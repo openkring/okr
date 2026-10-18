@@ -93,7 +93,11 @@
   "create": {
     "conf": "La voce è stata salvata.",
     "error": "La voce non è stata salvata.",
-    "exists": "Per questo giorno esiste già una voce — si aprirà per la modifica."
+    "exists": "Per questo giorno esiste già una voce — si aprirà per la modifica.",
+    "pickDate": "Per quale giorno?",
+    "existsTitle": "Questo giorno esiste già",
+    "existsMessage": "C'è già una voce per il {date}.",
+    "existsEdit": "Modifica questo giorno"
   },
   "delete": {
     "conf": "La voce è stata eliminata.",

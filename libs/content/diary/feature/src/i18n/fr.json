@@ -93,7 +93,11 @@
   "create": {
     "conf": "L'entrée a été enregistrée.",
     "error": "L'entrée n'a pas pu être enregistrée.",
-    "exists": "Il existe déjà une entrée pour ce jour — elle s'ouvre pour être modifiée."
+    "exists": "Il existe déjà une entrée pour ce jour — elle s'ouvre pour être modifiée.",
+    "pickDate": "Pour quel jour ?",
+    "existsTitle": "Ce jour existe déjà",
+    "existsMessage": "Il y a déjà une entrée pour le {date}.",
+    "existsEdit": "Modifier ce jour"
   },
   "delete": {
     "conf": "L'entrée a été supprimée.",

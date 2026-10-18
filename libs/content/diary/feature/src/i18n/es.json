@@ -93,7 +93,11 @@
   "create": {
     "conf": "La entrada se ha guardado.",
     "error": "La entrada no se ha podido guardar.",
-    "exists": "Ya hay una entrada para este día — se abrirá para editarla."
+    "exists": "Ya hay una entrada para este día — se abrirá para editarla.",
+    "pickDate": "¿Para qué día?",
+    "existsTitle": "Este día ya existe",
+    "existsMessage": "Ya hay una entrada para el {date}.",
+    "existsEdit": "Editar este día"
   },
   "delete": {
     "conf": "La entrada se ha eliminado.",

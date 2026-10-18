@@ -93,7 +93,11 @@
   "create": {
     "conf": "Der Eintrag wurde gespeichert.",
     "error": "Der Eintrag konnte nicht gespeichert werden.",
-    "exists": "Für diesen Tag gibt es schon einen Eintrag — er wird zum Bearbeiten geöffnet."
+    "exists": "Für diesen Tag gibt es schon einen Eintrag — er wird zum Bearbeiten geöffnet.",
+    "pickDate": "Für welchen Tag?",
+    "existsTitle": "Diesen Tag gibt es schon",
+    "existsMessage": "Für den {date} gibt es schon einen Eintrag.",
+    "existsEdit": "Diesen Tag bearbeiten"
   },
   "delete": {
     "conf": "Der Eintrag wurde gelöscht.",

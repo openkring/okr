@@ -1,6 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { ModalController } from '@ionic/angular';
+import { AlertController, ModalController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Browser } from '@capacitor/browser';
 import { firstValueFrom, of, timeout } from 'rxjs';
@@ -10,14 +10,15 @@ import { DiaryService, DiaryWeatherService } from '@okr/content-diary-data-acces
 import { AppConfigService } from '@okr/shared-data-access';
 import {
   DIARY_FIRST_YEAR, DIARY_I18N_KEYS, DiaryRange, DiaryStateFilter, buildDiaryRangeTree, diaryRangeOfYear,
-  diaryStateMatches, driveFolderUrl, getDiaryIndex, groupDiariesByMonth, hasDiaryWeather, newDiary,
+  diaryStateMatches, driveFolderUrl, formatDiaryDate, getDiaryIndex, groupDiariesByMonth, hasDiaryWeather, newDiary,
 } from '@okr/content-diary-util';
 import { LocationService } from '@okr/location-data-access';
 import { AvatarInfo, DiaryModel, DiaryPeriod, TripModel } from '@okr/shared-models';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AlertService } from '@okr/shared-util-angular';
-import { hasRole, nameMatches } from '@okr/shared-util-core';
+import { DateFormat, convertDateFormatToString, getTodayStr, hasRole, nameMatches } from '@okr/shared-util-core';
+import { selectDate } from '@okr/shared-ui';
 
 export type DiaryStoreState = {
   searchTerm: string;
@@ -55,6 +56,7 @@ export const DiaryStore = signalStore(
     locationService: inject(LocationService),
     modelSelectService: inject(ModelSelectService),
     modalController: inject(ModalController),
+    alertController: inject(AlertController),
     alertService: inject(AlertService),
     i18nService: inject(I18nService),
   })),
@@ -167,6 +169,22 @@ export const DiaryStore = signalStore(
       return role === 'confirm' && data ? data : undefined;
     };
 
+    /** «Diesen Tag gibt es schon» — true when the author chose to edit the existing day. */
+    const confirmEditExisting = async (date: string): Promise<boolean> => {
+      const alert = await store.alertController.create({
+        header: store.i18n.create_exists_title(),
+        // single braces: translateAll strips Transloco's {{params}} (memory: translateall-strips-double-brace-params)
+        message: store.i18n.create_exists_message().replace('{date}', formatDiaryDate(date)),
+        buttons: [
+          { text: store.i18n.cancel(), role: 'cancel' },
+          { text: store.i18n.create_exists_edit(), role: 'confirm' },
+        ],
+      });
+      await alert.present();
+      const { role } = await alert.onDidDismiss();
+      return role === 'confirm';
+    };
+
     const editEntry = async (diary: DiaryModel): Promise<void> => {
       const edited = await openEditor(diary, true);
       if (!edited) return;
@@ -190,34 +208,28 @@ export const DiaryStore = signalStore(
       setSelectedState(selectedState: DiaryStateFilter) { patchState(store, { selectedState }); },
 
       /**
-       * A new entry for today. The id is deterministic per date, so "one entry per day" is
-       * enforced by reading the id first: if today already has an entry, it is opened for
-       * editing instead of being overwritten. An ARCHIVED (soft-deleted) entry at that id is
-       * treated as absent in both checks — `create` (`setDoc`) then overwrites it with the
-       * fresh, non-archived document, so a deleted day is not a dead end that can never be
-       * re-created.
+       * A new entry for any day (spec 1.106 §1.4). The date is picked FIRST, so a taken day is
+       * caught before anything is typed: the alert offers to edit that day instead, and
+       * cancelling writes nothing. A free day opens the editor with the date locked — it can no
+       * longer collide afterwards. The id is deterministic per date; an ARCHIVED (soft-deleted)
+       * entry at that id counts as absent — `create` (`setDoc`) overwrites it with the fresh,
+       * non-archived document, so a deleted day is not a dead end.
        */
       async add(): Promise<void> {
         if (!store.canWrite()) return;
-        const fresh = newDiary(store.tenantId(), store.authorKey());
+        const today = convertDateFormatToString(getTodayStr(DateFormat.StoreDate), DateFormat.StoreDate, DateFormat.IsoDate);
+        const iso = await selectDate(store.modalController, today, store.i18n.create_pick_date());
+        if (!iso) return;
+        const date = convertDateFormatToString(iso.slice(0, 10), DateFormat.IsoDate, DateFormat.StoreDate);
+        const fresh = newDiary(store.tenantId(), store.authorKey(), date);
         const existing = await store.diaryService.readOnce(fresh.okey);
         if (existing && !existing.isArchived) {
-          store.alertService.showToast(store.i18n.create_exists());
-          await editEntry(existing);
+          if (await confirmEditExisting(date)) await editEntry(existing);
           return;
         }
-        const edited = await openEditor(fresh, false);
+        const edited = await openEditor(fresh, true);
         if (!edited) return;
-        // the date may have been changed in the form: re-key, and re-check the target day
-        const keyed = newDiary(store.tenantId(), store.authorKey(), edited.date);
-        const target = { ...edited, okey: keyed.okey };
-        if (target.okey !== fresh.okey) {
-          const targetExisting = await store.diaryService.readOnce(target.okey);
-          if (targetExisting && !targetExisting.isArchived) {
-            store.alertService.showToast(store.i18n.create_exists());
-            return;
-          }
-        }
+        const target = { ...edited, date: fresh.date, scope: fresh.scope, okey: fresh.okey };
         const ready = await withWeather(target);
         await store.diaryService.create({ ...ready, index: getDiaryIndex(ready) }, store.currentUser());
         store.diariesResource.reload();
