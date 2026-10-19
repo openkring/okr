@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { MemberFeeModel, MembershipModel } from '@okr/shared-models';
-import { billedMemberships, feeRowsOfBooks } from './member-fee.util';
+import { billedCategoryKey, billedMemberships, feeRowsOfBooks, feeScreenState } from './member-fee.util';
 
 const GSS_ORG = 'mkdf7xin64es5q4rmhdj';
 const SCS_ORG = 'scs';
@@ -84,5 +84,44 @@ describe('billedMemberships', () => {
 
   it('returns nothing without an org', () => {
     expect(billedMemberships([membership('p1', GSS_ORG)], '', TODAY)).toEqual([]);
+  });
+});
+
+describe('billedCategoryKey', () => {
+  it('prices a gss run from the Gönnerverein\'s own list', () => {
+    expect(billedCategoryKey({ membershipCategoryKey: 'mcat_gss' })).toBe('mcat_gss');
+  });
+
+  it('falls back to mcat for an org doc without the field', () => {
+    expect(billedCategoryKey({})).toBe('mcat');
+    expect(billedCategoryKey({ membershipCategoryKey: '' })).toBe('mcat');
+  });
+
+  it('falls back to mcat when the org is not loaded', () => {
+    expect(billedCategoryKey(undefined)).toBe('mcat');
+  });
+});
+
+describe('feeScreenState', () => {
+  it('is loading while the config has not loaded, even without an owner', () => {
+    expect(feeScreenState(false, true, undefined)).toBe('loading');
+    expect(feeScreenState(false, false, GSS_ORG)).toBe('loading');
+  });
+
+  it('is loading while the fee rows have not loaded', () => {
+    expect(feeScreenState(true, false, GSS_ORG)).toBe('loading');
+  });
+
+  it('is no-org once loaded and the books have no org owner', () => {
+    expect(feeScreenState(true, true, undefined)).toBe('no-org');
+  });
+
+  it('is ready once both are loaded and an org owns the books', () => {
+    expect(feeScreenState(true, true, GSS_ORG)).toBe('ready');
+  });
+
+  it('is error when the config read failed, whatever else holds', () => {
+    expect(feeScreenState(false, false, undefined, true)).toBe('error');
+    expect(feeScreenState(true, true, GSS_ORG, true)).toBe('error');
   });
 });

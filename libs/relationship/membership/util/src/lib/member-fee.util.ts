@@ -25,3 +25,32 @@ export function billedMemberships(all: MembershipModel[], orgKey: string, today:
     (m.state === 'active' || m.state === 'passive')
   );
 }
+
+/**
+ * Where the fee screen stands (spec 1.108, D12): 'error' when the books' config could not be read;
+ * 'loading' until the config AND the books' fee rows have answered (a run started earlier would see
+ * every member as row-less and create duplicates); 'no-org' when the books have no org owner
+ * (nobody to bill, D2); otherwise 'ready'. Every action of the screen runs only when 'ready'.
+ */
+export type MemberFeesScreenState = 'loading' | 'error' | 'no-org' | 'ready';
+
+export function feeScreenState(
+  configLoaded: boolean,
+  rowsLoaded: boolean,
+  billedOrgKey: string | undefined,
+  configFailed = false,
+): MemberFeesScreenState {
+  if (configFailed) return 'error';
+  if (!configLoaded) return 'loading';
+  if (!billedOrgKey) return 'no-org';
+  if (!rowsLoaded) return 'loading';
+  return 'ready';
+}
+
+/**
+ * The membership-category list a fee run prices from (spec 1.108, D9): the billed org's own list,
+ * so a gss run prices from the Gönnerverein's categories. Legacy org docs may lack the field.
+ */
+export function billedCategoryKey(org: { membershipCategoryKey?: string } | undefined): string {
+  return org?.membershipCategoryKey || 'mcat';
+}

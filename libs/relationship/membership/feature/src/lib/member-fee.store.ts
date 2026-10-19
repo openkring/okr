@@ -22,7 +22,7 @@ import { MemberFeeService, getTemplateId } from '@okr/relationship-membership-da
 
 import { MembershipEditModal } from './membership-edit.modal';
 import { MemberFeesTotalsModal } from './member-fee-totals.modal';
-import { BexioPosition, billedMemberships, buildPositions, feeRowsOfBooks, getFeeTotal, rebatePosition, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
+import { BexioPosition, billedCategoryKey, billedMemberships, buildPositions, feeRowsOfBooks, feeScreenState, getFeeTotal, MemberFeesScreenState, rebatePosition, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
 import { MemberFeeUploadModal } from '@okr/relationship-membership-ui';
 
 export type MemberFeesState = {
@@ -31,13 +31,6 @@ export type MemberFeesState = {
   selectedState: string;
   version: number;
 };
-
-/**
- * Where the fee screen stands (spec 1.108, D12): the books' config has not answered yet
- * ('loading' — spinner, no action runs), the books have no org owner ('no-org' — nobody to bill),
- * or the run can work on the owner org's members ('ready').
- */
-export type MemberFeesScreenState = 'loading' | 'no-org' | 'ready';
 
 const initialState: MemberFeesState = {
   searchTerm: '',
@@ -130,13 +123,27 @@ export const _MemberFeesStore = signalStore(
   // (spec 1.108, D2) — never the app tenant or the default org.
   withComputed((store) => ({
     booksId: computed(() => store.accountingStore.accountingTenantId()),
-    billedOrgKey: computed(() => ownerOrgOfBooks(store.accountingStore.config())),
+    configFailed: computed(() => store.accountingStore.configResource.status() === 'error'),
   })),
 
   withComputed((store) => ({
+    // A resource in 'error' throws from value(): never read config() then (the header's category
+    // filter reads this too, so the guard lives here and not only in screenState).
+    billedOrgKey: computed(() => store.configFailed() ? undefined : ownerOrgOfBooks(store.accountingStore.config())),
+  })),
+
+  withComputed((store) => ({
+    // 'ready' only once the config AND the books' fee rows have answered (spec 1.108, D12): while
+    // feeRecordsResource reloads (version bump, books switch) its value is undefined and every
+    // billed member would look row-less — a reload then would create duplicates.
     screenState: computed((): MemberFeesScreenState => {
-      if (!store.accountingStore.configLoaded()) return 'loading';
-      return store.billedOrgKey() ? 'ready' : 'no-org';
+      const rowsStatus = store.feeRecordsResource.status();
+      return feeScreenState(
+        store.accountingStore.configLoaded(),
+        rowsStatus === 'resolved' || rowsStatus === 'local',
+        store.billedOrgKey(),
+        store.configFailed(),
+      );
     }),
   })),
 
@@ -189,6 +196,7 @@ export const _MemberFeesStore = signalStore(
     // an empty position list — never a wrong amount.
     feeSchedule: computed((): FeeScheduleEntry => {
       const year = getYear();
+      if (store.configFailed()) return { year, positions: [] };
       return store.accountingStore.config()?.feeSchedule?.find(e => e.year === year) ?? { year, positions: [] };
     }),
 
@@ -199,13 +207,13 @@ export const _MemberFeesStore = signalStore(
      * still loading, `accountingBackend ?? 'native'` reads 'native' for EVERY books — a Bexio
      * books clicking early would take the native branch and get a raw `failed-precondition`.
      */
-    isBexioBackend: computed(() => store.accountingStore.config()?.accountingBackend === 'bexio'),
+    isBexioBackend: computed(() => !store.configFailed() && store.accountingStore.config()?.accountingBackend === 'bexio'),
 
     // The billed org names its own membership-category list (spec 1.108, D9) — a gss run prices
     // from the Gönnerverein's list, not the default org's. Legacy org docs may lack the field.
     membershipCategoryKey: computed(() => {
       const orgKey = store.billedOrgKey();
-      return (orgKey ? store.appStore.getOrg(orgKey)?.membershipCategoryKey : undefined) || 'mcat';
+      return billedCategoryKey(orgKey ? store.appStore.getOrg(orgKey) : undefined);
     }),
   })),
 
@@ -286,20 +294,24 @@ export const _MemberFeesStore = signalStore(
      */
     async generateFees(): Promise<void> {
       if (store.screenState() !== 'ready') return;
+      // Snapshot everything BEFORE the dialog: the treasurer may switch books while it is open.
       const booksId = store.booksId();
-      const confirmed = await confirm(store.alertController, store.i18n.memberFee_generate_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
-      if (!confirmed) return;
-
       const tenantId = store.tenantId();
       const lockerKeys = store.lockerOwnerKeys();
       const feeMap = store.feeRecordsByMemberKey();
       const schedule = store.feeSchedule();
       const categoryLists = store.categoryLists();
-      const currentUser = store.appStore.currentUser() ?? undefined;
-
+      const categoryKey = store.membershipCategoryKey();
       const members = store.billedMemberships().filter((m: MembershipModel) => !feeMap.has(m.memberKey));
+
+      const confirmed = await confirm(store.alertController, store.i18n.memberFee_generate_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
+      if (!confirmed) return;
+      // The books changed (or their rows are reloading) while the dialog was open — write nothing.
+      if (store.booksId() !== booksId || store.screenState() !== 'ready') return;
+
+      const currentUser = store.appStore.currentUser() ?? undefined;
       const saves = members.map((m: MembershipModel) => {
-          const fee = deriveFee(m, schedule, categoryLists, store.membershipCategoryKey(), lockerKeys, tenantId, booksId);
+          const fee = deriveFee(m, schedule, categoryLists, categoryKey, lockerKeys, tenantId, booksId);
           return store.memberFeeService.save(fee, currentUser, false);
       });
       const msg = 'generated ' + members.length + ' member fees for books ' + booksId + '.';

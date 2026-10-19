@@ -174,7 +174,8 @@
       "none": "There are no entries in state 'ready' that could be invoiced."
     },
     "config": {
-      "loading": "The accounting settings are still loading. Please try again in a moment."
+      "loading": "The accounting settings are still loading. Please try again in a moment.",
+      "error": "The settings of these books could not be loaded."
     },
     "proRata": {
       "months": {

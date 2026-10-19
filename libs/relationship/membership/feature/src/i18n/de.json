@@ -174,7 +174,8 @@
       "none": "Es gibt keine Einträge im Status «ready», die verrechnet werden könnten."
     },
     "config": {
-      "loading": "Die Buchhaltungs-Einstellungen werden noch geladen. Bitte versuche es gleich nochmals."
+      "loading": "Die Buchhaltungs-Einstellungen werden noch geladen. Bitte versuche es gleich nochmals.",
+      "error": "Die Einstellungen dieser Buchhaltung konnten nicht geladen werden."
     },
     "proRata": {
       "months": {

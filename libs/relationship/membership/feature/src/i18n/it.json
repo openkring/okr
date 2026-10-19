@@ -174,7 +174,8 @@
       "none": "Non ci sono voci nello stato «ready» da fatturare."
     },
     "config": {
-      "loading": "Le impostazioni contabili si stanno ancora caricando. Riprova tra un istante."
+      "loading": "Le impostazioni contabili si stanno ancora caricando. Riprova tra un istante.",
+      "error": "Non è stato possibile caricare le impostazioni di questa contabilità."
     },
     "proRata": {
       "months": {

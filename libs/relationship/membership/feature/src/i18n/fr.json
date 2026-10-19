@@ -174,7 +174,8 @@
       "none": "Il n'y a aucune entrée à l'état « ready » qui pourrait être facturée."
     },
     "config": {
-      "loading": "Les réglages de comptabilité sont encore en cours de chargement. Réessaie dans un instant."
+      "loading": "Les réglages de comptabilité sont encore en cours de chargement. Réessaie dans un instant.",
+      "error": "Les réglages de cette comptabilité n'ont pas pu être chargés."
     },
     "proRata": {
       "months": {

@@ -174,7 +174,8 @@
       "none": "No hay entradas en estado «ready» que se puedan facturar."
     },
     "config": {
-      "loading": "Los ajustes de contabilidad todavía se están cargando. Inténtalo de nuevo en un momento."
+      "loading": "Los ajustes de contabilidad todavía se están cargando. Inténtalo de nuevo en un momento.",
+      "error": "No se han podido cargar los ajustes de esta contabilidad."
     },
     "proRata": {
       "months": {
