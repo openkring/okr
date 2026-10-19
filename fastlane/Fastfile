@@ -160,12 +160,13 @@ platform :ios do
     app = options[:app] || UI.user_error!('Missing app:<app>, e.g. app:scs-app')
     store = File.join(ROOT, "apps/#{app}/store/ios")
     UI.user_error!("No #{store}") unless Dir.exist?(store)
-    check_store_texts!(store, STORE_LIMITS_IOS)
+    # deliver rejects a screenshots folder inside metadata_path, hence the two siblings.
+    check_store_texts!(File.join(store, 'metadata'), STORE_LIMITS_IOS)
     deliver(
       api_key_path: ASC_API_KEY,
       app_identifier: package_name(app),
       app_version: JSON.parse(File.read(File.join(ROOT, 'package.json')))['version'],
-      metadata_path: store,
+      metadata_path: File.join(store, 'metadata'),
       screenshots_path: File.join(store, 'screenshots'),
       overwrite_screenshots: true,
       skip_binary_upload: true,
