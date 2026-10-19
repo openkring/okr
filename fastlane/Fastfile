@@ -6,8 +6,14 @@
 #   fastlane android metadata app:scs-app            store texts + graphics + screenshots → Play listing
 #   fastlane ios     metadata app:scs-app            store texts + screenshots → App Store (no review)
 #
+# Release notes: apps/<app>/store/release-notes/<version>.txt (German, version = root package.json).
+# `android internal` sends them as the Play release notes, `ios beta` as TestFlight "What to Test",
+# `ios metadata` as App Store "What's New" (only once a version is live — the first one has none).
+#
 # Every lane takes `app:<app>`: paths, package name and secrets derive from it, so a second
 # tenant is configuration, not new code. Secrets live outside the repo in ~/.okr-secrets/android/.
+
+require 'tmpdir'
 
 default_platform(:android)
 
@@ -42,16 +48,28 @@ platform :android do
       aab = File.join(ROOT, "apps/#{app}/android/app/build/outputs/bundle/release/app-release.aab")
       gate_production!(aab, 'aab')
 
+      # supply reads release notes only from <metadata_path>/<lang>/changelogs/<versionCode>.txt, so
+      # they go through a throwaway metadata dir that holds nothing else.
+      notes = release_notes(app, PLAY_RELEASE_NOTES_MAX)
+      changelog_dir = Dir.mktmpdir('okr-play-notes-')
+      if notes
+        store_languages(app, 'android').each do |lang|
+          FileUtils.mkdir_p(File.join(changelog_dir, lang, 'changelogs'))
+          File.write(File.join(changelog_dir, lang, 'changelogs', "#{version_code}.txt"), notes)
+        end
+      end
+
       upload_to_play_store(
         package_name: package,
         json_key: PLAY_JSON_KEY,
         track: 'internal',
         aab: aab,
         release_status: 'completed',
+        metadata_path: changelog_dir,
         skip_upload_metadata: true,
         skip_upload_images: true,
         skip_upload_screenshots: true,
-        skip_upload_changelogs: true,
+        skip_upload_changelogs: notes.nil?,
       )
       UI.success("#{package} versionCode #{version_code} is on Internal testing")
     ensure
@@ -146,7 +164,9 @@ platform :ios do
       )
       gate_production!(ipa, 'ipa')
 
-      upload_to_testflight(api_key_path: ASC_API_KEY, ipa: ipa, skip_waiting_for_build_processing: true)
+      notes = release_notes(app, APPLE_RELEASE_NOTES_MAX)
+      upload_to_testflight(api_key_path: ASC_API_KEY, ipa: ipa, skip_waiting_for_build_processing: true,
+                           changelog: notes)
       UI.success("#{bundle_id} #{version} (#{build_number}) is uploaded to TestFlight")
     ensure
       sh_root("pnpm nx build #{app} --skip-nx-cache", log: false)
@@ -162,9 +182,25 @@ platform :ios do
     UI.user_error!("No #{store}") unless Dir.exist?(store)
     # deliver rejects a screenshots folder inside metadata_path, hence the two siblings.
     check_store_texts!(File.join(store, 'metadata'), STORE_LIMITS_IOS)
+
+    # "What's New" exists only for an update: Apple refuses it on an app's first version and requires
+    # it on every later one.
+    bundle_id = package_name(app)
+    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.from(filepath: ASC_API_KEY)
+    live = Spaceship::ConnectAPI::App.find(bundle_id)&.get_live_app_store_version(platform: 'IOS')
+    notes = release_notes(app, APPLE_RELEASE_NOTES_MAX)
+    whats_new = nil
+    if live
+      UI.user_error!("#{bundle_id} is live (#{live.version_string}): an update needs release notes") unless notes
+      whats_new = store_languages(app, 'ios/metadata').to_h { |lang| [lang, notes] }
+    elsif notes
+      UI.message("#{bundle_id} has no live version yet — release notes are not sent (first version)")
+    end
+
     deliver(
       api_key_path: ASC_API_KEY,
-      app_identifier: package_name(app),
+      app_identifier: bundle_id,
+      release_notes: whats_new,
       app_version: JSON.parse(File.read(File.join(ROOT, 'package.json')))['version'],
       metadata_path: File.join(store, 'metadata'),
       screenshots_path: File.join(store, 'screenshots'),
@@ -187,7 +223,33 @@ STORE_LIMITS_IOS = {
   'description.txt' => 4000, 'keywords.txt' => 100,
 }.freeze
 
+PLAY_RELEASE_NOTES_MAX = 500
+APPLE_RELEASE_NOTES_MAX = 4000
+
 # ── helpers ───────────────────────────────────────────────────────────────────
+
+def app_version
+  JSON.parse(File.read(File.join(ROOT, 'package.json')))['version']
+end
+
+# The German release notes for the current version, or nil (with a warning) when there are none.
+def release_notes(app, max)
+  path = File.join(ROOT, "apps/#{app}/store/release-notes/#{app_version}.txt")
+  unless File.exist?(path)
+    UI.important("No release notes at #{path} — uploading without")
+    return nil
+  end
+  notes = File.read(path).strip
+  UI.user_error!("#{path}: #{notes.length} characters, limit #{max}") if notes.length > max
+  UI.user_error!("#{path} is empty") if notes.empty?
+  notes
+end
+
+# The store languages are the locale folders under apps/<app>/store/<sub> (e.g. de-DE).
+def store_languages(app, sub)
+  Dir[File.join(ROOT, "apps/#{app}/store/#{sub}/*/")].map { |d| File.basename(d) }
+     .grep(/\A[a-z]{2}(-[A-Z]{2})?\z/)
+end
 
 def check_store_texts!(store, limits)
   Dir[File.join(store, '*/')].each do |lang_dir|
