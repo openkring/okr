@@ -130,12 +130,16 @@ test('every MAINT name has a ROW_SPECS entry', () => {
   for (const n of Object.values(MAINT).flat()) assert.ok(ROW_SPECS[n], n);
 });
 
-test('MAINT equals the tail of each context menu in the catalogue', () => {
+test('the catalogue context menu contains MAINT in order (later phases may append after it)', () => {
   for (const [ctx, names] of Object.entries(MAINT)) {
     const start = CATALOGUE.indexOf(`{ key: '${ctx}', name: '${ctx}', url: '', action: 'context'`);
     assert.ok(start >= 0, ctx);
     const end = CATALOGUE.indexOf('\n    ] },', start);
     const keys = [...CATALOGUE.slice(start, end).matchAll(/\{ key: '([^']+)'/g)].map((m) => m[1]).slice(1);
-    assert.deepEqual(keys.slice(-names.length), names, ctx);
+    let at = -1;
+    for (const n of names) {
+      at = keys.indexOf(n, at + 1);
+      assert.ok(at >= 0, `${ctx}: ${n} missing or out of order`);
+    }
   }
 });
