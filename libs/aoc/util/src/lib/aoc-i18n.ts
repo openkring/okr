@@ -708,6 +708,20 @@ export const AOC_I18N_KEYS = {
   chat_blocked_title:   PFX + 'chat.blocked.title',
   chat_blocked_default: PFX + 'chat.blocked.default',
   chat_blocked_call:    PFX + 'chat.blocked.call',
+  // 1.107 admin card «Chat sperren»
+  chat_block_title:        PFX + 'chat.block.title',
+  chat_block_description:  PFX + 'chat.block.description',
+  chat_block_active:       PFX + 'chat.block.active',
+  chat_block_blockedSince: PFX + 'chat.block.blockedSince',
+  chat_block_message:      PFX + 'chat.block.message',
+  chat_block_action:       PFX + 'chat.block.action',
+  chat_unblock_action:     PFX + 'chat.unblock.action',
+  chat_block_confirm:      PFX + 'chat.block.confirm',
+  chat_unblock_confirm:    PFX + 'chat.unblock.confirm',
+  chat_block_saveMessage:  PFX + 'chat.block.saveMessage',
+  chat_block_exempt:       PFX + 'chat.block.exempt',
+  chat_block_exemptHint:   PFX + 'chat.block.exemptHint',
+  chat_block_exemptAdd:    PFX + 'chat.block.exemptAdd',
 } satisfies Record<string, string>;
 
 // ─── Tenant App-Switcher ─────────────────────────────────────────────────────

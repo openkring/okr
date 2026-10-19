@@ -386,6 +386,23 @@
       "title": "Chat vorübergehend nicht verfügbar",
       "default": "Der Chat wird gerade gewartet. Er ist bald wieder da.",
       "call": "Anrufe sind während der Wartung nicht möglich."
+    },
+    "block": {
+      "title": "Chat sperren",
+      "description": "Sperrt den Chat in allen Apps. Alle sehen deine Nachricht statt des Chats.",
+      "active": "Der Chat ist aktiv.",
+      "blockedSince": "Gesperrt seit {time} von {name}.",
+      "message": "Nachricht an alle",
+      "action": "Chat sperren",
+      "confirm": "Der Chat wird in allen Apps gesperrt. Möchtest du fortfahren?",
+      "saveMessage": "Nachricht speichern",
+      "exempt": "Ausnahmen",
+      "exemptHint": "Diese Personen können den Chat trotz Sperre nutzen und testen.",
+      "exemptAdd": "Person hinzufügen"
+    },
+    "unblock": {
+      "action": "Chat entsperren",
+      "confirm": "Der Chat wird in allen Apps wieder freigegeben. Möchtest du fortfahren?"
     }
   },
   "content": {

@@ -1,6 +1,6 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActionSheetController, ActionSheetOptions, IonBadge, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonSearchbar, IonSelect, IonSelectOption, IonSpinner, IonThumbnail } from '@ionic/angular';
+import { ActionSheetController, ActionSheetOptions, IonBadge, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonSearchbar, IonSelect, IonSelectOption, IonSpinner, IonTextarea, IonThumbnail } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
@@ -20,7 +20,7 @@ import { AocChatStore, AdminRoom, GroupRoomDrift, RoomMemberInfo, RoomAssignment
     FormsModule, 
     SvgIconPipe,
     Header, AvatarSelect,
-    IonContent, IonIcon, IonList, IonItem, IonLabel, IonNote, IonBadge, IonThumbnail, IonSpinner, IonSearchbar, IonSelect, IonSelectOption, IonButton,
+    IonContent, IonIcon, IonList, IonItem, IonLabel, IonNote, IonBadge, IonThumbnail, IonSpinner, IonSearchbar, IonSelect, IonSelectOption, IonButton, IonTextarea,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent
   ],
   providers: [AocChatStore],
@@ -156,6 +156,62 @@ import { AocChatStore, AdminRoom, GroupRoomDrift, RoomMemberInfo, RoomAssignment
       </div>
 
       <div class="admin-cards">
+
+      <!-- 1.107 chat block: global switch for all tenant apps -->
+      <ion-card class="repair-card">
+        <ion-card-header>
+          <ion-card-title>{{ store.i18n.chat_block_title() }}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <p class="repair-desc">{{ store.i18n.chat_block_description() }}</p>
+          <ion-note [color]="chatBlocked() ? 'danger' : 'success'">{{ chatStatusLine() }}</ion-note>
+          @if (isAdmin()) {
+            <ion-textarea
+              [label]="store.i18n.chat_block_message()"
+              labelPlacement="stacked"
+              [autoGrow]="true"
+              [rows]="3"
+              [value]="chatMessage()"
+              (ionInput)="onChatMessageInput($event)"
+            />
+            <div class="repair-actions">
+              @if (chatBlocked()) {
+                <ion-button size="small" color="primary" (click)="onUnblockChat()">
+                  <ion-icon slot="start" src="{{'lock-open' | svgIcon}}" />
+                  {{ store.i18n.chat_unblock_action() }}
+                </ion-button>
+                @if (chatMessageDirty()) {
+                  <ion-button size="small" fill="outline" (click)="onSaveChatMessage()">
+                    <ion-icon slot="start" src="{{'checkbox-circle' | svgIcon}}" />
+                    {{ store.i18n.chat_block_saveMessage() }}
+                  </ion-button>
+                }
+              } @else {
+                <ion-button size="small" color="danger" (click)="onBlockChat()">
+                  <ion-icon slot="start" src="{{'lock-closed' | svgIcon}}" />
+                  {{ store.i18n.chat_block_action() }}
+                </ion-button>
+              }
+            </div>
+            <div class="repair-preview-title">{{ store.i18n.chat_block_exempt() }}</div>
+            <p class="repair-desc">{{ store.i18n.chat_block_exemptHint() }}</p>
+            <ion-list lines="inset" class="repair-list">
+              @for (entry of chatExempt(); track entry.personKey) {
+                <ion-item>
+                  <ion-label>{{ entry.name }}</ion-label>
+                  <ion-button slot="end" fill="clear" color="danger" (click)="onRemoveChatExemption(entry.personKey)">
+                    <ion-icon slot="icon-only" src="{{'trash' | svgIcon}}" />
+                  </ion-button>
+                </ion-item>
+              }
+            </ion-list>
+            <ion-button size="small" fill="outline" (click)="onAddChatExemption()">
+              <ion-icon slot="start" src="{{'person-add' | svgIcon}}" />
+              {{ store.i18n.chat_block_exemptAdd() }}
+            </ion-button>
+          }
+        </ion-card-content>
+      </ion-card>
 
       <!-- Matrix SDK log level (debug aid) -->
       <ion-card class="log-card">
@@ -715,10 +771,58 @@ export class AocChat {
   protected readonly guestScanning = computed(() => this.store.guestScanning());
   protected readonly guestPruningGroup = computed(() => this.store.guestPruningGroup());
 
+  // 1.107 chat block card
+  protected readonly isAdmin = computed(() => this.store.isAdmin());
+  protected readonly chatBlocked = computed(() => this.store.chatBlocked());
+  protected readonly chatExempt = computed(() => this.store.chatExempt());
+  protected readonly chatStatusLine = computed(() => this.store.chatStatusLine());
+  /**
+   * Local draft of the admin message, seeded ONCE from the first status snapshot. Not a
+   * linkedSignal: the status is a live Firestore stream, and every snapshot would wipe the input.
+   */
+  protected readonly chatMessage = signal('');
+  private chatMessageSeeded = false;
+  protected readonly chatMessageDirty = computed(() => this.chatMessage().trim() !== (this.store.chatStatus()?.message ?? '').trim());
+
   // constants
   private imgixBaseUrl = this.store.imgixBaseUrl();
   protected isPhotoUrl = isMatrixPhotoUrl;
   protected formatTimestamp = formatMatrixTimestamp;
+
+  constructor() {
+    effect(() => {
+      const status = this.store.chatStatus();
+      if (this.chatMessageSeeded || !status) return;
+      this.chatMessageSeeded = true;
+      untracked(() => this.chatMessage.set(status.message ?? ''));
+    });
+  }
+
+  // ─── chat block ─────────────────────────────────────────────────────────────
+
+  protected onChatMessageInput(event: CustomEvent): void {
+    this.chatMessage.set((event.detail as { value?: string | null }).value ?? '');
+  }
+
+  protected async onBlockChat(): Promise<void> {
+    await this.store.blockChat(this.chatMessage());
+  }
+
+  protected async onUnblockChat(): Promise<void> {
+    await this.store.unblockChat();
+  }
+
+  protected async onSaveChatMessage(): Promise<void> {
+    await this.store.saveChatMessage(this.chatMessage());
+  }
+
+  protected async onAddChatExemption(): Promise<void> {
+    await this.store.addChatExemption();
+  }
+
+  protected async onRemoveChatExemption(personKey: string): Promise<void> {
+    await this.store.removeChatExemption(personKey);
+  }
 
   // ─── person filter ──────────────────────────────────────────────────────────
 

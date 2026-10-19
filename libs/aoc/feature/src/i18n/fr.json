@@ -386,6 +386,23 @@
       "title": "Chat temporairement indisponible",
       "default": "Le chat est en cours de maintenance. Il sera bientôt de retour.",
       "call": "Les appels ne sont pas possibles pendant la maintenance."
+    },
+    "block": {
+      "title": "Bloquer le chat",
+      "description": "Bloque le chat dans toutes les apps. Tout le monde voit ton message à la place du chat.",
+      "active": "Le chat est actif.",
+      "blockedSince": "Bloqué depuis le {time} par {name}.",
+      "message": "Message à tous",
+      "action": "Bloquer le chat",
+      "confirm": "Le chat sera bloqué dans toutes les apps. Veux-tu continuer ?",
+      "saveMessage": "Enregistrer le message",
+      "exempt": "Exceptions",
+      "exemptHint": "Ces personnes peuvent utiliser et tester le chat malgré le blocage.",
+      "exemptAdd": "Ajouter une personne"
+    },
+    "unblock": {
+      "action": "Débloquer le chat",
+      "confirm": "Le chat sera de nouveau disponible dans toutes les apps. Veux-tu continuer ?"
     }
   },
   "content": {

@@ -7,11 +7,12 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { AlertController, ModalController, ToastController } from '@ionic/angular';
 
-import { AppStore } from '@okr/shared-feature';
-import { FirestoreService } from '@okr/shared-data-access';
-import { ArticleSection, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, PageCollection, PageModel, SectionCollection, UserModel, ViewPosition } from '@okr/shared-models';
+import { AppStore, ModelSelectService } from '@okr/shared-feature';
+import { ChatStatusService, FirestoreService } from '@okr/shared-data-access';
+import { ArticleSection, ChatExemption, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, PageCollection, PageModel, SectionCollection, UserModel, ViewPosition } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
 import { showToast } from '@okr/shared-util-angular';
+import { chatBlockedSince, fill, getFullName, hasRole } from '@okr/shared-util-core';
 import { AOC_I18N_KEYS } from '@okr/aoc-util';
 import { findGroupOfRoom, getMatrixLogLevel, setMatrixLogLevel, MatrixLogLevel } from '@okr/chat-util';
 import type { MatrixMediaService } from '@okr/chat-data-access';
@@ -260,6 +261,8 @@ export const AocChatStore = signalStore(
       toastController: inject(ToastController),
       i18nService: inject(I18nService),
       firestoreService: inject(FirestoreService),
+      chatStatusService: inject(ChatStatusService),
+      modelSelectService: inject(ModelSelectService),
       // Shaped like the service so the call sites read unchanged. Every caller is already
       // async (an rxResource stream), so the one-time import costs them nothing extra.
       media: {
@@ -353,6 +356,22 @@ export const AocChatStore = signalStore(
      */
     /** Another page of history exists exactly while Synapse still hands back a cursor. */
     historyHasMore: computed(() => !!state.historyCursor()),
+    // ─── 1.107 chat block card ───
+    isAdmin: computed(() => hasRole('admin', state.appStore.currentUser())),
+    chatStatus: computed(() => state.chatStatusService.status()),
+    chatBlocked: computed(() => state.chatStatusService.blocked()),
+    chatExempt: computed(() => state.chatStatusService.status()?.exempt ?? []),
+    /** «Der Chat ist aktiv.» or «Gesperrt seit {time} von {name}.» — the blocker's name from the exempt list (auto-added on block), else the persons list, else the key. */
+    chatStatusLine: computed(() => {
+      const status = state.chatStatusService.status();
+      if (!status?.blocked) return state.i18n.chat_block_active();
+      const key = status.blockedBy ?? '';
+      const person = state.appStore.allPersons().find(p => p.okey === key);
+      const name = status.exempt?.find(e => e.personKey === key)?.name
+        || (person ? getFullName(person.firstName, person.lastName) : '')
+        || key;
+      return fill(chatBlockedSince(status.blockedAt, state.i18n.chat_block_blockedSince()), { name });
+    }),
     guestExtrasByRoom: computed(() => new Map(
       (state.guestPreview() ?? [])
         .filter(g => g.extras.length > 0)
@@ -405,7 +424,36 @@ export const AocChatStore = signalStore(
   })),
 
   // ─── methods ────────────────────────────────────────────────────────────────
-  withMethods(store => ({
+  withMethods(store => {
+    /** The signed-in admin as a ChatExemption; undefined (no write) for anybody else. */
+    const currentAdmin = (): ChatExemption | undefined => {
+      const personKey = store.appStore.currentUser()?.personKey;
+      if (!personKey || !store.isAdmin()) return undefined;
+      const person = store.appStore.currentPerson();
+      return { personKey, name: (person ? getFullName(person.firstName, person.lastName) : '') || personKey };
+    };
+    const confirm = async (header: string, message: string): Promise<boolean> => {
+      const alert = await store.alertController.create({
+        header,
+        message,
+        buttons: [
+          { text: store.i18n.cancel(), role: 'cancel' },
+          { text: header, role: 'confirm' },
+        ],
+      });
+      await alert.present();
+      const { role } = await alert.onDidDismiss();
+      return role === 'confirm';
+    };
+    /** The service throws on an unloaded status (exempt-list writes) or a denied write — toast, never an unhandled rejection. */
+    const guarded = async (write: () => Promise<void>): Promise<void> => {
+      try {
+        await write();
+      } catch (e) {
+        await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
+      }
+    };
+    return {
 
     selectPerson(personKey: string | undefined): void {
       patchState(store, {
@@ -1371,6 +1419,46 @@ export const AocChatStore = signalStore(
       }
     },
 
+    // ─── 1.107 chat block ──────────────────────────────────────────────────────
+
+    /** Block chat in all apps (after confirmation); the admin is auto-exempted by the service. */
+    async blockChat(message: string): Promise<void> {
+      const admin = currentAdmin();
+      if (!admin) return;
+      if (!(await confirm(store.i18n.chat_block_action(), store.i18n.chat_block_confirm()))) return;
+      await guarded(() => store.chatStatusService.block(message.trim(), admin));
+    },
+
+    /** Unblock chat in all apps (after confirmation). The exempt list is kept for the next block. */
+    async unblockChat(): Promise<void> {
+      const admin = currentAdmin();
+      if (!admin) return;
+      if (!(await confirm(store.i18n.chat_unblock_action(), store.i18n.chat_unblock_confirm()))) return;
+      await guarded(() => store.chatStatusService.unblock(admin.personKey));
+    },
+
+    async saveChatMessage(message: string): Promise<void> {
+      const admin = currentAdmin();
+      if (!admin) return;
+      await guarded(() => store.chatStatusService.updateMessage(message.trim(), admin.personKey));
+    },
+
+    /** Opens the person picker and adds the chosen person to the exempt list. */
+    async addChatExemption(): Promise<void> {
+      const admin = currentAdmin();
+      if (!admin) return;
+      const avatar = await store.modelSelectService.selectPersonAvatar();
+      if (!avatar?.key) return;
+      const entry: ChatExemption = { personKey: avatar.key, name: getFullName(avatar.name1, avatar.name2) || avatar.key };
+      await guarded(() => store.chatStatusService.addExemption(entry, admin.personKey));
+    },
+
+    async removeChatExemption(personKey: string): Promise<void> {
+      const admin = currentAdmin();
+      if (!admin) return;
+      await guarded(() => store.chatStatusService.removeExemption(personKey, admin.personKey));
+    },
+
     /** Set the matrix-js-sdk console log level (admin-only, persisted across reloads). */
     setLogLevel(level: MatrixLogLevel): void {
       setMatrixLogLevel(level);
@@ -1384,5 +1472,6 @@ export const AocChatStore = signalStore(
     reloadMembers(): void {
       store.membersResource.reload();
     },
-  }))
+    };
+  })
 );

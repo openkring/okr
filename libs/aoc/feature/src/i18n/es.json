@@ -386,6 +386,23 @@
       "title": "Chat no disponible temporalmente",
       "default": "El chat está en mantenimiento. Volverá pronto.",
       "call": "Las llamadas no son posibles durante el mantenimiento."
+    },
+    "block": {
+      "title": "Bloquear el chat",
+      "description": "Bloquea el chat en todas las apps. Todos ven tu mensaje en lugar del chat.",
+      "active": "El chat está activo.",
+      "blockedSince": "Bloqueado desde el {time} por {name}.",
+      "message": "Mensaje para todos",
+      "action": "Bloquear el chat",
+      "confirm": "El chat se bloqueará en todas las apps. ¿Quieres continuar?",
+      "saveMessage": "Guardar mensaje",
+      "exempt": "Excepciones",
+      "exemptHint": "Estas personas pueden usar y probar el chat a pesar del bloqueo.",
+      "exemptAdd": "Añadir persona"
+    },
+    "unblock": {
+      "action": "Desbloquear el chat",
+      "confirm": "El chat volverá a estar disponible en todas las apps. ¿Quieres continuar?"
     }
   },
   "content": {

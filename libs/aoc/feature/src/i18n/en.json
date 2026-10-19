@@ -386,6 +386,23 @@
       "title": "Chat temporarily unavailable",
       "default": "The chat is currently under maintenance. It will be back soon.",
       "call": "Calls are not possible during maintenance."
+    },
+    "block": {
+      "title": "Block chat",
+      "description": "Blocks the chat in all apps. Everyone sees your message instead of the chat.",
+      "active": "The chat is active.",
+      "blockedSince": "Blocked since {time} by {name}.",
+      "message": "Message to everyone",
+      "action": "Block chat",
+      "confirm": "The chat will be blocked in all apps. Do you want to continue?",
+      "saveMessage": "Save message",
+      "exempt": "Exceptions",
+      "exemptHint": "These people can still use and test the chat while it is blocked.",
+      "exemptAdd": "Add person"
+    },
+    "unblock": {
+      "action": "Unblock chat",
+      "confirm": "The chat will be available again in all apps. Do you want to continue?"
     }
   },
   "content": {
