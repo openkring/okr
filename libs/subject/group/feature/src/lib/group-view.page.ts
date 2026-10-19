@@ -69,7 +69,7 @@ import { GroupStore } from './group.store';
                     <ion-item-divider class="separator" />
                   }
                   @if(showSegmentContextMenu()) {
-                    <okr-menu [menuName]="segmentContextMenuName()!" [forceVisible]="isGroupAdmin()" [toggleStates]="segmentToggleStates()" />
+                    <okr-menu [menuName]="segmentContextMenuName()!" [forceVisible]="isGroupAdmin()" [excludeNames]="segmentExcludedNames()" [toggleStates]="segmentToggleStates()" />
                   }
                 </ion-content>
               </ng-template>
@@ -306,6 +306,11 @@ export class GroupViewPage implements ViewWillEnter {
       default: return undefined;
     }
   });
+
+  // Rows the calendar list hides for this user (admin-only Wartung rows): [forceVisible] bypasses roleNeeded
+  // for a group admin, so the list's own exclusions must be passed on to the hoisted menu too.
+  protected readonly segmentExcludedNames = computed<string[]>(() =>
+    this.selectedSegment() === 'calendar' ? (this.caleventList()?.excludedMenuNames() ?? []) : []);
 
   // Show the hoisted context-menu button only when the active segment permits changes.
   protected readonly showSegmentContextMenu = computed(() => {

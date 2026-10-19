@@ -473,7 +473,7 @@ export class CalEventList implements OnInit {
       .map(c => ({ key: c.okey, title: c.title || c.name }));
   });
   /** Schedule polls only exist in group calendars — hide the entry everywhere else (e.g. /calevent/all). */
-  protected excludedMenuNames = computed(() => {
+  public readonly excludedMenuNames = computed(() => {
     const names = this.store.isGroupCalendar() ? [] : ['calevent-schedule'];
     // the maintenance rows are admin-only; a group admin (forceVisible) must not see them
     return this.hasRole('admin') ? names : [...names, 'maint-divider', 'calevent-check-duplicates'];
