@@ -9,6 +9,7 @@
 // design — see the doc comment on the function.
 
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { checkOperatorTenant } from '@okr/shared-util-functions';
 import { getFirestore } from 'firebase-admin/firestore';
 
 import {
@@ -60,6 +61,7 @@ export const backfillMatrixRoomTenants = onCall(
   },
   async (request): Promise<BackfillResult> => {
     await requireRole(request, 'backfillMatrixRoomTenants', ['admin']);
+    await checkOperatorTenant(request, 'backfillMatrixRoomTenants');
 
     const { dryRun = false } = (request.data ?? {}) as { dryRun?: boolean };
     const adminToken = matrixAdminToken.value();

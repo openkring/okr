@@ -322,6 +322,10 @@ seed("contracts/cDocs", {"tenants": ["t1"], "isArchived": False, "name": "Mit Da
 seed("contract-documents/dA", {"tenants": ["t1"], "isArchived": False, "contractKey": "cLoanA",
      "partyPersonKeys": ["pA"], "isStrictlyConfidential": False})
 U = jwt("uidU")
+seed("users/uidO", {"tenants": ["bka"], "roles": {"admin": True}, "firstName": "O", "personKey": "pO"})
+seed("users/uidO2", {"tenants": ["bka"], "roles": {}, "firstName": "O2", "personKey": "pO2"})
+seed("users/uidO3", {"tenants": ["bka", "t1"], "roles": {"admin": True}, "firstName": "O3", "personKey": "pO3"})
+O, O2, O3 = jwt("uidO"), jwt("uidO2"), jwt("uidO3")
 GET, PATCH, POST, DELETE = "GET", "PATCH", "POST", "DELETE"
 
 
@@ -341,15 +345,22 @@ single_cases = [
     ("userA(no role) GET sessions/sX -> DENY (was signedIn)", False, GET, "sessions/sX", A, None, None),
     ("userB(admin t2) GET sessions/sX (t1) -> DENY (cross-tenant)", False, GET, "sessions/sX", B, None, None),
     ("userD(admin t1) GET sessions/sX -> ALLOW", True, GET, "sessions/sX", D, None, None),
-    # 1.107: app-status/chat is global (no tenants[]): signed-in read, any tenant's admin writes
+    # 1.107: app-status/chat is global (no tenants[]): signed-in read, operator (bka) writes
     ("anon GET app-status/chat -> DENY", False, GET, "app-status/chat", None, None, None),
     ("userA(member t1) GET app-status/chat -> ALLOW", True, GET, "app-status/chat", A, None, None),
     ("userA(member t1) PATCH app-status/chat blocked -> DENY", False, PATCH, "app-status/chat", A,
      body({"blocked": True}), ["blocked"]),
-    ("userD(admin t1) PATCH app-status/chat blocked -> ALLOW", True, PATCH, "app-status/chat", D,
+    ("userD(admin t1) PATCH app-status/chat blocked -> DENY (operator only)", False, PATCH, "app-status/chat", D,
      body({"blocked": True}), ["blocked"]),
-    ("userB(admin t2) PATCH app-status/chat message -> ALLOW (any tenant admin)", True, PATCH,
+    ("userB(admin t2) PATCH app-status/chat message -> DENY (operator only)", False, PATCH,
      "app-status/chat", B, body({"message": "Wartung"}), ["message"]),
+    ("userO(admin bka) PATCH app-status/chat blocked -> ALLOW (operator)", True, PATCH, "app-status/chat", O,
+     body({"blocked": True}), ["blocked"]),
+    ("userO2(non-admin bka) PATCH app-status/chat -> DENY", False, PATCH, "app-status/chat", O2,
+     body({"blocked": True}), ["blocked"]),
+    ("userO3(admin bka+t1) PATCH app-status/chat -> DENY (tenants must be exactly bka)", False, PATCH,
+     "app-status/chat", O3, body({"blocked": True}), ["blocked"]),
+    ("userD(admin t1) GET app-status/chat -> ALLOW (read unchanged)", True, GET, "app-status/chat", D, None, None),
     ("userD(admin t1) PATCH app-status/other -> DENY (only the chat doc)", False, PATCH,
      "app-status/other", D, body({"blocked": True}), ["blocked"]),
     # 1.32 §8.5: enabledFeatures is a billing boundary. Everything else in app-config

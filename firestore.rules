@@ -34,6 +34,11 @@ service cloud.firestore {
     function isAdmin() {
       return hasRole('admin');
     }
+    // Operator (spec 1.101): the users doc has tenants exactly ['bka'] AND roles.admin.
+    // Mirrors isOperatorUserData / checkOperatorTenant in @okr/shared-util-functions.
+    function isOperator() {
+      return isAdmin() && userData().tenants == ['bka'];
+    }
     function isPrivileged() {
       return hasRole('privileged') || isAdmin();
     }
@@ -209,11 +214,11 @@ service cloud.firestore {
     }
     // Global chat switch (spec 1.107): one doc app-status/chat for ALL tenant apps.
     // Deliberately not tenant-scoped (no tenants[]); any signed-in user reads it,
-    // any admin (of any tenant) writes it.
+    // only the operator (tenant bka, spec 1.101 phase 4) writes it.
     // Only the chat doc: any other app-status/* falls through to the default deny.
     match /app-status/chat {
       allow read: if signedIn();
-      allow write: if isAdmin();
+      allow write: if isOperator();
     }
     // Global integration config singletons (e.g. config/bexioSync sync pointers).
     // Read by the admin-only AOC console; written exclusively by Cloud Functions

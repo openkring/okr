@@ -4,6 +4,7 @@
 // profile sync, and deactivation.
 
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { checkOperatorTenant } from '@okr/shared-util-functions';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 
@@ -318,6 +319,7 @@ export const deactivateMatrixUser = onCall(
   },
   async (request): Promise<{ matrixUserId: string; deactivated: boolean }> => {
     await requireRole(request, 'deactivateMatrixUser', ['admin']);
+    await checkOperatorTenant(request, 'deactivateMatrixUser');
 
     const { personKey, erase = false } = request.data as { personKey: string; erase?: boolean };
     requireParam(personKey, 'personKey');
@@ -466,6 +468,7 @@ export const repairMatrixDisplayNames = onCall(
   },
   async (request): Promise<DisplayNameRepairResult> => {
     await requireRole(request, 'repairMatrixDisplayNames', ['admin']);
+    await checkOperatorTenant(request, 'repairMatrixDisplayNames');
     const dryRun = (request.data as { dryRun?: boolean } | undefined)?.dryRun !== false; // default true
     const adminToken = matrixAdminToken.value();
 
@@ -587,6 +590,7 @@ export const repairMatrixAvatars = onCall(
   },
   async (request): Promise<AvatarRepairResult> => {
     await requireRole(request, 'repairMatrixAvatars', ['admin']);
+    await checkOperatorTenant(request, 'repairMatrixAvatars');
     const dryRun = (request.data as { dryRun?: boolean } | undefined)?.dryRun !== false; // default true
     const adminToken = matrixAdminToken.value();
 

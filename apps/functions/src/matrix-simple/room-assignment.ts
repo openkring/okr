@@ -22,6 +22,7 @@
 // fuer persoenliche Bruecken-Chats, wo Loeschen die falsche Antwort waere.
 
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { checkOperatorTenant } from '@okr/shared-util-functions';
 
 import {
   matrixAdminToken,
@@ -83,6 +84,7 @@ export const listUnassignedMatrixRooms = onCall(
   },
   async (request): Promise<{ rooms: RoomAssignment[] }> => {
     await requireRole(request, 'listUnassignedMatrixRooms', ['admin']);
+    await checkOperatorTenant(request, 'listUnassignedMatrixRooms');
     const adminToken = matrixAdminToken.value();
 
     const rooms: SynapseRoom[] = [];
