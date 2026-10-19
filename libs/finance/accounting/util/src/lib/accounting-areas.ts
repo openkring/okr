@@ -14,7 +14,7 @@ export interface AccountingSegment {
   urlTemplate: string;
   /** the url belongs to this segment when one of these matches; group 1 = the books (if booksScoped) */
   matches: RegExp[];
-  /** false: the route carries no books param (`/expense/all`, `/memberfees`) */
+  /** false: the route carries no books param (`/expense/all`) */
   booksScoped: boolean;
   /** hide unless this feature block is effective for the tenant */
   featureBlock?: string;
@@ -64,7 +64,7 @@ export const ACCOUNTING_AREAS: readonly AccountingArea[] = [
   ] },
   { id: 'receivables', i18nKey: 'nav_area_receivables', segments: [
     seg('receivables.invoices', 'nav_seg_invoices', '/accounting/{books}/invoice/all/c-invoice', [acc('invoice')]),
-    seg('receivables.memberFees', 'nav_seg_memberFees', '/memberfees/c-memberfees', [/^\/memberfees(?:[/?#]|$)/], { booksScoped: false, featureBlock: 'member-fee' }),
+    seg('receivables.memberFees', 'nav_seg_memberFees', '/accounting/{books}/member-fees/c-memberfees', [acc('member-fees')], { featureBlock: 'member-fee' }),
     seg('receivables.aging', 'nav_seg_aging', '/accounting/{books}/aging', [acc('aging')]),
   ] },
   { id: 'cost', i18nKey: 'nav_area_cost', segments: [

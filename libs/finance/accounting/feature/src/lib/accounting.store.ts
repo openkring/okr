@@ -83,7 +83,7 @@ export const AccountingStore = signalStore(
   withHooks(store => ({
     onInit(): void {
       // a switch in the «Buchhaltung» menu while an accounting screen is open: show the same screen
-      // in the other books. Books-less screens (/expense/all, /memberfees) stay where they are.
+      // in the other books. Books-less screens (/expense/all) stay where they are.
       store.selectedBooksSignal.switched$.pipe(takeUntilDestroyed()).subscribe(books => {
         const cur = resolveAccountingArea(store.router.url);
         if (cur?.segment.booksScoped && cur.books !== books) void store.router.navigateByUrl(segmentUrl(cur.segment, books));

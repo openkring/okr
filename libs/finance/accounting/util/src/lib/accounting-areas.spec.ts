@@ -13,7 +13,7 @@ describe('resolveAccountingArea', () => {
     ['/accounting/scs/payments/po-123', 'payables', 'payables.paymentOrders', 'scs'],
     ['/expense/all/c-expense', 'payables', 'payables.expenses', undefined],
     ['/accounting/scs/invoice/all/c-invoice', 'receivables', 'receivables.invoices', 'scs'],
-    ['/memberfees/c-memberfees', 'receivables', 'receivables.memberFees', undefined],
+    ['/accounting/gss/member-fees/c-memberfees', 'receivables', 'receivables.memberFees', 'gss'],
     ['/accounting/scs/aging', 'receivables', 'receivables.aging', 'scs'],
     ['/accounting/scs/cost-center/c-cost-center', 'cost', 'cost.costCenters', 'scs'],
     ['/accounting/scs/budget/c-budget', 'cost', 'cost.budgets', 'scs'],
@@ -48,6 +48,16 @@ describe('resolveAccountingArea', () => {
     expect(resolveAccountingArea('/my-invoice/scs/c-invoice')).toBeUndefined();
     expect(resolveAccountingArea('/private/welcome')).toBeUndefined();
     expect(resolveAccountingArea('')).toBeUndefined();
+  });
+
+  it('no longer matches the retired /memberfees url', () => {
+    expect(resolveAccountingArea('/memberfees/c-memberfees')).toBeUndefined();
+  });
+
+  it('member fees segment is books-scoped', () => {
+    const seg = ACCOUNTING_AREAS.flatMap(a => a.segments).find(x => x.id === 'receivables.memberFees')!;
+    expect(seg.booksScoped).toBe(true);
+    expect(segmentUrl(seg, 'scs')).toBe('/accounting/scs/member-fees/c-memberfees');
   });
 
   it('does not confuse invoice with a longer path segment', () => {

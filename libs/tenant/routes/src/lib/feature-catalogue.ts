@@ -2,6 +2,7 @@ import { inject } from '@angular/core';
 import type { Route } from '@angular/router';
 import { isAdminGuard, isAuthenticatedGuard, isContentAdminGuard, isContractReaderGuard, isMemberAdminGuard, isPrivilegedGuard, isTreasurerGuard } from '@okr/auth-feature';
 import { AppStore } from '@okr/shared-feature';
+import { memberFeesRedirectGuard } from './member-fees-redirect';
 import { RESOURCE_EDIT_MODAL } from '@okr/resource-ui';
 
 /**
@@ -593,16 +594,11 @@ const relationship: BlockRoutes = {
       }],
     },
     {
-      // Route ships to every tenant enabling `relationship` (copied verbatim from
-      // app.routes.ts, no tenant gating in the route table itself). The menu is NOT modelled
-      // here any more: since the generalization (planning/specs/2026-09-17-member-fees-generic-
-      // design.md) the context wrapper
-      // `c-memberfees` belongs to the `member-fee` feature block in libs/tenant/util/src/lib/
-      // feature-blocks.ts, which ships it to every tenant that enables the block. The route
-      // stays cheap to ship (lazy-loaded, unreachable without a menu entry or typed URL).
+      // Retired url (spec 1.108): the member-fee screen moved under `accounting/:accountingTenantId/
+      // member-fees/`. Old bookmarks and tenant-authored menu rows redirect into the default books.
       path: 'memberfees',
       canActivate: [isAuthenticatedGuard],
-      children: [{ path: ':contextMenuName', loadComponent: () => import('@okr/relationship-membership-feature').then(m => m.MemberFees) }],
+      children: [{ path: ':contextMenuName', canActivate: [memberFeesRedirectGuard], children: [] }],
     },
     {
       path: 'invitation',
@@ -777,6 +773,11 @@ const finance: BlockRoutes = {
       loadComponent: () => import('@okr/finance-accounting-feature').then(m => m.AccountingShell),
       children: [
         { path: 'overview', loadComponent: () => import('@okr/finance-accounting-feature').then(m => m.AccountingOverviewPage) },
+        {
+          // Mitgliederbeiträge (spec 1.108): books-scoped; the `member-fee` block ships only the c-memberfees context wrapper.
+          path: 'member-fees',
+          children: [{ path: ':contextMenuName', loadComponent: () => import('@okr/relationship-membership-feature').then(m => m.MemberFees) }],
+        },
         { path: 'aging', loadComponent: () => import('@okr/finance-invoice-feature').then(m => m.InvoiceAging) },
         {
           path: 'journal',
@@ -907,8 +908,8 @@ const finance: BlockRoutes = {
 };
 
 const memberFee: BlockRoutes = {
-  // No route of its own — `memberfees/:contextMenuName` is a child of `relationship`'s route
-  // fragment above (`MemberFees`, `@okr/relationship-membership-feature`), because the screen
+  // No route of its own — `accounting/:accountingTenantId/member-fees/:contextMenuName` is a child of the
+  // accounting shell (spec 1.108; `MemberFees`, `@okr/relationship-membership-feature`), because the screen
   // reads memberships. This entry exists only so `feature-catalogue.sync.spec.ts` finds a
   // route-side id matching the `member-fee` metadata block (see `feature-blocks.ts`).
   id: 'member-fee',

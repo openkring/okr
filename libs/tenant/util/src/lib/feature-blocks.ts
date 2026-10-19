@@ -1551,7 +1551,7 @@ const finance: FeatureBlock = {
 
 /**
  * `libs/relationship/membership/{data-access,feature,ui,util}` — the generalized member-fee
- * screen (`MemberFees`, `/memberfees/:contextMenuName`), reworked from the
+ * screen (`MemberFees`, `/accounting/{books}/member-fees/:contextMenuName`), reworked from the
  * scs-only `scsf_memberfees`/`c-scsfees` original per
  * `planning/specs/2026-09-17-member-fees-generic-design.md`.
  *
