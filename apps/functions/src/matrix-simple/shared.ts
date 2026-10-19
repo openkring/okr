@@ -893,37 +893,16 @@ export async function getJoinedMemberIds(roomId: string, adminToken: string): Pr
 export async function getRoomSummary(
   roomId: string,
   adminToken: string,
-): Promise<{ name: string; canonicalAlias: string } | undefined> {
+): Promise<{ name: string; canonicalAlias: string; creator: string } | undefined> {
   try {
     const res = await fetch(`${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}`, {
       headers: { Authorization: `Bearer ${adminToken}` },
     });
     if (!res.ok) return undefined;
-    const body = (await res.json()) as { name?: string | null; canonical_alias?: string | null };
-    return { name: String(body.name ?? ''), canonicalAlias: String(body.canonical_alias ?? '') };
+    const body = (await res.json()) as { name?: string | null; canonical_alias?: string | null; creator?: string | null };
+    return { name: String(body.name ?? ''), canonicalAlias: String(body.canonical_alias ?? ''), creator: String(body.creator ?? '') };
   } catch {
     return undefined;
-  }
-}
-
-/**
- * Whether a canonical alias names a «Notizen an mich» room (`#notes_<tenant>_<personKey>:…`,
- * spec 1.104). Notes rooms are personal: the tenant-admin room tools never list, read or delete them.
- */
-export function isNotesRoomAlias(canonicalAlias: string | null | undefined): boolean {
-  return typeof canonicalAlias === 'string' && canonicalAlias.startsWith('#notes_');
-}
-
-/**
- * Throw unless `roomId` is not a notes room. Fails closed: when the room details cannot be read,
- * the admin tool refuses rather than risk exposing a person's notes.
- */
-export async function requireNotNotesRoom(roomId: string, fnName: string, adminToken: string): Promise<void> {
-  const summary = await getRoomSummary(roomId, adminToken);
-  if (!summary) throw new HttpsError('unavailable', 'Room details are not available right now.');
-  if (isNotesRoomAlias(summary.canonicalAlias)) {
-    console.warn(`${fnName}: refused on personal notes room ${roomId}`);
-    throw new HttpsError('permission-denied', 'This room cannot be managed here.');
   }
 }
 

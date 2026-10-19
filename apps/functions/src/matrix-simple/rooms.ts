@@ -26,9 +26,8 @@ import {
   getRoomTenantsBatch,
   getUserTenants,
   roomAdmitsTenant,
-  isNotesRoomAlias,
-  requireNotNotesRoom,
 } from './shared';
+import { fetchBotUserId, isPersonalNotesRoom, requireNotPersonalNotesRoom } from './notes-room';
 
 /**
  * Matrix power level a caller must hold to ring a kiosk device. 100 = room admin.
@@ -317,8 +316,21 @@ export const listMatrixRooms = onCall(
      * every tenant, and this listing is where an admin finds them to run the backfill.
      */
     const scopeToTenant = async (allRooms: AdminRoom[]): Promise<AdminRoom[]> => {
-      // Personal «Notizen an mich» rooms carry the tenant marker but are nobody's admin business.
-      const rooms = allRooms.filter(r => !isNotesRoomAlias(r.canonicalAlias));
+      // Genuine «Notizen an mich» rooms carry the tenant marker but are nobody's admin business.
+      // Only a #notes_ alias triggers the check; a check that fails keeps the room listed —
+      // listing exposes no content, and reading/deleting still fail closed per room.
+      const candidates = allRooms.filter(r => r.canonicalAlias?.startsWith('#notes_'));
+      const personal = new Set<string>();
+      if (candidates.length > 0) {
+        const botUserId = await fetchBotUserId(adminToken).catch(() => undefined);
+        if (botUserId) {
+          await Promise.all(candidates.map(async (r) => {
+            const isPersonal = await isPersonalNotesRoom(r.roomId, r.canonicalAlias, adminToken, botUserId).catch(() => false);
+            if (isPersonal) personal.add(r.roomId);
+          }));
+        }
+      }
+      const rooms = allRooms.filter(r => !personal.has(r.roomId));
       const markers = await getRoomTenantsBatch(rooms.map(r => r.roomId), adminToken);
       const kept = rooms.filter(r => roomAdmitsTenant(markers.get(r.roomId) ?? [], callerTenants));
       const unmarked = kept.filter(r => (markers.get(r.roomId) ?? []).length === 0).length;
@@ -706,7 +718,7 @@ export const getRoomMessages = onCall(
 
     const adminToken = matrixAdminToken.value();
     await requireRoomInTenant(roomId, uid, 'getRoomMessages', adminToken);
-    await requireNotNotesRoom(roomId, 'getRoomMessages', adminToken);
+    await requireNotPersonalNotesRoom(roomId, 'getRoomMessages', adminToken);
 
     // Synapse caps this server-side too; bound it here so one call cannot pull a whole room.
     const pageSize = Math.min(Math.max(limit ?? 50, 1), 200);
@@ -798,7 +810,7 @@ export const deleteMatrixRoom = onCall(
     // Synapse admin API is homeserver-global. Without this, an admin of one tenant could
     // destroy another tenant's chat history.
     await requireRoomInTenant(roomId, uid, 'deleteMatrixRoom', adminToken);
-    await requireNotNotesRoom(roomId, 'deleteMatrixRoom', adminToken);
+    await requireNotPersonalNotesRoom(roomId, 'deleteMatrixRoom', adminToken);
 
     console.log(`deleteMatrixRoom: deleting room ${roomId}`);
 

@@ -23,6 +23,8 @@ import {
   resolveRoomAlias,
   notesRoomAliasLocalpart,
   serverHostname,
+  getRoomSummary,
+  getJoinedMemberIds,
 } from './shared';
 
 /**
@@ -125,6 +127,72 @@ export async function isOwnNotesRoom(
   } catch (error) {
     if (opts.strict) throw error;
     return false;
+  }
+}
+
+/** What the tenant-admin room tools need to know about a room to decide whether it is a notes room. */
+export interface NotesRoomFacts {
+  canonicalAlias: string | null | undefined;
+  creator: string | null | undefined;
+  joinedMembers: Set<string>;
+  marker: string[] | undefined;
+}
+
+/**
+ * Whether a room is a genuine «Notizen an mich» room — the only kind the tenant-admin room tools
+ * (list, read, delete) skip. A `#notes_` alias alone proves nothing: any member can create a room,
+ * stamp the tenant marker (the app's own client does) and give it a `#notes_…` alias to escape
+ * moderation. So all of these must hold: @bk2-bot created it, exactly the bot and one person are
+ * joined, the marker names exactly one tenant, and the canonical alias is exactly that person's
+ * notes alias for that tenant on the bot's server.
+ */
+export function isGenuineNotesRoom(facts: NotesRoomFacts, botUserId: string): boolean {
+  const server = botUserId.split(':').slice(1).join(':');
+  if (!server || facts.creator !== botUserId) return false;
+  if (facts.marker?.length !== 1) return false;
+  if (facts.joinedMembers.size !== 2 || !facts.joinedMembers.has(botUserId)) return false;
+  const owner = [...facts.joinedMembers].find((m) => m !== botUserId) ?? '';
+  const [ownerLocal, ownerServer] = [owner.slice(1, owner.indexOf(':')), owner.slice(owner.indexOf(':') + 1)];
+  if (!owner.startsWith('@') || ownerServer !== server) return false;
+  return facts.canonicalAlias === `#${notesRoomAliasLocalpart(facts.marker[0], ownerLocal)}:${server}`;
+}
+
+/**
+ * Whether `roomId` (whose canonical alias the caller already knows) is a genuine notes room.
+ * Only a `#notes_` alias triggers the lookups; every other room is moderatable without them.
+ * A failed lookup throws — callers decide whether that fails open (listing) or closed (read/delete).
+ */
+export async function isPersonalNotesRoom(
+  roomId: string, canonicalAlias: string | null | undefined, adminToken: string, botUserId: string,
+): Promise<boolean> {
+  if (typeof canonicalAlias !== 'string' || !canonicalAlias.startsWith('#notes_')) return false;
+  const summary = await getRoomSummary(roomId, adminToken);
+  if (!summary) throw new Error(`isPersonalNotesRoom: no details for ${roomId}`);
+  const [joinedMembers, marker] = await Promise.all([
+    getJoinedMemberIds(roomId, adminToken),
+    getRoomTenantMarker(roomId, adminToken, { strict: true }),
+  ]);
+  return isGenuineNotesRoom({ canonicalAlias, creator: summary.creator, joinedMembers, marker }, botUserId);
+}
+
+/**
+ * Throw unless `roomId` may be managed by the tenant-admin room tools. Fails closed: when a room
+ * that looks like a notes room cannot be checked, the tool refuses rather than risk exposing it.
+ */
+export async function requireNotPersonalNotesRoom(roomId: string, fnName: string, adminToken: string): Promise<void> {
+  const summary = await getRoomSummary(roomId, adminToken);
+  if (!summary) throw new HttpsError('unavailable', 'Room details are not available right now.');
+  if (!summary.canonicalAlias.startsWith('#notes_')) return;
+  let personal: boolean;
+  try {
+    personal = await isPersonalNotesRoom(roomId, summary.canonicalAlias, adminToken, await fetchBotUserId(adminToken));
+  } catch (error) {
+    console.warn(`${fnName}: notes-room check failed for ${roomId}`, error);
+    throw new HttpsError('unavailable', 'Room details are not available right now.');
+  }
+  if (personal) {
+    console.warn(`${fnName}: refused on personal notes room ${roomId}`);
+    throw new HttpsError('permission-denied', 'This room cannot be managed here.');
   }
 }
 
