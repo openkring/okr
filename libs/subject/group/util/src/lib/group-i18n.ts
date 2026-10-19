@@ -130,6 +130,7 @@ export const GROUP_I18N_KEYS = {
   check_hygiene_alias:           PFX + 'checkHygiene.alias_collision',
   check_hygiene_unsafe:          PFX + 'checkHygiene.unsafe_characters',
   check_hygiene_prefix:          PFX + 'checkHygiene.missing_prefix',
+  check_hygiene_read_error:      PFX + 'checkHygiene.read_error',
 
   // «Chat-Mitglieder / Schreibrechte abgleichen», «Nicht-Mitglieder in Chats» (group context menu); single-brace params
   chat_sync_members_title:       PFX + 'chatSync.members_title',
@@ -145,6 +146,11 @@ export const GROUP_I18N_KEYS = {
   chat_sync_guests_prune:        PFX + 'chatSync.guests_prune',
   chat_sync_guests_confirm:      PFX + 'chatSync.guests_confirm',
   chat_sync_guests_done:         PFX + 'chatSync.guests_done',
+  chat_sync_running:             PFX + 'chatSync.running',
+  chat_sync_busy:                PFX + 'chatSync.busy',
+  chat_sync_result:              PFX + 'chatSync.result',
+  chat_sync_result_failed:       PFX + 'chatSync.result_failed',
+  chat_sync_audit_running:       PFX + 'chatSync.audit_running',
 } satisfies Record<string, string>;
 
 export type GroupI18n = { [K in keyof typeof GROUP_I18N_KEYS]: Signal<string> };

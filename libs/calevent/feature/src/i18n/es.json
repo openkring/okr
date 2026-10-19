@@ -660,6 +660,7 @@
     "slot": "{count} citas a la misma hora. Calendarios: {calendars}. Series: {series}.",
     "single": "Cita única",
     "count_mismatch": "La regla de repetición da {expected} citas, hay {actual} guardadas.",
-    "stale_index": "{count} citas llevan una fecha ajena en el índice de búsqueda. Puede que se hayan copiado inscripciones por error: {okeys}"
+    "stale_index": "{count} citas llevan una fecha ajena en el índice de búsqueda. Puede que se hayan copiado inscripciones por error: {okeys}",
+    "read_error": "No se pudieron leer los datos. Inténtalo de nuevo más tarde."
   }
 }

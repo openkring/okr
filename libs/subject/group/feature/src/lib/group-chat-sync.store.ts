@@ -1,11 +1,12 @@
 import { inject } from '@angular/core';
-import { AlertController, ModalController, ToastController } from '@ionic/angular';
+import { AlertController, LoadingController, ModalController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withMethods, withProps, withState } from '@ngrx/signals';
 import { getApp } from 'firebase/app';
 import { getFunctions } from 'firebase/functions';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
+import { GroupModel } from '@okr/shared-models';
 import { openReport } from '@okr/shared-ui';
 import { showToast } from '@okr/shared-util-angular';
 import { fill, hasRole } from '@okr/shared-util-core';
@@ -33,6 +34,7 @@ export const GroupChatSyncStore = signalStore(
     appStore: inject(AppStore),
     alertController: inject(AlertController),
     modalController: inject(ModalController),
+    loadingController: inject(LoadingController),
     toastController: inject(ToastController),
     i18nService: inject(I18nService),
   })),
@@ -56,6 +58,41 @@ export const GroupChatSyncStore = signalStore(
       return role === 'confirm';
     };
 
+    /**
+     * Runs `work` once per group behind a loading overlay with a done/total counter and returns how many
+     * groups failed. A group without a chat room (`functions/not-found`) is expected, not a failure.
+     */
+    const runPerGroup = async (groups: GroupModel[], work: (group: GroupModel) => Promise<void>): Promise<number> => {
+      const message = (done: number) => fill(store.i18n.chat_sync_running(), { done, total: groups.length });
+      const loading = await store.loadingController.create({ message: message(0) });
+      await loading.present();
+      let failed = 0;
+      try {
+        let done = 0;
+        for (const group of groups) {
+          try {
+            await work(group);
+          } catch (e) {
+            if ((e as { code?: string }).code !== 'functions/not-found') {
+              failed++;
+              console.warn(`group chat sync: group ${group.okey} failed: ${(e as Error).message}`);
+            }
+          }
+          loading.message = message(++done);
+        }
+      } finally {
+        await loading.dismiss();
+      }
+      return failed;
+    };
+
+    const resultToast = (title: string, count: number, failed: number) =>
+      showToast(store.toastController, fill(failed > 0 ? store.i18n.chat_sync_result_failed() : store.i18n.chat_sync_result(),
+        { title, count, failed }));
+
+    /** a second tap while a run is in flight gets told, not silently dropped */
+    const busyToast = () => showToast(store.toastController, store.i18n.chat_sync_busy());
+
     const fail = (e: unknown) => showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
 
     return {
@@ -68,7 +105,11 @@ export const GroupChatSyncStore = signalStore(
        * exit date as already-inactive and kicked those members from their rooms months early.
        */
       async repairMembers(): Promise<void> {
-        if (!isAdmin() || store.busy()) return;
+        if (!isAdmin()) return;
+        if (store.busy()) {
+          await busyToast();
+          return;
+        }
         const groups = store.appStore.allGroups();
         const confirmed = await confirm(
           store.i18n.chat_sync_members_title(),
@@ -81,15 +122,10 @@ export const GroupChatSyncStore = signalStore(
         try {
           const functions = getFn();
           let joined = 0;
-          for (const group of groups) {
-            try {
-              joined += (await reconcileGroupRoomMembers(functions, group.okey)).joined.length;
-            } catch (e) {
-              // A group without a chat room throws; that is expected, not a failure of the run.
-              console.warn(`reconcileGroupRoomMembers: skipped group ${group.okey}: ${(e as Error).message}`);
-            }
-          }
-          await showToast(store.toastController, `${store.i18n.chat_sync_members_title()}: ${joined}`);
+          const failed = await runPerGroup(groups, async (group) => {
+            joined += (await reconcileGroupRoomMembers(functions, group.okey)).joined.length;
+          });
+          await resultToast(store.i18n.chat_sync_members_title(), joined, failed);
         } catch (e) {
           await fail(e);
         } finally {
@@ -104,7 +140,11 @@ export const GroupChatSyncStore = signalStore(
        * do: `all` groups are not touched by the function without allowReset.
        */
       async syncPostPolicy(): Promise<void> {
-        if (!isAdmin() || store.busy()) return;
+        if (!isAdmin()) return;
+        if (store.busy()) {
+          await busyToast();
+          return;
+        }
         const groups = store.appStore.allGroups().filter(g => g.postPolicy === 'privileged');
         const confirmed = await confirm(
           store.i18n.chat_sync_postpolicy_title(),
@@ -117,14 +157,10 @@ export const GroupChatSyncStore = signalStore(
         try {
           const functions = getFn();
           let changed = 0;
-          for (const group of groups) {
-            try {
-              if ((await syncRoomPostPolicy(functions, group.okey)).result === 'applied') changed++;
-            } catch (e) {
-              console.warn(`syncRoomPostPolicy: skipped group ${group.okey}: ${(e as Error).message}`);
-            }
-          }
-          await showToast(store.toastController, `${store.i18n.chat_sync_postpolicy_title()}: ${changed}`);
+          const failed = await runPerGroup(groups, async (group) => {
+            if ((await syncRoomPostPolicy(functions, group.okey)).result === 'applied') changed++;
+          });
+          await resultToast(store.i18n.chat_sync_postpolicy_title(), changed, failed);
         } catch (e) {
           await fail(e);
         } finally {
@@ -139,14 +175,28 @@ export const GroupChatSyncStore = signalStore(
        * audited again and the report re-opens; closing it (or following a finding) ends the loop.
        */
       async reviewGuests(): Promise<void> {
-        if (!isAdmin() || store.busy()) return;
+        if (!isAdmin()) return;
+        if (store.busy()) {
+          await busyToast();
+          return;
+        }
         const tenantId = store.appStore.tenantId();
         patchState(store, { busy: true });
         try {
           const functions = getFn();
+          // the audit walks every group room, so it gets the same overlay as the repairs
+          const audit = async (): Promise<GroupRoomDrift[]> => {
+            const loading = await store.loadingController.create({ message: store.i18n.chat_sync_audit_running() });
+            await loading.present();
+            try {
+              return await auditGroupRooms(functions, tenantId);
+            } finally {
+              await loading.dismiss();
+            }
+          };
           let drift: GroupRoomDrift[];
           try {
-            drift = await auditGroupRooms(functions, tenantId);
+            drift = await audit();
           } catch (e) {
             await fail(e);
             return;
@@ -185,7 +235,7 @@ export const GroupChatSyncStore = signalStore(
               continue;
             }
             try {
-              drift = await auditGroupRooms(functions, tenantId);
+              drift = await audit();
             } catch (e) {
               await fail(e);
               return;

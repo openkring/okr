@@ -426,6 +426,7 @@ export const CALEVENT_I18N_KEYS = {
   check_duplicates_single:       PFX + 'checkDuplicates.single',
   check_duplicates_count:        PFX + 'checkDuplicates.count_mismatch',
   check_duplicates_stale:        PFX + 'checkDuplicates.stale_index',
+  check_duplicates_read_error:   PFX + 'checkDuplicates.read_error',
 } satisfies Record<string, string>;
 
 export type CaleventI18n = { [K in keyof typeof CALEVENT_I18N_KEYS]: Signal<string> };

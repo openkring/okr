@@ -9,7 +9,7 @@ import { Photo } from '@capacitor/camera';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { ArticleSection, AvatarInfo, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, MembershipModel, PageCollection, PageModel, PersonModel, SectionCollection, ViewPosition } from '@okr/shared-models';
-import { AlertService, AppNavigationService, navigateByUrl } from '@okr/shared-util-angular';
+import { AlertService, AppNavigationService, navigateByUrl, showToast } from '@okr/shared-util-angular';
 import { chipMatches, hasRole, debugData, debugItemLoaded, debugListLoaded, fill, generateRandomString, getAvatarInfo, getAvatarInfoForCurrentUser, getSystemQuery, isGroup, isPerson, nameMatches } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { openReport } from '@okr/shared-ui';
@@ -364,8 +364,15 @@ export const GroupStore = signalStore(
     async checkHygiene(): Promise<void> {
       if (!hasRole('admin', store.appStore.currentUser())) return;
       const tenantId = store.appStore.tenantId();
-      const groups = await store.firestoreService.getDataOnce<GroupModel>(
-        GroupCollection, getSystemQuery(tenantId), 'name', 'asc');
+      // strict read: getDataOnce turns a failed read into [], which reads as «nothing found»
+      let groups: GroupModel[];
+      try {
+        groups = await store.firestoreService.getDataOnceStrict<GroupModel>(
+          GroupCollection, getSystemQuery(tenantId), 'name', 'asc');
+      } catch {
+        await showToast(store.toastController, store.i18n.check_hygiene_read_error());
+        return;
+      }
       const findings = groupHygieneFindings(groups, tenantId, {
         duplicate: store.i18n.check_hygiene_duplicate(),
         aliasCollision: store.i18n.check_hygiene_alias(),

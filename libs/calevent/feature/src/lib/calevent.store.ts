@@ -1445,8 +1445,15 @@ export const CalEventStore = signalStore(
        */
       async checkDuplicates(): Promise<void> {
         if (!hasRole('admin', store.appStore.currentUser())) return;
-        const events = await store.appStore.firestoreService.getDataOnce<CalEventModel>(
-          CalEventCollection, getSystemQuery(store.appStore.tenantId()), 'startDate', 'asc');
+        // strict read: getDataOnce turns a failed read into [], which reads as «nothing found»
+        let events: CalEventModel[];
+        try {
+          events = await store.appStore.firestoreService.getDataOnceStrict<CalEventModel>(
+            CalEventCollection, getSystemQuery(store.appStore.tenantId()), 'startDate', 'asc');
+        } catch {
+          await showToast(store.toastController, store.i18n.check_duplicates_read_error());
+          return;
+        }
         const findings = duplicateEventFindings(events, {
           slot: store.i18n.check_duplicates_slot(),
           single: store.i18n.check_duplicates_single(),

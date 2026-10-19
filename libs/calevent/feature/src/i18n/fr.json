@@ -660,6 +660,7 @@
     "slot": "{count} rendez-vous à la même heure. Calendriers : {calendars}. Séries : {series}.",
     "single": "Rendez-vous unique",
     "count_mismatch": "La règle de répétition donne {expected} rendez-vous, {actual} sont enregistrés.",
-    "stale_index": "{count} rendez-vous portent une date étrangère dans l'index de recherche. Des inscriptions ont peut-être été copiées par erreur : {okeys}"
+    "stale_index": "{count} rendez-vous portent une date étrangère dans l'index de recherche. Des inscriptions ont peut-être été copiées par erreur : {okeys}",
+    "read_error": "Les données n'ont pas pu être lues. Réessaie plus tard."
   }
 }

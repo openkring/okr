@@ -217,7 +217,8 @@
     "duplicate": "{count} groups with practically the same name: {groups}",
     "alias_collision": "The chat alias {alias} is also claimed by {others}.",
     "unsafe_characters": "The id contains characters that the derived folder, page and chat names cannot carry unchanged. Today it would be called {tenantId}_...",
-    "missing_prefix": "The id has no {tenantId}_ prefix. In a second tenant the same name could overwrite this document."
+    "missing_prefix": "The id has no {tenantId}_ prefix. In a second tenant the same name could overwrite this document.",
+    "read_error": "The data could not be read. Please try again later."
   },
   "chatSync": {
     "members_title": "Reconcile group-chat members",
@@ -232,6 +233,11 @@
     "guests_missing": "{count} members missing from the room",
     "guests_prune": "Remove",
     "guests_confirm": "Remove {count} people without a membership from “{group}” now?",
-    "guests_done": "{count} people removed."
+    "guests_done": "{count} people removed.",
+    "running": "Running … this can take a few minutes. {done}/{total}",
+    "busy": "A sync is already running.",
+    "result": "{title}: {count} synced",
+    "result_failed": "{title}: {count} synced, {failed} failed",
+    "audit_running": "Running … this can take a few minutes."
   }
 }

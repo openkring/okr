@@ -660,6 +660,7 @@
     "slot": "{count} events at the same time. Calendars: {calendars}. Series: {series}.",
     "single": "Single event",
     "count_mismatch": "The recurrence rule gives {expected} events, {actual} are stored.",
-    "stale_index": "{count} events carry a foreign date in the search index. Sign-ups may have been copied by mistake: {okeys}"
+    "stale_index": "{count} events carry a foreign date in the search index. Sign-ups may have been copied by mistake: {okeys}",
+    "read_error": "The data could not be read. Please try again later."
   }
 }

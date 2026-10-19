@@ -217,7 +217,8 @@
     "duplicate": "{count} grupos con prácticamente el mismo nombre: {groups}",
     "alias_collision": "El alias de chat {alias} también lo reclama {others}.",
     "unsafe_characters": "El identificador contiene caracteres que los nombres de carpeta, página y chat derivados no pueden llevar sin cambios. Hoy se llamaría {tenantId}_...",
-    "missing_prefix": "El identificador no lleva el prefijo {tenantId}_. En un segundo mandante, el mismo nombre podría sobrescribir este documento."
+    "missing_prefix": "El identificador no lleva el prefijo {tenantId}_. En un segundo mandante, el mismo nombre podría sobrescribir este documento.",
+    "read_error": "No se pudieron leer los datos. Inténtalo de nuevo más tarde."
   },
   "chatSync": {
     "members_title": "Conciliar los miembros del chat de grupo",
@@ -232,6 +233,11 @@
     "guests_missing": "{count} miembros que faltan en la sala",
     "guests_prune": "Eliminar",
     "guests_confirm": "¿Eliminar ahora {count} personas sin membresía de «{group}»?",
-    "guests_done": "{count} personas eliminadas."
+    "guests_done": "{count} personas eliminadas.",
+    "running": "En curso … esto puede tardar unos minutos. {done}/{total}",
+    "busy": "Ya hay una sincronización en curso.",
+    "result": "{title}: {count} sincronizados",
+    "result_failed": "{title}: {count} sincronizados, {failed} fallidos",
+    "audit_running": "En curso … esto puede tardar unos minutos."
   }
 }

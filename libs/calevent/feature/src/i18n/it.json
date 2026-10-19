@@ -660,6 +660,7 @@
     "slot": "{count} appuntamenti alla stessa ora. Calendari: {calendars}. Serie: {series}.",
     "single": "Appuntamento singolo",
     "count_mismatch": "La regola di ripetizione dà {expected} appuntamenti, ne risultano {actual} memorizzati.",
-    "stale_index": "{count} appuntamenti riportano una data estranea nell'indice di ricerca. Forse alcune iscrizioni sono state copiate per errore: {okeys}"
+    "stale_index": "{count} appuntamenti riportano una data estranea nell'indice di ricerca. Forse alcune iscrizioni sono state copiate per errore: {okeys}",
+    "read_error": "Non è stato possibile leggere i dati. Riprova più tardi."
   }
 }
