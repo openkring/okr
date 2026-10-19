@@ -312,6 +312,8 @@ export const MATRIX_CHAT_I18N_KEYS = {
 
   readOnly_hint:             PFX + 'readOnly.hint',
   readOnly_ask:              PFX + 'readOnly.ask',
+
+  exempt_banner:             PFX + 'exempt.banner',
 } satisfies Record<string, string>;
 
 export type MatrixChatI18n = { [K in keyof typeof MATRIX_CHAT_I18N_KEYS]: Signal<string> };

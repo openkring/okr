@@ -14,6 +14,7 @@ import { AlertService, AppNavigationService, VersionCheckService } from '@okr/sh
 import { AuthService } from '@okr/auth-data-access';
 import { ActivityService } from '@okr/activity-data-access';
 import { MatrixChatService } from '@okr/chat-data-access';
+import { ChatStatusService } from '@okr/shared-data-access';
 import { MenuService } from '@okr/cms-menu-data-access';
 import { FeatureStore } from '@okr/tenant-feature';
 
@@ -22,9 +23,13 @@ import { MenuStore } from './menu.store';
 const tenantId = 'p13';
 const i18nProxy = new Proxy({}, { get: () => () => 'x' });
 
-function appStoreMock() {
+function chatStatusMock(blocked = false) {
+  return { isEffectivelyBlocked: vi.fn(() => blocked) };
+}
+
+function appStoreMock(currentUser: unknown = undefined) {
   return {
-    currentUser: signal(undefined),
+    currentUser: signal(currentUser),
     tenantId: signal(tenantId),
     appConfig: signal({ defaultAccountingTenantId: undefined }),
     loginEmail: signal(undefined),
@@ -66,12 +71,14 @@ function makeStore(
   menuService = menuServiceMock(),
   featureStore = featureStoreMock(),
   alertService: { confirm: () => Promise<boolean> } = { confirm: () => Promise.resolve(true) },
+  chat: { blocked?: boolean; currentUser?: unknown; matrix?: unknown } = {},
 ): MenuStore {
   TestBed.resetTestingModule();
   TestBed.configureTestingModule({
     providers: [
       MenuStore,
-      { provide: AppStore, useValue: appStoreMock() },
+      { provide: AppStore, useValue: appStoreMock(chat.currentUser) },
+      { provide: ChatStatusService, useValue: chatStatusMock(chat.blocked) },
       // the real one reads accounting-configs; the menu only needs the current books
       { provide: SelectedBooks, useValue: { current: signal(''), available: signal([]) } },
       { provide: MenuService, useValue: menuService },
@@ -84,7 +91,7 @@ function makeStore(
       { provide: AppNavigationService, useValue: {} },
       { provide: AuthService, useValue: {} },
       { provide: ActivityService, useValue: {} },
-      { provide: MatrixChatService, useValue: { rooms: of([]) } },
+      { provide: MatrixChatService, useValue: chat.matrix ?? { rooms: of([]) } },
       { provide: VersionCheckService, useValue: { getCurrentVersion: () => '1.0.0' } },
       { provide: I18nService, useValue: { translateAll: () => i18nProxy, translate: () => of('') } },
       // The store injects AlertService for the fork-ownership guard (`confirmFork`). The real
@@ -98,6 +105,26 @@ function makeStore(
 
 describe('MenuStore', () => {
   let store: MenuStore;
+
+  describe('chat unread badge (1.107)', () => {
+    const user = { personKey: 'p1' };
+    const rooms = of([{ unreadCount: 2 }, { unreadCount: 3 }]);
+
+    it('counts unread rooms for the dashboard item when chat is not blocked', async () => {
+      const s = makeStore(undefined, undefined, undefined, { currentUser: user, matrix: { rooms } });
+      s.setMenuName('dashboard');
+      await TestBed.inject(ApplicationRef).whenStable();
+      expect(s.chatUnreadResource.value()).toBe(5);
+    });
+
+    it('yields 0 while blocked, without touching the chat service', async () => {
+      const matrix = { get rooms() { throw new Error('chat service must not be touched while blocked'); } };
+      const s = makeStore(undefined, undefined, undefined, { blocked: true, currentUser: user, matrix });
+      s.setMenuName('dashboard');
+      await TestBed.inject(ApplicationRef).whenStable();
+      expect(s.chatUnreadResource.value()).toBe(0);
+    });
+  });
 
   beforeEach(() => {
     store = makeStore();

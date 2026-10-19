@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonBadge, IonCard, IonCardContent, IonItem, IonLabel, IonList } from '@ionic/angular';
 
-import { EmptyList, MoreButton, OptionalCardHeader, Spinner } from '@okr/shared-ui';
+import { ChatBlockedCard, EmptyList, MoreButton, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 import { debugMessage } from '@okr/shared-util-core';
 import { navigateByUrl } from '@okr/shared-util-angular';
 import { MatrixRoom, MessagesConfig, MessagesSection } from '@okr/shared-models';
@@ -22,7 +22,7 @@ import { reservedListHeight } from './list-reservation';
   `],
   providers: [MessagesStore],
   imports: [
-    OptionalCardHeader, Spinner, EmptyList, MoreButton,
+    OptionalCardHeader, Spinner, EmptyList, MoreButton, ChatBlockedCard,
     IonCard, IonCardContent, IonList, IonItem, IonLabel, IonBadge,
   ],
   template: `
@@ -30,7 +30,9 @@ import { reservedListHeight } from './list-reservation';
       <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
       <ion-card-content>
         <div class="list-area" [style.min-height.px]="reservedHeight()">
-        @if(isLoading()) {
+        @if(store.isBlocked()) {
+          <okr-chat-blocked-card [title]="store.i18n.chat_blocked_title()" [message]="store.blockedMessage()" [since]="store.blockedSince()" />
+        } @else if(isLoading()) {
           <div class="loading">
             <okr-spinner />
             <p>{{ store.i18n.chat_loading() }}</p>

@@ -293,6 +293,11 @@
     "showChannelList": {
       "label": "Kanal-Liste anzeigen",
       "helper": "Zeigt die Liste der verfügbaren Chat-Kanäle an."
+    },
+    "blocked": {
+      "title": "Chat vorübergehend nicht verfügbar",
+      "default": "Der Chat wird gerade gewartet. Er ist bald wieder da.",
+      "since": "gesperrt seit {time}"
     }
   },
   "context": {

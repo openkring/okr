@@ -432,5 +432,8 @@
     "message": "Vuoi ricevere notifiche per i nuovi messaggi in chat, le attività e gli eventi? Puoi cambiarlo in qualsiasi momento nel tuo profilo.",
     "allow": "Consenti",
     "later": "Più tardi"
+  },
+  "exempt": {
+    "banner": "La chat è bloccata per tutti gli altri. La stai provando in questo momento."
   }
 }

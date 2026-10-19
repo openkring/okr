@@ -293,6 +293,11 @@
     "showChannelList": {
       "label": "Show channel list",
       "helper": "Shows the list of available chat channels."
+    },
+    "blocked": {
+      "title": "Chat temporarily unavailable",
+      "default": "The chat is currently under maintenance. It will be back soon.",
+      "since": "blocked since {time}"
     }
   },
   "context": {

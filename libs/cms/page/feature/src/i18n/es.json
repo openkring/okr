@@ -234,5 +234,12 @@
     "download": "Descargar el vídeo",
     "copyLink": "Copiar enlace",
     "linkCopied": "Enlace copiado."
+  },
+  "chat": {
+    "blocked": {
+      "title": "Chat no disponible temporalmente",
+      "default": "El chat está en mantenimiento. Volverá pronto.",
+      "since": "bloqueado desde {time}"
+    }
   }
 }

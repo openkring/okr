@@ -13,6 +13,7 @@ import { CategoryListModel, MenuItemModel } from '@okr/shared-models';
 import { die, fill, nameMatches, safeStructuredClone, warn } from '@okr/shared-util-core';
 import { AlertService, AppNavigationService, dismissOverlay, isInSplitPane, lazyService, navigateByUrl, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
+import { ChatStatusService } from '@okr/shared-data-access';
 
 import { expandMenuTokens, getRepoUrl, lacksBooks, MENU_I18N_KEYS, MenuTokenContext, resolveMenuLabelKey, resolveMenuUrl } from '@okr/cms-menu-util';
 
@@ -47,6 +48,7 @@ export const _MenuStore = signalStore(
   withErrorState(),
   withProps(() => ({
     appStore: inject(AppStore),
+    chatStatus: inject(ChatStatusService),
     selectedBooks: inject(SelectedBooks),
     menuService: inject(MenuService),
     // Die Menüliste selbst ist mandantenweit identisch und liegt daher in EINEM root-Store,
@@ -116,12 +118,15 @@ export const _MenuStore = signalStore(
       params: resourceParams(() => ({
         name: store.name(),
         personKey: store.appStore.currentUser()?.personKey,
+        // 1.107: while chat is blocked for this person the badge is 0 and the (lazy) chat
+        // service is never touched — no chunk load, no Matrix connection.
+        blocked: store.chatStatus.isEffectivelyBlocked(store.appStore.currentUser()?.personKey),
       })),
       stream: ({ params }): Observable<number> => {
-        const { name, personKey } = params;
+        const { name, personKey, blocked } = params;
         // Only activate a real subscription for the dashboard menu item.
         // All other menu instances return 0 immediately — no Matrix connection.
-        if (name !== 'dashboard' || !personKey) return of(0);
+        if (name !== 'dashboard' || !personKey || blocked) return of(0);
 
         return from(store.matrixChatService()).pipe(
           switchMap(svc => svc.rooms),

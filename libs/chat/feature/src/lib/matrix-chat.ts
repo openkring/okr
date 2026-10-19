@@ -1,7 +1,7 @@
 import { Component, DestroyRef, ElementRef, PLATFORM_ID, computed, effect, inject, input, OnDestroy, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
-import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonSearchbar, IonText, IonList, IonListHeader, IonItem, IonLabel, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular';
+import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonSearchbar, IonText, IonList, IonListHeader, IonItem, IonLabel, IonNote, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular';
 import { captureMessage } from '@sentry/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -11,6 +11,7 @@ import { AlertService, createActionSheetButton, createActionSheetDivider, create
 import { MatrixMessage, PersonModelName, RoleName } from '@okr/shared-models';
 
 import { MenuService } from '@okr/cms-menu-data-access';
+import { ChatStatusService } from '@okr/shared-data-access';
 import { VideoUrlService } from '@okr/content-document-data-access';
 import { videoDocKeyOf, videoLink } from '@okr/content-document-util';
 
@@ -33,7 +34,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
   imports: [
     SvgIconPipe, RouterLink,
     Spinner, MatrixRoomList, MatrixMessageList, MatrixMessageInput,
-    IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonSearchbar, IonText, IonList, IonListHeader, IonItem, IonLabel
+    IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonSearchbar, IonText, IonList, IonListHeader, IonItem, IonLabel, IonNote
   ],
   styles: [`
     :host {
@@ -157,6 +158,16 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
       gap: 16px;
       padding: 32px;
       text-align: center;
+    }
+
+    .exempt-banner {
+      display: block;
+      padding: 6px 8px;
+      text-align: center;
+      font-size: 0.875rem;
+      font-weight: normal;
+      background: var(--ion-color-warning-tint);
+      color: var(--ion-color-warning-contrast);
     }
 
     .sync-status {
@@ -338,6 +349,11 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
               }
             }
           </div>
+        }
+
+        <!-- 1.107: chat is blocked for everyone else, this person is an exempt tester -->
+        @if (showExemptBanner()) {
+          <ion-note class="exempt-banner">{{ store.i18n.exempt_banner() }}</ion-note>
         }
 
         <ion-card-content class="ion-no-padding">
@@ -689,6 +705,7 @@ export class MatrixChat implements OnDestroy {
   private readonly modalController = inject(ModalController);
   private readonly router = inject(Router);
   private readonly menuService = inject(MenuService);
+  private readonly chatStatus = inject(ChatStatusService);
 
   // Read-only rooms (announcement channels) show a way to still reach someone instead of the
   // composer. Resolves the 'chat-support' menu item; stays undefined if the tenant has none —
@@ -712,6 +729,10 @@ export class MatrixChat implements OnDestroy {
   /** Deep link to one message of `selectedRoom`. The router sets unbound inputs to undefined = no jump. */
   public eventId = input<string | undefined>();
   public contextMenuName = input<string>('contextMenuChat');
+
+  /** 1.107: chat is blocked, but this person is on the exempt list (a tester). */
+  protected readonly showExemptBanner = computed(() =>
+    this.chatStatus.blocked() && this.chatStatus.isExempt(this.store.appStore.currentUser()?.personKey));
 
   // Whether the current user may manage rooms (add/edit) — read by the parent ChatPage,
   // which hosts the hoisted context menu on the main toolbar and delegates to onPopoverDismiss().

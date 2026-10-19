@@ -432,5 +432,8 @@
     "message": "Veux-tu recevoir une notification pour les nouveaux messages du chat, les tâches et les événements ? Tu peux changer cela à tout moment dans ton profil.",
     "allow": "Autoriser",
     "later": "Plus tard"
+  },
+  "exempt": {
+    "banner": "Le chat est bloqué pour tous les autres. Tu es en train de le tester."
   }
 }

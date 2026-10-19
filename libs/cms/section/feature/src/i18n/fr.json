@@ -293,6 +293,11 @@
     "showChannelList": {
       "label": "Afficher la liste des canaux",
       "helper": "Affiche la liste des canaux de chat disponibles."
+    },
+    "blocked": {
+      "title": "Chat temporairement indisponible",
+      "default": "Le chat est en cours de maintenance. Il sera bientôt de retour.",
+      "since": "bloqué depuis {time}"
     }
   },
   "context": {

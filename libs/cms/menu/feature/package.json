@@ -10,6 +10,7 @@
     "@okr/shared-models": "*",
     "@okr/shared-config": "*",
     "@okr/shared-categories": "*",
+    "@okr/shared-data-access": "*",
     "@okr/shared-feature": "*",
     "@okr/shared-i18n": "*",
     "@okr/shared-pipes": "*",

@@ -432,5 +432,8 @@
     "message": "Would you like to be notified about new chat messages, tasks and events? You can change this any time in your profile.",
     "allow": "Allow",
     "later": "Later"
+  },
+  "exempt": {
+    "banner": "The chat is blocked for everyone else. You are testing it right now."
   }
 }

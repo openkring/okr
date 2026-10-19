@@ -5,8 +5,11 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { I18nService } from '@okr/shared-i18n';
 import { PAGE_I18N_KEYS, PageI18n } from '@okr/cms-page-util';
 import { Menu } from '@okr/cms-menu-feature';
-import { Spinner } from '@okr/shared-ui';
+import { ChatBlockedCard, Spinner } from '@okr/shared-ui';
 import { isBrowser } from '@okr/shared-util-angular';
+import { ChatStatusService } from '@okr/shared-data-access';
+import { AppStore } from '@okr/shared-feature';
+import { chatBlockedMessage, convertDateFormatToString, DateFormat, fill } from '@okr/shared-util-core';
 import type { MatrixChat } from '@okr/chat-feature';
 
 
@@ -14,7 +17,7 @@ import type { MatrixChat } from '@okr/chat-feature';
   selector: 'okr-chat-page',
   standalone: true,
   imports: [
-    Menu, SvgIconPipe, Spinner,
+    Menu, SvgIconPipe, Spinner, ChatBlockedCard,
     IonContent, IonHeader, IonToolbar, IonButtons, IonTitle, IonMenuButton, IonButton, IonIcon, IonPopover
   ],
   styles: [`
@@ -60,10 +63,16 @@ import type { MatrixChat } from '@okr/chat-feature';
       </ion-header>
     }
     <ion-content>
+      <!-- 1.107: blocked ⇒ the card replaces the chat; MatrixChat is destroyed and not re-created
+           (its chunk is never even loaded) until the block is lifted -->
+      @if (effectivelyBlocked()) {
+        <okr-chat-blocked-card [title]="i18n.chat_blocked_title()" [message]="blockedMessage()" [since]="blockedSince()" />
+      } @else {
         @if (!chatRef()) {
           <okr-spinner />
         }
         <div #chatHost class="chat-host"></div>
+      }
     </ion-content>
   `
 })
@@ -71,6 +80,19 @@ export class ChatPage {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly i18n = inject(I18nService).translateAll(PAGE_I18N_KEYS) as PageI18n;
+  private readonly appStore = inject(AppStore);
+  private readonly chatStatus = inject(ChatStatusService);
+
+  // 1.107 global chat block (exempt testers see the normal chat)
+  protected readonly effectivelyBlocked = computed(() =>
+    this.chatStatus.isEffectivelyBlocked(this.appStore.currentUser()?.personKey));
+  protected readonly blockedMessage = computed(() =>
+    chatBlockedMessage(this.chatStatus.message(), this.i18n.chat_blocked_default()));
+  protected readonly blockedSince = computed(() => {
+    const at = this.chatStatus.status()?.blockedAt;
+    if (!at) return '';
+    return fill(this.i18n.chat_blocked_since(), { time: convertDateFormatToString(at, DateFormat.StoreDateTime, DateFormat.ViewDateTime, false) });
+  });
 
   // inputs
   public color = input('secondary');
@@ -85,6 +107,8 @@ export class ChatPage {
   protected readonly chatRef = signal<ComponentRef<MatrixChat> | undefined>(undefined);
   /** Guards against a second mount while the chunk is still in flight. */
   private creatingChat = false;
+  private readonly creatingTick = signal(0);
+  private destroyed = false;
 
   // hoist facade — read/driven by the parent PageDispatcher when this page is embedded in the group view
   public readonly canManageRooms = computed(() => this.chatRef()?.instance.canManageRooms() ?? false);
@@ -100,21 +124,43 @@ export class ChatPage {
     // after the first await lands outside the tracking context.
     effect(() => {
       const host = this.chatHost();
+      const blocked = this.effectivelyBlocked();
+      this.creatingTick();
+      // 1.107: blocked, or the host vanished with the @else block ⇒ drop the ref. Blocking
+      // removes #chatHost, which destroys the component inside it; keeping the dead ref would
+      // stop the effect from ever mounting a new one when the block is lifted (the host returns
+      // as a fresh element) — the "lazy host in conditional block" trap.
+      if (!host || blocked) {
+        const ref = untracked(() => this.chatRef());
+        if (ref) {
+          if (!ref.hostView.destroyed) ref.destroy();
+          this.chatRef.set(undefined);
+        }
+        return;
+      }
       // `creating` closes the window the ref guard alone leaves open: between starting the import
       // and setting the ref, a second run would pass the guard and mount a second component.
-      if (!host || untracked(() => this.chatRef()) || this.creatingChat || !isBrowser(this.platformId)) return;
+      if (untracked(() => this.chatRef()) || this.creatingChat || !isBrowser(this.platformId)) return;
       this.creatingChat = true;
       void (async () => {
         try {
           const { MatrixChat } = await import('@okr/chat-feature');
+          // the block may have started (or the page closed) while the chunk was in flight
+          if (this.destroyed || untracked(() => this.effectivelyBlocked()) || untracked(() => this.chatHost()) !== host) return;
           const ref = host.createComponent(MatrixChat);
           ref.setInput('isGroupView', untracked(() => this.isGroupView()));
           ref.setInput('selectedRoom', untracked(() => this.selectedRoom()));
           ref.setInput('eventId', untracked(() => this.eventId()));
           ref.setInput('contextMenuName', untracked(() => this.contextMenuName()));
+          // first CD pass now: a component destroyed before its first tick (block flips right
+          // after mount) otherwise throws in its ngOnDestroy
+          ref.changeDetectorRef.detectChanges();
           this.chatRef.set(ref);
         } finally {
           this.creatingChat = false;
+          // a host that came back while the chunk was in flight found `creatingChat` set and
+          // returned; nudge the effect so it mounts into the current host
+          this.creatingTick.update(n => n + 1);
         }
       })();
     });
@@ -130,7 +176,11 @@ export class ChatPage {
       ref.setInput('eventId', eventId);
       ref.setInput('contextMenuName', contextMenuName);
     });
-    this.destroyRef.onDestroy(() => this.chatRef()?.destroy());
+    this.destroyRef.onDestroy(() => {
+      this.destroyed = true;
+      const ref = this.chatRef();
+      if (ref && !ref.hostView.destroyed) ref.destroy();
+    });
   }
 
   public async openInfo(): Promise<void> {

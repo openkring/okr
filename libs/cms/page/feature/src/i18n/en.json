@@ -234,5 +234,12 @@
     "download": "Download video",
     "copyLink": "Copy link",
     "linkCopied": "Link copied."
+  },
+  "chat": {
+    "blocked": {
+      "title": "Chat temporarily unavailable",
+      "default": "The chat is currently under maintenance. It will be back soon.",
+      "since": "blocked since {time}"
+    }
   }
 }

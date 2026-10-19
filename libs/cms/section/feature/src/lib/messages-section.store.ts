@@ -5,6 +5,8 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { catchError, combineLatest, from, map, of, startWith, switchMap } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
+import { ChatStatusService } from '@okr/shared-data-access';
+import { chatBlockedMessage, convertDateFormatToString, DateFormat, fill } from '@okr/shared-util-core';
 import { MatrixRoom, PersonModel } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
@@ -30,6 +32,7 @@ export const MessagesStore = signalStore(
   withState(initialState),
   withProps(() => ({
     appStore: inject(AppStore),
+    chatStatus: inject(ChatStatusService),
     // Lazy: a static import here would drag matrix-js-sdk before the LCP (spec 1.49, F1).
     matrixService: lazyService(inject(Injector), () =>
       import('@okr/chat-data-access').then(m => m.MatrixChatService)),
@@ -37,7 +40,11 @@ export const MessagesStore = signalStore(
   })),
   withProps((store) => ({
     roomsWithUnreadResource: rxResource({
-      stream: () => {
+      // 1.107: re-runs when the block flips. Blocked ⇒ no chunk load, no ensureInitialized call;
+      // lifted ⇒ the stream starts again and reconnects.
+      params: () => ({ blocked: store.chatStatus.isEffectivelyBlocked(store.appStore.currentUser()?.personKey) }),
+      stream: ({ params }) => {
+        if (params.blocked) return of<MessagesSnapshot>({ status: 'ready', rooms: [] });
         // chat-util is loaded with the service, not statically: its barrel reaches into
         // matrix-js-sdk, which must stay out of the dashboard's eager bundle (spec 1.49, F1).
         return from(Promise.all([store.matrixService(), import('@okr/chat-util')])).pipe(
@@ -101,6 +108,14 @@ export const MessagesStore = signalStore(
       isLoading: computed(() => (state.roomsWithUnreadResource.value()?.status ?? 'loading') === 'loading'),
       hasError: computed(() => state.roomsWithUnreadResource.value()?.status === 'error'),
       currentUser: computed(() => state.appStore.currentUser()),
+      // 1.107 global chat block (exempt testers see the normal list)
+      isBlocked: computed(() => state.chatStatus.isEffectivelyBlocked(state.appStore.currentUser()?.personKey)),
+      blockedMessage: computed(() => chatBlockedMessage(state.chatStatus.message(), state.i18n.chat_blocked_default())),
+      blockedSince: computed(() => {
+        const at = state.chatStatus.status()?.blockedAt;
+        if (!at) return '';
+        return fill(state.i18n.chat_blocked_since(), { time: convertDateFormatToString(at, DateFormat.StoreDateTime, DateFormat.ViewDateTime, false) });
+      }),
     }
   }),
 
