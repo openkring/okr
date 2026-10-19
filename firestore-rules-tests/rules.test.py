@@ -236,6 +236,9 @@ seed("tickets/tk1", {"tenants": ["t1"], "isArchived": False, "partnerKey": "p1",
 seed("app-config/t1", {"tenantId": "t1", "gitOrg": "openkring",
                        "enabledFeatures": ["calevent", "task"]})
 
+# app-status/chat (spec 1.107): global chat switch, signed-in read, any admin writes
+seed("app-status/chat", {"blocked": False, "message": ""})
+
 # alias (spec 2026-08-22): `aliases` ist CF-write-only, und der Grund ist NICHT die Rolle.
 # Die Document-ID ist deterministisch (<tenant>__<space>__<alias>), also wuerde ein
 # Client-setDoc einen bestehenden — womoeglich GEDRUCKTEN — Alias still ueberschreiben
@@ -338,6 +341,15 @@ single_cases = [
     ("userA(no role) GET sessions/sX -> DENY (was signedIn)", False, GET, "sessions/sX", A, None, None),
     ("userB(admin t2) GET sessions/sX (t1) -> DENY (cross-tenant)", False, GET, "sessions/sX", B, None, None),
     ("userD(admin t1) GET sessions/sX -> ALLOW", True, GET, "sessions/sX", D, None, None),
+    # 1.107: app-status/chat is global (no tenants[]): signed-in read, any tenant's admin writes
+    ("anon GET app-status/chat -> DENY", False, GET, "app-status/chat", None, None, None),
+    ("userA(member t1) GET app-status/chat -> ALLOW", True, GET, "app-status/chat", A, None, None),
+    ("userA(member t1) PATCH app-status/chat blocked -> DENY", False, PATCH, "app-status/chat", A,
+     body({"blocked": True}), ["blocked"]),
+    ("userD(admin t1) PATCH app-status/chat blocked -> ALLOW", True, PATCH, "app-status/chat", D,
+     body({"blocked": True}), ["blocked"]),
+    ("userB(admin t2) PATCH app-status/chat message -> ALLOW (any tenant admin)", True, PATCH,
+     "app-status/chat", B, body({"message": "Wartung"}), ["message"]),
     # 1.32 §8.5: enabledFeatures is a billing boundary. Everything else in app-config
     # stays tenant-admin territory; only the paid-add-on subset is server-side.
     ("userD(admin t1) PATCH app-config/t1 gitOrg -> ALLOW", True, PATCH, "app-config/t1", D,

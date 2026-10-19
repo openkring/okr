@@ -207,6 +207,13 @@ service cloud.firestore {
       allow read: if true;
       allow write: if false;                          // updated out-of-band / by admin tooling
     }
+    // Global chat switch (spec 1.107): one doc app-status/chat for ALL tenant apps.
+    // Deliberately not tenant-scoped (no tenants[]); any signed-in user reads it,
+    // any admin (of any tenant) writes it.
+    match /app-status/{doc} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
     // Global integration config singletons (e.g. config/bexioSync sync pointers).
     // Read by the admin-only AOC console; written exclusively by Cloud Functions
     // (Admin SDK, bypasses rules).
