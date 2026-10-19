@@ -413,6 +413,11 @@ export const ChatMaintenanceStore = signalStore(
       const person = store.appStore.currentPerson();
       return { personKey, name: (person ? getFullName(person.firstName, person.lastName) : '') || personKey };
     };
+    /**
+     * The live group behind a room, or undefined. Invite and kick take a `groupId` (the server
+     * resolves the room from the group), so a room without a group offers neither.
+     */
+    const groupKeyOfRoom = (roomId: string): string | undefined => groupKeyForRoom(roomId, store.appStore.allGroupsAndChats());
     const confirm = async (header: string, message: string): Promise<boolean> => {
       const alert = await store.alertController.create({
         header,
@@ -823,16 +828,11 @@ export const ChatMaintenanceStore = signalStore(
       }
     },
 
-    /**
-     * The live group behind a room, or undefined. Invite and kick take a `groupId` (the server
-     * resolves the room from the group), so a room without a group offers neither.
-     */
-    groupKeyOfRoom(roomId: string): string | undefined {
-      return groupKeyForRoom(roomId, store.appStore.allGroupsAndChats());
-    },
+    /** Public view of the closure-scoped lookup, for the page's action gating. */
+    groupKeyOfRoom,
 
     async inviteToRoom(roomId: string): Promise<void> {
-      const groupId = this.groupKeyOfRoom(roomId);
+      const groupId = groupKeyOfRoom(roomId);
       if (!groupId) return;
       const defaultPersonKey = store.selectedPersonKey() ?? '';
       const alert = await store.alertController.create({
@@ -1158,7 +1158,7 @@ export const ChatMaintenanceStore = signalStore(
     // ─── member actions ────────────────────────────────────────────────────────
 
     async kickMember(userId: string, roomId: string): Promise<void> {
-      const groupId = this.groupKeyOfRoom(roomId);
+      const groupId = groupKeyOfRoom(roomId);
       if (!groupId) return;
       const message = await firstValueFrom(store.i18nService.translate('@chat/feature.maintenance.member.kick.confirm', { userId }));
       const alert = await store.alertController.create({

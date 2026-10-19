@@ -17,18 +17,12 @@ import { DateFormat, debugListLoaded, generateRandomString, getDataRow, getFullN
 import { ExportFormats } from '@okr/shared-categories';
 
 import { UserService } from '@okr/user-data-access';
-import { buildUserAccountRows, filterUserAccountRows, searchUserAccountRows, USER_I18N_KEYS, UserAccountRow, UserI18n } from '@okr/user-util';
+import { buildUserAccountRows, EXTENDED_ROLE_OPTIONS, filterUserAccountRows, searchUserAccountRows, USER_I18N_KEYS, UserAccountRow, UserI18n } from '@okr/user-util';
 
 export type { UserI18n };
 
 /** What listFirebaseUsers returns per login (the server scopes it to the caller's tenant, bka sees all). */
 type FirebaseLogin = { uid: string; email: string | undefined };
-
-/** The roles the «Erweiterte Rollen» select offers: every role that grants more than plain membership. */
-export const EXTENDED_ROLE_OPTIONS: RoleName[] = [
-  'privileged', 'contentAdmin', 'resourceAdmin', 'memberAdmin', 'eventAdmin', 'treasurer', 'admin',
-  'groupAdmin', 'kiosk', 'tripAdmin', 'auditor', 'tester',
-];
 
 export type UserState = {
   searchTerm: string;

@@ -257,6 +257,9 @@ export const getFirebaseUser = functions.onCall(
       };
       // tbd: customClaims, multiFactor
     } catch (error: any) {
+      if (error?.code === 'auth/user-not-found') {
+        throw new functions.HttpsError('not-found', 'Dieses Benutzerkonto gibt es nicht.');
+      }
       console.error(`${CF_NAME}: ERROR: `, error);
       throw new functions.HttpsError('internal', `Failed to get the firebase user: ${error.message}`);
     }

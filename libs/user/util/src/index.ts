@@ -18,3 +18,4 @@ export * from './lib/user-privacy-form.validations';
 export * from './lib/user-account-rows.util';
 export * from './lib/login-id-admin.util';
 export * from './lib/user-account-actions.util';
+export * from './lib/user-roles.util';
