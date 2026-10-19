@@ -15,6 +15,9 @@
  * WHAT IT REFUSES: a row without books whose `tenants` is anything other than `['scs']` is listed
  * and NOT changed — its books cannot be inferred, a person decides.
  *
+ * GUARD: aborts (exit 1, nothing written) unless `accounting-configs/scs` exists and its
+ * `ownerKey` is `org.scs` — the stamped books must really be the club's.
+ *
  * IDEMPOTENT: a row that already has books is counted and skipped, so a re-run changes nothing.
  * Writes go in batches of 400 (the Firestore cap is 500).
  *
@@ -29,6 +32,7 @@
 const COLLECTION = 'member-fees';
 const BOOKS = 'scs';
 const TENANT = 'scs';
+const BOOKS_OWNER = 'org.scs';
 const BATCH_SIZE = 400;
 
 const HELP = `migrate-member-fees-books — spec 1.108 D4: set accountingTenantId '${BOOKS}' on the existing ${COLLECTION} rows
@@ -40,6 +44,7 @@ Usage:
 
 Changes only rows with tenants = ['${TENANT}'] and accountingTenantId missing or ''.
 Rows without books in any other tenant are listed and left unchanged. Idempotent.
+Aborts unless accounting-configs/${BOOKS} exists with ownerKey '${BOOKS_OWNER}'.
 Requires: gcloud auth application-default login (or GOOGLE_APPLICATION_CREDENTIALS).`;
 
 /** The plan for one row: 'already' (has books), 'stamp' (scs row without books), 'refuse' (other tenant). */
@@ -68,6 +73,15 @@ async function main() {
   const { getFirestore } = await import('firebase-admin/firestore');
   if (!getApps().length) initializeApp({ projectId: 'bkaiser-org' });
   const db = getFirestore();
+
+  // The rows are stamped with the books 'scs' — they must be the club's books (owner org.scs),
+  // not merely a doc that happens to carry that id. Checked before anything is counted or written.
+  const books = await db.collection('accounting-configs').doc(BOOKS).get();
+  const ownerKey = books.exists ? books.get('ownerKey') : undefined;
+  if (!books.exists || ownerKey !== BOOKS_OWNER) {
+    console.error(`ABORT — accounting-configs/${BOOKS} ${books.exists ? `has ownerKey ${JSON.stringify(ownerKey ?? null)}, expected '${BOOKS_OWNER}'` : 'does not exist'}. Nothing written.`);
+    process.exit(1);
+  }
 
   const snapshot = await db.collection(COLLECTION).get();
   console.log(`${apply ? 'APPLY' : 'DRY RUN'} — ${COLLECTION}.accountingTenantId → '${BOOKS}' · ${snapshot.size} rows in the collection\n`);

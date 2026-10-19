@@ -1,6 +1,6 @@
 import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
-import { getFirestore } from 'firebase-admin/firestore';
+import { DocumentData, getFirestore } from 'firebase-admin/firestore';
 
 import {
   AccountingConfigCollection, AccountingConfigModel,
@@ -8,7 +8,7 @@ import {
   InvoicePositionCollection, InvoicePositionModel,
   MemberFeeCollection, MemberFeeModel, MemberFeePosition,
 } from '@okr/shared-models';
-import { checkAppCheckToken, checkAuthentication, checkRoles } from '@okr/shared-util-functions';
+import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
 import { addDuration, DateFormat, generateRandomString, getTodayStr, getYear, removeKeyFromOkrModel } from '@okr/shared-util-core';
 import { getFeeTotal } from '@okr/relationship-membership-util';
 import { getInvoiceIndex } from '@okr/finance-invoice-util';
@@ -42,6 +42,19 @@ export function billedPositions(fee: Pick<MemberFeeModel, 'positions'>): MemberF
   return (fee.positions ?? [])
     .filter(p => Number(p.amount) !== 0)
     .map(p => p.type === 'rebate' ? { ...p, amount: -Math.abs(p.amount) } : p);
+}
+
+/**
+ * Why the books may not be posted for the caller's tenant (spec 1.108, D5), or undefined when they
+ * may: the `accounting-configs` doc must exist, list the tenant and not be archived. The books id
+ * comes from the client and is never derived from the tenant (scs keeps the books scs AND gss).
+ */
+export function booksOfTenantRefusal(config: DocumentData | undefined, tenantId: string): 'not-found' | 'foreign-tenant' | 'archived' | undefined {
+  if (!config) return 'not-found';
+  const tenants = Array.isArray(config['tenants']) ? (config['tenants'] as unknown[]) : [];
+  if (!tenants.includes(tenantId)) return 'foreign-tenant';
+  if (config['isArchived'] === true) return 'archived';
+  return undefined;
 }
 
 /**
@@ -104,13 +117,28 @@ export const postMemberFees = onCall(
     // mirrors createBexioInvoice's access check.
     await checkRoles(request, CF_NAME, ['treasurer', 'privileged']);
 
-    const { tenantId, accountingTenantId } = request.data ?? {};
-    if (!tenantId) throw new HttpsError('invalid-argument', 'tenantId is required');
+    // The tenant is the caller's own (users/{uid}), never the client's word. `tenantId` is still
+    // accepted from older app builds (staggered deploys) but must then name the same tenant.
+    const tenantId = await getCallerTenantId(request, CF_NAME);
+    const { tenantId: requestedTenantId, accountingTenantId } = request.data ?? {};
+    if (requestedTenantId && requestedTenantId !== tenantId) {
+      logger.error(`${CF_NAME}: caller of tenant ${tenantId} asked for tenant ${requestedTenantId} — refused`);
+      throw new HttpsError('permission-denied', 'tenantId does not match the caller');
+    }
     if (!accountingTenantId) throw new HttpsError('invalid-argument', 'accountingTenantId is required');
 
     const db = getFirestore();
 
     const configSnap = await db.collection(AccountingConfigCollection).doc(accountingTenantId).get();
+    const refusal = booksOfTenantRefusal(configSnap.data(), tenantId);
+    if (refusal === 'not-found') {
+      logger.error(`${CF_NAME}: books ${accountingTenantId} do not exist`);
+      throw new HttpsError('not-found', 'These books do not exist.');
+    }
+    if (refusal) {
+      logger.error(`${CF_NAME}: books ${accountingTenantId} are ${refusal} for tenant ${tenantId} — refused`);
+      throw new HttpsError('permission-denied', 'These books do not belong to your tenant.');
+    }
     const config = configSnap.data() as AccountingConfigModel | undefined;
     const backend = config?.accountingBackend ?? 'native';
     if (backend === 'bexio') {

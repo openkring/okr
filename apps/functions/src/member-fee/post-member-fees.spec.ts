@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { billedPositions, isPostableRow, memberFeeDraft, unbookablePositions } from './post-member-fees';
+import { billedPositions, booksOfTenantRefusal, isPostableRow, memberFeeDraft, unbookablePositions } from './post-member-fees';
 import { issueBlockers, issueHeaderBlockers } from '../invoice/invoice.logic';
 import type { MemberFeePosition } from '@okr/shared-models';
 
@@ -114,5 +114,22 @@ describe('isPostableRow (spec 1.108, D5/D11)', () => {
     ['already invoiced', { state: 'invoiced' }],
   ])('never posts a row that is %s', (_why, over) => {
     expect(isPostableRow(fee(over), 'scs', 'scs')).toBe(false);
+  });
+});
+
+describe('booksOfTenantRefusal (spec 1.108, D5)', () => {
+  it('accepts live books that list the caller\'s tenant', () => {
+    expect(booksOfTenantRefusal({ tenants: ['scs'], isArchived: false }, 'scs')).toBeUndefined();
+    expect(booksOfTenantRefusal({ tenants: ['scs', 'kring'] }, 'scs')).toBeUndefined();
+  });
+  it('refuses books that do not exist', () => {
+    expect(booksOfTenantRefusal(undefined, 'scs')).toBe('not-found');
+  });
+  it('refuses books of another tenant', () => {
+    expect(booksOfTenantRefusal({ tenants: ['gvs'], isArchived: false }, 'scs')).toBe('foreign-tenant');
+    expect(booksOfTenantRefusal({ isArchived: false }, 'scs')).toBe('foreign-tenant');
+  });
+  it('refuses archived books', () => {
+    expect(booksOfTenantRefusal({ tenants: ['scs'], isArchived: true }, 'scs')).toBe('archived');
   });
 });

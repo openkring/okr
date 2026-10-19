@@ -44,10 +44,21 @@ const isRowOfBooks = (f: DocumentData, booksId: string): boolean => booksId !== 
  * books (D11) → 'no-books', so the caller can log it. Exactly one open row ('initial' | 'review',
  * no invoice yet) of the books → rebuild; several → nothing (ambiguous).
  */
+export interface FeeRowScope {
+  /** The app tenant (`tenants[]`). */
+  tenantId: string;
+  /** The books of the membership org (`accountingTenantId`, spec 1.108 D6) — never the tenant. */
+  booksId: string;
+  /** Today as StoreDate (yyyymmdd). */
+  today: string;
+  /** Live memberships of the member in the tenant with this entry date and category (default 1). */
+  sameEntryMemberships?: number;
+}
+
 export function feeRowToRebuild(
-  rows: { okey: string; data: DocumentData }[], m: FeeRowMembership, tenantId: string, booksId: string, today: string,
-  sameEntryMemberships = 1,
+  rows: { okey: string; data: DocumentData }[], m: FeeRowMembership, scope: FeeRowScope,
 ): FeeRowPlan {
+  const { tenantId, booksId, today, sameEntryMemberships = 1 } = scope;
   if (m.isArchived === true) return { action: 'skip', why: 'archived' };
   const exit = str(m.dateOfExit);
   const hasExit = /^\d{8}$/.test(exit) && !exit.startsWith('9999');
@@ -115,13 +126,19 @@ export async function rebuildFeeRow(db: Firestore, ctx: ExitContext, today: stri
   if (!memberKey || !schedule || String(schedule.year) !== today.substring(0, 4)) return false;
 
   const snap = await db.collection(MemberFeeCollection).where('member.key', '==', memberKey).get();
-  const plan = feeRowToRebuild(snap.docs.map(d => ({ okey: d.id, data: d.data() })), m, tenantId, booksId, today, ctx.sameEntryMemberships);
+  const plan = feeRowToRebuild(snap.docs.map(d => ({ okey: d.id, data: d.data() })), m, {
+    tenantId, booksId, today, sameEntryMemberships: ctx.sameEntryMemberships,
+  });
   if (plan.action === 'skip' && plan.why === 'membership-collision') {
     logger.warn(`${CF_NAME}: member ${memberKey} has ${ctx.sameEntryMemberships} live memberships with the same entry date and category in tenant ${tenantId}, fee row of membership ${ctx.membershipKey} not rebuilt`);
     return false;
   }
   if (plan.action === 'skip' && plan.why === 'no-books') {
     logger.warn(`${CF_NAME}: open fee row(s) of member ${memberKey} in tenant ${tenantId} have no books (accountingTenantId ''), ignored — fee row of membership ${ctx.membershipKey} not rebuilt`);
+    return false;
+  }
+  if (plan.action === 'skip' && plan.why === 'other-books') {
+    logger.info(`${CF_NAME}: the open fee row(s) of member ${memberKey} in tenant ${tenantId} belong to other books than ${booksId}, fee row of membership ${ctx.membershipKey} not rebuilt`);
     return false;
   }
   if (plan.action === 'ambiguous') {
