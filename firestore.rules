@@ -654,7 +654,8 @@ service cloud.firestore {
       allow read: if tenantRead() && (resource == null
         || taskStaff() || taskMember(resource.data) || taskShareOpen(resource.data));
       // only privileged may create a task in someone else's name (spec §2)
-      allow create: if tenantCreate() && (isPrivileged() || taskAuthor(request.resource.data));
+      // spec 1.105: settlement task id exit-<tenantId>-<membershipKey> is predictable, so server-only (Admin SDK)
+      allow create: if tenantCreate() && !id.matches('exit-.*') && (isPrivileged() || taskAuthor(request.resource.data));
       // tenantUpdate(): the caller's tenant must be on the stored doc, not just on the new one
       allow update: if tenantUpdate() && (isPrivileged() || taskAuthorKept()) && (
         (taskArchiving() || selfDetach())
