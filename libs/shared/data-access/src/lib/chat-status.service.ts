@@ -1,7 +1,8 @@
-import { computed, inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
+import { computed, inject, Injectable, OnDestroy, PLATFORM_ID, signal } from '@angular/core';
+import { onAuthStateChanged, type User } from 'firebase/auth';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 
-import { FIRESTORE } from '@okr/shared-config';
+import { AUTH, FIRESTORE } from '@okr/shared-config';
 import { ChatBlockedError, ChatExemption, ChatStatusCollection, ChatStatusDocId, ChatStatusModel } from '@okr/shared-models';
 import { addChatExemption, DateFormat, getTodayStr, isBrowser, isChatEffectivelyBlocked, removeChatExemption } from '@okr/shared-util-core';
 
@@ -9,14 +10,17 @@ import { addChatExemption, DateFormat, getTodayStr, isBrowser, isChatEffectively
  * Global chat switch (app-status/chat). Fail-open: no snapshot, a listener error or a missing
  * doc all mean "not blocked". Must not import anything from @okr/chat-* (bundle constraint).
  * Does not know the current user: consumers pass the personKey (see isEffectivelyBlocked).
+ * Watches the Firebase auth state only to re-read the status at once after a login: the read is
+ * denied while signed out, and a stale fail-open state must not let a blocked user connect.
  */
 const RETRY_INITIAL_MS = 5000;
 const RETRY_MAX_MS = 60000;
 
 @Injectable({ providedIn: 'root' })
-export class ChatStatusService {
+export class ChatStatusService implements OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly firestore = inject(FIRESTORE);
+  private readonly auth = inject(AUTH);
 
   private readonly _status = signal<ChatStatusModel | undefined>(undefined);
   private readonly _ready = signal(false);
@@ -26,6 +30,7 @@ export class ChatStatusService {
   private unsubscribe: (() => void) | undefined;
   private retryTimer: ReturnType<typeof setTimeout> | undefined;
   private retryDelayMs = RETRY_INITIAL_MS;
+  private unsubscribeAuth: (() => void) | undefined;
 
   public readonly status = this._status.asReadonly();
   public readonly ready = this._ready.asReadonly();
@@ -34,6 +39,12 @@ export class ChatStatusService {
 
   constructor() {
     this.start();
+  }
+
+  public ngOnDestroy(): void {
+    this.unsubscribeAuth?.();
+    this.unsubscribeAuth = undefined;
+    this.stopListening();
   }
 
   public isExempt(personKey: string | undefined): boolean {
@@ -114,6 +125,35 @@ export class ChatStatusService {
     if (this.started || !isBrowser(this.platformId)) return;
     this.started = true;
     this.subscribe();
+    this.unsubscribeAuth = onAuthStateChanged(this.auth, (user) => this.onAuthChange(user));
+  }
+
+  /**
+   * Signed in: unless a healthy listener is already live, drop the stale (fail-open) state and
+   * read again now — not after the backoff — so whenReady() waits for the real status.
+   * Signed out: the read is denied anyway; stop listening and stay fail-open (not blocked).
+   */
+  private onAuthChange(user: User | null): void {
+    if (user) {
+      if (this.loaded && this.unsubscribe) return;
+      this.stopListening();
+      this.retryDelayMs = RETRY_INITIAL_MS;
+      this._ready.set(false);
+      this.subscribe();
+    } else {
+      this.stopListening();
+      this.retryDelayMs = RETRY_INITIAL_MS;
+      this._status.set(undefined);
+      this._ready.set(true);
+    }
+  }
+
+  private stopListening(): void {
+    clearTimeout(this.retryTimer);
+    this.retryTimer = undefined;
+    this.unsubscribe?.();
+    this.unsubscribe = undefined;
+    this.loaded = false;
   }
 
   private subscribe(): void {
@@ -128,12 +168,9 @@ export class ChatStatusService {
       },
       () => {
         // fail-open now, resubscribe with backoff
-        this.loaded = false;
         this._status.set(undefined);
         this._ready.set(true);
-        this.unsubscribe?.();
-        this.unsubscribe = undefined;
-        clearTimeout(this.retryTimer);
+        this.stopListening();
         const delay = this.retryDelayMs;
         this.retryDelayMs = Math.min(delay * 2, RETRY_MAX_MS);
         this.retryTimer = setTimeout(() => this.subscribe(), delay);

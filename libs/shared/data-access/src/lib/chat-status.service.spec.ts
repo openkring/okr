@@ -2,13 +2,22 @@ import { PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { FIRESTORE } from '@okr/shared-config';
+import { AUTH, FIRESTORE } from '@okr/shared-config';
 import { ChatBlockedError } from '@okr/shared-models';
 
 const h = vi.hoisted(() => ({
   setDoc: vi.fn(async () => undefined),
   next: undefined as ((s: unknown) => void) | undefined,
   error: undefined as ((e: unknown) => void) | undefined,
+  auth: undefined as ((u: unknown) => void) | undefined,
+  unsubscribe: vi.fn(),
+}));
+
+vi.mock('firebase/auth', () => ({
+  onAuthStateChanged: vi.fn((_auth: unknown, cb: (u: unknown) => void) => {
+    h.auth = cb;
+    return () => undefined;
+  }),
 }));
 
 vi.mock('firebase/firestore', () => ({
@@ -17,7 +26,7 @@ vi.mock('firebase/firestore', () => ({
   onSnapshot: vi.fn((_ref: unknown, next: (s: unknown) => void, error: (e: unknown) => void) => {
     h.next = next;
     h.error = error;
-    return () => undefined;
+    return h.unsubscribe;
   }),
 }));
 
@@ -28,10 +37,12 @@ function make(): ChatStatusService {
     providers: [
       { provide: PLATFORM_ID, useValue: 'browser' },
       { provide: FIRESTORE, useValue: {} },
+      { provide: AUTH, useValue: {} },
     ],
   });
   return TestBed.inject(ChatStatusService);
 }
+const RETRY_MAX = 60000;
 const snap = (data: unknown) => ({ exists: () => data !== undefined, data: () => data });
 
 describe('ChatStatusService', () => {
@@ -39,9 +50,15 @@ describe('ChatStatusService', () => {
     h.setDoc.mockClear();
     h.next = undefined;
     h.error = undefined;
+    h.auth = undefined;
+    h.unsubscribe.mockClear();
     TestBed.resetTestingModule();
   });
-  afterEach(() => vi.useRealTimers());
+  afterEach(() => {
+    // destroys the root injector ⇒ ngOnDestroy clears any pending retry timer
+    TestBed.resetTestingModule();
+    vi.useRealTimers();
+  });
 
   it('missing doc: not blocked, ready', () => {
     const s = make();
@@ -52,6 +69,7 @@ describe('ChatStatusService', () => {
   });
 
   it('listener error: not blocked, ready', () => {
+    vi.useFakeTimers();
     const s = make();
     s.blocked();
     h.error?.(new Error('denied'));
@@ -118,6 +136,7 @@ describe('ChatStatusService', () => {
   });
 
   it('addExemption / removeExemption refuse after a listener error', async () => {
+    vi.useFakeTimers();
     const s = make();
     h.error?.(new Error('denied'));
     await expect(s.addExemption({ personKey: 'p1', name: 'A' }, 'adm')).rejects.toThrow();
@@ -186,6 +205,69 @@ describe('ChatStatusService', () => {
       const assertion = expect(p).rejects.toBeInstanceOf(ChatBlockedError);
       await vi.advanceTimersByTimeAsync(50);
       await assertion;
+    });
+  });
+
+  describe('auth changes (signed-out boot, then login)', () => {
+    async function snapshotCalls(): Promise<number> {
+      const { onSnapshot } = await import('firebase/firestore');
+      return vi.mocked(onSnapshot).mock.calls.length;
+    }
+
+    it('sign-in after a denied read resubscribes at once and is not ready until the snapshot', async () => {
+      vi.useFakeTimers();
+      const s = make();
+      const before = await snapshotCalls();
+      h.error?.(new Error('denied'));
+      expect(s.ready()).toBe(true);
+      h.auth?.({ uid: 'u1' });
+      expect(await snapshotCalls()).toBe(before + 1);
+      expect(s.ready()).toBe(false);
+      h.next?.(snap({ blocked: true, exempt: [] }));
+      expect(s.ready()).toBe(true);
+      expect(s.isEffectivelyBlocked('p2')).toBe(true);
+      // the backoff retry of the denied read was cancelled
+      await vi.advanceTimersByTimeAsync(RETRY_MAX);
+      expect(await snapshotCalls()).toBe(before + 1);
+    });
+
+    it('assertNotBlocked right after login waits for the new snapshot', async () => {
+      vi.useFakeTimers();
+      const s = make();
+      h.error?.(new Error('denied'));
+      h.auth?.({ uid: 'u1' });
+      let settled = false;
+      const p = s.assertNotBlocked('p2').then(() => { settled = true; }, (e: unknown) => { settled = true; throw e; });
+      await vi.advanceTimersByTimeAsync(100);
+      expect(settled).toBe(false);
+      h.next?.(snap({ blocked: true, exempt: [] }));
+      const assertion = expect(p).rejects.toBeInstanceOf(ChatBlockedError);
+      await vi.advanceTimersByTimeAsync(50);
+      await assertion;
+    });
+
+    it('sign-in with a healthy listener keeps it', async () => {
+      const s = make();
+      h.next?.(snap({ blocked: false, exempt: [] }));
+      const before = await snapshotCalls();
+      h.auth?.({ uid: 'u1' });
+      expect(await snapshotCalls()).toBe(before);
+      expect(s.ready()).toBe(true);
+    });
+
+    it('sign-out unsubscribes, stays fail-open and stops retrying', async () => {
+      vi.useFakeTimers();
+      const s = make();
+      h.next?.(snap({ blocked: true, exempt: [] }));
+      const before = await snapshotCalls();
+      h.auth?.(null);
+      expect(h.unsubscribe).toHaveBeenCalled();
+      expect(s.blocked()).toBe(false);
+      expect(s.ready()).toBe(true);
+      await vi.advanceTimersByTimeAsync(RETRY_MAX);
+      expect(await snapshotCalls()).toBe(before);
+      h.auth?.({ uid: 'u2' });
+      expect(await snapshotCalls()).toBe(before + 1);
     });
   });
 });
