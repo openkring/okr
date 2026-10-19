@@ -72,7 +72,7 @@ export function collectRowTenants(contextDocs, name) {
 export function planRow(existing, name, tenants) {
   const want = [...new Set(tenants)].sort();
   if (existing.length > 1) {
-    return { id: name, action: 'warn', reason: `WARN ${existing.length} docs named ${name} (${existing.map((d) => d.id).join(', ')}); not guessing, skipped` };
+    return { id: name, action: 'warn', reason: `${existing.length} docs named ${name} (${existing.map((d) => d.id).join(', ')}); not guessing, skipped` };
   }
   if (existing.length === 0) {
     const s = ROW_SPECS[name];
@@ -89,7 +89,13 @@ export function planRow(existing, name, tenants) {
     };
   }
   const [doc] = existing;
-  if (doc.id !== name) return { id: doc.id, action: 'skip', reason: `fork row doc (${doc.id}); left alone` };
+  const uncovered = want.filter((t) => !arr(doc.tenants).includes(t));
+  if (doc.isArchived === true) {
+    return { id: doc.id, action: 'warn', reason: `only doc is archived (${doc.id}); not extended, tenants [${want.join(', ')}] cannot see ${name}` };
+  }
+  if (doc.id !== name) {
+    return { id: doc.id, action: 'warn', reason: `only doc is a fork (${doc.id}); left alone, tenants [${uncovered.join(', ')}] stay uncovered` };
+  }
   const have = arr(doc.tenants);
   const missing = want.filter((t) => !have.includes(t));
   return missing.length === 0
@@ -101,7 +107,7 @@ export function planRow(existing, name, tenants) {
 export function planLeavingRow(doc, otherReferrers) {
   if (doc.isArchived === true) return { id: doc.id, action: 'skip', reason: 'already archived' };
   if (otherReferrers.length) {
-    return { id: doc.id, action: 'warn', reason: `WARN ${doc.name} still listed by [${otherReferrers.map((d) => d.id).join(', ')}]; not archived` };
+    return { id: doc.id, action: 'warn', reason: `${doc.name} still listed by [${otherReferrers.map((d) => d.id).join(', ')}]; not archived` };
   }
   return { id: doc.id, action: 'archive', reason: `${doc.name} left the AOC` };
 }

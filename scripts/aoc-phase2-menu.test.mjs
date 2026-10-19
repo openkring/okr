@@ -45,7 +45,7 @@ test('planContextMenu tolerates malformed menuItems', () => {
 });
 
 test('a tenant without a c-diary doc gets no diary row tenant', () => {
-  const docs = Object.values(LIVE).map((d) => (planContextMenu(d, MAINT[d.name]).menuItems ? { ...d, menuItems: planContextMenu(d, MAINT[d.name]).menuItems } : d));
+  const docs = Object.values(LIVE).map((d) => ({ ...d, menuItems: planContextMenu(d, MAINT[d.name]).menuItems }));
   assert.deepEqual(collectRowTenants(docs, 'diary-import'), ['bka']);
   assert.deepEqual(collectRowTenants(docs, 'trip-kiosk'), ['okr', 'scs']);
 });
@@ -78,10 +78,18 @@ test('planRow: duplicate name warns and skips', () => {
   assert.match(p.reason, /2 docs/);
 });
 
-test('planRow: a fork row doc (id differs from name) is not touched', () => {
-  const p = planRow([{ id: 'maint-divider_scs', name: 'maint-divider', tenants: ['scs'] }], 'maint-divider', ['bka']);
-  assert.equal(p.action, 'skip');
+test('planRow: a lone fork row doc warns and names the uncovered tenants', () => {
+  const p = planRow([{ id: 'maint-divider_scs', name: 'maint-divider', tenants: ['scs'] }], 'maint-divider', ['bka', 'scs']);
+  assert.equal(p.action, 'warn');
   assert.match(p.reason, /fork/);
+  assert.match(p.reason, /\[bka\]/);
+  assert.doesNotMatch(p.reason, /^WARN/);
+});
+
+test('planRow: a lone archived row doc warns, never extends or creates', () => {
+  const p = planRow([{ id: 'maint-divider', name: 'maint-divider', tenants: ['bka'], isArchived: true }], 'maint-divider', ['bka', 'scs']);
+  assert.equal(p.action, 'warn');
+  assert.match(p.reason, /archived/);
 });
 
 test('aoc-menu_bka loses the four leaving names, keeps the rest in place', () => {

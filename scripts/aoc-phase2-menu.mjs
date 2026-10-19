@@ -60,6 +60,7 @@ for (const name of rowNames) {
   const p = planRow(await byName(name), name, collectRowTenants(postPlanDocs, name));
   rowPlans.push({ ...p, rowName: name });
   line(p, name);
+  if (p.action === 'create') console.log(JSON.stringify(p.doc, null, 2).replace(/^/gm, '    '));
 }
 
 // 3. AOC parents
@@ -126,6 +127,10 @@ const steps = {
   leaving: async () => {
     for (const p of leavingPlans.filter((x) => x.action === 'archive')) {
       const snap = await col.doc(p.id).get();
+      if (!snap.exists) {
+        console.log(`[GONE] menuItems/${p.id}`);
+        continue;
+      }
       const re = planLeavingRow({ id: snap.id, ...snap.data() }, await referrers({ id: snap.id, name: p.rowName }));
       if (re.action !== 'archive') {
         line(re, p.rowName);
