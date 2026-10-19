@@ -205,7 +205,8 @@ export async function loadExitContext(
     logger.info(`loadExitContext: membership ${membershipKey} (org ${orgKey || '-'}) has no unique books in tenant ${tenantId}, skipped`);
     return 'no-books';
   }
-  const config = configs.find(c => c.okey === booksId)?.data ?? {};
+  // BooksConfigRef carries only what booksOfOrg needs — the fee schedule comes from the doc itself.
+  const config: DocumentData = configsSnap.docs.find(d => d.id === booksId)?.data() ?? {};
 
   const exitYear = exitYearOf(str(membership.dateOfExit)) || Number(today.substring(0, 4));
   const memberKey = str(membership.memberKey);

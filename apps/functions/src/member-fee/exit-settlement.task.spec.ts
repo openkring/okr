@@ -230,6 +230,11 @@ describe('loadExitContext', () => {
     expect(isExitContext(r) && r.tenantId).toBe('scs');
     expect(isExitContext(r) && r.input.booksId).toBe('scs');
   });
+  it('loads the fee schedule of the exit year from the books found via ownerKey', async () => {
+    const fs = [{ year: 2026, positions: [] }, { year: 2025, positions: [] }];
+    const r = await load(base(membership(), { scs: { tenants: ['scs'], ownerKey: 'org.scs', feeSchedule: fs } }));
+    expect(isExitContext(r) && r.input.schedule).toEqual({ year: 2026, positions: [] });
+  });
   it('finds books whose okey is neither the tenant nor the org (gss owned by org mkdf…)', async () => {
     const r = await load(base(membership({ orgKey: 'mkdf7xin64es5q4rmhdj' }), {
       scs: { tenants: ['scs'], ownerKey: 'org.scs' }, gss: { tenants: ['scs'], ownerKey: 'org.mkdf7xin64es5q4rmhdj' },
