@@ -183,13 +183,15 @@ describe('openOrUpdateSettlementTask', () => {
       expect(store['tasks'][TASK_ID]).toEqual(squat);
     }
   });
-  it('replaces an open, unclaimed squatted doc with a fresh server task', async () => {
-    const squat = { tenants: ['scs'], state: 'initial', completionDate: '', notes: 'von Mallory', tags: '', author: { key: 'p9' } };
+  it('replaces an open, unclaimed squatted doc with a fresh server task, keeping the text below the marker', async () => {
+    const squat = { tenants: ['scs'], state: 'initial', completionDate: '', notes: `gefälscht\n${NOTES_MARKER}\nangerufen`, tags: '', author: { key: 'p9' } };
     const { db, store } = fakeDb({ tasks: { [TASK_ID]: squat } });
     expect(await openOrUpdateSettlementTask(db, ctx(), due())).toBe('replace');
     const t = store['tasks'][TASK_ID];
     expect(t).toMatchObject({ tenants: ['scs'], tags: 'exit-settlement', relatedKey: 'membership.m1', state: 'initial', author: SYSTEM_AUTHOR });
-    expect(String(t['notes'])).not.toContain('Mallory');
+    // fresh generated block above the marker, the typed text below it survives
+    expect(String(t['notes'])).toMatch(/^Austrittsdatum: 31\.10\.2026[\s\S]*\n--- Notizen ---\nangerufen$/);
+    expect(String(t['notes'])).not.toContain('gefälscht');
   });
   it('replaces a doc of another tenant at the task id', async () => {
     const { db, store } = fakeDb({ tasks: { [TASK_ID]: { ...SERVER, tenants: ['evil'], state: 'initial', notes: 'x' } } });

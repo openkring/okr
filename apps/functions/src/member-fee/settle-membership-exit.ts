@@ -34,7 +34,7 @@ import { pickMemberIban } from '../expense/expense.util';
 import { cancelInvoiceCore } from '../invoice/cancel-invoice';
 import { totalRappen, withoutUndefined } from '../invoice/invoice.logic';
 import { writeFinanceHistory } from '../finance-history/finance-history';
-import { doneTaskDecision, ExitContext, isExitContext, loadExitContext, toInvoiceFacts } from './exit-settlement.context';
+import { doneTaskDecision, ExitContext, isExitContext, isSettlementTaskFor, loadExitContext, toInvoiceFacts } from './exit-settlement.context';
 import {
   appendInvoiceNote, appendTaskNote, choiceRefusal, claimedChoices, claimedInvoiceKey, claimPatch, claimRefusal, decisionNote,
   emptySettlement, extendedRelLog, isLiveRefund, isValidClaim, membershipKeyOf, postalAddressText, refundDecision, refundInvoiceRefusal, refundMessageId, refundOrderId,
@@ -88,6 +88,8 @@ export const settleMembershipExit = onCall(
     if (!str(task['tags']).split(',').map(t => t.trim()).includes(EXIT_SETTLEMENT_TAG)) throw refusal('not-a-settlement-task');
     const membershipKey = membershipKeyOf(str(task['relatedKey']));
     if (!membershipKey) throw refusal('not-a-settlement-task', `task ${taskKey} is not about a membership`);
+    // only the server task at exit-<tenantId>-<membershipKey>: a client-written look-alike is refused
+    if (!isSettlementTaskFor(taskKey, task, tenantId, membershipKey)) throw refusal('not-a-settlement-task', `task ${taskKey} is not the settlement task of membership ${membershipKey}`);
 
     // a done task always answers with its stored decision, even when the membership is gone
     if (isDone(task)) {

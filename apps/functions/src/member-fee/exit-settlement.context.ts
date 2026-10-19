@@ -10,11 +10,12 @@ import {
   InvoicePositionCollection, MembershipCollection, MembershipModel, OrgCollection, ResponsibilityCollection, TaskCollection,
 } from '@okr/shared-models';
 import { getFullName } from '@okr/shared-util-core';
-import { ExitSettlementInput, InvoiceFacts, invoiceShape } from '@okr/relationship-membership-util';
+import { EXIT_SETTLEMENT_TAG, ExitSettlementInput, InvoiceFacts, invoiceShape } from '@okr/relationship-membership-util';
 import { orgOwnerKey, resolveOwnerKey } from '@okr/finance-accounting-util';
 
 import { activeResponsible, AvatarRef, ResponsibilityLike, treasurerResponsibilityKey } from '../invoice/treasurer-contact.logic';
 import { storedDecision } from './settle-membership-exit.logic';
+import { SYSTEM_AUTHOR } from '../workflow/activity';
 
 /** Appended to the notes when the trigger closes a task because nothing is due any more (§4.5). */
 export const CLOSE_NOTE = 'Nicht mehr nötig: Austritt geändert.';
@@ -139,6 +140,29 @@ export function pickBooksId(configs: { okey: string; data: DocumentData }[], ten
   const hits = configs.filter(c => c.data['isArchived'] !== true && tenantsOf(c.data).includes(tenantId) &&
     resolveOwnerKey(c.data as { ownerKey?: string; orgId?: string }) === owner);
   return hits.length === 1 ? hits[0].okey : undefined;
+}
+
+const hasSettlementTag = (t: DocumentData): boolean =>
+  typeof t['tags'] === 'string' && (t['tags'] as string).split(',').map(x => x.trim()).includes(EXIT_SETTLEMENT_TAG);
+
+/**
+ * Whether the doc at `exit-<tenantId>-<membershipKey>` is the task the trigger wrote: system author, the
+ * settlement tag, this membership, this tenant. The id is predictable and tasks are client-writable,
+ * so anything else is a squat.
+ */
+export function isServerTask(task: DocumentData, tenantId: string, membershipKey: string): boolean {
+  const author = (task['author'] ?? {}) as Record<string, unknown>;
+  return author['key'] === SYSTEM_AUTHOR.key && author['name1'] === SYSTEM_AUTHOR.name1 && author['modelType'] === SYSTEM_AUTHOR.modelType &&
+    hasSettlementTag(task) && task['relatedKey'] === `membership.${membershipKey}` &&
+    Array.isArray(task['tenants']) && (task['tenants'] as string[]).includes(tenantId);
+}
+
+/**
+ * The callable's acceptance check: the task is the membership's server task in the caller's tenant,
+ * at its deterministic id. A copied server task at any other id is refused.
+ */
+export function isSettlementTaskFor(taskKey: string, task: DocumentData, tenantId: string, membershipKey: string): boolean {
+  return taskKey === settlementTaskId(tenantId, membershipKey) && isServerTask(task, tenantId, membershipKey);
 }
 
 /**

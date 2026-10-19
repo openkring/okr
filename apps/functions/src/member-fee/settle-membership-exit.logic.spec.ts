@@ -6,6 +6,8 @@ import {
   emptySettlement, extendedRelLog, isLiveRefund, isValidClaim, membershipKeyOf, NO_IBAN_NOTE, postalAddressText, refundDecision, refundMessageId,
   refundInvoiceRefusal, refundOrderId, refundPaymentId, refundReference, replacementPositions, storedDecision, stornoReason, withInvoice,
 } from './settle-membership-exit.logic';
+import { isSettlementTaskFor } from './exit-settlement.context';
+import { SYSTEM_AUTHOR } from '../workflow/activity';
 
 const settlement = (c: SettlementCase, choices: SettlementChoice[], extra: Partial<ExitSettlement> = {}): ExitSettlement => ({
   case: c, exitYear: 2026, months: 10, yearlyFr: 120, dueFr: 100, billedFr: 120, overpaidRappen: 2000,
@@ -307,5 +309,24 @@ describe('refundInvoiceRefusal', () => {
     expect(refundInvoiceRefusal(undefined, 'scs', 'scs')).toBe('state-changed');
     expect(refundInvoiceRefusal(inv({ tenants: ['gss'] }), 'scs', 'scs')).toBe('state-changed');
     expect(refundInvoiceRefusal(inv({ accountingTenantId: 'gss' }), 'scs', 'scs')).toBe('state-changed');
+  });
+});
+
+describe('isSettlementTaskFor (callable acceptance check)', () => {
+  const task = {
+    tenants: ['scs'], state: 'initial', tags: 'exit-settlement', relatedKey: 'membership.m1', author: { ...SYSTEM_AUTHOR },
+  };
+  it('accepts the server task at exit-<tenantId>-<membershipKey>', () => {
+    expect(isSettlementTaskFor('exit-scs-m1', task, 'scs', 'm1')).toBe(true);
+  });
+  it('rejects a task at another id, even a perfect copy of the server task', () => {
+    expect(isSettlementTaskFor('t-123', task, 'scs', 'm1')).toBe(false);
+    expect(isSettlementTaskFor('exit-gvs-m1', task, 'scs', 'm1')).toBe(false);
+    expect(isSettlementTaskFor('exit-m1', task, 'scs', 'm1')).toBe(false);
+  });
+  it('rejects a doc at the right id that is not a server task', () => {
+    expect(isSettlementTaskFor('exit-scs-m1', { ...task, author: { key: 'p9', name1: 'Mallory' } }, 'scs', 'm1')).toBe(false);
+    expect(isSettlementTaskFor('exit-scs-m1', { ...task, tags: 'todo' }, 'scs', 'm1')).toBe(false);
+    expect(isSettlementTaskFor('exit-scs-m1', { ...task, tenants: ['gvs'] }, 'scs', 'm1')).toBe(false);
   });
 });

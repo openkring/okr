@@ -3,11 +3,11 @@ import type { ExitSettlement, SettlementCase } from '@okr/relationship-membershi
 
 import { claimedInvoiceKey, claimPatch } from './settle-membership-exit.logic';
 import {
-  exitChanged, exitSettlementFor, isServerTask, isSettlementWriter, mergeTaskNotes, NOTES_MARKER, REOPEN_NOTE, reopenedTaskNotes, siblingsToSettle,
+  exitChanged, exitSettlementFor, isSettlementWriter, mergeTaskNotes, NOTES_MARKER, REOPEN_NOTE, reopenedTaskNotes, siblingsToSettle,
   taskStateOf, upsertDecision, writerCheck, writerTenant,
 } from './exit-settlement.trigger';
 import {
-  CLOSE_NOTE, doneTaskDecision, flattenCategoryLists, isAutoClosed, needsPositions, overlappingCount, pickBooksId, toAvatarInfo,
+  CLOSE_NOTE, doneTaskDecision, flattenCategoryLists, isAutoClosed, isServerTask, needsPositions, overlappingCount, pickBooksId, toAvatarInfo,
   toInvoiceFacts,
 } from './exit-settlement.context';
 import { SYSTEM_AUTHOR } from '../workflow/activity';

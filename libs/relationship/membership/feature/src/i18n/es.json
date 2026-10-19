@@ -570,7 +570,8 @@
       "invalid-claim": "La factura vinculada no corresponde a esta baja. Compruébala a mano.",
       "state-changed": "El caso ha cambiado entretanto. Vuelve a abrir la tarea.",
       "no-membership": "No se encontró la afiliación.",
-      "no-books": "No hay ninguna contabilidad claramente asignada a la organización de esta afiliación. Liquida la baja a mano."
+      "no-books": "No hay ninguna contabilidad claramente asignada a la organización de esta afiliación. Liquida la baja a mano.",
+      "not-a-settlement-task": "Esta tarea no forma parte de la liquidación de la baja."
     },
     "doneToast": "La baja está liquidada."
   }

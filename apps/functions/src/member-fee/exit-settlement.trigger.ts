@@ -22,7 +22,9 @@ import {
 
 import { SYSTEM_AUTHOR } from '../workflow/activity';
 import { withoutUndefined } from '../invoice/invoice.logic';
-import { CLOSE_NOTE, ExitContext, isAutoClosed, isExitContext, loadExitContext, settlementTaskId, treasurerAssignee } from './exit-settlement.context';
+import {
+  CLOSE_NOTE, ExitContext, isAutoClosed, isExitContext, isServerTask, loadExitContext, settlementTaskId, treasurerAssignee,
+} from './exit-settlement.context';
 import { rebuildFeeRow, settlementAfterRebuild } from './exit-settlement.fee-row';
 import { claimedInvoiceKey } from './settle-membership-exit.logic';
 
@@ -117,21 +119,6 @@ export function exitSettlementFor(membership: { isArchived?: boolean }, compute:
 }
 
 const notesOf = (t: DocumentData | undefined): string => (typeof t?.['notes'] === 'string' ? (t['notes'] as string) : '');
-
-const hasSettlementTag = (t: DocumentData): boolean =>
-  typeof t['tags'] === 'string' && (t['tags'] as string).split(',').map(x => x.trim()).includes(EXIT_SETTLEMENT_TAG);
-
-/**
- * Whether the doc at `exit-<tenantId>-<membershipKey>` is the task the trigger wrote: system author, the
- * settlement tag, this membership, this tenant. The id is predictable and tasks are client-writable,
- * so anything else is a squat.
- */
-export function isServerTask(task: DocumentData, tenantId: string, membershipKey: string): boolean {
-  const author = (task['author'] ?? {}) as Record<string, unknown>;
-  return author['key'] === SYSTEM_AUTHOR.key && author['name1'] === SYSTEM_AUTHOR.name1 && author['modelType'] === SYSTEM_AUTHOR.modelType &&
-    hasSettlementTag(task) && task['relatedKey'] === `membership.${membershipKey}` &&
-    Array.isArray(task['tenants']) && (task['tenants'] as string[]).includes(tenantId);
-}
 
 /**
  * The settlement task as `upsertDecision` sees it. A doc that is not a server task (`isServerTask`)
@@ -236,7 +223,8 @@ export async function openOrUpdateSettlementTask(db: Firestore, ctx: ExitContext
       }
       case 'replace': {
         const assignee = await treasurerAssignee(db, ctx.tenantId, today);
-        tx.set(ref, withoutUndefined(newSettlementTask(ctx, name, generated, dueDate, assignee)));
+        // a fresh server task; the text typed below the marker survives, the generated block is ours
+        tx.set(ref, withoutUndefined(newSettlementTask(ctx, name, generated, dueDate, assignee, notesOf(found))));
         break;
       }
     }
@@ -244,10 +232,12 @@ export async function openOrUpdateSettlementTask(db: Firestore, ctx: ExitContext
   });
 }
 
-function newSettlementTask(ctx: ExitContext, name: string, generated: string, dueDate: string, assignee: AvatarInfo | undefined): Omit<TaskModel, 'okey'> {
+function newSettlementTask(
+  ctx: ExitContext, name: string, generated: string, dueDate: string, assignee: AvatarInfo | undefined, existingNotes?: string,
+): Omit<TaskModel, 'okey'> {
   const task = new TaskModel(ctx.tenantId);
   task.name = name;
-  task.notes = mergeTaskNotes(undefined, generated);
+  task.notes = mergeTaskNotes(existingNotes, generated);
   task.tags = EXIT_SETTLEMENT_TAG;
   task.relatedKey = `membership.${ctx.membershipKey}`;
   task.relatedModelType = 'membership';

@@ -40,6 +40,7 @@ export const EXIT_SETTLEMENT_I18N_KEYS = {
   error_state_changed:       PFX + 'exitSettlement.error.state-changed',
   error_no_membership:       PFX + 'exitSettlement.error.no-membership',
   error_no_books:            PFX + 'exitSettlement.error.no-books',
+  error_not_a_settlement_task: PFX + 'exitSettlement.error.not-a-settlement-task',
   done_toast:            PFX + 'exitSettlement.doneToast',
 } satisfies Record<string, string>;
 
@@ -90,6 +91,7 @@ export function settleErrorText(i18n: ExitSettlementI18n, reason: string | undef
     case 'state-changed': return i18n.error_state_changed();
     case 'no-membership': return i18n.error_no_membership();
     case 'no-books': return i18n.error_no_books();
+    case 'not-a-settlement-task': return i18n.error_not_a_settlement_task();
     default: return i18n.error();
   }
 }

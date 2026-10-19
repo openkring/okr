@@ -17,7 +17,7 @@ describe('settleErrorText', () => {
     ['task-done', 'error_task_done'], ['choice-not-offered', 'error_choice_not_offered'],
     ['already-refunded', 'error_already_refunded'], ['adjust-in-progress', 'error_adjust_in_progress'],
     ['invalid-claim', 'error_invalid_claim'], ['state-changed', 'error_state_changed'], ['no-membership', 'error_no_membership'],
-    ['no-books', 'error_no_books'],
+    ['no-books', 'error_no_books'], ['not-a-settlement-task', 'error_not_a_settlement_task'],
   ];
   it.each(known)('maps %s', (reason, k) => expect(settleErrorText(i18n, reason)).toBe(key(k)));
   it('falls back to the generic error for unknown and missing reasons', () => {

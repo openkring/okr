@@ -570,7 +570,8 @@
       "invalid-claim": "Die zugehörige Rechnung passt nicht zu diesem Austritt. Bitte prüfe sie von Hand.",
       "state-changed": "Der Fall hat sich inzwischen geändert. Bitte öffne die Aufgabe neu.",
       "no-membership": "Die Mitgliedschaft wurde nicht gefunden.",
-      "no-books": "Für die Organisation dieser Mitgliedschaft ist keine Buchhaltung klar zugeordnet. Bitte rechne den Austritt von Hand ab."
+      "no-books": "Für die Organisation dieser Mitgliedschaft ist keine Buchhaltung klar zugeordnet. Bitte rechne den Austritt von Hand ab.",
+      "not-a-settlement-task": "Diese Aufgabe gehört nicht zur Austrittsabrechnung."
     },
     "doneToast": "Der Austritt ist abgerechnet."
   }
