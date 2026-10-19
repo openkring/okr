@@ -29,17 +29,24 @@ import {
 /**
  * Power level of the room's owner. 50 may post (events_default 0) and redact (redact 50), but
  * every reshaping action — invite/kick/ban and all state, incl. the room name, the canonical
- * alias and the org.okr.tenant marker — needs 100, which only @bk2-bot holds (see
- * notesRoomPowerLevels). The private_chat preset alone would let 50 do all of that.
+ * alias and the org.okr.tenant marker — needs 100, which only @bk2-bot holds as the room's
+ * creator (see notesRoomPowerLevels). The private_chat preset alone would let 50 do all of that.
  */
 const NOTES_PERSON_POWER_LEVEL = 50;
 const NOTES_BOT_POWER_LEVEL = 100;
 
-/** `power_level_content_override` of a notes room: the owner may write and redact, nothing else. */
-export function notesRoomPowerLevels(botUserId: string, ownerUserId: string): Record<string, unknown> {
+/** Notes rooms are created as room version 12: the creator (@bk2-bot) outranks every power level. */
+export const NOTES_ROOM_VERSION = '12';
+
+/**
+ * `power_level_content_override` of a notes room: the owner may write and redact, nothing else.
+ * The bot is NOT listed in `users` — in room version 12 the creator holds unlimited power and
+ * Synapse rejects a creator in `content.users` («Creator user … must not appear in content.users»).
+ */
+export function notesRoomPowerLevels(ownerUserId: string): Record<string, unknown> {
   const admin = NOTES_BOT_POWER_LEVEL;
   return {
-    users: { [botUserId]: NOTES_BOT_POWER_LEVEL, [ownerUserId]: NOTES_PERSON_POWER_LEVEL },
+    users: { [ownerUserId]: NOTES_PERSON_POWER_LEVEL },
     invite: admin,
     kick: admin,
     ban: admin,
@@ -153,7 +160,8 @@ export interface NotesRoomFacts {
  *   - @bk2-bot created the room,
  *   - the marker names exactly one tenant,
  *   - the power levels are notesRoomPowerLevels' own (state_default, invite and the canonical
- *     alias at 100) and their users are exactly the bot at 100 and one person at 50 (the owner),
+ *     alias at 100) and their users are exactly one person at 50 (the owner) — plus, in a room of
+ *     an older room version, the bot at 100,
  *   - nobody but the bot and the owner is joined or invited (the owner may have left),
  *   - the canonical alias is exactly that owner's notes alias for that tenant on the bot's server,
  *   - and that alias resolves back to this room.
@@ -167,9 +175,11 @@ export function isGenuineNotesRoom(facts: NotesRoomFacts, botUserId: string): bo
   if (pl['state_default'] !== NOTES_BOT_POWER_LEVEL || pl['invite'] !== NOTES_BOT_POWER_LEVEL) return false;
   if (events['m.room.canonical_alias'] !== NOTES_BOT_POWER_LEVEL) return false;
   const users = Object.entries((pl['users'] ?? {}) as Record<string, number>);
-  if (users.length !== 2) return false;
-  if (!users.some(([id, level]) => id === botUserId && level === NOTES_BOT_POWER_LEVEL)) return false;
-  const owner = users.find(([id, level]) => id !== botUserId && level === NOTES_PERSON_POWER_LEVEL)?.[0];
+  const botEntry = users.find(([id]) => id === botUserId);
+  if (botEntry && botEntry[1] !== NOTES_BOT_POWER_LEVEL) return false;
+  const others = users.filter(([id]) => id !== botUserId);
+  if (others.length !== 1 || others[0][1] !== NOTES_PERSON_POWER_LEVEL) return false;
+  const owner = others[0][0];
   if (!owner?.startsWith('@')) return false;
   const colon = owner.indexOf(':');
   if (colon < 0 || owner.slice(colon + 1) !== server) return false;
@@ -257,7 +267,6 @@ export async function ensureNotesRoom(
     });
   }
 
-  const botUserId = await fetchBotUserId(adminToken);
   const createResp = await fetch(`${MATRIX_HOMESERVER}/_matrix/client/v3/createRoom`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
@@ -272,7 +281,8 @@ export async function ensureNotesRoom(
         { type: OKR_TENANT_EVENT, state_key: '', content: { tenants: [tenantId] } },
         { type: 'm.room.history_visibility', state_key: '', content: { history_visibility: 'joined' } },
       ],
-      power_level_content_override: notesRoomPowerLevels(botUserId, matrixUserId),
+      room_version: NOTES_ROOM_VERSION,
+      power_level_content_override: notesRoomPowerLevels(matrixUserId),
     }),
   });
   if (!createResp.ok) {

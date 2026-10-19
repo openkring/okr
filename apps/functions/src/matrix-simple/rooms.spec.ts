@@ -32,7 +32,7 @@ const NOTES_PL = { state_default: 100, invite: 100, events: { 'm.room.canonical_
 const ROOMS: Record<string, { alias: string; creator: string; power: Record<string, unknown>; members: string[] }> = {
   '!group:hs': { alias: '#group_g1:hs', creator: BOT, power: { users: { [BOT]: 100 } }, members: [BOT, '@a:hs'] },
   // owner @kaiser has left: only the bot is still joined
-  '!notes:hs': { alias: '#notes_scs_kaiser:hs', creator: BOT, power: { ...NOTES_PL, users: { [BOT]: 100, '@kaiser:hs': 50 } }, members: [BOT] },
+  '!notes:hs': { alias: '#notes_scs_kaiser:hs', creator: BOT, power: { ...NOTES_PL, users: { '@kaiser:hs': 50 } }, members: [BOT] },
   '!fake:hs': { alias: '#notes_scs_mallory:hs', creator: '@mallory:hs', power: { ...NOTES_PL, users: { '@mallory:hs': 100, '@victim:hs': 50 } }, members: ['@mallory:hs', '@victim:hs'] },
 };
 const roomOfAlias = (alias: string) => Object.entries(ROOMS).find(([, r]) => r.alias === alias)?.[0];
@@ -53,6 +53,12 @@ describe('isGenuineNotesRoom', () => {
   it('rejects a #notes_ alias that is not the owner\'s own', () => {
     expect(isGenuineNotesRoom({ ...genuine, canonicalAlias: '#notes_scs_someone:hs' }, BOT)).toBe(false);
   });
+  it('accepts the room version 12 shape: only the owner in users, the creator bot implicit', () => {
+    expect(isGenuineNotesRoom(withUsers({ '@kaiser:hs': 50 }), BOT)).toBe(true);
+  });
+  it('rejects the bot listed at a level other than 100', () => {
+    expect(isGenuineNotesRoom(withUsers({ [BOT]: 50, '@kaiser:hs': 50 }), BOT)).toBe(false);
+  });
   it('accepts the owner still joined, and the owner gone', () => {
     expect(isGenuineNotesRoom({ ...genuine, activeMembers: new Set([BOT, '@kaiser:hs']) }, BOT)).toBe(true);
     expect(isGenuineNotesRoom({ ...genuine, activeMembers: new Set() }, BOT)).toBe(true);
@@ -61,6 +67,7 @@ describe('isGenuineNotesRoom', () => {
     expect(isGenuineNotesRoom(withUsers({ [BOT]: 100, '@kaiser:hs': 50, '@x:hs': 50 }), BOT)).toBe(false);
     expect(isGenuineNotesRoom(withUsers({ [BOT]: 100, '@kaiser:hs': 100 }), BOT)).toBe(false);
     expect(isGenuineNotesRoom(withUsers({ [BOT]: 100 }), BOT)).toBe(false);
+    expect(isGenuineNotesRoom(withUsers({ '@kaiser:hs': 50, '@x:hs': 50 }), BOT)).toBe(false);
     expect(isGenuineNotesRoom(withUsers(undefined), BOT)).toBe(false);
   });
   it('rejects power levels that are not the notes room\'s own', () => {

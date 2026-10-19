@@ -105,7 +105,9 @@ describe('ensureNotesRoom', () => {
     });
     expect(body.name).toBe('notes_scs_kaiser');
     const pl = body.power_level_content_override;
-    expect(pl.users).toEqual({ '@bk2-bot:hs': 100, [`@kaiser:${HOST}`]: 50 });
+    // room version 12: the creator (bot) must NOT be in users — Synapse rejects it
+    expect(body.room_version).toBe('12');
+    expect(pl.users).toEqual({ [`@kaiser:${HOST}`]: 50 });
     expect(pl).toMatchObject({ invite: 100, kick: 100, ban: 100, state_default: 100, events_default: 0, redact: 50 });
     for (const type of [
       'm.room.name', 'm.room.canonical_alias', 'm.room.avatar', 'm.room.topic', 'm.room.power_levels',
