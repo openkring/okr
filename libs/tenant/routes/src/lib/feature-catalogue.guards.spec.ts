@@ -317,6 +317,7 @@ const AOC_REDIRECTS: Record<string, string> = {
   diary: '/diary/import',
   kiosk: '/trips/kiosk',
   statistics: '/aoc/adminops',
+  chat: '/chat/maintenance',
 };
 
 describe('/aoc guards after the 2026-08-05 rulings', () => {

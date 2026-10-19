@@ -12,11 +12,10 @@ import { ChatStatusService, FirestoreService } from '@okr/shared-data-access';
 import { ArticleSection, ChatExemption, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, PageCollection, PageModel, SectionCollection, UserModel, ViewPosition } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
 import { showToast } from '@okr/shared-util-angular';
-import { chatBlockedSince, fill, getFullName, hasRole } from '@okr/shared-util-core';
-import { AOC_I18N_KEYS } from '@okr/aoc-util';
+import { chatBlockedSince, fill, getFullName, hasRole, OPERATOR_TENANT_ID } from '@okr/shared-util-core';
 import { auditGroupRooms } from '@okr/subject-group-data-access';
 import type { GroupRoomDrift } from '@okr/subject-group-util';
-import { findGroupOfRoom, getMatrixLogLevel, setMatrixLogLevel, MatrixLogLevel } from '@okr/chat-util';
+import { CHAT_MAINTENANCE_I18N_KEYS, findGroupOfRoom, getMatrixLogLevel, groupKeyForRoom, setMatrixLogLevel, MatrixLogLevel } from '@okr/chat-util';
 import type { MatrixMediaService } from '@okr/chat-data-access';
 
 // ─── types mirroring the cloud-function interfaces ───────────────────────────
@@ -139,7 +138,7 @@ export interface RoomMessageInfo {
 
 export type DetailsTarget = 'room' | 'member';
 
-export type AocChatState = {
+export type ChatMaintenanceState = {
   selectedPersonKey: string | undefined;
   selectedRoomId: string | undefined;
   selectedMemberId: string | undefined;
@@ -175,7 +174,7 @@ export type AocChatState = {
   historyLoading: boolean;
 };
 
-const initialState: AocChatState = {
+const initialState: ChatMaintenanceState = {
   selectedPersonKey: undefined,
   selectedRoomId: undefined,
   selectedMemberId: undefined,
@@ -208,15 +207,16 @@ function getFn() {
   return getFunctions(getApp(), 'europe-west6');
 }
 
-export const AocChatStore = signalStore(
+export const ChatMaintenanceStore = signalStore(
   withState(initialState),
   withProps(() => {
     // `@okr/chat-data-access` is the barrel in front of matrix-js-sdk: importing it
-    // statically binds ~890 KB (the matrix chunk plus the SDK chunk it pulls) into the AOC
-    // section chunk, which every AOC page then downloads — the tenant list, the storage
-    // page, the kiosk page, none of which touch Matrix. A static import is the binding edge,
-    // so the only way out is to not have one: the type import above carries no runtime edge,
-    // and the service is resolved on first use through the injector.
+    // statically binds ~890 KB (the matrix chunk plus the SDK chunk it pulls) into whatever
+    // chunk holds this store. In AOC that was the section chunk every AOC page downloaded;
+    // here (spec 1.101 phase 4) the page is a lazy route, and the store still must not be the
+    // edge that binds the SDK to it. A static import is the binding edge, so the only way out
+    // is to not have one: the type import above carries no runtime edge, and the service is
+    // resolved on first use through the injector.
     //
     // Same reasoning as `trip-kiosk.store` and `trip.store`, which already lazy-load this lib.
     const injector = inject(Injector);
@@ -246,7 +246,7 @@ export const AocChatStore = signalStore(
     };
   }),
   withProps(store => ({
-    i18n: store.i18nService.translateAll(AOC_I18N_KEYS),
+    i18n: store.i18nService.translateAll(CHAT_MAINTENANCE_I18N_KEYS),
   })),
 
   // ─── rxResources ────────────────────────────────────────────────────────────
@@ -332,6 +332,13 @@ export const AocChatStore = signalStore(
     historyHasMore: computed(() => !!state.historyCursor()),
     // ─── 1.107 chat block card ───
     isAdmin: computed(() => hasRole('admin', state.appStore.currentUser())),
+    /**
+     * The homeserver-wide tools (display-name/avatar repair, tenant backfill, manual room
+     * assignment, «Chat sperren», deactivating a Matrix user) act on every tenant at once, so
+     * they show only in the operator's app (spec 1.101 phase 4). Hiding is not the gate: the
+     * callables and the `app-status/chat` rule reject everybody else server-side.
+     */
+    isOperator: computed(() => state.appStore.tenantId() === OPERATOR_TENANT_ID),
     chatStatus: computed(() => state.chatStatusService.status()),
     chatBlocked: computed(() => state.chatStatusService.blocked()),
     chatExempt: computed(() => state.chatStatusService.status()?.exempt ?? []),
@@ -658,8 +665,9 @@ export const AocChatStore = signalStore(
     // These mirror `GroupStore.createChatSection` / `createArticleSection` /
     // `createGroupPage` / `createGroupCalendar`. They are duplicated rather than imported:
     // `@okr/subject-group-feature` would drag the whole group view (tasks, folder, document,
-    // calendar) into the AOC chunk, which is exactly the eager-bundle growth the AOC page was
-    // just trimmed of. Only the document shapes are copied, and those are model-defined.
+    // calendar) into this page's chunk (it was the AOC chunk until spec 1.101 phase 4), which is
+    // exactly the bundle growth the page was trimmed of. Only the document shapes are copied,
+    // and those are model-defined.
 
     /** Read a document once; used to keep every create below idempotent. */
     async docExists(collection: string, key: string): Promise<boolean> {
@@ -765,7 +773,7 @@ export const AocChatStore = signalStore(
     },
 
     async deleteRoom(roomId: string): Promise<void> {
-      const message = await firstValueFrom(store.i18nService.translate('@aoc/feature.' + 'chat.room.delete.confirm', { roomId }));
+      const message = await firstValueFrom(store.i18nService.translate('@chat/feature.maintenance.room.delete.confirm', { roomId }));
       const alert = await store.alertController.create({
         header: store.i18n.chat_room_delete(),
         message,
@@ -815,7 +823,17 @@ export const AocChatStore = signalStore(
       }
     },
 
+    /**
+     * The live group behind a room, or undefined. Invite and kick take a `groupId` (the server
+     * resolves the room from the group), so a room without a group offers neither.
+     */
+    groupKeyOfRoom(roomId: string): string | undefined {
+      return groupKeyForRoom(roomId, store.appStore.allGroups());
+    },
+
     async inviteToRoom(roomId: string): Promise<void> {
+      const groupId = this.groupKeyOfRoom(roomId);
+      if (!groupId) return;
       const defaultPersonKey = store.selectedPersonKey() ?? '';
       const alert = await store.alertController.create({
         header: store.i18n.chat_room_invite(),
@@ -831,38 +849,12 @@ export const AocChatStore = signalStore(
       const pk = (data.values.personKey as string).trim();
       if (!pk) return;
       try {
-        const fn = httpsCallable<{ roomId: string; personKey: string }, { invited: boolean }>(
+        const fn = httpsCallable<{ groupId: string; personKey: string }, { roomId: string; joined: boolean }>(
           getFn(), 'invitePersonToGroupRoom'
         );
-        await fn({ roomId, personKey: pk });
+        await fn({ groupId, personKey: pk });
         store.membersResource.reload();
         await showToast(store.toastController, `${pk} ${store.i18n.chat_room_invite_conf()}`);
-      } catch (e) {
-        await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
-      }
-    },
-
-    async provisionUser(personKey?: string): Promise<void> {
-      const defaultKey = personKey ?? store.selectedPersonKey() ?? '';
-      const alert = await store.alertController.create({
-        header: store.i18n.chat_user_provision(),
-        inputs: [{ name: 'personKey', type: 'text', value: defaultKey, placeholder: 'personKey' }],
-        buttons: [
-          { text: store.i18n.cancel(), role: 'cancel' },
-          { text: store.i18n.chat_user_provision_action(), role: 'confirm' },
-        ],
-      });
-      await alert.present();
-      const { data, role } = await alert.onDidDismiss();
-      if (role !== 'confirm' || !data?.values?.personKey) return;
-      const pk = (data.values.personKey as string).trim();
-      if (!pk) return;
-      try {
-        const fn = httpsCallable<{ personKey: string }, { matrixUserId: string; provisioned: boolean }>(
-          getFn(), 'provisionMatrixUser'
-        );
-        const result = await fn({ personKey: pk });
-        await showToast(store.toastController, `${store.i18n.chat_user_provision_conf()}: ${result.data.matrixUserId}`);
       } catch (e) {
         await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
       }
@@ -900,7 +892,7 @@ export const AocChatStore = signalStore(
       const preview = store.repairPreview();
       if (!preview || preview.length === 0) return;
       const message = await firstValueFrom(
-        store.i18nService.translate('@aoc/feature.chat.repair.names.confirm', { count: preview.length })
+        store.i18nService.translate('@chat/feature.maintenance.repair.names.confirm', { count: preview.length })
       );
       const alert = await store.alertController.create({
         header: store.i18n.chat_repair_names(),
@@ -921,7 +913,7 @@ export const AocChatStore = signalStore(
         );
         const applied = await fn({ dryRun: false });
         const conf = await firstValueFrom(
-          store.i18nService.translate('@aoc/feature.chat.repair.names.conf', { count: applied.data.repaired.length })
+          store.i18nService.translate('@chat/feature.maintenance.repair.names.conf', { count: applied.data.repaired.length })
         );
         patchState(store, { repairPreview: [], repairSkippedCustom: applied.data.skippedCustomName.length });
         store.membersResource.reload();
@@ -966,7 +958,7 @@ export const AocChatStore = signalStore(
       const preview = store.avatarRepairPreview();
       if (!preview || preview.length === 0) return;
       const message = await firstValueFrom(
-        store.i18nService.translate('@aoc/feature.chat.repair.avatars.confirm', { count: preview.length })
+        store.i18nService.translate('@chat/feature.maintenance.repair.avatars.confirm', { count: preview.length })
       );
       const alert = await store.alertController.create({
         header: store.i18n.chat_repair_avatars(),
@@ -987,7 +979,7 @@ export const AocChatStore = signalStore(
         );
         const applied = await fn({ dryRun: false });
         const conf = await firstValueFrom(
-          store.i18nService.translate('@aoc/feature.chat.repair.avatars.conf', { count: applied.data.repaired.length + applied.data.migratedHttp.length })
+          store.i18nService.translate('@chat/feature.maintenance.repair.avatars.conf', { count: applied.data.repaired.length + applied.data.migratedHttp.length })
         );
         patchState(store, { avatarRepairPreview: [], avatarRepairSkippedHas: applied.data.skippedHasAvatar });
         store.membersResource.reload();
@@ -1039,7 +1031,7 @@ export const AocChatStore = signalStore(
     async assignRoom(entry: RoomAssignmentEntry, toThisApp: boolean): Promise<void> {
       const tenantId = store.appStore.tenantId();
       const message = await firstValueFrom(store.i18nService.translate(
-        toThisApp ? '@aoc/feature.chat.assign.confirm_here' : '@aoc/feature.chat.assign.confirm_hide',
+        toThisApp ? '@chat/feature.maintenance.assign.confirm_here' : '@chat/feature.maintenance.assign.confirm_hide',
         { name: entry.name || entry.roomId },
       ));
       const alert = await store.alertController.create({
@@ -1112,7 +1104,7 @@ export const AocChatStore = signalStore(
       const preview = store.tenantRepairPreview();
       if (!preview || preview.length === 0) return;
       const message = await firstValueFrom(
-        store.i18nService.translate('@aoc/feature.chat.repair.tenants.confirm', { count: preview.length })
+        store.i18nService.translate('@chat/feature.maintenance.repair.tenants.confirm', { count: preview.length })
       );
       const alert = await store.alertController.create({
         header: store.i18n.chat_repair_tenants(),
@@ -1133,7 +1125,7 @@ export const AocChatStore = signalStore(
         );
         const applied = await fn({ dryRun: false });
         const conf = await firstValueFrom(
-          store.i18nService.translate('@aoc/feature.chat.repair.tenants.conf', { count: applied.data.stamped })
+          store.i18nService.translate('@chat/feature.maintenance.repair.tenants.conf', { count: applied.data.stamped })
         );
         patchState(store, { tenantRepairPreview: [], tenantRepairAmbiguous: applied.data.ambiguous.length });
         await showToast(store.toastController, conf);
@@ -1166,7 +1158,9 @@ export const AocChatStore = signalStore(
     // ─── member actions ────────────────────────────────────────────────────────
 
     async kickMember(userId: string, roomId: string): Promise<void> {
-      const message = await firstValueFrom(store.i18nService.translate('@aoc/feature.' + 'chat.member.kick.confirm', { userId }));
+      const groupId = this.groupKeyOfRoom(roomId);
+      if (!groupId) return;
+      const message = await firstValueFrom(store.i18nService.translate('@chat/feature.maintenance.member.kick.confirm', { userId }));
       const alert = await store.alertController.create({
         header: store.i18n.chat_member_kick(),
         message,
@@ -1182,10 +1176,10 @@ export const AocChatStore = signalStore(
       // Extract personKey from userId (@personkey:homeserver → personkey)
       const personKey = userId.replace(/^@/, '').split(':')[0];
       try {
-        const fn = httpsCallable<{ roomId: string; personKey: string }, { kicked: boolean }>(
+        const fn = httpsCallable<{ groupId: string; personKey: string }, { roomId: string; kicked: boolean }>(
           getFn(), 'kickPersonFromGroupRoom'
         );
-        await fn({ roomId, personKey });
+        await fn({ groupId, personKey });
         store.membersResource.reload();
         await showToast(store.toastController, `${userId} ${store.i18n.chat_member_kick_conf()}`);
       } catch (e) {
@@ -1194,7 +1188,7 @@ export const AocChatStore = signalStore(
     },
 
     async deactivateUser(userId: string): Promise<void> {
-      const message = await firstValueFrom(store.i18nService.translate('@aoc/feature.' + 'chat.user.deactivate.confirm', { userId }));
+      const message = await firstValueFrom(store.i18nService.translate('@chat/feature.maintenance.user.deactivate.confirm', { userId }));
       const alert = await store.alertController.create({
         header: store.i18n.chat_user_deactivate(),
         message,

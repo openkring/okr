@@ -23,3 +23,5 @@ export * from './lib/bookmark.util';
 export * from './lib/jump.util';
 export * from './lib/reminder.util';
 export * from './lib/unread-from.util';
+export * from './lib/room-group.util';
+export * from './lib/chat-room-filter.util';

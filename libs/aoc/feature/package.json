@@ -19,8 +19,6 @@
     "@okr/shared-pipes": "*",
     "@okr/auth-data-access": "*",
     "@okr/aoc-util": "*",
-    "@okr/chat-util": "*",
-    "@okr/chat-data-access": "*",
     "@okr/user-data-access": "*",
     "@okr/subject-person-data-access": "*",
     "@okr/subject-person-feature": "*",
@@ -50,7 +48,6 @@
     "@okr/subject-person-util": "*",
     "@okr/project-task-util": "*",
     "@okr/user-feature": "*",
-    "@okr/user-util": "*",
-    "@okr/subject-group-data-access": "*"
+    "@okr/user-util": "*"
   }
 }

@@ -28,6 +28,8 @@
     "@okr/content-document-data-access": "*",
     "@okr/content-document-util": "*",
     "@okr/chat-ui": "*",
+    "@okr/subject-group-data-access": "*",
+    "@okr/subject-group-util": "*",
     "@sentry/angular": "*"
   }
 }

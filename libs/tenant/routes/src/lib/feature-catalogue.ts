@@ -152,7 +152,8 @@ const aoc: BlockRoutes = {
       // 1.101 phase 2: remove after the next release
       { path: 'content', redirectTo: '/page/integrity' },
       { path: 'data',       canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocData) },
-      { path: 'chat',       canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocChat) },
+      // 1.101 phase 4: remove after the next release
+      { path: 'chat', redirectTo: '/chat/maintenance' },
       { path: 'account',    canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocUserAccounts) },
       // 1.101 phase 2: remove after the next release
       { path: 'doc', redirectTo: '/document/orphans' },
@@ -1062,12 +1063,13 @@ const documentBlock: BlockRoutes = {
  */
 
 /**
- * No route fragment — deliberate, and verified rather than assumed: `app.routes.ts` has no
+ * No route for the chat screen itself (only Chat-Wartung, `/chat/maintenance`, spec 1.101
+ * phase 4) — deliberate, and verified rather than assumed: `app.routes.ts` has no
  * `chat` path and imports no `@okr/chat-*` lib anywhere. The chat SCREEN is a CMS page — the
  * live `chat` menu doc navigates to `/private/chat/contextMenuChat`, which resolves against
  * the `cms` block's `private/:id/:contextMenuName` fragment above and renders
  * `PageDispatcher` → `ChatPage` (`@case ('chat')`, `page.dispatcher.ts:53`) → `MatrixChat`.
- * The empty entry is still required: `feature-catalogue.sync.spec.ts` fails if an id exists
+ * The entry would be required even empty: `feature-catalogue.sync.spec.ts` fails if an id exists
  * on one side only.
  *
  * CONSEQUENCE WORTH KNOWING before Task 19 drives the real route table from this catalogue:
@@ -1079,7 +1081,16 @@ const documentBlock: BlockRoutes = {
  */
 const chat: BlockRoutes = {
   id: 'chat',
-  routes: (): Route[] => [],
+  // Chat-Wartung (moved from AOC `/aoc/chat`, spec 1.101 phase 4) — the one screen this block
+  // routes itself: the admin room browser, reached from `contextMenuChat` › Wartung. Lazy on
+  // purpose: `@okr/chat-feature` carries matrix-js-sdk, which must never reach an eager chunk.
+  routes: (): Route[] => [{
+    path: 'chat',
+    canActivate: [isAuthenticatedGuard],
+    children: [
+      { path: 'maintenance', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/chat-feature').then(m => m.ChatMaintenance) },
+    ],
+  }],
 };
 
 /**

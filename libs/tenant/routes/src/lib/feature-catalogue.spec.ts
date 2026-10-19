@@ -120,3 +120,24 @@ describe('person Bexio contacts route (spec 1.101 phase 3)', () => {
     expect(children.find(r => r.path === 'bexio-contacts')?.canActivate).toHaveLength(1);
   });
 });
+
+describe('chat maintenance route (spec 1.101 phase 4)', () => {
+  const blockRoutes = (id: string) => FEATURE_ROUTES.find(b => b.id === id)!.routes();
+  const child = (routes: ReturnType<typeof blockRoutes>, path: string) => routes.find(r => r.path === path)?.children ?? [];
+
+  it('the old /aoc/chat url redirects to /chat/maintenance', () => {
+    const aoc = child(blockRoutes('aoc'), 'aoc').find(r => r.path === 'chat');
+    expect(aoc?.redirectTo).toBe('/chat/maintenance');
+    expect(aoc?.loadComponent).toBeUndefined();
+  });
+
+  it('the chat block routes only /chat/maintenance, lazily, behind one admin guard', () => {
+    const routes = blockRoutes('chat');
+    expect(routes.map(r => r.path)).toEqual(['chat']);
+    const children = child(routes, 'chat');
+    expect(children.map(r => r.path)).toEqual(['maintenance']);
+    expect(children[0].canActivate).toHaveLength(1);
+    expect(children[0].loadComponent).toBeTypeOf('function');
+    expect(children[0].component).toBeUndefined();
+  });
+});

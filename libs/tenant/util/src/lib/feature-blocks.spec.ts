@@ -130,8 +130,35 @@ describe('FEATURE_BLOCKS Wartung rows (1.101 phase 2)', () => {
       (spec.children ?? []).forEach(visit);
     };
     aoc.menu.forEach(visit);
-    for (const n of ['maint-divider', 'maint-divider-content', 'maint-divider-trip', 'calevent-check-duplicates', 'group-check-hygiene', 'person-check-favaddress', 'person-bexio-contacts', 'aoc-bexio', 'page-integrity', 'document-orphans', 'trip-maintenance', 'trip-kiosk', 'aoc-kiosk', 'diary-import', 'aoc-content', 'aoc-doc', 'aoc-diary']) {
+    for (const n of ['maint-divider', 'maint-divider-content', 'maint-divider-trip', 'calevent-check-duplicates', 'group-check-hygiene', 'person-check-favaddress', 'person-bexio-contacts', 'aoc-bexio', 'page-integrity', 'document-orphans', 'trip-maintenance', 'trip-kiosk', 'aoc-kiosk', 'diary-import', 'aoc-content', 'aoc-doc', 'aoc-diary', 'chat-maintenance', 'aoc-chat']) {
       expect(names.has(n), n).toBe(false);
     }
+  });
+});
+
+/**
+ * Spec 1.101 phase 4: Chat-Wartung leaves `aoc-menu` and sits at the end of `contextMenuChat`.
+ * That wrapper is declared twice (blocks `chat` and `subject`), and the cross-block identity test
+ * compares only the OWN fields, never `children` — so the two child lists are pinned here.
+ */
+describe('contextMenuChat Wartung rows (1.101 phase 4)', () => {
+  const copies = FEATURE_BLOCKS
+    .map(b => ({ id: b.id, spec: b.menu.find(m => m.name === 'contextMenuChat') }))
+    .filter((c): c is { id: string; spec: MenuSpec } => !!c.spec);
+
+  it('is declared by exactly the chat and subject blocks', () => {
+    expect(copies.map(c => c.id).sort()).toEqual(['chat', 'subject']);
+  });
+
+  it.each(['chat', 'subject'])('the %s copy ends with the admin divider and the Chat-Wartung row', id => {
+    const tail = (copies.find(c => c.id === id)?.spec.children ?? []).slice(-2);
+    expect(tail.map(c => c.name)).toEqual(['maint-divider', 'chat-maintenance']);
+    expect(tail[0]).toMatchObject({ action: 'divider', url: '', roleNeeded: 'admin' });
+    expect(tail[1]).toMatchObject({ key: 'chat-maintenance', action: 'navigate', url: '/chat/maintenance', roleNeeded: 'admin', label: '@item.chat-maintenance' });
+  });
+
+  it('both copies carry field-identical children', () => {
+    const [a, b] = copies.map(c => JSON.stringify(c.spec.children));
+    expect(a).toBe(b);
   });
 });

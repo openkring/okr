@@ -3,6 +3,14 @@ import { die } from "./log.util";
 import { debugMessage } from "./debug.util";
 
 /**
+ * The operator tenant: the one app (used only by the operator) that may run tools reaching
+ * across tenants (spec 1.101 §6). Browser-safe home of the constant, so an app can hide those
+ * tools outside the operator's app; `@okr/shared-util-functions` re-exports it for the Cloud
+ * Functions, which are where the tools are actually gated.
+ */
+export const OPERATOR_TENANT_ID = 'bka';
+
+/**
  * Determines if the user has a matching role.
  * @param user 
  * @param allowedRoles a list of allowed roles to check for

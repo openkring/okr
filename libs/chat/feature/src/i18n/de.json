@@ -441,5 +441,199 @@
     "default": "Der Chat wird gerade gewartet. Er ist bald wieder da.",
     "callEnded": "Dein Anruf wurde deshalb beendet.",
     "ok": "OK"
+  },
+  "maintenance": {
+    "title": "Chat-Wartung",
+    "rooms": "Räume",
+    "no_rooms": "Keine Räume",
+    "search_placeholder": "Raum suchen...",
+    "no_members": "Keine Mitglieder",
+    "choose_room": "Raum auswählen",
+    "details": "Details",
+    "id": "ID",
+    "name": "Name",
+    "created_by": "Erstellt von",
+    "members": "Mitglieder",
+    "note": "Wenn keine Person ausgewählt ist, werden alle Chat Räume angezeigt. Bei selektierter Person, werden alle Chat Räume angezeigt, wo diese Person Mitglied ist.",
+    "invited": "Eingeladen",
+    "public": "Öffentlich",
+    "topic": "Thema",
+    "aliases": "Aliases",
+    "avatar": "Avatar",
+    "uid": "User ID",
+    "display_name": "Anzeigename",
+    "level": "Power Level",
+    "membership": "Mitgliedschaft",
+    "choose_room_or_member": "Raum oder Mitglied auswählen<br>Details anzeigen",
+    "select": {
+      "roomMember": {
+        "label": "Person wählen",
+        "description": "Wenn das Feld leer ist, werden alle Chat Räume angezeigt. Mit der Auswahl einer Person begrenzst du die Auswahl auf alle Räume, wo diese Person Member ist."
+      }
+    },
+    "room": {
+      "rename": {
+        "label": "Raum umbenennen",
+        "newname": "Neuer Name",
+        "action": "Umbenennen",
+        "conf": "Raum umbenannt"
+      },
+      "delete": {
+        "label": "Raum löschen",
+        "confirm": "Raum {{ roomId }} wirklich löschen ? Alle Nachrichten werden entfernt.",
+        "action": "Löschen",
+        "conf": "Raum gelöscht."
+      },
+      "invite": {
+        "label": "Person einladen",
+        "action": "Einladen",
+        "conf": "eingeladen"
+      }
+    },
+    "history": {
+      "label": "Verlauf lesen",
+      "header": "Verlauf",
+      "empty": "In diesem Raum wurde noch nichts geschrieben.",
+      "more": "Ältere laden",
+      "redacted": "Nachricht gelöscht",
+      "hint": "Nur zum Lesen. Du trittst dem Raum nicht bei, und niemand sieht, dass du mitliest.",
+      "error": "Der Verlauf konnte nicht geladen werden"
+    },
+    "convert": {
+      "label": "In Gruppe umwandeln",
+      "header": "In Gruppe umwandeln",
+      "message": "Aus diesem Chat wird eine richtige Gruppe mit Mitgliederliste. Alle bisherigen Teilnehmenden bleiben dabei, und keine Nachricht geht verloren. Der Chat bleibt geschlossen — nur Mitglieder kommen hinein, und wer neu dazukommt, liest erst ab dem Beitritt mit. Was soll die Gruppe zusätzlich bekommen?",
+      "action": "Umwandeln",
+      "conf": "Der Chat ist jetzt eine Gruppe",
+      "calendar": "Kalender",
+      "content": "Inhaltsseite",
+      "files": "Dateien",
+      "tasks": "Aufgaben",
+      "page": {
+        "chat": "Chat",
+        "content": "Inhalt"
+      }
+    },
+    "alias": {
+      "add": {
+        "label": "Alias hinzufügen",
+        "placeholder": "alias-name (ohne # und :homeserver)",
+        "action": "Hinzufügen",
+        "conf": "Alias hinzugefügt"
+      }
+    },
+    "user": {
+      "provision": {
+        "label": "Matrix User anlegen",
+        "action": "Anlegen",
+        "conf": "User angelegt"
+      },
+      "deactivate": {
+        "label": "Matrix User deaktivieren",
+        "confirm": "{{ userId }} deaktivieren? Der User kann sich danach nicht mehr anmelden.",
+        "action": "Deaktivieren",
+        "conf": "deaktiviert",
+        "notfound": "User nicht gefunden"
+      }
+    },
+    "member": {
+      "kick": {
+        "label": "Mitglied entfernen",
+        "confirm": "{{ userId }} aus dem Raum entfernen ?",
+        "action": "Entfernen",
+        "conf": "entfernt."
+      },
+      "view": {
+        "label": "Mitglieder anzeigen"
+      }
+    },
+    "log": {
+      "title": "Matrix SDK Log-Level",
+      "description": "Steuert, wie ausführlich das Matrix-SDK (matrix-js-sdk) in die Browser-Konsole schreibt – nur zur Fehlersuche im Chat. Die Auswahl bleibt über Reloads hinweg gespeichert. Standard: warn. Auf trace/debug stellen für ausführliche Logs, auf silent für keine."
+    },
+    "repair": {
+      "names": {
+        "label": "Anzeigenamen reparieren",
+        "description": "Setzt fehlende Matrix-Anzeigenamen aus dem Personennamen (Vorname Nachname). Konten mit eigenem Namen bleiben unberührt.",
+        "scan": "Prüfen",
+        "action": "Reparieren",
+        "none": "Alle Anzeigenamen sind korrekt – nichts zu reparieren.",
+        "preview": "Zu reparierende Konten",
+        "skipped_custom": "Konten mit eigenem Anzeigenamen übersprungen.",
+        "confirm": "{{ count }} Anzeigenamen jetzt aus den Personennamen setzen?",
+        "conf": "{{ count }} Anzeigenamen repariert."
+      },
+      "avatars": {
+        "label": "Avatare reparieren",
+        "description": "Setzt fehlende Matrix-Avatare aus dem Personen-Avatar. Konten mit eigenem Avatar bleiben unberührt.",
+        "scan": "Prüfen",
+        "action": "Reparieren",
+        "none": "Alle Konten haben einen Avatar – nichts zu reparieren.",
+        "preview": "Zu reparierende Konten",
+        "skipped_has": "Konten mit eigenem Avatar übersprungen.",
+        "confirm": "{{ count }} Avatare jetzt aus den Personen-Avataren setzen?",
+        "conf": "{{ count }} Avatare repariert."
+      },
+      "tenants": {
+        "label": "Chat-Räume Mandanten zuordnen",
+        "description": "Ein Matrix-Konto gilt für alle Mandanten. Diese Reparatur markiert bestehende Gruppen-Räume mit den Mandanten ihrer Gruppe, damit im Chat nur noch die Räume dieses Mandanten erscheinen. Direktnachrichten werden bewusst nicht markiert (sie werden über die Gegenseite zugeordnet); Räume ohne eindeutige Zuordnung bleiben unmarkiert und weiterhin überall sichtbar.",
+        "scan": "Prüfen",
+        "action": "Zuordnen",
+        "none": "Alle Räume sind bereits zugeordnet – nichts zu tun.",
+        "preview": "Zuzuordnende Räume",
+        "ambiguous": "Räume ohne eindeutige Zuordnung übersprungen (bleiben überall sichtbar).",
+        "confirm": "{{ count }} Chat-Räume jetzt den Mandanten zuordnen?",
+        "conf": "{{ count }} Chat-Räume zugeordnet."
+      },
+      "guests": {
+        "label": "Nicht-Mitglieder in Gruppen-Chats",
+        "description": "Zeigt pro Gruppe, wie viele Leute im Chat-Raum sitzen, die nicht in der Mitgliederliste stehen, und markiert die betroffenen Räume in der Liste. Hier wird nichts geändert.",
+        "scan": "Prüfen",
+        "none": "In allen Gruppen-Chats sitzen nur Mitglieder – nichts zu tun.",
+        "preview": "Gruppen mit Abweichung",
+        "inroom": "im Chat-Raum",
+        "members": "Mitglieder",
+        "missing": "Mitglieder fehlen im Raum",
+        "link_text": "Mitglieder abgleichen, Schreibrechte setzen und Nicht-Mitglieder entfernen findest du im Menü der Gruppenliste.",
+        "link_action": "Abgleichen in Gruppen"
+      }
+    },
+    "assign": {
+      "label": "Räume von Hand zuordnen",
+      "description": "Manche Chat-Räume gehören zu keiner Gruppe — zum Beispiel Räume, die über eine Verbindung zu Signal oder WhatsApp entstehen. Die automatische Zuordnung kann sie nicht erkennen, darum entscheidest du hier selbst: Räume, die du dieser App zuordnest, erscheinen in der Chat-Übersicht; ausgeblendete Räume erscheinen in keiner App. In Element bleiben sie in beiden Fällen unverändert lesbar.",
+      "scan": "Räume suchen",
+      "none": "Alle Räume sind zugeordnet – nichts zu tun.",
+      "found": "Räume ohne Gruppe",
+      "bridged": "über eine Verbindung entstanden",
+      "state_unassigned": "keiner App zugeordnet",
+      "state_unmarked": "noch nicht zugeordnet",
+      "action_here": "Dieser App zuordnen",
+      "action_hide": "Ausblenden",
+      "confirm_here": "Den Raum «{{ name }}» dieser App zuordnen? Er erscheint dann in der Chat-Übersicht.",
+      "confirm_hide": "Den Raum «{{ name }}» ausblenden? Er erscheint dann in keiner App mehr.",
+      "conf": "Zuordnung gespeichert."
+    },
+    "blocked": {
+      "title": "Chat vorübergehend nicht verfügbar",
+      "default": "Der Chat wird gerade gewartet. Er ist bald wieder da.",
+      "call": "Anrufe sind während der Wartung nicht möglich."
+    },
+    "block": {
+      "title": "Chat sperren",
+      "description": "Sperrt den Chat in allen Apps. Alle sehen deine Nachricht statt des Chats.",
+      "active": "Der Chat ist aktiv.",
+      "blockedSince": "Gesperrt seit {time} von {name}.",
+      "message": "Nachricht an alle",
+      "action": "Chat sperren",
+      "confirm": "Der Chat wird in allen Apps gesperrt. Möchtest du fortfahren?",
+      "saveMessage": "Nachricht speichern",
+      "exempt": "Ausnahmen",
+      "exemptHint": "Diese Personen können den Chat trotz Sperre nutzen und testen.",
+      "exemptAdd": "Person hinzufügen"
+    },
+    "unblock": {
+      "action": "Chat entsperren",
+      "confirm": "Der Chat wird in allen Apps wieder freigegeben. Möchtest du fortfahren?"
+    }
   }
 }

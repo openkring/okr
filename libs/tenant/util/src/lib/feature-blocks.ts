@@ -302,10 +302,10 @@ const aoc: FeatureBlock = {
       // every other tenant's AOC submenu is missing them today, which is exactly what
       // cataloguing them fixes).
       { key: 'aoc-sessions',   name: 'aoc-sessions',   url: '/aoc/sessions',   action: 'navigate', roleNeeded: 'admin', icon: 'history',  label: '@item.aoc-sessions' },
-      { key: 'aoc-chat',       name: 'aoc-chat',       url: '/aoc/chat',       action: 'navigate', roleNeeded: 'admin', icon: 'chatbubbles', label: '@item.aoc-chat' },
       { key: 'aoc-account',    name: 'aoc-account',    url: '/aoc/account',    action: 'navigate', roleNeeded: 'admin', icon: 'person',   label: '@item.aoc-account' },
       { key: 'aoc-email',      name: 'aoc-email',      url: '/aoc/email',      action: 'navigate', roleNeeded: 'admin', icon: 'email',    label: '@item.aoc-email' },
       // `aoc-kiosk` LEFT the catalogue with spec 1.101 phase 2: the kiosk page is `trip-kiosk` in `c-trips`.
+      // `aoc-chat` LEFT the catalogue with spec 1.101 phase 4: Chat-Wartung is `chat-maintenance` in `contextMenuChat`.
       // `aoc-allocation` (spec 1.47) LEFT the catalogue with spec 1.101 §6: tenant allocation is an
       // operator-only tool. Its route lives in apps/bka-app (`/operator/allocation`) and its menu
       // row is a bka-only doc written by scripts/restrict-allocation-to-bka.mjs.
@@ -959,6 +959,8 @@ const subject: FeatureBlock = {
     { key: 'contextMenuChat', name: 'contextMenuChat', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
       { key: 'chat-room-edit', name: 'chat-room-edit', url: 'editRoom', action: 'call', roleNeeded: 'admin', icon: 'edit', label: '@item.chat-room-edit' },
       { key: 'chat-room-pin', name: 'chat-room-pin', url: 'togglePin', action: 'toggle', roleNeeded: 'registered', icon: 'star-outline', iconAlt: 'star', label: '@item.chat-room-pin', labelAlt: '@item.chat-room-unpin' },
+      { key: 'maint-divider', name: 'maint-divider', url: '', action: 'divider', roleNeeded: 'admin', icon: 'help-circle', label: '@item.maint-divider' },
+      { key: 'chat-maintenance', name: 'chat-maintenance', url: '/chat/maintenance', action: 'navigate', roleNeeded: 'admin', icon: 'settings', label: '@item.chat-maintenance' },
     ] },
     { key: 'c-persons', name: 'c-persons', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'person-add', name: 'person-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: '@item.person-add' },
@@ -1888,10 +1890,9 @@ const documentBlock: FeatureBlock = {
  *  - `cms` (`page`, `section`, `menu` subdomains) — `core: true`, so by the settled convention
  *    it never declares a non-core edge; note `cms/page` is the block that physically renders
  *    `MatrixChat`.
- *  - `aoc` — does NOT: `aoc-chat.ts`/`aoc-chat.store.ts` use `@okr/chat-util` helpers and
- *    `MatrixMediaService` to build `aoc`'s OWN admin screen (`/aoc/chat`, still listed in the
- *    TODO on that block). It renders nothing of chat's surface and needs no doc catalogued
- *    here.
+ *  - `aoc` — no longer reaches in at all: its admin screen `/aoc/chat` moved into this lib as
+ *    Chat-Wartung (`/chat/maintenance`, the `chat-maintenance` row of `contextMenuChat`, spec
+ *    1.101 phase 4); `/aoc/chat` only redirects there.
  * (`avatar` is deliberately NOT in this list — fix round 1 corrected a reversed direction. No
  * `libs/avatar/**` file imports `@okr/chat-*`; the import runs the other way, see below.)
  *
@@ -1961,6 +1962,8 @@ const chat: FeatureBlock = {
     { key: 'contextMenuChat', name: 'contextMenuChat', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
       { key: 'chat-room-edit', name: 'chat-room-edit', url: 'editRoom', action: 'call', roleNeeded: 'admin', icon: 'edit', label: '@item.chat-room-edit' },
       { key: 'chat-room-pin', name: 'chat-room-pin', url: 'togglePin', action: 'toggle', roleNeeded: 'registered', icon: 'star-outline', iconAlt: 'star', label: '@item.chat-room-pin', labelAlt: '@item.chat-room-unpin' },
+      { key: 'maint-divider', name: 'maint-divider', url: '', action: 'divider', roleNeeded: 'admin', icon: 'help-circle', label: '@item.maint-divider' },
+      { key: 'chat-maintenance', name: 'chat-maintenance', url: '/chat/maintenance', action: 'navigate', roleNeeded: 'admin', icon: 'settings', label: '@item.chat-maintenance' },
     ] },
   ],
 };

@@ -10,13 +10,12 @@ import { ModelSelectService } from '@okr/shared-feature';
 import { AvatarInfo } from '@okr/shared-models';
 import { AvatarSelect } from '@okr/avatar-ui';
 
-import { formatMatrixTimestamp, isMatrixPhotoUrl, MATRIX_LOG_LEVELS, MatrixLogLevel } from '@okr/chat-util';
-import { filterAdminRoomsByName } from '@okr/aoc-util';
+import { filterAdminRoomsByName, formatMatrixTimestamp, isMatrixPhotoUrl, MATRIX_LOG_LEVELS, MatrixLogLevel } from '@okr/chat-util';
 import type { GroupRoomDrift } from '@okr/subject-group-util';
-import { AocChatStore, AdminRoom, RoomMemberInfo, RoomAssignmentEntry } from './aoc-chat.store';
+import { ChatMaintenanceStore, AdminRoom, RoomMemberInfo, RoomAssignmentEntry } from './chat-maintenance.store';
 
 @Component({
-  selector: 'okr-aoc-chat',
+  selector: 'okr-chat-maintenance',
   standalone: true,
   imports: [
     FormsModule, 
@@ -25,7 +24,7 @@ import { AocChatStore, AdminRoom, RoomMemberInfo, RoomAssignmentEntry } from './
     IonContent, IonIcon, IonList, IonItem, IonLabel, IonNote, IonBadge, IonThumbnail, IonSpinner, IonSearchbar, IonSelect, IonSelectOption, IonButton, IonTextarea,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent
   ],
-  providers: [AocChatStore],
+  providers: [ChatMaintenanceStore],
   styles: [`
     :host { display: block; height: 100%; }
 
@@ -159,61 +158,64 @@ import { AocChatStore, AdminRoom, RoomMemberInfo, RoomAssignmentEntry } from './
 
       <div class="admin-cards">
 
-      <!-- 1.107 chat block: global switch for all tenant apps -->
-      <ion-card class="repair-card">
-        <ion-card-header>
-          <ion-card-title>{{ store.i18n.chat_block_title() }}</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <p class="repair-desc">{{ store.i18n.chat_block_description() }}</p>
-          <ion-note [color]="chatBlocked() ? 'danger' : 'success'">{{ chatStatusLine() }}</ion-note>
-          @if (isAdmin()) {
-            <ion-textarea
-              [label]="store.i18n.chat_block_message()"
-              labelPlacement="stacked"
-              [autoGrow]="true"
-              [rows]="3"
-              [value]="chatMessage()"
-              (ionInput)="onChatMessageInput($event)"
-            />
-            <div class="repair-actions">
-              @if (chatBlocked()) {
-                <ion-button size="small" color="primary" (click)="onUnblockChat()">
-                  <ion-icon slot="start" src="{{'lock-open' | svgIcon}}" />
-                  {{ store.i18n.chat_unblock_action() }}
-                </ion-button>
-                @if (chatMessageDirty()) {
-                  <ion-button size="small" fill="outline" (click)="onSaveChatMessage()">
-                    <ion-icon slot="start" src="{{'checkbox-circle' | svgIcon}}" />
-                    {{ store.i18n.chat_block_saveMessage() }}
+      <!-- Operator only (spec 1.101 phase 4): the block switches chat off in every tenant app -->
+      @if (isOperator()) {
+        <!-- 1.107 chat block: global switch for all tenant apps -->
+        <ion-card class="repair-card">
+          <ion-card-header>
+            <ion-card-title>{{ store.i18n.chat_block_title() }}</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <p class="repair-desc">{{ store.i18n.chat_block_description() }}</p>
+            <ion-note [color]="chatBlocked() ? 'danger' : 'success'">{{ chatStatusLine() }}</ion-note>
+            @if (isAdmin()) {
+              <ion-textarea
+                [label]="store.i18n.chat_block_message()"
+                labelPlacement="stacked"
+                [autoGrow]="true"
+                [rows]="3"
+                [value]="chatMessage()"
+                (ionInput)="onChatMessageInput($event)"
+              />
+              <div class="repair-actions">
+                @if (chatBlocked()) {
+                  <ion-button size="small" color="primary" (click)="onUnblockChat()">
+                    <ion-icon slot="start" src="{{'lock-open' | svgIcon}}" />
+                    {{ store.i18n.chat_unblock_action() }}
+                  </ion-button>
+                  @if (chatMessageDirty()) {
+                    <ion-button size="small" fill="outline" (click)="onSaveChatMessage()">
+                      <ion-icon slot="start" src="{{'checkbox-circle' | svgIcon}}" />
+                      {{ store.i18n.chat_block_saveMessage() }}
+                    </ion-button>
+                  }
+                } @else {
+                  <ion-button size="small" color="danger" (click)="onBlockChat()">
+                    <ion-icon slot="start" src="{{'lock-closed' | svgIcon}}" />
+                    {{ store.i18n.chat_block_action() }}
                   </ion-button>
                 }
-              } @else {
-                <ion-button size="small" color="danger" (click)="onBlockChat()">
-                  <ion-icon slot="start" src="{{'lock-closed' | svgIcon}}" />
-                  {{ store.i18n.chat_block_action() }}
-                </ion-button>
-              }
-            </div>
-            <div class="repair-preview-title">{{ store.i18n.chat_block_exempt() }}</div>
-            <p class="repair-desc">{{ store.i18n.chat_block_exemptHint() }}</p>
-            <ion-list lines="inset" class="repair-list">
-              @for (entry of chatExempt(); track entry.personKey) {
-                <ion-item>
-                  <ion-label>{{ entry.name }}</ion-label>
-                  <ion-button slot="end" fill="clear" color="danger" (click)="onRemoveChatExemption(entry.personKey)">
-                    <ion-icon slot="icon-only" src="{{'trash' | svgIcon}}" />
-                  </ion-button>
-                </ion-item>
-              }
-            </ion-list>
-            <ion-button size="small" fill="outline" (click)="onAddChatExemption()">
-              <ion-icon slot="start" src="{{'person-add' | svgIcon}}" />
-              {{ store.i18n.chat_block_exemptAdd() }}
-            </ion-button>
-          }
-        </ion-card-content>
-      </ion-card>
+              </div>
+              <div class="repair-preview-title">{{ store.i18n.chat_block_exempt() }}</div>
+              <p class="repair-desc">{{ store.i18n.chat_block_exemptHint() }}</p>
+              <ion-list lines="inset" class="repair-list">
+                @for (entry of chatExempt(); track entry.personKey) {
+                  <ion-item>
+                    <ion-label>{{ entry.name }}</ion-label>
+                    <ion-button slot="end" fill="clear" color="danger" (click)="onRemoveChatExemption(entry.personKey)">
+                      <ion-icon slot="icon-only" src="{{'trash' | svgIcon}}" />
+                    </ion-button>
+                  </ion-item>
+                }
+              </ion-list>
+              <ion-button size="small" fill="outline" (click)="onAddChatExemption()">
+                <ion-icon slot="start" src="{{'person-add' | svgIcon}}" />
+                {{ store.i18n.chat_block_exemptAdd() }}
+              </ion-button>
+            }
+          </ion-card-content>
+        </ion-card>
+      }
 
       <!-- Matrix SDK log level (debug aid) -->
       <ion-card class="log-card">
@@ -237,225 +239,228 @@ import { AocChatStore, AdminRoom, RoomMemberInfo, RoomAssignmentEntry } from './
         </ion-card-content>
       </ion-card>
 
-      <!-- Display-name repair (SCS-13) -->
-      <ion-card class="repair-card">
-        <ion-card-header>
-          <ion-card-title>{{ store.i18n.chat_repair_names() }}</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <p class="repair-desc">{{ store.i18n.chat_repair_names_description() }}</p>
-          <div class="repair-actions">
-            <ion-button size="small" fill="outline" (click)="onPreviewRepair()" [disabled]="repairScanning() || repairApplying()">
-              @if (repairScanning()) {
-                <ion-spinner name="dots" slot="start" style="width:16px;height:16px" />
-              } @else {
-                <ion-icon slot="start" src="{{'search' | svgIcon}}" />
-              }
-              {{ store.i18n.chat_repair_names_scan() }}
-            </ion-button>
-            @if (repairPreview()?.length) {
-              <ion-button size="small" color="primary" (click)="onApplyRepair()" [disabled]="repairApplying()">
-                @if (repairApplying()) {
+      <!-- Operator only (spec 1.101 phase 4): these four act on the whole homeserver, not on this tenant -->
+      @if (isOperator()) {
+        <!-- Display-name repair (SCS-13) -->
+        <ion-card class="repair-card">
+          <ion-card-header>
+            <ion-card-title>{{ store.i18n.chat_repair_names() }}</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <p class="repair-desc">{{ store.i18n.chat_repair_names_description() }}</p>
+            <div class="repair-actions">
+              <ion-button size="small" fill="outline" (click)="onPreviewRepair()" [disabled]="repairScanning() || repairApplying()">
+                @if (repairScanning()) {
                   <ion-spinner name="dots" slot="start" style="width:16px;height:16px" />
                 } @else {
-                  <ion-icon slot="start" src="{{'edit' | svgIcon}}" />
+                  <ion-icon slot="start" src="{{'search' | svgIcon}}" />
                 }
-                {{ store.i18n.chat_repair_names_action() }} ({{ repairPreview()!.length }})
+                {{ store.i18n.chat_repair_names_scan() }}
               </ion-button>
-            }
-          </div>
-
-          @if (repairPreview(); as preview) {
-            @if (preview.length === 0) {
-              <ion-note color="medium">{{ store.i18n.chat_repair_names_none() }}</ion-note>
-            } @else {
-              <div class="repair-preview-title">{{ store.i18n.chat_repair_names_preview() }} ({{ preview.length }})</div>
-              <ion-list lines="inset" class="repair-list">
-                @for (entry of preview; track entry.matrixUserId) {
-                  <ion-item>
-                    <ion-label>
-                      <div>{{ entry.to }}</div>
-                      <ion-note color="medium" style="font-size:0.75rem">
-                        {{ entry.matrixUserId }}@if (entry.from) { — „{{ entry.from }}"}
-                      </ion-note>
-                    </ion-label>
-                  </ion-item>
-                }
-              </ion-list>
-            }
-            @if (repairSkippedCustom() > 0) {
-              <ion-note color="medium" class="repair-skipped">{{ repairSkippedCustom() }} {{ store.i18n.chat_repair_names_skipped() }}</ion-note>
-            }
-          }
-        </ion-card-content>
-      </ion-card>
-
-      <!-- Avatar repair — fill Matrix avatars from the person avatar -->
-      <ion-card class="repair-card">
-        <ion-card-header>
-          <ion-card-title>{{ store.i18n.chat_repair_avatars() }}</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <p class="repair-desc">{{ store.i18n.chat_repair_avatars_description() }}</p>
-          <div class="repair-actions">
-            <ion-button size="small" fill="outline" (click)="onPreviewAvatarRepair()" [disabled]="avatarRepairScanning() || avatarRepairApplying()">
-              @if (avatarRepairScanning()) {
-                <ion-spinner name="dots" slot="start" style="width:16px;height:16px" />
-              } @else {
-                <ion-icon slot="start" src="{{'search' | svgIcon}}" />
+              @if (repairPreview()?.length) {
+                <ion-button size="small" color="primary" (click)="onApplyRepair()" [disabled]="repairApplying()">
+                  @if (repairApplying()) {
+                    <ion-spinner name="dots" slot="start" style="width:16px;height:16px" />
+                  } @else {
+                    <ion-icon slot="start" src="{{'edit' | svgIcon}}" />
+                  }
+                  {{ store.i18n.chat_repair_names_action() }} ({{ repairPreview()!.length }})
+                </ion-button>
               }
-              {{ store.i18n.chat_repair_avatars_scan() }}
-            </ion-button>
-            @if (avatarRepairPreview()?.length) {
-              <ion-button size="small" color="primary" (click)="onApplyAvatarRepair()" [disabled]="avatarRepairApplying()">
-                @if (avatarRepairApplying()) {
+            </div>
+
+            @if (repairPreview(); as preview) {
+              @if (preview.length === 0) {
+                <ion-note color="medium">{{ store.i18n.chat_repair_names_none() }}</ion-note>
+              } @else {
+                <div class="repair-preview-title">{{ store.i18n.chat_repair_names_preview() }} ({{ preview.length }})</div>
+                <ion-list lines="inset" class="repair-list">
+                  @for (entry of preview; track entry.matrixUserId) {
+                    <ion-item>
+                      <ion-label>
+                        <div>{{ entry.to }}</div>
+                        <ion-note color="medium" style="font-size:0.75rem">
+                          {{ entry.matrixUserId }}@if (entry.from) { — „{{ entry.from }}"}
+                        </ion-note>
+                      </ion-label>
+                    </ion-item>
+                  }
+                </ion-list>
+              }
+              @if (repairSkippedCustom() > 0) {
+                <ion-note color="medium" class="repair-skipped">{{ repairSkippedCustom() }} {{ store.i18n.chat_repair_names_skipped() }}</ion-note>
+              }
+            }
+          </ion-card-content>
+        </ion-card>
+
+        <!-- Avatar repair — fill Matrix avatars from the person avatar -->
+        <ion-card class="repair-card">
+          <ion-card-header>
+            <ion-card-title>{{ store.i18n.chat_repair_avatars() }}</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <p class="repair-desc">{{ store.i18n.chat_repair_avatars_description() }}</p>
+            <div class="repair-actions">
+              <ion-button size="small" fill="outline" (click)="onPreviewAvatarRepair()" [disabled]="avatarRepairScanning() || avatarRepairApplying()">
+                @if (avatarRepairScanning()) {
                   <ion-spinner name="dots" slot="start" style="width:16px;height:16px" />
                 } @else {
-                  <ion-icon slot="start" src="{{'edit' | svgIcon}}" />
+                  <ion-icon slot="start" src="{{'search' | svgIcon}}" />
                 }
-                {{ store.i18n.chat_repair_avatars_action() }} ({{ avatarRepairPreview()!.length }})
+                {{ store.i18n.chat_repair_avatars_scan() }}
               </ion-button>
-            }
-          </div>
-
-          @if (avatarRepairPreview(); as preview) {
-            @if (preview.length === 0) {
-              <ion-note color="medium">{{ store.i18n.chat_repair_avatars_none() }}</ion-note>
-            } @else {
-              <div class="repair-preview-title">{{ store.i18n.chat_repair_avatars_preview() }} ({{ preview.length }})</div>
-              <ion-list lines="inset" class="repair-list">
-                @for (entry of preview; track entry.matrixUserId) {
-                  <ion-item>
-                    <ion-thumbnail slot="start">
-                      <img [src]="entry.avatarUrl" [alt]="entry.matrixUserId" />
-                    </ion-thumbnail>
-                    <ion-label>
-                      <ion-note color="medium" style="font-size:0.75rem">{{ entry.matrixUserId }}</ion-note>
-                    </ion-label>
-                  </ion-item>
-                }
-              </ion-list>
-            }
-            @if (avatarRepairSkippedHas() > 0) {
-              <ion-note color="medium" class="repair-skipped">{{ avatarRepairSkippedHas() }} {{ store.i18n.chat_repair_avatars_skipped() }}</ion-note>
-            }
-          }
-        </ion-card-content>
-      </ion-card>
-
-      <!-- Tenant backfill — stamp rooms with the tenants they belong to -->
-      <ion-card class="repair-card">
-        <ion-card-header>
-          <ion-card-title>{{ store.i18n.chat_repair_tenants() }}</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <p class="repair-desc">{{ store.i18n.chat_repair_tenants_description() }}</p>
-          <div class="repair-actions">
-            <ion-button size="small" fill="outline" (click)="onPreviewTenantRepair()" [disabled]="tenantRepairScanning() || tenantRepairApplying()">
-              @if (tenantRepairScanning()) {
-                <ion-spinner name="dots" slot="start" style="width:16px;height:16px" />
-              } @else {
-                <ion-icon slot="start" src="{{'search' | svgIcon}}" />
+              @if (avatarRepairPreview()?.length) {
+                <ion-button size="small" color="primary" (click)="onApplyAvatarRepair()" [disabled]="avatarRepairApplying()">
+                  @if (avatarRepairApplying()) {
+                    <ion-spinner name="dots" slot="start" style="width:16px;height:16px" />
+                  } @else {
+                    <ion-icon slot="start" src="{{'edit' | svgIcon}}" />
+                  }
+                  {{ store.i18n.chat_repair_avatars_action() }} ({{ avatarRepairPreview()!.length }})
+                </ion-button>
               }
-              {{ store.i18n.chat_repair_tenants_scan() }}
-            </ion-button>
-            @if (tenantRepairPreview()?.length) {
-              <ion-button size="small" color="primary" (click)="onApplyTenantRepair()" [disabled]="tenantRepairApplying()">
-                @if (tenantRepairApplying()) {
+            </div>
+
+            @if (avatarRepairPreview(); as preview) {
+              @if (preview.length === 0) {
+                <ion-note color="medium">{{ store.i18n.chat_repair_avatars_none() }}</ion-note>
+              } @else {
+                <div class="repair-preview-title">{{ store.i18n.chat_repair_avatars_preview() }} ({{ preview.length }})</div>
+                <ion-list lines="inset" class="repair-list">
+                  @for (entry of preview; track entry.matrixUserId) {
+                    <ion-item>
+                      <ion-thumbnail slot="start">
+                        <img [src]="entry.avatarUrl" [alt]="entry.matrixUserId" />
+                      </ion-thumbnail>
+                      <ion-label>
+                        <ion-note color="medium" style="font-size:0.75rem">{{ entry.matrixUserId }}</ion-note>
+                      </ion-label>
+                    </ion-item>
+                  }
+                </ion-list>
+              }
+              @if (avatarRepairSkippedHas() > 0) {
+                <ion-note color="medium" class="repair-skipped">{{ avatarRepairSkippedHas() }} {{ store.i18n.chat_repair_avatars_skipped() }}</ion-note>
+              }
+            }
+          </ion-card-content>
+        </ion-card>
+
+        <!-- Tenant backfill — stamp rooms with the tenants they belong to -->
+        <ion-card class="repair-card">
+          <ion-card-header>
+            <ion-card-title>{{ store.i18n.chat_repair_tenants() }}</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <p class="repair-desc">{{ store.i18n.chat_repair_tenants_description() }}</p>
+            <div class="repair-actions">
+              <ion-button size="small" fill="outline" (click)="onPreviewTenantRepair()" [disabled]="tenantRepairScanning() || tenantRepairApplying()">
+                @if (tenantRepairScanning()) {
                   <ion-spinner name="dots" slot="start" style="width:16px;height:16px" />
                 } @else {
-                  <ion-icon slot="start" src="{{'edit' | svgIcon}}" />
+                  <ion-icon slot="start" src="{{'search' | svgIcon}}" />
                 }
-                {{ store.i18n.chat_repair_tenants_action() }} ({{ tenantRepairPreview()!.length }})
+                {{ store.i18n.chat_repair_tenants_scan() }}
               </ion-button>
-            }
-          </div>
-
-          @if (tenantRepairPreview(); as preview) {
-            @if (preview.length === 0) {
-              <ion-note color="medium">{{ store.i18n.chat_repair_tenants_none() }}</ion-note>
-            } @else {
-              <div class="repair-preview-title">{{ store.i18n.chat_repair_tenants_preview() }} ({{ preview.length }})</div>
-              <ion-list lines="inset" class="repair-list">
-                @for (entry of preview; track entry.roomId) {
-                  <ion-item>
-                    <ion-label>
-                      <div>{{ entry.name || entry.roomId }}</div>
-                      <ion-note color="medium" style="font-size:0.75rem">{{ entry.tenants.join(', ') }} — {{ entry.roomId }}</ion-note>
-                    </ion-label>
-                  </ion-item>
-                }
-              </ion-list>
-            }
-            @if (tenantRepairAmbiguous() > 0) {
-              <ion-note color="medium" class="repair-skipped">{{ tenantRepairAmbiguous() }} {{ store.i18n.chat_repair_tenants_skipped() }}</ion-note>
-            }
-          }
-        </ion-card-content>
-      </ion-card>
-
-      <!-- Manual room assignment — for rooms the backfill cannot derive (bridge rooms) -->
-      <ion-card class="repair-card">
-        <ion-card-header>
-          <ion-card-title>{{ store.i18n.chat_assign() }}</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <p class="repair-desc">{{ store.i18n.chat_assign_description() }}</p>
-          <div class="repair-actions">
-            <ion-button size="small" fill="outline" (click)="onScanAssignableRooms()" [disabled]="assignScanning()">
-              @if (assignScanning()) {
-                <ion-spinner name="dots" slot="start" style="width:16px;height:16px" />
-              } @else {
-                <ion-icon slot="start" src="{{'search' | svgIcon}}" />
+              @if (tenantRepairPreview()?.length) {
+                <ion-button size="small" color="primary" (click)="onApplyTenantRepair()" [disabled]="tenantRepairApplying()">
+                  @if (tenantRepairApplying()) {
+                    <ion-spinner name="dots" slot="start" style="width:16px;height:16px" />
+                  } @else {
+                    <ion-icon slot="start" src="{{'edit' | svgIcon}}" />
+                  }
+                  {{ store.i18n.chat_repair_tenants_action() }} ({{ tenantRepairPreview()!.length }})
+                </ion-button>
               }
-              {{ store.i18n.chat_assign_scan() }}
-            </ion-button>
-          </div>
+            </div>
 
-          @if (assignRooms(); as rooms) {
-            @if (rooms.length === 0) {
-              <ion-note color="medium">{{ store.i18n.chat_assign_none() }}</ion-note>
-            } @else {
-              <div class="repair-preview-title">{{ store.i18n.chat_assign_found() }} ({{ rooms.length }})</div>
-              <ion-list lines="inset" class="repair-list">
-                @for (entry of rooms; track entry.roomId) {
-                  <ion-item>
-                    <ion-label>
-                      <div>{{ entry.name || entry.roomId }}</div>
-                      <ion-note color="medium" style="font-size:0.75rem">
-                        {{ entry.joinedMembers }}
-                        @if (entry.bridged) { · {{ store.i18n.chat_assign_bridged() }} }
-                        ·
-                        @if (entry.tenants === undefined) {
-                          {{ store.i18n.chat_assign_state_unmarked() }}
-                        } @else if (entry.tenants.length === 0) {
-                          {{ store.i18n.chat_assign_state_unassigned() }}
-                        } @else {
-                          {{ entry.tenants.join(', ') }}
+            @if (tenantRepairPreview(); as preview) {
+              @if (preview.length === 0) {
+                <ion-note color="medium">{{ store.i18n.chat_repair_tenants_none() }}</ion-note>
+              } @else {
+                <div class="repair-preview-title">{{ store.i18n.chat_repair_tenants_preview() }} ({{ preview.length }})</div>
+                <ion-list lines="inset" class="repair-list">
+                  @for (entry of preview; track entry.roomId) {
+                    <ion-item>
+                      <ion-label>
+                        <div>{{ entry.name || entry.roomId }}</div>
+                        <ion-note color="medium" style="font-size:0.75rem">{{ entry.tenants.join(', ') }} — {{ entry.roomId }}</ion-note>
+                      </ion-label>
+                    </ion-item>
+                  }
+                </ion-list>
+              }
+              @if (tenantRepairAmbiguous() > 0) {
+                <ion-note color="medium" class="repair-skipped">{{ tenantRepairAmbiguous() }} {{ store.i18n.chat_repair_tenants_skipped() }}</ion-note>
+              }
+            }
+          </ion-card-content>
+        </ion-card>
+
+        <!-- Manual room assignment — for rooms the backfill cannot derive (bridge rooms) -->
+        <ion-card class="repair-card">
+          <ion-card-header>
+            <ion-card-title>{{ store.i18n.chat_assign() }}</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <p class="repair-desc">{{ store.i18n.chat_assign_description() }}</p>
+            <div class="repair-actions">
+              <ion-button size="small" fill="outline" (click)="onScanAssignableRooms()" [disabled]="assignScanning()">
+                @if (assignScanning()) {
+                  <ion-spinner name="dots" slot="start" style="width:16px;height:16px" />
+                } @else {
+                  <ion-icon slot="start" src="{{'search' | svgIcon}}" />
+                }
+                {{ store.i18n.chat_assign_scan() }}
+              </ion-button>
+            </div>
+
+            @if (assignRooms(); as rooms) {
+              @if (rooms.length === 0) {
+                <ion-note color="medium">{{ store.i18n.chat_assign_none() }}</ion-note>
+              } @else {
+                <div class="repair-preview-title">{{ store.i18n.chat_assign_found() }} ({{ rooms.length }})</div>
+                <ion-list lines="inset" class="repair-list">
+                  @for (entry of rooms; track entry.roomId) {
+                    <ion-item>
+                      <ion-label>
+                        <div>{{ entry.name || entry.roomId }}</div>
+                        <ion-note color="medium" style="font-size:0.75rem">
+                          {{ entry.joinedMembers }}
+                          @if (entry.bridged) { · {{ store.i18n.chat_assign_bridged() }} }
+                          ·
+                          @if (entry.tenants === undefined) {
+                            {{ store.i18n.chat_assign_state_unmarked() }}
+                          } @else if (entry.tenants.length === 0) {
+                            {{ store.i18n.chat_assign_state_unassigned() }}
+                          } @else {
+                            {{ entry.tenants.join(', ') }}
+                          }
+                        </ion-note>
+                      </ion-label>
+                      @if (assignBusyRoomId() === entry.roomId) {
+                        <ion-spinner slot="end" name="dots" style="width:16px;height:16px" />
+                      } @else {
+                        @if (!isAssignedHere(entry)) {
+                          <ion-button slot="end" size="small" fill="clear" (click)="onAssignRoom(entry, true)">
+                            {{ store.i18n.chat_assign_action_here() }}
+                          </ion-button>
                         }
-                      </ion-note>
-                    </ion-label>
-                    @if (assignBusyRoomId() === entry.roomId) {
-                      <ion-spinner slot="end" name="dots" style="width:16px;height:16px" />
-                    } @else {
-                      @if (!isAssignedHere(entry)) {
-                        <ion-button slot="end" size="small" fill="clear" (click)="onAssignRoom(entry, true)">
-                          {{ store.i18n.chat_assign_action_here() }}
-                        </ion-button>
+                        @if (entry.tenants === undefined || entry.tenants.length > 0) {
+                          <ion-button slot="end" size="small" fill="clear" color="medium" (click)="onAssignRoom(entry, false)">
+                            {{ store.i18n.chat_assign_action_hide() }}
+                          </ion-button>
+                        }
                       }
-                      @if (entry.tenants === undefined || entry.tenants.length > 0) {
-                        <ion-button slot="end" size="small" fill="clear" color="medium" (click)="onAssignRoom(entry, false)">
-                          {{ store.i18n.chat_assign_action_hide() }}
-                        </ion-button>
-                      }
-                    }
-                  </ion-item>
-                }
-              </ion-list>
+                    </ion-item>
+                  }
+                </ion-list>
+              }
             }
-          }
-        </ion-card-content>
-      </ion-card>
+          </ion-card-content>
+        </ion-card>
+      }
 
       <!-- Group-room drift — read-only scan (feeds the badge in the room list); the repairs live in the group list -->
       <ion-card class="repair-card">
@@ -658,8 +663,8 @@ import { AocChatStore, AdminRoom, RoomMemberInfo, RoomAssignmentEntry } from './
     </ion-content>
   `,
 })
-export class AocChat {
-  protected readonly store = inject(AocChatStore);
+export class ChatMaintenance {
+  protected readonly store = inject(ChatMaintenanceStore);
   private readonly router = inject(Router);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly modelSelectService = inject(ModelSelectService);
@@ -717,6 +722,7 @@ export class AocChat {
 
   // 1.107 chat block card
   protected readonly isAdmin = computed(() => this.store.isAdmin());
+  protected readonly isOperator = computed(() => this.store.isOperator());
   protected readonly chatBlocked = computed(() => this.store.chatBlocked());
   protected readonly chatExempt = computed(() => this.store.chatExempt());
   protected readonly chatStatusLine = computed(() => this.store.chatStatusLine());
@@ -867,13 +873,15 @@ export class AocChat {
     opts.buttons.push(createActionSheetButton('chat.actionsheet.showHistory', this.store.i18n.chat_history(), this.imgixBaseUrl, 'chatbubbles'));
     opts.buttons.push(createActionSheetButton('chat.actionsheet.rename', this.store.i18n.chat_room_rename(), this.imgixBaseUrl, 'edit'));
     opts.buttons.push(createActionSheetButton('chat.actionsheet.addAlias', this.store.i18n.chat_alias_add(), this.imgixBaseUrl, 'add-circle'));
-    opts.buttons.push(createActionSheetButton('chat.actionsheet.invite', this.store.i18n.chat_room_invite(), this.imgixBaseUrl, 'person-add'));
+    // Invite takes a group, not a room: hidden for a room no live group owns (a DM, a bridge room).
+    if (this.store.groupKeyOfRoom(room.roomId)) {
+      opts.buttons.push(createActionSheetButton('chat.actionsheet.invite', this.store.i18n.chat_room_invite(), this.imgixBaseUrl, 'person-add'));
+    }
     // Only an ad-hoc chat can become a group — every other room already belongs to one, or to
     // no group at all (a DM).
     if (this.store.isAdhocChatRoom(room)) {
       opts.buttons.push(createActionSheetButton('chat.actionsheet.convert', this.store.i18n.chat_convert(), this.imgixBaseUrl, 'group'));
     }
-    opts.buttons.push(createActionSheetButton('chat.actionsheet.provision', this.store.i18n.chat_user_provision(), this.imgixBaseUrl, 'key'));
     opts.buttons.push(createActionSheetButton('chat.actionsheet.delete', this.store.i18n.chat_room_delete(), this.imgixBaseUrl, 'trash'));
     opts.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
 
@@ -904,9 +912,6 @@ export class AocChat {
       case 'chat.actionsheet.convert':
         await this.store.convertAdhocChatToGroup(room);
         break;
-      case 'chat.actionsheet.provision':
-        await this.store.provisionUser();
-        break;
       case 'chat.actionsheet.delete':
         await this.store.deleteRoom(room.roomId);
         break;
@@ -919,10 +924,14 @@ export class AocChat {
     const opts = createActionSheetOptions(this.store.i18n.as_title());
 
     opts.buttons.push(createActionSheetButton('chat.actionsheet.showDetails', this.store.i18n.chat_details(), this.imgixBaseUrl, 'info-circle'));
-    if (roomId) {
+    // Kick takes a group, not a room: hidden for a room no live group owns.
+    if (roomId && this.store.groupKeyOfRoom(roomId)) {
       opts.buttons.push(createActionSheetButton('chat.actionsheet.kick', this.store.i18n.chat_member_kick(), this.imgixBaseUrl, 'cancel'));
     }
-    opts.buttons.push(createActionSheetButton('chat.actionsheet.deactivate', this.store.i18n.chat_user_deactivate(), this.imgixBaseUrl, 'trash'));
+    // Deactivating a Matrix account locks the person out of chat in every tenant: operator only.
+    if (this.isOperator()) {
+      opts.buttons.push(createActionSheetButton('chat.actionsheet.deactivate', this.store.i18n.chat_user_deactivate(), this.imgixBaseUrl, 'trash'));
+    }
     opts.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
 
     const sheet = await this.actionSheetController.create(opts as ActionSheetOptions);
@@ -938,7 +947,7 @@ export class AocChat {
         if (roomId) await this.store.kickMember(member.userId, roomId);
         break;
       case 'chat.actionsheet.deactivate':
-        await this.store.deactivateUser(member.userId);
+        if (this.isOperator()) await this.store.deactivateUser(member.userId);
         break;
     }
   }

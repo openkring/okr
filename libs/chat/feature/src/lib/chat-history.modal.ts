@@ -5,7 +5,7 @@ import {
 } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { AocChatStore, RoomMessageInfo } from './aoc-chat.store';
+import { ChatMaintenanceStore, RoomMessageInfo } from './chat-maintenance.store';
 
 /**
  * An admin's READ-ONLY window into a room they are not in.
@@ -86,7 +86,7 @@ import { AocChatStore, RoomMessageInfo } from './aoc-chat.store';
 })
 export class ChatHistoryModal {
   private readonly modalController = inject(ModalController);
-  protected readonly store = inject(AocChatStore);
+  protected readonly store = inject(ChatMaintenanceStore);
 
   public readonly roomName = input<string>('');
 

@@ -1,6 +1,7 @@
 import * as functions from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
+import { OPERATOR_TENANT_ID } from '@okr/shared-util-core';
 
 export function checkAppCheckToken(request: functions.CallableRequest, nameOfCallingFunction: string): void {
   if (!request.app) {
@@ -95,9 +96,10 @@ export async function getCallerTenantId(request: functions.CallableRequest, name
  * The operator tenant: the one app (used only by the operator) that may run tools reaching
  * across tenants — tenant allocation, the project-wide login list (spec 1.101 §6). All tenants
  * share one Firebase project, so these tools are gated HERE, on the server; hiding their screens
- * in the other apps is not access control.
+ * in the other apps is not access control. Defined in `@okr/shared-util-core` (browser-safe, so
+ * the apps can hide those screens) and re-exported here as the functions' single import site.
  */
-export const OPERATOR_TENANT_ID = 'bka';
+export { OPERATOR_TENANT_ID };
 
 /**
  * True only when the `users` doc belongs to the operator tenant alone AND carries `roles.admin`

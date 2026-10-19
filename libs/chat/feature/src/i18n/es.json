@@ -441,5 +441,199 @@
     "default": "El chat está en mantenimiento. Volverá pronto.",
     "callEnded": "Por eso tu llamada se ha finalizado.",
     "ok": "OK"
+  },
+  "maintenance": {
+    "title": "Mantenimiento del chat",
+    "rooms": "Salas",
+    "no_rooms": "Sin salas",
+    "search_placeholder": "Buscar sala...",
+    "no_members": "Sin miembros",
+    "choose_room": "Seleccionar sala",
+    "details": "Detalles",
+    "id": "ID",
+    "name": "Nombre",
+    "created_by": "Creado por",
+    "members": "Miembros",
+    "note": "Si no se selecciona ninguna persona, se muestran todas las salas de chat. Si se selecciona una persona, se muestran todas las salas de chat donde esta persona es miembro.",
+    "invited": "Invitado",
+    "public": "Público",
+    "topic": "Tema",
+    "aliases": "Aliases",
+    "avatar": "Avatar",
+    "uid": "User ID",
+    "display_name": "Nombre para mostrar",
+    "level": "Power Level",
+    "membership": "Membresía",
+    "choose_room_or_member": "Seleccionar sala o miembro<br>para mostrar detalles",
+    "select": {
+      "roomMember": {
+        "label": "Seleccionar persona",
+        "description": "Si el campo está vacío, se muestran todas las salas de chat. Al seleccionar una persona, se limita la selección a todas las salas donde esta persona es miembro."
+      }
+    },
+    "room": {
+      "rename": {
+        "label": "Renombrar sala",
+        "newname": "Nuevo nombre",
+        "action": "Renombrar",
+        "conf": "Sala renombrada"
+      },
+      "delete": {
+        "label": "Eliminar sala",
+        "confirm": "¿Eliminar realmente la sala {{ roomId }} ? Se eliminarán todos los mensajes.",
+        "action": "Eliminar",
+        "conf": "Sala eliminada."
+      },
+      "invite": {
+        "label": "Invitar a una persona",
+        "action": "Invitar",
+        "conf": "invitado"
+      }
+    },
+    "history": {
+      "label": "Leer el historial",
+      "header": "Historial",
+      "empty": "Todavía no se ha escrito nada en esta sala.",
+      "more": "Cargar más antiguos",
+      "redacted": "Mensaje eliminado",
+      "hint": "Solo lectura. No te unes a la sala y nadie ve que estás leyendo.",
+      "error": "No se pudo cargar el historial"
+    },
+    "convert": {
+      "label": "Convertir en grupo",
+      "header": "Convertir en grupo",
+      "message": "Este chat se convierte en un grupo real con lista de miembros. Todas las personas que están ahora siguen dentro y no se pierde ningún mensaje. El chat sigue cerrado — solo entran los miembros, y quien se incorpore más tarde lee a partir de ese momento. ¿Qué más debe tener el grupo?",
+      "action": "Convertir",
+      "conf": "El chat ya es un grupo",
+      "calendar": "Calendario",
+      "content": "Página de contenido",
+      "files": "Archivos",
+      "tasks": "Tareas",
+      "page": {
+        "chat": "Chat",
+        "content": "Contenido"
+      }
+    },
+    "alias": {
+      "add": {
+        "label": "Añadir alias",
+        "placeholder": "alias-name (sin # ni :homeserver)",
+        "action": "Añadir",
+        "conf": "Alias añadido"
+      }
+    },
+    "user": {
+      "provision": {
+        "label": "Crear usuario de Matrix",
+        "action": "Crear",
+        "conf": "Usuario creado"
+      },
+      "deactivate": {
+        "label": "Desactivar usuario de Matrix",
+        "confirm": "¿Desactivar {{ userId }}? El usuario ya no podrá iniciar sesión.",
+        "action": "Desactivar",
+        "conf": "desactivado",
+        "notfound": "Usuario no encontrado"
+      }
+    },
+    "member": {
+      "kick": {
+        "label": "Quitar miembro",
+        "confirm": "¿Quitar a {{ userId }} de la sala ?",
+        "action": "Quitar",
+        "conf": "quitado."
+      },
+      "view": {
+        "label": "Mostrar miembros"
+      }
+    },
+    "log": {
+      "title": "Nivel de log del SDK de Matrix",
+      "description": "Controla el nivel de detalle con el que el SDK de Matrix (matrix-js-sdk) escribe en la consola del navegador – solo para la resolución de problemas del chat. La selección se conserva entre recargas. Predeterminado: warn. Establecer en trace/debug para logs detallados, en silent para ninguno."
+    },
+    "repair": {
+      "names": {
+        "label": "Reparar nombres para mostrar",
+        "description": "Establece los nombres para mostrar de Matrix que faltan a partir del nombre de la persona (nombre apellido). Las cuentas con su propio nombre permanecen intactas.",
+        "scan": "Comprobar",
+        "action": "Reparar",
+        "none": "Todos los nombres para mostrar son correctos – nada que reparar.",
+        "preview": "Cuentas a reparar",
+        "skipped_custom": "Cuentas con su propio nombre para mostrar omitidas.",
+        "confirm": "¿Establecer ahora {{ count }} nombres para mostrar a partir de los nombres de las personas?",
+        "conf": "{{ count }} nombres para mostrar reparados."
+      },
+      "avatars": {
+        "label": "Reparar avatares",
+        "description": "Establece los avatares de Matrix que faltan a partir del avatar de la persona. Las cuentas con su propio avatar permanecen intactas.",
+        "scan": "Comprobar",
+        "action": "Reparar",
+        "none": "Todas las cuentas tienen un avatar – nada que reparar.",
+        "preview": "Cuentas a reparar",
+        "skipped_has": "Cuentas con su propio avatar omitidas.",
+        "confirm": "¿Establecer ahora {{ count }} avatares a partir de los avatares de las personas?",
+        "conf": "{{ count }} avatares reparados."
+      },
+      "tenants": {
+        "label": "Asignar salas de chat a los inquilinos",
+        "description": "Una cuenta de Matrix sirve para todos los inquilinos. Esta reparación marca las salas de grupo existentes con los inquilinos de su grupo, para que el chat solo muestre las salas de este inquilino. Los mensajes directos no se marcan a propósito (se asignan por su interlocutor); las salas sin asignación inequívoca quedan sin marcar y siguen visibles en todas partes.",
+        "scan": "Comprobar",
+        "action": "Asignar",
+        "none": "Todas las salas ya están asignadas: nada que hacer.",
+        "preview": "Salas por asignar",
+        "ambiguous": "salas sin asignación inequívoca omitidas (siguen visibles en todas partes).",
+        "confirm": "¿Asignar ahora {{ count }} salas de chat a sus inquilinos?",
+        "conf": "{{ count }} salas de chat asignadas."
+      },
+      "guests": {
+        "label": "No miembros en los chats de grupo",
+        "description": "Muestra, por grupo, cuántas personas están en la sala sin figurar en la lista de miembros y marca las salas afectadas en la lista. Aquí no se cambia nada.",
+        "scan": "Comprobar",
+        "none": "En todos los chats de grupo solo hay miembros — nada que hacer.",
+        "preview": "Grupos con diferencias",
+        "inroom": "en la sala",
+        "members": "miembros",
+        "missing": "miembros que faltan en la sala",
+        "link_text": "Sincronizar miembros, ajustar permisos de escritura y eliminar a quienes no son miembros está en el menú de la lista de grupos.",
+        "link_action": "Sincronizar en grupos"
+      }
+    },
+    "assign": {
+      "label": "Asignar salas a mano",
+      "description": "Algunas salas de chat no pertenecen a ningún grupo — por ejemplo las que se crean a través de una conexión con Signal o WhatsApp. La asignación automática no puede reconocerlas, así que aquí decides tú: las salas que asignes a esta app aparecen en el resumen de chats; las salas ocultas no aparecen en ninguna app. En ambos casos siguen siendo legibles en Element.",
+      "scan": "Buscar salas",
+      "none": "Todas las salas están asignadas: nada que hacer.",
+      "found": "Salas sin grupo",
+      "bridged": "creada por una conexión",
+      "state_unassigned": "no asignada a ninguna app",
+      "state_unmarked": "aún no asignada",
+      "action_here": "Asignar a esta app",
+      "action_hide": "Ocultar",
+      "confirm_here": "¿Asignar la sala «{{ name }}» a esta app? Entonces aparecerá en el resumen de chats.",
+      "confirm_hide": "¿Ocultar la sala «{{ name }}»? Entonces no aparecerá en ninguna app.",
+      "conf": "Asignación guardada."
+    },
+    "blocked": {
+      "title": "Chat no disponible temporalmente",
+      "default": "El chat está en mantenimiento. Volverá pronto.",
+      "call": "Las llamadas no son posibles durante el mantenimiento."
+    },
+    "block": {
+      "title": "Bloquear el chat",
+      "description": "Bloquea el chat en todas las apps. Todos ven tu mensaje en lugar del chat.",
+      "active": "El chat está activo.",
+      "blockedSince": "Bloqueado desde el {time} por {name}.",
+      "message": "Mensaje para todos",
+      "action": "Bloquear el chat",
+      "confirm": "El chat se bloqueará en todas las apps. ¿Quieres continuar?",
+      "saveMessage": "Guardar mensaje",
+      "exempt": "Excepciones",
+      "exemptHint": "Estas personas pueden usar y probar el chat a pesar del bloqueo.",
+      "exemptAdd": "Añadir persona"
+    },
+    "unblock": {
+      "action": "Desbloquear el chat",
+      "confirm": "El chat volverá a estar disponible en todas las apps. ¿Quieres continuar?"
+    }
   }
 }

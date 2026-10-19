@@ -101,6 +101,14 @@ Modal form for creating and editing Matrix rooms. Props: `roomId` (undefined = c
 
 Main chat UI component. Uses the `_MatrixChatStore` to render the room list, message thread, and toolbar.
 
+## Chat-Wartung (`/chat/maintenance`)
+
+`ChatMaintenance` / `ChatMaintenanceStore` (moved from AOC `/aoc/chat`, spec 1.101 phase 4), reached from `contextMenuChat` › Wartung, admin only, lazy route. An admin room browser over the Synapse admin API: it lists every room of the homeserver (filterable by person), not only the rooms the admin joined, which is what makes a read-only history of an unjoined room possible (`ChatHistoryModal`, opened through a dynamic import because it injects the store back).
+
+- **Every admin:** room browser with room and member action sheets (members, details, history, rename, alias, delete, convert an ad-hoc chat to a group), the matrix-js-sdk log level, and the read-only group-room drift scan with its room-list badge.
+- **Invite and kick** send the `groupId` of the live group whose `matrixRoomId` is the room (`groupKeyForRoom`, `@okr/chat-util`); for a room without a group both actions are hidden.
+- **Operator only** (`appStore.tenantId() === OPERATOR_TENANT_ID`): «Chat sperren», display-name and avatar repair, tenant backfill, «Räume von Hand zuordnen», and deactivating a Matrix user. They act on the whole homeserver; the callables and the `app-status/chat` rule reject every other tenant server-side, so hiding them is not the gate.
+
 ## Cloud Functions
 
 | Function | Description |
