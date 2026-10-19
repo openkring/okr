@@ -260,6 +260,7 @@ export const MEMBERSHIP_I18N_KEYS = {
   srv_hide:                                 PFX + 'srv.hide',
   srv_index_building:                       PFX + 'srv.index.building',
   srv_index_none:                           PFX + 'srv.index.none',
+  srv_index_error:                          PFX + 'srv.index.error',
   srv_index_summary:                        PFX + 'srv.index.summary',
   srv_col_name:                             PFX + 'srv.col.name',
   srv_col_age:                              PFX + 'srv.col.age',

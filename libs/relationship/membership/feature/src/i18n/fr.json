@@ -608,7 +608,8 @@
       "button": "Construire l'index",
       "building": "Construction de l’index...",
       "none": "Pas encore d’index. Construisez-le.",
-      "summary": "{shown} sur {total} entrées : {scs} SCS, {srv} SRV, {regasoft} Regasoft"
+      "summary": "{shown} sur {total} entrées : {scs} SCS, {srv} SRV, {regasoft} Regasoft",
+      "error": "Les contacts du portail Regasoft n'ont pas pu être chargés. Réessaie plus tard."
     },
     "person": {
       "update": {

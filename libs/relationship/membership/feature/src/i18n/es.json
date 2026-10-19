@@ -608,7 +608,8 @@
       "button": "Construir índice",
       "building": "Construyendo el índice...",
       "none": "Todavía no hay índice. Constrúyalo.",
-      "summary": "{shown} de {total} entradas: {scs} SCS, {srv} SRV, {regasoft} Regasoft"
+      "summary": "{shown} de {total} entradas: {scs} SCS, {srv} SRV, {regasoft} Regasoft",
+      "error": "No se pudieron cargar los contactos del portal Regasoft. Inténtalo de nuevo más tarde."
     },
     "person": {
       "update": {

@@ -608,7 +608,8 @@
       "button": "Index aufbauen",
       "building": "Index wird aufgebaut...",
       "none": "Noch kein Index. Index aufbauen.",
-      "summary": "{shown} von {total} Einträgen: {scs} SCS, {srv} SRV, {regasoft} Regasoft"
+      "summary": "{shown} von {total} Einträgen: {scs} SCS, {srv} SRV, {regasoft} Regasoft",
+      "error": "Die Kontakte aus dem Regasoft-Portal konnten nicht geladen werden. Bitte versuche es später noch einmal."
     },
     "person": {
       "update": {

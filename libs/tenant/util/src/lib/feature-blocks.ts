@@ -274,9 +274,11 @@ const aoc: FeatureBlock = {
   // aoc-content, aoc-data, aoc-statistics, user-all, aoc-sessions, aoc-chat,
   // aoc-account, aoc-doc, aoc-bexio, aoc-srv, activity-all, flighttracker, priv-register,
   // priv-audit, divider_empty`):
-  //  - the `aoc-*` entries are this block's own, all declared below (task 18 added
+  //  - the `aoc-*` entries are this block's own, declared below (task 18 added
   //    sessions/chat/account/doc/bexio/srv, whose routes were also missing from
-  //    `FEATURE_ROUTES` until now);
+  //    `FEATURE_ROUTES` until now) — except `aoc-statistics`, `aoc-bexio` and `aoc-srv`, which
+  //    were moved or deleted in spec 1.101 phase 3 (SRV to Mitglieder, Bexio contacts to
+  //    Personen, Statistik deleted);
   //  - `user-all` → `user`; `priv-register`/`priv-audit` → `security`; `flighttracker` →
   //    `mobility` (task 14; since spec 1.101 phase 1 a main-menu row, no longer under `aoc-menu`); `activity-all` → `activity` (task 18) — each via `aocMenuParent`;
   //  - `divider_empty` IS catalogued now (declared last below, mirroring its position as the

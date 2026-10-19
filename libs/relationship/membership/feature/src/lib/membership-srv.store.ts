@@ -1,7 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
-import { ModalController } from '@ionic/angular';
+import { ModalController, ToastController } from '@ionic/angular';
 import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { rxResource } from '@angular/core/rxjs-interop';
@@ -13,6 +13,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { AddressCollection, AddressModel, MembershipCollection, MembershipModel, OwnershipModel, PersonModel, SrvContact, SrvIndex, SrvMemberLicenseDetail } from '@okr/shared-models';
 import { debugListLoaded, getBirthYear, getFullName, getMismatches, getSystemQuery, getTodayStr, getYear, isAfterOrEqualDate, isMembership, isPerson } from '@okr/shared-util-core';
 
+import { showToast } from '@okr/shared-util-angular';
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { PersonService } from '@okr/subject-person-data-access';
@@ -156,6 +157,7 @@ export const MembershipSrvStore = signalStore(
     personService: inject(PersonService),
     membershipService: inject(MembershipService),
     modalController: inject(ModalController),
+    toastController: inject(ToastController),
     router: inject(Router),
     ownershipService: inject(OwnershipService),
     i18nService: inject(I18nService),
@@ -266,6 +268,9 @@ export const MembershipSrvStore = signalStore(
         console.log(`MembershipSrvStore.buildIndex: ${regasoftContacts.length} Regasoft contacts loaded`);
       } catch (e) {
         console.error('MembershipSrvStore.buildIndex: getSrvContacts failed', e);
+        // Without the Regasoft side every row would read «nur in BK»: say why and leave the index as it was.
+        await showToast(store.toastController, store.i18n.srv_index_error());
+        return;
       }
 
       const regasoftByServiceId = new Map<string, SrvContact>();

@@ -142,9 +142,8 @@ const aoc: BlockRoutes = {
   routes: (): Route[] => [{
     path: 'aoc',
     // The FLOOR every `/aoc` screen shares — the union of the children's own requirements, NOT
-    // the admin gate. The admin gate lives on the nine admin-only children below (the ones the
-    // 2026-08-05 rulings do not name; the `content`, `doc`, `trip`, `kiosk` and `diary` bookmark redirects
-    // carry no guard). See the block comment for why it is contentAdmin and not privileged
+    // the admin gate. The admin gate lives on the admin-only children below (the ones the
+    // 2026-08-05 rulings do not name; the bookmark redirects carry no guard). See the block comment for why it is contentAdmin and not privileged
     // (R-5) nor merely authenticated.
     canActivate: [isContentAdminGuard()],
     children: [
@@ -168,6 +167,8 @@ const aoc: BlockRoutes = {
       { path: 'bexio', redirectTo: '/person/bexio-contacts' },
       // 1.101 phase 3: remove after the next release
       { path: 'srv', redirectTo: '/membership/srv' },
+      // 1.101 phase 3: remove after the next release
+      { path: 'statistics', redirectTo: '/aoc/adminops' },
       { path: 'sessions',   canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocSession) },
       // 1.101 phase 2: remove after the next release
       { path: 'trip', redirectTo: '/trips/maintenance' },

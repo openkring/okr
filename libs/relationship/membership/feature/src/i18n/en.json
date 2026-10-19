@@ -608,7 +608,8 @@
       "button": "Build index",
       "building": "Building the index...",
       "none": "No index yet. Build the index.",
-      "summary": "{shown} of {total} entries: {scs} SCS, {srv} SRV, {regasoft} Regasoft"
+      "summary": "{shown} of {total} entries: {scs} SCS, {srv} SRV, {regasoft} Regasoft",
+      "error": "The contacts from the Regasoft portal could not be loaded. Please try again later."
     },
     "person": {
       "update": {
