@@ -2,7 +2,7 @@ import { computed, inject, Injectable, PLATFORM_ID, signal } from '@angular/core
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 
 import { FIRESTORE } from '@okr/shared-config';
-import { ChatExemption, ChatStatusCollection, ChatStatusDocId, ChatStatusModel } from '@okr/shared-models';
+import { ChatBlockedError, ChatExemption, ChatStatusCollection, ChatStatusDocId, ChatStatusModel } from '@okr/shared-models';
 import { addChatExemption, DateFormat, getTodayStr, isBrowser, isChatEffectivelyBlocked, removeChatExemption } from '@okr/shared-util-core';
 
 /**
@@ -53,6 +53,15 @@ export class ChatStatusService {
       const iv = setInterval(() => { if (this._ready()) done(); }, 25);
       function done(): void { clearTimeout(t); clearInterval(iv); resolve(); }
     });
+  }
+
+  /**
+   * Gate for opening a Matrix session: waits (bounded) for the status, then throws
+   * ChatBlockedError if chat is blocked for this person. Fail-open on timeout or listener error.
+   */
+  public async assertNotBlocked(personKey: string | undefined): Promise<void> {
+    await this.whenReady();
+    if (this.isEffectivelyBlocked(personKey)) throw new ChatBlockedError();
   }
 
   public async block(message: string, admin: ChatExemption): Promise<void> {

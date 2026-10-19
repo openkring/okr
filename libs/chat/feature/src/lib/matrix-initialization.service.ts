@@ -1,15 +1,15 @@
-import { ApplicationRef, computed, createComponent, EnvironmentInjector, inject, Injectable, Injector, runInInjectionContext } from '@angular/core';
+import { ApplicationRef, computed, createComponent, effect, EnvironmentInjector, inject, Injectable, Injector, runInInjectionContext, untracked } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { filter, switchMap, take, tap } from 'rxjs/operators';
 
 import { AppStore } from '@okr/shared-feature';
 import { MatrixChatService } from '@okr/chat-data-access';
-import { FcmService, writeBadgeLedgerFromPage } from '@okr/shared-data-access';
+import { ChatStatusService, FcmService, writeBadgeLedgerFromPage } from '@okr/shared-data-access';
+import { ChatBlockedError } from '@okr/shared-models';
 import { isKioskOnly, PUSH_PROMPT_SNOOZE_MS, shouldAskForPush } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { PUSH_PROMPT_I18N_KEYS, PushPromptI18n } from '@okr/chat-util';
@@ -36,8 +36,20 @@ export class MatrixInitializationService {
   private readonly injector = inject(Injector);
   private readonly environmentInjector = inject(EnvironmentInjector);
   private readonly appRef = inject(ApplicationRef);
+  private readonly chatStatus = inject(ChatStatusService);
   private initializationStarted = false;
   private kioskCallWindowMounted = false;
+  private sessionSetupDone = false;
+
+  /**
+   * 1.107 gate state: 'none' (signed out), 'blocked' (chat blocked for this person) or 'open'.
+   * A string so the effect below re-runs only on a real flip, not on every user-doc update.
+   */
+  private readonly chatGate = computed<'none' | 'blocked' | 'open'>(() => {
+    const user = this.appStore.currentUser();
+    if (!user) return 'none';
+    return this.chatStatus.isEffectivelyBlocked(user.personKey) ? 'blocked' : 'open';
+  });
 
   /**
    * Start watching for user authentication and initialize Matrix when ready.
@@ -51,18 +63,21 @@ export class MatrixInitializationService {
     this.initializationStarted = true;
     console.log('MatrixInitializationService: Starting early initialization watcher');
 
-    // Watch for user authentication (runInInjectionContext needed when called from APP_BOOTSTRAP_LISTENER)
-    runInInjectionContext(this.injector, () => toObservable(this.appStore.currentUser))
-      .pipe(
-        filter(user => !!user), // Wait for user to be authenticated
-        take(1), // Only initialize once
-        tap(user => console.log('MatrixInitializationService: User authenticated, initializing Matrix for', user.personKey)),
-        switchMap(() => this.initializeMatrix())
-      )
-      .subscribe({
-        next: () => console.log('MatrixInitializationService: Early initialization completed'),
-        error: (error) => console.error('MatrixInitializationService: Early initialization failed', error)
+    // Live transitions (1.107): connect while chat is open for the signed-in user, disconnect
+    // (keeping the cache) when an admin blocks it. runInInjectionContext is needed because this
+    // is called from APP_BOOTSTRAP_LISTENER. Only chatGate is tracked; the async work is untracked.
+    runInInjectionContext(this.injector, () => effect(() => {
+      const gate = this.chatGate();
+      untracked(() => {
+        if (gate === 'open') {
+          void this.initializeMatrix();
+        } else if (gate === 'blocked' && this.matrixService.isInitialized) {
+          console.log('MatrixInitializationService: chat blocked, disconnecting Matrix');
+          void this.matrixService.disconnect();
+        }
+        // 'none' (logout): MatrixChatService disconnects and wipes the cache on its own.
       });
+    }));
   }
 
   /**
@@ -121,9 +136,21 @@ export class MatrixInitializationService {
       // Idempotent — returns immediately if already initialized.
       await this.matrixService.ensureInitialized();
 
+      // Blocked while credentials were in flight (the status flipped after the gate passed):
+      // the effect saw no running client then, so stop the fresh one here.
+      if (this.chatGate() === 'blocked') {
+        await this.matrixService.disconnect();
+        return;
+      }
+
       console.log('MatrixInitializationService: Matrix client initialized successfully');
 
       this.mountKioskCallWindow();
+
+      // Push registration, listeners and badge sync run once per app lifetime; a reconnect
+      // after an unblock (or a token refresh) must not register them a second time.
+      if (this.sessionSetupDone) return;
+      this.sessionSetupDone = true;
 
       // Register for push (FCM token + Matrix pusher, see FcmService.enablePush). Without a decided
       // permission nothing registers here — iOS and Android 13+ need a user gesture — so ask once,
@@ -272,6 +299,10 @@ export class MatrixInitializationService {
       }
 
     } catch (error) {
+      if (error instanceof ChatBlockedError) {
+        console.log('MatrixInitializationService: chat is blocked, Matrix not started');
+        return;
+      }
       console.error('MatrixInitializationService: Failed to initialize Matrix', error);
       // Don't throw - this is a background initialization, shouldn't break the app
     }

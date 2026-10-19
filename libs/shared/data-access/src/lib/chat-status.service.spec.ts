@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { FIRESTORE } from '@okr/shared-config';
+import { ChatBlockedError } from '@okr/shared-models';
 
 const h = vi.hoisted(() => ({
   setDoc: vi.fn(async () => undefined),
@@ -150,5 +151,41 @@ describe('ChatStatusService', () => {
     h.setDoc.mockClear();
     await s.removeExemption('p2', 'adm');
     expect(payload()['exempt']).toEqual([]);
+  });
+  describe('assertNotBlocked', () => {
+    it('blocked, not exempt: rejects with ChatBlockedError', async () => {
+      const s = make();
+      h.next?.(snap({ blocked: true, exempt: [{ personKey: 'p1', name: 'A' }] }));
+      await expect(s.assertNotBlocked('p2')).rejects.toBeInstanceOf(ChatBlockedError);
+      await expect(s.assertNotBlocked(undefined)).rejects.toBeInstanceOf(ChatBlockedError);
+    });
+
+    it('blocked, exempt: resolves', async () => {
+      const s = make();
+      h.next?.(snap({ blocked: true, exempt: [{ personKey: 'p1', name: 'A' }] }));
+      await expect(s.assertNotBlocked('p1')).resolves.toBeUndefined();
+    });
+
+    it('no snapshot within the timeout: resolves (fail-open)', async () => {
+      vi.useFakeTimers();
+      const s = make();
+      const p = s.assertNotBlocked('p2');
+      const assertion = expect(p).resolves.toBeUndefined();
+      await vi.advanceTimersByTimeAsync(3100);
+      await assertion;
+    });
+
+    it('waits for the first snapshot before deciding', async () => {
+      vi.useFakeTimers();
+      const s = make();
+      let settled = false;
+      const p = s.assertNotBlocked('p2').then(() => { settled = true; }, (e: unknown) => { settled = true; throw e; });
+      await vi.advanceTimersByTimeAsync(100);
+      expect(settled).toBe(false);
+      h.next?.(snap({ blocked: true, exempt: [] }));
+      const assertion = expect(p).rejects.toBeInstanceOf(ChatBlockedError);
+      await vi.advanceTimersByTimeAsync(50);
+      await assertion;
+    });
   });
 });

@@ -8,6 +8,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotification, UserModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
+import { ChatStatusService } from '@okr/shared-data-access';
 import { checkVideoLimits, debugData, debugMessage } from '@okr/shared-util-core';
 import { OKR_VIDEO_FIELD, videoLink } from '@okr/content-document-util';
 import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError, VideoUploadError, buildPollContent, PollAnswerDef, POLL_START_EVENT, PinboardInput, AvailablePinboard, UNREAD_FROM_EVENT, MARKED_UNREAD_EVENT, flaggedUnreadFrom, indexBookmarkEntries, bookmarkedMessageIds } from '@okr/chat-util';
@@ -55,6 +56,7 @@ function msgTypeForMimeType(mimetype: string): MsgType {
 })
 export class MatrixChatService {
   private appStore = inject(AppStore);
+  private readonly chatStatus = inject(ChatStatusService);
 
   private client: MatrixClient | null = null;
   // ARCH-1: promise-cached so concurrent callers (early-init service + chat component)
@@ -266,6 +268,9 @@ export class MatrixChatService {
    * initialized; a failed attempt clears the cache so a later call can retry.
    */
   async ensureInitialized(): Promise<void> {
+    // 1.107: an admin can block chat app-wide. Waits (bounded, fail-open) for the status and
+    // throws ChatBlockedError before anything reaches fetchCredentials.
+    await this.chatStatus.assertNotBlocked(this.appStore.currentUser()?.personKey);
     if (this.client) return;
     if (this.initPromise) return this.initPromise;
     this.initPromise = (async () => {
