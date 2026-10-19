@@ -1,7 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonLabel, IonRow } from '@ionic/angular';
 
-import { Button, Header, ResultLog, StringSelect, StringSelectI18n } from '@okr/shared-ui';
+import { Button, Header, ResultLog } from '@okr/shared-ui';
 
 import { AocAdminOpsStore } from './aoc-adminops.store';
 

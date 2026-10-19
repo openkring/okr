@@ -1,5 +1,5 @@
 import { MembershipModel } from '@okr/shared-models';
-import { compareDate, fill, getAgeFromBirthYear, getEndOfYear, getFullName, ReportFinding } from '@okr/shared-util-core';
+import { fill, getAgeFromBirthYear, getFullName, isOngoing, ReportFinding } from '@okr/shared-util-core';
 
 import { getMembershipCategoryChanges } from './membership.util';
 
@@ -39,8 +39,9 @@ export function oldJuniorFindings(
   const findings: ReportFinding[] = [];
   for (const m of memberships) {
     if (m.category !== 'junior' || m.orgKey !== orgKey || m.relIsLast !== true) continue;
-    // same truthiness semantics as the former AOC report: only an exit date equal to the end of this year is skipped
-    if (compareDate(m.dateOfExit, getEndOfYear() + '') === 0) continue;
+    // only memberships that are still open: no exit date, or an exit on/after 31 Dec of the reference year.
+    // isOngoing alone would drop a junior leaving exactly at year end.
+    if (!isOngoing(m.dateOfExit) && m.dateOfExit < `${refYear}1231`) continue;
     const memberAge = getAgeFromBirthYear(m.memberBirthYear, refYear);
     if (memberAge >= 0 && memberAge <= age) continue;
     findings.push({

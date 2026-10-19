@@ -54,6 +54,18 @@ describe('oldJuniorFindings', () => {
   it('returns [] for no memberships', () => {
     expect(oldJuniorFindings([], 'scs', 2026, juniorTexts)).toEqual([]);
   });
+
+  it('ignores juniors that already left', () => {
+    expect(oldJuniorFindings([membership({ dateOfExit: '20200630' })], 'scs', 2026, juniorTexts)).toEqual([]);
+  });
+
+  it('lists a junior leaving on 31 Dec of the reference year', () => {
+    expect(oldJuniorFindings([membership({ dateOfExit: '20261231' })], 'scs', 2026, juniorTexts)).toHaveLength(1);
+  });
+
+  it('lists a junior with an open exit', () => {
+    expect(oldJuniorFindings([membership({ dateOfExit: END_FUTURE_DATE_STR })], 'scs', 2026, juniorTexts)).toHaveLength(1);
+  });
 });
 
 describe('categoryChangeFindings', () => {
