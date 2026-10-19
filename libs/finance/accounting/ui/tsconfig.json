@@ -8,7 +8,7 @@
     "moduleResolution": "bundler",
     "lib": ["dom", "es2022"],
     "ignoreDeprecations": "6.0",
-    "rootDir": "src"
+    "rootDir": "../../.."
   },
   "angularCompilerOptions": {
     "strictTemplates": true,
