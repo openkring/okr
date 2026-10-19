@@ -421,42 +421,6 @@
       "select": "Collection wählen"
     }
   },
-  "doc": {
-    "title": "Dokumente prüfen",
-    "content": "Prüft ob alle Dateien in Firebase Storage einen entsprechenden Eintrag in der Datenbank haben.",
-    "copy": {
-      "path": "Speicherpfad kopieren",
-      "url": "Download-URL kopieren"
-    },
-    "create": {
-      "label": "Dokument erstellen (DB-Record)",
-      "conf": "Das Dokument wurde erstellt.",
-      "error": "Das Dokument konnte nicht erstellt werden."
-    },
-    "delete": {
-      "label": "Dokument löschen",
-      "confirm": "Soll diese Datei aus dem Firebase Storage gelöscht werden?",
-      "conf": "Das Dokument wurde gelöscht.",
-      "error": "Das Dokument konnte nicht gelöscht werden."
-    },
-    "download": {
-      "label": "Dokument herunterladen"
-    },
-    "hide": {
-      "label": "Ausblenden"
-    },
-    "check": {
-      "title": "Dateien ohne DB-Eintrag",
-      "content": "Listet alle Dateien in Firebase Storage auf, für die kein Eintrag in der Firestore docs-Kollektion existiert.",
-      "button": "Prüfen"
-    },
-    "createAll": {
-      "label": "Für alle Dateien Dokumente erstellen",
-      "confirm": "Für alle {count} Dateien einen Datenbank-Eintrag erstellen?",
-      "running": "{done} von {count} erstellt …",
-      "conf": "{done} von {count} Dokumenten erstellt."
-    }
-  },
   "roles": {
     "title": "Autorisierung und Rollen",
     "personSelect": {

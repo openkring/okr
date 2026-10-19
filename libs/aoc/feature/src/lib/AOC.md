@@ -13,7 +13,7 @@ The AOC (Admin Operations Console) is a restricted administrative dashboard for 
 - **User Accounts** — Cross-reference view of Firebase Auth accounts, application `UserModel` records, and `MembershipModel` entries; supports editing/deleting each tier independently.
 - **Admin Ops** — Miscellaneous administrative queries: list IBANs, list over-age juniors, show membership-category changes by club/year. No Debug Tools (removed, spec 1.101).
 - **Kiosk** — Monitor and remote-control the tenant's kiosk tablets: heartbeat/online state, battery, running app version, today's trips, and the remote operations (reload, message, lock, video call) written as fields on `kiosk-status/{uid}`. See the `kiosk` skill.
-- **Doc** — Document-level admin operations (separate store `aoc-doc.store.ts`).
+- **Doc** — moved to Dokumente › Verwaiste Dateien (`/document/orphans`, `@okr/content-document-feature`); `/aoc/doc` redirects there.
 - **Email** — «E-Mail-Ereignisse» (`aoc-email.ts`): the delivery/bounce events of outgoing mail, with its own menu row (`aoc-email` → `/aoc/email`).
 - **Diary** — Prepare and repair the diary import: the Drive health check, the import dry run, and the places/people the import could not match. Lives in `@okr/content-diary-feature`, not here — same owner-vs-target split as `aoc/trip`. See [DIARY.md](../../../content/diary/feature/src/lib/DIARY.md).
 

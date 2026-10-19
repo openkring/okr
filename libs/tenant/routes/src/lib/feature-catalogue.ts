@@ -151,8 +151,8 @@ const aoc: BlockRoutes = {
   routes: (): Route[] => [{
     path: 'aoc',
     // The FLOOR every `/aoc` screen shares — the union of the children's own requirements, NOT
-    // the admin gate. The admin gate lives on the fourteen children below that the 2026-08-05
-    // rulings do not name. See the block comment for why it is contentAdmin and not privileged
+    // the admin gate. The admin gate lives on the twelve admin-only children below (the ones the
+    // 2026-08-05 rulings do not name; the `content` and `doc` bookmark redirects carry no guard). See the block comment for why it is contentAdmin and not privileged
     // (R-5) nor merely authenticated.
     canActivate: [isContentAdminGuard()],
     children: [
@@ -164,7 +164,8 @@ const aoc: BlockRoutes = {
       { path: 'chat',       canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocChat) },
       { path: 'account',    canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocUserAccounts) },
       { path: 'statistics', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocStatistics) },
-      { path: 'doc',        canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocDoc) },
+      // 1.101 phase 2: remove after the next release
+      { path: 'doc', redirectTo: '/document/orphans' },
       { path: 'kiosk',      canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocKiosk) },
       // SOFTENED by owner ruling R-5, 2026-08-05, to match the live `tag-all` menu doc's
       // `roleNeeded: contentAdmin`. The fifth mismatch, found while applying the first four and
@@ -326,6 +327,9 @@ const cms: BlockRoutes = {
       path: 'page',
       canActivate: [isAuthenticatedGuard],
       children: [
+        // Content integrity (moved from AOC, spec 1.101 phase 2). BEFORE `:listId/:contextMenuName`,
+        // which would otherwise swallow `integrity` as a listId.
+        { path: 'integrity', canActivate: [isContentAdminGuard()], loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageIntegrity) },
         // ACCESS REDUCED by owner ruling R-6, 2026-08-05 — this is not a tidy-up. The route now
         // matches the `page-all` menu doc's `roleNeeded: contentAdmin`, and a `privileged`-only
         // user LOSES access to the page editor they can open today: `privileged` and
@@ -333,9 +337,6 @@ const cms: BlockRoutes = {
         // `[<role>, 'admin']`), so this swap admits contentAdmins and excludes privileged. The
         // owner was offered a union guard that would have kept both and chose the swap
         // deliberately: privileged was never meant to do CMS work.
-        // Content integrity (moved from AOC, spec 1.101 phase 2). BEFORE `:listId/:contextMenuName`,
-        // which would otherwise swallow `integrity` as a listId.
-        { path: 'integrity', canActivate: [isContentAdminGuard()], loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageIntegrity) },
         { path: ':listId/:contextMenuName', canActivate: [isContentAdminGuard()], loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageList) },
       ],
     },
@@ -988,6 +989,10 @@ const documentBlock: BlockRoutes = {
     path: 'document',
     canActivate: [isAuthenticatedGuard],
     children: [
+      // Orphaned files (moved from AOC, spec 1.101 phase 2). BEFORE `:listId/:contextMenuName`, which
+      // would otherwise swallow `orphans` as a listId. Admin-only: `listTenantStorageFiles` requires
+      // `roles.admin` server-side.
+      { path: 'orphans', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/content-document-feature').then(m => m.DocumentOrphans) },
       // NO ROLE GUARD, by owner ruling R-7 (2026-08-25), which reverses R-6's
       // `isContentAdminGuard()` here.
       //

@@ -269,5 +269,41 @@
     "empty": "Noch kein SVG erzeugt.",
     "error": "Das SVG konnte nicht erzeugt werden."
   },
-  "fileCount": "Dateien"
+  "fileCount": "Dateien",
+  "orphans": {
+    "title": "Verwaiste Dateien",
+    "content": "Prüft, ob zu allen hochgeladenen Dateien ein Dokument angelegt ist.",
+    "copy": {
+      "path": "Speicherpfad kopieren",
+      "url": "Download-Link kopieren"
+    },
+    "create": {
+      "label": "Dokument anlegen",
+      "conf": "Das Dokument wurde angelegt.",
+      "error": "Das Dokument konnte nicht angelegt werden."
+    },
+    "delete": {
+      "label": "Datei löschen",
+      "confirm": "Soll diese Datei endgültig gelöscht werden?",
+      "conf": "Die Datei wurde gelöscht.",
+      "error": "Die Datei konnte nicht gelöscht werden."
+    },
+    "download": {
+      "label": "Datei herunterladen"
+    },
+    "hide": {
+      "label": "Ausblenden"
+    },
+    "check": {
+      "title": "Dateien ohne Dokument",
+      "content": "Zeigt alle hochgeladenen Dateien, zu denen noch kein Dokument angelegt ist.",
+      "button": "Prüfen"
+    },
+    "createAll": {
+      "label": "Für alle Dateien Dokumente anlegen",
+      "confirm": "Für alle {count} Dateien ein Dokument anlegen?",
+      "running": "{done} von {count} angelegt …",
+      "conf": "{done} von {count} Dokumenten angelegt."
+    }
+  }
 }

@@ -297,34 +297,6 @@ export const AOC_I18N_KEYS = {
   data_index_button:                        PFX + 'data.index.button',
   data_index_select:                        PFX + 'data.index.select',
 
-  // doc
-  doc_title:                                PFX + 'doc.title',
-  doc_content:                              PFX + 'doc.content',
-
-  doc_copy_path:                            PFX + 'doc.copy.path',
-  doc_copy_url:                             PFX + 'doc.copy.url',
-
-  doc_create:                               PFX + 'doc.create.label',
-  doc_create_conf:                          PFX + 'doc.create.conf',
-  doc_create_error:                         PFX + 'doc.create.error',
-
-  doc_create_all:                           PFX + 'doc.createAll.label',
-  doc_create_all_confirm:                   PFX + 'doc.createAll.confirm',
-  doc_create_all_running:                   PFX + 'doc.createAll.running',
-  doc_create_all_conf:                      PFX + 'doc.createAll.conf',
-
-  doc_delete:                               PFX + 'doc.delete.label',
-  doc_delete_confirm:                       PFX + 'doc.delete.confirm',
-  doc_delete_conf:                          PFX + 'doc.delete.conf',
-  doc_delete_error:                         PFX + 'doc.delete.error',
-
-  doc_hide:                                 PFX + 'doc.hide.label',
-  doc_download:                             PFX + 'doc.download.label',
-
-  doc_check_title:                          PFX + 'doc.check.title',
-  doc_check_content:                        PFX + 'doc.check.content',
-  doc_check_button:                         PFX + 'doc.check.button',
-
   // email
 
 

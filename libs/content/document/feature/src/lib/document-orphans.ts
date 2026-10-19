@@ -3,15 +3,14 @@ import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, Ion
 
 import { Button, Header } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
-import { fileSizeUnit } from '@okr/shared-util-core';
+import { fileSizeUnit, fill } from '@okr/shared-util-core';
 import { FileLogoPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
 import { I18nService } from '@okr/shared-i18n';
 
-import { fill } from '@okr/aoc-util';
-import { AocDocStore, BULK_CREATE_THRESHOLD, StorageFileInfo } from './aoc-doc.store';
+import { DocumentOrphansStore, BULK_CREATE_THRESHOLD, StorageFileInfo } from './document-orphans.store';
 
 @Component({
-  selector: 'okr-aoc-doc',
+  selector: 'okr-document-orphans',
   standalone: true,
   imports: [
     ThumbnailUrlPipe, FileLogoPipe,
@@ -19,15 +18,15 @@ import { AocDocStore, BULK_CREATE_THRESHOLD, StorageFileInfo } from './aoc-doc.s
     IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
     IonGrid, IonRow, IonCol, IonList, IonItem, IonLabel, IonNote, IonIcon, IonThumbnail
   ],
-  providers: [AocDocStore],
+  providers: [DocumentOrphansStore],
   template: `
-    <okr-header [i18n]="{ title: store.i18n.doc_title() }" />
+    <okr-header [i18n]="{ title: store.i18n.orphans_title() }" />
     <ion-content>
       <ion-card>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col>{{ store.i18n.doc_content() }}</ion-col>
+              <ion-col>{{ store.i18n.orphans_content() }}</ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
@@ -36,15 +35,15 @@ import { AocDocStore, BULK_CREATE_THRESHOLD, StorageFileInfo } from './aoc-doc.s
       <!-- Check Files in Store -->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>{{ store.i18n.doc_check_title() }}</ion-card-title>
+          <ion-card-title>{{ store.i18n.orphans_check_title() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col size="6">{{ store.i18n.doc_check_content() }}</ion-col>
+              <ion-col size="6">{{ store.i18n.orphans_check_content() }}</ion-col>
               <ion-col size="6">
                 <okr-button
-                  [label]="missingDocs().length > 0 ? store.i18n.doc_hide() : store.i18n.doc_check_button()"
+                  [label]="missingDocs().length > 0 ? store.i18n.orphans_hide() : store.i18n.orphans_check_button()"
                   iconName="checkbox-circle"
                   [disabled]="isChecking()"
                   (click)="toggleCheckFiles()" />
@@ -95,8 +94,8 @@ import { AocDocStore, BULK_CREATE_THRESHOLD, StorageFileInfo } from './aoc-doc.s
     </ion-content>
   `,
 })
-export class AocDoc {
-  protected readonly store = inject(AocDocStore);
+export class DocumentOrphans {
+  protected readonly store = inject(DocumentOrphansStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly i18nService = inject(I18nService);
 
@@ -110,8 +109,8 @@ export class AocDoc {
 
   /** While the run is going, the button doubles as the progress indicator. */
   protected readonly bulkCreateLabel = computed(() => {
-    if (!this.isCreatingAll()) return this.store.i18n.doc_create_all();
-    return fill(this.store.i18n.doc_create_all_running(),
+    if (!this.isCreatingAll()) return this.store.i18n.orphans_create_all();
+    return fill(this.store.i18n.orphans_create_all_running(),
       { done: this.store.createdCount(), count: this.missingDocs().length });
   });
 
@@ -140,11 +139,11 @@ export class AocDoc {
 
   protected async showFileActions(file: StorageFileInfo): Promise<void> {
     const options: ActionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
-    options.buttons.push(createActionSheetButton('doc.actionsheet.document.download', this.store.i18n.doc_download(), this.imgixBaseUrl, 'download'));
-    options.buttons.push(createActionSheetButton('doc.actionsheet.document.create', this.store.i18n.doc_create(), this.imgixBaseUrl, 'edit'));
-    options.buttons.push(createActionSheetButton('doc.actionsheet.copy.path', this.store.i18n.doc_copy_path(), this.imgixBaseUrl, 'copy'));
-    options.buttons.push(createActionSheetButton('doc.actionsheet.copy.url', this.store.i18n.doc_copy_url(), this.imgixBaseUrl, 'copy'));
-    options.buttons.push(createActionSheetButton('doc.actionsheet.document.delete', this.store.i18n.doc_delete(), this.imgixBaseUrl, 'trash'));
+    options.buttons.push(createActionSheetButton('doc.actionsheet.document.download', this.store.i18n.orphans_download(), this.imgixBaseUrl, 'download'));
+    options.buttons.push(createActionSheetButton('doc.actionsheet.document.create', this.store.i18n.orphans_create(), this.imgixBaseUrl, 'edit'));
+    options.buttons.push(createActionSheetButton('doc.actionsheet.copy.path', this.store.i18n.orphans_copy_path(), this.imgixBaseUrl, 'copy'));
+    options.buttons.push(createActionSheetButton('doc.actionsheet.copy.url', this.store.i18n.orphans_copy_url(), this.imgixBaseUrl, 'copy'));
+    options.buttons.push(createActionSheetButton('doc.actionsheet.document.delete', this.store.i18n.orphans_delete(), this.imgixBaseUrl, 'trash'));
     options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel-circle'));
 
     const sheet = await this.actionSheetController.create(options);

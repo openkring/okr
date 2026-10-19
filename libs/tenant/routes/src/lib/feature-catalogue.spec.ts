@@ -10,7 +10,7 @@ describe('catalogue route coverage', () => {
     const routes = [...composeFeatureRoutes(FEATURE_ROUTES), ...UNGATED_ROUTES];
     // TRANSITIONAL (spec 1.101 phase 2, Task 2): Wartung rows are catalogued before their pages;
     // Tasks 6-9 add each route and delete its entry. Empty by the end of the branch.
-    const pending = ['/document/orphans', '/trips/maintenance', '/diary/import'];
+    const pending = ['/trips/maintenance', '/diary/import'];
     const unresolved = collectMenuUrls(FEATURE_BLOCKS).filter(u => !pending.includes(u) && !urlResolves(routes, u));
     expect(unresolved).toEqual([]);
   });
@@ -30,5 +30,24 @@ describe('content integrity route (spec 1.101 phase 2)', () => {
     const paths = child(blockRoutes('cms'), 'page').map(r => r.path);
     expect(paths).toContain('integrity');
     expect(paths.indexOf('integrity')).toBeLessThan(paths.indexOf(':listId/:contextMenuName'));
+  });
+});
+
+describe('document orphans route (spec 1.101 phase 2)', () => {
+  const blockRoutes = (id: string) => FEATURE_ROUTES.find(b => b.id === id)!.routes();
+  const child = (routes: ReturnType<typeof blockRoutes>, path: string) => routes.find(r => r.path === path)?.children ?? [];
+
+  it('the old /aoc/doc url redirects to /document/orphans', () => {
+    const aoc = child(blockRoutes('aoc'), 'aoc').find(r => r.path === 'doc');
+    expect(aoc?.redirectTo).toBe('/document/orphans');
+    expect(aoc?.loadComponent).toBeUndefined();
+  });
+
+  it('the document block has the orphans path ahead of the :listId catch-all, behind an admin guard', () => {
+    const children = child(blockRoutes('document'), 'document');
+    const paths = children.map(r => r.path);
+    expect(paths).toContain('orphans');
+    expect(paths.indexOf('orphans')).toBeLessThan(paths.indexOf(':listId/:contextMenuName'));
+    expect(children.find(r => r.path === 'orphans')?.canActivate).toHaveLength(1);
   });
 });

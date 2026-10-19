@@ -269,5 +269,41 @@
     "empty": "Todavía no se ha generado ningún SVG.",
     "error": "No se pudo generar el SVG."
   },
-  "fileCount": "archivos"
+  "fileCount": "archivos",
+  "orphans": {
+    "title": "Archivos huérfanos",
+    "content": "Comprueba si todos los archivos subidos tienen un documento.",
+    "copy": {
+      "path": "Copiar la ubicación del archivo",
+      "url": "Copiar el enlace de descarga"
+    },
+    "create": {
+      "label": "Crear documento",
+      "conf": "Se ha creado el documento.",
+      "error": "No se pudo crear el documento."
+    },
+    "delete": {
+      "label": "Eliminar archivo",
+      "confirm": "¿Quieres eliminar este archivo definitivamente?",
+      "conf": "Se ha eliminado el archivo.",
+      "error": "No se pudo eliminar el archivo."
+    },
+    "download": {
+      "label": "Descargar archivo"
+    },
+    "hide": {
+      "label": "Ocultar"
+    },
+    "check": {
+      "title": "Archivos sin documento",
+      "content": "Muestra todos los archivos subidos que aún no tienen un documento.",
+      "button": "Comprobar"
+    },
+    "createAll": {
+      "label": "Crear documentos para todos los archivos",
+      "confirm": "¿Crear un documento para los {count} archivos?",
+      "running": "{done} de {count} creados …",
+      "conf": "{done} de {count} documentos creados."
+    }
+  }
 }

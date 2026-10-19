@@ -300,16 +300,35 @@ describe('guard factories are never registered uncalled', () => {
   });
 });
 
+/**
+ * A `redirectTo` child (the bookmark redirects, spec 1.101 phase 2) cannot carry a guard: Angular
+ * redirects before activation, and the redirect target brings its own guard. Every guard check
+ * below therefore looks at the non-redirect children only; `AOC_REDIRECTS` pins which ones are
+ * exempt, so no other redirect can slip past those checks.
+ */
+const withoutRedirects = (children: readonly Route[] = []): Route[] => children.filter(c => !c.redirectTo);
+
+/** The exact set of `/aoc` redirect children: old path -> new home. Later tasks add to it. */
+const AOC_REDIRECTS: Record<string, string> = {
+  content: '/page/integrity',
+  doc: '/document/orphans',
+};
+
 describe('/aoc guards after the 2026-08-05 rulings', () => {
+  it('the /aoc redirect children are exactly the known bookmark redirects', () => {
+    const { children = [] } = fragmentOf('aoc', 'aoc');
+    const redirects = Object.fromEntries(children.filter(c => c.redirectTo).map(c => [c.path, c.redirectTo]));
+
+    expect(redirects).toEqual(AOC_REDIRECTS);
+  });
+
   /**
    * The floor is no longer `admin`, so "the parent will catch it" is no longer true. Every
    * child must state its own requirement — this is what makes the next test meaningful.
    */
   it('every /aoc child carries its own guard', () => {
     const { children = [] } = fragmentOf('aoc', 'aoc');
-    // A `redirectTo` child (the `content` bookmark redirect, spec 1.101 phase 2) cannot carry a guard:
-    // Angular redirects before activation. The redirect target brings its own guard.
-    const unguarded = children.filter(c => !c.redirectTo && (c.canActivate ?? []).length === 0).map(c => c.path);
+    const unguarded = withoutRedirects(children).filter(c => (c.canActivate ?? []).length === 0).map(c => c.path);
 
     expect(unguarded, 'child would silently inherit the contentAdmin floor').toEqual([]);
     // 17: the tenant allocation child and the Storage page left the catalogue (spec 1.101).
@@ -318,9 +337,9 @@ describe('/aoc guards after the 2026-08-05 rulings', () => {
 
   it('every child the rulings do NOT name stays admin-only', () => {
     const { children = [] } = fragmentOf('aoc', 'aoc');
-    const others = children.filter(c => !c.redirectTo && !AOC_CONTENT_ADMIN.includes(c.path as typeof AOC_CONTENT_ADMIN[number]));
+    const others = withoutRedirects(children).filter(c => !AOC_CONTENT_ADMIN.includes(c.path as typeof AOC_CONTENT_ADMIN[number]));
 
-    expect(others.length, 'expected thirteen admin-only /aoc children (the fourteenth, content, is now a redirect)').toBe(13);
+    expect(others.length, 'expected twelve admin-only /aoc children (the redirect children carry no guard)').toBe(12);
     // The child's OWN guard must reject both non-admin roles, independently of the floor.
     expect(others.filter(c => activates(CONTENT_ADMIN, c)).map(c => c.path)).toEqual([]);
     expect(others.filter(c => activates(PRIVILEGED, c)).map(c => c.path)).toEqual([]);
@@ -328,14 +347,14 @@ describe('/aoc guards after the 2026-08-05 rulings', () => {
 
   it('an admin still reaches every /aoc screen', () => {
     const parent = fragmentOf('aoc', 'aoc');
-    const blocked = (parent.children ?? []).filter(c => !c.redirectTo).filter(c => !activates(ADMIN, parent, c)).map(c => c.path);
+    const blocked = withoutRedirects(parent.children).filter(c => !activates(ADMIN, parent, c)).map(c => c.path);
 
     expect(blocked).toEqual([]);
   });
 
   it('the /aoc floor still keeps a merely-registered user out of everything', () => {
     const parent = fragmentOf('aoc', 'aoc');
-    const reachable = (parent.children ?? []).filter(c => !c.redirectTo).filter(c => activates(REGISTERED, parent, c)).map(c => c.path);
+    const reachable = withoutRedirects(parent.children).filter(c => activates(REGISTERED, parent, c)).map(c => c.path);
 
     expect(reachable).toEqual([]);
   });
@@ -345,11 +364,11 @@ describe('/aoc guards after the 2026-08-05 rulings', () => {
    * the three ruled children are reachable) and still be stopped by each admin-only child. Both
    * halves in one assertion, because getting either wrong reintroduces the defeat-by-ancestor
    * bug the restructuring exists to avoid. R-6 touched no `/aoc` route, so the floor is still
-   * the union of these children: fourteen `['admin']` ∪ three `['contentAdmin', 'admin']`.
+   * the union of these children: twelve `['admin']` ∪ three `['contentAdmin', 'admin']`.
    */
   it('a contentAdmin clears the floor but only reaches the three ruled screens', () => {
     const parent = fragmentOf('aoc', 'aoc');
-    const reachable = (parent.children ?? []).filter(c => !c.redirectTo)
+    const reachable = withoutRedirects(parent.children)
       .filter(c => activates(CONTENT_ADMIN, parent, c))
       .map(c => c.path as string);
 

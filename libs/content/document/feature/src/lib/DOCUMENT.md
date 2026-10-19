@@ -86,3 +86,7 @@ Notable store actions:
 ## Version Chain
 
 Documents form an optional linked list: `priorVersionKey` points to the previous version's `okey`. `getRevisions()` traverses this chain and returns all versions ordered from newest to oldest. The `version` field holds a human-readable version identifier.
+
+## Verwaiste Dateien (`/document/orphans`)
+
+`DocumentOrphans` / `DocumentOrphansStore` (moved from AOC, spec 1.101 phase 2; reached from the Dokumente context menu, admin only). Lists every file under `tenant/{tenantId}/` in Storage that has no `docs` entry (via the `listTenantStorageFiles` callable, which requires `roles.admin`) and offers per-file actions (download, create the document, copy path or link, delete) plus a bulk create above 10 files.

@@ -421,42 +421,6 @@
       "select": "Select collection"
     }
   },
-  "doc": {
-    "title": "Check documents",
-    "content": "Checks whether all files in Firebase Storage have a corresponding entry in the database.",
-    "copy": {
-      "path": "Copy storage path",
-      "url": "Copy download URL"
-    },
-    "create": {
-      "label": "Create document (DB record)",
-      "conf": "The document was created.",
-      "error": "The document could not be created."
-    },
-    "delete": {
-      "label": "Delete document",
-      "confirm": "Do you want to delete this file from Firebase Storage?",
-      "conf": "The document was deleted.",
-      "error": "The document could not be deleted."
-    },
-    "download": {
-      "label": "Download document"
-    },
-    "hide": {
-      "label": "Hide"
-    },
-    "check": {
-      "title": "Files without DB entry",
-      "content": "Lists all files in Firebase Storage for which no entry exists in the Firestore docs collection.",
-      "button": "Check"
-    },
-    "createAll": {
-      "label": "Create documents for all files",
-      "confirm": "Create a database entry for all {count} files?",
-      "running": "{done} of {count} created …",
-      "conf": "{done} of {count} documents created."
-    }
-  },
   "roles": {
     "title": "Authorization and roles",
     "personSelect": {

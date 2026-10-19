@@ -141,6 +141,28 @@ export const DOCUMENT_I18N_KEYS = {
   cancel:                       '@cancel',
   save:                         '@save.label',
   file_count:       '@content/document/feature.fileCount',
+
+  // orphaned files page (moved from AOC, spec 1.101 phase 2)
+  orphans_title:                '@content/document/feature.orphans.title',
+  orphans_content:              '@content/document/feature.orphans.content',
+  orphans_copy_path:            '@content/document/feature.orphans.copy.path',
+  orphans_copy_url:             '@content/document/feature.orphans.copy.url',
+  orphans_create:               '@content/document/feature.orphans.create.label',
+  orphans_create_conf:          '@content/document/feature.orphans.create.conf',
+  orphans_create_error:         '@content/document/feature.orphans.create.error',
+  orphans_create_all:           '@content/document/feature.orphans.createAll.label',
+  orphans_create_all_confirm:   '@content/document/feature.orphans.createAll.confirm',
+  orphans_create_all_running:   '@content/document/feature.orphans.createAll.running',
+  orphans_create_all_conf:      '@content/document/feature.orphans.createAll.conf',
+  orphans_delete:               '@content/document/feature.orphans.delete.label',
+  orphans_delete_confirm:       '@content/document/feature.orphans.delete.confirm',
+  orphans_delete_conf:          '@content/document/feature.orphans.delete.conf',
+  orphans_delete_error:         '@content/document/feature.orphans.delete.error',
+  orphans_hide:                 '@content/document/feature.orphans.hide.label',
+  orphans_download:             '@content/document/feature.orphans.download.label',
+  orphans_check_title:          '@content/document/feature.orphans.check.title',
+  orphans_check_content:        '@content/document/feature.orphans.check.content',
+  orphans_check_button:         '@content/document/feature.orphans.check.button',
 } satisfies Record<string, string>;
 
 export type DocumentI18n = { [K in keyof typeof DOCUMENT_I18N_KEYS]: Signal<string> };

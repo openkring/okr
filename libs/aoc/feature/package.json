@@ -39,7 +39,6 @@
     "@okr/cms-menu-util": "*",
     "@okr/cms-page-util": "*",
     "@okr/comment-util": "*",
-    "@okr/content-document-data-access": "*",
     "@okr/content-document-util": "*",
     "@okr/location-util": "*",
     "@okr/relationship-membership-util": "*",

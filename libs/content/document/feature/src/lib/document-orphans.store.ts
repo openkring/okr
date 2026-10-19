@@ -10,12 +10,11 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { DocumentCollection, DocumentModel, UserModel } from '@okr/shared-models';
 import { confirm, copyToClipboardWithConfirmation, downloadToBrowser, showToast } from '@okr/shared-util-angular';
-import { DateFormat, convertDateFormatToString, getFullName, getTodayStr } from '@okr/shared-util-core';
+import { DateFormat, convertDateFormatToString, fill, getFullName, getTodayStr } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
 import { DocumentService } from '@okr/content-document-data-access';
-import { extractDateFromFileName, extractTagsFromStoragePath, extractTitleFromFileName, getDocumentIndex } from '@okr/content-document-util';
-import { AOC_I18N_KEYS, fill } from '@okr/aoc-util';
+import { DOCUMENT_I18N_KEYS, extractDateFromFileName, extractTagsFromStoragePath, extractTitleFromFileName, getDocumentIndex } from '@okr/content-document-util';
 
 /** One object under `tenant/{tenantId}/`, as returned by the `listTenantStorageFiles` callable. */
 export type TenantStorageFile = {
@@ -32,7 +31,7 @@ export type StorageFileInfo = TenantStorageFile & {
   downloadUrl: string;
 };
 
-export type AocDocState = {
+export type DocumentOrphansState = {
   missingDocs: StorageFileInfo[];
   isChecking: boolean;
   /** Files already processed by the bulk create; 0 while it is not running (see `isCreatingAll`). */
@@ -40,7 +39,7 @@ export type AocDocState = {
   isCreatingAll: boolean;
 };
 
-export const initialState: AocDocState = {
+export const initialState: DocumentOrphansState = {
   missingDocs: [],
   isChecking: false,
   createdCount: 0,
@@ -109,7 +108,7 @@ function buildDocument(file: StorageFileInfo, tenantId: string, currentUser: Use
   return document;
 }
 
-export const AocDocStore = signalStore(
+export const DocumentOrphansStore = signalStore(
   withState(initialState),
   withProps(() => ({
     appStore: inject(AppStore),
@@ -121,7 +120,7 @@ export const AocDocStore = signalStore(
     i18nService: inject(I18nService)
   })),
   withProps((store) => ({
-    i18n: store.i18nService.translateAll(AOC_I18N_KEYS),
+    i18n: store.i18nService.translateAll(DOCUMENT_I18N_KEYS),
   })),
   withComputed(state => ({
     currentUser: computed(() => state.appStore.currentUser()),
@@ -174,7 +173,7 @@ export const AocDocStore = signalStore(
     },
 
     async deleteDocument(file: StorageFileInfo): Promise<void> {
-      const ok = await confirm(store.alertController, store.i18n.doc_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
+      const ok = await confirm(store.alertController, store.i18n.orphans_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
       if (!ok) return;
       await deleteObject(ref(store.storage, file.fullPath));
       patchState(store, {
@@ -194,7 +193,7 @@ export const AocDocStore = signalStore(
       const currentUser = store.currentUser();
       const document = buildDocument(file, store.appStore.env.tenantId, currentUser);
       await store.firestoreService.createModel<DocumentModel>(
-        DocumentCollection, document, store.i18n.doc_create_conf(), store.i18n.doc_create_error(), currentUser
+        DocumentCollection, document, store.i18n.orphans_create_conf(), store.i18n.orphans_create_error(), currentUser
       );
       patchState(store, {
         missingDocs: store.missingDocs().filter(d => d.fullPath !== file.fullPath),
@@ -218,7 +217,7 @@ export const AocDocStore = signalStore(
       // `isCancellable` MUST be true: with false, `confirm` renders a single OK button that
       // dismisses without role 'confirm', so it always resolves false and the run never starts.
       const ok = await confirm(store.alertController,
-        fill(store.i18n.doc_create_all_confirm(), { count: files.length }),
+        fill(store.i18n.orphans_create_all_confirm(), { count: files.length }),
         store.i18n.ok(), store.i18n.cancel(), true);
       if (!ok) return;
 
@@ -244,7 +243,7 @@ export const AocDocStore = signalStore(
       // Whatever failed stays in the list so it is still visible and retryable per file.
       patchState(store, { missingDocs: failed, isCreatingAll: false, createdCount: 0 });
       await showToast(store.toastController,
-        fill(store.i18n.doc_create_all_conf(), { done: files.length - failed.length, count: files.length }));
+        fill(store.i18n.orphans_create_all_conf(), { done: files.length - failed.length, count: files.length }));
     },
   }))
 );
