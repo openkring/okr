@@ -577,6 +577,13 @@ export class MatrixChatService {
       }
     });
 
+    // A room the client did not know yet (joined by a Cloud Function, e.g. the notes room)
+    // arrives via sync, or we just joined it: load a message list that was requested too early.
+    this.client.on(ClientEvent.Room, (room: Room) => this.messages.handleRoomArrived(room));
+    this.client.on(RoomEvent.MyMembership, (room: Room, membership: string) => {
+      if (membership === 'join') this.messages.handleRoomArrived(room);
+    });
+
     // Room events — live timeline only (toStartOfTimeline=true means historical/pagination events)
     this.client.on(RoomEvent.Timeline, (event: MatrixEvent, room: Room | undefined, toStartOfTimeline: boolean | undefined, _removed: boolean, data: IRoomTimelineData) => {
       if (toStartOfTimeline) return;

@@ -242,6 +242,18 @@ export class MatrixMessageService {
    * When a sent message is confirmed by the server, replace the local-echo entry
    * (temp ID like ~!room:id.$local) with the confirmed event (real server ID).
    */
+  /**
+   * A room became known to the client (it arrived via sync) or we just joined it. A message list
+   * requested BEFORE that moment — e.g. the «Notizen an mich» room opened right after the Cloud
+   * Function created and joined it (spec 1.104), or any other CF-joined room — found no room,
+   * stayed unloaded (`null`) and was never loaded again, so its history (the first bookmark)
+   * stayed invisible until a reload. Load it now. A list that already loaded is left alone.
+   */
+  public handleRoomArrived(room: Room): void {
+    const subject = this.messages$.get(room.roomId);
+    if (subject && subject.value === null) void this.loadMessagesForRoom(room.roomId);
+  }
+
   public handleLocalEcho(event: MatrixEvent, room: Room, oldEventId?: string): void {
     const et = event.getType();
     if (et !== EventType.RoomMessage && et !== 'org.matrix.msc3381.poll.start') return;
