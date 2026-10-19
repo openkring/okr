@@ -12,8 +12,8 @@ import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { ExportFormat, MembershipCollection, MembershipModel, PersonCollection, PersonModel, RoleName, UserModel } from '@okr/shared-models';
 import { AUTH } from '@okr/shared-config';
-import { AppNavigationService, exportCsv, showToast } from '@okr/shared-util-angular';
-import { DateFormat, debugItemLoaded, debugListLoaded, generateRandomString, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isUser, OPERATOR_TENANT_ID } from '@okr/shared-util-core';
+import { exportCsv, showToast } from '@okr/shared-util-angular';
+import { DateFormat, debugListLoaded, generateRandomString, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isUser, OPERATOR_TENANT_ID } from '@okr/shared-util-core';
 import { ExportFormats } from '@okr/shared-categories';
 
 import { UserService } from '@okr/user-data-access';
@@ -33,7 +33,6 @@ export const EXTENDED_ROLE_OPTIONS: RoleName[] = [
 export type UserState = {
   searchTerm: string;
   selectedTag: string;
-  userKey: string | undefined;
   problems: boolean;               // «Probleme» chip
   extendedRolesOn: boolean;        // «Erweiterte Rollen» chip
   extendedRole: RoleName | 'any';  // its role select; 'any' = «alle»
@@ -42,7 +41,6 @@ export type UserState = {
 export const initialState: UserState = {
   searchTerm: '',
   selectedTag: '',
-  userKey: undefined,
   problems: false,
   extendedRolesOn: false,
   extendedRole: 'any',
@@ -55,7 +53,6 @@ export const UserStore = signalStore(
     modalController: inject(ModalController),
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
-    appNavigationService: inject(AppNavigationService),
     i18nService: inject(I18nService),
     toastController: inject(ToastController),
     fbUser: toSignal(authState(inject(AUTH))),
@@ -121,18 +118,6 @@ export const UserStore = signalStore(
         );
       },
     }),
-
-    userResource: rxResource({
-      params: () => ({
-        userKey: store.userKey(),
-        currentUser: store.appStore.currentUser()
-      }),
-      stream: ({params}) => {
-        return store.userService.read(params.userKey).pipe(
-          debugItemLoaded('UserStore.user', params.currentUser)
-        );
-      }
-    })
   })),
 
   withComputed((store) => {
@@ -140,10 +125,11 @@ export const UserStore = signalStore(
       // listBkUsers hands the operator every tenant's users: the list, the count and the export stay on the own tenant
       users: computed(() => (store.usersResource.value() ?? []).filter(u => u.tenants?.includes(store.appStore.tenantId()))),
       usersCount: computed(() => (store.usersResource.value() ?? []).filter(u => u.tenants?.includes(store.appStore.tenantId())).length),
-      user: computed(() => store.userResource.value() ?? new UserModel(store.appStore.tenantId())),
       currentUser: computed(() => store.appStore.currentUser()),
       tenantId: computed(() => store.appStore.tenantId()),
       isOperator: computed(() => store.appStore.tenantId() === OPERATOR_TENANT_ID),
+      /** the user docs are there (loaded, not reloading); `?edit=` waits for this */
+      usersLoaded: computed(() => store.usersResource.hasValue() && !store.usersResource.isLoading()),
       extendedRoleOptions: computed(() => EXTENDED_ROLE_OPTIONS),
       activeMembers: computed(() => {
         const today = getTodayStr(DateFormat.StoreDate);
@@ -226,10 +212,6 @@ export const UserStore = signalStore(
         patchState(store, { extendedRole });
       },
 
-      setUserKey(userKey: string): void {
-        patchState(store, { userKey });
-      },
-
       /******************************** getters ******************************************* */
       getTags(): string {
         return store.appStore.getTags('user');
@@ -268,13 +250,6 @@ export const UserStore = signalStore(
         this.reload();
       },
 
-      async delete(user: UserModel, readOnly = true): Promise<void> {
-        if (readOnly) return;
-        await store.userService.delete(user, store.appStore.currentUser());
-        this.reset();
-        this.reload();
-      },
-
       async export(type: string): Promise<void> {
         let keys: (keyof UserModel)[] = [];
         const table: string[][] = [];
@@ -298,24 +273,6 @@ export const UserStore = signalStore(
         }
         exportCsv(table, fn, tableName);
       },
-
-      async save(user: UserModel): Promise<void> {
-        await (!user.okey ?
-          store.userService.create(user, store.currentUser()) :
-          store.userService.update(user, store.currentUser()));
-        store.appNavigationService.back();
-      },
-
-      getTitleLabel(readOnly: boolean, key?: string): string {
-        if (readOnly) {
-          return store.i18n.view();
-        }
-        if (key && key.length > 0) {
-          return store.i18n.update();
-        } else {
-          return store.i18n.create();
-        }
-      }
     }
   }),
 );

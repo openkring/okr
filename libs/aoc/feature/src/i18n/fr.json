@@ -4,79 +4,10 @@
     "title": "Résultats"
   },
   "account": {
-    "title": "Comptes utilisateur",
-    "plural": "Comptes",
-    "empty": "Aucun utilisateur trouvé",
-    "user": {
-      "delete": {
-        "label": "Supprimer l'utilisateur",
-        "error": "L'utilisateur n'a pas pu être supprimé.",
-        "conf": "L'utilisateur a été supprimé.",
-        "confirm": "Voulez-vous vraiment supprimer l'utilisateur ?"
-      },
-      "update": {
-        "label": "Modifier l'utilisateur",
-        "error": "Les modifications n'ont pas pu être enregistrées",
-        "conf": "Les modifications ont été enregistrées."
-      }
-    },
     "fbuser": {
-      "delete": {
-        "label": "Supprimer l'utilisateur Firebase",
-        "error": "L'utilisateur Firebase n'a pas pu être supprimé.",
-        "conf": "L'utilisateur Firebase a été supprimé.",
-        "confirm": "Voulez-vous vraiment supprimer l'utilisateur Firebase ?"
-      },
       "create": {
         "conf": "L'utilisateur Firebase a été créé."
       }
-    },
-    "email": {
-      "label": "E-mail de connexion",
-      "placeholder": "name@domain.com"
-    },
-    "membership": {
-      "edit": "Modifier l'adhésion"
-    },
-    "copy": {
-      "email": "Copier l'e-mail",
-      "uid": "Copier l'UID",
-      "pkey": "Copier la clé de personne"
-    },
-    "loginId": {
-      "label": "Nom d'utilisateur",
-      "change": {
-        "label": "Modifier le nom d'utilisateur",
-        "header": "Nouveau nom d'utilisateur",
-        "signout": "{name} se connecte avec un nom d'utilisateur. Après la modification, {name} sera déconnecté une fois et se reconnectera avec le nouveau nom d'utilisateur.",
-        "conf": "Le nom d'utilisateur est maintenant {loginId}.",
-        "invalid": "Un nom d'utilisateur compte 3 à 40 caractères : lettres minuscules, chiffres, point, trait d'union ou tiret bas.",
-        "taken": "Ce nom d'utilisateur existe déjà.",
-        "error": "Le nom d'utilisateur n'a pas pu être modifié."
-      }
-    },
-    "open": {
-      "label": "Ouvrir un compte",
-      "created": "Le compte est ouvert.",
-      "createdWithLoginId": "Le compte est ouvert. L'e-mail appartient déjà à quelqu'un d'autre, c'est pourquoi {name} se connecte avec le nom d'utilisateur {loginId}.",
-      "exists": "Cette personne a déjà un compte.",
-      "noEmail": "Aucun e-mail n'est enregistré pour cette personne. Sans e-mail, on ne peut pas ouvrir de compte.",
-      "noPerson": "Cette personne n'existe plus.",
-      "error": "Le compte n'a pas pu être ouvert."
-    },
-    "reset": {
-      "label": "Envoyer un lien pour le mot de passe",
-      "conf": "Le lien pour définir un mot de passe a été demandé.",
-      "error": "Le lien pour définir un mot de passe n'a pas pu être demandé."
-    },
-    "swap": {
-      "label": "Échanger l'e-mail",
-      "confirm": "{holder} cède l'e-mail à {newcomer} et se connectera désormais avec le nom d'utilisateur {loginId}. {holder} sera déconnecté une fois.",
-      "minor": "{holder} est mineur — l'échange est ici généralement le bon choix.",
-      "noHolder": "Personne d'autre ici ne se connecte avec cet e-mail. Il n'y a rien à échanger.",
-      "noLoginId": "{holder} n'a pas encore de nom d'utilisateur. Réessaie demain.",
-      "conf": "Échange effectué. {holder} se connecte désormais avec le nom d'utilisateur {loginId} — transmets-le, s'il te plaît. {newcomer} reçoit un lien pour définir un mot de passe.",
-      "error": "L'e-mail n'a pas pu être échangé."
     }
   },
   "adminops": {
@@ -107,59 +38,6 @@
       "content": "Crée un index sur une collection. Ceci est utile lorsqu'un index manque dans la base de données et qu'une requête ne peut pas être exécutée.",
       "button": "Créer un index",
       "select": "Choisir la collection"
-    }
-  },
-  "roles": {
-    "title": "Autorisation et rôles",
-    "personSelect": {
-      "title": "Choisir une personne",
-      "content": "La plupart des opérations ci-dessous sont basées sur une personne. C'est pourquoi une personne doit d'abord être sélectionnée ici. Les opérations peuvent ensuite être effectuées sur cette personne."
-    },
-    "account": {
-      "select": "Choisir une personne",
-      "title": "Créer un compte utilisateur",
-      "content": "Une personne existante est enregistrée comme utilisateur dans Firebase Auth, c.-à-d. que le compte Firebase et l'utilisateur sont créés. Si le compte Firebase existe déjà, seul un utilisateur est créé, reliant le compte Firebase et la personne.",
-      "button": "Créer le compte",
-      "password": {
-        "set": "Définir le mot de passe",
-        "reset": "Réinitialiser le mot de passe"
-      }
-    },
-    "assignment": {
-      "title": "Attribuer des rôles",
-      "content": "Effectuer et vérifier les attributions de rôles aux personnes."
-    },
-    "check": {
-      "title": "Vérifier le compte utilisateur",
-      "content": "Vérifier si une personne a un compte utilisateur dans Firebase Auth ou si les conditions de création du compte sont remplies.",
-      "button": "Vérifier"
-    },
-    "fbuser": {
-      "title": "Modifier l'utilisateur Firebase",
-      "content": "Modifier un utilisateur Firebase existant. La modification n'a lieu que dans Firebase Auth ; le cas échéant, le UserModel ou le PersonModel doit également être modifié.",
-      "button": "Modifier l'utilisateur Firebase"
-    },
-    "impersonate": {
-      "title": "Impersonnifier un utilisateur",
-      "content": "Le rôle de l'utilisateur est temporairement défini sur l'utilisateur sélectionné. Cela permet à l'admin d'utiliser l'application en tant que cet utilisateur. Pour revenir au rôle d'admin, l'admin doit se déconnecter et se reconnecter.",
-      "button": "Impersonate"
-    },
-    "password": {
-      "label": "Mot de passe",
-      "placeholder": "Mot de passe",
-      "error": "Le mot de passe doit comporter au moins 6 caractères.",
-      "helper": "Vous pouvez définir ici un mot de passe pour l'utilisateur sélectionné (p. ex. à des fins de test). Un champ de mot de passe vide génère un mot de passe aléatoire. L'utilisateur peut ensuite définir son propre mot de passe via une réinitialisation.",
-      "set": "Définir un nouveau mot de passe pour l'utilisateur sélectionné sans déclencher d'e-mail de réinitialisation. Un champ de mot de passe vide génère un mot de passe aléatoire.",
-      "reset": "Envoyer un e-mail de réinitialisation de mot de passe à l'utilisateur sélectionné."
-    },
-    "person": "Personne :",
-    "user": "Utilisateur :",
-    "result": "Résultat",
-    "privileged": {
-      "title": "Utilisateurs avec des rôles étendus",
-      "content": "Tous les utilisateurs qui ont plus que le rôle « registered ».",
-      "filter": "Filtrer le rôle",
-      "all": "Tous les rôles"
     }
   },
   "session": {

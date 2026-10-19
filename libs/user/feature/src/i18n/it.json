@@ -13,6 +13,108 @@
     "no_account": "nessun account",
     "login_no_user": "login senza utente"
   },
+  "account": {
+    "person": {
+      "edit": "Modificare persona"
+    },
+    "fbuser": {
+      "delete": {
+        "label": "Eliminare login",
+        "confirm": "Vuoi davvero eliminare questo login? Dopo nessuno potrà più accedere con esso.",
+        "error": "Non è stato possibile eliminare il login."
+      },
+      "edit": {
+        "label": "Modificare login",
+        "notfound": "Questo utente non ha un login.",
+        "conf": "Il login è salvato.",
+        "error": "Non è stato possibile salvare il login: {reason}"
+      }
+    },
+    "password": {
+      "label": "Impostare password",
+      "header": "Nuova password",
+      "message": "Scegli tu la password, non viene inviata nessuna e-mail. Se lasci vuoto il campo, viene impostata una password casuale.",
+      "placeholder": "Password",
+      "conf": "La password è impostata.",
+      "error": "Non è stato possibile impostare la password."
+    },
+    "impersonate": {
+      "label": "Accedere come questo utente",
+      "confirm": "Accedi come {name} e vedi l'app come la vede {name}. Per tornare te stesso, esci e accedi di nuovo.",
+      "error": "L'accesso come questo utente non è riuscito."
+    },
+    "check": {
+      "label": "Verificare l'accesso",
+      "title": "Verificare l'accesso",
+      "explanation": "La persona, l'utente e il login di questo accesso, e se corrispondono.",
+      "person": "Persona",
+      "email": "E-mail della persona",
+      "noEmail": "nessuna e-mail registrata, senza e-mail non si può aprire un account",
+      "user": "Utente",
+      "noUser": "nessun utente",
+      "login": "Login",
+      "noLogin": "nessun login trovato",
+      "linkPerson": "Utente → persona",
+      "linkLogin": "Login → utente",
+      "ok": "corrisponde",
+      "roles": "Ruoli",
+      "archived": "archiviato"
+    },
+    "matrix": {
+      "label": "Configurare l'utente Matrix",
+      "conf": "L'utente Matrix è configurato: {id}",
+      "error": "Non è stato possibile configurare l'utente Matrix."
+    },
+    "copied": "Copiato.",
+    "copy": {
+      "email": "Copiare l'e-mail",
+      "uid": "Copiare l'UID",
+      "pkey": "Copiare la chiave persona"
+    },
+    "loginId": {
+      "label": "Nome utente",
+      "change": {
+        "label": "Cambia nome utente",
+        "header": "Nuovo nome utente",
+        "signout": "{name} accede con un nome utente. Dopo la modifica, {name} verrà disconnesso una volta e poi accederà di nuovo con il nuovo nome utente.",
+        "conf": "Il nome utente ora è {loginId}.",
+        "invalid": "Un nome utente ha da 3 a 40 caratteri: lettere minuscole, cifre, punto, trattino o trattino basso.",
+        "taken": "Questo nome utente esiste già.",
+        "error": "Non è stato possibile cambiare il nome utente."
+      }
+    },
+    "open": {
+      "label": "Apri account",
+      "created": "L'account è aperto.",
+      "createdWithLoginId": "L'account è aperto. L'e-mail appartiene già a qualcun altro, perciò {name} accede con il nome utente {loginId}.",
+      "exists": "Questa persona ha già un account.",
+      "noEmail": "Per questa persona non c'è nessuna e-mail. Senza e-mail non si può aprire un account.",
+      "noPerson": "Questa persona non esiste più.",
+      "error": "Non è stato possibile aprire l'account."
+    },
+    "reset": {
+      "label": "Invia link per la password",
+      "conf": "Il link per impostare una password è stato richiesto.",
+      "error": "Non è stato possibile richiedere il link per impostare una password."
+    },
+    "swap": {
+      "label": "Scambia l'e-mail",
+      "confirm": "{holder} cede l'e-mail a {newcomer} e d'ora in poi accederà con il nome utente {loginId}. {holder} verrà disconnesso una volta.",
+      "minor": "{holder} è minorenne — qui lo scambio è di solito la scelta giusta.",
+      "noHolder": "Nessun altro qui accede con questa e-mail. Non c'è niente da scambiare.",
+      "noLoginId": "{holder} non ha ancora un nome utente. Riprova domani.",
+      "conf": "Scambio fatto. {holder} ora accede con il nome utente {loginId} — passaglielo, per favore. {newcomer} riceve un link per impostare una password.",
+      "error": "Non è stato possibile scambiare l'e-mail."
+    }
+  },
+  "segment": {
+    "profile": "Profilo",
+    "roles": "Ruoli",
+    "settings": "Impostazioni"
+  },
+  "edit": {
+    "missing": "Questo utente non esiste qui."
+  },
   "empty": "Nessun utente trovato",
   "unknown": "Utente sconosciuto",
   "intro": "Un utente corrisponde 1:1 a un account autenticato (Firebase UID = User.okey) e a esattamente una persona (User.personKey = Person.okey).",

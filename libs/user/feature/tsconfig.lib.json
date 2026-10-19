@@ -17,6 +17,7 @@
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"],
   "references": [
+    { "path": "../../auth/data-access/tsconfig.lib.json" },
     { "path": "../../avatar/data-access/tsconfig.lib.json" },
     { "path": "../../avatar/feature/tsconfig.lib.json" },
     { "path": "../../avatar/util/tsconfig.lib.json" },
@@ -32,6 +33,8 @@
     { "path": "../../shared/ui/tsconfig.lib.json" },
     { "path": "../../shared/util-angular/tsconfig.lib.json" },
     { "path": "../../shared/util-core/tsconfig.lib.json" },
+    { "path": "../../subject/person/data-access/tsconfig.lib.json" },
+    { "path": "../../subject/person/feature/tsconfig.lib.json" },
     { "path": "../../subject/person/util/tsconfig.lib.json" },
     { "path": "../data-access/tsconfig.lib.json" },
     { "path": "../ui/tsconfig.lib.json" },

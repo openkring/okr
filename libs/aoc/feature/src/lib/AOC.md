@@ -6,10 +6,10 @@ The AOC (Admin Operations Console) is a restricted administrative dashboard for 
 
 - **Data** — Validate model integrity and regenerate search indexes across all collections. There is no Daten-Korrektur page any more; bulk fixes run as a local script (see below).
 - **Content** — moved to Seiten › Integrität prüfen (`/page/integrity`, `@okr/cms-page-feature`); `/aoc/content` redirects there.
-- **Roles** — Manage Firebase Auth accounts and application user roles: create accounts, reset/set passwords, update Firebase user profiles, impersonate users, and manage role assignments.
+- **Roles** — moved to «Benutzer & Zugänge» (`/user/all/c-users`, `@okr/user-feature`, spec 1.101 phase 4): the account tools are row actions there, roles are edited in the user modal; `/aoc/roles` redirects there.
 - **Chat** — moved to Chat › Wartung «Chat-Wartung» (`/chat/maintenance`, `@okr/chat-feature`, spec 1.101 phase 4); `/aoc/chat` redirects there.
 - **Tag** — Manage the `tags` Firestore collection: browse, create, edit, and delete tag documents and their comma-separated tag strings per model type.
-- **User Accounts** — Cross-reference view of Firebase Auth accounts, application `UserModel` records, and `MembershipModel` entries; supports editing/deleting each tier independently.
+- **User Accounts** — merged into «Benutzer & Zugänge» (`/user/all/c-users`, `@okr/user-feature`, spec 1.101 phase 4); `/aoc/account` redirects there.
 - **Admin Ops** — Miscellaneous administrative operations: the IBAN list and `backfillAccountTenants` (both move in spec 1.101 phase 5). The over-age-juniors and membership-category-change reports left in phase 3 (see below). No Debug Tools (removed, spec 1.101).
 - **SRV / Regasoft** — moved to Mitglieder › Wartung › Verbandsabgleich (SRV) (`/membership/srv`, `@okr/relationship-membership-feature`, memberAdmin, not restricted to scs); `/aoc/srv` redirects there.
 - **Bexio** — the account, journal, invoice and bill syncs, the vendor/receiver linking and «clear tree» are retired from the UI (the Cloud Functions stay deployed; `syncBexioAccounts` requires admin). The contact reconciliation moved to Personen › Wartung › Bexio-Kontakte (`/person/bexio-contacts`, `@okr/subject-person-feature`, admin); `/aoc/bexio` redirects there.
@@ -31,7 +31,7 @@ All AOC pages require the `admin` or `privileged` role, enforced via `hasRole(..
 
 ## Store Pattern
 
-Each AOC tab has its own `signalStore` (`AocDataStore`, `AocRolesStore`, `AocTagStore`, `AocUserAccountStore`, `AocAdminOpsStore`) provided at the component level (not root). All stores inject `AppStore` and `FirestoreService`.
+Each AOC tab has its own `signalStore` (`AocDataStore`, `AocTagStore`, `AocAdminOpsStore`) provided at the component level (not root). All stores inject `AppStore` and `FirestoreService`.
 
 ## Supported Model Types (Data / Validate / Index operations)
 

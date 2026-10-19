@@ -19,11 +19,9 @@
   "references": [
     { "path": "../ui/tsconfig.lib.json" },
     { "path": "../util/tsconfig.lib.json" },
-    { "path": "../../auth/data-access/tsconfig.lib.json" },
     { "path": "../../avatar/ui/tsconfig.lib.json" },
     { "path": "../../calevent/util/tsconfig.lib.json" },
     { "path": "../../category/util/tsconfig.lib.json" },
-    { "path": "../../cms/menu/feature/tsconfig.lib.json" },
     { "path": "../../cms/menu/util/tsconfig.lib.json" },
     { "path": "../../cms/page/util/tsconfig.lib.json" },
     { "path": "../../comment/util/tsconfig.lib.json" },
@@ -56,7 +54,6 @@
     { "path": "../../subject/person/feature/tsconfig.lib.json" },
     { "path": "../../subject/person/util/tsconfig.lib.json" },
     { "path": "../../user/data-access/tsconfig.lib.json" },
-    { "path": "../../user/feature/tsconfig.lib.json" },
     { "path": "../../user/util/tsconfig.lib.json" }
   ]
 }

@@ -4,79 +4,10 @@
     "title": "Risultati"
   },
   "account": {
-    "title": "Account utente",
-    "plural": "Account",
-    "empty": "Nessun utente trovato",
-    "user": {
-      "delete": {
-        "label": "Eliminare utente",
-        "error": "Impossibile eliminare l'utente.",
-        "conf": "L'utente è stato eliminato.",
-        "confirm": "Eliminare davvero l'utente ?"
-      },
-      "update": {
-        "label": "Modificare utente",
-        "error": "Impossibile salvare le modifiche",
-        "conf": "Le modifiche sono state salvate."
-      }
-    },
     "fbuser": {
-      "delete": {
-        "label": "Eliminare utente Firebase",
-        "error": "Impossibile eliminare l'utente Firebase.",
-        "conf": "L'utente Firebase è stato eliminato.",
-        "confirm": "Eliminare davvero l'utente Firebase ?"
-      },
       "create": {
         "conf": "L'utente Firebase è stato creato."
       }
-    },
-    "email": {
-      "label": "E-mail di accesso",
-      "placeholder": "name@domain.com"
-    },
-    "membership": {
-      "edit": "Modificare l'iscrizione"
-    },
-    "copy": {
-      "email": "Copiare l'e-mail",
-      "uid": "Copiare l'UID",
-      "pkey": "Copiare la chiave persona"
-    },
-    "loginId": {
-      "label": "Nome utente",
-      "change": {
-        "label": "Cambia nome utente",
-        "header": "Nuovo nome utente",
-        "signout": "{name} accede con un nome utente. Dopo la modifica, {name} verrà disconnesso una volta e poi accederà di nuovo con il nuovo nome utente.",
-        "conf": "Il nome utente ora è {loginId}.",
-        "invalid": "Un nome utente ha da 3 a 40 caratteri: lettere minuscole, cifre, punto, trattino o trattino basso.",
-        "taken": "Questo nome utente esiste già.",
-        "error": "Non è stato possibile cambiare il nome utente."
-      }
-    },
-    "open": {
-      "label": "Apri account",
-      "created": "L'account è aperto.",
-      "createdWithLoginId": "L'account è aperto. L'e-mail appartiene già a qualcun altro, perciò {name} accede con il nome utente {loginId}.",
-      "exists": "Questa persona ha già un account.",
-      "noEmail": "Per questa persona non c'è nessuna e-mail. Senza e-mail non si può aprire un account.",
-      "noPerson": "Questa persona non esiste più.",
-      "error": "Non è stato possibile aprire l'account."
-    },
-    "reset": {
-      "label": "Invia link per la password",
-      "conf": "Il link per impostare una password è stato richiesto.",
-      "error": "Non è stato possibile richiedere il link per impostare una password."
-    },
-    "swap": {
-      "label": "Scambia l'e-mail",
-      "confirm": "{holder} cede l'e-mail a {newcomer} e d'ora in poi accederà con il nome utente {loginId}. {holder} verrà disconnesso una volta.",
-      "minor": "{holder} è minorenne — qui lo scambio è di solito la scelta giusta.",
-      "noHolder": "Nessun altro qui accede con questa e-mail. Non c'è niente da scambiare.",
-      "noLoginId": "{holder} non ha ancora un nome utente. Riprova domani.",
-      "conf": "Scambio fatto. {holder} ora accede con il nome utente {loginId} — passaglielo, per favore. {newcomer} riceve un link per impostare una password.",
-      "error": "Non è stato possibile scambiare l'e-mail."
     }
   },
   "adminops": {
@@ -107,59 +38,6 @@
       "content": "Crea un indice su una collezione. Questo è utile quando manca un indice nel database e una query non può essere eseguita.",
       "button": "Creare un indice",
       "select": "Scegliere la collezione"
-    }
-  },
-  "roles": {
-    "title": "Autorizzazione e ruoli",
-    "personSelect": {
-      "title": "Scegliere una persona",
-      "content": "La maggior parte delle operazioni seguenti si basa su una persona. Per questo è necessario prima selezionare qui una persona. Le operazioni possono poi essere eseguite su questa persona."
-    },
-    "account": {
-      "select": "Scegliere una persona",
-      "title": "Creare un account utente",
-      "content": "Una persona esistente viene registrata come utente in Firebase Auth, cioè vengono creati l'account Firebase e l'utente. Se l'account Firebase esiste già, viene creato solo un utente che collega l'account Firebase e la persona.",
-      "button": "Creare l'account",
-      "password": {
-        "set": "Impostare la password",
-        "reset": "Reimpostare la password"
-      }
-    },
-    "assignment": {
-      "title": "Assegnare i ruoli",
-      "content": "Effettuare e verificare le assegnazioni di ruoli alle persone."
-    },
-    "check": {
-      "title": "Verificare l'account utente",
-      "content": "Verificare se una persona ha un account utente in Firebase Auth o se i presupposti per la creazione dell'account sono soddisfatti.",
-      "button": "Verificare"
-    },
-    "fbuser": {
-      "title": "Modificare l'utente Firebase",
-      "content": "Modificare un utente Firebase esistente. La modifica avviene solo in Firebase Auth; se necessario, devono essere modificati anche l'UserModel o il PersonModel.",
-      "button": "Modificare l'utente Firebase"
-    },
-    "impersonate": {
-      "title": "Impersonare un utente",
-      "content": "Il ruolo dell'utente viene temporaneamente impostato sull'utente selezionato. Ciò consente all'admin di utilizzare l'applicazione come questo utente. Per tornare al ruolo di admin, l'admin deve disconnettersi e riconnettersi.",
-      "button": "Impersonate"
-    },
-    "password": {
-      "label": "Password",
-      "placeholder": "Password",
-      "error": "La password deve contenere almeno 6 caratteri.",
-      "helper": "Qui è possibile impostare una password per l'utente selezionato (ad es. a scopo di test). Un campo password vuoto genera una password casuale. L'utente può poi impostare la propria password tramite una reimpostazione.",
-      "set": "Impostare una nuova password per l'utente selezionato senza attivare un'e-mail di reimpostazione. Un campo password vuoto genera una password casuale.",
-      "reset": "Inviare un'e-mail di reimpostazione della password all'utente selezionato."
-    },
-    "person": "Persona:",
-    "user": "Utente:",
-    "result": "Risultato",
-    "privileged": {
-      "title": "Utenti con ruoli estesi",
-      "content": "Tutti gli utenti che hanno più del ruolo «registered».",
-      "filter": "Filtra ruolo",
-      "all": "Tutti i ruoli"
     }
   },
   "session": {

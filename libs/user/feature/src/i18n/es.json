@@ -13,6 +13,108 @@
     "no_account": "sin cuenta",
     "login_no_user": "acceso sin usuario"
   },
+  "account": {
+    "person": {
+      "edit": "Editar persona"
+    },
+    "fbuser": {
+      "delete": {
+        "label": "Eliminar inicio de sesión",
+        "confirm": "¿Seguro que quieres eliminar este inicio de sesión? Después nadie podrá entrar con él.",
+        "error": "No se pudo eliminar el inicio de sesión."
+      },
+      "edit": {
+        "label": "Editar inicio de sesión",
+        "notfound": "Este usuario no tiene inicio de sesión.",
+        "conf": "El inicio de sesión está guardado.",
+        "error": "No se pudo guardar el inicio de sesión: {reason}"
+      }
+    },
+    "password": {
+      "label": "Establecer contraseña",
+      "header": "Nueva contraseña",
+      "message": "Tú eliges la contraseña, no se envía ningún correo. Si dejas el campo vacío, se establece una contraseña aleatoria.",
+      "placeholder": "Contraseña",
+      "conf": "La contraseña está establecida.",
+      "error": "No se pudo establecer la contraseña."
+    },
+    "impersonate": {
+      "label": "Entrar como este usuario",
+      "confirm": "Entras como {name} y ves la app como la ve {name}. Para volver a ser tú, cierra la sesión y vuelve a entrar.",
+      "error": "No se pudo entrar como este usuario."
+    },
+    "check": {
+      "label": "Comprobar acceso",
+      "title": "Comprobar acceso",
+      "explanation": "La persona, el usuario y el inicio de sesión de este acceso, y si coinciden.",
+      "person": "Persona",
+      "email": "Correo de la persona",
+      "noEmail": "no hay correo guardado, sin correo no se puede abrir una cuenta",
+      "user": "Usuario",
+      "noUser": "sin usuario",
+      "login": "Inicio de sesión",
+      "noLogin": "no se encontró inicio de sesión",
+      "linkPerson": "Usuario → persona",
+      "linkLogin": "Inicio de sesión → usuario",
+      "ok": "coincide",
+      "roles": "Roles",
+      "archived": "archivado"
+    },
+    "matrix": {
+      "label": "Configurar usuario de Matrix",
+      "conf": "El usuario de Matrix está configurado: {id}",
+      "error": "No se pudo configurar el usuario de Matrix."
+    },
+    "copied": "Copiado.",
+    "copy": {
+      "email": "Copiar correo",
+      "uid": "Copiar UID",
+      "pkey": "Copiar clave de persona"
+    },
+    "loginId": {
+      "label": "Nombre de usuario",
+      "change": {
+        "label": "Cambiar nombre de usuario",
+        "header": "Nuevo nombre de usuario",
+        "signout": "{name} inicia sesión con un nombre de usuario. Tras el cambio, {name} cerrará sesión una vez y volverá a entrar con el nuevo nombre de usuario.",
+        "conf": "El nombre de usuario ahora es {loginId}.",
+        "invalid": "Un nombre de usuario tiene de 3 a 40 caracteres: minúsculas, cifras, punto, guion o guion bajo.",
+        "taken": "Este nombre de usuario ya existe.",
+        "error": "No se pudo cambiar el nombre de usuario."
+      }
+    },
+    "open": {
+      "label": "Abrir cuenta",
+      "created": "La cuenta está abierta.",
+      "createdWithLoginId": "La cuenta está abierta. El correo ya pertenece a otra persona, por eso {name} inicia sesión con el nombre de usuario {loginId}.",
+      "exists": "Esta persona ya tiene una cuenta.",
+      "noEmail": "No hay ningún correo para esta persona. Sin correo no se puede abrir una cuenta.",
+      "noPerson": "Esta persona ya no existe.",
+      "error": "No se pudo abrir la cuenta."
+    },
+    "reset": {
+      "label": "Enviar enlace de contraseña",
+      "conf": "Se ha solicitado el enlace para establecer una contraseña.",
+      "error": "No se pudo solicitar el enlace para establecer una contraseña."
+    },
+    "swap": {
+      "label": "Intercambiar correo",
+      "confirm": "{holder} cede el correo a {newcomer} y a partir de ahora iniciará sesión con el nombre de usuario {loginId}. {holder} cerrará sesión una vez.",
+      "minor": "{holder} es menor de edad — aquí suele ser correcto intercambiar.",
+      "noHolder": "Nadie más aquí inicia sesión con este correo. No hay nada que intercambiar.",
+      "noLoginId": "{holder} todavía no tiene nombre de usuario. Inténtalo de nuevo mañana.",
+      "conf": "Intercambiado. {holder} inicia sesión ahora con el nombre de usuario {loginId} — pásaselo, por favor. {newcomer} recibe un enlace para establecer una contraseña.",
+      "error": "No se pudo intercambiar el correo."
+    }
+  },
+  "segment": {
+    "profile": "Perfil",
+    "roles": "Roles",
+    "settings": "Ajustes"
+  },
+  "edit": {
+    "missing": "Este usuario no existe aquí."
+  },
   "empty": "No se han encontrado usuarios",
   "unknown": "Usuario desconocido",
   "intro": "Un usuario corresponde 1:1 a una cuenta autenticada (Firebase UID = User.okey) y exactamente a una persona (User.personKey = Person.okey).",

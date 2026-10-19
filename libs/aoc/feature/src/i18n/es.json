@@ -4,79 +4,10 @@
     "title": "Resultados"
   },
   "account": {
-    "title": "Cuentas de usuario",
-    "plural": "Cuentas",
-    "empty": "No se encontraron usuarios",
-    "user": {
-      "delete": {
-        "label": "Eliminar usuario",
-        "error": "No se pudo eliminar el usuario.",
-        "conf": "El usuario se ha eliminado.",
-        "confirm": "¿Desea realmente eliminar el usuario ?"
-      },
-      "update": {
-        "label": "Editar usuario",
-        "error": "No se pudieron guardar los cambios",
-        "conf": "Los cambios se han guardado."
-      }
-    },
     "fbuser": {
-      "delete": {
-        "label": "Eliminar usuario de Firebase",
-        "error": "No se pudo eliminar el usuario de Firebase.",
-        "conf": "El usuario de Firebase se ha eliminado.",
-        "confirm": "¿Desea realmente eliminar el usuario de Firebase ?"
-      },
       "create": {
         "conf": "El usuario de Firebase se ha creado."
       }
-    },
-    "email": {
-      "label": "Correo de inicio de sesión",
-      "placeholder": "name@domain.com"
-    },
-    "membership": {
-      "edit": "Editar membresía"
-    },
-    "copy": {
-      "email": "Copiar correo",
-      "uid": "Copiar UID",
-      "pkey": "Copiar clave de persona"
-    },
-    "loginId": {
-      "label": "Nombre de usuario",
-      "change": {
-        "label": "Cambiar nombre de usuario",
-        "header": "Nuevo nombre de usuario",
-        "signout": "{name} inicia sesión con un nombre de usuario. Tras el cambio, {name} cerrará sesión una vez y volverá a entrar con el nuevo nombre de usuario.",
-        "conf": "El nombre de usuario ahora es {loginId}.",
-        "invalid": "Un nombre de usuario tiene de 3 a 40 caracteres: minúsculas, cifras, punto, guion o guion bajo.",
-        "taken": "Este nombre de usuario ya existe.",
-        "error": "No se pudo cambiar el nombre de usuario."
-      }
-    },
-    "open": {
-      "label": "Abrir cuenta",
-      "created": "La cuenta está abierta.",
-      "createdWithLoginId": "La cuenta está abierta. El correo ya pertenece a otra persona, por eso {name} inicia sesión con el nombre de usuario {loginId}.",
-      "exists": "Esta persona ya tiene una cuenta.",
-      "noEmail": "No hay ningún correo para esta persona. Sin correo no se puede abrir una cuenta.",
-      "noPerson": "Esta persona ya no existe.",
-      "error": "No se pudo abrir la cuenta."
-    },
-    "reset": {
-      "label": "Enviar enlace de contraseña",
-      "conf": "Se ha solicitado el enlace para establecer una contraseña.",
-      "error": "No se pudo solicitar el enlace para establecer una contraseña."
-    },
-    "swap": {
-      "label": "Intercambiar correo",
-      "confirm": "{holder} cede el correo a {newcomer} y a partir de ahora iniciará sesión con el nombre de usuario {loginId}. {holder} cerrará sesión una vez.",
-      "minor": "{holder} es menor de edad — aquí suele ser correcto intercambiar.",
-      "noHolder": "Nadie más aquí inicia sesión con este correo. No hay nada que intercambiar.",
-      "noLoginId": "{holder} todavía no tiene nombre de usuario. Inténtalo de nuevo mañana.",
-      "conf": "Intercambiado. {holder} inicia sesión ahora con el nombre de usuario {loginId} — pásaselo, por favor. {newcomer} recibe un enlace para establecer una contraseña.",
-      "error": "No se pudo intercambiar el correo."
     }
   },
   "adminops": {
@@ -107,59 +38,6 @@
       "content": "Crea un índice sobre una colección. Esto es útil cuando falta un índice en la base de datos y no se puede ejecutar una consulta.",
       "button": "Crear índice",
       "select": "Seleccionar colección"
-    }
-  },
-  "roles": {
-    "title": "Autorización y roles",
-    "personSelect": {
-      "title": "Seleccionar persona",
-      "content": "La mayoría de las operaciones siguientes se basan en una persona. Por eso, primero debe seleccionarse aquí una persona. Después, las operaciones pueden realizarse sobre esta persona."
-    },
-    "account": {
-      "select": "Seleccionar persona",
-      "title": "Crear cuenta de usuario",
-      "content": "Una persona existente se registra como usuario en Firebase Auth, es decir, se crean la cuenta de Firebase y el usuario. Si la cuenta de Firebase ya existe, solo se crea un usuario que vincula la cuenta de Firebase y la persona.",
-      "button": "Crear cuenta",
-      "password": {
-        "set": "Establecer contraseña",
-        "reset": "Restablecer contraseña"
-      }
-    },
-    "assignment": {
-      "title": "Asignar roles",
-      "content": "Realizar y comprobar las asignaciones de roles a personas."
-    },
-    "check": {
-      "title": "Comprobar cuenta de usuario",
-      "content": "Comprobar si una persona tiene una cuenta de usuario en Firebase Auth o si se cumplen los requisitos para crear la cuenta.",
-      "button": "Comprobar"
-    },
-    "fbuser": {
-      "title": "Editar usuario de Firebase",
-      "content": "Editar un usuario de Firebase existente. El cambio se realiza solo en Firebase Auth; si es necesario, también deben modificarse el UserModel o el PersonModel.",
-      "button": "Editar usuario de Firebase"
-    },
-    "impersonate": {
-      "title": "Suplantar usuario",
-      "content": "El rol del usuario se establece temporalmente en el usuario seleccionado. Esto permite al administrador usar la aplicación como este usuario. Para volver al rol de administrador, el administrador debe cerrar sesión y volver a iniciarla.",
-      "button": "Impersonate"
-    },
-    "password": {
-      "label": "Contraseña",
-      "placeholder": "Contraseña",
-      "error": "La contraseña debe tener al menos 6 caracteres.",
-      "helper": "Aquí puede establecer una contraseña para el usuario seleccionado (p. ej. con fines de prueba). Un campo de contraseña vacío genera una contraseña aleatoria. El usuario puede después establecer su propia contraseña mediante un restablecimiento.",
-      "set": "Establecer una nueva contraseña para el usuario seleccionado sin activar un correo de restablecimiento. Un campo de contraseña vacío genera una contraseña aleatoria.",
-      "reset": "Enviar un correo de restablecimiento de contraseña al usuario seleccionado."
-    },
-    "person": "Persona:",
-    "user": "Usuario:",
-    "result": "Resultado",
-    "privileged": {
-      "title": "Usuarios con roles ampliados",
-      "content": "Todos los usuarios que tienen más que el rol «registered».",
-      "filter": "Filtrar rol",
-      "all": "Todos los roles"
     }
   },
   "session": {

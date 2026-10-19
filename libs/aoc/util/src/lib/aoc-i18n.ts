@@ -9,59 +9,8 @@ export const AOC_I18N_KEYS = {
   result_title:                           PFX + 'result.title',
 
   // account
-  account_title:                          PFX + 'account.title',
-  account_plural:                         PFX + 'account.plural',
-  account_empty:                          PFX + 'account.empty',
-
-  account_user_delete:                    PFX + 'account.user.delete.label',
-  account_user_delete_confirm:            PFX + 'account.user.delete.confirm',
-  account_user_delete_conf:                PFX + 'account.user.delete.conf',
-  account_user_delete_error:              PFX + 'account.user.delete.error',
-
-  account_user_update:                    PFX + 'account.user.update.label',
-  account_user_conf:                      PFX + 'account.user.update.conf',
-  account_user_error:                     PFX + 'account.user.update.error',
 
   account_fbuser_create_conf:             PFX + 'account.fbuser.create.conf',
-  account_fbuser_delete:                  PFX + 'account.fbuser.delete.label',
-  account_fbuser_delete_confirm:          PFX + 'account.fbuser.delete.confirm',
-  account_fbuser_delete_conf:             PFX + 'account.fbuser.delete.conf',
-  account_fbuser_delete_error:            PFX + 'account.fbuser.delete.error',
-
-  account_login_email:                    PFX + 'account.email.label',
-  account_login_email_placeholder:        PFX + 'account.email.placeholder',
-  account_membership_edit:                PFX + 'account.membership.edit',
-
-  account_copy_email:                     PFX + 'account.copy.email',
-  account_copy_uid:                       PFX + 'account.copy.uid',
-  account_copy_pkey:                      PFX + 'account.copy.pkey',
-
-  // account — Benutzername admin tools (spec 1.71 §6b)
-  account_login_id:                       PFX + 'account.loginId.label',
-  account_open:                           PFX + 'account.open.label',
-  account_open_created:                   PFX + 'account.open.created',
-  account_open_created_login_id:          PFX + 'account.open.createdWithLoginId',
-  account_open_exists:                    PFX + 'account.open.exists',
-  account_open_no_email:                  PFX + 'account.open.noEmail',
-  account_open_no_person:                 PFX + 'account.open.noPerson',
-  account_open_error:                     PFX + 'account.open.error',
-  account_reset:                          PFX + 'account.reset.label',
-  account_reset_conf:                     PFX + 'account.reset.conf',
-  account_reset_error:                    PFX + 'account.reset.error',
-  account_login_id_change:                PFX + 'account.loginId.change.label',
-  account_login_id_change_header:         PFX + 'account.loginId.change.header',
-  account_login_id_change_signout:        PFX + 'account.loginId.change.signout',
-  account_login_id_change_conf:           PFX + 'account.loginId.change.conf',
-  account_login_id_change_invalid:        PFX + 'account.loginId.change.invalid',
-  account_login_id_change_taken:          PFX + 'account.loginId.change.taken',
-  account_login_id_change_error:          PFX + 'account.loginId.change.error',
-  account_swap:                           PFX + 'account.swap.label',
-  account_swap_confirm:                   PFX + 'account.swap.confirm',
-  account_swap_minor:                     PFX + 'account.swap.minor',
-  account_swap_no_holder:                 PFX + 'account.swap.noHolder',
-  account_swap_no_login_id:               PFX + 'account.swap.noLoginId',
-  account_swap_conf:                      PFX + 'account.swap.conf',
-  account_swap_error:                     PFX + 'account.swap.error',
 
   // adminops
   adminops_title:                         PFX + 'adminops.title',
@@ -89,45 +38,6 @@ export const AOC_I18N_KEYS = {
   data_index_select:                        PFX + 'data.index.select',
 
   // email
-
-  // roles
-  roles_title:                              PFX + 'roles.title',
-  roles_person_select_title:                PFX + 'roles.personSelect.title',
-  roles_person_select_content:              PFX + 'roles.personSelect.content',
-
-  roles_account_select:                     PFX + 'roles.account.select',
-  roles_account_title:                      PFX + 'roles.account.title',
-  roles_account_content:                    PFX + 'roles.account.content',
-  roles_account_button:                     PFX + 'roles.account.button',
-  roles_account_pwd_set:                    PFX + 'roles.account.password.set',
-  roles_account_pwd_reset:                  PFX + 'roles.account.password.reset',
-
-  roles_assignment_title:                   PFX + 'roles.assignment.title',
-  roles_assignment_content:                 PFX + 'roles.assignment.content',
-
-  roles_check_title:                        PFX + 'roles.check.title',
-  roles_check_content:                      PFX + 'roles.check.content',
-  roles_check_button:                       PFX + 'roles.check.button',
-
-  roles_fbuser_title:                       PFX + 'roles.fbuser.title',
-  roles_fbuser_content:                     PFX + 'roles.fbuser.content',
-  roles_fbuser_button:                      PFX + 'roles.fbuser.button',
-
-  roles_impersonate_title:                  PFX + 'roles.impersonate.title',
-  roles_impersonate_content:                PFX + 'roles.impersonate.content',
-  roles_impersonate_button:                 PFX + 'roles.impersonate.button',
-
-  roles_privileged_title:                   PFX + 'roles.privileged.title',
-  roles_privileged_content:                 PFX + 'roles.privileged.content',
-  roles_privileged_filter:                  PFX + 'roles.privileged.filter',
-  roles_privileged_all:                     PFX + 'roles.privileged.all',
-
-  roles_password_label:                     PFX + 'roles.password.label',
-  roles_password_placeholder:               PFX + 'roles.password.placeholder',
-  roles_password_error:                     PFX + 'roles.password.placeholder',
-  roles_password_helper:                    PFX + 'roles.password.helper',
-  roles_password_set:                       PFX + 'roles.password.set',
-  roles_password_reset:                     PFX + 'roles.password.reset',
 
   // session
   session_title:                          PFX + 'session.title',
@@ -169,10 +79,6 @@ export const AOC_I18N_KEYS = {
   session_duration_from:                  PFX + 'session.duration.from',
   session_duration_to:                    PFX + 'session.duration.to',
 
-  // roles console
-  roles_person:                             PFX + 'roles.person',
-  roles_user:                               PFX + 'roles.user',
-  roles_result:                             PFX + 'roles.result',
   close:                                    '@shared/ui.close',
 
   // tag

@@ -17,7 +17,6 @@
     "@okr/shared-ui": "*",
     "@okr/shared-categories": "*",
     "@okr/shared-pipes": "*",
-    "@okr/auth-data-access": "*",
     "@okr/aoc-util": "*",
     "@okr/user-data-access": "*",
     "@okr/subject-person-data-access": "*",
@@ -27,7 +26,6 @@
     "@okr/avatar-ui": "*",
     "@okr/calevent-util": "*",
     "@okr/category-util": "*",
-    "@okr/cms-menu-feature": "*",
     "@okr/cms-menu-util": "*",
     "@okr/cms-page-util": "*",
     "@okr/comment-util": "*",
@@ -47,7 +45,6 @@
     "@okr/subject-org-util": "*",
     "@okr/subject-person-util": "*",
     "@okr/project-task-util": "*",
-    "@okr/user-feature": "*",
     "@okr/user-util": "*"
   }
 }

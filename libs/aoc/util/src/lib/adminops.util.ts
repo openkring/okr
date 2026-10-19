@@ -1,7 +1,7 @@
-import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { ToastController } from '@ionic/angular';
 
-import { FirebaseUserModel, LogInfo, PersonModel, UserModel } from '@okr/shared-models';
+import { LogInfo, PersonModel, UserModel } from '@okr/shared-models';
 import { error, showToast } from '@okr/shared-util-angular';
 import { die } from '@okr/shared-util-core';
 import { getApp } from 'firebase/app';
@@ -93,53 +93,6 @@ export async function getUidByEmail(loginEmail: string): Promise<string | undefi
 }
 
 /**
- * Lookup a firebase user by its uid.
- * @param uid the firebase user id
- * @returns limited user data to avoid exposing sensitive data
- */
-export async function getFirebaseUser(uid: string): Promise<FirebaseUserModel | undefined> {
-  try {
-    // Get a reference to the Firebase Functions service.
-    const functions = getFunctions(getApp(), 'europe-west6');
-    //if (store.appStore.env.useEmulators) {
-    //  connectFunctionsEmulator(functions, 'localhost', 5001);
-    //}
-    const getFirebaseUserFunction = httpsCallable(functions, 'getFirebaseUser');
-    const result = await getFirebaseUserFunction({ uid });
-    const fbUser = result.data as FirebaseUserModel;
-    // the admin SDK returns null for unset fields; the form validations reject null
-    if (!fbUser.email) fbUser.email = '';
-    if (!fbUser.displayName) fbUser.displayName = '';
-    if (!fbUser.phone) fbUser.phone = '';
-    if (!fbUser.photoUrl) fbUser.photoUrl = '';
-    console.log(`adminops.util.getFirebaseUser: received firebase user`, fbUser);
-    return fbUser;
-  } catch (error) {
-    console.error('adminops.util.getFirebaseUser:  -> error: ' + JSON.stringify(error));
-  }
-}
-
-/**
- * Set a new password for the firebase user with a given uid.
- * @param uid the firebase user id of the user to set its password for
- * @param password the new password
- */
-export async function setPassword(uid: string, password: string, useEmulators = false): Promise<void> {
-  try {
-    // Get a reference to the Firebase Functions service.
-    const functions = getFunctions(getApp(), 'europe-west6');
-    if (useEmulators) {
-      connectFunctionsEmulator(functions, 'localhost', 5001);
-    }
-    const _setPasswordFunction = httpsCallable(functions, 'setPassword');
-    await _setPasswordFunction({ uid, password });
-    console.log(`adminops.util.setPassword: setting new password for user ${uid}`);
-  } catch (error) {
-    console.error('adminops.util.setPassword:  -> error: ' + JSON.stringify(error));
-  }
-}
-
-/**
  * Set a new loginEmail for the firebase user with a given uid.
  * @param uid the firebase user id of the user to set its password for
  * @param email the new login email
@@ -156,55 +109,6 @@ export async function setLoginEmail(uid: string, email: string): Promise<void> {
   } catch (error) {
     console.error('adminops.util.setLoginEmail:  -> error: ' + JSON.stringify(error));
   }
-}
-
-/**
- * Update an existing firebase user. This can also be used to change the users loginEmail.
- * @param uid the firebase user id of the user to set its password for
- * @param fbUser the FirebaseUserModel data structure (it needs to be complete and is saved as is)
- */
-export async function updateFirebaseUser(fbUser: FirebaseUserModel, useEmulator = true): Promise<void> {
-  try {
-    const functions = getFunctions(getApp(), 'europe-west6');
-    if (useEmulator) {
-      connectFunctionsEmulator(functions, 'localhost', 5001);
-    }
-    const updateFirebaseUserFunction = httpsCallable(functions, 'updateFirebaseUser');
-    if (fbUser.phone?.length === 0) fbUser.phone = undefined;
-    if (fbUser.photoUrl?.length === 0) fbUser.photoUrl = undefined;
-    await updateFirebaseUserFunction(fbUser);
-    console.log(`adminops.util.updateFirebaseUser: user ${fbUser.uid} updated.`);
-  } catch (error) {
-    // the callable carries the real reason (e.g. email already in use) in message, not in the JSON
-    console.error('adminops.util.updateFirebaseUser:  -> error: ' + (error as Error).message);
-    throw error;
-  }
-}
-
-/**
- * Generates a cryptographically secure random string, suitable for passwords.
- * Uses the Web Crypto API (`crypto.getRandomValues`, available in browsers and Node ≥19)
- * instead of the predictable `Math.random()` (CodeQL js/insecure-randomness).
- */
-function generateSecureRandomString(size: number): string {
-  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  const bytes = new Uint8Array(size);
-  crypto.getRandomValues(bytes);
-  let result = '';
-  for (let i = 0; i < size; i++) {
-    result += charset[bytes[i] % charset.length];
-  }
-  return result;
-}
-
-/**
- * Generates a password.
- * By default, the password is a 12 char long cryptographically secure random string.
- * Optionally, a password can be preset.
- * @param password the preset password
- */
-export function generatePassword(password?: string): string {
-  return !password || password.length === 0 ? generateSecureRandomString(12) : password;
 }
 
 /**

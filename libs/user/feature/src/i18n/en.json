@@ -13,6 +13,108 @@
     "no_account": "no account",
     "login_no_user": "login without user"
   },
+  "account": {
+    "person": {
+      "edit": "Edit person"
+    },
+    "fbuser": {
+      "delete": {
+        "label": "Delete login",
+        "confirm": "Do you really want to delete this login? Nobody can sign in with it afterwards.",
+        "error": "The login could not be deleted."
+      },
+      "edit": {
+        "label": "Edit login",
+        "notfound": "This user has no login.",
+        "conf": "The login is saved.",
+        "error": "The login could not be saved: {reason}"
+      }
+    },
+    "password": {
+      "label": "Set password",
+      "header": "New password",
+      "message": "You choose the password yourself, no email is sent. If you leave the field empty, a random password is set.",
+      "placeholder": "Password",
+      "conf": "The password is set.",
+      "error": "The password could not be set."
+    },
+    "impersonate": {
+      "label": "Sign in as this user",
+      "confirm": "You sign in as {name} and see the app the way {name} sees it. To be yourself again, sign out and sign in again.",
+      "error": "Signing in as this user did not work."
+    },
+    "check": {
+      "label": "Check access",
+      "title": "Check access",
+      "explanation": "The person, user and login of this access, and whether they match.",
+      "person": "Person",
+      "email": "Email of the person",
+      "noEmail": "no email on file, an account cannot be opened without one",
+      "user": "User",
+      "noUser": "no user",
+      "login": "Login",
+      "noLogin": "no login found",
+      "linkPerson": "User → person",
+      "linkLogin": "Login → user",
+      "ok": "matches",
+      "roles": "Roles",
+      "archived": "archived"
+    },
+    "matrix": {
+      "label": "Set up Matrix user",
+      "conf": "The Matrix user is set up: {id}",
+      "error": "The Matrix user could not be set up."
+    },
+    "copied": "Copied.",
+    "copy": {
+      "email": "Copy email",
+      "uid": "Copy UID",
+      "pkey": "Copy person key"
+    },
+    "loginId": {
+      "label": "Username",
+      "change": {
+        "label": "Change username",
+        "header": "New username",
+        "signout": "{name} logs in with a username. After the change, {name} is signed out once and then logs in again with the new username.",
+        "conf": "The username is now {loginId}.",
+        "invalid": "A username has 3 to 40 characters: lowercase letters, digits, dot, hyphen or underscore.",
+        "taken": "This username already exists.",
+        "error": "The username could not be changed."
+      }
+    },
+    "open": {
+      "label": "Open account",
+      "created": "The account is open.",
+      "createdWithLoginId": "The account is open. The email already belongs to someone else, so {name} logs in with the username {loginId}.",
+      "exists": "This person already has an account.",
+      "noEmail": "There is no email for this person. An account cannot be opened without one.",
+      "noPerson": "This person no longer exists.",
+      "error": "The account could not be opened."
+    },
+    "reset": {
+      "label": "Send password link",
+      "conf": "The link to set a password has been requested.",
+      "error": "The link to set a password could not be requested."
+    },
+    "swap": {
+      "label": "Swap email",
+      "confirm": "{holder} hands the email over to {newcomer} and will log in with the username {loginId} from now on. {holder} is signed out once.",
+      "minor": "{holder} is under 18 — swapping is usually right here.",
+      "noHolder": "Nobody else here logs in with this email. There is nothing to swap.",
+      "noLoginId": "{holder} does not have a username yet. Please try again tomorrow.",
+      "conf": "Swapped. {holder} now logs in with the username {loginId} — please pass it on. {newcomer} gets a link to set a password.",
+      "error": "The email could not be swapped."
+    }
+  },
+  "segment": {
+    "profile": "Profile",
+    "roles": "Roles",
+    "settings": "Settings"
+  },
+  "edit": {
+    "missing": "This user does not exist here."
+  },
   "empty": "No users found",
   "unknown": "Unknown user",
   "intro": "A user corresponds 1:1 to an authenticated account (Firebase UID = User.okey) and to exactly one person (User.personKey = Person.okey).",

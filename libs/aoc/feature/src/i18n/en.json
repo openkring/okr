@@ -4,79 +4,10 @@
     "title": "Results"
   },
   "account": {
-    "title": "User Accounts",
-    "plural": "Accounts",
-    "empty": "No users found",
-    "user": {
-      "delete": {
-        "label": "Delete user",
-        "error": "The user could not be deleted.",
-        "conf": "The user was deleted.",
-        "confirm": "Do you really want to delete the user ?"
-      },
-      "update": {
-        "label": "Edit user",
-        "error": "The changes could not be saved",
-        "conf": "The changes were saved."
-      }
-    },
     "fbuser": {
-      "delete": {
-        "label": "Delete Firebase user",
-        "error": "The Firebase user could not be deleted.",
-        "conf": "The Firebase user was deleted.",
-        "confirm": "Do you really want to delete the Firebase user ?"
-      },
       "create": {
         "conf": "The Firebase user was created."
       }
-    },
-    "email": {
-      "label": "Login email",
-      "placeholder": "name@domain.com"
-    },
-    "membership": {
-      "edit": "Edit membership"
-    },
-    "copy": {
-      "email": "Copy email",
-      "uid": "Copy UID",
-      "pkey": "Copy person key"
-    },
-    "loginId": {
-      "label": "Username",
-      "change": {
-        "label": "Change username",
-        "header": "New username",
-        "signout": "{name} logs in with a username. After the change, {name} is signed out once and then logs in again with the new username.",
-        "conf": "The username is now {loginId}.",
-        "invalid": "A username has 3 to 40 characters: lowercase letters, digits, dot, hyphen or underscore.",
-        "taken": "This username already exists.",
-        "error": "The username could not be changed."
-      }
-    },
-    "open": {
-      "label": "Open account",
-      "created": "The account is open.",
-      "createdWithLoginId": "The account is open. The email already belongs to someone else, so {name} logs in with the username {loginId}.",
-      "exists": "This person already has an account.",
-      "noEmail": "There is no email for this person. An account cannot be opened without one.",
-      "noPerson": "This person no longer exists.",
-      "error": "The account could not be opened."
-    },
-    "reset": {
-      "label": "Send password link",
-      "conf": "The link to set a password has been requested.",
-      "error": "The link to set a password could not be requested."
-    },
-    "swap": {
-      "label": "Swap email",
-      "confirm": "{holder} hands the email over to {newcomer} and will log in with the username {loginId} from now on. {holder} is signed out once.",
-      "minor": "{holder} is under 18 — swapping is usually right here.",
-      "noHolder": "Nobody else here logs in with this email. There is nothing to swap.",
-      "noLoginId": "{holder} does not have a username yet. Please try again tomorrow.",
-      "conf": "Swapped. {holder} now logs in with the username {loginId} — please pass it on. {newcomer} gets a link to set a password.",
-      "error": "The email could not be swapped."
     }
   },
   "adminops": {
@@ -107,59 +38,6 @@
       "content": "Creates an index on a collection. This is useful when an index is missing in the database and a query cannot be executed.",
       "button": "Create index",
       "select": "Select collection"
-    }
-  },
-  "roles": {
-    "title": "Authorization and roles",
-    "personSelect": {
-      "title": "Select person",
-      "content": "Most of the operations below are based on a person. Therefore, a person must be selected here first. The operations can then be performed on this person."
-    },
-    "account": {
-      "select": "Select person",
-      "title": "Create user account",
-      "content": "An existing person is registered as a user in Firebase Auth, i.e. the Firebase account and the user are created. If the Firebase account already exists, only a user is created that links the Firebase account and the person.",
-      "button": "Create account",
-      "password": {
-        "set": "Set password",
-        "reset": "Reset password"
-      }
-    },
-    "assignment": {
-      "title": "Assign roles",
-      "content": "Assign and check assignments of roles to persons."
-    },
-    "check": {
-      "title": "Check user account",
-      "content": "Check whether a person has a user account in Firebase Auth or whether the prerequisites for creating the account are met.",
-      "button": "Check"
-    },
-    "fbuser": {
-      "title": "Edit Firebase user",
-      "content": "Edit an existing Firebase user. The change is made only in Firebase Auth; if necessary, the UserModel or PersonModel must also be changed.",
-      "button": "Edit Firebase user"
-    },
-    "impersonate": {
-      "title": "Impersonate user",
-      "content": "The user's role is temporarily set to the selected user. This allows the admin to use the application as this user. To return to the admin role, the admin must sign out and sign in again.",
-      "button": "Impersonate"
-    },
-    "password": {
-      "label": "Password",
-      "placeholder": "Password",
-      "error": "The password must be at least 6 characters long.",
-      "helper": "Here you can set a password for the selected user (e.g. for testing purposes). An empty password field results in a random password. The user can then set their own password with a password reset.",
-      "set": "Set a new password for the selected user without triggering a password reset email. An empty password field results in a random password.",
-      "reset": "Send a password reset email to the selected user."
-    },
-    "person": "Person:",
-    "user": "User:",
-    "result": "Result",
-    "privileged": {
-      "title": "Users with extended roles",
-      "content": "All users who have more than the role 'registered'.",
-      "filter": "Filter role",
-      "all": "All roles"
     }
   },
   "session": {

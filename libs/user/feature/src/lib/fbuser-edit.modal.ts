@@ -7,7 +7,8 @@ import { hasRole, removeUndefinedFields } from "@okr/shared-util-core";
 
 import { FbuserForm } from "@okr/user-ui";
 import { dismissOverlay } from '@okr/shared-util-angular';
-import { UserStore } from "./user.store";
+import { I18nService } from "@okr/shared-i18n";
+import { USER_I18N_KEYS, UserI18n } from "@okr/user-util";
 
 @Component({
   selector: 'okr-fbuser-edit-modal',
@@ -16,15 +17,14 @@ import { UserStore } from "./user.store";
     Header, ChangeConfirmation, FbuserForm,
     IonContent
   ],
-  providers: [UserStore],
   template: `
-    <okr-header [i18n]="{ title: store.i18n.fbuser_title() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: i18n.fbuser_title() }" [isModal]="true" />
     @if(showConfirmation()) {
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
       } 
     <ion-content>
       <okr-fbuser-form
-        [i18n]="store.i18n"
+        [i18n]="i18n"
         [formData]="formData()"
         (formDataChange)="onFormDataChange($event)"
         [currentUser]="currentUser()"
@@ -37,7 +37,8 @@ import { UserStore } from "./user.store";
 })
 export class FbuserEditModal {
   private readonly modalController = inject(ModalController);
-  protected readonly store = inject(UserStore);
+  // the i18n only — not the UserStore, whose three callables would load again for every modal
+  protected readonly i18n = inject(I18nService).translateAll(USER_I18N_KEYS) as UserI18n;
 
   // inputs
   public fbuser = input.required<FirebaseUserModel>();
@@ -51,7 +52,7 @@ export class FbuserEditModal {
 
   // derived
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.i18n.cancel(), save: this.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

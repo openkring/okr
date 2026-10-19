@@ -296,16 +296,15 @@ const aoc: FeatureBlock = {
   menu: [
     aocMenuParent([
       { key: 'aoc-admin',      name: 'aoc-admin',      url: '/aoc/adminops',   action: 'navigate', roleNeeded: 'admin', icon: 'admin',    label: '@main.aoc.admin' },
-      { key: 'aoc-auth',       name: 'aoc-auth',       url: '/aoc/roles',      action: 'navigate', roleNeeded: 'admin', icon: 'key',      label: '@main.aoc.auth' },
       { key: 'aoc-data',       name: 'aoc-data',       url: '/aoc/data',       action: 'navigate', roleNeeded: 'admin', icon: 'database', label: '@item.aoc-data' },
       // Added task 18, verbatim off the live docs (all six `tenants: ['scs']` only — i.e.
       // every other tenant's AOC submenu is missing them today, which is exactly what
       // cataloguing them fixes).
       { key: 'aoc-sessions',   name: 'aoc-sessions',   url: '/aoc/sessions',   action: 'navigate', roleNeeded: 'admin', icon: 'history',  label: '@item.aoc-sessions' },
-      { key: 'aoc-account',    name: 'aoc-account',    url: '/aoc/account',    action: 'navigate', roleNeeded: 'admin', icon: 'person',   label: '@item.aoc-account' },
       { key: 'aoc-email',      name: 'aoc-email',      url: '/aoc/email',      action: 'navigate', roleNeeded: 'admin', icon: 'email',    label: '@item.aoc-email' },
       // `aoc-kiosk` LEFT the catalogue with spec 1.101 phase 2: the kiosk page is `trip-kiosk` in `c-trips`.
       // `aoc-chat` LEFT the catalogue with spec 1.101 phase 4: Chat-Wartung is `chat-maintenance` in `contextMenuChat`.
+      // `aoc-auth` and `aoc-account` LEFT the catalogue with spec 1.101 phase 4: both are «Benutzer & Zugänge» (`user-all`).
       // `aoc-allocation` (spec 1.47) LEFT the catalogue with spec 1.101 §6: tenant allocation is an
       // operator-only tool. Its route lives in apps/bka-app (`/operator/allocation`) and its menu
       // row is a bka-only doc written by scripts/restrict-allocation-to-bka.mjs.

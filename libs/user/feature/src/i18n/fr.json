@@ -13,6 +13,108 @@
     "no_account": "pas de compte",
     "login_no_user": "login sans utilisateur"
   },
+  "account": {
+    "person": {
+      "edit": "Modifier la personne"
+    },
+    "fbuser": {
+      "delete": {
+        "label": "Supprimer le login",
+        "confirm": "Veux-tu vraiment supprimer ce login ? Plus personne ne pourra se connecter avec.",
+        "error": "Le login n'a pas pu être supprimé."
+      },
+      "edit": {
+        "label": "Modifier le login",
+        "notfound": "Cet utilisateur n'a pas de login.",
+        "conf": "Le login est enregistré.",
+        "error": "Le login n'a pas pu être enregistré : {reason}"
+      }
+    },
+    "password": {
+      "label": "Définir le mot de passe",
+      "header": "Nouveau mot de passe",
+      "message": "Tu choisis toi-même le mot de passe, aucun e-mail n'est envoyé. Si tu laisses le champ vide, un mot de passe aléatoire est défini.",
+      "placeholder": "Mot de passe",
+      "conf": "Le mot de passe est défini.",
+      "error": "Le mot de passe n'a pas pu être défini."
+    },
+    "impersonate": {
+      "label": "Se connecter en tant que cet utilisateur",
+      "confirm": "Tu te connectes en tant que {name} et tu vois l'app comme {name} la voit. Pour redevenir toi-même, déconnecte-toi puis reconnecte-toi.",
+      "error": "La connexion en tant que cet utilisateur n'a pas fonctionné."
+    },
+    "check": {
+      "label": "Vérifier l'accès",
+      "title": "Vérifier l'accès",
+      "explanation": "La personne, l'utilisateur et le login de cet accès, et s'ils correspondent.",
+      "person": "Personne",
+      "email": "E-mail de la personne",
+      "noEmail": "aucun e-mail enregistré, sans e-mail aucun compte ne peut être ouvert",
+      "user": "Utilisateur",
+      "noUser": "aucun utilisateur",
+      "login": "Login",
+      "noLogin": "aucun login trouvé",
+      "linkPerson": "Utilisateur → personne",
+      "linkLogin": "Login → utilisateur",
+      "ok": "correspond",
+      "roles": "Rôles",
+      "archived": "archivé"
+    },
+    "matrix": {
+      "label": "Configurer l'utilisateur Matrix",
+      "conf": "L'utilisateur Matrix est configuré : {id}",
+      "error": "L'utilisateur Matrix n'a pas pu être configuré."
+    },
+    "copied": "Copié.",
+    "copy": {
+      "email": "Copier l'e-mail",
+      "uid": "Copier l'UID",
+      "pkey": "Copier la clé de personne"
+    },
+    "loginId": {
+      "label": "Nom d'utilisateur",
+      "change": {
+        "label": "Modifier le nom d'utilisateur",
+        "header": "Nouveau nom d'utilisateur",
+        "signout": "{name} se connecte avec un nom d'utilisateur. Après la modification, {name} sera déconnecté une fois et se reconnectera avec le nouveau nom d'utilisateur.",
+        "conf": "Le nom d'utilisateur est maintenant {loginId}.",
+        "invalid": "Un nom d'utilisateur compte 3 à 40 caractères : lettres minuscules, chiffres, point, trait d'union ou tiret bas.",
+        "taken": "Ce nom d'utilisateur existe déjà.",
+        "error": "Le nom d'utilisateur n'a pas pu être modifié."
+      }
+    },
+    "open": {
+      "label": "Ouvrir un compte",
+      "created": "Le compte est ouvert.",
+      "createdWithLoginId": "Le compte est ouvert. L'e-mail appartient déjà à quelqu'un d'autre, c'est pourquoi {name} se connecte avec le nom d'utilisateur {loginId}.",
+      "exists": "Cette personne a déjà un compte.",
+      "noEmail": "Aucun e-mail n'est enregistré pour cette personne. Sans e-mail, on ne peut pas ouvrir de compte.",
+      "noPerson": "Cette personne n'existe plus.",
+      "error": "Le compte n'a pas pu être ouvert."
+    },
+    "reset": {
+      "label": "Envoyer un lien pour le mot de passe",
+      "conf": "Le lien pour définir un mot de passe a été demandé.",
+      "error": "Le lien pour définir un mot de passe n'a pas pu être demandé."
+    },
+    "swap": {
+      "label": "Échanger l'e-mail",
+      "confirm": "{holder} cède l'e-mail à {newcomer} et se connectera désormais avec le nom d'utilisateur {loginId}. {holder} sera déconnecté une fois.",
+      "minor": "{holder} est mineur — l'échange est ici généralement le bon choix.",
+      "noHolder": "Personne d'autre ici ne se connecte avec cet e-mail. Il n'y a rien à échanger.",
+      "noLoginId": "{holder} n'a pas encore de nom d'utilisateur. Réessaie demain.",
+      "conf": "Échange effectué. {holder} se connecte désormais avec le nom d'utilisateur {loginId} — transmets-le, s'il te plaît. {newcomer} reçoit un lien pour définir un mot de passe.",
+      "error": "L'e-mail n'a pas pu être échangé."
+    }
+  },
+  "segment": {
+    "profile": "Profil",
+    "roles": "Rôles",
+    "settings": "Réglages"
+  },
+  "edit": {
+    "missing": "Cet utilisateur n'existe pas ici."
+  },
   "empty": "Aucun utilisateur trouvé",
   "unknown": "Utilisateur inconnu",
   "intro": "Un utilisateur correspond 1:1 à un compte authentifié (Firebase UID = User.okey) et à exactement une personne (User.personKey = Person.okey).",

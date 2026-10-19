@@ -522,11 +522,6 @@
       }
     },
     "user": {
-      "provision": {
-        "label": "Create Matrix user",
-        "action": "Create",
-        "conf": "User created"
-      },
       "deactivate": {
         "label": "Deactivate Matrix user",
         "confirm": "Deactivate {{ userId }}? The user will no longer be able to sign in.",

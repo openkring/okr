@@ -1,6 +1,6 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
-import { IonContent, ModalController, Platform } from '@ionic/angular';
+import { IonContent, IonLabel, IonSegment, IonSegmentButton, ModalController, Platform } from '@ionic/angular';
 
 import { PersonModel, UserModel, UserModelName } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Chips, Header } from '@okr/shared-ui';
@@ -24,7 +24,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
   imports: [
     Header, ChangeConfirmation, AvatarToolbar, Chips, CommentsCard,
     UserModelForm, UserDisplayForm, UserAuthForm, UserPrivacyForm, UserNotificationForm,
-    IonContent
+    IonContent, IonSegment, IonSegmentButton, IonLabel
   ],
   template: `
     <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
@@ -33,20 +33,34 @@ import { dismissOverlay } from '@okr/shared-util-angular';
     }
     <ion-content class="ion-no-padding">
       <okr-avatar-toolbar key="{{avatarKey()}}" modelType="person" (imageSelected)="onImageSelected($event)" [readOnly]="readOnly()" [title]="toolbarTitle()"/>
+      <!-- the segment only picks which of the stacked forms is visible; one save covers them all -->
+      <ion-segment [value]="segment()" (ionChange)="onSegmentChange($event.detail.value)">
+        <ion-segment-button value="profile"><ion-label>{{ i18n.segment_profile() }}</ion-label></ion-segment-button>
+        <ion-segment-button value="roles"><ion-label>{{ i18n.segment_roles() }}</ion-label></ion-segment-button>
+        <ion-segment-button value="settings"><ion-label>{{ i18n.segment_settings() }}</ion-label></ion-segment-button>
+      </ion-segment>
       @if(user(); as user) {
-        <okr-user-model-form
-            [i18n]="i18n"
-            [formData]="userModelVm()"
-            (formDataChange)="onFormDataChange('model', $event)"
-            [readOnly]="readOnly()"
-            (dirty)="formDirty.set($event)"
-            (valid)="formValid.set($event)"
-        />
-        <okr-user-auth-form [i18n]="i18n" [formData]="userAuthVm()" [allRoles]="allRoles()" [readOnly]="readOnly()" (formDataChange)="onFormDataChange('auth', $event)" />
-        <okr-user-display-form [i18n]="i18n" [formData]="userDisplayVm()" [readOnly]="readOnly()" (formDataChange)="onFormDataChange('display', $event)" />
-        <okr-user-privacy-form [i18n]="i18n" [formData]="userPrivacyVm()" [readOnly]="readOnly()" [currentUser]="currentUser()" (formDataChange)="onFormDataChange('privacy', $event)" />
-        <okr-user-notification-form [i18n]="i18n" [formData]="userNotificationVm()" [readOnly]="readOnly()" (formDataChange)="onFormDataChange('notification', $event)" />
-        <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onTagsChanged($event)" [readOnly]="readOnly()" [allChips]="allTags()" chipName="tag" />
+        @switch (segment()) {
+          @case ('roles') {
+            <okr-user-auth-form [i18n]="i18n" [formData]="userAuthVm()" [allRoles]="allRoles()" [readOnly]="readOnly()" (formDataChange)="onFormDataChange('auth', $event)" />
+          }
+          @case ('settings') {
+            <okr-user-display-form [i18n]="i18n" [formData]="userDisplayVm()" [readOnly]="readOnly()" (formDataChange)="onFormDataChange('display', $event)" />
+            <okr-user-privacy-form [i18n]="i18n" [formData]="userPrivacyVm()" [readOnly]="readOnly()" [currentUser]="currentUser()" (formDataChange)="onFormDataChange('privacy', $event)" />
+            <okr-user-notification-form [i18n]="i18n" [formData]="userNotificationVm()" [readOnly]="readOnly()" (formDataChange)="onFormDataChange('notification', $event)" />
+          }
+          @default {
+            <okr-user-model-form
+                [i18n]="i18n"
+                [formData]="userModelVm()"
+                (formDataChange)="onFormDataChange('model', $event)"
+                [readOnly]="readOnly()"
+                (dirty)="formDirty.set($event)"
+                (valid)="formValid.set($event)"
+            />
+            <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onTagsChanged($event)" [readOnly]="readOnly()" [allChips]="allTags()" chipName="tag" />
+          }
+        }
       }
       <okr-comments-card [parentKey]="parentKey()" />
     </ion-content>
@@ -78,6 +92,7 @@ export class UserEditModal {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showForm = signal(true);
+  protected segment = signal<'profile' | 'roles' | 'settings'>('profile');
 
   // derived
   protected readonly headerTitle = computed(() => {
@@ -144,6 +159,10 @@ export class UserEditModal {
     if (downloadUrl) {
       await this.avatarService.updateOrCreate(avatar);
     }
+  }
+
+  protected onSegmentChange(value: unknown): void {
+    if (value === 'profile' || value === 'roles' || value === 'settings') this.segment.set(value);
   }
 
   protected onTagsChanged(tags: string): void {

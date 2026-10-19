@@ -3,6 +3,7 @@ import type { Route } from '@angular/router';
 import { isAdminGuard, isAuthenticatedGuard, isContentAdminGuard, isContractReaderGuard, isMemberAdminGuard, isPrivilegedGuard, isTreasurerGuard, isTripAdminGuard } from '@okr/auth-feature';
 import { AppStore } from '@okr/shared-feature';
 import { memberFeesRedirectGuard } from './member-fees-redirect';
+import { userEditRedirect } from './user-edit-redirect';
 import { RESOURCE_EDIT_MODAL } from '@okr/resource-ui';
 
 /**
@@ -148,13 +149,15 @@ const aoc: BlockRoutes = {
     canActivate: [isContentAdminGuard()],
     children: [
       { path: 'adminops',   canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocAdminOps) },
-      { path: 'roles',      canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocRoles) },
+      // 1.101 phase 4: remove after the next release
+      { path: 'roles', redirectTo: '/user/all/c-users' },
       // 1.101 phase 2: remove after the next release
       { path: 'content', redirectTo: '/page/integrity' },
       { path: 'data',       canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocData) },
       // 1.101 phase 4: remove after the next release
       { path: 'chat', redirectTo: '/chat/maintenance' },
-      { path: 'account',    canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocUserAccounts) },
+      // 1.101 phase 4: remove after the next release
+      { path: 'account', redirectTo: '/user/all/c-users' },
       // 1.101 phase 2: remove after the next release
       { path: 'doc', redirectTo: '/document/orphans' },
       // 1.101 phase 2: remove after the next release
@@ -361,11 +364,10 @@ const user: BlockRoutes = {
     path: 'user',
     canActivate: [isAuthenticatedGuard],
     children: [
-      { path: ':listId/:contextMenuName', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/user-feature').then(m => m.UserList) },
-      // Corrected from app.routes.ts's uncalled `isAdminGuard` (one of the 12 sites where
-      // the live route table writes the guard factory uncalled, which enforces nothing —
-      // see feature-catalogue.types.ts / the task brief).
-      { path: ':userKey', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/user-feature').then(m => m.UserEditPage) },
+      // «Benutzer & Zugänge» (spec 1.101 phase 4): admin, matching the `user-all` row's `roleNeeded`.
+      { path: ':listId/:contextMenuName', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/user-feature').then(m => m.UserList) },
+      // The retired UserEditPage (it could not save): the list opens the user's modal for `?edit=`.
+      { path: ':userKey', redirectTo: userEditRedirect },
     ],
   }],
 };

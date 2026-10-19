@@ -130,7 +130,7 @@ describe('FEATURE_BLOCKS Wartung rows (1.101 phase 2)', () => {
       (spec.children ?? []).forEach(visit);
     };
     aoc.menu.forEach(visit);
-    for (const n of ['maint-divider', 'maint-divider-content', 'maint-divider-trip', 'calevent-check-duplicates', 'group-check-hygiene', 'person-check-favaddress', 'person-bexio-contacts', 'aoc-bexio', 'page-integrity', 'document-orphans', 'trip-maintenance', 'trip-kiosk', 'aoc-kiosk', 'diary-import', 'aoc-content', 'aoc-doc', 'aoc-diary', 'chat-maintenance', 'aoc-chat']) {
+    for (const n of ['maint-divider', 'maint-divider-content', 'maint-divider-trip', 'calevent-check-duplicates', 'group-check-hygiene', 'person-check-favaddress', 'person-bexio-contacts', 'aoc-bexio', 'page-integrity', 'document-orphans', 'trip-maintenance', 'trip-kiosk', 'aoc-kiosk', 'diary-import', 'aoc-content', 'aoc-doc', 'aoc-diary', 'chat-maintenance', 'aoc-chat', 'aoc-account', 'aoc-auth']) {
       expect(names.has(n), n).toBe(false);
     }
   });

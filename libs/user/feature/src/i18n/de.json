@@ -13,6 +13,108 @@
     "no_account": "kein Konto",
     "login_no_user": "Login ohne Benutzer"
   },
+  "account": {
+    "person": {
+      "edit": "Person bearbeiten"
+    },
+    "fbuser": {
+      "delete": {
+        "label": "Login löschen",
+        "confirm": "Soll dieses Login wirklich gelöscht werden? Danach kann sich damit niemand mehr anmelden.",
+        "error": "Das Login konnte nicht gelöscht werden."
+      },
+      "edit": {
+        "label": "Login bearbeiten",
+        "notfound": "Zu diesem Benutzer gibt es kein Login.",
+        "conf": "Das Login ist gespeichert.",
+        "error": "Das Login konnte nicht gespeichert werden: {reason}"
+      }
+    },
+    "password": {
+      "label": "Passwort setzen",
+      "header": "Neues Passwort",
+      "message": "Du legst das Passwort selbst fest, es geht keine E-Mail hinaus. Lässt du das Feld leer, wird ein zufälliges Passwort gesetzt.",
+      "placeholder": "Passwort",
+      "conf": "Das Passwort ist gesetzt.",
+      "error": "Das Passwort konnte nicht gesetzt werden."
+    },
+    "impersonate": {
+      "label": "Als dieser Benutzer anmelden",
+      "confirm": "Du meldest dich als {name} an und siehst die App so, wie {name} sie sieht. Um wieder du selbst zu sein, meldest du dich ab und wieder an.",
+      "error": "Die Anmeldung als dieser Benutzer hat nicht geklappt."
+    },
+    "check": {
+      "label": "Berechtigung prüfen",
+      "title": "Zugang prüfen",
+      "explanation": "Person, Benutzer und Login dieses Zugangs, und ob sie zueinander passen.",
+      "person": "Person",
+      "email": "E-Mail der Person",
+      "noEmail": "keine E-Mail hinterlegt, ohne E-Mail lässt sich kein Konto eröffnen",
+      "user": "Benutzer",
+      "noUser": "kein Benutzer",
+      "login": "Login",
+      "noLogin": "kein Login gefunden",
+      "linkPerson": "Benutzer → Person",
+      "linkLogin": "Login → Benutzer",
+      "ok": "passt",
+      "roles": "Rollen",
+      "archived": "archiviert"
+    },
+    "matrix": {
+      "label": "Matrix-Benutzer einrichten",
+      "conf": "Der Matrix-Benutzer ist eingerichtet: {id}",
+      "error": "Der Matrix-Benutzer konnte nicht eingerichtet werden."
+    },
+    "copied": "Kopiert.",
+    "copy": {
+      "email": "E-Mail kopieren",
+      "uid": "UID kopieren",
+      "pkey": "Person-Key kopieren"
+    },
+    "loginId": {
+      "label": "Benutzername",
+      "change": {
+        "label": "Benutzername ändern",
+        "header": "Neuer Benutzername",
+        "signout": "{name} meldet sich mit dem Benutzernamen an. Nach der Änderung wird {name} einmal abgemeldet und meldet sich dann mit dem neuen Benutzernamen wieder an.",
+        "conf": "Der Benutzername ist jetzt {loginId}.",
+        "invalid": "Ein Benutzername hat 3 bis 40 Zeichen: Kleinbuchstaben, Ziffern, Punkt, Bindestrich oder Unterstrich.",
+        "taken": "Diesen Benutzernamen gibt es schon.",
+        "error": "Der Benutzername konnte nicht geändert werden."
+      }
+    },
+    "open": {
+      "label": "Konto eröffnen",
+      "created": "Das Konto ist eröffnet.",
+      "createdWithLoginId": "Das Konto ist eröffnet. Die E-Mail gehört schon jemand anderem, darum meldet sich {name} mit dem Benutzernamen {loginId} an.",
+      "exists": "Für diese Person gibt es schon ein Konto.",
+      "noEmail": "Für diese Person ist keine E-Mail hinterlegt. Ohne E-Mail lässt sich kein Konto eröffnen.",
+      "noPerson": "Diese Person gibt es nicht mehr.",
+      "error": "Das Konto konnte nicht eröffnet werden."
+    },
+    "reset": {
+      "label": "Passwort-Link senden",
+      "conf": "Der Link zum Setzen des Passworts ist angefordert.",
+      "error": "Der Link zum Setzen des Passworts konnte nicht angefordert werden."
+    },
+    "swap": {
+      "label": "E-Mail tauschen",
+      "confirm": "{holder} gibt die E-Mail an {newcomer} ab und meldet sich künftig mit dem Benutzernamen {loginId} an. {holder} wird dabei einmal abgemeldet.",
+      "minor": "{holder} ist minderjährig — tauschen ist hier meist richtig.",
+      "noHolder": "Mit dieser E-Mail meldet sich hier niemand sonst an. Es gibt nichts zu tauschen.",
+      "noLoginId": "{holder} hat noch keinen Benutzernamen. Versuche es morgen noch einmal.",
+      "conf": "Getauscht. {holder} meldet sich ab jetzt mit dem Benutzernamen {loginId} an — gib ihn bitte weiter. {newcomer} bekommt einen Link, um ein Passwort zu setzen.",
+      "error": "Die E-Mail konnte nicht getauscht werden."
+    }
+  },
+  "segment": {
+    "profile": "Profil",
+    "roles": "Rollen",
+    "settings": "Einstellungen"
+  },
+  "edit": {
+    "missing": "Diesen Benutzer gibt es hier nicht."
+  },
   "empty": "Keine User gefunden",
   "unknown": "Unbekannter User",
   "intro": "Ein User entspricht 1:1 einem authentisierten Konto (Firebase UID = User.okey) und genau einer Person (User.personKey = Person.okey).",

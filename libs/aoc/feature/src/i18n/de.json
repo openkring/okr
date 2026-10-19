@@ -4,79 +4,10 @@
     "title": "Resultate"
   },
   "account": {
-    "title": "User Accounts",
-    "plural": "Konti",
-    "empty": "Keine User gefunden",
-    "user": {
-      "delete": {
-        "label": "User löschen",
-        "error": "Der User konnte nicht gelöscht werden.",
-        "conf": "Der User wurde gelöscht.",
-        "confirm": "Soll der User wirklich gelöscht werden ?"
-      },
-      "update": {
-        "label": "User ändern",
-        "error": "Die Aenderungen konnten nicht gespeichert werden",
-        "conf": "Die Aenderungen wurden gespeichert."
-      }
-    },
     "fbuser": {
-      "delete": {
-        "label": "Firebase User löschen",
-        "error": "Der Firebase User konnte nicht gelöscht werden.",
-        "conf": "Der Firebase User wurde gelöscht.",
-        "confirm": "Soll der Firebase User wirklich gelöscht werden ?"
-      },
       "create": {
         "conf": "Der Firebase User wurde erstellt."
       }
-    },
-    "email": {
-      "label": "Login E-Mail",
-      "placeholder": "name@domain.com"
-    },
-    "membership": {
-      "edit": "Mitgliedschaft ändern"
-    },
-    "copy": {
-      "email": "E-Mail kopieren",
-      "uid": "UID kopieren",
-      "pkey": "Person-Key kopieren"
-    },
-    "loginId": {
-      "label": "Benutzername",
-      "change": {
-        "label": "Benutzername ändern",
-        "header": "Neuer Benutzername",
-        "signout": "{name} meldet sich mit dem Benutzernamen an. Nach der Änderung wird {name} einmal abgemeldet und meldet sich dann mit dem neuen Benutzernamen wieder an.",
-        "conf": "Der Benutzername ist jetzt {loginId}.",
-        "invalid": "Ein Benutzername hat 3 bis 40 Zeichen: Kleinbuchstaben, Ziffern, Punkt, Bindestrich oder Unterstrich.",
-        "taken": "Diesen Benutzernamen gibt es schon.",
-        "error": "Der Benutzername konnte nicht geändert werden."
-      }
-    },
-    "open": {
-      "label": "Konto eröffnen",
-      "created": "Das Konto ist eröffnet.",
-      "createdWithLoginId": "Das Konto ist eröffnet. Die E-Mail gehört schon jemand anderem, darum meldet sich {name} mit dem Benutzernamen {loginId} an.",
-      "exists": "Für diese Person gibt es schon ein Konto.",
-      "noEmail": "Für diese Person ist keine E-Mail hinterlegt. Ohne E-Mail lässt sich kein Konto eröffnen.",
-      "noPerson": "Diese Person gibt es nicht mehr.",
-      "error": "Das Konto konnte nicht eröffnet werden."
-    },
-    "reset": {
-      "label": "Passwort-Link senden",
-      "conf": "Der Link zum Setzen des Passworts ist angefordert.",
-      "error": "Der Link zum Setzen des Passworts konnte nicht angefordert werden."
-    },
-    "swap": {
-      "label": "E-Mail tauschen",
-      "confirm": "{holder} gibt die E-Mail an {newcomer} ab und meldet sich künftig mit dem Benutzernamen {loginId} an. {holder} wird dabei einmal abgemeldet.",
-      "minor": "{holder} ist minderjährig — tauschen ist hier meist richtig.",
-      "noHolder": "Mit dieser E-Mail meldet sich hier niemand sonst an. Es gibt nichts zu tauschen.",
-      "noLoginId": "{holder} hat noch keinen Benutzernamen. Versuche es morgen noch einmal.",
-      "conf": "Getauscht. {holder} meldet sich ab jetzt mit dem Benutzernamen {loginId} an — gib ihn bitte weiter. {newcomer} bekommt einen Link, um ein Passwort zu setzen.",
-      "error": "Die E-Mail konnte nicht getauscht werden."
     }
   },
   "adminops": {
@@ -107,59 +38,6 @@
       "content": "Erstellt einen Index auf einer Collection. Dies ist nützlich, wenn ein Index in der Datenbank fehlt und eine Abfrage nicht ausgeführt werden kann.",
       "button": "Index erstellen",
       "select": "Collection wählen"
-    }
-  },
-  "roles": {
-    "title": "Autorisierung und Rollen",
-    "personSelect": {
-      "title": "Person auswählen",
-      "content": "Die meisten der untenstehenden Operationen basieren auf einer Person. Deshalb muss hier zuerst eine Person ausgewählt werden. Danach können die Operationen auf dieser Person durchgeführt werden."
-    },
-    "account": {
-      "select": "Person auswählen",
-      "title": "User Account erstellen",
-      "content": "Eine bestehende Person wird als User in Firebase Auth registriert, dh. das Firebase-Account und der User werden erzeugt. Falls das Firebase-Account bereits existiert, wird nur ein User erstellt, welcher das Firebase Account und die Person verlinkt.",
-      "button": "Konto erstellen",
-      "password": {
-        "set": "Passwort setzen",
-        "reset": "Passwort zurücksetzen"
-      }
-    },
-    "assignment": {
-      "title": "Rollen zuweisen",
-      "content": "Zuteilungen von Rollen zu Personen vornehmen und prüfen."
-    },
-    "check": {
-      "title": "User Account prüfen",
-      "content": "Prüfen, ob eine Person einen User-Account in Firebase Auth hat oder ob die Voraussetzungen für die Erstellung des Accounts erfüllt sind.",
-      "button": "Prüfen"
-    },
-    "fbuser": {
-      "title": "Firebase User ändern",
-      "content": "Ändere einen bestehenden Firebase User. Die Aenderung erfolgt nur in Firebase Auth, allenfalls müssen auch das UserModel oder PersonModel geändert werden.",
-      "button": "Firebase User ändern"
-    },
-    "impersonate": {
-      "title": "Benutzer impersonifizieren",
-      "content": "Die Rolle des Users wird temporär auf den ausgewählten User gesetzt. Dadurch kann der Admin die Applikation als dieser User benutzen. Um wieder in die Admin-Rolle zurückzukehren, muss der Admin sich abmelden und wieder anmelden.",
-      "button": "Impersonate"
-    },
-    "password": {
-      "label": "Passwort",
-      "placeholder": "Passwort",
-      "error": "Das Passwort muss mindestens 6 Zeichen lang sein.",
-      "helper": "Du kannst hier ein Passwort für den selektierten User setzen (z.B. für Testzwecke). Ein leeres Passwort-Feld führt zu einem zufälligen Passwort. Der User kann anschliessend mit Passwort Reset sein eigenes Passwort setzen.",
-      "set": "Setze ein neues Passwort für den ausgewählten User, ohne eine Passwort-Reset Email auszulösen. Ein leeres Passwort-Feld führt zu einem zufälligen Passwort.",
-      "reset": "Sende eine Passwort-Reset Email an den ausgewählten User."
-    },
-    "person": "Person:",
-    "user": "User:",
-    "result": "Resultat",
-    "privileged": {
-      "title": "Benutzer mit erweiterten Rollen",
-      "content": "Alle Benutzer, die mehr als die Rolle 'registered' haben.",
-      "filter": "Rolle filtern",
-      "all": "Alle Rollen"
     }
   },
   "session": {

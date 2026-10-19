@@ -318,6 +318,8 @@ const AOC_REDIRECTS: Record<string, string> = {
   kiosk: '/trips/kiosk',
   statistics: '/aoc/adminops',
   chat: '/chat/maintenance',
+  roles: '/user/all/c-users',
+  account: '/user/all/c-users',
 };
 
 describe('/aoc guards after the 2026-08-05 rulings', () => {

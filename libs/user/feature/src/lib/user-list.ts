@@ -1,15 +1,17 @@
-import { Component, computed, inject, input, linkedSignal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonBadge, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonSelect, IonSelectOption, IonTitle, IonToolbar } from '@ionic/angular';
+import { Component, computed, effect, inject, input, linkedSignal, untracked } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { IonBadge, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonSelect, IonSelectOption, IonTitle, IonToolbar, ToastController } from '@ionic/angular';
 
 import { Menu } from '@okr/cms-menu-feature';
-import { RoleName, UserModel } from '@okr/shared-models';
+import { RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { error, showToast } from '@okr/shared-util-angular';
 import { hasRole } from '@okr/shared-util-core';
 
-import { UserAccountKind, UserAccountRow } from '@okr/user-util';
+import { UserAccountKind, UserAccountRow, UserEditRequest, userEditRequest } from '@okr/user-util';
 
+import { UserAccountActions } from './user-account-actions';
 import { UserStore } from './user.store';
 
 @Component({
@@ -21,7 +23,7 @@ import { UserStore } from './user.store';
       IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
       IonLabel, IonContent, IonItem, IonList, IonPopover, IonChip, IonBadge, IonSelect, IonSelectOption
     ],
-    providers: [UserStore],
+    providers: [UserStore, UserAccountActions],
     template: `
     <ion-header>
       <!-- title and context menu -->
@@ -104,11 +106,17 @@ import { UserStore } from './user.store';
 })
 export class UserList {
   protected store = inject(UserStore);
-  private actionSheetController = inject(ActionSheetController);
+  private readonly actions = inject(UserAccountActions);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly toastController = inject(ToastController);
 
   // inputs
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
+  /** query param: the user whose modal to open (the old `/user/:userKey` url redirects here) */
+  public edit = input<string>();
+  private handledEditKey: string | undefined;
 
   // derived signals
   protected searchTerm = linkedSignal(() => this.store.searchTerm());
@@ -129,7 +137,18 @@ export class UserList {
 
   // passing constants to the template
   protected isYearly = false;
-  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
+
+  constructor() {
+    // `?edit=<userKey>`: wait for the users, then open the modal once (userEditRequest decides)
+    effect(() => {
+      const editKey = this.edit();
+      if (!editKey) { this.handledEditKey = undefined; return; }  // cleared: the same key may come again later
+      const request = userEditRequest(editKey, this.store.users(), this.store.usersLoaded());
+      if (editKey === this.handledEditKey || request.kind === 'none' || request.kind === 'wait') return;
+      this.handledEditKey = editKey;
+      untracked(() => void this.handleEditRequest(request));
+    });
+  }
 
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
@@ -152,62 +171,21 @@ export class UserList {
     }
   }
 
-   /**
-   * Displays an ActionSheet with all possible actions on an User. Only actions are shown, that the user has permission for.
-   * After user selected an action this action is executed.
-   * @param user 
-   */
+  /** The row's ActionSheet: every account tool that applies to this row kind (see UserAccountActions). */
   protected async showActions(row: UserAccountRow): Promise<void> {
-    const user = row.user;
-    if (!user) return; // rows without a user doc get their actions in Task 4
-    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
-    this.addActionSheetButtons(actionSheetOptions, user);
-    await this.executeActions(actionSheetOptions, user);
+    await this.actions.show(row);
   }
 
   /**
-   * Fills the ActionSheet with all possible actions, considering the user permissions.
-   * @param user 
+   * `?edit=<userKey>` (where the retired `/user/:userKey` page redirects): opens that user's modal
+   * once the users are loaded, then clears the param so a reload or back does not open it again.
    */
-  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, user: UserModel): void {
-    if (hasRole('privileged', this.store.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('user.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
-    }
-    if (hasRole('admin', this.store.appStore.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('user.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
-      actionSheetOptions.buttons.push(createActionSheetButton('user.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
-    }
-    if (actionSheetOptions.buttons.length === 1) { // only cancel button
-      actionSheetOptions.buttons = [];
-    }
+  private async handleEditRequest(request: UserEditRequest): Promise<void> {
+    await this.router.navigate([], { relativeTo: this.route, queryParams: { edit: null }, queryParamsHandling: 'merge', replaceUrl: true });
+    if (request.kind === 'open') await this.store.edit(request.user, this.readOnly());
+    else if (request.kind === 'missing') await showToast(this.toastController, this.store.i18n.edit_missing());
   }
 
-  /**
-   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
-   * @param actionSheetOptions 
-   * @param user 
-   */
-  private async executeActions(actionSheetOptions: ActionSheetOptions, user: UserModel): Promise<void> {
-    if (actionSheetOptions.buttons.length > 0) {
-      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
-      await actionSheet.present();
-      const { data } = await actionSheet.onDidDismiss();
-      if (!data) return;
-      switch (data.action) {
-        case 'user.delete':
-          await this.store.delete(user, this.readOnly());
-          break;
-        case 'user.edit':
-          await this.store.edit(user, this.readOnly());
-          break;
-        case 'user.view':
-          await this.store.edit(user, true);
-          break;
-      }
-    }
-  }
-  
   /******************************* helpers *************************************** */
   protected trackKey(row: UserAccountRow): string {
     return `${row.kind}:${row.uid ?? ''}:${row.personKey ?? ''}`;

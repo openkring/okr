@@ -6,7 +6,7 @@
 
 The user domain covers two concerns:
 
-1. **Admin management** — `UserList` + `UserListStore` + `UserEditPage` + `UserEditStore` for admins to view and edit all user accounts.
+1. **Admin management** — «Benutzer & Zugänge» (`/user/all/c-users`, admin): `UserList` + `UserStore` merge the logins, users and active members into rows (`buildUserAccountRows`); each row's ActionSheet (`UserAccountActions`, offers per `actionsForRow`) carries every account tool of the former AOC pages «User Accounts» and «Berechtigungen» (spec 1.101 phase 4). `UserEditModal` edits a user in three segments (Profil · Rollen · Einstellungen). The old `/user/:userKey` url redirects to the list with `?edit=<userKey>`, which opens the modal.
 2. **Firebase Auth management** — `FbuserEditModal` for viewing/editing the raw Firebase Auth account (email, displayName, emailVerified, disabled).
 
 ## Firestore Collection
@@ -69,7 +69,7 @@ The `FbuserEditModal` shows and edits the underlying Firebase Auth record direct
 
 ## Stores
 
-### `UserListStore`
+### `UserStore`
 
 Loads all users for the current tenant ordered by `loginEmail`.
 
@@ -84,33 +84,15 @@ Loads all users for the current tenant ordered by `loginEmail`.
 
 | Method | Description |
 |---|---|
-| `edit(user, readOnly)` | Navigates to `/user/<okey>` |
-| `delete(user, readOnly)` | Deletes the user document |
+| `edit(user, readOnly)` | Opens `UserEditModal` and saves the user (and the person's usage* flags) |
 | `export(type)` | Exports users as XLSX (`'raw'` or `'users'` format) |
-
-### `UserEditStore`
-
-Manages a single user detail page. Loaded by `userKey` input.
-
-#### State
-
-| Property | Type | Description |
-|---|---|---|
-| `userKey` | string \| undefined | Key of the user being edited |
-
-#### Key Methods
-
-| Method | Description |
-|---|---|
-| `setUserKey(key)` | Triggers reload of the user resource |
-| `save(user)` | Creates or updates the user; navigates back on success |
 
 ## Components
 
 | Component | Description |
 |---|---|
-| `UserList` | List with search and tag filters; actions via ActionSheet (edit, delete, export) |
-| `UserEditPage` | Full edit page for a single user's settings and roles |
+| `UserList` | «Benutzer & Zugänge»: search, tag, «Probleme» and «Erweiterte Rollen» filters; row actions via `UserAccountActions` |
+| `UserEditModal` | Edit modal for one user (segments Profil · Rollen · Einstellungen) |
 | `FbuserEditModal` | Ionic modal to view/edit raw Firebase Auth account fields |
 
 ## Validation (`@okr/user-util`)

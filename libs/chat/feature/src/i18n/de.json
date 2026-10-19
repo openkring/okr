@@ -522,11 +522,6 @@
       }
     },
     "user": {
-      "provision": {
-        "label": "Matrix User anlegen",
-        "action": "Anlegen",
-        "conf": "User angelegt"
-      },
       "deactivate": {
         "label": "Matrix User deaktivieren",
         "confirm": "{{ userId }} deaktivieren? Der User kann sich danach nicht mehr anmelden.",
