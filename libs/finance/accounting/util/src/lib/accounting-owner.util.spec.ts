@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { OrgModel, PersonModel } from '@okr/shared-models';
 
-import { orgOwnerKey, ownerDisplayName, parseOwnerKey, personOwnerKey, resolveOwnerKey } from './accounting-owner.util';
+import { booksOfOrg, orgOwnerKey, ownerDisplayName, ownerOrgOfBooks, parseOwnerKey, personOwnerKey, resolveOwnerKey } from './accounting-owner.util';
 
 describe('parseOwnerKey', () => {
   it('splits an org owner', () => {
@@ -71,5 +71,52 @@ describe('ownerDisplayName', () => {
     expect(ownerDisplayName('scs', getOrg, getPerson)).toBe('');
     expect(ownerDisplayName('org.unknown', getOrg, getPerson)).toBe('');
     expect(ownerDisplayName('person.unknown', getOrg, getPerson)).toBe('');
+  });
+});
+
+describe('booksOfOrg', () => {
+  const cfg = (okey: string, rest: Record<string, unknown>) => ({ okey, ...rest });
+
+  it('takes the one books config of the tenant owned by the org (ownerKey)', () => {
+    expect(booksOfOrg([cfg('scs', { tenants: ['scs'], ownerKey: 'org.scs' })], 'scs', 'scs')).toBe('scs');
+  });
+
+  it('finds books whose id differs from the org okey (gss owned by an org)', () => {
+    const configs = [cfg('scs', { tenants: ['scs'], ownerKey: 'org.scs' }), cfg('gss', { tenants: ['scs'], ownerKey: 'org.mkdf7xin64es5q4rmhdj' })];
+    expect(booksOfOrg(configs, 'scs', 'mkdf7xin64es5q4rmhdj')).toBe('gss');
+    expect(booksOfOrg(configs, 'scs', 'scs')).toBe('scs');
+  });
+
+  it('never takes the books from the org okey or the tenant alone', () => {
+    expect(booksOfOrg([cfg('scs', { tenants: ['scs'] })], 'scs', 'scs')).toBeUndefined();
+    expect(booksOfOrg([cfg('scs', { tenants: ['scs'], ownerKey: '' })], 'scs', 'scs')).toBeUndefined();
+  });
+
+  it('ignores personal books, other tenants and archived configs', () => {
+    expect(booksOfOrg([cfg('bka', { tenants: ['scs'], ownerKey: 'person.kaiser' })], 'scs', 'kaiser')).toBeUndefined();
+    expect(booksOfOrg([cfg('scs', { tenants: ['evil'], ownerKey: 'org.scs' })], 'scs', 'scs')).toBeUndefined();
+    expect(booksOfOrg([cfg('scs', { tenants: ['scs'], ownerKey: 'org.scs', isArchived: true })], 'scs', 'scs')).toBeUndefined();
+  });
+
+  it('is undefined when several books match', () => {
+    const configs = [cfg('a', { tenants: ['scs'], ownerKey: 'org.scs' }), cfg('b', { tenants: ['scs'], ownerKey: 'org.scs' })];
+    expect(booksOfOrg(configs, 'scs', 'scs')).toBeUndefined();
+  });
+
+  it('is undefined without an org or tenant', () => {
+    expect(booksOfOrg([cfg('scs', { tenants: ['scs'], ownerKey: 'org.' })], 'scs', '')).toBeUndefined();
+    expect(booksOfOrg([cfg('scs', { tenants: ['scs'], ownerKey: 'org.scs' })], '', 'scs')).toBeUndefined();
+  });
+});
+
+describe('ownerOrgOfBooks', () => {
+  it('returns the org okey of org-owned books', () => {
+    expect(ownerOrgOfBooks({ ownerKey: 'org.scs' })).toBe('scs');
+  });
+
+  it('is undefined for person-owned, empty or missing owners', () => {
+    expect(ownerOrgOfBooks({ ownerKey: 'person.kaiser' })).toBeUndefined();
+    expect(ownerOrgOfBooks({ ownerKey: '' })).toBeUndefined();
+    expect(ownerOrgOfBooks(undefined)).toBeUndefined();
   });
 });

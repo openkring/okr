@@ -39,6 +39,7 @@ export class MemberFeeModel implements OkrModel, SearchableModel, TaggedModel {
 
   public member: AvatarInfo | undefined;
   public memberBirthYear = ''; // YYYY — degraded-precision dob replica (spec 1.19); memberDateOfBirth was stripped in Phase 4
+  public accountingTenantId = ''; // the books whose fee run this row belongs to (spec 1.108); '' = legacy, ignored
   public memberBexioId = DEFAULT_ID;
   public dateOfEntry = DEFAULT_DATE;
   public category = DEFAULT_MCAT;

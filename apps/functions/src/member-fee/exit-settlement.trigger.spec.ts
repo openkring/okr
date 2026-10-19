@@ -7,7 +7,7 @@ import {
   taskStateOf, upsertDecision, writerCheck, writerTenant,
 } from './exit-settlement.trigger';
 import {
-  CLOSE_NOTE, doneTaskDecision, flattenCategoryLists, isAutoClosed, isServerTask, needsPositions, overlappingCount, pickBooksId, toAvatarInfo,
+  CLOSE_NOTE, doneTaskDecision, flattenCategoryLists, isAutoClosed, isServerTask, needsPositions, overlappingCount, toAvatarInfo,
   toInvoiceFacts,
 } from './exit-settlement.context';
 import { SYSTEM_AUTHOR } from '../workflow/activity';
@@ -239,43 +239,6 @@ describe('doneTaskDecision', () => {
   it('returns the stored decision line of a treasurer-decided task', () => {
     expect(doneTaskDecision({ state: 'done', notes: 'figures\nEntschieden von Anna am 01.10.2026: Rückerstattung CHF 100.00' }))
       .toBe('Entschieden von Anna am 01.10.2026: Rückerstattung CHF 100.00');
-  });
-});
-
-describe('pickBooksId', () => {
-  const cfg = (okey: string, data: Record<string, unknown>) => ({ okey, data });
-
-  it('takes the one books config of the tenant owned by the membership org (ownerKey)', () => {
-    expect(pickBooksId([cfg('scs', { tenants: ['scs'], ownerKey: 'org.scs' })], 'scs', 'scs')).toBe('scs');
-  });
-
-  it('finds books whose id differs from the org okey (gss owned by an org)', () => {
-    const configs = [cfg('scs', { tenants: ['scs'], ownerKey: 'org.scs' }), cfg('gss', { tenants: ['scs'], ownerKey: 'org.mkdf7xin64es5q4rmhdj' })];
-    expect(pickBooksId(configs, 'scs', 'mkdf7xin64es5q4rmhdj')).toBe('gss');
-  });
-
-  it('never takes the books from the org okey or the tenant alone', () => {
-    expect(pickBooksId([cfg('scs', { tenants: ['scs'] })], 'scs', 'scs')).toBeUndefined();
-    expect(pickBooksId([cfg('scs', { tenants: ['scs'], ownerKey: '' , orgId: 'scs' })], 'scs', 'scs')).toBeUndefined();
-  });
-
-  it('ignores a leftover orgId: only ownerKey names the owner', () => {
-    expect(pickBooksId([cfg('scs', { tenants: ['scs'], orgId: 'scs' })], 'scs', 'scs')).toBeUndefined();
-  });
-
-  it('ignores personal books, books of another tenant and archived configs', () => {
-    expect(pickBooksId([cfg('bka', { tenants: ['scs'], ownerKey: 'person.kaiser' })], 'scs', 'kaiser')).toBeUndefined();
-    expect(pickBooksId([cfg('scs', { tenants: ['evil'], ownerKey: 'org.scs' })], 'scs', 'scs')).toBeUndefined();
-    expect(pickBooksId([cfg('scs', { tenants: ['scs'], ownerKey: 'org.scs', isArchived: true })], 'scs', 'scs')).toBeUndefined();
-  });
-
-  it('detects nothing when several books match', () => {
-    const configs = [cfg('a', { tenants: ['scs'], ownerKey: 'org.scs' }), cfg('b', { tenants: ['scs'], ownerKey: 'org.scs' })];
-    expect(pickBooksId(configs, 'scs', 'scs')).toBeUndefined();
-  });
-
-  it('detects nothing without an org', () => {
-    expect(pickBooksId([cfg('scs', { tenants: ['scs'], ownerKey: 'org.' })], 'scs', '')).toBeUndefined();
   });
 });
 

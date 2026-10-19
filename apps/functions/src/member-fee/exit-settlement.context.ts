@@ -11,7 +11,7 @@ import {
 } from '@okr/shared-models';
 import { getFullName } from '@okr/shared-util-core';
 import { EXIT_SETTLEMENT_TAG, ExitSettlementInput, InvoiceFacts, invoiceShape } from '@okr/relationship-membership-util';
-import { orgOwnerKey, resolveOwnerKey } from '@okr/finance-accounting-util';
+import { BooksConfigRef, booksOfOrg } from '@okr/finance-accounting-util';
 
 import { activeResponsible, AvatarRef, ResponsibilityLike, treasurerResponsibilityKey } from '../invoice/treasurer-contact.logic';
 import { storedDecision } from './settle-membership-exit.logic';
@@ -127,21 +127,6 @@ function exitYearOf(exit: string): number {
   return /^\d{8}$/.test(exit) && !exit.startsWith('9999') ? Number(exit.substring(0, 4)) : 0;
 }
 
-/**
- * The books of a membership (§4.2): the one accounting config of the tenant whose owner
- * (`resolveOwnerKey`) is the membership's org. Never `accounting-configs/{orgKey}` and never the app
- * tenant: accountingTenantId, tenantId and the org okey are three different things (gss books are
- * owned by org mkdf7xin64es5q4rmhdj). Personal books (owner `person.*`) never match. Undefined when
- * none or several match.
- */
-export function pickBooksId(configs: { okey: string; data: DocumentData }[], tenantId: string, orgKey: string): string | undefined {
-  if (!orgKey || !tenantId) return undefined;
-  const owner = orgOwnerKey(orgKey);
-  const hits = configs.filter(c => c.data['isArchived'] !== true && tenantsOf(c.data).includes(tenantId) &&
-    resolveOwnerKey(c.data as { ownerKey?: string; orgId?: string }) === owner);
-  return hits.length === 1 ? hits[0].okey : undefined;
-}
-
 const hasSettlementTag = (t: DocumentData): boolean =>
   typeof t['tags'] === 'string' && (t['tags'] as string).split(',').map(x => x.trim()).includes(EXIT_SETTLEMENT_TAG);
 
@@ -185,7 +170,7 @@ export function isExitContext(r: ExitContext | ExitContextMiss | undefined): r i
 /**
  * Load the membership and everything its exit settlement depends on, in the app tenant `tenantId`
  * (the writer's or caller's tenant, §4.2). The membership must belong to that tenant; its books are
- * found via the owner (`pickBooksId`). A miss names why: 'no-membership' (gone or archived),
+ * found via the owner (`booksOfOrg`). A miss names why: 'no-membership' (gone or archived),
  * 'foreign-tenant', 'no-books' (none or several books owned by the org in the tenant).
  * `includeArchived` is only for the trigger, which loads an archived membership to close its task.
  */
@@ -204,8 +189,10 @@ export async function loadExitContext(
     db.collection(AccountingConfigCollection).where('tenants', 'array-contains', tenantId).get(),
     orgKey ? db.collection(OrgCollection).doc(orgKey).get() : undefined,
   ]);
-  const configs = configsSnap.docs.map(d => ({ okey: d.id, data: d.data() }));
-  const booksId = pickBooksId(configs, tenantId, orgKey);
+  const configs: BooksConfigRef[] = configsSnap.docs.map(d => ({
+    okey: d.id, tenants: tenantsOf(d.data()), isArchived: d.data()['isArchived'] === true, ownerKey: str(d.data()['ownerKey']),
+  }));
+  const booksId = booksOfOrg(configs, tenantId, orgKey);
   const memberLabel = getFullName(str(membership.memberName1), str(membership.memberName2));
   if (!booksId && data['isArchived'] === true) {
     // an archived membership has nothing to settle; its open task must close even without books (I1)

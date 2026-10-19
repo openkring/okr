@@ -43,6 +43,33 @@ export function resolveOwnerKey(config: Partial<Pick<AccountingConfigModel, 'own
   return config?.ownerKey ?? '';
 }
 
+/** The minimal shape of an accounting config that `booksOfOrg` reads (a Firestore doc plus its okey). */
+export interface BooksConfigRef {
+  okey: string;
+  tenants?: string[];
+  isArchived?: boolean;
+  ownerKey?: string;
+}
+
+/**
+ * The books owned by the org `orgKey` in the app tenant `tenantId`: the one non-archived config whose
+ * tenants include `tenantId` and whose owner (`resolveOwnerKey`) is `org.<orgKey>`. Never derived from
+ * the org okey or the tenant (accountingTenantId, tenantId and org okey are three different ids).
+ * Personal books never match. Undefined when none or several match, or orgKey/tenantId is empty.
+ */
+export function booksOfOrg(configs: BooksConfigRef[], tenantId: string, orgKey: string): string | undefined {
+  if (!orgKey || !tenantId) return undefined;
+  const owner = orgOwnerKey(orgKey);
+  const hits = configs.filter(c => c.isArchived !== true && (c.tenants ?? []).includes(tenantId) && resolveOwnerKey(c) === owner);
+  return hits.length === 1 ? hits[0].okey : undefined;
+}
+
+/** The okey of the org owning the books, or undefined for person-owned, unset or invalid owners. */
+export function ownerOrgOfBooks(config: Pick<AccountingConfigModel, 'ownerKey'> | undefined): string | undefined {
+  const owner = parseOwnerKey(resolveOwnerKey(config));
+  return owner?.modelType === 'org' ? owner.key : undefined;
+}
+
 /**
  * The printed name of a books owner: the org's name or the person's full name. '' for no owner, an
  * invalid key, or an owner whose document is not loaded — a report never prints a raw okey.
