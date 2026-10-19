@@ -32,3 +32,66 @@ describe('FEATURE_BLOCKS menu spec invariant', () => {
     expect(mismatches).toEqual([]);
   });
 });
+
+/**
+ * Spec 1.101 phase 2: every domain's maintenance check sits at the END of that domain's context
+ * menu, behind a divider whose `roleNeeded` matches the row. They no longer live under `aoc-menu`.
+ */
+describe('FEATURE_BLOCKS Wartung rows (1.101 phase 2)', () => {
+  const findContext = (name: string) => {
+    for (const block of FEATURE_BLOCKS) {
+      const hit = block.menu.find(spec => spec.name === name);
+      if (hit) return hit;
+    }
+    return undefined;
+  };
+  const cases: [string, string, string, string, string, string][] = [
+    // context menu, divider, divider role, row, action, row role
+    ['c-calevents', 'maint-divider', 'admin', 'calevent-check-duplicates', 'call', 'admin'],
+    ['c-groups', 'maint-divider', 'admin', 'group-check-hygiene', 'call', 'admin'],
+    ['c-persons', 'maint-divider', 'admin', 'person-check-favaddress', 'call', 'admin'],
+    ['c-pages', 'maint-divider-content', 'contentAdmin', 'page-integrity', 'navigate', 'contentAdmin'],
+    ['c-documents', 'maint-divider', 'admin', 'document-orphans', 'navigate', 'admin'],
+    ['c-trips', 'maint-divider-trip', 'tripAdmin', 'trip-maintenance', 'navigate', 'tripAdmin'],
+    ['c-diary', 'maint-divider', 'admin', 'diary-import', 'navigate', 'admin'],
+  ];
+
+  it.each(cases)('%s ends with %s then %s', (ctx, divider, dividerRole, row, action, rowRole) => {
+    const children = findContext(ctx)?.children ?? [];
+    const tail = children.slice(-2);
+    expect(tail.map(c => c.name)).toEqual([divider, row]);
+    expect(tail[0]).toMatchObject({ action: 'divider', url: '', roleNeeded: dividerRole });
+    expect(tail[1]).toMatchObject({ action, roleNeeded: rowRole });
+  });
+
+  it('the shared maint-divider doc is field-identical wherever it is declared', () => {
+    const seen: string[] = [];
+    const visit = (spec: MenuSpec): void => {
+      if (spec.name.startsWith('maint-divider')) {
+        const { children: _c, ...fields } = spec;
+        seen.push(JSON.stringify(Object.entries(fields).sort()) + spec.name);
+      }
+      (spec.children ?? []).forEach(visit);
+    };
+    FEATURE_BLOCKS.forEach(b => b.menu.forEach(visit));
+    const byName = new Map<string, Set<string>>();
+    seen.forEach(s => {
+      const name = /(maint-divider[a-z-]*)$/.exec(s)![1];
+      byName.set(name, (byName.get(name) ?? new Set()).add(s));
+    });
+    byName.forEach(variants => expect(variants.size).toBe(1));
+  });
+
+  it('none of the new names sits under aoc-menu', () => {
+    const aoc = FEATURE_BLOCKS.find(b => b.id === 'aoc')!;
+    const names = new Set<string>();
+    const visit = (spec: MenuSpec): void => {
+      names.add(spec.name);
+      (spec.children ?? []).forEach(visit);
+    };
+    aoc.menu.forEach(visit);
+    for (const n of ['maint-divider', 'maint-divider-content', 'maint-divider-trip', 'calevent-check-duplicates', 'group-check-hygiene', 'person-check-favaddress', 'page-integrity', 'document-orphans', 'trip-maintenance', 'diary-import', 'aoc-content', 'aoc-doc', 'aoc-diary']) {
+      expect(names.has(n), n).toBe(false);
+    }
+  });
+});

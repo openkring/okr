@@ -215,6 +215,9 @@ const calevent: FeatureBlock = {
       // invisible for three months because nothing could show them. `admin`, not `contentAdmin`:
       // this is a forensic view, not an editing aid.
       { key: 'calevent-archived', name: 'calevent-archived', url: 'toggleArchived', action: 'toggle', roleNeeded: 'admin', icon: 'history', label: '@item.calevent-archived' },
+      // 1.101 phase 2: maintenance checks moved here from the AOC; same admin-only divider in every domain.
+      { key: 'maint-divider', name: 'maint-divider', url: '', action: 'divider', roleNeeded: 'admin', icon: 'help-circle', label: '@item.maint-divider' },
+      { key: 'calevent-check-duplicates', name: 'calevent-check-duplicates', url: 'checkDuplicates', action: 'call', roleNeeded: 'admin', icon: 'copy', label: '@item.calevent-check-duplicates' },
     ] },
     // Fix round 1 (review Critical 1) — the `/yearlyevents/:listId/:contextMenuName` route
     // added above resolves its context menu to this doc; catalogued even though no
@@ -301,7 +304,6 @@ const aoc: FeatureBlock = {
     aocMenuParent([
       { key: 'aoc-admin',      name: 'aoc-admin',      url: '/aoc/adminops',   action: 'navigate', roleNeeded: 'admin', icon: 'admin',    label: '@main.aoc.admin' },
       { key: 'aoc-auth',       name: 'aoc-auth',       url: '/aoc/roles',      action: 'navigate', roleNeeded: 'admin', icon: 'key',      label: '@main.aoc.auth' },
-      { key: 'aoc-content',    name: 'aoc-content',    url: '/aoc/content',    action: 'navigate', roleNeeded: 'admin', icon: 'page',     label: '@item.aoc-content' },
       { key: 'aoc-data',       name: 'aoc-data',       url: '/aoc/data',       action: 'navigate', roleNeeded: 'admin', icon: 'database', label: '@item.aoc-data' },
       { key: 'aoc-statistics', name: 'aoc-statistics', url: '/aoc/statistics', action: 'navigate', roleNeeded: 'admin', icon: 'chart',    label: '@item.aoc-statistics' },
       // Added task 18, verbatim off the live docs (all six `tenants: ['scs']` only — i.e.
@@ -310,7 +312,6 @@ const aoc: FeatureBlock = {
       { key: 'aoc-sessions',   name: 'aoc-sessions',   url: '/aoc/sessions',   action: 'navigate', roleNeeded: 'admin', icon: 'history',  label: '@item.aoc-sessions' },
       { key: 'aoc-chat',       name: 'aoc-chat',       url: '/aoc/chat',       action: 'navigate', roleNeeded: 'admin', icon: 'chatbubbles', label: '@item.aoc-chat' },
       { key: 'aoc-account',    name: 'aoc-account',    url: '/aoc/account',    action: 'navigate', roleNeeded: 'admin', icon: 'person',   label: '@item.aoc-account' },
-      { key: 'aoc-doc',        name: 'aoc-doc',        url: '/aoc/doc',        action: 'navigate', roleNeeded: 'admin', icon: 'documents', label: '@item.aoc-doc' },
       { key: 'aoc-email',      name: 'aoc-email',      url: '/aoc/email',      action: 'navigate', roleNeeded: 'admin', icon: 'email',    label: '@item.aoc-email' },
       { key: 'aoc-bexio',      name: 'aoc-bexio',      url: '/aoc/bexio',      action: 'navigate', roleNeeded: 'admin', icon: 'bank',     label: '@item.aoc-bexio' },
       // NEW (not mirrored off a live doc, unlike its siblings above): the kiosk monitoring +
@@ -322,7 +323,6 @@ const aoc: FeatureBlock = {
       // NEW with the AOC diary screen: the Drive check + import dry run moved off
       // `/security/privacy-audit`, plus the places/people the import could not match. Seeded
       // with the block like `aoc-kiosk`, not mirrored off a live doc.
-      { key: 'aoc-diary',      name: 'aoc-diary',      url: '/aoc/diary',      action: 'navigate', roleNeeded: 'admin', icon: 'document', label: '@item.aoc-diary' },
       // NEW with spec 1.35, seeded live for `scs` in the same change. It hangs under the AOC
       // submenu but its ROUTE is not an `/aoc/*` child and not block-gated: the rule engine is
       // a Cloud Function that fires on every membership write, so gating the screen would hide
@@ -512,6 +512,8 @@ const cms: FeatureBlock = {
     { key: 'c-pages', name: 'c-pages', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'page-add', name: 'page-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: '@item.page-add' },
       { key: 'page-exportraw', name: 'page-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: '@item.page-exportraw' },
+      { key: 'maint-divider-content', name: 'maint-divider-content', url: '', action: 'divider', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '@item.maint-divider-content' },
+      { key: 'page-integrity', name: 'page-integrity', url: '/page/integrity', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'checkbox-circle-double', label: '@item.page-integrity' },
     ] },
     // The context menu `cms-graph`'s url points at. Live for `scs` ONLY (as are both `gp-*`
     // children) — catalogued so every tenant that switches the sitemap on gets the same three
@@ -814,6 +816,8 @@ const trip: FeatureBlock = {
       { key: 'trip-exportraw', name: 'trip-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'admin', icon: 'download', label: '@item.trip-exportraw' },
       // remote read-only switch: writes `locked` to every kiosk-status doc of the tenant (see the `trips` skill)
       { key: 'trip-togglelock', name: 'trip-togglelock', url: 'toggleLock', action: 'call', roleNeeded: 'admin', icon: 'lock-closed', label: '@item.trip-togglelock' },
+      { key: 'maint-divider-trip', name: 'maint-divider-trip', url: '', action: 'divider', roleNeeded: 'tripAdmin', icon: 'help-circle', label: '@item.maint-divider-trip' },
+      { key: 'trip-maintenance', name: 'trip-maintenance', url: '/trips/maintenance', action: 'navigate', roleNeeded: 'tripAdmin', icon: 'hammer', label: '@item.trip-maintenance' },
     ] },
   ],
 };
@@ -989,6 +993,8 @@ const subject: FeatureBlock = {
       { key: 'person-vcard-import', name: 'person-vcard-import', url: 'importVcards', action: 'call', roleNeeded: 'memberAdmin', icon: 'upload', label: '@item.person-vcard-import' },
       { key: 'person-copy-emails', name: 'person-copy-emails', url: 'copyEmailAddresses', action: 'call', roleNeeded: 'memberAdmin', icon: 'copy', label: '@item.person-copy-emails' },
       { key: 'person-send-email', name: 'person-send-email', url: 'sendEmailToList', action: 'call', roleNeeded: 'memberAdmin', icon: 'email', label: '@item.person-send-email' },
+      { key: 'maint-divider', name: 'maint-divider', url: '', action: 'divider', roleNeeded: 'admin', icon: 'help-circle', label: '@item.maint-divider' },
+      { key: 'person-check-favaddress', name: 'person-check-favaddress', url: 'checkFavAddresses', action: 'call', roleNeeded: 'admin', icon: 'location', label: '@item.person-check-favaddress' },
     ] },
     { key: 'c-orgs', name: 'c-orgs', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'org-add', name: 'org-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: '@item.org-add' },
@@ -998,6 +1004,8 @@ const subject: FeatureBlock = {
     { key: 'c-groups', name: 'c-groups', url: '', action: 'context', roleNeeded: 'privileged', icon: 'help-circle', label: '', children: [
       { key: 'group-add', name: 'group-add', url: 'add', action: 'call', roleNeeded: 'privileged', icon: 'add-circle', label: '@item.group-add' },
       { key: 'group-export-raw', name: 'group-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'privileged', icon: 'download', label: '@item.group-export-raw' },
+      { key: 'maint-divider', name: 'maint-divider', url: '', action: 'divider', roleNeeded: 'admin', icon: 'help-circle', label: '@item.maint-divider' },
+      { key: 'group-check-hygiene', name: 'group-check-hygiene', url: 'checkHygiene', action: 'call', roleNeeded: 'admin', icon: 'checkbox-circle-double', label: '@item.group-check-hygiene' },
     ] },
   ],
 };
@@ -1810,6 +1818,8 @@ const documentBlock: FeatureBlock = {
       // `isArchived: true` one must not be catalogued, rule 10). See the long note on
       // `c-calevents` above.
       { key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle', roleNeeded: 'contentAdmin', icon: 'eye-on', label: '@item.filter-toggle' },
+      { key: 'maint-divider', name: 'maint-divider', url: '', action: 'divider', roleNeeded: 'admin', icon: 'help-circle', label: '@item.maint-divider' },
+      { key: 'document-orphans', name: 'document-orphans', url: '/document/orphans', action: 'navigate', roleNeeded: 'admin', icon: 'document', label: '@item.document-orphans' },
     ] },
     // `c-folder` is catalogued HERE, on `document`, despite its name — and it is catalogued
     // at all despite NO catalogued (or live) `navigate` url pointing at it and no route
@@ -3009,6 +3019,8 @@ const diary: FeatureBlock = {
       // spec 1.77 D7 — the published travel period of a travel diary app, admin-only:
       // `DiaryList.onPopoverDismiss` case 'period' opens `DiaryPeriodModal` via `DiaryStore.editPeriod()`.
       { key: 'diary-period', name: 'diary-period', url: 'period', action: 'call', roleNeeded: 'admin', icon: 'calendar', label: '@item.diary-period' },
+      { key: 'maint-divider', name: 'maint-divider', url: '', action: 'divider', roleNeeded: 'admin', icon: 'help-circle', label: '@item.maint-divider' },
+      { key: 'diary-import', name: 'diary-import', url: '/diary/import', action: 'navigate', roleNeeded: 'admin', icon: 'download', label: '@item.diary-import' },
     ] },
   ],
 };

@@ -670,7 +670,17 @@
     "asset-add": "Añadir activo",
     "asset-export": "Exportar",
     "diary-month-groups": "Agrupar por mes",
-    "diary-month-groups-off": "Sin grupos por mes"
+    "diary-month-groups-off": "Sin grupos por mes",
+    "maint-divider": "Mantenimiento · solo admin",
+    "maint-divider-content": "Mantenimiento",
+    "maint-divider-trip": "Mantenimiento",
+    "calevent-check-duplicates": "Buscar eventos duplicados",
+    "group-check-hygiene": "Revisar grupos",
+    "person-check-favaddress": "Revisar direcciones principales",
+    "page-integrity": "Revisar la integridad",
+    "document-orphans": "Archivos huérfanos",
+    "trip-maintenance": "Ordenar el diario de a bordo",
+    "diary-import": "Preparar la importación"
   },
   "ownership": {
     "fork_confirm": "«{name}» pertenece al catálogo de funciones ({blocks}).\n\nAl guardar se crea una copia propia del inquilino «{forkKey}» y se desvincula este inquilino del original compartido. Las futuras correcciones del catálogo (URL, acción, rol) ya no llegarán a esta entrada.\n\n¿Guardar de todos modos?",

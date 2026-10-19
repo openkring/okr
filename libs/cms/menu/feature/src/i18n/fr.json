@@ -670,7 +670,17 @@
     "asset-add": "Ajouter une immobilisation",
     "asset-export": "Exporter",
     "diary-month-groups": "Regrouper par mois",
-    "diary-month-groups-off": "Sans groupes par mois"
+    "diary-month-groups-off": "Sans groupes par mois",
+    "maint-divider": "Maintenance · admin uniquement",
+    "maint-divider-content": "Maintenance",
+    "maint-divider-trip": "Maintenance",
+    "calevent-check-duplicates": "Rechercher les événements en double",
+    "group-check-hygiene": "Vérifier les groupes",
+    "person-check-favaddress": "Vérifier les adresses principales",
+    "page-integrity": "Vérifier l'intégrité",
+    "document-orphans": "Fichiers orphelins",
+    "trip-maintenance": "Ranger le journal de bord",
+    "diary-import": "Préparer l'import"
   },
   "ownership": {
     "fork_confirm": "« {name} » appartient au catalogue de fonctionnalités ({blocks}).\n\nL'enregistrement crée une copie propre au locataire « {forkKey} » et détache ce locataire de l'original partagé. Les corrections futures du catalogue (URL, action, rôle) n'atteindront plus cette entrée.\n\nEnregistrer quand même ?",

@@ -670,7 +670,17 @@
     "asset-add": "Add asset",
     "asset-export": "Export",
     "diary-month-groups": "Group by month",
-    "diary-month-groups-off": "Without month groups"
+    "diary-month-groups-off": "Without month groups",
+    "maint-divider": "Maintenance · admin only",
+    "maint-divider-content": "Maintenance",
+    "maint-divider-trip": "Maintenance",
+    "calevent-check-duplicates": "Find duplicate events",
+    "group-check-hygiene": "Check groups",
+    "person-check-favaddress": "Check main addresses",
+    "page-integrity": "Check integrity",
+    "document-orphans": "Orphaned files",
+    "trip-maintenance": "Tidy up the logbook",
+    "diary-import": "Prepare import"
   },
   "ownership": {
     "fork_confirm": "«{name}» belongs to the feature catalogue ({blocks}).\n\nSaving creates a tenant-private copy «{forkKey}» and detaches this tenant from the shared original. Future catalogue corrections (url, action, role) will no longer reach this entry.\n\nSave anyway?",

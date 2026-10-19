@@ -154,8 +154,13 @@ function navDocs(): NavDoc[] {
 // UNGATED_ROUTES appended for the same reason as in feature-catalogue.spec.ts: a menu row
 // may point at a control-plane screen that is deliberately not a gateable feature.
 const ROUTES = [...FEATURE_ROUTES.flatMap(block => block.routes()), ...UNGATED_ROUTES];
+/**
+ * TRANSITIONAL (spec 1.101 phase 2, Task 2). The Wartung rows are catalogued before their pages
+ * exist; Tasks 6-9 add each route and delete its entry here. Empty by the end of the branch.
+ */
+const PENDING_AOC_PHASE2_URLS: readonly string[] = ['/page/integrity', '/document/orphans', '/trips/maintenance', '/diary/import'];
 /** Every `navigate` doc that declares a role — direction 1's population. */
-const DOCS = navDocs();
+const DOCS = navDocs().filter(doc => !PENDING_AOC_PHASE2_URLS.includes(doc.url));
 /** Those naming a privilege above plain membership — direction 2's population. */
 const GATED = DOCS.filter(isGated);
 

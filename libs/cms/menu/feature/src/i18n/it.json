@@ -670,7 +670,17 @@
     "asset-add": "Aggiungi cespite",
     "asset-export": "Esporta",
     "diary-month-groups": "Raggruppa per mese",
-    "diary-month-groups-off": "Senza gruppi per mese"
+    "diary-month-groups-off": "Senza gruppi per mese",
+    "maint-divider": "Manutenzione · solo admin",
+    "maint-divider-content": "Manutenzione",
+    "maint-divider-trip": "Manutenzione",
+    "calevent-check-duplicates": "Cerca eventi doppi",
+    "group-check-hygiene": "Controlla i gruppi",
+    "person-check-favaddress": "Controlla gli indirizzi principali",
+    "page-integrity": "Controlla l'integrità",
+    "document-orphans": "File orfani",
+    "trip-maintenance": "Riordina il giornale di bordo",
+    "diary-import": "Prepara l'importazione"
   },
   "ownership": {
     "fork_confirm": "«{name}» appartiene al catalogo delle funzionalità ({blocks}).\n\nIl salvataggio crea una copia propria del tenant «{forkKey}» e scollega questo tenant dall'originale condiviso. Le future correzioni del catalogo (URL, azione, ruolo) non raggiungeranno più questa voce.\n\nSalvare comunque?",
