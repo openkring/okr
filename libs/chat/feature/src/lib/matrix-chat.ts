@@ -87,6 +87,30 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
       border-right-color: transparent;
     }
 
+    /* Narrow screens: the room list slides in over the messages instead of pushing them aside
+       (a flex sibling reflows the message list on every toggle, which WebKit animates visibly). */
+    @media (max-width: 767px) {
+      .chat-container {
+        position: relative;
+      }
+
+      .room-list-column {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 40;
+        width: min(280px, 85%);
+        background: var(--ion-background-color, #fff);
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+      }
+
+      .room-list-column.collapsed {
+        width: 0;
+        box-shadow: none;
+      }
+    }
+
     .messages-column {
       display: flex;
       flex-direction: column;
@@ -117,6 +141,10 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
 
     .room-header {
       border-bottom: 1px solid var(--ion-border-color, #dedede);
+      /* These headers sit inside the page's ion-content, below the page toolbar that already
+         clears the notch. Ionic pads the first toolbar of every ion-header with the safe-area
+         inset, which only exists on a real iOS device — hence the extra whitespace there only. */
+      --ion-safe-area-top: 0px;
     }
 
     .empty-state {
