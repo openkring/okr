@@ -49,7 +49,7 @@ export const initialState: DiaryImportState = {
 };
 
 /**
- * The AOC diary screen's state and every write it performs.
+ * The import-preparation page's state (`/diary/import`) and every write it performs.
  *
  * The two modals it opens are deliberately dumb: they pick, this store acts, and the store
  * RE-OPENS them afterwards so the admin keeps working through the list instead of starting over

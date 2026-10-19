@@ -1,4 +1,4 @@
-# Diary Domain (AOC screen)
+# Diary Domain (import preparation page)
 
 ## Overview
 

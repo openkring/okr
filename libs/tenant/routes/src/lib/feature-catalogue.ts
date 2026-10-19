@@ -80,14 +80,15 @@ const calevent: BlockRoutes = {
 /**
  * RECONCILED (task 18) against every `aoc` child in `app.routes.ts:388-408`. Task 5 copied
  * SIX of them; the live app declares SIXTEEN. The ten added here — `chat`, `account`,
- * `sessions`, `doc`, `tag`, `email`, `bexio`, `srv`, `trip`, `website` — were unreachable
+ * `sessions`, `doc` (since moved to `/document/orphans`), `tag`, `email`, `bexio`, `srv`, `trip`, `website` — were unreachable
  * through the catalogue, which matters concretely for SIX of them: `aoc-sessions`,
- * `aoc-chat`, `aoc-account`, `aoc-doc`, `aoc-bexio` and `aoc-srv` are live children of the
+ * `aoc-chat`, `aoc-account`, `aoc-doc` (since removed), `aoc-bexio` and `aoc-srv` are live children of the
  * shared `aoc-menu` doc (they are now catalogued as menu specs on the `aoc` block too), so
  * before this the seeded submenu could point at routes this table did not have. The other
  * four (`tag`, `email`, `trip`, `website`) were simply unrouted here: `tag` and `website` do
  * have live docs, but under `cms-menu` rather than `aoc-menu` (see the `aoc` block in
- * `feature-blocks.ts`), `email` now has an `aoc-email` menu spec (spec 1.101 phase 1), `trip` has no menu doc at all.
+ * `feature-blocks.ts`), `email` now has an `aoc-email` menu spec (spec 1.101 phase 1), `trip` had no menu doc at all
+ * (it has since moved to `/trips/maintenance`).
  *
  * GUARD: `app.routes.ts:389` has `canActivate: [isAdminGuard]` — the factory UNCALLED, i.e.
  * the whole `/aoc/*` admin console is open to any authenticated user in the live app today.
@@ -135,18 +136,6 @@ const calevent: BlockRoutes = {
  * (`contentAdmin`), not `admin`. `feature-catalogue.guards.spec.ts` fails if any `/aoc` child
  * lacks its own guard, or if any child outside the three R-5 names is reachable by a non-admin
  * — do not delete that test, it is the whole safety net of this arrangement.
- *
- * (`trip` and `diary` formerly loaded other blocks' feature libs; they are now bookmark redirects.)
- *
- * HISTORICAL: `trip` LOADED ANOTHER BLOCK'S FEATURE LIB — `@okr/trip-feature` is `libs/geo/trip/feature`,
- * i.e. the `geo` block's, and `AocTrip` has no counterpart in `@okr/aoc-feature` (there is no
- * `aoc-trip.ts`). It is kept here rather than moved to `geo` and this is the INVERSE of the
- * Task 12 defect, not a repeat of it: that rule ("a `core: true` block must not own a route
- * that loads another block's feature lib") exists because a core block's route bypasses the
- * enablement gate of the lib it loads. Here the OWNER (`aoc`) is gated and the TARGET (`geo`)
- * is `core: true`, hence always effective — so nothing is bypassed in either direction, and
- * the screen is an AOC admin screen sitting under aoc's own admin path. Moving it to `geo`
- * would instead put a child of aoc's admin path into an always-on block.
  */
 const aoc: BlockRoutes = {
   id: 'aoc',
@@ -154,7 +143,8 @@ const aoc: BlockRoutes = {
     path: 'aoc',
     // The FLOOR every `/aoc` screen shares — the union of the children's own requirements, NOT
     // the admin gate. The admin gate lives on the ten admin-only children below (the ones the
-    // 2026-08-05 rulings do not name; the `content`, `doc`, `trip` and `diary` bookmark redirects carry no guard). See the block comment for why it is contentAdmin and not privileged
+    // 2026-08-05 rulings do not name; the `content`, `doc`, `trip` and `diary` bookmark redirects
+    // carry no guard). See the block comment for why it is contentAdmin and not privileged
     // (R-5) nor merely authenticated.
     canActivate: [isContentAdminGuard()],
     children: [
@@ -181,7 +171,6 @@ const aoc: BlockRoutes = {
       // one and so this fragment survives a future change to the floor unchanged.
       { path: 'srv',        canActivate: [isContentAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocSrv) },
       { path: 'sessions',   canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocSession) },
-      // See the block comment: `@okr/trip-feature` is `geo`'s lib, deliberately.
       // 1.101 phase 2: remove after the next release
       { path: 'trip', redirectTo: '/trips/maintenance' },
       // 1.101 phase 2: remove after the next release

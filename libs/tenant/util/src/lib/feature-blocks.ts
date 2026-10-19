@@ -237,11 +237,10 @@ const aoc: FeatureBlock = {
   label: '@tenant/util.feature.aoc.label',
   icon: 'admin',
   defaultAvailability: 'ga',
-  // `document` added (task 16), by import evidence: three of this block's own stores —
-  // `aoc-content.store.ts:18`, `aoc-doc.store.ts:14` (`DocumentService`) and
-  // `aoc-data.store.ts:24` (`documentValidations`/`getDocumentIndex`) — read and repair the
-  // `docs` collection directly. The `aoc-doc` entry still listed in the TODO below is
-  // literally the "Dokumente" admin screen over it.
+  // `document` added (task 16), by import evidence: the block's `aoc-data.store.ts:24`
+  // (`documentValidations`/`getDocumentIndex`) reads and repairs the `docs` collection directly.
+  // (Task 16 also named the content and orphaned-files stores; those screens have since moved to
+  // `page-integrity.store.ts` and `document-orphans.store.ts`.)
   //
   // NO `task` EDGE, although `aoc-data.store.ts:35` imports from `@okr/project-task-util`
   // (`getTaskIndex`, `taskValidations`). That lib is PURE FUNCTIONS — the "Daten" screen
@@ -290,16 +289,8 @@ const aoc: FeatureBlock = {
   //    unbuilt screens, `tenants: ['scs']`), not for the action type any more.
   //
   // `/aoc/email` (`AocEmail`) has the `aoc-email` row declared below; its live doc is created by
-  // `scripts/aoc-phase1-menu.mjs` (spec 1.101 phase 1). ONE AOC SCREEN IS STILL ROUTED BUT
-  // UN-MENU'D, stated so the omission is not read as an oversight: `/aoc/trip` (now a redirect to `/trips/maintenance`) had NO
-  // live `menuItems` doc and no catalogue row. The pre-1.101 verification (which also found none for `aoc-email`, since created) ran as follows:  with two query shapes, per the `c-yearlyevents` lesson: a name-equality `IN`
-  // query over [aoc-trip, aoc-website, aoc-tag, aoc-email, …] returned `aoc-website` only, and
-  // an ordered range scan of every doc whose `name` sorts in ['a','b') returned 21 documents
-  // whose `aoc-*` members were EXACTLY the leaves then declared (those before `aoc-email`) plus the
-  // `aoc-menu` parent and `aoc-website` — no `aoc-email`, no `aoc-trip`, under any spelling. `/aoc/trip`
-  // is therefore reachable only by typing the URL, the same "un-menu'd admin screen" shape as `i18n` and
-  // `subject`'s `/applications`. (`/aoc/tag`'s doc is named `tag-all`, not `aoc-tag` — see
-  // below.)
+  // `scripts/aoc-phase1-menu.mjs` (spec 1.101 phase 1). (`/aoc/tag`'s doc is named `tag-all`, not
+  // `aoc-tag` — see below.)
   menu: [
     aocMenuParent([
       { key: 'aoc-admin',      name: 'aoc-admin',      url: '/aoc/adminops',   action: 'navigate', roleNeeded: 'admin', icon: 'admin',    label: '@main.aoc.admin' },
@@ -2988,8 +2979,8 @@ const meeting: FeatureBlock = {
 
 /**
  * `libs/content/diary/{data-access,feature,ui,util}` — the author's private day notes (spec
- * 1.34). Owns `diaries` and `diaryImports`; the AOC import screen stays in the `aoc` block
- * (see `aoc-diary` there), this block is the READING and WRITING surface.
+ * 1.34). Owns `diaries` and `diaryImports`; the import-preparation page (`DiaryImport`,
+ * `/diary/import`, row `diary-import`) lives here too; this block is the READING and WRITING surface.
  *
  * `defaultAvailability: 'beta'` + a `feature-rollout/diary` doc with `allowTenants: ['bka']`:
  * the spec calls it a product feature for every tenant, prototyped in `bka` — beta is the
