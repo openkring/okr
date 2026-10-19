@@ -64,7 +64,7 @@ interface StoreDeps {
 
 function makeStore(sectionService = sectionServiceMock(), deps: StoreDeps = {}): SectionStore {
   const appStore = appStoreMock();
-  if (deps.currentUser) appStore.currentUser = signal(deps.currentUser as undefined);
+  if (deps.currentUser) appStore.currentUser = signal(deps.currentUser as unknown as undefined);
   TestBed.resetTestingModule();
   TestBed.configureTestingModule({
     providers: [

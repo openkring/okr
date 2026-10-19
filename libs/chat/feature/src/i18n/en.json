@@ -435,5 +435,11 @@
   },
   "exempt": {
     "banner": "The chat is blocked for everyone else. You are testing it right now."
+  },
+  "blocked": {
+    "title": "Chat temporarily unavailable",
+    "default": "The chat is currently under maintenance. It will be back soon.",
+    "callEnded": "Your call has therefore been ended.",
+    "ok": "OK"
   }
 }

@@ -435,5 +435,11 @@
   },
   "exempt": {
     "banner": "Der Chat ist für alle anderen gesperrt. Du testest ihn gerade."
+  },
+  "blocked": {
+    "title": "Chat vorübergehend nicht verfügbar",
+    "default": "Der Chat wird gerade gewartet. Er ist bald wieder da.",
+    "callEnded": "Dein Anruf wurde deshalb beendet.",
+    "ok": "OK"
   }
 }

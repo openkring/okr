@@ -210,7 +210,8 @@ service cloud.firestore {
     // Global chat switch (spec 1.107): one doc app-status/chat for ALL tenant apps.
     // Deliberately not tenant-scoped (no tenants[]); any signed-in user reads it,
     // any admin (of any tenant) writes it.
-    match /app-status/{doc} {
+    // Only the chat doc: any other app-status/* falls through to the default deny.
+    match /app-status/chat {
       allow read: if signedIn();
       allow write: if isAdmin();
     }

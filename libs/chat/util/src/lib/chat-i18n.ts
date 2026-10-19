@@ -327,3 +327,13 @@ export const PUSH_PROMPT_I18N_KEYS = {
 } satisfies Record<string, string>;
 
 export type PushPromptI18n = { [K in keyof typeof PUSH_PROMPT_I18N_KEYS]: Signal<string> };
+
+/** 1.107: alert shown when an admin blocks the chat while the user is in a call. */
+export const CHAT_BLOCKED_ALERT_I18N_KEYS = {
+  title:     PFX + 'blocked.title',
+  default:   PFX + 'blocked.default',
+  callEnded: PFX + 'blocked.callEnded',
+  ok:        PFX + 'blocked.ok',
+} satisfies Record<string, string>;
+
+export type ChatBlockedAlertI18n = { [K in keyof typeof CHAT_BLOCKED_ALERT_I18N_KEYS]: Signal<string> };

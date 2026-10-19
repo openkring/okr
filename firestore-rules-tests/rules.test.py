@@ -350,6 +350,8 @@ single_cases = [
      body({"blocked": True}), ["blocked"]),
     ("userB(admin t2) PATCH app-status/chat message -> ALLOW (any tenant admin)", True, PATCH,
      "app-status/chat", B, body({"message": "Wartung"}), ["message"]),
+    ("userD(admin t1) PATCH app-status/other -> DENY (only the chat doc)", False, PATCH,
+     "app-status/other", D, body({"blocked": True}), ["blocked"]),
     # 1.32 §8.5: enabledFeatures is a billing boundary. Everything else in app-config
     # stays tenant-admin territory; only the paid-add-on subset is server-side.
     ("userD(admin t1) PATCH app-config/t1 gitOrg -> ALLOW", True, PATCH, "app-config/t1", D,

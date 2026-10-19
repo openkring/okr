@@ -10,9 +10,9 @@ import { AppStore } from '@okr/shared-feature';
 import { MatrixChatService } from '@okr/chat-data-access';
 import { ChatStatusService, FcmService, writeBadgeLedgerFromPage } from '@okr/shared-data-access';
 import { ChatBlockedError } from '@okr/shared-models';
-import { isKioskOnly, PUSH_PROMPT_SNOOZE_MS, shouldAskForPush } from '@okr/shared-util-core';
+import { chatBlockedAlertMessage, isKioskOnly, PUSH_PROMPT_SNOOZE_MS, shouldAskForPush } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
-import { PUSH_PROMPT_I18N_KEYS, PushPromptI18n } from '@okr/chat-util';
+import { CHAT_BLOCKED_ALERT_I18N_KEYS, ChatBlockedAlertI18n, PUSH_PROMPT_I18N_KEYS, PushPromptI18n } from '@okr/chat-util';
 import { AlertController } from '@ionic/angular';
 
 import { KioskCallWindow } from './kiosk-call-window';
@@ -32,6 +32,7 @@ export class MatrixInitializationService {
   private readonly fcmService = inject(FcmService);
   private readonly alertController = inject(AlertController);
   private readonly pushPromptI18n = inject(I18nService).translateAll(PUSH_PROMPT_I18N_KEYS) as PushPromptI18n;
+  private readonly blockedAlertI18n = inject(I18nService).translateAll(CHAT_BLOCKED_ALERT_I18N_KEYS) as ChatBlockedAlertI18n;
   private readonly router = inject(Router);
   private readonly injector = inject(Injector);
   private readonly environmentInjector = inject(EnvironmentInjector);
@@ -73,7 +74,10 @@ export class MatrixInitializationService {
           void this.initializeMatrix();
         } else if (gate === 'blocked' && this.matrixService.isInitialized) {
           console.log('MatrixInitializationService: chat blocked, disconnecting Matrix');
+          // disconnect() hangs up a running call; tell the user why it ended.
+          const hadCall = this.matrixService.hasActiveCall();
           void this.matrixService.disconnect();
+          if (hadCall) void this.showCallEndedByBlockAlert();
         }
         // 'none' (logout): MatrixChatService disconnects and wipes the cache on its own.
       });
@@ -116,6 +120,23 @@ export class MatrixInitializationService {
     } else {
       try { localStorage.setItem(snoozeKey, String(Date.now() + PUSH_PROMPT_SNOOZE_MS)); } catch { /* best effort */ }
     }
+  }
+
+  /** The chat was blocked during a call: the call is gone, show the admin's message. */
+  private async showCallEndedByBlockAlert(): Promise<void> {
+    const i18n = this.blockedAlertI18n;
+    const alert = await this.alertController.create({
+      header: i18n.title(),
+      // escaped: the admin's message is free text and Ionic renders the alert message as HTML
+      message: chatBlockedAlertMessage(this.chatStatus.message(), i18n.default(), i18n.callEnded()),
+      buttons: [{ text: i18n.ok(), role: 'cancel' }],
+    });
+    await alert.present();
+  }
+
+  /** True when chat is blocked for the signed-in person (incoming call pushes are ignored then). */
+  private isChatBlockedForMe(): boolean {
+    return this.chatGate() === 'blocked';
   }
 
   private mountKioskCallWindow(): void {
@@ -170,6 +191,7 @@ export class MatrixInitializationService {
         PushNotifications.addListener('pushNotificationReceived', notification => {
           const data = notification.data as Record<string, string> | undefined;
           if (data?.['type'] !== 'video-call') return;
+          if (this.isChatBlockedForMe()) return; // 1.107: no call to land on while blocked
           const url = data['url'];
           if (url) {
             this.router.navigateByUrl(url);
@@ -188,6 +210,7 @@ export class MatrixInitializationService {
         // Web / PWA: foreground FCM messages (service worker doesn't show a banner when app is open).
         this.fcmService.listenForMessages().subscribe(payload => {
           if (payload?.data?.['type'] !== 'video-call') return;
+          if (this.isChatBlockedForMe()) return; // 1.107: no «Video-Anruf» banner, no navigation
           const callerName = payload.data['callerName'] ?? 'Unbekannt';
           const roomName   = payload.data['roomName']   ?? '';
           const url        = payload.data['url']        as string | undefined;

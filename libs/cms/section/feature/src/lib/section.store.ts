@@ -450,7 +450,7 @@ export const _SectionStore = signalStore(
       async sendEmergencyMessage(): Promise<void> {
         const currentUser = store.currentUser();
         if (!currentUser) return;
-        // 1.107: say plainly that the chat is down, so the caller looks for help another way
+        // 1.107: say plainly that the chat is down instead of failing silently or pretending it was sent
         if (this.isChatBlocked()) {
           await this.showChatBlockedNotice();
           return;

@@ -435,5 +435,11 @@
   },
   "exempt": {
     "banner": "La chat è bloccata per tutti gli altri. La stai provando in questo momento."
+  },
+  "blocked": {
+    "title": "Chat temporaneamente non disponibile",
+    "default": "La chat è in manutenzione. Tornerà presto.",
+    "callEnded": "Per questo la tua chiamata è stata terminata.",
+    "ok": "OK"
   }
 }

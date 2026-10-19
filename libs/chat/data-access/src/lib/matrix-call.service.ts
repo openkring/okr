@@ -128,6 +128,11 @@ export class MatrixCallService {
     );
   }
 
+  /** True while a call is ringing, connecting or connected. */
+  public hasActiveCall(): boolean {
+    return this.activeCall$.value !== null;
+  }
+
   public hangupCall(): void {
     const call = this.activeCall$.value;
     if (!call) return;

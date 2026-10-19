@@ -324,6 +324,11 @@ export class MatrixChatService {
     return this.calls.callFeeds;
   }
 
+  /** True while a call is ringing, connecting or connected. */
+  public hasActiveCall(): boolean {
+    return this.calls.hasActiveCall();
+  }
+
   /**
    * Initialize the Matrix client with the given configuration
    */
@@ -487,6 +492,14 @@ export class MatrixChatService {
     document.removeEventListener('visibilitychange', this.kickSync);
     window.removeEventListener('online', this.kickSync);
     this.media.setClient(null);  // revokes + clears the blob-URL cache
+    // End a running call first (1.107 block, logout): stopClient() only stops the sync and
+    // leaves the WebRTC peer connection, camera and microphone live. hangup() stops the local
+    // media and tells the other side; setClient(null) then resets the call state.
+    try {
+      this.calls.hangupCall();
+    } catch (err) {
+      console.warn('MatrixChatService.disconnect: hangup of the active call failed:', err);
+    }
     this.calls.setClient(null);  // resets call state
     this.roomList.clearTyping();
     this.messages.clearTransient();
