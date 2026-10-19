@@ -240,5 +240,11 @@
   "validation": {
     "lastNameRequired": "La saisie d'un nom est obligatoire.",
     "validSSN": "Veuillez saisir un numéro AVS valide."
+  },
+  "chat": {
+    "blocked": {
+      "title": "Chat temporairement indisponible",
+      "default": "Le chat est en cours de maintenance. Il sera bientôt de retour."
+    }
   }
 }

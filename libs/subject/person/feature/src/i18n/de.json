@@ -240,5 +240,11 @@
   "validation": {
     "lastNameRequired": "Die Eingabe eines Nachnamens ist obligatorisch.",
     "validSSN": "Bitte eine gültige AHV-Nummer eingeben."
+  },
+  "chat": {
+    "blocked": {
+      "title": "Chat vorübergehend nicht verfügbar",
+      "default": "Der Chat wird gerade gewartet. Er ist bald wieder da."
+    }
   }
 }

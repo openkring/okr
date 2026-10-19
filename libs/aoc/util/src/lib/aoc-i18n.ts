@@ -704,6 +704,10 @@ export const AOC_I18N_KEYS = {
   allocation_account_createdWithLoginId:  PFX + 'allocation.account.createdWithLoginId',
   allocation_email_taken:                 PFX + 'allocation.email.taken',
   allocation_account_failed:              PFX + 'allocation.account.failed',
+  // 1.107 chat maintenance block
+  chat_blocked_title:   PFX + 'chat.blocked.title',
+  chat_blocked_default: PFX + 'chat.blocked.default',
+  chat_blocked_call:    PFX + 'chat.blocked.call',
 } satisfies Record<string, string>;
 
 // ─── Tenant App-Switcher ─────────────────────────────────────────────────────

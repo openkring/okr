@@ -381,6 +381,11 @@
       "confirm_here": "Den Raum «{{ name }}» dieser App zuordnen? Er erscheint dann in der Chat-Übersicht.",
       "confirm_hide": "Den Raum «{{ name }}» ausblenden? Er erscheint dann in keiner App mehr.",
       "conf": "Zuordnung gespeichert."
+    },
+    "blocked": {
+      "title": "Chat vorübergehend nicht verfügbar",
+      "default": "Der Chat wird gerade gewartet. Er ist bald wieder da.",
+      "call": "Anrufe sind während der Wartung nicht möglich."
     }
   },
   "content": {

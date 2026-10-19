@@ -415,6 +415,9 @@ export const CALEVENT_I18N_KEYS = {
   sync_hint_readonly:         PFX + 'sync.hint.readonly',
   sync_reset:                 PFX + 'sync.reset.label',
   sync_reset_confirm:         PFX + 'sync.reset.confirm',
+  // 1.107 chat maintenance block
+  chat_blocked_title:   PFX + 'chat.blocked.title',
+  chat_blocked_default: PFX + 'chat.blocked.default',
 } satisfies Record<string, string>;
 
 export type CaleventI18n = { [K in keyof typeof CALEVENT_I18N_KEYS]: Signal<string> };

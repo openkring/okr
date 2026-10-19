@@ -381,6 +381,11 @@
       "confirm_here": "Assign the room “{{ name }}” to this app? It will then appear in the chat overview.",
       "confirm_hide": "Hide the room “{{ name }}”? It will then appear in no app.",
       "conf": "Assignment saved."
+    },
+    "blocked": {
+      "title": "Chat temporarily unavailable",
+      "default": "The chat is currently under maintenance. It will be back soon.",
+      "call": "Calls are not possible during maintenance."
     }
   },
   "content": {

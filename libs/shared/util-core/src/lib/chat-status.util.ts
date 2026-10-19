@@ -29,6 +29,20 @@ export function chatBlockedMessage(message: string | undefined, fallback: string
   return trimmed ? trimmed : fallback;
 }
 
+/**
+ * The HTML message of the «chat is blocked» alert shown when a user starts a chat action (1.107).
+ * Ionic renders AlertOptions.message as HTML (innerHTMLTemplatesEnabled), and the admin's message
+ * is free text from Firestore, so it is escaped here; its line breaks become <br>. `extraLine`
+ * (e.g. «calls are not possible») follows after a blank line.
+ */
+export function chatBlockedAlertMessage(message: string | undefined, fallback: string, extraLine?: string): string {
+  const escape = (value: string) => value
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+    .replace(/\r?\n/g, '<br>');
+  const body = escape(chatBlockedMessage(message, fallback));
+  return extraLine ? `${body}<br><br>${escape(extraLine)}` : body;
+}
+
 /** «gesperrt seit {time}» with blockedAt (StoreDateTime) as d.M.yyyy HH:mm; '' when there is no blockedAt. */
 export function chatBlockedSince(blockedAt: string | undefined, template: string): string {
   if (!blockedAt) return '';

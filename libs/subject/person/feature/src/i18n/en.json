@@ -240,5 +240,11 @@
   "validation": {
     "lastNameRequired": "Entering a last name is mandatory.",
     "validSSN": "Please enter a valid AHV number."
+  },
+  "chat": {
+    "blocked": {
+      "title": "Chat temporarily unavailable",
+      "default": "The chat is currently under maintenance. It will be back soon."
+    }
   }
 }

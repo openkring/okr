@@ -7,11 +7,11 @@ import { Photo } from '@capacitor/camera';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { FirestoreService } from '@okr/shared-data-access';
+import { FirestoreService, ChatStatusService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { AddressCollection, AddressModel, CategoryListModel, DefaultLanguage, MembershipCollection, MembershipModel, OrgModel, PersonModel, PersonModelName, ResourceModel } from '@okr/shared-models';
 import { AlertService, copyToClipboardWithConfirmation, getCcEmailAddresses, getMainEmailAddresses, lazyService, navigateByUrl, showToast } from '@okr/shared-util-angular';
-import { chipMatches, debugItemLoaded, getSystemQuery, hasRole, isPerson, nameMatches, PHOTO_USAGE_ALL, photoUsageMatches } from '@okr/shared-util-core';
+import { chipMatches, debugItemLoaded, getSystemQuery, hasRole, isPerson, nameMatches, PHOTO_USAGE_ALL, photoUsageMatches, chatBlockedAlertMessage, isChatBlockedError } from '@okr/shared-util-core';
 import { EmailAddressesModal, MapViewModal } from '@okr/shared-ui';
 import { openBulkEmailFlow } from '@okr/content-pdf-template-feature';
 import { Languages } from '@okr/shared-categories';
@@ -60,6 +60,7 @@ export const PersonStore = signalStore(
     firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
     alertService: inject(AlertService),
+    chatStatus: inject(ChatStatusService),
     toastController: inject(ToastController),
     geocodeService: inject(GeocodingService),
     // Lazy: a static import here would drag matrix-js-sdk before the LCP (spec 1.49, F1).
@@ -455,6 +456,10 @@ export const PersonStore = signalStore(
          * 
          */
         async chat(person: PersonModel): Promise<void> {
+          if (this.isChatBlocked()) {
+            await this.showChatBlockedNotice();
+            return;
+          }
           try {
             // Matrix is initialized in the background after login (MatrixInitializationService).
             // Await the idempotent, promise-cached init so opening a direct chat works even
@@ -464,10 +469,27 @@ export const PersonStore = signalStore(
             const room = await matrix.createDirectRoom(person.okey);
             await navigateByUrl(store.router, '/private/chat/c-contentpage', { selectedRoom: room.roomId });
           } catch (error) {
+            if (isChatBlockedError(error, this.isChatBlocked())) {
+              await this.showChatBlockedNotice();
+              return;
+            }
             const msg = error instanceof Error ? error.message : 'Could not start chat';
             void store.activityService.log('chat', 'createdirect', store.currentUser(), `ERROR: ${person.okey} ${msg}`);
             await showToast(store.toastController, msg);
           }
+        },
+
+        /** 1.107: true while the chat is blocked for the current person (read live, not captured). */
+        isChatBlocked(): boolean {
+          return store.chatStatus.isEffectivelyBlocked(store.currentUser()?.personKey);
+        },
+
+        /** 1.107: the admin's maintenance message (or the default) instead of an error toast. */
+        async showChatBlockedNotice(): Promise<void> {
+          await store.alertService.notify(
+            store.i18n.chat_blocked_title(),
+            chatBlockedAlertMessage(store.chatStatus.message(), store.i18n.chat_blocked_default()),
+          );
         },
 
         async isPersonUser(personKey: string): Promise<boolean> {

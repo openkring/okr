@@ -647,5 +647,11 @@
   },
   "activity": {
     "unseen": "Nuovi commenti o documenti da quando hai aperto l'appuntamento l'ultima volta"
+  },
+  "chat": {
+    "blocked": {
+      "title": "Chat temporaneamente non disponibile",
+      "default": "La chat è in manutenzione. Tornerà presto."
+    }
   }
 }

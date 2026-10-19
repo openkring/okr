@@ -27,7 +27,11 @@
     "chooseNew": "Scegli una nuova categoria"
   },
   "chat": {
-    "open": "Apri chat diretta"
+    "open": "Apri chat diretta",
+    "blocked": {
+      "title": "Chat temporaneamente non disponibile",
+      "default": "La chat è in manutenzione. Tornerà presto."
+    }
   },
   "copy": {
     "email": {

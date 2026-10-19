@@ -6,7 +6,7 @@ import { captureMessage } from '@sentry/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ImageLightboxModal, LightboxImage, showVideoView, Spinner } from '@okr/shared-ui';
-import { debugMessage, fileSizeUnit, fill, hasRole, isKioskOnly, warn } from '@okr/shared-util-core';
+import { debugMessage, fileSizeUnit, fill, hasRole, isChatBlockedError, isKioskOnly, warn } from '@okr/shared-util-core';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, downloadFile, isBrowser, isNativePlatform, navigateByUrl, saveFile } from '@okr/shared-util-angular';
 import { MatrixMessage, PersonModelName, RoleName } from '@okr/shared-models';
 
@@ -1190,6 +1190,8 @@ export class MatrixChat implements OnDestroy {
 
       debugMessage('MatrixChat: Matrix initialized successfully', this.store.currentUser());
     } catch (error) {
+      // 1.107: a blocked chat is not a credentials problem — keep them for the unblock, no error log
+      if (isChatBlockedError(error, this.chatStatus.isEffectivelyBlocked(this.store.appStore.currentUser()?.personKey))) return;
       console.error('MatrixChat: Failed to initialize Matrix:', error);
       this.store.clearCredentials();
     } finally {

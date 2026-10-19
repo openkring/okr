@@ -647,5 +647,11 @@
   },
   "activity": {
     "unseen": "Neue Kommentare oder Dokumente seit du den Termin zuletzt geöffnet hast"
+  },
+  "chat": {
+    "blocked": {
+      "title": "Chat vorübergehend nicht verfügbar",
+      "default": "Der Chat wird gerade gewartet. Er ist bald wieder da."
+    }
   }
 }

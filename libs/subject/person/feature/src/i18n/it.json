@@ -240,5 +240,11 @@
   "validation": {
     "lastNameRequired": "L'inserimento di un cognome è obbligatorio.",
     "validSSN": "Inserire un numero AVS valido."
+  },
+  "chat": {
+    "blocked": {
+      "title": "Chat temporaneamente non disponibile",
+      "default": "La chat è in manutenzione. Tornerà presto."
+    }
   }
 }

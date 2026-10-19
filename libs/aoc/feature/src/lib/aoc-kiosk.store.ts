@@ -8,10 +8,10 @@ import { AOC_I18N_KEYS, fill, KIOSK_COUNTDOWN_DEFAULT, KioskMessageFormData } fr
 import { I18nService } from '@okr/shared-i18n';
 
 import { KioskStatus, KioskStatusCollection, AppStore } from '@okr/shared-feature';
-import { FirestoreService } from '@okr/shared-data-access';
+import { ChatStatusService, FirestoreService } from '@okr/shared-data-access';
 import { TripModel } from '@okr/shared-models';
 import { AlertService } from '@okr/shared-util-angular';
-import { getTodayStr } from '@okr/shared-util-core';
+import { chatBlockedAlertMessage, getTodayStr, isChatBlockedError } from '@okr/shared-util-core';
 
 import { UserService } from '@okr/user-data-access';
 import { TripService } from '@okr/trip-data-access';
@@ -31,6 +31,7 @@ export const AocKioskStore = signalStore(
     userService: inject(UserService),
     tripService: inject(TripService),
     alertService: inject(AlertService),
+    chatStatus: inject(ChatStatusService),
     modalController: inject(ModalController),
     injector: inject(Injector),
     i18nService: inject(I18nService),
@@ -139,6 +140,11 @@ export const AocKioskStore = signalStore(
         await store.alertService.showToast(store.i18n.kiosk_no_person());
         return;
       }
+      // 1.107: no call while the chat is blocked — and no matrix-js-sdk download for nothing
+      if (store.chatStatus.isEffectivelyBlocked(store.appStore.currentUser()?.personKey)) {
+        await this.showChatBlockedCallNotice();
+        return;
+      }
       try {
         const { MatrixChatService } = await import('@okr/chat-data-access');
         const matrixService = store.injector.get(MatrixChatService);
@@ -146,9 +152,21 @@ export const AocKioskStore = signalStore(
         const room = await matrixService.createDirectRoom(user.personKey);
         await matrixService.startVideoCall(room.roomId, store.appStore.currentUser());
       } catch (error) {
+        if (isChatBlockedError(error, store.chatStatus.isEffectivelyBlocked(store.appStore.currentUser()?.personKey))) {
+          await this.showChatBlockedCallNotice();
+          return;
+        }
         console.error('AocKioskStore.callKiosk: failed to start the call:', error);
         await store.alertService.showToast(store.i18n.kiosk_call_failed());
       }
+    },
+
+    /** 1.107: the admin's maintenance message (or the default) plus «calls are not possible». */
+    async showChatBlockedCallNotice(): Promise<void> {
+      await store.alertService.notify(
+        store.i18n.chat_blocked_title(),
+        chatBlockedAlertMessage(store.chatStatus.message(), store.i18n.chat_blocked_default(), store.i18n.chat_blocked_call()),
+      );
     },
   })),
 );

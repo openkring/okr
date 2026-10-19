@@ -2,6 +2,7 @@ import { ChatBlockedError } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
 import {
   addChatExemption,
+  chatBlockedAlertMessage,
   chatBlockedMessage,
   chatBlockedSince,
   isChatBlockedError,
@@ -76,5 +77,18 @@ describe('chatBlockedSince', () => {
   });
   it('fills {time} with the view date-time', () => {
     expect(chatBlockedSince('20261019140500', 'gesperrt seit {time}')).toBe('gesperrt seit 19.10.2026 14:05');
+  });
+});
+
+describe('chatBlockedAlertMessage', () => {
+  it('uses the fallback for an empty message', () => {
+    expect(chatBlockedAlertMessage('', 'F')).toBe('F');
+  });
+  it('escapes the admin message and keeps its line breaks', () => {
+    expect(chatBlockedAlertMessage('<b>A</b> & "B"\nC', 'F')).toBe('&lt;b&gt;A&lt;/b&gt; &amp; &quot;B&quot;<br>C');
+  });
+  it('appends the extra line after a blank line', () => {
+    expect(chatBlockedAlertMessage('X', 'F', 'Anrufe sind während der Wartung nicht möglich.'))
+      .toBe('X<br><br>Anrufe sind während der Wartung nicht möglich.');
   });
 });

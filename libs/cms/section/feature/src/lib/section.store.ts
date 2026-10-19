@@ -11,10 +11,10 @@ import { catchError, of } from 'rxjs';
 
 import { AppStore, withErrorState } from '@okr/shared-feature';
 import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageActionType, ImageConfig, SectionModel, SectionType } from '@okr/shared-models';
-import { chipMatches, debugData, debugItemLoaded, debugMessage, fill, nameMatches, sanitizeFileName } from '@okr/shared-util-core';
+import { chipMatches, debugData, debugItemLoaded, debugMessage, fill, nameMatches, sanitizeFileName, chatBlockedAlertMessage, isChatBlockedError } from '@okr/shared-util-core';
 import { DEFAULT_MIMETYPES, IMAGE_MIMETYPES } from '@okr/shared-constants';
-import { confirm, downloadTextFile, exportCsv, getExportFileName, lazyService, showToast, resourceParams } from '@okr/shared-util-angular';
-import { FirestoreService } from '@okr/shared-data-access';
+import { confirm, downloadTextFile, exportCsv, getExportFileName, lazyService, showToast, resourceParams, notify } from '@okr/shared-util-angular';
+import { FirestoreService, ChatStatusService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 
 import { UploadService } from '@okr/avatar-data-access';
@@ -68,6 +68,7 @@ export const _SectionStore = signalStore(
     appStore: inject(AppStore),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
+    chatStatus: inject(ChatStatusService),
     toastController: inject(ToastController),
     firestoreService: inject(FirestoreService),
     i18nService: inject(I18nService)
@@ -449,6 +450,11 @@ export const _SectionStore = signalStore(
       async sendEmergencyMessage(): Promise<void> {
         const currentUser = store.currentUser();
         if (!currentUser) return;
+        // 1.107: say plainly that the chat is down, so the caller looks for help another way
+        if (this.isChatBlocked()) {
+          await this.showChatBlockedNotice();
+          return;
+        }
         try {
           // Initialise on demand rather than bailing out — the button is reachable from a
           // content page the user may have opened without ever touching the chat.
@@ -472,9 +478,28 @@ export const _SectionStore = signalStore(
           }
           await showToast(store.toastController, store.i18n.emergency_sent());
         } catch (error) {
+          if (isChatBlockedError(error, this.isChatBlocked())) {
+            await this.showChatBlockedNotice();
+            return;
+          }
           console.error('SectionStore.sendEmergencyMessage: Failed to send:', error);
           await showToast(store.toastController, store.i18n.emergency_error());
         }
+      },
+
+      /** 1.107: true while the chat is blocked for the current person (read live, not captured). */
+      isChatBlocked(): boolean {
+        return store.chatStatus.isEffectivelyBlocked(store.currentUser()?.personKey);
+      },
+
+      /** 1.107: the admin's maintenance message (or the default) instead of an error toast. */
+      async showChatBlockedNotice(): Promise<void> {
+        await notify(
+          store.alertController,
+          store.i18n.chat_blocked_title(),
+          chatBlockedAlertMessage(store.chatStatus.message(), store.i18n.chat_blocked_default()),
+          store.i18n.ok(),
+        );
       },
 
       /**

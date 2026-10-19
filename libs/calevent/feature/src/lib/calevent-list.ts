@@ -11,7 +11,7 @@ import { ModelSelectService } from '@okr/shared-feature';
 import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { DateTimeSelectModal, EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { AppNavigationService, confirm, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, keepDefaultTrue, lazyService, navigateByUrl, okrPrompt, QuickEntryService } from '@okr/shared-util-angular';
-import { convertDateFormatToString, DateFormat, addTime, debugData, extractFirstPartOfOptionalTupel, getAttendanceColor, getAttendanceIcon, getAttendanceState, getAvatarInfo, getIsoDateTime, isCalendarPublic, fill, getYear, getYearList, hasRole, parseEventString, warn, YEAR_ROLLING_WINDOW } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, addTime, debugData, extractFirstPartOfOptionalTupel, getAttendanceColor, getAttendanceIcon, getAttendanceState, getAvatarInfo, getIsoDateTime, isCalendarPublic, fill, getYear, getYearList, hasRole, parseEventString, warn, YEAR_ROLLING_WINDOW, isChatBlockedError } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
@@ -1256,12 +1256,21 @@ export class CalEventList implements OnInit {
 
   /** Opens (or creates) the direct chat room with the given person — same flow as PersonStore.chat(). */
   private async chatWith(personKey: string): Promise<void> {
+    // 1.107: while the chat is blocked, show the admin's message instead of trying
+    if (this.store.isChatBlocked()) {
+      await this.store.showChatBlockedNotice();
+      return;
+    }
     try {
       const matrix = await this.matrixChatService();
       await matrix.ensureInitialized();
       const room = await matrix.createDirectRoom(personKey);
       await navigateByUrl(this.router, '/private/chat/c-contentpage', { selectedRoom: room.roomId });
     } catch (err) {
+      if (isChatBlockedError(err, this.store.isChatBlocked())) {
+        await this.store.showChatBlockedNotice();
+        return;
+      }
       warn(`CalEventList.chatWith: could not open the direct chat with ${personKey}: ${err}`);
     }
   }

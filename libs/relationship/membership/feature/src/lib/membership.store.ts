@@ -8,11 +8,11 @@ import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { ExportFormats, memberTypeMatches, yearMatches } from '@okr/shared-categories';
-import { FirestoreService } from '@okr/shared-data-access';
+import { FirestoreService, ChatStatusService } from '@okr/shared-data-access';
 import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { AddressCollection, AddressModel, CategoryListModel, ExportFormat, GroupModel, GroupModelName, MembershipCollection, MembershipModel, OrgModel, OrgModelName, OwnershipCollection, OwnershipModel, PersonModel, PersonModelName } from '@okr/shared-models';
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, generateRandomString, getAvatarInfo, getBirthYear, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isChatOnlyMembership, isMembership, isOngoing, isPerson, nameMatches, warn } from '@okr/shared-util-core';
-import { confirm, copyToClipboardWithConfirmation, exportCsv, getCcEmailAddresses, getMainEmailAddresses, lazyService, navigateByUrl, showToast } from '@okr/shared-util-angular';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, generateRandomString, getAvatarInfo, getBirthYear, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isChatOnlyMembership, isMembership, isOngoing, isPerson, nameMatches, warn, chatBlockedAlertMessage, isChatBlockedError } from '@okr/shared-util-core';
+import { confirm, copyToClipboardWithConfirmation, exportCsv, getCcEmailAddresses, getMainEmailAddresses, lazyService, navigateByUrl, showToast, notify } from '@okr/shared-util-angular';
 import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
 import { EmailAddressesModal, selectDate } from '@okr/shared-ui';
@@ -87,6 +87,7 @@ export const _MembershipStore = signalStore(
       import('@okr/finance-invoice-feature').then(m => m.MemberInvoiceService)),
     toastController: inject(ToastController),
     alertController: inject(AlertController),
+    chatStatus: inject(ChatStatusService),
     router: inject(Router),
     personService: inject(PersonService),
     addressService: inject(AddressService),
@@ -701,6 +702,10 @@ export const _MembershipStore = signalStore(
        * 
        */
       async chat(membership: MembershipModel): Promise<void> {
+        if (this.isChatBlocked()) {
+          await this.showChatBlockedNotice();
+          return;
+        }
         try {
           // Matrix is initialized in the background after login (MatrixInitializationService).
           // Await the idempotent, promise-cached init so opening a direct chat works even
@@ -711,10 +716,29 @@ export const _MembershipStore = signalStore(
           void store.activityService.log('chat', 'createdirect', store.currentUser(), `SUCCESS: ${membership.memberKey}`);
           await navigateByUrl(store.router, '/private/chat/c-contentpage', { selectedRoom: room.roomId });
         } catch (error) {
+          if (isChatBlockedError(error, this.isChatBlocked())) {
+            await this.showChatBlockedNotice();
+            return;
+          }
           const msg = error instanceof Error ? error.message : 'Could not start chat';
           void store.activityService.log('chat', 'createdirect', store.currentUser(), `ERROR: ${membership.memberKey} ${msg}`);
           await showToast(store.toastController, msg);
         }
+      },
+
+      /** 1.107: true while the chat is blocked for the current person (read live, not captured). */
+      isChatBlocked(): boolean {
+        return store.chatStatus.isEffectivelyBlocked(store.currentUser()?.personKey);
+      },
+
+      /** 1.107: the admin's maintenance message (or the default) instead of an error toast. */
+      async showChatBlockedNotice(): Promise<void> {
+        await notify(
+          store.alertController,
+          store.i18n.chat_blocked_title(),
+          chatBlockedAlertMessage(store.chatStatus.message(), store.i18n.chat_blocked_default()),
+          store.i18n.ok(),
+        );
       },
 
       async isPersonUser(personKey: string): Promise<boolean> {

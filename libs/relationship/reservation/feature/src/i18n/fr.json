@@ -262,5 +262,11 @@
   "apply": {
     "invalid": "L’inscription ne peut pas encore être envoyée. Veuillez vérifier : {fields}",
     "confirmation": "Confirmation"
+  },
+  "chat": {
+    "blocked": {
+      "title": "Chat temporairement indisponible",
+      "default": "Le chat est en cours de maintenance. Il sera bientôt de retour."
+    }
   }
 }

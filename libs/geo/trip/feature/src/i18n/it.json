@@ -253,5 +253,12 @@
     "date_placeholder": "GG.MM.AAAA",
     "time_label": "Ora di partenza",
     "time_placeholder": "HH:MM"
+  },
+  "chat": {
+    "blocked": {
+      "title": "Chat temporaneamente non disponibile",
+      "default": "La chat è in manutenzione. Tornerà presto.",
+      "call": "Le chiamate non sono possibili durante la manutenzione."
+    }
   }
 }

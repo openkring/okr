@@ -4,11 +4,12 @@ import { ActionSheetController, ModalController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { firstValueFrom } from 'rxjs';
 
+import { ChatStatusService } from '@okr/shared-data-access';
 import { AppStore, KioskStatus, KioskStatusService, LocationSelectResult, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AvatarInfo, PersonModel, ReservationModel, TaskModel, TripModel, UserModel } from '@okr/shared-models';
 import { AlertService } from '@okr/shared-util-angular';
-import { fill, getAvatarInfoForCurrentUser, getFullName, getTodayStr, getYear, hasRole, isKioskOnly, nameMatches } from '@okr/shared-util-core';
+import { chatBlockedAlertMessage, fill, getAvatarInfoForCurrentUser, getFullName, getTodayStr, getYear, hasRole, isChatBlockedError, isKioskOnly, nameMatches } from '@okr/shared-util-core';
 import { yearMatches } from '@okr/shared-categories';
 import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
 
@@ -81,6 +82,7 @@ export const TripStore = signalStore(
     modalController: inject(ModalController),
     actionSheetController: inject(ActionSheetController),
     alertService: inject(AlertService),
+    chatStatus: inject(ChatStatusService),
     i18nService: inject(I18nService),
     injector: inject(Injector),
     reservationService: inject(ReservationService),
@@ -556,6 +558,11 @@ export const TripStore = signalStore(
         await store.alertService.showToast(store.i18n.call_support_none());
         return;
       }
+      // 1.107: no call while the chat is blocked — and no matrix-js-sdk download for nothing
+      if (store.chatStatus.isEffectivelyBlocked(store.currentUser()?.personKey)) {
+        await this.showChatBlockedCallNotice();
+        return;
+      }
       try {
         const { MatrixChatService } = await import('@okr/chat-data-access');
         const matrixService = store.injector.get(MatrixChatService);
@@ -563,9 +570,21 @@ export const TripStore = signalStore(
         const room = await matrixService.createDirectRoom(responsible.key);
         await matrixService.startVideoCall(room.roomId, store.currentUser());
       } catch (error) {
+        if (isChatBlockedError(error, store.chatStatus.isEffectivelyBlocked(store.currentUser()?.personKey))) {
+          await this.showChatBlockedCallNotice();
+          return;
+        }
         console.error('TripStore.callSupport: failed to start the support call:', error);
         await store.alertService.showToast(store.i18n.call_support_error());
       }
+    },
+
+    /** 1.107: the admin's maintenance message (or the default) plus «calls are not possible». */
+    async showChatBlockedCallNotice(): Promise<void> {
+      await store.alertService.notify(
+        store.i18n.chat_blocked_title(),
+        chatBlockedAlertMessage(store.chatStatus.message(), store.i18n.chat_blocked_default(), store.i18n.chat_blocked_call()),
+      );
     },
 
     async export(type: string): Promise<void> {

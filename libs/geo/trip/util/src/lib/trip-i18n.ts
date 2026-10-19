@@ -171,6 +171,10 @@ export const TRIP_I18N_KEYS = {
   ok:                       '@ok',
   notify_deleted:           PFX + 'notify.deleted',
   notify_suspicious:        PFX + 'notify.suspicious',
+  // 1.107 chat maintenance block
+  chat_blocked_title:   PFX + 'chat.blocked.title',
+  chat_blocked_default: PFX + 'chat.blocked.default',
+  chat_blocked_call:    PFX + 'chat.blocked.call',
 } satisfies Record<string, string>;
 
 export type TripI18n = { [K in keyof typeof TRIP_I18N_KEYS]: Signal<string> };

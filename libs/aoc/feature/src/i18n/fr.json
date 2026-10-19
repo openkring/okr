@@ -381,6 +381,11 @@
       "confirm_here": "Attribuer le salon « {{ name }} » à cette app ? Il apparaîtra alors dans la vue d'ensemble des discussions.",
       "confirm_hide": "Masquer le salon « {{ name }} » ? Il n'apparaîtra alors dans aucune app.",
       "conf": "Attribution enregistrée."
+    },
+    "blocked": {
+      "title": "Chat temporairement indisponible",
+      "default": "Le chat est en cours de maintenance. Il sera bientôt de retour.",
+      "call": "Les appels ne sont pas possibles pendant la maintenance."
     }
   },
   "content": {

@@ -5,12 +5,12 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { of, take } from 'rxjs';
 
 import { yearMatches } from '@okr/shared-categories';
-import { FirestoreService } from '@okr/shared-data-access';
+import { FirestoreService, ChatStatusService } from '@okr/shared-data-access';
 import { AppStore, PersonSelectModal, PersonSelectResult, ResourceSelectModal } from '@okr/shared-feature';
-import { confirm, exportCsv, getExportFileName, lazyService, navigateByUrl, showToast } from '@okr/shared-util-angular';
+import { confirm, exportCsv, getExportFileName, lazyService, navigateByUrl, showToast, notify } from '@okr/shared-util-angular';
 import { CalEventCollection, CalEventModel, CategoryListModel, OrgModel, PersonModel, PersonModelName, ReservationModel, ResourceCollection, ResourceModel } from '@okr/shared-models';
 import { selectDate } from '@okr/shared-ui';
-import { buildExportTable, chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, findByKey, getAvatarInfo, getCategoryIcon, getSystemQuery, getYear, isPerson, isResource, isValidAt, nameMatches } from '@okr/shared-util-core';
+import { buildExportTable, chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, findByKey, getAvatarInfo, getCategoryIcon, getSystemQuery, getYear, isPerson, isResource, isValidAt, nameMatches, chatBlockedAlertMessage, isChatBlockedError } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
 import { ReservationService } from '@okr/relationship-reservation-data-access';
@@ -63,6 +63,7 @@ export const ReservationStore = signalStore(
     firestoreService: inject(FirestoreService),
     reservationService: inject(ReservationService),
     alertController: inject(AlertController),
+    chatStatus: inject(ChatStatusService),
     modalController: inject(ModalController),
     i18nService: inject(I18nService),
     // Lazy: a static import here would drag matrix-js-sdk before the LCP (spec 1.49, F1).
@@ -422,6 +423,10 @@ export const ReservationStore = signalStore(
       async openDirectChat(reservation?: ReservationModel, readOnly = true): Promise<void> {
         if (!reservation || !reservation.reserver?.key || readOnly) return;
         const key = reservation.reserver.key;
+        if (this.isChatBlocked()) {
+          await this.showChatBlockedNotice();
+          return;
+        }
         try {
           // Matrix is initialized in the background after login (MatrixInitializationService).
           // Await the idempotent, promise-cached init so opening a direct chat works even
@@ -432,10 +437,29 @@ export const ReservationStore = signalStore(
           void store.activityService.log('chat', 'createdirect', store.currentUser(), `SUCCESS: ${key}`);
           await navigateByUrl(store.router, '/private/chat/c-contentpage', { selectedRoom: room.roomId });
         } catch (error) {
+          if (isChatBlockedError(error, this.isChatBlocked())) {
+            await this.showChatBlockedNotice();
+            return;
+          }
           const msg = error instanceof Error ? error.message : 'Could not start chat';
           void store.activityService.log('chat', 'createdirect', store.currentUser(), `ERROR: ${key} ${msg}`);
           await showToast(store.toastController, msg);
         }
+      },
+
+      /** 1.107: true while the chat is blocked for the current person (read live, not captured). */
+      isChatBlocked(): boolean {
+        return store.chatStatus.isEffectivelyBlocked(store.currentUser()?.personKey);
+      },
+
+      /** 1.107: the admin's maintenance message (or the default) instead of an error toast. */
+      async showChatBlockedNotice(): Promise<void> {
+        await notify(
+          store.alertController,
+          store.i18n.chat_blocked_title(),
+          chatBlockedAlertMessage(store.chatStatus.message(), store.i18n.chat_blocked_default()),
+          store.i18n.ok(),
+        );
       },
 
       /**

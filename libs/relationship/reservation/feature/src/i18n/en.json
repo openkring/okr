@@ -262,5 +262,11 @@
   "apply": {
     "invalid": "The application cannot be submitted yet. Please check: {fields}",
     "confirmation": "Confirmation"
+  },
+  "chat": {
+    "blocked": {
+      "title": "Chat temporarily unavailable",
+      "default": "The chat is currently under maintenance. It will be back soon."
+    }
   }
 }

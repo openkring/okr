@@ -262,5 +262,11 @@
   "apply": {
     "invalid": "Die Anmeldung kann noch nicht abgeschickt werden. Bitte prüfen: {fields}",
     "confirmation": "Bestätigung"
+  },
+  "chat": {
+    "blocked": {
+      "title": "Chat vorübergehend nicht verfügbar",
+      "default": "Der Chat wird gerade gewartet. Er ist bald wieder da."
+    }
   }
 }

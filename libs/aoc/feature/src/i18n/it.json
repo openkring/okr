@@ -381,6 +381,11 @@
       "confirm_here": "Assegnare la stanza «{{ name }}» a questa app? Comparirà poi nella panoramica delle chat.",
       "confirm_hide": "Nascondere la stanza «{{ name }}»? Non comparirà più in nessuna app.",
       "conf": "Assegnazione salvata."
+    },
+    "blocked": {
+      "title": "Chat temporaneamente non disponibile",
+      "default": "La chat è in manutenzione. Tornerà presto.",
+      "call": "Le chiamate non sono possibili durante la manutenzione."
     }
   },
   "content": {

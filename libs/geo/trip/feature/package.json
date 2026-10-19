@@ -9,6 +9,7 @@
     "tslib": "^2.8.1",
     "@okr/shared-models": "*",
     "@okr/shared-config": "*",
+    "@okr/shared-data-access": "*",
     "@okr/shared-constants": "*",
     "@okr/shared-feature": "*",
     "@okr/shared-i18n": "*",

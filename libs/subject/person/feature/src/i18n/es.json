@@ -240,5 +240,11 @@
   "validation": {
     "lastNameRequired": "La introducción de un apellido es obligatoria.",
     "validSSN": "Introduzca un número AVS válido."
+  },
+  "chat": {
+    "blocked": {
+      "title": "Chat no disponible temporalmente",
+      "default": "El chat está en mantenimiento. Volverá pronto."
+    }
   }
 }

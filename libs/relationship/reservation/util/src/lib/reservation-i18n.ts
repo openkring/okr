@@ -155,6 +155,9 @@ export const RESERVATION_I18N_KEYS = {
   card_process:                      PFX + 'card.process',
   apply_invalid:                     PFX + 'apply.invalid',
   apply_confirmation:                PFX + 'apply.confirmation',
+  // 1.107 chat maintenance block
+  chat_blocked_title:   PFX + 'chat.blocked.title',
+  chat_blocked_default: PFX + 'chat.blocked.default',
 } satisfies Record<string, string>;
 
 export type ReservationI18n = { [K in keyof typeof RESERVATION_I18N_KEYS]: Signal<string> };

@@ -381,6 +381,11 @@
       "confirm_here": "¿Asignar la sala «{{ name }}» a esta app? Entonces aparecerá en el resumen de chats.",
       "confirm_hide": "¿Ocultar la sala «{{ name }}»? Entonces no aparecerá en ninguna app.",
       "conf": "Asignación guardada."
+    },
+    "blocked": {
+      "title": "Chat no disponible temporalmente",
+      "default": "El chat está en mantenimiento. Volverá pronto.",
+      "call": "Las llamadas no son posibles durante el mantenimiento."
     }
   },
   "content": {

@@ -221,7 +221,9 @@ export const MEMBERSHIP_I18N_KEYS = {
   cancel:                         '@cancel',
   count_label:                    PFX + 'count.label',
   save:                           '@save.label',
-
+  // 1.107 chat maintenance block
+  chat_blocked_title:   PFX + 'chat.blocked.title',
+  chat_blocked_default: PFX + 'chat.blocked.default',
 } satisfies Record<string, string>;
 
 export type MembershipI18n = { [K in keyof typeof MEMBERSHIP_I18N_KEYS]: Signal<string> };

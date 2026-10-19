@@ -9,10 +9,10 @@ import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { from, firstValueFrom, map, of } from 'rxjs';
 
-import { FirestoreService } from '@okr/shared-data-access';
+import { FirestoreService, ChatStatusService } from '@okr/shared-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { Attendee, AvatarInfo, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CalEventModelName, CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
-import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getArchiveInclusiveQuery, getFullName, getSystemQuery, getTodayStr, fill, isCalendarPublic, isAfterDate, isAfterOrEqualDate, isInRollingWindow, nameMatches, pad, prettyFormatDate, publicAppOrigin, removeKeyFromOkrModel, warn, YEAR_ROLLING_WINDOW } from '@okr/shared-util-core';
+import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getArchiveInclusiveQuery, getFullName, getSystemQuery, getTodayStr, fill, isCalendarPublic, isAfterDate, isAfterOrEqualDate, isInRollingWindow, nameMatches, pad, prettyFormatDate, publicAppOrigin, removeKeyFromOkrModel, warn, YEAR_ROLLING_WINDOW, chatBlockedAlertMessage, isChatBlockedError } from '@okr/shared-util-core';
 import { confirm, copyToClipboardDeferred, error, lazyService, navigateByUrl, notify, okrPrompt, showToast } from '@okr/shared-util-angular';
 import { InvitationService } from '@okr/relationship-invitation-data-access';
 import type { InvitePersonsFormData, InvitePersonsI18n } from '@okr/relationship-invitation-util';
@@ -84,6 +84,7 @@ export const CalEventStore = signalStore(
     modalController: inject(ModalController),
     toastController: inject(ToastController),
     alertController: inject(AlertController),
+    chatStatus: inject(ChatStatusService),
     router: inject(Router),
     membershipService: inject(MembershipService),
     locationService: inject(LocationService),
@@ -504,6 +505,8 @@ export const CalEventStore = signalStore(
       async notifyGroupRoom(message: string): Promise<void> {
         const groupId = store.groupCalendarId();
         if (!groupId) return;
+        // 1.107: a side effect of the poll — while the chat is blocked it is skipped silently
+        if (this.isChatBlocked()) return;
         try {
           const functions = getFunctions(getApp(), 'europe-west6');
           const fn = httpsCallable<{ groupId: string }, { roomId: string }>(functions, 'requestGroupRoomAccess');
@@ -512,9 +515,25 @@ export const CalEventStore = signalStore(
           await matrix.ensureInitialized();
           await matrix.sendMessage(data.roomId, message);
         } catch (err) {
+          if (isChatBlockedError(err, this.isChatBlocked())) return;
           warn(`CalEventStore.notifyGroupRoom: ${err}`);
           await showToast(store.toastController, store.i18n.schedule_no_room());
         }
+      },
+
+      /** 1.107: true while the chat is blocked for the current person (read live, not captured). */
+      isChatBlocked(): boolean {
+        return store.chatStatus.isEffectivelyBlocked(store.currentUser()?.personKey);
+      },
+
+      /** 1.107: the admin's maintenance message (or the default) instead of an error toast. */
+      async showChatBlockedNotice(): Promise<void> {
+        await notify(
+          store.alertController,
+          store.i18n.chat_blocked_title(),
+          chatBlockedAlertMessage(store.chatStatus.message(), store.i18n.chat_blocked_default()),
+          store.i18n.ok(),
+        );
       },
 
       /**

@@ -168,8 +168,9 @@ export const PERSON_I18N_KEYS = {
     ok:                         '@ok',
     cancel:                     '@cancel',
     save:                       '@save.label',
-
-
+    // 1.107 chat maintenance block
+    chat_blocked_title:         PFX + 'chat.blocked.title',
+    chat_blocked_default:       PFX + 'chat.blocked.default',
 } satisfies Record<string, string>;
 
 export type PersonI18n = { [K in keyof typeof PERSON_I18N_KEYS]: Signal<string> };
