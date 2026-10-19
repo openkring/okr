@@ -1,11 +1,12 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
+import { collection, getDocs, query } from 'firebase/firestore';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { MemberFeeCollection, MemberFeeModel, UserModel } from '@okr/shared-models';
-import { getSystemQuery, getTodayStr, DateFormat } from '@okr/shared-util-core';
+import { getQuery, getSystemQuery, getTodayStr, DateFormat } from '@okr/shared-util-core';
 import { ActivityService } from '@okr/activity-data-access';
 import { BEXIO_INVOICE_TEMPLATES } from '@okr/relationship-membership-util';
 
@@ -43,6 +44,21 @@ export class MemberFeeService {
       'index',
       'asc'
     );
+  }
+
+  /**
+   * Every live fee row of the tenant, read once. Unlike `list()` (searchData swallows stream errors
+   * into []), this REJECTS on failure — a reload must never mistake a failed read (missing index,
+   * denied query) for "nobody has a row yet" and create duplicates. Uses the tenants + isArchived +
+   * index composite index.
+   */
+  public async listAllOnce(): Promise<MemberFeeModel[]> {
+    const ref = query(
+      collection(this.firestoreService.firestore, MemberFeeCollection),
+      ...getQuery(getSystemQuery(this.env.tenantId), 'index', 'asc')
+    );
+    const snapshot = await getDocs(ref);
+    return snapshot.docs.map(d => ({ ...d.data(), okey: d.id }) as MemberFeeModel);
   }
 
   public async save(fee: MemberFeeModel, currentUser?: UserModel, addActivity = true): Promise<string | undefined> {

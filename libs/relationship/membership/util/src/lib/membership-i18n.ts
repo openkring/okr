@@ -70,6 +70,8 @@ export const MEMBERSHIP_I18N_KEYS = {
   memberFee_delete_conf:       PFX + 'memberFee.delete.conf',
   memberFee_generate_confirm:  PFX + 'memberFee.generate.confirm',
   memberFee_generate_conf:     PFX + 'memberFee.generate.conf',
+  memberFee_generate_readError: PFX + 'memberFee.generate.readError',
+  memberFee_generate_legacyRows: PFX + 'memberFee.generate.legacyRows',
   memberFee_update_label:      PFX + 'memberFee.update.label',
   memberFee_update_conf:       PFX + 'memberFee.update.conf',
   memberFee_download_enterInvoiceId:     PFX + 'memberFee.download.enterInvoiceId',

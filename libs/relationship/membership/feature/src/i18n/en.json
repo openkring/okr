@@ -128,7 +128,9 @@
     },
     "generate": {
       "confirm": "WARNING: All invoices will be regenerated. Local changes will be overwritten. Normally this operation is run once at the start of an invoice run. Should the operation be executed?",
-      "conf": "The invoice data was generated."
+      "conf": "The invoice data was generated.",
+      "readError": "The fee lines could not be loaded. Nothing was changed.",
+      "legacyRows": "Some fee lines do not belong to any books yet. Please run the migration first."
     },
     "update": {
       "label": "Edit invoice",

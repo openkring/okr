@@ -128,7 +128,9 @@
     },
     "generate": {
       "confirm": "ACHTUNG: Alle Rechnungen werden neu generiert. Lokale Aenderungen werden überschrieben. Normalerweise wird diese Operation einmal beim Starten eines Rechnungslaufs ausgeführt. Soll die Operation ausgeführt werden ?",
-      "conf": "Die Rechnungsdaten wurden generiert."
+      "conf": "Die Rechnungsdaten wurden generiert.",
+      "readError": "Die Beitragszeilen konnten nicht geladen werden. Es wurde nichts geändert.",
+      "legacyRows": "Es gibt noch Beitragszeilen ohne Buchhaltung. Bitte zuerst die Migration ausführen."
     },
     "update": {
       "label": "Rechnung ändern",

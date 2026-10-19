@@ -54,3 +54,23 @@ export function feeScreenState(
 export function billedCategoryKey(org: { membershipCategoryKey?: string } | undefined): string {
   return org?.membershipCategoryKey || 'mcat';
 }
+
+/**
+ * Why a fee reload must not run (spec 1.108, final review): any fee row of the TENANT without books
+ * means the migration has not run (or an old client wrote one) — such a row may be this member's
+ * row of these books, so a reload would create a duplicate. `rows` is a fresh, non-swallowing read
+ * of all the tenant's fee rows.
+ */
+export function reloadRefusal(rows: MemberFeeModel[]): 'legacy-rows' | undefined {
+  // tenant-wide on purpose: a row without books may belong to any books
+  return rows.some(row => !row.accountingTenantId) ? 'legacy-rows' : undefined;
+}
+
+/** The members that already have a fee row in these books — the reload skips them. */
+export function rowMemberKeysOfBooks(rows: MemberFeeModel[], booksId: string): Set<string> {
+  const keys = new Set<string>();
+  for (const row of feeRowsOfBooks(rows, booksId)) {
+    if (row.member?.key) keys.add(row.member.key);
+  }
+  return keys;
+}

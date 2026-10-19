@@ -22,7 +22,7 @@ import { MemberFeeService, getTemplateId } from '@okr/relationship-membership-da
 
 import { MembershipEditModal } from './membership-edit.modal';
 import { MemberFeesTotalsModal } from './member-fee-totals.modal';
-import { BexioPosition, billedCategoryKey, billedMemberships, buildPositions, feeRowsOfBooks, feeScreenState, getFeeTotal, MemberFeesScreenState, rebatePosition, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
+import { BexioPosition, billedCategoryKey, billedMemberships, buildPositions, feeRowsOfBooks, feeScreenState, getFeeTotal, reloadRefusal, rowMemberKeysOfBooks, MemberFeesScreenState, rebatePosition, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
 import { MemberFeeUploadModal } from '@okr/relationship-membership-ui';
 
 export type MemberFeesState = {
@@ -298,16 +298,32 @@ export const _MemberFeesStore = signalStore(
       const booksId = store.booksId();
       const tenantId = store.tenantId();
       const lockerKeys = store.lockerOwnerKeys();
-      const feeMap = store.feeRecordsByMemberKey();
       const schedule = store.feeSchedule();
       const categoryLists = store.categoryLists();
       const categoryKey = store.membershipCategoryKey();
-      const members = store.billedMemberships().filter((m: MembershipModel) => !feeMap.has(m.memberKey));
+      const billed = store.billedMemberships();
 
       const confirmed = await confirm(store.alertController, store.i18n.memberFee_generate_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
       if (!confirmed) return;
       // The books changed (or their rows are reloading) while the dialog was open — write nothing.
       if (store.booksId() !== booksId || store.screenState() !== 'ready') return;
+
+      // "Already has a row" comes from a fresh read that throws on failure, not from the resource:
+      // searchData turns a failed stream into [] and every member would look row-less.
+      let tenantRows: MemberFeeModel[];
+      try {
+        tenantRows = await store.memberFeeService.listAllOnce();
+      } catch (e) {
+        console.error('MemberFeesStore.generateFees: reading the fee rows failed', e);
+        await showToast(store.toastController, store.i18n.memberFee_generate_readError());
+        return;
+      }
+      if (reloadRefusal(tenantRows) === 'legacy-rows') {
+        await showToast(store.toastController, store.i18n.memberFee_generate_legacyRows());
+        return;
+      }
+      const withRow = rowMemberKeysOfBooks(tenantRows, booksId);
+      const members = billed.filter((m: MembershipModel) => !withRow.has(m.memberKey));
 
       const currentUser = store.appStore.currentUser() ?? undefined;
       const saves = members.map((m: MembershipModel) => {

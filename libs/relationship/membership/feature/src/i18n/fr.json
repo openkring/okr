@@ -128,7 +128,9 @@
     },
     "generate": {
       "confirm": "ATTENTION : toutes les factures seront régénérées. Les modifications locales seront écrasées. Normalement, cette opération est exécutée une fois au démarrage d'une exécution de facturation. L'opération doit-elle être exécutée ?",
-      "conf": "Les données de facturation ont été générées."
+      "conf": "Les données de facturation ont été générées.",
+      "readError": "Les lignes de cotisation n'ont pas pu être chargées. Rien n'a été modifié.",
+      "legacyRows": "Certaines lignes de cotisation n'appartiennent encore à aucune comptabilité. Lance d'abord la migration."
     },
     "update": {
       "label": "Modifier la facture",

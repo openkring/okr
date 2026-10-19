@@ -128,7 +128,9 @@
     },
     "generate": {
       "confirm": "ATENCIÓN: Todas las facturas se regenerarán. Los cambios locales se sobrescribirán. Normalmente esta operación se ejecuta una vez al iniciar una ejecución de facturación. ¿Desea ejecutar la operación?",
-      "conf": "Los datos de facturación se han generado."
+      "conf": "Los datos de facturación se han generado.",
+      "readError": "No se han podido cargar las líneas de cuotas. No se ha cambiado nada.",
+      "legacyRows": "Todavía hay líneas de cuotas sin contabilidad. Ejecuta primero la migración."
     },
     "update": {
       "label": "Editar factura",

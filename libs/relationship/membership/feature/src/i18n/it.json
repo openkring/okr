@@ -128,7 +128,9 @@
     },
     "generate": {
       "confirm": "ATTENZIONE: tutte le fatture verranno rigenerate. Le modifiche locali verranno sovrascritte. Normalmente questa operazione viene eseguita una volta all'avvio di un'esecuzione di fatturazione. Eseguire l'operazione?",
-      "conf": "I dati di fatturazione sono stati generati."
+      "conf": "I dati di fatturazione sono stati generati.",
+      "readError": "Non è stato possibile caricare le righe delle quote. Non è stato modificato nulla.",
+      "legacyRows": "Ci sono ancora righe delle quote senza contabilità. Esegui prima la migrazione."
     },
     "update": {
       "label": "Modifica fattura",
