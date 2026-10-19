@@ -356,11 +356,19 @@ export const PersonStore = signalStore(
           const tenantId = store.tenantId();
           const dbQuery = getSystemQuery(tenantId);
           for (;;) {
-            const [persons, addresses] = await Promise.all([
-              store.firestoreService.getDataOnce<PersonModel>(PersonCollection, dbQuery, 'lastName', 'asc'),
-              store.firestoreService.getDataOnce<AddressModel>(AddressCollection, dbQuery, 'parentKey', 'asc'),
-            ]);
-            if (!persons || !addresses) return;
+            // strict reads: getDataOnce turns a failed read into [], which would report every person
+            // with a zip as a mismatch against an "empty" address list
+            let persons: PersonModel[];
+            let addresses: AddressModel[];
+            try {
+              [persons, addresses] = await Promise.all([
+                store.firestoreService.getDataOnceStrict<PersonModel>(PersonCollection, dbQuery, 'lastName', 'asc'),
+                store.firestoreService.getDataOnceStrict<AddressModel>(AddressCollection, dbQuery, 'parentKey', 'asc'),
+              ]);
+            } catch {
+              await showToast(store.toastController, store.i18n.check_fav_read_error());
+              return;
+            }
             const mismatches = findFavMismatches(persons, addresses);
             const result = await openReport(store.modalController, {
               title: store.i18n.check_fav_title(),

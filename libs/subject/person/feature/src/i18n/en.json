@@ -252,6 +252,7 @@
     "explanation": "Compares each person's stored postcode with their main address. «Copy to person» writes the value of the main address into the person.",
     "detail": "Stored on the person: {cached}. In the main address: {fromAddress}.",
     "no_value": "empty",
-    "to_person": "Copy to person"
+    "to_person": "Copy to person",
+    "read_error": "The data could not be read. Please try again later."
   }
 }

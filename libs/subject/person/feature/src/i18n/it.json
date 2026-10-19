@@ -252,6 +252,7 @@
     "explanation": "Confronta, per ogni persona, il codice postale salvato con l'indirizzo principale. «Riporta nella persona» scrive il valore dell'indirizzo principale nella persona.",
     "detail": "Salvato nella persona: {cached}. Nell'indirizzo principale: {fromAddress}.",
     "no_value": "vuoto",
-    "to_person": "Riporta nella persona"
+    "to_person": "Riporta nella persona",
+    "read_error": "Non è stato possibile leggere i dati. Riprova più tardi."
   }
 }

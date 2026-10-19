@@ -252,6 +252,7 @@
     "explanation": "Vergleicht bei jeder Person die gespeicherte Postleitzahl mit der Hauptadresse. Mit «In Person übernehmen» wird der Wert der Hauptadresse bei der Person eingetragen.",
     "detail": "Bei der Person gespeichert: {cached}. In der Hauptadresse: {fromAddress}.",
     "no_value": "leer",
-    "to_person": "In Person übernehmen"
+    "to_person": "In Person übernehmen",
+    "read_error": "Die Daten konnten nicht gelesen werden. Bitte versuche es später noch einmal."
   }
 }

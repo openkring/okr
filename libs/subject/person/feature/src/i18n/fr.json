@@ -252,6 +252,7 @@
     "explanation": "Compare, pour chaque personne, le code postal enregistré avec l'adresse principale. «Reprendre dans la personne» inscrit la valeur de l'adresse principale dans la personne.",
     "detail": "Enregistré dans la personne : {cached}. Dans l'adresse principale : {fromAddress}.",
     "no_value": "vide",
-    "to_person": "Reprendre dans la personne"
+    "to_person": "Reprendre dans la personne",
+    "read_error": "Les données n'ont pas pu être lues. Réessaie plus tard."
   }
 }

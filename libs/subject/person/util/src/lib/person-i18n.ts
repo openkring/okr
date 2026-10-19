@@ -177,6 +177,7 @@ export const PERSON_I18N_KEYS = {
     check_fav_detail:           PFX + 'checkFavAddresses.detail',
     check_fav_no_value:         PFX + 'checkFavAddresses.no_value',
     check_fav_to_person:        PFX + 'checkFavAddresses.to_person',
+    check_fav_read_error:       PFX + 'checkFavAddresses.read_error',
 } satisfies Record<string, string>;
 
 export type PersonI18n = { [K in keyof typeof PERSON_I18N_KEYS]: Signal<string> };
