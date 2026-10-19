@@ -7,7 +7,6 @@ export * from './lib/aoc-chat';
 export * from './lib/aoc-doc';
 export * from './lib/aoc-kiosk';
 export * from './lib/aoc-kiosk.store';
-export * from './lib/aoc-content';
 export * from './lib/aoc-data';
 export * from './lib/aoc-roles';
 export * from './lib/aoc-statistics';

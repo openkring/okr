@@ -5,7 +5,7 @@
 The AOC (Admin Operations Console) is a restricted administrative dashboard for privileged users and admins. It provides a collection of operational tools grouped into dedicated tabs/pages:
 
 - **Data** — Validate model integrity and regenerate search indexes across all collections. There is no Daten-Korrektur page any more; bulk fixes run as a local script (see below).
-- **Content** — CMS health checks: find orphaned sections/menu items, detect dangling page-to-section or menu-to-sub-item references, and repair them interactively.
+- **Content** — moved to Seiten › Integrität prüfen (`/page/integrity`, `@okr/cms-page-feature`); `/aoc/content` redirects there.
 - **Roles** — Manage Firebase Auth accounts and application user roles: create accounts, reset/set passwords, update Firebase user profiles, impersonate users, and manage role assignments.
 - **Statistics** — Recompute the age-by-gender statistics («Altersstatistik nach Geschlecht») from the active memberships; the other statistics actions were removed (spec 1.101).
 - **Chat** — Admin view of the Matrix homeserver: browse rooms, inspect members, rename rooms, add aliases, invite users, provision Matrix accounts, kick members, deactivate users.
@@ -27,7 +27,7 @@ All AOC pages require the `admin` or `privileged` role, enforced via `hasRole(..
 
 ## Store Pattern
 
-Each AOC tab has its own `signalStore` (`AocDataStore`, `AocContentStore`, `AocRolesStore`, `AocStatisticsStore`, `AocChatStore`, `AocTagStore`, `AocUserAccountStore`, `AocAdminOpsStore`) provided at the component level (not root). All stores inject `AppStore` and `FirestoreService`.
+Each AOC tab has its own `signalStore` (`AocDataStore`, `AocRolesStore`, `AocStatisticsStore`, `AocChatStore`, `AocTagStore`, `AocUserAccountStore`, `AocAdminOpsStore`) provided at the component level (not root). All stores inject `AppStore` and `FirestoreService`.
 
 ## Supported Model Types (Data / Validate / Index operations)
 
@@ -63,15 +63,6 @@ The `AocDataStore` supports operations over the following collections:
 - `validateModels()` — Run vest validation suites over all documents in a collection and log validation errors.
 - `createIndexesOnCollection()` — Regenerate the `index` field on every document in a collection using domain-specific index functions.
 - Bulk fixes (types, missing fields, one-off migrations) are no longer in the UI: use the local script `node scripts/fix-models.mjs --collection <name> [--max <n>] [--apply]` (dry run by default; configure `DEFAULTS`/`TYPE_SPEC`/`CUSTOM` at its top).
-
-### AocContentStore
-
-- `findOrphanedSections()` — Lists sections not referenced by any page, accordion item, or `linkedSection`.
-- `findMissingSections()` — Lists page→section references where the section document does not exist.
-- `findOrphanedMenus()` — Lists menu items not referenced by any parent menu.
-- `findMissingMenus()` — Lists sub-menu references pointing to non-existent menu items.
-- `editSection()` / `removeSection()` / `createMissingSection()` / `removeSectionRefFromPage()` — Repair actions on orphaned/missing sections.
-- `editMenu()` / `removeMenu()` / `addMissingMenu()` / `removeMissingMenuRef()` — Repair actions on orphaned/missing menu items.
 
 ### AocTagStore
 

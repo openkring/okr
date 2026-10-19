@@ -47,6 +47,9 @@
       "path": "../../../shared/util-core/tsconfig.lib.json"
     },
     {
+      "path": "../../../cms/menu/data-access/tsconfig.lib.json"
+    },
+    {
       "path": "../../../cms/menu/feature/tsconfig.lib.json"
     },
     {

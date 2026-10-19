@@ -283,68 +283,6 @@ export const AOC_I18N_KEYS = {
   chat_member_deactivate:                   PFX + 'chat.member.deactivate.label',
   chat_member_view:                         PFX + 'chat.member.view.label',
 
-  // content
-  content:                                  PFX + 'content.content',
-  content_title:                            PFX + 'content.title',
-  
-  content_link_check_title:                 PFX + 'content.link.check.title',
-  content_link_check_content:               PFX + 'content.link.check.content',
-  content_link_check_show:                  PFX + 'content.link.check.show',
-  content_link_check_hide:                  PFX + 'content.link.check.hide',
-
-  content_section_delete:                   PFX + 'content.section.delete.label',
-  content_section_delete_confirm:           PFX + 'content.section.delete.confirm',
-  content_section_delete_conf:              PFX + 'content.section.delete.conf',
-  content_section_delete_error:             PFX + 'content.section.delete.error',
-
-  content_section_orphaned_title:           PFX + 'content.section.orphaned.title',
-  content_section_orphaned_content:         PFX + 'content.section.orphaned.content',
-  content_section_orphaned_hide:            PFX + 'content.section.orphaned.hide',
-  content_section_orphaned_show:            PFX + 'content.section.orphaned.show',
-
-  content_section_missing_title:            PFX + 'content.section.missing.title',
-  content_section_missing_content:          PFX + 'content.section.missing.content',
-  content_section_missing_hide:             PFX + 'content.section.missing.hide',
-  content_section_missing_show:             PFX + 'content.section.missing.show',
-
-  content_section_create:                   PFX + 'content.section.create',
-  content_section_edit:                     PFX + 'content.section.edit',
-  content_section_removeref:                PFX + 'content.section.removeRef',
-
-  content_menu_delete:                      PFX + 'content.menu.delete.label',
-  content_menu_delete_confirm:              PFX + 'content.menu.delete.confirm',
-  content_menu_delete_conf:                 PFX + 'content.menu.delete.conf',
-  content_menu_delete_error:                PFX + 'content.menu.delete.error',
-
-  content_menu_create:                      PFX + 'content.menu.create',
-  content_menu_edit:                        PFX + 'content.menu.edit',
-  content_menu_removeref:                   PFX + 'content.menu.removeRef',
-
-  content_menu_orphaned_title:              PFX + 'content.menu.orphaned.title',
-  content_menu_orphaned_content:            PFX + 'content.menu.orphaned.content',
-  content_menu_orphaned_hide:               PFX + 'content.menu.orphaned.hide',
-  content_menu_orphaned_show:               PFX + 'content.menu.orphaned.show',
-
-  content_menu_missing_title:               PFX + 'content.menu.missing.title',
-  content_menu_missing_content:             PFX + 'content.menu.missing.content',
-  content_menu_missing_hide:                PFX + 'content.menu.missing.hide',
-  content_menu_missing_show:                PFX + 'content.menu.missing.show',
-
-  content_copy_okey:                        PFX + 'content.copy.okey',
-  content_page_edit:                        PFX + 'content.page.edit',
-
-  content_section_images_title:             PFX + 'content.section.images.title',
-  content_section_images_content:           PFX + 'content.section.images.content',
-  content_section_images_hide:              PFX + 'content.section.images.hide',
-  content_section_images_show:              PFX + 'content.section.images.show',
-  content_image_create:                     PFX + 'content.section.images.create.label',
-  content_image_create_conf:                PFX + 'content.section.images.create.conf',
-  content_image_create_error:               PFX + 'content.section.images.create.error',
-  content_image_delete:                     PFX + 'content.section.images.delete.label',
-  content_image_delete_confirm:             PFX + 'content.section.images.delete.confirm',
-  content_image_detail:                     PFX + 'content.section.images.detail',
-  content_image_download:                   PFX + 'content.section.images.download',
-
   // data
   data_title:                               PFX + 'data.title',
   data_content:                             PFX + 'data.content',

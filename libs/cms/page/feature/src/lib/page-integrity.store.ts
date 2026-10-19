@@ -23,7 +23,7 @@ import { PageService } from '@okr/cms-page-data-access';
 import { SectionService } from '@okr/cms-section-data-access';
 import { SectionEditModal } from '@okr/cms-section-feature';
 
-import { AOC_I18N_KEYS } from '@okr/aoc-util';
+import { PAGE_I18N_KEYS } from '@okr/cms-page-util';
 
 export type MissingMenuRef = {
   parent: MenuItemModel;   // menu item that contains the broken reference
@@ -48,7 +48,7 @@ export type SectionImageRef = {
   md5Hash: string;         // base64-encoded MD5 from storage metadata
 };
 
-export type AocContentState = {
+export type PageIntegrityState = {
   modelType: string | undefined;
   log: LogInfo[];
   logTitle: string;
@@ -59,7 +59,7 @@ export type AocContentState = {
   sectionImagesMissingDoc: SectionImageRef[];
 };
 
-export const initialState: AocContentState = {
+export const initialState: PageIntegrityState = {
   modelType: undefined,
   log: [],
   logTitle: '',
@@ -84,7 +84,7 @@ function isoToStoreDate(iso: string): string {
   return convertDateFormatToString(iso.substring(0, 10), DateFormat.IsoDate, DateFormat.StoreDate);
 }
 
-export const AocContentStore = signalStore(
+export const PageIntegrityStore = signalStore(
   withState(initialState),
   withProps(() => ({
     appStore: inject(AppStore),
@@ -100,7 +100,7 @@ export const AocContentStore = signalStore(
     i18nService: inject(I18nService)
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll(AOC_I18N_KEYS),
+    i18n: store.i18nService.translateAll(PAGE_I18N_KEYS),
 
     dataResource: rxResource({
       params: () => ({
@@ -505,10 +505,6 @@ export const AocContentStore = signalStore(
         };
         const updated = { ...section, properties: { ...section.properties, images: [...images, newImage] } } as SectionModel;
         await store.sectionService.update(updated, store.currentUser());
-      },
-
-      checkLinks(): void {
-        console.log('AocContentStore.checkLinks: not yet implemented');
       },
     };
   })

@@ -10,8 +10,25 @@ describe('catalogue route coverage', () => {
     const routes = [...composeFeatureRoutes(FEATURE_ROUTES), ...UNGATED_ROUTES];
     // TRANSITIONAL (spec 1.101 phase 2, Task 2): Wartung rows are catalogued before their pages;
     // Tasks 6-9 add each route and delete its entry. Empty by the end of the branch.
-    const pending = ['/page/integrity', '/document/orphans', '/trips/maintenance', '/diary/import'];
+    const pending = ['/document/orphans', '/trips/maintenance', '/diary/import'];
     const unresolved = collectMenuUrls(FEATURE_BLOCKS).filter(u => !pending.includes(u) && !urlResolves(routes, u));
     expect(unresolved).toEqual([]);
+  });
+});
+
+describe('content integrity route (spec 1.101 phase 2)', () => {
+  const blockRoutes = (id: string) => FEATURE_ROUTES.find(b => b.id === id)!.routes();
+  const child = (routes: ReturnType<typeof blockRoutes>, path: string) => routes.find(r => r.path === path)?.children ?? [];
+
+  it('the old /aoc/content url redirects to /page/integrity', () => {
+    const aoc = child(blockRoutes('aoc'), 'aoc').find(r => r.path === 'content');
+    expect(aoc?.redirectTo).toBe('/page/integrity');
+    expect(aoc?.loadComponent).toBeUndefined();
+  });
+
+  it('the page block has the integrity path ahead of the :listId catch-all', () => {
+    const paths = child(blockRoutes('cms'), 'page').map(r => r.path);
+    expect(paths).toContain('integrity');
+    expect(paths.indexOf('integrity')).toBeLessThan(paths.indexOf(':listId/:contextMenuName'));
   });
 });

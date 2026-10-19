@@ -6,7 +6,6 @@
   "emptyPageReadOnly": "This page is still empty.",
   "notexist": "The requested page does not exist.",
   "help": "Please check the URL or navigate via the menu.",
-
   "name": {
     "label": "Name",
     "placeholder": "sssss",
@@ -18,7 +17,6 @@
     "placeholder": "String",
     "helper": "The title is optional and is shown to the viewer of the web page."
   },
-
   "view": "Show web page configuration",
   "edit": "Edit web page",
   "show": "Show web page",
@@ -54,7 +52,6 @@
     "error": "The PDF could not be created. Browser printing is used instead.",
     "empty": "This page contains no printable sections."
   },
-
   "type": {
     "graph": {
       "nomain": "No main menu found.",
@@ -118,7 +115,6 @@
       }
     }
   },
-
   "section": {
     "add": "Add new section",
     "edit": "Edit section",
@@ -148,7 +144,6 @@
     "logoAltText": "Logo of the application",
     "bannerAltText": "Background image of the error page."
   },
-
   "content_state": {
     "label": "Status",
     "helper": "The status helps the content creators during creation. For example, new pages can be shown to only a few users while in draft or during a review.",
@@ -171,7 +166,6 @@
       "label": "Archived"
     }
   },
-
   "page_type": {
     "all": {
       "label": "All types"
@@ -241,5 +235,81 @@
       "default": "The chat is currently under maintenance. It will be back soon.",
       "since": "blocked since {time}"
     }
+  },
+  "content": {
+    "content": "Manage content (Pages, Sections, Menus).",
+    "title": "Check integrity",
+    "section": {
+      "delete": {
+        "label": "Delete section",
+        "confirm": "Do you really want to delete this section ?",
+        "conf": "The section was deleted.",
+        "error": "The section could not be deleted."
+      },
+      "orphaned": {
+        "title": "Orphaned sections",
+        "content": "List sections that are not used by any page.",
+        "hide": "Hide",
+        "show": "Show"
+      },
+      "missing": {
+        "title": "Missing sections",
+        "content": "List non-existing section names that are referenced by a page.",
+        "hide": "Hide",
+        "show": "Show"
+      },
+      "create": "Create section",
+      "edit": "Edit section",
+      "removeRef": "Remove reference from page",
+      "images": {
+        "title": "Check images with missing doc",
+        "content": "Checks per section whether images uploaded to Storage have an entry in the docs collection. On creation, the image is additionally assigned to the section (Article/Slider).",
+        "hide": "Hide",
+        "show": "Show",
+        "detail": "Show image",
+        "download": "Download image",
+        "create": {
+          "label": "Create document & assign image to section",
+          "conf": "The document was created.",
+          "error": "The document could not be created."
+        },
+        "delete": {
+          "label": "Delete image",
+          "confirm": "Do you want to delete this image file from Firebase Storage?"
+        }
+      }
+    },
+    "menu": {
+      "delete": {
+        "label": "Delete menu",
+        "confirm": "Do you really want to delete the menu entry ?",
+        "conf": "The menu entry was deleted.",
+        "error": "The menu entry could not be deleted."
+      },
+      "orphaned": {
+        "title": "Orphaned menus",
+        "content": "List menus that are not used.",
+        "hide": "Hide",
+        "show": "Show"
+      },
+      "missing": {
+        "title": "Missing menus",
+        "content": "List non-existing menus that are referenced by another menu.",
+        "hide": "Hide",
+        "show": "Show"
+      },
+      "create": "Create menu",
+      "edit": "Edit menu",
+      "removeRef": "Remove menu reference"
+    },
+    "copy": {
+      "okey": "Copy key"
+    },
+    "page": {
+      "edit": "Edit website"
+    }
+  },
+  "result": {
+    "title": "Results"
   }
 }

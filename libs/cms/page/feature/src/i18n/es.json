@@ -6,7 +6,6 @@
   "emptyPageReadOnly": "Esta página aún está vacía.",
   "notexist": "La página solicitada no existe.",
   "help": "Por favor, compruebe la URL o navegue a través del menú.",
-
   "name": {
     "label": "Nombre",
     "placeholder": "sssss",
@@ -18,7 +17,6 @@
     "placeholder": "String",
     "helper": "El título es opcional y se muestra al visitante de la página web."
   },
-
   "view": "Mostrar la configuración de la página web",
   "edit": "Editar la página web",
   "show": "Mostrar la página web",
@@ -54,7 +52,6 @@
     "error": "El PDF no se pudo crear. Se utiliza la impresión del navegador en su lugar.",
     "empty": "Esta página no contiene secciones imprimibles."
   },
-
   "type": {
     "graph": {
       "nomain": "No se encontró ningún menú principal.",
@@ -118,7 +115,6 @@
       }
     }
   },
-
   "section": {
     "add": "Añadir nueva sección",
     "edit": "Editar sección",
@@ -148,7 +144,6 @@
     "logoAltText": "Logo de la aplicación",
     "bannerAltText": "Imagen de fondo de la página de error."
   },
-
   "content_state": {
     "label": "Estado",
     "helper": "El estado ayuda a los creadores de contenido durante la creación. Por ejemplo, las páginas nuevas pueden mostrarse solo a algunos usuarios mientras están en borrador o durante una revisión.",
@@ -171,7 +166,6 @@
       "label": "Archivado"
     }
   },
-
   "page_type": {
     "all": {
       "label": "Todos los tipos"
@@ -241,5 +235,81 @@
       "default": "El chat está en mantenimiento. Volverá pronto.",
       "since": "bloqueado desde {time}"
     }
+  },
+  "content": {
+    "content": "Gestionar contenido (Pages, Sections, Menus).",
+    "title": "Revisar la integridad",
+    "section": {
+      "delete": {
+        "label": "Eliminar sección",
+        "confirm": "¿Desea realmente eliminar esta sección ?",
+        "conf": "La sección se ha eliminado.",
+        "error": "No se pudo eliminar la sección."
+      },
+      "orphaned": {
+        "title": "Secciones huérfanas",
+        "content": "Listar secciones que no son utilizadas por ninguna página.",
+        "hide": "Ocultar",
+        "show": "Mostrar"
+      },
+      "missing": {
+        "title": "Secciones faltantes",
+        "content": "Listar nombres de secciones inexistentes que son referenciados por una página.",
+        "hide": "Ocultar",
+        "show": "Mostrar"
+      },
+      "create": "Crear sección",
+      "edit": "Editar sección",
+      "removeRef": "Quitar referencia de la página",
+      "images": {
+        "title": "Comprobar imágenes con doc faltante",
+        "content": "Comprueba por sección si las imágenes subidas al Storage tienen una entrada en la colección docs. Al crear, la imagen se asigna además a la sección (Artículo/Slider).",
+        "hide": "Ocultar",
+        "show": "Mostrar",
+        "detail": "Mostrar imagen",
+        "download": "Descargar imagen",
+        "create": {
+          "label": "Crear documento y asignar imagen a la sección",
+          "conf": "El documento se ha creado.",
+          "error": "No se pudo crear el documento."
+        },
+        "delete": {
+          "label": "Eliminar imagen",
+          "confirm": "¿Desea eliminar este archivo de imagen de Firebase Storage?"
+        }
+      }
+    },
+    "menu": {
+      "delete": {
+        "label": "Eliminar menú",
+        "confirm": "¿Desea realmente eliminar la entrada de menú ?",
+        "conf": "La entrada de menú se ha eliminado.",
+        "error": "No se pudo eliminar la entrada de menú."
+      },
+      "orphaned": {
+        "title": "Menús huérfanos",
+        "content": "Listar menús que no se utilizan.",
+        "hide": "Ocultar",
+        "show": "Mostrar"
+      },
+      "missing": {
+        "title": "Menús faltantes",
+        "content": "Listar menús inexistentes que son referenciados por otro menú.",
+        "hide": "Ocultar",
+        "show": "Mostrar"
+      },
+      "create": "Crear menú",
+      "edit": "Editar menú",
+      "removeRef": "Quitar referencia de menú"
+    },
+    "copy": {
+      "okey": "Copiar clave"
+    },
+    "page": {
+      "edit": "Editar sitio web"
+    }
+  },
+  "result": {
+    "title": "Resultados"
   }
 }

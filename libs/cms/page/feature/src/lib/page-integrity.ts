@@ -6,11 +6,11 @@ import { MenuItemModel, SectionModel } from '@okr/shared-models';
 import { Button, Header, ResultLog } from '@okr/shared-ui';
 import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 
-import { AocContentStore, MissingMenuRef, MissingSectionRef, SectionImageRef } from './aoc-content.store';
+import { PageIntegrityStore, MissingMenuRef, MissingSectionRef, SectionImageRef } from './page-integrity.store';
 import { SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
 
 @Component({
-  selector: 'okr-aoc-content',
+  selector: 'okr-page-integrity',
   standalone: true,
   imports: [
     SvgIconPipe, ThumbnailUrlPipe,
@@ -18,9 +18,9 @@ import { SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
     IonContent, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonGrid, IonRow, IonCol,
     IonList, IonItem, IonLabel, IonIcon, IonThumbnail,
   ],
-  providers: [AocContentStore],
+  providers: [PageIntegrityStore],
   template: `
-    <okr-header [i18n]="{ title: store.i18n.title() }" />
+    <okr-header [i18n]="{ title: store.i18n.content_title() }" />
     <ion-content>
       <ion-card>
         <ion-card-content>
@@ -184,28 +184,12 @@ import { SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
         </ion-card-content>
       </ion-card>
 
-      <ion-card>
-        <ion-card-header>
-          <ion-card-title>{{ store.i18n.content_link_check_title() }}</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <ion-grid>
-            <ion-row>
-              <ion-col size="6">{{ store.i18n.content_link_check_content() }}</ion-col>
-              <ion-col size="6">
-                <okr-button label=" {{ store.i18n.content_link_check_show() }}" iconName="checkbox-circle" (click)="checkLinks()" />
-              </ion-col>
-            </ion-row>
-          </ion-grid>
-        </ion-card-content>
-      </ion-card>
-
       <okr-result-log [cardTitle]="store.i18n.result_title()" [title]="logTitle()" [log]="logInfo()" />
     </ion-content>
   `,
 })
-export class AocContent {
-  protected readonly store = inject(AocContentStore);
+export class PageIntegrity {
+  protected readonly store = inject(PageIntegrityStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly toastController = inject(ToastController);
 
@@ -307,10 +291,6 @@ export class AocContent {
         await this.store.deleteImage(image);
         break;
     }
-  }
-
-  public async checkLinks(): Promise<void> {
-    this.store.checkLinks();
   }
 
   protected async showSectionActions(section: SectionModel): Promise<void> {

@@ -17,6 +17,7 @@
     "@okr/shared-ui": "*",
     "@okr/shared-util-core": "*",
     "@okr/shared-util-angular": "*",
+    "@okr/cms-menu-data-access": "*",
     "@okr/cms-menu-feature": "*",
     "@okr/cms-menu-util": "*",
     "@okr/cms-page-data-access": "*",

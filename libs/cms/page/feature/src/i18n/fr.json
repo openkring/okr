@@ -6,7 +6,6 @@
   "emptyPageReadOnly": "Cette page est encore vide.",
   "notexist": "La page demandée n'existe pas.",
   "help": "Veuillez vérifier l'URL ou naviguer via le menu.",
-
   "name": {
     "label": "Nom",
     "placeholder": "sssss",
@@ -18,7 +17,6 @@
     "placeholder": "String",
     "helper": "Le titre est optionnel et est affiché au visiteur de la page web."
   },
-
   "view": "Afficher la configuration de la page web",
   "edit": "Modifier la page web",
   "show": "Afficher la page web",
@@ -54,7 +52,6 @@
     "error": "Le PDF n'a pas pu être créé. L'impression du navigateur est utilisée à la place.",
     "empty": "Cette page ne contient aucune section imprimable."
   },
-
   "type": {
     "graph": {
       "nomain": "Aucun menu principal trouvé.",
@@ -118,7 +115,6 @@
       }
     }
   },
-
   "section": {
     "add": "Ajouter une nouvelle section",
     "edit": "Modifier la section",
@@ -148,7 +144,6 @@
     "logoAltText": "Logo de l'application",
     "bannerAltText": "Image de fond de la page d'erreur."
   },
-
   "content_state": {
     "label": "Statut",
     "helper": "Le statut aide les créateurs de contenu lors de la création. Par exemple, les nouvelles pages peuvent n'être affichées qu'à quelques utilisateurs lorsqu'elles sont en brouillon ou pendant une relecture.",
@@ -171,7 +166,6 @@
       "label": "Archivé"
     }
   },
-
   "page_type": {
     "all": {
       "label": "Tous les types"
@@ -241,5 +235,81 @@
       "default": "Le chat est en cours de maintenance. Il sera bientôt de retour.",
       "since": "bloqué depuis {time}"
     }
+  },
+  "content": {
+    "content": "Gérer le contenu (Pages, Sections, Menus).",
+    "title": "Vérifier l'intégrité",
+    "section": {
+      "delete": {
+        "label": "Supprimer la section",
+        "confirm": "Voulez-vous vraiment supprimer cette section ?",
+        "conf": "La section a été supprimée.",
+        "error": "La section n'a pas pu être supprimée."
+      },
+      "orphaned": {
+        "title": "Sections orphelines",
+        "content": "Lister les sections qui ne sont utilisées par aucune page.",
+        "hide": "Masquer",
+        "show": "Afficher"
+      },
+      "missing": {
+        "title": "Sections manquantes",
+        "content": "Lister les noms de sections inexistantes qui sont référencées par une page.",
+        "hide": "Masquer",
+        "show": "Afficher"
+      },
+      "create": "Créer une section",
+      "edit": "Modifier la section",
+      "removeRef": "Retirer la référence de la page",
+      "images": {
+        "title": "Vérifier les images sans doc",
+        "content": "Vérifie par section si les images téléchargées dans le Storage ont une entrée dans la collection docs. Lors de la création, l'image est en plus affectée à la section (Article/Slider).",
+        "hide": "Masquer",
+        "show": "Afficher",
+        "detail": "Afficher l'image",
+        "download": "Télécharger l'image",
+        "create": {
+          "label": "Créer le document et affecter l'image à la section",
+          "conf": "Le document a été créé.",
+          "error": "Le document n'a pas pu être créé."
+        },
+        "delete": {
+          "label": "Supprimer l'image",
+          "confirm": "Voulez-vous supprimer ce fichier image de Firebase Storage ?"
+        }
+      }
+    },
+    "menu": {
+      "delete": {
+        "label": "Supprimer le menu",
+        "confirm": "Voulez-vous vraiment supprimer l'entrée de menu ?",
+        "conf": "L'entrée de menu a été supprimée.",
+        "error": "L'entrée de menu n'a pas pu être supprimée."
+      },
+      "orphaned": {
+        "title": "Menus orphelins",
+        "content": "Lister les menus qui ne sont pas utilisés.",
+        "hide": "Masquer",
+        "show": "Afficher"
+      },
+      "missing": {
+        "title": "Menus manquants",
+        "content": "Lister les menus inexistants qui sont référencés par un autre menu.",
+        "hide": "Masquer",
+        "show": "Afficher"
+      },
+      "create": "Créer un menu",
+      "edit": "Modifier le menu",
+      "removeRef": "Retirer la référence du menu"
+    },
+    "copy": {
+      "okey": "Copier la clé"
+    },
+    "page": {
+      "edit": "Modifier le site web"
+    }
+  },
+  "result": {
+    "title": "Résultats"
   }
 }

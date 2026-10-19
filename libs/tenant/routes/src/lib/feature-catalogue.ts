@@ -158,7 +158,8 @@ const aoc: BlockRoutes = {
     children: [
       { path: 'adminops',   canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocAdminOps) },
       { path: 'roles',      canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocRoles) },
-      { path: 'content',    canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocContent) },
+      // 1.101 phase 2: remove after the next release
+      { path: 'content', redirectTo: '/page/integrity' },
       { path: 'data',       canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocData) },
       { path: 'chat',       canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocChat) },
       { path: 'account',    canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocUserAccounts) },
@@ -332,6 +333,9 @@ const cms: BlockRoutes = {
         // `[<role>, 'admin']`), so this swap admits contentAdmins and excludes privileged. The
         // owner was offered a union guard that would have kept both and chose the swap
         // deliberately: privileged was never meant to do CMS work.
+        // Content integrity (moved from AOC, spec 1.101 phase 2). BEFORE `:listId/:contextMenuName`,
+        // which would otherwise swallow `integrity` as a listId.
+        { path: 'integrity', canActivate: [isContentAdminGuard()], loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageIntegrity) },
         { path: ':listId/:contextMenuName', canActivate: [isContentAdminGuard()], loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageList) },
       ],
     },

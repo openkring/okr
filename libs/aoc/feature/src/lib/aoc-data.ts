@@ -24,7 +24,7 @@ import { AocDataStore } from './aoc-data.store';
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ion-col>{{ store.i18n.content() }}</ion-col>
+              <ion-col>{{ store.i18n.data_content() }}</ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>

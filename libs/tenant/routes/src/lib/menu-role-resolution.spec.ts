@@ -158,7 +158,7 @@ const ROUTES = [...FEATURE_ROUTES.flatMap(block => block.routes()), ...UNGATED_R
  * TRANSITIONAL (spec 1.101 phase 2, Task 2). The Wartung rows are catalogued before their pages
  * exist; Tasks 6-9 add each route and delete its entry here. Empty by the end of the branch.
  */
-const PENDING_AOC_PHASE2_URLS: readonly string[] = ['/page/integrity', '/document/orphans', '/trips/maintenance', '/diary/import'];
+const PENDING_AOC_PHASE2_URLS: readonly string[] = ['/document/orphans', '/trips/maintenance', '/diary/import'];
 /** Every `navigate` doc that declares a role — direction 1's population. */
 const DOCS = navDocs().filter(doc => !PENDING_AOC_PHASE2_URLS.includes(doc.url));
 /** Those naming a privilege above plain membership — direction 2's population. */

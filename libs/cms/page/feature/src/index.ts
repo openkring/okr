@@ -18,3 +18,4 @@ export * from './lib/graph.page';
 export * from './lib/album.page';
 export * from './lib/public-album.page';
 export * from './lib/video.page';
+export * from './lib/page-integrity';

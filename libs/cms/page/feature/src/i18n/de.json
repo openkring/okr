@@ -6,7 +6,6 @@
   "emptyPageReadOnly": "Diese Seite ist noch leer.",
   "notexist": "Die aufgerufene Seite existiert nicht.",
   "help": "Bitte überprüfen Sie die URL oder navigieren Sie über das Menü.",
-
   "name": {
     "label": "Name",
     "placeholder": "sssss",
@@ -18,7 +17,6 @@
     "placeholder": "String",
     "helper": "Der Titel ist optional und wird dem Betrachter der Webseite gezeigt."
   },
-
   "view": "Webseiten-Konfiguration anzeigen",
   "edit": "Webseite bearbeiten",
   "show": "Webseite anzeigen",
@@ -54,7 +52,6 @@
     "error": "Das PDF konnte nicht erstellt werden. Es wird der Browser-Druck verwendet.",
     "empty": "Diese Seite enthält keine druckbaren Abschnitte."
   },
-
   "type": {
     "graph": {
       "nomain": "Kein Hauptmenu gefunden.",
@@ -118,7 +115,6 @@
       }
     }
   },
-
   "section": {
     "add": "Neue Sektion hinzufügen",
     "edit": "Sektion bearbeiten",
@@ -148,7 +144,6 @@
     "logoAltText": "Logo der Applikation",
     "bannerAltText": "Hintergrundbild der Fehlerseite."
   },
-
   "content_state": {
     "label": "Status",
     "helper": "Der Status hilft den Erstellern von Content beim Erzeugen. z.B. können neue Seiten im Entwurf oder während eines Reviews erst wenigen Benutzern angezeigt werden.",
@@ -171,7 +166,6 @@
       "label": "Archiviert"
     }
   },
-
   "page_type": {
     "all": {
       "label": "Alle Typen"
@@ -241,5 +235,81 @@
       "default": "Der Chat wird gerade gewartet. Er ist bald wieder da.",
       "since": "gesperrt seit {time}"
     }
+  },
+  "content": {
+    "content": "Inhalte (Pages, Sections, Menus) verwalten.",
+    "title": "Integrität prüfen",
+    "section": {
+      "delete": {
+        "label": "Sektion löschen",
+        "confirm": "Soll diese Sektion wirklich gelöscht werden ?",
+        "conf": "Die Sektion wurde gelöscht.",
+        "error": "Die Sektion konnte nicht gelöscht werden."
+      },
+      "orphaned": {
+        "title": "Verwaiste Sektionen",
+        "content": "Liste Sektionen, welche von keiner Page verwendet werden.",
+        "hide": "Ausblenden",
+        "show": "Anzeigen"
+      },
+      "missing": {
+        "title": "Fehlende Sektionen",
+        "content": "Liste nicht existierende Sektionsnamen, welche von einer Page referenziert werden.",
+        "hide": "Ausblenden",
+        "show": "Anzeigen"
+      },
+      "create": "Sektion erstellen",
+      "edit": "Sektion bearbeiten",
+      "removeRef": "Referenz von Seite entfernen",
+      "images": {
+        "title": "Bilder mit fehlendem Doc prüfen",
+        "content": "Prüft pro Sektion, ob im Storage hochgeladene Bilder einen Eintrag in der docs-Kollektion haben. Beim Erstellen wird das Bild zusätzlich der Sektion zugeordnet (Artikel/Slider).",
+        "hide": "Ausblenden",
+        "show": "Anzeigen",
+        "detail": "Bild anzeigen",
+        "download": "Bild herunterladen",
+        "create": {
+          "label": "Dokument erstellen & Bild der Sektion zuordnen",
+          "conf": "Das Dokument wurde erstellt.",
+          "error": "Das Dokument konnte nicht erstellt werden."
+        },
+        "delete": {
+          "label": "Bild löschen",
+          "confirm": "Soll diese Bilddatei aus dem Firebase Storage gelöscht werden?"
+        }
+      }
+    },
+    "menu": {
+      "delete": {
+        "label": "Menü löschen",
+        "confirm": "Soll der Menueintrag wirklich gelöscht werden ?",
+        "conf": "Der Menüeintrag wurde gelöscht.",
+        "error": "Der Menüeintrag konnte nicht gelöscht werden."
+      },
+      "orphaned": {
+        "title": "Verwaiste Menüs",
+        "content": "Liste Menüs, welche nicht verwendet werden.",
+        "hide": "Ausblenden",
+        "show": "Anzeigen"
+      },
+      "missing": {
+        "title": "Fehlende Menüs",
+        "content": "Liste nicht existierende Menüs, welche von einem anderen Menü referenziert werden.",
+        "hide": "Ausblenden",
+        "show": "Anzeigen"
+      },
+      "create": "Menü erstellen",
+      "edit": "Menü bearbeiten",
+      "removeRef": "Menü Referenz entfernen"
+    },
+    "copy": {
+      "okey": "Key kopieren"
+    },
+    "page": {
+      "edit": "Website bearbeiten"
+    }
+  },
+  "result": {
+    "title": "Resultate"
   }
 }

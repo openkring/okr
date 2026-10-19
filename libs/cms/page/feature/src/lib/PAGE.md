@@ -105,6 +105,10 @@ The `pageResource` resolves the full `sections` list reactively: any section doc
 
 Section IDs in `page.sections` may contain `@TID@`, which is resolved to the tenant ID at load time. This allows shared cross-tenant section references.
 
+## Integrität prüfen (`/page/integrity`)
+
+`PageIntegrity` / `PageIntegrityStore` (moved from AOC, spec 1.101 phase 2; reached from the Seiten context menu, contentAdmin). Lists sections not referenced by any page, page-to-section references whose section is missing, menu items nobody references, dangling sub-menu references, and section images in Storage without a `docs` entry, each with repair actions (edit, remove, create the missing record, remove the reference).
+
 ## Key Components
 
 | Component | Selector | Role |
