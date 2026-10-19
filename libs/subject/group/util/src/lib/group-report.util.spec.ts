@@ -51,7 +51,7 @@ describe('groupHygieneFindings', () => {
   it('reports unsafe characters', () => {
     const findings = groupHygieneFindings([makeGroup('scs_Zürich', 'Zürich')], 'scs', TEXTS);
     expect(findings).toEqual([{
-      id: 'scs_Zürich', title: 'Zürich', detail: 'Unsicher, hiesse scs_...', url: '/group-view/scs_Zürich',
+      id: 'scs_Zürich', title: 'Zürich', detail: 'Unsicher, hiesse scs_...', url: '/group-view/scs_Z%C3%BCrich',
     }]);
   });
 

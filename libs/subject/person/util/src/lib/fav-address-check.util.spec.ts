@@ -36,6 +36,12 @@ describe('findFavMismatches', () => {
     ]);
   });
 
+  it('treats a legacy undefined zip like an empty one', () => {
+    const legacy = makePerson('p1', 'Anna', 'Muster', '');
+    (legacy as { favZipCode?: string }).favZipCode = undefined;
+    expect(findFavMismatches([legacy], [])).toEqual([]);
+  });
+
   it('reports nothing when the zip matches', () => {
     expect(findFavMismatches([makePerson('p1', 'Anna', 'Muster', '8001')], [makePostal('person.p1', '8001')])).toEqual([]);
   });

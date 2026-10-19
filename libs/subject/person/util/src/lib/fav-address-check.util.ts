@@ -34,7 +34,7 @@ export function findFavMismatches(persons: PersonModel[], addresses: AddressMode
   for (const person of persons) {
     const personAddresses = addresses.filter(a => a.parentKey === `person.${person.okey}`);
     const fav = computeFavoriteAddressInfo(personAddresses);
-    if (person.favZipCode !== fav.favZipCode) {
+    if ((person.favZipCode ?? '') !== fav.favZipCode) {
       mismatches.push({
         personKey: person.okey,
         personName: `${person.firstName} ${person.lastName}`,

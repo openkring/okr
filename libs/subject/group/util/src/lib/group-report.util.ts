@@ -21,7 +21,7 @@ export interface GroupHygieneTexts {
 
 /** The group detail page. */
 function groupUrl(okey: string): string {
-  return `/group-view/${okey}`;
+  return `/group-view/${encodeURIComponent(okey)}`;
 }
 
 /**
