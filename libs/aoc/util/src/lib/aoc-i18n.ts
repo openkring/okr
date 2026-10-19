@@ -354,10 +354,6 @@ export const AOC_I18N_KEYS = {
   data_validate_button:                     PFX + 'data.validate.button',
   data_validate_select:                     PFX + 'data.validate.select',
 
-  hygiene_groups_title:                     PFX + 'hygiene.groups.title',
-  hygiene_groups_content:                   PFX + 'hygiene.groups.content',
-  hygiene_groups_button:                    PFX + 'hygiene.groups.button',
-  hygiene_groups_clean:                     PFX + 'hygiene.groups.clean',
   data_index_title:                         PFX + 'data.index.title',
   data_index_content:                       PFX + 'data.index.content',
   data_index_button:                        PFX + 'data.index.button',

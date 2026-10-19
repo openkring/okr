@@ -210,5 +210,13 @@
   "postPolicy": {
     "label": "Chi può scrivere",
     "helper": "Tutti: ogni persona nella stanza scrive – la normale chat di gruppo. Solo il comitato: la stanza diventa un canale di comunicazioni in cui scrivono soltanto il comitato e l’amministrazione; tutti gli altri leggono, possono reagire e trovano nella stanza un pulsante per fare una domanda. Utile per gruppi grandi, dove una comunicazione importante andrebbe altrimenti persa nella conversazione."
+  },
+  "checkHygiene": {
+    "title": "Controllare i gruppi",
+    "explanation": "Cerca gruppi presenti due volte e identificatori di gruppo che non possono portare correttamente i nomi di cartella, pagina e chat da essi derivati. Il rapporto non modifica nulla: un identificatore di gruppo non può essere rinominato senza rischi.",
+    "duplicate": "{count} gruppi con praticamente lo stesso nome: {groups}",
+    "alias_collision": "L'alias della chat {alias} è rivendicato anche da {others}.",
+    "unsafe_characters": "L'identificatore contiene caratteri che i nomi di cartella, pagina e chat derivati non possono portare invariati. Oggi si chiamerebbe {tenantId}_...",
+    "missing_prefix": "L'identificatore non ha il prefisso {tenantId}_. In un secondo mandante lo stesso nome potrebbe sovrascrivere questo documento."
   }
 }

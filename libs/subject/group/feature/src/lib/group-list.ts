@@ -123,6 +123,7 @@ export class GroupList {
     switch (selectedMethod) {
       case 'add': await this.store.add(!this.canCreate()); break;
       case 'exportRaw': await this.store.export("raw"); break;
+      case 'checkHygiene': await this.store.checkHygiene(); break;
       default: this.alertService.error(`GroupList.call: unknown method ${selectedMethod}`);
     }
   }

@@ -210,5 +210,13 @@
   "hasMembers": {
     "label": "Mitglieder anzeigen",
     "helper": "Die Mitglieder der Gruppe werden allen Gruppenmitgliedern angezeigt."
+  },
+  "checkHygiene": {
+    "title": "Gruppen prüfen",
+    "explanation": "Sucht Gruppen, die es doppelt gibt, und Gruppen-IDs, die abgeleitete Ordner-, Seiten- und Chat-Namen nicht sauber tragen können. Der Bericht ändert nichts: Eine Gruppen-ID lässt sich nicht gefahrlos umbenennen.",
+    "duplicate": "{count} Gruppen mit praktisch demselben Namen: {groups}",
+    "alias_collision": "Der Chat-Alias {alias} wird auch von {others} beansprucht.",
+    "unsafe_characters": "Die ID enthält Zeichen, die abgeleitete Ordner-, Seiten- und Chat-Namen nicht unverändert tragen können. Heute würde sie {tenantId}_... heissen.",
+    "missing_prefix": "Die ID trägt kein Präfix {tenantId}_. In einem zweiten Mandanten könnte derselbe Name dieses Dokument überschreiben."
   }
 }

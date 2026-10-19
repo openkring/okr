@@ -121,6 +121,14 @@ export const GROUP_I18N_KEYS = {
   admins_title:                    PFX + 'admins.title',
   admins_description:              PFX + 'admins.description',
   page_title:               PFX + 'page.title',
+
+  // «Gruppen prüfen» (group context menu); texts use single-brace params
+  check_hygiene_title:           PFX + 'checkHygiene.title',
+  check_hygiene_explanation:     PFX + 'checkHygiene.explanation',
+  check_hygiene_duplicate:       PFX + 'checkHygiene.duplicate',
+  check_hygiene_alias:           PFX + 'checkHygiene.alias_collision',
+  check_hygiene_unsafe:          PFX + 'checkHygiene.unsafe_characters',
+  check_hygiene_prefix:          PFX + 'checkHygiene.missing_prefix',
 } satisfies Record<string, string>;
 
 export type GroupI18n = { [K in keyof typeof GROUP_I18N_KEYS]: Signal<string> };

@@ -210,5 +210,13 @@
   "postPolicy": {
     "label": "Qui peut écrire",
     "helper": "Tout le monde : chaque personne du salon écrit – le chat de groupe habituel. Comité uniquement : le salon devient un canal d'annonces où seuls le comité et l'administration écrivent ; les autres lisent, peuvent réagir et trouvent dans le salon un bouton pour poser une question. Utile pour les grands groupes, où une annonce importante se perdrait sinon dans la conversation."
+  },
+  "checkHygiene": {
+    "title": "Vérifier les groupes",
+    "explanation": "Recherche les groupes existant en double et les identifiants de groupe qui ne peuvent pas porter proprement les noms de dossier, de page et de discussion qui en dérivent. Le rapport ne modifie rien : un identifiant de groupe ne peut pas être renommé sans risque.",
+    "duplicate": "{count} groupes portant pratiquement le même nom : {groups}",
+    "alias_collision": "L'alias de discussion {alias} est aussi revendiqué par {others}.",
+    "unsafe_characters": "L'identifiant contient des caractères que les noms de dossier, de page et de discussion dérivés ne peuvent pas porter tels quels. Aujourd'hui, il s'appellerait {tenantId}_...",
+    "missing_prefix": "L'identifiant n'a pas le préfixe {tenantId}_. Dans un second mandant, le même nom pourrait écraser ce document."
   }
 }

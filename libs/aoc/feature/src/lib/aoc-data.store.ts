@@ -35,7 +35,7 @@ import { getTransferIndex, transferValidations } from '@okr/relationship-transfe
 import { getWorkrelIndex, workrelValidations } from '@okr/relationship-workrel-util';
 import { getUserIndex, userValidations } from '@okr/user-util';
 import { categoryListValidations } from '@okr/category-util';
-import { findDuplicateGroups, findGroupKeyIssues, getGroupIndex, groupValidations } from '@okr/subject-group-util';
+import { getGroupIndex, groupValidations } from '@okr/subject-group-util';
 import { getResponsibilityIndex } from '@okr/relationship-responsibility-util';
 import { getSessionIndex } from '@okr/session-util';
 
@@ -398,42 +398,6 @@ export const AocDataStore = signalStore(
        *   surface archived documents (the admin address list's archived toggle) — otherwise they
        *   keep a stale index forever and silently drop out of every search.
        */
-      /**
-       * Reports groups that are the same group twice, and group keys that cannot safely carry the
-       * ids derived from them.
-       *
-       * Also a report only. A group key is referenced by `memberships.orgKey`, the group's calendar
-       * document id AND its `owner`, every `calevent.calendars[]` entry, the files/album folder
-       * names, task list ids and page ids — there is no safe automatic rename, and this is the list
-       * a human needs before deciding.
-       */
-      async findGroupHygieneIssues(): Promise<void> {
-        const log: LogInfo[] = [];
-        const tenantId = store.appStore.tenantId();
-        const groups = await store.appStore.firestoreService.getDataOnce<GroupModel>(
-          GroupCollection, getSystemQuery(tenantId), 'name', 'asc');
-
-        for (const dup of findDuplicateGroups(groups)) {
-          log.push({
-            id: dup.groups.map(g => g.okey).join(' / '),
-            name: dup.groups[0].name,
-            message: `${dup.groups.length} Gruppen mit praktisch demselben Namen: ${dup.groups.map(g => `${g.name} (${g.okey})`).join(', ')}`
-          });
-        }
-
-        for (const issue of findGroupKeyIssues(groups, tenantId)) {
-          const message = issue.kind === 'aliasCollision'
-            ? `Der Chat-Alias '${issue.aliasLocalpart}' wird auch von ${issue.collidesWith.join(', ')} beansprucht.`
-            : issue.kind === 'unsafeCharacters'
-              ? `Die ID enthaelt Zeichen, die abgeleitete Ordner-, Seiten- und Chat-Namen nicht unveraendert tragen koennen. Heute wuerde sie '${tenantId}_...' heissen.`
-              : `Die ID traegt kein '${tenantId}_'-Praefix — in einem zweiten Mandanten koennte derselbe Name dieses Dokument ueberschreiben.`;
-          log.push({ id: issue.okey, name: issue.name, message });
-        }
-
-        if (log.length === 0) log.push({ id: '', name: '', message: store.i18n.hygiene_groups_clean() });
-        patchState(store, { log, logTitle: store.i18n.hygiene_groups_title() });
-      },
-
       createIndex<T extends OkrModel>(collection: string, generateIndexFn: (model: T) => string, orderBy = 'none', includeArchived = false): void {
         const dbQuery: DbQuery[] = includeArchived
           ? [{ key: 'tenants', operator: 'array-contains', value: store.appStore.tenantId() }]

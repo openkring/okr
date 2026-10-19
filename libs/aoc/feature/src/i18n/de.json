@@ -977,14 +977,6 @@
       "taken": "Diese E-Mail hat schon einen Zugang. Gehört er einer anderen Person, wird der neue Zugang mit einem Benutzernamen eröffnet."
     }
   },
-  "hygiene": {
-    "groups": {
-      "title": "Gruppen pruefen",
-      "content": "Sucht Gruppen, die es doppelt gibt, und Gruppen-IDs, die abgeleitete Ordner-, Seiten- und Chat-Namen nicht sauber tragen koennen. Auch dieser Bericht aendert nichts: eine Gruppen-ID laesst sich nicht gefahrlos umbenennen.",
-      "button": "Gruppen pruefen",
-      "clean": "Keine doppelten Gruppen und keine problematischen Gruppen-IDs gefunden."
-    }
-  },
   "email": {
     "title": "E-Mail-Ereignisse",
     "searchPlaceholder": "E-Mail, Betreff, Absender …",

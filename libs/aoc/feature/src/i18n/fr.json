@@ -977,14 +977,6 @@
       "taken": "Cette adresse e-mail a déjà un accès. S'il appartient à une autre personne, le nouvel accès est ouvert avec un nom d'utilisateur."
     }
   },
-  "hygiene": {
-    "groups": {
-      "title": "Vérifier les groupes",
-      "content": "Recherche les groupes existant en double et les identifiants de groupe qui ne peuvent pas porter proprement les noms de dossier, de page et de discussion qui en dérivent. Ce rapport ne modifie rien non plus : un identifiant de groupe ne peut pas être renommé sans risque.",
-      "button": "Vérifier les groupes",
-      "clean": "Aucun groupe en double et aucun identifiant problématique."
-    }
-  },
   "email": {
     "title": "Événements e-mail",
     "searchPlaceholder": "E-mail, objet, expéditeur …",

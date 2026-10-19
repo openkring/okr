@@ -210,5 +210,13 @@
   "postPolicy": {
     "label": "Quién puede escribir",
     "helper": "Todos: cualquier persona de la sala escribe – el chat de grupo normal. Solo la junta: la sala se convierte en un canal de avisos en el que escriben únicamente la junta y la administración; el resto lee, puede reaccionar y encuentra en la sala un botón para hacer una pregunta. Útil para grupos grandes, donde un aviso importante se perdería en la conversación."
+  },
+  "checkHygiene": {
+    "title": "Comprobar grupos",
+    "explanation": "Busca grupos que existen dos veces e identificadores de grupo que no pueden llevar limpiamente los nombres de carpeta, página y chat derivados de ellos. El informe no cambia nada: un identificador de grupo no se puede renombrar sin riesgo.",
+    "duplicate": "{count} grupos con prácticamente el mismo nombre: {groups}",
+    "alias_collision": "El alias de chat {alias} también lo reclama {others}.",
+    "unsafe_characters": "El identificador contiene caracteres que los nombres de carpeta, página y chat derivados no pueden llevar sin cambios. Hoy se llamaría {tenantId}_...",
+    "missing_prefix": "El identificador no lleva el prefijo {tenantId}_. En un segundo mandante, el mismo nombre podría sobrescribir este documento."
   }
 }

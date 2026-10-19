@@ -10,14 +10,15 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { ArticleSection, AvatarInfo, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, MembershipModel, PageCollection, PageModel, PersonModel, SectionCollection, ViewPosition } from '@okr/shared-models';
 import { AlertService, AppNavigationService, navigateByUrl } from '@okr/shared-util-angular';
-import { chipMatches, debugData, debugItemLoaded, debugListLoaded, fill, generateRandomString, getAvatarInfo, getAvatarInfoForCurrentUser, getSystemQuery, isGroup, isPerson, nameMatches } from '@okr/shared-util-core';
+import { chipMatches, hasRole, debugData, debugItemLoaded, debugListLoaded, fill, generateRandomString, getAvatarInfo, getAvatarInfoForCurrentUser, getSystemQuery, isGroup, isPerson, nameMatches } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
+import { openReport } from '@okr/shared-ui';
 
 import { GroupService } from '@okr/subject-group-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { createGroupMembership } from '@okr/relationship-membership-util';
-import { filterAccessibleGroups, findConflictingGroups, getUniqueGroupKey, getVisibleGroupKeys, GROUP_I18N_KEYS, withCreatorAsAdmin } from '@okr/subject-group-util';
+import { filterAccessibleGroups, findConflictingGroups, getUniqueGroupKey, groupHygieneFindings, getVisibleGroupKeys, GROUP_I18N_KEYS, withCreatorAsAdmin } from '@okr/subject-group-util';
 
 import { GroupEditModal } from './group-edit.modal';
 
@@ -352,6 +353,32 @@ export const GroupStore = signalStore(
       await (!group.okey ? 
         store.groupService.create(group, store.currentUser()) : 
         store.groupService.update(group, store.currentUser()));
+    },
+
+    /**
+     * Admin-only data check from the group context menu: groups that exist twice, and group keys that
+     * cannot safely carry the ids derived from them. A report, never a fix: a group key is referenced by
+     * memberships, the group calendar, every event's calendars[], folders, task lists and pages, so there
+     * is no safe automatic rename.
+     */
+    async checkHygiene(): Promise<void> {
+      if (!hasRole('admin', store.appStore.currentUser())) return;
+      const tenantId = store.appStore.tenantId();
+      const groups = await store.firestoreService.getDataOnce<GroupModel>(
+        GroupCollection, getSystemQuery(tenantId), 'name', 'asc');
+      const findings = groupHygieneFindings(groups, tenantId, {
+        duplicate: store.i18n.check_hygiene_duplicate(),
+        aliasCollision: store.i18n.check_hygiene_alias(),
+        unsafeCharacters: store.i18n.check_hygiene_unsafe(),
+        missingTenantPrefix: store.i18n.check_hygiene_prefix(),
+      });
+      await openReport(store.modalController, {
+        title: store.i18n.check_hygiene_title(),
+        kind: 'report',
+        explanation: store.i18n.check_hygiene_explanation(),
+        findings,
+        ranAt: new Date(),
+      });
     },
 
     async saveAvatar(photo: Photo): Promise<void> {

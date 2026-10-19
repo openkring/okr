@@ -977,14 +977,6 @@
       "taken": "Este correo electrónico ya tiene un acceso. Si pertenece a otra persona, el nuevo acceso se abre con un nombre de usuario."
     }
   },
-  "hygiene": {
-    "groups": {
-      "title": "Comprobar grupos",
-      "content": "Busca grupos que existen dos veces e identificadores de grupo que no pueden llevar limpiamente los nombres de carpeta, página y chat derivados de ellos. Este informe tampoco cambia nada: un identificador de grupo no se puede renombrar sin riesgo.",
-      "button": "Comprobar grupos",
-      "clean": "No se han encontrado grupos duplicados ni identificadores problemáticos."
-    }
-  },
   "email": {
     "title": "Eventos de correo",
     "searchPlaceholder": "Correo, asunto, remitente …",
