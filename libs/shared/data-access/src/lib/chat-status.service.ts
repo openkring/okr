@@ -10,6 +10,9 @@ import { addChatExemption, DateFormat, getTodayStr, isBrowser, isChatEffectively
  * doc all mean "not blocked". Must not import anything from @okr/chat-* (bundle constraint).
  * Does not know the current user: consumers pass the personKey (see isEffectivelyBlocked).
  */
+const RETRY_INITIAL_MS = 5000;
+const RETRY_MAX_MS = 60000;
+
 @Injectable({ providedIn: 'root' })
 export class ChatStatusService {
   private readonly platformId = inject(PLATFORM_ID);
@@ -18,14 +21,20 @@ export class ChatStatusService {
   private readonly _status = signal<ChatStatusModel | undefined>(undefined);
   private readonly _ready = signal(false);
   private started = false;
+  /** True only while the last listener event was a successful snapshot. */
+  private loaded = false;
+  private unsubscribe: (() => void) | undefined;
+  private retryTimer: ReturnType<typeof setTimeout> | undefined;
+  private retryDelayMs = RETRY_INITIAL_MS;
 
-  private readonly statusSignal = computed(() => { this.start(); return this._status(); });
-  private readonly readySignal = computed(() => { this.start(); return this._ready(); });
-
-  public readonly status = this.statusSignal;
-  public readonly ready = this.readySignal;
+  public readonly status = this._status.asReadonly();
+  public readonly ready = this._ready.asReadonly();
   public readonly blocked = computed(() => this.status()?.blocked === true);
   public readonly message = computed(() => this.status()?.message ?? '');
+
+  constructor() {
+    this.start();
+  }
 
   public isExempt(personKey: string | undefined): boolean {
     if (!personKey) return false;
@@ -38,7 +47,6 @@ export class ChatStatusService {
 
   /** Resolves when the first snapshot (or a listener error) arrived, or after timeoutMs (fail-open). */
   public whenReady(timeoutMs = 3000): Promise<void> {
-    this.start();
     if (this._ready()) return Promise.resolve();
     return new Promise<void>((resolve) => {
       const t = setTimeout(done, timeoutMs);
@@ -48,6 +56,7 @@ export class ChatStatusService {
   }
 
   public async block(message: string, admin: ChatExemption): Promise<void> {
+    await this.requireLoaded();
     const now = this.now();
     await this.write({
       blocked: true, message, blockedAt: now, blockedBy: admin.personKey,
@@ -65,10 +74,12 @@ export class ChatStatusService {
   }
 
   public async addExemption(entry: ChatExemption, adminPersonKey: string): Promise<void> {
+    await this.requireLoaded();
     await this.write({ exempt: addChatExemption(this._status()?.exempt, entry), ...this.updated(adminPersonKey) });
   }
 
   public async removeExemption(personKey: string, adminPersonKey: string): Promise<void> {
+    await this.requireLoaded();
     await this.write({ exempt: removeChatExemption(this._status()?.exempt, personKey), ...this.updated(adminPersonKey) });
   }
 
@@ -84,18 +95,39 @@ export class ChatStatusService {
     await setDoc(doc(this.firestore, ChatStatusCollection, ChatStatusDocId), patch, { merge: true });
   }
 
+  /** Exempt-list writes are read-modify-write; refuse to run against an unloaded cache. */
+  private async requireLoaded(): Promise<void> {
+    await this.whenReady();
+    if (!this.loaded) throw new Error('ChatStatusService: status not loaded, refusing to modify the exemption list');
+  }
+
   private start(): void {
     if (this.started || !isBrowser(this.platformId)) return;
     this.started = true;
-    onSnapshot(
+    this.subscribe();
+  }
+
+  private subscribe(): void {
+    this.unsubscribe?.();
+    this.unsubscribe = onSnapshot(
       doc(this.firestore, ChatStatusCollection, ChatStatusDocId),
       (snap) => {
+        this.loaded = true;
+        this.retryDelayMs = RETRY_INITIAL_MS;
         this._status.set(snap.exists() ? (snap.data() as ChatStatusModel) : undefined);
         this._ready.set(true);
       },
       () => {
+        // fail-open now, resubscribe with backoff
+        this.loaded = false;
         this._status.set(undefined);
         this._ready.set(true);
+        this.unsubscribe?.();
+        this.unsubscribe = undefined;
+        clearTimeout(this.retryTimer);
+        const delay = this.retryDelayMs;
+        this.retryDelayMs = Math.min(delay * 2, RETRY_MAX_MS);
+        this.retryTimer = setTimeout(() => this.subscribe(), delay);
       },
     );
   }

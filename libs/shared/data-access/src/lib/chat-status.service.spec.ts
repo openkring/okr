@@ -1,6 +1,6 @@
 import { PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { FIRESTORE } from '@okr/shared-config';
 
@@ -40,6 +40,7 @@ describe('ChatStatusService', () => {
     h.error = undefined;
     TestBed.resetTestingModule();
   });
+  afterEach(() => vi.useRealTimers());
 
   it('missing doc: not blocked, ready', () => {
     const s = make();
@@ -91,5 +92,63 @@ describe('ChatStatusService', () => {
   it('whenReady resolves after timeout without a snapshot', async () => {
     const s = make();
     await expect(s.whenReady(10)).resolves.toBeUndefined();
+  });
+
+  const payload = (): Record<string, unknown> => (h.setDoc.mock.calls[0] as unknown[])[1] as Record<string, unknown>;
+
+  it('block() without a snapshot waits for it and keeps existing exemptions', async () => {
+    const s = make();
+    const p = s.block('Wartung', { personKey: 'p1', name: 'A' });
+    await Promise.resolve();
+    expect(h.setDoc).not.toHaveBeenCalled();
+    h.next?.(snap({ blocked: false, exempt: [{ personKey: 'p2', name: 'B' }] }));
+    await p;
+    expect(payload()['exempt']).toEqual([{ personKey: 'p2', name: 'B' }, { personKey: 'p1', name: 'A' }]);
+  });
+
+  it('block() throws instead of writing when no snapshot arrives', async () => {
+    vi.useFakeTimers();
+    const s = make();
+    const p = s.block('Wartung', { personKey: 'p1', name: 'A' });
+    const assertion = expect(p).rejects.toThrow();
+    await vi.advanceTimersByTimeAsync(3100);
+    await assertion;
+    expect(h.setDoc).not.toHaveBeenCalled();
+  });
+
+  it('addExemption / removeExemption refuse after a listener error', async () => {
+    const s = make();
+    h.error?.(new Error('denied'));
+    await expect(s.addExemption({ personKey: 'p1', name: 'A' }, 'adm')).rejects.toThrow();
+    await expect(s.removeExemption('p1', 'adm')).rejects.toThrow();
+    expect(h.setDoc).not.toHaveBeenCalled();
+  });
+
+  it('resubscribes with backoff after an error', async () => {
+    vi.useFakeTimers();
+    const { onSnapshot } = await import('firebase/firestore');
+    const s = make();
+    const calls = vi.mocked(onSnapshot).mock.calls.length;
+    h.error?.(new Error('denied'));
+    expect(s.blocked()).toBe(false);
+    expect(s.ready()).toBe(true);
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(vi.mocked(onSnapshot).mock.calls.length).toBe(calls + 1);
+    h.next?.(snap({ blocked: true, exempt: [] }));
+    expect(s.blocked()).toBe(true);
+  });
+
+  it('updateMessage / addExemption / removeExemption payloads', async () => {
+    const s = make();
+    h.next?.(snap({ blocked: true, exempt: [{ personKey: 'p2', name: 'B' }] }));
+    await s.updateMessage('neu', 'adm');
+    expect(payload()).toMatchObject({ message: 'neu', updatedBy: 'adm' });
+    expect('exempt' in payload()).toBe(false);
+    h.setDoc.mockClear();
+    await s.addExemption({ personKey: 'p3', name: 'C' }, 'adm');
+    expect(payload()['exempt']).toEqual([{ personKey: 'p2', name: 'B' }, { personKey: 'p3', name: 'C' }]);
+    h.setDoc.mockClear();
+    await s.removeExemption('p2', 'adm');
+    expect(payload()['exempt']).toEqual([]);
   });
 });
