@@ -100,3 +100,23 @@ describe('membership SRV route (spec 1.101 phase 3)', () => {
     expect(children.find(r => r.path === 'srv')?.canActivate).toHaveLength(1);
   });
 });
+
+describe('person Bexio contacts route (spec 1.101 phase 3)', () => {
+  const blockRoutes = (id: string) => FEATURE_ROUTES.find(b => b.id === id)!.routes();
+  const child = (routes: ReturnType<typeof blockRoutes>, path: string) => routes.find(r => r.path === path)?.children ?? [];
+
+  it('the old /aoc/bexio url redirects to /person/bexio-contacts', () => {
+    const aoc = child(blockRoutes('aoc'), 'aoc').find(r => r.path === 'bexio');
+    expect(aoc?.redirectTo).toBe('/person/bexio-contacts');
+    expect(aoc?.loadComponent).toBeUndefined();
+  });
+
+  it('bexio-contacts is declared before :personKey (else the param route swallows it), behind one guard', () => {
+    const children = child(blockRoutes('subject'), 'person');
+    const paths = children.map(r => r.path);
+    expect(paths).toContain('bexio-contacts');
+    expect(paths.indexOf('bexio-contacts')).toBeLessThan(paths.indexOf(':personKey'));
+    expect(paths.indexOf('bexio-contacts')).toBeLessThan(paths.indexOf(':listId/:contextMenuName'));
+    expect(children.find(r => r.path === 'bexio-contacts')?.canActivate).toHaveLength(1);
+  });
+});

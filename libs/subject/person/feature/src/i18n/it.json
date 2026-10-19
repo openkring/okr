@@ -254,5 +254,49 @@
     "no_value": "vuoto",
     "to_person": "Riporta nella persona",
     "read_error": "Non è stato possibile leggere i dati. Riprova più tardi."
+  },
+  "bexio": {
+    "title": "Contatti Bexio",
+    "index": {
+      "title": "Confrontare i contatti Bexio",
+      "content": "Qui vedi tutte le persone, le organizzazioni e i membri dell'organizzazione principale accanto ai contatti in Bexio. «Sincronizza» carica i contatti da Bexio e li confronta con le voci dell'app. Se un contatto manca da una parte, puoi aggiungerlo dalla sua riga.",
+      "button": "Sincronizza",
+      "contactFilter": {
+        "label": "Filtro contatti"
+      },
+      "error": {
+        "credentials": "Bexio ha rifiutato l'accesso. La chiave di accesso deve essere rinnovata. Fino ad allora le colonne Bexio restano vuote.",
+        "fetch": "Non è stato possibile caricare i contatti Bexio. Le colonne Bexio restano vuote."
+      }
+    },
+    "edit": {
+      "person": "Modificare la persona",
+      "org": "Modificare l'organizzazione",
+      "membership": "Modificare l'iscrizione"
+    },
+    "filter": {
+      "all": "Tutti",
+      "persons": "Solo persone",
+      "members": "Solo membri",
+      "orgs": "Solo organizzazioni",
+      "mismatch": "Solo differenze"
+    },
+    "col": {
+      "bexio_id": "ID Bexio",
+      "bk_bexio_id": "ID Bexio (app)",
+      "source": "Origine",
+      "name": "Nome",
+      "category": "Cat"
+    },
+    "dialog": {
+      "title": "Contatto Bexio",
+      "download": "Importare il contatto Bexio nell'app",
+      "update_bk": "Aggiornare il contatto nell'app",
+      "create": "Creare il contatto in Bexio",
+      "update_bexio": "Aggiornare il contatto in Bexio",
+      "in_sync": "I dati coincidono.",
+      "bexio_only": "Questo contatto esiste solo in Bexio. Importalo solo se sei sicuro che nell'app non esista ancora una persona o un'organizzazione corrispondente.",
+      "both_empty": "Entrambi i lati sono vuoti. Non dovrebbe succedere, controlla la voce a mano."
+    }
   }
 }

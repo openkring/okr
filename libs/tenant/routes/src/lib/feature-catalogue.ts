@@ -82,7 +82,7 @@ const calevent: BlockRoutes = {
  * SIX of them; the live app declares SIXTEEN. The ten added here — `chat`, `account`,
  * `sessions`, `doc` (since moved to `/document/orphans`), `tag`, `email`, `bexio`, `srv`, `trip`, `website` — were unreachable
  * through the catalogue, which matters concretely for SIX of them: `aoc-sessions`,
- * `aoc-chat`, `aoc-account`, `aoc-doc` (since removed), `aoc-bexio` and `aoc-srv` (since moved to Mitglieder, 1.101 phase 3) are live children of the
+ * `aoc-chat`, `aoc-account`, `aoc-doc` (since removed), `aoc-bexio` (since moved to Personen) and `aoc-srv` (since moved to Mitglieder, 1.101 phase 3) are live children of the
  * shared `aoc-menu` doc (they are now catalogued as menu specs on the `aoc` block too), so
  * before this the seeded submenu could point at routes this table did not have. The other
  * four (`tag`, `email`, `trip`, `website`) were simply unrouted here: `tag` and `website` do
@@ -164,7 +164,8 @@ const aoc: BlockRoutes = {
       // explicitly folded into the ruling.
       { path: 'tag',        canActivate: [isContentAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocTag) },
       { path: 'email',      canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocEmail) },
-      { path: 'bexio',      canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocBexio) },
+      // 1.101 phase 3: remove after the next release
+      { path: 'bexio', redirectTo: '/person/bexio-contacts' },
       // 1.101 phase 3: remove after the next release
       { path: 'srv', redirectTo: '/membership/srv' },
       { path: 'sessions',   canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocSession) },
@@ -527,6 +528,9 @@ const subject: BlockRoutes = {
         // privacy overview (2.83) — an aggregate of who shields what; persons are tenant-readable,
         // so this guard is the only gate the page has
         { path: 'privacy', canActivate: [isMemberAdminGuard], loadComponent: () => import('@okr/subject-person-feature').then(m => m.PrivacyList) },
+        // Bexio contact reconciliation (moved from AOC, spec 1.101 phase 3). BEFORE `:personKey`, which
+        // would otherwise swallow `bexio-contacts` as a person key. Admin: the server requires it.
+        { path: 'bexio-contacts', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/subject-person-feature').then(m => m.PersonBexio) },
         { path: ':listId/:contextMenuName', loadComponent: () => import('@okr/subject-person-feature').then(m => m.PersonList) },
         { path: ':personKey', loadComponent: () => import('@okr/subject-person-feature').then(m => m.PersonEditPage) },
       ],

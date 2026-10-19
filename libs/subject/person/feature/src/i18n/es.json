@@ -254,5 +254,49 @@
     "no_value": "vacío",
     "to_person": "Copiar a la persona",
     "read_error": "No se pudieron leer los datos. Inténtalo de nuevo más tarde."
+  },
+  "bexio": {
+    "title": "Contactos de Bexio",
+    "index": {
+      "title": "Cotejar contactos de Bexio",
+      "content": "Aquí ves todas las personas, organizaciones y miembros de la organización principal junto a los contactos de Bexio. «Sincronizar» carga los contactos de Bexio y los compara con las entradas de la aplicación. Si falta un contacto en un lado, puedes añadirlo desde su fila.",
+      "button": "Sincronizar",
+      "contactFilter": {
+        "label": "Filtro de contactos"
+      },
+      "error": {
+        "credentials": "Bexio ha rechazado el acceso. La clave de acceso debe renovarse. Hasta entonces, las columnas de Bexio permanecen vacías.",
+        "fetch": "No se han podido cargar los contactos de Bexio. Las columnas de Bexio permanecen vacías."
+      }
+    },
+    "edit": {
+      "person": "Editar persona",
+      "org": "Editar organización",
+      "membership": "Editar membresía"
+    },
+    "filter": {
+      "all": "Todos",
+      "persons": "Solo personas",
+      "members": "Solo miembros",
+      "orgs": "Solo organizaciones",
+      "mismatch": "Solo discrepancias"
+    },
+    "col": {
+      "bexio_id": "ID de Bexio",
+      "bk_bexio_id": "ID de Bexio (app)",
+      "source": "Origen",
+      "name": "Nombre",
+      "category": "Cat"
+    },
+    "dialog": {
+      "title": "Contacto de Bexio",
+      "download": "Traer el contacto de Bexio a la aplicación",
+      "update_bk": "Actualizar el contacto en la aplicación",
+      "create": "Crear el contacto en Bexio",
+      "update_bexio": "Actualizar el contacto en Bexio",
+      "in_sync": "Los datos coinciden.",
+      "bexio_only": "Este contacto solo existe en Bexio. Tráelo solo si estás seguro de que en la aplicación aún no hay una persona u organización equivalente.",
+      "both_empty": "Ambos lados están vacíos. Esto no debería ocurrir, comprueba la entrada a mano."
+    }
   }
 }

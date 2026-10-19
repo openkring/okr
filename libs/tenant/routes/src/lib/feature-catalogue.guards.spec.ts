@@ -312,6 +312,7 @@ const AOC_REDIRECTS: Record<string, string> = {
   content: '/page/integrity',
   doc: '/document/orphans',
   srv: '/membership/srv',
+  bexio: '/person/bexio-contacts',
   trip: '/trips/maintenance',
   diary: '/diary/import',
   kiosk: '/trips/kiosk',
@@ -342,7 +343,7 @@ describe('/aoc guards after the 2026-08-05 rulings', () => {
     const { children = [] } = fragmentOf('aoc', 'aoc');
     const others = withoutRedirects(children).filter(c => !AOC_CONTENT_ADMIN.includes(c.path as typeof AOC_CONTENT_ADMIN[number]));
 
-    expect(others.length, 'expected eight admin-only /aoc children (the redirect children carry no guard)').toBe(8);
+    expect(others.length, 'expected seven admin-only /aoc children (the redirect children carry no guard)').toBe(7);
     // The child's OWN guard must reject both non-admin roles, independently of the floor.
     expect(others.filter(c => activates(CONTENT_ADMIN, c)).map(c => c.path)).toEqual([]);
     expect(others.filter(c => activates(PRIVILEGED, c)).map(c => c.path)).toEqual([]);

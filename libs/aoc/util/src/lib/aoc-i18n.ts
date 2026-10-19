@@ -74,60 +74,6 @@ export const AOC_I18N_KEYS = {
   adminops_hasaccount_confirm:            PFX + 'adminops.hasAccount.confirm',
   adminops_hasaccount_conf:               PFX + 'adminops.hasAccount.conf',
 
-  // bexio
-  bexio_title:                              PFX + 'bexio.title',
-
-  bexio_invoices_title:                     PFX + 'bexio.invoices.title',
-  bexio_invoices_subtitle:                  PFX + 'bexio.invoices.subtitle',
-  bexio_invoices_nodata:                    PFX + 'bexio.invoices.nodata',
-  bexio_invoices_status:                    PFX + 'bexio.invoices.status',
-  bexio_invoices_history:                   PFX + 'bexio.invoices.history',
-
-  bexio_bills_title:                        PFX + 'bexio.bills.title',
-  bexio_bills_subtitle:                     PFX + 'bexio.bills.subtitle',
-  bexio_bills_nodata:                       PFX + 'bexio.bills.nodata',
-  bexio_bills_status:                       PFX + 'bexio.bills.status',
-  bexio_bills_history:                      PFX + 'bexio.bills.history',
-
-  bexio_journal_title:                      PFX + 'bexio.journal.title',
-  bexio_journal_subtitle:                   PFX + 'bexio.journal.subtitle',
-  bexio_journal_nodata:                     PFX + 'bexio.journal.nodata',
-  bexio_journal_status:                     PFX + 'bexio.journal.status',
-  bexio_journal_history:                    PFX + 'bexio.journal.history',
-
-  bexio_accounts_title:                     PFX + 'bexio.accounts.title',
-  bexio_accounts_subtitle:                  PFX + 'bexio.accounts.subtitle',
-  bexio_accounts_nodata:                    PFX + 'bexio.accounts.nodata',
-  bexio_accounts_download:                  PFX + 'bexio.accounts.download',
-  bexio_accounts_history:                   PFX + 'bexio.accounts.history',
-
-  bexio_index_title:                        PFX + 'bexio.index.title',
-  bexio_index_content:                      PFX + 'bexio.index.content',
-  bexio_index_button:                       PFX + 'bexio.index.button',
-  bexio_index_contactFilter_label:          PFX + 'bexio.index.contactFilter.label',
-  bexio_index_error_credentials:            PFX + 'bexio.index.error.credentials',
-  bexio_index_error_fetch:                  PFX + 'bexio.index.error.fetch',
-
-  bexio_vendor_title:                       PFX + 'bexio.vendor.title',
-  bexio_vendor_subtitle:                    PFX + 'bexio.vendor.subtitle',
-  bexio_vendor_status_initial:              PFX + 'bexio.vendor.status.initial',
-  bexio_vendor_status_done:                 PFX + 'bexio.vendor.status.done',
-  bexio_vendor_status_open:                 PFX + 'bexio.vendor.status.open',
-  bexio_vendor_status_linked:               PFX + 'bexio.vendor.status.linked',
-  bexio_vendor_status_unmatched:            PFX + 'bexio.vendor.status.unmatched',
-
-  bexio_receiver_title:                     PFX + 'bexio.receiver.title',
-  bexio_receiver_status_initial:            PFX + 'bexio.receiver.status.initial',
-  bexio_receiver_status_done:               PFX + 'bexio.receiver.status.done',
-  bexio_receiver_status_open:               PFX + 'bexio.receiver.status.open',
-  bexio_receiver_status_linked:             PFX + 'bexio.receiver.status.linked',
-  bexio_receiver_status_unmatched:          PFX + 'bexio.receiver.status.unmatched',
-  bexio_receiver_link:                      PFX + 'bexio.receiver.link',
-
-  bexio_edit_person:                        PFX + 'bexio.edit.person',
-  bexio_edit_org:                           PFX + 'bexio.edit.org',
-  bexio_edit_membership:                    PFX + 'bexio.edit.membership',
-
   // chat
   chat_title:                               PFX + 'chat.title',
   chat_rooms:                               PFX + 'chat.rooms',
@@ -358,24 +304,10 @@ export const AOC_I18N_KEYS = {
   session_duration_from:                  PFX + 'session.duration.from',
   session_duration_to:                    PFX + 'session.duration.to',
 
-  // bexio console
-  bexio_filter_all:                         PFX + 'bexio.filter.all',
-  bexio_filter_persons:                     PFX + 'bexio.filter.persons',
-  bexio_filter_members:                     PFX + 'bexio.filter.members',
-  bexio_filter_orgs:                        PFX + 'bexio.filter.orgs',
-  bexio_filter_mismatch:                    PFX + 'bexio.filter.mismatch',
-  bexio_from_date:                          PFX + 'bexio.from_date',
-  bexio_root_name:                          PFX + 'bexio.root_name',
-  bexio_col_bexio_id:                       PFX + 'bexio.col.bexio_id',
-  bexio_col_source:                         PFX + 'bexio.col.source',
-  bexio_col_name:                           PFX + 'bexio.col.name',
-  bexio_col_category:                       PFX + 'bexio.col.category',
-
   // roles console
   roles_person:                             PFX + 'roles.person',
   roles_user:                               PFX + 'roles.user',
   roles_result:                             PFX + 'roles.result',
-  location:                                 '@location',
   close:                                    '@shared/ui.close',
 
   // tag

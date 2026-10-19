@@ -1,63 +1,26 @@
 import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { I18nService } from '@okr/shared-i18n';
-import { AOC_I18N_KEYS } from '@okr/aoc-util';
 import { getApp } from 'firebase/app';
-import { collection, doc, getCountFromServer, getDocs, getDoc, getFirestore, query, where, writeBatch } from 'firebase/firestore';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { firstValueFrom } from 'rxjs';
 
 import { isFirestoreInitializedCheck } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
-import { AddressCollection, AddressModel, AvatarInfo, InvoiceCollection, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@okr/shared-models';
+import { AddressCollection, AddressModel, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@okr/shared-models';
 import { getCatAbbreviation, getFullName, getSystemQuery, isMembership, isOrg, isPerson } from '@okr/shared-util-core';
 import { ModalController, ToastController } from '@ionic/angular';
 import { showToast } from '@okr/shared-util-angular';
-import { AocBexioContactEditModal } from './aoc-bexio-contact-edit.modal';
+import { PersonBexioContactModal } from '@okr/subject-person-ui';
+import { BexioIndex, PERSON_I18N_KEYS } from '@okr/subject-person-util';
+import { ORG_EDIT_MODAL } from '@okr/subject-org-ui';
 import { createFavoriteAddress } from '@okr/subject-address-util';
 import { PersonService } from '@okr/subject-person-data-access';
-import { PersonEditModal } from '@okr/subject-person-feature';
+import { PersonEditModal } from './person-edit.modal';
 import { OrgService } from '@okr/subject-org-data-access';
-import { OrgEditModal } from '@okr/subject-org-feature';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { MembershipEditModal } from '@okr/relationship-membership-feature';
-
-export interface BexioIndex {
-  // person or org
-  key: string;      // getFullName(name1, name2).trim().toLowerCase(), the trim is important to remove the leading bank in orgs
-  okey: string;     // BK document key (person.okey or org.okey)
-  name1: string;   // first name (person) or '' (org)
-  name2: string;   // last name (person) or company name (org)
-  type: 'person' | 'org'; 
-  bexioId: string; // BK-stored bexio ID (from membership.memberBexioId)
-  streetName: string,
-  streetNumber: string,
-  zipCode: string,
-  city: string,
-  email: string,
-  phone: string,    // BK favPhone
-
-  // membership
-  mkey: string;     // membership okey
-  mname: string;          // membership full name (getFullName(memberName1, memberName2))
-  memberModelType: string; // membership.memberModelType ('person' | 'org')
-  mbexioId: string; // membership.memberBexioId
-  dateOfExit: string;   // exit date, this is needed to finde the current members
-  mcat: string;
-
-  // bexio
-  bx_id: string;     // Bexio contact ID
-  bx_name1: string;  // Bexio first name (contact.name_2)
-  bx_name2: string;  // Bexio last/company name (contact.name_1)
-  bx_type: 'person' | 'org';
-  bx_streetName: string;
-  bx_streetNumber: string;
-  bx_zipCode: string;
-  bx_city: string;
-  bx_email: string;
-  bx_phone: string;
-}
 
 interface BexioContact {
   id: number;
@@ -72,41 +35,19 @@ interface BexioContact {
   contact_type_id: number; // 1=company, 2=person
 }
 
-export type AocBexioState = {
+export type PersonBexioState = {
   index: BexioIndex[];
   indexError: string; // '' = no error; otherwise the message to show next to the index
   isLoading: boolean;
-  invoiceCount: number;
-  lastSyncedAt: string; // "YYYY-MM-DD HH:mm:ss" or ''
-  receiverLinkCount: number;    // invoices updated in last linkInvoiceReceivers run, -1 = not run
-  receiverPendingCount: number; // invoices still missing a receiver, -1 = not counted yet
-  billCount: number;
-  lastBillSyncedAt: string; // "YYYY-MM-DD HH:mm:ss" or ''
-  vendorLinkedCount: number;   // bills updated in last linkBillVendors run, -1 = not run
-  vendorPendingCount: number;  // bills still missing a vendor, -1 = not counted yet
-  vendorUnmatched: string[];   // vendor names that could not be matched
-  journalCount: number;
-  lastJournalSyncedAt: string; // "YYYY-MM-DD HH:mm:ss" or ''
 };
 
-const initialState: AocBexioState = {
+const initialState: PersonBexioState = {
   index: [],
   indexError: '',
   isLoading: false,
-  invoiceCount: -1,
-  lastSyncedAt: '',
-  receiverLinkCount: -1,
-  receiverPendingCount: -1,
-  billCount: -1,
-  lastBillSyncedAt: '',
-  vendorLinkedCount: -1,
-  vendorPendingCount: -1,
-  vendorUnmatched: [],
-  journalCount: -1,
-  lastJournalSyncedAt: '',
 };
 
-export const AocBexioStore = signalStore(
+export const PersonBexioStore = signalStore(
   withState(initialState),
   withProps(() => ({
     appStore: inject(AppStore),
@@ -117,9 +58,10 @@ export const AocBexioStore = signalStore(
     personService: inject(PersonService),
     orgService: inject(OrgService),
     membershipService: inject(MembershipService),
+    orgEditModal: inject(ORG_EDIT_MODAL, { optional: true }),
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll(AOC_I18N_KEYS),
+    i18n: store.i18nService.translateAll(PERSON_I18N_KEYS),
   })),
   withComputed(state => ({
     currentUser: computed(() => state.appStore.currentUser()),
@@ -642,276 +584,9 @@ export const AocBexioStore = signalStore(
         && norm(item.email) === norm(item.bx_email);
     },
 
-    async loadInvoiceStats(): Promise<void> {
-      try {
-        const db = getFirestore(getApp());
-        const [snap, configDoc] = await Promise.all([
-          getCountFromServer(query(collection(db, InvoiceCollection), where('tenants', 'array-contains', store.tenantId()))),
-          getDoc(doc(db, 'config', 'bexioSync')),
-        ]);
-        patchState(store, {
-          invoiceCount: snap.data().count,
-          lastSyncedAt: configDoc.data()?.['lastSyncedAt'] ?? '',
-        });
-      } catch (e) {
-        // Transient on Safari: a request aborted mid-load (reload/navigate-away/bfcache) returns an
-        // empty body that the Firebase SDK JSON-parses → "Unexpected EOF". ngOnInit calls this
-        // fire-and-forget, so an unguarded rejection becomes an unhandled rejection (Sentry noise).
-        console.warn('loadInvoiceStats failed (transient, ignored):', e);
-      }
-    },
-
-    async linkInvoiceReceivers(): Promise<void> {
-      const persons = store.appStore.allPersons();
-      const orgs = store.appStore.allOrgs();
-      if (persons.length === 0 && orgs.length === 0) {
-        console.warn('linkInvoiceReceivers: persons/orgs not yet loaded, aborting');
-        return;
-      }
-
-      // build bexioId -> AvatarInfo lookup from persons and orgs
-      const lookup = new Map<string, AvatarInfo>();
-
-      // 1) load all persons with bexioId — normalize key to plain numeric string
-      for (const p of persons) {
-        if (p.bexioId) {
-          const key = String(Number(String(p.bexioId).trim()));
-          lookup.set(key, { key: p.okey ?? '', name1: p.firstName ?? '', name2: p.lastName ?? '', modelType: 'person', type: '', subType: '', label: getFullName(p.firstName ?? '', p.lastName ?? '') });
-        }
-      }
-
-      // 2) load all orgs with bexioId — normalize key to plain numeric string
-      for (const o of orgs) {
-        if (o.bexioId) {
-          const key = String(Number(o.bexioId.trim()));
-          lookup.set(key, { key: o.okey ?? '', name1: '', name2: o.name ?? '', modelType: 'org', type: '', subType: '', label: o.name ?? '' });
-        }
-      }
-
-      console.log(`linkInvoiceReceivers: lookup has ${lookup.size} entries (${persons.filter(p => p.bexioId).length} persons, ${orgs.filter(o => o.bexioId).length} orgs)`);
-
-      // 3) load all invoices that still have a notes value (= bexioContactId not yet resolved)
-      const db = getFirestore(getApp());
-      const invoiceQuery = query(
-        collection(db, InvoiceCollection),
-        where('tenants', 'array-contains', store.tenantId()),
-        where('notes', '!=', '')
-      );
-      const snapshot = await getDocs(invoiceQuery);
-      const pending = snapshot.docs.filter(d => !!d.data()['notes']);
-
-      patchState(store, { receiverPendingCount: pending.length });
-
-      if (pending.length === 0) return;
-
-      // process in batches of 500 (Firestore limit)
-      const BATCH_SIZE = 500;
-      let linked = 0;
-      for (let i = 0; i < pending.length; i += BATCH_SIZE) {
-        const batch = writeBatch(db);
-        const chunk = pending.slice(i, i + BATCH_SIZE);
-        for (const d of chunk) {
-          const data = d.data();
-          const bexioContactId = String(Number(String(data['notes'] ?? '').trim()));
-          const receiver = lookup.get(bexioContactId);
-          if (!receiver) {
-            console.log(`linkInvoiceReceivers: no match for bexioContactId="${bexioContactId}" (invoice ${data['invoiceId'] ?? d.id})`);
-            continue;
-          }
-
-          const invoiceId: string = data['invoiceId'] ?? '';
-          const totalCents: number = data['totalAmount']?.amount ?? 0;
-          const indexStr = `i: ${invoiceId} a: ${(totalCents / 100).toFixed(2)} n: ${receiver.label} bx: ${bexioContactId}`;
-
-          batch.update(d.ref, {
-            receiver,
-            index: indexStr,
-            notes: '',
-          });
-          linked++;
-        }
-        await batch.commit();
-      }
-
-      patchState(store, { receiverLinkCount: linked, receiverPendingCount: pending.length - linked });
-    },
-
-    async syncInvoices(fromDate?: string): Promise<{ count: number }> {
-      const functions = getFunctions(getApp(), 'europe-west6');
-      if (store.appStore.env.useEmulators) {
-        connectFunctionsEmulator(functions, 'localhost', 5001);
-      }
-      const syncBexioInvoicesFn = httpsCallable<{ fromDate?: string }, { count: number }>(functions, 'syncBexioInvoices');
-      const result = await syncBexioInvoicesFn(fromDate ? { fromDate } : {});
-      return result.data;
-    },
-
-    async loadBillStats(): Promise<void> {
-      try {
-        const db = getFirestore(getApp());
-        const [snap, configDoc] = await Promise.all([
-          getCountFromServer(query(collection(db, 'bills'), where('tenants', 'array-contains', store.tenantId()))),
-          getDoc(doc(db, 'config', 'bexioSync')),
-        ]);
-        patchState(store, {
-          billCount: snap.data().count,
-          lastBillSyncedAt: configDoc.data()?.['lastBillSyncedAt'] ?? '',
-        });
-      } catch (e) {
-        console.warn('loadBillStats failed (transient, ignored):', e);
-      }
-    },
-
-    async syncBills(fromDate?: string): Promise<{ count: number }> {
-      const functions = getFunctions(getApp(), 'europe-west6');
-      if (store.appStore.env.useEmulators) {
-        connectFunctionsEmulator(functions, 'localhost', 5001);
-      }
-      const syncBexioBillsFn = httpsCallable<{ fromDate?: string }, { count: number }>(functions, 'syncBexioBills');
-      const result = await syncBexioBillsFn(fromDate ? { fromDate } : {});
-      return result.data;
-    },
-
-    async loadJournalStats(): Promise<void> {
-      try {
-        const db = getFirestore(getApp());
-        // Bexio journal entries are synced into the native `bookings` collection (the legacy `journallogs` collection was retired).
-        const [snap, configDoc] = await Promise.all([
-          getCountFromServer(query(collection(db, 'bookings'), where('tenants', 'array-contains', store.tenantId()))),
-          getDoc(doc(db, 'config', 'bexioSync')),
-        ]);
-        patchState(store, {
-          journalCount: snap.data().count,
-          lastJournalSyncedAt: configDoc.data()?.['lastJournalSyncedAt'] ?? '',
-        });
-      } catch (e) {
-        console.warn('loadJournalStats failed (transient, ignored):', e);
-      }
-    },
-
-    async syncJournal(): Promise<{ count: number }> {
-      const functions = getFunctions(getApp(), 'europe-west6');
-      if (store.appStore.env.useEmulators) {
-        connectFunctionsEmulator(functions, 'localhost', 5001);
-      }
-      const syncBexioJournalFn = httpsCallable<void, { count: number }>(functions, 'syncBexioJournal');
-      const result = await syncBexioJournalFn();
-      return result.data;
-    },
-
-    async syncAccounts(): Promise<{ groups: number; accounts: number }> {
-      const functions = getFunctions(getApp(), 'europe-west6');
-      if (store.appStore.env.useEmulators) {
-        connectFunctionsEmulator(functions, 'localhost', 5001);
-      }
-      const fn = httpsCallable<void, { groups: number; accounts: number }>(functions, 'syncBexioAccounts');
-      const result = await fn();
-      return result.data;
-    },
-
-    async clearAccountTree(rootName: string): Promise<number> {
-      if (!rootName.trim() || !isFirestoreInitializedCheck()) return 0;
-      const db = getFirestore(getApp());
-
-      // 1. Find the root document by name + type
-      const rootSnap = await getDocs(query(
-        collection(db, 'accounts'),
-        where('tenants', 'array-contains', store.tenantId()),
-        where('name', '==', rootName.trim()),
-        where('type', '==', 'root')
-      ));
-      if (rootSnap.empty) return 0;
-      const rootOkey = rootSnap.docs[0].id;
-
-      // 2. BFS to collect all okeys in the tree
-      const allOkeys: string[] = [rootOkey];
-      const frontier: string[] = [rootOkey];
-      while (frontier.length > 0) {
-        // Firestore 'in' supports max 30 values per query
-        const chunk = frontier.splice(0, 30);
-        const childSnap = await getDocs(query(
-          collection(db, 'accounts'),
-          where('tenants', 'array-contains', store.tenantId()),
-          where('parentId', 'in', chunk)
-        ));
-        for (const d of childSnap.docs) {
-          allOkeys.push(d.id);
-          frontier.push(d.id);
-        }
-      }
-
-      // 3. Delete in batches of 500
-      const BATCH_SIZE = 500;
-      for (let i = 0; i < allOkeys.length; i += BATCH_SIZE) {
-        const batch = writeBatch(db);
-        for (const okey of allOkeys.slice(i, i + BATCH_SIZE)) {
-          batch.delete(doc(db, 'accounts', okey));
-        }
-        await batch.commit();
-      }
-      return allOkeys.length;
-    },
-
-    async linkBillVendors(): Promise<void> {
-      const persons = store.appStore.allPersons();
-      const orgs = store.appStore.allOrgs();
-      if (persons.length === 0 && orgs.length === 0) {
-        console.warn('linkBillVendors: persons/orgs not yet loaded, aborting');
-        return;
-      }
-
-      // 1) build name.lowercase -> AvatarInfo lookup
-      const lookup = new Map<string, AvatarInfo>();
-      for (const p of persons) {
-        const name = getFullName(p.firstName ?? '', p.lastName ?? '').trim().toLowerCase();
-        if (name) lookup.set(name, { key: p.okey ?? '', name1: p.firstName ?? '', name2: p.lastName ?? '', modelType: 'person', type: '', subType: '', label: getFullName(p.firstName ?? '', p.lastName ?? '') });
-      }
-      for (const o of orgs) {
-        const name = (o.name ?? '').trim().toLowerCase();
-        if (name) lookup.set(name, { key: o.okey ?? '', name1: '', name2: o.name ?? '', modelType: 'org', type: '', subType: '', label: o.name ?? '' });
-      }
-
-      // 2) load all bills with notes (= unresolved vendor name)
-      const db = getFirestore(getApp());
-      const billQuery = query(
-        collection(db, 'bills'),
-        where('tenants', 'array-contains', store.tenantId()),
-        where('notes', '!=', '')
-      );
-      const snapshot = await getDocs(billQuery);
-      const pending = snapshot.docs.filter(d => !!d.data()['notes']);
-      patchState(store, { vendorPendingCount: pending.length, vendorUnmatched: [] });
-      if (pending.length === 0) return;
-
-      // 3) match and write
-      const BATCH_SIZE = 500;
-      let linked = 0;
-      const unmatched: string[] = [];
-      for (let i = 0; i < pending.length; i += BATCH_SIZE) {
-        const batch = writeBatch(db);
-        const chunk = pending.slice(i, i + BATCH_SIZE);
-        for (const d of chunk) {
-          const data = d.data();
-          const vendorName = String(data['notes'] ?? '').trim().toLowerCase();
-          const vendor = lookup.get(vendorName);
-          if (!vendor) {
-            if (!unmatched.includes(vendorName)) unmatched.push(vendorName);
-            continue;
-          }
-          const billId: string = data['billId'] ?? '';
-          const totalCents: number = data['totalAmount']?.amount ?? 0;
-          const indexStr = `i: ${billId} a: ${(totalCents / 100).toFixed(2)} n: ${vendor.label}`;
-          batch.update(d.ref, { vendor, index: indexStr, notes: '' });
-          linked++;
-        }
-        await batch.commit();
-      }
-      patchState(store, { vendorLinkedCount: linked, vendorPendingCount: pending.length - linked, vendorUnmatched: unmatched });
-    },
-
     async edit(bexioIndex: BexioIndex): Promise<void> {
       const modal = await store.modalController.create({
-        component: AocBexioContactEditModal,
+        component: PersonBexioContactModal,
         cssClass: 'wide-modal',
         componentProps: {
           bexioIndex,
@@ -964,8 +639,9 @@ export const AocBexioStore = signalStore(
     async editOrg(item: BexioIndex): Promise<void> {
       const org = store.appStore.getOrg(item.okey);
       if (!org) return;
+      if (!store.orgEditModal) { console.warn('PersonBexioStore.editOrg: ORG_EDIT_MODAL is not provided by this app'); return; }
       const modal = await store.modalController.create({
-        component: OrgEditModal,
+        component: await store.orgEditModal(),
         componentProps: {
           org,
           currentUser: store.currentUser(),

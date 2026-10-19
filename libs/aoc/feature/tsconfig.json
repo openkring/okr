@@ -2,11 +2,17 @@
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
-    "types": ["vitest", "node"],
+    "types": [
+      "vitest",
+      "node"
+    ],
     "declaration": true,
     "module": "preserve",
     "moduleResolution": "bundler",
-    "lib": ["dom", "es2022"],
+    "lib": [
+      "dom",
+      "es2022"
+    ],
     "ignoreDeprecations": "6.0",
     "rootDir": "../.."
   },
@@ -16,8 +22,14 @@
     "disableTypeScriptVersionCheck": true,
     "compileNonExportedClasses": true
   },
-  "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
-  "exclude": ["dist/**/*"],
+  "include": [
+    "src/**/*",
+    "**/*.spec.ts",
+    "**/*.test.ts"
+  ],
+  "exclude": [
+    "dist/**/*"
+  ],
   "references": [
     {
       "path": "../../shared/models/tsconfig.lib.json"
@@ -90,18 +102,6 @@
     },
     {
       "path": "../../subject/person/feature/tsconfig.lib.json"
-    },
-    {
-      "path": "../../subject/org/data-access/tsconfig.lib.json"
-    },
-    {
-      "path": "../../subject/org/feature/tsconfig.lib.json"
-    },
-    {
-      "path": "../../relationship/membership/data-access/tsconfig.lib.json"
-    },
-    {
-      "path": "../../relationship/membership/feature/tsconfig.lib.json"
     },
     {
       "path": "../../session/util/tsconfig.lib.json"

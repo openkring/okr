@@ -254,5 +254,49 @@
     "no_value": "leer",
     "to_person": "In Person übernehmen",
     "read_error": "Die Daten konnten nicht gelesen werden. Bitte versuche es später noch einmal."
+  },
+  "bexio": {
+    "title": "Bexio-Kontakte",
+    "index": {
+      "title": "Bexio-Kontakte abgleichen",
+      "content": "Hier siehst du alle Personen, Organisationen und Mitglieder der Hauptorganisation neben den Kontakten in Bexio. Mit «Sync» werden die Kontakte aus Bexio geladen und mit den Einträgen in der App verglichen. Fehlt ein Kontakt auf einer Seite, kannst du ihn über die Zeile ergänzen.",
+      "button": "Sync",
+      "contactFilter": {
+        "label": "Kontakt-Filter"
+      },
+      "error": {
+        "credentials": "Bexio hat den Zugang abgelehnt. Der Zugangsschlüssel muss erneuert werden. Bis dahin bleiben die Bexio-Spalten leer.",
+        "fetch": "Die Bexio-Kontakte konnten nicht geladen werden. Die Bexio-Spalten bleiben leer."
+      }
+    },
+    "edit": {
+      "person": "Person bearbeiten",
+      "org": "Organisation bearbeiten",
+      "membership": "Mitgliedschaft bearbeiten"
+    },
+    "filter": {
+      "all": "Alle",
+      "persons": "Nur Personen",
+      "members": "Nur Mitglieder",
+      "orgs": "Nur Orgs",
+      "mismatch": "Nur Abweichungen"
+    },
+    "col": {
+      "bexio_id": "Bexio ID",
+      "bk_bexio_id": "BK Bexio ID",
+      "source": "Quelle",
+      "name": "Name",
+      "category": "Kat"
+    },
+    "dialog": {
+      "title": "Bexio-Kontakt",
+      "download": "Bexio-Kontakt in die App übernehmen",
+      "update_bk": "Kontakt in der App aktualisieren",
+      "create": "Kontakt in Bexio anlegen",
+      "update_bexio": "Kontakt in Bexio aktualisieren",
+      "in_sync": "Die Daten stimmen überein.",
+      "bexio_only": "Dieser Kontakt existiert nur in Bexio. Übernimm ihn nur, wenn es in der App sicher noch keine passende Person oder Organisation gibt.",
+      "both_empty": "Beide Seiten sind leer. Das sollte nicht vorkommen, bitte prüfe den Eintrag von Hand."
+    }
   }
 }

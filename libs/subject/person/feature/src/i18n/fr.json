@@ -254,5 +254,49 @@
     "no_value": "vide",
     "to_person": "Reprendre dans la personne",
     "read_error": "Les données n'ont pas pu être lues. Réessaie plus tard."
+  },
+  "bexio": {
+    "title": "Contacts Bexio",
+    "index": {
+      "title": "Rapprocher les contacts Bexio",
+      "content": "Voici toutes les personnes, organisations et tous les membres de l'organisation principale à côté des contacts dans Bexio. « Synchro » charge les contacts de Bexio et les compare avec les entrées de l'application. Si un contact manque d'un côté, tu peux l'ajouter depuis sa ligne.",
+      "button": "Synchro",
+      "contactFilter": {
+        "label": "Filtre de contacts"
+      },
+      "error": {
+        "credentials": "Bexio a refusé l'accès. La clé d'accès doit être renouvelée. D'ici là, les colonnes Bexio restent vides.",
+        "fetch": "Les contacts Bexio n'ont pas pu être chargés. Les colonnes Bexio restent vides."
+      }
+    },
+    "edit": {
+      "person": "Modifier la personne",
+      "org": "Modifier l'organisation",
+      "membership": "Modifier l'adhésion"
+    },
+    "filter": {
+      "all": "Tous",
+      "persons": "Personnes uniquement",
+      "members": "Membres uniquement",
+      "orgs": "Organisations uniquement",
+      "mismatch": "Écarts uniquement"
+    },
+    "col": {
+      "bexio_id": "ID Bexio",
+      "bk_bexio_id": "ID Bexio (app)",
+      "source": "Source",
+      "name": "Nom",
+      "category": "Cat"
+    },
+    "dialog": {
+      "title": "Contact Bexio",
+      "download": "Reprendre le contact Bexio dans l'application",
+      "update_bk": "Mettre à jour le contact dans l'application",
+      "create": "Créer le contact dans Bexio",
+      "update_bexio": "Mettre à jour le contact dans Bexio",
+      "in_sync": "Les données concordent.",
+      "bexio_only": "Ce contact n'existe que dans Bexio. Ne le reprends que si tu es sûr qu'il n'y a pas encore de personne ou d'organisation correspondante dans l'application.",
+      "both_empty": "Les deux côtés sont vides. Cela ne devrait pas arriver, vérifie l'entrée à la main."
+    }
   }
 }

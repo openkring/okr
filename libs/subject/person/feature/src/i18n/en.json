@@ -254,5 +254,49 @@
     "no_value": "empty",
     "to_person": "Copy to person",
     "read_error": "The data could not be read. Please try again later."
+  },
+  "bexio": {
+    "title": "Bexio contacts",
+    "index": {
+      "title": "Reconcile Bexio contacts",
+      "content": "This shows all persons, organizations and members of the main organization next to the contacts in Bexio. «Sync» loads the contacts from Bexio and compares them with the entries in the app. If a contact is missing on one side, you can add it from its row.",
+      "button": "Sync",
+      "contactFilter": {
+        "label": "Contact filter"
+      },
+      "error": {
+        "credentials": "Bexio rejected the access. The access key has to be renewed. Until then the Bexio columns stay empty.",
+        "fetch": "The Bexio contacts could not be loaded. The Bexio columns stay empty."
+      }
+    },
+    "edit": {
+      "person": "Edit person",
+      "org": "Edit organization",
+      "membership": "Edit membership"
+    },
+    "filter": {
+      "all": "All",
+      "persons": "Persons only",
+      "members": "Members only",
+      "orgs": "Orgs only",
+      "mismatch": "Mismatches only"
+    },
+    "col": {
+      "bexio_id": "Bexio ID",
+      "bk_bexio_id": "App Bexio ID",
+      "source": "Source",
+      "name": "Name",
+      "category": "Cat"
+    },
+    "dialog": {
+      "title": "Bexio contact",
+      "download": "Download Bexio contact to the app",
+      "update_bk": "Update contact in the app",
+      "create": "Create contact in Bexio",
+      "update_bexio": "Update contact in Bexio",
+      "in_sync": "The data matches.",
+      "bexio_only": "This contact exists only in Bexio. Only download it if you are sure there is no matching person or organization in the app yet.",
+      "both_empty": "Both sides are empty. This should not happen, please check the entry by hand."
+    }
   }
 }

@@ -4,16 +4,14 @@ import { IonButton, IonCol, IonContent, IonGrid, IonLabel, IonRow, ModalControll
 import { UserModel } from "@okr/shared-models";
 import { Header, Spinner } from "@okr/shared-ui";
 import { I18nService } from "@okr/shared-i18n";
-import { AOC_I18N_KEYS } from "@okr/aoc-util";
-
-import { BexioIndex } from "..";
+import { BexioIndex, PERSON_I18N_KEYS } from "@okr/subject-person-util";
 import { getFullName } from "@okr/shared-util-core";
 import { dismissOverlay } from '@okr/shared-util-angular';
 
 type SyncStatus = 'in-sync' | 'update' | 'create' | 'bexio-only' | 'both-empty';
 
 @Component({
-  selector: 'okr-aoc-bexio-contact-edit-modal',
+  selector: 'okr-person-bexio-contact-modal',
   standalone: true,
   imports: [
     Header, Spinner,
@@ -26,7 +24,7 @@ type SyncStatus = 'in-sync' | 'update' | 'create' | 'bexio-only' | 'both-empty';
     .sync-row { margin-top: 1rem; }
   `],
   template: `
-    <okr-header [i18n]="{ title: i18n.title()}" [isModal]="true" />
+    <okr-header [i18n]="{ title: i18n.bexio_dialog_title()}" [isModal]="true" />
     <ion-content class="ion-no-padding">
       @if(bexioIndex(); as bx) {
       <ion-grid>
@@ -110,34 +108,30 @@ type SyncStatus = 'in-sync' | 'update' | 'create' | 'bexio-only' | 'both-empty';
           <ion-col size="3"></ion-col>
           <ion-col size="3">
             @if(showDownload()) {
-              <ion-button fill="outline" (click)="dismiss('download')">Download Bexio Contact to the App</ion-button>
+              <ion-button fill="outline" (click)="dismiss('download')">{{ i18n.bexio_dialog_download() }}</ion-button>
             }
             @if(showUpdateBk()) {
-              <ion-button fill="outline" (click)="dismiss('updateBk')">Update BK Contact</ion-button>
+              <ion-button fill="outline" (click)="dismiss('updateBk')">{{ i18n.bexio_dialog_update_bk() }}</ion-button>
             }
           </ion-col>
           <ion-col size="3"></ion-col>
           <ion-col size="3">
             @if(showCreate()) {
-              <ion-button fill="outline" (click)="dismiss('create')">Create a contact in Bexio</ion-button>
+              <ion-button fill="outline" (click)="dismiss('create')">{{ i18n.bexio_dialog_create() }}</ion-button>
             }
             @if(showUpdateBexio()) {
-              <ion-button fill="outline" (click)="dismiss('update')">Update Bexio Contact</ion-button>
+              <ion-button fill="outline" (click)="dismiss('update')">{{ i18n.bexio_dialog_update_bexio() }}</ion-button>
             }
           </ion-col>
         </ion-row>
         @if(syncStatus() === 'in-sync') {
-          <ion-row><ion-col size="12"><ion-label color="success"><strong>Sync is ok</strong></ion-label></ion-col></ion-row>
+          <ion-row><ion-col size="12"><ion-label color="success"><strong>{{ i18n.bexio_dialog_in_sync() }}</strong></ion-label></ion-col></ion-row>
         }
         @if(syncStatus() === 'bexio-only') {
-          <ion-row><ion-col size="12"><ion-label color="danger">
-            This contact exists only in Bexio. BE CAREFUL: only apply this function when you are sure that there is no corresponding person or org in the app already.
-          </ion-label></ion-col></ion-row>
+          <ion-row><ion-col size="12"><ion-label color="danger">{{ i18n.bexio_dialog_bexio_only() }}</ion-label></ion-col></ion-row>
         }
         @if(syncStatus() === 'both-empty') {
-          <ion-row><ion-col size="12"><ion-label color="danger">
-            Both contacts are empty - this should not happen in theory. Check this manually.
-          </ion-label></ion-col></ion-row>
+          <ion-row><ion-col size="12"><ion-label color="danger">{{ i18n.bexio_dialog_both_empty() }}</ion-label></ion-col></ion-row>
         }
       </ion-grid>
       } @else {
@@ -146,11 +140,11 @@ type SyncStatus = 'in-sync' | 'update' | 'create' | 'bexio-only' | 'both-empty';
     </ion-content>
   `
 })
-export class AocBexioContactEditModal {
+export class PersonBexioContactModal {
   private readonly modalController = inject(ModalController);
   private readonly i18nService = inject(I18nService);
 
-  protected readonly i18n = this.i18nService.translateAll(AOC_I18N_KEYS);
+  protected readonly i18n = this.i18nService.translateAll(PERSON_I18N_KEYS);
 
   // inputs
   public bexioIndex = input.required<BexioIndex>();

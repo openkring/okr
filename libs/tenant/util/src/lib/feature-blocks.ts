@@ -303,7 +303,6 @@ const aoc: FeatureBlock = {
       { key: 'aoc-chat',       name: 'aoc-chat',       url: '/aoc/chat',       action: 'navigate', roleNeeded: 'admin', icon: 'chatbubbles', label: '@item.aoc-chat' },
       { key: 'aoc-account',    name: 'aoc-account',    url: '/aoc/account',    action: 'navigate', roleNeeded: 'admin', icon: 'person',   label: '@item.aoc-account' },
       { key: 'aoc-email',      name: 'aoc-email',      url: '/aoc/email',      action: 'navigate', roleNeeded: 'admin', icon: 'email',    label: '@item.aoc-email' },
-      { key: 'aoc-bexio',      name: 'aoc-bexio',      url: '/aoc/bexio',      action: 'navigate', roleNeeded: 'admin', icon: 'bank',     label: '@item.aoc-bexio' },
       // `aoc-kiosk` LEFT the catalogue with spec 1.101 phase 2: the kiosk page is `trip-kiosk` in `c-trips`.
       // `aoc-allocation` (spec 1.47) LEFT the catalogue with spec 1.101 §6: tenant allocation is an
       // operator-only tool. Its route lives in apps/bka-app (`/operator/allocation`) and its menu
@@ -967,6 +966,7 @@ const subject: FeatureBlock = {
       { key: 'person-send-email', name: 'person-send-email', url: 'sendEmailToList', action: 'call', roleNeeded: 'memberAdmin', icon: 'email', label: '@item.person-send-email' },
       { key: 'maint-divider', name: 'maint-divider', url: '', action: 'divider', roleNeeded: 'admin', icon: 'help-circle', label: '@item.maint-divider' },
       { key: 'person-check-favaddress', name: 'person-check-favaddress', url: 'checkFavAddresses', action: 'call', roleNeeded: 'admin', icon: 'location', label: '@item.person-check-favaddress' },
+      { key: 'person-bexio-contacts', name: 'person-bexio-contacts', url: '/person/bexio-contacts', action: 'navigate', roleNeeded: 'admin', icon: 'bank', label: '@item.person-bexio-contacts' },
     ] },
     { key: 'c-orgs', name: 'c-orgs', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'org-add', name: 'org-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: '@item.org-add' },

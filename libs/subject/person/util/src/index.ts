@@ -12,3 +12,4 @@ export * from './lib/person-duplicate.model';
 export * from './lib/person-field-diff.util';
 export * from './lib/person-directory.model';
 export * from './lib/fav-address-check.util';
+export * from './lib/person-bexio.model';

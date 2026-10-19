@@ -48,7 +48,6 @@ describe('FEATURE_BLOCKS Wartung rows (1.101 phase 2)', () => {
   const cases: [string, string, string, string, string, string][] = [
     // context menu, divider, divider role, row, action, row role
     ['c-calevents', 'maint-divider', 'admin', 'calevent-check-duplicates', 'call', 'admin'],
-    ['c-persons', 'maint-divider', 'admin', 'person-check-favaddress', 'call', 'admin'],
     ['c-pages', 'maint-divider-content', 'contentAdmin', 'page-integrity', 'navigate', 'contentAdmin'],
     ['c-documents', 'maint-divider', 'admin', 'document-orphans', 'navigate', 'admin'],
     ['c-trips', 'maint-divider', 'admin', 'trip-kiosk', 'navigate', 'admin'],
@@ -61,6 +60,16 @@ describe('FEATURE_BLOCKS Wartung rows (1.101 phase 2)', () => {
     expect(tail.map(c => c.name)).toEqual([divider, row]);
     expect(tail[0]).toMatchObject({ action: 'divider', url: '', roleNeeded: dividerRole });
     expect(tail[1]).toMatchObject({ action, roleNeeded: rowRole });
+  });
+
+  it('c-persons ends with the divider, the favourite-address check and the Bexio contacts page, all admin', () => {
+    const tail = (findContext('c-persons')?.children ?? []).slice(-3);
+    expect(tail.map(c => c.name)).toEqual(['maint-divider', 'person-check-favaddress', 'person-bexio-contacts']);
+    expect(tail[0]).toMatchObject({ action: 'divider', url: '', roleNeeded: 'admin' });
+    expect(tail.slice(1).map(c => [c.url, c.action, c.roleNeeded])).toEqual([
+      ['checkFavAddresses', 'call', 'admin'],
+      ['/person/bexio-contacts', 'navigate', 'admin'],
+    ]);
   });
 
   it('c-trips holds the tripAdmin maintenance row before the admin-only kiosk row', () => {
@@ -121,7 +130,7 @@ describe('FEATURE_BLOCKS Wartung rows (1.101 phase 2)', () => {
       (spec.children ?? []).forEach(visit);
     };
     aoc.menu.forEach(visit);
-    for (const n of ['maint-divider', 'maint-divider-content', 'maint-divider-trip', 'calevent-check-duplicates', 'group-check-hygiene', 'person-check-favaddress', 'page-integrity', 'document-orphans', 'trip-maintenance', 'trip-kiosk', 'aoc-kiosk', 'diary-import', 'aoc-content', 'aoc-doc', 'aoc-diary']) {
+    for (const n of ['maint-divider', 'maint-divider-content', 'maint-divider-trip', 'calevent-check-duplicates', 'group-check-hygiene', 'person-check-favaddress', 'person-bexio-contacts', 'aoc-bexio', 'page-integrity', 'document-orphans', 'trip-maintenance', 'trip-kiosk', 'aoc-kiosk', 'diary-import', 'aoc-content', 'aoc-doc', 'aoc-diary']) {
       expect(names.has(n), n).toBe(false);
     }
   });
