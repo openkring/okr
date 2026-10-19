@@ -359,16 +359,6 @@ export const AOC_I18N_KEYS = {
   data_index_button:                        PFX + 'data.index.button',
   data_index_select:                        PFX + 'data.index.select',
 
-  data_fav_title:                           PFX + 'data.fav.title',
-  data_fav_description:                     PFX + 'data.fav.description',
-  data_fav_hide:                            PFX + 'data.fav.hide',
-  data_fav_validate:                        PFX + 'data.fav.validate',
-  data_fav_person:                          PFX + 'data.fav.person',
-  data_fav_field:                           PFX + 'data.fav.field',
-  data_fav_favperson:                       PFX + 'data.fav.favperson',
-  data_fav_address:                         PFX + 'data.fav.address',
-  data_fav_nomismatches:                    PFX + 'data.fav.nomismatches',
-
   // doc
   doc_title:                                PFX + 'doc.title',
   doc_content:                              PFX + 'doc.content',

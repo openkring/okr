@@ -246,5 +246,12 @@
       "title": "Chat temporaneamente non disponibile",
       "default": "La chat è in manutenzione. Tornerà presto."
     }
+  },
+  "checkFavAddresses": {
+    "title": "Controllare gli indirizzi principali",
+    "explanation": "Confronta, per ogni persona, il codice postale salvato con l'indirizzo principale. «Riporta nella persona» scrive il valore dell'indirizzo principale nella persona.",
+    "detail": "Salvato nella persona: {cached}. Nell'indirizzo principale: {fromAddress}.",
+    "no_value": "vuoto",
+    "to_person": "Riporta nella persona"
   }
 }

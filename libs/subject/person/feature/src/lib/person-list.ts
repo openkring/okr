@@ -249,6 +249,7 @@ export class PersonList {
       case 'copyEmailAddresses': await this.store.copyEmailAddresses(); break;
       case 'sendEmailToList': await this.store.sendEmailToList(); break;
       case 'importVcards': await this.store.importVcards(); break;
+      case 'checkFavAddresses': await this.store.checkFavAddresses(); break;
       default: this.alertService.error(`PersonList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }

@@ -500,17 +500,6 @@
       "content": "Crea un índice sobre una colección. Esto es útil cuando falta un índice en la base de datos y no se puede ejecutar una consulta.",
       "button": "Crear índice",
       "select": "Seleccionar colección"
-    },
-    "fav": {
-      "title": "Consistencia de direcciones favoritas",
-      "description": "Compara los campos fav* en caché de cada persona con las direcciones favoritas reales.",
-      "hide": "Ocultar",
-      "validate": "Comprobar",
-      "person": "Persona",
-      "field": "Campo",
-      "favperson": "Persona (fav*)",
-      "address": "En la dirección",
-      "nomismatches": "No se encontraron discrepancias."
     }
   },
   "doc": {

@@ -500,17 +500,6 @@
       "content": "Erstellt einen Index auf einer Collection. Dies ist nützlich, wenn ein Index in der Datenbank fehlt und eine Abfrage nicht ausgeführt werden kann.",
       "button": "Index erstellen",
       "select": "Collection wählen"
-    },
-    "fav": {
-      "title": "Fav-Adressen Konsistenz",
-      "description": "Vergleicht die gecachten fav*-Felder jeder Person mit den tatsächlichen Favorite-Adressen.",
-      "hide": "Ausblenden",
-      "validate": "Prüfen",
-      "person": "Person",
-      "field": "Feld",
-      "favperson": "Person (fav*)",
-      "address": "In Adresse",
-      "nomismatches": "Keine Abweichungen gefunden."
     }
   },
   "doc": {

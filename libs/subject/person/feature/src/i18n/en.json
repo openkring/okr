@@ -246,5 +246,12 @@
       "title": "Chat temporarily unavailable",
       "default": "The chat is currently under maintenance. It will be back soon."
     }
+  },
+  "checkFavAddresses": {
+    "title": "Check main addresses",
+    "explanation": "Compares each person's stored postcode with their main address. «Copy to person» writes the value of the main address into the person.",
+    "detail": "Stored on the person: {cached}. In the main address: {fromAddress}.",
+    "no_value": "empty",
+    "to_person": "Copy to person"
   }
 }

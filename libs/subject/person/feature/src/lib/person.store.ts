@@ -9,17 +9,17 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { FirestoreService, ChatStatusService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
-import { AddressCollection, AddressModel, CategoryListModel, DefaultLanguage, MembershipCollection, MembershipModel, OrgModel, PersonModel, PersonModelName, ResourceModel } from '@okr/shared-models';
+import { AddressCollection, AddressModel, CategoryListModel, DefaultLanguage, MembershipCollection, MembershipModel, OrgModel, PersonCollection, PersonModel, PersonModelName, ResourceModel } from '@okr/shared-models';
 import { AlertService, copyToClipboardWithConfirmation, getCcEmailAddresses, getMainEmailAddresses, lazyService, navigateByUrl, showToast } from '@okr/shared-util-angular';
 import { chipMatches, debugItemLoaded, getSystemQuery, hasRole, isPerson, nameMatches, PHOTO_USAGE_ALL, photoUsageMatches, chatBlockedAlertMessage, isChatBlockedError } from '@okr/shared-util-core';
-import { EmailAddressesModal, MapViewModal } from '@okr/shared-ui';
+import { EmailAddressesModal, MapViewModal, openReport } from '@okr/shared-ui';
 import { openBulkEmailFlow } from '@okr/content-pdf-template-feature';
 import { Languages } from '@okr/shared-categories';
 import { I18nService } from '@okr/shared-i18n';
 
 import { AddressService, GeocodingService } from '@okr/subject-address-data-access';
 import { PersonService, SensitivePersonData } from '@okr/subject-person-data-access';
-import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel, PERSON_I18N_KEYS, PersonI18n, PersonDuplicateCandidate, ReconcilableField } from '@okr/subject-person-util';
+import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel, PERSON_I18N_KEYS, PersonI18n, PersonDuplicateCandidate, ReconcilableField, favMismatchFindings, findFavMismatches } from '@okr/subject-person-util';
 import { browseUrl, getDirectoryPostalAddress, readsAddressVault, stringifyPostalAddress } from '@okr/subject-address-util';
 
 import { AvatarService } from '@okr/avatar-data-access';
@@ -343,6 +343,47 @@ export const PersonStore = signalStore(
         async importVcards(): Promise<void> {
           await store.vcardImportService.importVcards(
             store.currentUser()?.roles, store.tenantId(), store.currentUser());
+        },
+
+        /**
+         * Admin-only data check from the person context menu: compares each person's cached favZipCode
+         * with their favorite postal address. The report offers one repair per row (copy the address
+         * value into the person); after each repair the data is re-read and the report re-opened,
+         * until it is closed, a finding is opened, or a repair fails.
+         */
+        async checkFavAddresses(): Promise<void> {
+          if (!hasRole('admin', store.currentUser())) return;
+          const tenantId = store.tenantId();
+          const dbQuery = getSystemQuery(tenantId);
+          for (;;) {
+            const [persons, addresses] = await Promise.all([
+              store.firestoreService.getDataOnce<PersonModel>(PersonCollection, dbQuery, 'lastName', 'asc'),
+              store.firestoreService.getDataOnce<AddressModel>(AddressCollection, dbQuery, 'parentKey', 'asc'),
+            ]);
+            if (!persons || !addresses) return;
+            const mismatches = findFavMismatches(persons, addresses);
+            const result = await openReport(store.modalController, {
+              title: store.i18n.check_fav_title(),
+              kind: 'check',
+              explanation: store.i18n.check_fav_explanation(),
+              findings: favMismatchFindings(mismatches, {
+                detail: store.i18n.check_fav_detail(),
+                noValue: store.i18n.check_fav_no_value(),
+                toPerson: store.i18n.check_fav_to_person(),
+              }),
+              ranAt: new Date(),
+            });
+            if (result?.kind !== 'action' || result.actionId !== 'toPerson') return;
+            const mismatch = mismatches.find(m => `${m.personKey}:${m.field}` === result.findingId);
+            if (!mismatch) return;
+            const person = persons.find(p => p.okey === mismatch.personKey);
+            if (!person) return;
+            person[mismatch.field] = mismatch.fromAddress;
+            // updateModel reports a failed write itself (toast / Sentry) and resolves undefined:
+            // stop here, a re-opened report would only offer the same failing repair again
+            const key = await store.firestoreService.updateModel(PersonCollection, person);
+            if (!key) return;
+          }
         },
 
         async edit(person: PersonModel, readOnly = true): Promise<void> {

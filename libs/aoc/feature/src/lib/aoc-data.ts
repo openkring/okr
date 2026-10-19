@@ -1,22 +1,20 @@
-import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
+import { Component, computed, inject, linkedSignal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonRow } from '@ionic/angular';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonItem, IonRow } from '@ionic/angular';
 
 import { Button, CategorySelect, Header, ResultLog } from '@okr/shared-ui';
 import { hasRole } from '@okr/shared-util-core';
 import { PersonModelName } from '@okr/shared-models';
-import { SvgIconPipe } from '@okr/shared-pipes';
 
-import { AocDataStore, FavMismatch } from './aoc-data.store';
+import { AocDataStore } from './aoc-data.store';
 
 @Component({
   selector: 'okr-aoc-data',
   standalone: true,
   imports: [
-    SvgIconPipe,
     FormsModule,
     Header, ResultLog, Button, CategorySelect,
-    IonContent, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonGrid, IonRow, IonCol, IonItem, IonIcon
+    IonContent, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonGrid, IonRow, IonCol, IonItem
   ],
   providers: [AocDataStore],
   template: `
@@ -78,53 +76,6 @@ import { AocDataStore, FavMismatch } from './aoc-data.store';
         </ion-card-content>
       </ion-card>
       <okr-result-log [title]="logTitle()"  cardTitle="Resultat" [log]="logInfo()" />
-
-      <ion-card>
-        <ion-card-header>
-          <ion-card-title>{{ store.i18n.data_fav_title() }}</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <ion-grid>
-            <ion-row>
-              <ion-col>{{ store.i18n.data_fav_description() }}</ion-col>
-              <ion-col>
-                <okr-button 
-                  [label]="favMismatches().length > 0 ? store.i18n.data_fav_hide() : store.i18n.data_fav_validate()"
-                  iconName="info-circle" 
-                  [disabled]="isLoading()"
-                  (click)="toggleFavAddresses()" 
-                />
-              </ion-col>
-            </ion-row>
-            @if (favMismatches().length > 0) {
-              <ion-row>
-                <ion-col size="2"><strong>{{ store.i18n.data_fav_person() }}</strong></ion-col>
-                <ion-col size="2"><strong>{{ store.i18n.data_fav_field() }}</strong></ion-col>
-                <ion-col size="3"><strong>{{ store.i18n.data_fav_favperson() }}</strong></ion-col>
-                <ion-col size="1"></ion-col>
-                <ion-col size="1"></ion-col>
-                <ion-col size="3"><strong>{{ store.i18n.data_fav_address() }}</strong></ion-col>
-              </ion-row>
-              @for (m of favMismatches(); track m.personKey + m.field) {
-                <ion-row>
-                  <ion-col size="2"><small>{{ m.personName }}</small></ion-col>
-                  <ion-col size="2"><small>{{ m.field }}</small></ion-col>
-                  <ion-col size="3"><small>{{ m.cached }}</small></ion-col>
-                  <ion-col size="1">
-                    <ion-icon src="{{ 'arrow-back-circle' | svgIcon }}" (click)="repairFavMismatch(m, 'toPerson')" />
-                  </ion-col>
-                  <ion-col size="1">
-                    <ion-icon src="{{ 'arrow-forward-circle' | svgIcon }}" (click)="repairFavMismatch(m, 'toAddress')" />
-                  </ion-col>
-                  <ion-col size="3"><small>{{ m.fromAddress }}</small></ion-col>
-                </ion-row>
-              }
-            } @else if (favChecked()) {
-              <ion-row><ion-col><small>{{ store.i18n.data_fav_nomismatches() }}</small></ion-col></ion-row>
-            }
-          </ion-grid>
-        </ion-card-content>
-      </ion-card>
     </ion-content>
   `,
 })
@@ -137,8 +88,6 @@ export class AocData {
   protected readonly isLoading = computed(() => this.store.isLoading());
   protected readonly types = computed(() => this.store.appStore.getCategory('model_type'));
   protected readonly readOnly = computed(() => !hasRole('admin', this.store.currentUser()));
-  protected readonly favMismatches = computed(() => this.store.favMismatches());
-  protected favChecked = signal(false);
 
   /**
    * Validate models of a given type. This checks the data in one collection of the database whether it is valid.
@@ -149,19 +98,5 @@ export class AocData {
 
   public async createIndexesOnCollection(): Promise<void> {
     await this.store.createIndexesOnCollection();
-  }
-
-  public async toggleFavAddresses(): Promise<void> {
-    if (this.favMismatches().length > 0) {
-      this.store.clearFavMismatches();
-    } else {
-      this.favChecked.set(false);
-      await this.store.checkFavAddresses();
-      this.favChecked.set(true);
-    }
-  }
-
-  public async repairFavMismatch(mismatch: FavMismatch, direction: 'toPerson' | 'toAddress'): Promise<void> {
-    await this.store.repairFavMismatch(mismatch, direction);
   }
 }

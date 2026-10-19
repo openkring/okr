@@ -171,6 +171,12 @@ export const PERSON_I18N_KEYS = {
     // 1.107 chat maintenance block
     chat_blocked_title:         PFX + 'chat.blocked.title',
     chat_blocked_default:       PFX + 'chat.blocked.default',
+    // «Hauptadressen prüfen» (person context menu); texts use single-brace params
+    check_fav_title:            PFX + 'checkFavAddresses.title',
+    check_fav_explanation:      PFX + 'checkFavAddresses.explanation',
+    check_fav_detail:           PFX + 'checkFavAddresses.detail',
+    check_fav_no_value:         PFX + 'checkFavAddresses.no_value',
+    check_fav_to_person:        PFX + 'checkFavAddresses.to_person',
 } satisfies Record<string, string>;
 
 export type PersonI18n = { [K in keyof typeof PERSON_I18N_KEYS]: Signal<string> };

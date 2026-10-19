@@ -500,17 +500,6 @@
       "content": "Creates an index on a collection. This is useful when an index is missing in the database and a query cannot be executed.",
       "button": "Create index",
       "select": "Select collection"
-    },
-    "fav": {
-      "title": "Fav address consistency",
-      "description": "Compares the cached fav* fields of each person with the actual favorite addresses.",
-      "hide": "Hide",
-      "validate": "Check",
-      "person": "Person",
-      "field": "Field",
-      "favperson": "Person (fav*)",
-      "address": "In address",
-      "nomismatches": "No discrepancies found."
     }
   },
   "doc": {

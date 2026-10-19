@@ -500,17 +500,6 @@
       "content": "Crea un indice su una collezione. Questo è utile quando manca un indice nel database e una query non può essere eseguita.",
       "button": "Creare un indice",
       "select": "Scegliere la collezione"
-    },
-    "fav": {
-      "title": "Coerenza degli indirizzi preferiti",
-      "description": "Confronta i campi fav* memorizzati nella cache di ogni persona con gli indirizzi preferiti effettivi.",
-      "hide": "Nascondere",
-      "validate": "Verificare",
-      "person": "Persona",
-      "field": "Campo",
-      "favperson": "Persona (fav*)",
-      "address": "Nell'indirizzo",
-      "nomismatches": "Nessuna discrepanza trovata."
     }
   },
   "doc": {

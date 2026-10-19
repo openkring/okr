@@ -16,7 +16,7 @@ import { getCategoryIndex, getFullName, getSystemQuery } from '@okr/shared-util-
 import { I18nService } from '@okr/shared-i18n';
 import { AOC_I18N_KEYS } from '@okr/aoc-util';
 
-import { addressValidations, computeFavoriteAddressInfo, getAddressIndex } from '@okr/subject-address-util';
+import { addressValidations, getAddressIndex } from '@okr/subject-address-util';
 import { commentValidations, getCommentIndex } from '@okr/comment-util';
 import { calEventValidations, getCaleventIndex } from '@okr/calevent-util';
 import { documentValidations, getDocumentIndex } from '@okr/content-document-util';
@@ -40,26 +40,16 @@ import { getResponsibilityIndex } from '@okr/relationship-responsibility-util';
 import { getSessionIndex } from '@okr/session-util';
 
 
-export interface FavMismatch {
-  personKey: string;
-  personName: string;
-  field: string;
-  cached: string;
-  fromAddress: string;
-}
-
 export type AocDataState = {
   modelType: string | undefined;
   log: LogInfo[];
   logTitle: string;
-  favMismatches: FavMismatch[];
 };
 
 export const initialState: AocDataState = {
   modelType: undefined,
   log: [],
   logTitle: '',
-  favMismatches: [],
 };
 
 export const AocDataStore = signalStore(
@@ -215,75 +205,6 @@ export const AocDataStore = signalStore(
               }
             }
           });
-      },
-
-      /**
-       * Compare the fav* cache fields on every PersonModel against the actual favorite addresses
-       * in the address sub-collection. Populates favMismatches so the UI can display them and
-       * offer to repair in either direction.
-       */
-      async checkFavAddresses(): Promise<void> {
-        patchState(store, { favMismatches: [] });
-        const tenantId = store.appStore.tenantId();
-        const dbQuery = getSystemQuery(tenantId);
-
-        const [persons, addresses] = await Promise.all([
-          store.appStore.firestoreService.getDataOnce<PersonModel>(PersonCollection, dbQuery, 'lastName', 'asc'),
-          store.appStore.firestoreService.getDataOnce<AddressModel>(AddressCollection, dbQuery, 'parentKey', 'asc'),
-        ]);
-
-        if (!persons || !addresses) return;
-
-        const mismatches: FavMismatch[] = [];
-        for (const person of persons) {
-          const personAddresses = addresses.filter(a => a.parentKey === `person.${person.okey}`);
-          const fav = computeFavoriteAddressInfo(personAddresses);
-
- /*          console.log(person);
-          console.log(personAddresses);
-          console.log(fav);
-          return; */
-
-          const name = `${person.firstName} ${person.lastName}`;
-          // favEmail/favPhone were stripped from persons (spec 1.19 Phase 4) —
-          // only the favZipCode cache remains to check.
-          const checks: Array<[string, string, string]> = [
-            ['favZipCode', person.favZipCode, fav.favZipCode],
-          ];
-          for (const [field, cached, fromAddress] of checks) {
-            if (cached !== fromAddress) {
-              mismatches.push({ personKey: person.okey, personName: name, field, cached, fromAddress });
-            }
-          }
-        }
-        patchState(store, { favMismatches: mismatches });
-      },
-
-      clearFavMismatches(): void {
-        patchState(store, { favMismatches: [] });
-      },
-
-      /**
-       * Repair a single fav* mismatch.
-       * direction 'toPerson'  → copy fromAddress value into person.fav* field
-       * direction 'toAddress' → find the favorite address and update its value from the cached person.fav* field
-       */
-      async repairFavMismatch(mismatch: FavMismatch, direction: 'toPerson' | 'toAddress'): Promise<void> {
-        if (direction === 'toAddress') {
-          // updating an address channel value is complex (different fields per channel) — not implemented
-          console.warn('AocDataStore.repairFavMismatch: toAddress direction is not yet implemented.');
-          return;
-        }
-        // direction === 'toPerson': write the address-derived value into the person document
-        const person = store.appStore.getPerson(mismatch.personKey);
-        if (!person) return;
-        (person as any)[mismatch.field] = mismatch.fromAddress;
-        console.log('AocData.repairavMismatch: ', person);
-        await store.appStore.firestoreService.updateModel(PersonCollection, person);
-        // remove fixed mismatch from state
-        patchState(store, { favMismatches: store.favMismatches().filter(m =>
-          !(m.personKey === mismatch.personKey && m.field === mismatch.field)
-        )});
       },
 
       /**
