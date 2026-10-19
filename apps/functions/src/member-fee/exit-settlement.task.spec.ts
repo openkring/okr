@@ -1,5 +1,5 @@
 /**
- * The settlement task lives at the deterministic id `exit-<membershipKey>` and is written in one
+ * The settlement task lives at the deterministic id `exit-<tenantId>-<membershipKey>` and is written in one
  * transaction (spec 1.105, final review I3); an archived membership is not settled (I1). Runs the real
  * Firestore paths against a small in-memory fake.
  */
@@ -62,7 +62,7 @@ const membership = (over: Doc = {}): Doc => ({
 });
 
 const ctx = (): ExitContext => ({
-  tenantId: 'scs', membershipKey: 'm1', memberLabel: 'Silvan Kamber',
+  tenantId: 'scs', membershipKey: 'm1', memberLabel: 'Silvan Kamber', sameEntryMemberships: 1,
   membership: membership() as unknown as ExitContext['membership'],
   input: {
     membership: { dateOfEntry: '20250205', dateOfExit: '20261031', category: 'active', orgKey: 'scs' },
@@ -75,12 +75,15 @@ const ctx = (): ExitContext => ({
   },
 });
 const due = (): ExitSettlement => computeExitSettlement(ctx().input);
-const TASK_ID = 'exit-m1';
+const TASK_ID = 'exit-scs-m1';
 /** What makes a doc at the task id a task the trigger wrote (anything else is squatted). */
 const SERVER = { tenants: ['scs'], tags: 'exit-settlement', relatedKey: 'membership.m1', author: { ...SYSTEM_AUTHOR } };
 
 describe('settlementTaskId', () => {
-  it('is deterministic per membership', () => expect(settlementTaskId('m1')).toBe(TASK_ID));
+  it('is deterministic per tenant and membership', () => expect(settlementTaskId('scs', 'm1')).toBe(TASK_ID));
+  it('differs per tenant, so one tenant never writes over another tenant\'s task', () => {
+    expect(settlementTaskId('gvs', 'm1')).not.toBe(settlementTaskId('scs', 'm1'));
+  });
 });
 
 describe('settlementTaskDecision (shared by the trigger and the backfill dry run)', () => {
@@ -111,7 +114,7 @@ describe('settlementTaskDecision (shared by the trigger and the backfill dry run
 });
 
 describe('openOrUpdateSettlementTask', () => {
-  it('creates the task at exit-<membershipKey>', async () => {
+  it('creates the task at exit-<tenantId>-<membershipKey>', async () => {
     const { db, store } = fakeDb({});
     expect(await openOrUpdateSettlementTask(db, ctx(), due())).toBe('create');
     const t = store['tasks'][TASK_ID];
@@ -166,8 +169,22 @@ describe('openOrUpdateSettlementTask', () => {
     expect(isAutoClosed(decided)).toBe(false);
     expect(settlementTaskDecision(due(), decided, 'scs', 'm1')).toBe('noop');
   });
-  it('replaces a squatted doc at the task id with a fresh server task', async () => {
+  it('never overwrites a squatted doc that is done (a decision may be lost)', async () => {
     const squat = { tenants: ['scs'], state: 'done', completionDate: '20261001', notes: 'Entschieden von Mallory', tags: '', author: { key: 'p9' } };
+    const { db, store } = fakeDb({ tasks: { [TASK_ID]: { ...squat } } });
+    expect(await openOrUpdateSettlementTask(db, ctx(), due())).toBe('noop');
+    expect(store['tasks'][TASK_ID]).toEqual(squat);
+  });
+  it('never overwrites a squatted doc with a completion date or a claim (a storno may be in progress)', async () => {
+    const base = { tenants: ['scs'], state: 'initial', completionDate: '', notes: 'x', tags: '', author: { key: 'p9' } };
+    for (const squat of [{ ...base, completionDate: '20261001' }, { ...base, ...claimPatch('inv1') }]) {
+      const { db, store } = fakeDb({ tasks: { [TASK_ID]: { ...squat } } });
+      expect(await openOrUpdateSettlementTask(db, ctx(), due())).toBe('noop');
+      expect(store['tasks'][TASK_ID]).toEqual(squat);
+    }
+  });
+  it('replaces an open, unclaimed squatted doc with a fresh server task', async () => {
+    const squat = { tenants: ['scs'], state: 'initial', completionDate: '', notes: 'von Mallory', tags: '', author: { key: 'p9' } };
     const { db, store } = fakeDb({ tasks: { [TASK_ID]: squat } });
     expect(await openOrUpdateSettlementTask(db, ctx(), due())).toBe('replace');
     const t = store['tasks'][TASK_ID];
@@ -193,8 +210,9 @@ describe('openOrUpdateSettlementTask', () => {
 describe('readSettlementTask', () => {
   it('reads the task by its deterministic id', async () => {
     const { db } = fakeDb({ tasks: { [TASK_ID]: { notes: 'n' } } });
-    expect(await readSettlementTask(db, 'm1')).toEqual({ notes: 'n' });
-    expect(await readSettlementTask(db, 'm2')).toBeUndefined();
+    expect(await readSettlementTask(db, 'scs', 'm1')).toEqual({ notes: 'n' });
+    expect(await readSettlementTask(db, 'scs', 'm2')).toBeUndefined();
+    expect(await readSettlementTask(db, 'gvs', 'm1')).toBeUndefined();
   });
 });
 
@@ -230,6 +248,24 @@ describe('loadExitContext', () => {
     expect(await load(base(membership({ isArchived: true })))).toBe('no-membership');
     expect(await loadExitContext(fakeDb(base(membership())).db, 'm9', 'scs', '20261018')).toBe('no-membership');
   });
+  it('loads an archived membership even without books, so its open task still closes', async () => {
+    const r = await load(base(membership({ isArchived: true }), {}), { includeArchived: true });
+    expect(isExitContext(r)).toBe(true);
+    if (!isExitContext(r)) return;
+    expect(r.input.booksId).toBe('');
+    const { db, store } = fakeDb({ tasks: { [TASK_ID]: { ...SERVER, state: 'initial', completionDate: '', notes: 'n' } } });
+    expect(await openOrUpdateSettlementTask(db, r, noExitSettlement())).toBe('close');
+    expect(store['tasks'][TASK_ID]['state']).toBe('done');
+  });
+  it('counts the live memberships of the member in the tenant with the same entry date and category', async () => {
+    const store = base(membership());
+    store['memberships']['m2'] = membership({ orgKey: 'other' });
+    store['memberships']['m3'] = membership({ category: 'junior' });
+    store['memberships']['m4'] = membership({ isArchived: true });
+    store['memberships']['m5'] = membership({ tenants: ['gvs'] });
+    const r = await load(store);
+    expect(isExitContext(r) && r.sameEntryMemberships).toBe(2);
+  });
   it('loads an archived membership only when asked to (the trigger closes its task)', async () => {
     const r = await load(base(membership({ isArchived: true })), { includeArchived: true });
     expect(isExitContext(r) && r.membership.isArchived).toBe(true);
@@ -257,6 +293,11 @@ describe('rebuildFeeRow', () => {
   it('does nothing without a fee schedule for the year', async () => {
     const { db } = fakeDb({ 'member-fees': { f1: feeRow() } });
     expect(await rebuildFeeRow(db, { ...ctx(), input: { ...ctx().input, schedule: undefined } }, '20261019')).toBe(false);
+  });
+  it('skips when two live memberships in the tenant share entry date and category (two orgs)', async () => {
+    const { db, store } = fakeDb({ 'member-fees': { f1: feeRow() } });
+    expect(await rebuildFeeRow(db, { ...withSchedule(), sameEntryMemberships: 2 }, '20261019')).toBe(false);
+    expect((store['member-fees']['f1']['positions'] as { amount: number }[])[0].amount).toBe(600);
   });
   it('leaves a row that moved on to an invoice meanwhile', async () => {
     const { db, store } = fakeDb({ 'member-fees': { f1: feeRow({ state: 'invoiced' }) } });

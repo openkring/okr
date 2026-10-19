@@ -25,6 +25,8 @@ export interface ExitContext {
   membershipKey: string;
   membership: MembershipModel;
   memberLabel: string;
+  /** live memberships of the member in the tenant with this entry date and category, incl. this one (fee-row match, §4.6) */
+  sameEntryMemberships: number;
   input: ExitSettlementInput;
 }
 
@@ -53,6 +55,16 @@ export function overlappingCount(
   return memberships.filter(m =>
     m.isArchived !== true && m.orgKey === orgKey &&
     str(m.dateOfEntry) <= last && (str(m.dateOfExit) === '' || str(m.dateOfExit) >= first)).length;
+}
+
+/**
+ * Live memberships (any org) with this entry date and category. The fee row carries neither the
+ * membership nor the org, so two of them (two orgs in one tenant) make the row match ambiguous.
+ */
+export function sameEntryCount(
+  memberships: { dateOfEntry?: string; category?: string; isArchived?: boolean }[], dateOfEntry: string, category: string,
+): number {
+  return memberships.filter(m => m.isArchived !== true && str(m.dateOfEntry) === dateOfEntry && str(m.category) === category).length;
 }
 
 /** The invoice as the computation sees it; Rappen for totals and payments, francs for positions. */
@@ -100,9 +112,13 @@ export function doneTaskDecision(task: DocumentData): string {
   return isAutoClosed(task) ? CLOSE_NOTE : storedDecision(str(task['notes']));
 }
 
-/** The one settlement task of a membership lives at this id (one exit per membership). */
-export function settlementTaskId(membershipKey: string): string {
-  return `exit-${membershipKey}`;
+/**
+ * The one settlement task of a membership in a tenant lives at this id (one exit per membership). The
+ * tenant is part of it: a membership can belong to several tenants, and one tenant's run must never
+ * write over another tenant's task.
+ */
+export function settlementTaskId(tenantId: string, membershipKey: string): string {
+  return `exit-${tenantId}-${membershipKey}`;
 }
 
 /** The exit year of a StoreDate exit, or 0 when there is none. */
@@ -166,6 +182,14 @@ export async function loadExitContext(
   ]);
   const configs = configsSnap.docs.map(d => ({ okey: d.id, data: d.data() }));
   const booksId = pickBooksId(configs, tenantId, orgKey);
+  const memberLabel = getFullName(str(membership.memberName1), str(membership.memberName2));
+  if (!booksId && data['isArchived'] === true) {
+    // an archived membership has nothing to settle; its open task must close even without books (I1)
+    return { tenantId, membershipKey, membership, memberLabel, sameEntryMemberships: 0, input: {
+      membership: { dateOfEntry: str(membership.dateOfEntry), dateOfExit: str(membership.dateOfExit), category: str(membership.category), orgKey },
+      overlappingMemberships: 0, schedule: undefined, categoryLists: {}, defaultCategoryList: '', booksId: '', invoices: [], today,
+    } };
+  }
   if (!booksId) {
     logger.info(`loadExitContext: membership ${membershipKey} (org ${orgKey || '-'}) has no unique books in tenant ${tenantId}, skipped`);
     return 'no-books';
@@ -190,6 +214,7 @@ export async function loadExitContext(
     .filter(d => d.id !== membershipKey && tenantsOf(d.data()).includes(tenantId))
     .map(d => d.data());
   const overlappingMemberships = overlappingCount([...others, membership], orgKey, exitYear);
+  const sameEntryMemberships = sameEntryCount([...others, membership], str(membership.dateOfEntry), str(membership.category));
 
   // computeExitSettlement does not look at the invoice state: a cancelled invoice and its
   // replacement would otherwise read as two matches (ambiguous).
@@ -210,7 +235,8 @@ export async function loadExitContext(
     tenantId,
     membershipKey,
     membership,
-    memberLabel: getFullName(str(membership.memberName1), str(membership.memberName2)),
+    memberLabel,
+    sameEntryMemberships,
     input: {
       membership: {
         dateOfEntry: str(membership.dateOfEntry), dateOfExit: str(membership.dateOfExit),
@@ -227,9 +253,9 @@ export async function loadExitContext(
   };
 }
 
-/** The membership's settlement task (read by its deterministic id), undefined when there is none. */
-export async function readSettlementTask(db: Firestore, membershipKey: string): Promise<DocumentData | undefined> {
-  return (await db.collection(TaskCollection).doc(settlementTaskId(membershipKey)).get()).data();
+/** The membership's settlement task in the tenant (read by its deterministic id), undefined when there is none. */
+export async function readSettlementTask(db: Firestore, tenantId: string, membershipKey: string): Promise<DocumentData | undefined> {
+  return (await db.collection(TaskCollection).doc(settlementTaskId(tenantId, membershipKey)).get()).data();
 }
 
 /** Who holds the tenant's treasurer responsibility today (delegate aware); undefined = unassigned. */

@@ -31,7 +31,7 @@ const CF_NAME = 'onMembershipExitWritten';
 const DUE_IN_DAYS = 14;
 
 export type UpsertDecision = 'create' | 'update' | 'close' | 'reopen' | 'replace' | 'noop';
-export type TaskState = 'missing' | 'open' | 'claimed' | 'done' | 'auto-closed' | 'squatted';
+export type TaskState = 'missing' | 'open' | 'claimed' | 'done' | 'auto-closed' | 'squatted' | 'squatted-locked';
 
 /** Replaces the close note when an auto-closed task is reopened: keeps the history, no longer reads as auto-closed. */
 export const REOPEN_NOTE = 'Wieder geöffnet: Austritt erneut geändert.';
@@ -122,7 +122,7 @@ const hasSettlementTag = (t: DocumentData): boolean =>
   typeof t['tags'] === 'string' && (t['tags'] as string).split(',').map(x => x.trim()).includes(EXIT_SETTLEMENT_TAG);
 
 /**
- * Whether the doc at `exit-<membershipKey>` is the task the trigger wrote: system author, the
+ * Whether the doc at `exit-<tenantId>-<membershipKey>` is the task the trigger wrote: system author, the
  * settlement tag, this membership, this tenant. The id is predictable and tasks are client-writable,
  * so anything else is a squat.
  */
@@ -134,13 +134,18 @@ export function isServerTask(task: DocumentData, tenantId: string, membershipKey
 }
 
 /**
- * The settlement task as `upsertDecision` sees it. A doc that is not a server task (`isServerTask`,
- * incl. one of another tenant) is 'squatted'; an archived task is never touched; a done task the
+ * The settlement task as `upsertDecision` sees it. A doc that is not a server task (`isServerTask`)
+ * is 'squatted' when open and unclaimed, else 'squatted-locked'; an archived task is never touched; a done task the
  * trigger closed itself is 'auto-closed', every other done task is the treasurer's decision.
  */
 export function taskStateOf(task: DocumentData | undefined, tenantId: string, membershipKey: string): TaskState {
   if (!task) return 'missing';
-  if (!isServerTask(task, tenantId, membershipKey)) return 'squatted';
+  if (!isServerTask(task, tenantId, membershipKey)) {
+    // never set over a done or claimed doc: it may hold a decision or a storno in progress
+    const locked = task['state'] === 'done' || (typeof task['completionDate'] === 'string' && task['completionDate'] !== '') ||
+      claimedInvoiceKey(task) !== '';
+    return locked ? 'squatted-locked' : 'squatted';
+  }
   if (task['isArchived'] === true) return 'done';
   const done = task['state'] === 'done' || (typeof task['completionDate'] === 'string' && task['completionDate'] !== '');
   if (done) return isAutoClosed(task) ? 'auto-closed' : 'done';
@@ -151,11 +156,13 @@ export function taskStateOf(task: DocumentData | undefined, tenantId: string, me
  * What to do with the settlement task (§4.5). A done task is a decision already taken: never
  * reopened, never duplicated. A claimed task (an invoice adjustment in progress, the storno possibly
  * written) is left alone too: closing or rewriting it would strand a cancelled invoice. A task the
- * trigger closed itself is reopened in place when something is due again. A squatted doc at the
- * task id is overwritten with a fresh server task once something is due (the id is ours by
- * convention); while nothing is due no task is needed.
+ * trigger closed itself is reopened in place when something is due again. An open, unclaimed
+ * squatted doc at the task id is overwritten with a fresh server task once something is due (the id
+ * is ours by convention); while nothing is due no task is needed. A done or claimed squat is never
+ * overwritten.
  */
 export function upsertDecision(s: ExitSettlement, task: TaskState): UpsertDecision {
+  if (task === 'squatted-locked') return 'noop';
   if (task === 'squatted') return s.case === 'none' ? 'noop' : 'replace';
   if (task === 'done' || task === 'claimed') return 'noop';
   if (s.case === 'none') return task === 'open' ? 'close' : 'noop';
@@ -174,13 +181,13 @@ export function reopenedTaskNotes(existing: string | undefined, generated: strin
 }
 
 /**
- * Create, update, close or reopen the membership's settlement task (`exit-<membershipKey>`) in ONE
+ * Create, update, close or reopen the membership's settlement task (`exit-<tenantId>-<membershipKey>`) in ONE
  * transaction, so two trigger events racing on the same membership (a category change writes the old
  * and the new membership) end in one task. Reused by the backfill.
  */
 export async function openOrUpdateSettlementTask(db: Firestore, ctx: ExitContext, settlement: ExitSettlement): Promise<UpsertDecision> {
   const today = getTodayStr(DateFormat.StoreDate);
-  const ref = db.collection(TaskCollection).doc(settlementTaskId(ctx.membershipKey));
+  const ref = db.collection(TaskCollection).doc(settlementTaskId(ctx.tenantId, ctx.membershipKey));
   const exitViewDate = convertDateFormatToString(ctx.membership.dateOfExit, DateFormat.StoreDate, DateFormat.ViewDate, false);
   const name = exitSettlementTaskName(ctx.memberLabel, settlement);
   const generated = exitSettlementTaskNotes(settlement, exitViewDate);
@@ -191,6 +198,7 @@ export async function openOrUpdateSettlementTask(db: Firestore, ctx: ExitContext
     const state = taskStateOf(found, ctx.tenantId, ctx.membershipKey);
     const decision = upsertDecision(settlement, state);
     if (state === 'claimed') logger.info(`${CF_NAME}: task of membership ${ctx.membershipKey} is claimed by an invoice adjustment, left alone`);
+    if (state === 'squatted-locked') logger.warn(`${CF_NAME}: doc ${ref.id} is not a settlement task but is done or claimed, left alone`);
     if (state === 'squatted') {
       logger.warn(`${CF_NAME}: doc ${ref.id} is not a settlement task of tenant ${ctx.tenantId} / membership ${ctx.membershipKey}` +
         (decision === 'replace' ? ', overwritten with a fresh task' : ', nothing due, left alone'));
@@ -300,17 +308,7 @@ export const onMembershipExitWritten = onDocumentWrittenWithAuthContext(
     const writer = { authType: String(event.authType), authId: event.authId };
 
     const keys: string[] = exitChanged(before, after) ? [membershipKey] : [];
-    const created = !before && !!after;
-    if (keys.length === 0 && !created) return;
-    let tenantId: string | undefined;
-    try {
-      tenantId = await settlementTenantOf(db, membershipKey, writer);
-    } catch (err) {
-      logger.error(`${CF_NAME}: writer check failed for membership ${membershipKey}`, err);
-    }
-    if (!tenantId) return;
-
-    if (created && after) {
+    if (!before && after) {
       try {
         const memberKey = typeof after['memberKey'] === 'string' ? (after['memberKey'] as string) : '';
         const orgKey = typeof after['orgKey'] === 'string' ? (after['orgKey'] as string) : '';
@@ -323,6 +321,15 @@ export const onMembershipExitWritten = onDocumentWrittenWithAuthContext(
         logger.error(`${CF_NAME}: sibling lookup failed for membership ${membershipKey}`, err);
       }
     }
+    // the writer (users read) is resolved only when there is something to settle
+    if (keys.length === 0) return;
+    let tenantId: string | undefined;
+    try {
+      tenantId = await settlementTenantOf(db, membershipKey, writer);
+    } catch (err) {
+      logger.error(`${CF_NAME}: writer check failed for membership ${membershipKey}`, err);
+    }
+    if (!tenantId) return;
 
     for (const key of keys) {
       try {

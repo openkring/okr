@@ -129,6 +129,10 @@ describe('upsertDecision', () => {
   it('leaves a squatted doc alone while nothing is due (no task is needed)', () => {
     expect(upsertDecision(settlement('none'), 'squatted')).toBe('noop');
   });
+
+  it.each([...due, 'none' as SettlementCase])('never overwrites a locked squat (done, completed or claimed) when %s', (c) => {
+    expect(upsertDecision(settlement(c), 'squatted-locked')).toBe('noop');
+  });
 });
 
 describe('flattenCategoryLists', () => {
@@ -396,8 +400,15 @@ describe('isServerTask / taskStateOf (squatting)', () => {
     expect(taskStateOf(doc, 'scs', 'm1')).toBe('squatted');
   });
 
-  it('a squatted done or archived doc is still squatted, not a decision', () => {
-    expect(taskStateOf({ ...server, tags: '', state: 'done', completionDate: '20261001' }, 'scs', 'm1')).toBe('squatted');
+  it('a squatted doc that is done, completed or claimed is locked: never overwritten', () => {
+    expect(taskStateOf({ ...server, tags: '', state: 'done', completionDate: '20261001' }, 'scs', 'm1')).toBe('squatted-locked');
+    expect(taskStateOf({ ...server, tags: '', state: 'done' }, 'scs', 'm1')).toBe('squatted-locked');
+    expect(taskStateOf({ ...server, tags: '', completionDate: '20261001' }, 'scs', 'm1')).toBe('squatted-locked');
+    expect(taskStateOf({ ...server, tags: '', ...claimPatch('inv1') }, 'scs', 'm1')).toBe('squatted-locked');
+  });
+
+  it('an open, unclaimed squatted doc (also archived) is squatted', () => {
+    expect(taskStateOf({ ...server, tags: '' }, 'scs', 'm1')).toBe('squatted');
     expect(taskStateOf({ ...server, tags: '', isArchived: true }, 'scs', 'm1')).toBe('squatted');
   });
 

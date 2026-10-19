@@ -570,7 +570,7 @@
       "invalid-claim": "The linked invoice does not fit this exit. Please check it by hand.",
       "state-changed": "The case has changed in the meantime. Please reopen the task.",
       "no-membership": "The membership was not found.",
-      "no-books": "No unique set of books is set up for the organisation of this membership. Please settle the exit by hand."
+      "no-books": "No set of books is clearly assigned to the organisation of this membership. Please settle the exit by hand."
     },
     "doneToast": "The exit has been settled."
   }

@@ -21,25 +21,29 @@ const FEE_ROW_OPEN_STATES = ['initial', 'review'];
 export type FeeRowPlan =
   | { action: 'rebuild'; rowKey: string }
   | { action: 'ambiguous'; rowKeys: string[] }
-  | { action: 'skip'; why: 'archived' | 'other-year' | 'no-row' };
+  | { action: 'skip'; why: 'archived' | 'other-year' | 'membership-collision' | 'no-row' };
 
 interface FeeRowMembership { memberKey?: string; dateOfEntry?: string; dateOfExit?: string; category?: string; isArchived?: boolean }
 
-/** A fee row that is not yet on its way to an invoice. */
-const isOpenRow = (f: DocumentData): boolean => FEE_ROW_OPEN_STATES.includes(str(f['state'])) && f['isArchived'] !== true;
+/** A fee row that is not yet on its way to an invoice: open state, not posted natively, not uploaded to bexio. */
+const isOpenRow = (f: DocumentData): boolean => FEE_ROW_OPEN_STATES.includes(str(f['state'])) && f['isArchived'] !== true &&
+  str(f['invoiceKey']) === '' && str(f['invoiceBexioId']) === '';
 
 /**
  * Which fee row to rebuild. Only for an exit in the running year or a cleared exit; the row has no
- * membership key, so it is matched by tenant, member, entry date and category. Exactly one open row
- * ('initial' | 'review') → rebuild; several → nothing (ambiguous).
+ * membership key, so it is matched by tenant, member, entry date and category; when the member has
+ * more than one live membership in the tenant with that entry date and category (two orgs) the match
+ * is not safe and nothing is done. Exactly one open row ('initial' | 'review', no invoice yet) →
+ * rebuild; several → nothing (ambiguous).
  */
 export function feeRowToRebuild(
-  rows: { okey: string; data: DocumentData }[], m: FeeRowMembership, tenantId: string, today: string,
+  rows: { okey: string; data: DocumentData }[], m: FeeRowMembership, tenantId: string, today: string, sameEntryMemberships = 1,
 ): FeeRowPlan {
   if (m.isArchived === true) return { action: 'skip', why: 'archived' };
   const exit = str(m.dateOfExit);
   const hasExit = /^\d{8}$/.test(exit) && !exit.startsWith('9999');
   if (hasExit && exit.substring(0, 4) !== today.substring(0, 4)) return { action: 'skip', why: 'other-year' };
+  if (sameEntryMemberships > 1) return { action: 'skip', why: 'membership-collision' };
   const hits = rows.filter(({ data: f }) => isOpenRow(f) && tenantsOf(f).includes(tenantId) &&
     str((f['member'] as { key?: unknown } | undefined)?.key) === str(m.memberKey) && !!m.memberKey &&
     str(f['dateOfEntry']) === str(m.dateOfEntry) && str(f['category']) === str(m.category));
@@ -96,7 +100,11 @@ export async function rebuildFeeRow(db: Firestore, ctx: ExitContext, today: stri
   if (!memberKey || !schedule || String(schedule.year) !== today.substring(0, 4)) return false;
 
   const snap = await db.collection(MemberFeeCollection).where('member.key', '==', memberKey).get();
-  const plan = feeRowToRebuild(snap.docs.map(d => ({ okey: d.id, data: d.data() })), m, tenantId, today);
+  const plan = feeRowToRebuild(snap.docs.map(d => ({ okey: d.id, data: d.data() })), m, tenantId, today, ctx.sameEntryMemberships);
+  if (plan.action === 'skip' && plan.why === 'membership-collision') {
+    logger.warn(`${CF_NAME}: member ${memberKey} has ${ctx.sameEntryMemberships} live memberships with the same entry date and category in tenant ${tenantId}, fee row of membership ${ctx.membershipKey} not rebuilt`);
+    return false;
+  }
   if (plan.action === 'ambiguous') {
     logger.warn(`${CF_NAME}: ${plan.rowKeys.length} open fee rows match membership ${ctx.membershipKey} (${plan.rowKeys.join(', ')}), none rebuilt`);
     return false;

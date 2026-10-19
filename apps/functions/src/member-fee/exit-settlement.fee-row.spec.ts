@@ -44,8 +44,14 @@ describe('feeRowToRebuild', () => {
     ['another entry date', { dateOfEntry: '20240101' }],
     ['another category', { category: 'junior' }],
     ['archived', { isArchived: true }],
+    ['posted natively (invoiceKey)', { invoiceKey: 'inv1' }],
+    ['uploaded to bexio (invoiceBexioId)', { invoiceBexioId: '42' }],
   ])('never touches a row that is %s', (_why, over) => {
     expect(feeRowToRebuild([row('f1', over)], m(), 'scs', TODAY)).toEqual({ action: 'skip', why: 'no-row' });
+  });
+
+  it('skips when the member has two live memberships in the tenant with the same entry date and category (two orgs)', () => {
+    expect(feeRowToRebuild([row('f1')], m(), 'scs', TODAY, 2)).toEqual({ action: 'skip', why: 'membership-collision' });
   });
 
   it('does nothing when several rows match', () => {

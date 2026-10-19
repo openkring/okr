@@ -58,7 +58,7 @@ export const backfillExitSettlements = onCall(
         if (!isExitContext(ctx)) { logger.info(`${CF_NAME}: membership ${key} skipped: ${ctx}`); result.skipped.push(key); continue; }
         const settlement = computeExitSettlement(ctx.input);
         const decision: UpsertDecision = dryRun === true
-          ? settlementTaskDecision(settlement, await readSettlementTask(db, key), tenantId, key)
+          ? settlementTaskDecision(settlement, await readSettlementTask(db, tenantId, key), tenantId, key)
           : await openOrUpdateSettlementTask(db, ctx, settlement);
         if (decision === 'create' || decision === 'replace') result.created.push(key);
         else if (decision === 'noop') result.skipped.push(key);

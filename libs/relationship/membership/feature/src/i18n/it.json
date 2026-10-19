@@ -570,7 +570,7 @@
       "invalid-claim": "La fattura collegata non corrisponde a questa uscita. Controllala a mano.",
       "state-changed": "Il caso nel frattempo è cambiato. Riapri il compito.",
       "no-membership": "L'iscrizione non è stata trovata.",
-      "no-books": "Per l'organizzazione di questa iscrizione non è configurata una contabilità univoca. Regola l'uscita a mano."
+      "no-books": "All'organizzazione di questa iscrizione non è chiaramente assegnata alcuna contabilità. Regola l'uscita a mano."
     },
     "doneToast": "L'uscita è stata conteggiata."
   }
