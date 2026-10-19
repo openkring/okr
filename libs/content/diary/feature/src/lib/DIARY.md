@@ -4,9 +4,8 @@
 
 The diary is the repo owner's private archive, imported from Google Drive by two Cloud Functions
 (`dryRunDiaryImport` / `commitDiaryImport`, spec 1.34). This lib holds the single screen that
-prepares and repairs that import: `/aoc/diary`, `isAdminGuard`, contributed by the `aoc`
-catalogue block (the same owner-vs-target split as `aoc/trip` — aoc owns the entry point, another
-lib ships the screen).
+prepares and repairs that import: `/diary/import`, `isAdminGuard`, reached from the Tagebuch context menu
+(«Import vorbereiten»). The old `/aoc/diary` url redirects here.
 
 Two halves:
 
@@ -54,8 +53,8 @@ uses, so 'Zürich ZH' and 'Zuerich' are one row rather than two half-used ones.
 
 | File | Role |
 |---|---|
-| `aoc-diary.ts` | the screen: prerequisites card + a card per reference kind |
-| `aoc-diary.store.ts` | component-provided `signalStore`; owns the diaries stream and performs every write |
+| `diary-import.ts` | the screen: prerequisites card + a card per reference kind |
+| `diary-import.store.ts` | component-provided `signalStore`; owns the diaries stream and performs every write |
 | `diary-reference-list.modal.ts` | the places/people list — search + all/open/matched filter, `checkmark` vs `help` per row |
 | `diary-usage-list.modal.ts` | the diaries one reference appears in, with 'create' / 'link' per entry |
 

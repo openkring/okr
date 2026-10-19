@@ -153,8 +153,8 @@ const aoc: BlockRoutes = {
   routes: (): Route[] => [{
     path: 'aoc',
     // The FLOOR every `/aoc` screen shares — the union of the children's own requirements, NOT
-    // the admin gate. The admin gate lives on the eleven admin-only children below (the ones the
-    // 2026-08-05 rulings do not name; the `content`, `doc` and `trip` bookmark redirects carry no guard). See the block comment for why it is contentAdmin and not privileged
+    // the admin gate. The admin gate lives on the ten admin-only children below (the ones the
+    // 2026-08-05 rulings do not name; the `content`, `doc`, `trip` and `diary` bookmark redirects carry no guard). See the block comment for why it is contentAdmin and not privileged
     // (R-5) nor merely authenticated.
     canActivate: [isContentAdminGuard()],
     children: [
@@ -184,7 +184,8 @@ const aoc: BlockRoutes = {
       // See the block comment: `@okr/trip-feature` is `geo`'s lib, deliberately.
       // 1.101 phase 2: remove after the next release
       { path: 'trip', redirectTo: '/trips/maintenance' },
-      { path: 'diary',      canActivate: [isAdminGuard()], loadComponent: () => import('@okr/content-diary-feature').then(m => m.AocDiary) },
+      // 1.101 phase 2: remove after the next release
+      { path: 'diary', redirectTo: '/diary/import' },
       // SOFTENED by owner ruling R-5, 2026-08-05, to match the live `aoc-website` menu doc's
       // `roleNeeded: contentAdmin`. This is the one place the live `app.routes.ts` guard is NOT
       // reproduced verbatim: it writes `isPrivilegedGuard`, which was inert under the old admin
@@ -1537,6 +1538,9 @@ const diary: BlockRoutes = {
       path: 'diary',
       canActivate: [isAuthenticatedGuard],
       children: [
+        // Import preparation (moved from AOC, spec 1.101 phase 2). BEFORE `:listId/:contextMenuName`.
+        // Admin: the page calls the Drive check and the import dry run.
+        { path: 'import', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/content-diary-feature').then(m => m.DiaryImport) },
         { path: ':listId/:contextMenuName', loadComponent: () => import('@okr/content-diary-feature').then(m => m.DiaryList) },
       ],
     },

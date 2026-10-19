@@ -8,10 +8,7 @@ describe('catalogue route coverage', () => {
     // UNGATED_ROUTES: catalogued menu rows may point at a control-plane screen that is
     // deliberately outside FEATURE_ROUTES (the feature picker). It still has to resolve.
     const routes = [...composeFeatureRoutes(FEATURE_ROUTES), ...UNGATED_ROUTES];
-    // TRANSITIONAL (spec 1.101 phase 2, Task 2): Wartung rows are catalogued before their pages;
-    // Tasks 6-9 add each route and delete its entry. Empty by the end of the branch.
-    const pending = ['/diary/import'];
-    const unresolved = collectMenuUrls(FEATURE_BLOCKS).filter(u => !pending.includes(u) && !urlResolves(routes, u));
+    const unresolved = collectMenuUrls(FEATURE_BLOCKS).filter(u => !urlResolves(routes, u));
     expect(unresolved).toEqual([]);
   });
 });
@@ -52,19 +49,23 @@ describe('document orphans route (spec 1.101 phase 2)', () => {
   });
 });
 
-describe('trip maintenance route (spec 1.101 phase 2)', () => {
+describe('trip maintenance and diary import routes (spec 1.101 phase 2)', () => {
   const blockRoutes = (id: string) => FEATURE_ROUTES.find(b => b.id === id)!.routes();
   const child = (routes: ReturnType<typeof blockRoutes>, path: string) => routes.find(r => r.path === path)?.children ?? [];
 
-  it('the old /aoc/trip url redirects to its new home', () => {
+  it('the old /aoc/trip and /aoc/diary urls redirect to their new homes', () => {
     const aoc = child(blockRoutes('aoc'), 'aoc');
     const trip = aoc.find(r => r.path === 'trip');
+    const diary = aoc.find(r => r.path === 'diary');
     expect(trip?.redirectTo).toBe('/trips/maintenance');
     expect(trip?.loadComponent).toBeUndefined();
+    expect(diary?.redirectTo).toBe('/diary/import');
+    expect(diary?.loadComponent).toBeUndefined();
   });
 
   it.each([
     ['trip', 'trips', 'maintenance'],
+    ['diary', 'diary', 'import'],
   ])('the %s block has %s/%s ahead of the :listId catch-all, behind one guard', (block, root, path) => {
     const children = child(blockRoutes(block), root);
     const paths = children.map(r => r.path);

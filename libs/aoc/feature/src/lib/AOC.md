@@ -16,7 +16,7 @@ The AOC (Admin Operations Console) is a restricted administrative dashboard for 
 - **Doc** — moved to Dokumente › Verwaiste Dateien (`/document/orphans`, `@okr/content-document-feature`); `/aoc/doc` redirects there.
 - **Email** — «E-Mail-Ereignisse» (`aoc-email.ts`): the delivery/bounce events of outgoing mail, with its own menu row (`aoc-email` → `/aoc/email`).
 - **Trip** — moved to Logbuch › Logbuch aufräumen (`/trips/maintenance`, `@okr/trip-feature`, tripAdmin); `/aoc/trip` redirects there.
-- **Diary** — Prepare and repair the diary import (`@okr/content-diary-feature`, same owner-vs-target split as `aoc/trip`).
+- **Diary** — moved to Tagebuch › Import vorbereiten (`/diary/import`, `@okr/content-diary-feature`); `/aoc/diary` redirects there.
 
 There is no Storage page (removed, spec 1.101). Flight Tracker is not an AOC tool: it is a main-menu entry (block `mobility`).
 

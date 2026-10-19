@@ -6,10 +6,10 @@ import {
 
 import { DateInput, Header } from '@okr/shared-ui';
 
-import { AocDiaryStore } from './aoc-diary.store';
+import { DiaryImportStore } from './diary-import.store';
 
 /**
- * The diary admin screen — `/aoc/diary`, `isAdminGuard`.
+ * The diary admin screen — `/diary/import`, `isAdminGuard` (the `/aoc/diary` bookmark redirects here).
  *
  * It is the home the diary import's two diagnostics were waiting for: the Drive health check and
  * the dry run lived on `/security/privacy-audit` only because that was the app's sole admin-only
@@ -22,14 +22,14 @@ import { AocDiaryStore } from './aoc-diary.store';
  * from the imported `diaries` instead — which is also what makes a fix writable.
  */
 @Component({
-  selector: 'okr-aoc-diary',
+  selector: 'okr-diary-import',
   standalone: true,
   imports: [
     Header, DateInput,
     IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton, IonNote,
     IonSpinner, IonBadge,
   ],
-  providers: [AocDiaryStore],
+  providers: [DiaryImportStore],
   styles: [`
     .samples { font-size: 12px; opacity: .8; word-break: break-all; }
   `],
@@ -193,8 +193,8 @@ import { AocDiaryStore } from './aoc-diary.store';
     </ion-content>
   `,
 })
-export class AocDiary {
-  protected readonly store = inject(AocDiaryStore);
+export class DiaryImport {
+  protected readonly store = inject(DiaryImportStore);
 
   /**
    * Also blocked while the diaries load: the suggested floor is derived from them, and until it

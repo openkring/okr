@@ -23,7 +23,7 @@ import { PersonNewFormModel, convertFormToNewPerson } from '@okr/subject-person-
 import type { DiaryReferenceListResult } from './diary-reference-list.modal';
 import type { DiaryUsageListResult } from './diary-usage-list.modal';
 
-export type AocDiaryState = {
+export type DiaryImportState = {
   isCheckingDrive: boolean;
   driveResult: DriveAccessResult | undefined;
   isDryRunning: boolean;
@@ -36,7 +36,7 @@ export type AocDiaryState = {
   fromDateOverride: string | undefined;
 };
 
-export const initialState: AocDiaryState = {
+export const initialState: DiaryImportState = {
   isCheckingDrive: false,
   driveResult: undefined,
   isDryRunning: false,
@@ -56,7 +56,7 @@ export const initialState: AocDiaryState = {
  * per fix. That is why both are pulled in with a dynamic `await import()` and never injected the
  * other way round — see the store↔modal DI contract in the `new-feature` skill.
  */
-export const AocDiaryStore = signalStore(
+export const DiaryImportStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     diaryService: inject(DiaryService),
