@@ -93,3 +93,4 @@ export * from './lib/viewdate-input';
 export * from './lib/year-select';
 export * from './lib/file-tiles';
 export * from './lib/radio-group';
+export * from './lib/report.modal';

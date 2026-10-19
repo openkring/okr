@@ -141,5 +141,15 @@
     "exifError": "Non è stato possibile leggere i dati EXIF."
   },
   "close": "Chiudere",
-  "withTime": "con orario"
+  "withTime": "con orario",
+  "report": {
+    "kind": {
+      "report": "Rapporto",
+      "check": "Verificare + riparare",
+      "operation": "Esercizio",
+      "migration": "Migrazione"
+    },
+    "empty": "Non è stato trovato nulla — tutto in ordine.",
+    "ranAt": "Verificato il"
+  }
 }

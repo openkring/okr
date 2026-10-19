@@ -141,5 +141,15 @@
     "exifError": "EXIF data could not be read."
   },
   "close": "Close",
-  "withTime": "with time"
+  "withTime": "with time",
+  "report": {
+    "kind": {
+      "report": "Report",
+      "check": "Check + repair",
+      "operation": "Operations",
+      "migration": "Migration"
+    },
+    "empty": "Nothing found — everything is fine.",
+    "ranAt": "Checked on"
+  }
 }
