@@ -523,21 +523,21 @@ const page = await browser.newPage({ viewport: { width: 1200, height: 1200 } });
  */
 /**
  * Native iOS app icon (spec 1.10 Phase 3): the single 1024² universal icon in
- * `ios/App/App/Assets.xcassets/AppIcon.appiconset`, from logo-maskable — square and opaque, like
- * apple-touch-icon; iOS applies its own rounded mask. Apple rejects an icon that merely HAS an alpha
+ * `ios/App/App/Assets.xcassets/AppIcon.appiconset`, from the full-bleed master on white — iOS only
+ * rounds the corners, so the maskable's safe-zone inset would show as a wide coloured frame. Apple rejects an icon that merely HAS an alpha
  * channel (ITMS-90717), and a canvas PNG always has one, so `sips` drops it via a max-quality JPEG
  * round trip. The file name stays the one Contents.json references.
  */
-function writeIosIcon(appDir, maskable) {
+function writeIosIcon(appDir, fullBleed) {
   const set = path.join(appDir, 'ios/App/App/Assets.xcassets/AppIcon.appiconset');
-  if (!fs.existsSync(set) || !maskable) return null;
+  if (!fs.existsSync(set) || !fullBleed) return null;
   const contents = JSON.parse(fs.readFileSync(path.join(set, 'Contents.json'), 'utf8'));
   const entry = contents.images.find((i) => i.size === '1024x1024' && i.filename);
   if (!entry) return 'no 1024x1024 entry in AppIcon Contents.json — skipped';
   if (DRY) return `${entry.filename} (dry run, not written)`;
   const target = path.join(set, entry.filename);
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'okr-ios-icon-'));
-  fs.writeFileSync(path.join(tmp, 'icon.png'), Buffer.from(maskable.split(',')[1], 'base64'));
+  fs.writeFileSync(path.join(tmp, 'icon.png'), Buffer.from(fullBleed.split(',')[1], 'base64'));
   execFileSync('sips', ['-z', '1024', '1024', '-s', 'format', 'jpeg', '-s', 'formatOptions', '100',
     path.join(tmp, 'icon.png'), '--out', path.join(tmp, 'icon.jpg')], { stdio: 'ignore' });
   execFileSync('sips', ['-s', 'format', 'png', path.join(tmp, 'icon.jpg'), '--out', target], { stdio: 'ignore' });
@@ -549,17 +549,33 @@ function writeIosIcon(appDir, maskable) {
  * Google Play listing graphics (spec 1.10 Phase 3b), written only when the app keeps its store
  * texts in `store/android/de-DE/` (fastlane `supply` layout):
  *
- *   images/icon.png            512² — the maskable rendition (Play applies its own mask)
+ *   images/icon.png            512² — the full-bleed master on white (Play only rounds the corners)
  *   images/featureGraphic.png  1024×500 — the mark on its own backdrop colour, plus the app name
  *                              from `store/android/de-DE/title.txt`
  */
-async function writeStoreGraphics(appDir, maskable) {
+/** The master composited onto opaque white, 1024² — for surfaces that only round the corners. */
+async function flattenOnWhite(master) {
+  if (!master) return null;
+  return page.evaluate(async (src) => {
+    const img = await new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = src; });
+    const c = document.createElement('canvas');
+    c.width = c.height = 1024;
+    const x = c.getContext('2d');
+    x.fillStyle = '#ffffff'; x.fillRect(0, 0, 1024, 1024);
+    x.drawImage(img, 0, 0, 1024, 1024);
+    return c.toDataURL('image/png');
+  }, master);
+}
+
+async function writeStoreGraphics(appDir, maskable, fullBleed) {
   const lang = path.join(appDir, 'store/android/de-DE');
-  if (!fs.existsSync(lang) || !maskable) return null;
+  if (!fs.existsSync(lang) || !maskable || !fullBleed) return null;
   const titleFile = path.join(lang, 'title.txt');
   const title = fs.existsSync(titleFile) ? fs.readFileSync(titleFile, 'utf8').trim() : '';
-  const out = await page.evaluate(async ({ maskable, title }) => {
-    const img = await new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = maskable; });
+  const out = await page.evaluate(async ({ maskable, fullBleed, title }) => {
+    const load = (src) => new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = src; });
+    const img = await load(maskable);
+    const mark = await load(fullBleed);
     const probe = document.createElement('canvas');
     probe.width = probe.height = 1;
     probe.getContext('2d').drawImage(img, 0, 0, 1, 1, 0, 0, 1, 1);
@@ -567,7 +583,7 @@ async function writeStoreGraphics(appDir, maskable) {
     const backdrop = `rgb(${r},${g},${b})`;
     const icon = document.createElement('canvas');
     icon.width = icon.height = 512;
-    icon.getContext('2d').drawImage(img, 0, 0, 512, 512);
+    icon.getContext('2d').drawImage(mark, 0, 0, 512, 512);
     const fg = document.createElement('canvas');
     fg.width = 1024; fg.height = 500;
     const x = fg.getContext('2d');
@@ -580,7 +596,7 @@ async function writeStoreGraphics(appDir, maskable) {
     while (x.measureText(title).width > 450 && size > 40) { size -= 2; x.font = `700 ${size}px -apple-system, "Helvetica Neue", Arial, sans-serif`; }
     x.fillText(title, 540, 250);
     return { icon: icon.toDataURL('image/png'), feature: fg.toDataURL('image/png') };
-  }, { maskable, title });
+  }, { maskable, fullBleed, title });
   if (DRY) return 'icon.png + featureGraphic.png (dry run, not written)';
   const images = path.join(lang, 'images');
   fs.mkdirSync(images, { recursive: true });
@@ -746,6 +762,7 @@ for (const tenant of tenants) {
   let resolvedBytes = 0;
   let lastFavicon = null;
   let lastMaskable = null;
+  let lastMaster = null;
   let lastRound = null;
   let lastMono = null;
   let resolvedIsSvg = false;
@@ -813,6 +830,7 @@ for (const tenant of tenants) {
     if (suffix === '') {
       lastFavicon = r.favicon;
       lastMaskable = r.maskable;
+      lastMaster = r.master;
       lastRound = r.round;
     }
     if (suffix === '-mono') lastMono = r.master;
@@ -858,9 +876,12 @@ for (const tenant of tenants) {
   );
   const android = await writeAndroidIcons(appDir, lastMaskable, lastRound, lastMono);
   if (android) console.log(`   android: ${android}`);
-  const ios = writeIosIcon(appDir, lastMaskable);
+  // iOS and Google Play only round the corners, so they get the full-bleed master (on white: the
+  // master's whites are transparent). The maskable's 72% inset would show as a wide coloured frame.
+  const fullBleed = await flattenOnWhite(lastMaster);
+  const ios = writeIosIcon(appDir, fullBleed);
   if (ios) console.log(`   ios: ${ios}`);
-  const storeGfx = await writeStoreGraphics(appDir, lastMaskable);
+  const storeGfx = await writeStoreGraphics(appDir, lastMaskable, fullBleed);
   if (storeGfx) console.log(`   store: ${storeGfx}`);
 
   await doWebsite();
