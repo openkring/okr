@@ -4,6 +4,7 @@ export * from './lib/form-definition.model';
 export * from './lib/activity.model';
 export * from './lib/address.model';
 export * from './lib/address-directory.model';
+export * from './lib/chat-status.model';
 export * from './lib/alias.model';
 export * from './lib/alias-space.model';
 export * from './lib/alias-stats.model';
