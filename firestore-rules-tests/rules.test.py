@@ -775,6 +775,13 @@ single_cases = [
      body({"isArchived": False, "state": "planned", "completionDate": ""}), ["isArchived", "state", "completionDate"]),
     ("privileged P PATCH tkA.author -> pC -> ALLOW", True, PATCH, "tasks/tkA", P,
      body({"author": {"key": "pC", "name1": "C"}}), ["author"]),
+    # settlement task ids (spec 1.105): exit-* is server-only, even for privileged
+    ("author E create tasks/exit-t1-m1 -> DENY (server-only id)", False, POST, "tasks?documentId=exit-t1-m1", E,
+     body({"tenants": ["t1"], "isArchived": False, "shareKey": "", "name": "N", "author": {"key": "pE", "name1": "E"}, "state": "planned", "completionDate": ""}), None),
+    ("privileged P create tasks/exit-t1-m1 -> DENY (server-only id)", False, POST, "tasks?documentId=exit-t1-m1", P,
+     body({"tenants": ["t1"], "isArchived": False, "shareKey": "", "name": "N", "author": {"key": "pE", "name1": "E"}, "state": "planned", "completionDate": ""}), None),
+    ("author E create tasks/abc -> ALLOW (normal id)", True, POST, "tasks?documentId=abc", E,
+     body({"tenants": ["t1"], "isArchived": False, "shareKey": "", "name": "N", "author": {"key": "pE", "name1": "E"}, "state": "planned", "completionDate": ""}), None),
     # contracts / contract-documents (spec 1.5 §5.1)
     ("userA GET contracts/cLoanA (own party) -> ALLOW", True, GET, "contracts/cLoanA", A, None, None),
     ("userB GET contracts/cLoanA (stranger) -> DENY", False, GET, "contracts/cLoanA", B, None, None),
