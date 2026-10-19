@@ -467,8 +467,7 @@
     "choose_room_or_member": "Choisir un salon ou un membre<br>pour afficher les détails",
     "select": {
       "roomMember": {
-        "label": "Choisir une personne",
-        "description": "Si le champ est vide, tous les salons de chat sont affichés. En sélectionnant une personne, vous limitez la sélection à tous les salons où cette personne est membre."
+        "label": "Choisir une personne"
       }
     },
     "room": {
@@ -612,11 +611,6 @@
       "confirm_here": "Attribuer le salon « {{ name }} » à cette app ? Il apparaîtra alors dans la vue d'ensemble des discussions.",
       "confirm_hide": "Masquer le salon « {{ name }} » ? Il n'apparaîtra alors dans aucune app.",
       "conf": "Attribution enregistrée."
-    },
-    "blocked": {
-      "title": "Chat temporairement indisponible",
-      "default": "Le chat est en cours de maintenance. Il sera bientôt de retour.",
-      "call": "Les appels ne sont pas possibles pendant la maintenance."
     },
     "block": {
       "title": "Bloquer le chat",

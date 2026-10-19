@@ -467,8 +467,7 @@
     "choose_room_or_member": "Raum oder Mitglied auswählen<br>Details anzeigen",
     "select": {
       "roomMember": {
-        "label": "Person wählen",
-        "description": "Wenn das Feld leer ist, werden alle Chat Räume angezeigt. Mit der Auswahl einer Person begrenzst du die Auswahl auf alle Räume, wo diese Person Member ist."
+        "label": "Person wählen"
       }
     },
     "room": {
@@ -612,11 +611,6 @@
       "confirm_here": "Den Raum «{{ name }}» dieser App zuordnen? Er erscheint dann in der Chat-Übersicht.",
       "confirm_hide": "Den Raum «{{ name }}» ausblenden? Er erscheint dann in keiner App mehr.",
       "conf": "Zuordnung gespeichert."
-    },
-    "blocked": {
-      "title": "Chat vorübergehend nicht verfügbar",
-      "default": "Der Chat wird gerade gewartet. Er ist bald wieder da.",
-      "call": "Anrufe sind während der Wartung nicht möglich."
     },
     "block": {
       "title": "Chat sperren",

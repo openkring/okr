@@ -467,8 +467,7 @@
     "choose_room_or_member": "Seleccionar sala o miembro<br>para mostrar detalles",
     "select": {
       "roomMember": {
-        "label": "Seleccionar persona",
-        "description": "Si el campo está vacío, se muestran todas las salas de chat. Al seleccionar una persona, se limita la selección a todas las salas donde esta persona es miembro."
+        "label": "Seleccionar persona"
       }
     },
     "room": {
@@ -612,11 +611,6 @@
       "confirm_here": "¿Asignar la sala «{{ name }}» a esta app? Entonces aparecerá en el resumen de chats.",
       "confirm_hide": "¿Ocultar la sala «{{ name }}»? Entonces no aparecerá en ninguna app.",
       "conf": "Asignación guardada."
-    },
-    "blocked": {
-      "title": "Chat no disponible temporalmente",
-      "default": "El chat está en mantenimiento. Volverá pronto.",
-      "call": "Las llamadas no son posibles durante el mantenimiento."
     },
     "block": {
       "title": "Bloquear el chat",

@@ -467,8 +467,7 @@
     "choose_room_or_member": "Select room or member<br>to show details",
     "select": {
       "roomMember": {
-        "label": "Select person",
-        "description": "If the field is empty, all chat rooms are shown. By selecting a person you limit the selection to all rooms where this person is a member."
+        "label": "Select person"
       }
     },
     "room": {
@@ -612,11 +611,6 @@
       "confirm_here": "Assign the room “{{ name }}” to this app? It will then appear in the chat overview.",
       "confirm_hide": "Hide the room “{{ name }}”? It will then appear in no app.",
       "conf": "Assignment saved."
-    },
-    "blocked": {
-      "title": "Chat temporarily unavailable",
-      "default": "The chat is currently under maintenance. It will be back soon.",
-      "call": "Calls are not possible during maintenance."
     },
     "block": {
       "title": "Block chat",

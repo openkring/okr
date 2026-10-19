@@ -828,7 +828,7 @@ export const ChatMaintenanceStore = signalStore(
      * resolves the room from the group), so a room without a group offers neither.
      */
     groupKeyOfRoom(roomId: string): string | undefined {
-      return groupKeyForRoom(roomId, store.appStore.allGroups());
+      return groupKeyForRoom(roomId, store.appStore.allGroupsAndChats());
     },
 
     async inviteToRoom(roomId: string): Promise<void> {
