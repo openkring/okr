@@ -326,6 +326,7 @@ seed("users/uidO", {"tenants": ["bka"], "roles": {"admin": True}, "firstName": "
 seed("users/uidO2", {"tenants": ["bka"], "roles": {}, "firstName": "O2", "personKey": "pO2"})
 seed("users/uidO3", {"tenants": ["bka", "t1"], "roles": {"admin": True}, "firstName": "O3", "personKey": "pO3"})
 O, O2, O3 = jwt("uidO"), jwt("uidO2"), jwt("uidO3")
+NODOC = jwt("uidNoDoc")  # signed in, but no users/{uid} doc
 GET, PATCH, POST, DELETE = "GET", "PATCH", "POST", "DELETE"
 
 
@@ -360,6 +361,8 @@ single_cases = [
      body({"blocked": True}), ["blocked"]),
     ("userO3(admin bka+t1) PATCH app-status/chat -> DENY (tenants must be exactly bka)", False, PATCH,
      "app-status/chat", O3, body({"blocked": True}), ["blocked"]),
+    ("signed-in caller without users doc PATCH app-status/chat -> DENY", False, PATCH, "app-status/chat", NODOC,
+     body({"blocked": True}), ["blocked"]),
     ("userD(admin t1) GET app-status/chat -> ALLOW (read unchanged)", True, GET, "app-status/chat", D, None, None),
     ("userD(admin t1) PATCH app-status/other -> DENY (only the chat doc)", False, PATCH,
      "app-status/other", D, body({"blocked": True}), ["blocked"]),
