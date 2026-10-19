@@ -996,6 +996,9 @@ const subject: FeatureBlock = {
       { key: 'group-export-raw', name: 'group-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'privileged', icon: 'download', label: '@item.group-export-raw' },
       { key: 'maint-divider', name: 'maint-divider', url: '', action: 'divider', roleNeeded: 'admin', icon: 'help-circle', label: '@item.maint-divider' },
       { key: 'group-check-hygiene', name: 'group-check-hygiene', url: 'checkHygiene', action: 'call', roleNeeded: 'admin', icon: 'checkbox-circle-double', label: '@item.group-check-hygiene' },
+      { key: 'group-chat-members', name: 'group-chat-members', url: 'chatMembers', action: 'call', roleNeeded: 'admin', icon: 'checkbox-circle-double', label: '@item.group-chat-members' },
+      { key: 'group-chat-postpolicy', name: 'group-chat-postpolicy', url: 'chatPostPolicy', action: 'call', roleNeeded: 'admin', icon: 'checkbox-circle-double', label: '@item.group-chat-postpolicy' },
+      { key: 'group-chat-guests', name: 'group-chat-guests', url: 'chatGuests', action: 'call', roleNeeded: 'admin', icon: 'checkbox-circle-double', label: '@item.group-chat-guests' },
     ] },
   ],
 };

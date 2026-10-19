@@ -57,6 +57,7 @@
     "@okr/subject-person-util": "*",
     "@okr/project-task-util": "*",
     "@okr/user-feature": "*",
-    "@okr/user-util": "*"
+    "@okr/user-util": "*",
+    "@okr/subject-group-data-access": "*"
   }
 }

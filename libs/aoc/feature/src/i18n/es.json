@@ -341,30 +341,17 @@
         "confirm": "¿Asignar ahora {{ count }} salas de chat a sus inquilinos?",
         "conf": "{{ count }} salas de chat asignadas."
       },
-      "members": {
-        "label": "Conciliar los miembros del chat de grupo",
-        "description": "Añade a cada persona con una afiliación activa a la sala de chat de su grupo. Necesario para los miembros que un error anterior eliminó demasiado pronto de sus salas. Puramente aditivo: solo se añade, nunca se elimina; los miembros de la sala sin afiliación (p. ej. participantes de un curso) no se ven afectados.",
-        "action": "Conciliar",
-        "confirm": "¿Conciliar ahora los miembros de los {count} grupos?"
-      },
-      "postpolicy": {
-        "label": "Conciliar los permisos de escritura",
-        "description": "Aplica a la sala de chat de cada grupo sus permisos de escritura actuales. Normalmente esto ocurre automáticamente cada noche — usa esto cuando no pueda esperar hasta mañana, por ejemplo porque alguien acaba de perder el rol que le permitía escribir.",
-        "action": "Conciliar",
-        "confirm": "¿Conciliar ahora los permisos de escritura de los {count} grupos?"
-      },
       "guests": {
         "label": "No miembros en los chats de grupo",
-        "description": "Quien abre el chat de un grupo entra de forma permanente en su sala, incluso sin ser miembro. Es intencionado (p. ej. para participantes de un curso), pero nunca se deshace. Esta comprobación muestra, por grupo, cuántas personas están en la sala sin figurar en la lista de miembros, y las elimina si lo deseas.",
+        "description": "Muestra, por grupo, cuántas personas están en la sala sin figurar en la lista de miembros y marca las salas afectadas en la lista. Aquí no se cambia nada.",
         "scan": "Comprobar",
-        "action": "Eliminar",
         "none": "En todos los chats de grupo solo hay miembros — nada que hacer.",
         "preview": "Grupos con diferencias",
-        "members": "miembros",
         "inroom": "en la sala",
+        "members": "miembros",
         "missing": "miembros que faltan en la sala",
-        "confirm": "¿Eliminar ahora {{ count }} personas sin membresía de «{{ group }}»?",
-        "conf": "{{ count }} personas eliminadas."
+        "link_text": "Sincronizar miembros, ajustar permisos de escritura y eliminar a quienes no son miembros está en el menú de la lista de grupos.",
+        "link_action": "Sincronizar en grupos"
       }
     },
     "assign": {

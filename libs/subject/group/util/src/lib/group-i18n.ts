@@ -76,6 +76,7 @@ export const GROUP_I18N_KEYS = {
   as_title:                        '@actionsheet.title',
   ok:                              '@ok',
   cancel:                          '@cancel',
+  error:                           '@error',
   save:                            '@save.label',
   copy_conf:                       '@copy.conf',
 
@@ -129,6 +130,21 @@ export const GROUP_I18N_KEYS = {
   check_hygiene_alias:           PFX + 'checkHygiene.alias_collision',
   check_hygiene_unsafe:          PFX + 'checkHygiene.unsafe_characters',
   check_hygiene_prefix:          PFX + 'checkHygiene.missing_prefix',
+
+  // «Chat-Mitglieder / Schreibrechte abgleichen», «Nicht-Mitglieder in Chats» (group context menu); single-brace params
+  chat_sync_members_title:       PFX + 'chatSync.members_title',
+  chat_sync_members_action:      PFX + 'chatSync.members_action',
+  chat_sync_members_confirm:     PFX + 'chatSync.members_confirm',
+  chat_sync_postpolicy_title:    PFX + 'chatSync.postpolicy_title',
+  chat_sync_postpolicy_action:   PFX + 'chatSync.postpolicy_action',
+  chat_sync_postpolicy_confirm:  PFX + 'chatSync.postpolicy_confirm',
+  chat_sync_guests_title:        PFX + 'chatSync.guests_title',
+  chat_sync_guests_explanation:  PFX + 'chatSync.guests_explanation',
+  chat_sync_guests_extras:       PFX + 'chatSync.guests_extras',
+  chat_sync_guests_missing:      PFX + 'chatSync.guests_missing',
+  chat_sync_guests_prune:        PFX + 'chatSync.guests_prune',
+  chat_sync_guests_confirm:      PFX + 'chatSync.guests_confirm',
+  chat_sync_guests_done:         PFX + 'chatSync.guests_done',
 } satisfies Record<string, string>;
 
 export type GroupI18n = { [K in keyof typeof GROUP_I18N_KEYS]: Signal<string> };

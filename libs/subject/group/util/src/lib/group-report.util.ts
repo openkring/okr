@@ -57,3 +57,56 @@ export function groupHygieneFindings(groups: GroupModel[], tenantId: string, tex
 
   return findings;
 }
+
+/**
+ * One group's Matrix room compared against its active memberships (auditGroupRoomMembers).
+ *
+ * `extras` are room members WITHOUT a membership. They are not an error: opening a group's
+ * chat tab force-joins any user via requestGroupRoomAccess, deliberately so, and nothing
+ * ever undoes it — which is why the group view and the chat room can disagree.
+ *
+ * Lives in util (not data-access) so the pure report builder can use it.
+ */
+export interface GroupRoomDrift {
+  groupKey: string;
+  groupName: string;
+  roomId: string;
+  memberCount: number;
+  roomMemberCount: number;
+  missing: string[];
+  extras: Array<{ userId: string; displayName: string }>;
+}
+
+/** Already-translated templates for the chat drift report. Placeholders use single braces (see `fill`). */
+export interface GroupDriftTexts {
+  /** `{count}` room members without a membership, `{names}` their names */
+  extras: string;
+  /** `{count}` members that are not in the room */
+  missing: string;
+  /** label of the prune action */
+  prune: string;
+}
+
+/**
+ * Builds the report findings of the «Nicht-Mitglieder in Chats» check: one finding per group whose chat
+ * room disagrees with its memberships. Only a finding with `extras` carries the (danger) `prune` action;
+ * missing members are repaired by «Chat-Mitglieder abgleichen» instead.
+ */
+export function groupDriftFindings(drift: GroupRoomDrift[], texts: GroupDriftTexts): ReportFinding[] {
+  return drift.map(d => {
+    const parts: string[] = [];
+    if (d.extras.length > 0) {
+      parts.push(fill(texts.extras, { count: d.extras.length, names: d.extras.map(e => e.displayName || e.userId).join(', ') }));
+    }
+    if (d.missing.length > 0) {
+      parts.push(fill(texts.missing, { count: d.missing.length }));
+    }
+    return {
+      id: d.groupKey,
+      title: d.groupName,
+      detail: parts.join(' · '),
+      url: groupUrl(d.groupKey),
+      actions: d.extras.length > 0 ? [{ id: 'prune', label: texts.prune, danger: true }] : undefined,
+    };
+  });
+}

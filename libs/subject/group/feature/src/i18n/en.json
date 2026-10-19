@@ -218,5 +218,20 @@
     "alias_collision": "The chat alias {alias} is also claimed by {others}.",
     "unsafe_characters": "The id contains characters that the derived folder, page and chat names cannot carry unchanged. Today it would be called {tenantId}_...",
     "missing_prefix": "The id has no {tenantId}_ prefix. In a second tenant the same name could overwrite this document."
+  },
+  "chatSync": {
+    "members_title": "Reconcile group-chat members",
+    "members_action": "Reconcile",
+    "members_confirm": "Reconcile the members of all {count} groups now?",
+    "postpolicy_title": "Reconcile write permissions",
+    "postpolicy_action": "Reconcile",
+    "postpolicy_confirm": "Reconcile write permissions for all {count} groups now?",
+    "guests_title": "Non-members in group chats",
+    "guests_explanation": "Anyone who opens a group's chat is permanently added to its room, even without a membership. That is intended (e.g. for course participants) but is never undone. This check shows, per group, how many people sit in the chat room who are not on the member list, and removes them on request.",
+    "guests_extras": "{count} in the room without a membership: {names}",
+    "guests_missing": "{count} members missing from the room",
+    "guests_prune": "Remove",
+    "guests_confirm": "Remove {count} people without a membership from “{group}” now?",
+    "guests_done": "{count} people removed."
   }
 }

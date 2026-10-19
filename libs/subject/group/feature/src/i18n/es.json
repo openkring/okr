@@ -218,5 +218,20 @@
     "alias_collision": "El alias de chat {alias} también lo reclama {others}.",
     "unsafe_characters": "El identificador contiene caracteres que los nombres de carpeta, página y chat derivados no pueden llevar sin cambios. Hoy se llamaría {tenantId}_...",
     "missing_prefix": "El identificador no lleva el prefijo {tenantId}_. En un segundo mandante, el mismo nombre podría sobrescribir este documento."
+  },
+  "chatSync": {
+    "members_title": "Conciliar los miembros del chat de grupo",
+    "members_action": "Conciliar",
+    "members_confirm": "¿Conciliar ahora los miembros de los {count} grupos?",
+    "postpolicy_title": "Conciliar los permisos de escritura",
+    "postpolicy_action": "Conciliar",
+    "postpolicy_confirm": "¿Conciliar ahora los permisos de escritura de los {count} grupos?",
+    "guests_title": "No miembros en los chats de grupo",
+    "guests_explanation": "Quien abre el chat de un grupo entra de forma permanente en su sala, incluso sin ser miembro. Es intencionado (p. ej. para participantes de un curso), pero nunca se deshace. Esta comprobación muestra, por grupo, cuántas personas están en la sala sin figurar en la lista de miembros, y las elimina si lo deseas.",
+    "guests_extras": "{count} en la sala sin ser miembros: {names}",
+    "guests_missing": "{count} miembros que faltan en la sala",
+    "guests_prune": "Eliminar",
+    "guests_confirm": "¿Eliminar ahora {count} personas sin membresía de «{group}»?",
+    "guests_done": "{count} personas eliminadas."
   }
 }

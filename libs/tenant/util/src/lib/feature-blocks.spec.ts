@@ -48,7 +48,6 @@ describe('FEATURE_BLOCKS Wartung rows (1.101 phase 2)', () => {
   const cases: [string, string, string, string, string, string][] = [
     // context menu, divider, divider role, row, action, row role
     ['c-calevents', 'maint-divider', 'admin', 'calevent-check-duplicates', 'call', 'admin'],
-    ['c-groups', 'maint-divider', 'admin', 'group-check-hygiene', 'call', 'admin'],
     ['c-persons', 'maint-divider', 'admin', 'person-check-favaddress', 'call', 'admin'],
     ['c-pages', 'maint-divider-content', 'contentAdmin', 'page-integrity', 'navigate', 'contentAdmin'],
     ['c-documents', 'maint-divider', 'admin', 'document-orphans', 'navigate', 'admin'],
@@ -62,6 +61,19 @@ describe('FEATURE_BLOCKS Wartung rows (1.101 phase 2)', () => {
     expect(tail.map(c => c.name)).toEqual([divider, row]);
     expect(tail[0]).toMatchObject({ action: 'divider', url: '', roleNeeded: dividerRole });
     expect(tail[1]).toMatchObject({ action, roleNeeded: rowRole });
+  });
+
+  it('c-groups ends with the divider, the hygiene check and the three chat sync rows, all admin', () => {
+    const children = findContext('c-groups')?.children ?? [];
+    const tail = children.slice(-5);
+    expect(tail.map(c => c.name)).toEqual(['maint-divider', 'group-check-hygiene', 'group-chat-members', 'group-chat-postpolicy', 'group-chat-guests']);
+    expect(tail[0]).toMatchObject({ action: 'divider', url: '', roleNeeded: 'admin' });
+    expect(tail.slice(1).map(c => [c.url, c.action, c.roleNeeded])).toEqual([
+      ['checkHygiene', 'call', 'admin'],
+      ['chatMembers', 'call', 'admin'],
+      ['chatPostPolicy', 'call', 'admin'],
+      ['chatGuests', 'call', 'admin'],
+    ]);
   });
 
   it('the shared maint-divider doc is field-identical wherever it is declared', () => {

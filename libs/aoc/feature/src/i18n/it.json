@@ -341,30 +341,17 @@
         "confirm": "Assegnare ora {{ count }} stanze ai loro tenant?",
         "conf": "{{ count }} stanze assegnate."
       },
-      "members": {
-        "label": "Riconciliare i membri della chat di gruppo",
-        "description": "Aggiunge ogni persona con un’affiliazione attiva alla stanza chat del suo gruppo. Necessario per i membri rimossi troppo presto dalle loro stanze a causa di un errore precedente. Puramente additivo: si aggiunge soltanto, mai si rimuove — i membri della stanza senza affiliazione (p. es. partecipanti a un corso) restano invariati.",
-        "action": "Riconciliare",
-        "confirm": "Riconciliare ora i membri di tutti i {count} gruppi?"
-      },
-      "postpolicy": {
-        "label": "Riconciliare i diritti di scrittura",
-        "description": "Applica a ogni stanza chat di gruppo i diritti di scrittura attuali del gruppo. Normalmente questo avviene automaticamente ogni notte — usalo quando non può aspettare fino a domani, per esempio perché qualcuno ha appena perso il ruolo che gli permetteva di scrivere.",
-        "action": "Riconciliare",
-        "confirm": "Riconciliare ora i diritti di scrittura di tutti i {count} gruppi?"
-      },
       "guests": {
         "label": "Non membri nelle chat di gruppo",
-        "description": "Chi apre la chat di un gruppo viene aggiunto in modo permanente alla sua stanza, anche senza appartenenza. È voluto (ad es. per i partecipanti a un corso), ma non viene mai annullato. Questo controllo mostra, per ogni gruppo, quante persone sono nella stanza pur non comparendo nell'elenco dei membri, e le rimuove su richiesta.",
+        "description": "Mostra, per ogni gruppo, quante persone sono nella stanza senza comparire nell'elenco dei membri e segnala le stanze interessate nell'elenco. Qui non viene modificato nulla.",
         "scan": "Verifica",
-        "action": "Rimuovi",
         "none": "In tutte le chat di gruppo ci sono solo membri — niente da fare.",
         "preview": "Gruppi con scostamento",
-        "members": "membri",
         "inroom": "nella stanza",
+        "members": "membri",
         "missing": "membri mancanti nella stanza",
-        "confirm": "Rimuovere ora {{ count }} persone senza appartenenza da «{{ group }}»?",
-        "conf": "{{ count }} persone rimosse."
+        "link_text": "Sincronizzare i membri, impostare i permessi di scrittura e rimuovere i non membri si fa nel menu dell'elenco dei gruppi.",
+        "link_action": "Sincronizza nei gruppi"
       }
     },
     "assign": {

@@ -218,5 +218,20 @@
     "alias_collision": "L'alias della chat {alias} è rivendicato anche da {others}.",
     "unsafe_characters": "L'identificatore contiene caratteri che i nomi di cartella, pagina e chat derivati non possono portare invariati. Oggi si chiamerebbe {tenantId}_...",
     "missing_prefix": "L'identificatore non ha il prefisso {tenantId}_. In un secondo mandante lo stesso nome potrebbe sovrascrivere questo documento."
+  },
+  "chatSync": {
+    "members_title": "Riconciliare i membri della chat di gruppo",
+    "members_action": "Riconciliare",
+    "members_confirm": "Riconciliare ora i membri di tutti i {count} gruppi?",
+    "postpolicy_title": "Riconciliare i diritti di scrittura",
+    "postpolicy_action": "Riconciliare",
+    "postpolicy_confirm": "Riconciliare ora i diritti di scrittura di tutti i {count} gruppi?",
+    "guests_title": "Non membri nelle chat di gruppo",
+    "guests_explanation": "Chi apre la chat di un gruppo viene aggiunto in modo permanente alla sua stanza, anche senza appartenenza. È voluto (ad es. per i partecipanti a un corso), ma non viene mai annullato. Questo controllo mostra, per ogni gruppo, quante persone sono nella stanza pur non comparendo nell'elenco dei membri, e le rimuove su richiesta.",
+    "guests_extras": "{count} nella stanza senza appartenenza: {names}",
+    "guests_missing": "{count} membri mancanti nella stanza",
+    "guests_prune": "Rimuovi",
+    "guests_confirm": "Rimuovere ora {count} persone senza appartenenza da «{group}»?",
+    "guests_done": "{count} persone rimosse."
   }
 }

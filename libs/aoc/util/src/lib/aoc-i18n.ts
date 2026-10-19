@@ -249,25 +249,16 @@ export const AOC_I18N_KEYS = {
   chat_assign_action_hide:                  PFX + 'chat.assign.action_hide',
   chat_assign_conf:                         PFX + 'chat.assign.conf',
 
-  chat_repair_members:                      PFX + 'chat.repair.members.label',
-  chat_repair_members_description:          PFX + 'chat.repair.members.description',
-  chat_repair_members_action:               PFX + 'chat.repair.members.action',
-  chat_repair_members_confirm:              PFX + 'chat.repair.members.confirm',
-
-  chat_repair_postpolicy:                   PFX + 'chat.repair.postpolicy.label',
-  chat_repair_postpolicy_description:       PFX + 'chat.repair.postpolicy.description',
-  chat_repair_postpolicy_action:            PFX + 'chat.repair.postpolicy.action',
-  chat_repair_postpolicy_confirm:           PFX + 'chat.repair.postpolicy.confirm',
-
   chat_repair_guests:                       PFX + 'chat.repair.guests.label',
   chat_repair_guests_description:           PFX + 'chat.repair.guests.description',
   chat_repair_guests_scan:                  PFX + 'chat.repair.guests.scan',
-  chat_repair_guests_action:                PFX + 'chat.repair.guests.action',
   chat_repair_guests_none:                  PFX + 'chat.repair.guests.none',
   chat_repair_guests_preview:               PFX + 'chat.repair.guests.preview',
   chat_repair_guests_members:               PFX + 'chat.repair.guests.members',
   chat_repair_guests_inroom:                PFX + 'chat.repair.guests.inroom',
   chat_repair_guests_missing:               PFX + 'chat.repair.guests.missing',
+  chat_repair_guests_link_text:             PFX + 'chat.repair.guests.link_text',
+  chat_repair_guests_link_action:           PFX + 'chat.repair.guests.link_action',
 
   chat_user_deactivate:                     PFX + 'chat.user.deactivate.label',
   chat_user_deactivate_confirm:             PFX + 'chat.user.deactivate.confirm',

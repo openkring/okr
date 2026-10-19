@@ -218,5 +218,20 @@
     "alias_collision": "Der Chat-Alias {alias} wird auch von {others} beansprucht.",
     "unsafe_characters": "Die ID enthält Zeichen, die abgeleitete Ordner-, Seiten- und Chat-Namen nicht unverändert tragen können. Heute würde sie {tenantId}_... heissen.",
     "missing_prefix": "Die ID trägt kein Präfix {tenantId}_. In einem zweiten Mandanten könnte derselbe Name dieses Dokument überschreiben."
+  },
+  "chatSync": {
+    "members_title": "Gruppen-Chat-Mitglieder abgleichen",
+    "members_action": "Abgleichen",
+    "members_confirm": "Mitglieder aller {count} Gruppen jetzt abgleichen?",
+    "postpolicy_title": "Schreibrechte abgleichen",
+    "postpolicy_action": "Abgleichen",
+    "postpolicy_confirm": "Schreibrechte aller {count} Gruppen jetzt abgleichen?",
+    "guests_title": "Nicht-Mitglieder in Gruppen-Chats",
+    "guests_explanation": "Wer den Chat einer Gruppe öffnet, wird dauerhaft in den Raum aufgenommen – auch ohne Mitgliedschaft. Das ist so gewollt (z.B. für Kursteilnehmende), wird aber nie rückgängig gemacht. Diese Prüfung zeigt pro Gruppe, wie viele Leute im Chat-Raum sitzen, die in der Mitgliederliste nicht vorkommen, und entfernt sie auf Wunsch.",
+    "guests_extras": "{count} ohne Mitgliedschaft im Raum: {names}",
+    "guests_missing": "{count} Mitglieder fehlen im Raum",
+    "guests_prune": "Entfernen",
+    "guests_confirm": "{count} Personen ohne Mitgliedschaft jetzt aus „{group}“ entfernen?",
+    "guests_done": "{count} Personen entfernt."
   }
 }

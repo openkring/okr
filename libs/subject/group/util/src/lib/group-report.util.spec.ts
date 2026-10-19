@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { GroupModel } from '@okr/shared-models';
 
-import { groupHygieneFindings, GroupHygieneTexts } from './group-report.util';
+import { groupDriftFindings, GroupDriftTexts, GroupRoomDrift, groupHygieneFindings, GroupHygieneTexts } from './group-report.util';
 
 const TEXTS: GroupHygieneTexts = {
   duplicate: '{count} Gruppen: {groups}',
@@ -60,5 +60,55 @@ describe('groupHygieneFindings', () => {
     expect(findings.map(f => f.id)).toEqual(['scs_Ab', 'scs_ab']);
     expect(findings[0].detail).toBe('Alias group_scs_ab auch bei scs_ab');
     expect(findings[1].detail).toBe('Alias group_scs_ab auch bei scs_Ab');
+  });
+});
+
+const DRIFT_TEXTS: GroupDriftTexts = {
+  extras: '{count} ohne Mitgliedschaft: {names}',
+  missing: '{count} Mitglieder fehlen im Raum',
+  prune: 'Entfernen',
+};
+
+function makeDrift(overrides: Partial<GroupRoomDrift> = {}): GroupRoomDrift {
+  return {
+    groupKey: 'scs_a', groupName: 'Alpha', roomId: '!r:x', memberCount: 5, roomMemberCount: 6,
+    missing: [], extras: [], ...overrides,
+  };
+}
+
+describe('groupDriftFindings', () => {
+  it('returns [] for no drift', () => {
+    expect(groupDriftFindings([], DRIFT_TEXTS)).toEqual([]);
+  });
+
+  it('gives a drift with extras a danger prune action and lists the names', () => {
+    const findings = groupDriftFindings([makeDrift({
+      extras: [{ userId: '@a:x', displayName: 'Anna' }, { userId: '@b:x', displayName: '' }],
+    })], DRIFT_TEXTS);
+    expect(findings).toEqual([{
+      id: 'scs_a',
+      title: 'Alpha',
+      detail: '2 ohne Mitgliedschaft: Anna, @b:x',
+      url: '/group-view/scs_a',
+      actions: [{ id: 'prune', label: 'Entfernen', danger: true }],
+    }]);
+  });
+
+  it('gives a missing-only drift no action', () => {
+    const findings = groupDriftFindings([makeDrift({ missing: ['p1', 'p2', 'p3'] })], DRIFT_TEXTS);
+    expect(findings).toEqual([{
+      id: 'scs_a',
+      title: 'Alpha',
+      detail: '3 Mitglieder fehlen im Raum',
+      url: '/group-view/scs_a',
+      actions: undefined,
+    }]);
+  });
+
+  it('joins extras and missing in one detail', () => {
+    const [finding] = groupDriftFindings([makeDrift({
+      missing: ['p1'], extras: [{ userId: '@a:x', displayName: 'Anna' }],
+    })], DRIFT_TEXTS);
+    expect(finding.detail).toBe('1 ohne Mitgliedschaft: Anna · 1 Mitglieder fehlen im Raum');
   });
 });

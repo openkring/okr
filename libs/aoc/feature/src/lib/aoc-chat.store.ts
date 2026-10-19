@@ -14,6 +14,8 @@ import { I18nService } from '@okr/shared-i18n';
 import { showToast } from '@okr/shared-util-angular';
 import { chatBlockedSince, fill, getFullName, hasRole } from '@okr/shared-util-core';
 import { AOC_I18N_KEYS } from '@okr/aoc-util';
+import { auditGroupRooms } from '@okr/subject-group-data-access';
+import type { GroupRoomDrift } from '@okr/subject-group-util';
 import { findGroupOfRoom, getMatrixLogLevel, setMatrixLogLevel, MatrixLogLevel } from '@okr/chat-util';
 import type { MatrixMediaService } from '@okr/chat-data-access';
 
@@ -121,23 +123,6 @@ export interface TenantBackfillResult {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * One group's Matrix room compared against its active memberships (auditGroupRoomMembers).
- *
- * `extras` are room members WITHOUT a membership. They are not an error: opening a group's
- * chat tab force-joins any user via requestGroupRoomAccess, deliberately so, and nothing
- * ever undoes it — which is why the group view and the chat room can disagree.
- */
-export interface GroupRoomDrift {
-  groupKey: string;
-  groupName: string;
-  roomId: string;
-  memberCount: number;
-  roomMemberCount: number;
-  missing: string[];
-  extras: Array<{ userId: string; displayName: string }>;
-}
-
-/**
  * One message of a room, as `getRoomMessages` returns it. Mirrors the Cloud Function's
  * `RoomMessageInfo` — functions cannot import from libs, so the shape is kept in sync by hand.
  */
@@ -179,15 +164,9 @@ export type AocChatState = {
   assignRooms: RoomAssignmentEntry[] | undefined; // undefined = not yet scanned
   assignScanning: boolean;
   assignBusyRoomId: string | undefined;           // the row currently being written
-  memberRepairApplying: boolean;
-  memberRepairJoined: number;
-  // group-room write-permission sync
-  postPolicySyncApplying: boolean;
-  postPolicySyncChanged: number;
   // group-room drift — room members without a membership
   guestPreview: GroupRoomDrift[] | undefined; // undefined = not yet scanned
   guestScanning: boolean;
-  guestPruningGroup: string | undefined;      // groupKey currently being pruned
   // read-only room history (admin window into a room they are not in)
   history: RoomMessageInfo[];
   historyRoomId: string | undefined;
@@ -217,13 +196,8 @@ const initialState: AocChatState = {
   assignRooms: undefined,
   assignScanning: false,
   assignBusyRoomId: undefined,
-  memberRepairApplying: false,
-  memberRepairJoined: 0,
-  postPolicySyncApplying: false,
-  postPolicySyncChanged: 0,
   guestPreview: undefined,
   guestScanning: false,
-  guestPruningGroup: undefined,
   history: [],
   historyRoomId: undefined,
   historyCursor: undefined,
@@ -1170,194 +1144,22 @@ export const AocChatStore = signalStore(
       }
     },
 
-    // ─── group-room member reconciliation ──────────────────────────────────────
-
-    /**
-     * Force-join every person with an active group membership into their group's Matrix
-     * room, for all groups of this tenant.
-     *
-     * There is no dry run: reconcileGroupRoomMembers is additive-only — it joins missing
-     * members and merely *reports* room members without a membership (course participants
-     * are legitimate), so applying it can never remove anyone.
-     *
-     * Needed after the 2026-08-13 fix to grantsChatAccess, which used to treat a FUTURE
-     * membership exit date as already-inactive and kicked those members from their group
-     * rooms months early. Those members are not restored automatically.
-     */
-    async applyMemberRepair(): Promise<void> {
-      const groups = store.appStore.allGroups();
-      const message = await firstValueFrom(
-        store.i18nService.translate('@aoc/feature.chat.repair.members.confirm', { count: groups.length })
-      );
-      const alert = await store.alertController.create({
-        header: store.i18n.chat_repair_members(),
-        message,
-        buttons: [
-          { text: store.i18n.cancel(), role: 'cancel' },
-          { text: store.i18n.chat_repair_members_action(), role: 'confirm' },
-        ],
-      });
-      await alert.present();
-      const { role } = await alert.onDidDismiss();
-      if (role !== 'confirm') return;
-
-      patchState(store, { memberRepairApplying: true, memberRepairJoined: 0 });
-      try {
-        const fn = httpsCallable<{ groupId: string }, { roomId: string; joined: string[]; alreadyIn: string[]; extras: string[] }>(
-          getFn(), 'reconcileGroupRoomMembers'
-        );
-        let joined = 0;
-        for (const group of groups) {
-          try {
-            const result = await fn({ groupId: group.okey });
-            joined += result.data.joined.length;
-          } catch (e) {
-            // A group without a chat room throws; that is expected, not a failure of the run.
-            console.warn(`reconcileGroupRoomMembers: skipped group ${group.okey}: ${(e as Error).message}`);
-          }
-        }
-        patchState(store, { memberRepairJoined: joined });
-        await showToast(store.toastController, `${store.i18n.chat_repair_members()}: ${joined}`);
-      } catch (e) {
-        await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
-      } finally {
-        patchState(store, { memberRepairApplying: false });
-      }
-    },
-
-    // ─── group-room write-permission sync ──────────────────────────────────────
-
-    /**
-     * Re-apply each group's write-permission setting to its Matrix chat room.
-     *
-     * Losing a privileged role does not immediately revoke the ability to post in a
-     * group's announcement-style room — a nightly job removes it. This lets an admin
-     * trigger the same reconciliation on demand, for all groups of this tenant.
-     */
-    async applyPostPolicySync(): Promise<void> {
-      // Nur Gruppen mit 'privileged' koennen ueberhaupt etwas zu tun haben — 'all'-Gruppen
-      // werden von applyRoomPostPolicy ohne allowReset gar nicht mehr angefasst (Finding 1),
-      // also braeuchte ein Lauf ueber alle 36 Gruppen nur unnoetig Zeit und Raum-Beitritte.
-      const groups = store.appStore.allGroups().filter(g => g.postPolicy === 'privileged');
-      const message = await firstValueFrom(
-        store.i18nService.translate('@aoc/feature.chat.repair.postpolicy.confirm', { count: groups.length })
-      );
-      const alert = await store.alertController.create({
-        header: store.i18n.chat_repair_postpolicy(),
-        message,
-        buttons: [
-          { text: store.i18n.cancel(), role: 'cancel' },
-          { text: store.i18n.chat_repair_postpolicy_action(), role: 'confirm' },
-        ],
-      });
-      await alert.present();
-      const { role } = await alert.onDidDismiss();
-      if (role !== 'confirm') return;
-
-      patchState(store, { postPolicySyncApplying: true, postPolicySyncChanged: 0 });
-      try {
-        const fn = httpsCallable<{ groupId: string }, { result: 'unchanged' | 'applied' | 'no-room' }>(
-          getFn(), 'syncRoomPostPolicy'
-        );
-        let changed = 0;
-        for (const group of groups) {
-          try {
-            const result = await fn({ groupId: group.okey });
-            if (result.data.result === 'applied') changed++;
-          } catch (e) {
-            // A group without a chat room throws; that is expected, not a failure of the run.
-            console.warn(`syncRoomPostPolicy: skipped group ${group.okey}: ${(e as Error).message}`);
-          }
-        }
-        patchState(store, { postPolicySyncChanged: changed });
-        await showToast(store.toastController, `${store.i18n.chat_repair_postpolicy()}: ${changed}`);
-      } catch (e) {
-        await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
-      } finally {
-        patchState(store, { postPolicySyncApplying: false });
-      }
-    },
-
     // ─── group-room drift: non-members sitting in a group chat ─────────────────
 
     /**
      * Scan every group room of this tenant and report who is in it without holding an
-     * active membership. Read-only — nothing changes until `pruneGuests` is called for
-     * one specific group.
+     * active membership. Read-only; it feeds the drift badge in the room list. Fixing the
+     * drift happens in the group list's context menu («Nicht-Mitglieder in Chats»).
      */
     async previewGuests(): Promise<void> {
       patchState(store, { guestScanning: true });
       try {
-        const fn = httpsCallable<{ tenantId: string }, { groups: GroupRoomDrift[] }>(
-          getFn(), 'auditGroupRoomMembers'
-        );
-        const { data } = await fn({ tenantId: store.appStore.tenantId() });
-        // Only groups that actually disagree are worth showing; the rest are noise.
-        const drifted = data.groups
-          .filter(g => g.extras.length > 0 || g.missing.length > 0)
-          .sort((a, b) => b.extras.length - a.extras.length);
-        patchState(store, { guestPreview: drifted });
+        patchState(store, { guestPreview: await auditGroupRooms(getFn(), store.appStore.tenantId()) });
       } catch (e) {
         patchState(store, { guestPreview: undefined });
         await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
       } finally {
         patchState(store, { guestScanning: false });
-      }
-    },
-
-    /**
-     * Remove the non-members of ONE group from its chat room. Per group rather than
-     * "clean everything": a group may legitimately host non-members (course participants),
-     * so who gets removed stays a deliberate, per-group decision.
-     *
-     * The Cloud Function re-verifies every user id against the current memberships, so a
-     * preview that went stale between scan and apply can never remove a real member.
-     */
-    async pruneGuests(drift: GroupRoomDrift): Promise<void> {
-      if (drift.extras.length === 0) return;
-      const message = await firstValueFrom(
-        store.i18nService.translate('@aoc/feature.chat.repair.guests.confirm', {
-          count: drift.extras.length,
-          group: drift.groupName,
-        })
-      );
-      const alert = await store.alertController.create({
-        header: store.i18n.chat_repair_guests(),
-        message,
-        buttons: [
-          { text: store.i18n.cancel(), role: 'cancel' },
-          { text: store.i18n.chat_repair_guests_action(), role: 'confirm', cssClass: 'danger' },
-        ],
-      });
-      await alert.present();
-      const { role } = await alert.onDidDismiss();
-      if (role !== 'confirm') return;
-
-      patchState(store, { guestPruningGroup: drift.groupKey });
-      try {
-        const fn = httpsCallable<{ groupId: string; userIds: string[] }, { roomId: string; kicked: string[]; refused: string[] }>(
-          getFn(), 'pruneGroupRoomExtras'
-        );
-        const { data } = await fn({ groupId: drift.groupKey, userIds: drift.extras.map(e => e.userId) });
-        // Drop the removed people from the preview so the card reflects the new state
-        // without a second full scan; a group with nothing left over disappears.
-        const kicked = new Set(data.kicked);
-        const remaining = (store.guestPreview() ?? [])
-          .map(g => g.groupKey === drift.groupKey
-            ? { ...g, extras: g.extras.filter(e => !kicked.has(e.userId)), roomMemberCount: g.roomMemberCount - kicked.size }
-            : g)
-          .filter(g => g.extras.length > 0 || g.missing.length > 0);
-        patchState(store, { guestPreview: remaining });
-
-        const confirmation = await firstValueFrom(
-          store.i18nService.translate('@aoc/feature.chat.repair.guests.conf', { count: data.kicked.length })
-        );
-        await showToast(store.toastController, confirmation);
-        store.roomsResource.reload();
-      } catch (e) {
-        await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
-      } finally {
-        patchState(store, { guestPruningGroup: undefined });
       }
     },
 

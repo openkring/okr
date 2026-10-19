@@ -341,30 +341,17 @@
         "confirm": "Assign {{ count }} chat rooms to their tenants now?",
         "conf": "{{ count }} chat rooms assigned."
       },
-      "members": {
-        "label": "Reconcile group-chat members",
-        "description": "Adds every person with an active group membership to their group's chat room. Needed for members who were removed from their rooms too early by an earlier bug. Purely additive: members are only added, never removed — room members without a membership (e.g. course participants) are left untouched.",
-        "action": "Reconcile",
-        "confirm": "Reconcile the members of all {count} groups now?"
-      },
-      "postpolicy": {
-        "label": "Reconcile write permissions",
-        "description": "Applies each group's current write permissions to its chat room. This normally happens automatically overnight — use this when it can't wait until tomorrow, for example because someone just lost the role that let them post.",
-        "action": "Reconcile",
-        "confirm": "Reconcile write permissions for all {count} groups now?"
-      },
       "guests": {
         "label": "Non-members in group chats",
-        "description": "Anyone who opens a group's chat is permanently added to its room, even without a membership. That is intended (e.g. for course participants) but is never undone. This check shows, per group, how many people sit in the chat room who are not on the member list, and removes them on request.",
+        "description": "Shows, per group, how many people sit in the chat room without being on the member list, and flags the affected rooms in the list. Nothing is changed here.",
         "scan": "Check",
-        "action": "Remove",
         "none": "Every group chat holds members only — nothing to do.",
         "preview": "Groups with a mismatch",
-        "members": "members",
         "inroom": "in the chat room",
+        "members": "members",
         "missing": "members missing from the room",
-        "confirm": "Remove {{ count }} people without a membership from “{{ group }}” now?",
-        "conf": "{{ count }} people removed."
+        "link_text": "Syncing members, setting write permissions and removing non-members are in the menu of the group list.",
+        "link_action": "Sync in groups"
       }
     },
     "assign": {

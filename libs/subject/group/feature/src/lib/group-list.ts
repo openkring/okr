@@ -13,6 +13,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { MemberAvatarsPipe } from '@okr/relationship-membership-feature';
 import { isAdminMember } from '@okr/subject-group-util';
 
+import { GroupChatSyncStore } from './group-chat-sync.store';
 import { GroupStore } from './group.store';
 
 @Component({
@@ -24,7 +25,7 @@ import { GroupStore } from './group.store';
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonPopover, IonAvatar, IonList,
 ],
-  providers: [GroupStore],
+  providers: [GroupStore, GroupChatSyncStore],
   styles: [`
     ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
   `],
@@ -87,6 +88,7 @@ import { GroupStore } from './group.store';
 })
 export class GroupList {
   protected readonly store = inject(GroupStore);
+  private readonly chatSync = inject(GroupChatSyncStore);
   private actionSheetController = inject(ActionSheetController);
   private readonly alertService = inject(AlertService);
 
@@ -124,6 +126,9 @@ export class GroupList {
       case 'add': await this.store.add(!this.canCreate()); break;
       case 'exportRaw': await this.store.export("raw"); break;
       case 'checkHygiene': await this.store.checkHygiene(); break;
+      case 'chatMembers': await this.chatSync.repairMembers(); break;
+      case 'chatPostPolicy': await this.chatSync.syncPostPolicy(); break;
+      case 'chatGuests': await this.chatSync.reviewGuests(); break;
       default: this.alertService.error(`GroupList.call: unknown method ${selectedMethod}`);
     }
   }

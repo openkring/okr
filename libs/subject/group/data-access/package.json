@@ -12,6 +12,7 @@
     "@okr/shared-config": "*",
     "@okr/shared-data-access": "*",
     "@okr/shared-util-core": "*",
-    "@okr/shared-constants": "*"
+    "@okr/shared-constants": "*",
+    "@okr/subject-group-util": "*"
   }
 }

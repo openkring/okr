@@ -1,5 +1,6 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ActionSheetController, ActionSheetOptions, IonBadge, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonSearchbar, IonSelect, IonSelectOption, IonSpinner, IonTextarea, IonThumbnail } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -11,7 +12,8 @@ import { AvatarSelect } from '@okr/avatar-ui';
 
 import { formatMatrixTimestamp, isMatrixPhotoUrl, MATRIX_LOG_LEVELS, MatrixLogLevel } from '@okr/chat-util';
 import { filterAdminRoomsByName } from '@okr/aoc-util';
-import { AocChatStore, AdminRoom, GroupRoomDrift, RoomMemberInfo, RoomAssignmentEntry } from './aoc-chat.store';
+import type { GroupRoomDrift } from '@okr/subject-group-util';
+import { AocChatStore, AdminRoom, RoomMemberInfo, RoomAssignmentEntry } from './aoc-chat.store';
 
 @Component({
   selector: 'okr-aoc-chat',
@@ -455,53 +457,7 @@ import { AocChatStore, AdminRoom, GroupRoomDrift, RoomMemberInfo, RoomAssignment
         </ion-card-content>
       </ion-card>
 
-      <!-- Group-room member reconciliation — additive-only, so no preview step -->
-      <ion-card class="repair-card">
-        <ion-card-header>
-          <ion-card-title>{{ store.i18n.chat_repair_members() }}</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <p class="repair-desc">{{ store.i18n.chat_repair_members_description() }}</p>
-          <div class="repair-actions">
-            <ion-button size="small" color="primary" (click)="onApplyMemberRepair()" [disabled]="memberRepairApplying()">
-              @if (memberRepairApplying()) {
-                <ion-spinner name="dots" slot="start" style="width:16px;height:16px" />
-              } @else {
-                <ion-icon slot="start" src="{{'reload' | svgIcon}}" />
-              }
-              {{ store.i18n.chat_repair_members_action() }}
-            </ion-button>
-          </div>
-          @if (memberRepairJoined() > 0) {
-            <ion-note color="medium" class="repair-skipped">{{ memberRepairJoined() }}</ion-note>
-          }
-        </ion-card-content>
-      </ion-card>
-
-      <!-- Group-room write-permission sync — additive/idempotent, so no preview step -->
-      <ion-card class="repair-card">
-        <ion-card-header>
-          <ion-card-title>{{ store.i18n.chat_repair_postpolicy() }}</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <p class="repair-desc">{{ store.i18n.chat_repair_postpolicy_description() }}</p>
-          <div class="repair-actions">
-            <ion-button size="small" color="primary" (click)="onApplyPostPolicySync()" [disabled]="postPolicySyncApplying()">
-              @if (postPolicySyncApplying()) {
-                <ion-spinner name="dots" slot="start" style="width:16px;height:16px" />
-              } @else {
-                <ion-icon slot="start" src="{{'reload' | svgIcon}}" />
-              }
-              {{ store.i18n.chat_repair_postpolicy_action() }}
-            </ion-button>
-          </div>
-          @if (postPolicySyncChanged() > 0) {
-            <ion-note color="medium" class="repair-skipped">{{ postPolicySyncChanged() }}</ion-note>
-          }
-        </ion-card-content>
-      </ion-card>
-
-      <!-- Group-room drift — people sitting in a group chat without a membership -->
+      <!-- Group-room drift — read-only scan (feeds the badge in the room list); the repairs live in the group list -->
       <ion-card class="repair-card">
         <ion-card-header>
           <ion-card-title>{{ store.i18n.chat_repair_guests() }}</ion-card-title>
@@ -542,26 +498,18 @@ import { AocChatStore, AdminRoom, GroupRoomDrift, RoomMemberInfo, RoomAssignment
                         </ion-note>
                       }
                     </ion-label>
-                    @if (drift.extras.length > 0) {
-                      <ion-button
-                        slot="end"
-                        size="small"
-                        color="danger"
-                        fill="outline"
-                        (click)="onPruneGuests(drift)"
-                        [disabled]="guestPruningGroup() !== undefined"
-                      >
-                        @if (guestPruningGroup() === drift.groupKey) {
-                          <ion-spinner name="dots" slot="start" style="width:16px;height:16px" />
-                        }
-                        {{ store.i18n.chat_repair_guests_action() }} ({{ drift.extras.length }})
-                      </ion-button>
-                    }
                   </ion-item>
                 }
               </ion-list>
             }
           }
+          <p class="repair-desc">{{ store.i18n.chat_repair_guests_link_text() }}</p>
+          <div class="repair-actions">
+            <ion-button size="small" fill="clear" (click)="onOpenGroups()">
+              <ion-icon slot="start" src="{{'persons' | svgIcon}}" />
+              {{ store.i18n.chat_repair_guests_link_action() }}
+            </ion-button>
+          </div>
         </ion-card-content>
       </ion-card>
 
@@ -712,6 +660,7 @@ import { AocChatStore, AdminRoom, GroupRoomDrift, RoomMemberInfo, RoomAssignment
 })
 export class AocChat {
   protected readonly store = inject(AocChatStore);
+  private readonly router = inject(Router);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly modelSelectService = inject(ModelSelectService);
 
@@ -761,15 +710,10 @@ export class AocChat {
   protected readonly assignRooms = computed(() => this.store.assignRooms());
   protected readonly assignScanning = computed(() => this.store.assignScanning());
   protected readonly assignBusyRoomId = computed(() => this.store.assignBusyRoomId());
-  protected readonly memberRepairApplying = computed(() => this.store.memberRepairApplying());
-  protected readonly memberRepairJoined = computed(() => this.store.memberRepairJoined());
-  protected readonly postPolicySyncApplying = computed(() => this.store.postPolicySyncApplying());
-  protected readonly postPolicySyncChanged = computed(() => this.store.postPolicySyncChanged());
 
   // group-room drift (non-members sitting in a group chat)
   protected readonly guestPreview = computed(() => this.store.guestPreview());
   protected readonly guestScanning = computed(() => this.store.guestScanning());
-  protected readonly guestPruningGroup = computed(() => this.store.guestPruningGroup());
 
   // 1.107 chat block card
   protected readonly isAdmin = computed(() => this.store.isAdmin());
@@ -885,21 +829,15 @@ export class AocChat {
     return !!entry.tenants?.includes(this.store.appStore.tenantId());
   }
 
-  protected onApplyMemberRepair(): void {
-    this.store.applyMemberRepair();
-  }
-
-  protected onApplyPostPolicySync(): void {
-    this.store.applyPostPolicySync();
-  }
-
   protected onPreviewGuests(): void {
     this.store.previewGuests();
   }
 
-  protected onPruneGuests(drift: GroupRoomDrift): void {
-    this.store.pruneGuests(drift);
+  /** The repairs (members, write permissions, non-members) moved to the group list's context menu. */
+  protected onOpenGroups(): void {
+    void this.router.navigateByUrl('/group/all/c-groups');
   }
+
 
   /** The people in a group's chat room who hold no membership — names, not Matrix ids. */
   protected guestNames(drift: GroupRoomDrift): string {
