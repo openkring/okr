@@ -76,9 +76,20 @@ describe('buildUserAccountRows with incomplete sources', () => {
     expect(buildUserAccountRows([], [{ uid: 'u1' }], [{ personKey: 'p-1', name: 'A' }], 'scs', false, false)).toEqual([]);
   });
 
-  it('dedupes a member whose person has a user in another tenant', () => {
+  // The operator's user list spans every tenant: a user elsewhere is no account HERE.
+  it('flags a member whose person has a user only in another tenant', () => {
     const rows = buildUserAccountRows([user('u3', 'other')], [], [{ personKey: 'p-u3', name: 'C' }], 'scs', true);
-    expect(rows).toEqual([]);
+    expect(rows).toEqual([{ kind: 'memberWithoutAccount', personKey: 'p-u3', name: 'C', roles: [] }]);
+  });
+
+  it('does not flag a member whose person has a user in this tenant (shared across tenants)', () => {
+    const rows = buildUserAccountRows([user('u4', 'other', { tenants: ['other', 'scs'] })], [{ uid: 'u4' }], [{ personKey: 'p-u4', name: 'D' }], 'scs', true);
+    expect(rows.map(r => r.kind)).toEqual(['normal']);
+  });
+
+  it('a user doc without tenants (legacy) accounts for nobody', () => {
+    const rows = buildUserAccountRows([user('u5', 'scs', { tenants: undefined as unknown as string[] })], [], [{ personKey: 'p-u5', name: 'E' }], 'scs', true);
+    expect(rows.map(r => r.kind)).toEqual(['memberWithoutAccount']);
   });
 });
 

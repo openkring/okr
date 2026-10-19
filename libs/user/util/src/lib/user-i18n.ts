@@ -21,6 +21,8 @@ export const USER_I18N_KEYS = {
   account_fbuser_delete:           PFX + 'account.fbuser.delete.label',
   account_fbuser_delete_confirm:   PFX + 'account.fbuser.delete.confirm',
   account_fbuser_delete_error:     PFX + 'account.fbuser.delete.error',
+  // deleting the user doc leaves its login behind, invisible to a tenant admin afterwards — the text says so
+  account_user_delete_confirm:     PFX + 'account.user.delete.confirm',
   account_fbuser_edit:             PFX + 'account.fbuser.edit.label',
   account_fbuser_edit_notfound:    PFX + 'account.fbuser.edit.notfound',
   account_fbuser_edit_conf:        PFX + 'account.fbuser.edit.conf',

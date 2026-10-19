@@ -364,7 +364,9 @@ export class UserAccountActions {
   /******************************* delete *************************************** */
   private async deleteUser(row: UserAccountRow): Promise<void> {
     if (!row.user) return;
-    if (!(await confirm(this.alertController, this.i18n.delete_confirm(), this.i18n.ok(), this.i18n.cancel(), true))) return;
+    // With a login (a normal row) deleting the user doc strands the login: warn and point to «Login löschen».
+    const text = row.kind === 'normal' ? this.i18n.account_user_delete_confirm() : this.i18n.delete_confirm();
+    if (!(await confirm(this.alertController, text, this.i18n.ok(), this.i18n.cancel(), true))) return;
     await this.userService.delete(row.user, this.appStore.currentUser());
     this.store.reload();
   }

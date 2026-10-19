@@ -14,6 +14,11 @@
     "login_no_user": "acceso sin usuario"
   },
   "account": {
+    "user": {
+      "delete": {
+        "confirm": "¿Seguro que quieres eliminar este usuario? Su inicio de sesión se mantiene y después ya no lo verás aquí. Si la persona ya no debe poder entrar, elimina primero el inicio de sesión con «Eliminar inicio de sesión»."
+      }
+    },
     "person": {
       "edit": "Editar persona"
     },

@@ -24,7 +24,7 @@ function rolesOf(user: UserModel): RoleName[] {
  * - login + user of the own tenant -> normal (a user of another tenant is skipped)
  * - login without a user doc -> loginWithoutUser (operator only; the server returns it to nobody else)
  * - user without a login -> userWithoutLogin
- * - active member whose person has no user -> memberWithoutAccount
+ * - active member whose person has no user in this tenant -> memberWithoutAccount
  * With `sourcesComplete` false (a read failed) no problem kind is produced: a missing source would
  * otherwise turn every member/user into a fake problem.
  */
@@ -36,6 +36,8 @@ export function buildUserAccountRows(
   isOperator: boolean,
   sourcesComplete = true,
 ): UserAccountRow[] {
+  // Raw Firestore reads: a legacy user doc may lack `tenants` (the model default never applies).
+  const inTenant = (u: UserModel): boolean => (u.tenants ?? []).includes(tenantId);
   const userByUid = new Map(users.map(u => [u.okey, u]));
   const rows: UserAccountRow[] = [];
   const seenUids = new Set<string>();
@@ -49,7 +51,7 @@ export function buildUserAccountRows(
       rows.push({ kind: 'loginWithoutUser', uid: login.uid, loginEmail, name: loginEmail, roles: [] });
       continue;
     }
-    if (!user.tenants.includes(tenantId)) continue;
+    if (!inTenant(user)) continue;
     rows.push({
       kind: 'normal', uid: login.uid, personKey: user.personKey, loginEmail: user.loginEmail || login.email || '',
       loginId: user.loginId ?? '', name: getFullName(user.firstName, user.lastName), user, roles: rolesOf(user),
@@ -57,7 +59,7 @@ export function buildUserAccountRows(
   }
 
   for (const user of users) {
-    if (!user.tenants.includes(tenantId) || seenUids.has(user.okey)) continue;
+    if (!inTenant(user) || seenUids.has(user.okey)) continue;
     seenUids.add(user.okey);
     rows.push({
       kind: 'userWithoutLogin', uid: user.okey, personKey: user.personKey, loginEmail: user.loginEmail,
@@ -65,7 +67,9 @@ export function buildUserAccountRows(
     });
   }
 
-  const accountedPersonKeys = new Set(users.map(u => u.personKey).filter(Boolean));
+  // Only users of THIS tenant account for a member: the operator's user list spans every tenant, and a
+  // member with a user elsewhere still has no account here.
+  const accountedPersonKeys = new Set(users.filter(inTenant).map(u => u.personKey).filter(Boolean));
   for (const member of activeMembers) {
     if (accountedPersonKeys.has(member.personKey)) continue;
     rows.push({ kind: 'memberWithoutAccount', personKey: member.personKey, name: member.name, roles: [] });

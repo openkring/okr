@@ -14,6 +14,11 @@
     "login_no_user": "login sans utilisateur"
   },
   "account": {
+    "user": {
+      "delete": {
+        "confirm": "Veux-tu vraiment supprimer cet utilisateur ? Son login reste actif et tu ne le verras plus ici ensuite. Si la personne ne doit plus pouvoir se connecter, supprime d’abord le login avec «Supprimer le login»."
+      }
+    },
     "person": {
       "edit": "Modifier la personne"
     },
