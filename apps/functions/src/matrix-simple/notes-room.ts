@@ -134,8 +134,10 @@ export interface NotesRoomFacts {
   roomId: string;
   canonicalAlias: string | null | undefined;
   creator: string | null | undefined;
-  /** `m.room.power_levels` → `users`. */
-  powerUsers: Record<string, number> | undefined;
+  /** `m.room.power_levels` content. */
+  powerLevels: Record<string, unknown> | undefined;
+  /** Everyone whose current membership is `join` or `invite`. */
+  activeMembers: Set<string>;
   marker: string[] | undefined;
   /** Where the canonical alias resolves in the room directory. */
   aliasRoomId: string | undefined;
@@ -150,7 +152,9 @@ export interface NotesRoomFacts {
  * who leaves does not expose their notes:
  *   - @bk2-bot created the room,
  *   - the marker names exactly one tenant,
- *   - the power-level users are exactly the bot at 100 and one person at 50 (the owner),
+ *   - the power levels are notesRoomPowerLevels' own (state_default, invite and the canonical
+ *     alias at 100) and their users are exactly the bot at 100 and one person at 50 (the owner),
+ *   - nobody but the bot and the owner is joined or invited (the owner may have left),
  *   - the canonical alias is exactly that owner's notes alias for that tenant on the bot's server,
  *   - and that alias resolves back to this room.
  */
@@ -158,13 +162,18 @@ export function isGenuineNotesRoom(facts: NotesRoomFacts, botUserId: string): bo
   const server = botUserId.split(':').slice(1).join(':');
   if (!server || facts.creator !== botUserId) return false;
   if (facts.marker?.length !== 1) return false;
-  const users = Object.entries(facts.powerUsers ?? {});
+  const pl = facts.powerLevels ?? {};
+  const events = (pl['events'] ?? {}) as Record<string, unknown>;
+  if (pl['state_default'] !== NOTES_BOT_POWER_LEVEL || pl['invite'] !== NOTES_BOT_POWER_LEVEL) return false;
+  if (events['m.room.canonical_alias'] !== NOTES_BOT_POWER_LEVEL) return false;
+  const users = Object.entries((pl['users'] ?? {}) as Record<string, number>);
   if (users.length !== 2) return false;
   if (!users.some(([id, level]) => id === botUserId && level === NOTES_BOT_POWER_LEVEL)) return false;
   const owner = users.find(([id, level]) => id !== botUserId && level === NOTES_PERSON_POWER_LEVEL)?.[0];
   if (!owner?.startsWith('@')) return false;
   const colon = owner.indexOf(':');
   if (colon < 0 || owner.slice(colon + 1) !== server) return false;
+  if ([...facts.activeMembers].some((m) => m !== botUserId && m !== owner)) return false;
   const alias = `#${notesRoomAliasLocalpart(facts.marker[0], owner.slice(1, colon))}:${server}`;
   return facts.canonicalAlias === alias && facts.aliasRoomId === facts.roomId;
 }
@@ -186,11 +195,14 @@ export async function isPersonalNotesRoom(
   if (!stateResp.ok) throw new Error(`isPersonalNotesRoom: state ${stateResp.status} for ${roomId}`);
   const events = ((await stateResp.json()) as { state?: Array<{ type: string; state_key: string; content: Record<string, unknown> }> }).state ?? [];
   const content = (type: string) => events.find((e) => e.type === type && e.state_key === '')?.content;
-  const powerUsers = content('m.room.power_levels')?.['users'] as Record<string, number> | undefined;
+  const powerLevels = content('m.room.power_levels');
+  const activeMembers = new Set(events
+    .filter((e) => e.type === 'm.room.member' && ['join', 'invite'].includes(String(e.content?.['membership'])))
+    .map((e) => e.state_key));
   const tenants = content(OKR_TENANT_EVENT)?.['tenants'];
   const marker = Array.isArray(tenants) ? tenants.map(String) : undefined;
   const aliasRoomId = await resolveRoomAlias(canonicalAlias, adminToken, { strict: true });
-  return isGenuineNotesRoom({ roomId, canonicalAlias, creator: summary.creator, powerUsers, marker, aliasRoomId }, botUserId);
+  return isGenuineNotesRoom({ roomId, canonicalAlias, creator: summary.creator, powerLevels, activeMembers, marker, aliasRoomId }, botUserId);
 }
 
 /**

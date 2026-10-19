@@ -28,18 +28,22 @@ const BOT = '@bk2-bot:hs';
  * marker [scs], exact own alias resolving back to it) whose owner has LEFT, and a fake one: a
  * member created a room and gave it a #notes_ alias to hide it from moderation. All marked for scs.
  */
-const ROOMS: Record<string, { alias: string; creator: string; power: Record<string, number> }> = {
-  '!group:hs': { alias: '#group_g1:hs', creator: BOT, power: { [BOT]: 100 } },
-  '!notes:hs': { alias: '#notes_scs_kaiser:hs', creator: BOT, power: { [BOT]: 100, '@kaiser:hs': 50 } },
-  '!fake:hs': { alias: '#notes_scs_mallory:hs', creator: '@mallory:hs', power: { '@mallory:hs': 100, '@victim:hs': 50 } },
+const NOTES_PL = { state_default: 100, invite: 100, events: { 'm.room.canonical_alias': 100 } };
+const ROOMS: Record<string, { alias: string; creator: string; power: Record<string, unknown>; members: string[] }> = {
+  '!group:hs': { alias: '#group_g1:hs', creator: BOT, power: { users: { [BOT]: 100 } }, members: [BOT, '@a:hs'] },
+  // owner @kaiser has left: only the bot is still joined
+  '!notes:hs': { alias: '#notes_scs_kaiser:hs', creator: BOT, power: { ...NOTES_PL, users: { [BOT]: 100, '@kaiser:hs': 50 } }, members: [BOT] },
+  '!fake:hs': { alias: '#notes_scs_mallory:hs', creator: '@mallory:hs', power: { ...NOTES_PL, users: { '@mallory:hs': 100, '@victim:hs': 50 } }, members: ['@mallory:hs', '@victim:hs'] },
 };
 const roomOfAlias = (alias: string) => Object.entries(ROOMS).find(([, r]) => r.alias === alias)?.[0];
 
 describe('isGenuineNotesRoom', () => {
   const genuine = {
     roomId: '!n:hs', canonicalAlias: '#notes_scs_kaiser:hs', creator: BOT,
-    powerUsers: { [BOT]: 100, '@kaiser:hs': 50 }, marker: ['scs'], aliasRoomId: '!n:hs',
+    powerLevels: { ...NOTES_PL, users: { [BOT]: 100, '@kaiser:hs': 50 } },
+    activeMembers: new Set([BOT]), marker: ['scs'], aliasRoomId: '!n:hs',
   };
+  const withUsers = (users: Record<string, number> | undefined) => ({ ...genuine, powerLevels: { ...NOTES_PL, users } });
   it('accepts a bot-created room whose alias is exactly its owner\'s notes alias', () => {
     expect(isGenuineNotesRoom(genuine, BOT)).toBe(true);
   });
@@ -49,11 +53,25 @@ describe('isGenuineNotesRoom', () => {
   it('rejects a #notes_ alias that is not the owner\'s own', () => {
     expect(isGenuineNotesRoom({ ...genuine, canonicalAlias: '#notes_scs_someone:hs' }, BOT)).toBe(false);
   });
+  it('accepts the owner still joined, and the owner gone', () => {
+    expect(isGenuineNotesRoom({ ...genuine, activeMembers: new Set([BOT, '@kaiser:hs']) }, BOT)).toBe(true);
+    expect(isGenuineNotesRoom({ ...genuine, activeMembers: new Set() }, BOT)).toBe(true);
+  });
   it('rejects power users other than exactly bot 100 + owner 50', () => {
-    expect(isGenuineNotesRoom({ ...genuine, powerUsers: { [BOT]: 100, '@kaiser:hs': 50, '@x:hs': 50 } }, BOT)).toBe(false);
-    expect(isGenuineNotesRoom({ ...genuine, powerUsers: { [BOT]: 100, '@kaiser:hs': 100 } }, BOT)).toBe(false);
-    expect(isGenuineNotesRoom({ ...genuine, powerUsers: { [BOT]: 100 } }, BOT)).toBe(false);
-    expect(isGenuineNotesRoom({ ...genuine, powerUsers: undefined }, BOT)).toBe(false);
+    expect(isGenuineNotesRoom(withUsers({ [BOT]: 100, '@kaiser:hs': 50, '@x:hs': 50 }), BOT)).toBe(false);
+    expect(isGenuineNotesRoom(withUsers({ [BOT]: 100, '@kaiser:hs': 100 }), BOT)).toBe(false);
+    expect(isGenuineNotesRoom(withUsers({ [BOT]: 100 }), BOT)).toBe(false);
+    expect(isGenuineNotesRoom(withUsers(undefined), BOT)).toBe(false);
+  });
+  it('rejects power levels that are not the notes room\'s own', () => {
+    const pl = (over: Record<string, unknown>) => ({ ...genuine, powerLevels: { ...genuine.powerLevels, ...over } });
+    expect(isGenuineNotesRoom(pl({ state_default: 50 }), BOT)).toBe(false);
+    expect(isGenuineNotesRoom(pl({ invite: 0 }), BOT)).toBe(false);
+    expect(isGenuineNotesRoom(pl({ events: { 'm.room.canonical_alias': 50 } }), BOT)).toBe(false);
+    expect(isGenuineNotesRoom({ ...genuine, powerLevels: undefined }, BOT)).toBe(false);
+  });
+  it('rejects a room where anyone besides the bot and the owner is joined or invited', () => {
+    expect(isGenuineNotesRoom({ ...genuine, activeMembers: new Set([BOT, '@x:hs']) }, BOT)).toBe(false);
   });
   it('rejects an alias that does not resolve back to the room', () => {
     expect(isGenuineNotesRoom({ ...genuine, aliasRoomId: '!other:hs' }, BOT)).toBe(false);
@@ -90,7 +108,9 @@ describe('admin room tools exclude notes rooms', () => {
       if (state) {
         const r = ROOMS[decodeURIComponent(state[1])];
         return json({ state: r ? [
-          { type: 'm.room.power_levels', state_key: '', content: { users: r.power } },
+          { type: 'm.room.power_levels', state_key: '', content: r.power },
+          ...r.members.map((m) => ({ type: 'm.room.member', state_key: m, content: { membership: 'join' } })),
+          { type: 'm.room.member', state_key: '@kaiser:hs', content: { membership: 'leave' } },
           { type: 'org.okr.tenant', state_key: '', content: { tenants: ['scs'] } },
         ] : [] });
       }
