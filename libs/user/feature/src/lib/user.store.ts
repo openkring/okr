@@ -60,7 +60,7 @@ export const UserStore = signalStore(
   withProps((store) => ({
     i18n: store.i18nService.translateAll(USER_I18N_KEYS),
   })),
-  withProps((store) => ({
+  withProps(() => ({
     /** which sources failed to load; a failed source must never fake «nobody» or fake problems */
     failed: signal<{ users: boolean; logins: boolean; members: boolean }>({ users: false, logins: false, members: false }),
   })),

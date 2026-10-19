@@ -260,7 +260,9 @@ export class UserAccountActions {
     try {
       const holderLoginId = await swapLoginEmail(holder.okey, row.uid);
       // the newcomer was opened with a random password: the reset link reaches exactly their mailbox
-      if (favEmail) await this.authService.resetPassword(favEmail);
+      // (outside production the admin's own login, as in resetPassword: never mail a real user from dev)
+      const resetTo = this.appStore.env.production ? favEmail : this.appStore.currentUser()?.loginEmail;
+      if (resetTo) await this.authService.resetPassword(resetTo);
       await notify(this.alertController, this.i18n.account_swap(), fill(this.i18n.account_swap_conf(), { ...params, loginId: holderLoginId }), this.i18n.ok());
       this.store.reload();
     } catch (ex) {
@@ -272,7 +274,14 @@ export class UserAccountActions {
   /** Edits the Firebase login itself (email, display name, verified, disabled). */
   private async editFirebaseUser(row: UserAccountRow): Promise<void> {
     if (!row.uid) return;
-    const fbuser = await getFirebaseUser(row.uid);
+    let fbuser: FirebaseUserModel | undefined;
+    try {
+      fbuser = await getFirebaseUser(row.uid);
+    } catch (ex) {
+      console.error('UserAccountActions.editFirebaseUser', ex);
+      error(this.toastController, fill(this.i18n.account_fbuser_edit_load_error(), { reason: (ex as Error)?.message ?? '' }));
+      return;
+    }
     if (!fbuser) {
       await notify(this.alertController, this.i18n.account_fbuser_edit(), this.i18n.account_fbuser_edit_notfound(), this.i18n.ok());
       return;

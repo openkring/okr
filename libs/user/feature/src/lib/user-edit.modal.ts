@@ -33,7 +33,9 @@ import { dismissOverlay } from '@okr/shared-util-angular';
     }
     <ion-content class="ion-no-padding">
       <okr-avatar-toolbar key="{{avatarKey()}}" modelType="person" (imageSelected)="onImageSelected($event)" [readOnly]="readOnly()" [title]="toolbarTitle()"/>
-      <!-- the segment only picks which of the stacked forms is visible; one save covers them all -->
+      <!-- the segment only picks which forms are shown; @switch destroys and re-creates them on every
+           switch, so their state lives in the modal's *Vm signals (seeded from those on re-create) and
+           one save covers all segments -->
       <ion-segment [value]="segment()" (ionChange)="onSegmentChange($event.detail.value)">
         <ion-segment-button value="profile"><ion-label>{{ i18n.segment_profile() }}</ion-label></ion-segment-button>
         <ion-segment-button value="roles"><ion-label>{{ i18n.segment_roles() }}</ion-label></ion-segment-button>
@@ -170,7 +172,7 @@ export class UserEditModal {
     this.tags.set(tags);
   }
 
-  protected onFormDataChange(formType: string, formData: any): void {
+  protected onFormDataChange(formType: string, formData: UserModelFormModel | UserAuthFormModel | UserDisplayFormModel | UserPrivacyFormModel | UserNotificationFormModel): void {
     this.formDirty.set(true);
     switch(formType) {
         case 'model': 

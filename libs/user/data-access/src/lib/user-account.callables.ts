@@ -2,6 +2,7 @@ import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 
 import { FirebaseUserModel } from '@okr/shared-models';
+import { isAuthUserNotFound } from '@okr/user-util';
 
 /*
  * The account callables behind the «Benutzer & Zugänge» row actions (spec 1.101 phase 4). Moved
@@ -66,21 +67,24 @@ export async function setPassword(uid: string, password: string, useEmulators = 
   await callable<{ uid: string; password: string }, unknown>('setPassword', useEmulators)({ uid, password });
 }
 
-/** The Firebase login of a uid (limited fields), or undefined when there is none. */
+/**
+ * The Firebase login of a uid (limited fields), or undefined when there is none. Any other failure
+ * (permission, network, server) throws, like the other wrappers, so the caller can say so.
+ */
 export async function getFirebaseUser(uid: string): Promise<FirebaseUserModel | undefined> {
+  let fbUser: FirebaseUserModel;
   try {
-    const result = await callable<{ uid: string }, FirebaseUserModel>('getFirebaseUser')({ uid });
-    const fbUser = result.data;
-    // the admin SDK returns null for unset fields; the form validations reject null
-    if (!fbUser.email) fbUser.email = '';
-    if (!fbUser.displayName) fbUser.displayName = '';
-    if (!fbUser.phone) fbUser.phone = '';
-    if (!fbUser.photoUrl) fbUser.photoUrl = '';
-    return fbUser;
+    fbUser = (await callable<{ uid: string }, FirebaseUserModel>('getFirebaseUser')({ uid })).data;
   } catch (ex) {
-    console.error('getFirebaseUser: ' + JSON.stringify(ex));
-    return undefined;
+    if (isAuthUserNotFound(ex)) return undefined;
+    throw ex;
   }
+  // the admin SDK returns null for unset fields; the form validations reject null
+  if (!fbUser.email) fbUser.email = '';
+  if (!fbUser.displayName) fbUser.displayName = '';
+  if (!fbUser.phone) fbUser.phone = '';
+  if (!fbUser.photoUrl) fbUser.photoUrl = '';
+  return fbUser;
 }
 
 /** Saves a Firebase login as is (it must be complete); the callable's message carries the reason on failure. */

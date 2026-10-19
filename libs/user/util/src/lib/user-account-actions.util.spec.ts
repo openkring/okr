@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { UserModel } from '@okr/shared-models';
 
-import { accountCheckFindings, actionsForRow, AccountCheckTexts, userEditRequest } from './user-account-actions.util';
+import { accountCheckFindings, actionsForRow, AccountCheckTexts, isAuthUserNotFound, userEditRequest } from './user-account-actions.util';
 import { UserAccountRow } from './user-account-rows.util';
 
 function user(okey: string, extra: Partial<UserModel> = {}): UserModel {
@@ -21,7 +21,7 @@ describe('actionsForRow', () => {
       'account.reset', 'account.password', 'account.loginid', 'fbuser.edit',
       'account.check', 'account.impersonate', 'matrix.provision',
       'copy.email', 'copy.uid', 'copy.pkey',
-      'user.delete',
+      'user.delete', 'fbuser.delete',
     ]);
   });
 
@@ -32,7 +32,7 @@ describe('actionsForRow', () => {
       'account.reset', 'account.password', 'account.loginid', 'account.swap', 'fbuser.edit',
       'account.check', 'account.impersonate', 'matrix.provision',
       'copy.email', 'copy.uid', 'copy.pkey',
-      'user.delete',
+      'user.delete', 'fbuser.delete',
     ]);
   });
 
@@ -43,18 +43,33 @@ describe('actionsForRow', () => {
       'account.reset', 'account.password', 'account.loginid', 'fbuser.edit',
       'account.impersonate',
       'copy.email', 'copy.uid',
-      'user.delete',
+      'user.delete', 'fbuser.delete',
     ]);
   });
 
   it('a user without a login can be edited, opened or deleted', () => {
     const row: UserAccountRow = { kind: 'userWithoutLogin', uid: 'u2', personKey: 'p2', loginEmail: 'b@x.ch', name: 'B', user: user('u2'), roles: [] };
-    expect(actionsForRow(row, false)).toEqual(['user.edit', 'person.edit', 'account.open', 'copy.email', 'copy.uid', 'copy.pkey', 'user.delete']);
+    expect(actionsForRow(row, false)).toEqual(['user.edit', 'person.edit', 'account.open', 'account.check', 'copy.email', 'copy.uid', 'copy.pkey', 'user.delete']);
   });
 
   it('a member without an account can get one', () => {
     const row: UserAccountRow = { kind: 'memberWithoutAccount', personKey: 'p3', name: 'C', roles: [] };
-    expect(actionsForRow(row, false)).toEqual(['person.edit', 'account.open', 'copy.pkey']);
+    expect(actionsForRow(row, false)).toEqual(['person.edit', 'account.open', 'account.check', 'copy.pkey']);
+  });
+
+  it('a tenant admin may delete the login of a normal row (server: mayDeleteAuthUser), last in the sheet', () => {
+    const actions = actionsForRow(normal, false);
+    expect(actions.slice(-2)).toEqual(['user.delete', 'fbuser.delete']);
+  });
+
+  it('offers «Berechtigung prüfen» on every row with a person, problem rows included', () => {
+    const rows: UserAccountRow[] = [
+      normal,
+      { kind: 'userWithoutLogin', uid: 'u2', personKey: 'p2', name: 'B', user: user('u2'), roles: [] },
+      { kind: 'memberWithoutAccount', personKey: 'p3', name: 'C', roles: [] },
+    ];
+    expect(rows.map(r => actionsForRow(r, false).includes('account.check'))).toEqual([true, true, true]);
+    expect(actionsForRow({ ...normal, personKey: undefined }, false).includes('account.check')).toBe(false);
   });
 
   it('a login without a user is operator-only', () => {
@@ -123,5 +138,19 @@ describe('accountCheckFindings', () => {
       { id: 'user', title: 'Benutzer', detail: 'kein Benutzer' },
       { id: 'login', title: 'Login', detail: 'kein Login' },
     ]);
+  });
+});
+
+describe('isAuthUserNotFound', () => {
+  it('recognises the tenant check and the Admin SDK lookup as not found', () => {
+    expect(isAuthUserNotFound({ code: 'functions/not-found', message: 'Dieses Benutzerkonto gibt es nicht.' })).toBe(true);
+    expect(isAuthUserNotFound({ code: 'functions/internal', message: 'Failed to get the firebase user: There is no user record corresponding to the provided identifier.' })).toBe(true);
+  });
+
+  it('treats every other failure as an error', () => {
+    expect(isAuthUserNotFound({ code: 'functions/permission-denied', message: 'nope' })).toBe(false);
+    expect(isAuthUserNotFound({ code: 'functions/internal', message: 'Failed to get the firebase user: quota' })).toBe(false);
+    expect(isAuthUserNotFound(new Error('network'))).toBe(false);
+    expect(isAuthUserNotFound(undefined)).toBe(false);
   });
 });

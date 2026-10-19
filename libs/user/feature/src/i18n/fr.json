@@ -27,7 +27,8 @@
         "label": "Modifier le login",
         "notfound": "Cet utilisateur n'a pas de login.",
         "conf": "Le login est enregistré.",
-        "error": "Le login n'a pas pu être enregistré : {reason}"
+        "error": "Le login n'a pas pu être enregistré : {reason}",
+        "load_error": "Le login n'a pas pu être chargé : {reason}"
       }
     },
     "password": {

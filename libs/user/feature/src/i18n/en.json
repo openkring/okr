@@ -27,7 +27,8 @@
         "label": "Edit login",
         "notfound": "This user has no login.",
         "conf": "The login is saved.",
-        "error": "The login could not be saved: {reason}"
+        "error": "The login could not be saved: {reason}",
+        "load_error": "The login could not be loaded: {reason}"
       }
     },
     "password": {

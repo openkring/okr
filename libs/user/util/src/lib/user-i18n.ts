@@ -25,6 +25,7 @@ export const USER_I18N_KEYS = {
   account_fbuser_edit_notfound:    PFX + 'account.fbuser.edit.notfound',
   account_fbuser_edit_conf:        PFX + 'account.fbuser.edit.conf',
   account_fbuser_edit_error:       PFX + 'account.fbuser.edit.error',
+  account_fbuser_edit_load_error:  PFX + 'account.fbuser.edit.load_error',
   account_password:                PFX + 'account.password.label',
   account_password_header:         PFX + 'account.password.header',
   account_password_message:        PFX + 'account.password.message',

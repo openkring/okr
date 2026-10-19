@@ -27,7 +27,8 @@
         "label": "Login bearbeiten",
         "notfound": "Zu diesem Benutzer gibt es kein Login.",
         "conf": "Das Login ist gespeichert.",
-        "error": "Das Login konnte nicht gespeichert werden: {reason}"
+        "error": "Das Login konnte nicht gespeichert werden: {reason}",
+        "load_error": "Das Login konnte nicht geladen werden: {reason}"
       }
     },
     "password": {

@@ -30,9 +30,10 @@ export function actionGroup(action: UserAccountAction): 'edit' | 'account' | 'di
  * The actions a row offers, in sheet order. Only what applies to the row kind, and only when the
  * value the action needs is there (a person action needs a personKey, a copy its value).
  * - loginWithoutUser (operator only): copy email/uid, delete the Firebase login
- * - userWithoutLogin: edit user/person, open the account, copy, delete the user
- * - memberWithoutAccount: edit the person, open the account, copy the personKey
- * - normal: the whole toolbox; the email swap only for a Benutzername login (synthetic login email)
+ * - userWithoutLogin: edit user/person, open the account, check, copy, delete the user
+ * - memberWithoutAccount: edit the person, open the account, check, copy the personKey
+ * - normal: the whole toolbox incl. deleting the login; the email swap only for a Benutzername login
+ * «Berechtigung prüfen» needs a personKey and is offered on every row that has one.
  */
 export function actionsForRow(row: UserAccountRow, isOperator: boolean): UserAccountAction[] {
   const actions: UserAccountAction[] = [];
@@ -50,12 +51,12 @@ export function actionsForRow(row: UserAccountRow, isOperator: boolean): UserAcc
       return actions;
     case 'memberWithoutAccount':
       if (!hasPerson) return [];
-      actions.push('person.edit', 'account.open');
+      actions.push('person.edit', 'account.open', 'account.check');
       copies();
       return actions;
     case 'userWithoutLogin':
       actions.push('user.edit');
-      if (hasPerson) actions.push('person.edit', 'account.open');
+      if (hasPerson) actions.push('person.edit', 'account.open', 'account.check');
       copies();
       actions.push('user.delete');
       return actions;
@@ -69,9 +70,21 @@ export function actionsForRow(row: UserAccountRow, isOperator: boolean): UserAcc
       actions.push('account.impersonate');
       if (hasPerson) actions.push('matrix.provision');
       copies();
-      actions.push('user.delete');
+      // the server (mayDeleteAuthUser) lets a tenant admin delete the login of its own single-tenant user
+      actions.push('user.delete', 'fbuser.delete');
       return actions;
   }
+}
+
+/**
+ * True when a getFirebaseUser failure means "this login does not exist": the tenant check answers
+ * `not-found`, the Admin SDK's user-not-found arrives wrapped as `internal` with its message.
+ * Every other failure is a real error the caller must report.
+ */
+export function isAuthUserNotFound(ex: unknown): boolean {
+  const { code, message } = (ex ?? {}) as { code?: string; message?: string };
+  if (String(code ?? '').replace(/^functions\//, '') === 'not-found') return true;
+  return /no user record/i.test(message ?? '');
 }
 
 /** What `?edit=<userKey>` on the list asks for (the retired `/user/:userKey` page redirects there). */

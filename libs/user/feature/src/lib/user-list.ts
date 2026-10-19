@@ -183,6 +183,8 @@ export class UserList {
   private async handleEditRequest(request: UserEditRequest): Promise<void> {
     await this.router.navigate([], { relativeTo: this.route, queryParams: { edit: null }, queryParamsHandling: 'merge', replaceUrl: true });
     if (request.kind === 'open') await this.store.edit(request.user, this.readOnly());
+    // the users could not be read: say that, not «gibt es nicht» (an empty list proves nothing)
+    else if (this.store.failed().users) await showToast(this.toastController, this.store.i18n.read_error());
     else if (request.kind === 'missing') await showToast(this.toastController, this.store.i18n.edit_missing());
   }
 

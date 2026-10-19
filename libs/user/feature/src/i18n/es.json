@@ -27,7 +27,8 @@
         "label": "Editar inicio de sesión",
         "notfound": "Este usuario no tiene inicio de sesión.",
         "conf": "El inicio de sesión está guardado.",
-        "error": "No se pudo guardar el inicio de sesión: {reason}"
+        "error": "No se pudo guardar el inicio de sesión: {reason}",
+        "load_error": "No se pudo cargar el inicio de sesión: {reason}"
       }
     },
     "password": {

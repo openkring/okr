@@ -27,7 +27,8 @@
         "label": "Modificare login",
         "notfound": "Questo utente non ha un login.",
         "conf": "Il login è salvato.",
-        "error": "Non è stato possibile salvare il login: {reason}"
+        "error": "Non è stato possibile salvare il login: {reason}",
+        "load_error": "Non è stato possibile caricare il login: {reason}"
       }
     },
     "password": {
