@@ -21,7 +21,7 @@ const FEE_ROW_OPEN_STATES = ['initial', 'review'];
 export type FeeRowPlan =
   | { action: 'rebuild'; rowKey: string }
   | { action: 'ambiguous'; rowKeys: string[] }
-  | { action: 'skip'; why: 'archived' | 'other-year' | 'membership-collision' | 'no-row' };
+  | { action: 'skip'; why: 'archived' | 'other-year' | 'membership-collision' | 'no-row' | 'other-books' | 'no-books' };
 
 interface FeeRowMembership { memberKey?: string; dateOfEntry?: string; dateOfExit?: string; category?: string; isArchived?: boolean }
 
@@ -30,24 +30,38 @@ const isOpenRow = (f: DocumentData): boolean => FEE_ROW_OPEN_STATES.includes(str
   str(f['invoiceKey']) === '' && str(f['invoiceBexioId']) === '';
 
 /**
+ * Whether the row belongs to the books (spec 1.108, D6). A row without books (`''` or missing,
+ * D11) belongs to none — it is never treated as the club's.
+ */
+const isRowOfBooks = (f: DocumentData, booksId: string): boolean => booksId !== '' && str(f['accountingTenantId']) === booksId;
+
+/**
  * Which fee row to rebuild. Only for an exit in the running year or a cleared exit; the row has no
  * membership key, so it is matched by tenant, member, entry date and category; when the member has
  * more than one live membership in the tenant with that entry date and category (two orgs) the match
- * is not safe and nothing is done. Exactly one open row ('initial' | 'review', no invoice yet) →
- * rebuild; several → nothing (ambiguous).
+ * is not safe and nothing is done (D13: the guard stays). Only rows of the membership org's books
+ * (`booksId`, spec 1.108 D6) are candidates: a row of other books → 'other-books', a row without
+ * books (D11) → 'no-books', so the caller can log it. Exactly one open row ('initial' | 'review',
+ * no invoice yet) of the books → rebuild; several → nothing (ambiguous).
  */
 export function feeRowToRebuild(
-  rows: { okey: string; data: DocumentData }[], m: FeeRowMembership, tenantId: string, today: string, sameEntryMemberships = 1,
+  rows: { okey: string; data: DocumentData }[], m: FeeRowMembership, tenantId: string, booksId: string, today: string,
+  sameEntryMemberships = 1,
 ): FeeRowPlan {
   if (m.isArchived === true) return { action: 'skip', why: 'archived' };
   const exit = str(m.dateOfExit);
   const hasExit = /^\d{8}$/.test(exit) && !exit.startsWith('9999');
   if (hasExit && exit.substring(0, 4) !== today.substring(0, 4)) return { action: 'skip', why: 'other-year' };
   if (sameEntryMemberships > 1) return { action: 'skip', why: 'membership-collision' };
-  const hits = rows.filter(({ data: f }) => isOpenRow(f) && tenantsOf(f).includes(tenantId) &&
+  const candidates = rows.filter(({ data: f }) => isOpenRow(f) && tenantsOf(f).includes(tenantId) &&
     str((f['member'] as { key?: unknown } | undefined)?.key) === str(m.memberKey) && !!m.memberKey &&
     str(f['dateOfEntry']) === str(m.dateOfEntry) && str(f['category']) === str(m.category));
-  if (hits.length === 0) return { action: 'skip', why: 'no-row' };
+  if (candidates.length === 0) return { action: 'skip', why: 'no-row' };
+  const hits = candidates.filter(({ data: f }) => isRowOfBooks(f, booksId));
+  if (hits.length === 0) {
+    const withoutBooks = candidates.some(({ data: f }) => str(f['accountingTenantId']) === '');
+    return { action: 'skip', why: withoutBooks ? 'no-books' : 'other-books' };
+  }
   if (hits.length > 1) return { action: 'ambiguous', rowKeys: hits.map(h => h.okey) };
   return { action: 'rebuild', rowKey: hits[0].okey };
 }
@@ -95,14 +109,19 @@ export function settlementAfterRebuild(s: ExitSettlement, rebuilt: boolean): Exi
  */
 export async function rebuildFeeRow(db: Firestore, ctx: ExitContext, today: string): Promise<boolean> {
   const { membership: m, tenantId } = ctx;
+  const booksId = ctx.input.booksId;
   const schedule = ctx.input.schedule;
   const memberKey = str(m.memberKey);
   if (!memberKey || !schedule || String(schedule.year) !== today.substring(0, 4)) return false;
 
   const snap = await db.collection(MemberFeeCollection).where('member.key', '==', memberKey).get();
-  const plan = feeRowToRebuild(snap.docs.map(d => ({ okey: d.id, data: d.data() })), m, tenantId, today, ctx.sameEntryMemberships);
+  const plan = feeRowToRebuild(snap.docs.map(d => ({ okey: d.id, data: d.data() })), m, tenantId, booksId, today, ctx.sameEntryMemberships);
   if (plan.action === 'skip' && plan.why === 'membership-collision') {
     logger.warn(`${CF_NAME}: member ${memberKey} has ${ctx.sameEntryMemberships} live memberships with the same entry date and category in tenant ${tenantId}, fee row of membership ${ctx.membershipKey} not rebuilt`);
+    return false;
+  }
+  if (plan.action === 'skip' && plan.why === 'no-books') {
+    logger.warn(`${CF_NAME}: open fee row(s) of member ${memberKey} in tenant ${tenantId} have no books (accountingTenantId ''), ignored — fee row of membership ${ctx.membershipKey} not rebuilt`);
     return false;
   }
   if (plan.action === 'ambiguous') {
@@ -120,7 +139,7 @@ export async function rebuildFeeRow(db: Firestore, ctx: ExitContext, today: stri
   const ref = db.collection(MemberFeeCollection).doc(plan.rowKey);
   return db.runTransaction(async (tx) => {
     const row = (await tx.get(ref)).data();
-    if (!row || !isOpenRow(row) || !tenantsOf(row).includes(tenantId)) return false;
+    if (!row || !isOpenRow(row) || !tenantsOf(row).includes(tenantId) || !isRowOfBooks(row, booksId)) return false;
     tx.update(ref, { positions });
     return true;
   });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { billedPositions, memberFeeDraft, unbookablePositions } from './post-member-fees';
+import { billedPositions, isPostableRow, memberFeeDraft, unbookablePositions } from './post-member-fees';
 import { issueBlockers, issueHeaderBlockers } from '../invoice/invoice.logic';
 import type { MemberFeePosition } from '@okr/shared-models';
 
@@ -83,5 +83,36 @@ describe('billedPositions', () => {
     expect(billed.map(p => p.amount)).toEqual([600, -50]);
     const asInput = billed.map(p => ({ name: p.label, amount: p.amount, accountKey: p.accountKey }));
     expect(issueBlockers(asInput, 'recv')).toEqual([]);
+  });
+});
+
+describe('isPostableRow (spec 1.108, D5/D11)', () => {
+  const fee = (over: Record<string, unknown> = {}) => ({
+    tenants: ['scs'], accountingTenantId: 'scs', isArchived: false, state: 'ready', ...over,
+  });
+
+  it('posts a ready row of the run\'s books', () => {
+    expect(isPostableRow(fee(), 'scs', 'scs')).toBe(true);
+    expect(isPostableRow(fee({ accountingTenantId: 'gss' }), 'scs', 'gss')).toBe(true);
+  });
+
+  it('never posts a gss row in an scs run, nor an scs row in a gss run', () => {
+    expect(isPostableRow(fee({ accountingTenantId: 'gss' }), 'scs', 'scs')).toBe(false);
+    expect(isPostableRow(fee(), 'scs', 'gss')).toBe(false);
+  });
+
+  it('never posts a row without books — it does not count as scs', () => {
+    expect(isPostableRow(fee({ accountingTenantId: '' }), 'scs', 'scs')).toBe(false);
+    expect(isPostableRow(fee({ accountingTenantId: undefined }), 'scs', 'scs')).toBe(false);
+    expect(isPostableRow(fee({ accountingTenantId: '' }), 'scs', '')).toBe(false);
+  });
+
+  it.each([
+    ['of another tenant', { tenants: ['evil'] }],
+    ['archived', { isArchived: true }],
+    ['not ready', { state: 'review' }],
+    ['already invoiced', { state: 'invoiced' }],
+  ])('never posts a row that is %s', (_why, over) => {
+    expect(isPostableRow(fee(over), 'scs', 'scs')).toBe(false);
   });
 });

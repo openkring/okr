@@ -67,12 +67,15 @@ export function toPositions(legacy: Record<string, unknown>): MemberFeePosition[
 
 /**
  * Build the migrated document from one legacy document: every field carries over unchanged
- * except the ten legacy fee columns, which `toPositions` has turned into `positions[]`.
+ * except the ten legacy fee columns, which `toPositions` has turned into `positions[]`, and the
+ * row gets the club's books (`accountingTenantId: 'scs'`, spec 1.108 D4).
  */
 export function toMigratedDoc(legacy: FsData): FsData {
   const copy: FsData = { ...legacy };
   for (const field of LEGACY_FEE_FIELDS) delete copy[field];
   copy.positions = toPositions(legacy);
+  // Every legacy row is the club's (spec 1.108, D4): `scs-memberfees` only ever held scs rows.
+  copy.accountingTenantId = 'scs';
   return copy;
 }
 

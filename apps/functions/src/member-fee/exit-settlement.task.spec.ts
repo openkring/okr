@@ -281,7 +281,7 @@ describe('loadExitContext', () => {
 describe('rebuildFeeRow', () => {
   const schedule = { year: 2026, positions: [{ key: 'fee', usage: 'membershipFee', type: 'fee', label: 'Jahresbeitrag', source: 'category', proRata: true, accountKey: '3000' }] };
   const feeRow = (over: Doc = {}): Doc => ({
-    tenants: ['scs'], member: { key: 'p1' }, state: 'initial', dateOfEntry: '20250205', category: 'active', isArchived: false,
+    tenants: ['scs'], accountingTenantId: 'scs', member: { key: 'p1' }, state: 'initial', dateOfEntry: '20250205', category: 'active', isArchived: false,
     positions: [{ key: 'fee', amount: 600 }], ...over,
   });
   const withSchedule = (): ExitContext => ({ ...ctx(), input: { ...ctx().input, schedule: schedule as ExitContext['input']['schedule'] } });
@@ -303,6 +303,22 @@ describe('rebuildFeeRow', () => {
   it('skips when two live memberships in the tenant share entry date and category (two orgs)', async () => {
     const { db, store } = fakeDb({ 'member-fees': { f1: feeRow() } });
     expect(await rebuildFeeRow(db, { ...withSchedule(), sameEntryMemberships: 2 }, '20261019')).toBe(false);
+    expect((store['member-fees']['f1']['positions'] as { amount: number }[])[0].amount).toBe(600);
+  });
+  it('leaves the row of other books alone (spec 1.108, D6)', async () => {
+    const { db, store } = fakeDb({ 'member-fees': { f1: feeRow({ accountingTenantId: 'gss' }) } });
+    expect(await rebuildFeeRow(db, withSchedule(), '20261019')).toBe(false);
+    expect((store['member-fees']['f1']['positions'] as { amount: number }[])[0].amount).toBe(600);
+  });
+  it('rewrites only the row of the books when the member has a row in both books', async () => {
+    const { db, store } = fakeDb({ 'member-fees': { f1: feeRow(), g1: feeRow({ accountingTenantId: 'gss' }) } });
+    expect(await rebuildFeeRow(db, withSchedule(), '20261019')).toBe(true);
+    expect((store['member-fees']['f1']['positions'] as { amount: number }[])[0].amount).toBe(500);
+    expect((store['member-fees']['g1']['positions'] as { amount: number }[])[0].amount).toBe(600);
+  });
+  it('ignores a row without books (D11)', async () => {
+    const { db, store } = fakeDb({ 'member-fees': { f1: feeRow({ accountingTenantId: '' }) } });
+    expect(await rebuildFeeRow(db, withSchedule(), '20261019')).toBe(false);
     expect((store['member-fees']['f1']['positions'] as { amount: number }[])[0].amount).toBe(600);
   });
   it('leaves a row that moved on to an invoice meanwhile', async () => {

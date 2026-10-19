@@ -45,6 +45,22 @@ export function billedPositions(fee: Pick<MemberFeeModel, 'positions'>): MemberF
 }
 
 /**
+ * Whether a fee row belongs in this fee run (spec 1.108, D5): a live 'ready' row of the tenant and
+ * of exactly these books. A row without books (`''` or missing, D11) belongs to no run — it never
+ * counts as the club's. The query already selects these rows; this is the same rule in memory, so
+ * a row the query should not have returned can never be posted.
+ */
+export function isPostableRow(
+  fee: { tenants?: unknown; accountingTenantId?: unknown; isArchived?: unknown; state?: unknown },
+  tenantId: string, accountingTenantId: string,
+): boolean {
+  const tenants = Array.isArray(fee.tenants) ? (fee.tenants as unknown[]) : [];
+  const books = typeof fee.accountingTenantId === 'string' ? fee.accountingTenantId : '';
+  return tenants.includes(tenantId) && fee.isArchived !== true && fee.state === 'ready' &&
+    accountingTenantId !== '' && books === accountingTenantId;
+}
+
+/**
  * The invoice DRAFT of one member-fee row (spec 1.76 D10). It carries no number: `invoiceNo` 0 and
  * `invoiceId` '' until a treasurer reviews and issues it (`issueInvoice` allocates the number
  * transactionally). Same shape `writeInvoice` stores for a new draft.
@@ -69,8 +85,8 @@ export function memberFeeDraft(
 }
 
 /**
- * Post every 'ready' member-fee row of a tenant as an in-house invoice DRAFT (no number; a treasurer
- * issues it via `issueInvoice`, which numbers it transactionally): one `InvoiceModel`
+ * Post every 'ready' member-fee row of a tenant AND of the given books (spec 1.108, D5) as an
+ * in-house invoice DRAFT (no number; a treasurer issues it via `issueInvoice`, which numbers it transactionally): one `InvoiceModel`
  * plus one `InvoicePositionModel` per fee position, written in a single Firestore batch per fee
  * row so a row is never left half-posted (invoice without positions, or positions without the
  * fee record being flipped to 'invoiced'). This is the 'native' counterpart to
@@ -106,7 +122,24 @@ export const postMemberFees = onCall(
       .where('tenants', 'array-contains', tenantId)
       .where('isArchived', '==', false)
       .where('state', '==', 'ready')
+      .where('accountingTenantId', '==', accountingTenantId)
       .get();
+
+    // D11: a 'ready' row without books belongs to no fee run and is never posted — but it must
+    // surface, not vanish silently. (A row MISSING the field cannot be queried; the migration
+    // gives every row its books, and isPostableRow ignores such a row anyway.)
+    const withoutBooks = await db.collection(MemberFeeCollection)
+      .where('tenants', 'array-contains', tenantId)
+      .where('isArchived', '==', false)
+      .where('state', '==', 'ready')
+      .where('accountingTenantId', '==', '')
+      .count()
+      .get();
+    const withoutBooksCount = withoutBooks.data().count;
+    if (withoutBooksCount > 0) {
+      logger.warn(`${CF_NAME}: ${withoutBooksCount} 'ready' member-fee(s) of tenant ${tenantId} have no books (accountingTenantId ''), not posted`);
+    }
+    const feeDocs = feeSnap.docs.filter(d => isPostableRow(d.data(), tenantId, accountingTenantId));
 
     const scheduleYear = getYear();
     const invoiceDate = getTodayStr(DateFormat.StoreDate);
@@ -114,7 +147,7 @@ export const postMemberFees = onCall(
 
     let invoiced = 0;
     const failed: { member: string; positions: string[] }[] = [];
-    for (const feeDoc of feeSnap.docs) {
+    for (const feeDoc of feeDocs) {
       const fee = feeDoc.data() as MemberFeeModel;
 
       const unbookable = unbookablePositions(fee);
@@ -159,7 +192,7 @@ export const postMemberFees = onCall(
       invoiced++;
     }
 
-    logger.info(`${CF_NAME}: posted ${invoiced} of ${feeSnap.size} 'ready' member-fee(s) for tenant ${tenantId} (accountingTenantId ${accountingTenantId}), ${failed.length} skipped`);
-    return { processed: feeSnap.size, invoiced, failed };
+    logger.info(`${CF_NAME}: posted ${invoiced} of ${feeDocs.length} 'ready' member-fee(s) for tenant ${tenantId} (accountingTenantId ${accountingTenantId}), ${failed.length} skipped`);
+    return { processed: feeDocs.length, invoiced, failed };
   },
 );

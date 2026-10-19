@@ -14,27 +14,27 @@ const m = (over: Record<string, unknown> = {}) => ({
 });
 const row = (okey: string, over: Record<string, unknown> = {}) => ({
   okey,
-  data: { tenants: ['scs'], member: { key: 'p1' }, state: 'initial', dateOfEntry: '20250205', category: 'active', isArchived: false, ...over },
+  data: { tenants: ['scs'], accountingTenantId: 'scs', member: { key: 'p1' }, state: 'initial', dateOfEntry: '20250205', category: 'active', isArchived: false, ...over },
 });
 
 describe('feeRowToRebuild', () => {
   it('rebuilds the one matching row of the running year (initial or review)', () => {
-    expect(feeRowToRebuild([row('f1')], m(), 'scs', TODAY)).toEqual({ action: 'rebuild', rowKey: 'f1' });
-    expect(feeRowToRebuild([row('f1', { state: 'review' })], m(), 'scs', TODAY)).toEqual({ action: 'rebuild', rowKey: 'f1' });
+    expect(feeRowToRebuild([row('f1')], m(), 'scs', 'scs', TODAY)).toEqual({ action: 'rebuild', rowKey: 'f1' });
+    expect(feeRowToRebuild([row('f1', { state: 'review' })], m(), 'scs', 'scs', TODAY)).toEqual({ action: 'rebuild', rowKey: 'f1' });
   });
 
   it('rebuilds to the full year when the exit is cleared (either form of «no exit»)', () => {
-    expect(feeRowToRebuild([row('f1')], m({ dateOfExit: '' }), 'scs', TODAY)).toEqual({ action: 'rebuild', rowKey: 'f1' });
-    expect(feeRowToRebuild([row('f1')], m({ dateOfExit: '99991231' }), 'scs', TODAY)).toEqual({ action: 'rebuild', rowKey: 'f1' });
+    expect(feeRowToRebuild([row('f1')], m({ dateOfExit: '' }), 'scs', 'scs', TODAY)).toEqual({ action: 'rebuild', rowKey: 'f1' });
+    expect(feeRowToRebuild([row('f1')], m({ dateOfExit: '99991231' }), 'scs', 'scs', TODAY)).toEqual({ action: 'rebuild', rowKey: 'f1' });
   });
 
   it('leaves the rows alone when the exit lies in another year', () => {
-    expect(feeRowToRebuild([row('f1')], m({ dateOfExit: '20251031' }), 'scs', TODAY)).toEqual({ action: 'skip', why: 'other-year' });
-    expect(feeRowToRebuild([row('f1')], m({ dateOfExit: '20270331' }), 'scs', TODAY)).toEqual({ action: 'skip', why: 'other-year' });
+    expect(feeRowToRebuild([row('f1')], m({ dateOfExit: '20251031' }), 'scs', 'scs', TODAY)).toEqual({ action: 'skip', why: 'other-year' });
+    expect(feeRowToRebuild([row('f1')], m({ dateOfExit: '20270331' }), 'scs', 'scs', TODAY)).toEqual({ action: 'skip', why: 'other-year' });
   });
 
   it('leaves the rows alone for an archived membership', () => {
-    expect(feeRowToRebuild([row('f1')], m({ isArchived: true }), 'scs', TODAY)).toEqual({ action: 'skip', why: 'archived' });
+    expect(feeRowToRebuild([row('f1')], m({ isArchived: true }), 'scs', 'scs', TODAY)).toEqual({ action: 'skip', why: 'archived' });
   });
 
   it.each([
@@ -47,15 +47,38 @@ describe('feeRowToRebuild', () => {
     ['posted natively (invoiceKey)', { invoiceKey: 'inv1' }],
     ['uploaded to bexio (invoiceBexioId)', { invoiceBexioId: '42' }],
   ])('never touches a row that is %s', (_why, over) => {
-    expect(feeRowToRebuild([row('f1', over)], m(), 'scs', TODAY)).toEqual({ action: 'skip', why: 'no-row' });
+    expect(feeRowToRebuild([row('f1', over)], m(), 'scs', 'scs', TODAY)).toEqual({ action: 'skip', why: 'no-row' });
   });
 
   it('skips when the member has two live memberships in the tenant with the same entry date and category (two orgs)', () => {
-    expect(feeRowToRebuild([row('f1')], m(), 'scs', TODAY, 2)).toEqual({ action: 'skip', why: 'membership-collision' });
+    expect(feeRowToRebuild([row('f1')], m(), 'scs', 'scs', TODAY, 2)).toEqual({ action: 'skip', why: 'membership-collision' });
+  });
+
+  it('never touches a row of other books (spec 1.108, D6)', () => {
+    expect(feeRowToRebuild([row('f1', { accountingTenantId: 'gss' })], m(), 'scs', 'scs', TODAY)).toEqual({ action: 'skip', why: 'other-books' });
+  });
+
+  it('ignores a row without books — never counts it as the club\'s (D11)', () => {
+    expect(feeRowToRebuild([row('f1', { accountingTenantId: '' })], m(), 'scs', 'scs', TODAY)).toEqual({ action: 'skip', why: 'no-books' });
+    expect(feeRowToRebuild([row('f1', { accountingTenantId: undefined })], m(), 'scs', 'scs', TODAY)).toEqual({ action: 'skip', why: 'no-books' });
+  });
+
+  it('rebuilds only the row of the membership org\'s books when the member has a row in both books', () => {
+    const rows = [row('scs1'), row('gss1', { accountingTenantId: 'gss' })];
+    expect(feeRowToRebuild(rows, m(), 'scs', 'scs', TODAY)).toEqual({ action: 'rebuild', rowKey: 'scs1' });
+    expect(feeRowToRebuild(rows, m(), 'scs', 'gss', TODAY)).toEqual({ action: 'rebuild', rowKey: 'gss1' });
+  });
+
+  it('matches nothing without books', () => {
+    expect(feeRowToRebuild([row('f1', { accountingTenantId: '' })], m(), 'scs', '', TODAY)).toEqual({ action: 'skip', why: 'no-books' });
+  });
+
+  it('keeps the collision guard even when the books match (D13)', () => {
+    expect(feeRowToRebuild([row('f1')], m(), 'scs', 'scs', TODAY, 2)).toEqual({ action: 'skip', why: 'membership-collision' });
   });
 
   it('does nothing when several rows match', () => {
-    expect(feeRowToRebuild([row('f1'), row('f2', { state: 'review' })], m(), 'scs', TODAY)).toEqual({ action: 'ambiguous', rowKeys: ['f1', 'f2'] });
+    expect(feeRowToRebuild([row('f1'), row('f2', { state: 'review' })], m(), 'scs', 'scs', TODAY)).toEqual({ action: 'ambiguous', rowKeys: ['f1', 'f2'] });
   });
 });
 

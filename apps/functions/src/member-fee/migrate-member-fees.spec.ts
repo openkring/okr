@@ -59,6 +59,12 @@ describe('migrateLegacyDocs', () => {
     expect(result).toEqual({ seen: 1, converted: 1, skipped: 0 });
   });
 
+  it('gives every migrated row the club\'s books (spec 1.108, D4)', async () => {
+    const target: Record<string, FsData> = {};
+    await migrateLegacyDocs(gateway({ 'abc123': { tenants: ['scs'], jb: 320 } }, target));
+    expect(target['abc123'].accountingTenantId).toBe('scs');
+  });
+
   it('skips a legacy document whose target already exists instead of overwriting it', async () => {
     const legacy = { 'abc123': { jb: 320 } };
     const target: Record<string, FsData> = {};
