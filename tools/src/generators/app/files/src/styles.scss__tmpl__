@@ -169,7 +169,13 @@ ion-modal.auto-height-modal {
 
   ion-content {
     height: auto;
-    flex: 0 1 auto;
+    // Never shrink below the content: the .ion-page above is the scroll container, and
+    // ion-content's white background (its absolutely positioned `background` part) only
+    // covers ion-content's own box. Ionic 9 marks a content-sized modal's ion-content
+    // `.content-sizing` (`min-height: 0`), so with flex-shrink 1 it shrank to the
+    // --max-height cap while the cards overflowed below it onto the translucent modal
+    // background. A short modal is unaffected — flex-basis auto is still its content.
+    flex: 0 0 auto;
     contain: none;
 
     // The inner scroll part has to stop being a *scroll container* too, not just

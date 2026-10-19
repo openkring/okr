@@ -1551,9 +1551,7 @@ export class MatrixChat implements OnDestroy {
   // open the chat help modal (shortcuts + direct-vs-group explanation)
   // public so the parent ChatPage can trigger it from the hoisted info icon (group view)
   public async openChatHelp(): Promise<void> {
-    // fixed-size class: the help is taller than the 85vh cap of the default auto-height modal, so it
-    // must scroll inside ion-content (a shrunk ion-content leaves the overflow on the grey backdrop)
-    const modal = await this.modalController.create({ component: ChatHelpModal, cssClass: 'wide-modal' });
+    const modal = await this.modalController.create({ component: ChatHelpModal });
     await modal.present();
   }
 
