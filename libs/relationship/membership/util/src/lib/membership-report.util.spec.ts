@@ -63,6 +63,14 @@ describe('oldJuniorFindings', () => {
     expect(oldJuniorFindings([membership({ dateOfExit: '20261231' })], 'scs', 2026, juniorTexts)).toHaveLength(1);
   });
 
+  it('lists a junior with an empty exit date (none recorded)', () => {
+    expect(oldJuniorFindings([membership({ dateOfExit: '' })], 'scs', 2026, juniorTexts)).toHaveLength(1);
+  });
+
+  it('lists a junior with an undefined exit date (legacy doc)', () => {
+    expect(oldJuniorFindings([membership({ dateOfExit: undefined as unknown as string })], 'scs', 2026, juniorTexts)).toHaveLength(1);
+  });
+
   it('lists a junior with an open exit', () => {
     expect(oldJuniorFindings([membership({ dateOfExit: END_FUTURE_DATE_STR })], 'scs', 2026, juniorTexts)).toHaveLength(1);
   });

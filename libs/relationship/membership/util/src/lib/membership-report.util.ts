@@ -39,9 +39,9 @@ export function oldJuniorFindings(
   const findings: ReportFinding[] = [];
   for (const m of memberships) {
     if (m.category !== 'junior' || m.orgKey !== orgKey || m.relIsLast !== true) continue;
-    // only memberships that are still open: no exit date, or an exit on/after 31 Dec of the reference year.
+    // only memberships that are still open: no exit date recorded (empty/undefined), or an exit on/after 31 Dec of the reference year.
     // isOngoing alone would drop a junior leaving exactly at year end.
-    if (!isOngoing(m.dateOfExit) && m.dateOfExit < `${refYear}1231`) continue;
+    if (m.dateOfExit && !isOngoing(m.dateOfExit) && m.dateOfExit < `${refYear}1231`) continue;
     const memberAge = getAgeFromBirthYear(m.memberBirthYear, refYear);
     if (memberAge >= 0 && memberAge <= age) continue;
     findings.push({
