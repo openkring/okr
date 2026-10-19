@@ -20,7 +20,7 @@ import { TRIP_I18N_KEYS, TripI18n, formatTripTime } from '@okr/trip-util';
 
 import { TripEditModal } from './trip-edit.modal';
 
-const AocTripStore = signalStore(
+const TripMaintenanceStore = signalStore(
   withState({ _dummy: 0 }),
   withProps(() => ({
     appStore: inject(AppStore),
@@ -61,7 +61,7 @@ const AocTripStore = signalStore(
     },
 
     async hardDeleteTrip(trip: TripModel): Promise<void> {
-      const confirmed = await store.alertService.confirm(store.i18n.aoc_hard_delete_confirm(), true);
+      const confirmed = await store.alertService.confirm(store.i18n.maintenance_hard_delete_confirm(), true);
       if (!confirmed) return;
       const tombstone = { ...trip, state: 'deleted.permanent', deletedAt: new Date().toISOString() } as TripModel;
       await store.tripService.update(tombstone, store.appStore.currentUser());
@@ -98,7 +98,7 @@ const AocTripStore = signalStore(
 );
 
 @Component({
-  selector: 'okr-aoc-trip',
+  selector: 'okr-trip-maintenance',
   standalone: true,
   imports: [
     SvgIconPipe, Spinner,
@@ -106,12 +106,12 @@ const AocTripStore = signalStore(
     IonContent, IonList, IonItem, IonLabel, IonBadge,
     IonIcon, IonButton, IonAccordionGroup, IonAccordion,
   ],
-  providers: [AocTripStore],
+  providers: [TripMaintenanceStore],
   template: `
     <ion-header>
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ store.i18n.aoc_title() }}</ion-title>
+        <ion-title>{{ store.i18n.maintenance_title() }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
@@ -124,7 +124,7 @@ const AocTripStore = signalStore(
           <!-- Trash -->
           <ion-accordion value="trash">
             <ion-item slot="header">
-              <ion-label>{{ store.i18n.aoc_trash() }}</ion-label>
+              <ion-label>{{ store.i18n.maintenance_trash() }}</ion-label>
               @if (store.trashTrips().length > 0) {
                 <ion-badge color="danger" slot="end">{{ store.trashTrips().length }}</ion-badge>
               }
@@ -170,7 +170,7 @@ const AocTripStore = signalStore(
           <!-- 0 km -->
           <ion-accordion value="zero_km">
             <ion-item slot="header">
-              <ion-label>{{ store.i18n.aoc_zero_km() }}</ion-label>
+              <ion-label>{{ store.i18n.maintenance_zero_km() }}</ion-label>
               @if (store.zeroKmTrips().length > 0) {
                 <ion-badge color="warning" slot="end">{{ store.zeroKmTrips().length }}</ion-badge>
               }
@@ -190,7 +190,7 @@ const AocTripStore = signalStore(
           <!-- Flagged -->
           <ion-accordion value="flagged">
             <ion-item slot="header">
-              <ion-label>{{ store.i18n.aoc_flagged() }}</ion-label>
+              <ion-label>{{ store.i18n.maintenance_flagged() }}</ion-label>
               @if (store.flaggedTrips().length > 0) {
                 <ion-badge color="danger" slot="end">{{ store.flaggedTrips().length }}</ion-badge>
               }
@@ -218,7 +218,7 @@ const AocTripStore = signalStore(
     </ion-content>
   `,
 })
-export class AocTrip {
-  protected readonly store = inject(AocTripStore);
+export class TripMaintenance {
+  protected readonly store = inject(TripMaintenanceStore);
   protected readonly formatTime = formatTripTime;
 }

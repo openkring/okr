@@ -188,7 +188,7 @@
       "description": "Una salida registrada con el tracker."
     }
   },
-  "aoc": {
+  "maintenance": {
     "title": "Administración de salidas",
     "trash": "Papelera",
     "notes": "Salidas con notas",

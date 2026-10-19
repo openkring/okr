@@ -291,7 +291,7 @@ const aoc: FeatureBlock = {
   //
   // `/aoc/email` (`AocEmail`) has the `aoc-email` row declared below; its live doc is created by
   // `scripts/aoc-phase1-menu.mjs` (spec 1.101 phase 1). ONE AOC SCREEN IS STILL ROUTED BUT
-  // UN-MENU'D, stated so the omission is not read as an oversight: `/aoc/trip` (`AocTrip`) has NO
+  // UN-MENU'D, stated so the omission is not read as an oversight: `/aoc/trip` (now a redirect to `/trips/maintenance`) had NO
   // live `menuItems` doc and no catalogue row. The pre-1.101 verification (which also found none for `aoc-email`, since created) ran as follows:  with two query shapes, per the `c-yearlyevents` lesson: a name-equality `IN`
   // query over [aoc-trip, aoc-website, aoc-tag, aoc-email, …] returned `aoc-website` only, and
   // an ordered range scan of every doc whose `name` sorts in ['a','b') returned 21 documents
@@ -784,9 +784,8 @@ const geo: FeatureBlock = {
  * `@okr/location-data-access` (`geo` — every trip starts and ends at a location),
  * `@okr/relationship-responsibility-data-access` (`relationship` — who is on duty / may
  * unlock), `@okr/project-task-data-access` (`task` — a damage report opens a task). Nothing depends
- * on `trip`, so this edge set cannot close a cycle. Note `aoc`'s `AocTrip` screen ALSO loads
- * `@okr/trip-feature` — see the block comment on `aoc` in `feature-catalogue.ts`; that stays
- * an intentional inverse-gating exception and is not an edge.
+ * on `trip`, so this edge set cannot close a cycle. The Logbuch maintenance page
+ * (`TripMaintenance`) lives in `@okr/trip-feature` itself.
  */
 const trip: FeatureBlock = {
   id: 'trip',

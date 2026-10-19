@@ -188,7 +188,7 @@
       "description": "Eine mit dem Tracker aufgezeichnete Ausfahrt."
     }
   },
-  "aoc": {
+  "maintenance": {
     "title": "Ausfahrten Administration",
     "trash": "Papierkorb",
     "notes": "Ausfahrten mit Notizen",

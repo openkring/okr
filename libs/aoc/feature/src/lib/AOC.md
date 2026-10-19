@@ -15,7 +15,8 @@ The AOC (Admin Operations Console) is a restricted administrative dashboard for 
 - **Kiosk** — Monitor and remote-control the tenant's kiosk tablets: heartbeat/online state, battery, running app version, today's trips, and the remote operations (reload, message, lock, video call) written as fields on `kiosk-status/{uid}`. See the `kiosk` skill.
 - **Doc** — moved to Dokumente › Verwaiste Dateien (`/document/orphans`, `@okr/content-document-feature`); `/aoc/doc` redirects there.
 - **Email** — «E-Mail-Ereignisse» (`aoc-email.ts`): the delivery/bounce events of outgoing mail, with its own menu row (`aoc-email` → `/aoc/email`).
-- **Diary** — Prepare and repair the diary import: the Drive health check, the import dry run, and the places/people the import could not match. Lives in `@okr/content-diary-feature`, not here — same owner-vs-target split as `aoc/trip`. See [DIARY.md](../../../content/diary/feature/src/lib/DIARY.md).
+- **Trip** — moved to Logbuch › Logbuch aufräumen (`/trips/maintenance`, `@okr/trip-feature`, tripAdmin); `/aoc/trip` redirects there.
+- **Diary** — Prepare and repair the diary import (`@okr/content-diary-feature`, same owner-vs-target split as `aoc/trip`).
 
 There is no Storage page (removed, spec 1.101). Flight Tracker is not an AOC tool: it is a main-menu entry (block `mobility`).
 

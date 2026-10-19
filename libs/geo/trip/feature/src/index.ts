@@ -3,4 +3,4 @@ export * from './lib/trip-list';
 export * from './lib/trip-edit.modal';
 export * from './lib/trip-report.modal';
 export * from './lib/boat-reserved-info.modal';
-export * from './lib/aoc-trip';
+export * from './lib/trip-maintenance';

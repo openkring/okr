@@ -312,6 +312,7 @@ const withoutRedirects = (children: readonly Route[] = []): Route[] => children.
 const AOC_REDIRECTS: Record<string, string> = {
   content: '/page/integrity',
   doc: '/document/orphans',
+  trip: '/trips/maintenance',
 };
 
 describe('/aoc guards after the 2026-08-05 rulings', () => {
@@ -339,7 +340,7 @@ describe('/aoc guards after the 2026-08-05 rulings', () => {
     const { children = [] } = fragmentOf('aoc', 'aoc');
     const others = withoutRedirects(children).filter(c => !AOC_CONTENT_ADMIN.includes(c.path as typeof AOC_CONTENT_ADMIN[number]));
 
-    expect(others.length, 'expected twelve admin-only /aoc children (the redirect children carry no guard)').toBe(12);
+    expect(others.length, 'expected eleven admin-only /aoc children (the redirect children carry no guard)').toBe(11);
     // The child's OWN guard must reject both non-admin roles, independently of the floor.
     expect(others.filter(c => activates(CONTENT_ADMIN, c)).map(c => c.path)).toEqual([]);
     expect(others.filter(c => activates(PRIVILEGED, c)).map(c => c.path)).toEqual([]);
@@ -364,7 +365,7 @@ describe('/aoc guards after the 2026-08-05 rulings', () => {
    * the three ruled children are reachable) and still be stopped by each admin-only child. Both
    * halves in one assertion, because getting either wrong reintroduces the defeat-by-ancestor
    * bug the restructuring exists to avoid. R-6 touched no `/aoc` route, so the floor is still
-   * the union of these children: twelve `['admin']` ∪ three `['contentAdmin', 'admin']`.
+   * the union of these children: eleven `['admin']` ∪ three `['contentAdmin', 'admin']`.
    */
   it('a contentAdmin clears the floor but only reaches the three ruled screens', () => {
     const parent = fragmentOf('aoc', 'aoc');

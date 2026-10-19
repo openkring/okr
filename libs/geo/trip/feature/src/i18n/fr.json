@@ -188,7 +188,7 @@
       "description": "Une sortie enregistrée avec le tracker."
     }
   },
-  "aoc": {
+  "maintenance": {
     "title": "Administration des sorties",
     "trash": "Corbeille",
     "notes": "Sorties avec notes",

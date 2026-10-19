@@ -188,7 +188,7 @@
       "description": "Un'uscita registrata con il tracker."
     }
   },
-  "aoc": {
+  "maintenance": {
     "title": "Amministrazione delle uscite",
     "trash": "Cestino",
     "notes": "Uscite con note",

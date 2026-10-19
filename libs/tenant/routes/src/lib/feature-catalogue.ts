@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import type { Route } from '@angular/router';
-import { isAdminGuard, isAuthenticatedGuard, isContentAdminGuard, isContractReaderGuard, isMemberAdminGuard, isPrivilegedGuard, isTreasurerGuard } from '@okr/auth-feature';
+import { isAdminGuard, isAuthenticatedGuard, isContentAdminGuard, isContractReaderGuard, isMemberAdminGuard, isPrivilegedGuard, isTreasurerGuard, isTripAdminGuard } from '@okr/auth-feature';
 import { AppStore } from '@okr/shared-feature';
 import { memberFeesRedirectGuard } from './member-fees-redirect';
 import { RESOURCE_EDIT_MODAL } from '@okr/resource-ui';
@@ -136,7 +136,9 @@ const calevent: BlockRoutes = {
  * lacks its own guard, or if any child outside the three R-5 names is reachable by a non-admin
  * — do not delete that test, it is the whole safety net of this arrangement.
  *
- * `trip` LOADS ANOTHER BLOCK'S FEATURE LIB — `@okr/trip-feature` is `libs/geo/trip/feature`,
+ * (`trip` and `diary` formerly loaded other blocks' feature libs; they are now bookmark redirects.)
+ *
+ * HISTORICAL: `trip` LOADED ANOTHER BLOCK'S FEATURE LIB — `@okr/trip-feature` is `libs/geo/trip/feature`,
  * i.e. the `geo` block's, and `AocTrip` has no counterpart in `@okr/aoc-feature` (there is no
  * `aoc-trip.ts`). It is kept here rather than moved to `geo` and this is the INVERSE of the
  * Task 12 defect, not a repeat of it: that rule ("a `core: true` block must not own a route
@@ -151,8 +153,8 @@ const aoc: BlockRoutes = {
   routes: (): Route[] => [{
     path: 'aoc',
     // The FLOOR every `/aoc` screen shares — the union of the children's own requirements, NOT
-    // the admin gate. The admin gate lives on the twelve admin-only children below (the ones the
-    // 2026-08-05 rulings do not name; the `content` and `doc` bookmark redirects carry no guard). See the block comment for why it is contentAdmin and not privileged
+    // the admin gate. The admin gate lives on the eleven admin-only children below (the ones the
+    // 2026-08-05 rulings do not name; the `content`, `doc` and `trip` bookmark redirects carry no guard). See the block comment for why it is contentAdmin and not privileged
     // (R-5) nor merely authenticated.
     canActivate: [isContentAdminGuard()],
     children: [
@@ -180,13 +182,8 @@ const aoc: BlockRoutes = {
       { path: 'srv',        canActivate: [isContentAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocSrv) },
       { path: 'sessions',   canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocSession) },
       // See the block comment: `@okr/trip-feature` is `geo`'s lib, deliberately.
-      { path: 'trip',       canActivate: [isAdminGuard()], loadComponent: () => import('@okr/trip-feature').then(m => m.AocTrip) },
-      // Diary admin (spec 1.34). Same owner-vs-target split as `aoc/trip` above, and safe for
-      // the same reason: `libs/content/diary/**` has no catalogue block of its own — `content`
-      // is a container directory whose subdomains are catalogued individually, and the diary is
-      // the owner's private import tooling rather than a sellable feature — so there is no
-      // enablement gate for this route to bypass. `isAdminGuard`, like every other diagnostics
-      // child: the screen calls the Drive check and the import dry run.
+      // 1.101 phase 2: remove after the next release
+      { path: 'trip', redirectTo: '/trips/maintenance' },
       { path: 'diary',      canActivate: [isAdminGuard()], loadComponent: () => import('@okr/content-diary-feature').then(m => m.AocDiary) },
       // SOFTENED by owner ruling R-5, 2026-08-05, to match the live `aoc-website` menu doc's
       // `roleNeeded: contentAdmin`. This is the one place the live `app.routes.ts` guard is NOT
@@ -507,7 +504,13 @@ const trip: BlockRoutes = {
     {
       path: 'trips',
       canActivate: [isAuthenticatedGuard],
-      children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/trip-feature').then(m => m.TripList) }],
+      children: [
+        // Logbuch maintenance (moved from AOC, spec 1.101 phase 2). BEFORE `:listId/:contextMenuName`,
+        // which would otherwise swallow `maintenance` as a listId. tripAdmin: trips are writable by any
+        // tenant member (firestore.rules `match /trips`), so the route guard is the only gate.
+        { path: 'maintenance', canActivate: [isTripAdminGuard()], loadComponent: () => import('@okr/trip-feature').then(m => m.TripMaintenance) },
+        { path: ':listId/:contextMenuName', loadComponent: () => import('@okr/trip-feature').then(m => m.TripList) },
+      ],
     },
   ],
 };
@@ -1533,7 +1536,9 @@ const diary: BlockRoutes = {
     {
       path: 'diary',
       canActivate: [isAuthenticatedGuard],
-      children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/content-diary-feature').then(m => m.DiaryList) }],
+      children: [
+        { path: ':listId/:contextMenuName', loadComponent: () => import('@okr/content-diary-feature').then(m => m.DiaryList) },
+      ],
     },
   ],
 };

@@ -188,7 +188,7 @@
       "description": "A trip recorded with the tracker."
     }
   },
-  "aoc": {
+  "maintenance": {
     "title": "Outings administration",
     "trash": "Trash",
     "notes": "Outings with notes",
