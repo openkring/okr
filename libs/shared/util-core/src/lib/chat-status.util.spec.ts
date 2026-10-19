@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   addChatExemption,
   chatBlockedMessage,
+  chatBlockedSince,
   isChatBlockedError,
   isChatEffectivelyBlocked,
   removeChatExemption,
@@ -65,5 +66,15 @@ describe('chatBlockedMessage', () => {
     expect(chatBlockedMessage('  ', 'F')).toBe('F');
     expect(chatBlockedMessage(' X ', 'F')).toBe('X');
     expect(chatBlockedMessage(undefined, 'F')).toBe('F');
+  });
+});
+
+describe('chatBlockedSince', () => {
+  it('is empty without blockedAt', () => {
+    expect(chatBlockedSince(undefined, 'seit {time}')).toBe('');
+    expect(chatBlockedSince('', 'seit {time}')).toBe('');
+  });
+  it('fills {time} with the view date-time', () => {
+    expect(chatBlockedSince('20261019140500', 'gesperrt seit {time}')).toBe('gesperrt seit 19.10.2026 14:05');
   });
 });

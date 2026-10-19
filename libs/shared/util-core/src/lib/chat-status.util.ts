@@ -1,5 +1,8 @@
 import { ChatBlockedError, ChatExemption, ChatStatusModel } from '@okr/shared-models';
 
+import { convertDateFormatToString, DateFormat } from './date.util';
+import { fill } from './text.util';
+
 export function isChatEffectivelyBlocked(status: Partial<ChatStatusModel> | undefined, personKey: string | undefined): boolean {
   if (!status?.blocked) return false;
   if (!personKey) return true;
@@ -24,4 +27,10 @@ export function isChatBlockedError(error: unknown, effectivelyBlocked: boolean):
 export function chatBlockedMessage(message: string | undefined, fallback: string): string {
   const trimmed = message?.trim();
   return trimmed ? trimmed : fallback;
+}
+
+/** «gesperrt seit {time}» with blockedAt (StoreDateTime) as d.M.yyyy HH:mm; '' when there is no blockedAt. */
+export function chatBlockedSince(blockedAt: string | undefined, template: string): string {
+  if (!blockedAt) return '';
+  return fill(template, { time: convertDateFormatToString(blockedAt, DateFormat.StoreDateTime, DateFormat.ViewDateTime, false) });
 }

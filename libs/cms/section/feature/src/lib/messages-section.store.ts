@@ -1,12 +1,12 @@
 import { Injector, computed, inject } from '@angular/core';
-import { lazyService } from '@okr/shared-util-angular';
+import { lazyService, resourceParams } from '@okr/shared-util-angular';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { catchError, combineLatest, from, map, of, startWith, switchMap } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
 import { ChatStatusService } from '@okr/shared-data-access';
-import { chatBlockedMessage, convertDateFormatToString, DateFormat, fill } from '@okr/shared-util-core';
+import { chatBlockedMessage, chatBlockedSince } from '@okr/shared-util-core';
 import { MatrixRoom, PersonModel } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
@@ -42,7 +42,7 @@ export const MessagesStore = signalStore(
     roomsWithUnreadResource: rxResource({
       // 1.107: re-runs when the block flips. Blocked ⇒ no chunk load, no ensureInitialized call;
       // lifted ⇒ the stream starts again and reconnects.
-      params: () => ({ blocked: store.chatStatus.isEffectivelyBlocked(store.appStore.currentUser()?.personKey) }),
+      params: resourceParams(() => ({ blocked: store.chatStatus.isEffectivelyBlocked(store.appStore.currentUser()?.personKey) })),
       stream: ({ params }) => {
         if (params.blocked) return of<MessagesSnapshot>({ status: 'ready', rooms: [] });
         // chat-util is loaded with the service, not statically: its barrel reaches into
@@ -111,11 +111,7 @@ export const MessagesStore = signalStore(
       // 1.107 global chat block (exempt testers see the normal list)
       isBlocked: computed(() => state.chatStatus.isEffectivelyBlocked(state.appStore.currentUser()?.personKey)),
       blockedMessage: computed(() => chatBlockedMessage(state.chatStatus.message(), state.i18n.chat_blocked_default())),
-      blockedSince: computed(() => {
-        const at = state.chatStatus.status()?.blockedAt;
-        if (!at) return '';
-        return fill(state.i18n.chat_blocked_since(), { time: convertDateFormatToString(at, DateFormat.StoreDateTime, DateFormat.ViewDateTime, false) });
-      }),
+      blockedSince: computed(() => chatBlockedSince(state.chatStatus.status()?.blockedAt, state.i18n.chat_blocked_since())),
     }
   }),
 

@@ -9,7 +9,7 @@ import { ChatBlockedCard, Spinner } from '@okr/shared-ui';
 import { isBrowser } from '@okr/shared-util-angular';
 import { ChatStatusService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
-import { chatBlockedMessage, convertDateFormatToString, DateFormat, fill } from '@okr/shared-util-core';
+import { chatBlockedMessage, chatBlockedSince } from '@okr/shared-util-core';
 import type { MatrixChat } from '@okr/chat-feature';
 
 
@@ -88,11 +88,8 @@ export class ChatPage {
     this.chatStatus.isEffectivelyBlocked(this.appStore.currentUser()?.personKey));
   protected readonly blockedMessage = computed(() =>
     chatBlockedMessage(this.chatStatus.message(), this.i18n.chat_blocked_default()));
-  protected readonly blockedSince = computed(() => {
-    const at = this.chatStatus.status()?.blockedAt;
-    if (!at) return '';
-    return fill(this.i18n.chat_blocked_since(), { time: convertDateFormatToString(at, DateFormat.StoreDateTime, DateFormat.ViewDateTime, false) });
-  });
+  protected readonly blockedSince = computed(() =>
+    chatBlockedSince(this.chatStatus.status()?.blockedAt, this.i18n.chat_blocked_since()));
 
   // inputs
   public color = input('secondary');
@@ -142,11 +139,17 @@ export class ChatPage {
       // and setting the ref, a second run would pass the guard and mount a second component.
       if (untracked(() => this.chatRef()) || this.creatingChat || !isBrowser(this.platformId)) return;
       this.creatingChat = true;
+      let nudge = false;
       void (async () => {
         try {
           const { MatrixChat } = await import('@okr/chat-feature');
-          // the block may have started (or the page closed) while the chunk was in flight
-          if (this.destroyed || untracked(() => this.effectivelyBlocked()) || untracked(() => this.chatHost()) !== host) return;
+          if (this.destroyed) return;
+          // the block may have started, or the host been replaced, while the chunk was in flight:
+          // re-run the effect once the guard is released so it acts on the CURRENT host/state
+          if (untracked(() => this.effectivelyBlocked()) || untracked(() => this.chatHost()) !== host) {
+            nudge = true;
+            return;
+          }
           const ref = host.createComponent(MatrixChat);
           ref.setInput('isGroupView', untracked(() => this.isGroupView()));
           ref.setInput('selectedRoom', untracked(() => this.selectedRoom()));
@@ -156,11 +159,12 @@ export class ChatPage {
           // after mount) otherwise throws in its ngOnDestroy
           ref.changeDetectorRef.detectChanges();
           this.chatRef.set(ref);
+        } catch (error) {
+          // no nudge: a failed chunk load (offline, stale chunk after a deploy) must not retry in a loop
+          console.error('ChatPage: failed to load the chat', error);
         } finally {
           this.creatingChat = false;
-          // a host that came back while the chunk was in flight found `creatingChat` set and
-          // returned; nudge the effect so it mounts into the current host
-          this.creatingTick.update(n => n + 1);
+          if (nudge) this.creatingTick.update(n => n + 1);
         }
       })();
     });
