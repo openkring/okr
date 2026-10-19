@@ -51,7 +51,7 @@ describe('FEATURE_BLOCKS Wartung rows (1.101 phase 2)', () => {
     ['c-persons', 'maint-divider', 'admin', 'person-check-favaddress', 'call', 'admin'],
     ['c-pages', 'maint-divider-content', 'contentAdmin', 'page-integrity', 'navigate', 'contentAdmin'],
     ['c-documents', 'maint-divider', 'admin', 'document-orphans', 'navigate', 'admin'],
-    ['c-trips', 'maint-divider-trip', 'tripAdmin', 'trip-maintenance', 'navigate', 'tripAdmin'],
+    ['c-trips', 'maint-divider', 'admin', 'trip-kiosk', 'navigate', 'admin'],
     ['c-diary', 'maint-divider', 'admin', 'diary-import', 'navigate', 'admin'],
   ];
 
@@ -61,6 +61,13 @@ describe('FEATURE_BLOCKS Wartung rows (1.101 phase 2)', () => {
     expect(tail.map(c => c.name)).toEqual([divider, row]);
     expect(tail[0]).toMatchObject({ action: 'divider', url: '', roleNeeded: dividerRole });
     expect(tail[1]).toMatchObject({ action, roleNeeded: rowRole });
+  });
+
+  it('c-trips holds the tripAdmin maintenance row before the admin-only kiosk row', () => {
+    const tail = (findContext('c-trips')?.children ?? []).slice(-4);
+    expect(tail.map(c => c.name)).toEqual(['maint-divider-trip', 'trip-maintenance', 'maint-divider', 'trip-kiosk']);
+    expect(tail[1]).toMatchObject({ action: 'navigate', url: '/trips/maintenance', roleNeeded: 'tripAdmin' });
+    expect(tail[3]).toMatchObject({ action: 'navigate', url: '/trips/kiosk', roleNeeded: 'admin' });
   });
 
   it('c-groups ends with the divider, the hygiene check and the three chat sync rows, all admin', () => {
@@ -102,7 +109,7 @@ describe('FEATURE_BLOCKS Wartung rows (1.101 phase 2)', () => {
       (spec.children ?? []).forEach(visit);
     };
     aoc.menu.forEach(visit);
-    for (const n of ['maint-divider', 'maint-divider-content', 'maint-divider-trip', 'calevent-check-duplicates', 'group-check-hygiene', 'person-check-favaddress', 'page-integrity', 'document-orphans', 'trip-maintenance', 'diary-import', 'aoc-content', 'aoc-doc', 'aoc-diary']) {
+    for (const n of ['maint-divider', 'maint-divider-content', 'maint-divider-trip', 'calevent-check-duplicates', 'group-check-hygiene', 'person-check-favaddress', 'page-integrity', 'document-orphans', 'trip-maintenance', 'trip-kiosk', 'aoc-kiosk', 'diary-import', 'aoc-content', 'aoc-doc', 'aoc-diary']) {
       expect(names.has(n), n).toBe(false);
     }
   });

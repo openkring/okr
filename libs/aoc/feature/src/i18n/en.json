@@ -740,36 +740,6 @@
       "description": "From 27 years."
     }
   },
-  "kiosk": {
-    "title": "Kiosk devices",
-    "empty": "No kiosk device has reported yet.",
-    "no_trips": "No trip recorded today.",
-    "lock": "Lock",
-    "unlock": "Unlock",
-    "reload": {
-      "conf": "Reload triggered.",
-      "ask": "{device}: reload the device now? Any open input will be lost."
-    },
-    "message": {
-      "sent": "Message sent.",
-      "title": "Send message",
-      "send": "Send",
-      "label": "Message text",
-      "placeholder": "e.g. do not use boat 3 any more"
-    },
-    "locked": {
-      "conf": "Kiosk locked."
-    },
-    "unlocked": {
-      "conf": "Kiosk unlocked."
-    },
-    "no_person": "No person is assigned to this kiosk — a call is not possible.",
-    "call_failed": "The call could not be started.",
-    "countdown": {
-      "label": "Close the message automatically",
-      "seconds": "Countdown (seconds)"
-    }
-  },
   "allocation": {
     "title": "Tenant allocation",
     "personSelect": {

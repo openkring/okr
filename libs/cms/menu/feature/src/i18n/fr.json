@@ -683,6 +683,7 @@
     "page-integrity": "Vérifier l'intégrité",
     "document-orphans": "Fichiers orphelins",
     "trip-maintenance": "Ranger le journal de bord",
+    "trip-kiosk": "Appareils kiosque",
     "diary-import": "Préparer l'import"
   },
   "ownership": {

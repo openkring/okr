@@ -142,8 +142,8 @@ const aoc: BlockRoutes = {
   routes: (): Route[] => [{
     path: 'aoc',
     // The FLOOR every `/aoc` screen shares — the union of the children's own requirements, NOT
-    // the admin gate. The admin gate lives on the ten admin-only children below (the ones the
-    // 2026-08-05 rulings do not name; the `content`, `doc`, `trip` and `diary` bookmark redirects
+    // the admin gate. The admin gate lives on the nine admin-only children below (the ones the
+    // 2026-08-05 rulings do not name; the `content`, `doc`, `trip`, `kiosk` and `diary` bookmark redirects
     // carry no guard). See the block comment for why it is contentAdmin and not privileged
     // (R-5) nor merely authenticated.
     canActivate: [isContentAdminGuard()],
@@ -158,7 +158,8 @@ const aoc: BlockRoutes = {
       { path: 'statistics', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocStatistics) },
       // 1.101 phase 2: remove after the next release
       { path: 'doc', redirectTo: '/document/orphans' },
-      { path: 'kiosk',      canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocKiosk) },
+      // 1.101 phase 2: remove after the next release
+      { path: 'kiosk', redirectTo: '/trips/kiosk' },
       // SOFTENED by owner ruling R-5, 2026-08-05, to match the live `tag-all` menu doc's
       // `roleNeeded: contentAdmin`. The fifth mismatch, found while applying the first four and
       // explicitly folded into the ruling.
@@ -499,6 +500,8 @@ const trip: BlockRoutes = {
         // which would otherwise swallow `maintenance` as a listId. tripAdmin: trips are writable by any
         // tenant member (firestore.rules `match /trips`), so the route guard is the only gate.
         { path: 'maintenance', canActivate: [isTripAdminGuard()], loadComponent: () => import('@okr/trip-feature').then(m => m.TripMaintenance) },
+        // Kiosk devices (moved from AOC, spec 1.101 phase 2). Admin: `kiosk-status` is writable by admins only.
+        { path: 'kiosk', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/trip-feature').then(m => m.TripKiosk) },
         { path: ':listId/:contextMenuName', loadComponent: () => import('@okr/trip-feature').then(m => m.TripList) },
       ],
     },

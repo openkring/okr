@@ -260,5 +260,36 @@
       "default": "La chat è in manutenzione. Tornerà presto.",
       "call": "Le chiamate non sono possibili durante la manutenzione."
     }
+  },
+  "kiosk": {
+    "title": "Dispositivi kiosk",
+    "empty": "Nessun dispositivo kiosk si è ancora annunciato.",
+    "no_trips": "Oggi non è stata registrata alcuna uscita.",
+    "lock": "Bloccare",
+    "unlock": "Sbloccare",
+    "reload": {
+      "conf": "Ricaricamento avviato.",
+      "ask": "{device}: ricaricare ora il dispositivo? Ogni immissione aperta andrà persa."
+    },
+    "message": {
+      "sent": "Messaggio inviato.",
+      "title": "Inviare un messaggio",
+      "send": "Inviare",
+      "label": "Testo del messaggio",
+      "placeholder": "p. es. non usare più la barca 3"
+    },
+    "locked": {
+      "conf": "Kiosk bloccato."
+    },
+    "unlocked": {
+      "conf": "Kiosk sbloccato."
+    },
+    "no_person": "A questo kiosk non è associata alcuna persona — chiamata non possibile.",
+    "call_failed": "Non è stato possibile avviare la chiamata.",
+    "countdown": {
+      "label": "Chiudere automaticamente il messaggio",
+      "seconds": "Conto alla rovescia (secondi)"
+    },
+    "today_trips": "Uscite di oggi"
   }
 }

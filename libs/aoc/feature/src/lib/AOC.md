@@ -12,7 +12,7 @@ The AOC (Admin Operations Console) is a restricted administrative dashboard for 
 - **Tag** — Manage the `tags` Firestore collection: browse, create, edit, and delete tag documents and their comma-separated tag strings per model type.
 - **User Accounts** — Cross-reference view of Firebase Auth accounts, application `UserModel` records, and `MembershipModel` entries; supports editing/deleting each tier independently.
 - **Admin Ops** — Miscellaneous administrative queries: list IBANs, list over-age juniors, show membership-category changes by club/year. No Debug Tools (removed, spec 1.101).
-- **Kiosk** — Monitor and remote-control the tenant's kiosk tablets: heartbeat/online state, battery, running app version, today's trips, and the remote operations (reload, message, lock, video call) written as fields on `kiosk-status/{uid}`. See the `kiosk` skill.
+- **Kiosk** — moved to Logbuch › Kiosk-Geräte (`/trips/kiosk`, `@okr/trip-feature`, admin); `/aoc/kiosk` redirects there. Monitoring and remote control of the tenant's kiosk tablets are described in the `kiosk` skill.
 - **Doc** — moved to Dokumente › Verwaiste Dateien (`/document/orphans`, `@okr/content-document-feature`); `/aoc/doc` redirects there.
 - **Email** — «E-Mail-Ereignisse» (`aoc-email.ts`): the delivery/bounce events of outgoing mail, with its own menu row (`aoc-email` → `/aoc/email`).
 - **Trip** — moved to Logbuch › Logbuch aufräumen (`/trips/maintenance`, `@okr/trip-feature`, tripAdmin); `/aoc/trip` redirects there.

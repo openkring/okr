@@ -49,7 +49,7 @@ describe('document orphans route (spec 1.101 phase 2)', () => {
   });
 });
 
-describe('trip maintenance and diary import routes (spec 1.101 phase 2)', () => {
+describe('trip maintenance, trip kiosk and diary import routes (spec 1.101 phase 2)', () => {
   const blockRoutes = (id: string) => FEATURE_ROUTES.find(b => b.id === id)!.routes();
   const child = (routes: ReturnType<typeof blockRoutes>, path: string) => routes.find(r => r.path === path)?.children ?? [];
 
@@ -63,9 +63,16 @@ describe('trip maintenance and diary import routes (spec 1.101 phase 2)', () => 
     expect(diary?.loadComponent).toBeUndefined();
   });
 
+  it('the old /aoc/kiosk url redirects to its new home', () => {
+    const kiosk = child(blockRoutes('aoc'), 'aoc').find(r => r.path === 'kiosk');
+    expect(kiosk?.redirectTo).toBe('/trips/kiosk');
+    expect(kiosk?.loadComponent).toBeUndefined();
+  });
+
   it.each([
     ['trip', 'trips', 'maintenance'],
     ['diary', 'diary', 'import'],
+    ['trip', 'trips', 'kiosk'],
   ])('the %s block has %s/%s ahead of the :listId catch-all, behind one guard', (block, root, path) => {
     const children = child(blockRoutes(block), root);
     const paths = children.map(r => r.path);

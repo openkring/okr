@@ -4,14 +4,14 @@ import { ModalController } from '@ionic/angular';
 import { signalStore, withComputed, withMethods, withProps } from '@ngrx/signals';
 import { firstValueFrom } from 'rxjs';
 
-import { AOC_I18N_KEYS, fill, KIOSK_COUNTDOWN_DEFAULT, KioskMessageFormData } from '@okr/aoc-util';
+import { KIOSK_COUNTDOWN_DEFAULT, KioskMessageFormData, TRIP_I18N_KEYS } from '@okr/trip-util';
 import { I18nService } from '@okr/shared-i18n';
 
 import { KioskStatus, KioskStatusCollection, AppStore } from '@okr/shared-feature';
 import { ChatStatusService, FirestoreService } from '@okr/shared-data-access';
 import { TripModel } from '@okr/shared-models';
 import { AlertService } from '@okr/shared-util-angular';
-import { chatBlockedAlertMessage, getTodayStr, isChatBlockedError } from '@okr/shared-util-core';
+import { chatBlockedAlertMessage, fill, getTodayStr, isChatBlockedError } from '@okr/shared-util-core';
 
 import { UserService } from '@okr/user-data-access';
 import { TripService } from '@okr/trip-data-access';
@@ -24,7 +24,7 @@ import { TripService } from '@okr/trip-data-access';
  * push channel, no Cloud Function: the device is already listening, and a kiosk that is off
  * simply picks the command up the next time it starts.
  */
-export const AocKioskStore = signalStore(
+export const TripKioskStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
@@ -37,7 +37,7 @@ export const AocKioskStore = signalStore(
     i18nService: inject(I18nService),
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll(AOC_I18N_KEYS),
+    i18n: store.i18nService.translateAll(TRIP_I18N_KEYS),
   })),
   withProps(store => ({
     kiosksResource: rxResource({
@@ -96,7 +96,7 @@ export const AocKioskStore = signalStore(
      * front of an unattended kiosk to press OK.
      */
     async sendAlert(kiosk: KioskStatus): Promise<void> {
-      const { KioskMessageEditModal } = await import('./kiosk-message-edit.modal');
+      const { KioskMessageEditModal } = await import('@okr/trip-ui');
       const modal = await store.modalController.create({
         component: KioskMessageEditModal,
         componentProps: {
@@ -156,7 +156,7 @@ export const AocKioskStore = signalStore(
           await this.showChatBlockedCallNotice();
           return;
         }
-        console.error('AocKioskStore.callKiosk: failed to start the call:', error);
+        console.error('TripKioskStore.callKiosk: failed to start the call:', error);
         await store.alertService.showToast(store.i18n.kiosk_call_failed());
       }
     },

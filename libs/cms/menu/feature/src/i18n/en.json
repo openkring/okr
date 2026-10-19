@@ -683,6 +683,7 @@
     "page-integrity": "Check integrity",
     "document-orphans": "Orphaned files",
     "trip-maintenance": "Tidy up the logbook",
+    "trip-kiosk": "Kiosk devices",
     "diary-import": "Prepare import"
   },
   "ownership": {

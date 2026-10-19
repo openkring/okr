@@ -740,36 +740,6 @@
       "description": "Desde 27 años."
     }
   },
-  "kiosk": {
-    "title": "Dispositivos kiosco",
-    "empty": "Ningún dispositivo kiosco se ha anunciado todavía.",
-    "no_trips": "Hoy no se ha registrado ninguna salida.",
-    "lock": "Bloquear",
-    "unlock": "Desbloquear",
-    "reload": {
-      "conf": "Recarga activada.",
-      "ask": "{device}: ¿recargar el dispositivo ahora? Se perderá cualquier entrada abierta."
-    },
-    "message": {
-      "sent": "Mensaje enviado.",
-      "title": "Enviar mensaje",
-      "send": "Enviar",
-      "label": "Texto del mensaje",
-      "placeholder": "p. ej. no usar más el barco 3"
-    },
-    "locked": {
-      "conf": "Kiosco bloqueado."
-    },
-    "unlocked": {
-      "conf": "Kiosco desbloqueado."
-    },
-    "no_person": "No hay ninguna persona asignada a este kiosco: no se puede llamar.",
-    "call_failed": "No se pudo iniciar la llamada.",
-    "countdown": {
-      "label": "Cerrar el mensaje automáticamente",
-      "seconds": "Cuenta atrás (segundos)"
-    }
-  },
   "allocation": {
     "title": "Asignación de inquilinos",
     "personSelect": {

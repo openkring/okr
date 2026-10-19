@@ -740,36 +740,6 @@
       "description": "À partir de 27 ans."
     }
   },
-  "kiosk": {
-    "title": "Appareils kiosque",
-    "empty": "Aucun appareil kiosque ne s’est encore annoncé.",
-    "no_trips": "Aucune sortie enregistrée aujourd’hui.",
-    "lock": "Verrouiller",
-    "unlock": "Déverrouiller",
-    "reload": {
-      "conf": "Rechargement déclenché.",
-      "ask": "{device} : recharger l’appareil maintenant ? Toute saisie en cours sera perdue."
-    },
-    "message": {
-      "sent": "Message envoyé.",
-      "title": "Envoyer un message",
-      "send": "Envoyer",
-      "label": "Texte du message",
-      "placeholder": "p. ex. ne plus utiliser le bateau 3"
-    },
-    "locked": {
-      "conf": "Kiosque verrouillé."
-    },
-    "unlocked": {
-      "conf": "Kiosque déverrouillé."
-    },
-    "no_person": "Aucune personne n’est associée à ce kiosque — appel impossible.",
-    "call_failed": "L’appel n’a pas pu être démarré.",
-    "countdown": {
-      "label": "Fermer automatiquement le message",
-      "seconds": "Compte à rebours (secondes)"
-    }
-  },
   "allocation": {
     "title": "Attribution des locataires",
     "personSelect": {

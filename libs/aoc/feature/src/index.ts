@@ -4,8 +4,6 @@ export * from './lib/aoc-bexio.store';
 export * from './lib/aoc-srv';
 export * from './lib/aoc-srv.store';
 export * from './lib/aoc-chat';
-export * from './lib/aoc-kiosk';
-export * from './lib/aoc-kiosk.store';
 export * from './lib/aoc-data';
 export * from './lib/aoc-roles';
 export * from './lib/aoc-statistics';

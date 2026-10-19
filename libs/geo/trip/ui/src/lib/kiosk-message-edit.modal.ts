@@ -3,7 +3,7 @@ import { IonContent, ModalController } from '@ionic/angular';
 
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { safeStructuredClone } from '@okr/shared-util-core';
-import { AOC_I18N_KEYS, AocI18n, KioskMessageFormData } from '@okr/aoc-util';
+import { KioskMessageFormData, TRIP_I18N_KEYS, TripI18n } from '@okr/trip-util';
 import { I18nService } from '@okr/shared-i18n';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
@@ -31,7 +31,7 @@ import { KioskMessageForm } from './kiosk-message.form';
     <ion-content class="ion-no-padding">
       @if (formData(); as formData) {
         <okr-kiosk-message-form
-          [formData]="formData" (formDataChange)="onFormDataChange($event)"
+          [i18n]="i18n" [formData]="formData" (formDataChange)="onFormDataChange($event)"
           [showForm]="showForm()"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
@@ -49,7 +49,7 @@ export class KioskMessageEditModal {
   public okLabel = input<string>();
   public cancelLabel = input<string>();
 
-  private readonly i18n = inject(I18nService).translateAll(AOC_I18N_KEYS) as AocI18n;
+  protected readonly i18n = inject(I18nService).translateAll(TRIP_I18N_KEYS) as TripI18n;
   protected readonly labels = computed(() => ({
     title:  this.title()  ?? this.i18n.kiosk_message_title(),
     ok:     this.okLabel() ?? this.i18n.kiosk_message_send(),
@@ -60,7 +60,7 @@ export class KioskMessageEditModal {
   protected formDirty = signal(false);
   protected formValid = signal(false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.cancelLabel(), save: this.okLabel() } as ChangeConfirmationI18n));
+  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.labels().cancel, save: this.labels().ok } as ChangeConfirmationI18n));
 
   protected formData = linkedSignal(() => safeStructuredClone(this.kioskMessage()));
   protected showForm = signal(true);

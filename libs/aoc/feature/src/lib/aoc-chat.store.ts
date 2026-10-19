@@ -218,7 +218,7 @@ export const AocChatStore = signalStore(
     // so the only way out is to not have one: the type import above carries no runtime edge,
     // and the service is resolved on first use through the injector.
     //
-    // Same reasoning as `aoc-kiosk.store` and `trip.store`, which already lazy-load this lib.
+    // Same reasoning as `trip-kiosk.store` and `trip.store`, which already lazy-load this lib.
     const injector = inject(Injector);
     let service: Promise<MatrixMediaService> | undefined;
     const load = (): Promise<MatrixMediaService> => (service ??= import('@okr/chat-data-access')

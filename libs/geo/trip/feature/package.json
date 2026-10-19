@@ -31,6 +31,8 @@
     "@okr/subject-person-ui": "*",
     "@okr/trip-data-access": "*",
     "@okr/trip-ui": "*",
-    "@okr/trip-util": "*"
+    "@okr/trip-util": "*",
+    "@okr/user-data-access": "*",
+    "@okr/chat-data-access": "*"
   }
 }

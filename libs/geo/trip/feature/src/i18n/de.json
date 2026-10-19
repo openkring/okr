@@ -260,5 +260,36 @@
       "default": "Der Chat wird gerade gewartet. Er ist bald wieder da.",
       "call": "Anrufe sind während der Wartung nicht möglich."
     }
+  },
+  "kiosk": {
+    "title": "Kiosk-Geräte",
+    "empty": "Kein Kiosk-Gerät hat sich bisher gemeldet.",
+    "no_trips": "Heute wurde noch keine Fahrt erfasst.",
+    "lock": "Sperren",
+    "unlock": "Entsperren",
+    "reload": {
+      "conf": "Neuladen ausgelöst.",
+      "ask": "{device}: Gerät jetzt neu laden? Eine offene Eingabe geht dabei verloren."
+    },
+    "message": {
+      "sent": "Mitteilung gesendet.",
+      "title": "Mitteilung senden",
+      "send": "Senden",
+      "label": "Text der Mitteilung",
+      "placeholder": "z.B. Boot 3 bitte nicht mehr benutzen"
+    },
+    "locked": {
+      "conf": "Kiosk gesperrt."
+    },
+    "unlocked": {
+      "conf": "Kiosk entsperrt."
+    },
+    "no_person": "Zu diesem Kiosk ist keine Person hinterlegt — Anruf nicht möglich.",
+    "call_failed": "Der Anruf konnte nicht gestartet werden.",
+    "countdown": {
+      "label": "Mitteilung automatisch schliessen",
+      "seconds": "Countdown (Sekunden)"
+    },
+    "today_trips": "Fahrten heute"
   }
 }

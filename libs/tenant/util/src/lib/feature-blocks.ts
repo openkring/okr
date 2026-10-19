@@ -305,15 +305,13 @@ const aoc: FeatureBlock = {
       { key: 'aoc-account',    name: 'aoc-account',    url: '/aoc/account',    action: 'navigate', roleNeeded: 'admin', icon: 'person',   label: '@item.aoc-account' },
       { key: 'aoc-email',      name: 'aoc-email',      url: '/aoc/email',      action: 'navigate', roleNeeded: 'admin', icon: 'email',    label: '@item.aoc-email' },
       { key: 'aoc-bexio',      name: 'aoc-bexio',      url: '/aoc/bexio',      action: 'navigate', roleNeeded: 'admin', icon: 'bank',     label: '@item.aoc-bexio' },
-      // NEW (not mirrored off a live doc, unlike its siblings above): the kiosk monitoring +
-      // remote-operations screen, seeded with the block. See the `kiosk` skill.
-      { key: 'aoc-kiosk',      name: 'aoc-kiosk',      url: '/aoc/kiosk',      action: 'navigate', roleNeeded: 'admin', icon: 'settings', label: '@item.aoc-kiosk' },
+      // `aoc-kiosk` LEFT the catalogue with spec 1.101 phase 2: the kiosk page is `trip-kiosk` in `c-trips`.
       // `aoc-allocation` (spec 1.47) LEFT the catalogue with spec 1.101 §6: tenant allocation is an
       // operator-only tool. Its route lives in apps/bka-app (`/operator/allocation`) and its menu
       // row is a bka-only doc written by scripts/restrict-allocation-to-bka.mjs.
       // NEW with the AOC diary screen: the Drive check + import dry run moved off
       // `/security/privacy-audit`, plus the places/people the import could not match. Seeded
-      // with the block like `aoc-kiosk`, not mirrored off a live doc.
+      // with the block, not mirrored off a live doc.
       // NEW with spec 1.35, seeded live for `scs` in the same change. It hangs under the AOC
       // submenu but its ROUTE is not an `/aoc/*` child and not block-gated: the rule engine is
       // a Cloud Function that fires on every membership write, so gating the screen would hide
@@ -808,6 +806,10 @@ const trip: FeatureBlock = {
       { key: 'trip-togglelock', name: 'trip-togglelock', url: 'toggleLock', action: 'call', roleNeeded: 'admin', icon: 'lock-closed', label: '@item.trip-togglelock' },
       { key: 'maint-divider-trip', name: 'maint-divider-trip', url: '', action: 'divider', roleNeeded: 'tripAdmin', icon: 'help-circle', label: '@item.maint-divider-trip' },
       { key: 'trip-maintenance', name: 'trip-maintenance', url: '/trips/maintenance', action: 'navigate', roleNeeded: 'tripAdmin', icon: 'hammer', label: '@item.trip-maintenance' },
+      // 1.101 phase 2: the kiosk console (moved from the AOC). Admin-only: `kiosk-status` is writable by
+      // admins only (firestore.rules). `settings` is the old `aoc-kiosk` icon; `tablet-portrait` is not in the icon set.
+      { key: 'maint-divider', name: 'maint-divider', url: '', action: 'divider', roleNeeded: 'admin', icon: 'help-circle', label: '@item.maint-divider' },
+      { key: 'trip-kiosk', name: 'trip-kiosk', url: '/trips/kiosk', action: 'navigate', roleNeeded: 'admin', icon: 'settings', label: '@item.trip-kiosk' },
     ] },
   ],
 };

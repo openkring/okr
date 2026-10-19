@@ -22,8 +22,6 @@
     "@okr/chat-util": "*",
     "@okr/chat-data-access": "*",
     "@okr/user-data-access": "*",
-    "@okr/trip-data-access": "*",
-    "@okr/trip-util": "*",
     "@okr/subject-person-data-access": "*",
     "@okr/subject-person-feature": "*",
     "@okr/subject-org-data-access": "*",

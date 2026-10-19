@@ -435,26 +435,6 @@ export const AOC_I18N_KEYS = {
   bexio_col_bexio_id:                       PFX + 'bexio.col.bexio_id',
   bexio_col_source:                         PFX + 'bexio.col.source',
 
-  // kiosk console
-  kiosk_title:                              PFX + 'kiosk.title',
-  kiosk_empty:                              PFX + 'kiosk.empty',
-  kiosk_no_trips:                           PFX + 'kiosk.no_trips',
-  kiosk_lock:                               PFX + 'kiosk.lock',
-  kiosk_unlock:                             PFX + 'kiosk.unlock',
-  kiosk_reload_conf:                        PFX + 'kiosk.reload.conf',
-  kiosk_reload_ask:                         PFX + 'kiosk.reload.ask',
-  kiosk_message_sent:                       PFX + 'kiosk.message.sent',
-  kiosk_locked_conf:                        PFX + 'kiosk.locked.conf',
-  kiosk_unlocked_conf:                      PFX + 'kiosk.unlocked.conf',
-  kiosk_no_person:                          PFX + 'kiosk.no_person',
-  kiosk_call_failed:                        PFX + 'kiosk.call_failed',
-  kiosk_message_title:                      PFX + 'kiosk.message.title',
-  kiosk_message_send:                       PFX + 'kiosk.message.send',
-  kiosk_message_label:                      PFX + 'kiosk.message.label',
-  kiosk_message_placeholder:                PFX + 'kiosk.message.placeholder',
-  kiosk_countdown_label:                    PFX + 'kiosk.countdown.label',
-  kiosk_countdown_seconds:                  PFX + 'kiosk.countdown.seconds',
-
   // roles console
   roles_person:                             PFX + 'roles.person',
   roles_user:                               PFX + 'roles.user',

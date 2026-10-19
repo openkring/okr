@@ -7,27 +7,26 @@ import { KioskStatus } from '@okr/shared-feature';
 
 import { getTodayStr } from '@okr/shared-util-core';
 
-import { formatBattery, formatSeenAge, isKioskOnline } from '@okr/aoc-util';
-import { formatTripTime } from '@okr/trip-util';
+import { formatBattery, formatSeenAge, formatTripTime, isKioskOnline } from '@okr/trip-util';
 
-import { AocKioskStore } from './aoc-kiosk.store';
+import { TripKioskStore } from './trip-kiosk.store';
 
 /**
- * AOC screen for the tenant's kiosk devices: monitoring (heartbeat, battery, running version)
+ * Logbuch page (Kiosk-Geräte) for the tenant's kiosk devices: monitoring (heartbeat, battery, running version)
  * and the remote operations an unattended tablet needs — reload, message, lock, video call.
  *
- * German labels are hardcoded, like the neighbouring AOC screens (Daten, Storage, …): this is an
- * admin-only console, it is not translated.
+ * German labels are hardcoded, like the neighbouring admin consoles: only the title, the list captions and the
+ * command messages are translated.
  */
 @Component({
-  selector: 'okr-aoc-kiosk',
+  selector: 'okr-trip-kiosk',
   standalone: true,
   imports: [
     SvgIconPipe, PrettyDatePipe, Header, Spinner, EmptyList,
     IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent,
     IonGrid, IonRow, IonCol, IonButton, IonIcon, IonBadge, IonList, IonItem, IonLabel,
   ],
-  providers: [AocKioskStore],
+  providers: [TripKioskStore],
   styles: [`
     .metric { display: flex; flex-direction: column; }
     .metric .value { font-size: 1.2rem; font-weight: 600; }
@@ -114,7 +113,7 @@ import { AocKioskStore } from './aoc-kiosk.store';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Fahrten heute ({{ store.todaysTrips().length }})</ion-card-title>
+          <ion-card-title>{{ store.i18n.kiosk_today_trips() }} ({{ store.todaysTrips().length }})</ion-card-title>
           <ion-card-subtitle>{{ today | prettyDate }}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
@@ -138,8 +137,8 @@ import { AocKioskStore } from './aoc-kiosk.store';
     </ion-content>
   `,
 })
-export class AocKiosk {
-  protected readonly store = inject(AocKioskStore);
+export class TripKiosk {
+  protected readonly store = inject(TripKioskStore);
   protected readonly formatTime = formatTripTime;
   protected readonly today = getTodayStr();
 

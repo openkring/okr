@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, model, output } from '@angular/core';
+import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
@@ -6,8 +6,7 @@ import { Checkbox, CheckboxI18n, NotesInput, NotesInputI18n, NumberInput, Number
 import { coerceBoolean } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
 
-import { AOC_I18N_KEYS, AocI18n, KIOSK_COUNTDOWN_MAX, KIOSK_COUNTDOWN_MIN, KioskMessageFormData, kioskMessageValidations } from '@okr/aoc-util';
-import { I18nService } from '@okr/shared-i18n';
+import { KIOSK_COUNTDOWN_MAX, KIOSK_COUNTDOWN_MIN, KioskMessageFormData, kioskMessageValidations, TripI18n } from '@okr/trip-util';
 
 /**
  * The message an admin pops on a kiosk device, plus an optional countdown after which the
@@ -56,6 +55,7 @@ import { I18nService } from '@okr/shared-i18n';
 export class KioskMessageForm {
   // inputs
   public formData = model.required<KioskMessageFormData>();
+  public readonly i18n = input.required<TripI18n>();
   public readonly readOnly = input(false);
   public readonly showForm = input(true);
 
@@ -73,8 +73,6 @@ export class KioskMessageForm {
     effect(() => this.valid.emit(this.kioskMessageForm().valid()));
   }
 
-  private readonly i18n = inject(I18nService).translateAll(AOC_I18N_KEYS) as AocI18n;
-
   protected readonly min = KIOSK_COUNTDOWN_MIN;
   protected readonly max = KIOSK_COUNTDOWN_MAX;
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
@@ -83,15 +81,15 @@ export class KioskMessageForm {
   protected readonly countdown = computed(() => this.formData()?.countdown ?? KIOSK_COUNTDOWN_MIN);
 
   protected messageI18n = computed(() => ({
-    name: 'message', label: this.i18n.kiosk_message_label(), placeholder: this.i18n.kiosk_message_placeholder()
+    name: 'message', label: this.i18n().kiosk_message_label(), placeholder: this.i18n().kiosk_message_placeholder()
   } as NotesInputI18n));
 
   protected countdownEnabledI18n = computed(() => ({
-    name: 'withCountdown', label: this.i18n.kiosk_countdown_label(), helper: ''
+    name: 'withCountdown', label: this.i18n().kiosk_countdown_label(), helper: ''
   } as CheckboxI18n));
 
   protected countdownI18n = computed(() => ({
-    name: 'countdown', label: this.i18n.kiosk_countdown_seconds(), placeholder: '10', helper: ''
+    name: 'countdown', label: this.i18n().kiosk_countdown_seconds(), placeholder: '10', helper: ''
   } as NumberInputI18n));
 
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
