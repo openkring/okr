@@ -113,8 +113,10 @@ function formatElapsed(milliseconds: number): string {
   `,
   styles: [`
     /* The board scrolls INSIDE itself (see CrosswordBoard); the page body must never scroll
-       sideways because of a wide puzzle. */
-    :host { display: block; overflow-x: hidden; }
+       sideways because of a wide puzzle. No \`display\` here: the host is Ionic's \`.ion-page\`,
+       whose flex column sizes ion-content to the space below the header — \`display: block\`
+       made ion-content 100% tall under the header, so the actions at the bottom were cut off. */
+    :host { overflow-x: hidden; }
 
     .cw-play { display: flex; flex-direction: column; gap: 0.75rem; max-width: 40rem; margin-inline: auto; }
 

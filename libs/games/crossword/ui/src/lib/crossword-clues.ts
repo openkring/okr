@@ -1,5 +1,5 @@
 import { Component, computed, input, output } from '@angular/core';
-import { IonItem, IonLabel, IonList, IonListHeader } from '@ionic/angular';
+import { IonCol, IonGrid, IonItem, IonLabel, IonList, IonListHeader, IonRow } from '@ionic/angular';
 
 import { CrosswordEntry, CrosswordGrid, CrosswordPlacement } from '@okr/shared-models';
 import { CrosswordI18n } from '@okr/games-crossword-util';
@@ -12,49 +12,59 @@ interface ClueRow {
 /**
  * Two clue lists (across/down) built from `grid().placements`, each row showing the clue number
  * and the entry's clue text. Pure/dumb — labels arrive via the `i18n` input, never TranslatePipe.
+ * Stacked on small screens, side by side (one column each) from the md breakpoint up.
  */
 @Component({
   selector: 'okr-crossword-clues',
   standalone: true,
-  imports: [IonList, IonListHeader, IonItem, IonLabel],
+  imports: [IonGrid, IonRow, IonCol, IonList, IonListHeader, IonItem, IonLabel],
   styles: [`
     .cw-clue-item { cursor: pointer; }
     .cw-clue-item.active { --background: var(--ion-color-primary-tint, rgba(var(--ion-color-primary-rgb), 0.12)); }
     .cw-clue-number { font-weight: 600; margin-inline-end: 6px; }
+    ion-grid, ion-col { --ion-grid-padding: 0; --ion-grid-column-padding: 0; }
   `],
   template: `
-    <ion-list>
-      <ion-list-header>{{ i18n().across() }}</ion-list-header>
-      @for (row of across(); track row.placement.number) {
-        <ion-item
-          button
-          lines="none"
-          class="cw-clue-item"
-          [class.active]="isActive(row.placement)"
-          (click)="cluePicked.emit(row.placement)"
-        >
-          <ion-label>
-            <span class="cw-clue-number">{{ row.placement.number }}.</span>{{ row.clue }}
-          </ion-label>
-        </ion-item>
-      }
-    </ion-list>
-    <ion-list>
-      <ion-list-header>{{ i18n().down() }}</ion-list-header>
-      @for (row of down(); track row.placement.number) {
-        <ion-item
-          button
-          lines="none"
-          class="cw-clue-item"
-          [class.active]="isActive(row.placement)"
-          (click)="cluePicked.emit(row.placement)"
-        >
-          <ion-label>
-            <span class="cw-clue-number">{{ row.placement.number }}.</span>{{ row.clue }}
-          </ion-label>
-        </ion-item>
-      }
-    </ion-list>
+    <ion-grid>
+      <ion-row>
+        <ion-col size="12" size-md="6">
+          <ion-list>
+            <ion-list-header>{{ i18n().across() }}</ion-list-header>
+            @for (row of across(); track row.placement.number) {
+              <ion-item
+                button
+                lines="none"
+                class="cw-clue-item"
+                [class.active]="isActive(row.placement)"
+                (click)="cluePicked.emit(row.placement)"
+              >
+                <ion-label>
+                  <span class="cw-clue-number">{{ row.placement.number }}.</span>{{ row.clue }}
+                </ion-label>
+              </ion-item>
+            }
+          </ion-list>
+        </ion-col>
+        <ion-col size="12" size-md="6">
+          <ion-list>
+            <ion-list-header>{{ i18n().down() }}</ion-list-header>
+            @for (row of down(); track row.placement.number) {
+              <ion-item
+                button
+                lines="none"
+                class="cw-clue-item"
+                [class.active]="isActive(row.placement)"
+                (click)="cluePicked.emit(row.placement)"
+              >
+                <ion-label>
+                  <span class="cw-clue-number">{{ row.placement.number }}.</span>{{ row.clue }}
+                </ion-label>
+              </ion-item>
+            }
+          </ion-list>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
   `,
 })
 export class CrosswordClues {

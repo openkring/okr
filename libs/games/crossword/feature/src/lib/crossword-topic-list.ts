@@ -25,7 +25,8 @@ import { CROSSWORD_I18N_KEYS, CrosswordI18n } from '@okr/games-crossword-util';
  *
  * Non-admins, and admins outside edit mode, see only `published` topics — a draft has no
  * guaranteed grid yet and is not meant to be played. Edit mode additionally lists drafts so an
- * admin can find and finish them.
+ * admin can find and finish them. Outside edit mode a row shows no state chip and a tap plays
+ * the topic directly; in edit mode a tap opens the edit/delete/play ActionSheet.
  */
 @Component({
   selector: 'okr-crossword-topic-list',
@@ -69,14 +70,14 @@ import { CROSSWORD_I18N_KEYS, CrosswordI18n } from '@okr/games-crossword-util';
       } @else {
         <ion-list lines="inset">
           @for (topic of filtered(); track topic.okey) {
-            <ion-item button [detail]="false" (click)="showActions(topic)">
+            <ion-item button [detail]="false" (click)="onTopicClicked(topic)">
               <ion-label>
                 <h2>{{ topic.title }}</h2>
                 @if (markerFor(topic); as marker) {
                   <p class="cw-stale">{{ marker }}</p>
                 }
               </ion-label>
-              @if (topic.state === 'published') {
+              @if (editMode() && topic.state === 'published') {
                 <ion-chip slot="end" color="success">{{ i18n.publish() }}</ion-chip>
               }
             </ion-item>
@@ -148,6 +149,15 @@ export class CrosswordTopicList {
   }
 
   /******************************* per-item actions *************************************** */
+  /** Read-only mode has a single action (play), so it skips the ActionSheet and plays directly. */
+  protected async onTopicClicked(topic: CrosswordTopicModel): Promise<void> {
+    if (this.editMode()) {
+      await this.showActions(topic);
+    } else {
+      await this.play(topic);
+    }
+  }
+
   protected async showActions(topic: CrosswordTopicModel): Promise<void> {
     const options = createActionSheetOptions(this.i18n.as_title());
     this.addActionSheetButtons(options);
