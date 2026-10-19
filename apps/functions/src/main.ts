@@ -418,12 +418,10 @@ export { onUserWritten, backfillAccountTenants } from './person/account-mirror';
 export { migrateMemberFees } from './member-fee/migrate-member-fees';
 
 // exit fee settlement (spec 1.105): a changed membership exit (or archiving) opens, updates, closes or
-// reopens the treasurer's pro-rata settlement task; fee rows are NOT touched («Neu laden» in the fee run)
+// reopens the treasurer's pro-rata settlement task; a not-yet-invoiced fee row is rebuilt pro rata instead
 export { onMembershipExitWritten } from './member-fee/exit-settlement.trigger';
 // the treasurer's decision on that task: refund, adjust the invoice or exit on 31.12.
 export { settleMembershipExit } from './member-fee/settle-membership-exit';
-// one-off admin backfill of settlement tasks for exits saved before the trigger existed.
-export { backfillExitSettlements } from './member-fee/backfill-exit-settlements';
 
 // member-fees generic positions (2026-09-17): 'native' accountingBackend counterpart to
 // uploadToBexio/createBexioInvoice — posts 'ready' member-fees as real InvoiceModel +

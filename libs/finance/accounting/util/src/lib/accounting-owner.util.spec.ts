@@ -45,24 +45,12 @@ describe('orgOwnerKey / personOwnerKey', () => {
 describe('resolveOwnerKey', () => {
   it('reads ownerKey when set', () => {
     expect(resolveOwnerKey({ ownerKey: 'person.kaiser' })).toBe('person.kaiser');
+    expect(resolveOwnerKey({ ownerKey: 'org.mkdf7xin64es5q4rmhdj' })).toBe('org.mkdf7xin64es5q4rmhdj');
   });
 
-  it('prefers ownerKey over a legacy orgId', () => {
-    expect(resolveOwnerKey({ ownerKey: 'person.kaiser', orgId: 'scs' })).toBe('person.kaiser');
-  });
-
-  it('maps a legacy orgId to an org owner only when ownerKey is missing', () => {
-    expect(resolveOwnerKey({ orgId: 'scs' })).toBe('org.scs');
-    expect(resolveOwnerKey({ ownerKey: undefined, orgId: 'mkdf7xin64es5q4rmhdj' })).toBe('org.mkdf7xin64es5q4rmhdj');
-  });
-
-  it('treats an empty ownerKey as authoritative: a cleared owner never revives the legacy orgId', () => {
-    expect(resolveOwnerKey({ ownerKey: '', orgId: 'scs' })).toBe('');
-  });
-
-  it('is empty when neither is set, never the tenant or the app-config owner', () => {
+  it('is empty when not set, never the tenant or the app-config owner', () => {
     expect(resolveOwnerKey({})).toBe('');
-    expect(resolveOwnerKey({ ownerKey: '', orgId: '' })).toBe('');
+    expect(resolveOwnerKey({ ownerKey: '' })).toBe('');
     expect(resolveOwnerKey(undefined)).toBe('');
   });
 });

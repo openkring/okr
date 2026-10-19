@@ -14,15 +14,11 @@ import { resolveOwnerKey } from './accounting-owner.util';
  * stored values are kept. Arrays are copied so editing never mutates the store's object.
  * The five reminder fields (1.76 phase 3) are seeded too, so any save writes them all and settings,
  * reminder dialog, Mahnlauf and server read the same values (ruling P3-R2).
- * The books owner is seeded from `resolveOwnerKey`, so a doc still carrying the legacy `orgId` opens
- * with its org selected (spec 1.105).
+ * The books owner (`ownerKey`, spec 1.105) is seeded from `resolveOwnerKey`.
  */
 export function toAccountingConfigFormData(config: AccountingConfigModel): AccountingConfigModel {
-  // legacy orgId — remove after the 1.105 data migration: carried over as ownerKey, not kept in the form
-  const stored: AccountingConfigModel & { orgId?: string } = { ...config };
-  delete stored.orgId;
   return {
-    ...stored,
+    ...config,
     defaultExpenseAccountKey: config.defaultExpenseAccountKey ?? '',
     employeePayablesAccountKey: config.employeePayablesAccountKey ?? '',
     receivablesAccountKey: config.receivablesAccountKey ?? '',

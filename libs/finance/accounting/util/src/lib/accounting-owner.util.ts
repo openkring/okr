@@ -36,15 +36,11 @@ export function personOwnerKey(personKey: string): string {
 }
 
 /**
- * The books owner of a config as stored. `ownerKey` is authoritative whenever it is defined, even
- * '' (a cleared owner must not revive the legacy field on a merge-saved doc); only a doc without
- * the field falls back to the legacy `orgId` as an org owner; else '' (no owner — never the tenant
- * id or app-config ownerOrgId: accountingTenantId ≠ tenantId). Every reader of the owner goes through here.
+ * The books owner of a config as stored (`ownerKey`), else '' (no owner — never the tenant id or
+ * app-config ownerOrgId: accountingTenantId ≠ tenantId). Every reader of the owner goes through here.
  */
-export function resolveOwnerKey(config: (Partial<Pick<AccountingConfigModel, 'ownerKey'>> & { orgId?: string }) | undefined): string {
-  if (config?.ownerKey !== undefined) return config.ownerKey;
-  // legacy orgId — remove after the 1.105 data migration
-  return config?.orgId ? orgOwnerKey(config.orgId) : '';
+export function resolveOwnerKey(config: Partial<Pick<AccountingConfigModel, 'ownerKey'>> | undefined): string {
+  return config?.ownerKey ?? '';
 }
 
 /**

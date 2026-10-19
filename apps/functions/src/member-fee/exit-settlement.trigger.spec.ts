@@ -259,8 +259,8 @@ describe('pickBooksId', () => {
     expect(pickBooksId([cfg('scs', { tenants: ['scs'], ownerKey: '' , orgId: 'scs' })], 'scs', 'scs')).toBeUndefined();
   });
 
-  it('reads the legacy orgId only when ownerKey is absent', () => {
-    expect(pickBooksId([cfg('scs', { tenants: ['scs'], orgId: 'scs' })], 'scs', 'scs')).toBe('scs');
+  it('ignores a leftover orgId: only ownerKey names the owner', () => {
+    expect(pickBooksId([cfg('scs', { tenants: ['scs'], orgId: 'scs' })], 'scs', 'scs')).toBeUndefined();
   });
 
   it('ignores personal books, books of another tenant and archived configs', () => {

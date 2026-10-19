@@ -7,7 +7,7 @@ import type { DocumentData, Firestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import {
   AccountingConfigCollection, AvatarInfo, AvatarModelTypes, CategoryCollection, FeeScheduleEntry, InvoiceCollection,
-  InvoicePositionCollection, MembershipCollection, MembershipModel, OrgCollection, ResponsibilityCollection, TaskCollection,
+  InvoicePositionCollection, MembershipCollection, MembershipModel, OrgCollection, ResponsibilityCollection,
 } from '@okr/shared-models';
 import { getFullName } from '@okr/shared-util-core';
 import { EXIT_SETTLEMENT_TAG, ExitSettlementInput, InvoiceFacts, invoiceShape } from '@okr/relationship-membership-util';
@@ -275,11 +275,6 @@ export async function loadExitContext(
       today,
     },
   };
-}
-
-/** The membership's settlement task in the tenant (read by its deterministic id), undefined when there is none. */
-export async function readSettlementTask(db: Firestore, tenantId: string, membershipKey: string): Promise<DocumentData | undefined> {
-  return (await db.collection(TaskCollection).doc(settlementTaskId(tenantId, membershipKey)).get()).data();
 }
 
 /** Who holds the tenant's treasurer responsibility today (delegate aware); undefined = unassigned. */

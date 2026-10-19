@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import type { Firestore } from 'firebase-admin/firestore';
 import { computeExitSettlement, noExitSettlement, type ExitSettlement } from '@okr/relationship-membership-util';
 
-import { CLOSE_NOTE, ExitContext, isAutoClosed, isExitContext, loadExitContext, readSettlementTask, settlementTaskId } from './exit-settlement.context';
+import { CLOSE_NOTE, ExitContext, isAutoClosed, isExitContext, loadExitContext, settlementTaskId } from './exit-settlement.context';
 import { NOTES_MARKER, openOrUpdateSettlementTask, REOPEN_NOTE, settlementTaskDecision } from './exit-settlement.trigger';
 import { claimPatch } from './settle-membership-exit.logic';
 import { rebuildFeeRow } from './exit-settlement.fee-row';
@@ -209,12 +209,11 @@ describe('openOrUpdateSettlementTask', () => {
   });
 });
 
-describe('readSettlementTask', () => {
-  it('reads the task by its deterministic id', async () => {
-    const { db } = fakeDb({ tasks: { [TASK_ID]: { notes: 'n' } } });
-    expect(await readSettlementTask(db, 'scs', 'm1')).toEqual({ notes: 'n' });
-    expect(await readSettlementTask(db, 'scs', 'm2')).toBeUndefined();
-    expect(await readSettlementTask(db, 'gvs', 'm1')).toBeUndefined();
+describe('settlementTaskId', () => {
+  it('is deterministic per tenant and membership', () => {
+    expect(settlementTaskId('scs', 'm1')).toBe(TASK_ID);
+    expect(settlementTaskId('scs', 'm2')).not.toBe(TASK_ID);
+    expect(settlementTaskId('gvs', 'm1')).not.toBe(TASK_ID);
   });
 });
 
