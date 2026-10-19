@@ -28,10 +28,19 @@
       "helper": "Template used to create invoice PDFs.",
       "add": "Create a new template"
     },
+    "ownerType": {
+      "label": "Belongs to",
+      "helper": "Who these books belong to: an organisation or a person. The name and address appear on the reports, for an organisation also its logo.",
+      "org": "Organisation",
+      "person": "Person"
+    },
     "org": {
       "label": "Organisation",
-      "placeholder": "Choose an organisation",
-      "helper": "Who these books belong to. Its name, address and logo appear on the reports."
+      "placeholder": "Choose an organisation"
+    },
+    "person": {
+      "label": "Person",
+      "placeholder": "Choose a person"
     },
     "projectReportTemplate": {
       "label": "Project result template",
@@ -232,7 +241,8 @@
   },
   "validation": {
     "reminderFeeDecimals": "Please enter the amount with at most two decimal places.",
-    "reminderFeeAccountRequired": "Reminder fees need a revenue account. Choose one or set the fee to 0."
+    "reminderFeeAccountRequired": "Reminder fees need a revenue account. Choose one or set the fee to 0.",
+    "ownerKeyInvalid": "Choose an organisation or a person from the list."
   },
   "ledger": {
     "bookings": "Bookings",

@@ -28,10 +28,19 @@
       "helper": "Plantilla con la que se crean las facturas en PDF.",
       "add": "Crear una plantilla nueva"
     },
+    "ownerType": {
+      "label": "Pertenece a",
+      "helper": "A quién pertenece esta contabilidad: una organización o una persona. El nombre y la dirección aparecen en los informes; en una organización, también su logotipo.",
+      "org": "Organización",
+      "person": "Persona"
+    },
     "org": {
       "label": "Organización",
-      "placeholder": "Elige una organización",
-      "helper": "A quién pertenece esta contabilidad. Su nombre, dirección y logotipo aparecen en los informes."
+      "placeholder": "Elige una organización"
+    },
+    "person": {
+      "label": "Persona",
+      "placeholder": "Elige una persona"
     },
     "projectReportTemplate": {
       "label": "Plantilla del resultado del proyecto",
@@ -232,7 +241,8 @@
   },
   "validation": {
     "reminderFeeDecimals": "Indica el importe con dos decimales como máximo.",
-    "reminderFeeAccountRequired": "Los recargos de recordatorio necesitan una cuenta de ingresos. Elige una o pon el recargo a 0."
+    "reminderFeeAccountRequired": "Los recargos de recordatorio necesitan una cuenta de ingresos. Elige una o pon el recargo a 0.",
+    "ownerKeyInvalid": "Elige una organización o una persona de la lista."
   },
   "ledger": {
     "bookings": "Asientos",

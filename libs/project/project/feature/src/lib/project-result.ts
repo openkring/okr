@@ -9,14 +9,15 @@ import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Spinner } from '@okr/shared-ui';
 import { AlertService, resourceParams } from '@okr/shared-util-angular';
-import { convertDateFormatToString, DateFormat, fill, getTodayStr } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, fill, getFullName, getTodayStr } from '@okr/shared-util-core';
 
 import { AvatarService } from '@okr/avatar-data-access';
 import { DocGenerationService, GenerateDocumentResponse } from '@okr/content-pdf-template-data-access';
 import { AccountingConfigService } from '@okr/finance-accounting-data-access';
+import { parseOwnerKey, resolveOwnerKey } from '@okr/finance-accounting-util';
 import { AccountService } from '@okr/finance-account-data-access';
 import { AddressService } from '@okr/subject-address-data-access';
-import { loadOrgAddressLine } from '@okr/finance-reporting-feature';
+import { loadOwnerAddressLine } from '@okr/finance-reporting-feature';
 import { ReportingService } from '@okr/finance-reporting-data-access';
 import {
   buildReportDocument, buildSplitProjectResult, downloadFromUrl, filterLinesByDimension, printableRows, REPORTING_I18N_KEYS, ReportDocumentLabels,
@@ -34,7 +35,8 @@ import { PROJECT_I18N_KEYS } from '@okr/project-project-util';
  * Split by booking direction (`buildSplitProjectResult`): an account booked both ways appears under
  * both headings, so every amount is positive.
  * The PDF prints what the page shows (opened accounts with their bookings), headed by the logo,
- * name and address of the books' org (`AccountingConfig.orgId`), through the `report` template the
+ * name and address of the books' owner (`AccountingConfig.ownerKey`, an org or a person; only an org
+ * brings a logo; no owner = none printed, spec 1.105), through the `report` template the
  * accounting settings name (`projectReportTemplateId`); without one, the built-in layout.
  * Read from the app's default books (`defaultAccountingTenantId`, NOT the app tenant); lines of other
  * books are not reached from here.
@@ -154,11 +156,12 @@ export class ProjectResult {
 
   protected async exportPdf(): Promise<void> {
     try {
-      const tenantId = this.accountingTenantId();
       const config = this.configResource.value();
-      const orgKey = config?.orgId || this.appStore.appConfig().ownerOrgId || tenantId;
-      const orgName = this.appStore.getOrg(orgKey)?.name ?? tenantId;
-      const orgAddress = await loadOrgAddressLine(this.addressService, orgKey);
+      // The books' own owner only — never app-config ownerOrgId or the tenant id (accountingTenantId ≠ tenantId).
+      const ownerKey = resolveOwnerKey(config);
+      const owner = parseOwnerKey(ownerKey);
+      const orgName = this.ownerName(ownerKey);
+      const orgAddress = owner ? await loadOwnerAddressLine(this.addressService, ownerKey) : '';
       const generatedOn = viewDate(getTodayStr(DateFormat.StoreDate));
       const title = fill(this.i18n.resultPdfTitle(), { name: this.projectName() || this.projectKey() });
       const periodValue = this.periodValue();
@@ -171,10 +174,10 @@ export class ProjectResult {
       let result: GenerateDocumentResponse;
       if (templateId) {
         const payload: ReportTemplatePayload = {
-          title, orgName, orgAddress, logoUrl: await this.orgLogoUrl(orgKey),
+          title, orgName, orgAddress, logoUrl: owner?.modelType === 'org' ? await this.orgLogoUrl(owner.key) : '',
           created: this.reporting.pdf_created(), generatedOn,
           facts: [
-            { label: this.reporting.pdf_address(), value: orgAddress ? `${orgName}, ${orgAddress}` : orgName },
+            ...(orgName ? [{ label: this.reporting.pdf_address(), value: orgAddress ? `${orgName}, ${orgAddress}` : orgName }] : []),
             { label: this.reporting.pdf_period(), value: periodValue },
           ],
           books, amounts,
@@ -211,6 +214,15 @@ export class ProjectResult {
     } catch (error) {
       this.alertService.error(`ProjectResult.exportPdf: ${error}`);
     }
+  }
+
+  /** The printed name of the books' owner: the org's name or the person's full name, its okey while not loaded; '' = no owner. */
+  private ownerName(ownerKey: string): string {
+    const owner = parseOwnerKey(ownerKey);
+    if (!owner) return '';
+    if (owner.modelType === 'org') return this.appStore.getOrg(owner.key)?.name || owner.key;
+    const person = this.appStore.getPerson(owner.key);
+    return (person ? getFullName(person.firstName, person.lastName) : '') || owner.key;
   }
 
   /** «01.05.2026 – 30.06.2026» from the project dates; a missing end stays open, no dates at all = every booking year. */

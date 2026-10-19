@@ -23,6 +23,7 @@
     { "path": "../../../content/pdf-template/data-access/tsconfig.lib.json" },
     { "path": "../../../finance/account/data-access/tsconfig.lib.json" },
     { "path": "../../../finance/accounting/data-access/tsconfig.lib.json" },
+    { "path": "../../../finance/accounting/util/tsconfig.lib.json" },
     { "path": "../../../finance/booking/util/tsconfig.lib.json" },
     { "path": "../../../finance/budget/data-access/tsconfig.lib.json" },
     { "path": "../../../finance/budget/util/tsconfig.lib.json" },

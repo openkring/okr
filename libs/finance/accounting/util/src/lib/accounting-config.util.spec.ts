@@ -63,11 +63,18 @@ describe('toAccountingConfigFormData', () => {
 
   it('seeds the report fields of a legacy doc and keeps stored ones, so the suite accepts both', () => {
     const seeded = toAccountingConfigFormData(legacyConfig());
-    expect([seeded.orgId, seeded.projectReportTemplateId]).toEqual(['', '']);
+    expect([seeded.ownerKey, seeded.projectReportTemplateId]).toEqual(['', '']);
     expect(accountingConfigValidations(seeded, 'scs', '').isValid()).toBe(true);
-    const stored = toAccountingConfigFormData({ ...legacyConfig(), orgId: 'scs', projectReportTemplateId: 'tpl-project' } as AccountingConfigModel);
-    expect([stored.orgId, stored.projectReportTemplateId]).toEqual(['scs', 'tpl-project']);
+    const stored = toAccountingConfigFormData({ ...legacyConfig(), ownerKey: 'person.kaiser', projectReportTemplateId: 'tpl-project' } as AccountingConfigModel);
+    expect([stored.ownerKey, stored.projectReportTemplateId]).toEqual(['person.kaiser', 'tpl-project']);
     expect(accountingConfigValidations(stored, 'scs', '').isValid()).toBe(true);
+  });
+
+  it('carries a legacy orgId over as an org ownerKey and drops the old field (1.105)', () => {
+    const data = toAccountingConfigFormData({ ...legacyConfig(), orgId: 'mkdf7xin64es5q4rmhdj' } as unknown as AccountingConfigModel);
+    expect(data.ownerKey).toBe('org.mkdf7xin64es5q4rmhdj');
+    expect('orgId' in data).toBe(false);
+    expect(accountingConfigValidations(data, 'scs', '').isValid()).toBe(true);
   });
 
   it('keeps and copies the bill payment fields (spec 1.85)', () => {

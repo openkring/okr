@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { AccountingConfigModel } from '@okr/shared-models';
 
 import {
-  accountingConfigValidations, hasReminderFee, REMINDER_FEE_ACCOUNT_REQUIRED_ERROR, REMINDER_FEE_DECIMALS_ERROR, reminderFeeOf, reminderFeeRappen,
+  accountingConfigValidations, hasReminderFee, OWNER_KEY_INVALID_ERROR, REMINDER_FEE_ACCOUNT_REQUIRED_ERROR, REMINDER_FEE_DECIMALS_ERROR, reminderFeeOf, reminderFeeRappen,
 } from './accounting-config.validations';
 
 describe('accountingConfigValidations', () => {
@@ -48,6 +48,27 @@ describe('accountingConfigValidations', () => {
   it('rejects a book default Kostenstelle that is not a key string', () => {
     const result = accountingConfigValidations(config({ defaultCostCenterKey: 42 as unknown as string }), 'tenant-1', '');
     expect(result.getErrors('defaultCostCenterKey').length).toBeGreaterThan(0);
+  });
+
+  describe('books owner (ownerKey, spec 1.105)', () => {
+    it('accepts no owner, an org owner and a person owner', () => {
+      expect(accountingConfigValidations(config({ ownerKey: '' }), 'tenant-1', '').isValid()).toBe(true);
+      expect(accountingConfigValidations(config({ ownerKey: 'org.mkdf7xin64es5q4rmhdj' }), 'tenant-1', '').isValid()).toBe(true);
+      expect(accountingConfigValidations(config({ ownerKey: 'person.kaiser' }), 'tenant-1', '').isValid()).toBe(true);
+    });
+
+    it('accepts a legacy doc without the field', () => {
+      const legacy = config();
+      delete (legacy as Partial<AccountingConfigModel>).ownerKey;
+      expect(accountingConfigValidations(legacy, 'tenant-1', '').isValid()).toBe(true);
+    });
+
+    it('rejects a bare okey, an unknown prefix or an empty key', () => {
+      for (const ownerKey of ['scs', 'group.board', 'org.', 'person.']) {
+        const result = accountingConfigValidations(config({ ownerKey }), 'tenant-1', '');
+        expect(result.getErrors('ownerKey')).toContain(OWNER_KEY_INVALID_ERROR);
+      }
+    });
   });
 
   it('rejects a missing accounting tenant', () => {

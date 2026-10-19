@@ -4,11 +4,16 @@ import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AccountingConfigModel, DEFAULT_REMINDER_DUE_DAYS, DEFAULT_REMINDER_FEES, DEFAULT_REMINDER_GRACE_DAYS } from '@okr/shared-models';
 import { baseValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
 
+import { parseOwnerKey } from './accounting-owner.util';
+
 /** Grace days and reminder due days accept whole days from 0 to this many. */
 export const REMINDER_DAYS_MAX = 365;
 
 /** Shown under a fee input whose CHF value has more than two decimals (same rule as parseReminderFee). */
 export const REMINDER_FEE_DECIMALS_ERROR = '@finance/accounting/feature.validation.reminderFeeDecimals';
+
+/** Shown under the owner select when the stored owner is neither 'org.<okey>' nor 'person.<okey>' (spec 1.105). */
+export const OWNER_KEY_INVALID_ERROR = '@finance/accounting/feature.validation.ownerKeyInvalid';
 
 /** Shown under the fee account select when a reminder fee is set but no revenue account takes it (spec 1.76 D14). */
 export const REMINDER_FEE_ACCOUNT_REQUIRED_ERROR = '@finance/accounting/feature.validation.reminderFeeAccountRequired';
@@ -50,8 +55,12 @@ export const accountingConfigValidations = staticSuite(
     stringValidations('discountAccountKey', model.discountAccountKey ?? '');
     // Kostenrechnung (1.65): a cost-centre okey, '' = keine Kostenstelle; legacy docs lack the field.
     stringValidations('defaultCostCenterKey', model.defaultCostCenterKey ?? '');
-    // Reports: the owner org (logo, name, address) and the project result template — selector values, '' = fallback; legacy docs lack both.
-    stringValidations('orgId', model.orgId ?? '');
+    // Reports: the books owner (name, address; logo for an org) and the project result template — selector values,
+    // '' = no owner / built-in layout; legacy docs lack both. The owner is 'org.<okey>' or 'person.<okey>' (1.105).
+    stringValidations('ownerKey', model.ownerKey ?? '');
+    test('ownerKey', OWNER_KEY_INVALID_ERROR, () => {
+      enforce(!(model.ownerKey ?? '') || !!parseOwnerKey(model.ownerKey)).isTruthy();
+    });
     stringValidations('projectReportTemplateId', model.projectReportTemplateId ?? '');
     numberValidations('fiscalYearStart', model.fiscalYearStart, true, 1, 12);
     // Mahnwesen (1.76 phase 3): legacy config docs lack the fields, so validate the model defaults.

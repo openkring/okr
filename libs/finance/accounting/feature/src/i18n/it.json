@@ -28,10 +28,19 @@
       "helper": "Modello usato per creare le fatture in PDF.",
       "add": "Crea un nuovo modello"
     },
+    "ownerType": {
+      "label": "Appartiene a",
+      "helper": "A chi appartiene questa contabilità: un’organizzazione o una persona. Nome e indirizzo compaiono sui rapporti, per un’organizzazione anche il logo.",
+      "org": "Organizzazione",
+      "person": "Persona"
+    },
     "org": {
       "label": "Organizzazione",
-      "placeholder": "Scegli un’organizzazione",
-      "helper": "A chi appartiene questa contabilità. Nome, indirizzo e logo compaiono sui rapporti."
+      "placeholder": "Scegli un’organizzazione"
+    },
+    "person": {
+      "label": "Persona",
+      "placeholder": "Scegli una persona"
     },
     "projectReportTemplate": {
       "label": "Modello risultato del progetto",
@@ -232,7 +241,8 @@
   },
   "validation": {
     "reminderFeeDecimals": "Indica l’importo con al massimo due decimali.",
-    "reminderFeeAccountRequired": "Le spese di sollecito richiedono un conto ricavi. Scegline uno o imposta le spese a 0."
+    "reminderFeeAccountRequired": "Le spese di sollecito richiedono un conto ricavi. Scegline uno o imposta le spese a 0.",
+    "ownerKeyInvalid": "Scegli un’organizzazione o una persona dalla lista."
   },
   "ledger": {
     "bookings": "Registrazioni",

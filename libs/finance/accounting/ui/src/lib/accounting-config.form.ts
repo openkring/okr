@@ -1,18 +1,20 @@
-import { Component, computed, effect, input, model, output } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonNote, IonRow, IonSelect, IonSelectOption, IonToggle, SelectChangeEventDetail } from '@ionic/angular';
 
 import { NumberInput, NumberInputI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
-import { AccountingConfigModel, AccountModel, CostCenterModel, DEFAULT_INCOMING_PAYMENT_LABEL, DEFAULT_OUTGOING_PAYMENT_LABEL, OrgModel, TemplateModel } from '@okr/shared-models';
+import { AccountingConfigModel, AccountModel, CostCenterModel, DEFAULT_INCOMING_PAYMENT_LABEL, DEFAULT_OUTGOING_PAYMENT_LABEL, OrgModel, PersonModel, TemplateModel } from '@okr/shared-models';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
-import { coerceBoolean } from '@okr/shared-util-core';
+import { coerceBoolean, getFullName } from '@okr/shared-util-core';
 
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
 import { CostCenterSelect, CostCenterSelectI18n } from '@okr/finance-cost-center-ui';
 import { leafAccounts } from '@okr/finance-account-util';
-import { AccountingI18n, accountingConfigValidations, REMINDER_DAYS_MAX, reminderFeeOf, reminderFeeRappen } from '@okr/finance-accounting-util';
+import {
+  AccountingI18n, accountingConfigValidations, AccountingOwnerType, orgOwnerKey, parseOwnerKey, personOwnerKey, REMINDER_DAYS_MAX, reminderFeeOf, reminderFeeRappen,
+} from '@okr/finance-accounting-util';
 
 export type { AccountingI18n };
 
@@ -76,20 +78,41 @@ export type { AccountingI18n };
                   <okr-error-note [errors]="invoiceTemplateIdErrors()" />
                 </ion-col>
               </ion-row>
-              <!-- reports: whose books these are (name, address, logo) and the project result template -->
+              <!-- reports: whose books these are — an org or a person (name, address; an org's logo) — and the project result template -->
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <ion-select [label]="i18n().org()" labelPlacement="floating"
-                    [placeholder]="i18n().org_placeholder()"
-                    [value]="orgId()" [disabled]="isReadOnly()"
-                    (ionChange)="onOrgChange($event)">
-                    @for (org of orgChoices(); track org.okey) {
-                      <ion-select-option [value]="org.okey">{{ org.name || org.okey }}</ion-select-option>
-                    }
+                  <ion-select [label]="i18n().owner_type()" labelPlacement="floating"
+                    [value]="ownerType()" [disabled]="isReadOnly()"
+                    (ionChange)="onOwnerTypeChange($event)">
+                    <ion-select-option value="org">{{ i18n().owner_type_org() }}</ion-select-option>
+                    <ion-select-option value="person">{{ i18n().owner_type_person() }}</ion-select-option>
                   </ion-select>
-                  <ion-note>{{ i18n().org_helper() }}</ion-note>
-                  <okr-error-note [errors]="orgIdErrors()" />
+                  <ion-note>{{ i18n().owner_type_helper() }}</ion-note>
                 </ion-col>
+                <ion-col size="12" size-md="6">
+                  @if (ownerType() === 'person') {
+                    <ion-select [label]="i18n().person()" labelPlacement="floating"
+                      [placeholder]="i18n().person_placeholder()"
+                      [value]="ownerKey()" [disabled]="isReadOnly()"
+                      (ionChange)="onOwnerChange($event)">
+                      @for (person of personChoices(); track person.okey) {
+                        <ion-select-option [value]="person.ownerKey">{{ person.name }}</ion-select-option>
+                      }
+                    </ion-select>
+                  } @else {
+                    <ion-select [label]="i18n().org()" labelPlacement="floating"
+                      [placeholder]="i18n().org_placeholder()"
+                      [value]="ownerKey()" [disabled]="isReadOnly()"
+                      (ionChange)="onOwnerChange($event)">
+                      @for (org of orgChoices(); track org.okey) {
+                        <ion-select-option [value]="org.ownerKey">{{ org.name }}</ion-select-option>
+                      }
+                    </ion-select>
+                  }
+                  <okr-error-note [errors]="ownerKeyErrors()" />
+                </ion-col>
+              </ion-row>
+              <ion-row>
                 <ion-col size="12" size-md="6">
                   <ion-select [label]="i18n().project_report_template()" labelPlacement="floating"
                     [placeholder]="i18n().project_report_template_placeholder()"
@@ -266,6 +289,8 @@ export class AccountingConfigForm {
   public readonly templates = input<TemplateModel[]>([]);
   /** the orgs the books may belong to; the selected one's name, address and logo head the reports */
   public readonly orgs = input<OrgModel[]>([]);
+  /** the persons the books may belong to (personal accounting, e.g. tenant bka); name and address head the reports */
+  public readonly persons = input<PersonModel[]>([]);
   /** show the link to the template list (only for users who may open it) */
   public readonly showTemplateLink = input(false);
   /** true when no payment_approver responsibility exists for these books; false while unknown, so a failed lookup never warns */
@@ -295,15 +320,33 @@ export class AccountingConfigForm {
       .filter(t => t.category === 'invoice' || t.okey === id)
       .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
   });
-  // legacy config docs predate both fields: '' = app-config ownerOrgId / the built-in layout
-  protected readonly orgId = computed(() => this.formData()?.orgId ?? '');
+  // Books owner (spec 1.105): 'org.<okey>' | 'person.<okey>'; '' = no owner printed. toAccountingConfigFormData
+  // already carried a legacy orgId over, so the form reads ownerKey only.
+  protected readonly ownerKey = computed(() => this.formData()?.ownerKey ?? '');
+  /** which picker shows: the stored owner's type; an empty owner keeps the picker chosen last (initially the org picker) */
+  protected readonly ownerType = linkedSignal<string, AccountingOwnerType>({
+    source: this.ownerKey,
+    computation: (ownerKey, previous) => parseOwnerKey(ownerKey)?.modelType ?? previous?.value ?? 'org',
+  });
   protected readonly projectReportTemplateId = computed(() => this.formData()?.projectReportTemplateId ?? '');
-  // Live orgs, but never drop the stored one (same rule as the template selects).
+  // Live orgs / persons, but never drop the stored one (same rule as the template selects).
+  // A stored owner that is not loaded (yet) still shows its okey instead of a blank select.
   protected orgChoices = computed(() => {
-    const id = this.orgId();
-    return this.orgs()
+    const owner = parseOwnerKey(this.ownerKey());
+    const id = owner?.modelType === 'org' ? owner.key : '';
+    const choices = this.orgs()
       .filter(o => !o.isArchived || o.okey === id)
-      .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
+      .map(o => ({ okey: o.okey, ownerKey: orgOwnerKey(o.okey), name: o.name || o.okey }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    return id && !choices.some(c => c.okey === id) ? [...choices, { okey: id, ownerKey: orgOwnerKey(id), name: id }] : choices;
+  });
+  protected personChoices = computed(() => {
+    const owner = parseOwnerKey(this.ownerKey());
+    const id = owner?.modelType === 'person' ? owner.key : '';
+    const choices = this.persons()
+      .filter(p => !p.isArchived || p.okey === id)
+      .map(p => ({ okey: p.okey, ownerKey: personOwnerKey(p.okey), name: getFullName(p.firstName, p.lastName) || p.okey }));
+    return id && !choices.some(c => c.okey === id) ? [...choices, { okey: id, ownerKey: personOwnerKey(id), name: id }] : choices;
   });
   // Report templates only, but never drop the stored one (same rule as the invoice template).
   protected reportTemplateChoices = computed(() => {
@@ -422,7 +465,7 @@ export class AccountingConfigForm {
 
   protected receivablesAccountKeyErrors = computed(() => this.validationResult().getErrors('receivablesAccountKey'));
   protected invoiceTemplateIdErrors = computed(() => this.validationResult().getErrors('invoiceTemplateId'));
-  protected orgIdErrors = computed(() => this.validationResult().getErrors('orgId'));
+  protected ownerKeyErrors = computed(() => this.validationResult().getErrors('ownerKey'));
   protected projectReportTemplateIdErrors = computed(() => this.validationResult().getErrors('projectReportTemplateId'));
   protected defaultCostCenterKeyErrors = computed(() => this.validationResult().getErrors('defaultCostCenterKey'));
   protected reminderTemplateIdErrors = computed(() => this.validationResult().getErrors('reminderTemplateId'));
@@ -441,8 +484,16 @@ export class AccountingConfigForm {
     this.onFieldChange('invoiceTemplateId', event.detail.value ?? '');
   }
 
-  protected onOrgChange(event: CustomEvent<SelectChangeEventDetail<string>>): void {
-    this.onFieldChange('orgId', event.detail.value ?? '');
+  /** Switching between org and person clears the owner: a key of the other type would not match the new picker. */
+  protected onOwnerTypeChange(event: CustomEvent<SelectChangeEventDetail<AccountingOwnerType>>): void {
+    const type = event.detail.value === 'person' ? 'person' : 'org';
+    if (type === this.ownerType()) return;
+    this.ownerType.set(type);
+    if (this.ownerKey()) this.onFieldChange('ownerKey', '');
+  }
+
+  protected onOwnerChange(event: CustomEvent<SelectChangeEventDetail<string>>): void {
+    this.onFieldChange('ownerKey', event.detail.value ?? '');
   }
 
   protected onProjectReportTemplateChange(event: CustomEvent<SelectChangeEventDetail<string>>): void {

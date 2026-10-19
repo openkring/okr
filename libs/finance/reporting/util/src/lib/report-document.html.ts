@@ -144,6 +144,7 @@ function row(r: PrintableRow, showPrevious: boolean): string {
 export function buildReportDocument(rows: readonly PrintableRow[], options: ReportDocumentOptions): string {
   const l = options.labels;
   const showPrevious = options.showPrevious ?? true;
+  // no owner (books without ownerKey, spec 1.105): neither the name prefix nor the address line is printed
   const addressLine = options.orgAddress
     ? `${options.orgName}, ${options.orgAddress}`
     : options.orgName;
@@ -182,10 +183,10 @@ export function buildReportDocument(rows: readonly PrintableRow[], options: Repo
 </head>
 <body>
 ${watermark}
-<div class="meta">${escapeHtml(options.orgName)} - ${escapeHtml(l.created)}: ${escapeHtml(options.generatedOn)}</div>
+<div class="meta">${options.orgName ? `${escapeHtml(options.orgName)} - ` : ''}${escapeHtml(l.created)}: ${escapeHtml(options.generatedOn)}</div>
 <h1>${escapeHtml(l.title)}</h1>
 <div class="facts">
-  <p>${escapeHtml(l.address)}: ${escapeHtml(addressLine)}</p>
+  ${addressLine ? `<p>${escapeHtml(l.address)}: ${escapeHtml(addressLine)}</p>` : ''}
   <p>${escapeHtml(l.period)}: ${escapeHtml(l.periodValue)}</p>
   ${l.books ? `<p>${escapeHtml(l.books)}</p>` : ''}
   <p>${escapeHtml(l.amounts)}</p>

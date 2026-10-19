@@ -48,7 +48,7 @@ import { AccountingSegments } from './accounting-segments';
         <okr-accounting-config-form [formData]="config" (formDataChange)="formData.set($event)"
           [accounts]="accounts()" [costCenters]="costCenters()" [costCentersEnabled]="!store.isExternallyManaged()"
           [tenantId]="store.tenantId()" [i18n]="store.i18n"
-          [templates]="templates()" [orgs]="store.appStore.allOrgs()" [showTemplateLink]="canManageTemplates()" (addTemplate)="openTemplates()"
+          [templates]="templates()" [orgs]="store.appStore.allOrgs()" [persons]="store.appStore.allPersons()" [showTemplateLink]="canManageTemplates()" (addTemplate)="openTemplates()"
           [approverMissing]="approverMissing()"
           [readOnly]="store.isExternallyManaged()" [showForm]="showForm()"
           (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" />

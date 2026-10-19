@@ -66,6 +66,12 @@ describe('buildReportDocument', () => {
     expect(html).toContain('Adresse: bkaiser GmbH<');
   });
 
+  it('prints no owner when the books have none (spec 1.105)', () => {
+    const html = buildReportDocument([], options({ orgName: '', orgAddress: '' }));
+    expect(html).toContain('<div class="meta">Erstellt: 08.09.2025</div>');
+    expect(html).not.toContain('Adresse:');
+  });
+
   it('prints one row per report row, in order, with both amount columns', () => {
     const html = buildReportDocument([
       row({ okey: 'a', id: '1', name: 'Aktiven', kind: 'group', hasChildren: true, current: 100000, previous: 90000 }),

@@ -28,10 +28,19 @@
       "helper": "Modèle utilisé pour créer les factures en PDF.",
       "add": "Créer un nouveau modèle"
     },
+    "ownerType": {
+      "label": "Appartient à",
+      "helper": "À qui appartient cette comptabilité : une organisation ou une personne. Le nom et l’adresse figurent sur les rapports, pour une organisation aussi son logo.",
+      "org": "Organisation",
+      "person": "Personne"
+    },
     "org": {
       "label": "Organisation",
-      "placeholder": "Choisis une organisation",
-      "helper": "À qui appartient cette comptabilité. Son nom, son adresse et son logo figurent sur les rapports."
+      "placeholder": "Choisis une organisation"
+    },
+    "person": {
+      "label": "Personne",
+      "placeholder": "Choisis une personne"
     },
     "projectReportTemplate": {
       "label": "Modèle du résultat de projet",
@@ -232,7 +241,8 @@
   },
   "validation": {
     "reminderFeeDecimals": "Indique le montant avec au maximum deux décimales.",
-    "reminderFeeAccountRequired": "Les frais de rappel ont besoin d’un compte de produits. Choisis-en un ou mets les frais à 0."
+    "reminderFeeAccountRequired": "Les frais de rappel ont besoin d’un compte de produits. Choisis-en un ou mets les frais à 0.",
+    "ownerKeyInvalid": "Choisis une organisation ou une personne dans la liste."
   },
   "ledger": {
     "bookings": "Écritures",

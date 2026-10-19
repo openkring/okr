@@ -28,10 +28,19 @@
       "helper": "Vorlage, mit der Rechnungen als PDF erstellt werden.",
       "add": "Neue Vorlage erstellen"
     },
+    "ownerType": {
+      "label": "Gehört zu",
+      "helper": "Wem diese Buchhaltung gehört: einer Organisation oder einer Person. Name und Adresse erscheinen auf den Berichten, bei einer Organisation auch das Logo.",
+      "org": "Organisation",
+      "person": "Person"
+    },
     "org": {
       "label": "Organisation",
-      "placeholder": "Organisation wählen",
-      "helper": "Wem diese Buchhaltung gehört. Name, Adresse und Logo erscheinen auf den Berichten."
+      "placeholder": "Organisation wählen"
+    },
+    "person": {
+      "label": "Person",
+      "placeholder": "Person wählen"
     },
     "projectReportTemplate": {
       "label": "Vorlage Projektergebnis",
@@ -232,7 +241,8 @@
   },
   "validation": {
     "reminderFeeDecimals": "Bitte gib den Betrag mit höchstens zwei Nachkommastellen an.",
-    "reminderFeeAccountRequired": "Für Mahngebühren braucht es ein Ertragskonto. Wähle eines aus oder setze die Gebühr auf 0."
+    "reminderFeeAccountRequired": "Für Mahngebühren braucht es ein Ertragskonto. Wähle eines aus oder setze die Gebühr auf 0.",
+    "ownerKeyInvalid": "Wähle eine Organisation oder eine Person aus der Liste."
   },
   "ledger": {
     "bookings": "Buchungen",
