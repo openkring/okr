@@ -228,6 +228,17 @@ export const MEMBERSHIP_I18N_KEYS = {
   // 1.107 chat maintenance block
   chat_blocked_title:   PFX + 'chat.blocked.title',
   chat_blocked_default: PFX + 'chat.blocked.default',
+  // 1.101 phase 3 membership reports
+  report_read_error:             PFX + 'reports.readError',
+  old_juniors_title:             PFX + 'reports.oldJuniors.title',
+  old_juniors_explanation:       PFX + 'reports.oldJuniors.explanation',
+  old_juniors_detail:            PFX + 'reports.oldJuniors.detail',
+  old_juniors_nodob:             PFX + 'reports.oldJuniors.nodob',
+  category_changes_title:        PFX + 'reports.categoryChanges.title',
+  category_changes_explanation:  PFX + 'reports.categoryChanges.explanation',
+  category_changes_detail:       PFX + 'reports.categoryChanges.detail',
+  category_changes_year_title:   PFX + 'reports.categoryChanges.yearTitle',
+  category_changes_year_message: PFX + 'reports.categoryChanges.yearMessage',
 } satisfies Record<string, string>;
 
 export type MembershipI18n = { [K in keyof typeof MEMBERSHIP_I18N_KEYS]: Signal<string> };

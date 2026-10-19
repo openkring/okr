@@ -85,22 +85,6 @@
       "label": "Elencare i numeri IBAN",
       "button": "Mostrare"
     },
-    "mcatchange": {
-      "title": "Modifiche della categoria di socio",
-      "button": "Mostrare"
-    },
-    "oldJuniors": {
-      "title": "Giovani da riassegnare (troppo grandi) (>18)",
-      "label": "Elencare i giovani da riassegnare (troppo grandi)",
-      "button": "Mostrare",
-      "nodob": "Nessuna data di nascita"
-    },
-    "club": {
-      "label": "Club"
-    },
-    "year": {
-      "label": "Anno"
-    },
     "hasAccount": {
       "title": "Riporta gli accessi sulle persone",
       "label": "Registra per ogni persona in quali tenant ha un accesso. Serve perché tu possa invitare solo persone che qui possono accedere.",

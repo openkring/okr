@@ -11,16 +11,16 @@ import { ExportFormats, memberTypeMatches, yearMatches } from '@okr/shared-categ
 import { FirestoreService, ChatStatusService } from '@okr/shared-data-access';
 import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { AddressCollection, AddressModel, CategoryListModel, ExportFormat, GroupModel, GroupModelName, MembershipCollection, MembershipModel, OrgModel, OrgModelName, OwnershipCollection, OwnershipModel, PersonModel, PersonModelName } from '@okr/shared-models';
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, generateRandomString, getAvatarInfo, getBirthYear, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isChatOnlyMembership, isMembership, isOngoing, isPerson, nameMatches, warn, chatBlockedAlertMessage, isChatBlockedError } from '@okr/shared-util-core';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, generateRandomString, getAvatarInfo, getBirthYear, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, getYear, hasRole, isAfterDate, isAfterOrEqualDate, isChatOnlyMembership, isMembership, isOngoing, isPerson, nameMatches, warn, chatBlockedAlertMessage, isChatBlockedError, ReportFinding } from '@okr/shared-util-core';
 import { confirm, copyToClipboardWithConfirmation, exportCsv, getCcEmailAddresses, getMainEmailAddresses, lazyService, navigateByUrl, showToast, notify } from '@okr/shared-util-angular';
 import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
-import { EmailAddressesModal, selectDate } from '@okr/shared-ui';
+import { EmailAddressesModal, openReport, selectDate } from '@okr/shared-ui';
 import { openBulkEmailFlow } from '@okr/content-pdf-template-feature';
 
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
-import { convertFormToNewPerson, convertMemberAndOrgToMembership, convertNewMemberFormToEmailAddress, convertNewMemberFormToMembership, convertNewMemberFormToPhoneAddress, convertNewMemberFormToPostalAddress, convertNewMemberFormToWebAddress, convertToAddressDataRow, convertToClubdeskImportRow, convertToSrvDataRow, getGroupsOfMember, getRelLogEntry, MemberContact, MemberNewFormModel, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
+import { convertFormToNewPerson, convertMemberAndOrgToMembership, convertNewMemberFormToEmailAddress, convertNewMemberFormToMembership, convertNewMemberFormToPhoneAddress, convertNewMemberFormToPostalAddress, convertNewMemberFormToWebAddress, convertToAddressDataRow, convertToClubdeskImportRow, categoryChangeFindings, convertToSrvDataRow, exitYears, getGroupsOfMember, oldJuniorFindings, getRelLogEntry, MemberContact, MemberNewFormModel, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
 import { AddressService } from '@okr/subject-address-data-access';
 import { PersonService } from '@okr/subject-person-data-access';
 import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
@@ -519,6 +519,70 @@ export const _MembershipStore = signalStore(
         }
         const membership = convertMemberAndOrgToMembership(person, PersonModelName, org, OrgModelName, store.tenantId());
         await this.edit(membership, false, true);
+      },
+
+      /**
+       * The memberships of one org, read fresh and strictly (a failed read must not look like «nothing found»).
+       * Own query per call: the report never depends on what the list or another report loaded before.
+       * Unordered on purpose: equality on orgKey plus an orderBy on another field would need a composite index.
+       */
+      async readOrgMemberships(orgId: string): Promise<MembershipModel[] | undefined> {
+        try {
+          return await store.firestoreService.getDataOnceStrict<MembershipModel>(MembershipCollection,
+            [...getSystemQuery(store.tenantId()), { key: 'orgKey', operator: '==', value: orgId }], 'none');
+        } catch {
+          await showToast(store.toastController, store.i18n.report_read_error());
+          return undefined;
+        }
+      },
+
+      /** Report «Umzuteilende Jugendliche» of the given org: juniors over 18 or without a birth year. */
+      async oldJuniors(orgId: string): Promise<void> {
+        if (!hasRole('memberAdmin', store.currentUser())) return;
+        const memberships = await this.readOrgMemberships(orgId);
+        if (!memberships) return;
+        await openReport(store.modalController, {
+          title: store.i18n.old_juniors_title(),
+          kind: 'report',
+          explanation: store.i18n.old_juniors_explanation(),
+          findings: oldJuniorFindings(memberships, orgId, getYear(), {
+            detail: store.i18n.old_juniors_detail(),
+            nodob: store.i18n.old_juniors_nodob(),
+          }),
+          ranAt: new Date(),
+        });
+      },
+
+      /** Report «Wechsel der Mitgliederkategorie» of the given org; asks for the year first. */
+      async categoryChanges(orgId: string): Promise<void> {
+        if (!hasRole('memberAdmin', store.currentUser())) return;
+        const memberships = await this.readOrgMemberships(orgId);
+        if (!memberships) return;
+        const years = exitYears(memberships, orgId);
+        let findings: ReportFinding[] = [];
+        if (years.length > 0) {
+          const alert = await store.alertController.create({
+            header: store.i18n.category_changes_year_title(),
+            message: store.i18n.category_changes_year_message(),
+            inputs: years.map((y, i) => ({ type: 'radio' as const, label: y, value: y, checked: i === 0 })),
+            buttons: [
+              { text: store.i18n.cancel(), role: 'cancel' },
+              { text: store.i18n.ok(), role: 'confirm' },
+            ],
+          });
+          await alert.present();
+          const { role, data } = await alert.onDidDismiss();
+          if (role !== 'confirm') return;
+          const year = typeof data?.values === 'string' ? data.values : years[0];
+          findings = categoryChangeFindings(memberships, orgId, year, { detail: store.i18n.category_changes_detail() });
+        }
+        await openReport(store.modalController, {
+          title: store.i18n.category_changes_title(),
+          kind: 'report',
+          explanation: store.i18n.category_changes_explanation(),
+          findings,
+          ranAt: new Date(),
+        });
       },
 
       /**

@@ -1087,6 +1087,9 @@ const relationship: FeatureBlock = {
       { key: 'membership-exportmembers', name: 'membership-exportmembers', url: 'exportMembers', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.membership-exportmembers' },
       { key: 'membership-exportaddresses', name: 'membership-exportaddresses', url: 'exportAddresses', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.membership-exportaddresses' },
       { key: 'membership-exportclubdesk', name: 'membership-exportclubdesk', url: 'exportClubdesk', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: '@item.membership-exportclubdesk' },
+      { key: 'maint-divider-member', name: 'maint-divider-member', url: '', action: 'divider', roleNeeded: 'memberAdmin', icon: 'help-circle', label: '@item.maint-divider-member' },
+      { key: 'membership-old-juniors', name: 'membership-old-juniors', url: 'oldJuniors', action: 'call', roleNeeded: 'memberAdmin', icon: 'checkbox-circle-double', label: '@item.membership-old-juniors' },
+      { key: 'membership-category-changes', name: 'membership-category-changes', url: 'categoryChanges', action: 'call', roleNeeded: 'memberAdmin', icon: 'checkbox-circle-double', label: '@item.membership-category-changes' },
     ] },
     { key: 'c-groupmembers', name: 'c-groupmembers', url: '', action: 'context', roleNeeded: 'privileged', icon: 'help-circle', label: '', children: [
       { key: 'membership-add', name: 'membership-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: '@item.membership-add' },

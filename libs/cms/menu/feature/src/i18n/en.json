@@ -684,7 +684,10 @@
     "document-orphans": "Orphaned files",
     "trip-maintenance": "Tidy up the logbook",
     "trip-kiosk": "Kiosk devices",
-    "diary-import": "Prepare import"
+    "diary-import": "Prepare import",
+    "maint-divider-member": "Maintenance",
+    "membership-old-juniors": "Juniors to be reassigned",
+    "membership-category-changes": "Member category changes"
   },
   "ownership": {
     "fork_confirm": "«{name}» belongs to the feature catalogue ({blocks}).\n\nSaving creates a tenant-private copy «{forkKey}» and detaches this tenant from the shared original. Future catalogue corrections (url, action, role) will no longer reach this entry.\n\nSave anyway?",

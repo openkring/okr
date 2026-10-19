@@ -85,22 +85,6 @@
       "label": "Lister les numéros IBAN",
       "button": "Afficher"
     },
-    "mcatchange": {
-      "title": "Modifications de la catégorie de membre",
-      "button": "Afficher"
-    },
-    "oldJuniors": {
-      "title": "Juniors à réaffecter (trop âgés) (>18)",
-      "label": "Lister les juniors à réaffecter (trop âgés)",
-      "button": "Afficher",
-      "nodob": "Aucune date de naissance"
-    },
-    "club": {
-      "label": "Club"
-    },
-    "year": {
-      "label": "Année"
-    },
     "hasAccount": {
       "title": "Reporter les accès sur les personnes",
       "label": "Retient pour chaque personne dans quels mandants elle dispose d'un accès. Nécessaire pour que tu ne puisses inviter que des personnes capables de se connecter ici.",

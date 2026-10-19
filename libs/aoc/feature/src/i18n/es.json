@@ -85,22 +85,6 @@
       "label": "Listar números IBAN",
       "button": "Mostrar"
     },
-    "mcatchange": {
-      "title": "Cambios en la categoría de miembro",
-      "button": "Mostrar"
-    },
-    "oldJuniors": {
-      "title": "Juveniles a reasignar (demasiado mayores) (>18)",
-      "label": "Listar juveniles a reasignar (demasiado mayores)",
-      "button": "Mostrar",
-      "nodob": "Sin fecha de nacimiento"
-    },
-    "club": {
-      "label": "Club"
-    },
-    "year": {
-      "label": "Año"
-    },
     "hasAccount": {
       "title": "Reflejar los accesos en las personas",
       "label": "Registra para cada persona en qué inquilinos tiene acceso. Necesario para que solo puedas invitar a personas que puedan iniciar sesión aquí.",

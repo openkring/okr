@@ -85,22 +85,6 @@
       "label": "IBAN Nummern auflisten",
       "button": "Anzeigen"
     },
-    "mcatchange": {
-      "title": "Änderungen der Mitgliederkategorie",
-      "button": "Anzeigen"
-    },
-    "oldJuniors": {
-      "title": "Umzuteilende (zu alte) Jugendliche (>18)",
-      "label": "Umzuteilende (zu alte) Jugendliche auflisten",
-      "button": "Anzeigen",
-      "nodob": "Kein Geburtsdatum"
-    },
-    "club": {
-      "label": "Verein"
-    },
-    "year": {
-      "label": "Jahr"
-    },
     "hasAccount": {
       "title": "Zugänge auf die Personen spiegeln",
       "label": "Hält bei jeder Person fest, in welchen Mandanten sie einen Zugang hat. Nötig, damit du zu einem Anlass nur Personen einladen kannst, die sich hier auch anmelden können.",

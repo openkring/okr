@@ -1,28 +1,24 @@
-import { computed, inject } from '@angular/core';
+import { inject } from '@angular/core';
 import { AlertController, ToastController } from '@ionic/angular';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { from, Observable, of } from 'rxjs';
+import { patchState, signalStore, withMethods, withProps, withState } from '@ngrx/signals';
+import { from } from 'rxjs';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { AddressCollection, AddressModel, OkrModel, LogInfo, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@okr/shared-models';
-import { compareDate, fill, getAgeFromBirthYear, getEndOfYear, getFullName, getSystemQuery, getYear, isMembership } from '@okr/shared-util-core';
+import { AddressCollection, AddressModel, LogInfo } from '@okr/shared-models';
+import { fill, getFullName, getSystemQuery } from '@okr/shared-util-core';
 import { confirm, showToast } from '@okr/shared-util-angular';
-import { getMembershipCategoryChanges } from '@okr/relationship-membership-util';
 import { AOC_I18N_KEYS } from '@okr/aoc-util';
 
 export type AocAdminOpsState = {
-  modelType: string | undefined;
   log: LogInfo[];
   logTitle: string;
 };
 
 export const initialState: AocAdminOpsState = {
-  modelType: undefined,
   log: [],
   logTitle: '',
 };
@@ -36,41 +32,8 @@ export const AocAdminOpsStore = signalStore(
     toastController: inject(ToastController),
     i18n: inject(I18nService).translateAll(AOC_I18N_KEYS),
   })),
-  withProps(store => ({
-    dataResource: rxResource({
-      params: () => ({
-        modelType: store.modelType(),
-      }),
-      stream: ({ params }): Observable<OkrModel[] | undefined> => {
-        switch (params.modelType) {
-          case 'person':
-            return store.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(store.appStore.env.tenantId), 'lastName', 'asc');
-          case 'org':
-            return store.firestoreService.searchData<OrgModel>(OrgCollection, getSystemQuery(store.appStore.env.tenantId), 'name', 'asc');
-          case 'membership':
-            return store.firestoreService.searchData<MembershipModel>(MembershipCollection, getSystemQuery(store.appStore.env.tenantId), 'memberName2', 'asc');
-          default:
-            return of(undefined);
-        }
-      },
-    }),
-  })),
-
-  withComputed(state => {
-    return {
-      currentUser: computed(() => state.appStore.currentUser()),
-      isLoading: computed(() => state.dataResource.isLoading()),
-      data: computed(() => state.dataResource.value() ?? []),
-    };
-  }),
-
   withMethods(store => {
     return {
-      /******************************** setters (filter) ******************************************* */
-      setModelType(modelType: string | undefined): void {
-        patchState(store, { modelType, log: [], logTitle: '' });
-      },
-
       /**
        * Einmalige Wartung: spiegelt aus `users`, in WELCHEN Mandanten eine Person einen Zugang
        * hat, auf `persons.accountTenants`.
@@ -131,63 +94,6 @@ export const AocAdminOpsStore = signalStore(
           });
           patchState(store, { log, logTitle: 'IBAN List' });
         }); 
-      },
-
-      listJuniorsOlderThan(age = 18, orgKey = 'scs', refYear = getYear()): void {
-        const title = store.i18n.adminops_oldjuniors_title();
-        if (store.modelType() === 'membership') {
-          const log = store
-            .data()
-            .filter(model => {
-              if (isMembership(model, store.appStore.env.tenantId)) {
-                const m = model as MembershipModel;
-                if (m.category === 'junior' && m.orgKey === orgKey && m.relIsLast === true && compareDate(m.dateOfExit, getEndOfYear() + '')) {
-                  // we have all current juniors of the given org
-                  // now we filter the ones that are older than the given age or have no dateOfBirth.
-                  // Read the year-precision replica (memberBirthYear) — spec 1.19 D-P4-9: never pad
-                  // a year into a date, getAgeFromBirthYear takes the YYYY as it stands.
-                  const memberAge = getAgeFromBirthYear(m.memberBirthYear, refYear);
-                  if (memberAge < 0 || memberAge > age) return true;
-                }
-              }
-              return false;
-            })
-            .map(model => {
-              const nodob = store.i18n.adminops_oldjuniors_nodob();
-              if (isMembership(model, store.appStore.env.tenantId)) {
-                const m = model as MembershipModel;
-                const name = getFullName(m.memberName1, m.memberName2);
-                const memberAge = getAgeFromBirthYear(m.memberBirthYear, refYear);
-                const message = memberAge < 0 ? nodob : `${title}}: ${m.memberBirthYear} -> ${memberAge}`;
-                if (memberAge < 0) return { id: m.okey, name: name, message: nodob };
-                return { id: m.okey, name: name, message: message };
-              }
-              const m = model as OkrModel;
-              return { id: m.okey, name: '', message: 'not a membership ?' };
-            });
-          patchState(store, { log: log, logTitle: store.i18n.title() });
-        } else {
-          console.error('AocAdminOpsStore.listJuniorsOlderThan: modelType is not membership');
-        }
-      },
-
-      async showMembershipCategoryChanges(club: string, year: number): Promise<void> {
-        const log: LogInfo[] = [];
-
-        // Wait for dataResource to finish loading
-        while (store.dataResource.isLoading()) {
-          // eslint-disable-next-line no-await-in-loop
-          await new Promise(res => setTimeout(res, 50));
-        }
-        if (store.modelType() === 'membership') {
-          const changes = getMembershipCategoryChanges(store.data() as MembershipModel[], club, year);
-          for (const change of changes) {
-            log.push({ id: change.memberKey, name: getFullName(change.memberName1, change.memberName2), message: `${change.dateOfChange}: ${change.oldCategory} -> ${change.newCategory}` }); 
-          }
-          patchState(store, { log: log, logTitle: store.i18n.adminops_mcatchange_title() });
-        } else {
-          console.error('AocAdminOpsStore.showMembershipCategoryChanges: modelType is not membership');
-        }
       },
     };
   })

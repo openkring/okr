@@ -582,5 +582,21 @@
       "not-a-settlement-task": "This task is not part of the exit settlement."
     },
     "doneToast": "The exit has been settled."
+  },
+  "reports": {
+    "oldJuniors": {
+      "title": "Juniors to be reassigned",
+      "explanation": "Shows the juniors of this organisation who are older than 18 or have no birth year. They need to move to another member category.",
+      "detail": "Born {birthYear}, {age} years old",
+      "nodob": "No birth year recorded"
+    },
+    "categoryChanges": {
+      "title": "Member category changes",
+      "explanation": "Shows the members of this organisation who changed category in the chosen year.",
+      "detail": "{date}: {oldCategory} → {newCategory}",
+      "yearTitle": "Which year?",
+      "yearMessage": "Choose the year in which the members changed category."
+    },
+    "readError": "The memberships could not be read. Please try again later."
   }
 }

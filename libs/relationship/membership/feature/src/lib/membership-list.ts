@@ -316,6 +316,8 @@ export class MembershipList {
       case 'exportAddresses': await this.store.export("address", this.filteredMemberships()); break;
       case 'copyEmailAddresses': await this.store.copyEmailAddresses(this.listId(), this.readOnly()); break;
       case 'sendEmailToList': await this.store.sendEmailToList(this.listId()); break;
+      case 'oldJuniors': await this.store.oldJuniors(this.orgId()); break;
+      case 'categoryChanges': await this.store.categoryChanges(this.orgId()); break;
       default: error(undefined, `MembershipList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
     this.cdr.markForCheck();

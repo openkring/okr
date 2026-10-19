@@ -582,5 +582,21 @@
       "not-a-settlement-task": "Esta tarea no forma parte de la liquidación de la baja."
     },
     "doneToast": "La baja está liquidada."
+  },
+  "reports": {
+    "oldJuniors": {
+      "title": "Juveniles por reasignar",
+      "explanation": "Muestra los juveniles de esta organización que tienen más de 18 años o cuyo año de nacimiento falta. Deben pasar a otra categoría de socios.",
+      "detail": "Nacido en {birthYear}, {age} años",
+      "nodob": "Sin año de nacimiento registrado"
+    },
+    "categoryChanges": {
+      "title": "Cambios de categoría de socio",
+      "explanation": "Muestra los socios de esta organización que cambiaron de categoría en el año elegido.",
+      "detail": "{date}: {oldCategory} → {newCategory}",
+      "yearTitle": "¿Qué año?",
+      "yearMessage": "Elige el año en el que los socios cambiaron de categoría."
+    },
+    "readError": "No se pudieron leer las afiliaciones. Inténtalo de nuevo más tarde."
   }
 }

@@ -14,3 +14,4 @@ export * from './lib/member-new-form.validations';
 export * from './lib/membership-i18n';
 export * from './lib/exit-settlement';
 export * from './lib/exit-settlement-i18n';
+export * from './lib/membership-report.util';

@@ -582,5 +582,21 @@
       "not-a-settlement-task": "Diese Aufgabe gehört nicht zur Austrittsabrechnung."
     },
     "doneToast": "Der Austritt ist abgerechnet."
+  },
+  "reports": {
+    "oldJuniors": {
+      "title": "Umzuteilende Jugendliche",
+      "explanation": "Zeigt die Jugendlichen dieser Organisation, die älter als 18 sind oder bei denen das Geburtsjahr fehlt. Sie müssen in eine andere Mitgliederkategorie wechseln.",
+      "detail": "Jahrgang {birthYear}, {age} Jahre alt",
+      "nodob": "Kein Geburtsjahr erfasst"
+    },
+    "categoryChanges": {
+      "title": "Wechsel der Mitgliederkategorie",
+      "explanation": "Zeigt die Mitglieder dieser Organisation, die im gewählten Jahr die Kategorie gewechselt haben.",
+      "detail": "{date}: {oldCategory} → {newCategory}",
+      "yearTitle": "Welches Jahr?",
+      "yearMessage": "Wähle das Jahr, in dem die Mitglieder die Kategorie gewechselt haben."
+    },
+    "readError": "Die Mitgliedschaften konnten nicht gelesen werden. Bitte versuche es später noch einmal."
   }
 }

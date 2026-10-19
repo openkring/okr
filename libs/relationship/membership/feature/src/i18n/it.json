@@ -582,5 +582,21 @@
       "not-a-settlement-task": "Questa attività non fa parte del conteggio dell'uscita."
     },
     "doneToast": "L'uscita è stata conteggiata."
+  },
+  "reports": {
+    "oldJuniors": {
+      "title": "Giovani da riassegnare",
+      "explanation": "Mostra i giovani di questa organizzazione che hanno più di 18 anni o di cui manca l'anno di nascita. Devono passare a un'altra categoria di soci.",
+      "detail": "Nato nel {birthYear}, {age} anni",
+      "nodob": "Nessun anno di nascita registrato"
+    },
+    "categoryChanges": {
+      "title": "Cambi di categoria dei soci",
+      "explanation": "Mostra i soci di questa organizzazione che hanno cambiato categoria nell'anno scelto.",
+      "detail": "{date}: {oldCategory} → {newCategory}",
+      "yearTitle": "Quale anno?",
+      "yearMessage": "Scegli l'anno in cui i soci hanno cambiato categoria."
+    },
+    "readError": "Non è stato possibile leggere le affiliazioni. Riprova più tardi."
   }
 }

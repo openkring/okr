@@ -582,5 +582,21 @@
       "not-a-settlement-task": "Cette tâche ne fait pas partie du décompte de sortie."
     },
     "doneToast": "Le départ est décompté."
+  },
+  "reports": {
+    "oldJuniors": {
+      "title": "Juniors à réaffecter",
+      "explanation": "Affiche les juniors de cette organisation qui ont plus de 18 ans ou dont l'année de naissance manque. Ils doivent passer dans une autre catégorie de membres.",
+      "detail": "Né en {birthYear}, {age} ans",
+      "nodob": "Aucune année de naissance saisie"
+    },
+    "categoryChanges": {
+      "title": "Changements de catégorie de membre",
+      "explanation": "Affiche les membres de cette organisation qui ont changé de catégorie durant l'année choisie.",
+      "detail": "{date} : {oldCategory} → {newCategory}",
+      "yearTitle": "Quelle année ?",
+      "yearMessage": "Choisis l'année durant laquelle les membres ont changé de catégorie."
+    },
+    "readError": "Les adhésions n'ont pas pu être lues. Réessaie plus tard."
   }
 }

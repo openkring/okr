@@ -68,22 +68,11 @@ export const AOC_I18N_KEYS = {
   adminops_iban_label:                    PFX + 'adminops.iban.label',
   adminops_iban_button:                   PFX + 'adminops.iban.button',
 
-  adminops_mcatchange_title:              PFX + 'adminops.mcatchange.title',
-  adminops_mcatchange_button:              PFX + 'adminops.mcatchange.button',
-
   adminops_hasaccount_title:              PFX + 'adminops.hasAccount.title',
   adminops_hasaccount_label:              PFX + 'adminops.hasAccount.label',
   adminops_hasaccount_button:             PFX + 'adminops.hasAccount.button',
   adminops_hasaccount_confirm:            PFX + 'adminops.hasAccount.confirm',
   adminops_hasaccount_conf:               PFX + 'adminops.hasAccount.conf',
-
-  adminops_oldjuniors_title:              PFX + 'adminops.oldJuniors.title',
-  adminops_oldJuniors_label:              PFX + 'adminops.oldJuniors.label',
-  adminops_oldJuniors_button:             PFX + 'adminops.oldJuniors.button',
-  adminops_oldjuniors_nodob:              PFX + 'adminops.oldJuniors.nodob',
-
-  adminops_club_label:                    PFX + 'adminops.club.label',
-  adminops_year_label:                    PFX + 'adminops.year.label',
 
   // bexio
   bexio_title:                              PFX + 'bexio.title',
