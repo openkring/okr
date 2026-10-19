@@ -179,7 +179,6 @@ export const PERSON_I18N_KEYS = {
     check_fav_to_person:        PFX + 'checkFavAddresses.to_person',
     check_fav_read_error:       PFX + 'checkFavAddresses.read_error',
     // Bexio contacts (Personen › Wartung, moved from AOC in spec 1.101 phase 3)
-    loading:                    '@loading',
     location:                   '@location',
     bexio_title:                PFX + 'bexio.title',
     bexio_index_title:          PFX + 'bexio.index.title',
@@ -202,6 +201,10 @@ export const PERSON_I18N_KEYS = {
     bexio_col_name:             PFX + 'bexio.col.name',
     bexio_col_category:         PFX + 'bexio.col.category',
     bexio_dialog_title:         PFX + 'bexio.dialog.title',
+    bexio_dialog_membership:    PFX + 'bexio.dialog.membership',
+    bexio_dialog_bexio:         PFX + 'bexio.dialog.bexio',
+    bexio_dialog_person:        PFX + 'bexio.dialog.person',
+    bexio_dialog_org:           PFX + 'bexio.dialog.org',
     bexio_dialog_download:      PFX + 'bexio.dialog.download',
     bexio_dialog_update_bk:     PFX + 'bexio.dialog.update_bk',
     bexio_dialog_create:        PFX + 'bexio.dialog.create',

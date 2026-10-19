@@ -296,7 +296,11 @@
       "update_bexio": "Update contact in Bexio",
       "in_sync": "The data matches.",
       "bexio_only": "This contact exists only in Bexio. Only download it if you are sure there is no matching person or organization in the app yet.",
-      "both_empty": "Both sides are empty. This should not happen, please check the entry by hand."
+      "both_empty": "Both sides are empty. This should not happen, please check the entry by hand.",
+      "membership": "Membership",
+      "bexio": "Bexio",
+      "person": "Person",
+      "org": "Organization"
     }
   }
 }

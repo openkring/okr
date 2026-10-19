@@ -296,7 +296,11 @@
       "update_bexio": "Mettre à jour le contact dans Bexio",
       "in_sync": "Les données concordent.",
       "bexio_only": "Ce contact n'existe que dans Bexio. Ne le reprends que si tu es sûr qu'il n'y a pas encore de personne ou d'organisation correspondante dans l'application.",
-      "both_empty": "Les deux côtés sont vides. Cela ne devrait pas arriver, vérifie l'entrée à la main."
+      "both_empty": "Les deux côtés sont vides. Cela ne devrait pas arriver, vérifie l'entrée à la main.",
+      "membership": "Adhésion",
+      "bexio": "Bexio",
+      "person": "Personne",
+      "org": "Organisation"
     }
   }
 }

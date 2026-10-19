@@ -296,7 +296,11 @@
       "update_bexio": "Aggiornare il contatto in Bexio",
       "in_sync": "I dati coincidono.",
       "bexio_only": "Questo contatto esiste solo in Bexio. Importalo solo se sei sicuro che nell'app non esista ancora una persona o un'organizzazione corrispondente.",
-      "both_empty": "Entrambi i lati sono vuoti. Non dovrebbe succedere, controlla la voce a mano."
+      "both_empty": "Entrambi i lati sono vuoti. Non dovrebbe succedere, controlla la voce a mano.",
+      "membership": "Iscrizione",
+      "bexio": "Bexio",
+      "person": "Persona",
+      "org": "Organizzazione"
     }
   }
 }

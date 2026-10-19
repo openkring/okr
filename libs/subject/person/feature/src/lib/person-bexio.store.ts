@@ -143,7 +143,6 @@ export const PersonBexioStore = signalStore(
       }
 
       // 4. Add orgs to index
-      let i = 0;
       for (const org of orgs) {
         const membership = memberships.find(m => m.memberKey === org.okey);
         const postal = favPostalByParent.get(`org.${org.okey}`);
@@ -179,7 +178,6 @@ export const PersonBexioStore = signalStore(
           bx_email: '',
           bx_phone: ''
         });
-        i++;
       }
 
       // 5. Sort by name2
@@ -233,8 +231,6 @@ export const PersonBexioStore = signalStore(
         const result = await getBexioContacts();
         const contacts = result.data;
 
-        // log entries that have a bexioId set, to verify reconciliation worked
-        const withId = index.filter(i => !!i.bexioId);
 
         // 7. Join by key: primary = bexioId match, fallback = name key (only when bexioId missing)
         for (const contact of contacts) {

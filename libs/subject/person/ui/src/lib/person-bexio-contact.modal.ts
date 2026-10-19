@@ -31,8 +31,8 @@ type SyncStatus = 'in-sync' | 'update' | 'create' | 'bexio-only' | 'both-empty';
         <ion-row class="table-header"> <!-- header -->
           <ion-col size="3"><strong>{{ i18n.bexio_col_source() }}</strong></ion-col>
           <ion-col size="3"><strong>{{ effectiveType() }}</strong></ion-col>
-          <ion-col size="3"><strong>Membership</strong></ion-col>
-          <ion-col size="3"><strong>Bexio</strong></ion-col>
+          <ion-col size="3"><strong>{{ i18n.bexio_dialog_membership() }}</strong></ion-col>
+          <ion-col size="3"><strong>{{ i18n.bexio_dialog_bexio() }}</strong></ion-col>
         </ion-row>
         <ion-row> <!-- key -->
           <ion-col size="3" class="row-label">Key</ion-col>
@@ -152,7 +152,7 @@ export class PersonBexioContactModal {
   public tenantId = input.required<string>();
 
   // derived signals
-  protected effectiveType = computed(() => this.bexioIndex().type === 'person' ? 'Person' : 'Organisation');
+  protected effectiveType = computed(() => this.bexioIndex().type === 'person' ? this.i18n.bexio_dialog_person() : this.i18n.bexio_dialog_org());
   protected name = computed(() => getFullName(this.bexioIndex().name1, this.bexioIndex().name2));
   protected bx_name = computed(() => getFullName(this.bexioIndex().bx_name1, this.bexioIndex().bx_name2));
   protected street = computed(() => this.bexioIndex().streetName + ' ' + this.bexioIndex().streetNumber);

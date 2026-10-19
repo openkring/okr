@@ -283,7 +283,7 @@
     },
     "col": {
       "bexio_id": "Bexio ID",
-      "bk_bexio_id": "BK Bexio ID",
+      "bk_bexio_id": "Bexio-ID (App)",
       "source": "Quelle",
       "name": "Name",
       "category": "Kat"
@@ -296,7 +296,11 @@
       "update_bexio": "Kontakt in Bexio aktualisieren",
       "in_sync": "Die Daten stimmen überein.",
       "bexio_only": "Dieser Kontakt existiert nur in Bexio. Übernimm ihn nur, wenn es in der App sicher noch keine passende Person oder Organisation gibt.",
-      "both_empty": "Beide Seiten sind leer. Das sollte nicht vorkommen, bitte prüfe den Eintrag von Hand."
+      "both_empty": "Beide Seiten sind leer. Das sollte nicht vorkommen, bitte prüfe den Eintrag von Hand.",
+      "membership": "Mitgliedschaft",
+      "bexio": "Bexio",
+      "person": "Person",
+      "org": "Organisation"
     }
   }
 }
