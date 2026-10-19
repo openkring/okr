@@ -653,5 +653,13 @@
       "title": "Chat temporarily unavailable",
       "default": "The chat is currently under maintenance. It will be back soon."
     }
+  },
+  "checkDuplicates": {
+    "title": "Find duplicate events",
+    "explanation": "Looks for events that exist twice on the same day and time, and for series whose stored events do not match their own recurrence rule. The report changes nothing: which of two events is the right one depends on where the sign-ups are.",
+    "slot": "{count} events at the same time. Calendars: {calendars}. Series: {series}.",
+    "single": "Single event",
+    "count_mismatch": "The recurrence rule gives {expected} events, {actual} are stored.",
+    "stale_index": "{count} events carry a foreign date in the search index. Sign-ups may have been copied by mistake: {okeys}"
   }
 }

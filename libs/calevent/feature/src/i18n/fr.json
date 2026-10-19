@@ -653,5 +653,13 @@
       "title": "Chat temporairement indisponible",
       "default": "Le chat est en cours de maintenance. Il sera bientôt de retour."
     }
+  },
+  "checkDuplicates": {
+    "title": "Trouver les rendez-vous en double",
+    "explanation": "Recherche les rendez-vous présents deux fois le même jour à la même heure, et les séries dont les rendez-vous enregistrés ne correspondent pas à leur propre règle de répétition. Le rapport ne modifie rien : lequel des deux est le bon dépend de l'endroit où se trouvent les inscriptions.",
+    "slot": "{count} rendez-vous à la même heure. Calendriers : {calendars}. Séries : {series}.",
+    "single": "Rendez-vous unique",
+    "count_mismatch": "La règle de répétition donne {expected} rendez-vous, {actual} sont enregistrés.",
+    "stale_index": "{count} rendez-vous portent une date étrangère dans l'index de recherche. Des inscriptions ont peut-être été copiées par erreur : {okeys}"
   }
 }

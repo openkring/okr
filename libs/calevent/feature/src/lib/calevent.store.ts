@@ -12,7 +12,7 @@ import { from, firstValueFrom, map, of } from 'rxjs';
 import { FirestoreService, ChatStatusService } from '@okr/shared-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { Attendee, AvatarInfo, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CalEventModelName, CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
-import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getArchiveInclusiveQuery, getFullName, getSystemQuery, getTodayStr, fill, isCalendarPublic, isAfterDate, isAfterOrEqualDate, isInRollingWindow, nameMatches, pad, prettyFormatDate, publicAppOrigin, removeKeyFromOkrModel, warn, YEAR_ROLLING_WINDOW, chatBlockedAlertMessage, isChatBlockedError } from '@okr/shared-util-core';
+import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getArchiveInclusiveQuery, getFullName, getSystemQuery, getTodayStr, fill, isCalendarPublic, isAfterDate, isAfterOrEqualDate, isInRollingWindow, nameMatches, pad, prettyFormatDate, publicAppOrigin, removeKeyFromOkrModel, warn, YEAR_ROLLING_WINDOW, chatBlockedAlertMessage, isChatBlockedError, hasRole } from '@okr/shared-util-core';
 import { confirm, copyToClipboardDeferred, error, lazyService, navigateByUrl, notify, okrPrompt, showToast } from '@okr/shared-util-angular';
 import { InvitationService } from '@okr/relationship-invitation-data-access';
 import type { InvitePersonsFormData, InvitePersonsI18n } from '@okr/relationship-invitation-util';
@@ -26,9 +26,10 @@ import { LocationService } from '@okr/location-data-access';
 import { CalEventService } from '@okr/calevent-data-access';
 import { AliasMintService } from '@okr/system-alias-data-access';
 import { SeenService } from '@okr/user-data-access';
-import { addInvitedAttendee, applyInvitationAnswer, toAttendeeState, CALEVENT_I18N_KEYS, resetActivity, seenKeyFor, toSeenCounts, unseenActivity, findConflictingCalEvents, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, isAttendanceClosed, getSeriesUpdateFields, isCalEvent, isCaleventFull, isCaleventInView, isPersonalCalendarName, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
+import { addInvitedAttendee, applyInvitationAnswer, toAttendeeState, CALEVENT_I18N_KEYS, resetActivity, seenKeyFor, toSeenCounts, unseenActivity, findConflictingCalEvents, duplicateEventFindings, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, isAttendanceClosed, getSeriesUpdateFields, isCalEvent, isCaleventFull, isCaleventInView, isPersonalCalendarName, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
 import { RegressionSelectionModal, showCalEventInfo } from '@okr/calevent-ui';
 import { createComment } from '@okr/comment-util';
+import { openReport } from '@okr/shared-ui';
 
 /**
  * Der Alias-Space der Termin-Kurzlinks: ein `redirect`-Space mit `targetTypes: ['url']`
@@ -1435,6 +1436,30 @@ export const CalEventStore = signalStore(
       /** Opens the 'Kalender & Einladungen' explainer (info icon in the list header). */
       async showInfo(): Promise<void> {
         await showCalEventInfo(store.modalController, store.appStore.appConfig().appName);
+      },
+
+      /**
+       * Admin-only data check from the calendar context menu: events on the same slot, and series whose
+       * stored documents no longer match their recurrence rule. A report, never a fix: which of two
+       * colliding events is the real one depends on where the attendance sits, and no rule can decide that.
+       */
+      async checkDuplicates(): Promise<void> {
+        if (!hasRole('admin', store.appStore.currentUser())) return;
+        const events = await store.appStore.firestoreService.getDataOnce<CalEventModel>(
+          CalEventCollection, getSystemQuery(store.appStore.tenantId()), 'startDate', 'asc');
+        const findings = duplicateEventFindings(events, {
+          slot: store.i18n.check_duplicates_slot(),
+          single: store.i18n.check_duplicates_single(),
+          countMismatch: store.i18n.check_duplicates_count(),
+          staleIndex: store.i18n.check_duplicates_stale(),
+        });
+        await openReport(store.modalController, {
+          title: store.i18n.check_duplicates_title(),
+          kind: 'report',
+          explanation: store.i18n.check_duplicates_explanation(),
+          findings,
+          ranAt: new Date(),
+        });
       },
 
       async export(type: string): Promise<void> {

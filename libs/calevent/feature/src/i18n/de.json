@@ -653,5 +653,13 @@
       "title": "Chat vorübergehend nicht verfügbar",
       "default": "Der Chat wird gerade gewartet. Er ist bald wieder da."
     }
+  },
+  "checkDuplicates": {
+    "title": "Doppelte Termine suchen",
+    "explanation": "Sucht Termine, die am selben Tag zur selben Zeit doppelt vorhanden sind, und Serien, deren gespeicherte Termine nicht zur eigenen Wiederholungsregel passen. Der Bericht ändert nichts: Welcher von zwei Terminen der richtige ist, hängt davon ab, wo die Anmeldungen liegen.",
+    "slot": "{count} Termine zur selben Zeit. Kalender: {calendars}. Serien: {series}.",
+    "single": "Einzeltermin",
+    "count_mismatch": "Die Wiederholungsregel ergibt {expected} Termine, gespeichert sind {actual}.",
+    "stale_index": "{count} Termine tragen ein fremdes Datum im Suchindex. Möglicherweise wurden Anmeldungen falsch kopiert: {okeys}"
   }
 }

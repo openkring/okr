@@ -12,13 +12,13 @@ import { AddressCollection, AddressModel, OkrModel, CalEventCollection, CalEvent
   PersonModel, ReservationCollection, ReservationModel, SessionCollection, SessionModel, TaskCollection, TransferCollection, UserCollection,
   WorkrelCollection, TaskModel, ResourceModel, ResourceCollection, TransferModel, UserModel, WorkrelModel, GroupModel, CategoryModel,
   CategoryListModel, DbQuery, ResponsibilityModel, ResponsibilityCollection } from '@okr/shared-models';
-import { getCategoryIndex, getFullName, getSystemQuery, prettyFormatDate } from '@okr/shared-util-core';
+import { getCategoryIndex, getFullName, getSystemQuery } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { AOC_I18N_KEYS } from '@okr/aoc-util';
 
 import { addressValidations, computeFavoriteAddressInfo, getAddressIndex } from '@okr/subject-address-util';
 import { commentValidations, getCommentIndex } from '@okr/comment-util';
-import { auditCalEventSeries, calEventValidations, findDuplicateCalEvents, getCaleventIndex } from '@okr/calevent-util';
+import { calEventValidations, getCaleventIndex } from '@okr/calevent-util';
 import { documentValidations, getDocumentIndex } from '@okr/content-document-util';
 import { getLocationIndex, locationValidations } from '@okr/location-util';
 import { getMembershipIndex, membershipValidations } from '@okr/relationship-membership-util';
@@ -398,48 +398,6 @@ export const AocDataStore = signalStore(
        *   surface archived documents (the admin address list's archived toggle) — otherwise they
        *   keep a stale index forever and silently drop out of every search.
        */
-      /**
-       * Reports events that occupy the same slot, and series whose stored documents no longer match
-       * their own recurrence rule.
-       *
-       * A REPORT, never a fix. Which of two colliding events is the real one depends on where the
-       * attendance sits, and no rule can decide that — on 2026-06-10 the survivor was the THIRD
-       * attempt, not the first. Merging automatically would destroy the answer.
-       *
-       * The three checks, and what each one caught in the incident that motivated them:
-       * - duplicate slots — three '4X-Dienstag' series on the same Tuesdays;
-       * - countMismatch  — a series holding 13 occurrences while its rule described 101;
-       * - staleIndex     — occurrences carrying the series' first date, the fingerprint of a
-       *   whole-model spread that also copies `attendees` across the whole series.
-       */
-      async findDuplicateEvents(): Promise<void> {
-        const log: LogInfo[] = [];
-        const events = await store.appStore.firestoreService.getDataOnce<CalEventModel>(
-          CalEventCollection, getSystemQuery(store.appStore.tenantId()), 'startDate', 'asc');
-
-        for (const dup of findDuplicateCalEvents(events)) {
-          const where = dup.calendars.length > 0 ? dup.calendars.join(', ') : '—';
-          log.push({
-            id: dup.events.map(e => e.okey).join(' / '),
-            name: `${prettyFormatDate(dup.startDate)} ${dup.startTime} ${dup.name}`,
-            message: `${dup.events.length} Termine auf demselben Slot, Kalender: ${where}, Serien: ${dup.seriesIds.map(s => s || '(Einzeltermin)').join(', ')}`
-          });
-        }
-
-        for (const issue of auditCalEventSeries(events)) {
-          log.push({
-            id: issue.seriesId,
-            name: `${issue.name} (${prettyFormatDate(issue.firstDate)} – ${prettyFormatDate(issue.lastDate)})`,
-            message: issue.kind === 'countMismatch'
-              ? `Die Serienregel beschreibt ${issue.expected} Termine, gespeichert sind ${issue.actual}.`
-              : `${issue.okeys.length} Termine tragen ein fremdes Datum im Suchindex — moegliche falsch kopierte Teilnahmen: ${issue.okeys.join(', ')}`
-          });
-        }
-
-        if (log.length === 0) log.push({ id: '', name: '', message: store.i18n.hygiene_events_clean() });
-        patchState(store, { log, logTitle: store.i18n.hygiene_events_title() });
-      },
-
       /**
        * Reports groups that are the same group twice, and group keys that cannot safely carry the
        * ids derived from them.

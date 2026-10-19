@@ -978,12 +978,6 @@
     }
   },
   "hygiene": {
-    "events": {
-      "title": "Doppelte Termine finden",
-      "content": "Sucht Termine, die am selben Tag zur selben Zeit doppelt vorhanden sind, und Serien, deren gespeicherte Termine nicht mehr zu ihrer eigenen Wiederholungsregel passen. Der Bericht aendert nichts — welcher von zwei Terminen der richtige ist, haengt davon ab, wo die Anmeldungen liegen.",
-      "button": "Termine pruefen",
-      "clean": "Keine doppelten Termine und keine unvollstaendigen Serien gefunden."
-    },
     "groups": {
       "title": "Gruppen pruefen",
       "content": "Sucht Gruppen, die es doppelt gibt, und Gruppen-IDs, die abgeleitete Ordner-, Seiten- und Chat-Namen nicht sauber tragen koennen. Auch dieser Bericht aendert nichts: eine Gruppen-ID laesst sich nicht gefahrlos umbenennen.",

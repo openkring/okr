@@ -978,12 +978,6 @@
     }
   },
   "hygiene": {
-    "events": {
-      "title": "Buscar citas duplicadas",
-      "content": "Busca citas que existen dos veces el mismo día y a la misma hora, y series cuyas citas guardadas ya no coinciden con su propia regla de repetición. El informe no cambia nada: cuál de las dos es la correcta depende de dónde estén las inscripciones.",
-      "button": "Comprobar citas",
-      "clean": "No se han encontrado citas duplicadas ni series incompletas."
-    },
     "groups": {
       "title": "Comprobar grupos",
       "content": "Busca grupos que existen dos veces e identificadores de grupo que no pueden llevar limpiamente los nombres de carpeta, página y chat derivados de ellos. Este informe tampoco cambia nada: un identificador de grupo no se puede renombrar sin riesgo.",

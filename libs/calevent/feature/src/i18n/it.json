@@ -653,5 +653,13 @@
       "title": "Chat temporaneamente non disponibile",
       "default": "La chat è in manutenzione. Tornerà presto."
     }
+  },
+  "checkDuplicates": {
+    "title": "Trovare appuntamenti doppi",
+    "explanation": "Cerca appuntamenti presenti due volte nello stesso giorno e alla stessa ora e serie i cui appuntamenti memorizzati non corrispondono alla propria regola di ripetizione. Il rapporto non modifica nulla: quale dei due sia quello giusto dipende da dove si trovano le iscrizioni.",
+    "slot": "{count} appuntamenti alla stessa ora. Calendari: {calendars}. Serie: {series}.",
+    "single": "Appuntamento singolo",
+    "count_mismatch": "La regola di ripetizione dà {expected} appuntamenti, ne risultano {actual} memorizzati.",
+    "stale_index": "{count} appuntamenti riportano una data estranea nell'indice di ricerca. Forse alcune iscrizioni sono state copiate per errore: {okeys}"
   }
 }

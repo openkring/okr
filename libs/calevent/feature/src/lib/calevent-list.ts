@@ -473,7 +473,11 @@ export class CalEventList implements OnInit {
       .map(c => ({ key: c.okey, title: c.title || c.name }));
   });
   /** Schedule polls only exist in group calendars — hide the entry everywhere else (e.g. /calevent/all). */
-  protected excludedMenuNames = computed(() => this.store.isGroupCalendar() ? [] : ['calevent-schedule']);
+  protected excludedMenuNames = computed(() => {
+    const names = this.store.isGroupCalendar() ? [] : ['calevent-schedule'];
+    // the maintenance rows are admin-only; a group admin (forceVisible) must not see them
+    return this.hasRole('admin') ? names : [...names, 'maint-divider', 'calevent-check-duplicates'];
+  });
   private readonly firstFutureIndex = computed(() => {
     const today = format(new Date(), 'yyyyMMdd');
     return this.sortedCalEvents().findIndex(e => e.startDate >= today);
@@ -945,6 +949,7 @@ export class CalEventList implements OnInit {
       case 'schedule':
         if (this.store.schedule()) await this.openSchedulePoll('');   // schedule() = the group-calendar guard
         break;
+      case 'checkDuplicates': await this.store.checkDuplicates(); break;
       case 'toggleFilter': this.showFilter.update(v => !v); break;
       case 'toggleArchived': this.store.toggleShowArchived(); break;
       default: error(undefined, `CalEventList.onPopoverDismiss: unknown method ${selectedMethod}`);

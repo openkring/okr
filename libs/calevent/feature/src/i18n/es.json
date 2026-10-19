@@ -653,5 +653,13 @@
       "title": "Chat no disponible temporalmente",
       "default": "El chat está en mantenimiento. Volverá pronto."
     }
+  },
+  "checkDuplicates": {
+    "title": "Buscar citas duplicadas",
+    "explanation": "Busca citas que existen dos veces el mismo día y a la misma hora, y series cuyas citas guardadas no coinciden con su propia regla de repetición. El informe no cambia nada: cuál de las dos es la correcta depende de dónde estén las inscripciones.",
+    "slot": "{count} citas a la misma hora. Calendarios: {calendars}. Series: {series}.",
+    "single": "Cita única",
+    "count_mismatch": "La regla de repetición da {expected} citas, hay {actual} guardadas.",
+    "stale_index": "{count} citas llevan una fecha ajena en el índice de búsqueda. Puede que se hayan copiado inscripciones por error: {okeys}"
   }
 }

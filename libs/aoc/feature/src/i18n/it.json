@@ -978,12 +978,6 @@
     }
   },
   "hygiene": {
-    "events": {
-      "title": "Trovare appuntamenti doppi",
-      "content": "Cerca appuntamenti presenti due volte nello stesso giorno e alla stessa ora e serie i cui appuntamenti memorizzati non corrispondono più alla propria regola di ripetizione. Il rapporto non modifica nulla: quale dei due sia quello giusto dipende da dove si trovano le iscrizioni.",
-      "button": "Controllare gli appuntamenti",
-      "clean": "Nessun appuntamento doppio e nessuna serie incompleta."
-    },
     "groups": {
       "title": "Controllare i gruppi",
       "content": "Cerca gruppi presenti due volte e identificatori di gruppo che non possono portare correttamente i nomi di cartella, pagina e chat da essi derivati. Anche questo rapporto non modifica nulla: un identificatore di gruppo non può essere rinominato senza rischi.",

@@ -418,6 +418,14 @@ export const CALEVENT_I18N_KEYS = {
   // 1.107 chat maintenance block
   chat_blocked_title:   PFX + 'chat.blocked.title',
   chat_blocked_default: PFX + 'chat.blocked.default',
+
+  // «Doppelte Termine suchen» (calendar context menu); texts use single-brace params
+  check_duplicates_title:        PFX + 'checkDuplicates.title',
+  check_duplicates_explanation:  PFX + 'checkDuplicates.explanation',
+  check_duplicates_slot:         PFX + 'checkDuplicates.slot',
+  check_duplicates_single:       PFX + 'checkDuplicates.single',
+  check_duplicates_count:        PFX + 'checkDuplicates.count_mismatch',
+  check_duplicates_stale:        PFX + 'checkDuplicates.stale_index',
 } satisfies Record<string, string>;
 
 export type CaleventI18n = { [K in keyof typeof CALEVENT_I18N_KEYS]: Signal<string> };
