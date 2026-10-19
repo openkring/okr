@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, signal } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { ModalController, ToastController } from '@ionic/angular';
@@ -13,11 +13,11 @@ import { I18nService } from '@okr/shared-i18n';
 import { ExportFormat, MembershipCollection, MembershipModel, PersonCollection, PersonModel, RoleName, UserModel } from '@okr/shared-models';
 import { AUTH } from '@okr/shared-config';
 import { AppNavigationService, exportCsv, showToast } from '@okr/shared-util-angular';
-import { chipMatches, DateFormat, debugItemLoaded, debugListLoaded, generateRandomString, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isUser, nameMatches, OPERATOR_TENANT_ID } from '@okr/shared-util-core';
+import { DateFormat, debugItemLoaded, debugListLoaded, generateRandomString, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isUser, OPERATOR_TENANT_ID } from '@okr/shared-util-core';
 import { ExportFormats } from '@okr/shared-categories';
 
 import { UserService } from '@okr/user-data-access';
-import { buildUserAccountRows, filterUserAccountRows, USER_I18N_KEYS, UserAccountRow, UserI18n } from '@okr/user-util';
+import { buildUserAccountRows, filterUserAccountRows, searchUserAccountRows, USER_I18N_KEYS, UserAccountRow, UserI18n } from '@okr/user-util';
 
 export type { UserI18n };
 
@@ -64,16 +64,26 @@ export const UserStore = signalStore(
     i18n: store.i18nService.translateAll(USER_I18N_KEYS),
   })),
   withProps((store) => ({
-    // a failed read must never look like «nobody»: say so, keep the list empty (phase 2/3 pattern)
-    loadFailed: (what: string, ex: unknown): void => {
+    /** which sources failed to load; a failed source must never fake «nobody» or fake problems */
+    failed: signal<{ users: boolean; logins: boolean; members: boolean }>({ users: false, logins: false, members: false }),
+  })),
+  withProps((store) => ({
+    // say it once (one toast for all failing sources), keep the list empty (phase 2/3 pattern)
+    loadFailed: (what: 'users' | 'logins' | 'members', ex: unknown): void => {
       console.error(`UserStore: reading ${what} failed`, ex);
-      void showToast(store.toastController, store.i18n.read_error());
+      const first = !Object.values(store.failed()).some(Boolean);
+      store.failed.update(f => ({ ...f, [what]: true }));
+      if (first) void showToast(store.toastController, store.i18n.read_error());
+    },
+    loadStarted: (what: 'users' | 'logins' | 'members'): void => {
+      store.failed.update(f => ({ ...f, [what]: false }));
     },
   })),
   withProps((store) => ({
     usersResource: rxResource({
       params: () => store.fbUser(),   // reload on login/logout
       stream: () => {
+        store.loadStarted('users');
         const fn = httpsCallable<void, { users: UserModel[] }>(getFunctions(getApp(), 'europe-west6'), 'listBkUsers');
         return from(fn().then(result => result.data.users).catch((ex: unknown) => { store.loadFailed('users', ex); return [] as UserModel[]; }));
       }
@@ -83,6 +93,7 @@ export const UserStore = signalStore(
     firebaseUsersResource: rxResource({
       params: () => store.fbUser(),
       stream: () => {
+        store.loadStarted('logins');
         const fn = httpsCallable<void, { users: FirebaseLogin[] }>(getFunctions(getApp(), 'europe-west6'), 'listFirebaseUsers');
         return from(fn().then(result => result.data.users).catch((ex: unknown) => { store.loadFailed('logins', ex); return [] as FirebaseLogin[]; }));
       }
@@ -90,11 +101,13 @@ export const UserStore = signalStore(
 
     // the active members of the tenant's default org (same query as the former AOC account page)
     activeMembersResource: rxResource({
-      params: () => ({ currentUser: store.appStore.currentUser(), defaultOrg: store.appStore.defaultOrg() }),
+      params: () => ({ orgKey: store.appStore.defaultOrg()?.okey, uid: store.appStore.currentUser()?.okey }),
       stream: ({ params }) => {
-        const orgKey = params.defaultOrg?.okey;
+        store.loadStarted('members');
+        const orgKey = params.orgKey;
+        const currentUser = store.appStore.currentUser();
         if (!orgKey) return store.firestoreService.searchData<MembershipModel>(MembershipCollection, [], 'memberName2', 'asc').pipe(
-          debugListLoaded('UserStore.activeMembers (no org)', params.currentUser),
+          debugListLoaded('UserStore.activeMembers (no org)', currentUser),
           catchError((ex: unknown) => { store.loadFailed('members', ex); return of([] as MembershipModel[]); })
         );
         const query = getSystemQuery(store.appStore.tenantId());
@@ -103,7 +116,7 @@ export const UserStore = signalStore(
         query.push({ key: 'memberModelType', operator: '==', value: 'person' });
         query.push({ key: 'relIsLast', operator: '==', value: true });
         return store.firestoreService.searchData<MembershipModel>(MembershipCollection, query, 'memberName2', 'asc').pipe(
-          debugListLoaded('UserStore.activeMembers', params.currentUser),
+          debugListLoaded('UserStore.activeMembers', currentUser),
           catchError((ex: unknown) => { store.loadFailed('members', ex); return of([] as MembershipModel[]); })
         );
       },
@@ -124,8 +137,9 @@ export const UserStore = signalStore(
 
   withComputed((store) => {
     return {
-      users: computed(() => store.usersResource.value()),
-      usersCount: computed(() => store.usersResource.value()?.length ?? 0),
+      // listBkUsers hands the operator every tenant's users: the list, the count and the export stay on the own tenant
+      users: computed(() => (store.usersResource.value() ?? []).filter(u => u.tenants?.includes(store.appStore.tenantId()))),
+      usersCount: computed(() => (store.usersResource.value() ?? []).filter(u => u.tenants?.includes(store.appStore.tenantId())).length),
       user: computed(() => store.userResource.value() ?? new UserModel(store.appStore.tenantId())),
       currentUser: computed(() => store.appStore.currentUser()),
       tenantId: computed(() => store.appStore.tenantId()),
@@ -135,7 +149,7 @@ export const UserStore = signalStore(
         const today = getTodayStr(DateFormat.StoreDate);
         return (store.activeMembersResource.value() ?? []).filter(m => isAfterDate(m.dateOfExit, today));
       }),
-      isLoading: computed(() => store.usersResource.isLoading() || store.firebaseUsersResource.isLoading() || store.activeMembersResource.isLoading()),
+      isLoading: computed(() => store.fbUser() === undefined || store.usersResource.isLoading() || store.firebaseUsersResource.isLoading() || store.activeMembersResource.isLoading()),
     };
   }),
 
@@ -148,6 +162,7 @@ export const UserStore = signalStore(
         store.activeMembers().map(m => ({ personKey: m.memberKey, name: getFullName(m.memberName1, m.memberName2) })),
         store.appStore.tenantId(),
         store.isOperator(),
+        !Object.values(store.failed()).some(Boolean),
       )),
     };
   }),
@@ -158,12 +173,10 @@ export const UserStore = signalStore(
       filteredRows: computed((): UserAccountRow[] => {
         const term = store.searchTerm();
         const tag = store.selectedTag();
-        return filterUserAccountRows(store.accountRows(), {
+        return searchUserAccountRows(filterUserAccountRows(store.accountRows(), {
           problems: store.problems(),
           extendedRole: store.extendedRolesOn() ? store.extendedRole() : undefined,
-        }).filter(r =>
-          nameMatches((r.user?.index ?? '') + ' ' + r.name + ' ' + (r.loginEmail ?? '') + ' ' + (r.loginId ?? ''), term) &&
-          chipMatches(r.user?.tags ?? '', tag));
+        }), term, tag);
       }),
       problemCount: computed(() => filterUserAccountRows(store.accountRows(), { problems: true }).length),
     };

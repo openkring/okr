@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { UserModel } from '@okr/shared-models';
 
-import { buildUserAccountRows, filterUserAccountRows, UserAccountRow } from './user-account-rows.util';
+import { buildUserAccountRows, filterUserAccountRows, searchUserAccountRows, UserAccountRow } from './user-account-rows.util';
 
 function user(okey: string, tenant: string, extra: Partial<UserModel> = {}): UserModel {
   const u = new UserModel(tenant);
@@ -62,6 +62,37 @@ describe('buildUserAccountRows', () => {
   });
 });
 
+describe('buildUserAccountRows with incomplete sources', () => {
+  it('produces no problem rows when a source failed, but keeps the normal rows', () => {
+    const users = [user('u1', 'scs'), user('u2', 'scs')];
+    const rows = buildUserAccountRows(users, [{ uid: 'u1' }, { uid: 'ghost' }], [{ personKey: 'p-9', name: 'B' }], 'bka', true, false);
+    expect(rows.map(r => r.kind)).toEqual([]);   // u1 is of tenant scs, not bka
+    const own = buildUserAccountRows(users, [{ uid: 'u1' }, { uid: 'ghost' }], [{ personKey: 'p-9', name: 'B' }], 'scs', true, false);
+    expect(own.map(r => r.kind)).toEqual(['normal']);
+    expect(own[0].uid).toBe('u1');
+  });
+
+  it('with failed users no member is reported as without account', () => {
+    expect(buildUserAccountRows([], [{ uid: 'u1' }], [{ personKey: 'p-1', name: 'A' }], 'scs', false, false)).toEqual([]);
+  });
+
+  it('dedupes a member whose person has a user in another tenant', () => {
+    const rows = buildUserAccountRows([user('u3', 'other')], [], [{ personKey: 'p-u3', name: 'C' }], 'scs', true);
+    expect(rows).toEqual([]);
+  });
+});
+
+describe('searchUserAccountRows', () => {
+  const a: UserAccountRow = { kind: 'normal', name: 'Anna Muster', loginEmail: 'anna@x.ch', roles: [], user: Object.assign(new UserModel('scs'), { index: 'anna muster', tags: 'vorstand,kasse' }) };
+  const b: UserAccountRow = { kind: 'memberWithoutAccount', name: 'Berta Beispiel', roles: [] };
+  it('matches name/email and tag; rows without a user have no tags', () => {
+    expect(searchUserAccountRows([a, b], 'berta', '')).toEqual([b]);
+    expect(searchUserAccountRows([a, b], 'anna@x', '')).toEqual([a]);
+    expect(searchUserAccountRows([a, b], '', 'vorstand')).toEqual([a]);
+    expect(searchUserAccountRows([a, b], '', '')).toEqual([a, b]);
+  });
+});
+
 describe('filterUserAccountRows', () => {
   const row = (kind: UserAccountRow['kind'], roles: UserAccountRow['roles'] = []): UserAccountRow => ({ kind, name: kind, roles });
   const rows = [
@@ -86,5 +117,11 @@ describe('filterUserAccountRows', () => {
     const out = filterUserAccountRows(rows, { problems: false, extendedRole: 'treasurer' });
     expect(out).toHaveLength(1);
     expect(out[0].roles).toContain('treasurer');
+  });
+
+  it('problems and extendedRole together intersect', () => {
+    const withRole = { ...row('userWithoutLogin', ['treasurer']) };
+    const out = filterUserAccountRows([...rows, withRole], { problems: true, extendedRole: 'treasurer' });
+    expect(out).toEqual([withRole]);
   });
 });

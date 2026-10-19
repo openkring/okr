@@ -52,10 +52,10 @@ import { UserStore } from './user.store';
 
     <!-- chips: Probleme, Erweiterte Rollen (+ role select) -->
     <ion-toolbar>
-      <ion-chip [outline]="!problems()" [color]="problems() ? 'warning' : 'medium'" (click)="store.setProblems(!problems())">
+      <ion-chip [outline]="!problems()" [color]="problems() ? 'warning' : 'medium'" (click)="store.setProblems(!problems())" role="button" tabindex="0" (keydown.enter)="store.setProblems(!problems())">
         <ion-label>{{ store.i18n.filter_problems() }} ({{ problemCount() }})</ion-label>
       </ion-chip>
-      <ion-chip [outline]="!extendedRolesOn()" [color]="extendedRolesOn() ? 'primary' : 'medium'" (click)="store.setExtendedRolesOn(!extendedRolesOn())">
+      <ion-chip [outline]="!extendedRolesOn()" [color]="extendedRolesOn() ? 'primary' : 'medium'" (click)="store.setExtendedRolesOn(!extendedRolesOn())" role="button" tabindex="0" (keydown.enter)="store.setExtendedRolesOn(!extendedRolesOn())">
         <ion-label>{{ store.i18n.filter_extended_roles() }}</ion-label>
       </ion-chip>
       @if(extendedRolesOn()) {

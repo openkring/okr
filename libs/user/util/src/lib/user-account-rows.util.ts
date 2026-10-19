@@ -1,5 +1,5 @@
 import { RoleName, UserModel } from '@okr/shared-models';
-import { getFullName } from '@okr/shared-util-core';
+import { chipMatches, getFullName, nameMatches } from '@okr/shared-util-core';
 
 export type UserAccountKind = 'normal' | 'loginWithoutUser' | 'userWithoutLogin' | 'memberWithoutAccount';
 
@@ -25,6 +25,8 @@ function rolesOf(user: UserModel): RoleName[] {
  * - login without a user doc -> loginWithoutUser (operator only; the server returns it to nobody else)
  * - user without a login -> userWithoutLogin
  * - active member whose person has no user -> memberWithoutAccount
+ * With `sourcesComplete` false (a read failed) no problem kind is produced: a missing source would
+ * otherwise turn every member/user into a fake problem.
  */
 export function buildUserAccountRows(
   users: UserModel[],
@@ -32,6 +34,7 @@ export function buildUserAccountRows(
   activeMembers: { personKey: string; name: string }[],
   tenantId: string,
   isOperator: boolean,
+  sourcesComplete = true,
 ): UserAccountRow[] {
   const userByUid = new Map(users.map(u => [u.okey, u]));
   const rows: UserAccountRow[] = [];
@@ -67,7 +70,7 @@ export function buildUserAccountRows(
     if (accountedPersonKeys.has(member.personKey)) continue;
     rows.push({ kind: 'memberWithoutAccount', personKey: member.personKey, name: member.name, roles: [] });
   }
-  return rows;
+  return sourcesComplete ? rows : rows.filter(r => r.kind === 'normal');
 }
 
 /** normal rows by default; the three problem kinds with `problems`; `extendedRole` narrows by role. */
@@ -79,4 +82,11 @@ export function filterUserAccountRows(
   const role = opts.extendedRole;
   if (!role) return byKind;
   return byKind.filter(r => role === 'any' ? r.roles.some(x => x !== 'registered') : r.roles.includes(role));
+}
+
+/** Search term (name, email, Benutzername, user index) and tag; rows without a user doc carry no tags. */
+export function searchUserAccountRows(rows: UserAccountRow[], term: string, tag: string): UserAccountRow[] {
+  return rows.filter(r =>
+    nameMatches((r.user?.index ?? '') + ' ' + r.name + ' ' + (r.loginEmail ?? '') + ' ' + (r.loginId ?? ''), term) &&
+    chipMatches(r.user?.tags ?? '', tag));
 }
