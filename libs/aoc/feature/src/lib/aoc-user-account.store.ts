@@ -11,7 +11,7 @@ import { Router } from '@angular/router';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { MembershipCollection, MembershipModel, UserModel } from '@okr/shared-models';
-import { DateFormat, debugListLoaded, fill, getAge, getFullName, getSystemQuery, getTodayStr, isAfterDate } from '@okr/shared-util-core';
+import { DateFormat, debugListLoaded, fill, getAge, getFullName, getSystemQuery, getTodayStr, isAfterDate, OPERATOR_TENANT_ID } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { AUTH } from '@okr/shared-config';
 import { confirm, error, navigateByUrl, notify, showToast } from '@okr/shared-util-angular';
@@ -21,7 +21,7 @@ import { UserService } from '@okr/user-data-access';
 import { PersonService } from '@okr/subject-person-data-access';
 import { PersonEditModal } from '@okr/subject-person-feature';
 import { findLoginEmailHolder, isMinorAge, AOC_I18N_KEYS } from '@okr/aoc-util';
-import { isSyntheticLoginEmail, isValidLoginId, normalizeLoginIdInput } from '@okr/user-util';
+import { buildUserAccountRows, isSyntheticLoginEmail, isValidLoginId, normalizeLoginIdInput } from '@okr/user-util';
 
 export type FirebaseAuthUser = {
   uid: string;
@@ -145,99 +145,34 @@ export const AocUserAccountStore = signalStore(
   withComputed(state => {
     return {
       userAccounts: computed((): UserAccount[] => {
-        const firebaseUsers = state.firebaseUsers();
-        const allUsers      = state.allUsers();
         const activeMembers = state.activeMembers();
-
-        // Fast lookup maps
-        const userByUid      = new Map(allUsers.map(u => [u.okey, u]));
         const memberByPerson = new Map(activeMembers.map(m => [m.memberKey, m]));
-
-        const result: UserAccount[] = [];
-        const seenUids = new Set<string>();
-
-        // 1. Firebase Auth users (source of truth for accounts)
-        for (const fbUser of firebaseUsers) {
-          seenUids.add(fbUser.uid);
-          const user       = userByUid.get(fbUser.uid);
-          const loginEmail = user?.loginEmail ?? fbUser.email ?? '';
-          if (!user) {
-            result.push({
-              uid:                fbUser.uid,
-              loginEmail,
-              loginId:            '',
-              firstName:          '',
-              lastName:           '',
-              personKey:          '',
-              hasFirebaseAccount: true,
-              hasBkAccount:       false,
-              hasMembership:      false,
-              index:              loginEmail.toLocaleLowerCase()
-              });
-          } else {
-            // found a user -> ignore users of other tenants
-            if (!user.tenants.includes(state.appStore.tenantId())) continue;
-            const membership = user ? memberByPerson.get(user.personKey) : undefined;
-            const firstName = user?.firstName  ?? membership?.memberName1 ?? '';
-            const lastName = user?.lastName   ?? membership?.memberName2 ?? '';
-            const loginId = user?.loginId ?? '';
-            result.push({
-              uid:                fbUser.uid,
-              loginEmail,
-              loginId,
-              firstName,
-              lastName,
-              personKey:          user?.personKey  ?? '',
-              hasFirebaseAccount: true,
-              hasBkAccount:       !!user,
-              hasMembership:      !!membership,
-              index:              (loginEmail + ' ' + loginId + ' ' + firstName + ' ' + lastName).toLocaleLowerCase()
-            });
-          }
-        }
-
-        // 2. BK users without a Firebase Auth account
-        for (const user of allUsers) {
-          // ignore users of other tenants
-          if (!user.tenants.includes(state.appStore.tenantId())) continue;
-          if (seenUids.has(user.okey)) continue;
-          seenUids.add(user.okey);
-          const membership = memberByPerson.get(user.personKey);
-          result.push({
-            uid:                user.okey,
-            loginEmail:         user.loginEmail,
-            loginId:            user.loginId ?? '',
-            firstName:          user.firstName,
-            lastName:           user.lastName,
-            personKey:          user.personKey,
-            hasFirebaseAccount: false,
-            hasBkAccount:       true,
-            hasMembership:      !!membership,
-            index:              (user.loginEmail + ' ' + (user.loginId ?? '') + ' ' + user.firstName + ' ' + user.lastName).toLocaleLowerCase()
-          });
-        }
-
-        // 3. Active members without any account at all
-        const accountedPersonKeys = new Set(allUsers.map(u => u.personKey).filter(Boolean));
-        console.log('accountedPersonKeys: ', accountedPersonKeys);
-        console.log(activeMembers.length + ' active members');
-        for (const membership of activeMembers) {
-          if (accountedPersonKeys.has(membership.memberKey)) continue;
-          result.push({
-            uid:                '',
-            loginEmail:         '',
-            loginId:            '',
-            firstName:          membership.memberName1,
-            lastName:           membership.memberName2,
-            personKey:          membership.memberKey,
-            hasFirebaseAccount: false,
-            hasBkAccount:       false,
-            hasMembership:      true,
-            index:              (membership.memberName1 + ' ' + membership.memberName2).toLocaleLowerCase()
-          });
-        }
-
-        return result;
+        const rows = buildUserAccountRows(
+          state.allUsers(),
+          state.firebaseUsers().map(f => ({ uid: f.uid, email: f.email })),
+          activeMembers.map(m => ({ personKey: m.memberKey, name: getFullName(m.memberName1, m.memberName2) })),
+          state.appStore.tenantId(),
+          state.appStore.tenantId() === OPERATOR_TENANT_ID,
+        );
+        return rows.map((row): UserAccount => {
+          const membership = row.personKey ? memberByPerson.get(row.personKey) : undefined;
+          const firstName = row.user?.firstName ?? membership?.memberName1 ?? '';
+          const lastName = row.user?.lastName ?? membership?.memberName2 ?? '';
+          const loginEmail = row.loginEmail ?? '';
+          const loginId = row.loginId ?? '';
+          return {
+            uid: row.uid ?? '',
+            loginEmail,
+            loginId,
+            firstName,
+            lastName,
+            personKey: row.personKey ?? '',
+            hasFirebaseAccount: row.kind === 'normal' || row.kind === 'loginWithoutUser',
+            hasBkAccount: row.kind === 'normal' || row.kind === 'userWithoutLogin',
+            hasMembership: !!membership,
+            index: (row.kind === 'memberWithoutAccount' ? firstName + ' ' + lastName : loginEmail + ' ' + loginId + ' ' + firstName + ' ' + lastName).toLocaleLowerCase(),
+          };
+        });
       }),
     };
   }),

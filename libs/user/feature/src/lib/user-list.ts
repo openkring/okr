@@ -1,12 +1,14 @@
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
+import { ActionSheetController, ActionSheetOptions, IonBadge, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonSelect, IonSelectOption, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { RoleName, UserModel } from '@okr/shared-models';
-import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
+import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { hasRole } from '@okr/shared-util-core';
+
+import { UserAccountKind, UserAccountRow } from '@okr/user-util';
 
 import { UserStore } from './user.store';
 
@@ -14,10 +16,10 @@ import { UserStore } from './user.store';
     selector: 'okr-user-list',
     standalone: true,
     imports: [
-      SvgIconPipe, FullNamePipe,
+      SvgIconPipe,
       Spinner, EmptyList, ListFilter, Menu,
       IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
-      IonLabel, IonContent, IonItem, IonList, IonPopover
+      IonLabel, IonContent, IonItem, IonList, IonPopover, IonChip, IonBadge, IonSelect, IonSelectOption
     ],
     providers: [UserStore],
     template: `
@@ -25,7 +27,7 @@ import { UserStore } from './user.store';
       <!-- title and context menu -->
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ selectedUsersCount()}}/{{usersCount()}} {{ store.i18n.users() }}</ion-title>
+        <ion-title>{{ selectedUsersCount()}}/{{usersCount()}} {{ store.i18n.title() }}</ion-title>
         @if(hasRole('privileged')) {
           <ion-buttons slot="end">
             <ion-button id="{{ popupId() }}">
@@ -48,6 +50,25 @@ import { UserStore } from './user.store';
       (tagChanged)="onTagSelected($event)" [tags]="tags()"
      />
 
+    <!-- chips: Probleme, Erweiterte Rollen (+ role select) -->
+    <ion-toolbar>
+      <ion-chip [outline]="!problems()" [color]="problems() ? 'warning' : 'medium'" (click)="store.setProblems(!problems())">
+        <ion-label>{{ store.i18n.filter_problems() }} ({{ problemCount() }})</ion-label>
+      </ion-chip>
+      <ion-chip [outline]="!extendedRolesOn()" [color]="extendedRolesOn() ? 'primary' : 'medium'" (click)="store.setExtendedRolesOn(!extendedRolesOn())">
+        <ion-label>{{ store.i18n.filter_extended_roles() }}</ion-label>
+      </ion-chip>
+      @if(extendedRolesOn()) {
+        <ion-select aria-label="{{ store.i18n.filter_extended_roles() }}" interface="popover" [value]="extendedRole()"
+          (ionChange)="store.setExtendedRole($event.detail.value)">
+          <ion-select-option value="any">{{ store.i18n.filter_role_all() }}</ion-select-option>
+          @for(role of roleOptions(); track role) {
+            <ion-select-option [value]="role">{{ role }}</ion-select-option>
+          }
+        </ion-select>
+      }
+    </ion-toolbar>
+
     <!-- list header -->
     <ion-toolbar color="primary">
       <ion-item lines="none" color="primary">
@@ -62,14 +83,17 @@ import { UserStore } from './user.store';
     @if(isLoading()) {
       <okr-spinner />
     } @else {
-      @if(filteredUsers().length === 0) {
+      @if(filteredRows().length === 0) {
         <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
-          @for(user of filteredUsers(); track user.okey) {
-              <ion-item (click)="showActions(user)">
-                <ion-label>{{user.loginEmail}}</ion-label>      
-                <ion-label>{{user.firstName | fullName:user.lastName}}</ion-label>      
+          @for(row of filteredRows(); track trackKey(row)) {
+              <ion-item (click)="showActions(row)">
+                <ion-label>{{ row.loginEmail }}</ion-label>
+                <ion-label>{{ row.name }}</ion-label>
+                @if(kindLabel(row.kind); as label) {
+                  <ion-badge slot="end" color="warning">{{ label }}</ion-badge>
+                }
               </ion-item>
           }
         </ion-list>
@@ -89,9 +113,14 @@ export class UserList {
   // derived signals
   protected searchTerm = linkedSignal(() => this.store.searchTerm());
   protected selectedTag = linkedSignal(() => this.store.selectedTag());
-  protected filteredUsers = computed(() => this.store.filteredUsers() ?? []);
-  protected usersCount = computed(() => this.store.usersCount());
-  protected selectedUsersCount = computed(() => this.filteredUsers().length);
+  protected filteredRows = computed(() => this.store.filteredRows());
+  protected usersCount = computed(() => this.store.accountRows().filter(r => r.kind === 'normal').length);
+  protected selectedUsersCount = computed(() => this.filteredRows().length);
+  protected problems = computed(() => this.store.problems());
+  protected problemCount = computed(() => this.store.problemCount());
+  protected extendedRolesOn = computed(() => this.store.extendedRolesOn());
+  protected extendedRole = computed(() => this.store.extendedRole());
+  protected roleOptions = computed(() => this.store.extendedRoleOptions());
   protected isLoading = computed(() => this.store.isLoading());
   protected tags = computed(() => this.store.getTags());
   protected popupId = computed(() => `c_user_${this.listId}`);
@@ -128,7 +157,9 @@ export class UserList {
    * After user selected an action this action is executed.
    * @param user 
    */
-  protected async showActions(user: UserModel): Promise<void> {
+  protected async showActions(row: UserAccountRow): Promise<void> {
+    const user = row.user;
+    if (!user) return; // rows without a user doc get their actions in Task 4
     const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, user);
     await this.executeActions(actionSheetOptions, user);
@@ -178,6 +209,20 @@ export class UserList {
   }
   
   /******************************* helpers *************************************** */
+  protected trackKey(row: UserAccountRow): string {
+    return `${row.kind}:${row.uid ?? ''}:${row.personKey ?? ''}`;
+  }
+
+  /** the badge on problem rows; normal rows get none */
+  protected kindLabel(kind: UserAccountKind): string {
+    switch (kind) {
+      case 'userWithoutLogin': return this.store.i18n.kind_no_login();
+      case 'memberWithoutAccount': return this.store.i18n.kind_no_account();
+      case 'loginWithoutUser': return this.store.i18n.kind_login_no_user();
+      default: return '';
+    }
+  }
+
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.store.currentUser());
   }

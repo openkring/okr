@@ -1,6 +1,18 @@
 {
   "user": "Utente",
   "users": "Utenti",
+  "title": "Utenti e accessi",
+  "read_error": "Non è stato possibile caricare gli utenti e gli accessi. Riprova più tardi.",
+  "filter": {
+    "problems": "Problemi",
+    "extended_roles": "Ruoli estesi",
+    "role_all": "tutti"
+  },
+  "kind": {
+    "no_login": "nessun login",
+    "no_account": "nessun account",
+    "login_no_user": "login senza utente"
+  },
   "empty": "Nessun utente trovato",
   "unknown": "Utente sconosciuto",
   "intro": "Un utente corrisponde 1:1 a un account autenticato (Firebase UID = User.okey) e a esattamente una persona (User.personKey = Person.okey).",

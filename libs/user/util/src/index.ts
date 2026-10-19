@@ -15,3 +15,4 @@ export * from './lib/user-notification-form.model';
 export * from './lib/user-notification-form.validations';
 export * from './lib/user-privacy-form.model';
 export * from './lib/user-privacy-form.validations';
+export * from './lib/user-account-rows.util';
