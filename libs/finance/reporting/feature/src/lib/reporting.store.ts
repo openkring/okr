@@ -13,6 +13,7 @@ import { convertDateFormatToString, DateFormat, fill, getTodayStr } from '@okr/s
 import { DocGenerationService } from '@okr/content-pdf-template-data-access';
 import { AccountService } from '@okr/finance-account-data-access';
 import { AccountingStore } from '@okr/finance-accounting-feature';
+import { ownerDisplayName, parseOwnerKey, resolveOwnerKey } from '@okr/finance-accounting-util';
 import { CostCenterStore } from '@okr/finance-cost-center-feature';
 import { costCenterLabel, costCenterSubtreeKeys, sortCostCenterTree } from '@okr/finance-cost-center-util';
 import { ReportingService } from '@okr/finance-reporting-data-access';
@@ -22,7 +23,7 @@ import {
 } from '@okr/finance-reporting-util';
 import { AddressService } from '@okr/subject-address-data-access';
 
-import { loadOrgAddressLine } from './reporting-address';
+import { loadOwnerAddressLine } from './reporting-address';
 
 export type ReportKind = 'balance' | 'income';
 
@@ -80,20 +81,11 @@ export const ReportingStore = signalStore(
   })),
   withComputed(store => ({
     /**
-     * The org whose letterhead the statements carry — NOT `accountingTenantId`.
-     *
-     * `accountingTenantId` is the BOOKS' key. For a sub-entity's books it happens to be a real
-     * `orgs` okey, but for the tenant's own default books it is the tenant id, and that is only
-     * also an org okey where the tenant's org doc was keyed that way (scs). Where it was not
-     * (bkg → `orgs/DIVsVOA0fXfrLDLY3m5y`), `getOrg('bkg')` misses and the header falls back to
-     * the raw tenant id. The tenant's own org is `app-config.ownerOrgId`.
+     * The owner whose name and address head the statements: the books' own `ownerKey` (an org or a
+     * person, spec 1.105) — never app-config ownerOrgId, the tenant id or the books id
+     * (accountingTenantId ≠ tenantId ≠ org okey). '' = no owner, none printed.
      */
-    reportOrgKey: computed(() => {
-      const accountingTenantId = store.accountingTenantId();
-      return accountingTenantId === store.appStore.tenantId()
-        ? store.appStore.appConfig().ownerOrgId || accountingTenantId
-        : accountingTenantId;
-    }),
+    reportOwnerKey: computed(() => resolveOwnerKey(store.accountingStore.config())),
     /** Distinct fiscal years with postings (desc), always including the running one. */
     years: computed<number[]>(() => {
       const start = store.fiscalYearStart();
@@ -286,9 +278,9 @@ export const ReportingStore = signalStore(
       return data?.variant as ReportVariant | undefined;
     },
 
-    /** The org's own postal address as one line, or '' when it has none / cannot be read. */
-    async orgAddressLine(): Promise<string> {
-      return loadOrgAddressLine(store.addressService, store.reportOrgKey());
+    /** The owner's favourite postal address as one line, or '' when there is no owner / none / it cannot be read. */
+    async ownerAddressLine(ownerKey: string): Promise<string> {
+      return parseOwnerKey(ownerKey) ? loadOwnerAddressLine(store.addressService, ownerKey) : '';
     },
 
     /**
@@ -324,10 +316,12 @@ export const ReportingStore = signalStore(
         const rows = kind === 'income'
           ? printableRows(store.reportRows(kind, false), store.incomeDetails(), openKeys, view)
           : store.reportRows(kind, false);
+        const ownerKey = store.reportOwnerKey();
+        const orgName = ownerDisplayName(ownerKey, key => store.appStore.getOrg(key), key => store.appStore.getPerson(key));
         const html = buildReportDocument(rows, {
           variant,
-          orgName: store.appStore.getOrg(store.reportOrgKey())?.name ?? store.accountingTenantId(),
-          orgAddress: await this.orgAddressLine(),
+          orgName,
+          orgAddress: orgName ? await this.ownerAddressLine(ownerKey) : '',
           generatedOn: view(getTodayStr(DateFormat.StoreDate)),
           labels,
         });

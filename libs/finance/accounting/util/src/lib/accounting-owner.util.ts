@@ -1,4 +1,5 @@
-import { AccountingConfigModel } from '@okr/shared-models';
+import { AccountingConfigModel, OrgModel, PersonModel } from '@okr/shared-models';
+import { getFullName } from '@okr/shared-util-core';
 
 /** The model types that may own a set of books (spec 1.105 amendment). */
 export type AccountingOwnerType = 'org' | 'person';
@@ -35,12 +36,29 @@ export function personOwnerKey(personKey: string): string {
 }
 
 /**
- * The books owner of a config as stored: `ownerKey`, else the legacy `orgId` as an org owner,
- * else '' (no owner — never the tenant id or app-config ownerOrgId: accountingTenantId ≠ tenantId).
- * Every reader of the owner goes through here.
+ * The books owner of a config as stored. `ownerKey` is authoritative whenever it is defined, even
+ * '' (a cleared owner must not revive the legacy field on a merge-saved doc); only a doc without
+ * the field falls back to the legacy `orgId` as an org owner; else '' (no owner — never the tenant
+ * id or app-config ownerOrgId: accountingTenantId ≠ tenantId). Every reader of the owner goes through here.
  */
 export function resolveOwnerKey(config: (Partial<Pick<AccountingConfigModel, 'ownerKey'>> & { orgId?: string }) | undefined): string {
-  if (config?.ownerKey) return config.ownerKey;
+  if (config?.ownerKey !== undefined) return config.ownerKey;
   // legacy orgId — remove after the 1.105 data migration
   return config?.orgId ? orgOwnerKey(config.orgId) : '';
+}
+
+/**
+ * The printed name of a books owner: the org's name or the person's full name. '' for no owner, an
+ * invalid key, or an owner whose document is not loaded — a report never prints a raw okey.
+ */
+export function ownerDisplayName(
+  ownerKey: string,
+  getOrg: (key: string) => OrgModel | undefined,
+  getPerson: (key: string) => PersonModel | undefined,
+): string {
+  const owner = parseOwnerKey(ownerKey);
+  if (!owner) return '';
+  if (owner.modelType === 'org') return getOrg(owner.key)?.name ?? '';
+  const person = getPerson(owner.key);
+  return person ? getFullName(person.firstName, person.lastName) : '';
 }

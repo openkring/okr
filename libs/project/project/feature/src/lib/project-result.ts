@@ -9,12 +9,12 @@ import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Spinner } from '@okr/shared-ui';
 import { AlertService, resourceParams } from '@okr/shared-util-angular';
-import { convertDateFormatToString, DateFormat, fill, getFullName, getTodayStr } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, fill, getTodayStr } from '@okr/shared-util-core';
 
 import { AvatarService } from '@okr/avatar-data-access';
 import { DocGenerationService, GenerateDocumentResponse } from '@okr/content-pdf-template-data-access';
 import { AccountingConfigService } from '@okr/finance-accounting-data-access';
-import { parseOwnerKey, resolveOwnerKey } from '@okr/finance-accounting-util';
+import { ownerDisplayName, parseOwnerKey, resolveOwnerKey } from '@okr/finance-accounting-util';
 import { AccountService } from '@okr/finance-account-data-access';
 import { AddressService } from '@okr/subject-address-data-access';
 import { loadOwnerAddressLine } from '@okr/finance-reporting-feature';
@@ -160,8 +160,9 @@ export class ProjectResult {
       // The books' own owner only — never app-config ownerOrgId or the tenant id (accountingTenantId ≠ tenantId).
       const ownerKey = resolveOwnerKey(config);
       const owner = parseOwnerKey(ownerKey);
-      const orgName = this.ownerName(ownerKey);
-      const orgAddress = owner ? await loadOwnerAddressLine(this.addressService, ownerKey) : '';
+      const orgName = ownerDisplayName(ownerKey, key => this.appStore.getOrg(key), key => this.appStore.getPerson(key));
+      // an owner not loaded prints nothing at all — no bare address line without a name
+      const orgAddress = owner && orgName ? await loadOwnerAddressLine(this.addressService, ownerKey) : '';
       const generatedOn = viewDate(getTodayStr(DateFormat.StoreDate));
       const title = fill(this.i18n.resultPdfTitle(), { name: this.projectName() || this.projectKey() });
       const periodValue = this.periodValue();
@@ -214,15 +215,6 @@ export class ProjectResult {
     } catch (error) {
       this.alertService.error(`ProjectResult.exportPdf: ${error}`);
     }
-  }
-
-  /** The printed name of the books' owner: the org's name or the person's full name, its okey while not loaded; '' = no owner. */
-  private ownerName(ownerKey: string): string {
-    const owner = parseOwnerKey(ownerKey);
-    if (!owner) return '';
-    if (owner.modelType === 'org') return this.appStore.getOrg(owner.key)?.name || owner.key;
-    const person = this.appStore.getPerson(owner.key);
-    return (person ? getFullName(person.firstName, person.lastName) : '') || owner.key;
   }
 
   /** «01.05.2026 – 30.06.2026» from the project dates; a missing end stays open, no dates at all = every booking year. */

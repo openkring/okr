@@ -12,6 +12,7 @@
     "@okr/shared-util-core": "*",
     "@okr/shared-ui": "*",
     "@okr/finance-account-ui": "*",
+    "@okr/avatar-ui": "*",
     "@okr/finance-account-util": "*",
     "@okr/shared-constants": "*",
     "@okr/shared-config": "*",

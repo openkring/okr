@@ -3,11 +3,6 @@ import { firstValueFrom } from 'rxjs';
 import { AddressService } from '@okr/subject-address-data-access';
 import { stringifyPostalAddress } from '@okr/subject-address-util';
 
-/** The org's own postal address as one line, or '' when it has none / cannot be read. */
-export async function loadOrgAddressLine(addressService: AddressService, orgKey: string): Promise<string> {
-  return loadOwnerAddressLine(addressService, `org.${orgKey}`);
-}
-
 /**
  * The favourite postal address of an org or a person as one line, or '' when it has none / cannot
  * be read. `parentKey` is the prefixed key ('org.<okey>' | 'person.<okey>'), as the books' ownerKey
