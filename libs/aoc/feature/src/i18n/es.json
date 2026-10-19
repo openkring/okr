@@ -507,19 +507,6 @@
       "to": "Hasta"
     }
   },
-  "statistics": {
-    "header": "Estadísticas AOC",
-    "content": "Ciertas estadísticas pueden recalcularse aquí a partir de los datos actuales. Este cálculo solo debería realizarse cuando la base de datos está en un estado estable. El cálculo puede llevar algún tiempo. Las estadísticas deberían después revisarse y, si es necesario, corregirse manualmente.",
-    "title": "Actualizar estadísticas",
-    "ageByGender": {
-      "title": "Estructura de edad",
-      "subTitle": "Miembros por edad y sexo",
-      "label": "Recalcular estadísticas de edad",
-      "conf": "Las estadísticas de edad se han recalculado.",
-      "error": "No se pudieron recalcular las estadísticas de edad.",
-      "button": "Ejecutar"
-    }
-  },
   "tag": {
     "title": "Gestión de tags",
     "add": {

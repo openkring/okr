@@ -507,19 +507,6 @@
       "to": "A"
     }
   },
-  "statistics": {
-    "header": "Statistiche AOC",
-    "content": "Alcune statistiche possono essere ricalcolate qui a partire dai dati attuali. Questo calcolo dovrebbe essere eseguito solo quando il database è in uno stato stabile. Il calcolo può richiedere un po' di tempo. Le statistiche dovrebbero poi essere verificate e, se necessario, corrette manualmente.",
-    "title": "Aggiornare le statistiche",
-    "ageByGender": {
-      "title": "Struttura per età",
-      "subTitle": "Soci per età e sesso",
-      "label": "Ricalcolare le statistiche per età",
-      "conf": "Le statistiche per età sono state ricalcolate.",
-      "error": "Impossibile ricalcolare le statistiche per età.",
-      "button": "Eseguire"
-    }
-  },
   "tag": {
     "title": "Gestione dei tag",
     "add": {

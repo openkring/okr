@@ -507,19 +507,6 @@
       "to": "Au"
     }
   },
-  "statistics": {
-    "header": "Statistiques AOC",
-    "content": "Certaines statistiques peuvent être recalculées ici à partir des données actuelles. Ce calcul ne devrait être effectué que lorsque la base de données est dans un état stable. Le calcul peut prendre un certain temps. Les statistiques devraient ensuite être vérifiées et, le cas échéant, corrigées manuellement.",
-    "title": "Mettre à jour les statistiques",
-    "ageByGender": {
-      "title": "Structure d'âge",
-      "subTitle": "Membres par âge et par sexe",
-      "label": "Recalculer les statistiques d'âge",
-      "conf": "Les statistiques d'âge ont été recalculées.",
-      "error": "Les statistiques d'âge n'ont pas pu être recalculées.",
-      "button": "Exécuter"
-    }
-  },
   "tag": {
     "title": "Gestion des tags",
     "add": {

@@ -334,15 +334,15 @@ describe('/aoc guards after the 2026-08-05 rulings', () => {
     const unguarded = withoutRedirects(children).filter(c => (c.canActivate ?? []).length === 0).map(c => c.path);
 
     expect(unguarded, 'child would silently inherit the contentAdmin floor').toEqual([]);
-    // 17: the tenant allocation child and the Storage page left the catalogue (spec 1.101).
-    expect(children.length, 'children were added or removed; re-check the ruling list').toBe(17);
+    // 16: the tenant allocation child, the Storage page and the statistics page left the catalogue (spec 1.101).
+    expect(children.length, 'children were added or removed; re-check the ruling list').toBe(16);
   });
 
   it('every child the rulings do NOT name stays admin-only', () => {
     const { children = [] } = fragmentOf('aoc', 'aoc');
     const others = withoutRedirects(children).filter(c => !AOC_CONTENT_ADMIN.includes(c.path as typeof AOC_CONTENT_ADMIN[number]));
 
-    expect(others.length, 'expected nine admin-only /aoc children (the redirect children carry no guard)').toBe(9);
+    expect(others.length, 'expected eight admin-only /aoc children (the redirect children carry no guard)').toBe(8);
     // The child's OWN guard must reject both non-admin roles, independently of the floor.
     expect(others.filter(c => activates(CONTENT_ADMIN, c)).map(c => c.path)).toEqual([]);
     expect(others.filter(c => activates(PRIVILEGED, c)).map(c => c.path)).toEqual([]);

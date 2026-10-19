@@ -378,16 +378,6 @@ export const AOC_I18N_KEYS = {
   location:                                 '@location',
   close:                                    '@shared/ui.close',
 
-  // statistics
-  statistics_header:                        PFX + 'statistics.header',
-  statistics_content:                       PFX + 'statistics.content',
-  statistics_title:                         PFX + 'statistics.title',
-
-  statistics_age_by_gender_label:           PFX + 'statistics.ageByGender.label',
-  statistics_age_by_gender_conf:            PFX + 'statistics.ageByGender.conf',
-  statistics_age_by_gender_error:           PFX + 'statistics.ageByGender.error',
-  statistics_age_by_gender_button:          PFX + 'statistics.ageByGender.button',
-
   // tag
   tag_title:                                PFX + 'tag.title',
 

@@ -507,19 +507,6 @@
       "to": "Bis"
     }
   },
-  "statistics": {
-    "header": "AOC Statistiken",
-    "content": "Gewisse Statistiken können hier aus den aktuellen Daten neu berechnet werden. Diese Berechnung sollte nur durchgeführt werden, wenn die Datenbank in einem stabilen Zustand ist. Die Berechnung kann einige Zeit in Anspruch nehmen. Die Statistiken sollten anschliessend überprüft werden und allenfalls manuell korrigiert werden.",
-    "title": "Statistiken aktualisieren",
-    "ageByGender": {
-      "title": "Alters-Struktur",
-      "subTitle": "Mitglieder nach Alter und Geschlecht",
-      "label": "Alters-Statistik neu berechnen",
-      "conf": "Alters-Statisik wurde neu berechnet.",
-      "error": "Die Alters-Statistik konnte nicht neu berechnet werden.",
-      "button": "Ausführen"
-    }
-  },
   "tag": {
     "title": "Tag-Verwaltung",
     "add": {

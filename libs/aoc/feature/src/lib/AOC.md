@@ -7,7 +7,6 @@ The AOC (Admin Operations Console) is a restricted administrative dashboard for 
 - **Data** — Validate model integrity and regenerate search indexes across all collections. There is no Daten-Korrektur page any more; bulk fixes run as a local script (see below).
 - **Content** — moved to Seiten › Integrität prüfen (`/page/integrity`, `@okr/cms-page-feature`); `/aoc/content` redirects there.
 - **Roles** — Manage Firebase Auth accounts and application user roles: create accounts, reset/set passwords, update Firebase user profiles, impersonate users, and manage role assignments.
-- **Statistics** — Recompute the age-by-gender statistics («Altersstatistik nach Geschlecht») from the active memberships; the other statistics actions were removed (spec 1.101).
 - **Chat** — Admin view of the Matrix homeserver: browse rooms, inspect members, rename rooms, add aliases, invite users, provision Matrix accounts, kick members, deactivate users. The group-membership repairs (members, post policy, guests) moved to Gruppen › Wartung (`c-groups`); this page keeps only a read-only drift scan for its room-list badge.
 - **Tag** — Manage the `tags` Firestore collection: browse, create, edit, and delete tag documents and their comma-separated tag strings per model type.
 - **User Accounts** — Cross-reference view of Firebase Auth accounts, application `UserModel` records, and `MembershipModel` entries; supports editing/deleting each tier independently.
@@ -28,7 +27,7 @@ All AOC pages require the `admin` or `privileged` role, enforced via `hasRole(..
 
 ## Store Pattern
 
-Each AOC tab has its own `signalStore` (`AocDataStore`, `AocRolesStore`, `AocStatisticsStore`, `AocChatStore`, `AocTagStore`, `AocUserAccountStore`, `AocAdminOpsStore`) provided at the component level (not root). All stores inject `AppStore` and `FirestoreService`.
+Each AOC tab has its own `signalStore` (`AocDataStore`, `AocRolesStore`, `AocChatStore`, `AocTagStore`, `AocUserAccountStore`, `AocAdminOpsStore`) provided at the component level (not root). All stores inject `AppStore` and `FirestoreService`.
 
 ## Supported Model Types (Data / Validate / Index operations)
 
@@ -87,4 +86,4 @@ Operator-only since spec 1.101 §6: route `/operator/allocation` exists only in 
 
 `@okr/aoc-feature` (`libs/aoc/feature/src/lib/`)
 
-Utilities: `@okr/aoc-util` (`libs/aoc/util/src/`) — exports `adminops.util` and `statistics.util`.
+Utilities: `@okr/aoc-util` (`libs/aoc/util/src/`) — exports `adminops.util`.
