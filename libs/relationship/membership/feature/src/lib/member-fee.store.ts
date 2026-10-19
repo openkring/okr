@@ -5,23 +5,24 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { doc } from 'firebase/firestore';
-import { of } from 'rxjs';
+import { map, of } from 'rxjs';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
-import { AccountingConfigModel, ExportFormat, FeeScheduleEntry, INVOICE_STATE, MembershipCollection, MembershipModel, OwnershipCollection, OwnershipModel, MemberFeeCollection, MemberFeeModel } from '@okr/shared-models';
-import { confirm, exportCsv, okrPrompt, showToast } from '@okr/shared-util-angular';
+import { ExportFormat, FeeScheduleEntry, INVOICE_STATE, MembershipCollection, MembershipModel, OwnershipCollection, OwnershipModel, MemberFeeCollection, MemberFeeModel } from '@okr/shared-models';
+import { confirm, exportCsv, okrPrompt, resourceParams, showToast } from '@okr/shared-util-angular';
 import { DateFormat, debugListLoaded, fill, generateRandomString, getDataRow, getFullName, getSystemQuery, getTodayStr, getYear, isAfterDate, nameMatches } from '@okr/shared-util-core';
 import { ExportFormats } from '@okr/shared-categories';
 import { I18nService } from '@okr/shared-i18n';
 
 import { ActivityService } from '@okr/activity-data-access';
-import { AccountingConfigService } from '@okr/finance-accounting-data-access';
+import { AccountingStore } from '@okr/finance-accounting-feature';
+import { ownerOrgOfBooks } from '@okr/finance-accounting-util';
 import { MemberFeeService, getTemplateId } from '@okr/relationship-membership-data-access';
 
 import { MembershipEditModal } from './membership-edit.modal';
 import { MemberFeesTotalsModal } from './member-fee-totals.modal';
-import { BexioPosition, buildPositions, getFeeTotal, rebatePosition, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
+import { BexioPosition, billedMemberships, buildPositions, feeRowsOfBooks, getFeeTotal, rebatePosition, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
 import { MemberFeeUploadModal } from '@okr/relationship-membership-ui';
 
 export type MemberFeesState = {
@@ -30,6 +31,13 @@ export type MemberFeesState = {
   selectedState: string;
   version: number;
 };
+
+/**
+ * Where the fee screen stands (spec 1.108, D12): the books' config has not answered yet
+ * ('loading' — spinner, no action runs), the books have no org owner ('no-org' — nobody to bill),
+ * or the run can work on the owner org's members ('ready').
+ */
+export type MemberFeesScreenState = 'loading' | 'no-org' | 'ready';
 
 const initialState: MemberFeesState = {
   searchTerm: '',
@@ -48,7 +56,7 @@ export const _MemberFeesStore = signalStore(
     }
     return {
       memberFeeService: inject(MemberFeeService),
-      accountingConfigService: inject(AccountingConfigService),
+      accountingStore: inject(AccountingStore),
       appStore,
       firestoreService: inject(FirestoreService),
       activityService: inject(ActivityService),
@@ -95,30 +103,40 @@ export const _MemberFeesStore = signalStore(
       },
     }),
 
-    // The accounting config of the default org — carries the year-versioned `feeSchedule`
-    // that drives the fee derivation (buildPositions).
-    accountingConfigResource: rxResource({
-      params: () => ({
-        currentUser: store.appStore.currentUser(),
-        accountingTenantId: store.appStore.defaultOrg()?.okey ?? store.appStore.tenantId(),
+    // Persisted fee records of the selected books (spec 1.108, D3). The query already filters by
+    // books; feeRowsOfBooks is the second guard, and a dropped row is logged (D11).
+    feeRecordsResource: rxResource({
+      params: resourceParams(() => ({
+        userKey: store.appStore.currentUser()?.okey ?? '',
+        booksId: store.accountingStore.accountingTenantId(),
         version: store.version(),
-      }),
+      })),
       stream: ({ params }) => {
-        if (!params.currentUser || !params.accountingTenantId) return of(undefined);
-        return store.accountingConfigService.read(params.accountingTenantId);
+        if (!params.userKey || !params.booksId) return of([] as MemberFeeModel[]);
+        return store.memberFeeService.list(params.booksId).pipe(
+          map((rows: MemberFeeModel[]) => {
+            const kept = feeRowsOfBooks(rows, params.booksId);
+            if (kept.length !== rows.length) {
+              console.warn(`MemberFeesStore.feeRecords: ignored ${rows.length - kept.length} fee row(s) not of books ${params.booksId}`);
+            }
+            return kept;
+          })
+        );
       },
     }),
+  })),
 
-    // Persisted fee records from member-fees collection
-    feeRecordsResource: rxResource({
-      params: () => ({
-        currentUser: store.appStore.currentUser(),
-        version: store.version(),
-      }),
-      stream: ({ params }) => {
-        if (!params.currentUser) return of([]);
-        return store.memberFeeService.list();
-      },
+  // The books come from the accounting area (AccountingStore), the billed org is their owner
+  // (spec 1.108, D2) — never the app tenant or the default org.
+  withComputed((store) => ({
+    booksId: computed(() => store.accountingStore.accountingTenantId()),
+    billedOrgKey: computed(() => ownerOrgOfBooks(store.accountingStore.config())),
+  })),
+
+  withComputed((store) => ({
+    screenState: computed((): MemberFeesScreenState => {
+      if (!store.accountingStore.configLoaded()) return 'loading';
+      return store.billedOrgKey() ? 'ready' : 'no-org';
     }),
   })),
 
@@ -126,23 +144,15 @@ export const _MemberFeesStore = signalStore(
     isLoading: computed(() =>
       store.allMembershipsResource.isLoading() ||
       store.allLockerOwnershipsResource.isLoading() ||
-      store.accountingConfigResource.isLoading() ||
       store.feeRecordsResource.isLoading()
     ),
     currentUser: computed(() => store.appStore.currentUser()),
     tenantId: computed(() => store.appStore.tenantId()),
 
-    // current active+passive memberships of the default org
-    defaultOrgMemberships: computed(() => {
-      const today = getTodayStr();
-      const orgId = store.appStore.defaultOrg()?.okey ?? store.appStore.tenantId();
-      return store.allMembershipsResource.value()?.filter((m: MembershipModel) => 
-        m.orgKey === orgId && 
-        m.orgModelType === 'org' &&
-        isAfterDate(m.dateOfExit, today) &&
-        (m.state === 'active' || m.state === 'passive')
-      ) ?? [];
-    }),
+    // current active+passive memberships of the org that owns the books
+    billedMemberships: computed(() =>
+      billedMemberships(store.allMembershipsResource.value() ?? [], store.billedOrgKey() ?? '', getTodayStr())
+    ),
 
     // locker ownerships active today, indexed by ownerKey
     lockerOwnerKeys: computed((): Set<string> => {
@@ -179,30 +189,24 @@ export const _MemberFeesStore = signalStore(
     // an empty position list — never a wrong amount.
     feeSchedule: computed((): FeeScheduleEntry => {
       const year = getYear();
-      const config: AccountingConfigModel | undefined = store.accountingConfigResource.value();
-      return config?.feeSchedule?.find(e => e.year === year) ?? { year, positions: [] };
+      return store.accountingStore.config()?.feeSchedule?.find(e => e.year === year) ?? { year, positions: [] };
     }),
 
     /**
-     * Whether the accounting config has actually arrived. While the resource is still loading,
-     * `accountingBackend ?? 'native'` reads 'native' for EVERY tenant — a Bexio tenant clicking
-     * early would take the native branch and get a raw `failed-precondition` from the callable.
-     * Every invoicing action is gated on this. 'error' deliberately does NOT count as loaded:
-     * refusing is the safe direction, guessing the backend is not.
+     * Whether these books live in Bexio. Only meaningful once `accountingStore.configLoaded()` is
+     * true — before that it reads false, like every unloaded config, which is why every invoicing
+     * action gates on the loaded flag (via screenState) and not on this one. While the config is
+     * still loading, `accountingBackend ?? 'native'` reads 'native' for EVERY books — a Bexio
+     * books clicking early would take the native branch and get a raw `failed-precondition`.
      */
-    /**
-     * Whether this tenant's books live in Bexio. Only meaningful once
-     * `accountingConfigLoaded()` is true — before that it reads false, like every unloaded
-     * tenant, which is why the UI gates on the loaded flag and not on this one.
-     */
-    isBexioBackend: computed(() => store.accountingConfigResource.value()?.accountingBackend === 'bexio'),
+    isBexioBackend: computed(() => store.accountingStore.config()?.accountingBackend === 'bexio'),
 
-    accountingConfigLoaded: computed(() =>
-      store.accountingConfigResource.status() === 'resolved' ||
-      store.accountingConfigResource.status() === 'local'),
-
-    // The org names its own membership-category list; legacy org docs may lack the field.
-    membershipCategoryKey: computed(() => store.appStore.defaultOrg()?.membershipCategoryKey || 'mcat'),
+    // The billed org names its own membership-category list (spec 1.108, D9) — a gss run prices
+    // from the Gönnerverein's list, not the default org's. Legacy org docs may lack the field.
+    membershipCategoryKey: computed(() => {
+      const orgKey = store.billedOrgKey();
+      return (orgKey ? store.appStore.getOrg(orgKey)?.membershipCategoryKey : undefined) || 'mcat';
+    }),
   })),
 
   withComputed((store) => ({
@@ -212,23 +216,25 @@ export const _MemberFeesStore = signalStore(
   withComputed((store) => ({
     // Merged list: persisted records take priority; generated models fill in the rest
     allFees: computed((): MemberFeeModel[] => {
+      if (store.screenState() !== 'ready') return [];
       const tenantId = store.tenantId();
+      const booksId = store.booksId();
       const lockerKeys = store.lockerOwnerKeys();
       const feeMap = store.feeRecordsByMemberKey();
       const schedule = store.feeSchedule();
       const categoryLists = store.categoryLists();
       const defaultCategoryList = store.membershipCategoryKey();
 
-      return store.defaultOrgMemberships().map((membership: MembershipModel) => {
+      return store.billedMemberships().map((membership: MembershipModel) => {
         const existing = feeMap.get(membership.memberKey);
         if (existing) return existing;
-        return deriveFee(membership, schedule, categoryLists, defaultCategoryList, lockerKeys, tenantId);
+        return deriveFee(membership, schedule, categoryLists, defaultCategoryList, lockerKeys, tenantId, booksId);
       });
     }),
 
     membershipsByMemberKey: computed(() => {
       const map = new Map<string, MembershipModel>();
-      store.defaultOrgMemberships().forEach((m: MembershipModel) => map.set(m.memberKey, m));
+      store.billedMemberships().forEach((m: MembershipModel) => map.set(m.memberKey, m));
       return map;
     }),
 
@@ -269,14 +275,18 @@ export const _MemberFeesStore = signalStore(
      * Save an edited fee record to Firestore and reload.
      */
     async saveFee(fee: MemberFeeModel): Promise<void> {
+      if (store.screenState() !== 'ready') return;
       await store.memberFeeService.save(fee, store.appStore.currentUser() ?? undefined);
       patchState(store, { version: store.version() + 1 });
     },
 
     /**
-     * Generate and persist fee records for all default org members that don't have one yet.
+     * Generate and persist fee records for all members of the books' owner org that don't have one
+     * yet. Every new row carries the selected books (spec 1.108, D3).
      */
     async generateFees(): Promise<void> {
+      if (store.screenState() !== 'ready') return;
+      const booksId = store.booksId();
       const confirmed = await confirm(store.alertController, store.i18n.memberFee_generate_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
       if (!confirmed) return;
 
@@ -287,12 +297,12 @@ export const _MemberFeesStore = signalStore(
       const categoryLists = store.categoryLists();
       const currentUser = store.appStore.currentUser() ?? undefined;
 
-      const members = store.defaultOrgMemberships().filter((m: MembershipModel) => !feeMap.has(m.memberKey));
+      const members = store.billedMemberships().filter((m: MembershipModel) => !feeMap.has(m.memberKey));
       const saves = members.map((m: MembershipModel) => {
-          const fee = deriveFee(m, schedule, categoryLists, store.membershipCategoryKey(), lockerKeys, tenantId);
+          const fee = deriveFee(m, schedule, categoryLists, store.membershipCategoryKey(), lockerKeys, tenantId, booksId);
           return store.memberFeeService.save(fee, currentUser, false);
       });
-      const msg = 'generated ' + members.length + ' scs member fees.';
+      const msg = 'generated ' + members.length + ' member fees for books ' + booksId + '.';
       store.activityService.log('membership', 'create', currentUser, msg);
 
       await Promise.all(saves);
@@ -301,6 +311,7 @@ export const _MemberFeesStore = signalStore(
     },
 
     async showTotals(): Promise<void> {
+      if (store.screenState() !== 'ready') return;
       const modal = await store.modalController.create({
         component: MemberFeesTotalsModal,
         componentProps: {
@@ -311,6 +322,7 @@ export const _MemberFeesStore = signalStore(
     },
 
     async archive(): Promise<void> {
+      if (store.screenState() !== 'ready') return;
       const confirmed = await confirm(store.alertController, store.i18n.memberFee_archive_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
       if (!confirmed) return;
 
@@ -327,12 +339,12 @@ export const _MemberFeesStore = signalStore(
     },
 
     async export(type: string): Promise<void> {
+      if (store.screenState() !== 'ready') return;
       if (type === 'raw') {
         const fees = store.filteredFees();
         let keys: (keyof MemberFeeModel)[] = [];
         const table: string[][] = [];
         const fn = generateRandomString(10) + '.' + ExportFormats[ExportFormat.XLSX].abbreviation;
-        let tableName = '';
         keys = Object.keys(new MemberFeeModel(store.appStore.tenantId())) as (keyof MemberFeeModel)[];
         table.push(keys);
         for (const fee of fees) {
@@ -410,10 +422,12 @@ export const _MemberFeesStore = signalStore(
     },
 
     /**
-     * Post every 'ready' fee record of this tenant as a real in-house invoice by calling the
+     * Post every 'ready' fee record of the selected books as a real in-house invoice by calling the
      * postMemberFees Cloud Function (the 'native' accountingBackend counterpart to uploadToBexio).
      */
     async postMemberFees(): Promise<void> {
+      if (store.screenState() !== 'ready') return;
+      const accountingTenantId = store.booksId();
       // This is a BULK run: the callable posts every 'ready' row of the tenant and knows nothing
       // about a clicked row. Name the number of rows before doing it — the action used to sit on
       // a single fee's ActionSheet and looked like a per-member invoice.
@@ -427,7 +441,6 @@ export const _MemberFeesStore = signalStore(
         store.i18n.ok(), store.i18n.cancel(), true);
       if (!confirmed) return;
 
-      const accountingTenantId = store.appStore.defaultOrg()?.okey ?? store.appStore.tenantId();
       const fn = httpsCallable<
         { tenantId: string; accountingTenantId: string },
         { processed: number; invoiced: number; failed: { member: string; positions: string[] }[] }
@@ -524,11 +537,12 @@ export const _MemberFeesStore = signalStore(
      * screen needs no second setting, and never both paths for the same tenant.
      */
     async invoice(fee: MemberFeeModel): Promise<void> {
-      if (!store.accountingConfigLoaded()) {
+      if (store.screenState() === 'loading') {
         await showToast(store.toastController, store.i18n.memberFee_config_loading());
         return;
       }
-      const backend = store.accountingConfigResource.value()?.accountingBackend ?? 'native';
+      if (store.screenState() !== 'ready') return;
+      const backend = store.accountingStore.config()?.accountingBackend ?? 'native';
       if (backend === 'bexio') {
         await store.uploadToBexio(fee);
         return;
@@ -549,8 +563,10 @@ function deriveFee(
   defaultCategoryList: string,
   lockerOwnerKeys: Set<string>,
   tenantId: string,
+  booksId: string,
 ): MemberFeeModel {
   const fee = new MemberFeeModel(tenantId);
+  fee.accountingTenantId = booksId;
 
   fee.tenants = membership.tenants;
   fee.isArchived = membership.isArchived;

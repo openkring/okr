@@ -89,6 +89,7 @@ export const MEMBERSHIP_I18N_KEYS = {
   memberFee_invoiceAll_confirm: PFX + 'memberFee.invoiceAll.confirm',
   memberFee_invoiceAll_none:   PFX + 'memberFee.invoiceAll.none',
   memberFee_config_loading:    PFX + 'memberFee.config.loading',
+  memberFee_noOrg:             PFX + 'memberFee.noOrg',
   memberFee_totals_label:      PFX + 'memberFee.totals.label',
   memberFee_export_title:      PFX + 'memberFee.export.title',
   memberFee_list_title:        PFX + 'memberFee.list.title',

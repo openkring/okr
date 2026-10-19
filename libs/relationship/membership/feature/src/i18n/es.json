@@ -115,6 +115,7 @@
     }
   },
   "memberFee": {
+    "noOrg": "Esta contabilidad no pertenece a ninguna organización, por eso no hay ninguna facturación de cuotas.",
     "archive": {
       "confirm": "La ejecución de facturación se completa y todas las facturas se establecen como archivadas.",
       "conf": "Todas las facturas se han archivado. Está listo para una nueva generación de facturas."

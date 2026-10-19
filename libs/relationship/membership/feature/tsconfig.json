@@ -53,7 +53,7 @@
       "path": "../../../shared/util-core/tsconfig.lib.json"
     },
     {
-      "path": "../../../finance/accounting/data-access/tsconfig.lib.json"
+      "path": "../../../finance/accounting/util/tsconfig.lib.json"
     },
     {
       "path": "../../../relationship/membership/data-access/tsconfig.lib.json"

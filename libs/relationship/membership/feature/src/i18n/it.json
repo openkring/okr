@@ -115,6 +115,7 @@
     }
   },
   "memberFee": {
+    "noOrg": "Questa contabilità non appartiene a nessuna organizzazione, quindi non c'è nessuna fatturazione delle quote.",
     "archive": {
       "confirm": "L'esecuzione della fatturazione viene completata e tutte le fatture vengono impostate come archiviate.",
       "conf": "Tutte le fatture sono state archiviate. Sei pronto per una nuova generazione di fatture."

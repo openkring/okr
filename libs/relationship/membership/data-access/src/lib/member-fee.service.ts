@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
@@ -28,16 +28,29 @@ export class MemberFeeService {
     fee_delete_error: PFX + 'fee.delete.error',
   });
 
-  public list(): Observable<MemberFeeModel[]> {
+  /**
+   * The fee rows of one set of books in this tenant (spec 1.108, D3). Without books there is no
+   * fee run, so nothing is read — never the rows of every books of the tenant.
+   */
+  public list(accountingTenantId: string): Observable<MemberFeeModel[]> {
+    if (!accountingTenantId) return of([]);
     return this.firestoreService.searchData<MemberFeeModel>(
       MemberFeeCollection,
-      getSystemQuery(this.env.tenantId),
+      [
+        ...getSystemQuery(this.env.tenantId),
+        { key: 'accountingTenantId', operator: '==', value: accountingTenantId },
+      ],
       'index',
       'asc'
     );
   }
 
   public async save(fee: MemberFeeModel, currentUser?: UserModel, addActivity = true): Promise<string | undefined> {
+    // A new row without books would belong to no fee run (spec 1.108, D11) — refuse it.
+    if (!fee.okey && !fee.accountingTenantId) {
+      console.warn('MemberFeeService.save: refused a new fee row without accountingTenantId', fee.index);
+      return undefined;
+    }
 
     if (fee.okey && fee.okey.length > 0) {
       const key = await this.firestoreService.updateModel<MemberFeeModel>(MemberFeeCollection, fee, false, this.i18n.fee_update_conf(), this.i18n.fee_update_error(), currentUser);

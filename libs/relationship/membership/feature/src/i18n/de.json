@@ -115,6 +115,7 @@
     }
   },
   "memberFee": {
+    "noOrg": "Diese Buchhaltung gehört keiner Organisation, darum gibt es keinen Beitragslauf.",
     "archive": {
       "confirm": "Der Rechnungslauf wird abgeschlossen und all Rechnungen auf archiviert gesetzt.",
       "conf": "Alle Rechnungen wurden archiviert. Du bist ready für eine neue Rechnungsgenerierung."

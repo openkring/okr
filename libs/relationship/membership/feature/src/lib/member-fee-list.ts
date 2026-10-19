@@ -94,8 +94,10 @@ import { AccountingBooks, AccountingSegments } from '@okr/finance-accounting-fea
     </ion-header>
 
     <ion-content>
-      @if (isLoading()) {
+      @if (screenState() === 'loading' || isLoading()) {
         <okr-spinner />
+      } @else if (screenState() === 'no-org') {
+        <okr-empty-list [message]="store.i18n.memberFee_noOrg()" />
       } @else {
         @if (sortedFees().length === 0) {
           <okr-empty-list [message]="store.i18n.memberFee_list_empty()" />
@@ -154,6 +156,8 @@ export class MemberFees {
 
   // computed
   protected isLoading = computed(() => this.store.isLoading());
+  // D12 (spec 1.108): books config not loaded → spinner; books without an org owner → note
+  protected screenState = computed(() => this.store.screenState());
   protected allFees = computed(() => this.store.allFees());
 
   /**
