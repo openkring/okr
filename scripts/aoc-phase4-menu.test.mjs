@@ -1,9 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 import {
-  APPLY_ORDER, LEAVING, MAINT, ROW_SPECS, collectRowTenants, planAocParent, planContextMenu, planLeavingRow, planRow,
+  APPLY_ORDER, LEAVING, MAINT, OPERATOR_ROW_SPECS, ROW_SPECS, collectRowTenants, planAocParent, planContextMenu, planLeavingRow,
+  planOperatorRow, planRow,
 } from './aoc-phase4-menu.logic.mjs';
 
 const T_CHAT = ['bka', 'p13', 'scs', 'bkg', 'kring', 'elab', 'okr', 'kwa'];
@@ -96,17 +97,88 @@ test('planRow: a lone archived row doc warns, never extends or creates', () => {
   assert.match(p.reason, /archived/);
 });
 
-test('aoc-menu_bka loses the three phase 4 names, keeps the rest in order (phase 3 names untouched)', () => {
+test('aoc-menu_bka loses the three phase 4 names, keeps the rest in order (phase 3 names untouched), gains operator-chat after aoc-allocation', () => {
   const p = planAocParent(AOC_BKA);
   assert.equal(p.action, 'update');
-  assert.deepEqual(p.menuItems, ['aoc-data', 'aoc-statistics', 'aoc-allocation', 'aoc-srv', 'alias-spaces']);
+  assert.deepEqual(p.menuItems, ['aoc-data', 'aoc-statistics', 'aoc-allocation', 'operator-chat', 'aoc-srv', 'alias-spaces']);
+  assert.equal(p.reason, 'remove [aoc-chat, aoc-account, aoc-auth]; add operator [operator-chat]');
   assert.equal(planAocParent({ ...AOC_BKA, menuItems: p.menuItems }).action, 'skip');
   assert.deepEqual(LEAVING, ['aoc-chat', 'aoc-account', 'aoc-auth']);
 });
 
 test('planAocParent tolerates phase 3 applied (statistics/bexio/srv already gone)', () => {
   const p = planAocParent({ ...AOC_BKA, menuItems: ['aoc-data', 'aoc-chat', 'aoc-account', 'aoc-auth', 'alias-spaces'] });
-  assert.deepEqual(p.menuItems, ['aoc-data', 'alias-spaces']);
+  assert.deepEqual(p.menuItems, ['aoc-data', 'alias-spaces', 'operator-chat']);
+});
+
+// ---- operator-only row (spec 1.101 §6): bka-only, outside the catalogue ----
+const AOC_SCS = { id: 'aoc-menu_scs', name: 'aoc-menu', tenants: ['scs'], menuItems: ['aoc-data', 'aoc-chat', 'aoc-email'] };
+const AOC_SHARED = { id: 'aoc-menu', name: 'aoc-menu', tenants: ['bka', 'scs'], menuItems: ['aoc-data', 'aoc-chat'] };
+
+test('operator-chat spec: navigate /operator/chat, admin, chatbubbles, plain label', () => {
+  assert.deepEqual(OPERATOR_ROW_SPECS, {
+    'operator-chat': { action: 'navigate', url: '/operator/chat', roleNeeded: 'admin', icon: 'chatbubbles', label: 'Chat-Wartung (Betreiber)' },
+  });
+});
+
+test('planOperatorRow creates operator-chat for bka only, same field template as catalogue rows', () => {
+  const p = planOperatorRow([], 'operator-chat');
+  assert.equal(p.action, 'create');
+  assert.equal(p.id, 'operator-chat');
+  assert.deepEqual(p.doc, {
+    name: 'operator-chat', url: '/operator/chat', action: 'navigate', roleNeeded: 'admin', icon: 'chatbubbles',
+    label: 'Chat-Wartung (Betreiber)', tenants: ['bka'], menuItems: [], data: [], description: '', tags: '',
+    isArchived: false, index: 'n:operator-chat a:navigate k:operator-chat',
+  });
+  assert.deepEqual(Object.keys(p.doc).sort(), Object.keys(planRow([], 'chat-maintenance', ['bka']).doc).sort());
+});
+
+test('planOperatorRow: skip when bka-only on the url, warn otherwise (never widened, never revived)', () => {
+  const ok = { id: 'operator-chat', name: 'operator-chat', tenants: ['bka'], url: '/operator/chat' };
+  assert.equal(planOperatorRow([ok], 'operator-chat').action, 'skip');
+  assert.equal(planOperatorRow([{ ...ok, tenants: ['bka', 'scs'] }], 'operator-chat').action, 'warn');
+  assert.equal(planOperatorRow([{ ...ok, url: '/chat/maintenance' }], 'operator-chat').action, 'warn');
+  assert.equal(planOperatorRow([{ ...ok, isArchived: true }], 'operator-chat').action, 'warn');
+  assert.equal(planOperatorRow([ok, { ...ok, id: 'x' }], 'operator-chat').action, 'warn');
+});
+
+test('operator-chat never reaches another tenant\'s or a shared AOC submenu', () => {
+  const scs = planAocParent(AOC_SCS);
+  assert.deepEqual(scs.menuItems, ['aoc-data', 'aoc-email']);
+  assert.equal(scs.reason, 'remove [aoc-chat]');
+  const shared = planAocParent(AOC_SHARED);
+  assert.deepEqual(shared.menuItems, ['aoc-data']);
+  assert.equal(shared.reason, 'remove [aoc-chat]; shared with [scs], operator rows not added — fork it first');
+});
+
+test('aoc-menu_bka after apply is skip (operator-chat present, leaving names gone)', () => {
+  const once = planAocParent(AOC_BKA);
+  const again = planAocParent({ ...AOC_BKA, menuItems: once.menuItems });
+  assert.equal(again.action, 'skip');
+  assert.equal(again.reason, 'already migrated');
+});
+
+test('operator-chat is NOT a catalogue row (operator tools stay outside the catalogue)', () => {
+  for (const name of Object.keys(OPERATOR_ROW_SPECS)) {
+    assert.equal(CATALOGUE.includes(`key: '${name}'`), false, name);
+    assert.equal(ROW_SPECS[name], undefined, name);
+  }
+});
+
+// bka-app is a private submodule; skip (not fail) when it is not checked out. No unit-test harness exists for
+// app route tables, so the operator routes are pinned on the source text.
+const BKA_ROUTES = new URL('../apps/bka-app/src/app/app.routes.ts', import.meta.url);
+test('bka-app pins both operator routes, admin-guarded, and the /aoc/chat bookmark ahead of the composed routes', { skip: !existsSync(BKA_ROUTES) && 'apps/bka-app not checked out' }, () => {
+  const src = readFileSync(BKA_ROUTES, 'utf8');
+  const alloc = src.indexOf("{ path: 'operator/allocation', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocTenantAllocation) }");
+  const chat = src.indexOf("{ path: 'operator/chat', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/chat-feature').then(m => m.ChatMaintenance) }");
+  const bookmark = src.indexOf("{ path: 'aoc/chat', pathMatch: 'full', redirectTo: '/operator/chat' }");
+  const composed = src.indexOf('...composeGatedFeatureRoutes()');
+  assert.ok(alloc > 0, 'operator/allocation');
+  assert.ok(chat > 0, 'operator/chat');
+  assert.ok(bookmark > 0, 'aoc/chat redirect');
+  assert.ok(composed > 0, 'composed routes');
+  assert.ok(alloc < composed && chat < composed && bookmark < composed, 'all three before the composed routes (first match wins)');
 });
 
 test('planLeavingRow: archive, already archived, still referenced', () => {

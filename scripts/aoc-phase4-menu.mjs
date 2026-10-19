@@ -7,6 +7,8 @@
  * 2. Context menus (`contextMenuChat`, every non-archived doc incl. forks): the missing names are appended at the end.
  *    Nothing else changes; no menu is created.
  * 3. AOC parents (`aoc-menu*`) drop aoc-chat / aoc-account / aoc-auth (phase 3 names are left as they are).
+ *    bka's own AOC submenu (tenants exactly ['bka']) gains the operator row `operator-chat` (created bka-only
+ *    in step 1, NOT a catalogue row — spec 1.101 §6) after `aoc-allocation`.
  * 4. The three leaving rows (found by `name`) are archived, unless another menu doc still lists them.
  *
  * Re-running after an apply reports only SKIP.
@@ -21,7 +23,8 @@ import { getApps, initializeApp } from 'firebase-admin/app';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 
 import {
-  APPLY_ORDER, LEAVING, MAINT, collectRowTenants, planAocParent, planContextMenu, planLeavingRow, planRow,
+  APPLY_ORDER, LEAVING, MAINT, OPERATOR_ROW_SPECS, collectRowTenants, planAocParent, planContextMenu, planLeavingRow,
+  planOperatorRow, planRow,
 } from './aoc-phase4-menu.logic.mjs';
 
 const args = process.argv.slice(2);
@@ -58,6 +61,12 @@ const rowNames = [...new Set(Object.values(MAINT).flat())];
 const rowPlans = [];
 for (const name of rowNames) {
   const p = planRow(await byName(name), name, collectRowTenants(postPlanDocs, name));
+  rowPlans.push({ ...p, rowName: name });
+  line(p, name);
+  if (p.action === 'create') console.log(JSON.stringify(p.doc, null, 2).replace(/^/gm, '    '));
+}
+for (const name of Object.keys(OPERATOR_ROW_SPECS)) {
+  const p = planOperatorRow(await byName(name), name);
   rowPlans.push({ ...p, rowName: name });
   line(p, name);
   if (p.action === 'create') console.log(JSON.stringify(p.doc, null, 2).replace(/^/gm, '    '));
