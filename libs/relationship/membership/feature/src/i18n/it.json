@@ -569,7 +569,8 @@
       "adjust-in-progress": "La fattura è in corso di adattamento. Concludi prima quella operazione.",
       "invalid-claim": "La fattura collegata non corrisponde a questa uscita. Controllala a mano.",
       "state-changed": "Il caso nel frattempo è cambiato. Riapri il compito.",
-      "no-membership": "L'iscrizione non è stata trovata."
+      "no-membership": "L'iscrizione non è stata trovata.",
+      "no-books": "Per l'organizzazione di questa iscrizione non è configurata una contabilità univoca. Regola l'uscita a mano."
     },
     "doneToast": "L'uscita è stata conteggiata."
   }

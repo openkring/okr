@@ -3,12 +3,14 @@ import type { ExitSettlement, SettlementCase } from '@okr/relationship-membershi
 
 import { claimedInvoiceKey, claimPatch } from './settle-membership-exit.logic';
 import {
-  exitChanged, exitSettlementFor, isSettlementWriter, mergeTaskNotes, NOTES_MARKER, siblingsToSettle, upsertDecision, writerCheck,
+  exitChanged, exitSettlementFor, isServerTask, isSettlementWriter, mergeTaskNotes, NOTES_MARKER, REOPEN_NOTE, reopenedTaskNotes, siblingsToSettle,
+  taskStateOf, upsertDecision, writerCheck, writerTenant,
 } from './exit-settlement.trigger';
 import {
-  CLOSE_NOTE, doneTaskDecision, flattenCategoryLists, isAutoClosed, needsPositions, overlappingCount, resolveSettlementTenant, toAvatarInfo,
+  CLOSE_NOTE, doneTaskDecision, flattenCategoryLists, isAutoClosed, needsPositions, overlappingCount, pickBooksId, toAvatarInfo,
   toInvoiceFacts,
 } from './exit-settlement.context';
+import { SYSTEM_AUTHOR } from '../workflow/activity';
 
 const settlement = (c: SettlementCase): ExitSettlement => ({
   case: c, exitYear: 2026, months: 6, yearlyFr: 600, dueFr: 300, billedFr: 600, overpaidRappen: 30000,
@@ -120,8 +122,12 @@ describe('upsertDecision', () => {
     expect(upsertDecision(settlement('none'), 'auto-closed')).toBe('noop');
   });
 
-  it.each([...due, 'none' as SettlementCase])('never touches a task of another tenant (%s)', (c) => {
-    expect(upsertDecision(settlement(c), 'foreign')).toBe('noop');
+  it.each(due)('replaces a squatted doc at the task id with a fresh server task when %s is due', (c) => {
+    expect(upsertDecision(settlement(c), 'squatted')).toBe('replace');
+  });
+
+  it('leaves a squatted doc alone while nothing is due (no task is needed)', () => {
+    expect(upsertDecision(settlement('none'), 'squatted')).toBe('noop');
   });
 });
 
@@ -197,6 +203,29 @@ describe('isAutoClosed', () => {
   it('keeps a task the treasurer completed as a decision', () => {
     expect(isAutoClosed({ state: 'done', notes: 'Austrittsdatum: 31.10.2026' })).toBe(false);
   });
+
+  it('ignores trailing blank lines after the close note', () => {
+    expect(isAutoClosed({ state: 'done', notes: `x\n${CLOSE_NOTE}\n\n  ` })).toBe(true);
+  });
+
+  it('is a decision when anything follows the close note (hand-reopened, then decided)', () => {
+    // auto-closed, reopened by hand (notes untouched), then decided by the treasurer
+    const notes = `figures\n${CLOSE_NOTE}\nEntschieden von Anna am 01.10.2026: Rückerstattung CHF 100.00`;
+    expect(isAutoClosed({ state: 'done', notes })).toBe(false);
+    expect(doneTaskDecision({ state: 'done', notes })).toBe('Entschieden von Anna am 01.10.2026: Rückerstattung CHF 100.00');
+  });
+
+  it('is never auto-closed while the task is open', () => {
+    expect(isAutoClosed({ state: 'initial', notes: `x\n${CLOSE_NOTE}` })).toBe(false);
+  });
+});
+
+describe('reopenedTaskNotes', () => {
+  it('turns the close note into history, so a later decision never reads as auto-closed', () => {
+    const notes = reopenedTaskNotes(`old\n${NOTES_MARKER}\nangerufen\n${CLOSE_NOTE}`, 'neu');
+    expect(notes).toBe(`neu\n${NOTES_MARKER}\nangerufen\n${REOPEN_NOTE}`);
+    expect(notes).not.toContain(CLOSE_NOTE);
+  });
 });
 
 describe('doneTaskDecision', () => {
@@ -209,19 +238,40 @@ describe('doneTaskDecision', () => {
   });
 });
 
-describe('resolveSettlementTenant', () => {
-  it('takes the membership tenant the books and the org also belong to', () => {
-    expect(resolveSettlementTenant(['scs'], ['scs'], ['scs', 'kring'])).toBe('scs');
+describe('pickBooksId', () => {
+  const cfg = (okey: string, data: Record<string, unknown>) => ({ okey, data });
+
+  it('takes the one books config of the tenant owned by the membership org (ownerKey)', () => {
+    expect(pickBooksId([cfg('scs', { tenants: ['scs'], ownerKey: 'org.scs' })], 'scs', 'scs')).toBe('scs');
   });
 
-  it('ignores a foreign tenant smuggled into the membership', () => {
-    expect(resolveSettlementTenant(['evil', 'scs'], ['scs'], ['scs'])).toBe('scs');
+  it('finds books whose id differs from the org okey (gss owned by an org)', () => {
+    const configs = [cfg('scs', { tenants: ['scs'], ownerKey: 'org.scs' }), cfg('gss', { tenants: ['scs'], ownerKey: 'org.mkdf7xin64es5q4rmhdj' })];
+    expect(pickBooksId(configs, 'scs', 'mkdf7xin64es5q4rmhdj')).toBe('gss');
   });
 
-  it('skips when no tenant is shared by all three', () => {
-    expect(resolveSettlementTenant(['evil', 'scs'], ['gss'], ['scs'])).toBeUndefined();
-    expect(resolveSettlementTenant(['evil'], ['scs'], ['scs'])).toBeUndefined();
-    expect(resolveSettlementTenant([], [], [])).toBeUndefined();
+  it('never takes the books from the org okey or the tenant alone', () => {
+    expect(pickBooksId([cfg('scs', { tenants: ['scs'] })], 'scs', 'scs')).toBeUndefined();
+    expect(pickBooksId([cfg('scs', { tenants: ['scs'], ownerKey: '' , orgId: 'scs' })], 'scs', 'scs')).toBeUndefined();
+  });
+
+  it('reads the legacy orgId only when ownerKey is absent', () => {
+    expect(pickBooksId([cfg('scs', { tenants: ['scs'], orgId: 'scs' })], 'scs', 'scs')).toBe('scs');
+  });
+
+  it('ignores personal books, books of another tenant and archived configs', () => {
+    expect(pickBooksId([cfg('bka', { tenants: ['scs'], ownerKey: 'person.kaiser' })], 'scs', 'kaiser')).toBeUndefined();
+    expect(pickBooksId([cfg('scs', { tenants: ['evil'], ownerKey: 'org.scs' })], 'scs', 'scs')).toBeUndefined();
+    expect(pickBooksId([cfg('scs', { tenants: ['scs'], ownerKey: 'org.scs', isArchived: true })], 'scs', 'scs')).toBeUndefined();
+  });
+
+  it('detects nothing when several books match', () => {
+    const configs = [cfg('a', { tenants: ['scs'], ownerKey: 'org.scs' }), cfg('b', { tenants: ['scs'], ownerKey: 'org.scs' })];
+    expect(pickBooksId(configs, 'scs', 'scs')).toBeUndefined();
+  });
+
+  it('detects nothing without an org', () => {
+    expect(pickBooksId([cfg('scs', { tenants: ['scs'], ownerKey: 'org.' })], 'scs', '')).toBeUndefined();
   });
 });
 
@@ -297,14 +347,63 @@ describe('isSettlementWriter', () => {
 
 describe('writerCheck', () => {
   it.each([
-    ['service_account', 'allow'],
-    ['system', 'allow'],
-    ['api_key', 'check-user'],
-    ['unauthenticated', 'check-user'],
-    ['unknown', 'check-user'],
-    ['app_user', 'check-user'],
-    ['something-new', 'check-user'],
-  ])('%s -> %s (fail closed)', (authType, expected) => {
-    expect(writerCheck(authType)).toBe(expected);
+    ['service_account', 'u1', 'skip'],
+    ['system', 'u1', 'skip'],
+    ['api_key', 'u1', 'check-user'],
+    ['unauthenticated', 'u1', 'check-user'],
+    ['unknown', 'u1', 'check-user'],
+    ['app_user', 'u1', 'check-user'],
+    ['something-new', 'u1', 'check-user'],
+    ['app_user', undefined, 'skip'],
+    ['app_user', '', 'skip'],
+  ])('%s / %s -> %s (no writer, no tenant: nothing to do)', (authType, authId, expected) => {
+    expect(writerCheck(authType, authId)).toBe(expected);
+  });
+});
+
+describe('writerTenant', () => {
+  it('is the first tenant of the writer\'s user doc, like getCallerTenantId', () => {
+    expect(writerTenant({ tenants: ['scs', 'kring'] })).toBe('scs');
+  });
+  it('is empty without a user doc or tenants', () => {
+    expect(writerTenant(undefined)).toBe('');
+    expect(writerTenant({ tenants: [] })).toBe('');
+    expect(writerTenant({})).toBe('');
+  });
+});
+
+describe('isServerTask / taskStateOf (squatting)', () => {
+  const server = {
+    tenants: ['scs'], state: 'initial', completionDate: '', notes: '', tags: 'exit-settlement',
+    relatedKey: 'membership.m1', author: { ...SYSTEM_AUTHOR },
+  };
+
+  it('accepts the task the trigger wrote, also with extra tags', () => {
+    expect(isServerTask(server, 'scs', 'm1')).toBe(true);
+    expect(isServerTask({ ...server, tags: 'urgent, exit-settlement' }, 'scs', 'm1')).toBe(true);
+  });
+
+  it.each([
+    ['another author', { author: { ...SYSTEM_AUTHOR, key: 'p9', name1: 'Mallory' } }],
+    ['no author', { author: undefined }],
+    ['no settlement tag', { tags: 'todo' }],
+    ['another membership', { relatedKey: 'membership.m2' }],
+    ['another tenant', { tenants: ['evil'] }],
+    ['no tenants', { tenants: undefined }],
+  ])('rejects a doc with %s', (_why, over) => {
+    const doc = { ...server, ...over };
+    expect(isServerTask(doc, 'scs', 'm1')).toBe(false);
+    expect(taskStateOf(doc, 'scs', 'm1')).toBe('squatted');
+  });
+
+  it('a squatted done or archived doc is still squatted, not a decision', () => {
+    expect(taskStateOf({ ...server, tags: '', state: 'done', completionDate: '20261001' }, 'scs', 'm1')).toBe('squatted');
+    expect(taskStateOf({ ...server, tags: '', isArchived: true }, 'scs', 'm1')).toBe('squatted');
+  });
+
+  it('a server task keeps its usual states', () => {
+    expect(taskStateOf(undefined, 'scs', 'm1')).toBe('missing');
+    expect(taskStateOf(server, 'scs', 'm1')).toBe('open');
+    expect(taskStateOf({ ...server, state: 'done', notes: `x\n${CLOSE_NOTE}` }, 'scs', 'm1')).toBe('auto-closed');
   });
 });

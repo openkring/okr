@@ -569,7 +569,8 @@
       "adjust-in-progress": "La facture est en cours d'adaptation. Termine d'abord cette étape.",
       "invalid-claim": "La facture liée ne correspond pas à ce départ. Vérifie-la à la main.",
       "state-changed": "Le cas a changé entre-temps. Rouvre la tâche.",
-      "no-membership": "L'adhésion est introuvable."
+      "no-membership": "L'adhésion est introuvable.",
+      "no-books": "Aucune comptabilité unique n'est configurée pour l'organisation de cette adhésion. Règle la sortie à la main."
     },
     "doneToast": "Le départ est décompté."
   }

@@ -1,12 +1,13 @@
 /**
  * Exit fee settlement, detection side (spec 1.105 §4): when a membership's exit date changes,
- * open, update or close the treasurer's settlement task. Nothing is paid or sent here; a failure
- * only means the treasurer settles by hand.
+ * open, update or close the treasurer's settlement task, and rebuild a not-yet-invoiced fee row of
+ * the running year (§4.6). Nothing is paid or sent here; a failure only means the treasurer settles
+ * by hand.
  *
- * §4.6 (rebuilding a not-yet-invoiced fee row) is deliberately NOT done here: the membership rules
- * let a user write a membership that merely contains one of their tenants, so an automatic write
- * into member-fees would be a cross-tenant tampering path. The no-invoice task text tells the
- * treasurer to reload the row in the fee run instead.
+ * The tenant is the WRITER's tenant (`users/{authId}.tenants[0]`, as `getCallerTenantId` reads it for
+ * callables), never guessed from the membership's `tenants` array; the membership must belong to it
+ * and the writer must hold a settlement role. Admin SDK / system writes and writes without an authId
+ * do nothing: the callable's «extend» already set its task done, the backfill passes its tenant itself.
  */
 import { logger } from 'firebase-functions/v2';
 import { onDocumentWrittenWithAuthContext } from 'firebase-functions/v2/firestore';
@@ -14,21 +15,23 @@ import { DocumentData, Firestore, getFirestore } from 'firebase-admin/firestore'
 import { AvatarInfo, MembershipCollection, TaskCollection, TaskModel, UserCollection } from '@okr/shared-models';
 import { addDuration, convertDateFormatToString, DateFormat, getTodayStr } from '@okr/shared-util-core';
 import { getTaskIndex } from '@okr/project-task-util';
+import { tenantIdOfUserData } from '@okr/shared-util-functions';
 import {
   computeExitSettlement, EXIT_SETTLEMENT_TAG, ExitSettlement, exitSettlementTaskName, exitSettlementTaskNotes, noExitSettlement,
 } from '@okr/relationship-membership-util';
 
 import { SYSTEM_AUTHOR } from '../workflow/activity';
 import { withoutUndefined } from '../invoice/invoice.logic';
-import { CLOSE_NOTE, ExitContext, isAutoClosed, loadExitContext, settlementTaskId, treasurerAssignee } from './exit-settlement.context';
+import { CLOSE_NOTE, ExitContext, isAutoClosed, isExitContext, loadExitContext, settlementTaskId, treasurerAssignee } from './exit-settlement.context';
+import { rebuildFeeRow, settlementAfterRebuild } from './exit-settlement.fee-row';
 import { claimedInvoiceKey } from './settle-membership-exit.logic';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'onMembershipExitWritten';
 const DUE_IN_DAYS = 14;
 
-export type UpsertDecision = 'create' | 'update' | 'close' | 'reopen' | 'noop';
-export type TaskState = 'missing' | 'open' | 'claimed' | 'done' | 'auto-closed' | 'foreign';
+export type UpsertDecision = 'create' | 'update' | 'close' | 'reopen' | 'replace' | 'noop';
+export type TaskState = 'missing' | 'open' | 'claimed' | 'done' | 'auto-closed' | 'squatted';
 
 /** Replaces the close note when an auto-closed task is reopened: keeps the history, no longer reads as auto-closed. */
 export const REOPEN_NOTE = 'Wieder geöffnet: Austritt erneut geändert.';
@@ -57,13 +60,20 @@ export function isSettlementWriter(user: DocumentData | undefined, tenantId: str
 }
 
 /**
- * How to treat the writer of the event — fail closed. Only Admin SDK (service account) and system
- * writes pass unchecked; every other value ('unknown', 'api_key', 'app_user', 'unauthenticated',
- * anything new) needs a user doc with a settlement role in the tenant. The docs do not say which
- * authType a signed-in client write carries, so none is trusted.
+ * How to treat the writer of the event — fail closed. Admin SDK (service account) and system writes
+ * and writes without an authId have no writer tenant, so the trigger does nothing ('skip'): the
+ * callable's «extend» already set its task done, the backfill runs with its own tenant. Every other
+ * value ('unknown', 'api_key', 'app_user', 'unauthenticated', anything new) needs a user doc with a
+ * settlement role; the docs do not say which authType a signed-in client write carries.
  */
-export function writerCheck(authType: string): 'allow' | 'check-user' {
-  return authType === 'service_account' || authType === 'system' ? 'allow' : 'check-user';
+export function writerCheck(authType: string, authId: string | undefined): 'skip' | 'check-user' {
+  if (authType === 'service_account' || authType === 'system' || !authId) return 'skip';
+  return 'check-user';
+}
+
+/** The writer's tenant: `users/{authId}.tenants[0]`, the value `getCallerTenantId` uses; '' when none. */
+export function writerTenant(user: DocumentData | undefined): string {
+  return tenantIdOfUserData(user);
 }
 
 const isSettleableExit = (exit: string, thisYear: number): boolean => {
@@ -108,14 +118,29 @@ export function exitSettlementFor(membership: { isArchived?: boolean }, compute:
 
 const notesOf = (t: DocumentData | undefined): string => (typeof t?.['notes'] === 'string' ? (t['notes'] as string) : '');
 
+const hasSettlementTag = (t: DocumentData): boolean =>
+  typeof t['tags'] === 'string' && (t['tags'] as string).split(',').map(x => x.trim()).includes(EXIT_SETTLEMENT_TAG);
+
 /**
- * The settlement task as `upsertDecision` sees it. A task of another tenant (the id is guessable,
- * tasks are client-writable) and an archived task are never touched; a done task the trigger closed
- * itself is 'auto-closed', every other done task is the treasurer's decision.
+ * Whether the doc at `exit-<membershipKey>` is the task the trigger wrote: system author, the
+ * settlement tag, this membership, this tenant. The id is predictable and tasks are client-writable,
+ * so anything else is a squat.
  */
-export function taskStateOf(task: DocumentData | undefined, tenantId: string): TaskState {
+export function isServerTask(task: DocumentData, tenantId: string, membershipKey: string): boolean {
+  const author = (task['author'] ?? {}) as Record<string, unknown>;
+  return author['key'] === SYSTEM_AUTHOR.key && author['name1'] === SYSTEM_AUTHOR.name1 && author['modelType'] === SYSTEM_AUTHOR.modelType &&
+    hasSettlementTag(task) && task['relatedKey'] === `membership.${membershipKey}` &&
+    Array.isArray(task['tenants']) && (task['tenants'] as string[]).includes(tenantId);
+}
+
+/**
+ * The settlement task as `upsertDecision` sees it. A doc that is not a server task (`isServerTask`,
+ * incl. one of another tenant) is 'squatted'; an archived task is never touched; a done task the
+ * trigger closed itself is 'auto-closed', every other done task is the treasurer's decision.
+ */
+export function taskStateOf(task: DocumentData | undefined, tenantId: string, membershipKey: string): TaskState {
   if (!task) return 'missing';
-  if (!(Array.isArray(task['tenants']) && (task['tenants'] as string[]).includes(tenantId))) return 'foreign';
+  if (!isServerTask(task, tenantId, membershipKey)) return 'squatted';
   if (task['isArchived'] === true) return 'done';
   const done = task['state'] === 'done' || (typeof task['completionDate'] === 'string' && task['completionDate'] !== '');
   if (done) return isAutoClosed(task) ? 'auto-closed' : 'done';
@@ -126,18 +151,21 @@ export function taskStateOf(task: DocumentData | undefined, tenantId: string): T
  * What to do with the settlement task (§4.5). A done task is a decision already taken: never
  * reopened, never duplicated. A claimed task (an invoice adjustment in progress, the storno possibly
  * written) is left alone too: closing or rewriting it would strand a cancelled invoice. A task the
- * trigger closed itself is reopened in place when something is due again.
+ * trigger closed itself is reopened in place when something is due again. A squatted doc at the
+ * task id is overwritten with a fresh server task once something is due (the id is ours by
+ * convention); while nothing is due no task is needed.
  */
 export function upsertDecision(s: ExitSettlement, task: TaskState): UpsertDecision {
-  if (task === 'done' || task === 'claimed' || task === 'foreign') return 'noop';
+  if (task === 'squatted') return s.case === 'none' ? 'noop' : 'replace';
+  if (task === 'done' || task === 'claimed') return 'noop';
   if (s.case === 'none') return task === 'open' ? 'close' : 'noop';
   if (task === 'auto-closed') return 'reopen';
   return task === 'open' ? 'update' : 'create';
 }
 
 /** The one decision function of the trigger, the backfill and its dry run. */
-export function settlementTaskDecision(s: ExitSettlement, task: DocumentData | undefined, tenantId: string): UpsertDecision {
-  return upsertDecision(s, taskStateOf(task, tenantId));
+export function settlementTaskDecision(s: ExitSettlement, task: DocumentData | undefined, tenantId: string, membershipKey: string): UpsertDecision {
+  return upsertDecision(s, taskStateOf(task, tenantId, membershipKey));
 }
 
 /** The notes of a reopened task: fresh figures, the treasurer text kept, the close note turned into history. */
@@ -160,10 +188,13 @@ export async function openOrUpdateSettlementTask(db: Firestore, ctx: ExitContext
 
   return db.runTransaction(async (tx) => {
     const found = (await tx.get(ref)).data();
-    const state = taskStateOf(found, ctx.tenantId);
+    const state = taskStateOf(found, ctx.tenantId, ctx.membershipKey);
     const decision = upsertDecision(settlement, state);
     if (state === 'claimed') logger.info(`${CF_NAME}: task of membership ${ctx.membershipKey} is claimed by an invoice adjustment, left alone`);
-    if (state === 'foreign') logger.warn(`${CF_NAME}: task ${ref.id} does not belong to tenant ${ctx.tenantId}, left alone`);
+    if (state === 'squatted') {
+      logger.warn(`${CF_NAME}: doc ${ref.id} is not a settlement task of tenant ${ctx.tenantId} / membership ${ctx.membershipKey}` +
+        (decision === 'replace' ? ', overwritten with a fresh task' : ', nothing due, left alone'));
+    }
 
     switch (decision) {
       case 'noop':
@@ -174,7 +205,8 @@ export async function openOrUpdateSettlementTask(db: Firestore, ctx: ExitContext
         break;
       }
       case 'update': {
-        const notes = mergeTaskNotes(notesOf(found), generated);
+        // a task reopened by hand still carries the close note: turn it into history here too
+        const notes = reopenedTaskNotes(notesOf(found), generated);
         tx.update(ref, { name, notes, index: getTaskIndex({ ...(found as TaskModel), name, notes }) });
         break;
       }
@@ -183,6 +215,7 @@ export async function openOrUpdateSettlementTask(db: Firestore, ctx: ExitContext
         const open = new TaskModel(ctx.tenantId).state;
         const patch: Partial<TaskModel> = {
           state: open, completionDate: '', name, notes: reopenedTaskNotes(notesOf(found), generated), dueDate,
+          linkKey: '', linkModelType: '',
           ...(assignee ? { assignee } : {}),
         };
         tx.update(ref, withoutUndefined({ ...patch, index: getTaskIndex({ ...(found as TaskModel), ...patch }) }));
@@ -191,6 +224,11 @@ export async function openOrUpdateSettlementTask(db: Firestore, ctx: ExitContext
       case 'create': {
         const assignee = await treasurerAssignee(db, ctx.tenantId, today);
         tx.create(ref, withoutUndefined(newSettlementTask(ctx, name, generated, dueDate, assignee)));
+        break;
+      }
+      case 'replace': {
+        const assignee = await treasurerAssignee(db, ctx.tenantId, today);
+        tx.set(ref, withoutUndefined(newSettlementTask(ctx, name, generated, dueDate, assignee)));
         break;
       }
     }
@@ -214,21 +252,41 @@ function newSettlementTask(ctx: ExitContext, name: string, generated: string, du
   return doc;
 }
 
-/** Settle one membership, unless the writer of the event may not act in its tenant. */
-async function settleMembership(db: Firestore, membershipKey: string, writer: { authType: string; authId?: string }, today: string): Promise<void> {
+/** Settle one membership in the writer's tenant, rebuilding its open fee row first (§4.6). */
+async function settleMembership(db: Firestore, membershipKey: string, tenantId: string, today: string): Promise<void> {
   // an archived membership is loaded too, so its open task closes
-  const ctx = await loadExitContext(db, membershipKey, today, { includeArchived: true });
-  if (!ctx) return;
-  if (writerCheck(writer.authType) === 'check-user') {
-    const user = writer.authId ? (await db.collection(UserCollection).doc(writer.authId).get()).data() : undefined;
-    if (!isSettlementWriter(user, ctx.tenantId)) {
-      logger.warn(`${CF_NAME}: writer ${writer.authType}/${writer.authId ?? '-'} may not settle membership ${membershipKey} in tenant ${ctx.tenantId}, skipped`);
-      return;
-    }
+  const ctx = await loadExitContext(db, membershipKey, tenantId, today, { includeArchived: true });
+  if (!isExitContext(ctx)) {
+    logger.info(`${CF_NAME}: membership ${membershipKey} not settled in tenant ${tenantId}: ${ctx}`);
+    return;
   }
   const settlement = exitSettlementFor(ctx.membership, () => computeExitSettlement(ctx.input));
-  const decision = await openOrUpdateSettlementTask(db, ctx, settlement);
-  logger.info(`${CF_NAME}: membership ${membershipKey} case ${settlement.case}${settlement.manualReason ? ` (${settlement.manualReason})` : ''} -> ${decision}`);
+  let rebuilt = false;
+  try {
+    rebuilt = await rebuildFeeRow(db, ctx, today);
+    if (rebuilt) logger.info(`${CF_NAME}: rebuilt the open fee row of membership ${membershipKey}`);
+  } catch (err) {
+    logger.error(`${CF_NAME}: fee row rebuild failed for membership ${membershipKey}`, err);
+  }
+  const forTask = settlementAfterRebuild(settlement, rebuilt);
+  const decision = await openOrUpdateSettlementTask(db, ctx, forTask);
+  logger.info(`${CF_NAME}: membership ${membershipKey} case ${settlement.case}${settlement.manualReason ? ` (${settlement.manualReason})` : ''}` +
+    `${forTask !== settlement ? ' (row rebuilt, no task needed)' : ''} -> ${decision}`);
+}
+
+/** The writer's tenant when the writer may settle there; undefined (with a log line) otherwise. */
+async function settlementTenantOf(db: Firestore, membershipKey: string, writer: { authType: string; authId?: string }): Promise<string | undefined> {
+  if (writerCheck(writer.authType, writer.authId) === 'skip') {
+    logger.info(`${CF_NAME}: membership ${membershipKey} written by ${writer.authType}/${writer.authId ?? '-'}, no writer tenant, skipped`);
+    return undefined;
+  }
+  const user = writer.authId ? (await db.collection(UserCollection).doc(writer.authId).get()).data() : undefined;
+  const tenantId = writerTenant(user);
+  if (!tenantId || !isSettlementWriter(user, tenantId)) {
+    logger.warn(`${CF_NAME}: writer ${writer.authType}/${writer.authId ?? '-'} may not settle membership ${membershipKey} in tenant ${tenantId || '-'}, skipped`);
+    return undefined;
+  }
+  return tenantId;
 }
 
 export const onMembershipExitWritten = onDocumentWrittenWithAuthContext(
@@ -242,7 +300,17 @@ export const onMembershipExitWritten = onDocumentWrittenWithAuthContext(
     const writer = { authType: String(event.authType), authId: event.authId };
 
     const keys: string[] = exitChanged(before, after) ? [membershipKey] : [];
-    if (!before && after) {
+    const created = !before && !!after;
+    if (keys.length === 0 && !created) return;
+    let tenantId: string | undefined;
+    try {
+      tenantId = await settlementTenantOf(db, membershipKey, writer);
+    } catch (err) {
+      logger.error(`${CF_NAME}: writer check failed for membership ${membershipKey}`, err);
+    }
+    if (!tenantId) return;
+
+    if (created && after) {
       try {
         const memberKey = typeof after['memberKey'] === 'string' ? (after['memberKey'] as string) : '';
         const orgKey = typeof after['orgKey'] === 'string' ? (after['orgKey'] as string) : '';
@@ -259,7 +327,7 @@ export const onMembershipExitWritten = onDocumentWrittenWithAuthContext(
     for (const key of keys) {
       try {
         // the live document, not the event's snapshot: out-of-order delivery must not resurrect an old exit
-        await settleMembership(db, key, writer, today);
+        await settleMembership(db, key, tenantId, today);
       } catch (err) {
         logger.error(`${CF_NAME}: settlement task failed for membership ${key}`, err);
       }

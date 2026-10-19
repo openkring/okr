@@ -39,6 +39,7 @@ export const EXIT_SETTLEMENT_I18N_KEYS = {
   error_invalid_claim:       PFX + 'exitSettlement.error.invalid-claim',
   error_state_changed:       PFX + 'exitSettlement.error.state-changed',
   error_no_membership:       PFX + 'exitSettlement.error.no-membership',
+  error_no_books:            PFX + 'exitSettlement.error.no-books',
   done_toast:            PFX + 'exitSettlement.doneToast',
 } satisfies Record<string, string>;
 
@@ -88,6 +89,7 @@ export function settleErrorText(i18n: ExitSettlementI18n, reason: string | undef
     case 'invalid-claim': return i18n.error_invalid_claim();
     case 'state-changed': return i18n.error_state_changed();
     case 'no-membership': return i18n.error_no_membership();
+    case 'no-books': return i18n.error_no_books();
     default: return i18n.error();
   }
 }

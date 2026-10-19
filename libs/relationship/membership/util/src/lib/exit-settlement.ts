@@ -25,7 +25,7 @@ export interface ExitSettlementInput {
   categoryLists: Record<string, Record<string, number>>;
   /** OrgModel.membershipCategoryKey */
   defaultCategoryList: string;
-  /** accounting-configs okey resolved from orgKey */
+  /** accountingTenantId: the one accounting-configs doc of the tenant owned by the membership's org (ownerKey), never the org okey or the tenant */
   booksId: string;
   /** candidates for the member in these books, not cancelled */
   invoices: InvoiceFacts[];

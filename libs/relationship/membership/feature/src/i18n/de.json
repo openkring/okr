@@ -569,7 +569,8 @@
       "adjust-in-progress": "Die Rechnung wird gerade angepasst. Bitte schliesse das zuerst ab.",
       "invalid-claim": "Die zugehörige Rechnung passt nicht zu diesem Austritt. Bitte prüfe sie von Hand.",
       "state-changed": "Der Fall hat sich inzwischen geändert. Bitte öffne die Aufgabe neu.",
-      "no-membership": "Die Mitgliedschaft wurde nicht gefunden."
+      "no-membership": "Die Mitgliedschaft wurde nicht gefunden.",
+      "no-books": "Für die Organisation dieser Mitgliedschaft ist keine eindeutige Buchhaltung eingerichtet. Bitte rechne den Austritt von Hand ab."
     },
     "doneToast": "Der Austritt ist abgerechnet."
   }

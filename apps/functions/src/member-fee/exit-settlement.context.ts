@@ -11,6 +11,7 @@ import {
 } from '@okr/shared-models';
 import { getFullName } from '@okr/shared-util-core';
 import { ExitSettlementInput, InvoiceFacts, invoiceShape } from '@okr/relationship-membership-util';
+import { orgOwnerKey, resolveOwnerKey } from '@okr/finance-accounting-util';
 
 import { activeResponsible, AvatarRef, ResponsibilityLike, treasurerResponsibilityKey } from '../invoice/treasurer-contact.logic';
 import { storedDecision } from './settle-membership-exit.logic';
@@ -19,6 +20,7 @@ import { storedDecision } from './settle-membership-exit.logic';
 export const CLOSE_NOTE = 'Nicht mehr nötig: Austritt geändert.';
 
 export interface ExitContext {
+  /** the app tenant the settlement runs in: the writer's / caller's tenant, never derived from the membership */
   tenantId: string;
   membershipKey: string;
   membership: MembershipModel;
@@ -82,9 +84,15 @@ export function toAvatarInfo(ref: AvatarRef | undefined): AvatarInfo | undefined
   };
 }
 
-/** A task the trigger closed itself (§4.5) is not a treasurer decision: a later exit reopens it. */
+/**
+ * A task the trigger closed itself (§4.5) is not a treasurer decision: a later exit reopens it. Only
+ * when the close note is the LAST non-empty line: a task reopened by hand and then decided carries
+ * the decision line after it, and that is a decision.
+ */
 export function isAutoClosed(task: DocumentData): boolean {
-  return str(task['state']) === 'done' && str(task['notes']).includes(CLOSE_NOTE);
+  if (str(task['state']) !== 'done') return false;
+  const lines = str(task['notes']).split('\n').map(l => l.trim()).filter(l => l !== '');
+  return lines[lines.length - 1] === CLOSE_NOTE;
 }
 
 /** The decision line the card shows for a done task: the close note when the trigger closed it itself. */
@@ -103,12 +111,18 @@ function exitYearOf(exit: string): number {
 }
 
 /**
- * The tenant the settlement runs in: the first tenant of the membership that the books
- * (`accounting-configs/{orgKey}`) and the org also belong to. Membership `tenants` alone is not
- * trusted — the rules let a user write a membership that merely contains one of their tenants.
+ * The books of a membership (§4.2): the one accounting config of the tenant whose owner
+ * (`resolveOwnerKey`) is the membership's org. Never `accounting-configs/{orgKey}` and never the app
+ * tenant: accountingTenantId, tenantId and the org okey are three different things (gss books are
+ * owned by org mkdf7xin64es5q4rmhdj). Personal books (owner `person.*`) never match. Undefined when
+ * none or several match.
  */
-export function resolveSettlementTenant(membershipTenants: string[], configTenants: string[], orgTenants: string[]): string | undefined {
-  return membershipTenants.find(t => !!t && configTenants.includes(t) && orgTenants.includes(t));
+export function pickBooksId(configs: { okey: string; data: DocumentData }[], tenantId: string, orgKey: string): string | undefined {
+  if (!orgKey || !tenantId) return undefined;
+  const owner = orgOwnerKey(orgKey);
+  const hits = configs.filter(c => c.data['isArchived'] !== true && tenantsOf(c.data).includes(tenantId) &&
+    resolveOwnerKey(c.data as { ownerKey?: string; orgId?: string }) === owner);
+  return hits.length === 1 ? hits[0].okey : undefined;
 }
 
 /**
@@ -121,33 +135,42 @@ export function needsPositions(facts: InvoiceFacts, exitYear: number): boolean {
   return year >= exitYear - 1 && year <= exitYear + 1;
 }
 
+/** Why `loadExitContext` found nothing to settle. */
+export type ExitContextMiss = 'no-membership' | 'foreign-tenant' | 'no-books';
+
+export function isExitContext(r: ExitContext | ExitContextMiss | undefined): r is ExitContext {
+  return typeof r === 'object' && r !== null;
+}
+
 /**
- * Load the membership and everything its exit settlement depends on. The books are
- * `accounting-configs/{orgKey}` (never the app tenant, §4.2). Undefined when the membership is gone,
- * archived (nothing to settle) or no tenant is shared by the membership, the books and the org.
+ * Load the membership and everything its exit settlement depends on, in the app tenant `tenantId`
+ * (the writer's or caller's tenant, §4.2). The membership must belong to that tenant; its books are
+ * found via the owner (`pickBooksId`). A miss names why: 'no-membership' (gone or archived),
+ * 'foreign-tenant', 'no-books' (none or several books owned by the org in the tenant).
  * `includeArchived` is only for the trigger, which loads an archived membership to close its task.
  */
 export async function loadExitContext(
-  db: Firestore, membershipKey: string, today: string, opts: { includeArchived?: boolean } = {},
-): Promise<ExitContext | undefined> {
+  db: Firestore, membershipKey: string, tenantId: string, today: string, opts: { includeArchived?: boolean } = {},
+): Promise<ExitContext | ExitContextMiss> {
   const snap = await db.collection(MembershipCollection).doc(membershipKey).get();
   const data = snap.data();
-  if (!snap.exists || !data) return undefined;
-  if (data['isArchived'] === true && opts.includeArchived !== true) return undefined;
+  if (!snap.exists || !data) return 'no-membership';
+  if (data['isArchived'] === true && opts.includeArchived !== true) return 'no-membership';
+  if (!tenantId || !tenantsOf(data).includes(tenantId)) return 'foreign-tenant';
   const membership = { ...(data as MembershipModel), okey: membershipKey };
   const orgKey = str(membership.orgKey);
-  if (!orgKey) return undefined;
-  const booksId = orgKey;
 
-  const [configSnap, orgSnap] = await Promise.all([
-    db.collection(AccountingConfigCollection).doc(booksId).get(),
-    db.collection(OrgCollection).doc(orgKey).get(),
+  const [configsSnap, orgSnap] = await Promise.all([
+    db.collection(AccountingConfigCollection).where('tenants', 'array-contains', tenantId).get(),
+    orgKey ? db.collection(OrgCollection).doc(orgKey).get() : undefined,
   ]);
-  const tenantId = resolveSettlementTenant(tenantsOf(data), tenantsOf(configSnap.data() ?? {}), tenantsOf(orgSnap.data() ?? {}));
-  if (!tenantId) {
-    logger.warn(`loadExitContext: membership ${membershipKey} shares no tenant with books/org ${orgKey}, skipped`);
-    return undefined;
+  const configs = configsSnap.docs.map(d => ({ okey: d.id, data: d.data() }));
+  const booksId = pickBooksId(configs, tenantId, orgKey);
+  if (!booksId) {
+    logger.info(`loadExitContext: membership ${membershipKey} (org ${orgKey || '-'}) has no unique books in tenant ${tenantId}, skipped`);
+    return 'no-books';
   }
+  const config = configs.find(c => c.okey === booksId)?.data ?? {};
 
   const exitYear = exitYearOf(str(membership.dateOfExit)) || Number(today.substring(0, 4));
   const memberKey = str(membership.memberKey);
@@ -158,8 +181,8 @@ export async function loadExitContext(
     memberKey ? db.collection(InvoiceCollection).where('receiver.key', '==', memberKey).get() : undefined,
   ]);
 
-  const schedule = ((configSnap.data()?.['feeSchedule'] ?? []) as FeeScheduleEntry[]).find(e => e.year === exitYear);
-  const defaultCategoryList = str(orgSnap.data()?.['membershipCategoryKey']) || 'mcat';
+  const schedule = ((config['feeSchedule'] ?? []) as FeeScheduleEntry[]).find(e => e.year === exitYear);
+  const defaultCategoryList = str(orgSnap?.data()?.['membershipCategoryKey']) || 'mcat';
   const categoryLists = flattenCategoryLists(categorySnap.docs.map(d => d.data()).filter(d => d['isArchived'] !== true));
 
   // The membership itself is taken from its own read, so it always counts once with its latest data.

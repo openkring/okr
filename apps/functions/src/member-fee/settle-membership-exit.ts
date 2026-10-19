@@ -19,7 +19,7 @@ import { logger } from 'firebase-functions/v2';
 import { DocumentData, DocumentReference, Firestore, getFirestore, Transaction } from 'firebase-admin/firestore';
 
 import {
-  AccountingConfigCollection, AddressCollection, AddressModel, InvoiceCollection, InvoiceModel, InvoicePositionCollection,
+  AddressCollection, AddressModel, InvoiceCollection, InvoiceModel, InvoicePositionCollection,
   InvoicePositionModel, MembershipCollection, PaymentCollection, PaymentOrderCollection, TaskCollection,
 } from '@okr/shared-models';
 import { addDuration, convertDateFormatToString, DateFormat, getTodayStr, removeKeyFromOkrModel } from '@okr/shared-util-core';
@@ -34,7 +34,7 @@ import { pickMemberIban } from '../expense/expense.util';
 import { cancelInvoiceCore } from '../invoice/cancel-invoice';
 import { totalRappen, withoutUndefined } from '../invoice/invoice.logic';
 import { writeFinanceHistory } from '../finance-history/finance-history';
-import { doneTaskDecision, ExitContext, loadExitContext, toInvoiceFacts } from './exit-settlement.context';
+import { doneTaskDecision, ExitContext, isExitContext, loadExitContext, toInvoiceFacts } from './exit-settlement.context';
 import {
   appendInvoiceNote, appendTaskNote, choiceRefusal, claimedChoices, claimedInvoiceKey, claimPatch, claimRefusal, decisionNote,
   emptySettlement, extendedRelLog, isLiveRefund, isValidClaim, membershipKeyOf, postalAddressText, refundDecision, refundInvoiceRefusal, refundMessageId, refundOrderId,
@@ -91,18 +91,17 @@ export const settleMembershipExit = onCall(
 
     // a done task always answers with its stored decision, even when the membership is gone
     if (isDone(task)) {
-      const done = await loadExitContext(db, membershipKey, today).catch(() => undefined);
-      const settlement = done && done.tenantId === tenantId ? computeExitSettlement(done.input) : emptySettlement();
+      const done = await loadExitContext(db, membershipKey, tenantId, today).catch(() => undefined);
+      const settlement = isExitContext(done) ? computeExitSettlement(done.input) : emptySettlement();
       return { settlement, done: true, decision: doneTaskDecision(task) };
     }
 
-    // ---- membership and books ----
-    const ctx = await loadExitContext(db, membershipKey, today);
-    if (!ctx) throw refusal('no-membership', `membership ${membershipKey} cannot be settled`);
-    if (ctx.tenantId !== tenantId) throw new HttpsError('permission-denied', 'membership belongs to another tenant');
+    // ---- membership and books (the caller's tenant; books via ownerKey, never the org okey or the tenant) ----
+    const ctx = await loadExitContext(db, membershipKey, tenantId, today);
+    if (ctx === 'foreign-tenant') throw new HttpsError('permission-denied', 'membership belongs to another tenant');
+    if (ctx === 'no-books') throw refusal('no-books', `membership ${membershipKey} has no unique books owned by its org in tenant ${tenantId}`);
+    if (!isExitContext(ctx)) throw refusal('no-membership', `membership ${membershipKey} cannot be settled`);
     const books = ctx.input.booksId;
-    const config = (await db.collection(AccountingConfigCollection).doc(books).get()).data();
-    if (!tenantsOf(config).includes(tenantId)) throw new HttpsError('permission-denied', `${books} does not belong to this tenant`);
 
     const claimed = claimedInvoiceKey(task);
     const settlement = claimed ? await claimedSettlement(db, ctx, claimed) : computeExitSettlement(ctx.input);

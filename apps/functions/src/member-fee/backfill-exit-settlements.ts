@@ -2,7 +2,9 @@
  * One-off admin callable (spec 1.105): opens settlement tasks for exits saved before the trigger
  * existed. Same create path as the trigger (`openOrUpdateSettlementTask`), which skips done and
  * claimed tasks. `dryRun` computes what would happen with the same decision function
- * (`settlementTaskDecision`) and writes nothing. A reopened auto-closed task counts as updated.
+ * (`settlementTaskDecision`) and writes nothing. A reopened auto-closed task counts as updated, a
+ * squatted doc overwritten with a fresh task as created. The tenant is the validated caller tenant;
+ * the books are found via ownerKey (`loadExitContext`), a membership without unique books is skipped.
  */
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
@@ -14,7 +16,7 @@ import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId 
 import { computeExitSettlement } from '@okr/relationship-membership-util';
 
 import { selectBackfillMemberships } from './backfill-exit-settlements.logic';
-import { loadExitContext, readSettlementTask } from './exit-settlement.context';
+import { isExitContext, loadExitContext, readSettlementTask } from './exit-settlement.context';
 import { openOrUpdateSettlementTask, settlementTaskDecision, UpsertDecision } from './exit-settlement.trigger';
 
 const REGION = 'europe-west6';
@@ -52,13 +54,13 @@ export const backfillExitSettlements = onCall(
     const result: BackfillResult = { created: [], updated: [], skipped: [] };
     for (const key of keys) {
       try {
-        const ctx = await loadExitContext(db, key, today);
-        if (!ctx || ctx.tenantId !== tenantId) { result.skipped.push(key); continue; }
+        const ctx = await loadExitContext(db, key, tenantId, today);
+        if (!isExitContext(ctx)) { logger.info(`${CF_NAME}: membership ${key} skipped: ${ctx}`); result.skipped.push(key); continue; }
         const settlement = computeExitSettlement(ctx.input);
         const decision: UpsertDecision = dryRun === true
-          ? settlementTaskDecision(settlement, await readSettlementTask(db, key), tenantId)
+          ? settlementTaskDecision(settlement, await readSettlementTask(db, key), tenantId, key)
           : await openOrUpdateSettlementTask(db, ctx, settlement);
-        if (decision === 'create') result.created.push(key);
+        if (decision === 'create' || decision === 'replace') result.created.push(key);
         else if (decision === 'noop') result.skipped.push(key);
         else result.updated.push(key);
       } catch (err) {

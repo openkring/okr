@@ -569,7 +569,8 @@
       "adjust-in-progress": "La factura se está ajustando ahora. Termina eso primero.",
       "invalid-claim": "La factura vinculada no corresponde a esta baja. Compruébala a mano.",
       "state-changed": "El caso ha cambiado entretanto. Vuelve a abrir la tarea.",
-      "no-membership": "No se encontró la afiliación."
+      "no-membership": "No se encontró la afiliación.",
+      "no-books": "No hay una contabilidad única configurada para la organización de esta afiliación. Liquida la baja a mano."
     },
     "doneToast": "La baja está liquidada."
   }
