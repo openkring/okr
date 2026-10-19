@@ -3,7 +3,10 @@ import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
 import * as admin from 'firebase-admin';
 
+import { checkAdminRole } from '@okr/shared-util-functions';
+
 import { bexioApiKey, bexioTenantId, BEXIO_BASE } from './shared';
+import { loadIsBexioBackend } from './backend-gate';
 
 interface BexioAccountGroup {
   id: number;
@@ -155,6 +158,11 @@ export const syncBexioAccounts = onCall(
   },
   async (request: CallableRequest) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
+    // Rewrites the whole `accounts` tree: an admin operation (1.101 phase 3, was open to any signed-in user).
+    await checkAdminRole(request, 'syncBexioAccounts');
+    if (!(await loadIsBexioBackend(admin.firestore(), bexioTenantId.value()))) {
+      throw new HttpsError('failed-precondition', 'The accounting backend is no longer bexio (spec 1.68).');
+    }
     return runAccountSync(bexioTenantId.value(), 'syncBexioAccounts');
   }
 );
