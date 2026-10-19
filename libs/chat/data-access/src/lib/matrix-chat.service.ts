@@ -10,7 +10,7 @@ import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotif
 import { AppStore } from '@okr/shared-feature';
 import { checkVideoLimits, debugData, debugMessage } from '@okr/shared-util-core';
 import { OKR_VIDEO_FIELD, videoLink } from '@okr/content-document-util';
-import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError, VideoUploadError, buildPollContent, PollAnswerDef, POLL_START_EVENT, PinboardInput, AvailablePinboard, UNREAD_FROM_EVENT, MARKED_UNREAD_EVENT, flaggedUnreadFrom } from '@okr/chat-util';
+import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError, VideoUploadError, buildPollContent, PollAnswerDef, POLL_START_EVENT, PinboardInput, AvailablePinboard, UNREAD_FROM_EVENT, MARKED_UNREAD_EVENT, flaggedUnreadFrom, indexBookmarkEntries, bookmarkedMessageIds } from '@okr/chat-util';
 
 import { mediaMimeHint, mxcAvatarHttpUrl } from './matrix-helpers';
 import { MatrixMediaService } from './matrix-media.service';
@@ -579,7 +579,10 @@ export class MatrixChatService {
 
     // A room the client did not know yet (joined by a Cloud Function, e.g. the notes room)
     // arrives via sync, or we just joined it: load a message list that was requested too early.
-    this.client.on(ClientEvent.Room, (room: Room) => this.messages.handleRoomArrived(room));
+    this.client.on(ClientEvent.Room, (room: Room) => {
+      this.messages.handleRoomArrived(room);
+      if (this.bookmarkIndex?.roomId === room.roomId && !this.bookmarkIndex.scanned) void this.scanNotesRoom(room.roomId);
+    });
     this.client.on(RoomEvent.MyMembership, (room: Room, membership: string) => {
       if (membership === 'join') this.messages.handleRoomArrived(room);
     });
@@ -595,6 +598,7 @@ export class MatrixChatService {
       if (data?.timeline && data.timeline.getTimelineSet() === room.getUnfilteredTimelineSet()
           && data.timeline !== room.getLiveTimeline()) return;
       this.messages.handleTimelineEvent(event, room);
+      if (this.bookmarkIndex?.roomId === room.roomId) this.indexNotesEvents([event]);
     });
 
     // Timeline reset — rebuild the open room's message list from the FRESH live timeline.
@@ -653,7 +657,60 @@ export class MatrixChatService {
     // Redactions — either mark a message as deleted, or refresh reactions if a reaction was removed
     this.client.on(RoomEvent.Redaction, (event: MatrixEvent, room: Room) => {
       this.messages.handleRedaction(event, room);
+      const entryId = event.getAssociatedId();
+      if (entryId && this.bookmarkIndex?.roomId === room?.roomId && this.bookmarkIndex.index.delete(entryId)) {
+        this.bookmarkIndex.subject.next(bookmarkedMessageIds(this.bookmarkIndex.index));
+      }
     });
+  }
+
+  // ─── Bookmark index (spec 1.104): which messages are already saved in «Notizen an mich» ──
+
+  /** One notes room per tenant app and session; replaced when another notes room is asked for. */
+  private bookmarkIndex?: { roomId: string; index: Map<string, string>; subject: BehaviorSubject<Set<string>>; scanned: boolean };
+  private static readonly BOOKMARK_SCAN_ROUNDS = 30;
+
+  /**
+   * Ids of the messages saved in the notes room `notesRoomId`. The room is read back to its start
+   * once (notes rooms are small), then new entries and deletions are followed live — a deletion
+   * on another device included. Drives hiding «Merken» on an already saved message.
+   */
+  public bookmarkedMessageIds(notesRoomId: string): Observable<Set<string>> {
+    if (this.bookmarkIndex?.roomId !== notesRoomId) {
+      this.bookmarkIndex = { roomId: notesRoomId, index: new Map(), subject: new BehaviorSubject<Set<string>>(new Set()), scanned: false };
+      void this.scanNotesRoom(notesRoomId);
+    }
+    return this.bookmarkIndex.subject.asObservable();
+  }
+
+  /** Read the whole notes room once; a room the client does not know yet is scanned on arrival (ClientEvent.Room). */
+  private async scanNotesRoom(roomId: string): Promise<void> {
+    const room = this.client?.getRoom(roomId);
+    if (!this.client || !room || this.bookmarkIndex?.roomId !== roomId || this.bookmarkIndex.scanned) return;
+    this.bookmarkIndex.scanned = true;
+    const timeline = room.getLiveTimeline();
+    try {
+      for (let round = 0; round < MatrixChatService.BOOKMARK_SCAN_ROUNDS; round++) {
+        if (!timeline.getPaginationToken(EventTimeline.BACKWARDS)) break;
+        if (!(await this.client.paginateEventTimeline(timeline, { backwards: true, limit: 100 }))) break;
+      }
+    } catch (error) {
+      // Partial index: entries not reached keep «Merken» visible — the old behaviour, never a lost bookmark.
+      console.warn('MatrixChatService.scanNotesRoom: could not read the whole notes room', error);
+    }
+    this.indexNotesEvents(timeline.getEvents());
+  }
+
+  private indexNotesEvents(events: MatrixEvent[]): void {
+    const state = this.bookmarkIndex;
+    if (!state) return;
+    const entries = events
+      .filter(e => e.getType() === EventType.RoomMessage && !!e.getId())
+      .map(e => ({ eventId: e.getId()!, sender: e.getSender(), content: e.getContent(), redacted: e.isRedacted() }));
+    const found = indexBookmarkEntries(entries, this.client?.getUserId() ?? undefined);
+    if (found.size === 0) return;
+    for (const [entryId, messageId] of found) state.index.set(entryId, messageId);
+    state.subject.next(bookmarkedMessageIds(state.index));
   }
 
   public getCurrentUserId(): string | undefined {

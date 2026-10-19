@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { MatrixMessage } from '@okr/shared-models';
-import { OKR_BOOKMARK_FIELD, notesRoomAliasLocalpart, bookmarkSnippet, buildBookmarkContent, readBookmark, isTrustedBookmarkEntry, matrixPermalink, parseMatrixPermalink, isOwnNotesRoom, resolvePermalinkTarget } from './bookmark.util';
+import { OKR_BOOKMARK_FIELD, notesRoomAliasLocalpart, bookmarkSnippet, buildBookmarkContent, readBookmark, isTrustedBookmarkEntry, matrixPermalink, parseMatrixPermalink, isOwnNotesRoom, resolvePermalinkTarget, indexBookmarkEntries, bookmarkedMessageIds } from './bookmark.util';
 
 const SERVER = 'bkchat.etke.host';
 
@@ -155,5 +155,29 @@ describe('resolvePermalinkTarget', () => {
   it('ask/notes not joined', () => {
     expect(resolvePermalinkTarget('#ask_g_p:s', rooms)).toEqual({ kind: 'none' });
     expect(resolvePermalinkTarget('#notes_t_p:s', rooms)).toEqual({ kind: 'none' });
+  });
+});
+
+describe('indexBookmarkEntries', () => {
+  const me = '@kaiser:hs';
+  const entry = (eventId: string, target: string, sender = me, redacted = false) => ({
+    eventId, sender, redacted,
+    content: { msgtype: 'm.text', body: 'x', [OKR_BOOKMARK_FIELD]: { roomId: '!r:hs', eventId: target, senderId: '@a:hs', originTs: 1, roomName: 'R', snippet: 's', senderName: 'A' } },
+  });
+
+  it('maps each own entry to the message it saves', () => {
+    const index = indexBookmarkEntries([entry('$e1', '$m1'), entry('$e2', '$m2')], me);
+    expect([...index.entries()]).toEqual([['$e1', '$m1'], ['$e2', '$m2']]);
+  });
+
+  it('ignores entries sent by someone else, deleted entries and plain notes', () => {
+    const plain = { eventId: '$p', sender: me, redacted: false, content: { msgtype: 'm.text', body: 'note' } };
+    const index = indexBookmarkEntries([entry('$e1', '$m1', '@x:hs'), entry('$e2', '$m2', me, true), plain], me);
+    expect(index.size).toBe(0);
+  });
+
+  it('bookmarkedMessageIds is the set of saved messages, duplicates collapsed', () => {
+    const index = indexBookmarkEntries([entry('$e1', '$m1'), entry('$e2', '$m1'), entry('$e3', '$m2')], me);
+    expect(bookmarkedMessageIds(index)).toEqual(new Set(['$m1', '$m2']));
   });
 });

@@ -1772,7 +1772,7 @@ export class MatrixChat implements OnDestroy {
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
       return;
     }
-    const canBookmark = !inNotes && !isKioskOnly(this.currentUser());
+    const canBookmark = !inNotes && !isKioskOnly(this.currentUser()) && !this.store.bookmarkedMessageIds().has(message.eventId);
     // Pinboard: no threads; «Antworten» becomes «Privat antworten» (non-authors only), plus
     // «An alle antworten» when the pinboard allows it. Authors get no reply action.
     const pushReplyButtons = (): void => {

@@ -163,3 +163,32 @@ export function resolvePermalinkTarget(
   const group = groups.find(g => groupRoomAliasLocalpart(g.okey) === `group_${aliasKey}`);
   return { kind: 'group', groupKey: group?.okey ?? aliasKey };
 }
+
+/** A notes-room event as the bookmark index needs it. */
+export interface BookmarkIndexEntry {
+  eventId: string;
+  sender: string | undefined;
+  content: unknown;
+  redacted: boolean;
+}
+
+/**
+ * Index of the bookmark entries in a notes room: entry event id → id of the message it saves.
+ * Only the user's own, not-deleted entries count — the same trust rule as the card
+ * (isTrustedBookmarkEntry). Drives hiding «Merken» on an already saved message.
+ */
+export function indexBookmarkEntries(entries: BookmarkIndexEntry[], ownUserId: string | undefined): Map<string, string> {
+  const index = new Map<string, string>();
+  if (!ownUserId) return index;
+  for (const e of entries) {
+    if (e.redacted || e.sender !== ownUserId) continue;
+    const bookmark = readBookmark(e.content);
+    if (bookmark) index.set(e.eventId, bookmark.eventId);
+  }
+  return index;
+}
+
+/** The ids of all messages saved in the notes room. */
+export function bookmarkedMessageIds(index: Map<string, string>): Set<string> {
+  return new Set(index.values());
+}

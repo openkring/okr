@@ -417,6 +417,13 @@ export const _MatrixChatStore = signalStore(
   // listener (and its read cost) exists exactly where the bell is shown. The query mirrors the
   // rules: own person, own tenant, pending.
   withProps((store) => ({
+    /** Ids of the messages already saved in «Notizen an mich» — «Merken» is hidden for them. */
+    bookmarkedIdsResource: rxResource({
+      params: resourceParams(() => ({ notesRoomId: store.notesRoom()?.roomId ?? '' })),
+      stream: ({ params }) => params.notesRoomId
+        ? store.matrixService.bookmarkedMessageIds(params.notesRoomId)
+        : of(new Set<string>()),
+    }),
     pendingReminders: rxResource({
       params: resourceParams(() => ({
         active: store.isCurrentRoomNotes(),
@@ -430,6 +437,8 @@ export const _MatrixChatStore = signalStore(
   })),
 
   withComputed((state) => ({
+    /** Whether `eventId` is already saved in «Notizen an mich». */
+    bookmarkedMessageIds: computed((): Set<string> => state.bookmarkedIdsResource.value() ?? new Set<string>()),
     /** Pending reminders by the bookmark entry they belong to (`bookmarkEventId`). */
     remindersByEntry: computed((): Map<string, ChatReminderModel> =>
       new Map((state.pendingReminders.value() ?? []).map(r => [r.bookmarkEventId, r] as const))),
