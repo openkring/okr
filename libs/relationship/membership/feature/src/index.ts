@@ -10,3 +10,5 @@ export * from './lib/membership-list';
 export * from './lib/membership.store';
 export * from './lib/membership-accordion';
 export * from './lib/member-avatars.pipe';
+export * from './lib/membership-srv';
+export * from './lib/membership-srv.store';

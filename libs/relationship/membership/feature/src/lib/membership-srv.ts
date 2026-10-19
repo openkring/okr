@@ -8,12 +8,12 @@ import { ColorIonic, SrvIndex } from '@okr/shared-models';
 
 import { AvatarLabel } from '@okr/avatar-ui';
 
-import { AocSrvStore, getMismatches } from './aoc-srv.store';
+import { MembershipSrvStore, getMismatches } from './membership-srv.store';
 import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
 import { fill } from '@okr/shared-util-core';
 
 @Component({
-  selector: 'okr-aoc-srv',
+  selector: 'okr-membership-srv',
   standalone: true,
   imports: [
     SvgIconPipe,
@@ -22,7 +22,7 @@ import { fill } from '@okr/shared-util-core';
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonButton, IonIcon, IonSpinner, IonHeader,
     IonButtons, IonMenuButton, IonTitle, IonToolbar
   ],
-  providers: [AocSrvStore],
+  providers: [MembershipSrvStore],
   styles: [`okr-list-filter { width: 100%; }`],
   template: `
     <ion-header>
@@ -312,8 +312,8 @@ import { fill } from '@okr/shared-util-core';
     </ion-content>
   `,
 })
-export class AocSrv implements OnInit {
-  protected readonly store = inject(AocSrvStore);
+export class MembershipSrv implements OnInit {
+  protected readonly store = inject(MembershipSrvStore);
   private actionSheetController = inject(ActionSheetController);
   private toastController = inject(ToastController);
 

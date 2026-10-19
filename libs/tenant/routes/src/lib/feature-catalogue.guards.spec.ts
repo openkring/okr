@@ -10,7 +10,7 @@ import { FEATURE_ROUTES } from './feature-catalogue';
 /**
  * THE SAFETY NET FOR THE 2026-08-05 RULINGS — R-5 (`isContentAdminGuard` on the five routes
  * whose menu docs say `contentAdmin`) and R-6 (the same swap on the seven where the route said
- * `privileged`, a deliberate ACCESS REDUCTION).
+ * `privileged`, a deliberate ACCESS REDUCTION). `/aoc/srv` left R-5 for Mitglieder in 1.101 phase 3.
  *
  * ELEVEN, NOT TWELVE, SINCE R-7 (2026-08-25): `document`'s `:listId/:contextMenuName` child was
  * one of R-6's seven and no longer carries a role guard at all. See `documentBlock` in
@@ -32,7 +32,7 @@ import { FEATURE_ROUTES } from './feature-catalogue';
  */
 
 /** The `/aoc` children ruled down to contentAdmin. Everything else under `/aoc` is admin-only. */
-const AOC_CONTENT_ADMIN = ['tag', 'srv', 'website'] as const;
+const AOC_CONTENT_ADMIN = ['tag', 'website'] as const;
 
 interface RuledRoute {
   menuDoc: string;
@@ -46,7 +46,6 @@ const RULED_R5: RuledRoute[] = [
   { menuDoc: 'templates', blockId: 'pdf-template', path: 'templates' },
   { menuDoc: 'forms-all', blockId: 'forms', path: 'forms' },
   { menuDoc: 'aoc-website', blockId: 'aoc', path: 'aoc', child: 'website' },
-  { menuDoc: 'aoc-srv', blockId: 'aoc', path: 'aoc', child: 'srv' },
   { menuDoc: 'tag-all', blockId: 'aoc', path: 'aoc', child: 'tag' },
 ];
 
@@ -198,9 +197,9 @@ const blockedFor = (injector: Injector, routes: RuledRoute[]): string[] =>
 const reachableFor = (injector: Injector, routes: RuledRoute[]): string[] =>
   routes.filter(entry => activates(injector, ...chainOf(entry))).map(entry => entry.menuDoc);
 
-describe('the eleven routes ruled to match their menu documents', () => {
+describe('the ten routes ruled to match their menu documents', () => {
   it('covers every route the rulings name', () => {
-    expect(RULED_R5).toHaveLength(5);
+    expect(RULED_R5).toHaveLength(4);
     expect(REDUCED_R6).toHaveLength(6);
     expect(DEGRADED_R7).toHaveLength(1);
     expect(DEGRADED_R8).toHaveLength(1);
@@ -209,14 +208,14 @@ describe('the eleven routes ruled to match their menu documents', () => {
   /**
    * THE RULINGS THEMSELVES, and the assertion that fails on a revert to `isPrivilegedGuard` —
    * `hasRole('privileged')` → `['privileged', 'admin']` never admitted `contentAdmin`, the very
-   * role all eleven menu documents name.
+   * role all ten menu documents name.
    */
-  it('a contentAdmin reaches all eleven', () => {
+  it('a contentAdmin reaches all ten', () => {
     expect(blockedFor(CONTENT_ADMIN, ALL_RULED),
       'menu row visible, navigation still cancelled — a ruling is not in effect').toEqual([]);
   });
 
-  it('an admin reaches all eleven too (softening never locks admins out)', () => {
+  it('an admin reaches all ten too (softening never locks admins out)', () => {
     expect(blockedFor(ADMIN, ALL_RULED)).toEqual([]);
   });
 
@@ -230,11 +229,11 @@ describe('the eleven routes ruled to match their menu documents', () => {
       'privileged access came back — R-6 chose the straight swap over a union guard').toEqual([]);
   });
 
-  it('a privileged-only user reaches none of the eleven', () => {
+  it('a privileged-only user reaches none of the ten', () => {
     expect(reachableFor(PRIVILEGED, ALL_RULED)).toEqual([]);
   });
 
-  it('a merely-registered member reaches none of the eleven', () => {
+  it('a merely-registered member reaches none of the ten', () => {
     expect(reachableFor(REGISTERED, ALL_RULED)).toEqual([]);
   });
 
@@ -312,6 +311,7 @@ const withoutRedirects = (children: readonly Route[] = []): Route[] => children.
 const AOC_REDIRECTS: Record<string, string> = {
   content: '/page/integrity',
   doc: '/document/orphans',
+  srv: '/membership/srv',
   trip: '/trips/maintenance',
   diary: '/diary/import',
   kiosk: '/trips/kiosk',
@@ -364,12 +364,12 @@ describe('/aoc guards after the 2026-08-05 rulings', () => {
 
   /**
    * The floor must not be the thing that decides: a contentAdmin has to clear the PARENT (so
-   * the three ruled children are reachable) and still be stopped by each admin-only child. Both
+   * the two ruled children are reachable) and still be stopped by each admin-only child. Both
    * halves in one assertion, because getting either wrong reintroduces the defeat-by-ancestor
    * bug the restructuring exists to avoid. R-6 touched no `/aoc` route, so the floor is still
-   * the union of these children: nine `['admin']` ∪ three `['contentAdmin', 'admin']`.
+   * the union of these children: nine `['admin']` ∪ two `['contentAdmin', 'admin']` (`srv` left for Mitglieder in phase 3).
    */
-  it('a contentAdmin clears the floor but only reaches the three ruled screens', () => {
+  it('a contentAdmin clears the floor but only reaches the two ruled screens', () => {
     const parent = fragmentOf('aoc', 'aoc');
     const reachable = withoutRedirects(parent.children)
       .filter(c => activates(CONTENT_ADMIN, parent, c))

@@ -598,5 +598,97 @@
       "yearMessage": "Choisis l'année durant laquelle les membres ont changé de catégorie."
     },
     "readError": "Les adhésions n'ont pas pu être lues. Réessaie plus tard."
+  },
+  "srv": {
+    "title": "Gestion de l'intégration SRV / Regasoft",
+    "index": {
+      "title": "Synchroniser les membres SRV",
+      "subtitle": "Compare les adhésions SRV actuelles (orgKey=srv) avec les membres du portail Regasoft. Rapprochement primaire via memberId = serviceId, repli via le nom.",
+      "reset": "Réinitialiser l'index",
+      "button": "Construire l'index",
+      "building": "Construction de l’index...",
+      "none": "Pas encore d’index. Construisez-le.",
+      "summary": "{shown} sur {total} entrées : {scs} SCS, {srv} SRV, {regasoft} Regasoft"
+    },
+    "person": {
+      "update": {
+        "label": "Modifier la personne"
+      }
+    },
+    "membership": {
+      "update": {
+        "label": "Modifier l'adhésion"
+      },
+      "parent": {
+        "create": {
+          "label": "Créer une adhésion de fédération"
+        },
+        "update": {
+          "label": "Modifier l'adhésion de fédération"
+        }
+      }
+    },
+    "regasoft": {
+      "copy": {
+        "label": "Copier les données Regasoft"
+      },
+      "view": {
+        "label": "Afficher les données Regasoft"
+      },
+      "add": {
+        "label": "Créer une entrée Regasoft"
+      },
+      "update": {
+        "label": "Mettre à jour l'entrée Regasoft"
+      }
+    },
+    "license": {
+      "create": {
+        "label": "Créer une licence"
+      },
+      "download": {
+        "label": "Télécharger la licence"
+      },
+      "title": "Licences",
+      "empty": "Aucun membre licencié dans l’index.",
+      "count": "{count} membres avec une licence active"
+    },
+    "show": "Afficher",
+    "hide": "Masquer",
+    "col": {
+      "name": "Nom",
+      "age": "Âge",
+      "category": "Cat",
+      "member_id": "BK memberId",
+      "service_id": "ID SRV",
+      "nation": "Nation",
+      "membership_type": "Type d’affiliation",
+      "license": "Licence",
+      "license_until": "Licence valable jusqu’au",
+      "other_clubs": "Autres clubs",
+      "attribute": "Attribut",
+      "regasoft": "Regasoft"
+    },
+    "foreign": {
+      "title": "Membres étrangers",
+      "empty": "Aucun membre étranger dans l’index.",
+      "count": "{count} membres de nationalité étrangère"
+    },
+    "clubs": {
+      "title": "Membres dans d’autres clubs",
+      "empty": "Aucun membre d’un autre club dans l’index.",
+      "count": "{count} membres dans d’autres clubs",
+      "subtitle": "{count} membres également dans d’autres clubs SRV"
+    },
+    "filter": {
+      "all": "Tous",
+      "bk": "Uniquement dans BK",
+      "srv": "Uniquement dans SRV",
+      "both": "Les deux"
+    },
+    "mismatch": {
+      "yes": "oui",
+      "no": "non"
+    }
   }
 }

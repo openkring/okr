@@ -322,26 +322,7 @@ const aoc: FeatureBlock = {
       // screen you use to switch a block back on. Plain label, no i18n key: `resolveMenuLabelKey`
       // passes a non-`@` label through unchanged.
       { key: 'tenant-features', name: 'tenant-features', url: '/tenant/features', action: 'navigate', roleNeeded: 'admin', icon: 'settings', label: 'Features' },
-      // `roleNeeded: contentAdmin` (not `admin`) is the LIVE value, copied verbatim — and it
-      // is now HONOURED. It used to be inert: the `/aoc` route parent was `isAdminGuard()`, so
-      // a contentAdmin-but-not-admin user saw the row and was bounced. Owner ruling R-5
-      // (2026-08-05) added `isContentAdminGuard` and put it on `/aoc/srv`, and moved the `/aoc`
-      // parent down to a contentAdmin FLOOR so the child guard is actually reached — see the
-      // `aoc` block in `@okr/tenant-routes`' route catalogue for the floor's derivation. The
-      // same ruling covered `/aoc/tag` and `aoc/website`; R-6 (same day) covered `document-all`
-      // and `forms-all`. `addresses` (`subject`) is a DIFFERENT pair (menu `privileged` vs.
-      // route `admin`) and is still open — see its own note.
-      //
-      // `icon: '//org.srv'` is a LIVE-DATA DEFECT, flagged rather than justified — identical
-      // to `boats-club`'s `//org.scs` on the `resource` block: it is a storage asset path for
-      // one specific organisation (SRV, the Swiss rowing federation), so a newly seeded tenant
-      // gets this literal written into its own `aoc-srv` doc and renders a blank icon.
-      // Mirrored verbatim per the never-invent rule; a decision for whoever owns menu-doc icon
-      // hygiene. NOTE the SCREEN itself is generic despite the name (an SRV membership
-      // reconciliation admin tool), which is why the entry is catalogued at all rather than
-      // excluded as tenant-bespoke — the tenant literal is in the icon only, not in the
-      // url/label/name.
-      { key: 'aoc-srv',        name: 'aoc-srv',        url: '/aoc/srv',        action: 'navigate', roleNeeded: 'contentAdmin', icon: '//org.srv', label: '@item.aoc-srv' },
+      // `aoc-srv` moved to Mitglieder › Wartung as `membership-srv` (spec 1.101 phase 3).
       // Purely presentational, mirrored verbatim off the live doc (`z950dr1fob9b4eydqogq`:
       // `action: divider`, empty `url`/`label`, `icon: help-circle`, `roleNeeded: admin`,
       // `tenants: [bka, scs, bkg, kring, p13, okr]`) and kept LAST, the position it holds in
@@ -1090,6 +1071,7 @@ const relationship: FeatureBlock = {
       { key: 'maint-divider-member', name: 'maint-divider-member', url: '', action: 'divider', roleNeeded: 'memberAdmin', icon: 'help-circle', label: '@item.maint-divider-member' },
       { key: 'membership-old-juniors', name: 'membership-old-juniors', url: 'oldJuniors', action: 'call', roleNeeded: 'memberAdmin', icon: 'checkbox-circle-double', label: '@item.membership-old-juniors' },
       { key: 'membership-category-changes', name: 'membership-category-changes', url: 'categoryChanges', action: 'call', roleNeeded: 'memberAdmin', icon: 'checkbox-circle-double', label: '@item.membership-category-changes' },
+      { key: 'membership-srv', name: 'membership-srv', url: '/membership/srv', action: 'navigate', roleNeeded: 'memberAdmin', icon: 'checkbox-circle-double', label: '@item.membership-srv' },
     ] },
     { key: 'c-groupmembers', name: 'c-groupmembers', url: '', action: 'context', roleNeeded: 'privileged', icon: 'help-circle', label: '', children: [
       { key: 'membership-add', name: 'membership-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: '@item.membership-add' },

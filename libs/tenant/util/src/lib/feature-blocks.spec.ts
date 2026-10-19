@@ -83,14 +83,15 @@ describe('FEATURE_BLOCKS Wartung rows (1.101 phase 2)', () => {
     ]);
   });
 
-  it('c-membership ends with the member maintenance divider and the two membership reports, all memberAdmin', () => {
+  it('c-membership ends with the member maintenance divider, the two membership reports and the SRV page, all memberAdmin', () => {
     const children = findContext('c-membership')?.children ?? [];
-    const tail = children.slice(-3);
-    expect(tail.map(c => c.name)).toEqual(['maint-divider-member', 'membership-old-juniors', 'membership-category-changes']);
+    const tail = children.slice(-4);
+    expect(tail.map(c => c.name)).toEqual(['maint-divider-member', 'membership-old-juniors', 'membership-category-changes', 'membership-srv']);
     expect(tail[0]).toMatchObject({ action: 'divider', url: '', roleNeeded: 'memberAdmin' });
     expect(tail.slice(1).map(c => [c.url, c.action, c.roleNeeded])).toEqual([
       ['oldJuniors', 'call', 'memberAdmin'],
       ['categoryChanges', 'call', 'memberAdmin'],
+      ['/membership/srv', 'navigate', 'memberAdmin'],
     ]);
   });
 

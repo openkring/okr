@@ -14,14 +14,13 @@ import { AddressCollection, AddressModel, MembershipCollection, MembershipModel,
 import { debugListLoaded, getBirthYear, getFullName, getMismatches, getSystemQuery, getTodayStr, getYear, isAfterOrEqualDate, isMembership, isPerson } from '@okr/shared-util-core';
 
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
-import { MembershipEditModal } from '@okr/relationship-membership-feature';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { PersonService } from '@okr/subject-person-data-access';
-import { PersonEditModal } from '@okr/subject-person-feature';
-import { newMembershipForPerson } from '@okr/relationship-membership-util';
-import { AOC_I18N_KEYS } from '@okr/aoc-util';
+import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
+import { MEMBERSHIP_I18N_KEYS, newMembershipForPerson } from '@okr/relationship-membership-util';
+import { MembershipSrvMismatchModal } from '@okr/relationship-membership-ui';
 
-import { AocSrvMismatchModal } from './aoc-srv-mismatch.modal';
+import { MembershipEditModal } from './membership-edit.modal';
 
 export { getMismatches };
 
@@ -29,14 +28,14 @@ const PARENT_ORG = 'srv';
 
 // ─── Store state ──────────────────────────────────────────────────────────────
 
-export type AocSrvState = {
+export type MembershipSrvState = {
   index: SrvIndex[];
   searchTerm: string;
   selectedFilter: string;
   regasoftItems: number;
 };
 
-const initialState: AocSrvState = {
+const initialState: MembershipSrvState = {
   index: [],
   searchTerm: '',
   selectedFilter: 'all',
@@ -149,7 +148,7 @@ function loadIndex(tenantId: string): SrvIndex[] {
 
 // ─── Store ────────────────────────────────────────────────────────────────────
 
-export const AocSrvStore = signalStore(
+export const MembershipSrvStore = signalStore(
   withState(initialState),
   withProps(() => ({
     appStore: inject(AppStore),
@@ -160,9 +159,10 @@ export const AocSrvStore = signalStore(
     router: inject(Router),
     ownershipService: inject(OwnershipService),
     i18nService: inject(I18nService),
+    personEditModal: inject(PERSON_EDIT_MODAL, { optional: true }),
   })),
   withProps(store => ({
-    i18n: store.i18nService.translateAll(AOC_I18N_KEYS),
+    i18n: store.i18nService.translateAll(MEMBERSHIP_I18N_KEYS),
   })),
 
   withComputed(state => ({
@@ -181,7 +181,7 @@ export const AocSrvStore = signalStore(
         query.push({ key: 'orgModelType',    operator: '==', value: 'org' });
         return store.firestoreService
           .searchData<MembershipModel>(MembershipCollection, query, 'memberName2', 'asc')
-          .pipe(debugListLoaded<MembershipModel>('AocSrvStore.mainMemberships', params.currentUser));
+          .pipe(debugListLoaded<MembershipModel>('MembershipSrvStore.mainMemberships', params.currentUser));
       },
     }),
   })),
@@ -197,7 +197,7 @@ export const AocSrvStore = signalStore(
         query.push({ key: 'orgModelType',    operator: '==', value: 'org' });
         return store.firestoreService
           .searchData<MembershipModel>(MembershipCollection, query, 'memberName2', 'asc')
-          .pipe(debugListLoaded<MembershipModel>('AocSrvStore.parentMemberships', params.currentUser));
+          .pipe(debugListLoaded<MembershipModel>('MembershipSrvStore.parentMemberships', params.currentUser));
       },
     }),
   })),
@@ -263,9 +263,9 @@ export const AocSrvStore = signalStore(
         const result = await fn();
         regasoftContacts = result.data;
         patchState(store, { regasoftItems: regasoftContacts.length });
-        console.log(`AocSrvStore.buildIndex: ${regasoftContacts.length} Regasoft contacts loaded`);
+        console.log(`MembershipSrvStore.buildIndex: ${regasoftContacts.length} Regasoft contacts loaded`);
       } catch (e) {
-        console.error('AocSrvStore.buildIndex: getSrvContacts failed', e);
+        console.error('MembershipSrvStore.buildIndex: getSrvContacts failed', e);
       }
 
       const regasoftByServiceId = new Map<string, SrvContact>();
@@ -379,20 +379,20 @@ export const AocSrvStore = signalStore(
           }
           const withClubs = index.filter(i => i.clubs.length > 0).length;
           const multiClubs = index.filter(i => i.clubs.length > 1).length;
-          console.log(`AocSrvStore.buildIndex: enriched ${detailResult.data.length} member details, ${withClubs} with clubs, ${multiClubs} with >1 club`);
+          console.log(`MembershipSrvStore.buildIndex: enriched ${detailResult.data.length} member details, ${withClubs} with clubs, ${multiClubs} with >1 club`);
         } catch (e) {
-          console.error('AocSrvStore.buildIndex: getSrvMemberDetail failed', e);
+          console.error('MembershipSrvStore.buildIndex: getSrvMemberDetail failed', e);
         }
       }
 
-      console.log(`AocSrvStore.buildIndex: index built with ${index.length} entries`);
+      console.log(`MembershipSrvStore.buildIndex: index built with ${index.length} entries`);
       patchState(store, { index });
       saveIndex(store.tenantId(), index);
     },
 
     async showRegasoftDetail(item: SrvIndex): Promise<void> {
       const modal = await store.modalController.create({
-        component: AocSrvMismatchModal,
+        component: MembershipSrvMismatchModal,
         cssClass: 'wide-modal',
         componentProps: { item },
       });
@@ -434,7 +434,8 @@ export const AocSrvStore = signalStore(
 
     async editPerson(item: SrvIndex): Promise<void> {
       const person = store.appStore.getPerson(item.personKey);
-      if (person) {
+      if (person && store.personEditModal) {
+        const PersonEditModal = await store.personEditModal();
         const modal = await store.modalController.create({
           component: PersonEditModal,
           componentProps: {
@@ -559,7 +560,7 @@ export const AocSrvStore = signalStore(
         });
         srvId = String(result.data.id);
       } catch (e) {
-        console.error('AocSrvStore.addToRegasoft: createSrvContact failed', e);
+        console.error('MembershipSrvStore.addToRegasoft: createSrvContact failed', e);
         throw e;
       }
 
@@ -601,7 +602,7 @@ export const AocSrvStore = signalStore(
           dateOfDeath:    sensitive.dod || null,
         });
       } catch (e) {
-        console.error('AocSrvStore.updateRegasoft: updateSrvContact failed', e);
+        console.error('MembershipSrvStore.updateRegasoft: updateSrvContact failed', e);
         throw e;
       }
 

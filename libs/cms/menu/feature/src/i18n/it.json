@@ -687,7 +687,8 @@
     "diary-import": "Prepara l'importazione",
     "maint-divider-member": "Manutenzione",
     "membership-old-juniors": "Giovani da riassegnare",
-    "membership-category-changes": "Cambi di categoria dei soci"
+    "membership-category-changes": "Cambi di categoria dei soci",
+    "membership-srv": "Confronto con la federazione (SRV)"
   },
   "ownership": {
     "fork_confirm": "«{name}» appartiene al catalogo delle funzionalità ({blocks}).\n\nIl salvataggio crea una copia propria del tenant «{forkKey}» e scollega questo tenant dall'originale condiviso. Le future correzioni del catalogo (URL, azione, ruolo) non raggiungeranno più questa voce.\n\nSalvare comunque?",

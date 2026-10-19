@@ -598,5 +598,97 @@
       "yearMessage": "Choose the year in which the members changed category."
     },
     "readError": "The memberships could not be read. Please try again later."
+  },
+  "srv": {
+    "title": "Manage the SRV / Regasoft integration",
+    "index": {
+      "title": "Sync SRV members",
+      "subtitle": "Compares the current SRV memberships (orgKey=srv) with the members in the Regasoft portal. Primary reconciliation via memberId = serviceId, fallback via name.",
+      "reset": "Reset index",
+      "button": "Build index",
+      "building": "Building the index...",
+      "none": "No index yet. Build the index.",
+      "summary": "{shown} of {total} entries: {scs} SCS, {srv} SRV, {regasoft} Regasoft"
+    },
+    "person": {
+      "update": {
+        "label": "Edit person"
+      }
+    },
+    "membership": {
+      "update": {
+        "label": "Edit membership"
+      },
+      "parent": {
+        "create": {
+          "label": "Create association membership"
+        },
+        "update": {
+          "label": "Edit association membership"
+        }
+      }
+    },
+    "regasoft": {
+      "copy": {
+        "label": "Copy Regasoft data"
+      },
+      "view": {
+        "label": "Show Regasoft data"
+      },
+      "add": {
+        "label": "Create Regasoft entry"
+      },
+      "update": {
+        "label": "Update Regasoft entry"
+      }
+    },
+    "license": {
+      "create": {
+        "label": "Create license"
+      },
+      "download": {
+        "label": "Download license"
+      },
+      "title": "Licenses",
+      "empty": "No licensed members in the index.",
+      "count": "{count} members with an active license"
+    },
+    "show": "Show",
+    "hide": "Hide",
+    "col": {
+      "name": "Name",
+      "age": "Age",
+      "category": "Cat",
+      "member_id": "BK memberId",
+      "service_id": "SRV ID",
+      "nation": "Nation",
+      "membership_type": "Membership type",
+      "license": "License",
+      "license_until": "License valid until",
+      "other_clubs": "Other clubs",
+      "attribute": "Attribute",
+      "regasoft": "Regasoft"
+    },
+    "foreign": {
+      "title": "Foreign members",
+      "empty": "No foreign members in the index.",
+      "count": "{count} members with a foreign nationality"
+    },
+    "clubs": {
+      "title": "Members in other clubs",
+      "empty": "No members in other clubs in the index.",
+      "count": "{count} members in other clubs",
+      "subtitle": "{count} members also in other SRV clubs"
+    },
+    "filter": {
+      "all": "All",
+      "bk": "Only in BK",
+      "srv": "Only in SRV",
+      "both": "Both"
+    },
+    "mismatch": {
+      "yes": "yes",
+      "no": "no"
+    }
   }
 }

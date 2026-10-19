@@ -297,8 +297,8 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                 </ion-item>
               </ion-row>
               <ion-row>
-                <ion-col size="5"><strong>{{ store.i18n.srv_col_name() }}</strong></ion-col>
-                <ion-col size="1"><strong>{{ store.i18n.srv_col_category() }}</strong></ion-col>
+                <ion-col size="5"><strong>{{ store.i18n.bexio_col_name() }}</strong></ion-col>
+                <ion-col size="1"><strong>{{ store.i18n.bexio_col_category() }}</strong></ion-col>
                 <ion-col size="3"><strong>BK Bexio ID</strong></ion-col>
                 <ion-col size="3"><strong>{{ store.i18n.bexio_col_bexio_id() }}</strong></ion-col>
               </ion-row>

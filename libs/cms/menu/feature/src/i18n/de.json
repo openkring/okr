@@ -687,7 +687,8 @@
     "diary-import": "Import vorbereiten",
     "maint-divider-member": "Wartung",
     "membership-old-juniors": "Umzuteilende Jugendliche",
-    "membership-category-changes": "Wechsel der Mitgliederkategorie"
+    "membership-category-changes": "Wechsel der Mitgliederkategorie",
+    "membership-srv": "Verbandsabgleich (SRV)"
   },
   "ownership": {
     "fork_confirm": "«{name}» gehört zum Feature-Katalog ({blocks}).\n\nBeim Speichern wird eine eigene Kopie «{forkKey}» für diesen Mandanten angelegt und der Mandant vom gemeinsamen Original abgehängt. Künftige Katalog-Korrekturen (URL, Aktion, Berechtigung) erreichen diesen Eintrag dann nicht mehr.\n\nTrotzdem speichern?",

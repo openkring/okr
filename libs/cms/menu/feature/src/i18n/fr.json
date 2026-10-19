@@ -687,7 +687,8 @@
     "diary-import": "Préparer l'import",
     "maint-divider-member": "Maintenance",
     "membership-old-juniors": "Juniors à réaffecter",
-    "membership-category-changes": "Changements de catégorie de membre"
+    "membership-category-changes": "Changements de catégorie de membre",
+    "membership-srv": "Comparaison avec la fédération (SRV)"
   },
   "ownership": {
     "fork_confirm": "« {name} » appartient au catalogue de fonctionnalités ({blocks}).\n\nL'enregistrement crée une copie propre au locataire « {forkKey} » et détache ce locataire de l'original partagé. Les corrections futures du catalogue (URL, action, rôle) n'atteindront plus cette entrée.\n\nEnregistrer quand même ?",

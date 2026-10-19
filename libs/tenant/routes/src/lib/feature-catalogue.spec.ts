@@ -81,3 +81,22 @@ describe('trip maintenance, trip kiosk and diary import routes (spec 1.101 phase
     expect(children.find(r => r.path === path)?.canActivate).toHaveLength(1);
   });
 });
+
+describe('membership SRV route (spec 1.101 phase 3)', () => {
+  const blockRoutes = (id: string) => FEATURE_ROUTES.find(b => b.id === id)!.routes();
+  const child = (routes: ReturnType<typeof blockRoutes>, path: string) => routes.find(r => r.path === path)?.children ?? [];
+
+  it('the old /aoc/srv url redirects to /membership/srv', () => {
+    const aoc = child(blockRoutes('aoc'), 'aoc').find(r => r.path === 'srv');
+    expect(aoc?.redirectTo).toBe('/membership/srv');
+    expect(aoc?.loadComponent).toBeUndefined();
+  });
+
+  it('the membership block has srv ahead of the :listId catch-all, behind one guard', () => {
+    const children = child(blockRoutes('relationship'), 'membership');
+    const paths = children.map(r => r.path);
+    expect(paths).toContain('srv');
+    expect(paths.indexOf('srv')).toBeLessThan(paths.indexOf(':listId/:orgId/:contextMenuName'));
+    expect(children.find(r => r.path === 'srv')?.canActivate).toHaveLength(1);
+  });
+});

@@ -4,7 +4,7 @@ import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonRow, 
 import { SrvIndex } from '@okr/shared-models';
 import { getMismatches } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
-import { AOC_I18N_KEYS, AocI18n } from '@okr/aoc-util';
+import { MEMBERSHIP_I18N_KEYS, MembershipI18n } from '@okr/relationship-membership-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
 interface SrvDisplayRow {
@@ -16,7 +16,7 @@ interface SrvDisplayRow {
 }
 
 @Component({
-  selector: 'okr-aoc-srv-mismatch-modal',
+  selector: 'okr-membership-srv-mismatch-modal',
   standalone: true,
   imports: [
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
@@ -55,13 +55,13 @@ interface SrvDisplayRow {
     </ion-content>
   `,
 })
-export class AocSrvMismatchModal {
+export class MembershipSrvMismatchModal {
   private readonly modalController = inject(ModalController);
 
   public item = input.required<SrvIndex>();
 
-  // Direct inject (no store): AocSrvStore opens this modal, importing it back would be circular.
-  protected readonly i18n = inject(I18nService).translateAll(AOC_I18N_KEYS) as AocI18n;
+  // Direct inject (no store): MembershipSrvStore opens this modal, importing it back would be circular.
+  protected readonly i18n = inject(I18nService).translateAll(MEMBERSHIP_I18N_KEYS) as MembershipI18n;
 
   protected rows = computed<SrvDisplayRow[]>(() => {
     const i = this.item();

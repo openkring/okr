@@ -173,7 +173,9 @@
     "root_name": "Nombre raíz",
     "col": {
       "bexio_id": "ID de Bexio",
-      "source": "Origen"
+      "source": "Origen",
+      "name": "Nombre",
+      "category": "Cat"
     }
   },
   "chat": {
@@ -503,98 +505,6 @@
       "title": "Seleccionar período",
       "from": "Desde",
       "to": "Hasta"
-    }
-  },
-  "srv": {
-    "title": "Gestión de la integración de SRV / Regasoft",
-    "index": {
-      "title": "Sincronizar miembros de SRV",
-      "subtitle": "Compara las membresías SRV actuales (orgKey=srv) con los miembros del portal Regasoft. Cotejo primario vía memberId = serviceId, alternativa vía nombre.",
-      "reset": "Restablecer índice",
-      "button": "Construir índice",
-      "building": "Construyendo el índice...",
-      "none": "Todavía no hay índice. Constrúyalo.",
-      "summary": "{shown} de {total} entradas: {scs} SCS, {srv} SRV, {regasoft} Regasoft"
-    },
-    "person": {
-      "update": {
-        "label": "Editar persona"
-      }
-    },
-    "membership": {
-      "update": {
-        "label": "Editar membresía"
-      },
-      "parent": {
-        "create": {
-          "label": "Crear membresía de federación"
-        },
-        "update": {
-          "label": "Editar membresía de federación"
-        }
-      }
-    },
-    "regasoft": {
-      "copy": {
-        "label": "Copiar datos de Regasoft"
-      },
-      "view": {
-        "label": "Mostrar datos de Regasoft"
-      },
-      "add": {
-        "label": "Crear entrada de Regasoft"
-      },
-      "update": {
-        "label": "Actualizar entrada de Regasoft"
-      }
-    },
-    "license": {
-      "create": {
-        "label": "Crear licencia"
-      },
-      "download": {
-        "label": "Descargar licencia"
-      },
-      "title": "Licencias",
-      "empty": "No hay miembros con licencia en el índice.",
-      "count": "{count} miembros con licencia activa"
-    },
-    "show": "Mostrar",
-    "hide": "Ocultar",
-    "col": {
-      "name": "Nombre",
-      "age": "Edad",
-      "category": "Cat",
-      "member_id": "BK memberId",
-      "service_id": "ID SRV",
-      "nation": "Nación",
-      "membership_type": "Tipo de afiliación",
-      "license": "Licencia",
-      "license_until": "Licencia válida hasta",
-      "other_clubs": "Otros clubes",
-      "attribute": "Atributo",
-      "regasoft": "Regasoft"
-    },
-    "foreign": {
-      "title": "Miembros extranjeros",
-      "empty": "No hay miembros extranjeros en el índice.",
-      "count": "{count} miembros con nacionalidad extranjera"
-    },
-    "clubs": {
-      "title": "Miembros en otros clubes",
-      "empty": "No hay miembros de otros clubes en el índice.",
-      "count": "{count} miembros en otros clubes",
-      "subtitle": "{count} miembros también en otros clubes SRV"
-    },
-    "filter": {
-      "all": "Todos",
-      "bk": "Solo en BK",
-      "srv": "Solo en SRV",
-      "both": "Ambos"
-    },
-    "mismatch": {
-      "yes": "sí",
-      "no": "no"
     }
   },
   "statistics": {

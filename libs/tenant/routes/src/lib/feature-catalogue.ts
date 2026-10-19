@@ -166,11 +166,8 @@ const aoc: BlockRoutes = {
       { path: 'tag',        canActivate: [isContentAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocTag) },
       { path: 'email',      canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocEmail) },
       { path: 'bexio',      canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocBexio) },
-      // SOFTENED by owner ruling R-5, 2026-08-05, to match the live `aoc-srv` menu doc's
-      // `roleNeeded: contentAdmin`. Written out even though it currently equals the parent's
-      // floor: every `/aoc` child states its own requirement, so the spec can fail on a missing
-      // one and so this fragment survives a future change to the floor unchanged.
-      { path: 'srv',        canActivate: [isContentAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocSrv) },
+      // 1.101 phase 3: remove after the next release
+      { path: 'srv', redirectTo: '/membership/srv' },
       { path: 'sessions',   canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocSession) },
       // 1.101 phase 2: remove after the next release
       { path: 'trip', redirectTo: '/trips/maintenance' },
@@ -588,11 +585,16 @@ const relationship: BlockRoutes = {
     {
       path: 'membership',
       canActivate: [isAuthenticatedGuard],
-      children: [{
-        path: ':listId/:orgId/:contextMenuName',
-        loadComponent: () => import('@okr/relationship-membership-feature').then(m => m.MembershipList),
-        data: { color: 'secondary', view: 'mcat' },
-      }],
+      children: [
+        // SRV / Regasoft reconciliation (moved from AOC, spec 1.101 phase 3). BEFORE the param route,
+        // which would otherwise swallow `srv` as a listId. The books and constants stay as they were.
+        { path: 'srv', canActivate: [isMemberAdminGuard], loadComponent: () => import('@okr/relationship-membership-feature').then(m => m.MembershipSrv) },
+        {
+          path: ':listId/:orgId/:contextMenuName',
+          loadComponent: () => import('@okr/relationship-membership-feature').then(m => m.MembershipList),
+          data: { color: 'secondary', view: 'mcat' },
+        },
+      ],
     },
     {
       // Retired url (spec 1.108): the member-fee screen moved under `accounting/:accountingTenantId/

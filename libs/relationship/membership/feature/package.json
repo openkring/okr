@@ -29,6 +29,8 @@
     "@okr/cms-menu-feature": "*",
     "@okr/vcard-feature": "*",
     "@okr/content-pdf-template-feature": "*",
-    "@okr/finance-accounting-feature": "*"
+    "@okr/finance-accounting-feature": "*",
+    "@okr/relationship-ownership-data-access": "*",
+    "@okr/subject-person-data-access": "*"
   }
 }

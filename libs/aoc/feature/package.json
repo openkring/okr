@@ -40,7 +40,6 @@
     "@okr/content-document-util": "*",
     "@okr/location-util": "*",
     "@okr/relationship-membership-util": "*",
-    "@okr/relationship-ownership-data-access": "*",
     "@okr/relationship-ownership-util": "*",
     "@okr/relationship-personal-rel-util": "*",
     "@okr/relationship-reservation-util": "*",

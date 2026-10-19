@@ -598,5 +598,97 @@
       "yearMessage": "Wähle das Jahr, in dem die Mitglieder die Kategorie gewechselt haben."
     },
     "readError": "Die Mitgliedschaften konnten nicht gelesen werden. Bitte versuche es später noch einmal."
+  },
+  "srv": {
+    "title": "Verwaltung der SRV / Regasoft Integration",
+    "index": {
+      "title": "SRV Mitglieder synchronisieren",
+      "subtitle": "Vergleicht die aktuellen SRV-Mitgliedschaften (orgKey=srv) mit den Mitgliedern im Regasoft-Portal. Primärer Abgleich via memberId = serviceId, Fallback via Name.",
+      "reset": "Index zurücksetzen",
+      "button": "Index aufbauen",
+      "building": "Index wird aufgebaut...",
+      "none": "Noch kein Index. Index aufbauen.",
+      "summary": "{shown} von {total} Einträgen: {scs} SCS, {srv} SRV, {regasoft} Regasoft"
+    },
+    "person": {
+      "update": {
+        "label": "Person ändern"
+      }
+    },
+    "membership": {
+      "update": {
+        "label": "Mitgliedschaft ändern"
+      },
+      "parent": {
+        "create": {
+          "label": "Verbands-Mitgliedschaft erstellen"
+        },
+        "update": {
+          "label": "Verbands-Mitgliedschaft ändern"
+        }
+      }
+    },
+    "regasoft": {
+      "copy": {
+        "label": "Regasoft-Daten kopieren"
+      },
+      "view": {
+        "label": "Regasoft-Daten anzeigen"
+      },
+      "add": {
+        "label": "Regasoft-Eintrag erstellen"
+      },
+      "update": {
+        "label": "Regasoft-Eintrag aktualisieren"
+      }
+    },
+    "license": {
+      "create": {
+        "label": "Lizenz erstellen"
+      },
+      "download": {
+        "label": "Lizenz herunterladen"
+      },
+      "title": "Lizenzen",
+      "empty": "Keine lizenzierten Mitglieder im Index.",
+      "count": "{count} Mitglieder mit aktiver Lizenz"
+    },
+    "show": "Einblenden",
+    "hide": "Ausblenden",
+    "col": {
+      "name": "Name",
+      "age": "Alter",
+      "category": "Kat",
+      "member_id": "BK memberId",
+      "service_id": "SRV ID",
+      "nation": "Nation",
+      "membership_type": "Mitgliedschaftstyp",
+      "license": "Lizenz",
+      "license_until": "Lizenz gültig bis",
+      "other_clubs": "Andere Vereine",
+      "attribute": "Attribut",
+      "regasoft": "Regasoft"
+    },
+    "foreign": {
+      "title": "Ausländische Mitglieder",
+      "empty": "Keine ausländischen Mitglieder im Index.",
+      "count": "{count} Mitglieder mit ausländischer Nationalität"
+    },
+    "clubs": {
+      "title": "Mitglieder in anderen Vereinen",
+      "empty": "Keine Mitglieder in anderen Vereinen im Index.",
+      "count": "{count} Mitglieder in anderen Vereinen",
+      "subtitle": "{count} Mitglieder auch in anderen SRV-Vereinen"
+    },
+    "filter": {
+      "all": "Alle",
+      "bk": "Nur in BK",
+      "srv": "Nur in SRV",
+      "both": "Beide"
+    },
+    "mismatch": {
+      "yes": "ja",
+      "no": "nein"
+    }
   }
 }

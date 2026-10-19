@@ -279,7 +279,6 @@ export const AOC_I18N_KEYS = {
 
   // email
 
-
   // roles
   roles_title:                              PFX + 'roles.title',
   roles_person_select_title:                PFX + 'roles.personSelect.title',
@@ -359,60 +358,6 @@ export const AOC_I18N_KEYS = {
   session_duration_from:                  PFX + 'session.duration.from',
   session_duration_to:                    PFX + 'session.duration.to',
 
-  // srv
-  srv_title:                                PFX + 'srv.title',
-
-  srv_index_title:                          PFX + 'srv.index.title',
-  srv_index_subtitle:                       PFX + 'srv.index.subtitle',
-  srv_index_reset:                          PFX + 'srv.index.reset',
-  srv_index_button:                         PFX + 'srv.index.button',
-
-  srv_person_update:                        PFX + 'srv.person.update.label',
-  srv_membership_update:                    PFX + 'srv.membership.update.label',
-  srv_parentmembership_update:              PFX + 'srv.membership.parent.update.label',
-  srv_parentmembership_create:              PFX + 'srv.membership.parent.create.label',
-
-  srv_regasoft_copy:                        PFX + 'srv.regasoft.copy.label',
-  srv_regasoft_view:                        PFX + 'srv.regasoft.view.label',
-  srv_regasoft_add:                         PFX + 'srv.regasoft.add.label',
-  srv_regasoft_update:                      PFX + 'srv.regasoft.update.label',
-
-  srv_show:                                 PFX + 'srv.show',
-  srv_hide:                                 PFX + 'srv.hide',
-  srv_index_building:                       PFX + 'srv.index.building',
-  srv_index_none:                           PFX + 'srv.index.none',
-  srv_index_summary:                        PFX + 'srv.index.summary',
-  srv_col_name:                             PFX + 'srv.col.name',
-  srv_col_age:                              PFX + 'srv.col.age',
-  srv_col_category:                         PFX + 'srv.col.category',
-  srv_col_member_id:                        PFX + 'srv.col.member_id',
-  srv_col_service_id:                       PFX + 'srv.col.service_id',
-  srv_col_nation:                           PFX + 'srv.col.nation',
-  srv_col_membership_type:                  PFX + 'srv.col.membership_type',
-  srv_col_license:                          PFX + 'srv.col.license',
-  srv_col_license_until:                    PFX + 'srv.col.license_until',
-  srv_col_other_clubs:                      PFX + 'srv.col.other_clubs',
-  srv_col_attribute:                        PFX + 'srv.col.attribute',
-  srv_col_person:                           '@person',
-  srv_col_member:                           '@membership',
-  srv_col_regasoft:                         PFX + 'srv.col.regasoft',
-  srv_foreign_title:                        PFX + 'srv.foreign.title',
-  srv_foreign_empty:                        PFX + 'srv.foreign.empty',
-  srv_foreign_count:                        PFX + 'srv.foreign.count',
-  srv_license_title:                        PFX + 'srv.license.title',
-  srv_license_empty:                        PFX + 'srv.license.empty',
-  srv_license_count:                        PFX + 'srv.license.count',
-  srv_clubs_title:                          PFX + 'srv.clubs.title',
-  srv_clubs_empty:                          PFX + 'srv.clubs.empty',
-  srv_clubs_count:                          PFX + 'srv.clubs.count',
-  srv_clubs_subtitle:                       PFX + 'srv.clubs.subtitle',
-  srv_filter_all:                           PFX + 'srv.filter.all',
-  srv_filter_bk:                            PFX + 'srv.filter.bk',
-  srv_filter_srv:                           PFX + 'srv.filter.srv',
-  srv_filter_both:                          PFX + 'srv.filter.both',
-  srv_mismatch_yes:                         PFX + 'srv.mismatch.yes',
-  srv_mismatch_no:                          PFX + 'srv.mismatch.no',
-
   // bexio console
   bexio_filter_all:                         PFX + 'bexio.filter.all',
   bexio_filter_persons:                     PFX + 'bexio.filter.persons',
@@ -423,6 +368,8 @@ export const AOC_I18N_KEYS = {
   bexio_root_name:                          PFX + 'bexio.root_name',
   bexio_col_bexio_id:                       PFX + 'bexio.col.bexio_id',
   bexio_col_source:                         PFX + 'bexio.col.source',
+  bexio_col_name:                           PFX + 'bexio.col.name',
+  bexio_col_category:                       PFX + 'bexio.col.category',
 
   // roles console
   roles_person:                             PFX + 'roles.person',
@@ -430,9 +377,6 @@ export const AOC_I18N_KEYS = {
   roles_result:                             PFX + 'roles.result',
   location:                                 '@location',
   close:                                    '@shared/ui.close',
-
-  srv_license_create:                       PFX + 'srv.license.create.label',
-  srv_license_download:                     PFX + 'srv.license.download.label',
 
   // statistics
   statistics_header:                        PFX + 'statistics.header',
