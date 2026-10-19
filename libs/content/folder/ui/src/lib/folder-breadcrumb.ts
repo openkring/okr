@@ -27,7 +27,7 @@ const FULL_TRAIL_MEDIA_QUERY = '(min-width: 992px)';
         (ionCollapsedClick)="showCollapsed($event)">
         @for(folder of breadcrumbs(); track folder.okey; let last = $last) {
           <ion-breadcrumb [active]="last" (click)="onBreadcrumbClick($event, folder.okey, last)">
-            {{ folder.name }}
+            {{ folder.title || folder.name }}
           </ion-breadcrumb>
         }
       </ion-breadcrumbs>
@@ -37,7 +37,7 @@ const FULL_TRAIL_MEDIA_QUERY = '(min-width: 992px)';
             <ion-list lines="none">
               @for(folder of collapsedFolders(); track folder.okey) {
                 <ion-item button [detail]="false" (click)="selectCollapsed(folder.okey)">
-                  <ion-label>{{ folder.name }}</ion-label>
+                  <ion-label>{{ folder.title || folder.name }}</ion-label>
                 </ion-item>
               }
             </ion-list>

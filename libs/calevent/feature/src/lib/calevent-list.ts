@@ -455,7 +455,8 @@ export class CalEventList implements OnInit {
   protected types = computed(() => this.store.appStore.tryGetCategory('calevent_type'));
   private currentUser = computed(() => this.store.appStore.currentUser());
   protected readonly years = computed(() => getYearList(getYear() + 1, 30));
-  public isListView = linkedSignal(() => this.view() === 'list');
+  // Small screens (below Ionic's sm breakpoint) start in the list: a week grid is unreadable on a phone.
+  public isListView = linkedSignal(() => this.view() === 'list' || this.isSmallScreen);
   protected expertMode = computed(() => this.hasRole('admin'));
   /** The personal calendars ('personal', 'my'): every registered user may create and manage their own events here. */
   protected isPersonalCalendar = computed(() => isPersonalCalendarName(this.store.calendarName()));
@@ -620,6 +621,9 @@ export class CalEventList implements OnInit {
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   private readonly platformId = inject(PLATFORM_ID);
+
+  /** Below Ionic's sm breakpoint (576px), i.e. phones in portrait. */
+  private readonly isSmallScreen = isBrowser(this.platformId) && window.innerWidth < 576;
 
   /** Coarse pointer = finger/stylus, i.e. phones and tablets. A touch laptop gets the swipe too,
    *  which is harmless — it keeps the toolbar arrows either way. */

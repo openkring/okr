@@ -36,7 +36,8 @@ if (!app || !login || !password) {
 const SCREENS = [
   { name: 'dashboard', url: '/private/dashboard/c-contentpage', waitFor: 'Nächste Anlässe' },
   { name: 'kalender', url: '/calevent/my/c-calevents' },
-  { name: 'chat', url: '/private/chat/contextMenuChat' },
+  // a staged conversation between fake members (Galilei, Einstein) in a group the review user belongs to
+  { name: 'chat', url: `/private/chat/contextMenuChat?selectedRoom=${encodeURIComponent('!Kz7VJ2vIvC6WLZfgXRigBfBWWi7RIvMbYtA9AN5disA')}`, waitFor: 'Physiker-Gig' },
   { name: 'news', url: '/private/news_scs/c-contentpage', scrollTo: 'Schweizer Doppelvierer schreibt Geschichte' },
   { name: 'album', url: '/album/scs-album/c-album?folder=scs_20260105scsNeujahrsfahrt' },
   { name: 'kontakt', url: '/private/scs_contact/c-contentpage' },
