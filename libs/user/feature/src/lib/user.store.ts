@@ -155,6 +155,17 @@ export const UserStore = signalStore(
 
   withComputed((store) => {
     return {
+      /** all three sources have loaded (value present, not loading) and none failed; only then may a missing counterpart count as a problem */
+      sourcesComplete: computed(() =>
+        store.usersResource.hasValue() && !store.usersResource.isLoading() &&
+        store.firebaseUsersResource.hasValue() && !store.firebaseUsersResource.isLoading() &&
+        store.activeMembersResource.hasValue() && !store.activeMembersResource.isLoading() &&
+        !Object.values(store.failed()).some(Boolean)),
+    };
+  }),
+
+  withComputed((store) => {
+    return {
       /** logins + users + active members merged into rows (all kinds, unfiltered) */
       accountRows: computed((): UserAccountRow[] => buildUserAccountRows(
         store.usersResource.value() ?? [],
@@ -162,7 +173,7 @@ export const UserStore = signalStore(
         store.activeMembers().map(m => ({ personKey: m.memberKey, name: getFullName(m.memberName1, m.memberName2) })),
         store.appStore.tenantId(),
         store.isOperator(),
-        !Object.values(store.failed()).some(Boolean),
+        store.sourcesComplete(),
       )),
     };
   }),
@@ -178,7 +189,7 @@ export const UserStore = signalStore(
           extendedRole: store.extendedRolesOn() ? store.extendedRole() : undefined,
         }), term, tag);
       }),
-      problemCount: computed(() => filterUserAccountRows(store.accountRows(), { problems: true }).length),
+      problemCount: computed(() => store.sourcesComplete() ? filterUserAccountRows(store.accountRows(), { problems: true }).length : 0),
     };
   }),
 
