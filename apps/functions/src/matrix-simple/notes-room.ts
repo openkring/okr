@@ -24,7 +24,6 @@ import {
   notesRoomAliasLocalpart,
   serverHostname,
   getRoomSummary,
-  getJoinedMemberIds,
 } from './shared';
 
 /**
@@ -132,29 +131,42 @@ export async function isOwnNotesRoom(
 
 /** What the tenant-admin room tools need to know about a room to decide whether it is a notes room. */
 export interface NotesRoomFacts {
+  roomId: string;
   canonicalAlias: string | null | undefined;
   creator: string | null | undefined;
-  joinedMembers: Set<string>;
+  /** `m.room.power_levels` → `users`. */
+  powerUsers: Record<string, number> | undefined;
   marker: string[] | undefined;
+  /** Where the canonical alias resolves in the room directory. */
+  aliasRoomId: string | undefined;
 }
 
 /**
  * Whether a room is a genuine «Notizen an mich» room — the only kind the tenant-admin room tools
  * (list, read, delete) skip. A `#notes_` alias alone proves nothing: any member can create a room,
  * stamp the tenant marker (the app's own client does) and give it a `#notes_…` alias to escape
- * moderation. So all of these must hold: @bk2-bot created it, exactly the bot and one person are
- * joined, the marker names exactly one tenant, and the canonical alias is exactly that person's
- * notes alias for that tenant on the bot's server.
+ * moderation. The decision rests only on facts the owner cannot change (all state needs power
+ * level 100 in a notes room, see notesRoomPowerLevels) — never on current membership, so an owner
+ * who leaves does not expose their notes:
+ *   - @bk2-bot created the room,
+ *   - the marker names exactly one tenant,
+ *   - the power-level users are exactly the bot at 100 and one person at 50 (the owner),
+ *   - the canonical alias is exactly that owner's notes alias for that tenant on the bot's server,
+ *   - and that alias resolves back to this room.
  */
 export function isGenuineNotesRoom(facts: NotesRoomFacts, botUserId: string): boolean {
   const server = botUserId.split(':').slice(1).join(':');
   if (!server || facts.creator !== botUserId) return false;
   if (facts.marker?.length !== 1) return false;
-  if (facts.joinedMembers.size !== 2 || !facts.joinedMembers.has(botUserId)) return false;
-  const owner = [...facts.joinedMembers].find((m) => m !== botUserId) ?? '';
-  const [ownerLocal, ownerServer] = [owner.slice(1, owner.indexOf(':')), owner.slice(owner.indexOf(':') + 1)];
-  if (!owner.startsWith('@') || ownerServer !== server) return false;
-  return facts.canonicalAlias === `#${notesRoomAliasLocalpart(facts.marker[0], ownerLocal)}:${server}`;
+  const users = Object.entries(facts.powerUsers ?? {});
+  if (users.length !== 2) return false;
+  if (!users.some(([id, level]) => id === botUserId && level === NOTES_BOT_POWER_LEVEL)) return false;
+  const owner = users.find(([id, level]) => id !== botUserId && level === NOTES_PERSON_POWER_LEVEL)?.[0];
+  if (!owner?.startsWith('@')) return false;
+  const colon = owner.indexOf(':');
+  if (colon < 0 || owner.slice(colon + 1) !== server) return false;
+  const alias = `#${notesRoomAliasLocalpart(facts.marker[0], owner.slice(1, colon))}:${server}`;
+  return facts.canonicalAlias === alias && facts.aliasRoomId === facts.roomId;
 }
 
 /**
@@ -168,11 +180,17 @@ export async function isPersonalNotesRoom(
   if (typeof canonicalAlias !== 'string' || !canonicalAlias.startsWith('#notes_')) return false;
   const summary = await getRoomSummary(roomId, adminToken);
   if (!summary) throw new Error(`isPersonalNotesRoom: no details for ${roomId}`);
-  const [joinedMembers, marker] = await Promise.all([
-    getJoinedMemberIds(roomId, adminToken),
-    getRoomTenantMarker(roomId, adminToken, { strict: true }),
-  ]);
-  return isGenuineNotesRoom({ canonicalAlias, creator: summary.creator, joinedMembers, marker }, botUserId);
+  const stateResp = await fetch(`${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/state`, {
+    headers: { Authorization: `Bearer ${adminToken}` },
+  });
+  if (!stateResp.ok) throw new Error(`isPersonalNotesRoom: state ${stateResp.status} for ${roomId}`);
+  const events = ((await stateResp.json()) as { state?: Array<{ type: string; state_key: string; content: Record<string, unknown> }> }).state ?? [];
+  const content = (type: string) => events.find((e) => e.type === type && e.state_key === '')?.content;
+  const powerUsers = content('m.room.power_levels')?.['users'] as Record<string, number> | undefined;
+  const tenants = content(OKR_TENANT_EVENT)?.['tenants'];
+  const marker = Array.isArray(tenants) ? tenants.map(String) : undefined;
+  const aliasRoomId = await resolveRoomAlias(canonicalAlias, adminToken, { strict: true });
+  return isGenuineNotesRoom({ roomId, canonicalAlias, creator: summary.creator, powerUsers, marker, aliasRoomId }, botUserId);
 }
 
 /**
