@@ -1518,3 +1518,10 @@ export async function resolveDocs(entry: SubjectDataEntry, ctx: SubjectCtx): Pro
 // gap: bank-import-rows — counterparty name extracted from a bank statement line (payee,
 //   rawText), no subject link (no personKey); the same name lands on the posted booking's
 //   counterparty, so erasure/anonymisation follows the bookings row (spec 1.60)
+// gap: app-status — the single global chat-maintenance doc `app-status/chat` (spec 1.107, no
+//   tenants[]). It holds a few admins' and testers' personKeys PLUS display names: blockedBy /
+//   updatedBy (personKey) and exempt[] ({personKey, name}). Array-of-object elements cannot be
+//   queried by personKey alone, and the doc is global, so it is not a row. An access request
+//   would miss it and an erasure would leave the person's name in exempt[] (and the key in
+//   blockedBy/updatedBy) until an admin removes the tester; the admin's free-text `message`
+//   may also name someone. Only a handful of operators are affected, never ordinary members.
