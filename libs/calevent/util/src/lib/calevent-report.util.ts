@@ -31,6 +31,7 @@ export function duplicateEventFindings(events: CalEventModel[], texts: Duplicate
   for (const dup of findDuplicateCalEvents(events)) {
     findings.push({
       id: dup.events.map(e => e.okey).join('/'),
+      // trim: an event without startTime would leave a double space in the title
       title: `${prettyFormatDate(dup.startDate)} ${dup.startTime} ${dup.name}`.replace(/\s+/g, ' ').trim(),
       detail: fill(texts.slot, {
         count: dup.events.length,

@@ -158,8 +158,6 @@ export class AocData {
   protected readonly favMismatches = computed(() => this.store.favMismatches());
   protected favChecked = signal(false);
 
-  /** Reports duplicate events and unhealthy series. Read-only — writes nothing. */
-
   /** Reports duplicate groups and unsafe group keys. Read-only — writes nothing. */
   public async findGroupHygieneIssues(): Promise<void> {
     await this.store.findGroupHygieneIssues();

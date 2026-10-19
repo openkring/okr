@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { CalEventModel } from '@okr/shared-models';
+import { prettyFormatDate } from '@okr/shared-util-core';
 
 import { duplicateEventFindings, DuplicateEventTexts } from './calevent-report.util';
 
@@ -36,19 +37,32 @@ describe('duplicateEventFindings', () => {
     expect(findings).toHaveLength(1);
     expect(findings[0].id).toBe('aaa/bbb');
     expect(findings[0].title).toContain('4X-Dienstag');
+    expect(findings[0].title).toContain(prettyFormatDate('20260616'));
     expect(findings[0].title).toContain('06:45');
     expect(findings[0].detail).toBe('2 Termine, Kalender: scs, Serien: (Einzeltermin)');
     expect(findings[0].url).toBeUndefined();
   });
 
   it('reports a series whose count does not match its rule, keyed by the seriesId', () => {
+    // weekly 16.06. to 07.07. describes 4 occurrences, only 3 are stored
     const series = ['20260616', '20260623', '20260630'].map((startDate, i) => makeEvent({
-      okey: `kgmr${i}`, startDate, seriesId: 'kgmr', periodicity: 'weekly', repeatUntilDate: '20281230',
+      okey: `kgmr${i}`, startDate, seriesId: 'kgmr', periodicity: 'weekly', repeatUntilDate: '20260707',
     }));
     const findings = duplicateEventFindings(series, TEXTS);
     expect(findings).toHaveLength(1);
     expect(findings[0].id).toBe('kgmr');
-    expect(findings[0].detail).toMatch(/^Regel: \d+, gespeichert: 3$/);
+    expect(findings[0].detail).toBe('Regel: 4, gespeichert: 3');
     expect(findings[0].url).toBeUndefined();
+  });
+
+  it('reports occurrences carrying a foreign date in the index', () => {
+    const series = ['20260620', '20260627'].map((startDate, i) => makeEvent({
+      okey: `rxiu${i}`, startDate, seriesId: 'rxiu', periodicity: 'weekly', repeatUntilDate: '20260627',
+      index: 'd:20260620 n:4X-Dienstag',
+    }));
+    const findings = duplicateEventFindings(series, TEXTS);
+    expect(findings).toHaveLength(1);
+    expect(findings[0].id).toBe('rxiu');
+    expect(findings[0].detail).toBe('1 fremde Daten: rxiu1');
   });
 });
