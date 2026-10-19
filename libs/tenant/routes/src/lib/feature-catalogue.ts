@@ -82,7 +82,7 @@ const calevent: BlockRoutes = {
  * SIX of them; the live app declares SIXTEEN. The ten added here — `chat`, `account`,
  * `sessions`, `doc` (since moved to `/document/orphans`), `tag`, `email`, `bexio`, `srv`, `trip`, `website` — were unreachable
  * through the catalogue, which matters concretely for SIX of them: `aoc-sessions`,
- * `aoc-chat`, `aoc-account`, `aoc-doc` (since removed), `aoc-bexio` and `aoc-srv` are live children of the
+ * `aoc-chat`, `aoc-account`, `aoc-doc` (since removed), `aoc-bexio` and `aoc-srv` (since moved to Mitglieder, 1.101 phase 3) are live children of the
  * shared `aoc-menu` doc (they are now catalogued as menu specs on the `aoc` block too), so
  * before this the seeded submenu could point at routes this table did not have. The other
  * four (`tag`, `email`, `trip`, `website`) were simply unrouted here: `tag` and `website` do
@@ -96,7 +96,7 @@ const calevent: BlockRoutes = {
  *
  * WHERE THE ADMIN GATE NOW SITS, AND WHY IT MOVED (owner ruling, 2026-08-05). The ruling
  * softens `aoc/website` and `/aoc/srv` to match their menu documents (`aoc-website` and
- * `aoc-srv`, both `roleNeeded: contentAdmin`). Softening those two children ALONE would have
+ * `aoc-srv` (moved to Mitglieder in 1.101 phase 3), both `roleNeeded: contentAdmin`). Softening those two children ALONE would have
  * changed nothing: Angular evaluates an ancestor's `canActivate` before activating any
  * descendant, so the parent `isAdminGuard()` would still have bounced every non-admin before
  * the child guard ran. The gate therefore moved DOWN — the parent keeps only the floor every

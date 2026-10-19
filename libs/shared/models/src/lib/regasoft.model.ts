@@ -119,7 +119,7 @@ export interface SrvMemberLicenseDetail {
 
 // ─── AoC SRV index types ──────────────────────────────────────────────────────
 
-/** Merged BK + Regasoft index entry used by AocSrvStore. */
+/** Merged BK + Regasoft index entry used by MembershipSrvStore. */
 export interface SrvIndex {
   key: string;       // getFullName(firstName, lastName).trim().toLowerCase()
   firstName: string;
