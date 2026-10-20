@@ -1073,10 +1073,13 @@ export class FirestoreService {
   /**
    * Like updateObject (merge, no overwrite), but silent and strict: no toast, and a failed write
    * REJECTS instead of returning undefined. For bulk bookkeeping where the caller reports one summary.
+   * A denial from a stale App Check token is retried once (`writeWithTokenDenialRetry`); the final
+   * failure still rejects.
    */
   public async updateObjectStrict(collectionName: string, key: string, object: Record<string, unknown>): Promise<void> {
     if (!collectionName || !key) throw new Error('FirestoreService.updateObjectStrict: collectionName and key are mandatory.');
-    await updateDoc(doc(this.firestore, `${collectionName}/${key}`), { ...object });
+    await this.writeWithTokenDenialRetry(`updateObjectStrict(${collectionName}/${key})`, () =>
+      updateDoc(doc(this.firestore, `${collectionName}/${key}`), { ...object }));
   }
 
   public listAllObjects<T>(collectionName: string, addOkey = false): Observable<T[]> {

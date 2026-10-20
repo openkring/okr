@@ -305,7 +305,7 @@ describe('deriveEnabledFeatures — against the real catalogue', () => {
     const all = deriveEnabledFeatures({
       catalogue: FEATURE_BLOCKS, rollouts: [], menuDocs: docs, tenantId: 'p13', policy: 'all',
     });
-    const coDeclarers = ['esign', 'pdf-template', 'forms']; // not core, not a dependency of aoc
+    const coDeclarers = ['esign', 'pdf-template', 'forms']; // not core; aoc (core since 1.101 phase 5) names no dependency
     expect(exclusive.enabled).toContain('aoc');
     coDeclarers.forEach(id => expect(exclusive.enabled, id).not.toContain(id));
     expect(all.enabled).toContain('aoc');

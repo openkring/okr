@@ -747,3 +747,47 @@ describe('FirestoreService.updateModel', () => {
     error.mockRestore();
   });
 });
+
+// Spec 1.101 phase 5: the AOC reindex writes through `updateObjectStrict` (silent, rejecting, so the
+// caller can report ONE summary). It must recover from a stale App Check token like the other writes.
+describe('FirestoreService.updateObjectStrict', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    TestBed.resetTestingModule();
+    attestAppCheckMock.mockResolvedValue('refreshed');
+    docMock.mockReturnValue({ id: 'a1' } as never);
+  });
+
+  it('retries a denied update once after forcing a fresh App Check token', async () => {
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+    updateDocMock.mockRejectedValueOnce(permissionDenied()).mockResolvedValue(undefined);
+    const svc = makeService();
+
+    await expect(svc.updateObjectStrict('persons', 'a1', { index: 'x' })).resolves.toBeUndefined();
+
+    expect(updateDocMock).toHaveBeenCalledTimes(2);
+    expect(attestAppCheckMock).toHaveBeenCalledWith(undefined, true);
+    debug.mockRestore();
+  });
+
+  it('still rejects when the retry is denied as well', async () => {
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+    updateDocMock.mockRejectedValue(permissionDenied());
+    const svc = makeService();
+
+    await expect(svc.updateObjectStrict('persons', 'a1', { index: 'x' })).rejects.toMatchObject({ code: 'permission-denied' });
+
+    expect(updateDocMock).toHaveBeenCalledTimes(2);          // one retry, never a loop
+    debug.mockRestore();
+  });
+
+  it('does not retry a non-permission failure and rejects with it', async () => {
+    updateDocMock.mockRejectedValue(Object.assign(new Error('backend unavailable'), { code: 'unavailable' }));
+    const svc = makeService();
+
+    await expect(svc.updateObjectStrict('persons', 'a1', { index: 'x' })).rejects.toMatchObject({ code: 'unavailable' });
+
+    expect(updateDocMock).toHaveBeenCalledTimes(1);
+    expect(attestAppCheckMock).not.toHaveBeenCalled();
+  });
+});

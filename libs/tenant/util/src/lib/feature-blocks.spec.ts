@@ -222,4 +222,21 @@ describe('aoc is a core block (1.101 phase 5)', () => {
     expect(aoc?.dependsOn).toEqual([]);
     expect(holdersOf(FEATURE_BLOCKS, 'document', coreIds)).not.toContain('aoc');
   });
+
+  /**
+   * A core block is always effective, so any dependency it names becomes permanently 'required'
+   * (`holdersOf` counts core blocks as holders) — its target can never be switched off. The rule
+   * (see the `cms`, `avatar` and `aoc` blocks) is therefore: a core block names no non-core
+   * dependency. `vcard` predates this guard and still holds `subject`/`relationship` on; it is
+   * allowlisted as-is so that any NEW violation, or a new edge on vcard, still fails here.
+   */
+  const KNOWN_CORE_TO_NON_CORE: Record<string, string[]> = { vcard: ['subject', 'relationship'] };
+
+  it('no core block depends on a non-core block, except the allowlisted pre-existing vcard edges', () => {
+    const core = new Set(coreIds);
+    for (const block of FEATURE_BLOCKS.filter(b => b.core === true)) {
+      const nonCore = block.dependsOn.filter(dep => !core.has(dep));
+      expect(nonCore, block.id).toEqual(KNOWN_CORE_TO_NON_CORE[block.id] ?? []);
+    }
+  });
 });

@@ -1721,7 +1721,8 @@ const pdfTemplate: FeatureBlock = {
  * (`@okr/avatar-data-access`), `document.util.ts` uses `readAsFile` (`@okr/avatar-util`),
  * and `document-list.ts` renders `Menu` (`@okr/cms-menu-feature`). Both targets are
  * `core: true`, i.e. unconditionally effective for every tenant, and NO block in this
- * catalogue declares a core dependency (every core block itself carries `dependsOn: []`) —
+ * catalogue declares a core dependency (no core block names a non-core dependency either, except the
+ * pre-existing `vcard` → `subject`/`relationship`, allowlisted in `feature-blocks.spec.ts`) —
  * following that convention rather than inventing an exception here. Declaring `avatar`
  * would additionally create a dependsOn CYCLE, because `avatar`'s own `upload.service.ts`
  * imports `DocumentService`/`buildDocumentModel` back out of this domain
