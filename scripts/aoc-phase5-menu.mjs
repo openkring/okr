@@ -16,9 +16,13 @@
  *
  * Re-running after an apply reports only SKIP (and the WARN lines that need a decision by hand).
  *
+ * RELEASE FIRST: run --apply only after the app release that ships the hub routes and
+ * @item.aoc-access/ops/config labels is live on every app — otherwise admins lose their AOC navigation.
+ * --apply is refused without --released, which confirms exactly that.
+ *
  * Usage:
- *   node scripts/aoc-phase5-menu.mjs            # dry run (default)
- *   node scripts/aoc-phase5-menu.mjs --apply    # perform the writes
+ *   node scripts/aoc-phase5-menu.mjs                       # dry run (default)
+ *   node scripts/aoc-phase5-menu.mjs --apply --released    # perform the writes (release live on every app)
  *
  * Requires: gcloud auth application-default login (or GOOGLE_APPLICATION_CREDENTIALS).
  */
@@ -26,21 +30,21 @@ import { getApps, initializeApp } from 'firebase-admin/app';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 
 import {
-  APPLY_ORDER, FORK_SPLITS, HUB_ABSORBED, HUB_ROWS, SHARED_PARENT_ID, collectRowTenants, planAocParent, planDetach,
-  planFork, planLeavingRow, planRow,
+  APPLY_ORDER, FORK_SPLITS, HUB_ABSORBED, HUB_ROWS, RELEASE_FIRST, SHARED_PARENT_ID, collectRowTenants,
+  gateParentOnDetach, parseArgs, planAocParent, planDetach, planFork, planLeavingRow, planRow,
 } from './aoc-phase5-menu.logic.mjs';
 
-const args = process.argv.slice(2);
-if (args.some((a) => a !== '--apply' && a !== '--dry-run')) {
-  console.error('Usage: node scripts/aoc-phase5-menu.mjs [--dry-run|--apply]');
+const cli = parseArgs(process.argv.slice(2));
+if (cli.error) {
+  console.error(cli.error);
   process.exit(1);
 }
-const apply = args.includes('--apply');
+const { apply } = cli;
 
 if (!getApps().length) initializeApp({ projectId: 'bkaiser-org' });
 const db = getFirestore();
 const col = db.collection('menuItems');
-console.log(apply ? 'APPLY MODE\n' : 'DRY RUN (no writes) — pass --apply to write.\n');
+console.log(apply ? `APPLY MODE — ${RELEASE_FIRST}\n` : `DRY RUN (no writes) — pass --apply --released to write.\n${RELEASE_FIRST}\n`);
 
 const line = (p, label) => console.log(`[${p.action.toUpperCase()}] menuItems/${p.id} — ${label ? `${label}: ` : ''}${p.reason}`);
 const body = (doc) => console.log(JSON.stringify(doc, null, 2).replace(/^/gm, '    '));
@@ -127,6 +131,7 @@ async function updateMenuItems(id, replan) {
   });
 }
 
+const writtenDetachIds = new Set();
 const steps = {
   rows: async () => {
     for (const p of rowPlans) {
@@ -163,11 +168,19 @@ const steps = {
         tx.update(ref, { tenants: re.tenants });
         return true;
       });
-      if (done) console.log(`wrote menuItems/${p.id}`);
+      if (done) {
+        writtenDetachIds.add(p.id);
+        console.log(`wrote menuItems/${p.id}`);
+      }
     }
   },
   parents: async () => {
-    for (const p of parentPlans.filter((x) => x.action === 'update')) {
+    for (const planned of parentPlans.filter((x) => x.action === 'update')) {
+      const p = gateParentOnDetach(planned, detachPlans, writtenDetachIds);
+      if (p.action !== 'update') {
+        line(p, 'aoc-menu');
+        continue;
+      }
       if (await updateMenuItems(p.id, planAocParent)) console.log(`wrote menuItems/${p.id}`);
     }
   },

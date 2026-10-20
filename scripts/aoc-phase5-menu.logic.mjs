@@ -34,6 +34,24 @@ export const ROW_SPECS = {
  */
 export const APPLY_ORDER = ['rows', 'forks', 'detach', 'parents', 'leaving'];
 
+/**
+ * Seeding rule (menu skill: release first, seed second). Printed in the usage text and in apply mode; --apply is
+ * refused without --released.
+ */
+export const RELEASE_FIRST =
+  'Run --apply only after the app release that ships the hub routes and @item.aoc-access/ops/config labels is live on every app — otherwise admins lose their AOC navigation.';
+export const USAGE = `Usage: node scripts/aoc-phase5-menu.mjs [--dry-run | --apply --released]\n${RELEASE_FIRST}`;
+
+/** CLI args → { apply } or { error }. --apply needs --released (the caller confirms the release is live). */
+export function parseArgs(args) {
+  const known = ['--apply', '--dry-run', '--released'];
+  if (args.some((a) => !known.includes(a))) return { error: USAGE };
+  const apply = args.includes('--apply');
+  if (apply && args.includes('--dry-run')) return { error: USAGE };
+  if (apply && !args.includes('--released')) return { error: `--apply needs --released.\n${USAGE}` };
+  return { apply };
+}
+
 const arr = (v) => (Array.isArray(v) ? v : []);
 const only = (doc, tenant) => arr(doc.tenants).length === 1 && arr(doc.tenants)[0] === tenant;
 const sameList = (a, b) => a.length === b.length && a.every((n, i) => n === b[i]);
@@ -48,29 +66,24 @@ function rowDoc(name, s, tenants) {
 }
 
 /**
- * An AOC submenu doc. A doc for exactly one FORK_SPLITS tenant becomes that tenant's fixed list. Every other doc
- * becomes HUB_ROWS followed by the names it lists that are neither absorbed nor hub rows, in their old order.
+ * An AOC submenu doc becomes its hub rows followed by the names it lists that are neither absorbed nor hub rows, in
+ * their old order. The hub rows are HUB_ROWS, or the FORK_SPLITS list for a doc of exactly one split tenant (its own
+ * extra rows are kept as well, never overwritten).
  * Archived docs are reported and left alone.
  */
 export function planAocParent(doc) {
   const before = arr(doc.menuItems);
   if (doc.isArchived === true) return { id: doc.id, action: 'warn', menuItems: before, reason: 'archived; left alone' };
   const split = arr(doc.tenants).length === 1 ? FORK_SPLITS[arr(doc.tenants)[0]] : undefined;
-  let menuItems;
-  let reason;
-  if (split) {
-    menuItems = [...split];
-    reason = `${arr(doc.tenants)[0]}-only: [${split.join(', ')}]`;
-  } else {
-    const removed = before.filter((n) => HUB_ABSORBED.includes(n));
-    const extras = before.filter((n) => !HUB_ABSORBED.includes(n) && !HUB_ROWS.includes(n));
-    menuItems = [...HUB_ROWS, ...extras];
-    reason = [
-      removed.length ? `remove [${removed.join(', ')}]` : '',
-      `hub [${HUB_ROWS.join(', ')}]`,
-      extras.length ? `keep [${extras.join(', ')}]` : '',
-    ].filter(Boolean).join('; ');
-  }
+  const head = split ?? HUB_ROWS;
+  const removed = before.filter((n) => HUB_ABSORBED.includes(n));
+  const extras = before.filter((n) => !HUB_ABSORBED.includes(n) && !HUB_ROWS.includes(n));
+  const menuItems = [...head, ...extras];
+  const reason = [
+    removed.length ? `remove [${removed.join(', ')}]` : '',
+    split ? `${arr(doc.tenants)[0]}-only hub [${head.join(', ')}]` : `hub [${head.join(', ')}]`,
+    extras.length ? `keep [${extras.join(', ')}]` : '',
+  ].filter(Boolean).join('; ');
   if (sameList(menuItems, before)) return { id: doc.id, action: 'skip', menuItems, reason: 'already migrated' };
   return { id: doc.id, action: 'update', menuItems, reason };
 }
@@ -164,4 +177,15 @@ export function planLeavingRow(doc, otherReferrers) {
     return { id: doc.id, action: 'warn', reason: `${doc.name} still listed by [${otherReferrers.map((d) => d.id).join(', ')}]; not archived` };
   }
   return { id: doc.id, action: 'archive', reason: `${doc.name} absorbed by the AOC hub` };
+}
+
+/**
+ * Apply-time gate for a parent update: a doc whose detach was planned but not written (its in-transaction re-plan
+ * declined) keeps its old list too, so a tenant that should have left it never sees the new hub rows there.
+ * `writtenDetachIds` = ids whose detach was written in this run.
+ */
+export function gateParentOnDetach(plan, detachPlans, writtenDetachIds) {
+  const pending = detachPlans.filter((d) => d.id === plan.id && d.action === 'detach' && !writtenDetachIds.has(d.id));
+  if (plan.action !== 'update' || !pending.length) return plan;
+  return { ...plan, action: 'warn', reason: `detach of [${pending.map((d) => d.tenant).join(', ')}] not written; parent not updated` };
 }

@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  APPLY_ORDER, FORK_SPLITS, HUB_ABSORBED, HUB_ROWS, ROW_SPECS, SHARED_PARENT_ID, collectRowTenants, planAocParent,
-  planDetach, planFork, planLeavingRow, planRow,
+  APPLY_ORDER, FORK_SPLITS, HUB_ABSORBED, HUB_ROWS, RELEASE_FIRST, ROW_SPECS, SHARED_PARENT_ID, USAGE, collectRowTenants,
+  gateParentOnDetach, parseArgs, planAocParent, planDetach, planFork, planLeavingRow, planRow,
 } from './aoc-phase5-menu.logic.mjs';
 
 // Live fixtures (dry-run read 2026-10-20, after the phase 3 + 4 applies).
@@ -104,15 +104,51 @@ test('kring: planDetach removes kring from the shared doc only once the fork exi
   assert.equal(planDetach(LIVE['aoc-menu'], [LIVE['aoc-menu'], { ...KRING_FORK, planned: true }], 'kring').action, 'detach');
 });
 
-test('kring: after apply, fork and detach both skip; the fork list is never extended with hub/extra rows', () => {
+test('kring: after apply, fork, detach and the fork parent plan all skip; other hub rows never reach the fork', () => {
   const shared = { ...LIVE['aoc-menu'], tenants: ['okr'] };
   assert.equal(planFork(shared, [shared, KRING_FORK], 'kring').action, 'skip');
   assert.equal(planDetach(shared, [shared, KRING_FORK], 'kring').action, 'skip');
   const f = planAocParent(KRING_FORK);
   assert.equal(f.action, 'skip');
   assert.deepEqual(f.menuItems, ['aoc-ops', 'aoc-config']);
-  // A kring-only doc with stale content is set to exactly the split list.
-  assert.deepEqual(planAocParent({ ...KRING_FORK, menuItems: ['aoc-admin', 'aoc-data', 'divider_empty'] }).menuItems, ['aoc-ops', 'aoc-config']);
+  // A kring-only doc with stale content: split list first, absorbed + other hub rows dropped, extras kept.
+  assert.deepEqual(planAocParent({ ...KRING_FORK, menuItems: ['aoc-admin', 'aoc-data', 'divider_empty'] }).menuItems, ['aoc-ops', 'aoc-config', 'divider_empty']);
+});
+
+test('kring: a re-run on a fork with an extra row keeps that row, in order', () => {
+  const fork = { ...KRING_FORK, menuItems: ['aoc-ops', 'aoc-config', 'kring-extra', 'divider_empty'] };
+  const p = planAocParent(fork);
+  assert.equal(p.action, 'skip');
+  assert.deepEqual(p.menuItems, ['aoc-ops', 'aoc-config', 'kring-extra', 'divider_empty']);
+  const moved = planAocParent({ ...fork, menuItems: ['kring-extra', 'aoc-ops', 'aoc-email', 'aoc-config'] });
+  assert.equal(moved.action, 'update');
+  assert.deepEqual(moved.menuItems, ['aoc-ops', 'aoc-config', 'kring-extra']);
+  assert.equal(moved.reason, 'remove [aoc-email]; kring-only hub [aoc-ops, aoc-config]; keep [kring-extra]');
+});
+
+test('parents step depends on the detach: a planned but unwritten detach blocks the shared doc update', () => {
+  const plan = planAocParent(LIVE['aoc-menu']);
+  const det = [{ id: 'aoc-menu', action: 'detach', tenant: 'kring', tenants: ['okr'] }];
+  const blocked = gateParentOnDetach(plan, det, new Set());
+  assert.equal(blocked.action, 'warn');
+  assert.equal(blocked.reason, 'detach of [kring] not written; parent not updated');
+  assert.equal(gateParentOnDetach(plan, det, new Set(['aoc-menu'])), plan);
+  // other docs, and detach plans that were skip/warn, are not gated
+  const bka = planAocParent(LIVE['aoc-menu_bka']);
+  assert.equal(gateParentOnDetach(bka, det, new Set()), bka);
+  assert.equal(gateParentOnDetach(plan, [{ ...det[0], action: 'skip' }], new Set()), plan);
+});
+
+test('release first: --apply needs --released; usage carries the warning', () => {
+  assert.match(RELEASE_FIRST, /^Run --apply only after the app release that ships the hub routes and @item\.aoc-access\/ops\/config labels is live on every app — otherwise admins lose their AOC navigation\.$/);
+  assert.ok(USAGE.includes(RELEASE_FIRST));
+  assert.deepEqual(parseArgs([]), { apply: false });
+  assert.deepEqual(parseArgs(['--dry-run']), { apply: false });
+  assert.deepEqual(parseArgs(['--apply', '--released']), { apply: true });
+  assert.match(parseArgs(['--apply']).error, /--apply needs --released/);
+  assert.ok(parseArgs(['--apply']).error.includes(RELEASE_FIRST));
+  assert.equal(parseArgs(['--apply', '--dry-run', '--released']).error, USAGE);
+  assert.equal(parseArgs(['--force']).error, USAGE);
 });
 
 test('kring: odd states warn instead of guessing', () => {
