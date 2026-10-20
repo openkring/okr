@@ -5,12 +5,12 @@ import { isDriveId, splitDiaryMedia } from './list-diary-media';
 const f = (name: string, mimeType: string, thumbnail = '') => ({ id: name, name, mimeType, thumbnail, webViewLink: 'w' });
 
 describe('splitDiaryMedia', () => {
-  it('splits images from documents, sorted by name', () => {
+  it('splits images and videos from documents, sorted by name', () => {
     const r = splitDiaryMedia([
-      f('b.jpg', 'image/jpeg'), f('a.heic', 'image/heic'), f('z.pdf', 'application/pdf'),
+      f('b.jpg', 'image/jpeg'), f('a.heic', 'image/heic'), f('z.pdf', 'application/pdf'), f('m.mov', 'video/quicktime'),
       f('c.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
     ]);
-    expect(r.images.map(x => x.name)).toEqual(['a.heic', 'b.jpg']);
+    expect(r.images.map(x => x.name)).toEqual(['a.heic', 'b.jpg', 'm.mov']);
     expect(r.documents.map(x => x.name)).toEqual(['c.docx', 'z.pdf']);
   });
 

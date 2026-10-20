@@ -88,7 +88,7 @@
     "delete": "Supprimer",
     "deleteConfirm": "Veux-tu vraiment supprimer cette entrée ?",
     "weatherRefresh": "Rattraper la météo",
-    "openDrive": "Ouvrir les images dans Drive"
+    "openDrive": "Ouvrir le dossier Google Drive"
   },
   "create": {
     "conf": "L'entrée a été enregistrée.",

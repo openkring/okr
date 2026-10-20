@@ -28,6 +28,13 @@ describe('diarySliderImages', () => {
     expect(startIndex).toBe(1);
   });
 
+  it('leaves out videos', () => {
+    const video = { ...f('v', 'data:v'), mimeType: 'video/mp4' };
+    const { images, startIndex } = diarySliderImages([f('a', 'data:a'), video, f('c', 'data:c')], 2);
+    expect(images.map(i => i.url)).toEqual(['data:a', 'data:c']);
+    expect(startIndex).toBe(1);
+  });
+
   it('prefers the large rendition where one is loaded', () => {
     const { images } = diarySliderImages([f('a', 'data:a'), f('c', 'data:c')], 0, new Map([['c', 'data:C-large']]));
     expect(images.map(i => i.url)).toEqual(['data:a', 'data:C-large']);

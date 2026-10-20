@@ -30,17 +30,19 @@ export function isDriveId(id: string): boolean {
 }
 
 const byName = (a: DiaryMediaFile, b: DiaryMediaFile) => a.name.localeCompare(b.name);
+const isVisualMedia = (f: DiaryMediaFile) => f.mimeType.startsWith('image/') || f.mimeType.startsWith('video/');
 
 /**
- * Images (`image/*`) and documents (everything else) of one day folder, each sorted by name.
+ * Images and videos (`image/*`, `video/*` — the thumbnail row) and documents (everything else)
+ * of one day folder, each sorted by name.
  * The diary's own markdown and any subfolder are dropped — subfolders are archive legacy
  * (spec 1.106 §2.3), the markdown is the entry itself.
  */
 export function splitDiaryMedia(files: DiaryMediaFile[]): DiaryMediaResult {
   const media = files.filter(f => f.mimeType !== FOLDER_MIME && !f.name.toLowerCase().endsWith('.md'));
   return {
-    images: media.filter(f => f.mimeType.startsWith('image/')).sort(byName),
-    documents: media.filter(f => !f.mimeType.startsWith('image/')).sort(byName),
+    images: media.filter(isVisualMedia).sort(byName),
+    documents: media.filter(f => !isVisualMedia(f)).sort(byName),
   };
 }
 

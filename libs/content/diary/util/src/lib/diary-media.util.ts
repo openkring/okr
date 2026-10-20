@@ -17,6 +17,7 @@ export interface DiaryMediaFile {
 }
 
 export interface DiaryMediaResult {
+  /** images AND videos — the thumbnail row; a video tile opens Drive's player */
   images: DiaryMediaFile[];
   documents: DiaryMediaFile[];
 }
@@ -27,6 +28,11 @@ export function driveThumbnailAtSize(link: string, px: number): string {
   return /=s\d+$/.test(link) ? link.replace(/=s\d+$/, `=s${px}`) : `${link}=s${px}`;
 }
 
+/** A video in the thumbnail row: drawn with a play overlay, opened in Drive (the slider shows images only). */
+export function isDiaryVideo(file: DiaryMediaFile | undefined): boolean {
+  return !!file?.mimeType.startsWith('video/');
+}
+
 /** Icon name in the `filetypes` set for a document tile without a Drive thumbnail. */
 export function diaryFileIconName(mimeType: string): string {
   if (!mimeType) return 'file';
@@ -35,8 +41,8 @@ export function diaryFileIconName(mimeType: string): string {
 }
 
 /**
- * The full-size slider over a day's images. An image without a Drive thumbnail has no rendition
- * and is left out — the tapped index is re-mapped so the slider still opens on it. `large` holds
+ * The full-size slider over a day's images. Videos, and an image without a Drive thumbnail (no
+ * rendition), are left out — the tapped index is re-mapped so the slider still opens on it. `large` holds
  * the slider-size `data:` URLs loaded so far (by file id); an image without one falls back to its
  * thumbnail.
  */
@@ -44,7 +50,7 @@ export function diarySliderImages(
   files: DiaryMediaFile[], tappedIndex: number, large: ReadonlyMap<string, string> = new Map(),
 ): { images: ImageConfig[]; startIndex: number } {
   const tapped = files[tappedIndex];
-  const shown = files.filter(f => !!f.thumbnail);
+  const shown = files.filter(f => !!f.thumbnail && !isDiaryVideo(f));
   const images = shown.map(f => ({
     label: f.name, type: ImageType.Image, url: large.get(f.id) || f.thumbnail,
     actionUrl: '', altText: f.name, overlay: '',

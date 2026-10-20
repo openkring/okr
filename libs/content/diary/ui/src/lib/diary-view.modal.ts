@@ -11,7 +11,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
 
 import {
   DiaryI18n, DiaryMediaResult, diarySliderImages, diaryWeatherLine, driveFolderUrl, formatDiaryDateLong, hasDiaryWeather,
-  JassDiaryResult, parseJassDiaryLine, renderDiaryHtml,
+  isDiaryVideo, JassDiaryResult, parseJassDiaryLine, renderDiaryHtml,
 } from '@okr/content-diary-util';
 
 import { DiaryJassCard } from './diary-jass-card';
@@ -117,7 +117,7 @@ export interface DiaryNeighbours {
           <okr-diary-media-row kind="image" [files]="media()?.images" (opened)="openImage($event)" />
         }
         <ion-item lines="none" button [detail]="false" (click)="openDrive()">
-          <ion-icon slot="start" src="{{ 'image' | svgIcon }}" />
+          <ion-icon slot="start" src="{{ 'folder-open' | svgIcon }}" />
           <ion-label>{{ i18n().open_drive() }}</ion-label>
         </ion-item>
       }
@@ -214,9 +214,14 @@ export class DiaryViewModal {
    * tap opens at once); an image whose rendition fails is shown at thumbnail size.
    */
   protected async openImage(index: number): Promise<void> {
+    const tapped = this.media()?.images[index];
+    if (isDiaryVideo(tapped)) {   // Drive's own player — the slider shows images only
+      if (tapped?.webViewLink) await Browser.open({ url: tapped.webViewLink });
+      return;
+    }
     if (this.sliderLoading()) return;
     const shown = this.current();
-    const files = (this.media()?.images ?? []).filter(f => !!f.thumbnail);
+    const files = (this.media()?.images ?? []).filter(f => !!f.thumbnail && !isDiaryVideo(f));
     if (!files.length) return;
     const large = new Map<string, string>();
     this.sliderLoading.set(true);

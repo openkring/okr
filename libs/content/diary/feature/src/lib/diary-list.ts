@@ -225,7 +225,7 @@ export class DiaryList {
       options.buttons.push(createActionSheetButton('diary.weather', this.store.i18n.weather_refresh(), this.imgixBaseUrl, 'reload'));
     }
     if (diary.driveFolderId) {
-      options.buttons.push(createActionSheetButton('diary.drive', this.store.i18n.open_drive(), this.imgixBaseUrl, 'image'));
+      options.buttons.push(createActionSheetButton('diary.drive', this.store.i18n.open_drive(), this.imgixBaseUrl, 'folder-open'));
     }
     options.buttons.push(createActionSheetButton('diary.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
     options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));

@@ -2,13 +2,14 @@ import { Component, input, output, signal } from '@angular/core';
 import { IonIcon, IonSkeletonText } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { DiaryMediaFile, diaryFileIconName } from '@okr/content-diary-util';
+import { DiaryMediaFile, diaryFileIconName, isDiaryVideo } from '@okr/content-diary-util';
 
 /** Placeholder tiles shown while the folder listing itself is still loading. */
 const LOADING_TILES = [0, 1, 2, 3];
 
 /**
- * One horizontal strip of a diary day's Drive files (spec 1.106 §2.3) — images or documents.
+ * One horizontal strip of a diary day's Drive files (spec 1.106 §2.3) — images and videos, or
+ * documents. A video tile carries a play overlay.
  * Every tile is a fixed-size placeholder first (skeleton, or the file-type icon for a document),
  * so the layout never jumps. The thumbnail arrives inline as a `data:` URL (the Drive files are
  * private; see DiaryMediaFile) and only replaces the placeholder once its `load` event fired; a
@@ -26,6 +27,9 @@ const LOADING_TILES = [0, 1, 2, 3];
     .tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .2s; }
     .tile img.loaded { opacity: 1; }
     .tile ion-icon { font-size: 36px; }
+    .play { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 1; width: 34px; height: 34px;
+      border-radius: 50%; background: rgba(0, 0, 0, .55); display: flex; align-items: center; justify-content: center; pointer-events: none; }
+    .play ion-icon { font-size: 18px; color: #fff; margin-left: 2px; }
     .name { font-size: 11px; max-width: 88px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 4px; }
   `],
   template: `
@@ -34,7 +38,7 @@ const LOADING_TILES = [0, 1, 2, 3];
         @for (file of list; track file.id; let i = $index) {
           <div class="tile" role="button" [attr.aria-label]="file.name" [title]="file.name" (click)="opened.emit(i)">
             @if (!isLoaded(file.id)) {
-              @if (kind() === 'image') {
+              @if (kind() === 'image' && (file.thumbnail || !isVideo(file))) {
                 <ion-skeleton-text [animated]="!!file.thumbnail && !hasFailed(file.id)" />
               } @else {
                 <ion-icon src="{{ fileIcon(file) | svgIcon: 'filetypes' }}" />
@@ -44,6 +48,9 @@ const LOADING_TILES = [0, 1, 2, 3];
             @if (file.thumbnail && !hasFailed(file.id)) {
               <img [src]="file.thumbnail" [alt]="file.name" [class.loaded]="isLoaded(file.id)"
                 (load)="markLoaded(file.id)" (error)="markFailed(file.id)" />
+            }
+            @if (isVideo(file)) {
+              <div class="play"><ion-icon src="{{ 'play' | svgIcon }}" /></div>
             }
           </div>
         }
@@ -65,6 +72,10 @@ export class DiaryMediaRow {
   protected readonly loadingTiles = LOADING_TILES;
   private readonly loaded = signal<ReadonlySet<string>>(new Set());
   private readonly failed = signal<ReadonlySet<string>>(new Set());
+
+  protected isVideo(file: DiaryMediaFile): boolean {
+    return isDiaryVideo(file);
+  }
 
   protected fileIcon(file: DiaryMediaFile): string {
     return diaryFileIconName(file.mimeType);

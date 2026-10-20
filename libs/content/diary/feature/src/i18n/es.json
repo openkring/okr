@@ -88,7 +88,7 @@
     "delete": "Eliminar",
     "deleteConfirm": "¿Quieres eliminar esta entrada?",
     "weatherRefresh": "Recuperar el tiempo",
-    "openDrive": "Abrir las imágenes en Drive"
+    "openDrive": "Abrir la carpeta de Google Drive"
   },
   "create": {
     "conf": "La entrada se ha guardado.",

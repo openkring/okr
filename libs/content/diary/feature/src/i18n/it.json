@@ -88,7 +88,7 @@
     "delete": "Elimina",
     "deleteConfirm": "Vuoi davvero eliminare questa voce?",
     "weatherRefresh": "Recupera il meteo",
-    "openDrive": "Apri le immagini in Drive"
+    "openDrive": "Apri la cartella Google Drive"
   },
   "create": {
     "conf": "La voce è stata salvata.",

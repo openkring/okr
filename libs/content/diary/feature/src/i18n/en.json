@@ -88,7 +88,7 @@
     "delete": "Delete",
     "deleteConfirm": "Do you really want to delete this entry?",
     "weatherRefresh": "Fetch weather",
-    "openDrive": "Open images in Drive"
+    "openDrive": "Open Google Drive folder"
   },
   "create": {
     "conf": "The entry was saved.",
