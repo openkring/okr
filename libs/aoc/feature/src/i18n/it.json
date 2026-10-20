@@ -285,5 +285,82 @@
     "searchPlaceholder": "E-mail, oggetto, mittente …",
     "allEventTypes": "Tutti i tipi di evento",
     "empty": "Nessun evento trovato."
+  },
+  "hub": {
+    "area": {
+      "access": "Accesso e privacy",
+      "ops": "Esercizio",
+      "config": "Configurazione",
+      "data": "Qualità dei dati"
+    },
+    "group": {
+      "migrations": "Migrazioni"
+    },
+    "card": {
+      "users": {
+        "label": "Utenti e accessi",
+        "effect": "Vedi chi può accedere e gestisci gli accessi."
+      },
+      "sessions": {
+        "label": "Sessioni",
+        "effect": "Mostra chi era connesso, quando e con quale dispositivo."
+      },
+      "register": {
+        "label": "Registro dei trattamenti",
+        "effect": "Elenca quali dati personali tratti e perché."
+      },
+      "privacyAudit": {
+        "label": "Audit sulla privacy",
+        "effect": "Controlla che i dati personali siano protetti bene e mostra le lacune."
+      },
+      "iban": {
+        "label": "Elenco IBAN",
+        "effect": "Mostra quali persone hanno un IBAN registrato."
+      },
+      "allocation": {
+        "label": "Assegnazione ai mandanti",
+        "effect": "Stabilisce quali persone, organizzazioni e risorse sono visibili in quale app."
+      },
+      "activity": {
+        "label": "Attività di sistema",
+        "effect": "Mostra cosa è successo di recente nel sistema."
+      },
+      "emailEvents": {
+        "label": "Eventi e-mail",
+        "effect": "Mostra se le e-mail inviate sono state consegnate, aperte o respinte."
+      },
+      "chatMaintenance": {
+        "label": "Manutenzione chat (operatore)",
+        "effect": "Riordina le stanze chat e controlla in quale app sono visibili."
+      },
+      "escalations": {
+        "label": "Escalation",
+        "effect": "Mostra le segnalazioni che qualcuno deve esaminare più da vicino."
+      },
+      "features": {
+        "label": "Funzionalità",
+        "effect": "Attiva o disattiva funzioni per questa app."
+      },
+      "workflow": {
+        "label": "Regole di workflow",
+        "effect": "Definisce cosa succede automaticamente quando accade qualcosa di preciso."
+      },
+      "validate": {
+        "label": "Validazione dei dati",
+        "effect": "Controlla i tuoi dati alla ricerca di errori e incoerenze e li elenca."
+      },
+      "reindex": {
+        "label": "Ricostruisci l'indice di ricerca",
+        "effect": "Ricostruisce la ricerca quando mancano risultati o sono obsoleti."
+      },
+      "accountTenants": {
+        "label": "Assegna gli account alle app",
+        "effect": "Registra per gli account esistenti in quali app valgono."
+      },
+      "matrixTenants": {
+        "label": "Assegna le stanze chat alle app",
+        "effect": "Assegna le stanze chat esistenti alle app in cui devono essere visibili."
+      }
+    }
   }
 }

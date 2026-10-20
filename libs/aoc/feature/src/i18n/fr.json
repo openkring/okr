@@ -285,5 +285,82 @@
     "searchPlaceholder": "E-mail, objet, expéditeur …",
     "allEventTypes": "Tous les types d'événements",
     "empty": "Aucun événement trouvé."
+  },
+  "hub": {
+    "area": {
+      "access": "Accès et confidentialité",
+      "ops": "Exploitation",
+      "config": "Configuration",
+      "data": "Qualité des données"
+    },
+    "group": {
+      "migrations": "Migrations"
+    },
+    "card": {
+      "users": {
+        "label": "Utilisateurs et accès",
+        "effect": "Vois qui peut se connecter et gère les accès."
+      },
+      "sessions": {
+        "label": "Sessions",
+        "effect": "Montre qui était connecté, quand et avec quel appareil."
+      },
+      "register": {
+        "label": "Registre des traitements",
+        "effect": "Liste quelles données personnelles tu traites et pourquoi."
+      },
+      "privacyAudit": {
+        "label": "Audit de confidentialité",
+        "effect": "Vérifie que les données personnelles sont bien protégées et montre les lacunes."
+      },
+      "iban": {
+        "label": "Liste des IBAN",
+        "effect": "Montre quelles personnes ont un IBAN enregistré."
+      },
+      "allocation": {
+        "label": "Attribution aux mandants",
+        "effect": "Définit quelles personnes, organisations et ressources sont visibles dans quelle app."
+      },
+      "activity": {
+        "label": "Activités du système",
+        "effect": "Montre ce qui s'est passé récemment dans le système."
+      },
+      "emailEvents": {
+        "label": "Événements e-mail",
+        "effect": "Montre si les e-mails envoyés ont été remis, ouverts ou rejetés."
+      },
+      "chatMaintenance": {
+        "label": "Maintenance du chat (opérateur)",
+        "effect": "Range les salons de discussion et vérifie dans quelle app ils sont visibles."
+      },
+      "escalations": {
+        "label": "Escalades",
+        "effect": "Montre les signalements que quelqu'un doit examiner de plus près."
+      },
+      "features": {
+        "label": "Fonctionnalités",
+        "effect": "Active ou désactive des fonctions pour cette app."
+      },
+      "workflow": {
+        "label": "Règles de workflow",
+        "effect": "Définit ce qui se passe automatiquement quand un événement précis survient."
+      },
+      "validate": {
+        "label": "Validation des données",
+        "effect": "Vérifie tes données à la recherche d'erreurs et d'incohérences et les liste."
+      },
+      "reindex": {
+        "label": "Reconstruire l'index de recherche",
+        "effect": "Reconstruit la recherche quand des résultats manquent ou sont périmés."
+      },
+      "accountTenants": {
+        "label": "Attribuer les comptes aux apps",
+        "effect": "Indique pour les accès existants dans quelles apps ils valent."
+      },
+      "matrixTenants": {
+        "label": "Attribuer les salons de chat aux apps",
+        "effect": "Attribue les salons de chat existants aux apps où ils doivent être visibles."
+      }
+    }
   }
 }

@@ -285,5 +285,82 @@
     "searchPlaceholder": "E-Mail, Betreff, Absender …",
     "allEventTypes": "Alle Ereignisarten",
     "empty": "Keine Ereignisse gefunden."
+  },
+  "hub": {
+    "area": {
+      "access": "Zugang & Datenschutz",
+      "ops": "Betrieb",
+      "config": "Konfiguration",
+      "data": "Datenqualität"
+    },
+    "group": {
+      "migrations": "Migrationen"
+    },
+    "card": {
+      "users": {
+        "label": "Benutzer & Zugänge",
+        "effect": "Hier siehst du, wer sich anmelden darf, und verwaltest die Zugänge."
+      },
+      "sessions": {
+        "label": "Sessions",
+        "effect": "Zeigt, wer wann angemeldet war und mit welchem Gerät."
+      },
+      "register": {
+        "label": "Bearbeitungsverzeichnis",
+        "effect": "Listet auf, welche persönlichen Daten du wofür bearbeitest."
+      },
+      "privacyAudit": {
+        "label": "Privacy Audit",
+        "effect": "Prüft, ob persönliche Daten korrekt geschützt sind, und zeigt Lücken."
+      },
+      "iban": {
+        "label": "IBAN-Bestand",
+        "effect": "Zeigt, von welchen Personen eine IBAN hinterlegt ist."
+      },
+      "allocation": {
+        "label": "Mandanten-Zuteilung",
+        "effect": "Legt fest, welche Personen, Organisationen und Ressourcen in welcher App sichtbar sind."
+      },
+      "activity": {
+        "label": "System-Aktivitäten",
+        "effect": "Zeigt, was zuletzt im System passiert ist."
+      },
+      "emailEvents": {
+        "label": "E-Mail-Ereignisse",
+        "effect": "Zeigt, ob versendete E-Mails zugestellt, geöffnet oder abgewiesen wurden."
+      },
+      "chatMaintenance": {
+        "label": "Chat-Wartung (Betreiber)",
+        "effect": "Räumt Chat-Räume auf und prüft, in welcher App sie sichtbar sind."
+      },
+      "escalations": {
+        "label": "Eskalationen",
+        "effect": "Zeigt Meldungen, die jemand genauer anschauen muss."
+      },
+      "features": {
+        "label": "Features",
+        "effect": "Schaltet Funktionen für diese App ein oder aus."
+      },
+      "workflow": {
+        "label": "Workflow-Regeln",
+        "effect": "Legt fest, was automatisch passiert, wenn etwas Bestimmtes eintrifft."
+      },
+      "validate": {
+        "label": "Daten-Validierung",
+        "effect": "Prüft deine Daten auf Fehler und Widersprüche und listet sie auf."
+      },
+      "reindex": {
+        "label": "Suchindex neu aufbauen",
+        "effect": "Baut die Suche neu auf, wenn Treffer fehlen oder veraltet sind."
+      },
+      "accountTenants": {
+        "label": "Zugänge den Apps zuordnen",
+        "effect": "Trägt bei bestehenden Zugängen ein, in welchen Apps sie gelten."
+      },
+      "matrixTenants": {
+        "label": "Chat-Räume Apps zuordnen",
+        "effect": "Ordnet bestehende Chat-Räume den Apps zu, in denen sie sichtbar sein sollen."
+      }
+    }
   }
 }

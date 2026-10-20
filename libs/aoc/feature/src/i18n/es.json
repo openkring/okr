@@ -285,5 +285,82 @@
     "searchPlaceholder": "Correo, asunto, remitente …",
     "allEventTypes": "Todos los tipos de evento",
     "empty": "No se encontraron eventos."
+  },
+  "hub": {
+    "area": {
+      "access": "Acceso y privacidad",
+      "ops": "Operación",
+      "config": "Configuración",
+      "data": "Calidad de los datos"
+    },
+    "group": {
+      "migrations": "Migraciones"
+    },
+    "card": {
+      "users": {
+        "label": "Usuarios y accesos",
+        "effect": "Mira quién puede iniciar sesión y gestiona los accesos."
+      },
+      "sessions": {
+        "label": "Sesiones",
+        "effect": "Muestra quién estuvo conectado, cuándo y con qué dispositivo."
+      },
+      "register": {
+        "label": "Registro de tratamientos",
+        "effect": "Enumera qué datos personales tratas y para qué."
+      },
+      "privacyAudit": {
+        "label": "Auditoría de privacidad",
+        "effect": "Comprueba que los datos personales estén bien protegidos y muestra las carencias."
+      },
+      "iban": {
+        "label": "Listado de IBAN",
+        "effect": "Muestra qué personas tienen un IBAN registrado."
+      },
+      "allocation": {
+        "label": "Asignación de inquilinos",
+        "effect": "Define qué personas, organizaciones y recursos se ven en cada app."
+      },
+      "activity": {
+        "label": "Actividad del sistema",
+        "effect": "Muestra lo que ha pasado últimamente en el sistema."
+      },
+      "emailEvents": {
+        "label": "Eventos de correo",
+        "effect": "Muestra si los correos enviados se entregaron, abrieron o rebotaron."
+      },
+      "chatMaintenance": {
+        "label": "Mantenimiento del chat (operador)",
+        "effect": "Ordena las salas de chat y comprueba en qué app se ven."
+      },
+      "escalations": {
+        "label": "Escalaciones",
+        "effect": "Muestra los avisos que alguien debe revisar con más detalle."
+      },
+      "features": {
+        "label": "Funciones",
+        "effect": "Activa o desactiva funciones de esta app."
+      },
+      "workflow": {
+        "label": "Reglas de flujo de trabajo",
+        "effect": "Define qué ocurre automáticamente cuando sucede algo concreto."
+      },
+      "validate": {
+        "label": "Validación de datos",
+        "effect": "Revisa tus datos en busca de errores e incoherencias y los enumera."
+      },
+      "reindex": {
+        "label": "Reconstruir el índice de búsqueda",
+        "effect": "Reconstruye la búsqueda cuando faltan resultados o están desactualizados."
+      },
+      "accountTenants": {
+        "label": "Asignar cuentas a las apps",
+        "effect": "Anota en las cuentas existentes a qué apps pertenecen."
+      },
+      "matrixTenants": {
+        "label": "Asignar salas de chat a las apps",
+        "effect": "Asigna las salas de chat existentes a las apps donde deben verse."
+      }
+    }
   }
 }

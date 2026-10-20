@@ -210,6 +210,47 @@ export const AOC_EMAIL_I18N_KEYS = {
   email_empty:              PFX + 'email.empty',
 };
 
+// ─── AOC hub cards (spec 1.101 phase 5) ──────────────────────────────────────
+export const AOC_HUB_I18N_KEYS = {
+  area_access: PFX + 'hub.area.access',
+  area_ops: PFX + 'hub.area.ops',
+  area_config: PFX + 'hub.area.config',
+  area_data: PFX + 'hub.area.data',
+  group_migrations: PFX + 'hub.group.migrations',
+  card_users_label: PFX + 'hub.card.users.label',
+  card_users_effect: PFX + 'hub.card.users.effect',
+  card_sessions_label: PFX + 'hub.card.sessions.label',
+  card_sessions_effect: PFX + 'hub.card.sessions.effect',
+  card_register_label: PFX + 'hub.card.register.label',
+  card_register_effect: PFX + 'hub.card.register.effect',
+  card_privacyAudit_label: PFX + 'hub.card.privacyAudit.label',
+  card_privacyAudit_effect: PFX + 'hub.card.privacyAudit.effect',
+  card_iban_label: PFX + 'hub.card.iban.label',
+  card_iban_effect: PFX + 'hub.card.iban.effect',
+  card_allocation_label: PFX + 'hub.card.allocation.label',
+  card_allocation_effect: PFX + 'hub.card.allocation.effect',
+  card_activity_label: PFX + 'hub.card.activity.label',
+  card_activity_effect: PFX + 'hub.card.activity.effect',
+  card_emailEvents_label: PFX + 'hub.card.emailEvents.label',
+  card_emailEvents_effect: PFX + 'hub.card.emailEvents.effect',
+  card_chatMaintenance_label: PFX + 'hub.card.chatMaintenance.label',
+  card_chatMaintenance_effect: PFX + 'hub.card.chatMaintenance.effect',
+  card_escalations_label: PFX + 'hub.card.escalations.label',
+  card_escalations_effect: PFX + 'hub.card.escalations.effect',
+  card_features_label: PFX + 'hub.card.features.label',
+  card_features_effect: PFX + 'hub.card.features.effect',
+  card_workflow_label: PFX + 'hub.card.workflow.label',
+  card_workflow_effect: PFX + 'hub.card.workflow.effect',
+  card_validate_label: PFX + 'hub.card.validate.label',
+  card_validate_effect: PFX + 'hub.card.validate.effect',
+  card_reindex_label: PFX + 'hub.card.reindex.label',
+  card_reindex_effect: PFX + 'hub.card.reindex.effect',
+  card_accountTenants_label: PFX + 'hub.card.accountTenants.label',
+  card_accountTenants_effect: PFX + 'hub.card.accountTenants.effect',
+  card_matrixTenants_label: PFX + 'hub.card.matrixTenants.label',
+  card_matrixTenants_effect: PFX + 'hub.card.matrixTenants.effect',
+} satisfies Record<string, string>;
+
 export type AocI18n = { [K in keyof typeof AOC_I18N_KEYS]: Signal<string> };
 
 // `fill` now lives in @okr/shared-util-core so every domain can use it; re-exported

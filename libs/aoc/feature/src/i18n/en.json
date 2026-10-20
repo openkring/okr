@@ -285,5 +285,82 @@
     "searchPlaceholder": "Email, subject, sender …",
     "allEventTypes": "All event types",
     "empty": "No events found."
+  },
+  "hub": {
+    "area": {
+      "access": "Access & privacy",
+      "ops": "Operations",
+      "config": "Configuration",
+      "data": "Data quality"
+    },
+    "group": {
+      "migrations": "Migrations"
+    },
+    "card": {
+      "users": {
+        "label": "Users & access",
+        "effect": "See who may sign in and manage their access."
+      },
+      "sessions": {
+        "label": "Sessions",
+        "effect": "Shows who was signed in when, and on which device."
+      },
+      "register": {
+        "label": "Processing register",
+        "effect": "Lists which personal data you process and why."
+      },
+      "privacyAudit": {
+        "label": "Privacy audit",
+        "effect": "Checks that personal data is protected properly and shows gaps."
+      },
+      "iban": {
+        "label": "IBAN records",
+        "effect": "Shows which people have an IBAN on file."
+      },
+      "allocation": {
+        "label": "Tenant allocation",
+        "effect": "Decides which people, organisations and resources are visible in which app."
+      },
+      "activity": {
+        "label": "System activity",
+        "effect": "Shows what recently happened in the system."
+      },
+      "emailEvents": {
+        "label": "Email events",
+        "effect": "Shows whether sent emails were delivered, opened or bounced."
+      },
+      "chatMaintenance": {
+        "label": "Chat maintenance (operator)",
+        "effect": "Tidies up chat rooms and checks which app they are visible in."
+      },
+      "escalations": {
+        "label": "Escalations",
+        "effect": "Shows reports that someone needs to look at more closely."
+      },
+      "features": {
+        "label": "Features",
+        "effect": "Turns features on or off for this app."
+      },
+      "workflow": {
+        "label": "Workflow rules",
+        "effect": "Defines what happens automatically when something specific occurs."
+      },
+      "validate": {
+        "label": "Data validation",
+        "effect": "Checks your data for errors and inconsistencies and lists them."
+      },
+      "reindex": {
+        "label": "Rebuild search index",
+        "effect": "Rebuilds search when results are missing or outdated."
+      },
+      "accountTenants": {
+        "label": "Assign accounts to apps",
+        "effect": "Records for existing accounts which apps they belong to."
+      },
+      "matrixTenants": {
+        "label": "Assign chat rooms to apps",
+        "effect": "Assigns existing chat rooms to the apps where they should be visible."
+      }
+    }
   }
 }
