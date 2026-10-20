@@ -14,7 +14,7 @@ import { DocGenerationService } from '@okr/content-pdf-template-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AlertService } from '@okr/shared-util-angular';
-import { DateFormat, convertDateFormatToString, getTodayStr } from '@okr/shared-util-core';
+import { DateFormat, OPERATOR_TENANT_ID, convertDateFormatToString, getTodayStr } from '@okr/shared-util-core';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import type { FindingSeverity, PrivacyAuditResult } from '@okr/shared-models';
 
@@ -78,15 +78,18 @@ import type { FindingSeverity, PrivacyAuditResult } from '@okr/shared-models';
             </ion-button>
             <!-- The one repair reachable from here: check 3's fix is a single callable, so
                  the screen that reports the staleness can also clear it. Everything else
-                 needs a human on the offending record. -->
-            <ion-button fill="outline" (click)="rebuildDirectory()"
-                        [disabled]="isRunning() || isRebuilding()">
-              @if (isRebuilding()) {
-                <ion-spinner name="dots" slot="start" /> {{ i18n.rebuild_running() }}
-              } @else {
-                {{ i18n.rebuild_action() }}
-              }
-            </ion-button>
+                 needs a human on the offending record. The rebuild runs across all tenants,
+                 so only the operator sees it (spec 1.101 phase 5; the callable checks too). -->
+            @if (isOperator()) {
+              <ion-button fill="outline" (click)="rebuildDirectory()"
+                          [disabled]="isRunning() || isRebuilding()">
+                @if (isRebuilding()) {
+                  <ion-spinner name="dots" slot="start" /> {{ i18n.rebuild_running() }}
+                } @else {
+                  {{ i18n.rebuild_action() }}
+                }
+              </ion-button>
+            }
           </div>
         </ion-card-content>
       </ion-card>
@@ -163,6 +166,8 @@ export class PrivacyAuditPage {
   protected readonly rebuildSummary = signal<RebuildDirectoryResult | undefined>(undefined);
   protected readonly rebuildMessage = signal<string | undefined>(undefined);
   protected readonly error = signal<string | undefined>(undefined);
+  /** The address-directory rebuild is cross-tenant and operator-only (rebuildAddressDirectory checks the same). */
+  protected readonly isOperator = computed(() => this.appStore.tenantId() === OPERATOR_TENANT_ID);
 
   protected readonly ranOn = computed(() =>
     convertDateFormatToString(this.result()?.ranAt, DateFormat.StoreDate, DateFormat.ViewDate, false));

@@ -1,88 +1,141 @@
-# AOC (Admin Operations Console) Domain
+# AOC (Admin Operations Console)
 
-## Overview
+A short map of where the admin tools live after the restructuring (spec 1.101, phases 1–5).
 
-The AOC (Admin Operations Console) is a restricted administrative dashboard for privileged users and admins. It provides a collection of operational tools grouped into dedicated tabs/pages:
+## The hub
 
-- **Data** — Validate model integrity and regenerate search indexes across all collections. There is no Daten-Korrektur page any more; bulk fixes run as a local script (see below).
-- **Content** — moved to Seiten › Integrität prüfen (`/page/integrity`, `@okr/cms-page-feature`); `/aoc/content` redirects there.
-- **Roles** — moved to «Benutzer & Zugänge» (`/user/all/c-users`, `@okr/user-feature`, spec 1.101 phase 4): the account tools are row actions there, roles are edited in the user modal; `/aoc/roles` redirects there.
-- **Chat** — moved to Chat › Wartung «Chat-Wartung» (`/chat/maintenance`, `@okr/chat-feature`, spec 1.101 phase 4); `/aoc/chat` redirects there.
-- **Tag** — Manage the `tags` Firestore collection: browse, create, edit, and delete tag documents and their comma-separated tag strings per model type.
-- **User Accounts** — merged into «Benutzer & Zugänge» (`/user/all/c-users`, `@okr/user-feature`, spec 1.101 phase 4); `/aoc/account` redirects there.
-- **Admin Ops** — Miscellaneous administrative operations: the IBAN list and `backfillAccountTenants` (both move in spec 1.101 phase 5). The over-age-juniors and membership-category-change reports left in phase 3 (see below). No Debug Tools (removed, spec 1.101).
-- **SRV / Regasoft** — moved to Mitglieder › Wartung › Verbandsabgleich (SRV) (`/membership/srv`, `@okr/relationship-membership-feature`, memberAdmin, not restricted to scs); `/aoc/srv` redirects there.
-- **Bexio** — the account, journal, invoice and bill syncs, the vendor/receiver linking and «clear tree» are retired from the UI (the Cloud Functions stay deployed; `syncBexioAccounts` requires admin). The contact reconciliation moved to Personen › Wartung › Bexio-Kontakte (`/person/bexio-contacts`, `@okr/subject-person-feature`, admin); `/aoc/bexio` redirects there.
-- **Statistik** — deleted (it queried fields that do not exist and duplicated the `member-age` section).
-- **Year-end membership reports** (Umzuteilende Jugendliche, Änderungen Mitgliederkategorie) — moved to Mitglieder › Wartung (`@okr/relationship-membership-feature`, memberAdmin); they report on the org of the open list.
-- **Kiosk** — moved to Logbuch › Kiosk-Geräte (`/trips/kiosk`, `@okr/trip-feature`, admin); `/aoc/kiosk` redirects there. Monitoring and remote control of the tenant's kiosk tablets are described in the `kiosk` skill.
-- **Doc** — moved to Dokumente › Verwaiste Dateien (`/document/orphans`, `@okr/content-document-feature`); `/aoc/doc` redirects there.
-- **Email** — «E-Mail-Ereignisse» (`aoc-email.ts`): the delivery/bounce events of outgoing mail, with its own menu row (`aoc-email` → `/aoc/email`).
-- **Trip** — moved to Logbuch › Logbuch aufräumen (`/trips/maintenance`, `@okr/trip-feature`, tripAdmin); `/aoc/trip` redirects there.
-- **Diary** — moved to Tagebuch › Import vorbereiten (`/diary/import`, `@okr/content-diary-feature`); `/aoc/diary` redirects there.
+The AOC is one page, `AocHub`, shown for four areas. Each area has a fixed route (`isAdminGuard()`),
+and the area comes from the route data (`data: { area }`). There is no `/aoc/:area` route.
 
-There is no Storage page (removed, spec 1.101). Flight Tracker is not an AOC tool: it is a main-menu entry (block `mobility`).
+| Area | Route | Menu row |
+|---|---|---|
+| Zugang & Datenschutz | `/aoc/access` | `aoc-access` |
+| Betrieb | `/aoc/ops` | `aoc-ops` |
+| Konfiguration | `/aoc/config` | `aoc-config` |
+| Datenqualität | `/aoc/data` | `aoc-data` |
 
-The AOC has no Firestore collection of its own — it operates on all other domain collections via `FirestoreService` and domain-specific services.
+The `aoc-menu` submenu holds these four rows, followed by the closing `divider_empty`. Rows outside
+the catalogue (`aoc-allocation`, `operator-chat`, `alias-all`, `alias-spaces`, `person-privacy`) stay
+below them. Only the `aoc` block declares `aoc-menu`.
 
-## Authorization
+The cards are pure data: `AOC_AREAS` in `@okr/aoc-util` (`libs/aoc/util/src/lib/aoc-areas.ts`), in
+display order. `visibleAocCards` filters them by tenant (`tenants`, `notOnApps`), feature block and
+role. A card either opens a route or runs an operation, which `AocHubStore` dispatches. The store
+writes each run to `activities` (`scope: 'aoc'`), and the card shows the last run from there.
 
-All AOC pages require the `admin` or `privileged` role, enforced via `hasRole(...)` guards in the UI and stores.
+## Cards per area
 
-## Store Pattern
+### Zugang & Datenschutz
 
-Each AOC tab has its own `signalStore` (`AocDataStore`, `AocTagStore`, `AocAdminOpsStore`) provided at the component level (not root). All stores inject `AppStore` and `FirestoreService`.
+| Card | Target | What it does |
+|---|---|---|
+| Benutzer & Zugänge | `/user/all/c-users` | Logins, roles and account tools (`@okr/user-feature`) |
+| Sessions | `/aoc/sessions` | Who was signed in, when, and on which device (`AocSession`) |
+| Bearbeitungsverzeichnis | `/security/register` | The processing register (`@okr/security-processing-feature`) |
+| Privacy Audit | `/security/privacy-audit` | Checks the privacy protection (`@okr/security-audit-feature`) |
+| IBAN-Bestand | operation `iban` | Lists the persons with an IBAN on file, as a report |
+| Mandanten-Zuteilung | `/operator/allocation` | Operator only (bka) |
 
-## Supported Model Types (Data / Validate / Index operations)
+### Betrieb
 
-The `AocDataStore` supports operations over the following collections:
+| Card | Target | What it does |
+|---|---|---|
+| System-Aktivitäten | `/activity` | The activity log (`@okr/activity-feature`) |
+| E-Mail-Ereignisse | `/aoc/email` | Delivery, open and bounce events of outgoing mail (`AocEmail`), operator only |
+| Chat-Wartung (Betreiber) | `/operator/chat` | Operator only (bka) |
+| Eskalationen | `/ticket/all` | The 3LS escalation queue, kring only |
 
-| Model Type | Collection |
+### Konfiguration
+
+| Card | Target | What it does |
+|---|---|---|
+| Features | `/tenant/features` | The feature picker (`@okr/tenant-feature`) |
+| Workflow-Regeln | `/workflow/all/workflow-context` | Workflow rules (`@okr/system-workflow-feature`) |
+
+### Datenqualität
+
+| Card | Target | What it does |
+|---|---|---|
+| Daten-Validierung | operation `validate` | Runs the Vest suites over the collections and lists the findings as a report |
+| Suchindex neu aufbauen | operation `reindex` | Previews the documents whose `index` differs, then writes only that field |
+| Migrationen › Zugänge den Apps zuordnen | operation `migrate-account-tenants` | `backfillAccountTenants`; «Prüfen» runs the dry run; operator only |
+| Migrationen › Chat-Räume Apps zuordnen | operation `migrate-matrix-tenants` | `backfillMatrixRoomTenants`; operator only |
+
+A migration card shows «offen» or «erledigt» only after «Prüfen». Nothing runs on page load. A
+finished migration's card is removed from `AOC_AREAS` in the following release.
+
+Bulk fixes have no UI. Use `node scripts/fix-models.mjs --collection <name> [--max <n>] [--apply]`
+(dry run by default).
+
+## kring
+
+kring-app hand-writes its route table and declares only `/aoc/ops` (pinned in
+`scripts/app-routes.test.mjs`). Cards whose targets do not exist in kring carry `notOnApps: ['kring']`.
+On kring the Betrieb hub shows Eskalationen; the Features card sits in Konfiguration, whose route kring
+does not declare.
+
+## Where the moved tools live
+
+| Old tool | New home | Phase |
+|---|---|---|
+| Content | Seiten › Integrität prüfen, `/page/integrity` | 2 |
+| Doc | Dokumente › Verwaiste Dateien, `/document/orphans` | 2 |
+| Kiosk | Logbuch › Kiosk-Geräte, `/trips/kiosk` | 2 |
+| Trip | Logbuch › Logbuch aufräumen, `/trips/maintenance` | 2 |
+| Diary | Tagebuch › Import vorbereiten, `/diary/import` | 2 |
+| SRV / Regasoft | Mitglieder › Wartung › Verbandsabgleich, `/membership/srv` | 3 |
+| Bexio contacts | Personen › Wartung › Bexio-Kontakte, `/person/bexio-contacts` | 3 |
+| Year-end membership reports | Mitglieder › Wartung (memberAdmin) | 3 |
+| Statistik | deleted | 3 |
+| Roles, User Accounts | Benutzer & Zugänge, `/user/all/c-users` | 4 |
+| Chat | Chat › Wartung, `/chat/maintenance`; bka also `/operator/chat` | 4 |
+| Admin Ops: IBAN list | Zugang › IBAN-Bestand | 5 |
+| Admin Ops: `backfillAccountTenants` | Datenqualität › Migrationen | 5 |
+| Data: validation, search index | Datenqualität cards | 5 |
+| Matrix room backfill | Datenqualität › Migrationen (moved from Chat-Wartung) | 5 |
+| Sessions, E-Mail-Ereignisse | hub cards; the pages keep `/aoc/sessions` and `/aoc/email` | 5 |
+| Benutzer, Register, Privacy Audit, Aktivitäten, Eskalationen, Workflow, Features | hub cards, no longer `aoc-menu` rows | 5 |
+
+Tags (`/aoc/tag`) and Website (`/aoc/website`) are content tools (contentAdmin) under `cms-menu`, not
+hub content. There is no Storage page, no Debug Tools page and no Daten-Korrektur page any more.
+Flight Tracker is a main-menu entry (block `mobility`).
+
+## Operator only (bka)
+
+The operator is a caller whose `users` doc has tenants exactly `['bka']` and `roles.admin` true
+(`checkOperatorTenant`, `getCallerContext().isOperator`, rules `isOperator()`). Operator only are:
+
+- Mandanten-Zuteilung (`/operator/allocation`, bka-app only; `allocateTenant`, `getAllocationEmails`)
+- Chat-Wartung (Betreiber) (`/operator/chat`, bka-app only)
+- E-Mail-Ereignisse (the `emailEvents` read rule)
+- the migrations `backfillAccountTenants` and `backfillMatrixRoomTenants`
+- «Adressverzeichnis neu aufbauen» on the Privacy Audit page (`rebuildAddressDirectory`; the button
+  is shown only when `tenantId === OPERATOR_TENANT_ID`)
+- `listFirebaseUsers` and `listBkUsers` return the whole project only to bka, the caller's own tenant otherwise
+
+Outside bka, the account callables act only on logins whose `users` doc belongs to the caller's tenant
+alone (`loadTenantUser`, `isSoleTenantUserData`, `mayDeleteAuthUser`).
+
+## Remaining `/aoc/*` redirects
+
+Each is kept for one release and pinned in `AOC_REDIRECTS` (`feature-catalogue.guards.spec.ts`):
+
+| Old path | Redirects to |
 |---|---|
-| `address` | `addresses` |
-| `calevent` | `calevents` |
-| `comment` | `comments` |
-| `document` | `documents` |
-| `group` | `groups` |
-| `location` | `locations` |
-| `membership` | `memberships` |
-| `menuitem` | `menu-items` |
-| `org` | `orgs` |
-| `ownership` | `ownerships` |
-| `page` | `pages` |
-| `person` | `persons` |
-| `personal_rel` | `personal-rels` |
-| `reservation` | `reservations` |
-| `resource` | `resources` |
-| `todo` | `tasks` |
-| `transfer` | `transfers` |
-| `user` | `users` |
-| `workrel` | `workrels` |
-| `category` | `categories` |
+| `/aoc/adminops` | `/aoc/data` |
+| `/aoc/statistics` | `/aoc/data` |
+| `/aoc/roles`, `/aoc/account` | `/user/all/c-users` |
+| `/aoc/chat` | `/chat/maintenance` (bka-app: `/operator/chat`) |
+| `/aoc/content` | `/page/integrity` |
+| `/aoc/doc` | `/document/orphans` |
+| `/aoc/kiosk` | `/trips/kiosk` |
+| `/aoc/trip` | `/trips/maintenance` |
+| `/aoc/diary` | `/diary/import` |
+| `/aoc/bexio` | `/person/bexio-contacts` |
+| `/aoc/srv` | `/membership/srv` |
 
-## Key Capabilities
+## Library path
 
-### AocDataStore
-
-- `validateModels()` — Run vest validation suites over all documents in a collection and log validation errors.
-- `createIndexesOnCollection()` — Regenerate the `index` field on every document in a collection using domain-specific index functions.
-- Bulk fixes (types, missing fields, one-off migrations) are no longer in the UI: use the local script `node scripts/fix-models.mjs --collection <name> [--max <n>] [--apply]` (dry run by default; configure `DEFAULTS`/`TYPE_SPEC`/`CUSTOM` at its top).
-
-### AocTagStore
-
-- Reads from collection: `tags` (field `tagModel`, `tags` as comma-separated string).
-- Supports full CRUD on tag documents and individual tag string items.
-
-## Mandanten-Zuteilung (operator only)
-
-Operator-only since spec 1.101 §6: route `/operator/allocation` exists only in `apps/bka-app`; `allocateTenant` and `getAllocationEmails` refuse every tenant but `bka` (`checkOperatorTenant`). `listFirebaseUsers` / `listBkUsers` return the whole project only to bka, the caller's own tenant otherwise.
-
-- Operator = the caller's `users` doc has tenants exactly `['bka']` AND `roles.admin` is true (`getCallerContext().isOperator`, `isOperatorUserData`) — never `tenants[0]`, never the custom claim.
-- Outside bka, impersonation (`createCustomToken`), `getFirebaseUser`, `getUidByEmail`, `setPassword`, `updateFirebaseUser` and `deleteFirebaseAuthUser` act only on logins whose `users` doc belongs to the caller's tenant alone (`loadTenantUser` / `isSoleTenantUserData` / `mayDeleteAuthUser`).
-- `firestore.rules` (users): a `users` doc holds exactly one tenant; admins create only docs of their own single tenant, never change `tenants`, and update/delete only docs of their own tenant.
-
-## Library Path
-
-`@okr/aoc-feature` (`libs/aoc/feature/src/lib/`)
-
-Utilities: `@okr/aoc-util` (`libs/aoc/util/src/`) — exports `adminops.util`.
+`@okr/aoc-feature` (`libs/aoc/feature/src/lib/`): `AocHub`, `AocSession`, `AocEmail`, `AocTag`,
+`AocWebsite`, `AocTenantAllocation` and the tenant switcher. `@okr/aoc-util` (`libs/aoc/util/src/lib/`):
+`AOC_AREAS`, `AOC_AREA_ROUTES`, the hub i18n keys and the pure helpers.

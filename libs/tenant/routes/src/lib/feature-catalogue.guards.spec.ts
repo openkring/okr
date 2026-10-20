@@ -316,7 +316,8 @@ const AOC_REDIRECTS: Record<string, string> = {
   trip: '/trips/maintenance',
   diary: '/diary/import',
   kiosk: '/trips/kiosk',
-  statistics: '/aoc/adminops',
+  statistics: '/aoc/data',
+  adminops: '/aoc/data',
   chat: '/chat/maintenance',
   roles: '/user/all/c-users',
   account: '/user/all/c-users',
@@ -328,6 +329,30 @@ describe('/aoc guards after the 2026-08-05 rulings', () => {
     const redirects = Object.fromEntries(children.filter(c => c.redirectTo).map(c => [c.path, c.redirectTo]));
 
     expect(redirects).toEqual(AOC_REDIRECTS);
+  });
+
+  // 1.101 phase 5: the old pages land on the Datenqualität hub directly, never via a redirect chain.
+  it('/aoc/adminops and /aoc/statistics both land on the Datenqualität hub', () => {
+    const { children = [] } = fragmentOf('aoc', 'aoc');
+    const target = (path: string) => children.find(c => c.path === path)?.redirectTo;
+
+    expect(target('adminops')).toBe('/aoc/data');
+    expect(target('statistics')).toBe('/aoc/data');
+    // No redirect may point at another redirect.
+    const redirectPaths = children.filter(c => c.redirectTo).map(c => `/aoc/${c.path}`);
+    expect(children.filter(c => redirectPaths.includes(c.redirectTo as string)).map(c => c.path)).toEqual([]);
+  });
+
+  /** 1.101 phase 5: the four hub areas are fixed paths, one component, the area taken from route data. */
+  it('the four hub routes carry their area in route data and are admin-only', () => {
+    const { children = [] } = fragmentOf('aoc', 'aoc');
+    const hubs = children.filter(c => c.data?.['area'] !== undefined);
+
+    expect(Object.fromEntries(hubs.map(c => [c.path, c.data?.['area']]))).toEqual({
+      access: 'access', ops: 'ops', config: 'config', data: 'data',
+    });
+    expect(hubs.filter(c => activates(CONTENT_ADMIN, c) || activates(PRIVILEGED, c)).map(c => c.path)).toEqual([]);
+    expect(hubs.filter(c => !activates(ADMIN, c)).map(c => c.path)).toEqual([]);
   });
 
   /**

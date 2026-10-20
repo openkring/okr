@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { FEATURE_BLOCKS } from './feature-blocks';
 import type { MenuSpec } from './feature-catalogue.types';
+import { blockOwnersOfMenuKey } from './feature-routes.util';
 
 /**
  * `blockOfMenuKey` (`feature-routes.util.ts`) is fed a menu doc's `name` — the field
@@ -160,5 +161,39 @@ describe('contextMenuChat Wartung rows (1.101 phase 4)', () => {
   it('both copies carry field-identical children', () => {
     const [a, b] = copies.map(c => JSON.stringify(c.spec.children));
     expect(a).toBe(b);
+  });
+});
+
+/**
+ * Spec 1.101 phase 5: `aoc-menu` holds the four AOC hub rows. The tools the hub cards link to
+ * (users, register, privacy audit, activity, escalations, workflow rules, features) are no longer
+ * menu rows — and with that `aoc` is the only block left declaring the shared parent.
+ */
+describe('aoc-menu hub rows (1.101 phase 5)', () => {
+  const aocMenu = FEATURE_BLOCKS.find(b => b.id === 'aoc')?.menu.find(m => m.name === 'aoc-menu');
+
+  it('lists the four hub rows in area order, then the closing divider', () => {
+    expect(aocMenu?.children?.map(c => c.name)).toEqual(['aoc-access', 'aoc-ops', 'aoc-config', 'aoc-data', 'divider_empty']);
+  });
+
+  it.each([
+    ['aoc-access', '/aoc/access'],
+    ['aoc-ops', '/aoc/ops'],
+    ['aoc-config', '/aoc/config'],
+    ['aoc-data', '/aoc/data'],
+  ])('%s navigates to %s, admin only, with its own menu label', (name, url) => {
+    expect(aocMenu?.children?.find(c => c.name === name)).toMatchObject({
+      key: name, action: 'navigate', url, roleNeeded: 'admin', label: `@item.${name}`,
+    });
+  });
+
+  it('is declared by the aoc block alone', () => {
+    expect(blockOwnersOfMenuKey(FEATURE_BLOCKS, 'aoc-menu')).toEqual(['aoc']);
+  });
+
+  it('no block declares a row the hub absorbed', () => {
+    for (const key of ['aoc-admin', 'aoc-sessions', 'aoc-email', 'user-all', 'priv-register', 'priv-audit', 'activity-all', 'ticket-all', 'workflow-all', 'tenant-features']) {
+      expect(blockOwnersOfMenuKey(FEATURE_BLOCKS, key), key).toEqual([]);
+    }
   });
 });

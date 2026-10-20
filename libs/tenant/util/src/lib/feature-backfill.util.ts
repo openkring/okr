@@ -40,7 +40,9 @@ import { blockOwnersOfMenuKey } from './feature-routes.util';
  *                  would each be granted `activity` (the activity-log admin screen) despite
  *                  owning no `activity-all`. That is a silent grant of a block to
  *                  eight tenants that demonstrably do not run it. (`mobility` used to be
- *                  a co-declarer too; its flighttracker row left `aoc-menu` in 1.101.)
+ *                  a co-declarer too; its flighttracker row left `aoc-menu` in 1.101.
+ *                  Since 1.101 phase 5 `aoc` alone declares `aoc-menu` — the example is
+ *                  historical, the policy argument is not.)
  *
  *   'exclusive'    CHOSEN (the default). Attribute a document only when exactly one block
  *                  declares it. A co-declared document is treated as evidence of nothing.

@@ -250,9 +250,8 @@ const aoc: FeatureBlock = {
   // "no edge" side of the settled dividing line, one step further from an edge than the
   // data-access-service case (`chat`/`finance` → `activity`, and `folder.service.ts`, whose
   // domain now sits inside the `document` block). Same for the `activity`
-  // domain, whose `activity-all` menu doc is a child of the SHARED `aoc-menu` parent this
-  // block also declares — a shared parent is not an edge either (see `activity` below, which
-  // owns that spec and co-declares the same parent).
+  // domain, whose screen the AOC hub links by URL (its `activity-all` row under `aoc-menu`
+  // left the catalogue in spec 1.101 phase 5) — a URL is not an edge either.
   dependsOn: ['document'],
   // Was `[]` with no justification (task 5); researched and corrected in task 18, in step with
   // the `tag`/`website` routes added to this block's route fragment. `tags` (`TagCollection`,
@@ -290,37 +289,29 @@ const aoc: FeatureBlock = {
   //    stay excluded on their own, unrelated grounds (tenant-bespoke "tbd:" placeholders for
   //    unbuilt screens, `tenants: ['scs']`), not for the action type any more.
   //
-  // `/aoc/email` (`AocEmail`) has the `aoc-email` row declared below; its live doc is created by
-  // `scripts/aoc-phase1-menu.mjs` (spec 1.101 phase 1). (`/aoc/tag`'s doc is named `tag-all`, not
-  // `aoc-tag` — see below.)
+  // `/aoc/email` (`AocEmail`) is reached through the «E-Mail-Ereignisse» hub card since spec 1.101
+  // phase 5 (its `aoc-email` row is gone). (`/aoc/tag`'s doc is named `tag-all`, not `aoc-tag` — see below.)
   menu: [
     aocMenuParent([
-      { key: 'aoc-admin',      name: 'aoc-admin',      url: '/aoc/adminops',   action: 'navigate', roleNeeded: 'admin', icon: 'admin',    label: '@main.aoc.admin' },
+      // Spec 1.101 phase 5: the AOC submenu is the four hub areas, in hub order. Each row opens
+      // `AocHub` for its area; the tools themselves are hub CARDS (`AOC_AREAS` in @okr/aoc-util),
+      // no longer menu rows. Absorbed and removed from the catalogue: `aoc-admin` (the page is
+      // gone, /aoc/adminops redirects to /aoc/data), `aoc-sessions`, `aoc-email`, `workflow-all`
+      // and `tenant-features` here, plus `user-all` (user), `priv-register`/`priv-audit`
+      // (security), `activity-all` (activity) and `ticket-all` (business), which no longer hang
+      // under `aoc-menu` — so `aoc` is now the only block declaring the shared parent. Their live
+      // docs are archived by scripts/aoc-phase5-menu.mjs; the old `@item.*` labels stay in the
+      // menu bundle until then.
+      { key: 'aoc-access',     name: 'aoc-access',     url: '/aoc/access',     action: 'navigate', roleNeeded: 'admin', icon: 'shield',   label: '@item.aoc-access' },
+      { key: 'aoc-ops',        name: 'aoc-ops',        url: '/aoc/ops',        action: 'navigate', roleNeeded: 'admin', icon: 'history',  label: '@item.aoc-ops' },
+      { key: 'aoc-config',     name: 'aoc-config',     url: '/aoc/config',     action: 'navigate', roleNeeded: 'admin', icon: 'settings', label: '@item.aoc-config' },
       { key: 'aoc-data',       name: 'aoc-data',       url: '/aoc/data',       action: 'navigate', roleNeeded: 'admin', icon: 'database', label: '@item.aoc-data' },
-      // Added task 18, verbatim off the live docs (all six `tenants: ['scs']` only — i.e.
-      // every other tenant's AOC submenu is missing them today, which is exactly what
-      // cataloguing them fixes).
-      { key: 'aoc-sessions',   name: 'aoc-sessions',   url: '/aoc/sessions',   action: 'navigate', roleNeeded: 'admin', icon: 'history',  label: '@item.aoc-sessions' },
-      { key: 'aoc-email',      name: 'aoc-email',      url: '/aoc/email',      action: 'navigate', roleNeeded: 'admin', icon: 'email',    label: '@item.aoc-email' },
       // `aoc-kiosk` LEFT the catalogue with spec 1.101 phase 2: the kiosk page is `trip-kiosk` in `c-trips`.
       // `aoc-chat` LEFT the catalogue with spec 1.101 phase 4: Chat-Wartung is `chat-maintenance` in `contextMenuChat`.
       // `aoc-auth` and `aoc-account` LEFT the catalogue with spec 1.101 phase 4: both are «Benutzer & Zugänge» (`user-all`).
       // `aoc-allocation` (spec 1.47) LEFT the catalogue with spec 1.101 §6: tenant allocation is an
       // operator-only tool. Its route lives in apps/bka-app (`/operator/allocation`) and its menu
       // row is a bka-only doc written by scripts/restrict-allocation-to-bka.mjs.
-      // NEW with the AOC diary screen: the Drive check + import dry run moved off
-      // `/security/privacy-audit`, plus the places/people the import could not match. Seeded
-      // with the block, not mirrored off a live doc.
-      // NEW with spec 1.35, seeded live for `scs` in the same change. It hangs under the AOC
-      // submenu but its ROUTE is not an `/aoc/*` child and not block-gated: the rule engine is
-      // a Cloud Function that fires on every membership write, so gating the screen would hide
-      // rules that keep running. See `system` in NON_BLOCK_DOMAINS.
-      { key: 'workflow-all',   name: 'workflow-all',   url: '/workflow/all/workflow-context', action: 'navigate', roleNeeded: 'admin', icon: 'settings', label: '@system/workflow/feature.plural' },
-      // The feature picker itself (`tenant/features`, `isAdminGuard`). Like `workflow-all` it
-      // hangs under the AOC submenu but its route is deliberately NOT block-gated — it is the
-      // screen you use to switch a block back on. Plain label, no i18n key: `resolveMenuLabelKey`
-      // passes a non-`@` label through unchanged.
-      { key: 'tenant-features', name: 'tenant-features', url: '/tenant/features', action: 'navigate', roleNeeded: 'admin', icon: 'settings', label: 'Features' },
       // `aoc-srv` moved to Mitglieder › Wartung as `membership-srv` (spec 1.101 phase 3).
       // Purely presentational, mirrored verbatim off the live doc (`z950dr1fob9b4eydqogq`:
       // `action: divider`, empty `url`/`label`, `icon: help-circle`, `roleNeeded: admin`,
@@ -341,8 +332,8 @@ const aoc: FeatureBlock = {
     // Declared through `cmsMenuParent()` accordingly (rule 2: mirror the live TREE SHAPE), so
     // the `aoc` block is the EIGHTH to co-declare that shared parent — counted, not estimated:
     // `cmsMenuParent()` is invoked by `aoc`, `cms`, `category`, `geo`, `esign`, `pdf-template`,
-    // `document` and `forms`. (`aocMenuParent()` has callers `aoc`, `user`, `security`,
-    // `activity`, `business`; `mobility` is no longer one.)
+    // `document` and `forms`. (`aocMenuParent()` has one caller left, `aoc`: `user`, `security`,
+    // `activity` and `business` stopped co-declaring it in spec 1.101 phase 5; `mobility` in phase 1.)
     //
     // Neither name carries an `aoc-`/`tag-` prefix consistently: the doc for `/aoc/tag` is
     // named `tag-all` and the one for `aoc/website` is named `aoc-website`. Both copied as
@@ -569,9 +560,8 @@ const user: FeatureBlock = {
   dependsOn: [],
   collections: ['users'],
   menu: [
-    aocMenuParent([
-      { key: 'user-all', name: 'user-all', url: '/user/all/c-users', action: 'navigate', roleNeeded: 'admin', icon: 'people', label: '@item.user-all' },
-    ]),
+    // `user-all` (under `aoc-menu`) left the catalogue with spec 1.101 phase 5: «Benutzer & Zugänge»
+    // is a card on the AOC hub (Zugang), which links /user/all/c-users directly.
     { key: 'c-users', name: 'c-users', url: '', action: 'context', roleNeeded: 'admin', icon: 'help-circle', label: '', children: [
       { key: 'user-add', name: 'user-add', url: 'add', action: 'call', roleNeeded: 'admin', icon: 'edit', label: '@item.user-add' },
       { key: 'user-exportraw', name: 'user-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'admin', icon: 'download', label: '@item.user-exportraw' },
@@ -623,12 +613,9 @@ const security: FeatureBlock = {
   // privacy audit runs a callable with no persisted result, and the processing register is
   // computed from app-config on read. Neither owns a Firestore collection.
   collections: [],
-  menu: [
-    aocMenuParent([
-      { key: 'priv-register', name: 'priv-register', url: '/security/register', action: 'navigate', roleNeeded: 'admin', icon: 'doc-safe', label: '@item.priv-register' },
-      { key: 'priv-audit', name: 'priv-audit', url: '/security/privacy-audit', action: 'navigate', roleNeeded: 'admin', icon: 'checkbox-circle-double', label: '@item.priv-audit' },
-    ]),
-  ],
+  // `priv-register` and `priv-audit` (under `aoc-menu`) left the catalogue with spec 1.101 phase 5:
+  // both are cards on the AOC hub (Zugang), which link their routes directly.
+  menu: [],
 };
 
 const i18n: FeatureBlock = {
@@ -2197,19 +2184,14 @@ const activity: FeatureBlock = {
   // by `activity.service.ts` and read by `activity.store.ts`. The only collection this domain
   // touches — grepped, not assumed.
   collections: ['activities'],
-  // Live child of the shared `aoc-menu` parent (`aoc-menu.menuItems` lists `activity-all`
-  // between `aoc-srv` and `flighttracker`) — the last of that doc's children to find a home,
-  // and nested via `aocMenuParent()` accordingly, never top-level (rule 2). `tenants: ['scs']`
-  // only today, so 15 of the 16 tenants' AOC submenus are missing it.
-  //
   // No context wrapper is owed: `/activity` takes no `:contextMenuName` segment and
   // `ActivityList` binds no `okr-menu` at all (verified — no `contextMenuName`/`menuName`
   // anywhere under `libs/activity`).
-  menu: [
-    aocMenuParent([
-      { key: 'activity-all', name: 'activity-all', url: '/activity', action: 'navigate', roleNeeded: 'admin', icon: 'stackoverflow', label: '@item.activity-all' },
-    ]),
-  ],
+  //
+  // Spec 1.101 phase 5: `activity-all` left `aoc-menu` and the catalogue — System-Aktivitäten is a
+  // card on the AOC hub (Betrieb), which links /activity directly. A top-level row is not an
+  // option: `rootNavKeys` would append an admin log screen to every tenant's sidebar.
+  menu: [],
 };
 
 /**
@@ -2936,11 +2918,8 @@ const business: FeatureBlock = {
     { key: 'partner-all', name: 'partner-all', url: '/partner/all/partner-context', action: 'navigate', roleNeeded: 'admin', icon: 'org', label: '@business/partner/util.plural' },
     { key: 'metering-all', name: 'metering-all', url: '/metering', action: 'navigate', roleNeeded: 'admin', icon: 'chart', label: '@business/metering/util.records.plural' },
     { key: 'prospect-all', name: 'prospect-all', url: '/prospect', action: 'navigate', roleNeeded: 'admin', icon: 'target', label: '@business/prospect/util.plural' },
-    // The escalation queue is an admin screen, so it hangs under the shared `aoc-menu` parent
-    // rather than top-level like its three siblings above.
-    aocMenuParent([
-      { key: 'ticket-all', name: 'ticket-all', url: '/ticket/all', action: 'navigate', roleNeeded: 'admin', icon: 'hammer', label: '@business/ticket/util.plural' },
-    ]),
+    // `ticket-all` (the escalation queue, under `aoc-menu`) left the catalogue with spec 1.101
+    // phase 5: Eskalationen is a card on the AOC hub (Betrieb, kring), which links /ticket/all.
   ],
 };
 

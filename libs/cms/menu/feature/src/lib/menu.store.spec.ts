@@ -260,26 +260,26 @@ describe('MenuStore', () => {
       expect(store.menu()?.menuItems).toEqual(['my-custom-link']);
     });
 
-    // Regression, task 12 review round 3: 'user-all'/'priv-register'/'priv-audit' are
-    // children of the SHARED 'aoc-menu' parent, but they are owned by 'user'/'security'
-    // (both core: true, always effective) — NOT by 'aoc' (bundle 'special', togglable).
-    // `blockOfMenuKey` used to return only the FIRST declaring block in `FEATURE_BLOCKS`
-    // order ('aoc'), so switching 'aoc' off alone hid these two always-on blocks' own menu
-    // entries too. Fixed via `blockOwnersOfMenuKey` (multi-owner aware): visibility is now
-    // "ANY declaring block is effective", not just the first.
-    it('keeps a child owned by a DIFFERENT, still-effective co-declarer of a shared parent, even when the parent\'s first declarer is switched off', async () => {
+    // Regression, task 12 review round 3: children of a SHARED parent are owned by different
+    // blocks. `blockOfMenuKey` used to return only the FIRST declaring block in `FEATURE_BLOCKS`
+    // order, so switching that one block off hid the other, still-effective blocks' entries too.
+    // Fixed via `blockOwnersOfMenuKey` (multi-owner aware): visibility is "ANY declaring block is
+    // effective", not just the first. Originally pinned on `aoc-menu` (`user-all`, `priv-*`); since
+    // spec 1.101 phase 5 `aoc` alone declares that parent, so the shared `cms-menu` carries it:
+    // `menu-all` (cms), `category-all` (category) and `tag-all` (aoc) all hang under it.
+    it('keeps a child owned by a DIFFERENT, still-effective co-declarer of a shared parent, even when another declarer is switched off', async () => {
       store = makeStore(
         menuServiceMock([], {
-          okey: 'aoc-menu', name: 'aoc-menu',
-          menuItems: ['user-all', 'priv-register', 'priv-audit', 'aoc-admin'],
+          okey: 'cms-menu', name: 'cms-menu',
+          menuItems: ['menu-all', 'category-all', 'tag-all'],
         }),
-        featureStoreMock(['user', 'security']) // 'aoc' deliberately NOT effective
+        featureStoreMock(['cms', 'category']) // 'aoc' deliberately NOT effective
       );
-      store.setMenuName('aoc-menu');
+      store.setMenuName('cms-menu');
       await TestBed.inject(ApplicationRef).whenStable();
-      // 'aoc-admin' (owned only by the now-off 'aoc') is dropped; the three entries owned
-      // by 'user'/'security' (both still effective) survive.
-      expect(store.menu()?.menuItems).toEqual(['user-all', 'priv-register', 'priv-audit']);
+      // 'tag-all' (owned only by the now-off 'aoc') is dropped; the two entries owned by
+      // 'cms'/'category' (both still effective) survive.
+      expect(store.menu()?.menuItems).toEqual(['menu-all', 'category-all']);
     });
   });
   /**

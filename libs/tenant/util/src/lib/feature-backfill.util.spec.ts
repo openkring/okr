@@ -275,10 +275,11 @@ describe('deriveEnabledFeatures — against the real catalogue', () => {
     expect(gated.gatedOut.map(g => g.id)).toContain('calevent');
   });
 
-  it("does not attribute `activity` to a tenant whose only AOC doc is the shared parent; `mobility` no longer co-declares `aoc-menu`", () => {
-    // The exact p13-shaped case: the AOC submenu exists, but activity-all does not. `mobility`
-    // left `aoc-menu` (spec 1.101 phase 1), so it is never attributed from the shared parent.
-    const docs = realDocs(['aoc-menu', 'aoc-admin'], 'p13');
+  it("attributes only `aoc` to a tenant whose only AOC docs are the submenu and a hub row", () => {
+    // The p13-shaped case: the AOC submenu exists, but activity-all does not. `mobility` left
+    // `aoc-menu` in spec 1.101 phase 1, and `activity`, `user`, `security` and `business` in
+    // phase 5, so the shared parent attributes `aoc` alone — under either policy.
+    const docs = realDocs(['aoc-menu', 'aoc-data'], 'p13');
     const exclusive = deriveEnabledFeatures({
       catalogue: FEATURE_BLOCKS, rollouts: [], menuDocs: docs, tenantId: 'p13', policy: 'exclusive',
     });
@@ -290,7 +291,7 @@ describe('deriveEnabledFeatures — against the real catalogue', () => {
       catalogue: FEATURE_BLOCKS, rollouts: [], menuDocs: docs, tenantId: 'p13', policy: 'all',
     });
     expect(all.enabled).not.toContain('mobility');
-    expect(all.enabled).toContain('activity');
+    expect(all.enabled).not.toContain('activity');
   });
 
   it('every non-core block reachable by evidence owns at least one exclusively-declared key', () => {
@@ -329,6 +330,10 @@ describe('deriveEnabledFeatures — against the real catalogue', () => {
     // root nav of a tenant that has the umbrella on but no game enabled. Being un-inferable is
     // harmless here: `resolveWithDeps` closes every game's `dependsOn: ['games']` over the
     // umbrella, so evidence for a GAME already switches it on.
-    expect(withoutExclusive).toEqual(['games', 'weather']);
+    // `activity` (spec 1.101 phase 5) is here BY DESIGN too. Its only row, `activity-all`, hung
+    // under `aoc-menu`; the AOC hub's «System-Aktivitäten» card now links /activity by URL, and a
+    // top-level row would put an admin log in every sidebar. Un-inferable is harmless: the
+    // backfill ran once (every tenant has `enabledFeatures`), and a tenant ticks it in the picker.
+    expect(withoutExclusive).toEqual(['activity', 'games', 'weather']);
   });
 });

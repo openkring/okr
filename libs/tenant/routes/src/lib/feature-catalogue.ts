@@ -148,8 +148,13 @@ const aoc: BlockRoutes = {
     // (R-5) nor merely authenticated.
     canActivate: [isContentAdminGuard()],
     children: [
-      // 1.101 phase 5: AocAdminOps is gone (IBAN and the backfill live on the hub); Task 5 turns this into a redirect
-      { path: 'adminops',   canActivate: [isAdminGuard()], data: { area: 'data' }, loadComponent: () => import('@okr/aoc-feature').then(m => m.AocHub) },
+      // 1.101 phase 5: the four AOC hub areas (Zugang, Betrieb, Konfiguration, Datenqualität) — fixed
+      // paths, one component, the area taken from route data. Paths match `AOC_AREA_ROUTES` in @okr/aoc-util.
+      { path: 'access',     canActivate: [isAdminGuard()], data: { area: 'access' }, loadComponent: () => import('@okr/aoc-feature').then(m => m.AocHub) },
+      { path: 'ops',        canActivate: [isAdminGuard()], data: { area: 'ops' },    loadComponent: () => import('@okr/aoc-feature').then(m => m.AocHub) },
+      { path: 'config',     canActivate: [isAdminGuard()], data: { area: 'config' }, loadComponent: () => import('@okr/aoc-feature').then(m => m.AocHub) },
+      // 1.101 phase 5: AocAdminOps is gone (IBAN → Zugang, the backfill → Migrationen); remove after the next release
+      { path: 'adminops', redirectTo: '/aoc/data' },
       // 1.101 phase 4: remove after the next release
       { path: 'roles', redirectTo: '/user/all/c-users' },
       // 1.101 phase 2: remove after the next release
@@ -172,8 +177,8 @@ const aoc: BlockRoutes = {
       { path: 'bexio', redirectTo: '/person/bexio-contacts' },
       // 1.101 phase 3: remove after the next release
       { path: 'srv', redirectTo: '/membership/srv' },
-      // 1.101 phase 3: remove after the next release
-      { path: 'statistics', redirectTo: '/aoc/adminops' },
+      // 1.101 phase 3: remove after the next release (retargeted in phase 5 to avoid a chain via /aoc/adminops)
+      { path: 'statistics', redirectTo: '/aoc/data' },
       { path: 'sessions',   canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocSession) },
       // 1.101 phase 2: remove after the next release
       { path: 'trip', redirectTo: '/trips/maintenance' },
