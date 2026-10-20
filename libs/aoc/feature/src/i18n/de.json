@@ -275,7 +275,7 @@
       },
       "iban": {
         "label": "IBAN-Bestand",
-        "effect": "Zeigt, von welchen Personen eine IBAN hinterlegt ist."
+        "effect": "Zeigt, von welchen Personen und Organisationen eine IBAN hinterlegt ist."
       },
       "allocation": {
         "label": "Mandanten-Zuteilung",
@@ -344,6 +344,7 @@
       "explanation": "Bei diesen {count} Einträgen von «{type}» ist der Suchindex veraltet. Mit «Index neu aufbauen» korrigierst du ihn.",
       "apply": "Index neu aufbauen",
       "done": "Fertig: {count} Einträge neu aufgebaut.",
+      "partial": "{count} Einträge neu aufgebaut, {failed} konnten nicht gespeichert werden. Versuch es später noch einmal.",
       "old": "Bisher",
       "new": "Neu"
     },

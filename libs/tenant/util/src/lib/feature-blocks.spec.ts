@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { FEATURE_BLOCKS } from './feature-blocks';
 import type { MenuSpec } from './feature-catalogue.types';
 import { blockOwnersOfMenuKey } from './feature-routes.util';
+import { holdersOf } from './feature-deps.util';
+import { effectiveFeatures } from './feature-rollout.util';
 
 /**
  * `blockOfMenuKey` (`feature-routes.util.ts`) is fed a menu doc's `name` — the field
@@ -195,5 +197,29 @@ describe('aoc-menu hub rows (1.101 phase 5)', () => {
     for (const key of ['aoc-admin', 'aoc-sessions', 'aoc-email', 'user-all', 'priv-register', 'priv-audit', 'activity-all', 'ticket-all', 'workflow-all', 'tenant-features']) {
       expect(blockOwnersOfMenuKey(FEATURE_BLOCKS, key), key).toEqual([]);
     }
+  });
+});
+
+/**
+ * Spec 1.101 phase 5, final review (controller ruling): `aoc` is `core: true`. After phase 5 the
+ * AOC hub is the only menu path to users, the privacy register/audit, system activities and the
+ * feature picker — a tenant that switched `aoc` off would strand its admins outside all of them.
+ */
+describe('aoc is a core block (1.101 phase 5)', () => {
+  const aoc = FEATURE_BLOCKS.find(b => b.id === 'aoc');
+  const coreIds = FEATURE_BLOCKS.filter(b => b.core === true).map(b => b.id);
+
+  it('is core and sits in the core bundle, so the picker offers no switch', () => {
+    expect(aoc).toMatchObject({ core: true, bundle: 'core', defaultAvailability: 'ga' });
+  });
+
+  it('stays effective for a tenant whose stored selection omits it', () => {
+    const effective = effectiveFeatures({ catalogue: FEATURE_BLOCKS, rollouts: [], enabled: [], tenantId: 'p13' });
+    expect(effective.has('aoc')).toBe(true);
+  });
+
+  it('names no dependency, so it does not hold document on for every tenant', () => {
+    expect(aoc?.dependsOn).toEqual([]);
+    expect(holdersOf(FEATURE_BLOCKS, 'document', coreIds)).not.toContain('aoc');
   });
 });

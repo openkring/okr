@@ -490,14 +490,23 @@ export const AocHubStore = signalStore(
         });
         if (result?.kind !== 'apply') return;
         let written = 0;
+        let failed = 0;
         for (const diff of plan.diffs) {
           // ONLY the index: re-sending the preview-time snapshot would revert any edit made while
-          // the preview was open. updateFields reports a failed write itself and resolves undefined.
-          const key = await store.firestoreService.updateFields(plan.collection, diff.model.okey, { index: diff.newIndex });
-          if (key) written++;
+          // the preview was open. updateObjectStrict is silent and rejects on a failed write, so
+          // the failures are counted here and reported in ONE toast — not one toast per document.
+          try {
+            await store.firestoreService.updateObjectStrict(plan.collection, diff.model.okey, { index: diff.newIndex });
+            written++;
+          } catch (e) {
+            failed++;
+            console.error(`AocHubStore.reindex: ${plan.collection}/${diff.model.okey}`, e);
+          }
         }
         await logRun('reindex', `${type}: ${written}/${count}`);
-        await showToast(store.toastController, fill(store.i18n.reindex_done(), { count: written }));
+        await showToast(store.toastController, failed > 0
+          ? fill(store.i18n.reindex_partial(), { count: written, failed })
+          : fill(store.i18n.reindex_done(), { count: written }));
       },
 
       /**

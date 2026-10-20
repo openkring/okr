@@ -230,6 +230,7 @@ export const AOC_HUB_I18N_KEYS = {
   reindex_explanation: PFX + 'hub.reindex.explanation',
   reindex_apply: PFX + 'hub.reindex.apply',
   reindex_done: PFX + 'hub.reindex.done',
+  reindex_partial: PFX + 'hub.reindex.partial',
   reindex_old: PFX + 'hub.reindex.old',
   reindex_new: PFX + 'hub.reindex.new',
   iban_explanation: PFX + 'hub.iban.explanation',

@@ -275,7 +275,7 @@
       },
       "iban": {
         "label": "Elenco IBAN",
-        "effect": "Mostra quali persone hanno un IBAN registrato."
+        "effect": "Mostra quali persone e organizzazioni hanno un IBAN registrato."
       },
       "allocation": {
         "label": "Assegnazione ai mandanti",
@@ -344,6 +344,7 @@
       "explanation": "Queste {count} voci di «{type}» hanno un indice di ricerca obsoleto. «Ricostruisci indice» lo corregge.",
       "apply": "Ricostruisci indice",
       "done": "Fatto: {count} voci ricostruite.",
+      "partial": "{count} voci ricostruite, {failed} non sono state salvate. Riprova più tardi.",
       "old": "Prima",
       "new": "Nuovo"
     },

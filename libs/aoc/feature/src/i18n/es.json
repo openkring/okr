@@ -275,7 +275,7 @@
       },
       "iban": {
         "label": "Listado de IBAN",
-        "effect": "Muestra qué personas tienen un IBAN registrado."
+        "effect": "Muestra qué personas y organizaciones tienen un IBAN registrado."
       },
       "allocation": {
         "label": "Asignación a mandantes",
@@ -344,6 +344,7 @@
       "explanation": "Estas {count} entradas de «{type}» tienen un índice de búsqueda desactualizado. «Reconstruir índice» lo corrige.",
       "apply": "Reconstruir índice",
       "done": "Hecho: {count} entradas reconstruidas.",
+      "partial": "{count} entradas reconstruidas, {failed} no se pudieron guardar. Vuelve a intentarlo más tarde.",
       "old": "Antes",
       "new": "Nuevo"
     },

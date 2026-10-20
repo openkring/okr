@@ -141,7 +141,7 @@ export const check3: AuditCheck = {
     return toFinding(check3,
       'Die Projektion ist älter als die Adressen, die sie abbilden soll — oder fehlt ganz. '
       + 'Betroffene Mitglieder erscheinen im Verzeichnis mit veralteten oder gar keinen '
-      + 'Kontaktdaten. Mit der Funktion rebuildAddressDirectory neu aufbauen.',
+      + 'Kontaktdaten. Der Betreiber kann das Verzeichnis neu aufbauen – melde dich bei ihm.',
       '/person/all', offenders);
   },
 };

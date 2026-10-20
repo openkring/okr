@@ -275,7 +275,7 @@
       },
       "iban": {
         "label": "IBAN records",
-        "effect": "Shows which people have an IBAN on file."
+        "effect": "Shows which people and organisations have an IBAN on file."
       },
       "allocation": {
         "label": "Tenant allocation",
@@ -344,6 +344,7 @@
       "explanation": "These {count} «{type}» entries have an outdated search index. «Rebuild index» fixes it.",
       "apply": "Rebuild index",
       "done": "Done: {count} entries rebuilt.",
+      "partial": "{count} entries rebuilt, {failed} could not be saved. Please try again later.",
       "old": "Before",
       "new": "New"
     },

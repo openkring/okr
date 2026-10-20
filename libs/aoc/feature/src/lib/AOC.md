@@ -16,7 +16,8 @@ and the area comes from the route data (`data: { area }`). There is no `/aoc/:ar
 
 The `aoc-menu` submenu holds these four rows, followed by the closing `divider_empty`. Rows outside
 the catalogue (`aoc-allocation`, `operator-chat`, `alias-all`, `alias-spaces`, `person-privacy`) stay
-below them. Only the `aoc` block declares `aoc-menu`.
+below them. Only the `aoc` block declares `aoc-menu`. The `aoc` block is `core: true`: the hub is
+the only menu path to users, privacy and the feature picker, so no tenant can switch it off.
 
 The cards are pure data: `AOC_AREAS` in `@okr/aoc-util` (`libs/aoc/util/src/lib/aoc-areas.ts`), in
 display order. `visibleAocCards` filters them by tenant (`tenants`, `notOnApps`), feature block and
@@ -33,7 +34,7 @@ writes each run to `activities` (`scope: 'aoc'`), and the card shows the last ru
 | Sessions | `/aoc/sessions` | Who was signed in, when, and on which device (`AocSession`) |
 | Bearbeitungsverzeichnis | `/security/register` | The processing register (`@okr/security-processing-feature`) |
 | Privacy Audit | `/security/privacy-audit` | Checks the privacy protection (`@okr/security-audit-feature`) |
-| IBAN-Bestand | operation `iban` | Lists the persons with an IBAN on file, as a report |
+| IBAN-Bestand | operation `iban` | Lists the persons and organisations with an IBAN on file, as a report |
 | Mandanten-Zuteilung | `/operator/allocation` | Operator only (bka) |
 
 ### Betrieb
@@ -73,6 +74,11 @@ kring-app hand-writes its route table and declares only `/aoc/ops` and `/aoc/con
 `scripts/app-routes.test.mjs`). Cards whose targets do not exist in kring carry `notOnApps: ['kring']`,
 so kring shows Betrieb (Eskalationen) and Konfiguration (Features), and the segment bar offers only
 those two areas.
+
+kring's `aoc-menu` is a fork that lists only `aoc-ops` and `aoc-config` (phase 5 menu script). The
+catalogue still declares all four hub rows, so the feature picker can add `aoc-access` and `aoc-data`
+back to that fork. Both rows are dead on kring: it has no `/aoc/access` or `/aoc/data` route. Do not
+use «Ins Menü» for `aoc` on kring. If the two rows reappear, remove them from the fork by hand.
 
 ## Where the moved tools live
 

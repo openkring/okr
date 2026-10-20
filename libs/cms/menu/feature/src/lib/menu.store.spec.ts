@@ -17,6 +17,7 @@ import { MatrixChatService } from '@okr/chat-data-access';
 import { ChatStatusService } from '@okr/shared-data-access';
 import { MenuService } from '@okr/cms-menu-data-access';
 import { FeatureStore } from '@okr/tenant-feature';
+import { FEATURE_BLOCKS, effectiveFeatures } from '@okr/tenant-util';
 
 import { MenuStore } from './menu.store';
 
@@ -280,6 +281,25 @@ describe('MenuStore', () => {
       // 'tag-all' (owned only by the now-off 'aoc') is dropped; the two entries owned by
       // 'cms'/'category' (both still effective) survive.
       expect(store.menu()?.menuItems).toEqual(['menu-all', 'category-all']);
+    });
+
+    // Regression, spec 1.101 phase 5 final review: since phase 5 `aoc` ALONE declares `aoc-menu`,
+    // so its four hub rows are the only menu path to users, privacy, activities and the feature
+    // picker. `aoc` is therefore `core: true` — fed through the REAL `effectiveFeatures` (not a
+    // hand-picked Set), a stored selection without `aoc` must still render all four rows.
+    // (The test above switches `aoc` off by hand; since it is core, only a rollout kill can.)
+    it('keeps the aoc-menu hub rows even when the stored selection omits aoc, because aoc is core', async () => {
+      const effective = effectiveFeatures({ catalogue: FEATURE_BLOCKS, rollouts: [], enabled: ['cms'], tenantId });
+      store = makeStore(
+        menuServiceMock([], {
+          okey: 'aoc-menu', name: 'aoc-menu',
+          menuItems: ['aoc-access', 'aoc-ops', 'aoc-config', 'aoc-data'],
+        }),
+        featureStoreMock([...effective])
+      );
+      store.setMenuName('aoc-menu');
+      await TestBed.inject(ApplicationRef).whenStable();
+      expect(store.menu()?.menuItems).toEqual(['aoc-access', 'aoc-ops', 'aoc-config', 'aoc-data']);
     });
   });
   /**

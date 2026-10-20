@@ -233,14 +233,29 @@ const calevent: FeatureBlock = {
 
 const aoc: FeatureBlock = {
   id: 'aoc',
-  bundle: 'special',
+  bundle: 'core',
   label: '@tenant/util.feature.aoc.label',
   icon: 'admin',
+  // `core: true` since spec 1.101 phase 5 (final review, controller ruling). After phase 5 the
+  // AOC hub is the ONLY menu path to users, the privacy register/audit, system activities and the
+  // feature picker itself — switching `aoc` off would strand an admin outside all of them. No
+  // tenant had it off. Core = the picker shows no switch (`blockState` → 'core'), `effective()`
+  // always includes it, and no profile names it. A rollout doc can still kill it (core bypasses
+  // enablement, not rollout).
+  core: true,
   defaultAvailability: 'ga',
-  // `document` added (task 16), by import evidence: the block's `aoc-hub.store.ts:27`
-  // (`documentValidations`/`getDocumentIndex`) reads and repairs the `docs` collection directly.
-  // (Task 16 also named the content and orphaned-files stores; those screens have since moved to
-  // `page-integrity.store.ts` and `document-orphans.store.ts`.)
+  // `dependsOn` stays `[]` DELIBERATELY since it became core — same rule as on `cms` and
+  // `avatar`: a `core: true` block must not name a non-core dependency (`vcard` is the one core
+  // block that still does, holding `subject`/`relationship` on). The edge aoc had,
+  // `document` (task 16, by import evidence: `aoc-hub.store.ts` uses
+  // `documentValidations`/`getDocumentIndex` and reindexes the `docs` collection), would make
+  // `document` permanently 'required' for every tenant — `planDisableBlock` and the picker count
+  // core blocks as holders (`holdersOf`), while `effectiveFeatures` does NOT close core blocks
+  // over their deps, so the stored config and the running set would disagree. The Datenqualität
+  // hub keeps working without it: on a tenant with no `document` block the docs collection is
+  // simply empty, so there is nothing to validate or reindex. (Task 16 also named the content
+  // and orphaned-files stores; those screens have since moved to `page-integrity.store.ts` and
+  // `document-orphans.store.ts`.)
   //
   // NO `task` EDGE, although `aoc-hub.store.ts:38` imports from `@okr/project-task-util`
   // (`getTaskIndex`, `taskValidations`). That lib is PURE FUNCTIONS — the Datenqualität hub
@@ -252,7 +267,7 @@ const aoc: FeatureBlock = {
   // domain now sits inside the `document` block). Same for the `activity`
   // domain, whose screen the AOC hub links by URL (its `activity-all` row under `aoc-menu`
   // left the catalogue in spec 1.101 phase 5) — a URL is not an edge either.
-  dependsOn: ['document'],
+  dependsOn: [],
   // Was `[]` with no justification (task 5); researched and corrected in task 18, in step with
   // the `tag`/`website` routes added to this block's route fragment. `tags` (`TagCollection`,
   // `tag.model.ts:14`) and `websiteContent` (`WebsiteContentCollection`,

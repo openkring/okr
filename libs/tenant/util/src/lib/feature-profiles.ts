@@ -57,10 +57,11 @@ export const FEATURE_PROFILES: FeatureProfile[] = [
     label: '@tenant/util.profile.minimal.label',
     description: '@tenant/util.profile.minimal.description',
     icon: 'person',
-    // Personen, Termine, Dokumente, Aufgaben, Chat, Verwaltung. `subject` pulls `document`
-    // and `task`, `calevent` pulls `subject`/`document`, `aoc` pulls `document` — all listed
-    // anyway, so the set reads as itself rather than as something to resolve in your head.
-    blocks: ['subject', 'calevent', 'document', 'task', 'chat', 'aoc'],
+    // Personen, Termine, Dokumente, Aufgaben, Chat. `subject` pulls `document` and `task`,
+    // `calevent` pulls `subject`/`document` — all listed anyway, so the set reads as itself
+    // rather than as something to resolve in your head. The admin console (`aoc`) is not
+    // listed: it is `core: true` since spec 1.101 phase 5, on for every tenant.
+    blocks: ['subject', 'calevent', 'document', 'task', 'chat'],
   },
   {
     id: 'vereinsbetrieb',
@@ -68,7 +69,7 @@ export const FEATURE_PROFILES: FeatureProfile[] = [
     description: '@tenant/util.profile.vereinsbetrieb.description',
     icon: 'people',
     blocks: [
-      'subject', 'calevent', 'document', 'task', 'chat', 'aoc',
+      'subject', 'calevent', 'document', 'task', 'chat',
       'relationship', 'resource', 'forms', 'meeting', 'activity',
     ],
   },
@@ -78,7 +79,7 @@ export const FEATURE_PROFILES: FeatureProfile[] = [
     description: '@tenant/util.profile.voll.description',
     icon: 'star',
     blocks: [
-      'subject', 'calevent', 'document', 'task', 'chat', 'aoc',
+      'subject', 'calevent', 'document', 'task', 'chat',
       'relationship', 'resource', 'forms', 'meeting', 'activity',
       'finance', 'pdf-template', 'esign', 'trip', 'mobility', 'instruments', 'alias',
     ],

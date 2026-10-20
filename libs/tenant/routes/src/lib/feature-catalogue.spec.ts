@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { FEATURE_BLOCKS, collectMenuUrls, composeFeatureRoutes, urlResolves } from '@okr/tenant-util';
 import { FEATURE_ROUTES } from './feature-catalogue';
 import { UNGATED_ROUTES } from './ungated-routes';
+import { AOC_AREA_IDS, AOC_AREA_ROUTES } from '@okr/aoc-util';
 
 describe('catalogue route coverage', () => {
   it('every declared menu url resolves against the composed route table', () => {
@@ -139,5 +140,21 @@ describe('chat maintenance route (spec 1.101 phase 4)', () => {
     expect(children[0].canActivate).toHaveLength(1);
     expect(children[0].loadComponent).toBeTypeOf('function');
     expect(children[0].component).toBeUndefined();
+  });
+});
+
+/**
+ * Spec 1.101 phase 5: the hub's four area routes live here, the card targets and segment bar in
+ * `@okr/aoc-util` (`AOC_AREA_ROUTES`). Nothing else ties the two copies together, so a renamed
+ * path on either side would leave a segment or a menu row pointing at nothing.
+ */
+describe('AOC hub area routes match AOC_AREA_ROUTES (spec 1.101 phase 5)', () => {
+  const aoc = FEATURE_ROUTES.find(b => b.id === 'aoc')!.routes().find(r => r.path === 'aoc')?.children ?? [];
+  const areaRoutes = aoc.filter(r => typeof r.data?.['area'] === 'string');
+
+  it('declares exactly one route per area, at the path AOC_AREA_ROUTES names', () => {
+    const declared = Object.fromEntries(areaRoutes.map(r => [r.data?.['area'] as string, `/aoc/${r.path}`]));
+    expect(declared).toEqual(AOC_AREA_ROUTES);
+    expect(areaRoutes).toHaveLength(AOC_AREA_IDS.length);
   });
 });

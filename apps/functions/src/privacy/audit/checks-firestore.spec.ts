@@ -95,6 +95,17 @@ describe('check 3 — address-directory older than the parent last address write
     expect(f?.count).toBe(1);
   });
 
+  // Since spec 1.101 phase 5 only the operator (bka) may run rebuildAddressDirectory, so the
+  // finding a tenant admin reads must not send them to a function they cannot call.
+  it('tells a tenant admin that the operator rebuilds the directory, without naming the function', async () => {
+    const f = await check3.run(ctxWith({
+      addresses: [{ okey: 'a1', parentKey: 'person.p1', updatedAt: 3000 }],
+      'address-directory': [],
+    }));
+    expect(f?.detailDe).toContain('Betreiber');
+    expect(f?.detailDe).not.toContain('rebuildAddressDirectory');
+  });
+
   it('ignores archived addresses — they are not meant to be projected', async () => {
     expect(await check3.run(ctxWith({
       addresses: [{ okey: 'a1', parentKey: 'person.p1', updatedAt: 3000, isArchived: true }],
