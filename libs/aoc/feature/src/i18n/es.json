@@ -333,10 +333,10 @@
     },
     "action": {
       "run": "Ejecutar",
-      "preview": "Vista previa"
+      "preview": "Vista previa",
+      "check": "Comprobar"
     },
     "pickType": "¿Qué datos?",
-    "notYet": "Esta migración aún no está disponible.",
     "validate": {
       "explanation": "Cada entrada es un registro de «{type}» que no cumple una regla. Debajo ves qué está mal."
     },
@@ -375,6 +375,18 @@
       "group": "Grupos",
       "responsibility": "Responsabilidades",
       "session": "Sesiones"
+    },
+    "migrate": {
+      "confirmAccount": "A {count} personas se les va a anotar ahora en qué apps están activas. ¿Continuar?",
+      "confirmMatrix": "¿Asignar ahora {count} salas de chat a sus apps?",
+      "openAccount": "A {count} personas aún les falta la anotación de en qué apps están activas.",
+      "nothing": "Nada que hacer: todo está ya asignado.",
+      "doneAccount": "Listo: {count} personas actualizadas.",
+      "doneMatrix": "Listo: {count} salas de chat asignadas.",
+      "matrixExplanation": "{count} salas de chat se asignarán a las apps en las que deben ser visibles. Salas sin asignación clara: {ambiguous}.",
+      "ambiguousTitle": "{count} salas sin asignación clara",
+      "ambiguousDetail": "Por ahora estas salas siguen visibles en todas partes. Asígnalas a mano en el mantenimiento del chat. Toca aquí para abrirlo.",
+      "room": "Apps: {tenants}"
     }
   }
 }

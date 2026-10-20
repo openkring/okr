@@ -333,10 +333,10 @@
     },
     "action": {
       "run": "Exécuter",
-      "preview": "Aperçu"
+      "preview": "Aperçu",
+      "check": "Vérifier"
     },
     "pickType": "Quelles données ?",
-    "notYet": "Cette migration n'est pas encore disponible.",
     "validate": {
       "explanation": "Chaque entrée est un enregistrement «{type}» qui ne respecte pas une règle. En dessous, tu vois ce qui ne va pas."
     },
@@ -375,6 +375,18 @@
       "group": "Groupes",
       "responsibility": "Responsabilités",
       "session": "Sessions"
+    },
+    "migrate": {
+      "confirmAccount": "Pour {count} personnes, on va maintenant enregistrer dans quelles apps elles sont actives. Continuer ?",
+      "confirmMatrix": "Attribuer maintenant {count} salons de discussion à leurs apps ?",
+      "openAccount": "Pour {count} personnes, l'indication des apps concernées manque encore.",
+      "nothing": "Rien à faire : tout est déjà attribué.",
+      "doneAccount": "Terminé : {count} personnes mises à jour.",
+      "doneMatrix": "Terminé : {count} salons de discussion attribués.",
+      "matrixExplanation": "{count} salons de discussion vont être attribués aux apps dans lesquelles ils doivent être visibles. Salons sans attribution claire : {ambiguous}.",
+      "ambiguousTitle": "{count} salons sans attribution claire",
+      "ambiguousDetail": "Pour l'instant, ces salons restent visibles partout. Attribue-les à la main dans la maintenance du chat. Touche ici pour l'ouvrir.",
+      "room": "Apps : {tenants}"
     }
   }
 }

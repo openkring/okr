@@ -333,10 +333,10 @@
     },
     "action": {
       "run": "Run",
-      "preview": "Preview"
+      "preview": "Preview",
+      "check": "Check"
     },
     "pickType": "Which data?",
-    "notYet": "This migration is not available yet.",
     "validate": {
       "explanation": "Each entry is a «{type}» record that breaks a rule. Below it you see what is wrong."
     },
@@ -375,6 +375,18 @@
       "group": "Groups",
       "responsibility": "Responsibilities",
       "session": "Sessions"
+    },
+    "migrate": {
+      "confirmAccount": "{count} people will now get an entry saying which apps they belong to. Continue?",
+      "confirmMatrix": "Assign {count} chat rooms to their apps now?",
+      "openAccount": "{count} people still lack the entry saying which apps they belong to.",
+      "nothing": "Nothing to do: everything is already assigned.",
+      "doneAccount": "Done: {count} people updated.",
+      "doneMatrix": "Done: {count} chat rooms assigned.",
+      "matrixExplanation": "{count} chat rooms will be assigned to the apps where they should be visible. Rooms without a clear assignment: {ambiguous}.",
+      "ambiguousTitle": "{count} rooms without a clear assignment",
+      "ambiguousDetail": "For now these rooms stay visible everywhere. Assign them by hand in the chat maintenance. Tap here to open it.",
+      "room": "Apps: {tenants}"
     }
   }
 }

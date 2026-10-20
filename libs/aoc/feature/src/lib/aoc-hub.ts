@@ -4,7 +4,7 @@ import { IonButtons, IonContent, IonHeader, IonLabel, IonMenuButton, IonSegment,
 
 import { EmptyList } from '@okr/shared-ui';
 import { AOC_AREA_IDS, AOC_AREA_ROUTES, AOC_AREAS, AocArea, AocCard, visibleAocCards } from '@okr/aoc-util';
-import { OperationCard, OperationCardAction } from '@okr/aoc-ui';
+import { OperationCard, OperationCardAction, OperationCardStatus } from '@okr/aoc-ui';
 
 import { AocHubStore } from './aoc-hub.store';
 
@@ -71,8 +71,8 @@ import { AocHubStore } from './aoc-hub.store';
             <div class="grid">
               @for (c of migrations(); track c.id) {
                 <okr-operation-card [label]="label(c)" [effect]="effect(c)" [kind]="c.kind"
-                  [lastRun]="lastRun(c)" [actions]="actionsOf(c)" [i18n]="store.i18n"
-                [busy]="!!store.running()" [running]="isRunning(c)" (action)="onAction(c, $event)" />
+                  [lastRun]="lastRun(c)" [status]="statusOf(c)" [actions]="actionsOf(c)" [i18n]="store.i18n"
+                  [busy]="!!store.running()" [running]="isRunning(c)" (action)="onAction(c, $event)" />
               }
             </div>
           </section>
@@ -125,9 +125,22 @@ export class AocHub {
     return 'operation' in card.target && this.store.running() === card.target.operation;
   }
 
-  /** A route card has no actions (the whole card navigates); an operation card has one button. */
+  /** A migration shows a status only after «Prüfen»; nothing is checked on page load. */
+  protected statusOf(card: AocCard): OperationCardStatus | undefined {
+    return card.group === 'migrations' && 'operation' in card.target ? this.store.migrations()[card.target.operation]?.status : undefined;
+  }
+
+  /**
+   * A route card has no actions (the whole card navigates); an operation card has one button; a
+   * migration has «Prüfen» and, once the check found something to do, «Ausführen».
+   */
   protected actionsOf(card: AocCard): OperationCardAction[] {
     if (!('operation' in card.target)) return [];
+    if (card.group === 'migrations') {
+      const actions: OperationCardAction[] = [{ id: 'check', label: this.store.i18n.action_check() }];
+      if (this.statusOf(card) === 'offen') actions.push({ id: 'run', label: this.store.i18n.action_run() });
+      return actions;
+    }
     const label = card.target.operation === 'reindex' ? this.store.i18n.action_preview() : this.store.i18n.action_run();
     return [{ id: 'run', label }];
   }
@@ -135,6 +148,10 @@ export class AocHub {
   protected async onAction(card: AocCard, actionId: string): Promise<void> {
     if ('route' in card.target) {
       if (actionId === 'open') await this.router.navigateByUrl(card.target.route);
+      return;
+    }
+    if (card.group === 'migrations') {
+      if (actionId === 'check' || actionId === 'run') await this.store.run(card.target.operation, actionId === 'run' ? 'apply' : 'check');
       return;
     }
     if (actionId === 'run') await this.store.run(card.target.operation);
