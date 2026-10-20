@@ -17,6 +17,13 @@
         "updateBuildableProjectDepsInPackageJson": false
       }
     },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "configFile": "libs/chat/data-access/vite.config.ts"
+      }
+    },
     "lint": {
       "executor": "@nx/eslint:lint"
     }

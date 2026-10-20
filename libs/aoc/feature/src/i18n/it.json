@@ -386,7 +386,9 @@
       "matrixExplanation": "{count} stanze di chat verranno assegnate alle app in cui devono essere visibili. Stanze senza un'assegnazione chiara: {ambiguous}.",
       "ambiguousTitle": "{count} stanze senza un'assegnazione chiara",
       "ambiguousDetail": "Per ora queste stanze restano visibili ovunque. Assegnale a mano nella manutenzione della chat. Tocca qui per aprirla.",
-      "room": "App: {tenants}"
+      "room": "App: {tenants}",
+      "manualDone": "Fatto – devi assegnare {count} stanze a mano",
+      "manualOpen": "Devi assegnare {count} stanze a mano"
     }
   }
 }

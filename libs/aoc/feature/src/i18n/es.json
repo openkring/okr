@@ -386,7 +386,9 @@
       "matrixExplanation": "{count} salas de chat se asignarán a las apps en las que deben ser visibles. Salas sin asignación clara: {ambiguous}.",
       "ambiguousTitle": "{count} salas sin asignación clara",
       "ambiguousDetail": "Por ahora estas salas siguen visibles en todas partes. Asígnalas a mano en el mantenimiento del chat. Toca aquí para abrirlo.",
-      "room": "Apps: {tenants}"
+      "room": "Apps: {tenants}",
+      "manualDone": "Listo – tienes que asignar {count} salas a mano",
+      "manualOpen": "Tienes que asignar {count} salas a mano"
     }
   }
 }

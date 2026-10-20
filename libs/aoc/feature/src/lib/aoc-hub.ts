@@ -3,10 +3,14 @@ import { Router } from '@angular/router';
 import { IonButtons, IonContent, IonHeader, IonLabel, IonMenuButton, IonSegment, IonSegmentButton, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { EmptyList } from '@okr/shared-ui';
-import { AOC_AREA_IDS, AOC_AREA_ROUTES, AOC_AREAS, AocArea, AocCard, visibleAocCards } from '@okr/aoc-util';
+import { fill } from '@okr/shared-util-core';
+import { AOC_AREA_IDS, AOC_AREA_ROUTES, AOC_AREAS, AocArea, AocCard, manualAssignCount, visibleAocCards } from '@okr/aoc-util';
 import { OperationCard, OperationCardAction, OperationCardStatus } from '@okr/aoc-ui';
 
 import { AocHubStore } from './aoc-hub.store';
+
+/** The manual room assignment in Chat-Wartung (operator-only, so always the bka route). */
+const CHAT_MAINTENANCE_ROUTE = '/operator/chat';
 
 /**
  * The AOC hub (spec 1.101 phase 5): one page per area (`area` from the route data), a segment bar
@@ -71,7 +75,7 @@ import { AocHubStore } from './aoc-hub.store';
             <div class="grid">
               @for (c of migrations(); track c.id) {
                 <okr-operation-card [label]="label(c)" [effect]="effect(c)" [kind]="c.kind"
-                  [lastRun]="lastRun(c)" [status]="statusOf(c)" [actions]="actionsOf(c)" [i18n]="store.i18n"
+                  [lastRun]="lastRun(c)" [status]="statusOf(c)" [note]="noteOf(c)" [actions]="actionsOf(c)" [i18n]="store.i18n"
                   [busy]="!!store.running()" [running]="isRunning(c)" (action)="onAction(c, $event)" />
               }
             </div>
@@ -130,6 +134,15 @@ export class AocHub {
     return card.group === 'migrations' && 'operation' in card.target ? this.store.migrations()[card.target.operation]?.status : undefined;
   }
 
+  /** The rooms a finished Matrix migration leaves for the manual assignment in Chat-Wartung. */
+  protected noteOf(card: AocCard): string {
+    if (card.group !== 'migrations' || !('operation' in card.target)) return '';
+    const state = this.store.migrations()[card.target.operation];
+    const count = manualAssignCount(state);
+    if (count === 0) return '';
+    return fill(state?.status === 'erledigt' ? this.store.i18n.migrate_manual_done() : this.store.i18n.migrate_manual_open(), { count });
+  }
+
   /**
    * A route card has no actions (the whole card navigates); an operation card has one button; a
    * migration has «Prüfen» and, once the check found something to do, «Ausführen».
@@ -151,6 +164,7 @@ export class AocHub {
       return;
     }
     if (card.group === 'migrations') {
+      if (actionId === 'note') await this.router.navigateByUrl(CHAT_MAINTENANCE_ROUTE);
       if (actionId === 'check' || actionId === 'run') await this.store.run(card.target.operation, actionId === 'run' ? 'apply' : 'check');
       return;
     }

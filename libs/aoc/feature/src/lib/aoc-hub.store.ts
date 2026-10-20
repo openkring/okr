@@ -57,11 +57,14 @@ export interface MigrationState {
   status: MigrationStatus;
   /** items the automatic part still has to change */
   pending: number;
+  /** items the automatic part cannot derive (Matrix rooms); reported, never counted as offen */
+  ambiguous: number;
 }
 
 /** What a migration's dry run reports, in the hub's terms. */
 interface MigrationProbe {
   pending: number;
+  ambiguous: number;
   /** a report to show after the check (only the Matrix rooms have one) */
   report?: { explanation: string; findings: ReportFinding[] };
   /** a toast to show after the check when there is no report */
@@ -304,6 +307,7 @@ export const AocHubStore = signalStore(
         const dry = await callAccountBackfill(true);
         return {
           pending: dry.pending,
+          ambiguous: 0,
           message: dry.pending > 0 ? fill(store.i18n.migrate_open_account(), { count: dry.pending }) : store.i18n.migrate_nothing(),
         };
       }
@@ -324,6 +328,7 @@ export const AocHubStore = signalStore(
       }
       return {
         pending: dry.changes.length,
+        ambiguous: dry.ambiguous.length,
         report: {
           explanation: fill(store.i18n.migrate_matrix_explanation(), { count: dry.changes.length, ambiguous: dry.ambiguous.length }),
           findings,
@@ -335,7 +340,7 @@ export const AocHubStore = signalStore(
     const check = async (id: string, showResult: boolean): Promise<MigrationProbe | undefined> => {
       try {
         const result = await probe(id);
-        setMigration(id, { status: migrationStatus(result), pending: result.pending });
+        setMigration(id, { status: migrationStatus(result), pending: result.pending, ambiguous: result.ambiguous });
         if (showResult) {
           if (result.report && (result.pending > 0 || result.report.findings.length > 0)) {
             await openReport(store.modalController, {
@@ -353,7 +358,7 @@ export const AocHubStore = signalStore(
         }
         return result;
       } catch (e) {
-        setMigration(id, { status: migrationStatus(e instanceof Error ? e : new Error(String(e))), pending: 0 });
+        setMigration(id, { status: migrationStatus(e instanceof Error ? e : new Error(String(e))), pending: 0, ambiguous: 0 });
         await fail(e);
         return undefined;
       }
@@ -383,7 +388,7 @@ export const AocHubStore = signalStore(
       try {
         done = id === MIGRATE_MATRIX ? (await backfillRooms(false)).stamped : (await callAccountBackfill(false)).written;
       } catch (e) {
-        setMigration(id, { status: migrationStatus(e instanceof Error ? e : new Error(String(e))), pending: known.pending });
+        setMigration(id, { status: migrationStatus(e instanceof Error ? e : new Error(String(e))), pending: known.pending, ambiguous: known.ambiguous });
         await fail(e);
         return;
       }

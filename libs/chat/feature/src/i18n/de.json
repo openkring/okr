@@ -569,7 +569,7 @@
         "conf": "{{ count }} Avatare repariert."
       },
       "tenants": {
-        "moved": "Die Zuordnung der Räume zu Mandanten findest du jetzt unter AOC › Datenqualität › Migrationen."
+        "moved": "Die Zuordnung der Räume zu Apps findest du jetzt unter AOC › Datenqualität › Migrationen."
       },
       "guests": {
         "label": "Nicht-Mitglieder in Gruppen-Chats",

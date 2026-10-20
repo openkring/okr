@@ -386,7 +386,9 @@
       "matrixExplanation": "{count} chat rooms will be assigned to the apps where they should be visible. Rooms without a clear assignment: {ambiguous}.",
       "ambiguousTitle": "{count} rooms without a clear assignment",
       "ambiguousDetail": "For now these rooms stay visible everywhere. Assign them by hand in the chat maintenance. Tap here to open it.",
-      "room": "Apps: {tenants}"
+      "room": "Apps: {tenants}",
+      "manualDone": "Done – you need to assign {count} rooms by hand",
+      "manualOpen": "You need to assign {count} rooms by hand"
     }
   }
 }

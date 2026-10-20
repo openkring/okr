@@ -200,6 +200,8 @@ export const AOC_HUB_I18N_KEYS = {
   migrate_ambiguous_title: PFX + 'hub.migrate.ambiguousTitle',
   migrate_ambiguous_detail: PFX + 'hub.migrate.ambiguousDetail',
   migrate_room: PFX + 'hub.migrate.room',
+  migrate_manual_done: PFX + 'hub.migrate.manualDone',
+  migrate_manual_open: PFX + 'hub.migrate.manualOpen',
   pick_type: PFX + 'hub.pickType',
   busy: PFX + 'hub.busy',
   type_address: PFX + 'hub.type.address',

@@ -41,6 +41,8 @@ export type OperationCardStatus = 'offen' | 'erledigt' | 'error';
     .badge.error { background: var(--ion-color-danger); color: var(--ion-color-danger-contrast); }
     .label { font-size: 1.05rem; font-weight: 600; }
     .effect { font-size: .9rem; color: var(--ion-color-step-700, var(--ion-text-color)); }
+    button.note { align-self: flex-start; padding: 0; border: 0; background: none; font: inherit; font-size: .9rem; text-align: left;
+      color: var(--ion-color-warning-shade); text-decoration: underline; cursor: pointer; }
     .run { font-size: .8rem; color: var(--ion-color-medium-shade); }
     .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: auto; padding-top: 4px; }
     .busy { display: inline-flex; align-items: center; gap: 4px; font-size: .85rem; color: var(--ion-color-medium-shade); }
@@ -54,6 +56,7 @@ export type OperationCardStatus = 'offen' | 'erledigt' | 'error';
       <span class="label">{{ label() }}</span>
       <span class="effect">{{ effect() }}</span>
       @if (runText(); as run) { <span class="run">{{ run }}</span> }
+      @if (note(); as n) { <span class="note-row"><button class="note" type="button" (click)="onNote($event)">{{ n }}</button></span> }
     </ng-template>
 
     @if (actions().length === 0) {
@@ -88,7 +91,15 @@ export class OperationCard {
   /** this card's own operation is running: a busy marker is shown */
   public readonly running = input(false);
 
+  /** a follow-up the card leaves to the admin; a tap emits `action('note')` */
+  public readonly note = input<string>('');
+
   public readonly action = output<string>();
+
+  protected onNote(event: Event): void {
+    event.stopPropagation();
+    this.action.emit('note');
+  }
 
   protected readonly kindLabel = computed(() => this.i18n()[`kind_${this.kind()}` as const]());
   protected readonly statusLabel = computed(() => {

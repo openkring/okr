@@ -386,7 +386,9 @@
       "matrixExplanation": "{count} Chat-Räume werden den Apps zugeordnet, in denen sie sichtbar sein sollen. Räume ohne eindeutige Zuordnung: {ambiguous}.",
       "ambiguousTitle": "{count} Räume ohne eindeutige Zuordnung",
       "ambiguousDetail": "Diese Räume bleiben vorerst überall sichtbar. Ordne sie in der Chat-Wartung von Hand zu. Tippe hier, um sie zu öffnen.",
-      "room": "Apps: {tenants}"
+      "room": "Apps: {tenants}",
+      "manualDone": "Erledigt – {count} Räume musst du von Hand zuordnen",
+      "manualOpen": "{count} Räume musst du von Hand zuordnen"
     }
   }
 }
