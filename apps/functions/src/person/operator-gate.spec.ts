@@ -34,8 +34,8 @@ vi.mock('firebase-admin/firestore', () => ({
     },
   }),
 }));
-// The operator decision stays the real isOperatorUserData; the util lib's own Firestore read is
-// replaced by the switchable users doc. The other gate checks are no-ops (they are not under test).
+// The operator decision stays the real isOperatorUserData; the util lib's own Firestore read
+// is replaced by the switchable users doc. The other gate checks are no-ops (not under test).
 vi.mock('@okr/shared-util-functions', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@okr/shared-util-functions')>();
   return {
@@ -77,7 +77,7 @@ describe('operator gate on cross-tenant AOC tools', () => {
 
     it(`${name}: an admin of tenant bka passes the gate`, async () => {
       state.user = { roles: { admin: true }, tenants: ['bka'] };
-      await expect(handler.run(req({ dryRun: true }))).resolves.toBeDefined();
+      await expect(handler.run(req())).resolves.toBeDefined();
       expect(state.scans).toBeGreaterThan(0);
     });
   }
@@ -96,6 +96,12 @@ describe('backfillAccountTenants dryRun', () => {
     expect(result).toEqual({ users: 2, persons: 2, written: 0, pending: 1 });
     expect(state.sets).toBe(0);
     expect(state.commits).toBe(0);
+  });
+
+  it.each([['true', 'true'], ['1', 1], ['null', null], ['object', {}]])('rejects a non-boolean dryRun (%s) without scanning or writing', async (_l, value) => {
+    await expect(backfillAccountTenants.run(req({ dryRun: value }))).rejects.toMatchObject({ code: 'invalid-argument' });
+    expect(state.scans).toBe(0);
+    expect(state.sets).toBe(0);
   });
 
   it('a real run writes the stale doc and reports pending 0', async () => {

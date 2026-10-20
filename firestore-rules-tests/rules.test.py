@@ -888,6 +888,10 @@ list_cases = [
     ("userA LIST aliasSpaces array-contains t1 -> ALLOW", True, "aliasSpaces", "t1", A),
     ("userA(plain) LIST aliasEvents t1 -> DENY (privileged only)", False, "aliasEvents", "t1", A),
     ("userP(privileged) LIST aliasEvents t1 -> ALLOW", True, "aliasEvents", "t1", P),
+    # 1.101 phase 5: the AOC e-mail page runs an unfiltered (cross-tenant) collection query
+    ("userO(admin bka) LIST emailEvents (no tenant filter) -> ALLOW (operator)", True, "emailEvents", None, O),
+    ("userD(admin t1) LIST emailEvents (no tenant filter) -> DENY", False, "emailEvents", None, D),
+    ("userD(admin t1) LIST emailEvents array-contains t1 -> DENY", False, "emailEvents", "t1", D),
 ]
 
 # the AvatarService stream: tenants array-contains-any [tenant, 'system'] (own + shared defaults)

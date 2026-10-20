@@ -21,7 +21,7 @@
 //
 // This module is the ONLY writer of `persons/{id}.accountTenants`. The app never writes it.
 
-import { onCall } from 'firebase-functions/v2/https';
+import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -94,7 +94,11 @@ export const backfillAccountTenants = onCall(
     checkAuthentication(request, 'backfillAccountTenants');
     await checkAdminRole(request, 'backfillAccountTenants');
     await checkOperatorTenant(request, 'backfillAccountTenants');
-    const dryRun = (request.data as { dryRun?: boolean } | undefined)?.dryRun === true;
+    const rawDryRun = (request.data as { dryRun?: unknown } | undefined)?.dryRun;
+    if (rawDryRun !== undefined && typeof rawDryRun !== 'boolean') {
+      throw new HttpsError('invalid-argument', 'backfillAccountTenants: dryRun must be a boolean.');
+    }
+    const dryRun = rawDryRun === true;
 
     const db = getFirestore();
     const users = await db.collection(UserCollection).get();

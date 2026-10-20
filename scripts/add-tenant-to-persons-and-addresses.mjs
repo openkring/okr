@@ -70,7 +70,7 @@
  *
  * REMEDY — MANDATORY AFTER EVERY `--write` RUN, in both directions:
  * call the existing `rebuildAddressDirectory` callable
- * (`apps/functions/src/address/rebuild-address-directory.ts`). It is admin-only and fully
+ * (`apps/functions/src/address/rebuild-address-directory.ts`). It is operator-only (bka) and fully
  * idempotent: it walks every `persons` and every `orgs` document and rebuilds the
  * projection from the live vault via `writeAddressDirectory`, returning
  * `{ persons, orgs, crossTenantAddresses, parentsAffected }`. Because it does not consult
