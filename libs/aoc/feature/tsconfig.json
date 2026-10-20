@@ -105,6 +105,12 @@
     },
     {
       "path": "../../session/util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../activity/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../tenant/feature/tsconfig.lib.json"
     }
   ]
 }

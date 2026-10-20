@@ -1,45 +1,5 @@
 {
   "title": "AOC - Application Operation Center",
-  "result": {
-    "title": "Resultate"
-  },
-  "account": {
-    "fbuser": {
-      "create": {
-        "conf": "Der Firebase User wurde erstellt."
-      }
-    }
-  },
-  "adminops": {
-    "title": "Admin Operationen",
-    "iban": {
-      "label": "IBAN Nummern auflisten",
-      "button": "Anzeigen"
-    },
-    "hasAccount": {
-      "title": "Zugänge auf die Personen spiegeln",
-      "label": "Hält bei jeder Person fest, in welchen Mandanten sie einen Zugang hat. Nötig, damit du zu einem Anlass nur Personen einladen kannst, die sich hier auch anmelden können.",
-      "button": "Ausführen",
-      "confirm": "Das Merkmal wird für alle Personen neu berechnet, über alle Mandanten hinweg. Bestehende Daten gehen dabei nicht verloren. Fortfahren?",
-      "conf": "Fertig: {count} Personen angepasst."
-    }
-  },
-  "data": {
-    "title": "Daten",
-    "content": "Daten validieren und korrigieren",
-    "validate": {
-      "title": "Daten-Validierung",
-      "content": "Bulk-Operation (adminops/validateModels) mit Validierungs-Operationen auf eine Collection.",
-      "button": "Daten validieren",
-      "select": "Collection wählen"
-    },
-    "index": {
-      "title": "Index erstellen",
-      "content": "Erstellt einen Index auf einer Collection. Dies ist nützlich, wenn ein Index in der Datenbank fehlt und eine Abfrage nicht ausgeführt werden kann.",
-      "button": "Index erstellen",
-      "select": "Collection wählen"
-    }
-  },
   "session": {
     "title": "Sessions",
     "empty": "Keine Sessions im gewählten Zeitraum",
@@ -361,6 +321,36 @@
         "label": "Chat-Räume Apps zuordnen",
         "effect": "Ordnet bestehende Chat-Räume den Apps zu, in denen sie sichtbar sein sollen."
       }
+    },
+    "title": "Administration",
+    "empty": "In diesem Bereich gibt es für dich gerade nichts.",
+    "lastRun": "Zuletzt ausgeführt: {date}",
+    "neverRun": "Noch nie ausgeführt",
+    "status": {
+      "offen": "Offen",
+      "erledigt": "Erledigt",
+      "error": "Fehler"
+    },
+    "action": {
+      "run": "Ausführen",
+      "preview": "Vorschau"
+    },
+    "pickType": "Welche Daten?",
+    "unsupported": "Für diese Daten gibt es das noch nicht.",
+    "notYet": "Diese Migration ist noch nicht verfügbar.",
+    "validate": {
+      "explanation": "Jeder Eintrag ist ein Datensatz von «{type}», der nicht den Regeln entspricht. Darunter steht, was nicht stimmt."
+    },
+    "reindex": {
+      "explanation": "Bei diesen {count} Einträgen von «{type}» ist der Suchindex veraltet. Mit «Index neu aufbauen» korrigierst du ihn.",
+      "apply": "Index neu aufbauen",
+      "done": "Fertig: {count} Einträge neu aufgebaut.",
+      "old": "Bisher",
+      "new": "Neu"
+    },
+    "iban": {
+      "explanation": "Alle in dieser App hinterlegten Bankkonten mit ihren Inhabern. Die Liste wird nirgends gespeichert.",
+      "noOwner": "Ohne Inhaber"
     }
   }
 }

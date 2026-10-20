@@ -27,8 +27,6 @@ export interface AocCard {
   featureBlock: string;
   /** Visible only for these tenants (matched against ctx.tenantId). */
   tenants?: string[];
-  /** Visible only in these apps (matched against ctx.tenantId). */
-  apps?: string[];
   /** Hidden in these apps (matched against ctx.tenantId). */
   notOnApps?: string[];
 }
@@ -39,7 +37,7 @@ const KRING_TENANT_ID = 'kring';
 /** kring-app has no /aoc, /user, /activity or /security routes: only Eskalationen and Features exist there. */
 const NOT_ON_KRING = [KRING_TENANT_ID];
 
-type CardOptions = Pick<AocCard, 'group' | 'tenants' | 'apps' | 'notOnApps'>;
+type CardOptions = Pick<AocCard, 'group' | 'tenants' | 'notOnApps'>;
 
 type CardKeys = keyof typeof AOC_HUB_I18N_KEYS;
 
@@ -71,17 +69,17 @@ export const AOC_AREAS: readonly AocCard[] = [
   card('register', 'access', 'report', { route: '/security/register' }, 'security', { notOnApps: NOT_ON_KRING }),
   card('privacyAudit', 'access', 'check', { route: '/security/privacy-audit' }, 'security', { notOnApps: NOT_ON_KRING }),
   card('iban', 'access', 'report', { operation: 'iban' }, 'aoc', { notOnApps: NOT_ON_KRING }),
-  card('allocation', 'access', 'operation', { route: '/operator/allocation' }, 'aoc', { tenants: [OPERATOR_TENANT_ID], notOnApps: NOT_ON_KRING }),
+  card('allocation', 'access', 'operation', { route: '/operator/allocation' }, 'aoc', { tenants: [OPERATOR_TENANT_ID] }),
   card('activity', 'ops', 'report', { route: '/activity' }, 'activity', { notOnApps: NOT_ON_KRING }),
-  card('emailEvents', 'ops', 'report', { route: '/aoc/email' }, 'aoc', { tenants: [OPERATOR_TENANT_ID], notOnApps: NOT_ON_KRING }),
-  card('chatMaintenance', 'ops', 'operation', { route: '/operator/chat' }, 'aoc', { tenants: [OPERATOR_TENANT_ID], notOnApps: NOT_ON_KRING }),
+  card('emailEvents', 'ops', 'report', { route: '/aoc/email' }, 'aoc', { tenants: [OPERATOR_TENANT_ID] }),
+  card('chatMaintenance', 'ops', 'operation', { route: '/operator/chat' }, 'aoc', { tenants: [OPERATOR_TENANT_ID] }),
   card('escalations', 'ops', 'report', { route: '/ticket/all' }, 'business', { tenants: [KRING_TENANT_ID] }),
   card('features', 'config', 'operation', { route: '/tenant/features' }, 'aoc'),
   card('workflow', 'config', 'operation', { route: '/workflow/all/workflow-context' }, 'aoc', { notOnApps: NOT_ON_KRING }),
   card('validate', 'data', 'check', { operation: 'validate' }, 'aoc', { notOnApps: NOT_ON_KRING }),
   card('reindex', 'data', 'check', { operation: 'reindex' }, 'aoc', { notOnApps: NOT_ON_KRING }),
-  card('accountTenants', 'data', 'migration', { operation: 'migrate-account-tenants' }, 'aoc', { group: 'migrations', tenants: [OPERATOR_TENANT_ID], notOnApps: NOT_ON_KRING }),
-  card('matrixTenants', 'data', 'migration', { operation: 'migrate-matrix-tenants' }, 'aoc', { group: 'migrations', tenants: [OPERATOR_TENANT_ID], notOnApps: NOT_ON_KRING }),
+  card('accountTenants', 'data', 'migration', { operation: 'migrate-account-tenants' }, 'aoc', { group: 'migrations', tenants: [OPERATOR_TENANT_ID] }),
+  card('matrixTenants', 'data', 'migration', { operation: 'migrate-matrix-tenants' }, 'aoc', { group: 'migrations', tenants: [OPERATOR_TENANT_ID] }),
 ];
 
 export interface AocCardContext {
@@ -95,7 +93,6 @@ export function visibleAocCards(cards: readonly AocCard[], area: AocArea, ctx: A
     c =>
       c.area === area &&
       (!c.tenants || c.tenants.includes(ctx.tenantId)) &&
-      (!c.apps || c.apps.includes(ctx.tenantId)) &&
       !c.notOnApps?.includes(ctx.tenantId) &&
       ctx.isEnabled(c.featureBlock) &&
       ctx.hasRole(c.roleNeeded),

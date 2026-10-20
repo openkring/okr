@@ -44,6 +44,8 @@
     "@okr/subject-org-util": "*",
     "@okr/subject-person-util": "*",
     "@okr/project-task-util": "*",
-    "@okr/user-util": "*"
+    "@okr/user-util": "*",
+    "@okr/activity-data-access": "*",
+    "@okr/tenant-feature": "*"
   }
 }

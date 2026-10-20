@@ -1,45 +1,5 @@
 {
   "title": "AOC - Application Operation Center",
-  "result": {
-    "title": "Risultati"
-  },
-  "account": {
-    "fbuser": {
-      "create": {
-        "conf": "L'utente Firebase è stato creato."
-      }
-    }
-  },
-  "adminops": {
-    "title": "Operazioni admin",
-    "iban": {
-      "label": "Elencare i numeri IBAN",
-      "button": "Mostrare"
-    },
-    "hasAccount": {
-      "title": "Riporta gli accessi sulle persone",
-      "label": "Registra per ogni persona in quali tenant ha un accesso. Serve perché tu possa invitare solo persone che qui possono accedere.",
-      "button": "Esegui",
-      "confirm": "Il campo viene ricalcolato per tutte le persone, su tutti i tenant. Nessun dato esistente va perso. Continuare?",
-      "conf": "Fatto: {count} persone aggiornate."
-    }
-  },
-  "data": {
-    "title": "Dati",
-    "content": "Convalidare e correggere i dati",
-    "validate": {
-      "title": "Convalida dei dati",
-      "content": "Operazione di massa (adminops/validateModels) con operazioni di convalida su una collezione.",
-      "button": "Convalidare i dati",
-      "select": "Scegliere la collezione"
-    },
-    "index": {
-      "title": "Creare un indice",
-      "content": "Crea un indice su una collezione. Questo è utile quando manca un indice nel database e una query non può essere eseguita.",
-      "button": "Creare un indice",
-      "select": "Scegliere la collezione"
-    }
-  },
   "session": {
     "title": "Sessioni",
     "empty": "Nessuna sessione nel periodo selezionato",
@@ -361,6 +321,36 @@
         "label": "Assegna le stanze chat alle app",
         "effect": "Assegna le stanze chat esistenti alle app in cui devono essere visibili."
       }
+    },
+    "title": "Amministrazione",
+    "empty": "Al momento non c'è niente per te in quest'area.",
+    "lastRun": "Ultima esecuzione: {date}",
+    "neverRun": "Mai eseguito",
+    "status": {
+      "offen": "In sospeso",
+      "erledigt": "Fatto",
+      "error": "Errore"
+    },
+    "action": {
+      "run": "Esegui",
+      "preview": "Anteprima"
+    },
+    "pickType": "Quali dati?",
+    "unsupported": "Per questi dati non è ancora disponibile.",
+    "notYet": "Questa migrazione non è ancora disponibile.",
+    "validate": {
+      "explanation": "Ogni voce è un record di «{type}» che non rispetta una regola. Sotto vedi cosa non va."
+    },
+    "reindex": {
+      "explanation": "Queste {count} voci di «{type}» hanno un indice di ricerca obsoleto. «Ricostruisci indice» lo corregge.",
+      "apply": "Ricostruisci indice",
+      "done": "Fatto: {count} voci ricostruite.",
+      "old": "Prima",
+      "new": "Nuovo"
+    },
+    "iban": {
+      "explanation": "Tutti i conti bancari salvati in questa app, con i loro titolari. L'elenco non viene salvato da nessuna parte.",
+      "noOwner": "Senza titolare"
     }
   }
 }

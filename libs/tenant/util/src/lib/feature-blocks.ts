@@ -237,13 +237,13 @@ const aoc: FeatureBlock = {
   label: '@tenant/util.feature.aoc.label',
   icon: 'admin',
   defaultAvailability: 'ga',
-  // `document` added (task 16), by import evidence: the block's `aoc-data.store.ts:24`
+  // `document` added (task 16), by import evidence: the block's `aoc-hub.store.ts:27`
   // (`documentValidations`/`getDocumentIndex`) reads and repairs the `docs` collection directly.
   // (Task 16 also named the content and orphaned-files stores; those screens have since moved to
   // `page-integrity.store.ts` and `document-orphans.store.ts`.)
   //
-  // NO `task` EDGE, although `aoc-data.store.ts:35` imports from `@okr/project-task-util`
-  // (`getTaskIndex`, `taskValidations`). That lib is PURE FUNCTIONS — the "Daten" screen
+  // NO `task` EDGE, although `aoc-hub.store.ts:38` imports from `@okr/project-task-util`
+  // (`getTaskIndex`, `taskValidations`). That lib is PURE FUNCTIONS — the Datenqualität hub
   // re-derives search indexes and validates documents for every collection in the tenant, so
   // it imports the util layer of a dozen domains the same way. No component crosses the
   // boundary, aoc navigates into no task screen, and no menu doc of task's is involved: the
@@ -2247,7 +2247,7 @@ const activity: FeatureBlock = {
  *  - `geo`, `relationship`, `subject/application`, `aoc` — do NOT: `trip.store.ts:15`,
  *    `membership.store.ts:20` and `application.service.ts:25` inject `TaskService` (a
  *    data-access service, the settled no-edge class — they create follow-up tasks as a side
- *    effect), and `aoc-data.store.ts:35` imports pure helpers from `@okr/project-task-util`. No screen
+ *    effect), and `aoc-hub.store.ts:38` imports pure helpers from `@okr/project-task-util`. No screen
  *    of theirs renders a task component. (`geo` is core anyway.)
  *
  * MENU TREE SHAPE — no generic parent exists, so both entries are TOP-LEVEL here, following the

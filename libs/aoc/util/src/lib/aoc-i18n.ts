@@ -2,40 +2,8 @@ import { Signal } from '@angular/core';
 
 const PFX = '@aoc/feature.';
 
-// ─── AocAdminOps ─────────────────────────────────────────────────────────────
-
 export const AOC_I18N_KEYS = {
   title:                                  PFX + 'title',
-  result_title:                           PFX + 'result.title',
-
-  // account
-
-  account_fbuser_create_conf:             PFX + 'account.fbuser.create.conf',
-
-  // adminops
-  adminops_title:                         PFX + 'adminops.title',
-  adminops_iban_label:                    PFX + 'adminops.iban.label',
-  adminops_iban_button:                   PFX + 'adminops.iban.button',
-
-  adminops_hasaccount_title:              PFX + 'adminops.hasAccount.title',
-  adminops_hasaccount_label:              PFX + 'adminops.hasAccount.label',
-  adminops_hasaccount_button:             PFX + 'adminops.hasAccount.button',
-  adminops_hasaccount_confirm:            PFX + 'adminops.hasAccount.confirm',
-  adminops_hasaccount_conf:               PFX + 'adminops.hasAccount.conf',
-
-  // data
-  data_title:                               PFX + 'data.title',
-  data_content:                             PFX + 'data.content',
-
-  data_validate_title:                      PFX + 'data.validate.title',
-  data_validate_content:                    PFX + 'data.validate.content',
-  data_validate_button:                     PFX + 'data.validate.button',
-  data_validate_select:                     PFX + 'data.validate.select',
-
-  data_index_title:                         PFX + 'data.index.title',
-  data_index_content:                       PFX + 'data.index.content',
-  data_index_button:                        PFX + 'data.index.button',
-  data_index_select:                        PFX + 'data.index.select',
 
   // email
 
@@ -212,6 +180,33 @@ export const AOC_EMAIL_I18N_KEYS = {
 
 // ─── AOC hub cards (spec 1.101 phase 5) ──────────────────────────────────────
 export const AOC_HUB_I18N_KEYS = {
+  title: PFX + 'hub.title',
+  empty: PFX + 'hub.empty',
+  last_run: PFX + 'hub.lastRun',
+  never_run: PFX + 'hub.neverRun',
+  status_offen: PFX + 'hub.status.offen',
+  status_erledigt: PFX + 'hub.status.erledigt',
+  status_error: PFX + 'hub.status.error',
+  action_run: PFX + 'hub.action.run',
+  action_preview: PFX + 'hub.action.preview',
+  pick_type: PFX + 'hub.pickType',
+  unsupported: PFX + 'hub.unsupported',
+  not_yet: PFX + 'hub.notYet',
+  validate_explanation: PFX + 'hub.validate.explanation',
+  reindex_explanation: PFX + 'hub.reindex.explanation',
+  reindex_apply: PFX + 'hub.reindex.apply',
+  reindex_done: PFX + 'hub.reindex.done',
+  reindex_old: PFX + 'hub.reindex.old',
+  reindex_new: PFX + 'hub.reindex.new',
+  iban_explanation: PFX + 'hub.iban.explanation',
+  iban_no_owner: PFX + 'hub.iban.noOwner',
+  kind_report: '@shared/ui.report.kind.report',
+  kind_check: '@shared/ui.report.kind.check',
+  kind_operation: '@shared/ui.report.kind.operation',
+  kind_migration: '@shared/ui.report.kind.migration',
+  ok: '@ok',
+  cancel: '@cancel',
+  error: '@error',
   area_access: PFX + 'hub.area.access',
   area_ops: PFX + 'hub.area.ops',
   area_config: PFX + 'hub.area.config',
@@ -252,6 +247,7 @@ export const AOC_HUB_I18N_KEYS = {
 } satisfies Record<string, string>;
 
 export type AocI18n = { [K in keyof typeof AOC_I18N_KEYS]: Signal<string> };
+export type AocHubI18n = { [K in keyof typeof AOC_HUB_I18N_KEYS]: Signal<string> };
 
 // `fill` now lives in @okr/shared-util-core so every domain can use it; re-exported
 // here so the existing `import { fill } from '@okr/aoc-util'` call sites keep working.

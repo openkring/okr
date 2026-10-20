@@ -78,8 +78,8 @@ describe('visibleAocCards', () => {
     expect(ids('ops', ctx('scs'))).not.toContain('emailEvents');
     expect(ids('ops', ctx('scs'))).not.toContain('chatMaintenance');
     expect(ids('access', ctx('scs'))).not.toContain('allocation');
-    expect(ids('ops', ctx('bka'))).toEqual(expect.arrayContaining(['emailEvents', 'chatMaintenance']));
-    expect(ids('access', ctx('bka'))).toContain('allocation');
+    expect(ids('ops', ctx('bka'))).toEqual(['activity', 'emailEvents', 'chatMaintenance']);
+    expect(ids('access', ctx('bka'))).toEqual(['users', 'sessions', 'register', 'privacyAudit', 'iban', 'allocation']);
     expect(ids('data', ctx('scs'))).toEqual(['validate', 'reindex']);
     expect(ids('data', ctx('bka'))).toEqual(['validate', 'reindex', 'accountTenants', 'matrixTenants']);
   });

@@ -148,12 +148,13 @@ const aoc: BlockRoutes = {
     // (R-5) nor merely authenticated.
     canActivate: [isContentAdminGuard()],
     children: [
-      { path: 'adminops',   canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocAdminOps) },
+      // 1.101 phase 5: AocAdminOps is gone (IBAN and the backfill live on the hub); Task 5 turns this into a redirect
+      { path: 'adminops',   canActivate: [isAdminGuard()], data: { area: 'data' }, loadComponent: () => import('@okr/aoc-feature').then(m => m.AocHub) },
       // 1.101 phase 4: remove after the next release
       { path: 'roles', redirectTo: '/user/all/c-users' },
       // 1.101 phase 2: remove after the next release
       { path: 'content', redirectTo: '/page/integrity' },
-      { path: 'data',       canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocData) },
+      { path: 'data',       canActivate: [isAdminGuard()], data: { area: 'data' }, loadComponent: () => import('@okr/aoc-feature').then(m => m.AocHub) },
       // 1.101 phase 4: remove after the next release
       { path: 'chat', redirectTo: '/chat/maintenance' },
       // 1.101 phase 4: remove after the next release

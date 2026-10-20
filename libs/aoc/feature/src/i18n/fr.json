@@ -1,45 +1,5 @@
 {
   "title": "AOC - Application Operation Center",
-  "result": {
-    "title": "Résultats"
-  },
-  "account": {
-    "fbuser": {
-      "create": {
-        "conf": "L'utilisateur Firebase a été créé."
-      }
-    }
-  },
-  "adminops": {
-    "title": "Opérations admin",
-    "iban": {
-      "label": "Lister les numéros IBAN",
-      "button": "Afficher"
-    },
-    "hasAccount": {
-      "title": "Reporter les accès sur les personnes",
-      "label": "Retient pour chaque personne dans quels mandants elle dispose d'un accès. Nécessaire pour que tu ne puisses inviter que des personnes capables de se connecter ici.",
-      "button": "Exécuter",
-      "confirm": "Le champ est recalculé pour toutes les personnes, sur tous les mandants. Aucune donnée existante n'est perdue. Continuer ?",
-      "conf": "Terminé : {count} personnes mises à jour."
-    }
-  },
-  "data": {
-    "title": "Données",
-    "content": "Valider et corriger les données",
-    "validate": {
-      "title": "Validation de données",
-      "content": "Opération groupée (adminops/validateModels) avec des opérations de validation sur une collection.",
-      "button": "Valider les données",
-      "select": "Choisir la collection"
-    },
-    "index": {
-      "title": "Créer un index",
-      "content": "Crée un index sur une collection. Ceci est utile lorsqu'un index manque dans la base de données et qu'une requête ne peut pas être exécutée.",
-      "button": "Créer un index",
-      "select": "Choisir la collection"
-    }
-  },
   "session": {
     "title": "Sessions",
     "empty": "Aucune session dans la période sélectionnée",
@@ -361,6 +321,36 @@
         "label": "Attribuer les salons de chat aux apps",
         "effect": "Attribue les salons de chat existants aux apps où ils doivent être visibles."
       }
+    },
+    "title": "Administration",
+    "empty": "Il n'y a rien pour toi dans ce domaine pour le moment.",
+    "lastRun": "Dernière exécution : {date}",
+    "neverRun": "Jamais exécuté",
+    "status": {
+      "offen": "En attente",
+      "erledigt": "Terminé",
+      "error": "Erreur"
+    },
+    "action": {
+      "run": "Exécuter",
+      "preview": "Aperçu"
+    },
+    "pickType": "Quelles données ?",
+    "unsupported": "Ce n'est pas encore disponible pour ces données.",
+    "notYet": "Cette migration n'est pas encore disponible.",
+    "validate": {
+      "explanation": "Chaque entrée est un enregistrement «{type}» qui ne respecte pas une règle. En dessous, tu vois ce qui ne va pas."
+    },
+    "reindex": {
+      "explanation": "Ces {count} entrées «{type}» ont un index de recherche obsolète. «Reconstruire l'index» le corrige.",
+      "apply": "Reconstruire l'index",
+      "done": "Terminé : {count} entrées reconstruites.",
+      "old": "Avant",
+      "new": "Nouveau"
+    },
+    "iban": {
+      "explanation": "Tous les comptes bancaires enregistrés dans cette app, avec leurs titulaires. La liste n'est enregistrée nulle part.",
+      "noOwner": "Sans titulaire"
     }
   }
 }

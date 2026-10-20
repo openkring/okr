@@ -1,5 +1,3 @@
-export * from './lib/aoc-adminops';
-export * from './lib/aoc-data';
 export * from './lib/aoc-tag';
 export * from './lib/aoc-email';
 export * from './lib/aoc-session';
@@ -13,3 +11,5 @@ export * from './lib/tenant-switcher';
 export * from './lib/tenant-allocation-confirm.modal';
 export * from './lib/aoc-tenant-allocation.store';
 export * from './lib/aoc-tenant-allocation';
+export * from './lib/aoc-hub';
+export * from './lib/aoc-hub.store';

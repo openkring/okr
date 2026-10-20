@@ -1,45 +1,5 @@
 {
   "title": "AOC - Application Operation Center",
-  "result": {
-    "title": "Resultados"
-  },
-  "account": {
-    "fbuser": {
-      "create": {
-        "conf": "El usuario de Firebase se ha creado."
-      }
-    }
-  },
-  "adminops": {
-    "title": "Operaciones de administración",
-    "iban": {
-      "label": "Listar números IBAN",
-      "button": "Mostrar"
-    },
-    "hasAccount": {
-      "title": "Reflejar los accesos en las personas",
-      "label": "Registra para cada persona en qué inquilinos tiene acceso. Necesario para que solo puedas invitar a personas que puedan iniciar sesión aquí.",
-      "button": "Ejecutar",
-      "confirm": "El campo se vuelve a calcular para todas las personas, en todos los inquilinos. No se pierde ningún dato existente. ¿Continuar?",
-      "conf": "Listo: {count} personas actualizadas."
-    }
-  },
-  "data": {
-    "title": "Datos",
-    "content": "Validar y corregir datos",
-    "validate": {
-      "title": "Validación de datos",
-      "content": "Operación masiva (adminops/validateModels) con operaciones de validación sobre una colección.",
-      "button": "Validar datos",
-      "select": "Seleccionar colección"
-    },
-    "index": {
-      "title": "Crear índice",
-      "content": "Crea un índice sobre una colección. Esto es útil cuando falta un índice en la base de datos y no se puede ejecutar una consulta.",
-      "button": "Crear índice",
-      "select": "Seleccionar colección"
-    }
-  },
   "session": {
     "title": "Sesiones",
     "empty": "No hay sesiones en el período seleccionado",
@@ -318,7 +278,7 @@
         "effect": "Muestra qué personas tienen un IBAN registrado."
       },
       "allocation": {
-        "label": "Asignación de inquilinos",
+        "label": "Asignación a mandantes",
         "effect": "Define qué personas, organizaciones y recursos se ven en cada app."
       },
       "activity": {
@@ -361,6 +321,36 @@
         "label": "Asignar salas de chat a las apps",
         "effect": "Asigna las salas de chat existentes a las apps donde deben verse."
       }
+    },
+    "title": "Administración",
+    "empty": "Por ahora no hay nada para ti en esta área.",
+    "lastRun": "Última ejecución: {date}",
+    "neverRun": "Nunca ejecutado",
+    "status": {
+      "offen": "Pendiente",
+      "erledigt": "Hecho",
+      "error": "Error"
+    },
+    "action": {
+      "run": "Ejecutar",
+      "preview": "Vista previa"
+    },
+    "pickType": "¿Qué datos?",
+    "unsupported": "Esto aún no está disponible para estos datos.",
+    "notYet": "Esta migración aún no está disponible.",
+    "validate": {
+      "explanation": "Cada entrada es un registro de «{type}» que no cumple una regla. Debajo ves qué está mal."
+    },
+    "reindex": {
+      "explanation": "Estas {count} entradas de «{type}» tienen un índice de búsqueda desactualizado. «Reconstruir índice» lo corrige.",
+      "apply": "Reconstruir índice",
+      "done": "Hecho: {count} entradas reconstruidas.",
+      "old": "Antes",
+      "new": "Nuevo"
+    },
+    "iban": {
+      "explanation": "Todas las cuentas bancarias guardadas en esta app, con sus titulares. La lista no se guarda en ningún sitio.",
+      "noOwner": "Sin titular"
     }
   }
 }
