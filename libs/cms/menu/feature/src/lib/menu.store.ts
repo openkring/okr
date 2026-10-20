@@ -75,10 +75,10 @@ export const _MenuStore = signalStore(
     // A menu doc is rendered as a child only when its owning feature block is effective
     // for this tenant. `tenants[]` (query-level) still decides readability; enablement
     // decides visibility on top of that (D-BB-8). `blockOwnersOfMenuKey` returns every
-    // block that declares this key — a "shared parent" key like `aoc-menu` is declared by
-    // `aoc` (togglable) AND by `user`/`security` (always `core: true`), so visibility must
-    // be "ANY owner effective", not just the first — else disabling `aoc` alone would also
-    // hide `user`/`security`'s own, still-effective menu entries (task 12 review round 3).
+    // block that declares this key — a "shared parent" key like `cms-menu` is declared by
+    // eight blocks (`aoc`, `cms`, `category`, …), so visibility must be "ANY owner
+    // effective", not just the first — else disabling one declarer alone would also hide
+    // the other, still-effective blocks' own menu entries (task 12 review round 3).
     // `[]` (no owners) means a tenant-authored menu entry — those always render.
     // Gate 4, the per-row opt-out: `app-config.hiddenMenuKeys` suppresses a single row while
     // its owning block stays ENABLED. Checked FIRST and applied to every key, including a

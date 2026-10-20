@@ -82,14 +82,14 @@ const calevent: BlockRoutes = {
  * RECONCILED (task 18) against every `aoc` child in `app.routes.ts:388-408`. Task 5 copied
  * SIX of them; the live app declares SIXTEEN. The ten added here — `chat`, `account`,
  * `sessions`, `doc` (since moved to `/document/orphans`), `tag`, `email`, `bexio`, `srv`, `trip`, `website` — were unreachable
- * through the catalogue, which matters concretely for SIX of them: `aoc-sessions`,
- * `aoc-chat` (since moved), `aoc-account` (since merged into `user-all`), `aoc-doc` (since removed), `aoc-bexio` (since moved to Personen) and `aoc-srv` (since moved to Mitglieder, 1.101 phase 3) are live children of the
- * shared `aoc-menu` doc (they are now catalogued as menu specs on the `aoc` block too), so
- * before this the seeded submenu could point at routes this table did not have. The other
- * four (`tag`, `email`, `trip`, `website`) were simply unrouted here: `tag` and `website` do
- * have live docs, but under `cms-menu` rather than `aoc-menu` (see the `aoc` block in
- * `feature-blocks.ts`), `email` now has an `aoc-email` menu spec (spec 1.101 phase 1), `trip` had no menu doc at all
- * (it has since moved to `/trips/maintenance`).
+ * through the catalogue, which mattered concretely for SIX of them: `sessions`, `chat`,
+ * `account`, `doc`, `bexio` and `srv` had live child docs under `aoc-menu`, so the seeded
+ * submenu could point at routes this table did not have. All six rows have since left
+ * `aoc-menu` (1.101 phases 2–5); since phase 5 `aoc-menu` holds only the four hub rows, and
+ * `/aoc/sessions` and `/aoc/email` are reached through hub cards. The other four (`tag`,
+ * `email`, `trip`, `website`) were simply unrouted here: `tag` and `website` have live docs
+ * under `cms-menu` rather than `aoc-menu` (see the `aoc` block in `feature-blocks.ts`), and
+ * `trip` had no menu doc at all (it has since moved to `/trips/maintenance`).
  *
  * GUARD: `app.routes.ts:389` has `canActivate: [isAdminGuard]` — the factory UNCALLED, i.e.
  * the whole `/aoc/*` admin console is open to any authenticated user in the live app today.

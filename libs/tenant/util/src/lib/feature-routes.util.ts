@@ -26,11 +26,11 @@ export function composeFeatureRoutes(sources: RouteSource[]): Route[] {
  * owning block redeclares the same parent node with only its own children.
  *
  * This is the multi-owner-aware replacement `blockOfMenuKey` (below) is now built on top
- * of. It matters for real: `aoc-menu`'s declarers are `aoc` (bundle `special`, togglable)
- * PLUS `user` and `security` (both `core: true`, always effective) — checking only the
- * FIRST declaring block (`aoc`, first in `FEATURE_BLOCKS` order) would hide `user-all`/
- * `priv-register`/`priv-audit` from the root nav the instant a tenant switches `aoc` off,
- * even though both owning blocks are still fully effective (task 12 review round 3).
+ * of. It matters for real: `cms-menu` is declared by eight blocks (`aoc`, `cms`, `category`,
+ * `geo`, `esign`, `pdf-template`, `document`, `forms`) — checking only the FIRST declaring
+ * block would hide e.g. `category-all` the instant a tenant switches that first block off,
+ * even though `category` is still fully effective (task 12 review round 3, found on
+ * `aoc-menu`, which `aoc` alone declares since spec 1.101 phase 5).
  * Returns `[]` for a tenant-authored menu entry (not declared by any block), which is
  * never filtered.
  */

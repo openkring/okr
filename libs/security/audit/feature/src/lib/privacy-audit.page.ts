@@ -204,6 +204,7 @@ export class PrivacyAuditPage {
    * its own run, and re-running the audit is one click away.
    */
   protected async rebuildDirectory(): Promise<void> {
+    if (!this.isOperator()) return;
     const question = await this.i18nService.translateOnce(PRIVACY_AUDIT_I18N_KEYS.rebuild_confirm);
     if (!await this.alertService.confirm(question, true)) return;
 

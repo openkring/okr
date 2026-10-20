@@ -300,8 +300,9 @@ const aoc: FeatureBlock = {
       // and `tenant-features` here, plus `user-all` (user), `priv-register`/`priv-audit`
       // (security), `activity-all` (activity) and `ticket-all` (business), which no longer hang
       // under `aoc-menu` — so `aoc` is now the only block declaring the shared parent. Their live
-      // docs are archived by scripts/aoc-phase5-menu.mjs; the old `@item.*` labels stay in the
-      // menu bundle until then.
+      // docs: scripts/aoc-phase5-menu.mjs archives all ten absorbed rows, each only when nothing
+      // outside `aoc-menu*` references it. The old `@item.*` labels stay in the menu bundle until
+      // then, plus one release.
       { key: 'aoc-access',     name: 'aoc-access',     url: '/aoc/access',     action: 'navigate', roleNeeded: 'admin', icon: 'shield',   label: '@item.aoc-access' },
       { key: 'aoc-ops',        name: 'aoc-ops',        url: '/aoc/ops',        action: 'navigate', roleNeeded: 'admin', icon: 'history',  label: '@item.aoc-ops' },
       { key: 'aoc-config',     name: 'aoc-config',     url: '/aoc/config',     action: 'navigate', roleNeeded: 'admin', icon: 'settings', label: '@item.aoc-config' },

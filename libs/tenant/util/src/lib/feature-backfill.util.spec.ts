@@ -294,6 +294,24 @@ describe('deriveEnabledFeatures — against the real catalogue', () => {
     expect(all.enabled).not.toContain('activity');
   });
 
+  it("the still-shared `cms-menu` parent: 'all' over-attributes its co-declarers, 'exclusive' only the true owner", () => {
+    // `aoc-menu` is no longer shared (spec 1.101 phase 5), so the policy contrast is pinned on
+    // `cms-menu`, declared by aoc, cms, category, geo, esign, pdf-template, document and forms.
+    // The tenant owns the submenu and `tag-all`, which only `aoc` declares.
+    const docs = realDocs(['cms-menu', 'tag-all'], 'p13');
+    const exclusive = deriveEnabledFeatures({
+      catalogue: FEATURE_BLOCKS, rollouts: [], menuDocs: docs, tenantId: 'p13', policy: 'exclusive',
+    });
+    const all = deriveEnabledFeatures({
+      catalogue: FEATURE_BLOCKS, rollouts: [], menuDocs: docs, tenantId: 'p13', policy: 'all',
+    });
+    const coDeclarers = ['esign', 'pdf-template', 'forms']; // not core, not a dependency of aoc
+    expect(exclusive.enabled).toContain('aoc');
+    coDeclarers.forEach(id => expect(exclusive.enabled, id).not.toContain(id));
+    expect(all.enabled).toContain('aoc');
+    coDeclarers.forEach(id => expect(all.enabled, id).toContain(id));
+  });
+
   it('every non-core block reachable by evidence owns at least one exclusively-declared key', () => {
     // Pins the premise the 'exclusive' policy rests on: shared PARENTS are shared, their
     // CHILDREN are not. Failure here means 'exclusive' has started under-attributing.
