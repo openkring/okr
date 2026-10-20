@@ -1,8 +1,8 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular';
-import { signalStore, withComputed, withMethods, withProps } from '@ngrx/signals';
-import { Observable, of } from 'rxjs';
+import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { from, Observable, of } from 'rxjs';
 import { StaticSuite } from 'vest';
 
 import { ActivityService } from '@okr/activity-data-access';
@@ -15,11 +15,11 @@ import { ActivityCollection, ActivityModel, AddressCollection, AddressModel, Okr
   PersonModel, ReservationCollection, ReservationModel, SessionCollection, SessionModel, TaskCollection, TransferCollection, UserCollection,
   WorkrelCollection, TaskModel, ResourceModel, ResourceCollection, TransferModel, UserModel, WorkrelModel, GroupModel, CategoryModel,
   CategoryListModel, DbQuery, ResponsibilityModel, ResponsibilityCollection } from '@okr/shared-models';
-import { fill, getCategoryIndex, getFullName, getSystemQuery, logToFindings, ReportFinding } from '@okr/shared-util-core';
+import { fill, getCategoryIndex, getFullName, getSystemQuery, hasRole, logToFindings, ReportFinding } from '@okr/shared-util-core';
 import { resourceParams, showToast } from '@okr/shared-util-angular';
 import { openReport } from '@okr/shared-ui';
 import { FeatureStore } from '@okr/tenant-feature';
-import { AOC_AREAS, AOC_HUB_I18N_KEYS, formatValidationErrors, indexDiffs, IndexDiff, lastRunsByOperation } from '@okr/aoc-util';
+import { AOC_AREAS, AOC_HUB_I18N_KEYS, AocCardContext, formatValidationErrors, indexDiffs, IndexDiff, isOperationVisible, lastRunsByOperation } from '@okr/aoc-util';
 
 import { addressValidations, getAddressIndex } from '@okr/subject-address-util';
 import { commentValidations, getCommentIndex } from '@okr/comment-util';
@@ -59,6 +59,8 @@ const AOC_SCOPE = 'aoc';
  * logic unchanged; only their output changed from the console / a result log to `openReport`.
  */
 export const AocHubStore = signalStore(
+  /** the operation id that is running; its card (and every other run button) is disabled meanwhile */
+  withState({ running: undefined as string | undefined }),
   withProps(() => ({
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
@@ -76,9 +78,10 @@ export const AocHubStore = signalStore(
       AOC_AREAS.flatMap(c => [[c.id + '.label', c.labelKey], [c.id + '.effect', c.effectKey]])) as Record<string, string>),
 
     /**
-     * All `scope: 'aoc'` activities of the tenant in ONE query, reduced client-side to the newest
-     * per operation id. Equality-only (no orderBy), so the live `tenants` + `scope` composite
-     * index serves it — no new index.
+     * All `scope: 'aoc'` activities of the tenant in ONE one-shot read (no live listener), reduced
+     * client-side to the newest per operation id and reloaded after each run. Equality-only (no
+     * orderBy), so the live `tenants` + `scope` composite index serves it — no new index. A
+     * "newest N" limit would need `tenants` + `scope` + `timestamp DESC`, which is not live.
      */
     lastRunsResource: rxResource({
       params: resourceParams(() => ({ tenantId: store.appStore.tenantId() })),
@@ -88,7 +91,7 @@ export const AocHubStore = signalStore(
           { key: 'tenants', operator: 'array-contains', value: params.tenantId },
           { key: 'scope', operator: '==', value: AOC_SCOPE },
         ];
-        return store.firestoreService.searchData<ActivityModel>(ActivityCollection, query, 'none');
+        return from(store.firestoreService.getDataOnce<ActivityModel>(ActivityCollection, query, 'none'));
       },
     }),
   })),
@@ -97,19 +100,34 @@ export const AocHubStore = signalStore(
     currentUser: computed(() => store.appStore.currentUser()),
     tenantId: computed(() => store.appStore.tenantId()),
     lastRuns: computed(() => lastRunsByOperation(store.lastRunsResource.value() ?? [])),
+    /** what decides which cards (and so which operations) this user gets */
+    cardContext: computed((): AocCardContext => {
+      const user = store.appStore.currentUser();
+      return {
+        tenantId: store.appStore.tenantId(),
+        isEnabled: store.featureStore.isEnabled(),
+        hasRole: role => hasRole(role, user),
+      };
+    }),
   })),
 
   withMethods(store => {
-    const logRun = (operationId: string, payload: string): void => {
-      void store.activityService.log(AOC_SCOPE, operationId, store.currentUser(), payload);
+    const logRun = async (operationId: string, payload: string): Promise<void> => {
+      await store.activityService.log(AOC_SCOPE, operationId, store.currentUser(), payload);
+      store.lastRunsResource.reload();
+    };
+
+    /** The picker label of a model type; the two spellings of the personal relation share one key. */
+    const typeLabel = (type: string): string => {
+      const key = `type_${type === 'personal_rel' ? 'personalRel' : type}` as keyof typeof store.i18n;
+      return store.i18n[key]?.() ?? type;
     };
 
     /** Asks which data to work on: a radio list of the types the operation supports. */
     const pickType = async (types: string[]): Promise<string | undefined> => {
-      const labelOf = await store.i18nService.createLabelResolver(store.appStore.getCategory('model_type'));
       const alert = await store.alertController.create({
         header: store.i18n.pick_type(),
-        inputs: types.map(t => ({ type: 'radio' as const, label: labelOf(t), value: t })),
+        inputs: types.map(t => ({ type: 'radio' as const, label: typeLabel(t), value: t })),
         buttons: [
           { text: store.i18n.cancel(), role: 'cancel' },
           { text: store.i18n.ok(), role: 'confirm' },
@@ -122,9 +140,6 @@ export const AocHubStore = signalStore(
       const type: string = typeof data === 'string' ? data : (data.values ?? '');
       return type || undefined;
     };
-
-    const typeLabel = async (type: string): Promise<string> =>
-      (await store.i18nService.createLabelResolver(store.appStore.getCategory('model_type')))(type);
 
     /**
      * Validate models of a given type using a vest test suite.
@@ -239,19 +254,29 @@ export const AocHubStore = signalStore(
     };
 
     return {
-      /** Dispatches a card's operation id. */
+      /**
+       * Dispatches a card's operation id — only when that card is visible to this user (the client
+       * gate; rules and callables still decide) and no other run is in flight.
+       */
       async run(operationId: string): Promise<void> {
-        switch (operationId) {
-          case 'validate': return this.validate();
-          case 'reindex': return this.reindex();
-          case 'iban': return this.listIban();
-          default:
-            // migrate-*: the Migrationen area (Task 4) replaces this placeholder; nothing is logged
-            if (operationId.startsWith('migrate-')) {
-              await showToast(store.toastController, store.i18n.not_yet());
-              return;
-            }
-            console.warn(`AocHubStore.run: unknown operation ${operationId}`);
+        if (store.running()) return;
+        if (!isOperationVisible(AOC_AREAS, operationId, store.cardContext())) return;
+        patchState(store, { running: operationId });
+        try {
+          switch (operationId) {
+            case 'validate': return await this.validate();
+            case 'reindex': return await this.reindex();
+            case 'iban': return await this.listIban();
+            default:
+              // migrate-*: the Migrationen area (Task 4) replaces this placeholder; nothing is logged
+              if (operationId.startsWith('migrate-')) {
+                await showToast(store.toastController, store.i18n.not_yet());
+                return;
+              }
+              console.warn(`AocHubStore.run: unknown operation ${operationId}`);
+          }
+        } finally {
+          patchState(store, { running: undefined });
         }
       },
 
@@ -267,8 +292,8 @@ export const AocHubStore = signalStore(
           await fail(e);
           return;
         }
-        const label = await typeLabel(type);
-        logRun('validate', `${type}: ${log.length}`);
+        const label = typeLabel(type);
+        await logRun('validate', `${type}: ${log.length}`);
         await openReport(store.modalController, {
           title: store.i18n.card_validate_label(),
           kind: 'check',
@@ -290,7 +315,7 @@ export const AocHubStore = signalStore(
           await fail(e);
           return;
         }
-        const label = await typeLabel(type);
+        const label = typeLabel(type);
         const count = plan.diffs.length;
         const findings: ReportFinding[] = plan.diffs.map(d => ({
           id: d.model.okey,
@@ -298,7 +323,7 @@ export const AocHubStore = signalStore(
           detail: `${store.i18n.reindex_old()}: ${d.oldIndex}\n${store.i18n.reindex_new()}: ${d.newIndex}`,
         }));
         // nothing to rewrite: the preview is the whole run
-        if (count === 0) logRun('reindex', `${type}: 0`);
+        if (count === 0) await logRun('reindex', `${type}: 0`);
         const result = await openReport(store.modalController, {
           title: store.i18n.card_reindex_label(),
           kind: 'check',
@@ -310,12 +335,12 @@ export const AocHubStore = signalStore(
         if (result?.kind !== 'apply') return;
         let written = 0;
         for (const diff of plan.diffs) {
-          diff.model.index = diff.newIndex;
-          // updateModel reports a failed write itself (toast / Sentry) and resolves undefined
-          const key = await store.appStore.firestoreService.updateModel(plan.collection, diff.model);
+          // ONLY the index: re-sending the preview-time snapshot would revert any edit made while
+          // the preview was open. updateFields reports a failed write itself and resolves undefined.
+          const key = await store.firestoreService.updateFields(plan.collection, diff.model.okey, { index: diff.newIndex });
           if (key) written++;
         }
-        logRun('reindex', `${type}: ${written}/${count}`);
+        await logRun('reindex', `${type}: ${written}/${count}`);
         await showToast(store.toastController, fill(store.i18n.reindex_done(), { count: written }));
       },
 
@@ -338,7 +363,7 @@ export const AocHubStore = signalStore(
           title: getOwnerName(address.parentKey) || store.i18n.iban_no_owner(),
           detail: address.iban,
         }));
-        logRun('iban', `${findings.length}`);
+        await logRun('iban', `${findings.length}`);
         await openReport(store.modalController, {
           title: store.i18n.card_iban_label(),
           kind: 'report',

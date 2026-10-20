@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { RoleName } from '@okr/shared-models';
 import { OPERATOR_TENANT_ID } from '@okr/shared-util-core';
 
-import { AOC_AREAS, AOC_AREA_ROUTES, AocArea, visibleAocCards } from './aoc-areas';
+import { AOC_AREA_IDS, AOC_AREAS, AOC_AREA_ROUTES, AocArea, isOperationVisible, visibleAocCards } from './aoc-areas';
 
 const ctx = (tenantId: string, over: { enabled?: string[]; roles?: RoleName[] } = {}) => ({
   tenantId,
@@ -105,5 +105,22 @@ describe('visibleAocCards', () => {
 
   it('filters by feature block', () => {
     expect(ids('access', ctx('scs', { enabled: ['user'] }))).toEqual(['users']);
+  });
+});
+
+describe('isOperationVisible', () => {
+  it('allows an operation only when its card is visible in some area', () => {
+    expect(isOperationVisible(AOC_AREAS, 'validate', ctx('scs'))).toBe(true);
+    expect(isOperationVisible(AOC_AREAS, 'iban', ctx('scs'))).toBe(true);
+    expect(isOperationVisible(AOC_AREAS, 'migrate-account-tenants', ctx('scs'))).toBe(false);
+    expect(isOperationVisible(AOC_AREAS, 'migrate-account-tenants', ctx('bka'))).toBe(true);
+    expect(isOperationVisible(AOC_AREAS, 'iban', ctx('kring'))).toBe(false);
+    expect(isOperationVisible(AOC_AREAS, 'validate', ctx('scs', { roles: ['registered'] }))).toBe(false);
+    expect(isOperationVisible(AOC_AREAS, 'reindex', ctx('scs', { enabled: ['user'] }))).toBe(false);
+    expect(isOperationVisible(AOC_AREAS, 'unknown', ctx('bka'))).toBe(false);
+  });
+
+  it('lists the four areas in hub order', () => {
+    expect(AOC_AREA_IDS).toEqual(['access', 'ops', 'config', 'data']);
   });
 });

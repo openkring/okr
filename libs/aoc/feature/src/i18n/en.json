@@ -336,7 +336,6 @@
       "preview": "Preview"
     },
     "pickType": "Which data?",
-    "unsupported": "This is not available for this data yet.",
     "notYet": "This migration is not available yet.",
     "validate": {
       "explanation": "Each entry is a «{type}» record that breaks a rule. Below it you see what is wrong."
@@ -351,6 +350,31 @@
     "iban": {
       "explanation": "All bank accounts stored in this app, with their owners. The list is not saved anywhere.",
       "noOwner": "No owner"
+    },
+    "busy": "Running …",
+    "type": {
+      "address": "Addresses",
+      "comment": "Comments",
+      "document": "Documents",
+      "calevent": "Events",
+      "location": "Places",
+      "membership": "Memberships",
+      "menuitem": "Menu items",
+      "org": "Organisations",
+      "ownership": "Ownerships",
+      "page": "Pages",
+      "person": "People",
+      "personalRel": "Personal relationships",
+      "reservation": "Reservations",
+      "resource": "Resources",
+      "task": "Tasks",
+      "transfer": "Transfers",
+      "user": "Users",
+      "workrel": "Work relationships",
+      "category": "Categories",
+      "group": "Groups",
+      "responsibility": "Responsibilities",
+      "session": "Sessions"
     }
   }
 }

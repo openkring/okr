@@ -336,7 +336,6 @@
       "preview": "Vista previa"
     },
     "pickType": "¿Qué datos?",
-    "unsupported": "Esto aún no está disponible para estos datos.",
     "notYet": "Esta migración aún no está disponible.",
     "validate": {
       "explanation": "Cada entrada es un registro de «{type}» que no cumple una regla. Debajo ves qué está mal."
@@ -351,6 +350,31 @@
     "iban": {
       "explanation": "Todas las cuentas bancarias guardadas en esta app, con sus titulares. La lista no se guarda en ningún sitio.",
       "noOwner": "Sin titular"
+    },
+    "busy": "En curso …",
+    "type": {
+      "address": "Direcciones",
+      "comment": "Comentarios",
+      "document": "Documentos",
+      "calevent": "Eventos",
+      "location": "Lugares",
+      "membership": "Membresías",
+      "menuitem": "Entradas de menú",
+      "org": "Organizaciones",
+      "ownership": "Propiedades",
+      "page": "Páginas",
+      "person": "Personas",
+      "personalRel": "Relaciones personales",
+      "reservation": "Reservas",
+      "resource": "Recursos",
+      "task": "Tareas",
+      "transfer": "Transferencias",
+      "user": "Usuarios",
+      "workrel": "Relaciones laborales",
+      "category": "Categorías",
+      "group": "Grupos",
+      "responsibility": "Responsabilidades",
+      "session": "Sesiones"
     }
   }
 }

@@ -336,7 +336,6 @@
       "preview": "Vorschau"
     },
     "pickType": "Welche Daten?",
-    "unsupported": "Für diese Daten gibt es das noch nicht.",
     "notYet": "Diese Migration ist noch nicht verfügbar.",
     "validate": {
       "explanation": "Jeder Eintrag ist ein Datensatz von «{type}», der nicht den Regeln entspricht. Darunter steht, was nicht stimmt."
@@ -351,6 +350,31 @@
     "iban": {
       "explanation": "Alle in dieser App hinterlegten Bankkonten mit ihren Inhabern. Die Liste wird nirgends gespeichert.",
       "noOwner": "Ohne Inhaber"
+    },
+    "busy": "Läuft …",
+    "type": {
+      "address": "Adressen",
+      "comment": "Kommentare",
+      "document": "Dokumente",
+      "calevent": "Termine",
+      "location": "Orte",
+      "membership": "Mitgliedschaften",
+      "menuitem": "Menüeinträge",
+      "org": "Organisationen",
+      "ownership": "Besitzverhältnisse",
+      "page": "Seiten",
+      "person": "Personen",
+      "personalRel": "Persönliche Beziehungen",
+      "reservation": "Reservationen",
+      "resource": "Ressourcen",
+      "task": "Aufgaben",
+      "transfer": "Transfers",
+      "user": "Benutzer",
+      "workrel": "Arbeitsverhältnisse",
+      "category": "Kategorien",
+      "group": "Gruppen",
+      "responsibility": "Zuständigkeiten",
+      "session": "Sessions"
     }
   }
 }

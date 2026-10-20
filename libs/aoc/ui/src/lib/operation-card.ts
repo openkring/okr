@@ -1,10 +1,9 @@
 import { formatDate, NgTemplateOutlet } from '@angular/common';
-import { Component, computed, inject, input, output } from '@angular/core';
-import { IonButton } from '@ionic/angular';
+import { Component, computed, input, output } from '@angular/core';
+import { IonButton, IonSpinner } from '@ionic/angular';
 
-import { I18nService } from '@okr/shared-i18n';
 import { fill, ReportKind } from '@okr/shared-util-core';
-import { AOC_HUB_I18N_KEYS } from '@okr/aoc-util';
+import { AocHubI18n } from '@okr/aoc-util';
 
 export interface OperationCardAction {
   id: string;
@@ -19,12 +18,14 @@ export type OperationCardStatus = 'offen' | 'erledigt' | 'error';
  * an optional migration status. Presentational: it only emits `action(id)`.
  *
  * A card without `actions` is a navigation card: the whole card is a button and a tap emits
- * `action('open')`. A card with actions shows one button per action instead.
+ * `action('open')`. A card with actions shows one button per action instead; `busy` disables them
+ * (another run is in flight) and `running` marks this card's own run.
+ * Labels arrive store-resolved as `[i18n]` (AocHubStore.i18n).
  */
 @Component({
   selector: 'okr-operation-card',
   standalone: true,
-  imports: [NgTemplateOutlet, IonButton],
+  imports: [NgTemplateOutlet, IonButton, IonSpinner],
   styles: [`
     :host { display: block; }
     .card { display: flex; flex-direction: column; gap: 6px; width: 100%; height: 100%; box-sizing: border-box; padding: 16px; border-radius: 10px;
@@ -41,7 +42,8 @@ export type OperationCardStatus = 'offen' | 'erledigt' | 'error';
     .label { font-size: 1.05rem; font-weight: 600; }
     .effect { font-size: .9rem; color: var(--ion-color-step-700, var(--ion-text-color)); }
     .run { font-size: .8rem; color: var(--ion-color-medium-shade); }
-    .actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: auto; padding-top: 4px; }
+    .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: auto; padding-top: 4px; }
+    .busy { display: inline-flex; align-items: center; gap: 4px; font-size: .85rem; color: var(--ion-color-medium-shade); }
   `],
   template: `
     <ng-template #body>
@@ -63,7 +65,10 @@ export type OperationCardStatus = 'offen' | 'erledigt' | 'error';
         <ng-container [ngTemplateOutlet]="body" />
         <span class="actions">
           @for (a of actions(); track a.id) {
-            <ion-button size="small" fill="outline" [color]="a.danger ? 'danger' : 'primary'" (click)="action.emit(a.id)">{{ a.label }}</ion-button>
+            <ion-button size="small" fill="outline" [color]="a.danger ? 'danger' : 'primary'" [disabled]="busy()" (click)="action.emit(a.id)">{{ a.label }}</ion-button>
+          }
+          @if (running()) {
+            <span class="busy"><ion-spinner name="dots" />{{ i18n().busy() }}</span>
           }
         </span>
       </div>
@@ -77,25 +82,18 @@ export class OperationCard {
   public readonly lastRun = input<Date | undefined>(undefined);
   public readonly status = input<OperationCardStatus | undefined>(undefined);
   public readonly actions = input<OperationCardAction[]>([]);
+  public readonly i18n = input.required<AocHubI18n>();
+  /** some operation is running: the action buttons are disabled */
+  public readonly busy = input(false);
+  /** this card's own operation is running: a busy marker is shown */
+  public readonly running = input(false);
 
   public readonly action = output<string>();
 
-  protected readonly i18n = inject(I18nService).translateAll({
-    report: AOC_HUB_I18N_KEYS.kind_report,
-    check: AOC_HUB_I18N_KEYS.kind_check,
-    operation: AOC_HUB_I18N_KEYS.kind_operation,
-    migration: AOC_HUB_I18N_KEYS.kind_migration,
-    offen: AOC_HUB_I18N_KEYS.status_offen,
-    erledigt: AOC_HUB_I18N_KEYS.status_erledigt,
-    error: AOC_HUB_I18N_KEYS.status_error,
-    lastRun: AOC_HUB_I18N_KEYS.last_run,
-    neverRun: AOC_HUB_I18N_KEYS.never_run,
-  });
-
-  protected readonly kindLabel = computed(() => this.i18n[this.kind()]());
+  protected readonly kindLabel = computed(() => this.i18n()[`kind_${this.kind()}` as const]());
   protected readonly statusLabel = computed(() => {
     const s = this.status();
-    return s ? this.i18n[s]() : '';
+    return s ? this.i18n()[`status_${s}` as const]() : '';
   });
 
   /** Only an operation card has a run to report; a navigation card shows none. */
@@ -103,7 +101,7 @@ export class OperationCard {
     if (this.actions().length === 0) return '';
     const run = this.lastRun();
     return run
-      ? fill(this.i18n.lastRun(), { date: formatDate(run, 'dd.MM.yyyy HH:mm', 'en-US') })
-      : this.i18n.neverRun();
+      ? fill(this.i18n().last_run(), { date: formatDate(run, 'dd.MM.yyyy HH:mm', 'en-US') })
+      : this.i18n().never_run();
   });
 }
