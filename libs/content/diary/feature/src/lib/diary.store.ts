@@ -189,7 +189,7 @@ export const DiaryStore = signalStore(
     /**
      * Drive files per entry, cached for the store's lifetime so paging back and forth does not
      * call Drive again (spec 1.106 §2.3). A failed call is evicted, so the next visit retries.
-     * Thumbnail links expire after hours — the cache never outlives the list page.
+     * The thumbnails come inline as `data:` URLs; the cache never outlives the list page.
      */
     const mediaCache = new Map<string, Promise<DiaryMediaResult>>();
     const loadMedia = (diary: DiaryModel): Promise<DiaryMediaResult> => {
@@ -198,6 +198,19 @@ export const DiaryStore = signalStore(
         pending = store.mediaService.list(diary.okey);
         pending.catch(() => mediaCache.delete(diary.okey));
         mediaCache.set(diary.okey, pending);
+      }
+      return pending;
+    };
+
+    /** Slider-size renditions, cached like the listings; a failed load is evicted and retried. */
+    const imageCache = new Map<string, Promise<string>>();
+    const loadImage = (diary: DiaryModel, fileId: string): Promise<string> => {
+      const key = `${diary.okey}/${fileId}`;
+      let pending = imageCache.get(key);
+      if (!pending) {
+        pending = store.mediaService.loadImage(diary.okey, fileId);
+        pending.catch(() => imageCache.delete(key));
+        imageCache.set(key, pending);
       }
       return pending;
     };
@@ -331,7 +344,7 @@ export const DiaryStore = signalStore(
           cssClass: 'wide-modal',
           componentProps: {
             diary, i18n: store.i18n, lang: store.lang(),
-            neighbours: neighboursOf, openPerson: openPersonView, openLocation: openLocationView, loadMedia,
+            neighbours: neighboursOf, openPerson: openPersonView, openLocation: openLocationView, loadMedia, loadImage,
           },
         });
         await modal.present();

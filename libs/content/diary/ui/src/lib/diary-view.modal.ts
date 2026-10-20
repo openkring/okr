@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonButton, IonButtons, IonChip, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonToolbar, ModalController } from '@ionic/angular';
+import { IonButton, IonButtons, IonChip, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonProgressBar, IonToolbar, ModalController } from '@ionic/angular';
 import { Browser } from '@capacitor/browser';
 
 import { AvatarInfo, DiaryModel, IMAGE_STYLE_SHAPE } from '@okr/shared-models';
@@ -11,10 +11,14 @@ import { dismissOverlay } from '@okr/shared-util-angular';
 
 import {
   DiaryI18n, DiaryMediaResult, diarySliderImages, diaryWeatherLine, driveFolderUrl, formatDiaryDateLong, hasDiaryWeather,
-  renderDiaryHtml,
+  JassDiaryResult, parseJassDiaryLine, renderDiaryHtml,
 } from '@okr/content-diary-util';
 
+import { DiaryJassCard } from './diary-jass-card';
 import { DiaryMediaRow } from './diary-media-row';
+
+/** Slider-size downloads in flight at once when the slider opens. */
+const IMAGE_CONCURRENCY = 4;
 
 /** The entries one step away from the shown one (spec 1.106 §2.1); undefined = no such entry. */
 export interface DiaryNeighbours {
@@ -32,7 +36,7 @@ export interface DiaryNeighbours {
 @Component({
   selector: 'okr-diary-view-modal',
   standalone: true,
-  imports: [Header, AvatarDisplay, DiaryMediaRow, SvgIconPipe, IonContent, IonItem, IonLabel, IonList, IonNote, IonChip, IonIcon, IonButton, IonButtons, IonToolbar],
+  imports: [Header, AvatarDisplay, DiaryMediaRow, DiaryJassCard, SvgIconPipe, IonContent, IonProgressBar, IonItem, IonLabel, IonList, IonNote, IonChip, IonIcon, IonButton, IonButtons, IonToolbar],
   styles: [`
     .body { padding: 16px; line-height: 1.5; }
     .meta ion-chip { margin-right: 4px; }
@@ -40,7 +44,7 @@ export interface DiaryNeighbours {
     .person, .location { cursor: pointer; }
   `],
   template: `
-    <okr-header [i18n]="{ title: title() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: title() }" [isModal]="true" actionIcon="edit" [actionTitle]="i18n().edit()" (actionClicked)="edit()" />
     <ion-content>
       <ion-toolbar>
         <ion-buttons slot="start">
@@ -93,15 +97,20 @@ export interface DiaryNeighbours {
             </div>
           </ion-item>
         }
-        @if (current().events.length || current().places.length) {
+        @if (events().length || current().places.length) {
           <ion-item>
-            @for (e of current().events; track e) { <ion-chip color="tertiary">{{ e }}</ion-chip> }
+            @for (e of events(); track e) { <ion-chip color="tertiary">{{ e }}</ion-chip> }
             @for (p of current().places; track p) { <ion-chip>{{ p }}</ion-chip> }
           </ion-item>
         }
       </ion-list>
 
+      @for (jass of jassResults(); track $index) {
+        <okr-diary-jass-card [result]="jass" [i18n]="i18n()" />
+      }
+
       @if (driveUrl()) {
+        @if (sliderLoading()) { <ion-progress-bar type="indeterminate" /> }
         @if (mediaFailed()) {
           <ion-note class="ion-padding-start">{{ i18n().media_load_failed() }}</ion-note>
         } @else if (!media() || media()?.images?.length) {
@@ -128,10 +137,6 @@ export interface DiaryNeighbours {
           }
         </ion-list>
       }
-
-      <ion-item lines="none">
-        <ion-button slot="end" fill="outline" (click)="edit()">{{ i18n().edit() }}</ion-button>
-      </ion-item>
     </ion-content>
   `,
 })
@@ -147,6 +152,8 @@ export class DiaryViewModal {
   public readonly openLocation = input.required<(a: AvatarInfo) => Promise<void>>();
   /** the day folder's Drive files (spec 1.106 §2.3) — the store caches per entry */
   public readonly loadMedia = input.required<(d: DiaryModel) => Promise<DiaryMediaResult>>();
+  /** one image of the day folder at slider size, as a `data:` URL — the store caches per file */
+  public readonly loadImage = input.required<(d: DiaryModel, fileId: string) => Promise<string>>();
 
   /** the entry on screen — starts at `diary`, swapped by prev/next/up */
   protected readonly current = linkedSignal(() => this.diary());
@@ -154,6 +161,7 @@ export class DiaryViewModal {
   /** undefined while loading */
   protected readonly media = signal<DiaryMediaResult | undefined>(undefined);
   protected readonly mediaFailed = signal(false);
+  protected readonly sliderLoading = signal(false);
 
   protected readonly title = computed(() => this.current().title || this.i18n().view_untitled());
   protected readonly dateLabel = computed(() => formatDiaryDateLong(this.current().date, this.lang()));
@@ -165,6 +173,10 @@ export class DiaryViewModal {
   });
   /** one single-element array per person, so each avatar is its own tap target */
   protected readonly people = computed(() => this.current().people.filter(p => !!p.key).map(p => [p]));
+  /** Jasstafel results are drawn as a card; every other event stays a chip */
+  private readonly parsedEvents = computed(() => this.current().events.map(e => ({ e, jass: parseJassDiaryLine(e) })));
+  protected readonly events = computed(() => this.parsedEvents().filter(p => !p.jass).map(p => p.e));
+  protected readonly jassResults = computed(() => this.parsedEvents().map(p => p.jass).filter((j): j is JassDiaryResult => !!j));
   protected readonly html = computed(() => renderDiaryHtml(this.current().text));
   protected readonly driveUrl = computed(() => driveFolderUrl(this.current().driveFolderId));
   protected readonly hasWeather = computed(() => hasDiaryWeather(this.current().weather));
@@ -196,10 +208,34 @@ export class DiaryViewModal {
     });
   }
 
-  /** Full-size slider over all images of the day, starting at the tapped one. */
+  /**
+   * Full-size slider over all images of the day, starting at the tapped one. The slider takes its
+   * URLs up front, so the slider-size renditions are loaded first (the store caches them, a second
+   * tap opens at once); an image whose rendition fails is shown at thumbnail size.
+   */
   protected async openImage(index: number): Promise<void> {
-    const { images, startIndex } = diarySliderImages(this.media()?.images ?? [], index);
-    if (images.length) await showImageSlider(this.modalController, images, { ...IMAGE_STYLE_SHAPE }, startIndex);
+    if (this.sliderLoading()) return;
+    const shown = this.current();
+    const files = (this.media()?.images ?? []).filter(f => !!f.thumbnail);
+    if (!files.length) return;
+    const large = new Map<string, string>();
+    this.sliderLoading.set(true);
+    try {
+      let next = 0;
+      const worker = async () => {
+        while (next < files.length) {
+          const file = files[next++];
+          const url = await this.loadImage()(shown, file.id).catch(() => '');
+          if (url) large.set(file.id, url);
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(IMAGE_CONCURRENCY, files.length) }, worker));
+    } finally {
+      this.sliderLoading.set(false);
+    }
+    if (this.current().okey !== shown.okey) return;   // paged away while loading
+    const { images, startIndex } = diarySliderImages(this.media()?.images ?? [], index, large);
+    await showImageSlider(this.modalController, images, { ...IMAGE_STYLE_SHAPE }, startIndex);
   }
 
   protected async openDocument(index: number): Promise<void> {

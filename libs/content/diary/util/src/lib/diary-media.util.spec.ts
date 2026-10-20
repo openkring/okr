@@ -20,10 +20,16 @@ describe('diaryFileIconName', () => {
 });
 
 describe('diarySliderImages', () => {
+  const f = (name: string, thumbnail: string) => ({ id: name, name, mimeType: 'image/jpeg', thumbnail, webViewLink: '' });
+
   it('leaves out images without a thumbnail and keeps the tapped index aligned', () => {
-    const f = (name: string, thumbnailLink: string) => ({ id: name, name, mimeType: 'image/jpeg', thumbnailLink, webViewLink: '' });
-    const { images, startIndex } = diarySliderImages([f('a', 'https://x/a=s220'), f('b', ''), f('c', 'https://x/c=s220')], 2);
-    expect(images.map(i => i.url)).toEqual(['https://x/a=s2400', 'https://x/c=s2400']);
+    const { images, startIndex } = diarySliderImages([f('a', 'data:a'), f('b', ''), f('c', 'data:c')], 2);
+    expect(images.map(i => i.url)).toEqual(['data:a', 'data:c']);
     expect(startIndex).toBe(1);
+  });
+
+  it('prefers the large rendition where one is loaded', () => {
+    const { images } = diarySliderImages([f('a', 'data:a'), f('c', 'data:c')], 0, new Map([['c', 'data:C-large']]));
+    expect(images.map(i => i.url)).toEqual(['data:a', 'data:C-large']);
   });
 });

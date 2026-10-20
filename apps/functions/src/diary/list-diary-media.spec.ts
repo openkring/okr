@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { isDriveId, splitDiaryMedia } from './list-diary-media';
 
-const f = (name: string, mimeType: string, thumbnailLink = '') => ({ id: name, name, mimeType, thumbnailLink, webViewLink: 'w' });
+const f = (name: string, mimeType: string, thumbnail = '') => ({ id: name, name, mimeType, thumbnail, webViewLink: 'w' });
 
 describe('splitDiaryMedia', () => {
   it('splits images from documents, sorted by name', () => {
@@ -20,7 +20,7 @@ describe('splitDiaryMedia', () => {
   });
 
   it('keeps a document without thumbnail', () => {
-    expect(splitDiaryMedia([f('x.zip', 'application/zip')]).documents[0].thumbnailLink).toBe('');
+    expect(splitDiaryMedia([f('x.zip', 'application/zip')]).documents[0].thumbnail).toBe('');
   });
 });
 
@@ -33,3 +33,4 @@ describe('isDriveId', () => {
   });
   it('rejects empty', () => expect(isDriveId('')).toBe(false));
 });
+

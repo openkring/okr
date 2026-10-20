@@ -9,6 +9,7 @@ export * from './lib/diary-index.util';
 export * from './lib/diary-key.util';
 export * from './lib/diary-lines.util';
 export * from './lib/diary-media.util';
+export * from './lib/diary-jass.util';
 export * from './lib/diary-model-mapping';
 export * from './lib/diary-parse';
 export * from './lib/diary-range.util';

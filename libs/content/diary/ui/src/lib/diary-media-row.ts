@@ -2,7 +2,7 @@ import { Component, input, output, signal } from '@angular/core';
 import { IonIcon, IonSkeletonText } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { DiaryMediaFile, diaryFileIconName, driveThumbnailAtSize } from '@okr/content-diary-util';
+import { DiaryMediaFile, diaryFileIconName } from '@okr/content-diary-util';
 
 /** Placeholder tiles shown while the folder listing itself is still loading. */
 const LOADING_TILES = [0, 1, 2, 3];
@@ -10,8 +10,8 @@ const LOADING_TILES = [0, 1, 2, 3];
 /**
  * One horizontal strip of a diary day's Drive files (spec 1.106 §2.3) — images or documents.
  * Every tile is a fixed-size placeholder first (skeleton, or the file-type icon for a document),
- * so the layout never jumps. The thumbnail loads lazily (`loading="lazy"` — tiles scrolled out of
- * the strip are not fetched) and only replaces the placeholder once its `load` event fired; a
+ * so the layout never jumps. The thumbnail arrives inline as a `data:` URL (the Drive files are
+ * private; see DiaryMediaFile) and only replaces the placeholder once its `load` event fired; a
  * missing or failing thumbnail simply leaves the placeholder.
  */
 @Component({
@@ -35,14 +35,14 @@ const LOADING_TILES = [0, 1, 2, 3];
           <div class="tile" role="button" [attr.aria-label]="file.name" [title]="file.name" (click)="opened.emit(i)">
             @if (!isLoaded(file.id)) {
               @if (kind() === 'image') {
-                <ion-skeleton-text [animated]="!!file.thumbnailLink && !hasFailed(file.id)" />
+                <ion-skeleton-text [animated]="!!file.thumbnail && !hasFailed(file.id)" />
               } @else {
                 <ion-icon src="{{ fileIcon(file) | svgIcon: 'filetypes' }}" />
                 <span class="name">{{ file.name }}</span>
               }
             }
-            @if (file.thumbnailLink && !hasFailed(file.id)) {
-              <img [src]="thumbnail(file)" loading="lazy" [alt]="file.name" [class.loaded]="isLoaded(file.id)"
+            @if (file.thumbnail && !hasFailed(file.id)) {
+              <img [src]="file.thumbnail" [alt]="file.name" [class.loaded]="isLoaded(file.id)"
                 (load)="markLoaded(file.id)" (error)="markFailed(file.id)" />
             }
           </div>
@@ -65,10 +65,6 @@ export class DiaryMediaRow {
   protected readonly loadingTiles = LOADING_TILES;
   private readonly loaded = signal<ReadonlySet<string>>(new Set());
   private readonly failed = signal<ReadonlySet<string>>(new Set());
-
-  protected thumbnail(file: DiaryMediaFile): string {
-    return driveThumbnailAtSize(file.thumbnailLink, 220);
-  }
 
   protected fileIcon(file: DiaryMediaFile): string {
     return diaryFileIconName(file.mimeType);

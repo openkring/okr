@@ -212,5 +212,13 @@
     "scopeInvalid": "Choisis une période valide.",
     "statusInvalid": "Choisis un statut valide.",
     "dateScopeMismatch": "La date ne correspond pas à la période choisie."
+  },
+  "jass": {
+    "draw": "Match nul – la revanche est pour ainsi dire déjà fixée.",
+    "match": "Avec match – pas un seul pli pour les autres.",
+    "close": "Sur le fil – c'est un dernier Stöck qui a tout décidé.",
+    "clear": "Victoire méritée – les cartes étaient de leur côté aujourd'hui.",
+    "rout": "Victoire écrasante – les autres mélangeront la prochaine fois.",
+    "schneider": "Schneider"
   }
 }

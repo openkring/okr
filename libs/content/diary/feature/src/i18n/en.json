@@ -212,5 +212,13 @@
     "scopeInvalid": "Select a valid period.",
     "statusInvalid": "Select a valid status.",
     "dateScopeMismatch": "The date does not match the selected period."
+  },
+  "jass": {
+    "draw": "A draw – a rematch is as good as settled.",
+    "match": "With a match – not a single trick left for the others.",
+    "close": "Paper-thin – one last Stöck made the difference.",
+    "clear": "Well deserved – the cards were on their side today.",
+    "rout": "A landslide – the others get to shuffle next time.",
+    "schneider": "Schneider"
   }
 }

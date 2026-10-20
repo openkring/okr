@@ -212,5 +212,13 @@
     "scopeInvalid": "Wähle einen gültigen Zeitraum aus.",
     "statusInvalid": "Wähle einen gültigen Status aus.",
     "dateScopeMismatch": "Das Datum passt nicht zum gewählten Zeitraum."
+  },
+  "jass": {
+    "draw": "Unentschieden – eine Revanche ist so gut wie abgemacht.",
+    "match": "Mit Match – da blieb für die anderen kein einziger Stich übrig.",
+    "close": "Hauchdünn – das hat am Schluss ein einziges Stöck entschieden.",
+    "clear": "Verdient gewonnen – die Karten waren heute auf ihrer Seite.",
+    "rout": "Kantersieg – die anderen dürfen beim nächsten Mal mischen.",
+    "schneider": "Schneider"
   }
 }
