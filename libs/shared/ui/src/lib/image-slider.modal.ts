@@ -146,8 +146,12 @@ export class ImageSliderModal {
   // Full-screen view: request the whole image (fit=max, no aspect-ratio crop) up to a large
   // width; `object-fit: contain` then letterboxes it. Prepend the imgix base URL only for
   // storage paths ('tenant/...') — external/asset/imgix URLs are already absolute.
+  // Inline `data:`/`blob:` images (e.g. the diary's private Drive photos, which the browser
+  // cannot fetch itself) are not imgix sources at all and go straight to <img>.
   protected imgixUrl = computed(() => {
-    const url = getImgixUrl(this.current()?.url ?? '', 'auto=format,compress,enhance&fit=max&w=2400');
+    const raw = this.current()?.url ?? '';
+    if (raw.startsWith('data:') || raw.startsWith('blob:')) return raw;
+    const url = getImgixUrl(raw, 'auto=format,compress,enhance&fit=max&w=2400');
     return url.startsWith('tenant') ? this.imgixBaseUrl + '/' + url : url;
   });
 
