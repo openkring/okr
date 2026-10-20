@@ -239,6 +239,9 @@ seed("app-config/t1", {"tenantId": "t1", "gitOrg": "openkring",
 # app-status/chat (spec 1.107): global chat switch, signed-in read, any admin writes
 seed("app-status/chat", {"blocked": False, "message": ""})
 
+# emailEvents (1.101 phase 5): webhook-written telemetry, operator-only read
+seed("emailEvents/ev1", {"event": "delivery", "email": "x@example.org", "expiresAt": "20261101"})
+
 # alias (spec 2026-08-22): `aliases` ist CF-write-only, und der Grund ist NICHT die Rolle.
 # Die Document-ID ist deterministisch (<tenant>__<space>__<alias>), also wuerde ein
 # Client-setDoc einen bestehenden — womoeglich GEDRUCKTEN — Alias still ueberschreiben
@@ -366,6 +369,19 @@ single_cases = [
     ("userD(admin t1) GET app-status/chat -> ALLOW (read unchanged)", True, GET, "app-status/chat", D, None, None),
     ("userD(admin t1) PATCH app-status/other -> DENY (only the chat doc)", False, PATCH,
      "app-status/other", D, body({"blocked": True}), ["blocked"]),
+    # 1.101 phase 5: emailEvents is cross-tenant telemetry, operator (bka) reads, nobody writes
+    ("userO(admin bka) GET emailEvents/ev1 -> ALLOW (operator)", True, GET, "emailEvents/ev1", O, None, None),
+    ("userD(admin t1) GET emailEvents/ev1 -> DENY (operator only)", False, GET, "emailEvents/ev1", D, None, None),
+    ("userB(admin t2) GET emailEvents/ev1 -> DENY (operator only)", False, GET, "emailEvents/ev1", B, None, None),
+    ("userO2(non-admin bka) GET emailEvents/ev1 -> DENY", False, GET, "emailEvents/ev1", O2, None, None),
+    ("userO3(admin bka+t1) GET emailEvents/ev1 -> DENY", False, GET, "emailEvents/ev1", O3, None, None),
+    ("signed-in caller without users doc GET emailEvents/ev1 -> DENY", False, GET, "emailEvents/ev1", NODOC, None, None),
+    ("anon GET emailEvents/ev1 -> DENY", False, GET, "emailEvents/ev1", None, None, None),
+    ("userO(admin bka) PATCH emailEvents/ev1 -> DENY (write:false)", False, PATCH, "emailEvents/ev1", O,
+     body({"event": "x"}), ["event"]),
+    ("userO(admin bka) POST emailEvents -> DENY (write:false)", False, POST, "emailEvents?documentId=evNew", O,
+     body({"event": "x"}), None),
+    ("userO(admin bka) DELETE emailEvents/ev1 -> DENY (write:false)", False, DELETE, "emailEvents/ev1", O, None, None),
     # 1.32 §8.5: enabledFeatures is a billing boundary. Everything else in app-config
     # stays tenant-admin territory; only the paid-add-on subset is server-side.
     ("userD(admin t1) PATCH app-config/t1 gitOrg -> ALLOW", True, PATCH, "app-config/t1", D,

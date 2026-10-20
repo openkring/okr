@@ -27,7 +27,7 @@ import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { getFirestore } from 'firebase-admin/firestore';
 
 import { PersonCollection, UserCollection } from '@okr/shared-models';
-import { checkAdminRole, checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
+import { checkAdminRole, checkAppCheckToken, checkAuthentication, checkOperatorTenant } from '@okr/shared-util-functions';
 
 import { affectedPersonKeys, PersonMirrorDoc, personMirrorPatch, UserAccountDoc } from './account-mirror.decide';
 
@@ -80,16 +80,21 @@ export const onUserWritten = onDocumentWritten(
  * One-off after rolling out `accountTenants`: derive the field for every person from the whole
  * `users` collection.
  *
- * Admin-only and idempotent — a person whose value already matches is not written. Runs over ALL
+ * Operator-only (bka, spec 1.101 phase 5) and idempotent — a person whose value already matches is not written. Runs over ALL
  * tenants on purpose: the field lists the tenants a person holds an account in, so computing it
  * from only one tenant's users would drop the others and make that person un-invitable there.
+ *
+ * `dryRun: true` computes the same patches but writes nothing; `pending` is the number of docs a
+ * real run would write (0 after a real run).
  */
 export const backfillAccountTenants = onCall(
   { region: REGION, enforceAppCheck: true, timeoutSeconds: 540, memory: '512MiB' },
-  async (request): Promise<{ users: number; persons: number; written: number }> => {
+  async (request): Promise<{ users: number; persons: number; written: number; pending: number }> => {
     checkAppCheckToken(request, 'backfillAccountTenants');
     checkAuthentication(request, 'backfillAccountTenants');
     await checkAdminRole(request, 'backfillAccountTenants');
+    await checkOperatorTenant(request, 'backfillAccountTenants');
+    const dryRun = (request.data as { dryRun?: boolean } | undefined)?.dryRun === true;
 
     const db = getFirestore();
     const users = await db.collection(UserCollection).get();
@@ -105,23 +110,26 @@ export const backfillAccountTenants = onCall(
 
     const persons = await db.collection(PersonCollection).get();
     let written = 0;
+    let wouldWrite = 0;
     let batch = db.batch();
-    let pending = 0;
+    let inBatch = 0;
 
     for (const doc of persons.docs) {
       const patch = personMirrorPatch(byPerson.get(doc.id) ?? [], doc.data() as PersonMirrorDoc);
       if (!patch) continue;
+      wouldWrite++;
+      if (dryRun) continue;
       batch.set(doc.ref, patch, { merge: true });
       written++;
-      if (++pending >= BATCH) {
+      if (++inBatch >= BATCH) {
         await batch.commit();
         batch = db.batch();
-        pending = 0;
+        inBatch = 0;
       }
     }
-    if (pending > 0) await batch.commit();
+    if (inBatch > 0) await batch.commit();
 
-    logger.info(`backfillAccountTenants: users=${users.size}, persons=${persons.size}, written=${written}`);
-    return { users: users.size, persons: persons.size, written };
+    logger.info(`backfillAccountTenants${dryRun ? ' (dry run)' : ''}: users=${users.size}, persons=${persons.size}, written=${written}, pending=${dryRun ? wouldWrite : 0}`);
+    return { users: users.size, persons: persons.size, written, pending: dryRun ? wouldWrite : 0 };
   },
 );

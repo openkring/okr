@@ -4,7 +4,7 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore, Query, DocumentData } from 'firebase-admin/firestore';
 
 import { OrgCollection, PersonCollection } from '@okr/shared-models';
-import { checkAdminRole, checkAppCheckToken, checkAuthentication, writeAddressDirectory } from '@okr/shared-util-functions';
+import { checkAdminRole, checkAppCheckToken, checkAuthentication, checkOperatorTenant, writeAddressDirectory } from '@okr/shared-util-functions';
 
 const REGION = 'europe-west6';
 const BATCH = 400;
@@ -29,8 +29,8 @@ async function forEachDocId(base: Query<DocumentData>, fn: (id: string) => Promi
 }
 
 /**
- * Rebuild the entire address-directory projection (spec 1.19 Phase 4). Admin-only,
- * idempotent — run it for the initial backfill and after any change to the
+ * Rebuild the entire address-directory projection (spec 1.19 Phase 4). Operator-only
+ * (bka, spec 1.101 phase 5), idempotent — run it for the initial backfill and after any change to the
  * projection logic itself: every existing doc was written by the OLD
  * buildDirectoryDoc and stays stale until its parent's next address write fires
  * the trigger. The favorite-only reduction (2026-07-27) is such a change —
@@ -52,6 +52,7 @@ export const rebuildAddressDirectory = onCall(
     checkAppCheckToken(request, 'rebuildAddressDirectory');
     checkAuthentication(request, 'rebuildAddressDirectory');
     await checkAdminRole(request, 'rebuildAddressDirectory');
+    await checkOperatorTenant(request, 'rebuildAddressDirectory');
 
     const db = getFirestore();
     let crossTenantAddresses = 0;

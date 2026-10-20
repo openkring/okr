@@ -220,6 +220,12 @@ service cloud.firestore {
       allow read: if signedIn();
       allow write: if isOperator();
     }
+    // Mail delivery telemetry (spec 1.101 phase 5): written only by the mailtrapWebhook Cloud
+    // Function (Admin SDK, bypasses rules); the cross-tenant AOC e-mail page is operator-only.
+    match /emailEvents/{id} {
+      allow read: if isOperator();
+      allow write: if false;
+    }
     // Global integration config singletons (e.g. config/bexioSync sync pointers).
     // Read by the admin-only AOC console; written exclusively by Cloud Functions
     // (Admin SDK, bypasses rules).
