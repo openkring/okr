@@ -69,10 +69,10 @@ Bulk fixes have no UI. Use `node scripts/fix-models.mjs --collection <name> [--m
 
 ## kring
 
-kring-app hand-writes its route table and declares only `/aoc/ops` (pinned in
-`scripts/app-routes.test.mjs`). Cards whose targets do not exist in kring carry `notOnApps: ['kring']`.
-On kring the Betrieb hub shows Eskalationen; the Features card sits in Konfiguration, whose route kring
-does not declare.
+kring-app hand-writes its route table and declares only `/aoc/ops` and `/aoc/config` (pinned in
+`scripts/app-routes.test.mjs`). Cards whose targets do not exist in kring carry `notOnApps: ['kring']`,
+so kring shows Betrieb (Eskalationen) and Konfiguration (Features), and the segment bar offers only
+those two areas.
 
 ## Where the moved tools live
 
