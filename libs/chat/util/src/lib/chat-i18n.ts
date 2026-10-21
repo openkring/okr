@@ -154,7 +154,6 @@ export const MATRIX_CHAT_I18N_KEYS = {
   details_help:              PFX + 'details.help',
   mute_tile:                 PFX + 'mute.tile',
   mute_on:                   PFX + 'mute.on',
-  mute_off:                  PFX + 'mute.off',
   mute_1h:                   PFX + 'mute.duration.h1',
   mute_8h:                   PFX + 'mute.duration.h8',
   mute_1w:                   PFX + 'mute.duration.w1',

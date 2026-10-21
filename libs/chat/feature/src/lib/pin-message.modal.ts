@@ -4,9 +4,8 @@ import {
   IonToggle, IonToolbar, ModalController,
 } from '@ionic/angular';
 
-import { I18nService } from '@okr/shared-i18n';
 import { dismissOverlay } from '@okr/shared-util-angular';
-import { MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, PIN_DURATIONS, PinDuration } from '@okr/chat-util';
+import { MatrixChatI18n, PIN_DURATIONS, PinDuration } from '@okr/chat-util';
 
 /** What the pin dialog returns with role `confirm`. */
 export interface PinMessageChoice {
@@ -37,11 +36,11 @@ const DURATION_LABEL: Record<PinDuration, keyof MatrixChatI18n> = {
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-button (click)="cancel()">{{ i18n.cancel() }}</ion-button>
+          <ion-button (click)="cancel()">{{ i18n().cancel() }}</ion-button>
         </ion-buttons>
-        <ion-title>{{ i18n.pin_title() }}</ion-title>
+        <ion-title>{{ i18n().pin_title() }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button [strong]="true" (click)="confirm()">{{ i18n.pin_action() }}</ion-button>
+          <ion-button [strong]="true" (click)="confirm()">{{ i18n().pin_action() }}</ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -59,7 +58,7 @@ const DURATION_LABEL: Record<PinDuration, keyof MatrixChatI18n> = {
         <ion-list lines="full">
           <ion-item>
             <ion-toggle [checked]="forAll()" (ionChange)="forAll.set($any($event).detail.checked)" justify="space-between">
-              <ion-label>{{ i18n.pin_for_all() }}</ion-label>
+              <ion-label>{{ i18n().pin_for_all() }}</ion-label>
             </ion-toggle>
           </ion-item>
         </ion-list>
@@ -69,7 +68,8 @@ const DURATION_LABEL: Record<PinDuration, keyof MatrixChatI18n> = {
 })
 export class PinMessageModal {
   private readonly modalController = inject(ModalController);
-  protected readonly i18n = inject(I18nService).translateAll(MATRIX_CHAT_I18N_KEYS) as MatrixChatI18n;
+  /** The chat labels (`store.i18n`), handed in so opening the modal resolves nothing again. */
+  public readonly i18n = input.required<MatrixChatI18n>();
 
   /** Whether the «Für alle anheften» toggle is offered. */
   public readonly canPinForAll = input(false);
@@ -79,7 +79,7 @@ export class PinMessageModal {
   protected readonly forAll = signal(false);
 
   protected label(d: PinDuration): string {
-    return this.i18n[DURATION_LABEL[d]]();
+    return this.i18n()[DURATION_LABEL[d]]();
   }
 
   protected async cancel(): Promise<void> {

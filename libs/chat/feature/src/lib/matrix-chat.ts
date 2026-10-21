@@ -17,9 +17,8 @@ import { videoDocKeyOf, videoLink } from '@okr/content-document-util';
 
 import { MatrixMessageInput, MatrixMessageList, MatrixRoomList, MessageActionsSheet, PinBanner, PollDetailModal, ReactionDetailsModal, ReminderPicker } from '@okr/chat-ui';
 import { MatrixPollData } from '@okr/chat-data-access';
-import { verifiedForwardedNames } from './forwarded-names';
 import { buildMessageActionLabels, buildMessageActionsCtx } from './message-actions.feature';
-import { buildEditedPollAnswers, canEditPoll, parsePollContent, convertHeicToJpeg, groupRoomAliasLocalpart, shouldDeferAskRoom, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, readBookmark, isTrustedBookmarkEntry, ChatBookmark, resolvePermalinkTarget, shouldSendReceipt, MessageDraft, UploadTooLargeError, availablePresets, reminderDueAt, ReminderPreset, getMessageActions, MessageActionId } from '@okr/chat-util';
+import { buildEditedPollAnswers, canEditPoll, parsePollContent, convertHeicToJpeg, groupRoomAliasLocalpart, shouldDeferAskRoom, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, readBookmark, isTrustedBookmarkEntry, ChatBookmark, resolvePermalinkTarget, shouldSendReceipt, MessageDraft, UploadTooLargeError, availablePresets, reminderDueAt, ReminderPreset, getMessageActions, MessageActionId, verifiedForwardedNames } from '@okr/chat-util';
 
 import { MatrixChatStore } from './matrix-chat.store';
 import { PollCreateModal } from './poll-create.modal';
@@ -1399,7 +1398,7 @@ export class MatrixChat implements OnDestroy {
       isKiosk: isKioskOnly(this.currentUser()),
       isBookmarked: this.store.bookmarkedMessageIds().has(message.eventId),
       isNative: isNativePlatform(),
-      isPinned: this.store.isMessagePinned(message.eventId),
+      isPinned: this.store.canUnpinMessage(message.eventId),
     }));
     if (!actions.reactions && actions.tiles.length + actions.list.length + actions.danger.length === 0) return;
     const sheet = await this.modalController.create({

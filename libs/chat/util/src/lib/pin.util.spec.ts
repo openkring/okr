@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { activePins, ActivePin, expiredSharedPins, isEventPinned, isPinActive, PIN_DURATIONS, pinPreviewOf, pinUntil, unpinnableScopes, withoutPersonalPin, withPersonalPin } from './pin.util';
+import { activePins, ActivePin, canUnpinEvent, expiredSharedPins, isEventPinned, isPinActive, PIN_DURATIONS, pinPreviewOf, pinUntil, unpinnableScopes, withoutPersonalPin, withPersonalPin } from './pin.util';
 
 describe('pinUntil', () => {
   it('adds the duration to now', () => {
@@ -122,6 +122,14 @@ describe('unpinnableScopes', () => {
 
   it('is empty for an unpinned event', () => {
     expect(unpinnableScopes('$x', both, true)).toEqual([]);
+  });
+
+  it('canUnpinEvent is false for a shared-only pin without the right', () => {
+    expect(canUnpinEvent('$c', both, false)).toBe(false);
+    expect(canUnpinEvent('$c', both, true)).toBe(true);
+    expect(canUnpinEvent('$a', both, false)).toBe(true);
+    expect(canUnpinEvent('$b', both, false)).toBe(true);
+    expect(canUnpinEvent('$x', both, true)).toBe(false);
   });
 
   it('isEventPinned looks at both scopes', () => {

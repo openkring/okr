@@ -1,3 +1,5 @@
+import type { MatrixMessage } from '@okr/shared-models';
+
 /**
  * Forwarding a message to another room (spec 1.109 §5). A forward is a fresh message that
  * carries the payload plus an `org.okr.forwarded` attribution; nothing else is copied over.
@@ -61,4 +63,29 @@ const MATRIX_USER_ID = /^@[a-z0-9._=/+-]+:[A-Za-z0-9.-]+(:\d+)?$/;
 /** True when the string is a well-formed Matrix user id (`@localpart:server[:port]`). */
 export function isMatrixUserId(value: string): boolean {
   return MATRIX_USER_ID.test(value);
+}
+
+/** The fields of a message that {@link verifiedForwardedNames} reads. */
+export type ForwardedNameSource = Pick<MatrixMessage, 'eventId' | 'sender' | 'senderName' | 'content'>;
+
+/**
+ * Verified original-author names for forwarded messages (spec 1.109 §5). The `org.okr.forwarded`
+ * claim is free text any client can write, so a name is only returned when the original event is
+ * held locally (`senderOf`), its real sender equals the claimed one and that is a well-formed
+ * Matrix id. Everything else gets no entry and renders neutrally. The name is the display name of
+ * a loaded message by that sender, else the localpart.
+ */
+export function verifiedForwardedNames(
+  messages: readonly ForwardedNameSource[],
+  senderOf: (roomId: string, eventId: string) => string | undefined,
+): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const m of messages) {
+    const from = readForwarded(m.content);
+    if (!from || !isMatrixUserId(from.sender)) continue;
+    if (senderOf(from.roomId, from.eventId) !== from.sender) continue;
+    const known = messages.find((x) => x.sender === from.sender)?.senderName;
+    out.set(m.eventId, known || from.sender.slice(1).split(':')[0]);
+  }
+  return out;
 }

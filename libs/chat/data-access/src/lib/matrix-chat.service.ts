@@ -1476,13 +1476,14 @@ export class MatrixChatService {
 
     // Find-or-create: return existing DM room if one already exists. The lookup reads the
     // client's own rooms (m.direct), so a hidden DM is found too — and comes back into the
-    // list before it opens (spec 1.109 §10.1). A left DM is not found: a new one is created.
+    // list (spec 1.109 §10.1). A left DM is not found: a new one is created.
     const existingRoomId = this.dm.findExistingDirectRoom(matrixUserId);
     if (existingRoomId) {
       const existing = this.client.getRoom(existingRoomId);
       if (existing) {
         if (this.prefs.isHidden(existingRoomId)) {
-          await this.prefs.unhideRoom(existingRoomId).catch(err =>
+          // Fire and forget: the account-data write waits for /sync, the DM must open right away.
+          this.prefs.unhideRoom(existingRoomId).catch(err =>
             console.warn('MatrixChatService.createDirectRoom: unhiding the DM failed (non-critical):', err));
         }
         return existing;
@@ -1578,8 +1579,19 @@ export class MatrixChatService {
   }
 
   /**
+   * Raw `tenants` of the room's tenant marker (`org.okr.tenant` state event) as the client sees
+   * it; undefined when the room is not loaded or carries no marker. Not validated — see
+   * `tenantsAfterArchive` (chat-util).
+   */
+  getRoomTenantMarker(roomId: string): unknown {
+    const state = this.client?.getRoom(roomId)?.getLiveTimeline().getState(EventTimeline.FORWARDS);
+    return state?.getStateEvents(OKR_TENANT_EVENT, '')?.getContent()?.['tenants'];
+  }
+
+  /**
    * Set the tenant marker of a room (callable `assignMatrixRoomTenants`, admin only). `[]` takes
-   * the room out of every app — «Chat archivieren» of an unmarked room (spec 1.109 §10.2).
+   * the room out of every app; «Chat archivieren» of an 'other' room removes only the current
+   * tenant (spec 1.109 §10.2, ruling R12).
    */
   async assignMatrixRoomTenants(roomId: string, tenants: string[]): Promise<string[]> {
     const fn = httpsCallable<{ roomId: string; tenants: string[] }, { roomId: string; tenants: string[] }>(

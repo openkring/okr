@@ -82,6 +82,8 @@ export function getRoomDetailsSections(ctx: RoomDetailsCtx): RoomDetailsSections
     archiveViaGroup: kind === 'group' && groupLevel,
     leave: kind === 'dm' || adhoc || kind === 'pinboard' || kind === 'other',
     // 'other' is decided at write time by maySendStateEvent, not here.
+    // DMs: the room right only. The client additionally gates DMs on the actual power to write
+    // `m.room.pinned_events` (`canPinForAll` in pins.feature.ts), like 'other' rooms.
     pinForAll: kind === 'dm' || adhoc || ((kind === 'group' || kind === 'pinboard') && groupLevel),
   };
 }
@@ -99,4 +101,16 @@ export function roomKindOf(p: { isDirect: boolean; isNotes: boolean; isSupport: 
 /** Localpart of a canonical alias (`#group_x:server` → `group_x`); '' when there is none. */
 export function aliasLocalpartOf(alias: string | undefined): string {
   return alias?.startsWith('#') ? alias.slice(1).split(':')[0] : '';
+}
+
+/**
+ * Tenant marker of an 'other' room after «Chat archivieren» in tenant `tenantId` (spec 1.109
+ * §10.2, ruling R12): only this tenant is removed, so the room stays in the other apps; `[]` only
+ * when this tenant was the only one. Undefined when the marker is unreadable (room not loaded, no
+ * marker = unclassified, malformed content): the caller must refuse — never fall back to `[]`,
+ * which would take the room out of every app.
+ */
+export function tenantsAfterArchive(markerTenants: unknown, tenantId: string): string[] | undefined {
+  if (!Array.isArray(markerTenants) || !markerTenants.every((t) => typeof t === 'string')) return undefined;
+  return (markerTenants as string[]).filter((t) => t !== tenantId);
 }

@@ -3,10 +3,9 @@ import {
   IonButton, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonList, IonNote, IonTitle, IonToolbar, ModalController,
 } from '@ionic/angular';
 
-import { I18nService } from '@okr/shared-i18n';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { fill } from '@okr/shared-util-core';
-import { ActivePin, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n } from '@okr/chat-util';
+import { ActivePin, MatrixChatI18n } from '@okr/chat-util';
 
 /** One row of the pin list: the pin and what to show for it. */
 export interface PinnedMessageItem {
@@ -31,7 +30,7 @@ export interface PinnedMessageItem {
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-button (click)="cancel()">{{ i18n.cancel() }}</ion-button>
+          <ion-button (click)="cancel()">{{ i18n().cancel() }}</ion-button>
         </ion-buttons>
         <ion-title>{{ title() }}</ion-title>
       </ion-toolbar>
@@ -46,7 +45,7 @@ export interface PinnedMessageItem {
                 {{ item.snippet }}
               </p>
             </ion-label>
-            <ion-note slot="end">{{ item.pin.scope === 'shared' ? i18n.pin_label_all() : i18n.pin_label_me() }}</ion-note>
+            <ion-note slot="end">{{ item.pin.scope === 'shared' ? i18n().pin_label_all() : i18n().pin_label_me() }}</ion-note>
           </ion-item>
         }
       </ion-list>
@@ -55,12 +54,13 @@ export interface PinnedMessageItem {
 })
 export class PinnedMessagesModal {
   private readonly modalController = inject(ModalController);
-  protected readonly i18n = inject(I18nService).translateAll(MATRIX_CHAT_I18N_KEYS) as MatrixChatI18n;
+  /** The chat labels (`store.i18n`), handed in so opening the modal resolves nothing again. */
+  public readonly i18n = input.required<MatrixChatI18n>();
 
   public readonly items = input.required<PinnedMessageItem[]>();
 
   protected title(): string {
-    return fill(this.i18n.pin_list(), { n: this.items().length });
+    return fill(this.i18n().pin_list(), { n: this.items().length });
   }
 
   protected async select(item: PinnedMessageItem): Promise<void> {

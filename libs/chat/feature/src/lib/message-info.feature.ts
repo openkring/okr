@@ -1,10 +1,9 @@
 import { MatrixMessage, MatrixReadReceipt } from '@okr/shared-models';
 import { DateFormat, convertDateFormatToString, fill, prettyFormatDateTime } from '@okr/shared-util-core';
 import {
-  MatrixChatI18n, buildReceiptRows, matrixPermalink, messageTypeLabelKey, readForwarded, readersOfMessage, storeDateTimeOfMs,
+  MatrixChatI18n, buildReceiptRows, matrixPermalink, messageTypeLabelKey, readForwarded, readersOfMessage, storeDateTimeOfMs, verifiedForwardedNames,
 } from '@okr/chat-util';
 
-import { verifiedForwardedNames } from './forwarded-names';
 import type { MessageInfoPerson, MessageInfoReaction } from './message-info.modal';
 
 export interface MessageInfoSources {

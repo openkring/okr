@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { aliasLocalpartOf, getRoomDetailsSections, roomKindOf, RoomDetailsCtx, RoomKind } from './room-details.util';
+import { aliasLocalpartOf, getRoomDetailsSections, roomKindOf, RoomDetailsCtx, RoomKind, tenantsAfterArchive } from './room-details.util';
 
 const ctx = (kind: RoomKind, patch: Partial<RoomDetailsCtx> = {}): RoomDetailsCtx => ({
   kind,
@@ -193,5 +193,26 @@ describe('aliasLocalpartOf', () => {
   it('is empty without an alias', () => {
     expect(aliasLocalpartOf(undefined)).toBe('');
     expect(aliasLocalpartOf('Ein Thema')).toBe('');
+  });
+});
+
+describe('tenantsAfterArchive', () => {
+  it('removes only the current tenant', () => {
+    expect(tenantsAfterArchive(['scs', 'kring'], 'scs')).toEqual(['kring']);
+  });
+
+  it('empties the marker when the tenant was the only one', () => {
+    expect(tenantsAfterArchive(['scs'], 'scs')).toEqual([]);
+  });
+
+  it('keeps a marker that does not contain the tenant', () => {
+    expect(tenantsAfterArchive(['kring'], 'scs')).toEqual(['kring']);
+    expect(tenantsAfterArchive([], 'scs')).toEqual([]);
+  });
+
+  it('is undefined for an unreadable marker', () => {
+    expect(tenantsAfterArchive(undefined, 'scs')).toBeUndefined();
+    expect(tenantsAfterArchive('scs', 'scs')).toBeUndefined();
+    expect(tenantsAfterArchive(['scs', 3], 'scs')).toBeUndefined();
   });
 });

@@ -7,10 +7,9 @@ import {
 
 import { MatrixRoom } from '@okr/shared-models';
 import { MultiAvatarPipe, SvgIconPipe } from '@okr/shared-pipes';
-import { I18nService } from '@okr/shared-i18n';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { fill } from '@okr/shared-util-core';
-import { filterRoomsByName, isMatrixPhotoUrl, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n } from '@okr/chat-util';
+import { filterRoomsByName, isMatrixPhotoUrl, MatrixChatI18n } from '@okr/chat-util';
 
 /** How many rooms the «Zuletzt» section lists. */
 const RECENT_COUNT = 5;
@@ -32,9 +31,9 @@ const RECENT_COUNT = 5;
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-button (click)="cancel()">{{ i18n.cancel() }}</ion-button>
+          <ion-button (click)="cancel()">{{ i18n().cancel() }}</ion-button>
         </ion-buttons>
-        <ion-title>{{ i18n.forward_title() }}</ion-title>
+        <ion-title>{{ i18n().forward_title() }}</ion-title>
         <ion-buttons slot="end">
           <ion-button [strong]="true" [disabled]="selected().size === 0" (click)="send()">
             {{ sendLabel() }}
@@ -48,13 +47,13 @@ const RECENT_COUNT = 5;
     <ion-content>
       @if (recent().length > 0) {
         <ion-list lines="full">
-          <ion-list-header>{{ i18n.forward_recent() }}</ion-list-header>
+          <ion-list-header>{{ i18n().forward_recent() }}</ion-list-header>
           @for (room of recent(); track room.roomId) { <ng-container *ngTemplateOutlet="row; context: { $implicit: room }" /> }
         </ion-list>
       }
       @if (others().length > 0) {
         <ion-list lines="full">
-          <ion-list-header>{{ i18n.forward_all() }}</ion-list-header>
+          <ion-list-header>{{ i18n().forward_all() }}</ion-list-header>
           @for (room of others(); track room.roomId) { <ng-container *ngTemplateOutlet="row; context: { $implicit: room }" /> }
         </ion-list>
       }
@@ -74,7 +73,8 @@ const RECENT_COUNT = 5;
 })
 export class ForwardMessageModal {
   private readonly modalController = inject(ModalController);
-  protected readonly i18n = inject(I18nService).translateAll(MATRIX_CHAT_I18N_KEYS) as MatrixChatI18n;
+  /** The chat labels (`store.i18n`), handed in so opening the modal resolves nothing again. */
+  public readonly i18n = input.required<MatrixChatI18n>();
 
   /** Rooms the member may post in (hidden rooms already removed by the caller). */
   public readonly rooms = input.required<MatrixRoom[]>();
@@ -94,7 +94,7 @@ export class ForwardMessageModal {
       this.rooms().filter((r) => !this.recentIds().has(r.roomId))
         .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'de', { sensitivity: 'base' })),
       this.query()));
-  protected readonly sendLabel = computed(() => fill(this.i18n.forward_send(), { n: this.selected().size }));
+  protected readonly sendLabel = computed(() => fill(this.i18n().forward_send(), { n: this.selected().size }));
 
   protected toggle(roomId: string): void {
     const next = new Set(this.selected());

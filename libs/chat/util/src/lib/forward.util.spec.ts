@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildForwardContent, ForwardedFrom, isForwardable, OKR_FORWARDED_FIELD, readForwarded } from './forward.util';
+import {
+  buildForwardContent, ForwardedFrom, ForwardedNameSource, isForwardable, isMatrixUserId, OKR_FORWARDED_FIELD, readForwarded,
+  verifiedForwardedNames,
+} from './forward.util';
 
 const FROM: ForwardedFrom = { sender: '@a:hs', senderName: 'Anna', roomId: '!r:hs', eventId: '$e' };
 
@@ -109,5 +112,55 @@ describe('readForwarded', () => {
     expect(readForwarded({ [OKR_FORWARDED_FIELD]: { ...FROM, eventId: '' } })).toBeUndefined();
     expect(readForwarded({ [OKR_FORWARDED_FIELD]: { ...FROM, roomId: 5 } })).toBeUndefined();
     expect(readForwarded({ [OKR_FORWARDED_FIELD]: 'x' })).toBeUndefined();
+  });
+});
+
+describe('isMatrixUserId', () => {
+  it('accepts well-formed ids, with or without a port', () => {
+    expect(isMatrixUserId('@anna:example.org')).toBe(true);
+    expect(isMatrixUserId('@a.b_c=d/e+f-g:matrix.example.org')).toBe(true);
+    expect(isMatrixUserId('@anna:example.org:8448')).toBe(true);
+    expect(isMatrixUserId('@anna:localhost')).toBe(true);
+  });
+
+  it('rejects malformed ids', () => {
+    expect(isMatrixUserId('anna:example.org')).toBe(false); // missing @
+    expect(isMatrixUserId('@anna')).toBe(false); // missing server
+    expect(isMatrixUserId('@anna:')).toBe(false);
+    expect(isMatrixUserId('@Anna:example.org')).toBe(false); // uppercase localpart
+    expect(isMatrixUserId('@an na:example.org')).toBe(false); // space
+    expect(isMatrixUserId('@anna:exa mple.org')).toBe(false);
+    expect(isMatrixUserId('')).toBe(false);
+  });
+});
+
+describe('verifiedForwardedNames', () => {
+  const ORIG: ForwardedFrom = { sender: '@anna:hs', senderName: 'Fake', roomId: '!r:hs', eventId: '$orig' };
+  const fwd = (eventId: string, from: ForwardedFrom): ForwardedNameSource =>
+    ({ eventId, sender: '@bob:hs', senderName: 'Bob', content: { msgtype: 'm.text', body: 'x', [OKR_FORWARDED_FIELD]: from } });
+  const senderOf = (sender: string | undefined) => () => sender;
+
+  it('names the original author when the local sender matches the claim', () => {
+    const anna: ForwardedNameSource = { eventId: '$a', sender: '@anna:hs', senderName: 'Anna Muster', content: { body: 'hi' } };
+    expect(verifiedForwardedNames([fwd('$f', ORIG), anna], senderOf('@anna:hs')).get('$f')).toBe('Anna Muster');
+  });
+
+  it('falls back to the localpart, never to the claimed name', () => {
+    expect(verifiedForwardedNames([fwd('$f', ORIG)], senderOf('@anna:hs')).get('$f')).toBe('anna');
+  });
+
+  it('gives no name when the original is not held locally or its sender differs', () => {
+    expect(verifiedForwardedNames([fwd('$f', ORIG)], senderOf(undefined)).has('$f')).toBe(false);
+    expect(verifiedForwardedNames([fwd('$f', ORIG)], senderOf('@eve:hs')).has('$f')).toBe(false);
+  });
+
+  it('gives no name for a malformed claimed sender', () => {
+    const bad = { ...ORIG, sender: 'Anna' };
+    expect(verifiedForwardedNames([fwd('$f', bad)], senderOf('Anna')).has('$f')).toBe(false);
+  });
+
+  it('ignores messages that are no forwards', () => {
+    const plain: ForwardedNameSource = { eventId: '$p', sender: '@bob:hs', senderName: 'Bob', content: { body: 'x' } };
+    expect(verifiedForwardedNames([plain], senderOf('@bob:hs')).size).toBe(0);
   });
 });

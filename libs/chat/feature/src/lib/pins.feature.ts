@@ -6,8 +6,8 @@ import { fill, hasRole, isKioskOnly } from '@okr/shared-util-core';
 import { AlertService, createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 import type { MatrixChatService, MatrixPinsService, MatrixRoomPrefsService } from '@okr/chat-data-access';
 import {
-  ActivePin, activePins, aliasLocalpartOf, bookmarkSnippet, expiredSharedPins, findGroupOfRoom, getRoomDetailsSections,
-  isEventPinned, isProtectedRoomAlias, MatrixChatI18n, PIN_ICON, PinPreview, PinScope, pinUntil, RoomKind, roomKindOf,
+  ActivePin, activePins, aliasLocalpartOf, bookmarkSnippet, canUnpinEvent, expiredSharedPins, findGroupOfRoom, getRoomDetailsSections,
+  isProtectedRoomAlias, MatrixChatI18n, PIN_ICON, PinPreview, PinScope, pinUntil, RoomKind, roomKindOf,
   unpinnableScopes,
 } from '@okr/chat-util';
 import { isAdminMember } from '@okr/subject-group-util';
@@ -67,16 +67,20 @@ export function pinComputeds(s: PinComputedDeps) {
   });
 
   /**
-   * Whether the caller may pin (and unpin) for everyone in the open room. Ad-hoc chats and DMs:
-   * every member; group rooms and pinboards: group admins, privileged, admin; notes and support:
-   * never; any other room: only when the client may write the state directly. Kiosk: never.
+   * Whether the caller may pin (and unpin) for everyone in the open room. Ad-hoc chats: every
+   * member; group rooms and pinboards: group admins, privileged, admin; notes and support: never;
+   * DMs and any other room: only when the client may write the state directly. Kiosk: never.
+   *
+   * DMs are gated like 'other' here although `getRoomDetailsSections` grants every DM member
+   * «Für alle»: a DM not created as TrustedPrivateChat gives members no power to write
+   * `m.room.pinned_events`, and the `setChatPins` callable treats DMs as 'other' too.
    */
   const canPinForAll = computed((): boolean => {
     const roomId = s.currentRoomId();
     const kind = currentRoomKind();
     const user = s.appStore.currentUser();
     if (!roomId || !kind || !user || isKioskOnly(user)) return false;
-    if (kind === 'other') {
+    if (kind === 'other' || kind === 'dm') {
       s.roomStateVersionResource.value(); // power levels may change
       return s.pinsService.canWriteSharedPins(roomId);
     }
@@ -184,7 +188,7 @@ export function pinMethods(store: PinMethodDeps) {
     const { PinnedMessagesModal } = await import('./pinned-messages.modal');
     const modal = await store.modalController.create({
       component: PinnedMessagesModal,
-      componentProps: { items },
+      componentProps: { items, i18n: store.i18n },
       cssClass: 'auto-height-modal',
     });
     await modal.present();
@@ -193,9 +197,13 @@ export function pinMethods(store: PinMethodDeps) {
   };
 
   return {
-    /** Whether a message of the open room is pinned (in either scope) — «Anheften» vs «Lösen». */
-    isMessagePinned(eventId: string): boolean {
-      return isEventPinned(eventId, store.currentPins());
+    /**
+     * Whether the caller can unpin a message of the open room in at least one scope — «Lösen»
+     * vs «Anheften». A shared pin the caller may not remove counts as not pinned, so «Anheften»
+     * offers a personal pin instead (never a dead «Lösen» row).
+     */
+    canUnpinMessage(eventId: string): boolean {
+      return canUnpinEvent(eventId, store.currentPins(), store.canPinForAll());
     },
 
     /** «Anheften»: duration and scope from the pin dialog, then the personal or shared write. */
@@ -206,7 +214,7 @@ export function pinMethods(store: PinMethodDeps) {
       const { PinMessageModal } = await import('./pin-message.modal');
       const modal = await store.modalController.create({
         component: PinMessageModal,
-        componentProps: { canPinForAll },
+        componentProps: { canPinForAll, i18n: store.i18n },
         cssClass: 'auto-height-modal',
       });
       await modal.present();

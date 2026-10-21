@@ -138,6 +138,15 @@ export function unpinnableScopes(eventId: string, pins: readonly ActivePin[], ca
   return result;
 }
 
+/**
+ * Whether the caller can unpin `eventId` in at least one scope — decides «Lösen» vs «Anheften»
+ * in the message actions. A message pinned only for everyone by somebody else, without the
+ * shared right, is not unpinnable: the caller gets «Anheften» (a personal pin) instead.
+ */
+export function canUnpinEvent(eventId: string, pins: readonly ActivePin[], canUnpinShared: boolean): boolean {
+  return unpinnableScopes(eventId, pins, canUnpinShared).length > 0;
+}
+
 /** What the banner and the pin list show for a pinned message. */
 export interface PinPreview {
   senderName: string;

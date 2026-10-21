@@ -49,7 +49,9 @@ export class MatrixPinsService {
     }
     const pinned = this.sharedPinned(roomId);
     const nextPinned = pinned.includes(eventId) ? pinned : [...pinned, eventId];
-    await this.writeBoth(roomId, nextPinned, { ...this.sharedExpiry(roomId), [eventId]: until });
+    // Expiry first: a pin never shows up in m.room.pinned_events without its expiry.
+    await this.writeExpiry(roomId, { ...this.sharedExpiry(roomId), [eventId]: until });
+    await this.writePinned(roomId, nextPinned);
   }
 
   async removeSharedPin(roomId: string, eventId: string): Promise<void> {
@@ -57,13 +59,7 @@ export class MatrixPinsService {
       await this.callPins({ roomId, op: 'unpin', eventId });
       return;
     }
-    const expiry = { ...this.sharedExpiry(roomId) };
-    delete expiry[eventId];
-    await this.writeBoth(
-      roomId,
-      this.sharedPinned(roomId).filter((id) => id !== eventId),
-      expiry,
-    );
+    await this.writeUnpinned(roomId, this.sharedPinned(roomId).filter((id) => id !== eventId));
   }
 
   /** Unpin every shared pin whose expiry has passed; a no-op when none has. */
@@ -74,18 +70,30 @@ export class MatrixPinsService {
       await this.callPins({ roomId, op: 'cleanup' });
       return;
     }
-    const expiry = { ...this.sharedExpiry(roomId) };
-    for (const id of expired) delete expiry[id];
-    await this.writeBoth(
-      roomId,
-      this.sharedPinned(roomId).filter((id) => !expired.includes(id)),
-      expiry,
-    );
+    await this.writeUnpinned(roomId, this.sharedPinned(roomId).filter((id) => !expired.includes(id)));
   }
 
-  private async writeBoth(roomId: string, pinned: string[], expiry: Record<string, unknown>): Promise<void> {
+  /**
+   * Unpin / cleanup, in the same order as the `setChatPins` callable: `pinned` first, then the
+   * expiry map pruned to the ids still pinned — a failure in between leaves at most a stale
+   * expiry entry, never a pin without its expiry.
+   */
+  private async writeUnpinned(roomId: string, pinned: string[]): Promise<void> {
+    await this.writePinned(roomId, pinned);
+    const expiry: Record<string, unknown> = {};
+    for (const [id, until] of Object.entries(this.sharedExpiry(roomId))) {
+      if (pinned.includes(id)) expiry[id] = until;
+    }
+    await this.writeExpiry(roomId, expiry);
+  }
+
+  private async writePinned(roomId: string, pinned: string[]): Promise<void> {
     if (!this.client) throw new Error('MatrixPinsService: client not initialized');
     await this.client.sendStateEvent(roomId, MATRIX_PINNED_EVENTS as never, { pinned } as never, '');
+  }
+
+  private async writeExpiry(roomId: string, expiry: Record<string, unknown>): Promise<void> {
+    if (!this.client) throw new Error('MatrixPinsService: client not initialized');
     await this.client.sendStateEvent(roomId, OKR_PIN_EXPIRY_EVENT as never, expiry as never, '');
   }
 

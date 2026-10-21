@@ -8,7 +8,7 @@ import type { MatrixChatService, MatrixRoomPrefsService } from '@okr/chat-data-a
 import type { GroupService } from '@okr/subject-group-data-access';
 import {
   ActivePin, aliasLocalpartOf, getRoomDetailsSections, isProtectedRoomAlias, isRoomMuted, MatrixChatI18n, muteUntil,
-  RoomDetailsCtx, RoomDetailsSections, RoomKind,
+  RoomDetailsCtx, RoomDetailsSections, RoomKind, tenantsAfterArchive,
 } from '@okr/chat-util';
 import { isAdminMember } from '@okr/subject-group-util';
 
@@ -112,7 +112,7 @@ export interface RoomDetailsMethodDeps {
   currentRoomDetails: Signal<RoomDetailsSections | undefined>;
   imgixBaseUrl: Signal<string>;
   i18n: MatrixChatI18n;
-  appStore: { currentUser: Signal<UserModel | undefined> };
+  appStore: { tenantId: Signal<string>; currentUser: Signal<UserModel | undefined> };
   matrixService: MatrixChatService;
   roomPrefs: MatrixRoomPrefsService;
   groupService: GroupService;
@@ -138,10 +138,20 @@ export function roomDetailsMethods(store: RoomDetailsMethodDeps) {
     }
   };
 
-  /** Any other (unmarked, admin-visible) room: empty tenant marker = in no app any more. */
+  /**
+   * Any other (admin-visible) room: remove only this app's tenant from the room's tenant marker
+   * (ruling R12 — no cross-tenant effect); `[]` only when this tenant was the only one. An
+   * unreadable or absent marker is refused, never replaced by `[]`.
+   */
   const archiveOtherRoom = async (roomId: string): Promise<boolean> => {
+    const tenants = tenantsAfterArchive(store.matrixService.getRoomTenantMarker(roomId), store.appStore.tenantId());
+    if (!tenants) {
+      console.error('MatrixChatStore.archiveOtherRoom: tenant marker unreadable, refused:', roomId);
+      await store.alertService.showToast(store.i18n.details_error());
+      return false;
+    }
     try {
-      await store.matrixService.assignMatrixRoomTenants(roomId, []);
+      await store.matrixService.assignMatrixRoomTenants(roomId, tenants);
       return true;
     } catch (error) {
       console.error('MatrixChatStore.archiveOtherRoom: failed:', error);
@@ -230,8 +240,9 @@ export function roomDetailsMethods(store: RoomDetailsMethodDeps) {
         if (!await store.alertService.confirm(store.i18n.details_leave_confirm(), true)) return false;
         done = await store.leaveRoom();
         if (!done) await store.alertService.showToast(store.i18n.details_error());
-        // A left DM is forgotten, so it never comes back; a new DM gets a new room (§12.12).
-        if (done) {
+        // Only a left DM is forgotten, so it never comes back; a new DM gets a new room (§12.12).
+        // An 'other' room is just left: it can still be joined again.
+        if (done && kind === 'dm') {
           store.matrixService.forgetRoom(roomId).catch((error: unknown) =>
             console.warn('MatrixChatStore.leaveCurrentRoom: forget failed (non-critical):', error));
         }

@@ -886,7 +886,7 @@ export const _MatrixChatStore = signalStore(
         const { ForwardMessageModal } = await import('./forward-message.modal');
         const modal = await store.modalController.create({
           component: ForwardMessageModal,
-          componentProps: { rooms: candidates },
+          componentProps: { rooms: candidates, i18n: store.i18n },
         });
         await modal.present();
         const { data, role } = await modal.onDidDismiss<string[]>();

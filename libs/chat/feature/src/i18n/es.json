@@ -690,7 +690,6 @@
   "mute": {
     "tile": "Silenciar",
     "on": "Silenciado",
-    "off": "Notificaciones activadas",
     "duration": {
       "h1": "1 hora",
       "h8": "8 horas",
