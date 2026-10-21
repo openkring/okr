@@ -12,7 +12,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { DateFormat, convertDateFormatToString } from '@okr/shared-util-core';
 import { LocationService } from '@okr/location-data-access';
 import { WeatherService } from '@okr/weather-data-access';
-import { WEATHER_I18N_KEYS, WIND_DIRECTION_KEYS } from '@okr/weather-util';
+import { WEATHER_I18N_KEYS, WEATHER_VARIANT_KEYS, WIND_DIRECTION_KEYS } from '@okr/weather-util';
 import {
   WeatherForecastDetail, WeatherForecastOverview, WeatherForecastTable, WeatherDayPill,
   WeatherDayTile, WeatherHourlyDetail, WeatherMap, WeatherMapPin
@@ -46,7 +46,7 @@ import type { WeatherRainRadar } from './weather-rain-radar';
   template: `
     @if (section(); as section) {
       <ion-card>
-        <okr-optional-card-header [title]="section.title" [subTitle]="section.subTitle" />
+        <okr-optional-card-header [title]="title()" [subTitle]="section.subTitle" />
         <ion-card-content>
           @switch (section.properties.variant) {
 
@@ -88,7 +88,8 @@ import type { WeatherRainRadar } from './weather-rain-radar';
                 [titleLabel]="i18n.local_forecast()" [placeLabel]="placeLabel()"
                 [probabilityLabel]="i18n.precipitation_prob()"
                 [sunshineLabel]="i18n.sunshine_duration()" [windLabel]="i18n.wind_and_gusts()"
-                [emptyLabel]="i18n.empty()" />
+                [rangeLabel]="i18n.range_label()" [rangeOneLabel]="i18n.range_one()"
+                [rangeManyLabel]="i18n.range_many()" [emptyLabel]="i18n.empty()" />
             }
 
             @case ('map') {
@@ -126,6 +127,20 @@ export class WeatherSectionComponent {
     this.directions.d4(), this.directions.d5(), this.directions.d6(), this.directions.d7(),
   ]);
 
+  /**
+   * The card title. A title that is empty or merely repeats the technical variant id
+   * ("day-horizontal") is replaced by the variant's translated name.
+   */
+  protected title = computed(() => {
+    const section = this.section();
+    if (!section) return '';
+    const variant = section.properties?.variant;
+    const raw = (section.title ?? '').trim();
+    if (raw && raw !== variant) return raw;
+    const key = variant ? WEATHER_VARIANT_KEYS[variant] : undefined;
+    return key ? this.i18n[key]() : raw;
+  });
+
   /** Today as a StoreDate (yyyyMMdd) — the anchor of every query below. */
   private readonly todayKey = toStoreDate(new Date());
 
@@ -134,8 +149,9 @@ export class WeatherSectionComponent {
 
   private locations = toSignal(this.locationService.list(), { initialValue: [] as LocationModel[] });
 
-  protected locationName = computed(() =>
-    this.locations().find((l) => l.okey === this.effectiveLocationKey())?.name ?? '');
+  private location = computed(() => this.locations().find((l) => l.okey === this.effectiveLocationKey()));
+
+  protected locationName = computed(() => this.location()?.name ?? '');
 
   protected placeLabel = computed(() => {
     const loc = this.locations().find((l) => l.okey === this.effectiveLocationKey());
@@ -160,8 +176,14 @@ export class WeatherSectionComponent {
   protected todayLabel = computed(() =>
     convertDateFormatToString(this.todayKey, DateFormat.StoreDate, DateFormat.ViewDate, false));
 
-  protected dayLabels = computed(() => this.days().map((d) =>
-    convertDateFormatToString(d.date, DateFormat.StoreDate, DateFormat.ViewDate, false)));
+  /** "Mi 21.10." — weekday first, so a narrow day can drop the date and keep the weekday. */
+  protected dayLabels = computed(() => {
+    const weekday = new Intl.DateTimeFormat(this.i18nService.getActiveLang() || 'de', { weekday: 'short' });
+    return this.days().map((d) => {
+      const date = new Date(Number(d.date.slice(0, 4)), Number(d.date.slice(4, 6)) - 1, Number(d.date.slice(6, 8)));
+      return `${weekday.format(date).replace(/\.$/, '')} ${d.date.slice(6, 8)}.${d.date.slice(4, 6)}.`;
+    });
+  });
 
   /** The hour the clock is in, falling back to the first one the provider returned. */
   protected currentHour = computed(() => {
@@ -218,7 +240,16 @@ export class WeatherSectionComponent {
           created.setInput('measuredLabel', untracked(() => this.i18n.radar_measured()));
           created.setInput('forecastLabel', untracked(() => this.i18n.radar_forecast()));
           created.setInput('playLabel', untracked(() => this.i18n.radar_play()));
+          created.setInput('pauseLabel', untracked(() => this.i18n.radar_pause()));
+          created.setInput('errorLabel', untracked(() => this.i18n.radar_error()));
           created.setInput('degradedLabel', untracked(() => this.i18n.radar_degraded()));
+          created.setInput('legendLabel', untracked(() => this.i18n.radar_legend()));
+          // centre on the section's location; the radar's own default is the middle of Switzerland
+          const loc = untracked(() => this.location());
+          if (loc?.latitude && loc?.longitude) {
+            created.setInput('latitude', loc.latitude);
+            created.setInput('longitude', loc.longitude);
+          }
           this.radarRef.set(created);
         } finally {
           this.creatingRadar.set(false);

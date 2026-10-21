@@ -1,6 +1,6 @@
 import {
   AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, computed, inject, input,
-  signal, viewChild
+  effect, signal, viewChild
 } from '@angular/core';
 import * as L from 'leaflet';
 
@@ -11,6 +11,18 @@ interface RadarFrame { time: number; path: string; }
 const FRAME_OPACITY = 0.75;
 
 /**
+ * RainViewer's free tier serves radar tiles up to zoom 7 only (since 2026). Above that every
+ * tile is a grey "Zoom Level Not Supported" image with HTTP 200 — no `tileerror`, just a map
+ * full of grey boxes. `maxNativeZoom` makes Leaflet fetch zoom-7 tiles and scale them up.
+ * The free tier also dropped the colour schemes (every scheme returns the same "Universal
+ * Blue" picture) and the nowcast (`radar.nowcast` is empty), see the legend below.
+ */
+const RADAR_MAX_NATIVE_ZOOM = 7;
+
+/** A single failed tile happens (edge of coverage, a hiccup); only a pattern is worth a notice. */
+const TILE_ERROR_NOTICE_THRESHOLD = 3;
+
+/**
  * `rain_radar` — animated precipitation over Switzerland.
  *
  * NOTHING may import this file statically: it is created by hand from `weather-section.ts`
@@ -18,8 +30,8 @@ const FRAME_OPACITY = 0.75;
  * deliberately absent from the `@okr/weather-ui` barrel — an `export *` there would be a
  * static edge from every consumer of that lib.
  *
- * Tiles come from RainViewer: ready-made XYZ frames covering roughly the last two hours plus
- * a short nowcast. MeteoSwiss CombiPrecip would be sharper but ships as ODIM HDF5 in
+ * Tiles come from RainViewer: ready-made XYZ frames covering roughly the last two hours (the
+ * nowcast is gone from the free tier). MeteoSwiss CombiPrecip would be sharper but ships as ODIM HDF5 in
  * EPSG:2056, which needs a decode/reproject/tile pipeline of its own. Only the tile layer
  * would change; the timeline below stays as it is.
  */
@@ -53,6 +65,11 @@ const FRAME_OPACITY = 0.75;
       background: var(--ion-color-danger, #c5000f); transform: translateX(-50%); pointer-events: none;
       box-shadow: 0 0 0 3px var(--ion-card-background, #fff);
     }
+    .scale { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 11px; color: var(--ion-color-medium, #5f5f5f); }
+    .scale .ramp {
+      width: 120px; height: 8px; border-radius: 4px;
+      background: linear-gradient(90deg, #88ddee, #0099cc, #0077aa, #005588, #ffee00, #ffaa00, #ff4400, #c10000, #ffaaff);
+    }
     .legend { display: flex; margin-top: 4px; font-size: 11px; color: var(--ion-color-medium, #5f5f5f); }
     .stamp { font-size: 13px; font-variant-numeric: tabular-nums; }
     .error { padding: 16px 0; font-size: 14px; color: var(--ion-color-medium, #5f5f5f); }
@@ -81,12 +98,16 @@ const FRAME_OPACITY = 0.75;
           </div>
           <div class="legend">
             <div [style.width.%]="pastShare()">{{ measuredLabel() }}</div>
-            <div>{{ forecastLabel() }}</div>
+            @if (pastShare() < 100) { <div>{{ forecastLabel() }}</div> }
           </div>
         </div>
       </div>
     } @else if (failed()) {
       <div class="error">{{ errorLabel() }}</div>
+    }
+
+    @if (legendLabel()) {
+      <div class="scale"><div class="ramp"></div><span>{{ legendLabel() }}</span></div>
     }
 
     @if (tilesFailed()) {
@@ -105,6 +126,8 @@ export class WeatherRainRadar implements AfterViewInit, OnDestroy {
   public pauseLabel = input('');
   public errorLabel = input('');
   public degradedLabel = input('');
+  /** Words under the colour ramp, e.g. "leicht · mässig · stark". */
+  public legendLabel = input('');
 
   private mapHost = viewChild.required<ElementRef<HTMLElement>>('mapHost');
 
@@ -123,6 +146,7 @@ export class WeatherRainRadar implements AfterViewInit, OnDestroy {
   private visible?: L.TileLayer;
   private timer?: ReturnType<typeof setInterval>;
   private host = '';
+  private tileErrors = 0;
 
   protected progress = computed(() => {
     const n = this.frames().length;
@@ -143,6 +167,11 @@ export class WeatherRainRadar implements AfterViewInit, OnDestroy {
 
   constructor() {
     inject(DestroyRef).onDestroy(() => this.stop());
+    // the location may arrive after the map was built (locations load asynchronously)
+    effect(() => {
+      const centre: L.LatLngTuple = [this.latitude(), this.longitude()];
+      this.map?.setView(centre, this.map.getZoom());
+    });
   }
 
   public async ngAfterViewInit(): Promise<void> {
@@ -203,10 +232,15 @@ export class WeatherRainRadar implements AfterViewInit, OnDestroy {
 
     let layer = this.layers.get(frame.path);
     if (!layer) {
-      layer = L.tileLayer(`${this.host}${frame.path}/256/{z}/{x}/{y}/4/1_1.png`, { opacity: 0 });
+      // colour scheme 2 ("Universal Blue") is the only one the free tier still renders
+      layer = L.tileLayer(`${this.host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`, {
+        opacity: 0, maxNativeZoom: RADAR_MAX_NATIVE_ZOOM, attribution: 'Radar © RainViewer'
+      });
       // A tile 429/404 is otherwise completely silent: the animation keeps running over a
       // half-drawn radar picture and nothing tells the viewer the image is incomplete.
-      layer.on('tileerror', () => this.tilesFailed.set(true));
+      layer.on('tileerror', () => {
+        if (++this.tileErrors >= TILE_ERROR_NOTICE_THRESHOLD) this.tilesFailed.set(true);
+      });
       layer.addTo(this.map);
       this.layers.set(frame.path, layer);
     }

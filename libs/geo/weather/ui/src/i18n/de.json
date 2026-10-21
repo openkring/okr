@@ -19,7 +19,9 @@
     "forecast": "Prognose",
     "play": "Animation starten",
     "pause": "Animation anhalten",
-    "degraded": "Ein Teil des Radarbilds konnte nicht geladen werden — es ist gerade unvollständig."
+    "degraded": "Einige Teile des Radarbilds fehlen gerade. Versuch es in ein paar Minuten nochmals.",
+    "error": "Das Regenradar ist gerade nicht erreichbar. Die Karte zeigt deshalb keinen Niederschlag.",
+    "legend": "leicht · mässig · stark"
   },
   "direction": {
     "n": "Norden",
@@ -32,5 +34,20 @@
     "nw": "Nordwesten"
   },
   "sunshine": "Sonnenschein",
-  "sunshine.duration": "Sonnenscheindauer"
+  "sunshine.duration": "Sonnenscheindauer",
+  "variant": {
+    "dayHorizontal": "Heute (Zeile)",
+    "dayVertical": "Heute (Kachel)",
+    "forecastOverview": "Wetterprognose",
+    "forecastDetail": "Lokalprognose",
+    "forecastTable": "Prognosetabelle",
+    "hourlyDetail": "Wetter jetzt",
+    "map": "Wetterkarte",
+    "rainRadar": "Regenradar"
+  },
+  "range": {
+    "label": "Zeitraum",
+    "one": "1 Tag",
+    "many": "{n} Tage"
+  }
 }

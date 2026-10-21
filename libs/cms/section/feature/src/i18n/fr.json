@@ -1307,7 +1307,15 @@
     "edit": "Modifier la configuration météo",
     "description": "Widgets météo : résumé du jour, prévision, carte ou radar de pluie",
     "variant": {
-      "label": "Widget"
+      "label": "Widget",
+      "dayHorizontal": "Aujourd'hui (ligne)",
+      "dayVertical": "Aujourd'hui (tuile)",
+      "forecastOverview": "Prévisions",
+      "forecastDetail": "Prévisions locales",
+      "forecastTable": "Tableau des prévisions",
+      "hourlyDetail": "Météo actuelle",
+      "map": "Carte météo",
+      "rainRadar": "Radar des précipitations"
     },
     "location": {
       "label": "Lieu",

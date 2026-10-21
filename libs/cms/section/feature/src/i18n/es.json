@@ -1307,7 +1307,15 @@
     "edit": "Cambiar la configuración del tiempo",
     "description": "Widgets del tiempo: resumen del día, pronóstico, mapa o radar de lluvia",
     "variant": {
-      "label": "Widget"
+      "label": "Widget",
+      "dayHorizontal": "Hoy (fila)",
+      "dayVertical": "Hoy (mosaico)",
+      "forecastOverview": "Pronóstico",
+      "forecastDetail": "Pronóstico local",
+      "forecastTable": "Tabla del pronóstico",
+      "hourlyDetail": "El tiempo ahora",
+      "map": "Mapa del tiempo",
+      "rainRadar": "Radar de lluvia"
     },
     "location": {
       "label": "Lugar",

@@ -1,5 +1,7 @@
 import { Signal } from '@angular/core';
 
+import { WeatherVariant } from '@okr/shared-models';
+
 /**
  * Keys live here (util), the translations live in the lib that renders them
  * (`libs/geo/weather/ui/src/i18n/*.json`), so the prefix must mirror THAT path —
@@ -28,6 +30,22 @@ export const WEATHER_I18N_KEYS = {
   radar_play:               PFX + 'radar.play',
   radar_pause:              PFX + 'radar.pause',
   radar_degraded:           PFX + 'radar.degraded',
+  radar_error:              PFX + 'radar.error',
+  radar_legend:             PFX + 'radar.legend',
+
+  range_label:              PFX + 'range.label',
+  range_one:                PFX + 'range.one',
+  /** `{n}` placeholder — single braces, filled by the caller (translateAll strips `{{n}}`). */
+  range_many:               PFX + 'range.many',
+
+  variant_day_horizontal:   PFX + 'variant.dayHorizontal',
+  variant_day_vertical:     PFX + 'variant.dayVertical',
+  variant_forecast_overview: PFX + 'variant.forecastOverview',
+  variant_forecast_detail:  PFX + 'variant.forecastDetail',
+  variant_forecast_table:   PFX + 'variant.forecastTable',
+  variant_hourly_detail:    PFX + 'variant.hourlyDetail',
+  variant_map:              PFX + 'variant.map',
+  variant_rain_radar:       PFX + 'variant.rainRadar',
 
   dir_n:                    PFX + 'direction.n',
   dir_ne:                   PFX + 'direction.ne',
@@ -49,3 +67,15 @@ export const WIND_DIRECTION_KEYS = [
   WEATHER_I18N_KEYS.dir_n, WEATHER_I18N_KEYS.dir_ne, WEATHER_I18N_KEYS.dir_e, WEATHER_I18N_KEYS.dir_se,
   WEATHER_I18N_KEYS.dir_s, WEATHER_I18N_KEYS.dir_sw, WEATHER_I18N_KEYS.dir_w, WEATHER_I18N_KEYS.dir_nw,
 ] as const;
+
+/** Section variant to the i18n key of its human-readable name. */
+export const WEATHER_VARIANT_KEYS: Record<WeatherVariant, WeatherI18nKey> = {
+  'day-horizontal':    'variant_day_horizontal',
+  'day-vertical':      'variant_day_vertical',
+  'forecast_overview': 'variant_forecast_overview',
+  'forecast_detail':   'variant_forecast_detail',
+  'forecast_table':    'variant_forecast_table',
+  'hourly_detail':     'variant_hourly_detail',
+  'map':               'variant_map',
+  'rain_radar':        'variant_rain_radar',
+};

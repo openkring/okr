@@ -713,6 +713,6 @@ export interface WeatherConfig {
   locationKeys?: string[];
   /** Only `variant: 'forecast_overview'`. Default 'horizontal'. */
   orientation?: 'horizontal' | 'vertical';
-  /** forecast_overview / forecast_table — number of days, default 6. */
+  /** forecast_overview / forecast_table / forecast_detail — number of days, default 6. */
   days?: number;
 }

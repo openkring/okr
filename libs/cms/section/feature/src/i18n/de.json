@@ -1307,7 +1307,15 @@
     "edit": "Wetter-Konfiguration ändern",
     "description": "Wetter-Widgets: Tagesübersicht, Prognose, Karte oder Regenradar",
     "variant": {
-      "label": "Widget"
+      "label": "Widget",
+      "dayHorizontal": "Heute (Zeile)",
+      "dayVertical": "Heute (Kachel)",
+      "forecastOverview": "Wetterprognose",
+      "forecastDetail": "Lokalprognose",
+      "forecastTable": "Prognosetabelle",
+      "hourlyDetail": "Wetter jetzt",
+      "map": "Wetterkarte",
+      "rainRadar": "Regenradar"
     },
     "location": {
       "label": "Ort",

@@ -1307,7 +1307,15 @@
     "edit": "Modifica la configurazione meteo",
     "description": "Widget meteo: riepilogo del giorno, previsione, mappa o radar della pioggia",
     "variant": {
-      "label": "Widget"
+      "label": "Widget",
+      "dayHorizontal": "Oggi (riga)",
+      "dayVertical": "Oggi (riquadro)",
+      "forecastOverview": "Previsioni",
+      "forecastDetail": "Previsioni locali",
+      "forecastTable": "Tabella delle previsioni",
+      "hourlyDetail": "Meteo attuale",
+      "map": "Mappa meteo",
+      "rainRadar": "Radar delle precipitazioni"
     },
     "location": {
       "label": "Luogo",

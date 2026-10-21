@@ -19,7 +19,9 @@
     "forecast": "Prévision",
     "play": "Lancer l'animation",
     "pause": "Mettre en pause",
-    "degraded": "Une partie de l'image radar n'a pas pu être chargée — elle est incomplète pour le moment."
+    "degraded": "Certaines parties de l'image radar manquent pour le moment. Réessaie dans quelques minutes.",
+    "error": "Le radar des précipitations n'est pas joignable pour le moment, la carte n'affiche donc aucune précipitation.",
+    "legend": "faible · modérée · forte"
   },
   "direction": {
     "n": "nord",
@@ -32,5 +34,20 @@
     "nw": "nord-ouest"
   },
   "sunshine": "Ensoleillement",
-  "sunshine.duration": "Durée d'ensoleillement"
+  "sunshine.duration": "Durée d'ensoleillement",
+  "variant": {
+    "dayHorizontal": "Aujourd'hui (ligne)",
+    "dayVertical": "Aujourd'hui (tuile)",
+    "forecastOverview": "Prévisions",
+    "forecastDetail": "Prévisions locales",
+    "forecastTable": "Tableau des prévisions",
+    "hourlyDetail": "Météo actuelle",
+    "map": "Carte météo",
+    "rainRadar": "Radar des précipitations"
+  },
+  "range": {
+    "label": "Période",
+    "one": "1 jour",
+    "many": "{n} jours"
+  }
 }

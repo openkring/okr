@@ -12,6 +12,14 @@ export interface WeatherLocationOption { okey: string; name: string; }
 interface WeatherConfigI18n {
   weather_title:               Signal<string>;
   weather_variant_label:       Signal<string>;
+  weather_variant_day_horizontal:    Signal<string>;
+  weather_variant_day_vertical:      Signal<string>;
+  weather_variant_forecast_overview: Signal<string>;
+  weather_variant_forecast_detail:   Signal<string>;
+  weather_variant_forecast_table:    Signal<string>;
+  weather_variant_hourly_detail:     Signal<string>;
+  weather_variant_map:               Signal<string>;
+  weather_variant_rain_radar:        Signal<string>;
   weather_location_label:      Signal<string>;
   weather_location_helper:     Signal<string>;
   weather_locations_label:     Signal<string>;
@@ -46,7 +54,7 @@ interface WeatherConfigI18n {
                           [value]="variant()" [disabled]="readOnly()"
                           (ionChange)="onChange('variant', $event.detail.value)">
                 @for (v of variants; track v) {
-                  <ion-select-option [value]="v">{{ v }}</ion-select-option>
+                  <ion-select-option [value]="v">{{ variantLabels()[v] }}</ion-select-option>
                 }
               </ion-select>
             </ion-col>
@@ -114,6 +122,19 @@ export class WeatherConfiguration {
     'day-horizontal', 'day-vertical', 'forecast_overview', 'forecast_detail',
     'forecast_table', 'hourly_detail', 'map', 'rain_radar'
   ];
+  protected variantLabels = computed<Record<WeatherVariant, string>>(() => {
+    const i = this.i18n();
+    return {
+      'day-horizontal': i.weather_variant_day_horizontal(),
+      'day-vertical': i.weather_variant_day_vertical(),
+      'forecast_overview': i.weather_variant_forecast_overview(),
+      'forecast_detail': i.weather_variant_forecast_detail(),
+      'forecast_table': i.weather_variant_forecast_table(),
+      'hourly_detail': i.weather_variant_hourly_detail(),
+      'map': i.weather_variant_map(),
+      'rain_radar': i.weather_variant_rain_radar(),
+    };
+  });
   protected readonly dayOptions = [1, 2, 3, 4, 5, 6, 7];
 
   protected variant = linkedSignal(() => this.formData().variant ?? 'day-horizontal');
@@ -123,7 +144,8 @@ export class WeatherConfiguration {
   protected days = linkedSignal(() => this.formData().days ?? 6);
 
   protected showsDays = computed(() =>
-    this.variant() === 'forecast_overview' || this.variant() === 'forecast_table');
+    this.variant() === 'forecast_overview' || this.variant() === 'forecast_table' ||
+    this.variant() === 'forecast_detail');
 
   protected onChange(field: keyof WeatherConfig, value: unknown): void {
     this.formData.update((vm) => ({ ...vm, [field]: value }));

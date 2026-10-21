@@ -19,7 +19,9 @@
     "forecast": "Forecast",
     "play": "Start animation",
     "pause": "Pause animation",
-    "degraded": "Part of the radar image could not be loaded — it is incomplete right now."
+    "degraded": "Parts of the radar image are missing right now. Try again in a few minutes.",
+    "error": "The rain radar cannot be reached right now, so the map shows no precipitation.",
+    "legend": "light · moderate · heavy"
   },
   "direction": {
     "n": "north",
@@ -32,5 +34,20 @@
     "nw": "north-west"
   },
   "sunshine": "Sunshine",
-  "sunshine.duration": "Sunshine duration"
+  "sunshine.duration": "Sunshine duration",
+  "variant": {
+    "dayHorizontal": "Today (row)",
+    "dayVertical": "Today (tile)",
+    "forecastOverview": "Forecast",
+    "forecastDetail": "Local forecast",
+    "forecastTable": "Forecast table",
+    "hourlyDetail": "Weather now",
+    "map": "Weather map",
+    "rainRadar": "Rain radar"
+  },
+  "range": {
+    "label": "Period",
+    "one": "1 day",
+    "many": "{n} days"
+  }
 }

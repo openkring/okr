@@ -1307,7 +1307,15 @@
     "edit": "Change weather configuration",
     "description": "Weather widgets: day summary, forecast, map or rain radar",
     "variant": {
-      "label": "Widget"
+      "label": "Widget",
+      "dayHorizontal": "Today (row)",
+      "dayVertical": "Today (tile)",
+      "forecastOverview": "Forecast",
+      "forecastDetail": "Local forecast",
+      "forecastTable": "Forecast table",
+      "hourlyDetail": "Weather now",
+      "map": "Weather map",
+      "rainRadar": "Rain radar"
     },
     "location": {
       "label": "Location",
