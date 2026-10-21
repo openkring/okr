@@ -17,7 +17,6 @@ import { WeatherDayTile } from './weather-day-tile';
   imports: [WeatherDayTile],
   styles: [`
     :host { display: block; }
-    .title { font-size: 22px; font-weight: 600; letter-spacing: -0.3px; margin-bottom: 10px; }
     .days { display: grid; gap: 4px; }
     .rows { display: flex; flex-direction: column; }
     .row {
@@ -34,8 +33,6 @@ import { WeatherDayTile } from './weather-day-tile';
     .empty { padding: 20px 0; color: var(--ion-color-medium, #5f5f5f); font-size: 14px; }
   `],
   template: `
-    @if (locationName()) { <div class="title">{{ locationName() }}</div> }
-
     @if (days().length) {
       @if (orientation() === 'vertical') {
         <div class="rows">
@@ -68,7 +65,6 @@ import { WeatherDayTile } from './weather-day-tile';
 })
 export class WeatherForecastOverview {
   public days = input.required<WeatherModel[]>();
-  public locationName = input('');
   public orientation = input<'horizontal' | 'vertical'>('horizontal');
   public emptyLabel = input('');
 

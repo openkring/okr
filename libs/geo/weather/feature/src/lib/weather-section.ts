@@ -41,30 +41,34 @@ import type { WeatherRainRadar } from './weather-rain-radar';
   styles: [`
     ion-card { margin: 0; padding: 0; border: 0; box-shadow: none !important; }
     ion-card-content { padding: 12px 16px 16px; }
-    .radar-host { display: block; min-height: 320px; }
+    .place { font-size: 14px; font-weight: 500; color: var(--ion-color-medium, #5f5f5f); margin: -4px 0 12px; }
   `],
   template: `
     @if (section(); as section) {
       <ion-card>
         <okr-optional-card-header [title]="title()" [subTitle]="section.subTitle" />
         <ion-card-content>
+          <!-- one header for every widget: card title above, the place below it; a map has many -->
+          @if (section.properties.variant !== 'map' && placeLabel()) {
+            <div class="place">{{ placeLabel() }}</div>
+          }
           @switch (section.properties.variant) {
 
             @case ('day-horizontal') {
               @if (today(); as day) {
-                <okr-weather-day-pill [daily]="day.daily" [locationName]="locationName()" />
+                <okr-weather-day-pill [daily]="day.daily" />
               } @else { <div>{{ i18n.empty() }}</div> }
             }
 
             @case ('day-vertical') {
               @if (today(); as day) {
-                <okr-weather-day-tile [daily]="day.daily" [locationName]="locationName()" />
+                <okr-weather-day-tile [daily]="day.daily" [date]="day.date" />
               } @else { <div>{{ i18n.empty() }}</div> }
             }
 
             @case ('forecast_overview') {
               <okr-weather-forecast-overview
-                [days]="days()" [locationName]="locationName()"
+                [days]="days()"
                 [orientation]="section.properties.orientation ?? 'horizontal'"
                 [emptyLabel]="i18n.empty()" />
             }
@@ -85,7 +89,6 @@ import type { WeatherRainRadar } from './weather-rain-radar';
             @case ('forecast_detail') {
               <okr-weather-forecast-detail
                 [days]="days()" [dayLabels]="dayLabels()"
-                [titleLabel]="i18n.local_forecast()" [placeLabel]="placeLabel()"
                 [probabilityLabel]="i18n.precipitation_prob()"
                 [sunshineLabel]="i18n.sunshine_duration()" [windLabel]="i18n.wind_and_gusts()"
                 [rangeLabel]="i18n.range_label()" [rangeOneLabel]="i18n.range_one()"
@@ -97,7 +100,9 @@ import type { WeatherRainRadar } from './weather-rain-radar';
             }
 
             @case ('rain_radar') {
-              <div class="radar-host" #radarHost></div>
+              <!-- an ng-container, not a div: createComponent inserts AFTER its anchor, so a sized
+                   div host left an empty block above the map -->
+              <ng-container #radarHost />
               @if (!radarRef()) { <okr-spinner /> }
             }
           }
@@ -151,12 +156,10 @@ export class WeatherSectionComponent {
 
   private location = computed(() => this.locations().find((l) => l.okey === this.effectiveLocationKey()));
 
-  protected locationName = computed(() => this.location()?.name ?? '');
-
   protected placeLabel = computed(() => {
     const loc = this.locations().find((l) => l.okey === this.effectiveLocationKey());
     if (!loc) return '';
-    return loc.seaLevel ? `${loc.name} (${loc.seaLevel} m ü. M.)` : loc.name;
+    return loc.seaLevel ? `${loc.name} (${loc.seaLevel} ${this.i18n.elevation()})` : loc.name;
   });
 
   /** The configured days, forecast only — the archive is read by other views, not by a widget. */

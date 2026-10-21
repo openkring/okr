@@ -55,9 +55,6 @@ const MIN_BAR_PITCH_PX = 6;
   imports: [NgTemplateOutlet, WeatherIcon, IonSegment, IonSegmentButton, IonLabel],
   styles: [`
     :host { display: block; }
-    .head { text-align: center; margin-bottom: 10px; }
-    .head .title { font-size: 21px; font-weight: 600; letter-spacing: -0.3px; }
-    .head .place { font-size: 14px; color: var(--ion-color-medium, #5f5f5f); margin-top: 2px; }
     ion-segment { max-width: 420px; margin: 0 auto 14px; }
     ion-segment-button { min-height: 32px; font-size: 13px; text-transform: none; }
     .tag {
@@ -96,11 +93,6 @@ const MIN_BAR_PITCH_PX = 6;
     .empty { padding: 20px 0; color: var(--ion-color-medium, #5f5f5f); font-size: 14px; }
   `],
   template: `
-    <div class="head">
-      <div class="title">{{ titleLabel() }}</div>
-      @if (placeLabel()) { <div class="place">{{ placeLabel() }}</div> }
-    </div>
-
     @if (hours().length > 1) {
       @if (rangeOptions().length > 1) {
         <ion-segment [value]="range()" (ionChange)="pickRange($event.detail.value)"
@@ -191,8 +183,6 @@ export class WeatherForecastDetail {
   public days = input.required<WeatherModel[]>();
   /** Already-formatted weekday + date per day, in the same order as `days` (e.g. "Mi 21.10."). */
   public dayLabels = input<string[]>([]);
-  public titleLabel = input('');
-  public placeLabel = input('');
   public probabilityLabel = input('');
   public sunshineLabel = input('');
   public windLabel = input('');
