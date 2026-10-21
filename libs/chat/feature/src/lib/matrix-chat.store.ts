@@ -1,12 +1,12 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
+import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { catchError, from, map, of, startWith, switchMap, timer } from 'rxjs';
 import { Visibility, type MatrixCall } from 'matrix-js-sdk';
 import { captureMessage } from '@sentry/angular';
-import { AlertController, ModalController, ToastController } from '@ionic/angular';
+import { ActionSheetController, AlertController, ModalController, ToastController } from '@ionic/angular';
 
 import { AppStore } from '@okr/shared-feature';
 import { AvatarInfo, ChatReminderModel, GroupModel, MatrixMessage, MatrixReadReceipt, MatrixRoom, MatrixUser, PersonModel } from '@okr/shared-models';
@@ -16,10 +16,11 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { ActivityService } from '@okr/activity-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
-import { ChatReminderService, MatrixChatService, MatrixRoomPrefsService, MatrixJumpResult, MatrixPollData } from '@okr/chat-data-access';
-import { AvailablePinboard, AdhocChatFormModel, newAdhocChatForm, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, pinboardBroadcastCount, pinboardReplyDraft, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, isOwnNotesRoom, NotesRoomOwner, buildBookmarkContent, buildForwardContent, isForwardable, videoAlbumFallsBackToSynapse, readBookmark, reminderTitle } from '@okr/chat-util';
+import { ChatReminderService, MatrixChatService, MatrixPinsService, MatrixRoomPrefsService, MatrixJumpResult, MatrixPollData } from '@okr/chat-data-access';
+import { AvailablePinboard, AdhocChatFormModel, newAdhocChatForm, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, pinboardBroadcastCount, pinboardReplyDraft, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, isOwnNotesRoom, NotesRoomOwner, buildBookmarkContent, buildForwardContent, isForwardable, videoAlbumFallsBackToSynapse, readBookmark, reminderTitle, PinPreview } from '@okr/chat-util';
 
 import { RoomEditModal } from './room-edit.modal';
+import { PIN_CLOCK_MS, pinComputeds, pinMethods, previewOfMessage } from './pins.feature';
 
 export type { MatrixChatI18n };
 
@@ -63,6 +64,10 @@ export const _MatrixChatStore = signalStore(
     activityService: inject(ActivityService),
     matrixService: inject(MatrixChatService),
     roomPrefs: inject(MatrixRoomPrefsService),
+    pinsService: inject(MatrixPinsService),
+    actionSheetController: inject(ActionSheetController),
+    /** Coarse clock for pin expiry (spec 1.109 §6): an expired pin disappears within a minute. */
+    pinClock: toSignal(timer(0, PIN_CLOCK_MS).pipe(map(() => Date.now())), { initialValue: Date.now() }),
     reminderService: inject(ChatReminderService),
     avatarService: inject(AvatarService),
     modalController: inject(ModalController),
@@ -400,6 +405,28 @@ export const _MatrixChatStore = signalStore(
       }),
     };
   }),
+
+  // Pins (spec 1.109 §6): room kind, the «Für alle» right and the active pins — see pins.feature.ts.
+  withComputed((state) => pinComputeds(state)),
+  withProps((store) => ({
+    /** Sender and snippet of the banner pin when it is not in the loaded timeline. */
+    pinPreviewResource: rxResource({
+      params: resourceParams(() => ({ roomId: store.currentRoomId() ?? '', eventId: store.currentPins()[0]?.eventId ?? '' })),
+      stream: ({ params }) => params.roomId && params.eventId
+        ? from(store.matrixService.getEventPreview(params.roomId, params.eventId))
+        : of(undefined),
+    }),
+  })),
+  withComputed((state) => ({
+    /** What the pin banner shows: the loaded message, else the fetched event, else a generic text. */
+    bannerPreview: computed((): PinPreview => {
+      const pin = state.currentPins()[0];
+      if (!pin) return { senderName: '', snippet: '' };
+      const loaded = (state.messagesResource.value() ?? []).find(m => m.eventId === pin.eventId && !m.isRedacted);
+      if (loaded) return previewOfMessage(loaded);
+      return state.pinPreviewResource.value() ?? { senderName: '', snippet: state.i18n.pin_unknown() };
+    }),
+  })),
 
   withComputed((state) => ({
     /**
@@ -1657,7 +1684,9 @@ export const _MatrixChatStore = signalStore(
         patchState(store, { currentRoomId: undefined, selectedThreadId: undefined, hasMoreHistory: true });
       },
     };
-  })
+  }),
+  // Pin / unpin / banner menu / pin list (spec 1.109 §6) — see pins.feature.ts.
+  withMethods((store) => pinMethods(store)),
 );
 
 

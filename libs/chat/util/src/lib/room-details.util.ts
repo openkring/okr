@@ -79,3 +79,8 @@ export function roomKindOf(p: { isDirect: boolean; isNotes: boolean; isSupport: 
   if (p.groupKind === 'group' || p.groupKind === 'pinboard') return p.groupKind;
   return 'other';
 }
+
+/** Localpart of a canonical alias (`#group_x:server` → `group_x`); '' when there is none. */
+export function aliasLocalpartOf(alias: string | undefined): string {
+  return alias?.startsWith('#') ? alias.slice(1).split(':')[0] : '';
+}

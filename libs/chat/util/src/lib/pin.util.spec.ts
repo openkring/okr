@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { activePins, expiredSharedPins, isPinActive, PIN_DURATIONS, pinUntil, withoutPersonalPin, withPersonalPin } from './pin.util';
+import { activePins, ActivePin, expiredSharedPins, isEventPinned, isPinActive, PIN_DURATIONS, pinPreviewOf, pinUntil, unpinnableScopes, withoutPersonalPin, withPersonalPin } from './pin.util';
 
 describe('pinUntil', () => {
   it('adds the duration to now', () => {
@@ -99,5 +99,55 @@ describe('withoutPersonalPin', () => {
 
   it('copes with missing content', () => {
     expect(withoutPersonalPin(undefined, 'a', 0)).toEqual({});
+  });
+});
+
+describe('unpinnableScopes', () => {
+  const pin = (eventId: string, scope: 'personal' | 'shared'): ActivePin => ({ eventId, scope, until: null, order: 0 });
+  const both = [pin('$a', 'shared'), pin('$a', 'personal'), pin('$b', 'personal'), pin('$c', 'shared')];
+
+  it('offers both scopes when pinned twice and the shared right is there', () => {
+    expect(unpinnableScopes('$a', both, true)).toEqual(['shared', 'personal']);
+  });
+
+  it('drops the shared scope without the right', () => {
+    expect(unpinnableScopes('$a', both, false)).toEqual(['personal']);
+    expect(unpinnableScopes('$c', both, false)).toEqual([]);
+  });
+
+  it('returns the single scope a pin has', () => {
+    expect(unpinnableScopes('$b', both, true)).toEqual(['personal']);
+    expect(unpinnableScopes('$c', both, true)).toEqual(['shared']);
+  });
+
+  it('is empty for an unpinned event', () => {
+    expect(unpinnableScopes('$x', both, true)).toEqual([]);
+  });
+
+  it('isEventPinned looks at both scopes', () => {
+    expect(isEventPinned('$c', both)).toBe(true);
+    expect(isEventPinned('$x', both)).toBe(false);
+  });
+});
+
+describe('pinPreviewOf', () => {
+  it('uses the body of a text message', () => {
+    expect(pinPreviewOf('m.room.message', { msgtype: 'm.text', body: '  Hallo\n  zusammen ' }, 'Anna'))
+      .toEqual({ senderName: 'Anna', snippet: 'Hallo zusammen' });
+  });
+
+  it('marks media with a clip and the file name', () => {
+    expect(pinPreviewOf('m.room.message', { msgtype: 'm.file', body: 'plan.pdf' }, 'Bea')?.snippet).toBe('📎 plan.pdf');
+  });
+
+  it('shows the question of a poll', () => {
+    const content = { 'org.matrix.msc3381.poll': { question: { body: 'Wann?' }, answers: [] } };
+    expect(pinPreviewOf('org.matrix.msc3381.poll.start', content, 'Cem')?.snippet).toBe('Wann?');
+  });
+
+  it('is undefined for encrypted, redacted or missing content', () => {
+    expect(pinPreviewOf('m.room.encrypted', { ciphertext: 'x' }, 'A')).toBeUndefined();
+    expect(pinPreviewOf('m.room.message', {}, 'A')).toBeUndefined();
+    expect(pinPreviewOf('m.room.message', undefined, 'A')).toBeUndefined();
   });
 });

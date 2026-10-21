@@ -11,7 +11,7 @@ import { AppStore } from '@okr/shared-feature';
 import { ChatStatusService } from '@okr/shared-data-access';
 import { checkVideoLimits, debugData, debugMessage } from '@okr/shared-util-core';
 import { OKR_VIDEO_FIELD, videoLink } from '@okr/content-document-util';
-import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError, VideoUploadError, buildPollContent, PollAnswerDef, POLL_START_EVENT, PinboardInput, AvailablePinboard, UNREAD_FROM_EVENT, MARKED_UNREAD_EVENT, flaggedUnreadFrom, indexBookmarkEntries, bookmarkedMessageIds } from '@okr/chat-util';
+import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError, VideoUploadError, buildPollContent, PollAnswerDef, POLL_START_EVENT, PinboardInput, AvailablePinboard, UNREAD_FROM_EVENT, MARKED_UNREAD_EVENT, flaggedUnreadFrom, indexBookmarkEntries, bookmarkedMessageIds, PinPreview, pinPreviewOf } from '@okr/chat-util';
 
 import { mediaMimeHint, mxcAvatarHttpUrl } from './matrix-helpers';
 import { MatrixMediaService } from './matrix-media.service';
@@ -774,6 +774,29 @@ export class MatrixChatService {
   public getMemberDisplayName(roomId: string, userId: string): string {
     const member = this.client?.getRoom(roomId)?.getMember(userId);
     return resolveMatrixDisplayName(member?.rawDisplayName, userId);
+  }
+
+  /**
+   * Sender and snippet of one event (a pinned message, spec 1.109 §6): from the loaded timeline
+   * when it is there, otherwise fetched alone. Undefined when it cannot be read (deleted,
+   * encrypted without keys, network) — the caller shows a generic text then.
+   */
+  public async getEventPreview(roomId: string, eventId: string): Promise<PinPreview | undefined> {
+    const client = this.client;
+    if (!client) return undefined;
+    try {
+      const local = client.getRoom(roomId)?.findEventById(eventId);
+      if (local) {
+        if (local.isRedacted()) return undefined;
+        return pinPreviewOf(local.getType(), local.getContent(), this.getMemberDisplayName(roomId, local.getSender() ?? ''));
+      }
+      const raw = await client.fetchRoomEvent(roomId, eventId);
+      if (raw.unsigned?.redacted_because) return undefined;
+      return pinPreviewOf(raw.type ?? '', raw.content as Record<string, unknown> | undefined, this.getMemberDisplayName(roomId, raw.sender ?? ''));
+    } catch (error) {
+      console.warn('MatrixChatService.getEventPreview: event not available:', error);
+      return undefined;
+    }
   }
 
   /**

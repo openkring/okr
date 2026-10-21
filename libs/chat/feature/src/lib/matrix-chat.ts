@@ -15,7 +15,7 @@ import { ChatStatusService } from '@okr/shared-data-access';
 import { VideoUrlService } from '@okr/content-document-data-access';
 import { videoDocKeyOf, videoLink } from '@okr/content-document-util';
 
-import { MatrixMessageInput, MatrixMessageList, MatrixRoomList, PollDetailModal, ReactionDetailsModal, ReminderPicker } from '@okr/chat-ui';
+import { MatrixMessageInput, MatrixMessageList, MatrixRoomList, PinBanner, PollDetailModal, ReactionDetailsModal, ReminderPicker } from '@okr/chat-ui';
 import { MatrixPollData } from '@okr/chat-data-access';
 import { buildEditedPollAnswers, canEditPoll, parsePollContent, convertHeicToJpeg, groupRoomAliasLocalpart, shouldDeferAskRoom, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, readBookmark, isTrustedBookmarkEntry, ChatBookmark, resolvePermalinkTarget, shouldSendReceipt, MessageDraft, UploadTooLargeError, availablePresets, reminderDueAt, ReminderPreset } from '@okr/chat-util';
 
@@ -33,7 +33,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
   standalone: true,
   imports: [
     SvgIconPipe, RouterLink,
-    Spinner, MatrixRoomList, MatrixMessageList, MatrixMessageInput,
+    Spinner, MatrixRoomList, MatrixMessageList, MatrixMessageInput, PinBanner,
     IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonSearchbar, IonText, IonList, IonListHeader, IonItem, IonLabel, IonNote
   ],
   styles: [`
@@ -462,6 +462,20 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                       </ion-buttons>
                     </ion-toolbar>
                   </ion-header>
+                }
+
+                <!-- Pinned messages (spec 1.109 §6): the newest active pin, shared before personal -->
+                @if (store.currentPins()[0]; as pin) {
+                  <okr-pin-banner
+                    [pin]="pin"
+                    [index]="1"
+                    [count]="store.currentPins().length"
+                    [senderName]="store.bannerPreview().senderName"
+                    [snippet]="store.bannerPreview().snippet"
+                    [i18n]="store.i18n"
+                    (jump)="store.jumpToPin()"
+                    (menu)="store.openPinMenu()"
+                  />
                 }
 
                 <!-- Message List or Loading Spinner -->
@@ -1004,6 +1018,13 @@ export class MatrixChat implements OnDestroy {
       if (isReady && !this.isRequestingRoomAccess && (Date.now() - lastAttempt) > 15_000) {
         untracked(() => this.requestRoomAccess(roomAlias));
       }
+    });
+    // Expired shared pins leave m.room.pinned_events (and Element) once per room and session
+    // (spec 1.109 §6). Fire and forget — never blocks opening the room.
+    effect(() => {
+      const roomId = this.store.currentRoomId();
+      if (!roomId || !this.store.isMatrixInitialized() || !this.store.currentRoom()) return;
+      untracked(() => this.store.cleanupExpiredPins(roomId));
     });
     // Persist the last opened room so the next visit lands on it (browser only).
     effect(() => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getRoomDetailsSections, roomKindOf, RoomDetailsCtx, RoomKind } from './room-details.util';
+import { aliasLocalpartOf, getRoomDetailsSections, roomKindOf, RoomDetailsCtx, RoomKind } from './room-details.util';
 
 const ctx = (kind: RoomKind, patch: Partial<RoomDetailsCtx> = {}): RoomDetailsCtx => ({
   kind,
@@ -156,5 +156,16 @@ describe('roomKindOf', () => {
 
   it('falls back to other', () => {
     expect(roomKindOf(base)).toBe('other');
+  });
+});
+
+describe('aliasLocalpartOf', () => {
+  it('strips the sigil and the server', () => {
+    expect(aliasLocalpartOf('#group_scs_support:bkchat.etke.host')).toBe('group_scs_support');
+  });
+
+  it('is empty without an alias', () => {
+    expect(aliasLocalpartOf(undefined)).toBe('');
+    expect(aliasLocalpartOf('Ein Thema')).toBe('');
   });
 });

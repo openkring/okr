@@ -3,6 +3,9 @@
  * `org.okr.pin_expiry` room state; personal pins live in the `org.okr.pins` room account data.
  * Time is always a parameter.
  */
+import type { MatrixMessage } from '@okr/shared-models';
+
+import { bookmarkSnippet } from './bookmark.util';
 
 /** Room account data: `{ [eventId]: until (ms) | null }`, `null` = never expires. */
 export const OKR_PINS_EVENT = 'org.okr.pins';
@@ -110,4 +113,46 @@ export function withoutPersonalPin(content: Record<string, unknown> | undefined,
   const result = pruned(content, now);
   delete result[eventId];
   return result;
+}
+
+/**
+ * Icon of a pin (banner, pin menu). The icon repository has no dedicated pin glyph yet, so the
+ * location marker stands in; swap the name here once a `pin` icon is uploaded.
+ */
+export const PIN_ICON = 'location';
+
+/** Whether `eventId` is pinned in any scope. */
+export function isEventPinned(eventId: string, pins: readonly ActivePin[]): boolean {
+  return pins.some((p) => p.eventId === eventId);
+}
+
+/**
+ * The scopes in which the caller may unpin `eventId`: personal always, shared only with the
+ * right (`canUnpinShared`). Two entries mean the caller must be asked which one.
+ */
+export function unpinnableScopes(eventId: string, pins: readonly ActivePin[], canUnpinShared: boolean): PinScope[] {
+  const scopes = new Set(pins.filter((p) => p.eventId === eventId).map((p) => p.scope));
+  const result: PinScope[] = [];
+  if (scopes.has('shared') && canUnpinShared) result.push('shared');
+  if (scopes.has('personal')) result.push('personal');
+  return result;
+}
+
+/** What the banner and the pin list show for a pinned message. */
+export interface PinPreview {
+  senderName: string;
+  snippet: string;
+}
+
+/**
+ * Preview of a pinned event from its raw type and content (a message that is not in the loaded
+ * timeline). Undefined when nothing readable is left: encrypted, redacted or empty.
+ */
+export function pinPreviewOf(eventType: string, content: Record<string, unknown> | undefined, senderName: string): PinPreview | undefined {
+  if (!content || eventType === 'm.room.encrypted') return undefined;
+  const msgtype = content['msgtype'];
+  const type = eventType === 'm.room.message' ? (typeof msgtype === 'string' ? msgtype : 'm.text') : eventType;
+  const body = typeof content['body'] === 'string' ? content['body'] : '';
+  const snippet = bookmarkSnippet({ type, body, content } as MatrixMessage);
+  return snippet ? { senderName, snippet } : undefined;
 }

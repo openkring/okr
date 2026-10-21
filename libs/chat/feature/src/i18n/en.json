@@ -647,7 +647,8 @@
     "of": "{i} of {n} pinned",
     "goto": "Go to message",
     "list": "All pinned ({n})",
-    "unpinWhich": "Which pin do you want to remove?"
+    "unpinWhich": "Which pin do you want to remove?",
+    "unknown": "Pinned message"
   },
   "reactions": {
     "people": "{n} people",

@@ -111,6 +111,7 @@ export const MATRIX_CHAT_I18N_KEYS = {
   pin_goto:                  PFX + 'pin.goto',
   pin_list:                  PFX + 'pin.list',
   pin_unpin_which:           PFX + 'pin.unpinWhich',
+  pin_unknown:               PFX + 'pin.unknown',
   reactions_people:          PFX + 'reactions.people',
   reactions_also:            PFX + 'reactions.also',
   info_title:                PFX + 'info.title',

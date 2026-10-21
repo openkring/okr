@@ -647,7 +647,8 @@
     "of": "{i} de {n} fijados",
     "goto": "Ir al mensaje",
     "list": "Todos los fijados ({n})",
-    "unpinWhich": "¿Qué fijado quieres quitar?"
+    "unpinWhich": "¿Qué fijado quieres quitar?",
+    "unknown": "Mensaje fijado"
   },
   "reactions": {
     "people": "{n} personas",

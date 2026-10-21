@@ -156,6 +156,7 @@ const MODAL_ALLOWLIST = {
   'libs/finance/expense/feature/src/lib/expense-detail.modal.ts': 'read-only view: renders the edit form in readOnly mode, nothing to save',
   'libs/auth/feature/src/lib/login.modal.ts': 'auth form with its own submit, nothing is edited',
   'libs/chat/feature/src/lib/forward-message.modal.ts': 'picker: choose target chats for forwarding',
+  'libs/chat/feature/src/lib/pin-message.modal.ts': 'picker: pin duration and scope',
   'libs/shared/ui/src/lib/distribution-list.modal.ts': 'picker: choose recipients for the email composer',
   'libs/calevent/ui/src/lib/regression-selection.modal.ts': 'picker: scope of a series change (this / future / all)',
   'libs/calevent/ui/src/lib/organiser-contact.modal.ts': 'action picker: whom to contact and how',

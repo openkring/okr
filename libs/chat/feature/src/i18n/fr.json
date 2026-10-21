@@ -647,7 +647,8 @@
     "of": "{i} sur {n} épinglés",
     "goto": "Aller au message",
     "list": "Tous les épinglés ({n})",
-    "unpinWhich": "Quelle épingle veux-tu détacher ?"
+    "unpinWhich": "Quelle épingle veux-tu détacher ?",
+    "unknown": "Message épinglé"
   },
   "reactions": {
     "people": "{n} personnes",

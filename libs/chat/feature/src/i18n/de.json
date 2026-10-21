@@ -647,7 +647,8 @@
     "of": "{i} von {n} angehefteten",
     "goto": "Zur Nachricht",
     "list": "Alle angehefteten ({n})",
-    "unpinWhich": "Welche Anheftung möchtest du lösen?"
+    "unpinWhich": "Welche Anheftung möchtest du lösen?",
+    "unknown": "Angeheftete Nachricht"
   },
   "reactions": {
     "people": "{n} Personen",
