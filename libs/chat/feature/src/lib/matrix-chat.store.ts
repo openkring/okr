@@ -1432,7 +1432,7 @@ export const _MatrixChatStore = signalStore(
           isAdmin: hasRole('admin', store.appStore.currentUser()),
           i18n: store.i18n,
         });
-        const modal = await store.modalController.create({ component: MessageInfoModal, componentProps: props });
+        const modal = await store.modalController.create({ component: MessageInfoModal, componentProps: props, cssClass: 'auto-height-modal' });
         await modal.present();
         const { role, data } = await modal.onDidDismiss();
         return role === 'reaction' && typeof data === 'string' ? data : undefined;

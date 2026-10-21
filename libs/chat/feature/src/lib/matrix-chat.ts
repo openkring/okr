@@ -1397,6 +1397,7 @@ export class MatrixChat implements OnDestroy {
     const sheet = await this.modalController.create({
       component: MessageActionsSheet,
       componentProps: { actions, labels: buildMessageActionLabels(this.store.i18n) },
+      cssClass: 'auto-height-modal',
       breakpoints: [0, 1],
       initialBreakpoint: 1,
     });
@@ -1543,6 +1544,7 @@ export class MatrixChat implements OnDestroy {
       const i18n = this.store.i18n;
       const modal = await this.modalController.create({
         component: ReactionDetailsModal,
+        cssClass: 'auto-height-modal',
         componentProps: {
           emoji: event.emoji,
           rows,

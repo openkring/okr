@@ -151,7 +151,6 @@
     "copy": "Copy message",
     "share": "Share file",
     "download": "Download file",
-    "raw": "Show raw data",
     "react": {
       "header": "Choose reaction",
       "add": "Add reaction",

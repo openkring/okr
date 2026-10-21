@@ -100,6 +100,14 @@ describe('getMessageActions', () => {
     }
   });
 
+  it('offers no unreadFromHere to a kiosk user (1.104)', () => {
+    expect(run({ isKiosk: true }).list).not.toContain('unreadFromHere');
+  });
+
+  it('offers no reminder on a bookmark entry to a kiosk user', () => {
+    expect(run({ isBookmarkEntry: true, isKiosk: true }).list).toEqual(['bookmark.open']);
+  });
+
   it('hides bookmark and remind when already bookmarked', () => {
     const a = run({ isBookmarked: true });
     expect(a.tiles).not.toContain('bookmark');

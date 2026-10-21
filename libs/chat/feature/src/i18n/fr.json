@@ -151,7 +151,6 @@
     "copy": "Copier le message",
     "share": "Partager le fichier",
     "download": "Télécharger le fichier",
-    "raw": "Afficher les données brutes",
     "react": {
       "header": "Choisir une réaction",
       "add": "Ajouter une réaction",

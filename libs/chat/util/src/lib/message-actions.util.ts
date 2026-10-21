@@ -46,7 +46,7 @@ export function getMessageActions(ctx: MessageActionsCtx): MessageActions {
     return {
       reactions: false,
       tiles: [],
-      list: actions(['bookmark.open', 'bookmark.reminder']),
+      list: actions(['bookmark.open', !ctx.isKiosk && 'bookmark.reminder']),
       danger: actions(['delete'], true),
     };
   }
@@ -72,7 +72,7 @@ export function getMessageActions(ctx: MessageActionsCtx): MessageActions {
     social && !pinboard && 'thread',
     !ctx.isKiosk && (ctx.isPinned ? 'unpin' : 'pin'),
     social && !ctx.isKiosk && !ctx.isBookmarked && 'bookmark.remind',
-    social && !ctx.isAuthor && 'unreadFromHere',
+    social && !ctx.isAuthor && !ctx.isKiosk && 'unreadFromHere',
     ctx.hasFileMedia && 'share',
     ctx.hasFileMedia && !ctx.isNative && 'download',
     !ctx.isKiosk && 'info',

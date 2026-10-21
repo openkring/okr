@@ -190,7 +190,6 @@ export const MATRIX_CHAT_I18N_KEYS = {
   msg_copy:                  PFX + 'message.copy',
   msg_share:                 PFX + 'message.share',
   msg_download:              PFX + 'message.download',
-  msg_raw:                   PFX + 'message.raw',
   msg_react_header:          PFX + 'message.react.header',
   msg_react_add:             PFX + 'message.react.add',
   msg_react_cancel:          PFX + 'message.react.cancel',

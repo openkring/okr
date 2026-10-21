@@ -184,6 +184,7 @@ export function pinMethods(store: PinMethodDeps) {
     const modal = await store.modalController.create({
       component: PinnedMessagesModal,
       componentProps: { items },
+      cssClass: 'auto-height-modal',
     });
     await modal.present();
     const { data, role } = await modal.onDidDismiss<string>();
@@ -205,6 +206,7 @@ export function pinMethods(store: PinMethodDeps) {
       const modal = await store.modalController.create({
         component: PinMessageModal,
         componentProps: { canPinForAll },
+        cssClass: 'auto-height-modal',
       });
       await modal.present();
       const { data, role } = await modal.onDidDismiss<PinMessageChoice>();
