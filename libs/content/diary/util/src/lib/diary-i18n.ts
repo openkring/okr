@@ -131,6 +131,7 @@ export const DIARY_I18N_KEYS = {
   nav_next:               PFX + 'view.navNext',
   nav_up:                 PFX + 'view.navUp',
   media_load_failed:      PFX + 'view.mediaLoadFailed',
+  media_reload:           PFX + 'view.mediaReload',
   jass_draw:              PFX + 'jass.draw',
   jass_match:             PFX + 'jass.match',
   jass_close:             PFX + 'jass.close',

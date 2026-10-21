@@ -191,7 +191,11 @@ export const DiaryStore = signalStore(
      * The thumbnails come inline as `data:` URLs; the cache never outlives the list page.
      */
     const mediaCache = new Map<string, Promise<DiaryMediaResult>>();
-    const loadMedia = (diary: DiaryModel): Promise<DiaryMediaResult> => {
+    const loadMedia = (diary: DiaryModel, reload = false): Promise<DiaryMediaResult> => {
+      if (reload) {   // the author changed the Drive folder: drop the listing and its slider renditions
+        mediaCache.delete(diary.okey);
+        for (const key of [...imageCache.keys()]) if (key.startsWith(`${diary.okey}/`)) imageCache.delete(key);
+      }
       let pending = mediaCache.get(diary.okey);
       if (!pending) {
         pending = store.mediaService.list(diary.okey);

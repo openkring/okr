@@ -124,6 +124,10 @@ export interface DiaryNeighbours {
           <ion-icon slot="start" src="{{ 'folder-open' | svgIcon }}" />
           <ion-label>{{ i18n().open_drive() }}</ion-label>
         </ion-item>
+        <ion-item lines="none" button [detail]="false" [disabled]="media() === undefined && !mediaFailed()" (click)="reloadMedia()">
+          <ion-icon slot="start" src="{{ 'reload' | svgIcon }}" />
+          <ion-label>{{ i18n().media_reload() }}</ion-label>
+        </ion-item>
       }
 
       <!-- markdown, sanitized by Angular; images are stripped (they live in Drive, decision 6) -->
@@ -155,7 +159,7 @@ export class DiaryViewModal {
   public readonly openPerson = input.required<(a: AvatarInfo) => Promise<void>>();
   public readonly openLocation = input.required<(a: AvatarInfo) => Promise<void>>();
   /** the day folder's Drive files (spec 1.106 §2.3) — the store caches per entry */
-  public readonly loadMedia = input.required<(d: DiaryModel) => Promise<DiaryMediaResult>>();
+  public readonly loadMedia = input.required<(d: DiaryModel, reload?: boolean) => Promise<DiaryMediaResult>>();
   /** one image of the day folder at slider size, as a `data:` URL — the store caches per file */
   public readonly loadImage = input.required<(d: DiaryModel, fileId: string) => Promise<string>>();
   /** fetches and saves the measured weather of a day; resolves to the saved entry, undefined = none */
@@ -266,6 +270,16 @@ export class DiaryViewModal {
     } finally {
       this.weatherBusy.set(false);
     }
+  }
+
+  /** Reads the day folder again — new or removed photos, videos and files show up without leaving the entry. */
+  protected reloadMedia(): void {
+    const shown = this.current();
+    this.media.set(undefined);
+    this.mediaFailed.set(false);
+    this.loadMedia()(shown, true)
+      .then(media => { if (this.current().okey === shown.okey) this.media.set(media); })
+      .catch(() => { if (this.current().okey === shown.okey) this.mediaFailed.set(true); });
   }
 
   protected go(target: DiaryModel | undefined): void {

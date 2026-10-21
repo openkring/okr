@@ -173,7 +173,8 @@
     "navPrev": "Vorheriger Tag",
     "navNext": "Nächster Tag",
     "navUp": "Übersicht",
-    "mediaLoadFailed": "Bilder und Dokumente aus Drive konnten nicht geladen werden."
+    "mediaLoadFailed": "Bilder und Dokumente aus Drive konnten nicht geladen werden.",
+    "mediaReload": "Neu aus Google Drive laden"
   },
   "diaryState": {
     "all": {

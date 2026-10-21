@@ -173,7 +173,8 @@
     "navPrev": "Jour précédent",
     "navNext": "Jour suivant",
     "navUp": "Vue d'ensemble",
-    "mediaLoadFailed": "Les photos et documents de Drive n'ont pas pu être chargés."
+    "mediaLoadFailed": "Les photos et documents de Drive n'ont pas pu être chargés.",
+    "mediaReload": "Recharger depuis Google Drive"
   },
   "diaryState": {
     "all": {
