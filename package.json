@@ -1,6 +1,6 @@
 {
   "name": "okr",
-  "version": "7.45.1",
+  "version": "7.45.2",
   "packageManager": "pnpm@12.10.1",
   "license": "MIT",
   "type": "module",
