@@ -38,6 +38,7 @@
     { "path": "../../../content/folder/data-access/tsconfig.lib.json" },
     { "path": "../../../content/folder/ui/tsconfig.lib.json" },
     { "path": "../../../content/folder/util/tsconfig.lib.json" },
+    { "path": "../../../finance/expense/feature/tsconfig.lib.json" },
     { "path": "../../../forms/data-access/tsconfig.lib.json" },
     { "path": "../../../forms/ui/tsconfig.lib.json" },
     { "path": "../../../geo/location/data-access/tsconfig.lib.json" },

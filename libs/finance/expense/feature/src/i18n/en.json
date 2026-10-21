@@ -104,7 +104,6 @@
     "view": "View",
     "delete": "Delete",
     "redoOcr": "Run OCR again",
-    "openTask": "Open task",
     "openBooking": "Open booking",
     "cancel": "Cancel",
     "edit": "Edit"
@@ -174,5 +173,23 @@
     "manual": "Please enter this payment manually",
     "openOrder": "Open payment order",
     "none": "No payment prepared yet"
+  },
+  "done": {
+    "header": "Mark expense as done",
+    "intro": "When you mark this expense as «Done», the following happens:",
+    "effectTask": "The related task is completed as well.",
+    "effectPayment": "The refund is added as a draft to the open expense payment order, provided bank details are on file.",
+    "effectBooking": "The booking in the journal stays as it is.",
+    "editableTitle": "Afterwards you can still change:",
+    "editable": "Description, account, cost centre, cost unit, note and status",
+    "lockedTitle": "No longer changeable, because the expense is already booked:",
+    "locked": "Amount, currency and transfer target",
+    "unlocked": "Amount, currency and transfer target stay changeable as long as the expense is not booked.",
+    "reopen": "If you reset the status later, a payment draft that has not been sent yet is removed again. The task stays completed.",
+    "dmHint": "The message below is sent as a direct message to {name}. Leave it empty if you do not want to send one.",
+    "dmDefault": "Thank you for your expense claim. The payment order is done, you should have the money in your account tomorrow.",
+    "confirm": "Mark as done",
+    "dmConf": "Message sent to {name}.",
+    "dmError": "The expense is done, but the message to {name} could not be sent."
   }
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { collectingMessageId, collectingOrderId, expensePaymentId, expensePaymentTransition, memberExpenseFields, pickMemberIban } from './expense.util';
+import { collectingMessageId, collectingOrderId, expensePaymentId, expensePaymentTransition, memberExpenseFields, pickMemberIban, taskToCompleteOnDone } from './expense.util';
 
 describe('memberExpenseFields', () => {
   const data = {
@@ -72,5 +72,16 @@ describe('payment ids', () => {
   it('keeps the message id within 35 characters', () => {
     expect(collectingMessageId('scs', '20261002', 1)).toBe('SCS-EXP-20261002-1');
     expect(collectingMessageId('averyveryverylongtenantname', '20261002', 12).length).toBeLessThanOrEqual(35);
+  });
+});
+
+describe('taskToCompleteOnDone', () => {
+  it('names the task on the move into done', () =>
+    expect(taskToCompleteOnDone({ status: 'processing', taskKey: 't1' }, 'done')).toBe('t1'));
+  it('does nothing for an expense already done, another status or no task', () => {
+    expect(taskToCompleteOnDone({ status: 'done', taskKey: 't1' }, 'done')).toBe('');
+    expect(taskToCompleteOnDone({ status: 'processing', taskKey: 't1' }, 'cancelled')).toBe('');
+    expect(taskToCompleteOnDone({ status: 'processing', taskKey: 't1' }, undefined)).toBe('');
+    expect(taskToCompleteOnDone({ status: 'processing' }, 'done')).toBe('');
   });
 });

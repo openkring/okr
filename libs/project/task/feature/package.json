@@ -31,6 +31,7 @@
     "@okr/system-workflow-data-access": "*",
     "@okr/system-workflow-ui": "*",
     "@okr/system-workflow-util": "*",
-    "@okr/project-project-data-access": "*"
+    "@okr/project-project-data-access": "*",
+    "@okr/finance-expense-feature": "*"
   }
 }

@@ -162,6 +162,9 @@
     },
     {
       "path": "../../../user/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../finance/expense/feature/tsconfig.lib.json"
     }
   ]
 }

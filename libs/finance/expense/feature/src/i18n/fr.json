@@ -104,7 +104,6 @@
     "view": "Afficher",
     "delete": "Supprimer",
     "redoOcr": "Relancer l'OCR",
-    "openTask": "Ouvrir la tâche",
     "openBooking": "Ouvrir l'écriture",
     "cancel": "Annuler",
     "edit": "Modifier"
@@ -174,5 +173,23 @@
     "manual": "Merci de saisir ce paiement manuellement",
     "openOrder": "Ouvrir l'ordre de paiement",
     "none": "Aucun paiement préparé pour l'instant"
+  },
+  "done": {
+    "header": "Marquer la note de frais comme terminée",
+    "intro": "Si tu marques cette note de frais comme «Terminé», voici ce qui se passe :",
+    "effectTask": "La tâche associée est également terminée.",
+    "effectPayment": "Le remboursement est ajouté comme brouillon à l'ordre de paiement des frais ouvert, si des coordonnées bancaires sont disponibles.",
+    "effectBooking": "L'écriture dans le journal reste inchangée.",
+    "editableTitle": "Ensuite, tu peux encore modifier :",
+    "editable": "Description, compte, centre de coûts, objet de coûts, note et statut",
+    "lockedTitle": "Ne peut plus être modifié, car la note de frais est déjà comptabilisée :",
+    "locked": "Montant, devise et destinataire du virement",
+    "unlocked": "Le montant, la devise et le destinataire du virement restent modifiables tant que la note de frais n'est pas comptabilisée.",
+    "reopen": "Si tu remets le statut plus tard, un brouillon de paiement pas encore transmis est retiré. La tâche reste terminée.",
+    "dmHint": "Le message ci-dessous est envoyé en message direct à {name}. Laisse-le vide si tu ne veux rien envoyer.",
+    "dmDefault": "Merci pour ta note de frais. L'ordre de paiement est fait, tu devrais avoir l'argent sur ton compte demain.",
+    "confirm": "Marquer comme terminé",
+    "dmConf": "Message envoyé à {name}.",
+    "dmError": "La note de frais est terminée, mais le message à {name} n'a pas pu être envoyé."
   }
 }

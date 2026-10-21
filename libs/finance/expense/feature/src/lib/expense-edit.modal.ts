@@ -1,13 +1,16 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonContent, ModalController, ToastController } from '@ionic/angular';
+import { Component, computed, inject, Injector, input, linkedSignal, signal } from '@angular/core';
+import { AlertController, IonContent, ModalController, ToastController } from '@ionic/angular';
 
+import { AppStore } from '@okr/shared-feature';
 import { ExpenseModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { dismissOverlay, showToast } from '@okr/shared-util-angular';
 import { lockedExpenseFields } from '@okr/shared-util-core';
 
 import { ExpenseService, UpdateExpensePayload } from '@okr/finance-expense-data-access';
-import { EXPENSE_EDIT_STATES, ExpenseEditFormValue, getExpenseEditStateCategory, toExpenseFormValue } from '@okr/finance-expense-util';
+import {
+  buildExpenseDoneMessage, EXPENSE_EDIT_STATES, ExpenseEditFormValue, expenseDoneRecipient, fillName, getExpenseEditStateCategory, toExpenseFormValue,
+} from '@okr/finance-expense-util';
 import { ExpenseEditForm } from '@okr/finance-expense-ui';
 
 import { injectExpenseCostCenters, injectExpenseView } from './expense-view';
@@ -67,7 +70,10 @@ import { injectExpenseCostCenters, injectExpenseView } from './expense-view';
 export class ExpenseEditModal {
   private readonly modalController = inject(ModalController);
   private readonly toastController = inject(ToastController);
+  private readonly alertController = inject(AlertController);
   private readonly expenseService = inject(ExpenseService);
+  private readonly appStore = inject(AppStore);
+  private readonly injector = inject(Injector);
 
   // inputs (set via componentProps by ExpenseStore.editExpense)
   public readonly expense = input.required<ExpenseModel>();
@@ -146,6 +152,15 @@ export class ExpenseEditModal {
     // Only send the status when the treasurer actually moved it: echoing back an untouched
     // 'draft' would be refused by the callable's VALID_STATUS and make the save impossible.
     if (value.status !== this.storedStatus()) payload.status = value.status;
+
+    // Moving INTO 'done' is confirmed first: it closes the task and queues the refund, and the
+    // treasurer may send the member a thank-you DM. Cancelling keeps the modal and the edits.
+    let message = '';
+    if (payload.status === 'done') {
+      const answer = await this.confirmDone();
+      if (answer === undefined) return;
+      message = answer;
+    }
     if (!locked.includes('amountTotal')) payload.amountTotal = value.amountTotal;
     if (!locked.includes('currency'))    payload.currency   = value.currency;
     if (!locked.includes('transferTo'))  payload.transferTo = value.transferTo;
@@ -155,12 +170,74 @@ export class ExpenseEditModal {
       // changed locked field, so an out-of-date lock in the UI cannot corrupt a booked expense.
       await this.expenseService.updateViaFunction(payload);
       await dismissOverlay(this.modalController, null, 'confirm');
+      // after the dismiss: initialising the chat client can take seconds, the save is already done
+      if (message) void this.sendDoneMessage(message);
     } catch (e) {
       // NOT submit_error ("Vorgang wurde zurückgerollt"): nothing is rolled back on an update.
       // This is also the toast a treasurer sees when the callable refuses a locked-field change,
       // where "rolled back" would say the exact opposite of what happened.
       console.error('ExpenseEditModal.save failed', e);
       await showToast(this.toastController, this.i18n.update_error());
+    }
+  }
+
+  /** The recipient of the thank-you DM; nobody when the expense names no person or it is the treasurer. */
+  private readonly doneRecipient = computed(() => {
+    const recipient = expenseDoneRecipient(this.expense());
+    const ownKey = this.appStore.currentUser()?.personKey ?? '';
+    return recipient.key && recipient.key !== ownKey ? recipient : { key: '', name: '' };
+  });
+
+  /**
+   * Explains what «Erledigt» sets off and offers the prefilled DM. Resolves to the message to send
+   * ('' = none), or undefined when the treasurer cancels.
+   */
+  private async confirmDone(): Promise<string | undefined> {
+    const i = this.i18n;
+    const recipient = this.doneRecipient();
+    const alert = await this.alertController.create({
+      header: i.done_header(),
+      message: buildExpenseDoneMessage({
+        intro: i.done_intro(), effectTask: i.done_effect_task(), effectPayment: i.done_effect_payment(),
+        effectBooking: i.done_effect_booking(), editableTitle: i.done_editable_title(), editable: i.done_editable(),
+        lockedTitle: i.done_locked_title(), locked: i.done_locked(), unlocked: i.done_unlocked(),
+        reopen: i.done_reopen(), dmHint: i.done_dm_hint(),
+      }, {
+        booked: !!this.expense().bookingKey,
+        hasTask: !!this.expense().taskKey,
+        recipientName: recipient.key ? (recipient.name || '?') : '',
+      }),
+      inputs: recipient.key
+        ? [{ name: 'message', type: 'textarea', value: i.done_dm_default(), attributes: { rows: 4 } }]
+        : [],
+      buttons: [
+        { text: i.action_cancel(), role: 'cancel' },
+        { text: i.done_confirm(), role: 'confirm' },
+      ],
+    });
+    await alert.present();
+    const { role, data } = await alert.onDidDismiss<{ values?: { message?: string } }>();
+    if (role !== 'confirm') return undefined;
+    return recipient.key ? (data?.values?.message ?? '').trim() : '';
+  }
+
+  /**
+   * The thank-you DM, sent from the treasurer's own chat account. matrix-js-sdk is large, so the
+   * chat data-access lib is loaded only here. A failure never undoes the save — it only says so.
+   */
+  private async sendDoneMessage(text: string): Promise<void> {
+    const { key, name } = this.doneRecipient();
+    if (!key) return;
+    try {
+      const { MatrixChatService } = await import('@okr/chat-data-access');
+      const matrix = this.injector.get(MatrixChatService);
+      await matrix.ensureInitialized();
+      const room = await matrix.createDirectRoom(key);
+      await matrix.sendMessage(room.roomId, text);
+      await showToast(this.toastController, fillName(this.i18n.done_dm_conf(), name));
+    } catch (e) {
+      console.error('ExpenseEditModal.sendDoneMessage failed', e);
+      await showToast(this.toastController, fillName(this.i18n.done_dm_error(), name));
     }
   }
 

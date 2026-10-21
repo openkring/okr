@@ -104,7 +104,6 @@
     "view": "Ver",
     "delete": "Eliminar",
     "redoOcr": "Ejecutar OCR de nuevo",
-    "openTask": "Abrir tarea",
     "openBooking": "Abrir asiento",
     "cancel": "Cancelar",
     "edit": "Editar"
@@ -174,5 +173,23 @@
     "manual": "Por favor, registra este pago manualmente",
     "openOrder": "Abrir la orden de pago",
     "none": "Todavía no hay ningún pago preparado"
+  },
+  "done": {
+    "header": "Marcar el gasto como completado",
+    "intro": "Si marcas este gasto como «Completado», ocurre lo siguiente:",
+    "effectTask": "La tarea correspondiente también se completa.",
+    "effectPayment": "El reembolso se añade como borrador a la orden de pago de gastos abierta, si hay datos bancarios.",
+    "effectBooking": "El asiento en el diario se queda como está.",
+    "editableTitle": "Después aún puedes cambiar:",
+    "editable": "Descripción, cuenta, centro de coste, portador de costes, nota y estado",
+    "lockedTitle": "Ya no se puede cambiar, porque el gasto ya está contabilizado:",
+    "locked": "Importe, moneda y destinatario de la transferencia",
+    "unlocked": "El importe, la moneda y el destinatario de la transferencia se pueden cambiar mientras el gasto no esté contabilizado.",
+    "reopen": "Si más tarde vuelves a cambiar el estado, se elimina un borrador de pago aún no enviado. La tarea sigue completada.",
+    "dmHint": "El mensaje de abajo se envía como mensaje directo a {name}. Déjalo vacío si no quieres enviar nada.",
+    "dmDefault": "Gracias por tu nota de gastos. La orden de pago está hecha, mañana deberías tener el dinero en tu cuenta.",
+    "confirm": "Marcar como completado",
+    "dmConf": "Mensaje enviado a {name}.",
+    "dmError": "El gasto está completado, pero no se pudo enviar el mensaje a {name}."
   }
 }

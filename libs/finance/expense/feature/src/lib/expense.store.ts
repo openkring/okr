@@ -1,4 +1,4 @@
-import { computed, inject, Injector } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular';
 import { combineLatest, firstValueFrom, map, of } from 'rxjs';
@@ -55,7 +55,6 @@ export const ExpenseStore = signalStore(
     env:                     inject(ENV),
     appStore:                inject(AppStore),
     modalController:         inject(ModalController),
-    injector:                inject(Injector),
     alertController:         inject(AlertController),
     toastController:         inject(ToastController),
     addressService:          inject(AddressService),
@@ -219,28 +218,6 @@ export const ExpenseStore = signalStore(
         console.error('ExpenseStore.redoOcr failed', e);
         await showToast(store.toastController, store.i18n.redo_error());
       }
-    },
-
-    async openTask(expense: ExpenseModel): Promise<void> {
-      if (!expense.taskKey) return;
-      const task = await store.expenseService.readTask(expense.taskKey);
-      if (!task) return;
-      const { TaskEditModal, loadTaskProjects } = await import('@okr/project-task-feature');
-      const modal = await store.modalController.create({
-        component: TaskEditModal,
-        componentProps: {
-          task,
-          projects: await loadTaskProjects(store.injector),
-          currentUser: store.appStore.currentUser(),
-          tags: store.appStore.getTags('task'),
-          states: store.appStore.getCategory('task_state'),
-          priorities: store.appStore.getCategory('priority'),
-          importances: store.appStore.getCategory('importance'),
-          tenantId: store.env.tenantId,
-          readOnly: true,
-        },
-      });
-      await modal.present();
     },
 
     async openBooking(expense: ExpenseModel): Promise<void> {

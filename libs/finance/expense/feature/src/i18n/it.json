@@ -104,7 +104,6 @@
     "view": "Visualizza",
     "delete": "Elimina",
     "redoOcr": "Esegui di nuovo l'OCR",
-    "openTask": "Apri compito",
     "openBooking": "Apri registrazione",
     "cancel": "Annulla",
     "edit": "Modifica"
@@ -174,5 +173,23 @@
     "manual": "Registra questo pagamento manualmente",
     "openOrder": "Apri l'ordine di pagamento",
     "none": "Nessun pagamento ancora preparato"
+  },
+  "done": {
+    "header": "Segna la nota spese come completata",
+    "intro": "Se segni questa nota spese come «Completato», succede quanto segue:",
+    "effectTask": "Anche l'attività collegata viene completata.",
+    "effectPayment": "Il rimborso viene aggiunto come bozza all'ordine di pagamento spese aperto, se ci sono le coordinate bancarie.",
+    "effectBooking": "La registrazione nel giornale resta invariata.",
+    "editableTitle": "Dopo puoi ancora modificare:",
+    "editable": "Descrizione, conto, centro di costo, oggetto di costo, nota e stato",
+    "lockedTitle": "Non più modificabile, perché la nota spese è già registrata:",
+    "locked": "Importo, valuta e destinatario del bonifico",
+    "unlocked": "Importo, valuta e destinatario del bonifico restano modificabili finché la nota spese non è registrata.",
+    "reopen": "Se in seguito reimposti lo stato, una bozza di pagamento non ancora trasmessa viene rimossa. L'attività resta completata.",
+    "dmHint": "Il messaggio qui sotto viene inviato come messaggio diretto a {name}. Lascialo vuoto se non vuoi inviarne uno.",
+    "dmDefault": "Grazie per la tua nota spese. L'ordine di pagamento è fatto, domani dovresti avere i soldi sul tuo conto.",
+    "confirm": "Segna come completato",
+    "dmConf": "Messaggio inviato a {name}.",
+    "dmError": "La nota spese è completata, ma il messaggio a {name} non è stato inviato."
   }
 }

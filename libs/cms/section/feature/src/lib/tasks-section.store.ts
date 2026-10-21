@@ -11,7 +11,7 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 import { TaskService } from '@okr/project-task-data-access';
-import { canChangeTask, canDeleteTask, getCompletionPatch, isTask } from '@okr/project-task-util';
+import { canChangeTask, canDeleteTask, getCompletionPatch, getTaskExpenseKey, isTask, opensExpense } from '@okr/project-task-util';
 import { resourceParams } from '@okr/shared-util-angular';
 
 
@@ -78,6 +78,12 @@ export const TasksStore = signalStore(
       },
 
     async edit(task: TaskModel, readOnly = true): Promise<void> {
+      // a treasurer works an expense's review task on the expense itself (dynamic: keeps the
+      // expense feature out of this bundle); false = not editable here, open the task as before
+      if (opensExpense(task, store.currentUser())) {
+        const { openExpenseOfTask } = await import('@okr/finance-expense-feature');
+        if (await openExpenseOfTask(store.injector, getTaskExpenseKey(task))) return;
+      }
       // dynamic: a static import puts the task feature (and the workflow ui it pulls in) into the dashboard closure
       const { TaskEditModal, loadTaskProjects } = await import('@okr/project-task-feature');
       const modal = await store.modalController.create({
@@ -98,9 +104,8 @@ export const TasksStore = signalStore(
       const { data, role } = await modal.onDidDismiss();
       if (role === 'confirm' && data && !readOnly) {
         if (isTask(data, store.tenantId())) {
-          data.okey?.length === 0 ? 
-            await store.taskService.create(data, store.currentUser()) : 
-            await store.taskService.update(data, store.currentUser());
+          if (data.okey?.length === 0) await store.taskService.create(data, store.currentUser());
+          else await store.taskService.update(data, store.currentUser());
           // no reload(): the list is an rxfire real-time stream
         }
       }

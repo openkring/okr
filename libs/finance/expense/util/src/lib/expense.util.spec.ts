@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeIban, chfToCents, centsToCHF, newExpenseModel, newExpenseDocumentModel, canDeleteExpense, canRedoOcr, canOpenTask, canOpenBooking, canViewExpense, canEditExpense, filterExpenses, mergeExpenses, sortExpenses, getExpenseEditStateCategory, getExpenseTransferCategory, EXPENSE_EDIT_STATES, expenseStatusColor, nextExpenseStateFilter } from './expense.util';
+import { normalizeIban, chfToCents, centsToCHF, newExpenseModel, newExpenseDocumentModel, canDeleteExpense, canRedoOcr, canOpenBooking, canViewExpense, canEditExpense, filterExpenses, mergeExpenses, sortExpenses, getExpenseEditStateCategory, getExpenseTransferCategory, EXPENSE_EDIT_STATES, expenseStatusColor, nextExpenseStateFilter, expenseDoneRecipient, escapeHtml, fillName, buildExpenseDoneMessage, ExpenseDoneTexts } from './expense.util';
 import { CategoryItemModel, CategoryListModel } from '@okr/shared-models';
 import { ExpenseModel, UserModel } from '@okr/shared-models';
 
@@ -79,11 +79,6 @@ describe('expense permission predicates', () => {
     expect(canRedoOcr(expense(), treasurer())).toBe(true);
     expect(canRedoOcr(expense({ bookingKey: 'b1' }), treasurer())).toBe(false);
     expect(canRedoOcr(expense(), author())).toBe(false);
-  });
-  it('open task: author/treasurer AND taskKey present', () => {
-    expect(canOpenTask(expense({ taskKey: 'k1' }), author())).toBe(true);
-    expect(canOpenTask(expense(), author())).toBe(false);
-    expect(canOpenTask(expense({ taskKey: 'k1' }), stranger())).toBe(false);
   });
   it('open booking: author/treasurer AND bookingKey present', () => {
     expect(canOpenBooking(expense({ bookingKey: 'b1' }), author())).toBe(true);
@@ -209,5 +204,53 @@ describe('nextExpenseStateFilter', () => {
   });
   it('starts over at the first state from an unknown value', () => {
     expect(nextExpenseStateFilter('', states)).toBe('draft');
+  });
+});
+
+describe('expenseDoneRecipient', () => {
+  it('is the submitter for a member\'s own expense', () => {
+    expect(expenseDoneRecipient(expense({ transferTo: 'me', personKey: 'p1', userName: 'Anna' }))).toEqual({ key: 'p1', name: 'Anna' });
+  });
+  it('is the payee for an expense a treasurer entered for a member', () => {
+    expect(expenseDoneRecipient(expense({ transferTo: 'member', personKey: 'pT', userName: 'Kassier', payeeKey: 'p2', payeeName: 'Cesar' })))
+      .toEqual({ key: 'p2', name: 'Cesar' });
+  });
+  it('coalesces fields a legacy document lacks', () => {
+    const legacy = expense({ transferTo: 'me' }) as unknown as Record<string, unknown>;
+    delete legacy['personKey']; delete legacy['userName'];
+    expect(expenseDoneRecipient(legacy as unknown as ExpenseModel)).toEqual({ key: '', name: '' });
+  });
+});
+
+describe('escapeHtml / fillName', () => {
+  it('escapes markup', () => {
+    expect(escapeHtml('<b>"A" & \'B\'</b>')).toBe('&lt;b&gt;&quot;A&quot; &amp; &#39;B&#39;&lt;/b&gt;');
+  });
+  it('fills every {name}', () => {
+    expect(fillName('An {name}, {name}', 'Anna')).toBe('An Anna, Anna');
+  });
+});
+
+describe('buildExpenseDoneMessage', () => {
+  const t: ExpenseDoneTexts = {
+    intro: 'INTRO', effectTask: 'TASK', effectPayment: 'PAY', effectBooking: 'BOOK', editableTitle: 'EDIT_T',
+    editable: 'EDIT', lockedTitle: 'LOCK_T', locked: 'LOCK', unlocked: 'UNLOCK', reopen: 'REOPEN', dmHint: 'DM {name}',
+  };
+  it('lists the locked fields of a booked expense', () => {
+    const html = buildExpenseDoneMessage(t, { booked: true, hasTask: true, recipientName: 'Anna' });
+    expect(html).toContain('<li>TASK</li>');
+    expect(html).toContain('<li>LOCK</li>');
+    expect(html).not.toContain('UNLOCK');
+    expect(html).toContain('<p>DM Anna</p>');
+  });
+  it('says the amount stays editable while unbooked, and drops the task line without a task', () => {
+    const html = buildExpenseDoneMessage(t, { booked: false, hasTask: false, recipientName: '' });
+    expect(html).toContain('<p>UNLOCK</p>');
+    expect(html).not.toContain('TASK');
+    expect(html).not.toContain('LOCK_T');
+    expect(html).not.toContain('DM');
+  });
+  it('escapes the recipient name', () => {
+    expect(buildExpenseDoneMessage(t, { booked: false, hasTask: false, recipientName: '<x>' })).toContain('DM &lt;x&gt;');
   });
 });

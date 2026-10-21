@@ -114,7 +114,7 @@ slices to `maxItems` only for the `'my'` view.
 Key actions:
 
 - `add(readOnly)` — creates a new task pre-populated with the current user as both author and assignee, then opens the edit modal.
-- `edit(task, readOnly)` — opens `TaskEditModal`.
+- `edit(task, readOnly)` — opens `TaskEditModal`; for a task of an expense (`linkKey || relatedKey` = `expense.<okey>`) a treasurer gets the expense edit modal instead (`opensExpense`, `openExpenseOfTask` from `@okr/finance-expense-feature`, dynamic import). The dashboard `TasksSectionStore.edit` does the same.
 - `delete(task)` — archives the task (`TaskService.delete`), gated by `canDeleteTask`.
 - `restore(task)` — un-archives (and reopens) an archived task, same gate.
 - `quickEntry(task)` — creates a task without opening the modal.

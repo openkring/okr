@@ -80,22 +80,13 @@ import { ExpenseStore } from './expense.store';
           (receiptSelected)="view.showReceiptActions($event)"
         />
 
-        @if (expense()!.bookingKey || expense()!.taskKey) {
+        @if (expense()!.bookingKey) {
           <ion-list>
             @if (expense()!.bookingKey) {
               <ion-item button (click)="openBooking()">
                 <ion-label>
                   <h3>{{ store.i18n.detail_booking_ref() }}</h3>
                   <p>{{ expense()!.bookingKey }}</p>
-                </ion-label>
-                <ion-icon slot="end" src="{{ 'chevron-forward' | svgIcon }}" />
-              </ion-item>
-            }
-            @if (expense()!.taskKey) {
-              <ion-item button (click)="openTask()">
-                <ion-label>
-                  <h3>{{ store.i18n.action_openTask() }}</h3>
-                  <p>{{ expense()!.taskKey }}</p>
                 </ion-label>
                 <ion-icon slot="end" src="{{ 'chevron-forward' | svgIcon }}" />
               </ion-item>
@@ -200,10 +191,5 @@ export class ExpenseDetailPage {
   protected openBooking(): void {
     const expense = this.expense();
     if (expense) void this.store.openBooking(expense);
-  }
-
-  protected openTask(): void {
-    const expense = this.expense();
-    if (expense) void this.store.openTask(expense);
   }
 }

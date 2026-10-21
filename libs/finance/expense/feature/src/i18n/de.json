@@ -104,7 +104,6 @@
     "view": "Anzeigen",
     "delete": "Löschen",
     "redoOcr": "OCR erneut ausführen",
-    "openTask": "Aufgabe öffnen",
     "openBooking": "Buchung öffnen",
     "cancel": "Abbrechen",
     "edit": "Bearbeiten"
@@ -174,5 +173,23 @@
     "manual": "Zahlung bitte manuell erfassen",
     "openOrder": "Zahlungsauftrag öffnen",
     "none": "Noch keine Zahlung vorbereitet"
+  },
+  "done": {
+    "header": "Spesen auf Erledigt setzen",
+    "intro": "Wenn du diese Spesen auf «Erledigt» setzt, passiert Folgendes:",
+    "effectTask": "Die zugehörige Aufgabe wird ebenfalls erledigt.",
+    "effectPayment": "Die Rückzahlung kommt als Entwurf in den offenen Spesen-Zahlungsauftrag, sofern eine Bankverbindung vorliegt.",
+    "effectBooking": "Die Buchung im Journal bleibt, wie sie ist.",
+    "editableTitle": "Danach kannst du weiterhin ändern:",
+    "editable": "Beschreibung, Konto, Kostenstelle, Kostenträger, Notiz und Status",
+    "lockedTitle": "Nicht mehr ändern lässt sich, weil die Spesen schon verbucht sind:",
+    "locked": "Betrag, Währung und Überweisungsziel",
+    "unlocked": "Betrag, Währung und Überweisungsziel bleiben änderbar, solange die Spesen nicht verbucht sind.",
+    "reopen": "Setzt du den Status später zurück, wird ein noch nicht übermittelter Zahlungsentwurf wieder entfernt. Die Aufgabe bleibt erledigt.",
+    "dmHint": "Die Nachricht unten geht als Direktnachricht an {name}. Lass sie leer, wenn du keine senden willst.",
+    "dmDefault": "Danke für deine Spesenabrechnung. Der Zahlungsauftrag ist gemacht, du solltest das Geld morgen auf deinem Konto haben.",
+    "confirm": "Auf Erledigt setzen",
+    "dmConf": "Nachricht an {name} gesendet.",
+    "dmError": "Die Spesen sind erledigt, aber die Nachricht an {name} konnte nicht gesendet werden."
   }
 }

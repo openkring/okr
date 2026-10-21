@@ -64,8 +64,6 @@ export const canViewExpense   = (e: ExpenseModel, u?: UserModel): boolean => isA
 export const canDeleteExpense = (e: ExpenseModel, u?: UserModel): boolean => isAuthor(e, u) || isTreasurer(u);
 /** Redo OCR: treasurer only, and only while not yet booked. */
 export const canRedoOcr       = (e: ExpenseModel, u?: UserModel): boolean => isTreasurer(u) && !e.bookingKey;
-/** Open the linked review task: viewer with a task link. */
-export const canOpenTask      = (e: ExpenseModel, u?: UserModel): boolean => (isAuthor(e, u) || isTreasurer(u)) && !!e.taskKey;
 /** Open the linked booking: viewer with a booking link. */
 export const canOpenBooking   = (e: ExpenseModel, u?: UserModel): boolean => (isAuthor(e, u) || isTreasurer(u)) && !!e.bookingKey;
 
@@ -189,4 +187,62 @@ export function sortExpenses(expenses: ExpenseModel[], field: ExpenseSortField, 
     }
     return ascending ? -diff : diff;
   });
+}
+
+/******************************* done confirmation *************************************** */
+
+/**
+ * Who gets the thank-you DM when a treasurer sets an expense to 'done': the member who submitted
+ * it, or — for a 'member' expense a treasurer entered — the member it is paid to (the submitter is
+ * then the treasurer). `key` is '' when the expense names nobody (legacy documents lack personKey).
+ */
+export function expenseDoneRecipient(e: ExpenseModel): { key: string; name: string } {
+  if (e.transferTo === 'member') return { key: e.payeeKey ?? '', name: e.payeeName ?? '' };
+  return { key: e.personKey ?? '', name: e.userName ?? '' };
+}
+
+/** The alert message renders as HTML (innerHTMLTemplatesEnabled), so stored names are escaped. */
+export function escapeHtml(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+/** Fills a single-brace `{name}` placeholder (translateAll strips double-brace params). */
+export function fillName(text: string, name: string): string {
+  return text.replace(/\{name\}/g, name);
+}
+
+export interface ExpenseDoneTexts {
+  intro: string;
+  effectTask: string;
+  effectPayment: string;
+  effectBooking: string;
+  editableTitle: string;
+  editable: string;
+  lockedTitle: string;
+  locked: string;
+  unlocked: string;
+  reopen: string;
+  dmHint: string;
+}
+
+/**
+ * The explanation in the «Erledigt» confirmation: what the move sets off, what stays editable and
+ * who gets the message. `booked` mirrors lockedExpenseFields (amount, currency and transfer target
+ * lock once the expense has a booking); `hasTask` hides the task line for an expense without one.
+ */
+export function buildExpenseDoneMessage(
+  t: ExpenseDoneTexts, opts: { booked: boolean; hasTask: boolean; recipientName: string },
+): string {
+  const effects = [opts.hasTask ? t.effectTask : '', t.effectPayment, t.effectBooking].filter(s => s.length > 0);
+  const li = (items: string[]) => `<ul>${items.map(s => `<li>${escapeHtml(s)}</li>`).join('')}</ul>`;
+  const parts = [
+    `<p>${escapeHtml(t.intro)}</p>`, li(effects),
+    `<p>${escapeHtml(t.editableTitle)}</p>`, li([t.editable]),
+  ];
+  if (opts.booked) parts.push(`<p>${escapeHtml(t.lockedTitle)}</p>`, li([t.locked]));
+  else parts.push(`<p>${escapeHtml(t.unlocked)}</p>`);
+  parts.push(`<p>${escapeHtml(t.reopen)}</p>`);
+  if (opts.recipientName) parts.push(`<p>${escapeHtml(fillName(t.dmHint, opts.recipientName))}</p>`);
+  return parts.join('');
 }

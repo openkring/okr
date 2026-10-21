@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { AvatarInfo, TaskModel, UserModel } from '@okr/shared-models';
 
-import { canChangeTask, canCreateTask, canDeleteTask, getCompletionPatch, getRestorePatch, isTaskCompleted } from './task-permission.util';
+import { canChangeTask, canCreateTask, canDeleteTask, getCompletionPatch, getRestorePatch, getTaskExpenseKey, isTaskCompleted, opensExpense } from './task-permission.util';
 
 function user(personKey: string, roles: Record<string, boolean> = { registered: true }): UserModel {
   const u = new UserModel('test');
@@ -72,5 +72,28 @@ describe('task restore', () => {
     const t = task();
     t.isArchived = true;
     expect(getRestorePatch(t)).toEqual({ isArchived: false });
+  });
+});
+
+describe('task of an expense', () => {
+  const task = (over: Partial<TaskModel>): TaskModel => Object.assign(new TaskModel('t'), over);
+  const user = (roles: Record<string, boolean>): UserModel => Object.assign(new UserModel('t'), { roles });
+
+  it('reads the expense key from linkKey, else relatedKey', () => {
+    expect(getTaskExpenseKey(task({ relatedKey: 'expense.e1' }))).toBe('e1');
+    expect(getTaskExpenseKey(task({ linkKey: 'expense.e2', relatedKey: 'expense.e1' }))).toBe('e2');
+    expect(getTaskExpenseKey(task({ relatedKey: 'trip.t1' }))).toBe('');
+  });
+  it('coalesces a legacy task without either field', () => {
+    const legacy = task({}) as unknown as Record<string, unknown>;
+    delete legacy['linkKey']; delete legacy['relatedKey'];
+    expect(getTaskExpenseKey(legacy as unknown as TaskModel)).toBe('');
+  });
+  it('opens the expense only for a treasurer or admin', () => {
+    const t = task({ relatedKey: 'expense.e1' });
+    expect(opensExpense(t, user({ treasurer: true }))).toBe(true);
+    expect(opensExpense(t, user({ admin: true }))).toBe(true);
+    expect(opensExpense(t, user({ registered: true }))).toBe(false);
+    expect(opensExpense(task({ relatedKey: 'trip.t1' }), user({ treasurer: true }))).toBe(false);
   });
 });

@@ -68,3 +68,18 @@ export function getRestorePatch(task: TaskModel): Partial<Pick<TaskModel, 'isArc
 export function isTaskCompleted(task: TaskModel): boolean {
   return (task.completionDate ?? '').length > 0;
 }
+
+/**
+ * The expense a task belongs to, '' for any other task. A treasurer opening such a task gets the
+ * expense edit modal instead of the task modal. `linkKey || relatedKey` mirrors onExpenseTaskWritten:
+ * the workflow engine sets relatedKey and leaves linkKey empty; legacy documents lack both.
+ */
+export function getTaskExpenseKey(task: TaskModel): string {
+  const key = task.linkKey || task.relatedKey || '';
+  return key.startsWith('expense.') ? key.slice('expense.'.length) : '';
+}
+
+/** Whether opening this task should open its expense instead (treasurer or admin only). */
+export function opensExpense(task: TaskModel, currentUser: UserModel | undefined): boolean {
+  return getTaskExpenseKey(task).length > 0 && hasRole('treasurer', currentUser);
+}

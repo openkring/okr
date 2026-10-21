@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Injector } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
@@ -13,7 +13,7 @@ import { resourceParams } from '@okr/shared-util-angular';
 
 import { ProjectService } from '@okr/project-project-data-access';
 import { TaskService } from '@okr/project-task-data-access';
-import { assignMissingRanks, buildTaskListQueries, canChangeTask, canCreateTask, canDeleteTask, getCompletionPatch, getDefaultParentKey, getDefaultShareKey, getTaskListSource, groupTasksByState, isClosedGroup, isTask, TASK_I18N_KEYS, TaskBoardColumn, TaskSettings } from '@okr/project-task-util';
+import { assignMissingRanks, buildTaskListQueries, canChangeTask, canCreateTask, canDeleteTask, getCompletionPatch, getDefaultParentKey, getDefaultShareKey, getTaskExpenseKey, getTaskListSource, groupTasksByState, isClosedGroup, isTask, opensExpense, TASK_I18N_KEYS, TaskBoardColumn, TaskSettings } from '@okr/project-task-util';
 
 /** The payload of a Kanban drag-and-drop. `columnTasks` is the target column, ordered, without the moved task. */
 export type TaskMove = {
@@ -63,6 +63,7 @@ export const TaskStore = signalStore(
     appStore: inject(AppStore),
     appConfigService: inject(AppConfigService),
     modalController: inject(ModalController),
+    injector: inject(Injector),
     i18nService: inject(I18nService),
   })),
   withProps((store) => ({
@@ -272,6 +273,12 @@ export const TaskStore = signalStore(
     },
 
     async edit(task: TaskModel, readOnly = true): Promise<void> {
+      // a treasurer works an expense's review task on the expense itself (dynamic: keeps the
+      // expense feature out of this bundle); false = not editable here, open the task as before
+      if (opensExpense(task, store.currentUser())) {
+        const { openExpenseOfTask } = await import('@okr/finance-expense-feature');
+        if (await openExpenseOfTask(store.injector, getTaskExpenseKey(task))) return;
+      }
       const { TaskEditModal } = await import('./task-edit.modal');
       const modal = await store.modalController.create({
         component: TaskEditModal,

@@ -7,7 +7,7 @@ import { getTodayStr, DateFormat, isProfitAndLossAccountId } from '@okr/shared-u
 
 import { assertProjectKeyShapes, assertProjectsAssignable } from '../project/project-context';
 import { emitEvent } from '../workflow/emit';
-import { CreateExpenseFields, memberExpenseFields, pickMemberIban } from './expense.util';
+import { CreateExpenseFields, memberExpenseFields, pickMemberIban, taskToCompleteOnDone } from './expense.util';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'createExpense';
@@ -232,6 +232,9 @@ export const updateExpense = onCall(
     if (Object.keys(patch).length === 0) return { ok: true };
 
     await expSnap.ref.set(patch, { merge: true });
+    await completeExpenseTask(db, d.expenseKey, taskToCompleteOnDone({
+      status: expense['status'] as string | undefined, taskKey: expense['taskKey'] as string | undefined,
+    }, d.status));
     if (projectChanged) await carryProjectToReviewBooking(db, d.expenseKey, expense, projectKey ?? '');
     logger.info(`updateExpense: ${d.expenseKey} patched [${Object.keys(patch).join(', ')}]`);
     return { ok: true };
@@ -261,6 +264,21 @@ async function carryProjectToReviewBooking(
 }
 
 const TASK_COLLECTION = 'tasks';
+
+/**
+ * Setting the expense to 'done' by hand settles its review task too — the mirror of
+ * onExpenseTaskWritten. A task that is already closed (done, or cancelled by a rejection) or gone
+ * stays as it is. The write re-fires onExpenseTaskWritten, which finds the expense already done.
+ */
+async function completeExpenseTask(db: FirebaseFirestore.Firestore, expenseKey: string, taskKey: string): Promise<void> {
+  if (!taskKey) return;
+  const ref = db.collection(TASK_COLLECTION).doc(taskKey);
+  const snap = await ref.get();
+  const state = snap.data()?.['state'] as string | undefined;
+  if (!snap.exists || state === 'done' || state === 'cancelled') return;
+  await ref.set({ state: 'done', completionDate: getTodayStr() }, { merge: true });
+  logger.info(`updateExpense: ${expenseKey} done → task ${taskKey} done`);
+}
 
 /**
  * The expense side of a task that belongs to one (spec 2026-09-02 §3.6). Two effects:

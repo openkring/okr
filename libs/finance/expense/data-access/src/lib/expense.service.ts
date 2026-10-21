@@ -8,7 +8,7 @@ import { ENV, STORAGE } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import {
   BookingCollection, BookingLineCollection, BookingLineModel, BookingModel,
-  ExpenseCollection, ExpenseModel, ExpenseTransferTo, TaskCollection, TaskModel,
+  ExpenseCollection, ExpenseModel, ExpenseTransferTo,
 } from '@okr/shared-models';
 import { getSystemQuery } from '@okr/shared-util-core';
 import { ExpenseReceipt } from '@okr/finance-expense-util';
@@ -86,13 +86,13 @@ export class ExpenseService {
     return (result.data as { reprocessed: number }).reprocessed;
   }
 
-  // The three reads below feed a modal opened ONCE, so they are one-shot server reads: a
+  // The reads below feed a modal opened ONCE, so they are one-shot server reads: a
   // firstValueFrom over the live streams took the local cache's first emission, and the persistent
   // cache kept showing a booking the OCR pipeline or a repair had already changed.
 
-  /** Load the review TaskModel linked from expense.taskKey. */
-  public readTask(taskKey: string): Promise<TaskModel | undefined> {
-    return this.firestoreService.readModelOnce<TaskModel>(TaskCollection, taskKey);
+  /** Load the expense a task belongs to (opened from the task list instead of the task modal). */
+  public readOnce(expenseKey: string): Promise<ExpenseModel | undefined> {
+    return this.firestoreService.readModelOnce<ExpenseModel>(ExpenseCollection, expenseKey);
   }
 
   /** Load the BookingModel linked from expense.bookingKey. */

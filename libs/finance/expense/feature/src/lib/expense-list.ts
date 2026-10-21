@@ -16,7 +16,7 @@ import { convertDateFormatToString, DateFormat, generateRandomString, getItemLab
 import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
 import {
-  canDeleteExpense, canEditExpense, canOpenBooking, canOpenTask, canRedoOcr, canViewExpense, centsToCHF,
+  canDeleteExpense, canEditExpense, canOpenBooking, canRedoOcr, canViewExpense, centsToCHF,
   expenseStatusColor, ExpenseSortField, nextExpenseStateFilter,
 } from '@okr/finance-expense-util';
 
@@ -285,7 +285,6 @@ export class ExpenseList {
     const options = createActionSheetOptions(i.as_title());
     if (canEditExpense(expense, user))    options.buttons.push(createActionSheetButton('expense.edit', i.action_edit(), this.imgixBaseUrl, 'edit'));
     if (canViewExpense(expense, user))    options.buttons.push(createActionSheetButton('expense.view', i.action_view(), this.imgixBaseUrl, 'eye-on'));
-    if (canOpenTask(expense, user))       options.buttons.push(createActionSheetButton('expense.openTask', i.action_openTask(), this.imgixBaseUrl, 'checkbox'));
     if (canOpenBooking(expense, user))    options.buttons.push(createActionSheetButton('expense.openBooking', i.action_openBooking(), this.imgixBaseUrl, 'booking'));
     if (canRedoOcr(expense, user))        options.buttons.push(createActionSheetButton('expense.redoOcr', i.action_redoOcr(), this.imgixBaseUrl, 'reload'));
     if (canDeleteExpense(expense, user)) {
@@ -300,7 +299,6 @@ export class ExpenseList {
     switch (data?.action) {
       case 'expense.edit':        await this.store.editExpense(expense); break;
       case 'expense.view':        await this.store.openDetail(expense); break;
-      case 'expense.openTask':    await this.store.openTask(expense); break;
       case 'expense.openBooking': await this.store.openBooking(expense); break;
       case 'expense.redoOcr':     await this.store.redoOcr(expense); break;
       case 'expense.delete':      await this.store.deleteExpense(expense); break;

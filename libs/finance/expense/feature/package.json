@@ -17,7 +17,6 @@
     "@okr/shared-pipes": "*",
     "@okr/shared-ui": "*",
     "@okr/cms-menu-feature": "*",
-    "@okr/project-task-feature": "*",
     "@okr/subject-address-data-access": "*",
     "@okr/avatar-data-access": "*",
     "@okr/avatar-ui": "*",
@@ -33,6 +32,7 @@
     "@okr/finance-payment-data-access": "*",
     "@okr/project-project-data-access": "*",
     "@okr/finance-vat-code-data-access": "*",
-    "@okr/finance-accounting-feature": "*"
+    "@okr/finance-accounting-feature": "*",
+    "@okr/chat-data-access": "*"
   }
 }
