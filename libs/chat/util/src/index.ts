@@ -28,3 +28,4 @@ export * from './lib/chat-room-filter.util';
 export * from './lib/message-actions.util';
 export * from './lib/pin.util';
 export * from './lib/mute.util';
+export * from './lib/forward.util';
