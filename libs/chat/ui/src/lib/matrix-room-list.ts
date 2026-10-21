@@ -157,7 +157,7 @@ export class MatrixRoomList {
   notesPlaceholderSelected = output<void>();
 
   /** Icon of the notes room row. */
-  protected readonly notesIcon = 'note';
+  protected readonly notesIcon = 'text';
 
   protected readonly isNotes = (room: MatrixRoom): boolean => isOwnNotesRoom(room, this.notesOwner());
 

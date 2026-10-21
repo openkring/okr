@@ -1,13 +1,13 @@
 import { Component, DestroyRef, ElementRef, PLATFORM_ID, computed, effect, inject, input, OnDestroy, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
-import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonSearchbar, IonText, IonList, IonListHeader, IonItem, IonLabel, IonNote, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular';
+import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonSearchbar, IonText, IonList, IonListHeader, IonItem, IonLabel, IonNote, ActionSheetController, ModalController } from '@ionic/angular';
 import { captureMessage } from '@sentry/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ImageLightboxModal, LightboxImage, showVideoView, Spinner } from '@okr/shared-ui';
 import { debugMessage, fileSizeUnit, fill, hasRole, isChatBlockedError, isKioskOnly, warn } from '@okr/shared-util-core';
-import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, downloadFile, isBrowser, isNativePlatform, navigateByUrl, saveFile } from '@okr/shared-util-angular';
+import { AlertService, createActionSheetButton, createActionSheetOptions, downloadFile, isBrowser, isNativePlatform, navigateByUrl, saveFile } from '@okr/shared-util-angular';
 import { MatrixMessage, PersonModelName, RoleName } from '@okr/shared-models';
 
 import { MenuService } from '@okr/cms-menu-data-access';
@@ -15,10 +15,11 @@ import { ChatStatusService } from '@okr/shared-data-access';
 import { VideoUrlService } from '@okr/content-document-data-access';
 import { videoDocKeyOf, videoLink } from '@okr/content-document-util';
 
-import { MatrixMessageInput, MatrixMessageList, MatrixRoomList, PinBanner, PollDetailModal, ReactionDetailsModal, ReminderPicker } from '@okr/chat-ui';
+import { MatrixMessageInput, MatrixMessageList, MatrixRoomList, MessageActionsSheet, PinBanner, PollDetailModal, ReactionDetailsModal, ReminderPicker } from '@okr/chat-ui';
 import { MatrixPollData } from '@okr/chat-data-access';
 import { verifiedForwardedNames } from './forwarded-names';
-import { buildEditedPollAnswers, canEditPoll, parsePollContent, convertHeicToJpeg, groupRoomAliasLocalpart, shouldDeferAskRoom, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, readBookmark, isTrustedBookmarkEntry, ChatBookmark, resolvePermalinkTarget, shouldSendReceipt, MessageDraft, UploadTooLargeError, availablePresets, reminderDueAt, ReminderPreset } from '@okr/chat-util';
+import { buildMessageActionLabels, buildMessageActionsCtx } from './message-actions.feature';
+import { buildEditedPollAnswers, canEditPoll, parsePollContent, convertHeicToJpeg, groupRoomAliasLocalpart, shouldDeferAskRoom, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, readBookmark, isTrustedBookmarkEntry, ChatBookmark, resolvePermalinkTarget, shouldSendReceipt, MessageDraft, UploadTooLargeError, availablePresets, reminderDueAt, ReminderPreset, getMessageActions, MessageActionId } from '@okr/chat-util';
 
 import { MatrixChatStore } from './matrix-chat.store';
 import { PollCreateModal } from './poll-create.modal';
@@ -1374,15 +1375,34 @@ export class MatrixChat implements OnDestroy {
   }
 
   /**
-   * When a user clicks a message, an actionsheet is shown with appliable operations.
-   * The operations are based on the user's role and whether the message is in a thread.
-   * e.g. reply, edit, delete, react, showRaw etc.
-   * @param message 
+   * A tap on a message opens the message sheet (spec 1.109 §3): reactions, tiles, the «Nachricht»
+   * list and the red rows. `getMessageActions` decides what is shown; nothing applicable → no sheet.
    */
   protected async onMessageClicked(message: MatrixMessage): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
-    this.addActionSheetButtons(actionSheetOptions, message);
-    await this.executeActions(actionSheetOptions, message);
+    const currentUserId = this.matrixUserId();
+    const inNotes = this.store.isCurrentRoomNotes();
+    const isBookmarkEntry = isTrustedBookmarkEntry(inNotes, message.sender, currentUserId) && !!readBookmark(message.content);
+    const actions = getMessageActions(buildMessageActionsCtx({
+      message,
+      currentUserId,
+      inNotes,
+      isBookmarkEntry,
+      pinboard: this.store.currentPinboard(),
+      isKiosk: isKioskOnly(this.currentUser()),
+      isBookmarked: this.store.bookmarkedMessageIds().has(message.eventId),
+      isNative: isNativePlatform(),
+      isPinned: this.store.isMessagePinned(message.eventId),
+    }));
+    if (!actions.reactions && actions.tiles.length + actions.list.length + actions.danger.length === 0) return;
+    const sheet = await this.modalController.create({
+      component: MessageActionsSheet,
+      componentProps: { actions, labels: buildMessageActionLabels(this.store.i18n) },
+      breakpoints: [0, 1],
+      initialBreakpoint: 1,
+    });
+    await sheet.present();
+    const { role, data } = await sheet.onDidDismiss();
+    await this.executeActions(message, role, data);
   }
 
   /**
@@ -1854,185 +1874,97 @@ export class MatrixChat implements OnDestroy {
   }
 
   /**
-   * Fills the ActionSheet with all possible actions, considering the user permissions.
-   * @param message the Matrix message data
+   * Runs what was chosen in the message sheet (spec 1.109 §3): a quick reaction (toggle), the full
+   * emoji list, or one action id — each id has exactly one handler here.
    */
-  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, message: MatrixMessage): void {
-    const currentUserId = this.matrixUserId();
-    const isAuthor = !!currentUserId && message.sender === currentUserId;
-    const isPoll = message.type === 'org.matrix.msc3381.poll.start';
-    const pinboard = this.store.currentPinboard();
-    const inNotes = this.store.isCurrentRoomNotes();
-    const bookmark = isTrustedBookmarkEntry(inNotes, message.sender, currentUserId) ? readBookmark(message.content) : undefined;
-    if (bookmark) { // bookmark card: open the original or delete the entry
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.bookmarkOpen', this.store.i18n.bookmark_open(), this.imgixBaseUrl, 'link'));
-      if (!isKioskOnly(this.currentUser())) {
-        actionSheetOptions.buttons.push(createActionSheetButton('chat.message.reminder', this.store.i18n.reminder_action(), this.imgixBaseUrl, 'alarm'));
-      }
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.delete', this.store.i18n.msg_delete(), this.imgixBaseUrl, 'trash'));
-      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
+  private async executeActions(message: MatrixMessage, role: string | undefined, data: unknown): Promise<void> {
+    if (role === 'react' && typeof data === 'string') {
+      await this.store.sendReaction(message.eventId, data);
       return;
     }
-    const canBookmark = !inNotes && !isKioskOnly(this.currentUser()) && !this.store.bookmarkedMessageIds().has(message.eventId);
-    // Pinboard: no threads; «Antworten» becomes «Privat antworten» (non-authors only), plus
-    // «An alle antworten» when the pinboard allows it. Authors get no reply action.
-    const pushReplyButtons = (): void => {
-      if (!pinboard) {
-        actionSheetOptions.buttons.push(createActionSheetButton('chat.message.reply', this.store.i18n.msg_reply(), this.imgixBaseUrl, 'return_reply'));
-        actionSheetOptions.buttons.push(createActionSheetButton('chat.message.thread', this.store.i18n.thread_open(), this.imgixBaseUrl, 'branch'));
-        return;
-      }
-      if (isAuthor) return;
-      actionSheetOptions.buttons.push(createActionSheetButton('pinboard.reply.private', this.store.i18n.pinboard_reply_private(), this.imgixBaseUrl, 'return_reply'));
-      if (pinboard.allowReplyAll ?? false) {
-        actionSheetOptions.buttons.push(createActionSheetButton('chat.message.reply', this.store.i18n.pinboard_reply_all(), this.imgixBaseUrl, 'return_reply'));
-      }
-    };
-
-    // Poll-specific actions are merged into this single message action sheet (no separate poll sheet):
-    // everyone can view the results, react, reply and open a thread; the author can edit or end a running poll.
-    // Layout: [results, end] | [react, reply, thread] | [message operations] — two dividers separate them.
-    if (isPoll) {
-      actionSheetOptions.buttons.push(createActionSheetButton('poll.viewVotes', this.store.i18n.results_title(), this.imgixBaseUrl, 'chart'));
-      if (isAuthor && !message.pollEnded) {
-        actionSheetOptions.buttons.push(createActionSheetButton('poll.edit', this.store.i18n.survey_edit(), this.imgixBaseUrl, 'edit'));
-        actionSheetOptions.buttons.push(createActionSheetButton('poll.end', this.store.i18n.survey_end(), this.imgixBaseUrl, 'cancel-circle'));
-      }
-      actionSheetOptions.buttons.push(createActionSheetDivider());
-      if (!inNotes) {
-        actionSheetOptions.buttons.push(createActionSheetButton('chat.message.react', this.store.i18n.msg_react_header(), this.imgixBaseUrl, 'smiley'));
-        pushReplyButtons();
-      }
-      actionSheetOptions.buttons.push(createActionSheetDivider());
+    if (role === 'picker') {
+      await this.store.reactToMessage(message);
+      return;
     }
-
-    if (canBookmark) {
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.bookmark', this.store.i18n.bookmark_action(), this.imgixBaseUrl, 'note'));
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.bookmarkRemind', this.store.i18n.bookmark_remind_action(), this.imgixBaseUrl, 'alarm'));
-      // «Ab hier ungelesen» (spec 1.104 §6.2): not on own messages, not in the notes room, not for kiosks.
-      if (!isAuthor) {
-        actionSheetOptions.buttons.push(createActionSheetButton('chat.message.unreadFromHere', this.store.i18n.unread_from_here_action(), this.imgixBaseUrl, 'mail'));
-      }
-    }
-
-    if (isAuthor) { // author of message
-      // Polls get their own edit action above (poll.edit), which keeps answer ids stable under cast votes.
-      if (!isPoll) {
-        actionSheetOptions.buttons.push(createActionSheetButton('chat.message.edit', this.store.i18n.msg_edit(), this.imgixBaseUrl, 'edit'));
-      }
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.delete', this.store.i18n.msg_delete(), this.imgixBaseUrl, 'trash'));
-    } else if (inNotes) {
-      // notes room: only the user lives here, nothing to react to, reply to or report
-    } else if (!isPoll) {  // receiver of a non-poll message (poll react/reply/thread already added above)
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.react', this.store.i18n.msg_react_header(), this.imgixBaseUrl, 'smiley'));
-      pushReplyButtons();
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.report', this.store.i18n.msg_report_header(), this.imgixBaseUrl, 'alert-circle'));
-    } else {  // receiver of a poll message
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.report', this.store.i18n.msg_report_header(), this.imgixBaseUrl, 'alert-circle'));
-    }
-    // m.video belongs here too: a video used to travel as m.file, and dropping it from this
-    // gate would silently take share/download away from exactly the attachments that got a
-    // player. Images have their own lightbox and are deliberately not in this branch.
-    if ((message.type === 'm.file' || message.type === 'm.video') && !!(message.mediaUrl ?? message.content.url)) { // file attachment → offer share (+ download on web)
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.share', this.store.i18n.msg_share(), this.imgixBaseUrl, 'share'));
-      if (!isNativePlatform()) { // web only — native already saves via the share sheet
-        actionSheetOptions.buttons.push(createActionSheetButton('chat.message.download', this.store.i18n.msg_download(), this.imgixBaseUrl, 'download'));
-      }
-    }
-    actionSheetOptions.buttons.push(createActionSheetButton('chat.message.copy', this.store.i18n.msg_copy(), this.imgixBaseUrl, 'copy'));
-    if (hasRole('admin', this.currentUser())) {
-      actionSheetOptions.buttons.push(createActionSheetButton('chat.message.raw', this.store.i18n.msg_raw(), this.imgixBaseUrl, 'code'));
-    }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
-    if (actionSheetOptions.buttons.length === 1) { // only cancel button
-      actionSheetOptions.buttons = [];
-    }
-  }
-
-  /**
-   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
-   * @param actionSheetOptions 
-   * @param address 
-   */
-  private async executeActions(actionSheetOptions: ActionSheetOptions, message: MatrixMessage): Promise<void> {
-    if (actionSheetOptions.buttons.length > 0) {
-      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
-      await actionSheet.present();
-      const { data } = await actionSheet.onDidDismiss();
-      if (!data) return;
-      switch (data.action) {
-        case 'chat.message.bookmark':
-          await this.store.bookmarkMessage(message);
-          break;
-        case 'chat.message.unreadFromHere':
-          // The group view has no room list: go to the chat page, which shows it (roomListRequested).
-          if (await this.store.markUnreadFromHere(message) && this.isGroupView()) {
-            void navigateByUrl(this.router, '/private/chat/c-contentpage');
-          }
-          break;
-        case 'chat.message.bookmarkRemind': {
-          const dueAt = await this.chooseReminder();
-          if (typeof dueAt === 'number') await this.store.bookmarkWithReminder(message, dueAt);
-          break;
+    if (role !== 'action') return;
+    switch (data as MessageActionId) {
+      case 'bookmark':
+        await this.store.bookmarkMessage(message);
+        break;
+      case 'unreadFromHere':
+        // The group view has no room list: go to the chat page, which shows it (roomListRequested).
+        if (await this.store.markUnreadFromHere(message) && this.isGroupView()) {
+          void navigateByUrl(this.router, '/private/chat/c-contentpage');
         }
-        case 'chat.message.reminder': {
-          if (!isTrustedBookmarkEntry(this.store.isCurrentRoomNotes(), message.sender, this.matrixUserId())) break;
-          const dueAt = await this.chooseReminder(this.store.remindersByEntry().get(message.eventId)?.dueAt);
-          if (dueAt === undefined) break; // cancelled
-          await this.store.setReminder(message, dueAt ?? undefined);
-          break;
-        }
-        case 'chat.message.bookmarkOpen': {
-          const bm = isTrustedBookmarkEntry(this.store.isCurrentRoomNotes(), message.sender, this.matrixUserId()) ? readBookmark(message.content) : undefined;
-          if (bm) this.onBookmarkClicked(bm);
-          break;
-        }
-        case 'chat.message.react':
-          await this.store.reactToMessage(message);
-          break;
-        case 'chat.message.reply':
-          this.store.setReplyToMessage(message);
-          break;
-        case 'pinboard.reply.private':
-          await this.store.replyPrivately(message);
-          break;
-        case 'chat.message.thread':
-          await this.store.replyInThread(message);
-          break;
-        case 'chat.message.report':
-          await this.store.reportMessage(message);
-          break;
-        case 'chat.message.share':
-          await this.shareFile(message);
-          break;
-        case 'chat.message.download':
-          await this.downloadFileToDisk(message);
-          break;
-        case 'chat.message.copy':
-          await this.store.copy(message);
-          break;
-        case 'chat.message.raw':
-        case 'chat.message.info': {
-          const emoji = await this.store.showMessageInfo(message);
-          if (emoji) await this.onReactionClicked({ messageId: message.eventId, emoji });
-          break;
-        }
-        case 'chat.message.edit':
-          await this.store.editMessage(message);
-          break;
-        case 'chat.message.delete':
-          await this.store.deleteMessage(message);
-          break;
-        case 'poll.viewVotes':
-          await this.openPollDetail(message);
-          break;
-        case 'poll.edit':
-          await this.openPollEdit(message);
-          break;
-        case 'poll.end':
-          await this.onPollEndClicked({ pollEventId: message.eventId });
-          break;
+        break;
+      case 'bookmark.remind': {
+        const dueAt = await this.chooseReminder();
+        if (typeof dueAt === 'number') await this.store.bookmarkWithReminder(message, dueAt);
+        break;
       }
+      case 'bookmark.reminder': {
+        if (!isTrustedBookmarkEntry(this.store.isCurrentRoomNotes(), message.sender, this.matrixUserId())) break;
+        const dueAt = await this.chooseReminder(this.store.remindersByEntry().get(message.eventId)?.dueAt);
+        if (dueAt === undefined) break; // cancelled
+        await this.store.setReminder(message, dueAt ?? undefined);
+        break;
+      }
+      case 'bookmark.open': {
+        const bm = isTrustedBookmarkEntry(this.store.isCurrentRoomNotes(), message.sender, this.matrixUserId()) ? readBookmark(message.content) : undefined;
+        if (bm) this.onBookmarkClicked(bm);
+        break;
+      }
+      case 'reply':
+      case 'reply.all': // pinboard «An alle antworten»: a normal reply in the pinboard room
+        this.store.setReplyToMessage(message);
+        break;
+      case 'reply.private':
+        await this.store.replyPrivately(message);
+        break;
+      case 'thread':
+        await this.store.replyInThread(message);
+        break;
+      case 'forward':
+        await this.store.forward(message);
+        break;
+      case 'pin':
+        await this.store.pin(message);
+        break;
+      case 'unpin':
+        await this.store.unpin(message);
+        break;
+      case 'report':
+        await this.store.reportMessage(message);
+        break;
+      case 'share':
+        await this.shareFile(message);
+        break;
+      case 'download':
+        await this.downloadFileToDisk(message);
+        break;
+      case 'copy':
+        await this.store.copy(message);
+        break;
+      case 'info': {
+        const emoji = await this.store.showMessageInfo(message);
+        if (emoji) await this.onReactionClicked({ messageId: message.eventId, emoji });
+        break;
+      }
+      case 'edit':
+        await this.store.editMessage(message);
+        break;
+      case 'delete':
+        await this.store.deleteMessage(message);
+        break;
+      case 'poll.results':
+        await this.openPollDetail(message);
+        break;
+      case 'poll.edit':
+        await this.openPollEdit(message);
+        break;
+      case 'poll.end':
+        await this.onPollEndClicked({ pollEventId: message.eventId });
+        break;
     }
   }
 
