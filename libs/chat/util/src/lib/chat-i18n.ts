@@ -417,7 +417,6 @@ export const CHAT_MAINTENANCE_I18N_KEYS = {
   chat_repair_avatars_none:           PFX + 'maintenance.repair.avatars.none',
   chat_repair_avatars_preview:        PFX + 'maintenance.repair.avatars.preview',
   chat_repair_avatars_skipped:        PFX + 'maintenance.repair.avatars.skipped_has',
-  chat_repair_tenants_moved:          PFX + 'maintenance.repair.tenants.moved',
   chat_assign:                        PFX + 'maintenance.assign.label',
   chat_assign_description:            PFX + 'maintenance.assign.description',
   chat_assign_scan:                   PFX + 'maintenance.assign.scan',

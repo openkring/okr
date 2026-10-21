@@ -568,9 +568,6 @@
         "confirm": "Impostare ora {{ count }} avatar a partire dagli avatar delle persone?",
         "conf": "{{ count }} avatar riparati."
       },
-      "tenants": {
-        "moved": "L'assegnazione delle stanze alle app si trova ora in AOC › Qualità dei dati › Migrazioni."
-      },
       "guests": {
         "label": "Non membri nelle chat di gruppo",
         "description": "Mostra, per ogni gruppo, quante persone sono nella stanza senza comparire nell'elenco dei membri e segnala le stanze interessate nell'elenco. Qui non viene modificato nulla.",

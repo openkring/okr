@@ -568,9 +568,6 @@
         "confirm": "{{ count }} Avatare jetzt aus den Personen-Avataren setzen?",
         "conf": "{{ count }} Avatare repariert."
       },
-      "tenants": {
-        "moved": "Die Zuordnung der Räume zu Apps findest du jetzt unter AOC › Datenqualität › Migrationen."
-      },
       "guests": {
         "label": "Nicht-Mitglieder in Gruppen-Chats",
         "description": "Zeigt pro Gruppe, wie viele Leute im Chat-Raum sitzen, die nicht in der Mitgliederliste stehen, und markiert die betroffenen Räume in der Liste. Hier wird nichts geändert.",

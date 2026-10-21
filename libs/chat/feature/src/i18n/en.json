@@ -568,9 +568,6 @@
         "confirm": "Set {{ count }} avatars from the person avatars now?",
         "conf": "{{ count }} avatars repaired."
       },
-      "tenants": {
-        "moved": "Assigning rooms to apps now lives under AOC › Data quality › Migrations."
-      },
       "guests": {
         "label": "Non-members in group chats",
         "description": "Shows, per group, how many people sit in the chat room without being on the member list, and flags the affected rooms in the list. Nothing is changed here.",

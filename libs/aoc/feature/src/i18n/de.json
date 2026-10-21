@@ -253,9 +253,6 @@
       "config": "Konfiguration",
       "data": "Datenqualität"
     },
-    "group": {
-      "migrations": "Migrationen"
-    },
     "card": {
       "users": {
         "label": "Benutzer & Zugänge",
@@ -312,29 +309,15 @@
       "reindex": {
         "label": "Suchindex neu aufbauen",
         "effect": "Baut die Suche neu auf, wenn Treffer fehlen oder veraltet sind."
-      },
-      "accountTenants": {
-        "label": "Zugänge den Apps zuordnen",
-        "effect": "Trägt bei bestehenden Zugängen ein, in welchen Apps sie gelten."
-      },
-      "matrixTenants": {
-        "label": "Chat-Räume Apps zuordnen",
-        "effect": "Ordnet bestehende Chat-Räume den Apps zu, in denen sie sichtbar sein sollen."
       }
     },
     "title": "Administration",
     "empty": "In diesem Bereich gibt es für dich gerade nichts.",
     "lastRun": "Zuletzt ausgeführt: {date}",
     "neverRun": "Noch nie ausgeführt",
-    "status": {
-      "offen": "Offen",
-      "erledigt": "Erledigt",
-      "error": "Fehler"
-    },
     "action": {
       "run": "Ausführen",
-      "preview": "Vorschau",
-      "check": "Prüfen"
+      "preview": "Vorschau"
     },
     "pickType": "Welche Daten?",
     "validate": {
@@ -376,20 +359,6 @@
       "group": "Gruppen",
       "responsibility": "Zuständigkeiten",
       "session": "Sessions"
-    },
-    "migrate": {
-      "confirmAccount": "Bei {count} Personen wird jetzt eingetragen, in welchen Apps sie gelten. Fortfahren?",
-      "confirmMatrix": "{count} Chat-Räume jetzt den Apps zuordnen?",
-      "openAccount": "Bei {count} Personen fehlt noch der Eintrag, in welchen Apps sie gelten.",
-      "nothing": "Nichts zu tun: Alles ist bereits zugeordnet.",
-      "doneAccount": "Fertig: {count} Personen aktualisiert.",
-      "doneMatrix": "Fertig: {count} Chat-Räume zugeordnet.",
-      "matrixExplanation": "{count} Chat-Räume werden den Apps zugeordnet, in denen sie sichtbar sein sollen. Räume ohne eindeutige Zuordnung: {ambiguous}.",
-      "ambiguousTitle": "{count} Räume ohne eindeutige Zuordnung",
-      "ambiguousDetail": "Diese Räume bleiben vorerst überall sichtbar. Ordne sie in der Chat-Wartung von Hand zu. Tippe hier, um sie zu öffnen.",
-      "room": "Apps: {tenants}",
-      "manualDone": "Erledigt – {count} Räume musst du von Hand zuordnen",
-      "manualOpen": "{count} Räume musst du von Hand zuordnen"
     }
   }
 }

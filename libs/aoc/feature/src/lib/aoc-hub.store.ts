@@ -2,8 +2,6 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { getApp } from 'firebase/app';
-import { getFunctions, httpsCallable } from 'firebase/functions';
 import { from, Observable, of } from 'rxjs';
 import { StaticSuite } from 'vest';
 
@@ -21,7 +19,7 @@ import { fill, getCategoryIndex, getFullName, getSystemQuery, hasRole, logToFind
 import { resourceParams, showToast } from '@okr/shared-util-angular';
 import { openReport } from '@okr/shared-ui';
 import { FeatureStore } from '@okr/tenant-feature';
-import { AOC_AREAS, AOC_HUB_I18N_KEYS, AocCardContext, formatValidationErrors, indexDiffs, IndexDiff, isOperationVisible, lastRunsByOperation, MigrationStatus, migrationStatus } from '@okr/aoc-util';
+import { AOC_AREAS, AOC_HUB_I18N_KEYS, AocCardContext, formatValidationErrors, indexDiffs, IndexDiff, isOperationVisible, lastRunsByOperation } from '@okr/aoc-util';
 
 import { addressValidations, getAddressIndex } from '@okr/subject-address-util';
 import { commentValidations, getCommentIndex } from '@okr/comment-util';
@@ -52,30 +50,6 @@ interface ReindexPlan {
   diffs: IndexDiff<OkrModel & { index?: string }>[];
 }
 
-/** The outcome of the last «Prüfen» of a migration; absent until the admin has pressed it. */
-export interface MigrationState {
-  status: MigrationStatus;
-  /** items the automatic part still has to change */
-  pending: number;
-  /** items the automatic part cannot derive (Matrix rooms); reported, never counted as offen */
-  ambiguous: number;
-}
-
-/** What a migration's dry run reports, in the hub's terms. */
-interface MigrationProbe {
-  pending: number;
-  ambiguous: number;
-  /** a report to show after the check (only the Matrix rooms have one) */
-  report?: { explanation: string; findings: ReportFinding[] };
-  /** a toast to show after the check when there is no report */
-  message?: string;
-}
-
-const MIGRATE_ACCOUNT = 'migrate-account-tenants';
-const MIGRATE_MATRIX = 'migrate-matrix-tenants';
-/** The manual room assignment (Chat-Wartung) for rooms the automatic backfill cannot derive. */
-const CHAT_MAINTENANCE_ROUTE = '/operator/chat';
-
 /** The scope every hub run is logged under; `action` is the card's operation id. */
 const AOC_SCOPE = 'aoc';
 
@@ -88,8 +62,6 @@ export const AocHubStore = signalStore(
   /** the operation id that is running; its card (and every other run button) is disabled meanwhile */
   withState({
     running: undefined as string | undefined,
-    /** per migration id: the status set by «Prüfen». Nothing is checked on page load. */
-    migrations: {} as Record<string, MigrationState>,
   }),
   withProps(() => ({
     appStore: inject(AppStore),
@@ -288,132 +260,12 @@ export const AocHubStore = signalStore(
       await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error)?.message ?? e}`);
     };
 
-    const functions = () => getFunctions(getApp(), 'europe-west6');
-
-    /** The Matrix rooms backfill lives in chat-data-access; import it on use so the SDK stays lazy. */
-    const backfillRooms = async (dryRun: boolean) => (await import('@okr/chat-data-access')).backfillRoomTenants(functions(), dryRun);
-
-    const callAccountBackfill = async (dryRun: boolean) => {
-      const fn = httpsCallable<{ dryRun: boolean }, { users: number; persons: number; written: number; pending: number }>(functions(), 'backfillAccountTenants');
-      return (await fn({ dryRun })).data;
-    };
-
-    const setMigration = (id: string, state: MigrationState): void =>
-      patchState(store, { migrations: { ...store.migrations(), [id]: state } });
-
-    /** Dry run of one migration: nothing is written. */
-    const probe = async (id: string): Promise<MigrationProbe> => {
-      if (id === MIGRATE_ACCOUNT) {
-        const dry = await callAccountBackfill(true);
-        return {
-          pending: dry.pending,
-          ambiguous: 0,
-          message: dry.pending > 0 ? fill(store.i18n.migrate_open_account(), { count: dry.pending }) : store.i18n.migrate_nothing(),
-        };
-      }
-      // Ambiguous rooms are not offen for the automatic part, but they are always reported.
-      const dry = await backfillRooms(true);
-      const findings: ReportFinding[] = dry.changes.map(c => ({
-        id: c.roomId,
-        title: c.name || c.roomId,
-        detail: `${fill(store.i18n.migrate_room(), { tenants: c.tenants.join(', ') })} — ${c.roomId}`,
-      }));
-      if (dry.ambiguous.length > 0) {
-        findings.push({
-          id: 'ambiguous',
-          title: fill(store.i18n.migrate_ambiguous_title(), { count: dry.ambiguous.length }),
-          detail: store.i18n.migrate_ambiguous_detail(),
-          url: CHAT_MAINTENANCE_ROUTE,
-        });
-      }
-      return {
-        pending: dry.changes.length,
-        ambiguous: dry.ambiguous.length,
-        report: {
-          explanation: fill(store.i18n.migrate_matrix_explanation(), { count: dry.changes.length, ambiguous: dry.ambiguous.length }),
-          findings,
-        },
-      };
-    };
-
-    /** Probes and sets the status; on a callable error the status is `error`, never erledigt. */
-    const check = async (id: string, showResult: boolean): Promise<MigrationProbe | undefined> => {
-      try {
-        const result = await probe(id);
-        setMigration(id, { status: migrationStatus(result), pending: result.pending, ambiguous: result.ambiguous });
-        if (showResult) {
-          if (result.report && (result.pending > 0 || result.report.findings.length > 0)) {
-            await openReport(store.modalController, {
-              title: store.cardI18n[(id === MIGRATE_MATRIX ? 'matrixTenants' : 'accountTenants') + '.label']?.() ?? '',
-              kind: 'migration',
-              explanation: result.report.explanation,
-              findings: result.report.findings,
-              ranAt: new Date(),
-            });
-          } else if (result.message) {
-            await showToast(store.toastController, result.message);
-          } else {
-            await showToast(store.toastController, store.i18n.migrate_nothing());
-          }
-        }
-        return result;
-      } catch (e) {
-        setMigration(id, { status: migrationStatus(e instanceof Error ? e : new Error(String(e))), pending: 0, ambiguous: 0 });
-        await fail(e);
-        return undefined;
-      }
-    };
-
-    const confirmApply = async (id: string, count: number): Promise<boolean> => {
-      const key = id === MIGRATE_MATRIX ? 'migrate_confirm_matrix' : 'migrate_confirm_account';
-      const alert = await store.alertController.create({
-        header: store.cardI18n[(id === MIGRATE_MATRIX ? 'matrixTenants' : 'accountTenants') + '.label']?.() ?? '',
-        message: fill(store.i18n[key](), { count }),
-        buttons: [
-          { text: store.i18n.cancel(), role: 'cancel' },
-          { text: store.i18n.action_run(), role: 'confirm' },
-        ],
-      });
-      await alert.present();
-      return (await alert.onDidDismiss()).role === 'confirm';
-    };
-
-    /** Runs the migration for real, logs it, then re-checks so the status reflects what is left. */
-    const apply = async (id: string): Promise<void> => {
-      const known = store.migrations()[id];
-      // only an offen migration can be applied: «Prüfen» first gives the count to confirm
-      if (known?.status !== 'offen' || known.pending <= 0) return;
-      if (!(await confirmApply(id, known.pending))) return;
-      let done: number;
-      try {
-        done = id === MIGRATE_MATRIX ? (await backfillRooms(false)).stamped : (await callAccountBackfill(false)).written;
-      } catch (e) {
-        setMigration(id, { status: migrationStatus(e instanceof Error ? e : new Error(String(e))), pending: known.pending, ambiguous: known.ambiguous });
-        await fail(e);
-        return;
-      }
-      await logRun(id, `${done}`);
-      const doneText = fill(store.i18n[id === MIGRATE_MATRIX ? 'migrate_done_matrix' : 'migrate_done_account'](), { count: done });
-      await showToast(store.toastController, doneText);
-      // re-check; for the rooms, show the report when ambiguous rooms remain so the link to the manual step is offered
-      const after = await check(id, false);
-      if (after?.report && after.report.findings.some(f => f.id === 'ambiguous')) {
-        await openReport(store.modalController, {
-          title: store.cardI18n['matrixTenants.label']?.() ?? '',
-          kind: 'migration',
-          explanation: after.report.explanation,
-          findings: after.report.findings,
-          ranAt: new Date(),
-        });
-      }
-    };
-
     return {
       /**
        * Dispatches a card's operation id — only when that card is visible to this user (the client
        * gate; rules and callables still decide) and no other run is in flight.
        */
-      async run(operationId: string, action: 'check' | 'apply' = 'check'): Promise<void> {
+      async run(operationId: string): Promise<void> {
         if (store.running()) return;
         if (!isOperationVisible(AOC_AREAS, operationId, store.cardContext())) return;
         patchState(store, { running: operationId });
@@ -422,12 +274,6 @@ export const AocHubStore = signalStore(
             case 'validate': return await this.validate();
             case 'reindex': return await this.reindex();
             case 'iban': return await this.listIban();
-            case MIGRATE_ACCOUNT:
-            case MIGRATE_MATRIX:
-              // «Prüfen» (dry run, sets the status) or «Ausführen» (confirm, run, log, re-check)
-              if (action === 'apply') await apply(operationId);
-              else await check(operationId, true);
-              return;
             default:
               console.warn(`AocHubStore.run: unknown operation ${operationId}`);
           }

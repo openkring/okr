@@ -299,48 +299,14 @@ describe('guard factories are never registered uncalled', () => {
   });
 });
 
-/**
- * A `redirectTo` child (the bookmark redirects, spec 1.101 phase 2) cannot carry a guard: Angular
- * redirects before activation, and the redirect target brings its own guard. Every guard check
- * below therefore looks at the non-redirect children only; `AOC_REDIRECTS` pins which ones are
- * exempt, so no other redirect can slip past those checks.
- */
+/** No `/aoc` child is a redirect any more (the 1.101 bookmark redirects are gone); the filter is kept so a future redirect cannot slip past the guard checks unnoticed by the test below. */
 const withoutRedirects = (children: readonly Route[] = []): Route[] => children.filter(c => !c.redirectTo);
 
-/** The exact set of `/aoc` redirect children: old path -> new home. Later tasks add to it. */
-const AOC_REDIRECTS: Record<string, string> = {
-  content: '/page/integrity',
-  doc: '/document/orphans',
-  srv: '/membership/srv',
-  bexio: '/person/bexio-contacts',
-  trip: '/trips/maintenance',
-  diary: '/diary/import',
-  kiosk: '/trips/kiosk',
-  statistics: '/aoc/data',
-  adminops: '/aoc/data',
-  chat: '/chat/maintenance',
-  roles: '/user/all/c-users',
-  account: '/user/all/c-users',
-};
-
 describe('/aoc guards after the 2026-08-05 rulings', () => {
-  it('the /aoc redirect children are exactly the known bookmark redirects', () => {
+  it('/aoc has no redirect children (the 1.101 bookmark redirects were removed)', () => {
     const { children = [] } = fragmentOf('aoc', 'aoc');
-    const redirects = Object.fromEntries(children.filter(c => c.redirectTo).map(c => [c.path, c.redirectTo]));
 
-    expect(redirects).toEqual(AOC_REDIRECTS);
-  });
-
-  // 1.101 phase 5: the old pages land on the Datenqualität hub directly, never via a redirect chain.
-  it('/aoc/adminops and /aoc/statistics both land on the Datenqualität hub', () => {
-    const { children = [] } = fragmentOf('aoc', 'aoc');
-    const target = (path: string) => children.find(c => c.path === path)?.redirectTo;
-
-    expect(target('adminops')).toBe('/aoc/data');
-    expect(target('statistics')).toBe('/aoc/data');
-    // No redirect may point at another redirect.
-    const redirectPaths = children.filter(c => c.redirectTo).map(c => `/aoc/${c.path}`);
-    expect(children.filter(c => redirectPaths.includes(c.redirectTo as string)).map(c => c.path)).toEqual([]);
+    expect(children.filter(c => c.redirectTo).map(c => c.path)).toEqual([]);
   });
 
   /** 1.101 phase 5: the four hub areas are fixed paths, one component, the area taken from route data. */

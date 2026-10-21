@@ -253,9 +253,6 @@
       "config": "Configuración",
       "data": "Calidad de los datos"
     },
-    "group": {
-      "migrations": "Migraciones"
-    },
     "card": {
       "users": {
         "label": "Usuarios y accesos",
@@ -312,29 +309,15 @@
       "reindex": {
         "label": "Reconstruir el índice de búsqueda",
         "effect": "Reconstruye la búsqueda cuando faltan resultados o están desactualizados."
-      },
-      "accountTenants": {
-        "label": "Asignar cuentas a las apps",
-        "effect": "Anota en las cuentas existentes a qué apps pertenecen."
-      },
-      "matrixTenants": {
-        "label": "Asignar salas de chat a las apps",
-        "effect": "Asigna las salas de chat existentes a las apps donde deben verse."
       }
     },
     "title": "Administración",
     "empty": "Por ahora no hay nada para ti en esta área.",
     "lastRun": "Última ejecución: {date}",
     "neverRun": "Nunca ejecutado",
-    "status": {
-      "offen": "Pendiente",
-      "erledigt": "Hecho",
-      "error": "Error"
-    },
     "action": {
       "run": "Ejecutar",
-      "preview": "Vista previa",
-      "check": "Comprobar"
+      "preview": "Vista previa"
     },
     "pickType": "¿Qué datos?",
     "validate": {
@@ -376,20 +359,6 @@
       "group": "Grupos",
       "responsibility": "Responsabilidades",
       "session": "Sesiones"
-    },
-    "migrate": {
-      "confirmAccount": "A {count} personas se les va a anotar ahora en qué apps están activas. ¿Continuar?",
-      "confirmMatrix": "¿Asignar ahora {count} salas de chat a sus apps?",
-      "openAccount": "A {count} personas aún les falta la anotación de en qué apps están activas.",
-      "nothing": "Nada que hacer: todo está ya asignado.",
-      "doneAccount": "Listo: {count} personas actualizadas.",
-      "doneMatrix": "Listo: {count} salas de chat asignadas.",
-      "matrixExplanation": "{count} salas de chat se asignarán a las apps en las que deben ser visibles. Salas sin asignación clara: {ambiguous}.",
-      "ambiguousTitle": "{count} salas sin asignación clara",
-      "ambiguousDetail": "Por ahora estas salas siguen visibles en todas partes. Asígnalas a mano en el mantenimiento del chat. Toca aquí para abrirlo.",
-      "room": "Apps: {tenants}",
-      "manualDone": "Listo – tienes que asignar {count} salas a mano",
-      "manualOpen": "Tienes que asignar {count} salas a mano"
     }
   }
 }

@@ -253,9 +253,6 @@
       "config": "Configuration",
       "data": "Data quality"
     },
-    "group": {
-      "migrations": "Migrations"
-    },
     "card": {
       "users": {
         "label": "Users & access",
@@ -312,29 +309,15 @@
       "reindex": {
         "label": "Rebuild search index",
         "effect": "Rebuilds search when results are missing or outdated."
-      },
-      "accountTenants": {
-        "label": "Assign accounts to apps",
-        "effect": "Records for existing accounts which apps they belong to."
-      },
-      "matrixTenants": {
-        "label": "Assign chat rooms to apps",
-        "effect": "Assigns existing chat rooms to the apps where they should be visible."
       }
     },
     "title": "Administration",
     "empty": "There is nothing for you in this area right now.",
     "lastRun": "Last run: {date}",
     "neverRun": "Not run yet",
-    "status": {
-      "offen": "Pending",
-      "erledigt": "Done",
-      "error": "Error"
-    },
     "action": {
       "run": "Run",
-      "preview": "Preview",
-      "check": "Check"
+      "preview": "Preview"
     },
     "pickType": "Which data?",
     "validate": {
@@ -376,20 +359,6 @@
       "group": "Groups",
       "responsibility": "Responsibilities",
       "session": "Sessions"
-    },
-    "migrate": {
-      "confirmAccount": "{count} people will now get an entry saying which apps they belong to. Continue?",
-      "confirmMatrix": "Assign {count} chat rooms to their apps now?",
-      "openAccount": "{count} people still lack the entry saying which apps they belong to.",
-      "nothing": "Nothing to do: everything is already assigned.",
-      "doneAccount": "Done: {count} people updated.",
-      "doneMatrix": "Done: {count} chat rooms assigned.",
-      "matrixExplanation": "{count} chat rooms will be assigned to the apps where they should be visible. Rooms without a clear assignment: {ambiguous}.",
-      "ambiguousTitle": "{count} rooms without a clear assignment",
-      "ambiguousDetail": "For now these rooms stay visible everywhere. Assign them by hand in the chat maintenance. Tap here to open it.",
-      "room": "Apps: {tenants}",
-      "manualDone": "Done – you need to assign {count} rooms by hand",
-      "manualOpen": "You need to assign {count} rooms by hand"
     }
   }
 }

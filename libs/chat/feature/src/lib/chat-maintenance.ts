@@ -347,15 +347,6 @@ import { ChatMaintenanceStore, AdminRoom, RoomMemberInfo, RoomAssignmentEntry } 
           </ion-card-content>
         </ion-card>
 
-        <!-- The automatic tenant assignment moved to the AOC hub (spec 1.101 phase 5) -->
-        <ion-card class="repair-card">
-          <ion-card-content>
-            <p class="repair-desc">
-              <a href="/aoc/data" (click)="onOpenMigrations($event)">{{ store.i18n.chat_repair_tenants_moved() }}</a>
-            </p>
-          </ion-card-content>
-        </ion-card>
-
         <!-- Manual room assignment — for rooms the backfill cannot derive (bridge rooms) -->
         <ion-card class="repair-card">
           <ion-card-header>
@@ -766,12 +757,6 @@ export class ChatMaintenance {
 
   protected onApplyAvatarRepair(): void {
     this.store.applyAvatarRepair();
-  }
-
-  /** The automatic tenant assignment lives in AOC › Datenqualität › Migrationen (spec 1.101 phase 5). */
-  protected onOpenMigrations(event: Event): void {
-    event.preventDefault();
-    void this.router.navigateByUrl('/aoc/data');
   }
 
   protected onScanAssignableRooms(): void {

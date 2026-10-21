@@ -568,9 +568,6 @@
         "confirm": "¿Establecer ahora {{ count }} avatares a partir de los avatares de las personas?",
         "conf": "{{ count }} avatares reparados."
       },
-      "tenants": {
-        "moved": "La asignación de las salas a las apps ahora está en AOC › Calidad de datos › Migraciones."
-      },
       "guests": {
         "label": "No miembros en los chats de grupo",
         "description": "Muestra, por grupo, cuántas personas están en la sala sin figurar en la lista de miembros y marca las salas afectadas en la lista. Aquí no se cambia nada.",

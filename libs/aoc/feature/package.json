@@ -46,7 +46,6 @@
     "@okr/project-task-util": "*",
     "@okr/user-util": "*",
     "@okr/activity-data-access": "*",
-    "@okr/chat-data-access": "*",
     "@okr/tenant-feature": "*"
   }
 }

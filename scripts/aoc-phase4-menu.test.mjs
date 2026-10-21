@@ -168,17 +168,15 @@ test('operator-chat is NOT a catalogue row (operator tools stay outside the cata
 // bka-app is a private submodule; skip (not fail) when it is not checked out. No unit-test harness exists for
 // app route tables, so the operator routes are pinned on the source text.
 const BKA_ROUTES = new URL('../apps/bka-app/src/app/app.routes.ts', import.meta.url);
-test('bka-app pins both operator routes, admin-guarded, and the /aoc/chat bookmark ahead of the composed routes', { skip: !existsSync(BKA_ROUTES) && 'apps/bka-app not checked out' }, () => {
+test('bka-app pins both operator routes, admin-guarded, ahead of the composed routes', { skip: !existsSync(BKA_ROUTES) && 'apps/bka-app not checked out' }, () => {
   const src = readFileSync(BKA_ROUTES, 'utf8');
   const alloc = src.indexOf("{ path: 'operator/allocation', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocTenantAllocation) }");
   const chat = src.indexOf("{ path: 'operator/chat', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/chat-feature').then(m => m.ChatMaintenance) }");
-  const bookmark = src.indexOf("{ path: 'aoc/chat', pathMatch: 'full', redirectTo: '/operator/chat' }");
   const composed = src.indexOf('...composeGatedFeatureRoutes()');
   assert.ok(alloc > 0, 'operator/allocation');
   assert.ok(chat > 0, 'operator/chat');
-  assert.ok(bookmark > 0, 'aoc/chat redirect');
   assert.ok(composed > 0, 'composed routes');
-  assert.ok(alloc < composed && chat < composed && bookmark < composed, 'all three before the composed routes (first match wins)');
+  assert.ok(alloc < composed && chat < composed, 'both before the composed routes (first match wins)');
 });
 
 test('planLeavingRow: archive, already archived, still referenced', () => {

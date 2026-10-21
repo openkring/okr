@@ -19,7 +19,6 @@ export const AOC_AREA_IDS: readonly AocArea[] = ['access', 'ops', 'config', 'dat
 export interface AocCard {
   id: string;
   area: AocArea;
-  group?: 'migrations';
   kind: ReportKind;
   labelKey: string;
   effectKey: string;
@@ -40,7 +39,7 @@ const KRING_TENANT_ID = 'kring';
 /** kring-app has no /aoc, /user, /activity or /security routes: only Eskalationen and Features exist there. */
 const NOT_ON_KRING = [KRING_TENANT_ID];
 
-type CardOptions = Pick<AocCard, 'group' | 'tenants' | 'notOnApps'>;
+type CardOptions = Pick<AocCard, 'tenants' | 'notOnApps'>;
 
 type HubKey = keyof typeof AOC_HUB_I18N_KEYS;
 
@@ -71,7 +70,7 @@ function card(
   };
 }
 
-/** Display order = array order. A finished migration's card is removed here in the next release. */
+/** Display order = array order. */
 export const AOC_AREAS: readonly AocCard[] = [
   card('users', 'access', 'operation', { route: '/user/all/c-users' }, 'user', { notOnApps: NOT_ON_KRING }),
   card('sessions', 'access', 'report', { route: '/aoc/sessions' }, 'aoc', { notOnApps: NOT_ON_KRING }),
@@ -87,8 +86,6 @@ export const AOC_AREAS: readonly AocCard[] = [
   card('workflow', 'config', 'operation', { route: '/workflow/all/workflow-context' }, 'aoc', { notOnApps: NOT_ON_KRING }),
   card('validate', 'data', 'check', { operation: 'validate' }, 'aoc', { notOnApps: NOT_ON_KRING }),
   card('reindex', 'data', 'check', { operation: 'reindex' }, 'aoc', { notOnApps: NOT_ON_KRING }),
-  card('accountTenants', 'data', 'migration', { operation: 'migrate-account-tenants' }, 'aoc', { group: 'migrations', tenants: [OPERATOR_TENANT_ID] }),
-  card('matrixTenants', 'data', 'migration', { operation: 'migrate-matrix-tenants' }, 'aoc', { group: 'migrations', tenants: [OPERATOR_TENANT_ID] }),
 ];
 
 export interface AocCardContext {

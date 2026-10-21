@@ -568,9 +568,6 @@
         "confirm": "Définir maintenant {{ count }} avatars à partir des avatars de personnes ?",
         "conf": "{{ count }} avatars réparés."
       },
-      "tenants": {
-        "moved": "L'attribution des salons aux applications se trouve désormais sous AOC › Qualité des données › Migrations."
-      },
       "guests": {
         "label": "Non-membres dans les chats de groupe",
         "description": "Montre, par groupe, combien de personnes se trouvent dans le salon sans figurer dans la liste des membres, et signale les salons concernés dans la liste. Rien n'est modifié ici.",

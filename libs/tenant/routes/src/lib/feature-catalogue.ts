@@ -144,7 +144,7 @@ const aoc: BlockRoutes = {
     path: 'aoc',
     // The FLOOR every `/aoc` screen shares — the union of the children's own requirements, NOT
     // the admin gate. The admin gate lives on the admin-only children below (the ones the
-    // 2026-08-05 rulings do not name; the bookmark redirects carry no guard). See the block comment for why it is contentAdmin and not privileged
+    // 2026-08-05 rulings do not name). See the block comment for why it is contentAdmin and not privileged
     // (R-5) nor merely authenticated.
     canActivate: [isContentAdminGuard()],
     children: [
@@ -153,37 +153,13 @@ const aoc: BlockRoutes = {
       { path: 'access',     canActivate: [isAdminGuard()], data: { area: 'access' }, loadComponent: () => import('@okr/aoc-feature').then(m => m.AocHub) },
       { path: 'ops',        canActivate: [isAdminGuard()], data: { area: 'ops' },    loadComponent: () => import('@okr/aoc-feature').then(m => m.AocHub) },
       { path: 'config',     canActivate: [isAdminGuard()], data: { area: 'config' }, loadComponent: () => import('@okr/aoc-feature').then(m => m.AocHub) },
-      // 1.101 phase 5: AocAdminOps is gone (IBAN → Zugang, the backfill → Migrationen); remove after the next release
-      { path: 'adminops', redirectTo: '/aoc/data' },
-      // 1.101 phase 4: remove after the next release
-      { path: 'roles', redirectTo: '/user/all/c-users' },
-      // 1.101 phase 2: remove after the next release
-      { path: 'content', redirectTo: '/page/integrity' },
       { path: 'data',       canActivate: [isAdminGuard()], data: { area: 'data' }, loadComponent: () => import('@okr/aoc-feature').then(m => m.AocHub) },
-      // 1.101 phase 4: remove after the next release
-      { path: 'chat', redirectTo: '/chat/maintenance' },
-      // 1.101 phase 4: remove after the next release
-      { path: 'account', redirectTo: '/user/all/c-users' },
-      // 1.101 phase 2: remove after the next release
-      { path: 'doc', redirectTo: '/document/orphans' },
-      // 1.101 phase 2: remove after the next release
-      { path: 'kiosk', redirectTo: '/trips/kiosk' },
       // SOFTENED by owner ruling R-5, 2026-08-05, to match the live `tag-all` menu doc's
       // `roleNeeded: contentAdmin`. The fifth mismatch, found while applying the first four and
       // explicitly folded into the ruling.
       { path: 'tag',        canActivate: [isContentAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocTag) },
       { path: 'email',      canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocEmail) },
-      // 1.101 phase 3: remove after the next release
-      { path: 'bexio', redirectTo: '/person/bexio-contacts' },
-      // 1.101 phase 3: remove after the next release
-      { path: 'srv', redirectTo: '/membership/srv' },
-      // 1.101 phase 3: remove after the next release (retargeted in phase 5 to avoid a chain via /aoc/adminops)
-      { path: 'statistics', redirectTo: '/aoc/data' },
       { path: 'sessions',   canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocSession) },
-      // 1.101 phase 2: remove after the next release
-      { path: 'trip', redirectTo: '/trips/maintenance' },
-      // 1.101 phase 2: remove after the next release
-      { path: 'diary', redirectTo: '/diary/import' },
       // SOFTENED by owner ruling R-5, 2026-08-05, to match the live `aoc-website` menu doc's
       // `roleNeeded: contentAdmin`. This is the one place the live `app.routes.ts` guard is NOT
       // reproduced verbatim: it writes `isPrivilegedGuard`, which was inert under the old admin

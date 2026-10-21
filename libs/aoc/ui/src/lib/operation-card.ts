@@ -11,11 +11,8 @@ export interface OperationCardAction {
   danger?: boolean;
 }
 
-export type OperationCardStatus = 'offen' | 'erledigt' | 'error';
-
 /**
- * One tool on the AOC hub (spec 1.101 phase 5): kind badge, label, what it does, its last run and
- * an optional migration status. Presentational: it only emits `action(id)`.
+ * One tool on the AOC hub (spec 1.101 phase 5): kind badge, label, what it does, and its last run. Presentational: it only emits `action(id)`.
  *
  * A card without `actions` is a navigation card: the whole card is a button and a tap emits
  * `action('open')`. A card with actions shows one button per action instead; `busy` disables them
@@ -36,13 +33,8 @@ export type OperationCardStatus = 'offen' | 'erledigt' | 'error';
     .top { display: flex; flex-wrap: wrap; gap: 6px; }
     .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: .8rem;
       background: var(--ion-color-medium); color: var(--ion-color-medium-contrast); }
-    .badge.offen { background: var(--ion-color-warning); color: var(--ion-color-warning-contrast); }
-    .badge.erledigt { background: var(--ion-color-success); color: var(--ion-color-success-contrast); }
-    .badge.error { background: var(--ion-color-danger); color: var(--ion-color-danger-contrast); }
     .label { font-size: 1.05rem; font-weight: 600; }
     .effect { font-size: .9rem; color: var(--ion-color-step-700, var(--ion-text-color)); }
-    button.note { align-self: flex-start; padding: 0; border: 0; background: none; font: inherit; font-size: .9rem; text-align: left;
-      color: var(--ion-color-warning-shade); text-decoration: underline; cursor: pointer; }
     .run { font-size: .8rem; color: var(--ion-color-medium-shade); }
     .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: auto; padding-top: 4px; }
     .busy { display: inline-flex; align-items: center; gap: 4px; font-size: .85rem; color: var(--ion-color-medium-shade); }
@@ -51,12 +43,10 @@ export type OperationCardStatus = 'offen' | 'erledigt' | 'error';
     <ng-template #body>
       <span class="top">
         <span class="badge">{{ kindLabel() }}</span>
-        @if (status(); as s) { <span class="badge" [class]="s">{{ statusLabel() }}</span> }
       </span>
       <span class="label">{{ label() }}</span>
       <span class="effect">{{ effect() }}</span>
       @if (runText(); as run) { <span class="run">{{ run }}</span> }
-      @if (note(); as n) { <span class="note-row"><button class="note" type="button" (click)="onNote($event)">{{ n }}</button></span> }
     </ng-template>
 
     @if (actions().length === 0) {
@@ -83,7 +73,6 @@ export class OperationCard {
   public readonly effect = input.required<string>();
   public readonly kind = input.required<ReportKind>();
   public readonly lastRun = input<Date | undefined>(undefined);
-  public readonly status = input<OperationCardStatus | undefined>(undefined);
   public readonly actions = input<OperationCardAction[]>([]);
   public readonly i18n = input.required<AocHubI18n>();
   /** some operation is running: the action buttons are disabled */
@@ -91,22 +80,9 @@ export class OperationCard {
   /** this card's own operation is running: a busy marker is shown */
   public readonly running = input(false);
 
-  /** a follow-up the card leaves to the admin; a tap emits `action('note')` */
-  public readonly note = input<string>('');
-
   public readonly action = output<string>();
 
-  protected onNote(event: Event): void {
-    event.stopPropagation();
-    this.action.emit('note');
-  }
-
   protected readonly kindLabel = computed(() => this.i18n()[`kind_${this.kind()}` as const]());
-  protected readonly statusLabel = computed(() => {
-    const s = this.status();
-    return s ? this.i18n()[`status_${s}` as const]() : '';
-  });
-
   /** Only an operation card has a run to report; a navigation card shows none. */
   protected readonly runText = computed(() => {
     if (this.actions().length === 0) return '';

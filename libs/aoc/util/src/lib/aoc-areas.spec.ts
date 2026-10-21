@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import { RoleName } from '@okr/shared-models';
-import { OPERATOR_TENANT_ID } from '@okr/shared-util-core';
 
 import { AOC_AREA_IDS, AOC_AREAS, AOC_AREA_ROUTES, AocArea, isOperationVisible, visibleAocCards } from './aoc-areas';
 
@@ -30,8 +29,6 @@ const EXPECTED_OPERATIONS: Record<string, string> = {
   iban: 'iban',
   validate: 'validate',
   reindex: 'reindex',
-  accountTenants: 'migrate-account-tenants',
-  matrixTenants: 'migrate-matrix-tenants',
 };
 
 describe('AOC_AREAS', () => {
@@ -59,15 +56,6 @@ describe('AOC_AREAS', () => {
     }
   });
 
-  it('groups exactly the two migrations, operator only', () => {
-    const m = AOC_AREAS.filter(c => c.group === 'migrations');
-    expect(m.map(c => c.id)).toEqual(['accountTenants', 'matrixTenants']);
-    for (const c of m) {
-      expect(c.kind).toBe('migration');
-      expect(c.tenants).toEqual([OPERATOR_TENANT_ID]);
-    }
-  });
-
   it('exposes the four hub routes', () => {
     expect(AOC_AREA_ROUTES).toEqual({ access: '/aoc/access', ops: '/aoc/ops', config: '/aoc/config', data: '/aoc/data' });
   });
@@ -81,7 +69,7 @@ describe('visibleAocCards', () => {
     expect(ids('ops', ctx('bka'))).toEqual(['activity', 'emailEvents', 'chatMaintenance']);
     expect(ids('access', ctx('bka'))).toEqual(['users', 'sessions', 'register', 'privacyAudit', 'iban', 'allocation']);
     expect(ids('data', ctx('scs'))).toEqual(['validate', 'reindex']);
-    expect(ids('data', ctx('bka'))).toEqual(['validate', 'reindex', 'accountTenants', 'matrixTenants']);
+    expect(ids('data', ctx('bka'))).toEqual(['validate', 'reindex']);
   });
 
   it('shows Eskalationen only for kring and only with the business block', () => {
@@ -112,8 +100,6 @@ describe('isOperationVisible', () => {
   it('allows an operation only when its card is visible in some area', () => {
     expect(isOperationVisible(AOC_AREAS, 'validate', ctx('scs'))).toBe(true);
     expect(isOperationVisible(AOC_AREAS, 'iban', ctx('scs'))).toBe(true);
-    expect(isOperationVisible(AOC_AREAS, 'migrate-account-tenants', ctx('scs'))).toBe(false);
-    expect(isOperationVisible(AOC_AREAS, 'migrate-account-tenants', ctx('bka'))).toBe(true);
     expect(isOperationVisible(AOC_AREAS, 'iban', ctx('kring'))).toBe(false);
     expect(isOperationVisible(AOC_AREAS, 'validate', ctx('scs', { roles: ['registered'] }))).toBe(false);
     expect(isOperationVisible(AOC_AREAS, 'reindex', ctx('scs', { enabled: ['user'] }))).toBe(false);

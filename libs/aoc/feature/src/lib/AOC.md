@@ -59,11 +59,6 @@ writes each run to `activities` (`scope: 'aoc'`), and the card shows the last ru
 |---|---|---|
 | Daten-Validierung | operation `validate` | Runs the Vest suites over the collections and lists the findings as a report |
 | Suchindex neu aufbauen | operation `reindex` | Previews the documents whose `index` differs, then writes only that field |
-| Migrationen › Zugänge den Apps zuordnen | operation `migrate-account-tenants` | `backfillAccountTenants`; «Prüfen» runs the dry run; operator only |
-| Migrationen › Chat-Räume Apps zuordnen | operation `migrate-matrix-tenants` | `backfillMatrixRoomTenants`; operator only |
-
-A migration card shows «offen» or «erledigt» only after «Prüfen». Nothing runs on page load. A
-finished migration's card is removed from `AOC_AREAS` in the following release.
 
 Bulk fixes have no UI. Use `node scripts/fix-models.mjs --collection <name> [--max <n>] [--apply]`
 (dry run by default).
@@ -96,9 +91,9 @@ use «Ins Menü» for `aoc` on kring. If the two rows reappear, remove them from
 | Roles, User Accounts | Benutzer & Zugänge, `/user/all/c-users` | 4 |
 | Chat | Chat › Wartung, `/chat/maintenance`; bka also `/operator/chat` | 4 |
 | Admin Ops: IBAN list | Zugang › IBAN-Bestand | 5 |
-| Admin Ops: `backfillAccountTenants` | Datenqualität › Migrationen | 5 |
+| Admin Ops: `backfillAccountTenants` | no UI; the callable stays deployed (script use) | 5 |
 | Data: validation, search index | Datenqualität cards | 5 |
-| Matrix room backfill | Datenqualität › Migrationen (moved from Chat-Wartung) | 5 |
+| Matrix room backfill | no UI; `backfillMatrixRoomTenants` stays deployed (script use); rooms are assigned by hand in Chat-Wartung | 5 |
 | Sessions, E-Mail-Ereignisse | hub cards; the pages keep `/aoc/sessions` and `/aoc/email` | 5 |
 | Benutzer, Register, Privacy Audit, Aktivitäten, Eskalationen, Workflow, Features | hub cards, no longer `aoc-menu` rows | 5 |
 
@@ -114,31 +109,13 @@ The operator is a caller whose `users` doc has tenants exactly `['bka']` and `ro
 - Mandanten-Zuteilung (`/operator/allocation`, bka-app only; `allocateTenant`, `getAllocationEmails`)
 - Chat-Wartung (Betreiber) (`/operator/chat`, bka-app only)
 - E-Mail-Ereignisse (the `emailEvents` read rule)
-- the migrations `backfillAccountTenants` and `backfillMatrixRoomTenants`
+- the callables `backfillAccountTenants` and `backfillMatrixRoomTenants` (no UI any more; called by script)
 - «Adressverzeichnis neu aufbauen» on the Privacy Audit page (`rebuildAddressDirectory`; the button
   is shown only when `tenantId === OPERATOR_TENANT_ID`)
 - `listFirebaseUsers` and `listBkUsers` return the whole project only to bka, the caller's own tenant otherwise
 
 Outside bka, the account callables act only on logins whose `users` doc belongs to the caller's tenant
 alone (`loadTenantUser`, `isSoleTenantUserData`, `mayDeleteAuthUser`).
-
-## Remaining `/aoc/*` redirects
-
-Each is kept for one release and pinned in `AOC_REDIRECTS` (`feature-catalogue.guards.spec.ts`):
-
-| Old path | Redirects to |
-|---|---|
-| `/aoc/adminops` | `/aoc/data` |
-| `/aoc/statistics` | `/aoc/data` |
-| `/aoc/roles`, `/aoc/account` | `/user/all/c-users` |
-| `/aoc/chat` | `/chat/maintenance` (bka-app: `/operator/chat`) |
-| `/aoc/content` | `/page/integrity` |
-| `/aoc/doc` | `/document/orphans` |
-| `/aoc/kiosk` | `/trips/kiosk` |
-| `/aoc/trip` | `/trips/maintenance` |
-| `/aoc/diary` | `/diary/import` |
-| `/aoc/bexio` | `/person/bexio-contacts` |
-| `/aoc/srv` | `/membership/srv` |
 
 ## Library path
 

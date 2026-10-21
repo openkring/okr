@@ -253,9 +253,6 @@
       "config": "Configuration",
       "data": "Qualité des données"
     },
-    "group": {
-      "migrations": "Migrations"
-    },
     "card": {
       "users": {
         "label": "Utilisateurs et accès",
@@ -312,29 +309,15 @@
       "reindex": {
         "label": "Reconstruire l'index de recherche",
         "effect": "Reconstruit la recherche quand des résultats manquent ou sont périmés."
-      },
-      "accountTenants": {
-        "label": "Attribuer les comptes aux apps",
-        "effect": "Indique pour les accès existants dans quelles apps ils valent."
-      },
-      "matrixTenants": {
-        "label": "Attribuer les salons de chat aux apps",
-        "effect": "Attribue les salons de chat existants aux apps où ils doivent être visibles."
       }
     },
     "title": "Administration",
     "empty": "Il n'y a rien pour toi dans ce domaine pour le moment.",
     "lastRun": "Dernière exécution : {date}",
     "neverRun": "Jamais exécuté",
-    "status": {
-      "offen": "En attente",
-      "erledigt": "Terminé",
-      "error": "Erreur"
-    },
     "action": {
       "run": "Exécuter",
-      "preview": "Aperçu",
-      "check": "Vérifier"
+      "preview": "Aperçu"
     },
     "pickType": "Quelles données ?",
     "validate": {
@@ -376,20 +359,6 @@
       "group": "Groupes",
       "responsibility": "Responsabilités",
       "session": "Sessions"
-    },
-    "migrate": {
-      "confirmAccount": "Pour {count} personnes, on va maintenant enregistrer dans quelles apps elles sont actives. Continuer ?",
-      "confirmMatrix": "Attribuer maintenant {count} salons de discussion à leurs apps ?",
-      "openAccount": "Pour {count} personnes, l'indication des apps concernées manque encore.",
-      "nothing": "Rien à faire : tout est déjà attribué.",
-      "doneAccount": "Terminé : {count} personnes mises à jour.",
-      "doneMatrix": "Terminé : {count} salons de discussion attribués.",
-      "matrixExplanation": "{count} salons de discussion vont être attribués aux apps dans lesquelles ils doivent être visibles. Salons sans attribution claire : {ambiguous}.",
-      "ambiguousTitle": "{count} salons sans attribution claire",
-      "ambiguousDetail": "Pour l'instant, ces salons restent visibles partout. Attribue-les à la main dans la maintenance du chat. Touche ici pour l'ouvrir.",
-      "room": "Apps : {tenants}",
-      "manualDone": "Terminé – tu dois attribuer {count} salons à la main",
-      "manualOpen": "Tu dois attribuer {count} salons à la main"
     }
   }
 }

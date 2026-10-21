@@ -18,12 +18,6 @@ describe('content integrity route (spec 1.101 phase 2)', () => {
   const blockRoutes = (id: string) => FEATURE_ROUTES.find(b => b.id === id)!.routes();
   const child = (routes: ReturnType<typeof blockRoutes>, path: string) => routes.find(r => r.path === path)?.children ?? [];
 
-  it('the old /aoc/content url redirects to /page/integrity', () => {
-    const aoc = child(blockRoutes('aoc'), 'aoc').find(r => r.path === 'content');
-    expect(aoc?.redirectTo).toBe('/page/integrity');
-    expect(aoc?.loadComponent).toBeUndefined();
-  });
-
   it('the page block has the integrity path ahead of the :listId catch-all', () => {
     const paths = child(blockRoutes('cms'), 'page').map(r => r.path);
     expect(paths).toContain('integrity');
@@ -34,12 +28,6 @@ describe('content integrity route (spec 1.101 phase 2)', () => {
 describe('document orphans route (spec 1.101 phase 2)', () => {
   const blockRoutes = (id: string) => FEATURE_ROUTES.find(b => b.id === id)!.routes();
   const child = (routes: ReturnType<typeof blockRoutes>, path: string) => routes.find(r => r.path === path)?.children ?? [];
-
-  it('the old /aoc/doc url redirects to /document/orphans', () => {
-    const aoc = child(blockRoutes('aoc'), 'aoc').find(r => r.path === 'doc');
-    expect(aoc?.redirectTo).toBe('/document/orphans');
-    expect(aoc?.loadComponent).toBeUndefined();
-  });
 
   it('the document block has the orphans path ahead of the :listId catch-all, behind an admin guard', () => {
     const children = child(blockRoutes('document'), 'document');
@@ -53,22 +41,6 @@ describe('document orphans route (spec 1.101 phase 2)', () => {
 describe('trip maintenance, trip kiosk and diary import routes (spec 1.101 phase 2)', () => {
   const blockRoutes = (id: string) => FEATURE_ROUTES.find(b => b.id === id)!.routes();
   const child = (routes: ReturnType<typeof blockRoutes>, path: string) => routes.find(r => r.path === path)?.children ?? [];
-
-  it('the old /aoc/trip and /aoc/diary urls redirect to their new homes', () => {
-    const aoc = child(blockRoutes('aoc'), 'aoc');
-    const trip = aoc.find(r => r.path === 'trip');
-    const diary = aoc.find(r => r.path === 'diary');
-    expect(trip?.redirectTo).toBe('/trips/maintenance');
-    expect(trip?.loadComponent).toBeUndefined();
-    expect(diary?.redirectTo).toBe('/diary/import');
-    expect(diary?.loadComponent).toBeUndefined();
-  });
-
-  it('the old /aoc/kiosk url redirects to its new home', () => {
-    const kiosk = child(blockRoutes('aoc'), 'aoc').find(r => r.path === 'kiosk');
-    expect(kiosk?.redirectTo).toBe('/trips/kiosk');
-    expect(kiosk?.loadComponent).toBeUndefined();
-  });
 
   it.each([
     ['trip', 'trips', 'maintenance'],
@@ -87,12 +59,6 @@ describe('membership SRV route (spec 1.101 phase 3)', () => {
   const blockRoutes = (id: string) => FEATURE_ROUTES.find(b => b.id === id)!.routes();
   const child = (routes: ReturnType<typeof blockRoutes>, path: string) => routes.find(r => r.path === path)?.children ?? [];
 
-  it('the old /aoc/srv url redirects to /membership/srv', () => {
-    const aoc = child(blockRoutes('aoc'), 'aoc').find(r => r.path === 'srv');
-    expect(aoc?.redirectTo).toBe('/membership/srv');
-    expect(aoc?.loadComponent).toBeUndefined();
-  });
-
   it('the membership block has srv ahead of the :listId catch-all, behind one guard', () => {
     const children = child(blockRoutes('relationship'), 'membership');
     const paths = children.map(r => r.path);
@@ -105,12 +71,6 @@ describe('membership SRV route (spec 1.101 phase 3)', () => {
 describe('person Bexio contacts route (spec 1.101 phase 3)', () => {
   const blockRoutes = (id: string) => FEATURE_ROUTES.find(b => b.id === id)!.routes();
   const child = (routes: ReturnType<typeof blockRoutes>, path: string) => routes.find(r => r.path === path)?.children ?? [];
-
-  it('the old /aoc/bexio url redirects to /person/bexio-contacts', () => {
-    const aoc = child(blockRoutes('aoc'), 'aoc').find(r => r.path === 'bexio');
-    expect(aoc?.redirectTo).toBe('/person/bexio-contacts');
-    expect(aoc?.loadComponent).toBeUndefined();
-  });
 
   it('bexio-contacts is declared before :personKey (else the param route swallows it), behind one guard', () => {
     const children = child(blockRoutes('subject'), 'person');
@@ -125,12 +85,6 @@ describe('person Bexio contacts route (spec 1.101 phase 3)', () => {
 describe('chat maintenance route (spec 1.101 phase 4)', () => {
   const blockRoutes = (id: string) => FEATURE_ROUTES.find(b => b.id === id)!.routes();
   const child = (routes: ReturnType<typeof blockRoutes>, path: string) => routes.find(r => r.path === path)?.children ?? [];
-
-  it('the old /aoc/chat url redirects to /chat/maintenance', () => {
-    const aoc = child(blockRoutes('aoc'), 'aoc').find(r => r.path === 'chat');
-    expect(aoc?.redirectTo).toBe('/chat/maintenance');
-    expect(aoc?.loadComponent).toBeUndefined();
-  });
 
   it('the chat block routes only /chat/maintenance, lazily, behind one admin guard', () => {
     const routes = blockRoutes('chat');
