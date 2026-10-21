@@ -21,6 +21,8 @@ import {
   roomEventExists,
   serverHostname,
   getRoomStateContent,
+  getRoomSummary,
+  groupRoomAliasLocalpart,
   putRoomStateContent,
   mayPinForAll,
   MATRIX_PINNED_EVENTS,
@@ -101,6 +103,19 @@ export function applyPinOp(
 }
 
 /** The room kind for the pin rule, from the group document that owns the room (none → 'other'). */
+/**
+ * Group okey named by a room's canonical alias `#group_<okey>:<server>` — the fallback the client
+ * uses (`findGroupOfRoom`) when no group carries the room in `matrixRoomId`. Only an alias on
+ * this homeserver whose key is already in alias form (`groupRoomAliasLocalpart(key)` round-trips)
+ * names a document id directly; anything else is undefined (the room then counts as 'other').
+ */
+export function groupKeyOfRoomAlias(canonicalAlias: string | undefined, hostname: string): string | undefined {
+  const match = /^#(group_[^:]+):(.+)$/.exec(canonicalAlias ?? '');
+  if (!match || match[2] !== hostname) return undefined;
+  const key = match[1].slice('group_'.length);
+  return key && groupRoomAliasLocalpart(key) === match[1] ? key : undefined;
+}
+
 function pinKindOfGroup(kind: unknown): PinRoomKind {
   switch (kind ?? 'group') {
     case 'chat': return 'adhoc';
@@ -125,8 +140,9 @@ function sameExpiry(a: Record<string, unknown>, b: Record<string, unknown>): boo
  *
  * Checks, in order: provisioned caller, room in the caller's tenant, caller JOINED to the room,
  * and — for `pin`/`unpin` — `mayPinForAll` for the room's kind (from the group document whose
- * `matrixRoomId` is this room; none → 'other', where only `cleanup` is allowed). `cleanup` is
- * open to every member: it can only remove pins whose expiry has already passed.
+ * `matrixRoomId` is this room, else the one named by the canonical alias `#group_<okey>`; none →
+ * 'other', where only `cleanup` is allowed). `cleanup` is open to every member: it can only
+ * remove pins whose expiry has already passed.
  *
  * Write order: for `pin` the expiry FIRST, then `pinned` — a failed second write leaves an unused
  * expiry entry, never a permanent pin. For `unpin`/`cleanup` `pinned` first, then the pruned expiry.
@@ -172,8 +188,15 @@ export const setChatPins = onCall(
 
     let mayPin = false;
     if (op !== 'cleanup') {
-      const groups = await getFirestore().collection('groups').where('matrixRoomId', '==', room).limit(1).get();
-      const group = groups.empty ? undefined : groups.docs[0].data();
+      const db = getFirestore();
+      const groups = await db.collection('groups').where('matrixRoomId', '==', room).limit(1).get();
+      let group = groups.empty ? undefined : groups.docs[0].data();
+      if (!group) {
+        // No matrixRoomId on the group doc (older rooms): fall back to the canonical alias, as the client does.
+        const aliasKey = groupKeyOfRoomAlias((await getRoomSummary(room, adminToken))?.canonicalAlias, serverHostname());
+        const doc = aliasKey ? await db.collection('groups').doc(aliasKey).get() : undefined;
+        group = doc?.exists ? doc.data() : undefined;
+      }
       const kind = group ? pinKindOfGroup(group['kind']) : 'other';
       const isGroupAdmin = Array.isArray(group?.['admins']) &&
         (group['admins'] as { key?: string }[]).some((a) => a?.key === personKey);

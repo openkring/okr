@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { applyPinOp, MAX_SHARED_PINS } from './chat-pins';
+import { applyPinOp, groupKeyOfRoomAlias, MAX_SHARED_PINS } from './chat-pins';
 
 const NOW = 1_000_000;
 
@@ -56,5 +56,24 @@ describe('applyPinOp', () => {
     expect(() => applyPinOp(full, {}, 'pin', '$new', null, NOW, true)).toThrow(expect.objectContaining({ code: 'resource-exhausted' }));
     // re-pinning an existing one is fine
     expect(applyPinOp(full, {}, 'pin', '$0', null, NOW, true).pinned).toHaveLength(MAX_SHARED_PINS);
+  });
+});
+
+describe('groupKeyOfRoomAlias', () => {
+  it('reads the okey of a group alias on this server', () => {
+    expect(groupKeyOfRoomAlias('#group_ruderer:example.org', 'example.org')).toBe('ruderer');
+    expect(groupKeyOfRoomAlias('#group_a-b_c.d:example.org', 'example.org')).toBe('a-b_c.d');
+  });
+
+  it('ignores other servers, other alias kinds and missing aliases', () => {
+    expect(groupKeyOfRoomAlias('#group_ruderer:other.org', 'example.org')).toBeUndefined();
+    expect(groupKeyOfRoomAlias('#ask_ruderer_x:example.org', 'example.org')).toBeUndefined();
+    expect(groupKeyOfRoomAlias('#group_:example.org', 'example.org')).toBeUndefined();
+    expect(groupKeyOfRoomAlias('', 'example.org')).toBeUndefined();
+    expect(groupKeyOfRoomAlias(undefined, 'example.org')).toBeUndefined();
+  });
+
+  it('rejects a key that is not in alias form', () => {
+    expect(groupKeyOfRoomAlias('#group_Ruderer:example.org', 'example.org')).toBeUndefined();
   });
 });

@@ -897,6 +897,8 @@ export async function getRoomSummary(
   try {
     const res = await fetch(`${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}`, {
       headers: { Authorization: `Bearer ${adminToken}` },
+      // Bounded: callers on the push path treat «unknown» as protected and still send.
+      signal: AbortSignal.timeout(3000),
     });
     if (!res.ok) return undefined;
     const body = (await res.json()) as { name?: string | null; canonical_alias?: string | null; creator?: string | null };
