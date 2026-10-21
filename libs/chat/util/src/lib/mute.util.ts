@@ -13,6 +13,8 @@ export const OKR_HIDDEN_TAG = 'org.okr.hidden';
 export interface MuteEntry {
   until: number | null;
   byHide?: true;
+  /** A user-set mute that hiding replaced; restored on unhide while still active. */
+  prevUntil?: number | null;
 }
 
 export interface MuteContent {
@@ -55,7 +57,13 @@ export function parseMuteContent(raw: Record<string, unknown> | undefined): Mute
   if (isRecord(rawRooms)) {
     for (const [roomId, entry] of Object.entries(rawRooms)) {
       if (!isRecord(entry) || !isUntil(entry['until'])) continue;
-      rooms[roomId] = entry['byHide'] === true ? { until: entry['until'], byHide: true } : { until: entry['until'] };
+      if (entry['byHide'] !== true) {
+        rooms[roomId] = { until: entry['until'] };
+      } else if (isUntil(entry['prevUntil']) && entry['prevUntil'] !== undefined) {
+        rooms[roomId] = { until: entry['until'], byHide: true, prevUntil: entry['prevUntil'] };
+      } else {
+        rooms[roomId] = { until: entry['until'], byHide: true };
+      }
     }
   }
   return { all, rooms };
@@ -87,7 +95,11 @@ function pruned(c: MuteContent, now: number): MuteContent {
 
 export function withRoomMute(c: MuteContent, roomId: string, until: number | null, now: number, byHide?: boolean): MuteContent {
   const next = pruned(c, now);
-  next.rooms[roomId] = byHide ? { until, byHide: true } : { until };
+  const existing = next.rooms[roomId];
+  if (!byHide) next.rooms[roomId] = { until };
+  else if (existing && !existing.byHide) next.rooms[roomId] = { until, byHide: true, prevUntil: existing.until };
+  else if (existing?.byHide && existing.prevUntil !== undefined) next.rooms[roomId] = { until, byHide: true, prevUntil: existing.prevUntil };
+  else next.rooms[roomId] = { until, byHide: true };
   return next;
 }
 
@@ -95,7 +107,12 @@ export function withRoomMute(c: MuteContent, roomId: string, until: number | nul
 export function withoutRoomMute(c: MuteContent, roomId: string, now: number, onlyByHide?: boolean): MuteContent {
   const next = pruned(c, now);
   const entry = next.rooms[roomId];
-  if (entry && (!onlyByHide || entry.byHide)) delete next.rooms[roomId];
+  if (!entry || (onlyByHide && !entry.byHide)) return next;
+  if (entry.byHide && entry.prevUntil !== undefined && active(entry.prevUntil, now)) {
+    next.rooms[roomId] = { until: entry.prevUntil };
+  } else {
+    delete next.rooms[roomId];
+  }
   return next;
 }
 

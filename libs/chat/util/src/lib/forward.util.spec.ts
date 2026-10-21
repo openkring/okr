@@ -64,6 +64,28 @@ describe('buildForwardContent', () => {
     expect(out['formatted_body']).toBe('Hi Name, <a href="https://example.org">link</a>');
   });
 
+  it('strips the reply fallback from body and formatted_body', () => {
+    const out = buildForwardContent(
+      {
+        msgtype: 'm.text',
+        body: '> <@b:hs> quoted\nmore\n\nmy answer',
+        format: 'org.matrix.custom.html',
+        formatted_body:
+          '<mx-reply><blockquote><a href="https://matrix.to/#/!r:hs/$q">In reply to</a> <a href="https://matrix.to/#/@b:hs">Bob</a><br>quoted<br>more</blockquote></mx-reply>my <a href="https://matrix.to/#/@c:hs">Cy</a> answer',
+        'm.relates_to': { 'm.in_reply_to': { event_id: '$q' } },
+      },
+      FROM,
+    );
+    expect(out['body']).toBe('my answer');
+    expect(out['formatted_body']).toBe('my Cy answer');
+    expect(out['m.relates_to']).toBeUndefined();
+  });
+
+  it('keeps a body that merely contains a quote marker later', () => {
+    const out = buildForwardContent({ msgtype: 'm.text', body: 'hi\n\n> <@b:hs> x' }, FROM);
+    expect(out['body']).toBe('hi\n\n> <@b:hs> x');
+  });
+
   it('replaces an existing forwarded marker', () => {
     const out = buildForwardContent({ msgtype: 'm.text', body: 'x', [OKR_FORWARDED_FIELD]: { sender: '@old:hs' } }, FROM);
     expect(out[OKR_FORWARDED_FIELD]).toEqual(FROM);

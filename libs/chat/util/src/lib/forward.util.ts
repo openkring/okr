@@ -15,6 +15,7 @@ export interface ForwardedFrom {
 
 const FORWARDABLE_MSGTYPES = ['m.text', 'm.notice', 'm.emote', 'm.image', 'm.file', 'm.video', 'm.audio'];
 const COPIED_FIELDS = ['msgtype', 'body', 'format', 'formatted_body', 'url', 'info', 'filename'];
+const REPLY_FALLBACK = /<mx-reply>[\s\S]*?<\/mx-reply>/gi;
 const MENTION_ANCHOR = /<a\s+href="https:\/\/matrix\.to\/#\/[^"]*"[^>]*>(.*?)<\/a>/gi;
 
 /** Plain messages only: no polls, calls, redacted events (empty content) or bookmark entries. */
@@ -31,7 +32,12 @@ export function buildForwardContent(content: Record<string, unknown>, from: Forw
     if (content[field] !== undefined) out[field] = content[field];
   }
   if (typeof out['formatted_body'] === 'string') {
-    out['formatted_body'] = out['formatted_body'].replace(MENTION_ANCHOR, '$1');
+    out['formatted_body'] = out['formatted_body'].replace(REPLY_FALLBACK, '').replace(MENTION_ANCHOR, '$1');
+  }
+  // Reply fallback in the plain body: `> <@user> quote` up to the first blank line.
+  if (typeof out['body'] === 'string' && out['body'].startsWith('> <@')) {
+    const end = out['body'].indexOf('\n\n');
+    if (end >= 0) out['body'] = out['body'].slice(end + 2);
   }
   out['m.mentions'] = {};
   out[OKR_FORWARDED_FIELD] = from;

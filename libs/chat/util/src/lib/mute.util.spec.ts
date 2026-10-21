@@ -110,6 +110,26 @@ describe('withoutRoomMute', () => {
     expect(withoutRoomMute(c, '!hide', 0, true).rooms['!hide']).toBeUndefined();
   });
 
+  it('restores a user mute that hiding replaced', () => {
+    const week = muteUntil('1w', 0);
+    const user = withRoomMute(EMPTY, '!a', week, 0);
+    const hidden = withRoomMute(user, '!a', null, 10, true);
+    expect(hidden.rooms['!a']).toEqual({ until: null, byHide: true, prevUntil: week });
+    expect(withoutRoomMute(hidden, '!a', 20, true).rooms['!a']).toEqual({ until: week });
+  });
+
+  it('drops the entry when the replaced user mute expired during the hide', () => {
+    const hidden = withRoomMute(withRoomMute(EMPTY, '!a', 100, 0), '!a', null, 10, true);
+    expect(withoutRoomMute(hidden, '!a', 200, true).rooms['!a']).toBeUndefined();
+  });
+
+  it('keeps prevUntil across a repeated hide and through parsing', () => {
+    const hidden = withRoomMute(withRoomMute(EMPTY, '!a', null, 0), '!a', null, 1, true);
+    const again = withRoomMute(hidden, '!a', null, 2, true);
+    expect(again.rooms['!a']?.prevUntil).toBeNull();
+    expect(parseMuteContent(JSON.parse(JSON.stringify(again)))).toEqual(again);
+  });
+
   it('is immutable', () => {
     withoutRoomMute(c, '!user', 0);
     expect(c.rooms['!user']).toBeDefined();
