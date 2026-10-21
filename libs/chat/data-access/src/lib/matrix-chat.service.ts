@@ -18,6 +18,8 @@ import { MatrixMediaService } from './matrix-media.service';
 import { MatrixCallService } from './matrix-call.service';
 import { MatrixDirectRoomService } from './matrix-direct-room.service';
 import { MatrixRoomListService } from './matrix-room-list.service';
+import { MatrixRoomPrefsService } from './matrix-room-prefs.service';
+import { MatrixPinsService } from './matrix-pins.service';
 import { MatrixJumpResult, MatrixJumpState, MatrixMessageService } from './matrix-message.service';
 
 /**
@@ -92,6 +94,8 @@ export class MatrixChatService {
   private readonly dm = inject(MatrixDirectRoomService);
   private readonly roomList = inject(MatrixRoomListService);
   private readonly messages = inject(MatrixMessageService);
+  private readonly prefs = inject(MatrixRoomPrefsService);
+  private readonly pins = inject(MatrixPinsService);
 
   constructor() {
     // Disconnect and clear rooms when the user logs out (fbUser becomes null).
@@ -511,6 +515,8 @@ export class MatrixChatService {
       this.isInitialized$.next(false);
       this.dm.setClient(null);
       this.messages.setClient(null);
+      this.prefs.setClient(null);
+      this.pins.setClient(null);
       this.roomList.reset();       // detaches the client and emits an empty list
       this.syncState$.next('STOPPED');
       debugMessage('MatrixChatService: Client disconnected', this.appStore.currentUser());
@@ -529,6 +535,8 @@ export class MatrixChatService {
     this.dm.setClient(this.client);
     this.roomList.setClient(this.client);
     this.messages.setClient(this.client);
+    this.prefs.setClient(this.client);
+    this.pins.setClient(this.client);
 
     // Nudge the sync loop when the tab becomes visible again or the network returns.
     // A desktop tab that survived sleep/hibernate or a network drop keeps a dead long-poll
@@ -1686,6 +1694,32 @@ export class MatrixChatService {
   public async kickFromGroupRoom(groupId: string, personKey: string): Promise<void> {
     const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'kickPersonFromGroupRoom');
     await fn({ groupId, personKey });
+  }
+
+  /**
+   * Forward already-built message content (see buildForwardContent) to several rooms, one after
+   * the other. A failing room is collected in `failed`; it never aborts the remaining ones.
+   */
+  public async forwardMessage(targetRoomIds: string[], content: Record<string, unknown>): Promise<{ ok: string[]; failed: string[] }> {
+    if (!this.client) throw new Error('Client not initialized');
+    const ok: string[] = [];
+    const failed: string[] = [];
+    for (const roomId of targetRoomIds) {
+      try {
+        await this.client.sendEvent(roomId, EventType.RoomMessage, content as any);
+        ok.push(roomId);
+      } catch (err) {
+        console.warn('MatrixChatService.forwardMessage: send failed for', roomId, err);
+        failed.push(roomId);
+      }
+    }
+    return { ok, failed };
+  }
+
+  /** Remove a person from an ad-hoc chat (callable `removeAdhocChatMember`). */
+  public async removeAdhocChatMember(groupKey: string, personKey: string): Promise<void> {
+    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'removeAdhocChatMember');
+    await fn({ groupKey, personKey });
   }
 
   /**

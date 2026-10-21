@@ -1181,6 +1181,23 @@ export class MatrixMessageService {
     return reactions.size > 0 ? reactions : undefined;
   }
 
+  /** Who reacted to a message with `emoji`, newest first. Redacted reactions are skipped. */
+  getReactionDetails(roomId: string, eventId: string, emoji: string): { userId: string; ts: number; eventId: string }[] {
+    const room = this.client?.getRoom(roomId);
+    if (!room) return [];
+    const relations = room.relations.getChildEventsForEvent(eventId, RelationType.Annotation, 'm.reaction');
+    if (!relations) return [];
+    const result: { userId: string; ts: number; eventId: string }[] = [];
+    for (const reactionEvent of relations.getRelations()) {
+      if (reactionEvent.isRedacted()) continue;
+      const key = reactionEvent.getContent()?.['m.relates_to']?.key as string | undefined;
+      const userId = reactionEvent.getSender();
+      const id = reactionEvent.getId();
+      if (key === emoji && userId && id) result.push({ userId, ts: reactionEvent.getTs(), eventId: id });
+    }
+    return result.sort((a, b) => b.ts - a.ts);
+  }
+
   /** Re-map one message in a room's BehaviorSubject after its reactions changed. */
   private refreshMessageReactions(targetEventId: string, room: Room): void {
     const subject = this.messages$.get(room.roomId);
