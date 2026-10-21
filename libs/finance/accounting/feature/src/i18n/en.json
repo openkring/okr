@@ -335,6 +335,17 @@
       "scan": "Scan receipt",
       "bankImport": "Import bank statement",
       "invoice": "Create invoice"
+    },
+    "news": {
+      "title": "Since your last visit",
+      "since": "New since {date}",
+      "first": "Your first visit on this device – here are the last 7 days.",
+      "more": "+ {n} more",
+      "bookings": "New bookings",
+      "payments": "New payments",
+      "bills": "New supplier bills",
+      "invoices": "New customer invoices",
+      "expenses": "New expenses"
     }
   }
 }

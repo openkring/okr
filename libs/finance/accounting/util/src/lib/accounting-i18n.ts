@@ -220,6 +220,15 @@ export const ACCOUNTING_I18N_KEYS = {
   overview_act_scan: PFX + 'overview.act.scan',
   overview_act_bankImport: PFX + 'overview.act.bankImport',
   overview_act_invoice: PFX + 'overview.act.invoice',
+  overview_news: PFX + 'overview.news.title',
+  overview_news_since: PFX + 'overview.news.since',
+  overview_news_first: PFX + 'overview.news.first',
+  overview_news_more: PFX + 'overview.news.more',
+  overview_news_bookings: PFX + 'overview.news.bookings',
+  overview_news_payments: PFX + 'overview.news.payments',
+  overview_news_bills: PFX + 'overview.news.bills',
+  overview_news_invoices: PFX + 'overview.news.invoices',
+  overview_news_expenses: PFX + 'overview.news.expenses',
 } satisfies Record<string, string>;
 
 export type AccountingI18n = { [K in keyof typeof ACCOUNTING_I18N_KEYS]: Signal<string> };

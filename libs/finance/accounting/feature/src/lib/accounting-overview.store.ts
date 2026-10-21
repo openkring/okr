@@ -12,7 +12,10 @@ import {
 } from '@okr/shared-models';
 import { getSystemQuery, getTodayStr } from '@okr/shared-util-core';
 import { resourceParams } from '@okr/shared-util-angular';
-import { chunk, computeKeyFigures, currentPeriod, fiscalYearOptions, KeyFigures, liquidityBalance, openTotals, OverviewTodos, summarizeTodos } from '@okr/finance-accounting-util';
+import {
+  chunk, computeKeyFigures, currentPeriod, fiscalYearOptions, KeyFigures, liquidityBalance, NewsLists, nextVisit, openTotals, OverviewTodos, storeDateTimeOf,
+  summarizeNews, summarizeTodos, VisitMarks,
+} from '@okr/finance-accounting-util';
 import { fiscalYear, fiscalYearOf } from '@okr/finance-reporting-util';
 
 import { AccountingStore } from './accounting.store';
@@ -34,7 +37,34 @@ function valueOf<T>(res: { hasValue(): boolean; value(): T }): T | undefined {
   return res.hasValue() ? res.value() : undefined;
 }
 
-/** Accounting overview (spec 1.100 §4.4): to-dos, then key figures of ONE fiscal year, cash balance on demand. */
+/** Per device, user and books: when the overview was last seen (see `nextVisit`). */
+const VISIT_STORAGE_PREFIX = 'okr.accounting.overview.visit';
+
+function readVisit(storageKey: string): VisitMarks | undefined {
+  try {
+    const raw = localStorage.getItem(storageKey);
+    return raw ? JSON.parse(raw) as VisitMarks : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function writeVisit(storageKey: string, marks: VisitMarks): void {
+  try {
+    localStorage.setItem(storageKey, JSON.stringify({ since: marks.since, seenAt: marks.seenAt }));
+  } catch {
+    // private window or blocked storage: the next visit starts over with the last week
+  }
+}
+
+/** «Seit deinem letzten Besuch»: the baseline and what was created after it. */
+export interface OverviewNews {
+  since: number;
+  isFirst: boolean;
+  lists: NewsLists;
+}
+
+/** Accounting overview (spec 1.100 §4.4): to-dos, key figures of ONE fiscal year, cash balance on demand, news since the last visit. */
 export const AccountingOverviewStore = signalStore(
   withState({ selectedYear: 0, balanceValue: undefined as { books: string; value: number } | undefined, balanceLoading: false }),
   withProps(() => ({
@@ -65,9 +95,25 @@ export const AccountingOverviewStore = signalStore(
   withProps(store => {
     const { fs, scope } = store;
 
-    async function loadTodos(books: string, today: string): Promise<OverviewTodos> {
+    /** One visit per store instance and books: reloading the to-dos must not move the baseline again. */
+    const visits = new Map<string, VisitMarks & { isFirst: boolean }>();
+    function visitFor(userKey: string, books: string): VisitMarks & { isFirst: boolean } {
+      const storageKey = `${VISIT_STORAGE_PREFIX}.${userKey}.${books}`;
+      let marks = visits.get(storageKey);
+      if (!marks) {
+        marks = nextVisit(readVisit(storageKey), Date.now());
+        writeVisit(storageKey, marks);
+        visits.set(storageKey, marks);
+      }
+      return marks;
+    }
+
+    /** to-dos and news share the bill, invoice and expense reads */
+    async function loadTodos(books: string, today: string, userKey: string): Promise<{ todos: OverviewTodos; news: OverviewNews }> {
       const q = scope(books);
-      const [bookingsForReview, bills, paymentOrders, invoices, expenses, unmapped, mapped, failed] = await Promise.all([
+      const visit = visitFor(userKey, books);
+      const since = storeDateTimeOf(visit.since);
+      const [bookingsForReview, bills, paymentOrders, invoices, expenses, unmapped, mapped, failed, newBookings] = await Promise.all([
         fs.countOnce(BookingCollection, [...q, { key: 'status', operator: '==', value: 'forReview' }]),
         settle(fs.getDataOnceStrict<BillModel>(BillCollection, q), 'bills'),
         settle(fs.getDataOnceStrict<PaymentOrderModel>(PaymentOrderCollection, q), 'payment orders'),
@@ -76,13 +122,18 @@ export const AccountingOverviewStore = signalStore(
         fs.countOnce(BankImportRowCollection, [...q, { key: 'status', operator: '==', value: 'unmapped' }]),
         fs.countOnce(BankImportRowCollection, [...q, { key: 'status', operator: '==', value: 'mapped' }]),
         fs.countOnce(BankImportRowCollection, [...q, { key: 'status', operator: '==', value: 'error' }]),
+        // index: bookings (tenants, accountingTenantId, isArchived, createdAt desc)
+        settle(fs.getDataOnceStrict<BookingModel>(BookingCollection, [...q, { key: 'createdAt', operator: '>=', value: since }], 'createdAt', 'desc'), 'new bookings'),
       ]);
       const rows = [unmapped, mapped, failed];
       return {
-        ...summarizeTodos({ bills, paymentOrders, invoices, expenses, today }),
-        bookingsForReview,
-        bankRowsOpen: rows.some(r => r === undefined) ? undefined : rows.reduce((s: number, r) => s + (r ?? 0), 0),
-        openTotals: openTotals(bills, invoices, today),
+        todos: {
+          ...summarizeTodos({ bills, paymentOrders, invoices, expenses, today }),
+          bookingsForReview,
+          bankRowsOpen: rows.some(r => r === undefined) ? undefined : rows.reduce((s: number, r) => s + (r ?? 0), 0),
+          openTotals: openTotals(bills, invoices, today),
+        },
+        news: { since: visit.since, isFirst: visit.isFirst, lists: summarizeNews({ since, bookings: newBookings, bills, invoices, expenses }) },
       };
     }
 
@@ -110,7 +161,7 @@ export const AccountingOverviewStore = signalStore(
     return {
       todosResource: rxResource({
         params: resourceParams(() => ({ userKey: store.userKey(), books: store.books(), today: store.today() })),
-        stream: ({ params }) => params.userKey && params.books ? from(loadTodos(params.books, params.today)) : of(undefined),
+        stream: ({ params }) => params.userKey && params.books ? from(loadTodos(params.books, params.today, params.userKey)) : of(undefined),
       }),
       periodResource: rxResource({
         params: resourceParams(() => ({ userKey: store.userKey(), books: store.books() })),
@@ -133,7 +184,8 @@ export const AccountingOverviewStore = signalStore(
     };
   }),
   withComputed(store => ({
-    todos: computed(() => valueOf(store.todosResource)),
+    todos: computed(() => valueOf(store.todosResource)?.todos),
+    news: computed(() => valueOf(store.todosResource)?.news),
     todosLoading: computed(() => store.todosResource.isLoading()),
     period: computed(() => currentPeriod(valueOf(store.periodResource) ?? [], store.today(), store.fiscalYearStart())),
     figures: computed(() => valueOf(store.figuresResource)),

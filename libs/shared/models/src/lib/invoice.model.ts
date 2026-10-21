@@ -30,6 +30,7 @@ export class InvoiceModel implements OkrModel, SearchableModel, TaggedModel {
   public receiver: AvatarInfo | undefined;
 
   public accountingTenantId = '';   // = org.okey of the accounting tenant
+  public createdAt = '';                // StoreDateTime, stamped server-side on create (onBookingCreated/onBillCreated/onInvoiceCreated); '' = older document
   public invoiceNo = 0;             // sequential per fiscal year + accountingTenantId
   public paymentReference = '';     // QRR (27 digits) from invoiceNo, spec 1.2; '' = bexio/migrated, slip without reference
   public bookingKey = '';           // the issue booking (BookingModel okey `invoice-{key}`); '' = bexio/migrated

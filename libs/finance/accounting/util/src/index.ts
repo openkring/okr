@@ -8,4 +8,5 @@ export * from './lib/voucher.util';
 export * from './lib/ledger.util';
 export * from './lib/accounting-areas';
 export * from './lib/accounting-overview.util';
+export * from './lib/accounting-news.util';
 export * from './lib/cash-flow.util';

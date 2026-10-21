@@ -335,6 +335,17 @@
       "scan": "Escanear comprobante",
       "bankImport": "Importar extracto",
       "invoice": "Crear factura"
+    },
+    "news": {
+      "title": "Desde tu última visita",
+      "since": "Novedades desde el {date}",
+      "first": "Tu primera visita en este dispositivo – aquí tienes los últimos 7 días.",
+      "more": "+ {n} más",
+      "bookings": "Nuevos asientos",
+      "payments": "Nuevos pagos",
+      "bills": "Nuevas facturas de proveedores",
+      "invoices": "Nuevas facturas a clientes",
+      "expenses": "Nuevos gastos"
     }
   }
 }

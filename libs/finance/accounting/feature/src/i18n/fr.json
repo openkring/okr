@@ -335,6 +335,17 @@
       "scan": "Scanner un justificatif",
       "bankImport": "Importer un relevé",
       "invoice": "Créer une facture"
+    },
+    "news": {
+      "title": "Depuis ta dernière visite",
+      "since": "Nouveau depuis le {date}",
+      "first": "Ta première visite sur cet appareil – voici les 7 derniers jours.",
+      "more": "+ {n} autres",
+      "bookings": "Nouvelles écritures",
+      "payments": "Nouveaux paiements",
+      "bills": "Nouvelles factures fournisseurs",
+      "invoices": "Nouvelles factures clients",
+      "expenses": "Nouveaux frais"
     }
   }
 }

@@ -335,6 +335,17 @@
       "scan": "Scansiona giustificativo",
       "bankImport": "Importa estratto conto",
       "invoice": "Crea fattura"
+    },
+    "news": {
+      "title": "Dalla tua ultima visita",
+      "since": "Novità dal {date}",
+      "first": "La tua prima visita su questo dispositivo – ecco gli ultimi 7 giorni.",
+      "more": "+ altri {n}",
+      "bookings": "Nuove registrazioni",
+      "payments": "Nuovi pagamenti",
+      "bills": "Nuove fatture fornitori",
+      "invoices": "Nuove fatture clienti",
+      "expenses": "Nuove spese"
     }
   }
 }

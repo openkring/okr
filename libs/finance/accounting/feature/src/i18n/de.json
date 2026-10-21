@@ -335,6 +335,17 @@
       "scan": "Beleg scannen",
       "bankImport": "Bankauszug importieren",
       "invoice": "Rechnung erstellen"
+    },
+    "news": {
+      "title": "Seit deinem letzten Besuch",
+      "since": "Neu seit {date}",
+      "first": "Dein erster Besuch auf diesem Gerät – hier siehst du die letzten 7 Tage.",
+      "more": "+ {n} weitere",
+      "bookings": "Neue Buchungen",
+      "payments": "Neue Zahlungen",
+      "bills": "Neue Kreditorenrechnungen",
+      "invoices": "Neue Debitorenrechnungen",
+      "expenses": "Neue Spesen"
     }
   }
 }

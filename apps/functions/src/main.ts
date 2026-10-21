@@ -6,6 +6,7 @@ import * as functions from 'firebase-functions'; // needed for logger
 import * as Test from './test';
 import * as Address from './address';
 import * as FinanceDocument from './finance-document';
+import * as FinanceCreated from './finance-created';
 import * as Calendar from './calendar';
 import * as Replication from './replication';
 import * as Auth from './auth';
@@ -307,6 +308,10 @@ export const bookBill = Bill.bookBill;
 export const updateBillDetails = Bill.updateBillDetails;
 export const billApproverDaily = Bill.billApproverDaily;
 export const getBillsForApproval = Bill.getBillsForApproval;
+// createdAt on new bookings, bills and invoices: the accounting overview's «Seit deinem letzten Besuch»
+export const onBookingCreated = FinanceCreated.onBookingCreated;
+export const onBillCreated = FinanceCreated.onBillCreated;
+export const onInvoiceCreated = FinanceCreated.onInvoiceCreated;
 // bank import: the only write path from bank-import-rows into the ledger (spec 1.60 §7)
 export const postBankImport = BankImport.postBankImport;
 // bexio journal import: mapped entries posted directly as bookings (spec 1.60 §12)

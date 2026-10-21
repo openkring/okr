@@ -2,7 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonButton, IonButtons, IonContent, IonHeader, IonMenuButton, IonSelect, IonSelectOption, IonSpinner, IonTitle, IonToolbar } from '@ionic/angular';
 
-import { ACCOUNTING_AREAS, segmentUrl } from '@okr/finance-accounting-util';
+import { ACCOUNTING_AREAS, NewsLists, segmentUrl } from '@okr/finance-accounting-util';
 
 import { AccountingOverviewStore } from './accounting-overview.store';
 import { AccountingSegments } from './accounting-segments';
@@ -12,6 +12,9 @@ import { AccountingStore } from './accounting.store';
 function fill(template: string, values: Record<string, string>): string {
   return template.replace(/\{(\w+)\}/g, (_, k: string) => values[k] ?? '');
 }
+
+/** items listed per news card; the rest is «+ n weitere» */
+const NEWS_ITEMS = 3;
 
 function chf(minor: number | undefined): string {
   if (minor === undefined) return '—';
@@ -34,6 +37,10 @@ function chf(minor: number | undefined): string {
     .row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
     .chip { display: inline-flex; padding: 4px 12px; border-radius: 16px; font-weight: 600; font-size: .9rem; background: var(--ion-color-success-tint); color: var(--ion-color-success-contrast); }
     .chip.locked { background: var(--ion-color-warning-tint); color: var(--ion-color-warning-contrast); }
+    .since { margin: -6px 0 12px; }
+    .item { display: flex; justify-content: space-between; gap: 8px; font-size: .9rem; }
+    .item-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+    .item-amount { flex: none; font-variant-numeric: tabular-nums; }
     .actions { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
   `],
   template: `
@@ -47,6 +54,17 @@ function chf(minor: number | undefined): string {
     </ion-header>
     <ion-content>
       <div class="wrap">
+        @if (accountingStore.configLoaded() && !accountingStore.isExternallyManaged()) {
+          <section>
+            <h2>{{ i18n.overview_actions() }}</h2>
+            <div class="actions">
+              <ion-button expand="block" (click)="quick('journal.bookings', 'add')">{{ i18n.overview_act_booking() }}</ion-button>
+              <ion-button expand="block" fill="outline" (click)="quick('payables.bills', 'scan')">{{ i18n.overview_act_scan() }}</ion-button>
+              <ion-button expand="block" fill="outline" (click)="quick('journal.bankImport', 'import')">{{ i18n.overview_act_bankImport() }}</ion-button>
+              <ion-button expand="block" fill="outline" (click)="quick('receivables.invoices', 'add')">{{ i18n.overview_act_invoice() }}</ion-button>
+            </div>
+          </section>
+        }
         <div class="row">
           @if (store.period(); as p) {
             <span class="chip" [class.locked]="p.isLocked">{{ periodLabel() }}</span>
@@ -102,17 +120,23 @@ function chf(minor: number | undefined): string {
           </div>
         </section>
 
-        @if (accountingStore.configLoaded() && !accountingStore.isExternallyManaged()) {
-          <section>
-            <h2>{{ i18n.overview_actions() }}</h2>
-            <div class="actions">
-              <ion-button expand="block" (click)="quick('journal.bookings', 'add')">{{ i18n.overview_act_booking() }}</ion-button>
-              <ion-button expand="block" fill="outline" (click)="quick('payables.bills', 'scan')">{{ i18n.overview_act_scan() }}</ion-button>
-              <ion-button expand="block" fill="outline" (click)="quick('journal.bankImport', 'import')">{{ i18n.overview_act_bankImport() }}</ion-button>
-              <ion-button expand="block" fill="outline" (click)="quick('receivables.invoices', 'add')">{{ i18n.overview_act_invoice() }}</ion-button>
-            </div>
-          </section>
-        }
+
+        <section>
+          <h2>{{ i18n.overview_news() }}</h2>
+          @if (newsSinceText()) { <p class="s since">{{ newsSinceText() }}</p> }
+          <div class="grid">
+            @for (c of newsCards(); track c.key) {
+              <button class="card" type="button" (click)="go(c.segmentId)">
+                <span class="k">{{ c.label }}</span>
+                <span class="v">@if (store.todosLoading()) {<ion-spinner name="dots" />} @else { {{ c.value }} }</span>
+                @for (item of c.items; track item.key) {
+                  <span class="item"><span class="item-label">{{ item.label }}</span>@if (item.amount !== undefined) { <span class="item-amount">{{ money(item.amount) }}</span> }</span>
+                }
+                @if (c.more) { <span class="s">{{ c.more }}</span> }
+              </button>
+            }
+          </div>
+        </section>
       </div>
     </ion-content>
   `,
@@ -143,6 +167,30 @@ export class AccountingOverviewPage {
       { key: 'invoices', segmentId: 'receivables.invoices', label: this.i18n.overview_todo_invoices(), value: n(t?.invoicesOverdue), sub: '' },
       { key: 'expenses', segmentId: 'payables.expenses', label: this.i18n.overview_todo_expenses(), value: n(t?.expensesOpen), sub: '' },
       { key: 'bankRows', segmentId: 'journal.bankImport', label: this.i18n.overview_todo_bankRows(), value: n(t?.bankRowsOpen), sub: '' },
+    ];
+  });
+
+  protected readonly newsSinceText = computed(() => {
+    const n = this.store.news();
+    if (!n) return '';
+    if (n.isFirst) return this.i18n.overview_news_first();
+    const at = new Date(n.since).toLocaleString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    return fill(this.i18n.overview_news_since(), { date: at });
+  });
+
+  protected readonly newsCards = computed(() => {
+    const lists = this.store.news()?.lists;
+    const card = (key: keyof NewsLists, segmentId: string, label: string) => {
+      const items = lists?.[key];
+      const more = items && items.length > NEWS_ITEMS ? fill(this.i18n.overview_news_more(), { n: String(items.length - NEWS_ITEMS) }) : '';
+      return { key, segmentId, label, value: items === undefined ? '—' : String(items.length), items: (items ?? []).slice(0, NEWS_ITEMS), more };
+    };
+    return [
+      card('bookings', 'journal.bookings', this.i18n.overview_news_bookings()),
+      card('payments', 'journal.bookings', this.i18n.overview_news_payments()),
+      card('bills', 'payables.bills', this.i18n.overview_news_bills()),
+      card('invoices', 'receivables.invoices', this.i18n.overview_news_invoices()),
+      card('expenses', 'payables.expenses', this.i18n.overview_news_expenses()),
     ];
   });
 
