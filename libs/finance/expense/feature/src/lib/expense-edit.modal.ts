@@ -9,7 +9,7 @@ import { lockedExpenseFields } from '@okr/shared-util-core';
 
 import { ExpenseService, UpdateExpensePayload } from '@okr/finance-expense-data-access';
 import {
-  buildExpenseDoneMessage, EXPENSE_EDIT_STATES, ExpenseEditFormValue, expenseDoneRecipient, fillName, getExpenseEditStateCategory, toExpenseFormValue,
+  buildExpenseDoneMessage, escapeHtml, EXPENSE_EDIT_STATES, ExpenseEditFormValue, expenseDoneRecipient, fillName, getExpenseEditStateCategory, toExpenseFormValue,
 } from '@okr/finance-expense-util';
 import { ExpenseEditForm } from '@okr/finance-expense-ui';
 
@@ -234,10 +234,11 @@ export class ExpenseEditModal {
       await matrix.ensureInitialized();
       const room = await matrix.createDirectRoom(key);
       await matrix.sendMessage(room.roomId, text);
-      await showToast(this.toastController, fillName(this.i18n.done_dm_conf(), name));
+      // toasts render as HTML (innerHTMLTemplatesEnabled): the stored name is escaped
+      await showToast(this.toastController, fillName(this.i18n.done_dm_conf(), escapeHtml(name)));
     } catch (e) {
       console.error('ExpenseEditModal.sendDoneMessage failed', e);
-      await showToast(this.toastController, fillName(this.i18n.done_dm_error(), name));
+      await showToast(this.toastController, fillName(this.i18n.done_dm_error(), escapeHtml(name)));
     }
   }
 
