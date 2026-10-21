@@ -21,10 +21,13 @@ export interface CrosswordSelectedCell {
   standalone: true,
   imports: [],
   styles: [`
-    .cw-scroll { overflow-x: auto; width: 100%; }
+    .cw-scroll { overflow-x: auto; width: 100%; container-type: inline-size; }
+    /* Cells share the full available width (1fr) but never shrink below 40px — below that the
+       board scrolls inside .cw-scroll instead. Letters scale with the cell width (cqi). */
     .cw-grid {
       display: grid;
-      width: max-content;
+      width: 100%;
+      min-width: max-content;
       gap: 2px;
       background: var(--ion-color-step-200, #ccc);
       border: 2px solid var(--ion-color-step-200, #ccc);
@@ -32,13 +35,13 @@ export interface CrosswordSelectedCell {
     .cw-cell {
       position: relative;
       aspect-ratio: 1;
-      width: 40px;
+      min-width: 0;
       display: flex;
       align-items: center;
       justify-content: center;
       background: var(--ion-background-color, #fff);
       color: var(--ion-text-color, #000);
-      font-size: 1.1rem;
+      font-size: max(1.1rem, calc(50cqi / var(--cw-cols)));
       font-weight: 600;
       cursor: pointer;
       user-select: none;
@@ -58,7 +61,7 @@ export interface CrosswordSelectedCell {
       position: absolute;
       top: 1px;
       left: 2px;
-      font-size: 0.55rem;
+      font-size: max(0.55rem, calc(22cqi / var(--cw-cols)));
       font-weight: 400;
       color: var(--ion-color-medium);
     }
@@ -68,7 +71,8 @@ export interface CrosswordSelectedCell {
       <div
         class="cw-grid"
         [class.read-only]="readOnly()"
-        [style.grid-template-columns]="'repeat(' + grid().cols + ', 40px)'"
+        [style.grid-template-columns]="'repeat(' + grid().cols + ', minmax(40px, 1fr))'"
+        [style.--cw-cols]="grid().cols"
       >
         @for (row of cellMap(); track $index; let r = $index) {
           @for (cell of row; track $index; let c = $index) {

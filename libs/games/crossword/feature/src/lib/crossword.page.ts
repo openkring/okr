@@ -118,7 +118,7 @@ function formatElapsed(milliseconds: number): string {
        made ion-content 100% tall under the header, so the actions at the bottom were cut off. */
     :host { overflow-x: hidden; }
 
-    .cw-play { display: flex; flex-direction: column; gap: 0.75rem; max-width: 40rem; margin-inline: auto; }
+    .cw-play { display: flex; flex-direction: column; gap: 0.75rem; }
 
     .cw-status { display: flex; gap: 1rem; align-items: baseline; min-height: 1.5rem; }
 
