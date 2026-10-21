@@ -84,7 +84,8 @@
     "add": "Nuova voce",
     "view": "Leggi",
     "edit": "Modifica",
-    "openDrive": "Apri la cartella Google Drive"
+    "openDrive": "Apri la cartella Google Drive",
+    "weatherRefresh": "Recupera il meteo"
   },
   "create": {
     "conf": "La voce è stata salvata.",

@@ -201,6 +201,23 @@ export const DiaryStore = signalStore(
       return pending;
     };
 
+    /**
+     * The single-entry repair for the day entries the import left at code -1, offered in the read
+     * view. Returns the saved entry so the view can show the weather in place; undefined = no
+     * weather (no coordinates, or Open-Meteo has none — the toast says which).
+     */
+    const refreshWeather = async (diary: DiaryModel): Promise<DiaryModel | undefined> => {
+      const coords = await coordinatesOf(diary.location);
+      if (!coords) { store.alertService.showToast(store.i18n.weather_no_coords()); return undefined; }
+      const weather = await store.weatherService.fetch({ date: diary.date, ...coords }).catch(() => null);
+      if (!weather) { store.alertService.showToast(store.i18n.weather_draft_hint()); return undefined; }
+      const updated = { ...diary, weather };
+      // DiaryService.update already raises its own confirmation toast — no second one here.
+      await store.diaryService.update(updated, store.currentUser());
+      store.diariesResource.reload();
+      return updated;
+    };
+
     /** Slider-size renditions, cached like the listings; a failed load is evicted and retried. */
     const imageCache = new Map<string, Promise<string>>();
     const loadImage = (diary: DiaryModel, fileId: string): Promise<string> => {
@@ -343,7 +360,7 @@ export const DiaryStore = signalStore(
           cssClass: 'wide-modal',
           componentProps: {
             diary, i18n: store.i18n, lang: store.lang(),
-            neighbours: neighboursOf, openPerson: openPersonView, openLocation: openLocationView, loadMedia, loadImage,
+            neighbours: neighboursOf, openPerson: openPersonView, openLocation: openLocationView, loadMedia, loadImage, refreshWeather,
           },
         });
         await modal.present();

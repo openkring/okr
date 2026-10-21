@@ -84,7 +84,8 @@
     "add": "Nouvelle entrée",
     "view": "Lire",
     "edit": "Modifier",
-    "openDrive": "Ouvrir le dossier Google Drive"
+    "openDrive": "Ouvrir le dossier Google Drive",
+    "weatherRefresh": "Rattraper la météo"
   },
   "create": {
     "conf": "L'entrée a été enregistrée.",

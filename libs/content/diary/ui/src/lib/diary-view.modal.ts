@@ -83,6 +83,10 @@ export interface DiaryNeighbours {
           @if (current().scope === 'day' && hasWeather()) {
             <ion-icon slot="end" src="{{ weatherIcon() | svgIcon: weatherIconSet }}" />
             <ion-note slot="end">{{ weatherLine() }}</ion-note>
+          } @else if (canRefreshWeather()) {
+            <ion-button slot="end" fill="clear" size="small" [disabled]="weatherBusy()" (click)="fetchWeather()">
+              <ion-icon slot="start" src="{{ 'reload' | svgIcon }}" />{{ i18n().weather_refresh() }}
+            </ion-button>
           }
         </ion-item>
         @if (current().people.length || current().customPeopleLabels.length) {
@@ -154,6 +158,8 @@ export class DiaryViewModal {
   public readonly loadMedia = input.required<(d: DiaryModel) => Promise<DiaryMediaResult>>();
   /** one image of the day folder at slider size, as a `data:` URL — the store caches per file */
   public readonly loadImage = input.required<(d: DiaryModel, fileId: string) => Promise<string>>();
+  /** fetches and saves the measured weather of a day; resolves to the saved entry, undefined = none */
+  public readonly refreshWeather = input.required<(d: DiaryModel) => Promise<DiaryModel | undefined>>();
 
   /** the entry on screen — starts at `diary`, swapped by prev/next/up */
   protected readonly current = linkedSignal(() => this.diary());
@@ -162,6 +168,7 @@ export class DiaryViewModal {
   protected readonly media = signal<DiaryMediaResult | undefined>(undefined);
   protected readonly mediaFailed = signal(false);
   protected readonly sliderLoading = signal(false);
+  protected readonly weatherBusy = signal(false);
 
   protected readonly title = computed(() => this.current().title || this.i18n().view_untitled());
   protected readonly dateLabel = computed(() => formatDiaryDateLong(this.current().date, this.lang()));
@@ -183,6 +190,8 @@ export class DiaryViewModal {
   protected readonly weatherLine = computed(() => diaryWeatherLine(this.current().weather));
   protected readonly weatherIcon = computed(() => weatherCodeToIcon(this.current().weather.code));
   protected readonly weatherIconSet = WEATHER_ICON_SET;
+  /** weather needs a day and a resolved location (its coordinates); free text has none */
+  protected readonly canRefreshWeather = computed(() => this.current().scope === 'day' && !!this.current().location?.key);
 
   constructor() {
     // Neighbours of whatever is on screen. A slow answer for an entry the user already paged
@@ -246,6 +255,17 @@ export class DiaryViewModal {
   protected async openDocument(index: number): Promise<void> {
     const file = this.media()?.documents[index];
     if (file?.webViewLink) await Browser.open({ url: file.webViewLink });
+  }
+
+  protected async fetchWeather(): Promise<void> {
+    const shown = this.current();
+    this.weatherBusy.set(true);
+    try {
+      const updated = await this.refreshWeather()(shown).catch(() => undefined);
+      if (updated && this.current().okey === shown.okey) this.current.set(updated);
+    } finally {
+      this.weatherBusy.set(false);
+    }
   }
 
   protected go(target: DiaryModel | undefined): void {

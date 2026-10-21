@@ -84,7 +84,8 @@
     "add": "Nueva entrada",
     "view": "Leer",
     "edit": "Editar",
-    "openDrive": "Abrir la carpeta de Google Drive"
+    "openDrive": "Abrir la carpeta de Google Drive",
+    "weatherRefresh": "Recuperar el tiempo"
   },
   "create": {
     "conf": "La entrada se ha guardado.",

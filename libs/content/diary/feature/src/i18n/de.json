@@ -84,7 +84,8 @@
     "add": "Neuer Eintrag",
     "view": "Lesen",
     "edit": "Bearbeiten",
-    "openDrive": "Google Drive Ordner öffnen"
+    "openDrive": "Google Drive Ordner öffnen",
+    "weatherRefresh": "Wetter nachholen"
   },
   "create": {
     "conf": "Der Eintrag wurde gespeichert.",

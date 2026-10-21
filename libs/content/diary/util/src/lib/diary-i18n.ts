@@ -78,6 +78,7 @@ export const DIARY_I18N_KEYS = {
   view:                   PFX + 'actions.view',
   edit:                   PFX + 'actions.edit',
   open_drive:             PFX + 'actions.openDrive',
+  weather_refresh:        PFX + 'actions.weatherRefresh',
   create_conf:            PFX + 'create.conf',
   create_error:           PFX + 'create.error',
   create_exists:          PFX + 'create.exists',

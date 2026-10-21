@@ -84,7 +84,8 @@
     "add": "New entry",
     "view": "Read",
     "edit": "Edit",
-    "openDrive": "Open Google Drive folder"
+    "openDrive": "Open Google Drive folder",
+    "weatherRefresh": "Fetch weather"
   },
   "create": {
     "conf": "The entry was saved.",
