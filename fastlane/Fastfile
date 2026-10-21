@@ -1,7 +1,8 @@
 # Store publishing for the tenant apps (spec 1.10 §8, skill `android-release`).
 #
 #   fastlane android internal app:scs-app            build, gate, sign, upload to Internal testing
-#   fastlane android promote  app:scs-app to:alpha   promote the newest internal release
+#   fastlane android promote  app:scs-app to:alpha   promote the newest internal release (status:draft
+#                                                    while the app was never published)
 #   fastlane ios     beta     app:scs-app            build, gate, sign, upload to TestFlight
 #   fastlane android metadata app:scs-app            store texts + graphics + screenshots → Play listing
 #   fastlane ios     metadata app:scs-app            store texts + screenshots → App Store (no review)
@@ -93,16 +94,21 @@ platform :android do
     )
   end
 
-  desc 'Promote the newest Internal release to another track (to: alpha | beta | production)'
+  desc 'Promote the newest Internal release to another track (to: alpha | beta | production [status: draft])'
   lane :promote do |options|
     app = app_param(options)
     to = options[:to] || UI.user_error!('Missing to:<alpha|beta|production>')
     UI.user_error!("Unknown track #{to}") unless TRACKS.include?(to)
+    # A never-published ("draft") app accepts only draft releases outside Internal testing; the
+    # release is then sent for review in Play Console (skill android-release).
+    status = options[:status] || 'completed'
+    UI.user_error!("Unknown status #{status}") unless %w[completed draft].include?(status)
     upload_to_play_store(
       package_name: package_name(app),
       json_key: PLAY_JSON_KEY,
       track: 'internal',
       track_promote_to: to,
+      track_promote_release_status: status,
       skip_upload_aab: true,
       skip_upload_apk: true,
       skip_upload_metadata: true,
