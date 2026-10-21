@@ -172,7 +172,7 @@ const aoc: BlockRoutes = {
   // an AOC console panel — but it is contributed by THIS block because its menu row lives
   // in the AOC submenu and `system` is not a block of its own (see NON_BLOCK_DOMAINS: the
   // rule ENGINE is a Cloud Function that cannot be gated). Same owner-vs-target split as
-  // `aoc/trip` above, in the same direction: aoc owns the entry point, another lib ships
+  // the trip maintenance route, in the same direction: aoc owns the entry point, another lib ships
   // the screen.
   {
     path: 'workflow/:listId/:contextMenuName',

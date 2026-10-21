@@ -5,7 +5,7 @@
 The diary is the repo owner's private archive, imported from Google Drive by two Cloud Functions
 (`dryRunDiaryImport` / `commitDiaryImport`, spec 1.34). This lib holds the single screen that
 prepares and repairs that import: `/diary/import`, `isAdminGuard`, reached from the Tagebuch context menu
-(«Import vorbereiten»). The old `/aoc/diary` url redirects here.
+(«Import vorbereiten»).
 
 Two halves:
 

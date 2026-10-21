@@ -9,7 +9,7 @@ import { DateInput, Header } from '@okr/shared-ui';
 import { DiaryImportStore } from './diary-import.store';
 
 /**
- * The diary admin screen — `/diary/import`, `isAdminGuard` (the `/aoc/diary` bookmark redirects here).
+ * The diary admin screen — `/diary/import`, `isAdminGuard`.
  *
  * It is the home the diary import's two diagnostics were waiting for: the Drive health check and
  * the dry run lived on `/security/privacy-audit` only because that was the app's sole admin-only

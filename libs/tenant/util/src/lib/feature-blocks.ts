@@ -311,7 +311,7 @@ const aoc: FeatureBlock = {
       // Spec 1.101 phase 5: the AOC submenu is the four hub areas, in hub order. Each row opens
       // `AocHub` for its area; the tools themselves are hub CARDS (`AOC_AREAS` in @okr/aoc-util),
       // no longer menu rows. Absorbed and removed from the catalogue: `aoc-admin` (the page is
-      // gone, /aoc/adminops redirects to /aoc/data), `aoc-sessions`, `aoc-email`, `workflow-all`
+      // gone), `aoc-sessions`, `aoc-email`, `workflow-all`
       // and `tenant-features` here, plus `user-all` (user), `priv-register`/`priv-audit`
       // (security), `activity-all` (activity) and `ticket-all` (business), which no longer hang
       // under `aoc-menu` — so `aoc` is now the only block declaring the shared parent. Their live
@@ -1895,7 +1895,7 @@ const documentBlock: FeatureBlock = {
  *    `MatrixChat`.
  *  - `aoc` — no longer reaches in at all: its admin screen `/aoc/chat` moved into this lib as
  *    Chat-Wartung (`/chat/maintenance`, the `chat-maintenance` row of `contextMenuChat`, spec
- *    1.101 phase 4); `/aoc/chat` only redirects there.
+ *    1.101 phase 4).
  * (`avatar` is deliberately NOT in this list — fix round 1 corrected a reversed direction. No
  * `libs/avatar/**` file imports `@okr/chat-*`; the import runs the other way, see below.)
  *

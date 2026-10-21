@@ -299,9 +299,6 @@ describe('guard factories are never registered uncalled', () => {
   });
 });
 
-/** No `/aoc` child is a redirect any more (the 1.101 bookmark redirects are gone); the filter is kept so a future redirect cannot slip past the guard checks unnoticed by the test below. */
-const withoutRedirects = (children: readonly Route[] = []): Route[] => children.filter(c => !c.redirectTo);
-
 describe('/aoc guards after the 2026-08-05 rulings', () => {
   it('/aoc has no redirect children (the 1.101 bookmark redirects were removed)', () => {
     const { children = [] } = fragmentOf('aoc', 'aoc');
@@ -327,18 +324,17 @@ describe('/aoc guards after the 2026-08-05 rulings', () => {
    */
   it('every /aoc child carries its own guard', () => {
     const { children = [] } = fragmentOf('aoc', 'aoc');
-    const unguarded = withoutRedirects(children).filter(c => (c.canActivate ?? []).length === 0).map(c => c.path);
+    const unguarded = children.filter(c => (c.canActivate ?? []).length === 0).map(c => c.path);
 
     expect(unguarded, 'child would silently inherit the contentAdmin floor').toEqual([]);
   });
 
   it('every child the rulings do NOT name stays admin-only', () => {
     const { children = [] } = fragmentOf('aoc', 'aoc');
-    const others = withoutRedirects(children).filter(c => !AOC_CONTENT_ADMIN.includes(c.path as typeof AOC_CONTENT_ADMIN[number]));
+    const others = children.filter(c => !AOC_CONTENT_ADMIN.includes(c.path as typeof AOC_CONTENT_ADMIN[number]));
 
-    // Derived, not hard-coded: every non-redirect child is either ruled contentAdmin or admin-only.
-    const redirectCount = children.filter(c => c.redirectTo).length;
-    expect(others.length).toBe(children.length - redirectCount - AOC_CONTENT_ADMIN.length);
+    // Derived, not hard-coded: every child is either ruled contentAdmin or admin-only.
+    expect(others.length).toBe(children.length - AOC_CONTENT_ADMIN.length);
     expect(others.length, 'no admin-only /aoc child left to check').toBeGreaterThan(0);
     // The child's OWN guard must reject both non-admin roles, independently of the floor.
     expect(others.filter(c => activates(CONTENT_ADMIN, c)).map(c => c.path)).toEqual([]);
@@ -347,14 +343,14 @@ describe('/aoc guards after the 2026-08-05 rulings', () => {
 
   it('an admin still reaches every /aoc screen', () => {
     const parent = fragmentOf('aoc', 'aoc');
-    const blocked = withoutRedirects(parent.children).filter(c => !activates(ADMIN, parent, c)).map(c => c.path);
+    const blocked = (parent.children ?? []).filter(c => !activates(ADMIN, parent, c)).map(c => c.path);
 
     expect(blocked).toEqual([]);
   });
 
   it('the /aoc floor still keeps a merely-registered user out of everything', () => {
     const parent = fragmentOf('aoc', 'aoc');
-    const reachable = withoutRedirects(parent.children).filter(c => activates(REGISTERED, parent, c)).map(c => c.path);
+    const reachable = (parent.children ?? []).filter(c => activates(REGISTERED, parent, c)).map(c => c.path);
 
     expect(reachable).toEqual([]);
   });
@@ -368,7 +364,7 @@ describe('/aoc guards after the 2026-08-05 rulings', () => {
    */
   it('a contentAdmin clears the floor but only reaches the two ruled screens', () => {
     const parent = fragmentOf('aoc', 'aoc');
-    const reachable = withoutRedirects(parent.children)
+    const reachable = (parent.children ?? [])
       .filter(c => activates(CONTENT_ADMIN, parent, c))
       .map(c => c.path as string);
 
