@@ -55,3 +55,10 @@ export function readForwarded(content: Record<string, unknown> | undefined): For
   }
   return undefined;
 }
+
+const MATRIX_USER_ID = /^@[a-z0-9._=\-\/+]+:[A-Za-z0-9.\-]+(:\d+)?$/;
+
+/** True when the string is a well-formed Matrix user id (`@localpart:server[:port]`). */
+export function isMatrixUserId(value: string): boolean {
+  return MATRIX_USER_ID.test(value);
+}

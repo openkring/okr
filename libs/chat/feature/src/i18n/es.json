@@ -205,7 +205,8 @@
       "all": "Todos los chats",
       "done": "Reenviado a {n} chats",
       "failed": "No se pudo reenviar a «{room}»",
-      "from": "Reenviado de {name}"
+      "from": "Reenviado de {name}",
+      "plain": "Reenviado"
     }
   },
   "thread": {

@@ -205,7 +205,8 @@
       "all": "Alle Chats",
       "done": "An {n} Chats weitergeleitet",
       "failed": "In «{room}» konnte nicht weitergeleitet werden",
-      "from": "Weitergeleitet von {name}"
+      "from": "Weitergeleitet von {name}",
+      "plain": "Weitergeleitet"
     }
   },
   "thread": {

@@ -1406,6 +1406,14 @@ export class MatrixChatService {
   }
 
   /**
+   * The real sender of an event the client already holds (no network fetch), or undefined when
+   * the room or event is not available locally. Used to verify a forwarded-from claim.
+   */
+  public getEventSender(roomId: string, eventId: string): string | undefined {
+    return this.client?.getRoom(roomId)?.findEventById(eventId)?.getSender() ?? undefined;
+  }
+
+  /**
    * Localparts of all joined members of a room — the inverse of personKeyToMatrixUserId.
    * These are lowercased Person.okey values; the caller resolves them against the person
    * list (compare case-insensitively). Returns [] when the client or room is not ready.

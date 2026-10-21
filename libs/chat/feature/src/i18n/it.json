@@ -205,7 +205,8 @@
       "all": "Tutte le chat",
       "done": "Inoltrato a {n} chat",
       "failed": "Impossibile inoltrare a «{room}»",
-      "from": "Inoltrato da {name}"
+      "from": "Inoltrato da {name}",
+      "plain": "Inoltrato"
     }
   },
   "thread": {

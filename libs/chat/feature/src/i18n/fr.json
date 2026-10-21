@@ -205,7 +205,8 @@
       "all": "Toutes les discussions",
       "done": "Transféré à {n} discussions",
       "failed": "Impossible de transférer vers « {room} »",
-      "from": "Transféré de {name}"
+      "from": "Transféré de {name}",
+      "plain": "Transféré"
     }
   },
   "thread": {

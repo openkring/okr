@@ -205,7 +205,8 @@
       "all": "All chats",
       "done": "Forwarded to {n} chats",
       "failed": "Could not forward to “{room}”",
-      "from": "Forwarded from {name}"
+      "from": "Forwarded from {name}",
+      "plain": "Forwarded"
     }
   },
   "thread": {

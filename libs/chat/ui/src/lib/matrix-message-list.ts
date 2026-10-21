@@ -833,15 +833,14 @@ export class MatrixMessageList {
   failedMediaIds = input<ReadonlySet<string>>(new Set());
   public readonly i18n = input.required<MatrixChatI18n>();
 
-  /** «Weitergeleitet von X» for a forwarded message, undefined for ordinary messages. */
+  /** Verified original-author names of forwarded messages, by eventId of the forwarded message. */
+  public readonly forwardedNames = input<ReadonlyMap<string, string>>(new Map());
+
+  /** «Weitergeleitet von X» when the author is verified, else the neutral «Weitergeleitet». */
   protected forwardedLabel(m: MatrixMessage): string | undefined {
-    const from = readForwarded(m.content);
-    if (!from) return undefined;
-    // `senderName` is free text any client can write, so it is never rendered: the name comes from
-    // a message this list already holds for the claimed sender id, else from the id's localpart.
-    const known = this.messages().find((x) => x.sender === from.sender)?.senderName;
-    const localpart = from.sender.replace(/^@/, '').split(':')[0];
-    return fill(this.i18n().forwarded_from(), { name: known || localpart });
+    if (!readForwarded(m.content)) return undefined;
+    const name = this.forwardedNames().get(m.eventId);
+    return name ? fill(this.i18n().forwarded_from(), { name }) : this.i18n().forwarded_plain();
   }
   /** Signed posters of the album videos linked in this list, by docKey — owned by the feature (VideoUrlService). */
   public readonly videoCards = input<Record<string, { posterUrl: string; available: boolean; loading: boolean }>>({});

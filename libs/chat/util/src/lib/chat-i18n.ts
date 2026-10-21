@@ -97,6 +97,7 @@ export const MATRIX_CHAT_I18N_KEYS = {
   forward_done:              PFX + 'message.forward.done',
   forward_failed:            PFX + 'message.forward.failed',
   forwarded_from:            PFX + 'message.forward.from',
+  forwarded_plain:           PFX + 'message.forward.plain',
   pin_action:                PFX + 'pin.action',
   unpin_action:              PFX + 'pin.unpin',
   pin_title:                 PFX + 'pin.title',

@@ -17,6 +17,7 @@ import { videoDocKeyOf, videoLink } from '@okr/content-document-util';
 
 import { MatrixMessageInput, MatrixMessageList, MatrixRoomList, PinBanner, PollDetailModal, ReactionDetailsModal, ReminderPicker } from '@okr/chat-ui';
 import { MatrixPollData } from '@okr/chat-data-access';
+import { verifiedForwardedNames } from './forwarded-names';
 import { buildEditedPollAnswers, canEditPoll, parsePollContent, convertHeicToJpeg, groupRoomAliasLocalpart, shouldDeferAskRoom, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, readBookmark, isTrustedBookmarkEntry, ChatBookmark, resolvePermalinkTarget, shouldSendReceipt, MessageDraft, UploadTooLargeError, availablePresets, reminderDueAt, ReminderPreset } from '@okr/chat-util';
 
 import { MatrixChatStore } from './matrix-chat.store';
@@ -492,6 +493,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                     [typingUsers]="typingUsers()"
                     [threadReplyCounts]="store.currentPinboard() ? emptyThreadCounts : threadReplyCounts()"
                     [receiptsByEventId]="receiptsByEventId()"
+                    [forwardedNames]="forwardedNames()"
                     [i18n]="store.i18n"
                     (loadOlder)="onLoadOlder()"
                     [highlightEventId]="store.jumpTarget()"
@@ -637,6 +639,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                     [highlightEventId]="store.threadJumpTarget()"
                     [unreadDividerEventId]="store.unreadDividerEventId()"
                     [messages]="threadMessages()"
+                    [forwardedNames]="forwardedNames()"
                     [currentUserId]="matrixUserId()"
                     [typingUsers]="[]"
                     [i18n]="store.i18n"
@@ -851,6 +854,9 @@ export class MatrixChat implements OnDestroy {
 
   // Messages signal
   protected readonly messages = computed(() => this.store.messages());
+  protected readonly forwardedNames = computed(() => verifiedForwardedNames(
+    [...this.store.messages(), ...this.store.threadMessages()],
+    (roomId, eventId) => this.store.matrixService.getEventSender(roomId, eventId)));
   protected readonly isMessagesLoading = computed(() => this.store.isMessagesLoading());
   protected readonly typingUsers = computed(() => this.store.typingUsers());
   protected readonly receiptsByEventId = computed(() => this.store.receiptsByEventId());
