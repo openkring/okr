@@ -23,6 +23,15 @@ const RADAR_MAX_NATIVE_ZOOM = 7;
 const TILE_ERROR_NOTICE_THRESHOLD = 3;
 
 /**
+ * RainViewer's free tier allows a burst of 300 tile requests and 500 per minute per IP (measured
+ * 2026-10-21: `x-ratelimit-burst-limit: 300`, `x-ratelimit-limit: 500`, `retry-after: 10`). The
+ * first play-through of ~13 frames, a re-centre and a reload or two hit it, and every tile over
+ * the limit came back 429 and stayed missing. A rejected tile is now asked for again once,
+ * after the advertised `retry-after`; only a tile that fails twice counts towards the notice.
+ */
+const TILE_RETRY_DELAY_MS = 10_000;
+
+/**
  * `rain_radar` — animated precipitation over Switzerland.
  *
  * NOTHING may import this file statically: it is created by hand from `weather-section.ts`
@@ -147,6 +156,7 @@ export class WeatherRainRadar implements AfterViewInit, OnDestroy {
   private timer?: ReturnType<typeof setInterval>;
   private host = '';
   private tileErrors = 0;
+  private retryTimers = new Set<ReturnType<typeof setTimeout>>();
 
   protected progress = computed(() => {
     const n = this.frames().length;
@@ -185,6 +195,7 @@ export class WeatherRainRadar implements AfterViewInit, OnDestroy {
 
   public ngOnDestroy(): void {
     this.stop();
+    this.retryTimers.forEach(clearTimeout);
     this.map?.remove();
   }
 
@@ -238,9 +249,7 @@ export class WeatherRainRadar implements AfterViewInit, OnDestroy {
       });
       // A tile 429/404 is otherwise completely silent: the animation keeps running over a
       // half-drawn radar picture and nothing tells the viewer the image is incomplete.
-      layer.on('tileerror', () => {
-        if (++this.tileErrors >= TILE_ERROR_NOTICE_THRESHOLD) this.tilesFailed.set(true);
-      });
+      layer.on('tileerror', (event: L.TileErrorEvent) => this.retryTile(event.tile));
       layer.addTo(this.map);
       this.layers.set(frame.path, layer);
     }
@@ -248,6 +257,21 @@ export class WeatherRainRadar implements AfterViewInit, OnDestroy {
     this.visible?.setOpacity(0);
     layer.setOpacity(FRAME_OPACITY);
     this.visible = layer;
+  }
+
+  /** One delayed second attempt per tile (see TILE_RETRY_DELAY_MS); Leaflet's own load handler stays bound. */
+  private retryTile(tile: HTMLImageElement): void {
+    if (tile.dataset['retried']) {
+      if (++this.tileErrors >= TILE_ERROR_NOTICE_THRESHOLD) this.tilesFailed.set(true);
+      return;
+    }
+    tile.dataset['retried'] = '1';
+    const src = tile.src;
+    const retry = setTimeout(() => {
+      this.retryTimers.delete(retry);
+      tile.src = `${src}${src.includes('?') ? '&' : '?'}retry=1`;
+    }, TILE_RETRY_DELAY_MS);
+    this.retryTimers.add(retry);
   }
 
   protected toggle(): void {
