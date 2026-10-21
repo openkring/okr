@@ -939,7 +939,8 @@ export const _MatrixChatStore = signalStore(
         if (!await store.alertService.confirm(store.i18n.pinboard_archive_confirm(), true)) return false;
         try {
           await store.matrixService.archivePinboard(pinboard.okey);
-          patchState(store, { currentRoomId: undefined });
+          // Back to the room list in the same patch: the auto-select effect must not re-open this room.
+          patchState(store, { currentRoomId: undefined, roomListRequested: true });
           await store.alertService.showToast(store.i18n.pinboard_archive_conf());
           return true;
         } catch (error) {
@@ -970,7 +971,8 @@ export const _MatrixChatStore = signalStore(
         if (!await store.alertService.confirm(store.i18n.pinboard_leave_confirm(), true)) return false;
         try {
           await store.matrixService.leavePinboard(pinboard.okey);
-          patchState(store, { currentRoomId: undefined });
+          // Back to the room list in the same patch: the auto-select effect must not re-open this room.
+          patchState(store, { currentRoomId: undefined, roomListRequested: true });
           this.reloadAvailablePinboards();
           await store.alertService.showToast(store.i18n.pinboard_leave_conf());
           return true;
@@ -992,7 +994,8 @@ export const _MatrixChatStore = signalStore(
         if (!confirmed) return false;
         try {
           await store.matrixService.leaveAdhocChat(chat.okey);
-          patchState(store, { currentRoomId: undefined });
+          // Back to the room list in the same patch: the auto-select effect must not re-open this room.
+          patchState(store, { currentRoomId: undefined, roomListRequested: true });
           await store.alertService.showToast(store.i18n.adhoc_leave_conf());
           return true;
         } catch (error) {
@@ -1461,6 +1464,7 @@ export const _MatrixChatStore = signalStore(
 
       /** A room was left, archived or hidden from the Chat-Details page: back to the room list. */
       exitRoomToList(roomId: string): void {
+        // roomListRequested first: the auto-select effect must not re-open the room just left.
         patchState(store, { roomListRequested: true });
         if (store.currentRoomId() === roomId) this.setCurrentRoom(undefined);
       },
@@ -1628,7 +1632,7 @@ export const _MatrixChatStore = signalStore(
           // A jumped window of the left room must not survive it (no reload against a left room).
           store.jumpSeq.value++;
           if (store.matrixService.isJumped(roomId)) store.matrixService.returnToLive(roomId, false);
-          patchState(store, { currentRoomId: undefined, jumpTarget: undefined, jumpPending: false, threadJumpTarget: undefined });
+          patchState(store, { currentRoomId: undefined, roomListRequested: true, jumpTarget: undefined, jumpPending: false, threadJumpTarget: undefined });
           return true;
         } catch (error) {
           void store.activityService.log('chat', 'leave', store.currentUser(), 'ERROR rid:' + roomId);

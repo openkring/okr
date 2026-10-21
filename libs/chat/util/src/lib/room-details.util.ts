@@ -11,6 +11,8 @@ export interface RoomDetailsCtx {
   isPrivileged: boolean;
   isGroupAdmin: boolean;
   isCreator: boolean;
+  /** Kiosk-only user on a shared device: no membership or visibility changes, no mute (Ruling R10). */
+  isKiosk: boolean;
   isOperatorView?: boolean;
   activePinCount: number;
 }
@@ -47,7 +49,7 @@ export function getRoomDetailsSections(ctx: RoomDetailsCtx): RoomDetailsSections
   const groupLevel = ctx.isGroupAdmin || ctx.isPrivileged || ctx.isAdmin;
 
   const tiles: RoomTile[] = [];
-  if (kind !== 'support') tiles.push('mute');
+  if (kind !== 'support' && !ctx.isKiosk) tiles.push('mute');
   if (ctx.activePinCount > 0) tiles.push('pins');
   tiles.push('help');
 
@@ -55,6 +57,20 @@ export function getRoomDetailsSections(ctx: RoomDetailsCtx): RoomDetailsSections
     (adhoc && (ctx.isCreator || ctx.isAdmin)) ||
     (kind === 'pinboard' && (ctx.isPrivileged || ctx.isAdmin)) ||
     (kind === 'other' && ctx.isAdmin);
+
+  if (ctx.isKiosk) {
+    return {
+      tiles,
+      members: MEMBERS[kind],
+      canInvite: false,
+      canRemoveMembers: false,
+      hide: false,
+      archive: false,
+      archiveViaGroup: false,
+      leave: false,
+      pinForAll: false,
+    };
+  }
 
   return {
     tiles,

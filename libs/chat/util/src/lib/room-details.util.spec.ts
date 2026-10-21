@@ -8,6 +8,7 @@ const ctx = (kind: RoomKind, patch: Partial<RoomDetailsCtx> = {}): RoomDetailsCt
   isPrivileged: false,
   isGroupAdmin: false,
   isCreator: false,
+  isKiosk: false,
   activePinCount: 1,
   ...patch,
 });
@@ -130,6 +131,31 @@ describe('pinForAll', () => {
     for (const kind of ['notes', 'support', 'other'] as RoomKind[]) {
       expect(sections(kind, { isAdmin: true, isPrivileged: true, isGroupAdmin: true }).pinForAll).toBe(false);
     }
+  });
+});
+
+describe('kiosk', () => {
+  const kinds: RoomKind[] = ['dm', 'group', 'adhoc', 'pinboard', 'notes', 'support', 'other'];
+
+  it.each(kinds)('offers no membership or visibility change in a %s room', (kind) => {
+    const s = sections(kind, { isKiosk: true, isAdmin: true, isPrivileged: true, isGroupAdmin: true, isCreator: true });
+    expect(s.hide).toBe(false);
+    expect(s.archive).toBe(false);
+    expect(s.archiveViaGroup).toBe(false);
+    expect(s.leave).toBe(false);
+    expect(s.canInvite).toBe(false);
+    expect(s.canRemoveMembers).toBe(false);
+    expect(s.pinForAll).toBe(false);
+  });
+
+  it('drops the mute tile but keeps pins and help', () => {
+    expect(sections('group', { isKiosk: true }).tiles).toEqual(['pins', 'help']);
+    expect(sections('dm', { isKiosk: true, activePinCount: 0 }).tiles).toEqual(['help']);
+  });
+
+  it('keeps the members list mode', () => {
+    expect(sections('adhoc', { isKiosk: true }).members).toBe('manage');
+    expect(sections('dm', { isKiosk: true }).members).toBe('counterpart');
   });
 });
 

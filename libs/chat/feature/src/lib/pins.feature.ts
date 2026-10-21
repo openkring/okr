@@ -86,6 +86,7 @@ export function pinComputeds(s: PinComputedDeps) {
       isPrivileged: hasRole('privileged', user),
       isGroupAdmin: isAdminMember(currentRoomGroup(), user.personKey),
       isCreator: false,
+      isKiosk: isKioskOnly(user), // always false here: kiosk returned above
       activePinCount: 0,
     }).pinForAll;
   });

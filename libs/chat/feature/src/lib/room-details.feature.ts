@@ -2,7 +2,7 @@ import { computed, Signal } from '@angular/core';
 import { ActionSheetController, ModalController } from '@ionic/angular';
 
 import { GroupModel, MatrixRoom, PersonModel, UserModel } from '@okr/shared-models';
-import { fill, hasRole } from '@okr/shared-util-core';
+import { fill, hasRole, isKioskOnly } from '@okr/shared-util-core';
 import { AlertService } from '@okr/shared-util-angular';
 import type { MatrixChatService, MatrixRoomPrefsService } from '@okr/chat-data-access';
 import type { GroupService } from '@okr/subject-group-data-access';
@@ -60,6 +60,7 @@ export function roomDetailsComputeds(s: RoomDetailsComputedDeps) {
       isGroupAdmin,
       // An ad-hoc chat's creator is its admin (`group.admins`, handed on when the creator leaves).
       isCreator: kind === 'adhoc' && isGroupAdmin,
+      isKiosk: isKioskOnly(user),
       activePinCount: s.currentPins().length,
     };
   });
@@ -109,7 +110,6 @@ export interface RoomDetailsMethodDeps {
   currentRoomKind: Signal<RoomKind | undefined>;
   currentRoomGroup: Signal<GroupModel | undefined>;
   currentRoomDetails: Signal<RoomDetailsSections | undefined>;
-  isCurrentRoomMuted: Signal<boolean>;
   imgixBaseUrl: Signal<string>;
   i18n: MatrixChatI18n;
   appStore: { currentUser: Signal<UserModel | undefined> };
@@ -127,9 +127,6 @@ export interface RoomDetailsMethodDeps {
 }
 
 export function roomDetailsMethods(store: RoomDetailsMethodDeps) {
-  /** The open room's id, only while it is still `roomId` (the user may have switched meanwhile). */
-  const stillOpen = (roomId: string): boolean => store.currentRoomId() === roomId;
-
   /** Ad-hoc chat: archive the group doc; `onGroupChatCleanup` then empties the room's tenant marker. */
   const archiveAdhocChat = async (chat: GroupModel): Promise<boolean> => {
     try {
@@ -166,8 +163,10 @@ export function roomDetailsMethods(store: RoomDetailsMethodDeps) {
     /** Stumm tile: duration sheet, then the mute write (spec 1.109 §9). */
     async pickRoomMute(roomId: string): Promise<void> {
       if (!store.currentRoomDetails()?.tiles.includes('mute')) return;
-      const muted = stillOpen(roomId) && store.isCurrentRoomMuted();
-      const choice = await pickMuteDuration(store.actionSheetController, store.i18n, store.imgixBaseUrl(), muted);
+      // «Wieder einschalten» only lifts this room's own mute; «Alle stummschalten» is the bell's (Task 15).
+      const entry = store.roomPrefs.muteContent().rooms[roomId];
+      const roomMuted = !!entry && (entry.until === null || entry.until > Date.now());
+      const choice = await pickMuteDuration(store.actionSheetController, store.i18n, store.imgixBaseUrl(), roomMuted);
       if (!choice) return;
       try {
         if (choice === 'unmute') await store.roomPrefs.clearRoomMute(roomId);
@@ -230,6 +229,7 @@ export function roomDetailsMethods(store: RoomDetailsMethodDeps) {
       } else {
         if (!await store.alertService.confirm(store.i18n.details_leave_confirm(), true)) return false;
         done = await store.leaveRoom();
+        if (!done) await store.alertService.showToast(store.i18n.details_error());
         // A left DM is forgotten, so it never comes back; a new DM gets a new room (§12.12).
         if (done) {
           store.matrixService.forgetRoom(roomId).catch((error: unknown) =>
