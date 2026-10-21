@@ -26,3 +26,4 @@ export * from './lib/unread-from.util';
 export * from './lib/room-group.util';
 export * from './lib/chat-room-filter.util';
 export * from './lib/message-actions.util';
+export * from './lib/pin.util';
