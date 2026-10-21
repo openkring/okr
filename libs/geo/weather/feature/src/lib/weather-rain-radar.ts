@@ -32,6 +32,16 @@ const TILE_ERROR_NOTICE_THRESHOLD = 3;
 const TILE_RETRY_DELAY_MS = 10_000;
 
 /**
+ * The base map is drawn grey. OpenStreetMap's land is a light beige, and RainViewer paints the
+ * weakest echoes beige and snow white — at 75 % opacity both vanished into the map, so light
+ * rain and snowfall looked like "nothing". A greyscale, slightly darkened base keeps streets and
+ * borders readable and leaves colour to the radar alone. Same tiles, same source: only a CSS
+ * filter on the base layer's own pane (the radar layers live in Leaflet's default tile pane).
+ */
+const BASE_PANE = 'okrBase';
+const BASE_FILTER = 'grayscale(1) brightness(0.9) contrast(0.95)';
+
+/**
  * `rain_radar` — animated precipitation over Switzerland.
  *
  * NOTHING may import this file statically: it is created by hand from `weather-section.ts`
@@ -187,8 +197,11 @@ export class WeatherRainRadar implements AfterViewInit, OnDestroy {
   public async ngAfterViewInit(): Promise<void> {
     this.map = L.map(this.mapHost().nativeElement, { attributionControl: true })
       .setView([this.latitude(), this.longitude()], this.zoom());
+    const basePane = this.map.createPane(BASE_PANE);
+    basePane.style.zIndex = '150';   // below Leaflet's tilePane (200), where the radar frames go
+    basePane.style.filter = BASE_FILTER;
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 12, attribution: '© OpenStreetMap'
+      maxZoom: 12, attribution: '© OpenStreetMap', pane: BASE_PANE
     }).addTo(this.map);
     await this.loadFrames();
   }
