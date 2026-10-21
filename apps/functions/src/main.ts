@@ -138,6 +138,9 @@ export const assignMatrixRoomTenants = MatrixSimple.assignMatrixRoomTenants;
 export const createAdhocChat = MatrixSimple.createAdhocChat;
 export const leaveAdhocChat = MatrixSimple.leaveAdhocChat;
 export const addAdhocChatMembers = MatrixSimple.addAdhocChatMembers;
+// Chat-Aktionen (TOC 1.109): Mitglied aus Ad-hoc-Chat entfernen, «Für alle» anheften
+export const removeAdhocChatMember = MatrixSimple.removeAdhocChatMember;
+export const setChatPins = MatrixSimple.setChatPins;
 export const resolveNotesRoom = MatrixSimple.resolveNotesRoom;
 
 // Pinnwand: alle schreiben an alle, Antworten privat (spec 2026-10-11, TOC 1.95)
