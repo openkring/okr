@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { ClientEvent, MatrixClient, RoomEvent } from 'matrix-js-sdk';
+import { BehaviorSubject, Observable } from 'rxjs';
 
 import {
   MuteContent,
@@ -29,11 +30,14 @@ export class MatrixRoomPrefsService {
   private detach: (() => void) | null = null;
 
   private readonly _muteContent = signal<MuteContent>(parseMuteContent(undefined));
+  private readonly _muteContent$ = new BehaviorSubject<MuteContent>(parseMuteContent(undefined));
   private readonly _hiddenVersion = signal(0);
   private readonly _pinsVersion = signal(0);
 
   /** Live global mute content; updated from the `ClientEvent.AccountData` echo. */
   readonly muteContent = this._muteContent.asReadonly();
+  /** The same content as an Observable, for consumers outside an injection context (menu badge). */
+  readonly muteContent$: Observable<MuteContent> = this._muteContent$.asObservable();
   /** Bumps whenever any room's tags change (read it to re-evaluate {@link isHidden}). */
   readonly hiddenVersion = this._hiddenVersion.asReadonly();
   /** Bumps whenever room account data changes (read it to re-evaluate {@link personalPins}). */
@@ -46,12 +50,12 @@ export class MatrixRoomPrefsService {
     this.detach = null;
     this.client = client;
     if (!client) {
-      this._muteContent.set(parseMuteContent(undefined));
+      this.setMute(parseMuteContent(undefined));
       this._hiddenVersion.update((v) => v + 1);
       this._pinsVersion.update((v) => v + 1);
       return;
     }
-    const readMute = () => this._muteContent.set(parseMuteContent(client.getAccountData(OKR_MUTE_EVENT as never)?.getContent()));
+    const readMute = () => this.setMute(parseMuteContent(client.getAccountData(OKR_MUTE_EVENT as never)?.getContent()));
     const onAccountData = (event: { getType(): string }) => {
       if (event.getType() === OKR_MUTE_EVENT) readMute();
     };
@@ -91,7 +95,12 @@ export class MatrixRoomPrefsService {
     const next = transform(current, Date.now());
     await client.setAccountData(OKR_MUTE_EVENT as never, next as never);
     // Optimistic: the AccountData echo confirms it.
-    this._muteContent.set(next);
+    this.setMute(next);
+  }
+
+  private setMute(content: MuteContent): void {
+    this._muteContent.set(content);
+    this._muteContent$.next(content);
   }
 
   // ---- hide ----

@@ -1,7 +1,7 @@
 import { effect, inject, Injectable } from '@angular/core';
 import { createClient, IndexedDBStore, MatrixClient, MatrixEvent, Room, RoomMember, EventType, EventTimeline, MsgType, RelationType, IContent, ISendEventResponse, MatrixError, RoomStateEvent, RoomEvent, ClientEvent, ICreateRoomOpts, Visibility, Preset, User, ReceiptType, type MatrixCall, type Store, type IRoomTimelineData } from 'matrix-js-sdk';
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import { distinctUntilChanged } from 'rxjs/operators';
+import { BehaviorSubject, combineLatest, Observable, Subject, timer } from 'rxjs';
+import { distinctUntilChanged, map } from 'rxjs/operators';
 
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -11,7 +11,7 @@ import { AppStore } from '@okr/shared-feature';
 import { ChatStatusService } from '@okr/shared-data-access';
 import { checkVideoLimits, debugData, debugMessage } from '@okr/shared-util-core';
 import { OKR_VIDEO_FIELD, videoLink } from '@okr/content-document-util';
-import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError, VideoUploadError, buildPollContent, PollAnswerDef, POLL_START_EVENT, PinboardInput, AvailablePinboard, UNREAD_FROM_EVENT, MARKED_UNREAD_EVENT, flaggedUnreadFrom, indexBookmarkEntries, bookmarkedMessageIds, PinPreview, pinPreviewOf } from '@okr/chat-util';
+import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError, VideoUploadError, buildPollContent, PollAnswerDef, POLL_START_EVENT, PinboardInput, AvailablePinboard, UNREAD_FROM_EVENT, MARKED_UNREAD_EVENT, flaggedUnreadFrom, countUnmutedUnread, indexBookmarkEntries, bookmarkedMessageIds, PinPreview, pinPreviewOf } from '@okr/chat-util';
 
 import { mediaMimeHint, mxcAvatarHttpUrl } from './matrix-helpers';
 import { MatrixMediaService } from './matrix-media.service';
@@ -28,6 +28,9 @@ import { MatrixJumpResult, MatrixJumpState, MatrixMessageService } from './matri
  * `getMatrixCredentials` Cloud Function), so one day of slack is cheap.
  */
 const TOKEN_REFRESH_MARGIN_MS = 24 * 60 * 60 * 1000;
+
+/** How often the menu badge re-checks mute expiry (spec 1.109 §9). */
+const MUTE_CLOCK_MS = 60_000;
 
 /** Minimum gap between two media-401-driven re-authentications (SCS-92). */
 const MEDIA_AUTH_RECOVERY_COOLDOWN_MS = 5 * 60 * 1000;
@@ -147,6 +150,18 @@ export class MatrixChatService {
 
   get rooms(): Observable<MatrixRoom[]> {
     return this.roomList.rooms;
+  }
+
+  /**
+   * Chat unread total for the main-menu badge: muted rooms (own mute or «Alle stummschalten» of
+   * `tenantId`) do not count (spec 1.109 §9). Re-evaluated every minute so a mute that runs out
+   * counts again without a reload.
+   */
+  unmutedUnreadCount$(tenantId: string): Observable<number> {
+    return combineLatest([this.rooms, this.prefs.muteContent$, timer(0, MUTE_CLOCK_MS)]).pipe(
+      map(([rooms, mute]) => countUnmutedUnread(rooms, mute, tenantId, Date.now())),
+      distinctUntilChanged(),
+    );
   }
 
   /** Synchronous snapshot of the current rooms list (BehaviorSubject value). */
@@ -1459,11 +1474,19 @@ export class MatrixChatService {
       matrixUserId = this.personKeyToMatrixUserId(userId);
     }
 
-    // Find-or-create: return existing DM room if one already exists
+    // Find-or-create: return existing DM room if one already exists. The lookup reads the
+    // client's own rooms (m.direct), so a hidden DM is found too — and comes back into the
+    // list before it opens (spec 1.109 §10.1). A left DM is not found: a new one is created.
     const existingRoomId = this.dm.findExistingDirectRoom(matrixUserId);
     if (existingRoomId) {
       const existing = this.client.getRoom(existingRoomId);
-      if (existing) return existing;
+      if (existing) {
+        if (this.prefs.isHidden(existingRoomId)) {
+          await this.prefs.unhideRoom(existingRoomId).catch(err =>
+            console.warn('MatrixChatService.createDirectRoom: unhiding the DM failed (non-critical):', err));
+        }
+        return existing;
+      }
     }
 
     // Verify the target user exists; if not, provision them via the Cloud Function.

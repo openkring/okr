@@ -1,9 +1,10 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
 
-import { IonList, IonItem, IonItemDivider, IonLabel, IonBadge, IonNote, IonIcon, IonThumbnail } from '@ionic/angular';
+import { IonList, IonItem, IonItemDivider, IonLabel, IonBadge, IonNote, IonIcon, IonThumbnail, IonButton } from '@ionic/angular';
 
 import { MatrixRoom } from '@okr/shared-models';
 import { MultiAvatarPipe, SvgIconPipe } from '@okr/shared-pipes';
+import { fill } from '@okr/shared-util-core';
 
 import { formatMatrixTimestamp, isMatrixPhotoUrl, isOwnNotesRoom, MatrixChatI18n, NotesRoomOwner, splitFavouriteRooms } from '@okr/chat-util';
 
@@ -20,7 +21,8 @@ import { formatMatrixTimestamp, isMatrixPhotoUrl, isOwnNotesRoom, MatrixChatI18n
     IonBadge,
     IonNote,
     IonIcon,
-    IonThumbnail
+    IonThumbnail,
+    IonButton,
 ],
   styles: [`
     :host {
@@ -77,6 +79,21 @@ import { formatMatrixTimestamp, isMatrixPhotoUrl, isOwnNotesRoom, MatrixChatI18n
       margin-inline-end: 6px;
     }
 
+    .muted-icon {
+      font-size: 0.875rem;
+      margin-inline-start: 6px;
+      color: var(--ion-color-medium);
+      flex-shrink: 0;
+    }
+
+    ion-item-divider.hidden-toggle {
+      cursor: pointer;
+    }
+
+    .room-item.hidden-room {
+      opacity: 0.7;
+    }
+
     .typing-indicator {
       font-size: 0.75rem;
       color: var(--ion-color-primary);
@@ -120,11 +137,15 @@ import { formatMatrixTimestamp, isMatrixPhotoUrl, isOwnNotesRoom, MatrixChatI18n
             <ion-label>
               <div style="display: flex; align-items: center;">
                 <span>{{ isNotes(room) ? i18n().notes_room_name() : room.name }}</span>
+                @if (mutedRoomIds().has(room.roomId)) {
+                  <ion-icon class="muted-icon" src="{{ muteIcon | svgIcon }}" [attr.aria-label]="i18n().mute_on()" />
+                }
               </div>
               <ion-note color="medium">{{ formatTimestamp(room.lastMessage?.timestamp || 0) }}</ion-note>
             </ion-label>
             @if (room.unreadCount > 0) {
-              <ion-badge slot="end" color="primary" class="unread-badge">
+              <!-- A muted room keeps its count, dimmed: it does not count towards the badges (1.109 §9). -->
+              <ion-badge slot="end" [color]="mutedRoomIds().has(room.roomId) ? 'medium' : 'primary'" class="unread-badge">
                 {{ room.unreadCount > 99 ? '99+' : room.unreadCount }}
               </ion-badge>
             }
@@ -138,6 +159,26 @@ import { formatMatrixTimestamp, isMatrixPhotoUrl, isOwnNotesRoom, MatrixChatI18n
             <p>{{ i18n().room_none() }}</p>
           </ion-label>
         </ion-item>
+      }
+
+      <!-- «Ausgeblendet (n)» (spec 1.109 §10.1): collapsed by default, each row can come back. -->
+      @if (hiddenRooms().length > 0) {
+        <ion-item-divider class="section hidden-toggle" role="button" tabindex="0" [attr.aria-expanded]="hiddenOpen()"
+          (click)="toggleHidden()" (keydown.enter)="toggleHidden()" (keydown.space)="toggleHidden(); $event.preventDefault()">
+          <ion-icon src="{{ (hiddenOpen() ? 'chevron-down' : 'chevron-forward') | svgIcon }}" />
+          <ion-label>{{ hiddenLabel() }}</ion-label>
+        </ion-item-divider>
+        @if (hiddenOpen()) {
+          @for (room of hiddenRooms(); track room.roomId) {
+            <ion-item class="room-item hidden-room">
+              <ion-icon slot="start" src="{{ room | multiAvatar | svgIcon }}" />
+              <ion-label>{{ isNotes(room) ? i18n().notes_room_name() : room.name }}</ion-label>
+              <ion-button slot="end" fill="clear" size="small" (click)="roomUnhidden.emit(room.roomId)">
+                {{ i18n().details_unhide() }}
+              </ion-button>
+            </ion-item>
+          }
+        }
       }
     </ion-list>
   `
@@ -153,11 +194,28 @@ export class MatrixRoomList {
   /** Show the «Notizen an mich» placeholder row (room not created yet, not a kiosk user). */
   showNotesPlaceholder = input(false);
 
+  /** Rooms that show the 🔕 (muted, never support / Notfall) — decided by the store. */
+  public readonly mutedRoomIds = input<ReadonlySet<string>>(new Set<string>());
+  /** Rooms the user hid; listed under «Ausgeblendet (n)». */
+  public readonly hiddenRooms = input<MatrixRoom[]>([]);
+
   roomSelected = output<string>();
+  /** «Wieder einblenden» on a hidden room. */
+  public readonly roomUnhidden = output<string>();
   notesPlaceholderSelected = output<void>();
 
   /** Icon of the notes room row. */
   protected readonly notesIcon = 'text';
+  /** Icon of a muted row — the same as the Stumm tile (`notifications-off` is not in the icon set). */
+  protected readonly muteIcon = 'alarm';
+
+  /** Whether the «Ausgeblendet» block is open (collapsed by default). */
+  protected readonly hiddenOpen = signal(false);
+  protected readonly hiddenLabel = computed(() => fill(this.i18n().hidden_section(), { n: this.hiddenRooms().length }));
+
+  protected toggleHidden(): void {
+    this.hiddenOpen.update((open) => !open);
+  }
 
   protected readonly isNotes = (room: MatrixRoom): boolean => isOwnNotesRoom(room, this.notesOwner());
 

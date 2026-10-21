@@ -387,6 +387,13 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                   <!-- Ad-hoc-Chat eroeffnen: fuer jede angemeldete Person, nicht nur fuer Admins
                        (planning/specs/2026-09-01-adhoc-chats-spec.md) -->
                   <ion-buttons slot="end">
+                    <!-- «Alle Chats stummschalten» of this tenant app (spec 1.109 §9); not on kiosk devices -->
+                    @if (store.canMuteAll()) {
+                      <ion-button [attr.aria-label]="store.i18n.mute_all()" [attr.aria-pressed]="store.isAllRoomsMuted()"
+                        [color]="store.isAllRoomsMuted() ? 'primary' : 'medium'" (click)="store.pickAllMute()">
+                        <ion-icon slot="icon-only" src="{{ muteIcon | svgIcon }}"></ion-icon>
+                      </ion-button>
+                    }
                     <ion-button [attr.aria-label]="store.i18n.adhoc_new_action()" (click)="store.createAdhocChat()">
                       <ion-icon slot="icon-only" src="{{ 'add-circle' | svgIcon }}"></ion-icon>
                     </ion-button>
@@ -394,7 +401,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                 </ion-toolbar>
               </ion-header>
 
-              @if (rooms().length > 20) {
+              @if (store.visibleRooms().length > 20) {
                 <ion-searchbar
                   [placeholder]="store.i18n.room_search_placeholder()"
                   [debounce]="150"
@@ -424,6 +431,9 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                 [i18n]="store.i18n"
                 [notesOwner]="store.notesOwner()"
                 [showNotesPlaceholder]="store.showNotesPlaceholder()"
+                [mutedRoomIds]="store.mutedRoomIds()"
+                [hiddenRooms]="store.hiddenRooms()"
+                (roomUnhidden)="store.unhideRoom($event)"
                 (roomSelected)="onRoomSelected($event)"
                 (notesPlaceholderSelected)="onNotesPlaceholderSelected()"
               />
@@ -850,7 +860,10 @@ export class MatrixChat implements OnDestroy {
   protected isThreadDragOver = signal(false);
   protected pendingImages = signal<File[]>([]);
   protected readonly roomFilter = signal('');
-  protected readonly filteredRooms = computed(() => filterRoomsByName(this.rooms(), this.roomFilter()));
+  /** The room list: hidden rooms sit in their own «Ausgeblendet» block (spec 1.109 §10.1). */
+  protected readonly filteredRooms = computed(() => filterRoomsByName(this.store.visibleRooms(), this.roomFilter()));
+  /** Bell of «Alle Chats stummschalten» — the same icon as the Stumm tile (`notifications-off` is not in the icon set). */
+  protected readonly muteIcon = 'alarm';
 
   // Messages signal
   protected readonly messages = computed(() => this.store.messages());
@@ -1054,7 +1067,8 @@ export class MatrixChat implements OnDestroy {
         : undefined;
       // Never open a room flagged «Ab hier ungelesen» by itself: opening clears the flag, so only
       // the user's own tap may do that (spec 1.104 §6.2). Only flagged rooms → show the list.
-      const candidates = syncRooms.filter(r => !r.unreadFromEventId);
+      // A hidden room (spec 1.109 §10.1) is never opened by itself either.
+      const candidates = syncRooms.filter(r => !r.unreadFromEventId && !this.store.roomPrefs.isHidden(r.roomId));
       if (candidates.length === 0) {
         untracked(() => this.showRoomList.set(true));
         return;

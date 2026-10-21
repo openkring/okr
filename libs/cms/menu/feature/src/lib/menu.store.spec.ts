@@ -92,7 +92,7 @@ function makeStore(
       { provide: AppNavigationService, useValue: {} },
       { provide: AuthService, useValue: {} },
       { provide: ActivityService, useValue: {} },
-      { provide: MatrixChatService, useValue: chat.matrix ?? { rooms: of([]) } },
+      { provide: MatrixChatService, useValue: chat.matrix ?? { rooms: of([]), unmutedUnreadCount$: () => of(0) } },
       { provide: VersionCheckService, useValue: { getCurrentVersion: () => '1.0.0' } },
       { provide: I18nService, useValue: { translateAll: () => i18nProxy, translate: () => of('') } },
       // The store injects AlertService for the fork-ownership guard (`confirmFork`). The real
@@ -109,17 +109,18 @@ describe('MenuStore', () => {
 
   describe('chat unread badge (1.107)', () => {
     const user = { personKey: 'p1' };
-    const rooms = of([{ unreadCount: 2 }, { unreadCount: 3 }]);
-
-    it('counts unread rooms for the dashboard item when chat is not blocked', async () => {
-      const s = makeStore(undefined, undefined, undefined, { currentUser: user, matrix: { rooms } });
+    it('counts the unmuted unread rooms of this tenant for the dashboard item when chat is not blocked', async () => {
+      const asked: string[] = [];
+      const matrix = { unmutedUnreadCount$: (t: string) => { asked.push(t); return of(5); } };
+      const s = makeStore(undefined, undefined, undefined, { currentUser: user, matrix });
       s.setMenuName('dashboard');
       await TestBed.inject(ApplicationRef).whenStable();
       expect(s.chatUnreadResource.value()).toBe(5);
+      expect(asked).toEqual([tenantId]);
     });
 
     it('yields 0 while blocked, without touching the chat service', async () => {
-      const matrix = { get rooms() { throw new Error('chat service must not be touched while blocked'); } };
+      const matrix = { unmutedUnreadCount$: () => { throw new Error('chat service must not be touched while blocked'); } };
       const s = makeStore(undefined, undefined, undefined, { blocked: true, currentUser: user, matrix });
       s.setMenuName('dashboard');
       await TestBed.inject(ApplicationRef).whenStable();

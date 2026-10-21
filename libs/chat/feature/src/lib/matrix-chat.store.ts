@@ -25,6 +25,7 @@ import { MessageInfoModal } from './message-info.modal';
 import { buildMessageInfoProps } from './message-info.feature';
 import { PIN_CLOCK_MS, pinComputeds, pinMethods, previewOfMessage } from './pins.feature';
 import { roomDetailsComputeds, roomDetailsMethods } from './room-details.feature';
+import { roomMuteComputeds, roomMuteMethods } from './room-mute.feature';
 
 export type { MatrixChatI18n };
 
@@ -192,6 +193,7 @@ export const _MatrixChatStore = signalStore(
       // One Matrix account spans all tenants, so the raw list contains other tenants' group
       // rooms and DMs too — filtered down to this tenant (see filterRoomsOfTenant).
       // Everything derived from `rooms` (unread badges included) inherits the filter.
+      // Hidden rooms stay in here; the room list shows `visibleRooms` (room-mute.feature.ts).
       rooms: computed(() => filterRoomsOfTenant(
         state.roomsResource.value() || [],
         // Ad-hoc-Chats gehoeren dazu: sie sind Gruppendokumente mit `kind: 'chat'` und
@@ -405,18 +407,16 @@ export const _MatrixChatStore = signalStore(
         return state.rooms().filter(r => r.unreadCount > 0);
       }),
 
-      totalUnreadCount: computed(() => {
-        return state.rooms().reduce((sum, r) => sum + r.unreadCount, 0);
-      }),
     };
   }),
 
   // Pins (spec 1.109 §6): room kind, the «Für alle» right and the active pins — see pins.feature.ts.
   // Chat-Details (spec 1.109 §8): the page's context, sections and mute state — see room-details.feature.ts.
+  // Mute and hide in the room list (spec 1.109 §9, §10.1): visible / hidden rooms, 🔕, badge total — see room-mute.feature.ts.
   // One feature with the pins: signalStore takes at most 15 features.
   withComputed((state) => {
     const pins = pinComputeds(state);
-    return { ...pins, ...roomDetailsComputeds({ ...state, ...pins, isServiceAccount }) };
+    return { ...pins, ...roomDetailsComputeds({ ...state, ...pins, isServiceAccount }), ...roomMuteComputeds(state) };
   }),
   withProps((store) => ({
     /** Sender and snippet of the banner pin when it is not in the loaded timeline. */
@@ -1671,7 +1671,8 @@ export const _MatrixChatStore = signalStore(
   }),
   // Pin / unpin / banner menu / pin list (spec 1.109 §6) — see pins.feature.ts.
   // Chat-Details: mute tile, hide / archive / leave, remove members (spec 1.109 §8) — see room-details.feature.ts.
-  withMethods((store) => ({ ...pinMethods(store), ...roomDetailsMethods(store) })),
+  // «Alle stummschalten» bell and «Wieder einblenden» (spec 1.109 §9, §10.1) — see room-mute.feature.ts.
+  withMethods((store) => ({ ...pinMethods(store), ...roomDetailsMethods(store), ...roomMuteMethods(store) })),
 );
 
 

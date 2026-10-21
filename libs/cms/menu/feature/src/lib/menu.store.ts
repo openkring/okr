@@ -118,19 +118,21 @@ export const _MenuStore = signalStore(
       params: resourceParams(() => ({
         name: store.name(),
         personKey: store.appStore.currentUser()?.personKey,
+        // «Alle stummschalten» is per tenant app (spec 1.109 §9).
+        tenantId: store.appStore.tenantId(),
         // 1.107: while chat is blocked for this person the badge is 0 and the (lazy) chat
         // service is never touched — no chunk load, no Matrix connection.
         blocked: store.chatStatus.isEffectivelyBlocked(store.appStore.currentUser()?.personKey),
       })),
       stream: ({ params }): Observable<number> => {
-        const { name, personKey, blocked } = params;
+        const { name, personKey, tenantId, blocked } = params;
         // Only activate a real subscription for the dashboard menu item.
         // All other menu instances return 0 immediately — no Matrix connection.
         if (name !== 'dashboard' || !personKey || blocked) return of(0);
 
         return from(store.matrixChatService()).pipe(
-          switchMap(svc => svc.rooms),
-          map(rooms => rooms.reduce((sum: number, r) => sum + r.unreadCount, 0))
+          // Muted rooms do not count towards the badge (spec 1.109 §9).
+          switchMap(svc => svc.unmutedUnreadCount$(tenantId))
         );
       }
     }),
