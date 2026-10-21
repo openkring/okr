@@ -196,6 +196,16 @@
       "action": "Mark unread from here",
       "divider": "Unread from here",
       "error": "That did not work. Please try again."
+    },
+    "forward": {
+      "action": "Forward",
+      "title": "Forward",
+      "send": "Send ({n})",
+      "recent": "Recent",
+      "all": "All chats",
+      "done": "Forwarded to {n} chats",
+      "failed": "Could not forward to “{room}”",
+      "from": "Forwarded from {name}"
     }
   },
   "thread": {
@@ -613,5 +623,73 @@
       "action": "Unblock chat",
       "confirm": "The chat will be available again in all apps. Do you want to continue?"
     }
+  },
+  "sheet": {
+    "section": {
+      "message": "Message"
+    }
+  },
+  "pin": {
+    "action": "Pin",
+    "unpin": "Unpin",
+    "title": "Pin for",
+    "duration": {
+      "h24": "24 hours",
+      "d7": "7 days",
+      "d30": "30 days",
+      "forever": "Until I unpin it"
+    },
+    "forAll": "Pin for everyone",
+    "label": {
+      "all": "For everyone",
+      "me": "Only for you"
+    },
+    "of": "{i} of {n} pinned",
+    "goto": "Go to message",
+    "list": "All pinned ({n})",
+    "unpinWhich": "Which pin do you want to remove?"
+  },
+  "reactions": {
+    "people": "{n} people",
+    "also": "React the same way"
+  },
+  "info": {
+    "title": "Info",
+    "sent": "Sent",
+    "edited": "Edited",
+    "type": "Type",
+    "readBy": "Read by ({x} of {y})",
+    "reactions": "Reactions",
+    "copyLink": "Copy link",
+    "raw": "Raw data"
+  },
+  "details": {
+    "title": "Chat details",
+    "members": "Members",
+    "invite": "Invite people",
+    "removeConfirm": "Do you want to remove {name} from this chat?",
+    "hide": "Hide",
+    "unhide": "Show again",
+    "archive": "Archive chat",
+    "archiveConfirm": "The chat will disappear for all members. Do you want to archive it?",
+    "archiveGroup": "To archive this chat, archive the group",
+    "leave": "Leave chat",
+    "leaveConfirm": "Do you want to leave this chat? You can only come back with a new invitation."
+  },
+  "mute": {
+    "tile": "Mute",
+    "on": "Muted",
+    "off": "Notifications on",
+    "duration": {
+      "h1": "1 hour",
+      "h8": "8 hours",
+      "w1": "1 week",
+      "forever": "Until I turn it back on"
+    },
+    "all": "Mute all chats",
+    "unmute": "Turn back on"
+  },
+  "hidden": {
+    "section": "Hidden ({n})"
   }
 }

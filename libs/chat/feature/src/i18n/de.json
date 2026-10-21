@@ -196,6 +196,16 @@
       "action": "Ab hier ungelesen",
       "divider": "Ab hier ungelesen",
       "error": "Das hat nicht geklappt. Versuche es bitte noch einmal."
+    },
+    "forward": {
+      "action": "Weiterleiten",
+      "title": "Weiterleiten",
+      "send": "Senden ({n})",
+      "recent": "Zuletzt",
+      "all": "Alle Chats",
+      "done": "An {n} Chats weitergeleitet",
+      "failed": "In «{room}» konnte nicht weitergeleitet werden",
+      "from": "Weitergeleitet von {name}"
     }
   },
   "thread": {
@@ -613,5 +623,73 @@
       "action": "Chat entsperren",
       "confirm": "Der Chat wird in allen Apps wieder freigegeben. Möchtest du fortfahren?"
     }
+  },
+  "sheet": {
+    "section": {
+      "message": "Nachricht"
+    }
+  },
+  "pin": {
+    "action": "Anheften",
+    "unpin": "Lösen",
+    "title": "Anheften für",
+    "duration": {
+      "h24": "24 Stunden",
+      "d7": "7 Tage",
+      "d30": "30 Tage",
+      "forever": "Bis ich es löse"
+    },
+    "forAll": "Für alle anheften",
+    "label": {
+      "all": "Für alle",
+      "me": "Nur für dich"
+    },
+    "of": "{i} von {n} angehefteten",
+    "goto": "Zur Nachricht",
+    "list": "Alle angehefteten ({n})",
+    "unpinWhich": "Welche Anheftung möchtest du lösen?"
+  },
+  "reactions": {
+    "people": "{n} Personen",
+    "also": "Auch so reagieren"
+  },
+  "info": {
+    "title": "Info",
+    "sent": "Gesendet",
+    "edited": "Bearbeitet",
+    "type": "Typ",
+    "readBy": "Gelesen von ({x} von {y})",
+    "reactions": "Reaktionen",
+    "copyLink": "Link kopieren",
+    "raw": "Rohdaten"
+  },
+  "details": {
+    "title": "Chat-Details",
+    "members": "Mitglieder",
+    "invite": "Personen einladen",
+    "removeConfirm": "Möchtest du {name} aus diesem Chat entfernen?",
+    "hide": "Ausblenden",
+    "unhide": "Wieder einblenden",
+    "archive": "Chat archivieren",
+    "archiveConfirm": "Der Chat verschwindet für alle Mitglieder. Möchtest du ihn archivieren?",
+    "archiveGroup": "Zum Archivieren die Gruppe archivieren",
+    "leave": "Chat verlassen",
+    "leaveConfirm": "Möchtest du diesen Chat verlassen? Zurück kommst du nur mit einer neuen Einladung."
+  },
+  "mute": {
+    "tile": "Stumm",
+    "on": "Stummgeschaltet",
+    "off": "Benachrichtigungen an",
+    "duration": {
+      "h1": "1 Stunde",
+      "h8": "8 Stunden",
+      "w1": "1 Woche",
+      "forever": "Bis ich es wieder einschalte"
+    },
+    "all": "Alle Chats stummschalten",
+    "unmute": "Wieder einschalten"
+  },
+  "hidden": {
+    "section": "Ausgeblendet ({n})"
   }
 }

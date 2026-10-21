@@ -196,6 +196,16 @@
       "action": "Non lu à partir d'ici",
       "divider": "Non lu à partir d'ici",
       "error": "Ça n'a pas marché. Essaie encore une fois."
+    },
+    "forward": {
+      "action": "Transférer",
+      "title": "Transférer",
+      "send": "Envoyer ({n})",
+      "recent": "Récents",
+      "all": "Toutes les discussions",
+      "done": "Transféré à {n} discussions",
+      "failed": "Impossible de transférer vers « {room} »",
+      "from": "Transféré de {name}"
     }
   },
   "thread": {
@@ -613,5 +623,73 @@
       "action": "Débloquer le chat",
       "confirm": "Le chat sera de nouveau disponible dans toutes les apps. Veux-tu continuer ?"
     }
+  },
+  "sheet": {
+    "section": {
+      "message": "Message"
+    }
+  },
+  "pin": {
+    "action": "Épingler",
+    "unpin": "Détacher",
+    "title": "Épingler pour",
+    "duration": {
+      "h24": "24 heures",
+      "d7": "7 jours",
+      "d30": "30 jours",
+      "forever": "Jusqu’à ce que je le détache"
+    },
+    "forAll": "Épingler pour tous",
+    "label": {
+      "all": "Pour tous",
+      "me": "Seulement pour toi"
+    },
+    "of": "{i} sur {n} épinglés",
+    "goto": "Aller au message",
+    "list": "Tous les épinglés ({n})",
+    "unpinWhich": "Quelle épingle veux-tu détacher ?"
+  },
+  "reactions": {
+    "people": "{n} personnes",
+    "also": "Réagir aussi"
+  },
+  "info": {
+    "title": "Infos",
+    "sent": "Envoyé",
+    "edited": "Modifié",
+    "type": "Type",
+    "readBy": "Lu par ({x} sur {y})",
+    "reactions": "Réactions",
+    "copyLink": "Copier le lien",
+    "raw": "Données brutes"
+  },
+  "details": {
+    "title": "Détails de la discussion",
+    "members": "Membres",
+    "invite": "Inviter des personnes",
+    "removeConfirm": "Veux-tu retirer {name} de cette discussion ?",
+    "hide": "Masquer",
+    "unhide": "Afficher de nouveau",
+    "archive": "Archiver la discussion",
+    "archiveConfirm": "La discussion disparaît pour tous les membres. Veux-tu l’archiver ?",
+    "archiveGroup": "Pour l’archiver, archive le groupe",
+    "leave": "Quitter la discussion",
+    "leaveConfirm": "Veux-tu quitter cette discussion ? Tu ne pourras revenir qu’avec une nouvelle invitation."
+  },
+  "mute": {
+    "tile": "Muet",
+    "on": "En sourdine",
+    "off": "Notifications activées",
+    "duration": {
+      "h1": "1 heure",
+      "h8": "8 heures",
+      "w1": "1 semaine",
+      "forever": "Jusqu’à ce que je la réactive"
+    },
+    "all": "Mettre toutes les discussions en sourdine",
+    "unmute": "Réactiver"
+  },
+  "hidden": {
+    "section": "Masqués ({n})"
   }
 }

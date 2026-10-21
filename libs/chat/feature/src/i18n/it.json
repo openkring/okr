@@ -196,6 +196,16 @@
       "action": "Non letto da qui",
       "divider": "Non letto da qui",
       "error": "Non ha funzionato. Riprova."
+    },
+    "forward": {
+      "action": "Inoltra",
+      "title": "Inoltra",
+      "send": "Invia ({n})",
+      "recent": "Recenti",
+      "all": "Tutte le chat",
+      "done": "Inoltrato a {n} chat",
+      "failed": "Impossibile inoltrare a «{room}»",
+      "from": "Inoltrato da {name}"
     }
   },
   "thread": {
@@ -613,5 +623,73 @@
       "action": "Sbloccare la chat",
       "confirm": "La chat sarà di nuovo disponibile in tutte le app. Vuoi continuare?"
     }
+  },
+  "sheet": {
+    "section": {
+      "message": "Messaggio"
+    }
+  },
+  "pin": {
+    "action": "Fissa",
+    "unpin": "Rimuovi",
+    "title": "Fissa per",
+    "duration": {
+      "h24": "24 ore",
+      "d7": "7 giorni",
+      "d30": "30 giorni",
+      "forever": "Finché non lo rimuovo"
+    },
+    "forAll": "Fissa per tutti",
+    "label": {
+      "all": "Per tutti",
+      "me": "Solo per te"
+    },
+    "of": "{i} di {n} fissati",
+    "goto": "Vai al messaggio",
+    "list": "Tutti i fissati ({n})",
+    "unpinWhich": "Quale fissaggio vuoi rimuovere?"
+  },
+  "reactions": {
+    "people": "{n} persone",
+    "also": "Reagisci anche tu"
+  },
+  "info": {
+    "title": "Info",
+    "sent": "Inviato",
+    "edited": "Modificato",
+    "type": "Tipo",
+    "readBy": "Letto da ({x} di {y})",
+    "reactions": "Reazioni",
+    "copyLink": "Copia link",
+    "raw": "Dati grezzi"
+  },
+  "details": {
+    "title": "Dettagli della chat",
+    "members": "Membri",
+    "invite": "Invita persone",
+    "removeConfirm": "Vuoi rimuovere {name} da questa chat?",
+    "hide": "Nascondi",
+    "unhide": "Mostra di nuovo",
+    "archive": "Archivia chat",
+    "archiveConfirm": "La chat scompare per tutti i membri. Vuoi archiviarla?",
+    "archiveGroup": "Per archiviare la chat, archivia il gruppo",
+    "leave": "Esci dalla chat",
+    "leaveConfirm": "Vuoi uscire da questa chat? Potrai rientrare solo con un nuovo invito."
+  },
+  "mute": {
+    "tile": "Silenzia",
+    "on": "Silenziata",
+    "off": "Notifiche attive",
+    "duration": {
+      "h1": "1 ora",
+      "h8": "8 ore",
+      "w1": "1 settimana",
+      "forever": "Finché non la riattivo"
+    },
+    "all": "Silenzia tutte le chat",
+    "unmute": "Riattiva"
+  },
+  "hidden": {
+    "section": "Nascoste ({n})"
   }
 }
