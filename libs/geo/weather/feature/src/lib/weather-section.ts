@@ -56,7 +56,7 @@ import type { WeatherRainRadar } from './weather-rain-radar';
 
             @case ('day-horizontal') {
               @if (today(); as day) {
-                <okr-weather-day-pill [daily]="day.daily" />
+                <okr-weather-day-pill [daily]="day.daily" [details]="true" />
               } @else { <div>{{ i18n.empty() }}</div> }
             }
 

@@ -36,7 +36,7 @@
   "sunshine": "Ensoleillement",
   "sunshine.duration": "Durée d'ensoleillement",
   "variant": {
-    "dayHorizontal": "Aujourd'hui (ligne)",
+    "dayHorizontal": "Aujourd'hui",
     "dayVertical": "Aujourd'hui (tuile)",
     "forecastOverview": "Prévisions",
     "forecastDetail": "Prévisions locales",

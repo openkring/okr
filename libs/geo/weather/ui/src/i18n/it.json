@@ -36,7 +36,7 @@
   "sunshine": "Sole",
   "sunshine.duration": "Durata del sole",
   "variant": {
-    "dayHorizontal": "Oggi (riga)",
+    "dayHorizontal": "Oggi",
     "dayVertical": "Oggi (riquadro)",
     "forecastOverview": "Previsioni",
     "forecastDetail": "Previsioni locali",

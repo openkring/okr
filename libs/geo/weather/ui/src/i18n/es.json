@@ -36,7 +36,7 @@
   "sunshine": "Sol",
   "sunshine.duration": "Horas de sol",
   "variant": {
-    "dayHorizontal": "Hoy (fila)",
+    "dayHorizontal": "Hoy",
     "dayVertical": "Hoy (mosaico)",
     "forecastOverview": "Pronóstico",
     "forecastDetail": "Pronóstico local",

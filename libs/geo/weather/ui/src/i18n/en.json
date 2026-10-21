@@ -36,7 +36,7 @@
   "sunshine": "Sunshine",
   "sunshine.duration": "Sunshine duration",
   "variant": {
-    "dayHorizontal": "Today (row)",
+    "dayHorizontal": "Today",
     "dayVertical": "Today (tile)",
     "forecastOverview": "Forecast",
     "forecastDetail": "Local forecast",
