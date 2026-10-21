@@ -836,7 +836,12 @@ export class MatrixMessageList {
   /** «Weitergeleitet von X» for a forwarded message, undefined for ordinary messages. */
   protected forwardedLabel(m: MatrixMessage): string | undefined {
     const from = readForwarded(m.content);
-    return from ? fill(this.i18n().forwarded_from(), { name: from.senderName }) : undefined;
+    if (!from) return undefined;
+    // `senderName` is free text any client can write, so it is never rendered: the name comes from
+    // a message this list already holds for the claimed sender id, else from the id's localpart.
+    const known = this.messages().find((x) => x.sender === from.sender)?.senderName;
+    const localpart = from.sender.replace(/^@/, '').split(':')[0];
+    return fill(this.i18n().forwarded_from(), { name: known || localpart });
   }
   /** Signed posters of the album videos linked in this list, by docKey — owned by the feature (VideoUrlService). */
   public readonly videoCards = input<Record<string, { posterUrl: string; available: boolean; loading: boolean }>>({});

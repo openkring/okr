@@ -937,7 +937,7 @@ export const _MatrixChatStore = signalStore(
         await modal.present();
         const { data, role } = await modal.onDidDismiss<string[]>();
         if (role !== 'confirm' || !data?.length) return;
-        const content = buildForwardContent(message.content, {
+        const content = buildForwardContent(message.content ?? {}, {
           sender: message.sender,
           senderName: message.senderName,
           roomId: message.roomId,
