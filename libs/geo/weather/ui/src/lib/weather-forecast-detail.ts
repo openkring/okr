@@ -1,10 +1,11 @@
-import { Component, DestroyRef, ElementRef, afterNextRender, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, input, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { IonLabel, IonSegment, IonSegmentButton } from '@ionic/angular';
 
 import { WeatherHour, WeatherModel } from '@okr/shared-models';
 import { AxisScale, hourStep, niceScale } from '@okr/weather-util';
 
+import { hostWidth } from './host-width';
 import { WeatherIcon } from './weather-icon';
 
 /** One hour plus its position on the time axis (`i` = index across all shown hours). */
@@ -204,7 +205,7 @@ export class WeatherForecastDetail {
   protected readonly W_BOTTOM = 124;
 
   // ---- width ----------------------------------------------------------------------------
-  private readonly measured = signal(0);
+  private readonly measured = hostWidth();
   /** Chart width in px. Until the first measurement a desktop-ish guess keeps SSR sane. */
   protected W = computed(() => Math.max(280, Math.round(this.measured() || 720)));
   private plotW = computed(() => this.W() - GL - GR);
@@ -342,22 +343,6 @@ export class WeatherForecastDetail {
   protected gustPath = computed(() => this.line(this.hours().map((h) => h.gusts ?? 0), this.windY));
   protected gustBand = computed(() => this.ring(
     this.hours().map((h) => h.gusts ?? 0), this.hours().map((h) => h.wind ?? 0), this.windY));
-
-  constructor() {
-    const host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
-    const destroyRef = inject(DestroyRef);
-    afterNextRender(() => {
-      this.measured.set(host.clientWidth);
-      if (typeof ResizeObserver === 'undefined') return;
-      const observer = new ResizeObserver((entries) => {
-        const width = entries[0]?.contentRect.width ?? 0;
-        // sub-pixel jitter would rebuild every chart for nothing
-        if (Math.abs(width - this.measured()) >= 1) this.measured.set(width);
-      });
-      observer.observe(host);
-      destroyRef.onDestroy(() => observer.disconnect());
-    });
-  }
 
   protected pickRange(value: unknown): void {
     const n = Number(value);
