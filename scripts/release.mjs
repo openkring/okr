@@ -287,6 +287,14 @@ async function releaseApp(app) {
     console.log(`\n[3b/7] Generating OSS attribution for ${app}…`);
     run('node', ['scripts/gen-attribution.mjs', app]);
 
+    // 3c. Service-worker stamp — makes ngsw-worker.js differ per release, so installed apps pick
+    //     up a new worker and with it the CURRENT CSP headers (a worker keeps the CSP of the day it
+    //     was installed; see the script header). Before 4: the Sentry step re-hashes after it.
+    if (app.endsWith('-app')) {
+      console.log(`\n[3c/7] Stamping the service worker for ${app}…`);
+      run('node', ['scripts/stamp-ngsw-worker.mjs', app]);
+    }
+
     // 4. Sentry source maps — MUST run before deploy (injects debug IDs into the built JS,
     //    uploads maps, finalizes the scs@<version> release). Skipped if SENTRY_* not exported.
     console.log('\n[4/7] Sentry source maps');
