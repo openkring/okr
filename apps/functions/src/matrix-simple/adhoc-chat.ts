@@ -18,7 +18,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore } from 'firebase-admin/firestore';
 
-import { DateFormat, getTodayStr } from '@okr/shared-util-core';
+import { DateFormat, getTodayStr, isActiveMembership } from '@okr/shared-util-core';
 
 import {
   matrixAdminToken,
@@ -35,6 +35,8 @@ import {
   activeGroupMemberKeys,
   serverHostname,
   getUserTenants,
+  getCallerRoles,
+  nextAdhocAdmin,
 } from './shared';
 
 /** Hoechstzahl Mitglieder eines Ad-hoc-Chats (die anlegende Person eingerechnet). */
@@ -401,7 +403,8 @@ export const addAdhocChatMembers = onCall(
  * Der Kick aus dem Matrix-Raum passiert nicht hier, sondern in `onMembershipWritten` —
  * derselbe Weg wie beim Ende einer Gruppenmitgliedschaft. Der Chat laeuft fuer die
  * anderen weiter; verlaesst die letzte Person ihn, bleibt ein Dokument ohne aktive
- * Mitgliedschaft zurueck (Spec §5, offener Punkt).
+ * Mitgliedschaft zurueck (Spec §5, offener Punkt). Verlaesst der Admin des Chats ihn, geht
+ * `group.admins` an das verbleibende Mitglied mit dem fruehesten Eintritt (spec 1.109 §8.3).
  */
 export const leaveAdhocChat = onCall(
   {
@@ -436,14 +439,147 @@ export const leaveAdhocChat = onCall(
       .get();
     if (snap.empty) return { left: false };
 
-    const today = getTodayStr(DateFormat.StoreDate);
-    const batch = db.batch();
-    for (const doc of snap.docs) {
-      batch.update(doc.ref, { dateOfExit: today, isArchived: true });
-    }
-    await batch.commit();
+    await endAdhocMembership(chatKey, group, personKey, snap.docs);
 
     console.log(`leaveAdhocChat: ${personKey} left ${chatKey}`);
     return { left: true };
+  }
+);
+
+/** An entry of `group.admins` (an AvatarInfo-shaped person reference). */
+export interface AdhocAdminRef {
+  key: string;
+  name1: string;
+  name2: string;
+  modelType: string;
+  type: string;
+  subType: string;
+  label: string;
+}
+
+/** A member who stays in the chat — a candidate for the admin hand-over. */
+export interface RemainingAdhocMember {
+  personKey: string;
+  dateOfEntry: string;
+  name1: string;
+  name2: string;
+}
+
+/**
+ * `group.admins` after `leaverKey` is gone (spec 1.109 §8.3): undefined when the leaver was no
+ * admin (nothing to write). Otherwise the other admins; when none remains, the member who joined
+ * earliest takes over (`nextAdhocAdmin`), so the chat always keeps someone who can remove members
+ * and archive it. Empty only when nobody remains.
+ */
+export function adhocAdminsAfterLeave(
+  admins: unknown,
+  leaverKey: string,
+  remaining: RemainingAdhocMember[],
+): AdhocAdminRef[] | undefined {
+  if (!Array.isArray(admins)) return undefined;
+  const list = admins as AdhocAdminRef[];
+  if (!list.some((a) => a?.key === leaverKey)) return undefined;
+  const others = list.filter((a) => a?.key !== leaverKey);
+  if (others.length > 0) return others;
+  const nextKey = nextAdhocAdmin(remaining);
+  const next = remaining.find((m) => m.personKey === nextKey);
+  if (!next) return [];
+  return [{ key: next.personKey, name1: next.name1, name2: next.name2, modelType: 'person', type: '', subType: '', label: '' }];
+}
+
+/**
+ * End a person's membership of an ad-hoc chat (leave or removal): archive the membership
+ * documents and, when the person was an admin, hand `group.admins` over in the same batch. The
+ * kick from the Matrix room follows via `onMembershipWritten`, as for any ended membership.
+ */
+async function endAdhocMembership(
+  chatKey: string,
+  group: Record<string, unknown>,
+  personKey: string,
+  membershipDocs: FirebaseFirestore.QueryDocumentSnapshot[],
+): Promise<void> {
+  const db = getFirestore();
+  const today = getTodayStr(DateFormat.StoreDate);
+  const batch = db.batch();
+  for (const doc of membershipDocs) {
+    batch.update(doc.ref, { dateOfExit: today, isArchived: true });
+  }
+
+  const all = await db.collection('memberships')
+    .where('orgKey', '==', chatKey)
+    .where('orgModelType', '==', 'group')
+    .where('memberModelType', '==', 'person')
+    .get();
+  const remaining: RemainingAdhocMember[] = all.docs
+    .map((d) => d.data() as { memberKey: string; dateOfEntry?: string; dateOfExit?: string; isArchived?: boolean; memberName1?: string; memberName2?: string })
+    .filter((m) => m.memberKey !== personKey && isActiveMembership(m, today))
+    .map((m) => ({ personKey: m.memberKey, dateOfEntry: m.dateOfEntry ?? '', name1: m.memberName1 ?? '', name2: m.memberName2 ?? '' }));
+  const admins = adhocAdminsAfterLeave(group['admins'], personKey, remaining);
+  if (admins) batch.update(db.collection('groups').doc(chatKey), { admins });
+
+  await batch.commit();
+  if (admins) console.log(`endAdhocMembership: admins of ${chatKey} → [${admins.map((a) => a.key).join(', ')}]`);
+}
+
+/**
+ * Remove another person from an ad-hoc chat (spec 1.109 §8.3). Allowed for the chat's admins
+ * (`group.admins`, the creator or whom it was handed to) and the tenant `admin`; nobody removes
+ * themselves here — that is «Verlassen» (`leaveAdhocChat`). Ends the membership like
+ * `leaveAdhocChat`; the kick follows via `onMembershipWritten`.
+ */
+export const removeAdhocChatMember = onCall(
+  {
+    cors: true,
+    region: 'europe-west6',
+    enforceAppCheck: true,
+    secrets: [matrixAdminToken],
+  },
+  async (request): Promise<{ removed: boolean }> => {
+    const uid = await requireProvisionedUser(request, 'removeAdhocChatMember');
+    checkRateLimit(uid, 'removeAdhocChatMember', 20);
+
+    const { groupKey, personKey } = request.data as { groupKey?: string; personKey?: string };
+    const chatKey = requireParam(groupKey, 'groupKey', 100);
+    const targetKey = requireParam(personKey, 'personKey', 100);
+
+    const callerKey = await requireUserPersonKey(uid, 'removeAdhocChatMember');
+    if (callerKey === targetKey) {
+      throw new HttpsError('failed-precondition', 'Use leaveAdhocChat to leave a chat yourself.');
+    }
+
+    const db = getFirestore();
+    const groupSnap = await db.collection('groups').doc(chatKey).get();
+    const group = groupSnap.data();
+    if (!groupSnap.exists || !group) throw new HttpsError('not-found', `Chat ${chatKey} not found`);
+    if ((group['kind'] ?? 'group') !== 'chat') {
+      throw new HttpsError('failed-precondition', `${chatKey} is not an ad-hoc chat.`);
+    }
+
+    // The chat must belong to the caller's tenant — `admin` is a per-tenant role, and a chat key
+    // of another tenant must not even be confirmed to exist.
+    const chatTenants = (group['tenants'] ?? []) as string[];
+    const callerTenants = await getUserTenants(uid);
+    if (!chatTenants.some((t) => callerTenants.includes(t))) {
+      throw new HttpsError('not-found', `Chat ${chatKey} not found`);
+    }
+
+    const isChatAdmin = Array.isArray(group['admins']) &&
+      (group['admins'] as { key?: string }[]).some((a) => a?.key === callerKey);
+    if (!isChatAdmin && (await getCallerRoles(uid))['admin'] !== true) {
+      throw new HttpsError('permission-denied', 'Only the chat\'s admin may remove members.');
+    }
+
+    const snap = await db.collection('memberships')
+      .where('orgKey', '==', chatKey)
+      .where('orgModelType', '==', 'group')
+      .where('memberKey', '==', targetKey)
+      .get();
+    const open = snap.docs.filter((d) => d.data()['isArchived'] !== true);
+    if (open.length === 0) return { removed: false };
+
+    await endAdhocMembership(chatKey, group, targetKey, open);
+
+    console.log(`removeAdhocChatMember: ${targetKey} removed from ${chatKey} by ${callerKey}`);
+    return { removed: true };
   }
 );

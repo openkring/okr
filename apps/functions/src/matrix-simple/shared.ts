@@ -1225,3 +1225,182 @@ export async function getRoomEvent(
 export async function roomEventExists(roomId: string, eventId: string, adminToken: string): Promise<boolean> {
   return (await getRoomEvent(roomId, eventId, adminToken)) !== undefined;
 }
+
+// ── Chat actions redesign (spec 1.109) ──────────────────────────────────────────────────────
+
+/**
+ * Shared-pin expiry room state (state_key ''): `{ [eventId]: untilMs | null }` (spec 1.109 §6).
+ * Kept in sync with `OKR_PIN_EXPIRY_EVENT` in libs/chat/util/src/lib/pin.util.ts.
+ */
+export const OKR_PIN_EXPIRY_EVENT = 'org.okr.pin_expiry';
+
+/** The Matrix standard pinned-events room state: `{ pinned: string[] }`. */
+export const MATRIX_PINNED_EVENTS = 'm.room.pinned_events';
+
+/**
+ * Global account data of a user's mutes (spec 1.109 §9). Kept in sync with `OKR_MUTE_EVENT` in
+ * libs/chat/util/src/lib/mute.util.ts.
+ */
+export const OKR_MUTE_EVENT = 'org.okr.mute';
+
+/** The room kinds `setChatPins` distinguishes (DMs write their pins directly, never via the callable). */
+export type PinRoomKind = 'group' | 'pinboard' | 'adhoc' | 'notes' | 'other';
+
+/**
+ * Who may pin or unpin for everyone (spec 1.109 §6): every member of an ad-hoc chat; group admins
+ * and `privileged`/`admin` in group rooms and pinboards; nobody in the notes room or an unknown
+ * room (there only the expired-pin cleanup goes through the callable).
+ */
+export function mayPinForAll(kind: PinRoomKind, roles: Record<string, boolean>, isGroupAdmin: boolean): boolean {
+  switch (kind) {
+    case 'adhoc':
+      return true;
+    case 'group':
+    case 'pinboard':
+      return isGroupAdmin || roles['privileged'] === true || roles['admin'] === true;
+    default:
+      return false;
+  }
+}
+
+/**
+ * Support and Notfall rooms (alias localpart) can neither be muted nor hidden.
+ * Keep in sync with `isProtectedRoomAlias` in libs/chat/util/src/lib/mute.util.ts.
+ */
+export function isProtectedRoomAlias(aliasLocalpart: string, tenantId: string): boolean {
+  return [`group_${tenantId}_support`, 'support', 'group_support', `group_${tenantId}_notfall`, 'notfall'].includes(aliasLocalpart);
+}
+
+function isMuteUntil(value: unknown): value is number | null {
+  return value === null || (typeof value === 'number' && Number.isFinite(value) && value >= 0);
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function muteActive(until: unknown, now: number): boolean {
+  return isMuteUntil(until) && (until === null || until > now);
+}
+
+/**
+ * Whether the user's `org.okr.mute` content silences a push for `roomId` in the app of `tenantId`.
+ * Mirrors `isRoomMuted` + `parseMuteContent` in libs/chat/util/src/lib/mute.util.ts (keep in sync):
+ * `all` is keyed per tenant, a room entry `{ until, byHide?, prevUntil? }` is active while
+ * `until === null || until > now`, a protected room is never silenced, and a pusher without a
+ * tenant only honours room entries. Malformed content silences nothing.
+ */
+export function muteBlocksPush(
+  mute: Record<string, unknown> | undefined,
+  roomId: string,
+  tenantId: string | undefined,
+  now: number,
+  isProtected: boolean,
+): boolean {
+  if (isProtected || !isPlainRecord(mute)) return false;
+  const rooms = mute['rooms'];
+  if (isPlainRecord(rooms)) {
+    const entry = rooms[roomId];
+    if (isPlainRecord(entry) && muteActive(entry['until'], now)) return true;
+  }
+  const all = mute['all'];
+  return !!tenantId && isPlainRecord(all) && muteActive(all[tenantId], now);
+}
+
+/**
+ * The member who takes over `group.admins` of an ad-hoc chat when its admin leaves (spec 1.109
+ * §8.3): the earliest `dateOfEntry` (StoreDate `yyyymmdd`, compares as a string); a tie goes to
+ * the first in the input. Undefined when nobody remains.
+ */
+export function nextAdhocAdmin(remaining: { personKey: string; dateOfEntry: string }[]): string | undefined {
+  let best: { personKey: string; dateOfEntry: string } | undefined;
+  for (const m of remaining) {
+    if (!best || (m.dateOfEntry ?? '') < (best.dateOfEntry ?? '')) best = m;
+  }
+  return best?.personKey;
+}
+
+/**
+ * A small in-memory cache with a TTL and a hard size bound, for long-lived function instances
+ * (the push gateway). Evicts the oldest insertion beyond `maxSize`. `get` returns a wrapper so a
+ * cached `undefined` is still a hit. Time is a parameter.
+ */
+export class BoundedTtlCache<T> {
+  private readonly entries = new Map<string, { value: T; expiresAt: number }>();
+
+  public constructor(private readonly maxSize: number, private readonly ttlMs: number) {}
+
+  public get size(): number {
+    return this.entries.size;
+  }
+
+  public get(key: string, now: number): { value: T } | undefined {
+    const hit = this.entries.get(key);
+    if (!hit) return undefined;
+    if (now >= hit.expiresAt) {
+      this.entries.delete(key);
+      return undefined;
+    }
+    return { value: hit.value };
+  }
+
+  public set(key: string, value: T, now: number, ttlMs = this.ttlMs): void {
+    this.entries.delete(key);
+    this.entries.set(key, { value, expiresAt: now + ttlMs });
+    while (this.entries.size > this.maxSize) {
+      const oldest = this.entries.keys().next().value;
+      if (oldest === undefined) break;
+      this.entries.delete(oldest);
+    }
+  }
+}
+
+/**
+ * Read one state event's content of a room via the client API with the admin token (the bot must
+ * be in the room). `undefined` when the state is absent (404); any other failure THROWS, so a
+ * caller that rewrites the state never mistakes an outage for «empty» and wipes it.
+ */
+export async function getRoomStateContent(
+  roomId: string, eventType: string, adminToken: string,
+): Promise<Record<string, unknown> | undefined> {
+  const resp = await fetch(
+    `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/state/${encodeURIComponent(eventType)}/`,
+    { headers: { Authorization: `Bearer ${adminToken}` } },
+  );
+  if (resp.status === 404) return undefined;
+  if (!resp.ok) throw new Error(`getRoomStateContent ${roomId} ${eventType} → ${resp.status}: ${await resp.text()}`);
+  const content = await resp.json() as unknown;
+  return isPlainRecord(content) ? content : undefined;
+}
+
+/** Write one state event (state_key '') as the bot. Throws on any non-2xx. */
+export async function putRoomStateContent(
+  roomId: string, eventType: string, content: Record<string, unknown>, adminToken: string,
+): Promise<void> {
+  const resp = await fetch(
+    `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/state/${encodeURIComponent(eventType)}/`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(content),
+    },
+  );
+  if (!resp.ok) throw new Error(`putRoomStateContent ${roomId} ${eventType} → ${resp.status}: ${await resp.text()}`);
+}
+
+/**
+ * A user's global account data of `eventType` via the Synapse admin API (no user token needed).
+ * Undefined when the user has none; throws on any failure (the gateway fails open on that).
+ */
+export async function getUserGlobalAccountData(
+  matrixUserId: string, eventType: string, adminToken: string, timeoutMs = 3_000,
+): Promise<Record<string, unknown> | undefined> {
+  const resp = await fetch(
+    `${MATRIX_HOMESERVER}/_synapse/admin/v1/users/${encodeURIComponent(matrixUserId)}/accountdata`,
+    { headers: { Authorization: `Bearer ${adminToken}` }, signal: AbortSignal.timeout(timeoutMs) },
+  );
+  if (!resp.ok) throw new Error(`getUserGlobalAccountData ${matrixUserId} → ${resp.status}`);
+  const body = await resp.json() as { account_data?: { global?: Record<string, unknown> } };
+  const content = body.account_data?.global?.[eventType];
+  return isPlainRecord(content) ? content : undefined;
+}

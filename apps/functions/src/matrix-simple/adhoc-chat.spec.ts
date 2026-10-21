@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { adhocChatKey, deriveAdhocChatName } from './adhoc-chat';
+import { adhocAdminsAfterLeave, adhocChatKey, deriveAdhocChatName } from './adhoc-chat';
 
 describe('adhocChatKey', () => {
   it('prefixes the tenant and marks the document as a chat', () => {
@@ -29,5 +29,35 @@ describe('deriveAdhocChatName', () => {
 
   it('falls back when no name is usable', () => {
     expect(deriveAdhocChatName([])).toBe('Chat');
+  });
+});
+
+describe('adhocAdminsAfterLeave', () => {
+  const admin = (key: string) => ({ key, name1: key.toUpperCase(), name2: '', modelType: 'person', type: '', subType: '', label: '' });
+  const remaining = [
+    { personKey: 'b', dateOfEntry: '20260102', name1: 'Beat', name2: 'B' },
+    { personKey: 'a', dateOfEntry: '20260101', name1: 'Anna', name2: 'A' },
+  ];
+
+  it('leaves the admins alone when a non-admin leaves', () => {
+    expect(adhocAdminsAfterLeave([admin('c')], 'x', remaining)).toBeUndefined();
+  });
+
+  it('hands over to the earliest remaining member when the creator leaves', () => {
+    expect(adhocAdminsAfterLeave([admin('c')], 'c', remaining)).toEqual([
+      { key: 'a', name1: 'Anna', name2: 'A', modelType: 'person', type: '', subType: '', label: '' },
+    ]);
+  });
+
+  it('keeps other admins without adding one', () => {
+    expect(adhocAdminsAfterLeave([admin('c'), admin('d')], 'c', remaining)).toEqual([admin('d')]);
+  });
+
+  it('empties the list when nobody remains', () => {
+    expect(adhocAdminsAfterLeave([admin('c')], 'c', [])).toEqual([]);
+  });
+
+  it('tolerates a malformed admins field', () => {
+    expect(adhocAdminsAfterLeave(undefined, 'c', remaining)).toBeUndefined();
   });
 });

@@ -19,6 +19,12 @@ import {
   getUserTenants,
   getRoomTenantMarker,
   pusherAdmitsRoom,
+  getRoomSummary,
+  getUserGlobalAccountData,
+  isProtectedRoomAlias,
+  muteBlocksPush,
+  BoundedTtlCache,
+  OKR_MUTE_EVENT,
 } from './shared';
 import { androidDisplay, appNameFor, collectTokens, withAppName } from '../srv/push';
 
@@ -272,7 +278,8 @@ export const registerMatrixPusher = onCall(
           device_display_name: deviceName,
           pushkey,
           lang: lang || 'de',
-          data: { url, ...(pusherTenantId ? { tenantId: pusherTenantId } : {}) },
+          // matrixUserId lets matrixPushGateway read this user's `org.okr.mute` (spec 1.109 §9).
+          data: { url, matrixUserId, ...(pusherTenantId ? { tenantId: pusherTenantId } : {}) },
           append: false,
         }),
       }
@@ -299,6 +306,65 @@ async function cachedRoomTenantMarker(roomId: string, adminToken: string): Promi
   const marker = await getRoomTenantMarker(roomId, adminToken).catch(() => undefined);
   markerCache.set(roomId, { marker, at: Date.now() });
   return marker;
+}
+
+/**
+ * A room's canonical alias localpart (`#group_scs_support:host` → `group_scs_support`; '' when the
+ * room has none), cached per instance like the marker. `undefined` = the read failed: the gateway
+ * then treats the room as protected (fails open — a support room must never be silenced), and the
+ * failure is cached only briefly.
+ */
+const ALIAS_FAILURE_TTL_MS = 10_000;
+const aliasCache = new BoundedTtlCache<string | undefined>(2_000, MARKER_TTL_MS);
+
+async function cachedRoomAliasLocalpart(roomId: string, adminToken: string): Promise<string | undefined> {
+  const now = Date.now();
+  const hit = aliasCache.get(roomId, now);
+  if (hit) return hit.value;
+  const summary = await getRoomSummary(roomId, adminToken);
+  if (!summary) {
+    aliasCache.set(roomId, undefined, now, ALIAS_FAILURE_TTL_MS);
+    return undefined;
+  }
+  const alias = summary.canonicalAlias;
+  const localpart = alias.startsWith('#') ? alias.slice(1).split(':')[0] : '';
+  aliasCache.set(roomId, localpart, now);
+  return localpart;
+}
+
+/**
+ * A user's `org.okr.mute` account data, cached per user for 60 s (spec 1.109 §9) and bounded —
+ * the instance is long-lived. A failed read FAILS OPEN: `undefined` (= nothing muted) is cached
+ * for a few seconds only, so a slow Synapse neither drops pushes nor is hammered.
+ */
+const MUTE_TTL_MS = 60_000;
+const MUTE_FAILURE_TTL_MS = 10_000;
+const muteCache = new BoundedTtlCache<Record<string, unknown> | undefined>(5_000, MUTE_TTL_MS);
+
+async function cachedUserMute(matrixUserId: string, adminToken: string): Promise<Record<string, unknown> | undefined> {
+  const now = Date.now();
+  const hit = muteCache.get(matrixUserId, now);
+  if (hit) return hit.value;
+  try {
+    const mute = await getUserGlobalAccountData(matrixUserId, OKR_MUTE_EVENT, adminToken);
+    muteCache.set(matrixUserId, mute, now);
+    return mute;
+  } catch (err) {
+    console.warn(`matrixPushGateway: mute read failed for ${matrixUserId}, delivering unmuted:`, err);
+    muteCache.set(matrixUserId, undefined, now, MUTE_FAILURE_TTL_MS);
+    return undefined;
+  }
+}
+
+/**
+ * Whether the room is a support/Notfall room for the pusher's app. An unknown alias (failed read)
+ * counts as protected (fail open). A pusher without a tenant is checked against the room's marker.
+ */
+function roomIsProtected(aliasLocalpart: string | undefined, tenantId: string | undefined, roomMarker: string[] | undefined): boolean {
+  if (aliasLocalpart === undefined) return true;
+  if (aliasLocalpart === '') return false;
+  const tenants = tenantId ? [tenantId] : (roomMarker ?? []);
+  return isProtectedRoomAlias(aliasLocalpart, '') || tenants.some((t) => isProtectedRoomAlias(aliasLocalpart, t));
 }
 
 interface MatrixPushDevice {
@@ -379,8 +445,13 @@ export const matrixPushGateway = onRequest(
       // One Matrix account serves every tenant app of a person; send a room's message only to
       // the apps of the room's tenants (spec 1.93 §3). Skipped devices are NOT `rejected` —
       // that would make Synapse delete a healthy pusher.
-      const roomMarker = roomId ? await cachedRoomTenantMarker(roomId, matrixAdminToken.value()) : undefined;
+      const adminToken = matrixAdminToken.value();
+      const roomMarker = roomId ? await cachedRoomTenantMarker(roomId, adminToken) : undefined;
       let skippedForeign = 0;
+      let skippedMuted = 0;
+      // Read lazily: only once a device's owner has mute content at all.
+      let aliasRead = false;
+      let aliasLocalpart: string | undefined;
 
       for (const device of notification.devices) {
         const token = device.pushkey;
@@ -390,6 +461,25 @@ export const matrixPushGateway = onRequest(
         if (!pusherAdmitsRoom(roomMarker, device.data?.['tenantId'])) {
           skippedForeign++;
           continue;
+        }
+        // Mute (spec 1.109 §9): the pusher's owner muted this room or this app. Pushers registered
+        // before `matrixUserId` was put into their data carry none → delivered (dies out with
+        // the next app start). Never `rejected` — the pusher is healthy.
+        const matrixUserId = device.data?.['matrixUserId'];
+        if (roomId && typeof matrixUserId === 'string' && matrixUserId.startsWith('@')) {
+          const mute = await cachedUserMute(matrixUserId, adminToken);
+          if (mute) {
+            if (!aliasRead) {
+              aliasLocalpart = await cachedRoomAliasLocalpart(roomId, adminToken);
+              aliasRead = true;
+            }
+            const tenantId = device.data?.['tenantId'] || undefined;
+            const isProtected = roomIsProtected(aliasLocalpart, tenantId, roomMarker);
+            if (muteBlocksPush(mute, roomId, tenantId, Date.now(), isProtected)) {
+              skippedMuted++;
+              continue;
+            }
+          }
         }
 
         try {
@@ -435,7 +525,7 @@ export const matrixPushGateway = onRequest(
         }
       }
 
-      console.log(`matrixPushGateway: room=${roomId} rejected=${rejectedTokens.length} skippedForeign=${skippedForeign}`);
+      console.log(`matrixPushGateway: room=${roomId} rejected=${rejectedTokens.length} skippedForeign=${skippedForeign} skippedMuted=${skippedMuted}`);
       res.status(200).json({ rejected: rejectedTokens });
     } catch (err) {
       console.error('matrixPushGateway: Unexpected error:', err);

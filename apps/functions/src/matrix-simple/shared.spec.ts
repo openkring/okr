@@ -1,6 +1,18 @@
 import { describe, expect, it } from 'vitest';
 
-import { askRoomAliasLocalpart, askRoomsToLeave, groupRoomAliasLocalpart, pusherAdmitsRoom, roomAdmitsTenant, useAskRoom } from './shared';
+import {
+  askRoomAliasLocalpart,
+  askRoomsToLeave,
+  BoundedTtlCache,
+  groupRoomAliasLocalpart,
+  isProtectedRoomAlias,
+  mayPinForAll,
+  muteBlocksPush,
+  nextAdhocAdmin,
+  pusherAdmitsRoom,
+  roomAdmitsTenant,
+  useAskRoom,
+} from './shared';
 
 describe('askRoomAliasLocalpart', () => {
   it('derives a stable localpart from group + person', () => {
@@ -126,5 +138,128 @@ describe('pusherAdmitsRoom', () => {
   it('delivers as before to a pusher registered without a tenant', () => {
     expect(pusherAdmitsRoom(['scs'], undefined)).toBe(true);
     expect(pusherAdmitsRoom(['scs'], '')).toBe(true);
+  });
+});
+
+describe('mayPinForAll', () => {
+  it('lets every member of an ad-hoc chat pin for all', () => {
+    expect(mayPinForAll('adhoc', {}, false)).toBe(true);
+  });
+
+  it('requires a group admin or privileged/admin role in group rooms and pinboards', () => {
+    expect(mayPinForAll('group', {}, false)).toBe(false);
+    expect(mayPinForAll('group', { privileged: true }, false)).toBe(true);
+    expect(mayPinForAll('group', { admin: true }, false)).toBe(true);
+    expect(mayPinForAll('pinboard', {}, true)).toBe(true);
+    expect(mayPinForAll('pinboard', { registered: true }, false)).toBe(false);
+  });
+
+  it('never in the notes room or an unknown room', () => {
+    expect(mayPinForAll('notes', { admin: true }, true)).toBe(false);
+    expect(mayPinForAll('other', { admin: true }, true)).toBe(false);
+  });
+});
+
+describe('isProtectedRoomAlias', () => {
+  it('matches the support and Notfall aliases of the tenant', () => {
+    for (const a of ['group_scs_support', 'support', 'group_support', 'group_scs_notfall', 'notfall']) {
+      expect(isProtectedRoomAlias(a, 'scs')).toBe(true);
+    }
+  });
+
+  it('does not match another tenant\'s support room or an ordinary group', () => {
+    expect(isProtectedRoomAlias('group_kring_support', 'scs')).toBe(false);
+    expect(isProtectedRoomAlias('group_scs_vorstand', 'scs')).toBe(false);
+  });
+});
+
+describe('muteBlocksPush', () => {
+  const NOW = 1_000_000;
+
+  it('blocks while a room mute is active, indefinitely with null', () => {
+    expect(muteBlocksPush({ rooms: { '!r': { until: NOW + 1 } } }, '!r', 'scs', NOW, false)).toBe(true);
+    expect(muteBlocksPush({ rooms: { '!r': { until: null } } }, '!r', 'scs', NOW, false)).toBe(true);
+    expect(muteBlocksPush({ rooms: { '!r': { until: null, byHide: true, prevUntil: NOW + 5 } } }, '!r', 'scs', NOW, false)).toBe(true);
+  });
+
+  it('does not block once the expiry is reached', () => {
+    expect(muteBlocksPush({ rooms: { '!r': { until: NOW } } }, '!r', 'scs', NOW, false)).toBe(false);
+    expect(muteBlocksPush({ all: { scs: NOW } }, '!r', 'scs', NOW, false)).toBe(false);
+  });
+
+  it('keys «all» per tenant', () => {
+    expect(muteBlocksPush({ all: { scs: null } }, '!r', 'scs', NOW, false)).toBe(true);
+    expect(muteBlocksPush({ all: { scs: null } }, '!r', 'kring', NOW, false)).toBe(false);
+  });
+
+  it('counts only room entries when the pusher carries no tenant', () => {
+    expect(muteBlocksPush({ all: { scs: null } }, '!r', undefined, NOW, false)).toBe(false);
+    expect(muteBlocksPush({ rooms: { '!r': { until: null } } }, '!r', undefined, NOW, false)).toBe(true);
+  });
+
+  it('never blocks a protected room', () => {
+    expect(muteBlocksPush({ all: { scs: null }, rooms: { '!r': { until: null } } }, '!r', 'scs', NOW, true)).toBe(false);
+  });
+
+  it('tolerates missing and malformed content', () => {
+    expect(muteBlocksPush(undefined, '!r', 'scs', NOW, false)).toBe(false);
+    expect(muteBlocksPush({ all: 'x', rooms: [] }, '!r', 'scs', NOW, false)).toBe(false);
+    expect(muteBlocksPush({ all: { scs: 'soon' }, rooms: { '!r': { until: -5 } } }, '!r', 'scs', NOW, false)).toBe(false);
+    expect(muteBlocksPush({ rooms: { '!r': 'yes' } }, '!r', 'scs', NOW, false)).toBe(false);
+  });
+
+  it('ignores other rooms\' entries', () => {
+    expect(muteBlocksPush({ rooms: { '!other': { until: null } } }, '!r', 'scs', NOW, false)).toBe(false);
+  });
+});
+
+describe('nextAdhocAdmin', () => {
+  it('picks the member who joined earliest', () => {
+    expect(nextAdhocAdmin([
+      { personKey: 'b', dateOfEntry: '20260102' },
+      { personKey: 'a', dateOfEntry: '20260101' },
+    ])).toBe('a');
+  });
+
+  it('breaks a tie by input order', () => {
+    expect(nextAdhocAdmin([
+      { personKey: 'b', dateOfEntry: '20260101' },
+      { personKey: 'a', dateOfEntry: '20260101' },
+    ])).toBe('b');
+  });
+
+  it('is undefined when nobody remains', () => {
+    expect(nextAdhocAdmin([])).toBeUndefined();
+  });
+});
+
+describe('BoundedTtlCache', () => {
+  it('returns a value within its TTL and forgets it afterwards', () => {
+    const c = new BoundedTtlCache<string>(10, 100);
+    c.set('k', 'v', 0);
+    expect(c.get('k', 99)).toEqual({ value: 'v' });
+    expect(c.get('k', 100)).toBeUndefined();
+  });
+
+  it('caches undefined as a hit', () => {
+    const c = new BoundedTtlCache<string | undefined>(10, 100);
+    c.set('k', undefined, 0);
+    expect(c.get('k', 1)).toEqual({ value: undefined });
+  });
+
+  it('honours a per-entry TTL', () => {
+    const c = new BoundedTtlCache<string>(10, 100);
+    c.set('k', 'v', 0, 10);
+    expect(c.get('k', 11)).toBeUndefined();
+  });
+
+  it('evicts the oldest entry beyond its size', () => {
+    const c = new BoundedTtlCache<number>(2, 1000);
+    c.set('a', 1, 0);
+    c.set('b', 2, 1);
+    c.set('c', 3, 2);
+    expect(c.size).toBe(2);
+    expect(c.get('a', 3)).toBeUndefined();
+    expect(c.get('c', 3)).toEqual({ value: 3 });
   });
 });
