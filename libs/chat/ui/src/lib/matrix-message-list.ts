@@ -3,13 +3,14 @@ import { Component, computed, DestroyRef, effect, inject, input, output, signal,
 import { IonIcon, IonChip, IonAvatar, IonSpinner } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { fill } from '@okr/shared-util-core';
 import { VideoCard } from '@okr/shared-ui';
 import { videoDocKeyOf, videoLink } from '@okr/content-document-util';
 import { MatrixMessage, MatrixReadReceipt, PersonModelName } from '@okr/shared-models';
 import { AvatarService } from '@okr/avatar-data-access';
 import { MatrixReadReceiptStrip } from './matrix-read-receipt-strip';
 import { PollMessage } from './poll-message';
-import { decorateMentionPills, extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessages, ImageBatchGroup, isVideoMessage, linkifyText, readBookmark, isTrustedBookmarkEntry, ChatBookmark, parseMatrixPermalink, MatrixChatI18n, MessageOrBatch } from '@okr/chat-util';
+import { decorateMentionPills, extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessages, ImageBatchGroup, isVideoMessage, linkifyText, readBookmark, isTrustedBookmarkEntry, ChatBookmark, parseMatrixPermalink, MatrixChatI18n, MessageOrBatch, readForwarded } from '@okr/chat-util';
 
 /** imgix thumbnail size for a mention pill's avatar — 2x the 18px CSS box, for retina. */
 const MENTION_AVATAR_SIZE = 36;
@@ -120,6 +121,16 @@ const MENTION_AVATAR_SIZE = 36;
     .message-bubble.redacted {
       opacity: 0.5;
       font-style: italic;
+    }
+
+    .forwarded-from {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      font-style: italic;
+      color: var(--ion-color-medium);
+      margin-bottom: 2px;
     }
 
     .message-text {
@@ -623,6 +634,9 @@ const MENTION_AVATAR_SIZE = 36;
                       @if (item.isRedacted) {
                         <p class="message-text">Message deleted</p>
                       } @else {
+                        @if (forwardedLabel(item); as fwd) {
+                          <div class="forwarded-from"><ion-icon src="{{ 'share' | svgIcon }}" />{{ fwd }}</div>
+                        }
                         @switch (item.type) {
                           @case ('m.text') {
                             @let videoKey = videoKeyOf(item);
@@ -818,6 +832,12 @@ export class MatrixMessageList {
   /** Attachments whose download failed; any other image without a mediaUrl is still loading. */
   failedMediaIds = input<ReadonlySet<string>>(new Set());
   public readonly i18n = input.required<MatrixChatI18n>();
+
+  /** «Weitergeleitet von X» for a forwarded message, undefined for ordinary messages. */
+  protected forwardedLabel(m: MatrixMessage): string | undefined {
+    const from = readForwarded(m.content);
+    return from ? fill(this.i18n().forwarded_from(), { name: from.senderName }) : undefined;
+  }
   /** Signed posters of the album videos linked in this list, by docKey — owned by the feature (VideoUrlService). */
   public readonly videoCards = input<Record<string, { posterUrl: string; available: boolean; loading: boolean }>>({});
   public readonly videoUnavailableLabel = input('');

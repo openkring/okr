@@ -16,8 +16,8 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { ActivityService } from '@okr/activity-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
-import { ChatReminderService, MatrixChatService, MatrixJumpResult, MatrixPollData } from '@okr/chat-data-access';
-import { AvailablePinboard, AdhocChatFormModel, newAdhocChatForm, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, pinboardBroadcastCount, pinboardReplyDraft, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, isOwnNotesRoom, NotesRoomOwner, buildBookmarkContent, videoAlbumFallsBackToSynapse, readBookmark, reminderTitle } from '@okr/chat-util';
+import { ChatReminderService, MatrixChatService, MatrixRoomPrefsService, MatrixJumpResult, MatrixPollData } from '@okr/chat-data-access';
+import { AvailablePinboard, AdhocChatFormModel, newAdhocChatForm, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, pinboardBroadcastCount, pinboardReplyDraft, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, isOwnNotesRoom, NotesRoomOwner, buildBookmarkContent, buildForwardContent, isForwardable, videoAlbumFallsBackToSynapse, readBookmark, reminderTitle } from '@okr/chat-util';
 
 import { RoomEditModal } from './room-edit.modal';
 
@@ -62,6 +62,7 @@ export const _MatrixChatStore = signalStore(
     appStore: inject(AppStore),
     activityService: inject(ActivityService),
     matrixService: inject(MatrixChatService),
+    roomPrefs: inject(MatrixRoomPrefsService),
     reminderService: inject(ChatReminderService),
     avatarService: inject(AvatarService),
     modalController: inject(ModalController),
@@ -894,6 +895,33 @@ export const _MatrixChatStore = signalStore(
         if (role === 'edit') await this.editPinboard(pinboard);
         if (role === 'archive') await this.archivePinboard(pinboard);
         if (role === 'leave') await this.leavePinboard(pinboard);
+      },
+
+      /** Forward a plain message to one or more chats (spec 1.109 §5): picker, send, toasts. */
+      async forward(message: MatrixMessage): Promise<void> {
+        if (!isForwardable(message.type, message.content ?? {}, !!readBookmark(message.content))) return;
+        const candidates = store.rooms().filter((r: MatrixRoom) =>
+          store.matrixService.canPostInRoom(r.roomId) && !store.roomPrefs.isHidden(r.roomId));
+        const { ForwardMessageModal } = await import('./forward-message.modal');
+        const modal = await store.modalController.create({
+          component: ForwardMessageModal,
+          componentProps: { rooms: candidates },
+        });
+        await modal.present();
+        const { data, role } = await modal.onDidDismiss<string[]>();
+        if (role !== 'confirm' || !data?.length) return;
+        const content = buildForwardContent(message.content, {
+          sender: message.sender,
+          senderName: message.senderName,
+          roomId: message.roomId,
+          eventId: message.eventId,
+        });
+        const { ok, failed } = await store.matrixService.forwardMessage(data, content);
+        if (ok.length > 0) await store.alertService.showToast(fill(store.i18n.forward_done(), { n: ok.length }));
+        for (const roomId of failed) {
+          const room = candidates.find((r: MatrixRoom) => r.roomId === roomId);
+          await store.alertService.showToast(fill(store.i18n.forward_failed(), { room: room?.name ?? roomId }));
+        }
       },
 
       async editPinboard(pinboard: GroupModel): Promise<void> {
