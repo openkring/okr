@@ -357,15 +357,9 @@
       "conf": "Der Chat ist eröffnet.",
       "error": "Der Chat konnte nicht eröffnet werden."
     },
-    "info": {
-      "header": "Chat-Info"
-    },
     "leave": {
-      "label": "Chat verlassen",
-      "confirm": "Möchtest du diesen Chat verlassen?",
       "conf": "Du hast den Chat verlassen.",
-      "error": "Der Chat konnte nicht verlassen werden.",
-      "hint": "Wenn du gehst, läuft der Chat für die anderen weiter. Du siehst ihn dann nicht mehr in deiner Liste."
+      "error": "Der Chat konnte nicht verlassen werden."
     },
     "historyHint": "Wer neu dazukommt, liest ab dem Beitritt mit — nicht, was vorher geschrieben wurde."
   },
@@ -403,10 +397,8 @@
       "draft": "Zu deinem Aushang «{excerpt}»: "
     },
     "info": {
-      "header": "Pinnwand",
       "rules": "Hier kannst du allen etwas mitteilen: etwas verkaufen, vermieten oder verschenken, Mitfahrende suchen oder einen Fund melden. Alle Mitglieder erhalten eine Benachrichtigung. Wenn du auf einen Aushang antwortest, geht deine Antwort nur an die Person, die ihn geschrieben hat — als Direktnachricht. Die anderen lesen nicht mit. Du musst deshalb keine Telefonnummer oder Adresse in einen Aushang schreiben.",
-      "rulesReplyAll": "Hier kannst du allen etwas mitteilen: etwas verkaufen, vermieten oder verschenken, Mitfahrende suchen oder einen Fund melden. Alle Mitglieder erhalten eine Benachrichtigung. Wenn du auf einen Aushang antwortest, geht deine Antwort normalerweise nur an die Person, die ihn geschrieben hat — als Direktnachricht. Du kannst aber auch allen antworten; dann erhalten alle Mitglieder eine Benachrichtigung. Schreib deshalb keine Telefonnummer oder Adresse in einen Aushang.",
-      "members": "Mitglieder"
+      "rulesReplyAll": "Hier kannst du allen etwas mitteilen: etwas verkaufen, vermieten oder verschenken, Mitfahrende suchen oder einen Fund melden. Alle Mitglieder erhalten eine Benachrichtigung. Wenn du auf einen Aushang antwortest, geht deine Antwort normalerweise nur an die Person, die ihn geschrieben hat — als Direktnachricht. Du kannst aber auch allen antworten; dann erhalten alle Mitglieder eine Benachrichtigung. Schreib deshalb keine Telefonnummer oder Adresse in einen Aushang."
     },
     "edit": {
       "label": "Bearbeiten",
@@ -417,13 +409,11 @@
       "error": "Die Pinnwand konnte nicht gespeichert werden."
     },
     "archive": {
-      "label": "Archivieren",
       "confirm": "Möchtest du diese Pinnwand archivieren? Alle Mitglieder verlieren den Zugang.",
       "conf": "Die Pinnwand ist archiviert.",
       "error": "Die Pinnwand konnte nicht archiviert werden."
     },
     "leave": {
-      "label": "Pinnwand verlassen",
       "confirm": "Möchtest du die Pinnwand verlassen? Du wirst nicht mehr automatisch aufgenommen, kannst aber jederzeit wieder beitreten.",
       "conf": "Du hast die Pinnwand verlassen.",
       "error": "Die Pinnwand konnte nicht verlassen werden."
@@ -683,7 +673,19 @@
     "archiveConfirm": "Der Chat verschwindet für alle Mitglieder. Möchtest du ihn archivieren?",
     "archiveGroup": "Zum Archivieren die Gruppe archivieren",
     "leave": "Chat verlassen",
-    "leaveConfirm": "Möchtest du diesen Chat verlassen? Zurück kommst du nur mit einer neuen Einladung."
+    "leaveConfirm": "Möchtest du diesen Chat verlassen? Zurück kommst du nur mit einer neuen Einladung.",
+    "type": {
+      "group": "Gruppen-Chat",
+      "notes": "Persönlicher Chat",
+      "support": "Support",
+      "other": "Chat-Raum"
+    },
+    "persons": "{n} Personen",
+    "personsOne": "1 Person",
+    "group": "Zur Gruppe",
+    "error": "Das hat nicht geklappt. Versuche es bitte noch einmal.",
+    "pins": "Angeheftet ({n})",
+    "help": "Hilfe"
   },
   "mute": {
     "tile": "Stumm",

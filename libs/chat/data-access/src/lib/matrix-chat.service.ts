@@ -1548,6 +1548,22 @@ export class MatrixChatService {
     await this.client.leave(roomId);
   }
 
+  /** Forget a left room, so it no longer comes back with the sync (DM «Verlassen», spec 1.109 §8.2). */
+  async forgetRoom(roomId: string): Promise<void> {
+    if (!this.client) return;
+    await this.client.forget(roomId);
+  }
+
+  /**
+   * Set the tenant marker of a room (callable `assignMatrixRoomTenants`, admin only). `[]` takes
+   * the room out of every app — «Chat archivieren» of an unmarked room (spec 1.109 §10.2).
+   */
+  async assignMatrixRoomTenants(roomId: string, tenants: string[]): Promise<string[]> {
+    const fn = httpsCallable<{ roomId: string; tenants: string[] }, { roomId: string; tenants: string[] }>(
+      getFunctions(getApp(), 'europe-west6'), 'assignMatrixRoomTenants');
+    return (await fn({ roomId, tenants })).data.tenants;
+  }
+
 
   /**
    * Get a room by ID

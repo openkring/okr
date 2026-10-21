@@ -150,6 +150,20 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
       --ion-safe-area-top: 0px;
     }
 
+    /* The room name is a button: it opens the Chat-Details page. */
+    .room-title-button {
+      all: unset;
+      cursor: pointer;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .room-title-button:focus-visible {
+      outline: 2px solid var(--ion-color-primary);
+      outline-offset: 2px;
+    }
+
     .empty-state {
       display: flex;
       align-items: center;
@@ -441,27 +455,12 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                         </ion-buttons>
                       }
 
-                      <ion-title>{{ isNotesRoomOpen() ? store.i18n.notes_room_name() : currentRoom()?.name }}</ion-title>
-                      <ion-buttons slot="end">
-                        @if (store.currentAdhocChat()) {
-                          <ion-button [attr.aria-label]="store.i18n.adhoc_info_header()" (click)="store.openAdhocChatInfo(); $event.stopPropagation()">
-                            <ion-icon src="{{'group' | svgIcon}}"></ion-icon>
-                          </ion-button>
-                        }
-                        @if (isNotesRoomOpen()) {
-                          <ion-button [attr.aria-label]="store.i18n.notes_room_name()" (click)="openNotesInfo(); $event.stopPropagation()">
-                            <ion-icon src="{{'info-circle' | svgIcon}}"></ion-icon>
-                          </ion-button>
-                        } @else if (store.currentPinboard()) {
-                          <ion-button [attr.aria-label]="store.i18n.pinboard_info_header()" (click)="store.openPinboardInfo(); $event.stopPropagation()">
-                            <ion-icon src="{{'info-circle' | svgIcon}}"></ion-icon>
-                          </ion-button>
-                        } @else {
-                          <ion-button [attr.aria-label]="store.i18n.help_title()" (click)="openChatHelp()">
-                            <ion-icon src="{{'info-circle' | svgIcon}}"></ion-icon>
-                          </ion-button>
-                        }
-                      </ion-buttons>
+                      <!-- Tap on the room name opens the Chat-Details page (spec 1.109 §8) -->
+                      <ion-title>
+                        <button type="button" class="room-title-button" [attr.aria-label]="store.i18n.details_title()" (click)="store.openRoomDetails(); $event.stopPropagation()">
+                          {{ isNotesRoomOpen() ? store.i18n.notes_room_name() : currentRoom()?.name }}
+                        </button>
+                      </ion-title>
                     </ion-toolbar>
                   </ion-header>
                 }
@@ -1111,7 +1110,7 @@ export class MatrixChat implements OnDestroy {
       untracked(() => this.store.markCurrentRoomAsRead());
     });
 
-    // Pinnwand: Info (Regeln) beim ersten Besuch pro Geraet und Pinnwand oeffnen.
+    // Pinnwand: Chat-Details (Regeln) beim ersten Besuch pro Geraet und Pinnwand oeffnen.
     effect(() => {
       const pinboard = this.store.currentPinboard();
       if (!pinboard) return;
@@ -1120,7 +1119,7 @@ export class MatrixChat implements OnDestroy {
       try { seen = !!localStorage.getItem(key); } catch { seen = false; }
       if (seen) return;
       try { localStorage.setItem(key, '1'); } catch { /* storage unavailable */ }
-      untracked(() => void this.store.openPinboardInfo());
+      untracked(() => void this.store.openRoomDetails());
     });
 
     // Re-authenticate when the Matrix access token expires (M_UNKNOWN_TOKEN).
@@ -1275,11 +1274,6 @@ export class MatrixChat implements OnDestroy {
 
   protected onRoomFilterChange(event: CustomEvent): void {
     this.roomFilter.set(((event.detail as { value?: string }).value ?? ''));
-  }
-
-  /** The (i) hint in the notes room header. */
-  protected async openNotesInfo(): Promise<void> {
-    await this.alertService.confirm(this.store.i18n.notes_room_info(), false);
   }
 
   async onNotesPlaceholderSelected(): Promise<void> {

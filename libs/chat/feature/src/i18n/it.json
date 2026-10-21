@@ -357,15 +357,9 @@
       "conf": "La chat è aperta.",
       "error": "Non è stato possibile creare la chat."
     },
-    "info": {
-      "header": "Informazioni sulla chat"
-    },
     "leave": {
-      "label": "Esci dalla chat",
-      "confirm": "Vuoi uscire da questa chat?",
       "conf": "Hai lasciato la chat.",
-      "error": "Non è stato possibile uscire dalla chat.",
-      "hint": "Se esci, la chat continua per gli altri. Non la vedrai più nel tuo elenco."
+      "error": "Non è stato possibile uscire dalla chat."
     },
     "historyHint": "Chi arriva dopo legge dal momento in cui entra, non quello che è stato scritto prima."
   },
@@ -403,10 +397,8 @@
       "draft": "Sul tuo annuncio «{excerpt}»: "
     },
     "info": {
-      "header": "Bacheca",
       "rules": "Qui puoi comunicare qualcosa a tutti: vendere, affittare o regalare qualcosa, cercare compagni di viaggio o segnalare un oggetto trovato. Tutti i membri ricevono una notifica. Quando rispondi a un annuncio, la tua risposta arriva solo a chi l'ha scritto, come messaggio diretto. Gli altri non leggono. Non serve quindi scrivere un numero di telefono o un indirizzo in un annuncio.",
-      "rulesReplyAll": "Qui puoi comunicare qualcosa a tutti: vendere, affittare o regalare qualcosa, cercare compagni di viaggio o segnalare un oggetto trovato. Tutti i membri ricevono una notifica. Quando rispondi a un annuncio, di solito la tua risposta arriva solo a chi l'ha scritto, come messaggio diretto. Puoi anche rispondere a tutti; in quel caso tutti i membri ricevono una notifica. Non scrivere quindi un numero di telefono o un indirizzo in un annuncio.",
-      "members": "Membri"
+      "rulesReplyAll": "Qui puoi comunicare qualcosa a tutti: vendere, affittare o regalare qualcosa, cercare compagni di viaggio o segnalare un oggetto trovato. Tutti i membri ricevono una notifica. Quando rispondi a un annuncio, di solito la tua risposta arriva solo a chi l'ha scritto, come messaggio diretto. Puoi anche rispondere a tutti; in quel caso tutti i membri ricevono una notifica. Non scrivere quindi un numero di telefono o un indirizzo in un annuncio."
     },
     "edit": {
       "label": "Modifica",
@@ -417,13 +409,11 @@
       "error": "Non è stato possibile salvare la bacheca."
     },
     "archive": {
-      "label": "Archivia",
       "confirm": "Vuoi archiviare questa bacheca? Tutti i membri perdono l'accesso.",
       "conf": "La bacheca è archiviata.",
       "error": "Non è stato possibile archiviare la bacheca."
     },
     "leave": {
-      "label": "Lascia la bacheca",
       "confirm": "Vuoi lasciare la bacheca? L'aggiunta automatica non avverrà più, ma puoi rientrare quando vuoi.",
       "conf": "Hai lasciato la bacheca.",
       "error": "Non è stato possibile lasciare la bacheca."
@@ -683,7 +673,19 @@
     "archiveConfirm": "La chat scompare per tutti i membri. Vuoi archiviarla?",
     "archiveGroup": "Per archiviare la chat, archivia il gruppo",
     "leave": "Esci dalla chat",
-    "leaveConfirm": "Vuoi uscire da questa chat? Potrai rientrare solo con un nuovo invito."
+    "leaveConfirm": "Vuoi uscire da questa chat? Potrai rientrare solo con un nuovo invito.",
+    "type": {
+      "group": "Chat di gruppo",
+      "notes": "Chat personale",
+      "support": "Supporto",
+      "other": "Stanza chat"
+    },
+    "persons": "{n} persone",
+    "personsOne": "1 persona",
+    "group": "Vai al gruppo",
+    "error": "Non ha funzionato. Riprova, per favore.",
+    "pins": "Fissati ({n})",
+    "help": "Aiuto"
   },
   "mute": {
     "tile": "Silenzia",

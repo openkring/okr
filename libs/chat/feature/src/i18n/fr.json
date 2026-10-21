@@ -357,15 +357,9 @@
       "conf": "La discussion est ouverte.",
       "error": "La discussion n'a pas pu être créée."
     },
-    "info": {
-      "header": "Infos sur la discussion"
-    },
     "leave": {
-      "label": "Quitter la discussion",
-      "confirm": "Veux-tu quitter cette discussion ?",
       "conf": "Tu as quitté la discussion.",
-      "error": "Impossible de quitter la discussion.",
-      "hint": "Si tu pars, la discussion continue pour les autres. Tu ne la verras plus dans ta liste."
+      "error": "Impossible de quitter la discussion."
     },
     "historyHint": "Celui qui arrive plus tard lit à partir de son arrivée — pas ce qui a été écrit avant."
   },
@@ -403,10 +397,8 @@
       "draft": "À propos de ton annonce «{excerpt}» : "
     },
     "info": {
-      "header": "Panneau d'affichage",
       "rules": "Ici, tu peux communiquer quelque chose à tous : vendre, louer ou donner un objet, chercher des personnes pour covoiturer ou signaler un objet trouvé. Tous les membres reçoivent une notification. Quand tu réponds à une annonce, ta réponse va uniquement à la personne qui l'a écrite, sous forme de message direct. Les autres ne lisent pas. Tu n'as donc pas besoin d'indiquer un numéro de téléphone ou une adresse dans une annonce.",
-      "rulesReplyAll": "Ici, tu peux communiquer quelque chose à tous : vendre, louer ou donner un objet, chercher des personnes pour covoiturer ou signaler un objet trouvé. Tous les membres reçoivent une notification. Quand tu réponds à une annonce, ta réponse va normalement uniquement à la personne qui l'a écrite, sous forme de message direct. Tu peux aussi répondre à tous ; tous les membres reçoivent alors une notification. N'indique donc pas de numéro de téléphone ou d'adresse dans une annonce.",
-      "members": "Membres"
+      "rulesReplyAll": "Ici, tu peux communiquer quelque chose à tous : vendre, louer ou donner un objet, chercher des personnes pour covoiturer ou signaler un objet trouvé. Tous les membres reçoivent une notification. Quand tu réponds à une annonce, ta réponse va normalement uniquement à la personne qui l'a écrite, sous forme de message direct. Tu peux aussi répondre à tous ; tous les membres reçoivent alors une notification. N'indique donc pas de numéro de téléphone ou d'adresse dans une annonce."
     },
     "edit": {
       "label": "Modifier",
@@ -417,13 +409,11 @@
       "error": "Le panneau d'affichage n'a pas pu être enregistré."
     },
     "archive": {
-      "label": "Archiver",
       "confirm": "Souhaites-tu archiver ce panneau d'affichage ? Tous les membres perdent l'accès.",
       "conf": "Le panneau d'affichage est archivé.",
       "error": "Le panneau d'affichage n'a pas pu être archivé."
     },
     "leave": {
-      "label": "Quitter le panneau d'affichage",
       "confirm": "Souhaites-tu quitter le panneau d'affichage ? Tu ne seras plus ajouté automatiquement, mais tu peux le rejoindre à tout moment.",
       "conf": "Tu as quitté le panneau d'affichage.",
       "error": "Impossible de quitter le panneau d'affichage."
@@ -683,7 +673,19 @@
     "archiveConfirm": "La discussion disparaît pour tous les membres. Veux-tu l’archiver ?",
     "archiveGroup": "Pour l’archiver, archive le groupe",
     "leave": "Quitter la discussion",
-    "leaveConfirm": "Veux-tu quitter cette discussion ? Tu ne pourras revenir qu’avec une nouvelle invitation."
+    "leaveConfirm": "Veux-tu quitter cette discussion ? Tu ne pourras revenir qu’avec une nouvelle invitation.",
+    "type": {
+      "group": "Discussion de groupe",
+      "notes": "Discussion personnelle",
+      "support": "Support",
+      "other": "Salon de discussion"
+    },
+    "persons": "{n} personnes",
+    "personsOne": "1 personne",
+    "group": "Vers le groupe",
+    "error": "Cela n'a pas fonctionné. Essaie encore une fois.",
+    "pins": "Épinglés ({n})",
+    "help": "Aide"
   },
   "mute": {
     "tile": "Muet",

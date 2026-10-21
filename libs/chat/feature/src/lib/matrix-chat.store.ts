@@ -15,6 +15,7 @@ import { AlertService, copyToClipboardWithConfirmation, resourceParams } from '@
 import { I18nService } from '@okr/shared-i18n';
 
 import { ActivityService } from '@okr/activity-data-access';
+import { GroupService } from '@okr/subject-group-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { ChatReminderService, isServiceAccount, MatrixChatService, MatrixPinsService, MatrixRoomPrefsService, MatrixJumpResult, MatrixPollData } from '@okr/chat-data-access';
 import { AvailablePinboard, AdhocChatFormModel, newAdhocChatForm, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, pinboardBroadcastCount, pinboardReplyDraft, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, isOwnNotesRoom, NotesRoomOwner, buildBookmarkContent, buildForwardContent, isForwardable, videoAlbumFallsBackToSynapse, readBookmark, reminderTitle, PinPreview } from '@okr/chat-util';
@@ -23,6 +24,7 @@ import { RoomEditModal } from './room-edit.modal';
 import { MessageInfoModal } from './message-info.modal';
 import { buildMessageInfoProps } from './message-info.feature';
 import { PIN_CLOCK_MS, pinComputeds, pinMethods, previewOfMessage } from './pins.feature';
+import { roomDetailsComputeds, roomDetailsMethods } from './room-details.feature';
 
 export type { MatrixChatI18n };
 
@@ -67,6 +69,7 @@ export const _MatrixChatStore = signalStore(
     matrixService: inject(MatrixChatService),
     roomPrefs: inject(MatrixRoomPrefsService),
     pinsService: inject(MatrixPinsService),
+    groupService: inject(GroupService),
     actionSheetController: inject(ActionSheetController),
     /** Coarse clock for pin expiry (spec 1.109 §6): an expired pin disappears within a minute. */
     pinClock: toSignal(timer(0, PIN_CLOCK_MS).pipe(map(() => Date.now())), { initialValue: Date.now() }),
@@ -409,7 +412,12 @@ export const _MatrixChatStore = signalStore(
   }),
 
   // Pins (spec 1.109 §6): room kind, the «Für alle» right and the active pins — see pins.feature.ts.
-  withComputed((state) => pinComputeds(state)),
+  // Chat-Details (spec 1.109 §8): the page's context, sections and mute state — see room-details.feature.ts.
+  // One feature with the pins: signalStore takes at most 15 features.
+  withComputed((state) => {
+    const pins = pinComputeds(state);
+    return { ...pins, ...roomDetailsComputeds({ ...state, ...pins, isServiceAccount }) };
+  }),
   withProps((store) => ({
     /** Sender and snippet of the banner pin when it is not in the loaded timeline. */
     pinPreviewResource: rxResource({
@@ -870,62 +878,6 @@ export const _MatrixChatStore = signalStore(
         }
       },
 
-      /**
-       * Chat-Info eines Ad-hoc-Chats: die Mitglieder und der Austritt. Die Mitglieder
-       * kommen aus dem Matrix-Raum (nicht aus Firestore) — das ist der Stand, der zaehlt,
-       * und er ist ohne zusaetzliche Abfrage da.
-       */
-      async openAdhocChatInfo(): Promise<void> {
-        const chat = store.currentAdhocChat();
-        const roomId = store.currentRoomId();
-        if (!chat || !roomId) return;
-
-        const memberKeys = new Set(store.matrixService.getRoomMemberPersonKeys(roomId));
-        const members = store.appStore.allPersons()
-          .filter((p: PersonModel) => memberKeys.has(p.okey?.toLowerCase() ?? ''))
-          .map((p: PersonModel) => getAvatarInfo(p, 'person'))
-          .filter((a): a is AvatarInfo => !!a);
-
-        const { AdhocChatInfoModal } = await import('./adhoc-chat-info.modal');
-        const modal = await store.modalController.create({
-          component: AdhocChatInfoModal,
-          componentProps: {
-            chatName: chat.name,
-            groupKey: chat.okey,
-            initialMembers: members,
-            currentPersonKey: store.appStore.currentUser()?.personKey ?? '',
-          },
-        });
-        await modal.present();
-        const { role } = await modal.onDidDismiss();
-        if (role === 'leave') await this.leaveAdhocChat(chat);
-      },
-
-      async openPinboardInfo(): Promise<void> {
-        const pinboard = store.currentPinboard();
-        const roomId = store.currentRoomId();
-        if (!pinboard || !roomId) return;
-        const groups = store.appStore.allGroups();
-        const { PinboardInfoModal } = await import('./pinboard-info.modal');
-        const modal = await store.modalController.create({
-          component: PinboardInfoModal,
-          componentProps: {
-            name: pinboard.name,
-            description: pinboard.notes ?? '',
-            sourceGroupNames: (pinboard.sourceGroupKeys ?? []).map((k: string) => groups.find((g: GroupModel) => g.okey === k)?.name ?? k),
-            memberCount: pinboardBroadcastCount(store.matrixService.getRoomMemberPersonKeys(roomId), '', knownPersonKeys()),
-            joinMode: pinboard.joinMode ?? 'optOut',
-            allowReplyAll: pinboard.allowReplyAll ?? false,
-            canManage: hasRole('privileged', store.appStore.currentUser()),
-          },
-        });
-        await modal.present();
-        const { role } = await modal.onDidDismiss();
-        if (role === 'edit') await this.editPinboard(pinboard);
-        if (role === 'archive') await this.archivePinboard(pinboard);
-        if (role === 'leave') await this.leavePinboard(pinboard);
-      },
-
       /** Forward a plain message to one or more chats (spec 1.109 §5): picker, send, toasts. */
       async forward(message: MatrixMessage): Promise<void> {
         if (!isForwardable(message.type, message.content ?? {}, !!readBookmark(message.content))) return;
@@ -983,15 +935,17 @@ export const _MatrixChatStore = signalStore(
         }
       },
 
-      async archivePinboard(pinboard: GroupModel): Promise<void> {
-        if (!await store.alertService.confirm(store.i18n.pinboard_archive_confirm(), true)) return;
+      async archivePinboard(pinboard: GroupModel): Promise<boolean> {
+        if (!await store.alertService.confirm(store.i18n.pinboard_archive_confirm(), true)) return false;
         try {
           await store.matrixService.archivePinboard(pinboard.okey);
           patchState(store, { currentRoomId: undefined });
           await store.alertService.showToast(store.i18n.pinboard_archive_conf());
+          return true;
         } catch (error) {
           console.error('MatrixChatStore.archivePinboard: failed:', error);
           await store.alertService.showToast(store.i18n.pinboard_archive_error());
+          return false;
         }
       },
 
@@ -1012,16 +966,18 @@ export const _MatrixChatStore = signalStore(
         }
       },
 
-      async leavePinboard(pinboard: GroupModel): Promise<void> {
-        if (!await store.alertService.confirm(store.i18n.pinboard_leave_confirm(), true)) return;
+      async leavePinboard(pinboard: GroupModel): Promise<boolean> {
+        if (!await store.alertService.confirm(store.i18n.pinboard_leave_confirm(), true)) return false;
         try {
           await store.matrixService.leavePinboard(pinboard.okey);
           patchState(store, { currentRoomId: undefined });
           this.reloadAvailablePinboards();
           await store.alertService.showToast(store.i18n.pinboard_leave_conf());
+          return true;
         } catch (error) {
           console.error('MatrixChatStore.leavePinboard: failed:', error);
           await store.alertService.showToast(store.i18n.pinboard_leave_error());
+          return false;
         }
       },
 
@@ -1031,16 +987,18 @@ export const _MatrixChatStore = signalStore(
        * ein paar Sekunden Verzoegerung. Der Raum wird sofort abgewaehlt, damit die
        * Ansicht nicht auf einem Chat stehen bleibt, den man gerade verlassen hat.
        */
-      async leaveAdhocChat(chat: GroupModel): Promise<void> {
-        const confirmed = await store.alertService.confirm(store.i18n.adhoc_leave_confirm(), true);
-        if (!confirmed) return;
+      async leaveAdhocChat(chat: GroupModel): Promise<boolean> {
+        const confirmed = await store.alertService.confirm(store.i18n.details_leave_confirm(), true);
+        if (!confirmed) return false;
         try {
           await store.matrixService.leaveAdhocChat(chat.okey);
           patchState(store, { currentRoomId: undefined });
           await store.alertService.showToast(store.i18n.adhoc_leave_conf());
+          return true;
         } catch (error) {
           console.error('MatrixChatStore.leaveAdhocChat: failed:', error);
           await store.alertService.showToast(store.i18n.adhoc_leave_error());
+          return false;
         }
       },
 
@@ -1501,6 +1459,12 @@ export const _MatrixChatStore = signalStore(
         patchState(store, { roomListRequested: false });
       },
 
+      /** A room was left, archived or hidden from the Chat-Details page: back to the room list. */
+      exitRoomToList(roomId: string): void {
+        patchState(store, { roomListRequested: true });
+        if (store.currentRoomId() === roomId) this.setCurrentRoom(undefined);
+      },
+
       /**
        * «Merken»: post a bookmark entry for the message into the user's notes room.
        * Returns the entry's event id; the toast offers to open the notes room.
@@ -1654,9 +1618,9 @@ export const _MatrixChatStore = signalStore(
       /**
        * Leave current room
        */
-      async leaveRoom(): Promise<void> {
+      async leaveRoom(): Promise<boolean> {
         const roomId = store.currentRoomId();
-        if (!roomId) return;
+        if (!roomId) return false;
 
         try {
           await store.matrixService.leaveRoom(roomId);
@@ -1665,9 +1629,11 @@ export const _MatrixChatStore = signalStore(
           store.jumpSeq.value++;
           if (store.matrixService.isJumped(roomId)) store.matrixService.returnToLive(roomId, false);
           patchState(store, { currentRoomId: undefined, jumpTarget: undefined, jumpPending: false, threadJumpTarget: undefined });
+          return true;
         } catch (error) {
           void store.activityService.log('chat', 'leave', store.currentUser(), 'ERROR rid:' + roomId);
           console.error('MatrixChatStore.leaveRoom: Failed to leave:', error);
+          return false;
         }
       },
 
@@ -1700,7 +1666,8 @@ export const _MatrixChatStore = signalStore(
     };
   }),
   // Pin / unpin / banner menu / pin list (spec 1.109 §6) — see pins.feature.ts.
-  withMethods((store) => pinMethods(store)),
+  // Chat-Details: mute tile, hide / archive / leave, remove members (spec 1.109 §8) — see room-details.feature.ts.
+  withMethods((store) => ({ ...pinMethods(store), ...roomDetailsMethods(store) })),
 );
 
 

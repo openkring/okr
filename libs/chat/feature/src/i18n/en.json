@@ -357,15 +357,9 @@
       "conf": "The chat is open.",
       "error": "The chat could not be created."
     },
-    "info": {
-      "header": "Chat info"
-    },
     "leave": {
-      "label": "Leave chat",
-      "confirm": "Do you want to leave this chat?",
       "conf": "You left the chat.",
-      "error": "You could not leave the chat.",
-      "hint": "If you leave, the chat continues for the others. You will no longer see it in your list."
+      "error": "You could not leave the chat."
     },
     "historyHint": "Whoever joins later reads along from their arrival — not what was written before."
   },
@@ -403,10 +397,8 @@
       "draft": "About your notice «{excerpt}»: "
     },
     "info": {
-      "header": "Notice board",
       "rules": "Here you can share something with everyone: sell, rent out or give away something, look for people to ride along with, or report a find. All members receive a notification. When you reply to a notice, your reply goes only to the person who wrote it, as a direct message. The others do not read along. So you do not need to put a phone number or address in a notice.",
-      "rulesReplyAll": "Here you can share something with everyone: sell, rent out or give away something, look for people to ride along with, or report a find. All members receive a notification. When you reply to a notice, your reply normally goes only to the person who wrote it, as a direct message. You can also reply to everyone; then all members receive a notification. So do not put a phone number or address in a notice.",
-      "members": "Members"
+      "rulesReplyAll": "Here you can share something with everyone: sell, rent out or give away something, look for people to ride along with, or report a find. All members receive a notification. When you reply to a notice, your reply normally goes only to the person who wrote it, as a direct message. You can also reply to everyone; then all members receive a notification. So do not put a phone number or address in a notice."
     },
     "edit": {
       "label": "Edit",
@@ -417,13 +409,11 @@
       "error": "The notice board could not be saved."
     },
     "archive": {
-      "label": "Archive",
       "confirm": "Would you like to archive this notice board? All members lose access.",
       "conf": "The notice board is archived.",
       "error": "The notice board could not be archived."
     },
     "leave": {
-      "label": "Leave notice board",
       "confirm": "Would you like to leave the notice board? You will no longer be added automatically, but you can rejoin at any time.",
       "conf": "You left the notice board.",
       "error": "The notice board could not be left."
@@ -683,7 +673,19 @@
     "archiveConfirm": "The chat will disappear for all members. Do you want to archive it?",
     "archiveGroup": "To archive this chat, archive the group",
     "leave": "Leave chat",
-    "leaveConfirm": "Do you want to leave this chat? You can only come back with a new invitation."
+    "leaveConfirm": "Do you want to leave this chat? You can only come back with a new invitation.",
+    "type": {
+      "group": "Group chat",
+      "notes": "Personal chat",
+      "support": "Support",
+      "other": "Chat room"
+    },
+    "persons": "{n} people",
+    "personsOne": "1 person",
+    "group": "Go to the group",
+    "error": "That did not work. Please try again.",
+    "pins": "Pinned ({n})",
+    "help": "Help"
   },
   "mute": {
     "tile": "Mute",
