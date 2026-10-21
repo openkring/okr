@@ -854,6 +854,11 @@ export class MatrixChatService {
     return this.messages.getMessagesForRoom(roomId);
   }
 
+  /** Reactors of one emoji with name/avatar, newest first (reaction details sheet). */
+  public getReactionRows(roomId: string, eventId: string, emoji: string) {
+    return this.messages.getReactionRows(roomId, eventId, emoji);
+  }
+
   /** Read receipts of a room, keyed by the event they point at. */
   public getReadReceiptsForRoom(roomId: string): Observable<Map<string, MatrixReadReceipt[]>> {
     return this.messages.getReadReceiptsForRoom(roomId);

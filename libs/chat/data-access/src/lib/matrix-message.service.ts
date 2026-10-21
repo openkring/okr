@@ -1198,6 +1198,30 @@ export class MatrixMessageService {
     return result.sort((a, b) => b.ts - a.ts);
   }
 
+  /**
+   * The reactors of one emoji with name and avatar, newest first — `getReactionDetails` resolved
+   * through the same member mapping the read-receipt strip uses (person avatar first, then the
+   * Matrix profile picture).
+   */
+  public async getReactionRows(
+    roomId: string, eventId: string, emoji: string,
+  ): Promise<{ userId: string; displayName: string; avatarUrl?: string; ts: number }[]> {
+    const room = this.client?.getRoom(roomId);
+    const details = this.getReactionDetails(roomId, eventId, emoji);
+    return Promise.all(details.map(async (d) => {
+      const member = room?.getMember(d.userId);
+      const mxcUrl = (member as any)?.getMxcAvatarUrl?.() as string | undefined;
+      const avatarUrl = personAvatarUrl(this.avatarService, d.userId)
+        ?? (mxcUrl ? (await this.media.resolveMediaUrl(mxcUrl) || undefined) : undefined);
+      return {
+        userId: d.userId,
+        displayName: member?.rawDisplayName || d.userId.split(':')[0].substring(1),
+        avatarUrl,
+        ts: d.ts,
+      };
+    }));
+  }
+
   /** Re-map one message in a room's BehaviorSubject after its reactions changed. */
   private refreshMessageReactions(targetEventId: string, room: Room): void {
     const subject = this.messages$.get(room.roomId);

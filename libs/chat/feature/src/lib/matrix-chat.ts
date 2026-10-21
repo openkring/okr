@@ -15,7 +15,7 @@ import { ChatStatusService } from '@okr/shared-data-access';
 import { VideoUrlService } from '@okr/content-document-data-access';
 import { videoDocKeyOf, videoLink } from '@okr/content-document-util';
 
-import { MatrixMessageInput, MatrixMessageList, MatrixRoomList, PollDetailModal, ReminderPicker } from '@okr/chat-ui';
+import { MatrixMessageInput, MatrixMessageList, MatrixRoomList, PollDetailModal, ReactionDetailsModal, ReminderPicker } from '@okr/chat-ui';
 import { MatrixPollData } from '@okr/chat-data-access';
 import { buildEditedPollAnswers, canEditPoll, parsePollContent, convertHeicToJpeg, groupRoomAliasLocalpart, shouldDeferAskRoom, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, readBookmark, isTrustedBookmarkEntry, ChatBookmark, resolvePermalinkTarget, shouldSendReceipt, MessageDraft, UploadTooLargeError, availablePresets, reminderDueAt, ReminderPreset } from '@okr/chat-util';
 
@@ -1487,8 +1487,31 @@ export class MatrixChat implements OnDestroy {
     }
   }
 
+  /** Chip tap: «who reacted» sheet; its dismiss role decides whether the own reaction is toggled. */
   async onReactionClicked(event: { messageId: string; emoji: string }) {
     try {
+      const roomId = this.store.currentRoomId();
+      if (!roomId) return;
+      const rows = await this.store.matrixService.getReactionRows(roomId, event.messageId, event.emoji);
+      const i18n = this.store.i18n;
+      const modal = await this.modalController.create({
+        component: ReactionDetailsModal,
+        componentProps: {
+          emoji: event.emoji,
+          rows,
+          currentUserId: this.matrixUserId(),
+          peopleLabel: i18n.reactions_people(),
+          alsoLabel: i18n.reactions_also(),
+          closeLabel: i18n.video_close(),
+          youLabel: i18n.adhoc_member_you(),
+          removeLabel: i18n.msg_react_cancel(),
+        },
+        breakpoints: [0, 1],
+        initialBreakpoint: 1,
+      });
+      await modal.present();
+      const { role } = await modal.onDidDismiss();
+      if (role !== 'remove' && role !== 'add') return;
       await this.store.sendReaction(event.messageId, event.emoji);
     } catch (error) {
       console.error('Failed to react to message:', error);

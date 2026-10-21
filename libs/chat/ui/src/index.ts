@@ -10,3 +10,4 @@ export * from './lib/image-lightbox.modal';
 export * from './lib/matrix-read-receipt-strip';
 export * from './lib/mention-autocomplete';
 export * from './lib/reminder-picker';
+export * from './lib/reaction-details.modal';

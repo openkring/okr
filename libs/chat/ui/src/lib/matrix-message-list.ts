@@ -377,6 +377,12 @@ const MENTION_AVATAR_SIZE = 36;
       border: 1px solid var(--ion-background-color, #fff);
     }
 
+    .reaction-chip.mine {
+      --background: rgba(var(--ion-color-primary-rgb), 0.18);
+      --color: var(--ion-color-primary);
+      border-color: var(--ion-color-primary);
+    }
+
     .thread-indicator {
       font-size: 0.75rem;
       color: var(--ion-color-primary);
@@ -744,7 +750,7 @@ const MENTION_AVATAR_SIZE = 36;
                     @if (item.reactions && item.reactions.size > 0) {
                       <div class="message-reactions">
                         @for (reaction of getReactions(item); track reaction.emoji) {
-                          <ion-chip class="reaction-chip" role="button" tabindex="0" [attr.aria-label]="reaction.emoji + ' ' + reaction.count" (click)="reactionClicked.emit({ messageId: item.eventId, emoji: reaction.emoji })">
+                          <ion-chip class="reaction-chip" [class.mine]="reaction.mine" role="button" tabindex="0" [attr.aria-label]="reaction.emoji + ' ' + reaction.count" (click)="reactionClicked.emit({ messageId: item.eventId, emoji: reaction.emoji })">
                             {{ reaction.emoji }} {{ reaction.count }}
                           </ion-chip>
                         }
@@ -1310,12 +1316,14 @@ export class MatrixMessageList {
     return `${users[0]} ${t.and()} ${users.length - 1} ${t.othersTyping()}`;
   }
 
-  getReactions(message: MatrixMessage): { emoji: string; count: number }[] {
+  getReactions(message: MatrixMessage): { emoji: string; count: number; mine: boolean }[] {
     if (!message.reactions) return [];
-    
+    const me = this.currentUserId();
+
     return Array.from(message.reactions.entries()).map(([emoji, users]) => ({
       emoji,
-      count: users.size
+      count: users.size,
+      mine: !!me && users.has(me),
     }));
   }
 }
