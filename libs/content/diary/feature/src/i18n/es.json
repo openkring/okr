@@ -81,13 +81,9 @@
     "allYears": "Todos los años"
   },
   "actions": {
-    "title": "Entrada",
     "add": "Nueva entrada",
     "view": "Leer",
     "edit": "Editar",
-    "delete": "Eliminar",
-    "deleteConfirm": "¿Quieres eliminar esta entrada?",
-    "weatherRefresh": "Recuperar el tiempo",
     "openDrive": "Abrir la carpeta de Google Drive"
   },
   "create": {
@@ -98,10 +94,6 @@
     "existsTitle": "Este día ya existe",
     "existsMessage": "Ya hay una entrada para el {date}.",
     "existsEdit": "Editar este día"
-  },
-  "delete": {
-    "conf": "La entrada se ha eliminado.",
-    "error": "La entrada no se ha podido eliminar."
   },
   "state": {
     "all": "Todas",

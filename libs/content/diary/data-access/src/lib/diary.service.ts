@@ -40,8 +40,6 @@ export class DiaryService {
     update_error: DIARY_I18N_KEYS.update_error,
     create_conf: DIARY_I18N_KEYS.create_conf,
     create_error: DIARY_I18N_KEYS.create_error,
-    delete_conf: DIARY_I18N_KEYS.delete_conf,
-    delete_error: DIARY_I18N_KEYS.delete_error,
   });
 
   /**
@@ -158,12 +156,6 @@ export class DiaryService {
   public async create(diary: DiaryModel, currentUser?: UserModel): Promise<string | undefined> {
     return await this.firestoreService.createModel<DiaryModel>(
       DiaryCollection, diary, this.i18n.create_conf(), this.i18n.create_error(), currentUser, false, true);
-  }
-
-  /** Archive, never a hard delete — deleteModel applies the tenant-aware patch (deleting-models skill). */
-  public async delete(diary: DiaryModel, currentUser?: UserModel): Promise<void> {
-    await this.firestoreService.deleteModel<DiaryModel>(
-      DiaryCollection, diary, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
   }
 
   /**

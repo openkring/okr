@@ -81,13 +81,9 @@
     "allYears": "Tutti gli anni"
   },
   "actions": {
-    "title": "Voce",
     "add": "Nuova voce",
     "view": "Leggi",
     "edit": "Modifica",
-    "delete": "Elimina",
-    "deleteConfirm": "Vuoi davvero eliminare questa voce?",
-    "weatherRefresh": "Recupera il meteo",
     "openDrive": "Apri la cartella Google Drive"
   },
   "create": {
@@ -98,10 +94,6 @@
     "existsTitle": "Questo giorno esiste già",
     "existsMessage": "C'è già una voce per il {date}.",
     "existsEdit": "Modifica questo giorno"
-  },
-  "delete": {
-    "conf": "La voce è stata eliminata.",
-    "error": "La voce non è stata eliminata."
   },
   "state": {
     "all": "Tutte",

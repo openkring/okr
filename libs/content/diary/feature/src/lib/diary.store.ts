@@ -2,7 +2,6 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { Browser } from '@capacitor/browser';
 import { firstValueFrom, of, timeout } from 'rxjs';
 
 import type { DiaryLocationPick, DiaryNeighbours } from '@okr/content-diary-ui';
@@ -10,7 +9,7 @@ import { DiaryMediaService, DiaryService, DiaryWeatherService } from '@okr/conte
 import { AppConfigService } from '@okr/shared-data-access';
 import {
   DIARY_FIRST_YEAR, DIARY_I18N_KEYS, DiaryMediaResult, DiaryRange, DiaryStateFilter, buildDiaryRangeTree, diaryRangeOfYear,
-  diaryStateMatches, driveFolderUrl, formatDiaryDate, getDiaryIndex, groupDiariesByMonth, hasDiaryWeather, newDiary,
+  diaryStateMatches, formatDiaryDate, getDiaryIndex, groupDiariesByMonth, hasDiaryWeather, newDiary,
 } from '@okr/content-diary-util';
 import { LocationService } from '@okr/location-data-access';
 import { AvatarInfo, DiaryModel, DiaryPeriod, PersonModelName, TripModel } from '@okr/shared-models';
@@ -351,29 +350,6 @@ export const DiaryStore = signalStore(
         // the modal pages in place — 'edit' carries the entry that was on screen
         const { data, role } = await modal.onWillDismiss<DiaryModel>();
         if (role === 'edit') await editEntry(data ?? diary);
-      },
-
-      async delete(diary: DiaryModel): Promise<void> {
-        const confirmed = await store.alertService.confirm(store.i18n.delete_confirm(), true);
-        if (!confirmed) return;
-        await store.diaryService.delete(diary, store.currentUser());
-        store.diariesResource.reload();
-      },
-
-      /** The single-entry repair for the 2'025 day entries the import left at code -1. */
-      async refreshWeather(diary: DiaryModel): Promise<void> {
-        const coords = await coordinatesOf(diary.location);
-        if (!coords) { store.alertService.showToast(store.i18n.weather_no_coords()); return; }
-        const weather = await store.weatherService.fetch({ date: diary.date, ...coords }).catch(() => null);
-        if (!weather) { store.alertService.showToast(store.i18n.weather_draft_hint()); return; }
-        // DiaryService.update already raises its own confirmation toast — no second one here.
-        await store.diaryService.update({ ...diary, weather }, store.currentUser());
-        store.diariesResource.reload();
-      },
-
-      async openDrive(diary: DiaryModel): Promise<void> {
-        const url = driveFolderUrl(diary.driveFolderId);
-        if (url) await Browser.open({ url });
       },
     };
   }),

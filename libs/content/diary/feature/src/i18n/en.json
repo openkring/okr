@@ -81,13 +81,9 @@
     "allYears": "All years"
   },
   "actions": {
-    "title": "Entry",
     "add": "New entry",
     "view": "Read",
     "edit": "Edit",
-    "delete": "Delete",
-    "deleteConfirm": "Do you really want to delete this entry?",
-    "weatherRefresh": "Fetch weather",
     "openDrive": "Open Google Drive folder"
   },
   "create": {
@@ -98,10 +94,6 @@
     "existsTitle": "This day already exists",
     "existsMessage": "There is already an entry for {date}.",
     "existsEdit": "Edit this day"
-  },
-  "delete": {
-    "conf": "The entry was deleted.",
-    "error": "The entry could not be deleted."
   },
   "state": {
     "all": "All",

@@ -81,13 +81,9 @@
     "allYears": "Toutes les années"
   },
   "actions": {
-    "title": "Entrée",
     "add": "Nouvelle entrée",
     "view": "Lire",
     "edit": "Modifier",
-    "delete": "Supprimer",
-    "deleteConfirm": "Veux-tu vraiment supprimer cette entrée ?",
-    "weatherRefresh": "Rattraper la météo",
     "openDrive": "Ouvrir le dossier Google Drive"
   },
   "create": {
@@ -98,10 +94,6 @@
     "existsTitle": "Ce jour existe déjà",
     "existsMessage": "Il y a déjà une entrée pour le {date}.",
     "existsEdit": "Modifier ce jour"
-  },
-  "delete": {
-    "conf": "L'entrée a été supprimée.",
-    "error": "L'entrée n'a pas pu être supprimée."
   },
   "state": {
     "all": "Toutes",

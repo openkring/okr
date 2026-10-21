@@ -1,7 +1,7 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import {
-  ActionSheetController, ActionSheetOptions, IonAccordion, IonAccordionGroup, IonBadge, IonButton, IonButtons, IonContent, IonHeader,
+  IonAccordion, IonAccordionGroup, IonBadge, IonButton, IonButtons, IonContent, IonHeader,
   IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonNote, IonPopover, IonTitle, IonToolbar,
 } from '@ionic/angular';
 
@@ -9,7 +9,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { CategoryItemModel, CategoryListModel, DiaryModel } from '@okr/shared-models';
-import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
+import { AlertService } from '@okr/shared-util-angular';
 import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
 
 import {
@@ -117,7 +117,7 @@ const DIARY_STATE_I18N_SCOPE = '@content/diary/feature';
     </ion-content>
 
     <ng-template #row let-diary>
-      <ion-item button [detail]="false" (click)="showActions(diary)" [class.placeholder]="stateOf(diary) === 'placeholder'">
+      <ion-item button [detail]="false" (click)="store.view(diary)" [class.placeholder]="stateOf(diary) === 'placeholder'">
         @if (diary.scope === 'day' && hasWeather(diary)) {
           <ion-icon slot="start" src="{{ weatherIcon(diary) | svgIcon: weatherIconSet }}" />
         } @else if (stateOf(diary) === 'placeholder') {
@@ -144,9 +144,7 @@ const DIARY_STATE_I18N_SCOPE = '@content/diary/feature';
 })
 export class DiaryList {
   protected readonly store = inject(DiaryStore);
-  private readonly actionSheetController = inject(ActionSheetController);
   private readonly alertService = inject(AlertService);
-  private readonly imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   public readonly listId = input('all');
   public readonly contextMenuName = input.required<string>();
@@ -208,39 +206,6 @@ export class DiaryList {
       case 'toggleMonthGroups': this.store.toggleGroupByMonth(); break;
       case undefined: case null: break;
       default: this.alertService.error(`DiaryList.onPopoverDismiss: unknown method ${$event.detail.data}`);
-    }
-  }
-
-  protected async showActions(diary: DiaryModel): Promise<void> {
-    const options = createActionSheetOptions(this.store.i18n.as_title());
-    this.addActionSheetButtons(options, diary);
-    await this.executeActions(options, diary);
-  }
-
-  private addActionSheetButtons(options: ActionSheetOptions, diary: DiaryModel): void {
-    options.buttons.push(createActionSheetButton('diary.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
-    options.buttons.push(createActionSheetButton('diary.edit', this.store.i18n.edit(), this.imgixBaseUrl, 'edit'));
-    options.buttons.push(createActionSheetDivider());
-    if (diary.scope === 'day' && !hasDiaryWeather(diary.weather) && diary.location?.key) {
-      options.buttons.push(createActionSheetButton('diary.weather', this.store.i18n.weather_refresh(), this.imgixBaseUrl, 'reload'));
-    }
-    if (diary.driveFolderId) {
-      options.buttons.push(createActionSheetButton('diary.drive', this.store.i18n.open_drive(), this.imgixBaseUrl, 'folder-open'));
-    }
-    options.buttons.push(createActionSheetButton('diary.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
-    options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
-  }
-
-  private async executeActions(options: ActionSheetOptions, diary: DiaryModel): Promise<void> {
-    const sheet = await this.actionSheetController.create(options);
-    await sheet.present();
-    const { data } = await sheet.onDidDismiss();
-    switch (data?.action) {
-      case 'diary.view':    await this.store.view(diary); break;
-      case 'diary.edit':    await this.store.edit(diary); break;
-      case 'diary.weather': await this.store.refreshWeather(diary); break;
-      case 'diary.drive':   await this.store.openDrive(diary); break;
-      case 'diary.delete':  await this.store.delete(diary); break;
     }
   }
 }

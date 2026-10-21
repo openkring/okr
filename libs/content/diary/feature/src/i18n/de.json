@@ -81,13 +81,9 @@
     "allYears": "Alle Jahre"
   },
   "actions": {
-    "title": "Eintrag",
     "add": "Neuer Eintrag",
     "view": "Lesen",
     "edit": "Bearbeiten",
-    "delete": "Löschen",
-    "deleteConfirm": "Willst du diesen Eintrag wirklich löschen?",
-    "weatherRefresh": "Wetter nachholen",
     "openDrive": "Google Drive Ordner öffnen"
   },
   "create": {
@@ -98,10 +94,6 @@
     "existsTitle": "Diesen Tag gibt es schon",
     "existsMessage": "Für den {date} gibt es schon einen Eintrag.",
     "existsEdit": "Diesen Tag bearbeiten"
-  },
-  "delete": {
-    "conf": "Der Eintrag wurde gelöscht.",
-    "error": "Der Eintrag konnte nicht gelöscht werden."
   },
   "state": {
     "all": "Alle",
