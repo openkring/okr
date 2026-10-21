@@ -663,7 +663,15 @@
     "readBy": "Lu par ({x} sur {y})",
     "reactions": "Réactions",
     "copyLink": "Copier le lien",
-    "raw": "Données brutes"
+    "raw": "Données brutes",
+    "typeText": "Texte",
+    "typeImage": "Image",
+    "typeFile": "Fichier",
+    "typeVideo": "Vidéo",
+    "typeAudio": "Audio",
+    "typePoll": "Sondage",
+    "typeLocation": "Position",
+    "typeOther": "Message"
   },
   "details": {
     "title": "Détails de la discussion",

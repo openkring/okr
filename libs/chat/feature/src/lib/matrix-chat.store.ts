@@ -16,10 +16,12 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { ActivityService } from '@okr/activity-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
-import { ChatReminderService, MatrixChatService, MatrixPinsService, MatrixRoomPrefsService, MatrixJumpResult, MatrixPollData } from '@okr/chat-data-access';
+import { ChatReminderService, isServiceAccount, MatrixChatService, MatrixPinsService, MatrixRoomPrefsService, MatrixJumpResult, MatrixPollData } from '@okr/chat-data-access';
 import { AvailablePinboard, AdhocChatFormModel, newAdhocChatForm, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, pinboardBroadcastCount, pinboardReplyDraft, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, isOwnNotesRoom, NotesRoomOwner, buildBookmarkContent, buildForwardContent, isForwardable, videoAlbumFallsBackToSynapse, readBookmark, reminderTitle, PinPreview } from '@okr/chat-util';
 
 import { RoomEditModal } from './room-edit.modal';
+import { MessageInfoModal } from './message-info.modal';
+import { buildMessageInfoProps } from './message-info.feature';
 import { PIN_CLOCK_MS, pinComputeds, pinMethods, previewOfMessage } from './pins.feature';
 
 export type { MatrixChatI18n };
@@ -1411,17 +1413,29 @@ export const _MatrixChatStore = signalStore(
       },
 
       /**
-       * Show a modal/alert with the raw JSON content of the message.
+       * Open the message info modal (spec 1.109 §7). Resolves with the emoji of a tapped reaction
+       * chip — the caller then opens the reaction details — or undefined when just closed.
        */
-      async showRawMessage(message: MatrixMessage): Promise<void> {
-        const raw = JSON.stringify(message.content, null, 2);
-        const alert = await store.alertController.create({
-          header: 'Raw Message',
-          message: `<pre style="font-size:0.7rem;overflow:auto;max-height:60vh;white-space:pre-wrap">${raw}</pre>`,
-          cssClass: 'raw-message-alert',
-          buttons: ['OK'],
+      async showMessageInfo(message: MatrixMessage): Promise<string | undefined> {
+        const currentUserId = store.matrixService.getCurrentUserId();
+        const sdkRoom = store.matrixService.getRoom(message.roomId);
+        const eligibleReaderCount = (sdkRoom?.getJoinedMembers() ?? [])
+          .filter((m: { userId: string }) => m.userId !== currentUserId && !isServiceAccount(m.userId)).length;
+        const props = buildMessageInfoProps({
+          message,
+          roomName: store.rooms().find((r) => r.roomId === message.roomId)?.name ?? sdkRoom?.name ?? '',
+          timeline: [...store.messages(), ...store.threadMessages()],
+          receiptsByEventId: store.receiptsByEventId(),
+          eligibleReaderCount,
+          currentUserId,
+          senderOf: (roomId, eventId) => store.matrixService.getEventSender(roomId, eventId),
+          isAdmin: hasRole('admin', store.appStore.currentUser()),
+          i18n: store.i18n,
         });
-        await alert.present();
+        const modal = await store.modalController.create({ component: MessageInfoModal, componentProps: props });
+        await modal.present();
+        const { role, data } = await modal.onDidDismiss();
+        return role === 'reaction' && typeof data === 'string' ? data : undefined;
       },
 
       /**

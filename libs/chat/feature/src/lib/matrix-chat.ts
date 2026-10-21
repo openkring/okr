@@ -2012,8 +2012,11 @@ export class MatrixChat implements OnDestroy {
           await this.store.copy(message);
           break;
         case 'chat.message.raw':
-          await this.store.showRawMessage(message);
+        case 'chat.message.info': {
+          const emoji = await this.store.showMessageInfo(message);
+          if (emoji) await this.onReactionClicked({ messageId: message.eventId, emoji });
           break;
+        }
         case 'chat.message.edit':
           await this.store.editMessage(message);
           break;

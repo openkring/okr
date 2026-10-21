@@ -663,7 +663,15 @@
     "readBy": "Letto da ({x} di {y})",
     "reactions": "Reazioni",
     "copyLink": "Copia link",
-    "raw": "Dati grezzi"
+    "raw": "Dati grezzi",
+    "typeText": "Testo",
+    "typeImage": "Immagine",
+    "typeFile": "File",
+    "typeVideo": "Video",
+    "typeAudio": "Audio",
+    "typePoll": "Sondaggio",
+    "typeLocation": "Posizione",
+    "typeOther": "Messaggio"
   },
   "details": {
     "title": "Dettagli della chat",
