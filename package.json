@@ -55,6 +55,7 @@
     "@angular/router": "22.2.2",
     "@angular/service-worker": "22.2.2",
     "@angular/ssr": "22.2.2",
+    "@capacitor-community/sqlite": "8.1.1",
     "@capacitor-firebase/app-check": "^8.5.2",
     "@capacitor/android": "^8.5.3",
     "@capacitor/app": "^8.1.2",
