@@ -972,6 +972,15 @@ service cloud.firestore {
       allow read:  if isAdmin() && (resource == null || belongsToTenant(resource.data));
       allow write: if false;
     }
+    // Quick file transfer (spec 1.115). Written by Cloud Functions only; recipients read via callables.
+    match /file-transfers/{docId} {
+      allow read: if tenantRead() && (resource == null || resource.data.senderKey == callerPersonKey() || isAdmin());
+      allow write: if false;
+    }
+    match /file-transfer-events/{docId} {
+      allow read: if tenantRead() && (resource == null || isAdmin() || resource.data.senderKey == callerPersonKey());
+      allow write: if false;
+    }
     match /_rateLimits/{docId} {
       allow read, write: if false;
     }

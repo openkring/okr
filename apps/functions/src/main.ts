@@ -541,3 +541,9 @@ export const sendFileTransfer = FileTransfer.sendFileTransfer;
 export const getFileTransfer = FileTransfer.getFileTransfer;
 // openFileTransferFile: quick file transfer, signed play/download url for a member, logs opened/downloaded (spec 1.115)
 export const openFileTransferFile = FileTransfer.openFileTransferFile;
+// endFileTransfer: quick file transfer, sender or admin ends an open transfer early, deletes the files (spec 1.115)
+export const endFileTransfer = FileTransfer.endFileTransfer;
+// reapFileTransfers: quick file transfer, hourly sweep — expires open transfers, drops stale uploads (spec 1.115)
+export const reapFileTransfers = FileTransfer.reapFileTransfers;
+// requestFileTransferLimit: quick file transfer, member asks for higher limits via the tenant support room (spec 1.115)
+export const requestFileTransferLimit = FileTransfer.requestFileTransferLimit;
