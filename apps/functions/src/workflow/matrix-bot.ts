@@ -184,12 +184,16 @@ export async function joinBotToRoom(roomId: string, botUserId: string, adminToke
  * the group answers there, so no `power_level_content_override` and `m.text` rather than
  * `m.notice` — clients render a notice as a system line, which is not what a conversation
  * opener is.
+ *
+ * `extra` adds custom content fields beside `msgtype`/`body` (e.g. the transfer card's
+ * `org.okr.fileTransfer`, spec 1.115); it can never override those two.
  */
 export async function postGroupChatMessage(
   roomId: string,
   body: string,
   txnId: string,
   adminToken: string,
+  extra: Record<string, unknown> = {},
 ): Promise<void> {
   const token = matrixBotToken.value();
   if (!token || token === PLACEHOLDER) {
@@ -200,7 +204,7 @@ export async function postGroupChatMessage(
 
   const resp = await matrixFetch(
     `/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/send/m.room.message/${encodeURIComponent(txnId)}`,
-    { method: 'PUT', token, body: JSON.stringify({ msgtype: 'm.text', body }) },
+    { method: 'PUT', token, body: JSON.stringify({ ...extra, msgtype: 'm.text', body }) },
   );
   if (!resp.ok) throw new Error(`matrix bot room send failed: ${await resp.text()}`);
 }

@@ -535,3 +535,5 @@ export { summarizeContract } from './contract/summarize';
 
 // prepareFileTransferUpload: quick file transfer, resumable upload sessions in the private bucket (spec 1.115)
 export const prepareFileTransferUpload = FileTransfer.prepareFileTransferUpload;
+// sendFileTransfer: quick file transfer, personal links, notifications and chat card (spec 1.115)
+export const sendFileTransfer = FileTransfer.sendFileTransfer;
