@@ -1,4 +1,5 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 import { randomUUID } from 'crypto';
 
@@ -8,7 +9,7 @@ import { checkAppCheckToken, checkAuthentication, getCallerTenantId } from '@okr
 import { resolveFileTransferLimits } from '@okr/content-file-transfer-util';
 
 import { matrixAdminToken, resolveGroupRoom, resolvePersonDisplayName, serverHostname } from '../matrix-simple/shared';
-import { checkRateLimit } from '../publicApi/rateLimit';
+import { checkRateLimit, refundRateLimit } from '../publicApi/rateLimit';
 import { matrixBotToken, postGroupChatMessage } from '../workflow/matrix-bot';
 import { logFileTransferEvent } from './file-transfer-access';
 
@@ -57,7 +58,14 @@ export const requestFileTransferLimit = onCall<unknown, Promise<Record<string, n
     const config = (await db.collection(AppConfigCollection).doc(tenantId).get()).data() as Partial<AppConfig> | undefined;
     const limits = resolveFileTransferLimits(config?.fileTransferLimits, personKey);
     const name = (await resolvePersonDisplayName(personKey)) ?? personKey;
-    await postGroupChatMessage(roomId, limitRequestMessage(name, limits, reason), `ftlimit-${randomUUID()}`, matrixAdminToken.value());
+    try {
+      await postGroupChatMessage(roomId, limitRequestMessage(name, limits, reason), `ftlimit-${randomUUID()}`, matrixAdminToken.value());
+    } catch (err) {
+      // the request never reached the admins: give the slot back
+      await refundRateLimit('transferLimitReq', personKey);
+      logger.error(`${CF_NAME}: posting to the support room failed`, { error: String(err) });
+      throw new HttpsError('unavailable', 'supportRoomUnavailable');
+    }
 
     await logFileTransferEvent(db, {
       tenants: [tenantId], transferKey: '', senderKey: personKey, type: 'limitRequested',

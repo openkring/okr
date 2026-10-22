@@ -19,7 +19,7 @@ import type { FileTransferEventModel, FileTransferModel } from '@okr/shared-mode
 
 import {
   effectiveDisposition, findFileTransferByToken, inlineContentType, issueFileUrl, logFileTransferEvent, memberFileAccess, publicOpenFile,
-  PublicAccessDeps, publicView, toFileTransferView,
+  PASSWORD_TOKEN_LIMIT, passwordTransferLimit, PublicAccessDeps, publicView, toFileTransferView,
 } from './file-transfer-access';
 import { hashToken } from './file-transfer-tokens';
 
@@ -194,6 +194,14 @@ describe('publicOpenFile (POST /file-transfer/:token/file)', () => {
   describe('with a password', () => {
     beforeEach(() => { deps = fakeDeps(transfer({ passwordHash: 'aa:bb' })); });
 
+    it('keeps the per-IP budget fail-open: only the password buckets ask for failClosed', async () => {
+      const seen: Record<string, boolean | undefined> = {};
+      const ok = deps.hitLimit;
+      deps.hitLimit = async (bucket, key, opts) => { seen[bucket] = opts.failClosed; return ok(bucket, key, opts); };
+      await publicOpenFile(TOKEN, { fileIndex: 0, disposition: 'inline', password: 'secret' }, '1.2.3.4', deps);
+      expect(seen).toEqual({ transferPostIp: undefined, transferPw: true, transferPwT: true });
+    });
+
     it('answers 401 without a password and logs nothing', async () => {
       const r = await publicOpenFile(TOKEN, { fileIndex: 0, disposition: 'attachment' }, '1.2.3.4', deps);
       expect(r).toEqual({ status: 401, body: { error: { code: 'wrongPassword' } } });
@@ -243,8 +251,9 @@ describe('publicOpenFile (POST /file-transfer/:token/file)', () => {
       expect(deps.counters.get('transferPwT:T1')).toBe(1);
     });
 
-    it('rate-limits per transfer: 20 attempts within 15 min across all its links, whatever the IP', async () => {
-      deps.counters.set('transferPwT:T1', 20);
+    it('rate-limits per transfer across all its links, whatever the IP', async () => {
+      // 2 links → 5 × 2 + 5 = 15
+      deps.counters.set('transferPwT:T1', 15);
       for (const [token, ip] of [[TOKEN, '6.6.6.6'], [OTHER_TOKEN, '7.7.7.7']]) {
         const r = await publicOpenFile(token, { fileIndex: 0, disposition: 'inline', password: 'secret' }, ip, deps);
         expect(r).toEqual({ status: 429, body: { error: { code: 'rateLimited' } } });
@@ -252,7 +261,40 @@ describe('publicOpenFile (POST /file-transfer/:token/file)', () => {
       expect(deps.issued).toEqual([]);
       // the per-link slot taken by the refused attempt is given back
       expect(deps.counters.get(`transferPw:${hashToken(TOKEN)}`)).toBe(0);
-      expect(deps.counters.get('transferPwT:T1')).toBe(20);
+      expect(deps.counters.get('transferPwT:T1')).toBe(15);
+    });
+
+    it('passwordTransferLimit = PASSWORD_TOKEN_LIMIT × max(1, links) + PASSWORD_TOKEN_LIMIT, fail-closed', () => {
+      const t = transfer();
+      expect(passwordTransferLimit(t).limit).toBe(15);
+      expect(passwordTransferLimit({ recipients: [] }).limit).toBe(10);
+      expect(passwordTransferLimit({ recipients: new Array(10).fill(t.recipients[0]) }).limit).toBe(55);
+      expect(passwordTransferLimit(t).failClosed).toBe(true);
+      expect(PASSWORD_TOKEN_LIMIT.failClosed).toBe(true);
+    });
+
+    it('one link can never exhaust the transfer budget (the other recipient still gets in)', async () => {
+      for (let i = 0; i < 30; i++) await publicOpenFile(TOKEN, { fileIndex: 0, disposition: 'inline', password: 'bad' }, '1.1.1.1', deps);
+      expect(deps.counters.get('transferPwT:T1')).toBe(5);
+      expect((await publicOpenFile(OTHER_TOKEN, { fileIndex: 0, disposition: 'inline', password: 'secret' }, '2.2.2.2', deps)).status).toBe(200);
+    });
+
+    it('a many-link attacker stays bounded by the transfer budget', async () => {
+      const t = transfer({ passwordHash: 'aa:bb' });
+      expect(passwordTransferLimit(t).limit).toBeLessThan(5 * 100);
+      deps.counters.set('transferPwT:T1', passwordTransferLimit(t).limit);
+      const r = await publicOpenFile(OTHER_TOKEN, { fileIndex: 0, disposition: 'inline', password: 'bad' }, '3.3.3.3', deps);
+      expect(r.status).toBe(429);
+    });
+
+    it('fails closed: a datastore error on a password bucket answers 503, issues no url, refunds the other slot', async () => {
+      const ok = deps.hitLimit;
+      deps.hitLimit = async (bucket, key, opts) => (bucket === 'transferPwT' ? 'unavailable' : ok(bucket, key, opts));
+      const r = await publicOpenFile(TOKEN, { fileIndex: 0, disposition: 'inline', password: 'secret' }, '1.2.3.4', deps);
+      expect(r).toEqual({ status: 503, body: { error: { code: 'unavailable' } } });
+      expect(deps.issued).toEqual([]);
+      expect(deps.events).toEqual([]);
+      expect(deps.counters.get(`transferPw:${hashToken(TOKEN)}`)).toBe(0);
     });
 
     it('does not use the client IP for the password limit', async () => {

@@ -42,7 +42,10 @@ function deps(): PublicAccessDeps {
   return {
     findByToken: token => findFileTransferByToken(db, token),
     refundLimit: (bucket, key) => refundRateLimit(bucket, key),
-    hitLimit: async (bucket, key, opts) => (await checkRateLimit(bucket, key, opts)).allowed,
+    hitLimit: async (bucket, key, opts) => {
+      const r = await checkRateLimit(bucket, key, opts);
+      return r.unavailable ? 'unavailable' : r.allowed;
+    },
     checkPassword: verifyPassword,
     issueFileUrl,
     logEvent: e => logFileTransferEvent(db, e),

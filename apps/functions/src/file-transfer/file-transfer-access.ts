@@ -29,9 +29,17 @@ export const GET_IP_LIMIT = { limit: 120, windowMs: WINDOW_MS };
 /** Larger: a recipient plays/downloads many files, each one POST. */
 export const POST_IP_LIMIT = { limit: 600, windowMs: WINDOW_MS };
 /** Password attempts per personal link (bucket `transferPw`, key = tokenHash). Not IP-based. */
-export const PASSWORD_TOKEN_LIMIT = { limit: 5, windowMs: WINDOW_MS };
-/** Password attempts per transfer across all its links (bucket `transferPwT`, key = transfer okey). */
-export const PASSWORD_TRANSFER_LIMIT = { limit: 20, windowMs: WINDOW_MS };
+export const PASSWORD_TOKEN_LIMIT = { limit: 5, windowMs: WINDOW_MS, failClosed: true as const };
+/**
+ * Password attempts per transfer across all its links (bucket `transferPwT`, key = transfer okey):
+ * `PASSWORD_TOKEN_LIMIT × max(1, links) + PASSWORD_TOKEN_LIMIT`. One link (capped at
+ * PASSWORD_TOKEN_LIMIT on its own) can therefore never exhaust the transfer's budget and lock the
+ * other recipients out, while an attacker holding many links stays bounded. Fails CLOSED.
+ */
+export function passwordTransferLimit(t: Pick<FileTransferModel, 'recipients'>): { limit: number; windowMs: number; failClosed: true } {
+  const links = Math.max(1, t.recipients.length);
+  return { limit: PASSWORD_TOKEN_LIMIT.limit * links + PASSWORD_TOKEN_LIMIT.limit, windowMs: WINDOW_MS, failClosed: true };
+}
 
 /** Personal link tokens are 32 random bytes base64url (43 chars); anything far off is not looked up. */
 const TOKEN_RE = /^[A-Za-z0-9_-]{20,128}$/;
@@ -133,13 +141,13 @@ export function eventTypeFor(disposition: FileDisposition): FileTransferEventTyp
 
 // ── public personal-link access ──────────────────────────────────────────────────────────────
 
-export interface RateLimitOpts { limit: number; windowMs: number }
+export interface RateLimitOpts { limit: number; windowMs: number; failClosed?: boolean }
 
 /** The I/O of the public handlers, injected so they are testable without Firestore/Storage. */
 export interface PublicAccessDeps {
   findByToken(token: string): Promise<FileTransferModel | undefined>;
-  /** atomically counts one hit; false (and not counted) when the window is used up */
-  hitLimit(bucket: string, key: string, opts: RateLimitOpts): Promise<boolean>;
+  /** atomically counts one hit; false (and not counted) when the window is used up; 'unavailable' when a failClosed bucket's datastore failed */
+  hitLimit(bucket: string, key: string, opts: RateLimitOpts): Promise<boolean | 'unavailable'>;
   /** gives one hit back within the current window, never below 0 */
   refundLimit(bucket: string, key: string): Promise<void>;
   checkPassword(password: string, stored: string): Promise<boolean>;
@@ -148,10 +156,10 @@ export interface PublicAccessDeps {
   now(): string;
 }
 
-export type AccessErrorCode = AccessFailure | 'badRequest';
+export type AccessErrorCode = AccessFailure | 'badRequest' | 'unavailable';
 export interface AccessResult<T> { status: number; body: T | { error: { code: AccessErrorCode } } }
 
-const STATUS: Record<AccessErrorCode, number> = { notFound: 404, expired: 410, wrongPassword: 401, rateLimited: 429, badRequest: 400 };
+const STATUS: Record<AccessErrorCode, number> = { notFound: 404, expired: 410, wrongPassword: 401, rateLimited: 429, badRequest: 400, unavailable: 503 };
 
 function fail<T>(code: AccessErrorCode): AccessResult<T> {
   return { status: STATUS[code], body: { error: { code } } };
@@ -164,7 +172,7 @@ async function resolveLink(token: string, ip: string, method: 'GET' | 'POST', de
   const allowed = method === 'GET'
     ? await deps.hitLimit('transferGetIp', ip, GET_IP_LIMIT)
     : await deps.hitLimit('transferPostIp', ip, POST_IP_LIMIT);
-  if (!allowed) return { ok: false, code: 'rateLimited' };
+  if (allowed !== true) return { ok: false, code: allowed === 'unavailable' ? 'unavailable' : 'rateLimited' };
   if (typeof token !== 'string' || !TOKEN_RE.test(token)) return { ok: false, code: 'notFound' };
   const t = await deps.findByToken(token);
   const tokenHash = hashToken(token);
@@ -185,7 +193,7 @@ export async function publicView(token: string, ip: string, deps: PublicAccessDe
  * POST /public/api/v1/file-transfer/:token/file {fileIndex, disposition, password?}
  *
  * Password attempts are limited per link (5 / 15 min, bucket `transferPw`, key = tokenHash) and
- * per transfer (20 / 15 min, bucket `transferPwT`, key = okey) — never by the spoofable client IP.
+ * per transfer (see passwordTransferLimit, 15 min, bucket `transferPwT`, key = okey) — never by the spoofable client IP.
  * Every attempt RESERVES a slot in both buckets atomically before the password is checked (so
  * concurrent guesses cannot slip past, and once a bucket is full even the right password gets 429
  * — a guess cannot be told apart); a RIGHT password refunds both, so a recipient opening many
@@ -208,15 +216,16 @@ export async function publicOpenFile(
     if (!password) return fail('wrongPassword');
     const [byToken, byTransfer] = await Promise.all([
       deps.hitLimit('transferPw', tokenHash, PASSWORD_TOKEN_LIMIT),
-      deps.hitLimit('transferPwT', t.okey, PASSWORD_TRANSFER_LIMIT),
+      deps.hitLimit('transferPwT', t.okey, passwordTransferLimit(t)),
     ]);
-    if (!byToken || !byTransfer) {
+    if (byToken !== true || byTransfer !== true) {
       // the refused attempt was never tried: give back the slot the other bucket did take
       await Promise.all([
-        byToken ? deps.refundLimit('transferPw', tokenHash) : undefined,
-        byTransfer ? deps.refundLimit('transferPwT', t.okey) : undefined,
+        byToken === true ? deps.refundLimit('transferPw', tokenHash) : undefined,
+        byTransfer === true ? deps.refundLimit('transferPwT', t.okey) : undefined,
       ]);
-      return fail('rateLimited');
+      // a failed datastore on a password bucket fails CLOSED: no guess may go untracked
+      return fail(byToken === 'unavailable' || byTransfer === 'unavailable' ? 'unavailable' : 'rateLimited');
     }
     if (!(await deps.checkPassword(password, t.passwordHash))) return fail('wrongPassword');
     await Promise.all([deps.refundLimit('transferPw', tokenHash), deps.refundLimit('transferPwT', t.okey)]);

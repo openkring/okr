@@ -2,10 +2,9 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
-import { FileTransferCollection, FileTransferModel } from '@okr/shared-models';
+import { FileTransferCollection, FileTransferEventCollection, FileTransferModel } from '@okr/shared-models';
 
 import { privateBucket } from '../_storage/private-bucket';
-import { logFileTransferEvent } from './file-transfer-access';
 import { fileTransferPrefix } from './file-transfer-storage';
 
 /** An upload that was never sent is dropped after this long (its resumable session is long dead). */
@@ -51,16 +50,31 @@ export const reapFileTransfers = onSchedule(
           if (action === 'none') continue;
           const tenantId = t.tenants[0] ?? '';
           if (!tenantId) { logger.warn(`reapFileTransfers: ${doc.id} has no tenant — skipped`); continue; }
-          await privateBucket().deleteFiles({ prefix: fileTransferPrefix(tenantId, doc.id) });
           if (action === 'expire') {
-            await doc.ref.update({ state: 'expired' });
-            await logFileTransferEvent(db, {
-              tenants: t.tenants, transferKey: doc.id, senderKey: t.senderKey, type: 'expired',
-              recipientId: '', actorKey: '', fileIndex: -1, at: nowIso,
+            // re-read inside the transaction: an end (or another reaper run) may have won the race
+            const flipped = await db.runTransaction(async (tx) => {
+              const fresh = (await tx.get(doc.ref)).data() as Partial<FileTransferModel> | undefined;
+              if (!fresh || fresh.state !== 'open') return false;
+              tx.update(doc.ref, { state: 'expired' });
+              tx.set(db.collection(FileTransferEventCollection).doc(), {
+                tenants: t.tenants, transferKey: doc.id, senderKey: t.senderKey, type: 'expired',
+                recipientId: '', actorKey: '', fileIndex: -1, at: nowIso,
+              });
+              return true;
             });
+            if (!flipped) continue;
+            await privateBucket().deleteFiles({ prefix: fileTransferPrefix(tenantId, doc.id) });
             expired++;
           } else {
-            await doc.ref.delete();
+            // only a still-'uploading' doc is dropped (a send may have opened it meanwhile)
+            const gone = await db.runTransaction(async (tx) => {
+              const fresh = (await tx.get(doc.ref)).data() as Partial<FileTransferModel> | undefined;
+              if (!fresh || fresh.state !== 'uploading') return false;
+              tx.delete(doc.ref);
+              return true;
+            });
+            if (!gone) continue;
+            await privateBucket().deleteFiles({ prefix: fileTransferPrefix(tenantId, doc.id) });
             dropped++;
           }
         } catch (err) {

@@ -1,11 +1,10 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore } from 'firebase-admin/firestore';
 
-import { FileTransferCollection, FileTransferModel, UserModel } from '@okr/shared-models';
+import { FileTransferCollection, FileTransferEventCollection, FileTransferModel, UserModel } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication, getCallerTenantId } from '@okr/shared-util-functions';
 
 import { privateBucket } from '../_storage/private-bucket';
-import { logFileTransferEvent } from './file-transfer-access';
 import { fileTransferPrefix } from './file-transfer-storage';
 
 const CF_NAME = 'endFileTransfer';
@@ -37,12 +36,22 @@ export const endFileTransfer = onCall<unknown, Promise<Record<string, never>>>(
     if (stored.state === 'ended' || stored.state === 'expired') return {};
     if (stored.state !== 'open') throw new HttpsError('failed-precondition', 'notOpen');
 
-    await privateBucket().deleteFiles({ prefix: fileTransferPrefix(tenantId, key) });
-    await ref.update({ state: 'ended', endedBy: personKey });
-    await logFileTransferEvent(db, {
-      tenants: stored.tenants, transferKey: key, senderKey: stored.senderKey ?? '', type: 'ended',
-      recipientId: '', actorKey: personKey, fileIndex: -1, at: new Date().toISOString(),
+    // Flip the state in a transaction that re-reads the doc, so a concurrent reaper run (or a
+    // second end) cannot double-write: only a transfer that is STILL 'open' is ended, and its
+    // event is written in the same commit. The files go after the commit.
+    const actor = personKey || `uid:${request.auth?.uid ?? ''}`;
+    const ended = await db.runTransaction(async (tx) => {
+      const fresh = (await tx.get(ref)).data() as Partial<FileTransferModel> | undefined;
+      if (!fresh || fresh.state === 'ended' || fresh.state === 'expired') return false;
+      if (fresh.state !== 'open') throw new HttpsError('failed-precondition', 'notOpen');
+      tx.update(ref, { state: 'ended', endedBy: actor });
+      tx.set(db.collection(FileTransferEventCollection).doc(), {
+        tenants: stored.tenants, transferKey: key, senderKey: stored.senderKey ?? '', type: 'ended',
+        recipientId: '', actorKey: actor, fileIndex: -1, at: new Date().toISOString(),
+      });
+      return true;
     });
+    if (ended) await privateBucket().deleteFiles({ prefix: fileTransferPrefix(tenantId, key) });
     return {};
   },
 );

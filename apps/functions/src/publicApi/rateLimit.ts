@@ -19,12 +19,16 @@ import type { Request } from 'express';
 export interface RateLimitOptions {
   limit: number;      // max requests allowed per window
   windowMs: number;   // window length in milliseconds
+  /** on a datastore error deny (`allowed: false`, `unavailable: true`) instead of failing open — for brute-force guards */
+  failClosed?: boolean;
 }
 
 export interface RateLimitResult {
   allowed: boolean;
   remaining: number;
   retryAfterMs: number;
+  /** set only when a failClosed check could not reach the datastore */
+  unavailable?: boolean;
 }
 
 /**
@@ -90,6 +94,7 @@ export async function checkRateLimit(
       return { allowed: true, remaining: opts.limit - (count + 1), retryAfterMs: 0 };
     });
   } catch {
+    if (opts.failClosed) return { allowed: false, remaining: 0, retryAfterMs: 0, unavailable: true };
     // Fail open: never let a datastore error block legitimate submissions.
     return { allowed: true, remaining: opts.limit, retryAfterMs: 0 };
   }

@@ -2,13 +2,13 @@ import { beforeEach, describe, it, expect, vi } from 'vitest';
 import type { Request } from 'express';
 
 // In-memory `_rateLimits` with a serial transaction, enough for the counter logic.
-const store = vi.hoisted(() => ({ docs: new Map<string, Record<string, unknown>>() }));
+const store = vi.hoisted(() => ({ docs: new Map<string, Record<string, unknown>>(), fail: false }));
 vi.mock('firebase-admin/firestore', () => {
   const ts = (ms: number) => ({ toMillis: () => ms });
   const ref = (path: string) => ({ path });
   const db = {
     collection: (c: string) => ({ doc: (id: string) => ref(`${c}/${id}`) }),
-    runTransaction: async <T>(fn: (tx: unknown) => Promise<T>) => fn({
+    runTransaction: async <T>(fn: (tx: unknown) => Promise<T>) => store.fail ? Promise.reject(new Error('datastore down')) : fn({
       get: async (r: { path: string }) => ({ exists: store.docs.has(r.path), data: () => store.docs.get(r.path) }),
       set: (r: { path: string }, d: Record<string, unknown>) => { store.docs.set(r.path, { ...d }); },
       update: (r: { path: string }, d: Record<string, unknown>) => { store.docs.set(r.path, { ...store.docs.get(r.path), ...d }); },
@@ -59,7 +59,13 @@ describe('checkRateLimit / refundRateLimit', () => {
   const opts = { limit: 2, windowMs: 60_000 };
   const count = (bucket: string, key: string) =>
     store.docs.get((rateLimitRef(bucket, key) as unknown as { path: string }).path)?.['count'];
-  beforeEach(() => { store.docs.clear(); });
+  beforeEach(() => { store.docs.clear(); store.fail = false; });
+
+  it('fails open on a datastore error by default, closed with failClosed', async () => {
+    store.fail = true;
+    expect(await checkRateLimit('b', 'k', opts)).toMatchObject({ allowed: true });
+    expect(await checkRateLimit('b', 'k', { ...opts, failClosed: true })).toEqual({ allowed: false, remaining: 0, retryAfterMs: 0, unavailable: true });
+  });
 
   it('counts up to the limit, then refuses without counting further', async () => {
     expect((await checkRateLimit('b', 'k', opts)).allowed).toBe(true);
