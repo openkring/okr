@@ -908,6 +908,23 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     retention: { months: 'indefinite', legalBasis: 'Persönliche Aufzeichnung — bleibt, bis der Autor sie löscht' },
   },
   {
+    collection: 'diaryAlbums',
+    dataClass: 'content',
+    tier: 'T2',              // voluntary, like the `diaries` it indexes — nothing may block a T2 erasure
+    onTenantExit: 'delete',  // a personal index over the author's own entries: leaves with its author
+    // The subject is the AUTHOR only, via the Firebase Auth uid on `authorKey` — same shape and
+    // same rule comparison as `diaries`. NO `matches` on `ref` (the person an album is built
+    // around): that person is mentioned in the author's private diary, which is data processed
+    // exclusively for personal use (DSG Art. 2 Abs. 2 lit. a), and matching would let
+    // `eraseMyData` / `exportMyData` reach into someone else's album. Revisit together with the
+    // `diaries` row if diary entries ever become shareable.
+    find: (c: SubjectCtx) => db().collection('diaryAlbums').where('authorKey', '==', c.uid),
+    tenantScope: 'tenantsArray',
+    onExport: 'full',        // titles and notes the author wrote — part of Art. 25 DSG access
+    onErasure: 'delete',
+    retention: { months: 'indefinite', legalBasis: 'Persönliche Aufzeichnung — bleibt, bis der Autor sie löscht' },
+  },
+  {
     collection: 'diaryImports',
     dataClass: 'log',
     tier: 'T2',               // voluntary, like the `diaries` row it mirrors — nothing may block its erasure

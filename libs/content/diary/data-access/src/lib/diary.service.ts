@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, firstValueFrom, map, of } from 'rxjs';
+import { Observable, combineLatest, firstValueFrom, map, of } from 'rxjs';
 import { QueryDocumentSnapshot, collection, getDocs, limit, query, startAfter } from 'firebase/firestore';
 
 import { FirestoreService } from '@okr/shared-data-access';
@@ -8,7 +8,7 @@ import { DbQuery, DiaryCollection, DiaryModel, TripCollection, TripModel, UserMo
 import { getQuery, getSystemQuery } from '@okr/shared-util-core';
 
 import {
-  DIARY_I18N_KEYS, DiaryRange, diaryHeadlineSortKey, diaryKey, diaryNeighbourQuery, diaryNeighbourScope, diaryRangeBounds,
+  DIARY_I18N_KEYS, DiaryRange, diaryAlbumKeys, diaryHeadlineSortKey, diaryKey, diaryNeighbourQuery, diaryNeighbourScope, diaryRangeBounds,
 } from '@okr/content-diary-util';
 
 /** Neighbour search pages: small, because the nearest hit is almost always in the first page. */
@@ -21,14 +21,15 @@ const NEIGHBOUR_MAX_PAGES = 10;
  * There is no tenant-wide list here and there never will be: `firestore.rules` allows read and
  * write on `diaries` only where `authorKey == request.auth.uid`, admin included.
  *
- * The query filters by uid AND tenant, and both are load-bearing. A LIST operation is not checked
- * per returned document — Firestore has to prove the read rule from the query's constraints alone,
- * and the rule is `isDiaryOwner(resource.data) && belongsToTenant(resource.data)`. Constraining
- * only `authorKey` leaves the tenant half unprovable, and the whole listener is refused with
- * "Missing or insufficient permissions" — including against an EMPTY collection, where no document
- * could possibly have failed. That is the trap: the error looks like bad data and is really a
- * query that does not mirror its rule. This costs one composite index (`authorKey` + `tenants`),
- * which is the price of the rule, not an optimisation choice.
+ * The READ rule is owner-only (`isDiaryOwner(resource.data)`, no tenant clause; spec 1.114 §3), so
+ * a query is provable from `authorKey ==` alone. That is what lets the album queries
+ * (`albumKeys array-contains`) run without a `tenants` constraint — they cannot carry both
+ * `albumKeys` and `tenants` without a second array-contains. Such a query returns the entries of
+ * every tenant the author wrote in, so `listByAlbum` / `newestAlbumDate` drop foreign tenants in
+ * memory. The existing queries (`list`, `listByRange`, `findNeighbour`, ...) keep their `tenants`
+ * constraint: they want only this tenant's entries, and it costs one composite index
+ * (`authorKey` + `tenants`) rather than client-side filtering of 7'000 documents. WRITES still
+ * check the tenant in the rules.
  *
  * `isArchived` stays an in-memory filter: the rule does not mention it, so it buys nothing here.
  */
@@ -61,6 +62,7 @@ export class DiaryService {
 
   /** Writes back an edited entry — used by the reference screen to attach a location or a person. */
   public async update(diary: DiaryModel, currentUser?: UserModel): Promise<string | undefined> {
+    diary.albumKeys = diaryAlbumKeys(diary);
     return await this.firestoreService.updateModel<DiaryModel>(
       DiaryCollection, diary, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
   }
@@ -154,6 +156,7 @@ export class DiaryService {
    * ARCHIVED one be replaced, so a deleted day is not a dead end that can never be re-created.
    */
   public async create(diary: DiaryModel, currentUser?: UserModel): Promise<string | undefined> {
+    diary.albumKeys = diaryAlbumKeys(diary);
     return await this.firestoreService.createModel<DiaryModel>(
       DiaryCollection, diary, this.i18n.create_conf(), this.i18n.create_error(), currentUser, false, true);
   }
@@ -167,5 +170,89 @@ export class DiaryService {
   public listTravelTrips(tenantId: string): Observable<TripModel[]> {
     return this.firestoreService.searchData<TripModel>(TripCollection, getSystemQuery(tenantId), 'startDate', 'desc')
       .pipe(map(trips => trips.filter(trip => trip.type === 'travel')));
+  }
+
+  /** Newest first by the headline sort key — aggregates (zeroed month/day) sort inside their period. */
+  private newestFirst(diaries: DiaryModel[]): DiaryModel[] {
+    return [...diaries].sort((a, b) => diaryHeadlineSortKey(b.date).localeCompare(diaryHeadlineSortKey(a.date)));
+  }
+
+  /**
+   * Every non-archived entry of `authorKey` carrying the album key (`person.<k>`, `location.<k>`,
+   * `event.<slug>`, `tag.<t>`), over ALL years, newest first. The query constrains `authorKey` and
+   * `albumKeys` only (see the class comment); other tenants' entries are dropped here.
+   */
+  public listByAlbum(authorKey: string, tenantId: string, key: string): Observable<DiaryModel[]> {
+    if (!authorKey || !tenantId || !key) return of([]);
+    return this.firestoreService.searchData<DiaryModel>(DiaryCollection, [
+      { key: 'authorKey', operator: '==', value: authorKey },
+      { key: 'albumKeys', operator: 'array-contains', value: key },
+    ], 'date', 'desc').pipe(
+      map(diaries => diaries.filter(diary => !diary.isArchived && (diary.tenants ?? []).includes(tenantId))),
+    );
+  }
+
+  /** The entries between two StoreDates, either bound '' = open. Same owner query as `listByRange`. */
+  public listByDateRange(authorKey: string, tenantId: string, from: string, to: string): Observable<DiaryModel[]> {
+    if (!authorKey || !tenantId) return of([]);
+    const dbQuery = this.ownerQuery(authorKey, tenantId);
+    if (from) dbQuery.push({ key: 'date', operator: '>=', value: from });
+    if (to) dbQuery.push({ key: 'date', operator: '<=', value: to });
+    return this.firestoreService.searchData<DiaryModel>(DiaryCollection, dbQuery, 'none').pipe(
+      map(diaries => this.newestFirst(diaries.filter(diary => !diary.isArchived))),
+    );
+  }
+
+  /**
+   * The entries of a trip: those pointing at it by `tripKey`, plus those inside
+   * `startDate..endDate` that have no `tripKey` at all. An in-span entry of ANOTHER trip is not
+   * part of this one. De-duplicated by `okey`, newest first.
+   */
+  public listByTrip(authorKey: string, tenantId: string, trip: TripModel): Observable<DiaryModel[]> {
+    if (!authorKey || !tenantId || !trip?.okey) return of([]);
+    const tagged$ = this.firestoreService.searchData<DiaryModel>(DiaryCollection, [
+      ...this.ownerQuery(authorKey, tenantId),
+      { key: 'tripKey', operator: '==', value: trip.okey },
+    ], 'none');
+    const inSpan$ = this.listByDateRange(authorKey, tenantId, trip.startDate, trip.endDate)
+      .pipe(map(diaries => diaries.filter(diary => !diary.tripKey)));
+    return combineLatest([tagged$, inSpan$]).pipe(
+      map(([tagged, inSpan]) => {
+        const byKey = new Map<string, DiaryModel>();
+        for (const diary of [...tagged.filter(d => !d.isArchived), ...inSpan]) byKey.set(diary.okey, diary);
+        return this.newestFirst([...byKey.values()]);
+      }),
+    );
+  }
+
+  /**
+   * The date of the newest entry of the album `key`, or '' when there is none. Looks at the five
+   * newest candidates only (same raw-query pattern as `findNeighbour`) and filters tenant and
+   * archived in memory — good enough for the "last used" hint in the Albums list.
+   */
+  public async newestAlbumDate(authorKey: string, tenantId: string, key: string): Promise<string> {
+    if (!authorKey || !tenantId || !key) return '';
+    const constraints = getQuery([
+      { key: 'authorKey', operator: '==', value: authorKey },
+      { key: 'albumKeys', operator: 'array-contains', value: key },
+    ], 'date', 'desc');
+    const snapshot = await getDocs(query(collection(this.firestoreService.firestore, DiaryCollection), ...constraints, limit(NEIGHBOUR_PAGE)));
+    const hit = snapshot.docs
+      .map(d => ({ ...d.data(), okey: d.id }) as DiaryModel)
+      .find(d => !d.isArchived && (d.tenants ?? []).includes(tenantId));
+    return hit?.date ?? '';
+  }
+
+  /** Creates a travel trip for the diary: `type` is forced to 'travel'. */
+  public async createTravelTrip(trip: TripModel, currentUser?: UserModel): Promise<string | undefined> {
+    trip.type = 'travel';
+    return await this.firestoreService.createModel<TripModel>(
+      TripCollection, trip, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
+  }
+
+  public async updateTravelTrip(trip: TripModel, currentUser?: UserModel): Promise<string | undefined> {
+    trip.type = 'travel';
+    return await this.firestoreService.updateModel<TripModel>(
+      TripCollection, trip, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
   }
 }

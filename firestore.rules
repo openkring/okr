@@ -495,11 +495,23 @@ service cloud.firestore {
     // what makes that premise true; keep both in sync if either side changes. Nobody but the
     // author may ever read or write their own diary, admin included — a private diary has no
     // "moderator" role the way CMS content or docs do.
+    //
+    // READ is owner-only WITHOUT a tenant clause (spec 1.114 §3): the album queries filter on
+    // `authorKey ==` + `albumKeys array-contains` and cannot also carry `tenants array-contains`,
+    // so a rule that demanded the tenant would refuse them as unprovable. The client drops other
+    // tenants' entries after the read; WRITES keep the tenant checks. `diaryAlbums` is the same.
     function isDiaryOwner(data) {
       return userExists() && data.authorKey == request.auth.uid;
     }
     match /diaries/{id} {
-      allow read: if userExists() && (resource == null || (isDiaryOwner(resource.data) && belongsToTenant(resource.data)));
+      allow read: if userExists() && (resource == null || isDiaryOwner(resource.data));
+      allow create: if userExists() && isDiaryOwner(request.resource.data) && canWriteTenant(request.resource.data);
+      allow update: if userExists() && isDiaryOwner(resource.data) && isDiaryOwner(request.resource.data)
+                      && belongsToTenant(resource.data) && belongsToTenant(request.resource.data);
+      allow delete: if userExists() && isDiaryOwner(resource.data) && canWriteTenant(resource.data);
+    }
+    match /diaryAlbums/{id} {
+      allow read: if userExists() && (resource == null || isDiaryOwner(resource.data));
       allow create: if userExists() && isDiaryOwner(request.resource.data) && canWriteTenant(request.resource.data);
       allow update: if userExists() && isDiaryOwner(resource.data) && isDiaryOwner(request.resource.data)
                       && belongsToTenant(resource.data) && belongsToTenant(request.resource.data);

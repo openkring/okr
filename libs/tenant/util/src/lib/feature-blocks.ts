@@ -3005,7 +3005,7 @@ const diary: FeatureBlock = {
   icon: 'document',
   defaultAvailability: 'beta',
   dependsOn: ['geo', 'subject'],
-  collections: ['diaries', 'diaryImports'],
+  collections: ['diaries', 'diaryImports', 'diaryAlbums'],
   menu: [
     { key: 'diary', name: 'diary', url: '/diary/all/c-diary', action: 'navigate', roleNeeded: 'registered', icon: 'document', label: '@item.diary' },
     { key: 'c-diary', name: 'c-diary', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [

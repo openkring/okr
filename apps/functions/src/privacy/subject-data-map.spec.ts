@@ -244,13 +244,14 @@ describe('SUBJECT_DATA_MAP — tiers and tenant-exit disposition', () => {
     // record. No contract obliges it, no accounting duty touches it, and it is not a club
     // record — the entries are locked to `authorKey == request.auth.uid` and leave with
     // their author. So nothing may lawfully block their erasure, which is what T2 encodes.
+    // `diaryAlbums` (spec 1.114) is the same author-owned, voluntary shape, one row after `diaries`.
     // `diaryImports` joined the same day: the import run's cursor/report is the same
     // author-locked, voluntary shape as `diaries` — it mirrors that row on purpose.
     // `hearingQuizResults` joined 2026-09-28 (1.64): a user's own Hörtraining results — the
     // same owner-locked, voluntary shape as `diaries`, and health data on top.
     // `chatReminders` joined 2026-10-18 (1.104): a person's own «remind me» on a chat bookmark —
     // owner-locked (`personKey`), voluntary, no club record; it leaves with its owner.
-    expect(SUBJECT_DATA_MAP.filter((e) => e.tier === 'T2').map((e) => e.collection)).toEqual(['avatars', 'prospects', 'diaries', 'diaryImports', 'hearingQuizResults', 'chatReminders']);
+    expect(SUBJECT_DATA_MAP.filter((e) => e.tier === 'T2').map((e) => e.collection)).toEqual(['avatars', 'prospects', 'diaries', 'diaryAlbums', 'diaryImports', 'hearingQuizResults', 'chatReminders']);
   });
 
   // Regression guard on the strictest-tier rule. `addresses` holds both the favorite

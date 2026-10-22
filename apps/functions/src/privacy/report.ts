@@ -124,6 +124,7 @@ export const COLLECTION_LABELS: Record<string, string> = {
   calevents: 'Kalendereinträge',
   trips: 'Fahrten', // libs/geo/trip/feature/src/i18n/de.json: trips (not "Ausfahrten")
   diaries: 'Tagesnotizen', // libs/content/diary — the spec's own word, not "Tagebuch"
+  diaryAlbums: 'Tagesnotizen-Alben', // libs/content/diary — the author's person/location/event albums (spec 1.114)
   hearingQuizResults: 'Hörtraining-Ergebnisse',
   chatReminders: 'Chat-Erinnerungen', // libs/chat/feature/src/i18n/de.json: reminder.* («Erinnerung») on chat bookmarks
   // stats_members has no list view either — it's the per-member half of the trip
