@@ -138,6 +138,10 @@ export const COLLECTION_LABELS: Record<string, string> = {
   esignAudit: 'Unterschriften-Protokoll',
   aliases: 'Kurzlinks', // libs/system/alias — der Code auf Plakat, Bootsmarke oder Ausweis
   aliasEvents: 'Kurzlink-Zugriffe', // nur bei trackingLevel 'detailed'; das Aggregat traegt keinen Personenbezug
+  // spec 1.115: the shipped list title is «Meine Transfers» (libs/content/file-transfer/util/src/i18n/de.json);
+  // «Datei-» keeps them apart from the ownership `transfers` row just above.
+  'file-transfers': 'Dateitransfers',
+  'file-transfer-events': 'Dateitransfer-Protokoll',
 
   // — logs —
   sessions: 'Anmeldesitzungen',

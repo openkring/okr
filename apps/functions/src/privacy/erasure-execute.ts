@@ -11,7 +11,7 @@ import {
 import { writeAddressDirectory } from '@okr/shared-util-functions';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
-import { resolveDocs } from './subject-data-map';
+import { resolveArrayItemDocs, resolveDocs } from './subject-data-map';
 import type { ErasurePreview } from './erasure-preview';
 import type { SubjectCtx, SubjectDataEntry } from './types';
 
@@ -181,6 +181,41 @@ export function anonymizePatch(
   return patch;
 }
 
+/**
+ * The patch that clears the subject's identity inside ONE element of a row's
+ * `anonymizeArrayItems.arrayField` — the subject as a second party on someone else's
+ * document. The element survives with its keys; only `clearProps` become `''`. Returns
+ * `undefined` when the subject is in no element or every prop is already blank, so a
+ * re-run writes nothing. The whole array is rewritten (Firestore cannot address one
+ * element), from the snapshot just read.
+ */
+export function arrayItemsPatch(
+  entry: SubjectDataEntry,
+  doc: DocumentSnapshot,
+  ctx: SubjectCtx,
+  now: string,
+): Record<string, unknown> | undefined {
+  const spec = entry.anonymizeArrayItems;
+  if (!spec || !ctx.personKey) return undefined;
+  const value = doc.get(spec.arrayField);
+  if (!Array.isArray(value)) return undefined;
+  let changed = false;
+  const next = value.map((el) => {
+    if (el === null || typeof el !== 'object') return el;
+    const rec = el as Record<string, unknown>;
+    if (rec[spec.keyProp] !== ctx.personKey) return el;
+    const cleared = { ...rec };
+    for (const prop of spec.clearProps) {
+      if (prop in cleared && cleared[prop] !== '') {
+        cleared[prop] = '';
+        changed = true;
+      }
+    }
+    return cleared;
+  });
+  return changed ? { [spec.arrayField]: next, anonymizedAt: now } : undefined;
+}
+
 /** The document as it reads after `patch` (dotted keys are Firestore field paths). Pure. */
 function applyPatch(data: Record<string, unknown>, patch: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = structuredClone(data);
@@ -226,6 +261,8 @@ export interface ErasureOps {
   resolve(entry: SubjectDataEntry, ctx: SubjectCtx): Promise<DocumentSnapshot[]>;
   deleteAll(docs: readonly DocumentSnapshot[]): Promise<number>;
   patchAll(patches: readonly DocPatch[]): Promise<number>;
+  /** MUST go through `resolveArrayItemDocs` — the row's `anonymizeArrayItems` documents, tenant-scoped. */
+  resolveArrayItems(entry: SubjectDataEntry, ctx: SubjectCtx): Promise<DocumentSnapshot[]>;
   /** arrayRemove(tenantId) on each doc; hard-delete the ones whose `tenants[]` empties. */
   detachTenant(docs: readonly DocumentSnapshot[], tenantId: string): Promise<DetachResult>;
   loadAddresses(parentKey: string): Promise<DocumentSnapshot[]>;
@@ -326,6 +363,16 @@ export async function executeErasure(
     counts[entry.collection] = await ops.patchAll(patches);
   }
 
+  // 2b — the subject as an element of someone else's document (a recipient of another
+  //      member's file transfer): clear the element's identity props, keep everything else.
+  for (const entry of entries.filter((e) => e.anonymizeArrayItems)) {
+    const patches = (await ops.resolveArrayItems(entry, ctx))
+      .map((doc) => ({ doc, patch: arrayItemsPatch(entry, doc, ctx, executedAt) }))
+      .filter((p): p is DocPatch => !!p.patch);
+    if (patches.length === 0) continue;
+    counts[entry.collection] = (counts[entry.collection] ?? 0) + await ops.patchAll(patches);
+  }
+
   // 3 — tenant detach of the shared parent documents.
   const shared = [await ops.loadPerson(ctx.personKey), await ops.loadUser(ctx.uid)]
     .filter((d): d is DocumentSnapshot => !!d && tenantsOf(d).includes(ctx.tenantId));
@@ -414,6 +461,7 @@ async function docOrUndefined(db: Firestore, collection: string, id: string): Pr
 export function firestoreErasureOps(db: Firestore = getFirestore()): ErasureOps {
   return {
     resolve: (entry, ctx) => resolveDocs(entry, ctx),
+    resolveArrayItems: (entry, ctx) => resolveArrayItemDocs(entry, ctx),
 
     deleteAll: async (docs) => {
       for (const part of chunk(docs)) {

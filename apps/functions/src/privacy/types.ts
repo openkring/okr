@@ -163,6 +163,16 @@ export interface SubjectDataEntry {
    * the erased name. Absent = the row has no such derived copy.
    */
   readonly recomputeDerived?: (anonymized: Record<string, unknown>) => Record<string, unknown>;
+  /**
+   * The subject as an ELEMENT of an array of embedded records on documents that are NOT the
+   * subject's own (another member's file transfer lists them as a recipient). Erasure keeps
+   * the element and its join keys and clears only `clearProps` of the element whose
+   * `keyProp` equals `ctx.personKey`; every other element and every top-level field stays.
+   * Runs in the anonymization pass, independent of `onErasure` / `anonymizeFields` (those
+   * govern the documents `find` returns). Read via `resolveArrayItemDocs`, which applies
+   * the row's `tenantScope` exactly like `resolveDocs`. Not part of the export or preview.
+   */
+  readonly anonymizeArrayItems?: ArrayItemAnonymization;
   /** Fields used to build an `index` export row. */
   readonly indexFields?: { title: string; date: string; route: string };
   readonly retention: RetentionRule;
@@ -177,4 +187,18 @@ export interface SubjectDataEntry {
    * Absent means `find` is already exact.
    */
   readonly matches?: (doc: DocumentSnapshot, ctx: SubjectCtx) => boolean;
+}
+
+/** See `SubjectDataEntry.anonymizeArrayItems`. */
+export interface ArrayItemAnonymization {
+  /** The documents where the subject appears in `arrayField` (e.g. a denormalised
+   * `recipientPersonKeys array-contains`). Over-fetching is harmless: only elements whose
+   * `keyProp` is the subject are touched. */
+  readonly find: (ctx: SubjectCtx) => Query;
+  /** The array of embedded records, e.g. `'recipients'`. */
+  readonly arrayField: string;
+  /** The element property holding the RAW person key, e.g. `'personKey'`. */
+  readonly keyProp: string;
+  /** Element properties set to `''` — the identity, never the join keys. */
+  readonly clearProps: readonly string[];
 }

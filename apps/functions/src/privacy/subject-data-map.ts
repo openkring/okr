@@ -1216,11 +1216,23 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     // (senderKey is the join key of the events and stays, hence not listed).
     onErasure: 'anonymize',
     anonymizeFields: ['senderName'],
+    // The subject as a RECIPIENT of someone else's transfer: that member's log stays intact,
+    // only the subject's snapshot name goes (id / personKey / tokenHash stay — the sender's
+    // monitor and the events still join on them). Person recipients store email '' (the
+    // oracle rule in recipientsForSend); clearing it covers legacy docs.
+    anonymizeArrayItems: {
+      find: (c: SubjectCtx) => db().collection('file-transfers').where('recipientPersonKeys', 'array-contains', c.personKey),
+      arrayField: 'recipients',
+      keyProp: 'personKey',
+      clearProps: ['name', 'email'],
+    },
     retention: CLUB_RECORD,
   },
   {
-    // The audit log of those transfers: keys, event type and timestamps only — no name or
-    // e-mail — so nothing to anonymise; kept permanently.
+    // The audit log of those transfers: keys, event type and timestamps only — no member name
+    // or member e-mail (a member recipient is `recipientId: 'p:<personKey>'`; only an OUTSIDE
+    // recipient's id carries their address, `'e:<email>'`, which the spec keeps on purpose) —
+    // so nothing to anonymise; kept permanently.
     collection: 'file-transfer-events',
     dataClass: 'log',
     tier: 'T4',
@@ -1430,6 +1442,17 @@ export function inTenant(entry: SubjectDataEntry, doc: QueryDocumentSnapshot, ct
 export async function resolveDocs(entry: SubjectDataEntry, ctx: SubjectCtx): Promise<QueryDocumentSnapshot[]> {
   const docs = entry.resolve ? await entry.resolve(ctx) : (await entry.find(ctx).get()).docs;
   return docs.filter((doc) => inTenant(entry, doc, ctx) && (entry.matches?.(doc, ctx) ?? true));
+}
+
+/**
+ * The documents a row's `anonymizeArrayItems` reaches, after the row's `tenantScope`.
+ * Empty for a row without one. The element-level subject check happens in the patch
+ * (`arrayItemsPatch`), so no `matches` step is needed here.
+ */
+export async function resolveArrayItemDocs(entry: SubjectDataEntry, ctx: SubjectCtx): Promise<QueryDocumentSnapshot[]> {
+  if (!entry.anonymizeArrayItems) return [];
+  const docs = (await entry.anonymizeArrayItems.find(ctx).get()).docs;
+  return docs.filter((doc) => inTenant(entry, doc, ctx));
 }
 
 // ──────────────────────────────────────────────────────────────────────────────────

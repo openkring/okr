@@ -2,7 +2,7 @@ import type { DocumentSnapshot } from 'firebase-admin/firestore';
 import { describe, expect, it } from 'vitest';
 import { SUBJECT_DATA_MAP } from './subject-data-map';
 import {
-  anonymizePatch, executeErasure, pseudonymFor,
+  anonymizePatch, arrayItemsPatch, executeErasure, pseudonymFor,
 } from './erasure-execute';
 import type { ErasureOps } from './erasure-execute';
 import type { ErasurePreview } from './erasure-preview';
@@ -273,6 +273,52 @@ describe('anonymizePatch', () => {
   });
 });
 
+// The subject as a RECIPIENT of another member's file transfer (spec 1.115 §7): the sender's
+// log survives, only the subject's snapshot name goes.
+describe('arrayItemsPatch (file-transfers recipients)', () => {
+  const transfers = mapRow('file-transfers');
+  const transfer = () => snap('t1', {
+    senderKey: 'p9', senderName: 'Bea Sender',
+    recipients: [
+      { id: 'p:p1', kind: 'person', personKey: 'p1', email: '', name: 'Ann Müller', tokenHash: 'h1', viaGroupKeys: ['g1'] },
+      { id: 'p:p2', kind: 'person', personKey: 'p2', email: '', name: 'Carl Other', tokenHash: 'h2', viaGroupKeys: [] },
+      { id: 'e:x@y.ch', kind: 'email', personKey: '', email: 'x@y.ch', name: 'x@y.ch', tokenHash: 'h3', viaGroupKeys: [] },
+    ],
+  });
+
+  it('is declared on the file-transfers row', () => {
+    expect(transfers.anonymizeArrayItems).toMatchObject({ arrayField: 'recipients', keyProp: 'personKey' });
+    expect(transfers.anonymizeArrayItems?.clearProps).toContain('name');
+  });
+
+  it("blanks only the subject's element name and keeps its keys", () => {
+    const p = arrayItemsPatch(transfers, transfer(), ctx, '20261022');
+    const recipients = p?.['recipients'] as Record<string, unknown>[];
+    expect(recipients[0]).toEqual({
+      id: 'p:p1', kind: 'person', personKey: 'p1', email: '', name: '', tokenHash: 'h1', viaGroupKeys: ['g1'],
+    });
+    expect(recipients[1]['name']).toBe('Carl Other');
+    expect(recipients[2]['name']).toBe('x@y.ch');
+    expect(p?.['anonymizedAt']).toBe('20261022');
+  });
+
+  it("never touches the sender's fields on someone else's transfer", () => {
+    const p = arrayItemsPatch(transfers, transfer(), ctx, '20261022') ?? {};
+    expect(Object.keys(p).sort()).toEqual(['anonymizedAt', 'recipients']);
+  });
+
+  it('returns undefined when the subject is not a recipient or is already blank (idempotent)', () => {
+    expect(arrayItemsPatch(transfers, transfer(), { ...ctx, personKey: 'p7' }, 'n')).toBeUndefined();
+    const once = arrayItemsPatch(transfers, transfer(), ctx, 'n') ?? {};
+    expect(arrayItemsPatch(transfers, snap('t1', { recipients: once['recipients'] }), ctx, 'n')).toBeUndefined();
+    expect(arrayItemsPatch(transfers, snap('t1', {}), ctx, 'n')).toBeUndefined();
+  });
+
+  it('does nothing for a row without the spec', () => {
+    expect(arrayItemsPatch(mapRow('file-transfer-events'), transfer(), ctx, 'n')).toBeUndefined();
+  });
+});
+
 // ────────────────────────────────────────────────────────────────────────────────────
 // The executor. Every side effect goes through `ErasureOps`, so the ORDER and the
 // DECISIONS are testable without an emulator — which is where the D-P5-2 and D-L2
@@ -290,6 +336,7 @@ function fakeOps(over: Partial<ErasureOps> & { addresses?: DocumentSnapshot[]; p
 
   const ops: ErasureOps = {
     resolve: async (entry) => (entry.collection === 'addresses' ? addresses : [snap(`${entry.collection}-1`, {})]),
+    resolveArrayItems: async () => [],
     deleteAll: async (docs) => {
       calls.push({ op: 'deleteAll', detail: docs.map((d) => d.id) });
       deleted.push(...docs.map((d) => d.id));
@@ -374,6 +421,24 @@ describe('executeErasure', () => {
     await executeErasure(ctx, cleanPreview, entries, ops, { salt: SALT });
     expect(deleted).toContain('sessions-1');
     expect(deleted).not.toContain('persons-1');
+  });
+
+  it("patches the subject's recipient element in another member's transfer, after the own-row pass", async () => {
+    const transfers = mapRow('file-transfers');
+    const theirs = snap('theirs', {
+      senderKey: 'p9', senderName: 'Bea Sender', tenants: ['scs'],
+      recipients: [{ id: 'p:p1', kind: 'person', personKey: 'p1', email: '', name: 'Ann Müller', tokenHash: 'h1' }],
+    });
+    const { ops, patched } = fakeOps({
+      resolve: async () => [],
+      resolveArrayItems: async (entry) => (entry.collection === 'file-transfers' ? [theirs] : []),
+    });
+    const result = await executeErasure(ctx, cleanPreview, [transfers], ops, { salt: SALT });
+    expect(patched).toHaveLength(1);
+    expect(patched[0].id).toBe('theirs');
+    expect(Object.keys(patched[0].patch)).not.toContain('senderName');
+    expect((patched[0].patch['recipients'] as Record<string, unknown>[])[0]['name']).toBe('');
+    expect(result.counts['file-transfers']).toBe(1);
   });
 
   describe('D-L2 — the detach reaches the address documents', () => {

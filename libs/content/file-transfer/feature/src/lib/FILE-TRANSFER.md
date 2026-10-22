@@ -83,6 +83,23 @@ fallback: the sender's address is not on the transfer document (addresses are th
 «Limiten bearbeiten» writes `app-config/{tenantId}.fileTransferLimits` through
 `AppConfigService.setFileTransferLimits` (single-field patch).
 
+## Privacy
+
+Gate walked 2026-10-22, full outcome in spec §7.1.
+
+- **Read access:** `file-transfers` and `file-transfer-events` are readable by the sender and
+  tenant admins only; everything else goes through callables. The public link view shows sender
+  name, message, files and expiry, nothing about other recipients.
+- **Personal links:** the token is never stored (only its hash) and there is no short alias link:
+  an alias document is tenant-readable and would hand every recipient's bearer link to the whole
+  tenant. The direct `/public/file-transfer/<token>` URL goes out in the notification only.
+- **No IPs:** the rate limit keys its counters by a hash of the IP; events carry keys only.
+- **Retention:** files go at expiry or end; the log is permanent. Outside addresses stay in it.
+- **Erasure:** `SUBJECT_DATA_MAP` rows (`apps/functions/src/privacy/subject-data-map.ts`). The
+  sender's `senderName` is pseudonymised; as a recipient of someone else's transfer the member's
+  element in `recipients[]` loses `name`/`email` through the row's `anonymizeArrayItems` option
+  (keys and token hash stay). Events are retained as they hold keys only.
+
 ## Menu
 
 Catalogue-owned rows of the `file-transfer` block: `file-transfer` («Transfer», registered) and
