@@ -33,6 +33,17 @@ export function parseBoundAuthor(raw: string | undefined): BoundAuthor | undefin
   }
 }
 
+/**
+ * The author to store, or undefined for «no change». A known name is never replaced by an empty one
+ * for the same person: the user document arrives before the person record, so the first binding often
+ * has no name yet (device check plan 2: «Autor: kaiser»).
+ */
+export function nextBoundAuthor(current: BoundAuthor | undefined, incoming: BoundAuthor): BoundAuthor | undefined {
+  if (!current || current.personKey !== incoming.personKey) return incoming;
+  if (incoming.name === '' || incoming.name === current.name) return undefined;
+  return incoming;
+}
+
 /** The device's last stamp from meta; a missing or foreign clock starts fresh, the sequence never goes back. */
 export function parseStamp(rawHlc: string | undefined, rawSeq: string | undefined, deviceId: string): ChangeStamp {
   const seq = Number(rawSeq);

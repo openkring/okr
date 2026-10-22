@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { JournalChange } from '@okr/shared-models';
 import {
-  BoundAuthor, ChangeStamp, createChange, formatHlc, JournalWriteRefused, NewChange,
+  BoundAuthor, ChangeStamp, createChange, formatHlc, JournalWriteRefused, NewChange, nextBoundAuthor,
   parseBoundAuthor, parseStamp, serializeBoundAuthor,
 } from '@okr/travel-journal-util';
 import { JournalDb } from './journal-db';
@@ -50,13 +50,25 @@ export class JournalIdentityService {
     return this.initialised;
   }
 
-  /** Called while online with the signed-in person; the binding survives offline cold starts. */
-  public async bindAuthor(author: BoundAuthor): Promise<void> {
-    await this.init();
-    const current = this.authorSignal();
-    if (current?.personKey === author.personKey && current.name === author.name) return;
-    await this.db.setMeta(META_AUTHOR, serializeBoundAuthor(author));
-    this.authorSignal.set(author);
+  /**
+   * Called while online with the signed-in person; the binding survives offline cold starts. Runs
+   * through the write queue: two quick calls (first without, then with the name) used to race, and the
+   * empty name could win.
+   */
+  public bindAuthor(author: BoundAuthor): Promise<void> {
+    return this.enqueue(async () => {
+      await this.init();
+      const next = nextBoundAuthor(this.authorSignal(), author);
+      if (!next) return;
+      await this.db.setMeta(META_AUTHOR, serializeBoundAuthor(next));
+      this.authorSignal.set(next);
+    });
+  }
+
+  private enqueue<T>(task: () => Promise<T>): Promise<T> {
+    const run = this.queue.then(task);
+    this.queue = run.catch(() => undefined); // a failed task does not block the next one
+    return run;
   }
 
   /**
@@ -64,7 +76,7 @@ export class JournalIdentityService {
    * transaction. Throws JournalWriteRefused('noAuthor') when this device has no bound author.
    */
   public stampChanges(drafts: ChangeDraft[]): Promise<JournalChange[]> {
-    const run = this.queue.then(async () => {
+    return this.enqueue(async () => {
       await this.init();
       const author = this.authorSignal();
       if (!author) throw new JournalWriteRefused('noAuthor');
@@ -86,7 +98,5 @@ export class JournalIdentityService {
       this.stamp = stamp; // only after the transaction succeeded
       return changes;
     });
-    this.queue = run.catch(() => undefined); // a failed write does not block the next one
-    return run;
   }
 }
