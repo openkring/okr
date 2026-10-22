@@ -204,9 +204,14 @@ service cloud.firestore {
       //
       // `affectedKeys()` reports only keys whose value actually CHANGED, so the AOC
       // config editor writing the whole document back with the field untouched still passes.
+      //
+      // `fileTransferLimits` (spec 1.115 §4.4) is admin-only: it holds the per-person
+      // overrides, so a privileged non-admin could otherwise raise their own limit.
       allow update: if isPrivileged() && (tenant in callerTenants())
         && !request.resource.data.diff(resource.data).affectedKeys()
-             .hasAny(['enabledFeatures']);
+             .hasAny(['enabledFeatures'])
+        && (isAdmin() || !request.resource.data.diff(resource.data).affectedKeys()
+             .hasAny(['fileTransferLimits']));
     }
     match /app-version/{doc} {
       allow read: if true;

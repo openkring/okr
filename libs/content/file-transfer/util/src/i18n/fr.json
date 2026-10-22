@@ -202,5 +202,12 @@
     "ended": "terminé",
     "expired": "expiré",
     "limitRequested": "limite plus élevée demandée"
+  },
+  "ok": "OK",
+  "chat": {
+    "blocked": {
+      "title": "Chat temporairement indisponible",
+      "default": "Le chat est en cours de maintenance. Il sera bientôt de retour."
+    }
   }
 }

@@ -202,5 +202,12 @@
     "ended": "beendet",
     "expired": "abgelaufen",
     "limitRequested": "höhere Limite beantragt"
+  },
+  "ok": "OK",
+  "chat": {
+    "blocked": {
+      "title": "Chat vorübergehend nicht verfügbar",
+      "default": "Der Chat wird gerade gewartet. Er ist bald wieder da."
+    }
   }
 }

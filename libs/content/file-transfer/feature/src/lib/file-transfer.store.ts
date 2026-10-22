@@ -5,12 +5,12 @@ import { AlertController, ModalController, ToastController } from '@ionic/angula
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
 
-import { AppConfigService } from '@okr/shared-data-access';
+import { AppConfigService, ChatStatusService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { FileTransferLimits, FileTransferModel } from '@okr/shared-models';
-import { confirm, lazyService, navigateByUrl, resourceParams, showToast } from '@okr/shared-util-angular';
-import { debugListLoaded, fill, hasRole } from '@okr/shared-util-core';
+import { confirm, lazyService, navigateByUrl, notify, resourceParams, showToast } from '@okr/shared-util-angular';
+import { chatBlockedAlertMessage, debugListLoaded, fill, hasRole, isChatBlockedError } from '@okr/shared-util-core';
 
 import { FileTransferDisposition, FileTransferError, FileTransferService } from '@okr/content-file-transfer-data-access';
 import {
@@ -72,6 +72,7 @@ export const FileTransferStore = signalStore(
     toastController: inject(ToastController),
     alertController: inject(AlertController),
     router: inject(Router),
+    chatStatus: inject(ChatStatusService),
     matrixService: lazyService(inject(Injector), () =>
       import('@okr/chat-data-access').then(m => m.MatrixChatService)),
   })),
@@ -198,7 +199,14 @@ export const FileTransferStore = signalStore(
         return false;
       }
 
-      const { FileTransferUploadModal } = await import('./file-transfer-upload.modal');
+      let FileTransferUploadModal;
+      try {
+        ({ FileTransferUploadModal } = await import('./file-transfer-upload.modal'));
+      } catch {
+        // stale chunk after a deploy / offline: no unhandled rejection, the reaper removes the transfer
+        await this.toast(store.i18n.upload_failed());
+        return false;
+      }
       const uploadModal = await store.modalController.create({
         component: FileTransferUploadModal,
         componentProps: { files: form.files, uploads: prepared.uploads },
@@ -293,13 +301,18 @@ export const FileTransferStore = signalStore(
       return store.fileTransferService.openFile(transferKey, fileIndex, disposition);
     },
 
-    /** Admin: load (or reload) the access counts of one transfer — a single one-shot read. */
-    async loadSummary(transfer: FileTransferModel): Promise<void> {
+    /**
+     * Admin: load (or reload) the access counts of one transfer — a single one-shot read.
+     * @returns false when the read failed (the caller may retry)
+     */
+    async loadSummary(transfer: FileTransferModel): Promise<boolean> {
       try {
         const events = await store.fileTransferService.getEvents(transfer.okey, store.isAdmin() ? undefined : store.personKey());
         patchState(store, { monitorSummaries: { ...store.monitorSummaries(), [transfer.okey]: summarizeFileTransferEvents(events) } });
+        return true;
       } catch (error) {
         console.warn('FileTransferStore.loadSummary failed', error instanceof Error ? error.message : 'unknown');
+        return false;
       }
     },
 
@@ -330,15 +343,38 @@ export const FileTransferStore = signalStore(
      */
     async contactSender(transfer: FileTransferModel): Promise<void> {
       if (!transfer.senderKey) return;
+      if (this.isChatBlocked()) {
+        await this.showChatBlockedNotice();
+        return;
+      }
       try {
         const matrix = await store.matrixService();
         await matrix.ensureInitialized();
         const room = await matrix.createDirectRoom(transfer.senderKey);
         await navigateByUrl(store.router, '/private/chat/c-contentpage', { selectedRoom: room.roomId });
       } catch (error) {
+        if (isChatBlockedError(error, this.isChatBlocked())) {
+          await this.showChatBlockedNotice();
+          return;
+        }
         console.warn('FileTransferStore.contactSender failed', error instanceof Error ? error.message : 'unknown');
         await this.toast(store.i18n.contact_failed());
       }
+    },
+
+    /** 1.107: true while the chat is blocked for the current person (read live, not captured). */
+    isChatBlocked(): boolean {
+      return store.chatStatus.isEffectivelyBlocked(store.personKey());
+    },
+
+    /** 1.107: the admin's maintenance message (or the default) instead of an error toast. */
+    async showChatBlockedNotice(): Promise<void> {
+      await notify(
+        store.alertController,
+        store.i18n.chat_blocked_title(),
+        chatBlockedAlertMessage(store.chatStatus.message(), store.i18n.chat_blocked_default()),
+        store.i18n.ok(),
+      );
     },
   })),
 );

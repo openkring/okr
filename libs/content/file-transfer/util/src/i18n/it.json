@@ -202,5 +202,12 @@
     "ended": "terminato",
     "expired": "scaduto",
     "limitRequested": "limite più alto richiesto"
+  },
+  "ok": "OK",
+  "chat": {
+    "blocked": {
+      "title": "Chat temporaneamente non disponibile",
+      "default": "La chat è in manutenzione. Tornerà presto."
+    }
   }
 }

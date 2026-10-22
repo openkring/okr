@@ -94,7 +94,8 @@ export class FileTransferMonitor {
       untracked(() => {
         for (const t of open) {
           this.requested.add(t.okey);
-          void this.store.loadSummary(t);
+          // a failed read clears the mark, so the next list emission (or reload) tries again
+          void this.store.loadSummary(t).then(ok => { if (!ok) this.requested.delete(t.okey); });
         }
       });
     });

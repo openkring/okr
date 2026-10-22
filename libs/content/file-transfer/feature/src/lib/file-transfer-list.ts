@@ -60,7 +60,7 @@ import { fileTransferStateColor, fileTransferStateLabel, isFileTransferOpen } fr
               <ion-label class="ion-text-wrap">
                 <h2>{{ title(transfer) }}</h2>
                 <p>{{ size(transfer) }} · {{ recipients(transfer) }} · {{ expires(transfer) }}</p>
-                <p class="ion-hide-sm-down">{{ counts(transfer) }}</p>
+                <p>{{ counts(transfer) }}</p>
               </ion-label>
               <ion-chip slot="end" [color]="stateColor(transfer)">{{ stateLabel(transfer) }}</ion-chip>
             </ion-item>

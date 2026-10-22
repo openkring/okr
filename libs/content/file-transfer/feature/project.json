@@ -13,7 +13,7 @@
         "outputPath": "dist/libs/content/file-transfer/feature",
         "main": "libs/content/file-transfer/feature/src/index.ts",
         "tsConfig": "libs/content/file-transfer/feature/tsconfig.lib.json",
-        "assets": ["libs/content/file-transfer/feature/*.md"],
+        "assets": ["libs/content/file-transfer/feature/src/lib/*.md"],
         "updateBuildableProjectDepsInPackageJson": false
       }
     },
