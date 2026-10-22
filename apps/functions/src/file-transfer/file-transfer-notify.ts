@@ -13,7 +13,7 @@ import { escapeHtml } from '../calendar/mail';
  * Firestore holds `tokenHash` only and `recipients[].aliasUrl` stays ''.
  */
 
-/** A person candidate as `sendFileTransfer` resolves it: email always looked up (for dedupe). */
+/** A person candidate as `sendFileTransfer` resolves it. `email` is server-side only (never stored). */
 export interface PersonCandidate {
   personKey: string;
   name: string;
@@ -23,13 +23,18 @@ export interface PersonCandidate {
 }
 
 /**
- * Recipients for a send. The person's email is passed to `buildRecipients` regardless of the
- * channel, so an outside address equal to a member's address merges into that person; it is then
- * cleared again for persons who do not want email, so the transfer doc does not keep it.
+ * Recipients for a send — exactly what the sender entered.
+ *
+ * Persons go in with their email BLANKED, so an outside address that equals a member's address
+ * stays its own `e:<email>` recipient with its own token. Merging it (what `buildRecipients` does
+ * when given the address) would be a membership/email ORACLE: the sender reads the stored transfer
+ * and the returned counts, sees a member's name where they typed an address, and learns who owns
+ * it — while member addresses are protected PII (privacy-model: addresses are a vault). For the
+ * same reason a person recipient never carries `email` in the stored doc. The duplicate mail is
+ * suppressed internally only, in `planNotifications`.
  */
 export function recipientsForSend(persons: PersonCandidate[], emails: string[]): Omit<FileTransferRecipient, 'tokenHash' | 'aliasUrl'>[] {
-  const wantsEmail = new Map(persons.map(p => [p.personKey, p.channels.includes(DeliveryChannel.Email)]));
-  return buildRecipients({ persons, emails }).map(r => (r.kind === 'person' && !wantsEmail.get(r.personKey) ? { ...r, email: '' } : r));
+  return buildRecipients({ persons: persons.map(p => ({ ...p, email: '' })), emails });
 }
 
 /**
@@ -45,9 +50,16 @@ export function mayPostCard(p: { senderJoined: boolean; postPolicy: string | und
   return hasRole('privileged', { roles: p.senderRoles ?? {} } as UserModel);
 }
 
+export interface PlannedMail {
+  /** the recipient whose personal link the mail carries */
+  recipientId: string;
+  to: string;
+  /** further recipients this one mail also reaches (an outside address equal to the person's) */
+  alsoReaches: string[];
+}
+
 export interface NotificationPlan {
-  /** recipient ids to email (persons with the email channel and an address, all outside addresses) */
-  emailIds: string[];
+  mails: PlannedMail[];
   /** person keys to push (chat channel, not reached by a card) */
   pushKeys: string[];
   /** recipient ids reached by a posted card */
@@ -58,22 +70,37 @@ export interface NotificationPlan {
  * Who gets what. A person whose chat channel is served by a posted card gets no push; email is
  * independent of the card. 'signal' is skipped (no Signal send path in the functions yet, spec
  * 1.113), 'post' is ignored for transfers.
+ *
+ * `emailByPerson` holds the members' addresses server-side (never stored, never returned). If an
+ * outside address equals the address of a person who is mailed anyway, only ONE mail goes out —
+ * with the person's link — and it counts for both recipients, so neither the stored doc nor the
+ * returned counts reveal the match (see `recipientsForSend`).
  */
 export function planNotifications(
   recipients: Pick<FileTransferRecipient, 'id' | 'kind' | 'personKey' | 'email'>[],
   channelsByPerson: Map<string, DeliveryChannel[]>,
+  emailByPerson: Map<string, string>,
   coveredPersonKeys: Set<string>,
 ): NotificationPlan {
-  const plan: NotificationPlan = { emailIds: [], pushKeys: [], coveredIds: [] };
+  const plan: NotificationPlan = { mails: [], pushKeys: [], coveredIds: [] };
+  const personMailByAddress = new Map<string, PlannedMail>();
   for (const r of recipients) {
-    if (r.kind === 'email') {
-      if (r.email) plan.emailIds.push(r.id);
-      continue;
-    }
+    if (r.kind !== 'person') continue;
     const channels = channelsByPerson.get(r.personKey) ?? [];
-    if (r.email && channels.includes(DeliveryChannel.Email)) plan.emailIds.push(r.id);
+    const to = (emailByPerson.get(r.personKey) ?? '').trim();
+    if (to && channels.includes(DeliveryChannel.Email)) {
+      const mail: PlannedMail = { recipientId: r.id, to, alsoReaches: [] };
+      plan.mails.push(mail);
+      if (!personMailByAddress.has(to.toLowerCase())) personMailByAddress.set(to.toLowerCase(), mail);
+    }
     if (coveredPersonKeys.has(r.personKey)) plan.coveredIds.push(r.id);
     else if (channels.includes(DeliveryChannel.Chat)) plan.pushKeys.push(r.personKey);
+  }
+  for (const r of recipients) {
+    if (r.kind !== 'email' || !r.email) continue;
+    const same = personMailByAddress.get(r.email.trim().toLowerCase());
+    if (same) same.alsoReaches.push(r.id);
+    else plan.mails.push({ recipientId: r.id, to: r.email, alsoReaches: [] });
   }
   return plan;
 }

@@ -64,32 +64,44 @@ describe('file-transfer-notify', () => {
   describe('recipients and notification plan', () => {
     const chatOnly = { personKey: 'p1', name: 'Beat', email: 'beat@example.ch', viaGroupKey: 'g1', channels: [DeliveryChannel.Chat] };
     const mailAndChat = { personKey: 'p2', name: 'Cla', email: 'cla@example.ch', viaGroupKey: 'g1', channels: [DeliveryChannel.Email, DeliveryChannel.Chat] };
+    const channels = new Map([['p1', chatOnly.channels], ['p2', mailAndChat.channels]]);
+    const emails = new Map([['p1', chatOnly.email], ['p2', mailAndChat.email]]);
 
-    it('merges an outside email equal to a chat-only member into that person and does not keep or mail it', () => {
-      const recipients = recipientsForSend([chatOnly], ['Beat@Example.ch', 'x@example.ch']);
-      expect(recipients.map(r => r.id)).toEqual(['p:p1', 'e:x@example.ch']);
-      expect(recipients[0].email).toBe('');
-      const plan = planNotifications(recipients, new Map([['p1', chatOnly.channels]]), new Set());
-      expect(plan.emailIds).toEqual(['e:x@example.ch']);
+    it('stored person recipients carry no email', () => {
+      const recipients = recipientsForSend([chatOnly, mailAndChat], []);
+      expect(recipients.map(r => [r.id, r.email])).toEqual([['p:p1', ''], ['p:p2', '']]);
+    });
+
+    it('an outside email equal to a mailed member stays its own recipient, but only one mail is planned', () => {
+      const recipients = recipientsForSend([mailAndChat], ['Cla@Example.ch']);
+      expect(recipients.map(r => r.id)).toEqual(['p:p2', 'e:cla@example.ch']);
+      const plan = planNotifications(recipients, channels, emails, new Set());
+      expect(plan.mails).toEqual([{ recipientId: 'p:p2', to: 'cla@example.ch', alsoReaches: ['e:cla@example.ch'] }]);
+    });
+
+    it('an outside email equal to a chat-only member stays separate and gets its own mail', () => {
+      const recipients = recipientsForSend([chatOnly], ['beat@example.ch', 'x@example.ch']);
+      expect(recipients.map(r => r.id)).toEqual(['p:p1', 'e:beat@example.ch', 'e:x@example.ch']);
+      const plan = planNotifications(recipients, channels, emails, new Set());
+      expect(plan.mails.map(m => [m.recipientId, m.to])).toEqual([['e:beat@example.ch', 'beat@example.ch'], ['e:x@example.ch', 'x@example.ch']]);
       expect(plan.pushKeys).toEqual(['p1']);
     });
 
     it('a member covered by a card gets no push but still the email of their channel', () => {
       const recipients = recipientsForSend([chatOnly, mailAndChat], []);
-      const channels = new Map([['p1', chatOnly.channels], ['p2', mailAndChat.channels]]);
-      const plan = planNotifications(recipients, channels, new Set(['p1', 'p2']));
+      const plan = planNotifications(recipients, channels, emails, new Set(['p1', 'p2']));
       expect(plan.pushKeys).toEqual([]);
       expect(plan.coveredIds).toEqual(['p:p1', 'p:p2']);
-      expect(plan.emailIds).toEqual(['p:p2']);
+      expect(plan.mails.map(m => m.recipientId)).toEqual(['p:p2']);
     });
 
     it('an uncovered chat member is pushed; signal and post only reach nobody', () => {
       const signalOnly = { personKey: 'p3', name: 'Dora', email: 'd@example.ch', channels: [DeliveryChannel.Signal, DeliveryChannel.Post] };
       const recipients = recipientsForSend([mailAndChat, signalOnly], []);
-      const plan = planNotifications(recipients, new Map([['p2', mailAndChat.channels], ['p3', signalOnly.channels]]), new Set());
+      const plan = planNotifications(recipients, new Map([['p2', mailAndChat.channels], ['p3', signalOnly.channels]]),
+        new Map([['p2', mailAndChat.email], ['p3', signalOnly.email]]), new Set());
       expect(plan.pushKeys).toEqual(['p2']);
-      expect(plan.emailIds).toEqual(['p:p2']);
-      expect(recipients.find(r => r.id === 'p:p3')?.email).toBe('');
+      expect(plan.mails.map(m => m.recipientId)).toEqual(['p:p2']);
     });
   });
 });

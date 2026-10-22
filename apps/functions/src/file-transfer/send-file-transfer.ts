@@ -187,8 +187,9 @@ export const sendFileTransfer = onCall<unknown, Promise<SendFileTransferResponse
       ...groupDocs.flatMap(g => g.members.map(k => ({ personKey: k, viaGroupKey: g.groupKey }))),
     ].filter(w => w.personKey !== personKey);   // the sender does not notify themself
 
-    // One lookup per distinct person: tenant check, name, channels and email. The email is
-    // resolved whatever the channel — it dedupes an outside address equal to the member's.
+    // One lookup per distinct person: tenant check, name, channels and email. The email stays
+    // server-side: it is never stored or returned, only used to send (and to send one mail when an
+    // outside address equals it — see recipientsForSend / planNotifications for the oracle).
     const deps = createFirestoreDeps();
     const distinct = [...new Set(wanted.map(w => w.personKey))];
     const looked = await mapBounded(distinct, async key => {
@@ -332,7 +333,7 @@ async function notifyRecipients(
   transfer: FileTransferModel,
   recipients: FileTransferRecipient[],
   tokens: Map<string, string>,
-  persons: Map<string, { channels: DeliveryChannel[] }>,
+  persons: Map<string, { channels: DeliveryChannel[]; email: string }>,
   covered: Set<string>,
   tenantId: string,
   baseUrl: string,
@@ -341,18 +342,18 @@ async function notifyRecipients(
   const provider = String(cfg?.['emailProvider'] ?? DEFAULT_EMAIL_PROVIDER);
   const appName = String(cfg?.['appName'] ?? '');
   const channels = new Map([...persons].map(([k, p]) => [k, p.channels]));
-  const plan = planNotifications(recipients, channels, covered);
+  const emails = new Map([...persons].map(([k, p]) => [k, p.email]));
+  const plan = planNotifications(recipients, channels, emails, covered);
   const reached = new Set<string>(plan.coveredIds);
 
-  const byId = new Map(recipients.map(r => [r.id, r]));
-  const mailTo = plan.emailIds.map(id => byId.get(id)).filter((r): r is FileTransferRecipient => !!r);
-  if (mailTo.length > 0) {
+  if (plan.mails.length > 0) {
     const mailFrom = (await getAppEmailConfig(tenantId)).from;
-    await mapBounded(mailTo, async r => {
+    await mapBounded(plan.mails, async m => {
       try {
-        const { subject, html } = fileTransferEmail(transfer, personalLink(baseUrl, tokens.get(r.id) ?? ''), appName);
-        await sendEmailViaProvider(provider, { from: mailFrom, to: [r.email], subject, html });
-        reached.add(r.id);
+        const { subject, html } = fileTransferEmail(transfer, personalLink(baseUrl, tokens.get(m.recipientId) ?? ''), appName);
+        await sendEmailViaProvider(provider, { from: mailFrom, to: [m.to], subject, html });
+        reached.add(m.recipientId);
+        m.alsoReaches.forEach(id => reached.add(id));
       } catch (error) {
         // no address in the log (PII)
         logger.warn(`${CF_NAME}: email to one recipient of ${transfer.okey} failed`, { error: String(error) });
