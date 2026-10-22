@@ -1,5 +1,6 @@
 import { DEFAULT_BLOG_TYPE, DEFAULT_CONTENT_STATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PAGE_TYPE, DEFAULT_SECTIONS, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TITLE } from '@okr/shared-constants';
 import { OkrModel, MetaTag, NamedModel, SearchableModel, TaggedModel } from './base.model';
+import { DiaryWeather } from './diary.model';
 
 export type BlogLayoutType = 'minimal' | 'grid' | 'classic' | 'magazine' | 'bento' | 'stream';
 export const DEFAULT_BLOG_LAYOUT_TYPE: BlogLayoutType = DEFAULT_BLOG_TYPE;
@@ -27,10 +28,26 @@ export class PageModel implements OkrModel, NamedModel, SearchableModel, TaggedM
   public blogType: BlogLayoutType = DEFAULT_BLOG_LAYOUT_TYPE; // layout type for blog pages
   public locationKey = ''; // FK -> locations; the page's location, inherited by weather sections
 
+  // travel-journal footprint fields (spec 1.113 §3.2), only used when type === FOOTPRINT_PAGE_TYPE.
+  // Optional on read: every page written before them returns undefined.
+  public journalKey?: string; // FK -> journals
+  public date?: string; // StoreDate, local ship time
+  public time?: string; // StoreTime, local ship time
+  public latitude?: number;
+  public longitude?: number;
+  public placeName?: string; // e.g. «Neko Harbour»
+  public weather?: DiaryWeather; // filled when the footprint is first online
+  public publishState?: FootprintPublishState;
+  public notifyGuests?: boolean; // the author's choice at publish time
+  public notifiedAt?: string; // ISO timestamp; makes the guest notification idempotent
+
   constructor(tenantId: string) {
     this.tenants = [tenantId];
   }
 }
+
+export type FootprintPublishState = 'draft' | 'published';
+export const FOOTPRINT_PAGE_TYPE = 'footprint';
 
 export const PageCollection = 'pages';
 export const PageModelName = 'page';

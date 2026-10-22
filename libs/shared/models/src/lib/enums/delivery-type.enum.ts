@@ -7,6 +7,8 @@ export enum DeliveryChannel {
   Post = 'post',
   Email = 'email',
   Chat = 'chat',
+  /** A Signal message through the Matrix mautrix-signal bridge (travel journal, spec 1.113 §8.2). */
+  Signal = 'signal',
 }
 
 /** What a user gets who never touched the setting: the two electronic ways. */

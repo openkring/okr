@@ -1,6 +1,7 @@
 import { DEFAULT_GENDER, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
 import { AddressableModel, OkrModel, SearchableModel, TaggedModel } from './base.model';
 import { PrivacyUsage } from './enums/privacy-usage.enum';
+import { DeliveryChannel } from './enums/delivery-type.enum';
 
 export class PersonModel implements OkrModel, AddressableModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY;
@@ -50,6 +51,12 @@ export class PersonModel implements OkrModel, AddressableModel, SearchableModel,
    */
   public isSystem = false;
   public favZipCode = '';
+  /**
+   * Person-level delivery channels (spec 1.113 §8.1), for persons without an account in the tenant,
+   * e.g. travel-journal guests. Only read by callers that opt in; an account's own newsDelivery wins
+   * elsewhere. Optional on read: undefined means «not set».
+   */
+  public newsDelivery?: DeliveryChannel[];
   public bexioId = DEFAULT_ID;
 
   // privacy preferences: how the person wants their sensitive attributes shared.

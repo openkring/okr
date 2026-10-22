@@ -13,7 +13,7 @@ const LEGACY_BY_INDEX: DeliveryChannel[] = [
   DeliveryChannel.Chat,   // 4 InAppNotification
 ];
 
-const CANONICAL_ORDER: DeliveryChannel[] = [DeliveryChannel.Post, DeliveryChannel.Email, DeliveryChannel.Chat];
+const CANONICAL_ORDER: DeliveryChannel[] = [DeliveryChannel.Post, DeliveryChannel.Email, DeliveryChannel.Chat, DeliveryChannel.Signal];
 
 function isChannel(value: unknown): value is DeliveryChannel {
   return typeof value === 'string' && CANONICAL_ORDER.includes(value as DeliveryChannel);

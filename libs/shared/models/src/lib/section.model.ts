@@ -226,6 +226,11 @@ export interface BaseSection {
   notes: string;
   tags: string;
   tenants: string[]; // list of tenant ids
+  // travel journal (spec 1.113 §3.3); optional, absent on every other section
+  authorKey?: string; // person.okey of the block's author; when set, only the author may edit
+  journalKey?: string; // FK -> journals; drives the footprint read rule
+  updatedAt?: string; // ISO timestamp, display only
+  order?: string; // fractional order within the footprint, see orderBetween in @okr/travel-journal-util
 }
 
 export interface EditorConfig {

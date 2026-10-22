@@ -24,6 +24,11 @@ describe('toDeliveryChannels', () => {
     expect(toDeliveryChannels('chat')).toEqual([DeliveryChannel.Chat]);
   });
 
+  it('keeps the signal channel after the electronic ones', () => {
+    expect(toDeliveryChannels(['signal', 'email'])).toEqual(['email', 'signal']);
+    expect(toDeliveryChannels('signal')).toEqual(['signal']);
+  });
+
   it('passes a valid list through, de-duplicated and in canonical order', () => {
     expect(toDeliveryChannels(['chat', 'post'])).toEqual([DeliveryChannel.Post, DeliveryChannel.Chat]);
     expect(toDeliveryChannels(['email', 'email'])).toEqual([DeliveryChannel.Email]);
