@@ -8,6 +8,9 @@
  * resume from there, never blindly from 0.
  *
  * The bucket CORS must expose the `Range` response header, otherwise a browser cannot read it.
+ *
+ * Progress is reported per chunk (default 8 MiB), not continuously: `onProgress(sent)` fires after
+ * each acknowledged chunk, so small files jump from 0 straight to 100 %.
  */
 
 /** 8 MiB, a multiple of the 256 KiB granularity GCS requires for non-final chunks. */
@@ -27,6 +30,16 @@ export interface ResumableUploadOptions {
 
 class RetryableError extends Error {}
 
+/** The session URL is gone (404/410): the caller must prepare a new upload. */
+export class ResumableSessionExpiredError extends Error {
+  constructor(public readonly status: number) {
+    super(`Upload session expired (${status})`);
+    this.name = 'ResumableSessionExpiredError';
+  }
+}
+
+const RANGE_UNREADABLE = 'Range header not readable — check bucket CORS (responseHeader must include Range)';
+
 function abortError(): Error {
   const e = new Error('Upload aborted');
   e.name = 'AbortError';
@@ -41,7 +54,7 @@ function nextOffset(res: Response): number {
 }
 
 const isDone = (status: number): boolean => status === 200 || status === 201;
-const isRetryable = (status: number): boolean => status === 429 || status >= 500;
+const isRetryable = (status: number): boolean => status === 408 || status === 429 || status >= 500;
 
 export async function uploadResumable(
   sessionUrl: string,
@@ -64,13 +77,21 @@ export async function uploadResumable(
       throw new RetryableError(String(e));
     }
   };
+  const checkExpired = (res: Response): void => {
+    if (res.status === 404 || res.status === 410) throw new ResumableSessionExpiredError(res.status);
+  };
+  let rangeHidden = false; // a chunk got 308 without a readable Range header
   const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
 
   /** Ask the session how much it has. Resolves to the next offset, or 'done'. */
   const queryStatus = async (): Promise<number | 'done'> => {
     const res = await put(`bytes */${size}`);
+    checkExpired(res);
     if (isDone(res.status)) return 'done';
-    if (res.status === 308) return nextOffset(res);
+    if (res.status === 308) {
+      if (rangeHidden && !res.headers.get('Range')) throw new Error(RANGE_UNREADABLE);
+      return nextOffset(res);
+    }
     if (isRetryable(res.status)) throw new RetryableError(`status query ${res.status}`);
     throw new Error(`Upload status query failed: ${res.status}`);
   };
@@ -93,13 +114,19 @@ export async function uploadResumable(
       const res = size === 0
         ? await put('bytes */0', file)
         : await put(`bytes ${offset}-${end - 1}/${size}`, file.slice(offset, end));
+      checkExpired(res);
       if (isDone(res.status)) { onProgress(size); return; }
       if (res.status === 308) {
         const next = nextOffset(res);
-        if (next > offset) failures = 0;
-        offset = next;
-        onProgress(offset);
-        continue;
+        if (next > offset) {
+          failures = 0;
+          offset = next;
+          onProgress(offset);
+          continue;
+        }
+        // No progress (e.g. CORS hides Range): count it, re-sync via status query, never loop forever.
+        if (!res.headers.get('Range')) rangeHidden = true;
+        throw new RetryableError('chunk not acknowledged');
       }
       if (isRetryable(res.status)) throw new RetryableError(`chunk ${res.status}`);
       throw new Error(`Upload failed: ${res.status}`);

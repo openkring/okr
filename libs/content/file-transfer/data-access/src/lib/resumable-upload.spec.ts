@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { uploadResumable } from './resumable-upload';
+import { ResumableSessionExpiredError, uploadResumable } from './resumable-upload';
 
 const MIB = 1024 * 1024;
 const CHUNK = 8 * MIB;
@@ -76,13 +76,61 @@ describe('uploadResumable', () => {
     expect(calls).toHaveLength(2);
   });
 
-  it('gives up after maxRetries and rejects', async () => {
+  it('gives up after maxRetries and rejects (exact call counts)', async () => {
     const { calls, fetchFn } = stub(() => new TypeError('network'));
     await expect(
       uploadResumable('https://s', blob(10), () => undefined, { fetchFn, maxRetries: 3, retryDelayMs: 0 }),
     ).rejects.toThrow();
-    // 1 initial attempt + 3 retries, each retry preceded by a status query that also fails
-    expect(calls.filter(c => c.range === 'bytes 0-9/10').length).toBeLessThanOrEqual(4);
+    expect(calls.filter(c => c.range === 'bytes 0-9/10')).toHaveLength(1);
+    expect(calls.filter(c => c.range === 'bytes */10')).toHaveLength(3);
+  });
+
+  it('a 308 that never advances rejects after maxRetries (exact counts)', async () => {
+    const { calls, fetchFn } = stub(() => res(308, 'bytes=0-0'));
+    await expect(
+      uploadResumable('https://s', blob(10), () => undefined, { fetchFn, maxRetries: 3, retryDelayMs: 0 }),
+    ).rejects.toThrow();
+    expect(calls.filter(c => c.range?.startsWith('bytes ') && !c.range.startsWith('bytes */'))).toHaveLength(5);
+    expect(calls.filter(c => c.range === 'bytes */10')).toHaveLength(3);
+  });
+
+  it('fails clearly when a 308 carries no readable Range even after a status query', async () => {
+    const { calls, fetchFn } = stub(() => res(308));
+    await expect(
+      uploadResumable('https://s', blob(10), () => undefined, { fetchFn, retryDelayMs: 0 }),
+    ).rejects.toThrow(/bucket CORS/);
+    expect(calls).toHaveLength(2);
+  });
+
+  it('retries 408', async () => {
+    const { calls, fetchFn } = stub((_c, n) => (n === 0 ? res(408) : n === 1 ? res(308) : res(200)));
+    await uploadResumable('https://s', blob(10), () => undefined, { fetchFn, retryDelayMs: 0 });
+    expect(calls).toHaveLength(3);
+  });
+
+  it('rejects with ResumableSessionExpiredError on a 410 status query', async () => {
+    const { fetchFn } = stub((_c, n) => (n === 0 ? new TypeError('x') : res(410)));
+    await expect(
+      uploadResumable('https://s', blob(10), () => undefined, { fetchFn, retryDelayMs: 0 }),
+    ).rejects.toBeInstanceOf(ResumableSessionExpiredError);
+  });
+
+  it('rejects with ResumableSessionExpiredError on a 404 chunk', async () => {
+    const { fetchFn } = stub(() => res(404));
+    await expect(
+      uploadResumable('https://s', blob(10), () => undefined, { fetchFn }),
+    ).rejects.toBeInstanceOf(ResumableSessionExpiredError);
+  });
+
+  it('rejects with AbortError when aborted during a flight', async () => {
+    const ctl = new AbortController();
+    const fetchFn = ((_u: string, init?: RequestInit) => new Promise((_r, rej) => {
+      init?.signal?.addEventListener('abort', () => rej(new DOMException('aborted', 'AbortError')));
+      setTimeout(() => ctl.abort(), 0);
+    })) as unknown as typeof fetch;
+    await expect(
+      uploadResumable('https://s', blob(10), () => undefined, { fetchFn, signal: ctl.signal }),
+    ).rejects.toMatchObject({ name: 'AbortError' });
   });
 
   it('rejects on a non-retryable 4xx', async () => {
