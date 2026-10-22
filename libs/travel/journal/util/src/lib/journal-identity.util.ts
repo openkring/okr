@@ -44,11 +44,16 @@ export function nextBoundAuthor(current: BoundAuthor | undefined, incoming: Boun
   return incoming;
 }
 
-/** The device's last stamp from meta; a missing or foreign clock starts fresh, the sequence never goes back. */
-export function parseStamp(rawHlc: string | undefined, rawSeq: string | undefined, deviceId: string): ChangeStamp {
+/**
+ * The device's last stamp from meta; a missing or foreign clock starts fresh. The sequence never goes
+ * back, not even below the highest seq already stored for this device (`storedMaxSeq`): if meta was
+ * not updated after a committed write, reusing a seq would collide with that record.
+ */
+export function parseStamp(rawHlc: string | undefined, rawSeq: string | undefined, deviceId: string, storedMaxSeq = 0): ChangeStamp {
   const seq = Number(rawSeq);
+  const metaSeq = Number.isInteger(seq) && seq > 0 ? seq : 0;
   return {
     clock: rawHlc && isValidHlc(rawHlc, deviceId) ? parseHlc(rawHlc) : undefined,
-    seq: Number.isInteger(seq) && seq > 0 ? seq : 0,
+    seq: Math.max(metaSeq, storedMaxSeq),
   };
 }

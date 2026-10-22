@@ -42,7 +42,7 @@ export class JournalIdentityService {
       }
       this.deviceIdSignal.set(deviceId);
       this.authorSignal.set(parseBoundAuthor(await this.db.getMeta(META_AUTHOR)));
-      this.stamp = parseStamp(await this.db.getMeta(META_HLC), await this.db.getMeta(META_SEQ), deviceId);
+      this.stamp = parseStamp(await this.db.getMeta(META_HLC), await this.db.getMeta(META_SEQ), deviceId, await this.db.maxSeq(deviceId));
     })().catch((error: unknown) => {
       this.initialised = undefined;
       throw error;

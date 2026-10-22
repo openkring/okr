@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { CapacitorSQLite, capSQLiteSet, SQLiteConnection, SQLiteDBConnection } from '@capacitor-community/sqlite';
 import { JournalChange } from '@okr/shared-models';
+import { decodeChangeRow, StoredChangeRow } from '@okr/travel-journal-util';
 
 /**
  * The travel journal's local store on the iPad (spec 1.113 §4): the append-only change log plus a
@@ -20,11 +21,6 @@ const SCHEMA = [
   'CREATE INDEX IF NOT EXISTS changes_journal ON changes (journalKey, hlc);',
   'CREATE UNIQUE INDEX IF NOT EXISTS changes_device_seq ON changes (deviceId, seq);',
 ].join('\n');
-
-interface ChangeRow {
-  id: string; journalKey: string; deviceId: string; seq: number; hlc: string; authorKey: string;
-  entity: JournalChange['entity']; entityKey: string; op: JournalChange['op']; fields: string;
-}
 
 @Injectable({ providedIn: 'root' })
 export class JournalDb {
@@ -47,23 +43,30 @@ export class JournalDb {
   }
 
   /**
-   * Appends change records — and optional meta values, e.g. the device clock — in ONE transaction:
-   * after a crash either all of them are stored or none. A record whose id exists is ignored.
-   * Returns the number of records inserted.
+   * Appends this device's own change records — and optional meta values, e.g. the device clock — in ONE
+   * transaction: after a crash either all of them are stored or none. A plain INSERT: a clash on id or
+   * on (deviceId, seq) fails and rolls the whole action back instead of silently dropping a record
+   * (plan 2 final review). Records received from peers or the server (plans 4–5) need their own
+   * INSERT OR IGNORE path, where duplicates are expected.
    */
-  public async appendChanges(changes: JournalChange[], meta: Record<string, string> = {}): Promise<number> {
-    if (changes.length === 0 && Object.keys(meta).length === 0) return 0;
+  public async appendChanges(changes: JournalChange[], meta: Record<string, string> = {}): Promise<void> {
+    if (changes.length === 0 && Object.keys(meta).length === 0) return;
     const db = await this.db();
-    const before = await this.count(db);
     const set: capSQLiteSet[] = changes.map((c) => ({
-      statement: 'INSERT OR IGNORE INTO changes (id, journalKey, deviceId, seq, hlc, authorKey, entity, entityKey, op, fields) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+      statement: 'INSERT INTO changes (id, journalKey, deviceId, seq, hlc, authorKey, entity, entityKey, op, fields) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
       values: [c.id, c.journalKey, c.deviceId, c.seq, c.hlc, c.authorKey, c.entity, c.entityKey, c.op, JSON.stringify(c.fields)],
     }));
     for (const [key, value] of Object.entries(meta)) {
       set.push({ statement: 'INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?);', values: [key, value] });
     }
     await db.executeSet(set, true);
-    return (await this.count(db)) - before;
+  }
+
+  /** The highest seq stored for this device — a floor for the device's next seq. */
+  public async maxSeq(deviceId: string): Promise<number> {
+    const db = await this.db();
+    const rows = await db.query('SELECT MAX(seq) AS n FROM changes WHERE deviceId = ?;', [deviceId]);
+    return Number((rows.values?.[0] as { n?: number | null } | undefined)?.n ?? 0);
   }
 
   public async listChanges(journalKey?: string): Promise<JournalChange[]> {
@@ -71,21 +74,16 @@ export class JournalDb {
     const rows = journalKey
       ? await db.query('SELECT * FROM changes WHERE journalKey = ? ORDER BY hlc;', [journalKey])
       : await db.query('SELECT * FROM changes ORDER BY hlc;');
-    return ((rows.values ?? []) as ChangeRow[]).map((r) => ({
-      id: r.id, journalKey: r.journalKey, deviceId: r.deviceId, seq: Number(r.seq), hlc: r.hlc, authorKey: r.authorKey,
-      entity: r.entity, entityKey: r.entityKey, op: r.op, fields: JSON.parse(r.fields) as Record<string, unknown>,
-    }));
+    // a damaged row is skipped, never allowed to hide the whole journal
+    return ((rows.values ?? []) as StoredChangeRow[])
+      .map(decodeChangeRow)
+      .filter((c): c is JournalChange => c !== undefined);
   }
 
   public async hasAnyJournal(): Promise<boolean> {
     const db = await this.db();
     const rows = await db.query("SELECT 1 FROM changes WHERE entity = 'journal' AND op = 'create' LIMIT 1;");
     return (rows.values?.length ?? 0) > 0;
-  }
-
-  private async count(db: SQLiteDBConnection): Promise<number> {
-    const rows = await db.query('SELECT COUNT(*) AS n FROM changes;');
-    return Number((rows.values?.[0] as { n?: number } | undefined)?.n ?? 0);
   }
 
   private db(): Promise<SQLiteDBConnection> {

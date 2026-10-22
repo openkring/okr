@@ -67,18 +67,25 @@ export const JournalStore = signalStore(
       return { footprint: fp, journalKey: fp.journalKey };
     }
 
+    // one shared load: a second page instance must not replace state that a write already extended
+    let loading: Promise<void> | undefined;
+
     return {
-      async init(): Promise<void> {
-        if (!store.native || store.ready()) {
-          patchState(store, { ready: true });
-          return;
-        }
-        try {
-          await store.identity.init();
-          patchState(store, { changes: await store.db.listChanges(), ready: true, error: '' });
-        } catch (error) {
-          patchState(store, { ready: true, error: String(error) });
-        }
+      init(): Promise<void> {
+        loading ??= (async () => {
+          if (!store.native()) {
+            patchState(store, { ready: true });
+            return;
+          }
+          try {
+            await store.identity.init();
+            patchState(store, { changes: await store.db.listChanges(), ready: true, error: '' });
+          } catch (error) {
+            loading = undefined; // allow a retry
+            patchState(store, { ready: true, error: String(error) });
+          }
+        })();
+        return loading;
       },
 
       footprints(journalKey: string): FootprintView[] {

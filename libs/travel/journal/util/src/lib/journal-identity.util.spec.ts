@@ -49,4 +49,10 @@ describe('journal identity', () => {
     const current = { personKey: 'kaiser', name: 'Bruno Kaiser' };
     expect(nextBoundAuthor(current, { ...current })).toBeUndefined();
   });
+
+  it('parseStamp never goes below the highest stored seq of this device', () => {
+    const hlc = formatHlc({ wall: 1000, counter: 0, deviceId: 'dev-a' });
+    expect(parseStamp(hlc, '5', 'dev-a', 7).seq).toBe(7);
+    expect(parseStamp(hlc, '9', 'dev-a', 7).seq).toBe(9);
+  });
 });
