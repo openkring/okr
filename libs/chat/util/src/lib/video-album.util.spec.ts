@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { callableErrorCode, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, VideoLimitError, VideoUploadError, videoAlbumFallsBackToSynapse } from './video-album.util';
+import { callableErrorCode, isAlbumVideoFile, isOversizeChatVideo, isVideoLimitError, isVideoUploadError, VideoLimitError, VideoUploadError, videoAlbumFallsBackToSynapse } from './video-album.util';
 
 function file(name: string, type = ''): File {
   return new File(['x'], name, { type });
@@ -66,5 +66,21 @@ describe('callableErrorCode', () => {
     expect(callableErrorCode({ code: 'storage/unauthorized' })).toBeUndefined();
     expect(callableErrorCode(new Error('x'))).toBeUndefined();
     expect(callableErrorCode(null)).toBeUndefined();
+  });
+});
+
+describe('isOversizeChatVideo', () => {
+  const MB = 1024 * 1024;
+  const sized = (name: string, size: number, type = 'video/mp4') =>
+    ({ name, type, size } as unknown as File);
+
+  it('is true for an album video over 100 MB', () => {
+    expect(isOversizeChatVideo(sized('a.mp4', 100 * MB + 1))).toBe(true);
+  });
+
+  it('is false at exactly 100 MB, for a non-album video and for a document', () => {
+    expect(isOversizeChatVideo(sized('a.mp4', 100 * MB))).toBe(false);
+    expect(isOversizeChatVideo(sized('a.webm', 300 * MB, 'video/webm'))).toBe(false);
+    expect(isOversizeChatVideo(sized('a.pdf', 300 * MB, 'application/pdf'))).toBe(false);
   });
 });

@@ -10,7 +10,7 @@ import { checkAppCheckToken, checkAuthentication, getCallerTenantId } from '@okr
 import { privateBucket } from '../_storage/private-bucket';
 import { getJoinedMemberIds, getRoomSummary, matrixAdminToken, requireRoomInTenant, requireUserPersonKey, serverHostname } from '../matrix-simple/shared';
 import {
-  assertChatFolders, chatAlbumRootName, humanMemberCount, chatFolderKeys, chatVideoPath, MAX_VIDEO_BYTES, safeVideoTitle, validateChatVideoRequest, zurichStoreDate,
+  assertChatFolders, chatAlbumRootName, humanMemberCount, chatFolderKeys, chatVideoPath, MAX_CHAT_VIDEO_BYTES, safeVideoTitle, validateChatVideoRequest, zurichStoreDate,
 } from './chat-video.util';
 
 const CF_NAME = 'prepareChatVideoUpload';
@@ -132,7 +132,7 @@ export const prepareChatVideoUpload = onCall(
       action: 'write',
       expires: Date.now() + UPLOAD_WINDOW_MS,
       contentType,
-      extensionHeaders: { 'x-goog-content-length-range': `0,${MAX_VIDEO_BYTES}` },
+      extensionHeaders: { 'x-goog-content-length-range': `0,${MAX_CHAT_VIDEO_BYTES}` },
     });
 
     const doc = new DocumentModel(tenantId);
@@ -153,6 +153,6 @@ export const prepareChatVideoUpload = onCall(
     const docRef = await db.collection(DocumentCollection).add(stripKey(doc));
 
     logger.info(`${CF_NAME}: prepared ${docRef.id} in ${keys.videos} for tenant ${tenantId}`, { roomId: req.roomId, size: req.size });
-    return { docKey: docRef.id, uploadUrl, contentType, maxBytes: MAX_VIDEO_BYTES };
+    return { docKey: docRef.id, uploadUrl, contentType, maxBytes: MAX_CHAT_VIDEO_BYTES };
   },
 );

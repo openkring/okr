@@ -7,10 +7,10 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, QuickEntryService } from '@okr/shared-util-angular';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { ButtonCopy, DateTimeSelectModal } from '@okr/shared-ui';
-import { convertDateFormatToString, DateFormat, MAX_VIDEO_BYTES } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 import { PersonModel } from '@okr/shared-models';
 
-import { isAlbumVideoFile, isSupportedImageFile, materializeFile,MatrixChatI18n, MessageDraft, MentionRef, findMentionQuery, filterActiveMentions } from '@okr/chat-util';
+import { isAlbumVideoFile, isFileReadable, isOversizeChatVideo, isSupportedImageFile, materializeFile,MatrixChatI18n, MessageDraft, MentionRef, findMentionQuery, filterActiveMentions } from '@okr/chat-util';
 import { MentionAutocomplete, MentionPick, MENTION_ROOM, mentionListboxId, mentionOptionId } from './mention-autocomplete';
 import 'emoji-picker-element';
 
@@ -451,6 +451,12 @@ export class MatrixMessageInput {
   filesSent = output<File[]>();
   /** Non-image files picked in one go (videos, documents, audio) — sent right away by the parent. */
   filesPicked = output<File[]>();
+  /**
+   * Videos over the chat cap from one pick, split by the read probe made right after the pick:
+   * `readable` ones are offered as ONE transfer, `unreadable` ones (stale iOS handle) get the
+   * «zu gross» toast.
+   */
+  oversizeVideosPicked = output<{ readable: File[]; unreadable: File[] }>();
   /** «Als Transfer senden» was chosen: the parent opens the transfer form for this room. */
   transferRequested = output<void>();
 
@@ -1051,16 +1057,30 @@ export class MatrixMessageInput {
     // on iOS a handle goes stale (and reads empty, silently) once the input is cleared.
     // See materializeFile. Album videos are read too: their PUT only starts after the limit check
     // and the prepareChatVideoUpload callable, and a stale iOS gallery handle then uploaded a
-    // 0-byte object that rendered as a blank card (2026-10-03). Over-limit videos stay handles
-    // (the store offers them as a transfer, which streams them in chunks), so nothing beyond
-    // MAX_VIDEO_BYTES is buffered. Other attachments
+    // 0-byte object that rendered as a blank card (2026-10-03). Videos over the chat cap stay
+    // handles (the transfer upload streams them in chunks), so nothing beyond
+    // MAX_CHAT_VIDEO_BYTES is buffered. Other attachments
     // are sent immediately, so they keep streaming straight off disk.
-    const materialized = await Promise.all(images.map(f => materializeFile(f)));
-    const sent = await Promise.all(others.map(f =>
-      isAlbumVideoFile(f) && f.size <= MAX_VIDEO_BYTES ? materializeFile(f) : Promise.resolve(f)));
+    // Videos over the chat cap are offered as a transfer (spec 1.115 §4.5). Probe them FIRST —
+    // started before anything else is awaited and before the input is cleared: a stale iOS
+    // handle would otherwise reach the transfer upload and read as empty.
+    const oversize = others.filter(f => isOversizeChatVideo(f));
+    const probes = Promise.all(oversize.map(f => isFileReadable(f)));
+    const rest = others.filter(f => !oversize.includes(f));
+    const [readable, materialized, sent] = await Promise.all([
+      probes,
+      Promise.all(images.map(f => materializeFile(f))),
+      Promise.all(rest.map(f => isAlbumVideoFile(f) ? materializeFile(f) : Promise.resolve(f))),
+    ]);
     input.value = '';
     for (const image of materialized) this.fileQueued.emit(image);
     if (sent.length > 0) this.filesPicked.emit(sent);
+    if (oversize.length > 0) {
+      this.oversizeVideosPicked.emit({
+        readable: oversize.filter((_, i) => readable[i]),
+        unreadable: oversize.filter((_, i) => !readable[i]),
+      });
+    }
   }
 
   cancelReply() {

@@ -1,6 +1,6 @@
-import { computed, inject, Injectable, Injector, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, Injector, signal, untracked } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { catchError, from, map, of, startWith, switchMap, timer } from 'rxjs';
@@ -18,7 +18,7 @@ import { ActivityService } from '@okr/activity-data-access';
 import { GroupService } from '@okr/subject-group-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { ChatReminderService, isServiceAccount, MatrixChatService, MatrixPinsService, MatrixRoomPrefsService, MatrixJumpResult, MatrixPollData } from '@okr/chat-data-access';
-import { AvailablePinboard, AdhocChatFormModel, newAdhocChatForm, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, pinboardBroadcastCount, pinboardReplyDraft, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, isOwnNotesRoom, NotesRoomOwner, buildBookmarkContent, buildForwardContent, isForwardable, videoAlbumFallsBackToSynapse, readBookmark, reminderTitle, PinPreview } from '@okr/chat-util';
+import { AvailablePinboard, AdhocChatFormModel, newAdhocChatForm, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, pinboardBroadcastCount, pinboardReplyDraft, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, isOwnNotesRoom, NotesRoomOwner, buildBookmarkContent, buildForwardContent, isForwardable, videoAlbumFallsBackToSynapse, fileTransferRoomPreset, isFileReadable, readBookmark, reminderTitle, PinPreview } from '@okr/chat-util';
 
 import { ChatFileTransferCard, EmojiPickerModal, MessageEditModal } from '@okr/chat-ui';
 // Quick file transfer (spec 1.115 §4.5): the callable client and the pure open helper are light and
@@ -534,26 +534,27 @@ export const _MatrixChatStore = signalStore(
       });
     };
 
-    /**
-     * Send one video into the room album (spec 1.82 §8). Answers true when the send is settled
-     * — sent, or refused with a toast — and false when the Synapse path should take the file
-     * instead (the room album was archived/moved, or Synapse could not confirm the membership).
-     * Never throws: every failure the member can see has its own toast here, so the callers'
-     * generic "x Datei(en)" toast would only repeat it.
-     */
-    /**
-     * Opens the transfer form for the open room (spec 1.115 §4.5), with `files` preset. In a group
-     * room of this tenant the group is the preset recipient and the room gets the card
-     * (`chatRoomId`); anywhere else nobody is preset and no card is posted (the server would ignore
-     * the room anyway). The transfer feature is loaded on first use.
-     */
-    /** The person whose transfer cards are cached in `fileTransferCards`. */
+    /** The person whose transfer cards are cached in `fileTransferCards` (see resetFileTransferCardsFor). */
     let fileTransferCardsOwner = '';
+    const resetFileTransferCardsFor = (personKey: string): void => {
+      if (personKey === fileTransferCardsOwner) return;
+      fileTransferCardsOwner = personKey;
+      patchState(store, { fileTransferCards: {} });
+    };
 
+    /**
+     * Opens the transfer form for the open room (spec 1.115 §4.5), with `files` preset. A group
+     * room of this tenant presets its group and gets the card (`chatRoomId`); a DM, ad-hoc chat or
+     * pinboard presets its members except me, and no card is posted. The transfer feature is
+     * loaded on first use.
+     */
     const openFileTransfer = async (files: File[] = []): Promise<void> => {
-      const roomId = store.currentRoomId() ?? '';
-      const group = store.currentRoomGroup();
-      const isGroupRoom = !!roomId && !!group && !group.isArchived && (group.kind ?? 'group') === 'group';
+      const preset = fileTransferRoomPreset(
+        store.currentRoomId() ?? '',
+        store.currentRoomGroup(),
+        store.mentionCandidates().map(p => p.okey),
+        store.appStore.currentUser()?.personKey ?? '',
+      );
       let transferStore;
       try {
         const { FileTransferStore } = await import('@okr/content-file-transfer-feature');
@@ -564,27 +565,42 @@ export const _MatrixChatStore = signalStore(
         await store.alertService.showToast(store.i18n.fileTransfer_unavailable());
         return;
       }
-      await transferStore.openNew(
-        { files, groupKeys: isGroupRoom && group ? [group.okey] : [] },
-        isGroupRoom ? roomId : '',
-      );
+      await transferStore.openNew({ files, groupKeys: preset.groupKeys, personKeys: preset.personKeys }, preset.chatRoomId);
+    };
+
+    /** The plain «zu gross» toast (largest of the files), where no transfer can be offered. */
+    const toastVideosTooLarge = async (files: File[]): Promise<void> => {
+      const size = Math.max(...files.map(f => f.size));
+      await store.alertService.showToast(fill(store.i18n.video_too_large(), { size: fileSizeUnit(size) }));
     };
 
     /**
-     * A video over the chat cap (MAX_VIDEO_BYTES): offer to send it as a transfer instead. Falls
-     * back to the plain «zu gross» toast where transfers are not available.
+     * Videos over the chat cap (MAX_CHAT_VIDEO_BYTES): ONE offer to send all readable ones as a
+     * transfer. `unreadable` (failed the read probe right after the pick — a stale iOS handle)
+     * and a tenant without transfers get the plain «zu gross» toast.
      */
-    const offerVideoAsTransfer = async (file: File, size: number): Promise<void> => {
-      const sizeText = fileSizeUnit(size);
+    const offerVideosAsTransfer = async (readable: File[], unreadable: File[] = []): Promise<void> => {
       if (!store.canSendTransfer()) {
-        await store.alertService.showToast(fill(store.i18n.video_too_large(), { size: sizeText }));
+        const all = [...readable, ...unreadable];
+        if (all.length > 0) await toastVideosTooLarge(all);
         return;
       }
-      const ok = await confirm(store.alertController, fill(store.i18n.video_too_large_transfer(), { size: sizeText }),
-        store.i18n.attach_transfer(), store.i18n.cancel(), true);
-      if (ok) await openFileTransfer([file]);
+      if (unreadable.length > 0) await toastVideosTooLarge(unreadable);
+      if (readable.length === 0) return;
+      const message = readable.length === 1
+        ? fill(store.i18n.video_too_large_transfer(), { size: fileSizeUnit(readable[0].size) })
+        : fill(store.i18n.video_too_large_transfer_many(), { count: String(readable.length) });
+      const ok = await confirm(store.alertController, message, store.i18n.attach_transfer(), store.i18n.cancel(), true);
+      if (ok) await openFileTransfer(readable);
     };
 
+    /**
+     * Send one video into the room album (spec 1.82 §8). Answers true when the send is settled
+     * — sent, or refused with a toast — and false when the Synapse path should take the file
+     * instead (the room album was archived/moved, or Synapse could not confirm the membership).
+     * Never throws: every failure the member can see has its own toast here, so the callers'
+     * generic "x Datei(en)" toast would only repeat it.
+     */
     const sendVideoToAlbum = async (roomId: string, file: File, threadId?: string): Promise<boolean> => {
       // The TENANT-FILTERED list (matrix-chat skill): the raw service list spans every tenant.
       // Fallback: the synchronous snapshot while rooms() has not caught up yet (same filter).
@@ -596,7 +612,11 @@ export const _MatrixChatStore = signalStore(
         return true;
       } catch (error) {
         if (isVideoLimitError(error)) {
-          if (error.reason === 'size') await offerVideoAsTransfer(file, error.actual);
+          // reached by a drop or a thread send; the composer splits oversize picks off earlier
+          if (error.reason === 'size') {
+            const readable = await isFileReadable(file);
+            await offerVideosAsTransfer(readable ? [file] : [], readable ? [] : [file]);
+          }
           else await store.alertService.showToast(fill(store.i18n.video_too_long(), { duration: formatDuration(error.actual) }));
           return true;
         }
@@ -1198,18 +1218,31 @@ export const _MatrixChatStore = signalStore(
       /**
        * Loads the cards of the transfers in view — each key once per session (`getFileTransfer`
        * checks that the viewer may see it). Expired and not-found both read «abgelaufen»; any other
-       * failure leaves the plain message in place.
+       * failure leaves the plain message in place until the visible cards change again.
        */
+      /**
+       * Videos over the chat cap from one pick (or drop): one offer for all readable ones, the
+       * «zu gross» toast for the rest. See offerVideosAsTransfer.
+       */
+      async offerVideosAsTransfer(readable: File[], unreadable: File[] = []): Promise<void> {
+        await offerVideosAsTransfer(readable, unreadable);
+      },
+
+      /**
+       * The store outlives a logout: drops the cached cards when the logged-in person changes
+       * (driven by the effect in withHooks), so one person's cards never show to the next one.
+       */
+      resetFileTransferCardsFor(personKey: string): void {
+        resetFileTransferCardsFor(personKey);
+      },
+
       ensureFileTransferCards(keys: string[]): void {
-        // The store outlives a logout: never show one person's cards to the next one.
         const owner = store.appStore.currentUser()?.personKey ?? '';
-        if (owner !== fileTransferCardsOwner) {
-          fileTransferCardsOwner = owner;
-          patchState(store, { fileTransferCards: {} });
-        }
+        resetFileTransferCardsFor(owner);
         if (!owner) return;
         const known = store.fileTransferCards();
-        const todo = keys.filter(k => !known[k]);
+        // a failed load is not known: the next change of the visible cards retries it
+        const todo = keys.filter(k => !known[k] || known[k].status === 'failed');
         if (todo.length === 0) return;
         const setCard = (key: string, card: ChatFileTransferCard): void => {
           if (fileTransferCardsOwner !== owner) return;   // answered after a logout
@@ -1797,6 +1830,16 @@ export const _MatrixChatStore = signalStore(
   // Chat-Details: mute tile, hide / archive / leave, remove members (spec 1.109 §8) — see room-details.feature.ts.
   // «Alle stummschalten» bell and «Wieder einblenden» (spec 1.109 §9, §10.1) — see room-mute.feature.ts.
   withMethods((store) => ({ ...pinMethods(store), ...roomDetailsMethods(store), ...roomMuteMethods(store) })),
+  // Quick file-transfer cards are cached per person: a new login empties the cache (15th feature —
+  // signalStore takes at most 15; merge before adding another).
+  withHooks((store) => ({
+    onInit(): void {
+      effect(() => {
+        const personKey = store.appStore.currentUser()?.personKey ?? '';
+        untracked(() => store.resetFileTransferCardsFor(personKey));
+      });
+    },
+  })),
 );
 
 

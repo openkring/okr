@@ -250,6 +250,7 @@ export const MATRIX_CHAT_I18N_KEYS = {
   video_too_large:           PFX + 'video.tooLarge',
   video_too_long:            PFX + 'video.tooLong',
   video_too_large_transfer:  PFX + 'video.tooLargeTransfer',
+  video_too_large_transfer_many: PFX + 'video.tooLargeTransferMany',
   fileTransfer_openFailed:   PFX + 'fileTransfer.openFailed',
   fileTransfer_expired:      PFX + 'fileTransfer.expired',
   fileTransfer_unavailable:  PFX + 'fileTransfer.unavailable',

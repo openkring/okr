@@ -238,7 +238,8 @@
     "error": "La vidéo ne peut pas être chargée pour le moment. Réessaie dans un instant.",
     "copyLink": "Copier le lien",
     "linkCopied": "Lien copié.",
-    "tooLargeTransfer": "Cette vidéo est trop grande ({size}) – le chat accepte les vidéos jusqu'à 100 Mo. Tu peux quand même la partager comme transfert : tout le monde ici reçoit un lien qui expire après quelques jours."
+    "tooLargeTransfer": "Cette vidéo est trop grande ({size}) – le chat accepte les vidéos jusqu'à 100 Mo. Tu peux quand même la partager comme transfert : tout le monde ici reçoit un lien qui expire après quelques jours.",
+    "tooLargeTransferMany": "{count} vidéos sont trop grandes pour le chat – il accepte les vidéos jusqu'à 100 Mo. Tu peux quand même les partager comme transfert : tout le monde ici reçoit un lien qui expire après quelques jours."
   },
   "survey": {
     "title": "Créer un sondage",

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_VIDEO_BYTES, MAX_VIDEO_SECONDS, checkVideoLimits, formatDuration } from './video.util';
+import { MAX_CHAT_VIDEO_BYTES, MAX_VIDEO_BYTES, MAX_VIDEO_SECONDS, checkVideoLimits, formatDuration } from './video.util';
 
 /** A File stand-in: only `size` and `type` are read before the duration probe. */
 function fakeFile(size: number, type = 'video/mp4'): File {
@@ -39,7 +39,13 @@ describe('checkVideoLimits', () => {
   });
 
   it('exposes the limits it enforces', () => {
-    expect(MAX_VIDEO_BYTES).toBe(100 * 1024 * 1024);
+    expect(MAX_VIDEO_BYTES).toBe(200 * 1024 * 1024);
+    expect(MAX_CHAT_VIDEO_BYTES).toBe(100 * 1024 * 1024);
     expect(MAX_VIDEO_SECONDS).toBe(120);
+  });
+
+  it('applies a smaller cap when one is given (chat)', async () => {
+    const result = await checkVideoLimits(fakeFile(MAX_CHAT_VIDEO_BYTES + 1), MAX_CHAT_VIDEO_BYTES);
+    expect(result).toEqual({ ok: false, reason: 'size', actual: MAX_CHAT_VIDEO_BYTES + 1 });
   });
 });

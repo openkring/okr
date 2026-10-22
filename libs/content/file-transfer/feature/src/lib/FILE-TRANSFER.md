@@ -54,13 +54,21 @@ navigates to the URL (the response says `attachment`, so the page stays). The he
 
 ## In the chat
 
-A group-room card is an `m.text` with `org.okr.fileTransfer: { transferKey }` (`fileTransferKeyOf`
-in `@okr/chat-util`). `MatrixChatStore` loads each card once per session through
-`getFileTransfer` (expired or not found → «abgelaufen») and opens files with
-`openFileTransferFile`; the message list only renders `FileTransferCard`. «Als Transfer senden»
-in the composer, and the offer for a video over the chat cap (100 MB), open `openNew` through a
-dynamic import of this lib: in a group room the group is preset and the room gets the card,
-anywhere else nobody is preset.
+- **Card:** a group-room card is an `m.text` with `org.okr.fileTransfer: { transferKey }`, posted
+  by the workflow bot (`@okrbot`, `postGroupChatMessage`). Only a message from that bot becomes a
+  card (`fileTransferCardOf` in `@okr/chat-util`). The same field from anybody else stays a plain
+  message, so a forged card neither loads a transfer nor hides its text. The bot's body is hidden
+  only when it is the server's exact one-line card text.
+- **Loading:** `MatrixChatStore` loads each card once per person and session through
+  `getFileTransfer` (expired or not found → «abgelaufen»; another failure retries on the next view
+  change) and opens files with `openFileTransferFile`. The message list only renders
+  `FileTransferCard`.
+- **Starting a transfer:** «Als Transfer senden» is offered in the room's MAIN composer only (not
+  the thread pane, not the pending ask room). A video over the chat cap (`MAX_CHAT_VIDEO_BYTES`,
+  100 MB — album uploads keep `MAX_VIDEO_BYTES`, 200 MB) gets ONE offer per pick, after a read
+  probe right after the pick (stale iOS handles get the «zu gross» toast). Both open `openNew`
+  through a dynamic import of this lib: a group room presets its group and gets the card; a DM or
+  ad-hoc chat presets its members except the sender, and no card is posted.
 
 ## Monitor
 

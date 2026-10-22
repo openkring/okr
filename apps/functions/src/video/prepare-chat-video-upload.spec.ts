@@ -63,7 +63,7 @@ vi.mock('../_storage/private-bucket', () => ({
 }));
 
 import { DocumentCollection, FolderCollection } from '@okr/shared-models';
-import { chatFolderKeys, MAX_VIDEO_BYTES, zurichStoreDate } from './chat-video.util';
+import { chatFolderKeys, MAX_CHAT_VIDEO_BYTES, zurichStoreDate } from './chat-video.util';
 import { prepareChatVideoUpload } from './prepare-chat-video-upload';
 
 const ROOM = '!room:hs';
@@ -141,9 +141,9 @@ describe('prepareChatVideoUpload', () => {
     expect(state.signCalls[0].path).toBe(fullPath);
     expect(state.signCalls[0].opts).toMatchObject({
       version: 'v4', action: 'write', contentType: 'video/quicktime',
-      extensionHeaders: { 'x-goog-content-length-range': `0,${MAX_VIDEO_BYTES}` },
+      extensionHeaders: { 'x-goog-content-length-range': `0,${MAX_CHAT_VIDEO_BYTES}` },
     });
-    expect(res).toEqual({ docKey: 'newDoc', uploadUrl: 'https://signed.example/put', contentType: 'video/quicktime', maxBytes: MAX_VIDEO_BYTES });
+    expect(res).toEqual({ docKey: 'newDoc', uploadUrl: 'https://signed.example/put', contentType: 'video/quicktime', maxBytes: MAX_CHAT_VIDEO_BYTES });
   });
 
   it('tolerates existing folders and never overwrites them', async () => {

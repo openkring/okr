@@ -238,7 +238,8 @@
     "error": "The video cannot be loaded right now. Please try again in a moment.",
     "copyLink": "Copy link",
     "linkCopied": "Link copied.",
-    "tooLargeTransfer": "This video is too large ({size}) – the chat takes videos up to 100 MB. You can still share it as a transfer: everyone here gets a link that expires after a few days."
+    "tooLargeTransfer": "This video is too large ({size}) – the chat takes videos up to 100 MB. You can still share it as a transfer: everyone here gets a link that expires after a few days.",
+    "tooLargeTransferMany": "{count} videos are too large for the chat – it takes videos up to 100 MB. You can still share them as a transfer: everyone here gets a link that expires after a few days."
   },
   "survey": {
     "title": "Create survey",

@@ -28,9 +28,10 @@ const REGION = 'europe-west6';
 const DOCS_COLLECTION = 'docs';
 const POSTER_SECOND = 2;
 const TIMEOUT_SECONDS = 540;
-/** Mirrors MAX_VIDEO_BYTES in @okr/shared-util-core. The client already refuses larger files;
- *  this is the backstop for an upload that bypassed the picker. */
-const MAX_INPUT_BYTES = 100 * 1024 * 1024;
+/** Mirrors MAX_VIDEO_BYTES in @okr/shared-util-core (album uploads, 200 MB). The client already
+ *  refuses larger files; this is the backstop for an upload that bypassed the picker. Chat videos
+ *  are smaller still (MAX_CHAT_VIDEO_BYTES, 100 MB) and pass this check too. */
+const MAX_INPUT_BYTES = 200 * 1024 * 1024;
 /** Nothing this instance is legitimately working on can be older than one full invocation. */
 const TMP_MAX_AGE_MS = TIMEOUT_SECONDS * 1000;
 

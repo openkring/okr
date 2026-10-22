@@ -527,13 +527,20 @@ export function findGroupOfRoom<T extends RoomOwningGroup>(
  */
 export const FILE_TRANSFER_CONTENT_KEY = 'org.okr.fileTransfer';
 
+/**
+ * The account that posts transfer cards: the workflow bot (`postGroupChatMessage` in
+ * `apps/functions/src/workflow/matrix-bot.ts`, user id = `whoami(MATRIX_BOT_TOKEN)`). Mirrors
+ * `okrbot` in `SERVICE_ACCOUNT_LOCALPARTS` of `apps/functions/src/matrix-simple/membership-sync.ts`;
+ * pointing that secret at a differently named account turns every card back into plain text.
+ */
+export const FILE_TRANSFER_BOT_LOCALPART = 'okrbot';
+
 /** A transfer key is a Firestore document id; anything else in the field is ignored. */
 const TRANSFER_KEY_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
 
 /**
- * The transfer a chat message stands for, or undefined for any other message.
- * Any client can write the field, so it only selects WHICH transfer to load: what the card then
- * shows comes from `getFileTransfer`, which admits only the sender, a recipient and an admin.
+ * The transfer key in a message's content, or undefined. Reads the field only — whether the
+ * message may become a card is `fileTransferCardOf`'s decision (any client can write the field).
  */
 export function fileTransferKeyOf(content: Record<string, unknown>): string | undefined {
   const field = content?.[FILE_TRANSFER_CONTENT_KEY] as { transferKey?: unknown } | null | undefined;
@@ -541,14 +548,90 @@ export function fileTransferKeyOf(content: Record<string, unknown>): string | un
   return typeof key === 'string' && TRANSFER_KEY_PATTERN.test(key) ? key : undefined;
 }
 
+/** True when `sender` is the transfer-card bot of our homeserver (exact user id). */
+export function isFileTransferBot(sender: string | undefined, serverName: string | undefined): boolean {
+  return !!sender && !!serverName && sender === `@${FILE_TRANSFER_BOT_LOCALPART}:${serverName}`;
+}
+
+/** Longest body the server can write (name + count + date + origin + key, generously). */
+const MAX_CARD_BODY_LENGTH = 600;
+/** Everything before `: <link>` in the server's body; `senderName` may be empty. */
+const CARD_BODY_PREFIX = /^(?:[^\r\n]{1,200} )?hat (?:1 Datei|[1-9]\d{0,3} Dateien) geteilt(?: \(bis \d{2}\.\d{2}\.\d{4}\))?$/;
+
 /**
- * True when a card message's body is the one-line text the server writes beside the card
- * («… hat 2 Dateien geteilt (bis …): <origin>/private/file-transfer/<key>») — the only text the
- * card may replace. Any other body is shown under the card, so a forged field never hides what
- * somebody actually wrote (same rule as the album video card).
+ * True when a body is exactly the one-line text the server writes beside a card:
+ * `«<name> hat <n> Dateien geteilt (bis dd.MM.yyyy): <origin>/private/file-transfer/<key>»`
+ * (see `fileTransferCardContent`). Anchored at both ends, one line, length-capped.
  */
 export function isFileTransferCardBody(body: string, transferKey: string, origins: readonly string[]): boolean {
   const text = (body ?? '').trim();
-  if (!text || /[\r\n]/.test(text)) return false;
-  return origins.some(origin => text.endsWith(`: ${origin}/private/file-transfer/${transferKey}`));
+  if (!text || text.length > MAX_CARD_BODY_LENGTH) return false;
+  return origins.some(origin => {
+    const suffix = `: ${origin}/private/file-transfer/${transferKey}`;
+    return !!origin && text.endsWith(suffix) && CARD_BODY_PREFIX.test(text.slice(0, -suffix.length));
+  });
+}
+
+/** How a message renders as a transfer card: which transfer, and whether its body may be hidden. */
+export interface FileTransferCardRender {
+  transferKey: string;
+  hideBody: boolean;
+}
+
+/**
+ * Whether a message is a transfer card. Only a message SENT BY THE CARD BOT becomes one; the same
+ * field from anybody else (a forged card) stays a plain message, so it neither loads a transfer
+ * nor hides its text. The body is hidden only when it is the server's exact card text.
+ */
+export function fileTransferCardOf(
+  message: { sender?: string; content?: Record<string, unknown>; body?: string },
+  serverName: string | undefined,
+  origins: readonly string[],
+): FileTransferCardRender | undefined {
+  if (!isFileTransferBot(message.sender, serverName)) return undefined;
+  const transferKey = fileTransferKeyOf(message.content ?? {});
+  if (!transferKey) return undefined;
+  return { transferKey, hideBody: isFileTransferCardBody(message.body ?? '', transferKey, origins) };
+}
+
+/** What «Als Transfer senden» presets for the open room (spec 1.115 §4.5). */
+export interface FileTransferRoomPreset {
+  groupKeys: string[];
+  personKeys: string[];
+  /** the room the card goes into — only a group room of this tenant, else '' */
+  chatRoomId: string;
+}
+
+/**
+ * Preset recipients of a transfer started in a room: a (live, non ad-hoc, non pinboard) group
+ * room presets its group and gets the card; any other room (DM, ad-hoc chat, pinboard) presets
+ * its members except the sender, and no card is posted there (the server ignores such rooms).
+ */
+export function fileTransferRoomPreset(
+  roomId: string,
+  group: { okey: string; kind?: string; isArchived?: boolean } | undefined,
+  memberKeys: readonly string[],
+  ownKey: string,
+): FileTransferRoomPreset {
+  if (roomId && group && !group.isArchived && (group.kind ?? 'group') === 'group') {
+    return { groupKeys: [group.okey], personKeys: [], chatRoomId: roomId };
+  }
+  const own = (ownKey ?? '').toLowerCase();
+  const personKeys = [...new Set(memberKeys.filter(k => !!k && k.toLowerCase() !== own))];
+  return { groupKeys: [], personKeys, chatRoomId: '' };
+}
+
+/**
+ * True when a picked file can still be read. iOS hands out picker handles that go stale once the
+ * input is cleared and then read as empty — silently. Call it right after the pick, before the
+ * input is cleared; a large video is not buffered, only its first byte is read.
+ */
+export async function isFileReadable(file: Blob): Promise<boolean> {
+  if (!(file?.size > 0)) return false;
+  try {
+    await file.slice(0, 1).arrayBuffer();
+    return true;
+  } catch {
+    return false;
+  }
 }

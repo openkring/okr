@@ -1,3 +1,4 @@
+import { MAX_CHAT_VIDEO_BYTES } from '@okr/shared-util-core';
 import { isVideoFile } from './video.util';
 
 /**
@@ -14,7 +15,15 @@ export function isAlbumVideoFile(file: File): boolean {
 }
 
 /**
- * Thrown before anything goes out when a chat video breaks the album limits (2 min, 100 MB).
+ * True for a video the room album would take but the chat cap refuses (> MAX_CHAT_VIDEO_BYTES):
+ * it is offered as a quick file transfer instead (spec 1.115 §4.5).
+ */
+export function isOversizeChatVideo(file: File): boolean {
+  return isAlbumVideoFile(file) && file.size > MAX_CHAT_VIDEO_BYTES;
+}
+
+/**
+ * Thrown before anything goes out when a chat video breaks the chat limits (2 min, 100 MB — MAX_CHAT_VIDEO_BYTES).
  * A distinct type so the store can show the size/duration toast instead of a generic failure.
  */
 export class VideoLimitError extends Error {

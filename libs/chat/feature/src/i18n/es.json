@@ -238,7 +238,8 @@
     "error": "El vídeo no se puede cargar ahora mismo. Vuelve a intentarlo en un momento.",
     "copyLink": "Copiar enlace",
     "linkCopied": "Enlace copiado.",
-    "tooLargeTransfer": "Este vídeo es demasiado grande ({size}): el chat admite vídeos de hasta 100 MB. Aun así puedes compartirlo como transferencia: todos aquí reciben un enlace que caduca a los pocos días."
+    "tooLargeTransfer": "Este vídeo es demasiado grande ({size}): el chat admite vídeos de hasta 100 MB. Aun así puedes compartirlo como transferencia: todos aquí reciben un enlace que caduca a los pocos días.",
+    "tooLargeTransferMany": "{count} vídeos son demasiado grandes para el chat: admite vídeos de hasta 100 MB. Aun así puedes compartirlos como transferencia: todos aquí reciben un enlace que caduca a los pocos días."
   },
   "survey": {
     "title": "Crear encuesta",

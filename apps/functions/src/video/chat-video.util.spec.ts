@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { HttpsError } from 'firebase-functions/v2/https';
 
 import {
-  assertChatFolders, chatAlbumRootName, humanMemberCount, chatFolderKeys, DM_ALBUM_NAME, chatVideoPath, MAX_VIDEO_BYTES, safeVideoFileName, safeVideoTitle, validateChatVideoRequest, zurichStoreDate,
+  assertChatFolders, chatAlbumRootName, humanMemberCount, chatFolderKeys, DM_ALBUM_NAME, chatVideoPath, MAX_CHAT_VIDEO_BYTES, safeVideoFileName, safeVideoTitle, validateChatVideoRequest, zurichStoreDate,
 } from './chat-video.util';
 import { isAlbumVideoObjectPath } from './video-sign.util';
 
@@ -70,7 +70,7 @@ describe('validateChatVideoRequest', () => {
     expect(validateChatVideoRequest(ok)).toEqual(ok);
   });
   it('accepts .avi and the size limit exactly', () => {
-    expect(validateChatVideoRequest({ ...ok, fileName: 'x.AVI', size: MAX_VIDEO_BYTES }).size).toBe(MAX_VIDEO_BYTES);
+    expect(validateChatVideoRequest({ ...ok, fileName: 'x.AVI', size: MAX_CHAT_VIDEO_BYTES }).size).toBe(MAX_CHAT_VIDEO_BYTES);
   });
   it('defaults a missing roomName and mimeType to empty strings', () => {
     const r = validateChatVideoRequest({ roomId: ok.roomId, fileName: ok.fileName, size: ok.size });

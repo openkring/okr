@@ -1,25 +1,34 @@
 /*
   Grenzen für hochgeladene Videos (Album). Zweck dieser Prüfung ist Komfort: dem Mitglied
-  100 MB Upload zu ersparen, die am Ende ohnehin abgelehnt würden.
+  200 MB Upload zu ersparen, die am Ende ohnehin abgelehnt würden.
 
   Die Grenze ist aber KEINE reine Komfortgrenze mehr, sondern eine von drei Stellen, an denen
-  dieselben 100 MB stehen müssen (seit dem Schnelltransfer, spec 1.115, von 200 auf 100 MB
-  gesenkt -- grössere Videos gehen als Transfer):
+  dieselben 200 MB stehen müssen:
     - MAX_VIDEO_BYTES (hier)                      -- die Vorprüfung im Client
-    - videoSizeOk() in storage.rules und storage-private.rules -- was Firebase überhaupt annimmt
-    - MAX_VIDEO_BYTES in apps/functions/src/video/chat-video.util.ts -- die signierte Chat-Upload-URL
+    - videoSizeOk() in storage.rules              -- was Firebase überhaupt annimmt
     - MAX_INPUT_BYTES in apps/functions/src/video -- was der Transcoder verarbeitet
   Driften sie auseinander, lehnt Firebase mit einem blanken `storage/unauthorized` ab: der
   Nutzer sieht ein rotes Kreuz ohne Text. Genau das war der Fall, solange storage.rules jeden
   Upload bei 25 MB deckelte.
+
+  Chat-Videos haben seit dem Schnelltransfer (spec 1.115) ihre EIGENE, kleinere Grenze:
+  MAX_CHAT_VIDEO_BYTES (100 MB). Grössere Videos gehen im Chat als Transfer. Sie steht an zwei
+  Stellen, die übereinstimmen müssen:
+    - MAX_CHAT_VIDEO_BYTES (hier)                               -- die Vorprüfung im Chat
+    - MAX_CHAT_VIDEO_BYTES in apps/functions/src/video/chat-video.util.ts -- prepareChatVideoUpload
+      prüft die Grösse und bindet sie als x-goog-content-length-range in die signierte URL
+  Die Storage-Regeln betrifft das nicht: Chat-Videos kommen nur über die signierte URL, die an
+  den Regeln vorbeigeht. Der Transcoder verarbeitet beides und bleibt bei MAX_VIDEO_BYTES.
 
   In storage.rules wird das Video an der ENDUNG erkannt, nicht am contentType: der SDK lädt
   ohne expliziten contentType hoch, also gewinnt der vom Browser geratene File.type -- und der
   ist bei .mov in Chrome/Firefox regelmässig leer.
 */
 
-export const MAX_VIDEO_BYTES = 100 * 1024 * 1024;   // 100 MB
+export const MAX_VIDEO_BYTES = 200 * 1024 * 1024;   // 200 MB
 export const MAX_VIDEO_SECONDS = 120;               // 2:00
+/** Chat videos (room album via prepareChatVideoUpload); see the comment above. */
+export const MAX_CHAT_VIDEO_BYTES = 100 * 1024 * 1024;   // 100 MB
 
 /** Wie lange auf die Metadaten des Probe-Elements gewartet wird, bevor die Dauer als
  *  unbekannt gilt. Kein Fehlerfall: Chrome kennt viele .mov-Container nicht. */
@@ -73,14 +82,15 @@ function probeDuration(file: File): Promise<number | undefined> {
 }
 
 /**
- * Prüft Grösse und Dauer, bevor ein Byte hochgeht.
+ * Prüft Grösse und Dauer, bevor ein Byte hochgeht. `maxBytes`: MAX_VIDEO_BYTES (Album) oder
+ * MAX_CHAT_VIDEO_BYTES (Chat).
  *
  * Die Grösse entscheidet zuerst und allein — eine zu grosse Datei wird nicht erst noch
  * geöffnet. Lässt sich die Dauer nicht ermitteln, gilt nur die Grössengrenze: ablehnen wäre
  * hier der schlechtere Fehler, weil Chrome bei .mov-Dateien regelmässig passt.
  */
-export async function checkVideoLimits(file: File): Promise<VideoCheckResult> {
-  if (file.size > MAX_VIDEO_BYTES) {
+export async function checkVideoLimits(file: File, maxBytes = MAX_VIDEO_BYTES): Promise<VideoCheckResult> {
+  if (file.size > maxBytes) {
     return { ok: false, reason: 'size', actual: file.size };
   }
   const duration = await probeDuration(file);

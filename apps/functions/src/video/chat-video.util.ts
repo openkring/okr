@@ -3,10 +3,11 @@ import { HttpsError } from 'firebase-functions/v2/https';
 
 import { isAlbumVideoObjectPath } from './video-sign.util';
 
-/** Mirrors MAX_VIDEO_BYTES in @okr/shared-util-core (see the "drei Stellen" comment there) and
- *  `videoSizeOk()` in the storage rules. Bound into the signed upload URL as
- *  `x-goog-content-length-range`, so GCS itself refuses a larger body. */
-export const MAX_VIDEO_BYTES = 100 * 1024 * 1024; // 100 MB
+/** Mirrors MAX_CHAT_VIDEO_BYTES in @okr/shared-util-core (see the comment there): the chat cap,
+ *  lowered from 200 to 100 MB with the quick file transfer (spec 1.115). Bound into the signed
+ *  upload URL as `x-goog-content-length-range`, so GCS itself refuses a larger body. Album uploads
+ *  keep MAX_VIDEO_BYTES (200 MB) in the storage rules and the transcoder. */
+export const MAX_CHAT_VIDEO_BYTES = 100 * 1024 * 1024; // 100 MB
 
 const VIDEO_EXTENSIONS = ['mp4', 'mov', 'avi'];
 const MAX_FILE_NAME = 120;
@@ -75,7 +76,7 @@ export function validateChatVideoRequest(data: unknown): ChatVideoRequest {
   }
   const ext = /\.([A-Za-z0-9]+)$/.exec(fileName)?.[1]?.toLowerCase() ?? '';
   if (!VIDEO_EXTENSIONS.includes(ext)) fail('Unsupported video type.');
-  if (typeof size !== 'number' || !Number.isInteger(size) || size < 1 || size > MAX_VIDEO_BYTES) {
+  if (typeof size !== 'number' || !Number.isInteger(size) || size < 1 || size > MAX_CHAT_VIDEO_BYTES) {
     fail('Invalid size.');
   }
   const mimeType = typeof d['mimeType'] === 'string' ? d['mimeType'].slice(0, 100) : '';

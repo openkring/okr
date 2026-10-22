@@ -18,7 +18,7 @@ import { videoDocKeyOf, videoLink } from '@okr/content-document-util';
 import { MatrixMessageInput, MatrixMessageList, MatrixRoomList, MessageActionsSheet, PinBanner, PollDetailModal, ReactionDetailsModal, ReminderPicker } from '@okr/chat-ui';
 import { MatrixPollData } from '@okr/chat-data-access';
 import { buildMessageActionLabels, buildMessageActionsCtx } from './message-actions.feature';
-import { fileTransferKeyOf, buildEditedPollAnswers, canEditPoll, parsePollContent, convertHeicToJpeg, groupRoomAliasLocalpart, shouldDeferAskRoom, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, readBookmark, isTrustedBookmarkEntry, ChatBookmark, resolvePermalinkTarget, shouldSendReceipt, MessageDraft, UploadTooLargeError, availablePresets, reminderDueAt, ReminderPreset, getMessageActions, MessageActionId, verifiedForwardedNames } from '@okr/chat-util';
+import { fileTransferCardOf, isFileReadable, isOversizeChatVideo, buildEditedPollAnswers, canEditPoll, parsePollContent, convertHeicToJpeg, groupRoomAliasLocalpart, shouldDeferAskRoom, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, readBookmark, isTrustedBookmarkEntry, ChatBookmark, resolvePermalinkTarget, shouldSendReceipt, MessageDraft, UploadTooLargeError, availablePresets, reminderDueAt, ReminderPreset, getMessageActions, MessageActionId, verifiedForwardedNames } from '@okr/chat-util';
 
 import { MatrixChatStore } from './matrix-chat.store';
 import { PollCreateModal } from './poll-create.modal';
@@ -557,6 +557,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                     (messageSent)="onMessageSent($event)"
                     (fileSent)="onFileSent($event)"
                     (filesPicked)="onFilesPicked($event)"
+                    (oversizeVideosPicked)="store.offerVideosAsTransfer($event.readable, $event.unreadable)"
                     (fileQueued)="onFileQueued($event)"
                     (removeImage)="onRemoveImage($event)"
                     (filesSent)="onFilesSent($event)"
@@ -586,6 +587,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                   (messageSent)="onMessageSent($event)"
                   (fileSent)="onFileSent($event)"
                     (filesPicked)="onFilesPicked($event)"
+                    (oversizeVideosPicked)="store.offerVideosAsTransfer($event.readable, $event.unreadable)"
                   (fileQueued)="onFileQueued($event)"
                   (removeImage)="onRemoveImage($event)"
                   (filesSent)="onFilesSent($event)"
@@ -685,6 +687,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                   (messageSent)="onThreadMessageSent($event)"
                   (fileSent)="onThreadFileSent($event)"
                   (filesPicked)="onThreadFilesPicked($event)"
+                  (oversizeVideosPicked)="store.offerVideosAsTransfer($event.readable, $event.unreadable)"
                   (fileQueued)="onThreadFileQueued($event)"
                   (typing)="onTyping($event)"
                   (surveyRequested)="onSurveyRequested()"
@@ -918,7 +921,8 @@ export class MatrixChat implements OnDestroy {
     const keys = new Set<string>();
     for (const m of [...this.messages(), ...this.threadMessages()]) {
       if (m.type !== 'm.text' || m.isRedacted) continue;
-      const key = fileTransferKeyOf(m.content ?? {});
+      // only the card bot's messages: a forged org.okr.fileTransfer field loads nothing
+      const key = fileTransferCardOf(m, this.store.homeServer(), this.store.appStore.appLinkOrigins())?.transferKey;
       if (key) keys.add(key);
     }
     return [...keys].sort();
@@ -1765,6 +1769,14 @@ export class MatrixChat implements OnDestroy {
    * (mp4/mov/avi → room album, the rest → Synapse). One toast for all failures of the batch.
    */
   private async sendNonImageFiles(files: File[], threadId?: string): Promise<void> {
+    // Videos over the chat cap (a drop; the composer splits its picks off itself): ONE transfer offer.
+    const oversize = files.filter(f => isOversizeChatVideo(f));
+    if (oversize.length > 0) {
+      const readable = await Promise.all(oversize.map(f => isFileReadable(f)));
+      await this.store.offerVideosAsTransfer(oversize.filter((_, i) => readable[i]), oversize.filter((_, i) => !readable[i]));
+    }
+    files = files.filter(f => !oversize.includes(f));
+    if (files.length === 0) return;
     // One prompt per batch, only for posts to the room (threads do not exist in a pinboard).
     if (!threadId && !await this.store.confirmPinboardBroadcast()) return;
     const results = await Promise.allSettled(files.map(f => this.store.sendFile(f, threadId)));

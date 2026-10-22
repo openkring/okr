@@ -12,7 +12,7 @@ import { FileTransferCard } from '@okr/content-file-transfer-ui';
 import { FileTransferOpenEvent, FileTransferView } from '@okr/content-file-transfer-util';
 import { MatrixReadReceiptStrip } from './matrix-read-receipt-strip';
 import { PollMessage } from './poll-message';
-import { decorateMentionPills, extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessages, ImageBatchGroup, isVideoMessage, linkifyText, readBookmark, isTrustedBookmarkEntry, ChatBookmark, parseMatrixPermalink, MatrixChatI18n, MessageOrBatch, readForwarded, fileTransferKeyOf, isFileTransferCardBody } from '@okr/chat-util';
+import { decorateMentionPills, extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessages, ImageBatchGroup, isVideoMessage, linkifyText, readBookmark, isTrustedBookmarkEntry, ChatBookmark, parseMatrixPermalink, MatrixChatI18n, MessageOrBatch, readForwarded, fileTransferCardOf, FileTransferCardRender } from '@okr/chat-util';
 
 /**
  * A quick file-transfer card in a room (spec 1.115 §4.5), loaded once per transferKey by the chat
@@ -676,20 +676,21 @@ const MENTION_AVATAR_SIZE = 36;
                           @case ('m.text') {
                             @let videoKey = videoKeyOf(item);
                             @let bookmark = bookmarkOf(item);
-                            @let transferKey = transferKeyOf(item);
-                            @let transfer = transferKey ? fileTransferCards()[transferKey] : undefined;
-                            @if (transferKey && transfer?.status !== 'failed') {
-                              <!-- A quick file transfer (spec 1.115 §4.5). Only the card's buttons stop the
-                                   tap; the rest of the card lets it through to the bubble's action sheet. -->
+                            @let transferCard = transferCardOf(item);
+                            @let transfer = transferCard ? fileTransferCards()[transferCard.transferKey] : undefined;
+                            @if (transferCard && transfer?.status !== 'failed') {
+                              <!-- A quick file transfer (spec 1.115 §4.5), only when the card bot sent it.
+                                   Only the card's buttons stop the tap; the rest of the card lets it
+                                   through to the bubble's action sheet. -->
                               <div class="chat-file-transfer-card" (click)="onFileTransferCardClick($event)">
                                 <okr-file-transfer-card
-                                  [transferKey]="transferKey"
+                                  [transferKey]="transferCard.transferKey"
                                   [view]="transfer?.view"
                                   [expired]="transfer?.status === 'expired'"
-                                  (open)="fileTransferOpened.emit({ transferKey, event: $event })"
+                                  (open)="fileTransferOpened.emit({ transferKey: transferCard.transferKey, event: $event })"
                                 />
                               </div>
-                              @if (!isFileTransferCardBody(item, transferKey)) {
+                              @if (!transferCard.hideBody) {
                                 <!-- any other body is shown too: a forged field must never hide what was written -->
                                 <p class="message-text" [innerHTML]="linkify(item.body)"></p>
                               }
@@ -1208,14 +1209,12 @@ export class MatrixMessageList {
     return videoDocKeyOf(item.content, item.body ?? '', this.linkOrigins());
   }
 
-  /** The quick file transfer a text message stands for (the org.okr.fileTransfer field). */
-  protected transferKeyOf(item: MatrixMessage): string | undefined {
-    return fileTransferKeyOf(item.content ?? {});
-  }
-
-  /** True when the body is the server's one-line card text — the only text the card may replace. */
-  protected isFileTransferCardBody(item: MatrixMessage, transferKey: string): boolean {
-    return isFileTransferCardBody(item.body ?? '', transferKey, this.linkOrigins());
+  /**
+   * The quick file transfer a text message stands for — only a message sent by the card bot;
+   * the org.okr.fileTransfer field from anybody else stays a plain message (forged card).
+   */
+  protected transferCardOf(item: MatrixMessage): FileTransferCardRender | undefined {
+    return fileTransferCardOf(item, this.serverName(), this.linkOrigins());
   }
 
   /** A tap on one of the card's buttons must not also open the message action sheet. */

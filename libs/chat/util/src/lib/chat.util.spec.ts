@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildReceiptAriaLabel, buildReceiptRows, filterRoomsOfTenant, isBridgedRoom, isForeignRoom, serverNameOf, isRoomClassifiable, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower, groupRoomAliasLocalpart, groupKeyFromRoomAlias, isRoomGoneError, askRoomAliasLocalpart, shouldDeferAskRoom, findGroupOfRoom, fileTransferKeyOf, isFileTransferCardBody } from './chat.util';
+import { buildReceiptAriaLabel, buildReceiptRows, filterRoomsOfTenant, isBridgedRoom, isForeignRoom, serverNameOf, isRoomClassifiable, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower, groupRoomAliasLocalpart, groupKeyFromRoomAlias, isRoomGoneError, askRoomAliasLocalpart, shouldDeferAskRoom, findGroupOfRoom, fileTransferKeyOf, isFileTransferCardBody, fileTransferCardOf, isFileTransferBot, fileTransferRoomPreset, isFileReadable } from './chat.util';
 
 describe('buildReceiptAriaLabel', () => {
   it('returns empty string for no receipts', () => {
@@ -618,5 +618,89 @@ describe('isFileTransferCardBody', () => {
 
   it('rejects any other text', () => {
     expect(isFileTransferCardBody('Schaut euch das an', 't1', origins)).toBe(false);
+  });
+
+  it('accepts the body without a sender name or expiry, and with one file', () => {
+    expect(isFileTransferCardBody('hat 1 Datei geteilt: https://app.seeclub.org/private/file-transfer/t1', 't1', origins)).toBe(true);
+  });
+
+  it('rejects free text before the link that is not the server format', () => {
+    expect(isFileTransferCardBody('Bitte Passwort an mich schicken: https://app.seeclub.org/private/file-transfer/t1', 't1', origins)).toBe(false);
+    expect(isFileTransferCardBody('Anna hat 2 Dateien geteilt (bis morgen): https://app.seeclub.org/private/file-transfer/t1', 't1', origins)).toBe(false);
+  });
+
+  it('rejects an overlong body', () => {
+    expect(isFileTransferCardBody('x'.repeat(600) + ' ' + body, 't1', origins)).toBe(false);
+  });
+});
+
+describe('fileTransferCardOf', () => {
+  const origins = ['https://app.seeclub.org'];
+  const content = { 'org.okr.fileTransfer': { transferKey: 't1' } };
+  const body = 'Anna Muster hat 2 Dateien geteilt (bis 01.11.2026): https://app.seeclub.org/private/file-transfer/t1';
+
+  it('makes a card of the bot\'s message and hides its server text', () => {
+    expect(fileTransferCardOf({ sender: '@okrbot:bkchat.etke.host', content, body }, 'bkchat.etke.host', origins))
+      .toEqual({ transferKey: 't1', hideBody: true });
+  });
+
+  it('keeps any other body of a bot card visible', () => {
+    expect(fileTransferCardOf({ sender: '@okrbot:bkchat.etke.host', content, body: 'Hallo' }, 'bkchat.etke.host', origins))
+      .toEqual({ transferKey: 't1', hideBody: false });
+  });
+
+  it('ignores a forged card from a normal member: no transfer key, no hidden body', () => {
+    expect(fileTransferCardOf({ sender: '@kaiser:bkchat.etke.host', content, body }, 'bkchat.etke.host', origins)).toBeUndefined();
+  });
+
+  it('ignores a bot of another homeserver and an unknown server name', () => {
+    expect(fileTransferCardOf({ sender: '@okrbot:evil.example', content, body }, 'bkchat.etke.host', origins)).toBeUndefined();
+    expect(fileTransferCardOf({ sender: '@okrbot:bkchat.etke.host', content, body }, '', origins)).toBeUndefined();
+  });
+
+  it('is undefined for a bot message without the field', () => {
+    expect(fileTransferCardOf({ sender: '@okrbot:bkchat.etke.host', content: {}, body }, 'bkchat.etke.host', origins)).toBeUndefined();
+  });
+
+  it('isFileTransferBot compares the full user id', () => {
+    expect(isFileTransferBot('@okrbot:hs', 'hs')).toBe(true);
+    expect(isFileTransferBot('@okrbot2:hs', 'hs')).toBe(false);
+    expect(isFileTransferBot(undefined, 'hs')).toBe(false);
+  });
+});
+
+describe('fileTransferRoomPreset', () => {
+  it('presets the group of a live group room and posts the card there', () => {
+    expect(fileTransferRoomPreset('!r:hs', { okey: 'g1' }, ['a', 'b'], 'a'))
+      .toEqual({ groupKeys: ['g1'], personKeys: [], chatRoomId: '!r:hs' });
+  });
+
+  it('presets the members (without me) of a DM or ad-hoc chat, no card', () => {
+    expect(fileTransferRoomPreset('!r:hs', undefined, ['me', 'anna', 'anna'], 'ME'))
+      .toEqual({ groupKeys: [], personKeys: ['anna'], chatRoomId: '' });
+    expect(fileTransferRoomPreset('!r:hs', { okey: 'c1', kind: 'chat' }, ['me', 'bob'], 'me'))
+      .toEqual({ groupKeys: [], personKeys: ['bob'], chatRoomId: '' });
+  });
+
+  it('treats an archived group or a pinboard like a non-group room', () => {
+    expect(fileTransferRoomPreset('!r:hs', { okey: 'g1', isArchived: true }, ['bob'], 'me').chatRoomId).toBe('');
+    expect(fileTransferRoomPreset('!r:hs', { okey: 'p1', kind: 'pinboard' }, ['bob'], 'me').groupKeys).toEqual([]);
+  });
+});
+
+describe('isFileReadable', () => {
+  it('is true for a readable non-empty file', async () => {
+    // jsdom's Blob has no arrayBuffer(); every browser the app supports has
+    const readable = { size: 10, slice: () => ({ arrayBuffer: () => Promise.resolve(new ArrayBuffer(1)) }) } as unknown as Blob;
+    expect(await isFileReadable(readable)).toBe(true);
+  });
+
+  it('is false for an empty file (a stale iOS handle reads as empty)', async () => {
+    expect(await isFileReadable(new Blob([]))).toBe(false);
+  });
+
+  it('is false when reading throws', async () => {
+    const stale = { size: 10, slice: () => ({ arrayBuffer: () => Promise.reject(new Error('NotReadableError')) }) } as unknown as Blob;
+    expect(await isFileReadable(stale)).toBe(false);
   });
 });

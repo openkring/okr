@@ -238,7 +238,8 @@
     "error": "Das Video lässt sich gerade nicht laden. Versuch es in einem Moment noch einmal.",
     "copyLink": "Link kopieren",
     "linkCopied": "Link kopiert.",
-    "tooLargeTransfer": "Das Video ist zu gross ({size}) – im Chat gehen Videos bis 100 MB. Als Transfer kannst du es trotzdem teilen: Alle hier bekommen einen Link, der nach ein paar Tagen abläuft."
+    "tooLargeTransfer": "Das Video ist zu gross ({size}) – im Chat gehen Videos bis 100 MB. Als Transfer kannst du es trotzdem teilen: Alle hier bekommen einen Link, der nach ein paar Tagen abläuft.",
+    "tooLargeTransferMany": "{count} Videos sind zu gross für den Chat – dort gehen Videos bis 100 MB. Als Transfer kannst du sie trotzdem teilen: Alle hier bekommen einen Link, der nach ein paar Tagen abläuft."
   },
   "survey": {
     "title": "Umfrage erstellen",

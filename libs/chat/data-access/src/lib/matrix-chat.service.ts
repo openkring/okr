@@ -9,7 +9,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotification, UserModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { ChatStatusService } from '@okr/shared-data-access';
-import { checkVideoLimits, debugData, debugMessage } from '@okr/shared-util-core';
+import { checkVideoLimits, debugData, debugMessage, MAX_CHAT_VIDEO_BYTES } from '@okr/shared-util-core';
 import { OKR_VIDEO_FIELD, videoLink } from '@okr/content-document-util';
 import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError, VideoUploadError, buildPollContent, PollAnswerDef, POLL_START_EVENT, PinboardInput, AvailablePinboard, UNREAD_FROM_EVENT, MARKED_UNREAD_EVENT, flaggedUnreadFrom, countUnmutedUnread, indexBookmarkEntries, bookmarkedMessageIds, PinPreview, pinPreviewOf } from '@okr/chat-util';
 
@@ -1116,7 +1116,7 @@ export class MatrixChatService {
   async sendVideoAsAlbumLink(roomId: string, roomName: string, file: File, threadId?: string, onUploadStart?: () => void): Promise<ISendEventResponse> {
     if (!this.client) throw new Error('Client not initialized');
 
-    const check = await checkVideoLimits(file);
+    const check = await checkVideoLimits(file, MAX_CHAT_VIDEO_BYTES);   // the chat cap (100 MB), not the album's
     if (!check.ok) throw new VideoLimitError(check.reason ?? 'size', check.actual ?? 0);
 
     // The composer materializes album videos while the picker handle is valid (see
