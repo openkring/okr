@@ -40,9 +40,17 @@ catch-alls under `private` and `public` would render these paths as CMS pages.
    Closing it aborts the upload.
 3. `sendFileTransfer` checks the real (deduplicated) recipients again and notifies them.
 
-Any failure after step 1 leaves the transfer in state `uploading`; the hourly reaper removes it
-and its files. The store is provided in root so the chat can open the send modal through a lazy
-import of this lib.
+Any failure after step 1 (stale chunk, upload error, closed modal, expired session, rejected send)
+calls `FileTransferStore.abandon`: `endFileTransfer` with `uploadingOnly` deletes the transfer
+while it is still `uploading` (event `ended`), so it no longer counts toward the sender's open
+bytes. Only the sender may do this, and it never ends an `open` transfer (a send whose response
+was lost may have opened it). If that call fails too, the hourly reaper drops the upload after
+24 h. The store is provided in root so the chat can open the send modal through a lazy import of
+this lib.
+
+Upload origins: the session is bound to the page origin — http(s) web origins, `https://localhost`
+(Android app) and exactly `capacitor://localhost` (iOS app, `normalizeUploadOrigin`). The private
+bucket's CORS must list both app origins.
 
 ## Opening files
 
@@ -60,8 +68,9 @@ navigates to the URL (the response says `attachment`, so the page stays). The he
   message, so a forged card neither loads a transfer nor hides its text. The bot's body is hidden
   only when it is the server's exact one-line card text.
 - **Loading:** `MatrixChatStore` loads each card once per person and session through
-  `getFileTransfer` (expired or not found → «abgelaufen»; another failure retries on the next view
-  change) and opens files with `openFileTransferFile`. The message list only renders
+  `getFileTransfer` (expired → «abgelaufen»; not found → «Nicht für dich freigegeben», a room
+  member who is not a recipient; another failure retries on the next view change,
+  `fileTransferCardStatusOf`) and opens files with `openFileTransferFile`. The message list only renders
   `FileTransferCard`.
 - **Starting a transfer:** «Als Transfer senden» is offered in the room's MAIN composer only (not
   the thread pane, not the pending ask room). A video over the chat cap (`MAX_CHAT_VIDEO_BYTES`,
@@ -81,7 +90,9 @@ admin opens the log — never one listener per row, because the log grows foreve
 fallback: the sender's address is not on the transfer document (addresses are the PII vault).
 
 «Limiten bearbeiten» writes `app-config/{tenantId}.fileTransferLimits` through
-`AppConfigService.setFileTransferLimits` (single-field patch).
+`AppConfigService.setFileTransferLimits` (single-field patch). `app-config` is world-readable, so
+every override is written with `name: ''`; the limits modal resolves the names from the persons
+by `personKey`.
 
 ## Privacy
 
@@ -89,10 +100,16 @@ Gate walked 2026-10-22, full outcome in spec §7.1.
 
 - **Read access:** `file-transfers` and `file-transfer-events` are readable by the sender and
   tenant admins only; everything else goes through callables. The public link view shows sender
-  name, message, files and expiry, nothing about other recipients.
+  name, message, files and expiry, nothing about other recipients. For a password-protected
+  transfer the GET answers only sender name and expiry; the page asks for the password and loads
+  the full view with `POST …/file-transfer/<token>/view` (same password buckets as the file POST,
+  no event written), then keeps the password in memory for the file POSTs.
 - **Personal links:** the token is never stored (only its hash) and there is no short alias link:
   an alias document is tenant-readable and would hand every recipient's bearer link to the whole
-  tenant. The direct `/public/file-transfer/<token>` URL goes out in the notification only.
+  tenant. The direct `/public/file-transfer/<token>` URL goes out in the notification only, and
+  only to outside addresses: a member's mail links the private page
+  `/private/file-transfer/<transferKey>` (signed in, no password). The client Sentry setup
+  replaces the token in page and API paths with `[token]` (`redactFileTransferTokens`).
 - **No IPs:** the rate limit keys its counters by a hash of the IP; events carry keys only.
 - **Retention:** files go at expiry or end; the log is permanent. Outside addresses stay in it.
 - **Erasure:** `SUBJECT_DATA_MAP` rows (`apps/functions/src/privacy/subject-data-map.ts`). The

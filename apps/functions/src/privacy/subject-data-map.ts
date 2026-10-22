@@ -1199,12 +1199,11 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     retention: RETAIN_10Y,
   },
   {
-    // Quick file transfers (spec 1.115). Keyed on the SENDER only. The recipients[] elements
-    // (personKey, name, email) are NOT reachable from here: `anonymizeFields` has no path for
-    // plain sub-fields of an array element, and a recipient-side OR query would make the flat
-    // `senderName` write below wipe the sender's name on someone else's transfer. Recipient
-    // data is bounded instead by the transfer's lifetime (max 30 days, files deleted on expiry)
-    // — a known gap in the erasure of the retained log, see the task-3 report.
+    // Quick file transfers (spec 1.115). `find` is keyed on the SENDER only: a recipient-side OR
+    // query would make the flat `senderName` write below wipe the sender's name on someone else's
+    // transfer. The subject's element in recipients[] of OTHER members' transfers is reached
+    // separately through `anonymizeArrayItems` below (name/email cleared, keys kept). Open: the
+    // data export does not list transfers where the subject is only a recipient.
     collection: 'file-transfers',
     dataClass: 'content',
     tier: 'T4',
