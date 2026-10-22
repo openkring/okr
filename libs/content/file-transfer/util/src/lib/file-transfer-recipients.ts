@@ -1,9 +1,6 @@
 import type { FileTransferRecipient } from '@okr/shared-models';
 
-export function buildRecipients(input: {
-  persons: { personKey: string; name: string; email: string; viaGroupKey?: string }[];
-  emails: string[];
-}): Omit<FileTransferRecipient, 'tokenHash' | 'aliasUrl'>[] {
+export function buildRecipients(input: { persons: { personKey: string; name: string; email: string; viaGroupKey?: string }[]; emails: string[] }): Omit<FileTransferRecipient, 'tokenHash' | 'aliasUrl'>[] {
   const byId = new Map<string, Omit<FileTransferRecipient, 'tokenHash' | 'aliasUrl'>>();
   const personEmails = new Set<string>();
 

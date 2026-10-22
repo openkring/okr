@@ -18,7 +18,7 @@ export const fileTransferValidations = staticSuite((model: FileTransferFormValue
     enforce(model.recipientCount + model.emails.length).greaterThanOrEquals(1);
   });
   test('emails', 'fileTransfer.emails.invalid', () => {
-    enforce(model.emails.every((e) => isFileTransferEmail(e))).isTruthy();
+    enforce(model.emails.every(e => isFileTransferEmail(e))).isTruthy();
   });
   test('lifetimeDays', 'fileTransfer.lifetime.range', () => {
     enforce(model.lifetimeDays).greaterThanOrEquals(1);

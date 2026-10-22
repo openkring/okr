@@ -5,7 +5,11 @@ const GB = 1024 ** 3;
 describe('resolveFileTransferLimits', () => {
   it('uses defaults without config', () => {
     expect(resolveFileTransferLimits(undefined, 'p1')).toEqual({
-      maxFileTransferBytes: GB, maxOpenBytes: 5 * GB, defaultLifetimeDays: 7, maxLifetimeDays: 30, maxExternalRecipients: 20,
+      maxFileTransferBytes: GB,
+      maxOpenBytes: 5 * GB,
+      defaultLifetimeDays: 7,
+      maxLifetimeDays: 30,
+      maxExternalRecipients: 20,
     });
   });
   it('applies an override to that person only', () => {
@@ -29,6 +33,17 @@ describe('checkFileTransferRequest', () => {
   it('tooLarge', () => expect(checkFileTransferRequest({ ...ok, totalBytes: GB + 1 }, limits, 0)).toBe('tooLarge'));
   it('openTotalExceeded', () => expect(checkFileTransferRequest({ ...ok, totalBytes: 1000 }, limits, 5 * GB)).toBe('openTotalExceeded'));
   it('tooManyExternals', () => expect(checkFileTransferRequest({ ...ok, externalCount: 21 }, limits, 0)).toBe('tooManyExternals'));
+  it('tooManyExternals counts emails, not just externalCount', () => {
+    const emails = Array.from({ length: 21 }, (_, i) => `u${i}@x.ch`);
+    expect(checkFileTransferRequest({ ...ok, externalCount: 1, emails }, limits, 0)).toBe('tooManyExternals');
+    expect(checkFileTransferRequest({ ...ok, externalCount: 0, emails: Array.from({ length: 50 }, (_, i) => `u${i}@x.ch`) }, limits, 0)).toBe('tooManyExternals');
+  });
+  it('invalidRequest for NaN, negative and fractional numbers', () => {
+    expect(checkFileTransferRequest({ ...ok, totalBytes: NaN }, limits, 0)).toBe('invalidRequest');
+    expect(checkFileTransferRequest({ ...ok, totalBytes: -1 }, limits, 0)).toBe('invalidRequest');
+    expect(checkFileTransferRequest({ ...ok, lifetimeDays: 1.5 }, limits, 0)).toBe('invalidRequest');
+    expect(checkFileTransferRequest(ok, limits, NaN)).toBe('invalidRequest');
+  });
   it('lifetimeTooLong', () => expect(checkFileTransferRequest({ ...ok, lifetimeDays: 31 }, limits, 0)).toBe('lifetimeTooLong'));
   it('noFiles', () => expect(checkFileTransferRequest({ ...ok, fileCount: 0 }, limits, 0)).toBe('noFiles'));
   it('noRecipients', () => expect(checkFileTransferRequest({ ...ok, recipientCount: 0, externalCount: 0, emails: [] }, limits, 0)).toBe('noRecipients'));
@@ -37,10 +52,12 @@ describe('checkFileTransferRequest', () => {
 
 describe('openBytes', () => {
   it('counts uploading and open transfers', () => {
-    expect(openBytes([
-      { state: 'uploading', totalBytes: 3e9 },
-      { state: 'open', totalBytes: 2e9 },
-      { state: 'expired', totalBytes: 9e9 },
-    ])).toBe(5e9);
+    expect(
+      openBytes([
+        { state: 'uploading', totalBytes: 3e9 },
+        { state: 'open', totalBytes: 2e9 },
+        { state: 'expired', totalBytes: 9e9 },
+      ])
+    ).toBe(5e9);
   });
 });

@@ -17,7 +17,7 @@ describe('buildRecipients', () => {
   });
   it('merges an outside email equal to a member email (case-insensitive)', () => {
     const r = buildRecipients({ persons: [{ personKey: 'a', name: 'A', email: 'a@x.ch' }], emails: ['A@X.ch', 'Bob@y.ch', 'bob@y.ch'] });
-    expect(r.map((x) => x.id)).toEqual(['p:a', 'e:bob@y.ch']);
+    expect(r.map(x => x.id)).toEqual(['p:a', 'e:bob@y.ch']);
     expect(r[1]).toMatchObject({ kind: 'email', personKey: '', email: 'bob@y.ch', name: 'bob@y.ch', viaGroupKeys: [] });
   });
 });
