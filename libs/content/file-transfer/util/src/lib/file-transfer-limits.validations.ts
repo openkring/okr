@@ -9,6 +9,7 @@ const PFX = '@content/file-transfer/util.';
 /** One per-person exception, sizes in GB as the admin sees them. */
 export interface FileTransferLimitOverrideFormData {
   personKey: string;
+  /** display only — resolved from the persons on the client, never written (see fromFileTransferLimitsFormData) */
   name: string;
   maxFileTransferGb: number;
   maxOpenGb: number;
@@ -25,7 +26,13 @@ export interface FileTransferLimitsFormData {
   overrides: FileTransferLimitOverrideFormData[];
 }
 
-export function toFileTransferLimitsFormData(limits: Partial<FileTransferLimits> | undefined): FileTransferLimitsFormData {
+/**
+ * @param nameOf resolves a person's display name from its key (client-side, from the persons the
+ *   admin may see); the stored `name` is only a fallback for a person the resolver does not know.
+ */
+export function toFileTransferLimitsFormData(
+  limits: Partial<FileTransferLimits> | undefined, nameOf: (personKey: string) => string = () => '',
+): FileTransferLimitsFormData {
   const l = { ...DEFAULT_FILE_TRANSFER_LIMITS, ...(limits ?? {}) };
   return {
     maxFileTransferGb: bytesToGb(l.maxFileTransferBytes, FILE_TRANSFER_GB_DECIMALS),
@@ -36,13 +43,18 @@ export function toFileTransferLimitsFormData(limits: Partial<FileTransferLimits>
     maxExternalRecipients: l.maxExternalRecipients,
     overrides: (l.overrides ?? []).map(o => ({
       personKey: o.personKey,
-      name: o.name,
+      name: nameOf(o.personKey) || o.name || '',
       maxFileTransferGb: bytesToGb(o.maxFileTransferBytes, FILE_TRANSFER_GB_DECIMALS),
       maxOpenGb: bytesToGb(o.maxOpenBytes, FILE_TRANSFER_GB_DECIMALS),
     })),
   };
 }
 
+/**
+ * Back to bytes for app-config. Every override's `name` is written EMPTY: `app-config` is
+ * world-readable (`allow read: if true`), so a person's name must not be stored there (spec 1.115
+ * §7.1); the form resolves names from `personKey` instead.
+ */
 export function fromFileTransferLimitsFormData(data: FileTransferLimitsFormData): FileTransferLimits {
   return {
     maxFileTransferBytes: gbToBytes(data.maxFileTransferGb),
@@ -53,7 +65,7 @@ export function fromFileTransferLimitsFormData(data: FileTransferLimitsFormData)
     maxExternalRecipients: data.maxExternalRecipients,
     overrides: (data.overrides ?? []).map(o => ({
       personKey: o.personKey,
-      name: o.name,
+      name: '',
       maxFileTransferBytes: gbToBytes(o.maxFileTransferGb),
       maxOpenBytes: gbToBytes(o.maxOpenGb),
     })),

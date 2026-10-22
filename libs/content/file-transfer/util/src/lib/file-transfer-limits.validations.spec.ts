@@ -13,9 +13,19 @@ describe('toFileTransferLimitsFormData / fromFileTransferLimitsFormData', () => 
       defaultLifetimeDays: 7, maxLifetimeDays: 30, maxExternalRecipients: 20, overrides: [],
     });
   });
-  it('round-trips the defaults and overrides', () => {
-    const limits = { ...DEFAULT_FILE_TRANSFER_LIMITS, overrides: [{ personKey: 'p1', name: 'Anna', maxFileTransferBytes: 10 * GB, maxOpenBytes: 50 * GB }] };
+  it('round-trips the defaults and overrides (names never stored)', () => {
+    const limits = { ...DEFAULT_FILE_TRANSFER_LIMITS, overrides: [{ personKey: 'p1', name: '', maxFileTransferBytes: 10 * GB, maxOpenBytes: 50 * GB }] };
     expect(fromFileTransferLimitsFormData(toFileTransferLimitsFormData(limits))).toEqual(limits);
+  });
+  it('resolves override names from the persons for display', () => {
+    const limits = { ...DEFAULT_FILE_TRANSFER_LIMITS, overrides: [{ personKey: 'p1', name: '', maxFileTransferBytes: GB, maxOpenBytes: GB }] };
+    expect(toFileTransferLimitsFormData(limits, key => (key === 'p1' ? 'Anna Muster' : '')).overrides[0].name).toBe('Anna Muster');
+  });
+  it('writes every override name empty: app-config is world-readable', () => {
+    const form = { ...base(), overrides: [{ personKey: 'p1', name: 'Anna Muster', maxFileTransferGb: 2, maxOpenGb: 10 }] };
+    const out = fromFileTransferLimitsFormData(form);
+    expect(out.overrides.map(o => o.name)).toEqual(['']);
+    expect(JSON.stringify(out)).not.toContain('Anna');
   });
   it('keeps four decimals of GB and converts back to whole bytes', () => {
     const form = toFileTransferLimitsFormData({ ...DEFAULT_FILE_TRANSFER_LIMITS, maxFileTransferBytes: 1.26 * GB });

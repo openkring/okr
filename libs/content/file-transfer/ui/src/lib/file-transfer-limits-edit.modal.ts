@@ -2,9 +2,10 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
-import { FileTransferLimits } from '@okr/shared-models';
+import { FileTransferLimits, PersonModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
+import { getFullName } from '@okr/shared-util-core';
 import {
   FILE_TRANSFER_I18N_KEYS, FileTransferI18n, FileTransferLimitsFormData, fromFileTransferLimitsFormData, toFileTransferLimitsFormData,
 } from '@okr/content-file-transfer-util';
@@ -50,10 +51,17 @@ export class FileTransferLimitsEditModal {
   public readonly limits = input<FileTransferLimits | undefined>(undefined);
   public readonly tenantId = input('');
   public readonly readOnly = input(false);
+  /** resolves the override names for display: app-config stores only the personKey (it is world-readable) */
+  public readonly persons = input<PersonModel[]>([]);
+
+  private readonly nameOf = computed(() => {
+    const names = new Map(this.persons().map(p => [p.okey, getFullName(p.firstName, p.lastName)]));
+    return (personKey: string) => names.get(personKey) ?? '';
+  });
 
   protected formDirty = signal(false);
   protected formValid = signal(false);
-  protected readonly formData = linkedSignal<FileTransferLimitsFormData>(() => toFileTransferLimitsFormData(this.limits()));
+  protected readonly formData = linkedSignal<FileTransferLimitsFormData>(() => toFileTransferLimitsFormData(this.limits(), this.nameOf()));
   protected showForm = signal(true);
 
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
@@ -72,7 +80,7 @@ export class FileTransferLimitsEditModal {
 
   public cancel(): void {
     this.formDirty.set(false);
-    this.formData.set(toFileTransferLimitsFormData(this.limits()));
+    this.formData.set(toFileTransferLimitsFormData(this.limits(), this.nameOf()));
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);   // fresh form → clears stale Vest state
   }
