@@ -1,0 +1,31 @@
+{
+  "name": "content-file-transfer-data-access",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/content/file-transfer/data-access/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:data-access", "scope:content", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/content/file-transfer/data-access",
+        "main": "libs/content/file-transfer/data-access/src/index.ts",
+        "tsConfig": "libs/content/file-transfer/data-access/tsconfig.lib.json",
+        "assets": ["libs/content/file-transfer/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "configFile": "libs/content/file-transfer/data-access/vite.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

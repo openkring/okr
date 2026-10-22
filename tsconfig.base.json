@@ -155,6 +155,7 @@
       "@okr/content-folder-feature": ["libs/content/folder/feature/src/index.ts"],
       "@okr/content-folder-ui": ["libs/content/folder/ui/src/index.ts"],
       "@okr/content-folder-util": ["libs/content/folder/util/src/index.ts"],
+      "@okr/content-file-transfer-data-access": ["libs/content/file-transfer/data-access/src/index.ts"],
       "@okr/content-file-transfer-util": ["libs/content/file-transfer/util/src/index.ts"],
       "@okr/content-diary-data-access": ["libs/content/diary/data-access/src/index.ts"],
       "@okr/content-diary-feature": ["libs/content/diary/feature/src/index.ts"],
