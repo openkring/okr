@@ -69,6 +69,32 @@ included. `DiaryService.list` therefore filters on `authorKey` alone server-side
 `isArchived`/tenant in memory: a second `where` clause would demand a composite index for a
 collection that only ever holds one person's own entries.
 
+## Alben
+
+Albums (spec 1.114) give a quick way into the diary by person, location, event, trip, tag and date.
+
+| Piece | Role |
+|---|---|
+| `diary-albums.modal.ts` | the «Alben» modal: segments Personen, Orte, Ereignisse, Reisen, Tags, Datum; picking one applies a filter to the list |
+| `diary-album-edit.modal.ts` / `diary-album.form.ts` | create or edit a person, location or event album (title, notes, resolved `ref` or event slug) |
+| `diary-trip.page.ts` | the trip page: days of the trip, route map (`okr-leaflet-map`) and notes |
+| `diaryAlbums` | personal per-author collection, document id `tenant__author__kind__ref`; tags and trips have no album document |
+
+**Filter.** The list holds one filter. An album or a trip is a `array-contains` query on
+`DiaryModel.albumKeys` (or `tripKey`); the Datum segment is a range. Combining an album with a date
+merges both into the single active filter (`{...current, from, to}`). The date filter is not carried in
+the URL and is lost on reload.
+
+**`albumKeys`.** Derived keys (`person.p1`, `location.l1`, `event.anrudern`, `tag.Familie`) computed
+by `diaryAlbumKeys` in the util lib from people, location, events and tags. Never edited by hand; every
+write recomputes them. Trip queries use the index `authorKey`, `tenants`, `tripKey` and sort in memory.
+
+**Scripts** (dry run is the default, `--write` must be explicit, `--tenant` is validated):
+
+- `scripts/backfill-diary-album-keys.mjs` fills `albumKeys` on existing entries.
+- `scripts/seed-diary-event-albums.mjs` seeds event albums from the Drive notes; orphan slugs only
+  with `--with-orphans`.
+
 ## Library Path
 
 `libs/content/diary/{util,data-access,feature}` → `@okr/content-diary-{util,data-access,feature}`
