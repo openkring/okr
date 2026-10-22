@@ -6,14 +6,8 @@ import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { safeStructuredClone } from '@okr/shared-util-core';
 
-import { DiaryI18n } from '@okr/content-diary-util';
+import { DiaryI18n, avatarTitle } from '@okr/content-diary-util';
 import { DiaryAlbumForm } from './diary-album.form';
-
-/** Display name of a picked avatar, used to prefill an empty album title. */
-export function avatarTitle(avatar: AvatarInfo): string {
-  const name = [avatar.name1, avatar.name2].filter(part => !!part).join(' ');
-  return name || avatar.label || '';
-}
 
 @Component({
   selector: 'okr-diary-album-edit-modal',

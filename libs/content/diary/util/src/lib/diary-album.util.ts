@@ -1,4 +1,4 @@
-import { DiaryAlbumKind, DiaryAlbumModel, DiaryModel } from '@okr/shared-models';
+import { AvatarInfo, DiaryAlbumKind, DiaryAlbumModel, DiaryModel } from '@okr/shared-models';
 
 export type DiaryFilterKind = DiaryAlbumKind | 'tag' | 'trip' | 'date';
 
@@ -73,4 +73,10 @@ export function decodeDiaryFilter(listId: string): Pick<DiaryFilter, 'kind' | 'k
   if (kind === 'trip') return { kind: 'trip', key: rest };
   if (kind === 'person' || kind === 'location' || kind === 'event' || kind === 'tag') return { kind, key: listId };
   return undefined;
+}
+
+/** Display name of a picked avatar, used to prefill an empty album title. */
+export function avatarTitle(avatar: AvatarInfo): string {
+  const name = [avatar.name1, avatar.name2].filter(part => !!part).join(' ');
+  return name || avatar.label || '';
 }

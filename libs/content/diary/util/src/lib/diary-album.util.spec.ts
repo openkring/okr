@@ -1,6 +1,6 @@
 import { AvatarInfo } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
-import { decodeDiaryFilter, DiaryFilter, diaryAlbumId, diaryAlbumKeys, encodeDiaryFilter, eventSlug, inDiaryDateRange } from './diary-album.util';
+import { avatarTitle, decodeDiaryFilter, DiaryFilter, diaryAlbumId, diaryAlbumKeys, encodeDiaryFilter, eventSlug, inDiaryDateRange } from './diary-album.util';
 
 describe('diary album utils', () => {
   it('derives sorted, de-duplicated keys', () => {
@@ -41,4 +41,11 @@ describe('diary album utils', () => {
     expect(decodeDiaryFilter(encodeDiaryFilter({ ...f, kind: 'trip', key: 'bka__travel__x' }))).toEqual({ kind: 'trip', key: 'bka__travel__x' });
     expect(decodeDiaryFilter('all')).toBeUndefined();
   });
+});
+
+describe('avatarTitle', () => {
+  it('joins first and last name', () =>
+    expect(avatarTitle({ name1: 'Anna', name2: 'Muster', label: 'x' } as AvatarInfo)).toBe('Anna Muster'));
+  it('falls back to the label', () =>
+    expect(avatarTitle({ name1: '', name2: '', label: 'Luzern' } as AvatarInfo)).toBe('Luzern'));
 });

@@ -77,9 +77,9 @@ export class DiaryTripForm {
   protected readonly startDate = computed(() => this.formData()?.startDate ?? '');
   protected readonly endDate = computed(() => this.formData()?.endDate ?? '');
 
-  protected readonly nameI18n = computed(() => ({
-    name: 'name', label: this.i18n().albums_trip_name(), placeholder: '',
-  } as TextInputI18n));
+  protected readonly nameI18n = computed<TextInputI18n>(() => ({
+    name: 'name', label: this.i18n().albums_trip_name(), placeholder: '', helper: '',
+  }));
   protected readonly startI18n = computed(() => ({
     name: 'startDate', label: this.i18n().albums_range_from(), placeholder: '',
   } as DateInputI18n));

@@ -49,7 +49,7 @@ import { DiaryI18n, diaryAlbumValidations, eventSlug } from '@okr/content-diary-
                 @if (kind() === 'event') {
                   <ion-col size="12" size-md="6">
                     <okr-text-input [i18n]="slugI18n()" [value]="slug()" (valueChange)="onFieldChange('slug', $event)"
-                      [readOnly]="isReadOnly() || !isNew()" />
+                      [showHelper]="true" [readOnly]="isReadOnly() || !isNew()" />
                     <okr-error-note [errors]="slugErrors()" />
                   </ion-col>
                 }
@@ -99,27 +99,31 @@ export class DiaryAlbumForm {
     return ref ? [ref] : [];
   });
 
-  protected readonly titleI18n = computed(() => ({
-    name: 'title', label: this.i18n().albums_title_label(), placeholder: this.i18n().albums_title_placeholder(),
-  } as TextInputI18n));
-  protected readonly slugI18n = computed(() => ({
+  protected readonly titleI18n = computed<TextInputI18n>(() => ({
+    name: 'title', label: this.i18n().albums_title_label(), placeholder: this.i18n().albums_title_placeholder(), helper: '',
+  }));
+  protected readonly slugI18n = computed<TextInputI18n>(() => ({
     name: 'slug', label: this.i18n().albums_slug_label(), placeholder: '', helper: this.i18n().albums_slug_helper(),
-  } as TextInputI18n));
+  }));
+
+  /** Once the user has edited the slug by hand, the title no longer overwrites it. */
+  private slugTouched = false;
 
   protected onFieldChange(fieldName: 'title' | 'slug', fieldValue: string): void {
     const value = fieldValue ?? '';
     if (this.formData()?.[fieldName] === value) return;
+    if (fieldName === 'slug') this.slugTouched = true;
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: value }));
   }
 
-  /** While the album is new, an event's slug follows its title. */
+  /** While the album is new and the slug untouched, an event's slug follows its title. */
   protected onTitleChange(title: string): void {
     const value = title ?? '';
     if (this.formData()?.title === value) return;
     this.dirty.emit(true);
     this.formData.update((vm) => ({
-      ...vm, title: value, slug: this.isNew() && vm.kind === 'event' ? eventSlug(value) : vm.slug,
+      ...vm, title: value, slug: this.isNew() && !this.slugTouched && vm.kind === 'event' ? eventSlug(value) : vm.slug,
     }));
   }
 
