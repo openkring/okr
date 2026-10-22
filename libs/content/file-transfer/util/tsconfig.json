@@ -1,0 +1,19 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node", "vitest"],
+    "declaration": true,
+    "ignoreDeprecations": "6.0",
+    "rootDir": "src"
+  },
+  "angularCompilerOptions": {
+    "strictTemplates": true,
+    "strictInjectionParameters": true,
+    "disableTypeScriptVersionCheck": true,
+    "compileNonExportedClasses": true
+  },
+  "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
+  "exclude": ["dist/**/*"],
+  "references": [{ "path": "../../../shared/models/tsconfig.lib.json" }]
+}
