@@ -1,6 +1,7 @@
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
+import type { Firestore } from 'firebase-admin/firestore';
 
 import { FileTransferCollection, FileTransferEventCollection, FileTransferModel } from '@okr/shared-models';
 
@@ -27,6 +28,55 @@ export function reapAction(t: Pick<FileTransferModel, 'state' | 'expiresAt' | 'c
     return Number.isFinite(created) && Number.isFinite(now) && now - created > UPLOAD_MAX_AGE_MS ? 'dropUpload' : 'none';
   }
   return 'none';
+}
+
+export type OrphanAction = 'delete' | 'keep';
+
+/**
+ * What the orphan sweep does with a transfer FOLDER in the bucket, given its doc (undefined = no
+ * doc). Files of a missing/ended/expired transfer (or an upload past 24 h) are leftovers of a
+ * delete that failed after the state commit; open transfers and fresh uploads are kept.
+ */
+export function orphanAction(doc: Pick<FileTransferModel, 'state' | 'createdAt'> | undefined, nowIso: string): OrphanAction {
+  if (!doc || doc.state === 'ended' || doc.state === 'expired') return 'delete';
+  if (doc.state === 'uploading') return reapAction({ state: 'uploading', expiresAt: '', createdAt: doc.createdAt }, nowIso) === 'dropUpload' ? 'delete' : 'keep';
+  return 'keep';
+}
+
+/** Per tenant and run: at most this many transfer folders are inspected. */
+const ORPHAN_SWEEP_MAX_PREFIXES = 500;
+
+/** Deletes the folders of transfers that no longer need files (see orphanAction). One failure never stops the sweep. */
+async function sweepOrphans(db: Firestore, nowIso: string): Promise<{ checked: number; deleted: number }> {
+  let checked = 0;
+  let deleted = 0;
+  const tenants = await db.collection('app-config').listDocuments();
+  for (const tenantRef of tenants) {
+    try {
+      const root = `tenant/${tenantRef.id}/file-transfer/`;
+      const [, , apiResponse] = await privateBucket().getFiles({ prefix: root, delimiter: '/', autoPaginate: false, maxResults: ORPHAN_SWEEP_MAX_PREFIXES });
+      const prefixes = ((apiResponse as { prefixes?: string[] } | undefined)?.prefixes ?? []).slice(0, ORPHAN_SWEEP_MAX_PREFIXES);
+      for (const prefix of prefixes) {
+        const key = prefix.slice(root.length).replace(/\/$/, '');
+        if (!key) continue;
+        checked++;
+        try {
+          const snap = await db.collection(FileTransferCollection).doc(key).get();
+          const doc = snap.exists ? (snap.data() as Partial<FileTransferModel>) : undefined;
+          const state = doc ? { state: doc.state ?? 'open', createdAt: doc.createdAt ?? '' } : undefined;
+          if (orphanAction(state, nowIso) === 'delete') {
+            await privateBucket().deleteFiles({ prefix });
+            deleted++;
+          }
+        } catch (err) {
+          logger.error(`reapFileTransfers: orphan sweep of ${prefix} failed`, err);
+        }
+      }
+    } catch (err) {
+      logger.error(`reapFileTransfers: orphan sweep of tenant ${tenantRef.id} failed`, err);
+    }
+  }
+  return { checked, deleted };
 }
 
 /**
@@ -82,6 +132,10 @@ export const reapFileTransfers = onSchedule(
         }
       }
     }
-    logger.info(`reapFileTransfers: ${expired} expired, ${dropped} dropped uploads`);
+    const orphans = await sweepOrphans(db, nowIso).catch(err => {
+      logger.error('reapFileTransfers: orphan sweep failed', err);
+      return { checked: 0, deleted: 0 };
+    });
+    logger.info(`reapFileTransfers: ${expired} expired, ${dropped} dropped uploads, orphan sweep ${orphans.deleted}/${orphans.checked} folders deleted`);
   },
 );

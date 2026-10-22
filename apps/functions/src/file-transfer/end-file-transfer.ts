@@ -1,4 +1,5 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
 import { FileTransferCollection, FileTransferEventCollection, FileTransferModel, UserModel } from '@okr/shared-models';
@@ -33,8 +34,6 @@ export const endFileTransfer = onCall<unknown, Promise<Record<string, never>>>(
     const stored = snap.data() as Partial<FileTransferModel> | undefined;
     if (!snap.exists || !stored?.tenants?.includes(tenantId)) throw new HttpsError('not-found', 'notFound');
     if (!isAdmin && !(personKey && stored.senderKey === personKey)) throw new HttpsError('permission-denied', 'Only the sender or an admin may end this transfer.');
-    if (stored.state === 'ended' || stored.state === 'expired') return {};
-    if (stored.state !== 'open') throw new HttpsError('failed-precondition', 'notOpen');
 
     // Flip the state in a transaction that re-reads the doc, so a concurrent reaper run (or a
     // second end) cannot double-write: only a transfer that is STILL 'open' is ended, and its
@@ -51,7 +50,15 @@ export const endFileTransfer = onCall<unknown, Promise<Record<string, never>>>(
       });
       return true;
     });
-    if (ended) await privateBucket().deleteFiles({ prefix: fileTransferPrefix(tenantId, key) });
+    if (ended) {
+      // The transfer is already 'ended'; a failed delete must not fail the call — the hourly
+      // orphan sweep (reapFileTransfers) removes the leftover files of an ended transfer.
+      try {
+        await privateBucket().deleteFiles({ prefix: fileTransferPrefix(tenantId, key) });
+      } catch (err) {
+        logger.error(`${CF_NAME}: deleting the files of ${key} failed — left to the orphan sweep`, { error: String(err) });
+      }
+    }
     return {};
   },
 );
