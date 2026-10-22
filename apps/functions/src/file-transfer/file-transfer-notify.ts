@@ -6,7 +6,11 @@ import { buildRecipients } from '@okr/content-file-transfer-util';
 import { escapeHtml } from '../calendar/mail';
 
 /*
- * Personal links (spec 1.115 §4.2) are the DIRECT url `<appBaseUrl>/public/file-transfer/<token>`,
+ * Links in a notification (spec 1.115 §4.2): a MEMBER (person recipient) gets the private page
+ * `<appBaseUrl>/private/file-transfer/<transferKey>` — no token, they open it signed in and never
+ * need the transfer password. Only an OUTSIDE address gets a personal token link.
+ *
+ * Personal token links are the DIRECT url `<appBaseUrl>/public/file-transfer/<token>`,
  * not an alias-service short link (deviation from the plan, fix round 1 of Task 4): alias docs are
  * readable tenant-wide (`aliases`: `allow read: if tenantRead()`) and their `targetUrl` would expose
  * the bearer token to every member. The url therefore exists only inside the notification itself;
@@ -51,8 +55,10 @@ export function mayPostCard(p: { senderJoined: boolean; postPolicy: string | und
 }
 
 export interface PlannedMail {
-  /** the recipient whose personal link the mail carries */
+  /** the recipient the mail is addressed to */
   recipientId: string;
+  /** 'member': the private page (no token); 'token': the recipient's personal token link */
+  link: 'member' | 'token';
   to: string;
   /** further recipients this one mail also reaches (an outside address equal to the person's) */
   alsoReaches: string[];
@@ -71,10 +77,13 @@ export interface NotificationPlan {
  * independent of the card. 'signal' is skipped (no Signal send path in the functions yet, spec
  * 1.113), 'post' is ignored for transfers.
  *
+ * A person's mail carries the private member link, an outside address's mail its token link.
+ *
  * `emailByPerson` holds the members' addresses server-side (never stored, never returned). If an
- * outside address equals the address of a person who is mailed anyway, only ONE mail goes out —
- * with the person's link — and it counts for both recipients, so neither the stored doc nor the
- * returned counts reveal the match (see `recipientsForSend`).
+ * outside address equals the address of a person who is mailed anyway, the address belongs to that
+ * member: only ONE mail goes out — with the member's private link — and it counts for both
+ * recipients, so neither the stored doc nor the returned counts reveal the match (see
+ * `recipientsForSend`).
  */
 export function planNotifications(
   recipients: Pick<FileTransferRecipient, 'id' | 'kind' | 'personKey' | 'email'>[],
@@ -89,7 +98,7 @@ export function planNotifications(
     const channels = channelsByPerson.get(r.personKey) ?? [];
     const to = (emailByPerson.get(r.personKey) ?? '').trim();
     if (to && channels.includes(DeliveryChannel.Email)) {
-      const mail: PlannedMail = { recipientId: r.id, to, alsoReaches: [] };
+      const mail: PlannedMail = { recipientId: r.id, link: 'member', to, alsoReaches: [] };
       plan.mails.push(mail);
       if (!personMailByAddress.has(to.toLowerCase())) personMailByAddress.set(to.toLowerCase(), mail);
     }
@@ -100,9 +109,16 @@ export function planNotifications(
     if (r.kind !== 'email' || !r.email) continue;
     const same = personMailByAddress.get(r.email.trim().toLowerCase());
     if (same) same.alsoReaches.push(r.id);
-    else plan.mails.push({ recipientId: r.id, to: r.email, alsoReaches: [] });
+    else plan.mails.push({ recipientId: r.id, link: 'token', to: r.email, alsoReaches: [] });
   }
   return plan;
+}
+
+/** The link a planned mail carries: the member's private page, or the outside recipient's token link. */
+export function notificationLink(baseUrl: string, transferKey: string, mail: Pick<PlannedMail, 'link'>, token: string): string {
+  return mail.link === 'member'
+    ? `${baseUrl}/private/file-transfer/${transferKey}`
+    : `${baseUrl}/public/file-transfer/${token}`;
 }
 
 function fileCountLabel(n: number): string {
@@ -133,8 +149,11 @@ function paragraphText(text: string): string {
   return escapeHtml(text).replace(/\r?\n/g, '<br>');
 }
 
-/** Email with a personal link — German, du-form, plain. */
-export function fileTransferEmail(t: FileTransferModel, link: string, appName: string): { subject: string; html: string } {
+/**
+ * Email with a link — German, du-form, plain. `member`: the link opens the app page and needs a
+ * sign-in (no password); otherwise it is the outside recipient's personal link.
+ */
+export function fileTransferEmail(t: FileTransferModel, link: string, appName: string, member = false): { subject: string; html: string } {
   const sender = t.senderName || appName;
   const subject = `${sender} hat dir Dateien geschickt`;
   const message = t.message.trim()
@@ -142,6 +161,7 @@ export function fileTransferEmail(t: FileTransferModel, link: string, appName: s
     : '';
   const expiry = fileTransferExpiryLabel(t.expiresAt);
   const until = expiry ? `<p>Der Link ist bis am ${escapeHtml(expiry)} gültig.</p>` : '';
+  const signIn = member ? `<p>Der Link öffnet die Dateien in der App, sobald du angemeldet bist.</p>` : '';
   const html = `<!doctype html><html lang="de"><head><meta charset="utf-8"><title>${escapeHtml(subject)}</title></head>`
     + '<body style="margin:0;padding:24px 16px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1f2328;line-height:1.5;">'
     + '<div style="max-width:560px;margin:0 auto;">'
@@ -150,6 +170,7 @@ export function fileTransferEmail(t: FileTransferModel, link: string, appName: s
     + message
     + `<p><a href="${escapeHtml(link)}">Dateien ansehen</a></p>`
     + `<p style="color:#57606a;font-size:13px;">${escapeHtml(link)}</p>`
+    + signIn
     + until
     + `<p>Freundliche Grüsse<br>${escapeHtml(appName)}</p>`
     + '</div></body></html>';

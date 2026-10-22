@@ -23,7 +23,7 @@ import { pushToPersons } from '../srv/push';
 import { createFirestoreDeps } from '../workflow/firestore-deps';
 import { matrixBotToken, postGroupChatMessage } from '../workflow/matrix-bot';
 import {
-  fileTransferCardContent, fileTransferEmail, mayPostCard, PersonCandidate, planNotifications, recipientsForSend,
+  fileTransferCardContent, fileTransferEmail, mayPostCard, notificationLink, PersonCandidate, planNotifications, recipientsForSend,
 } from './file-transfer-notify';
 import { hashPassword, hashToken, newToken } from './file-transfer-tokens';
 
@@ -97,11 +97,6 @@ function matrixUserId(personKey: string): string {
 
 /** A room that may receive the card: a recipient group's room or the group room the send started in. */
 interface CardTarget { groupKey: string; postPolicy: string | undefined; roomId?: string }
-
-/** Personal link — the direct token url; it exists only in the notification (see file-transfer-notify.ts). */
-function personalLink(baseUrl: string, token: string): string {
-  return `${baseUrl}/public/file-transfer/${token}`;
-}
 
 /**
  * Quick file transfer, step 2 (spec 1.115 §4.1/§4.2): checks the uploads, resolves the recipients
@@ -325,7 +320,8 @@ async function postCards(
 }
 
 /**
- * Personal notifications as decided by `planNotifications`: email with the personal token link,
+ * Personal notifications as decided by `planNotifications`: email (a member gets the private page
+ * link, an outside address its personal token link),
  * FCM push (as calendar `notifyPersons` does) opening `/private/file-transfer/<key>` — the push
  * payload never carries a token.
  */
@@ -350,7 +346,8 @@ async function notifyRecipients(
     const mailFrom = (await getAppEmailConfig(tenantId)).from;
     await mapBounded(plan.mails, async m => {
       try {
-        const { subject, html } = fileTransferEmail(transfer, personalLink(baseUrl, tokens.get(m.recipientId) ?? ''), appName);
+        const link = notificationLink(baseUrl, transfer.okey, m, tokens.get(m.recipientId) ?? '');
+        const { subject, html } = fileTransferEmail(transfer, link, appName, m.link === 'member');
         await sendEmailViaProvider(provider, { from: mailFrom, to: [m.to], subject, html });
         reached.add(m.recipientId);
         m.alsoReaches.forEach(id => reached.add(id));

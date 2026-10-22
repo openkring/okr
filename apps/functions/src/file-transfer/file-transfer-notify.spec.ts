@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { DeliveryChannel, FileTransferModel } from '@okr/shared-models';
 
-import { fileTransferCardContent, fileTransferEmail, mayPostCard, planNotifications, recipientsForSend } from './file-transfer-notify';
+import { fileTransferCardContent, fileTransferEmail, mayPostCard, notificationLink, planNotifications, recipientsForSend } from './file-transfer-notify';
 
 function transfer(): FileTransferModel {
   const t = new FileTransferModel('scs');
@@ -44,6 +44,19 @@ describe('file-transfer-notify', () => {
     expect(mail.html).toContain('29.10.2026');
   });
 
+  it('a member is mailed the private page, an outside address its token link', () => {
+    expect(notificationLink('https://app.seeclub.org', 't1', { link: 'member' }, 'TOKEN')).toBe('https://app.seeclub.org/private/file-transfer/t1');
+    expect(notificationLink('https://app.seeclub.org', 't1', { link: 'token' }, 'TOKEN')).toBe('https://app.seeclub.org/public/file-transfer/TOKEN');
+  });
+
+  it('the member email asks for a sign-in, never for a password', () => {
+    const member = fileTransferEmail(transfer(), 'https://app.seeclub.org/private/file-transfer/t1', 'Seeclub', true);
+    expect(member.html).toContain('angemeldet');
+    expect(member.html).not.toMatch(/passwort/i);
+    const outside = fileTransferEmail(transfer(), 'https://app.seeclub.org/public/file-transfer/TOKEN', 'Seeclub');
+    expect(outside.html).not.toContain('angemeldet');
+  });
+
   describe('mayPostCard', () => {
     it('allows a joined sender in a postPolicy all (or legacy undefined) room', () => {
       expect(mayPostCard({ senderJoined: true, postPolicy: 'all', senderRoles: { registered: true } })).toBe(true);
@@ -76,14 +89,16 @@ describe('file-transfer-notify', () => {
       const recipients = recipientsForSend([mailAndChat], ['Cla@Example.ch']);
       expect(recipients.map(r => r.id)).toEqual(['p:p2', 'e:cla@example.ch']);
       const plan = planNotifications(recipients, channels, emails, new Set());
-      expect(plan.mails).toEqual([{ recipientId: 'p:p2', to: 'cla@example.ch', alsoReaches: ['e:cla@example.ch'] }]);
+      expect(plan.mails).toEqual([{ recipientId: 'p:p2', link: 'member', to: 'cla@example.ch', alsoReaches: ['e:cla@example.ch'] }]);
     });
 
     it('an outside email equal to a chat-only member stays separate and gets its own mail', () => {
       const recipients = recipientsForSend([chatOnly], ['beat@example.ch', 'x@example.ch']);
       expect(recipients.map(r => r.id)).toEqual(['p:p1', 'e:beat@example.ch', 'e:x@example.ch']);
       const plan = planNotifications(recipients, channels, emails, new Set());
-      expect(plan.mails.map(m => [m.recipientId, m.to])).toEqual([['e:beat@example.ch', 'beat@example.ch'], ['e:x@example.ch', 'x@example.ch']]);
+      expect(plan.mails.map(m => [m.recipientId, m.link, m.to])).toEqual([
+        ['e:beat@example.ch', 'token', 'beat@example.ch'], ['e:x@example.ch', 'token', 'x@example.ch'],
+      ]);
       expect(plan.pushKeys).toEqual(['p1']);
     });
 
