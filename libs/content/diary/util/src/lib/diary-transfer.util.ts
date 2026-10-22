@@ -30,8 +30,8 @@ export function resolveDiaryTargets(
   const out: string[] = [];
   for (const target of targets ?? []) {
     if (!target.tenantId || !(target.sources ?? []).includes(source)) continue;
-    const from = target.from;
-    const to = target.to;
+    const from = target.from ?? '';
+    const to = target.to ?? '';
     if (from && date < from) continue;
     if (to && date > to) continue;
     if (!out.includes(target.tenantId)) out.push(target.tenantId);

@@ -290,7 +290,7 @@
   },
   "diaryTransfer": {
     "title": "Transfert vers le journal",
-    "description": "Choisis ce que cette app transfère dans lequel de tes journaux. Sans coche, rien n'est transféré. Sans période, la période de voyage du journal s'applique, s'il en a une.",
+    "description": "Choisis ce que cette app transfère dans lequel de tes journaux. Sans coche, rien n'est transféré. Si tu laisses vide le début ou la fin, il n'y a pas de limite de ce côté.",
     "from": "du",
     "to": "au",
     "source": {

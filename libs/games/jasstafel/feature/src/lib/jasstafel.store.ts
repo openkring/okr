@@ -110,7 +110,7 @@ export const JasstafelStore = signalStore(
     stats: computed(() => { const g = store.game(); return g ? stats(g) : {}; }),
     /**
      * The result card's diary button (spec 1.77 §6.3): hidden unless the current user routes
-     * `jasstafel` to at least one diary. The travel period is checked on the server only.
+     * `jasstafel` to at least one diary. The target date range is checked on the server only.
      */
     diaryState: computed((): 'hidden' | 'ready' | 'done' => {
       const g = store.game();
@@ -333,7 +333,7 @@ export const JasstafelStore = signalStore(
       /**
        * One line with the result and statistics into the caller's diary entry of the day the game
        * finished, into the diaries the user's own `diaryTargets` route `jasstafel` to (spec 1.77;
-       * `recordDiaryLine` callable). A game outside every diary's travel period is not sent.
+       * `recordDiaryLine` callable). A game outside every diary's target date range is not sent.
        * The game is marked so the button cannot send it twice.
        */
       async toDiary(): Promise<void> {

@@ -290,7 +290,7 @@
   },
   "diaryTransfer": {
     "title": "Trasferimento al diario",
-    "description": "Scegli che cosa questa app trasferisce in quale dei tuoi diari. Senza spunta non viene trasferito nulla. Senza periodo vale il periodo di viaggio del diario, se ne ha uno.",
+    "description": "Scegli che cosa questa app trasferisce in quale dei tuoi diari. Senza spunta non viene trasferito nulla. Se lasci vuoto l'inizio o la fine, non c'è alcun limite da quel lato.",
     "from": "dal",
     "to": "al",
     "source": {

@@ -290,7 +290,7 @@
   },
   "diaryTransfer": {
     "title": "Transferencia al diario",
-    "description": "Elige qué transfiere esta app a cuál de tus diarios. Sin marca no se transfiere nada. Sin periodo se aplica el periodo de viaje del diario, si tiene uno.",
+    "description": "Elige qué transfiere esta app a cuál de tus diarios. Sin marca no se transfiere nada. Si dejas vacío el inicio o el fin, no hay límite por ese lado.",
     "from": "desde",
     "to": "hasta",
     "source": {

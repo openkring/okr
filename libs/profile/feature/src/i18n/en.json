@@ -290,7 +290,7 @@
   },
   "diaryTransfer": {
     "title": "Diary transfer",
-    "description": "Choose what this app sends into which of your diaries. Nothing is sent without a tick. Without a period, the diary's travel period applies if it has one.",
+    "description": "Choose what this app sends into which of your diaries. Nothing is sent without a tick. If from or to is left empty, there is no limit on that side.",
     "from": "from",
     "to": "to",
     "source": {

@@ -21,6 +21,8 @@ describe('resolveDiaryTargets', () => {
   });
   it('treats an empty bound as open', () =>
     expect(resolveDiaryTargets([t('d1', ['taskDone'], '', '')], 'taskDone', '20261022')).toEqual(['d1']));
+  it('matches a legacy target without from/to fields', () =>
+    expect(resolveDiaryTargets([{ tenantId: 'd1', sources: ['taskDone'] } as DiaryTarget], 'taskDone', '20261022')).toEqual(['d1']));
   it('lets a half-open range bound only its typed side', () => {
     const targets = [t('jp', ['taskDone'], '', '20261025')];
     expect(resolveDiaryTargets(targets, 'taskDone', '20261024')).toEqual(['jp']);
