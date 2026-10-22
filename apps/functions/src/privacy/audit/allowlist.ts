@@ -49,6 +49,7 @@ export const NON_PERSONAL_COLLECTIONS: ReadonlySet<string> = new Set([
   'templates',
   'vat-codes',
   'weather',
+  'weather-radar',
   'websiteContent',
   'workflow-rules',
 ]);

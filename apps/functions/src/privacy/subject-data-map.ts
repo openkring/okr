@@ -1447,6 +1447,9 @@ export async function resolveDocs(entry: SubjectDataEntry, ctx: SubjectCtx): Pro
 //   createdBy, and nothing a data subject could be identified from. That a member happens to
 //   have looked at a forecast leaves no trace here — the documents are written by the
 //   scheduler for the tenant's locations, whether anybody reads them or not.
+// not personal data: weather-radar — the MeteoSwiss precipitation radar's frame list (spec 1.110):
+//   one shared document of image paths and timestamps for the whole country. Written by the
+//   scheduler, tied to no person, location of a member or tenant.
 // not personal data: hearingQuizNodes — the Hörtraining CONTENT tree (folders, questions, clips)
 //   authored by content admins. `parentKey` is the parent FOLDER's okey, never a person; nothing
 //   in a node records who wrote it or who answered it — answers live in `hearingQuizResults`.

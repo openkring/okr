@@ -456,6 +456,7 @@ export { allocateTenant, getAllocationEmails } from './tenant-allocation';
 // exchange rates
 export { fetchSnbRatesScheduled } from './exchange-rate/fetch-snb-rates';
 export { scheduledWeatherFetch } from './weather/fetch-weather';
+export { fetchMeteoSwissRadar } from './weather/fetch-meteoswiss-radar';
 export { setManualRate } from './exchange-rate/set-manual-rate';
 
 // payment

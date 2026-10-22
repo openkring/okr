@@ -662,6 +662,9 @@ importers:
       firebase-functions:
         specifier: ^7.4.0
         version: 7.4.0(firebase-admin@13.6.0(encoding@0.1.13)(supports-color@8.1.1))(supports-color@8.1.1)
+      h5wasm:
+        specifier: 0.10.3
+        version: 0.10.3
       handlebars:
         specifier: 4.7.9
         version: 4.7.9
@@ -695,6 +698,12 @@ importers:
       pdfkit:
         specifier: 0.18.0
         version: 0.18.0
+      pngjs:
+        specifier: 7.0.0
+        version: 7.0.0
+      proj4:
+        specifier: 2.22.0
+        version: 2.22.0
       puppeteer-core:
         specifier: 25.0.4
         version: 25.0.4(supports-color@8.1.1)
@@ -723,6 +732,9 @@ importers:
       '@types/nodemailer':
         specifier: 7.0.11
         version: 7.0.11
+      '@types/pngjs':
+        specifier: ^6.0.5
+        version: 6.0.5
 
 packages:
 
@@ -5494,6 +5506,9 @@ packages:
   '@types/pdfkit@0.17.5':
     resolution: {integrity: sha512-T3ZHnvF91HsEco5ClhBCOuBwobZfPcI2jaiSHybkkKYq4KhVIIurod94JVKvDIG0JXT6o3KiERC0X0//m8dyrg==}
 
+  '@types/pngjs@6.0.5':
+    resolution: {integrity: sha512-0k5eKfrA83JOZPppLtS2C7OUtyNAl2wKNxfyYl9Q5g9lPkgBl/9hNyAu6HuEH2J4XmIv2znEpkDd0SaZVxW6iQ==}
+
   '@types/qs@6.14.0':
     resolution: {integrity: sha512-eOunJqu0K1923aExK6y8p6fsihYEn/BYuQ4g0CxAAgFc4b/ZLN4CrsRZ55srTdqoiLzU2B2evC+apEIxprEzkQ==}
 
@@ -7883,6 +7898,9 @@ packages:
     resolution: {integrity: sha512-ax7ZYomf6jqPTQ4+XCpUGyXKHk5WweS+e05MBO4/y3WJ5RkmPXNKvX+bx1behVILVwr6JSQvZAku021CHPXG3Q==}
     engines: {node: '>=10'}
 
+  h5wasm@0.10.3:
+    resolution: {integrity: sha512-W4Jy5ExtX/VNbyD8GdOBckDuj6AL16TemppVNxZsV3rJZEWCv2sxlCzOttZLer3zkMttbDYsWHl0qt1z3Bln+Q==}
+
   handlebars@4.7.9:
     resolution: {integrity: sha512-4E71E0rpOaQuJR2A3xDZ+GM1HyWYv1clR58tC8emQNeQe3RH7MAzSbat+V0wG78LQBo6m6bzSG/L4pBuCsgnUQ==}
     engines: {node: '>=0.4.7'}
@@ -9079,6 +9097,9 @@ packages:
     resolution: {integrity: sha512-iclAHeNqNm68zFtnZ0e+1L2yUIdvzNoauKU4WBA3VvH/vPFieF7qfRlwUZU+DA9P9bPXIS90ulxoUoCH23sV2w==}
     engines: {node: '>= 0.6'}
 
+  mgrs@1.0.0:
+    resolution: {integrity: sha512-awNbTOqCxK1DBGjalK3xqWIstBZgN6fxsMSiXLs9/spqWkF2pAhb2rrYCFSsr1/tT7PhcDGjZndG8SWYn0byYA==}
+
   micromatch@4.0.8:
     resolution: {integrity: sha512-PXwfBhYu0hBCPw8Dn0E+WDYb7af3dSLVWKi3HGv84IdF4TyFoC0ysxFd0Goxw7nSv4T/PzEJQxsYsEiFCKo2BA==}
     engines: {node: '>=8.6'}
@@ -9828,6 +9849,10 @@ packages:
   png-js@1.0.0:
     resolution: {integrity: sha512-k+YsbhpA9e+EFfKjTCH3VW6aoKlyNYI6NYdTfDL4CIvFnvsuO84ttonmZE7rc+v23SLTH8XX+5w/Ak9v0xGY4g==}
 
+  pngjs@7.0.0:
+    resolution: {integrity: sha512-LKWqWJRhstyYo9pGvgor/ivk2w94eSjE3RGVuzLGlr3NmD8bf7RcYGze1mNdEHRP6TRP6rMuDHk5t44hnTRyow==}
+    engines: {node: '>=14.19.0'}
+
   portfinder@1.0.38:
     resolution: {integrity: sha512-rEwq/ZHlJIKw++XtLAO8PPuOQA/zaPJOZJ37BVuN97nLpMJeuDVLVGRwbFoBgLudgdTMP2hdRJP++H+8QOA3vg==}
     engines: {node: '>= 10.12'}
@@ -9962,6 +9987,14 @@ packages:
   progress@2.0.3:
     resolution: {integrity: sha512-7PiHtLll5LdnKIMw100I+8xJXR5gW2QwWYkT6iJva0bXitZKa/XMrSbdmg3r2Xnaidz9Qumd0VPaMrZlF9V9sA==}
     engines: {node: '>=0.4.0'}
+
+  proj4@2.22.0:
+    resolution: {integrity: sha512-MVvH09QrYm3A235rcX39WDiCKanrBiblu28l0KYIn/B2DofmYhvP/LLS43kE66jNDfx/P1l/nah3JmsAq8UgbQ==}
+    peerDependencies:
+      geotiff: '*'
+    peerDependenciesMeta:
+      geotiff:
+        optional: true
 
   promise-breaker@6.0.0:
     resolution: {integrity: sha512-BthzO9yTPswGf7etOBiHCVuugs2N01/Q/94dIPls48z2zCmrnDptUUZzfIb+41xq0MnYZ/BzmOd6ikDR4ibNZA==}
@@ -11784,6 +11817,9 @@ packages:
   winston@3.19.0:
     resolution: {integrity: sha512-LZNJgPzfKR+/J3cHkxcpHKpKKvGfDZVPS4hfJCc4cCG0CgYzvlD6yE/S3CIL/Yt91ak327YCpiF/0MyeZHEHKA==}
     engines: {node: '>= 12.0.0'}
+
+  wkt-parser@1.6.0:
+    resolution: {integrity: sha512-O2WMUagkdOKkgcfqZBUauysHVeifCwcs+zUd2QG7UIzVljLwK9g5xHUfL/TkQFwmQ3eF7oHFKGnMcb/kZdvbaw==}
 
   word-wrap@1.2.5:
     resolution: {integrity: sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==}
@@ -17555,6 +17591,10 @@ snapshots:
     dependencies:
       '@types/node': 24.2.0
 
+  '@types/pngjs@6.0.5':
+    dependencies:
+      '@types/node': 24.2.0
+
   '@types/qs@6.14.0': {}
 
   '@types/range-parser@1.2.7': {}
@@ -20472,6 +20512,8 @@ snapshots:
     dependencies:
       duplexer: 0.1.2
 
+  h5wasm@0.10.3: {}
+
   handlebars@4.7.9:
     dependencies:
       minimist: 1.2.8
@@ -21951,6 +21993,8 @@ snapshots:
 
   methods@1.1.2: {}
 
+  mgrs@1.0.0: {}
+
   micromatch@4.0.8:
     dependencies:
       braces: 3.0.3
@@ -22870,6 +22914,8 @@ snapshots:
 
   png-js@1.0.0: {}
 
+  pngjs@7.0.0: {}
+
   portfinder@1.0.38(supports-color@8.1.1):
     dependencies:
       async: 3.2.6
@@ -22976,6 +23022,11 @@ snapshots:
   process@0.11.10: {}
 
   progress@2.0.3: {}
+
+  proj4@2.22.0:
+    dependencies:
+      mgrs: 1.0.0
+      wkt-parser: 1.6.0
 
   promise-breaker@6.0.0: {}
 
@@ -25048,6 +25099,8 @@ snapshots:
       stack-trace: 0.0.10
       triple-beam: 1.4.1
       winston-transport: 4.9.0
+
+  wkt-parser@1.6.0: {}
 
   word-wrap@1.2.5: {}
 

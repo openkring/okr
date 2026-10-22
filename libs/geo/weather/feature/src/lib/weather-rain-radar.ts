@@ -2,10 +2,27 @@ import {
   AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, computed, inject, input,
   effect, signal, viewChild
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import * as L from 'leaflet';
+import { Observable, firstValueFrom, race, timer } from 'rxjs';
+import { map } from 'rxjs/operators';
 
-/** One radar frame as offered by RainViewer. */
+import { ENV } from '@okr/shared-config';
+import { WeatherRadarModel } from '@okr/shared-models';
+import { WeatherService } from '@okr/weather-data-access';
+import { RadarSource, nextRadarIndex, pickRadarSource, radarScaleGradient } from '@okr/weather-util';
+
+/** One radar frame: RainViewer's tile path or a MeteoSwiss PNG's Storage path. */
 interface RadarFrame { time: number; path: string; }
+
+/** RainViewer's own colour ramp ("Universal Blue"); MeteoSwiss uses RADAR_SCALE from the util. */
+const RAINVIEWER_RAMP = 'linear-gradient(90deg, #88ddee, #0099cc, #0077aa, #005588, #ffee00, #ffaa00, #ff4400, #c10000, #ffaaff)';
+
+/**
+ * How long to wait for the MeteoSwiss frame list before taking RainViewer. A Firestore listener
+ * answers in well under a second, from cache even faster; this only guards a stuck connection.
+ */
+const RADAR_LIST_WAIT_MS = 4000;
 
 /** Opacity of the visible radar layer; every other frame's layer sits at 0. */
 const FRAME_OPACITY = 0.75;
@@ -49,10 +66,13 @@ const BASE_FILTER = 'grayscale(1) brightness(0.9) contrast(0.95)';
  * deliberately absent from the `@okr/weather-ui` barrel — an `export *` there would be a
  * static edge from every consumer of that lib.
  *
- * Tiles come from RainViewer: ready-made XYZ frames covering roughly the last two hours (the
- * nowcast is gone from the free tier). MeteoSwiss CombiPrecip would be sharper but ships as ODIM HDF5 in
- * EPSG:2056, which needs a decode/reproject/tile pipeline of its own. Only the tile layer
- * would change; the timeline below stays as it is.
+ * Two sources, switched and never layered (spec 1.110, O2):
+ * - MeteoSwiss PRECIP for a place inside its radar box: 1 km, 5-minute frames over the last 6 h,
+ *   rendered by the Cloud Function `fetchMeteoSwissRadar` into one Web Mercator PNG per frame
+ *   (served through imgix) and listed in `weather-radar/meteoswiss`;
+ * - RainViewer everywhere else, and whenever that list is missing or stale: ready-made XYZ tiles
+ *   for roughly the last two hours.
+ * The timeline, play button and legend are the same for both.
  */
 @Component({
   selector: 'okr-weather-rain-radar',
@@ -87,7 +107,6 @@ const BASE_FILTER = 'grayscale(1) brightness(0.9) contrast(0.95)';
     .scale { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 11px; color: var(--ion-color-medium, #5f5f5f); }
     .scale .ramp {
       width: 120px; height: 8px; border-radius: 4px;
-      background: linear-gradient(90deg, #88ddee, #0099cc, #0077aa, #005588, #ffee00, #ffaa00, #ff4400, #c10000, #ffaaff);
     }
     .legend { display: flex; margin-top: 4px; font-size: 11px; color: var(--ion-color-medium, #5f5f5f); }
     .stamp { font-size: 13px; font-variant-numeric: tabular-nums; }
@@ -126,7 +145,7 @@ const BASE_FILTER = 'grayscale(1) brightness(0.9) contrast(0.95)';
     }
 
     @if (legendLabel()) {
-      <div class="scale"><div class="ramp"></div><span>{{ legendLabel() }}</span></div>
+      <div class="scale"><div class="ramp" [style.background]="ramp()"></div><span>{{ legendLabel() }}</span></div>
     }
 
     @if (tilesFailed()) {
@@ -149,6 +168,9 @@ export class WeatherRainRadar implements AfterViewInit, OnDestroy {
   public legendLabel = input('');
 
   private mapHost = viewChild.required<ElementRef<HTMLElement>>('mapHost');
+  private readonly weatherService = inject(WeatherService);
+  private readonly env = inject(ENV);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected frames = signal<RadarFrame[]>([]);
   protected index = signal(0);
@@ -158,11 +180,14 @@ export class WeatherRainRadar implements AfterViewInit, OnDestroy {
   protected tilesFailed = signal(false);
   /** How many frames are measurements rather than nowcast — drives the legend split. */
   private pastCount = signal(0);
+  protected source = signal<RadarSource>('rainviewer');
+  protected ramp = computed(() => this.source() === 'meteoswiss' ? radarScaleGradient() : RAINVIEWER_RAMP);
 
   private map?: L.Map;
   /** One kept layer per frame path — see `showFrame`. Never removed while the map lives. */
-  private layers = new Map<string, L.TileLayer>();
-  private visible?: L.TileLayer;
+  private layers = new Map<string, L.TileLayer | L.ImageOverlay>();
+  private visible?: L.TileLayer | L.ImageOverlay;
+  private bounds?: L.LatLngBoundsExpression;
   private timer?: ReturnType<typeof setInterval>;
   private host = '';
   private tileErrors = 0;
@@ -213,11 +238,52 @@ export class WeatherRainRadar implements AfterViewInit, OnDestroy {
   }
 
   /**
+   * Picks the source once, from the first MeteoSwiss list the listener delivers (O2). Inside the
+   * radar box with a fresh list the widget stays on MeteoSwiss and follows the listener; any other
+   * answer — outside, stale, missing, an error, no answer in time — takes RainViewer.
+   */
+  private async loadFrames(): Promise<void> {
+    const radar$ = this.weatherService.readRadar();
+    const first = await firstValueFrom(
+      race(radar$, timer(RADAR_LIST_WAIT_MS).pipe(map(() => undefined))), { defaultValue: undefined }
+    ).catch(() => undefined);
+    const source = pickRadarSource(first, this.latitude(), this.longitude(), Math.floor(Date.now() / 1000));
+    this.source.set(source);
+    if (source === 'meteoswiss' && first) {
+      this.followMeteoSwiss(first, radar$);
+    } else {
+      await this.loadRainViewerFrames();
+    }
+  }
+
+  private followMeteoSwiss(first: WeatherRadarModel, radar$: Observable<WeatherRadarModel | undefined>): void {
+    const { south, west, north, east } = first.bounds;
+    this.bounds = [[south, west], [north, east]];
+    this.applyMeteoSwissFrames(first.frames);
+    // new frames every 5 minutes; a later empty or broken emission keeps the frames already shown
+    radar$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (radar) => { if (radar?.frames?.length) this.applyMeteoSwissFrames(radar.frames); },
+      error: () => undefined,
+    });
+  }
+
+  private applyMeteoSwissFrames(frames: RadarFrame[]): void {
+    const current = this.frames();
+    const shown = current[this.index()]?.time;
+    const wasAtEnd = !current.length || this.index() === current.length - 1;
+    if (current.length === frames.length && current.every((f, i) => f.time === frames[i].time)) return;
+    this.pastCount.set(frames.length);
+    this.frames.set(frames);
+    this.index.set(nextRadarIndex(frames, shown, wasAtEnd));
+    this.showFrame();
+  }
+
+  /**
    * RainViewer publishes its frame list as a small JSON document. A failure here is not fatal:
    * the base map stays, the timeline disappears and the widget says so — the alternative is a
    * dead play button over an empty map.
    */
-  private async loadFrames(): Promise<void> {
+  private async loadRainViewerFrames(): Promise<void> {
     try {
       const res = await fetch('https://api.rainviewer.com/public/weather-maps.json');
       if (!res.ok) throw new Error(`radar index ${res.status}`);
@@ -249,13 +315,44 @@ export class WeatherRainRadar implements AfterViewInit, OnDestroy {
    *
    * Keeping ~16 layers alive is the deliberate cost. It also removes the flicker the old
    * `setTimeout(remove, 120)` was working around: nothing is ever detached mid-animation.
+   *
+   * MeteoSwiss frames are single images, so the same rule applies per image: one overlay per
+   * frame, created when first shown. Up to 72 of them would be too much to fetch on open; the
+   * next frame is created one step ahead so playback does not wait for each picture.
    */
   private showFrame(): void {
     const frame = this.frames()[this.index()];
     if (!this.map || !frame) return;
 
-    let layer = this.layers.get(frame.path);
-    if (!layer) {
+    const layer = this.source() === 'meteoswiss' ? this.meteoSwissLayer(frame) : this.rainViewerLayer(frame);
+    if (this.source() === 'meteoswiss') {
+      const next = this.frames()[(this.index() + 1) % this.frames().length];
+      if (next) this.meteoSwissLayer(next);
+    }
+
+    if (this.visible !== layer) this.visible?.setOpacity(0);
+    layer.setOpacity(FRAME_OPACITY);
+    this.visible = layer;
+  }
+
+  private meteoSwissLayer(frame: RadarFrame): L.ImageOverlay {
+    let layer = this.layers.get(frame.path) as L.ImageOverlay | undefined;
+    if (!layer && this.map && this.bounds) {
+      // through imgix like every other Storage image (images skill); auto=format serves WebP/AVIF
+      const url = `${this.env.services.imgixBaseUrl}/${frame.path}?auto=format`;
+      layer = L.imageOverlay(url, this.bounds, { opacity: 0, attribution: 'Radar © MeteoSchweiz' });
+      layer.on('error', () => {
+        if (++this.tileErrors >= TILE_ERROR_NOTICE_THRESHOLD) this.tilesFailed.set(true);
+      });
+      layer.addTo(this.map);
+      this.layers.set(frame.path, layer);
+    }
+    return layer as L.ImageOverlay;
+  }
+
+  private rainViewerLayer(frame: RadarFrame): L.TileLayer {
+    let layer = this.layers.get(frame.path) as L.TileLayer | undefined;
+    if (!layer && this.map) {
       // colour scheme 2 ("Universal Blue") is the only one the free tier still renders
       layer = L.tileLayer(`${this.host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`, {
         opacity: 0, maxNativeZoom: RADAR_MAX_NATIVE_ZOOM, attribution: 'Radar © RainViewer'
@@ -266,10 +363,7 @@ export class WeatherRainRadar implements AfterViewInit, OnDestroy {
       layer.addTo(this.map);
       this.layers.set(frame.path, layer);
     }
-
-    this.visible?.setOpacity(0);
-    layer.setOpacity(FRAME_OPACITY);
-    this.visible = layer;
+    return layer as L.TileLayer;
   }
 
   /** One delayed second attempt per tile (see TILE_RETRY_DELAY_MS); Leaflet's own load handler stays bound. */

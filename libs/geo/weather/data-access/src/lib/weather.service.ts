@@ -3,7 +3,9 @@ import { Observable } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
-import { WeatherCollection, WeatherModel } from '@okr/shared-models';
+import {
+  METEOSWISS_RADAR_KEY, WeatherCollection, WeatherModel, WeatherRadarCollection, WeatherRadarModel
+} from '@okr/shared-models';
 import { getSystemQuery } from '@okr/shared-util-core';
 
 /**
@@ -47,5 +49,14 @@ export class WeatherService {
     query.push({ key: 'locationKey', operator: 'in', value: locationKeys });
     query.push({ key: 'date', operator: '==', value: date });
     return this.firestoreService.searchData<WeatherModel>(WeatherCollection, query, 'locationKey', 'asc');
+  }
+
+  /**
+   * The MeteoSwiss radar frame list (spec 1.110) — one document shared by all tenants, written by
+   * `fetchMeteoSwissRadar` every 5 minutes. A live listener, so new frames arrive without polling.
+   * Emits undefined while the document does not exist (pipeline not deployed yet).
+   */
+  public readRadar(): Observable<WeatherRadarModel | undefined> {
+    return this.firestoreService.readObject<WeatherRadarModel>(WeatherRadarCollection, METEOSWISS_RADAR_KEY);
   }
 }

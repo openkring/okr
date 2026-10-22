@@ -604,6 +604,11 @@ service cloud.firestore {
     // bypasses these rules. No client may write — a forged forecast is not worth the attack
     // surface, and nothing in the app has a reason to.
     match /weather/{id}            { allow read: if tenantRead(); allow write: if false; }
+    // weather-radar: the MeteoSwiss radar frame list (spec 1.110), written only by the scheduled
+    // `fetchMeteoSwissRadar`. One document shared by every tenant (O5) holding nothing but image
+    // paths of open government data, so it is readable without sign-in — the rain_radar widget
+    // also renders on public pages, as it did with RainViewer.
+    match /weather-radar/{id}      { allow read: if true; allow write: if false; }
     match /memberships/{id}        { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     match /ownerships/{id}         { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     match /personal-rels/{id}      { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
