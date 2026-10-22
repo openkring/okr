@@ -5,3 +5,4 @@ export * from './lib/journal-position.util';
 export * from './lib/journal-change.util';
 export * from './lib/journal-view.util';
 export * from './lib/journal-identity.util';
+export * from './lib/journal-launch.util';

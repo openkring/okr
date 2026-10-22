@@ -12,6 +12,15 @@
     "@okr/shared-util-core": "*",
     "@okr/auth-feature": "*",
     "@okr/travel-journal-data-access": "*",
-    "@okr/travel-journal-util": "*"
+    "@okr/travel-journal-util": "*",
+    "@angular/core": "*",
+    "@angular/router": "*",
+    "@capacitor/app": "*",
+    "@capacitor/core": "*",
+    "@capacitor/filesystem": "*",
+    "@capacitor/network": "*",
+    "@ionic/angular": "*",
+    "@ngrx/signals": "*",
+    "rxjs": "*"
   }
 }
