@@ -85,3 +85,23 @@ export async function checkRateLimit(
     return { allowed: true, remaining: opts.limit, retryAfterMs: 0 };
   }
 }
+
+/**
+ * Read-only check of the same fixed-window counter: true when `bucket:key` has already used up
+ * its window. Does NOT count. For limits that must count only failures (e.g. wrong passwords):
+ * peek before the attempt, `checkRateLimit` after a failure — otherwise a right guess after the
+ * limit would still be told apart from a wrong one. Fails open like `checkRateLimit`.
+ */
+export async function isRateLimited(bucket: string, key: string, opts: RateLimitOptions): Promise<boolean> {
+  const hashed = createHash('sha256').update(key).digest('hex').slice(0, 32);
+  try {
+    const snap = await getFirestore().collection('_rateLimits').doc(`${bucket}_${hashed}`).get();
+    const data = snap.exists ? snap.data() : undefined;
+    if (!data) return false;
+    const windowStart = (data['windowStart'] as Timestamp).toMillis();
+    if (Date.now() - windowStart >= opts.windowMs) return false;
+    return (data['count'] as number) >= opts.limit;
+  } catch {
+    return false;
+  }
+}

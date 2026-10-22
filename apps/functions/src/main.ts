@@ -537,3 +537,7 @@ export { summarizeContract } from './contract/summarize';
 export const prepareFileTransferUpload = FileTransfer.prepareFileTransferUpload;
 // sendFileTransfer: quick file transfer, personal links, notifications and chat card (spec 1.115)
 export const sendFileTransfer = FileTransfer.sendFileTransfer;
+// getFileTransfer: quick file transfer, the view for a logged-in member (sender, admin, person recipient) (spec 1.115)
+export const getFileTransfer = FileTransfer.getFileTransfer;
+// openFileTransferFile: quick file transfer, signed play/download url for a member, logs opened/downloaded (spec 1.115)
+export const openFileTransferFile = FileTransfer.openFileTransferFile;

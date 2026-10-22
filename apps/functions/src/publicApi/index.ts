@@ -22,6 +22,7 @@ import { coursesRouter, resultsRouter } from './routes/stubs';
 import { pageRouter } from './routes/page';
 import { aliasRouter } from './routes/alias';
 import { galleryRouter } from './routes/gallery';
+import { fileTransferFileRouter, fileTransferViewRouter } from './routes/file-transfer';
 
 // ---------------------------------------------------------------------------
 // CORS allowlist. The public website calls this API from the browser, so we
@@ -110,6 +111,9 @@ app.get(`${BASE}/results`,       resultsRouter);
 app.get(`${BASE}/pages/:pageKey`, pageRouter);
 app.get(`${BASE}/gallery`,       galleryRouter);
 app.post(`${BASE}/contact`,      contactRouter);
+// Quick file transfer, personal links (spec 1.115): the token is the credential, no tenantId.
+app.get(`${BASE}/file-transfer/:token`,       fileTransferViewRouter);
+app.post(`${BASE}/file-transfer/:token/file`, fileTransferFileRouter);
 
 // Der Alias-Resolver liegt BEWUSST ausserhalb von BASE: der Pfad ist Teil der Kurz-URL
 // (app.<domain>/s/<space>/<code>) und muss kurz bleiben. Er leitet den Tenant aus dem Host ab,
