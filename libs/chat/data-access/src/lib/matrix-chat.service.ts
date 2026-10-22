@@ -1,4 +1,5 @@
-import { effect, inject, Injectable } from '@angular/core';
+import { computed, effect, inject, Injectable } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { createClient, IndexedDBStore, MatrixClient, MatrixEvent, Room, RoomMember, EventType, EventTimeline, MsgType, RelationType, IContent, ISendEventResponse, MatrixError, RoomStateEvent, RoomEvent, ClientEvent, ICreateRoomOpts, Visibility, Preset, User, ReceiptType, type MatrixCall, type Store, type IRoomTimelineData } from 'matrix-js-sdk';
 import { BehaviorSubject, combineLatest, Observable, Subject, timer } from 'rxjs';
 import { distinctUntilChanged, map } from 'rxjs/operators';
@@ -11,7 +12,7 @@ import { AppStore } from '@okr/shared-feature';
 import { ChatStatusService } from '@okr/shared-data-access';
 import { checkVideoLimits, debugData, debugMessage, MAX_CHAT_VIDEO_BYTES } from '@okr/shared-util-core';
 import { OKR_VIDEO_FIELD, videoLink } from '@okr/content-document-util';
-import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError, VideoUploadError, buildPollContent, PollAnswerDef, POLL_START_EVENT, PinboardInput, AvailablePinboard, UNREAD_FROM_EVENT, MARKED_UNREAD_EVENT, flaggedUnreadFrom, countUnmutedUnread, indexBookmarkEntries, bookmarkedMessageIds, PinPreview, pinPreviewOf } from '@okr/chat-util';
+import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError, VideoUploadError, buildPollContent, PollAnswerDef, POLL_START_EVENT, PinboardInput, AvailablePinboard, UNREAD_FROM_EVENT, MARKED_UNREAD_EVENT, flaggedUnreadFrom, countUnmutedUnread, filterRoomsOfTenant, serverNameOf, indexBookmarkEntries, bookmarkedMessageIds, PinPreview, pinPreviewOf } from '@okr/chat-util';
 
 import { mediaMimeHint, mxcAvatarHttpUrl } from './matrix-helpers';
 import { MatrixMediaService } from './matrix-media.service';
@@ -100,6 +101,18 @@ export class MatrixChatService {
   private readonly prefs = inject(MatrixRoomPrefsService);
   private readonly pins = inject(MatrixPinsService);
 
+  /**
+   * What decides which joined rooms belong to the current tenant app — the same inputs
+   * MatrixChatStore.rooms hands to filterRoomsOfTenant. An observable so the badge count
+   * re-evaluates once groups/persons finish loading (unmarked group rooms resolve via them).
+   */
+  private readonly tenantRoomScope$ = toObservable(computed(() => ({
+    groups: this.appStore.allGroupsAndChats(),
+    personKeys: new Set(this.appStore.allPersons().map(p => p.okey.toLowerCase())),
+    serverName: serverNameOf(this.appStore.env.services.matrixHomeserver),
+  })));
+  private readonly hiddenVersion$ = toObservable(this.prefs.hiddenVersion);
+
   constructor() {
     // Disconnect and clear rooms when the user logs out (fbUser becomes null).
     effect(() => {
@@ -153,13 +166,19 @@ export class MatrixChatService {
   }
 
   /**
-   * Chat unread total for the main-menu badge: muted rooms (own mute or «Alle stummschalten» of
-   * `tenantId`) do not count (spec 1.109 §9). Re-evaluated every minute so a mute that runs out
-   * counts again without a reload.
+   * Chat unread total for the main-menu badge — the same number as MatrixChatStore.totalUnreadCount
+   * (the app-icon badge) and the rooms the dashboard's chat card lists: only this tenant's rooms
+   * (`this.rooms` spans every tenant of the person's one Matrix account), without hidden rooms,
+   * and muted rooms (own mute or «Alle stummschalten» of `tenantId`) do not count (spec 1.109 §9).
+   * Re-evaluated every minute so a mute that runs out counts again without a reload.
    */
   unmutedUnreadCount$(tenantId: string): Observable<number> {
-    return combineLatest([this.rooms, this.prefs.muteContent$, timer(0, MUTE_CLOCK_MS)]).pipe(
-      map(([rooms, mute]) => countUnmutedUnread(rooms, mute, tenantId, Date.now())),
+    return combineLatest([this.rooms, this.tenantRoomScope$, this.prefs.muteContent$, this.hiddenVersion$, timer(0, MUTE_CLOCK_MS)]).pipe(
+      map(([rooms, scope, mute]) => {
+        const ownRooms = filterRoomsOfTenant(rooms, scope.groups, scope.personKeys, tenantId, scope.serverName)
+          .filter(r => !this.prefs.isHidden(r.roomId));
+        return countUnmutedUnread(ownRooms, mute, tenantId, Date.now());
+      }),
       distinctUntilChanged(),
     );
   }

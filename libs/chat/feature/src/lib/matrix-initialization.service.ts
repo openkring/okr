@@ -64,6 +64,10 @@ export class MatrixInitializationService {
     this.initializationStarted = true;
     console.log('MatrixInitializationService: Starting early initialization watcher');
 
+    // Independent of Matrix: the tasks and invitations parts must reach the icon badge even when
+    // the chat never connects (blocked, credentials or sync failing) or push registration hangs.
+    this.startBadgeSync();
+
     // Live transitions (1.107): connect while chat is open for the signed-in user, disconnect
     // (keeping the cache) when an admin blocks it. runInInjectionContext is needed because this
     // is called from APP_BOOTSTRAP_LISTENER. Only chatGate is tracked; the async work is untracked.
@@ -120,6 +124,64 @@ export class MatrixInitializationService {
     } else {
       try { localStorage.setItem(snoozeKey, String(Date.now() + PUSH_PROMPT_SNOOZE_MS)); } catch { /* best effort */ }
     }
+  }
+
+  /**
+   * Keep the PWA app icon badge in sync with the total notification count (foreground case; the
+   * service worker handles the background case).
+   *
+   * The total is chat unread + open assigned tasks + unanswered invitations, matching the main-menu
+   * badge (MenuStore.notificationCount) exactly. setAppBadge writes an ABSOLUTE value, so a writer
+   * that knows only its own part silently destroys the others: this used to publish the chat count
+   * alone, which meant opening the PWA cleared a task-driven badge while the tasks were still open.
+   *
+   * Started from startEarlyInitialization, not after the Matrix client is up: it used to sit behind
+   * ensureInitialized and push registration, so a chat that never connected left a stale
+   * background badge on the icon forever. The chat part is 0 until the rooms have synced (and while
+   * chat is blocked); the subscription corrects the badge once the count settles.
+   */
+  private startBadgeSync(): void {
+    // Native apps badge through apns.aps.badge; only the web / PWA writes the badge here.
+    if (Capacitor.isNativePlatform() || !('setAppBadge' in navigator)) return;
+    const applyBadge = (count: number) => {
+      const nav = navigator as Navigator & {
+        setAppBadge?: (n: number) => Promise<void>;
+        clearAppBadge?: () => Promise<void>;
+      };
+      if (count > 0) {
+        nav.setAppBadge?.(count).catch(() => {});
+      } else {
+        nav.clearAppBadge?.().catch(() => {});
+      }
+    };
+
+    const badgeParts = computed(() => ({
+      chat: this.chatGate() === 'open' ? this.matrixChatStore.totalUnreadCount() : 0,
+      tasks: this.appStore.openTaskCount(),
+      invitations: this.appStore.openInvitationCount(),
+    }), { equal: (a, b) => a.chat === b.chat && a.tasks === b.tasks && a.invitations === b.invitations });
+    const badgeTotal = computed(() => {
+      const parts = badgeParts();
+      return parts.chat + parts.tasks + parts.invitations;
+    });
+
+    runInInjectionContext(this.injector, () =>
+      toObservable(badgeTotal).subscribe(applyBadge)
+    );
+    // Hand the parts to the push service worker's badge ledger (spec 1.93): a push only knows its
+    // own part, so the worker needs the other two to write the right total while the app is closed.
+    runInInjectionContext(this.injector, () =>
+      toObservable(badgeParts).subscribe(parts => void writeBadgeLedgerFromPage(parts))
+    );
+
+    // Reconcile the badge whenever the PWA becomes visible again. A background push (or a message
+    // read on another device) can leave the OS icon badge out of sync with the real count while the
+    // app is closed. Forcing it back to the true total on resume fixes that.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        applyBadge(badgeTotal());
+      }
+    });
   }
 
   /** The chat was blocked during a call: the call is gone, show the admin's message. */
@@ -266,59 +328,6 @@ export class MatrixInitializationService {
           if (document.visibilityState === 'visible') closeReadNotifications();
         });
 
-        // Keep the PWA app icon badge in sync with the total notification count.
-        // This covers the foreground case; the service worker handles the background case.
-        //
-        // The total is chat unread + open assigned tasks + unanswered invitations, matching the main-menu badge
-        // (MenuStore.notificationCount) exactly. setAppBadge writes an ABSOLUTE value, so a
-        // writer that knows only its own half silently destroys the other's: this used to
-        // publish the chat count alone, which meant opening the PWA cleared a task-driven
-        // badge (resume reconcile → clearAppBadge) while the tasks were still open.
-        if ('setAppBadge' in navigator) {
-          const applyBadge = (count: number) => {
-            const nav = navigator as Navigator & {
-              setAppBadge?: (n: number) => Promise<void>;
-              clearAppBadge?: () => Promise<void>;
-            };
-            if (count > 0) {
-              nav.setAppBadge?.(count).catch(() => {});
-            } else {
-              nav.clearAppBadge?.().catch(() => {});
-            }
-          };
-
-          const badgeParts = computed(() => ({
-            chat: this.matrixChatStore.totalUnreadCount(),
-            tasks: this.appStore.openTaskCount(),
-            invitations: this.appStore.openInvitationCount(),
-          }), { equal: (a, b) => a.chat === b.chat && a.tasks === b.tasks && a.invitations === b.invitations });
-          const badgeTotal = computed(() => {
-            const parts = badgeParts();
-            return parts.chat + parts.tasks + parts.invitations;
-          });
-
-          runInInjectionContext(this.injector, () =>
-            toObservable(badgeTotal).subscribe(applyBadge)
-          );
-          // Hand the parts to the push service worker's badge ledger (spec 1.93): a push only
-          // knows its own part, so the worker needs the other two to write the right total
-          // while the app is closed.
-          runInInjectionContext(this.injector, () =>
-            toObservable(badgeParts).subscribe(parts => void writeBadgeLedgerFromPage(parts))
-          );
-
-          // Reconcile the badge whenever the PWA becomes visible again. A background push
-          // (or a message read on another device) can leave the OS icon badge out of sync
-          // with the real unread count while the app is closed — the reported "badge won't
-          // disappear after reading" bug. Forcing it back to the true total on resume fixes
-          // that; if Matrix hasn't finished syncing yet, the totalUnreadCount subscription
-          // above corrects it again once the count settles.
-          document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') {
-              applyBadge(badgeTotal());
-            }
-          });
-        }
       }
 
     } catch (error) {
