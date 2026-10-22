@@ -12,5 +12,5 @@
   },
   "include": ["src/**/*"],
   "exclude": ["dist/**/*"],
-  "references": [{ "path": "../../../shared/models/tsconfig.lib.json" }]
+  "references": [{ "path": "../../../shared/models/tsconfig.lib.json" }, { "path": "../util/tsconfig.lib.json" }]
 }
