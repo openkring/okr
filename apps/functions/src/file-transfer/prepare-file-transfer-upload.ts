@@ -13,7 +13,7 @@ import {
 } from '@okr/content-file-transfer-util';
 
 import { privateBucket } from '../_storage/private-bucket';
-import { fileTransferFilePath } from './file-transfer-storage';
+import { fileTransferFilePath, normalizeUploadOrigin } from './file-transfer-storage';
 
 const CF_NAME = 'prepareFileTransferUpload';
 const MAX_FILES = 100;
@@ -42,14 +42,8 @@ function parseRequest(data: unknown): PrepareFileTransferUploadRequest {
   if (!Number.isInteger(d.recipientCount)) throw invalid('recipientCount');
   if (!Number.isInteger(d.lifetimeDays)) throw invalid('lifetimeDays');
   if (typeof d.origin !== 'string') throw invalid('origin');
-  let origin: string;
-  try {
-    const url = new URL(d.origin);
-    if (url.protocol !== 'https:' && url.protocol !== 'http:') throw new Error('protocol');
-    origin = url.origin;
-  } catch {
-    throw invalid('origin');
-  }
+  const origin = normalizeUploadOrigin(d.origin);
+  if (!origin) throw invalid('origin');
   return {
     files: d.files.map(f => ({ name: f.name, size: f.size, contentType: f.contentType.trim() || 'application/octet-stream' })),
     lifetimeDays: d.lifetimeDays as number,

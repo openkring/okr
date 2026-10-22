@@ -19,3 +19,23 @@ export function fileTransferFilePath(tenantId: string, transferKey: string, inde
   const base = name.split(/[\\/]/).filter(Boolean).pop() ?? '';
   return `${fileTransferPrefix(tenantId, transferKey)}${index}-${safeName(base)}`;
 }
+
+/** The iOS Capacitor shell's origin; Android's WebView runs on `https://localhost` (a plain https origin). */
+export const CAPACITOR_IOS_ORIGIN = 'capacitor://localhost';
+
+/**
+ * Normalises the browser origin a resumable upload session is bound to: any http(s) URL becomes its
+ * origin; `capacitor://localhost` (iOS app) is accepted verbatim, because `new URL()` reports the
+ * origin of a non-special scheme as "null". Anything else → undefined (invalid-argument).
+ */
+export function normalizeUploadOrigin(raw: string): string | undefined {
+  const trimmed = raw.trim().replace(/\/+$/, '');
+  if (trimmed.toLowerCase() === CAPACITOR_IOS_ORIGIN) return CAPACITOR_IOS_ORIGIN;
+  try {
+    const url = new URL(trimmed);
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return undefined;
+    return url.origin;
+  } catch {
+    return undefined;
+  }
+}
