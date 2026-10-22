@@ -1,0 +1,30 @@
+{
+  "name": "travel-journal-data-access",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/travel/journal/data-access/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": [
+    "type:data-access",
+    "scope:journal",
+    "platform:mobile"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/libs/travel/journal/data-access",
+        "main": "libs/travel/journal/data-access/src/index.ts",
+        "tsConfig": "libs/travel/journal/data-access/tsconfig.lib.json",
+        "assets": [],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

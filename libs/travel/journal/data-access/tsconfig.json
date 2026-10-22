@@ -1,0 +1,16 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node"],
+    "declaration": true,
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "lib": ["dom", "es2022"],
+    "ignoreDeprecations": "6.0",
+    "rootDir": "src"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["dist/**/*"],
+  "references": []
+}
