@@ -1,0 +1,44 @@
+import { AvatarInfo } from '@okr/shared-models';
+import { describe, expect, it } from 'vitest';
+import { decodeDiaryFilter, DiaryFilter, diaryAlbumId, diaryAlbumKeys, encodeDiaryFilter, eventSlug, inDiaryDateRange } from './diary-album.util';
+
+describe('diary album utils', () => {
+  it('derives sorted, de-duplicated keys', () => {
+    expect(
+      diaryAlbumKeys({
+        people: [{ key: 'p1' } as AvatarInfo, { key: 'p1' } as AvatarInfo, { key: '' } as AvatarInfo],
+        location: { key: 'l1' } as AvatarInfo,
+        events: ['anrudern'],
+        tags: 'Familie, Segeln,',
+      })
+    ).toEqual(['event.anrudern', 'location.l1', 'person.p1', 'tag.Familie', 'tag.Segeln']);
+  });
+
+  it('survives a legacy doc without any of the fields', () => {
+    expect(diaryAlbumKeys({})).toEqual([]);
+  });
+
+  it('builds the deterministic album id', () => {
+    expect(diaryAlbumId('bka', 'u1', 'event', 'anrudern')).toBe('bka__u1__event__anrudern');
+  });
+
+  it('slugs a title like the archive (camelCase, umlauts transliterated)', () => {
+    expect(eventSlug('Zürich Fäscht 2024!')).toBe('zuerichFaescht2024');
+    expect(eventSlug('  Club-Regatta ')).toBe('clubRegatta');
+    expect(eventSlug('Ostern')).toBe('ostern');
+  });
+
+  it('treats empty bounds as open and keeps aggregates inside the range', () => {
+    expect(inDiaryDateRange('20041000', '20040101', '20041231')).toBe(true);
+    expect(inDiaryDateRange('19900000', '19900000', '')).toBe(true);
+    expect(inDiaryDateRange('20050101', '', '20041231')).toBe(false);
+    expect(inDiaryDateRange('20050101', '', '')).toBe(true);
+  });
+
+  it('round-trips a filter through the listId', () => {
+    const f: DiaryFilter = { kind: 'person', key: 'person.p1', title: 'x', from: '', to: '' };
+    expect(decodeDiaryFilter(encodeDiaryFilter(f))).toEqual({ kind: 'person', key: 'person.p1' });
+    expect(decodeDiaryFilter(encodeDiaryFilter({ ...f, kind: 'trip', key: 'bka__travel__x' }))).toEqual({ kind: 'trip', key: 'bka__travel__x' });
+    expect(decodeDiaryFilter('all')).toBeUndefined();
+  });
+});

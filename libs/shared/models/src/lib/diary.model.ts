@@ -100,6 +100,12 @@ export class DiaryModel implements OkrModel, TaggedModel, SearchableModel {
    */
   public sourceDocument = '';
 
+  /**
+   * Derived album keys ('person.p1', 'event.anrudern', 'tag.Familie'), used for array-contains
+   * queries. Never edited by hand — recomputed from people/location/events/tags, see `diaryAlbumKeys`.
+   */
+  public albumKeys: string[] = [];
+
   public index = DEFAULT_INDEX;
   public tags = DEFAULT_TAGS;
 

@@ -1,5 +1,6 @@
 import { AvatarInfo, DEFAULT_DIARY_WEATHER, DiaryModel, DiaryScope } from '@okr/shared-models';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
+import { diaryAlbumKeys } from './diary-album.util';
 import { DiaryFile, DiarySection } from './diary-file';
 import { fmList, fmNumber, fmScalar } from './diary-frontmatter';
 
@@ -144,5 +145,6 @@ export function toDiaryModel(
   };
 
   model.tags = fmList(file, 'tags').join(',');
+  model.albumKeys = diaryAlbumKeys(model);
   return model;
 }

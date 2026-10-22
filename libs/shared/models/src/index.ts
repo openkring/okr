@@ -44,6 +44,7 @@ export * from './lib/cost-allocation.model';
 export * from './lib/db-query.model';
 export * from './lib/dimensions.model';
 export * from './lib/diary-target.model';
+export * from './lib/diary-album.model';
 export * from './lib/diary.model';
 export * from './lib/diary-import.model';
 export * from './lib/document.model';

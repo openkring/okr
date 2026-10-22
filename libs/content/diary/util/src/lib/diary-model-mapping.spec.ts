@@ -1,6 +1,7 @@
 import { AvatarInfo } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
 import { DiaryResolver, toDiaryModel } from './diary-model-mapping';
+import { diaryAlbumKeys } from './diary-album.util';
 import { parseDiaryMarkdown } from './diary-parse';
 import { DIARY_FIXTURES } from './fixtures/diary-fixtures';
 
@@ -225,5 +226,15 @@ describe('toDiaryModel — Datierungsgenauigkeit (scope)', () => {
 
   it('laesst ein unparsbares Tagesdatum leer, statt zu werfen', () => {
     expect(withFrontmatter('date: irgendwann\ntitle: X').date).toBe('');
+  });
+});
+
+describe('toDiaryModel albumKeys', () => {
+  it('derives albumKeys from people, events and tags', () => {
+    const file = parseDiaryMarkdown('---\ndate: 2026-08-16\npeople: [anna]\nevents: [anrudern]\ntags: [Familie]\n---\n\n## Persönliche Gedanken\n\nx\n');
+    const model = toDiaryModel(file, 'bka', 'uid1', RESOLVER);
+    expect(model.albumKeys).toEqual(diaryAlbumKeys(model));
+    expect(model.albumKeys).toContain('event.anrudern');
+    expect(model.albumKeys).toContain('tag.Familie');
   });
 });
