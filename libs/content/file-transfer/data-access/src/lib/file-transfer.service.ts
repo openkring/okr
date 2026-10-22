@@ -94,6 +94,14 @@ export class FileTransferService {
     await this.call('endFileTransfer', { transferKey });
   }
 
+  /**
+   * Sender only: drops an own transfer that is still 'uploading' (failed or aborted send), so it
+   * stops counting toward the open bytes. Never ends an already 'open' transfer.
+   */
+  public async cancelUpload(transferKey: string): Promise<void> {
+    await this.call('endFileTransfer', { transferKey, uploadingOnly: true });
+  }
+
   public async requestLimit(reason: string): Promise<void> {
     await this.call('requestFileTransferLimit', { reason });
   }
@@ -165,6 +173,19 @@ export class FileTransferService {
   /*-------------------------- public link API (no auth) --------------------------------*/
   public async publicView(token: string): Promise<FileTransferView> {
     const res = await this.publicFetch(`${this.publicBase}/${encodeURIComponent(token)}`, { method: 'GET' });
+    return res as FileTransferView;
+  }
+
+  /**
+   * The full view of a password-protected transfer (the GET answers only sender and expiry). Same
+   * password limits as the file POST: 401 wrongPassword, 429 rateLimited, 503 unavailable.
+   */
+  public async publicViewWithPassword(token: string, password: string): Promise<FileTransferView> {
+    const res = await this.publicFetch(`${this.publicBase}/${encodeURIComponent(token)}/view`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
     return res as FileTransferView;
   }
 

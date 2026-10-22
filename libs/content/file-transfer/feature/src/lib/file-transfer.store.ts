@@ -179,8 +179,22 @@ export const FileTransferStore = signalStore(
     },
 
     /**
-     * prepare → resumable upload of every file (progress modal) → send. On any failure after
-     * prepare the transfer stays in state 'uploading'; the reaper deletes it and its files.
+     * Best effort after a failed or aborted send: the server deletes the still-'uploading' transfer
+     * (and its files), so it no longer counts toward the open bytes. If this call fails too, the
+     * hourly reaper drops the upload after 24 h.
+     */
+    async abandon(transferKey: string): Promise<void> {
+      try {
+        await store.fileTransferService.cancelUpload(transferKey);
+      } catch (error) {
+        console.warn('FileTransferStore.abandon failed', error instanceof Error ? error.message : 'unknown');
+      }
+    },
+
+    /**
+     * prepare → resumable upload of every file (progress modal) → send. Every failure after
+     * prepare (stale chunk, upload error, abort, expired session, rejected send) abandons the
+     * transfer; the reaper is the fallback when that fails too.
      */
     async send(form: FileTransferFormData, chatRoomId = ''): Promise<boolean> {
       let prepared;
@@ -203,7 +217,8 @@ export const FileTransferStore = signalStore(
       try {
         ({ FileTransferUploadModal } = await import('./file-transfer-upload.modal'));
       } catch {
-        // stale chunk after a deploy / offline: no unhandled rejection, the reaper removes the transfer
+        // stale chunk after a deploy / offline: no unhandled rejection
+        await this.abandon(prepared.transferKey);
         await this.toast(store.i18n.upload_failed());
         return false;
       }
@@ -218,6 +233,7 @@ export const FileTransferStore = signalStore(
         const text = upload.role === 'error'
           ? (upload.data?.reason === 'expired' ? store.i18n.upload_expired() : store.i18n.upload_failed())
           : store.i18n.upload_aborted();
+        await this.abandon(prepared.transferKey);
         await this.toast(text);
         return false;
       }
@@ -235,6 +251,7 @@ export const FileTransferStore = signalStore(
         await this.toast(fill(store.i18n.sent_done(), { count: result.recipients }));
         return true;
       } catch (error) {
+        await this.abandon(prepared.transferKey);
         await this.toast(this.errorText(error));
         return false;
       }
@@ -269,6 +286,7 @@ export const FileTransferStore = signalStore(
           limits: { ...DEFAULT_FILE_TRANSFER_LIMITS, ...(store.configLimits() ?? {}) },
           tenantId: store.tenantId(),
           readOnly: false,
+          persons: store.appStore.allPersons(),
         },
       });
       await modal.present();

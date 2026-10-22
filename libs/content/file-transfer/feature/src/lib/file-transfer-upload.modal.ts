@@ -24,8 +24,8 @@ interface UploadRow {
  * Uploads the files of a prepared transfer to their resumable sessions, one after the other, and
  * shows the progress per file. Dismisses with role 'confirm' when every file is stored, with role
  * 'error' and a {@link FileTransferUploadFailure} when one fails. Closing the modal (header close)
- * aborts the running upload; the caller sees role 'cancel'. A transfer that never gets sent stays
- * in state 'uploading' and is cleaned up by the reaper.
+ * aborts the running upload; the caller sees role 'cancel'. On any role but 'confirm' the store
+ * cancels the still-'uploading' transfer (the reaper is the fallback).
  *
  * Lives in the feature lib, not in ui: it is not a form, it drives the network upload itself
  * (same shape as `UploadTaskModal` in shared/ui for Firebase Storage uploads).
