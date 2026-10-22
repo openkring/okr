@@ -16,5 +16,7 @@
   },
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/test-setup.ts", "vite.config.ts"],
-  "references": []
+  "references": [
+    { "path": "../../../shared/models/tsconfig.lib.json" }
+  ]
 }
