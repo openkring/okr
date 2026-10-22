@@ -113,11 +113,13 @@ export interface TripMapPoint {
   /** StoreDate of the entry; '' for a trip-own location */
   date: string;
   diaryKey: string;
+  /** false for a trip-own location: pinned, but not part of the route line */
+  inRoute?: boolean;
 }
 
 /**
  * The trip map's pins: the located diary entries in date order (the polyline follows them),
- * then the trip's own locations. Entries without finite coordinates are dropped.
+ * then the trip's own locations (`inRoute: false`, off the line). Entries without finite coordinates are dropped.
  */
 export function tripMapPoints(
   entries: { date: string; okey: string; title: string; lat?: number; lng?: number }[],
@@ -129,6 +131,6 @@ export function tripMapPoints(
     .map(e => ({ lat: e.lat as number, lng: e.lng as number, title: e.title, date: e.date, diaryKey: e.okey }));
   const located = own
     .filter(o => Number.isFinite(o.lat) && Number.isFinite(o.lng))
-    .map(o => ({ lat: o.lat, lng: o.lng, title: o.title, date: '', diaryKey: '' }));
+    .map(o => ({ lat: o.lat, lng: o.lng, title: o.title, date: '', diaryKey: '', inRoute: false }));
   return [...dated, ...located];
 }

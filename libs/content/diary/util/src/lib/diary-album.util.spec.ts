@@ -115,8 +115,16 @@ describe('tripMapPoints', () => {
     );
     expect(points).toEqual([
       { lat: 1, lng: 10, title: 'Eins', date: '20240501', diaryKey: 'd1' },
-      { lat: 9, lng: 90, title: 'Hafen', date: '', diaryKey: '' },
+      { lat: 9, lng: 90, title: 'Hafen', date: '', diaryKey: '', inRoute: false },
     ]);
+  });
+
+  it('keeps the trip-own locations out of the route line', () => {
+    const points = tripMapPoints(
+      [{ date: '20240501', okey: 'd1', title: 'Eins', lat: 1, lng: 10 }],
+      [{ lat: 9, lng: 90, title: 'Hafen' }],
+    );
+    expect(points.map(p => p.inRoute !== false)).toEqual([true, false]);
   });
 
   it('returns [] without entries and own locations', () => {

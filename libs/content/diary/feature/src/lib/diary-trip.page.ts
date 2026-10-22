@@ -1,4 +1,4 @@
-import { Component, ComponentRef, DestroyRef, PLATFORM_ID, computed, effect, inject, input, resource, signal, untracked, viewChild, ViewContainerRef } from '@angular/core';
+import { Component, ComponentRef, DestroyRef, PLATFORM_ID, computed, effect, inject, input, linkedSignal, resource, signal, untracked, viewChild, ViewContainerRef } from '@angular/core';
 import {
   IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle,
   IonContent, IonHeader, IonIcon, IonNote, IonTitle, IonToolbar,
@@ -133,8 +133,14 @@ export class DiaryTripPage {
 
   protected readonly pointsLoading = computed(() => this.store.isLoading() || this.coordsResource.isLoading());
 
+  /** the last loaded coordinates — kept while the resource reloads, so the map does not flicker away */
+  private readonly coords = linkedSignal<Map<string, Coordinates> | undefined, Map<string, Coordinates>>({
+    source: () => this.coordsResource.value(),
+    computation: (value, previous) => value ?? previous?.value ?? new Map<string, Coordinates>(),
+  });
+
   protected readonly points = computed((): TripMapPoint[] => {
-    const coords = this.coordsResource.value() ?? new Map<string, Coordinates>();
+    const coords = this.coords();
     const entries = this.entries().map(entry => {
       const c = entry.location?.key ? coords.get(entry.location.key) : undefined;
       // pin detail = date + entry title
@@ -155,7 +161,8 @@ export class DiaryTripPage {
   });
 
   protected readonly dayCount = computed(() => {
-    const count = this.entries().length;
+    // only day entries count; a legacy doc without `scope` is a day (Firestore reads skip model defaults)
+    const count = this.entries().filter(entry => (entry.scope ?? 'day') === 'day').length;
     // single braces: translateAll strips Transloco's {{params}} (memory: translateall-strips-double-brace-params)
     return count === 1 ? this.store.i18n.trip_day() : this.store.i18n.trip_days().replace('{count}', String(count));
   });
@@ -172,6 +179,7 @@ export class DiaryTripPage {
   private readonly editorHost = viewChild('editorHost', { read: ViewContainerRef });
   private readonly editorRef = signal<ComponentRef<OkrEditor> | undefined>(undefined);
   private creatingEditor = false;
+  private destroyed = false;
 
   constructor() {
     // the store filters by this trip (its list is not shown here, only its entries are used)
@@ -203,6 +211,8 @@ export class DiaryTripPage {
       void (async () => {
         try {
           const { OkrEditor } = await import('@okr/shared-ui-editor');
+          // the host may have been torn down (trip gone, page left) while the chunk was loading
+          if (this.destroyed || this.editorHost() !== host || untracked(() => this.editorRef())) return;
           const ref = host.createComponent(OkrEditor);
           ref.instance.content.subscribe((value: string) => this.notes.set(value));
           this.editorRef.set(ref);
@@ -220,7 +230,10 @@ export class DiaryTripPage {
       ref.setInput('readOnly', false);
       ref.setInput('buttonCopyI18n', { copy_conf: copyConf });
     });
-    inject(DestroyRef).onDestroy(() => this.editorRef()?.destroy());
+    inject(DestroyRef).onDestroy(() => {
+      this.destroyed = true;
+      this.editorRef()?.destroy();
+    });
   }
 
   /******************************* actions *************************************** */

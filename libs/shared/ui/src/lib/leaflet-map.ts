@@ -12,6 +12,7 @@ export interface MapMarker extends GeoCoordinates {
   title?: string;
   what3words?: string;
   distance?: number; // distance in km from a reference point
+  inRoute?: boolean; // with `route`: false keeps this pin off the polyline (default: on it)
 }
 
 /**
@@ -83,6 +84,8 @@ export class LeafletMap {
   private tileLayer?: L.TileLayer;
   private markerLayer?: L.LayerGroup;
   private destroyed = false;
+  /** the coordinates last fitted — a re-emission with the same pins keeps the user's pan/zoom */
+  private fittedKey = '';
 
   constructor() {
     const destroyRef = inject(DestroyRef);
@@ -155,11 +158,15 @@ export class LeafletMap {
       latLngs.push([marker.lat, marker.lng]);
     }
 
-    if (route && latLngs.length > 1) {
+    const routeLatLngs = markers.filter(m => m.inRoute !== false).map((m): L.LatLngExpression => [m.lat, m.lng]);
+    if (route && routeLatLngs.length > 1) {
       // the line sits in the overlay pane, below the marker pane: pins stay on top and clickable
-      L.polyline(latLngs, { className: 'okr-route-line', weight: 3, opacity: 0.8 }).addTo(this.markerLayer);
+      L.polyline(routeLatLngs, { className: 'okr-route-line', weight: 3, opacity: 0.8 }).addTo(this.markerLayer);
     }
 
+    const key = `${zoom}|${markers.map(m => `${m.lat},${m.lng}`).join(';')}`;
+    if (key === this.fittedKey) return;
+    this.fittedKey = key;
     if (latLngs.length > 1) {
       map.fitBounds(L.latLngBounds(latLngs), { padding: FIT_PADDING, maxZoom: MAX_FIT_ZOOM });
     } else if (latLngs.length === 1) {
