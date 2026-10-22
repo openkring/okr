@@ -139,6 +139,23 @@ export const DIARY_I18N_KEYS = {
   jass_rout:              PFX + 'jass.rout',
   jass_schneider:         PFX + 'jass.schneider',
 
+  // ─── albums, trips and date ranges (spec 1.114 §4) ─────────────────────────────
+  albums_edit:            PFX + 'albums.edit',
+  albums_add:             PFX + 'albums.add',
+  albums_title_label:     PFX + 'albums.title.label',
+  albums_title_placeholder: PFX + 'albums.title.placeholder',
+  albums_slug_label:      PFX + 'albums.slug.label',
+  albums_slug_helper:     PFX + 'albums.slug.helper',
+  albums_person_label:    PFX + 'albums.person.label',
+  albums_person_select:   PFX + 'albums.person.select',
+  albums_location_label:  PFX + 'albums.location.label',
+  albums_location_select: PFX + 'albums.location.select',
+  albums_trip_edit:       PFX + 'albums.trip.edit',
+  albums_trip_add:        PFX + 'albums.trip.add',
+  albums_trip_name:       PFX + 'albums.trip.name',
+  albums_range_from:      PFX + 'albums.range.from',
+  albums_range_to:        PFX + 'albums.range.to',
+
   ok:                     '@ok',
   cancel:                 '@cancel',
 } satisfies Record<string, string>;

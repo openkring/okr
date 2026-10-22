@@ -3,3 +3,8 @@ export * from './lib/diary-edit.modal';
 export * from './lib/diary-view.modal';
 export * from './lib/diary-media-row';
 export * from './lib/diary-jass-card';
+export * from './lib/diary-album.form';
+export * from './lib/diary-album-edit.modal';
+export * from './lib/diary-trip.form';
+export * from './lib/diary-trip-edit.modal';
+export * from './lib/diary-date-range.form';

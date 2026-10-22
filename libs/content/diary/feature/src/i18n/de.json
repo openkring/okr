@@ -195,7 +195,12 @@
     "scopeInvalid": "Wähle einen gültigen Zeitraum aus.",
     "statusInvalid": "Wähle einen gültigen Status aus.",
     "dateScopeMismatch": "Das Datum passt nicht zum gewählten Zeitraum.",
-    "dateRangeInvalid": "Das Startdatum liegt nach dem Enddatum."
+    "dateRangeInvalid": "Das Startdatum liegt nach dem Enddatum.",
+    "slugInvalid": "Der Kurzname beginnt mit einem kleinen Buchstaben und enthält nur Buchstaben und Ziffern, ohne Leerzeichen.",
+    "refMissing": "Wähle zuerst eine Person oder einen Ort aus.",
+    "dateRequired": "Wähle ein Datum aus.",
+    "titleRequired": "Gib einen Titel ein.",
+    "nameRequired": "Gib einen Namen ein."
   },
   "jass": {
     "draw": "Unentschieden – eine Revanche ist so gut wie abgemacht.",
@@ -204,5 +209,34 @@
     "clear": "Verdient gewonnen – die Karten waren heute auf ihrer Seite.",
     "rout": "Kantersieg – die anderen dürfen beim nächsten Mal mischen.",
     "schneider": "Schneider"
+  },
+  "albums": {
+    "edit": "Album bearbeiten",
+    "add": "Neues Album",
+    "title": {
+      "label": "Titel",
+      "placeholder": "Wie soll das Album heissen?"
+    },
+    "slug": {
+      "label": "Kurzname",
+      "helper": "Damit werden die Tagebucheinträge dem Ereignis zugeordnet. Er lässt sich später nicht mehr ändern."
+    },
+    "person": {
+      "label": "Person",
+      "select": "Person wählen"
+    },
+    "location": {
+      "label": "Ort",
+      "select": "Ort wählen"
+    },
+    "trip": {
+      "edit": "Reise bearbeiten",
+      "add": "Neue Reise",
+      "name": "Reise"
+    },
+    "range": {
+      "from": "von",
+      "to": "bis"
+    }
   }
 }

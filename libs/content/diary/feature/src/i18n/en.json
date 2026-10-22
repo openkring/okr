@@ -195,7 +195,12 @@
     "scopeInvalid": "Select a valid period.",
     "statusInvalid": "Select a valid status.",
     "dateScopeMismatch": "The date does not match the selected period.",
-    "dateRangeInvalid": "The start date is after the end date."
+    "dateRangeInvalid": "The start date is after the end date.",
+    "slugInvalid": "The short name starts with a lowercase letter and contains only letters and digits, no spaces.",
+    "refMissing": "Choose a person or a place first.",
+    "dateRequired": "Choose a date.",
+    "titleRequired": "Enter a title.",
+    "nameRequired": "Enter a name."
   },
   "jass": {
     "draw": "A draw – a rematch is as good as settled.",
@@ -204,5 +209,34 @@
     "clear": "Well deserved – the cards were on their side today.",
     "rout": "A landslide – the others get to shuffle next time.",
     "schneider": "Schneider"
+  },
+  "albums": {
+    "edit": "Edit album",
+    "add": "New album",
+    "title": {
+      "label": "Title",
+      "placeholder": "What should the album be called?"
+    },
+    "slug": {
+      "label": "Short name",
+      "helper": "It links the diary entries to the event. It cannot be changed later."
+    },
+    "person": {
+      "label": "Person",
+      "select": "Choose person"
+    },
+    "location": {
+      "label": "Place",
+      "select": "Choose place"
+    },
+    "trip": {
+      "edit": "Edit trip",
+      "add": "New trip",
+      "name": "Trip"
+    },
+    "range": {
+      "from": "from",
+      "to": "to"
+    }
   }
 }

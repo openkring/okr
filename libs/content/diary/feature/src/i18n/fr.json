@@ -195,7 +195,12 @@
     "scopeInvalid": "Choisis une période valide.",
     "statusInvalid": "Choisis un statut valide.",
     "dateScopeMismatch": "La date ne correspond pas à la période choisie.",
-    "dateRangeInvalid": "La date de début est après la date de fin."
+    "dateRangeInvalid": "La date de début est après la date de fin.",
+    "slugInvalid": "Le nom court commence par une lettre minuscule et ne contient que des lettres et des chiffres, sans espace.",
+    "refMissing": "Choisis d'abord une personne ou un lieu.",
+    "dateRequired": "Choisis une date.",
+    "titleRequired": "Saisis un titre.",
+    "nameRequired": "Saisis un nom."
   },
   "jass": {
     "draw": "Match nul – la revanche est pour ainsi dire déjà fixée.",
@@ -204,5 +209,34 @@
     "clear": "Victoire méritée – les cartes étaient de leur côté aujourd'hui.",
     "rout": "Victoire écrasante – les autres mélangeront la prochaine fois.",
     "schneider": "Schneider"
+  },
+  "albums": {
+    "edit": "Modifier l'album",
+    "add": "Nouvel album",
+    "title": {
+      "label": "Titre",
+      "placeholder": "Comment l'album doit-il s'appeler ?"
+    },
+    "slug": {
+      "label": "Nom court",
+      "helper": "Il relie les entrées du journal à l'événement. Tu ne pourras plus le modifier ensuite."
+    },
+    "person": {
+      "label": "Personne",
+      "select": "Choisir une personne"
+    },
+    "location": {
+      "label": "Lieu",
+      "select": "Choisir un lieu"
+    },
+    "trip": {
+      "edit": "Modifier le voyage",
+      "add": "Nouveau voyage",
+      "name": "Voyage"
+    },
+    "range": {
+      "from": "du",
+      "to": "au"
+    }
   }
 }

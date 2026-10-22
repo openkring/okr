@@ -195,7 +195,12 @@
     "scopeInvalid": "Scegli un periodo valido.",
     "statusInvalid": "Scegli uno stato valido.",
     "dateScopeMismatch": "La data non corrisponde al periodo scelto.",
-    "dateRangeInvalid": "La data di inizio è successiva alla data di fine."
+    "dateRangeInvalid": "La data di inizio è successiva alla data di fine.",
+    "slugInvalid": "Il nome breve inizia con una lettera minuscola e contiene solo lettere e cifre, senza spazi.",
+    "refMissing": "Scegli prima una persona o un luogo.",
+    "dateRequired": "Scegli una data.",
+    "titleRequired": "Inserisci un titolo.",
+    "nameRequired": "Inserisci un nome."
   },
   "jass": {
     "draw": "Pareggio – la rivincita è praticamente già fissata.",
@@ -204,5 +209,34 @@
     "clear": "Vittoria meritata – oggi le carte erano dalla loro parte.",
     "rout": "Vittoria schiacciante – la prossima volta mescolano gli altri.",
     "schneider": "Schneider"
+  },
+  "albums": {
+    "edit": "Modifica l'album",
+    "add": "Nuovo album",
+    "title": {
+      "label": "Titolo",
+      "placeholder": "Come deve chiamarsi l'album?"
+    },
+    "slug": {
+      "label": "Nome breve",
+      "helper": "Collega le voci del diario all'evento. Più tardi non potrai più modificarlo."
+    },
+    "person": {
+      "label": "Persona",
+      "select": "Scegli una persona"
+    },
+    "location": {
+      "label": "Luogo",
+      "select": "Scegli un luogo"
+    },
+    "trip": {
+      "edit": "Modifica il viaggio",
+      "add": "Nuovo viaggio",
+      "name": "Viaggio"
+    },
+    "range": {
+      "from": "dal",
+      "to": "al"
+    }
   }
 }
