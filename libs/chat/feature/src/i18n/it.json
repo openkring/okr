@@ -30,8 +30,8 @@
     "helper": "Un avatar è l'immagine di una persona, il logo di un'organizzazione o di una risorsa, ecc."
   },
   "isDirect": {
-    "label": "Messaggio diretto",
-    "helper": "Un messaggio tra esattamente due persone."
+    "label": "Chat diretta",
+    "helper": "Una chat tra esattamente due persone."
   },
   "reconnecting": "Riconnessione...",
   "connectionError": "Errore di connessione",
@@ -48,7 +48,7 @@
   "mentionMe": "Inserisci me stesso (@me)",
   "noMessagesStartConversation": "Non ci sono ancora messaggi. Avvia la conversazione.",
   "room": {
-    "rooms": "Stanze di chat",
+    "rooms": "Stanze",
     "empty": "Stanza vuota",
     "none": "Nessuna stanza di chat trovata.",
     "searchPlaceholder": "Cerca stanza...",
@@ -171,7 +171,8 @@
       "header": "Modifica messaggio",
       "placeholder": "Scrivi la tua modifica...",
       "conf": "Il messaggio è stato modificato.",
-      "error": "Non è stato possibile modificare il messaggio."
+      "error": "Non è stato possibile modificare il messaggio.",
+      "label": "Messaggio"
     },
     "delete": {
       "label": "Elimina messaggio",
@@ -280,12 +281,13 @@
   "validation": {
     "nameRequired": "Il nome è obbligatorio.",
     "membersRequired": "Scegli almeno una persona.",
-    "directOne": "Scegli esattamente una persona per il messaggio diretto.",
-    "adhocTwo": "Scegli almeno due persone per una chat di gruppo.",
-    "membersMax": "Una chat di gruppo può avere al massimo altre 19 persone.",
+    "directOne": "Scegli esattamente una persona per la chat diretta.",
+    "adhocTwo": "Scegli almeno due persone per una chat ad hoc.",
+    "membersMax": "Una chat ad hoc può avere al massimo 19 altre persone.",
     "sourceGroupsRequired": "Scegli almeno un gruppo.",
     "pollAnswersTooFew": "Un sondaggio richiede almeno due opzioni.",
-    "pollAnswersTooMany": "Un sondaggio può avere al massimo 20 opzioni."
+    "pollAnswersTooMany": "Un sondaggio può avere al massimo 20 opzioni.",
+    "bodyRequired": "Il messaggio non può essere vuoto."
   },
   "askRoom": {
     "hint": "Ancora nessuna conversazione. Il tuo messaggio arriva a tutti i membri di {group}."
@@ -340,18 +342,17 @@
       "label": "Nome della chat",
       "placeholder": "Inserisci un nome",
       "helper": "Da due altre persone in su, la chat ha bisogno di un nome.",
-      "helperDirect": "Una chat a due non ha bisogno di un nome."
+      "helperDirect": "Una chat diretta non ha bisogno di un nome."
     },
     "members": {
       "title": "Membri",
       "add": "Aggiungi membro",
       "you": "tu",
-      "empty": "Non hai ancora scelto nessuno.",
       "addConf": "{name} ora è nella chat.",
       "addError": "Non è stato possibile aggiungere la persona."
     },
-    "hint": "Questa chat la vedono solo i suoi membri. Non compare in nessun elenco di gruppi e non ha né calendario né file.",
-    "hintDirect": "Con una sola persona nasce una chat a due. Se esiste già, viene semplicemente riaperta.",
+    "hint": "In una chat ad hoc puoi invitare quante persone vuoi (almeno 2). Diventi il gestore di questa chat. Solo i membri invitati vedono la chat. A differenza di una chat di gruppo, la chat ad hoc non ha calendario, file né pagina di contenuto. Compare solo nella tua panoramica delle chat, non nei gruppi.",
+    "hintDirect": "Con una sola persona nasce una chat diretta. Solo voi due vedete i vostri messaggi. Se esiste già, viene riaperta.",
     "creating": "La chat viene creata. Ci vuole un attimo.",
     "create": {
       "conf": "La chat è aperta.",
@@ -370,13 +371,14 @@
     },
     "sources": {
       "title": "Gruppi",
-      "add": "Aggiungi gruppo",
-      "empty": "Scegli almeno un gruppo."
+      "add": "Aggiungi gruppo"
     },
     "joinMode": {
       "label": "Partecipazione",
-      "optOut": "Tutti i membri ne fanno parte e possono uscire",
-      "optIn": "Chi vuole si unisce da solo"
+      "optOut": "Opt-out",
+      "optIn": "Opt-in",
+      "optOutNote": "Tutti i membri ne fanno parte e possono uscire",
+      "optInNote": "Chi vuole si unisce da sé"
     },
     "allowReplyAll": {
       "label": "Consenti risposte a tutti",
@@ -660,7 +662,8 @@
     "typeAudio": "Audio",
     "typePoll": "Sondaggio",
     "typeLocation": "Posizione",
-    "typeOther": "Messaggio"
+    "typeOther": "Messaggio",
+    "copyMatrixLink": "Copia link Matrix"
   },
   "details": {
     "title": "Dettagli della chat",

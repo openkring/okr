@@ -27,7 +27,7 @@ const ACTION_ICONS: Record<MessageActionId, string> = {
   'unreadFromHere': 'mail',
   'share': 'share',
   'download': 'download',
-  'info': 'information-circle',
+  'info': 'info-circle',
   'edit': 'edit',
   'delete': 'trash',
   'report': 'alert-circle',

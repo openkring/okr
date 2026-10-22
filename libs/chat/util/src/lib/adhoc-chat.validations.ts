@@ -1,6 +1,6 @@
 import { enforce, staticSuite, test } from 'vest';
 
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
+import { DESCRIPTION_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
 import { stringValidations } from '@okr/shared-util-core';
 
 import { ADHOC_CHAT_MAX_MEMBERS, AdhocChatFormModel } from './adhoc-chat.model';
@@ -11,7 +11,7 @@ const VPFX = '@chat/feature.validation.';
 /**
  * Je Raumtyp (`roomType`) gelten andere Regeln:
  *
- * - **direct** — genau eine weitere Person → eine Direktnachricht (`createDirectRoom`,
+ * - **direct** — genau eine weitere Person → ein Direkt-Chat (`createDirectRoom`,
  *   find-or-create). Ein Name ist dort bedeutungslos und wird ignoriert.
  * - **adhoc** — zwei bis 19 weitere Personen und ein Name. Abgeleitet waere der Name eine
  *   Aufzaehlung von Vornamen, die in der Raumliste niemand wiedererkennt.
@@ -22,7 +22,7 @@ export const adhocChatValidations = staticSuite((model: AdhocChatFormModel) => {
   const type = model.roomType ?? 'direct';
   const memberCount = model.members?.length ?? 0;
 
-  stringValidations('name', model.name, SHORT_NAME_LENGTH);
+  stringValidations('name', model.name, NAME_LENGTH);
   test('name', 'nameRequired', () => {
     enforce(type === 'direct' || (model.name ?? '').trim().length > 0).isTruthy();
   });

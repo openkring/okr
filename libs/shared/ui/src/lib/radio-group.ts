@@ -15,6 +15,7 @@ export interface RadioGroupI18n {
  * Usage example:
  *  <okr-radio-group [i18n]="genderI18n()" [stringList]="['male', 'female']" [labels]="genderLabels()"
  *    [selectedString]="gender()" (selectedStringChange)="onFieldChange('gender', $event)" [readOnly]="false" />
+ *  Pass `[notes]` (parallel to stringList) for a smaller explanation under an option.
  */
 @Component({
   selector: 'okr-radio-group',
@@ -24,6 +25,7 @@ export interface RadioGroupI18n {
     .group-label { font-size: 12px; color: var(--ion-color-medium); }
     ion-item.option { --min-height: 36px; }
     ion-item.helper { --min-height: 0; }
+    .option-note { display: block; margin-top: 2px; font-size: 0.8rem; line-height: 1.3; color: var(--ion-color-medium); }
   `],
   template: `
     <ion-item lines="none">
@@ -33,7 +35,12 @@ export interface RadioGroupI18n {
       @for (value of stringList(); track value; let i = $index) {
         <ion-item lines="none" class="option">
           <ion-radio [value]="value" labelPlacement="end" justify="start" [disabled]="isReadOnly()">
-            <span class="ion-text-wrap">{{ labels()[i] || value }}</span>
+            <span class="ion-text-wrap">
+              {{ labels()[i] || value }}
+              @if (notes()[i]) {
+                <span class="option-note">{{ notes()[i] }}</span>
+              }
+            </span>
           </ion-radio>
         </ion-item>
       }
@@ -52,6 +59,8 @@ export class RadioGroup {
   public readonly stringList = input.required<string[]>(); // the option values
   /** optional labels, parallel to stringList; falls back to the raw value */
   public readonly labels = input<string[]>([]);
+  /** optional small notes under each option, parallel to stringList; an empty entry shows none */
+  public readonly notes = input<string[]>([]);
   public readonly readOnly = input.required<boolean>();
 
   // coerced boolean inputs

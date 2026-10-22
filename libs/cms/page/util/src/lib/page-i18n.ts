@@ -10,6 +10,7 @@ export const PAGE_I18N_KEYS = {
   empty_readonly:               PFX + 'emptyPageReadOnly',
   not_exist:                    PFX + 'notexist',
   help:                         PFX + 'help',
+  chat_help:                    PFX + 'chatHelp',
 
   key:                          '@key',
   copy_conf:                    '@copy.conf',

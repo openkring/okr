@@ -20,6 +20,8 @@ import { AvatarService } from '@okr/avatar-data-access';
 import { ChatReminderService, isServiceAccount, MatrixChatService, MatrixPinsService, MatrixRoomPrefsService, MatrixJumpResult, MatrixPollData } from '@okr/chat-data-access';
 import { AvailablePinboard, AdhocChatFormModel, newAdhocChatForm, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, pinboardBroadcastCount, pinboardReplyDraft, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, isOwnNotesRoom, NotesRoomOwner, buildBookmarkContent, buildForwardContent, isForwardable, videoAlbumFallsBackToSynapse, readBookmark, reminderTitle, PinPreview } from '@okr/chat-util';
 
+import { EmojiPickerModal, MessageEditModal } from '@okr/chat-ui';
+
 import { RoomEditModal } from './room-edit.modal';
 import { MessageInfoModal } from './message-info.modal';
 import { buildMessageInfoProps } from './message-info.feature';
@@ -1227,28 +1229,24 @@ export const _MatrixChatStore = signalStore(
       },
 
       /**
-       * Show emoji picker and react to a message.
+       * «+ Reaktion»: the full emoji list (same picker as the chat input), then react with the pick.
        */
       async reactToMessage(message: MatrixMessage): Promise<void> {
-        const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '👎', '🎉', '🙏'];
-        const roomId = store.currentRoomId();
+        const roomId = message.roomId || store.currentRoomId();
         if (!roomId) return;
-        const alert = await store.alertController.create({
-          header: store.i18n.msg_react_header(),
-          buttons: [
-            ...QUICK_REACTIONS.map(emoji => ({
-              text: emoji,
-              handler: () => {
-                store.matrixService.reactToMessage(roomId, message.eventId, emoji).catch(err =>
-                  console.error('MatrixChatStore.reactToMessage: Failed to react:', err)
-                );
-              }
-            })),
-            { text: store.i18n.msg_react_cancel(), role: 'cancel' }
-          ],
-          cssClass: 'emoji-reaction-alert',
+        const modal = await store.modalController.create({
+          component: EmojiPickerModal,
+          componentProps: { title: store.i18n.msg_react_header() },
+          cssClass: 'auto-height-modal',
         });
-        await alert.present();
+        await modal.present();
+        const { data, role } = await modal.onDidDismiss<string>();
+        if (role !== 'confirm' || !data) return;
+        try {
+          await store.matrixService.reactToMessage(roomId, message.eventId, data);
+        } catch (error) {
+          console.error('MatrixChatStore.reactToMessage: Failed to react:', error);
+        }
       },
 
       /**
@@ -1391,6 +1389,7 @@ export const _MatrixChatStore = signalStore(
           currentUserId,
           senderOf: (roomId, eventId) => store.matrixService.getEventSender(roomId, eventId),
           isAdmin: hasRole('admin', store.appStore.currentUser()),
+          appOrigin: store.appStore.appOrigin(),
           i18n: store.i18n,
         });
         const modal = await store.modalController.create({ component: MessageInfoModal, componentProps: props, cssClass: 'auto-height-modal' });
@@ -1400,13 +1399,18 @@ export const _MatrixChatStore = signalStore(
       },
 
       /**
-       * Prompt user for new text and edit the message.
+       * «Mitteilung ändern»: edit modal (text + emoji picker), then send the edit.
        */
       async editMessage(message: MatrixMessage): Promise<void> {
         const roomId = store.currentRoomId();
         if (!roomId) return;
-        const newText = await store.alertService.okrPrompt(store.i18n.msg_update_header(), store.i18n.msg_update_placeholder(), message.body);
-        if (!newText?.trim() || newText.trim() === message.body) return;
+        const modal = await store.modalController.create({
+          component: MessageEditModal,
+          componentProps: { i18n: store.i18n, body: message.body },
+        });
+        await modal.present();
+        const { data: newText, role } = await modal.onDidDismiss<string>();
+        if (role !== 'confirm' || !newText?.trim() || newText.trim() === message.body) return;
         try {
           await store.matrixService.editMessage(roomId, message.eventId, newText.trim());
           await store.alertService.showToast(store.i18n.msg_update_conf());

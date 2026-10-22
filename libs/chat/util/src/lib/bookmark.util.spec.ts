@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { MatrixMessage } from '@okr/shared-models';
-import { OKR_BOOKMARK_FIELD, notesRoomAliasLocalpart, bookmarkSnippet, buildBookmarkContent, readBookmark, isTrustedBookmarkEntry, matrixPermalink, parseMatrixPermalink, isOwnNotesRoom, resolvePermalinkTarget, indexBookmarkEntries, bookmarkedMessageIds } from './bookmark.util';
+import { OKR_BOOKMARK_FIELD, notesRoomAliasLocalpart, bookmarkSnippet, buildBookmarkContent, readBookmark, isTrustedBookmarkEntry, matrixPermalink, chatDeepLink, parseMatrixPermalink, isOwnNotesRoom, resolvePermalinkTarget, indexBookmarkEntries, bookmarkedMessageIds } from './bookmark.util';
 
 const SERVER = 'bkchat.etke.host';
 
@@ -54,6 +54,13 @@ describe('bookmarkSnippet', () => {
 });
 
 describe('matrixPermalink', () => {
+  it('builds an in-app chat deep link', () => {
+    expect(chatDeepLink('https://app.seeclub.org/', '!abc:bkchat.etke.host', '$ev1'))
+      .toBe('https://app.seeclub.org/private/chat/c-contentpage?selectedRoom=%21abc%3Abkchat.etke.host&eventId=%24ev1');
+    expect(chatDeepLink('https://app.seeclub.org', '!abc:bkchat.etke.host'))
+      .toBe('https://app.seeclub.org/private/chat/c-contentpage?selectedRoom=%21abc%3Abkchat.etke.host');
+  });
+
   it('builds a matrix.to event link', () => {
     expect(matrixPermalink('!abc:bkchat.etke.host', '$ev1')).toBe('https://matrix.to/#/!abc:bkchat.etke.host/$ev1');
   });

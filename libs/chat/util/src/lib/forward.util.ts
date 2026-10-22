@@ -20,11 +20,16 @@ const COPIED_FIELDS = ['msgtype', 'body', 'format', 'formatted_body', 'url', 'in
 const REPLY_FALLBACK = /<mx-reply>[\s\S]*?<\/mx-reply>/gi;
 const MENTION_ANCHOR = /<a\s+href="https:\/\/matrix\.to\/#\/[^"]*"[^>]*>(.*?)<\/a>/gi;
 
-/** Plain messages only: no polls, calls, redacted events (empty content) or bookmark entries. */
+/**
+ * Plain messages only: no polls, calls, redacted events (empty content) or bookmark entries.
+ * `type` is either the event type (`m.room.message`) or — as on `MatrixMessage.type` — the
+ * msgtype itself, which the message service stores in its place.
+ */
 export function isForwardable(type: string, content: Record<string, unknown>, isBookmarkEntry: boolean): boolean {
-  if (isBookmarkEntry || type !== 'm.room.message') return false;
+  if (isBookmarkEntry) return false;
   const msgtype = content['msgtype'];
-  return typeof msgtype === 'string' && FORWARDABLE_MSGTYPES.includes(msgtype);
+  if (typeof msgtype !== 'string' || (type !== 'm.room.message' && type !== msgtype)) return false;
+  return FORWARDABLE_MSGTYPES.includes(msgtype);
 }
 
 /** Content of the forwarded message: payload only, no mentions, no reply/thread relation. */

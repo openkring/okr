@@ -66,6 +66,16 @@ export function matrixPermalink(roomId: string, eventId: string): string {
   return `https://matrix.to/#/${roomId}/${eventId}`;
 }
 
+/**
+ * Deep link into the app's chat view, opening `roomId` at `eventId` — the link to share with
+ * other members (a matrix.to link only opens in Element). `appOrigin` is `AppStore.appOrigin()`.
+ */
+export function chatDeepLink(appOrigin: string, roomId: string, eventId?: string): string {
+  const params = new URLSearchParams({ selectedRoom: roomId });
+  if (eventId) params.set('eventId', eventId);
+  return `${appOrigin.replace(/\/+$/, '')}/private/chat/c-contentpage?${params.toString()}`;
+}
+
 /** Content of the entry the bot/user posts into the notes room for a saved message. */
 export function buildBookmarkContent(
   message: MatrixMessage,

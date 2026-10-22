@@ -20,6 +20,12 @@ describe('isForwardable', () => {
     expect(isForwardable('m.room.message', { msgtype: 'm.location', body: 'x' }, false)).toBe(false);
   });
 
+  it('accepts a MatrixMessage.type that carries the msgtype', () => {
+    expect(isForwardable('m.text', { msgtype: 'm.text', body: 'x' }, false)).toBe(true);
+    expect(isForwardable('m.image', { msgtype: 'm.image', body: 'x' }, false)).toBe(true);
+    expect(isForwardable('m.text', { msgtype: 'm.location', body: 'x' }, false)).toBe(false);
+  });
+
   it('rejects redacted messages (empty content)', () => {
     expect(isForwardable('m.room.message', {}, false)).toBe(false);
   });

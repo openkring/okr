@@ -1,3 +1,4 @@
+import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 import { POLL_START_EVENT } from './poll.util';
 
 /** i18n keys (in `MATRIX_CHAT_I18N_KEYS`) naming the kind of a message in the info modal. */
@@ -68,4 +69,12 @@ export function storeDateTimeOfMs(ms: number): string {
   const d = new Date(ms);
   const p = (n: number, len = 2) => String(n).padStart(len, '0');
   return `${p(d.getFullYear(), 4)}${p(d.getMonth() + 1)}${p(d.getDate())}${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+}
+
+/** Local date and time of an epoch-ms timestamp, zero-padded: `05.10.2026 14:03`. */
+export function viewDateTimeOfMs(ms: number): string {
+  const store = storeDateTimeOfMs(ms);
+  const date = convertDateFormatToString(store.substring(0, 8), DateFormat.StoreDate, DateFormat.ViewDate, false);
+  const time = convertDateFormatToString(store, DateFormat.StoreDateTime, DateFormat.Time, false);
+  return `${date} ${time}`;
 }

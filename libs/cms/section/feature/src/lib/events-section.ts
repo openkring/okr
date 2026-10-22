@@ -4,9 +4,9 @@ import { ActionSheetController, ActionSheetOptions, IonBadge, IonCard, IonCardCo
 
 import { CalEventModel, EventsConfig, EventsSection } from '@okr/shared-models';
 import { MoreButton, OptionalCardHeader, Spinner } from '@okr/shared-ui';
-import { debugMessage, getAttendanceColor, getAttendanceIcon, getAttendanceState, hasRole } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, debugMessage, getAttendanceColor, getAttendanceIcon, getAttendanceState, hasRole } from '@okr/shared-util-core';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, isBrowser } from '@okr/shared-util-angular';
-import { PrettyDatePipe, SvgIconPipe, WeekdayPipe } from '@okr/shared-pipes';
+import { SvgIconPipe, WeekdayPipe } from '@okr/shared-pipes';
 import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 
 import { CALEVENT_I18N_KEYS, isAttendanceClosed } from '@okr/calevent-util';
@@ -37,7 +37,7 @@ import { reservedListHeight } from './list-reservation';
   ],
   providers: [CalendarStore], 
   imports: [
-    SvgIconPipe, PrettyDatePipe, WeekdayPipe, TranslatePipe, AsyncPipe,
+    SvgIconPipe, WeekdayPipe, TranslatePipe, AsyncPipe,
     OptionalCardHeader, Spinner, MoreButton,
     IonBadge, IonCard, IonCardContent, IonLabel
   ],
@@ -57,7 +57,7 @@ import { reservedListHeight } from './list-reservation';
             @for(event of calevents(); track event.okey) {
               <ion-item (click)="showActions(event)">
                 <ion-icon src="{{ getIcon(event) | svgIcon }}" color="{{ getIconColor(event) }}" slot="start" />
-                <ion-label>{{ event.startDate | weekday | translate | async }} {{ event.startDate | prettyDate:false }} {{event.name}}</ion-label>
+                <ion-label>{{ event.startDate | weekday | translate | async }} {{ startText(event) }} {{event.name}}</ion-label>
                 @if(store.unseen(event); as unseen) {
                   <ion-badge slot="end" color="primary" [title]="caleventI18n.activity_unseen()">{{ unseen }}</ion-badge>
                 }
@@ -152,6 +152,12 @@ export class EventsSectionComponent implements OnInit {
     const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, calevent);
     await this.executeActions(actionSheetOptions, calevent);
+  }
+
+  /** Start of the event as `dd.MM.yyyy HH:mm`; date only for an event without a start time. */
+  protected startText(event: CalEventModel): string {
+    const date = convertDateFormatToString(event.startDate, DateFormat.StoreDate, DateFormat.ViewDate, false);
+    return event.startTime ? `${date} ${event.startTime}` : date;
   }
 
   protected getIcon(event: CalEventModel): string {

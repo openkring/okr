@@ -1,3 +1,4 @@
+import { viewDateTimeOfMs } from './message-info.util';
 /** Single locale for all chat timestamp rendering (i18n consolidation, design review #5). */
 export const CHAT_LOCALE = 'de-DE';
 
@@ -71,7 +72,7 @@ export function hashUserIdToColor(userId: string): string {
 }
 
 export function formatReceiptTime(ts: number): string {
-  return `Gelesen ${new Date(ts).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', hour12: false })}`;
+  return `Gelesen ${viewDateTimeOfMs(ts)}`;
 }
 
 /** One row of the read-receipt popover: who read the message, and how they reacted to it. */

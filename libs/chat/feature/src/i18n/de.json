@@ -30,8 +30,8 @@
     "helper": "Ein Avatar ist ein Bild einer Person, ein Logo einer Organisation oder Resource etc."
   },
   "isDirect": {
-    "label": "Direktnachricht",
-    "helper": "Eine Nachricht zwischen genau zwei Personen."
+    "label": "Direkt-Chat",
+    "helper": "Ein Chat zwischen genau zwei Personen."
   },
   "reconnecting": "Wieder verbinden...",
   "connectionError": "Verbindungsfehler",
@@ -48,7 +48,7 @@
   "mentionMe": "Mich selbst einfügen (@me)",
   "noMessagesStartConversation": "Es gibt noch keine Nachrichten. Starte die Konversation.",
   "room": {
-    "rooms": "Chat-Räume",
+    "rooms": "Räume",
     "empty": "Leerer Raum",
     "none": "Keine Chat-Räume gefunden.",
     "searchPlaceholder": "Raum suchen...",
@@ -171,7 +171,8 @@
       "header": "Mitteilung ändern",
       "placeholder": "Schreibe deine Änderung...",
       "conf": "Die Mitteilung wurde geändert.",
-      "error": "Die Mitteilung konnte nicht geändert werden."
+      "error": "Die Mitteilung konnte nicht geändert werden.",
+      "label": "Mitteilung"
     },
     "delete": {
       "label": "Nachricht löschen",
@@ -280,12 +281,13 @@
   "validation": {
     "nameRequired": "Der Name ist obligatorisch.",
     "membersRequired": "Wähle mindestens eine Person aus.",
-    "directOne": "Wähle genau eine Person für die Direktnachricht aus.",
-    "adhocTwo": "Wähle für einen Gruppenchat mindestens zwei Personen aus.",
-    "membersMax": "Ein Gruppenchat kann höchstens 19 weitere Personen haben.",
+    "directOne": "Wähle genau eine Person für den Direkt-Chat aus.",
+    "adhocTwo": "Wähle für einen Ad-hoc-Chat mindestens zwei Personen aus.",
+    "membersMax": "Ein Ad-hoc-Chat kann höchstens 19 weitere Personen haben.",
     "sourceGroupsRequired": "Wähle mindestens eine Gruppe aus.",
     "pollAnswersTooFew": "Eine Umfrage braucht mindestens zwei Optionen.",
-    "pollAnswersTooMany": "Eine Umfrage kann höchstens 20 Optionen haben."
+    "pollAnswersTooMany": "Eine Umfrage kann höchstens 20 Optionen haben.",
+    "bodyRequired": "Die Mitteilung darf nicht leer sein."
   },
   "askRoom": {
     "hint": "Noch kein Gespräch. Deine Nachricht geht an alle Mitglieder von {group}."
@@ -340,18 +342,17 @@
       "label": "Name des Chats",
       "placeholder": "Name eingeben",
       "helper": "Ab zwei weiteren Personen brauchst du einen Namen für den Chat.",
-      "helperDirect": "Bei einem Chat zu zweit brauchst du keinen Namen."
+      "helperDirect": "Bei einem Direkt-Chat brauchst du keinen Namen."
     },
     "members": {
       "title": "Mitglieder",
       "add": "Mitglied hinzufügen",
       "you": "du",
-      "empty": "Noch niemand ausgewählt.",
       "addConf": "{name} ist jetzt im Chat.",
       "addError": "Die Person konnte nicht hinzugefügt werden."
     },
-    "hint": "Diesen Chat sehen nur seine Mitglieder. Er taucht in keiner Gruppenliste auf und hat weder Kalender noch Dateien.",
-    "hintDirect": "Mit einer einzigen Person entsteht ein Chat zu zweit. Gibt es ihn schon, wird er wieder geöffnet.",
+    "hint": "Zu einem Ad-hoc-Chat kannst du beliebig viele (mind. 2) Personen einladen. Du wirst zum Verwalter dieses Chats. Nur die eingeladenen Mitglieder sehen den Chat. Im Unterschied zu einem Gruppenchat enthält der Ad-hoc-Chat weder Kalender noch Dateien oder eine Content Page. Er erscheint auch nur in deiner Chat-Übersicht, aber nicht in den Gruppen.",
+    "hintDirect": "Mit einer einzigen Person entsteht ein Direkt-Chat. Nur ihr zwei seht eure Mitteilungen. Gibt es ihn schon, wird er wieder geöffnet.",
     "creating": "Der Chat wird eingerichtet. Das dauert einen Moment.",
     "create": {
       "conf": "Der Chat ist eröffnet.",
@@ -370,13 +371,14 @@
     },
     "sources": {
       "title": "Gruppen",
-      "add": "Gruppe hinzufügen",
-      "empty": "Wähle mindestens eine Gruppe."
+      "add": "Gruppe hinzufügen"
     },
     "joinMode": {
       "label": "Teilnahme",
-      "optOut": "Alle Mitglieder sind dabei und können austreten",
-      "optIn": "Wer möchte, tritt selbst bei"
+      "optOut": "Opt-Out",
+      "optIn": "Opt-In",
+      "optOutNote": "Alle Mitglieder sind dabei und können austreten",
+      "optInNote": "Wer möchte, tritt selbst bei"
     },
     "allowReplyAll": {
       "label": "Antworten an alle zulassen",
@@ -397,8 +399,8 @@
       "draft": "Zu deinem Aushang «{excerpt}»: "
     },
     "info": {
-      "rules": "Hier kannst du allen etwas mitteilen: etwas verkaufen, vermieten oder verschenken, Mitfahrende suchen oder einen Fund melden. Alle Mitglieder erhalten eine Benachrichtigung. Wenn du auf einen Aushang antwortest, geht deine Antwort nur an die Person, die ihn geschrieben hat — als Direktnachricht. Die anderen lesen nicht mit. Du musst deshalb keine Telefonnummer oder Adresse in einen Aushang schreiben.",
-      "rulesReplyAll": "Hier kannst du allen etwas mitteilen: etwas verkaufen, vermieten oder verschenken, Mitfahrende suchen oder einen Fund melden. Alle Mitglieder erhalten eine Benachrichtigung. Wenn du auf einen Aushang antwortest, geht deine Antwort normalerweise nur an die Person, die ihn geschrieben hat — als Direktnachricht. Du kannst aber auch allen antworten; dann erhalten alle Mitglieder eine Benachrichtigung. Schreib deshalb keine Telefonnummer oder Adresse in einen Aushang."
+      "rules": "Hier kannst du allen etwas mitteilen: etwas verkaufen, vermieten oder verschenken, Mitfahrende suchen oder einen Fund melden. Alle Mitglieder erhalten eine Benachrichtigung. Wenn du auf einen Aushang antwortest, geht deine Antwort nur an die Person, die ihn geschrieben hat — im Direkt-Chat. Die anderen lesen nicht mit. Du musst deshalb keine Telefonnummer oder Adresse in einen Aushang schreiben.",
+      "rulesReplyAll": "Hier kannst du allen etwas mitteilen: etwas verkaufen, vermieten oder verschenken, Mitfahrende suchen oder einen Fund melden. Alle Mitglieder erhalten eine Benachrichtigung. Wenn du auf einen Aushang antwortest, geht deine Antwort normalerweise nur an die Person, die ihn geschrieben hat — im Direkt-Chat. Du kannst aber auch allen antworten; dann erhalten alle Mitglieder eine Benachrichtigung. Schreib deshalb keine Telefonnummer oder Adresse in einen Aushang."
     },
     "edit": {
       "label": "Bearbeiten",
@@ -660,7 +662,8 @@
     "typeAudio": "Audio",
     "typePoll": "Umfrage",
     "typeLocation": "Standort",
-    "typeOther": "Nachricht"
+    "typeOther": "Nachricht",
+    "copyMatrixLink": "Matrix-Link kopieren"
   },
   "details": {
     "title": "Chat-Details",

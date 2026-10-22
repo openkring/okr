@@ -52,8 +52,8 @@ describe('formatReceiptTime', () => {
     expect(formatReceiptTime(1700000000000)).toContain('Gelesen');
   });
 
-  it('includes HH:mm time pattern', () => {
-    expect(formatReceiptTime(1700000000000)).toMatch(/\d{2}:\d{2}/);
+  it('shows the full date and time, dd.MM.yyyy HH:mm', () => {
+    expect(formatReceiptTime(1700000000000)).toMatch(/^Gelesen \d{2}\.\d{2}\.\d{4} \d{2}:\d{2}$/);
   });
 });
 

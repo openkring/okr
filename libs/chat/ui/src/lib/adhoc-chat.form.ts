@@ -3,8 +3,8 @@ import { form } from '@angular/forms/signals';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote, IonRow } from '@ionic/angular';
 
 import { AvatarInfo, UserModel } from '@okr/shared-models';
-import { Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n, RadioGroup, RadioGroupI18n, TextInput, TextInputI18n, ImgDirective } from '@okr/shared-ui';
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
+import { Checkbox, CheckboxI18n, ErrorNote, RadioGroup, RadioGroupI18n, TextareaInput, TextInput, TextInputI18n, ImgDirective } from '@okr/shared-ui';
+import { DESCRIPTION_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { coerceBoolean } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
@@ -31,7 +31,7 @@ import { AdhocChatFormModel, adhocChatValidations, ChatRoomType, MatrixChatI18n 
   selector: 'okr-adhoc-chat-form',
   standalone: true,
   imports: [
-    ImgDirective, TextInput, NotesInput, Checkbox, RadioGroup, ErrorNote, AvatarPipe, SvgIconPipe,
+    ImgDirective, TextInput, TextareaInput, Checkbox, RadioGroup, ErrorNote, AvatarPipe, SvgIconPipe,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent,
     IonList, IonItem, IonLabel, IonAvatar, IonButton, IonIcon, IonNote
   ],
@@ -39,7 +39,10 @@ import { AdhocChatFormModel, adhocChatValidations, ChatRoomType, MatrixChatI18n 
     @media (width <= 600px) { ion-card { margin: 5px; } }
     .members-title { font-size: 0.8rem; font-weight: 600; color: var(--ion-color-medium); padding: 12px 16px 4px 16px; letter-spacing: 0.02em; }
     .member-item { --min-height: 48px; }
-    .hint { display: block; padding: 8px 16px 16px 16px; }
+    .option-note { display: block; padding: 0 16px 12px 16px; font-size: 0.8rem; line-height: 1.3; }
+    /* lifts the checkbox to the height of the first Teilnahme option (the radio group has a label row above it) */
+    .align-spacer { display: none; }
+    @media (min-width: 768px) { .align-spacer { display: block; height: 48px; } }
   `],
   template: `
     @if (showForm()) {
@@ -52,7 +55,7 @@ import { AdhocChatFormModel, adhocChatValidations, ChatRoomType, MatrixChatI18n 
                 <ion-row>
                   <ion-col size="12">
                     <okr-radio-group [i18n]="roomTypeI18n()" [stringList]="roomTypes()" [labels]="roomTypeLabels()"
-                      [selectedString]="roomType()" (selectedStringChange)="onRoomTypeChange($event)" [readOnly]="isReadOnly()" />
+                      [notes]="roomTypeNotes()" [selectedString]="roomType()" (selectedStringChange)="onRoomTypeChange($event)" [readOnly]="isReadOnly()" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -65,9 +68,9 @@ import { AdhocChatFormModel, adhocChatValidations, ChatRoomType, MatrixChatI18n 
             <ion-card-content class="ion-no-padding">
               <ion-grid>
                 <ion-row>
-                  <ion-col size="12" size-md="6">
+                  <ion-col size="12">
                     <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)"
-                      [autofocus]="true" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                      [autofocus]="true" [maxLength]="nameLength" [readOnly]="isReadOnly()" />
                     <okr-error-note [errors]="nameErrors()" />
                   </ion-col>
                 </ion-row>
@@ -77,8 +80,19 @@ import { AdhocChatFormModel, adhocChatValidations, ChatRoomType, MatrixChatI18n 
         }
 
         @if (roomType() === 'pinboard') {
-          <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)"
-            [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="descriptionErrors()" />
+          <ion-card>
+            <ion-card-content class="ion-no-padding">
+              <ion-grid>
+                <ion-row>
+                  <ion-col size="12">
+                    <okr-textarea-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)"
+                      [maxLength]="descriptionLength" [rows]="4" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="descriptionErrors()" />
+                  </ion-col>
+                </ion-row>
+              </ion-grid>
+            </ion-card-content>
+          </ion-card>
 
           <ion-card>
             <ion-card-content class="ion-no-padding">
@@ -104,9 +118,6 @@ import { AdhocChatFormModel, adhocChatValidations, ChatRoomType, MatrixChatI18n 
                   </ion-item>
                 }
               </ion-list>
-              @if (sourceGroups().length === 0) {
-                <ion-note class="hint" color="medium">{{ i18n().pinboard_sources_empty() }}</ion-note>
-              }
               <okr-error-note [errors]="sourceGroupsErrors()" />
             </ion-card-content>
           </ion-card>
@@ -116,16 +127,17 @@ import { AdhocChatFormModel, adhocChatValidations, ChatRoomType, MatrixChatI18n 
               <ion-grid>
                 <ion-row>
                   <ion-col size="12" size-md="6">
-                    <okr-radio-group [i18n]="joinModeI18n()" [stringList]="joinModes" [labels]="joinModeLabels()"
+                    <okr-radio-group [i18n]="joinModeI18n()" [stringList]="joinModes" [labels]="joinModeLabels()" [notes]="joinModeNotes()"
                       [selectedString]="joinMode()" (selectedStringChange)="onFieldChange('joinMode', $event)" [readOnly]="isReadOnly()" />
                   </ion-col>
                   <ion-col size="12" size-md="6">
+                    <div class="align-spacer"></div>
                     <okr-checkbox [i18n]="allowReplyAllI18n()" [checked]="allowReplyAll()" (checkedChange)="onFieldChange('allowReplyAll', $event)"
-                      [showHelper]="true" [readOnly]="isReadOnly()" />
+                      [readOnly]="isReadOnly()" />
+                    <ion-note class="option-note" color="medium">{{ i18n().pinboard_allowReplyAll_helper() }}</ion-note>
                   </ion-col>
                 </ion-row>
               </ion-grid>
-              <ion-note class="hint" color="medium">{{ i18n().pinboard_hint() }}</ion-note>
             </ion-card-content>
           </ion-card>
         } @else {
@@ -163,11 +175,6 @@ import { AdhocChatFormModel, adhocChatValidations, ChatRoomType, MatrixChatI18n 
                 }
               </ion-list>
               <okr-error-note [errors]="membersErrors()" />
-
-              @if (memberCount() < 2) {
-                <ion-note class="hint" color="medium">{{ i18n().adhoc_members_empty() }}</ion-note>
-              }
-              <ion-note class="hint" color="medium">{{ isDirect() ? i18n().adhoc_hint_direct() : i18n().adhoc_hint() }}</ion-note>
             </ion-card-content>
           </ion-card>
         }
@@ -178,7 +185,7 @@ import { AdhocChatFormModel, adhocChatValidations, ChatRoomType, MatrixChatI18n 
 })
 export class AdhocChatForm {
   /** kept in step with the cap the Vest suite enforces on this field */
-  protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  protected readonly nameLength = NAME_LENGTH;
   /** kept in step with the cap the Vest suite enforces on this field (= PINBOARD_DESCRIPTION_MAX) */
   protected readonly descriptionLength = DESCRIPTION_LENGTH;
   protected readonly joinModes = ['optOut', 'optIn'];
@@ -250,6 +257,15 @@ export class AdhocChatForm {
       default: return this.i18n().adhoc_roomType_direct();
     }
   }));
+  /** The explanation of the chosen room type, shown right under that option. */
+  protected readonly roomTypeNotes = computed(() => this.roomTypes().map((t) => {
+    if (t !== this.roomType() || this.readOnlyType()) return '';
+    switch (t) {
+      case 'adhoc': return this.i18n().adhoc_hint();
+      case 'pinboard': return this.i18n().pinboard_hint();
+      default: return this.i18n().adhoc_hint_direct();
+    }
+  }));
   protected readonly roomTypeI18n = computed(() => ({
     name: 'roomType',
     label: this.i18n().adhoc_roomType_label()
@@ -265,10 +281,12 @@ export class AdhocChatForm {
   protected readonly descriptionI18n = computed(() => ({
     name: 'description',
     label: this.i18n().pinboard_description_label(),
-    placeholder: this.i18n().pinboard_description_placeholder()
-  } as NotesInputI18n));
+    placeholder: this.i18n().pinboard_description_placeholder(),
+    helper: ''
+  } as TextInputI18n));
 
   protected readonly joinModeLabels = computed(() => [this.i18n().pinboard_joinMode_optOut(), this.i18n().pinboard_joinMode_optIn()]);
+  protected readonly joinModeNotes = computed(() => [this.i18n().pinboard_joinMode_optOut_note(), this.i18n().pinboard_joinMode_optIn_note()]);
   protected readonly joinModeI18n = computed(() => ({
     name: 'joinMode',
     label: this.i18n().pinboard_joinMode_label()

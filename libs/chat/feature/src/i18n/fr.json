@@ -30,8 +30,8 @@
     "helper": "Un avatar est l'image d'une personne, le logo d'une organisation ou d'une ressource, etc."
   },
   "isDirect": {
-    "label": "Message direct",
-    "helper": "Un message entre exactement deux personnes."
+    "label": "Chat direct",
+    "helper": "Un chat entre exactement deux personnes."
   },
   "reconnecting": "Reconnexion...",
   "connectionError": "Erreur de connexion",
@@ -48,7 +48,7 @@
   "mentionMe": "M'insérer moi-même (@me)",
   "noMessagesStartConversation": "Il n'y a pas encore de messages. Démarrez la conversation.",
   "room": {
-    "rooms": "Salons de discussion",
+    "rooms": "Salons",
     "empty": "Salon vide",
     "none": "Aucun salon de discussion trouvé.",
     "searchPlaceholder": "Rechercher un salon...",
@@ -171,7 +171,8 @@
       "header": "Modifier le message",
       "placeholder": "Écrivez votre modification...",
       "conf": "Le message a été modifié.",
-      "error": "Le message n'a pas pu être modifié."
+      "error": "Le message n'a pas pu être modifié.",
+      "label": "Message"
     },
     "delete": {
       "label": "Supprimer le message",
@@ -280,12 +281,13 @@
   "validation": {
     "nameRequired": "Le nom est obligatoire.",
     "membersRequired": "Sélectionne au moins une personne.",
-    "directOne": "Sélectionne exactement une personne pour le message direct.",
-    "adhocTwo": "Sélectionne au moins deux personnes pour un chat de groupe.",
-    "membersMax": "Un chat de groupe peut avoir au maximum 19 autres personnes.",
+    "directOne": "Choisis exactement une personne pour le chat direct.",
+    "adhocTwo": "Choisis au moins deux personnes pour un chat ad hoc.",
+    "membersMax": "Un chat ad hoc peut compter au plus 19 autres personnes.",
     "sourceGroupsRequired": "Sélectionne au moins un groupe.",
     "pollAnswersTooFew": "Un sondage nécessite au moins deux options.",
-    "pollAnswersTooMany": "Un sondage peut avoir au maximum 20 options."
+    "pollAnswersTooMany": "Un sondage peut avoir au maximum 20 options.",
+    "bodyRequired": "Le message ne peut pas être vide."
   },
   "askRoom": {
     "hint": "Pas encore de conversation. Ton message est transmis à tous les membres de {group}."
@@ -340,18 +342,17 @@
       "label": "Nom de la discussion",
       "placeholder": "Saisis un nom",
       "helper": "À partir de deux autres personnes, la discussion a besoin d'un nom.",
-      "helperDirect": "Une discussion à deux n'a pas besoin de nom."
+      "helperDirect": "Un chat direct n'a pas besoin de nom."
     },
     "members": {
       "title": "Membres",
       "add": "Ajouter un membre",
       "you": "toi",
-      "empty": "Personne n'est encore sélectionné.",
       "addConf": "{name} fait maintenant partie de la discussion.",
       "addError": "La personne n'a pas pu être ajoutée."
     },
-    "hint": "Seuls ses membres voient cette discussion. Elle n'apparaît dans aucune liste de groupes et n'a ni calendrier ni fichiers.",
-    "hintDirect": "Avec une seule personne, tu obtiens une discussion à deux. Si elle existe déjà, elle est simplement rouverte.",
+    "hint": "Tu peux inviter autant de personnes que tu veux (au moins 2) à un chat ad hoc. Tu en deviens le gestionnaire. Seuls les membres invités voient le chat. Contrairement à un chat de groupe, le chat ad hoc n'a ni calendrier, ni fichiers, ni page de contenu. Il apparaît seulement dans ton aperçu des chats, pas dans les groupes.",
+    "hintDirect": "Avec une seule personne, tu ouvres un chat direct. Vous seuls voyez vos messages. S'il existe déjà, il est rouvert.",
     "creating": "La discussion est en cours de création. Cela prend un instant.",
     "create": {
       "conf": "La discussion est ouverte.",
@@ -370,13 +371,14 @@
     },
     "sources": {
       "title": "Groupes",
-      "add": "Ajouter un groupe",
-      "empty": "Choisis au moins un groupe."
+      "add": "Ajouter un groupe"
     },
     "joinMode": {
       "label": "Participation",
-      "optOut": "Tous les membres en font partie et peuvent le quitter",
-      "optIn": "Celles et ceux qui le souhaitent le rejoignent eux-mêmes"
+      "optOut": "Opt-out",
+      "optIn": "Opt-in",
+      "optOutNote": "Tous les membres y sont et peuvent la quitter",
+      "optInNote": "Qui le souhaite la rejoint lui-même"
     },
     "allowReplyAll": {
       "label": "Autoriser les réponses à tous",
@@ -660,7 +662,8 @@
     "typeAudio": "Audio",
     "typePoll": "Sondage",
     "typeLocation": "Position",
-    "typeOther": "Message"
+    "typeOther": "Message",
+    "copyMatrixLink": "Copier le lien Matrix"
   },
   "details": {
     "title": "Détails de la discussion",

@@ -325,9 +325,22 @@ export const _MenuStore = signalStore(
         return await store.alertService.confirm(message, true);
       },
 
-      async select(menuItem: MenuItemModel): Promise<void> {
+      /**
+       * @param fromContextMenu the item was chosen in a context menu (popover). A page it opens is
+       *   a step away from the current page, so the history keeps the current page underneath and
+       *   the target page's close button (`AppNavigationService.back()`) returns to it. From the
+       *   main menu a page starts a fresh history. Non-navigating items leave the history alone.
+       */
+      async select(menuItem: MenuItemModel, fromContextMenu = false): Promise<void> {
         try {
-          store.appNavigationService.resetLinkHistory(menuItem.url);
+          if (menuItem.action === 'navigate') {
+            if (fromContextMenu) {
+              store.appNavigationService.resetLinkHistory(store.router.url);
+              store.appNavigationService.pushLink(menuItem.url);
+            } else {
+              store.appNavigationService.resetLinkHistory(menuItem.url);
+            }
+          }
           switch(menuItem.url) {
             case '/auth/login':
               await this.login();

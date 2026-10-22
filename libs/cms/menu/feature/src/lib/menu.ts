@@ -1,4 +1,4 @@
-import { Component, computed, effect, forwardRef, inject, input, signal } from '@angular/core';
+import { Component, ElementRef, computed, effect, forwardRef, inject, input, signal } from '@angular/core';
 import { IonAccordion, IonAccordionGroup, IonItem, IonItemDivider, IonLabel, IonList, IonSegment, IonSegmentButton } from '@ionic/angular';
 
 import { SelectedBooks } from '@okr/shared-feature';
@@ -152,6 +152,7 @@ import { MenuStore } from './menu.store';
 export class Menu {
   protected readonly menuStore = inject(MenuStore);
   protected readonly selectedBooks = inject(SelectedBooks);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   // inputs
   public menuName = input.required<string>();
@@ -234,6 +235,9 @@ export class Menu {
   }
 
   protected async select(menuItem: MenuItemModel) {
-    this.menuStore.select(menuItem);
+    // A context menu lives in a popover: a page opened from there is a step away from the
+    // current page, so its close button must lead back here (not to the start page).
+    const fromContextMenu = !!this.host.nativeElement.closest('ion-popover');
+    this.menuStore.select(menuItem, fromContextMenu);
   }
 }

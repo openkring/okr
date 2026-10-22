@@ -1472,10 +1472,14 @@ export class MatrixChat implements OnDestroy {
     const initialIndex = event.group.indexOf(event.message);
     const modal = await this.modalController.create({
       component: ImageLightboxModal,
-      componentProps: { images, initialIndex },
+      componentProps: { images, initialIndex, actionsLabel: this.store.i18n.sheet_section_message() },
       cssClass: 'fullscreen-modal',
     });
     await modal.present();
+    // «⋯» in the lightbox: the message sheet of the image that was shown
+    const { data, role } = await modal.onDidDismiss<number>();
+    const shown = role === 'actions' && typeof data === 'number' ? event.group[data] : undefined;
+    if (shown) await this.onMessageClicked(shown);
   }
 
   /** Share/download a file attachment. Invoked from the message action sheet (chat.message.share). */

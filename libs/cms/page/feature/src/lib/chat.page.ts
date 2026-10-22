@@ -42,9 +42,13 @@ import type { MatrixChat } from '@okr/chat-feature';
         <ion-toolbar [color]="color()" id="bkheader">
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
           <ion-title>{{ i18n.chat_type_label() }}</ion-title>
-          <!-- room context menu, hoisted from the room-list toolbar; action delegated to MatrixChat -->
-          @if(canOpenRoomMenu()) {
-            <ion-buttons slot="end">
+          <ion-buttons slot="end">
+            <!-- chat help: room types + keyboard shortcuts (ChatHelpModal, opened by MatrixChat) -->
+            <ion-button [attr.aria-label]="i18n.chat_help()" (click)="openInfo()">
+              <ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" />
+            </ion-button>
+            <!-- room context menu, hoisted from the room-list toolbar; action delegated to MatrixChat -->
+            @if(canOpenRoomMenu()) {
               <!-- present imperatively (not via [trigger]) so a late-rendered button / cached page
                    can't break Ionic's one-shot getElementById trigger wiring -->
               <ion-button (click)="ctxPopover.present($event)">
@@ -57,8 +61,8 @@ import type { MatrixChat } from '@okr/chat-feature';
                   </ion-content>
                 </ng-template>
               </ion-popover>
-            </ion-buttons>
-          }
+            }
+          </ion-buttons>
         </ion-toolbar>
       </ion-header>
     }

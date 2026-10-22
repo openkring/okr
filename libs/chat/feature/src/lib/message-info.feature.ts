@@ -1,7 +1,7 @@
 import { MatrixMessage, MatrixReadReceipt } from '@okr/shared-models';
-import { DateFormat, convertDateFormatToString, fill, prettyFormatDateTime } from '@okr/shared-util-core';
+import { fill, prettyFormatDateTime } from '@okr/shared-util-core';
 import {
-  MatrixChatI18n, buildReceiptRows, matrixPermalink, messageTypeLabelKey, readForwarded, readersOfMessage, storeDateTimeOfMs, verifiedForwardedNames,
+  MatrixChatI18n, buildReceiptRows, chatDeepLink, matrixPermalink, messageTypeLabelKey, readForwarded, readersOfMessage, storeDateTimeOfMs, verifiedForwardedNames, viewDateTimeOfMs,
 } from '@okr/chat-util';
 
 import type { MessageInfoPerson, MessageInfoReaction } from './message-info.modal';
@@ -17,6 +17,8 @@ export interface MessageInfoSources {
   currentUserId: string | undefined;
   senderOf: (roomId: string, eventId: string) => string | undefined;
   isAdmin: boolean;
+  /** `AppStore.appOrigin()` — the origin of the copied deep link. */
+  appOrigin: string;
   i18n: MatrixChatI18n;
 }
 
@@ -25,10 +27,6 @@ function dateTimeText(ms: number): string {
   return prettyFormatDateTime(storeDateTimeOfMs(ms));
 }
 
-/** Time only, e.g. `14:03`. */
-function timeText(ms: number): string {
-  return convertDateFormatToString(storeDateTimeOfMs(ms), DateFormat.StoreDateTime, DateFormat.Time, false);
-}
 
 /** Everything the info modal shows for one message, resolved (spec 1.109 §7). */
 export function buildMessageInfoProps(src: MessageInfoSources): Record<string, unknown> {
@@ -38,7 +36,7 @@ export function buildMessageInfoProps(src: MessageInfoSources): Record<string, u
     .filter((r) => r.userId !== src.currentUserId);
   // Same rows (and the same person-merge) as the read-receipt strip, without the reaction extras.
   const readers: MessageInfoPerson[] = buildReceiptRows(receipts, undefined, new Map(), src.currentUserId)
-    .map((r) => ({ userId: r.userId, displayName: r.displayName, avatarUrl: r.avatarUrl, timeText: timeText(r.ts ?? 0) }));
+    .map((r) => ({ userId: r.userId, displayName: r.displayName, avatarUrl: r.avatarUrl, timeText: r.ts ? viewDateTimeOfMs(r.ts) : '' }));
 
   const reactions: MessageInfoReaction[] = [...(message.reactions ?? new Map<string, Set<string>>())]
     .map(([emoji, users]) => ({ emoji, count: users.size }))
@@ -73,7 +71,9 @@ export function buildMessageInfoProps(src: MessageInfoSources): Record<string, u
     readByTitle: fill(i18n.info_read_by(), { x: readers.length, y: src.eligibleReaderCount }),
     readers,
     reactions,
-    link: matrixPermalink(message.roomId, message.eventId),
+    link: chatDeepLink(src.appOrigin, message.roomId, message.eventId),
+    // Only Element users can open a matrix.to link, hence admins only (like the raw data).
+    matrixLink: src.isAdmin ? matrixPermalink(message.roomId, message.eventId) : undefined,
     rawJson,
   };
 }

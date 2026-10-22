@@ -112,9 +112,14 @@ export interface MessageInfoReaction {
       }
 
       <div class="actions">
-        <ion-button fill="outline" (click)="copyLink()">
+        <ion-button fill="outline" (click)="copyLink(link())">
           <ion-icon slot="start" src="{{ 'copy' | svgIcon }}" />{{ i18n.info_copy_link() }}
         </ion-button>
+        @if (matrixLink(); as matrixLink) {
+          <ion-button fill="clear" (click)="copyLink(matrixLink)">
+            <ion-icon slot="start" src="{{ 'copy' | svgIcon }}" />{{ i18n.info_copy_matrix_link() }}
+          </ion-button>
+        }
       </div>
 
       @if (rawJson()) {
@@ -144,7 +149,10 @@ export class MessageInfoModal {
   public readonly readByTitle = input('');
   public readonly readers = input<MessageInfoPerson[]>([]);
   public readonly reactions = input<MessageInfoReaction[]>([]);
+  /** Deep link into this app's chat view, opening the message. */
   public readonly link = input.required<string>();
+  /** matrix.to link (opens in Element); only given to admins. */
+  public readonly matrixLink = input<string | undefined>(undefined);
   /** Pretty-printed event JSON; only given to admins. */
   public readonly rawJson = input<string | undefined>(undefined);
 
@@ -157,8 +165,8 @@ export class MessageInfoModal {
   }
 
   /** The copy starts inside the tap (user-gesture rule); only the toast is awaited. */
-  protected copyLink(): void {
-    const copied = copyToClipboard(this.link());
+  protected copyLink(link: string): void {
+    const copied = copyToClipboard(link);
     void copied.then(() => this.alertService.showToast(this.i18n.copy_conf()));
   }
 }

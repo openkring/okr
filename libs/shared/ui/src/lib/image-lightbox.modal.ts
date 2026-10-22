@@ -64,6 +64,11 @@ export interface LightboxImage {
           <ion-button (click)="download()">
             <ion-icon slot="icon-only" src="{{'download' | svgIcon }}" />
           </ion-button>
+          @if (actionsLabel()) {
+            <ion-button [attr.aria-label]="actionsLabel()" (click)="actions()">
+              <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
+            </ion-button>
+          }
           <ion-button (click)="close()">
             <ion-icon slot="icon-only" src="{{'cancel' | svgIcon }}" />
           </ion-button>
@@ -80,6 +85,11 @@ export class ImageLightboxModal {
 
   images = input.required<LightboxImage[]>();
   initialIndex = input.required<number>();
+  /**
+   * When set, a «⋯» button (with this accessible label) closes the lightbox with role `actions`
+   * and the index of the shown image, so the caller can open its actions (e.g. the chat sheet).
+   */
+  actionsLabel = input('');
 
   protected currentIndex = linkedSignal(() => this.initialIndex());
   protected currentImage = computed(() => this.images()[this.currentIndex()]);
@@ -107,6 +117,10 @@ export class ImageLightboxModal {
       this.pendingFull.set(index, pending);
     }
     return pending;
+  }
+
+  protected async actions(): Promise<void> {
+    await dismissOverlay(this.modalController, this.currentIndex(), 'actions');
   }
 
   /** Previous image; wraps from the first to the last. */

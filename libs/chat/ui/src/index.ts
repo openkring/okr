@@ -13,3 +13,6 @@ export * from './lib/reminder-picker';
 export * from './lib/reaction-details.modal';
 export * from './lib/pin-banner';
 export * from './lib/message-actions.sheet';
+export * from './lib/message-edit.form';
+export * from './lib/message-edit.modal';
+export * from './lib/emoji-picker.modal';

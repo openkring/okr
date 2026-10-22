@@ -30,8 +30,8 @@
     "helper": "An avatar is an image of a person, a logo of an organization or resource etc."
   },
   "isDirect": {
-    "label": "Direct message",
-    "helper": "A message between exactly two people."
+    "label": "Direct chat",
+    "helper": "A chat between exactly two people."
   },
   "reconnecting": "Reconnecting...",
   "connectionError": "Connection error",
@@ -48,7 +48,7 @@
   "mentionMe": "Insert myself (@me)",
   "noMessagesStartConversation": "There are no messages yet. Start the conversation.",
   "room": {
-    "rooms": "Chat rooms",
+    "rooms": "Rooms",
     "empty": "Empty room",
     "none": "No chat rooms found.",
     "searchPlaceholder": "Search room...",
@@ -171,7 +171,8 @@
       "header": "Edit message",
       "placeholder": "Write your change...",
       "conf": "The message was updated.",
-      "error": "The message could not be updated."
+      "error": "The message could not be updated.",
+      "label": "Message"
     },
     "delete": {
       "label": "Delete message",
@@ -280,12 +281,13 @@
   "validation": {
     "nameRequired": "The name is required.",
     "membersRequired": "Select at least one person.",
-    "directOne": "Select exactly one person for the direct message.",
-    "adhocTwo": "Select at least two people for a group chat.",
-    "membersMax": "A group chat can have at most 19 other people.",
+    "directOne": "Choose exactly one person for the direct chat.",
+    "adhocTwo": "Choose at least two people for an ad-hoc chat.",
+    "membersMax": "An ad-hoc chat can have at most 19 other people.",
     "sourceGroupsRequired": "Select at least one group.",
     "pollAnswersTooFew": "A poll needs at least two options.",
-    "pollAnswersTooMany": "A poll can have at most 20 options."
+    "pollAnswersTooMany": "A poll can have at most 20 options.",
+    "bodyRequired": "The message must not be empty."
   },
   "askRoom": {
     "hint": "No conversation yet. Your message goes to all members of {group}."
@@ -340,18 +342,17 @@
       "label": "Chat name",
       "placeholder": "Enter a name",
       "helper": "From two additional people on, the chat needs a name.",
-      "helperDirect": "A chat with one person needs no name."
+      "helperDirect": "A direct chat does not need a name."
     },
     "members": {
       "title": "Members",
       "add": "Add member",
       "you": "you",
-      "empty": "Nobody selected yet.",
       "addConf": "{name} is now in the chat.",
       "addError": "The person could not be added."
     },
-    "hint": "Only its members can see this chat. It does not appear in any group list and has neither calendar nor files.",
-    "hintDirect": "With a single person you get a one-to-one chat. If it already exists, it is reopened.",
+    "hint": "You can invite as many people as you like (at least 2) to an ad-hoc chat. You become the manager of this chat. Only the invited members see the chat. Unlike a group chat, an ad-hoc chat has no calendar, no files and no content page. It only appears in your chat overview, not among the groups.",
+    "hintDirect": "With a single person you start a direct chat. Only the two of you see your messages. If it already exists, it opens again.",
     "creating": "The chat is being set up. This takes a moment.",
     "create": {
       "conf": "The chat is open.",
@@ -370,13 +371,14 @@
     },
     "sources": {
       "title": "Groups",
-      "add": "Add group",
-      "empty": "Choose at least one group."
+      "add": "Add group"
     },
     "joinMode": {
       "label": "Participation",
-      "optOut": "All members are included and can leave",
-      "optIn": "Whoever wants to joins on their own"
+      "optOut": "Opt-out",
+      "optIn": "Opt-in",
+      "optOutNote": "All members are in and can leave",
+      "optInNote": "Anyone who wants to joins themselves"
     },
     "allowReplyAll": {
       "label": "Allow replies to everyone",
@@ -660,7 +662,8 @@
     "typeAudio": "Audio",
     "typePoll": "Poll",
     "typeLocation": "Location",
-    "typeOther": "Message"
+    "typeOther": "Message",
+    "copyMatrixLink": "Copy Matrix link"
   },
   "details": {
     "title": "Chat details",

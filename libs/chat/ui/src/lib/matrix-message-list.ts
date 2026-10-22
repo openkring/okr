@@ -362,6 +362,16 @@ const MENTION_AVATAR_SIZE = 36;
       text-align: right;
     }
 
+    /* The time line doubles as the way into the message sheet: images, links and media keep
+       their own tap, so the «⋯» is the one target that always opens the actions. */
+    button.message-timestamp {
+      display: inline-flex; align-items: center; gap: 2px;
+      border: none; background: transparent; cursor: pointer; font: inherit; font-size: 0.7rem;
+      min-height: 24px; padding: 0 8px;
+    }
+    button.message-timestamp ion-icon { font-size: 0.85rem; }
+    .own-message .timestamp-row { display: flex; justify-content: flex-end; }
+
     .message-actions {
       display: flex;
       gap: 4px;
@@ -567,7 +577,8 @@ const MENTION_AVATAR_SIZE = 36;
                   }
                   <div class="message-bubble"
                        [attr.data-event-ids]="batchEventIds(item)"
-                       [class.jump-highlight]="isBatchHighlighted(item)">
+                       [class.jump-highlight]="isBatchHighlighted(item)"
+                       (contextmenu)="onBubbleContextMenu($event, item.messages[0])">
                     <div class="image-batch-grid">
                       @for (msg of item.messages; track msg.eventId) {
                         @if (msg.mediaUrl && !brokenImages().has(msg.eventId)) {
@@ -594,8 +605,11 @@ const MENTION_AVATAR_SIZE = 36;
                       }
                     </div>
                   </div>
-                  <div class="message-timestamp">
-                    {{ item.messages.length > 1 ? item.messages.length + ' ' + i18n().images() + ' · ' : '' }}{{ formatTime(item.timestamp) }}
+                  <div class="timestamp-row">
+                    <button type="button" class="message-timestamp" [attr.aria-label]="i18n().sheet_section_message()" (click)="messageClicked.emit(item.messages[0])">
+                      {{ item.messages.length > 1 ? item.messages.length + ' ' + i18n().images() + ' · ' : '' }}{{ formatTime(item.timestamp) }}
+                      <ion-icon src="{{ 'ellipsis-vertical' | svgIcon }}" />
+                    </button>
                   </div>
                   @if (receiptsByEventId().get(item.messages[0].eventId); as receipts) {
                     <okr-matrix-read-receipt-strip [receipts]="receipts" [reactions]="item.messages[0].reactions" [knownUsers]="knownUsers()" [currentUserId]="currentUserId()" />
@@ -630,6 +644,7 @@ const MENTION_AVATAR_SIZE = 36;
                       [class.edited]="item.isEdited"
                       [class.redacted]="item.isRedacted"
                       (click)="onBubbleClick($event, item)"
+                      (contextmenu)="onBubbleContextMenu($event, item)"
                     >
                       @if (item.isRedacted) {
                         <p class="message-text">Message deleted</p>
@@ -770,7 +785,12 @@ const MENTION_AVATAR_SIZE = 36;
                         }
                       </div>
                     }
-                    <div class="message-timestamp">{{ formatTime(item.timestamp) }}</div>
+                    <div class="timestamp-row">
+                      <button type="button" class="message-timestamp" [attr.aria-label]="i18n().sheet_section_message()" (click)="messageClicked.emit(item)">
+                        {{ formatTime(item.timestamp) }}
+                        <ion-icon src="{{ 'ellipsis-vertical' | svgIcon }}" />
+                      </button>
+                    </div>
                     @if (receiptsByEventId().get(item.eventId); as receipts) {
                       <okr-matrix-read-receipt-strip [receipts]="receipts" [reactions]="item.reactions" [knownUsers]="knownUsers()" [currentUserId]="currentUserId()" />
                     }
@@ -1214,6 +1234,12 @@ export class MatrixMessageList {
     }
     // a tapped link opens the link — not the action sheet on top of it
     if (href) return;
+    this.messageClicked.emit(item);
+  }
+
+  /** Right-click on a bubble (desktop) opens the message sheet — also on images and links. */
+  protected onBubbleContextMenu(event: MouseEvent, item: MatrixMessage): void {
+    event.preventDefault();
     this.messageClicked.emit(item);
   }
 
