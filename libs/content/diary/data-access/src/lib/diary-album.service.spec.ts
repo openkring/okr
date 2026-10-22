@@ -6,6 +6,7 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { DiaryAlbumModel } from '@okr/shared-models';
+import { DIARY_I18N_KEYS } from '@okr/content-diary-util';
 
 import { DiaryAlbumService } from './diary-album.service';
 
@@ -17,6 +18,8 @@ describe('DiaryAlbumService', () => {
   const album = (extra: Partial<DiaryAlbumModel> = {}): DiaryAlbumModel =>
     Object.assign(new DiaryAlbumModel('bka'), { authorKey: 'u1', kind: 'event', slug: 'anrudern', title: 'Anrudern' }, extra);
 
+  const translateAll = vi.fn(() => ({ update_conf: () => '', update_error: () => '', create_conf: () => '', create_error: () => '' }));
+
   beforeEach(() => {
     searchData.mockReset();
     createModel.mockClear();
@@ -26,8 +29,16 @@ describe('DiaryAlbumService', () => {
         DiaryAlbumService,
         { provide: ENV, useValue: { tenantId: 'bka' } },
         { provide: FirestoreService, useValue: { searchData, createModel, updateModel } },
-        { provide: I18nService, useValue: { translateAll: () => ({ update_conf: () => '', update_error: () => '', create_conf: () => '', create_error: () => '' }) } },
+        { provide: I18nService, useValue: { translateAll } },
       ],
+    });
+  });
+
+  it('toasts album wording, not the diary entry wording', () => {
+    TestBed.inject(DiaryAlbumService);
+    expect(translateAll).toHaveBeenCalledWith({
+      update_conf: DIARY_I18N_KEYS.albums_update_conf, update_error: DIARY_I18N_KEYS.albums_update_error,
+      create_conf: DIARY_I18N_KEYS.albums_create_conf, create_error: DIARY_I18N_KEYS.albums_create_error,
     });
   });
 

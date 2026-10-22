@@ -232,11 +232,46 @@
     "trip": {
       "edit": "Edit trip",
       "add": "New trip",
-      "name": "Trip"
+      "name": "Trip",
+      "create": {
+        "conf": "The trip was saved.",
+        "error": "The trip could not be saved."
+      },
+      "update": {
+        "conf": "The trip was updated.",
+        "error": "The trip could not be updated."
+      }
     },
     "range": {
       "from": "from",
       "to": "to"
+    },
+    "modalTitle": "Albums",
+    "segment": {
+      "event": "Events",
+      "person": "People",
+      "location": "Places",
+      "trip": "Trips",
+      "tag": "Tags",
+      "date": "Date"
+    },
+    "search": "Search",
+    "empty": "Nothing here yet.",
+    "apply": "Apply",
+    "archive": "Archive",
+    "openTrip": "Open trip page",
+    "filter": {
+      "from": "from",
+      "to": "until",
+      "clear": "Remove filter"
+    },
+    "create": {
+      "conf": "The album was saved.",
+      "error": "The album could not be saved."
+    },
+    "update": {
+      "conf": "The album was updated.",
+      "error": "The album could not be updated."
     }
   }
 }

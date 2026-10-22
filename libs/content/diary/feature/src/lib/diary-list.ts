@@ -1,7 +1,7 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input, untracked } from '@angular/core';
 import {
-  IonAccordion, IonAccordionGroup, IonBadge, IonButton, IonButtons, IonContent, IonHeader,
+  IonAccordion, IonAccordionGroup, IonBadge, IonButton, IonButtons, IonChip, IonContent, IonHeader,
   IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonNote, IonPopover, IonTitle, IonToolbar,
 } from '@ionic/angular';
 
@@ -24,8 +24,9 @@ const DIARY_STATE_I18N_SCOPE = '@content/diary/feature';
 
 /**
  * The author's own diary — one entry per day (or month/year aggregate), filterable by year and
- * state. `listId` is a reserved partition hook (e.g. by trip) for a later task; it does nothing
- * yet.
+ * state. `listId` is `all` for the year range, or an album filter over all years (spec 1.114 §5):
+ * `person.<okey>`, `location.<okey>`, `event.<slug>`, `tag.<tag>` or `trip.<okey>` — so a filtered
+ * list is linkable. A date filter from «Alben» has no listId and stays in the store.
  */
 @Component({
   selector: 'okr-diary-list',
@@ -33,7 +34,7 @@ const DIARY_STATE_I18N_SCOPE = '@content/diary/feature';
   imports: [
     NgTemplateOutlet, SvgIconPipe, Spinner, EmptyList, ListFilter, Menu, DiaryRangeSelect,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonPopover,
-    IonContent, IonList, IonItem, IonLabel, IonNote, IonBadge, IonAccordionGroup, IonAccordion,
+    IonContent, IonList, IonItem, IonLabel, IonNote, IonBadge, IonAccordionGroup, IonAccordion, IonChip,
   ],
   providers: [DiaryStore],
   styles: [`
@@ -61,15 +62,22 @@ const DIARY_STATE_I18N_SCOPE = '@content/diary/feature';
       </ion-toolbar>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <okr-diary-range-select [tree]="store.rangeTree()" [selected]="store.selectedRange()"
-            [allLabel]="store.i18n.list_all_years()" [label]="store.i18n.list_period()"
-            (selectedChange)="store.setSelectedRange($event)" />
+          @if (store.filter()) {
+            <ion-chip color="primary" (click)="store.clearFilter()" [attr.aria-label]="store.i18n.albums_filter_clear()">
+              <ion-label>{{ store.filterLabel() }}</ion-label>
+              <ion-icon src="{{ 'cancel-circle' | svgIcon }}" />
+            </ion-chip>
+          } @else {
+            <okr-diary-range-select [tree]="store.rangeTree()" [selected]="store.selectedRange()"
+              [allLabel]="store.i18n.list_all_years()" [label]="store.i18n.list_period()"
+              (selectedChange)="store.setSelectedRange($event)" />
+          }
         </ion-buttons>
         <okr-list-filter
           (searchTermChanged)="store.setSearchTerm($event)"
           (stateChanged)="onStateChange($event)" [states]="states()" />
       </ion-toolbar>
-      @if (isWide()) {
+      @if (isWide() && !store.filter()) {
         <ion-toolbar color="light"><ion-note class="ion-padding-start">{{ store.i18n.list_all_years_hint() }}</ion-note></ion-toolbar>
       }
     </ion-header>
@@ -149,6 +157,15 @@ export class DiaryList {
   public readonly listId = input('all');
   public readonly contextMenuName = input.required<string>();
 
+  constructor() {
+    // Ionic creates a new list per URL, so the route segments are read once per instance
+    effect(() => {
+      const listId = this.listId();
+      const contextMenuName = this.contextMenuName();
+      untracked(() => this.store.initFromRoute(listId, contextMenuName));
+    });
+  }
+
   protected readonly count = computed(() => this.store.diaries().length);
   protected readonly filteredCount = computed(() => this.store.filteredDiaries().length);
   protected readonly popupId = computed(() => `c_diaries_${this.listId()}`);
@@ -202,6 +219,7 @@ export class DiaryList {
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     switch ($event.detail.data) {
       case 'add': await this.store.add(); break;
+      case 'albums': await this.store.openAlbums(); break;
       case 'toggleMonthGroups': this.store.toggleGroupByMonth(); break;
       case undefined: case null: break;
       default: this.alertService.error(`DiaryList.onPopoverDismiss: unknown method ${$event.detail.data}`);

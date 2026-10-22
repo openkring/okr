@@ -232,11 +232,46 @@
     "trip": {
       "edit": "Editar viaje",
       "add": "Nuevo viaje",
-      "name": "Viaje"
+      "name": "Viaje",
+      "create": {
+        "conf": "El viaje se ha guardado.",
+        "error": "No se ha podido guardar el viaje."
+      },
+      "update": {
+        "conf": "El viaje se ha actualizado.",
+        "error": "No se ha podido actualizar el viaje."
+      }
     },
     "range": {
       "from": "desde",
       "to": "hasta"
+    },
+    "modalTitle": "Álbumes",
+    "segment": {
+      "event": "Eventos",
+      "person": "Personas",
+      "location": "Lugares",
+      "trip": "Viajes",
+      "tag": "Etiquetas",
+      "date": "Fecha"
+    },
+    "search": "Buscar",
+    "empty": "Aquí todavía no hay nada.",
+    "apply": "Aplicar",
+    "archive": "Archivar",
+    "openTrip": "Abrir la página del viaje",
+    "filter": {
+      "from": "desde",
+      "to": "hasta",
+      "clear": "Quitar el filtro"
+    },
+    "create": {
+      "conf": "El álbum se ha guardado.",
+      "error": "No se ha podido guardar el álbum."
+    },
+    "update": {
+      "conf": "El álbum se ha actualizado.",
+      "error": "No se ha podido actualizar el álbum."
     }
   }
 }

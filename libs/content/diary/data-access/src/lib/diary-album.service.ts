@@ -18,10 +18,11 @@ export class DiaryAlbumService {
   private readonly firestoreService = inject(FirestoreService);
   private readonly env = inject(ENV);
   private readonly i18n = inject(I18nService).translateAll({
-    update_conf: DIARY_I18N_KEYS.update_conf,
-    update_error: DIARY_I18N_KEYS.update_error,
-    create_conf: DIARY_I18N_KEYS.create_conf,
-    create_error: DIARY_I18N_KEYS.create_error,
+    // album wording, not the diary entry's «Der Eintrag wurde …»
+    update_conf: DIARY_I18N_KEYS.albums_update_conf,
+    update_error: DIARY_I18N_KEYS.albums_update_error,
+    create_conf: DIARY_I18N_KEYS.albums_create_conf,
+    create_error: DIARY_I18N_KEYS.albums_create_error,
   });
 
   /** Non-archived albums of `authorKey` in `tenantId`. */

@@ -41,6 +41,10 @@ export class DiaryService {
     update_error: DIARY_I18N_KEYS.update_error,
     create_conf: DIARY_I18N_KEYS.create_conf,
     create_error: DIARY_I18N_KEYS.create_error,
+    trip_create_conf: DIARY_I18N_KEYS.albums_trip_create_conf,
+    trip_create_error: DIARY_I18N_KEYS.albums_trip_create_error,
+    trip_update_conf: DIARY_I18N_KEYS.albums_trip_update_conf,
+    trip_update_error: DIARY_I18N_KEYS.albums_trip_update_error,
   });
 
   /**
@@ -257,12 +261,12 @@ export class DiaryService {
   public async createTravelTrip(trip: TripModel, currentUser?: UserModel): Promise<string | undefined> {
     trip.type = 'travel';
     return await this.firestoreService.createModel<TripModel>(
-      TripCollection, trip, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
+      TripCollection, trip, this.i18n.trip_create_conf(), this.i18n.trip_create_error(), currentUser);
   }
 
   public async updateTravelTrip(trip: TripModel, currentUser?: UserModel): Promise<string | undefined> {
     trip.type = 'travel';
     return await this.firestoreService.updateModel<TripModel>(
-      TripCollection, trip, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
+      TripCollection, trip, false, this.i18n.trip_update_conf(), this.i18n.trip_update_error(), currentUser);
   }
 }

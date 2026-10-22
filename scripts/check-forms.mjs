@@ -168,6 +168,7 @@ const MODAL_ALLOWLIST = {
   'libs/forms/feature/src/lib/section-encryption-setup.modal.ts': 'confirmation: shows a generated password, acknowledge to activate',
   'libs/cms/section/feature/src/lib/message-center.modal.ts': 'tool: composes and sends messages',
   'libs/content/esign/feature/src/lib/esign-send-document.modal.ts': 'wizard: upload, assign signees, send',
+  'libs/content/diary/ui/src/lib/diary-albums.modal.ts': 'picker: choose an album, tag or date range to filter the diary list (spec 1.114)',
 };
 
 const RAW_INPUT = /<ion-(input|textarea|select|checkbox|toggle|radio-group|range|datetime)\b/;

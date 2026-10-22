@@ -232,11 +232,46 @@
     "trip": {
       "edit": "Reise bearbeiten",
       "add": "Neue Reise",
-      "name": "Reise"
+      "name": "Reise",
+      "create": {
+        "conf": "Die Reise wurde gespeichert.",
+        "error": "Die Reise konnte nicht gespeichert werden."
+      },
+      "update": {
+        "conf": "Die Reise wurde aktualisiert.",
+        "error": "Die Reise konnte nicht aktualisiert werden."
+      }
     },
     "range": {
       "from": "von",
       "to": "bis"
+    },
+    "modalTitle": "Alben",
+    "segment": {
+      "event": "Ereignisse",
+      "person": "Personen",
+      "location": "Orte",
+      "trip": "Reisen",
+      "tag": "Tags",
+      "date": "Datum"
+    },
+    "search": "Suchen",
+    "empty": "Hier gibt es noch nichts.",
+    "apply": "Anwenden",
+    "archive": "Archivieren",
+    "openTrip": "Reiseseite öffnen",
+    "filter": {
+      "from": "ab",
+      "to": "bis",
+      "clear": "Filter entfernen"
+    },
+    "create": {
+      "conf": "Das Album wurde gespeichert.",
+      "error": "Das Album konnte nicht gespeichert werden."
+    },
+    "update": {
+      "conf": "Das Album wurde aktualisiert.",
+      "error": "Das Album konnte nicht aktualisiert werden."
     }
   }
 }

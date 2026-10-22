@@ -232,11 +232,46 @@
     "trip": {
       "edit": "Modifica il viaggio",
       "add": "Nuovo viaggio",
-      "name": "Viaggio"
+      "name": "Viaggio",
+      "create": {
+        "conf": "Il viaggio è stato salvato.",
+        "error": "Non è stato possibile salvare il viaggio."
+      },
+      "update": {
+        "conf": "Il viaggio è stato aggiornato.",
+        "error": "Non è stato possibile aggiornare il viaggio."
+      }
     },
     "range": {
       "from": "dal",
       "to": "al"
+    },
+    "modalTitle": "Album",
+    "segment": {
+      "event": "Eventi",
+      "person": "Persone",
+      "location": "Luoghi",
+      "trip": "Viaggi",
+      "tag": "Tag",
+      "date": "Data"
+    },
+    "search": "Cerca",
+    "empty": "Qui non c’è ancora niente.",
+    "apply": "Applica",
+    "archive": "Archivia",
+    "openTrip": "Apri la pagina del viaggio",
+    "filter": {
+      "from": "dal",
+      "to": "fino al",
+      "clear": "Rimuovi il filtro"
+    },
+    "create": {
+      "conf": "L'album è stato salvato.",
+      "error": "Non è stato possibile salvare l'album."
+    },
+    "update": {
+      "conf": "L'album è stato aggiornato.",
+      "error": "Non è stato possibile aggiornare l'album."
     }
   }
 }

@@ -80,3 +80,17 @@ export function avatarTitle(avatar: AvatarInfo): string {
   const name = [avatar.name1, avatar.name2].filter(part => !!part).join(' ');
   return name || avatar.label || '';
 }
+
+/**
+ * The chip text of an active filter: «Anna Muster · 01.01.2015–31.12.2019». A date filter shows
+ * only its range; an open bound reads «ab …» / «bis …». `words` are the translated prefixes.
+ */
+export function diaryFilterLabel(filter: DiaryFilter, formatDate: (d: string) => string, words: { from: string; to: string }): string {
+  const { from, to } = filter;
+  let range = '';
+  if (from && to) range = `${formatDate(from)}–${formatDate(to)}`;
+  else if (from) range = `${words.from} ${formatDate(from)}`;
+  else if (to) range = `${words.to} ${formatDate(to)}`;
+  const title = filter.kind === 'date' ? '' : filter.title;
+  return [title, range].filter(part => !!part).join(' · ');
+}

@@ -232,11 +232,46 @@
     "trip": {
       "edit": "Modifier le voyage",
       "add": "Nouveau voyage",
-      "name": "Voyage"
+      "name": "Voyage",
+      "create": {
+        "conf": "Le voyage a été enregistré.",
+        "error": "Le voyage n'a pas pu être enregistré."
+      },
+      "update": {
+        "conf": "Le voyage a été mis à jour.",
+        "error": "Le voyage n'a pas pu être mis à jour."
+      }
     },
     "range": {
       "from": "du",
       "to": "au"
+    },
+    "modalTitle": "Albums",
+    "segment": {
+      "event": "Événements",
+      "person": "Personnes",
+      "location": "Lieux",
+      "trip": "Voyages",
+      "tag": "Tags",
+      "date": "Date"
+    },
+    "search": "Rechercher",
+    "empty": "Il n'y a encore rien ici.",
+    "apply": "Appliquer",
+    "archive": "Archiver",
+    "openTrip": "Ouvrir la page du voyage",
+    "filter": {
+      "from": "dès le",
+      "to": "jusqu'au",
+      "clear": "Retirer le filtre"
+    },
+    "create": {
+      "conf": "L'album a été enregistré.",
+      "error": "L'album n'a pas pu être enregistré."
+    },
+    "update": {
+      "conf": "L'album a été mis à jour.",
+      "error": "L'album n'a pas pu être mis à jour."
     }
   }
 }

@@ -72,7 +72,8 @@ describe('DiaryService album queries and writes', () => {
       providers: [
         DiaryService,
         { provide: FirestoreService, useValue: { searchData, createModel, updateModel } },
-        { provide: I18nService, useValue: { translateAll: () => ({ update_conf: () => '', update_error: () => '', create_conf: () => '', create_error: () => '' }) } },
+        // each key resolves to its own name, so a test can tell which wording a toast uses
+        { provide: I18nService, useValue: { translateAll: (keys: Record<string, string>) => Object.fromEntries(Object.keys(keys).map(k => [k, () => k])) } },
       ],
     });
   });
@@ -171,5 +172,13 @@ describe('DiaryService album queries and writes', () => {
     expect((createModel.mock.calls[0][1] as TripModel).type).toBe('travel');
     await TestBed.inject(DiaryService).updateTravelTrip(trip);
     expect((updateModel.mock.calls[0][1] as TripModel).type).toBe('travel');
+  });
+
+  it('toasts trip wording, not the diary entry wording', async () => {
+    const trip = { ...new TripModel('bka') } as TripModel;
+    await TestBed.inject(DiaryService).createTravelTrip(trip);
+    expect(createModel.mock.calls[0].slice(2, 4)).toEqual(['trip_create_conf', 'trip_create_error']);
+    await TestBed.inject(DiaryService).updateTravelTrip(trip);
+    expect(updateModel.mock.calls[0].slice(3, 5)).toEqual(['trip_update_conf', 'trip_update_error']);
   });
 });
