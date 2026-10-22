@@ -44,6 +44,8 @@ export const PROFILE_I18N_KEYS = {
   name_display_helper:             PFX + 'display.name.helper',
   sort_person_label:               PFX + 'sort.person.label',
   sort_person_helper:              PFX + 'sort.person.helper',
+  calendar_small_screen_label:     PFX + 'calendar.smallScreen.label',
+  calendar_small_screen_helper:    PFX + 'calendar.smallScreen.helper',
   deliver_news_label:              PFX + 'deliver.news.label',
   deliver_news_helper:             PFX + 'deliver.news.helper',
   deliver_invoice_label:           PFX + 'deliver.invoice.label',

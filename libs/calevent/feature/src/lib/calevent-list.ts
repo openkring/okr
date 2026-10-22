@@ -6,7 +6,7 @@ import { format } from 'date-fns';
 import type { DateSelectArg, DatesSetArg, EventInput } from '@fullcalendar/core';
 import type { CaleventFullcalendarView } from './calevent-fullcalendar-view';
 import { DEFAULT_DATE } from '@okr/shared-constants';
-import { AvatarInfo, CalEventModel, LocationModel, PersonModel, RoleName } from '@okr/shared-models';
+import { AvatarInfo, CalendarSmallScreenView, CalEventModel, LocationModel, PersonModel, RoleName } from '@okr/shared-models';
 import { ModelSelectService } from '@okr/shared-feature';
 import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { DateTimeSelectModal, EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
@@ -455,8 +455,13 @@ export class CalEventList implements OnInit {
   protected types = computed(() => this.store.appStore.tryGetCategory('calevent_type'));
   private currentUser = computed(() => this.store.appStore.currentUser());
   protected readonly years = computed(() => getYearList(getYear() + 1, 30));
-  // Small screens (below Ionic's sm breakpoint) start in the list: a week grid is unreadable on a phone.
-  public isListView = linkedSignal(() => this.view() === 'list' || this.isSmallScreen);
+  /** The user's small-screen preference (profile settings); legacy user docs lack the field → list.
+   *  A primitive computed, so a re-streamed user doc does not reset the view the user toggled to. */
+  private readonly smallScreenListView = computed(() =>
+    (this.currentUser()?.smallScreenCalendarView ?? CalendarSmallScreenView.List) === CalendarSmallScreenView.List);
+  // Small screens (below Ionic's sm breakpoint) start in the list unless the user chose the calendar:
+  // a week grid is hard to read on a phone.
+  public isListView = linkedSignal(() => this.view() === 'list' || (this.isSmallScreen && this.smallScreenListView()));
   protected expertMode = computed(() => this.hasRole('admin'));
   /** The personal calendars ('personal', 'my'): every registered user may create and manage their own events here. */
   protected isPersonalCalendar = computed(() => isPersonalCalendarName(this.store.calendarName()));

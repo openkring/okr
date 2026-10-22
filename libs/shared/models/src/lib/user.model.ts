@@ -2,6 +2,7 @@ import { DEFAULT_EMAIL, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES,
 import { OkrModel, SearchableModel, TaggedModel } from './base.model';
 import { DiaryTarget } from './diary-target.model';
 import { AvatarUsage } from './enums/avatar-usage.enum';
+import { CalendarSmallScreenView } from './enums/calendar-small-screen-view.enum';
 import { DEFAULT_DELIVERY_CHANNELS, DeliveryChannel } from './enums/delivery-type.enum';
 import { DefaultLanguage } from './enums/language.enum';
 import { NameDisplay } from './enums/name-display.enum';
@@ -33,6 +34,7 @@ export class UserModel implements OkrModel, TaggedModel, SearchableModel {
   public gravatarEmail = DEFAULT_EMAIL;
   public nameDisplay = NameDisplay.FirstLast; // FirstLast
   public personSortCriteria = PersonSortCriteria.Lastname; // Lastname
+  public smallScreenCalendarView = CalendarSmallScreenView.List; // List; legacy docs lack it
   public newsDelivery: DeliveryChannel[] = [...DEFAULT_DELIVERY_CHANNELS];
   public invoiceDelivery: DeliveryChannel[] = [...DEFAULT_DELIVERY_CHANNELS];
   // spec 1.77 — what THIS app sends into which diary; [] = nothing (opt-in). Legacy docs lack it.

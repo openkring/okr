@@ -1,7 +1,7 @@
 import { staticSuite } from 'vest';
 
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
-import { AvatarUsage, Language, NameDisplay, PersonSortCriteria, PrivacyUsage, UserModel } from '@okr/shared-models';
+import { AvatarUsage, CalendarSmallScreenView, Language, NameDisplay, PersonSortCriteria, PrivacyUsage, UserModel } from '@okr/shared-models';
 import { baseValidations, booleanValidations, categoryValidations, deliveryChannelsValidations, stringValidations } from '@okr/shared-util-core';
 
 export const userValidations = staticSuite((model: UserModel, tenants: string, tags: string) => {
@@ -17,6 +17,8 @@ export const userValidations = staticSuite((model: UserModel, tenants: string, t
   stringValidations('gravatarEmail', model.gravatarEmail, SHORT_NAME_LENGTH);
   categoryValidations('nameDisplay', model.nameDisplay, NameDisplay);
   categoryValidations('personSortCriteria', model.personSortCriteria, PersonSortCriteria);
+  // legacy docs lack the field (Firestore reads skip model defaults) — validate the effective default
+  categoryValidations('smallScreenCalendarView', model.smallScreenCalendarView ?? CalendarSmallScreenView.List, CalendarSmallScreenView);
   deliveryChannelsValidations('newsDelivery', model.newsDelivery);
   deliveryChannelsValidations('invoiceDelivery', model.invoiceDelivery);
   booleanValidations('showArchivedData', model.showArchivedData);

@@ -4,7 +4,7 @@ import { IonCard, IonCardContent } from '@ionic/angular';
 import type { CalendarOptions, EventInput } from '@fullcalendar/core';
 import { format } from 'date-fns';
 
-import { CalendarSection, CalEventModel } from '@okr/shared-models';
+import { CalendarSection, CalendarSmallScreenView, CalEventModel } from '@okr/shared-models';
 import { Spinner } from '@okr/shared-ui';
 import { DateFormat, debugData, debugMessage, parseDate } from '@okr/shared-util-core';
 import { isBrowser } from '@okr/shared-util-angular';
@@ -63,6 +63,9 @@ export class CalendarSectionComponent {
 
   /** Tracks whether the viewport is narrow (phones), so the calendar can switch to a mobile-friendly agenda/month list. */
   protected readonly isMobile = signal(false);
+  /** The user's small-screen preference (profile settings); legacy user docs lack the field → list. */
+  private readonly mobileListView = computed(() =>
+    (this.calendarStore.currentUser()?.smallScreenCalendarView ?? CalendarSmallScreenView.List) === CalendarSmallScreenView.List);
 
   // inputs
   public section = input<CalendarSection>();
@@ -150,10 +153,12 @@ export class CalendarSectionComponent {
       const events = this.calendarEvents();
       const props = this.calendarProps();
       const mobile = this.isMobile();
+      const mobileListView = this.mobileListView();
       if (!ref) return;
       ref.setInput('events', events);
       ref.setInput('props', props);
       ref.setInput('isMobile', mobile);
+      ref.setInput('mobileListView', mobileListView);
     });
     this.destroyRef.onDestroy(() => this.componentRef()?.destroy());
   }

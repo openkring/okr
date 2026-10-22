@@ -301,5 +301,11 @@
     "period": {
       "error": "La fecha de inicio es posterior a la fecha de fin."
     }
+  },
+  "calendar": {
+    "smallScreen": {
+      "label": "Vista del calendario en pantallas pequeñas",
+      "helper": "En el móvil, el calendario muestra tus eventos como lista por defecto. Elige «Calendario» para ver en su lugar la vista mensual o semanal."
+    }
   }
 }

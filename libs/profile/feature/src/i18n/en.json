@@ -301,5 +301,11 @@
     "period": {
       "error": "The start date is after the end date."
     }
+  },
+  "calendar": {
+    "smallScreen": {
+      "label": "Calendar view on small screens",
+      "helper": "On a phone, the calendar shows your events as a list by default. Choose “Calendar” to see the month or week view instead."
+    }
   }
 }

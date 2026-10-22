@@ -360,6 +360,17 @@
       "description": "Only the last name is shown. Caution: duplicates can arise that are hard to distinguish. With a nickname this display format may still make sense."
     }
   },
+  "calendarSmallScreenView": {
+    "name": "Calendar view on small screens",
+    "list": {
+      "label": "List",
+      "description": "Events are shown as a list."
+    },
+    "calendar": {
+      "label": "Calendar",
+      "description": "Events are shown in a calendar view."
+    }
+  },
   "sortCriteria": {
     "name": "Sort criterion for members",
     "firstname": {

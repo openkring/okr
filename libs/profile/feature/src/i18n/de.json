@@ -301,5 +301,11 @@
     "period": {
       "error": "Das Startdatum liegt nach dem Enddatum."
     }
+  },
+  "calendar": {
+    "smallScreen": {
+      "label": "Kalenderdarstellung auf kleinen Bildschirmen",
+      "helper": "Auf dem Handy zeigt der Kalender deine Termine standardmässig als Liste. Mit «Kalender» siehst du stattdessen die Monats- oder Wochenansicht."
+    }
   }
 }

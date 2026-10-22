@@ -301,5 +301,11 @@
     "period": {
       "error": "La date de début est après la date de fin."
     }
+  },
+  "calendar": {
+    "smallScreen": {
+      "label": "Affichage du calendrier sur les petits écrans",
+      "helper": "Sur un téléphone, le calendrier affiche tes événements sous forme de liste par défaut. Choisis «Calendrier» pour voir plutôt la vue mensuelle ou hebdomadaire."
+    }
   }
 }

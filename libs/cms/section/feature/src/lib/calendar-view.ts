@@ -1,5 +1,5 @@
 import { CUSTOM_ELEMENTS_SCHEMA, Component, PLATFORM_ID,
-         computed, inject, input, output, viewChild } from '@angular/core';
+         computed, effect, inject, input, output, untracked, viewChild } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 
 import { FullCalendarComponent, FullCalendarModule } from '@fullcalendar/angular';
@@ -43,6 +43,8 @@ export class CalendarView {
   public events = input.required<EventInput[]>();
   public props = input<CalendarOptions>({});
   public isMobile = input<boolean>(false);
+  /** The user's choice for small screens (UserModel.smallScreenCalendarView): list (default) or month grid. */
+  public mobileListView = input<boolean>(true);
 
   public readonly dateClick = output<unknown>();
   public readonly eventDrop = output<unknown>();
@@ -53,7 +55,7 @@ export class CalendarView {
     const mobile = this.isMobile();
     return {
       plugins: [dayGridPlugin, interactionPlugin, timeGridPlugin, listPlugin],
-      initialView: mobile ? 'listWeek' : (props.initialView ?? 'timeGridWeek'),
+      initialView: mobile ? this.mobileInitialView() : (props.initialView ?? 'timeGridWeek'),
       headerToolbar: mobile
         ? { left: 'prev,next', center: 'title', right: 'listWeek,dayGridMonth' }
         : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
@@ -82,6 +84,18 @@ export class CalendarView {
       // zwingt es zum Neuzeichnen. Übernommen aus calendar-section.ts.
       setTimeout(() => window.dispatchEvent(new Event('resize')), 1);
     }
+    // FullCalendar reads initialView only once: when the preference (or the viewport) changes
+    // after the first render, e.g. the user doc arrives late, switch the live view explicitly.
+    effect(() => {
+      if (!this.isMobile()) return;
+      const view = this.mobileInitialView();
+      const api = untracked(() => this.fullCalendar()?.getApi());
+      if (api && api.view.type !== view) api.changeView(view);
+    });
+  }
+
+  private mobileInitialView(): string {
+    return this.mobileListView() ? 'listWeek' : 'dayGridMonth';
   }
 
   /** Wechselt auf die Wochenansicht um das gegebene Datum. */

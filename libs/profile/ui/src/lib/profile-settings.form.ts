@@ -2,8 +2,8 @@ import { Component, computed, effect, inject, input, model, output, signal } fro
 import { form } from "@angular/forms/signals";
 import { IonAccordion, IonButton, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from "@ionic/angular";
 
-import { AvatarUsages, LanguageCategory, Languages, NameDisplays, PersonSortCriterias } from "@okr/shared-categories";
-import { AvatarUsage, DefaultLanguage, NameDisplay, PersonSortCriteria, RoleName, UserModel } from "@okr/shared-models";
+import { AvatarUsages, CalendarSmallScreenViews, LanguageCategory, Languages, NameDisplays, PersonSortCriterias } from "@okr/shared-categories";
+import { AvatarUsage, CalendarSmallScreenView, DefaultLanguage, NameDisplay, PersonSortCriteria, RoleName, UserModel } from "@okr/shared-models";
 import { FcmService } from "@okr/shared-data-access";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, DeliveryChannelsControl, DeliveryChannelsI18n, ErrorNote, TextInput, TextInputI18n } from "@okr/shared-ui";
 import { validateVestTree, vestErrors } from "@okr/shared-util-angular";
@@ -16,7 +16,7 @@ import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 /** The user fields this accordion renders as editable — the ones its `valid` output may gate on. */
 const EDITED_FIELDS = [
   'userLanguage', 'showDebugInfo', 'showArchivedData', 'showHelpers', 'useTouchId', 'useFaceId',
-  'avatarUsage', 'gravatarEmail', 'nameDisplay', 'personSortCriteria', 'newsDelivery', 'invoiceDelivery',
+  'avatarUsage', 'gravatarEmail', 'nameDisplay', 'personSortCriteria', 'smallScreenCalendarView', 'newsDelivery', 'invoiceDelivery',
 ];
 
 @Component({
@@ -94,6 +94,10 @@ const EDITED_FIELDS = [
                 <okr-category-old [i18n]="personSortCriteriaI18n()" [value]="personSortCriteria()" (valueChange)="onFieldChange('personSortCriteria', $event)" [categories]="personSortCriterias" [readOnly]="isReadOnly()" />  
               </ion-col>
               <ion-col size="12" size-md="6">
+                <okr-category-old [i18n]="smallScreenCalendarViewI18n()" [value]="smallScreenCalendarView()" (valueChange)="onFieldChange('smallScreenCalendarView', $event)" [categories]="smallScreenCalendarViews" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="smallScreenCalendarViewErrors()" />
+              </ion-col>
+              <ion-col size="12" size-md="6">
                 <okr-delivery-channels [i18n]="newsDeliveryI18n()" [value]="newsDelivery()" (valueChange)="onFieldChange('newsDelivery', $event)" [readOnly]="isReadOnly()" />
                 <okr-error-note [errors]="newsDeliveryErrors()" />
               </ion-col>
@@ -147,6 +151,9 @@ export class ProfileSettingsAccordion {
   protected avatarUsageI18n       = computed(() => ({ name: 'avatarUsage',        label: this.i18n().avatar_usage()             } as CategoryOldI18n));
   protected nameDisplayI18n       = computed(() => ({ name: 'nameDisplay',        label: this.i18n().name_display_label()       } as CategoryOldI18n));
   protected personSortCriteriaI18n= computed(() => ({ name: 'personSortCriteria', label: this.i18n().sort_person_label()        } as CategoryOldI18n));
+  protected smallScreenCalendarViewI18n = computed(() => ({
+    name: 'smallScreenCalendarView', label: this.i18n().calendar_small_screen_label(), helper: this.i18n().calendar_small_screen_helper(),
+  } as CategoryOldI18n));
   protected channelLabels = computed(() => ({
     post:  this.i18n().deliveryChannel_post(),
     email: this.i18n().deliveryChannel_email(),
@@ -212,6 +219,7 @@ export class ProfileSettingsAccordion {
   protected gravatarEmailErrors = computed(() => this.validationResult().getErrors('gravatarEmail'));
   protected newsDeliveryErrors = computed(() => this.validationResult().getErrors('newsDelivery'));
   protected invoiceDeliveryErrors = computed(() => this.validationResult().getErrors('invoiceDelivery'));
+  protected smallScreenCalendarViewErrors = computed(() => this.validationResult().getErrors('smallScreenCalendarView'));
   protected showHelper = computed(() => this.currentUser()?.showHelpers ?? true);
 
   // fields
@@ -227,6 +235,7 @@ export class ProfileSettingsAccordion {
   // Lastname, to match UserModel's default and convertUserToForm() — showing Fullname here made the
   // picker disagree with the order the list actually used.
   protected readonly personSortCriteria = computed(() => this.formData().personSortCriteria ?? PersonSortCriteria.Lastname);
+  protected readonly smallScreenCalendarView = computed(() => this.formData().smallScreenCalendarView ?? CalendarSmallScreenView.List);
   protected readonly newsDelivery = computed(() => toEditableChannels(this.formData().newsDelivery));
   protected readonly invoiceDelivery = computed(() => toEditableChannels(this.formData().invoiceDelivery));
 
@@ -235,6 +244,7 @@ export class ProfileSettingsAccordion {
   protected avatarUsageEnum = AvatarUsage;
   protected nameDisplays = NameDisplays;
   protected personSortCriterias = PersonSortCriterias;
+  protected smallScreenCalendarViews = CalendarSmallScreenViews;
 
   constructor() {
     effect(() => this.valid.emit(this.editedFieldsValid()));

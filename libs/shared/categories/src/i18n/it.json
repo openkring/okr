@@ -360,6 +360,17 @@
       "description": "Viene visualizzato solo il cognome. Attenzione: possono formarsi duplicati difficili da distinguere. Con un soprannome questa modalità di visualizzazione può forse avere comunque senso."
     }
   },
+  "calendarSmallScreenView": {
+    "name": "Visualizzazione del calendario su schermi piccoli",
+    "list": {
+      "label": "Elenco",
+      "description": "Gli eventi vengono mostrati come elenco."
+    },
+    "calendar": {
+      "label": "Calendario",
+      "description": "Gli eventi vengono mostrati in una vista calendario."
+    }
+  },
   "sortCriteria": {
     "name": "Criterio di ordinamento dei membri",
     "firstname": {

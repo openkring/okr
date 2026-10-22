@@ -137,6 +137,7 @@ export * from './lib/enums/horizontal-position.enum';
 export * from './lib/enums/image-action.enum';
 export * from './lib/enums/image-type.enum';
 export * from './lib/enums/language.enum';
+export * from './lib/enums/calendar-small-screen-view.enum';
 export * from './lib/enums/name-display.enum';
 export * from './lib/enums/person-sort-criteria.enum';
 export * from './lib/enums/privacy-usage.enum';

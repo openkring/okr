@@ -360,6 +360,17 @@
       "description": "Solo se muestra el apellido. Atención: pueden surgir duplicados difíciles de distinguir. Con un apodo este modo de presentación puede tener sentido de todos modos."
     }
   },
+  "calendarSmallScreenView": {
+    "name": "Vista del calendario en pantallas pequeñas",
+    "list": {
+      "label": "Lista",
+      "description": "Los eventos se muestran como lista."
+    },
+    "calendar": {
+      "label": "Calendario",
+      "description": "Los eventos se muestran en una vista de calendario."
+    }
+  },
   "sortCriteria": {
     "name": "Criterio de ordenación de los miembros",
     "firstname": {

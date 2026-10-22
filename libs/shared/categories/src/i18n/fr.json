@@ -360,6 +360,17 @@
       "description": "Seul le nom est affiché. Attention : des doublons difficiles à distinguer peuvent apparaître. Un surnom peut malgré tout donner un sens à ce mode d'affichage."
     }
   },
+  "calendarSmallScreenView": {
+    "name": "Affichage du calendrier sur les petits écrans",
+    "list": {
+      "label": "Liste",
+      "description": "Les événements sont affichés sous forme de liste."
+    },
+    "calendar": {
+      "label": "Calendrier",
+      "description": "Les événements sont affichés dans une vue calendrier."
+    }
+  },
   "sortCriteria": {
     "name": "Critère de tri des membres",
     "firstname": {

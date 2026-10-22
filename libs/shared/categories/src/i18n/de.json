@@ -360,6 +360,17 @@
       "description": "Nur der Nachname wird dargestellt. Vorsicht: es können Doubletten entstehen, die kaum zu unterschieden sind. Mit Übername kann diese Darstellungsart vielleicht trotzdem Sinn machen."
     }
   },
+  "calendarSmallScreenView": {
+    "name": "Kalenderdarstellung auf kleinen Bildschirmen",
+    "list": {
+      "label": "Liste",
+      "description": "Termine werden als Liste angezeigt."
+    },
+    "calendar": {
+      "label": "Kalender",
+      "description": "Termine werden in einer Kalenderansicht angezeigt."
+    }
+  },
   "sortCriteria": {
     "name": "Sortierkriterium für Mitglieder",
     "firstname": {
