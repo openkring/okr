@@ -1199,6 +1199,39 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     retention: RETAIN_10Y,
   },
   {
+    // Quick file transfers (spec 1.115). Keyed on the SENDER only. The recipients[] elements
+    // (personKey, name, email) are NOT reachable from here: `anonymizeFields` has no path for
+    // plain sub-fields of an array element, and a recipient-side OR query would make the flat
+    // `senderName` write below wipe the sender's name on someone else's transfer. Recipient
+    // data is bounded instead by the transfer's lifetime (max 30 days, files deleted on expiry)
+    // — a known gap in the erasure of the retained log, see the task-3 report.
+    collection: 'file-transfers',
+    dataClass: 'content',
+    tier: 'T4',
+    onTenantExit: 'retain',
+    find: (c: SubjectCtx) => db().collection('file-transfers').where('senderKey', '==', c.personKey),
+    tenantScope: 'tenantsArray',
+    onExport: 'full',
+    // The log is kept permanently; on erasure the name goes, keys and timestamps stay
+    // (senderKey is the join key of the events and stays, hence not listed).
+    onErasure: 'anonymize',
+    anonymizeFields: ['senderName'],
+    retention: CLUB_RECORD,
+  },
+  {
+    // The audit log of those transfers: keys, event type and timestamps only — no name or
+    // e-mail — so nothing to anonymise; kept permanently.
+    collection: 'file-transfer-events',
+    dataClass: 'log',
+    tier: 'T4',
+    onTenantExit: 'retain',
+    find: (c: SubjectCtx) => db().collection('file-transfer-events').where('senderKey', '==', c.personKey),
+    tenantScope: 'tenantsArray',
+    onExport: 'full',
+    onErasure: 'retain',
+    retention: CLUB_RECORD,
+  },
+  {
     collection: 'esignList',
     dataClass: 'content',
     tier: 'T3',
