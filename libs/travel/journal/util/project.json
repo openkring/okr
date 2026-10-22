@@ -1,0 +1,40 @@
+{
+  "name": "travel-journal-util",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/travel/journal/util/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": [
+    "type:util",
+    "scope:journal",
+    "platform:mobile",
+    "platform:web"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/libs/travel/journal/util",
+        "main": "libs/travel/journal/util/src/index.ts",
+        "tsConfig": "libs/travel/journal/util/tsconfig.lib.json",
+        "assets": [],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": [
+        "{workspaceRoot}/coverage/{projectRoot}"
+      ],
+      "options": {
+        "configFile": "libs/travel/journal/util/vite.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}
