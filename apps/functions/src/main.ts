@@ -24,6 +24,7 @@ import * as Rag from './rag';
 import * as Ocr from './ocr';
 import * as Vectorize from './vectorize';
 import * as Video from './video';
+import * as FileTransfer from './file-transfer';
 import * as Expense from './expense';
 import * as Booking from './booking';
 import * as Invoice from './invoice';
@@ -531,3 +532,6 @@ export const requestContract = Contract.requestContract;
 export const getContractRequestStatus = Contract.getContractRequestStatus;
 // on-demand Gemini abstract of a contract file (spec 1.5 §7.3)
 export { summarizeContract } from './contract/summarize';
+
+// prepareFileTransferUpload: quick file transfer, resumable upload sessions in the private bucket (spec 1.115)
+export const prepareFileTransferUpload = FileTransfer.prepareFileTransferUpload;
