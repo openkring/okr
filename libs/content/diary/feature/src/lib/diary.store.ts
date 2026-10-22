@@ -8,7 +8,7 @@ import type { DiaryLocationPick, DiaryNeighbours } from '@okr/content-diary-ui';
 import { DiaryAlbumService, DiaryMediaService, DiaryService, DiaryWeatherService } from '@okr/content-diary-data-access';
 import {
   DIARY_FIRST_YEAR, DIARY_I18N_KEYS, DiaryFilter, DiaryMediaResult, DiaryRange, DiaryStateFilter, albumKey, albumRefOf,
-  buildDiaryRangeTree, decodeDiaryFilter, diaryFilterLabel, diaryRangeOfYear, diaryStateMatches, encodeDiaryFilter,
+  buildDiaryRangeTree, decodeDiaryFilter, diaryFilterLabel, diaryListUrl, diaryRangeOfYear, diaryStateMatches, encodeDiaryFilter,
   formatDiaryDate, getDiaryIndex, groupDiariesByMonth, hasDiaryWeather, inDiaryDateRange, newDiary,
 } from '@okr/content-diary-util';
 import { LocationService } from '@okr/location-data-access';
@@ -16,7 +16,7 @@ import { AvatarInfo, DiaryAlbumKind, DiaryAlbumModel, DiaryModel, LocationModel,
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AlertService, resourceParams } from '@okr/shared-util-angular';
-import { DateFormat, addIndexElement, convertDateFormatToString, getTodayStr, hasRole, nameMatches } from '@okr/shared-util-core';
+import { DateFormat, addIndexElement, convertDateFormatToString, getTodayStr, nameMatches } from '@okr/shared-util-core';
 import { selectDate } from '@okr/shared-ui';
 
 export type DiaryStoreState = {
@@ -254,7 +254,7 @@ export const DiaryStore = signalStore(
     };
 
     const navigateToList = async (listId: string, filter?: DiaryFilter): Promise<void> => {
-      const url = `/diary/${listId}/${store.contextMenuName()}`;
+      const url = diaryListUrl(listId, store.contextMenuName());
       if (filter) await store.navController.navigateForward(url, { state: { [FILTER_STATE_KEY]: filter } });
       else await store.navController.navigateBack(url);
     };

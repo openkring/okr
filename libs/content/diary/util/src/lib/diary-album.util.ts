@@ -1,5 +1,7 @@
 import { AvatarInfo, DiaryAlbumKind, DiaryAlbumModel, DiaryModel } from '@okr/shared-models';
 
+import { splitDiaryDate } from './diary-date.util';
+
 export type DiaryFilterKind = DiaryAlbumKind | 'tag' | 'trip' | 'date';
 
 export interface DiaryFilter {
@@ -54,15 +56,38 @@ export function eventSlug(title: string): string {
     .join('');
 }
 
-/** Empty bound = open. StoreDate strings compare lexicographically; aggregates (zeroed) sort inside. */
+/**
+ * Empty bound = open. StoreDate strings compare lexicographically, but a month or year aggregate
+ * (zeroed: '20041000', '19900000') would sort just BEFORE its own first day, so a range starting on
+ * 1 October 2004 would drop October's aggregate. It is compared by the first day of its period
+ * instead ('20041001', '19900101'): inside whenever the range covers the start of that month/year.
+ */
 export function inDiaryDateRange(date: string, from: string, to: string): boolean {
-  return (from === '' || date >= from) && (to === '' || date <= to);
+  const start = diaryPeriodStart(date);
+  return (from === '' || start >= from) && (to === '' || start <= to);
+}
+
+/** '20041000' -> '20041001', '19900000' -> '19900101'; a day (or anything unparsable) unchanged. */
+function diaryPeriodStart(date: string): string {
+  const parts = splitDiaryDate(date);
+  if (!parts || (parts.month !== 0 && parts.day !== 0)) return date;
+  const pad2 = (n: number): string => String(n).padStart(2, '0');
+  return `${String(parts.year).padStart(4, '0')}${pad2(parts.month || 1)}${pad2(parts.day || 1)}`;
 }
 
 /** The listId for a filter: album key, `trip.<okey>`, or 'all' for a pure date filter. */
 export function encodeDiaryFilter(filter: DiaryFilter): string {
   if (filter.kind === 'date') return 'all';
   return filter.kind === 'trip' ? `trip.${filter.key}` : filter.key;
+}
+
+/**
+ * The diary list route for a listId. The listId is ONE path segment, but a tag listId carries the
+ * user's free text (`tag.Segeln/Regatta`), so it is URI-encoded; the router hands the param back
+ * decoded, so `decodeDiaryFilter` reads the plain listId again.
+ */
+export function diaryListUrl(listId: string, contextMenuName: string): string {
+  return `/diary/${encodeURIComponent(listId)}/${contextMenuName}`;
 }
 
 export function decodeDiaryFilter(listId: string): Pick<DiaryFilter, 'kind' | 'key'> | undefined {
@@ -103,6 +128,15 @@ export function diaryFilterLabel(filter: DiaryFilter, formatDate: (d: string) =>
 export function mergeDiaryDateRange(current: DiaryFilter | undefined, from: string, to: string): DiaryFilter {
   if (current && current.kind !== 'date') return { ...current, from, to };
   return { kind: 'date', key: '', title: '', from, to };
+}
+
+/**
+ * Whether the Datum segment may apply its range. A plain date filter needs BOTH bounds: one open
+ * end would stream nearly the whole diary. While an album, tag or trip is active the query is
+ * already narrow, so an open end — or an empty range, which drops the narrowing — is fine.
+ */
+export function canApplyDiaryDateRange(from: string, to: string, narrowsAlbum: boolean): boolean {
+  return narrowsAlbum || (!!from && !!to);
 }
 
 /** A pin on the trip map (spec 1.114 §6). Structurally a shared/ui `MapMarker`; `diaryKey` '' for a trip-own location. */

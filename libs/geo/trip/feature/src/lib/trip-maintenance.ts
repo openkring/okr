@@ -43,8 +43,9 @@ const TripMaintenanceStore = signalStore(
     trashTrips: computed(() =>
       store.allTripsResource.value()?.filter(t => !!t.deletedAt) ?? []
     ),
+    // a diary travel trip's notes are rich-text HTML (spec 1.114 §6), not a logbook remark
     notesTrips: computed(() =>
-      store.allTripsResource.value()?.filter(t => !!t.notes && t.notes.trim().length > 0) ?? []
+      store.allTripsResource.value()?.filter(t => t.type !== 'travel' && !!t.notes && t.notes.trim().length > 0) ?? []
     ),
     zeroKmTrips: computed(() =>
       store.allTripsResource.value()?.filter(t => t.distance === 0 && !t.deletedAt) ?? []

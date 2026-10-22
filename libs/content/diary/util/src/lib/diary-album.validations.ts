@@ -5,7 +5,7 @@ import { DiaryAlbumModel } from '@okr/shared-models';
 
 const V = '@content/diary/feature.validation.';
 
-/** camelCase event slug as `eventSlug` produces it; an empty slug must fail too. */
+/** camelCase event slug as `eventSlug` produces it; an empty slug must fail too. New albums only. */
 const SLUG_PATTERN = /^[a-z][A-Za-z0-9]*$/;
 
 /** What the trip form edits; the suite also accepts a whole `TripModel`. */
@@ -18,7 +18,9 @@ export interface DiaryTripFields {
 /**
  * Album: the title is always required; an event needs a slug, a person/location album needs the
  * linked avatar (`ref.key`). The slug and the ref are generated/picked values, so they carry no
- * length cap.
+ * length cap. The slug PATTERN is checked only while the album is new (no okey yet): afterwards the
+ * slug is read-only, and seeded event albums carry slugs such as `Anrudern` or `jass-abend` that
+ * would otherwise block every later save.
  */
 export const diaryAlbumValidations = staticSuite((model: DiaryAlbumModel) => {
   test('title', V + 'titleRequired', () => {
@@ -30,7 +32,12 @@ export const diaryAlbumValidations = staticSuite((model: DiaryAlbumModel) => {
 
   omitWhen(model.kind !== 'event', () => {
     test('slug', V + 'slugInvalid', () => {
-      enforce(SLUG_PATTERN.test(model.slug ?? '')).isTruthy();
+      enforce(model.slug ?? '').isNotBlank();
+    });
+    omitWhen(!!model.okey, () => {
+      test('slug', V + 'slugInvalid', () => {
+        enforce(SLUG_PATTERN.test(model.slug ?? '')).isTruthy();
+      });
     });
   });
   omitWhen(model.kind === 'event', () => {

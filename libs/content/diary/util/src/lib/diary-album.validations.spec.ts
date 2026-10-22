@@ -27,6 +27,16 @@ describe('diaryAlbumValidations', () => {
   });
   it('accepts a person album with a ref and no slug', () =>
     expect(diaryAlbumValidations(album('person', { ref: { ...ref } })).isValid()).toBe(true));
+  it('accepts a seeded slug outside the pattern on an existing album (the slug is read-only then)', () => {
+    expect(diaryAlbumValidations(album('event', { okey: 'scs__u1__event__Anrudern', slug: 'Anrudern' })).isValid()).toBe(true);
+    expect(diaryAlbumValidations(album('event', { okey: 'scs__u1__event__jass-abend', slug: 'jass-abend' })).isValid()).toBe(true);
+  });
+  it('rejects the same slugs on a new album', () => {
+    expect(diaryAlbumValidations(album('event', { slug: 'Anrudern' })).hasErrors('slug')).toBe(true);
+    expect(diaryAlbumValidations(album('event', { slug: 'jass-abend' })).hasErrors('slug')).toBe(true);
+  });
+  it('still requires a slug on an existing event album', () =>
+    expect(diaryAlbumValidations(album('event', { okey: 'scs__u1__event__x', slug: '' })).hasErrors('slug')).toBe(true));
   it('does not ask an event for a ref', () =>
     expect(diaryAlbumValidations(album('event', { slug: 'x' })).hasErrors('ref')).toBe(false));
 });

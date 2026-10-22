@@ -510,8 +510,12 @@ service cloud.firestore {
                       && belongsToTenant(resource.data) && belongsToTenant(request.resource.data);
       allow delete: if userExists() && isDiaryOwner(resource.data) && canWriteTenant(resource.data);
     }
+    // A non-existent album may be read (createModel's existence check, the archived-album
+    // lookup) only under the caller's OWN id — `<tenant>__<uid>__<kind>__<ref>` — so nobody can
+    // probe which albums another author has.
     match /diaryAlbums/{id} {
-      allow read: if userExists() && (resource == null || isDiaryOwner(resource.data));
+      allow read: if userExists() && ((resource == null && id.matches('^[^_]+__' + request.auth.uid + '__.*'))
+                      || isDiaryOwner(resource.data));
       allow create: if userExists() && isDiaryOwner(request.resource.data) && canWriteTenant(request.resource.data);
       allow update: if userExists() && isDiaryOwner(resource.data) && isDiaryOwner(request.resource.data)
                       && belongsToTenant(resource.data) && belongsToTenant(request.resource.data);

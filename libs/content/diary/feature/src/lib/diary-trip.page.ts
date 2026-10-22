@@ -5,7 +5,7 @@ import {
 } from '@ionic/angular';
 import { firstValueFrom, timeout } from 'rxjs';
 
-import { encodeDiaryFilter, formatDiaryDate, tripMapPoints, TripMapPoint } from '@okr/content-diary-util';
+import { diaryListUrl, encodeDiaryFilter, formatDiaryDate, tripMapPoints, TripMapPoint } from '@okr/content-diary-util';
 import { LocationService } from '@okr/location-data-access';
 import { TripModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -248,7 +248,7 @@ export class DiaryTripPage {
     const trip = this.trip();
     if (!trip) return;
     // not `store.setFilter`: this store already holds the trip filter and would apply it in place
-    await this.store.navController.navigateForward(`/diary/${encodeDiaryFilter({ kind: 'trip', key: trip.okey, title: trip.name, from: '', to: '' })}/c-diary`);
+    await this.store.navController.navigateForward(diaryListUrl(encodeDiaryFilter({ kind: 'trip', key: trip.okey, title: trip.name, from: '', to: '' }), 'c-diary'));
   }
 
   protected async saveNotes(): Promise<void> {

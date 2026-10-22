@@ -267,6 +267,13 @@ seed("aliasEvents/ev1", {"tenants": ["t1"], "isArchived": False,
 # diary-import feature (2026-08): authorKey is the AUTH UID (not personKey, unlike docs.authorKey)
 # — a private diary/import run is readable and writable only by its own author, admin included.
 seed("diaries/diA", {"tenants": ["t1"], "authorKey": "uidA", "date": "20260101"})
+# spec 1.114 §3: diary READ is owner-only without a tenant clause, so the owner's entry in another
+# tenant is still readable to them (the client drops it in memory). diaryAlbums use the same rule.
+seed("diaries/diA_t2", {"tenants": ["t2"], "authorKey": "uidA", "date": "20260105"})
+seed("diaryAlbums/t1__uidA__event__anrudern", {"tenants": ["t1"], "authorKey": "uidA", "kind": "event",
+     "slug": "anrudern", "title": "Anrudern", "isArchived": False})
+seed("diaryAlbums/t1__uidA__event__alt", {"tenants": ["t1"], "authorKey": "uidA", "kind": "event",
+     "slug": "alt", "title": "Alt", "isArchived": True})
 seed("diaryImports/impA", {"tenants": ["t1"], "authorKey": "uidA", "phase": "done"})
 
 # bank import (spec 1.60): treasurer config + client-written staging rows
@@ -603,6 +610,31 @@ single_cases = [
      body({"tenants": ["t1"], "authorKey": "uidA", "date": "20260102"}), None),
     ("userA create diary with forged authorKey -> DENY", False, POST, "diaries?documentId=diForge", A,
      body({"tenants": ["t1"], "authorKey": "uidD", "date": "20260103"}), None),
+    # spec 1.114 §3: owner-only read without a tenant clause; writes keep the tenant checks
+    ("userA(owner, t1) GET own diary in tenant t2 -> ALLOW (read has no tenant clause)", True,
+     GET, "diaries/diA_t2", A, None, None),
+    ("userD(admin t1, not owner) GET foreign diary in t2 -> DENY", False, GET, "diaries/diA_t2", D, None, None),
+    ("userA(owner) GET own diaryAlbum -> ALLOW", True, GET, "diaryAlbums/t1__uidA__event__anrudern", A, None, None),
+    ("userD(admin t1, not owner) GET foreign diaryAlbum -> DENY", False,
+     GET, "diaryAlbums/t1__uidA__event__anrudern", D, None, None),
+    ("anon GET diaryAlbum -> DENY", False, GET, "diaryAlbums/t1__uidA__event__anrudern", None, None, None),
+    ("userA GET own NON-EXISTENT diaryAlbum id -> ALLOW(404) (createModel existence check)", True,
+     GET, "diaryAlbums/t1__uidA__event__nochNicht", A, None, None),
+    ("userA GET FOREIGN-uid NON-EXISTENT diaryAlbum id -> DENY (no existence probe)", False,
+     GET, "diaryAlbums/t1__uidD__event__nochNicht", A, None, None),
+    ("userA(owner) create own diaryAlbum -> ALLOW", True, POST, "diaryAlbums?documentId=t1__uidA__event__neu", A,
+     body({"tenants": ["t1"], "authorKey": "uidA", "kind": "event", "slug": "neu", "title": "Neu", "isArchived": False}), None),
+    ("userA create diaryAlbum with forged authorKey -> DENY", False,
+     POST, "diaryAlbums?documentId=t1__uidD__event__forge", A,
+     body({"tenants": ["t1"], "authorKey": "uidD", "kind": "event", "slug": "forge", "title": "F", "isArchived": False}), None),
+    ("userA create diaryAlbum into foreign tenant t2 -> DENY", False,
+     POST, "diaryAlbums?documentId=t2__uidA__event__fremd", A,
+     body({"tenants": ["t2"], "authorKey": "uidA", "kind": "event", "slug": "fremd", "title": "F", "isArchived": False}), None),
+    ("userA(owner) un-archive own diaryAlbum -> ALLOW", True, PATCH, "diaryAlbums/t1__uidA__event__alt", A,
+     body({"tenants": ["t1"], "authorKey": "uidA", "kind": "event", "slug": "alt", "title": "Alt neu", "isArchived": False}),
+     ["isArchived", "title"]),
+    ("userD(admin t1, not owner) PATCH foreign diaryAlbum -> DENY", False, PATCH, "diaryAlbums/t1__uidA__event__anrudern", D,
+     body({"title": "X"}), ["title"]),
     ("userA(owner) GET own diaryImports -> ALLOW", True, GET, "diaryImports/impA", A, None, None),
     ("userD(admin t1, not owner) GET foreign diaryImports -> DENY", False,
      GET, "diaryImports/impA", D, None, None),
@@ -920,6 +952,15 @@ STAFF_NON_STRICT = STAFF + [("isStrictlyConfidential", "EQUAL", False)]
 SYSQ = [("isArchived", "EQUAL", False), ("tenants", "ARRAY_CONTAINS_ANY", ["t1", "system"])]
 MY = lambda pk: [("partyPersonKeys", "ARRAY_CONTAINS", pk), ("isArchived", "EQUAL", False)]
 field_cases = [
+    # spec 1.114 §3: the album queries constrain authorKey alone (no tenant filter)
+    ("userA LIST diaries authorKey == uidA only -> ALLOW", True, "diaries", [("authorKey", "EQUAL", "uidA")], A),
+    ("userA LIST diaries authorKey == uidD (foreign) -> DENY", False, "diaries", [("authorKey", "EQUAL", "uidD")], A),
+    ("userD(admin) LIST diaries tenants t1 only (no authorKey) -> DENY", False, "diaries",
+     [("tenants", "ARRAY_CONTAINS", "t1")], D),
+    ("userA LIST diaries authorKey + albumKeys (album query) -> ALLOW", True, "diaries",
+     [("authorKey", "EQUAL", "uidA"), ("albumKeys", "ARRAY_CONTAINS", "event.anrudern")], A),
+    ("userA LIST diaryAlbums authorKey == uidA only -> ALLOW", True, "diaryAlbums", [("authorKey", "EQUAL", "uidA")], A),
+    ("userA LIST diaryAlbums authorKey == uidD (foreign) -> DENY", False, "diaryAlbums", [("authorKey", "EQUAL", "uidD")], A),
     ("userA LIST contracts listMine(pA) -> ALLOW", True, "contracts", MY("pA"), A),
     ("userA LIST contracts listMine with FOREIGN key pB -> DENY", False, "contracts", MY("pB"), A),
     ("userP(privileged) LIST contracts listStaff(false) -> ALLOW", True, "contracts", STAFF_NON_STRICT, P),

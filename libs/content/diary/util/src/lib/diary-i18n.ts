@@ -175,6 +175,7 @@ export const DIARY_I18N_KEYS = {
   albums_action_failed:   PFX + 'albums.actionFailed',
   albums_create_conf:     PFX + 'albums.create.conf',
   albums_create_error:    PFX + 'albums.create.error',
+  albums_exists:          PFX + 'albums.exists',
   albums_update_conf:     PFX + 'albums.update.conf',
   albums_update_error:    PFX + 'albums.update.error',
   albums_trip_create_conf:  PFX + 'albums.trip.create.conf',

@@ -269,6 +269,7 @@
       "conf": "L'album è stato salvato.",
       "error": "Non è stato possibile salvare l'album."
     },
+    "exists": "Questo album esiste già.",
     "update": {
       "conf": "L'album è stato aggiornato.",
       "error": "Non è stato possibile aggiornare l'album."

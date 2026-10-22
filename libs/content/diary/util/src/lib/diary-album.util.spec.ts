@@ -1,6 +1,6 @@
 import { AvatarInfo } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
-import { avatarTitle, decodeDiaryFilter, DiaryFilter, diaryAlbumId, diaryFilterLabel, mergeDiaryDateRange, diaryAlbumKeys, encodeDiaryFilter, eventSlug, inDiaryDateRange, tripMapPoints } from './diary-album.util';
+import { avatarTitle, canApplyDiaryDateRange, decodeDiaryFilter, diaryListUrl, DiaryFilter, diaryAlbumId, diaryFilterLabel, mergeDiaryDateRange, diaryAlbumKeys, encodeDiaryFilter, eventSlug, inDiaryDateRange, tripMapPoints } from './diary-album.util';
 
 describe('diary album utils', () => {
   it('derives sorted, de-duplicated keys', () => {
@@ -33,6 +33,42 @@ describe('diary album utils', () => {
     expect(inDiaryDateRange('19900000', '19900000', '')).toBe(true);
     expect(inDiaryDateRange('20050101', '', '20041231')).toBe(false);
     expect(inDiaryDateRange('20050101', '', '')).toBe(true);
+  });
+
+  it('keeps an aggregate inside a range that starts on the first of its month or year', () => {
+    expect(inDiaryDateRange('20041000', '20041001', '20041031')).toBe(true);
+    expect(inDiaryDateRange('20041000', '20041001', '20041015')).toBe(true);
+    expect(inDiaryDateRange('19900000', '19900101', '19901231')).toBe(true);
+    expect(inDiaryDateRange('19900000', '19900101', '19900131')).toBe(true);
+    // the period starts before the range: not inside
+    expect(inDiaryDateRange('20041000', '20041002', '20041031')).toBe(false);
+    expect(inDiaryDateRange('20041000', '20040901', '20040930')).toBe(false);
+  });
+
+  describe('diaryListUrl', () => {
+    it('leaves a plain listId readable', () =>
+      expect(diaryListUrl('person.p1', 'c-diary')).toBe('/diary/person.p1/c-diary'));
+    it('encodes a tag so slashes, spaces and ? stay inside the one segment', () => {
+      const url = diaryListUrl('tag.Segeln/Regatta ?2024#1', 'c-diary');
+      expect(url).toBe('/diary/tag.Segeln%2FRegatta%20%3F2024%231/c-diary');
+      // the router hands the segment back decoded, so the listId round-trips
+      expect(decodeURIComponent(url.split('/')[2])).toBe('tag.Segeln/Regatta ?2024#1');
+    });
+  });
+
+  describe('canApplyDiaryDateRange', () => {
+    it('needs both bounds for a plain date filter', () => {
+      expect(canApplyDiaryDateRange('20150101', '20191231', false)).toBe(true);
+      expect(canApplyDiaryDateRange('20150101', '', false)).toBe(false);
+      expect(canApplyDiaryDateRange('', '20191231', false)).toBe(false);
+      expect(canApplyDiaryDateRange('', '', false)).toBe(false);
+    });
+    it('allows an open end or no range while an album is active', () => {
+      expect(canApplyDiaryDateRange('20150101', '', true)).toBe(true);
+      expect(canApplyDiaryDateRange('', '20191231', true)).toBe(true);
+      expect(canApplyDiaryDateRange('', '', true)).toBe(true);
+      expect(canApplyDiaryDateRange('20150101', '20191231', true)).toBe(true);
+    });
   });
 
   it('round-trips a filter through the listId', () => {

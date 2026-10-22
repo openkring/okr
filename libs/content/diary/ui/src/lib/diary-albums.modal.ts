@@ -10,7 +10,7 @@ import { EmptyList, Header } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetOptions, dismissOverlay } from '@okr/shared-util-angular';
 
 import {
-  DiaryDateRange, DiaryFilter, DiaryI18n, albumKey, albumRefOf, formatDiaryDate, mergeDiaryDateRange,
+  DiaryDateRange, DiaryFilter, DiaryI18n, albumKey, albumRefOf, canApplyDiaryDateRange, formatDiaryDate, mergeDiaryDateRange,
 } from '@okr/content-diary-util';
 import { DiaryDateRangeForm } from './diary-date-range.form';
 
@@ -158,9 +158,9 @@ export class DiaryAlbumsModal {
     const filter = this.narrowable();
     return filter ? this.i18n().albums_applies_to().replace('{title}', filter.title || filter.key) : '';
   });
-  // an empty range is allowed only to drop the narrowing of an album (the album stays)
+  // a plain date filter needs both bounds; over an album one open end or an empty range is fine
   protected readonly canApplyRange = computed(() =>
-    this.rangeValid() && (!!(this.range().from || this.range().to) || !!this.narrowable()));
+    this.rangeValid() && canApplyDiaryDateRange(this.range().from, this.range().to, !!this.narrowable()));
 
   /** the album keys whose newest date the visible segment shows */
   private readonly datedKeys = computed((): string[] => {

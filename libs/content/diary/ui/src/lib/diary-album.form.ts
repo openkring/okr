@@ -14,7 +14,8 @@ import { DiaryI18n, diaryAlbumValidations, eventSlug } from '@okr/content-diary-
 /**
  * Form for one album (spec 1.114 §4). Person/location albums show the linked avatar with a choose
  * button (the parent runs the picker); event albums show title + slug, the slug following the title
- * while the album is new and read-only afterwards (it is the key entries are matched by).
+ * while the album is new and read-only afterwards (it is the key entries are matched by). The
+ * linked avatar is locked the same way once the album exists: the album id is derived from it.
  */
 @Component({
   selector: 'okr-diary-album-form',
@@ -31,11 +32,11 @@ import { DiaryI18n, diaryAlbumValidations, eventSlug } from '@okr/content-diary-
                 <ion-row>
                   <ion-col size="12">
                     <okr-avatars [avatars]="refAvatars()" (avatarsChange)="onRefChange($event)"
-                      [readOnly]="isReadOnly()" [currentUser]="currentUser()" [maxLength]="1"
+                      [readOnly]="isReadOnly() || !isNew()" [currentUser]="currentUser()" [maxLength]="1"
                       [title]="kind() === 'person' ? i18n().albums_person_label() : i18n().albums_location_label()"
                       [label]="kind() === 'person' ? i18n().albums_person_select() : i18n().albums_location_select()"
                       [selectIcon]="kind() === 'person' ? 'person' : 'location'"
-                      [showButton]="!isReadOnly()" (selectClicked)="selectClicked.emit()" />
+                      [showButton]="!isReadOnly() && isNew()" (selectClicked)="selectClicked.emit()" />
                     <okr-error-note [errors]="refErrors()" />
                   </ion-col>
                 </ion-row>

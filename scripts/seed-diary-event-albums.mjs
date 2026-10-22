@@ -80,11 +80,19 @@ const orphans = [...used].filter((s) => SLUG.test(s) && !notes.has(s)).sort();
 const entries = [...notes].map(([slug, title]) => ({ slug, title }))
   .concat(withOrphans ? orphans.map((slug) => ({ slug, title: slug })) : []);
 
+// Same `index` the app writes for an album: DiaryStore.openAlbums -> editAlbum saves
+// `addIndexElement('', 'n', title)` (libs/shared/util-core/src/lib/base-model.util.ts), i.e.
+// `n:<title>`, not lower-cased; an empty (or single-space) title gives ''. Keep the two in step.
+function albumIndex(title) {
+  if (!title || title === ' ') return '';
+  return `n:${title}`;
+}
+
 function buildAlbum({ slug, title }) {
   return {
     tenants: [tenantId], isArchived: false, authorKey, kind: 'event',
     title, slug, notes: '',
-    index: title.toLowerCase(),
+    index: albumIndex(title),
   };
 }
 
