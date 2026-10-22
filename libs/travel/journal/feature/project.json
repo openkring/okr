@@ -1,0 +1,31 @@
+{
+  "name": "travel-journal-feature",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/travel/journal/feature/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": [
+    "type:feature",
+    "scope:journal",
+    "platform:mobile",
+    "platform:web"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/libs/travel/journal/feature",
+        "main": "libs/travel/journal/feature/src/index.ts",
+        "tsConfig": "libs/travel/journal/feature/tsconfig.lib.json",
+        "assets": [],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}
