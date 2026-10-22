@@ -67,27 +67,47 @@ async function viaBotCommand(bot) {
   }
   if (!management) throw new Error(`no management room with ${bot} found`);
   const since = (await matrix('GET', '/_matrix/client/v3/sync?timeout=0&filter={"room":{"timeline":{"limit":1}}}')).next_batch;
-  await matrix('PUT', `/_matrix/client/v3/rooms/${encodeURIComponent(management)}/send/m.room.message/spike-${Date.now()}`, { msgtype: 'm.text', body: `start-chat ${number}` });
-  console.log(`sent "start-chat ${number}" to ${management}, waiting for the portal …`);
-  // Only a NEW invite from the bridge counts as the portal: taking "any joined room with new events"
-  // could post the test message into an unrelated family or club room. A portal that already
-  // exists produces no invite — then the bot's reply names it, and the script stops instead of guessing.
+  const sentAt = Date.now();
+  await matrix('PUT', `/_matrix/client/v3/rooms/${encodeURIComponent(management)}/send/m.room.message/spike-${sentAt}`, { msgtype: 'm.text', body: `start-chat ${number}` });
+  console.log(`sent "start-chat <number>" to ${management}, waiting for the bridge …`);
+  // The portal is either a NEW invite (first chat with this number) or an existing room the bridge names
+  // in its reply. Never guess from "any room with new events": that could hit an unrelated room.
   let cursor = since;
+  const seen = new Set();
   for (let i = 0; i < 10; i++) {
     const sync = await matrix('GET', `/_matrix/client/v3/sync?timeout=3000&since=${cursor}`);
     cursor = sync.next_batch;
-    const reply = sync.rooms?.join?.[management]?.timeline?.events?.find((e) => e.sender === bot)?.content?.body;
-    if (reply) console.log('bot:', reply);
     const invite = Object.entries(sync.rooms?.invite ?? {}).find(([, room]) =>
       room.invite_state?.events?.some((e) => e.type === 'm.room.member' && e.state_key === me.user_id && e.content?.membership === 'invite'),
     );
     if (invite) {
       const [roomId] = invite;
+      console.log('new portal (invite):', roomId);
       await matrix('POST', `/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/join`, {});
       return roomId;
     }
+    // read the bot's replies since the command
+    const { chunk = [] } = await matrix('GET', `/_matrix/client/v3/rooms/${encodeURIComponent(management)}/messages?dir=b&limit=10`);
+    for (const e of chunk) {
+      if (e.sender !== bot || e.origin_server_ts < sentAt || seen.has(e.event_id)) continue;
+      seen.add(e.event_id);
+      const text = `${e.content?.body ?? ''} ${e.content?.formatted_body ?? ''}`;
+      console.log('bot:', (e.content?.body ?? '').replace(/\+\d{6,15}/g, '+…'));
+      const match = decodeURIComponent(text).match(/(![A-Za-z0-9_\-]+:[A-Za-z0-9.\-]+)/);
+      if (match && match[1] !== management) {
+        const roomId = match[1];
+        await matrix('POST', `/_matrix/client/v3/join/${encodeURIComponent(roomId)}`, {}).catch(() => undefined);
+        // only a real Signal DM counts: a bridge puppet as member, and no more than 3 members
+        const members = Object.keys((await matrix('GET', `/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/joined_members`)).joined ?? {});
+        if (!members.some((id) => id.startsWith('@signal_')) || members.length > 3) {
+          throw new Error(`room ${roomId} named by the bot is not a Signal DM (${members.length} members) — nothing sent`);
+        }
+        console.log('portal named by the bridge:', roomId);
+        return roomId;
+      }
+    }
   }
-  throw new Error('no portal invite within 30 s — if the bot says the chat already exists, pass its room with --room');
+  throw new Error('no portal within 30 s — see the bot replies above; pass the room with --room if it names one');
 }
 
 const me = await matrix('GET', '/_matrix/client/v3/account/whoami');
