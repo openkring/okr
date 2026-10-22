@@ -14,6 +14,8 @@ export interface LocalPeerPlugin {
   send(options: { peerId: string; message: string }): Promise<void>; // message = JSON text
   addListener(event: 'peerConnected' | 'peerDisconnected', cb: (p: PeerInfo) => void): Promise<PluginListenerHandle>;
   addListener(event: 'message', cb: (m: { peerId: string; message: string }) => void): Promise<PluginListenerHandle>;
+  /** Spike diagnostics: one line per network step (Bonjour, dial, connection state, hello). */
+  addListener(event: 'log', cb: (l: { line: string }) => void): Promise<PluginListenerHandle>;
 }
 
 export const LocalPeer = registerPlugin<LocalPeerPlugin>('LocalPeer');
