@@ -6,7 +6,7 @@
 import type { Firestore } from 'firebase-admin/firestore';
 
 import { resolveDiaryTargets } from '@okr/content-diary-util';
-import { AppConfigCollection, DiaryPeriod, DiarySource, DiaryTarget, UserCollection } from '@okr/shared-models';
+import { DiarySource, DiaryTarget, UserCollection } from '@okr/shared-models';
 
 import { appendToDiary, type DiaryLineField, type DiaryLineMode, type DiaryLineResult } from './append-to-diary';
 
@@ -30,21 +30,6 @@ export function summariseDiaryResults(results: Record<string, DiaryTargetResult>
   return 'skipped-missing';
 }
 
-/** Published travel periods of the given diary tenants (missing doc/field → ''). */
-export async function readDiaryPeriods(db: Firestore, tenantIds: string[]): Promise<Record<string, DiaryPeriod>> {
-  const unique = [...new Set(tenantIds.filter(Boolean))];
-  const snaps = await Promise.all(unique.map(id => db.collection(AppConfigCollection).doc(id).get()));
-  const out: Record<string, DiaryPeriod> = {};
-  snaps.forEach((snap, i) => {
-    const data = snap.data() ?? {};
-    out[unique[i]] = {
-      travelFrom: typeof data['travelFrom'] === 'string' ? data['travelFrom'] : '',
-      travelTo: typeof data['travelTo'] === 'string' ? data['travelTo'] : '',
-    };
-  });
-  return out;
-}
-
 /**
  * Resolves the targets for one item and writes (or removes) its line in each matching diary.
  * Returns one status per diary tenant that matched; {} = nothing matched.
@@ -55,8 +40,7 @@ export async function sendToDiaries(db: Firestore, args: {
 }): Promise<Record<string, DiaryTargetResult>> {
   const ticked = (args.targets ?? []).filter(t => (t.sources ?? []).includes(args.source)).map(t => t.tenantId);
   if (ticked.length === 0 || !args.personKey) return {};
-  const periods = await readDiaryPeriods(db, ticked);
-  const diaryTenants = resolveDiaryTargets(args.targets, args.source, args.date, periods);
+  const diaryTenants = resolveDiaryTargets(args.targets, args.source, args.date);
   if (diaryTenants.length === 0) return {};
 
   const usersSnap = await db.collection(UserCollection).where('personKey', '==', args.personKey).get();

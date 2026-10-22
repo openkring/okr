@@ -9,7 +9,7 @@ import { effectiveFeatures, FEATURE_BLOCKS, type FeatureBlock, type FeatureRollo
 
 import { loginTenantsOf } from '../auth/login-tenants';
 
-export interface DiaryTenantInfo { tenantId: string; title: string; logoUrl: string; travelFrom: string; travelTo: string }
+export interface DiaryTenantInfo { tenantId: string; title: string; logoUrl: string }
 
 const str = (v: unknown): string => (typeof v === 'string' ? v : '');
 
@@ -31,8 +31,7 @@ export function buildDiaryTenantList(input: {
     .filter(t => effectiveOf(t).has('diary'))
     .map(t => {
       const cfg = input.configs[t] ?? {};
-      return { tenantId: t, title: str(cfg['appName']) || t, logoUrl: str(cfg['logoUrl']),
-               travelFrom: str(cfg['travelFrom']), travelTo: str(cfg['travelTo']) };
+      return { tenantId: t, title: str(cfg['appName']) || t, logoUrl: str(cfg['logoUrl']) };
     });
   return { diaries, sources: offeredDiarySources(effectiveOf(input.callerTenant)) };
 }

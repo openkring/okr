@@ -190,22 +190,12 @@
       "label": "Images seulement"
     }
   },
-  "period": {
-    "title": "Période de voyage",
-    "from": {
-      "label": "Voyage du"
-    },
-    "to": {
-      "label": "Voyage jusqu'au"
-    },
-    "helper": "Les transferts vers le journal sans période propre ne s'appliquent que pendant cette période. Une date vide laisse la période ouverte de ce côté.",
-    "error": "La date de début est après la date de fin."
-  },
   "validation": {
     "authorMissing": "Choisis qui écrit l'entrée.",
     "scopeInvalid": "Choisis une période valide.",
     "statusInvalid": "Choisis un statut valide.",
-    "dateScopeMismatch": "La date ne correspond pas à la période choisie."
+    "dateScopeMismatch": "La date ne correspond pas à la période choisie.",
+    "dateRangeInvalid": "La date de début est après la date de fin."
   },
   "jass": {
     "draw": "Match nul – la revanche est pour ainsi dire déjà fixée.",

@@ -8,18 +8,11 @@ export type DiarySource = typeof DIARY_SOURCES[number];
 
 /**
  * One diary app as configured by one user in one source app: which sources it receives and in
- * which period. `from`/`to` are StoreDates, inclusive; '' inherits the diary app's published
- * travel period (`AppConfig.travelFrom`/`travelTo`), and a still-empty bound is open.
+ * which period. `from`/`to` are StoreDates, inclusive; '' is an open bound.
  */
 export interface DiaryTarget {
   tenantId: string;
   sources: DiarySource[];
   from: string;
   to: string;
-}
-
-/** A diary app's published travel period; both '' = none (a personal diary). */
-export interface DiaryPeriod {
-  travelFrom: string;
-  travelTo: string;
 }

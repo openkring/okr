@@ -3010,12 +3010,10 @@ const diary: FeatureBlock = {
     { key: 'diary', name: 'diary', url: '/diary/all/c-diary', action: 'navigate', roleNeeded: 'registered', icon: 'document', label: '@item.diary' },
     { key: 'c-diary', name: 'c-diary', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
       { key: 'diary-add', name: 'diary-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add', label: '@item.diary-add' },
+      { key: 'diary-albums', name: 'diary-albums', url: 'albums', action: 'call', roleNeeded: 'registered', icon: 'images', label: '@item.diary-albums' },
       // spec 1.106 §1.1 — month accordions on/off; `DiaryList` passes the state via `toggleStates`
       // and flips it in `onPopoverDismiss` case 'toggleMonthGroups'.
       { key: 'diary-month-groups', name: 'diary-month-groups', url: 'toggleMonthGroups', action: 'toggle', roleNeeded: 'registered', icon: 'calendar', iconAlt: 'list', label: '@item.diary-month-groups', labelAlt: '@item.diary-month-groups-off' },
-      // spec 1.77 D7 — the published travel period of a travel diary app, admin-only:
-      // `DiaryList.onPopoverDismiss` case 'period' opens `DiaryPeriodModal` via `DiaryStore.editPeriod()`.
-      { key: 'diary-period', name: 'diary-period', url: 'period', action: 'call', roleNeeded: 'admin', icon: 'calendar', label: '@item.diary-period' },
       { key: 'maint-divider', name: 'maint-divider', url: '', action: 'divider', roleNeeded: 'admin', icon: 'help-circle', label: '@item.maint-divider' },
       { key: 'diary-import', name: 'diary-import', url: '/diary/import', action: 'navigate', roleNeeded: 'admin', icon: 'download', label: '@item.diary-import' },
     ] },

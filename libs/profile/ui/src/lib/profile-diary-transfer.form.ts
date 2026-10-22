@@ -5,7 +5,7 @@ import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic
 import { DiarySource, DiaryTarget, UserModel } from "@okr/shared-models";
 import { Checkbox, CheckboxI18n, DateInput, DateInputI18n, ErrorNote } from "@okr/shared-ui";
 import { validateVestTree, vestErrors } from "@okr/shared-util-angular";
-import { coerceBoolean, convertDateFormatToString, DateFormat } from "@okr/shared-util-core";
+import { coerceBoolean } from "@okr/shared-util-core";
 import { diaryTransferValidations, mergeDiaryTargets, ProfileI18n } from "@okr/profile-util";
 
 /**
@@ -16,15 +16,13 @@ import { diaryTransferValidations, mergeDiaryTargets, ProfileI18n } from "@okr/p
 export interface DiaryTransferColumn {
   tenantId: string;
   title: string;
-  travelFrom: string;
-  travelTo: string;
 }
 
 /**
  * Spec 1.77 §5 — «Tagebuch-Transfer»: rows = transfer kinds (sources), columns = diary apps.
  * A ticked cell routes that source into that diary; each column carries an optional period
- * (`von`/`bis`). An empty bound inherits the diary's published travel period, shown as the
- * placeholder. No submit button: the profile page's change-confirmation saves the UserModel.
+ * (`von`/`bis`); an empty bound is open. No submit button: the profile page's change-confirmation
+ * saves the UserModel.
  *
  * More than four diaries: there is no generic multi-select primitive in `@okr/shared-ui`
  * (`okr-chips` only handles tag/role chips), so the grid stays and scrolls horizontally
@@ -137,8 +135,8 @@ export class ProfileDiaryTransferAccordion {
       tenantId: diary.tenantId,
       title: diary.title,
       target: targets[i],
-      fromI18n: this.dateI18n(`${diary.tenantId}.from`, this.i18n().diaryTransfer_from(), diary.travelFrom),
-      toI18n: this.dateI18n(`${diary.tenantId}.to`, this.i18n().diaryTransfer_to(), diary.travelTo),
+      fromI18n: this.dateI18n(`${diary.tenantId}.from`, this.i18n().diaryTransfer_from()),
+      toI18n: this.dateI18n(`${diary.tenantId}.to`, this.i18n().diaryTransfer_to()),
       periodErrors: result.getErrors(`${diary.tenantId}.period`),
     }));
   });
@@ -187,13 +185,7 @@ export class ProfileDiaryTransferAccordion {
     return { name: `${tenantId}.${source}`, label: '', helper: '' };
   }
 
-  /** An empty bound shows the diary's travel date as placeholder, e.g. «1.10.2026 (Reise)». */
-  private dateI18n(name: string, label: string, travelDate: string): DateInputI18n {
-    const view = travelDate ? convertDateFormatToString(travelDate, DateFormat.StoreDate, DateFormat.ViewDate, false) : '';
-    return {
-      name,
-      label,
-      placeholder: view ? `${view} (${this.i18n().diaryTransfer_travel()})` : '',
-    };
+  private dateI18n(name: string, label: string): DateInputI18n {
+    return { name, label, placeholder: '' };
   }
 }

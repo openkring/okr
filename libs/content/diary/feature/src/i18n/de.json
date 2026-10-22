@@ -190,22 +190,12 @@
       "label": "Nur Bilder"
     }
   },
-  "period": {
-    "title": "Reisezeit",
-    "from": {
-      "label": "Reise von"
-    },
-    "to": {
-      "label": "Reise bis"
-    },
-    "helper": "Tagebuch-Übertragungen ohne eigenen Zeitraum gelten nur in dieser Zeit. Bleibt ein Datum leer, ist die Reisezeit an diesem Ende offen.",
-    "error": "Das Startdatum liegt nach dem Enddatum."
-  },
   "validation": {
     "authorMissing": "Wähle aus, wer den Eintrag schreibt.",
     "scopeInvalid": "Wähle einen gültigen Zeitraum aus.",
     "statusInvalid": "Wähle einen gültigen Status aus.",
-    "dateScopeMismatch": "Das Datum passt nicht zum gewählten Zeitraum."
+    "dateScopeMismatch": "Das Datum passt nicht zum gewählten Zeitraum.",
+    "dateRangeInvalid": "Das Startdatum liegt nach dem Enddatum."
   },
   "jass": {
     "draw": "Unentschieden – eine Revanche ist so gut wie abgemacht.",

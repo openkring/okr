@@ -1,4 +1,4 @@
-import { DiaryPeriod, DiarySource, DiaryTarget } from '@okr/shared-models';
+import { DiarySource, DiaryTarget } from '@okr/shared-models';
 
 /**
  * Which feature block must be effective in the source app for a source to be offered (spec 1.77
@@ -19,22 +19,19 @@ export function offeredDiarySources(effective: ReadonlySet<string>): DiarySource
 
 /**
  * The diary tenants that receive `source` for an item dated `date` (StoreDate) — spec 1.77 §6.1.
- * A target matches when it ticks `source` and `from <= date <= to`; an empty bound falls back to
- * that diary's published travel period, a still-empty bound is open. Bounds are inclusive.
+ * A target matches when it ticks `source` and `from <= date <= to`; an empty bound is open. Bounds are inclusive.
  * Order follows the stored targets; a tenant appears once.
  */
 export function resolveDiaryTargets(
   targets: DiaryTarget[] | undefined,
   source: DiarySource,
   date: string,
-  periods: Record<string, DiaryPeriod>,
 ): string[] {
   const out: string[] = [];
   for (const target of targets ?? []) {
     if (!target.tenantId || !(target.sources ?? []).includes(source)) continue;
-    const period = periods[target.tenantId];
-    const from = target.from || period?.travelFrom || '';
-    const to = target.to || period?.travelTo || '';
+    const from = target.from;
+    const to = target.to;
     if (from && date < from) continue;
     if (to && date > to) continue;
     if (!out.includes(target.tenantId)) out.push(target.tenantId);

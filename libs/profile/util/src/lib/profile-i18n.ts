@@ -71,7 +71,6 @@ export const PROFILE_I18N_KEYS = {
   diaryTransfer_description:       PFX + 'diaryTransfer.description',
   diaryTransfer_from:              PFX + 'diaryTransfer.from',
   diaryTransfer_to:                PFX + 'diaryTransfer.to',
-  diaryTransfer_travel:            PFX + 'diaryTransfer.travel',
   diaryTransfer_source_taskDone:   PFX + 'diaryTransfer.source.taskDone',
   diaryTransfer_source_jasstafel:  PFX + 'diaryTransfer.source.jasstafel',
   diaryTransfer_period_error:      PFX + 'diaryTransfer.period.error',

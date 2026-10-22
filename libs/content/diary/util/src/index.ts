@@ -14,7 +14,7 @@ export * from './lib/diary-jass.util';
 export * from './lib/diary-model-mapping';
 export * from './lib/diary-parse';
 export * from './lib/diary-range.util';
-export * from './lib/diary-period.validations';
+export * from './lib/diary-date-range.validations';
 export * from './lib/diary-reference.util';
 export * from './lib/diary-render';
 export * from './lib/diary-state.util';

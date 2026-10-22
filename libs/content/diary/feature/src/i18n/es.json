@@ -190,22 +190,12 @@
       "label": "Solo imágenes"
     }
   },
-  "period": {
-    "title": "Periodo de viaje",
-    "from": {
-      "label": "Viaje desde"
-    },
-    "to": {
-      "label": "Viaje hasta"
-    },
-    "helper": "Las transferencias al diario sin periodo propio solo se aplican durante este tiempo. Una fecha vacía deja el periodo abierto por ese lado.",
-    "error": "La fecha de inicio es posterior a la fecha de fin."
-  },
   "validation": {
     "authorMissing": "Elige quién escribe la entrada.",
     "scopeInvalid": "Elige un periodo válido.",
     "statusInvalid": "Elige un estado válido.",
-    "dateScopeMismatch": "La fecha no coincide con el periodo elegido."
+    "dateScopeMismatch": "La fecha no coincide con el periodo elegido.",
+    "dateRangeInvalid": "La fecha de inicio es posterior a la fecha de fin."
   },
   "jass": {
     "draw": "Empate – la revancha está prácticamente acordada.",

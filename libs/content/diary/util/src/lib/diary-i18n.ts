@@ -139,13 +139,6 @@ export const DIARY_I18N_KEYS = {
   jass_rout:              PFX + 'jass.rout',
   jass_schneider:         PFX + 'jass.schneider',
 
-  // ─── travel period of a diary app, admin-only (spec 1.77 D7) ───────────────
-  period_title:           PFX + 'period.title',
-  period_from_label:      PFX + 'period.from.label',
-  period_to_label:        PFX + 'period.to.label',
-  period_helper:          PFX + 'period.helper',
-  period_error:           PFX + 'period.error',
-
   ok:                     '@ok',
   cancel:                 '@cancel',
 } satisfies Record<string, string>;

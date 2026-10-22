@@ -23,8 +23,6 @@ export interface DiaryTenantInfo {
   tenantId: string;
   title: string;
   logoUrl: string;
-  travelFrom: string;
-  travelTo: string;
 }
 
 /**
