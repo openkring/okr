@@ -111,6 +111,7 @@ export * from './lib/tag.model';
 export * from './lib/task.model';
 export * from './lib/project.model';
 export * from './lib/transfer.model';
+export * from './lib/file-transfer.model';
 export * from './lib/trip.model';
 export * from './lib/journal.model';
 export * from './lib/journal-change.model';

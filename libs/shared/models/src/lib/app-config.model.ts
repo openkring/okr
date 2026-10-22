@@ -8,6 +8,7 @@ import { DEFAULT_EMAIL, DEFAULT_NAME, DEFAULT_TITLE, DEFAULT_URL } from "@okr/sh
 import { DEFAULT_DELIVERY_CHANNELS, DeliveryChannel } from "./enums/delivery-type.enum";
 import { AvailableLanguages } from "./enums/language.enum";
 import type { ProcessorEntry } from "./processor-entry.model";
+import type { FileTransferLimits } from "./file-transfer.model";
 
 export type PrivacyAccessor = 'admin' | 'privileged' | 'registered' | 'public';
 
@@ -159,6 +160,9 @@ export class AppConfig {
    * `effectiveFeatures()`, never with `?? []` at the call site.
    */
   public enabledFeatures?: string[];
+
+  /** Quick file-transfer limits (spec 1.115). Undefined on legacy docs — always coalesce. */
+  public fileTransferLimits?: FileTransferLimits;
 
   /**
    * Catalogue menu keys this tenant suppresses even though the owning block is ENABLED —
