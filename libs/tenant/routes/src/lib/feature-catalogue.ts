@@ -1597,8 +1597,55 @@ const contracts: BlockRoutes = {
   ],
 };
 
+/**
+ * `file-transfer` — Schnellübertragung von Dateien (spec 1.115).
+ *
+ * ORDER IN `FEATURE_ROUTES` IS LOAD-BEARING: this block is listed BEFORE `cms`. Its paths live
+ * under the shared `private` and `public` prefixes, where `cms` owns the catch-alls
+ * `private/:id`, `private/:id/:contextMenuName` and `public/:id/:contextMenuName` — listed after
+ * `cms`, `/private/file-transfer` would render `PageDispatcher` for a page called
+ * "file-transfer". Same precedent as `calevent`'s `public/calendar`. The router backtracks when
+ * none of these children match, so `/private/<anyPage>` still reaches `cms`.
+ *
+ * The paths are fixed by the server: notifications and the group-room card link to
+ * `/private/file-transfer/<transferKey>`, outside recipients get `/public/file-transfer/<token>`.
+ *
+ * - `private/file-transfer` — «Meine Transfers», any signed-in member (the callables refuse kiosk
+ *   users and enforce the limits; the list only ever shows the caller's own transfers).
+ * - `private/file-transfer-monitor` — Transfer-Überwachung, admins (the `file-transfers` rules
+ *   let only the sender or an admin read, so a softer guard would show an empty list).
+ * - `private/file-transfer/:transferKey` — one transfer, sender/recipient/admin; the callable
+ *   decides and answers «not found» to everybody else.
+ * - `public/file-transfer/:token` — the personal link: no role guard, no login. The feature gate
+ *   in front of it decides anonymous visitors on catalogue defaults alone (rollout docs are not
+ *   readable signed out), which is why the block is `ga`: a `beta` block would bounce every
+ *   outside recipient to the tenant's rootUrl.
+ */
+const fileTransfer: BlockRoutes = {
+  id: 'file-transfer',
+  routes: (): Route[] => [
+    {
+      path: 'private',
+      canActivate: [isAuthenticatedGuard],
+      children: [
+        { path: 'file-transfer', loadComponent: () => import('@okr/content-file-transfer-feature').then(m => m.FileTransferList) },
+        { path: 'file-transfer-monitor', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/content-file-transfer-feature').then(m => m.FileTransferMonitor) },
+        { path: 'file-transfer/:transferKey', loadComponent: () => import('@okr/content-file-transfer-feature').then(m => m.FileTransferViewPage) },
+      ],
+    },
+    {
+      path: 'public',
+      children: [{
+        path: 'file-transfer/:token',
+        loadComponent: () => import('@okr/content-file-transfer-feature').then(m => m.FileTransferPublicPage),
+        data: { showMenu: false },
+      }],
+    },
+  ],
+};
+
 export const FEATURE_ROUTES: BlockRoutes[] = [
-  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, memory, backgammon, klondike, jasstafel, tetris, mampf, wordle, chess,
+  calevent, fileTransfer, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, memory, backgammon, klondike, jasstafel, tetris, mampf, wordle, chess,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

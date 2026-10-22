@@ -117,5 +117,90 @@
     "openBelowTransfer": "Offene Transfers müssen mindestens so gross sein wie der grösste Transfer.",
     "defaultLifetime": "Die übliche Laufzeit darf nicht länger sein als die längste Laufzeit.",
     "overrideDuplicate": "Für diese Person gibt es schon eine Ausnahme."
+  },
+  "list": {
+    "title": "Meine Transfers",
+    "empty": "Du hast noch keine Transfers gesendet.",
+    "send": "Transfer senden",
+    "info": "So funktioniert ein Transfer",
+    "recipients": "{count} Empfänger",
+    "expires": "bis {date}",
+    "opens": "{count} geöffnet",
+    "downloads": "{count} heruntergeladen"
+  },
+  "state": {
+    "uploading": "wird hochgeladen",
+    "open": "offen",
+    "ended": "beendet",
+    "expired": "abgelaufen"
+  },
+  "actions": {
+    "title": "Transfer",
+    "open": "Öffnen",
+    "end": "Beenden",
+    "contact": "Absender kontaktieren",
+    "log": "Protokoll"
+  },
+  "end": {
+    "confirm": "Willst du diesen Transfer jetzt beenden? Die Dateien werden gelöscht und die Links funktionieren nicht mehr.",
+    "done": "Der Transfer ist beendet."
+  },
+  "upload": {
+    "title": "Dateien werden hochgeladen",
+    "progress": "Datei {index} von {count}: {name}",
+    "hint": "Lass die App offen, bis alle Dateien hochgeladen sind.",
+    "expired": "Das Hochladen hat zu lange gedauert. Bitte sende den Transfer noch einmal.",
+    "failed": "Das Hochladen hat nicht geklappt. Prüfe deine Verbindung und sende den Transfer noch einmal.",
+    "aborted": "Du hast das Hochladen abgebrochen. Der Transfer wurde nicht gesendet."
+  },
+  "sent": {
+    "done": "Der Transfer ist unterwegs zu {count} Empfängern."
+  },
+  "failure": {
+    "generic": "Das hat nicht geklappt. Bitte versuche es später noch einmal."
+  },
+  "request": {
+    "done": "Deine Anfrage ist bei den Verantwortlichen angekommen."
+  },
+  "view": {
+    "notFound": "Diesen Transfer gibt es nicht, oder er ist nicht für dich bestimmt."
+  },
+  "public": {
+    "notFound": "Diesen Link gibt es nicht. Prüfe, ob du ihn vollständig kopiert hast.",
+    "rateLimited": "Das waren zu viele Versuche. Warte bitte ein paar Minuten und versuche es dann noch einmal.",
+    "unavailable": "Der Transfer ist gerade nicht erreichbar. Bitte versuche es später noch einmal.",
+    "wrongPassword": "Das Passwort stimmt nicht.",
+    "passwordText": "Dieser Transfer ist mit einem Passwort geschützt. Du hast es von der Person bekommen, die ihn dir geschickt hat.",
+    "passwordPlaceholder": "Passwort eingeben"
+  },
+  "monitor": {
+    "title": "Transfer-Überwachung",
+    "empty": "Es gibt noch keine Transfers.",
+    "editLimits": "Limiten bearbeiten",
+    "members": "{count} Mitglieder",
+    "outside": "{count} extern",
+    "countsLater": "Zugriffe im Protokoll"
+  },
+  "flag": {
+    "manyExternals": "viele E-Mail-Adressen",
+    "nearLimit": "nahe am Limit",
+    "manyDownloads": "oft heruntergeladen"
+  },
+  "contact": {
+    "failed": "Der Chat konnte nicht geöffnet werden. Bitte versuche es später noch einmal."
+  },
+  "log": {
+    "title": "Protokoll",
+    "empty": "Noch keine Einträge.",
+    "sender": "Absender"
+  },
+  "event": {
+    "created": "erstellt",
+    "sent": "gesendet",
+    "opened": "geöffnet",
+    "downloaded": "heruntergeladen",
+    "ended": "beendet",
+    "expired": "abgelaufen",
+    "limitRequested": "höhere Limite beantragt"
   }
 }

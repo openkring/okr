@@ -3114,8 +3114,41 @@ const contracts: FeatureBlock = {
   ],
 };
 
+/**
+ * `libs/content/file-transfer/*` — Schnellübertragung von Dateien (spec 1.115): large files to
+ * groups, members and outside email addresses, with lifetime, limits and a permanent access log.
+ *
+ * `defaultAvailability: 'ga'` is forced by the public link page, not a rollout preference: the
+ * route feature gate decides an anonymous visitor on catalogue defaults alone, and a `beta`
+ * block is never offered without a readable rollout doc — every outside recipient would bounce
+ * to the tenant's rootUrl. A tenant still has to TICK the block (or carry a legacy config with
+ * no `enabledFeatures`) before anything shows.
+ *
+ * `dependsOn: ['subject']` — recipients are persons and groups (`MODEL_SELECTOR` person/group
+ * pickers in the send form). NOT `chat`: the group-room card is posted by the server, and the
+ * monitor's «Absender kontaktieren» lazy-loads the chat service only when used (same reasoning
+ * as `calevent` on `MatrixChatService`).
+ *
+ * Menu: «Transfer» for every registered member, «Transfer-Überwachung» for admins — both
+ * top-level rows (same shape as `alias-all`/`alias-spaces`); no context menu, the list's two
+ * header actions are buttons.
+ */
+const fileTransfer: FeatureBlock = {
+  id: 'file-transfer',
+  bundle: 'communication',
+  label: '@tenant/util.feature.file-transfer.label',
+  icon: 'send',
+  defaultAvailability: 'ga',
+  dependsOn: ['subject'],
+  collections: ['file-transfers', 'file-transfer-events'],
+  menu: [
+    { key: 'file-transfer', name: 'file-transfer', url: '/private/file-transfer', action: 'navigate', roleNeeded: 'registered', icon: 'send', label: '@item.file-transfer' },
+    { key: 'file-transfer-monitor', name: 'file-transfer-monitor', url: '/private/file-transfer-monitor', action: 'navigate', roleNeeded: 'admin', icon: 'shield', label: '@item.file-transfer-monitor' },
+  ],
+};
+
 export const FEATURE_BLOCKS: FeatureBlock[] = [
-  calevent, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, memory, backgammon, klondike, jasstafel, tetris, mampf, wordle, chess,
+  calevent, fileTransfer, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, memory, backgammon, klondike, jasstafel, tetris, mampf, wordle, chess,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

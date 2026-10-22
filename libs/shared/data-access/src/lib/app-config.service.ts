@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { FirestoreService } from '@okr/shared-data-access';
-import { AppConfig, AppConfigCollection, DiaryPeriod } from '@okr/shared-models';
+import { AppConfig, AppConfigCollection, DiaryPeriod, FileTransferLimits } from '@okr/shared-models';
 import { I18nService } from "@okr/shared-i18n";
 
 import { PFX } from "./scope";
@@ -97,6 +97,19 @@ export class AppConfigService {
   public async setTravelPeriod(tenantId: string, period: DiaryPeriod): Promise<string | undefined> {
     return await this.firestoreService.updateObject<Partial<AppConfig>>(
       AppConfigCollection, tenantId, { travelFrom: period.travelFrom, travelTo: period.travelTo }, false, this.i18n.update_conf());
+  }
+
+  /**
+   * Patch the quick file-transfer limits only (spec 1.115 §4.4); same single-field pattern as
+   * {@link setTaskSettings}. The whole `fileTransferLimits` map is replaced, overrides included.
+   * The server re-reads these limits on every prepare/send, so nothing else needs to change.
+   *
+   * @param tenantId the tenant whose config to patch — the doc id IS the tenantId
+   * @param limits the complete limits (sizes in bytes)
+   */
+  public async setFileTransferLimits(tenantId: string, limits: FileTransferLimits): Promise<string | undefined> {
+    return await this.firestoreService.updateObject<Partial<AppConfig>>(
+      AppConfigCollection, tenantId, { fileTransferLimits: limits }, false, this.i18n.update_conf());
   }
 
   /**

@@ -1,4 +1,5 @@
 export * from './lib/file-transfer-api';
+export * from './lib/file-transfer-events';
 export * from './lib/file-transfer-flags';
 export * from './lib/file-transfer-format';
 export * from './lib/file-transfer-i18n';

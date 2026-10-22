@@ -117,5 +117,90 @@
     "openBelowTransfer": "Open transfers must be at least as large as the largest transfer.",
     "defaultLifetime": "The usual duration may not be longer than the longest duration.",
     "overrideDuplicate": "This person already has an exception."
+  },
+  "list": {
+    "title": "My transfers",
+    "empty": "You haven't sent any transfers yet.",
+    "send": "Send transfer",
+    "info": "How a transfer works",
+    "recipients": "{count} recipients",
+    "expires": "until {date}",
+    "opens": "{count} opened",
+    "downloads": "{count} downloaded"
+  },
+  "state": {
+    "uploading": "uploading",
+    "open": "open",
+    "ended": "ended",
+    "expired": "expired"
+  },
+  "actions": {
+    "title": "Transfer",
+    "open": "Open",
+    "end": "End",
+    "contact": "Contact sender",
+    "log": "Log"
+  },
+  "end": {
+    "confirm": "Do you want to end this transfer now? The files will be deleted and the links will stop working.",
+    "done": "The transfer has ended."
+  },
+  "upload": {
+    "title": "Uploading files",
+    "progress": "File {index} of {count}: {name}",
+    "hint": "Keep the app open until all files are uploaded.",
+    "expired": "The upload took too long. Please send the transfer again.",
+    "failed": "The upload didn't work. Check your connection and send the transfer again.",
+    "aborted": "You cancelled the upload. The transfer was not sent."
+  },
+  "sent": {
+    "done": "The transfer is on its way to {count} recipients."
+  },
+  "failure": {
+    "generic": "That didn't work. Please try again later."
+  },
+  "request": {
+    "done": "Your request has reached the people in charge."
+  },
+  "view": {
+    "notFound": "This transfer doesn't exist, or it isn't meant for you."
+  },
+  "public": {
+    "notFound": "This link doesn't exist. Check that you copied all of it.",
+    "rateLimited": "That was too many attempts. Please wait a few minutes and then try again.",
+    "unavailable": "The transfer can't be reached right now. Please try again later.",
+    "wrongPassword": "The password is not correct.",
+    "passwordText": "This transfer is protected by a password. You got it from the person who sent it to you.",
+    "passwordPlaceholder": "Enter password"
+  },
+  "monitor": {
+    "title": "Transfer monitoring",
+    "empty": "There are no transfers yet.",
+    "editLimits": "Edit limits",
+    "members": "{count} members",
+    "outside": "{count} outside",
+    "countsLater": "Access in the log"
+  },
+  "flag": {
+    "manyExternals": "many email addresses",
+    "nearLimit": "close to the limit",
+    "manyDownloads": "downloaded often"
+  },
+  "contact": {
+    "failed": "The chat couldn't be opened. Please try again later."
+  },
+  "log": {
+    "title": "Log",
+    "empty": "No entries yet.",
+    "sender": "Sender"
+  },
+  "event": {
+    "created": "created",
+    "sent": "sent",
+    "opened": "opened",
+    "downloaded": "downloaded",
+    "ended": "ended",
+    "expired": "expired",
+    "limitRequested": "higher limit requested"
   }
 }

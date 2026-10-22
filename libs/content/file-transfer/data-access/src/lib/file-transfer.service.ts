@@ -121,6 +121,32 @@ export class FileTransferService {
       .pipe(map(list => [...list].sort(byDesc<FileTransferEventModel>('at'))));
   }
 
+  /**
+   * Every access-log event of the sender's own transfers, in ONE listener (the list's open/download
+   * counts). Rules admit it because the query pins `senderKey` to the caller's own personKey.
+   */
+  public listEventsOfSender(senderKey: string): Observable<FileTransferEventModel[]> {
+    const query: DbQuery[] = [
+      { key: 'tenants', operator: 'array-contains', value: this.tenantId },
+      { key: 'senderKey', operator: '==', value: senderKey },
+    ];
+    return this.firestoreService.searchData<FileTransferEventModel>(FileTransferEventCollection, query, 'none');
+  }
+
+  /**
+   * One-shot read of one transfer's log (admin monitor: loaded per row on demand instead of one
+   * listener per row). Throws on a denied/failed read rather than returning an empty log.
+   */
+  public async getEvents(transferKey: string, senderKey?: string): Promise<FileTransferEventModel[]> {
+    const query: DbQuery[] = [
+      { key: 'tenants', operator: 'array-contains', value: this.tenantId },
+      { key: 'transferKey', operator: '==', value: transferKey },
+    ];
+    if (senderKey) query.push({ key: 'senderKey', operator: '==', value: senderKey });
+    const list = await this.firestoreService.getDataOnceStrict<FileTransferEventModel>(FileTransferEventCollection, query, 'none');
+    return [...list].sort(byDesc<FileTransferEventModel>('at'));
+  }
+
   /*-------------------------- public link API (no auth) --------------------------------*/
   public async publicView(token: string): Promise<FileTransferView> {
     const res = await this.publicFetch(`${this.publicBase}/${encodeURIComponent(token)}`, { method: 'GET' });

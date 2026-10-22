@@ -247,6 +247,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/content/file-transfer/util/src/i18n",
+            "output": "./assets/i18n/content/file-transfer/util"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/content/folder/data-access/src/i18n",
             "output": "./assets/i18n/content/folder/data-access"
           },

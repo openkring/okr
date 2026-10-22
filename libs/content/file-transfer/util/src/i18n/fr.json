@@ -117,5 +117,90 @@
     "openBelowTransfer": "Les transferts ouverts doivent être au moins aussi grands que le plus grand transfert.",
     "defaultLifetime": "La durée habituelle ne peut pas dépasser la durée la plus longue.",
     "overrideDuplicate": "Cette personne a déjà une exception."
+  },
+  "list": {
+    "title": "Mes transferts",
+    "empty": "Tu n'as pas encore envoyé de transfert.",
+    "send": "Envoyer un transfert",
+    "info": "Comment fonctionne un transfert",
+    "recipients": "{count} destinataires",
+    "expires": "jusqu'au {date}",
+    "opens": "{count} ouvert(s)",
+    "downloads": "{count} téléchargé(s)"
+  },
+  "state": {
+    "uploading": "en cours de chargement",
+    "open": "ouvert",
+    "ended": "terminé",
+    "expired": "expiré"
+  },
+  "actions": {
+    "title": "Transfert",
+    "open": "Ouvrir",
+    "end": "Terminer",
+    "contact": "Contacter l'expéditeur",
+    "log": "Journal"
+  },
+  "end": {
+    "confirm": "Veux-tu terminer ce transfert maintenant ? Les fichiers seront supprimés et les liens ne fonctionneront plus.",
+    "done": "Le transfert est terminé."
+  },
+  "upload": {
+    "title": "Chargement des fichiers",
+    "progress": "Fichier {index} sur {count} : {name}",
+    "hint": "Laisse l'app ouverte jusqu'à ce que tous les fichiers soient chargés.",
+    "expired": "Le chargement a pris trop de temps. Envoie le transfert encore une fois, s'il te plaît.",
+    "failed": "Le chargement n'a pas fonctionné. Vérifie ta connexion et envoie le transfert encore une fois.",
+    "aborted": "Tu as interrompu le chargement. Le transfert n'a pas été envoyé."
+  },
+  "sent": {
+    "done": "Le transfert est en route vers {count} destinataires."
+  },
+  "failure": {
+    "generic": "Cela n'a pas fonctionné. Réessaie plus tard, s'il te plaît."
+  },
+  "request": {
+    "done": "Ta demande est arrivée chez les responsables."
+  },
+  "view": {
+    "notFound": "Ce transfert n'existe pas ou ne t'est pas destiné."
+  },
+  "public": {
+    "notFound": "Ce lien n'existe pas. Vérifie que tu l'as copié en entier.",
+    "rateLimited": "Il y a eu trop d'essais. Attends quelques minutes, puis réessaie.",
+    "unavailable": "Le transfert n'est pas accessible pour le moment. Réessaie plus tard, s'il te plaît.",
+    "wrongPassword": "Le mot de passe n'est pas correct.",
+    "passwordText": "Ce transfert est protégé par un mot de passe. Tu l'as reçu de la personne qui te l'a envoyé.",
+    "passwordPlaceholder": "Saisis le mot de passe"
+  },
+  "monitor": {
+    "title": "Surveillance des transferts",
+    "empty": "Il n'y a pas encore de transferts.",
+    "editLimits": "Modifier les limites",
+    "members": "{count} membres",
+    "outside": "{count} externes",
+    "countsLater": "Accès dans le journal"
+  },
+  "flag": {
+    "manyExternals": "beaucoup d'adresses e-mail",
+    "nearLimit": "proche de la limite",
+    "manyDownloads": "souvent téléchargé"
+  },
+  "contact": {
+    "failed": "Le chat n'a pas pu être ouvert. Réessaie plus tard, s'il te plaît."
+  },
+  "log": {
+    "title": "Journal",
+    "empty": "Pas encore d'entrées.",
+    "sender": "Expéditeur"
+  },
+  "event": {
+    "created": "créé",
+    "sent": "envoyé",
+    "opened": "ouvert",
+    "downloaded": "téléchargé",
+    "ended": "terminé",
+    "expired": "expiré",
+    "limitRequested": "limite plus élevée demandée"
   }
 }

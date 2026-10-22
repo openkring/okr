@@ -117,5 +117,90 @@
     "openBelowTransfer": "Las transferencias abiertas deben ser al menos tan grandes como la transferencia más grande.",
     "defaultLifetime": "La duración habitual no puede ser más larga que la duración más larga.",
     "overrideDuplicate": "Esta persona ya tiene una excepción."
+  },
+  "list": {
+    "title": "Mis transferencias",
+    "empty": "Todavía no has enviado ninguna transferencia.",
+    "send": "Enviar transferencia",
+    "info": "Cómo funciona una transferencia",
+    "recipients": "{count} destinatarios",
+    "expires": "hasta el {date}",
+    "opens": "{count} abiertas",
+    "downloads": "{count} descargadas"
+  },
+  "state": {
+    "uploading": "subiendo",
+    "open": "abierta",
+    "ended": "terminada",
+    "expired": "caducada"
+  },
+  "actions": {
+    "title": "Transferencia",
+    "open": "Abrir",
+    "end": "Terminar",
+    "contact": "Contactar al remitente",
+    "log": "Registro"
+  },
+  "end": {
+    "confirm": "¿Quieres terminar esta transferencia ahora? Los archivos se borrarán y los enlaces dejarán de funcionar.",
+    "done": "La transferencia ha terminado."
+  },
+  "upload": {
+    "title": "Subiendo archivos",
+    "progress": "Archivo {index} de {count}: {name}",
+    "hint": "Deja la app abierta hasta que se hayan subido todos los archivos.",
+    "expired": "La subida ha tardado demasiado. Por favor, envía la transferencia otra vez.",
+    "failed": "La subida no ha funcionado. Comprueba tu conexión y envía la transferencia otra vez.",
+    "aborted": "Has cancelado la subida. La transferencia no se ha enviado."
+  },
+  "sent": {
+    "done": "La transferencia va de camino a {count} destinatarios."
+  },
+  "failure": {
+    "generic": "No ha funcionado. Por favor, inténtalo más tarde."
+  },
+  "request": {
+    "done": "Tu solicitud ha llegado a los responsables."
+  },
+  "view": {
+    "notFound": "Esta transferencia no existe o no es para ti."
+  },
+  "public": {
+    "notFound": "Este enlace no existe. Comprueba que lo has copiado entero.",
+    "rateLimited": "Han sido demasiados intentos. Espera unos minutos y vuelve a intentarlo.",
+    "unavailable": "La transferencia no está disponible ahora mismo. Por favor, inténtalo más tarde.",
+    "wrongPassword": "La contraseña no es correcta.",
+    "passwordText": "Esta transferencia está protegida con una contraseña. Te la ha dado la persona que te la ha enviado.",
+    "passwordPlaceholder": "Introduce la contraseña"
+  },
+  "monitor": {
+    "title": "Supervisión de transferencias",
+    "empty": "Todavía no hay transferencias.",
+    "editLimits": "Editar límites",
+    "members": "{count} miembros",
+    "outside": "{count} externos",
+    "countsLater": "Accesos en el registro"
+  },
+  "flag": {
+    "manyExternals": "muchas direcciones de correo",
+    "nearLimit": "cerca del límite",
+    "manyDownloads": "descargada a menudo"
+  },
+  "contact": {
+    "failed": "No se ha podido abrir el chat. Por favor, inténtalo más tarde."
+  },
+  "log": {
+    "title": "Registro",
+    "empty": "Todavía no hay entradas.",
+    "sender": "Remitente"
+  },
+  "event": {
+    "created": "creada",
+    "sent": "enviada",
+    "opened": "abierta",
+    "downloaded": "descargada",
+    "ended": "terminada",
+    "expired": "caducada",
+    "limitRequested": "límite más alto solicitado"
   }
 }

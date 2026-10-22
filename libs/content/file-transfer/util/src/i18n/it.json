@@ -117,5 +117,90 @@
     "openBelowTransfer": "I trasferimenti aperti devono essere grandi almeno quanto il trasferimento più grande.",
     "defaultLifetime": "La durata abituale non può essere più lunga della durata più lunga.",
     "overrideDuplicate": "Questa persona ha già un'eccezione."
+  },
+  "list": {
+    "title": "I miei trasferimenti",
+    "empty": "Non hai ancora inviato nessun trasferimento.",
+    "send": "Invia trasferimento",
+    "info": "Come funziona un trasferimento",
+    "recipients": "{count} destinatari",
+    "expires": "fino al {date}",
+    "opens": "{count} aperti",
+    "downloads": "{count} scaricati"
+  },
+  "state": {
+    "uploading": "in caricamento",
+    "open": "aperto",
+    "ended": "terminato",
+    "expired": "scaduto"
+  },
+  "actions": {
+    "title": "Trasferimento",
+    "open": "Apri",
+    "end": "Termina",
+    "contact": "Contatta il mittente",
+    "log": "Registro"
+  },
+  "end": {
+    "confirm": "Vuoi terminare ora questo trasferimento? I file verranno eliminati e i link non funzioneranno più.",
+    "done": "Il trasferimento è terminato."
+  },
+  "upload": {
+    "title": "Caricamento dei file",
+    "progress": "File {index} di {count}: {name}",
+    "hint": "Lascia l'app aperta finché tutti i file sono caricati.",
+    "expired": "Il caricamento ha richiesto troppo tempo. Invia di nuovo il trasferimento, per favore.",
+    "failed": "Il caricamento non è riuscito. Controlla la connessione e invia di nuovo il trasferimento.",
+    "aborted": "Hai interrotto il caricamento. Il trasferimento non è stato inviato."
+  },
+  "sent": {
+    "done": "Il trasferimento è in viaggio verso {count} destinatari."
+  },
+  "failure": {
+    "generic": "Non ha funzionato. Riprova più tardi, per favore."
+  },
+  "request": {
+    "done": "La tua richiesta è arrivata ai responsabili."
+  },
+  "view": {
+    "notFound": "Questo trasferimento non esiste o non è destinato a te."
+  },
+  "public": {
+    "notFound": "Questo link non esiste. Controlla di averlo copiato per intero.",
+    "rateLimited": "Ci sono stati troppi tentativi. Aspetta qualche minuto e poi riprova.",
+    "unavailable": "Il trasferimento non è raggiungibile in questo momento. Riprova più tardi, per favore.",
+    "wrongPassword": "La password non è corretta.",
+    "passwordText": "Questo trasferimento è protetto da una password. L'hai ricevuta dalla persona che te l'ha inviato.",
+    "passwordPlaceholder": "Inserisci la password"
+  },
+  "monitor": {
+    "title": "Monitoraggio dei trasferimenti",
+    "empty": "Non ci sono ancora trasferimenti.",
+    "editLimits": "Modifica limiti",
+    "members": "{count} membri",
+    "outside": "{count} esterni",
+    "countsLater": "Accessi nel registro"
+  },
+  "flag": {
+    "manyExternals": "molti indirizzi e-mail",
+    "nearLimit": "vicino al limite",
+    "manyDownloads": "scaricato spesso"
+  },
+  "contact": {
+    "failed": "Non è stato possibile aprire la chat. Riprova più tardi, per favore."
+  },
+  "log": {
+    "title": "Registro",
+    "empty": "Ancora nessuna voce.",
+    "sender": "Mittente"
+  },
+  "event": {
+    "created": "creato",
+    "sent": "inviato",
+    "opened": "aperto",
+    "downloaded": "scaricato",
+    "ended": "terminato",
+    "expired": "scaduto",
+    "limitRequested": "limite più alto richiesto"
   }
 }

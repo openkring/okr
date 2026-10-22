@@ -188,6 +188,9 @@
     },
     "contracts": {
       "label": "Contrats"
+    },
+    "file-transfer": {
+      "label": "Transfert de fichiers"
     }
   },
   "picker": {
