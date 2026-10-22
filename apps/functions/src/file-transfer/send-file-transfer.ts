@@ -1,4 +1,4 @@
-import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
@@ -6,25 +6,25 @@ import {
   AppConfig, AppConfigCollection, DeliveryChannel, FileTransferCollection, FileTransferEventCollection, FileTransferEventModel, FileTransferModel,
   FileTransferRecipient, UserModel,
 } from '@okr/shared-models';
-import { convertDateFormatToString, DateFormat, getTodayStr, isKioskOnly } from '@okr/shared-util-core';
+import { isKioskOnly } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, getCallerTenantId } from '@okr/shared-util-functions';
 import {
-  buildRecipients, checkFileTransferRequest, openBytes, resolveFileTransferLimits, SendFileTransferRequest, SendFileTransferResponse,
+  checkFileTransferRequest, openBytes, resolveFileTransferLimits, SendFileTransferRequest, SendFileTransferResponse,
 } from '@okr/content-file-transfer-util';
 
 import { privateBucket } from '../_storage/private-bucket';
-import { assertMayMint, assertTargetAcceptable, mintAlias } from '../alias/mint-alias';
-import { appBaseUrl, shortUrl } from '../alias/tenant-domains';
+import { appBaseUrl } from '../alias/tenant-domains';
 import { getAppEmailConfig } from '../auth/email-templates';
 import { DEFAULT_EMAIL_PROVIDER, sendEmailViaProvider } from '../auth/email-transport';
 import {
-  activeGroupMemberKeys, getJoinedMemberIds, getRoomTenants, matrixAdminToken, resolveGroupRoom, resolvePersonDisplayName, roomAdmitsTenant,
-  serverHostname,
+  activeGroupMemberKeys, getJoinedMemberIds, matrixAdminToken, resolveGroupRoom, resolvePersonDisplayName, serverHostname,
 } from '../matrix-simple/shared';
 import { pushToPersons } from '../srv/push';
 import { createFirestoreDeps } from '../workflow/firestore-deps';
 import { matrixBotToken, postGroupChatMessage } from '../workflow/matrix-bot';
-import { ensureFileTransferAliasSpace, fileTransferCardContent, fileTransferEmail } from './file-transfer-notify';
+import {
+  fileTransferCardContent, fileTransferEmail, mayPostCard, PersonCandidate, planNotifications, recipientsForSend,
+} from './file-transfer-notify';
 import { hashPassword, hashToken, newToken } from './file-transfer-tokens';
 
 const CF_NAME = 'sendFileTransfer';
@@ -34,7 +34,7 @@ const MAX_PERSONS = 1000;
 const MAX_EMAILS = 100;          // the tenant limit (maxExternalRecipients) is checked separately
 const MAX_MESSAGE = 2000;
 const MAX_PASSWORD = 200;
-/** Parallel alias mints / person lookups — bounded so a big group does not fan out unbounded. */
+/** Parallel person lookups and mails — bounded so a big group does not fan out unbounded. */
 const CONCURRENCY = 16;
 
 /** Same list the workflow outbox binds: every provider's credentials, the tenant picks one. */
@@ -95,25 +95,36 @@ function matrixUserId(personKey: string): string {
   return `@${personKey.toLowerCase()}:${serverHostname()}`;
 }
 
-interface PersonCandidate { personKey: string; name: string; email: string; viaGroupKey?: string; channels: DeliveryChannel[] }
+/** A room that may receive the card: a recipient group's room or the group room the send started in. */
+interface CardTarget { groupKey: string; postPolicy: string | undefined; roomId?: string }
+
+/** Personal link — the direct token url; it exists only in the notification (see file-transfer-notify.ts). */
+function personalLink(baseUrl: string, token: string): string {
+  return `${baseUrl}/public/file-transfer/${token}`;
+}
 
 /**
  * Quick file transfer, step 2 (spec 1.115 §4.1/§4.2): checks the uploads, resolves the recipients
- * (group members snapshotted now), re-checks the limits with the REAL recipient counts, mints one
- * personal link per recipient, opens the transfer and notifies.
+ * (group members snapshotted now), re-checks the limits with the REAL recipient counts, creates one
+ * personal token per recipient (only its hash is stored), opens the transfer and notifies.
+ *
+ * Recipient groups: ANY group of the tenant may be chosen — the user decided that every registered
+ * user may send to groups; the limits (§4.4) and the admin monitoring view (§4.6) cover abuse. What
+ * is restricted is the CARD in a group's room: it is posted only where the sender could post
+ * themself (`mayPostCard`); otherwise that group's members get personal notifications.
  *
  * Notification is best-effort and happens after the commit: a failing mail provider or homeserver
- * must not leave the transfer stuck in 'uploading' after its links were minted.
+ * must not leave the transfer stuck in 'uploading'.
  */
-export const sendFileTransfer = onCall(
+export const sendFileTransfer = onCall<unknown, Promise<SendFileTransferResponse>>(
   {
     region: 'europe-west6', enforceAppCheck: true, cors: true, timeoutSeconds: 300,
     secrets: [...EMAIL_SECRETS, matrixAdminToken, matrixBotToken],
   },
-  async (request: CallableRequest<unknown>): Promise<SendFileTransferResponse> => {
-    checkAppCheckToken(request as never, CF_NAME);
-    checkAuthentication(request as never, CF_NAME);
-    const tenantId = await getCallerTenantId(request as never, CF_NAME);
+  async (request) => {
+    checkAppCheckToken(request, CF_NAME);
+    checkAuthentication(request, CF_NAME);
+    const tenantId = await getCallerTenantId(request, CF_NAME);
     const uid = request.auth?.uid ?? '';
     const req = parseRequest(request.data);
     const db = getFirestore();
@@ -152,41 +163,39 @@ export const sendFileTransfer = onCall(
     }));
     const files = transfer.files.map(f => ({ ...f, uploaded: true }));
 
-    // ── chat room chosen by the sender: must be a room of this tenant the sender is IN ───
-    // Otherwise any user could make the bot post into any room of the homeserver.
-    const adminToken = req.chatRoomId || req.groupKeys.length > 0 ? matrixAdminToken.value() : '';
-    let chatRoomMembers = new Set<string>();
-    if (req.chatRoomId) {
-      try {
-        const [roomTenants, members] = await Promise.all([getRoomTenants(req.chatRoomId, adminToken), getJoinedMemberIds(req.chatRoomId, adminToken)]);
-        if (!roomAdmitsTenant(roomTenants, [tenantId]) || !members.has(matrixUserId(personKey))) throw new Error('not admitted');
-        chatRoomMembers = members;
-      } catch (error) {
-        logger.warn(`${CF_NAME}: chat room refused for ${req.transferKey}`, { error: String(error) });
-        throw new HttpsError('not-found', 'Room not found.');
-      }
-    }
-
-    // ── recipients ────────────────────────────────────────────────────────────────────────
+    // ── groups (any group of the tenant, see above) ───────────────────────────────────────
     const groupDocs = await Promise.all(req.groupKeys.map(async groupKey => {
       const g = (await db.collection('groups').doc(groupKey).get()).data();
       if (!g || g['isArchived'] === true || !((g['tenants'] as string[] | undefined) ?? []).includes(tenantId)) throw invalid('groupKeys');
-      return { groupKey, hasChat: g['hasChat'] !== false, members: await activeGroupMemberKeys(groupKey) };
+      return { groupKey, hasChat: g['hasChat'] !== false, postPolicy: g['postPolicy'] as string | undefined, members: await activeGroupMemberKeys(groupKey) };
     }));
+
+    // The room the send started in counts only if it is a GROUP room of this tenant (never a DM
+    // or an ad-hoc room the bot would otherwise be joined into); else it is ignored.
+    let chatRoomGroup: CardTarget | undefined;
+    if (req.chatRoomId) {
+      const found = await db.collection('groups').where('matrixRoomId', '==', req.chatRoomId).get();
+      const g = found.docs.find(d => d.data()['isArchived'] !== true && d.data()['hasChat'] !== false
+        && ((d.data()['tenants'] as string[] | undefined) ?? []).includes(tenantId));
+      if (g) chatRoomGroup = { groupKey: g.id, postPolicy: g.data()['postPolicy'] as string | undefined, roomId: req.chatRoomId };
+      else logger.info(`${CF_NAME}: chatRoomId of ${req.transferKey} is not a group room of ${tenantId} — ignored`);
+    }
+
+    // ── recipients ────────────────────────────────────────────────────────────────────────
     const wanted: { personKey: string; viaGroupKey?: string }[] = [
       ...req.personKeys.map(k => ({ personKey: k })),
       ...groupDocs.flatMap(g => g.members.map(k => ({ personKey: k, viaGroupKey: g.groupKey }))),
     ].filter(w => w.personKey !== personKey);   // the sender does not notify themself
 
-    // One lookup per distinct person: tenant check, name, channels, email (only if mailed).
+    // One lookup per distinct person: tenant check, name, channels and email. The email is
+    // resolved whatever the channel — it dedupes an outside address equal to the member's.
     const deps = createFirestoreDeps();
     const distinct = [...new Set(wanted.map(w => w.personKey))];
     const looked = await mapBounded(distinct, async key => {
       const p = (await db.collection('persons').doc(key).get()).data();
       if (!p || p['isArchived'] === true || !((p['tenants'] as string[] | undefined) ?? []).includes(tenantId)) return undefined;
-      const channels = await deps.deliveryChannelsFor(key, tenantId, 'news');
-      const email = channels.includes(DeliveryChannel.Email) ? await deps.emailFor(key, tenantId) : '';
-      const name = [p['firstName'], p['lastName']].filter(Boolean).join(' ').trim() || String(p['name'] ?? '');
+      const [channels, email] = await Promise.all([deps.deliveryChannelsFor(key, tenantId, 'news'), deps.emailFor(key, tenantId)]);
+      const name = [p['firstName'], p['lastName']].filter(Boolean).join(' ').trim();
       return { personKey: key, name, email, channels };
     });
     const byKey = new Map(looked.filter((p): p is Omit<PersonCandidate, 'viaGroupKey'> => !!p).map(p => [p.personKey, p]));
@@ -196,7 +205,7 @@ export const sendFileTransfer = onCall(
       const p = byKey.get(w.personKey);
       return p ? [{ ...p, viaGroupKey: w.viaGroupKey }] : [];
     });
-    const built = buildRecipients({ persons, emails: req.emails });
+    const built = recipientsForSend(persons, req.emails);
 
     // ── limits, re-checked with the real counts (the client's recipientCount is not trusted) ──
     const config = (await db.collection(AppConfigCollection).doc(tenantId).get()).data() as Partial<AppConfig> | undefined;
@@ -217,34 +226,20 @@ export const sendFileTransfer = onCall(
     }, limits, otherOpen);
     if (rejection) throw new HttpsError('failed-precondition', rejection);
 
-    // ── personal links: token (only its hash is stored) → alias → /public/file-transfer/<token> ──
-    const space = await ensureFileTransferAliasSpace(db, tenantId);
-    assertMayMint(space, (user.roles ?? {}) as Record<string, boolean>);
+    // ── personal tokens: kept in memory for the notifications, only the hash is stored ────
     const baseUrl = await appBaseUrl(tenantId);
-    const now = new Date();
-    const validUntil = convertDateFormatToString(transfer.expiresAt.slice(0, 10), DateFormat.IsoDate, DateFormat.StoreDate, false);
-    const mintedAt = getTodayStr(DateFormat.StoreDateTime);
-    const recipients: FileTransferRecipient[] = await mapBounded(built, async (r, i) => {
+    const tokens = new Map<string, string>();
+    const recipients: FileTransferRecipient[] = built.map(r => {
       const token = newToken();
-      const targetUrl = `${baseUrl}/public/file-transfer/${token}`;
-      assertTargetAcceptable(space, 'url', targetUrl, '');
-      const minted = await mintAlias(db, {
-        tenantId, space, targetType: 'url', targetUrl, targetKey: '',
-        // no recipient name/email here: the alias doc is readable tenant-wide
-        original: `file-transfer/${req.transferKey}/${i}`,
-        notes: '',
-        createdBy: `person.${personKey}`,
-        now: mintedAt,
-        validUntil,
-      });
-      return { ...r, tokenHash: hashToken(token), aliasUrl: shortUrl(baseUrl, space.name, minted.alias) };
+      tokens.set(r.id, token);
+      return { ...r, tokenHash: hashToken(token), aliasUrl: '' };
     });
 
     transfer.senderName = (await resolvePersonDisplayName(personKey)) ?? '';
     transfer.message = req.message;
     transfer.files = files;
     transfer.groupKeys = req.groupKeys;
-    transfer.chatRoomId = req.chatRoomId;
+    transfer.chatRoomId = chatRoomGroup ? req.chatRoomId : '';
     transfer.recipients = recipients;
     transfer.recipientPersonKeys = recipients.filter(r => r.kind === 'person').map(r => r.personKey);
     transfer.tokenHashes = recipients.map(r => r.tokenHash);
@@ -252,6 +247,7 @@ export const sendFileTransfer = onCall(
     transfer.state = 'open';
 
     // ── commit: only one send wins (state re-checked inside the transaction) ──────────────
+    const now = new Date();
     await db.runTransaction(async tx => {
       const fresh = await tx.get(ref);
       if (fresh.data()?.['state'] !== 'uploading') throw new HttpsError('failed-precondition', 'notUploading');
@@ -273,8 +269,14 @@ export const sendFileTransfer = onCall(
     });
 
     // ── notify (best effort) ──────────────────────────────────────────────────────────────
-    const covered = await postCards(transfer, req, groupDocs, chatRoomMembers, baseUrl, adminToken);
-    const notified = await notifyRecipients(transfer, recipients, byKey, covered, tenantId);
+    const targets: CardTarget[] = [
+      ...(chatRoomGroup ? [chatRoomGroup] : []),
+      ...groupDocs.filter(g => g.hasChat).map(g => ({ groupKey: g.groupKey, postPolicy: g.postPolicy })),
+    ];
+    const covered = targets.length > 0
+      ? await postCards(transfer, targets, personKey, user.roles ?? {}, baseUrl)
+      : new Set<string>();
+    const notified = await notifyRecipients(transfer, recipients, tokens, byKey, covered, tenantId, baseUrl);
 
     logger.info(`${CF_NAME}: sent ${req.transferKey} (tenant ${tenantId})`, { recipients: recipients.length, notified });
     return { recipients: recipients.length, notified };
@@ -282,96 +284,86 @@ export const sendFileTransfer = onCall(
 );
 
 /**
- * One card per room: the sender's chat room (if any) and every recipient group's room. Returns
- * the person keys a successfully posted card reaches — their chat channel is served by the card,
- * so they get no extra push (spec §4.2: «instead of one message per member»).
+ * One card per room, only where `mayPostCard` allows it. Returns the person keys a posted card
+ * reaches (the room's joined members) — their chat channel is served by the card, so they get no
+ * extra push (spec §4.2: «instead of one message per member»). A refused or failed card leaves
+ * the group's members to the personal notifications.
  */
 async function postCards(
   transfer: FileTransferModel,
-  req: SendFileTransferRequest,
-  groups: { groupKey: string; hasChat: boolean; members: string[] }[],
-  chatRoomMembers: Set<string>,
+  targets: CardTarget[],
+  senderKey: string,
+  senderRoles: Record<string, boolean>,
   baseUrl: string,
-  adminToken: string,
 ): Promise<Set<string>> {
+  const adminToken = matrixAdminToken.value();
   const covered = new Set<string>();
-  const card = fileTransferCardContent(transfer, `${baseUrl}/private/file-transfer/${transfer.okey}`);
-  const { body, ...extra } = card;
-  const posted = new Set<string>();
+  const { body, ...extra } = fileTransferCardContent(transfer, `${baseUrl}/private/file-transfer/${transfer.okey}`);
+  const done = new Set<string>();
 
-  const post = async (roomId: string): Promise<boolean> => {
-    if (posted.has(roomId)) return true;
+  for (const target of targets) {
     try {
+      const roomId = target.roomId ?? await resolveGroupRoom(target.groupKey, serverHostname(), adminToken);
+      if (!roomId || done.has(roomId)) continue;
+      done.add(roomId);
+      const joined = await getJoinedMemberIds(roomId, adminToken);
+      if (!mayPostCard({ senderJoined: joined.has(matrixUserId(senderKey)), postPolicy: target.postPolicy, senderRoles })) {
+        logger.info(`${CF_NAME}: no card for ${transfer.okey} in the room of ${target.groupKey} (sender may not post there)`);
+        continue;
+      }
       // txnId per (transfer, room): a retried call is deduplicated by Synapse
       await postGroupChatMessage(roomId, body, `file-transfer.${transfer.okey}.${roomId}`, adminToken, extra);
-      posted.add(roomId);
-      return true;
+      for (const r of transfer.recipients) {
+        if (r.kind === 'person' && joined.has(matrixUserId(r.personKey))) covered.add(r.personKey);
+      }
     } catch (error) {
-      logger.warn(`${CF_NAME}: card not posted to ${roomId} for ${transfer.okey}`, { error: String(error) });
-      return false;
+      logger.warn(`${CF_NAME}: card for ${transfer.okey} in the room of ${target.groupKey} failed`, { error: String(error) });
     }
-  };
-
-  if (req.chatRoomId && await post(req.chatRoomId)) {
-    for (const r of transfer.recipients) {
-      if (r.kind === 'person' && chatRoomMembers.has(matrixUserId(r.personKey))) covered.add(r.personKey);
-    }
-  }
-  for (const g of groups.filter(x => x.hasChat)) {
-    let roomId: string | undefined;
-    try {
-      roomId = await resolveGroupRoom(g.groupKey, serverHostname(), adminToken);
-    } catch (error) {
-      logger.warn(`${CF_NAME}: group room of ${g.groupKey} not resolved`, { error: String(error) });
-    }
-    if (roomId && await post(roomId)) g.members.forEach(k => covered.add(k));
   }
   return covered;
 }
 
 /**
- * Personal notifications. Persons: their `newsDelivery` channels — email with the personal link,
- * chat as an FCM push opening the transfer in the app (as calendar `notifyPersons` does), unless
- * a card already reached them. 'signal' is skipped: there is no Signal send path in the functions
- * yet (spec 1.113); 'post' is ignored for transfers. Outside addresses: email with their link.
+ * Personal notifications as decided by `planNotifications`: email with the personal token link,
+ * FCM push (as calendar `notifyPersons` does) opening `/private/file-transfer/<key>` — the push
+ * payload never carries a token.
  */
 async function notifyRecipients(
   transfer: FileTransferModel,
   recipients: FileTransferRecipient[],
+  tokens: Map<string, string>,
   persons: Map<string, { channels: DeliveryChannel[] }>,
   covered: Set<string>,
   tenantId: string,
+  baseUrl: string,
 ): Promise<number> {
-  const db = getFirestore();
-  const cfg = (await db.collection(AppConfigCollection).doc(tenantId).get()).data();
+  const cfg = (await getFirestore().collection(AppConfigCollection).doc(tenantId).get()).data();
   const provider = String(cfg?.['emailProvider'] ?? DEFAULT_EMAIL_PROVIDER);
   const appName = String(cfg?.['appName'] ?? '');
-  const mailFrom = (await getAppEmailConfig(tenantId)).from;
+  const channels = new Map([...persons].map(([k, p]) => [k, p.channels]));
+  const plan = planNotifications(recipients, channels, covered);
+  const reached = new Set<string>(plan.coveredIds);
 
-  const reached = new Set<string>();
-  const pushKeys: string[] = [];
-  for (const r of recipients) {
-    if (r.kind !== 'person') continue;
-    if (covered.has(r.personKey)) reached.add(r.id);
-    else if (persons.get(r.personKey)?.channels.includes(DeliveryChannel.Chat)) pushKeys.push(r.personKey);
+  const byId = new Map(recipients.map(r => [r.id, r]));
+  const mailTo = plan.emailIds.map(id => byId.get(id)).filter((r): r is FileTransferRecipient => !!r);
+  if (mailTo.length > 0) {
+    const mailFrom = (await getAppEmailConfig(tenantId)).from;
+    await mapBounded(mailTo, async r => {
+      try {
+        const { subject, html } = fileTransferEmail(transfer, personalLink(baseUrl, tokens.get(r.id) ?? ''), appName);
+        await sendEmailViaProvider(provider, { from: mailFrom, to: [r.email], subject, html });
+        reached.add(r.id);
+      } catch (error) {
+        // no address in the log (PII)
+        logger.warn(`${CF_NAME}: email to one recipient of ${transfer.okey} failed`, { error: String(error) });
+      }
+    });
   }
 
-  const mailTo = recipients.filter(r => r.email && (r.kind === 'email' || persons.get(r.personKey)?.channels.includes(DeliveryChannel.Email)));
-  await mapBounded(mailTo, async r => {
-    try {
-      const { subject, html } = fileTransferEmail(transfer, r.aliasUrl, appName);
-      await sendEmailViaProvider(provider, { from: mailFrom, to: [r.email], subject, html });
-      reached.add(r.id);
-    } catch (error) {
-      // no address in the log (PII)
-      logger.warn(`${CF_NAME}: email to one recipient of ${transfer.okey} failed`, { error: String(error) });
-    }
-  });
-
-  if (pushKeys.length > 0) {
+  if (plan.pushKeys.length > 0) {
     try {
       const count = transfer.files.length;
-      await pushToPersons(pushKeys, {
+      await pushToPersons(plan.pushKeys, {
         type: 'file-transfer',
         tenantId,
         title: transfer.senderName,
@@ -379,7 +371,8 @@ async function notifyRecipients(
         url: `/private/file-transfer/${transfer.okey}`,
         channelId: `file-transfer.${transfer.okey}`,
       }, CF_NAME);
-      for (const r of recipients) if (r.kind === 'person' && pushKeys.includes(r.personKey)) reached.add(r.id);
+      const pushed = new Set(plan.pushKeys);
+      for (const r of recipients) if (r.kind === 'person' && pushed.has(r.personKey)) reached.add(r.id);
     } catch (error) {
       logger.warn(`${CF_NAME}: push for ${transfer.okey} failed`, { error: String(error) });
     }

@@ -1,51 +1,81 @@
-import type { Firestore } from 'firebase-admin/firestore';
-import { HttpsError } from 'firebase-functions/v2/https';
-
-import { AliasSpaceCollection, AliasSpaceModel } from '@okr/shared-models';
-import type { FileTransferModel } from '@okr/shared-models';
-import { convertDateFormatToString, DateFormat, removeKeyFromOkrModel } from '@okr/shared-util-core';
+import { DeliveryChannel } from '@okr/shared-models';
+import type { FileTransferModel, FileTransferRecipient, UserModel } from '@okr/shared-models';
+import { convertDateFormatToString, DateFormat, hasRole } from '@okr/shared-util-core';
+import { buildRecipients } from '@okr/content-file-transfer-util';
 
 import { escapeHtml } from '../calendar/mail';
-import { loadSpace } from '../alias/mint-alias';
 
-/** Alias space of the personal transfer links (`/s/file-transfer/<code>`). */
-export const TRANSFER_ALIAS_SPACE = 'file-transfer';
+/*
+ * Personal links (spec 1.115 §4.2) are the DIRECT url `<appBaseUrl>/public/file-transfer/<token>`,
+ * not an alias-service short link (deviation from the plan, fix round 1 of Task 4): alias docs are
+ * readable tenant-wide (`aliases`: `allow read: if tenantRead()`) and their `targetUrl` would expose
+ * the bearer token to every member. The url therefore exists only inside the notification itself;
+ * Firestore holds `tokenHash` only and `recipients[].aliasUrl` stays ''.
+ */
 
-/** gRPC ALREADY_EXISTS — a concurrent first send created the space a moment earlier. */
-const ALREADY_EXISTS = 6;
+/** A person candidate as `sendFileTransfer` resolves it: email always looked up (for dedupe). */
+export interface PersonCandidate {
+  personKey: string;
+  name: string;
+  email: string;
+  viaGroupKey?: string;
+  channels: DeliveryChannel[];
+}
 
 /**
- * Length of a personal link code. The code is a bearer secret (it redirects to the token URL),
- * so it is longer than the 6 of a printed short link: 12 × base32 ≈ 60 bits.
+ * Recipients for a send. The person's email is passed to `buildRecipients` regardless of the
+ * channel, so an outside address equal to a member's address merges into that person; it is then
+ * cleared again for persons who do not want email, so the transfer doc does not keep it.
  */
-const TRANSFER_ALIAS_LENGTH = 12;
+export function recipientsForSend(persons: PersonCandidate[], emails: string[]): Omit<FileTransferRecipient, 'tokenHash' | 'aliasUrl'>[] {
+  const wantsEmail = new Map(persons.map(p => [p.personKey, p.channels.includes(DeliveryChannel.Email)]));
+  return buildRecipients({ persons, emails }).map(r => (r.kind === 'person' && !wantsEmail.get(r.personKey) ? { ...r, email: '' } : r));
+}
 
 /**
- * The tenant's `file-transfer` alias space, created on first use. The document id is
- * deterministic, so two concurrent first sends create it once (`.create()` + ALREADY_EXISTS).
+ * May the bot post the transfer card into a group's room on the sender's behalf? Only where the
+ * sender could post themself: they are a joined member of the room AND the group's `postPolicy`
+ * lets them write (`'all'`, or tenant `privileged`/`admin` for `'privileged'`). Group admins
+ * (`group.admins[]`) deliberately do NOT count — the `group` skill / participant-messaging spec
+ * §3.2b: broadcast rights live in `users.roles` only.
  */
-export async function ensureFileTransferAliasSpace(db: Firestore, tenantId: string): Promise<AliasSpaceModel> {
-  try {
-    return await loadSpace(db, tenantId, TRANSFER_ALIAS_SPACE);
-  } catch (err) {
-    if (!(err instanceof HttpsError) || err.code !== 'not-found') throw err;
+export function mayPostCard(p: { senderJoined: boolean; postPolicy: string | undefined; senderRoles: Record<string, boolean> | undefined }): boolean {
+  if (!p.senderJoined) return false;
+  if ((p.postPolicy ?? 'all') === 'all') return true;
+  return hasRole('privileged', { roles: p.senderRoles ?? {} } as UserModel);
+}
+
+export interface NotificationPlan {
+  /** recipient ids to email (persons with the email channel and an address, all outside addresses) */
+  emailIds: string[];
+  /** person keys to push (chat channel, not reached by a card) */
+  pushKeys: string[];
+  /** recipient ids reached by a posted card */
+  coveredIds: string[];
+}
+
+/**
+ * Who gets what. A person whose chat channel is served by a posted card gets no push; email is
+ * independent of the card. 'signal' is skipped (no Signal send path in the functions yet, spec
+ * 1.113), 'post' is ignored for transfers.
+ */
+export function planNotifications(
+  recipients: Pick<FileTransferRecipient, 'id' | 'kind' | 'personKey' | 'email'>[],
+  channelsByPerson: Map<string, DeliveryChannel[]>,
+  coveredPersonKeys: Set<string>,
+): NotificationPlan {
+  const plan: NotificationPlan = { emailIds: [], pushKeys: [], coveredIds: [] };
+  for (const r of recipients) {
+    if (r.kind === 'email') {
+      if (r.email) plan.emailIds.push(r.id);
+      continue;
+    }
+    const channels = channelsByPerson.get(r.personKey) ?? [];
+    if (r.email && channels.includes(DeliveryChannel.Email)) plan.emailIds.push(r.id);
+    if (coveredPersonKeys.has(r.personKey)) plan.coveredIds.push(r.id);
+    else if (channels.includes(DeliveryChannel.Chat)) plan.pushKeys.push(r.personKey);
   }
-  const space = new AliasSpaceModel(tenantId);
-  space.name = TRANSFER_ALIAS_SPACE;
-  space.label = TRANSFER_ALIAS_SPACE;
-  space.kind = 'redirect';
-  space.length = TRANSFER_ALIAS_LENGTH;
-  space.targetTypes = ['url'];
-  space.roleNeeded = 'registered';
-  space.trackingLevel = 'off';      // opens/downloads are logged as file-transfer-events instead
-  space.defaultValidDays = 30;
-  const id = `${tenantId}_${TRANSFER_ALIAS_SPACE}`;
-  try {
-    await db.collection(AliasSpaceCollection).doc(id).create(removeKeyFromOkrModel(space));
-  } catch (err) {
-    if ((err as { code?: number }).code !== ALREADY_EXISTS) throw err;
-  }
-  return loadSpace(db, tenantId, TRANSFER_ALIAS_SPACE);
+  return plan;
 }
 
 function fileCountLabel(n: number): string {
