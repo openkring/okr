@@ -4,7 +4,7 @@ import {
   IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow, IonSelect, IonSelectOption,
 } from '@ionic/angular';
 
-import { AvatarInfo, DiaryModel, DiaryScope, DiaryStatus, RoleName, TripModel, UserModel } from '@okr/shared-models';
+import { AvatarInfo, DiaryAlbumModel, DiaryModel, DiaryScope, DiaryStatus, RoleName, TripModel, UserModel } from '@okr/shared-models';
 import {
   Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n,
   TextInput, TextInputI18n,
@@ -131,8 +131,14 @@ import {
               <!-- slug vocabularies, comma separated -->
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="eventsI18n()" [value]="events()" (valueChange)="onFieldChange('events', csvToList($event))"
-                    [maxLength]="200" [readOnly]="isReadOnly()" />
+                  <ion-item lines="none">
+                    <ion-select [label]="i18n().form_events_label()" [value]="eventSlugs()" [multiple]="true" interface="popover"
+                      [disabled]="isReadOnly()" (ionChange)="onFieldChange('events', $event.detail.value ?? [])">
+                      @for (option of eventOptions(); track option.slug) {
+                        <ion-select-option [value]="option.slug">{{ option.title }}</ion-select-option>
+                      }
+                    </ion-select>
+                  </ion-item>
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="placesI18n()" [value]="places()" (valueChange)="onFieldChange('places', csvToList($event))"
@@ -186,6 +192,8 @@ export class DiaryForm {
   public readonly lockDate = input(false);
   public readonly showForm = input(true);
   public readonly travelTrips = input<TripModel[]>([]);
+  /** the author's event albums: slug is the stored value, title the label */
+  public readonly eventAlbums = input<DiaryAlbumModel[]>([]);
 
   public readonly dirty = output<boolean>();
   public readonly valid = output<boolean>();
@@ -213,7 +221,15 @@ export class DiaryForm {
   protected readonly month = computed(() => splitDiaryDate(this.date())?.month ?? 0);
   protected readonly customLocationLabel = computed(() => this.formData()?.customLocationLabel ?? '');
   protected readonly tripKey = computed(() => this.formData()?.tripKey ?? '');
-  protected readonly events = computed(() => listToCsv(this.formData()?.events ?? []));
+  protected readonly eventSlugs = computed(() => this.formData()?.events ?? []);
+  /** Albums first; slugs on the entry without an album stay selectable under their slug (no silent loss). */
+  protected readonly eventOptions = computed((): { slug: string; title: string }[] => {
+    const options = this.eventAlbums().filter(a => a.kind === 'event' && !a.isArchived && a.slug).map(a => ({ slug: a.slug, title: a.title }));
+    for (const slug of this.eventSlugs()) {
+      if (!options.some(o => o.slug === slug)) options.push({ slug, title: slug });
+    }
+    return options;
+  });
   protected readonly places = computed(() => listToCsv(this.formData()?.places ?? []));
   protected readonly customPeople = computed(() => listToCsv(this.formData()?.customPeopleLabels ?? []));
   protected readonly done = computed(() => listToLines(this.formData()?.done ?? []));
@@ -238,7 +254,6 @@ export class DiaryForm {
   protected yearI18n = computed(() => ({ name: 'year', label: this.i18n().form_year_label(), placeholder: '', helper: '' } as NumberInputI18n));
   protected monthI18n = computed(() => ({ name: 'month', label: this.i18n().form_month_label(), placeholder: '', helper: '' } as NumberInputI18n));
   protected customLocationI18n = computed(() => ({ name: 'customLocationLabel', label: this.i18n().form_location_label(), placeholder: this.i18n().form_location_select(), helper: '' } as TextInputI18n));
-  protected eventsI18n = computed(() => ({ name: 'events', label: this.i18n().form_events_label(), placeholder: '', helper: '' } as TextInputI18n));
   protected placesI18n = computed(() => ({ name: 'places', label: this.i18n().form_places_label(), placeholder: '', helper: '' } as TextInputI18n));
   protected customPeopleI18n = computed(() => ({ name: 'customPeopleLabels', label: this.i18n().form_custom_people_label(), placeholder: '', helper: this.i18n().form_custom_people_helper() } as TextInputI18n));
 

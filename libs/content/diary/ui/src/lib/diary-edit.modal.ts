@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular';
 
-import { AvatarInfo, DiaryModel, TripModel, UserModel } from '@okr/shared-models';
+import { AvatarInfo, DiaryAlbumModel, DiaryModel, TripModel, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 import { dismissOverlay } from '@okr/shared-util-angular';
@@ -29,7 +29,7 @@ export interface DiaryLocationPick {
       @if (formData(); as formData) {
         <okr-diary-form [formData]="formData" (formDataChange)="onFormDataChange($event)"
           [i18n]="i18n()" [currentUser]="currentUser()" [tenantId]="tenantId()" [allTags]="allTags()"
-          [travelTrips]="travelTrips()" [readOnly]="isReadOnly()" [lockDate]="lockDate()" [showForm]="showForm()"
+          [travelTrips]="travelTrips()" [eventAlbums]="eventAlbums()" [readOnly]="isReadOnly()" [lockDate]="lockDate()" [showForm]="showForm()"
           (locationSelectClicked)="pickLocation()" (personSelectClicked)="pickPerson()"
           (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" />
       }
@@ -49,6 +49,7 @@ export class DiaryEditModal {
   public readonly tenantId = input.required<string>();
   public readonly allTags = input(DEFAULT_TAGS);
   public readonly travelTrips = input<TripModel[]>([]);
+  public readonly eventAlbums = input<DiaryAlbumModel[]>([]);
   public readonly readOnly = input(false);
   /** Editing an existing entry: scope and date/year/month are locked (see DiaryForm). */
   public readonly lockDate = input(false);

@@ -275,12 +275,19 @@ export const DiaryStore = signalStore(
 
     const openEditor = async (diary: DiaryModel, lockDate: boolean): Promise<DiaryModel | undefined> => {
       const { DiaryEditModal } = await import('@okr/content-diary-ui');
+      // one-shot: the picker only needs the list while the modal is open; a failure leaves the picker with the entry's own slugs
+      const authorKey = store.authorKey();
+      const eventAlbums = authorKey
+        ? await firstValueFrom(store.albumService.list(authorKey, store.tenantId()).pipe(timeout(5000)))
+            .then(albums => albums.filter(a => a.kind === 'event' && !a.isArchived))
+            .catch((ex: unknown) => { console.warn('DiaryStore.openEditor: event albums not loaded', ex); return [] as DiaryAlbumModel[]; })
+        : [];
       const modal = await store.modalController.create({
         component: DiaryEditModal,
         cssClass: 'wide-modal',
         componentProps: {
           diary, i18n: store.i18n, currentUser: store.currentUser(), tenantId: store.tenantId(),
-          allTags: store.appStore.getTags('diary'), travelTrips: store.travelTrips(), readOnly: false, lockDate,
+          allTags: store.appStore.getTags('diary'), travelTrips: store.travelTrips(), eventAlbums, readOnly: false, lockDate,
           // pickers are passed IN as callbacks — the modal must not inject ModelSelectService or
           // the store back (see the dynamic import above; store-modal-dynamic-import memory).
           selectLocation: pickLocation,
