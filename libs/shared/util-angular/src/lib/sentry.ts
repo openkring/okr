@@ -1,6 +1,6 @@
 import type { HttpInterceptorFn } from '@angular/common/http';
 import { addBreadcrumb, captureMessage, flush, getClient, isEnabled, setTag, setUser } from '@sentry/angular';
-import type { BrowserOptions, ErrorEvent, EventHint } from '@sentry/angular';
+import type { Breadcrumb, BrowserOptions, ErrorEvent, EventHint } from '@sentry/angular';
 import { redactSensitive, stripPii } from '@okr/shared-util-core';
 import { catchError } from 'rxjs';
 import { isStaleChunkRecoveryInFlight } from './chunk-load-error-handler';
@@ -16,6 +16,56 @@ export interface SentryConfig {
   release: string;
   tracesSampleRate: number;
   enabled: boolean;
+}
+
+/**
+ * A quick file-transfer personal link carries its bearer token in the path — the app page
+ * `/public/file-transfer/<token>` and the public API `/public/api/v1/file-transfer/<token>[/file|/view]`
+ * (spec 1.115). Replaces the token segment with `[token]` wherever it appears in a string.
+ */
+const FILE_TRANSFER_TOKEN_RE = /(\/public\/(?:api\/v1\/)?file-transfer\/)[^/?#\s"'<>)]+/g;
+
+export function redactFileTransferTokens<T extends string | undefined>(text: T): T {
+  return (typeof text === 'string' ? text.replace(FILE_TRANSFER_TOKEN_RE, '$1[token]') : text) as T;
+}
+
+/** Sentry's transaction event type (not re-exported by @sentry/angular). */
+type TransactionEvent = Parameters<NonNullable<BrowserOptions['beforeSendTransaction']>>[0];
+
+/** Scrubs a breadcrumb's message and the URL-bearing data fields (navigation from/to, fetch/xhr url). */
+export function scrubBreadcrumb(breadcrumb: Breadcrumb): Breadcrumb {
+  breadcrumb.message = redactFileTransferTokens(breadcrumb.message);
+  const data = breadcrumb.data;
+  if (data) {
+    for (const key of ['url', 'from', 'to']) {
+      if (typeof data[key] === 'string') data[key] = redactFileTransferTokens(data[key] as string);
+    }
+  }
+  return breadcrumb;
+}
+
+/** Token scrub of the parts of an event that carry the page or request URL. */
+function scrubEventUrls(event: ErrorEvent | TransactionEvent): void {
+  if (event.request?.url) event.request.url = redactFileTransferTokens(event.request.url);
+  if (event.transaction) event.transaction = redactFileTransferTokens(event.transaction);
+  if (event.message) event.message = redactFileTransferTokens(event.message);
+  event.exception?.values?.forEach((v) => { v.value = redactFileTransferTokens(v.value); });
+  event.breadcrumbs?.forEach(scrubBreadcrumb);
+}
+
+/** Transactions (tracing) carry the page URL as name and the fetched URLs in their spans. */
+export function beforeSendTransaction(event: TransactionEvent): TransactionEvent {
+  scrubEventUrls(event);
+  event.spans?.forEach((span) => {
+    span.description = redactFileTransferTokens(span.description);
+    const data = span.data as Record<string, unknown> | undefined;
+    if (data) {
+      for (const key of ['url', 'http.url', 'url.full']) {
+        if (typeof data[key] === 'string') data[key] = redactFileTransferTokens(data[key] as string);
+      }
+    }
+  });
+  return event;
 }
 
 /** Final scrubbing gate — runs on every event before it leaves the client. */
@@ -76,7 +126,10 @@ export function beforeSend(event: ErrorEvent, _hint: EventHint): ErrorEvent | nu
   // requests that failed just before it — otherwise there is nothing to go on at all.
   describeObjectRejection(event);
   const failed = getRecentFailedRequests();
-  if (failed.length > 0) event.extra = { ...event.extra, recentFailedRequests: failed.map((r) => `${r.status} ${r.url}`) };
+  if (failed.length > 0) {
+    event.extra = { ...event.extra, recentFailedRequests: failed.map((r) => redactFileTransferTokens(`${r.status} ${r.url}`)) };
+  }
+  scrubEventUrls(event);
 
   if (event.message) event.message = redactSensitive(event.message);
   event.exception?.values?.forEach((v) => { v.value = redactSensitive(v.value); });
@@ -231,6 +284,8 @@ export function buildSentryOptions(
     sendDefaultPii: false,
 
     beforeSend,
+    beforeSendTransaction,
+    beforeBreadcrumb: scrubBreadcrumb,
   };
 }
 

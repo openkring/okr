@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ErrorEvent } from '@sentry/angular';
-import { beforeSend, buildSentryOptions, SentryConfig } from './sentry';
+import { beforeSend, beforeSendTransaction, buildSentryOptions, redactFileTransferTokens, scrubBreadcrumb, SentryConfig } from './sentry';
 import { closeAnalyticsInitWindow, markAnalyticsInitStarted } from './analytics-init-window';
 import { clearRecentFailedRequests, installFailedRequestRecorder } from './failed-request-recorder';
 
@@ -303,5 +303,60 @@ describe('beforeSend and Edge-iOS injected rejections (SCS-B2)', () => {
     const event = objectRejection();
     event.exception!.values![0].stacktrace = { frames: [{ function: 'confirm' }] };
     expect(beforeSend(event, {} as never)).not.toBeNull();
+  });
+});
+
+describe('file-transfer token scrubbing (spec 1.115)', () => {
+  const TOKEN = 'AbC-123_xyzAbC-123_xyzAbC-123_xyzAbC-123_x';
+
+  it('replaces the token in app page and public API paths', () => {
+    expect(redactFileTransferTokens(`https://app.seeclub.org/public/file-transfer/${TOKEN}`))
+      .toBe('https://app.seeclub.org/public/file-transfer/[token]');
+    expect(redactFileTransferTokens(`POST https://europe-west6-x.cloudfunctions.net/publicApi/public/api/v1/file-transfer/${TOKEN}/view → 401`))
+      .toBe('POST https://europe-west6-x.cloudfunctions.net/publicApi/public/api/v1/file-transfer/[token]/view → 401');
+    expect(redactFileTransferTokens(`/public/file-transfer/${TOKEN}?x=1#y`)).toBe('/public/file-transfer/[token]?x=1#y');
+  });
+
+  it('leaves other URLs and undefined alone', () => {
+    expect(redactFileTransferTokens('/private/file-transfer/T1')).toBe('/private/file-transfer/T1');
+    expect(redactFileTransferTokens(undefined)).toBeUndefined();
+  });
+
+  it('scrubs breadcrumb message and navigation/fetch data', () => {
+    const b = scrubBreadcrumb({
+      category: 'navigation', message: `to /public/file-transfer/${TOKEN}`,
+      data: { from: '/private/home', to: `/public/file-transfer/${TOKEN}`, url: `https://h/public/api/v1/file-transfer/${TOKEN}/file` },
+    });
+    expect(JSON.stringify(b)).not.toContain(TOKEN);
+    expect(b.data?.['from']).toBe('/private/home');
+  });
+
+  it('beforeSend scrubs request url, transaction and breadcrumbs', () => {
+    vi.stubGlobal('location', new URL('https://app.seeclub.org/'));
+    const event = {
+      environment: 'production',
+      request: { url: `https://app.seeclub.org/public/file-transfer/${TOKEN}` },
+      transaction: `/public/file-transfer/${TOKEN}`,
+      breadcrumbs: [{ category: 'fetch', data: { url: `https://h/public/api/v1/file-transfer/${TOKEN}` } }],
+    } as unknown as ErrorEvent;
+    const out = beforeSend(event, {});
+    vi.unstubAllGlobals();
+    expect(out).not.toBeNull();
+    expect(JSON.stringify(out)).not.toContain(TOKEN);
+    expect(out?.request?.url).toBe('https://app.seeclub.org/public/file-transfer/[token]');
+  });
+
+  it('beforeSendTransaction scrubs the transaction name and span urls', () => {
+    const event = {
+      type: 'transaction', transaction: `/public/file-transfer/${TOKEN}`,
+      spans: [{ description: `GET https://h/public/api/v1/file-transfer/${TOKEN}`, data: { url: `https://h/public/api/v1/file-transfer/${TOKEN}` } }],
+    } as unknown as Parameters<typeof beforeSendTransaction>[0];
+    expect(JSON.stringify(beforeSendTransaction(event))).not.toContain(TOKEN);
+  });
+
+  it('is wired into the Sentry options', () => {
+    const o = buildSentryOptions(cfg, []);
+    expect(o.beforeBreadcrumb).toBe(scrubBreadcrumb);
+    expect(o.beforeSendTransaction).toBe(beforeSendTransaction);
   });
 });
