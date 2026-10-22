@@ -189,7 +189,15 @@ service cloud.firestore {
       // App configuration is admin territory — but only for your OWN tenant: the
       // doc id IS the tenantId, so without this check a privileged user of tenant A
       // could overwrite app-config/B.
-      allow create, delete: if isPrivileged() && (tenant in callerTenants());
+      //
+      // Create and delete are split (spec 1.115 fix round 2): with one shared
+      // `isPrivileged()` arm, a privileged non-admin could delete the doc and recreate it
+      // with any `fileTransferLimits` or `enabledFeatures`, around the update guards
+      // below. Delete is admin-only; a create that carries either guarded field is too.
+      // No client deletes or creates app-config today (provisioning uses the Admin SDK).
+      allow create: if isPrivileged() && (tenant in callerTenants())
+        && (isAdmin() || !request.resource.data.keys().hasAny(['fileTransferLimits', 'enabledFeatures']));
+      allow delete: if isAdmin() && (tenant in callerTenants());
       // ...except for the fields that are NOT the tenant's own business.
       //
       // `enabledFeatures` is a BILLING boundary (1.32 §8.5): a tenant admin who can
