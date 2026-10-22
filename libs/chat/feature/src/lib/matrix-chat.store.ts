@@ -18,7 +18,7 @@ import { ActivityService } from '@okr/activity-data-access';
 import { GroupService } from '@okr/subject-group-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { ChatReminderService, isServiceAccount, MatrixChatService, MatrixPinsService, MatrixRoomPrefsService, MatrixJumpResult, MatrixPollData } from '@okr/chat-data-access';
-import { AvailablePinboard, AdhocChatFormModel, newAdhocChatForm, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, pinboardBroadcastCount, pinboardReplyDraft, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, isOwnNotesRoom, NotesRoomOwner, buildBookmarkContent, buildForwardContent, isForwardable, videoAlbumFallsBackToSynapse, fileTransferRoomPreset, isFileReadable, readBookmark, reminderTitle, PinPreview } from '@okr/chat-util';
+import { AvailablePinboard, AdhocChatFormModel, newAdhocChatForm, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, pinboardBroadcastCount, pinboardReplyDraft, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, isOwnNotesRoom, NotesRoomOwner, buildBookmarkContent, buildForwardContent, isForwardable, videoAlbumFallsBackToSynapse, fileTransferRoomPreset, fileTransferCardStatusOf, isFileReadable, readBookmark, reminderTitle, PinPreview } from '@okr/chat-util';
 
 import { ChatFileTransferCard, EmojiPickerModal, MessageEditModal } from '@okr/chat-ui';
 // Quick file transfer (spec 1.115 §4.5): the callable client and the pure open helper are light and
@@ -1216,11 +1216,6 @@ export const _MatrixChatStore = signalStore(
       },
 
       /**
-       * Loads the cards of the transfers in view — each key once per session (`getFileTransfer`
-       * checks that the viewer may see it). Expired and not-found both read «abgelaufen»; any other
-       * failure leaves the plain message in place until the visible cards change again.
-       */
-      /**
        * Videos over the chat cap from one pick (or drop): one offer for all readable ones, the
        * «zu gross» toast for the rest. See offerVideosAsTransfer.
        */
@@ -1236,6 +1231,12 @@ export const _MatrixChatStore = signalStore(
         resetFileTransferCardsFor(personKey);
       },
 
+      /**
+       * Loads the cards of the transfers in view — each key once per session (`getFileTransfer`
+       * checks that the viewer may see it). Expired reads «abgelaufen», not-found «Nicht für dich
+       * freigegeben» (fileTransferCardStatusOf); any other failure leaves the plain message in place
+       * until the visible cards change again.
+       */
       ensureFileTransferCards(keys: string[]): void {
         const owner = store.appStore.currentUser()?.personKey ?? '';
         resetFileTransferCardsFor(owner);
@@ -1252,7 +1253,7 @@ export const _MatrixChatStore = signalStore(
           setCard(key, { status: 'loading' });
           store.fileTransferService.get(key).then(
             view => setCard(key, { status: 'ready', view }),
-            error => setCard(key, { status: fileTransferFailureOf(error) === 'other' ? 'failed' : 'expired' }),
+            error => setCard(key, { status: fileTransferCardStatusOf(fileTransferFailureOf(error)) }),
           );
         }
       },
@@ -1268,12 +1269,13 @@ export const _MatrixChatStore = signalStore(
           (index, disposition) => store.fileTransferService.openFile(transferKey, index, disposition),
           { videoInTab: true },
         ).catch(async (error: unknown) => {
-          if (fileTransferFailureOf(error) === 'other') {
+          const status = fileTransferCardStatusOf(fileTransferFailureOf(error));
+          if (status === 'failed') {
             await store.alertService.showToast(store.i18n.fileTransfer_openFailed());
             return;
           }
-          patchState(store, { fileTransferCards: { ...store.fileTransferCards(), [transferKey]: { status: 'expired', view } } });
-          await store.alertService.showToast(store.i18n.fileTransfer_expired());
+          patchState(store, { fileTransferCards: { ...store.fileTransferCards(), [transferKey]: { status, view } } });
+          await store.alertService.showToast(status === 'notShared' ? store.i18n.fileTransfer_notShared() : store.i18n.fileTransfer_expired());
         });
       },
 

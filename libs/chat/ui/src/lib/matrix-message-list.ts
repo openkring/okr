@@ -16,11 +16,12 @@ import { decorateMentionPills, extractMentionLocalpart, formatMatrixDate, format
 
 /**
  * A quick file-transfer card in a room (spec 1.115 §4.5), loaded once per transferKey by the chat
- * store: `loading` until `getFileTransfer` answers, `expired` also for «not found» (the server never
- * tells a stranger the transfer exists), `failed` for any other error (the plain message is shown).
+ * store: `loading` until `getFileTransfer` answers, `expired` («abgelaufen»), `notShared` for «not
+ * found» («Nicht für dich freigegeben»: a room member who is not a recipient — the server never tells
+ * a stranger whether the transfer exists), `failed` for any other error (the plain message is shown).
  */
 export interface ChatFileTransferCard {
-  status: 'loading' | 'ready' | 'expired' | 'failed';
+  status: 'loading' | 'ready' | 'expired' | 'notShared' | 'failed';
   view?: FileTransferView;
 }
 
@@ -687,6 +688,7 @@ const MENTION_AVATAR_SIZE = 36;
                                   [transferKey]="transferCard.transferKey"
                                   [view]="transfer?.view"
                                   [expired]="transfer?.status === 'expired'"
+                                  [notShared]="transfer?.status === 'notShared'"
                                   (open)="fileTransferOpened.emit({ transferKey: transferCard.transferKey, event: $event })"
                                 />
                               </div>

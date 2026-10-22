@@ -711,6 +711,7 @@
   "fileTransfer": {
     "openFailed": "Le fichier ne peut pas être ouvert pour le moment. Réessaie plus tard.",
     "expired": "Ce transfert a expiré. Les fichiers ne sont plus disponibles.",
+    "notShared": "Ce transfert n'est pas partagé avec toi.",
     "unavailable": "L'envoi comme transfert ne peut pas démarrer pour le moment. Réessaie plus tard."
   }
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildReceiptAriaLabel, buildReceiptRows, filterRoomsOfTenant, isBridgedRoom, isForeignRoom, serverNameOf, isRoomClassifiable, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower, groupRoomAliasLocalpart, groupKeyFromRoomAlias, isRoomGoneError, askRoomAliasLocalpart, shouldDeferAskRoom, findGroupOfRoom, fileTransferKeyOf, isFileTransferCardBody, fileTransferCardOf, isFileTransferBot, fileTransferRoomPreset, isFileReadable } from './chat.util';
+import { buildReceiptAriaLabel, buildReceiptRows, filterRoomsOfTenant, isBridgedRoom, isForeignRoom, serverNameOf, isRoomClassifiable, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower, groupRoomAliasLocalpart, groupKeyFromRoomAlias, isRoomGoneError, askRoomAliasLocalpart, shouldDeferAskRoom, findGroupOfRoom, fileTransferKeyOf, isFileTransferCardBody, fileTransferCardOf, isFileTransferBot, fileTransferRoomPreset, isFileReadable, fileTransferCardStatusOf } from './chat.util';
 
 describe('buildReceiptAriaLabel', () => {
   it('returns empty string for no receipts', () => {
@@ -702,5 +702,15 @@ describe('isFileReadable', () => {
   it('is false when reading throws', async () => {
     const stale = { size: 10, slice: () => ({ arrayBuffer: () => Promise.reject(new Error('NotReadableError')) }) } as unknown as Blob;
     expect(await isFileReadable(stale)).toBe(false);
+  });
+});
+
+describe('fileTransferCardStatusOf', () => {
+  it('reads expired as «abgelaufen» and notFound as «nicht für dich freigegeben»', () => {
+    expect(fileTransferCardStatusOf('expired')).toBe('expired');
+    expect(fileTransferCardStatusOf('notFound')).toBe('notShared');
+  });
+  it('leaves any other failure retryable', () => {
+    expect(fileTransferCardStatusOf('other')).toBe('failed');
   });
 });

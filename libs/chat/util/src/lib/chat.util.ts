@@ -573,6 +573,21 @@ export function isFileTransferCardBody(body: string, transferKey: string, origin
 }
 
 /** How a message renders as a transfer card: which transfer, and whether its body may be hidden. */
+/** How a transfer card in a room reads once `getFileTransfer` answered (spec 1.115 §4.5). */
+export type FileTransferCardStatus = 'expired' | 'notShared' | 'failed';
+
+/**
+ * Maps a failed `getFileTransfer` / file open (`fileTransferFailureOf`) to the card state:
+ * `expired` → «abgelaufen»; `notFound` → «Nicht für dich freigegeben» (a room member who is not a
+ * recipient — the server answers notFound and never says whether the transfer exists); anything
+ * else → `failed` (the plain message is shown and the next view change retries).
+ */
+export function fileTransferCardStatusOf(failure: 'expired' | 'notFound' | 'other'): FileTransferCardStatus {
+  if (failure === 'expired') return 'expired';
+  if (failure === 'notFound') return 'notShared';
+  return 'failed';
+}
+
 export interface FileTransferCardRender {
   transferKey: string;
   hideBody: boolean;

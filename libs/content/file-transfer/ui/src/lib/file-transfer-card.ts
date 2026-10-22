@@ -14,7 +14,8 @@ export type { FileTransferOpenEvent } from '@okr/content-file-transfer-util';
 
 /**
  * A transfer as a card (spec 1.115 §4.2/§4.5): sender, message, files with their sizes and
- * play/view/download buttons, expiry — or «abgelaufen». Presentational: it never holds a URL; a
+ * play/view/download buttons, expiry — or «abgelaufen», or «Nicht für dich freigegeben» (a room
+ * member who is not a recipient). Presentational: it never holds a URL; a
  * click leaves through `open` and the caller fetches the short-lived signed URL.
  * `view` undefined and not expired = still loading.
  */
@@ -32,7 +33,17 @@ export type { FileTransferOpenEvent } from '@okr/content-file-transfer-util';
   `],
   template: `
     <ion-card>
-      @if (expired()) {
+      @if (notShared()) {
+        <ion-card-header>
+          <ion-card-title>
+            {{ i18n.card_title() }}
+            <ion-badge color="medium">{{ i18n.card_notShared_badge() }}</ion-badge>
+          </ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-note>{{ i18n.card_notShared() }}</ion-note>
+        </ion-card-content>
+      } @else if (expired()) {
         <ion-card-header>
           <ion-card-title>
             {{ i18n.card_title() }}
@@ -96,6 +107,8 @@ export class FileTransferCard {
   public readonly transferKey = input('');
   public readonly view = input<FileTransferView | undefined>(undefined);
   public readonly expired = input(false);
+  /** the viewer is not a recipient (getFileTransfer answered notFound) — takes precedence over expired */
+  public readonly notShared = input(false);
 
   // outputs
   public readonly open = output<FileTransferOpenEvent>();
