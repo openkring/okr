@@ -1,5 +1,5 @@
 import { JournalChange, JournalEntity } from '@okr/shared-models';
-import { compareHlc } from './journal-hlc.util';
+import { compareHlc, isValidHlc } from './journal-hlc.util';
 
 /**
  * Field-level merge of the travel-journal change log (spec 1.113 §5.2).
@@ -12,6 +12,10 @@ import { compareHlc } from './journal-hlc.util';
  *
  * Every field keeps its best candidate PER AUTHOR, so the owner's latest value is still known when a
  * non-owner's record carries a higher clock — and a `set` that arrives before its `create` is kept.
+ *
+ * A record whose hlc is malformed or names another device is ignored: the clock decides who wins and
+ * who owns a block, so it must at least be the writer's own. Authors are trusted (only they can write
+ * change records); the server additionally checks the author and clamps clocks from the future (spec §5.3).
  */
 export const OWNED_ENTITIES: JournalEntity[] = ['section', 'comment', 'reaction', 'image'];
 
@@ -35,6 +39,7 @@ export function entityStateKey(entity: JournalEntity, entityKey: string): string
 }
 
 export function applyChange(state: JournalState, change: JournalChange): JournalState {
+  if (!isValidHlc(change.hlc, change.deviceId)) return state;
   const key = entityStateKey(change.entity, change.entityKey);
   const current: EntityState = state[key] ?? { entity: change.entity, entityKey: change.entityKey, created: false, fields: {} };
   const next: EntityState = { ...current, fields: { ...current.fields } };

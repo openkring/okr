@@ -88,6 +88,15 @@ describe('journal merge', () => {
     expect(viewOf(materialize([create, archive])['section:s1'])).toBeUndefined();
   });
 
+  it('a record whose hlc is malformed or names another device is ignored', () => {
+    const create = change({ entity: 'section', entityKey: 's1', op: 'create', fields: { html: '<p>Bruno</p>' } }, 100);
+    const forged = { ...change({ entity: 'section', entityKey: 's1', op: 'create', authorKey: 'barbara', fields: { html: '<p>stolen</p>' } }, 1, 'dev-b'), hlc: formatHlc({ wall: 1, counter: 0, deviceId: 'dev-a' }) };
+    const garbage = { ...change({ entity: 'section', entityKey: 's1', op: 'set', fields: { html: '<p>garbage</p>' } }, 900), hlc: '9999' };
+    const state = materialize([create, forged, garbage]);
+    expect(viewOf(state['section:s1'])?.['html']).toBe('<p>Bruno</p>');
+    expect(state['section:s1'].ownerKey).toBe('bruno');
+  });
+
   it('non-owner archive of an owned section is ignored', () => {
     const create = change({ entity: 'section', entityKey: 's1', op: 'create', fields: { html: '<p>x</p>' } }, 100);
     const archive = change({ entity: 'section', entityKey: 's1', op: 'archive', authorKey: 'barbara' }, 200, 'dev-b');
