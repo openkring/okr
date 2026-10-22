@@ -2,7 +2,7 @@ import { PluginListenerHandle, registerPlugin } from '@capacitor/core';
 
 /**
  * Local-network peers for the travel journal (spec 1.113 §5.4), implemented in Swift in the bkg iOS
- * project (`ios/App/App/Plugins/LocalPeerPlugin.swift`) with Network.framework: Bonjour service
+ * project (`ios/App/App/LocalPeerPlugin.swift`) with Network.framework: Bonjour service
  * `_okrjournal._tcp`, one TCP connection per peer pair, messages framed as a 4-byte big-endian
  * length followed by UTF-8 JSON.
  */

@@ -9,14 +9,25 @@ import { ImageConfig } from './image.model';
  */
 export type JournalState = 'draft' | 'active' | 'closed';
 
-/**
- * A guest is a person. `linkCode` is the random 128-bit code in the guest's personal link; it is
- * readable by the journal's authors only. Setting `revokedAt` ends the guest's access.
- */
+/** A guest is a person. Their personal link lives in JournalGuestLinks, never on the journal document. */
 export interface JournalGuest {
   person: AvatarInfo;
+}
+
+/**
+ * The personal links of a journal's guests, at `journals/{okey}/private/guestLinks` — readable by the
+ * journal's authors only. Guests can read the journal document, and Firestore rules cannot hide a
+ * single field, so a link code on the journal would let every guest sign in as every other guest.
+ * `linkCode` is a random 128-bit code; setting `revokedAt` ends that guest's access.
+ */
+export interface JournalGuestLink {
+  personKey: string;
   linkCode: string;
   revokedAt?: string;
+}
+
+export interface JournalGuestLinks {
+  links: JournalGuestLink[];
 }
 
 export class JournalModel implements OkrModel, SearchableModel, TaggedModel {
@@ -43,4 +54,7 @@ export class JournalModel implements OkrModel, SearchableModel, TaggedModel {
 }
 
 export const JournalCollection = 'journals';
+export const JournalPrivateCollection = 'private'; // subcollection, authors only: docs 'peer' and 'guestLinks'
+export const JournalGuestLinksDoc = 'guestLinks';
+export const JournalPeerDoc = 'peer';
 export const JournalModelName = 'journal';

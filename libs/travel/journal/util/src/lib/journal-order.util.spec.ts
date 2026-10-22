@@ -36,6 +36,11 @@ describe('journal order', () => {
     }
   });
 
+  it('orderBetween refuses equal or reversed bounds', () => {
+    expect(() => orderBetween('V', 'V')).toThrow(RangeError);
+    expect(() => orderBetween('W', 'V')).toThrow(RangeError);
+  });
+
   it('sortByOrder sorts by order, then by okey, and puts missing order last', () => {
     const items = [
       { okey: 'c', order: 'b' },

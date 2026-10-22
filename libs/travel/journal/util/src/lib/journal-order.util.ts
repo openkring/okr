@@ -20,8 +20,15 @@ function midpoint(a: string, b: string | undefined): string {
   return DIGITS[digitA] + midpoint(a.slice(1), undefined);
 }
 
-/** A key strictly between `before` and `after`; either bound may be missing. */
+/**
+ * A key strictly between `before` and `after`; either bound may be missing. Throws a RangeError
+ * when `before >= after`: two blocks appended concurrently can share a key (sortByOrder then breaks
+ * the tie by okey), and no key fits between them — the caller must pick distinct neighbours.
+ */
 export function orderBetween(before?: string, after?: string): string {
+  if (before !== undefined && after !== undefined && before >= after) {
+    throw new RangeError(`orderBetween: '${before}' is not below '${after}'`);
+  }
   return midpoint(before ?? '', after);
 }
 

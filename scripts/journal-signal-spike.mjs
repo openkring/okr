@@ -6,7 +6,7 @@
 //   MATRIX_HOMESERVER=https://matrix.example.org \
 //   MATRIX_ACCESS_TOKEN=… \
 //   SIGNAL_TEST_NUMBER=+41791234567 \
-//   node scripts/journal-signal-spike.mjs [--bot @signalbot:example.org] [--text "…"]
+//   node scripts/journal-signal-spike.mjs [--bot @signalbot:example.org] [--text "…"] [--room !portal:example.org]
 //
 // Never commit the token or the number. Steps:
 //   1. whoami — confirms the token's Matrix user.
@@ -24,6 +24,7 @@ const provisioningUrl = process.env.SIGNAL_PROVISIONING_URL?.replace(/\/+$/, '')
 const args = process.argv.slice(2);
 const botArg = args.indexOf('--bot');
 const textArg = args.indexOf('--text');
+const roomArg = args.indexOf('--room');
 const text = textArg >= 0 ? args[textArg + 1] : 'Test aus dem Reisetagebuch';
 
 if (!homeserver || !token || !number || !/^\+[1-9]\d{6,14}$/.test(number)) {
@@ -68,19 +69,25 @@ async function viaBotCommand(bot) {
   const since = (await matrix('GET', '/_matrix/client/v3/sync?timeout=0&filter={"room":{"timeline":{"limit":1}}}')).next_batch;
   await matrix('PUT', `/_matrix/client/v3/rooms/${encodeURIComponent(management)}/send/m.room.message/spike-${Date.now()}`, { msgtype: 'm.text', body: `start-chat ${number}` });
   console.log(`sent "start-chat ${number}" to ${management}, waiting for the portal …`);
+  // Only a NEW invite from the bridge counts as the portal: taking "any joined room with new events"
+  // could post the test message into an unrelated family or club room. A portal that already
+  // exists produces no invite — then the bot's reply names it, and the script stops instead of guessing.
+  let cursor = since;
   for (let i = 0; i < 10; i++) {
-    const sync = await matrix('GET', `/_matrix/client/v3/sync?timeout=3000&since=${since}`);
-    const invited = Object.keys(sync.rooms?.invite ?? {});
-    const joined = Object.keys(sync.rooms?.join ?? {}).filter((r) => r !== management);
+    const sync = await matrix('GET', `/_matrix/client/v3/sync?timeout=3000&since=${cursor}`);
+    cursor = sync.next_batch;
     const reply = sync.rooms?.join?.[management]?.timeline?.events?.find((e) => e.sender === bot)?.content?.body;
     if (reply) console.log('bot:', reply);
-    const roomId = invited[0] ?? joined[0];
-    if (roomId) {
-      if (invited.includes(roomId)) await matrix('POST', `/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/join`, {});
+    const invite = Object.entries(sync.rooms?.invite ?? {}).find(([, room]) =>
+      room.invite_state?.events?.some((e) => e.type === 'm.room.member' && e.state_key === me.user_id && e.content?.membership === 'invite'),
+    );
+    if (invite) {
+      const [roomId] = invite;
+      await matrix('POST', `/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/join`, {});
       return roomId;
     }
   }
-  throw new Error('no portal room appeared within 30 s');
+  throw new Error('no portal invite within 30 s — if the bot says the chat already exists, pass its room with --room');
 }
 
 const me = await matrix('GET', '/_matrix/client/v3/account/whoami');
@@ -89,7 +96,7 @@ const server = me.user_id.split(':')[1];
 const bot = botArg >= 0 ? args[botArg + 1] : `@signalbot:${server}`;
 
 const started = Date.now();
-const roomId = (await viaProvisioning(me.user_id)) ?? (await viaBotCommand(bot));
+const roomId = roomArg >= 0 ? args[roomArg + 1] : (await viaProvisioning(me.user_id)) ?? (await viaBotCommand(bot));
 console.log('portal room:', roomId, `(${Date.now() - started} ms)`);
 await matrix('PUT', `/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/send/m.room.message/journal-${Date.now()}`, { msgtype: 'm.text', body: text });
 console.log('sent. Check Signal on the test phone; run again to confirm the same room is reused.');

@@ -52,7 +52,10 @@ export function applyChange(state: JournalState, change: JournalChange): Journal
     }
   }
 
-  const values = change.op === 'archive' ? { [ARCHIVED_FIELD]: true } : change.fields;
+  // `archived` is written by op 'archive' only; a create or set may not touch it (no un-archive by a stray field)
+  const values = change.op === 'archive'
+    ? { [ARCHIVED_FIELD]: true }
+    : Object.fromEntries(Object.entries(change.fields).filter(([field]) => field !== ARCHIVED_FIELD));
   for (const [field, value] of Object.entries(values)) {
     const byAuthor = next.fields[field] ?? {};
     const best = byAuthor[change.authorKey];

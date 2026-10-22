@@ -97,6 +97,13 @@ describe('journal merge', () => {
     expect(state['section:s1'].ownerKey).toBe('bruno');
   });
 
+  it('a set cannot un-archive an entity', () => {
+    const create = change({ entity: 'footprint', entityKey: 'f1', op: 'create', fields: { title: 'Neko' } }, 100);
+    const archive = change({ entity: 'footprint', entityKey: 'f1', op: 'archive' }, 200);
+    const revive = change({ entity: 'footprint', entityKey: 'f1', op: 'set', fields: { archived: false, title: 'back' } }, 300);
+    expect(viewOf(materialize([create, archive, revive])['footprint:f1'])).toBeUndefined();
+  });
+
   it('non-owner archive of an owned section is ignored', () => {
     const create = change({ entity: 'section', entityKey: 's1', op: 'create', fields: { html: '<p>x</p>' } }, 100);
     const archive = change({ entity: 'section', entityKey: 's1', op: 'archive', authorKey: 'barbara' }, 200, 'dev-b');

@@ -8,7 +8,7 @@
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
-import { JournalCollection, JournalGuest } from '@okr/shared-models';
+import { JournalCollection, JournalGuestLinks, JournalGuestLinksDoc, JournalPrivateCollection } from '@okr/shared-models';
 
 interface GuestSignInSpikeRequest { journalKey: string; linkCode: string }
 
@@ -19,12 +19,14 @@ export const journalGuestSignInSpike = onCall<GuestSignInSpikeRequest, Promise<{
     const { journalKey, linkCode } = request.data ?? {};
     if (!journalKey || !linkCode) throw new HttpsError('invalid-argument', 'journalKey and linkCode required');
 
-    const journal = (await getFirestore().collection(JournalCollection).doc(journalKey).get()).data();
-    const guest = (journal?.['guests'] as JournalGuest[] | undefined)?.find((g) => g.linkCode === linkCode && !g.revokedAt);
+    const journalRef = getFirestore().collection(JournalCollection).doc(journalKey);
+    const journal = (await journalRef.get()).data();
+    const links = (await journalRef.collection(JournalPrivateCollection).doc(JournalGuestLinksDoc).get()).data() as JournalGuestLinks | undefined;
+    const link = links?.links?.find((l) => l.linkCode === linkCode && !l.revokedAt);
     const tenantId = (journal?.['tenants'] as string[] | undefined)?.[0];
-    if (!guest || !tenantId) throw new HttpsError('permission-denied', 'unknown or revoked link');
+    if (!link || !tenantId) throw new HttpsError('permission-denied', 'unknown or revoked link');
 
-    const personKey = guest.person.key;
+    const personKey = link.personKey;
     const token = await getAuth().createCustomToken(`jg_${personKey}`, { jg: journalKey, pk: personKey, tid: tenantId });
     return { token };
   },
