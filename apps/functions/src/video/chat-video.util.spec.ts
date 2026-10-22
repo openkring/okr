@@ -78,7 +78,8 @@ describe('validateChatVideoRequest', () => {
     expect(r.mimeType).toBe('');
   });
   it('rejects size 0', () => rejects({ ...ok, size: 0 }));
-  it('rejects size above 200 MB', () => rejects({ ...ok, size: 200 * 1024 * 1024 + 1 }));
+  it('rejects size above 100 MB', () => rejects({ ...ok, size: 100 * 1024 * 1024 + 1 }));
+  it('accepts exactly 100 MB', () => expect(() => validateChatVideoRequest({ ...ok, size: 100 * 1024 * 1024 })).not.toThrow());
   it('rejects a non-integer size', () => rejects({ ...ok, size: 1.5 }));
   it('rejects .mkv', () => rejects({ ...ok, fileName: 'x.mkv' }));
   it('rejects a roomId without !', () => rejects({ ...ok, roomId: 'abc:hs' }));

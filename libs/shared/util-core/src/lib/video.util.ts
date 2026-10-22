@@ -1,11 +1,13 @@
 /*
   Grenzen für hochgeladene Videos (Album). Zweck dieser Prüfung ist Komfort: dem Mitglied
-  200 MB Upload zu ersparen, die am Ende ohnehin abgelehnt würden.
+  100 MB Upload zu ersparen, die am Ende ohnehin abgelehnt würden.
 
   Die Grenze ist aber KEINE reine Komfortgrenze mehr, sondern eine von drei Stellen, an denen
-  dieselben 200 MB stehen müssen:
+  dieselben 100 MB stehen müssen (seit dem Schnelltransfer, spec 1.115, von 200 auf 100 MB
+  gesenkt -- grössere Videos gehen als Transfer):
     - MAX_VIDEO_BYTES (hier)                      -- die Vorprüfung im Client
-    - videoSizeOk() in storage.rules              -- was Firebase überhaupt annimmt
+    - videoSizeOk() in storage.rules und storage-private.rules -- was Firebase überhaupt annimmt
+    - MAX_VIDEO_BYTES in apps/functions/src/video/chat-video.util.ts -- die signierte Chat-Upload-URL
     - MAX_INPUT_BYTES in apps/functions/src/video -- was der Transcoder verarbeitet
   Driften sie auseinander, lehnt Firebase mit einem blanken `storage/unauthorized` ab: der
   Nutzer sieht ein rotes Kreuz ohne Text. Genau das war der Fall, solange storage.rules jeden
@@ -16,7 +18,7 @@
   ist bei .mov in Chrome/Firefox regelmässig leer.
 */
 
-export const MAX_VIDEO_BYTES = 200 * 1024 * 1024;   // 200 MB
+export const MAX_VIDEO_BYTES = 100 * 1024 * 1024;   // 100 MB
 export const MAX_VIDEO_SECONDS = 120;               // 2:00
 
 /** Wie lange auf die Metadaten des Probe-Elements gewartet wird, bevor die Dauer als

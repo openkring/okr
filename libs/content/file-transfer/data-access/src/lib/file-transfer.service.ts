@@ -28,6 +28,21 @@ export class FileTransferError extends Error {
   }
 }
 
+/** How a failed `getFileTransfer` / `openFileTransferFile` call reads to a member. */
+export type FileTransferFailure = 'expired' | 'notFound' | 'other';
+
+/**
+ * Classifies a failed callable by the reason the server named in its HttpsError message: the
+ * transfer ran out (`expired`), or it does not exist / is not the caller's (`notFound` — the server
+ * never answers 403, so nothing leaks). Unwraps an rxResource error's `cause`. One mapping for the
+ * view page and the chat card.
+ */
+export function fileTransferFailureOf(error: unknown): FileTransferFailure {
+  const cause = (error as { cause?: unknown } | null)?.cause ?? error;
+  const message = cause instanceof FileTransferError ? cause.message : '';
+  return message === 'expired' || message === 'notFound' ? message : 'other';
+}
+
 const GENERIC_FAILURE = 'Die Dateiübertragung ist fehlgeschlagen. Bitte versuche es später noch einmal.';
 
 /** Same mapping as AliasMintService.toFailure, but thrown as a typed error. */

@@ -10,8 +10,8 @@ service firebase.storage {
       return request.auth != null && firestore.exists(userPath())
         && (tenantId in firestore.get(userPath()).data.tenants);
     }
-    // Same 200 MB as MAX_VIDEO_BYTES (libs/shared/util-core/src/lib/video.util.ts).
-    function videoSizeOk() { return request.resource.size < 200 * 1024 * 1024; }
+    // Same 100 MB as MAX_VIDEO_BYTES (libs/shared/util-core/src/lib/video.util.ts).
+    function videoSizeOk() { return request.resource.size < 100 * 1024 * 1024; }
     // By extension, never by contentType — see storage.rules isVideoUpload().
     function isVideoUpload() { return request.resource.name.lower().matches('.*[.](mp4|mov|avi)'); }
     // A folder that carries a room audience (chat room album) takes no client write: those videos

@@ -98,7 +98,7 @@
       "url": "Link"
     },
     "video": {
-      "tooLarge": "Das Video ist zu gross ({size}). Du kannst Videos bis 200 MB hochladen.",
+      "tooLarge": "Das Video ist zu gross ({size}). Du kannst Videos bis 100 MB hochladen.",
       "tooLong": "Das Video ist {duration} lang. Du kannst Videos bis 2 Minuten hochladen.",
       "pending": "Das Video wird aufbereitet und ist in ein bis zwei Minuten abspielbar.",
       "unavailable": "Dieses Video ist für dich nicht verfügbar.",

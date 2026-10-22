@@ -6,14 +6,11 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { Spinner } from '@okr/shared-ui';
 import { fill } from '@okr/shared-util-core';
 import {
-  FILE_TRANSFER_I18N_KEYS, FileTransferI18n, FileTransferView, formatFileTransferExpiry, formatFileTransferSize, isFileTransferInline, isFileTransferVideo,
+  FILE_TRANSFER_I18N_KEYS, FileTransferI18n, FileTransferOpenEvent, FileTransferView, formatFileTransferExpiry, formatFileTransferSize, isFileTransferInline, isFileTransferVideo,
 } from '@okr/content-file-transfer-util';
 
-/** A click on a file: view it inline (video, image, pdf) or download it. */
-export interface FileTransferOpenEvent {
-  fileIndex: number;
-  disposition: 'inline' | 'attachment';
-}
+// the event type lives in util (openFileTransferFile takes it); re-exported for the card's callers
+export type { FileTransferOpenEvent } from '@okr/content-file-transfer-util';
 
 /**
  * A transfer as a card (spec 1.115 §4.2/§4.5): sender, message, files with their sizes and

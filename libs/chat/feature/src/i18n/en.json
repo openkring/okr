@@ -230,14 +230,15 @@
     "notPlayable": "This video cannot be played here. You can download it and watch it in another app.",
     "cardTitle": "Video",
     "uploading": "Uploading the video …",
-    "tooLarge": "This video is too large ({size}). You can send videos up to 200 MB.",
+    "tooLarge": "This video is too large ({size}). You can send videos up to 100 MB.",
     "tooLong": "This video is {duration} long. You can send videos up to 2 minutes.",
     "unavailable": "This video is not available to you.",
     "download": "Download video",
     "close": "Close",
     "error": "The video cannot be loaded right now. Please try again in a moment.",
     "copyLink": "Copy link",
-    "linkCopied": "Link copied."
+    "linkCopied": "Link copied.",
+    "tooLargeTransfer": "This video is too large ({size}) – the chat takes videos up to 100 MB. You can still share it as a transfer: everyone here gets a link that expires after a few days."
   },
   "survey": {
     "title": "Create survey",
@@ -275,7 +276,8 @@
     "title": "Add attachment",
     "files": "Add files",
     "position": "Send location",
-    "survey": "Create survey"
+    "survey": "Create survey",
+    "transfer": "Send as transfer"
   },
   "and": "and",
   "validation": {
@@ -704,5 +706,10 @@
   },
   "hidden": {
     "section": "Hidden ({n})"
+  },
+  "fileTransfer": {
+    "openFailed": "The file cannot be opened right now. Please try again later.",
+    "expired": "This transfer has expired. The files are no longer available.",
+    "unavailable": "Sending as a transfer cannot be started right now. Please try again later."
   }
 }

@@ -45,6 +45,12 @@
     },
     {
       "path": "../../shared/pipes/tsconfig.lib.json"
+    },
+    {
+      "path": "../../content/file-transfer/ui/tsconfig.lib.json"
+    },
+    {
+      "path": "../../content/file-transfer/util/tsconfig.lib.json"
     }
   ]
 }

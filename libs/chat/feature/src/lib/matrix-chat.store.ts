@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, Injector, signal } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { getApp } from 'firebase/app';
@@ -11,7 +11,7 @@ import { ActionSheetController, AlertController, ModalController, ToastControlle
 import { AppStore } from '@okr/shared-feature';
 import { AvatarInfo, ChatReminderModel, GroupModel, MatrixMessage, MatrixReadReceipt, MatrixRoom, MatrixUser, PersonModel } from '@okr/shared-models';
 import { debugMessage, fileSizeUnit, fill, formatDuration, getAvatarInfo, hasRole, isKioskOnly, warn } from '@okr/shared-util-core';
-import { AlertService, copyToClipboardWithConfirmation, resourceParams } from '@okr/shared-util-angular';
+import { AlertService, confirm, copyToClipboardWithConfirmation, resourceParams } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
 import { ActivityService } from '@okr/activity-data-access';
@@ -20,7 +20,13 @@ import { AvatarService } from '@okr/avatar-data-access';
 import { ChatReminderService, isServiceAccount, MatrixChatService, MatrixPinsService, MatrixRoomPrefsService, MatrixJumpResult, MatrixPollData } from '@okr/chat-data-access';
 import { AvailablePinboard, AdhocChatFormModel, newAdhocChatForm, PollDef, filterRoomsOfTenant, findSupportRoom, serverNameOf, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef, callableErrorCode, pinboardBroadcastCount, pinboardReplyDraft, isAlbumVideoFile, isVideoLimitError, isVideoUploadError, isOwnNotesRoom, NotesRoomOwner, buildBookmarkContent, buildForwardContent, isForwardable, videoAlbumFallsBackToSynapse, readBookmark, reminderTitle, PinPreview } from '@okr/chat-util';
 
-import { EmojiPickerModal, MessageEditModal } from '@okr/chat-ui';
+import { ChatFileTransferCard, EmojiPickerModal, MessageEditModal } from '@okr/chat-ui';
+// Quick file transfer (spec 1.115 §4.5): the callable client and the pure open helper are light and
+// needed inside a tap (the tab must open synchronously); the transfer FEATURE (store + send modals)
+// is imported dynamically in openFileTransfer and stays out of the chat bundle.
+import { FileTransferService, fileTransferFailureOf } from '@okr/content-file-transfer-data-access';
+import { FileTransferOpenEvent, openFileTransferFile } from '@okr/content-file-transfer-util';
+import { FeatureStore } from '@okr/tenant-feature';
 
 import { RoomEditModal } from './room-edit.modal';
 import { MessageInfoModal } from './message-info.modal';
@@ -46,6 +52,8 @@ export type MatrixChatState = {
   unreadDividerEventId: string | undefined;
   /** Set when «Ab hier ungelesen» left a room: the chat page shows the room list and opens no room by itself. */
   roomListRequested: boolean;
+  /** Quick file-transfer cards seen in this session, by transferKey — one `getFileTransfer` per key. */
+  fileTransferCards: Record<string, ChatFileTransferCard>;
 }
 
 /** How long the sync loop must stay in ERROR before the chat shows a connection error. */
@@ -65,6 +73,7 @@ export const _MatrixChatStore = signalStore(
     threadJumpTarget: undefined,
     unreadDividerEventId: undefined,
     roomListRequested: false,
+    fileTransferCards: {},
   })),
   withProps(() => ({
     appStore: inject(AppStore),
@@ -83,6 +92,9 @@ export const _MatrixChatStore = signalStore(
     toastController: inject(ToastController),
     alertService: inject(AlertService),
     i18nService: inject(I18nService),
+    injector: inject(Injector),
+    featureStore: inject(FeatureStore),
+    fileTransferService: inject(FileTransferService),
     /** `tenant:person` for which a notes room is being resolved or was resolved; '' when none. */
     notesRoomRequestedFor: signal(''),
   })),
@@ -482,6 +494,15 @@ export const _MatrixChatStore = signalStore(
     /** Pending reminders by the bookmark entry they belong to (`bookmarkEventId`). */
     remindersByEntry: computed((): Map<string, ChatReminderModel> =>
       new Map((state.pendingReminders.value() ?? []).map(r => [r.bookmarkEventId, r] as const))),
+    /**
+     * «Als Transfer senden» (spec 1.115 §4.5): only where the tenant has the file-transfer feature
+     * (settled — never on the cold-start guess) and for a registered user who is not a kiosk device.
+     */
+    canSendTransfer: computed(() =>
+      state.featureStore.settled()
+      && state.featureStore.isEnabled()('file-transfer')
+      && hasRole('registered', state.appStore.currentUser())
+      && !isKioskOnly(state.appStore.currentUser())),
   })),
 
   withMethods((store) => {
@@ -520,6 +541,50 @@ export const _MatrixChatStore = signalStore(
      * Never throws: every failure the member can see has its own toast here, so the callers'
      * generic "x Datei(en)" toast would only repeat it.
      */
+    /**
+     * Opens the transfer form for the open room (spec 1.115 §4.5), with `files` preset. In a group
+     * room of this tenant the group is the preset recipient and the room gets the card
+     * (`chatRoomId`); anywhere else nobody is preset and no card is posted (the server would ignore
+     * the room anyway). The transfer feature is loaded on first use.
+     */
+    /** The person whose transfer cards are cached in `fileTransferCards`. */
+    let fileTransferCardsOwner = '';
+
+    const openFileTransfer = async (files: File[] = []): Promise<void> => {
+      const roomId = store.currentRoomId() ?? '';
+      const group = store.currentRoomGroup();
+      const isGroupRoom = !!roomId && !!group && !group.isArchived && (group.kind ?? 'group') === 'group';
+      let transferStore;
+      try {
+        const { FileTransferStore } = await import('@okr/content-file-transfer-feature');
+        transferStore = store.injector.get(FileTransferStore);
+      } catch (error) {
+        // stale chunk after a deploy, or offline
+        warn(`MatrixChatStore.openFileTransfer: loading the transfer feature failed: ${error}`);
+        await store.alertService.showToast(store.i18n.fileTransfer_unavailable());
+        return;
+      }
+      await transferStore.openNew(
+        { files, groupKeys: isGroupRoom && group ? [group.okey] : [] },
+        isGroupRoom ? roomId : '',
+      );
+    };
+
+    /**
+     * A video over the chat cap (MAX_VIDEO_BYTES): offer to send it as a transfer instead. Falls
+     * back to the plain «zu gross» toast where transfers are not available.
+     */
+    const offerVideoAsTransfer = async (file: File, size: number): Promise<void> => {
+      const sizeText = fileSizeUnit(size);
+      if (!store.canSendTransfer()) {
+        await store.alertService.showToast(fill(store.i18n.video_too_large(), { size: sizeText }));
+        return;
+      }
+      const ok = await confirm(store.alertController, fill(store.i18n.video_too_large_transfer(), { size: sizeText }),
+        store.i18n.attach_transfer(), store.i18n.cancel(), true);
+      if (ok) await openFileTransfer([file]);
+    };
+
     const sendVideoToAlbum = async (roomId: string, file: File, threadId?: string): Promise<boolean> => {
       // The TENANT-FILTERED list (matrix-chat skill): the raw service list spans every tenant.
       // Fallback: the synchronous snapshot while rooms() has not caught up yet (same filter).
@@ -531,10 +596,8 @@ export const _MatrixChatStore = signalStore(
         return true;
       } catch (error) {
         if (isVideoLimitError(error)) {
-          const message = error.reason === 'size'
-            ? fill(store.i18n.video_too_large(), { size: fileSizeUnit(error.actual) })
-            : fill(store.i18n.video_too_long(), { duration: formatDuration(error.actual) });
-          await store.alertService.showToast(message);
+          if (error.reason === 'size') await offerVideoAsTransfer(file, error.actual);
+          else await store.alertService.showToast(fill(store.i18n.video_too_long(), { duration: formatDuration(error.actual) }));
           return true;
         }
         if (videoAlbumFallsBackToSynapse(error)) {
@@ -1122,6 +1185,63 @@ export const _MatrixChatStore = signalStore(
           console.error('MatrixChatStore.sendFile: Failed to send file:', error);
           throw error;
         }
+      },
+
+      /******************************* quick file transfer (spec 1.115 §4.5) *************************** */
+
+      /** «Als Transfer senden» from the composer: the form for this room, no files preset. */
+      async sendAsTransfer(): Promise<void> {
+        if (!store.canSendTransfer()) return;
+        await openFileTransfer();
+      },
+
+      /**
+       * Loads the cards of the transfers in view — each key once per session (`getFileTransfer`
+       * checks that the viewer may see it). Expired and not-found both read «abgelaufen»; any other
+       * failure leaves the plain message in place.
+       */
+      ensureFileTransferCards(keys: string[]): void {
+        // The store outlives a logout: never show one person's cards to the next one.
+        const owner = store.appStore.currentUser()?.personKey ?? '';
+        if (owner !== fileTransferCardsOwner) {
+          fileTransferCardsOwner = owner;
+          patchState(store, { fileTransferCards: {} });
+        }
+        if (!owner) return;
+        const known = store.fileTransferCards();
+        const todo = keys.filter(k => !known[k]);
+        if (todo.length === 0) return;
+        const setCard = (key: string, card: ChatFileTransferCard): void => {
+          if (fileTransferCardsOwner !== owner) return;   // answered after a logout
+          patchState(store, { fileTransferCards: { ...store.fileTransferCards(), [key]: card } });
+        };
+        for (const key of todo) {
+          setCard(key, { status: 'loading' });
+          store.fileTransferService.get(key).then(
+            view => setCard(key, { status: 'ready', view }),
+            error => setCard(key, { status: fileTransferFailureOf(error) === 'other' ? 'failed' : 'expired' }),
+          );
+        }
+      },
+
+      /**
+       * A file button on a transfer card. MUST run synchronously inside the tap: an inline file
+       * opens in a tab that is opened before the first await (Safari blocks it afterwards).
+       */
+      openTransferFile(transferKey: string, event: FileTransferOpenEvent): void {
+        const view = store.fileTransferCards()[transferKey]?.view;
+        if (!view) return;
+        openFileTransferFile(view, event,
+          (index, disposition) => store.fileTransferService.openFile(transferKey, index, disposition),
+          { videoInTab: true },
+        ).catch(async (error: unknown) => {
+          if (fileTransferFailureOf(error) === 'other') {
+            await store.alertService.showToast(store.i18n.fileTransfer_openFailed());
+            return;
+          }
+          patchState(store, { fileTransferCards: { ...store.fileTransferCards(), [transferKey]: { status: 'expired', view } } });
+          await store.alertService.showToast(store.i18n.fileTransfer_expired());
+        });
       },
 
       /**

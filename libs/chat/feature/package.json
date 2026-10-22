@@ -30,6 +30,10 @@
     "@okr/chat-ui": "*",
     "@okr/subject-group-data-access": "*",
     "@okr/subject-group-util": "*",
-    "@sentry/angular": "*"
+    "@sentry/angular": "*",
+    "@okr/content-file-transfer-data-access": "*",
+    "@okr/content-file-transfer-util": "*",
+    "@okr/content-file-transfer-feature": "*",
+    "@okr/tenant-feature": "*"
   }
 }

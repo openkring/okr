@@ -519,3 +519,36 @@ export function findGroupOfRoom<T extends RoomOwningGroup>(
     (!!aliasKey && groupRoomAliasLocalpart(g.okey) === `group_${aliasKey}`)
   );
 }
+
+/**
+ * Content field of a quick file-transfer card (spec 1.115 §4.5). The server posts the card as an
+ * `m.text` whose content carries `{ transferKey }` under this key — mirrors `fileTransferCardContent`
+ * in `apps/functions/src/file-transfer/file-transfer-notify.ts` (libs can't be imported there).
+ */
+export const FILE_TRANSFER_CONTENT_KEY = 'org.okr.fileTransfer';
+
+/** A transfer key is a Firestore document id; anything else in the field is ignored. */
+const TRANSFER_KEY_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
+
+/**
+ * The transfer a chat message stands for, or undefined for any other message.
+ * Any client can write the field, so it only selects WHICH transfer to load: what the card then
+ * shows comes from `getFileTransfer`, which admits only the sender, a recipient and an admin.
+ */
+export function fileTransferKeyOf(content: Record<string, unknown>): string | undefined {
+  const field = content?.[FILE_TRANSFER_CONTENT_KEY] as { transferKey?: unknown } | null | undefined;
+  const key = field && typeof field === 'object' ? field.transferKey : undefined;
+  return typeof key === 'string' && TRANSFER_KEY_PATTERN.test(key) ? key : undefined;
+}
+
+/**
+ * True when a card message's body is the one-line text the server writes beside the card
+ * («… hat 2 Dateien geteilt (bis …): <origin>/private/file-transfer/<key>») — the only text the
+ * card may replace. Any other body is shown under the card, so a forged field never hides what
+ * somebody actually wrote (same rule as the album video card).
+ */
+export function isFileTransferCardBody(body: string, transferKey: string, origins: readonly string[]): boolean {
+  const text = (body ?? '').trim();
+  if (!text || /[\r\n]/.test(text)) return false;
+  return origins.some(origin => text.endsWith(`: ${origin}/private/file-transfer/${transferKey}`));
+}

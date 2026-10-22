@@ -49,7 +49,18 @@ import of this lib.
 The card emits `open` with the file and `inline`/`attachment`. `openFileTransferFile` fetches a
 short-lived signed URL: an inline video plays in a `<video>` on the page, an inline image or PDF
 opens in a tab opened before the await (Safari blocks a later `window.open`), a download
-navigates to the URL (the response says `attachment`, so the page stays).
+navigates to the URL (the response says `attachment`, so the page stays). The helper lives in
+`@okr/content-file-transfer-util` because the chat calls it too (with `videoInTab`, no player).
+
+## In the chat
+
+A group-room card is an `m.text` with `org.okr.fileTransfer: { transferKey }` (`fileTransferKeyOf`
+in `@okr/chat-util`). `MatrixChatStore` loads each card once per session through
+`getFileTransfer` (expired or not found → «abgelaufen») and opens files with
+`openFileTransferFile`; the message list only renders `FileTransferCard`. «Als Transfer senden»
+in the composer, and the offer for a video over the chat cap (100 MB), open `openNew` through a
+dynamic import of this lib: in a group room the group is preset and the room gets the card,
+anywhere else nobody is preset.
 
 ## Monitor
 

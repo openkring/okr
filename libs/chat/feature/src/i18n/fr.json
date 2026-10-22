@@ -230,14 +230,15 @@
     "notPlayable": "Cette vidéo ne peut pas être lue ici. Tu peux la télécharger et la regarder dans une autre application.",
     "cardTitle": "Vidéo",
     "uploading": "La vidéo est en cours d'envoi …",
-    "tooLarge": "Cette vidéo est trop grande ({size}). Tu peux envoyer des vidéos jusqu'à 200 Mo.",
+    "tooLarge": "Cette vidéo est trop grande ({size}). Tu peux envoyer des vidéos jusqu'à 100 Mo.",
     "tooLong": "Cette vidéo dure {duration}. Tu peux envoyer des vidéos jusqu'à 2 minutes.",
     "unavailable": "Cette vidéo n'est pas disponible pour toi.",
     "download": "Télécharger la vidéo",
     "close": "Fermer",
     "error": "La vidéo ne peut pas être chargée pour le moment. Réessaie dans un instant.",
     "copyLink": "Copier le lien",
-    "linkCopied": "Lien copié."
+    "linkCopied": "Lien copié.",
+    "tooLargeTransfer": "Cette vidéo est trop grande ({size}) – le chat accepte les vidéos jusqu'à 100 Mo. Tu peux quand même la partager comme transfert : tout le monde ici reçoit un lien qui expire après quelques jours."
   },
   "survey": {
     "title": "Créer un sondage",
@@ -275,7 +276,8 @@
     "title": "Ajouter une pièce jointe",
     "files": "Ajouter des fichiers",
     "position": "Envoyer la position",
-    "survey": "Créer un sondage"
+    "survey": "Créer un sondage",
+    "transfer": "Envoyer comme transfert"
   },
   "and": "et",
   "validation": {
@@ -704,5 +706,10 @@
   },
   "hidden": {
     "section": "Masqués ({n})"
+  },
+  "fileTransfer": {
+    "openFailed": "Le fichier ne peut pas être ouvert pour le moment. Réessaie plus tard.",
+    "expired": "Ce transfert a expiré. Les fichiers ne sont plus disponibles.",
+    "unavailable": "L'envoi comme transfert ne peut pas démarrer pour le moment. Réessaie plus tard."
   }
 }

@@ -8,9 +8,21 @@ import { VideoCard } from '@okr/shared-ui';
 import { videoDocKeyOf, videoLink } from '@okr/content-document-util';
 import { MatrixMessage, MatrixReadReceipt, PersonModelName } from '@okr/shared-models';
 import { AvatarService } from '@okr/avatar-data-access';
+import { FileTransferCard } from '@okr/content-file-transfer-ui';
+import { FileTransferOpenEvent, FileTransferView } from '@okr/content-file-transfer-util';
 import { MatrixReadReceiptStrip } from './matrix-read-receipt-strip';
 import { PollMessage } from './poll-message';
-import { decorateMentionPills, extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessages, ImageBatchGroup, isVideoMessage, linkifyText, readBookmark, isTrustedBookmarkEntry, ChatBookmark, parseMatrixPermalink, MatrixChatI18n, MessageOrBatch, readForwarded } from '@okr/chat-util';
+import { decorateMentionPills, extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessages, ImageBatchGroup, isVideoMessage, linkifyText, readBookmark, isTrustedBookmarkEntry, ChatBookmark, parseMatrixPermalink, MatrixChatI18n, MessageOrBatch, readForwarded, fileTransferKeyOf, isFileTransferCardBody } from '@okr/chat-util';
+
+/**
+ * A quick file-transfer card in a room (spec 1.115 §4.5), loaded once per transferKey by the chat
+ * store: `loading` until `getFileTransfer` answers, `expired` also for «not found» (the server never
+ * tells a stranger the transfer exists), `failed` for any other error (the plain message is shown).
+ */
+export interface ChatFileTransferCard {
+  status: 'loading' | 'ready' | 'expired' | 'failed';
+  view?: FileTransferView;
+}
 
 /** imgix thumbnail size for a mention pill's avatar — 2x the 18px CSS box, for retina. */
 const MENTION_AVATAR_SIZE = 36;
@@ -26,7 +38,8 @@ const MENTION_AVATAR_SIZE = 36;
     SvgIconPipe,
     PollMessage,
     MatrixReadReceiptStrip,
-    VideoCard
+    VideoCard,
+    FileTransferCard
 ],
   styles: [`
     :host {
@@ -258,6 +271,13 @@ const MENTION_AVATAR_SIZE = 36;
        old inline player. Without an explicit width the card shrinks to its play badge in the bubble. */
     .chat-video-card {
       width: 240px;
+      max-width: 100%;
+    }
+
+    /* Quick file-transfer card (spec 1.115): wide enough for a file row with its two buttons. */
+    .chat-file-transfer-card {
+      display: block;
+      width: 320px;
       max-width: 100%;
     }
 
@@ -656,7 +676,24 @@ const MENTION_AVATAR_SIZE = 36;
                           @case ('m.text') {
                             @let videoKey = videoKeyOf(item);
                             @let bookmark = bookmarkOf(item);
-                            @if (bookmark) {
+                            @let transferKey = transferKeyOf(item);
+                            @let transfer = transferKey ? fileTransferCards()[transferKey] : undefined;
+                            @if (transferKey && transfer?.status !== 'failed') {
+                              <!-- A quick file transfer (spec 1.115 §4.5). Only the card's buttons stop the
+                                   tap; the rest of the card lets it through to the bubble's action sheet. -->
+                              <div class="chat-file-transfer-card" (click)="onFileTransferCardClick($event)">
+                                <okr-file-transfer-card
+                                  [transferKey]="transferKey"
+                                  [view]="transfer?.view"
+                                  [expired]="transfer?.status === 'expired'"
+                                  (open)="fileTransferOpened.emit({ transferKey, event: $event })"
+                                />
+                              </div>
+                              @if (!isFileTransferCardBody(item, transferKey)) {
+                                <!-- any other body is shown too: a forged field must never hide what was written -->
+                                <p class="message-text" [innerHTML]="linkify(item.body)"></p>
+                              }
+                            } @else if (bookmark) {
                               <!-- Bookmark entry (spec 1.104): a tap opens the original, not the action sheet. -->
                               <div class="bookmark-card" role="button" tabindex="0"
                                 (click)="onBookmarkCardClick($event, bookmark)"
@@ -865,6 +902,8 @@ export class MatrixMessageList {
   /** Signed posters of the album videos linked in this list, by docKey — owned by the feature (VideoUrlService). */
   public readonly videoCards = input<Record<string, { posterUrl: string; available: boolean; loading: boolean }>>({});
   public readonly videoUnavailableLabel = input('');
+  /** Quick file-transfer cards by transferKey — loaded and cached by the feature (MatrixChatStore). */
+  public readonly fileTransferCards = input<Record<string, ChatFileTransferCard>>({});
 
 
   messageClicked = output<MatrixMessage>();
@@ -887,6 +926,8 @@ export class MatrixMessageList {
   loadOlder = output<void>();
   /** A tap on an album video card: the docKey to play. */
   public readonly videoCardClicked = output<string>();
+  /** A file button on a transfer card. Emitted synchronously inside the tap (a tab must open in the gesture). */
+  public readonly fileTransferOpened = output<{ transferKey: string; event: FileTransferOpenEvent }>();
   public readonly bookmarkClicked = output<ChatBookmark>();
   /** A matrix.to link to a room or message on our homeserver was tapped. */
   public readonly permalinkClicked = output<{ roomIdOrAlias: string; eventId?: string }>();
@@ -1165,6 +1206,21 @@ export class MatrixMessageList {
   /** The album video a text message points at (the org.okr.video field, else a bare link on an app origin). */
   protected videoKeyOf(item: MatrixMessage): string | undefined {
     return videoDocKeyOf(item.content, item.body ?? '', this.linkOrigins());
+  }
+
+  /** The quick file transfer a text message stands for (the org.okr.fileTransfer field). */
+  protected transferKeyOf(item: MatrixMessage): string | undefined {
+    return fileTransferKeyOf(item.content ?? {});
+  }
+
+  /** True when the body is the server's one-line card text — the only text the card may replace. */
+  protected isFileTransferCardBody(item: MatrixMessage, transferKey: string): boolean {
+    return isFileTransferCardBody(item.body ?? '', transferKey, this.linkOrigins());
+  }
+
+  /** A tap on one of the card's buttons must not also open the message action sheet. */
+  protected onFileTransferCardClick(event: Event): void {
+    if ((event.target as Element | null)?.closest?.('ion-button')) event.stopPropagation();
   }
 
   /** True when the body is exactly the canonical link of this video — the only text a card may replace. */

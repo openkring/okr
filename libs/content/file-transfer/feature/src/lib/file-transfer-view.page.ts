@@ -4,10 +4,10 @@ import { IonBackButton, IonButtons, IonContent, IonHeader, IonTitle, IonToolbar 
 import { from, of } from 'rxjs';
 
 import { EmptyList, Spinner } from '@okr/shared-ui';
-import { FileTransferError } from '@okr/content-file-transfer-data-access';
+import { fileTransferFailureOf } from '@okr/content-file-transfer-data-access';
 import { FileTransferCard, FileTransferOpenEvent } from '@okr/content-file-transfer-ui';
+import { openFileTransferFile } from '@okr/content-file-transfer-util';
 
-import { openFileTransferFile } from './file-transfer-open.util';
 import { FileTransferStore } from './file-transfer.store';
 
 /**
@@ -69,9 +69,7 @@ export class FileTransferViewPage {
   protected readonly failure = computed(() => {
     const error = this.viewResource.error();
     if (!error) return this.transferKey() ? '' : 'notFound';
-    const cause = (error as { cause?: unknown }).cause ?? error;
-    const message = cause instanceof FileTransferError ? cause.message : '';
-    return message === 'expired' || message === 'notFound' ? message : 'other';
+    return fileTransferFailureOf(error);
   });
   protected readonly video = signal<{ url: string; name: string } | undefined>(undefined);
 
@@ -82,8 +80,7 @@ export class FileTransferViewPage {
       const outcome = await openFileTransferFile(view, event, (index, disposition) => this.store.fileUrl(view.transferKey, index, disposition));
       if (outcome.kind === 'video') this.video.set({ url: outcome.url, name: outcome.name });
     } catch (error) {
-      const message = error instanceof FileTransferError ? error.message : '';
-      if (message === 'expired') this.viewResource.reload();
+      if (fileTransferFailureOf(error) === 'expired') this.viewResource.reload();
       await this.store.toast(this.store.errorText(error));
     }
   }

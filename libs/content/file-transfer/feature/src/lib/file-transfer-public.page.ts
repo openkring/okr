@@ -7,9 +7,8 @@ import { I18nService } from '@okr/shared-i18n';
 import { EmptyList, PasswordInput, PasswordInputI18n, Spinner } from '@okr/shared-ui';
 import { FileTransferError, FileTransferService } from '@okr/content-file-transfer-data-access';
 import { FileTransferCard, FileTransferOpenEvent } from '@okr/content-file-transfer-ui';
-import { FILE_TRANSFER_I18N_KEYS, FileTransferI18n } from '@okr/content-file-transfer-util';
+import { FILE_TRANSFER_I18N_KEYS, FileTransferI18n, openFileTransferFile } from '@okr/content-file-transfer-util';
 
-import { openFileTransferFile } from './file-transfer-open.util';
 
 type PublicFailure = 'notFound' | 'expired' | 'rateLimited' | 'unavailable' | 'other';
 

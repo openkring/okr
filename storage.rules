@@ -61,11 +61,12 @@ service firebase.storage {
     // this app has ever seen, and holding it there is what keeps a stray or hostile upload
     // from filling the bucket. Album VIDEOS genuinely need more — a 2-minute 1080p clip off
     // an iPhone is routinely 60-150 MB — so they get their own, deliberately narrow grant
-    // below (`videoSizeOk()`, 200 MB) instead of the general cap being raised for everything.
+    // below (`videoSizeOk()`, 100 MB) instead of the general cap being raised for everything.
     // Raising `sizeOk()` would buy the videos their headroom at the price of letting a
-    // 200 MB anything land anywhere in the bucket; the carve-out costs one match block.
+    // 100 MB anything land anywhere in the bucket; the carve-out costs one match block.
     //
-    // 200 MB is not a free choice: it must stay equal to MAX_VIDEO_BYTES in
+    // 100 MB (200 MB until the quick file transfer, spec 1.115, took over the big files) is
+    // not a free choice: it must stay equal to MAX_VIDEO_BYTES in
     // libs/shared/util-core/src/lib/video.util.ts (the client-side pre-check) and to
     // MAX_INPUT_BYTES in apps/functions/src/video/index.ts (the transcoder's backstop).
     // The three are one limit expressed in three places; if they drift, the user either
@@ -75,7 +76,7 @@ service firebase.storage {
       return request.resource.size < 25 * 1024 * 1024;   // 25 MB cap
     }
     function videoSizeOk() {
-      return request.resource.size < 200 * 1024 * 1024;  // 200 MB cap, album videos only
+      return request.resource.size < 100 * 1024 * 1024;  // 100 MB cap, album videos only
     }
     // Video by file EXTENSION, never by contentType. `uploadToFirebaseStorage` passes no
     // explicit contentType, so the browser-inferred `File.type` wins -- and for .mov that is
@@ -150,7 +151,7 @@ service firebase.storage {
     // The mp4 and jpg renderings live under `.../album/renderings/` and are written by the
     // Admin SDK, which bypasses these rules entirely; they need no grant, and `sub != 'renderings'`
     // keeps this block from widening their cap too -- a member could otherwise write directly
-    // into `renderings/` under the 200 MB video cap instead of the general 25 MB one.
+    // into `renderings/` under the 100 MB video cap instead of the general 25 MB one.
     match /tenant/{tenantId}/{modelType}/{key}/album/{sub}/{path=**} {
       allow create, update: if inTenant(tenantId)
         && (modelType == 'section' || modelType == 'folder')

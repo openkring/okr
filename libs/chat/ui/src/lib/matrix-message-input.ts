@@ -432,6 +432,11 @@ export class MatrixMessageInput {
    * (ionInput, and the keyup/mouseup/touchend caret listeners).
    */
   public isDirectRoom = input<boolean>(false);
+  /**
+   * Offer «Als Transfer senden» (spec 1.115 §4.5): the parent decides — the tenant has the
+   * file-transfer feature and the user is no kiosk.
+   */
+  public canSendTransfer = input<boolean>(false);
 
   // outputs
   messageSent = output<MessageDraft>();
@@ -446,6 +451,8 @@ export class MatrixMessageInput {
   filesSent = output<File[]>();
   /** Non-image files picked in one go (videos, documents, audio) — sent right away by the parent. */
   filesPicked = output<File[]>();
+  /** «Als Transfer senden» was chosen: the parent opens the transfer form for this room. */
+  transferRequested = output<void>();
 
   // signals
   protected messageText = signal<string>('');
@@ -990,6 +997,13 @@ export class MatrixMessageInput {
     filesBtn.handler = () => this.selectFile(this.fileAccept());
     actionSheetOptions.buttons.push(filesBtn);
 
+    if (this.canSendTransfer()) {
+      // big files or many at once, with a link that expires (spec 1.115 §4.5)
+      const transferBtn = createActionSheetButton('chat.attachment.transfer', this.i18n().attach_transfer(), this.imgixBaseUrl, 'send');
+      transferBtn.handler = () => this.transferRequested.emit();
+      actionSheetOptions.buttons.push(transferBtn);
+    }
+
     const positionBtn = createActionSheetButton('chat.attachment.position', this.i18n().attach_position(), this.imgixBaseUrl, 'location');
     positionBtn.handler = () => this.locationSent.emit();
     actionSheetOptions.buttons.push(positionBtn);
@@ -1037,8 +1051,9 @@ export class MatrixMessageInput {
     // on iOS a handle goes stale (and reads empty, silently) once the input is cleared.
     // See materializeFile. Album videos are read too: their PUT only starts after the limit check
     // and the prepareChatVideoUpload callable, and a stale iOS gallery handle then uploaded a
-    // 0-byte object that rendered as a blank card (2026-10-03). Over-limit videos are refused
-    // anyway and stay handles, so nothing beyond MAX_VIDEO_BYTES is buffered. Other attachments
+    // 0-byte object that rendered as a blank card (2026-10-03). Over-limit videos stay handles
+    // (the store offers them as a transfer, which streams them in chunks), so nothing beyond
+    // MAX_VIDEO_BYTES is buffered. Other attachments
     // are sent immediately, so they keep streaming straight off disk.
     const materialized = await Promise.all(images.map(f => materializeFile(f)));
     const sent = await Promise.all(others.map(f =>

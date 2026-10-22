@@ -249,6 +249,10 @@ export const MATRIX_CHAT_I18N_KEYS = {
   video_uploading:           PFX + 'video.uploading',
   video_too_large:           PFX + 'video.tooLarge',
   video_too_long:            PFX + 'video.tooLong',
+  video_too_large_transfer:  PFX + 'video.tooLargeTransfer',
+  fileTransfer_openFailed:   PFX + 'fileTransfer.openFailed',
+  fileTransfer_expired:      PFX + 'fileTransfer.expired',
+  fileTransfer_unavailable:  PFX + 'fileTransfer.unavailable',
   video_unavailable:         PFX + 'video.unavailable',
   video_download:            PFX + 'video.download',
   video_close:               PFX + 'video.close',
@@ -280,6 +284,7 @@ export const MATRIX_CHAT_I18N_KEYS = {
   attach_title:              PFX + 'attach.title',
   attach_files:              PFX + 'attach.files',
   attach_position:           PFX + 'attach.position',
+  attach_transfer:           PFX + 'attach.transfer',
   attach_survey:             PFX + 'attach.survey',
 
   isTyping:                  PFX + 'isTyping',

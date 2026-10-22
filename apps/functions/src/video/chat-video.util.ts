@@ -6,7 +6,7 @@ import { isAlbumVideoObjectPath } from './video-sign.util';
 /** Mirrors MAX_VIDEO_BYTES in @okr/shared-util-core (see the "drei Stellen" comment there) and
  *  `videoSizeOk()` in the storage rules. Bound into the signed upload URL as
  *  `x-goog-content-length-range`, so GCS itself refuses a larger body. */
-export const MAX_VIDEO_BYTES = 200 * 1024 * 1024; // 200 MB
+export const MAX_VIDEO_BYTES = 100 * 1024 * 1024; // 100 MB
 
 const VIDEO_EXTENSIONS = ['mp4', 'mov', 'avi'];
 const MAX_FILE_NAME = 120;

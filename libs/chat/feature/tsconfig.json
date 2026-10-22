@@ -75,6 +75,18 @@
     },
     {
       "path": "../../chat/ui/tsconfig.lib.json"
+    },
+    {
+      "path": "../../content/file-transfer/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../content/file-transfer/util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../content/file-transfer/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../tenant/feature/tsconfig.lib.json"
     }
   ]
 }

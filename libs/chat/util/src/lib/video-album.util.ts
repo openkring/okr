@@ -14,7 +14,7 @@ export function isAlbumVideoFile(file: File): boolean {
 }
 
 /**
- * Thrown before anything goes out when a chat video breaks the album limits (2 min, 200 MB).
+ * Thrown before anything goes out when a chat video breaks the album limits (2 min, 100 MB).
  * A distinct type so the store can show the size/duration toast instead of a generic failure.
  */
 export class VideoLimitError extends Error {

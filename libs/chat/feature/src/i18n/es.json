@@ -230,14 +230,15 @@
     "notPlayable": "Este vídeo no se puede reproducir aquí. Puedes descargarlo y verlo en otra aplicación.",
     "cardTitle": "Vídeo",
     "uploading": "Subiendo el vídeo …",
-    "tooLarge": "Este vídeo es demasiado grande ({size}). Puedes enviar vídeos de hasta 200 MB.",
+    "tooLarge": "Este vídeo es demasiado grande ({size}). Puedes enviar vídeos de hasta 100 MB.",
     "tooLong": "Este vídeo dura {duration}. Puedes enviar vídeos de hasta 2 minutos.",
     "unavailable": "Este vídeo no está disponible para ti.",
     "download": "Descargar el vídeo",
     "close": "Cerrar",
     "error": "El vídeo no se puede cargar ahora mismo. Vuelve a intentarlo en un momento.",
     "copyLink": "Copiar enlace",
-    "linkCopied": "Enlace copiado."
+    "linkCopied": "Enlace copiado.",
+    "tooLargeTransfer": "Este vídeo es demasiado grande ({size}): el chat admite vídeos de hasta 100 MB. Aun así puedes compartirlo como transferencia: todos aquí reciben un enlace que caduca a los pocos días."
   },
   "survey": {
     "title": "Crear encuesta",
@@ -275,7 +276,8 @@
     "title": "Añadir adjunto",
     "files": "Añadir archivos",
     "position": "Enviar ubicación",
-    "survey": "Crear encuesta"
+    "survey": "Crear encuesta",
+    "transfer": "Enviar como transferencia"
   },
   "and": "y",
   "validation": {
@@ -704,5 +706,10 @@
   },
   "hidden": {
     "section": "Ocultos ({n})"
+  },
+  "fileTransfer": {
+    "openFailed": "Ahora mismo no se puede abrir el archivo. Inténtalo de nuevo más tarde.",
+    "expired": "Esta transferencia ha caducado. Los archivos ya no están disponibles.",
+    "unavailable": "Ahora mismo no se puede iniciar el envío como transferencia. Inténtalo de nuevo más tarde."
   }
 }

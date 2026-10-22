@@ -18,7 +18,7 @@ import { videoDocKeyOf, videoLink } from '@okr/content-document-util';
 import { MatrixMessageInput, MatrixMessageList, MatrixRoomList, MessageActionsSheet, PinBanner, PollDetailModal, ReactionDetailsModal, ReminderPicker } from '@okr/chat-ui';
 import { MatrixPollData } from '@okr/chat-data-access';
 import { buildMessageActionLabels, buildMessageActionsCtx } from './message-actions.feature';
-import { buildEditedPollAnswers, canEditPoll, parsePollContent, convertHeicToJpeg, groupRoomAliasLocalpart, shouldDeferAskRoom, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, readBookmark, isTrustedBookmarkEntry, ChatBookmark, resolvePermalinkTarget, shouldSendReceipt, MessageDraft, UploadTooLargeError, availablePresets, reminderDueAt, ReminderPreset, getMessageActions, MessageActionId, verifiedForwardedNames } from '@okr/chat-util';
+import { fileTransferKeyOf, buildEditedPollAnswers, canEditPoll, parsePollContent, convertHeicToJpeg, groupRoomAliasLocalpart, shouldDeferAskRoom, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, readBookmark, isTrustedBookmarkEntry, ChatBookmark, resolvePermalinkTarget, shouldSendReceipt, MessageDraft, UploadTooLargeError, availablePresets, reminderDueAt, ReminderPreset, getMessageActions, MessageActionId, verifiedForwardedNames } from '@okr/chat-util';
 
 import { MatrixChatStore } from './matrix-chat.store';
 import { PollCreateModal } from './poll-create.modal';
@@ -527,6 +527,8 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                     [videoCards]="videoCards()"
                     [videoUnavailableLabel]="store.i18n.video_unavailable()"
                     (videoCardClicked)="onVideoCardClicked($event)"
+                    [fileTransferCards]="store.fileTransferCards()"
+                    (fileTransferOpened)="store.openTransferFile($event.transferKey, $event.event)"
                   />
                 }
 
@@ -546,6 +548,8 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                     [roomId]="currentRoomId()"
                     [mentionCandidates]="store.mentionCandidates()"
                     [isDirectRoom]="store.isCurrentRoomDirect()"
+                    [canSendTransfer]="store.canSendTransfer()"
+                    (transferRequested)="store.sendAsTransfer()"
                     [typingUsers]="typingUsers()"
                     [replyToMessage]="replyToMessage()"
                     [confirmSend]="pinboardConfirm()"
@@ -655,6 +659,8 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                     [videoCards]="videoCards()"
                     [videoUnavailableLabel]="store.i18n.video_unavailable()"
                     (videoCardClicked)="onVideoCardClicked($event)"
+                    [fileTransferCards]="store.fileTransferCards()"
+                    (fileTransferOpened)="store.openTransferFile($event.transferKey, $event.event)"
                     (messageClicked)="onMessageClicked($event)"
                     (bookmarkClicked)="onBookmarkClicked($event)"
                     (permalinkClicked)="openPermalink($event)"
@@ -906,6 +912,18 @@ export class MatrixChat implements OnDestroy {
     return cards;
   });
 
+  // ─── quick file-transfer cards in messages (spec 1.115 §4.5) ─────────────────
+  /** transferKeys of the transfer cards in the room and the open thread, sorted; equal by content. */
+  private readonly visibleTransferKeys = computed(() => {
+    const keys = new Set<string>();
+    for (const m of [...this.messages(), ...this.threadMessages()]) {
+      if (m.type !== 'm.text' || m.isRedacted) continue;
+      const key = fileTransferKeyOf(m.content ?? {});
+      if (key) keys.add(key);
+    }
+    return [...keys].sort();
+  }, { equal: (a, b) => a.length === b.length && a.every((k, i) => k === b[i]) });
+
   // Ready state: true once the Matrix client exists; sync status shown via the banner
   protected readonly isMatrixReady = computed(() =>
     this.store.matrixUser() &&
@@ -931,6 +949,13 @@ export class MatrixChat implements OnDestroy {
       const keys = this.visibleVideoKeys();
       if (keys.length === 0) return;
       untracked(() => this.videoUrls.ensure(keys).catch(ex => warn(`MatrixChat: signing chat video posters failed: ${ex}`)));
+    });
+
+    // Load the transfer cards in view; the store asks the server once per key per session.
+    effect(() => {
+      const keys = this.visibleTransferKeys();
+      if (keys.length === 0) return;
+      untracked(() => this.store.ensureFileTransferCards(keys));
     });
 
     // Reactively initialize Matrix when matrixUser becomes available.

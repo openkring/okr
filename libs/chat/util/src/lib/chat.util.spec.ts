@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildReceiptAriaLabel, buildReceiptRows, filterRoomsOfTenant, isBridgedRoom, isForeignRoom, serverNameOf, isRoomClassifiable, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower, groupRoomAliasLocalpart, groupKeyFromRoomAlias, isRoomGoneError, askRoomAliasLocalpart, shouldDeferAskRoom, findGroupOfRoom } from './chat.util';
+import { buildReceiptAriaLabel, buildReceiptRows, filterRoomsOfTenant, isBridgedRoom, isForeignRoom, serverNameOf, isRoomClassifiable, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower, groupRoomAliasLocalpart, groupKeyFromRoomAlias, isRoomGoneError, askRoomAliasLocalpart, shouldDeferAskRoom, findGroupOfRoom, fileTransferKeyOf, isFileTransferCardBody } from './chat.util';
 
 describe('buildReceiptAriaLabel', () => {
   it('returns empty string for no receipts', () => {
@@ -574,5 +574,49 @@ describe('buildReceiptRows', () => {
 
   it('returns just the readers without reactions', () => {
     expect(buildReceiptRows([alice], undefined, new Map())).toEqual([{ ...alice, emojis: [] }]);
+  });
+});
+
+describe('fileTransferKeyOf', () => {
+  it('reads the transfer key of a transfer card', () => {
+    expect(fileTransferKeyOf({ 'org.okr.fileTransfer': { transferKey: 't1' } })).toBe('t1');
+  });
+
+  it('is undefined for a message without the field', () => {
+    expect(fileTransferKeyOf({ body: 'x' })).toBeUndefined();
+  });
+
+  it('is undefined for a malformed field', () => {
+    expect(fileTransferKeyOf({ 'org.okr.fileTransfer': 't1' })).toBeUndefined();
+    expect(fileTransferKeyOf({ 'org.okr.fileTransfer': { transferKey: 42 } })).toBeUndefined();
+    expect(fileTransferKeyOf({ 'org.okr.fileTransfer': { transferKey: '' } })).toBeUndefined();
+    expect(fileTransferKeyOf({ 'org.okr.fileTransfer': { transferKey: '../x' } })).toBeUndefined();
+    expect(fileTransferKeyOf({ 'org.okr.fileTransfer': null })).toBeUndefined();
+  });
+
+  it('is undefined for missing content', () => {
+    expect(fileTransferKeyOf(undefined as unknown as Record<string, unknown>)).toBeUndefined();
+  });
+});
+
+describe('isFileTransferCardBody', () => {
+  const origins = ['https://app.seeclub.org'];
+  const body = 'Anna Muster hat 2 Dateien geteilt (bis 01.11.2026): https://app.seeclub.org/private/file-transfer/t1';
+
+  it('accepts the body the server posts with the card', () => {
+    expect(isFileTransferCardBody(body, 't1', origins)).toBe(true);
+  });
+
+  it('rejects a body that links another transfer or origin', () => {
+    expect(isFileTransferCardBody(body, 't2', origins)).toBe(false);
+    expect(isFileTransferCardBody(body, 't1', ['https://evil.example'])).toBe(false);
+  });
+
+  it('rejects a body with more than one line (written text must stay visible)', () => {
+    expect(isFileTransferCardBody('Hallo\n' + body, 't1', origins)).toBe(false);
+  });
+
+  it('rejects any other text', () => {
+    expect(isFileTransferCardBody('Schaut euch das an', 't1', origins)).toBe(false);
   });
 });

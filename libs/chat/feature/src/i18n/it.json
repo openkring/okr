@@ -230,14 +230,15 @@
     "notPlayable": "Questo video non può essere riprodotto qui. Puoi scaricarlo e guardarlo in un’altra app.",
     "cardTitle": "Video",
     "uploading": "Caricamento del video …",
-    "tooLarge": "Questo video è troppo grande ({size}). Puoi inviare video fino a 200 MB.",
+    "tooLarge": "Questo video è troppo grande ({size}). Puoi inviare video fino a 100 MB.",
     "tooLong": "Questo video dura {duration}. Puoi inviare video fino a 2 minuti.",
     "unavailable": "Questo video non è disponibile per te.",
     "download": "Scarica il video",
     "close": "Chiudi",
     "error": "Il video non si riesce a caricare al momento. Riprova tra un istante.",
     "copyLink": "Copia link",
-    "linkCopied": "Link copiato."
+    "linkCopied": "Link copiato.",
+    "tooLargeTransfer": "Questo video è troppo grande ({size}): la chat accetta video fino a 100 MB. Puoi comunque condividerlo come trasferimento: tutti qui ricevono un link che scade dopo qualche giorno."
   },
   "survey": {
     "title": "Crea sondaggio",
@@ -275,7 +276,8 @@
     "title": "Aggiungi allegato",
     "files": "Aggiungi file",
     "position": "Invia posizione",
-    "survey": "Crea sondaggio"
+    "survey": "Crea sondaggio",
+    "transfer": "Invia come trasferimento"
   },
   "and": "e",
   "validation": {
@@ -704,5 +706,10 @@
   },
   "hidden": {
     "section": "Nascoste ({n})"
+  },
+  "fileTransfer": {
+    "openFailed": "Al momento il file non si può aprire. Riprova più tardi.",
+    "expired": "Questo trasferimento è scaduto. I file non sono più disponibili.",
+    "unavailable": "Al momento l'invio come trasferimento non si può avviare. Riprova più tardi."
   }
 }

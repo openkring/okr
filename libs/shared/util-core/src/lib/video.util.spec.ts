@@ -39,7 +39,7 @@ describe('checkVideoLimits', () => {
   });
 
   it('exposes the limits it enforces', () => {
-    expect(MAX_VIDEO_BYTES).toBe(200 * 1024 * 1024);
+    expect(MAX_VIDEO_BYTES).toBe(100 * 1024 * 1024);
     expect(MAX_VIDEO_SECONDS).toBe(120);
   });
 });
