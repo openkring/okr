@@ -272,6 +272,9 @@
     "update": {
       "conf": "Das Album wurde aktualisiert.",
       "error": "Das Album konnte nicht aktualisiert werden."
-    }
+    },
+    "appliesTo": "gilt für: {title}",
+    "loadFailed": "Deine Alben konnten nicht geladen werden.",
+    "actionFailed": "Das hat leider nicht geklappt. Versuch es bitte nochmals."
   }
 }

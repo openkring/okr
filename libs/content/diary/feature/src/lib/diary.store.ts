@@ -130,17 +130,13 @@ export const DiaryStore = signalStore(
       stream: ({ params }) => {
         const { authorKey, tenantId, kind, key, from, to } = params;
         if (!authorKey || !tenantId || !kind) return of([] as DiaryModel[]);
-        switch (kind) {
-          case 'date': return store.diaryService.listByDateRange(authorKey, tenantId, from, to);
-          case 'trip': {
-            // until the trips are loaded: the days pointing at it by tripKey only
-            const trip = params.trip ?? { okey: key, startDate: '', endDate: '' };
-            return store.diaryService.listByTrip(authorKey, tenantId, trip as TripModel);
-          }
-          default:
-            return store.diaryService.listByAlbum(authorKey, tenantId, key)
-              .pipe(map(diaries => diaries.filter(d => inDiaryDateRange(d.date, from, to))));
-        }
+        if (kind === 'date') return store.diaryService.listByDateRange(authorKey, tenantId, from, to);
+        // until the trips are loaded: the days pointing at it by tripKey only
+        const entries$ = kind === 'trip'
+          ? store.diaryService.listByTrip(authorKey, tenantId, (params.trip ?? { okey: key, startDate: '', endDate: '' }) as TripModel)
+          : store.diaryService.listByAlbum(authorKey, tenantId, key);
+        // the Datum segment's narrowing of an album, tag or trip («Anna, 2015–2019»)
+        return entries$.pipe(map(diaries => diaries.filter(d => inDiaryDateRange(d.date, from, to))));
       },
     }),
     /** Album titles for a filter opened from a link without one (deep link, reload). Loaded only then. */
@@ -167,7 +163,7 @@ export const DiaryStore = signalStore(
       if (filter.kind === 'tag') return { ...filter, title: filter.key.slice('tag.'.length) };
       if (filter.kind === 'trip') {
         const trip = store.tripsResource.value()?.find(t => t.okey === filter.key);
-        return trip ? { ...filter, title: trip.name, from: trip.startDate ?? '', to: trip.endDate ?? '' } : filter;
+        return trip ? { ...filter, title: trip.name } : filter;
       }
       const album = store.titleAlbumsResource.value()?.find(a => albumKey(a.kind, albumRefOf(a)) === filter.key);
       return album ? { ...filter, title: album.title } : filter;
@@ -486,7 +482,11 @@ export const DiaryStore = signalStore(
         // dynamic import: the modals must not pull the store's module graph back in (store-modal-dynamic-import)
         const { DiaryAlbumsModal, DiaryAlbumEditModal, DiaryTripEditModal } = await import('@okr/content-diary-ui');
         let albums = await firstValueFrom(store.albumService.list(authorKey, tenantId).pipe(timeout(10000)))
-          .catch(() => [] as DiaryAlbumModel[]);
+          .catch((ex: unknown) => {
+            console.warn('DiaryStore.openAlbums: albums not loaded', ex);
+            void store.alertService.showToast(store.i18n.albums_load_failed());
+            return [] as DiaryAlbumModel[];
+          });
         let trips = store.travelTrips();
 
         // The lists are kept here and merged after each write rather than re-read: a re-read
@@ -517,8 +517,8 @@ export const DiaryStore = signalStore(
         };
 
         const archiveAlbum = async (album: DiaryAlbumModel): Promise<DiaryAlbumModel[]> => {
-          await store.albumService.archive(album, store.currentUser());
-          albums = albums.filter(a => a.okey !== album.okey);
+          // the row goes only when the write went through; FirestoreService already toasted a failure
+          if (await store.albumService.archive(album, store.currentUser())) albums = albums.filter(a => a.okey !== album.okey);
           return albums;
         };
 
@@ -550,7 +550,7 @@ export const DiaryStore = signalStore(
             i18n: store.i18n, albums, trips, tags: tagsOf(store.appStore.getTags('diary')),
             imgixBaseUrl: store.appStore.env.services.imgixBaseUrl,
             newestDate: (key: string) => store.diaryService.newestAlbumDate(authorKey, tenantId, key),
-            editAlbum, editTrip, archiveAlbum,
+            editAlbum, editTrip, archiveAlbum, activeFilter: store.activeFilter(),
             openTrip: (trip: TripModel) => { void store.navController.navigateForward(`/diary/trip/${trip.okey}`); },
           },
         });

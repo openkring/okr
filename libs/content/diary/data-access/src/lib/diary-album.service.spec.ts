@@ -77,8 +77,13 @@ describe('DiaryAlbumService', () => {
     expect((createModel.mock.calls[0][1] as DiaryAlbumModel).okey).toBe('bka__u1__person__p1');
   });
 
-  it('archive sets isArchived for a single-tenant album', async () => {
-    await TestBed.inject(DiaryAlbumService).archive(album({ okey: 'a' }));
+  it('archive sets isArchived for a single-tenant album and reports success', async () => {
+    expect(await TestBed.inject(DiaryAlbumService).archive(album({ okey: 'a' }))).toBe(true);
     expect((updateModel.mock.calls[0][1] as DiaryAlbumModel).isArchived).toBe(true);
+  });
+
+  it('archive reports a failed write', async () => {
+    updateModel.mockResolvedValueOnce(undefined);
+    expect(await TestBed.inject(DiaryAlbumService).archive(album({ okey: 'a' }))).toBe(false);
   });
 });

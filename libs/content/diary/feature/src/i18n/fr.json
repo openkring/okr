@@ -272,6 +272,9 @@
     "update": {
       "conf": "L'album a été mis à jour.",
       "error": "L'album n'a pas pu être mis à jour."
-    }
+    },
+    "appliesTo": "s'applique à : {title}",
+    "loadFailed": "Tes albums n'ont pas pu être chargés.",
+    "actionFailed": "Cela n'a pas fonctionné. Réessaie, s'il te plaît."
   }
 }

@@ -7,10 +7,10 @@ import {
 import { DiaryAlbumKind, DiaryAlbumModel, TripModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Header } from '@okr/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, dismissOverlay } from '@okr/shared-util-angular';
+import { AlertService, createActionSheetButton, createActionSheetOptions, dismissOverlay } from '@okr/shared-util-angular';
 
 import {
-  DiaryDateRange, DiaryFilter, DiaryI18n, albumKey, albumRefOf, formatDiaryDate,
+  DiaryDateRange, DiaryFilter, DiaryI18n, albumKey, albumRefOf, formatDiaryDate, mergeDiaryDateRange,
 } from '@okr/content-diary-util';
 import { DiaryDateRangeForm } from './diary-date-range.form';
 
@@ -82,6 +82,9 @@ interface AlbumRow {
     }
     <ion-content>
       @if (segment() === 'date') {
+        @if (appliesTo(); as appliesTo) {
+          <ion-note class="ion-padding-start ion-padding-top" color="primary">{{ appliesTo }}</ion-note>
+        }
         <okr-diary-date-range-form [i18n]="i18n()" [(formData)]="range" (valid)="rangeValid.set($event)" />
         <ion-button class="ion-margin" expand="block" [disabled]="!canApplyRange()" (click)="applyRange()">
           {{ i18n().albums_apply() }}
@@ -110,6 +113,7 @@ interface AlbumRow {
 export class DiaryAlbumsModal {
   private readonly modalController = inject(ModalController);
   private readonly actionSheetController = inject(ActionSheetController);
+  private readonly alertService = inject(AlertService);
 
   // inputs — data in, actions as callbacks
   public readonly i18n = input.required<DiaryI18n>();
@@ -124,11 +128,14 @@ export class DiaryAlbumsModal {
   public readonly editTrip = input.required<(trip?: TripModel) => Promise<TripModel[]>>();
   public readonly archiveAlbum = input.required<(album: DiaryAlbumModel) => Promise<DiaryAlbumModel[]>>();
   public readonly openTrip = input.required<(trip: TripModel) => void>();
+  /** the list's current filter: a range from the Datum segment narrows an album/tag/trip filter */
+  public readonly activeFilter = input<DiaryFilter | undefined>(undefined);
 
   protected readonly segments = SEGMENTS;
   protected readonly segment = signal<DiaryAlbumsSegment>(readSegment());
   protected readonly searchTerm = signal('');
-  protected readonly range = signal<DiaryDateRange>({ from: '', to: '' });
+  /** starts at the active filter's range, so an applied narrowing can be seen and removed again */
+  protected readonly range = linkedSignal<DiaryDateRange>(() => ({ from: this.activeFilter()?.from ?? '', to: this.activeFilter()?.to ?? '' }));
   protected readonly rangeValid = signal(false);
 
   // the lists are refreshed by the edit callbacks, so they are local copies of the inputs
@@ -141,7 +148,19 @@ export class DiaryAlbumsModal {
 
   protected readonly icon = computed(() => ICONS[this.segment()]);
   protected readonly canAdd = computed(() => !['tag', 'date'].includes(this.segment()));
-  protected readonly canApplyRange = computed(() => this.rangeValid() && !!(this.range().from || this.range().to));
+  /** the album, tag or trip a range would narrow; undefined for none or a date filter */
+  private readonly narrowable = computed(() => {
+    const filter = this.activeFilter();
+    return filter && filter.kind !== 'date' ? filter : undefined;
+  });
+  /** «gilt für: Anna» — single braces, translateAll strips {{params}} */
+  protected readonly appliesTo = computed(() => {
+    const filter = this.narrowable();
+    return filter ? this.i18n().albums_applies_to().replace('{title}', filter.title || filter.key) : '';
+  });
+  // an empty range is allowed only to drop the narrowing of an album (the album stays)
+  protected readonly canApplyRange = computed(() =>
+    this.rangeValid() && (!!(this.range().from || this.range().to) || !!this.narrowable()));
 
   /** the album keys whose newest date the visible segment shows */
   private readonly datedKeys = computed((): string[] => {
@@ -227,10 +246,19 @@ export class DiaryAlbumsModal {
 
   protected async add(): Promise<void> {
     const segment = this.segment();
-    if (segment === 'trip') this.localTrips.set(await this.editTrip()());
-    else if (segment === 'event' || segment === 'person' || segment === 'location') {
-      this.localAlbums.set(await this.editAlbum()(segment));
+    try {
+      if (segment === 'trip') this.localTrips.set(await this.editTrip()());
+      else if (segment === 'event' || segment === 'person' || segment === 'location') {
+        this.localAlbums.set(await this.editAlbum()(segment));
+      }
+    } catch (ex) {
+      this.failed('add', ex);
     }
+  }
+
+  private failed(action: string, ex: unknown): void {
+    console.error(`DiaryAlbumsModal.${action}`, ex);
+    this.alertService.error(this.i18n().albums_action_failed());
   }
 
   protected async select(row: AlbumRow): Promise<void> {
@@ -240,7 +268,8 @@ export class DiaryAlbumsModal {
     } else if (row.tag) {
       filter = { kind: 'tag', key: albumKey('tag', row.tag), title: row.tag, from: '', to: '' };
     } else if (row.trip) {
-      filter = { kind: 'trip', key: row.trip.okey, title: row.title, from: row.trip.startDate ?? '', to: row.trip.endDate ?? '' };
+      // the trip query decides its days (tripKey or span); from/to are only a user narrowing
+      filter = { kind: 'trip', key: row.trip.okey, title: row.title, from: '', to: '' };
     }
     if (filter) await dismissOverlay(this.modalController, filter, 'filter');
   }
@@ -248,8 +277,7 @@ export class DiaryAlbumsModal {
   protected async applyRange(): Promise<void> {
     if (!this.canApplyRange()) return;
     const { from, to } = this.range();
-    const filter: DiaryFilter = { kind: 'date', key: '', title: '', from, to };
-    await dismissOverlay(this.modalController, filter, 'filter');
+    await dismissOverlay(this.modalController, mergeDiaryDateRange(this.activeFilter(), from, to), 'filter');
   }
 
   protected async showActions(row: AlbumRow): Promise<void> {
@@ -262,7 +290,15 @@ export class DiaryAlbumsModal {
     const sheet = await this.actionSheetController.create(options);
     await sheet.present();
     const { data } = await sheet.onDidDismiss();
-    switch (data?.action) {
+    try {
+      await this.runAction(data?.action, row);
+    } catch (ex) {
+      this.failed(String(data?.action), ex);
+    }
+  }
+
+  private async runAction(action: string | undefined, row: AlbumRow): Promise<void> {
+    switch (action) {
       case 'edit':
         if (row.album) this.localAlbums.set(await this.editAlbum()(row.album.kind, row.album));
         else if (row.trip) this.localTrips.set(await this.editTrip()(row.trip));

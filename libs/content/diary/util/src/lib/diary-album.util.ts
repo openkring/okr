@@ -94,3 +94,13 @@ export function diaryFilterLabel(filter: DiaryFilter, formatDate: (d: string) =>
   const title = filter.kind === 'date' ? '' : filter.title;
   return [title, range].filter(part => !!part).join(' · ');
 }
+
+/**
+ * The Datum segment's result: a range applied while an album, tag or trip filter is active
+ * narrows that filter («Anna, 2015–2019»); an empty range drops the narrowing and keeps the
+ * album. Without one (or over a date filter) it is a pure date filter.
+ */
+export function mergeDiaryDateRange(current: DiaryFilter | undefined, from: string, to: string): DiaryFilter {
+  if (current && current.kind !== 'date') return { ...current, from, to };
+  return { kind: 'date', key: '', title: '', from, to };
+}

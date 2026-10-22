@@ -1,6 +1,6 @@
 import { AvatarInfo } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
-import { avatarTitle, decodeDiaryFilter, DiaryFilter, diaryAlbumId, diaryFilterLabel, diaryAlbumKeys, encodeDiaryFilter, eventSlug, inDiaryDateRange } from './diary-album.util';
+import { avatarTitle, decodeDiaryFilter, DiaryFilter, diaryAlbumId, diaryFilterLabel, mergeDiaryDateRange, diaryAlbumKeys, encodeDiaryFilter, eventSlug, inDiaryDateRange } from './diary-album.util';
 
 describe('diary album utils', () => {
   it('derives sorted, de-duplicated keys', () => {
@@ -68,5 +68,21 @@ describe('avatarTitle', () => {
       expect(diaryFilterLabel(filter({ kind: 'date', key: '', to: '20191231' }), fmt, words)).toBe('bis 31.12.2019'));
     it('appends an open-ended range to the title', () =>
       expect(diaryFilterLabel(filter({ title: 'Anna', from: '20150101' }), fmt, words)).toBe('Anna · ab 01.01.2015'));
+  });
+
+  describe('mergeDiaryDateRange', () => {
+    const anna: DiaryFilter = { kind: 'person', key: 'person.p1', title: 'Anna', from: '', to: '' };
+
+    it('is a pure date filter without a current filter', () =>
+      expect(mergeDiaryDateRange(undefined, '20150101', '20191231'))
+        .toEqual({ kind: 'date', key: '', title: '', from: '20150101', to: '20191231' }));
+    it('replaces a current date filter', () =>
+      expect(mergeDiaryDateRange({ kind: 'date', key: '', title: '', from: '2000', to: '' }, '20150101', ''))
+        .toEqual({ kind: 'date', key: '', title: '', from: '20150101', to: '' }));
+    it('narrows the current album', () =>
+      expect(mergeDiaryDateRange(anna, '20150101', '20191231'))
+        .toEqual({ ...anna, from: '20150101', to: '20191231' }));
+    it('drops the range but keeps the album on an empty range', () =>
+      expect(mergeDiaryDateRange({ ...anna, from: '20150101', to: '20191231' }, '', '')).toEqual(anna));
   });
 });

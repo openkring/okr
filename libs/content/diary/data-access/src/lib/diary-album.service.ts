@@ -50,7 +50,8 @@ export class DiaryAlbumService {
   }
 
   /** deleting-models skill: detach the tenant, archive when it was the last one. */
-  public async archive(album: DiaryAlbumModel, currentUser?: UserModel): Promise<void> {
-    await this.update({ ...album, ...getDeletePatch(album.tenants, this.env.tenantId) }, currentUser);
+  /** true when the write went through (updateModel resolves undefined on failure). */
+  public async archive(album: DiaryAlbumModel, currentUser?: UserModel): Promise<boolean> {
+    return !!(await this.update({ ...album, ...getDeletePatch(album.tenants, this.env.tenantId) }, currentUser));
   }
 }
