@@ -1,0 +1,120 @@
+{
+  "cancel": "Cancelar",
+  "save": "Guardar",
+  "send": "Enviar",
+  "remove": "Quitar",
+  "new": {
+    "title": "Enviar una transferencia",
+    "titleChat": "Enviar como transferencia",
+    "chatHint": "El grupo ve la transferencia como una tarjeta en el chat."
+  },
+  "files": {
+    "label": "Archivos",
+    "helper": "Puedes elegir varios archivos a la vez. Como máximo {max} GB en total.",
+    "total": "{size} en total"
+  },
+  "groups": {
+    "title": "Grupos",
+    "add": "Añadir grupo"
+  },
+  "persons": {
+    "title": "Personas",
+    "add": "Añadir persona"
+  },
+  "emails": {
+    "title": "Direcciones de correo",
+    "add": "Añadir dirección de correo",
+    "description": "Para personas fuera de la app. Reciben un enlace personal por correo. Como máximo {max} direcciones."
+  },
+  "consent": {
+    "hint": "¿El archivo muestra a otras personas? Compártelo solo si están de acuerdo."
+  },
+  "message": {
+    "label": "Mensaje",
+    "placeholder": "Unas palabras sobre los archivos",
+    "helper": "Opcional. Todos los destinatarios ven este mensaje."
+  },
+  "lifetime": {
+    "label": "Duración en días",
+    "placeholder": "Número de días",
+    "helper": "Después, los archivos se borran. Como máximo {max} días."
+  },
+  "password": {
+    "label": "Contraseña",
+    "placeholder": "Déjalo vacío para no usar contraseña",
+    "helper": "Opcional. Pasa tú mismo la contraseña a las personas fuera de la app. Los miembros no la necesitan."
+  },
+  "info": {
+    "title": "Así funciona una transferencia",
+    "what": "Con una transferencia envías archivos grandes, por ejemplo un vídeo de entrenamiento, a grupos, a miembros concretos o a personas fuera de la app.",
+    "limitsTitle": "Tus límites",
+    "limitTransfer": "Por transferencia: como máximo {size} GB",
+    "limitOpen": "Todas tus transferencias abiertas juntas: como máximo {size} GB",
+    "limitExternals": "Direcciones de correo por transferencia: como máximo {count}",
+    "lifetime": "Una transferencia dura normalmente {days} días, como máximo {max} días.",
+    "whoTitle": "Quién ve qué",
+    "whoMembers": "Los miembros reciben una notificación y abren la transferencia en la app.",
+    "whoGroups": "Un grupo ve la transferencia como una tarjeta en su chat.",
+    "whoOutside": "Las personas fuera de la app reciben un enlace personal por correo.",
+    "deleted": "Cuando termina la duración, los archivos se borran.",
+    "log": "Anotamos quién envía una transferencia y quién la abre o la descarga. No guardamos direcciones IP.",
+    "consentTitle": "Ten en cuenta",
+    "requestTitle": "¿Necesitas más espacio?",
+    "requestText": "Entonces escribe a los responsables. Pueden ampliar tus límites.",
+    "reasonLabel": "Motivo",
+    "reasonPlaceholder": "¿Para qué necesitas más espacio?",
+    "reasonNone": "Sin motivo indicado",
+    "request": "Solicitar límites más altos"
+  },
+  "card": {
+    "from": "De {name}",
+    "expires": "Disponible hasta el {date}",
+    "expired": "Esta transferencia ha caducado.",
+    "expiredBadge": "caducada",
+    "loading": "Cargando la transferencia …",
+    "play": "Reproducir",
+    "view": "Ver",
+    "download": "Descargar"
+  },
+  "limits": {
+    "title": "Límites de las transferencias",
+    "placeholder": "Introduce un número",
+    "transferLabel": "Transferencia más grande (GB)",
+    "transferHelper": "Lo que una persona puede enviar de una vez.",
+    "openLabel": "Transferencias abiertas por persona (GB)",
+    "openHelper": "Lo que una persona puede compartir al mismo tiempo.",
+    "ceilingLabel": "Máximo para excepciones (GB)",
+    "ceilingHelper": "Ni siquiera una excepción puede permitir más.",
+    "defaultLifetimeLabel": "Duración habitual (días)",
+    "defaultLifetimeHelper": "Lo que dura una transferencia si la persona no elige otra cosa.",
+    "maxLifetimeLabel": "Duración más larga (días)",
+    "maxLifetimeHelper": "Ninguna transferencia puede durar más.",
+    "externalsLabel": "Direcciones de correo por transferencia",
+    "externalsHelper": "A cuántas personas fuera de la app puede llegar una transferencia.",
+    "overridesTitle": "Excepciones para personas concretas",
+    "overridesHelper": "Estas personas pueden enviar más que las demás.",
+    "overridesAdd": "Añadir persona",
+    "overridesEmpty": "Todavía no hay excepciones.",
+    "overrideTransferLabel": "Transferencia más grande (GB)",
+    "overrideOpenLabel": "Transferencias abiertas (GB)"
+  },
+  "rejection": {
+    "tooLarge": "Juntos, los archivos ocupan más de lo que puedes enviar de una vez.",
+    "openTotalExceeded": "Ya compartes muchos archivos. Termina una transferencia anterior o espera a que caduque.",
+    "tooManyExternals": "Son demasiadas direcciones de correo para una transferencia.",
+    "lifetimeTooLong": "Una transferencia no puede durar tanto. Elige menos días.",
+    "noFiles": "Elige al menos un archivo.",
+    "noRecipients": "Elige al menos un grupo, una persona o una dirección de correo.",
+    "invalidEmail": "Una dirección de correo no es correcta. Revísala, por favor.",
+    "invalidRequest": "No ha funcionado. Inténtalo de nuevo, por favor."
+  },
+  "validation": {
+    "lifetimeMin": "Una transferencia dura al menos un día entero.",
+    "positive": "Introduce un número mayor que 0.",
+    "wholeNumber": "Introduce un número entero.",
+    "aboveCeiling": "Este valor supera el máximo para excepciones.",
+    "openBelowTransfer": "Las transferencias abiertas deben ser al menos tan grandes como la transferencia más grande.",
+    "defaultLifetime": "La duración habitual no puede ser más larga que la duración más larga.",
+    "overrideDuplicate": "Esta persona ya tiene una excepción."
+  }
+}

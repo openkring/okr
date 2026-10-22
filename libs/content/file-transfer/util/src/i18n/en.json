@@ -1,0 +1,120 @@
+{
+  "cancel": "Cancel",
+  "save": "Save",
+  "send": "Send",
+  "remove": "Remove",
+  "new": {
+    "title": "Send a transfer",
+    "titleChat": "Send as transfer",
+    "chatHint": "The group sees the transfer as a card in the chat."
+  },
+  "files": {
+    "label": "Files",
+    "helper": "You can pick several files at once. Up to {max} GB in total.",
+    "total": "{size} in total"
+  },
+  "groups": {
+    "title": "Groups",
+    "add": "Add group"
+  },
+  "persons": {
+    "title": "People",
+    "add": "Add person"
+  },
+  "emails": {
+    "title": "Email addresses",
+    "add": "Add email address",
+    "description": "For people outside the app. They get a personal link by email. Up to {max} addresses."
+  },
+  "consent": {
+    "hint": "Does the file show other people? Only share it if they agree."
+  },
+  "message": {
+    "label": "Message",
+    "placeholder": "A few words about the files",
+    "helper": "Optional. Everyone who receives the transfer sees this message."
+  },
+  "lifetime": {
+    "label": "Available for (days)",
+    "placeholder": "Number of days",
+    "helper": "After that the files are deleted. Up to {max} days."
+  },
+  "password": {
+    "label": "Password",
+    "placeholder": "Leave empty for no password",
+    "helper": "Optional. Pass the password on to the people outside the app yourself. Members do not need it."
+  },
+  "info": {
+    "title": "How a transfer works",
+    "what": "With a transfer you send large files, for example a training video, to groups, to single members or to people outside the app.",
+    "limitsTitle": "Your limits",
+    "limitTransfer": "Per transfer: up to {size} GB",
+    "limitOpen": "All your open transfers together: up to {size} GB",
+    "limitExternals": "Email addresses per transfer: up to {count}",
+    "lifetime": "A transfer usually lasts {days} days, at most {max} days.",
+    "whoTitle": "Who sees what",
+    "whoMembers": "Members get a notification and open the transfer in the app.",
+    "whoGroups": "A group sees the transfer as a card in its chat.",
+    "whoOutside": "People outside the app get a personal link by email.",
+    "deleted": "When the time is up, the files are deleted.",
+    "log": "We keep a record of who sends a transfer and who opens or downloads it. We do not store IP addresses.",
+    "consentTitle": "Please note",
+    "requestTitle": "Need more space?",
+    "requestText": "Then write to the people in charge. They can raise your limits.",
+    "reasonLabel": "Reason",
+    "reasonPlaceholder": "What do you need more space for?",
+    "reasonNone": "No reason given",
+    "request": "Request higher limits"
+  },
+  "card": {
+    "from": "From {name}",
+    "expires": "Available until {date}",
+    "expired": "This transfer has expired.",
+    "expiredBadge": "expired",
+    "loading": "Loading transfer …",
+    "play": "Play",
+    "view": "View",
+    "download": "Download"
+  },
+  "limits": {
+    "title": "Transfer limits",
+    "placeholder": "Enter a number",
+    "transferLabel": "Largest transfer (GB)",
+    "transferHelper": "How much one person may send at once.",
+    "openLabel": "Open transfers per person (GB)",
+    "openHelper": "How much one person may be sharing at the same time.",
+    "ceilingLabel": "Maximum for exceptions (GB)",
+    "ceilingHelper": "Not even an exception may allow more than this.",
+    "defaultLifetimeLabel": "Usual duration (days)",
+    "defaultLifetimeHelper": "How long a transfer lasts unless the person chooses otherwise.",
+    "maxLifetimeLabel": "Longest duration (days)",
+    "maxLifetimeHelper": "No transfer may last longer.",
+    "externalsLabel": "Email addresses per transfer",
+    "externalsHelper": "How many people outside the app one transfer may reach.",
+    "overridesTitle": "Exceptions for single people",
+    "overridesHelper": "These people may send more than the others.",
+    "overridesAdd": "Add person",
+    "overridesEmpty": "No exceptions yet.",
+    "overrideTransferLabel": "Largest transfer (GB)",
+    "overrideOpenLabel": "Open transfers (GB)"
+  },
+  "rejection": {
+    "tooLarge": "Together, the files are larger than you may send at once.",
+    "openTotalExceeded": "You are already sharing a lot of files. End an older transfer or wait until it expires.",
+    "tooManyExternals": "That is too many email addresses for one transfer.",
+    "lifetimeTooLong": "A transfer may not last that long. Choose fewer days.",
+    "noFiles": "Choose at least one file.",
+    "noRecipients": "Choose at least one group, one person or one email address.",
+    "invalidEmail": "An email address is not right. Please check it.",
+    "invalidRequest": "That did not work. Please try again."
+  },
+  "validation": {
+    "lifetimeMin": "A transfer lasts at least one whole day.",
+    "positive": "Enter a number greater than 0.",
+    "wholeNumber": "Enter a whole number.",
+    "aboveCeiling": "This value is higher than the maximum for exceptions.",
+    "openBelowTransfer": "Open transfers must be at least as large as the largest transfer.",
+    "defaultLifetime": "The usual duration may not be longer than the longest duration.",
+    "overrideDuplicate": "This person already has an exception."
+  }
+}

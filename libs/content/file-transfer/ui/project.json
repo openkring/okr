@@ -1,0 +1,24 @@
+{
+  "name": "content-file-transfer-ui",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/content/file-transfer/ui/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:content", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/content/file-transfer/ui",
+        "main": "libs/content/file-transfer/ui/src/index.ts",
+        "tsConfig": "libs/content/file-transfer/ui/tsconfig.lib.json",
+        "assets": ["libs/content/file-transfer/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}
