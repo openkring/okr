@@ -76,7 +76,7 @@ import type { RoomDetailsMember } from './room-details.feature';
               @switch (tile) {
                 @case ('mute') {
                   <ion-button class="tile" fill="outline" [color]="muted() ? 'primary' : 'medium'" (click)="mute()">
-                    <span class="tile-inner"><ion-icon src="{{ 'alarm' | svgIcon }}" />{{ muted() ? i18n.mute_on() : i18n.mute_tile() }}</span>
+                    <span class="tile-inner"><ion-icon src="{{ (muted() ? 'notifications-off' : 'notifications-on') | svgIcon }}" />{{ muted() ? i18n.mute_on() : i18n.mute_tile() }}</span>
                   </ion-button>
                 }
                 @case ('pins') {

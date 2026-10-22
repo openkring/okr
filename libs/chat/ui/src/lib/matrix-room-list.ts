@@ -206,8 +206,8 @@ export class MatrixRoomList {
 
   /** Icon of the notes room row. */
   protected readonly notesIcon = 'text';
-  /** Icon of a muted row — the same as the Stumm tile (`notifications-off` is not in the icon set). */
-  protected readonly muteIcon = 'alarm';
+  /** Icon of a muted row. */
+  protected readonly muteIcon = 'notifications-off';
 
   /** Whether the «Ausgeblendet» block is open (collapsed by default). */
   protected readonly hiddenOpen = signal(false);

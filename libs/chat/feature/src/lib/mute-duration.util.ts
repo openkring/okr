@@ -36,7 +36,7 @@ export async function pickMuteDuration(
   muted: boolean,
 ): Promise<MuteDuration | 'unmute' | undefined> {
   const opts = createActionSheetOptions(labels.mute_tile());
-  if (muted) opts.buttons.push(createActionSheetButton(`${ACTION_PREFIX}unmute`, labels.mute_unmute(), imgixBaseUrl, 'alarm'));
+  if (muted) opts.buttons.push(createActionSheetButton(`${ACTION_PREFIX}unmute`, labels.mute_unmute(), imgixBaseUrl, 'notifications-on'));
   for (const d of MUTE_DURATIONS) {
     opts.buttons.push(createActionSheetButton(`${ACTION_PREFIX}${d}`, labels[DURATION_LABEL[d]](), imgixBaseUrl, 'time'));
   }

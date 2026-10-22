@@ -390,7 +390,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
                     @if (store.canMuteAll()) {
                       <ion-button [attr.aria-label]="store.i18n.mute_all()" [attr.aria-pressed]="store.isAllRoomsMuted()"
                         [color]="store.isAllRoomsMuted() ? 'primary' : 'medium'" (click)="store.pickAllMute()">
-                        <ion-icon slot="icon-only" src="{{ muteIcon | svgIcon }}"></ion-icon>
+                        <ion-icon slot="icon-only" src="{{ (store.isAllRoomsMuted() ? 'notifications-off' : 'notifications-on') | svgIcon }}"></ion-icon>
                       </ion-button>
                     }
                     <ion-button [attr.aria-label]="store.i18n.adhoc_new_action()" (click)="store.createAdhocChat()">
@@ -861,8 +861,6 @@ export class MatrixChat implements OnDestroy {
   protected readonly roomFilter = signal('');
   /** The room list: hidden rooms sit in their own «Ausgeblendet» block (spec 1.109 §10.1). */
   protected readonly filteredRooms = computed(() => filterRoomsByName(this.store.visibleRooms(), this.roomFilter()));
-  /** Bell of «Alle Chats stummschalten» — the same icon as the Stumm tile (`notifications-off` is not in the icon set). */
-  protected readonly muteIcon = 'alarm';
 
   // Messages signal
   protected readonly messages = computed(() => this.store.messages());
