@@ -38,7 +38,8 @@ async function resolveMember(request: CallableRequest<unknown>, cfName: string, 
 
   const snap = await db.collection(FileTransferCollection).doc(transferKey).get();
   if (!snap.exists) throw new HttpsError('not-found', 'notFound');
-  const transfer = { ...new FileTransferModel(tenantId), ...(snap.data() as Partial<FileTransferModel>), okey: transferKey } as FileTransferModel;
+  // defaults only fill fields a legacy doc lacks; never the caller's tenant (tenants decides access)
+  const transfer = { ...new FileTransferModel(''), ...(snap.data() as Partial<FileTransferModel>), okey: transferKey } as FileTransferModel;
 
   const access = memberFileAccess(transfer, { personKey, isAdmin: user?.roles?.admin === true, tenantId }, new Date().toISOString());
   if (!access.ok) {

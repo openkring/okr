@@ -22,7 +22,7 @@ import { coursesRouter, resultsRouter } from './routes/stubs';
 import { pageRouter } from './routes/page';
 import { aliasRouter } from './routes/alias';
 import { galleryRouter } from './routes/gallery';
-import { fileTransferFileRouter, fileTransferViewRouter } from './routes/file-transfer';
+import { fileTransferCors, fileTransferFileRouter, fileTransferViewRouter, isFileTransferPath } from './routes/file-transfer';
 
 // ---------------------------------------------------------------------------
 // CORS allowlist. The public website calls this API from the browser, so we
@@ -86,12 +86,15 @@ const ALLOWED_TENANTS = (process.env['PUBLIC_API_ALLOWED_TENANTS'] ?? '')
 
 const app = express();
 app.disable('x-powered-by');
-app.use((req, res, next) => cors(req, res, next));
+// The file-transfer routes get their own open CORS (any origin, no credentials — the token is the
+// credential, and the link page runs in every tenant app); every other route keeps the allowlist.
+app.use((req, res, next) => (isFileTransferPath(req.path) ? fileTransferCors(req, res, next) : cors(req, res, next)));
 app.use(express.json({ limit: '64kb' }));
 
 // Enforce the tenant allowlist (when configured) for any route that takes one.
+// The file-transfer routes take no tenantId (the token identifies the transfer and its tenant).
 app.use((req, res, next) => {
-  if (ALLOWED_TENANTS.length === 0) return next();
+  if (ALLOWED_TENANTS.length === 0 || isFileTransferPath(req.path)) return next();
   const tenantId = (req.query['tenantId'] as string | undefined)?.trim();
   if (tenantId && !ALLOWED_TENANTS.includes(tenantId)) {
     res.status(400).json({ error: { code: 'validation_error', message: 'Unknown tenantId' } });

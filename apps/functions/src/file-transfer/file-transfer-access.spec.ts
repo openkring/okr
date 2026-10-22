@@ -18,7 +18,7 @@ vi.mock('../_storage/private-bucket', () => ({
 import type { FileTransferEventModel, FileTransferModel } from '@okr/shared-models';
 
 import {
-  effectiveDisposition, findFileTransferByToken, issueFileUrl, logFileTransferEvent, memberFileAccess, publicOpenFile,
+  effectiveDisposition, findFileTransferByToken, inlineContentType, issueFileUrl, logFileTransferEvent, memberFileAccess, publicOpenFile,
   PublicAccessDeps, publicView, toFileTransferView,
 } from './file-transfer-access';
 import { hashToken } from './file-transfer-tokens';
@@ -64,12 +64,15 @@ function fakeDeps(t: FileTransferModel | undefined): Fake {
       fake.lookups.push(token);
       return t && t.tokenHashes.includes(hashToken(token)) ? t : undefined;
     },
-    peekLimit: async (bucket, key, opts) => (counters.get(`${bucket}:${key}`) ?? 0) >= opts.limit,
     hitLimit: async (bucket, key, opts) => {
       const n = counters.get(`${bucket}:${key}`) ?? 0;
       if (n >= opts.limit) return false;
       counters.set(`${bucket}:${key}`, n + 1);
       return true;
+    },
+    refundLimit: async (bucket, key) => {
+      const n = counters.get(`${bucket}:${key}`);
+      if (n !== undefined) counters.set(`${bucket}:${key}`, Math.max(0, n - 1));
     },
     checkPassword: async (pw) => pw === 'secret',
     issueFileUrl: async (_t, index, disposition) => {
@@ -135,7 +138,7 @@ describe('publicView (GET /file-transfer/:token)', () => {
     expect((r.body as { needsPassword: boolean }).needsPassword).toBe(true);
   });
 
-  it('rate-limits per client IP (120 / 15 min)', async () => {
+  it('rate-limits GET per client IP (120 / 15 min)', async () => {
     const deps = fakeDeps(transfer());
     for (let i = 0; i < 120; i++) expect((await publicView(TOKEN, '9.9.9.9', deps)).status).toBe(200);
     expect(await publicView(TOKEN, '9.9.9.9', deps)).toEqual({ status: 429, body: { error: { code: 'rateLimited' } } });
@@ -146,6 +149,14 @@ describe('publicView (GET /file-transfer/:token)', () => {
 describe('publicOpenFile (POST /file-transfer/:token/file)', () => {
   let deps: Fake;
   beforeEach(() => { deps = fakeDeps(transfer()); });
+
+  it('has its own, larger per-IP budget (600 / 15 min), separate from GET', async () => {
+    deps.counters.set('transferPostIp:9.9.9.9', 599);
+    expect((await publicOpenFile(TOKEN, { fileIndex: 0, disposition: 'inline' }, '9.9.9.9', deps)).status).toBe(200);
+    expect(await publicOpenFile(TOKEN, { fileIndex: 0, disposition: 'inline' }, '9.9.9.9', deps))
+      .toEqual({ status: 429, body: { error: { code: 'rateLimited' } } });
+    expect((await publicView(TOKEN, '9.9.9.9', deps)).status).toBe(200);
+  });
 
   it("writes 'opened' for inline, with the recipient id, fileIndex and senderKey — never an IP", async () => {
     const r = await publicOpenFile(TOKEN, { fileIndex: 0, disposition: 'inline' }, '1.2.3.4', deps);
@@ -190,8 +201,18 @@ describe('publicOpenFile (POST /file-transfer/:token/file)', () => {
       expect(deps.events).toEqual([]);
     });
 
-    it('answers 401 for a wrong password', async () => {
-      expect((await publicOpenFile(TOKEN, { fileIndex: 0, disposition: 'attachment', password: 'nope' }, '1.2.3.4', deps)).status).toBe(401);
+    it('answers 401 for a wrong password, issues nothing and logs nothing', async () => {
+      const r = await publicOpenFile(TOKEN, { fileIndex: 0, disposition: 'attachment', password: 'nope' }, '1.2.3.4', deps);
+      expect(r).toEqual({ status: 401, body: { error: { code: 'wrongPassword' } } });
+      expect(deps.issued).toEqual([]);
+      expect(deps.events).toEqual([]);
+      expect(deps.counters.get(`transferPw:${hashToken(TOKEN)}`)).toBe(1);
+      expect(deps.counters.get('transferPwT:T1')).toBe(1);
+    });
+
+    it('does not count a request without a password (no guess)', async () => {
+      await publicOpenFile(TOKEN, { fileIndex: 0, disposition: 'attachment' }, '1.2.3.4', deps);
+      expect(deps.counters.get(`transferPw:${hashToken(TOKEN)}`)).toBeUndefined();
     });
 
     it('issues the url for the right password', async () => {
@@ -212,18 +233,31 @@ describe('publicOpenFile (POST /file-transfer/:token/file)', () => {
       expect((await publicOpenFile(OTHER_TOKEN, { fileIndex: 0, disposition: 'inline', password: 'secret' }, '10.0.0.9', deps)).status).toBe(200);
     });
 
-    it('does not count right passwords (a recipient may open many files)', async () => {
+    it('refunds both reserved slots on a right password (a recipient may open many files)', async () => {
+      await publicOpenFile(TOKEN, { fileIndex: 0, disposition: 'inline', password: 'bad' }, '1.2.3.4', deps);
       for (let i = 0; i < 8; i++) {
         expect((await publicOpenFile(TOKEN, { fileIndex: 0, disposition: 'inline', password: 'secret' }, '1.2.3.4', deps)).status).toBe(200);
       }
-      expect(deps.counters.get(`transferPw:${hashToken(TOKEN)}`)).toBeUndefined();
+      // only the one wrong guess is left in both buckets
+      expect(deps.counters.get(`transferPw:${hashToken(TOKEN)}`)).toBe(1);
+      expect(deps.counters.get('transferPwT:T1')).toBe(1);
     });
 
-    it('rate-limits wrong passwords per client IP: 60 within 15 min across tokens', async () => {
-      deps.counters.set('transferPwIp:6.6.6.6', 60);
-      const r = await publicOpenFile(TOKEN, { fileIndex: 0, disposition: 'inline', password: 'secret' }, '6.6.6.6', deps);
-      expect(r.status).toBe(429);
-      expect((await publicOpenFile(TOKEN, { fileIndex: 0, disposition: 'inline', password: 'secret' }, '7.7.7.7', deps)).status).toBe(200);
+    it('rate-limits per transfer: 20 attempts within 15 min across all its links, whatever the IP', async () => {
+      deps.counters.set('transferPwT:T1', 20);
+      for (const [token, ip] of [[TOKEN, '6.6.6.6'], [OTHER_TOKEN, '7.7.7.7']]) {
+        const r = await publicOpenFile(token, { fileIndex: 0, disposition: 'inline', password: 'secret' }, ip, deps);
+        expect(r).toEqual({ status: 429, body: { error: { code: 'rateLimited' } } });
+      }
+      expect(deps.issued).toEqual([]);
+      // the per-link slot taken by the refused attempt is given back
+      expect(deps.counters.get(`transferPw:${hashToken(TOKEN)}`)).toBe(0);
+      expect(deps.counters.get('transferPwT:T1')).toBe(20);
+    });
+
+    it('does not use the client IP for the password limit', async () => {
+      for (let i = 0; i < 5; i++) await publicOpenFile(TOKEN, { fileIndex: 0, disposition: 'inline', password: 'bad' }, `10.1.0.${i}`, deps);
+      expect([...deps.counters.keys()].filter(k => k.startsWith('transferPw'))).toEqual([`transferPw:${hashToken(TOKEN)}`, 'transferPwT:T1']);
     });
   });
 });
@@ -262,11 +296,31 @@ describe('logFileTransferEvent', () => {
   });
 });
 
+describe('inlineContentType', () => {
+  it('normalises allow-listed types: lowercase, parameters cut, trimmed', () => {
+    expect(inlineContentType('Image/PNG; charset=x')).toBe('image/png');
+    expect(inlineContentType('  video/quicktime ')).toBe('video/quicktime');
+    expect(inlineContentType('application/pdf')).toBe('application/pdf');
+  });
+
+  it('rejects lists, control characters and anything not on the exact list', () => {
+    expect(inlineContentType('text/html, image/png')).toBeUndefined();
+    expect(inlineContentType('image/png,text/html')).toBeUndefined();
+    expect(inlineContentType('image/png\r\nX-Evil: 1')).toBeUndefined();
+    expect(inlineContentType('image/png\u0000')).toBeUndefined();
+    expect(inlineContentType('image/svg+xml')).toBeUndefined();
+    expect(inlineContentType('video/x-msvideo')).toBeUndefined();
+    expect(inlineContentType('image/pngx')).toBeUndefined();
+    expect(inlineContentType('')).toBeUndefined();
+  });
+});
+
 describe('effectiveDisposition', () => {
-  it('allows inline only for video, image (not svg) and pdf', () => {
+  it('allows inline only for the exact allow-list', () => {
     expect(effectiveDisposition('video/mp4', 'inline')).toBe('inline');
     expect(effectiveDisposition('image/jpeg', 'inline')).toBe('inline');
     expect(effectiveDisposition('Application/PDF; charset=x', 'inline')).toBe('inline');
+    expect(effectiveDisposition('text/html, image/png', 'inline')).toBe('attachment');
     expect(effectiveDisposition('image/svg+xml', 'inline')).toBe('attachment');
     expect(effectiveDisposition('text/html', 'inline')).toBe('attachment');
     expect(effectiveDisposition('', 'inline')).toBe('attachment');
@@ -291,11 +345,24 @@ describe('issueFileUrl', () => {
     expect(opts['responseType']).toBe('video/quicktime');
   });
 
-  it('forces attachment and no response type for anything else', async () => {
+  it('forces attachment as application/octet-stream for anything else', async () => {
     await issueFileUrl(transfer(), 1, 'inline');
     const { opts } = signed.calls[0];
     expect(String(opts['responseDisposition'])).toMatch(/^attachment; filename="page.html"/);
-    expect(opts['responseType']).toBeUndefined();
+    expect(opts['responseType']).toBe('application/octet-stream');
+  });
+
+  it('sends the normalised type, never the raw stored string', async () => {
+    const t = transfer();
+    t.files[0] = { ...t.files[0], contentType: 'Image/PNG; charset=x' };
+    await issueFileUrl(t, 0, 'inline');
+    expect(signed.calls[0].opts['responseType']).toBe('image/png');
+  });
+
+  it('an attachment of a playable file is octet-stream too', async () => {
+    await issueFileUrl(transfer(), 0, 'attachment');
+    expect(String(signed.calls[0].opts['responseDisposition'])).toMatch(/^attachment;/);
+    expect(signed.calls[0].opts['responseType']).toBe('application/octet-stream');
   });
 
   it('throws for an unknown file index', async () => {

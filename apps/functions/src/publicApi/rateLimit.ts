@@ -12,6 +12,7 @@
 // policy on `_rateLimits.expiresAt` to auto-purge stale buckets.
 
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import type { DocumentReference } from 'firebase-admin/firestore';
 import { createHash } from 'crypto';
 import type { Request } from 'express';
 
@@ -43,6 +44,15 @@ export function clientIp(req: Request): string {
 }
 
 /**
+ * The counter document of `bucket:key` (the key is hashed: it may be an IP or a token hash).
+ * The one place that derives the doc id, shared by check and refund so they cannot drift.
+ */
+export function rateLimitRef(bucket: string, key: string): DocumentReference {
+  const hashed = createHash('sha256').update(key).digest('hex').slice(0, 32);
+  return getFirestore().collection('_rateLimits').doc(`${bucket}_${hashed}`);
+}
+
+/**
  * Atomically increment a fixed-window counter for `bucket:key`. Returns whether
  * the request is allowed. Fails OPEN (allows the request) on a transient
  * datastore error so a Firestore blip cannot take the contact form fully offline.
@@ -53,8 +63,7 @@ export async function checkRateLimit(
   opts: RateLimitOptions,
 ): Promise<RateLimitResult> {
   const db = getFirestore();
-  const hashed = createHash('sha256').update(key).digest('hex').slice(0, 32);
-  const ref = db.collection('_rateLimits').doc(`${bucket}_${hashed}`);
+  const ref = rateLimitRef(bucket, key);
   const now = Date.now();
 
   try {
@@ -87,21 +96,25 @@ export async function checkRateLimit(
 }
 
 /**
- * Read-only check of the same fixed-window counter: true when `bucket:key` has already used up
- * its window. Does NOT count. For limits that must count only failures (e.g. wrong passwords):
- * peek before the attempt, `checkRateLimit` after a failure — otherwise a right guess after the
- * limit would still be told apart from a wrong one. Fails open like `checkRateLimit`.
+ * Gives back one hit of `bucket:key` within its CURRENT window (never below 0; a lapsed window
+ * or a missing counter is left alone). For limits that reserve before an attempt and count only
+ * failures: reserve with `checkRateLimit` (atomic, so concurrent attempts cannot slip past),
+ * refund when the attempt succeeded. Best effort: a datastore error is swallowed.
  */
-export async function isRateLimited(bucket: string, key: string, opts: RateLimitOptions): Promise<boolean> {
-  const hashed = createHash('sha256').update(key).digest('hex').slice(0, 32);
+export async function refundRateLimit(bucket: string, key: string): Promise<void> {
+  const db = getFirestore();
+  const ref = rateLimitRef(bucket, key);
   try {
-    const snap = await getFirestore().collection('_rateLimits').doc(`${bucket}_${hashed}`).get();
-    const data = snap.exists ? snap.data() : undefined;
-    if (!data) return false;
-    const windowStart = (data['windowStart'] as Timestamp).toMillis();
-    if (Date.now() - windowStart >= opts.windowMs) return false;
-    return (data['count'] as number) >= opts.limit;
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const data = snap.exists ? snap.data() : undefined;
+      if (!data) return;
+      const expiresAt = (data['expiresAt'] as Timestamp | undefined)?.toMillis() ?? 0;
+      const count = (data['count'] as number | undefined) ?? 0;
+      if (expiresAt <= Date.now() || count <= 0) return;
+      tx.update(ref, { count: count - 1 });
+    });
   } catch {
-    return false;
+    // best effort — the window lapses on its own
   }
 }

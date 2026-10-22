@@ -21,27 +21,57 @@ export type FileDisposition = 'inline' | 'attachment';
 const URL_TTL_MS = 10 * 60 * 1000;
 const WINDOW_MS = 15 * 60 * 1000;
 
-/** Public reads (GET view + POST file) per client IP. Generous: one recipient opens a few dozen files. */
-export const PUBLIC_IP_LIMIT = { limit: 120, windowMs: WINDOW_MS };
-/** Wrong passwords per personal link (key = tokenHash). */
+/**
+ * Request budgets per client IP (bucket `transferGetIp` / `transferPostIp`). The IP is spoofable
+ * (X-Forwarded-For), so these only bound casual load — they protect nothing secret.
+ */
+export const GET_IP_LIMIT = { limit: 120, windowMs: WINDOW_MS };
+/** Larger: a recipient plays/downloads many files, each one POST. */
+export const POST_IP_LIMIT = { limit: 600, windowMs: WINDOW_MS };
+/** Password attempts per personal link (bucket `transferPw`, key = tokenHash). Not IP-based. */
 export const PASSWORD_TOKEN_LIMIT = { limit: 5, windowMs: WINDOW_MS };
-/** Wrong passwords per client IP across all links (spraying many tokens). */
-export const PASSWORD_IP_LIMIT = { limit: 60, windowMs: WINDOW_MS };
+/** Password attempts per transfer across all its links (bucket `transferPwT`, key = transfer okey). */
+export const PASSWORD_TRANSFER_LIMIT = { limit: 20, windowMs: WINDOW_MS };
 
 /** Personal link tokens are 32 random bytes base64url (43 chars); anything far off is not looked up. */
 const TOKEN_RE = /^[A-Za-z0-9_-]{20,128}$/;
 const MAX_PASSWORD = 200;
 
-/** The client-supplied contentType is unvalidated: only these may render in the browser. SVG can carry script. */
-function mayRenderInline(contentType: string): boolean {
-  const type = (contentType ?? '').split(';')[0].trim().toLowerCase();
-  if (type === 'image/svg+xml') return false;
-  return type.startsWith('video/') || type.startsWith('image/') || type === 'application/pdf';
+/**
+ * The only types a file may be served INLINE as. The stored contentType comes from the uploader's
+ * client and is unvalidated, so it is matched exactly (no prefixes: no `image/svg+xml`, no
+ * `text/html`), and what is sent as `responseType` is this normalised value, never the raw string.
+ */
+export const INLINE_CONTENT_TYPES: ReadonlySet<string> = new Set([
+  'video/mp4', 'video/quicktime', 'video/webm',
+  'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif', 'image/avif',
+  'application/pdf',
+]);
+/** What everything not inline-able is served as. */
+export const ATTACHMENT_CONTENT_TYPE = 'application/octet-stream';
+
+function hasControlChar(value: string): boolean {
+  for (let i = 0; i < value.length; i++) {
+    const c = value.charCodeAt(i);
+    if (c < 0x20 || c === 0x7f) return true;
+  }
+  return false;
 }
 
-/** 'inline' only for playable/viewable types; everything else is forced to 'attachment'. */
+/**
+ * The allow-listed inline type of a stored contentType, or undefined. Strict: a value holding a
+ * `,` (a type list a browser or proxy might read differently) or any control character is
+ * rejected outright; otherwise lowercased, cut at `;` (parameters dropped) and trimmed.
+ */
+export function inlineContentType(raw: string): string | undefined {
+  if (typeof raw !== 'string' || raw.includes(',') || hasControlChar(raw)) return undefined;
+  const type = raw.toLowerCase().split(';')[0].trim();
+  return INLINE_CONTENT_TYPES.has(type) ? type : undefined;
+}
+
+/** 'inline' only for allow-listed types; everything else is forced to 'attachment'. */
 export function effectiveDisposition(contentType: string, requested: FileDisposition): FileDisposition {
-  return requested === 'inline' && mayRenderInline(contentType) ? 'inline' : 'attachment';
+  return requested === 'inline' && inlineContentType(contentType) !== undefined ? 'inline' : 'attachment';
 }
 
 /** The public page's data — never paths, token hashes, the password hash, emails or other recipients. */
@@ -61,13 +91,14 @@ export async function issueFileUrl(t: FileTransferModel, fileIndex: number, disp
   const file = t.files.find(f => f.index === fileIndex);
   if (!file) throw new Error(`issueFileUrl: no file ${fileIndex} in ${t.okey}`);
   const effective = effectiveDisposition(file.contentType, disposition);
+  const inlineType = effective === 'inline' ? inlineContentType(file.contentType) : undefined;
   const attachment = contentDisposition(file.name, file.path);
   const [url] = await privateBucket().file(file.path).getSignedUrl({
     version: 'v4',
     action: 'read',
     expires: Date.now() + URL_TTL_MS,
-    responseDisposition: effective === 'inline' ? attachment.replace(/^attachment;/, 'inline;') : attachment,
-    ...(effective === 'inline' ? { responseType: file.contentType } : {}),
+    responseDisposition: inlineType ? attachment.replace(/^attachment;/, 'inline;') : attachment,
+    responseType: inlineType ?? ATTACHMENT_CONTENT_TYPE,
   });
   return url;
 }
@@ -86,8 +117,7 @@ export async function findFileTransferByToken(db: Firestore, token: string): Pro
   const doc = snap.docs[0];
   if (snap.empty || !doc) return undefined;
   const data = doc.data() as Partial<FileTransferModel>;
-  const tenantId = data.tenants?.[0] ?? '';
-  return { ...new FileTransferModel(tenantId), ...data, okey: doc.id } as FileTransferModel;
+  return { ...new FileTransferModel(''), ...data, okey: doc.id } as FileTransferModel;
 }
 
 function accessEvent(
@@ -108,10 +138,10 @@ export interface RateLimitOpts { limit: number; windowMs: number }
 /** The I/O of the public handlers, injected so they are testable without Firestore/Storage. */
 export interface PublicAccessDeps {
   findByToken(token: string): Promise<FileTransferModel | undefined>;
-  /** true when `bucket:key` has used up its window (does not count) */
-  peekLimit(bucket: string, key: string, opts: RateLimitOpts): Promise<boolean>;
-  /** counts one hit; false when the window is used up */
+  /** atomically counts one hit; false (and not counted) when the window is used up */
   hitLimit(bucket: string, key: string, opts: RateLimitOpts): Promise<boolean>;
+  /** gives one hit back within the current window, never below 0 */
+  refundLimit(bucket: string, key: string): Promise<void>;
   checkPassword(password: string, stored: string): Promise<boolean>;
   issueFileUrl(t: FileTransferModel, fileIndex: number, disposition: FileDisposition): Promise<string>;
   logEvent(e: Omit<FileTransferEventModel, 'okey'>): Promise<void>;
@@ -129,9 +159,12 @@ function fail<T>(code: AccessErrorCode): AccessResult<T> {
 
 type Resolved = { ok: true; t: FileTransferModel; recipientId: string; tokenHash: string } | { ok: false; code: AccessErrorCode };
 
-/** Per-IP limit, token shape, lookup, recipient and lifetime — shared by GET and POST. */
-async function resolveLink(token: string, ip: string, deps: PublicAccessDeps): Promise<Resolved> {
-  if (!(await deps.hitLimit('transferIp', ip, PUBLIC_IP_LIMIT))) return { ok: false, code: 'rateLimited' };
+/** Per-IP budget, token shape, lookup, recipient and lifetime — shared by GET and POST. */
+async function resolveLink(token: string, ip: string, method: 'GET' | 'POST', deps: PublicAccessDeps): Promise<Resolved> {
+  const allowed = method === 'GET'
+    ? await deps.hitLimit('transferGetIp', ip, GET_IP_LIMIT)
+    : await deps.hitLimit('transferPostIp', ip, POST_IP_LIMIT);
+  if (!allowed) return { ok: false, code: 'rateLimited' };
   if (typeof token !== 'string' || !TOKEN_RE.test(token)) return { ok: false, code: 'notFound' };
   const t = await deps.findByToken(token);
   const tokenHash = hashToken(token);
@@ -143,7 +176,7 @@ async function resolveLink(token: string, ip: string, deps: PublicAccessDeps): P
 
 /** GET /public/api/v1/file-transfer/:token */
 export async function publicView(token: string, ip: string, deps: PublicAccessDeps): Promise<AccessResult<FileTransferView>> {
-  const link = await resolveLink(token, ip, deps);
+  const link = await resolveLink(token, ip, 'GET', deps);
   if (!link.ok) return fail(link.code);
   return { status: 200, body: toFileTransferView(link.t, !!link.t.passwordHash) };
 }
@@ -151,15 +184,17 @@ export async function publicView(token: string, ip: string, deps: PublicAccessDe
 /**
  * POST /public/api/v1/file-transfer/:token/file {fileIndex, disposition, password?}
  *
- * Wrong passwords are limited per link (5 / 15 min, bucket `transferPw`, key = tokenHash) and per
- * client IP (60 / 15 min, bucket `transferPwIp`). Only FAILURES count — a recipient opening many
- * files with the right password is not throttled — so the buckets are peeked BEFORE checking the
- * password: once exhausted, even the right password gets 429, so guesses cannot be told apart.
+ * Password attempts are limited per link (5 / 15 min, bucket `transferPw`, key = tokenHash) and
+ * per transfer (20 / 15 min, bucket `transferPwT`, key = okey) — never by the spoofable client IP.
+ * Every attempt RESERVES a slot in both buckets atomically before the password is checked (so
+ * concurrent guesses cannot slip past, and once a bucket is full even the right password gets 429
+ * — a guess cannot be told apart); a RIGHT password refunds both, so a recipient opening many
+ * files never locks themself out. A request without a password is no guess: 401, not counted.
  */
 export async function publicOpenFile(
   token: string, body: unknown, ip: string, deps: PublicAccessDeps,
 ): Promise<AccessResult<{ url: string }>> {
-  const link = await resolveLink(token, ip, deps);
+  const link = await resolveLink(token, ip, 'POST', deps);
   if (!link.ok) return fail(link.code);
   const { t, recipientId, tokenHash } = link;
 
@@ -169,17 +204,22 @@ export async function publicOpenFile(
   if (b.password !== undefined && (typeof b.password !== 'string' || b.password.length > MAX_PASSWORD)) return fail('badRequest');
 
   if (t.passwordHash) {
-    if (await deps.peekLimit('transferPw', tokenHash, PASSWORD_TOKEN_LIMIT)
-      || await deps.peekLimit('transferPwIp', ip, PASSWORD_IP_LIMIT)) return fail('rateLimited');
     const password = (b.password as string | undefined) ?? '';
-    if (!password || !(await deps.checkPassword(password, t.passwordHash))) {
-      // count the failure in both buckets (no short-circuit: both must advance)
-      const [byToken, byIp] = await Promise.all([
-        deps.hitLimit('transferPw', tokenHash, PASSWORD_TOKEN_LIMIT),
-        deps.hitLimit('transferPwIp', ip, PASSWORD_IP_LIMIT),
+    if (!password) return fail('wrongPassword');
+    const [byToken, byTransfer] = await Promise.all([
+      deps.hitLimit('transferPw', tokenHash, PASSWORD_TOKEN_LIMIT),
+      deps.hitLimit('transferPwT', t.okey, PASSWORD_TRANSFER_LIMIT),
+    ]);
+    if (!byToken || !byTransfer) {
+      // the refused attempt was never tried: give back the slot the other bucket did take
+      await Promise.all([
+        byToken ? deps.refundLimit('transferPw', tokenHash) : undefined,
+        byTransfer ? deps.refundLimit('transferPwT', t.okey) : undefined,
       ]);
-      return fail(byToken && byIp ? 'wrongPassword' : 'rateLimited');
+      return fail('rateLimited');
     }
+    if (!(await deps.checkPassword(password, t.passwordHash))) return fail('wrongPassword');
+    await Promise.all([deps.refundLimit('transferPw', tokenHash), deps.refundLimit('transferPwT', t.okey)]);
   }
 
   const disposition = effectiveDisposition(file.contentType, b.disposition);
