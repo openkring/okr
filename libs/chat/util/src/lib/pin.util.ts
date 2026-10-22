@@ -115,11 +115,8 @@ export function withoutPersonalPin(content: Record<string, unknown> | undefined,
   return result;
 }
 
-/**
- * Icon of a pin (banner, pin menu). The icon repository has no dedicated pin glyph yet, so the
- * location marker stands in; swap the name here once a `pin` icon is uploaded.
- */
-export const PIN_ICON = 'location';
+/** Icon of a pin (banner, pin menu, message sheet, Chat-Details). */
+export const PIN_ICON = 'pin';
 
 /** Whether `eventId` is pinned in any scope. */
 export function isEventPinned(eventId: string, pins: readonly ActivePin[]): boolean {
