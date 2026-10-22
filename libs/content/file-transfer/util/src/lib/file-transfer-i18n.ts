@@ -65,6 +65,8 @@ export const FILE_TRANSFER_I18N_KEYS = {
   card_expires:               PFX + 'card.expires',
   card_expired:               PFX + 'card.expired',
   card_expired_badge:         PFX + 'card.expiredBadge',
+  card_notShared:             PFX + 'card.notShared',
+  card_notShared_badge:       PFX + 'card.notSharedBadge',
   card_loading:               PFX + 'card.loading',
   card_play:                  PFX + 'card.play',
   card_view:                  PFX + 'card.view',
@@ -142,6 +144,8 @@ export const FILE_TRANSFER_I18N_KEYS = {
   public_wrongPassword:       PFX + 'public.wrongPassword',
   public_passwordText:        PFX + 'public.passwordText',
   public_passwordPlaceholder: PFX + 'public.passwordPlaceholder',
+  public_unlock:              PFX + 'public.unlock',
+  public_lockedText:          PFX + 'public.lockedText',
 
   // admin monitor + log
   monitor_title:              PFX + 'monitor.title',

@@ -96,6 +96,15 @@ export function toFileTransferView(t: FileTransferModel, needsPassword: boolean)
   };
 }
 
+/**
+ * What a GET of a PASSWORD-protected link answers (spec 1.115 §4.2): sender and expiry only, no
+ * message and no file names — a forwarded link must not leak them before the password is known.
+ * The full view comes from POST …/:token/view with the password.
+ */
+export function toLockedFileTransferView(t: FileTransferModel): FileTransferView {
+  return { transferKey: t.okey, senderName: t.senderName, expiresAt: t.expiresAt, needsPassword: true, message: '', files: [] };
+}
+
 /** v4 signed read URL, 10 minutes, with a Content-Disposition naming the original file. */
 export async function issueFileUrl(t: FileTransferModel, fileIndex: number, disposition: FileDisposition): Promise<string> {
   const file = t.files.find(f => f.index === fileIndex);
@@ -184,10 +193,73 @@ async function resolveLink(token: string, ip: string, method: 'GET' | 'POST', de
   return { ok: true, t, recipientId: recipient.id, tokenHash };
 }
 
-/** GET /public/api/v1/file-transfer/:token */
+/**
+ * Checks a link's password against both password buckets. Every attempt RESERVES a slot in the
+ * per-link (`transferPw`, key = tokenHash) and per-transfer (`transferPwT`, key = okey) bucket
+ * atomically before the password is checked (so concurrent guesses cannot slip past, and once a
+ * bucket is full even the right password gets 429 — a guess cannot be told apart); a RIGHT password
+ * refunds both, so a recipient opening many files never locks themself out. An empty password is
+ * no guess: 401, not counted. A datastore failure on a password bucket fails CLOSED (503).
+ * @returns undefined when the password is right, else the error code
+ */
+async function checkLinkPassword(
+  t: FileTransferModel, tokenHash: string, password: string, deps: PublicAccessDeps,
+): Promise<AccessErrorCode | undefined> {
+  if (!password) return 'wrongPassword';
+  const [byToken, byTransfer] = await Promise.all([
+    deps.hitLimit('transferPw', tokenHash, PASSWORD_TOKEN_LIMIT),
+    deps.hitLimit('transferPwT', t.okey, passwordTransferLimit(t)),
+  ]);
+  if (byToken !== true || byTransfer !== true) {
+    // the refused attempt was never tried: give back the slot the other bucket did take
+    await Promise.all([
+      byToken === true ? deps.refundLimit('transferPw', tokenHash) : undefined,
+      byTransfer === true ? deps.refundLimit('transferPwT', t.okey) : undefined,
+    ]);
+    // a failed datastore on a password bucket fails CLOSED: no guess may go untracked
+    return byToken === 'unavailable' || byTransfer === 'unavailable' ? 'unavailable' : 'rateLimited';
+  }
+  if (!(await deps.checkPassword(password, t.passwordHash))) return 'wrongPassword';
+  await Promise.all([deps.refundLimit('transferPw', tokenHash), deps.refundLimit('transferPwT', t.okey)]);
+  return undefined;
+}
+
+/** A password field of an untrusted body: undefined (absent) or a string within MAX_PASSWORD; else invalid. */
+function passwordOf(body: unknown): { ok: true; password: string } | { ok: false } {
+  const raw = ((body ?? {}) as { password?: unknown }).password;
+  if (raw === undefined) return { ok: true, password: '' };
+  if (typeof raw !== 'string' || raw.length > MAX_PASSWORD) return { ok: false };
+  return { ok: true, password: raw };
+}
+
+/**
+ * GET /public/api/v1/file-transfer/:token — the full view, or for a password-protected transfer
+ * only the locked view (sender, expiry, needsPassword; see toLockedFileTransferView).
+ */
 export async function publicView(token: string, ip: string, deps: PublicAccessDeps): Promise<AccessResult<FileTransferView>> {
   const link = await resolveLink(token, ip, 'GET', deps);
   if (!link.ok) return fail(link.code);
+  const body = link.t.passwordHash ? toLockedFileTransferView(link.t) : toFileTransferView(link.t, false);
+  return { status: 200, body };
+}
+
+/**
+ * POST /public/api/v1/file-transfer/:token/view {password} — the full view of a password-protected
+ * transfer once the password is right (same buckets as the file POST, see checkLinkPassword); a
+ * transfer without a password answers its full view. Writes NO event: an open is logged per file
+ * (`opened` / `downloaded`), seeing the list is not one.
+ */
+export async function publicViewWithPassword(
+  token: string, body: unknown, ip: string, deps: PublicAccessDeps,
+): Promise<AccessResult<FileTransferView>> {
+  const link = await resolveLink(token, ip, 'POST', deps);
+  if (!link.ok) return fail(link.code);
+  const pw = passwordOf(body);
+  if (!pw.ok) return fail('badRequest');
+  if (link.t.passwordHash) {
+    const denied = await checkLinkPassword(link.t, link.tokenHash, pw.password, deps);
+    if (denied) return fail(denied);
+  }
   return { status: 200, body: toFileTransferView(link.t, !!link.t.passwordHash) };
 }
 
@@ -195,11 +267,8 @@ export async function publicView(token: string, ip: string, deps: PublicAccessDe
  * POST /public/api/v1/file-transfer/:token/file {fileIndex, disposition, password?}
  *
  * Password attempts are limited per link (5 / 15 min, bucket `transferPw`, key = tokenHash) and
- * per transfer (see passwordTransferLimit, 15 min, bucket `transferPwT`, key = okey) — never by the spoofable client IP.
- * Every attempt RESERVES a slot in both buckets atomically before the password is checked (so
- * concurrent guesses cannot slip past, and once a bucket is full even the right password gets 429
- * — a guess cannot be told apart); a RIGHT password refunds both, so a recipient opening many
- * files never locks themself out. A request without a password is no guess: 401, not counted.
+ * per transfer (see passwordTransferLimit, 15 min, bucket `transferPwT`, key = okey) — never by the
+ * spoofable client IP; see checkLinkPassword. A request without a password is no guess: 401, not counted.
  */
 export async function publicOpenFile(
   token: string, body: unknown, ip: string, deps: PublicAccessDeps,
@@ -208,29 +277,15 @@ export async function publicOpenFile(
   if (!link.ok) return fail(link.code);
   const { t, recipientId, tokenHash } = link;
 
-  const b = (body ?? {}) as { fileIndex?: unknown; disposition?: unknown; password?: unknown };
+  const b = (body ?? {}) as { fileIndex?: unknown; disposition?: unknown };
   const file = Number.isInteger(b.fileIndex) ? t.files.find(f => f.index === b.fileIndex) : undefined;
   if (!file || (b.disposition !== 'inline' && b.disposition !== 'attachment')) return fail('badRequest');
-  if (b.password !== undefined && (typeof b.password !== 'string' || b.password.length > MAX_PASSWORD)) return fail('badRequest');
+  const pw = passwordOf(body);
+  if (!pw.ok) return fail('badRequest');
 
   if (t.passwordHash) {
-    const password = (b.password as string | undefined) ?? '';
-    if (!password) return fail('wrongPassword');
-    const [byToken, byTransfer] = await Promise.all([
-      deps.hitLimit('transferPw', tokenHash, PASSWORD_TOKEN_LIMIT),
-      deps.hitLimit('transferPwT', t.okey, passwordTransferLimit(t)),
-    ]);
-    if (byToken !== true || byTransfer !== true) {
-      // the refused attempt was never tried: give back the slot the other bucket did take
-      await Promise.all([
-        byToken === true ? deps.refundLimit('transferPw', tokenHash) : undefined,
-        byTransfer === true ? deps.refundLimit('transferPwT', t.okey) : undefined,
-      ]);
-      // a failed datastore on a password bucket fails CLOSED: no guess may go untracked
-      return fail(byToken === 'unavailable' || byTransfer === 'unavailable' ? 'unavailable' : 'rateLimited');
-    }
-    if (!(await deps.checkPassword(password, t.passwordHash))) return fail('wrongPassword');
-    await Promise.all([deps.refundLimit('transferPw', tokenHash), deps.refundLimit('transferPwT', t.okey)]);
+    const denied = await checkLinkPassword(t, tokenHash, pw.password, deps);
+    if (denied) return fail(denied);
   }
 
   const disposition = effectiveDisposition(file.contentType, b.disposition);

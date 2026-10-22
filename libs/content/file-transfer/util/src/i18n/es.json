@@ -72,6 +72,8 @@
     "expires": "Disponible hasta el {date}",
     "expired": "Esta transferencia ha caducado.",
     "expiredBadge": "caducada",
+    "notSharedBadge": "No compartido contigo",
+    "notShared": "Nadie te ha enviado esta transferencia. Pregunta a la persona que la compartió.",
     "loading": "Cargando la transferencia …",
     "play": "Reproducir",
     "view": "Ver",
@@ -171,7 +173,9 @@
     "unavailable": "La transferencia no está disponible ahora mismo. Por favor, inténtalo más tarde.",
     "wrongPassword": "La contraseña no es correcta.",
     "passwordText": "Esta transferencia está protegida con una contraseña. Te la ha dado la persona que te la ha enviado.",
-    "passwordPlaceholder": "Introduce la contraseña"
+    "passwordPlaceholder": "Introduce la contraseña",
+    "unlock": "Abrir",
+    "lockedText": "Verás los archivos y el mensaje en cuanto introduzcas la contraseña."
   },
   "monitor": {
     "title": "Supervisión de transferencias",

@@ -42,6 +42,7 @@ describe('file-transfer CORS', () => {
   it('applies only to the file-transfer routes', () => {
     expect(isFileTransferPath('/public/api/v1/file-transfer/abc')).toBe(true);
     expect(isFileTransferPath('/public/api/v1/file-transfer/abc/file')).toBe(true);
+    expect(isFileTransferPath('/public/api/v1/file-transfer/abc/view')).toBe(true);
     expect(isFileTransferPath('/public/api/v1/gallery')).toBe(false);
     expect(isFileTransferPath('/public/api/v1/file-transferx')).toBe(false);
   });

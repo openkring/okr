@@ -5,6 +5,7 @@ import corsLib from 'cors';
 
 import {
   AccessResult, findFileTransferByToken, issueFileUrl, logFileTransferEvent, PublicAccessDeps, publicOpenFile, publicView,
+  publicViewWithPassword,
 } from '../../file-transfer/file-transfer-access';
 import { verifyPassword } from '../../file-transfer/file-transfer-tokens';
 import { checkRateLimit, clientIp, refundRateLimit } from '../rateLimit';
@@ -63,12 +64,21 @@ function internalError(res: Response, what: string, err: unknown): void {
   res.status(500).set('Cache-Control', 'private, no-store').json({ error: { code: 'internal_error', message: 'Internal error' } });
 }
 
-/** GET /public/api/v1/file-transfer/:token → FileTransferView | 404 | 410 | 429 */
+/** GET /public/api/v1/file-transfer/:token → FileTransferView (locked view when password-protected) | 404 | 410 | 429 */
 export async function fileTransferViewRouter(req: Request, res: Response): Promise<void> {
   try {
     send(res, await publicView(String(req.params['token'] ?? ''), clientIp(req), deps()));
   } catch (err) {
     internalError(res, 'view', err);
+  }
+}
+
+/** POST /public/api/v1/file-transfer/:token/view {password} → FileTransferView | 400 | 401 | 404 | 410 | 429 | 503 */
+export async function fileTransferUnlockRouter(req: Request, res: Response): Promise<void> {
+  try {
+    send(res, await publicViewWithPassword(String(req.params['token'] ?? ''), req.body, clientIp(req), deps()));
+  } catch (err) {
+    internalError(res, 'unlock', err);
   }
 }
 

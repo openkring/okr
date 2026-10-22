@@ -19,7 +19,7 @@ import type { FileTransferEventModel, FileTransferModel } from '@okr/shared-mode
 
 import {
   effectiveDisposition, findFileTransferByToken, inlineContentType, issueFileUrl, logFileTransferEvent, memberFileAccess, publicOpenFile,
-  PASSWORD_TOKEN_LIMIT, passwordTransferLimit, PublicAccessDeps, publicView, toFileTransferView,
+  PASSWORD_TOKEN_LIMIT, passwordTransferLimit, PublicAccessDeps, publicView, publicViewWithPassword, toFileTransferView,
 } from './file-transfer-access';
 import { hashToken } from './file-transfer-tokens';
 
@@ -133,9 +133,16 @@ describe('publicView (GET /file-transfer/:token)', () => {
     }
   });
 
-  it('flags needsPassword when the transfer has one', async () => {
-    const r = await publicView(TOKEN, '1.2.3.4', fakeDeps(transfer({ passwordHash: 'aa:bb' })));
-    expect((r.body as { needsPassword: boolean }).needsPassword).toBe(true);
+  it('answers only the locked view for a password-protected transfer: no message, no file names', async () => {
+    const deps = fakeDeps(transfer({ passwordHash: 'aa:bb' }));
+    const r = await publicView(TOKEN, '1.2.3.4', deps);
+    expect(r).toEqual({
+      status: 200,
+      body: { transferKey: 'T1', senderName: 'Sara Sender', expiresAt: '2026-10-29T10:00:00.000Z', needsPassword: true, message: '', files: [] },
+    });
+    const json = JSON.stringify(r.body);
+    for (const leak of ['Hallo', 'Video 1.MOV', 'page.html']) expect(json).not.toContain(leak);
+    expect(deps.events).toEqual([]);
   });
 
   it('rate-limits GET per client IP (120 / 15 min)', async () => {
@@ -143,6 +150,63 @@ describe('publicView (GET /file-transfer/:token)', () => {
     for (let i = 0; i < 120; i++) expect((await publicView(TOKEN, '9.9.9.9', deps)).status).toBe(200);
     expect(await publicView(TOKEN, '9.9.9.9', deps)).toEqual({ status: 429, body: { error: { code: 'rateLimited' } } });
     expect((await publicView(TOKEN, '8.8.8.8', deps)).status).toBe(200);
+  });
+});
+
+describe('publicViewWithPassword (POST /file-transfer/:token/view)', () => {
+  let deps: Fake;
+  beforeEach(() => { deps = fakeDeps(transfer({ passwordHash: 'aa:bb' })); });
+
+  it('returns the full view for the right password, refunds both slots and logs nothing', async () => {
+    const r = await publicViewWithPassword(TOKEN, { password: 'secret' }, '1.2.3.4', deps);
+    expect(r.status).toBe(200);
+    expect(r.body).toEqual(toFileTransferView(transfer({ passwordHash: 'aa:bb' }), true));
+    expect(deps.counters.get(`transferPw:${hashToken(TOKEN)}`)).toBe(0);
+    expect(deps.counters.get('transferPwT:T1')).toBe(0);
+    expect(deps.events).toEqual([]);
+    expect(deps.counters.get('transferPostIp:1.2.3.4')).toBe(1);
+  });
+
+  it('answers 401 for a wrong or missing password; only a wrong one counts', async () => {
+    expect(await publicViewWithPassword(TOKEN, { password: 'nope' }, '1.2.3.4', deps))
+      .toEqual({ status: 401, body: { error: { code: 'wrongPassword' } } });
+    expect(await publicViewWithPassword(TOKEN, {}, '1.2.3.4', deps))
+      .toEqual({ status: 401, body: { error: { code: 'wrongPassword' } } });
+    expect(deps.counters.get(`transferPw:${hashToken(TOKEN)}`)).toBe(1);
+    expect(deps.counters.get('transferPwT:T1')).toBe(1);
+  });
+
+  it('shares the password buckets with the file POST: 5 wrong guesses lock both out (429)', async () => {
+    for (let i = 0; i < 3; i++) await publicViewWithPassword(TOKEN, { password: `bad${i}` }, '1.2.3.4', deps);
+    for (let i = 0; i < 2; i++) await publicOpenFile(TOKEN, { fileIndex: 0, disposition: 'inline', password: `bad${i}` }, '1.2.3.4', deps);
+    expect(await publicViewWithPassword(TOKEN, { password: 'secret' }, '1.2.3.4', deps))
+      .toEqual({ status: 429, body: { error: { code: 'rateLimited' } } });
+    expect((await publicOpenFile(TOKEN, { fileIndex: 0, disposition: 'inline', password: 'secret' }, '1.2.3.4', deps)).status).toBe(429);
+  });
+
+  it('fails closed with 503 when a password bucket is unavailable', async () => {
+    const ok = deps.hitLimit;
+    deps.hitLimit = async (bucket, key, opts) => (bucket === 'transferPw' ? 'unavailable' : ok(bucket, key, opts));
+    expect(await publicViewWithPassword(TOKEN, { password: 'secret' }, '1.2.3.4', deps))
+      .toEqual({ status: 503, body: { error: { code: 'unavailable' } } });
+    expect(deps.counters.get('transferPwT:T1')).toBe(0);
+  });
+
+  it('answers 400 for a non-string or oversized password', async () => {
+    expect((await publicViewWithPassword(TOKEN, { password: 42 }, '1.2.3.4', deps)).status).toBe(400);
+    expect((await publicViewWithPassword(TOKEN, { password: 'x'.repeat(201) }, '1.2.3.4', deps)).status).toBe(400);
+  });
+
+  it('answers 404 / 410 like the GET', async () => {
+    expect((await publicViewWithPassword('unknown-token-0123456789abcdefghijklmnop', { password: 'secret' }, '1.2.3.4', deps)).status).toBe(404);
+    expect((await publicViewWithPassword(TOKEN, { password: 'secret' }, '1.2.3.4', fakeDeps(transfer({ passwordHash: 'aa:bb', state: 'ended' })))).status).toBe(410);
+  });
+
+  it('returns the full view of a transfer without a password, counting nothing', async () => {
+    const open = fakeDeps(transfer());
+    const r = await publicViewWithPassword(TOKEN, {}, '1.2.3.4', open);
+    expect(r.body).toEqual(toFileTransferView(transfer(), false));
+    expect([...open.counters.keys()].filter(k => k.startsWith('transferPw'))).toEqual([]);
   });
 });
 

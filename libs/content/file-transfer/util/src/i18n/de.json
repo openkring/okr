@@ -72,6 +72,8 @@
     "expires": "Verfügbar bis {date}",
     "expired": "Dieser Transfer ist abgelaufen.",
     "expiredBadge": "abgelaufen",
+    "notSharedBadge": "Nicht für dich freigegeben",
+    "notShared": "Diesen Transfer hat dir niemand geschickt. Frag bei der Person nach, die ihn geteilt hat.",
     "loading": "Transfer wird geladen …",
     "play": "Abspielen",
     "view": "Ansehen",
@@ -171,7 +173,9 @@
     "unavailable": "Der Transfer ist gerade nicht erreichbar. Bitte versuche es später noch einmal.",
     "wrongPassword": "Das Passwort stimmt nicht.",
     "passwordText": "Dieser Transfer ist mit einem Passwort geschützt. Du hast es von der Person bekommen, die ihn dir geschickt hat.",
-    "passwordPlaceholder": "Passwort eingeben"
+    "passwordPlaceholder": "Passwort eingeben",
+    "unlock": "Öffnen",
+    "lockedText": "Die Dateien und die Nachricht siehst du, sobald du das Passwort eingegeben hast."
   },
   "monitor": {
     "title": "Transfer-Überwachung",

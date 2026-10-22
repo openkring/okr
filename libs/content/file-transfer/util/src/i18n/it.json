@@ -72,6 +72,8 @@
     "expires": "Disponibile fino al {date}",
     "expired": "Questo trasferimento è scaduto.",
     "expiredBadge": "scaduto",
+    "notSharedBadge": "Non condiviso con te",
+    "notShared": "Nessuno ti ha inviato questo trasferimento. Chiedi alla persona che l'ha condiviso.",
     "loading": "Caricamento del trasferimento …",
     "play": "Riproduci",
     "view": "Guarda",
@@ -171,7 +173,9 @@
     "unavailable": "Il trasferimento non è raggiungibile in questo momento. Riprova più tardi, per favore.",
     "wrongPassword": "La password non è corretta.",
     "passwordText": "Questo trasferimento è protetto da una password. L'hai ricevuta dalla persona che te l'ha inviato.",
-    "passwordPlaceholder": "Inserisci la password"
+    "passwordPlaceholder": "Inserisci la password",
+    "unlock": "Apri",
+    "lockedText": "Vedi i file e il messaggio non appena hai inserito la password."
   },
   "monitor": {
     "title": "Monitoraggio dei trasferimenti",

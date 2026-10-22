@@ -72,6 +72,8 @@
     "expires": "Available until {date}",
     "expired": "This transfer has expired.",
     "expiredBadge": "expired",
+    "notSharedBadge": "Not shared with you",
+    "notShared": "Nobody sent this transfer to you. Ask the person who shared it.",
     "loading": "Loading transfer …",
     "play": "Play",
     "view": "View",
@@ -171,7 +173,9 @@
     "unavailable": "The transfer can't be reached right now. Please try again later.",
     "wrongPassword": "The password is not correct.",
     "passwordText": "This transfer is protected by a password. You got it from the person who sent it to you.",
-    "passwordPlaceholder": "Enter password"
+    "passwordPlaceholder": "Enter password",
+    "unlock": "Open",
+    "lockedText": "You see the files and the message once you have entered the password."
   },
   "monitor": {
     "title": "Transfer monitoring",

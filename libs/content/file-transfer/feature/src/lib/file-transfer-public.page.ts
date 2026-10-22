@@ -1,13 +1,16 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { IonCard, IonCardContent, IonContent, IonHeader, IonNote, IonTitle, IonToolbar } from '@ionic/angular';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader, IonNote, IonTitle, IonToolbar } from '@ionic/angular';
 import { from, of } from 'rxjs';
 
 import { I18nService } from '@okr/shared-i18n';
 import { EmptyList, PasswordInput, PasswordInputI18n, Spinner } from '@okr/shared-ui';
 import { FileTransferError, FileTransferService } from '@okr/content-file-transfer-data-access';
 import { FileTransferCard, FileTransferOpenEvent } from '@okr/content-file-transfer-ui';
-import { FILE_TRANSFER_I18N_KEYS, FileTransferI18n, openFileTransferFile } from '@okr/content-file-transfer-util';
+import { fill } from '@okr/shared-util-core';
+import {
+  FILE_TRANSFER_I18N_KEYS, FileTransferI18n, FileTransferView, formatFileTransferExpiry, openFileTransferFile,
+} from '@okr/content-file-transfer-util';
 
 
 type PublicFailure = 'notFound' | 'expired' | 'rateLimited' | 'unavailable' | 'other';
@@ -27,15 +30,20 @@ function toFailure(error: unknown): PublicFailure {
  * `publicFileUrl`), where the token in the path is the credential. No store (nothing here needs
  * the signed-in user), so the page does not wait for or depend on any member data.
  *
- * States: loading, the transfer (password prompt first if it has one), «abgelaufen» (410), unknown
- * link (404), too many attempts (429), service down (503) or a generic failure.
+ * A password-protected transfer: the GET answers only sender and expiry (no message, no file
+ * names), the page asks for the password first, then loads the full view with
+ * `publicViewWithPassword` and keeps the password in memory (never stored) for the file POSTs.
+ *
+ * States: loading, the password prompt (if any), the transfer, «abgelaufen» (410), unknown link
+ * (404), too many attempts (429), service down (503) or a generic failure.
  */
 @Component({
   selector: 'okr-file-transfer-public-page',
   standalone: true,
   imports: [
     FileTransferCard, Spinner, EmptyList, PasswordInput,
-    IonHeader, IonToolbar, IonTitle, IonContent, IonCard, IonCardContent, IonNote,
+    IonHeader, IonToolbar, IonTitle, IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonNote,
+    IonButton,
   ],
   styles: [`
     .player { padding: 0 16px 16px 16px; }
@@ -58,18 +66,22 @@ function toFailure(error: unknown): PublicFailure {
         } @else {
           <okr-empty-list [message]="failureText(failure)" />
         }
+      } @else if (locked(); as locked) {
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>{{ fromText(locked) }}</ion-card-title>
+            <ion-card-subtitle>{{ expiresText(locked) }}</ion-card-subtitle>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-note>{{ i18n.public_passwordText() }} {{ i18n.public_lockedText() }}</ion-note>
+            <okr-password-input [(value)]="password" [i18n]="passwordI18n()" [copyable]="false" (keyup.enter)="unlock()" />
+            @if (passwordError()) {
+              <ion-note class="error">{{ passwordError() }}</ion-note>
+            }
+            <ion-button expand="block" [disabled]="unlocking()" (click)="unlock()">{{ i18n.public_unlock() }}</ion-button>
+          </ion-card-content>
+        </ion-card>
       } @else if (view(); as view) {
-        @if (view.needsPassword) {
-          <ion-card>
-            <ion-card-content>
-              <ion-note>{{ i18n.public_passwordText() }}</ion-note>
-              <okr-password-input [(value)]="password" [i18n]="passwordI18n()" [copyable]="false" />
-              @if (passwordError()) {
-                <ion-note class="error">{{ passwordError() }}</ion-note>
-              }
-            </ion-card-content>
-          </ion-card>
-        }
         <okr-file-transfer-card [transferKey]="view.transferKey" [view]="view" (open)="onOpen($event)" />
         @if (video(); as video) {
           <div class="player">
@@ -90,7 +102,11 @@ export class FileTransferPublicPage {
   // route param (withComponentInputBinding); '' when unbound
   public readonly token = input('');
 
+  /** in memory only; sent with every file POST of a password-protected transfer */
   protected readonly password = signal('');
+  /** the full view after a right password (the GET answered only the locked view) */
+  private readonly unlocked = signal<FileTransferView | undefined>(undefined);
+  protected readonly unlocking = signal(false);
   protected readonly passwordError = signal('');
   protected readonly openError = signal('');
   protected readonly video = signal<{ url: string; name: string } | undefined>(undefined);
@@ -103,7 +119,13 @@ export class FileTransferPublicPage {
   });
 
   // value() throws while the resource is in error state — read it only when there is one
-  protected readonly view = computed(() => this.viewResource.hasValue() ? this.viewResource.value() : undefined);
+  private readonly fetched = computed(() => this.viewResource.hasValue() ? this.viewResource.value() : undefined);
+  /** the locked view of a password-protected transfer, until the password was right */
+  protected readonly locked = computed(() => {
+    const fetched = this.fetched();
+    return fetched?.needsPassword && !this.unlocked() ? fetched : undefined;
+  });
+  protected readonly view = computed(() => this.unlocked() ?? (this.locked() ? undefined : this.fetched()));
   protected readonly failure = computed<PublicFailure | undefined>(() => {
     if (this.lateFailure()) return this.lateFailure();
     const error = this.viewResource.error();
@@ -116,6 +138,40 @@ export class FileTransferPublicPage {
     label: this.i18n.password_label(),
     placeholder: this.i18n.public_passwordPlaceholder(),
   }));
+
+  protected fromText(view: FileTransferView): string {
+    return fill(this.i18n.card_from(), { name: view.senderName });
+  }
+
+  protected expiresText(view: FileTransferView): string {
+    return fill(this.i18n.card_expires(), { date: formatFileTransferExpiry(view.expiresAt) });
+  }
+
+  /** Sends the password once; on success the full view replaces the locked one. */
+  protected async unlock(): Promise<void> {
+    if (this.unlocking()) return;
+    this.passwordError.set('');
+    this.openError.set('');
+    const password = this.password().trim();
+    if (!password) {
+      this.passwordError.set(this.i18n.public_wrongPassword());
+      return;
+    }
+    this.unlocking.set(true);
+    try {
+      this.unlocked.set(await this.fileTransferService.publicViewWithPassword(this.token(), password));
+    } catch (error) {
+      const code = error instanceof FileTransferError ? error.code : '';
+      if (code === 'wrongPassword') this.passwordError.set(this.i18n.public_wrongPassword());
+      else if (code === 'notFound' || code === 'expired') this.lateFailure.set(code);
+      else {
+        const failure = toFailure(error);
+        this.passwordError.set(failure === 'rateLimited' || failure === 'unavailable' ? this.failureText(failure) : this.i18n.failure_generic());
+      }
+    } finally {
+      this.unlocking.set(false);
+    }
+  }
 
   protected failureText(failure: PublicFailure): string {
     switch (failure) {
@@ -133,10 +189,6 @@ export class FileTransferPublicPage {
     this.passwordError.set('');
     this.openError.set('');
     const password = this.password().trim();
-    if (view.needsPassword && !password) {
-      this.passwordError.set(this.i18n.public_wrongPassword());
-      return;
-    }
     try {
       const outcome = await openFileTransferFile(view, event, (index, disposition) =>
         this.fileTransferService.publicFileUrl(this.token(), index, disposition, view.needsPassword ? password : undefined));
@@ -144,6 +196,8 @@ export class FileTransferPublicPage {
     } catch (error) {
       const code = error instanceof FileTransferError ? error.code : '';
       if (code === 'wrongPassword') {
+        // the password changed under us (cannot after unlock) — back to the prompt
+        this.unlocked.set(undefined);
         this.passwordError.set(this.i18n.public_wrongPassword());
       } else if (code === 'notFound' || code === 'expired') {
         this.lateFailure.set(code);
