@@ -276,5 +276,14 @@
     "appliesTo": "gilt für: {title}",
     "loadFailed": "Deine Alben konnten nicht geladen werden.",
     "actionFailed": "Das hat leider nicht geklappt. Versuch es bitte nochmals."
+  },
+  "trip": {
+    "day": "1 Tag im Tagebuch",
+    "days": "{count} Tage im Tagebuch",
+    "showEntries": "Einträge anzeigen",
+    "map": "Karte",
+    "noPoints": "Für diese Reise gibt es noch keine Orte mit Koordinaten.",
+    "notes": "Notizen",
+    "notFound": "Diese Reise wurde nicht gefunden."
   }
 }

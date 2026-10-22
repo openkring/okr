@@ -422,7 +422,34 @@ export const DiaryStore = signalStore(
       reloadList();
     };
 
+    /**
+     * Opens the trip edit modal and writes the result; the saved trip (okey set on create), or
+     * undefined when cancelled or the write failed (FirestoreService already toasted the failure).
+     */
+    const editTravelTrip = async (trip?: TripModel): Promise<TripModel | undefined> => {
+      const isNew = !trip;
+      // dynamic import: the modal must not pull the store's module graph back in (store-modal-dynamic-import)
+      const { DiaryTripEditModal } = await import('@okr/content-diary-ui');
+      const draft = trip ?? Object.assign(new TripModel(store.tenantId()), { type: 'travel' });
+      const modal = await store.modalController.create({
+        component: DiaryTripEditModal,
+        componentProps: { trip: draft, isNew, i18n: store.i18n },
+      });
+      await modal.present();
+      const { data, role } = await modal.onWillDismiss<TripModel>();
+      if (role !== 'confirm' || !data) return undefined;
+      const saved: TripModel = { ...data, index: addIndexElement(addIndexElement('', 'n', data.name), 'd', data.startDate) };
+      const key = isNew
+        ? await store.diaryService.createTravelTrip(saved, store.currentUser())
+        : await store.diaryService.updateTravelTrip(saved, store.currentUser());
+      if (!key) return undefined;
+      if (isNew) saved.okey = key;
+      return saved;
+    };
+
     return {
+      editTravelTrip,
+
       setSearchTerm(searchTerm: string) { patchState(store, { searchTerm }); },
       setSelectedRange(selectedRange: DiaryRange | undefined) { patchState(store, { selectedRange }); },
       toggleGroupByMonth() {
@@ -487,7 +514,7 @@ export const DiaryStore = signalStore(
         const tenantId = store.tenantId();
         if (!authorKey || !tenantId) return;
         // dynamic import: the modals must not pull the store's module graph back in (store-modal-dynamic-import)
-        const { DiaryAlbumsModal, DiaryAlbumEditModal, DiaryTripEditModal } = await import('@okr/content-diary-ui');
+        const { DiaryAlbumsModal, DiaryAlbumEditModal } = await import('@okr/content-diary-ui');
         let albums = await firstValueFrom(store.albumService.list(authorKey, tenantId).pipe(timeout(10000)))
           .catch((ex: unknown) => {
             console.warn('DiaryStore.openAlbums: albums not loaded', ex);
@@ -530,23 +557,8 @@ export const DiaryStore = signalStore(
         };
 
         const editTrip = async (trip?: TripModel): Promise<TripModel[]> => {
-          const isNew = !trip;
-          const draft = trip ?? Object.assign(new TripModel(tenantId), { type: 'travel' });
-          const modal = await store.modalController.create({
-            component: DiaryTripEditModal,
-            componentProps: { trip: draft, isNew, i18n: store.i18n },
-          });
-          await modal.present();
-          const { data, role } = await modal.onWillDismiss<TripModel>();
-          if (role !== 'confirm' || !data) return trips;
-          const saved: TripModel = { ...data, index: addIndexElement(addIndexElement('', 'n', data.name), 'd', data.startDate) };
-          const key = isNew
-            ? await store.diaryService.createTravelTrip(saved, store.currentUser())
-            : await store.diaryService.updateTravelTrip(saved, store.currentUser());
-          if (key) {
-            if (isNew) saved.okey = key;
-            trips = [...trips.filter(t => t.okey !== saved.okey), saved];
-          }
+          const saved = await editTravelTrip(trip);
+          if (saved) trips = [...trips.filter(t => t.okey !== saved.okey), saved];
           return trips;
         };
 

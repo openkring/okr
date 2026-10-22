@@ -3,7 +3,7 @@ import { IonButton, IonButtons, IonIcon, IonItem, IonLabel, IonList, IonNote, Io
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 
-import { MapMarker } from './map-view.modal';
+import { MapMarker } from './leaflet-map';
 
 export interface MapMarkerDetailI18n {
   name: string;

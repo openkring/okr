@@ -276,5 +276,14 @@
     "appliesTo": "vale per: {title}",
     "loadFailed": "Non è stato possibile caricare i tuoi album.",
     "actionFailed": "Non ha funzionato. Riprova, per favore."
+  },
+  "trip": {
+    "day": "1 giorno nel diario",
+    "days": "{count} giorni nel diario",
+    "showEntries": "Mostra le voci",
+    "map": "Mappa",
+    "noPoints": "Questo viaggio non ha ancora luoghi con coordinate.",
+    "notes": "Note",
+    "notFound": "Questo viaggio non è stato trovato."
   }
 }

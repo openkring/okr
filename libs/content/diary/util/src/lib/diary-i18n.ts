@@ -182,8 +182,18 @@ export const DIARY_I18N_KEYS = {
   albums_trip_update_conf:  PFX + 'albums.trip.update.conf',
   albums_trip_update_error: PFX + 'albums.trip.update.error',
 
+  // the trip page (spec 1.114 §6)
+  trip_day:               PFX + 'trip.day',
+  trip_days:              PFX + 'trip.days',
+  trip_show_entries:      PFX + 'trip.showEntries',
+  trip_map:               PFX + 'trip.map',
+  trip_no_points:         PFX + 'trip.noPoints',
+  trip_notes:             PFX + 'trip.notes',
+  trip_not_found:         PFX + 'trip.notFound',
+
   ok:                     '@ok',
   cancel:                 '@cancel',
+  copy_conf:              '@copy.conf',
 } satisfies Record<string, string>;
 
 export type DiaryI18n = { [K in keyof typeof DIARY_I18N_KEYS]: Signal<string> };

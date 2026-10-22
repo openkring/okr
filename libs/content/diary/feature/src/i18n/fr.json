@@ -276,5 +276,14 @@
     "appliesTo": "s'applique à : {title}",
     "loadFailed": "Tes albums n'ont pas pu être chargés.",
     "actionFailed": "Cela n'a pas fonctionné. Réessaie, s'il te plaît."
+  },
+  "trip": {
+    "day": "1 jour dans le journal",
+    "days": "{count} jours dans le journal",
+    "showEntries": "Afficher les entrées",
+    "map": "Carte",
+    "noPoints": "Ce voyage n'a pas encore de lieux avec des coordonnées.",
+    "notes": "Notes",
+    "notFound": "Ce voyage est introuvable."
   }
 }

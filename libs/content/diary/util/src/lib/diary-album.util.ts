@@ -104,3 +104,31 @@ export function mergeDiaryDateRange(current: DiaryFilter | undefined, from: stri
   if (current && current.kind !== 'date') return { ...current, from, to };
   return { kind: 'date', key: '', title: '', from, to };
 }
+
+/** A pin on the trip map (spec 1.114 §6). Structurally a shared/ui `MapMarker`; `diaryKey` '' for a trip-own location. */
+export interface TripMapPoint {
+  lat: number;
+  lng: number;
+  title: string;
+  /** StoreDate of the entry; '' for a trip-own location */
+  date: string;
+  diaryKey: string;
+}
+
+/**
+ * The trip map's pins: the located diary entries in date order (the polyline follows them),
+ * then the trip's own locations. Entries without finite coordinates are dropped.
+ */
+export function tripMapPoints(
+  entries: { date: string; okey: string; title: string; lat?: number; lng?: number }[],
+  own: { lat: number; lng: number; title: string }[],
+): TripMapPoint[] {
+  const dated = entries
+    .filter(e => Number.isFinite(e.lat) && Number.isFinite(e.lng))
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map(e => ({ lat: e.lat as number, lng: e.lng as number, title: e.title, date: e.date, diaryKey: e.okey }));
+  const located = own
+    .filter(o => Number.isFinite(o.lat) && Number.isFinite(o.lng))
+    .map(o => ({ lat: o.lat, lng: o.lng, title: o.title, date: '', diaryKey: '' }));
+  return [...dated, ...located];
+}

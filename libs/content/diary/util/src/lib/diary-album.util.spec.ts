@@ -1,6 +1,6 @@
 import { AvatarInfo } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
-import { avatarTitle, decodeDiaryFilter, DiaryFilter, diaryAlbumId, diaryFilterLabel, mergeDiaryDateRange, diaryAlbumKeys, encodeDiaryFilter, eventSlug, inDiaryDateRange } from './diary-album.util';
+import { avatarTitle, decodeDiaryFilter, DiaryFilter, diaryAlbumId, diaryFilterLabel, mergeDiaryDateRange, diaryAlbumKeys, encodeDiaryFilter, eventSlug, inDiaryDateRange, tripMapPoints } from './diary-album.util';
 
 describe('diary album utils', () => {
   it('derives sorted, de-duplicated keys', () => {
@@ -84,5 +84,42 @@ describe('avatarTitle', () => {
         .toEqual({ ...anna, from: '20150101', to: '20191231' }));
     it('drops the range but keeps the album on an empty range', () =>
       expect(mergeDiaryDateRange({ ...anna, from: '20150101', to: '20191231' }, '', '')).toEqual(anna));
+  });
+});
+
+describe('tripMapPoints', () => {
+  it('sorts the dated points by date ascending', () => {
+    const points = tripMapPoints([
+      { date: '20240503', okey: 'd3', title: 'Drei', lat: 3, lng: 30 },
+      { date: '20240501', okey: 'd1', title: 'Eins', lat: 1, lng: 10 },
+      { date: '20240502', okey: 'd2', title: 'Zwei', lat: 2, lng: 20 },
+    ], []);
+    expect(points.map(p => p.diaryKey)).toEqual(['d1', 'd2', 'd3']);
+    expect(points[0]).toEqual({ lat: 1, lng: 10, title: 'Eins', date: '20240501', diaryKey: 'd1' });
+  });
+
+  it('drops entries without coordinates', () => {
+    const points = tripMapPoints([
+      { date: '20240501', okey: 'd1', title: 'Eins' },
+      { date: '20240502', okey: 'd2', title: 'Zwei', lat: 2 },
+      { date: '20240503', okey: 'd3', title: 'Drei', lat: 3, lng: 30 },
+      { date: '20240504', okey: 'd4', title: 'Vier', lat: Number.NaN, lng: 40 },
+    ], []);
+    expect(points.map(p => p.diaryKey)).toEqual(['d3']);
+  });
+
+  it('appends the trip-own locations after the dated points, with an empty date and key', () => {
+    const points = tripMapPoints(
+      [{ date: '20240501', okey: 'd1', title: 'Eins', lat: 1, lng: 10 }],
+      [{ lat: 9, lng: 90, title: 'Hafen' }],
+    );
+    expect(points).toEqual([
+      { lat: 1, lng: 10, title: 'Eins', date: '20240501', diaryKey: 'd1' },
+      { lat: 9, lng: 90, title: 'Hafen', date: '', diaryKey: '' },
+    ]);
+  });
+
+  it('returns [] without entries and own locations', () => {
+    expect(tripMapPoints([], [])).toEqual([]);
   });
 });

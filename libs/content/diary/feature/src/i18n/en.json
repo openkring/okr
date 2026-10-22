@@ -276,5 +276,14 @@
     "appliesTo": "applies to: {title}",
     "loadFailed": "Your albums could not be loaded.",
     "actionFailed": "That did not work. Please try again."
+  },
+  "trip": {
+    "day": "1 day in the diary",
+    "days": "{count} days in the diary",
+    "showEntries": "Show entries",
+    "map": "Map",
+    "noPoints": "This trip has no places with coordinates yet.",
+    "notes": "Notes",
+    "notFound": "This trip was not found."
   }
 }

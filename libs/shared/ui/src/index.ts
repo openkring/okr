@@ -56,6 +56,7 @@ export * from './lib/label';
 export * from './lib/label-select.modal';
 export * from './lib/list-filter';
 export * from './lib/list-skeleton';
+export * from './lib/leaflet-map';
 export * from './lib/map-marker-detail';
 export * from './lib/map-view.modal';
 export * from './lib/meta-tag-list';

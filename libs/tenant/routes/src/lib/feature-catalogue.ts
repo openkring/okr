@@ -1550,6 +1550,8 @@ const diary: BlockRoutes = {
         // Import preparation (moved from AOC, spec 1.101 phase 2). BEFORE `:listId/:contextMenuName`.
         // Admin: the page calls the Drive check and the import dry run.
         { path: 'import', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/content-diary-feature').then(m => m.DiaryImport) },
+        // The trip page (spec 1.114 §6). BEFORE `:listId/:contextMenuName`, which would swallow `trip` as a listId.
+        { path: 'trip/:tripKey', loadComponent: () => import('@okr/content-diary-feature').then(m => m.DiaryTripPage) },
         { path: ':listId/:contextMenuName', loadComponent: () => import('@okr/content-diary-feature').then(m => m.DiaryList) },
       ],
     },
