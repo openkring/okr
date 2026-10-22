@@ -16,7 +16,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { Avatars } from '@okr/avatar-ui';
 
 import {
-  DiaryI18n, composeDiaryDate, csvToList, diaryValidations, linesToList, listToCsv, listToLines, splitDiaryDate,
+  DiaryI18n, composeDiaryDate, csvToList, parseJassDiaryLine, diaryValidations, linesToList, listToCsv, listToLines, splitDiaryDate,
 } from '@okr/content-diary-util';
 
 @Component({
@@ -133,7 +133,7 @@ import {
                 <ion-col size="12" size-md="6">
                   <ion-item lines="none">
                     <ion-select [label]="i18n().form_events_label()" [value]="eventSlugs()" [multiple]="true" interface="popover"
-                      [disabled]="isReadOnly()" (ionChange)="onFieldChange('events', $event.detail.value ?? [])">
+                      [disabled]="isReadOnly()" (ionChange)="onEventsChange($event.detail.value ?? [])">
                       @for (option of eventOptions(); track option.slug) {
                         <ion-select-option [value]="option.slug">{{ option.title }}</ion-select-option>
                       }
@@ -221,7 +221,9 @@ export class DiaryForm {
   protected readonly month = computed(() => splitDiaryDate(this.date())?.month ?? 0);
   protected readonly customLocationLabel = computed(() => this.formData()?.customLocationLabel ?? '');
   protected readonly tripKey = computed(() => this.formData()?.tripKey ?? '');
-  protected readonly eventSlugs = computed(() => this.formData()?.events ?? []);
+  /** Jass result lines (spec 1.77) share events[]; they are not events: never offered, never shown selected, always preserved on save. */
+  private readonly jassLines = computed(() => (this.formData()?.events ?? []).filter(e => !!parseJassDiaryLine(e)));
+  protected readonly eventSlugs = computed(() => (this.formData()?.events ?? []).filter(e => !parseJassDiaryLine(e)));
   /** Albums first; slugs on the entry without an album stay selectable under their slug (no silent loss). */
   protected readonly eventOptions = computed((): { slug: string; title: string }[] => {
     const options = this.eventAlbums().filter(a => a.kind === 'event' && !a.isArchived && a.slug).map(a => ({ slug: a.slug, title: a.title }));
@@ -282,6 +284,10 @@ export class DiaryForm {
 
   protected onMonthChange(month: number): void {
     this.onFieldChange('date', composeDiaryDate('month', this.year(), month));
+  }
+
+  protected onEventsChange(selected: string[]): void {
+    this.onFieldChange('events', [...selected, ...this.jassLines()]);
   }
 
   protected clearLocation(): void {

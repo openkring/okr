@@ -1,6 +1,7 @@
 import { AvatarInfo, DiaryAlbumKind, DiaryAlbumModel, DiaryModel } from '@okr/shared-models';
 
 import { splitDiaryDate } from './diary-date.util';
+import { parseJassDiaryLine } from './diary-jass.util';
 
 export type DiaryFilterKind = DiaryAlbumKind | 'tag' | 'trip' | 'date';
 
@@ -26,7 +27,8 @@ export function diaryAlbumKeys(diary: Partial<Pick<DiaryModel, 'people' | 'locat
   }
   if (diary.location?.key) keys.add(albumKey('location', diary.location.key));
   for (const event of diary.events ?? []) {
-    if (event) keys.add(albumKey('event', event));
+    // Jass result lines live in events[] on purpose (spec 1.77) but are not event slugs.
+    if (event && !parseJassDiaryLine(event)) keys.add(albumKey('event', event));
   }
   for (const tag of (diary.tags ?? '').split(',')) {
     const trimmed = tag.trim();

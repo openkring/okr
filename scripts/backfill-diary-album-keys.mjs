@@ -35,6 +35,8 @@ const APP_CONFIG = 'app-config';
 const config = await db.collection(APP_CONFIG).doc(tenantId).get();
 if (!config.exists) fail(`Tenant '${tenantId}' has no ${APP_CONFIG} document.`);
 
+const SLUG_SHAPE = /^[A-Za-z0-9_-]+$/;
+
 /** Mirror of diaryAlbumKeys in diary-album.util.ts. */
 function diaryAlbumKeys(diary) {
   const keys = new Set();
@@ -43,7 +45,10 @@ function diaryAlbumKeys(diary) {
   }
   if (diary.location?.key) keys.add(`location.${diary.location.key}`);
   for (const event of diary.events ?? []) {
-    if (event) keys.add(`event.${event}`);
+    // Jass result lines live in events[] on purpose (spec 1.77) and are not event slugs. The util skips
+    // them via parseJassDiaryLine (diary-jass.util.ts); a Jass line always contains spaces, ':' and '·',
+    // so the slug-shape test (same as seed-diary-event-albums.mjs) excludes exactly those.
+    if (event && SLUG_SHAPE.test(event)) keys.add(`event.${event}`);
   }
   for (const tag of (diary.tags ?? '').split(',')) {
     const trimmed = tag.trim();

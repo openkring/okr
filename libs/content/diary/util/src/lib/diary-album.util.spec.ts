@@ -1,4 +1,5 @@
 import { AvatarInfo } from '@okr/shared-models';
+import { parseJassDiaryLine } from './diary-jass.util';
 import { describe, expect, it } from 'vitest';
 import { avatarTitle, canApplyDiaryDateRange, decodeDiaryFilter, diaryListUrl, DiaryFilter, diaryAlbumId, diaryFilterLabel, mergeDiaryDateRange, diaryAlbumKeys, encodeDiaryFilter, eventSlug, inDiaryDateRange, tripMapPoints } from './diary-album.util';
 
@@ -43,6 +44,17 @@ describe('diary album utils', () => {
     // the period starts before the range: not inside
     expect(inDiaryDateRange('20041000', '20041002', '20041031')).toBe(false);
     expect(inDiaryDateRange('20041000', '20040901', '20040930')).toBe(false);
+  });
+
+  describe('diaryAlbumKeys with Jass lines', () => {
+    const JASS = 'Jass Schieber: Anna & Clara 2530 : Beat & Dora 1870 · Gewonnen: Anna & Clara · Weis (mit Stöck) 340 : 120 · Match 3 : 0 · 12 Runden · 1 h 25 min';
+    it('skips a Jass line but keeps the real event', () => {
+      expect(parseJassDiaryLine(JASS)).toBeDefined();
+      expect(diaryAlbumKeys({ events: [JASS, 'anrudern'] })).toEqual(['event.anrudern']);
+    });
+    it('a Jass line alone yields no key', () => {
+      expect(diaryAlbumKeys({ events: [JASS] })).toEqual([]);
+    });
   });
 
   describe('diaryListUrl', () => {
