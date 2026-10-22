@@ -10,6 +10,8 @@ const limit = vi.hoisted(() => vi.fn((n: number) => ({ limit: n })));
 vi.mock('firebase/firestore', async (importOriginal) => ({
   ...(await importOriginal<typeof import('firebase/firestore')>()),
   collection: vi.fn(() => ({})),
+  where: vi.fn((f: string, op: string, v: unknown) => ({ where: [f, op, v] })),
+  orderBy: vi.fn((f: string, dir: string) => ({ orderBy: [f, dir] })),
   query: vi.fn((_c: unknown, ...constraints: unknown[]) => ({ constraints })),
   getDocs,
   limit,
@@ -41,10 +43,19 @@ describe('DiaryService.newestAlbumDate', () => {
     ));
     expect(await TestBed.inject(DiaryService).newestAlbumDate('u1', 'bka', 'event.x')).toBe('20240801');
     expect(limit).toHaveBeenCalledWith(5);
+    const { where, orderBy } = await import('firebase/firestore');
+    expect(where).toHaveBeenCalledWith('authorKey', '==', 'u1');
+    expect(where).toHaveBeenCalledWith('albumKeys', 'array-contains', 'event.x');
+    expect(orderBy).toHaveBeenCalledWith('date', 'desc');
   });
 
   it('returns an empty string when only another tenant matches', async () => {
     getDocs.mockResolvedValue(snap({ id: 'a', data: { date: '20240901', tenants: ['other'] } }));
+    expect(await TestBed.inject(DiaryService).newestAlbumDate('u1', 'bka', 'event.x')).toBe('');
+  });
+
+  it('returns an empty string when the read fails', async () => {
+    getDocs.mockRejectedValue(new Error('index missing'));
     expect(await TestBed.inject(DiaryService).newestAlbumDate('u1', 'bka', 'event.x')).toBe('');
   });
 

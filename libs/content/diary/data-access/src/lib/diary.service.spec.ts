@@ -151,6 +151,20 @@ describe('DiaryService album queries and writes', () => {
     expect(query.some((c: { operator: string }) => c.operator === '<=')).toBe(false);
   });
 
+  it('listByDateRange with both bounds open does not query', async () => {
+    expect(await firstValueFrom(TestBed.inject(DiaryService).listByDateRange('u1', 'bka', '', ''))).toEqual([]);
+    expect(searchData).not.toHaveBeenCalled();
+  });
+
+  it('listByTrip without dates skips the span query', async () => {
+    const trip = { ...new TripModel('bka'), okey: 't1', startDate: '', endDate: '' } as TripModel;
+    searchData.mockReturnValue(of([entry('x', '20240105', { tripKey: 't1' })]));
+    const result = await firstValueFrom(TestBed.inject(DiaryService).listByTrip('u1', 'bka', trip));
+    expect(result.map(d => d.okey)).toEqual(['x']);
+    expect(searchData).toHaveBeenCalledTimes(1);
+    expect(searchData.mock.calls[0][1]).toEqual(expect.arrayContaining([{ key: 'tripKey', operator: '==', value: 't1' }]));
+  });
+
   it('createTravelTrip forces type travel', async () => {
     const trip = { ...new TripModel('bka'), type: 'logbuch' } as TripModel;
     await TestBed.inject(DiaryService).createTravelTrip(trip);

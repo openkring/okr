@@ -194,7 +194,8 @@ export class DiaryService {
 
   /** The entries between two StoreDates, either bound '' = open. Same owner query as `listByRange`. */
   public listByDateRange(authorKey: string, tenantId: string, from: string, to: string): Observable<DiaryModel[]> {
-    if (!authorKey || !tenantId) return of([]);
+    // both bounds open would stream the author's whole diary — callers must give at least one
+    if (!authorKey || !tenantId || (!from && !to)) return of([]);
     const dbQuery = this.ownerQuery(authorKey, tenantId);
     if (from) dbQuery.push({ key: 'date', operator: '>=', value: from });
     if (to) dbQuery.push({ key: 'date', operator: '<=', value: to });
@@ -214,7 +215,10 @@ export class DiaryService {
       ...this.ownerQuery(authorKey, tenantId),
       { key: 'tripKey', operator: '==', value: trip.okey },
     ], 'none');
-    const inSpan$ = this.listByDateRange(authorKey, tenantId, trip.startDate, trip.endDate)
+    // a trip without both dates has no span: querying would open the range and stream everything
+    const inSpan$ = (trip.startDate && trip.endDate
+      ? this.listByDateRange(authorKey, tenantId, trip.startDate, trip.endDate)
+      : of([] as DiaryModel[]))
       .pipe(map(diaries => diaries.filter(diary => !diary.tripKey)));
     return combineLatest([tagged$, inSpan$]).pipe(
       map(([tagged, inSpan]) => {
@@ -228,7 +232,9 @@ export class DiaryService {
   /**
    * The date of the newest entry of the album `key`, or '' when there is none. Looks at the five
    * newest candidates only (same raw-query pattern as `findNeighbour`) and filters tenant and
-   * archived in memory — good enough for the "last used" hint in the Albums list.
+   * archived in memory — good enough for the "last used" hint in the Albums list. '' means "none
+   * found among the 5 newest" (or a failed read), NOT "the album has no entries": never use it as
+   * an existence test.
    */
   public async newestAlbumDate(authorKey: string, tenantId: string, key: string): Promise<string> {
     if (!authorKey || !tenantId || !key) return '';
@@ -236,11 +242,15 @@ export class DiaryService {
       { key: 'authorKey', operator: '==', value: authorKey },
       { key: 'albumKeys', operator: 'array-contains', value: key },
     ], 'date', 'desc');
-    const snapshot = await getDocs(query(collection(this.firestoreService.firestore, DiaryCollection), ...constraints, limit(NEIGHBOUR_PAGE)));
-    const hit = snapshot.docs
-      .map(d => ({ ...d.data(), okey: d.id }) as DiaryModel)
-      .find(d => !d.isArchived && (d.tenants ?? []).includes(tenantId));
-    return hit?.date ?? '';
+    try {
+      const snapshot = await getDocs(query(collection(this.firestoreService.firestore, DiaryCollection), ...constraints, limit(NEIGHBOUR_PAGE)));
+      const hit = snapshot.docs
+        .map(d => ({ ...d.data(), okey: d.id }) as DiaryModel)
+        .find(d => !d.isArchived && (d.tenants ?? []).includes(tenantId));
+      return hit?.date ?? '';
+    } catch {
+      return '';
+    }
   }
 
   /** Creates a travel trip for the diary: `type` is forced to 'travel'. */

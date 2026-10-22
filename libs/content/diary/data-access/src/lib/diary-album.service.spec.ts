@@ -55,6 +55,12 @@ describe('DiaryAlbumService', () => {
     expect(allowOverwrite).toBe(false);
   });
 
+  it('create refuses an album without a ref and writes nothing', async () => {
+    expect(await TestBed.inject(DiaryAlbumService).create(album({ slug: '' }))).toBeUndefined();
+    expect(await TestBed.inject(DiaryAlbumService).create(album({ kind: 'person', slug: '', ref: undefined }))).toBeUndefined();
+    expect(createModel).not.toHaveBeenCalled();
+  });
+
   it('create derives the id from the person ref', async () => {
     await TestBed.inject(DiaryAlbumService).create(album({ kind: 'person', slug: '', ref: { key: 'p1' } as DiaryAlbumModel['ref'] }));
     expect((createModel.mock.calls[0][1] as DiaryAlbumModel).okey).toBe('bka__u1__person__p1');

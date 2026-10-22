@@ -36,7 +36,9 @@ export class DiaryAlbumService {
 
   /** The id is deterministic, so adding the same album twice must fail rather than overwrite. */
   public async create(album: DiaryAlbumModel, currentUser?: UserModel): Promise<string | undefined> {
-    album.okey = diaryAlbumId(album.tenants[0], album.authorKey, album.kind, albumRefOf(album));
+    const ref = albumRefOf(album);
+    if (!ref) return undefined;
+    album.okey = diaryAlbumId(this.env.tenantId, album.authorKey, album.kind, ref);
     return await this.firestoreService.createModel<DiaryAlbumModel>(
       DiaryAlbumCollection, album, this.i18n.create_conf(), this.i18n.create_error(), currentUser, false, false);
   }
