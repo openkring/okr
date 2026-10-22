@@ -7,7 +7,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { Header, TextareaInput, TextInputI18n } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { fill } from '@okr/shared-util-core';
-import { bytesToGb, FILE_TRANSFER_I18N_KEYS, FileTransferI18n, ResolvedLimits } from '@okr/content-file-transfer-util';
+import { FILE_TRANSFER_I18N_KEYS, FileTransferI18n, formatFileTransferSize, ResolvedLimits } from '@okr/content-file-transfer-util';
 
 /** What «Höhere Limite beantragen» hands back: the reason the admins read. */
 export interface FileTransferLimitRequest {
@@ -131,8 +131,8 @@ export class FileTransferInfoModal {
   protected readonly limitLines = computed(() => {
     const l = this.limits();
     return [
-      { icon: 'download', text: fill(this.i18n.info_limit_transfer(), { size: bytesToGb(l.maxFileTransferBytes) }) },
-      { icon: 'download', text: fill(this.i18n.info_limit_open(), { size: bytesToGb(l.maxOpenBytes) }) },
+      { icon: 'download', text: fill(this.i18n.info_limit_transfer(), { size: formatFileTransferSize(l.maxFileTransferBytes) }) },
+      { icon: 'download', text: fill(this.i18n.info_limit_open(), { size: formatFileTransferSize(l.maxOpenBytes) }) },
       { icon: 'mail', text: fill(this.i18n.info_limit_externals(), { count: l.maxExternalRecipients }) },
       { icon: 'time', text: fill(this.i18n.info_lifetime(), { days: l.defaultLifetimeDays, max: l.maxLifetimeDays }) },
     ];

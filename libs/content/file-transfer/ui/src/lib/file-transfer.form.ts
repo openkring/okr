@@ -15,7 +15,7 @@ import { coerceBoolean, fill, getFullName } from '@okr/shared-util-core';
 import { AvatarPipe } from '@okr/avatar-ui';
 import { getDefaultIcon } from '@okr/avatar-util';
 import {
-  bytesToGb, FileTransferI18n, fileTransferValidations, formatFileTransferSize, ResolvedLimits, toFileTransferFormValues,
+  FileTransferI18n, fileTransferValidations, formatFileTransferSize, ResolvedLimits, toFileTransferFormValues,
 } from '@okr/content-file-transfer-util';
 
 /** What the sender fills in. The files are only picked here — uploading is the caller's job. */
@@ -251,7 +251,7 @@ export class FileTransferForm {
   protected readonly filesI18n = computed(() => ({
     name: 'files',
     label: this.i18n().files_label(),
-    helper: fill(this.i18n().files_helper(), { max: bytesToGb(this.limits().maxFileTransferBytes) }),
+    helper: fill(this.i18n().files_helper(), { max: formatFileTransferSize(this.limits().maxFileTransferBytes) }),
   } as FileInputI18n));
   protected readonly emailsDescription = computed(() =>
     fill(this.i18n().emails_description(), { max: this.limits().maxExternalRecipients }));

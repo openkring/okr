@@ -10,7 +10,7 @@
   },
   "files": {
     "label": "Files",
-    "helper": "You can pick several files at once. Up to {max} GB in total.",
+    "helper": "You can pick several files at once. Up to {max} in total.",
     "total": "{size} in total"
   },
   "groups": {
@@ -48,8 +48,8 @@
     "title": "How a transfer works",
     "what": "With a transfer you send large files, for example a training video, to groups, to single members or to people outside the app.",
     "limitsTitle": "Your limits",
-    "limitTransfer": "Per transfer: up to {size} GB",
-    "limitOpen": "All your open transfers together: up to {size} GB",
+    "limitTransfer": "Per transfer: up to {size}",
+    "limitOpen": "All your open transfers together: up to {size}",
     "limitExternals": "Email addresses per transfer: up to {count}",
     "lifetime": "A transfer usually lasts {days} days, at most {max} days.",
     "whoTitle": "Who sees what",
@@ -67,6 +67,7 @@
     "request": "Request higher limits"
   },
   "card": {
+    "title": "Transfer",
     "from": "From {name}",
     "expires": "Available until {date}",
     "expired": "This transfer has expired.",

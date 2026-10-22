@@ -1,4 +1,4 @@
-import { bytesToGb, formatFileTransferSize, gbToBytes, isFileTransferInline, isFileTransferVideo } from './file-transfer-format';
+import { bytesToGb, formatFileTransferExpiry, formatFileTransferSize, gbToBytes, isFileTransferInline, isFileTransferVideo } from './file-transfer-format';
 
 const GB = 1024 ** 3;
 
@@ -8,6 +8,10 @@ describe('bytesToGb / gbToBytes', () => {
     expect(bytesToGb(1.5 * GB)).toBe(1.5);
     expect(bytesToGb(1.04 * GB)).toBe(1);
     expect(bytesToGb(500 * GB)).toBe(500);
+  });
+  it('takes more decimals on request', () => {
+    expect(bytesToGb(50 * 1024 ** 2)).toBe(0);
+    expect(bytesToGb(50 * 1024 ** 2, 4)).toBe(0.0488);
   });
   it('converts back to whole bytes', () => {
     expect(gbToBytes(1)).toBe(GB);
@@ -37,5 +41,16 @@ describe('isFileTransferInline / isFileTransferVideo', () => {
     expect(isFileTransferVideo('video/quicktime')).toBe(true);
     expect(isFileTransferVideo('image/png')).toBe(false);
     expect(isFileTransferVideo('video/x-msvideo')).toBe(false);
+  });
+});
+
+describe('formatFileTransferExpiry', () => {
+  it('shows the local wall-clock time as d.M.yyyy HH:mm', () => {
+    const local = new Date(2026, 9, 29, 7, 5, 0);   // 29 Oct 2026 07:05 local
+    expect(formatFileTransferExpiry(local.toISOString())).toBe('29.10.2026 07:05');
+  });
+  it('is empty for a missing or unreadable timestamp', () => {
+    expect(formatFileTransferExpiry(undefined)).toBe('');
+    expect(formatFileTransferExpiry('not a date')).toBe('');
   });
 });

@@ -1,5 +1,4 @@
 import { Component, computed, inject, input, output } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import { IonBadge, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonIcon, IonItem, IonLabel, IonList, IonNote } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
@@ -7,7 +6,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { Spinner } from '@okr/shared-ui';
 import { fill } from '@okr/shared-util-core';
 import {
-  FILE_TRANSFER_I18N_KEYS, FileTransferI18n, FileTransferView, formatFileTransferSize, isFileTransferInline, isFileTransferVideo,
+  FILE_TRANSFER_I18N_KEYS, FileTransferI18n, FileTransferView, formatFileTransferExpiry, formatFileTransferSize, isFileTransferInline, isFileTransferVideo,
 } from '@okr/content-file-transfer-util';
 
 /** A click on a file: view it inline (video, image, pdf) or download it. */
@@ -26,7 +25,7 @@ export interface FileTransferOpenEvent {
   selector: 'okr-file-transfer-card',
   standalone: true,
   imports: [
-    DatePipe, SvgIconPipe, Spinner,
+    SvgIconPipe, Spinner,
     IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonList, IonItem, IonLabel, IonNote, IonButton, IonIcon, IonBadge,
   ],
   styles: [`
@@ -39,7 +38,7 @@ export interface FileTransferOpenEvent {
       @if (expired()) {
         <ion-card-header>
           <ion-card-title>
-            {{ i18n.new_title() }}
+            {{ i18n.card_title() }}
             <ion-badge color="medium">{{ i18n.card_expired_badge() }}</ion-badge>
           </ion-card-title>
           @if (view()) {
@@ -94,8 +93,6 @@ export interface FileTransferOpenEvent {
 export class FileTransferCard {
   // direct inject: the card is also placed outside the transfer pages (e.g. in a chat timeline)
   protected readonly i18n = inject(I18nService).translateAll(FILE_TRANSFER_I18N_KEYS) as FileTransferI18n;
-  // numeric pattern only, so the always-registered en-US locale data is enough
-  private readonly datePipe = new DatePipe('en-US');
 
   // inputs
   /** the transfer this card stands for — lets the caller match `open` events to a transfer */
@@ -108,9 +105,8 @@ export class FileTransferCard {
 
   protected readonly fromText = computed(() => fill(this.i18n.card_from(), { name: this.view()?.senderName ?? '' }));
   protected readonly expiresText = computed(() => {
-    const expiresAt = this.view()?.expiresAt;
-    const date = expiresAt ? this.datePipe.transform(expiresAt, 'dd.MM.yyyy, HH:mm') ?? '' : '';
-    return fill(this.i18n.card_expires(), { date });
+    // local wall-clock time of the viewer (expiresAt is UTC)
+    return fill(this.i18n.card_expires(), { date: formatFileTransferExpiry(this.view()?.expiresAt) });
   });
 
   protected fileSize(bytes: number): string {

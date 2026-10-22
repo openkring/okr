@@ -60,6 +60,7 @@ export const FILE_TRANSFER_I18N_KEYS = {
   info_request:               PFX + 'info.request',
 
   // transfer card
+  card_title:                 PFX + 'card.title',
   card_from:                  PFX + 'card.from',
   card_expires:               PFX + 'card.expires',
   card_expired:               PFX + 'card.expired',

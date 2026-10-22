@@ -6,7 +6,7 @@ import { GroupModel, PersonModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import {
-  DEFAULT_FILE_TRANSFER_LIMITS, FILE_TRANSFER_I18N_KEYS, FileTransferI18n, resolveFileTransferLimits, ResolvedLimits,
+  FILE_TRANSFER_I18N_KEYS, FileTransferI18n, ResolvedLimits,
 } from '@okr/content-file-transfer-util';
 
 import { FileTransferForm, FileTransferFormData, newFileTransferFormData } from './file-transfer.form';
@@ -58,7 +58,7 @@ export class FileTransferNewModal {
   /** set when the transfer starts from a chat room; the caller posts the card there */
   public readonly chatRoomId = input('');
   /** the sender's limits (resolveFileTransferLimits of the tenant config and the sender) */
-  public readonly limits = input<ResolvedLimits>(resolveFileTransferLimits(DEFAULT_FILE_TRANSFER_LIMITS, ''));
+  public readonly limits = input.required<ResolvedLimits>();
   public readonly tenantId = input('');
   public readonly groups = input<GroupModel[]>([]);
   public readonly persons = input<PersonModel[]>([]);

@@ -17,10 +17,23 @@ describe('toFileTransferLimitsFormData / fromFileTransferLimitsFormData', () => 
     const limits = { ...DEFAULT_FILE_TRANSFER_LIMITS, overrides: [{ personKey: 'p1', name: 'Anna', maxFileTransferBytes: 10 * GB, maxOpenBytes: 50 * GB }] };
     expect(fromFileTransferLimitsFormData(toFileTransferLimitsFormData(limits))).toEqual(limits);
   });
-  it('rounds GB to one decimal and converts back to whole bytes', () => {
+  it('keeps four decimals of GB and converts back to whole bytes', () => {
     const form = toFileTransferLimitsFormData({ ...DEFAULT_FILE_TRANSFER_LIMITS, maxFileTransferBytes: 1.26 * GB });
-    expect(form.maxFileTransferGb).toBe(1.3);
+    expect(form.maxFileTransferGb).toBe(1.26);
     expect(fromFileTransferLimitsFormData({ ...form, maxFileTransferGb: 1.5 }).maxFileTransferBytes).toBe(1.5 * GB);
+  });
+  it('a 50 MB limit survives the round-trip: never 0, still valid, within 0.1 MB', () => {
+    const MB50 = 50 * 1024 ** 2;
+    const limits = {
+      ...DEFAULT_FILE_TRANSFER_LIMITS, maxFileTransferBytes: MB50,
+      overrides: [{ personKey: 'p1', name: 'A', maxFileTransferBytes: MB50, maxOpenBytes: MB50 }],
+    };
+    const form = toFileTransferLimitsFormData(limits);
+    expect(form.maxFileTransferGb).toBeGreaterThan(0);
+    expect(fileTransferLimitsValidations(form).isValid()).toBe(true);
+    const back = fromFileTransferLimitsFormData(form);
+    expect(Math.abs(back.maxFileTransferBytes - MB50)).toBeLessThan(0.1 * 1024 ** 2);
+    expect(Math.abs(back.overrides[0].maxOpenBytes - MB50)).toBeLessThan(0.1 * 1024 ** 2);
   });
   it('fills missing fields from the defaults', () => {
     expect(toFileTransferLimitsFormData(undefined)).toEqual(base());

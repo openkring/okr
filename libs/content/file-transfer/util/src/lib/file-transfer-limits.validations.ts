@@ -1,7 +1,7 @@
 import { enforce, omitWhen, staticSuite, test } from 'vest';
 import type { FileTransferLimits } from '@okr/shared-models';
 
-import { bytesToGb, gbToBytes } from './file-transfer-format';
+import { bytesToGb, FILE_TRANSFER_GB_DECIMALS, gbToBytes } from './file-transfer-format';
 import { DEFAULT_FILE_TRANSFER_LIMITS } from './file-transfer-limits';
 
 const PFX = '@content/file-transfer/util.';
@@ -28,17 +28,17 @@ export interface FileTransferLimitsFormData {
 export function toFileTransferLimitsFormData(limits: Partial<FileTransferLimits> | undefined): FileTransferLimitsFormData {
   const l = { ...DEFAULT_FILE_TRANSFER_LIMITS, ...(limits ?? {}) };
   return {
-    maxFileTransferGb: bytesToGb(l.maxFileTransferBytes),
-    maxOpenGb: bytesToGb(l.maxOpenBytes),
-    overrideCeilingGb: bytesToGb(l.overrideCeilingBytes),
+    maxFileTransferGb: bytesToGb(l.maxFileTransferBytes, FILE_TRANSFER_GB_DECIMALS),
+    maxOpenGb: bytesToGb(l.maxOpenBytes, FILE_TRANSFER_GB_DECIMALS),
+    overrideCeilingGb: bytesToGb(l.overrideCeilingBytes, FILE_TRANSFER_GB_DECIMALS),
     defaultLifetimeDays: l.defaultLifetimeDays,
     maxLifetimeDays: l.maxLifetimeDays,
     maxExternalRecipients: l.maxExternalRecipients,
     overrides: (l.overrides ?? []).map(o => ({
       personKey: o.personKey,
       name: o.name,
-      maxFileTransferGb: bytesToGb(o.maxFileTransferBytes),
-      maxOpenGb: bytesToGb(o.maxOpenBytes),
+      maxFileTransferGb: bytesToGb(o.maxFileTransferBytes, FILE_TRANSFER_GB_DECIMALS),
+      maxOpenGb: bytesToGb(o.maxOpenBytes, FILE_TRANSFER_GB_DECIMALS),
     })),
   };
 }

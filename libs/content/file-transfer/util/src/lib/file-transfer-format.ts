@@ -1,9 +1,18 @@
+import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
+
 /** One gigabyte as the limits count it (binary, like DEFAULT_FILE_TRANSFER_LIMITS). */
 export const FILE_TRANSFER_GB = 1024 ** 3;
 
-/** Bytes → GB for the UI, rounded to at most one decimal (1 GB → 1, 1.5 GB → 1.5). */
-export function bytesToGb(bytes: number): number {
-  return Math.round(((bytes ?? 0) / FILE_TRANSFER_GB) * 10) / 10;
+/**
+ * Decimals the limits form keeps: enough that a small stored limit (50 MB = 0.0488 GB) neither
+ * shows as 0 nor fails the `positive` rule when the form is reopened and saved again.
+ */
+export const FILE_TRANSFER_GB_DECIMALS = 4;
+
+/** Bytes → GB, rounded to `decimals` (default one: 1 GB → 1, 1.5 GB → 1.5). */
+export function bytesToGb(bytes: number, decimals = 1): number {
+  const factor = 10 ** decimals;
+  return Math.round(((bytes ?? 0) / FILE_TRANSFER_GB) * factor) / factor;
 }
 
 /** GB from the UI → whole bytes. */
@@ -42,4 +51,16 @@ export function isFileTransferInline(contentType: string): boolean {
 
 export function isFileTransferVideo(contentType: string): boolean {
   return isFileTransferInline(contentType) && normaliseContentType(contentType).startsWith('video/');
+}
+
+/**
+ * The expiry of a transfer for people, in the viewer's local wall-clock time: «d.M.yyyy HH:mm».
+ * `expiresAt` is a UTC ISO timestamp; '' when it is missing or unreadable.
+ */
+export function formatFileTransferExpiry(expiresAt: string | undefined): string {
+  const d = new Date(expiresAt ?? '');
+  if (!expiresAt || Number.isNaN(d.getTime())) return '';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const local = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  return convertDateFormatToString(local, DateFormat.IsoDateTime, DateFormat.ViewDateTime, false);
 }

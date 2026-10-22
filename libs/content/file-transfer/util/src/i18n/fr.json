@@ -10,7 +10,7 @@
   },
   "files": {
     "label": "Fichiers",
-    "helper": "Tu peux choisir plusieurs fichiers à la fois. {max} Go au maximum en tout.",
+    "helper": "Tu peux choisir plusieurs fichiers à la fois. {max} au maximum en tout.",
     "total": "{size} en tout"
   },
   "groups": {
@@ -48,8 +48,8 @@
     "title": "Comment fonctionne un transfert",
     "what": "Avec un transfert, tu envoies de gros fichiers, par exemple une vidéo d'entraînement, à des groupes, à des membres ou à des personnes en dehors de l'app.",
     "limitsTitle": "Tes limites",
-    "limitTransfer": "Par transfert : {size} Go au maximum",
-    "limitOpen": "Tous tes transferts ouverts ensemble : {size} Go au maximum",
+    "limitTransfer": "Par transfert : {size} au maximum",
+    "limitOpen": "Tous tes transferts ouverts ensemble : {size} au maximum",
     "limitExternals": "Adresses e-mail par transfert : {count} au maximum",
     "lifetime": "Un transfert dure normalement {days} jours, {max} jours au maximum.",
     "whoTitle": "Qui voit quoi",
@@ -67,6 +67,7 @@
     "request": "Demander des limites plus élevées"
   },
   "card": {
+    "title": "Transfert",
     "from": "De {name}",
     "expires": "Disponible jusqu'au {date}",
     "expired": "Ce transfert a expiré.",

@@ -49,6 +49,8 @@ const MAX_PASSWORD = 200;
  * The only types a file may be served INLINE as. The stored contentType comes from the uploader's
  * client and is unvalidated, so it is matched exactly (no prefixes: no `image/svg+xml`, no
  * `text/html`), and what is sent as `responseType` is this normalised value, never the raw string.
+ * Keep in step with FILE_TRANSFER_INLINE_TYPES in libs/content/file-transfer/util (file-transfer-format.ts),
+ * which decides whether the client offers a play/view button at all.
  */
 export const INLINE_CONTENT_TYPES: ReadonlySet<string> = new Set([
   'video/mp4', 'video/quicktime', 'video/webm',
