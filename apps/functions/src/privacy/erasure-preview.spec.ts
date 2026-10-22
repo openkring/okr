@@ -171,6 +171,39 @@ describe('buildPreview', () => {
 // membership blocks the CONTRACT tier; consent is withdrawable at any time, so the
 // voluntary tier stays deletable and the report has to say so.
 // ────────────────────────────────────────────────────────────────────────────────────
+// Executor step 2b patches OTHER members' documents (the subject as a file-transfer
+// recipient). The honest report has to say so, and its token has to move with it.
+describe('buildPreview — anonymizeArrayItems', () => {
+  const transfers = row({
+    collection: 'file-transfers', onErasure: 'anonymize', anonymizeFields: ['senderName'],
+    anonymizeArrayItems: { find: () => null as never, arrayField: 'recipients', keyProp: 'personKey', clearProps: ['name'] },
+  });
+
+  it('lists a recipient-only member under willAnonymize and counts those documents', async () => {
+    const p = await buildPreview(ctx, [transfers], none, 2, [], some('t1', 't2'));
+    expect(p.willAnonymize.map((r) => [r.collection, r.count])).toEqual([['file-transfers', 2]]);
+  });
+
+  it('merges own and recipient documents into one line, counting a shared one once', async () => {
+    const p = await buildPreview(ctx, [transfers], some('own1', 't1'), 2, [], some('t1', 't2'));
+    expect(p.willAnonymize).toHaveLength(1);
+    expect(p.willAnonymize[0].count).toBe(3);
+  });
+
+  it('changes the preview token when a recipient appearance comes or goes', async () => {
+    const a = await buildPreview(ctx, [transfers], none, 2, [], none);
+    const b = await buildPreview(ctx, [transfers], none, 2, [], some('t1'));
+    expect(a.willAnonymize).toEqual([]);
+    expect(a.previewToken).not.toBe(b.previewToken);
+  });
+
+  it('never asks a row without the option', async () => {
+    let asked = 0;
+    await buildPreview(ctx, [row({ collection: 'users', onErasure: 'anonymize' })], some('1'), 2, [], async () => { asked++; return []; });
+    expect(asked).toBe(0);
+  });
+});
+
 describe('buildPreview — canDeleteNow', () => {
   const avatars = row({ collection: 'avatars', tier: 'T2', dataClass: 'identity', onErasure: 'delete' });
   const blocked = (tiers?: ('T1' | 'T2' | 'T3' | 'T4')[]) => row({

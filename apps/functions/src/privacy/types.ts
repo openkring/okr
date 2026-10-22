@@ -170,7 +170,10 @@ export interface SubjectDataEntry {
    * `keyProp` equals `ctx.personKey`; every other element and every top-level field stays.
    * Runs in the anonymization pass, independent of `onErasure` / `anonymizeFields` (those
    * govern the documents `find` returns). Read via `resolveArrayItemDocs`, which applies
-   * the row's `tenantScope` exactly like `resolveDocs`. Not part of the export or preview.
+   * the row's `tenantScope` exactly like `resolveDocs`. The erasure preview lists these
+   * documents under `willAnonymize` (so the preview token covers them); the export does not.
+   * No document-level `anonymizedAt` is stamped: the document is someone else's record and
+   * stays un-anonymised as a whole.
    */
   readonly anonymizeArrayItems?: ArrayItemAnonymization;
   /** Fields used to build an `index` export row. */

@@ -249,6 +249,19 @@ describe('find() query shapes', () => {
     expect(r.root).toBe('deletions');
   });
 
+  // send-file-transfer only stores a recipient key that resolved via persons.doc(key), so
+  // recipientPersonKeys holds RAW person okeys — the array-contains must be fed ctx.personKey,
+  // never the prefixed parentKey (that would match nothing and silently skip the erasure).
+  it('finds file-transfer recipient appearances by the RAW personKey', () => {
+    const spec = SUBJECT_DATA_MAP.find((x) => x.collection === 'file-transfers')?.anonymizeArrayItems;
+    expect(spec).toBeDefined();
+    const q = spec!.find(CTX) as unknown as { root: string; raw: unknown[] };
+    const predicates: Predicate[] = [];
+    for (const r of q.raw) flatten(r, predicates);
+    expect(q.root).toBe('file-transfers');
+    expect(predicates).toEqual([{ field: 'recipientPersonKeys', op: 'array-contains', value: CTX.personKey }]);
+  });
+
   it('targets the collection its row is named after', () => {
     // the documented exceptions: subcollections reached via a parent doc, and the
     // esignAudit collection group whose leaf name differs from the row name

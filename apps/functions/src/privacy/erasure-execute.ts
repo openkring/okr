@@ -187,13 +187,13 @@ export function anonymizePatch(
  * document. The element survives with its keys; only `clearProps` become `''`. Returns
  * `undefined` when the subject is in no element or every prop is already blank, so a
  * re-run writes nothing. The whole array is rewritten (Firestore cannot address one
- * element), from the snapshot just read.
+ * element), from the snapshot just read. No `anonymizedAt` is stamped: the document is
+ * another member's record and is not anonymised as a whole.
  */
 export function arrayItemsPatch(
   entry: SubjectDataEntry,
   doc: DocumentSnapshot,
   ctx: SubjectCtx,
-  now: string,
 ): Record<string, unknown> | undefined {
   const spec = entry.anonymizeArrayItems;
   if (!spec || !ctx.personKey) return undefined;
@@ -213,7 +213,7 @@ export function arrayItemsPatch(
     }
     return cleared;
   });
-  return changed ? { [spec.arrayField]: next, anonymizedAt: now } : undefined;
+  return changed ? { [spec.arrayField]: next } : undefined;
 }
 
 /** The document as it reads after `patch` (dotted keys are Firestore field paths). Pure. */
@@ -367,7 +367,7 @@ export async function executeErasure(
   //      member's file transfer): clear the element's identity props, keep everything else.
   for (const entry of entries.filter((e) => e.anonymizeArrayItems)) {
     const patches = (await ops.resolveArrayItems(entry, ctx))
-      .map((doc) => ({ doc, patch: arrayItemsPatch(entry, doc, ctx, executedAt) }))
+      .map((doc) => ({ doc, patch: arrayItemsPatch(entry, doc, ctx) }))
       .filter((p): p is DocPatch => !!p.patch);
     if (patches.length === 0) continue;
     counts[entry.collection] = (counts[entry.collection] ?? 0) + await ops.patchAll(patches);

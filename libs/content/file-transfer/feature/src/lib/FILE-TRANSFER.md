@@ -98,7 +98,9 @@ Gate walked 2026-10-22, full outcome in spec §7.1.
 - **Erasure:** `SUBJECT_DATA_MAP` rows (`apps/functions/src/privacy/subject-data-map.ts`). The
   sender's `senderName` is pseudonymised; as a recipient of someone else's transfer the member's
   element in `recipients[]` loses `name`/`email` through the row's `anonymizeArrayItems` option
-  (keys and token hash stay). Events are retained as they hold keys only.
+  (keys and token hash stay, no document-level `anonymizedAt`); the erasure preview counts those
+  transfers under «Das wird anonymisiert». Events are retained as they hold keys only. Open: the data
+  export does not list transfers where the member is only a recipient.
 
 ## Menu
 

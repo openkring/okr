@@ -1219,7 +1219,9 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     // The subject as a RECIPIENT of someone else's transfer: that member's log stays intact,
     // only the subject's snapshot name goes (id / personKey / tokenHash stay — the sender's
     // monitor and the events still join on them). Person recipients store email '' (the
-    // oracle rule in recipientsForSend); clearing it covers legacy docs.
+    // oracle rule in recipientsForSend); clearing it covers legacy docs. `recipientPersonKeys`
+    // holds RAW person okeys (sendFileTransfer keeps only keys that resolved via
+    // persons.doc(key)), hence `c.personKey`, never `c.parentKey` — pinned in find.spec.
     anonymizeArrayItems: {
       find: (c: SubjectCtx) => db().collection('file-transfers').where('recipientPersonKeys', 'array-contains', c.personKey),
       arrayField: 'recipients',

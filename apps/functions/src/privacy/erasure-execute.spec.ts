@@ -292,30 +292,30 @@ describe('arrayItemsPatch (file-transfers recipients)', () => {
   });
 
   it("blanks only the subject's element name and keeps its keys", () => {
-    const p = arrayItemsPatch(transfers, transfer(), ctx, '20261022');
+    const p = arrayItemsPatch(transfers, transfer(), ctx);
     const recipients = p?.['recipients'] as Record<string, unknown>[];
     expect(recipients[0]).toEqual({
       id: 'p:p1', kind: 'person', personKey: 'p1', email: '', name: '', tokenHash: 'h1', viaGroupKeys: ['g1'],
     });
     expect(recipients[1]['name']).toBe('Carl Other');
     expect(recipients[2]['name']).toBe('x@y.ch');
-    expect(p?.['anonymizedAt']).toBe('20261022');
   });
 
-  it("never touches the sender's fields on someone else's transfer", () => {
-    const p = arrayItemsPatch(transfers, transfer(), ctx, '20261022') ?? {};
-    expect(Object.keys(p).sort()).toEqual(['anonymizedAt', 'recipients']);
+  // the document is the sender's record: no senderName, no document-level anonymizedAt
+  it("touches only the recipients array on someone else's transfer", () => {
+    const p = arrayItemsPatch(transfers, transfer(), ctx) ?? {};
+    expect(Object.keys(p)).toEqual(['recipients']);
   });
 
   it('returns undefined when the subject is not a recipient or is already blank (idempotent)', () => {
-    expect(arrayItemsPatch(transfers, transfer(), { ...ctx, personKey: 'p7' }, 'n')).toBeUndefined();
-    const once = arrayItemsPatch(transfers, transfer(), ctx, 'n') ?? {};
-    expect(arrayItemsPatch(transfers, snap('t1', { recipients: once['recipients'] }), ctx, 'n')).toBeUndefined();
-    expect(arrayItemsPatch(transfers, snap('t1', {}), ctx, 'n')).toBeUndefined();
+    expect(arrayItemsPatch(transfers, transfer(), { ...ctx, personKey: 'p7' })).toBeUndefined();
+    const once = arrayItemsPatch(transfers, transfer(), ctx) ?? {};
+    expect(arrayItemsPatch(transfers, snap('t1', { recipients: once['recipients'] }), ctx)).toBeUndefined();
+    expect(arrayItemsPatch(transfers, snap('t1', {}), ctx)).toBeUndefined();
   });
 
   it('does nothing for a row without the spec', () => {
-    expect(arrayItemsPatch(mapRow('file-transfer-events'), transfer(), ctx, 'n')).toBeUndefined();
+    expect(arrayItemsPatch(mapRow('file-transfer-events'), transfer(), ctx)).toBeUndefined();
   });
 });
 
@@ -436,7 +436,7 @@ describe('executeErasure', () => {
     const result = await executeErasure(ctx, cleanPreview, [transfers], ops, { salt: SALT });
     expect(patched).toHaveLength(1);
     expect(patched[0].id).toBe('theirs');
-    expect(Object.keys(patched[0].patch)).not.toContain('senderName');
+    expect(Object.keys(patched[0].patch)).toEqual(['recipients']);
     expect((patched[0].patch['recipients'] as Record<string, unknown>[])[0]['name']).toBe('');
     expect(result.counts['file-transfers']).toBe(1);
   });

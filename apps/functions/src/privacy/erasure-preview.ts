@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import type { DocumentSnapshot } from 'firebase-admin/firestore';
 import type { ErasurePreview, OutOfReachRow, PreviewRow } from '@okr/shared-models';
 import { DateFormat, addDuration, convertDateFormatToString } from '@okr/shared-util-core';
-import { resolveDocs } from './subject-data-map';
+import { resolveArrayItemDocs, resolveDocs } from './subject-data-map';
 import type { Blocker, SubjectCtx, SubjectDataEntry } from './types';
 
 /**
@@ -42,6 +42,10 @@ export type DocFetcher = (entry: SubjectDataEntry, ctx: SubjectCtx) => Promise<D
  * feeding them to the executor would erase them.
  */
 export const firestoreDocFetcher: DocFetcher = (entry, ctx) => resolveDocs(entry, ctx);
+
+/** Production fetcher for a row's `anonymizeArrayItems` — the subject as an element of
+ * someone else's document. `[]` for every row without one (no query is made). */
+export const firestoreArrayItemFetcher: DocFetcher = (entry, ctx) => resolveArrayItemDocs(entry, ctx);
 
 /**
  * The report shape itself is the wire contract in `@okr/shared-models`
@@ -166,6 +170,11 @@ export function previewTokenOf(parts: PreviewTokenParts): string {
  *                         to empty: a caller that cannot say which integrations this
  *                         tenant enabled must not guess, because every name in this list
  *                         is a statement to the member about where their data went.
+ * @param fetchArrayItems  the documents a row's `anonymizeArrayItems` reaches (the member as
+ *                         a recipient of someone else's file transfer). They are anonymised
+ *                         by the executor's step 2b, so they belong in `willAnonymize` — and
+ *                         with it in the preview token. Defaults to the production fetcher,
+ *                         which makes no query for a row without the option.
  */
 export async function buildPreview(
   ctx: SubjectCtx,
@@ -173,6 +182,7 @@ export async function buildPreview(
   fetchDocs: DocFetcher,
   otherAdminCount: number,
   outOfReach: readonly OutOfReachRow[] = [],
+  fetchArrayItems: DocFetcher = firestoreArrayItemFetcher,
 ): Promise<ErasurePreview> {
   const blockers: Blocker[] = [];
   const willDelete: PreviewRow[] = [];
@@ -184,16 +194,33 @@ export async function buildPreview(
 
   for (const entry of entries) {
     const docs = await fetchDocs(entry, ctx);
+    // Someone else's documents in which the subject is an array element (executor step 2b).
+    // Never fed to `blocksErasure` — that predicate sees the subject's own documents only.
+    const elementDocs = entry.anonymizeArrayItems ? await fetchArrayItems(entry, ctx) : [];
+
     // An empty collection is not a finding and must not become a line in the report —
     // and a blocker predicate is never asked about an empty set (map contract step 4).
-    if (docs.length === 0) continue;
+    if (docs.length > 0) {
+      const blocker = entry.blocksErasure?.(docs, ctx);
+      if (blocker) blockers.push(blocker);
+    }
 
-    const blocker = entry.blocksErasure?.(docs, ctx);
-    if (blocker) blockers.push(blocker);
+    if (entry.onErasure === 'anonymize') {
+      // one line per collection: the own and the element documents together, each counted once
+      const own = new Set(docs.map((d) => d.ref?.path ?? d.id));
+      const all = [...docs, ...elementDocs.filter((d) => !own.has(d.ref?.path ?? d.id))];
+      if (all.length === 0) continue;
+      const row = toPreviewRow(entry, all, true);
+      willAnonymize.push(row);
+      if (entry.tier === 'T2') voluntary.push({ entry, row });
+      continue;
+    }
+
+    if (elementDocs.length > 0) willAnonymize.push(toPreviewRow(entry, elementDocs, true));
+    if (docs.length === 0) continue;
 
     const row = toPreviewRow(entry, docs, entry.onErasure !== 'delete');
     if (entry.onErasure === 'delete') willDelete.push(row);
-    else if (entry.onErasure === 'anonymize') willAnonymize.push(row);
     else willRetain.push(row);
 
     if (entry.tier === 'T2') voluntary.push({ entry, row });
