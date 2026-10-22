@@ -1,0 +1,130 @@
+import { JournalEntity } from '@okr/shared-models';
+import { EntityState, JournalState, viewOf } from './journal-merge.util';
+import { sortByOrder } from './journal-order.util';
+
+/**
+ * The journal as the UI reads it, built from the merged change log (spec 1.113 §5.2). Field names in
+ * the change records are the contract: journal { title, subTitle, startDate, endDate }; footprint
+ * { journalKey, title, placeName, date, time, latitude, longitude, publishState }; section
+ * { footprintKey, kind, html, imageKeys, order }; image { journalKey, takenAt, latitude, longitude,
+ * width, height, path2048, path400, localIdentifier }.
+ */
+export interface JournalView { key: string; title: string; subTitle: string; startDate: string; endDate: string }
+
+export type BlockKind = 'text' | 'photos';
+
+export interface BlockView {
+  key: string;
+  kind: BlockKind;
+  authorKey: string;
+  order: string;
+  html?: string; // kind 'text'
+  imageKeys?: string[]; // kind 'photos', in pick order — may name images not (yet) received; look them up in imagesOf
+}
+
+export interface ImageView {
+  key: string;
+  authorKey: string;
+  takenAt?: string;
+  latitude?: number;
+  longitude?: number;
+  width: number;
+  height: number;
+  path2048: string; // relative to the app's Documents directory
+  path400: string;
+  localIdentifier: string;
+}
+
+export interface FootprintView {
+  key: string;
+  journalKey: string;
+  title: string;
+  placeName: string;
+  date: string;
+  time: string;
+  latitude?: number;
+  longitude?: number;
+  publishState: 'draft' | 'published';
+  blocks: BlockView[];
+}
+
+function live(state: JournalState, entity: JournalEntity): { entity: EntityState; view: Record<string, unknown> }[] {
+  const out: { entity: EntityState; view: Record<string, unknown> }[] = [];
+  for (const candidate of Object.values(state)) {
+    if (candidate.entity !== entity) continue;
+    const view = viewOf(candidate);
+    if (view) out.push({ entity: candidate, view });
+  }
+  return out;
+}
+
+const str = (v: unknown): string => (typeof v === 'string' ? v : '');
+const num = (v: unknown): number | undefined => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
+const cmp = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+
+export function journalsOf(state: JournalState): JournalView[] {
+  return live(state, 'journal')
+    .map(({ entity, view }) => ({
+      key: entity.entityKey,
+      title: str(view['title']),
+      subTitle: str(view['subTitle']),
+      startDate: str(view['startDate']),
+      endDate: str(view['endDate']),
+    }))
+    .sort((a, b) => cmp(a.startDate, b.startDate) || cmp(a.title, b.title));
+}
+
+function blocksOf(state: JournalState, footprintKey: string): BlockView[] {
+  const blocks = live(state, 'section')
+    .filter(({ view }) => view['footprintKey'] === footprintKey)
+    .map(({ entity, view }) => {
+      const kind: BlockKind = view['kind'] === 'photos' ? 'photos' : 'text';
+      const block: BlockView = { key: entity.entityKey, kind, authorKey: entity.ownerKey ?? '', order: str(view['order']) };
+      if (kind === 'text') block.html = str(view['html']);
+      else block.imageKeys = Array.isArray(view['imageKeys']) ? (view['imageKeys'] as unknown[]).filter((k): k is string => typeof k === 'string') : [];
+      return { ...block, okey: block.key };
+    });
+  return sortByOrder(blocks).map(({ okey: _okey, ...block }) => block);
+}
+
+export function footprintsOf(state: JournalState, journalKey: string): FootprintView[] {
+  return live(state, 'footprint')
+    .filter(({ view }) => view['journalKey'] === journalKey)
+    .map(({ entity, view }) => ({
+      key: entity.entityKey,
+      journalKey,
+      title: str(view['title']),
+      placeName: str(view['placeName']),
+      date: str(view['date']),
+      time: str(view['time']),
+      latitude: num(view['latitude']),
+      longitude: num(view['longitude']),
+      publishState: view['publishState'] === 'published' ? ('published' as const) : ('draft' as const),
+      blocks: blocksOf(state, entity.entityKey),
+    }))
+    .sort((a, b) => cmp(a.date, b.date) || cmp(a.time, b.time) || cmp(a.key, b.key));
+}
+
+export function imagesOf(state: JournalState, journalKey: string): Map<string, ImageView> {
+  const images = new Map<string, ImageView>();
+  for (const { entity, view } of live(state, 'image')) {
+    if (view['journalKey'] !== journalKey) continue;
+    images.set(entity.entityKey, {
+      key: entity.entityKey,
+      authorKey: entity.ownerKey ?? '',
+      takenAt: typeof view['takenAt'] === 'string' ? view['takenAt'] : undefined,
+      latitude: num(view['latitude']),
+      longitude: num(view['longitude']),
+      width: num(view['width']) ?? 0,
+      height: num(view['height']) ?? 0,
+      path2048: str(view['path2048']),
+      path400: str(view['path400']),
+      localIdentifier: str(view['localIdentifier']),
+    });
+  }
+  return images;
+}
+
+export function lastBlockOrder(footprint: FootprintView): string | undefined {
+  return footprint.blocks.length > 0 ? footprint.blocks[footprint.blocks.length - 1].order : undefined;
+}
