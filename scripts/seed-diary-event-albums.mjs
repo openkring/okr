@@ -2,7 +2,8 @@
 /**
  * Seeds event albums into `diaryAlbums` (spec 1.114 §2.4): one per
  * `archive/collections/events/*.md` note (slug = file basename, title = frontmatter `title`)
- * and one per slug found in the tenant's `diaries.events[]` without a note (title = slug).
+ * and, ONLY with `--with-orphans`, one per slug found in the tenant's `diaries.events[]`
+ * without a note (title = slug). The orphan slug list is always printed.
  *
  * SAFETY
  *   events[] values that are not slug-shaped are skipped and only counted.
@@ -25,6 +26,7 @@ const flag = (name) => args.find((a) => a.startsWith(`--${name}=`))?.split('=').
 const isWrite = args.includes('--write');
 const tenantId = flag('tenant');
 const authorKey = flag('author');
+const withOrphans = args.includes('--with-orphans');
 const archive = flag('archive') || process.env.DIARY_ARCHIVE || '';
 
 function fail(message) {
@@ -45,7 +47,7 @@ const APP_CONFIG = 'app-config';
 const config = await db.collection(APP_CONFIG).doc(tenantId).get();
 if (!config.exists) fail(`Tenant '${tenantId}' has no ${APP_CONFIG} document.`);
 
-const FRONTMATTER = /^---\n([\s\S]*?)\n---/;
+const FRONTMATTER = /^---\r?\n([\s\S]*?)\r?\n---/;
 function frontmatterField(text, key) {
   const front = FRONTMATTER.exec(text)?.[1] ?? '';
   return new RegExp(`^${key}:\\s*(.+)$`, 'm').exec(front)?.[1]?.trim().replace(/^["']|["']$/g, '') ?? '';
@@ -55,6 +57,11 @@ function frontmatterField(text, key) {
 const albumId = (slug) => `${tenantId}__${authorKey}__event__${slug}`;
 
 const eventsDir = path.join(archive, 'collections', 'events');
+try {
+  readdirSync(eventsDir);
+} catch {
+  fail(`Events directory not found: ${eventsDir} (check --archive).`);
+}
 const notes = new Map(); // slug -> title
 for (const file of readdirSync(eventsDir).filter((f) => f.endsWith('.md'))) {
   const slug = file.replace(/\.md$/, '');
@@ -71,7 +78,7 @@ const unfit = [...used].filter((s) => !SLUG.test(s)).length;
 const orphans = [...used].filter((s) => SLUG.test(s) && !notes.has(s)).sort();
 
 const entries = [...notes].map(([slug, title]) => ({ slug, title }))
-  .concat(orphans.map((slug) => ({ slug, title: slug })));
+  .concat(withOrphans ? orphans.map((slug) => ({ slug, title: slug })) : []);
 
 function buildAlbum({ slug, title }) {
   return {
@@ -99,7 +106,7 @@ for (const entry of entries) {
 }
 
 console.log(`tenant=${tenantId} author=${authorKey} diariesScanned=${diaries.size}`);
-console.log(`notes=${notes.size} orphanSlugs=${orphans.length} nonSlugValuesSkipped=${unfit} total=${entries.length} existing=${existing}`
+console.log(`notes=${notes.size} orphanSlugs=${orphans.length} (${withOrphans ? 'included' : 'NOT included, pass --with-orphans'}) nonSlugValuesSkipped=${unfit} wouldCreate=${entries.length - existing} existing=${existing}`
   + (isWrite ? ` created=${created}` : ' (dry run, nothing written)'));
 console.log(`orphan slugs: ${orphans.join(' ') || '(none)'}`);
 process.exit(0);

@@ -59,11 +59,11 @@ let unchanged = 0;
 let withKeys = 0;
 const toUpdate = [];
 for (const doc of snap.docs) {
-  const keys = diaryAlbumKeys(doc.data());
+  const data = doc.data();
+  const keys = diaryAlbumKeys(data);
   if (keys.length > 0) withKeys++;
-  // Stored sorted copy: a legacy/unsorted array counts as different.
-  const stored = doc.data().albumKeys;
-  if (same(Array.isArray(stored) ? [...stored].sort() : stored, keys) && same(stored, keys)) unchanged++;
+  // Exact match incl. order: an unsorted or missing stored array counts as different.
+  if (same(data.albumKeys, keys)) unchanged++;
   else toUpdate.push({ ref: doc.ref, keys });
 }
 
