@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import {
-  IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton,
+  IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton,
   IonProgressBar, IonTitle, IonToolbar, ModalController,
 } from '@ionic/angular';
 
@@ -40,7 +40,7 @@ function publicItemAsDoc(item: PublicLearningItem): DocumentModel {
   standalone: true,
   imports: [
     LearningToolbar, LearningVideoGrid, LearningImageGrid, LearningFileList, Spinner, EmptyList, SvgIconPipe,
-    IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonIcon, IonChip, IonLabel,
+    IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonButton, IonIcon, IonChip, IonLabel,
     IonProgressBar, IonList, IonItem,
   ],
   providers: [LearningStore],
@@ -49,7 +49,7 @@ function publicItemAsDoc(item: PublicLearningItem): DocumentModel {
     .upload-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 4px 8px; }
     .upload-row label { cursor: pointer; }
     .upload-row input[type=file] { display: none; }
-    .upload-status { padding: 4px 16px 8px; font-size: 0.9em; color: var(--ion-color-medium); }
+    .upload-status { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 16px 8px; font-size: 0.9em; color: var(--ion-color-medium); }
     .public-images { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; padding: 8px; }
     .public-images a img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 6px; display: block; }
     .notes { padding: 0 16px; }
@@ -126,7 +126,10 @@ function publicItemAsDoc(item: PublicLearningItem): DocumentModel {
         }
         @if (store.upload(); as up) {
           <ion-progress-bar [value]="up.progress" />
-          <div class="upload-status">{{ uploading(up.name) }}</div>
+          <div class="upload-status">
+            <span>{{ uploading(up.name) }}</span>
+            <ion-button fill="clear" size="small" (click)="store.cancelUpload()">{{ store.i18n.room_uploadCancel() }}</ion-button>
+          </div>
         }
         @if (store.isDocsLoading() && store.docs().length === 0) {
           <okr-spinner />
@@ -154,7 +157,11 @@ export class LearningRoomPage {
 
   // inputs (set by PageDispatcher)
   public readonly pageKey = input('');
-  /** accepted for dispatcher symmetry; the room's actions are role-dependent buttons, not a DB menu */
+  /**
+   * Intentionally unused: accepted only so PageDispatcher can pass the same inputs to every page
+   * type. A learning room has no DB context menu — its actions (upload per topic, edit, delete)
+   * depend on the viewer's curated topics and are rendered as buttons.
+   */
   public readonly contextMenuName = input<string | undefined>(undefined);
   public readonly color = input('secondary');
   public readonly showMenu = input(true);

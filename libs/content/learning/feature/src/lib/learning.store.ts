@@ -22,10 +22,11 @@ import {
   LearningAttachmentInfo, LearningFolderOption, LearningItemEditModal, LearningRoomEditModal,
   learningPublishAlertOptions, learningUnpublishAlertOptions,
 } from '@okr/content-learning-ui';
+import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import {
-  DocumentModel, LEARNING_SECTION_SHAPE, LearningConfig, LearningSection, PageModel, SectionModel, UserModel,
+  DocumentModel, LEARNING_SECTION_SHAPE, LearningConfig, LearningSection, PageCollection, PageModel, SectionModel, UserModel,
 } from '@okr/shared-models';
 import { browse } from '@okr/shared-ui';
 import { copyToClipboard, navigateByUrl, resourceParams, showToast } from '@okr/shared-util-angular';
@@ -97,6 +98,7 @@ export const LearningStore = signalStore(
     videoUrlService: inject(VideoUrlService),
     documentService: inject(DocumentService),
     pageService: inject(PageService),
+    firestoreService: inject(FirestoreService),
     sectionService: inject(SectionService),
     folderService: inject(FolderService),
     activityService: inject(ActivityService),
@@ -202,6 +204,8 @@ export const LearningStore = signalStore(
 
   withMethods((store) => {
     const toast = (message: string) => showToast(store.toastController, message);
+    /** the running upload's abort handle (one upload batch at a time) */
+    let uploadAbort: AbortController | undefined;
 
     async function confirmAlert(message: string, okLabel: string): Promise<boolean> {
       const alert = await store.alertController.create({
@@ -405,21 +409,30 @@ export const LearningStore = signalStore(
         if (!config || files.length === 0 || store.upload()) return;
         if (!methods.curatableFor().includes(topic)) return;
         const pageKey = store.pageKey();
+        const controller = new AbortController();
+        uploadAbort = controller;
         try {
           for (const file of files) {
             patchState(store, { upload: { name: file.name, progress: 0 } });
             try {
               await store.learningService.upload(pageKey, topic, file,
-                progress => patchState(store, { upload: { name: file.name, progress } }));
+                progress => patchState(store, { upload: { name: file.name, progress } }), controller.signal);
               await toast(fill(store.i18n.room_uploaded(), { name: file.name }));
             } catch {
-              await toast(store.i18n.room_uploadFailed());
+              // cancelled by the user: no error toast (the service removed the half-created doc)
+              if (!controller.signal.aborted) await toast(store.i18n.room_uploadFailed());
               return;
             }
           }
         } finally {
+          if (uploadAbort === controller) uploadAbort = undefined;
           patchState(store, { upload: undefined });
         }
+      },
+
+      /** Aborts the running upload (the remaining files of the batch are skipped). */
+      cancelUpload(): void {
+        uploadAbort?.abort();
       },
 
       /*-------------------------- rooms administration (spec 1.115 §6) --------------------------------*/
@@ -459,7 +472,8 @@ export const LearningStore = signalStore(
         await modal.present();
         const { data, role } = await modal.onWillDismiss<LearningRoomFormData>();
         if (role !== 'confirm' || !data) return;
-        await methods.createRoom(data, rooms.map(r => r.okey));
+        const pageKey = await methods.createRoom(data, rooms.map(r => r.okey));
+        await toast(pageKey ? store.i18n.rooms_saved() : store.i18n.rooms_saveFailed());
       },
 
       /**
@@ -485,17 +499,25 @@ export const LearningStore = signalStore(
           const group = store.appStore.groupsMap().get(data.groupKey);
           const ok = await store.folderService.ensureGroupFolder(
             data.groupKey, group?.name || data.name, tenantId, user, (group?.admins ?? []).map(a => a.key));
-          if (!ok) { await toast(store.i18n.rooms_saveFailed()); return undefined; }
+          if (!ok) return undefined;
           folder = data.groupKey;
         } else {
-          pageKey = menuLearningPageKey(tenantId, uniqueLearningSlug(data.name, tenantId, takenPageKeys));
+          // the rooms list holds only live pages: an archived room with the same slug must not be
+          // overwritten either (createModel is a blind upsert) — take the next free slug instead
+          const taken = [...takenPageKeys];
+          pageKey = menuLearningPageKey(tenantId, uniqueLearningSlug(data.name, tenantId, taken));
+          for (let i = 0; i < 20 && await pageExists(pageKey); i++) {
+            taken.push(pageKey);
+            pageKey = menuLearningPageKey(tenantId, uniqueLearningSlug(data.name, tenantId, taken));
+          }
+          if (await pageExists(pageKey)) return undefined;
           if (data.createFolder) {
             const created = await store.folderService.create(newFolderModel(tenantId, data.name, [], user?.personKey ?? ''), user);
-            if (!created) { await toast(store.i18n.rooms_saveFailed()); return undefined; }
+            if (!created) return undefined;
             folder = created;
           }
         }
-        if (!folder) { await toast(store.i18n.rooms_saveFailed()); return undefined; }
+        if (!folder) return undefined;
 
         const section = safeStructuredClone(LEARNING_SECTION_SHAPE) as LearningSection;
         section.okey = pageKey;
@@ -515,10 +537,16 @@ export const LearningStore = signalStore(
         page.isPrivate = true;
         page.sections = [pageKey];
 
+        // section first, so the page never points at a missing section; a failed page create
+        // archives the section again (deleteModel: detach or archive)
         const sectionKey = await store.sectionService.create(section as SectionModel, user);
-        if (!sectionKey) return undefined;   // the service already toasted
+        if (!sectionKey) return undefined;
         const created = await store.pageService.create(page, user);
-        return created ? pageKey : undefined;
+        if (!created) {
+          await store.sectionService.delete(section as SectionModel, user).catch(() => undefined);
+          return undefined;
+        }
+        return pageKey;
       },
 
       /** Opens the room modal on an existing room and saves name, topics, curators, start tab (and folder of a menu room). */
@@ -560,17 +588,20 @@ export const LearningStore = signalStore(
           if (!created) { await toast(store.i18n.rooms_saveFailed()); return; }
           folder = created;
         }
+        let ok = true;
         const properties: LearningConfig = { folder, topics: data.topics, curators: data.curators, defaultTab: data.defaultTab };
         if (section) {
-          await store.sectionService.update({ ...section, name: data.name, title: data.name, properties } as SectionModel, user);
+          ok = !!(await store.sectionService.update({ ...section, name: data.name, title: data.name, properties } as SectionModel, user));
         } else {
           // a page without a usable learning section: give it one (section key = page key)
           const fresh = safeStructuredClone(LEARNING_SECTION_SHAPE) as LearningSection;
           Object.assign(fresh, { okey: page.okey, name: data.name, title: data.name, state: 'published', roleNeeded: 'registered', tenants: [store.tenantId()], properties });
           const key = await store.sectionService.create(fresh as SectionModel, user);
+          ok = !!key;
           if (key && !(page.sections ?? []).includes(key)) page = { ...page, sections: [...(page.sections ?? []), key] };
         }
-        await store.pageService.update({ ...page, name: data.name, title: data.name }, user);
+        if (ok) ok = !!(await store.pageService.update({ ...page, name: data.name, title: data.name }, user));
+        await toast(ok ? store.i18n.rooms_saved() : store.i18n.rooms_saveFailed());
       },
 
       /** Publishes (warning first, acts only on 'confirm') and logs who, when and which page. */
@@ -607,6 +638,19 @@ export const LearningStore = signalStore(
     };
     return methods;
 
+    /**
+     * true when pages/<key> exists in ANY state or tenant. Raw read on purpose: PageService.read
+     * (readTenantModel) hides archived pages, which createModel would silently overwrite. Pages
+     * are world-readable (rules), so a read error is a real failure and counts as taken.
+     */
+    async function pageExists(pageKey: string): Promise<boolean> {
+      try {
+        return !!(await firstValueFrom(store.firestoreService.readModel<PageModel>(PageCollection, pageKey)));
+      } catch {
+        return true;
+      }
+    }
+
     async function setPrivate(page: PageModel, isPrivate: boolean): Promise<void> {
       if (!store.isContentAdmin()) return;
       const options = isPrivate ? learningUnpublishAlertOptions(store.i18n) : learningPublishAlertOptions(store.i18n);
@@ -615,8 +659,9 @@ export const LearningStore = signalStore(
       const { role } = await alert.onDidDismiss();
       if (role !== 'confirm') return;
       const user: UserModel | undefined = store.currentUser();
-      const key = await store.pageService.update({ ...page, isPrivate }, user);
-      if (!key) return;   // the service already toasted the failure
+      // only the flag: re-sending the list snapshot could revert a concurrent rename
+      const key = await store.pageService.setPrivate(page, isPrivate);
+      if (!key) { await toast(store.i18n.rooms_saveFailed()); return; }
       await store.activityService.log('learning', isPrivate ? 'unpublish' : 'publish', user, page.okey);
       await toast(isPrivate ? store.i18n.rooms_unpublished() : store.i18n.rooms_published());
     }

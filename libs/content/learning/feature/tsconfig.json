@@ -62,6 +62,9 @@
       "path": "../util/tsconfig.lib.json"
     },
     {
+      "path": "../../../shared/data-access/tsconfig.lib.json"
+    },
+    {
       "path": "../../../shared/feature/tsconfig.lib.json"
     },
     {

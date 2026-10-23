@@ -7,6 +7,7 @@ import { ViewWillEnter } from '@ionic/angular/lazy';
 import { GroupModel, PageModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, DeferError } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { resourceParams } from '@okr/shared-util-angular';
 import { hasRole, safeStructuredClone } from '@okr/shared-util-core';
 import { canAccessGroup, isAdminMember } from '@okr/subject-group-util';
 import { canManageFolders } from '@okr/content-folder-util';
@@ -276,7 +277,7 @@ export class GroupViewPage implements ViewWillEnter {
    * null = no such page or not readable (a get() on a missing doc can be rejected by the rules).
    */
   private readonly learningPageResource = rxResource({
-    params: () => ({ key: this.selectedSegment() === 'files' && this.access() === 'granted' ? this.groupKey() : '' }),
+    params: resourceParams(() => ({ key: this.selectedSegment() === 'files' && this.access() === 'granted' ? this.groupKey() : '' })),
     stream: ({ params }) => params.key
       ? this.pageService.read(groupLearningPageKey(params.key)).pipe(
           map(page => page ?? null),

@@ -118,7 +118,10 @@ import type { LearningRoomPage } from "@okr/content-learning-feature";
                 @case ('learning') {
                     <!-- created lazily in code (learningHost effect): a static import would bind the
                          learning feature into every chunk that reaches this dispatcher -->
-                    @if (!learningRef()) {
+                    <!-- the host stays in the DOM on failure: removing it would reset the failure and retry forever -->
+                    @if (learningFailed()) {
+                        <okr-defer-error />
+                    } @else if (!learningRef()) {
                         <okr-spinner />
                     }
                     <div #learningHost class="learning-host"></div>
@@ -170,6 +173,11 @@ export class PageDispatcher implements ViewWillEnter {
   private readonly learningHost = viewChild('learningHost', { read: ViewContainerRef });
   protected readonly learningRef = signal<ComponentRef<LearningRoomPage> | undefined>(undefined);
   private readonly creatingLearning = signal(false);
+  /** the lazy import or creation failed for the current host + page: no retry until one of them changes */
+  protected readonly learningFailed = signal(false);
+  private learningRefHost: ViewContainerRef | undefined;
+  private lastLearningHost: ViewContainerRef | undefined;
+  private lastLearningPageKey = '';
   private readonly chatPage = viewChild(ChatPage);
 
   public readonly hoistMenuName = computed<string | undefined>(() => {
@@ -239,18 +247,25 @@ export class PageDispatcher implements ViewWillEnter {
       }
     });
     // Lazily instantiate the learning room once its host appears (same shape as the group
-    // view's calendar host). Leaving the @case destroys host and component: drop the dead ref.
+    // view's calendar host). Leaving the @case destroys host and component: drop the dead ref
+    // (memory: lazy host in conditional block). A failed import sets learningFailed, which stops
+    // retries until the host or the page changes.
     effect(() => {
       const host = this.learningHost();
-      const existing = untracked(() => this.learningRef());
-      if (!host) {
-        if (existing) {
-          existing.destroy();
-          this.learningRef.set(undefined);
-        }
-        return;
+      const pageKey = this.page()?.okey ?? '';
+      if (host !== this.lastLearningHost || pageKey !== this.lastLearningPageKey) {
+        this.lastLearningHost = host;
+        this.lastLearningPageKey = pageKey;
+        untracked(() => this.learningFailed.set(false));
       }
-      if (existing || this.creatingLearning()) return;
+      let existing = untracked(() => this.learningRef());
+      if (existing && (existing.hostView.destroyed || this.learningRefHost !== host)) {
+        existing.destroy();
+        this.learningRef.set(undefined);
+        this.learningRefHost = undefined;
+        existing = undefined;
+      }
+      if (!host || existing || this.creatingLearning() || this.learningFailed()) return;
       this.creatingLearning.set(true);
       void (async () => {
         try {
@@ -262,7 +277,11 @@ export class PageDispatcher implements ViewWillEnter {
           ref.setInput('color', untracked(() => this.color()));
           ref.setInput('showMenu', untracked(() => this.showMenu() && !this.isGroupView()));
           ref.changeDetectorRef.detectChanges();
+          this.learningRefHost = host;
           this.learningRef.set(ref);
+        } catch (error) {
+          console.error('PageDispatcher: the learning room could not be loaded', error);
+          if (untracked(() => this.learningHost()) === host) this.learningFailed.set(true);
         } finally {
           this.creatingLearning.set(false);
         }
@@ -274,7 +293,7 @@ export class PageDispatcher implements ViewWillEnter {
       const color = this.color();
       const showMenu = this.showMenu() && !this.isGroupView();
       const ref = this.learningRef();
-      if (!ref || this.page()?.type !== 'learning') return;
+      if (!ref || ref.hostView.destroyed || this.page()?.type !== 'learning') return;
       ref.setInput('pageKey', pageKey);
       ref.setInput('color', color);
       ref.setInput('showMenu', showMenu);

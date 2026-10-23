@@ -81,6 +81,16 @@ export class PageService {
   }
 
   /**
+   * Flips only `isPrivate` (partial update — never re-sends a cached copy of the page). Pages
+   * shared with other tenants are refused: their publication is not this tenant's decision alone.
+   * @returns the page key, or undefined when refused or the write failed (the error is toasted)
+   */
+  public async setPrivate(page: PageModel, isPrivate: boolean): Promise<string | undefined> {
+    if (!page?.okey || !isOwnedBy(page, this.env.tenantId)) return undefined;
+    return await this.firestoreService.updateFields(PageCollection, page.okey, { isPrivate }, this.i18n.update_error());
+  }
+
+  /**
    * Delete a page.
    * We are not actually deleting a page. We are just archiving it.
    * @param key
