@@ -688,3 +688,30 @@ describe('getImgFallbackSrc', () => {
     expect(getImgFallbackSrc('https://x.imgix.net/a.jpg', '')).toBeUndefined();
   });
 });
+
+// travel journal (spec 1.113, plan 3): local files on the iPad must not be rewritten to imgix
+describe('direct image urls', () => {
+  const local = 'capacitor://localhost/_capacitor_file_/var/mobile/Documents/journals/j1/a-2048.jpg';
+
+  it('isDirectImageUrl recognises local schemes', async () => {
+    const { isDirectImageUrl } = await import('./img.util');
+    expect(isDirectImageUrl(local)).toBe(true);
+    expect(isDirectImageUrl('file:///var/x.jpg')).toBe(true);
+    expect(isDirectImageUrl('blob:capacitor://localhost/abc')).toBe(true);
+    expect(isDirectImageUrl('data:image/jpeg;base64,AAAA')).toBe(true);
+    expect(isDirectImageUrl('https://example.org/x.jpg')).toBe(true);
+    expect(isDirectImageUrl('tenant/scs/section/x.jpg')).toBe(false);
+    expect(isDirectImageUrl('assets/x.png')).toBe(false);
+  });
+
+  it('getImgixUrl passes a capacitor file URL through', async () => {
+    const { getImgixUrl } = await import('./img.util');
+    expect(getImgixUrl(local)).toBe(local);
+  });
+
+  it('getBackgroundStyle uses a direct URL as is', async () => {
+    const { getBackgroundStyle } = await import('./img.util');
+    const style = getBackgroundStyle('https://bkaiser.imgix.net', { width: '400', height: '300' } as ImageStyle, local);
+    expect(style['background-image']).toBe(`url(${local})`);
+  });
+});

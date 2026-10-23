@@ -32,8 +32,19 @@ export function getImageType(fileName: string): ImageType {
  * @param params the imgix query parameters (optional)
  * @returns a valid imgix url or AVATAR_URL if no path was given.
  */
+/**
+ * A URL the browser can load as is — never rewritten to imgix: absolute http(s), and local or inline
+ * sources such as the iOS WebView's `capacitor://localhost/_capacitor_file_/…` (travel journal photos
+ * live as files on the iPad, spec 1.113), `file:`, `blob:` and `data:`.
+ */
+const LOCAL_SCHEME = /^(capacitor|file|blob|data):/;
+export function isDirectImageUrl(url: string | undefined): boolean {
+  return !!url && (url.startsWith('https://') || url.startsWith('http://') || LOCAL_SCHEME.test(url));
+}
+
 export function getImgixUrl(path: string | undefined, params = 'auto=compress,enhance'): string {
   if (!path || path.length === 0) return '';
+  if (LOCAL_SCHEME.test(path)) return path; // a local file or inline image is loaded as is
   const _path = fixHttpUrl(path) ?? die('img.util.getImgixUrl -> path is undefined'); // http -> https
   const _urlType = checkUrlType(_path);
   switch (_urlType) {
@@ -323,6 +334,9 @@ export function getImgixJsonUrl(url: string, imgixBaseUrl: string): string {
  * the CMS album section and the shared image grid build tiles the same way.
  */
 export function getBackgroundStyle(imgixBaseUrl: string, imageStyle: ImageStyle, url: string, image?: ImageConfig): BackgroundStyle {
+  if (isDirectImageUrl(url)) {
+    return { 'background-image': `url(${url})`, 'min-height': '200px', 'background-size': 'cover', 'background-position': 'center', 'border': '1px' };
+  }
   if (!imageStyle.width || !imageStyle.height) die('album.util.getBackgroundStyle: image width and height must be set');
   const sizeParams = getSizedImgixParamsByExtension(url, imageStyle.width, imageStyle.height);
   const overlayParams = image ? buildOverlayParams(image, imageStyle) : '';

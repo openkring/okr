@@ -5,7 +5,7 @@ import { Browser } from '@capacitor/browser';
 
 import { ENV } from '@okr/shared-config';
 import { ImageActionType, ImageConfig, ImageStyle } from '@okr/shared-models';
-import { buildOverlayText, getImgixUrl, getSizedImgixParamsByExtension, getThumbnailUrl } from '@okr/shared-util-core';
+import { buildOverlayText, getImgixUrl, getSizedImgixParamsByExtension, getThumbnailUrl, isDirectImageUrl } from '@okr/shared-util-core';
 import { downloadToBrowser } from '@okr/shared-util-angular';
 
 import { findImageIndex, showImageSlider, showZoomedImage } from './ui.util';
@@ -101,7 +101,11 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
         @if(url(); as url) {
         @if(isThumbnail() === true) {
           <ion-thumbnail [slot]="slot()" [ngStyle]="style()" (click)="onImageClicked()">
-            <img [ngSrc]="thumbnailUrl()" [alt]="altText()" /> 
+            @if(isExternalImage()) {
+              <img [src]="url" [alt]="altText()" />
+            } @else {
+              <img [ngSrc]="thumbnailUrl()" [alt]="altText()" />
+            }
           </ion-thumbnail>
         }
         @else {
@@ -175,7 +179,8 @@ export class Img {
   protected hasPriority = computed(() => this.imageStyle()?.hasPriority ?? false);
   protected actionType = computed(() => this.imageStyle()?.action ?? 'none');
   protected actionUrl = computed(() => this.image()?.actionUrl ?? '');
-  protected isExternalImage = computed(() => this.url().startsWith('http'));
+  // absolute http(s) and local files (capacitor://, file:, blob:, data:) are shown as is, never via imgix
+  protected isExternalImage = computed(() => isDirectImageUrl(this.url()));
   protected srcset = computed(() => this.generateSrcset());
   // title/credit caption, rendered as an overlay element on top of the image
   protected caption = computed(() => buildOverlayText(this.image(), this.imageStyle()));
