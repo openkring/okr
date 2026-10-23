@@ -20,7 +20,14 @@ const SCHEMA = [
     'op TEXT NOT NULL, fields TEXT NOT NULL, uploadedAt TEXT);',
   'CREATE INDEX IF NOT EXISTS changes_journal ON changes (journalKey, hlc);',
   'CREATE UNIQUE INDEX IF NOT EXISTS changes_device_seq ON changes (deviceId, seq);',
+  'CREATE INDEX IF NOT EXISTS changes_pending ON changes (uploadedAt);',
+  // plan 4: photo files of the journal and whether this device uploaded them / holds them
+  'CREATE TABLE IF NOT EXISTS photo_files (' +
+    'file TEXT PRIMARY KEY, journalKey TEXT NOT NULL, uploaded INTEGER NOT NULL DEFAULT 0, present INTEGER NOT NULL DEFAULT 0);',
 ].join('\n');
+
+/** A record received from the server, with its upload time (ms). */
+export interface RemoteChange { change: JournalChange; uploadedAtMs: number }
 
 @Injectable({ providedIn: 'root' })
 export class JournalDb {
@@ -78,6 +85,70 @@ export class JournalDb {
     return ((rows.values ?? []) as StoredChangeRow[])
       .map(decodeChangeRow)
       .filter((c): c is JournalChange => c !== undefined);
+  }
+
+  /**
+   * Records not yet in Firestore (plan 4): `uploadedAt` is empty until the upload is confirmed. In clock
+   * order, so a journal's create record goes before its footprints.
+   */
+  public async pendingUploads(limit: number): Promise<JournalChange[]> {
+    const db = await this.db();
+    const rows = await db.query('SELECT * FROM changes WHERE uploadedAt IS NULL ORDER BY hlc LIMIT ?;', [limit]);
+    return ((rows.values ?? []) as StoredChangeRow[]).map(decodeChangeRow).filter((c): c is JournalChange => c !== undefined);
+  }
+
+  public async countPendingUploads(): Promise<number> {
+    const db = await this.db();
+    const rows = await db.query('SELECT COUNT(*) AS n FROM changes WHERE uploadedAt IS NULL;');
+    return Number((rows.values?.[0] as { n?: number } | undefined)?.n ?? 0);
+  }
+
+  public async markUploaded(ids: string[], uploadedAtMs: number): Promise<void> {
+    if (ids.length === 0) return;
+    const db = await this.db();
+    await db.executeSet(ids.map((id) => ({
+      statement: 'UPDATE changes SET uploadedAt = ? WHERE id = ? AND uploadedAt IS NULL;', values: [String(uploadedAtMs), id],
+    })), true);
+  }
+
+  /**
+   * Records downloaded from Firestore, in one transaction. INSERT OR IGNORE: the device already holds
+   * its own records and those received over P2P — for those only the upload mark is set.
+   */
+  public async appendRemoteChanges(remote: RemoteChange[]): Promise<void> {
+    if (remote.length === 0) return;
+    const db = await this.db();
+    const set: capSQLiteSet[] = remote.flatMap(({ change: c, uploadedAtMs }) => [
+      {
+        statement: 'INSERT OR IGNORE INTO changes (id, journalKey, deviceId, seq, hlc, authorKey, entity, entityKey, op, fields, uploadedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+        values: [c.id, c.journalKey, c.deviceId, c.seq, c.hlc, c.authorKey, c.entity, c.entityKey, c.op, JSON.stringify(c.fields), String(uploadedAtMs)],
+      },
+      { statement: 'UPDATE changes SET uploadedAt = ? WHERE id = ? AND uploadedAt IS NULL;', values: [String(uploadedAtMs), c.id] },
+    ]);
+    await db.executeSet(set, true);
+  }
+
+  /** Registers photo files of a journal; `present` = the file is on this device. Existing rows keep their marks. */
+  public async notePhotoFiles(journalKey: string, files: string[], present: boolean): Promise<void> {
+    if (files.length === 0) return;
+    const db = await this.db();
+    await db.executeSet(files.flatMap((file) => [
+      { statement: 'INSERT OR IGNORE INTO photo_files (file, journalKey, present) VALUES (?, ?, ?);', values: [file, journalKey, present ? 1 : 0] },
+      ...(present ? [{ statement: 'UPDATE photo_files SET present = 1 WHERE file = ?;', values: [file] }] : []),
+    ]), true);
+  }
+
+  public async photoFiles(journalKey: string): Promise<{ file: string; uploaded: boolean; present: boolean }[]> {
+    const db = await this.db();
+    const rows = await db.query('SELECT file, uploaded, present FROM photo_files WHERE journalKey = ?;', [journalKey]);
+    return ((rows.values ?? []) as { file: string; uploaded: number; present: number }[])
+      .map((r) => ({ file: r.file, uploaded: r.uploaded === 1, present: r.present === 1 }));
+  }
+
+  public async markPhotosUploaded(files: string[]): Promise<void> {
+    if (files.length === 0) return;
+    const db = await this.db();
+    await db.executeSet(files.map((file) => ({ statement: 'UPDATE photo_files SET uploaded = 1, present = 1 WHERE file = ?;', values: [file] })), true);
   }
 
   public async hasAnyJournal(): Promise<boolean> {

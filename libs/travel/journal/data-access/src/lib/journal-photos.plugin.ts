@@ -29,6 +29,12 @@ export interface SkippedPhoto {
 
 export interface JournalPhotosPlugin {
   pick(options: { journalKey: string; limit?: number }): Promise<{ photos: PickedPhoto[]; skipped: SkippedPhoto[] }>;
+  /** Plan 4: PUT of Documents/journals/<journalKey>/<file> to a signed URL (URLSession, not the WebView). */
+  uploadFile(options: { journalKey: string; file: string; url: string; headers: Record<string, string> }): Promise<{ status: number }>;
+  /** Plan 4: GET from a signed URL into Documents/journals/<journalKey>/<file>. */
+  downloadFile(options: { journalKey: string; file: string; url: string }): Promise<{ status: number }>;
+  /** Plan 4: the named files that exist in Documents/journals/<journalKey>/. */
+  presentFiles(options: { journalKey: string; files: string[] }): Promise<{ files: string[] }>;
 }
 
 export const JournalPhotos = registerPlugin<JournalPhotosPlugin>('JournalPhotos');

@@ -11,6 +11,8 @@
     "@capacitor-community/sqlite": "*",
     "@angular/core": "*",
     "@okr/shared-models": "*",
-    "@okr/travel-journal-util": "*"
+    "@okr/travel-journal-util": "*",
+    "@okr/shared-config": "*",
+    "firebase": "*"
   }
 }

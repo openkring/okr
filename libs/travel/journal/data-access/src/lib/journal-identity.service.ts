@@ -2,7 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { JournalChange } from '@okr/shared-models';
 import {
   BoundAuthor, ChangeStamp, createChange, formatHlc, JournalWriteRefused, NewChange, nextBoundAuthor,
-  parseBoundAuthor, parseStamp, serializeBoundAuthor,
+  parseBoundAuthor, parseHlc, parseStamp, receiveHlc, serializeBoundAuthor,
 } from '@okr/travel-journal-util';
 import { JournalDb } from './journal-db';
 
@@ -62,6 +62,24 @@ export class JournalIdentityService {
       if (!next) return;
       await this.db.setMeta(META_AUTHOR, serializeBoundAuthor(next));
       this.authorSignal.set(next);
+    });
+  }
+
+  /**
+   * Moves the device clock past received records (plan 4), so this device's next edit wins over what it
+   * has just seen even when the other device's clock runs ahead. The caller passes only accepted clocks
+   * (well-formed, not far in the future — acceptRecord).
+   */
+  public receiveClocks(hlcs: string[]): Promise<void> {
+    if (hlcs.length === 0) return Promise.resolve();
+    return this.enqueue(async () => {
+      await this.init();
+      const deviceId = this.deviceIdSignal();
+      let clock = this.stamp.clock ?? { wall: 0, counter: 0, deviceId };
+      const now = Date.now();
+      for (const hlc of hlcs) clock = receiveHlc(clock, parseHlc(hlc), now);
+      await this.db.setMeta(META_HLC, formatHlc(clock));
+      this.stamp = { ...this.stamp, clock };
     });
   }
 
