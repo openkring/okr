@@ -383,3 +383,25 @@ export function getImgFallbackSrc(failedSrc: string, fallback: string | undefine
   if (!fallback || failedSrc === fallback) return undefined;
   return fallback;
 }
+
+/**
+ * Collage layout for an album (spec 1.113 §9.3, «one large + two small»), on a 3-column grid:
+ * 1 image fills the width; 2 → large + tall; 3 → large 2×2 + two 1×1 beside it. More images repeat the
+ * 3-pattern; a remainder of 1 spans the full width, a remainder of 2 is 2×1 + 1×1. No gaps.
+ */
+export interface CollageTile { index: number; colSpan: 1 | 2 | 3; rowSpan: 1 | 2 }
+
+export function collageTiles(count: number): CollageTile[] {
+  if (count <= 0) return [];
+  if (count === 1) return [{ index: 0, colSpan: 3, rowSpan: 2 }];
+  if (count === 2) return [{ index: 0, colSpan: 2, rowSpan: 2 }, { index: 1, colSpan: 1, rowSpan: 2 }];
+  const tiles: CollageTile[] = [];
+  let i = 0;
+  while (count - i >= 3) {
+    tiles.push({ index: i, colSpan: 2, rowSpan: 2 }, { index: i + 1, colSpan: 1, rowSpan: 1 }, { index: i + 2, colSpan: 1, rowSpan: 1 });
+    i += 3;
+  }
+  if (count - i === 1) tiles.push({ index: i, colSpan: 3, rowSpan: 1 });
+  if (count - i === 2) tiles.push({ index: i, colSpan: 2, rowSpan: 1 }, { index: i + 1, colSpan: 1, rowSpan: 1 });
+  return tiles;
+}

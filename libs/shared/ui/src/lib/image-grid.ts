@@ -1,10 +1,10 @@
 import { NgStyle } from '@angular/common';
-import { Component, CUSTOM_ELEMENTS_SCHEMA, input, output } from '@angular/core';
+import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, input, output } from '@angular/core';
 import { IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow, IonThumbnail } from '@ionic/angular';
 
 import { BackgroundStyle, ImageConfig, ImageStyle, ImageType } from '@okr/shared-models';
 import { JpgUrlPipe, PdfUrlPipe, SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
-import { getBackgroundStyle, getPosterStyle } from '@okr/shared-util-core';
+import { collageTiles, getBackgroundStyle, getPosterStyle, isDirectImageUrl } from '@okr/shared-util-core';
 
 import { Video } from './video';
 
@@ -39,9 +39,27 @@ import { Video } from './video';
       background: rgba(0, 0, 0, 0.45); border-radius: 50%; padding: 0.4rem;
       pointer-events: none;
     }
+    /* collage (spec 1.113 §9.3): one large + two small on a 3-column grid, see collageTiles */
+    .collage-album { display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 160px; gap: 4px; }
+    .collage-album img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; cursor: pointer; display: block; }
   `],
   template: `
     @switch (albumStyle()) {
+      @case('collage') {
+        <div class="collage-album">
+          @for (tile of collage(); track tile.index) {
+            @if (images()[tile.index]; as image) {
+              <img
+                [src]="isDirectImageUrl(image.url) ? image.url : (image.url | jpgUrl)"
+                [alt]="image.altText ?? ''"
+                [style.grid-column]="'span ' + tile.colSpan"
+                [style.grid-row]="'span ' + tile.rowSpan"
+                (click)="imageClicked.emit(image)"
+              />
+            }
+          }
+        </div>
+      }
       @case('pinterest') {
         <!-- images are not strictly aligned and just take the space available -->
         <div class="pinterest-album">
@@ -145,6 +163,8 @@ export class ImageGrid {
 
   // outputs
   public imageClicked = output<ImageConfig>();
+  protected readonly collage = computed(() => collageTiles(this.images().length));
+  protected readonly isDirectImageUrl = isDirectImageUrl;
 
   // passing constants to template
   protected IT = ImageType;

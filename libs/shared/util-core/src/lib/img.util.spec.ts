@@ -715,3 +715,22 @@ describe('direct image urls', () => {
     expect(style['background-image']).toBe(`url(${local})`);
   });
 });
+
+describe('collageTiles', () => {
+  it('collageTiles lays out 1, 2 and 3 images without gaps in 3 columns', async () => {
+    const { collageTiles } = await import('./img.util');
+    expect(collageTiles(1)).toEqual([{ index: 0, colSpan: 3, rowSpan: 2 }]);
+    expect(collageTiles(2)).toEqual([{ index: 0, colSpan: 2, rowSpan: 2 }, { index: 1, colSpan: 1, rowSpan: 2 }]);
+    expect(collageTiles(3)).toEqual([
+      { index: 0, colSpan: 2, rowSpan: 2 }, { index: 1, colSpan: 1, rowSpan: 1 }, { index: 2, colSpan: 1, rowSpan: 1 },
+    ]);
+  });
+
+  it('collageTiles repeats the pattern and closes the remainder', async () => {
+    const { collageTiles } = await import('./img.util');
+    expect(collageTiles(4).map((t) => [t.colSpan, t.rowSpan])).toEqual([[2, 2], [1, 1], [1, 1], [3, 1]]);
+    expect(collageTiles(5).map((t) => [t.colSpan, t.rowSpan])).toEqual([[2, 2], [1, 1], [1, 1], [2, 1], [1, 1]]);
+    expect(collageTiles(7).map((t) => t.index)).toEqual([0, 1, 2, 3, 4, 5, 6]);
+    expect(collageTiles(0)).toEqual([]);
+  });
+});
