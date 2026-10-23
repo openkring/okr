@@ -19,3 +19,11 @@ describe('parseTopics', () => {
     expect(parseTopics('')).toEqual([]);
   });
 });
+
+describe('parseTopics non-string', () => {
+  it('returns [] for undefined/null/number', () => {
+    expect(parseTopics(undefined as unknown as string)).toEqual([]);
+    expect(parseTopics(null as unknown as string)).toEqual([]);
+    expect(parseTopics(5 as unknown as string)).toEqual([]);
+  });
+});

@@ -48,7 +48,16 @@ describe('filterLearningDocs', () => {
   });
 });
 
+describe('robustness', () => {
+  it('tolerates a non-string query', () => {
+    expect(filterLearningDocs([doc('a')], { ...all, query: undefined as unknown as string })).toHaveLength(1);
+  });
+});
+
 describe('stripHtml', () => {
+  it('decodes numeric entities', () => {
+    expect(stripHtml('&#228;&#x00fc; &#38; &#xZZ; &#99999999;')).toBe('äü & &#xZZ;');
+  });
   it('strips tags and decodes entities', () => {
     expect(stripHtml('<p>A &amp; B &lt;c&gt; &quot;d&quot; it&#39;s&nbsp;ok</p>')).toBe('A & B <c> "d" it\'s ok');
   });

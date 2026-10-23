@@ -21,6 +21,18 @@ describe('curatedTopics', () => {
     expect(curatedTopics(config, curator)).toEqual(['knoten', 'wetter']);
     expect(curatedTopics(config, actor('p2'))).toEqual(['wetter']);
   });
+  it('empty for an actor without personKey, even if a curator entry has an empty key', () => {
+    const c: LearningConfig = { ...config, curators: [{ tag: 'knoten', personKeys: [''] }] };
+    expect(curatedTopics(c, actor(''))).toEqual([]);
+  });
+  it('ignores curator tags that are not room topics', () => {
+    const c: LearningConfig = { ...config, curators: [{ tag: 'foreign', personKeys: ['p1'] }] };
+    expect(curatedTopics(c, curator)).toEqual([]);
+    expect(canUploadTo(c, curator, 'foreign')).toBe(false);
+  });
+  it('group admin flag must be exactly true', () => {
+    expect(curatedTopics(config, actor('x', {}, 1 as unknown as boolean))).toEqual([]);
+  });
   it('empty for a plain member', () => {
     expect(curatedTopics(config, member)).toEqual([]);
   });
@@ -54,6 +66,10 @@ describe('canChangeTags', () => {
   it('non-room tags are free to change', () => {
     expect(canChangeTags(config, curator, 'knoten', 'knoten, misc')).toBe(true);
   });
+  it('requires edit rights: a member cannot retag, a curator cannot take over a foreign doc', () => {
+    expect(canChangeTags(config, member, 'knoten', 'knoten, misc')).toBe(false);
+    expect(canChangeTags(config, curator, 'recht', 'recht, knoten')).toBe(false);
+  });
   it('member cannot change room topics; admin can', () => {
     expect(canChangeTags(config, member, 'knoten', 'wetter')).toBe(false);
     expect(canChangeTags(config, actor('x', { contentAdmin: true }), 'knoten', 'recht')).toBe(true);
@@ -68,10 +84,14 @@ describe('canDeleteItem', () => {
   it('curator cannot delete a shared doc of another curator topic set', () => {
     expect(canDeleteItem(config, actor('p2'), 'knoten, wetter')).toBe(false);
   });
-  it('a doc without room topic: only its uploader', () => {
-    expect(canDeleteItem(config, member, 'misc', 'p9')).toBe(true);
-    expect(canDeleteItem(config, member, 'misc', 'other')).toBe(false);
-    expect(canDeleteItem(config, member, 'misc')).toBe(false);
+  it('a doc without room topic: only its uploader, and only a curator of this room', () => {
+    expect(canDeleteItem(config, curator, 'misc', 'p1')).toBe(true);
+    expect(canDeleteItem(config, curator, 'misc', 'other')).toBe(false);
+    expect(canDeleteItem(config, curator, 'misc')).toBe(false);
+  });
+  it('a plain member never deletes, not even their own upload', () => {
+    expect(canDeleteItem(config, member, 'misc', 'p9')).toBe(false);
+    expect(canDeleteItem(config, member, 'knoten', 'p9')).toBe(false);
   });
   it('admin always', () => {
     expect(canDeleteItem(config, actor('x', {}, true), 'recht')).toBe(true);

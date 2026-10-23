@@ -11,7 +11,8 @@ export function learningTabOf(mimeType: string): LearningTab {
 /** Comma-separated tags -> trimmed, non-empty, de-duplicated, in order. */
 export function parseTopics(tags: string): string[] {
   const out: string[] = [];
-  for (const t of (tags ?? '').split(',')) {
+  if (typeof tags !== 'string') return [];
+  for (const t of tags.split(',')) {
     const s = t.trim();
     if (s && !out.includes(s)) out.push(s);
   }

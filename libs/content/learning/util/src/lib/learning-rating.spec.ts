@@ -1,4 +1,4 @@
-import { applyRatingChange, averageStars } from './learning-rating';
+import { applyRatingChange, averageStars, isValidRating } from './learning-rating';
 
 describe('applyRatingChange', () => {
   it('adds a new rating', () => {
@@ -23,5 +23,17 @@ describe('averageStars', () => {
   it('rounds to one decimal', () => {
     expect(averageStars({ ratingCount: 3, ratingSum: 11 })).toBe(3.7);
     expect(averageStars({ ratingCount: 2, ratingSum: 9 })).toBe(4.5);
+  });
+});
+
+describe('isValidRating', () => {
+  it('accepts integers 1..5 only', () => {
+    expect([1, 3, 5].every(isValidRating)).toBe(true);
+    expect([0, 6, 2.5, NaN, '3', null, undefined].some(isValidRating)).toBe(false);
+  });
+  it('applyRatingChange ignores invalid values', () => {
+    expect(applyRatingChange({ count: 2, sum: 7 }, undefined, 9)).toEqual({ count: 2, sum: 7 });
+    expect(applyRatingChange({ count: 2, sum: 7 }, 0, 4)).toEqual({ count: 3, sum: 11 });
+    expect(applyRatingChange({ count: 2, sum: 7 }, 3, 2.5)).toEqual({ count: 1, sum: 4 });
   });
 });

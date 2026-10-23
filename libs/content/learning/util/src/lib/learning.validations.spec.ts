@@ -34,6 +34,7 @@ describe('learningRoomValidations', () => {
   });
   it('curators must be persons', () => {
     expect(learningRoomValidations(room({ curators: [{ tag: 'a', personKeys: ['org.x'] }] })).hasErrors('curators')).toBe(true);
-    expect(learningRoomValidations(room({ curators: [{ tag: 'a', personKeys: ['person.p1'] }] })).isValid()).toBe(true);
+    expect(learningRoomValidations(room({ curators: [{ tag: 'a', personKeys: ['p1'] }] })).isValid()).toBe(true);
+    expect(learningRoomValidations(room({ curators: [{ tag: 'a', personKeys: ['person.p1'] }] })).hasErrors('curators')).toBe(true);
   });
 });
