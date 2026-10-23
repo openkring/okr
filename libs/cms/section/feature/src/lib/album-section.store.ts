@@ -25,13 +25,17 @@ export interface AlbumState {
   sectionKey: string;       // okey of the album section — the storage path of uploaded files
   rootFolderKey: string;    // the album's starting folder (config.folder, or the section name)
   currentFolderKey: string; // the folder currently browsed; starts at rootFolderKey
+  // A fixed image list handed in by the host (travel journal, spec 1.113 §9.3): the album then shows
+  // exactly these and reads no documents or folders. undefined = the normal folder album.
+  explicitImages: ImageConfig[] | undefined;
 }
 
 export const initialState: AlbumState = {
   config: ALBUM_CONFIG_SHAPE,
   sectionKey: '',
   rootFolderKey: '',
-  currentFolderKey: ''
+  currentFolderKey: '',
+  explicitImages: undefined,
 };
 
 export const AlbumStore = signalStore(
@@ -64,9 +68,9 @@ export const AlbumStore = signalStore(
     // All documents of the tenant. The album needs more than the current folder's files: the folder
     // tiles are rendered with the first image found *inside* each subfolder.
     documentsResource: rxResource({
-      params: () => ({ currentUser: store.currentUser() }),
+      params: () => ({ currentUser: store.currentUser(), explicit: store.explicitImages() !== undefined }),
       stream: ({ params }) => {
-        if (!params.currentUser) return of<DocumentModel[]>([]);
+        if (!params.currentUser || params.explicit) return of<DocumentModel[]>([]);
         return store.firestoreService.searchData<DocumentModel>(
           DocumentCollection, getSystemQuery(store.appStore.tenantId()), 'fullPath', 'asc');
       }
@@ -75,9 +79,9 @@ export const AlbumStore = signalStore(
     // All folders of the tenant: the folder tiles count their own subfolders, too.
     // Same cached stream listByParent() uses, so this costs no extra read.
     foldersResource: rxResource({
-      params: () => ({ currentUser: store.currentUser() }),
+      params: () => ({ currentUser: store.currentUser(), explicit: store.explicitImages() !== undefined }),
       stream: ({ params }) => {
-        if (!params.currentUser) return of<FolderModel[]>([]);
+        if (!params.currentUser || params.explicit) return of<FolderModel[]>([]);
         return store.folderService.list();
       }
     }),
@@ -118,6 +122,8 @@ export const AlbumStore = signalStore(
 
     // the files of the current folder, in display order
     images: computed<ImageConfig[]>(() => {
+      const explicit = state.explicitImages();
+      if (explicit !== undefined) return explicit;
       const config = state.config();
       const folderKey = state.currentFolderKey();
       return state.documents()
@@ -162,6 +168,10 @@ export const AlbumStore = signalStore(
   })),
 
   withMethods((store) => ({
+    /** A fixed image list (or undefined for the normal folder album), see AlbumState.explicitImages. */
+    setExplicitImages(images: ImageConfig[] | undefined): void {
+      patchState(store, { explicitImages: images });
+    },
     /** Browse into a folder; triggers the reload of its files and subfolders. */
     setFolder(currentFolderKey?: string): void {
       if (!currentFolderKey) return;

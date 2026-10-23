@@ -147,6 +147,11 @@ export class AlbumSectionComponent {
   public folder = input<string>('');
   /** The album-style picker is editor chrome — a host that hard-configures the style hides it. */
   public showStyleSelect = input(true);
+  /**
+   * A fixed image list instead of the folder (travel journal, spec 1.113): the album shows exactly
+   * these — local file URLs included — and reads no documents or folders.
+   */
+  public explicitImages = input<ImageConfig[] | undefined>(undefined);
 
   // outputs
   /** The folder the user browsed to, so a host can reflect it in the URL. */
@@ -173,11 +178,13 @@ export class AlbumSectionComponent {
     effect(() => {
       const section = this.section();
       const folder = this.folder();
+      const explicitImages = this.explicitImages();
       // untracked: both methods read store state, which would otherwise re-run this effect on
       // every browse step — setConfig would then reset the position the user just navigated to.
       untracked(() => {
         this.store.setConfig(section?.properties, section?.name, section?.okey);
         if (folder) this.store.setFolder(folder);
+        this.store.setExplicitImages(explicitImages);
       });
     });
   }
