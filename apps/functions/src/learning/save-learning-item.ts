@@ -3,11 +3,11 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
 import { DocumentCollection, DocumentModel } from '@okr/shared-models';
-import { checkAppCheckToken, checkAuthentication, getCallerTenantId } from '@okr/shared-util-functions';
+import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
 import { getHtmlSanitizer } from '../publicApi/sanitize';
 import { zurichStoreDate } from '../video/chat-video.util';
-import { assertDocInRoom, decideSave, learningActor, loadRoom, parseSaveRequest } from './learning-auth';
+import { assertDocInRoom, decideSave, learningActor, loadCaller, loadRoom, parseSaveRequest } from './learning-auth';
 
 const CF_NAME = 'saveLearningItem';
 
@@ -21,28 +21,33 @@ export const saveLearningItem = onCall(
   async (request: CallableRequest<unknown>): Promise<{ ok: true }> => {
     checkAppCheckToken(request as never, CF_NAME);
     checkAuthentication(request as never, CF_NAME);
-    const tenantId = await getCallerTenantId(request as never, CF_NAME);
     const req = parseSaveRequest(request.data);
 
     const db = getFirestore();
-    const { config, groupKey } = await loadRoom(db, tenantId, req.pageKey);
-    const actor = await learningActor(db, request.auth?.uid ?? '', tenantId, groupKey);
+    const { tenantId, user } = await loadCaller(db, request.auth?.uid ?? '');
+    const actor = learningActor(user);
+    const { config } = await loadRoom(db, tenantId, req.pageKey);
+    const sanitize = await getHtmlSanitizer();
     const ref = db.collection(DocumentCollection).doc(req.docKey);
-    const doc = (await ref.get()).data() as Partial<DocumentModel> | undefined;
-    assertDocInRoom(doc, config, tenantId);
 
-    const patch = decideSave(config, actor, doc, req, await getHtmlSanitizer(), zurichStoreDate(new Date()));
+    // read → decide → write in one transaction: a concurrent retag or move between the rights
+    // check and the update would otherwise be overwritten by a decision made on stale data.
+    const patch = await db.runTransaction(async tx => {
+      const doc = (await tx.get(ref)).data() as Partial<DocumentModel> | undefined;
+      assertDocInRoom(doc, config, tenantId);
+      const p = decideSave(config, actor, doc, req, sanitize, zurichStoreDate(new Date()));
+      if (req.attachmentKeys?.length) {
+        const snaps = await tx.getAll(...req.attachmentKeys.map(k => db.collection(DocumentCollection).doc(k)));
+        const missing = snaps.some(s => {
+          const a = s.data() as Partial<DocumentModel> | undefined;
+          return !a || !a.tenants?.includes(tenantId) || a.isArchived === true;
+        });
+        if (missing) throw new HttpsError('invalid-argument', 'Unknown attachment.');
+      }
+      tx.update(ref, p);
+      return p;
+    });
 
-    if (req.attachmentKeys?.length) {
-      const snaps = await db.getAll(...req.attachmentKeys.map(k => db.collection(DocumentCollection).doc(k)));
-      const missing = snaps.some(s => {
-        const a = s.data() as Partial<DocumentModel> | undefined;
-        return !a || !a.tenants?.includes(tenantId) || a.isArchived === true;
-      });
-      if (missing) throw new HttpsError('invalid-argument', 'Unknown attachment.');
-    }
-
-    await ref.update(patch);
     logger.info(`${CF_NAME}: ${req.docKey} in room ${req.pageKey} for tenant ${tenantId}`, { fields: Object.keys(patch) });
     return { ok: true };
   },

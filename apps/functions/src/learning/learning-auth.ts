@@ -5,7 +5,8 @@ import { DEFAULT_MIMETYPES } from '@okr/shared-constants';
 import {
   DocumentLink, DocumentModel, GroupCollection, GroupModel, LearningConfig, PageCollection, PageModel, SectionCollection, UserCollection, UserModel,
 } from '@okr/shared-models';
-import { getDeletePatch, getMimeType, isKioskOnly, MAX_VIDEO_BYTES } from '@okr/shared-util-core';
+import { addIndexElement, getDeletePatch, getMimeType, isKioskOnly, MAX_VIDEO_BYTES } from '@okr/shared-util-core';
+import { tenantIdOfUserData } from '@okr/shared-util-functions';
 import {
   canChangeTags, canDeleteItem, canEditItem, canUploadTo, LEARNING_LINK_TITLE_MAX, LEARNING_LINKS_MAX, LEARNING_NOTES_MAX, LEARNING_TITLE_MAX,
   learningTabOf, parseTopics, type LearningActor, type LearningTab,
@@ -100,20 +101,53 @@ export async function loadRoom(db: Firestore, tenantId: string, pageKey: string)
   return { page: { ...(page as PageModel), okey: pageKey }, config, groupKey };
 }
 
-/** The caller as the learning rules see them. Registered, not kiosk-only; group admin via `group.admins[].key`. */
-export async function learningActor(db: Firestore, uid: string, tenantId: string, groupKey: string): Promise<LearningActor & { name: string }> {
+export interface LearningCaller {
+  uid: string;
+  tenantId: string;
+  user: Partial<UserModel>;
+}
+
+/**
+ * The caller's single `users/{uid}` read: the tenant (same derivation as getCallerTenantId, which
+ * would read the doc a second time) and the user data the actor is built from.
+ */
+export async function loadCaller(db: Firestore, uid: string): Promise<LearningCaller> {
   const user = (await db.collection(UserCollection).doc(uid).get()).data() as Partial<UserModel> | undefined;
   if (!user) throw denied('No user profile.');
+  const tenantId = tenantIdOfUserData(user as Record<string, unknown>);
+  if (!tenantId) throw new HttpsError('failed-precondition', 'User is not linked to a tenant.');
+  return { uid, tenantId, user };
+}
+
+/**
+ * The caller as the learning rules see them: registered and not kiosk-only.
+ *
+ * `isGroupAdmin` is ALWAYS false. `group.admins` is not a trustworthy source of rights here:
+ * firestore.rules lets any registered member of the tenant update any group doc (`groups` uses
+ * `tenantCreateOrDetach()`), including its `admins` array — so a member could make themselves the
+ * group admin and become curator of every topic. Group rooms are curated by contentAdmin/admin and
+ * the named curators only, until group writes are locked down (fix round 1, Task 3).
+ */
+export function learningActor(user: Partial<UserModel>): LearningActor & { name: string } {
   if (user.roles?.registered !== true || isKioskOnly(user as UserModel)) throw denied('Registered users only.');
   const personKey = typeof user.personKey === 'string' ? user.personKey : '';
-  let isGroupAdmin = false;
-  if (groupKey && personKey) {
-    const group = (await db.collection(GroupCollection).doc(groupKey).get()).data() as Partial<GroupModel> | undefined;
-    isGroupAdmin = !!group && !!group.tenants?.includes(tenantId) && group.isArchived !== true
-      && (group.admins ?? []).some(a => a?.key === personKey);
-  }
   const name = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim();
-  return { personKey, roles: user.roles ?? {}, isGroupAdmin, name };
+  return { personKey, roles: user.roles ?? {}, isGroupAdmin: false, name };
+}
+
+/**
+ * The search index of a document — the same four elements, in the same order, as
+ * `getDocumentIndex` in libs/content/document/util/src/lib/document.util.ts. That lib pulls in
+ * Capacitor and Ionic and cannot be bundled into the functions, so it is mirrored here; keep both
+ * in step.
+ */
+export function learningDocumentIndex(doc: Partial<DocumentModel>): string {
+  let index = '';
+  index = addIndexElement(index, 'n', doc.title ?? '');
+  index = addIndexElement(index, 'h', doc.hash ?? '');
+  index = addIndexElement(index, 'm', doc.mimeType ?? '');
+  index = addIndexElement(index, 'f', (doc.folderKeys ?? []).join(' '));
+  return index;
 }
 
 /** The doc belongs to the tenant, is live and sits in the room folder — or throws. */
@@ -211,6 +245,7 @@ export function decideSave(
   }
   if (req.links !== undefined) patch['links'] = req.links;
   if (req.attachmentKeys !== undefined) patch['attachmentKeys'] = req.attachmentKeys;
+  patch['index'] = learningDocumentIndex({ ...doc, ...patch });
   patch['dateOfDocLastUpdate'] = today;
   return patch;
 }
@@ -275,6 +310,25 @@ export function assertUploadPath(path: string, tenantId: string, decision: Learn
   if (decision.bucket === 'private' && !isAlbumVideoObjectPath(path, tenantId)) throw invalid('Unsupported video file name.');
 }
 
+/**
+ * The headers the client must send with its PUT, exactly as signed: the content type, the size
+ * bound and — for the default bucket — the Firebase download token, so the object gets the same
+ * token-URL a Storage SDK upload gets (album zip/CSV read `doc.url`).
+ */
+export function learningUploadHeaders(decision: LearningUploadDecision, downloadToken: string): Record<string, string> {
+  const headers: Record<string, string> = {
+    'Content-Type': decision.contentType,
+    'x-goog-content-length-range': `0,${decision.maxBytes}`,
+  };
+  if (decision.bucket === 'default') headers['x-goog-meta-firebaseStorageDownloadTokens'] = downloadToken;
+  return headers;
+}
+
+/** The Firebase download URL of a default-bucket object with the given token. */
+export function firebaseDownloadUrl(bucketName: string, path: string, token: string): string {
+  return `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(path)}?alt=media&token=${token}`;
+}
+
 /* ------------------------------------------------------------------ delete ---- */
 
 export interface DeleteLearningItemRequest {
@@ -295,7 +349,7 @@ export function parseDeleteRequest(data: unknown): DeleteLearningItemRequest {
 export function decideDelete(config: LearningConfig, actor: LearningActor, doc: Partial<DocumentModel>, tenantId: string, today: string): Record<string, unknown> {
   if (!canDeleteItem(config, actor, doc.tags ?? '', doc.authorKey)) throw denied('Not allowed to delete this item.');
   const others = (doc.folderKeys ?? []).filter(k => k !== config.folder);
-  if (others.length > 0) return { folderKeys: others, dateOfDocLastUpdate: today };
+  if (others.length > 0) return { folderKeys: others, index: learningDocumentIndex({ ...doc, folderKeys: others }), dateOfDocLastUpdate: today };
   const patch = getDeletePatch(doc.tenants, tenantId);
   if (Object.keys(patch).length === 0) throw new HttpsError('failed-precondition', 'System documents cannot be deleted here.');
   return { ...patch, dateOfDocLastUpdate: today };

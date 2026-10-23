@@ -5,12 +5,14 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 
 import { DocumentCollection, DocumentModel, FolderCollection, FolderModel } from '@okr/shared-models';
-import { addIndexElement } from '@okr/shared-util-core';
-import { checkAppCheckToken, checkAuthentication, getCallerTenantId } from '@okr/shared-util-functions';
+import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
 import { privateBucket } from '../_storage/private-bucket';
 import { safeVideoTitle, zurichStoreDate } from '../video/chat-video.util';
-import { assertUploadPath, decideUpload, learningActor, learningUploadPath, loadRoom, parseUploadRequest } from './learning-auth';
+import {
+  assertUploadPath, decideUpload, firebaseDownloadUrl, learningActor, learningDocumentIndex, learningUploadHeaders, learningUploadPath, loadCaller, loadRoom,
+  parseUploadRequest,
+} from './learning-auth';
 
 const CF_NAME = 'prepareLearningUpload';
 const UPLOAD_WINDOW_MS = 15 * 60 * 1000;
@@ -20,6 +22,12 @@ export interface LearningUpload {
   uploadUrl: string;
   contentType: string;
   maxBytes: number;
+  /**
+   * The headers the PUT to `uploadUrl` must carry, verbatim — they are part of the v4 signature
+   * (Content-Type, x-goog-content-length-range and, for images/files, the Firebase download token
+   * x-goog-meta-firebaseStorageDownloadTokens). A missing or changed header fails the upload.
+   */
+  headers: Record<string, string>;
 }
 
 /** The plain object FirestoreService would write: class fields, minus `okey` (the document id). */
@@ -42,12 +50,12 @@ export const prepareLearningUpload = onCall(
   async (request: CallableRequest<unknown>): Promise<LearningUpload> => {
     checkAppCheckToken(request as never, CF_NAME);
     checkAuthentication(request as never, CF_NAME);
-    const tenantId = await getCallerTenantId(request as never, CF_NAME);
     const req = parseUploadRequest(request.data);
 
     const db = getFirestore();
-    const { config, groupKey } = await loadRoom(db, tenantId, req.pageKey);
-    const actor = await learningActor(db, request.auth?.uid ?? '', tenantId, groupKey);
+    const { tenantId, user } = await loadCaller(db, request.auth?.uid ?? '');
+    const actor = learningActor(user);
+    const { config } = await loadRoom(db, tenantId, req.pageKey);
     const decision = decideUpload(config, actor, req);
 
     const folder = (await db.collection(FolderCollection).doc(config.folder).get()).data() as Partial<FolderModel> | undefined;
@@ -58,13 +66,18 @@ export const prepareLearningUpload = onCall(
     const fullPath = learningUploadPath(tenantId, config.folder, req.fileName, randomUUID());
     assertUploadPath(fullPath, tenantId, decision);
     const bucket = decision.bucket === 'private' ? privateBucket() : getStorage().bucket();
+    // Default bucket: the same download token a Storage SDK upload gets, so `doc.url` works for every
+    // existing reader (album zip/CSV). Private-bucket videos have no token URL (signVideoUrls signs them).
+    const downloadToken = randomUUID();
+    const headers = learningUploadHeaders(decision, downloadToken);
+    const { 'Content-Type': _contentType, ...extensionHeaders } = headers;
     // Sign first: a signing failure must not leave a document behind that no upload can ever fill.
     const [uploadUrl] = await bucket.file(fullPath).getSignedUrl({
       version: 'v4',
       action: 'write',
       expires: Date.now() + UPLOAD_WINDOW_MS,
-      contentType: decision.contentType,
-      extensionHeaders: { 'x-goog-content-length-range': `0,${decision.maxBytes}` },
+      contentType: _contentType,
+      extensionHeaders,
     });
 
     const today = zurichStoreDate(new Date());
@@ -77,16 +90,14 @@ export const prepareLearningUpload = onCall(
     doc.tags = req.topic;
     doc.authorKey = actor.personKey;
     doc.authorName = actor.name;
-    doc.url = '';
+    doc.url = decision.bucket === 'default' ? firebaseDownloadUrl(bucket.name, fullPath, downloadToken) : '';
     doc.dateOfDocCreation = today;
     doc.dateOfDocLastUpdate = today;
     doc.version = '1.0';
-    let index = addIndexElement('', 'n', doc.title);
-    index = addIndexElement(index, 'm', doc.mimeType);
-    doc.index = addIndexElement(index, 'f', doc.folderKeys.join(' '));
+    doc.index = learningDocumentIndex(doc);
     const docRef = await db.collection(DocumentCollection).add(stripKey(doc));
 
     logger.info(`${CF_NAME}: prepared ${docRef.id} in ${config.folder} for tenant ${tenantId}`, { tab: decision.tab, size: req.size });
-    return { docKey: docRef.id, uploadUrl, contentType: decision.contentType, maxBytes: decision.maxBytes };
+    return { docKey: docRef.id, uploadUrl, contentType: decision.contentType, maxBytes: decision.maxBytes, headers };
   },
 );

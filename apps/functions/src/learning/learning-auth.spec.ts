@@ -5,8 +5,9 @@ import type { LearningActor } from '@okr/content-learning-util';
 import { MAX_VIDEO_BYTES } from '@okr/shared-util-core';
 
 import {
-  assertDocInRoom, assertLearningPage, decideDelete, decideSave, decideUpload, groupKeyCandidate, learningSectionKeys,
-  learningUploadPath, LEARNING_FILE_MAX_BYTES, parseDeleteRequest, parseSaveRequest, parseUploadRequest, pickLearningConfig,
+  assertDocInRoom, assertLearningPage, decideDelete, decideSave, decideUpload, firebaseDownloadUrl, groupKeyCandidate, learningActor,
+  learningDocumentIndex, learningSectionKeys, learningUploadHeaders, learningUploadPath, LEARNING_FILE_MAX_BYTES, parseDeleteRequest,
+  parseSaveRequest, parseUploadRequest, pickLearningConfig,
 } from './learning-auth';
 
 // Spec 1.115 part 2 — the curator callables are thin; every decision lives in these pure helpers.
@@ -21,7 +22,7 @@ const curator = actor('p1');
 const member = actor('p9');
 const admin = actor('a', { admin: true });
 const doc = (over: Partial<DocumentModel> = {}): Partial<DocumentModel> => ({
-  tenants: [T], isArchived: false, folderKeys: ['f1'], tags: 'knoten', authorKey: 'p1', ...over,
+  tenants: [T], isArchived: false, folderKeys: ['f1'], tags: 'knoten', authorKey: 'p1', title: 'Clip', mimeType: 'video/mp4', hash: '', ...over,
 });
 const identity = (s: string) => s;
 const TODAY = '20261023';
@@ -109,7 +110,7 @@ describe('decideSave', () => {
   const req = (over: object) => ({ pageKey: 'p', docKey: 'd', ...over });
   it('curator edits notes/links/title/attachments of a curated item', () => {
     const patch = decideSave(config, curator, doc(), req({ title: 'Neu', notes: '<p>x</p>', links: [], attachmentKeys: ['a'] }), identity, TODAY);
-    expect(patch).toEqual({ title: 'Neu', notes: '<p>x</p>', links: [], attachmentKeys: ['a'], dateOfDocLastUpdate: TODAY });
+    expect(patch).toEqual({ title: 'Neu', notes: '<p>x</p>', links: [], attachmentKeys: ['a'], index: 'n:Neu m:video/mp4 f:f1', dateOfDocLastUpdate: TODAY });
   });
   it('a member cannot edit; a curator cannot edit a foreign topic', () => {
     expect(codeOf(() => decideSave(config, member, doc(), req({ notes: 'x' }), identity, TODAY))).toBe('permission-denied');
@@ -172,7 +173,8 @@ describe('parseUploadRequest / decideUpload', () => {
 
 describe('decideDelete', () => {
   it('detaches from the room folder when the doc sits elsewhere too', () => {
-    expect(decideDelete(config, curator, doc({ folderKeys: ['f1', 'f9'] }), T, TODAY)).toEqual({ folderKeys: ['f9'], dateOfDocLastUpdate: TODAY });
+    expect(decideDelete(config, curator, doc({ folderKeys: ['f1', 'f9'] }), T, TODAY))
+      .toEqual({ folderKeys: ['f9'], index: 'n:Clip m:video/mp4 f:f9', dateOfDocLastUpdate: TODAY });
   });
   it('archives (or detaches the tenant) per getDeletePatch when the room is the only folder', () => {
     expect(decideDelete(config, curator, doc(), T, TODAY)).toEqual({ isArchived: true, dateOfDocLastUpdate: TODAY });
@@ -189,5 +191,51 @@ describe('decideDelete', () => {
   it('parses its payload', () => {
     expect(parseDeleteRequest({ pageKey: 'p', docKey: 'd' })).toEqual({ pageKey: 'p', docKey: 'd' });
     expect(codeOf(() => parseDeleteRequest({ pageKey: 'p' }))).toBe('invalid-argument');
+  });
+});
+
+describe('learningActor (fix round 1)', () => {
+  const user = (over: object = {}) => ({ personKey: 'p5', firstName: 'Eva', lastName: 'Muster', roles: { registered: true }, ...over });
+  it('never grants a right from group.admins', () => {
+    const a = learningActor(user());
+    expect(a).toEqual({ personKey: 'p5', roles: { registered: true }, isGroupAdmin: false, name: 'Eva Muster' });
+  });
+  it('a group admin who is not a curator is denied everywhere', () => {
+    const a = learningActor(user());
+    expect(codeOf(() => decideSave(config, a, doc(), { pageKey: 'g1_learning', docKey: 'd', notes: 'x' }, identity, TODAY))).toBe('permission-denied');
+    expect(codeOf(() => decideUpload(config, a, parseUploadRequest({ pageKey: 'g1_learning', topic: 'knoten', fileName: 'a.pdf', size: 1 })))).toBe('permission-denied');
+    expect(codeOf(() => decideDelete(config, a, doc({ authorKey: 'p5' }), T, TODAY))).toBe('permission-denied');
+  });
+  it('refuses unregistered and kiosk-only users', () => {
+    expect(codeOf(() => learningActor(user({ roles: {} })))).toBe('permission-denied');
+    expect(codeOf(() => learningActor(user({ roles: { registered: true, kiosk: true } })))).toBe('none');
+    expect(codeOf(() => learningActor(user({ roles: { kiosk: true } })))).toBe('permission-denied');
+  });
+});
+
+describe('learningDocumentIndex (mirrors getDocumentIndex)', () => {
+  it('n, h, m, f in that order, empty elements skipped', () => {
+    expect(learningDocumentIndex({ title: 'A', hash: 'x1', mimeType: 'image/png', folderKeys: ['f1', 'f2'] })).toBe('n:A h:x1 m:image/png f:f1 f2');
+    expect(learningDocumentIndex({ title: 'A', folderKeys: [] })).toBe('n:A');
+  });
+  it('save recomputes the index from the merged doc', () => {
+    expect(decideSave(config, curator, doc(), { pageKey: 'p', docKey: 'd', tags: 'knoten, misc' }, identity, TODAY).index).toBe('n:Clip m:video/mp4 f:f1');
+  });
+});
+
+describe('upload headers and download url (fix round 1)', () => {
+  it('default bucket: content type, size bound and the download token', () => {
+    expect(learningUploadHeaders({ tab: 'images', bucket: 'default', contentType: 'image/png', maxBytes: 9 }, 'tok')).toEqual({
+      'Content-Type': 'image/png', 'x-goog-content-length-range': '0,9', 'x-goog-meta-firebaseStorageDownloadTokens': 'tok',
+    });
+  });
+  it('private bucket: no download token', () => {
+    expect(learningUploadHeaders({ tab: 'videos', bucket: 'private', contentType: 'video/mp4', maxBytes: 9 }, 'tok')).toEqual({
+      'Content-Type': 'video/mp4', 'x-goog-content-length-range': '0,9',
+    });
+  });
+  it('builds the Firebase token url with an encoded path', () => {
+    expect(firebaseDownloadUrl('b.appspot.com', 'tenant/scs/folder/f1/album/r/a b.png', 'tok'))
+      .toBe('https://firebasestorage.googleapis.com/v0/b/b.appspot.com/o/tenant%2Fscs%2Ffolder%2Ff1%2Falbum%2Fr%2Fa%20b.png?alt=media&token=tok');
   });
 });
