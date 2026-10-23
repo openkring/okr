@@ -1,11 +1,12 @@
 import { Request, Response } from 'express';
+import corsLib from 'cors';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import { defineSecret } from 'firebase-functions/params';
 
 import type { DocumentLink } from '@okr/shared-models';
 import { DocumentCollection, FolderCollection } from '@okr/shared-models';
-import { learningTabOf, parseTopics, type PublicLearningItem, type PublicLearningSection } from '@okr/content-learning-util';
+import { learningTabOf, parseTopics, type LearningTab, type PublicLearningItem, type PublicLearningSection } from '@okr/content-learning-util';
 
 import { setCacheHeaders } from '../utils';
 import { getHtmlSanitizer } from '../sanitize';
@@ -16,6 +17,28 @@ import { albumFolderKeyOfPath, isSafeDocId, MP4_PARAMS, POSTER_PARAMS, windowExp
 export const imgixPrivateToken = defineSecret('IMGIX_PRIVATE_TOKEN');
 
 const IMGIX_BASE = 'https://bkaiser.imgix.net';
+
+/** Path prefix of the page route (mounted under the public API base). */
+export const PAGES_PATH = '/public/api/v1/pages/';
+
+/** A read of the page route (GET or its preflight); these get the open `pageCors` instead of the origin allowlist. */
+export function isPublicPageRead(path: string, method: string): boolean {
+  return path.startsWith(PAGES_PATH) && (method === 'GET' || method === 'OPTIONS' || method === 'HEAD');
+}
+
+/**
+ * Route-level CORS for `GET /pages/:pageKey`: ANY origin, no credentials. The anonymous learning
+ * room view (/public/<pageKey>) runs in every tenant app, each on its own origin, and only reads
+ * published content — an origin allowlist protects nothing there (CORS is no access control; a
+ * server-side caller sends no Origin at all) and would break every tenant app not listed. The
+ * tenant allowlist middleware in index.ts still validates `?tenantId=` for this route.
+ */
+export const pageCors = corsLib({
+  origin: '*',
+  methods: ['GET', 'OPTIONS'],
+  credentials: false,
+  maxAge: 3600,
+});
 
 function toImgixUrl(path: string): string {
   if (!path) return '';
@@ -232,12 +255,20 @@ function publicFileUrl(data: Record<string, unknown>, isImage: boolean, tenantId
   return validPath ? `${IMGIX_BASE}/${path.split('/').map(encodeURIComponent).join('/')}` : '';
 }
 
+const LEARNING_TABS: LearningTab[] = ['files', 'videos', 'images'];
+
+/** The configured start tab, or 'files' for anything unknown. */
+export function learningDefaultTab(value: unknown): LearningTab {
+  return LEARNING_TABS.includes(value as LearningTab) ? value as LearningTab : 'files';
+}
+
 export function buildLearningSection(s: SectionDoc, o: LearningSectionOptions): PublicLearningSection {
   const props = (s.properties ?? {}) as Record<string, unknown>;
   const title = pickI18n(props['titleI18n'] as I18nString | undefined, s.title ?? '');
   const subTitle = pickI18n(props['subTitleI18n'] as I18nString | undefined, s.subTitle ?? '');
   const folder = str(props['folder']);
-  if (!o.published || !folder) return { type: 'learning', title, subTitle, locked: true, topics: [], items: [] };
+  const defaultTab = learningDefaultTab(props['defaultTab']);
+  if (!o.published || !folder) return { type: 'learning', title, subTitle, locked: true, defaultTab, topics: [], items: [] };
 
   const items: PublicLearningItem[] = [];
   for (const { key, data } of o.docs) {
@@ -279,13 +310,15 @@ export function buildLearningSection(s: SectionDoc, o: LearningSectionOptions): 
     items.push(item);
   }
   items.sort((a, b) => a.title.localeCompare(b.title, 'de'));
-  return { type: 'learning', title, subTitle, locked: false, topics: parseTopics(str(props['topics'])), items };
+  return { type: 'learning', title, subTitle, locked: false, defaultTab, topics: parseTopics(str(props['topics'])), items };
 }
 
 /**
  * Loads the room's documents (single-field `folderKeys` query, no composite index) and maps the section.
  * Gate: the page must be published AND the room folder must be a live folder of the tenant (as
- * `videoAccessPath` requires); otherwise the locked shell, and no docs query runs.
+ * `videoAccessPath` requires) AND the folder must not admit member uploads (`membersMayUpload`):
+ * a member's upload would otherwise reach the public site without any curator having seen it.
+ * Otherwise the locked shell, and no docs query runs.
  */
 export async function loadLearningSection(
   db: Firestore, s: SectionDoc, pagePublished: boolean, tenantId: string, sanitize: SanitizeFn,
@@ -297,7 +330,8 @@ export async function loadLearningSection(
     const folderDoc = await db.collection(FolderCollection).doc(folder).get();
     const f = folderDoc.data();
     published = folderDoc.exists && !!f && f['isArchived'] !== true
-      && ((f['tenants'] as unknown[] | undefined) ?? []).includes(tenantId);
+      && ((f['tenants'] as unknown[] | undefined) ?? []).includes(tenantId)
+      && f['membersMayUpload'] !== true;
   }
   if (published) {
     const snap = await db.collection(DocumentCollection).where('folderKeys', 'array-contains', folder).get();

@@ -4,7 +4,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const fakeDb = vi.hoisted(() => ({ current: undefined as unknown }));
 vi.mock('firebase-admin/firestore', () => ({ getFirestore: () => fakeDb.current }));
 
-import { articleImageLayout, buildLearningSection, isPublishedPage, loadLearningSection, pageRouter } from './page';
+import type { Request, Response } from 'express';
+
+import {
+  articleImageLayout, buildLearningSection, isPublicPageRead, isPublishedPage, learningDefaultTab, loadLearningSection, pageCors, pageRouter,
+} from './page';
 import { getHtmlSanitizer } from '../sanitize';
 
 describe('articleImageLayout', () => {
@@ -63,7 +67,7 @@ describe('learning section', () => {
         published: isPublishedPage(page), tenantId: 'scs', sanitize, signVideo,
         docs: [doc('d1', { title: 'A', mimeType: 'application/pdf', fullPath: 'tenant/scs/folder/f1/a.pdf' })],
       });
-      expect(out).toEqual({ type: 'learning', title: 'Lernraum', subTitle: 'Training', locked: true, topics: [], items: [] });
+      expect(out).toEqual({ type: 'learning', title: 'Lernraum', subTitle: 'Training', locked: true, defaultTab: 'files', topics: [], items: [] });
     }
   });
 
@@ -99,6 +103,7 @@ describe('learning section', () => {
     expect(isPublishedPage({ isPrivate: false })).toBe(true);
     expect(out.locked).toBe(false);
     expect(out.topics).toEqual(['Technik', 'Taktik']);
+    expect(out.defaultTab).toBe('files');
     expect(out.items.map(i => [i.key, i.tab])).toEqual([['pdf', 'files'], ['img', 'images'], ['vid', 'videos']]);
     const [pdf, img, vid] = out.items;
     expect(pdf.url).toBe('https://firebasestorage.googleapis.com/v0/b/x/o/a.pdf?alt=media&token=t');
@@ -225,12 +230,65 @@ describe('learning section wiring', () => {
     expect(calls).toContain('query docs folderKeys array-contains f1');
   });
 
-  it('a missing, archived or foreign room folder gives the locked shell and runs no docs query', async () => {
-    for (const folder of [undefined, { ...liveFolder, isArchived: true }, { tenants: ['p13'] }]) {
+  it('a missing, archived, foreign or member-upload room folder gives the locked shell and runs no docs query', async () => {
+    for (const folder of [undefined, { ...liveFolder, isArchived: true }, { tenants: ['p13'] }, { ...liveFolder, membersMayUpload: true }]) {
       const m = makeDb({ folder, docs: [pdf] });
       const out = await loadLearningSection(m.db as never, m.learning, true, 'scs', sanitize);
       expect(out).toMatchObject({ locked: true, items: [], topics: [] });
       expect(m.calls.some(c => c.startsWith('query'))).toBe(false);
     }
+  });
+});
+
+describe('learning section start tab (final review)', () => {
+  it('passes a valid configured tab through and falls back to files', () => {
+    expect(learningDefaultTab('videos')).toBe('videos');
+    expect(learningDefaultTab('images')).toBe('images');
+    expect(learningDefaultTab('')).toBe('files');
+    expect(learningDefaultTab('<script>')).toBe('files');
+    expect(learningDefaultTab(undefined)).toBe('files');
+  });
+  it('delivers the configured defaultTab on a published room', () => {
+    const out = buildLearningSection(
+      { type: 'learning', title: 'R', properties: { folder: 'f1', topics: 'T', defaultTab: 'videos' } },
+      { published: true, tenantId: 'scs', docs: [], sanitize: h => h, signVideo: () => ({ url: '', posterUrl: '' }) },
+    );
+    expect(out.defaultTab).toBe('videos');
+  });
+});
+
+describe('page route CORS (final review)', () => {
+  function runCors(method: string, origin: string, extra: Record<string, string> = {}) {
+    const headers: Record<string, string> = {};
+    const res = {
+      statusCode: 200, ended: false,
+      setHeader: (k: string, v: string) => { headers[k.toLowerCase()] = String(v); },
+      getHeader: (k: string) => headers[k.toLowerCase()],
+      end: () => { res.ended = true; },
+    };
+    let nextCalled = false;
+    pageCors({ method, headers: { origin, ...extra } } as unknown as Request, res as unknown as Response, () => { nextCalled = true; });
+    return { headers, res, nextCalled };
+  }
+  it('answers a preflight from any tenant app origin: *, GET/OPTIONS, no credentials', () => {
+    const { headers, res, nextCalled } = runCors('OPTIONS', 'https://app.kwa.ch', { 'access-control-request-method': 'GET' });
+    expect(headers['access-control-allow-origin']).toBe('*');
+    expect(headers['access-control-allow-methods']).toBe('GET,OPTIONS');
+    expect(headers['access-control-allow-credentials']).toBeUndefined();
+    expect(res.statusCode).toBe(204);
+    expect(nextCalled).toBe(false);
+  });
+  it('lets the GET through with Access-Control-Allow-Origin: *', () => {
+    const { headers, nextCalled } = runCors('GET', 'https://app.krampfwanderer.ch');
+    expect(headers['access-control-allow-origin']).toBe('*');
+    expect(nextCalled).toBe(true);
+  });
+  it('applies only to reads of the page route', () => {
+    expect(isPublicPageRead('/public/api/v1/pages/scs_learning_x', 'GET')).toBe(true);
+    expect(isPublicPageRead('/public/api/v1/pages/scs_learning_x', 'OPTIONS')).toBe(true);
+    expect(isPublicPageRead('/public/api/v1/pages/scs_learning_x', 'POST')).toBe(false);
+    expect(isPublicPageRead('/public/api/v1/pagesx', 'GET')).toBe(false);
+    expect(isPublicPageRead('/public/api/v1/gallery', 'GET')).toBe(false);
+    expect(isPublicPageRead('/public/api/v1/contact', 'OPTIONS')).toBe(false);
   });
 });

@@ -19,7 +19,7 @@ import { newsRouter } from './routes/news';
 import { calendarRouter } from './routes/calendar';
 import { contactRouter } from './routes/contact';
 import { coursesRouter, resultsRouter } from './routes/stubs';
-import { imgixPrivateToken, pageRouter } from './routes/page';
+import { imgixPrivateToken, isPublicPageRead, pageCors, pageRouter } from './routes/page';
 import { aliasRouter } from './routes/alias';
 import { galleryRouter } from './routes/gallery';
 import {
@@ -89,8 +89,14 @@ const ALLOWED_TENANTS = (process.env['PUBLIC_API_ALLOWED_TENANTS'] ?? '')
 const app = express();
 app.disable('x-powered-by');
 // The file-transfer routes get their own open CORS (any origin, no credentials — the token is the
-// credential, and the link page runs in every tenant app); every other route keeps the allowlist.
-app.use((req, res, next) => (isFileTransferPath(req.path) ? fileTransferCors(req, res, next) : cors(req, res, next)));
+// credential, and the link page runs in every tenant app). So does the read of a page
+// (GET /pages/:pageKey): the anonymous learning room view runs in every tenant app and reads only
+// published content (spec 1.115 §5.5). Every other route keeps the allowlist.
+app.use((req, res, next) => {
+  if (isFileTransferPath(req.path)) return fileTransferCors(req, res, next);
+  if (isPublicPageRead(req.path, req.method)) return pageCors(req, res, next);
+  return cors(req, res, next);
+});
 app.use(express.json({ limit: '64kb' }));
 
 // Enforce the tenant allowlist (when configured) for any route that takes one.

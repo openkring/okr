@@ -20,6 +20,8 @@ export interface PublicLearningSection {
   title: string;
   subTitle: string;
   locked: boolean;
+  /** the room's configured start tab (section config `defaultTab`); renderers fall back to the first non-empty tab */
+  defaultTab: LearningTab;
   topics: string[];
   items: PublicLearningItem[];
 }
