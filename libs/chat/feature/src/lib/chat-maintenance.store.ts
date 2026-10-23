@@ -14,7 +14,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { showToast } from '@okr/shared-util-angular';
 import { chatBlockedSince, fill, getFullName, hasRole, OPERATOR_TENANT_ID } from '@okr/shared-util-core';
 import { auditGroupRooms } from '@okr/subject-group-data-access';
-import type { GroupRoomDrift } from '@okr/subject-group-util';
+import { stripAdminKeys, type GroupRoomDrift } from '@okr/subject-group-util';
 import { CHAT_MAINTENANCE_I18N_KEYS, findGroupOfRoom, getMatrixLogLevel, groupKeyForRoom, setMatrixLogLevel, MatrixLogLevel } from '@okr/chat-util';
 import type { MatrixMediaService } from '@okr/chat-data-access';
 
@@ -634,7 +634,8 @@ export const ChatMaintenanceStore = signalStore(
           hasTasks: picked.has('hasTasks'),
           filesFolder: hasFiles ? `f_${group.okey}` : group.filesFolder,
         } as GroupModel;
-        await store.firestoreService.updateModel<GroupModel>(GroupCollection, converted, false, undefined, undefined, user);
+        // adminKeys is server-maintained (onGroupWritten); the rules refuse a client write that changes it.
+        await store.firestoreService.updateModel<GroupModel>(GroupCollection, stripAdminKeys(converted), false, undefined, undefined, user);
 
         await showToast(store.toastController, `${store.i18n.chat_convert_conf()}: ${group.name}`);
       } catch (e) {

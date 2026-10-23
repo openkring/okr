@@ -717,7 +717,28 @@ service cloud.firestore {
         isContentManager()
         || (callerPersonKey() != '' && resource.data.get('ownerKey', '') == callerPersonKey()));
     }
-    match /groups/{id}             { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    // groups (spec 1.115 §7.2): created by privileged/memberAdmin only; changed, archived, detached
+    // or deleted by those roles OR by an admin of THIS group. Group admins are matched against
+    // `adminKeys`, the exact `admins[].key` mirror that only the onGroupWritten trigger (Admin SDK)
+    // maintains — a client can never write it, so a plain member cannot make itself admin by
+    // adding itself to `admins[]` (the check reads the STORED adminKeys, not the incoming doc).
+    // A group admin who removes itself from admins[] still passes (stored adminKeys) and loses
+    // the right once the trigger has rewritten adminKeys. Client writers strip adminKeys
+    // (stripAdminKeys, @okr/subject-group-util) so an updateDoc never touches the field.
+    match /groups/{id} {
+      function isGroupManager() {
+        return isPrivileged() || hasRole('memberAdmin')
+          || (callerPersonKey() != '' && callerPersonKey() in resource.data.get('adminKeys', []));
+      }
+      allow read: if tenantRead();
+      allow create: if tenantCreate()
+        && (isPrivileged() || hasRole('memberAdmin'))
+        && request.resource.data.get('adminKeys', []) == [];
+      allow update: if tenantUpdate()
+        && isGroupManager()
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['adminKeys']);
+      allow delete: if tenantDelete() && isGroupManager();
+    }
     match /i18nTenantOverride/{id} { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     match /icons/{id}              { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     match /invitations/{id}        { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }

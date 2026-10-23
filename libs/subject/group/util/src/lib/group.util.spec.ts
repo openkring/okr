@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { AVATAR_INFO_SHAPE, AvatarInfo, GroupModel, UserModel } from '@okr/shared-models';
-import { canAccessGroup, filterAccessibleGroups, findConflictingGroups, findDuplicateGroups, findGroupKeyIssues, getGroupKeyFromName, getMainContact, getUniqueGroupKey, getVisibilityRoles, getVisibleGroupKeys, shouldNotifyUser, userMatchesGroupVisibility, withCreatorAsAdmin } from './group.util';
+import { canAccessGroup, filterAccessibleGroups, findConflictingGroups, findDuplicateGroups, findGroupKeyIssues, getGroupKeyFromName, getMainContact, getUniqueGroupKey, getVisibilityRoles, getVisibleGroupKeys, shouldNotifyUser, stripAdminKeys, userMatchesGroupVisibility, withCreatorAsAdmin } from './group.util';
 
 describe('Group Utils', () => {
   const tenantId = 'tenant-1';
@@ -327,5 +327,21 @@ describe('Group key hygiene', () => {
     const collisions = issues.filter(i => i.kind === 'aliasCollision');
     expect(collisions).toHaveLength(2);
     expect(collisions[0].collidesWith).toEqual(['dienstags_4-er']);
+  });
+});
+
+describe('stripAdminKeys', () => {
+  it('removes adminKeys and keeps every other field, without mutating the input', () => {
+    const group = new GroupModel('tenant-1');
+    group.okey = 'g1';
+    group.name = 'Crew';
+    group.admins = [{ key: 'P_Abc' } as AvatarInfo];
+    group.adminKeys = ['P_Abc'];
+    const stripped = stripAdminKeys(group);
+    expect('adminKeys' in stripped).toBe(false);
+    expect(stripped.admins).toEqual(group.admins);
+    expect(stripped.name).toBe('Crew');
+    expect(stripped.okey).toBe('g1');
+    expect(group.adminKeys).toEqual(['P_Abc']);
   });
 });

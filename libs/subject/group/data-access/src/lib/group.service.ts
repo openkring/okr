@@ -7,7 +7,7 @@ import { DbQuery, GroupCollection, GroupModel, OrgCollection, OrgModel, UserMode
 import { getSystemQuery } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
-import { getGroupIndex } from '@okr/subject-group-util';
+import { getGroupIndex, stripAdminKeys } from '@okr/subject-group-util';
 import { ActivityService } from '@okr/activity-data-access';
 import { PFX } from './scope';
 
@@ -31,6 +31,8 @@ export class GroupService  {
   });
 
   /*-------------------------- CRUD operations --------------------------------*/
+  // Every write sends the group WITHOUT `adminKeys` (stripAdminKeys): the field is server-maintained
+  // (onGroupWritten) and firestore.rules refuse a client write that changes it.
   /**
    * Create a new Group in the database.
    * @param group the GroupModel to store in the database
@@ -39,7 +41,7 @@ export class GroupService  {
    */ 
   public async create(group: GroupModel, currentUser?: UserModel): Promise<string | undefined> {
     group.index = getGroupIndex(group);
-    const key = await this.firestoreService.createModel<GroupModel>(GroupCollection, group, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
+    const key = await this.firestoreService.createModel<GroupModel>(GroupCollection, stripAdminKeys(group), this.i18n.create_conf(), this.i18n.create_error(), currentUser);
     const payload = `${key}: ${group.name}`;
     void this.activityService.log('group', 'create', currentUser, payload);
     return key;
@@ -62,7 +64,7 @@ export class GroupService  {
    */
   public async update(group: GroupModel, currentUser?: UserModel): Promise<string | undefined > {
     group.index = getGroupIndex(group);
-    const key = await this.firestoreService.updateModel<GroupModel>(GroupCollection, group, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
+    const key = await this.firestoreService.updateModel<GroupModel>(GroupCollection, stripAdminKeys(group), false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
     const payload = `${key}: ${group.name}`;
     void this.activityService.log('group', 'update', currentUser, payload);
     return key;
@@ -76,7 +78,7 @@ export class GroupService  {
    */
   public async delete(group: GroupModel, currentUser?: UserModel): Promise<void> {
     const payload = `${group.okey}: ${group.name}`;
-    await this.firestoreService.deleteModel<GroupModel>(GroupCollection, group, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
+    await this.firestoreService.deleteModel<GroupModel>(GroupCollection, stripAdminKeys(group), this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
     void this.activityService.log('group', 'delete', currentUser, payload);
   }
 
