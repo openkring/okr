@@ -73,7 +73,7 @@ says the change is saved but not logged (the room state is not rolled back).
 
 A room whose folder has `membersMayUpload === true` cannot be published: the store refuses with an
 alert, and the public page API returns the locked shell for it anyway. The rules let only
-contentAdmin/admin change `isPrivate` on a `learning` page or write a `learning` section.
+contentAdmin/admin change `isPrivate` on a `learning` page or write a `learning` section, and only they can create, delete or retype a `learning` page.
 
 The public API serves a room only from its own learning page (`type === 'learning'` and section key =
 page key); the same section listed on any other page yields the locked shell.

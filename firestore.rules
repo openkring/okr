@@ -55,8 +55,16 @@ service cloud.firestore {
     // pages update: publishing or unpublishing a learning room (isPrivate) needs contentAdmin/admin.
     function learningPublishOk() {
       return (resource.data.get('type', '') != 'learning' && request.resource.data.get('type', '') != 'learning')
-        || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isPrivate'])
+        || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isPrivate', 'type'])
         || isContentAdminOrAdmin();
+    }
+    // pages create/delete: a learning page can be neither created nor deleted by a plain content manager
+    // (else delete + recreate under the same key with isPrivate false would bypass the publish gate).
+    function learningPageCreateOk() {
+      return request.resource.data.get('type', '') != 'learning' || isContentAdminOrAdmin();
+    }
+    function learningPageDeleteOk() {
+      return resource.data.get('type', '') != 'learning' || isContentAdminOrAdmin();
     }
     // sections create/update/delete: a learning section (curators, folder, topics) needs contentAdmin/admin.
     function learningSectionWriteOk() {
@@ -270,7 +278,7 @@ service cloud.firestore {
       allow read, write: if false;
     }
     // CMS content rendered by the anonymous PWA landing — public read.
-    match /pages/{id}           { allow read: if true; allow create: if isContentManager() && tenantCreateOrDetach(); allow update: if isContentManager() && tenantCreateOrDetach() && learningPublishOk(); allow delete: if isContentManager() && canWriteTenant(resource.data); }
+    match /pages/{id}           { allow read: if true; allow create: if isContentManager() && tenantCreateOrDetach() && learningPageCreateOk(); allow update: if isContentManager() && tenantCreateOrDetach() && learningPublishOk(); allow delete: if isContentManager() && canWriteTenant(resource.data) && learningPageDeleteOk(); }
     match /sections/{id}        { allow read: if true; allow create, update: if isContentManager() && tenantCreateOrDetach() && learningSectionWriteOk(); allow delete: if isContentManager() && canWriteTenant(resource.data) && learningSectionWriteOk(); }
     // menuItems/categories: navigation + select metadata. menuItems is read by the
     // app shell's menu store (ungated); categories are CMS select-lists. Low
