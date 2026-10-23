@@ -1,6 +1,6 @@
 import type { LearningConfig, Roles } from '@okr/shared-models';
 import {
-  canChangeTags, canDeleteItem, canEditItem, canUploadTo, curatedTopics, type LearningActor,
+  canChangeTags, canDeleteItem, canEditItem, canUploadTo, curatedTopics, learningActorOf, type LearningActor,
 } from './learning-rights';
 
 const config: LearningConfig = {
@@ -106,5 +106,25 @@ describe('canUploadTo', () => {
   it('member cannot upload, admin can', () => {
     expect(canUploadTo(config, member, 'knoten')).toBe(false);
     expect(canUploadTo(config, actor('x', { admin: true }), 'recht')).toBe(true);
+  });
+});
+
+describe('learningActorOf (final review: parity with the server learningActor)', () => {
+  it('a registered user acts with their person key and roles', () => {
+    expect(learningActorOf({ personKey: 'p1', roles: { registered: true } })).toEqual({ personKey: 'p1', roles: { registered: true }, isGroupAdmin: false });
+  });
+  it('anybody without roles.registered === true gets no rights', () => {
+    const none = { personKey: '', roles: {}, isGroupAdmin: false };
+    expect(learningActorOf(undefined)).toEqual(none);
+    expect(learningActorOf({ personKey: 'p1', roles: {} })).toEqual(none);
+    expect(learningActorOf({ personKey: 'p1', roles: { kiosk: true } })).toEqual(none);
+    // an admin flag without registered is refused by the server too
+    expect(learningActorOf({ personKey: 'a', roles: { admin: true } as Roles })).toEqual(none);
+  });
+  it('a curator who is not registered may not upload, edit or delete', () => {
+    const a = learningActorOf({ personKey: 'p1', roles: {} });
+    expect(canUploadTo(config, a, 'knoten')).toBe(false);
+    expect(canEditItem(config, a, 'knoten')).toBe(false);
+    expect(canDeleteItem(config, a, 'knoten', 'p1')).toBe(false);
   });
 });

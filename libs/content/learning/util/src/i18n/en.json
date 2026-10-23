@@ -158,6 +158,8 @@
     "saveFailed": "The learning room could not be saved.",
     "published": "The learning room is now public.",
     "unpublished": "The learning room is for members only again.",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "publishBlockedMemberUploads": "This learning room can't be published yet: all members may upload files to its folder. Switch that off in the folder settings first, so only reviewed content goes public.",
+    "logFailed": "The change is saved, but it could not be recorded in the activity log."
   }
 }

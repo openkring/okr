@@ -205,10 +205,17 @@ export class LearningRoomPage {
       const key = this.pageKey();
       untracked(() => this.store.setPageKey(key));
     });
-    // the room's start tab, once its config arrives
+    // the room's start tab, once its config and documents have arrived (empty start tab → first non-empty tab)
     effect(() => {
       const config = this.store.config();
-      if (config) untracked(() => this.store.applyDefaultTab(config.defaultTab));
+      if (!config || !this.store.docsReady()) return;
+      untracked(() => this.store.applyDefaultTab(config.defaultTab, this.store.docTabs()));
+    });
+    // the anonymous view: the published room's start tab, with the same fallback
+    effect(() => {
+      const room = this.store.publicRoom();
+      if (!room || !this.store.isAnonymous()) return;
+      untracked(() => this.store.applyDefaultTab(room.defaultTab, room.items.map(i => i.tab)));
     });
     // sign the posters of the visible videos (the service skips keys it already holds)
     effect(() => {

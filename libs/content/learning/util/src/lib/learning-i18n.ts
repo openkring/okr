@@ -144,6 +144,8 @@ export const LEARNING_I18N_KEYS = {
   rooms_saveFailed:                PFX + 'rooms.saveFailed',
   rooms_published:                 PFX + 'rooms.published',
   rooms_unpublished:               PFX + 'rooms.unpublished',
+  rooms_publishBlockedMemberUploads: PFX + 'rooms.publishBlockedMemberUploads',
+  rooms_logFailed:                 PFX + 'rooms.logFailed',
   rooms_cancel:                    PFX + 'rooms.cancel',
 } satisfies Record<string, string>;
 

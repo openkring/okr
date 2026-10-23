@@ -48,3 +48,22 @@ export function filterLearningDocs(
     return hay.includes(q);
   });
 }
+
+const TAB_ORDER: LearningTab[] = ['files', 'videos', 'images'];
+
+/** How many items each tab holds (unfiltered). */
+export function learningTabCounts(tabs: readonly LearningTab[]): Record<LearningTab, number> {
+  const out: Record<LearningTab, number> = { files: 0, videos: 0, images: 0 };
+  for (const t of tabs) if (t in out) out[t]++;
+  return out;
+}
+
+/**
+ * The tab a room opens on: the configured start tab when it holds items, else the first
+ * non-empty tab (files → videos → images), else the configured tab (or 'files') for an empty room.
+ */
+export function initialLearningTab(defaultTab: LearningTab | '' | undefined, counts: Record<LearningTab, number>): LearningTab {
+  const configured = defaultTab && TAB_ORDER.includes(defaultTab) ? defaultTab : undefined;
+  if (configured && counts[configured] > 0) return configured;
+  return TAB_ORDER.find(t => counts[t] > 0) ?? configured ?? 'files';
+}

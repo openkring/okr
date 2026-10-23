@@ -15,8 +15,8 @@ import { LearningService, RatingService } from '@okr/content-learning-data-acces
 import {
   LEARNING_I18N_KEYS, LEARNING_PAGE_TYPE, LEARNING_ROOM_SUFFIX, LearningActor, LearningFilter, LearningI18n, LearningItemFormData,
   LearningRoomFormData, LearningTab, canChangeTags, canDeleteItem, canEditItem, curatedTopics, filterLearningDocs,
-  groupLearningPageKey, isLearningPage, learningConfigOf, learningItemUrl, learningRoomUrl, menuLearningPageKey,
-  parseTopics, uniqueLearningSlug,
+  groupLearningPageKey, initialLearningTab, isLearningPage, learningActorOf, learningConfigOf, learningItemUrl, learningRoomUrl,
+  learningTabCounts, learningTabOf, menuLearningPageKey, parseTopics, uniqueLearningSlug,
 } from '@okr/content-learning-util';
 import {
   LearningAttachmentInfo, LearningFolderOption, LearningItemEditModal, LearningRoomEditModal,
@@ -162,11 +162,8 @@ export const LearningStore = signalStore(
     publicRoom: computed(() => state.publicResource.hasValue() ? state.publicResource.value() : undefined),
     publicRoomFailed: computed(() => !!state.publicResource.error()),
     isPublicLoading: computed(() => state.publicResource.isLoading()),
-    actor: computed<LearningActor>(() => ({
-      personKey: state.currentUser()?.personKey ?? '',
-      roles: state.currentUser()?.roles ?? {},
-      isGroupAdmin: false,
-    })),
+    // same gate as the server's learningActor (roles.registered === true): never offer what a callable refuses
+    actor: computed<LearningActor>(() => learningActorOf(state.currentUser())),
   })),
 
   withProps((store) => ({
@@ -180,6 +177,8 @@ export const LearningStore = signalStore(
   withComputed((state) => ({
     docs: computed(() => state.docsResource.value() ?? []),
     isDocsLoading: computed(() => state.docsResource.isLoading()),
+    /** the room docs of the current folder have arrived (the start tab may look at them) */
+    docsReady: computed(() => !!state.config()?.folder && state.docsResource.hasValue() && !state.docsResource.isLoading()),
     topics: computed(() => parseTopics(state.config()?.topics ?? '')),
     curated: computed<string[] | 'all'>(() => {
       const config = state.config();
@@ -261,11 +260,20 @@ export const LearningStore = signalStore(
         patchState(store, { pageKey, filterRoomKey: '', commentTexts: {}, commentTextsRoom: '', filter: { tab: 'files', topic: '', query: '' } });
       },
 
-      /** Applies the room's start tab once, when its config first arrives. */
-      applyDefaultTab(defaultTab: LearningTab | undefined): void {
+      /**
+       * Applies the room's start tab once per room, when its items are known: the configured tab,
+       * or the first non-empty tab when that one is empty (initialLearningTab).
+       */
+      applyDefaultTab(defaultTab: LearningTab | undefined, tabs: readonly LearningTab[]): void {
         const key = store.pageKey();
         if (!key || store.filterRoomKey() === key) return;
-        patchState(store, { filterRoomKey: key, filter: { ...store.filter(), tab: defaultTab ?? 'files' } });
+        const tab = initialLearningTab(defaultTab, learningTabCounts(tabs));
+        patchState(store, { filterRoomKey: key, filter: { ...store.filter(), tab } });
+      },
+
+      /** The tab of each room document (for applyDefaultTab). */
+      docTabs(): LearningTab[] {
+        return store.docs().map(d => learningTabOf(d.mimeType ?? ''));
       },
 
       setFilter(filter: LearningFilter): void {
@@ -472,17 +480,19 @@ export const LearningStore = signalStore(
         await modal.present();
         const { data, role } = await modal.onWillDismiss<LearningRoomFormData>();
         if (role !== 'confirm' || !data) return;
-        const pageKey = await methods.createRoom(data, rooms.map(r => r.okey));
-        await toast(pageKey ? store.i18n.rooms_saved() : store.i18n.rooms_saveFailed());
+        const result = await methods.createRoom(data, rooms.map(r => r.okey));
+        // exactly one toast: the reason when known, else saved / failed
+        await toast(result === 'groupExists' ? store.i18n.rooms_groupExists() : result ? store.i18n.rooms_saved() : store.i18n.rooms_saveFailed());
       },
 
       /**
        * Creates a room: a menu room gets page `<tenantId>_learning_<slug>` (and a new folder named
        * after the room when asked); a group room gets page `<groupKey>_learning` on the group's own
        * folder. The section key equals the page key. The page stays private (isPrivate) until published.
-       * @returns the page key, or undefined when nothing was created
+       * Shows no toast itself (the caller toasts once).
+       * @returns the page key; 'groupExists' when the group already has a room; undefined when nothing was created
        */
-      async createRoom(data: LearningRoomFormData, takenPageKeys: string[]): Promise<string | undefined> {
+      async createRoom(data: LearningRoomFormData, takenPageKeys: string[]): Promise<string | 'groupExists' | undefined> {
         const tenantId = store.tenantId();
         const user = store.currentUser();
         let pageKey: string;
@@ -492,10 +502,7 @@ export const LearningStore = signalStore(
           pageKey = groupLearningPageKey(data.groupKey);
           // createModel is a blind upsert: never overwrite an existing (even archived) group room
           const existing = await firstValueFrom(store.pageService.read(pageKey)).catch(() => undefined);
-          if (existing && existing.isArchived !== true) {
-            await toast(store.i18n.rooms_groupExists());
-            return undefined;
-          }
+          if (existing && existing.isArchived !== true) return 'groupExists';
           const group = store.appStore.groupsMap().get(data.groupKey);
           const ok = await store.folderService.ensureGroupFolder(
             data.groupKey, group?.name || data.name, tenantId, user, (group?.admins ?? []).map(a => a.key));
@@ -651,8 +658,29 @@ export const LearningStore = signalStore(
       }
     }
 
+    /**
+     * true when the room folder lets every member upload (`membersMayUpload`). Such a room must not
+     * be public: a member's upload would reach the website unreviewed (the public API locks it too).
+     * An unreadable section or folder counts as false — the public API gate still holds.
+     */
+    async function roomAdmitsMemberUploads(page: PageModel): Promise<boolean> {
+      const sections = await firstValueFrom(readSections(store.sectionService, page, store.tenantId())).catch(() => []);
+      const folderKey = learningConfigOf(sections, store.tenantId())?.config.folder;
+      if (!folderKey) return false;
+      const folder = await firstValueFrom(store.folderService.read(folderKey)).catch(() => undefined);
+      return folder?.membersMayUpload === true;
+    }
+
     async function setPrivate(page: PageModel, isPrivate: boolean): Promise<void> {
       if (!store.isContentAdmin()) return;
+      if (!isPrivate && await roomAdmitsMemberUploads(page)) {
+        const blocked = await store.alertController.create({
+          message: store.i18n.rooms_publishBlockedMemberUploads(),
+          buttons: [{ text: store.i18n.detail_ok(), role: 'cancel' }],
+        });
+        await blocked.present();
+        return;
+      }
       const options = isPrivate ? learningUnpublishAlertOptions(store.i18n) : learningPublishAlertOptions(store.i18n);
       const alert = await store.alertController.create(options);
       await alert.present();
@@ -662,7 +690,10 @@ export const LearningStore = signalStore(
       // only the flag: re-sending the list snapshot could revert a concurrent rename
       const key = await store.pageService.setPrivate(page, isPrivate);
       if (!key) { await toast(store.i18n.rooms_saveFailed()); return; }
-      await store.activityService.log('learning', isPrivate ? 'unpublish' : 'publish', user, page.okey);
+      // logged after the change (a log entry for a change that failed would be false); the room
+      // state has changed either way, so a failed log is a warning, not a rollback
+      const logged = await store.activityService.log('learning', isPrivate ? 'unpublish' : 'publish', user, page.okey);
+      if (!logged) { await toast(store.i18n.rooms_logFailed()); return; }
       await toast(isPrivate ? store.i18n.rooms_unpublished() : store.i18n.rooms_published());
     }
   }),

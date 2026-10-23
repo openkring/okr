@@ -1,5 +1,5 @@
 import { DocumentModel } from '@okr/shared-models';
-import { filterLearningDocs, roomDocs, stripHtml } from './learning-filter';
+import { filterLearningDocs, initialLearningTab, learningTabCounts, roomDocs, stripHtml } from './learning-filter';
 
 function doc(okey: string, p: Partial<DocumentModel> = {}): DocumentModel {
   return Object.assign(new DocumentModel('t'), { okey, mimeType: 'application/pdf', folderKeys: ['f1'] }, p);
@@ -63,5 +63,23 @@ describe('stripHtml', () => {
   });
   it('separates blocks with a space', () => {
     expect(stripHtml('<p>a</p><p>b</p>')).toBe('a b');
+  });
+});
+
+describe('initialLearningTab (final review: start tab with fallback)', () => {
+  it('counts items per tab', () => {
+    expect(learningTabCounts(['files', 'images', 'images'])).toEqual({ files: 1, videos: 0, images: 2 });
+  });
+  it('opens on the configured tab when it holds items', () => {
+    expect(initialLearningTab('videos', { files: 3, videos: 1, images: 0 })).toBe('videos');
+  });
+  it('falls back to the first non-empty tab when the configured one is empty', () => {
+    expect(initialLearningTab('videos', { files: 0, videos: 0, images: 2 })).toBe('images');
+    expect(initialLearningTab('images', { files: 1, videos: 2, images: 0 })).toBe('files');
+  });
+  it('an empty room keeps the configured tab, else files', () => {
+    expect(initialLearningTab('videos', { files: 0, videos: 0, images: 0 })).toBe('videos');
+    expect(initialLearningTab(undefined, { files: 0, videos: 0, images: 0 })).toBe('files');
+    expect(initialLearningTab('', { files: 0, videos: 4, images: 0 })).toBe('videos');
   });
 });

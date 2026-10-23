@@ -158,6 +158,8 @@
     "saveFailed": "L'espace d'apprentissage n'a pas pu être enregistré.",
     "published": "L'espace d'apprentissage est maintenant public.",
     "unpublished": "L'espace d'apprentissage est de nouveau réservé aux membres.",
-    "cancel": "Annuler"
+    "cancel": "Annuler",
+    "publishBlockedMemberUploads": "Cet espace d’apprentissage ne peut pas encore être publié : tous les membres peuvent téléverser des fichiers dans son dossier. Désactive d’abord cette option dans les réglages du dossier, pour que seul du contenu vérifié devienne public.",
+    "logFailed": "La modification est enregistrée, mais elle n’a pas pu être notée dans le journal d’activité."
   }
 }

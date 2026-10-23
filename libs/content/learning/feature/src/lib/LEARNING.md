@@ -56,13 +56,24 @@ The block `learning` is listed before `cms` in `FEATURE_ROUTES`, because `cms` o
 
 Decided by `curatedTopics`/`canEditItem`/`canChangeTags`/`canDeleteItem`/`canUploadTo` with
 `isGroupAdmin: false`: group admins are NOT curators (any member can write `group.admins`). The
-callables check again; the client only hides actions.
+callables check again; the client only hides actions. The client actor comes from `learningActorOf`,
+which — like the server's `learningActor` — grants nothing unless `roles.registered === true`.
+
+Uploads run prepare → signed PUT → `completeLearningUpload` (`LearningService.upload`,
+`runLearningUpload`). The completion checks the object exists with the declared size and, for the
+default bucket, sets the Firebase download token with the Admin SDK and writes `docs.url`. A failed
+PUT or a refused completion removes the half-created document again.
 
 ## Publishing
 
 Rooms page → «Veröffentlichen»: the warning alert (`learningPublishAlertOptions`) acts only on role
 `confirm`, flips `page.isPrivate` and logs `learning/publish` (or `learning/unpublish`) with the page key
-in the activity log (admin-visible).
+in the activity log (admin-visible). The log is written after the flip; when it fails, a warning toast
+says the change is saved but not logged (the room state is not rolled back).
+
+A room whose folder has `membersMayUpload === true` cannot be published: the store refuses with an
+alert, and the public page API returns the locked shell for it anyway. The rules let only
+contentAdmin/admin change `isPrivate` on a `learning` page or write a `learning` section.
 
 ## Archiving
 
@@ -81,6 +92,9 @@ Gate walked 2026-10-23, recorded in spec §7.2.
   carries comments, ratings or uploader names; videos are signed only for the room folder.
 - Group rooms are tenant-visible at data level (the `docs` rule is `tenantRead`); membership gates
   the UI only. Known and unchanged.
+- The rating aggregate (`ratingCount`/`ratingSum`) cannot be changed by a client (rules; admin
+  excepted). Known gap: the document's author and the folder owner can still write the other fields
+  of a learning item directly (tags, notes, links, fullPath), outside the curator callables.
 
 ## Known limits
 

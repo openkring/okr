@@ -158,6 +158,8 @@
     "saveFailed": "No se pudo guardar el espacio de aprendizaje.",
     "published": "El espacio de aprendizaje ahora es público.",
     "unpublished": "El espacio de aprendizaje vuelve a ser solo para miembros.",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "publishBlockedMemberUploads": "Este espacio de aprendizaje aún no se puede publicar: todos los miembros pueden subir archivos a su carpeta. Desactiva primero esa opción en los ajustes de la carpeta, para que solo se publique contenido revisado.",
+    "logFailed": "El cambio está guardado, pero no se pudo anotar en el registro de actividad."
   }
 }

@@ -158,6 +158,8 @@
     "saveFailed": "Non è stato possibile salvare lo spazio di apprendimento.",
     "published": "Lo spazio di apprendimento ora è pubblico.",
     "unpublished": "Lo spazio di apprendimento è di nuovo solo per i membri.",
-    "cancel": "Annulla"
+    "cancel": "Annulla",
+    "publishBlockedMemberUploads": "Questo spazio di apprendimento non può ancora essere pubblicato: tutti i membri possono caricare file nella sua cartella. Disattiva prima questa opzione nelle impostazioni della cartella, così diventa pubblico solo il contenuto verificato.",
+    "logFailed": "La modifica è salvata, ma non è stato possibile registrarla nel registro delle attività."
   }
 }

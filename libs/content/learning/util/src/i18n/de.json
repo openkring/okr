@@ -158,6 +158,8 @@
     "saveFailed": "Der Lernraum konnte nicht gespeichert werden.",
     "published": "Der Lernraum ist jetzt öffentlich.",
     "unpublished": "Der Lernraum ist wieder nur für Mitglieder.",
-    "cancel": "Abbrechen"
+    "cancel": "Abbrechen",
+    "publishBlockedMemberUploads": "Dieser Lernraum kann noch nicht veröffentlicht werden: In seinem Ordner dürfen alle Mitglieder Dateien hochladen. Schalte das zuerst in den Ordner-Einstellungen aus, damit nur geprüfte Inhalte öffentlich werden.",
+    "logFailed": "Die Änderung ist gespeichert, sie konnte aber nicht im Aktivitätsprotokoll vermerkt werden."
   }
 }

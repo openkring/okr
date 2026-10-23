@@ -9,6 +9,19 @@ export interface LearningActor {
   isGroupAdmin: boolean;
 }
 
+const NO_RIGHTS: LearningActor = { personKey: '', roles: {}, isGroupAdmin: false };
+
+/**
+ * The signed-in user as the client rights checks see them — the same gate as the server's
+ * `learningActor`: only `roles.registered === true` counts (a kiosk-only user never has it, since
+ * kiosk-only means no other role is set). Anybody else gets an actor without rights, so the UI
+ * never offers an action the callables would refuse. `isGroupAdmin` is always false (see the store).
+ */
+export function learningActorOf(user: { personKey?: string; roles?: Roles } | undefined): LearningActor {
+  if (!user || user.roles?.registered !== true) return NO_RIGHTS;
+  return { personKey: typeof user.personKey === 'string' ? user.personKey : '', roles: user.roles, isGroupAdmin: false };
+}
+
 function isAll(actor: LearningActor): boolean {
   return actor.roles?.contentAdmin === true || actor.roles?.admin === true || actor.isGroupAdmin === true;
 }
