@@ -29,6 +29,7 @@ export const LEARNING_I18N_KEYS = {
   // rating stars
   rating_label:                    PFX + 'rating.label',
   rating_none:                     PFX + 'rating.none',
+  rating_belowOne:                 PFX + 'rating.belowOne',
   rating_one:                      PFX + 'rating.one',
   rating_many:                     PFX + 'rating.many',
   // item badges and actions

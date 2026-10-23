@@ -39,11 +39,15 @@ import { LearningFilter, LearningI18n, LearningTab } from '@okr/content-learning
     </ion-toolbar>
     @if (topics().length > 0) {
       <div class="chips">
-        <ion-chip [color]="filter().topic === '' ? 'primary' : 'medium'" (click)="selectTopic('')">
+        <ion-chip [color]="filter().topic === '' ? 'primary' : 'medium'" (click)="selectTopic('')"
+                  role="button" tabindex="0" [attr.aria-pressed]="filter().topic === ''"
+                  (keydown.enter)="onChipKey($event, '')" (keydown.space)="onChipKey($event, '')">
           <ion-label>{{ i18n().topic_all() }}</ion-label>
         </ion-chip>
         @for (topic of topics(); track topic) {
-          <ion-chip [color]="filter().topic === topic ? 'primary' : 'medium'" (click)="selectTopic(topic)">
+          <ion-chip [color]="filter().topic === topic ? 'primary' : 'medium'" (click)="selectTopic(topic)"
+                    role="button" tabindex="0" [attr.aria-pressed]="filter().topic === topic"
+                    (keydown.enter)="onChipKey($event, topic)" (keydown.space)="onChipKey($event, topic)">
             <ion-label>{{ topic }}</ion-label>
           </ion-chip>
         }
@@ -77,6 +81,12 @@ export class LearningToolbar {
     if (value === 'files' || value === 'videos' || value === 'images') {
       this.filter.update(f => ({ ...f, tab: value }));
     }
+  }
+
+  /** Space would otherwise scroll the page. */
+  protected onChipKey(event: Event, topic: string): void {
+    event.preventDefault();
+    this.selectTopic(topic);
   }
 
   protected selectTopic(topic: string): void {

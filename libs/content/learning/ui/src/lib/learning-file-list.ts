@@ -10,7 +10,7 @@ import { EmptyList } from '@okr/shared-ui';
 /**
  * The «Dateien» tab of a learning room (spec 1.115 §5.2): the document list look (list rows or
  * grid tiles, file-type icon or thumbnail), but presentational — no store, no action sheet.
- * A tap on the row/tile emits `open` (the item detail); the download button emits `download`.
+ * A tap or Enter/Space on the row label/tile emits `open` (the item detail); the download button emits `download`.
  * The feature decides how to fetch the file.
  */
 @Component({
@@ -35,10 +35,12 @@ import { EmptyList } from '@okr/shared-ui';
       <ion-list>
         @for (doc of docs(); track doc.okey) {
           <ion-item>
-            <ion-thumbnail slot="start" class="tile" (click)="open.emit(doc)">
+            <!-- thumbnail: mouse/touch shortcut only; the label is the keyboard and screen-reader target -->
+            <ion-thumbnail slot="start" class="tile" aria-hidden="true" (click)="open.emit(doc)">
               <ng-container [ngTemplateOutlet]="media" [ngTemplateOutletContext]="{ $implicit: doc }" />
             </ion-thumbnail>
-            <ion-label class="tile" (click)="open.emit(doc)">
+            <ion-label class="tile" role="button" tabindex="0" (click)="open.emit(doc)"
+                       (keydown.enter)="onKey($event, doc)" (keydown.space)="onKey($event, doc)">
               <h3>{{ doc.title || (doc.fullPath | fileName) }}</h3>
               <p>{{ doc.fullPath | fileName }} · {{ doc.size | fileSize }} · {{ doc.dateOfDocLastUpdate | prettyDate }}</p>
             </ion-label>
@@ -54,7 +56,7 @@ import { EmptyList } from '@okr/shared-ui';
           @for (doc of docs(); track doc.okey) {
             <ion-col size="6" size-md="4" size-xl="3">
               <div class="tile tile-media" role="button" tabindex="0" [attr.aria-label]="i18n().item_open()"
-                   (click)="open.emit(doc)" (keydown.enter)="open.emit(doc)">
+                   (click)="open.emit(doc)" (keydown.enter)="onKey($event, doc)" (keydown.space)="onKey($event, doc)">
                 <ion-thumbnail>
                   <ng-container [ngTemplateOutlet]="media" [ngTemplateOutletContext]="{ $implicit: doc }" />
                 </ion-thumbnail>
@@ -87,6 +89,12 @@ export class LearningFileList {
 
   public open = output<DocumentModel>();
   public download = output<DocumentModel>();
+
+  /** Enter/Space on a row label or tile; Space would otherwise scroll the page. */
+  protected onKey(event: Event, doc: DocumentModel): void {
+    event.preventDefault();
+    this.open.emit(doc);
+  }
 
   /** imgix renders raster images and PDFs; SVG and everything else gets its file-type icon. */
   protected hasThumbnail(doc: DocumentModel): boolean {

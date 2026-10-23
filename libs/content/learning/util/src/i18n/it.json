@@ -31,6 +31,7 @@
   "rating": {
     "label": "Valutazione",
     "none": "Nessuna valutazione",
+    "belowOne": "Meno di 1 stella",
     "one": "1 stella",
     "many": "{n} stelle"
   },

@@ -11,8 +11,8 @@ const STARS = [1, 2, 3, 4, 5] as const;
  * Five stars, for showing an average (read-only) or for giving a rating (1..5).
  *
  * Read-only: `value` may carry decimals; it is rounded to the nearest half star, so 3.3 shows
- * three full stars and 3.6 three and a half. Screen readers get one text («3.5 Sterne» /
- * «Keine Bewertung») instead of five icons.
+ * three full stars and 3.6 three and a half; any average above 0 shows at least half a star.
+ * Screen readers get one text («3.5 Sterne» / «Unter 1 Stern» / «Keine Bewertung») instead of five icons.
  * Input mode: five buttons labelled «n Sterne»; a tap emits `rate` with n. The parent stores the
  * rating and feeds the new `value` back — this component keeps no state of its own.
  */
@@ -66,17 +66,24 @@ export class RatingStars {
 
   protected readonly stars = STARS;
 
-  /** Clamped to 0..5 and rounded to the nearest half star. */
-  protected readonly rounded = computed(() => {
+  /** Clamped to 0..5. */
+  private readonly clamped = computed(() => {
     const v = Number(this.value());
-    if (!Number.isFinite(v)) return 0;
-    return Math.round(Math.min(5, Math.max(0, v)) * 2) / 2;
+    return Number.isFinite(v) ? Math.min(5, Math.max(0, v)) : 0;
+  });
+
+  /** Rounded to the nearest half star; any rating above 0 shows at least half a star. */
+  protected readonly rounded = computed(() => {
+    const v = this.clamped();
+    if (v <= 0) return 0;
+    return Math.max(0.5, Math.round(v * 2) / 2);
   });
 
   protected readonly valueText = computed(() => {
-    const r = this.rounded();
-    if (r <= 0) return this.i18n().rating_none();
-    return this.starLabel(r);
+    const v = this.clamped();
+    if (v <= 0) return this.i18n().rating_none();
+    if (v < 1) return this.i18n().rating_belowOne();
+    return this.starLabel(this.rounded());
   });
 
   protected fillPercent(n: number): number {

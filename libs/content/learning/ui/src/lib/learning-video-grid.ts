@@ -18,7 +18,8 @@ import { RatingStars } from './rating-stars';
  * Presentation only: the feature signs the posters (`posters`: docKey → signed URL, spec 1.82) and
  * decides what `open` does (the item detail with the player). A video without a poster (not yet
  * signed, not transcoded, or not available to this person) shows the neutral card with
- * «Video nicht verfügbar» but stays openable through its title, so the detail can explain why.
+ * «nicht verfügbar» but stays openable through its title, so the detail can explain why; while
+ * `postersLoading` is set, such cards show the neutral loading surface instead.
  */
 @Component({
   selector: 'okr-learning-video-grid',
@@ -29,7 +30,7 @@ import { RatingStars } from './rating-stars';
   ],
   styles: [`
     .meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 0.8rem; color: var(--ion-color-medium); }
-    .title { margin: 0.35rem 0 0.15rem; font-size: 0.9rem; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .card { cursor: pointer; }
     .badge { display: inline-flex; align-items: center; gap: 2px; }
     .poster-thumb { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
     ion-thumbnail { --size: 64px; width: 96px; height: 54px; }
@@ -51,6 +52,9 @@ import { RatingStars } from './rating-stars';
             </ion-thumbnail>
             <ion-label>
               <h3>{{ doc.title }}</h3>
+              @if (isUnavailable(doc)) {
+                <p>{{ i18n().item_videoUnavailable() }}</p>
+              }
               <ng-container [ngTemplateOutlet]="meta" [ngTemplateOutletContext]="{ $implicit: doc }" />
             </ion-label>
           </ion-item>
@@ -61,13 +65,21 @@ import { RatingStars } from './rating-stars';
         <ion-row>
           @for (doc of docs(); track doc.okey) {
             <ion-col size="12" size-sm="6" size-md="4" size-xl="3">
-              <okr-video-card
-                [posterUrl]="posters()[doc.okey] ?? ''"
-                [available]="!!posters()[doc.okey]"
-                [unavailableLabel]="i18n().item_videoUnavailable()"
-                (clicked)="open.emit(doc)" />
-              <p class="title" role="button" tabindex="0" (click)="open.emit(doc)" (keydown.enter)="open.emit(doc)">{{ doc.title }}</p>
-              <ng-container [ngTemplateOutlet]="meta" [ngTemplateOutletContext]="{ $implicit: doc }" />
+              <!-- the poster consumes its own click (video-card stops propagation); this wrapper opens the
+                   item from the title and meta line, and is the keyboard target only when there is no poster -->
+              <div class="card" (click)="open.emit(doc)"
+                   [attr.role]="isUnavailable(doc) ? 'button' : null"
+                   [attr.tabindex]="isUnavailable(doc) ? 0 : null"
+                   (keydown.enter)="onCardKey($event, doc)" (keydown.space)="onCardKey($event, doc)">
+                <okr-video-card
+                  [posterUrl]="posters()[doc.okey] ?? ''"
+                  [title]="doc.title"
+                  [loading]="isLoading(doc)"
+                  [available]="!!posters()[doc.okey]"
+                  [unavailableLabel]="i18n().item_videoUnavailable()"
+                  (clicked)="open.emit(doc)" />
+                <ng-container [ngTemplateOutlet]="meta" [ngTemplateOutletContext]="{ $implicit: doc }" />
+              </div>
             </ion-col>
           }
         </ion-row>
@@ -94,10 +106,29 @@ export class LearningVideoGrid {
   public docs = input<DocumentModel[]>([]);
   /** docKey → signed poster URL; a missing key renders the neutral «nicht verfügbar» card. */
   public posters = input<Record<string, string>>({});
+  /** True while the feature is still signing posters: cards without a poster show the neutral
+   *  loading surface instead of «nicht verfügbar». */
+  public postersLoading = input(false);
   public view = input<'list' | 'grid'>('grid');
   public i18n = input.required<LearningI18n>();
 
   public open = output<DocumentModel>();
+
+  protected isLoading(doc: DocumentModel): boolean {
+    return this.postersLoading() && !this.posters()[doc.okey];
+  }
+
+  /** No poster and nothing pending: the video is not available to this person (yet). */
+  protected isUnavailable(doc: DocumentModel): boolean {
+    return !this.postersLoading() && !this.posters()[doc.okey];
+  }
+
+  /** Keyboard activation of the wrapper; ignores keys that bubbled up from the poster button. */
+  protected onCardKey(event: Event, doc: DocumentModel): void {
+    if (event.target !== event.currentTarget) return;
+    event.preventDefault();
+    this.open.emit(doc);
+  }
 
   protected average(doc: DocumentModel): number {
     return averageStars(doc);
