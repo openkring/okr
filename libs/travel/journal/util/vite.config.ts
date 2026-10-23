@@ -11,6 +11,8 @@ const libraryConfig = defineConfig({
       reportsDirectory: '../../../coverage/libs/travel/journal/util',
       provider: 'v8' as const,
     },
+    // @okr/shared-util-core pulls in Angular: load the compiler for JIT (testing skill)
+    setupFiles: ['./test-setup.ts'],
   },
 });
 
