@@ -1040,7 +1040,7 @@ def change(cid, jk, entity, key, op, author, tenant="t1"):
             "authorKey": author, "entity": entity, "entityKey": key, "op": op, "fields": {}, "tenants": [tenant]}
 
 JA, JE = jwt("uidA"), jwt("uidE")
-seed("journals/jA", {"tenants": ["t1"], "isArchived": False, "title": "Antarktis", "authorKeys": ["pA"]})
+seed("journals/jA", {"tenants": ["t1"], "isArchived": False, "title": "Antarktis", "authorKeys": ["pA", "pC"]})
 seed("journals/jA/footprints/fA", {"tenants": ["t1"], "isArchived": False, "type": "footprint", "journalKey": "jA"})
 seed("journals/jA/private/peer", {"secret": "s"})
 seed("journal-changes/cSeed", change("cSeed", "jA", "footprint", "fA", "create", "pA"))
@@ -1052,6 +1052,8 @@ journal_cases = [
      lambda: create_change("c2", change("c2", "jA", "footprint", "f2", "create", "pE"), JE)),
     ("A appends a record in E's name -> DENY", False,
      lambda: create_change("c3", change("c3", "jA", "footprint", "f3", "create", "pE"), JA)),
+    ("A uploads co-author C's record (received over P2P) -> ALLOW", True,
+     lambda: create_change("c3b", change("c3b", "jA", "section", "s3b", "create", "pC"), JA)),
     ("record without server upload time -> DENY", False,
      lambda: create_change("c4", change("c4", "jA", "footprint", "f4", "create", "pA"), JA, server_time=False)),
     ("record id differs from doc id -> DENY", False,

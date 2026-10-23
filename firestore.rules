@@ -656,11 +656,13 @@ service cloud.firestore {
       allow create: if tenantCreate()
         && callerPersonKey() != ''
         && request.resource.data.get('id', '') == id
-        && request.resource.data.get('authorKey', '') == callerPersonKey()
         && request.resource.data.get('uploadedAt', null) == request.time
         && request.resource.data.get('journalKey', '').matches('[A-Za-z0-9_-]{1,128}')
-        && (isJournalAuthor(request.resource.data.journalKey)
-            || (!exists(/databases/$(database)/documents/journals/$(request.resource.data.journalKey))
+        // any author's device uploads records of every author (records reach it over P2P, plan 5)
+        && ((isJournalAuthor(request.resource.data.journalKey)
+             && request.resource.data.get('authorKey', '') in get(/databases/$(database)/documents/journals/$(request.resource.data.journalKey)).data.get('authorKeys', []))
+            || (request.resource.data.get('authorKey', '') == callerPersonKey()
+                && !exists(/databases/$(database)/documents/journals/$(request.resource.data.journalKey))
                 && request.resource.data.get('entity', '') == 'journal'
                 && request.resource.data.get('op', '') == 'create'
                 && request.resource.data.get('entityKey', '') == request.resource.data.journalKey));
