@@ -3,7 +3,7 @@ import type { EChartsOption } from "echarts";
 
 import { BUTTON_HEIGHT, BUTTON_WIDTH, DEFAULT_CONTENT_STATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_SECTION_TYPE, DEFAULT_TAGS, DEFAULT_TITLE, DEFAULT_URL } from "@okr/shared-constants";
 import type {
-  AccordionSection, AlbumConfig, AlbumSection, ArticleConfig, ArticleSection,
+  AccordionSection, LearningConfig, LearningSection, AlbumConfig, AlbumSection, ArticleConfig, ArticleSection,
   AvatarConfig, ButtonConfig, ButtonSection, ButtonStyle, CalendarSection,
   ChartSection, ChatConfig, ChatSection, ContextDiagramConfig, ContextDiagramSection, EditorConfig, EventsConfig, EventsSection,
   FormSection, FormSectionConfig,
@@ -491,3 +491,16 @@ export const FORM_SECTION_SHAPE = {
   type: 'form' as const,
   properties: FORM_SECTION_CONFIG_SHAPE,
 } as FormSection;
+// --------------------------------------- LEARNING ----------------------------------------
+export const LEARNING_CONFIG_SHAPE: LearningConfig = {
+  folder: '',
+  topics: '',
+  curators: [],
+  defaultTab: 'videos'
+};
+
+export const LEARNING_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'learning',
+  properties: LEARNING_CONFIG_SHAPE
+} as LearningSection;

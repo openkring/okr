@@ -35,6 +35,12 @@ export interface DocumentRef {
   format: string;      // '' = the original (DocumentModel.fullPath)
 }
 
+/** A titled external link attached to a document (learning rooms, spec 1.115). */
+export interface DocumentLink {
+  title: string;
+  url: string;
+}
+
 export class DocumentModel implements OkrModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
@@ -67,6 +73,12 @@ export class DocumentModel implements OkrModel, SearchableModel, TaggedModel {
   // alternate FORMATS of this document (see DocumentRendering). fullPath stays the original and is
   // deliberately not mirrored here. Legacy docs have no such field -> always read with `?? []`.
   public renderings: DocumentRendering[] = [];
+  // learning rooms (spec 1.115): all optional, undefined on legacy docs - always coalesce.
+  public notes?: string;              // free-text notes about the document
+  public links?: DocumentLink[];      // related external links
+  public attachmentKeys?: string[];   // okeys of DocumentModels attached to this one
+  public ratingCount?: number;        // aggregate over `ratings`, maintained server-side
+  public ratingSum?: number;
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

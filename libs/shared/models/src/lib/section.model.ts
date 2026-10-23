@@ -23,7 +23,7 @@ export const SECTION_TYPES = [
     'album', 'article', 'button', 'cal', 'chart', 'chat', 'emergency', 'hero', 'iframe', 'map',
     'people', 'responsibility', 'slider', 'table', 'tracker', 'video', 'accordion', 'events', 'invitations', 'tasks',
     'news', 'activities', 'messages', 'rag', 'orgchart', 'context', 'member-age', 'member-cat', 'trip-stats', 'form',
-    'sankey', 'spider', 'toc', 'testimonial', 'timeline', 'weather',
+    'sankey', 'spider', 'toc', 'testimonial', 'timeline', 'weather', 'learning',
 ] as const;
 
 export type SectionType = (typeof SECTION_TYPES)[number];
@@ -33,7 +33,7 @@ export type SectionModel =
     AlbumSection | ArticleSection | ButtonSection | CalendarSection | ChartSection | ChatSection |
     HeroSection | IframeSection | MapSection | PeopleSection | ResponsibilitySection | SliderSection |
     TableSection | TrackerSection | VideoSection | AccordionSection | EventsSection | InvitationsSection | TasksSection |
-    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection | SpiderSection | TocSection | TestimonialSection | TimelineSection | WeatherSection;
+    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection | SpiderSection | TocSection | TestimonialSection | TimelineSection | WeatherSection | LearningSection;
 
 // --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
 // --------------------------------------- ORGCHART ----------------------------------------
@@ -222,7 +222,7 @@ export interface BaseSection {
   content: EditorConfig; // content from rich text editor
   properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | HeroConfig |
   IframeConfig | MapConfig | OrgchartConfig | ContextDiagramConfig | PeopleConfig | ResponsibilityConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig |
-  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig | SpiderConfig | TocConfig | TestimonialConfig | TimelineConfig | WeatherConfig;
+  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig | SpiderConfig | TocConfig | TestimonialConfig | TimelineConfig | WeatherConfig | LearningConfig;
   notes: string;
   tags: string;
   tenants: string[]; // list of tenant ids
@@ -721,4 +721,23 @@ export interface WeatherConfig {
   orientation?: 'horizontal' | 'vertical';
   /** forecast_overview / forecast_table / forecast_detail — number of days, default 6. */
   days?: number;
+}
+
+// --------------------------------------- LEARNING ----------------------------------------
+// Learning rooms (spec 1.115 part 2). Rendered by the learning page type, not by SectionDispatcher.
+export interface LearningSection extends BaseSection {
+  type: 'learning';
+  properties: LearningConfig;
+}
+
+export interface LearningCurators {
+  tag: string;           // topic tag the curators look after
+  personKeys: string[];  // person okeys only
+}
+
+export interface LearningConfig {
+  folder: string;        // root folder key
+  topics: string;        // comma-separated tags shown as chips, in order
+  curators: LearningCurators[]; // per topic; persons only
+  defaultTab: 'files' | 'videos' | 'images';
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ButtonAction, ButtonSection, ColorIonic, SECTION_TYPES, SectionType, WeatherSection } from '@okr/shared-models';
+import { ButtonAction, ButtonSection, ColorIonic, SECTION_TYPES, SectionType, WeatherSection, LearningSection } from '@okr/shared-models';
 
 import { createSection, narrowSection } from './section.util';
 
@@ -50,6 +50,16 @@ describe('narrowSection', () => {
   it('returns undefined for the removed files/links types (§7 regression)', () => {
     expect(narrowSection({ type: 'files' })).toBeUndefined();
     expect(narrowSection({ type: 'links' })).toBeUndefined();
+  });
+});
+
+describe('createSection — learning', () => {
+  it('seeds the learning config without sharing the shape arrays', () => {
+    const a = createSection('learning', tenantId) as LearningSection;
+    const b = createSection('learning', tenantId) as LearningSection;
+    expect(a.properties).toEqual({ folder: '', topics: '', curators: [], defaultTab: 'videos' });
+    a.properties.curators.push({ tag: 'x', personKeys: [] });
+    expect(b.properties.curators).toEqual([]);
   });
 });
 

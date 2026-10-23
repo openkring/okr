@@ -1,4 +1,4 @@
-import { ALBUM_SECTION_SHAPE, AlbumSection, ARTICLE_CONFIG_SHAPE, ARTICLE_SECTION_SHAPE, ArticleSection, BUTTON_SECTION_SHAPE, ButtonAction, ButtonSection, CAL_SECTION_SHAPE, CalendarSection, CHART_SECTION_SHAPE, ChartSection, CHAT_SECTION_SHAPE, ChatSection, ColorIonic, CONTEXT_DIAGRAM_SECTION_SHAPE, ContextDiagramSection, EVENTS_SECTION_SHAPE, EventsSection, HERO_SECTION_SHAPE, HeroSection, IFRAME_SECTION_SHAPE, IframeSection, INVITATIONS_SECTION_SHAPE, InvitationsSection, MAP_SECTION_SHAPE, MapSection, MEMBER_AGE_SECTION_SHAPE, MemberAgeSection, MEMBER_CAT_SECTION_SHAPE, MemberCatSection, PEOPLE_SECTION_SHAPE, PeopleSection, RAG_SECTION_SHAPE, RagSection, RESPONSIBILITY_SECTION_SHAPE, ResponsibilitySection, SANKEY_SECTION_SHAPE, SankeySection, SPIDER_SECTION_SHAPE, SpiderSection, TOC_SECTION_SHAPE, TocSection, TESTIMONIAL_SECTION_SHAPE, TestimonialSection, TIMELINE_SECTION_SHAPE, TimelineSection, SectionModel, SectionType, SLIDER_SECTION_SHAPE, SliderSection, TABLE_SECTION_SHAPE, TableSection, TRACKER_SECTION_SHAPE, TrackerSection, VIDEO_SECTION_SHAPE, VideoSection, ViewPosition, WEATHER_CONFIG_SHAPE, WEATHER_SECTION_SHAPE, WeatherSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FORM_SECTION_SHAPE } from '@okr/shared-models';
+import { ALBUM_SECTION_SHAPE, AlbumSection, ARTICLE_CONFIG_SHAPE, ARTICLE_SECTION_SHAPE, ArticleSection, BUTTON_SECTION_SHAPE, ButtonAction, ButtonSection, CAL_SECTION_SHAPE, CalendarSection, CHART_SECTION_SHAPE, ChartSection, CHAT_SECTION_SHAPE, ChatSection, ColorIonic, CONTEXT_DIAGRAM_SECTION_SHAPE, ContextDiagramSection, EVENTS_SECTION_SHAPE, EventsSection, HERO_SECTION_SHAPE, HeroSection, IFRAME_SECTION_SHAPE, IframeSection, INVITATIONS_SECTION_SHAPE, InvitationsSection, MAP_SECTION_SHAPE, MapSection, MEMBER_AGE_SECTION_SHAPE, MemberAgeSection, MEMBER_CAT_SECTION_SHAPE, MemberCatSection, PEOPLE_SECTION_SHAPE, PeopleSection, RAG_SECTION_SHAPE, RagSection, RESPONSIBILITY_SECTION_SHAPE, ResponsibilitySection, SANKEY_SECTION_SHAPE, SankeySection, SPIDER_SECTION_SHAPE, SpiderSection, TOC_SECTION_SHAPE, TocSection, TESTIMONIAL_SECTION_SHAPE, TestimonialSection, TIMELINE_SECTION_SHAPE, TimelineSection, SectionModel, SectionType, SLIDER_SECTION_SHAPE, SliderSection, TABLE_SECTION_SHAPE, TableSection, TRACKER_SECTION_SHAPE, TrackerSection, VIDEO_SECTION_SHAPE, VideoSection, ViewPosition, WEATHER_CONFIG_SHAPE, WEATHER_SECTION_SHAPE, WeatherSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FORM_SECTION_SHAPE, LEARNING_CONFIG_SHAPE, LEARNING_SECTION_SHAPE, LearningSection } from '@okr/shared-models';
 import { buildSearchTokens, DateFormat, die, getTodayStr } from '@okr/shared-util-core';
 
 /**
@@ -69,6 +69,9 @@ export function createSection(type: SectionType, tenantId: string): SectionModel
         properties: { ...WEATHER_CONFIG_SHAPE, locationKeys: [] },
       } as WeatherSection;
       break;
+    case 'learning':
+      section = { ...LEARNING_SECTION_SHAPE, properties: { ...LEARNING_CONFIG_SHAPE, curators: [] } } as LearningSection;
+      break;
     default:
       die(`section.util.createSection: unknown section type '${type}'`);
   }
@@ -109,6 +112,7 @@ export function narrowSection(section: any): SectionModel | undefined {
     case 'testimonial': return section as TestimonialSection;
     case 'timeline': return section as TimelineSection;
     case 'weather': return section as WeatherSection;
+    case 'learning': return section as LearningSection;
     default: return undefined;
   }
 }
