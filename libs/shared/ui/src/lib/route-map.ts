@@ -20,15 +20,16 @@ function escapeHtml(value: string): string {
   selector: 'okr-route-map',
   encapsulation: ViewEncapsulation.None, // the pin markup is created by Leaflet outside the component view
   styles: [`
-    okr-route-map { display: block; width: 100%; height: 100%; }
-    okr-route-map .okr-route-map-canvas { width: 100%; height: 100%; min-height: 240px; background: var(--ion-color-light, #dfe9ef); }
+    okr-route-map { display: block; position: relative; overflow: hidden; width: 100%; height: 100%; min-height: 240px;
+      background: var(--ion-color-light, #dfe9ef); }
+    /* positioned in whole pixels by snapToPixels(): Leaflet places tiles in whole pixels relative to
+       this element, so a fractional screen position (iPad landscape: x = 394.23) showed white seams */
+    okr-route-map .okr-route-map-canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
     .okr-route-pin { width: 44px; height: 44px; border-radius: 50%; border: 3px solid #fff; overflow: hidden;
       box-shadow: 0 1px 4px rgba(0,0,0,.35); background: var(--ion-color-medium, #8aa); cursor: pointer; box-sizing: border-box; }
     .okr-route-pin img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .okr-route-pin.selected { width: 56px; height: 56px; border-color: var(--ion-color-tertiary, #13a89e); }
     .okr-route-pin-icon { background: transparent; border: none; }
-    /* hairline seams between tiles at some zooms / pixel densities (WebKit); the fix Leaflet 2 ships */
-    okr-route-map .leaflet-tile { mix-blend-mode: plus-lighter; }
   `],
   template: `<div class="okr-route-map-canvas"></div>`,
 })
@@ -48,6 +49,9 @@ export class RouteMap {
   private lastPoints: L.LatLngExpression[] = [];
   private lastPointsKey = '';
   private lastTilesKey: string | undefined;
+  private snapFrames = 0;
+  private snapHandle?: number;
+  private lastSnap = '';
 
   public constructor() {
     afterNextRender(() => void this.init());
@@ -57,6 +61,7 @@ export class RouteMap {
       if (this.map) this.render(state.route, state.pins, state.selected, state.tiles);
     });
     inject(DestroyRef).onDestroy(() => {
+      if (this.snapHandle !== undefined) cancelAnimationFrame(this.snapHandle);
       this.resizeObserver?.disconnect();
       this.map?.remove();
       this.map = undefined;
@@ -71,18 +76,58 @@ export class RouteMap {
     }
     const container = (this.el.nativeElement as HTMLElement).querySelector('.okr-route-map-canvas') as HTMLElement | null;
     if (!container || this.map) return;
+    this.snapToPixels(container);
     this.map = this.leaflet.map(container, { zoomControl: true, attributionControl: true });
     this.overlay = this.leaflet.layerGroup().addTo(this.map);
     this.render(this.route(), this.pins(), this.selectedKey(), this.tiles());
+    this.settleSnap(container);
     // the container may still be animating or change with the layout (A/B): keep Leaflet's size in sync
     // Ionic hides a page that stays in the stack (size 0) and shows it again on «back»: refit then,
     // otherwise the map keeps the zoom it had at size 0 (device check plan 3).
     this.resizeObserver = new ResizeObserver(() => {
-      if (!this.map || container.clientWidth === 0 || container.clientHeight === 0) return;
+      if (!this.map || !this.snapToPixels(container)) return;
       this.map.invalidateSize();
       this.fit();
+      this.settleSnap(container);
     });
-    this.resizeObserver.observe(container);
+    this.resizeObserver.observe(this.el.nativeElement as HTMLElement);
+  }
+
+  /**
+   * Aligns the Leaflet container to whole CSS pixels on the screen: offset by the fraction of the host's
+   * position, size rounded down. Returns false while the host is hidden (size 0, e.g. a page kept in
+   * Ionic's stack). Device check plan 3: tile seams only in iPad landscape, where the host sat at x = 394.23.
+   */
+  private snapToPixels(canvas: HTMLElement): boolean {
+    const host = (this.el.nativeElement as HTMLElement).getBoundingClientRect();
+    if (host.width === 0 || host.height === 0) return false;
+    const left = Math.ceil(host.left) - host.left;
+    const top = Math.ceil(host.top) - host.top;
+    const snap = `${left}|${top}|${Math.floor(host.width - left)}|${Math.floor(host.height - top)}`;
+    if (snap === this.lastSnap) return true;
+    this.lastSnap = snap;
+    canvas.style.left = `${left}px`;
+    canvas.style.top = `${top}px`;
+    canvas.style.width = `${Math.floor(host.width - left)}px`;
+    canvas.style.height = `${Math.floor(host.height - top)}px`;
+    return true;
+  }
+
+  /**
+   * Re-measures for ~1.5 s (90 frames): the page slides in with a transform, so the first measurement
+   * sees a moving position, and a pure move (no size change) never reaches the ResizeObserver. Device
+   * check plan 3: seams stayed until the iPad was rotated once.
+   */
+  private settleSnap(canvas: HTMLElement): void {
+    this.snapFrames = 90;
+    if (this.snapHandle !== undefined) return;
+    const tick = (): void => {
+      const before = this.lastSnap;
+      if (this.snapToPixels(canvas) && this.lastSnap !== before) this.map?.invalidateSize();
+      this.snapFrames -= 1;
+      this.snapHandle = this.snapFrames > 0 ? requestAnimationFrame(tick) : undefined;
+    };
+    this.snapHandle = requestAnimationFrame(tick);
   }
 
   private render(route: [number, number][], pins: RoutePin[], selected: string | undefined, tiles: TileSource | undefined): void {
