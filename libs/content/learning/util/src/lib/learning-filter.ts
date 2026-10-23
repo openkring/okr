@@ -30,9 +30,9 @@ function normalize(s: unknown): string {
   return (typeof s === 'string' ? s : '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 }
 
-/** The documents of one learning room: filed in its folder and not archived. */
+/** The documents of one learning room: filed FIRST in its folder (as the rules and the public API read it) and not archived. */
 export function roomDocs(docs: DocumentModel[], folderKey: string): DocumentModel[] {
-  return docs.filter(d => !d.isArchived && (d.folderKeys ?? []).includes(folderKey));
+  return docs.filter(d => !d.isArchived && (d.folderKeys ?? [])[0] === folderKey);
 }
 
 export function filterLearningDocs(

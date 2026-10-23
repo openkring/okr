@@ -3,6 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { groupAdminDeleteRefusal, isLearningRoomFolder } from './group-content.util';
 
 describe('learning room refusal for group admins', () => {
+  it('flags a room folder so updateGroupFolder can refuse renames and membersMayUpload toggles', () => {
+    expect(isLearningRoomFolder({ learningRoom: true, membersMayUpload: true })).toBe(true);
+    expect(isLearningRoomFolder({ membersMayUpload: true })).toBe(false);
+  });
+
   it('detects the flag only when strictly true', () => {
     expect(isLearningRoomFolder({ learningRoom: true })).toBe(true);
     expect(isLearningRoomFolder({ learningRoom: false })).toBe(false);

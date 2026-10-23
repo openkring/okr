@@ -508,8 +508,6 @@ export const LearningStore = signalStore(
             data.groupKey, group?.name || data.name, tenantId, user, (group?.admins ?? []).map(a => a.key));
           if (!ok) return undefined;
           folder = data.groupKey;
-          // flag the group folder as a room folder (rules: no author/owner write path to room files)
-          if (!await store.folderService.setLearningRoom(folder, true)) return undefined;
         } else {
           // the rooms list holds only live pages: an archived room with the same slug must not be
           // overwritten either (createModel is a blind upsert) — take the next free slug instead
@@ -522,12 +520,9 @@ export const LearningStore = signalStore(
           if (await pageExists(pageKey)) return undefined;
           if (data.createFolder) {
             const newFolder = newFolderModel(tenantId, data.name, [], user?.personKey ?? '');
-            newFolder.learningRoom = true;
             const created = await store.folderService.create(newFolder, user);
             if (!created) return undefined;
             folder = created;
-          } else if (folder && !await store.folderService.setLearningRoom(folder, true)) {
-            return undefined; // existing folder: flag it (partial update of just learningRoom)
           }
         }
         if (!folder) return undefined;
@@ -556,6 +551,13 @@ export const LearningStore = signalStore(
         if (!sectionKey) return undefined;
         const created = await store.pageService.create(page, user);
         if (!created) {
+          await store.sectionService.delete(section as SectionModel, user).catch(() => undefined);
+          return undefined;
+        }
+        // flag LAST (rules: no author/owner write path to room files): a failure before this point
+        // leaves the folder unflagged and open as before; a failure of the flag rolls page+section back
+        if (!await store.folderService.setLearningRoom(folder, true)) {
+          await store.pageService.delete(page, user).catch(() => undefined);
           await store.sectionService.delete(section as SectionModel, user).catch(() => undefined);
           return undefined;
         }

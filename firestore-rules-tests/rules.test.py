@@ -205,6 +205,8 @@ seed("docs/dRoomAuth",  {"tenants": ["t1"], "isArchived": False, "authorKey": "p
 seed("docs/dRoomAuth2", {"tenants": ["t1"], "isArchived": False, "authorKey": "pA", "folderKeys": ["fRoom"], "fullPath": "r2"})
 seed("docs/dRoomOther", {"tenants": ["t1"], "isArchived": False, "authorKey": "pC", "folderKeys": ["fRoom"], "fullPath": "r3"})
 seed("docs/dRoomAdm",    {"tenants": ["t1"], "isArchived": False, "authorKey": "pA", "folderKeys": ["fRoom"], "fullPath": "r4"})
+seed("docs/dRoomPriv",   {"tenants": ["t1"], "isArchived": False, "authorKey": "pA", "folderKeys": ["fRoom"], "fullPath": "r5"})
+seed("docs/dRoomCADel",  {"tenants": ["t1"], "isArchived": False, "authorKey": "pA", "folderKeys": ["fRoom"], "fullPath": "r6"})
 seed("docs/dNormA",     {"tenants": ["t1"], "isArchived": False, "authorKey": "pA", "folderKeys": ["fOpen"], "fullPath": "nm"})
 seed("folders/fPlain",  {"tenants": ["t1"], "isArchived": False, "name": "Plain", "ownerKey": "pA"})
 seed("folders/fRoomDelOwn",  {"tenants": ["t1"], "isArchived": False, "name": "RDO", "ownerKey": "pA", "learningRoom": True})
@@ -718,6 +720,13 @@ single_cases = [
     ("userC(contentAdmin) PATCH doc in learningRoom folder -> ALLOW", True, PATCH, "docs/dRoomAuth2", C,
      body({"fullPath": "r2b"}), ["fullPath"]),
     ("userD(admin) DELETE doc in learningRoom folder -> ALLOW", True, DELETE, "docs/dRoomAdm", D, None, None),
+    ("userP(privileged, not contentAdmin) PATCH doc in learningRoom folder -> ALLOW (documented asymmetry)", True, PATCH, "docs/dRoomPriv", P,
+     body({"fullPath": "r5b"}), ["fullPath"]),
+    ("userC(contentAdmin) DELETE doc in learningRoom folder -> DENY (admin only)", False, DELETE, "docs/dRoomCADel", C, None, None),
+    ("userE(member) create doc with folderKeys [fOpen, fRoom] -> DENY (second-folder plant)", False, POST, "docs?documentId=dPlant1", E,
+     body({"tenants": ["t1"], "authorKey": "pE", "folderKeys": ["fOpen", "fRoom"], "fullPath": "pl1"}), None),
+    ("userE(member) create doc with folderKeys [fOpen] -> ALLOW", True, POST, "docs?documentId=dPlant2", E,
+     body({"tenants": ["t1"], "authorKey": "pE", "folderKeys": ["fOpen"], "fullPath": "pl2"}), None),
     ("userE(member) create doc into learningRoom+membersMayUpload folder -> DENY", False, POST, "docs?documentId=dRoomN1", E,
      body({"tenants": ["t1"], "authorKey": "pE", "folderKeys": ["fRoom"], "fullPath": "rn1"}), None),
     ("userC(contentAdmin) create doc into learningRoom folder -> ALLOW", True, POST, "docs?documentId=dRoomN2", C,

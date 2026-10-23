@@ -11,6 +11,10 @@ describe('roomDocs', () => {
     const docs = [doc('a'), doc('b', { folderKeys: ['f2'] }), doc('c', { isArchived: true })];
     expect(roomDocs(docs, 'f1').map(d => d.okey)).toEqual(['a']);
   });
+  it('matches the FIRST folder only (a doc planted in a second position is not in the room)', () => {
+    const docs = [doc('a'), doc('planted', { folderKeys: ['f2', 'f1'] })];
+    expect(roomDocs(docs, 'f1').map(d => d.okey)).toEqual(['a']);
+  });
 });
 
 describe('filterLearningDocs', () => {

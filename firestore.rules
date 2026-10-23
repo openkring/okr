@@ -622,7 +622,7 @@ service cloud.firestore {
         isContentManager()
         || (callerPersonKey() != ''
             && request.resource.data.get('authorKey', '') == callerPersonKey()
-            && request.resource.data.get('folderKeys', []).size() > 0
+            && request.resource.data.get('folderKeys', []).size() == 1
             && belongsToTenant(folderData(request.resource.data.folderKeys[0]))
             && folderData(request.resource.data.folderKeys[0]).get('membersMayUpload', false) == true
             && !inLearningRoom(request.resource.data.folderKeys)));

@@ -104,6 +104,11 @@ Gate walked 2026-10-23, recorded in spec §7.2.
   callables use the Admin SDK. Only contentAdmin/admin may set or change the flag.
   A flagged folder is deletable only by contentAdmin/admin, and `deleteGroupContent` refuses room files
   for group admins. No backfill is needed: rooms are not deployed yet and each new room is flagged at creation.
+  `createRoom` sets the flag LAST (after section and page succeeded); if that write fails, page and section
+  are rolled back and the failure toast shows, so a half-created room never locks a folder.
+  `updateGroupFolder` refuses a group admin on a flagged folder (no rename, no `membersMayUpload` toggle).
+  Members may upload into exactly one folder (`folderKeys.size() == 1` in the rules), and `roomDocs` reads
+  only the first folder key, as the rules and the public API do.
 
 ## Known limits
 

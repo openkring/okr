@@ -103,6 +103,10 @@ export const updateGroupFolder = onCall(
       throw new HttpsError('permission-denied', 'Der Ordner gehört nicht zu dieser Gruppe.');
     }
 
+    if (isLearningRoomFolder(existing)) {
+      throw new HttpsError('permission-denied', 'Der Ordner gehört zu einem Lernraum und kann nur von Inhaltsverwaltung oder Administration geändert werden.');
+    }
+
     const patch = { name, title, description, tags, membersMayUpload };
     await ref.update({ ...patch, index: getFolderIndex({ ...existing, ...patch } as FolderModel) });
 
