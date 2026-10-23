@@ -71,7 +71,10 @@ export class GroupService  {
   }
 
   /**
-   * Delete an existing group.
+   * Delete an existing group (archive, or detach this tenant from a shared group — see getDeletePatch).
+   * Unlike a bare `FirestoreService.deleteModel`, the caller's `group` object is NOT patched: the
+   * archive/detach patch is applied to a copy without `adminKeys` (stripAdminKeys). Reload the group
+   * (or the list) to see `isArchived`/`tenants` change.
    * @param group the GroupModel to delete
    * @param currentUser the current user who performs the operation
    * @returns a Promise that resolves when the operation is complete

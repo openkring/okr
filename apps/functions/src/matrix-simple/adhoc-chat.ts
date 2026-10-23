@@ -20,6 +20,8 @@ import { getFirestore } from 'firebase-admin/firestore';
 
 import { DateFormat, getTodayStr, isActiveMembership } from '@okr/shared-util-core';
 
+import { groupAdminKeys } from '../group/group-admin-keys';
+
 import {
   matrixAdminToken,
   MATRIX_HOMESERVER,
@@ -169,6 +171,18 @@ export const createAdhocChat = onCall(
 
     const creator = persons.find((p) => p.okey === creatorKey);
 
+    const admins = creator
+      ? [{
+          key: creator.okey,
+          name1: creator.firstName,
+          name2: creator.lastName,
+          modelType: 'person',
+          type: '',
+          subType: '',
+          label: '',
+        }]
+      : [];
+
     // Schritt 1: das Gruppendokument. `kind: 'chat'` haelt es aus jeder Gruppenoberflaeche
     // heraus, `chatMode: 'members'` weist Nicht-Mitglieder am Raum ab.
     await db.collection('groups').doc(groupKey).set({
@@ -185,17 +199,10 @@ export const createAdhocChat = onCall(
       filesFolder: '',
       hasMembers: false,
       matrixRoomId: '',
-      admins: creator
-        ? [{
-            key: creator.okey,
-            name1: creator.firstName,
-            name2: creator.lastName,
-            modelType: 'person',
-            type: '',
-            subType: '',
-            label: '',
-          }]
-        : [],
+      admins,
+      // written with admins so the creator can archive at once (rules test adminKeys); the
+      // onGroupWritten trigger finds it equal and does not write again.
+      adminKeys: groupAdminKeys(admins),
       parentKey: tenant,
       parentName: '',
       parentModelType: 'org',
@@ -515,7 +522,8 @@ async function endAdhocMembership(
     .filter((m) => m.memberKey !== personKey && isActiveMembership(m, today))
     .map((m) => ({ personKey: m.memberKey, dateOfEntry: m.dateOfEntry ?? '', name1: m.memberName1 ?? '', name2: m.memberName2 ?? '' }));
   const admins = adhocAdminsAfterLeave(group['admins'], personKey, remaining);
-  if (admins) batch.update(db.collection('groups').doc(chatKey), { admins });
+  // adminKeys in the same write: the new admin may archive at once (the trigger then finds it equal).
+  if (admins) batch.update(db.collection('groups').doc(chatKey), { admins, adminKeys: groupAdminKeys(admins) });
 
   await batch.commit();
   if (admins) console.log(`endAdhocMembership: admins of ${chatKey} → [${admins.map((a) => a.key).join(', ')}]`);

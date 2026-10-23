@@ -12,6 +12,8 @@ import { getFirestore } from 'firebase-admin/firestore';
 
 import { DateFormat, getTodayStr, isActiveMembership } from '@okr/shared-util-core';
 
+import { groupAdminKeys } from '../group/group-admin-keys';
+
 import {
   matrixAdminToken, requireRole, requireProvisionedUser, requireUserPersonKey, requireParam, checkRateLimit,
   getUserTenants, resolveGroupRoom, ensureAdminInRoom, setRoomName, setRoomTopic, ensureMatrixUserExists,
@@ -269,11 +271,12 @@ export const createPinboard = onCall(CALLABLE, async (request): Promise<{ groupK
 
   // Reihenfolge wie bei createAdhocChat: Dokument → Raum → Mitgliedschaften.
   const groupRef = db.collection('groups').doc(groupKey);
+  const admins = [{ key: creatorKey, name1: (creator['firstName'] as string) ?? '', name2: (creator['lastName'] as string) ?? '', modelType: 'person', type: '', subType: '', label: '' }];
   await groupRef.set({
     name, kind: 'pinboard', notes: description, tags: '', icon: 'group',
     hasContent: false, hasChat: true, hasCalendar: false, hasTasks: false, hasFiles: false, filesFolder: '', hasMembers: false,
     matrixRoomId: '',
-    admins: [{ key: creatorKey, name1: (creator['firstName'] as string) ?? '', name2: (creator['lastName'] as string) ?? '', modelType: 'person', type: '', subType: '', label: '' }],
+    admins, adminKeys: groupAdminKeys(admins), // adminKeys with admins: the trigger then finds it equal
     parentKey: tenant, parentName: '', parentModelType: 'org', visibility: '',
     notifyType: 'memberOnly', chatMode: 'members', postPolicy: 'all',
     sourceGroupKeys: sources, joinMode: data.joinMode ?? 'optOut', allowReplyAll: data.allowReplyAll ?? false,

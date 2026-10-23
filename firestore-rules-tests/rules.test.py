@@ -299,6 +299,13 @@ seed("tasks/tkArch", {"tenants": ["t1"], "isArchived": True, "shareKey": "", "na
 # closed-group tasks (spec 1.75): gClosed is chatMode 'members', gOpen is not.
 seed("groups/gOpen",   {"tenants": ["t1"], "chatMode": "ask"})
 seed("groups/gClosed", {"tenants": ["t1"], "chatMode": "members"})
+# group writes (spec 1.115 §7.2): adminKeys is the server-maintained mirror of admins[].key.
+# pE is admin of gAdm/gShared by adminKeys; gBlank carries an empty key; uidN/uidN2 have no personKey.
+seed("groups/gAdm",    {"tenants": ["t1"], "name": "Adm", "admins": [{"key": "pE"}], "adminKeys": ["pE"]})
+seed("groups/gShared", {"tenants": ["t1", "t2"], "name": "Shared", "admins": [{"key": "pE"}], "adminKeys": ["pE"]})
+seed("groups/gBlank",  {"tenants": ["t1"], "name": "Blank", "admins": [{"key": ""}], "adminKeys": [""]})
+seed("users/uidN",  {"tenants": ["t1"], "roles": {}, "firstName": "N"})
+seed("users/uidN2", {"tenants": ["t1"], "roles": {}, "firstName": "N2", "personKey": ""})
 for key, okey in [("gOpen", "tkOpen"), ("gClosed", "tkClosed"), ("meeting.m1", "tkMeet"), ("gNone", "tkNone")]:
     seed(f"tasks/{okey}", {"tenants": ["t1"], "isArchived": False, "shareKey": key, "name": okey,
                            "author": {"key": "pE", "name1": "E"}, "assignee": {"key": "pZ", "name1": "Z"},
@@ -337,6 +344,7 @@ seed("users/uidO2", {"tenants": ["bka"], "roles": {}, "firstName": "O2", "person
 seed("users/uidO3", {"tenants": ["bka", "t1"], "roles": {"admin": True}, "firstName": "O3", "personKey": "pO3"})
 O, O2, O3 = jwt("uidO"), jwt("uidO2"), jwt("uidO3")
 NODOC = jwt("uidNoDoc")  # signed in, but no users/{uid} doc
+N, N2 = jwt("uidN"), jwt("uidN2")  # no personKey / empty personKey, no role
 GET, PATCH, POST, DELETE = "GET", "PATCH", "POST", "DELETE"
 
 
@@ -687,6 +695,47 @@ single_cases = [
      body({"name": "Event2"}), ["name"]),
     ("userA DELETE foreign folder -> DENY", False, DELETE, "folders/fClosed", A, None, None),
     ("userA DELETE own folder -> ALLOW", True, DELETE, "folders/fMine", A, None, None),
+    # spec 1.115 §7.2: groups — create by privileged/memberAdmin (no adminKeys); update/detach/delete by
+    # privileged, memberAdmin or a person in the STORED adminKeys; no client may change adminKeys.
+    ("userA(member) PATCH group name -> DENY", False, PATCH, "groups/gAdm", A,
+     body({"name": "X"}), ["name"]),
+    ("userA(member) self-detach shared group -> DENY", False, PATCH, "groups/gShared", A,
+     body({"tenants": ["t2"]}), ["tenants"]),
+    ("userA(member) DELETE group -> DENY", False, DELETE, "groups/gAdm", A, None, None),
+    ("userA(member) adds self to admins[] -> DENY", False, PATCH, "groups/gAdm", A,
+     body({"admins": [{"key": "pE"}, {"key": "pA"}]}), ["admins"]),
+    ("userA(member) adds self to admins[] + adminKeys -> DENY", False, PATCH, "groups/gAdm", A,
+     body({"admins": [{"key": "pE"}, {"key": "pA"}], "adminKeys": ["pE", "pA"]}), ["admins", "adminKeys"]),
+    ("userE(adminKeys) PATCH group name -> ALLOW", True, PATCH, "groups/gAdm", E,
+     body({"name": "Adm2"}), ["name"]),
+    ("userE(adminKeys) adds admin to admins[] -> ALLOW", True, PATCH, "groups/gAdm", E,
+     body({"admins": [{"key": "pE"}, {"key": "pA"}]}), ["admins"]),
+    ("userE(adminKeys) changes adminKeys -> DENY", False, PATCH, "groups/gAdm", E,
+     body({"adminKeys": ["pE", "pA"]}), ["adminKeys"]),
+    ("userM(memberAdmin) changes adminKeys -> DENY", False, PATCH, "groups/gAdm", M,
+     body({"adminKeys": ["pM"]}), ["adminKeys"]),
+    ("userD(admin) changes adminKeys -> DENY", False, PATCH, "groups/gAdm", D,
+     body({"adminKeys": []}), ["adminKeys"]),
+    ("userE(adminKeys) self-detach shared group -> ALLOW", True, PATCH, "groups/gShared", E,
+     body({"tenants": ["t2"]}), ["tenants"]),
+    ("userM(memberAdmin) create group with adminKeys ['x'] -> DENY", False, POST, "groups?documentId=gNew1", M,
+     body({"tenants": ["t1"], "name": "New1", "admins": [{"key": "x"}], "adminKeys": ["x"]}), None),
+    ("userM(memberAdmin) create group without adminKeys -> ALLOW", True, POST, "groups?documentId=gNew2", M,
+     body({"tenants": ["t1"], "name": "New2", "admins": [{"key": "pM"}]}), None),
+    ("userP(privileged) create group with adminKeys [] -> ALLOW", True, POST, "groups?documentId=gNew3", P,
+     body({"tenants": ["t1"], "name": "New3", "adminKeys": []}), None),
+    ("userA(member) create group -> DENY", False, POST, "groups?documentId=gNew4", A,
+     body({"tenants": ["t1"], "name": "New4"}), None),
+    ("userM(memberAdmin) PATCH foreign group -> ALLOW", True, PATCH, "groups/gAdm", M,
+     body({"name": "Adm3"}), ["name"]),
+    ("userN(no personKey) PATCH group with adminKeys [''] -> DENY", False, PATCH, "groups/gBlank", N,
+     body({"name": "X"}), ["name"]),
+    ("userN2(personKey '') PATCH group with adminKeys [''] -> DENY", False, PATCH, "groups/gBlank", N2,
+     body({"name": "X"}), ["name"]),
+    ("userN2(personKey '') DELETE group with adminKeys [''] -> DENY", False, DELETE, "groups/gBlank", N2, None, None),
+    ("userE(adminKeys) removes self from admins[] -> ALLOW (stored adminKeys)", True, PATCH, "groups/gAdm", E,
+     body({"admins": [{"key": "pA"}]}), ["admins"]),
+    ("userE(adminKeys) DELETE group -> ALLOW", True, DELETE, "groups/gAdm", E, None, None),
     # privacy 1.19 D-P4-10: a person's avatar is a picture OF that person — only they,
     # memberAdmin or privileged may write it. Non-person avatars stay tenant content.
     # the doc id is tenant-scoped (`t1.person.pA`); a bare id (`person.pA`) is the shared
