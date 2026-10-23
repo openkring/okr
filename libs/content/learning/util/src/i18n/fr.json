@@ -11,5 +11,33 @@
     "folderRequired": "Choisis un dossier.",
     "tooManyTopics": "Tu peux indiquer 30 thèmes au maximum.",
     "curatorsPersonsOnly": "Seules des personnes peuvent être choisies comme responsables."
+  },
+  "tab": {
+    "files": "Fichiers",
+    "videos": "Vidéos",
+    "images": "Images"
+  },
+  "search": {
+    "placeholder": "Rechercher"
+  },
+  "topic": {
+    "all": "Tous"
+  },
+  "empty": {
+    "files": "Il n'y a pas encore de fichiers ici.",
+    "videos": "Il n'y a pas encore de vidéos ici.",
+    "images": "Il n'y a pas encore d'images ici."
+  },
+  "rating": {
+    "label": "Évaluation",
+    "none": "Pas d'évaluation",
+    "one": "1 étoile",
+    "many": "{n} étoiles"
+  },
+  "item": {
+    "notes": "Note",
+    "videoUnavailable": "Cette vidéo n'est pas disponible pour le moment.",
+    "open": "Ouvrir",
+    "download": "Télécharger"
   }
 }

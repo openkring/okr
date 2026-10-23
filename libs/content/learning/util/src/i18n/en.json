@@ -11,5 +11,33 @@
     "folderRequired": "Choose a folder.",
     "tooManyTopics": "You can enter at most 30 topics.",
     "curatorsPersonsOnly": "Only persons can be chosen as curators."
+  },
+  "tab": {
+    "files": "Files",
+    "videos": "Videos",
+    "images": "Images"
+  },
+  "search": {
+    "placeholder": "Search"
+  },
+  "topic": {
+    "all": "All"
+  },
+  "empty": {
+    "files": "There are no files here yet.",
+    "videos": "There are no videos here yet.",
+    "images": "There are no images here yet."
+  },
+  "rating": {
+    "label": "Rating",
+    "none": "No rating",
+    "one": "1 star",
+    "many": "{n} stars"
+  },
+  "item": {
+    "notes": "Note",
+    "videoUnavailable": "This video is not available right now.",
+    "open": "Open",
+    "download": "Download"
   }
 }
