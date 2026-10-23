@@ -19,7 +19,7 @@ import { newsRouter } from './routes/news';
 import { calendarRouter } from './routes/calendar';
 import { contactRouter } from './routes/contact';
 import { coursesRouter, resultsRouter } from './routes/stubs';
-import { pageRouter } from './routes/page';
+import { imgixPrivateToken, pageRouter } from './routes/page';
 import { aliasRouter } from './routes/alias';
 import { galleryRouter } from './routes/gallery';
 import {
@@ -139,4 +139,4 @@ app.use((err: unknown, _req: express.Request, res: express.Response, _next: expr
   }
 });
 
-export const publicApi = onRequest({ region: 'europe-west6', secrets: [mailtrapApiKey, aliasIpHashSecret] }, app);
+export const publicApi = onRequest({ region: 'europe-west6', secrets: [mailtrapApiKey, aliasIpHashSecret, imgixPrivateToken] }, app);

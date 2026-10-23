@@ -1,8 +1,19 @@
 import { Request, Response } from 'express';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
+import { defineSecret } from 'firebase-functions/params';
+
+import type { DocumentLink } from '@okr/shared-models';
+import { DocumentCollection } from '@okr/shared-models';
+import { learningTabOf, parseTopics, type PublicLearningItem, type PublicLearningSection } from '@okr/content-learning-util';
+
 import { setCacheHeaders } from '../utils';
 import { getHtmlSanitizer } from '../sanitize';
+import { IMGIX_PRIVATE_HOST, signImgixUrl } from '../../_storage/imgix-sign';
+import { isAlbumVideoObjectPath, MP4_PARAMS, POSTER_PARAMS, windowExpiry } from '../../video/video-sign.util';
+
+/** Signs learning-room videos (private bucket) on the public page; mounted on `publicApi` in index.ts. */
+export const imgixPrivateToken = defineSecret('IMGIX_PRIVATE_TOKEN');
 
 const IMGIX_BASE = 'https://bkaiser.imgix.net';
 
@@ -158,6 +169,124 @@ function mapSection(s: SectionDoc, nestedSections: Map<string, SectionDoc>, sani
   }
 }
 
+// --------------------------------------- LEARNING ----------------------------------------
+// Spec 1.115 part 2 §5.5: a learning room is public only when its PAGE is published
+// (`isPrivate === false`, strict). Otherwise the section is a locked shell. Never exposed: the
+// folder key, author names, ratings, comments, curators, attachments (attachment docs may live
+// outside the room folder and would leak private files).
+
+/** Whether a page doc is published to the public website. Anything but an explicit `false` is private. */
+export function isPublishedPage(page: Record<string, unknown> | undefined): boolean {
+  return page?.['isPrivate'] === false;
+}
+
+export interface LearningRawDoc { key: string; data: Record<string, unknown> }
+
+export interface LearningSectionOptions {
+  published: boolean;
+  tenantId: string;
+  /** Candidate documents (the folder query); tenant, archive and folder are re-checked here. */
+  docs: LearningRawDoc[];
+  sanitize: SanitizeFn;
+  /** Signed private-imgix mp4 + poster URLs for a validated album-video path. */
+  signVideo: (path: string) => { url: string; posterUrl: string };
+}
+
+function str(v: unknown): string {
+  return typeof v === 'string' ? v : '';
+}
+
+function httpsLinks(raw: unknown): DocumentLink[] {
+  if (!Array.isArray(raw)) return [];
+  const out: DocumentLink[] = [];
+  for (const l of raw as { title?: unknown; url?: unknown }[]) {
+    const url = str(l?.url).trim();
+    try {
+      if (new URL(url).protocol !== 'https:') continue;
+    } catch {
+      continue;
+    }
+    out.push({ title: str(l?.title), url });
+  }
+  return out;
+}
+
+/** Public URL of a default-bucket document: images through imgix, other files by their download URL. */
+function publicFileUrl(data: Record<string, unknown>, isImage: boolean): string {
+  const path = str(data['fullPath']).replace(/^\/+/, '');
+  if (isImage) return toImgixUrl(path);
+  const url = str(data['url']);
+  if (/^https:\/\//.test(url)) return url;
+  return path ? `${IMGIX_BASE}/${path.split('/').map(encodeURIComponent).join('/')}` : '';
+}
+
+export function buildLearningSection(s: SectionDoc, o: LearningSectionOptions): PublicLearningSection {
+  const props = (s.properties ?? {}) as Record<string, unknown>;
+  const title = pickI18n(props['titleI18n'] as I18nString | undefined, s.title ?? '');
+  const subTitle = pickI18n(props['subTitleI18n'] as I18nString | undefined, s.subTitle ?? '');
+  const folder = str(props['folder']);
+  if (!o.published || !folder) return { type: 'learning', title, subTitle, locked: true, topics: [], items: [] };
+
+  const items: PublicLearningItem[] = [];
+  for (const { key, data } of o.docs) {
+    if (data['isArchived'] === true) continue;
+    if (!((data['tenants'] as unknown[] | undefined) ?? []).includes(o.tenantId)) continue;
+    if (!((data['folderKeys'] as unknown[] | undefined) ?? []).includes(folder)) continue;
+    const tab = learningTabOf(str(data['mimeType']));
+    const item: PublicLearningItem = {
+      key,
+      tab,
+      title: str(data['title']),
+      tags: parseTopics(str(data['tags'])),
+      notes: o.sanitize(str(data['notes'])),
+      links: httpsLinks(data['links']),
+      url: '',
+    };
+    if (tab === 'videos') {
+      // fullPath is author-editable: only the album-video layout may be signed for the private host.
+      const path = str(data['fullPath']);
+      if (!isAlbumVideoObjectPath(path, o.tenantId)) continue;
+      // A signing failure (missing secret) drops the video, never the whole page.
+      try {
+        const signed = o.signVideo(path);
+        item.url = signed.url;
+        item.posterUrl = signed.posterUrl;
+      } catch (err) {
+        logger.warn('publicApi learning: could not sign video', { key, err: String(err) });
+        continue;
+      }
+    } else {
+      item.url = publicFileUrl(data, tab === 'images');
+      if (!item.url) continue;
+    }
+    items.push(item);
+  }
+  items.sort((a, b) => a.title.localeCompare(b.title, 'de'));
+  return { type: 'learning', title, subTitle, locked: false, topics: parseTopics(str(props['topics'])), items };
+}
+
+/** Loads the room's documents (single-field `folderKeys` query, no composite index) and maps the section. */
+async function loadLearningSection(
+  db: Firestore, s: SectionDoc, published: boolean, tenantId: string, sanitize: SanitizeFn,
+): Promise<PublicLearningSection> {
+  const folder = str((s.properties ?? {})['folder']);
+  let docs: LearningRawDoc[] = [];
+  if (published && folder) {
+    const snap = await db.collection(DocumentCollection).where('folderKeys', 'array-contains', folder).get();
+    docs = snap.docs.map(d => ({ key: d.id, data: d.data() }));
+  }
+  const expires = Math.floor(windowExpiry(Date.now()) / 1000);
+  let token: string | undefined;
+  const signVideo = (path: string) => {
+    token ??= imgixPrivateToken.value();
+    return {
+      url: signImgixUrl(IMGIX_PRIVATE_HOST, token, path, { ...MP4_PARAMS, expires }),
+      posterUrl: signImgixUrl(IMGIX_PRIVATE_HOST, token, path, { ...POSTER_PARAMS, expires }),
+    };
+  };
+  return buildLearningSection(s, { published, tenantId, docs, sanitize, signVideo });
+}
+
 export async function pageRouter(req: Request, res: Response): Promise<void> {
   const tenantId = (req.query['tenantId'] as string)?.trim();
   if (!tenantId) {
@@ -233,7 +362,10 @@ export async function pageRouter(req: Request, res: Response): Promise<void> {
     }
 
     const sanitize = await getHtmlSanitizer();
-    const sections = liveSections.map(s => mapSection(s, nestedSections, sanitize));
+    const published = isPublishedPage(pageData);
+    const sections = await Promise.all(liveSections.map(s => (s.type === 'learning'
+      ? loadLearningSection(db, s, published, tenantId, sanitize)
+      : mapSection(s, nestedSections, sanitize))));
 
     setCacheHeaders(res);
     res.json({ ...pageEnvelope, sections });
