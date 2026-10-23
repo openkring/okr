@@ -47,6 +47,23 @@ service cloud.firestore {
     function isContentManager() {
       return hasRole('contentAdmin') || isPrivileged();
     }
+    // Learning rooms (spec 1.115 §6): administering a room (its section config, publishing) is for
+    // contentAdmin/admin only — narrower than isContentManager, which also admits `privileged`.
+    function isContentAdminOrAdmin() {
+      return hasRole('contentAdmin') || isAdmin();
+    }
+    // pages update: publishing or unpublishing a learning room (isPrivate) needs contentAdmin/admin.
+    function learningPublishOk() {
+      return (resource.data.get('type', '') != 'learning' && request.resource.data.get('type', '') != 'learning')
+        || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isPrivate'])
+        || isContentAdminOrAdmin();
+    }
+    // sections create/update/delete: a learning section (curators, folder, topics) needs contentAdmin/admin.
+    function learningSectionWriteOk() {
+      return isContentAdminOrAdmin()
+        || ((resource == null || resource.data.get('type', '') != 'learning')
+            && (request.resource == null || request.resource.data.get('type', '') != 'learning'));
+    }
     // ── addresses vault (privacy 1.19 Phase 4 lock) ─────────────────────────────
     // The caller owns an address when its parentKey points at their own person.
     function ownsParent(data) {
@@ -253,8 +270,8 @@ service cloud.firestore {
       allow read, write: if false;
     }
     // CMS content rendered by the anonymous PWA landing — public read.
-    match /pages/{id}           { allow read: if true; allow create, update: if isContentManager() && tenantCreateOrDetach(); allow delete: if isContentManager() && canWriteTenant(resource.data); }
-    match /sections/{id}        { allow read: if true; allow create, update: if isContentManager() && tenantCreateOrDetach(); allow delete: if isContentManager() && canWriteTenant(resource.data); }
+    match /pages/{id}           { allow read: if true; allow create: if isContentManager() && tenantCreateOrDetach(); allow update: if isContentManager() && tenantCreateOrDetach() && learningPublishOk(); allow delete: if isContentManager() && canWriteTenant(resource.data); }
+    match /sections/{id}        { allow read: if true; allow create, update: if isContentManager() && tenantCreateOrDetach() && learningSectionWriteOk(); allow delete: if isContentManager() && canWriteTenant(resource.data) && learningSectionWriteOk(); }
     // menuItems/categories: navigation + select metadata. menuItems is read by the
     // app shell's menu store (ungated); categories are CMS select-lists. Low
     // sensitivity, kept public-readable; writes are content-role gated.
@@ -592,7 +609,11 @@ service cloud.firestore {
             && request.resource.data.get('folderKeys', []).size() > 0
             && belongsToTenant(folderData(request.resource.data.folderKeys[0]))
             && folderData(request.resource.data.folderKeys[0]).get('membersMayUpload', false) == true));
-      allow update: if tenantUpdate() && (
+      // ratingCount/ratingSum are the onRatingWritten aggregate (Admin SDK, bypasses rules): no client
+      // path but an admin's may change them (spec 1.115 §7.2). DocumentService.update never sends them.
+      allow update: if tenantUpdate()
+        && (isAdmin() || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['ratingCount', 'ratingSum']))
+        && (
         isContentManager()
         || (callerPersonKey() != ''
             && resource.data.get('authorKey', '') == callerPersonKey()

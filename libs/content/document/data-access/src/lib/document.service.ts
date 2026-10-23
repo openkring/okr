@@ -75,7 +75,11 @@ export class DocumentService {
    */
   public async update(document: DocumentModel, currentUser?: UserModel): Promise<string | undefined> {
     document.index = getDocumentIndex(document);
-    return await this.firestoreService.updateModel<DocumentModel>(DocumentCollection, document, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
+    // never send the rating aggregate (server-maintained, rules refuse a client change): a stale copy
+    // in an open editor would otherwise revert it, or fail the whole save. updateModel drops undefined
+    // fields and updateDoc leaves absent ones as they are.
+    const toWrite: DocumentModel = { ...document, ratingCount: undefined, ratingSum: undefined };
+    return await this.firestoreService.updateModel<DocumentModel>(DocumentCollection, toWrite, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
   }
 
   /**
