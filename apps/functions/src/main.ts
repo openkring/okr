@@ -555,3 +555,5 @@ export const saveLearningItem = Learning.saveLearningItem;
 export const prepareLearningUpload = Learning.prepareLearningUpload;
 // deleteLearningItem: learning rooms, a curator removes an item — detach from the room folder or archive (spec 1.115)
 export const deleteLearningItem = Learning.deleteLearningItem;
+// onRatingWritten: learning rooms, a rating write refreshes docs/{docKey}.ratingCount/ratingSum (spec 1.115)
+export const onRatingWritten = Learning.onRatingWritten;

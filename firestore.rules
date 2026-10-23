@@ -612,6 +612,30 @@ service cloud.firestore {
             && belongsToTenant(folderData(resource.data.folderKeys[0]))
             && folderData(resource.data.folderKeys[0]).get('ownerKey', '') == callerPersonKey()));
     }
+    // ratings (learning rooms, spec 1.115): one star rating per person and document, okey =
+    // `<docKey>__<personKey>`. Author-only reads (the aggregate lives on docs, written by the
+    // onRatingWritten trigger with the Admin SDK). parentKey is 'document.<docKey>'.
+    match /ratings/{id} {
+      allow read: if tenantRead()
+        && (resource == null || resource.data.get('personKey', '') == callerPersonKey());
+      allow create: if tenantCreate()
+        && callerPersonKey() != ''
+        && request.resource.data.get('personKey', '') == callerPersonKey()
+        && request.resource.data.get('parentKey', '').matches('document\\..+')
+        && id == request.resource.data.parentKey.split('\\.')[1] + '__' + callerPersonKey()
+        && request.resource.data.get('stars', 0) is int
+        && request.resource.data.stars >= 1 && request.resource.data.stars <= 5;
+      allow update: if tenantUpdate()
+        && callerPersonKey() != ''
+        && resource.data.get('personKey', '') == callerPersonKey()
+        && request.resource.data.get('personKey', '') == resource.data.get('personKey', '')
+        && request.resource.data.get('parentKey', '') == resource.data.get('parentKey', '')
+        && request.resource.data.get('stars', 0) is int
+        && request.resource.data.stars >= 1 && request.resource.data.stars <= 5;
+      allow delete: if tenantDelete()
+        && callerPersonKey() != ''
+        && resource.data.get('personKey', '') == callerPersonKey();
+    }
     match /folders/{id} {
       allow read: if tenantRead();
       allow create: if tenantCreate() && (

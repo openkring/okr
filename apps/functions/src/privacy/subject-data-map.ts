@@ -977,6 +977,19 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     retention: { months: 'indefinite', legalBasis: 'Persönliche Aufzeichnung — bleibt, bis die Person sie löscht' },
   },
   {
+    collection: 'ratings',
+    dataClass: 'content',
+    tier: 'T2',              // a voluntary star rating of a learning document
+    onTenantExit: 'delete',  // personal feedback, not a club record
+    // Spec 1.115 §6: ratings/{docKey}__{personKey}, one per person and document. The subject is the
+    // author, by `personKey`; the rules let only the author read it.
+    find: (c: SubjectCtx) => db().collection('ratings').where('personKey', '==', c.personKey),
+    tenantScope: 'tenantsArray',
+    onExport: 'full',
+    onErasure: 'delete',     // onRatingWritten then recomputes docs.ratingCount/ratingSum without it
+    retention: { months: 'indefinite', legalBasis: 'Freiwillige Bewertung — bleibt, bis die Person sie löscht' },
+  },
+  {
     collection: 'stats_members',
     dataClass: 'content',
     tier: 'T4',
