@@ -26,6 +26,7 @@ import * as Vectorize from './vectorize';
 import * as Video from './video';
 import * as FileTransfer from './file-transfer';
 import * as Learning from './learning';
+import * as Group from './group';
 import * as Expense from './expense';
 import * as Booking from './booking';
 import * as Invoice from './invoice';
@@ -565,3 +566,5 @@ export const ensureJournalPeerSecret = Journal.ensureJournalPeerSecret;
 export const deleteLearningItem = Learning.deleteLearningItem;
 // onRatingWritten: learning rooms, a rating write refreshes docs/{docKey}.ratingCount/ratingSum (spec 1.115)
 export const onRatingWritten = Learning.onRatingWritten;
+// onGroupWritten: groups, keeps groups/{id}.adminKeys (exact-case personKeys of admins[]) in step for firestore.rules
+export const onGroupWritten = Group.onGroupWritten;
