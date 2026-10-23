@@ -3163,8 +3163,42 @@ const fileTransfer: FeatureBlock = {
   ],
 };
 
+/**
+ * `libs/content/learning/*` — Lernräume (spec 1.115 part 2): media-first rooms over a folder, with
+ * topics, curators, ratings, comments and an optional publication to the website.
+ *
+ * A room is a CMS page of type `learning` and is reached through the `cms` routes and a menu entry
+ * the tenant makes in the menu editor (or as the «Dateien» segment of a group). This block owns
+ * only the item page, the room configuration page and its admin row — rooms keep rendering when
+ * the block is off (PageDispatcher knows the type); uploads and edits still go through the
+ * learning callables.
+ *
+ * `defaultAvailability: 'ga'` like the other content blocks (`document`, `meeting`): nothing here
+ * is reached anonymously (the public view of a published room runs on the `cms` routes), so the
+ * anonymous-gate reason of `file-transfer` does not apply; a tenant still has to tick the block.
+ *
+ * `dependsOn: ['document']` — rooms are folders of `docs`; comments, pages and sections are core.
+ *
+ * Menu: «Lernräume» for contentAdmin, nested under the shared `cms-menu` parent next to
+ * `document-all`/`folder-all` (rule 2: content administration lives there).
+ */
+const learningBlock: FeatureBlock = {
+  id: 'learning',
+  bundle: 'documents',
+  label: '@tenant/util.feature.learning.label',
+  icon: 'school',
+  defaultAvailability: 'ga',
+  dependsOn: ['document'],
+  collections: ['ratings'],
+  menu: [
+    cmsMenuParent([
+      { key: 'learning-rooms', name: 'learning-rooms', url: '/private/learning-rooms', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'school', label: '@item.learning-rooms' },
+    ]),
+  ],
+};
+
 export const FEATURE_BLOCKS: FeatureBlock[] = [
-  calevent, fileTransfer, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, memory, backgammon, klondike, jasstafel, tetris, mampf, wordle, chess,
+  calevent, fileTransfer, learningBlock, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, memory, backgammon, klondike, jasstafel, tetris, mampf, wordle, chess,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

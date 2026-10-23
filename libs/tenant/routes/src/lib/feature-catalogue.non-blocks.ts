@@ -52,9 +52,9 @@ export const NON_BLOCK_DOMAINS: Record<string, string> = {
   // `meeting` are no longer visible to the completeness test at all — deleting any of their
   // blocks would not turn it red. Recorded, not fixed; fixing it means teaching the test which
   // directories are containers, which is the same open question as the paragraph above.
-  // `diary` (block `diary`) and `file-transfer` (block `file-transfer`, spec 1.115) joined the
-  // container later and are catalogued the same way.
-  content: 'container directory (2026-08-14 move); its subdomains are catalogued individually as `document`, `esign`, `pdf-template`, `meeting`, `diary` and `file-transfer`',
+  // `diary` (block `diary`), `file-transfer` (block `file-transfer`, spec 1.115) and `learning`
+  // (block `learning`, spec 1.115 part 2) joined the container later and are catalogued the same way.
+  content: 'container directory (2026-08-14 move); its subdomains are catalogued individually as `document`, `esign`, `pdf-template`, `meeting`, `diary`, `file-transfer` and `learning`',
   // The `project` CONTAINER (spec 3.14 A11), created when `libs/task` moved into `libs/project/task`
   // and `libs/project/project` was added beside it. Same shape as `content` above: the container is
   // judged at the top level only, and its product surface is ONE block, `task`, whose id is a SKU

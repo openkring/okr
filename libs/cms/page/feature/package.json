@@ -31,6 +31,7 @@
     "@okr/content-document-util": "*",
     "@okr/content-folder-data-access": "*",
     "@okr/shared-constants": "*",
-    "@okr/tenant-util": "*"
+    "@okr/tenant-util": "*",
+    "@okr/content-learning-feature": "*"
   }
 }

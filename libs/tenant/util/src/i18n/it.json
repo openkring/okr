@@ -194,6 +194,9 @@
     },
     "journal": {
       "label": "Diario di viaggio"
+    },
+    "learning": {
+      "label": "Spazi di apprendimento"
     }
   },
   "picker": {

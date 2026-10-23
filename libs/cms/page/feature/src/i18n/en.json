@@ -219,6 +219,10 @@
     "shop": {
       "label": "Shop",
       "description": "In the shop, products can be sold. Components of the shop are an overview with search, detail views of the products. In the shopping cart, the selected products are summarized with prices and released for ordering with payment."
+    },
+    "learning": {
+      "label": "Learning room",
+      "description": "A learning room shows the files, videos and images of a folder, sorted by topic, with ratings and comments."
     }
   },
   "videoPage": {

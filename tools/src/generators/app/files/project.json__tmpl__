@@ -267,6 +267,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/content/learning/util/src/i18n",
+            "output": "./assets/i18n/content/learning/util"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/content/meeting/data-access/src/i18n",
             "output": "./assets/i18n/content/meeting/data-access"
           },

@@ -25,9 +25,9 @@
     "all": "Alle"
   },
   "empty": {
-    "files": "Hier gibt es noch keine Dateien.",
-    "videos": "Hier gibt es noch keine Videos.",
-    "images": "Hier gibt es noch keine Bilder."
+    "files": "Keine Dateien gefunden.",
+    "videos": "Keine Videos gefunden.",
+    "images": "Keine Bilder gefunden."
   },
   "rating": {
     "label": "Bewertung",
@@ -106,5 +106,58 @@
     "header": "Veröffentlichung zurückziehen?",
     "message": "Der Lernraum ist danach nur noch für Mitglieder sichtbar. Auf der Website können die Inhalte noch eine Weile im Zwischenspeicher sichtbar bleiben.",
     "confirm": "Zurückziehen"
+  },
+  "room": {
+    "notConfigured": "Dieser Lernraum ist noch nicht eingerichtet.",
+    "unavailable": "Dieser Lernraum ist gerade nicht verfügbar.",
+    "upload": "Hochladen",
+    "uploadTopic": "In welches Thema möchtest du hochladen?",
+    "uploading": "{name} wird hochgeladen …",
+    "uploaded": "{name} ist hochgeladen.",
+    "uploadFailed": "Das Hochladen hat nicht geklappt. Versuch es bitte nochmals.",
+    "uploadCancel": "Abbrechen"
+  },
+  "detail": {
+    "title": "Beitrag",
+    "notFound": "Dieser Beitrag ist nicht verfügbar.",
+    "uploadedBy": "Hochgeladen von {name} am {date}",
+    "uploadedOn": "Hochgeladen am {date}",
+    "yourRating": "Deine Bewertung",
+    "clearRating": "Bewertung entfernen",
+    "links": "Links",
+    "attachments": "Anhänge",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "deleteConfirm": "Möchtest du «{title}» aus dem Lernraum löschen?",
+    "saved": "Gespeichert.",
+    "deleted": "Gelöscht.",
+    "saveFailed": "Das hat nicht geklappt. Versuch es bitte nochmals.",
+    "pickAttachment": "Anhang wählen",
+    "noAttachmentCandidates": "In diesem Lernraum gibt es keine weiteren Dateien.",
+    "ok": "OK"
+  },
+  "rooms": {
+    "title": "Lernräume",
+    "add": "Neuer Lernraum",
+    "empty": "Keine Lernräume gefunden.",
+    "public": "Öffentlich",
+    "private": "Nur Mitglieder",
+    "group": "Gruppe {name}",
+    "menu": "Über das Menü",
+    "actions": "Lernraum",
+    "open": "Öffnen",
+    "edit": "Einstellungen ändern",
+    "publish": "Veröffentlichen",
+    "unpublish": "Veröffentlichung zurückziehen",
+    "copyUrl": "Link kopieren",
+    "urlCopied": "Link kopiert. Du kannst ihn im Menü-Editor als Menüeintrag verwenden.",
+    "archive": "Archivieren",
+    "archiveConfirm": "Möchtest du den Lernraum «{name}» archivieren? Der Ordner und alle Dateien bleiben erhalten.",
+    "groupExists": "Diese Gruppe hat schon einen Lernraum.",
+    "saved": "Der Lernraum ist gespeichert.",
+    "saveFailed": "Der Lernraum konnte nicht gespeichert werden.",
+    "published": "Der Lernraum ist jetzt öffentlich.",
+    "unpublished": "Der Lernraum ist wieder nur für Mitglieder.",
+    "cancel": "Abbrechen"
   }
 }

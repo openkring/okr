@@ -219,6 +219,10 @@
     "shop": {
       "label": "Tienda",
       "description": "En la tienda se pueden vender productos. Los componentes de la tienda son una vista general con búsqueda y vistas detalladas de los productos. En el carrito de la compra (cart) se resumen los productos seleccionados con sus precios y se habilitan para el pedido con pago."
+    },
+    "learning": {
+      "label": "Espacio de aprendizaje",
+      "description": "Un espacio de aprendizaje muestra los archivos, vídeos e imágenes de una carpeta, ordenados por tema, con valoraciones y comentarios."
     }
   },
   "videoPage": {

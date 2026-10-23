@@ -84,6 +84,7 @@
     "@okr/games-quiz-feature": "*",
     "@okr/games-zip-feature": "*",
     "@okr/resource-ui": "*",
-    "@okr/travel-journal-feature": "*"
+    "@okr/travel-journal-feature": "*",
+    "@okr/content-learning-feature": "*"
   }
 }

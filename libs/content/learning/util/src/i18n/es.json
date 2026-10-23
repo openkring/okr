@@ -25,9 +25,9 @@
     "all": "Todos"
   },
   "empty": {
-    "files": "Todavía no hay archivos aquí.",
-    "videos": "Todavía no hay vídeos aquí.",
-    "images": "Todavía no hay imágenes aquí."
+    "files": "No se encontraron archivos.",
+    "videos": "No se encontraron vídeos.",
+    "images": "No se encontraron imágenes."
   },
   "rating": {
     "label": "Valoración",
@@ -106,5 +106,58 @@
     "header": "¿Retirar la publicación?",
     "message": "Después, el espacio solo será visible para los miembros. En el sitio web el contenido puede seguir visible un tiempo en la caché.",
     "confirm": "Retirar"
+  },
+  "room": {
+    "notConfigured": "Este espacio de aprendizaje aún no está configurado.",
+    "unavailable": "Este espacio de aprendizaje no está disponible en este momento.",
+    "upload": "Subir",
+    "uploadTopic": "¿En qué tema quieres subir el archivo?",
+    "uploading": "Subiendo {name} …",
+    "uploaded": "{name} se ha subido.",
+    "uploadFailed": "La subida no ha funcionado. Inténtalo de nuevo.",
+    "uploadCancel": "Cancelar"
+  },
+  "detail": {
+    "title": "Contenido",
+    "notFound": "Este contenido no está disponible.",
+    "uploadedBy": "Subido por {name} el {date}",
+    "uploadedOn": "Subido el {date}",
+    "yourRating": "Tu valoración",
+    "clearRating": "Quitar valoración",
+    "links": "Enlaces",
+    "attachments": "Adjuntos",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "deleteConfirm": "¿Quieres eliminar «{title}» del espacio de aprendizaje?",
+    "saved": "Guardado.",
+    "deleted": "Eliminado.",
+    "saveFailed": "No ha funcionado. Inténtalo de nuevo.",
+    "pickAttachment": "Elegir un adjunto",
+    "noAttachmentCandidates": "No hay más archivos en este espacio de aprendizaje.",
+    "ok": "Aceptar"
+  },
+  "rooms": {
+    "title": "Espacios de aprendizaje",
+    "add": "Nuevo espacio de aprendizaje",
+    "empty": "No se encontraron espacios de aprendizaje.",
+    "public": "Público",
+    "private": "Solo miembros",
+    "group": "Grupo {name}",
+    "menu": "A través del menú",
+    "actions": "Espacio de aprendizaje",
+    "open": "Abrir",
+    "edit": "Cambiar la configuración",
+    "publish": "Publicar",
+    "unpublish": "Retirar la publicación",
+    "copyUrl": "Copiar enlace",
+    "urlCopied": "Enlace copiado. Puedes usarlo como entrada en el editor de menús.",
+    "archive": "Archivar",
+    "archiveConfirm": "¿Quieres archivar el espacio de aprendizaje «{name}»? La carpeta y todos los archivos se conservan.",
+    "groupExists": "Este grupo ya tiene un espacio de aprendizaje.",
+    "saved": "El espacio de aprendizaje se ha guardado.",
+    "saveFailed": "No se pudo guardar el espacio de aprendizaje.",
+    "published": "El espacio de aprendizaje ahora es público.",
+    "unpublished": "El espacio de aprendizaje vuelve a ser solo para miembros.",
+    "cancel": "Cancelar"
   }
 }

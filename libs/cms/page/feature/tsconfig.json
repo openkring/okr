@@ -78,6 +78,9 @@
     },
     {
       "path": "../../../content/pdf-template/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../content/learning/feature/tsconfig.lib.json"
     }
   ]
 }

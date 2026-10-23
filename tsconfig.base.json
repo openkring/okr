@@ -160,6 +160,7 @@
       "@okr/content-file-transfer-ui": ["libs/content/file-transfer/ui/src/index.ts"],
       "@okr/content-file-transfer-util": ["libs/content/file-transfer/util/src/index.ts"],
       "@okr/content-learning-data-access": ["libs/content/learning/data-access/src/index.ts"],
+      "@okr/content-learning-feature": ["libs/content/learning/feature/src/index.ts"],
       "@okr/content-learning-util": ["libs/content/learning/util/src/index.ts"],
       "@okr/content-learning-ui": ["libs/content/learning/ui/src/index.ts"],
       "@okr/content-diary-data-access": ["libs/content/diary/data-access/src/index.ts"],

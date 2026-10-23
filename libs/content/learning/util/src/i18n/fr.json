@@ -25,9 +25,9 @@
     "all": "Tous"
   },
   "empty": {
-    "files": "Il n'y a pas encore de fichiers ici.",
-    "videos": "Il n'y a pas encore de vidéos ici.",
-    "images": "Il n'y a pas encore d'images ici."
+    "files": "Aucun fichier trouvé.",
+    "videos": "Aucune vidéo trouvée.",
+    "images": "Aucune image trouvée."
   },
   "rating": {
     "label": "Évaluation",
@@ -106,5 +106,58 @@
     "header": "Retirer la publication ?",
     "message": "L’espace ne sera ensuite visible que pour les membres. Sur le site web, le contenu peut rester visible un moment dans le cache.",
     "confirm": "Retirer"
+  },
+  "room": {
+    "notConfigured": "Cet espace d'apprentissage n'est pas encore configuré.",
+    "unavailable": "Cet espace d'apprentissage n'est pas disponible pour le moment.",
+    "upload": "Téléverser",
+    "uploadTopic": "Dans quel thème veux-tu téléverser ?",
+    "uploading": "Téléversement de {name} …",
+    "uploaded": "{name} a été téléversé.",
+    "uploadFailed": "Le téléversement n'a pas fonctionné. Réessaie, s'il te plaît.",
+    "uploadCancel": "Annuler"
+  },
+  "detail": {
+    "title": "Contenu",
+    "notFound": "Ce contenu n'est pas disponible.",
+    "uploadedBy": "Téléversé par {name} le {date}",
+    "uploadedOn": "Téléversé le {date}",
+    "yourRating": "Ta note",
+    "clearRating": "Retirer la note",
+    "links": "Liens",
+    "attachments": "Pièces jointes",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "deleteConfirm": "Veux-tu supprimer « {title} » de l'espace d'apprentissage ?",
+    "saved": "Enregistré.",
+    "deleted": "Supprimé.",
+    "saveFailed": "Cela n'a pas fonctionné. Réessaie, s'il te plaît.",
+    "pickAttachment": "Choisir une pièce jointe",
+    "noAttachmentCandidates": "Il n'y a pas d'autres fichiers dans cet espace d'apprentissage.",
+    "ok": "OK"
+  },
+  "rooms": {
+    "title": "Espaces d'apprentissage",
+    "add": "Nouvel espace d'apprentissage",
+    "empty": "Aucun espace d'apprentissage trouvé.",
+    "public": "Public",
+    "private": "Membres seulement",
+    "group": "Groupe {name}",
+    "menu": "Par le menu",
+    "actions": "Espace d'apprentissage",
+    "open": "Ouvrir",
+    "edit": "Modifier les réglages",
+    "publish": "Publier",
+    "unpublish": "Retirer la publication",
+    "copyUrl": "Copier le lien",
+    "urlCopied": "Lien copié. Tu peux l'utiliser comme entrée dans l'éditeur de menu.",
+    "archive": "Archiver",
+    "archiveConfirm": "Veux-tu archiver l'espace d'apprentissage « {name} » ? Le dossier et tous les fichiers sont conservés.",
+    "groupExists": "Ce groupe a déjà un espace d'apprentissage.",
+    "saved": "L'espace d'apprentissage est enregistré.",
+    "saveFailed": "L'espace d'apprentissage n'a pas pu être enregistré.",
+    "published": "L'espace d'apprentissage est maintenant public.",
+    "unpublished": "L'espace d'apprentissage est de nouveau réservé aux membres.",
+    "cancel": "Annuler"
   }
 }

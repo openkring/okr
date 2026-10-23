@@ -25,9 +25,9 @@
     "all": "All"
   },
   "empty": {
-    "files": "There are no files here yet.",
-    "videos": "There are no videos here yet.",
-    "images": "There are no images here yet."
+    "files": "No files found.",
+    "videos": "No videos found.",
+    "images": "No images found."
   },
   "rating": {
     "label": "Rating",
@@ -106,5 +106,58 @@
     "header": "Unpublish learning room?",
     "message": "Afterwards the learning room is visible to members only. On the website the content may stay visible in the cache for a while.",
     "confirm": "Unpublish"
+  },
+  "room": {
+    "notConfigured": "This learning room is not set up yet.",
+    "unavailable": "This learning room is not available right now.",
+    "upload": "Upload",
+    "uploadTopic": "Which topic do you want to upload to?",
+    "uploading": "Uploading {name} …",
+    "uploaded": "{name} has been uploaded.",
+    "uploadFailed": "The upload did not work. Please try again.",
+    "uploadCancel": "Cancel"
+  },
+  "detail": {
+    "title": "Item",
+    "notFound": "This item is not available.",
+    "uploadedBy": "Uploaded by {name} on {date}",
+    "uploadedOn": "Uploaded on {date}",
+    "yourRating": "Your rating",
+    "clearRating": "Remove rating",
+    "links": "Links",
+    "attachments": "Attachments",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteConfirm": "Do you want to delete «{title}» from the learning room?",
+    "saved": "Saved.",
+    "deleted": "Deleted.",
+    "saveFailed": "That did not work. Please try again.",
+    "pickAttachment": "Choose an attachment",
+    "noAttachmentCandidates": "There are no other files in this learning room.",
+    "ok": "OK"
+  },
+  "rooms": {
+    "title": "Learning rooms",
+    "add": "New learning room",
+    "empty": "No learning rooms found.",
+    "public": "Public",
+    "private": "Members only",
+    "group": "Group {name}",
+    "menu": "Through the menu",
+    "actions": "Learning room",
+    "open": "Open",
+    "edit": "Change settings",
+    "publish": "Publish",
+    "unpublish": "Unpublish",
+    "copyUrl": "Copy link",
+    "urlCopied": "Link copied. You can use it as a menu entry in the menu editor.",
+    "archive": "Archive",
+    "archiveConfirm": "Do you want to archive the learning room «{name}»? The folder and all files are kept.",
+    "groupExists": "This group already has a learning room.",
+    "saved": "The learning room has been saved.",
+    "saveFailed": "The learning room could not be saved.",
+    "published": "The learning room is now public.",
+    "unpublished": "The learning room is for members only again.",
+    "cancel": "Cancel"
   }
 }

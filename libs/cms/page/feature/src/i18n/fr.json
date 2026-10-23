@@ -219,6 +219,10 @@
     "shop": {
       "label": "Boutique",
       "description": "Dans la boutique, des produits peuvent être vendus. Les composants de la boutique sont un aperçu avec recherche, des vues détaillées des produits. Dans le panier (cart), les produits sélectionnés sont récapitulés avec les prix et validés pour la commande avec paiement."
+    },
+    "learning": {
+      "label": "Espace d'apprentissage",
+      "description": "Un espace d'apprentissage montre les fichiers, vidéos et images d'un dossier, classés par thème, avec des notes et des commentaires."
     }
   },
   "videoPage": {

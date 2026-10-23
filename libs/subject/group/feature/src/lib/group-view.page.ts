@@ -1,13 +1,17 @@
 import { Component, ComponentRef, DestroyRef, ViewContainerRef, computed, effect, inject, input, linkedSignal, signal, untracked, viewChild } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { catchError, map, of } from 'rxjs';
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonPopover, IonSpinner, IonMenuButton, IonSegment, IonSegmentButton, IonTitle, IonToolbar } from '@ionic/angular';
 import { ViewWillEnter } from '@ionic/angular/lazy';
 
-import { GroupModel } from '@okr/shared-models';
+import { GroupModel, PageModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, DeferError } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { hasRole, safeStructuredClone } from '@okr/shared-util-core';
 import { canAccessGroup, isAdminMember } from '@okr/subject-group-util';
 import { canManageFolders } from '@okr/content-folder-util';
+import { groupFilesSegment, groupLearningPageKey } from '@okr/content-learning-util';
+import { PageService } from '@okr/cms-page-data-access';
 import { DEFAULT_ID, DEFAULT_NAME } from '@okr/shared-constants';
 
 import { Menu } from '@okr/cms-menu-feature';
@@ -163,7 +167,18 @@ import { GroupStore } from './group.store';
             }
           }
           @case ('files') {
-            @if(folderConflict()) {
+            @if(filesSegment() === 'pending') {
+              <div class="placeholder-center"><ion-spinner /></div>
+            } @else if(filesSegment() === 'learning') {
+              <!-- the group's learning room replaces the «Dateien» segment (spec 1.115 §5.1) -->
+              @defer (on immediate) {
+                <okr-page-dispatcher id="{{id + '_learning'}}" [color]="color()" [isGroupView]="true" [groupAdmin]="isGroupAdmin()" />
+              } @placeholder {
+                <div class="placeholder-center"><ion-spinner /></div>
+              } @error {
+                <okr-defer-error />
+              }
+            } @else if(folderConflict()) {
               <ion-item lines="none" color="danger">
                 <ion-label class="ion-text-wrap">{{ store.i18n.files_conflict() }}</ion-label>
               </ion-item>
@@ -197,6 +212,7 @@ export class GroupViewPage implements ViewWillEnter {
   protected readonly store = inject(GroupStore);
   private readonly pageStore = inject(PageStore);
   private readonly folderService = inject(FolderService);
+  private readonly pageService = inject(PageService);
 
   // inputs
   public groupKey = input.required<string>();
@@ -255,6 +271,23 @@ export class GroupViewPage implements ViewWillEnter {
   protected hasCalendar = computed(() => this.formData()?.hasCalendar ?? true);
   protected hasTasks = computed(() => this.formData()?.hasTasks ?? true);
   protected hasFiles = computed(() => this.formData()?.hasFiles ?? true);
+  /**
+   * `pages/<groupKey>_learning` (spec 1.115 §5.1): read only while the files segment is shown.
+   * null = no such page or not readable (a get() on a missing doc can be rejected by the rules).
+   */
+  private readonly learningPageResource = rxResource({
+    params: () => ({ key: this.selectedSegment() === 'files' && this.access() === 'granted' ? this.groupKey() : '' }),
+    stream: ({ params }) => params.key
+      ? this.pageService.read(groupLearningPageKey(params.key)).pipe(
+          map(page => page ?? null),
+          catchError(() => of(null)),
+        )
+      : of(undefined as PageModel | null | undefined),
+  });
+  /** the «Dateien» segment: the group's learning room, or today's document list */
+  protected readonly filesSegment = computed(() => groupFilesSegment(
+    this.learningPageResource.hasValue() ? this.learningPageResource.value() : undefined,
+    this.groupKey(), this.store.tenantId()));
   protected hasMembers = computed(() => this.formData()?.hasMembers ?? true);
   // First enabled segment in priority order: content > chat > todos(tasks) > members, then calendar/files as fallback.
   protected readonly defaultSegment = computed(() => {
@@ -299,7 +332,7 @@ export class GroupViewPage implements ViewWillEnter {
     switch (this.selectedSegment()) {
       case 'calendar': return 'c-calevents';
       case 'tasks': return 'c-tasks';
-      case 'files': return 'c-folder';
+      case 'files': return this.filesSegment() === 'documents' ? 'c-folder' : undefined;
       case 'members': return 'c-groupmembers';
       case 'content':
       case 'chat': return this.pageDispatcher()?.hoistMenuName();
@@ -357,7 +390,7 @@ export class GroupViewPage implements ViewWillEnter {
   // Only calendar/tasks/files expose a list/alternative view toggle.
   protected readonly segmentHasViewToggle = computed(() => {
     const seg = this.selectedSegment();
-    return seg === 'calendar' || seg === 'tasks' || seg === 'files';
+    return seg === 'calendar' || seg === 'tasks' || (seg === 'files' && this.filesSegment() === 'documents');
   });
 
   protected readonly viewToggleIcon = computed(() => {
@@ -478,6 +511,8 @@ export class GroupViewPage implements ViewWillEnter {
     const segment = this.selectedSegment();
     if ((segment === 'content' || segment === 'chat') && groupId && groupId !== DEFAULT_ID) {
       this.pageStore.setPageId(`${groupId}_${segment}`);
+    } else if (segment === 'files' && this.filesSegment() === 'learning' && groupId && groupId !== DEFAULT_ID) {
+      this.pageStore.setPageId(groupLearningPageKey(groupId));
     }
   }
 

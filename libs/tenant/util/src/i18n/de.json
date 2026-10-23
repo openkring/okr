@@ -194,6 +194,9 @@
     },
     "journal": {
       "label": "Reisetagebuch"
+    },
+    "learning": {
+      "label": "Lernräume"
     }
   },
   "picker": {

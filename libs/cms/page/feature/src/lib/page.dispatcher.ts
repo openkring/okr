@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, untracked, viewChild } from "@angular/core";
+import { Component, ComponentRef, DestroyRef, ViewContainerRef, computed, effect, inject, input, signal, untracked, viewChild } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, Router } from "@angular/router";
 import { ViewWillEnter } from '@ionic/angular/lazy';
@@ -16,6 +16,8 @@ import { ChatPage } from "./chat.page";
 import { FilesPage } from "./files.page";
 import { AlbumPage } from "./album.page";
 import { GraphPage } from "./graph.page";
+// type-only: the learning room is created with a dynamic import() (lazy-loading skill, Pattern A)
+import type { LearningRoomPage } from "@okr/content-learning-feature";
 
 /**
  * PageDispatcher is a routable component that dispatches to the correct page component based 
@@ -113,6 +115,14 @@ import { GraphPage } from "./graph.page";
                         <okr-defer-error />
                     }
                 }
+                @case ('learning') {
+                    <!-- created lazily in code (learningHost effect): a static import would bind the
+                         learning feature into every chunk that reaches this dispatcher -->
+                    @if (!learningRef()) {
+                        <okr-spinner />
+                    }
+                    <div #learningHost class="learning-host"></div>
+                }
                 @case ('error') {
                     <okr-error-page [errorName]="page.okey" />
                 }
@@ -155,6 +165,11 @@ export class PageDispatcher implements ViewWillEnter {
    * lives in this dispatcher's template), so the dispatcher exposes this facade and delegates to the
    * active page component. */
   private readonly contentPage = viewChild(ContentPage);
+
+  // learning room (spec 1.115): never a static import, see the @case ('learning') comment
+  private readonly learningHost = viewChild('learningHost', { read: ViewContainerRef });
+  protected readonly learningRef = signal<ComponentRef<LearningRoomPage> | undefined>(undefined);
+  private readonly creatingLearning = signal(false);
   private readonly chatPage = viewChild(ChatPage);
 
   public readonly hoistMenuName = computed<string | undefined>(() => {
@@ -223,6 +238,49 @@ export class PageDispatcher implements ViewWillEnter {
         });
       }
     });
+    // Lazily instantiate the learning room once its host appears (same shape as the group
+    // view's calendar host). Leaving the @case destroys host and component: drop the dead ref.
+    effect(() => {
+      const host = this.learningHost();
+      const existing = untracked(() => this.learningRef());
+      if (!host) {
+        if (existing) {
+          existing.destroy();
+          this.learningRef.set(undefined);
+        }
+        return;
+      }
+      if (existing || this.creatingLearning()) return;
+      this.creatingLearning.set(true);
+      void (async () => {
+        try {
+          const { LearningRoomPage } = await import('@okr/content-learning-feature');
+          if (untracked(() => this.learningHost()) !== host) return;
+          const ref = host.createComponent(LearningRoomPage);
+          ref.setInput('pageKey', untracked(() => this.page()?.okey ?? ''));
+          ref.setInput('contextMenuName', untracked(() => this.contextMenuName()));
+          ref.setInput('color', untracked(() => this.color()));
+          ref.setInput('showMenu', untracked(() => this.showMenu() && !this.isGroupView()));
+          ref.changeDetectorRef.detectChanges();
+          this.learningRef.set(ref);
+        } finally {
+          this.creatingLearning.set(false);
+        }
+      })();
+    });
+    // keep the inputs in sync (another learning page in the same dispatcher, a color change)
+    effect(() => {
+      const pageKey = this.page()?.okey ?? '';
+      const color = this.color();
+      const showMenu = this.showMenu() && !this.isGroupView();
+      const ref = this.learningRef();
+      if (!ref || this.page()?.type !== 'learning') return;
+      ref.setInput('pageKey', pageKey);
+      ref.setInput('color', color);
+      ref.setInput('showMenu', showMenu);
+    });
+    inject(DestroyRef).onDestroy(() => this.learningRef()?.destroy());
+
     effect(() => {
       const page = this.pageStore.page();
       if (page && page.isPrivate) {

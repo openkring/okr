@@ -219,6 +219,10 @@
     "shop": {
       "label": "Shop",
       "description": "Im Shop können Produkte verkauft werden. Bestandteile des Shops sind eine Übersicht mit Suche, Detailansichten der Produkte. Im Einkaufswagen (Cart) werden die ausgewählten Produkte mit Preisen zusammengefasst und zur Bestellung mit Zahlung freigegeben."
+    },
+    "learning": {
+      "label": "Lernraum",
+      "description": "Ein Lernraum zeigt die Dateien, Videos und Bilder eines Ordners, nach Themen geordnet, mit Bewertungen und Kommentaren."
     }
   },
   "videoPage": {

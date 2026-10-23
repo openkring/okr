@@ -33,6 +33,8 @@
     "@okr/cms-menu-feature": "*",
     "@okr/cms-menu-ui": "*",
     "@okr/cms-page-feature": "*",
-    "@okr/project-task-feature": "*"
+    "@okr/project-task-feature": "*",
+    "@okr/content-learning-util": "*",
+    "@okr/cms-page-data-access": "*"
   }
 }

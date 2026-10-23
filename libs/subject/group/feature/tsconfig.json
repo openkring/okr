@@ -96,6 +96,12 @@
     },
     {
       "path": "../../../project/task/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../cms/page/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../content/learning/util/tsconfig.lib.json"
     }
   ]
 }

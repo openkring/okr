@@ -1,0 +1,28 @@
+{
+  "name": "@okr/content-learning-feature",
+  "version": "0.0.1",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "sideEffects": false,
+  "private": true,
+  "dependencies": {
+    "tslib": "^2.8.1",
+    "@okr/activity-data-access": "*",
+    "@okr/cms-page-data-access": "*",
+    "@okr/cms-section-data-access": "*",
+    "@okr/comment-feature": "*",
+    "@okr/content-document-data-access": "*",
+    "@okr/content-folder-data-access": "*",
+    "@okr/content-folder-util": "*",
+    "@okr/content-learning-data-access": "*",
+    "@okr/content-learning-ui": "*",
+    "@okr/content-learning-util": "*",
+    "@okr/shared-feature": "*",
+    "@okr/shared-i18n": "*",
+    "@okr/shared-models": "*",
+    "@okr/shared-pipes": "*",
+    "@okr/shared-ui": "*",
+    "@okr/shared-util-angular": "*",
+    "@okr/shared-util-core": "*"
+  }
+}

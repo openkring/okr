@@ -696,7 +696,8 @@
     "person-bexio-contacts": "Contactos de Bexio",
     "file-transfer": "Transferencia",
     "file-transfer-monitor": "Supervisión de transferencias",
-    "journal": "Diario de viaje"
+    "journal": "Diario de viaje",
+    "learning-rooms": "Espacios de aprendizaje"
   },
   "ownership": {
     "fork_confirm": "«{name}» pertenece al catálogo de funciones ({blocks}).\n\nAl guardar se crea una copia propia del inquilino «{forkKey}» y se desvincula este inquilino del original compartido. Las futuras correcciones del catálogo (URL, acción, rol) ya no llegarán a esta entrada.\n\n¿Guardar de todos modos?",

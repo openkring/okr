@@ -1662,8 +1662,35 @@ const fileTransfer: BlockRoutes = {
   ],
 };
 
+/**
+ * `learning` — Lernräume (spec 1.115 part 2).
+ *
+ * ORDER IN `FEATURE_ROUTES` IS LOAD-BEARING, for the same reason as `file-transfer`: listed after
+ * `cms`, `/private/learning-rooms` would render `PageDispatcher` for a page called
+ * "learning-rooms". The room pages themselves are CMS pages (`type: 'learning'`) and stay on the
+ * `cms` routes `private/:id` and `public/:id`; this block gates only the two routes below.
+ *
+ * - `private/learning-item/:pageKey/:docKey` — one item of a room, any signed-in member (the room
+ *   page links here; Firestore rules and the callables decide what is readable and writable).
+ * - `private/learning-rooms` — «Lernräume», the room configuration (create/rename/archive,
+ *   publish/unpublish) for contentAdmin/admin; page and section writes need that role anyway.
+ */
+const learning: BlockRoutes = {
+  id: 'learning',
+  routes: (): Route[] => [
+    {
+      path: 'private',
+      canActivate: [isAuthenticatedGuard],
+      children: [
+        { path: 'learning-item/:pageKey/:docKey', loadComponent: () => import('@okr/content-learning-feature').then(m => m.LearningItemPage) },
+        { path: 'learning-rooms', canActivate: [isContentAdminGuard()], loadComponent: () => import('@okr/content-learning-feature').then(m => m.LearningRoomsPage) },
+      ],
+    },
+  ],
+};
+
 export const FEATURE_ROUTES: BlockRoutes[] = [
-  calevent, fileTransfer, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, memory, backgammon, klondike, jasstafel, tetris, mampf, wordle, chess,
+  calevent, fileTransfer, learning, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, memory, backgammon, klondike, jasstafel, tetris, mampf, wordle, chess,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

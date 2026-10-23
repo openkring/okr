@@ -194,6 +194,9 @@
     },
     "journal": {
       "label": "Carnet de voyage"
+    },
+    "learning": {
+      "label": "Espaces d'apprentissage"
     }
   },
   "picker": {
