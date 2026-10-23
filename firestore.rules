@@ -732,7 +732,11 @@ service cloud.firestore {
         && (
         isContentManager()
         || (callerPersonKey() != '' && resource.data.get('ownerKey', '') == callerPersonKey()));
-      allow delete: if tenantDelete() && (
+      // a room folder is deletable only by contentAdmin/admin: delete + recreate unflagged would reopen
+      // author/owner writes on all room files
+      allow delete: if tenantDelete()
+        && (resource.data.get('learningRoom', false) != true || isContentAdminOrAdmin())
+        && (
         isContentManager()
         || (callerPersonKey() != '' && resource.data.get('ownerKey', '') == callerPersonKey()));
     }

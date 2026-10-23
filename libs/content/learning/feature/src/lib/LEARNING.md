@@ -102,6 +102,8 @@ Gate walked 2026-10-23, recorded in spec §7.2.
   flagged folder the rules refuse the author's and the folder owner's update and delete and member
   uploads; only contentAdmin/privileged (update) and admin (delete) write directly, the curator
   callables use the Admin SDK. Only contentAdmin/admin may set or change the flag.
+  A flagged folder is deletable only by contentAdmin/admin, and `deleteGroupContent` refuses room files
+  for group admins. No backfill is needed: rooms are not deployed yet and each new room is flagged at creation.
 
 ## Known limits
 

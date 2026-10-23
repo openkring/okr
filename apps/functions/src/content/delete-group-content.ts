@@ -7,7 +7,7 @@ import { getDeletePatch } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
 import {
-  assertCallerIsGroupAdmin, db, folderHasContent, isInsideGroupFolder, REGION, requireString,
+  assertCallerIsGroupAdmin, db, folderHasContent, groupAdminDeleteRefusal, isInsideGroupFolder, REGION, requireString,
 } from './group-content.util';
 
 const CF_NAME = 'deleteGroupContent';
@@ -98,6 +98,15 @@ export const deleteGroupContent = onCall(
         throw new HttpsError('permission-denied', 'Die Datei gehört nicht zu dieser Gruppe.');
       }
     }
+
+    // --- learning rooms grant no group-admin rights (spec 1.115 §7.2) -----------------
+    let roomFolder: Record<string, unknown> | undefined;
+    if (target === 'document') {
+      const folderKey = ((data['folderKeys'] ?? []) as string[])[0];
+      roomFolder = (await firestore.collection(FolderCollection).doc(folderKey).get()).data();
+    }
+    const refusal = groupAdminDeleteRefusal(target, data, roomFolder);
+    if (refusal) throw new HttpsError('permission-denied', refusal);
 
     // --- delete = detach or archive (identical to FirestoreService.deleteModel) ---
     const patch = getDeletePatch(tenants, tenantId);

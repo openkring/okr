@@ -88,3 +88,29 @@ export function requireString(value: unknown, name: string, cfName: string): str
 export function db(): Firestore {
   return getFirestore();
 }
+
+/** True when a folder document is flagged as a learning room's folder (spec 1.115 §7.2). */
+export function isLearningRoomFolder(folder: Record<string, unknown> | undefined): boolean {
+  return folder?.['learningRoom'] === true;
+}
+
+/**
+ * Whether a group admin may delete the item through deleteGroupContent. Learning rooms grant no
+ * group-admin rights: files of a flagged folder and flagged folders themselves are refused.
+ * @param target the item kind
+ * @param item the item's own data (folder data for a folder target)
+ * @param folder the item's first folder (documents only)
+ */
+export function groupAdminDeleteRefusal(
+  target: 'folder' | 'document',
+  item: Record<string, unknown>,
+  folder: Record<string, unknown> | undefined,
+): string | undefined {
+  if (target === 'folder' && isLearningRoomFolder(item)) {
+    return 'Der Ordner gehört zu einem Lernraum und kann nur von Inhaltsverwaltung oder Administration gelöscht werden.';
+  }
+  if (target === 'document' && isLearningRoomFolder(folder)) {
+    return 'Die Datei gehört zu einem Lernraum und kann nur von Inhaltsverwaltung oder Administration gelöscht werden.';
+  }
+  return undefined;
+}
