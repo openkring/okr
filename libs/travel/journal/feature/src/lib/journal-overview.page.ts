@@ -1,9 +1,11 @@
 import { Component, computed, DestroyRef, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import {
-  IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonTitle, IonToolbar, ModalController,
-  ToastController,
+  ActionSheetController, IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar,
+  ModalController, ToastController,
 } from '@ionic/angular';
+
+import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { RouteMap, RoutePin } from '@okr/shared-ui';
 import { FootprintEditModal } from '@okr/travel-journal-ui';
@@ -13,6 +15,8 @@ import {
 
 import { JournalFileUrlService } from './journal-file-url.service';
 import { showJournalError } from './journal-errors';
+import { openJournalInfo } from './journal-info';
+import { choosePhotoMode } from './journal-photo-mode';
 import { JournalSyncLine } from './journal-sync-line';
 import { JournalStore } from './journal.store';
 
@@ -25,7 +29,7 @@ const WIDE_QUERY = '(min-width: 992px)';
  */
 @Component({
   selector: 'okr-journal-overview-page',
-  imports: [IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonButton, IonCard, IonCardContent, RouteMap, JournalSyncLine],
+  imports: [IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonButton, IonCard, IonCardContent, IonIcon, SvgIconPipe, RouteMap, JournalSyncLine],
   styles: [`
     .layout { display: flex; flex-direction: column; height: 100%; }
     .layout.wide { flex-direction: row; }
@@ -50,7 +54,10 @@ const WIDE_QUERY = '(min-width: 992px)';
       <ion-toolbar>
         <ion-buttons slot="start"><ion-back-button defaultHref="/journal" /></ion-buttons>
         <ion-title>{{ journal()?.title || store.i18n.untitled() }}</ion-title>
-        <ion-buttons slot="end"><ion-button (click)="newFootprint()">{{ store.i18n.footprints_new() }}</ion-button></ion-buttons>
+        <ion-buttons slot="end">
+          <ion-button (click)="info()" [attr.aria-label]="store.i18n.info()"><ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" /></ion-button>
+          <ion-button (click)="newFootprint()">{{ store.i18n.footprints_new() }}</ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content [scrollY]="!wide()">
@@ -60,8 +67,8 @@ const WIDE_QUERY = '(min-width: 992px)';
             (pinClicked)="openFootprint($event)" />
         </div>
         <div class="side">
-          <okr-journal-sync-line [status]="store.syncStatus()" [paused]="store.photosPaused()" [i18n]="store.i18n"
-            (syncNow)="store.syncNow()" (togglePhotos)="store.setPhotosPaused(!store.photosPaused())" />
+          <okr-journal-sync-line [status]="store.syncStatus()" [photoMode]="store.photoMode()" [i18n]="store.i18n"
+            (syncNow)="store.syncNow()" (choosePhotoMode)="photoMode()" />
           <div class="stats">
             <div class="stat"><b>{{ days() }}</b><span>{{ store.i18n.stats_days() }}</span></div>
             <div class="stat"><b>{{ km() }}</b><span>{{ store.i18n.stats_km() }}</span></div>
@@ -93,6 +100,7 @@ export class JournalOverviewPage {
   private readonly router = inject(Router);
   private readonly modalController = inject(ModalController);
   private readonly toastController = inject(ToastController);
+  private readonly actionSheetController = inject(ActionSheetController);
 
   public readonly journalKey = input.required<string>();
 
@@ -130,6 +138,14 @@ export class JournalOverviewPage {
       query.addEventListener('change', listener);
       inject(DestroyRef).onDestroy(() => query.removeEventListener('change', listener));
     }
+  }
+
+  protected info(): Promise<void> {
+    return openJournalInfo(this.modalController);
+  }
+
+  protected photoMode(): Promise<void> {
+    return choosePhotoMode(this.actionSheetController, this.store.i18n, this.store.photoMode(), (mode) => this.store.setPhotoMode(mode));
   }
 
   protected openFootprint(footprintKey: string): void {

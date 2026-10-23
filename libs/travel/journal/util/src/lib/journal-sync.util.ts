@@ -9,6 +9,20 @@ export const DOWNLOAD_PAGE = 500;
 /** Downloads start this far before the cursor: a record committed a moment earlier may become visible later. */
 export const CURSOR_OVERLAP_MS = 60_000;
 
+/**
+ * How photo files move through Firebase: 'all' = up and down; 'uploadOnly' = publish own photos, never
+ * download (on board: the other iPad's photos come over the local network, plan 5); 'paused' = neither.
+ * Text records always sync.
+ */
+export type JournalPhotoMode = 'all' | 'uploadOnly' | 'paused';
+export const JOURNAL_PHOTO_MODES: JournalPhotoMode[] = ['all', 'uploadOnly', 'paused'];
+
+/** The stored mode; a device from before the three modes kept only `photosPaused = '1'`. */
+export function parsePhotoMode(stored: string | undefined, legacyPaused: string | undefined): JournalPhotoMode {
+  if (stored === 'all' || stored === 'uploadOnly' || stored === 'paused') return stored;
+  return legacyPaused === '1' ? 'paused' : 'all';
+}
+
 export function pagesOf<T>(items: T[], size: number): T[][] {
   const pages: T[][] = [];
   for (let i = 0; i < items.length; i += size) pages.push(items.slice(i, i + size));

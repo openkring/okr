@@ -49,10 +49,7 @@
   },
   "photos": {
     "added": "{count} Foto(s) hinzugefügt",
-    "skipped": "{count} Foto(s) übersprungen",
-    "pause": "Foto-Übertragung pausieren",
-    "resume": "Foto-Übertragung fortsetzen",
-    "paused": "Foto-Übertragung pausiert"
+    "skipped": "{count} Foto(s) übersprungen"
   },
   "error": {
     "no_author": "Öffne das Reisetagebuch einmal mit Internet, dann kannst du schreiben.",
@@ -96,5 +93,35 @@
     "pending": "{records} Änderungen und {photos} Fotos warten auf die Übertragung",
     "offline": "Offline – deine Einträge sind auf dem iPad gespeichert.",
     "error": "Die Synchronisation hat nicht geklappt. Sie wird später wiederholt."
+  },
+  "photo_mode": {
+    "label": "Fotos: {mode}",
+    "title": "Foto-Übertragung",
+    "all": "Alle Fotos",
+    "upload_only": "Nur hochladen",
+    "paused": "Pausiert"
+  },
+  "info": {
+    "button": "Info",
+    "title": "So arbeitet das Reisetagebuch",
+    "offline_h": "Alles bleibt zuerst auf dem iPad",
+    "offline": "Was du schreibst und an Fotos hinzufügst, speichert das Reisetagebuch sofort auf diesem iPad. Es funktioniert ohne Internet, auch nach einem Neustart.",
+    "photos_h": "Fotos unterwegs",
+    "photos": "Fotografiere mit dem iPhone oder der Kamera. Bring die Bilder in die Fotos-App auf dem iPad – vom iPhone per AirDrop, von der Kamera über den Kartenleser – und bearbeite sie dort. Füge danach die fertigen Bilder ins Reisetagebuch ein: Es nimmt die bearbeitete Fassung mit Aufnahmezeit und Ort und legt eine eigene, kleinere Kopie an. Die Originale bleiben in der Fotos-App.",
+    "before_h": "Vor der Abreise",
+    "before_1": "Warte, bis die Fotos-App alles in iCloud hochgeladen hat.",
+    "before_2": "Schalte iCloud-Fotos auf dem iPad aus (Einstellungen → dein Name → iCloud → Fotos). Wähle dabei, die Fotos vom iPad zu entfernen: Sie bleiben in iCloud und auf deinen anderen Geräten, und das iPad hat wieder Platz für die Reise.",
+    "before_3": "Schalte an Bord für das WLAN des Schiffs den Datensparmodus ein, auf dem iPad und auf dem iPhone (Einstellungen → WLAN → das Netz → Datensparmodus). So lädt kein Gerät nebenbei Fotos in iCloud.",
+    "before_4": "Stelle im Reisetagebuch die Foto-Übertragung auf «Nur hochladen».",
+    "internet_h": "Mit Internet",
+    "internet": "Sobald das iPad Internet hat, gleicht das Reisetagebuch von selbst ab: beim Start, wenn die Verbindung zurückkommt, und alle zwei Minuten. Texte sind klein und gehen immer mit. Fotos gehen nur aus veröffentlichten Footprints hinaus – ein Bild in guter Grösse und ein kleines Vorschaubild, zusammen etwa 0,5 bis 1 MB pro Foto. Entwürfe und Originale bleiben auf dem iPad.",
+    "modes_h": "Foto-Übertragung",
+    "mode_all": "Alle Fotos: Deine veröffentlichten Fotos gehen hinaus, und die Fotos der anderen Person kommen herein. Für zu Hause.",
+    "mode_upload": "Nur hochladen: Deine veröffentlichten Fotos gehen hinaus, es kommt nichts herein. Für unterwegs – die Fotos der anderen Person kommen an Bord direkt von ihrem iPad.",
+    "mode_paused": "Pausiert: Es gehen nur Texte hin und her, keine Fotos. Wenn die Verbindung sehr knapp oder teuer ist.",
+    "local_h": "Zwischen den beiden iPads",
+    "local": "An Bord tauschen die beiden iPads ihre Einträge und Fotos direkt miteinander aus, ganz ohne Internet: über das WLAN des Schiffs oder, wenn es keines gibt, über eine direkte Funkverbindung, solange die iPads nahe beieinander sind. Dabei geht nichts über den Satelliten. Lass dafür WLAN und Bluetooth eingeschaltet, auch wenn du mit keinem Netz verbunden bist. Diese direkte Verbindung kommt mit einer der nächsten Versionen.",
+    "home_h": "Zurück zu Hause",
+    "home": "Stelle die Foto-Übertragung wieder auf «Alle Fotos» und schalte iCloud-Fotos wieder ein. Die Reisefotos aus der Fotos-App gehen dann über dein Internet zu Hause in iCloud."
   }
 }

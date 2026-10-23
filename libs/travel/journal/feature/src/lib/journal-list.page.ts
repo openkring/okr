@@ -2,27 +2,33 @@ import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Network } from '@capacitor/network';
 import {
-  ActionSheetController, AlertController, IonButton, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonList, IonMenuButton, IonTitle,
-  IonToolbar, ToastController,
+  ActionSheetController, AlertController, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton,
+  IonTitle, IonToolbar, ModalController, ToastController,
 } from '@ionic/angular';
 
 import { ModelSelectService } from '@okr/shared-feature';
+import { SvgIconPipe } from '@okr/shared-pipes';
 import { okrPrompt } from '@okr/shared-util-angular';
 import { fill } from '@okr/shared-util-core';
 import { showJournalError } from './journal-errors';
+import { openJournalInfo } from './journal-info';
+import { choosePhotoMode } from './journal-photo-mode';
 import { JournalSyncLine } from './journal-sync-line';
 import { JournalStore } from './journal.store';
 
 /** All travel journals on this device (spec 1.113); opens one, or creates a new one. */
 @Component({
   selector: 'okr-journal-list-page',
-  imports: [IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonList, IonItem, IonLabel, IonButton, JournalSyncLine],
+  imports: [IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonList, IonItem, IonLabel, IonButton, IonIcon, SvgIconPipe, JournalSyncLine],
   styles: [`.title { cursor: pointer; } okr-journal-sync-line { margin-top: 12px; }`],
   template: `
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ store.i18n.list_title() }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="info()" [attr.aria-label]="store.i18n.info()"><ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" /></ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content class="ion-padding">
@@ -40,8 +46,8 @@ import { JournalStore } from './journal.store';
           }
         </ion-list>
         <ion-button expand="block" (click)="create()">{{ store.i18n.list_new() }}</ion-button>
-        <okr-journal-sync-line [status]="store.syncStatus()" [paused]="store.photosPaused()" [i18n]="store.i18n"
-          (syncNow)="store.syncNow()" (togglePhotos)="store.setPhotosPaused(!store.photosPaused())" />
+        <okr-journal-sync-line [status]="store.syncStatus()" [photoMode]="store.photoMode()" [i18n]="store.i18n"
+          (syncNow)="store.syncNow()" (choosePhotoMode)="photoMode()" />
       }
     </ion-content>
   `,
@@ -53,9 +59,18 @@ export class JournalListPage {
   private readonly toastController = inject(ToastController);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly modelSelectService = inject(ModelSelectService);
+  private readonly modalController = inject(ModalController);
 
   public constructor() {
     void this.store.init();
+  }
+
+  protected info(): Promise<void> {
+    return openJournalInfo(this.modalController);
+  }
+
+  protected photoMode(): Promise<void> {
+    return choosePhotoMode(this.actionSheetController, this.store.i18n, this.store.photoMode(), (mode) => this.store.setPhotoMode(mode));
   }
 
   protected open(journalKey: string): void {

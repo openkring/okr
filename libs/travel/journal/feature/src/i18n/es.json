@@ -49,10 +49,7 @@
   },
   "photos": {
     "added": "{count} foto(s) añadida(s)",
-    "skipped": "{count} foto(s) omitida(s)",
-    "pause": "Pausar la transferencia de fotos",
-    "resume": "Reanudar la transferencia de fotos",
-    "paused": "Transferencia de fotos en pausa"
+    "skipped": "{count} foto(s) omitida(s)"
   },
   "error": {
     "no_author": "Abre el diario de viaje una vez con internet y luego podrás escribir.",
@@ -96,5 +93,35 @@
     "pending": "{records} cambios y {photos} fotos esperan la transferencia",
     "offline": "Sin conexión – tus entradas están guardadas en el iPad.",
     "error": "La sincronización no funcionó. Se repetirá más tarde."
+  },
+  "photo_mode": {
+    "label": "Fotos: {mode}",
+    "title": "Transferencia de fotos",
+    "all": "Todas las fotos",
+    "upload_only": "Solo subir",
+    "paused": "En pausa"
+  },
+  "info": {
+    "button": "Info",
+    "title": "Así funciona el diario de viaje",
+    "offline_h": "Todo se queda primero en el iPad",
+    "offline": "Lo que escribes y las fotos que añades se guardan enseguida en este iPad. El diario funciona sin Internet, incluso después de reiniciar.",
+    "photos_h": "Fotos en el viaje",
+    "photos": "Haz las fotos con el iPhone o la cámara. Pásalas a la app Fotos del iPad – desde el iPhone por AirDrop, desde la cámara con el lector de tarjetas – y edítalas allí. Después añade las imágenes terminadas al diario: toma la versión editada con la hora y el lugar y guarda su propia copia, más pequeña. Los originales se quedan en la app Fotos.",
+    "before_h": "Antes de salir",
+    "before_1": "Espera a que la app Fotos haya subido todo a iCloud.",
+    "before_2": "Desactiva Fotos en iCloud en el iPad (Ajustes → tu nombre → iCloud → Fotos). Elige eliminar las fotos del iPad: se quedan en iCloud y en tus otros dispositivos, y el iPad vuelve a tener espacio para el viaje.",
+    "before_3": "A bordo, activa el modo de datos reducidos para el Wi-Fi del barco, en el iPad y en el iPhone (Ajustes → Wi-Fi → la red → Modo de datos reducidos). Así ningún dispositivo sube fotos a iCloud por su cuenta.",
+    "before_4": "Pon la transferencia de fotos del diario en «Solo subir».",
+    "internet_h": "Con Internet",
+    "internet": "En cuanto el iPad tiene Internet, el diario se sincroniza solo: al iniciar, cuando vuelve la conexión y cada dos minutos. Los textos son pequeños y siempre se envían. Las fotos solo salen de los footprints publicados – una imagen de buen tamaño y una vista previa pequeña, entre 0,5 y 1 MB por foto. Los borradores y los originales se quedan en el iPad.",
+    "modes_h": "Transferencia de fotos",
+    "mode_all": "Todas las fotos: tus fotos publicadas salen y llegan las de la otra persona. Para casa.",
+    "mode_upload": "Solo subir: tus fotos publicadas salen, no llega nada. Para el viaje – a bordo, las fotos de la otra persona llegan directamente desde su iPad.",
+    "mode_paused": "En pausa: solo se intercambian textos, ninguna foto. Para una conexión muy lenta o cara.",
+    "local_h": "Entre los dos iPad",
+    "local": "A bordo, los dos iPad intercambian sus entradas y fotos directamente, sin Internet: por el Wi-Fi del barco o, si no lo hay, por una conexión de radio directa mientras los iPad estén cerca. Nada pasa por el satélite. Para ello deja el Wi-Fi y el Bluetooth activados, aunque no estés conectado a ninguna red. Esta conexión directa llega con una de las próximas versiones.",
+    "home_h": "De vuelta en casa",
+    "home": "Vuelve a poner la transferencia de fotos en «Todas las fotos» y activa de nuevo Fotos en iCloud. Las fotos del viaje de la app Fotos se suben entonces a iCloud con tu Internet de casa."
   }
 }

@@ -12,11 +12,12 @@ import {
 } from '@okr/travel-journal-data-access';
 import {
   entityStateKey, hasOthersBlocks, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
-  allPhotoFiles, journalsOf, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, publishedPhotoFiles, viewOf,
+  allPhotoFiles, JournalPhotoMode, journalsOf, parsePhotoMode, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, publishedPhotoFiles, viewOf,
 } from '@okr/travel-journal-util';
 
 const SYNC_INTERVAL_MS = 2 * 60 * 1000;
-const META_PHOTOS_PAUSED = 'photosPaused';
+const META_PHOTO_MODE = 'photoMode';
+const META_PHOTOS_PAUSED = 'photosPaused'; // before the three photo modes
 
 /**
  * The travel journal on this device (spec 1.113, plan 2). Reads and writes only SQLite through
@@ -32,10 +33,10 @@ interface JournalStoreState {
   native: boolean;
   error: string;
   changes: JournalChange[];
-  photosPaused: boolean;
+  photoMode: JournalPhotoMode;
 }
 
-const initialState: JournalStoreState = { ready: false, native: Capacitor.isNativePlatform(), error: '', changes: [], photosPaused: false };
+const initialState: JournalStoreState = { ready: false, native: Capacitor.isNativePlatform(), error: '', changes: [], photoMode: 'all' };
 
 export const JournalStore = signalStore(
   { providedIn: 'root' },
@@ -117,7 +118,7 @@ export const JournalStore = signalStore(
       await store.syncService.sync({
         tenantId,
         personKey: author.personKey,
-        photosPaused: store.photosPaused(),
+        photoMode: store.photoMode(),
         photoFiles: (journalKey) => {
           const images = imagesOf(store.journalState(), journalKey);
           return { published: publishedPhotoFiles(footprintsOf(store.journalState(), journalKey), images), all: allPhotoFiles(images) };
@@ -149,7 +150,7 @@ export const JournalStore = signalStore(
             await store.identity.init();
             patchState(store, {
               changes: await store.db.listChanges(), ready: true, error: '',
-              photosPaused: (await store.db.getMeta(META_PHOTOS_PAUSED)) === '1',
+              photoMode: parsePhotoMode(await store.db.getMeta(META_PHOTO_MODE), await store.db.getMeta(META_PHOTOS_PAUSED)),
             });
             startAutoSync();
           } catch (error) {
@@ -162,10 +163,10 @@ export const JournalStore = signalStore(
 
       syncNow,
 
-      async setPhotosPaused(paused: boolean): Promise<void> {
-        await store.db.setMeta(META_PHOTOS_PAUSED, paused ? '1' : '0');
-        patchState(store, { photosPaused: paused });
-        if (!paused) void syncNow();
+      async setPhotoMode(mode: JournalPhotoMode): Promise<void> {
+        await store.db.setMeta(META_PHOTO_MODE, mode);
+        patchState(store, { photoMode: mode });
+        if (mode !== 'paused') void syncNow();
       },
 
       /** The journal's co-authors as recorded on the journal (empty until someone was added). */

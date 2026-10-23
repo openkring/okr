@@ -49,10 +49,7 @@
   },
   "photos": {
     "added": "{count} photo(s) ajoutée(s)",
-    "skipped": "{count} photo(s) ignorée(s)",
-    "pause": "Mettre le transfert des photos en pause",
-    "resume": "Reprendre le transfert des photos",
-    "paused": "Transfert des photos en pause"
+    "skipped": "{count} photo(s) ignorée(s)"
   },
   "error": {
     "no_author": "Ouvre le carnet de voyage une fois avec internet, ensuite tu pourras écrire.",
@@ -96,5 +93,35 @@
     "pending": "{records} modifications et {photos} photos attendent le transfert",
     "offline": "Hors ligne – tes entrées sont enregistrées sur l’iPad.",
     "error": "La synchronisation n’a pas fonctionné. Elle sera répétée plus tard."
+  },
+  "photo_mode": {
+    "label": "Photos : {mode}",
+    "title": "Transfert des photos",
+    "all": "Toutes les photos",
+    "upload_only": "Envoi seulement",
+    "paused": "En pause"
+  },
+  "info": {
+    "button": "Info",
+    "title": "Comment fonctionne le carnet de voyage",
+    "offline_h": "Tout reste d’abord sur l’iPad",
+    "offline": "Ce que tu écris et les photos que tu ajoutes sont enregistrés tout de suite sur cet iPad. Le carnet fonctionne sans Internet, même après un redémarrage.",
+    "photos_h": "Les photos en voyage",
+    "photos": "Prends tes photos avec l’iPhone ou l’appareil photo. Mets-les dans l’app Photos de l’iPad – depuis l’iPhone par AirDrop, depuis l’appareil avec le lecteur de cartes – et retouche-les là. Ajoute ensuite les images terminées au carnet : il prend la version retouchée avec l’heure et le lieu et en garde sa propre copie, plus petite. Les originaux restent dans l’app Photos.",
+    "before_h": "Avant le départ",
+    "before_1": "Attends que l’app Photos ait tout envoyé vers iCloud.",
+    "before_2": "Désactive Photos iCloud sur l’iPad (Réglages → ton nom → iCloud → Photos). Choisis de supprimer les photos de l’iPad : elles restent dans iCloud et sur tes autres appareils, et l’iPad a de nouveau de la place pour le voyage.",
+    "before_3": "À bord, active le mode Données réduites pour le Wi-Fi du bateau, sur l’iPad et sur l’iPhone (Réglages → Wi-Fi → le réseau → Mode Données réduites). Ainsi aucun appareil n’envoie de photos vers iCloud en arrière-plan.",
+    "before_4": "Règle le transfert des photos du carnet sur « Envoi seulement ».",
+    "internet_h": "Avec Internet",
+    "internet": "Dès que l’iPad a Internet, le carnet se synchronise tout seul : au démarrage, quand la connexion revient et toutes les deux minutes. Les textes sont légers et partent toujours. Les photos ne partent que des footprints publiés – une image de bonne taille et un petit aperçu, environ 0,5 à 1 Mo par photo. Les brouillons et les originaux restent sur l’iPad.",
+    "modes_h": "Transfert des photos",
+    "mode_all": "Toutes les photos : tes photos publiées partent et celles de l’autre personne arrivent. Pour la maison.",
+    "mode_upload": "Envoi seulement : tes photos publiées partent, rien n’arrive. Pour le voyage – à bord, les photos de l’autre personne viennent directement de son iPad.",
+    "mode_paused": "En pause : seuls les textes sont échangés, pas de photos. Pour une connexion très lente ou chère.",
+    "local_h": "Entre les deux iPad",
+    "local": "À bord, les deux iPad échangent leurs entrées et leurs photos directement, sans Internet : par le Wi-Fi du bateau ou, s’il n’y en a pas, par une liaison radio directe tant que les iPad sont proches. Rien ne passe par le satellite. Laisse pour cela le Wi-Fi et le Bluetooth activés, même sans être connecté à un réseau. Cette liaison directe arrive avec une des prochaines versions.",
+    "home_h": "De retour à la maison",
+    "home": "Remets le transfert des photos sur « Toutes les photos » et réactive Photos iCloud. Les photos du voyage de l’app Photos partent alors vers iCloud par ton Internet à la maison."
   }
 }

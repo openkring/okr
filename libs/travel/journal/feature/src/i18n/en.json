@@ -49,10 +49,7 @@
   },
   "photos": {
     "added": "{count} photo(s) added",
-    "skipped": "{count} photo(s) skipped",
-    "pause": "Pause photo transfer",
-    "resume": "Resume photo transfer",
-    "paused": "Photo transfer paused"
+    "skipped": "{count} photo(s) skipped"
   },
   "error": {
     "no_author": "Open the travel journal once with internet, then you can write.",
@@ -96,5 +93,35 @@
     "pending": "{records} changes and {photos} photos waiting to be transferred",
     "offline": "Offline – your entries are saved on the iPad.",
     "error": "Syncing did not work. It will be retried later."
+  },
+  "photo_mode": {
+    "label": "Photos: {mode}",
+    "title": "Photo transfer",
+    "all": "All photos",
+    "upload_only": "Upload only",
+    "paused": "Paused"
+  },
+  "info": {
+    "button": "Info",
+    "title": "How the travel journal works",
+    "offline_h": "Everything stays on the iPad first",
+    "offline": "Whatever you write and the photos you add are saved on this iPad right away. The journal works without Internet, even after a restart.",
+    "photos_h": "Photos on the way",
+    "photos": "Take pictures with your iPhone or camera. Bring them into the Photos app on the iPad – from the iPhone by AirDrop, from the camera with the card reader – and edit them there. Then add the finished pictures to the journal: it takes the edited version with time and place and keeps its own smaller copy. The originals stay in the Photos app.",
+    "before_h": "Before you leave",
+    "before_1": "Wait until the Photos app has uploaded everything to iCloud.",
+    "before_2": "Turn off iCloud Photos on the iPad (Settings → your name → iCloud → Photos). Choose to remove the photos from the iPad: they stay in iCloud and on your other devices, and the iPad has room again for the trip.",
+    "before_3": "On board, turn on Low Data Mode for the ship’s Wi-Fi on both the iPad and the iPhone (Settings → Wi-Fi → the network → Low Data Mode). Then no device quietly uploads photos to iCloud.",
+    "before_4": "Set the journal’s photo transfer to «Upload only».",
+    "internet_h": "With Internet",
+    "internet": "As soon as the iPad has Internet, the journal syncs by itself: at start, when the connection comes back, and every two minutes. Texts are small and always go along. Photos only go out from published footprints – one picture in a good size and a small preview, together about 0.5 to 1 MB per photo. Drafts and originals stay on the iPad.",
+    "modes_h": "Photo transfer",
+    "mode_all": "All photos: your published photos go out, and the other person’s photos come in. For home.",
+    "mode_upload": "Upload only: your published photos go out, nothing comes in. For the trip – on board the other person’s photos come straight from their iPad.",
+    "mode_paused": "Paused: only texts are exchanged, no photos. For a very slow or expensive connection.",
+    "local_h": "Between the two iPads",
+    "local": "On board the two iPads exchange their entries and photos directly, without any Internet: over the ship’s Wi-Fi or, if there is none, over a direct radio link while the iPads are close to each other. Nothing goes over the satellite. Keep Wi-Fi and Bluetooth turned on for this, even when you are not connected to a network. This direct link comes with one of the next versions.",
+    "home_h": "Back home",
+    "home": "Set the photo transfer back to «All photos» and turn iCloud Photos on again. The trip photos in the Photos app then go to iCloud over your Internet at home."
   }
 }

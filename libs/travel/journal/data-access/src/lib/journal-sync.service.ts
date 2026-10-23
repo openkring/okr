@@ -9,7 +9,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { FIRESTORE, ensureAppCheckToken } from '@okr/shared-config';
 import { JournalChange, JournalChangeCollection, JournalCollection } from '@okr/shared-models';
 import {
-  acceptRecord, advanceCursor, classifyUploadError, DOWNLOAD_PAGE, downloadStart, pagesOf, UPLOAD_PAGE,
+  acceptRecord, advanceCursor, classifyUploadError, DOWNLOAD_PAGE, downloadStart, JournalPhotoMode, pagesOf, UPLOAD_PAGE,
 } from '@okr/travel-journal-util';
 
 import { JournalDb, RemoteChange } from './journal-db';
@@ -26,7 +26,7 @@ import { JournalPhotos } from './journal-photos.plugin';
 export interface JournalSyncContext {
   tenantId: string;
   personKey: string;
-  photosPaused: boolean;
+  photoMode: JournalPhotoMode;
   /** Photo files of a journal from the merged state: published ones go up, all of them are wanted locally. */
   photoFiles: (journalKey: string) => { published: string[]; all: string[] };
   /** Called after records were downloaded, before the photo phase — the store reloads its state. */
@@ -96,7 +96,9 @@ export class JournalSyncService {
       for (const journalKey of journalKeys) stored += await this.downloadRecords(journalKey);
       if (stored > 0) await ctx.onRecordsStored();
       for (const journalKey of journalKeys) await this.ensurePeerSecret(journalKey);
-      const pendingPhotos = ctx.photosPaused ? await this.countPendingPhotos(ctx, journalKeys) : await this.syncPhotos(ctx, journalKeys);
+      const pendingPhotos = ctx.photoMode === 'paused'
+        ? await this.countPendingPhotos(ctx, journalKeys)
+        : await this.syncPhotos(ctx, journalKeys, ctx.photoMode === 'all');
       this.patch({ state: 'idle', lastSyncAt: Date.now(), pendingRecords: await this.db.countPendingUploads(), pendingPhotos });
     } catch (error) {
       this.patch({
@@ -224,8 +226,11 @@ export class JournalSyncService {
     return n;
   }
 
-  /** Uploads published photos this device holds, downloads every missing one; returns what is still pending. */
-  private async syncPhotos(ctx: JournalSyncContext, journalKeys: string[]): Promise<number> {
+  /**
+   * Uploads published photos this device holds and, with `download`, fetches the missing ones; returns
+   * what is still waiting for upload.
+   */
+  private async syncPhotos(ctx: JournalSyncContext, journalKeys: string[], download: boolean): Promise<number> {
     let pending = 0;
     for (const journalKey of journalKeys) {
       const { published, all } = ctx.photoFiles(journalKey);
@@ -252,7 +257,7 @@ export class JournalSyncService {
         }
       }
 
-      const missing = rows.filter((f) => !f.present).map((f) => f.file);
+      const missing = download ? rows.filter((f) => !f.present).map((f) => f.file) : [];
       for (const chunk of pagesOf(missing, PHOTO_CHUNK)) {
         const { urls } = await this.call<{ urls: Record<string, string> }>('signJournalPhotos', { journalKey, files: chunk });
         for (const [file, url] of Object.entries(urls)) {
