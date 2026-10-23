@@ -191,6 +191,9 @@
     },
     "file-transfer": {
       "label": "Trasferimento di file"
+    },
+    "journal": {
+      "label": "Diario di viaggio"
     }
   },
   "picker": {

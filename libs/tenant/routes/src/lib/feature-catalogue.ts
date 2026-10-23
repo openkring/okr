@@ -1524,6 +1524,22 @@ const meeting: BlockRoutes = {
 };
 
 /** The author's diary (spec 1.34) — one list route; view and edit are modals off the list. */
+/**
+ * `journal` — the travel journal (spec 1.113). Apps that need it offline (bkg) also mount
+ * JOURNAL_ROUTES before the app-ready gate; that ungated copy matches first. Lazy, so no app's
+ * start bundle carries the journal.
+ */
+const journal: BlockRoutes = {
+  id: 'journal',
+  routes: (): Route[] => [
+    {
+      path: 'journal',
+      canActivate: [isAuthenticatedGuard],
+      loadChildren: () => import('@okr/travel-journal-feature').then(m => m.JOURNAL_CHILD_ROUTES),
+    },
+  ],
+};
+
 const diary: BlockRoutes = {
   id: 'diary',
   routes: (): Route[] => [
@@ -1650,7 +1666,7 @@ export const FEATURE_ROUTES: BlockRoutes[] = [
   subject, relationship, vcard,
   resource, mobility,
   finance, memberFee, esign, pdfTemplate,
-  documentBlock, contracts, meeting, diary,
+  documentBlock, contracts, meeting, diary, journal,
   chat, socialFeed, forms,
   business, alias, weather,
 ];

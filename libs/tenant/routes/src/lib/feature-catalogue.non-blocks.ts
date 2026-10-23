@@ -33,6 +33,10 @@ export const NON_BLOCK_DOMAINS: Record<string, string> = {
   // why this entry is required), but it ships no route and no menu doc of its own — every one
   // of its consumers also uses `@okr/content-document-*`. Full argument on the `document` block.
   folder: 'merged into the `document` block (2026-08-04); `document` declares its `folders` collection',
+  // The `travel` CONTAINER (2026-10-23, spec 1.113), same reasoning as `content` below: its one
+  // subdomain `libs/travel/journal` IS catalogued, as the `journal` block. The container itself
+  // ships no route and no menu doc.
+  travel: 'container; its subdomain `journal` is catalogued as the `journal` block (spec 1.113)',
   // The `content` CONTAINER created on 2026-08-14, when `document`, `folder`, `esign` and
   // `pdf-template` moved from `libs/<domain>/` into `libs/content/<domain>/` and `meeting`
   // (spec 2.7) was added beside them. It is listed here rather than made a block because its

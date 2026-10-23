@@ -7,14 +7,13 @@ import { isAuthenticatedGuard } from '@okr/auth-feature';
  * app-config, which an offline cold start does not have (spike S3). Only the Firebase sign-in is
  * required, and it is restored offline.
  */
+/** The pages under /journal; the feature catalogue lazy-loads these (loadChildren), the app mounts JOURNAL_ROUTES. */
+export const JOURNAL_CHILD_ROUTES: Route[] = [
+  { path: '', loadComponent: () => import('./journal-list.page').then((m) => m.JournalListPage) },
+  { path: ':journalKey', loadComponent: () => import('./journal-overview.page').then((m) => m.JournalOverviewPage) },
+  { path: ':journalKey/:footprintKey', loadComponent: () => import('./journal-story.page').then((m) => m.JournalStoryPage) },
+];
+
 export const JOURNAL_ROUTES: Route[] = [
-  {
-    path: 'journal',
-    canActivate: [isAuthenticatedGuard],
-    children: [
-      { path: '', loadComponent: () => import('./journal-list.page').then((m) => m.JournalListPage) },
-      { path: ':journalKey', loadComponent: () => import('./journal-overview.page').then((m) => m.JournalOverviewPage) },
-      { path: ':journalKey/:footprintKey', loadComponent: () => import('./journal-story.page').then((m) => m.JournalStoryPage) },
-    ],
-  },
+  { path: 'journal', canActivate: [isAuthenticatedGuard], children: JOURNAL_CHILD_ROUTES },
 ];

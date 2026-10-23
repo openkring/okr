@@ -191,6 +191,9 @@
     },
     "file-transfer": {
       "label": "Dateien senden (Transfer)"
+    },
+    "journal": {
+      "label": "Reisetagebuch"
     }
   },
   "picker": {

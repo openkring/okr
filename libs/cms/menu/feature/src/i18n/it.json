@@ -695,7 +695,8 @@
     "membership-srv": "Confronto con la federazione (SRV)",
     "person-bexio-contacts": "Contatti Bexio",
     "file-transfer": "Trasferimento",
-    "file-transfer-monitor": "Monitoraggio dei trasferimenti"
+    "file-transfer-monitor": "Monitoraggio dei trasferimenti",
+    "journal": "Diario di viaggio"
   },
   "ownership": {
     "fork_confirm": "«{name}» appartiene al catalogo delle funzionalità ({blocks}).\n\nIl salvataggio crea una copia propria del tenant «{forkKey}» e scollega questo tenant dall'originale condiviso. Le future correzioni del catalogo (URL, azione, ruolo) non raggiungeranno più questa voce.\n\nSalvare comunque?",

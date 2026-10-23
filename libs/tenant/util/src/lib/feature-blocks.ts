@@ -2980,6 +2980,24 @@ const meeting: FeatureBlock = {
  * `trip`: the diary reads its travel trips through its own service so that enabling the diary
  * does not switch the Logbuch on for a tenant that never asked for it (`bka` has it off).
  */
+/**
+ * `journal` — the travel journal (spec 1.113): co-edited offline on iPads, map-first overview and
+ * story pages. Its routes are mounted by the app BEFORE the app-ready gate (offline cold start); the
+ * catalogue entry gives it the menu row and the feature switch.
+ */
+const journal: FeatureBlock = {
+  id: 'journal',
+  bundle: 'special',
+  label: '@tenant/util.feature.journal.label',
+  icon: 'map',
+  defaultAvailability: 'beta',
+  dependsOn: [],
+  collections: ['journals', 'journal-changes', 'reactions'],
+  menu: [
+    { key: 'journal', name: 'journal', url: '/journal', action: 'navigate', roleNeeded: 'registered', icon: 'map', label: '@item.journal' },
+  ],
+};
+
 const diary: FeatureBlock = {
   id: 'diary',
   bundle: 'special',
@@ -3153,7 +3171,7 @@ export const FEATURE_BLOCKS: FeatureBlock[] = [
   subject, relationship, vcard,
   resource, mobility,
   finance, memberFee, esign, pdfTemplate,
-  documentBlock, contracts, meeting, diary,
+  documentBlock, contracts, meeting, diary, journal,
   chat, socialFeed, forms,
   business, alias, weather,
 ];

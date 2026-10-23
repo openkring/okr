@@ -191,6 +191,9 @@
     },
     "file-transfer": {
       "label": "File transfer"
+    },
+    "journal": {
+      "label": "Travel journal"
     }
   },
   "picker": {

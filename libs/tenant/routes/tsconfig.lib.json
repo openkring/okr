@@ -103,6 +103,7 @@
     { "path": "../../system/alias/feature/tsconfig.lib.json" },
     { "path": "../../system/workflow/feature/tsconfig.lib.json" },
     { "path": "../feature/tsconfig.lib.json" },
+    { "path": "../../travel/journal/feature/tsconfig.lib.json" },
     { "path": "../../user/feature/tsconfig.lib.json" }
   ]
 }
