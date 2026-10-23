@@ -81,7 +81,9 @@ page key); the same section listed on any other page yields the locked shell.
 ## Archiving
 
 «Archivieren» archives the page and its learning section through `FirestoreService.deleteModel`
-(detach or archive, deleting-models skill). The folder and its documents are never touched.
+(detach or archive, deleting-models skill). The folder and its documents are never touched, and the
+folder keeps `learningRoom: true`: it may still hold room files, which must stay out of reach of the
+author and folder-owner write paths.
 
 ## Privacy
 
@@ -96,8 +98,10 @@ Gate walked 2026-10-23, recorded in spec §7.2.
 - Group rooms are tenant-visible at data level (the `docs` rule is `tenantRead`); membership gates
   the UI only. Known and unchanged.
 - The rating aggregate (`ratingCount`/`ratingSum`) cannot be changed by a client (rules; admin
-  excepted). Known gap: the document's author and the folder owner can still write the other fields
-  of a learning item directly (tags, notes, links, fullPath), outside the curator callables.
+  excepted). Room files are protected by the folder flag `learningRoom` (set by `createRoom`): in a
+  flagged folder the rules refuse the author's and the folder owner's update and delete and member
+  uploads; only contentAdmin/privileged (update) and admin (delete) write directly, the curator
+  callables use the Admin SDK. Only contentAdmin/admin may set or change the flag.
 
 ## Known limits
 

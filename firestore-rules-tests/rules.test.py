@@ -199,6 +199,14 @@ seed("docs/dInMine", {"tenants": ["t1"], "isArchived": False, "authorKey": "pC",
 # authorKey pA, folder fMine owned by pA — so the delete-asymmetry test isolates the
 # isAdmin()-only bypass (see task-4-report.md fix-report deviation note).
 seed("docs/dForD",  {"tenants": ["t1"], "isArchived": False, "authorKey": "pA", "folderKeys": ["fMine"], "fullPath": "d.jpg"})
+# spec 1.115 §7.2: learningRoom folder (owner pA, members may upload) + docs in it and in a normal folder
+seed("folders/fRoom", {"tenants": ["t1"], "isArchived": False, "name": "Room", "membersMayUpload": True, "ownerKey": "pA", "learningRoom": True})
+seed("docs/dRoomAuth",  {"tenants": ["t1"], "isArchived": False, "authorKey": "pA", "folderKeys": ["fRoom"], "fullPath": "r1"})
+seed("docs/dRoomAuth2", {"tenants": ["t1"], "isArchived": False, "authorKey": "pA", "folderKeys": ["fRoom"], "fullPath": "r2"})
+seed("docs/dRoomOther", {"tenants": ["t1"], "isArchived": False, "authorKey": "pC", "folderKeys": ["fRoom"], "fullPath": "r3"})
+seed("docs/dRoomCA",    {"tenants": ["t1"], "isArchived": False, "authorKey": "pA", "folderKeys": ["fRoom"], "fullPath": "r4"})
+seed("docs/dNormA",     {"tenants": ["t1"], "isArchived": False, "authorKey": "pA", "folderKeys": ["fOpen"], "fullPath": "nm"})
+seed("folders/fPlain",  {"tenants": ["t1"], "isArchived": False, "name": "Plain", "ownerKey": "pC"})
 seed("folders/fT2", {"tenants": ["t2"], "isArchived": False, "name": "T2", "membersMayUpload": True, "ownerKey": "pB"})
 # privacy 1.19 Phase 5B: erasure-log — CF-written evidence, tenant-admin read only.
 seed("erasure-log/elA", {"tenants": ["t1"], "isArchived": False, "tenantId": "t1",
@@ -695,6 +703,34 @@ single_cases = [
      body({"name": "Event2"}), ["name"]),
     ("userA DELETE foreign folder -> DENY", False, DELETE, "folders/fClosed", A, None, None),
     ("userA DELETE own folder -> ALLOW", True, DELETE, "folders/fMine", A, None, None),
+    # spec 1.115 §7.2: learningRoom folders — no author/folder-owner write path to room files
+    ("userA(author) PATCH own doc in learningRoom folder -> DENY", False, PATCH, "docs/dRoomAuth", A,
+     body({"fullPath": "r1b"}), ["fullPath"]),
+    ("userA(author) DELETE own doc in learningRoom folder -> DENY", False, DELETE, "docs/dRoomAuth", A, None, None),
+    ("userA(author) PATCH own doc in normal folder -> ALLOW", True, PATCH, "docs/dNormA", A,
+     body({"fullPath": "nm2"}), ["fullPath"]),
+    ("userA(folder owner) PATCH foreign doc in learningRoom folder -> DENY", False, PATCH, "docs/dRoomOther", A,
+     body({"fullPath": "r3b"}), ["fullPath"]),
+    ("userA(folder owner) DELETE foreign doc in learningRoom folder -> DENY", False, DELETE, "docs/dRoomOther", A, None, None),
+    ("userC(contentAdmin) PATCH doc in learningRoom folder -> ALLOW", True, PATCH, "docs/dRoomAuth2", C,
+     body({"fullPath": "r2b"}), ["fullPath"]),
+    ("userD(admin) DELETE doc in learningRoom folder -> ALLOW", True, DELETE, "docs/dRoomCA", D, None, None),
+    ("userE(member) create doc into learningRoom+membersMayUpload folder -> DENY", False, POST, "docs?documentId=dRoomN1", E,
+     body({"tenants": ["t1"], "authorKey": "pE", "folderKeys": ["fRoom"], "fullPath": "rn1"}), None),
+    ("userC(contentAdmin) create doc into learningRoom folder -> ALLOW", True, POST, "docs?documentId=dRoomN2", C,
+     body({"tenants": ["t1"], "authorKey": "pC", "folderKeys": ["fRoom"], "fullPath": "rn2"}), None),
+    ("userP(privileged) sets learningRoom on a folder -> DENY", False, PATCH, "folders/fPlain", P,
+     body({"learningRoom": True}), ["learningRoom"]),
+    ("userP(privileged) creates folder with learningRoom -> DENY", False, POST, "folders?documentId=fRoomP", P,
+     body({"tenants": ["t1"], "name": "RP", "ownerKey": "pP", "learningRoom": True}), None),
+    ("userA(folder owner) clears learningRoom on own room folder -> DENY", False, PATCH, "folders/fRoom", A,
+     body({"learningRoom": False}), ["learningRoom"]),
+    ("userA(folder owner) renames learningRoom folder -> ALLOW", True, PATCH, "folders/fRoom", A,
+     body({"name": "Room2"}), ["name"]),
+    ("userC(contentAdmin) creates folder with learningRoom -> ALLOW", True, POST, "folders?documentId=fRoomC", C,
+     body({"tenants": ["t1"], "name": "RC", "ownerKey": "pC", "learningRoom": True}), None),
+    ("userC(contentAdmin) sets learningRoom on a folder -> ALLOW", True, PATCH, "folders/fPlain", C,
+     body({"learningRoom": True}), ["learningRoom"]),
     # spec 1.115 §7.2: groups — create by privileged/memberAdmin (no adminKeys); update/detach/delete by
     # privileged, memberAdmin or a person in the STORED adminKeys; no client may change adminKeys.
     ("userA(member) PATCH group name -> DENY", False, PATCH, "groups/gAdm", A,

@@ -191,6 +191,14 @@ service cloud.firestore {
     function folderData(folderKey) {
       return get(/databases/$(database)/documents/folders/$(folderKey)).data;
     }
+    // Learning-room folder (spec 1.115 §7.2): a doc whose first folder is flagged learningRoom is
+    // managed only by content managers/admins (and the Admin SDK callables), never by its author or
+    // the folder owner. A missing folder is not a room (exists() guard, no evaluation error).
+    function inLearningRoom(folderKeys) {
+      return folderKeys.size() > 0
+        && exists(/databases/$(database)/documents/folders/$(folderKeys[0]))
+        && folderData(folderKeys[0]).get('learningRoom', false) == true;
+    }
 
     // ============================================================================
     //  Public read — only what an unauthenticated client genuinely renders.
@@ -616,7 +624,8 @@ service cloud.firestore {
             && request.resource.data.get('authorKey', '') == callerPersonKey()
             && request.resource.data.get('folderKeys', []).size() > 0
             && belongsToTenant(folderData(request.resource.data.folderKeys[0]))
-            && folderData(request.resource.data.folderKeys[0]).get('membersMayUpload', false) == true));
+            && folderData(request.resource.data.folderKeys[0]).get('membersMayUpload', false) == true
+            && !inLearningRoom(request.resource.data.folderKeys)));
       // ratingCount/ratingSum are the onRatingWritten aggregate (Admin SDK, bypasses rules): no client
       // path but an admin's may change them (spec 1.115 §7.2). DocumentService.update never sends them.
       allow update: if tenantUpdate()
@@ -624,20 +633,25 @@ service cloud.firestore {
         && (
         isContentManager()
         || (callerPersonKey() != ''
+            && !inLearningRoom(resource.data.get('folderKeys', []))
             && resource.data.get('authorKey', '') == callerPersonKey()
             && request.resource.data.get('authorKey', '') == resource.data.get('authorKey', '')
             && request.resource.data.get('folderKeys', []) == resource.data.get('folderKeys', []))
         || (callerPersonKey() != ''
             && resource.data.get('folderKeys', []).size() > 0
+            && !inLearningRoom(resource.data.folderKeys)
             && belongsToTenant(folderData(resource.data.folderKeys[0]))
             && folderData(resource.data.folderKeys[0]).get('ownerKey', '') == callerPersonKey()
             && request.resource.data.get('authorKey', '') == resource.data.get('authorKey', '')
             && request.resource.data.get('folderKeys', []) == resource.data.get('folderKeys', [])));
       allow delete: if tenantDelete() && (
         isAdmin()
-        || (callerPersonKey() != '' && resource.data.get('authorKey', '') == callerPersonKey())
+        || (callerPersonKey() != ''
+            && !inLearningRoom(resource.data.get('folderKeys', []))
+            && resource.data.get('authorKey', '') == callerPersonKey())
         || (callerPersonKey() != ''
             && resource.data.get('folderKeys', []).size() > 0
+            && !inLearningRoom(resource.data.folderKeys)
             && belongsToTenant(folderData(resource.data.folderKeys[0]))
             && folderData(resource.data.folderKeys[0]).get('ownerKey', '') == callerPersonKey()));
     }
@@ -705,12 +719,17 @@ service cloud.firestore {
         && callerPersonKey() != ''
         && resource.data.get('personKey', '') == callerPersonKey();
     }
+    // learningRoom (spec 1.115 §7.2): only a content admin / admin may set it on create or change it.
     match /folders/{id} {
       allow read: if tenantRead();
-      allow create: if tenantCreate() && (
+      allow create: if tenantCreate()
+        && (request.resource.data.get('learningRoom', false) != true || isContentAdminOrAdmin())
+        && (
         isContentManager()
         || (callerPersonKey() != '' && request.resource.data.get('ownerKey', '') == callerPersonKey()));
-      allow update: if tenantUpdate() && (
+      allow update: if tenantUpdate()
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['learningRoom']) || isContentAdminOrAdmin())
+        && (
         isContentManager()
         || (callerPersonKey() != '' && resource.data.get('ownerKey', '') == callerPersonKey()));
       allow delete: if tenantDelete() && (

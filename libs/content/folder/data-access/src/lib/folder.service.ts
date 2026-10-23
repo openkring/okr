@@ -50,6 +50,16 @@ export class FolderService {
     return key;
   }
 
+  /**
+   * Flags (or unflags) a folder as a learning room's folder. Writes ONLY `learningRoom` (updateFields),
+   * never the rest of a cached model. firestore.rules allow changing the flag to contentAdmin/admin only.
+   * @returns true when the write succeeded
+   */
+  public async setLearningRoom(folderKey: string, value: boolean): Promise<boolean> {
+    const key = await this.firestoreService.updateFields(FolderCollection, folderKey, { learningRoom: value }, this.i18n.update_error());
+    return key !== undefined;
+  }
+
   public async delete(folder: FolderModel, currentUser?: UserModel): Promise<void> {
     const payload = `${folder.okey}:${folder.name}`
     await this.firestoreService.deleteModel<FolderModel>(FolderCollection, folder, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
