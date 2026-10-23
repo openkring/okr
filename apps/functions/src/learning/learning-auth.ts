@@ -311,22 +311,64 @@ export function assertUploadPath(path: string, tenantId: string, decision: Learn
 }
 
 /**
- * The headers the client must send with its PUT, exactly as signed: the content type, the size
- * bound and — for the default bucket — the Firebase download token, so the object gets the same
- * token-URL a Storage SDK upload gets (album zip/CSV read `doc.url`).
+ * The headers the client must send with its PUT, exactly as signed: the content type and the size
+ * bound. No metadata header: GCS lower-cases `x-goog-meta-*` keys, so a token sent that way lands
+ * as `firebasestoragedownloadtokens` and Firebase never serves it. completeLearningUpload sets the
+ * download token afterwards with the admin SDK (exact casing).
  */
-export function learningUploadHeaders(decision: LearningUploadDecision, downloadToken: string): Record<string, string> {
-  const headers: Record<string, string> = {
+export function learningUploadHeaders(decision: LearningUploadDecision): Record<string, string> {
+  return {
     'Content-Type': decision.contentType,
     'x-goog-content-length-range': `0,${decision.maxBytes}`,
   };
-  if (decision.bucket === 'default') headers['x-goog-meta-firebaseStorageDownloadTokens'] = downloadToken;
-  return headers;
 }
 
 /** The Firebase download URL of a default-bucket object with the given token. */
 export function firebaseDownloadUrl(bucketName: string, path: string, token: string): string {
   return `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(path)}?alt=media&token=${token}`;
+}
+
+/* ------------------------------------------------------------------ complete ---- */
+
+export interface CompleteLearningUploadRequest {
+  pageKey: string;
+  docKey: string;
+}
+
+export function parseCompleteRequest(data: unknown): CompleteLearningUploadRequest {
+  const d = asData(data);
+  return { pageKey: key(d['pageKey'], 'pageKey'), docKey: key(d['docKey'], 'docKey') };
+}
+
+/** Only the uploader (the doc's author) or contentAdmin/admin may complete an upload. */
+export function assertMayComplete(actor: LearningActor, doc: Partial<DocumentModel>): void {
+  const isAuthor = !!actor.personKey && actor.personKey === doc.authorKey;
+  if (!isAuthor && actor.roles.contentAdmin !== true && actor.roles.admin !== true) throw denied('Not the uploader of this item.');
+}
+
+/** Which bucket the doc's object was signed into (prepareLearningUpload: videos → private, else default). */
+export function learningBucketOf(doc: Partial<DocumentModel>): 'private' | 'default' {
+  return learningTabOf(doc.mimeType ?? '') === 'videos' ? 'private' : 'default';
+}
+
+/**
+ * The PUT must have landed: the object exists and has exactly the declared size (the signed size
+ * bound only caps it). Otherwise failed-precondition — the client then removes the doc again.
+ */
+export function assertUploadLanded(exists: boolean, objectSize: unknown, doc: Partial<DocumentModel>): void {
+  if (!exists) throw new HttpsError('failed-precondition', 'Upload not found.');
+  if (typeof doc.size !== 'number' || Number(objectSize) !== doc.size) throw new HttpsError('failed-precondition', 'Upload size mismatch.');
+}
+
+/** An existing Firebase download token of the object (first of the comma list), or ''. Keeps a repeated completion stable. */
+export function existingDownloadToken(metadata: Record<string, unknown> | undefined): string {
+  const raw = metadata?.['firebaseStorageDownloadTokens'];
+  return typeof raw === 'string' ? (raw.split(',')[0]?.trim() ?? '') : '';
+}
+
+/** The custom-metadata patch that gives a default-bucket object its Firebase download token. */
+export function downloadTokenMetadata(token: string): { metadata: { firebaseStorageDownloadTokens: string } } {
+  return { metadata: { firebaseStorageDownloadTokens: token } };
 }
 
 /* ------------------------------------------------------------------ delete ---- */

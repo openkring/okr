@@ -10,8 +10,8 @@ import { CommentCollection, CommentModel, DbQuery, DocumentCollection, DocumentM
 import { getSystemQuery } from '@okr/shared-util-core';
 
 import {
-  DeleteLearningItemRequest, LearningUpload, PrepareLearningUploadRequest, SaveLearningItemRequest,
-  chunk, joinCommentTexts, mergeUploadHeaders, publicRoomUrl, shapeSaveRequest, shapeUploadRequest, sortByTitle,
+  CompleteLearningUploadRequest, DeleteLearningItemRequest, LearningUpload, PrepareLearningUploadRequest, SaveLearningItemRequest,
+  chunk, joinCommentTexts, mergeUploadHeaders, publicRoomUrl, runLearningUpload, shapeSaveRequest, shapeUploadRequest, sortByTitle,
 } from './learning-request';
 import { uploadToSignedUrl } from './learning-upload';
 
@@ -73,22 +73,26 @@ export class LearningService {
 
   public uploadToSignedUrl = uploadToSignedUrl;
 
+  /** Confirms a finished PUT; the server verifies the object and sets `doc.url` (download token). */
+  public completeUpload(req: CompleteLearningUploadRequest): Promise<{ url: string }> {
+    return this.call('completeLearningUpload', req);
+  }
+
   /**
-   * Prepares and performs an upload into a topic. If the PUT fails or is aborted the half-created
-   * document is removed again (best effort) and the original error is rethrown.
+   * Prepares, performs and completes an upload into a topic. If the PUT fails or is aborted, or the
+   * completion is refused (object missing / wrong size), the half-created document is removed again
+   * (best effort) and the original error is rethrown.
    * @returns the new document key
    */
   public async upload(
     pageKey: string, topic: string, file: File, onProgress?: (fraction: number) => void, signal?: AbortSignal,
   ): Promise<string> {
-    const prepared = await this.prepareUpload(shapeUploadRequest(pageKey, topic, file));
-    try {
-      await uploadToSignedUrl(prepared.uploadUrl, file, mergeUploadHeaders(prepared.headers, prepared.contentType), onProgress, signal);
-    } catch (error) {
-      await this.deleteItem({ pageKey, docKey: prepared.docKey }).catch(() => undefined);
-      throw error;
-    }
-    return prepared.docKey;
+    return runLearningUpload({
+      prepare: () => this.prepareUpload(shapeUploadRequest(pageKey, topic, file)),
+      put: prepared => uploadToSignedUrl(prepared.uploadUrl, file, mergeUploadHeaders(prepared.headers, prepared.contentType), onProgress, signal),
+      complete: docKey => this.completeUpload({ pageKey, docKey }),
+      cleanup: docKey => this.deleteItem({ pageKey, docKey }),
+    });
   }
 
   /** The published room as the public page API serves it (no auth). */

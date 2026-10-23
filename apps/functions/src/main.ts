@@ -553,6 +553,8 @@ export const requestFileTransferLimit = FileTransfer.requestFileTransferLimit;
 export const saveLearningItem = Learning.saveLearningItem;
 // prepareLearningUpload: learning rooms, a curator uploads into a topic — document + signed upload URL (spec 1.115)
 export const prepareLearningUpload = Learning.prepareLearningUpload;
+// completeLearningUpload: learning rooms, verifies a finished upload, sets the download token and doc.url (spec 1.115)
+export const completeLearningUpload = Learning.completeLearningUpload;
 // deleteLearningItem: learning rooms, a curator removes an item — detach from the room folder or archive (spec 1.115)
 export const deleteLearningItem = Learning.deleteLearningItem;
 // onRatingWritten: learning rooms, a rating write refreshes docs/{docKey}.ratingCount/ratingSum (spec 1.115)

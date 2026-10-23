@@ -10,7 +10,7 @@ import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functi
 import { privateBucket } from '../_storage/private-bucket';
 import { safeVideoTitle, zurichStoreDate } from '../video/chat-video.util';
 import {
-  assertUploadPath, decideUpload, firebaseDownloadUrl, learningActor, learningDocumentIndex, learningUploadHeaders, learningUploadPath, loadCaller, loadRoom,
+  assertUploadPath, decideUpload, learningActor, learningDocumentIndex, learningUploadHeaders, learningUploadPath, loadCaller, loadRoom,
   parseUploadRequest,
 } from './learning-auth';
 
@@ -24,8 +24,7 @@ export interface LearningUpload {
   maxBytes: number;
   /**
    * The headers the PUT to `uploadUrl` must carry, verbatim — they are part of the v4 signature
-   * (Content-Type, x-goog-content-length-range and, for images/files, the Firebase download token
-   * x-goog-meta-firebaseStorageDownloadTokens). A missing or changed header fails the upload.
+   * (Content-Type, x-goog-content-length-range). A missing or changed header fails the upload.
    */
   headers: Record<string, string>;
 }
@@ -43,7 +42,8 @@ function stripKey<T extends { okey: string }>(model: T): Omit<T, 'okey'> {
  * authored by the caller) and returns a signed v4 PUT URL bound to the content type and the declared
  * size. Videos go to the private bucket in the folder album layout (played through signVideoUrls,
  * capped at MAX_VIDEO_BYTES); images and files to the default bucket (25 MB). The client uploads
- * with exactly `Content-Type: <contentType>` and `x-goog-content-length-range: 0,<maxBytes>`.
+ * with exactly `Content-Type: <contentType>` and `x-goog-content-length-range: 0,<maxBytes>`, then
+ * calls completeLearningUpload, which verifies the object and sets the download token and `doc.url`.
  */
 export const prepareLearningUpload = onCall(
   { region: 'europe-west6', enforceAppCheck: true, cors: true },
@@ -66,10 +66,7 @@ export const prepareLearningUpload = onCall(
     const fullPath = learningUploadPath(tenantId, config.folder, req.fileName, randomUUID());
     assertUploadPath(fullPath, tenantId, decision);
     const bucket = decision.bucket === 'private' ? privateBucket() : getStorage().bucket();
-    // Default bucket: the same download token a Storage SDK upload gets, so `doc.url` works for every
-    // existing reader (album zip/CSV). Private-bucket videos have no token URL (signVideoUrls signs them).
-    const downloadToken = randomUUID();
-    const headers = learningUploadHeaders(decision, downloadToken);
+    const headers = learningUploadHeaders(decision);
     const { 'Content-Type': _contentType, ...extensionHeaders } = headers;
     // Sign first: a signing failure must not leave a document behind that no upload can ever fill.
     const [uploadUrl] = await bucket.file(fullPath).getSignedUrl({
@@ -90,7 +87,8 @@ export const prepareLearningUpload = onCall(
     doc.tags = req.topic;
     doc.authorKey = actor.personKey;
     doc.authorName = actor.name;
-    doc.url = decision.bucket === 'default' ? firebaseDownloadUrl(bucket.name, fullPath, downloadToken) : '';
+    // Filled by completeLearningUpload once the PUT has landed (default bucket: the Firebase token URL).
+    doc.url = '';
     doc.dateOfDocCreation = today;
     doc.dateOfDocLastUpdate = today;
     doc.version = '1.0';

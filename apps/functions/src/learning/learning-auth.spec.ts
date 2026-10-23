@@ -5,7 +5,8 @@ import type { LearningActor } from '@okr/content-learning-util';
 import { MAX_VIDEO_BYTES } from '@okr/shared-util-core';
 
 import {
-  assertDocInRoom, assertLearningPage, decideDelete, decideSave, decideUpload, firebaseDownloadUrl, groupKeyCandidate, learningActor,
+  assertDocInRoom, assertLearningPage, assertMayComplete, assertUploadLanded, decideDelete, downloadTokenMetadata, existingDownloadToken,
+  learningBucketOf, parseCompleteRequest, decideSave, decideUpload, firebaseDownloadUrl, groupKeyCandidate, learningActor,
   learningDocumentIndex, learningSectionKeys, learningUploadHeaders, learningUploadPath, LEARNING_FILE_MAX_BYTES, parseDeleteRequest,
   parseSaveRequest, parseUploadRequest, pickLearningConfig,
 } from './learning-auth';
@@ -224,18 +225,53 @@ describe('learningDocumentIndex (mirrors getDocumentIndex)', () => {
 });
 
 describe('upload headers and download url (fix round 1)', () => {
-  it('default bucket: content type, size bound and the download token', () => {
-    expect(learningUploadHeaders({ tab: 'images', bucket: 'default', contentType: 'image/png', maxBytes: 9 }, 'tok')).toEqual({
-      'Content-Type': 'image/png', 'x-goog-content-length-range': '0,9', 'x-goog-meta-firebaseStorageDownloadTokens': 'tok',
+  it('default bucket: content type and size bound only — no metadata header (GCS lower-cases it)', () => {
+    expect(learningUploadHeaders({ tab: 'images', bucket: 'default', contentType: 'image/png', maxBytes: 9 })).toEqual({
+      'Content-Type': 'image/png', 'x-goog-content-length-range': '0,9',
     });
   });
-  it('private bucket: no download token', () => {
-    expect(learningUploadHeaders({ tab: 'videos', bucket: 'private', contentType: 'video/mp4', maxBytes: 9 }, 'tok')).toEqual({
+  it('private bucket: the same two headers', () => {
+    expect(learningUploadHeaders({ tab: 'videos', bucket: 'private', contentType: 'video/mp4', maxBytes: 9 })).toEqual({
       'Content-Type': 'video/mp4', 'x-goog-content-length-range': '0,9',
     });
   });
   it('builds the Firebase token url with an encoded path', () => {
     expect(firebaseDownloadUrl('b.appspot.com', 'tenant/scs/folder/f1/album/r/a b.png', 'tok'))
       .toBe('https://firebasestorage.googleapis.com/v0/b/b.appspot.com/o/tenant%2Fscs%2Ffolder%2Ff1%2Falbum%2Fr%2Fa%20b.png?alt=media&token=tok');
+  });
+});
+
+describe('completeLearningUpload helpers (final review)', () => {
+  it('parses the request and rejects unsafe keys', () => {
+    expect(parseCompleteRequest({ pageKey: 'p', docKey: 'd' })).toEqual({ pageKey: 'p', docKey: 'd' });
+    expect(codeOf(() => parseCompleteRequest({ pageKey: 'p', docKey: 'a/b' }))).toBe('invalid-argument');
+    expect(codeOf(() => parseCompleteRequest(null))).toBe('invalid-argument');
+  });
+  it('only the author or contentAdmin/admin may complete', () => {
+    expect(codeOf(() => assertMayComplete(curator, doc()))).toBe('none');
+    expect(codeOf(() => assertMayComplete(actor('p2'), doc()))).toBe('permission-denied');
+    expect(codeOf(() => assertMayComplete(actor('', {}), doc({ authorKey: '' })))).toBe('permission-denied');
+    expect(codeOf(() => assertMayComplete(admin, doc()))).toBe('none');
+    expect(codeOf(() => assertMayComplete(actor('x', { contentAdmin: true }), doc()))).toBe('none');
+  });
+  it('videos live in the private bucket, everything else in the default bucket', () => {
+    expect(learningBucketOf(doc({ mimeType: 'video/mp4' }))).toBe('private');
+    expect(learningBucketOf(doc({ mimeType: 'image/png' }))).toBe('default');
+    expect(learningBucketOf(doc({ mimeType: 'application/pdf' }))).toBe('default');
+  });
+  it('the object must exist with exactly the declared size', () => {
+    expect(codeOf(() => assertUploadLanded(true, '42', doc({ size: 42 })))).toBe('none');
+    expect(codeOf(() => assertUploadLanded(true, 42, doc({ size: 42 })))).toBe('none');
+    expect(codeOf(() => assertUploadLanded(false, undefined, doc({ size: 42 })))).toBe('failed-precondition');
+    expect(codeOf(() => assertUploadLanded(true, '41', doc({ size: 42 })))).toBe('failed-precondition');
+    expect(codeOf(() => assertUploadLanded(true, '42', doc({ size: undefined })))).toBe('failed-precondition');
+  });
+  it('reuses an existing download token, else none', () => {
+    expect(existingDownloadToken({ firebaseStorageDownloadTokens: 'a,b' })).toBe('a');
+    expect(existingDownloadToken({ firebasestoragedownloadtokens: 'a' })).toBe('');
+    expect(existingDownloadToken(undefined)).toBe('');
+  });
+  it('sets the token in exact casing as custom metadata', () => {
+    expect(downloadTokenMetadata('tok')).toEqual({ metadata: { firebaseStorageDownloadTokens: 'tok' } });
   });
 });

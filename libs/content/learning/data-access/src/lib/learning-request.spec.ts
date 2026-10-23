@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   chunk, joinCommentTexts, mergeUploadHeaders, publicRoomUrl, ratingData, ratingId, shapeSaveRequest, shapeUploadRequest, sortByTitle,
+  runLearningUpload, type LearningUpload,
 } from './learning-request';
 
 describe('learning-request', () => {
@@ -52,5 +53,38 @@ describe('learning-request', () => {
     const data = ratingData('scs', 'd1', 'p1', 4, new Date('2026-10-22T10:00:00Z'));
     expect(Object.keys(data).sort()).toEqual(['isArchived', 'parentKey', 'personKey', 'stars', 'tenants', 'updatedAt']);
     expect(data).toMatchObject({ parentKey: 'document.d1', tenants: ['scs'], stars: 4, isArchived: false });
+  });
+});
+
+describe('runLearningUpload (final review: complete after the PUT)', () => {
+  const prepared: LearningUpload = { docKey: 'd1', uploadUrl: 'u', contentType: 'image/png', maxBytes: 9, headers: {} };
+  function steps(over: { put?: () => Promise<void>; complete?: () => Promise<unknown> } = {}) {
+    const calls: string[] = [];
+    return {
+      calls,
+      prepare: async () => { calls.push('prepare'); return prepared; },
+      put: async () => { calls.push('put'); await over.put?.(); },
+      complete: async (k: string) => { calls.push(`complete:${k}`); return over.complete?.(); },
+      cleanup: async (k: string) => { calls.push(`cleanup:${k}`); },
+    };
+  }
+  it('prepares, puts, completes and returns the doc key', async () => {
+    const s = steps();
+    await expect(runLearningUpload(s)).resolves.toBe('d1');
+    expect(s.calls).toEqual(['prepare', 'put', 'complete:d1']);
+  });
+  it('a failed PUT cleans up and never completes', async () => {
+    const s = steps({ put: () => Promise.reject(new Error('put')) });
+    await expect(runLearningUpload(s)).rejects.toThrow('put');
+    expect(s.calls).toEqual(['prepare', 'put', 'cleanup:d1']);
+  });
+  it('a refused completion cleans up and rethrows', async () => {
+    const s = steps({ complete: () => Promise.reject(new Error('size')) });
+    await expect(runLearningUpload(s)).rejects.toThrow('size');
+    expect(s.calls).toEqual(['prepare', 'put', 'complete:d1', 'cleanup:d1']);
+  });
+  it('a failing cleanup does not hide the original error', async () => {
+    const s = { ...steps({ put: () => Promise.reject(new Error('put')) }), cleanup: () => Promise.reject(new Error('cleanup')) };
+    await expect(runLearningUpload(s)).rejects.toThrow('put');
   });
 });

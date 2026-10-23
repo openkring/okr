@@ -28,6 +28,12 @@ export interface LearningUpload {
   headers: Record<string, string>;
 }
 
+/** completeLearningUpload payload: the doc whose PUT has just finished. */
+export interface CompleteLearningUploadRequest {
+  pageKey: string;
+  docKey: string;
+}
+
 export interface DeleteLearningItemRequest {
   pageKey: string;
   docKey: string;
@@ -102,4 +108,29 @@ export function ratingData(tenantId: string, docKey: string, personKey: string, 
     updatedAt: now.toISOString(),
     isArchived: false,
   };
+}
+
+/** The steps of a learning upload, injected so the order and the cleanup rule are testable. */
+export interface LearningUploadSteps {
+  prepare: () => Promise<LearningUpload>;
+  put: (prepared: LearningUpload) => Promise<void>;
+  complete: (docKey: string) => Promise<unknown>;
+  cleanup: (docKey: string) => Promise<unknown>;
+}
+
+/**
+ * prepare → PUT → complete. A failed or aborted PUT, or a refused completion, removes the
+ * half-created document (best effort) and rethrows the original error.
+ * @returns the new document key
+ */
+export async function runLearningUpload(steps: LearningUploadSteps): Promise<string> {
+  const prepared = await steps.prepare();
+  try {
+    await steps.put(prepared);
+    await steps.complete(prepared.docKey);
+  } catch (error) {
+    await steps.cleanup(prepared.docKey).catch(() => undefined);
+    throw error;
+  }
+  return prepared.docKey;
 }
