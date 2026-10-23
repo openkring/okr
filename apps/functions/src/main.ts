@@ -25,6 +25,7 @@ import * as Ocr from './ocr';
 import * as Vectorize from './vectorize';
 import * as Video from './video';
 import * as FileTransfer from './file-transfer';
+import * as Learning from './learning';
 import * as Expense from './expense';
 import * as Booking from './booking';
 import * as Invoice from './invoice';
@@ -547,3 +548,10 @@ export const endFileTransfer = FileTransfer.endFileTransfer;
 export const reapFileTransfers = FileTransfer.reapFileTransfers;
 // requestFileTransferLimit: quick file transfer, member asks for higher limits via the tenant support room (spec 1.115)
 export const requestFileTransferLimit = FileTransfer.requestFileTransferLimit;
+
+// saveLearningItem: learning rooms, a curator edits title, topics, notes, links and attachments of an item (spec 1.115)
+export const saveLearningItem = Learning.saveLearningItem;
+// prepareLearningUpload: learning rooms, a curator uploads into a topic — document + signed upload URL (spec 1.115)
+export const prepareLearningUpload = Learning.prepareLearningUpload;
+// deleteLearningItem: learning rooms, a curator removes an item — detach from the room folder or archive (spec 1.115)
+export const deleteLearningItem = Learning.deleteLearningItem;
