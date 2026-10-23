@@ -1,0 +1,15 @@
+{
+  "validation": {
+    "titleRequired": "Saisis un titre.",
+    "titleTooLong": "Le titre peut contenir 200 caractères au maximum.",
+    "notesTooLong": "Les notes peuvent contenir 20000 caractères au maximum.",
+    "tooManyLinks": "Tu peux ajouter 20 liens au maximum.",
+    "linkTitle": "Chaque lien a besoin d'un titre de 100 caractères au maximum.",
+    "linkUrl": "Saisis une adresse qui commence par https://.",
+    "nameRequired": "Saisis un nom.",
+    "nameTooLong": "Le nom peut contenir 80 caractères au maximum.",
+    "folderRequired": "Choisis un dossier.",
+    "tooManyTopics": "Tu peux indiquer 30 thèmes au maximum.",
+    "curatorsPersonsOnly": "Seules des personnes peuvent être choisies comme responsables."
+  }
+}

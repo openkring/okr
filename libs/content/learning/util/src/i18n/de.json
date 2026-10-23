@@ -1,0 +1,15 @@
+{
+  "validation": {
+    "titleRequired": "Gib einen Titel ein.",
+    "titleTooLong": "Der Titel darf höchstens 200 Zeichen lang sein.",
+    "notesTooLong": "Die Notizen dürfen höchstens 20000 Zeichen lang sein.",
+    "tooManyLinks": "Du kannst höchstens 20 Links hinzufügen.",
+    "linkTitle": "Jeder Link braucht einen Titel mit höchstens 100 Zeichen.",
+    "linkUrl": "Gib eine Adresse an, die mit https:// beginnt.",
+    "nameRequired": "Gib einen Namen ein.",
+    "nameTooLong": "Der Name darf höchstens 80 Zeichen lang sein.",
+    "folderRequired": "Wähle einen Ordner aus.",
+    "tooManyTopics": "Du kannst höchstens 30 Themen angeben.",
+    "curatorsPersonsOnly": "Als Betreuung sind nur Personen möglich."
+  }
+}

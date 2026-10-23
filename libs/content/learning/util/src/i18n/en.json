@@ -1,0 +1,15 @@
+{
+  "validation": {
+    "titleRequired": "Enter a title.",
+    "titleTooLong": "The title can be at most 200 characters long.",
+    "notesTooLong": "The notes can be at most 20000 characters long.",
+    "tooManyLinks": "You can add at most 20 links.",
+    "linkTitle": "Every link needs a title of at most 100 characters.",
+    "linkUrl": "Enter an address that starts with https://.",
+    "nameRequired": "Enter a name.",
+    "nameTooLong": "The name can be at most 80 characters long.",
+    "folderRequired": "Choose a folder.",
+    "tooManyTopics": "You can enter at most 30 topics.",
+    "curatorsPersonsOnly": "Only persons can be chosen as curators."
+  }
+}
