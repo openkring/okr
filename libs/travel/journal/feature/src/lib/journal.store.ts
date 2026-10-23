@@ -4,10 +4,11 @@ import { patchState, signalStore, withComputed, withHooks, withMethods, withProp
 
 import { JournalChange } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 import { ChangeDraft, JournalDb, JournalIdentityService, JournalPhotos, SkippedPhoto } from '@okr/travel-journal-data-access';
 import {
-  entityStateKey, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
+  entityStateKey, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
   journalsOf, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, viewOf,
 } from '@okr/travel-journal-util';
 
@@ -35,6 +36,9 @@ export const JournalStore = signalStore(
     db: inject(JournalDb),
     identity: inject(JournalIdentityService),
     appStore: inject(AppStore),
+  })),
+  withProps(() => ({
+    i18n: inject(I18nService).translateAll(JOURNAL_I18N_KEYS) as JournalI18n,
   })),
   withComputed((store) => {
     const journalState = computed<JournalState>(() => materialize(store.changes()));
@@ -116,6 +120,21 @@ export const JournalStore = signalStore(
       async setFootprint(footprintKey: string, fields: FootprintFields): Promise<void> {
         const fp = footprint(footprintKey);
         if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
+        await write([{ journalKey: fp.journalKey, entity: 'footprint', entityKey: footprintKey, op: 'set', fields: { ...fields } }]);
+      },
+
+      /** Saves the footprint modal's form model (title, place, date, time, publish state). */
+      async saveFootprintForm(footprintKey: string, model: FootprintFormModel): Promise<void> {
+        const fp = footprint(footprintKey);
+        if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
+        const fields: FootprintFields = {};
+        if (model.title !== fp.title) fields.title = model.title;
+        if (model.placeName !== fp.placeName) fields.placeName = model.placeName;
+        if (model.date !== fp.date) fields.date = model.date;
+        if (model.time !== fp.time) fields.time = model.time;
+        const publishState = model.published ? 'published' : 'draft';
+        if (publishState !== fp.publishState) fields.publishState = publishState;
+        if (Object.keys(fields).length === 0) return;
         await write([{ journalKey: fp.journalKey, entity: 'footprint', entityKey: footprintKey, op: 'set', fields: { ...fields } }]);
       },
 

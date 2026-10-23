@@ -21,6 +21,11 @@
     "@capacitor/network": "*",
     "@ionic/angular": "*",
     "@ngrx/signals": "*",
-    "rxjs": "*"
+    "rxjs": "*",
+    "@okr/cms-section-feature": "*",
+    "@okr/shared-ui": "*",
+    "@okr/shared-i18n": "*",
+    "@okr/shared-util-angular": "*",
+    "@okr/travel-journal-ui": "*"
   }
 }
