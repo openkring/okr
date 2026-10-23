@@ -1,3 +1,5 @@
+import type { Timestamp } from 'firebase/firestore';
+
 /**
  * One edit in a travel journal (spec 1.113 §5.1). Every device appends these to its local change
  * log; peers exchange them, and any online device uploads them to `journal-changes`, where a Cloud
@@ -17,6 +19,8 @@ export interface JournalChange {
   entityKey: string;
   op: JournalChangeOp;
   fields: Record<string, unknown>; // only the changed fields
+  tenants?: string[]; // set by the uploader (the journal's tenant); absent in the local log
+  uploadedAt?: Timestamp; // server time of the upload, set as serverTimestamp(); absent in the local log
 }
 
 export const JournalChangeCollection = 'journal-changes';

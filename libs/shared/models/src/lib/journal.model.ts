@@ -44,6 +44,7 @@ export class JournalModel implements OkrModel, SearchableModel, TaggedModel {
   public endDate = DEFAULT_DATE; // StoreDate
   public tripKey?: string; // FK -> trips, optional
   public authors: AvatarInfo[] = []; // persons who may write
+  public authorKeys: string[] = []; // person.okey of every author — for rules and array-contains queries
   public guests: JournalGuest[] = []; // persons who may read, comment and like
   public signalSender?: string; // person.okey of the author whose Matrix account is logged into the Signal bridge
   public state: JournalState = 'draft';
@@ -53,7 +54,28 @@ export class JournalModel implements OkrModel, SearchableModel, TaggedModel {
   }
 }
 
+/**
+ * An image of a journal as the web story and guests read it (spec 1.113 §3), at
+ * `journals/{journalKey}/images/{okey}`, written by the applyJournalChange function only.
+ * `path2048`/`path400` are Storage paths in the private bucket, read through signed URLs.
+ */
+export interface JournalImageModel {
+  okey: string;
+  tenants: string[];
+  isArchived: boolean;
+  journalKey: string;
+  authorKey: string;
+  takenAt?: string; // ISO local time from EXIF
+  latitude?: number;
+  longitude?: number;
+  width: number;
+  height: number;
+  path2048: string;
+  path400: string;
+}
+
 export const JournalCollection = 'journals';
+export const JournalImageCollection = 'images'; // subcollection of journals/{okey}
 export const JournalPrivateCollection = 'private'; // subcollection, authors only: docs 'peer' and 'guestLinks'
 export const JournalGuestLinksDoc = 'guestLinks';
 export const JournalPeerDoc = 'peer';
