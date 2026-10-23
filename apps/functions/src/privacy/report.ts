@@ -143,6 +143,9 @@ export const COLLECTION_LABELS: Record<string, string> = {
   // «Datei-» keeps them apart from the ownership `transfers` row just above.
   'file-transfers': 'Dateitransfers',
   'file-transfer-events': 'Dateitransfer-Protokoll',
+  // Learning-room ratings (libs/content/learning/util/src/i18n/de.json: "Bewertung"); «Lernräume»
+  // keeps them apart from the other rating-like rows of the export.
+  ratings: 'Bewertungen (Lernräume)',
 
   // — logs —
   sessions: 'Anmeldesitzungen',
