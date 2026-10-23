@@ -54,6 +54,7 @@ import * as WorkflowOutbox from './workflow/outbox';
 import * as Approval from './approval';
 import * as Content from './content';
 import * as Contract from './contract';
+import * as Journal from './journal';
 
 // firebase app hosting requires a webserver. It does not automatically discover exported functions.
 //      the webserver is started in apphosting.yaml
@@ -555,6 +556,11 @@ export const saveLearningItem = Learning.saveLearningItem;
 export const prepareLearningUpload = Learning.prepareLearningUpload;
 // completeLearningUpload: learning rooms, verifies a finished upload, sets the download token and doc.url (spec 1.115)
 export const completeLearningUpload = Learning.completeLearningUpload;
+// travel journal (spec 1.113 plan 4)
+export const applyJournalChange = Journal.applyJournalChange;
+export const prepareJournalPhotoUploads = Journal.prepareJournalPhotoUploads;
+export const signJournalPhotos = Journal.signJournalPhotos;
+export const ensureJournalPeerSecret = Journal.ensureJournalPeerSecret;
 // deleteLearningItem: learning rooms, a curator removes an item — detach from the room folder or archive (spec 1.115)
 export const deleteLearningItem = Learning.deleteLearningItem;
 // onRatingWritten: learning rooms, a rating write refreshes docs/{docKey}.ratingCount/ratingSum (spec 1.115)

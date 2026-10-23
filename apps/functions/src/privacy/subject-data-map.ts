@@ -1615,3 +1615,17 @@ export async function resolveArrayItemDocs(entry: SubjectDataEntry, ctx: Subject
 //   would miss it and an erasure would leave the person's name in exempt[] (and the key in
 //   blockedBy/updatedBy) until an admin removes the tester; the admin's free-text `message`
 //   may also name someone. Only a handful of operators are affected, never ordinary members.
+// gap: journals — a travel journal (spec 1.113): authorKeys[]/authors[] and guests[] name persons;
+//   title and dates are the authors' own. Export and erasure rows come with the guest plan (plan 6),
+//   which also decides what an author's erasure does to a co-authored journal. Authors only today.
+// gap: journal-changes — the append-only change log of a travel journal: authorKey plus the
+//   authors' own text, photo metadata (GPS, time) and device ids. Never updated or deleted by
+//   design (spec 1.113 §3.5); export/erasure with plan 6.
+// gap: footprints — journals/{jk}/footprints and journals/{jk}/sections (the blocks, authorKey + text), materialised from journal-changes by
+//   applyJournalChange; place, date, GPS of the authors' trip. Follows the journal-changes row.
+// gap: images — journals/{jk}/images, materialised photo metadata (authorKey, GPS, time, private-bucket
+//   paths); the files live in the private bucket under tenant/<t>/journal/<jk>/. Follows journal-changes.
+// gap: private — journals/{jk}/private/{peer,guestLinks}: the P2P secret and the guests' link codes
+//   (personKey per link). Function-only access; erasure of a guest's link with plan 6.
+// gap: reactions — likes on a footprint (spec 1.113 §3.4), personKey in the doc id; not written yet
+//   (plan 6 adds the row together with comments).

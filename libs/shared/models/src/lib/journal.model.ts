@@ -75,7 +75,12 @@ export interface JournalImageModel {
 }
 
 export const JournalCollection = 'journals';
-export const JournalImageCollection = 'images'; // subcollection of journals/{okey}
+// Subcollections of journals/{okey}, written by the applyJournalChange function only (plan 4): the journal's
+// footprints (PageModel, type 'footprint'), blocks (sections) and images. Kept under the journal so read rules
+// can be scoped to its authors and guests without touching the CMS 'pages'/'sections' queries.
+export const JournalFootprintCollection = 'footprints';
+export const JournalSectionCollection = 'sections';
+export const JournalImageCollection = 'images';
 export const JournalPrivateCollection = 'private'; // subcollection, authors only: docs 'peer' and 'guestLinks'
 export const JournalGuestLinksDoc = 'guestLinks';
 export const JournalPeerDoc = 'peer';
