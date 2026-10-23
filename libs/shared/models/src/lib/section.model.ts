@@ -428,6 +428,7 @@ export interface HeroConfig {
   logo: ImageConfig; // the logo image
   hero: ImageConfig; // the hero background image
   imageStyle: ImageStyle;
+  chips?: string[]; // short facts under the title, e.g. date, coordinates, place (travel journal, spec 1.113)
 }
 
 // --------------------------------------- IFRAME ----------------------------------------

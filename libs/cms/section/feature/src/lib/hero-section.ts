@@ -1,5 +1,5 @@
 import { Component, computed, input } from '@angular/core';
-import { IonCol, IonGrid, IonRow } from '@ionic/angular';
+import { IonChip, IonCol, IonGrid, IonLabel, IonRow } from '@ionic/angular';
 
 import { HeroSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE } from '@okr/shared-models';
 import { Img, Spinner } from '@okr/shared-ui';
@@ -9,7 +9,7 @@ import { Img, Spinner } from '@okr/shared-ui';
   standalone: true,
   imports: [
     Spinner, Img,
-    IonGrid, IonRow, IonCol
+    IonGrid, IonRow, IonCol, IonChip, IonLabel
   ],
   styles: [`
     .hero-container { display: flex; justify-content: center; align-items: center; height: 100%; min-height: 700px;}
@@ -17,21 +17,33 @@ import { Img, Spinner } from '@okr/shared-ui';
     .hero-form {background-color: rgba(255, 255, 255); padding: 20px; border-radius: 10px; width: 600px; max-width: 600px; width: 90%; text-align: center; z-index: 5;}
     .title { text-align: center; font-size: 2rem;}
     .subtitle { text-align: center; font-size: 1.2rem;}
+    .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
     .logo { max-width: 300px; text-align: center; display: block; margin-left: auto; margin-right: auto; width: 50%; z-index: 10; }
   `],
   template: `
     @if(section(); as section) {
       <div class="hero-container">
         <okr-img class="hero-image" [image]="heroImage()" [imageStyle]="imageStyle()" />
-        <ion-grid class="hero-form">
-          @if(logoImage(); as logoImage) {
-            <ion-row>
-              <ion-col>
-                <okr-img class="logo" [image]="logoImage" [imageStyle]="imageStyle()" />
-              </ion-col>
-            </ion-row>
-          }
-        </ion-grid>
+        @if (hasCard()) {
+          <ion-grid class="hero-form">
+            @if (hasLogo()) {
+              <ion-row>
+                <ion-col>
+                  <okr-img class="logo" [image]="logoImage()" [imageStyle]="imageStyle()" />
+                </ion-col>
+              </ion-row>
+            }
+            @if (section.title) { <ion-row><ion-col><div class="title">{{ section.title }}</div></ion-col></ion-row> }
+            @if (section.subTitle) { <ion-row><ion-col><div class="subtitle">{{ section.subTitle }}</div></ion-col></ion-row> }
+            @if (chips().length > 0) {
+              <ion-row>
+                <ion-col class="chips">
+                  @for (chip of chips(); track $index) { <ion-chip><ion-label>{{ chip }}</ion-label></ion-chip> }
+                </ion-col>
+              </ion-row>
+            }
+          </ion-grid>
+        }
       </div>
     } @else {
       <okr-spinner />
@@ -49,4 +61,11 @@ export class HeroSectionComponent {
   protected logoImage = computed(() => this.section()?.properties.logo ?? IMAGE_CONFIG_SHAPE);
   // tbd on logoImage: hasPriority=false, ImageAction.None, isThumbnail=false, fill=true, altText='logo image'
   protected imageStyle = computed(() => this.section()?.properties.imageStyle ?? IMAGE_STYLE_SHAPE);
+  protected chips = computed(() => this.section()?.properties.chips ?? []);
+  // The card shows only when it has something: a logo (the classic hero), a title, a subtitle or chips.
+  protected hasLogo = computed(() => !!this.logoImage().url);
+  protected hasCard = computed(() => {
+    const section = this.section();
+    return this.hasLogo() || !!section?.title || !!section?.subTitle || this.chips().length > 0;
+  });
 }
