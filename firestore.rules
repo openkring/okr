@@ -621,7 +621,10 @@ service cloud.firestore {
       allow create: if tenantCreate()
         && callerPersonKey() != ''
         && request.resource.data.get('personKey', '') == callerPersonKey()
-        && request.resource.data.get('parentKey', '').matches('document\\..+')
+        && request.resource.data.get('parentKey', '').matches('document\\.[^.]+')
+        && request.resource.data.keys().hasOnly(['tenants', 'parentKey', 'personKey', 'stars', 'updatedAt', 'isArchived'])
+        && exists(/databases/$(database)/documents/docs/$(request.resource.data.parentKey.split('\\.')[1]))
+        && belongsToTenant(get(/databases/$(database)/documents/docs/$(request.resource.data.parentKey.split('\\.')[1])).data)
         && id == request.resource.data.parentKey.split('\\.')[1] + '__' + callerPersonKey()
         && request.resource.data.get('stars', 0) is int
         && request.resource.data.stars >= 1 && request.resource.data.stars <= 5;
@@ -630,6 +633,7 @@ service cloud.firestore {
         && resource.data.get('personKey', '') == callerPersonKey()
         && request.resource.data.get('personKey', '') == resource.data.get('personKey', '')
         && request.resource.data.get('parentKey', '') == resource.data.get('parentKey', '')
+        && request.resource.data.keys().hasOnly(['tenants', 'parentKey', 'personKey', 'stars', 'updatedAt', 'isArchived'])
         && request.resource.data.get('stars', 0) is int
         && request.resource.data.stars >= 1 && request.resource.data.stars <= 5;
       allow delete: if tenantDelete()

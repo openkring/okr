@@ -4,7 +4,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 
 import { DocumentCollection, RatingCollection } from '@okr/shared-models';
 
-import { docKeyOfRating, recomputeRatingAggregate } from './rating-aggregate';
+import { aggregateForDoc, ratingDocKeysToRefresh } from './rating-aggregate';
 
 /**
  * Keeps docs/{docKey}.ratingCount / ratingSum in step with the ratings of that document
@@ -18,25 +18,21 @@ export const onRatingWritten = onDocumentWritten(
     const before = event.data?.before.data();
     const after = event.data?.after.data();
     // An update could in theory move a rating to another doc; refresh both.
-    const keys = new Set<string>();
-    for (const data of [before, after]) {
-      const key = docKeyOfRating(data?.['parentKey']);
-      if (key) keys.add(key);
-    }
-    if (keys.size === 0) return;
+    const keys = ratingDocKeysToRefresh(before, after);
+    if (keys.length === 0) return;
 
     const db = getFirestore();
     for (const docKey of keys) {
       const docRef = db.collection(DocumentCollection).doc(docKey);
       await db.runTransaction(async (tx) => {
         const docSnap = await tx.get(docRef);
-        if (!docSnap.exists) {
+        const ratings = await tx.get(db.collection(RatingCollection).where('parentKey', '==', `document.${docKey}`));
+        const agg = aggregateForDoc(docSnap.data(), ratings.docs.map((d) => d.data()));
+        if (!agg) {
           logger.info('onRatingWritten: document missing, skipped', { docKey });
           return;
         }
-        const ratings = await tx.get(db.collection(RatingCollection).where('parentKey', '==', `document.${docKey}`));
-        const { count, sum } = recomputeRatingAggregate(ratings.docs.map((d) => d.get('stars')));
-        tx.update(docRef, { ratingCount: count, ratingSum: sum });
+        tx.update(docRef, { ratingCount: agg.count, ratingSum: agg.sum });
       });
     }
   },
