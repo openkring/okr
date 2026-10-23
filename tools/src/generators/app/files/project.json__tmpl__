@@ -822,6 +822,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/travel/journal/feature/src/i18n",
+            "output": "./assets/i18n/travel/journal/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/user/data-access/src/i18n",
             "output": "./assets/i18n/user/data-access"
           },

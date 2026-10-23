@@ -165,6 +165,7 @@
       "@okr/content-diary-util": ["libs/content/diary/util/src/index.ts"],
       "@okr/travel-journal-data-access": ["libs/travel/journal/data-access/src/index.ts"],
       "@okr/travel-journal-feature": ["libs/travel/journal/feature/src/index.ts"],
+      "@okr/travel-journal-ui": ["libs/travel/journal/ui/src/index.ts"],
       "@okr/travel-journal-util": ["libs/travel/journal/util/src/index.ts"],
       "@okr/content-meeting-data-access": ["libs/content/meeting/data-access/src/index.ts"],
       "@okr/content-meeting-feature": ["libs/content/meeting/feature/src/index.ts"],

@@ -1,0 +1,70 @@
+{
+  "list": {
+    "title": "Diari di viaggio",
+    "empty": "Ancora nessun diario di viaggio. Crea il primo.",
+    "new": "Nuovo diario di viaggio",
+    "new_prompt": "Come si chiama il viaggio?"
+  },
+  "native_only": "Per ora il diario di viaggio è disponibile solo nell'app per iPad.",
+  "untitled": "Senza titolo",
+  "stats": {
+    "days": "giorni",
+    "km": "km",
+    "footprints": "tappe",
+    "photos": "foto"
+  },
+  "footprints": {
+    "title": "Tappe",
+    "new": "Nuova tappa",
+    "empty": "Ancora nessuna tappa. Crea la prima."
+  },
+  "story": {
+    "add_text": "Aggiungi testo",
+    "add_photos": "Aggiungi foto",
+    "edit_footprint": "Modifica tappa",
+    "previous": "Precedente",
+    "next": "Successiva",
+    "by": "di {name}",
+    "by_you": "tuo",
+    "draft": "Bozza",
+    "published": "Pubblicato"
+  },
+  "block": {
+    "actions": "Blocco",
+    "edit": "Modifica",
+    "delete": "Elimina",
+    "delete_confirm": "Eliminare questo blocco?"
+  },
+  "photos": {
+    "added": "{count} foto aggiunte",
+    "skipped": "{count} foto saltate"
+  },
+  "error": {
+    "no_author": "Apri il diario di viaggio una volta con internet, poi potrai scrivere.",
+    "not_owner": "Solo chi ha scritto questo blocco può modificarlo.",
+    "generic": "Non ha funzionato. Riprova."
+  },
+  "footprint_form": {
+    "title": "Tappa",
+    "title_label": "Titolo",
+    "title_ph": "p. es. Neko Harbour",
+    "title_helper": "Il luogo o l'esperienza del giorno",
+    "place_label": "Luogo",
+    "place_ph": "p. es. Penisola Antartica",
+    "place_helper": "Mostrato sotto il titolo",
+    "date_label": "Data",
+    "date_ph": "GG.MM.AAAA",
+    "time_label": "Ora",
+    "time_ph": "HH:MM",
+    "published_label": "Pubblicato",
+    "published_helper": "Gli ospiti vedono solo le tappe pubblicate"
+  },
+  "text_form": {
+    "title": "Testo",
+    "text_label": "Testo",
+    "text_ph": "Cosa avete vissuto?",
+    "text_helper": "Una riga vuota inizia un nuovo paragrafo"
+  },
+  "cancel": "Annulla",
+  "save": "Salva"
+}

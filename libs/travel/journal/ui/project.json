@@ -1,0 +1,31 @@
+{
+  "name": "travel-journal-ui",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/travel/journal/ui/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": [
+    "type:ui",
+    "scope:journal",
+    "platform:mobile",
+    "platform:web"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/libs/travel/journal/ui",
+        "main": "libs/travel/journal/ui/src/index.ts",
+        "tsConfig": "libs/travel/journal/ui/tsconfig.lib.json",
+        "assets": [],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "list": {
+    "title": "Carnets de voyage",
+    "empty": "Pas encore de carnet de voyage. Crée le premier.",
+    "new": "Nouveau carnet de voyage",
+    "new_prompt": "Comment s'appelle le voyage ?"
+  },
+  "native_only": "Pour l'instant, le carnet de voyage n'est disponible que dans l'app iPad.",
+  "untitled": "Sans titre",
+  "stats": {
+    "days": "jours",
+    "km": "km",
+    "footprints": "étapes",
+    "photos": "photos"
+  },
+  "footprints": {
+    "title": "Étapes",
+    "new": "Nouvelle étape",
+    "empty": "Pas encore d'étape. Crée la première."
+  },
+  "story": {
+    "add_text": "Ajouter du texte",
+    "add_photos": "Ajouter des photos",
+    "edit_footprint": "Modifier l'étape",
+    "previous": "Précédente",
+    "next": "Suivante",
+    "by": "par {name}",
+    "by_you": "par toi",
+    "draft": "Brouillon",
+    "published": "Publié"
+  },
+  "block": {
+    "actions": "Bloc",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "delete_confirm": "Supprimer ce bloc ?"
+  },
+  "photos": {
+    "added": "{count} photo(s) ajoutée(s)",
+    "skipped": "{count} photo(s) ignorée(s)"
+  },
+  "error": {
+    "no_author": "Ouvre le carnet de voyage une fois avec internet, ensuite tu pourras écrire.",
+    "not_owner": "Seule la personne qui a écrit ce bloc peut le modifier.",
+    "generic": "Cela n'a pas fonctionné. Réessaie."
+  },
+  "footprint_form": {
+    "title": "Étape",
+    "title_label": "Titre",
+    "title_ph": "p. ex. Neko Harbour",
+    "title_helper": "Le lieu ou l'expérience du jour",
+    "place_label": "Lieu",
+    "place_ph": "p. ex. Péninsule Antarctique",
+    "place_helper": "Affiché sous le titre",
+    "date_label": "Date",
+    "date_ph": "JJ.MM.AAAA",
+    "time_label": "Heure",
+    "time_ph": "HH:MM",
+    "published_label": "Publié",
+    "published_helper": "Les invités ne voient que les étapes publiées"
+  },
+  "text_form": {
+    "title": "Texte",
+    "text_label": "Texte",
+    "text_ph": "Qu'avez-vous vécu ?",
+    "text_helper": "Une ligne vide commence un nouveau paragraphe"
+  },
+  "cancel": "Annuler",
+  "save": "Enregistrer"
+}

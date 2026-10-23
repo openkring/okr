@@ -1,0 +1,70 @@
+{
+  "list": {
+    "title": "Travel journals",
+    "empty": "No travel journal yet. Create the first one.",
+    "new": "New travel journal",
+    "new_prompt": "What is the trip called?"
+  },
+  "native_only": "For now the travel journal is only available in the iPad app.",
+  "untitled": "Untitled",
+  "stats": {
+    "days": "days",
+    "km": "km",
+    "footprints": "footprints",
+    "photos": "photos"
+  },
+  "footprints": {
+    "title": "Footprints",
+    "new": "New footprint",
+    "empty": "No footprints yet. Create the first one."
+  },
+  "story": {
+    "add_text": "Add text",
+    "add_photos": "Add photos",
+    "edit_footprint": "Edit footprint",
+    "previous": "Previous",
+    "next": "Next",
+    "by": "by {name}",
+    "by_you": "by you",
+    "draft": "Draft",
+    "published": "Published"
+  },
+  "block": {
+    "actions": "Block",
+    "edit": "Edit",
+    "delete": "Delete",
+    "delete_confirm": "Delete this block?"
+  },
+  "photos": {
+    "added": "{count} photo(s) added",
+    "skipped": "{count} photo(s) skipped"
+  },
+  "error": {
+    "no_author": "Open the travel journal once with internet, then you can write.",
+    "not_owner": "Only the person who wrote this block can change it.",
+    "generic": "That did not work. Please try again."
+  },
+  "footprint_form": {
+    "title": "Footprint",
+    "title_label": "Title",
+    "title_ph": "e.g. Neko Harbour",
+    "title_helper": "The place or the experience of the day",
+    "place_label": "Place",
+    "place_ph": "e.g. Antarctic Peninsula",
+    "place_helper": "Shown below the title",
+    "date_label": "Date",
+    "date_ph": "DD.MM.YYYY",
+    "time_label": "Time",
+    "time_ph": "HH:MM",
+    "published_label": "Published",
+    "published_helper": "Guests only see published footprints"
+  },
+  "text_form": {
+    "title": "Text",
+    "text_label": "Text",
+    "text_ph": "What did you experience?",
+    "text_helper": "An empty line starts a new paragraph"
+  },
+  "cancel": "Cancel",
+  "save": "Save"
+}

@@ -1,0 +1,70 @@
+{
+  "list": {
+    "title": "Diarios de viaje",
+    "empty": "Todavía no hay diario de viaje. Crea el primero.",
+    "new": "Nuevo diario de viaje",
+    "new_prompt": "¿Cómo se llama el viaje?"
+  },
+  "native_only": "Por ahora el diario de viaje solo está disponible en la app de iPad.",
+  "untitled": "Sin título",
+  "stats": {
+    "days": "días",
+    "km": "km",
+    "footprints": "etapas",
+    "photos": "fotos"
+  },
+  "footprints": {
+    "title": "Etapas",
+    "new": "Nueva etapa",
+    "empty": "Todavía no hay etapas. Crea la primera."
+  },
+  "story": {
+    "add_text": "Añadir texto",
+    "add_photos": "Añadir fotos",
+    "edit_footprint": "Editar etapa",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "by": "de {name}",
+    "by_you": "tuyo",
+    "draft": "Borrador",
+    "published": "Publicado"
+  },
+  "block": {
+    "actions": "Bloque",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "delete_confirm": "¿Eliminar este bloque?"
+  },
+  "photos": {
+    "added": "{count} foto(s) añadida(s)",
+    "skipped": "{count} foto(s) omitida(s)"
+  },
+  "error": {
+    "no_author": "Abre el diario de viaje una vez con internet y luego podrás escribir.",
+    "not_owner": "Solo quien escribió este bloque puede cambiarlo.",
+    "generic": "No ha funcionado. Inténtalo de nuevo."
+  },
+  "footprint_form": {
+    "title": "Etapa",
+    "title_label": "Título",
+    "title_ph": "p. ej. Neko Harbour",
+    "title_helper": "El lugar o la experiencia del día",
+    "place_label": "Lugar",
+    "place_ph": "p. ej. Península Antártica",
+    "place_helper": "Se muestra bajo el título",
+    "date_label": "Fecha",
+    "date_ph": "DD.MM.AAAA",
+    "time_label": "Hora",
+    "time_ph": "HH:MM",
+    "published_label": "Publicado",
+    "published_helper": "Los invitados solo ven las etapas publicadas"
+  },
+  "text_form": {
+    "title": "Texto",
+    "text_label": "Texto",
+    "text_ph": "¿Qué habéis vivido?",
+    "text_helper": "Una línea vacía empieza un párrafo nuevo"
+  },
+  "cancel": "Cancelar",
+  "save": "Guardar"
+}

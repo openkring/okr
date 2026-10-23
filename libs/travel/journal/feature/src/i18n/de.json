@@ -1,0 +1,70 @@
+{
+  "list": {
+    "title": "Reisetagebücher",
+    "empty": "Noch kein Reisetagebuch. Leg das erste an.",
+    "new": "Neues Reisetagebuch",
+    "new_prompt": "Wie heisst die Reise?"
+  },
+  "native_only": "Das Reisetagebuch ist vorerst nur in der iPad-App verfügbar.",
+  "untitled": "Ohne Titel",
+  "stats": {
+    "days": "Tage",
+    "km": "km",
+    "footprints": "Footprints",
+    "photos": "Fotos"
+  },
+  "footprints": {
+    "title": "Footprints",
+    "new": "Neuer Footprint",
+    "empty": "Noch keine Footprints. Leg den ersten an."
+  },
+  "story": {
+    "add_text": "Text hinzufügen",
+    "add_photos": "Fotos hinzufügen",
+    "edit_footprint": "Footprint bearbeiten",
+    "previous": "Vorheriger",
+    "next": "Nächster",
+    "by": "von {name}",
+    "by_you": "von dir",
+    "draft": "Entwurf",
+    "published": "Veröffentlicht"
+  },
+  "block": {
+    "actions": "Block",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "delete_confirm": "Diesen Block löschen?"
+  },
+  "photos": {
+    "added": "{count} Foto(s) hinzugefügt",
+    "skipped": "{count} Foto(s) übersprungen"
+  },
+  "error": {
+    "no_author": "Öffne das Reisetagebuch einmal mit Internet, dann kannst du schreiben.",
+    "not_owner": "Nur wer den Block geschrieben hat, kann ihn ändern.",
+    "generic": "Das hat nicht geklappt. Versuch es nochmals."
+  },
+  "footprint_form": {
+    "title": "Footprint",
+    "title_label": "Titel",
+    "title_ph": "z. B. Neko Harbour",
+    "title_helper": "Der Ort oder das Erlebnis des Tages",
+    "place_label": "Ort",
+    "place_ph": "z. B. Antarktische Halbinsel",
+    "place_helper": "Erscheint unter dem Titel",
+    "date_label": "Datum",
+    "date_ph": "TT.MM.JJJJ",
+    "time_label": "Zeit",
+    "time_ph": "HH:MM",
+    "published_label": "Veröffentlicht",
+    "published_helper": "Gäste sehen nur veröffentlichte Footprints"
+  },
+  "text_form": {
+    "title": "Text",
+    "text_label": "Text",
+    "text_ph": "Was habt ihr erlebt?",
+    "text_helper": "Eine Leerzeile beginnt einen neuen Absatz"
+  },
+  "cancel": "Abbrechen",
+  "save": "Speichern"
+}
