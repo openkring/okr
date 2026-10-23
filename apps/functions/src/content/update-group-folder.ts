@@ -7,7 +7,14 @@ import { FolderCollection, FolderModel } from '@okr/shared-models';
 import { getFolderIndex } from '@okr/content-folder-util';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
-import { assertCallerIsGroupAdmin, db, isInsideGroupFolder, REGION, requireString } from './group-content.util';
+import {
+  assertCallerIsGroupAdmin,
+  db,
+  isInsideGroupFolder,
+  isLearningRoomFolder,
+  REGION,
+  requireString,
+} from './group-content.util';
 
 const CF_NAME = 'updateGroupFolder';
 
