@@ -69,6 +69,19 @@ in the activity log (admin-visible).
 «Archivieren» archives the page and its learning section through `FirestoreService.deleteModel`
 (detach or archive, deleting-models skill). The folder and its documents are never touched.
 
+## Privacy
+
+Gate walked 2026-10-23, recorded in spec §7.2.
+
+- Ratings are author-only in the rules; everyone else sees only the aggregate on the document
+  (trigger `onRatingWritten`). `SUBJECT_DATA_MAP` row `ratings`: exported, deleted on erasure.
+- Curator notes, links and attachments are authored content, not person data. Comments use the
+  existing comment lib and rules.
+- Publishing is whole-room, contentAdmin/admin only, warned and logged. The public output never
+  carries comments, ratings or uploader names; videos are signed only for the room folder.
+- Group rooms are tenant-visible at data level (the `docs` rule is `tenantRead`); membership gates
+  the UI only. Known and unchanged.
+
 ## Known limits
 
 - Images open the full-size gallery directly; the item page is reached from files and videos.
