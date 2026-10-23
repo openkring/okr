@@ -641,6 +641,40 @@ service cloud.firestore {
             && belongsToTenant(folderData(resource.data.folderKeys[0]))
             && folderData(resource.data.folderKeys[0]).get('ownerKey', '') == callerPersonKey()));
     }
+    // travel journal (spec 1.113 plan 4). Devices only APPEND change records; the applyJournalChange
+    // function materialises them under journals/{jk} with the Admin SDK. Authors are the person keys in
+    // journals/{jk}.authorKeys (written by the function from the records). Guests come with plan 6.
+    function isJournalAuthor(jk) {
+      return callerPersonKey() != ''
+        && exists(/databases/$(database)/documents/journals/$(jk))
+        && callerPersonKey() in get(/databases/$(database)/documents/journals/$(jk)).data.get('authorKeys', []);
+    }
+    match /journal-changes/{id} {
+      allow read: if userExists() && isJournalAuthor(resource.data.journalKey);
+      // A new journal's first record creates it: only its own 'journal' create, before the
+      // function has written journals/{jk}. Every other record needs the caller to be an author.
+      allow create: if tenantCreate()
+        && callerPersonKey() != ''
+        && request.resource.data.get('id', '') == id
+        && request.resource.data.get('authorKey', '') == callerPersonKey()
+        && request.resource.data.get('uploadedAt', null) == request.time
+        && request.resource.data.get('journalKey', '').matches('[A-Za-z0-9_-]{1,128}')
+        && (isJournalAuthor(request.resource.data.journalKey)
+            || (!exists(/databases/$(database)/documents/journals/$(request.resource.data.journalKey))
+                && request.resource.data.get('entity', '') == 'journal'
+                && request.resource.data.get('op', '') == 'create'
+                && request.resource.data.get('entityKey', '') == request.resource.data.journalKey));
+      allow update, delete: if false;
+    }
+    match /journals/{jk} {
+      allow read: if userExists() && resource != null && callerPersonKey() != ''
+        && callerPersonKey() in resource.data.get('authorKeys', []);
+      allow write: if false;
+      match /{sub}/{docId} {
+        allow read: if userExists() && sub in ['footprints', 'sections', 'images'] && isJournalAuthor(jk);
+        allow write: if false; // private/{peer,guestLinks}: callables only
+      }
+    }
     // ratings (learning rooms, spec 1.115): one star rating per person and document, okey =
     // `<docKey>__<personKey>`. Author-only reads (the aggregate lives on docs, written by the
     // onRatingWritten trigger with the Admin SDK). parentKey is 'document.<docKey>'.

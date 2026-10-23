@@ -1021,5 +1021,72 @@ for label, expect, coll, filters, token in field_cases:
     passed += ok; failed += not ok
     print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
 
+# ------------------------------------------------- travel journal (1.113) ---
+# Change records carry uploadedAt = request.time, which only a commit with a server transform sets.
+def create_change(doc_id, d, token, server_time=True):
+    name = f"projects/{PROJ}/databases/(default)/documents/journal-changes/{doc_id}"
+    write = {"update": {"name": name, **body(d)}, "currentDocument": {"exists": False}}
+    if server_time:
+        write["updateTransforms"] = [{"fieldPath": "uploadedAt", "setToServerValue": "REQUEST_TIME"}]
+    hdr = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
+    r = urllib.request.Request(f"{BASE}:commit", data=json.dumps({"writes": [write]}).encode(), headers=hdr, method="POST")
+    try:
+        return urllib.request.urlopen(r).status
+    except urllib.error.HTTPError as e:
+        return e.code
+
+def change(cid, jk, entity, key, op, author, tenant="t1"):
+    return {"id": cid, "journalKey": jk, "deviceId": "d1", "seq": 1, "hlc": "000000000001000:000000:d1",
+            "authorKey": author, "entity": entity, "entityKey": key, "op": op, "fields": {}, "tenants": [tenant]}
+
+JA, JE = jwt("uidA"), jwt("uidE")
+seed("journals/jA", {"tenants": ["t1"], "isArchived": False, "title": "Antarktis", "authorKeys": ["pA"]})
+seed("journals/jA/footprints/fA", {"tenants": ["t1"], "isArchived": False, "type": "footprint", "journalKey": "jA"})
+seed("journals/jA/private/peer", {"secret": "s"})
+seed("journal-changes/cSeed", change("cSeed", "jA", "footprint", "fA", "create", "pA"))
+
+journal_cases = [
+    ("author A appends a footprint record -> ALLOW", True,
+     lambda: create_change("c1", change("c1", "jA", "footprint", "f1", "create", "pA"), JA)),
+    ("non-author E appends to jA -> DENY", False,
+     lambda: create_change("c2", change("c2", "jA", "footprint", "f2", "create", "pE"), JE)),
+    ("A appends a record in E's name -> DENY", False,
+     lambda: create_change("c3", change("c3", "jA", "footprint", "f3", "create", "pE"), JA)),
+    ("record without server upload time -> DENY", False,
+     lambda: create_change("c4", change("c4", "jA", "footprint", "f4", "create", "pA"), JA, server_time=False)),
+    ("record id differs from doc id -> DENY", False,
+     lambda: create_change("c5", change("other", "jA", "footprint", "f5", "create", "pA"), JA)),
+    ("E creates a new journal with its own create record -> ALLOW", True,
+     lambda: create_change("c6", change("c6", "jNew", "journal", "jNew", "create", "pE"), JE)),
+    ("E writes a footprint into a journal that does not exist yet -> DENY", False,
+     lambda: create_change("c7", change("c7", "jNew2", "footprint", "f7", "create", "pE"), JE)),
+    ("E claims the existing jA with a journal create -> DENY", False,
+     lambda: create_change("c8", change("c8", "jA", "journal", "jA", "create", "pE"), JE)),
+    ("record for another tenant -> DENY", False,
+     lambda: create_change("c9", change("c9", "jA", "footprint", "f9", "create", "pA", tenant="t2"), JA)),
+    ("A updates a record -> DENY", False,
+     lambda: req("PATCH", "journal-changes/cSeed", token=JA, data=body({"op": "archive"}), mask=["op"])),
+    ("A reads jA -> ALLOW", True, lambda: req("GET", "journals/jA", token=JA)),
+    ("E reads jA -> DENY", False, lambda: req("GET", "journals/jA", token=JE)),
+    ("A writes jA directly -> DENY", False,
+     lambda: req("PATCH", "journals/jA", token=JA, data=body({"title": "x"}), mask=["title"])),
+    ("A reads a footprint of jA -> ALLOW", True, lambda: req("GET", "journals/jA/footprints/fA", token=JA)),
+    ("E reads a footprint of jA -> DENY", False, lambda: req("GET", "journals/jA/footprints/fA", token=JE)),
+    ("A reads the peer secret -> DENY", False, lambda: req("GET", "journals/jA/private/peer", token=JA)),
+    ("A lists their journals (authorKeys array-contains pA) -> ALLOW", True,
+     lambda: field_query("journals", [("authorKeys", "ARRAY_CONTAINS", "pA")], token=JA)),
+    ("E lists A's journals -> DENY", False,
+     lambda: field_query("journals", [("authorKeys", "ARRAY_CONTAINS", "pA")], token=JE)),
+    ("A downloads jA's records -> ALLOW", True,
+     lambda: field_query("journal-changes", [("journalKey", "EQUAL", "jA")], token=JA)),
+    ("E downloads jA's records -> DENY", False,
+     lambda: field_query("journal-changes", [("journalKey", "EQUAL", "jA")], token=JE)),
+]
+for label, expect, run in journal_cases:
+    code = run()
+    ok = (code in (200, 201)) == expect
+    passed += ok; failed += not ok
+    print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
+
 print(f"\n{passed} passed, {failed} failed")
 raise SystemExit(1 if failed else 0)
