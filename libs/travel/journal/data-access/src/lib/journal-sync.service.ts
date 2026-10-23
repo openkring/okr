@@ -44,6 +44,8 @@ export interface JournalSyncStatus {
 }
 
 const CALL_TIMEOUT_MS = 30_000;
+/** A new journal is accepted once applyJournalChange has written it — about a second after its first record. */
+const NEW_JOURNAL_RETRY_MS = 4_000;
 const PHOTO_CHUNK = 50;
 const META_CURSOR = 'cursor:';
 const META_PEER = 'peerSecret:';
@@ -96,9 +98,7 @@ export class JournalSyncService {
       for (const journalKey of journalKeys) stored += await this.downloadRecords(journalKey);
       if (stored > 0) await ctx.onRecordsStored();
       for (const journalKey of journalKeys) await this.ensurePeerSecret(journalKey);
-      const pendingPhotos = ctx.photoMode === 'paused'
-        ? await this.countPendingPhotos(ctx, journalKeys)
-        : await this.syncPhotos(ctx, journalKeys, ctx.photoMode === 'all');
+      const pendingPhotos = await this.photoPhase(ctx, journalKeys);
       this.patch({ state: 'idle', lastSyncAt: Date.now(), pendingRecords: await this.db.countPendingUploads(), pendingPhotos });
     } catch (error) {
       this.patch({
@@ -113,9 +113,17 @@ export class JournalSyncService {
 
   private async uploadRecords(ctx: JournalSyncContext): Promise<void> {
     const stopped = new Set<string>(); // journals not (yet) accepted this round
+    let retried = false;
     for (;;) {
       const pending = (await this.db.pendingUploads(UPLOAD_PAGE * 5)).filter((c) => !stopped.has(c.journalKey));
-      if (pending.length === 0) return;
+      if (pending.length === 0) {
+        // a new journal stops after its own create record: give the function a moment, then try once more
+        if (stopped.size === 0 || retried) return;
+        retried = true;
+        stopped.clear();
+        await new Promise((resolve) => setTimeout(resolve, NEW_JOURNAL_RETRY_MS));
+        continue;
+      }
       const byJournal = new Map<string, JournalChange[]>();
       for (const c of pending) byJournal.set(c.journalKey, [...(byJournal.get(c.journalKey) ?? []), c]);
       for (const [journalKey, changes] of byJournal) {
@@ -216,6 +224,20 @@ export class JournalSyncService {
   }
 
   // ---------------------------------------------------------------- photos ------------------
+
+  /**
+   * Photos never fail the round: the records are through by now, and a refused photo call (offline aside —
+   * e.g. the region's Cloud Run quota) only leaves photos waiting for the next round.
+   */
+  private async photoPhase(ctx: JournalSyncContext, journalKeys: string[]): Promise<number> {
+    if (ctx.photoMode === 'paused') return this.countPendingPhotos(ctx, journalKeys);
+    try {
+      return await this.syncPhotos(ctx, journalKeys, ctx.photoMode === 'all');
+    } catch (error) {
+      if (isOffline(error)) throw error;
+      return this.countPendingPhotos(ctx, journalKeys);
+    }
+  }
 
   private async countPendingPhotos(ctx: JournalSyncContext, journalKeys: string[]): Promise<number> {
     let n = 0;
