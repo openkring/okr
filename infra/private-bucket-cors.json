@@ -1,17 +1,60 @@
 [
   {
+    "maxAgeSeconds": 3600,
+    "method": [
+      "GET",
+      "HEAD",
+      "PUT",
+      "POST"
+    ],
     "origin": [
-      "https://seeclub.org",
-      "https://www.seeclub.org",
       "https://scs-app-54aef.web.app",
       "https://scs-app-54aef.firebaseapp.com",
-      "https://app.bkaiser.com",
+      "https://p13-app-54aef.web.app",
+      "https://p13-app-54aef.firebaseapp.com",
+      "https://kring-app-54aef.web.app",
+      "https://kring-app-54aef.firebaseapp.com",
+      "https://okr-app-54aef.web.app",
+      "https://okr-app-54aef.firebaseapp.com",
+      "https://bka-app-54aef.web.app",
+      "https://bka-app-54aef.firebaseapp.com",
       "https://bkg-app-54aef.web.app",
       "https://bkg-app-54aef.firebaseapp.com",
-      "http://localhost:4200"
+      "https://elab-app-54aef.web.app",
+      "https://elab-app-54aef.firebaseapp.com",
+      "https://kwa-app-54aef.web.app",
+      "https://kwa-app-54aef.firebaseapp.com",
+      "https://seeclub.org",
+      "https://www.seeclub.org",
+      "https://app.seeclub.org",
+      "https://app.p13.ch",
+      "https://app.kring.ch",
+      "https://app.openkring.ch",
+      "https://app.openkring.org",
+      "https://app.brunokaiser.ch",
+      "https://app.bkaiser.com",
+      "https://app.elab.glp-staefa.ch",
+      "https://app.krampfwanderer.ch",
+      "http://localhost:4200",
+      "http://localhost:4201",
+      "http://localhost:4202",
+      "http://localhost:4203",
+      "http://localhost:4204",
+      "http://localhost:4205",
+      "http://localhost:4206",
+      "http://localhost:4207",
+      "capacitor://localhost",
+      "https://localhost"
     ],
-    "method": ["PUT", "GET"],
-    "responseHeader": ["Content-Type"],
-    "maxAgeSeconds": 3600
+    "responseHeader": [
+      "Content-Type",
+      "Content-Disposition",
+      "Content-Length",
+      "x-goog-content-length-range",
+      "Range",
+      "Location",
+      "x-goog-resumable",
+      "Content-Range"
+    ]
   }
 ]
