@@ -51,7 +51,8 @@
   "error": {
     "no_author": "Open the travel journal once with internet, then you can write.",
     "not_owner": "Only the person who wrote this block can change it.",
-    "generic": "That did not work. Please try again."
+    "generic": "That did not work. Please try again.",
+    "others_content": "This also contains the other person's entries. First delete only your own blocks."
   },
   "footprint_form": {
     "title": "Footprint",

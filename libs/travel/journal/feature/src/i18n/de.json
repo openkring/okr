@@ -51,7 +51,8 @@
   "error": {
     "no_author": "Öffne das Reisetagebuch einmal mit Internet, dann kannst du schreiben.",
     "not_owner": "Nur wer den Block geschrieben hat, kann ihn ändern.",
-    "generic": "Das hat nicht geklappt. Versuch es nochmals."
+    "generic": "Das hat nicht geklappt. Versuch es nochmals.",
+    "others_content": "Hier stehen auch Beiträge der anderen Person. Lösche zuerst nur deine eigenen Blöcke."
   },
   "footprint_form": {
     "title": "Footprint",

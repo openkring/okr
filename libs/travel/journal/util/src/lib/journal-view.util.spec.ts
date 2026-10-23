@@ -73,3 +73,20 @@ describe('journal view', () => {
     expect(lastBlockOrder(footprint)).toBeUndefined();
   });
 });
+
+describe('hasOthersBlocks', () => {
+  const fp = (blocks: { authorKey: string }[]) =>
+    ({ key: 'f', journalKey: 'j1', title: '', placeName: '', date: '', time: '', publishState: 'draft' as const,
+      blocks: blocks.map((b, i) => ({ key: `b${i}`, kind: 'text' as const, order: 'V', ...b })) });
+
+  it('a footprint with only own blocks may be deleted', async () => {
+    const { hasOthersBlocks } = await import('./journal-view.util');
+    expect(hasOthersBlocks([fp([{ authorKey: 'bruno' }, { authorKey: 'bruno' }])], 'bruno')).toBe(false);
+    expect(hasOthersBlocks([fp([])], 'bruno')).toBe(false);
+  });
+
+  it('a block of the other author blocks the deletion', async () => {
+    const { hasOthersBlocks } = await import('./journal-view.util');
+    expect(hasOthersBlocks([fp([{ authorKey: 'bruno' }]), fp([{ authorKey: 'barbara' }])], 'bruno')).toBe(true);
+  });
+});

@@ -8,7 +8,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 import { ChangeDraft, JournalDb, JournalIdentityService, JournalPhotos, PickedPhoto, SkippedPhoto } from '@okr/travel-journal-data-access';
 import {
-  entityStateKey, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
+  entityStateKey, hasOthersBlocks, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
   journalsOf, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, viewOf,
 } from '@okr/travel-journal-util';
 
@@ -198,6 +198,9 @@ export const JournalStore = signalStore(
       async archiveFootprint(footprintKey: string): Promise<void> {
         const fp = footprint(footprintKey);
         if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
+        const me = store.identity.author()?.personKey;
+        if (!me) throw new JournalWriteRefused('noAuthor');
+        if (hasOthersBlocks([fp], me)) throw new JournalWriteRefused('othersContent');
         await write([{ journalKey: fp.journalKey, entity: 'footprint', entityKey: footprintKey, op: 'archive', fields: {} }]);
       },
 
@@ -207,6 +210,9 @@ export const JournalStore = signalStore(
 
       /** Deletes (archives) a whole journal; its footprints disappear with it from every list. */
       async archiveJournal(journalKey: string): Promise<void> {
+        const me = store.identity.author()?.personKey;
+        if (!me) throw new JournalWriteRefused('noAuthor');
+        if (hasOthersBlocks(footprintsOf(store.journalState(), journalKey), me)) throw new JournalWriteRefused('othersContent');
         await write([{ journalKey, entity: 'journal', entityKey: journalKey, op: 'archive', fields: {} }]);
       },
 

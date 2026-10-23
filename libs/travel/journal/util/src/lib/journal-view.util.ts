@@ -128,3 +128,12 @@ export function imagesOf(state: JournalState, journalKey: string): Map<string, I
 export function lastBlockOrder(footprint: FootprintView): string | undefined {
   return footprint.blocks.length > 0 ? footprint.blocks[footprint.blocks.length - 1].order : undefined;
 }
+
+/**
+ * True when any of the footprints holds a block of another author. Deleting such a footprint (or the
+ * journal around it) would delete the other person's work with it — spec 1.113 anti-goal «losing an
+ * entry» — so the store refuses until only own blocks are left.
+ */
+export function hasOthersBlocks(footprints: FootprintView[], personKey: string): boolean {
+  return footprints.some((fp) => fp.blocks.some((block) => block.authorKey !== personKey));
+}

@@ -51,7 +51,8 @@
   "error": {
     "no_author": "Ouvre le carnet de voyage une fois avec internet, ensuite tu pourras écrire.",
     "not_owner": "Seule la personne qui a écrit ce bloc peut le modifier.",
-    "generic": "Cela n'a pas fonctionné. Réessaie."
+    "generic": "Cela n'a pas fonctionné. Réessaie.",
+    "others_content": "Ceci contient aussi des contributions de l'autre personne. Supprime d'abord seulement tes propres blocs."
   },
   "footprint_form": {
     "title": "Étape",

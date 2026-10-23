@@ -51,7 +51,8 @@
   "error": {
     "no_author": "Abre el diario de viaje una vez con internet y luego podrás escribir.",
     "not_owner": "Solo quien escribió este bloque puede cambiarlo.",
-    "generic": "No ha funcionado. Inténtalo de nuevo."
+    "generic": "No ha funcionado. Inténtalo de nuevo.",
+    "others_content": "Aquí también hay contribuciones de la otra persona. Elimina primero solo tus propios bloques."
   },
   "footprint_form": {
     "title": "Etapa",

@@ -27,6 +27,8 @@ function escapeHtml(value: string): string {
     .okr-route-pin img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .okr-route-pin.selected { width: 56px; height: 56px; border-color: var(--ion-color-tertiary, #13a89e); }
     .okr-route-pin-icon { background: transparent; border: none; }
+    /* hairline seams between tiles at some zooms / pixel densities (WebKit); the fix Leaflet 2 ships */
+    okr-route-map .leaflet-tile { mix-blend-mode: plus-lighter; }
   `],
   template: `<div class="okr-route-map-canvas"></div>`,
 })
@@ -44,6 +46,8 @@ export class RouteMap {
   private overlay?: L.LayerGroup;
   private resizeObserver?: ResizeObserver;
   private lastPoints: L.LatLngExpression[] = [];
+  private lastPointsKey = '';
+  private lastTilesKey: string | undefined;
 
   public constructor() {
     afterNextRender(() => void this.init());
@@ -85,10 +89,15 @@ export class RouteMap {
     const Lf = this.leaflet;
     if (!Lf || !this.map || !this.overlay) return;
 
-    this.tileLayer?.remove();
-    this.tileLayer = tiles
-      ? Lf.tileLayer(tiles.urlTemplate, { maxNativeZoom: tiles.maxNativeZoom, maxZoom: 16, attribution: tiles.attribution }).addTo(this.map)
-      : undefined;
+    // rebuild the tile layer only when the source changes — not on every data change (no flicker)
+    const tilesKey = tiles ? `${tiles.urlTemplate}|${tiles.maxNativeZoom}` : undefined;
+    if (tilesKey !== this.lastTilesKey) {
+      this.lastTilesKey = tilesKey;
+      this.tileLayer?.remove();
+      this.tileLayer = tiles
+        ? Lf.tileLayer(tiles.urlTemplate, { maxNativeZoom: tiles.maxNativeZoom, maxZoom: 16, attribution: tiles.attribution }).addTo(this.map)
+        : undefined;
+    }
 
     this.overlay.clearLayers();
     if (route.length > 1) {
@@ -109,8 +118,15 @@ export class RouteMap {
         .addTo(this.overlay);
     }
 
-    this.lastPoints = [...route, ...pins.map((p) => [p.lat, p.lng] as [number, number])];
-    this.fit();
+    // refit only when the points change: a selection change or a sync of unrelated data must not
+    // throw away the user's own pan and zoom
+    const points: [number, number][] = [...route, ...pins.map((p) => [p.lat, p.lng] as [number, number])];
+    const pointsKey = JSON.stringify(points);
+    if (pointsKey !== this.lastPointsKey) {
+      this.lastPointsKey = pointsKey;
+      this.lastPoints = points;
+      this.fit();
+    }
   }
 
   private fit(): void {
