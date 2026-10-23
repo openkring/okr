@@ -6,7 +6,7 @@ import { JournalChange } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
-import { ChangeDraft, JournalDb, JournalIdentityService, JournalPhotos, SkippedPhoto } from '@okr/travel-journal-data-access';
+import { ChangeDraft, JournalDb, JournalIdentityService, JournalPhotos, PickedPhoto, SkippedPhoto } from '@okr/travel-journal-data-access';
 import {
   entityStateKey, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
   journalsOf, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, viewOf,
@@ -60,6 +60,27 @@ export const JournalStore = signalStore(
       const view = viewOf(store.journalState()[entityStateKey('footprint', footprintKey)]);
       const journalKey = typeof view?.['journalKey'] === 'string' ? view['journalKey'] : undefined;
       return journalKey ? footprintsOf(store.journalState(), journalKey).find((f) => f.key === footprintKey) : undefined;
+    }
+
+    /** Picks photos and builds one image record per imported photo (not yet written). */
+    async function pickImages(journalKey: string): Promise<{ drafts: ChangeDraft[]; imageKeys: string[]; photos: PickedPhoto[]; skipped: SkippedPhoto[] }> {
+      if (!store.identity.author()) throw new JournalWriteRefused('noAuthor'); // before the picker opens
+      const { photos, skipped } = await JournalPhotos.pick({ journalKey });
+      const drafts: ChangeDraft[] = [];
+      const imageKeys: string[] = [];
+      for (const photo of photos) {
+        const key = crypto.randomUUID();
+        imageKeys.push(key);
+        drafts.push({
+          journalKey, entity: 'image', entityKey: key, op: 'create',
+          fields: {
+            journalKey, takenAt: photo.takenAt, latitude: photo.latitude, longitude: photo.longitude,
+            width: photo.width, height: photo.height, path2048: photo.path2048, path400: photo.path400,
+            localIdentifier: photo.localIdentifier,
+          },
+        });
+      }
+      return { drafts, imageKeys, photos, skipped };
     }
 
     function ownBlock(blockKey: string): { footprint: FootprintView; journalKey: string } {
@@ -154,6 +175,41 @@ export const JournalStore = signalStore(
         await write([{ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields: { html } }]);
       },
 
+      /** Adds photos to an existing photo block of this author. */
+      async addPhotosToBlock(blockKey: string): Promise<{ added: number; skipped: SkippedPhoto[] }> {
+        const { footprint: fp, journalKey } = ownBlock(blockKey);
+        const block = fp.blocks.find((b) => b.key === blockKey);
+        const { drafts, imageKeys, photos, skipped } = await pickImages(journalKey);
+        if (photos.length === 0) return { added: 0, skipped };
+        drafts.push({ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields: { imageKeys: [...(block?.imageKeys ?? []), ...imageKeys] } });
+        await write(drafts);
+        return { added: photos.length, skipped };
+      },
+
+      /** Removes one photo from a photo block of this author; the image record stays (other blocks may not use it). */
+      async removePhotoFromBlock(blockKey: string, imageKey: string): Promise<void> {
+        const { footprint: fp, journalKey } = ownBlock(blockKey);
+        const block = fp.blocks.find((b) => b.key === blockKey);
+        const imageKeys = (block?.imageKeys ?? []).filter((k) => k !== imageKey);
+        await write([{ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields: { imageKeys } }]);
+      },
+
+      /** Deletes (archives) a footprint; footprints are shared, so either author may. */
+      async archiveFootprint(footprintKey: string): Promise<void> {
+        const fp = footprint(footprintKey);
+        if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
+        await write([{ journalKey: fp.journalKey, entity: 'footprint', entityKey: footprintKey, op: 'archive', fields: {} }]);
+      },
+
+      async renameJournal(journalKey: string, title: string): Promise<void> {
+        await write([{ journalKey, entity: 'journal', entityKey: journalKey, op: 'set', fields: { title } }]);
+      },
+
+      /** Deletes (archives) a whole journal; its footprints disappear with it from every list. */
+      async archiveJournal(journalKey: string): Promise<void> {
+        await write([{ journalKey, entity: 'journal', entityKey: journalKey, op: 'archive', fields: {} }]);
+      },
+
       async archiveBlock(blockKey: string): Promise<void> {
         const { journalKey } = ownBlock(blockKey);
         await write([{ journalKey, entity: 'section', entityKey: blockKey, op: 'archive', fields: {} }]);
@@ -166,24 +222,8 @@ export const JournalStore = signalStore(
       async addPhotoBlock(journalKey: string, footprintKey: string): Promise<{ added: number; skipped: SkippedPhoto[] }> {
         const fp = footprint(footprintKey);
         if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
-        if (!store.identity.author()) throw new JournalWriteRefused('noAuthor'); // before the picker opens
-        const { photos, skipped } = await JournalPhotos.pick({ journalKey });
+        const { drafts, imageKeys, photos, skipped } = await pickImages(journalKey);
         if (photos.length === 0) return { added: 0, skipped };
-
-        const drafts: ChangeDraft[] = [];
-        const imageKeys: string[] = [];
-        for (const photo of photos) {
-          const key = crypto.randomUUID();
-          imageKeys.push(key);
-          drafts.push({
-            journalKey, entity: 'image', entityKey: key, op: 'create',
-            fields: {
-              journalKey, takenAt: photo.takenAt, latitude: photo.latitude, longitude: photo.longitude,
-              width: photo.width, height: photo.height, path2048: photo.path2048, path400: photo.path400,
-              localIdentifier: photo.localIdentifier,
-            },
-          });
-        }
         drafts.push({
           journalKey, entity: 'section', entityKey: crypto.randomUUID(), op: 'create',
           fields: { footprintKey, kind: 'photos', imageKeys, order: orderBetween(lastBlockOrder(fp), undefined) },

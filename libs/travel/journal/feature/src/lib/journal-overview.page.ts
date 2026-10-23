@@ -135,7 +135,9 @@ export class JournalOverviewPage {
   }
 
   protected async newFootprint(): Promise<void> {
-    const modal = await this.modalController.create({ component: FootprintEditModal, componentProps: { footprint: newFootprintFormModel() } });
+    const modal = await this.modalController.create({
+      component: FootprintEditModal, componentProps: { footprint: newFootprintFormModel() }, cssClass: 'auto-height-modal',
+    });
     await modal.present();
     const { data, role } = await modal.onWillDismiss<FootprintFormModel>();
     if (role !== 'confirm' || !data) return;

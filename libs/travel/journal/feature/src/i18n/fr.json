@@ -3,7 +3,12 @@
     "title": "Carnets de voyage",
     "empty": "Pas encore de carnet de voyage. Crée le premier.",
     "new": "Nouveau carnet de voyage",
-    "new_prompt": "Comment s'appelle le voyage ?"
+    "new_prompt": "Comment s'appelle le voyage ?",
+    "actions": "Plus",
+    "rename": "Renommer",
+    "rename_prompt": "Nouveau titre",
+    "delete": "Supprimer",
+    "delete_confirm": "Supprimer ce carnet de voyage avec toutes ses étapes ?"
   },
   "native_only": "Pour l'instant, le carnet de voyage n'est disponible que dans l'app iPad.",
   "untitled": "Sans titre",
@@ -27,13 +32,17 @@
     "by": "par {name}",
     "by_you": "par toi",
     "draft": "Brouillon",
-    "published": "Publié"
+    "published": "Publié",
+    "footprint_menu": "Étape",
+    "footprint_delete": "Supprimer l'étape",
+    "footprint_delete_confirm": "Supprimer cette étape avec tous ses blocs ?"
   },
   "block": {
     "actions": "Bloc",
     "edit": "Modifier",
     "delete": "Supprimer",
-    "delete_confirm": "Supprimer ce bloc ?"
+    "delete_confirm": "Supprimer ce bloc ?",
+    "add_photos": "Ajouter des photos"
   },
   "photos": {
     "added": "{count} photo(s) ajoutée(s)",
@@ -66,5 +75,10 @@
     "text_helper": "Une ligne vide commence un nouveau paragraphe"
   },
   "cancel": "Annuler",
-  "save": "Enregistrer"
+  "save": "Enregistrer",
+  "photo": {
+    "actions": "Photo",
+    "view": "Afficher",
+    "remove": "Retirer la photo"
+  }
 }

@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import {
-  AlertController, IonButton, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonList, IonMenuButton, IonTitle,
+  ActionSheetController, AlertController, IonButton, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonList, IonMenuButton, IonTitle,
   IonToolbar, ToastController,
 } from '@ionic/angular';
 
@@ -13,6 +13,7 @@ import { JournalStore } from './journal.store';
 @Component({
   selector: 'okr-journal-list-page',
   imports: [IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonList, IonItem, IonLabel, IonButton],
+  styles: [`.title { cursor: pointer; }`],
   template: `
     <ion-header>
       <ion-toolbar>
@@ -26,8 +27,9 @@ import { JournalStore } from './journal.store';
       } @else {
         <ion-list>
           @for (journal of store.journals(); track journal.key) {
-            <ion-item button detail (click)="open(journal.key)">
-              <ion-label>{{ journal.title || store.i18n.untitled() }}</ion-label>
+            <ion-item>
+              <ion-label class="title" (click)="open(journal.key)">{{ journal.title || store.i18n.untitled() }}</ion-label>
+              <ion-button slot="end" fill="clear" (click)="actions(journal.key, journal.title)">{{ store.i18n.list_actions() }}</ion-button>
             </ion-item>
           } @empty {
             <ion-item lines="none"><ion-label class="ion-text-wrap">{{ store.i18n.list_empty() }}</ion-label></ion-item>
@@ -43,6 +45,7 @@ export class JournalListPage {
   private readonly router = inject(Router);
   private readonly alertController = inject(AlertController);
   private readonly toastController = inject(ToastController);
+  private readonly actionSheetController = inject(ActionSheetController);
 
   public constructor() {
     void this.store.init();
@@ -50,6 +53,46 @@ export class JournalListPage {
 
   protected open(journalKey: string): void {
     void this.router.navigate(['/journal', journalKey]);
+  }
+
+  protected async actions(journalKey: string, title: string): Promise<void> {
+    const i18n = this.store.i18n;
+    const sheet = await this.actionSheetController.create({
+      header: title || i18n.untitled(),
+      buttons: [
+        { text: i18n.list_rename(), handler: () => void this.rename(journalKey, title) },
+        { text: i18n.list_delete(), role: 'destructive', handler: () => void this.confirmDelete(journalKey) },
+        { text: i18n.cancel(), role: 'cancel' },
+      ],
+    });
+    await sheet.present();
+  }
+
+  private async rename(journalKey: string, current: string): Promise<void> {
+    const i18n = this.store.i18n;
+    const title = await okrPrompt(this.alertController, i18n.list_rename(), i18n.list_rename_prompt(), i18n.save(), i18n.cancel(), current);
+    if (!title?.trim() || title.trim() === current) return;
+    await this.run(() => this.store.renameJournal(journalKey, title.trim()));
+  }
+
+  private async confirmDelete(journalKey: string): Promise<void> {
+    const i18n = this.store.i18n;
+    const sheet = await this.actionSheetController.create({
+      header: i18n.list_delete_confirm(),
+      buttons: [
+        { text: i18n.list_delete(), role: 'destructive', handler: () => void this.run(() => this.store.archiveJournal(journalKey)) },
+        { text: i18n.cancel(), role: 'cancel' },
+      ],
+    });
+    await sheet.present();
+  }
+
+  private async run(action: () => Promise<unknown>): Promise<void> {
+    try {
+      await action();
+    } catch (error) {
+      await showJournalError(this.toastController, this.store.i18n, error);
+    }
   }
 
   protected async create(): Promise<void> {

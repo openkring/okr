@@ -12,8 +12,12 @@ import { Img, Spinner } from '@okr/shared-ui';
     IonGrid, IonRow, IonCol, IonChip, IonLabel
   ],
   styles: [`
-    .hero-container { display: flex; justify-content: center; align-items: center; height: 100%; min-height: 700px;}
-    .hero-image { position: absolute; padding: 0; padding-top: 0; top: 0; left: 0; width: 100%; height: auto; min-height: 700px; object-fit: cover; opacity: 0.7; z-index: 1;}
+    /* anchored to its own container (it used to position against the page) and bounded in height, so
+       it also works as a story cover (travel journal, spec 1.113) — no hero section existed before */
+    .hero-container { position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center; min-height: min(700px, 60vh); }
+    .hero-image { position: absolute; inset: 0; display: block; padding: 0; z-index: 1; }
+    :host ::ng-deep .hero-image .image-container,
+    :host ::ng-deep .hero-image img { width: 100% !important; height: 100% !important; object-fit: cover !important; opacity: 0.85; }
     .hero-form {background-color: rgba(255, 255, 255); padding: 20px; border-radius: 10px; width: 600px; max-width: 600px; width: 90%; text-align: center; z-index: 5;}
     .title { text-align: center; font-size: 2rem;}
     .subtitle { text-align: center; font-size: 1.2rem;}

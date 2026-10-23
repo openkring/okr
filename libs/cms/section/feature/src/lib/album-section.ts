@@ -70,6 +70,8 @@ import { AlbumStore } from './album-section.store';
     @if(isLoading()) {
       <okr-spinner />
     } @else {
+      <!-- the folder toolbar means nothing for an explicit image list (travel journal) -->
+      @if (explicitImages() === undefined) {
       <ion-toolbar>
         <ion-grid>
           <ion-row>
@@ -95,6 +97,7 @@ import { AlbumStore } from './album-section.store';
           </ion-row>
         </ion-grid>
       </ion-toolbar>
+      }
       <ion-card>
         <ion-card-content>
           <!-- subfolders: cover image (or light background) + folder icon and name overlay -->
@@ -156,6 +159,12 @@ export class AlbumSectionComponent {
   // outputs
   /** The folder the user browsed to, so a host can reflect it in the URL. */
   public folderChanged = output<string>();
+  /**
+   * With `emitImageClicks`, a tap on an image is handed to the host instead of opening the gallery
+   * (travel journal: the author chooses between viewing and removing a photo).
+   */
+  public emitImageClicks = input(false);
+  public imageSelected = output<ImageConfig>();
 
   // derived
   protected imgixBaseUrl = computed(() => this.store.imgixBaseUrl());
@@ -205,6 +214,10 @@ export class AlbumSectionComponent {
    */
   protected async onImageClicked(image: ImageConfig): Promise<void> {
     if (this.editMode()) return;
+    if (this.emitImageClicks()) {
+      this.imageSelected.emit(image);
+      return;
+    }
     if (image.type === ImageType.Video) {
       const doc = this.store.visibleDocuments().find((d) => d.okey === image.documentKey);
       if (!doc) return;

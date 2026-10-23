@@ -43,6 +43,7 @@ export class RouteMap {
   private tileLayer?: L.TileLayer;
   private overlay?: L.LayerGroup;
   private resizeObserver?: ResizeObserver;
+  private lastPoints: L.LatLngExpression[] = [];
 
   public constructor() {
     afterNextRender(() => void this.init());
@@ -70,7 +71,13 @@ export class RouteMap {
     this.overlay = this.leaflet.layerGroup().addTo(this.map);
     this.render(this.route(), this.pins(), this.selectedKey(), this.tiles());
     // the container may still be animating or change with the layout (A/B): keep Leaflet's size in sync
-    this.resizeObserver = new ResizeObserver(() => this.map?.invalidateSize());
+    // Ionic hides a page that stays in the stack (size 0) and shows it again on «back»: refit then,
+    // otherwise the map keeps the zoom it had at size 0 (device check plan 3).
+    this.resizeObserver = new ResizeObserver(() => {
+      if (!this.map || container.clientWidth === 0 || container.clientHeight === 0) return;
+      this.map.invalidateSize();
+      this.fit();
+    });
     this.resizeObserver.observe(container);
   }
 
@@ -102,7 +109,14 @@ export class RouteMap {
         .addTo(this.overlay);
     }
 
-    const points: L.LatLngExpression[] = [...route, ...pins.map((p) => [p.lat, p.lng] as [number, number])];
+    this.lastPoints = [...route, ...pins.map((p) => [p.lat, p.lng] as [number, number])];
+    this.fit();
+  }
+
+  private fit(): void {
+    const Lf = this.leaflet;
+    if (!Lf || !this.map) return;
+    const points = this.lastPoints;
     if (points.length > 1) this.map.fitBounds(Lf.latLngBounds(points), { padding: FIT_PADDING });
     else if (points.length === 1) this.map.setView(points[0], SINGLE_POINT_ZOOM);
     else this.map.setView([-60, -62], 3); // nothing yet: the route area (spec §9.4)

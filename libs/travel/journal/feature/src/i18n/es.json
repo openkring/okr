@@ -3,7 +3,12 @@
     "title": "Diarios de viaje",
     "empty": "Todavía no hay diario de viaje. Crea el primero.",
     "new": "Nuevo diario de viaje",
-    "new_prompt": "¿Cómo se llama el viaje?"
+    "new_prompt": "¿Cómo se llama el viaje?",
+    "actions": "Más",
+    "rename": "Cambiar nombre",
+    "rename_prompt": "Nuevo título",
+    "delete": "Eliminar",
+    "delete_confirm": "¿Eliminar este diario de viaje con todas sus etapas?"
   },
   "native_only": "Por ahora el diario de viaje solo está disponible en la app de iPad.",
   "untitled": "Sin título",
@@ -27,13 +32,17 @@
     "by": "de {name}",
     "by_you": "tuyo",
     "draft": "Borrador",
-    "published": "Publicado"
+    "published": "Publicado",
+    "footprint_menu": "Etapa",
+    "footprint_delete": "Eliminar etapa",
+    "footprint_delete_confirm": "¿Eliminar esta etapa con todos sus bloques?"
   },
   "block": {
     "actions": "Bloque",
     "edit": "Editar",
     "delete": "Eliminar",
-    "delete_confirm": "¿Eliminar este bloque?"
+    "delete_confirm": "¿Eliminar este bloque?",
+    "add_photos": "Añadir fotos"
   },
   "photos": {
     "added": "{count} foto(s) añadida(s)",
@@ -66,5 +75,10 @@
     "text_helper": "Una línea vacía empieza un párrafo nuevo"
   },
   "cancel": "Cancelar",
-  "save": "Guardar"
+  "save": "Guardar",
+  "photo": {
+    "actions": "Foto",
+    "view": "Ver",
+    "remove": "Quitar foto"
+  }
 }

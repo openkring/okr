@@ -3,7 +3,12 @@
     "title": "Travel journals",
     "empty": "No travel journal yet. Create the first one.",
     "new": "New travel journal",
-    "new_prompt": "What is the trip called?"
+    "new_prompt": "What is the trip called?",
+    "actions": "More",
+    "rename": "Rename",
+    "rename_prompt": "New title",
+    "delete": "Delete",
+    "delete_confirm": "Delete this travel journal with all its footprints?"
   },
   "native_only": "For now the travel journal is only available in the iPad app.",
   "untitled": "Untitled",
@@ -27,13 +32,17 @@
     "by": "by {name}",
     "by_you": "by you",
     "draft": "Draft",
-    "published": "Published"
+    "published": "Published",
+    "footprint_menu": "Footprint",
+    "footprint_delete": "Delete footprint",
+    "footprint_delete_confirm": "Delete this footprint with all its blocks?"
   },
   "block": {
     "actions": "Block",
     "edit": "Edit",
     "delete": "Delete",
-    "delete_confirm": "Delete this block?"
+    "delete_confirm": "Delete this block?",
+    "add_photos": "Add photos"
   },
   "photos": {
     "added": "{count} photo(s) added",
@@ -66,5 +75,10 @@
     "text_helper": "An empty line starts a new paragraph"
   },
   "cancel": "Cancel",
-  "save": "Save"
+  "save": "Save",
+  "photo": {
+    "actions": "Photo",
+    "view": "View",
+    "remove": "Remove photo"
+  }
 }
