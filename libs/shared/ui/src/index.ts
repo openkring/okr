@@ -94,3 +94,4 @@ export * from './lib/year-select';
 export * from './lib/file-tiles';
 export * from './lib/radio-group';
 export * from './lib/report.modal';
+export * from './lib/route-map';

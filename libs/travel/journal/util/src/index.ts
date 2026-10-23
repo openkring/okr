@@ -7,3 +7,4 @@ export * from './lib/journal-view.util';
 export * from './lib/journal-identity.util';
 export * from './lib/journal-launch.util';
 export * from './lib/journal-row.util';
+export * from './lib/journal-map.util';
