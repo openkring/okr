@@ -10,7 +10,8 @@
     "nameTooLong": "Der Name darf höchstens 80 Zeichen lang sein.",
     "folderRequired": "Wähle einen Ordner aus.",
     "tooManyTopics": "Du kannst höchstens 30 Themen angeben.",
-    "curatorsPersonsOnly": "Als Betreuung sind nur Personen möglich."
+    "curatorsPersonsOnly": "Als Betreuung sind nur Personen möglich.",
+    "groupRequired": "Wähle eine Gruppe aus."
   },
   "tab": {
     "files": "Dateien",
@@ -40,5 +41,70 @@
     "videoUnavailable": "Dieses Video ist gerade nicht verfügbar.",
     "open": "Öffnen",
     "download": "Herunterladen"
+  },
+  "form": {
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "remove": "Entfernen"
+  },
+  "itemForm": {
+    "title": "Material bearbeiten",
+    "titleLabel": "Titel",
+    "titlePlaceholder": "Titel eingeben",
+    "titleHelper": "So erscheint das Material in der Liste.",
+    "tagsHelper": "Du kannst die Themen setzen, die du betreust. Andere Themen bleiben erhalten.",
+    "notesLabel": "Notizen",
+    "notesHelper": "Hinweise zum Material, zum Beispiel worauf man achten soll.",
+    "linksTitle": "Links",
+    "linksHelper": "Weiterführende Seiten im Internet, höchstens 20.",
+    "linksAdd": "Link hinzufügen",
+    "linksEmpty": "Noch keine Links.",
+    "linkTitleLabel": "Titel des Links",
+    "linkTitlePlaceholder": "z. B. Swiss Rowing Technik",
+    "linkUrlLabel": "Adresse",
+    "linkUrlPlaceholder": "https://",
+    "attachmentsTitle": "Anhänge",
+    "attachmentsHelper": "Weitere Dateien zu diesem Material, zum Beispiel ein Arbeitsblatt oder ein Trainingsplan.",
+    "attachmentsAdd": "Anhang hinzufügen",
+    "attachmentsEmpty": "Noch keine Anhänge."
+  },
+  "roomForm": {
+    "title": "Lernraum bearbeiten",
+    "newTitle": "Neuer Lernraum",
+    "nameLabel": "Name",
+    "namePlaceholder": "z. B. Rudern",
+    "nameHelper": "So heisst der Lernraum im Menü oder in der Gruppe.",
+    "modeLabel": "Erreichbar über",
+    "modeHelper": "Über einen Menüeintrag oder als «Dateien» einer Gruppe.",
+    "modeMenu": "Menüeintrag",
+    "modeGroup": "Gruppe",
+    "folderLabel": "Ordner",
+    "folderHelper": "Alles in diesem Ordner gehört zum Lernraum.",
+    "createFolderLabel": "Neuen Ordner anlegen",
+    "createFolderHelper": "Es wird ein neuer Ordner mit dem Namen des Lernraums angelegt.",
+    "groupLabel": "Gruppe",
+    "groupPick": "Gruppe wählen",
+    "groupNone": "Noch keine Gruppe gewählt.",
+    "groupHelper": "Der Lernraum zeigt die Dateien der Gruppe. Ihre Mitglieder können ihn öffnen.",
+    "topicsHelper": "Die Themen erscheinen als Filter im Lernraum, in dieser Reihenfolge.",
+    "curatorsTitle": "Kuratorinnen und Kuratoren",
+    "curatorsHelper": "Pro Thema die Personen, die Material hochladen, Notizen schreiben und Links pflegen.",
+    "curatorsGroupAdmins": "Gruppen-Admins sind nicht automatisch Kuratorinnen und Kuratoren; trage sie hier ein.",
+    "curatorsAdd": "Person hinzufügen",
+    "curatorsNone": "Noch niemand.",
+    "curatorsNoTopics": "Wähle zuerst Themen aus.",
+    "defaultTabLabel": "Startansicht",
+    "defaultTabHelper": "Diese Ansicht ist beim Öffnen des Lernraums ausgewählt."
+  },
+  "publish": {
+    "header": "Lernraum veröffentlichen?",
+    "message": "Danach kann jede Person im Internet alle Dateien, Videos und Bilder dieses Lernraums sehen – auch die Personen, die in Videos zu sehen sind, oft Kinder und Jugendliche. Nach dem Zurückziehen bleiben die Inhalte noch eine Weile im Zwischenspeicher der Website sichtbar. Prüfe das Material, bevor du veröffentlichst.",
+    "confirm": "Veröffentlichen",
+    "cancel": "Abbrechen"
+  },
+  "unpublish": {
+    "header": "Veröffentlichung zurückziehen?",
+    "message": "Der Lernraum ist danach nur noch für Mitglieder sichtbar. Auf der Website können die Inhalte noch eine Weile im Zwischenspeicher sichtbar bleiben.",
+    "confirm": "Zurückziehen"
   }
 }

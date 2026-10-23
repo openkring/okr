@@ -48,6 +48,15 @@
     },
     {
       "path": "../../../shared/util-core/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../shared/i18n/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../shared/ui-editor/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../shared/util-angular/tsconfig.lib.json"
     }
   ]
 }

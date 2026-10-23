@@ -3,3 +3,8 @@ export * from './lib/learning-toolbar';
 export * from './lib/learning-video-grid';
 export * from './lib/learning-image-grid';
 export * from './lib/learning-file-list';
+export * from './lib/learning-item.form';
+export * from './lib/learning-item-edit.modal';
+export * from './lib/learning-room.form';
+export * from './lib/learning-room-edit.modal';
+export * from './lib/learning-publish.alert';

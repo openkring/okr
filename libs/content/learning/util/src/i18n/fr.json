@@ -10,7 +10,8 @@
     "nameTooLong": "Le nom peut contenir 80 caractères au maximum.",
     "folderRequired": "Choisis un dossier.",
     "tooManyTopics": "Tu peux indiquer 30 thèmes au maximum.",
-    "curatorsPersonsOnly": "Seules des personnes peuvent être choisies comme responsables."
+    "curatorsPersonsOnly": "Seules des personnes peuvent être choisies comme responsables.",
+    "groupRequired": "Choisis un groupe."
   },
   "tab": {
     "files": "Fichiers",
@@ -40,5 +41,70 @@
     "videoUnavailable": "Cette vidéo n'est pas disponible pour le moment.",
     "open": "Ouvrir",
     "download": "Télécharger"
+  },
+  "form": {
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "remove": "Retirer"
+  },
+  "itemForm": {
+    "title": "Modifier le support",
+    "titleLabel": "Titre",
+    "titlePlaceholder": "Saisis un titre",
+    "titleHelper": "C’est ainsi que le support apparaît dans la liste.",
+    "tagsHelper": "Tu peux définir les thèmes dont tu t’occupes. Les autres thèmes sont conservés.",
+    "notesLabel": "Notes",
+    "notesHelper": "Remarques sur le support, par exemple ce à quoi il faut faire attention.",
+    "linksTitle": "Liens",
+    "linksHelper": "Pages utiles sur Internet, 20 au maximum.",
+    "linksAdd": "Ajouter un lien",
+    "linksEmpty": "Pas encore de liens.",
+    "linkTitleLabel": "Titre du lien",
+    "linkTitlePlaceholder": "p. ex. Technique Swiss Rowing",
+    "linkUrlLabel": "Adresse",
+    "linkUrlPlaceholder": "https://",
+    "attachmentsTitle": "Pièces jointes",
+    "attachmentsHelper": "Autres fichiers liés à ce support, par exemple une fiche de travail ou un plan d’entraînement.",
+    "attachmentsAdd": "Ajouter une pièce jointe",
+    "attachmentsEmpty": "Pas encore de pièces jointes."
+  },
+  "roomForm": {
+    "title": "Modifier l’espace d’apprentissage",
+    "newTitle": "Nouvel espace d’apprentissage",
+    "nameLabel": "Nom",
+    "namePlaceholder": "p. ex. Aviron",
+    "nameHelper": "C’est le nom de l’espace dans le menu ou dans le groupe.",
+    "modeLabel": "Accessible via",
+    "modeHelper": "Une entrée de menu, ou comme «Fichiers» d’un groupe.",
+    "modeMenu": "Entrée de menu",
+    "modeGroup": "Groupe",
+    "folderLabel": "Dossier",
+    "folderHelper": "Tout ce qui se trouve dans ce dossier fait partie de l’espace.",
+    "createFolderLabel": "Créer un nouveau dossier",
+    "createFolderHelper": "Un nouveau dossier portant le nom de l’espace est créé.",
+    "groupLabel": "Groupe",
+    "groupPick": "Choisir un groupe",
+    "groupNone": "Aucun groupe choisi.",
+    "groupHelper": "L’espace affiche les fichiers du groupe. Ses membres peuvent l’ouvrir.",
+    "topicsHelper": "Les thèmes apparaissent comme filtres dans l’espace, dans cet ordre.",
+    "curatorsTitle": "Responsables",
+    "curatorsHelper": "Par thème, les personnes qui téléversent du matériel, écrivent des notes et gèrent les liens.",
+    "curatorsGroupAdmins": "Les admins du groupe ne sont pas automatiquement responsables ; ajoute-les ici.",
+    "curatorsAdd": "Ajouter une personne",
+    "curatorsNone": "Personne pour l’instant.",
+    "curatorsNoTopics": "Choisis d’abord des thèmes.",
+    "defaultTabLabel": "Vue de départ",
+    "defaultTabHelper": "Cette vue est sélectionnée à l’ouverture de l’espace."
+  },
+  "publish": {
+    "header": "Publier l’espace d’apprentissage ?",
+    "message": "Ensuite, n’importe qui sur Internet pourra voir tous les fichiers, vidéos et images de cet espace – y compris les personnes visibles dans les vidéos, souvent des enfants et des jeunes. Après le retrait, le contenu reste visible un moment dans le cache du site web. Vérifie le matériel avant de publier.",
+    "confirm": "Publier",
+    "cancel": "Annuler"
+  },
+  "unpublish": {
+    "header": "Retirer la publication ?",
+    "message": "L’espace ne sera ensuite visible que pour les membres. Sur le site web, le contenu peut rester visible un moment dans le cache.",
+    "confirm": "Retirer"
   }
 }

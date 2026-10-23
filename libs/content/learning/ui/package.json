@@ -12,6 +12,9 @@
     "@okr/shared-models": "*",
     "@okr/shared-pipes": "*",
     "@okr/shared-ui": "*",
-    "@okr/shared-util-core": "*"
+    "@okr/shared-util-core": "*",
+    "@okr/shared-i18n": "*",
+    "@okr/shared-ui-editor": "*",
+    "@okr/shared-util-angular": "*"
   }
 }

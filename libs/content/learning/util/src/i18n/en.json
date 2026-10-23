@@ -10,7 +10,8 @@
     "nameTooLong": "The name can be at most 80 characters long.",
     "folderRequired": "Choose a folder.",
     "tooManyTopics": "You can enter at most 30 topics.",
-    "curatorsPersonsOnly": "Only persons can be chosen as curators."
+    "curatorsPersonsOnly": "Only persons can be chosen as curators.",
+    "groupRequired": "Choose a group."
   },
   "tab": {
     "files": "Files",
@@ -40,5 +41,70 @@
     "videoUnavailable": "This video is not available right now.",
     "open": "Open",
     "download": "Download"
+  },
+  "form": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "remove": "Remove"
+  },
+  "itemForm": {
+    "title": "Edit material",
+    "titleLabel": "Title",
+    "titlePlaceholder": "Enter a title",
+    "titleHelper": "This is how the material appears in the list.",
+    "tagsHelper": "You can set the topics you look after. Other topics are kept.",
+    "notesLabel": "Notes",
+    "notesHelper": "Hints about the material, for example what to watch out for.",
+    "linksTitle": "Links",
+    "linksHelper": "Related pages on the internet, at most 20.",
+    "linksAdd": "Add link",
+    "linksEmpty": "No links yet.",
+    "linkTitleLabel": "Link title",
+    "linkTitlePlaceholder": "e.g. Swiss Rowing technique",
+    "linkUrlLabel": "Address",
+    "linkUrlPlaceholder": "https://",
+    "attachmentsTitle": "Attachments",
+    "attachmentsHelper": "Further files for this material, for example a worksheet or a training plan.",
+    "attachmentsAdd": "Add attachment",
+    "attachmentsEmpty": "No attachments yet."
+  },
+  "roomForm": {
+    "title": "Edit learning room",
+    "newTitle": "New learning room",
+    "nameLabel": "Name",
+    "namePlaceholder": "e.g. Rowing",
+    "nameHelper": "This is the name of the learning room in the menu or in the group.",
+    "modeLabel": "Reached through",
+    "modeHelper": "A menu entry, or as the «Files» of a group.",
+    "modeMenu": "Menu entry",
+    "modeGroup": "Group",
+    "folderLabel": "Folder",
+    "folderHelper": "Everything in this folder belongs to the learning room.",
+    "createFolderLabel": "Create a new folder",
+    "createFolderHelper": "A new folder named after the learning room is created.",
+    "groupLabel": "Group",
+    "groupPick": "Choose group",
+    "groupNone": "No group chosen yet.",
+    "groupHelper": "The learning room shows the files of the group. Its members can open it.",
+    "topicsHelper": "The topics appear as filters in the learning room, in this order.",
+    "curatorsTitle": "Curators",
+    "curatorsHelper": "Per topic, the people who upload material, write notes and look after links.",
+    "curatorsGroupAdmins": "Group admins are not curators automatically; add them here.",
+    "curatorsAdd": "Add person",
+    "curatorsNone": "Nobody yet.",
+    "curatorsNoTopics": "Choose topics first.",
+    "defaultTabLabel": "Start view",
+    "defaultTabHelper": "This view is selected when the learning room opens."
+  },
+  "publish": {
+    "header": "Publish learning room?",
+    "message": "Afterwards anyone on the internet can see every file, video and image of this learning room – including the people shown in videos, often children and young people. After unpublishing, the content stays visible in the website cache for a while. Check the material before you publish.",
+    "confirm": "Publish",
+    "cancel": "Cancel"
+  },
+  "unpublish": {
+    "header": "Unpublish learning room?",
+    "message": "Afterwards the learning room is visible to members only. On the website the content may stay visible in the cache for a while.",
+    "confirm": "Unpublish"
   }
 }

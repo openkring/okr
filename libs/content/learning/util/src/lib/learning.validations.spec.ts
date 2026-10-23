@@ -1,7 +1,13 @@
 import { learningItemValidations, learningRoomValidations } from './learning.validations';
 
-const item = (o: object = {}) => ({ title: 'T', notes: '', links: [] as { title: string; url: string }[], ...o });
-const room = (o: object = {}) => ({ name: 'Segeln', folder: 'f1', topics: 'a, b', curators: [{ tag: 'a', personKeys: ['p1'] }], ...o });
+import type { LearningItemFormData, LearningRoomFormData } from './learning.validations';
+
+const item = (o: Partial<LearningItemFormData> = {}): LearningItemFormData =>
+  ({ title: 'T', tags: '', notes: '', links: [], attachmentKeys: [], ...o });
+const room = (o: Partial<LearningRoomFormData> = {}): LearningRoomFormData => ({
+  name: 'Segeln', mode: 'menu', groupKey: '', folder: 'f1', createFolder: false, topics: 'a, b',
+  curators: [{ tag: 'a', personKeys: ['p1'] }], defaultTab: 'files', ...o,
+});
 
 describe('learningItemValidations', () => {
   it('accepts a valid item', () => expect(learningItemValidations(item()).isValid()).toBe(true));
@@ -27,6 +33,14 @@ describe('learningRoomValidations', () => {
     expect(learningRoomValidations(room({ name: '' })).hasErrors('name')).toBe(true);
     expect(learningRoomValidations(room({ name: 'x'.repeat(81) })).hasErrors('name')).toBe(true);
     expect(learningRoomValidations(room({ folder: '' })).hasErrors('folder')).toBe(true);
+  });
+  it('skips the folder when a new one is created', () => {
+    expect(learningRoomValidations(room({ folder: '', createFolder: true })).isValid()).toBe(true);
+  });
+  it('a group room needs the group, not a folder', () => {
+    expect(learningRoomValidations(room({ mode: 'group', folder: '', groupKey: '' })).hasErrors('groupKey')).toBe(true);
+    expect(learningRoomValidations(room({ mode: 'group', folder: '', groupKey: 'g1' })).isValid()).toBe(true);
+    expect(learningRoomValidations(room({ mode: 'menu', groupKey: '' })).hasErrors('groupKey')).toBe(false);
   });
   it('limits topics to 30', () => {
     const topics = Array.from({ length: 31 }, (_, i) => 't' + i).join(',');
