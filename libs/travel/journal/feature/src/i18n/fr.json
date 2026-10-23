@@ -8,7 +8,10 @@
     "rename": "Renommer",
     "rename_prompt": "Nouveau titre",
     "delete": "Supprimer",
-    "delete_confirm": "Supprimer ce carnet de voyage avec toutes ses étapes ?"
+    "delete_confirm": "Supprimer ce carnet de voyage avec toutes ses étapes ?",
+    "coauthor": "Ajouter un co-auteur",
+    "coauthor_done": "{name} écrit désormais avec toi.",
+    "coauthor_offline": "Tu ne peux ajouter des co-auteurs qu’avec une connexion Internet."
   },
   "native_only": "Pour l'instant, le carnet de voyage n'est disponible que dans l'app iPad.",
   "untitled": "Sans titre",
@@ -46,7 +49,10 @@
   },
   "photos": {
     "added": "{count} photo(s) ajoutée(s)",
-    "skipped": "{count} photo(s) ignorée(s)"
+    "skipped": "{count} photo(s) ignorée(s)",
+    "pause": "Mettre le transfert des photos en pause",
+    "resume": "Reprendre le transfert des photos",
+    "paused": "Transfert des photos en pause"
   },
   "error": {
     "no_author": "Ouvre le carnet de voyage une fois avec internet, ensuite tu pourras écrire.",
@@ -81,5 +87,14 @@
     "actions": "Photo",
     "view": "Afficher",
     "remove": "Retirer la photo"
+  },
+  "sync": {
+    "now": "Synchroniser maintenant",
+    "done": "Synchronisé à {time}",
+    "never": "Pas encore synchronisé",
+    "running": "Synchronisation …",
+    "pending": "{records} modifications et {photos} photos attendent le transfert",
+    "offline": "Hors ligne – tes entrées sont enregistrées sur l’iPad.",
+    "error": "La synchronisation n’a pas fonctionné. Elle sera répétée plus tard."
   }
 }

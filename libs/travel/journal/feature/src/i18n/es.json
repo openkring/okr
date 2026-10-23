@@ -8,7 +8,10 @@
     "rename": "Cambiar nombre",
     "rename_prompt": "Nuevo título",
     "delete": "Eliminar",
-    "delete_confirm": "¿Eliminar este diario de viaje con todas sus etapas?"
+    "delete_confirm": "¿Eliminar este diario de viaje con todas sus etapas?",
+    "coauthor": "Añadir coautor",
+    "coauthor_done": "{name} escribe ahora contigo.",
+    "coauthor_offline": "Solo puedes añadir coautores con conexión a Internet."
   },
   "native_only": "Por ahora el diario de viaje solo está disponible en la app de iPad.",
   "untitled": "Sin título",
@@ -46,7 +49,10 @@
   },
   "photos": {
     "added": "{count} foto(s) añadida(s)",
-    "skipped": "{count} foto(s) omitida(s)"
+    "skipped": "{count} foto(s) omitida(s)",
+    "pause": "Pausar la transferencia de fotos",
+    "resume": "Reanudar la transferencia de fotos",
+    "paused": "Transferencia de fotos en pausa"
   },
   "error": {
     "no_author": "Abre el diario de viaje una vez con internet y luego podrás escribir.",
@@ -81,5 +87,14 @@
     "actions": "Foto",
     "view": "Ver",
     "remove": "Quitar foto"
+  },
+  "sync": {
+    "now": "Sincronizar ahora",
+    "done": "Sincronizado a las {time}",
+    "never": "Aún no sincronizado",
+    "running": "Sincronizando …",
+    "pending": "{records} cambios y {photos} fotos esperan la transferencia",
+    "offline": "Sin conexión – tus entradas están guardadas en el iPad.",
+    "error": "La sincronización no funcionó. Se repetirá más tarde."
   }
 }

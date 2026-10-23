@@ -8,7 +8,10 @@
     "rename": "Rename",
     "rename_prompt": "New title",
     "delete": "Delete",
-    "delete_confirm": "Delete this travel journal with all its footprints?"
+    "delete_confirm": "Delete this travel journal with all its footprints?",
+    "coauthor": "Add co-author",
+    "coauthor_done": "{name} now writes along.",
+    "coauthor_offline": "You can only add co-authors with an Internet connection."
   },
   "native_only": "For now the travel journal is only available in the iPad app.",
   "untitled": "Untitled",
@@ -46,7 +49,10 @@
   },
   "photos": {
     "added": "{count} photo(s) added",
-    "skipped": "{count} photo(s) skipped"
+    "skipped": "{count} photo(s) skipped",
+    "pause": "Pause photo transfer",
+    "resume": "Resume photo transfer",
+    "paused": "Photo transfer paused"
   },
   "error": {
     "no_author": "Open the travel journal once with internet, then you can write.",
@@ -81,5 +87,14 @@
     "actions": "Photo",
     "view": "View",
     "remove": "Remove photo"
+  },
+  "sync": {
+    "now": "Sync now",
+    "done": "Synced at {time}",
+    "never": "Not synced yet",
+    "running": "Syncing …",
+    "pending": "{records} changes and {photos} photos waiting to be transferred",
+    "offline": "Offline – your entries are saved on the iPad.",
+    "error": "Syncing did not work. It will be retried later."
   }
 }

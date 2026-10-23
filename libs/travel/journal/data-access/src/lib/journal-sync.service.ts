@@ -188,11 +188,13 @@ export class JournalSyncService {
         const { uploadedAt, tenants, ...change } = data;
         return { change: change as JournalChange, uploadedAtMs: uploadedAt?.toMillis() ?? Date.now() };
       });
-      await this.db.appendRemoteChanges(remote);
-      await this.identity.receiveClocks(remote.filter((r) => acceptRecord(r.change, r.uploadedAtMs)).map((r) => r.change.hlc));
+      // the same filter as the server (applyJournalChange): a record it ignores must not count here either
+      const accepted = remote.filter((r) => acceptRecord(r.change, r.uploadedAtMs));
+      await this.db.appendRemoteChanges(accepted);
+      await this.identity.receiveClocks(accepted.map((r) => r.change.hlc));
       cursor = advanceCursor(cursor, remote.map((r) => r.uploadedAtMs));
       if (cursor !== undefined) await this.db.setMeta(META_CURSOR + journalKey, String(cursor));
-      received += remote.length;
+      received += accepted.length;
       if (snaps.docs.length < DOWNLOAD_PAGE) return received;
       last = snaps.docs[snaps.docs.length - 1];
     }

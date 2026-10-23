@@ -13,6 +13,7 @@ import {
 
 import { JournalFileUrlService } from './journal-file-url.service';
 import { showJournalError } from './journal-errors';
+import { JournalSyncLine } from './journal-sync-line';
 import { JournalStore } from './journal.store';
 
 /** Wide screens (iPad landscape, desktop) get layout B — Ionic's `lg` breakpoint, spec 1.113 §9.1. */
@@ -24,7 +25,7 @@ const WIDE_QUERY = '(min-width: 992px)';
  */
 @Component({
   selector: 'okr-journal-overview-page',
-  imports: [IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonButton, IonCard, IonCardContent, RouteMap],
+  imports: [IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonButton, IonCard, IonCardContent, RouteMap, JournalSyncLine],
   styles: [`
     .layout { display: flex; flex-direction: column; height: 100%; }
     .layout.wide { flex-direction: row; }
@@ -59,6 +60,8 @@ const WIDE_QUERY = '(min-width: 992px)';
             (pinClicked)="openFootprint($event)" />
         </div>
         <div class="side">
+          <okr-journal-sync-line [status]="store.syncStatus()" [paused]="store.photosPaused()" [i18n]="store.i18n"
+            (syncNow)="store.syncNow()" (togglePhotos)="store.setPhotosPaused(!store.photosPaused())" />
           <div class="stats">
             <div class="stat"><b>{{ days() }}</b><span>{{ store.i18n.stats_days() }}</span></div>
             <div class="stat"><b>{{ km() }}</b><span>{{ store.i18n.stats_km() }}</span></div>

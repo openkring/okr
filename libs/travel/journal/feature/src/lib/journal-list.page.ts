@@ -1,19 +1,23 @@
 import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { Network } from '@capacitor/network';
 import {
   ActionSheetController, AlertController, IonButton, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonList, IonMenuButton, IonTitle,
   IonToolbar, ToastController,
 } from '@ionic/angular';
 
+import { ModelSelectService } from '@okr/shared-feature';
 import { okrPrompt } from '@okr/shared-util-angular';
+import { fill } from '@okr/shared-util-core';
 import { showJournalError } from './journal-errors';
+import { JournalSyncLine } from './journal-sync-line';
 import { JournalStore } from './journal.store';
 
 /** All travel journals on this device (spec 1.113); opens one, or creates a new one. */
 @Component({
   selector: 'okr-journal-list-page',
-  imports: [IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonList, IonItem, IonLabel, IonButton],
-  styles: [`.title { cursor: pointer; }`],
+  imports: [IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonList, IonItem, IonLabel, IonButton, JournalSyncLine],
+  styles: [`.title { cursor: pointer; } okr-journal-sync-line { margin-top: 12px; }`],
   template: `
     <ion-header>
       <ion-toolbar>
@@ -36,6 +40,8 @@ import { JournalStore } from './journal.store';
           }
         </ion-list>
         <ion-button expand="block" (click)="create()">{{ store.i18n.list_new() }}</ion-button>
+        <okr-journal-sync-line [status]="store.syncStatus()" [paused]="store.photosPaused()" [i18n]="store.i18n"
+          (syncNow)="store.syncNow()" (togglePhotos)="store.setPhotosPaused(!store.photosPaused())" />
       }
     </ion-content>
   `,
@@ -46,6 +52,7 @@ export class JournalListPage {
   private readonly alertController = inject(AlertController);
   private readonly toastController = inject(ToastController);
   private readonly actionSheetController = inject(ActionSheetController);
+  private readonly modelSelectService = inject(ModelSelectService);
 
   public constructor() {
     void this.store.init();
@@ -61,6 +68,7 @@ export class JournalListPage {
       header: title || i18n.untitled(),
       buttons: [
         { text: i18n.list_rename(), handler: () => void this.rename(journalKey, title) },
+        { text: i18n.list_coauthor(), handler: () => void this.addCoAuthor(journalKey) },
         { text: i18n.list_delete(), role: 'destructive', handler: () => void this.confirmDelete(journalKey) },
         { text: i18n.cancel(), role: 'cancel' },
       ],
@@ -73,6 +81,26 @@ export class JournalListPage {
     const title = await okrPrompt(this.alertController, i18n.list_rename(), i18n.list_rename_prompt(), i18n.save(), i18n.cancel(), current);
     if (!title?.trim() || title.trim() === current) return;
     await this.run(() => this.store.renameJournal(journalKey, title.trim()));
+  }
+
+  /** Picks a person (needs the person list, so online only) and makes them a co-author. */
+  private async addCoAuthor(journalKey: string): Promise<void> {
+    const i18n = this.store.i18n;
+    if (!(await Network.getStatus()).connected) {
+      await this.toast(i18n.list_coauthor_offline());
+      return;
+    }
+    const person = await this.modelSelectService.selectPersonAvatar();
+    if (!person?.key) return; // cancelled, or a free-text name without a person
+    await this.run(async () => {
+      await this.store.addCoAuthor(journalKey, person);
+      await this.toast(fill(i18n.list_coauthor_done(), { name: `${person.name1} ${person.name2}`.trim() }));
+    });
+  }
+
+  private async toast(message: string): Promise<void> {
+    const toast = await this.toastController.create({ message, duration: 2500, position: 'bottom' });
+    await toast.present();
   }
 
   private async confirmDelete(journalKey: string): Promise<void> {

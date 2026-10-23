@@ -67,6 +67,19 @@ export const JOURNAL_I18N_KEYS = {
   photo_actions: PFX + 'photo.actions',
   photo_view: PFX + 'photo.view',
   photo_remove: PFX + 'photo.remove',
+  list_coauthor: PFX + 'list.coauthor',
+  list_coauthor_done: PFX + 'list.coauthor_done',
+  list_coauthor_offline: PFX + 'list.coauthor_offline',
+  sync_now: PFX + 'sync.now',
+  sync_done: PFX + 'sync.done',
+  sync_never: PFX + 'sync.never',
+  sync_running: PFX + 'sync.running',
+  sync_pending: PFX + 'sync.pending',
+  sync_offline: PFX + 'sync.offline',
+  sync_error: PFX + 'sync.error',
+  photos_pause: PFX + 'photos.pause',
+  photos_resume: PFX + 'photos.resume',
+  photos_paused: PFX + 'photos.paused',
 } satisfies Record<string, string>;
 
 export type JournalI18n = { [K in keyof typeof JOURNAL_I18N_KEYS]: Signal<string> };

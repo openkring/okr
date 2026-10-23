@@ -1,22 +1,29 @@
 import { computed, effect, inject, untracked } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
+import { Network } from '@capacitor/network';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { JournalChange } from '@okr/shared-models';
+import { AvatarInfo, JournalChange } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
-import { ChangeDraft, JournalDb, JournalIdentityService, JournalPhotos, PickedPhoto, SkippedPhoto } from '@okr/travel-journal-data-access';
+import {
+  ChangeDraft, JournalDb, JournalIdentityService, JournalPhotos, JournalSyncService, PickedPhoto, SkippedPhoto,
+} from '@okr/travel-journal-data-access';
 import {
   entityStateKey, hasOthersBlocks, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
-  journalsOf, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, viewOf,
+  allPhotoFiles, journalsOf, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, publishedPhotoFiles, viewOf,
 } from '@okr/travel-journal-util';
+
+const SYNC_INTERVAL_MS = 2 * 60 * 1000;
+const META_PHOTOS_PAUSED = 'photosPaused';
 
 /**
  * The travel journal on this device (spec 1.113, plan 2). Reads and writes only SQLite through
  * JournalDb / JournalIdentityService — no Firestore, no app-config — so it works after an offline
  * cold start. Every action becomes change records; the in-memory state is updated only after the
- * database write succeeded.
+ * database write succeeded. Plan 4: JournalSyncService exchanges the records with Firebase when
+ * online (on start, when the network returns and every two minutes); offline nothing changes.
  */
 export type FootprintFields = Partial<Pick<FootprintView, 'title' | 'placeName' | 'date' | 'time' | 'latitude' | 'longitude' | 'publishState'>>;
 
@@ -25,9 +32,10 @@ interface JournalStoreState {
   native: boolean;
   error: string;
   changes: JournalChange[];
+  photosPaused: boolean;
 }
 
-const initialState: JournalStoreState = { ready: false, native: Capacitor.isNativePlatform(), error: '', changes: [] };
+const initialState: JournalStoreState = { ready: false, native: Capacitor.isNativePlatform(), error: '', changes: [], photosPaused: false };
 
 export const JournalStore = signalStore(
   { providedIn: 'root' },
@@ -35,6 +43,7 @@ export const JournalStore = signalStore(
   withProps(() => ({
     db: inject(JournalDb),
     identity: inject(JournalIdentityService),
+    syncService: inject(JournalSyncService),
     appStore: inject(AppStore),
   })),
   withProps(() => ({
@@ -46,6 +55,7 @@ export const JournalStore = signalStore(
       journalState,
       journals: computed(() => journalsOf(journalState())),
       author: computed(() => store.identity.author()),
+      syncStatus: computed(() => store.syncService.status()),
     };
   }),
   withMethods((store) => {
@@ -92,6 +102,39 @@ export const JournalStore = signalStore(
       return { footprint: fp, journalKey: fp.journalKey };
     }
 
+    /** Re-reads the log after a download; keeps records a write added meanwhile. */
+    async function reload(): Promise<void> {
+      const stored = await store.db.listChanges();
+      const ids = new Set(stored.map((c) => c.id));
+      patchState(store, { changes: [...stored, ...store.changes().filter((c) => !ids.has(c.id))] });
+    }
+
+    async function syncNow(): Promise<void> {
+      const author = store.identity.author();
+      const tenantId = store.appStore.tenantId();
+      if (!store.native() || !store.ready() || !author || !tenantId) return;
+      if (!(await Network.getStatus()).connected) return;
+      await store.syncService.sync({
+        tenantId,
+        personKey: author.personKey,
+        photosPaused: store.photosPaused(),
+        photoFiles: (journalKey) => {
+          const images = imagesOf(store.journalState(), journalKey);
+          return { published: publishedPhotoFiles(footprintsOf(store.journalState(), journalKey), images), all: allPhotoFiles(images) };
+        },
+        onRecordsStored: reload,
+      });
+    }
+
+    let autoSync = false;
+    function startAutoSync(): void {
+      if (autoSync) return;
+      autoSync = true;
+      void Network.addListener('networkStatusChange', (status) => { if (status.connected) void syncNow(); });
+      setInterval(() => void syncNow(), SYNC_INTERVAL_MS);
+      void syncNow();
+    }
+
     // one shared load: a second page instance must not replace state that a write already extended
     let loading: Promise<void> | undefined;
 
@@ -104,13 +147,49 @@ export const JournalStore = signalStore(
           }
           try {
             await store.identity.init();
-            patchState(store, { changes: await store.db.listChanges(), ready: true, error: '' });
+            patchState(store, {
+              changes: await store.db.listChanges(), ready: true, error: '',
+              photosPaused: (await store.db.getMeta(META_PHOTOS_PAUSED)) === '1',
+            });
+            startAutoSync();
           } catch (error) {
             loading = undefined; // allow a retry
             patchState(store, { ready: true, error: String(error) });
           }
         })();
         return loading;
+      },
+
+      syncNow,
+
+      async setPhotosPaused(paused: boolean): Promise<void> {
+        await store.db.setMeta(META_PHOTOS_PAUSED, paused ? '1' : '0');
+        patchState(store, { photosPaused: paused });
+        if (!paused) void syncNow();
+      },
+
+      /** The journal's co-authors as recorded on the journal (empty until someone was added). */
+      authors(journalKey: string): AvatarInfo[] {
+        const view = viewOf(store.journalState()[entityStateKey('journal', journalKey)]);
+        return Array.isArray(view?.['authors']) ? (view['authors'] as AvatarInfo[]) : [];
+      },
+
+      /**
+       * Adds a co-author (plan 4): a journal record with the full author list. The function derives the
+       * journal's authorKeys from it; the creator always stays an author.
+       */
+      async addCoAuthor(journalKey: string, person: AvatarInfo): Promise<void> {
+        const me = store.identity.author();
+        if (!me) throw new JournalWriteRefused('noAuthor');
+        const entity = store.journalState()[entityStateKey('journal', journalKey)];
+        const view = viewOf(entity);
+        const current = Array.isArray(view?.['authors']) ? (view['authors'] as AvatarInfo[]) : [];
+        const self: AvatarInfo = { key: me.personKey, name1: me.name, name2: '', modelType: 'person', type: '', subType: '', label: me.name };
+        const byKey = new Map<string, AvatarInfo>([[self.key, self], ...current.map((a) => [a.key, a] as [string, AvatarInfo]), [person.key, person]]);
+        const authors = [...byKey.values()];
+        const authorKeys = [...new Set([...(entity?.ownerKey ? [entity.ownerKey] : []), ...authors.map((a) => a.key)])];
+        await write([{ journalKey, entity: 'journal', entityKey: journalKey, op: 'set', fields: { authors, authorKeys } }]);
+        void syncNow();
       },
 
       footprints(journalKey: string): FootprintView[] {
@@ -258,7 +337,7 @@ export const JournalStore = signalStore(
       effect(() => {
         const user = store.appStore.currentUser();
         const person = store.appStore.currentPerson();
-        if (!store.native || !user?.personKey) return;
+        if (!store.native() || !user?.personKey) return;
         const name = person ? `${person.firstName} ${person.lastName}`.trim() : '';
         untracked(() => void store.identity.bindAuthor({ personKey: user.personKey, name }).catch(() => undefined));
       });
