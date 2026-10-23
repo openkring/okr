@@ -1,6 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { articleImageLayout, buildLearningSection, isPublishedPage } from './page';
+// The pageRouter wiring test drives a fake Firestore; nothing else in this file touches it.
+const fakeDb = vi.hoisted(() => ({ current: undefined as unknown }));
+vi.mock('firebase-admin/firestore', () => ({ getFirestore: () => fakeDb.current }));
+
+import { articleImageLayout, buildLearningSection, isPublishedPage, loadLearningSection, pageRouter } from './page';
 import { getHtmlSanitizer } from '../sanitize';
 
 describe('articleImageLayout', () => {
@@ -115,5 +119,118 @@ describe('learning section', () => {
       docs: [doc('v', { title: 'X', mimeType: 'video/mp4', fullPath: 'tenant/scs/private/invoices/x.mp4' })],
     });
     expect(out.items).toEqual([]);
+  });
+
+  const build = (docs: ReturnType<typeof doc>[]) =>
+    buildLearningSection(section, { published: true, tenantId: 'scs', sanitize, signVideo, docs });
+
+  it('never signs a video of another room or of a section album', () => {
+    const out = build([
+      doc('other-room', { title: 'A', mimeType: 'video/mp4', fullPath: 'tenant/scs/folder/f2/album/x/v.mp4' }),
+      doc('section', { title: 'B', mimeType: 'video/mp4', fullPath: 'tenant/scs/section/s1/album/x/v.mp4' }),
+    ]);
+    expect(out.items).toEqual([]);
+  });
+
+  it('lists only docs whose first folder is the room (no injection via a second folder key)', () => {
+    const out = build([
+      doc('injected', { title: 'A', mimeType: 'application/pdf', fullPath: 'tenant/scs/x.pdf', folderKeys: ['other', 'f1'] }),
+      doc('own', { title: 'B', mimeType: 'application/pdf', fullPath: 'tenant/scs/y.pdf', folderKeys: ['f1', 'other'] }),
+    ]);
+    expect(out.items.map(i => i.key)).toEqual(['own']);
+  });
+
+  it('skips images outside the tenant storage', () => {
+    const out = build([
+      doc('foreign', { title: 'A', mimeType: 'image/jpeg', fullPath: 'tenant/p13/folder/f1/a.jpg' }),
+      doc('absolute', { title: 'B', mimeType: 'image/jpeg', fullPath: 'https://evil.example/a.jpg' }),
+      doc('dots', { title: 'C', mimeType: 'image/jpeg', fullPath: 'tenant/scs/../p13/a.jpg' }),
+    ]);
+    expect(out.items).toEqual([]);
+  });
+
+  it('serves non-image files only from the Firebase download host, else the tenant imgix path', () => {
+    const out = build([
+      doc('fallback', { title: 'A', mimeType: 'application/pdf', fullPath: 'tenant/scs/folder/f1/a b.pdf', url: 'https://evil.example/a.pdf' }),
+      doc('skipped', { title: 'B', mimeType: 'application/pdf', fullPath: 'tenant/p13/b.pdf', url: 'https://evil.example/b.pdf' }),
+    ]);
+    expect(out.items.map(i => [i.key, i.url])).toEqual([['fallback', 'https://bkaiser.imgix.net/tenant/scs/folder/f1/a%20b.pdf']]);
+  });
+});
+
+describe('learning section wiring', () => {
+  type Call = string;
+  function makeDb(o: { page?: Record<string, unknown>; folder?: Record<string, unknown>; docs?: { id: string; data: Record<string, unknown> }[] }) {
+    const calls: Call[] = [];
+    const learning = { type: 'learning', title: 'Raum', tenants: ['scs'], properties: { folder: 'f1', topics: 'T' } };
+    const snap = (id: string, data: Record<string, unknown> | undefined) => ({ id, exists: data !== undefined, data: () => data });
+    const db = {
+      collection: (name: string) => ({
+        doc: (id: string) => ({
+          __path: `${name}/${id}`,
+          get: async () => {
+            calls.push(`get ${name}/${id}`);
+            if (name === 'pages') return snap(id, o.page);
+            if (name === 'folders') return snap(id, o.folder);
+            return snap(id, undefined);
+          },
+        }),
+        where: (field: string, op: string, value: string) => ({
+          get: async () => {
+            calls.push(`query ${name} ${field} ${op} ${value}`);
+            return { docs: (o.docs ?? []).map(d => ({ id: d.id, data: () => d.data })) };
+          },
+        }),
+      }),
+      getAll: async (...refs: { __path: string }[]) => refs.map(r => {
+        calls.push(`getAll ${r.__path}`);
+        return snap(r.__path.split('/')[1], r.__path === 'sections/s1' ? learning : undefined);
+      }),
+    };
+    return { db, calls, learning };
+  }
+  const liveFolder = { tenants: ['scs'], isArchived: false };
+  const pdf = { id: 'd1', data: { tenants: ['scs'], folderKeys: ['f1'], title: 'A', mimeType: 'application/pdf', fullPath: 'tenant/scs/a.pdf' } };
+  const sanitize = (h: string) => h;
+
+  beforeEach(() => { fakeDb.current = undefined; });
+
+  async function getPage(page: Record<string, unknown>) {
+    const m = makeDb({ page: { tenants: ['scs'], sections: ['s1'], ...page }, folder: liveFolder, docs: [pdf] });
+    fakeDb.current = m.db;
+    let body: { sections: { locked: boolean; items: unknown[] }[] } | undefined;
+    const res = {
+      set: () => res,
+      status: () => res,
+      json: (b: typeof body) => { body = b; return res; },
+    };
+    await pageRouter({ query: { tenantId: 'scs' }, params: { pageKey: 'p1' } } as never, res as never);
+    return { body: body!, calls: m.calls };
+  }
+
+  it('an unpublished page runs no docs query (published comes from the page doc)', async () => {
+    for (const page of [{ isPrivate: true }, {}]) {
+      const { body, calls } = await getPage(page);
+      expect(body.sections[0].locked).toBe(true);
+      expect(body.sections[0].items).toEqual([]);
+      expect(calls.some(c => c.startsWith('query') || c.startsWith('get folders'))).toBe(false);
+    }
+  });
+
+  it('a published page queries the room folder and lists its docs', async () => {
+    const { body, calls } = await getPage({ isPrivate: false });
+    expect(body.sections[0].locked).toBe(false);
+    expect(body.sections[0].items).toHaveLength(1);
+    expect(calls).toContain('get folders/f1');
+    expect(calls).toContain('query docs folderKeys array-contains f1');
+  });
+
+  it('a missing, archived or foreign room folder gives the locked shell and runs no docs query', async () => {
+    for (const folder of [undefined, { ...liveFolder, isArchived: true }, { tenants: ['p13'] }]) {
+      const m = makeDb({ folder, docs: [pdf] });
+      const out = await loadLearningSection(m.db as never, m.learning, true, 'scs', sanitize);
+      expect(out).toMatchObject({ locked: true, items: [], topics: [] });
+      expect(m.calls.some(c => c.startsWith('query'))).toBe(false);
+    }
   });
 });

@@ -4,13 +4,13 @@ import { logger } from 'firebase-functions/v2';
 import { defineSecret } from 'firebase-functions/params';
 
 import type { DocumentLink } from '@okr/shared-models';
-import { DocumentCollection } from '@okr/shared-models';
+import { DocumentCollection, FolderCollection } from '@okr/shared-models';
 import { learningTabOf, parseTopics, type PublicLearningItem, type PublicLearningSection } from '@okr/content-learning-util';
 
 import { setCacheHeaders } from '../utils';
 import { getHtmlSanitizer } from '../sanitize';
 import { IMGIX_PRIVATE_HOST, signImgixUrl } from '../../_storage/imgix-sign';
-import { isAlbumVideoObjectPath, MP4_PARAMS, POSTER_PARAMS, windowExpiry } from '../../video/video-sign.util';
+import { albumFolderKeyOfPath, isSafeDocId, MP4_PARAMS, POSTER_PARAMS, windowExpiry } from '../../video/video-sign.util';
 
 /** Signs learning-room videos (private bucket) on the public page; mounted on `publicApi` in index.ts. */
 export const imgixPrivateToken = defineSecret('IMGIX_PRIVATE_TOKEN');
@@ -211,13 +211,25 @@ function httpsLinks(raw: unknown): DocumentLink[] {
   return out;
 }
 
-/** Public URL of a default-bucket document: images through imgix, other files by their download URL. */
-function publicFileUrl(data: Record<string, unknown>, isImage: boolean): string {
-  const path = str(data['fullPath']).replace(/^\/+/, '');
-  if (isImage) return toImgixUrl(path);
+/** A storage path of this tenant (`tenant/<tid>/…`, no empty, `.` or `..` segment). fullPath is author-editable. */
+function isTenantPath(path: string, tenantId: string): boolean {
+  return path.startsWith(`tenant/${tenantId}/`) && !path.split('/').some(seg => seg === '' || seg === '.' || seg === '..');
+}
+
+const FIREBASE_DOWNLOAD_PREFIX = 'https://firebasestorage.googleapis.com/';
+
+/**
+ * Public URL of a default-bucket document, or '' (item skipped). Images go through imgix by their
+ * tenant path; other files use their Firebase download URL, else the imgix path. Both fields are
+ * author-editable, so nothing outside the tenant's storage or the Firebase download host passes.
+ */
+function publicFileUrl(data: Record<string, unknown>, isImage: boolean, tenantId: string): string {
+  const path = str(data['fullPath']);
+  const validPath = isTenantPath(path, tenantId);
+  if (isImage) return validPath ? toImgixUrl(path) : '';
   const url = str(data['url']);
-  if (/^https:\/\//.test(url)) return url;
-  return path ? `${IMGIX_BASE}/${path.split('/').map(encodeURIComponent).join('/')}` : '';
+  if (url.startsWith(FIREBASE_DOWNLOAD_PREFIX)) return url;
+  return validPath ? `${IMGIX_BASE}/${path.split('/').map(encodeURIComponent).join('/')}` : '';
 }
 
 export function buildLearningSection(s: SectionDoc, o: LearningSectionOptions): PublicLearningSection {
@@ -231,7 +243,11 @@ export function buildLearningSection(s: SectionDoc, o: LearningSectionOptions): 
   for (const { key, data } of o.docs) {
     if (data['isArchived'] === true) continue;
     if (!((data['tenants'] as unknown[] | undefined) ?? []).includes(o.tenantId)) continue;
-    if (!((data['folderKeys'] as unknown[] | undefined) ?? []).includes(folder)) continue;
+    // Only the doc's FIRST folder counts: firestore.rules check `membersMayUpload` on folderKeys[0]
+    // alone, so a member could add a published room as a second folder key and inject a doc into
+    // its public output. Room uploads always put the room folder first.
+    const folderKeys = (data['folderKeys'] as unknown[] | undefined) ?? [];
+    if (folderKeys[0] !== folder) continue;
     const tab = learningTabOf(str(data['mimeType']));
     const item: PublicLearningItem = {
       key,
@@ -245,7 +261,8 @@ export function buildLearningSection(s: SectionDoc, o: LearningSectionOptions): 
     if (tab === 'videos') {
       // fullPath is author-editable: only the album-video layout may be signed for the private host.
       const path = str(data['fullPath']);
-      if (!isAlbumVideoObjectPath(path, o.tenantId)) continue;
+      // The path must name an album of THIS room folder: never another room's (or a section's) video.
+      if (albumFolderKeyOfPath(path, o.tenantId) !== folder) continue;
       // A signing failure (missing secret) drops the video, never the whole page.
       try {
         const signed = o.signVideo(path);
@@ -256,7 +273,7 @@ export function buildLearningSection(s: SectionDoc, o: LearningSectionOptions): 
         continue;
       }
     } else {
-      item.url = publicFileUrl(data, tab === 'images');
+      item.url = publicFileUrl(data, tab === 'images', o.tenantId);
       if (!item.url) continue;
     }
     items.push(item);
@@ -265,13 +282,24 @@ export function buildLearningSection(s: SectionDoc, o: LearningSectionOptions): 
   return { type: 'learning', title, subTitle, locked: false, topics: parseTopics(str(props['topics'])), items };
 }
 
-/** Loads the room's documents (single-field `folderKeys` query, no composite index) and maps the section. */
-async function loadLearningSection(
-  db: Firestore, s: SectionDoc, published: boolean, tenantId: string, sanitize: SanitizeFn,
+/**
+ * Loads the room's documents (single-field `folderKeys` query, no composite index) and maps the section.
+ * Gate: the page must be published AND the room folder must be a live folder of the tenant (as
+ * `videoAccessPath` requires); otherwise the locked shell, and no docs query runs.
+ */
+export async function loadLearningSection(
+  db: Firestore, s: SectionDoc, pagePublished: boolean, tenantId: string, sanitize: SanitizeFn,
 ): Promise<PublicLearningSection> {
   const folder = str((s.properties ?? {})['folder']);
+  let published = pagePublished && isSafeDocId(folder);
   let docs: LearningRawDoc[] = [];
-  if (published && folder) {
+  if (published) {
+    const folderDoc = await db.collection(FolderCollection).doc(folder).get();
+    const f = folderDoc.data();
+    published = folderDoc.exists && !!f && f['isArchived'] !== true
+      && ((f['tenants'] as unknown[] | undefined) ?? []).includes(tenantId);
+  }
+  if (published) {
     const snap = await db.collection(DocumentCollection).where('folderKeys', 'array-contains', folder).get();
     docs = snap.docs.map(d => ({ key: d.id, data: d.data() }));
   }
