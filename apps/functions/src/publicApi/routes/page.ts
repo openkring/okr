@@ -203,6 +203,16 @@ export function isPublishedPage(page: Record<string, unknown> | undefined): bool
   return page?.['isPrivate'] === false;
 }
 
+/**
+ * A room's material is served only from its OWN learning page: the page is published, has type
+ * 'learning', and the section key equals the page key (rooms are created that way). Without this,
+ * a privileged user could list a room's section on any public page and bypass the contentAdmin-only
+ * publication.
+ */
+export function mayServeRoom(page: Record<string, unknown> | undefined, pageKey: string, sectionKey: string): boolean {
+  return isPublishedPage(page) && page?.['type'] === 'learning' && sectionKey === pageKey;
+}
+
 export interface LearningRawDoc { key: string; data: Record<string, unknown> }
 
 export interface LearningSectionOptions {
@@ -400,10 +410,10 @@ export async function pageRouter(req: Request, res: Response): Promise<void> {
       // and a read by key never passes through the array-contains filter.
       .filter(d => d.exists && d.data()?.['isArchived'] !== true
         && ((d.data()?.['tenants'] as string[] | undefined) ?? []).includes(tenantId))
-      .map(d => d.data() as SectionDoc);
+      .map(d => ({ id: d.id, doc: d.data() as SectionDoc }));
 
     const nestedKeys = new Set<string>();
-    for (const s of liveSections) {
+    for (const { doc: s } of liveSections) {
       if (s.type === 'accordion') {
         const items = ((s.properties?.['items'] as { key?: string }[] | undefined) ?? []);
         for (const it of items) {
@@ -424,9 +434,8 @@ export async function pageRouter(req: Request, res: Response): Promise<void> {
     }
 
     const sanitize = await getHtmlSanitizer();
-    const published = isPublishedPage(pageData);
-    const sections = await Promise.all(liveSections.map(s => (s.type === 'learning'
-      ? loadLearningSection(db, s, published, tenantId, sanitize)
+    const sections = await Promise.all(liveSections.map(({ id, doc: s }) => (s.type === 'learning'
+      ? loadLearningSection(db, s, mayServeRoom(pageData, pageKey, id), tenantId, sanitize)
       : mapSection(s, nestedSections, sanitize))));
 
     setCacheHeaders(res);

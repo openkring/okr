@@ -189,7 +189,7 @@ describe('learning section wiring', () => {
       }),
       getAll: async (...refs: { __path: string }[]) => refs.map(r => {
         calls.push(`getAll ${r.__path}`);
-        return snap(r.__path.split('/')[1], r.__path === 'sections/s1' ? learning : undefined);
+        return snap(r.__path.split('/')[1], ['sections/s1', 'sections/p1'].includes(r.__path) ? learning : undefined);
       }),
     };
     return { db, calls, learning };
@@ -201,7 +201,7 @@ describe('learning section wiring', () => {
   beforeEach(() => { fakeDb.current = undefined; });
 
   async function getPage(page: Record<string, unknown>) {
-    const m = makeDb({ page: { tenants: ['scs'], sections: ['s1'], ...page }, folder: liveFolder, docs: [pdf] });
+    const m = makeDb({ page: { tenants: ['scs'], type: 'learning', sections: ['p1'], ...page }, folder: liveFolder, docs: [pdf] });
     fakeDb.current = m.db;
     let body: { sections: { locked: boolean; items: unknown[] }[] } | undefined;
     const res = {
@@ -228,6 +228,24 @@ describe('learning section wiring', () => {
     expect(body.sections[0].items).toHaveLength(1);
     expect(calls).toContain('get folders/f1');
     expect(calls).toContain('query docs folderKeys array-contains f1');
+  });
+
+  it('a non-learning public page listing a learning section gets the locked shell and no docs query', async () => {
+    const { body, calls } = await getPage({ isPrivate: false, type: 'content' });
+    expect(body.sections[0]).toMatchObject({ locked: true, items: [] });
+    expect(calls.some(c => c.startsWith('query') || c.startsWith('get folders'))).toBe(false);
+  });
+
+  it('a learning page whose section key differs from the page key gets the locked shell', async () => {
+    const { body, calls } = await getPage({ isPrivate: false, sections: ['s1'] });
+    expect(body.sections[0]).toMatchObject({ locked: true, items: [] });
+    expect(calls.some(c => c.startsWith('query') || c.startsWith('get folders'))).toBe(false);
+  });
+
+  it('a public learning page with the matching section key serves the material', async () => {
+    const { body } = await getPage({ isPrivate: false, type: 'learning', sections: ['p1'] });
+    expect(body.sections[0].locked).toBe(false);
+    expect(body.sections[0].items).toHaveLength(1);
   });
 
   it('a missing, archived, foreign or member-upload room folder gives the locked shell and runs no docs query', async () => {

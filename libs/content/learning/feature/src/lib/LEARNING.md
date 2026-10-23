@@ -75,6 +75,9 @@ A room whose folder has `membersMayUpload === true` cannot be published: the sto
 alert, and the public page API returns the locked shell for it anyway. The rules let only
 contentAdmin/admin change `isPrivate` on a `learning` page or write a `learning` section.
 
+The public API serves a room only from its own learning page (`type === 'learning'` and section key =
+page key); the same section listed on any other page yields the locked shell.
+
 ## Archiving
 
 «Archivieren» archives the page and its learning section through `FirestoreService.deleteModel`
