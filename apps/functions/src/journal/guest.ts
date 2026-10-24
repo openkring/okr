@@ -19,7 +19,7 @@ import { applyManage, deliveryFor, GuestRequest, GuestRequestError, ManageAction
 import { isJournalKey } from './apply-journal-change.logic';
 import { requireJournalAuthor } from './journal-auth';
 import { checkNotice } from './notify.logic';
-import { previewNotice, sendNotice } from './notify';
+import { NoticeTooSoon, previewNotice, sendNotice } from './notify';
 import { journalSenderToken } from './signal';
 
 const REGION = 'europe-west6';
@@ -136,8 +136,8 @@ async function guestView(db: Firestore, jk: string, ctx: GuestContext): Promise<
 }
 
 /**
- * Everything a guest does (spec 1.113 §7, plan 7): no account, the link code is the credential. Actions:
- * view, comment, like, unlike, settings (delivery channel), mute, unmute. App Check enforced.
+ * Everything a guest does (spec 1.113 §7, plans 7, 8): no account, the link code is the credential. Actions:
+ * view, comment, deleteComment (own only), like, unlike, settings (delivery channel), mute, unmute. App Check enforced.
  */
 export const journalGuest = onCall(
   { ...SMALL, enforceAppCheck: true, cors: true, secrets: [imgixPrivateToken] },
@@ -161,6 +161,13 @@ export const journalGuest = onCall(
         await appendGuestRecord(db, req.journalKey, ctx, 'comment', randomUUID(), 'create',
           { footprintKey: req.footprintKey, text: req.text, authorName: ctx.name, createdAt: new Date().toISOString() });
         return { ok: true };
+      case 'deleteComment': {
+        // only the guest's own comment: its materialised document names the author
+        const comment = (await sub(db, req.journalKey, JournalCommentCollection).doc(req.commentKey as string).get()).data();
+        if (!comment || comment['isArchived'] === true || comment['authorKey'] !== pk) throw new HttpsError('permission-denied', 'comment');
+        await appendGuestRecord(db, req.journalKey, ctx, 'comment', req.commentKey as string, 'archive', {});
+        return { ok: true };
+      }
       case 'like':
       case 'unlike':
         await requirePublished(db, req.journalKey, req.footprintKey as string);
@@ -216,7 +223,12 @@ export const manageJournalGuest = onCall(
       if (action === 'previewNotice') return { ...(await previewNotice(db, caller.journalKey, journal, caller.tenantId)) };
       const notice = checkNotice(d['subject'], d['text']);
       if (!notice) throw new HttpsError('invalid-argument', 'notice');
-      return { sent: await sendNotice(db, caller.journalKey, caller.tenantId, notice) };
+      try {
+        return { sent: await sendNotice(db, caller.journalKey, caller.tenantId, notice) };
+      } catch (error) {
+        if (error instanceof NoticeTooSoon) throw new HttpsError('resource-exhausted', 'notice-too-soon');
+        throw error;
+      }
     }
     if (action !== 'create' && action !== 'expiry' && action !== 'revoke') throw new HttpsError('invalid-argument', 'action');
     const personKey = d['personKey'];

@@ -76,7 +76,7 @@ import { GIBS_BLUE_MARBLE, JOURNAL_I18N_KEYS, JournalI18n } from '@okr/travel-jo
           }
         </div>
         <okr-journal-reactions [likes]="fp.likes" [liked]="fp.liked" [comments]="comments(fp)" [i18n]="i18n"
-          (likeToggled)="toggleLike(fp)" (writeClicked)="writeComment(fp)" />
+          (likeToggled)="toggleLike(fp)" (writeClicked)="writeComment(fp)" (deleteClicked)="deleteComment($event)" />
       } @else {
         <div class="map">
           <okr-route-map [route]="route()" [pins]="pins()" [tiles]="tiles" (pinClicked)="open($event)" />
@@ -172,7 +172,7 @@ export class JournalGuestPage {
   }
 
   protected comments(fp: GuestFootprintView): ReactionComment[] {
-    return fp.comments.map((c) => ({ ...c, mine: false })); // guests do not delete in phase 1
+    return fp.comments; // `mine` from the server: guests delete their own comments (plan 8)
   }
 
   protected openPhoto(url: string): void {
@@ -186,6 +186,10 @@ export class JournalGuestPage {
   protected async writeComment(fp: GuestFootprintView): Promise<void> {
     const text = await okrPrompt(this.alertController, this.i18n.comment_write(), this.i18n.comment_prompt(), this.i18n.comment_send(), this.i18n.cancel());
     if (text?.trim()) await this.act('comment', { footprintKey: fp.key, text: text.trim() });
+  }
+
+  protected async deleteComment(commentKey: string): Promise<void> {
+    await this.act('deleteComment', { commentKey });
   }
 
   protected async settings(): Promise<void> {

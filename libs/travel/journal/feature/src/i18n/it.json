@@ -216,6 +216,7 @@
     "no_guests": "Ancora nessun ospite con link – aggiungi prima qualcuno in «Ospiti».",
     "send": "Invia",
     "sent": "Messaggio inviato a {count} ospiti.",
-    "offline": "Puoi inviare messaggi agli ospiti solo con Internet."
+    "offline": "Puoi inviare messaggi agli ospiti solo con Internet.",
+    "too_soon": "L’ultimo messaggio è partito solo pochi minuti fa. Riprova tra qualche minuto."
   }
 }

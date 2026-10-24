@@ -56,7 +56,8 @@ export class JournalGuestsSheet {
       const sent = await this.guestService.sendNotice(journalKey, data.subject, data.text);
       await this.toast(fill(i18n.notice_sent(), { count: sent.email + sent.signal }));
     } catch (error) {
-      await showJournalError(this.toastController, i18n, error);
+      if (guestErrorOf(error).code === 'resource-exhausted') await this.toast(i18n.notice_too_soon());
+      else await showJournalError(this.toastController, i18n, error);
     }
   }
 

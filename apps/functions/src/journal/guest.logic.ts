@@ -9,7 +9,7 @@ import { isJournalKey } from './apply-journal-change.logic';
  * allow-listed inputs; names shown next to comments come from the journal's own author and guest lists.
  */
 
-export type GuestAction = 'view' | 'comment' | 'like' | 'unlike' | 'settings' | 'mute' | 'unmute';
+export type GuestAction = 'view' | 'comment' | 'deleteComment' | 'like' | 'unlike' | 'settings' | 'mute' | 'unmute';
 export type GuestChannel = 'email' | 'signal' | 'none';
 
 export interface GuestRequest {
@@ -17,11 +17,12 @@ export interface GuestRequest {
   code: string;
   action: GuestAction;
   footprintKey?: string;
+  commentKey?: string;
   text?: string;
   channel?: GuestChannel;
 }
 
-const ACTIONS: GuestAction[] = ['view', 'comment', 'like', 'unlike', 'settings', 'mute', 'unmute'];
+const ACTIONS: GuestAction[] = ['view', 'comment', 'deleteComment', 'like', 'unlike', 'settings', 'mute', 'unmute'];
 const CODE = /^[a-f0-9]{32}$/;
 
 export class GuestRequestError extends Error {}
@@ -39,6 +40,10 @@ export function parseGuestRequest(data: unknown): GuestRequest {
   if (action === 'comment' || action === 'like' || action === 'unlike') {
     if (!isJournalKey(d['footprintKey'])) throw new GuestRequestError('invalid footprint');
     req.footprintKey = d['footprintKey'] as string;
+  }
+  if (action === 'deleteComment') {
+    if (!isJournalKey(d['commentKey'])) throw new GuestRequestError('invalid comment');
+    req.commentKey = d['commentKey'] as string;
   }
   if (action === 'comment') {
     const text = typeof d['text'] === 'string' ? d['text'].trim() : '';

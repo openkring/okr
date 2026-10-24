@@ -216,6 +216,7 @@
     "no_guests": "Noch keine Gäste mit Link – füge zuerst unter «Gäste» jemanden hinzu.",
     "send": "Senden",
     "sent": "Nachricht an {count} Gäste gesendet.",
-    "offline": "Nachrichten an Gäste sendest du nur mit Internet."
+    "offline": "Nachrichten an Gäste sendest du nur mit Internet.",
+    "too_soon": "Die letzte Nachricht ist erst wenige Minuten her. Versuch es in ein paar Minuten nochmals."
   }
 }

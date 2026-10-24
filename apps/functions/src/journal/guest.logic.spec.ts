@@ -21,6 +21,13 @@ describe('journal guest logic', () => {
     expect(() => parseGuestRequest({ journalKey: 'j1', code: CODE, action: 'like' })).toThrow();
   });
 
+  it('deleting needs a comment key', () => {
+    expect(parseGuestRequest({ journalKey: 'j1', code: CODE, action: 'deleteComment', commentKey: 'c1' }))
+      .toEqual({ journalKey: 'j1', code: CODE, action: 'deleteComment', commentKey: 'c1' });
+    expect(() => parseGuestRequest({ journalKey: 'j1', code: CODE, action: 'deleteComment' })).toThrow(GuestRequestError);
+    expect(() => parseGuestRequest({ journalKey: 'j1', code: CODE, action: 'deleteComment', commentKey: '../x' })).toThrow(GuestRequestError);
+  });
+
   it('names come from the journal lists only', () => {
     const authors = [avatar('bruno', 'Bruno', 'Kaiser')];
     const guests = [{ person: avatar('anna', 'Anna', 'Muster') }];

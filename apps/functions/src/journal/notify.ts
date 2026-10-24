@@ -24,6 +24,10 @@ import { journalSenderToken, sendSignal } from './signal';
  */
 
 type Journal = Record<string, unknown>;
+/** One notice per journal at most every five minutes — a double tap or a loop never reaches every guest twice. */
+export const NOTICE_INTERVAL_MS = 5 * 60 * 1000;
+
+export class NoticeTooSoon extends Error {}
 const privateRef = (db: Firestore, jk: string, doc: string) => db.doc(`${JournalCollection}/${jk}/${JournalPrivateCollection}/${doc}`);
 
 /** The accepted records uploaded after `cursor`, the merged journal and the newest upload time. */
@@ -74,6 +78,13 @@ export async function previewNotice(db: Firestore, journalKey: string, journal: 
 
 /** Sends the author's notice to every live, unmuted guest and moves the cursor. Returns how many were reached. */
 export async function sendNotice(db: Firestore, journalKey: string, tenantId: string, notice: { subject: string; text: string }): Promise<{ email: number; signal: number }> {
+  // reserve the send slot first (transaction), so two calls cannot both pass the throttle
+  const notifyRef = privateRef(db, journalKey, JournalNotifyDoc);
+  await db.runTransaction(async (tx) => {
+    const last = (await tx.get(notifyRef)).data()?.['lastNoticeSentAt'] as Timestamp | undefined;
+    if (last && Date.now() - last.toMillis() < NOTICE_INTERVAL_MS) throw new NoticeTooSoon('notice too soon');
+    tx.set(notifyRef, { lastNoticeSentAt: Timestamp.now() }, { merge: true });
+  });
   const appUrl = (await tenantLinks(tenantId)).appUrl;
   const { newest } = await newsSince(db, journalKey, undefined);
   const { recipients } = await recipientsOf(db, journalKey, tenantId);

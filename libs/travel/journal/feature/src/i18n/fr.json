@@ -216,6 +216,7 @@
     "no_guests": "Pas encore d’invités avec un lien – ajoute d’abord quelqu’un sous « Invités ».",
     "send": "Envoyer",
     "sent": "Message envoyé à {count} invités.",
-    "offline": "Tu ne peux envoyer des messages aux invités qu’avec Internet."
+    "offline": "Tu ne peux envoyer des messages aux invités qu’avec Internet.",
+    "too_soon": "Le dernier message est parti il y a quelques minutes seulement. Réessaie dans quelques minutes."
   }
 }

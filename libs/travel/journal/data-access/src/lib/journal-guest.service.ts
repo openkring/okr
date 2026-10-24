@@ -67,8 +67,8 @@ export class JournalGuestService {
     return this.call<GuestJournalView>('journalGuest', { journalKey, code, action: 'view' });
   }
 
-  public act(journalKey: string, code: string, action: 'comment' | 'like' | 'unlike' | 'settings' | 'mute' | 'unmute',
-    extra: { footprintKey?: string; text?: string; channel?: GuestChannel } = {}): Promise<void> {
+  public act(journalKey: string, code: string, action: 'comment' | 'deleteComment' | 'like' | 'unlike' | 'settings' | 'mute' | 'unmute',
+    extra: { footprintKey?: string; commentKey?: string; text?: string; channel?: GuestChannel } = {}): Promise<void> {
     return this.call<unknown>('journalGuest', { journalKey, code, action, ...extra }).then(() => undefined);
   }
 }

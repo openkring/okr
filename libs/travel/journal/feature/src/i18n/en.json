@@ -216,6 +216,7 @@
     "no_guests": "No guests with a link yet – add someone under «Guests» first.",
     "send": "Send",
     "sent": "Message sent to {count} guests.",
-    "offline": "You can only send messages to guests with an Internet connection."
+    "offline": "You can only send messages to guests with an Internet connection.",
+    "too_soon": "The last message went out only a few minutes ago. Try again in a few minutes."
   }
 }
