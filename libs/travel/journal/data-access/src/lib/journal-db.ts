@@ -128,6 +128,19 @@ export class JournalDb {
     await db.executeSet(set, true);
   }
 
+  /**
+   * Records received from the other iPad (plan 5): INSERT OR IGNORE, and `uploadedAt` stays empty — this
+   * device uploads them when it is online first (any author's device uploads every author's records).
+   */
+  public async appendPeerChanges(changes: JournalChange[]): Promise<void> {
+    if (changes.length === 0) return;
+    const db = await this.db();
+    await db.executeSet(changes.map((c) => ({
+      statement: 'INSERT OR IGNORE INTO changes (id, journalKey, deviceId, seq, hlc, authorKey, entity, entityKey, op, fields) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+      values: [c.id, c.journalKey, c.deviceId, c.seq, c.hlc, c.authorKey, c.entity, c.entityKey, c.op, JSON.stringify(c.fields)],
+    })), true);
+  }
+
   /** Registers photo files of a journal; `present` = the file is on this device. Existing rows keep their marks. */
   public async notePhotoFiles(journalKey: string, files: string[], present: boolean): Promise<void> {
     if (files.length === 0) return;

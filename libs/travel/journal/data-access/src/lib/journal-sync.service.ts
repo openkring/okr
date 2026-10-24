@@ -31,6 +31,8 @@ export interface JournalSyncContext {
   photoFiles: (journalKey: string) => { published: string[]; all: string[] };
   /** Called after records were downloaded, before the photo phase — the store reloads its state. */
   onRecordsStored: () => Promise<void>;
+  /** Called after photo files were downloaded — the pages reload their images. */
+  onPhotosStored?: () => void;
 }
 
 export type JournalSyncState = 'idle' | 'syncing' | 'offline' | 'error';
@@ -254,6 +256,7 @@ export class JournalSyncService {
    */
   private async syncPhotos(ctx: JournalSyncContext, journalKeys: string[], download: boolean): Promise<number> {
     let pending = 0;
+    let downloaded = 0;
     for (const journalKey of journalKeys) {
       const { published, all } = ctx.photoFiles(journalKey);
       await this.db.notePhotoFiles(journalKey, all, false);
@@ -286,12 +289,14 @@ export class JournalSyncService {
           try {
             await JournalPhotos.downloadFile({ journalKey, file, url });
             await this.db.notePhotoFiles(journalKey, [file], true);
+            downloaded += 1;
           } catch {
             // next round
           }
         }
       }
     }
+    if (downloaded > 0) ctx.onPhotosStored?.();
     return pending + await this.countPendingPhotos(ctx, journalKeys);
   }
 

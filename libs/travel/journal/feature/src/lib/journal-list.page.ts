@@ -46,7 +46,7 @@ import { JournalStore } from './journal.store';
           }
         </ion-list>
         <ion-button expand="block" (click)="create()">{{ store.i18n.list_new() }}</ion-button>
-        <okr-journal-sync-line [status]="store.syncStatus()" [photoMode]="store.photoMode()" [i18n]="store.i18n"
+        <okr-journal-sync-line [status]="store.syncStatus()" [photoMode]="store.photoMode()" [peerStatus]="store.peerStatus()" [i18n]="store.i18n"
           (syncNow)="store.syncNow()" (choosePhotoMode)="photoMode()" />
       }
     </ion-content>

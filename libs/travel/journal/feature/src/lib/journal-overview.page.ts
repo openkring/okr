@@ -1,4 +1,4 @@
-import { Component, computed, DestroyRef, inject, input, signal } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   ActionSheetController, IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar,
@@ -67,7 +67,7 @@ const WIDE_QUERY = '(min-width: 992px)';
             (pinClicked)="openFootprint($event)" />
         </div>
         <div class="side">
-          <okr-journal-sync-line [status]="store.syncStatus()" [photoMode]="store.photoMode()" [i18n]="store.i18n"
+          <okr-journal-sync-line [status]="store.syncStatus()" [photoMode]="store.photoMode()" [peerStatus]="store.peerStatus()" [i18n]="store.i18n"
             (syncNow)="store.syncNow()" (choosePhotoMode)="photoMode()" />
           <div class="stats">
             <div class="stat"><b>{{ days() }}</b><span>{{ store.i18n.stats_days() }}</span></div>
@@ -132,6 +132,11 @@ export class JournalOverviewPage {
 
   public constructor() {
     void this.store.init();
+    // the journal on screen is the one the other iPad syncs with (P2P, plan 5)
+    effect(() => {
+      const journalKey = this.journalKey();
+      untracked(() => void this.store.openJournal(journalKey));
+    });
     if (typeof window !== 'undefined') {
       const query = window.matchMedia(WIDE_QUERY);
       const listener = (e: MediaQueryListEvent) => this.wide.set(e.matches);

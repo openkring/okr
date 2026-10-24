@@ -5,11 +5,14 @@ import { Directory, Filesystem } from '@capacitor/filesystem';
 /**
  * Turns the journal's RELATIVE photo paths (`journals/<journalKey>/<id>-400.jpg`, relative to the app's
  * Documents directory — the container path changes on every app update) into URLs the WebView can
- * load. The Documents URI is read once; until then `url()` returns ''.
+ * load. The Documents URI is read once; until then `url()` returns ''. `refresh()` is called when photo
+ * files arrived later (P2P or Firebase): the version query makes the WebView load an image again that it
+ * had failed to load before.
  */
 @Injectable({ providedIn: 'root' })
 export class JournalFileUrlService {
   private readonly documentsUri = signal('');
+  private readonly version = signal(0);
 
   public constructor() {
     if (Capacitor.isNativePlatform()) {
@@ -22,6 +25,13 @@ export class JournalFileUrlService {
   /** Reads the Documents URI signal, so a computed that calls this updates once the URI is known. */
   public url(relativePath: string | undefined): string {
     const base = this.documentsUri();
-    return base && relativePath ? Capacitor.convertFileSrc(`${base}/${relativePath}`) : '';
+    const version = this.version();
+    if (!base || !relativePath) return '';
+    const url = Capacitor.convertFileSrc(`${base}/${relativePath}`);
+    return version > 0 ? `${url}?v=${version}` : url;
+  }
+
+  public refresh(): void {
+    this.version.update((v) => v + 1);
   }
 }

@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   ActionSheetController, IonBackButton, IonButton, IonButtons, IonContent, IonFooter, IonHeader, IonTitle, IonToolbar,
@@ -114,6 +114,11 @@ export class JournalStoryPage {
 
   public constructor() {
     void this.store.init();
+    // the journal on screen is the one the other iPad syncs with (P2P, plan 5)
+    effect(() => {
+      const journalKey = this.journalKey();
+      untracked(() => void this.store.openJournal(journalKey));
+    });
   }
 
   protected asArticle(item: StoryBlock): ArticleSection | undefined {

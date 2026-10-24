@@ -120,8 +120,14 @@
     "mode_upload": "Solo caricare: le tue foto pubblicate partono, non arriva nulla. Per il viaggio – a bordo le foto dell’altra persona arrivano direttamente dal suo iPad.",
     "mode_paused": "In pausa: si scambiano solo i testi, nessuna foto. Per una connessione molto lenta o costosa.",
     "local_h": "Tra i due iPad",
-    "local": "A bordo i due iPad si scambiano voci e foto direttamente, senza Internet: tramite il Wi-Fi della nave o, se non c’è, tramite un collegamento radio diretto finché gli iPad sono vicini. Niente passa dal satellite. Per questo lascia attivi Wi-Fi e Bluetooth, anche se non sei connesso a nessuna rete. Questo collegamento diretto arriva con una delle prossime versioni.",
+    "local": "A bordo i due iPad si scambiano voci e foto direttamente, senza Internet: tramite il Wi-Fi della nave o, se non c’è, tramite un collegamento radio diretto finché gli iPad sono vicini. Niente passa dal satellite. Per questo lascia attivi Wi-Fi e Bluetooth, anche se non sei connesso a nessuna rete.",
     "home_h": "Di nuovo a casa",
     "home": "Rimetti il trasferimento foto su «Tutte le foto» e riattiva Foto di iCloud. Le foto del viaggio nell’app Foto vanno allora su iCloud con il tuo Internet di casa."
+  },
+  "peer": {
+    "connected": "{names} connesso",
+    "connected_received": "{names} connesso · {count} modifiche ricevute",
+    "searching": "Cerco l’altro iPad …",
+    "no_secret": "Per collegare i due iPad, apri il diario una volta con Internet."
   }
 }

@@ -120,8 +120,14 @@
     "mode_upload": "Nur hochladen: Deine veröffentlichten Fotos gehen hinaus, es kommt nichts herein. Für unterwegs – die Fotos der anderen Person kommen an Bord direkt von ihrem iPad.",
     "mode_paused": "Pausiert: Es gehen nur Texte hin und her, keine Fotos. Wenn die Verbindung sehr knapp oder teuer ist.",
     "local_h": "Zwischen den beiden iPads",
-    "local": "An Bord tauschen die beiden iPads ihre Einträge und Fotos direkt miteinander aus, ganz ohne Internet: über das WLAN des Schiffs oder, wenn es keines gibt, über eine direkte Funkverbindung, solange die iPads nahe beieinander sind. Dabei geht nichts über den Satelliten. Lass dafür WLAN und Bluetooth eingeschaltet, auch wenn du mit keinem Netz verbunden bist. Diese direkte Verbindung kommt mit einer der nächsten Versionen.",
+    "local": "An Bord tauschen die beiden iPads ihre Einträge und Fotos direkt miteinander aus, ganz ohne Internet: über das WLAN des Schiffs oder, wenn es keines gibt, über eine direkte Funkverbindung, solange die iPads nahe beieinander sind. Dabei geht nichts über den Satelliten. Lass dafür WLAN und Bluetooth eingeschaltet, auch wenn du mit keinem Netz verbunden bist.",
     "home_h": "Zurück zu Hause",
     "home": "Stelle die Foto-Übertragung wieder auf «Alle Fotos» und schalte iCloud-Fotos wieder ein. Die Reisefotos aus der Fotos-App gehen dann über dein Internet zu Hause in iCloud."
+  },
+  "peer": {
+    "connected": "{names} verbunden",
+    "connected_received": "{names} verbunden · {count} Änderungen empfangen",
+    "searching": "Suche das andere iPad …",
+    "no_secret": "Für die Verbindung zwischen den iPads öffne das Reisetagebuch einmal mit Internet."
   }
 }

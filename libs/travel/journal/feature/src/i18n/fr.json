@@ -120,8 +120,14 @@
     "mode_upload": "Envoi seulement : tes photos publiées partent, rien n’arrive. Pour le voyage – à bord, les photos de l’autre personne viennent directement de son iPad.",
     "mode_paused": "En pause : seuls les textes sont échangés, pas de photos. Pour une connexion très lente ou chère.",
     "local_h": "Entre les deux iPad",
-    "local": "À bord, les deux iPad échangent leurs entrées et leurs photos directement, sans Internet : par le Wi-Fi du bateau ou, s’il n’y en a pas, par une liaison radio directe tant que les iPad sont proches. Rien ne passe par le satellite. Laisse pour cela le Wi-Fi et le Bluetooth activés, même sans être connecté à un réseau. Cette liaison directe arrive avec une des prochaines versions.",
+    "local": "À bord, les deux iPad échangent leurs entrées et leurs photos directement, sans Internet : par le Wi-Fi du bateau ou, s’il n’y en a pas, par une liaison radio directe tant que les iPad sont proches. Rien ne passe par le satellite. Laisse pour cela le Wi-Fi et le Bluetooth activés, même sans être connecté à un réseau.",
     "home_h": "De retour à la maison",
     "home": "Remets le transfert des photos sur « Toutes les photos » et réactive Photos iCloud. Les photos du voyage de l’app Photos partent alors vers iCloud par ton Internet à la maison."
+  },
+  "peer": {
+    "connected": "{names} connecté",
+    "connected_received": "{names} connecté · {count} modifications reçues",
+    "searching": "Recherche de l’autre iPad …",
+    "no_secret": "Pour relier les deux iPad, ouvre une fois le carnet avec Internet."
   }
 }

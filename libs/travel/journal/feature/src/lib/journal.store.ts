@@ -1,4 +1,5 @@
 import { computed, effect, inject, untracked } from '@angular/core';
+import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { Network } from '@capacitor/network';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
@@ -8,15 +9,18 @@ import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 import {
-  ChangeDraft, JournalDb, JournalIdentityService, JournalPhotos, JournalSyncService, PickedPhoto, SkippedPhoto,
+  ChangeDraft, JournalDb, JournalIdentityService, JournalPeerService, JournalPhotos, JournalSyncService, PickedPhoto, SkippedPhoto,
 } from '@okr/travel-journal-data-access';
 import {
   entityStateKey, hasOthersBlocks, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
   allPhotoFiles, JournalPhotoMode, journalsOf, parsePhotoMode, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, publishedPhotoFiles, viewOf,
 } from '@okr/travel-journal-util';
 
+import { JournalFileUrlService } from './journal-file-url.service';
+
 const SYNC_INTERVAL_MS = 2 * 60 * 1000;
 const META_PHOTO_MODE = 'photoMode';
+const META_ACTIVE_JOURNAL = 'activeJournal'; // the journal last opened: the one P2P runs for
 const META_PHOTOS_PAUSED = 'photosPaused'; // before the three photo modes
 
 /**
@@ -34,9 +38,10 @@ interface JournalStoreState {
   error: string;
   changes: JournalChange[];
   photoMode: JournalPhotoMode;
+  activeJournalKey: string;
 }
 
-const initialState: JournalStoreState = { ready: false, native: Capacitor.isNativePlatform(), error: '', changes: [], photoMode: 'all' };
+const initialState: JournalStoreState = { ready: false, native: Capacitor.isNativePlatform(), error: '', changes: [], photoMode: 'all', activeJournalKey: '' };
 
 export const JournalStore = signalStore(
   { providedIn: 'root' },
@@ -45,6 +50,8 @@ export const JournalStore = signalStore(
     db: inject(JournalDb),
     identity: inject(JournalIdentityService),
     syncService: inject(JournalSyncService),
+    peerService: inject(JournalPeerService),
+    fileUrl: inject(JournalFileUrlService),
     appStore: inject(AppStore),
   })),
   withProps(() => ({
@@ -57,6 +64,7 @@ export const JournalStore = signalStore(
       journals: computed(() => journalsOf(journalState())),
       author: computed(() => store.identity.author()),
       syncStatus: computed(() => store.syncService.status()),
+      peerStatus: computed(() => store.peerService.status()),
     };
   }),
   withMethods((store) => {
@@ -64,6 +72,7 @@ export const JournalStore = signalStore(
     async function write(drafts: ChangeDraft[]): Promise<JournalChange[]> {
       const changes = await store.identity.stampChanges(drafts);
       patchState(store, { changes: [...store.changes(), ...changes] });
+      store.peerService.push(changes); // the other iPad, when connected, gets it at once
       return changes;
     }
 
@@ -124,7 +133,24 @@ export const JournalStore = signalStore(
           return { published: publishedPhotoFiles(footprintsOf(store.journalState(), journalKey), images), all: allPhotoFiles(images) };
         },
         onRecordsStored: reload,
+        onPhotosStored: () => store.fileUrl.refresh(),
       });
+      // the peer secret arrives with the first sync of a journal: P2P can start now
+      if (store.peerService.status().state === 'noSecret') void startPeers();
+    }
+
+    /** P2P for the active journal while the app is in the foreground (spec §5.4). */
+    async function startPeers(): Promise<void> {
+      const journalKey = store.activeJournalKey();
+      if (!store.native() || !store.ready() || !journalKey) return;
+      await store.peerService.start({
+        journalKey,
+        displayName: store.identity.author()?.name || 'iPad',
+        changes: () => store.changes(),
+        photoFiles: () => allPhotoFiles(imagesOf(store.journalState(), journalKey)),
+        onRecordsStored: reload,
+        onPhotosStored: () => store.fileUrl.refresh(),
+      }).catch(() => undefined);
     }
 
     let autoSync = false;
@@ -132,6 +158,14 @@ export const JournalStore = signalStore(
       if (autoSync) return;
       autoSync = true;
       void Network.addListener('networkStatusChange', (status) => { if (status.connected) void syncNow(); });
+      // iOS runs the peer link only in the foreground: stop it in the background, start it again on return
+      void App.addListener('appStateChange', ({ isActive }) => {
+        if (isActive) {
+          void startPeers();
+          void syncNow();
+        } else void store.peerService.stop();
+      });
+      void startPeers();
       setInterval(() => void syncNow(), SYNC_INTERVAL_MS);
       void syncNow();
     }
@@ -151,6 +185,7 @@ export const JournalStore = signalStore(
             patchState(store, {
               changes: await store.db.listChanges(), ready: true, error: '',
               photoMode: parsePhotoMode(await store.db.getMeta(META_PHOTO_MODE), await store.db.getMeta(META_PHOTOS_PAUSED)),
+              activeJournalKey: (await store.db.getMeta(META_ACTIVE_JOURNAL)) ?? '',
             });
             startAutoSync();
           } catch (error) {
@@ -162,6 +197,15 @@ export const JournalStore = signalStore(
       },
 
       syncNow,
+
+      /** The journal now open becomes the active one: P2P switches to it. */
+      async openJournal(journalKey: string): Promise<void> {
+        await loading;
+        if (!store.native() || store.activeJournalKey() === journalKey) return;
+        patchState(store, { activeJournalKey: journalKey });
+        await store.db.setMeta(META_ACTIVE_JOURNAL, journalKey);
+        await startPeers();
+      },
 
       async setPhotoMode(mode: JournalPhotoMode): Promise<void> {
         await store.db.setMeta(META_PHOTO_MODE, mode);
