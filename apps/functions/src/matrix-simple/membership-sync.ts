@@ -218,7 +218,7 @@ export const reconcileGroupRoomMembers = onCall(
 
 // ─── group-room drift audit & prune ──────────────────────────────────────────
 //
-// `onMembershipWritten` keeps removals in sync, but arrivals need no membership at
+// `onMembershipDocWritten` keeps removals in sync, but arrivals need no membership at
 // all: `requestGroupRoomAccess` force-joins ANY provisioned user who opens a group's
 // chat tab (deliberately — course participants are legitimate). Nothing ever undoes
 // that, so a group room can silently accumulate people the group view never shows.

@@ -39,7 +39,6 @@ import {
   MATRIX_HOMESERVER,
 } from './shared';
 
-
 interface GroupChatDoc {
   name?: string;
   tenants?: string[];
@@ -76,10 +75,9 @@ async function deleteAndPurgeRoom(roomId: string, adminToken: string, reason: st
  * Gruppendokument geschrieben → Chatraum nachziehen, wenn die Gruppe abgeloest, archiviert,
  * wiederhergestellt oder geloescht wurde.
  *
- * Eigener Trigger neben `onGroupNameWritten` und `onGroupPostPolicyWritten`, aus demselben
- * Grund wie dort: drei fachlich unabhaengige Rueckwege in einer Funktion heissen, dass ein
- * Fehler im einen die anderen mitreisst — und dieser hier ist der einzige, der etwas
- * unwiederbringlich zerstoeren kann.
+ * Eigener Handler (`chatCleanup`) in `onGroupDocWritten`, neben `name` und `postPolicy`:
+ * `runHandlers` isoliert die Handler, ein Fehler im einen reisst die anderen nicht mit —
+ * wichtig, weil dieser hier der einzige ist, der etwas unwiederbringlich zerstoeren kann.
  *
  * Fehler werden geloggt, nie geworfen: ein Synapse-Schluckauf darf das Loeschen der Gruppe
  * nicht scheitern lassen. Der Preis ist ein Raum, der einen Lauf zu lange lebt — genau der

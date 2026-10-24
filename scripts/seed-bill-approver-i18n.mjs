@@ -1,7 +1,8 @@
 /**
  * Seeds the DB side of the daily payment_approver task (spec 1.94): the i18nDefault row that
- * names the task `billApproverDaily` opens (`@workflow.bill.approverDigest`, with {count},
- * {date} and {total}). An override per tenant still wins at runtime — see the i18n skill.
+ * names the task the `billApproverDaily` job of `eveningJobs` opens
+ * (`@workflow.bill.approverDigest`, with {count}, {date} and {total}). An override per tenant
+ * still wins at runtime — see the i18n skill.
  *
  * Run with:  node scripts/seed-bill-approver-i18n.mjs --dry     (inspect first)
  *            node scripts/seed-bill-approver-i18n.mjs

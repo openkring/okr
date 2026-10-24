@@ -548,7 +548,7 @@ export const PersonStore = signalStore(
         /**
          * Open a user account for a person (memberAdmin/admin only). The same
          * operation runs automatically when the person gains an active membership in
-         * the default org — see syncPersonAccount / onMembershipAccountSync
+         * the default org — see syncPersonAccount / onMembershipDocWritten (accountSync)
          * (planning/specs/2026-08-12-membership-account-sync-design.md).
          */
         async openUserAccount(person?: PersonModel): Promise<void> {

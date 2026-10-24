@@ -103,8 +103,9 @@ export const COLLECTION_LABELS: Record<string, string> = {
   // this exact concept (libs/finance/invoice/feature/src/i18n/de.json).
   'invoice-positions': 'Rechnungspositionen',
   [MemberFeeCollection]: 'Mitgliedergebühren', // libs/relationship/membership/feature/src/i18n/de.json: member-fee.list.title
-  // Same rows, still in the pre-rename collection until the owner drops it (the retired migrateMemberFees
-  // migration, ran and retired 2026-10-24 spec 1.118 D3, copied, it did not move). The reader must not see two different names for one thing.
+  // Same rows, still in the pre-rename collection until the owner drops it (the
+  // migrateMemberFees migration — ran, retired 2026-10-24, spec 1.118 D3 — copied them, it
+  // did not move them). The reader must not see two different names for one thing.
   [LegacyMemberFeeCollection]: 'Mitgliedergebühren (frühere Ablage)',
   bills: 'Kreditoren-Rechnungen', // libs/finance/bill/feature/src/i18n/de.json: list.title
   expenses: 'Spesen',

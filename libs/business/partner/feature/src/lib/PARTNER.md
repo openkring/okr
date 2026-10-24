@@ -41,7 +41,7 @@ commission history has to stay readable.
 
 | Component | Role |
 |---|---|
-| `PartnerList` (`partner-list.ts`) | The registry screen. Name · status · **heartbeat** columns, search filter, `add` via the `partner-context` menu, per-row ActionSheet. The heartbeat cell colours at C2 §13.3's marks — `warning` at 3 days (notice due), `danger` at 14 (termination right) — via `heartbeatStatus` from `@okr/business-metering-util`, the same function the daily `checkPartnerHeartbeats` job uses. |
+| `PartnerList` (`partner-list.ts`) | The registry screen. Name · status · **heartbeat** columns, search filter, `add` via the `partner-context` menu, per-row ActionSheet. The heartbeat cell colours at C2 §13.3's marks — `warning` at 3 days (notice due), `danger` at 14 (termination right) — via `heartbeatStatus` from `@okr/business-metering-util`, the same function the daily `partnerHeartbeats` job of `morningJobs` uses. |
 | `PartnerEditModal` (`partner-edit.modal.ts`) | Detail view. No submit button — `okr-change-confirmation` appears when the form is valid **and** dirty. Resolves i18n through `I18nService` directly and never injects `PartnerStore`, so no `providers` array and no import cycle. |
 | `PartnerForm` (`@okr/business-partner-ui`) | Signal Forms + Vest (`partnerValidations`). |
 

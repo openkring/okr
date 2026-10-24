@@ -5,7 +5,7 @@
 //
 // A person who gains an active membership in the DEFAULT ORG gets a user account;
 // when that membership ends the account is closed and their open group memberships
-// are ended (which makes onMembershipWritten remove them from the group Matrix rooms).
+// are ended (which makes onMembershipDocWritten remove them from the group Matrix rooms).
 //
 // Closing deletes the users/{uid} DOCUMENT and leaves the Firebase Auth identity
 // intact: every firestore.rules helper derives authorization from userExists()/roles,
@@ -486,7 +486,7 @@ export async function closeAccount(personKey: string, tenantId: string): Promise
     logger.info(`${CF_NAME}: no user document for person ${personKey} in ${tenantId} — nothing to close`);
   }
 
-  // 2. end still-active group memberships; the write fires onMembershipWritten,
+  // 2. end still-active group memberships; the write fires onMembershipDocWritten,
   //    which removes the person from the group's Matrix room
   const groupMemberships = await db.collection('memberships')
     .where('memberKey', '==', personKey)
@@ -543,9 +543,9 @@ async function emitMembershipEvent(
  * Firestore trigger: open/close the user account when a person's membership in the
  * DEFAULT ORG becomes active or stops being active.
  *
- * A second trigger on memberships/{id} alongside matrix-simple's onMembershipWritten —
- * Firebase supports several triggers per path, and keeping chat sync and account sync
- * separate means a failure in one cannot affect the other.
+ * The `accountSync` handler of onMembershipDocWritten (memberships/{membershipId}),
+ * beside matrix-simple's `matrixSync` handler — runHandlers isolates the handlers, so a
+ * failure in chat sync cannot affect account sync or the other way round.
  *
  * Errors are logged, never thrown: a throw would make Firebase retry and could
  * retry-storm the membership write, and a missed account can always be opened with the

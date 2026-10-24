@@ -323,7 +323,6 @@ export const endSession = Session.endSession;
 
 // task notifications
 export const onTaskWritten = Task.onTaskWritten;
-// task daily job: auto-archive completed tasks + due-today reminder (spec 1.72 §7.2, §8)
 // closed-group task list: membership check for chatMode 'members' groups (spec 1.75)
 export const listGroupTasks = Task.listGroupTasks;
 
@@ -396,8 +395,8 @@ export { resyncVaultReplicas } from './person/resync-vault-replicas';
 // mirror the tenants a person holds an account in (spec 2026-09-06 open events, decision 9)
 export { onUserWritten, backfillAccountTenants } from './person/account-mirror';
 
-// exit fee settlement (spec 1.105): a changed membership exit (or archiving) opens, updates, closes or
-// reopens the treasurer's pro-rata settlement task; a not-yet-invoiced fee row is rebuilt pro rata instead
+// exit fee settlement (spec 1.105): the exitSettlement handler of onMembershipDocWritten opens, updates,
+// closes or reopens the treasurer's pro-rata settlement task on a changed exit; a not-yet-invoiced fee row is rebuilt pro rata instead
 // the treasurer's decision on that task: refund, adjust the invoice or exit on 31.12.
 export { settleMembershipExit } from './member-fee/settle-membership-exit';
 
@@ -479,7 +478,7 @@ export const updateGroupFolder = Content.updateGroupFolder;
 // Verifies the backend is up and can reach Firestore. See ./health.
 export { healthz } from './health';
 
-// contracts: daily deadline scan (spec 1.5 §6.2)
+// contracts (spec 1.5 §6.2; the daily deadline scan is the contractDeadlineScan job of morningJobs)
 export const onContractWritten = Contract.onContractWritten;
 // contract dossier files: signed upload, register (SHA-256) and signed view links (spec 1.5 §7)
 export const requestContractUpload = Contract.requestContractUpload;

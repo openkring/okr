@@ -634,7 +634,7 @@ export const ChatMaintenanceStore = signalStore(
           hasTasks: picked.has('hasTasks'),
           filesFolder: hasFiles ? `f_${group.okey}` : group.filesFolder,
         } as GroupModel;
-        // adminKeys is server-maintained (onGroupWritten); the rules refuse a client write that changes it.
+        // adminKeys is server-maintained (onGroupDocWritten); the rules refuse a client write that changes it.
         await store.firestoreService.updateModel<GroupModel>(GroupCollection, stripAdminKeys(converted), false, undefined, undefined, user);
 
         await showToast(store.toastController, `${store.i18n.chat_convert_conf()}: ${group.name}`);

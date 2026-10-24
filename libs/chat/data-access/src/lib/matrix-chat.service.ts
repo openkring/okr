@@ -1756,7 +1756,7 @@ export class MatrixChatService {
 
   /**
    * Einen Ad-hoc-Chat verlassen: beendet die eigene Mitgliedschaft. Der Rauswurf aus dem
-   * Matrix-Raum folgt serverseitig ueber `onMembershipWritten`, also mit ein paar
+   * Matrix-Raum folgt serverseitig ueber `onMembershipDocWritten`, also mit ein paar
    * Sekunden Verzoegerung.
    */
   public async leaveAdhocChat(groupKey: string): Promise<void> {

@@ -3,8 +3,9 @@
  * dropped, order kept) on every `groups` doc where it differs from the current value.
  *
  * WHY: firestore.rules cannot iterate `admins[]` (a list of maps), so it tests the flat
- * `adminKeys` with `in`. The `onGroupWritten` trigger keeps it current from now on; this script
- * covers groups written before the trigger was deployed. Keep the logic in step with
+ * `adminKeys` with `in`. The `adminKeys` handler of the `onGroupDocWritten` trigger (formerly the
+ * own trigger `onGroupWritten`) keeps it current from now on; this script covers groups written
+ * before the trigger was deployed. Keep the logic in step with
  * apps/functions/src/group/group-admin-keys.ts.
  *
  * Idempotent; only `adminKeys` is written (update(), never set()). Dry run by default.

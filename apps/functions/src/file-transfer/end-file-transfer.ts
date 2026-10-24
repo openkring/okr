@@ -79,7 +79,7 @@ export const endFileTransfer = onCall<unknown, Promise<Record<string, never>>>(
     });
     if (ended) {
       // The transfer is already 'ended' (or its upload doc deleted); a failed delete must not fail the call — the hourly
-      // orphan sweep (reapFileTransfers) removes the leftover files of an ended transfer.
+      // orphan sweep (fileTransferReap job of halfHourlyJobs) removes the leftover files of an ended transfer.
       try {
         await privateBucket().deleteFiles({ prefix: fileTransferPrefix(tenantId, key) });
       } catch (err) {

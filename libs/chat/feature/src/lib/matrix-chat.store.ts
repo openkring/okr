@@ -1044,7 +1044,7 @@ export const _MatrixChatStore = signalStore(
           const roomId = await store.matrixService.joinPinboard(groupKey);
           patchState(store, { currentRoomId: roomId || undefined });
           this.reloadAvailablePinboards();
-          // Ohne Raum-id holt onMembershipWritten den Beitritt nach — der Raum taucht kurz danach auf.
+          // Ohne Raum-id holt onMembershipDocWritten den Beitritt nach — der Raum taucht kurz danach auf.
           if (!roomId) await store.alertService.showToast(store.i18n.pinboard_join_pending());
         } catch (error) {
           console.error('MatrixChatStore.joinPinboard: failed:', error);
@@ -1070,7 +1070,7 @@ export const _MatrixChatStore = signalStore(
 
       /**
        * Einen Ad-hoc-Chat verlassen. Die Cloud Function beendet die Mitgliedschaft;
-       * der Rauswurf aus dem Matrix-Raum folgt ueber `onMembershipWritten`, also mit
+       * der Rauswurf aus dem Matrix-Raum folgt ueber `onMembershipDocWritten`, also mit
        * ein paar Sekunden Verzoegerung. Der Raum wird sofort abgewaehlt, damit die
        * Ansicht nicht auf einem Chat stehen bleibt, den man gerade verlassen hat.
        */

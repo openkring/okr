@@ -160,12 +160,12 @@ service firebase.storage {
 
     // ---- CF-only private data (D-P5-1): subject-access export ZIPs ----
     // Contains a member's AHV number, date of birth and IBAN in plaintext — must never be
-    // client-readable. Written only by `exportMyData`, deleted only by `reapPrivacyExports`
-    // (both Cloud Functions, which bypass these rules via the Admin SDK); members are
-    // served exclusively through the 15-minute signed URL `exportMyData` returns. This
-    // block is redundant with the exclusion above (nothing else grants this path either,
-    // so the default-deny catch-all at the bottom would already deny it) but is kept
-    // explicit given the sensitivity of the data at this path.
+    // client-readable. Written only by `exportMyData`, deleted only by the `privacyExportReap`
+    // job of `nightlyMaintenance` (both Cloud Functions, which bypass these rules via the Admin
+    // SDK); members are served exclusively through the 15-minute signed URL `exportMyData`
+    // returns. This block is redundant with the exclusion above (nothing else grants this
+    // path either, so the default-deny catch-all at the bottom would already deny it) but is
+    // kept explicit given the sensitivity of the data at this path.
     match /tenant/{tenantId}/private/{path=**} {
       allow read, write: if false;
     }

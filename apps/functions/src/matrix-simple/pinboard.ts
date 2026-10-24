@@ -2,7 +2,7 @@
 //
 // Pinnwand (planning/specs/2026-10-11-chat-pinnwand-spec.md): ein Gruppendokument mit
 // `kind: 'pinboard'`. Die Mitglieder sind echte `memberships` mit deterministischer id,
-// abgeleitet aus `sourceGroupKeys` — `onMembershipWritten` macht daraus unveraendert den
+// abgeleitet aus `sourceGroupKeys` — `onMembershipDocWritten` macht daraus unveraendert den
 // Zwangsbeitritt und den Kick. Hier steht nur, WER Mitglied ist.
 
 import { onCall, HttpsError, CallableOptions } from 'firebase-functions/v2/https';
@@ -81,14 +81,14 @@ function activeOrgKeysOf(docs: FirebaseFirestore.QueryDocumentSnapshot[], today:
 /**
  * Gleicht die Mitgliedschaften einer Pinnwand mit ihren Quellgruppen ab. Mit `only` nur fuer
  * eine Person (Trigger). Schreibt nur Differenzen; der Matrix-Teil folgt ueber
- * `onMembershipWritten`. Gibt den ausgefuehrten Plan zurueck (Log und Tests).
+ * `onMembershipDocWritten`. Gibt den ausgefuehrten Plan zurueck (Log und Tests).
  */
 export async function reconcilePinboard(groupKey: string, only?: string): Promise<PinboardPlan> {
   const db = getFirestore();
   const groupSnap = await db.collection('groups').doc(groupKey).get();
   const group = groupSnap.data() as GroupDoc | undefined;
   if (!group || (group.kind ?? 'group') !== 'pinboard' || group.isArchived) return { add: [], end: [] };
-  // Erst wenn der Raum existiert: sonst loest das Schreiben der Mitgliedschaften (onMembershipWritten →
+  // Erst wenn der Raum existiert: sonst loest das Schreiben der Mitgliedschaften (onMembershipDocWritten →
   // resolveGroupRoom(create)) parallel zu createPinboard einen zweiten Raum-Anlauf aus (Alias-Konflikt).
   if (!group.matrixRoomId) {
     console.log(`reconcilePinboard: ${groupKey} has no room yet, skipped`);
@@ -340,7 +340,7 @@ export const updatePinboard = onCall(CALLABLE, async (request): Promise<{ update
       if (data.description !== undefined) await setRoomTopic(roomId, data.description.trim(), adminToken);
     }
   }
-  // Quellen- und Modus-Aenderungen gleicht der Gruppen-Trigger (onPinboardWritten) ab.
+  // Quellen- und Modus-Aenderungen gleicht der Gruppen-Trigger (onGroupDocWritten, Handler pinboard) ab.
   return { updated: true };
 });
 
@@ -361,7 +361,7 @@ export const archivePinboard = onCall(CALLABLE, async (request): Promise<{ archi
     }
   }
   await batch.commit();
-  // Den Raum raeumt onGroupChatCleanup auf.
+  // Den Raum raeumt onGroupDocWritten (Handler chatCleanup) auf.
   console.log(`archivePinboard: ${groupKey} ended ${snap.size} candidate membership docs`);
   return { archived: true };
 });
@@ -421,7 +421,7 @@ export const joinPinboard = onCall(CALLABLE, async (request): Promise<{ roomId: 
     groupKey, group.name ?? '', tenant));
   await batch.commit();
 
-  // Ab hier nie mehr werfen: die Mitgliedschaft steht, onMembershipWritten holt den Beitritt notfalls nach.
+  // Ab hier nie mehr werfen: die Mitgliedschaft steht, onMembershipDocWritten holt den Beitritt notfalls nach.
   const roomId = await roomOf();
   if (roomId) {
     try {

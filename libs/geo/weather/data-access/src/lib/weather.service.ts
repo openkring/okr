@@ -11,8 +11,9 @@ import { getSystemQuery } from '@okr/shared-util-core';
 /**
  * Read-only access to the `weather` collection.
  *
- * Nothing in the app writes weather: the documents are produced by the scheduled Cloud
- * Function `scheduledWeatherFetch`, and the client never talks to the provider directly.
+ * Nothing in the app writes weather: the documents are produced by the `weatherFetch` job of
+ * the scheduled Cloud Function `halfHourlyJobs`, and the client never talks to the provider
+ * directly.
  * That is why this service has no create/update/delete — the Firestore rules deny client
  * writes to this collection outright.
  */

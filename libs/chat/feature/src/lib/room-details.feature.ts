@@ -127,7 +127,7 @@ export interface RoomDetailsMethodDeps {
 }
 
 export function roomDetailsMethods(store: RoomDetailsMethodDeps) {
-  /** Ad-hoc chat: archive the group doc; `onGroupChatCleanup` then empties the room's tenant marker. */
+  /** Ad-hoc chat: archive the group doc; `onGroupDocWritten` (chatCleanup) then empties the room's tenant marker. */
   const archiveAdhocChat = async (chat: GroupModel): Promise<boolean> => {
     try {
       const key = await store.groupService.update({ ...chat, isArchived: true }, store.appStore.currentUser());

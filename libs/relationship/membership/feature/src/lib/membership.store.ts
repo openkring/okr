@@ -733,7 +733,7 @@ export const _MembershipStore = signalStore(
         }
         const sDate = convertDateFormatToString(endDate.substring(0, 10), DateFormat.IsoDate, DateFormat.StoreDate, false);
         await store.membershipService.endMembershipByDate(membership, sDate, store.currentUser());
-        // No eager kickFromGroupRoom here: onMembershipWritten does the removal server-side
+        // No eager kickFromGroupRoom here: onMembershipDocWritten does the removal server-side
         // and is date-aware (spec 1.34) — kicking from the client would throw a member with a
         // FUTURE exit date out of their rooms months early. The follow-up tasks (treasurer,
         // resourceAdmin) are workflow rules evaluated server-side (spec 1.35).

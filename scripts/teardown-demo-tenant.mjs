@@ -37,8 +37,9 @@ const DRY_RUN = process.argv.includes('--dry-run');
 
 // `--only <collection>` restricts the teardown to a single collection. Added for the
 // 2026-08-28 incident cleanup: the seeded `memberships` and `groups` fired
-// onMembershipWritten / onGroupPostPolicyWritten, which created accounts and rooms on the
-// live Matrix homeserver. Those two collections must be removed on their own — memberships
+// onMembershipWritten / onGroupPostPolicyWritten (today onMembershipDocWritten /
+// onGroupDocWritten), which created accounts and rooms on the live Matrix homeserver.
+// Those two collections must be removed on their own — memberships
 // FIRST, so the sync can still resolve each room while its group document still exists —
 // while the rest of the seeded data stays in place for the performance measurement.
 const onlyIdx = process.argv.indexOf('--only');

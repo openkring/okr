@@ -29,7 +29,6 @@ import {
 } from './shared';
 import { readRoomMemberState, SERVICE_ACCOUNT_LOCALPARTS } from './membership-sync';
 
-
 interface GroupChatModeDoc {
   chatMode?: string;
   matrixRoomId?: string;
@@ -83,8 +82,9 @@ export function closedRoomIntruders(
 
 /**
  * Gruppendokument geschrieben → bei einer geschlossenen Gruppe Nicht-Mitglieder aus dem Raum
- * entfernen. Eigener Trigger neben `onGroupChatCleanup`/`onGroupPostPolicyWritten`, aus
- * demselben Grund wie dort: ein Fehler im einen soll die anderen nicht mitreissen.
+ * entfernen. Eigener Handler (`chatMode`) in `onGroupDocWritten`, neben `chatCleanup` und
+ * `postPolicy`: `runHandlers` isoliert die Handler, ein Fehler im einen reisst die anderen
+ * nicht mit.
  *
  * Fehler werden geloggt, nie geworfen. Was liegen bleibt, zeigt `auditGroupRoomMembers` und
  * entfernt `pruneGroupRoomExtras` (AOC).

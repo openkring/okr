@@ -67,9 +67,10 @@ export const MemberFeeCollection = 'member-fees';
  * The collection this feature lived in before it was generalized out of its scs shape
  * (`MemberFeeModel` was `ScsMemberFeesModel`). Every historical document still sits here until
  * the owner drops the collection deliberately, so it stays wired into the privacy machinery
- * (SUBJECT_DATA_MAP, the privacy report, firestore.rules) and is the READ side of
- * the retired `migrateMemberFees` migration (ran and retired 2026-10-24, spec 1.118 D3), which copied id-for-id into `MemberFeeCollection`. Never inline the
- * literal: a privacy guard test asserts every mapped collection resolves to an exported constant.
+ * (SUBJECT_DATA_MAP, the privacy report, firestore.rules) and was the READ side of the
+ * `migrateMemberFees` migration (ran and retired 2026-10-24, spec 1.118 D3), which copied
+ * id-for-id into `MemberFeeCollection`. Never inline the literal: a privacy guard test
+ * asserts every mapped collection resolves to an exported constant.
  */
 export const LegacyMemberFeeCollection = 'scs-memberfees';
 export const MemberFeeModelName = 'member-fee';

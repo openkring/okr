@@ -7,10 +7,10 @@
 // den die Gruppe am Tag ihrer ersten Chat-Oeffnung hatte — und der Widerspruch faellt genau
 // dort auf, wo er am meisten stoert: in der Raumuebersicht und im Titel der Nachrichtenliste.
 //
-// Bewusst ein EIGENER Trigger und keine Erweiterung von `onGroupPostPolicyWritten`: jene
-// Funktion traegt die Schreibrechte-Logik, hat einen anderen Rueckweg ('privileged' → 'all')
-// und einen taeglichen Sweep als Partner. Zwei fachlich unabhaengige Rueckwege in einer
-// Funktion heissen, dass ein Fehler im einen den anderen mitreisst.
+// Bewusst ein EIGENER Handler (`name` in `onGroupDocWritten`) und keine Erweiterung des
+// `postPolicy`-Handlers: jener traegt die Schreibrechte-Logik, hat einen anderen Rueckweg
+// ('privileged' → 'all') und einen naechtlichen Sweep als Partner. Beide laufen im selben
+// Trigger, aber `runHandlers` isoliert sie: ein Fehler im einen reisst den anderen nicht mit.
 //
 // Der Raumschluessel bleibt unberuehrt. Umbenannt wird ausschliesslich `m.room.name`; okey,
 // Alias und `matrixRoomId` sind die Identitaet des Raums und aendern sich nie mit dem Namen.
@@ -26,7 +26,6 @@ import {
   setRoomName,
   serverHostname,
 } from './shared';
-
 
 interface GroupNameDoc {
   name?: string;

@@ -49,11 +49,11 @@ function toMatrixId(personKey: string, hostname: string): string {
  * wenn der Raum aktuell tatsaechlich stumm ist.
  *
  * `opts.allowReset` ist eine SICHERHEITSGRENZE, keine Optimierung: nur wer Vor- und
- * Nachzustand kennt — also `onGroupPostPolicyWritten` — darf den Rueckweg 'privileged' →
- * 'all' ausloesen (§3.1 des Entwurfs). Sweep und Callable reichen den Parameter NICHT
- * durch, damit dieser Pfad nicht ueber zwei weitere Aufrufer erreichbar bleibt. Ohne
- * `allowReset` bricht die Funktion bei einer 'all'-Gruppe sofort ab, BEVOR
- * `resolveGroupRoom`/`ensureAdminInRoom` laufen — das erspart 'all'-Gruppen (der
+ * Nachzustand kennt — also der `postPolicy`-Handler von `onGroupDocWritten` — darf den
+ * Rueckweg 'privileged' → 'all' ausloesen (§3.1 des Entwurfs). Sweep und Callable reichen
+ * den Parameter NICHT durch, damit dieser Pfad nicht ueber zwei weitere Aufrufer
+ * erreichbar bleibt. Ohne `allowReset` bricht die Funktion bei einer 'all'-Gruppe sofort
+ * ab, BEVOR `resolveGroupRoom`/`ensureAdminInRoom` laufen — das erspart 'all'-Gruppen (der
  * ueberwiegenden Mehrheit) den teuren und riskanten Raum-Beitritt samt
  * Admin-Eskalation fuer einen Abgleich, der ohnehin nichts schreiben wuerde.
  */
@@ -158,13 +158,12 @@ export async function applyRoomPostPolicy(
 /**
  * Ausloeser 1 von 3: das Gruppendokument wurde geaendert.
  *
- * Bewusst ein EIGENER Trigger und keine Erweiterung von `onGroupChange` in replication/:
- * jene Funktion ist die Bexio-Mitglieder-Replikation und traegt kein Matrix-Token. Ihr eines
- * zu geben, zoege ein fachfremdes Geheimnis in eine fremde Funktion — und weil Firebase die
- * Secret-Version in die Revision einfriert, wuerde jede Token-Rotation kuenftig einen
- * Redeploy der Replikation erzwingen (§3.1 des Entwurfs).
+ * Bewusst ein EIGENER Handler (`postPolicy` in `onGroupDocWritten`) und keine Erweiterung
+ * des `replication`-Handlers: jener ist die Bexio-Mitglieder-Replikation. Seit spec 1.118
+ * laufen beide im selben Trigger, der das Matrix-Token traegt; `runHandlers` isoliert sie,
+ * ein Fehler im einen reisst den anderen nicht mit.
  *
- * Dieser Trigger ist zugleich der EINZIGE, der den Rueckweg 'privileged' → 'all' traegt:
+ * Dieser Handler ist zugleich der EINZIGE, der den Rueckweg 'privileged' → 'all' traegt:
  * der Sweep sieht 'all'-Gruppen gar nicht an und wuerde einen zurueckgestellten Raum sonst
  * fuer immer stumm lassen.
  *

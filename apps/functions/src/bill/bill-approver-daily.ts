@@ -1,8 +1,9 @@
 // apps/functions/src/bill/bill-approver-daily.ts
 //
-// 23:30 Europe/Zurich (spec 1.94 §3.3–§3.4): for every set of books with `paymentApproverTask` on, one task for
-// its payment_approver listing the Kreditoren booked that day, grouped by paying account. No workflow rule: the
-// setting is the configuration; the assignee is resolved and the task written by the engine's own helpers.
+// 23:50 Europe/Zurich, the `billApproverDaily` job of `eveningJobs` (23:30 until spec 1.118; spec 1.94
+// §3.3–§3.4): for every set of books with `paymentApproverTask` on, one task for its payment_approver listing
+// the Kreditoren booked that day, grouped by paying account. No workflow rule: the setting is the
+// configuration; the assignee is resolved and the task written by the engine's own helpers.
 
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';

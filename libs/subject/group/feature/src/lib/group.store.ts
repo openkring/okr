@@ -311,7 +311,7 @@ export const GroupStore = signalStore(
             }
 
             // create default chat section/page. The Matrix room is NOT created here: the
-            // admins' memberships written above fire onMembershipWritten, whose
+            // admins' memberships written above fire onMembershipDocWritten, whose
             // resolveGroupRoom creates it as @bk2-bot (alias, tenant marker, matrixRoomId).
             // A room created on the user's own account made them its creator, and since room
             // version 12 a creator can never be removed — not even by the bot.

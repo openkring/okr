@@ -19,7 +19,7 @@ import { PartnerStore } from './partner.store';
  * The partner registry (C3 §5), bkaiser-side in tenant `kring`.
  *
  * The heartbeat column is the operational point of the whole screen: C2 §13.3's notice and
- * termination right hang off an ABSENT metering push, and `checkPartnerHeartbeats` only logs —
+ * termination right hang off an ABSENT metering push, and the `partnerHeartbeats` job only logs —
  * deliberately, since suspending a partner is a decision, not a cron job's verdict. This list is
  * where that decision is actually seen and taken.
  */

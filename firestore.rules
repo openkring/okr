@@ -742,9 +742,10 @@ service cloud.firestore {
     }
     // groups (spec 1.115 §7.2): created by privileged/memberAdmin only; changed, archived, detached
     // or deleted by those roles OR by an admin of THIS group. Group admins are matched against
-    // `adminKeys`, the exact `admins[].key` mirror that only the onGroupWritten trigger (Admin SDK)
-    // maintains — a client can never write it, so a plain member cannot make itself admin by
-    // adding itself to `admins[]` (the check reads the STORED adminKeys, not the incoming doc).
+    // `adminKeys`, the exact `admins[].key` mirror that only the adminKeys handler of the
+    // onGroupDocWritten trigger (Admin SDK) maintains — a client can never write it, so a plain
+    // member cannot make itself admin by adding itself to `admins[]` (the check reads the STORED
+    // adminKeys, not the incoming doc).
     // A group admin who removes itself from admins[] still passes (stored adminKeys) and loses
     // the right once the trigger has rewritten adminKeys. Client writers strip adminKeys
     // (stripAdminKeys, @okr/subject-group-util) so an updateDoc never touches the field.
@@ -798,8 +799,9 @@ service cloud.firestore {
     match /meetings/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     match /reservations/{id}       { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     match /member-fees/{id}        { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
-    // Pre-rename home of the member-fee rows; migrateMemberFees copies id-for-id and leaves the
-    // originals in place, so they stay readable/erasable until the owner drops the collection.
+    // Pre-rename home of the member-fee rows; the retired migrateMemberFees migration copied
+    // them id-for-id and left the originals in place, so they stay readable/erasable until the
+    // owner drops the collection.
     match /scs-memberfees/{id}     { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     // tasks (spec 1.72 §2, §3.1, §4): readable/writable by author, assignee and staff
     // (privileged/eventAdmin); shared tasks (shareKey = group key or 'meeting.<okey>') are

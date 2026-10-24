@@ -1,7 +1,8 @@
 /**
  * One-time migration of the date of death into the vault (privacy spec 1.19, D-P4-7).
- * Local admin-SDK twin of the `migrateDateOfDeath` callable — same idempotent logic,
- * run directly against production Firestore (no AppCheck/auth ceremony needed):
+ * Local admin-SDK twin of the `migrateDateOfDeath` callable (retired 2026-10-24, spec 1.118 D3)
+ * — same idempotent logic, run directly against production Firestore (no AppCheck/auth
+ * ceremony needed):
  *
  *   1. persons.dateOfDeath          -> addresses doc { addressChannel: 'dod', dod, parentKey: 'person.<id>' }
  *                                      + persons.isDeceased + persons.deathYear (YYYY), source field DELETED

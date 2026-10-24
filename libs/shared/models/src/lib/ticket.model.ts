@@ -108,7 +108,7 @@ export class TicketModel implements OkrModel, NamedModel, SearchableModel, Tagge
    *
    * ponytail: no reaper. Attachments are off unless a partner confirms redaction, so today the set
    * is empty and a scheduled sweep would be a job that deletes nothing. Add one modelled on
-   * `reapPrivacyExports` when the first attachment is actually written.
+   * the `privacyExportReap` job of `nightlyMaintenance` when the first attachment is actually written.
    */
   public attachmentPaths: string[] = [];
   public redactionConfirmed = false;

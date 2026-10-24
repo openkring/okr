@@ -5,7 +5,7 @@
 //
 // One tenant's `app-config` doc drives its own archive window; the two halves of the job run
 // per tenant so one tenant's failure (bad data, a transient Firestore error) never stops the
-// rest — see the try/catch in `taskDaily` below.
+// rest — see the try/catch in `runTaskDaily` below (the `taskDaily` job of `morningJobs`).
 
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, FieldValue, type Firestore } from 'firebase-admin/firestore';

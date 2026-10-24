@@ -5,7 +5,7 @@
 //
 // Ein Ad-hoc-Chat IST ein Gruppendokument (`kind: 'chat'`, alle has*-Unterfunktionen
 // ausser `hasChat` aus) — deshalb laufen resolveGroupRoom, der Tenant-Marker, der
-// Alias, onMembershipWritten (Zwangsbeitritt und Kick), das Backfill und die
+// Alias, onMembershipDocWritten (Zwangsbeitritt und Kick), das Backfill und die
 // Drift-Werkzeuge unveraendert weiter.
 //
 // Warum die Anlage hier und nicht im Client (Spec §3/§4):
@@ -87,7 +87,7 @@ type PersonRow = { okey: string; firstName: string; lastName: string };
  * sofort oeffnen kann.
  *
  * Reihenfolge ist wichtig: erst das Dokument, dann der Raum, erst danach die
- * Mitgliedschaften. `onMembershipWritten` loest den Raum sonst parallel selbst auf und
+ * Mitgliedschaften. `onMembershipDocWritten` loest den Raum sonst parallel selbst auf und
  * beide Pfade wuerden gleichzeitig einen Raum mit demselben Alias anlegen wollen
  * (`M_ROOM_IN_USE` ist auf dem Erzeugungspfad nicht behandelt). Mit persistierter
  * `matrixRoomId` nimmt der Trigger die schnelle Spur und tritt nur noch bei.
@@ -201,7 +201,7 @@ export const createAdhocChat = onCall(
       matrixRoomId: '',
       admins,
       // written with admins so the creator can archive at once (rules test adminKeys); the
-      // onGroupWritten trigger finds it equal and does not write again.
+      // adminKeys handler of onGroupDocWritten finds it equal and does not write again.
       adminKeys: groupAdminKeys(admins),
       parentKey: tenant,
       parentName: '',
@@ -253,7 +253,7 @@ export const createAdhocChat = onCall(
 
 /**
  * Ein Mitgliedschaftsdokument fuer einen Ad-hoc-Chat. Dieselbe Form wie eine
- * Gruppenmitgliedschaft — das ist der Punkt: `onMembershipWritten` traegt daraufhin den
+ * Gruppenmitgliedschaft — das ist der Punkt: `onMembershipDocWritten` traegt daraufhin den
  * Zwangsbeitritt (und beim Ende den Rauswurf), ohne irgendetwas ueber Chats zu wissen.
  */
 function adhocMembershipDoc(person: PersonRow, groupKey: string, chatName: string, tenant: string): Record<string, unknown> {
@@ -407,7 +407,7 @@ export const addAdhocChatMembers = onCall(
 /**
  * Einen Ad-hoc-Chat verlassen: die eigene Mitgliedschaft beenden.
  *
- * Der Kick aus dem Matrix-Raum passiert nicht hier, sondern in `onMembershipWritten` —
+ * Der Kick aus dem Matrix-Raum passiert nicht hier, sondern in `onMembershipDocWritten` —
  * derselbe Weg wie beim Ende einer Gruppenmitgliedschaft. Der Chat laeuft fuer die
  * anderen weiter; verlaesst die letzte Person ihn, bleibt ein Dokument ohne aktive
  * Mitgliedschaft zurueck (Spec §5, offener Punkt). Verlaesst der Admin des Chats ihn, geht
@@ -497,7 +497,7 @@ export function adhocAdminsAfterLeave(
 /**
  * End a person's membership of an ad-hoc chat (leave or removal): archive the membership
  * documents and, when the person was an admin, hand `group.admins` over in the same batch. The
- * kick from the Matrix room follows via `onMembershipWritten`, as for any ended membership.
+ * kick from the Matrix room follows via `onMembershipDocWritten`, as for any ended membership.
  */
 async function endAdhocMembership(
   chatKey: string,
@@ -533,7 +533,7 @@ async function endAdhocMembership(
  * Remove another person from an ad-hoc chat (spec 1.109 §8.3). Allowed for the chat's admins
  * (`group.admins`, the creator or whom it was handed to) and the tenant `admin`; nobody removes
  * themselves here — that is «Verlassen» (`leaveAdhocChat`). Ends the membership like
- * `leaveAdhocChat`; the kick follows via `onMembershipWritten`.
+ * `leaveAdhocChat`; the kick follows via `onMembershipDocWritten`.
  */
 export const removeAdhocChatMember = onCall(
   {

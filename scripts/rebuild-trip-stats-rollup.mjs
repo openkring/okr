@@ -3,13 +3,13 @@
  *
  * WHY: the client used to open one Firestore listener per boat/person to render the trip-stats
  * ranking. It now reads a single document per (entityType, year) instead. `onTripWrite` keeps
- * those documents current and `onTripStatsReconcile` rewrites the CURRENT year nightly — but
- * nobody ever writes the past years, so they need this backfill once.
+ * those documents current and the `tripStatsReconcile` job of `nightlyMaintenance` rewrites the
+ * CURRENT year nightly — but nobody ever writes the past years, so they need this backfill once.
  *
  * WHAT: scans every trip, aggregates km + count per boat and per person per year, and writes
  * `stats_rollup/<boats|members>_<year>`. Full overwrite — safe to re-run.
  *
- * AUTHORITATIVE LOGIC: onTripStatsReconcile (apps/functions/src/trip/index.ts) — keep the
+ * AUTHORITATIVE LOGIC: runTripStatsReconcile (apps/functions/src/trip/index.ts) — keep the
  * counting states and the entry shape in sync.
  *
  * Run with:  node scripts/rebuild-trip-stats-rollup.mjs --dry     (inspect first)

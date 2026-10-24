@@ -49,7 +49,7 @@ export class GroupModel implements OkrModel, NamedModel, SearchableModel, Tagged
 
   // first admin is the also the main contact
   public admins: AvatarInfo[] = [];
-  // Server-maintained mirror of admins[].key (exact case) by the onGroupWritten trigger, so firestore.rules can test adminship with `in`. Never write from the client.
+  // Server-maintained mirror of admins[].key (exact case) by the onGroupDocWritten trigger, so firestore.rules can test adminship with `in`. Never write from the client.
   public adminKeys: string[] = [];
 
   // hierarchy

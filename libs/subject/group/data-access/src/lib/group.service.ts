@@ -32,7 +32,7 @@ export class GroupService  {
 
   /*-------------------------- CRUD operations --------------------------------*/
   // Every write sends the group WITHOUT `adminKeys` (stripAdminKeys): the field is server-maintained
-  // (onGroupWritten) and firestore.rules refuse a client write that changes it.
+  // (onGroupDocWritten) and firestore.rules refuse a client write that changes it.
   /**
    * Create a new Group in the database.
    * @param group the GroupModel to store in the database

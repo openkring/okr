@@ -73,8 +73,9 @@ lists directly. Meeting keys and keys that name no group keep the behaviour abov
 - `listGroupTasks` — callable (spec 1.75): a closed group's tasks for staff and active members;
   refuses an open group (`failed-precondition`), another tenant (`permission-denied`) and a
   non-member (`permission-denied`).
-- `taskDaily` — 07:00 Europe/Zurich: archives tasks completed more than `AppConfig.taskArchiveDays`
-  (default 30, `0` = never) ago, and pushes a reminder for tasks due today.
+- `taskDaily` (a job of the `morningJobs` scheduler) — 07:00 Europe/Zurich: archives tasks completed
+  more than `AppConfig.taskArchiveDays` (default 30, `0` = never) ago, and pushes a reminder for tasks
+  due today.
 
 The archive setting is edited in the admin-only `TaskSettingsModal` (menu row `task-settings`,
 `AppConfigService.setTaskSettings`).

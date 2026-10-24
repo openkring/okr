@@ -132,9 +132,9 @@ export const listUnassignedMatrixRooms = onCall(
  * scs-App schieben — dieselbe homeserver-globale Luecke, nur in die andere Richtung.
  *
  * Auf einen Raum MIT `#group_`-Alias wird nicht geschrieben: dessen Zuordnung gehoert dem
- * Gruppendokument (`onGroupChatCleanup` zieht sie nach), und eine Handzuordnung waere beim
- * naechsten Schreiben auf die Gruppe wieder weg — ein stiller Rueckfall, der genau dann
- * auffaellt, wenn man sich auf ihn verlaesst.
+ * Gruppendokument (`onGroupDocWritten`, Handler `chatCleanup`, zieht sie nach), und eine
+ * Handzuordnung waere beim naechsten Schreiben auf die Gruppe wieder weg — ein stiller
+ * Rueckfall, der genau dann auffaellt, wenn man sich auf ihn verlaesst.
  */
 export const assignMatrixRoomTenants = onCall(
   {

@@ -1,7 +1,8 @@
 /**
  * One-time backfill for privacy spec 1.19 Phase 3 (addresses = PII vault).
- * Local admin-SDK twin of the `migrateSensitiveData` callable — same idempotent logic,
- * run directly against production Firestore (no AppCheck/auth ceremony needed):
+ * Local admin-SDK twin of the `migrateSensitiveData` callable (retired 2026-10-24, spec 1.118 D3)
+ * — same idempotent logic, run directly against production Firestore (no AppCheck/auth
+ * ceremony needed):
  *
  *   1. persons.ssnId        -> addresses doc { addressChannel: 'ssn',  ssn,  parentKey: 'person.<id>' }
  *   2. persons.dateOfBirth  -> addresses doc { addressChannel: 'dob',  dob,  parentKey: 'person.<id>' }

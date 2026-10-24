@@ -62,7 +62,7 @@ export function isAdminMember(group?: GroupModel, personKey?: string): boolean {
 
 /**
  * A shallow copy of `group` without `adminKeys`, for every client write of a group document.
- * `adminKeys` is maintained only by the onGroupWritten trigger (Admin SDK) and firestore.rules
+ * `adminKeys` is maintained only by the onGroupDocWritten trigger (Admin SDK) and firestore.rules
  * refuse any client update that changes it. A client copy can be stale (the trigger rewrote the
  * field after the doc was loaded), so the field is never sent: an `updateDoc` then leaves the
  * stored value untouched, and a create stores none (the trigger fills it).
