@@ -10,6 +10,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { ReportAction, ReportFinding, ReportKind, ReportResult } from '@okr/shared-util-core';
 
+import { Chips } from './chips';
 import { Header } from './header';
 import { PFX } from './scope';
 
@@ -17,13 +18,14 @@ import { PFX } from './scope';
  * Shared result modal of the domain checks (spec 1.101, phase 2): a kind badge, an explanation,
  * the findings (a tap on a finding with a `url` navigates there, an action button returns the
  * action to the caller), the time of the run and an optional «apply» footer button.
- * Has no input fields, so it is not a form modal.
+ * A finding with `chips` shows an editable chip list; each change goes to `onChipsChange` while the
+ * modal stays open. Has no form, so it is not a form modal.
  */
 @Component({
   selector: 'okr-report-modal',
   standalone: true,
   imports: [
-    DatePipe, SvgIconPipe, Header,
+    DatePipe, SvgIconPipe, Header, Chips,
     IonContent, IonList, IonItem, IonLabel, IonNote, IonButton, IonIcon, IonFooter, IonToolbar
   ],
   styles: [`
@@ -49,6 +51,10 @@ import { PFX } from './scope';
               <ion-label class="ion-text-wrap">
                 <h3>{{ finding.title }}</h3>
                 @if (finding.detail) { <p class="detail">{{ finding.detail }}</p> }
+                @if (finding.chips; as chips) {
+                  <okr-chips [chipName]="chips.name" [storedChips]="chips.value" [allChips]="chips.all"
+                    [readOnly]="!onChipsChange()" (storedChipsChange)="chipsChanged(finding, $event)" />
+                }
                 @if (finding.actions?.length) {
                   <div class="actions">
                     @for (action of finding.actions; track action.id) {
@@ -86,6 +92,7 @@ export class ReportModal {
   public readonly findings = input.required<ReportFinding[]>();
   public readonly ranAt = input.required<Date>();
   public readonly applyLabel = input<string | undefined>(undefined);
+  public readonly onChipsChange = input<((findingId: string, value: string) => void | Promise<void>) | undefined>(undefined);
 
   // fixed labels come from the shared-ui bundle (@shared/ui.report.*)
   protected readonly labels = inject(I18nService).translateAll({
@@ -110,6 +117,10 @@ export class ReportModal {
     void dismissOverlay(this.modalController, result, 'action');
   }
 
+  protected chipsChanged(finding: ReportFinding, value: string): void {
+    void this.onChipsChange()?.(finding.id, value);
+  }
+
   protected apply(): void {
     const result: ReportResult = { kind: 'apply' };
     void dismissOverlay(this.modalController, result, 'apply');
@@ -123,6 +134,8 @@ export interface OpenReportOptions {
   findings: ReportFinding[];
   ranAt: Date;
   applyLabel?: string;
+  /** saves a finding's edited chips (comma-separated); without it chips are read-only */
+  onChipsChange?: (findingId: string, value: string) => void | Promise<void>;
 }
 
 /** Opens the report modal and resolves with the chosen action / apply, or undefined when closed or navigated away. */

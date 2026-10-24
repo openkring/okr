@@ -5,7 +5,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { firstValueFrom, map, of } from 'rxjs';
 
 import { FirestoreService } from '@okr/shared-data-access';
-import { AppStore } from '@okr/shared-feature';
+import { AppStore, TagEditService } from '@okr/shared-feature';
 import { AvailableLanguages, I18nTenantOverrideCollection, I18nTenantOverrideModel, OkrModel, TagCollection, TagModel } from '@okr/shared-models';
 import { okrPrompt, confirm } from '@okr/shared-util-angular';
 import { dedupeForTenant, getSystemQuery, isOwnedBy } from '@okr/shared-util-core';
@@ -51,7 +51,8 @@ export const AocTagStore = signalStore(
     firestoreService: inject(FirestoreService),
     alertController: inject(AlertController),
     modalController: inject(ModalController),
-    i18nService: inject(I18nService)
+    i18nService: inject(I18nService),
+    tagEditService: inject(TagEditService),
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(AOC_I18N_KEYS),
@@ -102,16 +103,9 @@ export const AocTagStore = signalStore(
      * updated in place. See the `tag-model` skill.
      */
     const saveTags = async (tag: TagItem, tags: string, confirmMessage: string, errorMessage: string): Promise<void> => {
-      if (isOwnedBy(tag, store.appStore.env.tenantId)) {
-        await store.firestoreService.updateModel<TagItem>(TagCollection, { ...tag, tags }, false, confirmMessage, errorMessage, store.appStore.currentUser());
-        store.appStore.reloadTags();
-        return;
-      }
-      const forkedKey = await store.firestoreService.forkModel<TagItem>(TagCollection, tag, { tags }, errorMessage);
-      if (forkedKey) {
-        patchState(store, { selectedTagKey: forkedKey });
-        store.appStore.reloadTags();
-      }
+      const key = await store.tagEditService.saveTags(tag as TagItem & TagModel, tags, confirmMessage, errorMessage);
+      // a fork lives under a new key: keep it selected
+      if (key && key !== tag.okey) patchState(store, { selectedTagKey: key });
     };
 
     /** The current tenant's override row for a (module, key) pair, if it has one. */

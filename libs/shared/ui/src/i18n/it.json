@@ -151,5 +151,13 @@
     },
     "empty": "Non è stato trovato nulla — tutto in ordine.",
     "ranAt": "Verificato il"
+  },
+  "chipSelect": {
+    "edit": "Modifica valori",
+    "done": "Fatto",
+    "add": "Aggiungi valore",
+    "addPlaceholder": "Nuovo valore",
+    "removeConfirm": "Togliere «{value}» dalla scelta? Dove il valore è già in uso, rimane.",
+    "saveError": "Non è stato possibile salvare i valori."
   }
 }

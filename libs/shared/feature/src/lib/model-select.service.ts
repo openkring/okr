@@ -5,12 +5,13 @@ import { AppStore, GroupSelectModal, OrgSelectModal, PersonSelectModal, Resource
 import { isLocation, isOrg, isPerson, isResource } from "@okr/shared-util-core";
 import { AvatarInfo, GroupModel, LocationModel, OrgModel, PersonModel, ResourceModel, ResponsibilityModel } from "@okr/shared-models";
 import { DEFAULT_LABEL, DEFAULT_TAGS } from "@okr/shared-constants";
-import { MODEL_SELECTOR, ModelSelector, PersonSelectOptions } from "@okr/shared-util-angular";
+import { MODEL_SELECTOR, ModelSelector, PersonSelectOptions, TAG_EDITOR } from "@okr/shared-util-angular";
 
 import { LocationSelectModal, LocationSelectResult } from "./location-select.modal";
 import { PersonSelectResult } from "./person-select.modal";
 import { ResourceSelectResult } from "./resource-select.modal";
 import { normalizeWhitespace } from "./location-select.store";
+import { TagEditService } from "./tag-edit.service";
 
 @Injectable({
     providedIn: 'root'
@@ -239,7 +240,13 @@ export class ModelSelectService implements ModelSelector {
   }
 }
 
-/** Binds MODEL_SELECTOR (used by ui-layer forms) to ModelSelectService. Register once in every app.config.ts. */
-export function provideModelSelector(): Provider {
-  return { provide: MODEL_SELECTOR, useExisting: ModelSelectService };
+/**
+ * Binds MODEL_SELECTOR (used by ui-layer forms) to ModelSelectService and TAG_EDITOR (the tag
+ * select modal's «Werte bearbeiten») to TagEditService. Register once in every app.config.ts.
+ */
+export function provideModelSelector(): Provider[] {
+  return [
+    { provide: MODEL_SELECTOR, useExisting: ModelSelectService },
+    { provide: TAG_EDITOR, useExisting: TagEditService },
+  ];
 }

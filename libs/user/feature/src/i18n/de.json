@@ -5,8 +5,10 @@
   "read_error": "Die Benutzer und Zugänge konnten nicht geladen werden. Bitte versuche es später noch einmal.",
   "filter": {
     "problems": "Probleme",
-    "extended_roles": "Erweiterte Rollen",
-    "role_all": "alle"
+    "extended_roles": "Erweiterte Rollen"
+  },
+  "column": {
+    "state": "Hinweis"
   },
   "kind": {
     "no_login": "kein Login",
@@ -64,7 +66,13 @@
       "linkLogin": "Login → Benutzer",
       "ok": "passt",
       "roles": "Rollen",
-      "archived": "archiviert"
+      "archived": "archiviert",
+      "addEmail": "E-Mail erfassen",
+      "addEmailHeader": "E-Mail der Person",
+      "addEmailInvalid": "Das ist keine gültige E-Mail-Adresse.",
+      "addUser": "Konto eröffnen",
+      "addLogin": "Login eröffnen",
+      "loginConf": "Das Login ist eröffnet. Mit «Passwort-Link senden» kann die Person ihr Passwort setzen."
     },
     "matrix": {
       "label": "Matrix-Benutzer einrichten",

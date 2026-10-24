@@ -118,6 +118,9 @@ export interface AccountCheckTexts {
   ok: string;
   roles: string;
   archived: string;
+  addEmail: string;
+  addUser: string;
+  addLogin: string;
 }
 
 export interface AccountCheckInput {
@@ -126,7 +129,12 @@ export interface AccountCheckInput {
   favEmail: string;
   user: UserModel | undefined;
   login: { uid: string; email?: string } | undefined;
+  /** the role names the roles chips offer (comma-separated); without it the roles are read-only text */
+  allRoles?: string;
 }
+
+/** The repairs «Zugang prüfen» offers (ReportAction ids). */
+export type AccountCheckFix = 'email.add' | 'user.add' | 'login.add';
 
 const joinParts = (...parts: (string | undefined)[]): string => parts.filter(p => !!p).join(' · ');
 
@@ -135,21 +143,30 @@ const joinParts = (...parts: (string | undefined)[]): string => parts.filter(p =
  * and whether they point at each other (user → person, login → user).
  */
 export function accountCheckFindings(input: AccountCheckInput, texts: AccountCheckTexts): ReportFinding[] {
+  const fix = (id: AccountCheckFix, label: string) => [{ id, label, icon: 'add-circle' }];
   const findings: ReportFinding[] = [
     { id: 'person', title: texts.person, detail: joinParts(input.personKey, input.personTenants.join(', ')) },
-    { id: 'email', title: texts.email, detail: input.favEmail || texts.noEmail },
+    input.favEmail
+      ? { id: 'email', title: texts.email, detail: input.favEmail }
+      : { id: 'email', title: texts.email, detail: texts.noEmail, actions: fix('email.add', texts.addEmail) },
   ];
   const user = input.user;
   if (!user) {
-    findings.push({ id: 'user', title: texts.user, detail: texts.noUser });
+    // opening the account creates the user and its login in one go (openAccount)
+    findings.push({ id: 'user', title: texts.user, detail: texts.noUser, actions: fix('user.add', texts.addUser) });
   } else {
     findings.push({ id: 'user', title: texts.user, detail: joinParts(user.okey, user.loginEmail, (user.tenants ?? []).join(', '), user.isArchived ? texts.archived : undefined) });
-    findings.push({ id: 'roles', title: texts.roles, detail: Object.entries(user.roles ?? {}).filter(([, on]) => on === true).map(([role]) => role).join(', ') });
+    const roles = Object.entries(user.roles ?? {}).filter(([, on]) => on === true).map(([role]) => role).join(',');
+    findings.push(input.allRoles !== undefined
+      ? { id: 'roles', title: texts.roles, chips: { name: 'role', value: roles, all: input.allRoles } }
+      : { id: 'roles', title: texts.roles, detail: roles.split(',').join(', ') });
     findings.push({ id: 'user-person', title: texts.linkPerson, detail: user.personKey === input.personKey ? texts.ok : `${user.personKey} ≠ ${input.personKey}` });
   }
   const login = input.login;
   if (!login) {
-    findings.push({ id: 'login', title: texts.login, detail: texts.noLogin });
+    findings.push(user
+      ? { id: 'login', title: texts.login, detail: texts.noLogin, actions: fix('login.add', texts.addLogin) }
+      : { id: 'login', title: texts.login, detail: texts.noLogin });
   } else {
     findings.push({ id: 'login', title: texts.login, detail: joinParts(login.uid, login.email) });
     if (user) findings.push({ id: 'login-user', title: texts.linkLogin, detail: login.uid === user.okey ? texts.ok : `${login.uid} ≠ ${user.okey}` });

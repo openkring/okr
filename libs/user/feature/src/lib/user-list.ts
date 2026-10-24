@@ -1,11 +1,12 @@
 import { Component, computed, effect, inject, input, linkedSignal, untracked } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { IonBadge, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonSelect, IonSelectOption, IonTitle, IonToolbar, ToastController } from '@ionic/angular';
+import { IonAvatar, IonBadge, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, ToastController } from '@ionic/angular';
 
 import { Menu } from '@okr/cms-menu-feature';
-import { RoleName } from '@okr/shared-models';
+import { PersonModelName, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { EmptyList, ImgDirective, ListFilter, Spinner } from '@okr/shared-ui';
+import { AvatarPipe } from '@okr/avatar-ui';
 import { error, showToast } from '@okr/shared-util-angular';
 import { hasRole } from '@okr/shared-util-core';
 
@@ -18,12 +19,20 @@ import { UserStore } from './user.store';
     selector: 'okr-user-list',
     standalone: true,
     imports: [
-      SvgIconPipe,
-      Spinner, EmptyList, ListFilter, Menu,
+      SvgIconPipe, AvatarPipe,
+      Spinner, EmptyList, ListFilter, Menu, ImgDirective,
       IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
-      IonLabel, IonContent, IonItem, IonList, IonPopover, IonChip, IonBadge, IonSelect, IonSelectOption
+      IonLabel, IonContent, IonItem, IonList, IonPopover, IonChip, IonBadge, IonAvatar
     ],
     providers: [UserStore, UserAccountActions],
+    styles: [`
+      ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
+      ion-avatar ion-icon { width: 100%; height: 100%; color: var(--ion-color-medium); }
+      .col-name { flex: 1 1 35%; }
+      .col-email { flex: 1 1 35%; }
+      .col-state { flex: 0 1 30%; text-align: right; }
+      .col-state ion-badge { margin-left: 4px; }
+    `],
     template: `
     <ion-header>
       <!-- title and context menu -->
@@ -52,30 +61,22 @@ import { UserStore } from './user.store';
       (tagChanged)="onTagSelected($event)" [tags]="tags()"
      />
 
-    <!-- chips: Probleme, Erweiterte Rollen (+ role select) -->
+    <!-- chips: filters on all rows -->
     <ion-toolbar>
       <ion-chip [outline]="!problems()" [color]="problems() ? 'warning' : 'medium'" (click)="store.setProblems(!problems())" role="button" tabindex="0" (keydown.enter)="store.setProblems(!problems())">
         <ion-label>{{ store.i18n.filter_problems() }} ({{ problemCount() }})</ion-label>
       </ion-chip>
-      <ion-chip [outline]="!extendedRolesOn()" [color]="extendedRolesOn() ? 'primary' : 'medium'" (click)="store.setExtendedRolesOn(!extendedRolesOn())" role="button" tabindex="0" (keydown.enter)="store.setExtendedRolesOn(!extendedRolesOn())">
-        <ion-label>{{ store.i18n.filter_extended_roles() }}</ion-label>
+      <ion-chip [outline]="!extendedRoles()" [color]="extendedRoles() ? 'primary' : 'medium'" (click)="store.setExtendedRoles(!extendedRoles())" role="button" tabindex="0" (keydown.enter)="store.setExtendedRoles(!extendedRoles())">
+        <ion-label>{{ store.i18n.filter_extended_roles() }} ({{ extendedRolesCount() }})</ion-label>
       </ion-chip>
-      @if(extendedRolesOn()) {
-        <ion-select aria-label="{{ store.i18n.filter_extended_roles() }}" interface="popover" [value]="extendedRole()"
-          (ionChange)="store.setExtendedRole($event.detail.value)">
-          <ion-select-option value="any">{{ store.i18n.filter_role_all() }}</ion-select-option>
-          @for(role of roleOptions(); track role) {
-            <ion-select-option [value]="role">{{ role }}</ion-select-option>
-          }
-        </ion-select>
-      }
     </ion-toolbar>
 
     <!-- list header -->
     <ion-toolbar color="primary">
       <ion-item lines="none" color="primary">
-        <ion-label><strong>{{ store.i18n.loginEmail_label() }}</strong></ion-label>
-        <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
+        <ion-label class="col-name"><strong>{{ store.i18n.name() }}</strong></ion-label>
+        <ion-label class="col-email ion-hide-sm-down"><strong>{{ store.i18n.loginEmail_label() }}</strong></ion-label>
+        <ion-label class="col-state"><strong>{{ store.i18n.column_state() }}</strong></ion-label>
       </ion-item>
     </ion-toolbar>
   </ion-header>
@@ -91,11 +92,24 @@ import { UserStore } from './user.store';
         <ion-list lines="inset">
           @for(row of filteredRows(); track trackKey(row)) {
               <ion-item (click)="showActions(row)">
-                <ion-label>{{ row.loginEmail }}</ion-label>
-                <ion-label>{{ row.name }}</ion-label>
-                @if(kindLabel(row.kind); as label) {
-                  <ion-badge slot="end" color="warning">{{ label }}</ion-badge>
-                }
+                <ion-avatar slot="start">
+                  @if(row.personKey) {
+                    <img okrImg src="{{ personModelName + '.' + row.personKey | avatar:personModelName }}" alt="Avatar" />
+                  } @else {
+                    <ion-icon src="{{ 'person' | svgIcon }}" />
+                  }
+                </ion-avatar>
+                <ion-label class="col-name">{{ row.name }}</ion-label>
+                <ion-label class="col-email ion-hide-sm-down">{{ row.loginEmail }}</ion-label>
+                <ion-label class="col-state">
+                  @if(kindLabel(row.kind); as label) {
+                    <ion-badge color="warning">{{ label }}</ion-badge>
+                  } @else {
+                    @for(role of extendedRolesOf(row); track role) {
+                      <ion-badge color="primary">{{ role }}</ion-badge>
+                    }
+                  }
+                </ion-label>
               </ion-item>
           }
         </ion-list>
@@ -122,13 +136,12 @@ export class UserList {
   protected searchTerm = linkedSignal(() => this.store.searchTerm());
   protected selectedTag = linkedSignal(() => this.store.selectedTag());
   protected filteredRows = computed(() => this.store.filteredRows());
-  protected usersCount = computed(() => this.store.accountRows().filter(r => r.kind === 'normal').length);
+  protected usersCount = computed(() => this.store.accountRows().length);
   protected selectedUsersCount = computed(() => this.filteredRows().length);
   protected problems = computed(() => this.store.problems());
   protected problemCount = computed(() => this.store.problemCount());
-  protected extendedRolesOn = computed(() => this.store.extendedRolesOn());
-  protected extendedRole = computed(() => this.store.extendedRole());
-  protected roleOptions = computed(() => this.store.extendedRoleOptions());
+  protected extendedRoles = computed(() => this.store.extendedRoles());
+  protected extendedRolesCount = computed(() => this.store.extendedRolesCount());
   protected isLoading = computed(() => this.store.isLoading());
   protected tags = computed(() => this.store.getTags());
   protected popupId = computed(() => `c_user_${this.listId}`);
@@ -136,7 +149,7 @@ export class UserList {
   protected readOnly = computed(() => !hasRole('admin', this.currentUser()));
 
   // passing constants to the template
-  protected isYearly = false;
+  protected readonly personModelName = PersonModelName;
 
   constructor() {
     // `?edit=<userKey>`: wait for the users, then open the modal once (userEditRequest decides)
@@ -201,6 +214,11 @@ export class UserList {
       case 'loginWithoutUser': return this.store.i18n.kind_login_no_user();
       default: return '';
     }
+  }
+
+  /** the roles beyond `registered`, for the third column of a row without a problem */
+  protected extendedRolesOf(row: UserAccountRow): RoleName[] {
+    return row.roles.filter(role => role !== 'registered');
   }
 
   protected hasRole(role: RoleName): boolean {

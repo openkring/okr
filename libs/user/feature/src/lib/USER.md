@@ -79,6 +79,8 @@ Loads all users for the current tenant ordered by `loginEmail`.
 |---|---|---|
 | `searchTerm` | string | Free-text filter against `index` |
 | `selectedTag` | string | Tag chip filter |
+| `problems` | boolean | «Probleme» chip: only the problem rows |
+| `extendedRoles` | boolean | «Erweiterte Rollen» chip: only rows with a role besides `registered` |
 
 #### Key Methods
 
@@ -91,9 +93,17 @@ Loads all users for the current tenant ordered by `loginEmail`.
 
 | Component | Description |
 |---|---|
-| `UserList` | «Benutzer & Zugänge»: search, tag, «Probleme» and «Erweiterte Rollen» filters; row actions via `UserAccountActions` |
+| `UserList` | «Benutzer & Zugänge»: every row (normal and problem rows) as avatar + name · login email · problem badge or extended roles. Search, tag, «Probleme» (problem rows only) and «Erweiterte Rollen» (any role besides `registered`) narrow that full list and combine. Row actions via `UserAccountActions` |
 | `UserEditModal` | Edit modal for one user (segments Profil · Rollen · Einstellungen) |
 | `FbuserEditModal` | Ionic modal to view/edit raw Firebase Auth account fields |
+
+## «Zugang prüfen» (row action «Berechtigung prüfen»)
+
+The report (`accountCheckFindings`) repairs what it finds: a missing email gets «E-Mail erfassen»
+(a favourite email address for the person), a missing user «Konto eröffnen», a missing login
+«Login eröffnen» — both through `openPersonAccount` (`syncPersonAccount`), which recreates a lost
+login under the user's own uid (users/{uid} doc id = Auth uid). The roles are chips, saved on every
+change. After a repair the check opens again on the reloaded rows.
 
 ## Validation (`@okr/user-util`)
 

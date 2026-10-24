@@ -151,5 +151,13 @@
     },
     "empty": "Nothing found — everything is fine.",
     "ranAt": "Checked on"
+  },
+  "chipSelect": {
+    "edit": "Edit values",
+    "done": "Done",
+    "add": "Add value",
+    "addPlaceholder": "New value",
+    "removeConfirm": "Remove «{value}» from the choice? Where the value is already in use, it stays.",
+    "saveError": "The values could not be saved."
   }
 }

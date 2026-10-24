@@ -17,6 +17,15 @@ export interface ReportFinding {
   /** a tap on the finding closes the modal and navigates here */
   url?: string;
   actions?: ReportAction[];
+  /** an editable chip list (e.g. a user's roles); the modal hands every change to `onChipsChange` */
+  chips?: ReportChips;
+}
+
+/** Chips shown under a finding: `value` and `all` are comma-separated, as `okr-chips` takes them. */
+export interface ReportChips {
+  name: 'tag' | 'role';
+  value: string;
+  all: string;
 }
 
 export type ReportResult =

@@ -10,14 +10,14 @@ import { catchError, from, of } from 'rxjs';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { ExportFormat, MembershipCollection, MembershipModel, PersonCollection, PersonModel, RoleName, UserModel } from '@okr/shared-models';
+import { ExportFormat, MembershipCollection, MembershipModel, PersonCollection, PersonModel, UserModel } from '@okr/shared-models';
 import { AUTH } from '@okr/shared-config';
 import { exportCsv, showToast } from '@okr/shared-util-angular';
 import { DateFormat, debugListLoaded, generateRandomString, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isUser, OPERATOR_TENANT_ID } from '@okr/shared-util-core';
 import { ExportFormats } from '@okr/shared-categories';
 
 import { UserService } from '@okr/user-data-access';
-import { buildUserAccountRows, EXTENDED_ROLE_OPTIONS, filterUserAccountRows, searchUserAccountRows, USER_I18N_KEYS, UserAccountRow, UserI18n } from '@okr/user-util';
+import { buildUserAccountRows, filterUserAccountRows, searchUserAccountRows, USER_I18N_KEYS, UserAccountRow, UserI18n } from '@okr/user-util';
 
 export type { UserI18n };
 
@@ -28,16 +28,14 @@ export type UserState = {
   searchTerm: string;
   selectedTag: string;
   problems: boolean;               // «Probleme» chip
-  extendedRolesOn: boolean;        // «Erweiterte Rollen» chip
-  extendedRole: RoleName | 'any';  // its role select; 'any' = «alle»
+  extendedRoles: boolean;          // «Erweiterte Rollen» chip
 };
 
 export const initialState: UserState = {
   searchTerm: '',
   selectedTag: '',
   problems: false,
-  extendedRolesOn: false,
-  extendedRole: 'any',
+  extendedRoles: false,
 };
 
 export const UserStore = signalStore(
@@ -124,7 +122,6 @@ export const UserStore = signalStore(
       isOperator: computed(() => store.appStore.tenantId() === OPERATOR_TENANT_ID),
       /** the user docs are there (loaded, not reloading); `?edit=` waits for this */
       usersLoaded: computed(() => store.usersResource.hasValue() && !store.usersResource.isLoading()),
-      extendedRoleOptions: computed(() => EXTENDED_ROLE_OPTIONS),
       activeMembers: computed(() => {
         const today = getTodayStr(DateFormat.StoreDate);
         return (store.activeMembersResource.value() ?? []).filter(m => isAfterDate(m.dateOfExit, today));
@@ -160,16 +157,13 @@ export const UserStore = signalStore(
 
   withComputed((store) => {
     return {
-      /** the rows after the chips, the search term and the tag */
-      filteredRows: computed((): UserAccountRow[] => {
-        const term = store.searchTerm();
-        const tag = store.selectedTag();
-        return searchUserAccountRows(filterUserAccountRows(store.accountRows(), {
-          problems: store.problems(),
-          extendedRole: store.extendedRolesOn() ? store.extendedRole() : undefined,
-        }), term, tag);
-      }),
+      /** every row, narrowed by the chips, the search term and the tag */
+      filteredRows: computed((): UserAccountRow[] => searchUserAccountRows(filterUserAccountRows(store.accountRows(), {
+        problems: store.problems(),
+        extendedRoles: store.extendedRoles(),
+      }), store.searchTerm(), store.selectedTag())),
       problemCount: computed(() => store.sourcesComplete() ? filterUserAccountRows(store.accountRows(), { problems: true }).length : 0),
+      extendedRolesCount: computed(() => filterUserAccountRows(store.accountRows(), { extendedRoles: true }).length),
     };
   }),
 
@@ -198,12 +192,17 @@ export const UserStore = signalStore(
         patchState(store, { problems });
       },
 
-      setExtendedRolesOn(extendedRolesOn: boolean) {
-        patchState(store, { extendedRolesOn, extendedRole: 'any' });
+      setExtendedRoles(extendedRoles: boolean) {
+        patchState(store, { extendedRoles });
       },
 
-      setExtendedRole(extendedRole: RoleName | 'any') {
-        patchState(store, { extendedRole });
+      /** Resolves once every source has finished (re)loading, at most after `timeoutMs`. */
+      async whenLoaded(timeoutMs = 15_000): Promise<void> {
+        const until = Date.now() + timeoutMs;
+        // a reload() flips the resources to loading synchronously, the first tick is enough to see it
+        do {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        } while (store.isLoading() && Date.now() < until);
       },
 
       /******************************** getters ******************************************* */

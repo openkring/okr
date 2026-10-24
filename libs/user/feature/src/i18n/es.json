@@ -5,8 +5,10 @@
   "read_error": "No se han podido cargar los usuarios y los accesos. Inténtalo de nuevo más tarde.",
   "filter": {
     "problems": "Problemas",
-    "extended_roles": "Roles ampliados",
-    "role_all": "todos"
+    "extended_roles": "Roles ampliados"
+  },
+  "column": {
+    "state": "Nota"
   },
   "kind": {
     "no_login": "sin acceso",
@@ -64,7 +66,13 @@
       "linkLogin": "Inicio de sesión → usuario",
       "ok": "coincide",
       "roles": "Roles",
-      "archived": "archivado"
+      "archived": "archivado",
+      "addEmail": "Añadir correo",
+      "addEmailHeader": "Correo de la persona",
+      "addEmailInvalid": "No es una dirección de correo válida.",
+      "addUser": "Abrir cuenta",
+      "addLogin": "Abrir acceso",
+      "loginConf": "El acceso está abierto. Con «Enviar enlace de contraseña» la persona puede establecer su contraseña."
     },
     "matrix": {
       "label": "Configurar usuario de Matrix",

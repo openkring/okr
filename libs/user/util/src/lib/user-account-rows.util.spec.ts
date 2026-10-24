@@ -111,28 +111,23 @@ describe('filterUserAccountRows', () => {
     row('loginWithoutUser'), row('userWithoutLogin', ['registered']), row('memberWithoutAccount'),
   ];
 
-  it('defaults to normal rows only', () => {
-    expect(filterUserAccountRows(rows, { problems: false }).map(r => r.kind)).toEqual(['normal', 'normal', 'normal']);
+  it('without a chip keeps every row, problems included', () => {
+    expect(filterUserAccountRows(rows, {})).toEqual(rows);
+    expect(filterUserAccountRows(rows, { problems: false, extendedRoles: false })).toEqual(rows);
   });
 
   it('problems keeps exactly the three problem kinds', () => {
     expect(filterUserAccountRows(rows, { problems: true }).map(r => r.kind)).toEqual(['loginWithoutUser', 'userWithoutLogin', 'memberWithoutAccount']);
   });
 
-  it("extendedRole 'any' keeps rows with a role besides registered", () => {
-    const out = filterUserAccountRows(rows, { problems: false, extendedRole: 'any' });
+  it('extendedRoles keeps rows with a role besides registered', () => {
+    const out = filterUserAccountRows(rows, { extendedRoles: true });
     expect(out.map(r => r.roles)).toEqual([['registered', 'treasurer'], ['admin']]);
   });
 
-  it('a specific extendedRole keeps only rows with that role', () => {
-    const out = filterUserAccountRows(rows, { problems: false, extendedRole: 'treasurer' });
-    expect(out).toHaveLength(1);
-    expect(out[0].roles).toContain('treasurer');
-  });
-
-  it('problems and extendedRole together intersect', () => {
+  it('problems and extendedRoles together intersect', () => {
     const withRole = { ...row('userWithoutLogin', ['treasurer']) };
-    const out = filterUserAccountRows([...rows, withRole], { problems: true, extendedRole: 'treasurer' });
+    const out = filterUserAccountRows([...rows, withRole], { problems: true, extendedRoles: true });
     expect(out).toEqual([withRole]);
   });
 });

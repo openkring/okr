@@ -104,6 +104,7 @@ describe('accountCheckFindings', () => {
   const texts: AccountCheckTexts = {
     person: 'Person', email: 'E-Mail', noEmail: 'keine E-Mail', user: 'Benutzer', noUser: 'kein Benutzer',
     login: 'Login', noLogin: 'kein Login', linkPerson: 'Benutzer → Person', linkLogin: 'Login → Benutzer', ok: 'in Ordnung', roles: 'Rollen', archived: 'archiviert',
+    addEmail: 'E-Mail erfassen', addUser: 'Konto eröffnen', addLogin: 'Login eröffnen',
   };
 
   it('lists person, user and login of a consistent account', () => {
@@ -123,11 +124,11 @@ describe('accountCheckFindings', () => {
     const u = user('u1', { personKey: 'other', tenants: ['scs'], roles: { registered: true }, isArchived: true });
     expect(accountCheckFindings({ personKey: 'p1', personTenants: ['scs'], favEmail: '', user: u, login: undefined }, texts)).toEqual([
       { id: 'person', title: 'Person', detail: 'p1 · scs' },
-      { id: 'email', title: 'E-Mail', detail: 'keine E-Mail' },
+      { id: 'email', title: 'E-Mail', detail: 'keine E-Mail', actions: [{ id: 'email.add', label: 'E-Mail erfassen', icon: 'add-circle' }] },
       { id: 'user', title: 'Benutzer', detail: 'u1 · u1@x.ch · scs · archiviert' },
       { id: 'roles', title: 'Rollen', detail: 'registered' },
       { id: 'user-person', title: 'Benutzer → Person', detail: 'other ≠ p1' },
-      { id: 'login', title: 'Login', detail: 'kein Login' },
+      { id: 'login', title: 'Login', detail: 'kein Login', actions: [{ id: 'login.add', label: 'Login eröffnen', icon: 'add-circle' }] },
     ]);
   });
 
@@ -135,9 +136,16 @@ describe('accountCheckFindings', () => {
     expect(accountCheckFindings({ personKey: 'p1', personTenants: [], favEmail: 'a@x.ch', user: undefined, login: undefined }, texts)).toEqual([
       { id: 'person', title: 'Person', detail: 'p1' },
       { id: 'email', title: 'E-Mail', detail: 'a@x.ch' },
-      { id: 'user', title: 'Benutzer', detail: 'kein Benutzer' },
+      { id: 'user', title: 'Benutzer', detail: 'kein Benutzer', actions: [{ id: 'user.add', label: 'Konto eröffnen', icon: 'add-circle' }] },
       { id: 'login', title: 'Login', detail: 'kein Login' },
     ]);
+  });
+
+  it('offers the roles as editable chips when the role names are given', () => {
+    const u = user('u1', { personKey: 'p1', tenants: ['scs'], roles: { registered: true, admin: true, treasurer: false } });
+    const roles = accountCheckFindings({ personKey: 'p1', personTenants: ['scs'], favEmail: 'a@x.ch', user: u, login: { uid: 'u1' }, allRoles: 'registered,admin,treasurer' }, texts)
+      .find(f => f.id === 'roles');
+    expect(roles).toEqual({ id: 'roles', title: 'Rollen', chips: { name: 'role', value: 'registered,admin', all: 'registered,admin,treasurer' } });
   });
 });
 

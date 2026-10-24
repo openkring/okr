@@ -10,6 +10,7 @@ export * from './lib/person-select.modal';
 export * from './lib/resource-select.modal';
 export * from './lib/responsibility-select.modal';
 export * from './lib/model-select.service';
+export * from './lib/tag-edit.service';
 export * from './lib/location-select.modal';
 export * from './lib/sentry-context.service';
 export * from './lib/kiosk-status.service';

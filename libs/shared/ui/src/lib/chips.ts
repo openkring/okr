@@ -88,10 +88,13 @@ export class Chips {
   public async addChip() {
     const modal = await this.modalController.create({
       component: ChipSelectModal,
-      cssClass: 'chip-modal',
+      // tag-modal: its width; auto-height-modal: as tall as the chips (overrides tag-modal's fixed height)
+      cssClass: ['tag-modal', 'auto-height-modal'],
       componentProps: {
         chips: this.nonSelectedChips(),
-        chipName: this.chipName()
+        chipName: this.chipName(),
+        allChips: this.allChips(),
+        selected: this.selectedChips(),
       }
     });
     modal.present();

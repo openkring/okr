@@ -188,8 +188,14 @@ export async function openAccount(personKey: string, tenantId: string, loginEmai
   const ownDoc = own.docs[0];
   const ownAction = decideOwnAccount(identity, ownDoc ? { loginEmail: String(ownDoc.data()['loginEmail'] ?? '') } : undefined);
   if (ownDoc && ownAction === 'exists') {
+    const ownLoginEmail = String(ownDoc.data()['loginEmail']);
+    const ownLoginId = String(ownDoc.data()['loginId'] ?? '');
+    // a users doc whose Auth identity is gone («kein Login»): give it back its login, under its own uid
+    if (await restoreMissingLogin(ownDoc.id, ownLoginEmail, displayName, personKey)) {
+      return { outcome: 'created', uid: ownDoc.id, loginEmail: ownLoginEmail, loginId: ownLoginId };
+    }
     logger.info(`${CF_NAME}: users/${ownDoc.id} already exists for person ${personKey} — nothing to do`);
-    return { outcome: 'exists', uid: ownDoc.id, loginEmail: String(ownDoc.data()['loginEmail']), loginId: String(ownDoc.data()['loginId'] ?? '') };
+    return { outcome: 'exists', uid: ownDoc.id, loginEmail: ownLoginEmail, loginId: ownLoginId };
   }
   if (ownDoc && ownAction === 'resume') {
     const resumed = await resumeAccount(ownDoc.ref, ownDoc.data() as UserModel, firstName, lastName, synthetic);
@@ -286,6 +292,27 @@ interface SyntheticContext {
   readonly displayName: string;
   readonly emailHeldBy: string | undefined;
   readonly emailOwnerPersonKey: string | undefined;
+}
+
+/**
+ * A users doc with a loginEmail but no Auth identity under its uid (the «kein Login» row of
+ * «Benutzer & Zugänge»): recreate the identity with the SAME uid — users/{uid} doc id = Auth uid —
+ * and the doc's login address, with a random password (the admin sends a reset link afterwards).
+ * Returns false when the identity exists. createUser fails when another identity holds the address;
+ * that error goes to the caller, nothing is written.
+ */
+async function restoreMissingLogin(uid: string, loginEmail: string, displayName: string, personKey: string): Promise<boolean> {
+  try {
+    await getAuth().getUser(uid);
+    return false;
+  } catch (error) {
+    if ((error as { code?: string }).code !== 'auth/user-not-found') throw error;
+  }
+  await getAuth().createUser({ uid, email: loginEmail, password: randomPassword(), displayName });
+  if (isSyntheticLoginEmail(loginEmail)) await stampPersonKeyBestEffort(uid, personKey);
+  else await stampPersonKey(uid, personKey);
+  logger.info(`${CF_NAME}: users/${uid} of person ${personKey} had no Auth identity — login restored`);
+  return true;
 }
 
 /**

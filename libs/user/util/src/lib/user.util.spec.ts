@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { UserModel, NameDisplay, PersonSortCriteria, DeliveryChannel, AvatarUsage, PrivacyUsage, Roles, Language } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 import {
+  isPlausibleEmail,
   flattenRoles,
   structureRoles,
   convertUserToAuthForm,
@@ -215,5 +216,17 @@ describe('User Utils', () => {
     const form = convertUserToNotificationForm(user);
     expect(form.newsDelivery).toEqual([DeliveryChannel.Post]);
     expect(form.invoiceDelivery).toEqual([DeliveryChannel.Chat]);
+  });
+});
+
+describe('isPlausibleEmail', () => {
+  it('accepts an ordinary address', () => {
+    expect(isPlausibleEmail('anna.muster@seeclub.org')).toBe(true);
+  });
+
+  it('rejects missing parts, whitespace and empty input', () => {
+    for (const bad of ['', undefined, 'anna', 'anna@', '@seeclub.org', 'anna@seeclub', 'an na@seeclub.org', 'a@b@c.ch']) {
+      expect(isPlausibleEmail(bad)).toBe(false);
+    }
   });
 });

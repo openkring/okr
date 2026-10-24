@@ -77,15 +77,23 @@ export function buildUserAccountRows(
   return sourcesComplete ? rows : rows.filter(r => r.kind === 'normal');
 }
 
-/** normal rows by default; the three problem kinds with `problems`; `extendedRole` narrows by role. */
+/**
+ * The list chips are filters on ALL rows (spec 1.101 phase 4, revised 2026-10-24): without a chip
+ * every row shows; `problems` keeps the three problem kinds, `extendedRoles` the rows holding a role
+ * besides `registered`. Both on intersect.
+ */
 export function filterUserAccountRows(
   rows: UserAccountRow[],
-  opts: { problems: boolean; extendedRole?: RoleName | 'any' },
+  opts: { problems?: boolean; extendedRoles?: boolean },
 ): UserAccountRow[] {
-  const byKind = rows.filter(r => (r.kind === 'normal') !== opts.problems);
-  const role = opts.extendedRole;
-  if (!role) return byKind;
-  return byKind.filter(r => role === 'any' ? r.roles.some(x => x !== 'registered') : r.roles.includes(role));
+  return rows.filter(r =>
+    (!opts.problems || r.kind !== 'normal') &&
+    (!opts.extendedRoles || hasExtendedRole(r)));
+}
+
+/** A role beyond plain membership (anything but `registered`). */
+export function hasExtendedRole(row: UserAccountRow): boolean {
+  return row.roles.some(role => role !== 'registered');
 }
 
 /** Search term (name, email, Benutzername, user index) and tag; rows without a user doc carry no tags. */

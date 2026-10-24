@@ -175,3 +175,8 @@ export function getUserIndex(user: UserModel): string {
 export function getUserIndexInfo(): string {
   return 'n:ame l:oginEmail b:enutzername p:ersonKey u:id';
 }
+
+/** A plausible email address: one `@`, a non-empty local part, a dotted domain, no whitespace. */
+export function isPlausibleEmail(email: string | undefined): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email ?? '');
+}

@@ -1,20 +1,24 @@
 import { inject, Injectable } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, AlertController, ModalController, ToastController } from '@ionic/angular';
 
-import { FirebaseUserModel, PersonModel } from '@okr/shared-models';
+import { firstValueFrom } from 'rxjs';
+
+import { FirebaseUserModel, PersonModel, PersonModelName } from '@okr/shared-models';
 import { openReport } from '@okr/shared-ui';
-import { confirm, copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, notify, showToast } from '@okr/shared-util-angular';
-import { fill, getAge, getFullName, hasRole, OPERATOR_TENANT_ID } from '@okr/shared-util-core';
+import { confirm, copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, notify, okrPrompt, showToast } from '@okr/shared-util-angular';
+import { fill, getAge, getCategoryItemNames, getFullName, hasRole, normalizeEmail, OPERATOR_TENANT_ID } from '@okr/shared-util-core';
 
 import { AuthService } from '@okr/auth-data-access';
+import { AddressService } from '@okr/subject-address-data-access';
+import { createFavoriteAddress } from '@okr/subject-address-util';
 import { PersonService } from '@okr/subject-person-data-access';
 import {
   callableErrorCode, createCustomToken, deleteFirebaseAuthUser, generatePassword, getFirebaseUser, openPersonAccount,
   provisionMatrixUser, setLoginId, setPassword, swapLoginEmail, updateFirebaseUser, UserService
 } from '@okr/user-data-access';
 import {
-  accountCheckFindings, actionGroup, actionsForRow, findLoginEmailHolder, isMinorAge, isSyntheticLoginEmail, isValidLoginId,
-  normalizeLoginIdInput, UserAccountAction, UserAccountRow
+  AccountCheckFix, accountCheckFindings, actionGroup, actionsForRow, findLoginEmailHolder, isMinorAge, isPlausibleEmail, isSyntheticLoginEmail,
+  isValidLoginId, normalizeLoginIdInput, structureRoles, UserAccountAction, UserAccountRow
 } from '@okr/user-util';
 
 import { UserStore } from './user.store';
@@ -34,6 +38,7 @@ export class UserAccountActions {
   private readonly authService = inject(AuthService);
   private readonly personService = inject(PersonService);
   private readonly userService = inject(UserService);
+  private readonly addressService = inject(AddressService);
 
   private readonly i18n = this.store.i18n;
   private readonly appStore = this.store.appStore;
@@ -110,8 +115,11 @@ export class UserAccountActions {
 
   /******************************* edits *************************************** */
   private async editPerson(row: UserAccountRow): Promise<void> {
-    const person = row.personKey ? this.appStore.getPerson(row.personKey) : undefined;
-    if (!person) return;
+    const person = await this.loadPerson(row.personKey);
+    if (!person) {
+      await showToast(this.toastController, this.i18n.account_open_no_person());
+      return;
+    }
     // lazy: the person editor stays out of the list's chunk until it is used
     const { PersonEditModal } = await import('@okr/subject-person-feature');
     const modal = await this.modalController.create({
@@ -129,17 +137,28 @@ export class UserAccountActions {
     const { data, role } = await modal.onDidDismiss();
     if (role === 'confirm' && data) {
       await this.personService.update(data as PersonModel, this.appStore.currentUser());
+      this.appStore.reloadPersons();
     }
+  }
+
+  /**
+   * The row's person: from the loaded persons, else read directly. The loaded list holds the
+   * tenant's persons only, so a problem row (a member or user whose person lacks this tenant)
+   * would otherwise find nothing and the action silently did nothing.
+   */
+  private async loadPerson(personKey: string | undefined): Promise<PersonModel | undefined> {
+    if (!personKey) return undefined;
+    return this.appStore.getPerson(personKey) ?? await firstValueFrom(this.personService.read(personKey));
   }
 
   /******************************* account *************************************** */
   /** Opens the account through openAccount (syncPersonAccount, spec 1.71 §5.3), the one path that knows the shared-email rule. */
-  private async openAccount(row: UserAccountRow): Promise<void> {
-    if (!row.personKey) return;
+  private async openAccount(row: UserAccountRow, createdText = this.i18n.account_open_created()): Promise<boolean> {
+    if (!row.personKey) return false;
     try {
       const data = await openPersonAccount(row.personKey, this.appStore.tenantId());
       switch (data.outcome) {
-        case 'created':            await showToast(this.toastController, this.i18n.account_open_created()); break;
+        case 'created':            await showToast(this.toastController, createdText); break;
         case 'createdWithLoginId': await notify(this.alertController, this.i18n.account_open(),
                                      fill(this.i18n.account_open_created_login_id(), { name: row.name, loginId: data.loginId ?? '' }), this.i18n.ok()); break;
         case 'exists':             await showToast(this.toastController, this.i18n.account_open_exists()); break;
@@ -147,9 +166,11 @@ export class UserAccountActions {
         case 'noPerson':           await showToast(this.toastController, this.i18n.account_open_no_person()); break;
       }
       this.store.reload();
+      return data.outcome === 'created' || data.outcome === 'createdWithLoginId';
     } catch (ex) {
       console.error('UserAccountActions.openAccount', ex);
       error(this.toastController, this.i18n.account_open_error());
+      return false;
     }
   }
 
@@ -304,30 +325,95 @@ export class UserAccountActions {
   }
 
   /******************************* diagnose *************************************** */
-  /** «Berechtigung prüfen»: person, email, user and login of this account, and whether they match. */
+  /**
+   * «Berechtigung prüfen»: person, email, user and login of this account, and whether they match.
+   * A missing email, user or login carries an add button; the roles are chips saved on every change.
+   * After a repair the check opens again on the reloaded data, until the admin closes it.
+   */
   private async checkAccount(row: UserAccountRow): Promise<void> {
     if (!row.personKey) return;
-    const person = this.appStore.getPerson(row.personKey);
+    let current: UserAccountRow = row;
+    let addedEmail = '';   // the address directory follows an address write only seconds later
+    for (;;) {
+      const result = await openReport(this.modalController, {
+        title: this.i18n.account_check_title(),
+        kind: 'check',
+        explanation: this.i18n.account_check_explanation(),
+        findings: await this.accountFindings(current, addedEmail),
+        ranAt: new Date(),
+        onChipsChange: (findingId, value) => findingId === 'roles' ? this.saveRoles(current, value) : undefined,
+      });
+      if (result?.kind !== 'action') return;
+      const fix = result.actionId as AccountCheckFix;
+      if (fix === 'email.add') {
+        const email = await this.addEmail(current);
+        if (!email) return;
+        addedEmail = email;
+      } else if (!(await this.openAccount(current, fix === 'login.add' ? this.i18n.account_check_login_conf() : undefined))) {
+        return;
+      }
+      current = await this.reloadedRow(current);
+    }
+  }
+
+  private async accountFindings(row: UserAccountRow, addedEmail: string) {
+    const personKey = row.personKey ?? '';
+    const person = await this.loadPerson(personKey);
     const login = (this.store.firebaseUsersResource.value() ?? []).find(f => f.uid === row.uid);
     const i = this.i18n;
-    await openReport(this.modalController, {
-      title: i.account_check_title(),
-      kind: 'check',
-      explanation: i.account_check_explanation(),
-      findings: accountCheckFindings({
-        personKey: row.personKey,
-        personTenants: person?.tenants ?? [],
-        favEmail: this.appStore.getDirectoryEntry(`person.${row.personKey}`)?.favEmail ?? '',
-        user: row.user,
-        login: login ? { uid: login.uid, email: login.email } : undefined,
-      }, {
-        person: i.account_check_person(), email: i.account_check_email(), noEmail: i.account_check_no_email(),
-        user: i.account_check_user(), noUser: i.account_check_no_user(), login: i.account_check_login(), noLogin: i.account_check_no_login(),
-        linkPerson: i.account_check_link_person(), linkLogin: i.account_check_link_login(), ok: i.account_check_ok(),
-        roles: i.account_check_roles(), archived: i.account_check_archived(),
-      }),
-      ranAt: new Date(),
+    return accountCheckFindings({
+      personKey,
+      personTenants: person?.tenants ?? [],
+      favEmail: this.appStore.getDirectoryEntry(`${PersonModelName}.${personKey}`)?.favEmail || addedEmail,
+      user: row.user,
+      login: login ? { uid: login.uid, email: login.email } : undefined,
+      allRoles: getCategoryItemNames(this.appStore.getCategory('roles')),
+    }, {
+      person: i.account_check_person(), email: i.account_check_email(), noEmail: i.account_check_no_email(),
+      user: i.account_check_user(), noUser: i.account_check_no_user(), login: i.account_check_login(), noLogin: i.account_check_no_login(),
+      linkPerson: i.account_check_link_person(), linkLogin: i.account_check_link_login(), ok: i.account_check_ok(),
+      roles: i.account_check_roles(), archived: i.account_check_archived(),
+      addEmail: i.account_check_add_email(), addUser: i.account_check_add_user(), addLogin: i.account_check_add_login(),
     });
+  }
+
+  /** Asks for an email and stores it as the person's favourite email address; returns it, or '' when nothing was saved. */
+  private async addEmail(row: UserAccountRow): Promise<string> {
+    if (!row.personKey) return '';
+    const input = await okrPrompt(this.alertController, this.i18n.account_check_add_email_header(), this.i18n.account_check_add_email_header(), this.i18n.ok(), this.i18n.cancel());
+    const email = normalizeEmail(input).toLowerCase();
+    if (!email) return '';
+    if (!isPlausibleEmail(email)) {
+      await notify(this.alertController, this.i18n.account_check_add_email(), this.i18n.account_check_add_email_invalid(), this.i18n.ok());
+      return '';
+    }
+    const parentKey = `${PersonModelName}.${row.personKey}`;
+    const address = createFavoriteAddress('email', 'home', email, this.appStore.tenantId());
+    address.parentKey = parentKey;
+    const key = await this.addressService.create(address, this.appStore.currentUser());
+    if (!key) return '';
+    this.appStore.watchDirectoryEntry(parentKey);
+    return email;
+  }
+
+  /** Saves the roles chips (comma-separated) onto the user; the list reloads to show them. */
+  private async saveRoles(row: UserAccountRow, value: string): Promise<void> {
+    if (!row.user) return;
+    const user = { ...row.user, roles: structureRoles(value) };
+    if (await this.userService.update(user, this.appStore.currentUser())) {
+      row.user = user;
+      this.store.reload();
+    }
+  }
+
+  /** The row of the same account after the store reloaded (by uid, else by person). */
+  private async reloadedRow(row: UserAccountRow): Promise<UserAccountRow> {
+    await this.store.whenLoaded();
+    const rows = this.store.accountRows();
+    return rows.find(r => !!row.uid && r.uid === row.uid && r.kind !== 'memberWithoutAccount')
+      ?? rows.find(r => r.personKey === row.personKey && !!r.user)
+      ?? rows.find(r => r.personKey === row.personKey)
+      ?? row;
   }
 
   /** Signs the admin in as this user (custom token). Back to the own account only by signing out and in. */

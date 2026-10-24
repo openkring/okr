@@ -32,6 +32,15 @@
       "path": "../../subject/person/feature/tsconfig.lib.json"
     },
     {
+      "path": "../../subject/address/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../subject/address/util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../avatar/ui/tsconfig.lib.json"
+    },
+    {
       "path": "../../auth/data-access/tsconfig.lib.json"
     },
     {

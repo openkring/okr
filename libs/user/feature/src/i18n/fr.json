@@ -5,8 +5,10 @@
   "read_error": "Les utilisateurs et les accès n'ont pas pu être chargés. Réessaie plus tard.",
   "filter": {
     "problems": "Problèmes",
-    "extended_roles": "Rôles étendus",
-    "role_all": "tous"
+    "extended_roles": "Rôles étendus"
+  },
+  "column": {
+    "state": "Remarque"
   },
   "kind": {
     "no_login": "pas de login",
@@ -64,7 +66,13 @@
       "linkLogin": "Login → utilisateur",
       "ok": "correspond",
       "roles": "Rôles",
-      "archived": "archivé"
+      "archived": "archivé",
+      "addEmail": "Saisir l'e-mail",
+      "addEmailHeader": "E-mail de la personne",
+      "addEmailInvalid": "Ce n'est pas une adresse e-mail valide.",
+      "addUser": "Ouvrir le compte",
+      "addLogin": "Ouvrir l'accès",
+      "loginConf": "L'accès est ouvert. Avec «Envoyer le lien du mot de passe», la personne peut définir son mot de passe."
     },
     "matrix": {
       "label": "Configurer l'utilisateur Matrix",
