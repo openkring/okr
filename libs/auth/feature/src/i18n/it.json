@@ -131,6 +131,9 @@
       "confirm": "Eliminare questa passkey? Su quel dispositivo potrai poi accedere solo con la password."
     },
     "empty": "Non hai ancora una passkey.",
-    "error": "Non ha funzionato. Riprova, per favore."
+    "error": "Non ha funzionato. Riprova, per favore.",
+    "modal": {
+      "title": "Passkey di {name}"
+    }
   }
 }

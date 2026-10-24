@@ -131,6 +131,9 @@
       "confirm": "Supprimer cette clé d’accès ? Sur cet appareil, tu ne pourras ensuite te connecter qu’avec ton mot de passe."
     },
     "empty": "Tu n’as pas encore de clé d’accès.",
-    "error": "Cela n’a pas fonctionné. Réessaie, s’il te plaît."
+    "error": "Cela n’a pas fonctionné. Réessaie, s’il te plaît.",
+    "modal": {
+      "title": "Passkeys de {name}"
+    }
   }
 }

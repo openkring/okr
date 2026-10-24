@@ -16,3 +16,4 @@ export * from './lib/logout.page';
 export * from './lib/password-reset.page';
 export * from './lib/confirm-password-reset.page';export * from './lib/passkey.store';
 export * from './lib/passkeys.accordion';
+export * from './lib/passkeys.modal';

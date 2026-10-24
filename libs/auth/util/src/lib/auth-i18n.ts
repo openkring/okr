@@ -70,6 +70,7 @@ export const AUTH_I18N_KEYS = {
   passkey_login:            PFX + 'passkey.login.label',
   passkey_login_error:      PFX + 'passkey.login.error',
   passkey_title:            PFX + 'passkey.title',
+  passkey_modal_title:      PFX + 'passkey.modal.title',
   passkey_intro:            PFX + 'passkey.intro',
   passkey_add:              PFX + 'passkey.add',
   passkey_added:            PFX + 'passkey.added',

@@ -10,7 +10,7 @@ import { UserAccountRow } from './user-account-rows.util';
  */
 export type UserAccountAction =
   | 'user.edit' | 'person.edit'
-  | 'account.open' | 'account.reset' | 'account.password' | 'account.loginid' | 'account.swap' | 'fbuser.edit'
+  | 'account.open' | 'account.reset' | 'account.password' | 'account.loginid' | 'account.swap' | 'fbuser.edit' | 'account.passkeys'
   | 'account.check' | 'account.impersonate' | 'matrix.provision'
   | 'copy.email' | 'copy.uid' | 'copy.pkey'
   | 'user.delete' | 'fbuser.delete';
@@ -19,7 +19,7 @@ export type UserAccountAction =
 export function actionGroup(action: UserAccountAction): 'edit' | 'account' | 'diagnose' | 'copy' | 'delete' {
   switch (action) {
     case 'user.edit': case 'person.edit': return 'edit';
-    case 'account.open': case 'account.reset': case 'account.password': case 'account.loginid': case 'account.swap': case 'fbuser.edit': return 'account';
+    case 'account.open': case 'account.reset': case 'account.password': case 'account.loginid': case 'account.swap': case 'fbuser.edit': case 'account.passkeys': return 'account';
     case 'account.check': case 'account.impersonate': case 'matrix.provision': return 'diagnose';
     case 'copy.email': case 'copy.uid': case 'copy.pkey': return 'copy';
     default: return 'delete';
@@ -65,7 +65,7 @@ export function actionsForRow(row: UserAccountRow, isOperator: boolean): UserAcc
       if (hasPerson) actions.push('person.edit');
       actions.push('account.reset', 'account.password', 'account.loginid');
       if (isSyntheticLoginEmail(row.loginEmail)) actions.push('account.swap');
-      actions.push('fbuser.edit');
+      actions.push('fbuser.edit', 'account.passkeys');
       if (hasPerson) actions.push('account.check');
       actions.push('account.impersonate');
       if (hasPerson) actions.push('matrix.provision');

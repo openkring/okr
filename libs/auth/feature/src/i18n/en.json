@@ -131,6 +131,9 @@
       "confirm": "Delete this passkey? On that device you will then only be able to sign in with your password."
     },
     "empty": "You don't have a passkey yet.",
-    "error": "That did not work. Please try again."
+    "error": "That did not work. Please try again.",
+    "modal": {
+      "title": "Passkeys of {name}"
+    }
   }
 }

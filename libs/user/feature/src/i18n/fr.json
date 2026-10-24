@@ -111,6 +111,9 @@
       "conf": "Le lien pour définir un mot de passe a été demandé.",
       "error": "Le lien pour définir un mot de passe n'a pas pu être demandé."
     },
+    "passkeys": {
+      "label": "Passkeys"
+    },
     "swap": {
       "label": "Échanger l'e-mail",
       "confirm": "{holder} cède l'e-mail à {newcomer} et se connectera désormais avec le nom d'utilisateur {loginId}. {holder} sera déconnecté une fois.",

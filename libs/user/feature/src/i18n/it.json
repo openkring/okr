@@ -111,6 +111,9 @@
       "conf": "Il link per impostare una password è stato richiesto.",
       "error": "Non è stato possibile richiedere il link per impostare una password."
     },
+    "passkeys": {
+      "label": "Passkeys"
+    },
     "swap": {
       "label": "Scambia l'e-mail",
       "confirm": "{holder} cede l'e-mail a {newcomer} e d'ora in poi accederà con il nome utente {loginId}. {holder} verrà disconnesso una volta.",

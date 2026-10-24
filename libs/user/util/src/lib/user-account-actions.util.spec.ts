@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { UserModel } from '@okr/shared-models';
 
-import { accountCheckFindings, actionsForRow, AccountCheckTexts, isAuthUserNotFound, userEditRequest } from './user-account-actions.util';
+import { accountCheckFindings, actionGroup, actionsForRow, AccountCheckTexts, isAuthUserNotFound, userEditRequest } from './user-account-actions.util';
 import { UserAccountRow } from './user-account-rows.util';
 
 function user(okey: string, extra: Partial<UserModel> = {}): UserModel {
@@ -18,7 +18,7 @@ describe('actionsForRow', () => {
   it('offers the full account toolbox on a normal row', () => {
     expect(actionsForRow(normal, false)).toEqual([
       'user.edit', 'person.edit',
-      'account.reset', 'account.password', 'account.loginid', 'fbuser.edit',
+      'account.reset', 'account.password', 'account.loginid', 'fbuser.edit', 'account.passkeys',
       'account.check', 'account.impersonate', 'matrix.provision',
       'copy.email', 'copy.uid', 'copy.pkey',
       'user.delete', 'fbuser.delete',
@@ -29,7 +29,7 @@ describe('actionsForRow', () => {
     const row = { ...normal, loginEmail: 'max_mueller@login.seeclub.org', loginId: 'max_mueller' };
     expect(actionsForRow(row, false)).toEqual([
       'user.edit', 'person.edit',
-      'account.reset', 'account.password', 'account.loginid', 'account.swap', 'fbuser.edit',
+      'account.reset', 'account.password', 'account.loginid', 'account.swap', 'fbuser.edit', 'account.passkeys',
       'account.check', 'account.impersonate', 'matrix.provision',
       'copy.email', 'copy.uid', 'copy.pkey',
       'user.delete', 'fbuser.delete',
@@ -40,11 +40,18 @@ describe('actionsForRow', () => {
     const row = { ...normal, personKey: undefined };
     expect(actionsForRow(row, false)).toEqual([
       'user.edit',
-      'account.reset', 'account.password', 'account.loginid', 'fbuser.edit',
+      'account.reset', 'account.password', 'account.loginid', 'fbuser.edit', 'account.passkeys',
       'account.impersonate',
       'copy.email', 'copy.uid',
       'user.delete', 'fbuser.delete',
     ]);
+  });
+
+  it('offers «Passkeys» on a normal row, grouped with the account actions, not on a user without a login', () => {
+    const noLogin: UserAccountRow = { kind: 'userWithoutLogin', uid: 'u2', personKey: 'p2', name: 'B', user: user('u2'), roles: [] };
+    expect(actionsForRow(normal, false)).toContain('account.passkeys');
+    expect(actionsForRow(noLogin, false)).not.toContain('account.passkeys');
+    expect(actionGroup('account.passkeys')).toBe('account');
   });
 
   it('a user without a login can be edited, opened or deleted', () => {

@@ -111,6 +111,9 @@
       "conf": "Se ha solicitado el enlace para establecer una contraseña.",
       "error": "No se pudo solicitar el enlace para establecer una contraseña."
     },
+    "passkeys": {
+      "label": "Passkeys"
+    },
     "swap": {
       "label": "Intercambiar correo",
       "confirm": "{holder} cede el correo a {newcomer} y a partir de ahora iniciará sesión con el nombre de usuario {loginId}. {holder} cerrará sesión una vez.",

@@ -18,6 +18,7 @@
   "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"],
   "references": [
     { "path": "../../auth/data-access/tsconfig.lib.json" },
+    { "path": "../../auth/feature/tsconfig.lib.json" },
     { "path": "../../avatar/data-access/tsconfig.lib.json" },
     { "path": "../../avatar/feature/tsconfig.lib.json" },
     { "path": "../../avatar/ui/tsconfig.lib.json" },

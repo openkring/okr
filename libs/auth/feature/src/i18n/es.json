@@ -131,6 +131,9 @@
       "confirm": "¿Eliminar esta passkey? En ese dispositivo solo podrás iniciar sesión con tu contraseña."
     },
     "empty": "Todavía no tienes ninguna passkey.",
-    "error": "No ha funcionado. Inténtalo de nuevo, por favor."
+    "error": "No ha funcionado. Inténtalo de nuevo, por favor.",
+    "modal": {
+      "title": "Passkeys de {name}"
+    }
   }
 }
