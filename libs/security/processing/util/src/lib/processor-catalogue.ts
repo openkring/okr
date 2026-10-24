@@ -372,6 +372,36 @@ export const PROCESSOR_CATALOGUE: readonly CatalogueEntry[] = [
     memberNoticeDe:
       'Beim Erfassen deiner Adresse wurde eine Suchanfrage mit deinem Namen und Ort an das Verzeichnis gesendet. Übermittelt wurde nur die Anfrage, nicht dein Datensatz.',
   },
+  {
+    key: 'signal',
+    name: 'Signal (Benachrichtigungen an Reisetagebuch-Gäste)',
+    legalEntity: 'Signal Messenger LLC, 650 Castro Street, Suite 120-223, Mountain View, CA 94041, US',
+    // Der Register-Typ kennt kein «vom Gast gewählter Kanal»; am nächsten liegt processor, die
+    // Kategorie externalParty sagt den Rest.
+    role: 'processor',
+    category: 'externalParty',
+    // Gäste wählen Signal selbst als Kanal (Einstellungen hinter ihrem persönlichen Link); die
+    // Nachricht geht vom Signal-Konto des Autors über die mautrix-signal-Brücke auf dem Chatserver
+    // (Eintrag «matrix») an Signal. Signal sitzt in den USA.
+    country: 'US',
+    transferMechanism: 'consent',
+    purposes: ['Benachrichtigung von Gästen eines Reisetagebuchs über neue Einträge und Kommentare, auf Wunsch der Gäste'],
+    dataClasses: ['identity', 'contact', 'communication'],
+    retentionText: 'Nachrichten Ende-zu-Ende-verschlüsselt auf den Geräten der Beteiligten; Zustelldaten gemäss Datenschutzerklärung von Signal',
+    securityMeasures: [
+      'Ende-zu-Ende-Verschlüsselung durch Signal',
+      'Versand nur an Gäste, die Signal selbst gewählt haben, und nur solange sie die Benachrichtigungen nicht ausgeschaltet haben',
+      'Zugangsschlüssel des Absenders nur serverseitig (Secret Manager)',
+    ],
+    // Signal veröffentlicht keinen Auftragsverarbeitungsvertrag für diesen Fall. Bewusst leer.
+    dpaUrl: '',
+    privacyUrl: 'https://signal.org/legal/',
+    contact: 'privacy@signal.org',
+    enabledWhen: byIntegration('signal'),
+    cloudFunctions: ['journal/notify.ts', 'journal/signal.ts'],
+    memberNoticeDe:
+      'Wenn du Signal als Kanal gewählt hast, bekamst du die Benachrichtigungen über Signal. Diese Nachrichten liegen auf deinen Geräten und auf denen des Absenders; diese Löschung erreicht sie nicht.',
+  },
 ] as const;
 
 /**

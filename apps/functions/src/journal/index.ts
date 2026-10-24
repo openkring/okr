@@ -149,3 +149,4 @@ export const ensureJournalPeerSecret = onCall(
 );
 
 export { journalGuest, manageJournalGuest } from './guest';
+export { notifyJournalGuests } from './notify';

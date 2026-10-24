@@ -29,6 +29,13 @@ const privateDoc = (db: Firestore, jk: string, doc: string) => db.doc(`${Journal
 const sub = (db: Firestore, jk: string, collection: string) => db.collection(`${JournalCollection}/${jk}/${collection}`);
 const linksOf = (data: Data | undefined): JournalGuestLink[] => (Array.isArray(data?.['links']) ? (data['links'] as JournalGuestLink[]) : []);
 
+/** The person document, only when the person belongs to the tenant (a link never reaches other tenants' persons). */
+async function personInTenant(db: Firestore, personKey: string, tenants: string[]): Promise<Data | undefined> {
+  const person = (await db.collection(PersonCollection).doc(personKey).get()).data();
+  const personTenants = Array.isArray(person?.['tenants']) ? (person['tenants'] as string[]) : [];
+  return person && tenants.some((t) => personTenants.includes(t)) ? person : undefined;
+}
+
 interface GuestContext { journal: Data; tenants: string[]; link: JournalGuestLink; authors: AvatarInfo[]; guests: { person: AvatarInfo }[]; name: string }
 
 /** The journal, the caller's link and their display name — or an HttpsError for a refused link. */
@@ -41,13 +48,14 @@ async function guestContext(db: Firestore, req: GuestRequest): Promise<GuestCont
   if (!link || state !== 'ok') throw new HttpsError('permission-denied', `link-${state}`);
   const authors = Array.isArray(journal['authors']) ? (journal['authors'] as AvatarInfo[]) : [];
   const guests = Array.isArray(journal['guests']) ? (journal['guests'] as { person: AvatarInfo }[]) : [];
+  const tenants = Array.isArray(journal['tenants']) ? (journal['tenants'] as string[]) : [];
   let name = memberName(link.personKey, authors, guests);
   if (!name) {
-    // the iPad's guest record may still be on its way: the person's own name meanwhile
-    const person = (await db.collection(PersonCollection).doc(link.personKey).get()).data();
+    // the iPad's guest record may still be on its way: the person's own name meanwhile (same tenant only)
+    const person = await personInTenant(db, link.personKey, tenants);
     name = `${String(person?.['firstName'] ?? '')} ${String(person?.['lastName'] ?? '')}`.trim();
   }
-  return { journal, tenants: Array.isArray(journal['tenants']) ? (journal['tenants'] as string[]) : [], link, authors, guests, name };
+  return { journal, tenants, link, authors, guests, name };
 }
 
 /** Appends a guest's change record: next seq of the guest device, server clock; the trigger materialises it. */
@@ -157,6 +165,7 @@ export const journalGuest = onCall(
           req.action === 'like' ? { footprintKey: req.footprintKey, type: 'like', createdAt: new Date().toISOString() } : {});
         return { ok: true };
       case 'settings':
+        if (!(await personInTenant(db, pk, ctx.tenants))) throw new HttpsError('failed-precondition', 'person');
         await db.collection(PersonCollection).doc(pk).set({ newsDelivery: deliveryFor(req.channel ?? 'email') }, { merge: true });
         return { ok: true };
       case 'mute':
@@ -200,6 +209,8 @@ export const manageJournalGuest = onCall(
     if (action !== 'create' && action !== 'expiry' && action !== 'revoke') throw new HttpsError('invalid-argument', 'action');
     const personKey = d['personKey'];
     if (!isJournalKey(personKey)) throw new HttpsError('invalid-argument', 'personKey');
+    // a guest is a person of the journal's tenant — never a link to another tenant's person
+    if (action === 'create' && !(await personInTenant(db, personKey, [caller.tenantId]))) throw new HttpsError('failed-precondition', 'person not in tenant');
     const expiresAt = typeof d['expiresAt'] === 'string' && !Number.isNaN(Date.parse(d['expiresAt'])) ? new Date(d['expiresAt']).toISOString() : null;
     const link = await db.runTransaction(async (tx) => {
       const result = applyManage(linksOf((await tx.get(ref)).data()), action as ManageAction, personKey, new Date().toISOString(),
