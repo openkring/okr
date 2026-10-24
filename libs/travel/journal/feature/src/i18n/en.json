@@ -187,5 +187,20 @@
     "state_muted": "no notifications",
     "state_none": "no link yet",
     "offline": "You can only manage guests with an Internet connection."
+  },
+  "guest": {
+    "loading": "Loading the travel journal …",
+    "link_invalid": "This link no longer works. Ask the travellers for a new one.",
+    "settings": "Notifications",
+    "settings_title": "How would you like to hear about news?",
+    "channel_email": "By email",
+    "channel_signal": "By Signal",
+    "mute": "Turn notifications off",
+    "unmute": "Turn notifications back on",
+    "muted": "You will no longer get notifications about this travel journal.",
+    "unmuted": "You will get notifications again.",
+    "back": "Overview",
+    "empty": "Nothing published yet – check back soon.",
+    "hello": "Hello {name}, nice to have you along."
   }
 }

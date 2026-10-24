@@ -187,5 +187,20 @@
     "state_muted": "sans notifications",
     "state_none": "pas encore de lien",
     "offline": "Tu ne peux gérer les invités qu’avec Internet."
+  },
+  "guest": {
+    "loading": "Chargement du carnet de voyage …",
+    "link_invalid": "Ce lien ne fonctionne plus. Demande-en un nouveau aux voyageurs.",
+    "settings": "Notifications",
+    "settings_title": "Comment veux-tu être informé des nouveautés ?",
+    "channel_email": "Par e-mail",
+    "channel_signal": "Par Signal",
+    "mute": "Désactiver les notifications",
+    "unmute": "Réactiver les notifications",
+    "muted": "Tu ne recevras plus de notifications pour ce carnet de voyage.",
+    "unmuted": "Tu recevras à nouveau des notifications.",
+    "back": "Vue d’ensemble",
+    "empty": "Rien n’est encore publié – reviens bientôt.",
+    "hello": "Bonjour {name}, ravi que tu voyages avec nous."
   }
 }

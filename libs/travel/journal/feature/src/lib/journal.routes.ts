@@ -16,4 +16,6 @@ export const JOURNAL_CHILD_ROUTES: Route[] = [
 
 export const JOURNAL_ROUTES: Route[] = [
   { path: 'journal', canActivate: [isAuthenticatedGuard], children: JOURNAL_CHILD_ROUTES },
+  // the guest's personal link (plan 7): no sign-in — the link code is the credential of the journalGuest callable
+  { path: 'g/:journalKey/:code', loadComponent: () => import('./journal-guest.page').then((m) => m.JournalGuestPage) },
 ];

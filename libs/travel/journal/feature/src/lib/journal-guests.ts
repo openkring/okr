@@ -6,7 +6,7 @@ import { ActionSheetController, ToastController } from '@ionic/angular';
 import { AvatarInfo } from '@okr/shared-models';
 import { ModelSelectService } from '@okr/shared-feature';
 import { fill } from '@okr/shared-util-core';
-import { GuestLinkView, JournalGuestService } from '@okr/travel-journal-data-access';
+import { GuestLinkView, guestErrorOf, JournalGuestService } from '@okr/travel-journal-data-access';
 
 import { showJournalError } from './journal-errors';
 import { JournalStore } from './journal.store';
@@ -34,6 +34,12 @@ export class JournalGuestsSheet {
     try {
       const links = new Map((await this.guestService.links(journalKey)).filter((l) => !l.revokedAt).map((l) => [l.personKey, l]));
       const guests = this.store.guests(journalKey);
+      // a live link of a person who is no longer on the guest list stays visible, so it can still be blocked
+      for (const personKey of links.keys()) {
+        if (!guests.some((g) => g.key === personKey)) {
+          guests.push({ key: personKey, name1: personKey, name2: '', modelType: 'person', type: '', subType: '', label: personKey });
+        }
+      }
       const sheet = await this.actionSheetController.create({
         header: i18n.guests_title(),
         buttons: [
@@ -131,7 +137,12 @@ export class JournalGuestsSheet {
           text: remove ? i18n.guest_remove() : i18n.guest_revoke(), role: 'destructive',
           handler: () => void (async () => {
             try {
-              await this.guestService.revoke(journalKey, guest.key).catch(() => undefined); // no link yet: nothing to revoke
+              try {
+                await this.guestService.revoke(journalKey, guest.key);
+              } catch (error) {
+                // only «no live link» means there is nothing to block; anything else must not look like success
+                if (guestErrorOf(error).code !== 'not-found') throw error;
+              }
               if (remove) await this.store.removeGuest(journalKey, guest.key);
             } catch (error) {
               await showJournalError(this.toastController, i18n, error);

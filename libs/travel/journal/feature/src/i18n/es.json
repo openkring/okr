@@ -187,5 +187,20 @@
     "state_muted": "sin notificaciones",
     "state_none": "aún sin enlace",
     "offline": "Solo puedes gestionar invitados con Internet."
+  },
+  "guest": {
+    "loading": "Cargando el diario de viaje …",
+    "link_invalid": "Este enlace ya no funciona. Pide uno nuevo a los viajeros.",
+    "settings": "Notificaciones",
+    "settings_title": "¿Cómo quieres enterarte de las novedades?",
+    "channel_email": "Por correo",
+    "channel_signal": "Por Signal",
+    "mute": "Desactivar notificaciones",
+    "unmute": "Volver a activar notificaciones",
+    "muted": "Ya no recibirás notificaciones de este diario de viaje.",
+    "unmuted": "Vuelves a recibir notificaciones.",
+    "back": "Vista general",
+    "empty": "Aún no hay nada publicado – vuelve pronto.",
+    "hello": "Hola {name}, qué bien que viajes con nosotros."
   }
 }

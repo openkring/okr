@@ -187,5 +187,20 @@
     "state_muted": "keine Benachrichtigungen",
     "state_none": "noch kein Link",
     "offline": "Gäste verwaltest du nur mit Internet."
+  },
+  "guest": {
+    "loading": "Das Reisetagebuch wird geladen …",
+    "link_invalid": "Dieser Link funktioniert nicht mehr. Frag die Reisenden nach einem neuen.",
+    "settings": "Benachrichtigungen",
+    "settings_title": "Wie möchtest du von Neuigkeiten hören?",
+    "channel_email": "Per E-Mail",
+    "channel_signal": "Per Signal",
+    "mute": "Benachrichtigungen ausschalten",
+    "unmute": "Benachrichtigungen wieder einschalten",
+    "muted": "Du bekommst zu diesem Reisetagebuch keine Benachrichtigungen mehr.",
+    "unmuted": "Du bekommst wieder Benachrichtigungen.",
+    "back": "Übersicht",
+    "empty": "Noch ist nichts veröffentlicht – schau bald wieder vorbei.",
+    "hello": "Hallo {name}, schön, dass du mitreist."
   }
 }

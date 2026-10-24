@@ -187,5 +187,20 @@
     "state_muted": "senza notifiche",
     "state_none": "ancora nessun link",
     "offline": "Puoi gestire gli ospiti solo con Internet."
+  },
+  "guest": {
+    "loading": "Caricamento del diario di viaggio …",
+    "link_invalid": "Questo link non funziona più. Chiedine uno nuovo ai viaggiatori.",
+    "settings": "Notifiche",
+    "settings_title": "Come vuoi ricevere le novità?",
+    "channel_email": "Per e-mail",
+    "channel_signal": "Via Signal",
+    "mute": "Disattiva le notifiche",
+    "unmute": "Riattiva le notifiche",
+    "muted": "Non riceverai più notifiche per questo diario di viaggio.",
+    "unmuted": "Riceverai di nuovo le notifiche.",
+    "back": "Panoramica",
+    "empty": "Non è ancora pubblicato nulla – torna presto.",
+    "hello": "Ciao {name}, che bello che viaggi con noi."
   }
 }
