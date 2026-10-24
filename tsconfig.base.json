@@ -150,6 +150,7 @@
       "@okr/finance-vat-code-ui": ["libs/finance/vat-code/ui/src/index.ts"],
       "@okr/finance-vat-code-util": ["libs/finance/vat-code/util/src/index.ts"],
       "@okr/mobility-flighttracker-data-access": ["libs/mobility/flighttracker/data-access/src/index.ts"],
+      "@okr/mobility-tracker-data-access": ["libs/mobility/tracker/data-access/src/index.ts"],
       "@okr/mobility-flighttracker-feature": ["libs/mobility/flighttracker/feature/src/index.ts"],
       "@okr/content-folder-data-access": ["libs/content/folder/data-access/src/index.ts"],
       "@okr/content-folder-feature": ["libs/content/folder/feature/src/index.ts"],
