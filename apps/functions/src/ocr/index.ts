@@ -752,4 +752,4 @@ export const redoExpenseOcr = onCall(
 );
 
 // Spec 1.91: scheduled reaper for bill scans never saved (24 h).
-export { reapBillScans } from './reap-bill-scans';
+export { runBillScanReap } from './reap-bill-scans';

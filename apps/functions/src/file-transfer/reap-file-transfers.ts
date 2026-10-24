@@ -1,4 +1,3 @@
-import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 import type { Firestore } from 'firebase-admin/firestore';
@@ -84,58 +83,55 @@ async function sweepOrphans(db: Firestore, nowIso: string): Promise<{ checked: n
  * uploads older than 24 h → files and doc deleted. The transfer doc and its events of finished
  * transfers are kept (audit). One transfer's failure never stops the rest.
  */
-export const reapFileTransfers = onSchedule(
-  { region: 'europe-west6', schedule: 'every 60 minutes', timeoutSeconds: 540 },
-  async () => {
-    const db = getFirestore();
-    const nowIso = new Date().toISOString();
-    let expired = 0;
-    let dropped = 0;
-    for (const state of ['open', 'uploading'] as const) {
-      const snap = await db.collection(FileTransferCollection).where('state', '==', state).get();
-      for (const doc of snap.docs) {
-        try {
-          const t = { ...new FileTransferModel(''), ...(doc.data() as Partial<FileTransferModel>), okey: doc.id } as FileTransferModel;
-          const action = reapAction(t, nowIso);
-          if (action === 'none') continue;
-          const tenantId = t.tenants[0] ?? '';
-          if (!tenantId) { logger.warn(`reapFileTransfers: ${doc.id} has no tenant — skipped`); continue; }
-          if (action === 'expire') {
-            // re-read inside the transaction: an end (or another reaper run) may have won the race
-            const flipped = await db.runTransaction(async (tx) => {
-              const fresh = (await tx.get(doc.ref)).data() as Partial<FileTransferModel> | undefined;
-              if (!fresh || fresh.state !== 'open') return false;
-              tx.update(doc.ref, { state: 'expired' });
-              tx.set(db.collection(FileTransferEventCollection).doc(), {
-                tenants: t.tenants, transferKey: doc.id, senderKey: t.senderKey, type: 'expired',
-                recipientId: '', actorKey: '', fileIndex: -1, at: nowIso,
-              });
-              return true;
+export async function runFileTransferReap(): Promise<void> {
+  const db = getFirestore();
+  const nowIso = new Date().toISOString();
+  let expired = 0;
+  let dropped = 0;
+  for (const state of ['open', 'uploading'] as const) {
+    const snap = await db.collection(FileTransferCollection).where('state', '==', state).get();
+    for (const doc of snap.docs) {
+      try {
+        const t = { ...new FileTransferModel(''), ...(doc.data() as Partial<FileTransferModel>), okey: doc.id } as FileTransferModel;
+        const action = reapAction(t, nowIso);
+        if (action === 'none') continue;
+        const tenantId = t.tenants[0] ?? '';
+        if (!tenantId) { logger.warn(`reapFileTransfers: ${doc.id} has no tenant — skipped`); continue; }
+        if (action === 'expire') {
+          // re-read inside the transaction: an end (or another reaper run) may have won the race
+          const flipped = await db.runTransaction(async (tx) => {
+            const fresh = (await tx.get(doc.ref)).data() as Partial<FileTransferModel> | undefined;
+            if (!fresh || fresh.state !== 'open') return false;
+            tx.update(doc.ref, { state: 'expired' });
+            tx.set(db.collection(FileTransferEventCollection).doc(), {
+              tenants: t.tenants, transferKey: doc.id, senderKey: t.senderKey, type: 'expired',
+              recipientId: '', actorKey: '', fileIndex: -1, at: nowIso,
             });
-            if (!flipped) continue;
-            await privateBucket().deleteFiles({ prefix: fileTransferPrefix(tenantId, doc.id) });
-            expired++;
-          } else {
-            // only a still-'uploading' doc is dropped (a send may have opened it meanwhile)
-            const gone = await db.runTransaction(async (tx) => {
-              const fresh = (await tx.get(doc.ref)).data() as Partial<FileTransferModel> | undefined;
-              if (!fresh || fresh.state !== 'uploading') return false;
-              tx.delete(doc.ref);
-              return true;
-            });
-            if (!gone) continue;
-            await privateBucket().deleteFiles({ prefix: fileTransferPrefix(tenantId, doc.id) });
-            dropped++;
-          }
-        } catch (err) {
-          logger.error(`reapFileTransfers: ${doc.id} failed`, err);
+            return true;
+          });
+          if (!flipped) continue;
+          await privateBucket().deleteFiles({ prefix: fileTransferPrefix(tenantId, doc.id) });
+          expired++;
+        } else {
+          // only a still-'uploading' doc is dropped (a send may have opened it meanwhile)
+          const gone = await db.runTransaction(async (tx) => {
+            const fresh = (await tx.get(doc.ref)).data() as Partial<FileTransferModel> | undefined;
+            if (!fresh || fresh.state !== 'uploading') return false;
+            tx.delete(doc.ref);
+            return true;
+          });
+          if (!gone) continue;
+          await privateBucket().deleteFiles({ prefix: fileTransferPrefix(tenantId, doc.id) });
+          dropped++;
         }
+      } catch (err) {
+        logger.error(`reapFileTransfers: ${doc.id} failed`, err);
       }
     }
-    const orphans = await sweepOrphans(db, nowIso).catch(err => {
-      logger.error('reapFileTransfers: orphan sweep failed', err);
-      return { checked: 0, deleted: 0 };
-    });
-    logger.info(`reapFileTransfers: ${expired} expired, ${dropped} dropped uploads, orphan sweep ${orphans.deleted}/${orphans.checked} folders deleted`);
-  },
-);
+  }
+  const orphans = await sweepOrphans(db, nowIso).catch(err => {
+    logger.error('reapFileTransfers: orphan sweep failed', err);
+    return { checked: 0, deleted: 0 };
+  });
+  logger.info(`reapFileTransfers: ${expired} expired, ${dropped} dropped uploads, orphan sweep ${orphans.deleted}/${orphans.checked} folders deleted`);
+}

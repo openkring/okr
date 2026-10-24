@@ -1,6 +1,5 @@
 // apps/functions/src/trip/index.ts
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
-import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { logger } from 'firebase-functions/v2';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 
@@ -122,69 +121,66 @@ export const onTripWrite = onDocumentWritten(
   }
 );
 
-export const onTripStatsReconcile = onSchedule(
-  { schedule: '0 2 * * *', timeZone: 'Europe/Zurich', region: REGION },
-  async () => {
-    const db = getFirestore();
-    const year     = new Date().getFullYear();
-    const yearStr  = String(year);
-    const fromDate = `${yearStr}0101`;
-    const toDate   = `${yearStr}1231`;
+export async function runTripStatsReconcile(): Promise<void> {
+  const db = getFirestore();
+  const year     = new Date().getFullYear();
+  const yearStr  = String(year);
+  const fromDate = `${yearStr}0101`;
+  const toDate   = `${yearStr}1231`;
 
-    const snap = await db.collection('trips')
-      .where('startDate', '>=', fromDate)
-      .where('startDate', '<=', toDate)
-      .get();
+  const snap = await db.collection('trips')
+    .where('startDate', '>=', fromDate)
+    .where('startDate', '<=', toDate)
+    .get();
 
-    const boatTotals   = new Map<string, { totalKm: number; tripCount: number }>();
-    const memberTotals = new Map<string, { totalKm: number; tripCount: number }>();
+  const boatTotals   = new Map<string, { totalKm: number; tripCount: number }>();
+  const memberTotals = new Map<string, { totalKm: number; tripCount: number }>();
 
-    for (const doc of snap.docs) {
-      const t = doc.data() as TripDoc;
-      if (!COUNTING_STATES.has(t.state)) continue;
+  for (const doc of snap.docs) {
+    const t = doc.data() as TripDoc;
+    if (!COUNTING_STATES.has(t.state)) continue;
 
-      const dist = Number(t.distance);
-      if (!Number.isFinite(dist)) continue;
+    const dist = Number(t.distance);
+    if (!Number.isFinite(dist)) continue;
 
-      const boatKey = t.resource?.key;
-      if (boatKey) {
-        const cur = boatTotals.get(boatKey) ?? { totalKm: 0, tripCount: 0 };
-        boatTotals.set(boatKey, { totalKm: cur.totalKm + dist, tripCount: cur.tripCount + 1 });
-      }
-
-      for (const p of t.participants ?? []) {
-        if (!p.key) continue;
-        const cur = memberTotals.get(p.key) ?? { totalKm: 0, tripCount: 0 };
-        memberTotals.set(p.key, { totalKm: cur.totalKm + dist, tripCount: cur.tripCount + 1 });
-      }
+    const boatKey = t.resource?.key;
+    if (boatKey) {
+      const cur = boatTotals.get(boatKey) ?? { totalKm: 0, tripCount: 0 };
+      boatTotals.set(boatKey, { totalKm: cur.totalKm + dist, tripCount: cur.tripCount + 1 });
     }
 
-    const allWrites: Array<{ ref: FirebaseFirestore.DocumentReference; data: Record<string, unknown> }> = [
-      ...[...boatTotals.entries()].map(([key, data]) => ({ ref: db.doc(`stats_boats/${key}/years/${yearStr}`), data })),
-      ...[...memberTotals.entries()].map(([key, data]) => ({ ref: db.doc(`stats_members/${key}/years/${yearStr}`), data })),
-    ];
-
-    // Rollups are rewritten wholesale (no merge): the nightly job is the authority, so any drift
-    // the incremental deltas accumulated during the day is corrected here.
-    const toEntries = (m: Map<string, { totalKm: number; tripCount: number }>) =>
-      Object.fromEntries([...m].map(([key, v]) => [key, { km: v.totalKm, count: v.tripCount }]));
-    allWrites.push(
-      { ref: db.doc(`stats_rollup/boats_${yearStr}`),   data: { entries: toEntries(boatTotals) } },
-      { ref: db.doc(`stats_rollup/members_${yearStr}`), data: { entries: toEntries(memberTotals) } },
-    );
-
-    const CHUNK = 400;
-    for (let i = 0; i < allWrites.length; i += CHUNK) {
-      const batch = db.batch();
-      for (const { ref, data } of allWrites.slice(i, i + CHUNK)) {
-        batch.set(ref, { ...data, updatedAt: FieldValue.serverTimestamp() });
-      }
-      await batch.commit();
+    for (const p of t.participants ?? []) {
+      if (!p.key) continue;
+      const cur = memberTotals.get(p.key) ?? { totalKm: 0, tripCount: 0 };
+      memberTotals.set(p.key, { totalKm: cur.totalKm + dist, tripCount: cur.tripCount + 1 });
     }
-
-    logger.info(`onTripStatsReconcile: processed ${snap.size} trips, wrote ${boatTotals.size} boat + ${memberTotals.size} member docs for ${yearStr}`);
   }
-);
+
+  const allWrites: Array<{ ref: FirebaseFirestore.DocumentReference; data: Record<string, unknown> }> = [
+    ...[...boatTotals.entries()].map(([key, data]) => ({ ref: db.doc(`stats_boats/${key}/years/${yearStr}`), data })),
+    ...[...memberTotals.entries()].map(([key, data]) => ({ ref: db.doc(`stats_members/${key}/years/${yearStr}`), data })),
+  ];
+
+  // Rollups are rewritten wholesale (no merge): the nightly job is the authority, so any drift
+  // the incremental deltas accumulated during the day is corrected here.
+  const toEntries = (m: Map<string, { totalKm: number; tripCount: number }>) =>
+    Object.fromEntries([...m].map(([key, v]) => [key, { km: v.totalKm, count: v.tripCount }]));
+  allWrites.push(
+    { ref: db.doc(`stats_rollup/boats_${yearStr}`),   data: { entries: toEntries(boatTotals) } },
+    { ref: db.doc(`stats_rollup/members_${yearStr}`), data: { entries: toEntries(memberTotals) } },
+  );
+
+  const CHUNK = 400;
+  for (let i = 0; i < allWrites.length; i += CHUNK) {
+    const batch = db.batch();
+    for (const { ref, data } of allWrites.slice(i, i + CHUNK)) {
+      batch.set(ref, { ...data, updatedAt: FieldValue.serverTimestamp() });
+    }
+    await batch.commit();
+  }
+
+  logger.info(`onTripStatsReconcile: processed ${snap.size} trips, wrote ${boatTotals.size} boat + ${memberTotals.size} member docs for ${yearStr}`);
+}
 
 /*----------------------------- end-of-day auto-close ---------------------------------*/
 
@@ -219,34 +215,31 @@ function formatSwissDate(storeDate: string): string {
  * Runs once daily, shortly before midnight — by then every trip that started today should have
  * ended today, so nothing here needs a per-tenant timezone or an age check.
  */
-export const onTripEndOfDayClose = onSchedule(
-  { schedule: '55 23 * * *', timeZone: 'Europe/Zurich', region: REGION },
-  async () => {
-    const db = getFirestore();
-    const snap = await db.collection('trips').where('state', 'in', ['open', 'open.rev']).get();
-    if (snap.empty) return;
+export async function runTripEndOfDayClose(): Promise<void> {
+  const db = getFirestore();
+  const snap = await db.collection('trips').where('state', 'in', ['open', 'open.rev']).get();
+  if (snap.empty) return;
 
-    const { date, time } = zurichDateTimeParts(new Date());
-    const comment = `Automatisch abgeschlossen am ${formatSwissDate(date)} um ${time} Uhr — die Fahrt war am Tagesende noch offen und wurde vom System geschlossen. Bitte prüfen.`;
+  const { date, time } = zurichDateTimeParts(new Date());
+  const comment = `Automatisch abgeschlossen am ${formatSwissDate(date)} um ${time} Uhr — die Fahrt war am Tagesende noch offen und wurde vom System geschlossen. Bitte prüfen.`;
 
-    const docs = snap.docs;
-    for (let i = 0; i < docs.length; i += AUTO_CLOSE_CHUNK) {
-      const batch = db.batch();
-      for (const doc of docs.slice(i, i + AUTO_CLOSE_CHUNK)) {
-        const notes = (doc.data() as TripDoc & { notes?: string }).notes;
-        batch.update(doc.ref, {
-          endDate: date,
-          endTime: time,
-          state: 'closed.rev',
-          notes: notes ? `${notes}\n${comment}` : comment,
-        });
-      }
-      await batch.commit();
+  const docs = snap.docs;
+  for (let i = 0; i < docs.length; i += AUTO_CLOSE_CHUNK) {
+    const batch = db.batch();
+    for (const doc of docs.slice(i, i + AUTO_CLOSE_CHUNK)) {
+      const notes = (doc.data() as TripDoc & { notes?: string }).notes;
+      batch.update(doc.ref, {
+        endDate: date,
+        endTime: time,
+        state: 'closed.rev',
+        notes: notes ? `${notes}\n${comment}` : comment,
+      });
     }
-
-    logger.info(`onTripEndOfDayClose: closed ${docs.length} still-open trip(s) as 'closed.rev'`);
+    await batch.commit();
   }
-);
+
+  logger.info(`onTripEndOfDayClose: closed ${docs.length} still-open trip(s) as 'closed.rev'`);
+}
 
 // Logbuch damage / bug reports (Schaden-/Fehlermeldung) — emitted as workflow events
 export { reportIncident } from './report';

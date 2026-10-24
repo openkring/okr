@@ -1,6 +1,5 @@
 // apps/functions/src/business/index.ts
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
@@ -203,19 +202,16 @@ async function billedHistory(
  * termination right are bkaiser's decisions to take, not a function's, and a job that suspended
  * a partner automatically would do so on the strength of a missed cron run.
  */
-export const checkPartnerHeartbeats = onSchedule(
-  { region: REGION, schedule: '0 7 * * *', timeZone: 'Europe/Zurich' },
-  async () => {
-    const db = getFirestore();
-    const partners = await db.collection(PartnerCollection).where('status', '==', 'active').get();
-    for (const doc of partners.docs) {
-      const status = heartbeatStatus(doc.get('lastHeartbeatAt') ?? '');
-      if (status !== 'ok') {
-        logger.warn(`checkPartnerHeartbeats: ${doc.id} is at '${status}' (last heartbeat ${doc.get('lastHeartbeatAt') || 'never'})`);
-      }
+export async function runPartnerHeartbeats(): Promise<void> {
+  const db = getFirestore();
+  const partners = await db.collection(PartnerCollection).where('status', '==', 'active').get();
+  for (const doc of partners.docs) {
+    const status = heartbeatStatus(doc.get('lastHeartbeatAt') ?? '');
+    if (status !== 'ok') {
+      logger.warn(`checkPartnerHeartbeats: ${doc.id} is at '${status}' (last heartbeat ${doc.get('lastHeartbeatAt') || 'never'})`);
     }
-  },
-);
+  }
+}
 
 /**
  * C5 §2 — the public signup on kring.ch (and the `okr` demo).

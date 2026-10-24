@@ -1,6 +1,5 @@
 // apps/functions/src/session/index.ts
 import { onRequest } from 'firebase-functions/v2/https';
-import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getTodayStr, DateFormat, subDuration } from '@okr/shared-util-core';
@@ -58,41 +57,38 @@ export const endSession = onRequest(
  * Scheduled cleanup: marks orphaned sessions (isActive=true, lastSeenAt older than 30 min) as ended.
  * Runs every 30 minutes.
  */
-export const cleanupOrphanSessions = onSchedule(
-  { schedule: 'every 30 minutes', region: REGION },
-  async () => {
-    const db = getFirestore();
-    const thresholdStr = subDuration(getTodayStr(DateFormat.StoreDateTime), { minutes: 30 }, DateFormat.StoreDateTime);
+export async function runOrphanSessionCleanup(): Promise<void> {
+  const db = getFirestore();
+  const thresholdStr = subDuration(getTodayStr(DateFormat.StoreDateTime), { minutes: 30 }, DateFormat.StoreDateTime);
 
-    // ponytail: single-field query + in-memory cutoff filter, so no composite index is needed.
-    // Bounded by the number of concurrently-open sessions; add an (isActive, lastSeenAt) index
-    // if that ever grows past a few thousand.
-    const snap = await db.collection(SESSION_COLLECTION)
-      .where('isActive', '==', true)
-      .get();
+  // ponytail: single-field query + in-memory cutoff filter, so no composite index is needed.
+  // Bounded by the number of concurrently-open sessions; add an (isActive, lastSeenAt) index
+  // if that ever grows past a few thousand.
+  const snap = await db.collection(SESSION_COLLECTION)
+    .where('isActive', '==', true)
+    .get();
 
-    const docs = snap.docs.filter((doc) => (doc.get('lastSeenAt') as string) < thresholdStr);
+  const docs = snap.docs.filter((doc) => (doc.get('lastSeenAt') as string) < thresholdStr);
 
-    if (docs.length === 0) {
-      logger.info('cleanupOrphanSessions: no orphans found');
-      return;
-    }
-
-    const BATCH_SIZE = 500;
-    for (let i = 0; i < docs.length; i += BATCH_SIZE) {
-      const chunk = docs.slice(i, i + BATCH_SIZE);
-      const batch = db.batch();
-      for (const doc of chunk) {
-        const data = doc.data();
-        const endedAt = data['lastSeenAt'] as string;
-        const durationSeconds = calcDurationSeconds(data['startedAt'] as string, endedAt);
-        batch.update(doc.ref, { isActive: false, endedAt, durationSeconds });
-      }
-      await batch.commit();
-    }
-    logger.info(`cleanupOrphanSessions: closed ${docs.length} orphaned sessions`);
+  if (docs.length === 0) {
+    logger.info('cleanupOrphanSessions: no orphans found');
+    return;
   }
-);
+
+  const BATCH_SIZE = 500;
+  for (let i = 0; i < docs.length; i += BATCH_SIZE) {
+    const chunk = docs.slice(i, i + BATCH_SIZE);
+    const batch = db.batch();
+    for (const doc of chunk) {
+      const data = doc.data();
+      const endedAt = data['lastSeenAt'] as string;
+      const durationSeconds = calcDurationSeconds(data['startedAt'] as string, endedAt);
+      batch.update(doc.ref, { isActive: false, endedAt, durationSeconds });
+    }
+    await batch.commit();
+  }
+  logger.info(`cleanupOrphanSessions: closed ${docs.length} orphaned sessions`);
+}
 
 function calcDurationSeconds(startedAt: string, endedAt: string): number {
   if (!startedAt || !endedAt || startedAt.length < 14 || endedAt.length < 14) return 0;

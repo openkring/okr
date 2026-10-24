@@ -18,7 +18,6 @@ import { randomBytes } from 'node:crypto';
 import { getFirestore, DocumentReference, FieldValue } from 'firebase-admin/firestore';
 import { getAuth, UserRecord } from 'firebase-admin/auth';
 import { logger } from 'firebase-functions/v2';
-import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 
 import { AvatarInfo, UserModel } from '@okr/shared-models';
@@ -600,43 +599,40 @@ export async function handleMembershipAccountSync(event: MembershipWrittenEvent)
  * so the trigger alone would never close these. closeAccount is idempotent, so an
  * overlapping window is harmless.
  */
-export const sweepExpiredMemberships = onSchedule(
-  { schedule: '30 3 * * *', timeZone: 'Europe/Zurich', region: 'europe-west6' },
-  async () => {
-    const today = getTodayStr(DateFormat.StoreDate);
-    // ponytail: 7-day catch-up window. If runs can be missed for longer, store a
-    // watermark document instead of widening this.
-    const from = shiftDaysBack(today, 7);
+export async function runExpiredMembershipSweep(): Promise<void> {
+  const today = getTodayStr(DateFormat.StoreDate);
+  // ponytail: 7-day catch-up window. If runs can be missed for longer, store a
+  // watermark document instead of widening this.
+  const from = shiftDaysBack(today, 7);
 
-    const expired = await getFirestore().collection('memberships')
-      .where('dateOfExit', '>=', from)
-      .where('dateOfExit', '<=', today)
-      .get();
+  const expired = await getFirestore().collection('memberships')
+    .where('dateOfExit', '>=', from)
+    .where('dateOfExit', '<=', today)
+    .get();
 
-    let closed = 0;
-    for (const doc of expired.docs) {
-      const m = doc.data() as MembershipDoc;
-      try {
-        if (m.memberModelType !== 'person') continue;
-        if (isActiveMembership(m, today)) continue; // not expired after all
-        if (m.relIsLast === false) continue;        // superseded by a category change, not an exit
-        const tenantId = await resolveDefaultOrgTenant(m);
-        if (!tenantId) continue;
-        await closeAccount(m.memberKey, tenantId);
-        // Emit only on the day the exit date takes effect. closeAccount is idempotent
-        // and the catch-up window is 7 days wide, so an unconditional emit would re-fire
-        // the event every day for a week — and dedup only protects an OPEN task.
-        if (m.dateOfExit === today) {
-          await emitMembershipEvent('membership.ended', m, doc.id, tenantId, today);
-        }
-        closed++;
-      } catch (error) {
-        logger.error(`${CF_NAME}: sweep failed for membership ${doc.id}`, error);
+  let closed = 0;
+  for (const doc of expired.docs) {
+    const m = doc.data() as MembershipDoc;
+    try {
+      if (m.memberModelType !== 'person') continue;
+      if (isActiveMembership(m, today)) continue; // not expired after all
+      if (m.relIsLast === false) continue;        // superseded by a category change, not an exit
+      const tenantId = await resolveDefaultOrgTenant(m);
+      if (!tenantId) continue;
+      await closeAccount(m.memberKey, tenantId);
+      // Emit only on the day the exit date takes effect. closeAccount is idempotent
+      // and the catch-up window is 7 days wide, so an unconditional emit would re-fire
+      // the event every day for a week — and dedup only protects an OPEN task.
+      if (m.dateOfExit === today) {
+        await emitMembershipEvent('membership.ended', m, doc.id, tenantId, today);
       }
+      closed++;
+    } catch (error) {
+      logger.error(`${CF_NAME}: sweep failed for membership ${doc.id}`, error);
     }
-    logger.info(`${CF_NAME}: sweep processed ${expired.size} expired memberships, closed ${closed}`);
   }
-);
+  logger.info(`${CF_NAME}: sweep processed ${expired.size} expired memberships, closed ${closed}`);
+}
 
 /** The caller holds the admin role (users/{uid}.roles, or the legacy custom claim) — not merely memberAdmin. */
 async function callerIsAdmin(uid: string | undefined, adminClaim: boolean): Promise<boolean> {

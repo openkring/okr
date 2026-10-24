@@ -5,7 +5,6 @@
 // abgeleitet aus `sourceGroupKeys` — `onMembershipWritten` macht daraus unveraendert den
 // Zwangsbeitritt und den Kick. Hier steht nur, WER Mitglied ist.
 
-import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onCall, HttpsError, CallableOptions } from 'firebase-functions/v2/https';
 import { getFirestore } from 'firebase-admin/firestore';
 
@@ -180,22 +179,19 @@ export async function handlePinboard(event: GroupWrittenEvent): Promise<void> {
 }
 
 /** Naechtlicher Abgleich aller Pinnwaende — repariert verpasste Trigger. */
-export const sweepPinboards = onSchedule(
-  { schedule: '30 3 * * *', timeZone: 'Europe/Zurich', region: 'europe-west6' },
-  async () => {
-    const snap = await getFirestore().collection('groups').where('kind', '==', 'pinboard').get();
-    let changed = 0;
-    for (const doc of snap.docs) {
-      try {
-        const plan = await reconcilePinboard(doc.id);
-        if (plan.add.length + plan.end.length > 0) changed++;
-      } catch (error) {
-        console.error(`sweepPinboards: failed for ${doc.id}:`, error);
-      }
+export async function runPinboardSweep(): Promise<void> {
+  const snap = await getFirestore().collection('groups').where('kind', '==', 'pinboard').get();
+  let changed = 0;
+  for (const doc of snap.docs) {
+    try {
+      const plan = await reconcilePinboard(doc.id);
+      if (plan.add.length + plan.end.length > 0) changed++;
+    } catch (error) {
+      console.error(`sweepPinboards: failed for ${doc.id}:`, error);
     }
-    console.log(`sweepPinboards: pinboards=${snap.size} changed=${changed}`);
-  },
-);
+  }
+  console.log(`sweepPinboards: pinboards=${snap.size} changed=${changed}`);
+}
 
 // ---------------------------------------------------------------------------------------------
 // Callables

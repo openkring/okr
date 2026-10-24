@@ -1,5 +1,4 @@
 // apps/functions/src/privacy/reap-exports.ts
-import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { logger } from 'firebase-functions/v2';
 import { privateBucket } from '../_storage/private-bucket';
 
@@ -40,20 +39,17 @@ export function isReapableExportArtifact(
  * Scoped to `tenant/` (never lists outside it) and, per object, to
  * `isReapableExportArtifact` — it cannot delete anything that isn't an export artifact.
  */
-export const reapPrivacyExports = onSchedule(
-  { region: REGION, schedule: 'every 24 hours' },
-  async () => {
-    const bucket = privateBucket();
-    const [files] = await bucket.getFiles({ prefix: 'tenant/' });
-    const now = Date.now();
+export async function runPrivacyExportReap(): Promise<void> {
+  const bucket = privateBucket();
+  const [files] = await bucket.getFiles({ prefix: 'tenant/' });
+  const now = Date.now();
 
-    let deleted = 0;
-    for (const f of files) {
-      if (isReapableExportArtifact(f.name, f.metadata.timeCreated, now)) {
-        await f.delete();
-        deleted += 1;
-      }
+  let deleted = 0;
+  for (const f of files) {
+    if (isReapableExportArtifact(f.name, f.metadata.timeCreated, now)) {
+      await f.delete();
+      deleted += 1;
     }
-    logger.info(`reapPrivacyExports: deleted ${deleted} export artifact(s) of ${files.length} scanned`);
-  },
-);
+  }
+  logger.info(`reapPrivacyExports: deleted ${deleted} export artifact(s) of ${files.length} scanned`);
+}

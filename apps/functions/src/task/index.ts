@@ -8,7 +8,7 @@ import { pushToPersons } from '../srv/push';
 import { decideDiaryTransition, decideTaskPush, TASK_LIST_URL, type TaskDocLike } from './task-decisions';
 import { applyTaskToDiary } from './task-diary';
 
-export { taskDaily } from './task-daily';
+export { runTaskDaily } from './task-daily';
 export { listGroupTasks } from './list-group-tasks';
 
 const REGION = 'europe-west6';

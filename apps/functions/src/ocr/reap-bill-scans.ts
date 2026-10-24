@@ -1,4 +1,3 @@
-import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { logger } from 'firebase-functions/v2';
 import { getStorage } from 'firebase-admin/storage';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -35,27 +34,24 @@ export function isReapableBillScan(
  * ocr-results doc. A saved scan was already moved to the private bucket by writeBill, so
  * anything still under ocr/bill/ after 24 h is abandoned.
  */
-export const reapBillScans = onSchedule(
-  { region: REGION, schedule: 'every 24 hours' },
-  async () => {
-    const bucket = getStorage().bucket();
-    const [files] = await bucket.getFiles({ prefix: 'tenant/', matchGlob: 'tenant/*/ocr/bill/**' });
-    const db = getFirestore();
-    const now = Date.now();
+export async function runBillScanReap(): Promise<void> {
+  const bucket = getStorage().bucket();
+  const [files] = await bucket.getFiles({ prefix: 'tenant/', matchGlob: 'tenant/*/ocr/bill/**' });
+  const db = getFirestore();
+  const now = Date.now();
 
-    let deleted = 0;
-    for (const f of files) {
-      if (!isReapableBillScan(f.name, f.metadata.timeCreated, now)) continue;
-      try {
-        const results = await db.collection(OCR_RESULT_COLLECTION).where('storagePath', '==', f.name).get();
-        await Promise.all(results.docs.map((d) => d.ref.delete()));
-        await f.delete();
-        deleted += 1;
-      } catch (error) {
-        // One stubborn file must not stop the sweep; it is retried on the next run.
-        logger.warn(`reapBillScans: could not reap "${f.name}"`, error);
-      }
+  let deleted = 0;
+  for (const f of files) {
+    if (!isReapableBillScan(f.name, f.metadata.timeCreated, now)) continue;
+    try {
+      const results = await db.collection(OCR_RESULT_COLLECTION).where('storagePath', '==', f.name).get();
+      await Promise.all(results.docs.map((d) => d.ref.delete()));
+      await f.delete();
+      deleted += 1;
+    } catch (error) {
+      // One stubborn file must not stop the sweep; it is retried on the next run.
+      logger.warn(`reapBillScans: could not reap "${f.name}"`, error);
     }
-    logger.info(`reapBillScans: deleted ${deleted} abandoned bill scan(s) of ${files.length} scanned`);
-  },
-);
+  }
+  logger.info(`reapBillScans: deleted ${deleted} abandoned bill scan(s) of ${files.length} scanned`);
+}

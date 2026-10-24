@@ -10,7 +10,6 @@
 import type { GroupWrittenEvent } from '../group/group-written-event';
 import { getFirestore } from 'firebase-admin/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { onSchedule } from 'firebase-functions/v2/scheduler';
 
 import {
   MATRIX_HOMESERVER,
@@ -207,33 +206,25 @@ export async function handleGroupPostPolicy(event: GroupWrittenEvent): Promise<v
  *
  * Gruppen mit 'all' werden nicht abgefragt und nicht angefasst.
  */
-export const sweepRoomPostPolicies = onSchedule(
-  {
-    schedule: '15 3 * * *',
-    timeZone: 'Europe/Zurich',
-    region: 'europe-west6',
-    secrets: [matrixAdminToken],
-  },
-  async () => {
-    const adminToken = matrixAdminToken.value();
-    const hostname = serverHostname();
+export async function runRoomPostPolicySweep(): Promise<void> {
+  const adminToken = matrixAdminToken.value();
+  const hostname = serverHostname();
 
-    const snap = await getFirestore()
-      .collection(GROUP_COLLECTION)
-      .where('postPolicy', '==', 'privileged')
-      .get();
+  const snap = await getFirestore()
+    .collection(GROUP_COLLECTION)
+    .where('postPolicy', '==', 'privileged')
+    .get();
 
-    let applied = 0;
-    for (const doc of snap.docs) {
-      try {
-        if ((await applyRoomPostPolicy(doc.id, adminToken, hostname)) === 'applied') applied++;
-      } catch (error) {
-        console.error(`sweepRoomPostPolicies: failed for group ${doc.id}:`, error);
-      }
+  let applied = 0;
+  for (const doc of snap.docs) {
+    try {
+      if ((await applyRoomPostPolicy(doc.id, adminToken, hostname)) === 'applied') applied++;
+    } catch (error) {
+      console.error(`sweepRoomPostPolicies: failed for group ${doc.id}:`, error);
     }
-    console.log(`sweepRoomPostPolicies: groups=${snap.size} applied=${applied}`);
-  },
-);
+  }
+  console.log(`sweepRoomPostPolicies: groups=${snap.size} applied=${applied}`);
+}
 
 /**
  * Ausloeser 3 von 3: die AOC-Aktion «Schreibrechte abgleichen».

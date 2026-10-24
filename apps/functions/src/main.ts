@@ -149,7 +149,6 @@ export const onMembershipDocWritten = Membership.onMembershipDocWritten;
 export const resolveNotesRoom = MatrixSimple.resolveNotesRoom;
 
 // Pinnwand: alle schreiben an alle, Antworten privat (spec 2026-10-11, TOC 1.95)
-export const sweepPinboards = MatrixSimple.sweepPinboards;
 export const sendChatReminders = MatrixSimple.sendChatReminders;
 export const createPinboard = MatrixSimple.createPinboard;
 export const updatePinboard = MatrixSimple.updatePinboard;
@@ -159,14 +158,12 @@ export const joinPinboard = MatrixSimple.joinPinboard;
 export const listAvailablePinboards = MatrixSimple.listAvailablePinboards;
 // membership → Matrix-room sync (server-side backstop; chat design review #3)
 export const reconcileGroupRoomMembers = MatrixMembershipSync.reconcileGroupRoomMembers;
-export const sweepRoomPostPolicies = MatrixPostPolicy.sweepRoomPostPolicies;
 export const syncRoomPostPolicy = MatrixPostPolicy.syncRoomPostPolicy;
 // group-room drift: report room members without a membership, and prune them on demand
 export const auditGroupRoomMembers = MatrixMembershipSync.auditGroupRoomMembers;
 export const pruneGroupRoomExtras = MatrixMembershipSync.pruneGroupRoomExtras;
 
 // membership → user-account sync (spec 2026-08-12-membership-account-sync-design.md)
-export const sweepExpiredMemberships = AccountSync.sweepExpiredMemberships;
 export const syncPersonAccount = AccountSync.syncPersonAccount;
 
 // Benutzername (spec 2026-09-30-login-id-spec.md): daily backfill sweep — assigns a loginId
@@ -263,7 +260,6 @@ export const onRagFileDeleted = Rag.onRagFileDeleted;
 export const onOcrFileFinalized = Ocr.onOcrFileFinalized;
 export const onOcrResultWritten = Ocr.onOcrResultWritten;
 export const redoExpenseOcr = Ocr.redoExpenseOcr;
-export const reapBillScans = Ocr.reapBillScans;
 // document renderings: raster → SVG (vtracer)
 export const vectorizeDocument = Vectorize.vectorizeDocument;
 // storage trigger: album videos → playable mp4 + poster frame (ffmpeg renderings)
@@ -303,7 +299,6 @@ export const unlinkBillPayment = Bill.unlinkBillPayment;
 export const writeBill = Bill.writeBill;
 export const bookBill = Bill.bookBill;
 export const updateBillDetails = Bill.updateBillDetails;
-export const billApproverDaily = Bill.billApproverDaily;
 export const getBillsForApproval = Bill.getBillsForApproval;
 // createdAt on new bookings, bills and invoices: the accounting overview's «Seit deinem letzten Besuch»
 export const onBookingCreated = FinanceCreated.onBookingCreated;
@@ -325,19 +320,15 @@ export const getFlightInfo = Flighttracker.getFlightInfo;
 
 // session analytics
 export const endSession = Session.endSession;
-export const cleanupOrphanSessions = Session.cleanupOrphanSessions;
 
 // task notifications
 export const onTaskWritten = Task.onTaskWritten;
 // task daily job: auto-archive completed tasks + due-today reminder (spec 1.72 §7.2, §8)
-export const taskDaily = Task.taskDaily;
 // closed-group task list: membership check for chatMode 'members' groups (spec 1.75)
 export const listGroupTasks = Task.listGroupTasks;
 
 // trip statistics
 export const onTripWrite             = Trip.onTripWrite;
-export const onTripStatsReconcile    = Trip.onTripStatsReconcile;
-export const onTripEndOfDayClose     = Trip.onTripEndOfDayClose;
 // Logbuch damage / bug reports — emitted as workflow events, consequences configured as rules
 export const reportIncident          = Trip.reportIncident;
 
@@ -379,7 +370,7 @@ export const mergePersonIntoTenant = Person.mergePersonIntoTenant;
 export { mergeOrgIntoTenant } from './org';
 
 // partner channel — C3 metering ingest + commission run, C5 prospect signup
-export { pushMetering, runCommission, checkPartnerHeartbeats, submitProspect, pushMeteringToPlatform } from './business';
+export { pushMetering, runCommission, submitProspect, pushMeteringToPlatform } from './business';
 // C5 §5 — the partner-facing pool, and bkaiser's revocation lever
 export { listProspects, claimProspect, releaseProspect, revokeProspect } from './business';
 // C5 §5 — the same pool as the PARTNER's installation reaches it: an in-product proxy over the
@@ -443,8 +434,6 @@ export { getAddressView } from './address/get-address-view';
 export { allocateTenant, getAllocationEmails } from './tenant-allocation';
 
 // exchange rates
-export { fetchSnbRatesScheduled } from './exchange-rate/fetch-snb-rates';
-export { scheduledWeatherFetch } from './weather/fetch-weather';
 export { fetchMeteoSwissRadar } from './weather/fetch-meteoswiss-radar';
 export { setManualRate } from './exchange-rate/set-manual-rate';
 
@@ -455,7 +444,7 @@ export { parseQrInvoice } from './payment/parse-qr-invoice';
 export { generateDunningPdf } from './payment/generate-dunning-pdf';
 
 // privacy 1.19 Phase 5B: GDPR/revDSG subject-access export delivery (D-P5-1) —
-// exportMyData zips + signs the caller's own export, reapPrivacyExports reaps stale artifacts
+// exportMyData zips + signs the caller's own export (stale artifacts are reaped by nightlyMaintenance)
 // signFinanceDocuments: short-lived links to vouchers in the private bucket (spec 1.74)
 export const signFinanceDocuments = FinanceDocument.signFinanceDocuments;
 // signVideoUrls: signed imgix poster/mp4 URLs for album videos in the private bucket (spec 1.82)
@@ -463,7 +452,6 @@ export const signVideoUrls = Video.signVideoUrls;
 // prepareChatVideoUpload: chat video → room album in the private bucket, signed upload URL (spec 1.82 §8)
 export const prepareChatVideoUpload = Video.prepareChatVideoUpload;
 export const exportMyData = Privacy.exportMyData;
-export const reapPrivacyExports = Privacy.reapPrivacyExports;
 
 // privacy 1.19 Phase 5B: tenant-scoped right to erasure (D-P5-2/D-P5-6, D-L2) —
 // previewMyErasure builds the honest preflight report, eraseMyData executes the erasure
@@ -506,7 +494,6 @@ export const updateGroupFolder = Content.updateGroupFolder;
 export { healthz } from './health';
 
 // contracts: daily deadline scan (spec 1.5 §6.2)
-export const scanContractDeadlines = Contract.scanContractDeadlines;
 export const onContractWritten = Contract.onContractWritten;
 // contract dossier files: signed upload, register (SHA-256) and signed view links (spec 1.5 §7)
 export const requestContractUpload = Contract.requestContractUpload;
@@ -531,8 +518,6 @@ export const getFileTransfer = FileTransfer.getFileTransfer;
 export const openFileTransferFile = FileTransfer.openFileTransferFile;
 // endFileTransfer: quick file transfer, sender or admin ends an open transfer early, deletes the files (spec 1.115)
 export const endFileTransfer = FileTransfer.endFileTransfer;
-// reapFileTransfers: quick file transfer, hourly sweep — expires open transfers, drops stale uploads (spec 1.115)
-export const reapFileTransfers = FileTransfer.reapFileTransfers;
 // requestFileTransferLimit: quick file transfer, member asks for higher limits via the tenant support room (spec 1.115)
 export const requestFileTransferLimit = FileTransfer.requestFileTransferLimit;
 
@@ -554,3 +539,6 @@ export const notifyJournalGuests = Journal.notifyJournalGuests;
 export const deleteLearningItem = Learning.deleteLearningItem;
 // onRatingWritten: learning rooms, a rating write refreshes docs/{docKey}.ratingCount/ratingSum (spec 1.115)
 export const onRatingWritten = Learning.onRatingWritten;
+
+// time-slot schedulers (spec 1.118 A9): replace fifteen separate onSchedule functions
+export { nightlyMaintenance, morningJobs, eveningJobs, halfHourlyJobs } from './_schedules';

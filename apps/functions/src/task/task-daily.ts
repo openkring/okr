@@ -7,7 +7,6 @@
 // per tenant so one tenant's failure (bad data, a transient Firestore error) never stops the
 // rest — see the try/catch in `taskDaily` below.
 
-import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, FieldValue, type Firestore } from 'firebase-admin/firestore';
 import { DateFormat, getTodayStr, SYSTEM_TENANT } from '@okr/shared-util-core';
@@ -120,20 +119,17 @@ export async function remindDueToday(db: Firestore, tenantId: string, today: str
  * in UTC, so `getTodayStr()` — which reads the container's local (UTC) date — agrees with the
  * Zurich calendar day this job is meant to act on.
  */
-export const taskDaily = onSchedule(
-  { region: REGION, schedule: 'every day 07:00', timeZone: 'Europe/Zurich' },
-  async () => {
-    const db = getFirestore();
-    const today = getTodayStr();
-    const configs = await db.collection('app-config').get();
-    for (const cfg of configs.docs) {
-      const tenantId = cfg.id;
-      try {
-        await archiveCompleted(db, tenantId, getArchiveCutoff(today, resolveTaskArchiveDays(cfg.get('taskArchiveDays'))));
-        await remindDueToday(db, tenantId, today);
-      } catch (e) {
-        logger.error(`taskDaily: tenant=${tenantId} failed`, e);   // one tenant never stops the others
-      }
+export async function runTaskDaily(): Promise<void> {
+  const db = getFirestore();
+  const today = getTodayStr();
+  const configs = await db.collection('app-config').get();
+  for (const cfg of configs.docs) {
+    const tenantId = cfg.id;
+    try {
+      await archiveCompleted(db, tenantId, getArchiveCutoff(today, resolveTaskArchiveDays(cfg.get('taskArchiveDays'))));
+      await remindDueToday(db, tenantId, today);
+    } catch (e) {
+      logger.error(`taskDaily: tenant=${tenantId} failed`, e);   // one tenant never stops the others
     }
-  },
-);
+  }
+}
