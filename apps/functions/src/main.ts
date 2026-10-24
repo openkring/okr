@@ -24,6 +24,7 @@ import * as Video from './video';
 import * as FileTransfer from './file-transfer';
 import * as Learning from './learning';
 import * as Group from './group';
+import * as Membership from './membership';
 import * as Expense from './expense';
 import * as Booking from './booking';
 import * as Invoice from './invoice';
@@ -143,10 +144,11 @@ export const removeAdhocChatMember = MatrixSimple.removeAdhocChatMember;
 export const setChatPins = MatrixSimple.setChatPins;
 // onGroupDocWritten: groups/{groupId}, one trigger fanning out to the seven former group triggers (replication, adminKeys, name, postPolicy, chatMode, chatCleanup, pinboard; 1.118 A3)
 export const onGroupDocWritten = Group.onGroupDocWritten;
+// onMembershipDocWritten: memberships/{membershipId}, one trigger fanning out to the four former membership triggers (matrixSync, pinboardSource, accountSync, exitSettlement; 1.118 A4)
+export const onMembershipDocWritten = Membership.onMembershipDocWritten;
 export const resolveNotesRoom = MatrixSimple.resolveNotesRoom;
 
 // Pinnwand: alle schreiben an alle, Antworten privat (spec 2026-10-11, TOC 1.95)
-export const onPinboardSourceMembershipWritten = MatrixSimple.onPinboardSourceMembershipWritten;
 export const sweepPinboards = MatrixSimple.sweepPinboards;
 export const sendChatReminders = MatrixSimple.sendChatReminders;
 export const createPinboard = MatrixSimple.createPinboard;
@@ -156,7 +158,6 @@ export const leavePinboard = MatrixSimple.leavePinboard;
 export const joinPinboard = MatrixSimple.joinPinboard;
 export const listAvailablePinboards = MatrixSimple.listAvailablePinboards;
 // membership → Matrix-room sync (server-side backstop; chat design review #3)
-export const onMembershipWritten = MatrixMembershipSync.onMembershipWritten;
 export const reconcileGroupRoomMembers = MatrixMembershipSync.reconcileGroupRoomMembers;
 export const sweepRoomPostPolicies = MatrixPostPolicy.sweepRoomPostPolicies;
 export const syncRoomPostPolicy = MatrixPostPolicy.syncRoomPostPolicy;
@@ -165,7 +166,6 @@ export const auditGroupRoomMembers = MatrixMembershipSync.auditGroupRoomMembers;
 export const pruneGroupRoomExtras = MatrixMembershipSync.pruneGroupRoomExtras;
 
 // membership → user-account sync (spec 2026-08-12-membership-account-sync-design.md)
-export const onMembershipAccountSync = AccountSync.onMembershipAccountSync;
 export const sweepExpiredMemberships = AccountSync.sweepExpiredMemberships;
 export const syncPersonAccount = AccountSync.syncPersonAccount;
 
@@ -417,7 +417,6 @@ export { migrateMemberFees } from './member-fee/migrate-member-fees';
 
 // exit fee settlement (spec 1.105): a changed membership exit (or archiving) opens, updates, closes or
 // reopens the treasurer's pro-rata settlement task; a not-yet-invoiced fee row is rebuilt pro rata instead
-export { onMembershipExitWritten } from './member-fee/exit-settlement.trigger';
 // the treasurer's decision on that task: refund, adjust the invoice or exit on 31.12.
 export { settleMembershipExit } from './member-fee/settle-membership-exit';
 

@@ -10,7 +10,6 @@
 // the guaranteed mechanism; the client calls remain a latency optimization (both
 // paths are idempotent — "already in room" / "not in room" are tolerated).
 
-import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore } from 'firebase-admin/firestore';
 
@@ -30,6 +29,7 @@ import {
   getUserTenants,
   activeGroupMemberKeys,
 } from './shared';
+import type { MembershipWrittenEvent } from '../membership/membership-written-event';
 
 const MEMBERSHIP_COLLECTION = 'memberships';
 const GROUP_COLLECTION = 'groups';
@@ -88,59 +88,52 @@ function grantsChatAccess(doc: MembershipDoc | undefined, today: string): boolea
  * Errors are logged, never thrown: a Matrix hiccup must not fail/retry-storm the
  * Firestore write, and reconcileGroupRoomMembers can repair any missed transition.
  */
-export const onMembershipWritten = onDocumentWritten(
-  {
-    document: `${MEMBERSHIP_COLLECTION}/{membershipId}`,
-    region: 'europe-west6',
-    secrets: [matrixAdminToken],
-  },
-  async (event) => {
-    const before = event.data?.before?.exists ? (event.data.before.data() as MembershipDoc) : undefined;
-    const after = event.data?.after?.exists ? (event.data.after.data() as MembershipDoc) : undefined;
+export async function handleMembershipMatrixSync(event: MembershipWrittenEvent): Promise<void> {
+  const before = event.data?.before?.exists ? (event.data.before.data() as MembershipDoc) : undefined;
+  const after = event.data?.after?.exists ? (event.data.after.data() as MembershipDoc) : undefined;
 
-    const today = getTodayStr(DateFormat.StoreDate);
-    const had = grantsChatAccess(before, today);
-    const has = grantsChatAccess(after, today);
-    const rekeyed = had && has && (before!.memberKey !== after!.memberKey || before!.orgKey !== after!.orgKey);
-    if (had === has && !rekeyed) return; // no chat-relevant transition
+  const today = getTodayStr(DateFormat.StoreDate);
+  const had = grantsChatAccess(before, today);
+  const has = grantsChatAccess(after, today);
+  const rekeyed = had && has && (before!.memberKey !== after!.memberKey || before!.orgKey !== after!.orgKey);
+  if (had === has && !rekeyed) return; // no chat-relevant transition
 
-    const hostname = serverHostname();
-    const adminToken = matrixAdminToken.value();
+  const hostname = serverHostname();
+  const adminToken = matrixAdminToken.value();
 
-    try {
-      if ((had && !has) || rekeyed) {
-        const doc = before!;
-        const matrixUserId = `@${doc.memberKey.toLowerCase()}:${hostname}`;
-        const roomId = await resolveGroupRoom(doc.orgKey, hostname, adminToken, { create: false });
-        if (roomId) {
-          await ensureAdminInRoom(roomId, adminToken);
-          const kicked = await kickUserFromRoom(roomId, matrixUserId, adminToken, 'Membership ended');
-          console.log(`onMembershipWritten: ${matrixUserId} ${kicked ? 'kicked from' : 'was not in'} room ${roomId} (group ${doc.orgKey})`);
-        }
-        // The shared room is not the whole membership. An 'ask' group force-joins every member
-        // into every requester's room, so without this an ex-member keeps reading — and being
-        // notified about — conversations the group is no longer theirs to see. Runs whether or
-        // not the shared room resolved: the two room families are independent.
-        await kickFromAskRooms(doc.orgKey, doc.memberKey, matrixUserId, adminToken);
-      }
-      if ((has && !had) || rekeyed) {
-        const doc = after!;
-        const matrixUserId = `@${doc.memberKey.toLowerCase()}:${hostname}`;
-        await ensureMatrixUserExists(matrixUserId, adminToken, { personKey: doc.memberKey });
-        const roomId = await resolveGroupRoom(doc.orgKey, hostname, adminToken, { create: true });
-        if (!roomId) {
-          console.warn(`onMembershipWritten: no room resolvable for group ${doc.orgKey}`);
-          return;
-        }
+  try {
+    if ((had && !has) || rekeyed) {
+      const doc = before!;
+      const matrixUserId = `@${doc.memberKey.toLowerCase()}:${hostname}`;
+      const roomId = await resolveGroupRoom(doc.orgKey, hostname, adminToken, { create: false });
+      if (roomId) {
         await ensureAdminInRoom(roomId, adminToken);
-        await forceJoinUserToRoom(roomId, matrixUserId, adminToken);
-        console.log(`onMembershipWritten: ${matrixUserId} joined room ${roomId} (group ${doc.orgKey})`);
+        const kicked = await kickUserFromRoom(roomId, matrixUserId, adminToken, 'Membership ended');
+        console.log(`onMembershipWritten: ${matrixUserId} ${kicked ? 'kicked from' : 'was not in'} room ${roomId} (group ${doc.orgKey})`);
       }
-    } catch (error) {
-      console.error(`onMembershipWritten: sync failed for membership ${event.params.membershipId}:`, error);
+      // The shared room is not the whole membership. An 'ask' group force-joins every member
+      // into every requester's room, so without this an ex-member keeps reading — and being
+      // notified about — conversations the group is no longer theirs to see. Runs whether or
+      // not the shared room resolved: the two room families are independent.
+      await kickFromAskRooms(doc.orgKey, doc.memberKey, matrixUserId, adminToken);
     }
+    if ((has && !had) || rekeyed) {
+      const doc = after!;
+      const matrixUserId = `@${doc.memberKey.toLowerCase()}:${hostname}`;
+      await ensureMatrixUserExists(matrixUserId, adminToken, { personKey: doc.memberKey });
+      const roomId = await resolveGroupRoom(doc.orgKey, hostname, adminToken, { create: true });
+      if (!roomId) {
+        console.warn(`onMembershipWritten: no room resolvable for group ${doc.orgKey}`);
+        return;
+      }
+      await ensureAdminInRoom(roomId, adminToken);
+      await forceJoinUserToRoom(roomId, matrixUserId, adminToken);
+      console.log(`onMembershipWritten: ${matrixUserId} joined room ${roomId} (group ${doc.orgKey})`);
+    }
+  } catch (error) {
+    console.error(`onMembershipWritten: sync failed for membership ${event.params.membershipId}:`, error);
   }
-);
+}
 
 /**
  * Repair drift for one group: force-join every person with an active group

@@ -5,7 +5,6 @@
 // abgeleitet aus `sourceGroupKeys` — `onMembershipWritten` macht daraus unveraendert den
 // Zwangsbeitritt und den Kick. Hier steht nur, WER Mitglied ist.
 
-import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onCall, HttpsError, CallableOptions } from 'firebase-functions/v2/https';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -13,6 +12,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { DateFormat, getTodayStr, isActiveMembership } from '@okr/shared-util-core';
 
 import { groupAdminKeys } from '../group/group-admin-keys';
+import type { MembershipWrittenEvent } from '../membership/membership-written-event';
 import type { GroupWrittenEvent } from '../group/group-written-event';
 
 import {
@@ -140,29 +140,26 @@ export async function reconcilePinboard(groupKey: string, only?: string): Promis
 }
 
 /** Eine Quell-Mitgliedschaft hat sich geaendert → diese eine Person in allen betroffenen Pinnwaenden abgleichen. */
-export const onPinboardSourceMembershipWritten = onDocumentWritten(
-  { document: 'memberships/{membershipId}', region: 'europe-west6' },
-  async (event) => {
-    const before = event.data?.before?.data() as { orgKey?: string; orgModelType?: string; memberKey?: string; memberModelType?: string } | undefined;
-    const after = event.data?.after?.data() as typeof before;
-    const doc = after ?? before;
-    if (!doc || doc.orgModelType !== 'group' || doc.memberModelType !== 'person' || !doc.orgKey || !doc.memberKey) return;
-    // Pinnwand-Mitgliedschaften selbst nie weiterverfolgen — sonst Rekursion.
-    if (isPinboardKey(doc.orgKey) || event.params.membershipId.startsWith('pb_')) return;
-    try {
-      for (const [orgKey, personKey] of sourcePairsToReconcile(before, after)) {
-        const pinboards = await getFirestore().collection('groups')
-          .where('sourceGroupKeys', 'array-contains', orgKey).get();
-        for (const pb of pinboards.docs) {
-          if ((pb.data()['kind'] ?? 'group') !== 'pinboard') continue;
-          await reconcilePinboard(pb.id, personKey);
-        }
+export async function handlePinboardSourceMembership(event: MembershipWrittenEvent): Promise<void> {
+  const before = event.data?.before?.data() as { orgKey?: string; orgModelType?: string; memberKey?: string; memberModelType?: string } | undefined;
+  const after = event.data?.after?.data() as typeof before;
+  const doc = after ?? before;
+  if (!doc || doc.orgModelType !== 'group' || doc.memberModelType !== 'person' || !doc.orgKey || !doc.memberKey) return;
+  // Pinnwand-Mitgliedschaften selbst nie weiterverfolgen — sonst Rekursion.
+  if (isPinboardKey(doc.orgKey) || event.params.membershipId.startsWith('pb_')) return;
+  try {
+    for (const [orgKey, personKey] of sourcePairsToReconcile(before, after)) {
+      const pinboards = await getFirestore().collection('groups')
+        .where('sourceGroupKeys', 'array-contains', orgKey).get();
+      for (const pb of pinboards.docs) {
+        if ((pb.data()['kind'] ?? 'group') !== 'pinboard') continue;
+        await reconcilePinboard(pb.id, personKey);
       }
-    } catch (error) {
-      console.error(`onPinboardSourceMembershipWritten: failed for ${event.params.membershipId}:`, error);
     }
-  },
-);
+  } catch (error) {
+    console.error(`onPinboardSourceMembershipWritten: failed for ${event.params.membershipId}:`, error);
+  }
+}
 
 /** Quellgruppen oder Teilnahme geaendert → ganze Pinnwand abgleichen. */
 export async function handlePinboard(event: GroupWrittenEvent): Promise<void> {

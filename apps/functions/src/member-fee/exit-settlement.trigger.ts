@@ -10,7 +10,6 @@
  * do nothing: the callable's «extend» already set its task done, the backfill passes its tenant itself.
  */
 import { logger } from 'firebase-functions/v2';
-import { onDocumentWrittenWithAuthContext } from 'firebase-functions/v2/firestore';
 import { DocumentData, Firestore, getFirestore } from 'firebase-admin/firestore';
 import { AvatarInfo, MembershipCollection, TaskCollection, TaskModel, UserCollection } from '@okr/shared-models';
 import { addDuration, convertDateFormatToString, DateFormat, getTodayStr } from '@okr/shared-util-core';
@@ -20,6 +19,7 @@ import {
   computeExitSettlement, EXIT_SETTLEMENT_TAG, ExitSettlement, exitSettlementTaskName, exitSettlementTaskNotes, noExitSettlement,
 } from '@okr/relationship-membership-util';
 
+import type { MembershipWrittenEvent } from '../membership/membership-written-event';
 import { SYSTEM_AUTHOR } from '../workflow/activity';
 import { withoutUndefined } from '../invoice/invoice.logic';
 import {
@@ -287,47 +287,44 @@ async function settlementTenantOf(db: Firestore, membershipKey: string, writer: 
   return tenantId;
 }
 
-export const onMembershipExitWritten = onDocumentWrittenWithAuthContext(
-  { document: 'memberships/{key}', region: REGION },
-  async (event) => {
-    const before = event.data?.before?.data();
-    const after = event.data?.after?.data();
-    const membershipKey = event.params['key'] as string;
-    const db = getFirestore();
-    const today = getTodayStr(DateFormat.StoreDate);
-    const writer = { authType: String(event.authType), authId: event.authId };
+export async function handleMembershipExit(event: MembershipWrittenEvent): Promise<void> {
+  const before = event.data?.before?.data();
+  const after = event.data?.after?.data();
+  const membershipKey = event.params.membershipId;
+  const db = getFirestore();
+  const today = getTodayStr(DateFormat.StoreDate);
+  const writer = { authType: String(event.authType), authId: event.authId };
 
-    const keys: string[] = exitChanged(before, after) ? [membershipKey] : [];
-    if (!before && after) {
-      try {
-        const memberKey = typeof after['memberKey'] === 'string' ? (after['memberKey'] as string) : '';
-        const orgKey = typeof after['orgKey'] === 'string' ? (after['orgKey'] as string) : '';
-        if (memberKey && orgKey) {
-          const snap = await db.collection(MembershipCollection).where('memberKey', '==', memberKey).get();
-          keys.push(...siblingsToSettle({ okey: membershipKey, memberKey, orgKey },
-            snap.docs.map(d => ({ ...(d.data() as { memberKey?: string; orgKey?: string; dateOfExit?: string; isArchived?: boolean }), okey: d.id })), today));
-        }
-      } catch (err) {
-        logger.error(`${CF_NAME}: sibling lookup failed for membership ${membershipKey}`, err);
-      }
-    }
-    // the writer (users read) is resolved only when there is something to settle
-    if (keys.length === 0) return;
-    let tenantId: string | undefined;
+  const keys: string[] = exitChanged(before, after) ? [membershipKey] : [];
+  if (!before && after) {
     try {
-      tenantId = await settlementTenantOf(db, membershipKey, writer);
-    } catch (err) {
-      logger.error(`${CF_NAME}: writer check failed for membership ${membershipKey}`, err);
-    }
-    if (!tenantId) return;
-
-    for (const key of keys) {
-      try {
-        // the live document, not the event's snapshot: out-of-order delivery must not resurrect an old exit
-        await settleMembership(db, key, tenantId, today);
-      } catch (err) {
-        logger.error(`${CF_NAME}: settlement task failed for membership ${key}`, err);
+      const memberKey = typeof after['memberKey'] === 'string' ? (after['memberKey'] as string) : '';
+      const orgKey = typeof after['orgKey'] === 'string' ? (after['orgKey'] as string) : '';
+      if (memberKey && orgKey) {
+        const snap = await db.collection(MembershipCollection).where('memberKey', '==', memberKey).get();
+        keys.push(...siblingsToSettle({ okey: membershipKey, memberKey, orgKey },
+          snap.docs.map(d => ({ ...(d.data() as { memberKey?: string; orgKey?: string; dateOfExit?: string; isArchived?: boolean }), okey: d.id })), today));
       }
+    } catch (err) {
+      logger.error(`${CF_NAME}: sibling lookup failed for membership ${membershipKey}`, err);
     }
-  },
-);
+  }
+  // the writer (users read) is resolved only when there is something to settle
+  if (keys.length === 0) return;
+  let tenantId: string | undefined;
+  try {
+    tenantId = await settlementTenantOf(db, membershipKey, writer);
+  } catch (err) {
+    logger.error(`${CF_NAME}: writer check failed for membership ${membershipKey}`, err);
+  }
+  if (!tenantId) return;
+
+  for (const key of keys) {
+    try {
+      // the live document, not the event's snapshot: out-of-order delivery must not resurrect an old exit
+      await settleMembership(db, key, tenantId, today);
+    } catch (err) {
+      logger.error(`${CF_NAME}: settlement task failed for membership ${key}`, err);
+    }
+  }
+}

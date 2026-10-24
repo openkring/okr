@@ -18,7 +18,6 @@ import { randomBytes } from 'node:crypto';
 import { getFirestore, DocumentReference, FieldValue } from 'firebase-admin/firestore';
 import { getAuth, UserRecord } from 'firebase-admin/auth';
 import { logger } from 'firebase-functions/v2';
-import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 
@@ -28,6 +27,7 @@ import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId 
 import { getUserIndex, isSyntheticLoginEmail, syntheticLoginEmail } from '@okr/user-util';
 
 import { runWorkflow } from '../workflow';
+import type { MembershipWrittenEvent } from '../membership/membership-written-event';
 
 import { decideAccountAction, MembershipDoc, relLogAbbrs, shiftDaysBack } from './account-sync.decide';
 import { allocateLoginId, stampPersonKey, syntheticAddressFree, SyntheticCandidateStatus, syntheticCandidateStatus, tenantAppDomain } from './login-id';
@@ -552,49 +552,46 @@ async function emitMembershipEvent(
  * retry-storm the membership write, and a missed account can always be opened with the
  * syncPersonAccount callable.
  */
-export const onMembershipAccountSync = onDocumentWritten(
-  { document: 'memberships/{membershipId}', region: 'europe-west6' },
-  async (event) => {
-    const before = event.data?.before?.exists ? (event.data.before.data() as MembershipDoc) : undefined;
-    const after = event.data?.after?.exists ? (event.data.after.data() as MembershipDoc) : undefined;
+export async function handleMembershipAccountSync(event: MembershipWrittenEvent): Promise<void> {
+  const before = event.data?.before?.exists ? (event.data.before.data() as MembershipDoc) : undefined;
+  const after = event.data?.after?.exists ? (event.data.after.data() as MembershipDoc) : undefined;
 
-    try {
-      const tenantId = await resolveDefaultOrgTenant(after ?? before);
-      if (!tenantId) return; // not a default-org membership
+  try {
+    const tenantId = await resolveDefaultOrgTenant(after ?? before);
+    if (!tenantId) return; // not a default-org membership
 
-      const today = getTodayStr(DateFormat.StoreDate);
-      const action = decideAccountAction(before, after, tenantId, today);
+    const today = getTodayStr(DateFormat.StoreDate);
+    const action = decideAccountAction(before, after, tenantId, today);
 
-      const personKey = (after ?? before)?.memberKey ?? '';
-      if (!personKey) return;
+    const personKey = (after ?? before)?.memberKey ?? '';
+    if (!personKey) return;
 
-      // 1. the invariant: opening/closing the account stays in code, never in a rule
-      if (action === 'open') await openAccount(personKey, tenantId);
-      if (action === 'close') await closeAccount(personKey, tenantId);
+    // 1. the invariant: opening/closing the account stays in code, never in a rule
+    if (action === 'open') await openAccount(personKey, tenantId);
+    if (action === 'close') await closeAccount(personKey, tenantId);
 
-      // 2. the policy: whatever else should happen is data (spec 1.35). Emitted here
-      //    because this function has already computed before/after, the tenant and the
-      //    active-state transition — one definition of "ended", not two.
-      const membershipId = event.params.membershipId;
-      if (action === 'open') {
-        // A successor membership (relLog with a history) is a category change, not an
-        // entry — the UI never edits `category` in place, it ends one document and
-        // creates the next, so this is the ONLY write a categoryChanged rule can see.
-        const isSuccessor = relLogAbbrs(after).length > 1;
-        await emitMembershipEvent(
-          isSuccessor ? 'membership.categoryChanged' : 'membership.created',
-          after ?? before, membershipId, tenantId, today,
-        );
-      }
-      if (action === 'close') await emitMembershipEvent('membership.ended', after ?? before, membershipId, tenantId, today);
-      if (action === 'none' && before && after && (before.category ?? '') !== (after.category ?? '')) {
-        await emitMembershipEvent('membership.categoryChanged', after, membershipId, tenantId, today);
-      }
-    } catch (error) {
-      logger.error(`${CF_NAME}: failed for membership ${event.params.membershipId}`, error);
+    // 2. the policy: whatever else should happen is data (spec 1.35). Emitted here
+    //    because this function has already computed before/after, the tenant and the
+    //    active-state transition — one definition of "ended", not two.
+    const membershipId = event.params.membershipId;
+    if (action === 'open') {
+      // A successor membership (relLog with a history) is a category change, not an
+      // entry — the UI never edits `category` in place, it ends one document and
+      // creates the next, so this is the ONLY write a categoryChanged rule can see.
+      const isSuccessor = relLogAbbrs(after).length > 1;
+      await emitMembershipEvent(
+        isSuccessor ? 'membership.categoryChanged' : 'membership.created',
+        after ?? before, membershipId, tenantId, today,
+      );
     }
+    if (action === 'close') await emitMembershipEvent('membership.ended', after ?? before, membershipId, tenantId, today);
+    if (action === 'none' && before && after && (before.category ?? '') !== (after.category ?? '')) {
+      await emitMembershipEvent('membership.categoryChanged', after, membershipId, tenantId, today);
+    }
+  } catch (error) {
+    logger.error(`${CF_NAME}: failed for membership ${event.params.membershipId}`, error);
   }
-);
+}
 
 /**
  * Daily sweep: close accounts whose membership exit date has passed since the last run.

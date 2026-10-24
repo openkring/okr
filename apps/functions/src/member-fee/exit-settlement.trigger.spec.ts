@@ -1,16 +1,21 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { ExitSettlement, SettlementCase } from '@okr/relationship-membership-util';
 
 import { claimedInvoiceKey, claimPatch } from './settle-membership-exit.logic';
 import {
   exitChanged, exitSettlementFor, isSettlementWriter, mergeTaskNotes, NOTES_MARKER, REOPEN_NOTE, reopenedTaskNotes, siblingsToSettle,
-  taskStateOf, upsertDecision, writerCheck, writerTenant,
+  handleMembershipExit, taskStateOf, upsertDecision, writerCheck, writerTenant,
 } from './exit-settlement.trigger';
 import {
   CLOSE_NOTE, doneTaskDecision, flattenCategoryLists, isAutoClosed, isServerTask, needsPositions, overlappingCount, toAvatarInfo,
   toInvoiceFacts,
 } from './exit-settlement.context';
 import { SYSTEM_AUTHOR } from '../workflow/activity';
+import type { MembershipWrittenEvent } from '../membership/membership-written-event';
+
+const log = vi.hoisted(() => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }));
+vi.mock('firebase-functions/v2', async (orig) => ({ ...(await orig<object>()), logger: log }));
+vi.mock('firebase-admin/firestore', async (orig) => ({ ...(await orig<object>()), getFirestore: () => ({}) }));
 
 const settlement = (c: SettlementCase): ExitSettlement => ({
   case: c, exitYear: 2026, months: 6, yearlyFr: 600, dueFr: 300, billedFr: 600, overpaidRappen: 30000,
@@ -379,5 +384,19 @@ describe('isServerTask / taskStateOf (squatting)', () => {
     expect(taskStateOf(undefined, 'scs', 'm1')).toBe('missing');
     expect(taskStateOf(server, 'scs', 'm1')).toBe('open');
     expect(taskStateOf({ ...server, state: 'done', notes: `x\n${CLOSE_NOTE}` }, 'scs', 'm1')).toBe('auto-closed');
+  });
+});
+
+describe('handleMembershipExit', () => {
+  it('takes the membership key from params.membershipId', async () => {
+    const event = {
+      params: { membershipId: 'm1' },
+      authType: 'service_account',
+      authId: undefined,
+      data: { before: { data: () => ({ dateOfExit: '99991231' }) }, after: { data: () => ({ dateOfExit: '20261031' }) } },
+    } as unknown as MembershipWrittenEvent;
+    await handleMembershipExit(event);
+    // an exit change settles the key it reads from params; the service-account writer is then skipped, naming that key
+    expect(log.info).toHaveBeenCalledWith(expect.stringContaining('membership m1 written by service_account/-'));
   });
 });
