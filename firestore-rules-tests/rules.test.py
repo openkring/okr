@@ -1309,6 +1309,18 @@ tracker_cases = [
     ("uidT1 UPDATE own tracker trip handing it to pC -> DENY", False,
      lambda: req("PATCH", "trips/trTrack", token=TT1, data=body({"track": {"personKey": "pC"}}), mask=["track"])),
     ("uidC DELETE pB's tracker trip -> DENY", False, lambda: req("DELETE", "trips/trTrack", token=TC)),
+    ("uidC UPDATE trLog into a tracker trip (type -> tracker, track.personKey pC) -> DENY", False,
+     lambda: req("PATCH", "trips/trLog", token=TC,
+                 data=body({"type": "tracker", "track": {"personKey": "pC"}}), mask=["type", "track"])),
+    ("uidT1 UPDATE own tracker trip out of tracker (type -> logbuch) -> DENY", False,
+     lambda: req("PATCH", "trips/trTrack", token=TT1, data=body({"type": "logbuch"}), mask=["type"])),
+    ("uidC self-detach of pB's tracker trip (tenants minus t1) -> DENY", False,
+     lambda: req("PATCH", "trips/trTrack", token=TC, data=body({"tenants": ["t2"]}), mask=["tenants"])),
+    ("uidC CREATE tracker trip without track -> DENY", False,
+     lambda: req("POST", "trips?documentId=trNoTrack", token=TC,
+                 data=body({"tenants": ["t1"], "isArchived": False, "type": "tracker", "name": "New"}))),
+    ("uidT1 UPDATE own tracker trip keeping type, changing only name -> ALLOW", True,
+     lambda: req("PATCH", "trips/trTrack", token=TT1, data=body({"name": "Track3"}), mask=["name"])),
 ]
 for label, expect, run in tracker_cases:
     code = run()

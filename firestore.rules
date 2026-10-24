@@ -918,7 +918,10 @@ service cloud.firestore {
       allow get:    if tenantRead() && (resource == null || isTrackOwner(resource.data));
       allow list:   if tenantRead() && isListableTrip(resource.data);
       allow create: if tenantCreate() && isTrackOwner(request.resource.data);
-      allow update: if tenantUpdate() && isTrackOwner(resource.data) && isTrackOwner(request.resource.data);
+      // A trip may not change into or out of 'tracker': a member could otherwise hide any club trip
+      // as «their» tracker trip, and the stats function would then subtract its km.
+      allow update: if tenantUpdate() && isTrackOwner(resource.data) && isTrackOwner(request.resource.data)
+                    && (resource.data.get('type', '') == 'tracker') == (request.resource.data.get('type', '') == 'tracker');
       allow delete: if tenantDelete() && isTrackOwner(resource.data);
 
       // Recorded tracker points (encoded polyline per section). Only the recording person
