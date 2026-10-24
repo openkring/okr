@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  byCreatedAtDesc, checkLoginTarget, defaultPasskeyLabel, expectedOrigin, isChallengeUsable, isCredentialId, isRecentSignIn, mayManagePasskey,
+  byCreatedAtDesc, checkLoginTarget, defaultPasskeyLabel, expectedOrigin, isChallengeUsable, isCredentialId, isRecentSignIn, mayManagePasskey, registrationBlock,
   normalizePasskeyLabel, toPasskeyItem,
   passkeyAddedMail, resolveRpId, StoredChallenge,
 } from './passkey.decide';
@@ -129,5 +129,18 @@ describe('byCreatedAtDesc', () => {
   it('sorts newest first', () => {
     const items = [{ createdAt: '20250101000000' }, { createdAt: '20261024120000' }, { createdAt: '20260101000000' }];
     expect(items.sort(byCreatedAtDesc).map((i) => i.createdAt)).toEqual(['20261024120000', '20260101000000', '20250101000000']);
+  });
+});
+
+describe('registrationBlock', () => {
+  it('refuses an impersonation session even when it is fresh', () => {
+    expect(registrationBlock({ auth_time: 1_000, impersonatedBy: 'admin-uid' }, 1_000_000)).toBe('impersonated');
+  });
+  it('asks for a fresh sign-in when auth_time is old or missing', () => {
+    expect(registrationBlock({ auth_time: 1_000 }, 1_000_000 + 301_000)).toBe('recent-login-required');
+    expect(registrationBlock(undefined, 0)).toBe('recent-login-required');
+  });
+  it('lets a fresh own session register', () => {
+    expect(registrationBlock({ auth_time: 1_000 }, 1_000_000 + 299_000)).toBeUndefined();
   });
 });

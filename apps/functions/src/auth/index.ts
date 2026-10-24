@@ -119,7 +119,8 @@ export const createCustomToken = functions.onCall(
 
     try {
       logger.info(`${CF_NAME}: user ${request.auth?.uid} (tenant ${caller.tenantId}) wants custom token of user ${request.data.uid}`);
-      const _customToken = await getAuth().createCustomToken(request.data.uid);
+      // `impersonatedBy` marks the session, so it can never add a passkey to the member's account (spec 1.120)
+      const _customToken = await getAuth().createCustomToken(request.data.uid, { impersonatedBy: request.auth?.uid ?? 'unknown' });
       // Do NOT log the token itself — a custom token can be exchanged for a full
       // session of the impersonated user (H-4). Log only the target uid.
       logger.info(`${CF_NAME}: custom token created successfully for uid ${request.data.uid}`);
