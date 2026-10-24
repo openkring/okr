@@ -33,6 +33,9 @@ import { reservedListHeight } from './list-reservation';
       }
       ion-label { font-size: 1em; }
       ion-icon { font-size: 28px; width: 28px; height: 28px; margin-inline-end: 8px; }
+      /* a called-off event: red + struck through, matching the calendar list view */
+      ion-item.state-cancelled { --color: var(--ion-color-danger); }
+      ion-item.state-cancelled ion-label { text-decoration: line-through; }
     `,
   ],
   providers: [CalendarStore], 
@@ -55,7 +58,7 @@ import { reservedListHeight } from './list-reservation';
         } @else {
           <ion-list lines="inset">
             @for(event of calevents(); track event.okey) {
-              <ion-item (click)="showActions(event)">
+              <ion-item [class.state-cancelled]="event.state === 'cancelled'" (click)="showActions(event)">
                 <ion-icon src="{{ getIcon(event) | svgIcon }}" color="{{ getIconColor(event) }}" slot="start" />
                 <ion-label>{{ event.startDate | weekday | translate | async }} {{ startText(event) }} {{event.name}}</ion-label>
                 @if(store.unseen(event); as unseen) {
