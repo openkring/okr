@@ -95,6 +95,15 @@ function randomPassword(): string {
   return randomBytes(32).toString('base64url');
 }
 
+export interface OpenAccountOptions {
+  /**
+   * Recreate the Auth identity of the person's users doc when it has none (its login was lost or
+   * deleted). Set only by an admin's explicit request (syncPersonAccount); the automatic paths
+   * (membership trigger, tenant allocation) leave a deleted login deleted.
+   */
+  readonly restoreLogin?: boolean;
+}
+
 /** What `openAccount` did, for a caller that has to report it back to a user. */
 export type OpenAccountOutcome = 'created' | 'createdWithLoginId' | 'exists' | 'noEmail' | 'noPerson';
 
@@ -125,7 +134,7 @@ export interface OpenAccountResult {
  * account is being opened for the TARGET one — the favourite of the wrong tenant, or of no
  * tenant at all when the target has not projected this person yet.
  */
-export async function openAccount(personKey: string, tenantId: string, loginEmail?: string): Promise<OpenAccountResult> {
+export async function openAccount(personKey: string, tenantId: string, loginEmail?: string, options: OpenAccountOptions = {}): Promise<OpenAccountResult> {
   const db = getFirestore();
 
   // 1. the caller's pick, else the favourite e-mail from the address-directory projection
@@ -190,8 +199,11 @@ export async function openAccount(personKey: string, tenantId: string, loginEmai
   if (ownDoc && ownAction === 'exists') {
     const ownLoginEmail = String(ownDoc.data()['loginEmail']);
     const ownLoginId = String(ownDoc.data()['loginId'] ?? '');
-    // a users doc whose Auth identity is gone («kein Login»): give it back its login, under its own uid
-    if (await restoreMissingLogin(ownDoc.id, ownLoginEmail, displayName, personKey)) {
+    // a users doc whose Auth identity is gone («kein Login»): give it back its login, under its own
+    // uid — only when an admin asks for it. «Login löschen» leaves exactly this state on purpose, and
+    // the membership trigger must never quietly undo that.
+    if (options.restoreLogin && await restorableLoginEmail(ownLoginEmail, ownLoginId, favEmail, tenantId)
+        && await restoreMissingLogin(ownDoc.id, ownLoginEmail, displayName, personKey)) {
       return { outcome: 'created', uid: ownDoc.id, loginEmail: ownLoginEmail, loginId: ownLoginId };
     }
     logger.info(`${CF_NAME}: users/${ownDoc.id} already exists for person ${personKey} — nothing to do`);
@@ -201,7 +213,7 @@ export async function openAccount(personKey: string, tenantId: string, loginEmai
     const resumed = await resumeAccount(ownDoc.ref, ownDoc.data() as UserModel, firstName, lastName, synthetic);
     // undefined: the leftover doc had no Auth identity at all and is gone — open afresh, which also
     // re-decides real vs. synthetic and may reclaim this person's own orphaned identity
-    return resumed ?? openAccount(personKey, tenantId, loginEmail);
+    return resumed ?? openAccount(personKey, tenantId, loginEmail, options);
   }
 
   // Resolved before anything is written: a tenant without an appDomain cannot build a
@@ -295,8 +307,23 @@ interface SyntheticContext {
 }
 
 /**
+ * The users doc's loginEmail is only trusted for a new Auth identity when it is what the server
+ * would hand out itself: the person's favourite email, or the synthetic address of the doc's own
+ * Benutzername on this tenant's domain. A users doc carrying anything else is left alone (logged).
+ */
+async function restorableLoginEmail(loginEmail: string, loginId: string, favEmail: string, tenantId: string): Promise<boolean> {
+  const email = loginEmail.trim().toLowerCase();
+  const expected = isSyntheticLoginEmail(email)
+    ? (loginId ? syntheticLoginEmail(loginId, await tenantAppDomain(tenantId)) : '')
+    : favEmail;
+  const ok = !!email && email === expected.trim().toLowerCase();
+  if (!ok) logger.warn(`${CF_NAME}: users doc loginEmail matches neither the favourite email nor its Benutzername address — login not restored`);
+  return ok;
+}
+
+/**
  * A users doc with a loginEmail but no Auth identity under its uid (the «kein Login» row of
- * «Benutzer & Zugänge»): recreate the identity with the SAME uid — users/{uid} doc id = Auth uid —
+ * «Benutzer & Zugänge»; openAccount calls this only with `restoreLogin`): recreate the identity with the SAME uid — users/{uid} doc id = Auth uid —
  * and the doc's login address, with a random password (the admin sends a reset link afterwards).
  * Returns false when the identity exists. createUser fails when another identity holds the address;
  * that error goes to the caller, nothing is written.
@@ -614,6 +641,14 @@ export const sweepExpiredMemberships = onSchedule(
   }
 );
 
+/** The caller holds the admin role (users/{uid}.roles, or the legacy custom claim) — not merely memberAdmin. */
+async function callerIsAdmin(uid: string | undefined, adminClaim: boolean): Promise<boolean> {
+  if (adminClaim) return true;
+  if (!uid) return false;
+  const snap = await getFirestore().collection('users').doc(uid).get();
+  return (snap.data()?.['roles'] as Record<string, boolean> | undefined)?.['admin'] === true;
+}
+
 /**
  * Manual entry point for the person-list actions. Calls exactly the same
  * openAccount/closeAccount as the trigger — one implementation, two entry points.
@@ -641,7 +676,10 @@ export const syncPersonAccount = onCall(
 
     // 'open' hands back openAccount's outcome so the admin UI can say what happened
     // (created / createdWithLoginId + Benutzername / exists / noEmail). Old clients read only `ok`.
-    if (action === 'open') return { ok: true, ...(await openAccount(personKey, tenantId)) };
+    if (action === 'open') {
+      const restoreLogin = await callerIsAdmin(request.auth?.uid, request.auth?.token?.['admin'] === true);
+      return { ok: true, ...(await openAccount(personKey, tenantId, undefined, { restoreLogin })) };
+    }
     await closeAccount(personKey, tenantId);
     return { ok: true };
   }
