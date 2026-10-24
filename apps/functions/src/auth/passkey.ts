@@ -26,8 +26,8 @@ import { isoBase64URL, isoUint8Array } from '@simplewebauthn/server/helpers';
 import { PasskeyCollection, UserCollection, WebauthnChallengeCollection } from '@okr/shared-models';
 import type { PasskeyItem, PasskeyModel } from '@okr/shared-models';
 import { checkAppCheckToken, getCallerContext } from '@okr/shared-util-functions';
-import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 import { isSyntheticLoginEmail } from '@okr/user-util';
+import { toStoreDateTime } from '../srv/zurich-time';
 
 import { getAppEmailConfig } from './email-templates';
 import { DEFAULT_EMAIL_PROVIDER, isValidProvider, sendEmailViaProvider } from './email-transport';
@@ -155,6 +155,13 @@ async function managingCaller(request: CallableRequest): Promise<{ uid: string; 
 // ---------------------------------------------------------------------------------------------
 // registration (signed in)
 
+/** Account label a password manager shows: never the synthetic x@login.<domain> address. */
+function registrationUserName(user: Record<string, unknown>, displayName: string, uid: string): string {
+  const loginEmail = String(user['loginEmail'] ?? '');
+  if (loginEmail !== '' && !isSyntheticLoginEmail(loginEmail)) return loginEmail;
+  return String(user['loginId'] ?? '') || displayName || uid;
+}
+
 async function registerOptions(request: CallableRequest, data: PasskeyRequest) {
   const uid = requireUid(request);
   if (!isRecentSignIn(request.auth?.token.auth_time, Date.now())) {
@@ -178,7 +185,7 @@ async function registerOptions(request: CallableRequest, data: PasskeyRequest) {
   const options = await generateRegistrationOptions({
     rpName: appName,
     rpID: rpId,
-    userName: String(user['loginEmail'] ?? '') || uid,
+    userName: registrationUserName(user, displayName, uid),
     userID: isoUint8Array.fromUTF8String(uid),
     userDisplayName: displayName,
     attestationType: 'none',
@@ -228,7 +235,7 @@ async function registerVerify(request: CallableRequest, data: PasskeyRequest): P
   const info = verification.registrationInfo;
   const okey = info.credential.id;
   if (!isCredentialId(okey)) throw notVerified();
-  const now = getTodayStr(DateFormat.StoreDateTime);
+  const now = toStoreDateTime(new Date());
   const label = defaultPasskeyLabel(String(request.rawRequest?.headers?.['user-agent'] ?? ''));
   const doc: PasskeyDoc = {
     uid,
@@ -352,7 +359,7 @@ async function attemptLogin(tenantId: string, challengeId: string, response: Aut
 
   await passkeys().doc(okey).update({
     counter: verification.authenticationInfo.newCounter,
-    lastUsedAt: getTodayStr(DateFormat.StoreDateTime),
+    lastUsedAt: toStoreDateTime(new Date()),
   });
   return { token: await getAuth().createCustomToken(pk.uid) };
 }

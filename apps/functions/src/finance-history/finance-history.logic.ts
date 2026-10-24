@@ -8,6 +8,8 @@
  * and appends the details as they are, so the stored text stays language-neutral.
  */
 
+import { toStoreDateTime } from '../srv/zurich-time';
+
 export const FINANCE_HISTORY_COLLECTION = 'finance-comments';
 const HISTORY_KEY_PREFIX = '@finance/accounting/feature.history.';
 
@@ -31,12 +33,7 @@ export interface FinanceHistoryEntry {
 
 /** yyyyMMddHHmmss in Swiss local time (the functions run in UTC; bexio comments are local too). */
 export function zurichStoreDateTime(date: Date): string {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Europe/Zurich', year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
-  }).formatToParts(date);
-  const get = (type: string): string => parts.find((p) => p.type === type)?.value ?? '00';
-  return `${get('year')}${get('month')}${get('day')}${get('hour')}${get('minute')}${get('second')}`;
+  return toStoreDateTime(date);
 }
 
 /** One line of details: blanks dropped, single spaces, at most 1000 characters. */
