@@ -37,6 +37,12 @@ export interface JournalPhotosPlugin {
   presentFiles(options: { journalKey: string; files: string[] }): Promise<{ files: string[] }>;
   /** Plan 6: one offline map tile into Documents/<path> (`tiles/gibs/z/x/y.jpg`, `tiles/lima/z/x/y.png`); existing tiles are skipped. */
   downloadTile(options: { url: string; path: string }): Promise<{ skipped: boolean }>;
+  /** Plan 6b: stores an OpenStreetMap vector tile (`tiles/osm/z/x/y.mvt`, base64). */
+  writeTile(options: { path: string; data: string }): Promise<void>;
+  /** Plan 6b: one HTTP range of the Protomaps build (or its build list), base64 — those hosts send no CORS headers. */
+  fetchRange(options: { url: string; offset: number; length: number }): Promise<{ data: string }>;
+  /** Plan 6b: the named tile paths that are already stored. */
+  presentTiles(options: { paths: string[] }): Promise<{ paths: string[] }>;
 }
 
 export const JournalPhotos = registerPlugin<JournalPhotosPlugin>('JournalPhotos');

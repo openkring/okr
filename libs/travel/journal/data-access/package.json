@@ -13,6 +13,7 @@
     "@okr/shared-models": "*",
     "@okr/travel-journal-util": "*",
     "@okr/shared-config": "*",
-    "firebase": "*"
+    "firebase": "*",
+    "pmtiles": "*"
   }
 }

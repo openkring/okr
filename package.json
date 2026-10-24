@@ -121,6 +121,8 @@
     "ngx-editor": "^18.0.0",
     "pdfjs-dist": "4.10.38",
     "playwright": "1.64.0",
+    "pmtiles": "3.2.1",
+    "protomaps-leaflet": "5.1.0",
     "rxfire": "^6.2.0",
     "rxjs": "~7.8.2",
     "vest": "^5.4.6"

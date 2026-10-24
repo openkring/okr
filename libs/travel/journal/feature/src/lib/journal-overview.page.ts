@@ -7,7 +7,7 @@ import {
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 
-import { RouteMap, RoutePin } from '@okr/shared-ui';
+import { MapView, RouteMap, RoutePin } from '@okr/shared-ui';
 import { FootprintEditModal } from '@okr/travel-journal-ui';
 import {
   FootprintFormModel, footprintChips, journalMapData, newFootprintFormModel, routeLengthKm,
@@ -17,6 +17,7 @@ import { JournalFileUrlService } from './journal-file-url.service';
 import { showJournalError } from './journal-errors';
 import { openJournalInfo } from './journal-info';
 import { choosePhotoMode } from './journal-photo-mode';
+import { JournalOfflineMap } from './journal-offline-map';
 import { JournalSyncLine } from './journal-sync-line';
 import { JournalStore } from './journal.store';
 
@@ -29,7 +30,7 @@ const WIDE_QUERY = '(min-width: 992px)';
  */
 @Component({
   selector: 'okr-journal-overview-page',
-  imports: [IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonButton, IonCard, IonCardContent, IonIcon, SvgIconPipe, RouteMap, JournalSyncLine],
+  imports: [IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonButton, IonCard, IonCardContent, IonIcon, SvgIconPipe, RouteMap, JournalSyncLine, JournalOfflineMap],
   styles: [`
     .layout { display: flex; flex-direction: column; height: 100%; }
     .layout.wide { flex-direction: row; }
@@ -63,12 +64,13 @@ const WIDE_QUERY = '(min-width: 992px)';
     <ion-content [scrollY]="!wide()">
       <div class="layout" [class.wide]="wide()">
         <div class="map">
-          <okr-route-map [route]="map().route" [pins]="pins()" [selectedKey]="selectedKey()" [tiles]="store.mapTiles()"
-            (pinClicked)="openFootprint($event)" />
+          <okr-route-map [route]="map().route" [pins]="pins()" [selectedKey]="selectedKey()" [tiles]="mapLayers()"
+            (pinClicked)="openFootprint($event)" (viewChanged)="view.set($event)" />
         </div>
         <div class="side">
           <okr-journal-sync-line [status]="store.syncStatus()" [photoMode]="store.photoMode()" [peerStatus]="store.peerStatus()" [i18n]="store.i18n"
             (syncNow)="store.syncNow()" (choosePhotoMode)="photoMode()" />
+          <okr-journal-offline-map [journalKey]="journalKey()" [view]="view()" />
           <div class="stats">
             <div class="stat"><b>{{ days() }}</b><span>{{ store.i18n.stats_days() }}</span></div>
             <div class="stat"><b>{{ km() }}</b><span>{{ store.i18n.stats_km() }}</span></div>
@@ -105,6 +107,8 @@ export class JournalOverviewPage {
   public readonly journalKey = input.required<string>();
 
   protected readonly selectedKey = signal<string | undefined>(undefined);
+  protected readonly view = signal<MapView | undefined>(undefined);
+  protected readonly mapLayers = computed(() => this.store.mapLayersFor(this.journalKey()));
   protected readonly wide = signal(typeof window !== 'undefined' && window.matchMedia(WIDE_QUERY).matches);
 
   protected readonly journal = computed(() => this.store.journals().find((j) => j.key === this.journalKey()));

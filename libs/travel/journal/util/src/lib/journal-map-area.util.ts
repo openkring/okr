@@ -41,7 +41,7 @@ const LEVELS: Record<MapSource, { key: DetailLevel; maxZoom: number }[]> = {
 };
 
 /** Average stored tile size per source, for the size shown before a download. */
-const AVERAGE_BYTES: Record<TileJob['source'], number> = { gibs: 20_000, lima: 58_000, swisstopo: 35_000, osm: 30_000 };
+const AVERAGE_BYTES: Record<TileJob['source'], number> = { gibs: 20_000, lima: 58_000, swisstopo: 35_000, osm: 60_000 }; // osm: uncompressed MVT, 65–145 KB in a city (Oslo, 2026-10-24)
 
 const centre = ([w, s, e, n]: Bbox) => ({ lat: (s + n) / 2, lng: (w + e) / 2 });
 const inside = (p: { lat: number; lng: number }, [w, s, e, n]: Bbox) => p.lng >= w && p.lng <= e && p.lat >= s && p.lat <= n;

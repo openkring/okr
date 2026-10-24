@@ -1,13 +1,26 @@
 import { afterNextRender, Component, DestroyRef, effect, ElementRef, inject, input, output, ViewEncapsulation } from '@angular/core';
 import type * as L from 'leaflet';
+import type * as ProtomapsLeaflet from 'protomaps-leaflet';
 
 /**
  * A map with a dashed route line and round photo pins (travel journal overview, spec 1.113 §9.1).
  * Leaflet is loaded lazily on first render; its stylesheet is global in the apps that use it. Without a
  * tile source (offline, or tiles not yet downloaded) route and pins still show on a plain background.
+ * Layers can be raster tiles or OpenStreetMap vector tiles (`kind: 'vector'`, drawn by protomaps-leaflet,
+ * which is loaded only when such a layer is on the map); `bounds` limits a layer to its area.
  */
 export interface RoutePin { key: string; lat: number; lng: number; thumbnailUrl?: string; label: string }
-export interface TileSource { urlTemplate: string; maxNativeZoom: number; attribution: string; minZoom?: number; minNativeZoom?: number }
+export interface TileSource {
+  urlTemplate: string;
+  maxNativeZoom: number;
+  attribution: string;
+  minZoom?: number;
+  minNativeZoom?: number;
+  kind?: 'raster' | 'vector';
+  bounds?: [west: number, south: number, east: number, north: number];
+}
+/** The visible map: bounds as [west, south, east, north] and the zoom. */
+export interface MapView { bounds: [number, number, number, number]; zoom: number }
 
 const FIT_PADDING: L.PointExpression = [40, 40];
 const SINGLE_POINT_ZOOM = 10;
@@ -40,9 +53,13 @@ export class RouteMap {
   /** One source or several stacked layers (e.g. an offline overview plus detail tiles from a higher zoom on). */
   public readonly tiles = input<TileSource | TileSource[] | undefined>(undefined);
   public readonly pinClicked = output<string>();
+  /** After every pan or zoom: what the map shows (e.g. to save it as an offline area). */
+  public readonly viewChanged = output<MapView>();
 
   private readonly el = inject(ElementRef<HTMLElement>);
   private leaflet?: typeof L;
+  private vectorLib?: typeof ProtomapsLeaflet;
+  private vectorLoading = false;
   private map?: L.Map;
   private tileLayers: L.TileLayer[] = [];
   private overlay?: L.LayerGroup;
@@ -79,6 +96,7 @@ export class RouteMap {
     if (!container || this.map) return;
     this.snapToPixels(container);
     this.map = this.leaflet.map(container, { zoomControl: true, attributionControl: true });
+    this.map.on('moveend', () => this.emitView());
     this.overlay = this.leaflet.layerGroup().addTo(this.map);
     this.render(this.route(), this.pins(), this.selectedKey(), this.tiles());
     this.settleSnap(container);
@@ -138,15 +156,28 @@ export class RouteMap {
 
     // rebuild the tile layer only when the source changes — not on every data change (no flicker)
     const sources = tiles === undefined ? [] : Array.isArray(tiles) ? tiles : [tiles];
-    const tilesKey = sources.map((t) => `${t.urlTemplate}|${t.minZoom ?? ''}|${t.minNativeZoom ?? ''}|${t.maxNativeZoom}`).join(';');
-    if (tilesKey !== this.lastTilesKey) {
+    const tilesKey = sources.map((t) => `${t.kind ?? 'raster'}|${t.urlTemplate}|${t.minZoom ?? ''}|${t.minNativeZoom ?? ''}|${t.maxNativeZoom}|${t.bounds?.join(',') ?? ''}`).join(';');
+    const needsVector = sources.some((t) => t.kind === 'vector');
+    if (needsVector && !this.vectorLib) void this.loadVector(); // renders again once loaded
+    if (tilesKey !== this.lastTilesKey && (!needsVector || this.vectorLib)) {
       this.lastTilesKey = tilesKey;
       for (const layer of this.tileLayers) layer.remove();
-      this.tileLayers = sources.map((t) => Lf.tileLayer(t.urlTemplate, {
-        maxNativeZoom: t.maxNativeZoom, maxZoom: 16, attribution: t.attribution,
-        ...(t.minZoom !== undefined ? { minZoom: t.minZoom } : {}),
-        ...(t.minNativeZoom !== undefined ? { minNativeZoom: t.minNativeZoom } : {}),
-      }).addTo(map));
+      this.tileLayers = sources.map((t) => {
+        const bounds = t.bounds ? Lf.latLngBounds([t.bounds[1], t.bounds[0]], [t.bounds[3], t.bounds[2]]) : undefined;
+        if (t.kind === 'vector' && this.vectorLib) {
+          const layer = this.vectorLib.leafletLayer({
+            url: t.urlTemplate, flavor: 'light', lang: 'de', maxDataZoom: t.maxNativeZoom, attribution: t.attribution,
+            ...(bounds ? { bounds } : {}),
+          }) as unknown as L.TileLayer;
+          return layer.addTo(map);
+        }
+        return Lf.tileLayer(t.urlTemplate, {
+          maxNativeZoom: t.maxNativeZoom, maxZoom: 16, attribution: t.attribution,
+          ...(t.minZoom !== undefined ? { minZoom: t.minZoom } : {}),
+          ...(t.minNativeZoom !== undefined ? { minNativeZoom: t.minNativeZoom } : {}),
+          ...(bounds ? { bounds } : {}),
+        }).addTo(map);
+      });
     }
 
     this.overlay.clearLayers();
@@ -176,6 +207,26 @@ export class RouteMap {
       this.lastPointsKey = pointsKey;
       this.lastPoints = points;
       this.fit();
+    }
+  }
+
+  private emitView(): void {
+    const map = this.map;
+    if (!map) return;
+    const b = map.getBounds();
+    this.viewChanged.emit({ bounds: [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()], zoom: map.getZoom() });
+  }
+
+  /** protomaps-leaflet only when a vector layer is shown; it extends the global `L.GridLayer`. */
+  private async loadVector(): Promise<void> {
+    if (this.vectorLib || this.vectorLoading || !this.leaflet) return;
+    this.vectorLoading = true;
+    try {
+      (globalThis as { L?: unknown }).L ??= this.leaflet;
+      this.vectorLib = await import('protomaps-leaflet');
+      this.render(this.route(), this.pins(), this.selectedKey(), this.tiles());
+    } finally {
+      this.vectorLoading = false;
     }
   }
 

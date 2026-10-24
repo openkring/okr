@@ -123,7 +123,7 @@
     "local": "On board the two iPads exchange their entries and photos directly, without any Internet: over the ship’s Wi-Fi or, if there is none, over a direct radio link while the iPads are close to each other. Nothing goes over the satellite. Keep Wi-Fi and Bluetooth turned on for this, even when you are not connected to a network.",
     "home_h": "Back home",
     "home": "Set the photo transfer back to «All photos» and turn iCloud Photos on again. The trip photos in the Photos app then go to iCloud over your Internet at home.",
-    "before_5": "In the list of travel journals, load the offline map while you have Wi-Fi at home. On the way the map then shows the route and the landing sites without Internet."
+    "before_5": "In each travel journal, choose the areas under «Offline map» and load them while you have Wi-Fi at home. On the way the map then shows them without Internet."
   },
   "peer": {
     "connected": "{names} connected",
@@ -132,13 +132,28 @@
     "no_secret": "To connect the two iPads, open the journal once with an Internet connection."
   },
   "map": {
-    "hint": "Offline map: about 80 MB, load it once at home over Wi-Fi.",
     "load": "Load",
     "progress": "Offline map: {done} of {total}",
     "cancel": "Cancel",
     "ready": "Offline map ready (as of {date})",
     "update": "Update",
     "partial": "Offline map incomplete – {failed} map parts missing.",
-    "resume": "Continue"
+    "resume": "Continue",
+    "none": "Offline map: no areas yet.",
+    "summary": "Offline map: {count} areas · about {mb} MB",
+    "stale": "Offline map: new areas are not loaded yet.",
+    "areas": "Areas",
+    "areas_title": "Areas of the offline map",
+    "add_view": "Add the map view",
+    "add_antarctica": "Add Antarctica expedition",
+    "preset_antarctica": "Antarctica expedition",
+    "level_title": "How detailed should the map be?",
+    "level_overview": "Overview · about {mb} MB",
+    "level_detail": "Detail · about {mb} MB",
+    "level_hiking": "Hiking · about {mb} MB",
+    "too_large": "This area is too large. Zoom in closer.",
+    "name_prompt": "What is the area called?",
+    "remove": "Remove",
+    "remove_confirm": "Remove «{name}» from the offline map?"
   }
 }

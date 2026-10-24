@@ -123,7 +123,7 @@
     "local": "A bordo, los dos iPad intercambian sus entradas y fotos directamente, sin Internet: por el Wi-Fi del barco o, si no lo hay, por una conexión de radio directa mientras los iPad estén cerca. Nada pasa por el satélite. Para ello deja el Wi-Fi y el Bluetooth activados, aunque no estés conectado a ninguna red.",
     "home_h": "De vuelta en casa",
     "home": "Vuelve a poner la transferencia de fotos en «Todas las fotos» y activa de nuevo Fotos en iCloud. Las fotos del viaje de la app Fotos se suben entonces a iCloud con tu Internet de casa.",
-    "before_5": "En la lista de diarios de viaje, carga el mapa sin conexión mientras tengas Wi-Fi en casa. En el viaje, el mapa muestra entonces la ruta y los lugares de desembarco sin Internet."
+    "before_5": "En cada diario de viaje, elige las zonas en «Mapa sin conexión» y cárgalas mientras tengas Wi-Fi en casa. En el viaje, el mapa las muestra entonces sin Internet."
   },
   "peer": {
     "connected": "{names} conectado",
@@ -132,13 +132,28 @@
     "no_secret": "Para conectar los dos iPad, abre el diario una vez con Internet."
   },
   "map": {
-    "hint": "Mapa sin conexión: unos 80 MB, cárgalo una vez en casa con Wi-Fi.",
     "load": "Cargar",
     "progress": "Mapa sin conexión: {done} de {total}",
     "cancel": "Cancelar",
     "ready": "Mapa sin conexión listo (a {date})",
     "update": "Actualizar",
     "partial": "Mapa sin conexión incompleto: faltan {failed} partes.",
-    "resume": "Continuar"
+    "resume": "Continuar",
+    "none": "Mapa sin conexión: aún no hay zonas.",
+    "summary": "Mapa sin conexión: {count} zonas · unos {mb} MB",
+    "stale": "Mapa sin conexión: las zonas nuevas aún no están cargadas.",
+    "areas": "Zonas",
+    "areas_title": "Zonas del mapa sin conexión",
+    "add_view": "Añadir la vista del mapa",
+    "add_antarctica": "Añadir expedición a la Antártida",
+    "preset_antarctica": "Expedición a la Antártida",
+    "level_title": "¿Con cuánto detalle?",
+    "level_overview": "Vista general · unos {mb} MB",
+    "level_detail": "Detalle · unos {mb} MB",
+    "level_hiking": "Senderismo · unos {mb} MB",
+    "too_large": "Esta zona es demasiado grande. Acércate más.",
+    "name_prompt": "¿Cómo se llama la zona?",
+    "remove": "Quitar",
+    "remove_confirm": "¿Quitar «{name}» del mapa sin conexión?"
   }
 }

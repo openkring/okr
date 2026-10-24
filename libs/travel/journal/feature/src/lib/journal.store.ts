@@ -9,19 +9,21 @@ import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 import {
-  ChangeDraft, JournalDb, JournalIdentityService, JournalPeerService, JournalPhotos, JournalSyncService, PickedPhoto, SkippedPhoto,
+  ChangeDraft, JournalDb, JournalIdentityService, JournalPeerService, JournalPhotos, JournalSyncService, OsmExtract, PickedPhoto, SkippedPhoto,
+  toBase64,
 } from '@okr/travel-journal-data-access';
 import {
   entityStateKey, hasOthersBlocks, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
-  allPhotoFiles, GIBS_BLUE_MARBLE, JournalPhotoMode, JournalTileSource, journalsOf, localTileSources, offlineTilePlan, parsePhotoMode, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, publishedPhotoFiles, viewOf,
+  allPhotoFiles, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, parseMapAreas, parsePhotoMode, TileJob, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, publishedPhotoFiles, viewOf,
 } from '@okr/travel-journal-util';
 
 import { JournalFileUrlService } from './journal-file-url.service';
 
 const SYNC_INTERVAL_MS = 2 * 60 * 1000;
 const META_PHOTO_MODE = 'photoMode';
-const META_OFFLINE_MAP = 'offlineMap';
-const MAP_WORKERS = 4; // parallel tile requests: polite to GIBS and the USGS WMS
+const META_OFFLINE_MAP = 'offlineMap:'; // + journalKey
+const MAP_WORKERS = 4; // parallel tile requests: polite to GIBS, the USGS WMS, swisstopo and Protomaps
+const PRESENT_CHUNK = 200;
 const META_ACTIVE_JOURNAL = 'activeJournal'; // the journal last opened: the one P2P runs for
 const META_PHOTOS_PAUSED = 'photosPaused'; // before the three photo modes
 
@@ -41,24 +43,31 @@ interface JournalStoreState {
   changes: JournalChange[];
   photoMode: JournalPhotoMode;
   activeJournalKey: string;
-  offlineMap: OfflineMapStatus;
+  offlineMaps: Record<string, OfflineMapStatus>; // per journal
 }
 
-/** The offline map (plan 6): none yet, downloading, complete, or finished with failed tiles. */
-export interface OfflineMapStatus { state: 'none' | 'loading' | 'ready' | 'partial'; done: number; total: number; failed: number; at: string }
-const NO_OFFLINE_MAP: OfflineMapStatus = { state: 'none', done: 0, total: 0, failed: 0, at: '' };
+/**
+ * A journal's offline map (plans 6, 6b): none yet, downloading, complete, or finished with failed tiles.
+ * `areaIds` are the areas the last download covered — an area added later is not offline yet.
+ */
+export interface OfflineMapStatus {
+  state: 'none' | 'loading' | 'ready' | 'partial'; done: number; total: number; failed: number; at: string; areaIds: string[];
+}
+export const NO_OFFLINE_MAP: OfflineMapStatus = { state: 'none', done: 0, total: 0, failed: 0, at: '', areaIds: [] };
 
 function parseOfflineMap(raw: string | undefined): OfflineMapStatus {
   try {
     const value = raw ? (JSON.parse(raw) as Partial<OfflineMapStatus>) : undefined;
-    if (value?.state === 'ready' || value?.state === 'partial') return { ...NO_OFFLINE_MAP, ...value };
+    if (value?.state === 'ready' || value?.state === 'partial') {
+      return { ...NO_OFFLINE_MAP, ...value, areaIds: Array.isArray(value.areaIds) ? value.areaIds.filter((a) => typeof a === 'string') : [] };
+    }
   } catch {
     // a damaged entry counts as no map
   }
   return NO_OFFLINE_MAP;
 }
 
-const initialState: JournalStoreState = { ready: false, native: Capacitor.isNativePlatform(), error: '', changes: [], photoMode: 'all', activeJournalKey: '', offlineMap: NO_OFFLINE_MAP };
+const initialState: JournalStoreState = { ready: false, native: Capacitor.isNativePlatform(), error: '', changes: [], photoMode: 'all', activeJournalKey: '', offlineMaps: {} };
 
 export const JournalStore = signalStore(
   { providedIn: 'root' },
@@ -82,14 +91,6 @@ export const JournalStore = signalStore(
       author: computed(() => store.identity.author()),
       syncStatus: computed(() => store.syncService.status()),
       peerStatus: computed(() => store.peerService.status()),
-      /** The overview's map layers: the downloaded files once (nearly) complete, else Blue Marble online. */
-      mapTiles: computed<JournalTileSource | JournalTileSource[]>(() => {
-        const map = store.offlineMap();
-        const base = store.fileUrl.dirUrl('tiles');
-        // a download stopped early must not swap the map for mostly missing tiles
-        const usable = map.state === 'ready' || (map.state === 'partial' && map.failed <= map.total * 0.1);
-        return usable && base ? localTileSources(base) : GIBS_BLUE_MARBLE;
-      }),
     };
   }),
   withMethods((store) => {
@@ -213,8 +214,13 @@ export const JournalStore = signalStore(
               changes: await store.db.listChanges(), ready: true, error: '',
               photoMode: parsePhotoMode(await store.db.getMeta(META_PHOTO_MODE), await store.db.getMeta(META_PHOTOS_PAUSED)),
               activeJournalKey: (await store.db.getMeta(META_ACTIVE_JOURNAL)) ?? '',
-              offlineMap: parseOfflineMap(await store.db.getMeta(META_OFFLINE_MAP)),
+
             });
+            const offlineMaps: Record<string, OfflineMapStatus> = {};
+            for (const journal of journalsOf(store.journalState())) {
+              offlineMaps[journal.key] = parseOfflineMap(await store.db.getMeta(META_OFFLINE_MAP + journal.key));
+            }
+            patchState(store, { offlineMaps });
             startAutoSync();
           } catch (error) {
             loading = undefined; // allow a retry
@@ -226,40 +232,91 @@ export const JournalStore = signalStore(
 
       syncNow,
 
+      /** The journal's map areas (plan 6b), from the journal field `mapAreas`. */
+      mapAreas(journalKey: string): MapArea[] {
+        return parseMapAreas(viewOf(store.journalState()[entityStateKey('journal', journalKey)])?.['mapAreas']);
+      },
+
+      offlineMap(journalKey: string): OfflineMapStatus {
+        return store.offlineMaps()[journalKey] ?? NO_OFFLINE_MAP;
+      },
+
+      /** The overview's map layers: downloaded areas from local files, the rest live where allowed. */
+      mapLayersFor(journalKey: string): JournalTileSource[] {
+        const map = store.offlineMaps()[journalKey] ?? NO_OFFLINE_MAP;
+        // a download stopped early must not swap the map for mostly missing tiles
+        const usable = map.state === 'ready' || (map.state === 'partial' && map.failed <= map.total * 0.1);
+        const areas = parseMapAreas(viewOf(store.journalState()[entityStateKey('journal', journalKey)])?.['mapAreas']);
+        return mapLayers(areas, new Set(usable ? map.areaIds : []), store.fileUrl.dirUrl('tiles'));
+      },
+
+      async addMapArea(journalKey: string, area: MapArea): Promise<void> {
+        const areas = parseMapAreas(viewOf(store.journalState()[entityStateKey('journal', journalKey)])?.['mapAreas']);
+        if (areas.some((a) => a.id === area.id)) return;
+        await write([{ journalKey, entity: 'journal', entityKey: journalKey, op: 'set', fields: { mapAreas: [...areas, area] } }]);
+      },
+
+      async removeMapArea(journalKey: string, areaId: string): Promise<void> {
+        const areas = parseMapAreas(viewOf(store.journalState()[entityStateKey('journal', journalKey)])?.['mapAreas']);
+        await write([{ journalKey, entity: 'journal', entityKey: journalKey, op: 'set', fields: { mapAreas: areas.filter((a) => a.id !== areaId) } }]);
+      },
+
       /**
-       * Downloads the offline map (plan 6): route, peninsula and landing sites plus every footprint position of
-       * the journals on this iPad. Existing tiles are skipped natively, so it resumes after a stop.
+       * Downloads a journal's offline map (plans 6, 6b): its areas, the world background and — for the
+       * Antarctica preset — detail around the journal's footprints. Raster tiles come natively, OpenStreetMap
+       * tiles from the Protomaps build; tiles already on the iPad are skipped, so it resumes after a stop.
        */
-      async downloadOfflineMap(): Promise<void> {
-        if (!store.native() || store.offlineMap().state === 'loading') return;
-        const positions = journalsOf(store.journalState()).flatMap((j) => footprintsOf(store.journalState(), j.key))
+      async downloadOfflineMap(journalKey: string): Promise<void> {
+        const current = store.offlineMaps()[journalKey] ?? NO_OFFLINE_MAP;
+        if (!store.native() || current.state === 'loading' || Object.values(store.offlineMaps()).some((m) => m.state === 'loading')) return;
+        const areas = parseMapAreas(viewOf(store.journalState()[entityStateKey('journal', journalKey)])?.['mapAreas']);
+        if (areas.length === 0) return;
+        const positions = footprintsOf(store.journalState(), journalKey)
           .filter((f) => f.latitude !== undefined && f.longitude !== undefined)
           .map((f) => ({ lat: f.latitude as number, lng: f.longitude as number }));
-        const jobs = offlineTilePlan(positions);
+        const setStatus = (status: OfflineMapStatus) => patchState(store, { offlineMaps: { ...store.offlineMaps(), [journalKey]: status } });
+        const jobs = journalTilePlan(areas, positions);
         cancelMap = false;
-        let next = 0;
         let done = 0;
         let failed = 0;
-        patchState(store, { offlineMap: { ...store.offlineMap(), state: 'loading', done: 0, total: jobs.length, failed: 0 } });
+        setStatus({ ...current, state: 'loading', done: 0, total: jobs.length, failed: 0 });
+
+        // tiles already on the iPad count as done without a request
+        const todo: TileJob[] = [];
+        for (let i = 0; i < jobs.length && !cancelMap; i += PRESENT_CHUNK) {
+          const chunk = jobs.slice(i, i + PRESENT_CHUNK);
+          const present = new Set((await JournalPhotos.presentTiles({ paths: chunk.map((j) => j.path) })).paths);
+          for (const job of chunk) if (present.has(job.path)) done += 1; else todo.push(job);
+          setStatus({ ...current, state: 'loading', done, total: jobs.length, failed });
+        }
+
+        let osm: Promise<OsmExtract> | undefined;
+        let next = 0;
         const worker = async (): Promise<void> => {
-          while (!cancelMap && next < jobs.length) {
-            const job = jobs[next++];
+          while (!cancelMap && next < todo.length) {
+            const job = todo[next++];
             try {
-              await JournalPhotos.downloadTile({ url: job.url, path: job.path });
+              if (job.source === 'osm') {
+                osm ??= OsmExtract.open();
+                const tile = await (await osm).tile(job.z, job.x, job.y);
+                if (tile) await JournalPhotos.writeTile({ path: job.path, data: toBase64(tile) });
+              } else {
+                await JournalPhotos.downloadTile({ url: job.url, path: job.path });
+              }
             } catch {
-              failed += 1; // open sea outside the mosaic, a timeout: retried on «Fortsetzen»
+              failed += 1; // open sea outside the LIMA mosaic, a timeout: retried on «Fortsetzen»
             }
             done += 1;
-            patchState(store, { offlineMap: { ...store.offlineMap(), done, failed } });
+            setStatus({ ...current, state: 'loading', done, total: jobs.length, failed });
           }
         };
         await Promise.all(Array.from({ length: MAP_WORKERS }, () => worker()));
         const result: OfflineMapStatus = {
           state: failed === 0 && done === jobs.length ? 'ready' : 'partial', done, total: jobs.length, failed: failed + (jobs.length - done),
-          at: new Date().toISOString(),
+          at: new Date().toISOString(), areaIds: areas.map((a) => a.id),
         };
-        patchState(store, { offlineMap: result });
-        await store.db.setMeta(META_OFFLINE_MAP, JSON.stringify(result));
+        setStatus(result);
+        await store.db.setMeta(META_OFFLINE_MAP + journalKey, JSON.stringify(result));
       },
 
       cancelOfflineMap(): void {

@@ -15,6 +15,7 @@
     "@okr/shared-constants": "*",
     "@okr/shared-util-core": "*",
     "@okr/shared-util-angular": "*",
-    "@okr/shared-config": "*"
+    "@okr/shared-config": "*",
+    "protomaps-leaflet": "*"
   }
 }
