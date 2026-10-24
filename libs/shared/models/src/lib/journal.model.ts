@@ -18,12 +18,16 @@ export interface JournalGuest {
  * The personal links of a journal's guests, at `journals/{okey}/private/guestLinks` — readable by the
  * journal's authors only. Guests can read the journal document, and Firestore rules cannot hide a
  * single field, so a link code on the journal would let every guest sign in as every other guest.
- * `linkCode` is a random 128-bit code; setting `revokedAt` ends that guest's access.
+ * `linkCode` is a random 128-bit code; setting `revokedAt` ends that guest's access, and so does passing
+ * `expiresAt`. `mutedAt` is set when the guest mutes the journal: no notifications while it is set (plan 7,
+ * approved 2026-10-24).
  */
 export interface JournalGuestLink {
   personKey: string;
   linkCode: string;
-  revokedAt?: string;
+  revokedAt?: string; // ISO timestamp
+  expiresAt?: string; // ISO timestamp; the link stops working after it
+  mutedAt?: string; // ISO timestamp; no notifications while set
 }
 
 export interface JournalGuestLinks {
@@ -81,7 +85,12 @@ export const JournalCollection = 'journals';
 export const JournalFootprintCollection = 'footprints';
 export const JournalSectionCollection = 'sections';
 export const JournalImageCollection = 'images';
+export const JournalCommentCollection = 'comments'; // CommentModel shape, parentKey 'page.<footprintKey>'
+export const JournalReactionCollection = 'reactions'; // ReactionModel shape, id reactionKey(parentKey, personKey)
 export const JournalPrivateCollection = 'private'; // subcollection, authors only: docs 'peer' and 'guestLinks'
 export const JournalGuestLinksDoc = 'guestLinks';
 export const JournalPeerDoc = 'peer';
+export const JournalNotifyDoc = 'notify'; // private: { lastNotifiedAt } — the digest cursor (plan 7)
+export const JournalGuestSeqDoc = 'guestSeq'; // private: per guest the last seq of their change records
+export const JournalSignalRoomsDoc = 'signalRooms'; // private: personKey → Signal portal room id
 export const JournalModelName = 'journal';
