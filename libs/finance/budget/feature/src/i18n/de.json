@@ -138,6 +138,9 @@
     "helper": "Geplanter Betrag für das ganze Geschäftsjahr – bei Aufwand die Ausgaben, bei Ertrag die Einnahmen. Mit Minus planst du die Gegenrichtung, zum Beispiel eine Entnahme aus einem Fonds."
   },
   "archiveState": {
+    "all": {
+      "label": "Alle"
+    },
     "active": {
       "label": "Aktive"
     },

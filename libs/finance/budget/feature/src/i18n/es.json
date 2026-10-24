@@ -138,6 +138,9 @@
     "helper": "Importe previsto para todo el ejercicio: los gastos en las cuentas de gastos, los ingresos en las de ingresos. Con un signo menos planificas el sentido contrario, por ejemplo una retirada de un fondo."
   },
   "archiveState": {
+    "all": {
+      "label": "Todos"
+    },
     "active": {
       "label": "Activas"
     },

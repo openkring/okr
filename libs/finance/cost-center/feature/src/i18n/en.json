@@ -49,6 +49,9 @@
   "archiveHasChildren": "This group still has active cost centres. Archive them first.",
   "archived": "archived",
   "archiveState": {
+    "all": {
+      "label": "All"
+    },
     "active": {
       "label": "Active"
     },

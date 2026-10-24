@@ -138,6 +138,9 @@
     "helper": "Planned amount for the whole fiscal year – spending for expenses, income for revenue. A minus sign plans the opposite direction, for example a release from a fund."
   },
   "archiveState": {
+    "all": {
+      "label": "All"
+    },
     "active": {
       "label": "Active"
     },

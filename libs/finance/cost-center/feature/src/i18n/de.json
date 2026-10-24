@@ -49,6 +49,9 @@
   "archiveHasChildren": "Diese Gruppe hat noch aktive Kostenstellen. Archiviere zuerst diese.",
   "archived": "archiviert",
   "archiveState": {
+    "all": {
+      "label": "Alle"
+    },
     "active": {
       "label": "Aktive"
     },

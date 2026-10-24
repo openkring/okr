@@ -49,6 +49,9 @@
   "archiveHasChildren": "Este grupo todavía tiene centros de coste activos. Archívalos primero.",
   "archived": "archivado",
   "archiveState": {
+    "all": {
+      "label": "Todos"
+    },
     "active": {
       "label": "Activos"
     },

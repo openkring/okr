@@ -49,6 +49,9 @@
   "archiveHasChildren": "Questo gruppo ha ancora centri di costo attivi. Archiviali prima.",
   "archived": "archiviato",
   "archiveState": {
+    "all": {
+      "label": "Tutti"
+    },
     "active": {
       "label": "Attivi"
     },

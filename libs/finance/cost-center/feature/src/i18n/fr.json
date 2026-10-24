@@ -49,6 +49,9 @@
   "archiveHasChildren": "Ce groupe contient encore des centres de coûts actifs. Archive-les d’abord.",
   "archived": "archivé",
   "archiveState": {
+    "all": {
+      "label": "Tous"
+    },
     "active": {
       "label": "Actifs"
     },
