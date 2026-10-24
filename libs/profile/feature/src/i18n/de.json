@@ -171,16 +171,6 @@
       "helper": "Bei vielen Feldern in den Formularen werden Hilfe-Texte angezeigt. Du kannst diese hier ausblenden, was zu einer kompakteren, übersichtlichen Darstellung führt. Das Ausblenden wird nur fortgeschrittenen Anwendern empfohlen."
     }
   },
-  "use": {
-    "touchid": {
-      "label": "Touch ID verwenden",
-      "helper": "Authentisierung mittels Fingerabdruck (sofern auf deinem Gerät möglich. Noch nicht fertig implementiert."
-    },
-    "faceid": {
-      "label": "Face ID verwenden",
-      "helper": "Authentisierung mittels Gesichtserkennung (sofern auf deinem Gerät möglich). Noch nicht fertig implementiert."
-    }
-  },
   "privacyUsage": {
     "public": {
       "label": "Öffentlich",

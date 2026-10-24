@@ -156,10 +156,6 @@
     "label": "Mostrare dettagli utente"
   },
 
-  "auth": {
-    "title": "Autenticazione",
-    "description": "Impostazioni per l'autenticazione dell'utente. Queste impostazioni si applicano solo all'utente selezionato."
-  },
   "fbuser": {
     "title": "Utente Firebase",
     "description": "Informazioni sull'account di autenticazione Firebase.",
@@ -220,8 +216,6 @@
   "invoiceDelivery": { "label": "Recapito delle fatture" },
   "emailVerified": { "label": "E-mail confermata", "helper": "Se l'utente ha confermato l'indirizzo e-mail." },
   "disabled": { "label": "Disattivato", "helper": "L'account utente è disattivato." },
-  "useTouchId": { "label": "Usare Touch ID", "helper": "Autenticazione tramite impronta digitale." },
-  "useFaceId": { "label": "Usare Face ID", "helper": "Autenticazione tramite scansione del volto." },
   "showArchivedData": { "label": "Mostrare dati archiviati", "helper": "Vengono visualizzati anche i dati archiviati." },
   "showDebugInfo": { "label": "Mostrare informazioni di debug", "helper": "Le informazioni di debug vengono visualizzate in aggiunta." },
   "showHelpers": { "label": "Mostrare aiuti", "helper": "Vengono visualizzati i testi descrittivi." },

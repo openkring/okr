@@ -1,11 +1,7 @@
 import { staticSuite } from 'vest';
 
-import { booleanValidations } from '@okr/shared-util-core';
-
 import { UserAuthFormModel } from './user-auth-form.model';
 
 export const userAuthFormValidations = staticSuite((model: UserAuthFormModel) => {
-  booleanValidations('useFaceId', model.useFaceId);
-  booleanValidations('useTouchId', model.useTouchId);
  // roleValidations('roles', model.roles);
 });

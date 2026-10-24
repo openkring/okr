@@ -171,16 +171,6 @@
       "helper": "Pour de nombreux champs des formulaires, des textes d'aide sont affichés. Vous pouvez les masquer ici, ce qui conduit à un affichage plus compact et plus clair. Le masquage n'est recommandé qu'aux utilisateurs avancés."
     }
   },
-  "use": {
-    "touchid": {
-      "label": "Utiliser Touch ID",
-      "helper": "Authentification par empreinte digitale (si possible sur votre appareil). Pas encore entièrement implémenté."
-    },
-    "faceid": {
-      "label": "Utiliser Face ID",
-      "helper": "Authentification par reconnaissance faciale (si possible sur votre appareil). Pas encore entièrement implémenté."
-    }
-  },
   "privacyUsage": {
     "public": {
       "label": "Public",

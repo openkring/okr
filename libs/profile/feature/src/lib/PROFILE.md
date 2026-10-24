@@ -59,7 +59,7 @@ Both signals feed into a shared `formDirty` / `formValid` state to control the `
 | Avatar | `AvatarToolbar` | Shows person avatar + name/email; supports photo upload |
 | Personal data | `ProfileDataAccordion` | Edit `PersonModel` fields (name, gender, birthday, AHV, address snapshot) |
 | Addresses | `AddressesAccordion` | Manage the person's addresses (parentKey = `person.<personKey>`) |
-| Settings | `ProfileSettingsAccordion` | Edit `UserModel` app preferences (language, display, delivery, biometrics) |
+| Settings | `ProfileSettingsAccordion` | Edit `UserModel` app preferences (language, display, delivery) |
 | Privacy | `ProfilePrivacyAccordion` | Edit `UserModel` privacy usage settings per data category |
 
 ### Save Behaviour

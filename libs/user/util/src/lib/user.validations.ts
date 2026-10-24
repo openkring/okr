@@ -10,8 +10,6 @@ export const userValidations = staticSuite((model: UserModel, tenants: string, t
   stringValidations('personKey', model.personKey);
   stringValidations('firstName', model.firstName, SHORT_NAME_LENGTH);
   stringValidations('lastName', model.lastName, SHORT_NAME_LENGTH);
-  booleanValidations('useTouchId', model.useTouchId);
-  booleanValidations('useFaceId', model.useFaceId);
   categoryValidations('userLanguage', model.userLanguage, Language);
   categoryValidations('avatarUsage', model.avatarUsage, AvatarUsage);
   stringValidations('gravatarEmail', model.gravatarEmail, SHORT_NAME_LENGTH);

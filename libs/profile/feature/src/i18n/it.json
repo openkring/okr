@@ -171,16 +171,6 @@
       "helper": "Per molti campi nei moduli vengono mostrati dei testi di aiuto. Puoi nasconderli qui, il che porta a una visualizzazione più compatta e chiara. La disattivazione è consigliata solo agli utenti esperti."
     }
   },
-  "use": {
-    "touchid": {
-      "label": "Utilizza Touch ID",
-      "helper": "Autenticazione tramite impronta digitale (se possibile sul tuo dispositivo). Non ancora del tutto implementato."
-    },
-    "faceid": {
-      "label": "Utilizza Face ID",
-      "helper": "Autenticazione tramite riconoscimento facciale (se possibile sul tuo dispositivo). Non ancora del tutto implementato."
-    }
-  },
   "privacyUsage": {
     "public": {
       "label": "Pubblico",

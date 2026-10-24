@@ -61,10 +61,6 @@ export const PROFILE_I18N_KEYS = {
   show_archived_helper:            PFX + 'show.archived.helper',
   show_helpers_label:              PFX + 'show.helpers.label',
   show_helpers_helper:             PFX + 'show.helpers.helper',
-  use_touchid_label:               PFX + 'use.touchid.label',
-  use_touchid_helper:              PFX + 'use.touchid.helper',
-  use_faceid_label:                PFX + 'use.faceid.label',
-  use_faceid_helper:               PFX + 'use.faceid.helper',
 
   // diary transfer (spec 1.77 §5)
   diaryTransfer_title:             PFX + 'diaryTransfer.title',

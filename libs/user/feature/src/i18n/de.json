@@ -156,10 +156,6 @@
     "label": "User Details anzeigen"
   },
 
-  "auth": {
-    "title": "Authentifizierung",
-    "description": "Einstellungen zur Authentifizierung des Users. Diese Einstellungen gelten nur für den selektierten User."
-  },
   "fbuser": {
     "title": "Firebase-Benutzer",
     "description": "Angaben zum Firebase-Authentifizierungs-Konto.",
@@ -220,8 +216,6 @@
   "invoiceDelivery":    { "label": "Rechnung-Zustellung" },
   "emailVerified":      { "label": "E-Mail bestätigt", "helper": "Wenn der User die Email Adresse bestätigt hat." },
   "disabled":           { "label": "Deaktiviert", "helper": "Das User Konto ist deaktiviert." },
-  "useTouchId":         { "label": "Touch ID verwenden", "helper": "Authentisierung mittels Fingerabdruck." },
-  "useFaceId":          { "label": "Face ID verwenden", "helper": "Authentisierung mittels Gesichtsscan." },
   "showArchivedData":   { "label": "Archivierte Daten anzeigen", "helper": "Archivierte Daten werden auch angezeigt." },
   "showDebugInfo":      { "label": "Debug-Informationen anzeigen", "helper": "Debug Informationen werden zusätzlich angezeigt." },
   "showHelpers":        { "label": "Hilfestellungen anzeigen", "helper": "Beschreibungstexte werden angezeigt." },

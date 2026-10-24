@@ -113,8 +113,6 @@ export const USER_I18N_KEYS = {
   view:                             PFX + 'view.label',
 
   // auth
-  auth_title:                       PFX + 'auth.title',
-  auth_description:                 PFX + 'auth.description',
 
   // fbuser
   fbuser_title:                     PFX + 'fbuser.title',
@@ -194,10 +192,6 @@ export const USER_I18N_KEYS = {
   emailVerified_helper:             PFX + 'emailVerified.helper',
   disabled_label:                   PFX + 'disabled.label',
   disabled_helper:                  PFX + 'disabled.helper',
-  useTouchId_label:                 PFX + 'useTouchId.label',
-  useTouchId_helper:                PFX + 'useTouchId.helper',
-  useFaceId_label:                  PFX + 'useFaceId.label',
-  useFaceId_helper:                 PFX + 'useFaceId.helper',
   showArchivedData_label:           PFX + 'showArchivedData.label',
   showArchivedData_helper:          PFX + 'showArchivedData.helper',
   showDebugInfo_label:              PFX + 'showDebugInfo.label',

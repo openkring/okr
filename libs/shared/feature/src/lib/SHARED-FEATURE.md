@@ -102,7 +102,6 @@ Key fields:
 | `ownerOrgId` / `ownerUserId` / `defaultResourceId` | Default model references |
 | `showName` ... `showDocuments` | `PrivacyAccessor` values controlling visibility per role |
 | `showDebugInfo` | App-wide debug flag |
-| `useFaceId` / `useTouchId` | Biometric auth preferences |
 
 ## Select Stores
 

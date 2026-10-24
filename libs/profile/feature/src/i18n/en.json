@@ -171,16 +171,6 @@
       "helper": "For many fields in the forms, help texts are shown. You can hide them here, which leads to a more compact, clearer display. Hiding is only recommended for advanced users."
     }
   },
-  "use": {
-    "touchid": {
-      "label": "Use Touch ID",
-      "helper": "Authentication by fingerprint (if possible on your device). Not yet fully implemented."
-    },
-    "faceid": {
-      "label": "Use Face ID",
-      "helper": "Authentication by facial recognition (if possible on your device). Not yet fully implemented."
-    }
-  },
   "privacyUsage": {
     "public": {
       "label": "Public",

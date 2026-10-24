@@ -288,8 +288,6 @@ export class AppConfig {
   public personSortCriteria = 1; // sorting criteria for persons, e.g. 0 for name, 1 for date of birth
   public showArchivedData = false; // whether to show archived data
   public showDebugInfo = false; // whether to show debug information
-  public useFaceId = false; // whether to use Face ID for authentication
-  public useTouchId = false; // whether to use Touch ID for authentication
 
   /**
    * `tenantId` is a CONSTRUCTOR PARAMETER only — it seeds the per-tenant default paths

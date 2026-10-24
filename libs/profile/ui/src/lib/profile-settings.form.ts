@@ -15,7 +15,7 @@ import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
 /** The user fields this accordion renders as editable — the ones its `valid` output may gate on. */
 const EDITED_FIELDS = [
-  'userLanguage', 'showDebugInfo', 'showArchivedData', 'showHelpers', 'useTouchId', 'useFaceId',
+  'userLanguage', 'showDebugInfo', 'showArchivedData', 'showHelpers',
   'avatarUsage', 'gravatarEmail', 'nameDisplay', 'personSortCriteria', 'smallScreenCalendarView', 'newsDelivery', 'invoiceDelivery',
 ];
 
@@ -64,16 +64,6 @@ const EDITED_FIELDS = [
                 <okr-checkbox [i18n]="showHelpersI18n()" [checked]="showHelpers()" (checkedChange)="onFieldChange('showHelpers', $event)" [showHelper]="showHelper()" [readOnly]="isReadOnly()" />
                 <okr-error-note [errors]="showHelpersErrors()" />
               </ion-col>
-              @if(hasRole('admin')) {
-                <ion-col size="12" size-md="6">
-                  <okr-checkbox [i18n]="useTouchIdI18n()" [checked]="useTouchId()" (checkedChange)="onFieldChange('useTouchId', $event)" [showHelper]="showHelper()" [readOnly]="isReadOnly()" />
-                  <okr-error-note [errors]="useTouchIdErrors()" />
-                </ion-col>
-                <ion-col size="12" size-md="6">
-                  <okr-checkbox [i18n]="useFaceIdI18n()" [checked]="useFaceId()" (checkedChange)="onFieldChange('useFaceId', $event)" [showHelper]="showHelper()" [readOnly]="isReadOnly()" />
-                  <okr-error-note [errors]="useFaceIdErrors()" />
-                </ion-col>
-              }
             </ion-row>
             <ion-row>
               <ion-col size="12" size-md="6">
@@ -168,8 +158,6 @@ export class ProfileSettingsAccordion {
   protected showDebugInfoI18n     = computed(() => ({ name: 'showDebugInfo',    label: this.i18n().show_debug_label(),    helper: this.i18n().show_debug_helper()    } as CheckboxI18n));
   protected showArchivedDataI18n  = computed(() => ({ name: 'showArchivedData', label: this.i18n().show_archived_label(), helper: this.i18n().show_archived_helper() } as CheckboxI18n));
   protected showHelpersI18n       = computed(() => ({ name: 'showHelpers',      label: this.i18n().show_helpers_label(),  helper: this.i18n().show_helpers_helper()  } as CheckboxI18n));
-  protected useTouchIdI18n        = computed(() => ({ name: 'useTouchId',       label: this.i18n().use_touchid_label(),   helper: this.i18n().use_touchid_helper()   } as CheckboxI18n));
-  protected useFaceIdI18n         = computed(() => ({ name: 'useFaceId',        label: this.i18n().use_faceid_label(),    helper: this.i18n().use_faceid_helper()    } as CheckboxI18n));
 
   protected notificationPermission = signal<NotificationPermission>(
     typeof Notification !== 'undefined' ? Notification.permission : 'default'
@@ -214,8 +202,6 @@ export class ProfileSettingsAccordion {
   protected showArchivedDataErrors = computed(() => this.validationResult().getErrors('showArchivedData'));
   protected showDebugInfoErrors = computed(() => this.validationResult().getErrors('showDebugInfo'));
   protected showHelpersErrors = computed(() => this.validationResult().getErrors('showHelpers'));
-  protected useFaceIdErrors = computed(() => this.validationResult().getErrors('useFaceId'));
-  protected useTouchIdErrors = computed(() => this.validationResult().getErrors('useTouchId'));
   protected gravatarEmailErrors = computed(() => this.validationResult().getErrors('gravatarEmail'));
   protected newsDeliveryErrors = computed(() => this.validationResult().getErrors('newsDelivery'));
   protected invoiceDeliveryErrors = computed(() => this.validationResult().getErrors('invoiceDelivery'));
@@ -227,8 +213,6 @@ export class ProfileSettingsAccordion {
   protected readonly showDebugInfo = computed(() => this.formData().showDebugInfo ?? false);
   protected readonly showArchivedData = computed(() => this.formData().showArchivedData ?? false);
   protected readonly showHelpers = computed(() => this.formData().showHelpers ?? true);
-  protected readonly useTouchId = computed(() => this.formData().useTouchId ?? false);
-  protected readonly useFaceId = computed(() => this.formData().useFaceId ?? false);
   protected readonly avatarUsage = computed(() => this.formData().avatarUsage ?? AvatarUsage.PhotoFirst);
   protected readonly gravatarEmail = computed(() => this.formData().gravatarEmail ?? '');
   protected readonly nameDisplay = computed(() => this.formData().nameDisplay ?? NameDisplay.FirstLast);

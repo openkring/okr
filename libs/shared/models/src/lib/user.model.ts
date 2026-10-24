@@ -27,8 +27,6 @@ export class UserModel implements OkrModel, TaggedModel, SearchableModel {
   public roles: Roles = {};
 
   // settings
-  public useTouchId = false;
-  public useFaceId = false;
   public userLanguage = DefaultLanguage;
   public avatarUsage = AvatarUsage.PhotoFirst; // PhotoFirst
   public gravatarEmail = DEFAULT_EMAIL;

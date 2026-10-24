@@ -52,8 +52,6 @@ describe('User Utils', () => {
     user.userLanguage = Language.EN;
     user.showDebugInfo = true;
     user.showArchivedData = false;
-    user.useTouchId = true;
-    user.useFaceId = false;
     user.avatarUsage = AvatarUsage.PhotoFirst;
     user.nameDisplay = NameDisplay.LastFirst;
     user.useDisplayName = true;
@@ -85,7 +83,6 @@ describe('User Utils', () => {
     it('convertUserToAuthForm should convert user to auth form model', () => {
       const form = convertUserToAuthForm(user);
       expect(form.roles).toEqual({ admin: true, registered: true });
-      expect(form.useFaceId).toBe(false);
     });
 
     it('convertUserToDisplayForm should convert user to display form model', () => {
@@ -112,11 +109,9 @@ describe('User Utils', () => {
     });
 
     it('convertAuthFormToUser should update user from auth form model', () => {
-      const form: UserAuthFormModel = { roles: { admin: true }, useTouchId: true, useFaceId: true };
+      const form: UserAuthFormModel = { roles: { admin: true } };
       const updatedUser = convertAuthFormToUser(form, user);
       expect(updatedUser.roles).toEqual({ admin: true });
-      expect(updatedUser.useTouchId).toBe(true);
-      expect(updatedUser.useFaceId).toBe(true);
     });
 
     it('convertDisplayFormToUser should update user from display form model', () => {

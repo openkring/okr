@@ -171,16 +171,6 @@
       "helper": "En muchos campos de los formularios se muestran textos de ayuda. Puede ocultarlos aquí, lo que conduce a una visualización más compacta y clara. La ocultación solo se recomienda a usuarios avanzados."
     }
   },
-  "use": {
-    "touchid": {
-      "label": "Usar Touch ID",
-      "helper": "Autenticación mediante huella dactilar (si es posible en su dispositivo). Aún no está totalmente implementado."
-    },
-    "faceid": {
-      "label": "Usar Face ID",
-      "helper": "Autenticación mediante reconocimiento facial (si es posible en su dispositivo). Aún no está totalmente implementado."
-    }
-  },
   "privacyUsage": {
     "public": {
       "label": "Público",

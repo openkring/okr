@@ -156,10 +156,6 @@
     "label": "Afficher les détails de l'utilisateur"
   },
 
-  "auth": {
-    "title": "Authentification",
-    "description": "Paramètres d'authentification de l'utilisateur. Ces paramètres s'appliquent uniquement à l'utilisateur sélectionné."
-  },
   "fbuser": {
     "title": "Utilisateur Firebase",
     "description": "Informations sur le compte d'authentification Firebase.",
@@ -220,8 +216,6 @@
   "invoiceDelivery": { "label": "Distribution des factures" },
   "emailVerified": { "label": "E-mail confirmé", "helper": "Si l'utilisateur a confirmé l'adresse e-mail." },
   "disabled": { "label": "Désactivé", "helper": "Le compte utilisateur est désactivé." },
-  "useTouchId": { "label": "Utiliser Touch ID", "helper": "Authentification par empreinte digitale." },
-  "useFaceId": { "label": "Utiliser Face ID", "helper": "Authentification par reconnaissance faciale." },
   "showArchivedData": { "label": "Afficher les données archivées", "helper": "Les données archivées sont également affichées." },
   "showDebugInfo": { "label": "Afficher les informations de débogage", "helper": "Les informations de débogage sont affichées en plus." },
   "showHelpers": { "label": "Afficher les aides", "helper": "Les textes descriptifs sont affichés." },

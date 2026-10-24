@@ -16,6 +16,4 @@ export const USER_AUTH_FORM_SHAPE = {
     groupAdmin: false,
     admin: false,
   },
-  useTouchId: false,
-  useFaceId: false,
 } as any;

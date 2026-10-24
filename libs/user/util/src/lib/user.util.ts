@@ -36,8 +36,6 @@ export function structureRoles(roles: string): Roles {
 export function convertUserToAuthForm(user: UserModel): UserAuthFormModel {
   return {
     roles: user.roles,
-    useTouchId: user.useTouchId ?? false,
-    useFaceId: user.useFaceId ?? false,
   };
 }
 
@@ -106,8 +104,6 @@ export function convertFormsToUser(
 export function convertAuthFormToUser(vm: UserAuthFormModel, user?: UserModel): UserModel {
   if (!user) die('user.util.convertAuthFormToUser: User is mandatory.');
   user.roles = vm.roles ?? user.roles;
-  user.useTouchId = vm.useTouchId ?? user.useTouchId;
-  user.useFaceId = vm.useFaceId ?? user.useFaceId;
   return user;
 }
 export function convertDisplayFormToUser(vm: UserDisplayFormModel, user?: UserModel): UserModel {

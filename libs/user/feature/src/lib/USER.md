@@ -28,8 +28,6 @@ Collection name: `users`
 | `notes` | string | Free-text notes |
 | `tags` | string | Space-separated chip tags |
 | `index` | string | Search index string |
-| `useTouchId` | boolean | User preference: enable Touch ID |
-| `useFaceId` | boolean | User preference: enable Face ID |
 | `userLanguage` | string | UI language code (default: app default language) |
 | `avatarUsage` | AvatarUsage | How avatars are displayed (PhotoFirst, etc.) |
 | `gravatarEmail` | string | Email used for Gravatar lookup |
