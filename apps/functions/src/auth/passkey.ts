@@ -34,7 +34,7 @@ import { DEFAULT_EMAIL_PROVIDER, isValidProvider, sendEmailViaProvider } from '.
 import { tenantAppDomain } from './login-id';
 import {
   byCreatedAtDesc, ChallengePurpose, CHALLENGE_TTL_MS, checkLoginTarget, defaultPasskeyLabel, expectedOrigin,
-  isChallengeUsable, isCredentialId, isRecentSignIn, mayManagePasskey, normalizePasskeyLabel, passkeyAddedMail,
+  isChallengeUsable, isCredentialId, mayManagePasskey, registrationBlock, normalizePasskeyLabel, passkeyAddedMail,
   PASSKEY_LABEL_MAX, resolveRpId, StoredChallenge, toPasskeyItem,
 } from './passkey.decide';
 
@@ -162,11 +162,19 @@ function registrationUserName(user: Record<string, unknown>, displayName: string
   return String(user['loginId'] ?? '') || displayName || uid;
 }
 
+/** D4 + no impersonation: only the member's own, fresh sign-in may add a passkey. */
+function assertMayRegister(request: CallableRequest): void {
+  const block = registrationBlock(request.auth?.token, Date.now());
+  if (block === 'impersonated') {
+    logger.warn(`${CF_NAME}: passkey registration refused in an impersonation session for users/${request.auth?.uid}`);
+    throw new HttpsError('permission-denied', 'Einen Passkey kann nur die Person selbst einrichten.');
+  }
+  if (block === 'recent-login-required') throw new HttpsError('failed-precondition', 'recent-login-required');
+}
+
 async function registerOptions(request: CallableRequest, data: PasskeyRequest) {
   const uid = requireUid(request);
-  if (!isRecentSignIn(request.auth?.token.auth_time, Date.now())) {
-    throw new HttpsError('failed-precondition', 'recent-login-required');
-  }
+  assertMayRegister(request);
   const tenantId = requireString(data.tenantId, 'tenantId');
   const user = await userData(uid);
   if (!user || !tenantsOf(user).includes(tenantId)) {
@@ -200,6 +208,7 @@ async function registerOptions(request: CallableRequest, data: PasskeyRequest) {
 
 async function registerVerify(request: CallableRequest, data: PasskeyRequest): Promise<{ item: PasskeyItem }> {
   const uid = requireUid(request);
+  assertMayRegister(request);
   const tenantId = requireString(data.tenantId, 'tenantId');
   const challengeId = requireString(data.challengeId, 'challengeId');
   if (typeof data.response !== 'object' || data.response === null) throw new HttpsError('invalid-argument', 'response is required');
