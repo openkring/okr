@@ -10,7 +10,8 @@ import { JournalTileSource } from './journal-map.util';
  */
 export type Bbox = [west: number, south: number, east: number, north: number];
 
-export interface TileJob { source: 'gibs' | 'lima'; z: number; x: number; y: number; url: string; path: string }
+/** One tile to download; `url` is empty for OpenStreetMap tiles, which are read from the Protomaps build. */
+export interface TileJob { source: 'gibs' | 'lima' | 'swisstopo' | 'osm'; z: number; x: number; y: number; url: string; path: string }
 
 /** Ushuaia → Drake Passage → South Shetlands → Antarctic Peninsula. */
 export const ROUTE_BBOX: Bbox = [-72, -67, -54, -52];

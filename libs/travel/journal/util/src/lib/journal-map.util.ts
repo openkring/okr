@@ -11,6 +11,8 @@ export interface JournalTileSource {
   attribution: string;
   minZoom?: number; // the layer is hidden below
   minNativeZoom?: number;
+  kind?: 'raster' | 'vector'; // vector = OpenStreetMap tiles (Protomaps), drawn by protomaps-leaflet
+  bounds?: [west: number, south: number, east: number, north: number]; // tiles are only requested inside
 }
 
 /** NASA GIBS Blue Marble, EPSG:3857, up to zoom 8 (spike S4, NASA open data). */

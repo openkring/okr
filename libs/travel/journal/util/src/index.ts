@@ -15,3 +15,4 @@ export * from './lib/journal-server.util';
 export * from './lib/journal-sync.util';
 export * from './lib/journal-peer.util';
 export * from './lib/journal-tiles.util';
+export * from './lib/journal-map-area.util';
