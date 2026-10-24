@@ -176,12 +176,13 @@ export class DiaryService {
   /**
    * The travel trips of the tenant, for the trip picker. Read here rather than through
    * `@okr/trip-data-access` so the diary block needs no `dependsOn: ['trip']` — `bka` has the
-   * Logbuch switched off, and a catalogue edge would switch it on. `type` is filtered in memory:
-   * array-contains-any + equality would need one more composite index for ~40 documents.
+   * Logbuch switched off, and a catalogue edge would switch it on. `type == 'travel'` is part of
+   * the query (not an in-memory filter): the rules make tracker trips owner-only and rules are
+   * not filters, so every trips query must carry a `type` constraint. The composite index
+   * `isArchived, tenants, type, startDate` serves it.
    */
   public listTravelTrips(tenantId: string): Observable<TripModel[]> {
-    return this.firestoreService.searchData<TripModel>(TripCollection, getSystemQuery(tenantId), 'startDate', 'desc')
-      .pipe(map(trips => trips.filter(trip => trip.type === 'travel')));
+    return this.firestoreService.searchData<TripModel>(TripCollection, [...getSystemQuery(tenantId), { key: 'type', operator: '==', value: 'travel' }], 'startDate', 'desc');
   }
 
   /** Newest first by the headline sort key — aggregates (zeroed month/day) sort inside their period. */

@@ -6,7 +6,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
-import { TripCollection, TripModel, UserModel } from '@okr/shared-models';
+import { NON_TRACKER_TRIP_TYPES, TripCollection, TripModel, UserModel } from '@okr/shared-models';
 import { getSystemQuery } from '@okr/shared-util-core';
 
 import { getTripIndex, newTripName } from '@okr/trip-util';
@@ -53,7 +53,7 @@ export class TripService {
 
   public list(orderBy = 'startDate', sortOrder: 'asc' | 'desc' = 'desc'): Observable<TripModel[]> {
     return this.firestoreService.searchData<TripModel>(
-      TripCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder
+      TripCollection, [...getSystemQuery(this.env.tenantId), { key: 'type', operator: 'in', value: NON_TRACKER_TRIP_TYPES }], orderBy, sortOrder
     );
   }
 

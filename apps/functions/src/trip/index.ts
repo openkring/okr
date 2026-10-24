@@ -15,9 +15,14 @@ const COUNTING_STATES = new Set([
   'deleted.corr.rev',
 ]);
 
+// Mirrors TRACKER_TRIP_TYPE in @okr/shared-models (this file is inlined, no cross-bundle imports).
+// GPS tracks live in `trips` but are private and never count toward Logbuch stats.
+const TRACKER_TRIP_TYPE = 'tracker';
+
 // Inlined — no monorepo cross-bundle imports
 interface TripDoc {
   state: string;
+  type?: string;
   distance: number;
   startDate: string;  // 'yyyyMMdd'
   resource?: { key?: string };
@@ -31,7 +36,7 @@ export interface StatDelta {
 }
 
 function effectiveTrip(doc: TripDoc | undefined): TripDoc | undefined {
-  return doc && COUNTING_STATES.has(doc.state) ? doc : undefined;
+  return doc && doc.type !== TRACKER_TRIP_TYPE && COUNTING_STATES.has(doc.state) ? doc : undefined;
 }
 
 function collectDeltas(doc: TripDoc, sign: 1 | -1, out: Map<string, StatDelta>): void {
@@ -138,7 +143,7 @@ export async function runTripStatsReconcile(): Promise<void> {
 
   for (const doc of snap.docs) {
     const t = doc.data() as TripDoc;
-    if (!COUNTING_STATES.has(t.state)) continue;
+    if (t.type === TRACKER_TRIP_TYPE || !COUNTING_STATES.has(t.state)) continue;
 
     const dist = Number(t.distance);
     if (!Number.isFinite(dist)) continue;

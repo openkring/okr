@@ -25,6 +25,12 @@ describe('computeDeltas', () => {
     expect(deltas).toHaveLength(3);
   });
 
+  it('tracker trips never count, whatever their state', () => {
+    for (const state of ['done', 'recording', 'closed']) {
+      expect(computeDeltas(undefined, makeTrip({ type: 'tracker', state }))).toHaveLength(0);
+    }
+  });
+
   it('create draft trip: no deltas', () => {
     expect(computeDeltas(undefined, makeTrip({ state: 'draft' }))).toHaveLength(0);
   });
