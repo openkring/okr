@@ -390,21 +390,11 @@ export { getDiaryMediaImage, listDiaryMedia } from './diary/list-diary-media';
 export { recordDiaryLine } from './diary/record-diary-line';
 export { listMyDiaryTenants } from './diary/list-my-diary-tenants';
 
-// privacy 1.19 Phase 3: one-time backfill of the ssn/dob vault + memberBirthYear
-export { migrateSensitiveData } from './person/migrate-sensitive-data';
-
-// privacy 1.19: one-time migration of dateOfDeath into the 'dod' vault channel
-export { migrateDateOfDeath } from './person/migrate-sensitive-data';
-
-// re-derive the dob/dod replicas from the live vault (run AFTER migrateDateOfDeath)
+// re-derive the dob/dod replicas from the live vault (the dateOfDeath migration ran and was retired 2026-10-24, spec 1.118 D3)
 export { resyncVaultReplicas } from './person/resync-vault-replicas';
 
 // mirror the tenants a person holds an account in (spec 2026-09-06 open events, decision 9)
 export { onUserWritten, backfillAccountTenants } from './person/account-mirror';
-
-// member-fees generic positions (2026-09-17): one-time migration of the eight legacy fee
-// columns + rebate/rebateReason into positions[]
-export { migrateMemberFees } from './member-fee/migrate-member-fees';
 
 // exit fee settlement (spec 1.105): a changed membership exit (or archiving) opens, updates, closes or
 // reopens the treasurer's pro-rata settlement task; a not-yet-invoiced fee row is rebuilt pro rata instead
@@ -415,10 +405,6 @@ export { settleMembershipExit } from './member-fee/settle-membership-exit';
 // uploadToBexio/createBexioInvoice — posts 'ready' member-fees as real InvoiceModel +
 // InvoicePositionModel documents
 export { postMemberFees } from './member-fee/post-member-fees';
-
-// delivery-channels 2026-09-07: one-time rewrite of users.newsDelivery/.invoiceDelivery
-// from the legacy numeric DeliveryType to DeliveryChannel[], run once per tenant after release
-export { migrateDeliveryChannels } from './user/migrate-delivery-channels';
 
 // Kostenrechnung 1.65 §6.4: free-text → cost-centre key and current-year backfill (treasurer)
 export { migrateCostCenters } from './cost-center/migrate-cost-centers';

@@ -139,8 +139,8 @@ export async function syncBirthYearReplicas(firestore: Firestore, personId: stri
  * `persons.isDeceased`/`deathYear` + `memberships.memberIsDeceased`/`memberDeathYear`
  * are its degraded-precision copies — the fact and the year, never the full date.
  *
- * ⚠️ A person with no live dod address is treated as NOT deceased. Run the
- * `migrateDateOfDeath` migration BEFORE any bulk use of this, or it will clear the
+ * ⚠️ A person with no live dod address is treated as NOT deceased. The
+ * `migrateDateOfDeath` migration (ran and retired 2026-10-24, spec 1.118 D3) had to precede any bulk use of this, or it would clear the
  * flag of everyone whose date of death still sits on the legacy `persons.dateOfDeath`.
  * @param addresses the person's LIVE addresses (archived excluded)
  * @param evidence  bulk backfills only: ALL the person's addresses, incl. archived — see mayClear

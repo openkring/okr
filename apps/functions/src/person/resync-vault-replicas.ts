@@ -41,7 +41,8 @@ async function forEachDocId(base: Query<DocumentData>, fn: (id: string) => Promi
  * populated forever, and duplicate scalar docs let the last write win. The fixed
  * trigger only repairs a person on their NEXT address write; this sweeps the rest.
  *
- * ⚠️ RUN ORDER: `migrateDateOfDeath` MUST have completed first. This function treats
+ * ⚠️ RUN ORDER: the `migrateDateOfDeath` migration ran and was retired on 2026-10-24 (spec 1.118 D3);
+ * it had to complete before this function. This function treats
  * "no live dod address" as "not deceased", so running it against un-migrated data
  * would clear `isDeceased`/`deathYear` for everyone whose date of death still sits on
  * the legacy `persons.dateOfDeath` field.

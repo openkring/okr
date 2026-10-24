@@ -660,7 +660,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     // (paymentDate, synced from Bexio).
   },
   {
-    // The pre-rename home of the member-fee rows. `migrateMemberFees` COPIES id-for-id into
+    // The pre-rename home of the member-fee rows. the retired `migrateMemberFees` migration (ran, retired 2026-10-24, spec 1.118 D3) COPIED id-for-id into
     // `member-fees` and deliberately leaves the originals behind, so until the owner drops this
     // collection the personal data in it is live and must stay inside erasure and the export.
     // Same classification, finder and anonymize field list as the `member-fees` row above —
