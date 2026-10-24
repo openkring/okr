@@ -231,7 +231,10 @@
     "train": "Treno",
     "car": "Auto",
     "bike": "Bici",
-    "foot": "A piedi"
+    "foot": "A piedi",
+    "row": "Canottaggio",
+    "ski": "Sci",
+    "motorbike": "Moto"
   },
   "flyover": {
     "button": "Sorvolo",

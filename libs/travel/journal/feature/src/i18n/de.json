@@ -231,7 +231,10 @@
     "train": "Zug",
     "car": "Auto",
     "bike": "Velo",
-    "foot": "Zu Fuss"
+    "foot": "Zu Fuss",
+    "row": "Rudern",
+    "ski": "Ski",
+    "motorbike": "Motorrad"
   },
   "flyover": {
     "button": "Flyover",

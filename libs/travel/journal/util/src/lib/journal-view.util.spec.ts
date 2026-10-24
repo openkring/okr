@@ -103,6 +103,9 @@ describe('footprint weather', () => {
 });
 
 describe('footprint transport', () => {
+  it('accepts the new modes', () => {
+    for (const m of ['row', 'ski', 'motorbike']) expect(transportOf(m)).toBe(m);
+  });
   it('footprintsOf reads a valid transport and ignores others', () => {
     const state = materialize([
       rec({ entity: 'footprint', entityKey: 'f1', op: 'create', fields: { journalKey: 'j1', title: 'A', date: '20270101', transport: 'ship' } }),

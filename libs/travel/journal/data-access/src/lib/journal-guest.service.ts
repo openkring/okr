@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { TransportMode } from '@okr/shared-models';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
@@ -23,7 +24,7 @@ export interface GuestCommentView { key: string; authorName: string; text: strin
 export interface GuestFootprintView {
   key: string; title: string; placeName: string; date: string; time: string; latitude?: number; longitude?: number;
   weather?: { code: number; min: number; max: number; precip: number };
-  transport?: 'plane' | 'ship' | 'bus' | 'train' | 'car' | 'bike' | 'foot';
+  transport?: TransportMode;
   blocks: GuestBlockView[]; likes: number; liked: boolean; comments: GuestCommentView[];
 }
 export interface GuestJournalView {

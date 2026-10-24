@@ -6,7 +6,7 @@ import { LONG_NAME_LENGTH } from '@okr/shared-constants';
 import {
   Checkbox, CheckboxI18n, DateInput, DateInputI18n, ErrorNote, StringSelect, StringSelectI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n,
 } from '@okr/shared-ui';
-import { TRANSPORT_MODES } from '@okr/shared-models';
+import { TRANSPORT_MODES, TransportMode } from '@okr/shared-models';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 import { FootprintFormModel, footprintValidations, JournalI18n } from '@okr/travel-journal-util';
@@ -96,11 +96,16 @@ export class FootprintForm {
   protected readonly published = computed(() => this.formData()?.published ?? false);
   protected readonly transport = computed(() => this.formData()?.transport ?? '');
   /** '' first: «not set» */
-  protected readonly transportValues = ['', ...TRANSPORT_MODES];
+  protected readonly transportValues: ('' | TransportMode)[] = ['', ...TRANSPORT_MODES];
   protected readonly transportLabels = computed(() => {
     const i18n = this.i18n();
-    return ['–', i18n.transport_plane(), i18n.transport_ship(), i18n.transport_bus(), i18n.transport_train(), i18n.transport_car(),
-      i18n.transport_bike(), i18n.transport_foot()];
+    // Record<TransportMode, …>: a mode without a label does not compile
+    const byMode: Record<TransportMode, string> = {
+      plane: i18n.transport_plane(), ship: i18n.transport_ship(), bus: i18n.transport_bus(), train: i18n.transport_train(),
+      car: i18n.transport_car(), bike: i18n.transport_bike(), foot: i18n.transport_foot(), row: i18n.transport_row(),
+      ski: i18n.transport_ski(), motorbike: i18n.transport_motorbike(),
+    };
+    return this.transportValues.map((v) => (v === '' ? '–' : byMode[v]));
   });
   protected readonly transportI18n = computed(() => ({
     name: 'transport', label: this.i18n().transport_label(), helper: this.i18n().transport_helper(),

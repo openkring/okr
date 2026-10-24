@@ -48,8 +48,8 @@ export class PageModel implements OkrModel, NamedModel, SearchableModel, TaggedM
 }
 
 export type FootprintPublishState = 'draft' | 'published';
-export type TransportMode = 'plane' | 'ship' | 'bus' | 'train' | 'car' | 'bike' | 'foot';
-export const TRANSPORT_MODES: TransportMode[] = ['plane', 'ship', 'bus', 'train', 'car', 'bike', 'foot'];
+export type TransportMode = 'plane' | 'ship' | 'bus' | 'train' | 'car' | 'bike' | 'foot' | 'row' | 'ski' | 'motorbike';
+export const TRANSPORT_MODES: TransportMode[] = ['plane', 'ship', 'bus', 'train', 'car', 'bike', 'foot', 'row', 'ski', 'motorbike'];
 export const FOOTPRINT_PAGE_TYPE = 'footprint';
 
 export const PageCollection = 'pages';

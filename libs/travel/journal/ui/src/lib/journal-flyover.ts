@@ -12,7 +12,7 @@ import { CLOSING_MS, FlyLeg, FlyStop, FlyTimeline, JournalI18n, JournalTileSourc
  * route and closes. MapLibre is imported here, lazily, so no start bundle carries it; its worker and stylesheet
  * are app assets under `assets/maplibre/` (also offline on the iPad).
  */
-const TRANSPORT_ICON: Record<string, string> = { plane: '✈️', ship: '🚢', bus: '🚌', train: '🚆', car: '🚗', bike: '🚲', foot: '🚶' };
+const TRANSPORT_ICON: Record<string, string> = { plane: '✈️', ship: '🚢', bus: '🚌', train: '🚆', car: '🚗', bike: '🚲', foot: '🚶', row: '🚣', ski: '⛷️', motorbike: '🏍️' };
 const ASSET_BASE = 'assets/maplibre/';
 let stylesheetAdded = false;
 
