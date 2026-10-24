@@ -395,8 +395,9 @@ export { resyncVaultReplicas } from './person/resync-vault-replicas';
 // mirror the tenants a person holds an account in (spec 2026-09-06 open events, decision 9)
 export { onUserWritten, backfillAccountTenants } from './person/account-mirror';
 
-// exit fee settlement (spec 1.105): the exitSettlement handler of onMembershipDocWritten opens, updates,
-// closes or reopens the treasurer's pro-rata settlement task on a changed exit; a not-yet-invoiced fee row is rebuilt pro rata instead
+// exit fee settlement (spec 1.105): the exitSettlement handler of onMembershipDocWritten opens,
+// updates, closes or reopens the treasurer's pro-rata settlement task on a changed exit; a
+// not-yet-invoiced fee row is rebuilt pro rata instead.
 // the treasurer's decision on that task: refund, adjust the invoice or exit on 31.12.
 export { settleMembershipExit } from './member-fee/settle-membership-exit';
 
