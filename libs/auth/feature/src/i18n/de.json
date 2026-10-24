@@ -108,5 +108,29 @@
   },
   "background": {
     "alt": "Hintergrundbild"
+  },
+  "passkey": {
+    "login": {
+      "label": "Mit Passkey anmelden",
+      "error": "Die Anmeldung mit Passkey hat nicht geklappt. Du kannst dich weiterhin mit deinem Passwort anmelden."
+    },
+    "title": "Passkeys",
+    "intro": "Mit einem Passkey meldest du dich per Gesichtserkennung, Fingerabdruck oder Geräte-PIN an – ohne Passwort.",
+    "add": "Passkey hinzufügen",
+    "added": "Passkey hinzugefügt.",
+    "unavailable": "Auf diesem Gerät sind Passkeys nicht verfügbar.",
+    "exists": "Auf diesem Gerät gibt es schon einen Passkey für dein Konto.",
+    "reauth": "Bitte gib zur Sicherheit noch einmal dein Passwort ein.",
+    "synced": "synchronisiert",
+    "created": "Erstellt",
+    "lastUsed": "Zuletzt verwendet",
+    "never": "noch nie",
+    "rename": "Umbenennen",
+    "delete": {
+      "label": "Löschen",
+      "confirm": "Diesen Passkey löschen? Auf dem Gerät kannst du dich danach nur noch mit dem Passwort anmelden."
+    },
+    "empty": "Du hast noch keinen Passkey.",
+    "error": "Das hat nicht geklappt. Versuch es bitte noch einmal."
   }
 }

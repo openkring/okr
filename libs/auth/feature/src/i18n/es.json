@@ -108,5 +108,29 @@
   },
   "background": {
     "alt": "Imagen de fondo"
+  },
+  "passkey": {
+    "login": {
+      "label": "Iniciar sesión con passkey",
+      "error": "El inicio de sesión con passkey no ha funcionado. Puedes seguir iniciando sesión con tu contraseña."
+    },
+    "title": "Passkeys",
+    "intro": "Con una passkey inicias sesión con reconocimiento facial, huella dactilar o el PIN del dispositivo, sin contraseña.",
+    "add": "Añadir passkey",
+    "added": "Passkey añadida.",
+    "unavailable": "Las passkeys no están disponibles en este dispositivo.",
+    "exists": "Este dispositivo ya tiene una passkey para tu cuenta.",
+    "reauth": "Por seguridad, introduce otra vez tu contraseña.",
+    "synced": "sincronizada",
+    "created": "Creada",
+    "lastUsed": "Último uso",
+    "never": "nunca",
+    "rename": "Cambiar nombre",
+    "delete": {
+      "label": "Eliminar",
+      "confirm": "¿Eliminar esta passkey? En ese dispositivo solo podrás iniciar sesión con tu contraseña."
+    },
+    "empty": "Todavía no tienes ninguna passkey.",
+    "error": "No ha funcionado. Inténtalo de nuevo, por favor."
   }
 }

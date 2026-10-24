@@ -108,5 +108,29 @@
   },
   "background": {
     "alt": "Image d’arrière-plan"
+  },
+  "passkey": {
+    "login": {
+      "label": "Se connecter avec une clé d’accès",
+      "error": "La connexion avec une clé d’accès n’a pas fonctionné. Tu peux toujours te connecter avec ton mot de passe."
+    },
+    "title": "Clés d’accès",
+    "intro": "Avec une clé d’accès, tu te connectes par reconnaissance faciale, empreinte digitale ou code de l’appareil – sans mot de passe.",
+    "add": "Ajouter une clé d’accès",
+    "added": "Clé d’accès ajoutée.",
+    "unavailable": "Les clés d’accès ne sont pas disponibles sur cet appareil.",
+    "exists": "Cet appareil a déjà une clé d’accès pour ton compte.",
+    "reauth": "Pour ta sécurité, saisis encore une fois ton mot de passe.",
+    "synced": "synchronisée",
+    "created": "Créée",
+    "lastUsed": "Dernière utilisation",
+    "never": "jamais",
+    "rename": "Renommer",
+    "delete": {
+      "label": "Supprimer",
+      "confirm": "Supprimer cette clé d’accès ? Sur cet appareil, tu ne pourras ensuite te connecter qu’avec ton mot de passe."
+    },
+    "empty": "Tu n’as pas encore de clé d’accès.",
+    "error": "Cela n’a pas fonctionné. Réessaie, s’il te plaît."
   }
 }
