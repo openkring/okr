@@ -147,3 +147,5 @@ export const ensureJournalPeerSecret = onCall(
     return { secret };
   },
 );
+
+export { journalGuest, manageJournalGuest } from './guest';

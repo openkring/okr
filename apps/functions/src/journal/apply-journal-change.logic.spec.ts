@@ -63,6 +63,17 @@ describe('applyJournalChange logic', () => {
     expect(planEntityWrite([create], 'j1/other', 'section', 's1', ['bkg'])).toBeUndefined();
   });
 
+  it('a guest comment and an unliked like are materialised', () => {
+    const comment = rec({ entity: 'comment', entityKey: 'c1', op: 'create', fields: { footprintKey: 'f1', text: 'Schön!', authorName: 'Anna', createdAt: '2027-01-14T10:00:00Z' } }, 'guest-anna', 'anna');
+    expect(planEntityWrite([comment], 'j1', 'comment', 'c1', ['bkg'])).toMatchObject({
+      path: 'journals/j1/comments/c1', data: { authorKey: 'anna', authorName: 'Anna', description: 'Schön!', parentKey: 'page.f1', isArchived: false },
+    });
+    const like = rec({ entity: 'reaction', entityKey: 'f1_anna', op: 'create', fields: { footprintKey: 'f1', type: 'like' } }, 'guest-anna', 'anna');
+    const unlike = rec({ entity: 'reaction', entityKey: 'f1_anna', op: 'archive' }, 'guest-anna', 'anna');
+    expect(planEntityWrite([like], 'j1', 'reaction', 'f1_anna', ['bkg'])?.data).toMatchObject({ personKey: 'anna', parentKey: 'page.f1', type: 'like' });
+    expect(planEntityWrite([like, unlike], 'j1', 'reaction', 'f1_anna', ['bkg'])?.data).toEqual({ isArchived: true });
+  });
+
   it('sign rejects a path outside the journal', () => {
     expect(isJournalFileName('a1b2-2048.jpg')).toBe(true);
     expect(isJournalFileName('../other/a.jpg')).toBe(false);

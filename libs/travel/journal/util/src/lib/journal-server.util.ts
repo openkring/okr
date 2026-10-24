@@ -45,6 +45,10 @@ export function journalDocOf(state: JournalState, journalKey: string, tenants: s
     okey: journalKey, tenants, isArchived: false,
     title: str(v['title']), subTitle: str(v['subTitle']), startDate: str(v['startDate']), endDate: str(v['endDate']),
     authors: Array.isArray(v['authors']) ? (v['authors'] as JournalModel['authors']) : undefined,
+    guests: Array.isArray(v['guests'])
+      ? (v['guests'] as unknown[]).filter((g): g is JournalModel['guests'][number] =>
+        typeof g === 'object' && g !== null && typeof (g as { person?: { key?: unknown } }).person?.key === 'string')
+      : undefined,
     authorKeys,
   });
 }
@@ -89,6 +93,28 @@ export function imageDocOf(state: JournalState, imageKey: string, tenants: strin
     path2048: storagePath(tenant, journalKey, str(v['path2048'])),
     path400: storagePath(tenant, journalKey, str(v['path400'])),
   });
+}
+
+/** A comment as `journals/{jk}/comments/{key}` (CommentModel shape, plan 7). */
+export function commentDocOf(state: JournalState, commentKey: string, tenants: string[]): Record<string, unknown> | undefined {
+  const { entityState, view: v } = view(state, 'comment', commentKey);
+  if (!v) return undefined;
+  const createdAt = str(v['createdAt']);
+  return {
+    okey: commentKey, tenants, isArchived: false, index: '', tags: '', attachmentKeys: [],
+    authorKey: entityState?.ownerKey ?? '', authorName: str(v['authorName']), creationDateTime: createdAt,
+    parentKey: `page.${str(v['footprintKey'])}`, description: str(v['text']),
+  };
+}
+
+/** A like as `journals/{jk}/reactions/{key}` (ReactionModel shape, plan 7). */
+export function reactionDocOf(state: JournalState, reactionKey: string, tenants: string[]): Record<string, unknown> | undefined {
+  const { entityState, view: v } = view(state, 'reaction', reactionKey);
+  if (!v || v['type'] !== 'like') return undefined;
+  return {
+    okey: reactionKey, tenants, isArchived: false, parentKey: `page.${str(v['footprintKey'])}`,
+    personKey: entityState?.ownerKey ?? '', type: 'like', createdAt: str(v['createdAt']),
+  };
 }
 
 /**

@@ -1,8 +1,9 @@
 import {
-  JournalChange, JournalCollection, JournalEntity, JournalFootprintCollection, JournalImageCollection, JournalSectionCollection,
+  JournalChange, JournalCollection, JournalCommentCollection, JournalEntity, JournalFootprintCollection, JournalImageCollection,
+  JournalReactionCollection, JournalSectionCollection,
 } from '@okr/shared-models';
 import {
-  acceptRecord, entityStateKey, footprintPageOf, imageDocOf, journalDocOf, materialize, sectionDocOf, sortByOrder,
+  acceptRecord, commentDocOf, entityStateKey, footprintPageOf, imageDocOf, journalDocOf, materialize, reactionDocOf, sectionDocOf, sortByOrder,
 } from '@okr/travel-journal-util';
 
 /** A change record as stored in `journal-changes`, with its server upload time. */
@@ -20,8 +21,8 @@ export function journalPath(journalKey: string, sub?: string, key?: string): str
 /**
  * The document one entity materialises to, from ALL its records (spec 1.113 §5.3). Records with a
  * malformed or far-future clock are dropped. Nothing is written before the create record arrived (a set
- * can overtake its create); an archived entity becomes `isArchived: true` — never a delete. Comments and
- * reactions are plan 6.
+ * can overtake its create); an archived entity becomes `isArchived: true` — never a delete (an unliked
+ * like too).
  */
 export function planEntityWrite(records: StoredRecord[], journalKey: string, entity: JournalEntity, entityKey: string, tenants: string[]): JournalWrite | undefined {
   // keys come from the device: a '/' would address a document outside the journal's subcollections
@@ -37,6 +38,10 @@ export function planEntityWrite(records: StoredRecord[], journalKey: string, ent
       return { path: journalPath(journalKey, JournalSectionCollection, entityKey), data: { ...(sectionDocOf(state, entityKey, journalKey, tenants) ?? ARCHIVED) } };
     case 'image':
       return { path: journalPath(journalKey, JournalImageCollection, entityKey), data: { ...(imageDocOf(state, entityKey, tenants) ?? ARCHIVED) } };
+    case 'comment':
+      return { path: journalPath(journalKey, JournalCommentCollection, entityKey), data: commentDocOf(state, entityKey, tenants) ?? ARCHIVED };
+    case 'reaction':
+      return { path: journalPath(journalKey, JournalReactionCollection, entityKey), data: reactionDocOf(state, entityKey, tenants) ?? ARCHIVED };
     default:
       return undefined;
   }
