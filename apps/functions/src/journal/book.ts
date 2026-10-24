@@ -1,3 +1,4 @@
+import type { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 
 import { logger } from 'firebase-functions/v2';
@@ -122,15 +123,22 @@ async function writeExport(db: Firestore, caller: JournalCaller, req: BookExport
   }
 }
 
-/** Streams a document into a new bucket object while `draw` fills it; ends the document either way. */
+/**
+ * Streams a document into a new bucket object while `draw` fills it. Only a complete document is ended: when `draw`
+ * fails, the document is destroyed, which aborts the resumable upload so no truncated PDF is committed; the upload is
+ * awaited (it rejects) before the caller deletes whatever might be left.
+ */
 async function streamPdf(bucket: Bucket, doc: PDFKit.PDFDocument, path: string, draw: () => Promise<void>): Promise<void> {
   const upload = pipeline(doc, bucket.file(path).createWriteStream({ contentType: 'application/pdf', resumable: true }));
   upload.catch(() => undefined); // awaited below; a failing upload must not reject unhandled while `draw` still runs
   try {
     await draw();
-  } finally {
-    doc.end();
+  } catch (e) {
+    (doc as unknown as Readable).destroy(e instanceof Error ? e : new Error(String(e)));
+    await upload.catch(() => undefined);
+    throw e;
   }
+  doc.end();
   await upload;
 }
 
@@ -164,19 +172,21 @@ export const exportJournalBook = onCall(
     const startedAt = new Date(nowMs).toISOString();
     try {
       const written = await writeExport(db, caller, req, book, nowMs);
+      // sign first: a done export is never downgraded to failed by a signing error afterwards
+      const bucket = privateBucket();
+      const result: ExportJournalBookResult = {
+        bookUrl: await signedUrl(bucket, written.bookPath),
+        ...(written.coverPath ? { coverUrl: await signedUrl(bucket, written.coverPath) } : {}),
+        pageCount: written.pageCount,
+        warnings: written.warnings,
+      };
       const exp: JournalBookExport = {
         kind: req.kind, state: 'done', progress: 100, startedAt, finishedAt: new Date().toISOString(),
         bookPath: written.bookPath, pageCount: written.pageCount, warnings: written.warnings,
         ...(written.coverPath ? { coverPath: written.coverPath } : {}),
       };
       await ref.update({ export: exp });
-      const bucket = privateBucket();
-      return {
-        bookUrl: await signedUrl(bucket, written.bookPath),
-        ...(written.coverPath ? { coverUrl: await signedUrl(bucket, written.coverPath) } : {}),
-        pageCount: written.pageCount,
-        warnings: written.warnings,
-      };
+      return result;
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
       logger.error('exportJournalBook:export failed', { journalKey: caller.journalKey, kind: req.kind, error: message });

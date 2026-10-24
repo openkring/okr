@@ -396,14 +396,26 @@ function drawImage(doc: PDFKit.PDFDocument, data: Buffer, box: { x: number; y: n
   return true;
 }
 
-/** Waits while the consumer (the bucket upload) is behind, so photos do not pile up in memory. */
-async function relieve(doc: PDFKit.PDFDocument): Promise<void> {
-  const HIGH = 32 * 1024 * 1024;
-  const stream = doc as unknown as Readable;
-  for (let i = 0; i < 6000 && stream.readableFlowing === true && stream.readableLength > HIGH; i++) {
-    await new Promise((resolve) => setTimeout(resolve, 20));
+const RELIEVE_HIGH = 32 * 1024 * 1024;
+const RELIEVE_MAX_MS = 10 * 60 * 1000;
+
+/**
+ * Waits while more than `high` bytes of PDF sit unread in the document stream, so photos do not pile up in memory
+ * when the bucket upload is slower. Under backpressure pipe() pauses the source (readableFlowing false), so the wait
+ * depends on the buffered length alone. Throws once the stream is destroyed (the upload failed) — the export stops
+ * instead of reading every further photo — or when nothing is consumed for ten minutes.
+ */
+export async function relieve(stream: Readable, high = RELIEVE_HIGH, pollMs = 20): Promise<void> {
+  const until = Date.now() + RELIEVE_MAX_MS;
+  for (;;) {
+    if (stream.destroyed) throw new Error('book pdf: the output stream is closed');
+    if (stream.readableLength <= high) return;
+    if (Date.now() > until) throw new Error('book pdf: the upload stopped consuming');
+    await new Promise((resolve) => setTimeout(resolve, pollMs));
   }
 }
+
+const streamOf = (doc: PDFKit.PDFDocument) => doc as unknown as Readable;
 
 async function drawFrames(doc: PDFKit.PDFDocument, frames: BookFrame[], ox: number, oy: number, ctx: BookPdfContext, m: Measurer): Promise<void> {
   const srgb = ctx.x4 ? X4.get(doc)?.srgb : undefined;
@@ -433,15 +445,17 @@ export async function writeBookPdf(doc: PDFKit.PDFDocument, pages: BookPage[], c
   const wPt = mmToPt(PAGE_W_MM + 2 * ctx.bleedMm);
   const hPt = mmToPt(PAGE_H_MM + 2 * ctx.bleedMm);
   for (let i = 0; i < pages.length; i++) {
+    await relieve(streamOf(doc)); // also stops a failed upload before the next page's photos are read
     blackPage(doc, wPt, hPt);
     await drawFrames(doc, pages[i].frames, bleed, bleed, ctx, m);
     await onPage?.(i);
-    await relieve(doc);
   }
+  await relieve(streamOf(doc));
 }
 
 /** The cover sheet of coverLayout (one page, frames from the sheet's top-left corner, bleed included). */
 export async function writeCoverPdf(doc: PDFKit.PDFDocument, cover: { width: number; height: number; frames: BookFrame[] }, ctx: BookPdfContext): Promise<void> {
+  await relieve(streamOf(doc));
   blackPage(doc, mmToPt(cover.width), mmToPt(cover.height));
   await drawFrames(doc, cover.frames, 0, 0, ctx, pdfMeasurer(doc));
 }

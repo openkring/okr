@@ -1,10 +1,12 @@
+import { Readable } from 'node:stream';
+
 import { describe, expect, it } from 'vitest';
 import PDFDocument from 'pdfkit';
 
 import type { BookPage } from '@okr/travel-journal-util';
 
 import { htmlToRuns } from './book-html';
-import { applyPdfX4, bookAsset, createBookDoc, glyphSegments, pdfkitPaginate, writeBookPdf } from './book-pdf';
+import { applyPdfX4, bookAsset, createBookDoc, glyphSegments, pdfkitPaginate, relieve, writeBookPdf } from './book-pdf';
 
 // a 4 × 3 px RGB JPEG
 const JPEG = Buffer.from('/9j/4AAQSkZJRgABAQAASABIAAD/4QBMRXhpZgAATU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAABKADAAQAAAABAAAAAwAAAAD/7QA4UGhvdG9zaG9wIDMuMAA4QklNBAQAAAAAAAA4QklNBCUAAAAAABDUHYzZjwCyBOmACZjs+EJ+/8AAEQgAAwAEAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/bAEMAAgICAgICAwICAwUDAwMFBgUFBQUGCAYGBgYGCAoICAgICAgKCgoKCgoKCgwMDAwMDA4ODg4ODw8PDw8PDw8PD//bAEMBAgICBAQEBwQEBxALCQsQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEP/dAAQAAf/aAAwDAQACEQMRAD8A8Pooor+dz/SA/9k=', 'base64');
@@ -111,5 +113,26 @@ describe('book pdf', () => {
     const items = chunks.flatMap((c) => htmlToRuns(c)).filter((r) => r.list && r.bullet !== undefined);
     expect(items.filter((r) => r.bullet === '•').length).toBe(1);
     expect(pdfkitPaginate(doc)('', 'body', first, next)).toEqual([]);
+  });
+
+  it('relieve waits while a paused consumer leaves the buffer full, and fails once the stream is destroyed', async () => {
+    const stream = new Readable({ read: () => undefined });
+    stream.push(Buffer.alloc(100));
+    stream.pause(); // pipe() pauses the source under backpressure: readableFlowing is false
+    let done = false;
+    const waiting = relieve(stream, 50, 1).then(() => (done = true));
+    await new Promise((r) => setTimeout(r, 20));
+    expect(done).toBe(false); // the old guard (readableFlowing === true) returned at once here
+    stream.on('data', () => undefined).resume(); // the upload catches up
+    await waiting;
+    expect(done).toBe(true);
+
+    const dead = new Readable({ read: () => undefined });
+    dead.push(Buffer.alloc(100));
+    dead.pause();
+    const failing = relieve(dead, 50, 1);
+    dead.destroy();
+    await expect(failing).rejects.toThrow(/closed/);
+    await expect(relieve(dead, 50, 1)).rejects.toThrow(/closed/); // checked even with an empty buffer
   });
 });

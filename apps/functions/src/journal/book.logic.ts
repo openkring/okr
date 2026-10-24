@@ -3,11 +3,11 @@ import type { BookLabels } from '@okr/travel-journal-util';
 
 import { isJournalKey, journalObjectPath } from './apply-journal-change.logic';
 
-/** An export still «running» after this long has died with its instance (timeout 3600 s): a new one may start. */
-export const EXPORT_STALE_MS = 60 * 60 * 1000;
+/** An export still «running» after this long has died with its instance (timeout 3600 s + margin): a new one may start. */
+export const EXPORT_STALE_MS = 65 * 60 * 1000;
 export const MAX_LABEL_LENGTH = 200;
 
-/** False while another export of the book is running (started less than an hour ago). */
+/** False while another export of the book is running (started less than 65 minutes ago). */
 export function canStartExport(exp: JournalBookExport | undefined, nowMs: number): boolean {
   if (exp?.state !== 'running') return true;
   const started = Date.parse(exp.startedAt);

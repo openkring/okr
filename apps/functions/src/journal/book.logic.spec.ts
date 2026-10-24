@@ -14,8 +14,9 @@ describe('book export logic', () => {
   it('a running export blocks a second one', () => {
     const running = { kind: 'print' as const, state: 'running' as const, startedAt: '2026-10-25T09:30:00Z' };
     expect(canStartExport(running, NOW)).toBe(false);
-    // an export still «running» after an hour has died with its instance: a new one may start
-    expect(canStartExport({ ...running, startedAt: '2026-10-25T08:59:00Z' }, NOW)).toBe(true);
+    // still blocked at 60 min (the function's own timeout), free after 65 min: that instance has died
+    expect(canStartExport({ ...running, startedAt: '2026-10-25T09:00:00Z' }, NOW)).toBe(false);
+    expect(canStartExport({ ...running, startedAt: '2026-10-25T08:55:00Z' }, NOW)).toBe(true);
     expect(canStartExport({ ...running, startedAt: 'garbage' }, NOW)).toBe(true);
     expect(canStartExport({ ...running, state: 'done' }, NOW)).toBe(true);
     expect(canStartExport({ ...running, state: 'failed' }, NOW)).toBe(true);
