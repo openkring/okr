@@ -1,4 +1,4 @@
-import { JournalEntity } from '@okr/shared-models';
+import { DiaryWeather, JournalEntity } from '@okr/shared-models';
 import { EntityState, JournalState, viewOf } from './journal-merge.util';
 import { sortByOrder } from './journal-order.util';
 
@@ -45,7 +45,23 @@ export interface FootprintView {
   latitude?: number;
   longitude?: number;
   publishState: 'draft' | 'published';
+  weather?: DiaryWeather; // filled once online (spec §6.4, plan 8)
   blocks: BlockView[];
+}
+
+/** A stored weather value, or undefined when the field is missing or malformed. */
+export function weatherOf(value: unknown): DiaryWeather | undefined {
+  if (typeof value !== 'object' || value === null) return undefined;
+  const w = value as Record<string, unknown>;
+  const n = (k: string) => (typeof w[k] === 'number' && Number.isFinite(w[k]) ? (w[k] as number) : undefined);
+  const code = n('code');
+  if (code === undefined || code < 0) return undefined;
+  return { code, min: n('min') ?? 0, max: n('max') ?? 0, precip: n('precip') ?? 0, sunrise: String(w['sunrise'] ?? ''), sunset: String(w['sunset'] ?? '') };
+}
+
+/** The weather as one chip: '−3–4 °C, 2 mm' (the diary's format). */
+export function weatherLine(weather: DiaryWeather | undefined): string {
+  return weather ? `${Math.round(weather.min)}–${Math.round(weather.max)} °C, ${Math.round(weather.precip)} mm` : '';
 }
 
 function live(state: JournalState, entity: JournalEntity): { entity: EntityState; view: Record<string, unknown> }[] {
@@ -100,6 +116,7 @@ export function footprintsOf(state: JournalState, journalKey: string): Footprint
       latitude: num(view['latitude']),
       longitude: num(view['longitude']),
       publishState: view['publishState'] === 'published' ? ('published' as const) : ('draft' as const),
+      weather: weatherOf(view['weather']),
       blocks: blocksOf(state, entity.entityKey),
     }))
     .sort((a, b) => cmp(a.date, b.date) || cmp(a.time, b.time) || cmp(a.key, b.key));

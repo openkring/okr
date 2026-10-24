@@ -7,7 +7,7 @@ import {
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { FIRESTORE, ensureAppCheckToken } from '@okr/shared-config';
-import { JournalChange, JournalChangeCollection, JournalCollection } from '@okr/shared-models';
+import { DiaryWeather, JournalChange, JournalChangeCollection, JournalCollection } from '@okr/shared-models';
 import {
   acceptRecord, advanceCursor, classifyUploadError, DOWNLOAD_PAGE, downloadStart, JournalPhotoMode, pagesOf, UPLOAD_PAGE,
 } from '@okr/travel-journal-util';
@@ -298,6 +298,14 @@ export class JournalSyncService {
     }
     if (downloaded > 0) ctx.onPhotosStored?.();
     return pending + await this.countPendingPhotos(ctx, journalKeys);
+  }
+
+  /**
+   * The day's weather at a footprint (spec §6.4, plan 8) through the diary's `fetchDiaryWeather` callable —
+   * only a date and a coordinate leave the device. `null` = no measurement for that day.
+   */
+  public fetchWeather(date: string, latitude: number, longitude: number): Promise<DiaryWeather | null> {
+    return this.call<DiaryWeather | null>('fetchDiaryWeather', { date, latitude, longitude });
   }
 
   private async call<T>(name: string, payload: unknown): Promise<T> {

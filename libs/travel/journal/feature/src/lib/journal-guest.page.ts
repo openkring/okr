@@ -11,7 +11,7 @@ import { okrPrompt } from '@okr/shared-util-angular';
 import { fill } from '@okr/shared-util-core';
 import { GuestFootprintView, GuestJournalView, guestErrorOf, JournalGuestService } from '@okr/travel-journal-data-access';
 import { JournalReactions, ReactionComment } from '@okr/travel-journal-ui';
-import { GIBS_BLUE_MARBLE, JOURNAL_I18N_KEYS, JournalI18n } from '@okr/travel-journal-util';
+import { GIBS_BLUE_MARBLE, JOURNAL_I18N_KEYS, JournalI18n, weatherLine, weatherOf } from '@okr/travel-journal-util';
 
 /**
  * The journal for a guest (spec 1.113 §7, plan 7): opened with the personal link, no sign-in. Everything comes
@@ -164,7 +164,7 @@ export class JournalGuestPage {
 
   protected facts(fp: GuestFootprintView): string {
     const date = /^\d{8}$/.test(fp.date) ? `${fp.date.slice(6, 8)}.${fp.date.slice(4, 6)}.${fp.date.slice(0, 4)}` : '';
-    return [date, fp.time, fp.placeName].filter((x) => x).join(' · ');
+    return [date, fp.time, fp.placeName, weatherLine(weatherOf(fp.weather))].filter((x) => x).join(' · ');
   }
 
   protected counts(fp: GuestFootprintView): string {

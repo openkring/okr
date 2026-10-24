@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { JournalChange } from '@okr/shared-models';
 import { formatHlc } from './journal-hlc.util';
 import { materialize } from './journal-merge.util';
-import { footprintsOf, imagesOf, journalsOf, lastBlockOrder } from './journal-view.util';
+import { footprintsOf, imagesOf, journalsOf, lastBlockOrder, weatherLine, weatherOf } from './journal-view.util';
 
 let n = 0;
 function rec(p: Pick<JournalChange, 'entity' | 'entityKey' | 'op'> & Partial<JournalChange>): JournalChange {
@@ -88,5 +88,16 @@ describe('hasOthersBlocks', () => {
   it('a block of the other author blocks the deletion', async () => {
     const { hasOthersBlocks } = await import('./journal-view.util');
     expect(hasOthersBlocks([fp([{ authorKey: 'bruno' }]), fp([{ authorKey: 'barbara' }])], 'bruno')).toBe(true);
+  });
+});
+
+describe('footprint weather', () => {
+  it('a stored weather value is read and shown in the diary format', () => {
+    const w = weatherOf({ code: 3, min: -2.6, max: 4.4, precip: 1.6, sunrise: '04:10', sunset: '23:40' });
+    expect(w).toEqual({ code: 3, min: -2.6, max: 4.4, precip: 1.6, sunrise: '04:10', sunset: '23:40' });
+    expect(weatherLine(w)).toBe('-3–4 °C, 2 mm');
+    expect(weatherOf({ code: -1 })).toBeUndefined(); // no measurement
+    expect(weatherOf('sunny')).toBeUndefined();
+    expect(weatherLine(undefined)).toBe('');
   });
 });

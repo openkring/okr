@@ -3,7 +3,7 @@ import {
   IMAGE_CONFIG_SHAPE, ImageConfig,
 } from '@okr/shared-models';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
-import { BlockView, FootprintView, ImageView } from './journal-view.util';
+import { BlockView, FootprintView, ImageView, weatherLine } from './journal-view.util';
 
 /**
  * A footprint as CMS section objects (spec 1.113 §9.2, §9.3): a hero as cover, then one article per
@@ -21,7 +21,7 @@ function coordinate(value: number, positive: string, negative: string): string {
   return `${degrees}°${minutes}′${value < 0 ? negative : positive}`;
 }
 
-/** Short facts for the hero: date (dd.MM.yyyy), time, coordinates in degrees and minutes. */
+/** Short facts for the hero: date (dd.MM.yyyy), time, coordinates in degrees and minutes, weather. */
 export function footprintChips(footprint: FootprintView): string[] {
   const chips: string[] = [];
   if (footprint.date) chips.push(convertDateFormatToString(footprint.date, DateFormat.StoreDate, DateFormat.ViewDate, false));
@@ -29,6 +29,7 @@ export function footprintChips(footprint: FootprintView): string[] {
   if (footprint.latitude !== undefined && footprint.longitude !== undefined) {
     chips.push(`${coordinate(footprint.latitude, 'N', 'S')} ${coordinate(footprint.longitude, 'E', 'W')}`);
   }
+  chips.push(weatherLine(footprint.weather));
   return chips.filter((c) => c !== '');
 }
 

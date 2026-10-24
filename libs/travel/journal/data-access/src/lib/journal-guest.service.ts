@@ -22,6 +22,7 @@ export interface GuestBlockView { key: string; kind: 'text' | 'photos'; authorNa
 export interface GuestCommentView { key: string; authorName: string; text: string; createdAt: string; mine: boolean }
 export interface GuestFootprintView {
   key: string; title: string; placeName: string; date: string; time: string; latitude?: number; longitude?: number;
+  weather?: { code: number; min: number; max: number; precip: number };
   blocks: GuestBlockView[]; likes: number; liked: boolean; comments: GuestCommentView[];
 }
 export interface GuestJournalView {

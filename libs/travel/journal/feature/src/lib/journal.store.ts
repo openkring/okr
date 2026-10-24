@@ -7,7 +7,7 @@ import { patchState, signalStore, withComputed, withHooks, withMethods, withProp
 import { AvatarInfo, JournalChange } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, getTodayStr } from '@okr/shared-util-core';
 import {
   ChangeDraft, JournalDb, JournalIdentityService, JournalPeerService, JournalPhotos, JournalSyncService, OsmExtract, PickedPhoto, SkippedPhoto,
   toBase64,
@@ -163,6 +163,29 @@ export const JournalStore = signalStore(
       });
       // the peer secret arrives with the first sync of a journal: P2P can start now
       if (store.peerService.status().state === 'noSecret') void startPeers();
+      void fillWeather();
+    }
+
+    /**
+     * Weather for footprints that have a date and a position but no weather yet (spec §6.4, plan 8): at most
+     * ten per round, never for a future day. A failure only means «next round».
+     */
+    let fillingWeather = false;
+    async function fillWeather(): Promise<void> {
+      if (fillingWeather || !store.identity.author()) return;
+      fillingWeather = true;
+      try {
+        const today = getTodayStr(DateFormat.StoreDate);
+        const todo = journalsOf(store.journalState()).flatMap((j) => footprintsOf(store.journalState(), j.key))
+          .filter((f) => /^\d{8}$/.test(f.date) && f.date <= today && f.latitude !== undefined && f.longitude !== undefined && !f.weather)
+          .slice(0, 10);
+        for (const fp of todo) {
+          const weather = await store.syncService.fetchWeather(fp.date, fp.latitude as number, fp.longitude as number).catch(() => null);
+          if (weather) await write([{ journalKey: fp.journalKey, entity: 'footprint', entityKey: fp.key, op: 'set', fields: { weather } }]);
+        }
+      } finally {
+        fillingWeather = false;
+      }
     }
 
     /** P2P for the active journal while the app is in the foreground (spec §5.4). */
