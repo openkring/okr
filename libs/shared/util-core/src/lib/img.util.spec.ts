@@ -712,7 +712,7 @@ describe('direct image urls', () => {
   it('getBackgroundStyle uses a direct URL as is', async () => {
     const { getBackgroundStyle } = await import('./img.util');
     const style = getBackgroundStyle('https://bkaiser.imgix.net', { width: '400', height: '300' } as ImageStyle, local);
-    expect(style['background-image']).toBe(`url(${local})`);
+    expect(style['background-image']).toBe(`url("${local}")`); // quoted: a direct URL may carry characters that end url()
   });
 });
 

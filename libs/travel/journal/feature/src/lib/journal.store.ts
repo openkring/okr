@@ -612,12 +612,15 @@ export const JournalStore = signalStore(
         });
 
         const fill: Record<string, unknown> = {};
-        const position = footprintPosition(photos.filter((p): p is typeof p & { takenAt: string } => !!p.takenAt));
+        const position = footprintPosition(photos);
         if (fp.latitude === undefined && position) Object.assign(fill, position);
-        const earliest = photos.map((p) => p.takenAt).filter((t): t is string => !!t).sort()[0];
+        // only well-formed capture times count: one malformed value must not hide the valid ones
+        const earliest = photos.map((p) => p.takenAt).filter((t): t is string => !!t && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(t)).sort()[0];
         if (!fp.date && earliest) {
-          fill['date'] = convertDateFormatToString(earliest, DateFormat.IsoDateTime, DateFormat.StoreDate, false);
-          fill['time'] = convertDateFormatToString(earliest, DateFormat.IsoDateTime, DateFormat.Time, false);
+          const date = convertDateFormatToString(earliest, DateFormat.IsoDateTime, DateFormat.StoreDate, false);
+          const time = convertDateFormatToString(earliest, DateFormat.IsoDateTime, DateFormat.Time, false);
+          if (date) fill['date'] = date;
+          if (time) fill['time'] = time;
         }
         if (Object.keys(fill).length > 0) {
           drafts.push({ journalKey, entity: 'footprint', entityKey: footprintKey, op: 'set', fields: fill });

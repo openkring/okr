@@ -2967,20 +2967,6 @@ const meeting: FeatureBlock = {
 };
 
 /**
- * `libs/content/diary/{data-access,feature,ui,util}` — the author's private day notes (spec
- * 1.34). Owns `diaries` and `diaryImports`; the Orte/Personen repair page (`DiaryImport`,
- * `/diary/import`, row `diary-import`) lives here too; this block is the READING and WRITING surface.
- *
- * `defaultAvailability: 'beta'` + a `feature-rollout/diary` doc with `allowTenants: ['bka']`:
- * the spec calls it a product feature for every tenant, prototyped in `bka` — beta is the
- * catalogue's word for exactly that. Widening it is one rollout-doc edit, no code.
- *
- * `dependsOn: ['geo', 'subject']` by import evidence: the location picker
- * (`@okr/location-data-access`, `LocationSelectModal`) and the person picker. Deliberately NOT
- * `trip`: the diary reads its travel trips through its own service so that enabling the diary
- * does not switch the Logbuch on for a tenant that never asked for it (`bka` has it off).
- */
-/**
  * `journal` — the travel journal (spec 1.113): co-edited offline on iPads, map-first overview and
  * story pages. Its routes are mounted by the app BEFORE the app-ready gate (offline cold start); the
  * catalogue entry gives it the menu row and the feature switch.
@@ -2998,6 +2984,20 @@ const journal: FeatureBlock = {
   ],
 };
 
+/**
+ * `libs/content/diary/{data-access,feature,ui,util}` — the author's private day notes (spec
+ * 1.34). Owns `diaries` and `diaryImports`; the Orte/Personen repair page (`DiaryImport`,
+ * `/diary/import`, row `diary-import`) lives here too; this block is the READING and WRITING surface.
+ *
+ * `defaultAvailability: 'beta'` + a `feature-rollout/diary` doc with `allowTenants: ['bka']`:
+ * the spec calls it a product feature for every tenant, prototyped in `bka` — beta is the
+ * catalogue's word for exactly that. Widening it is one rollout-doc edit, no code.
+ *
+ * `dependsOn: ['geo', 'subject']` by import evidence: the location picker
+ * (`@okr/location-data-access`, `LocationSelectModal`) and the person picker. Deliberately NOT
+ * `trip`: the diary reads its travel trips through its own service so that enabling the diary
+ * does not switch the Logbuch on for a tenant that never asked for it (`bka` has it off).
+ */
 const diary: FeatureBlock = {
   id: 'diary',
   bundle: 'special',

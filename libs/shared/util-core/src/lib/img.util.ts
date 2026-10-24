@@ -335,7 +335,8 @@ export function getImgixJsonUrl(url: string, imgixBaseUrl: string): string {
  */
 export function getBackgroundStyle(imgixBaseUrl: string, imageStyle: ImageStyle, url: string, image?: ImageConfig): BackgroundStyle {
   if (isDirectImageUrl(url)) {
-    return { 'background-image': `url(${url})`, 'min-height': '200px', 'background-size': 'cover', 'background-position': 'center', 'border': '1px' };
+    // quoted: a direct URL (signed, capacitor://) may carry characters that end an unquoted url()
+    return { 'background-image': `url("${url.replace(/["\\]/g, '\\$&')}")`, 'min-height': '200px', 'background-size': 'cover', 'background-position': 'center', 'border': '1px' };
   }
   if (!imageStyle.width || !imageStyle.height) die('album.util.getBackgroundStyle: image width and height must be set');
   const sizeParams = getSizedImgixParamsByExtension(url, imageStyle.width, imageStyle.height);

@@ -57,7 +57,9 @@ export function toStorySections(
       authorKey: block.authorKey, order: block.order,
       properties: { ...ALBUM_SECTION_SHAPE.properties, albumStyle: 'collage' },
     };
-    return { block, section, images: present.map((i) => imageConfig(i, fileUrl(i.path2048))) };
+    // a photo without a URL yet (Documents URI not known, or not received) is left out, never a blank tile
+    const shown = present.map((i) => imageConfig(i, fileUrl(i.path2048))).filter((c) => c.url !== '');
+    return { block, section, images: shown };
   });
 
   const cover = blocks.find((b) => b.section.type === 'album' && (b.images?.length ?? 0) > 0)?.images?.[0];

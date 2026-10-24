@@ -50,4 +50,9 @@ describe('journal story', () => {
     expect(footprintChips({ ...base, latitude: 47.2312, longitude: 8.7123, date: '', time: '' })).toEqual(['47°14′N 8°43′E']);
     expect(footprintChips({ ...base, latitude: undefined, longitude: undefined })).toEqual(['14.01.2027', '09:00']);
   });
+
+  it('a photo without a URL yet is left out, never a blank tile', () => {
+    const story = toStorySections(base, new Map([['i1', image('i1')], ['i2', image('i2')]]), (p) => (p.includes('i1') ? '' : fileUrl(p)), 'bkg');
+    expect(story.blocks[1].images?.map((i) => i.url)).toEqual([fileUrl('journals/j1/i2-2048.jpg')]);
+  });
 });

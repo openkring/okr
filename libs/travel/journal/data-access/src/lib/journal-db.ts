@@ -166,7 +166,10 @@ export class JournalDb {
 
   public async hasAnyJournal(): Promise<boolean> {
     const db = await this.db();
-    const rows = await db.query("SELECT 1 FROM changes WHERE entity = 'journal' AND op = 'create' LIMIT 1;");
+    // a journal counts until its archive record: created ones minus archived ones
+    const rows = await db.query(
+      "SELECT 1 FROM changes c WHERE c.entity = 'journal' AND c.op = 'create' AND NOT EXISTS " +
+      "(SELECT 1 FROM changes a WHERE a.entity = 'journal' AND a.op = 'archive' AND a.entityKey = c.entityKey) LIMIT 1;");
     return (rows.values?.length ?? 0) > 0;
   }
 

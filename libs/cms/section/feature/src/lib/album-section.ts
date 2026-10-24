@@ -184,16 +184,21 @@ export class AlbumSectionComponent {
   protected readonly foldersVisible = signal(true);
 
   constructor() {
+    // explicit images first: setConfig then knows the album is in explicit mode and never opens
+    // the tenant's documents stream for nothing
+    effect(() => {
+      const explicitImages = this.explicitImages();
+      untracked(() => this.store.setExplicitImages(explicitImages));
+    });
+    // a separate effect: a new explicitImages array (every journal store change) must not re-run setConfig,
+    // which would reset the folder the user just navigated to.
     effect(() => {
       const section = this.section();
       const folder = this.folder();
-      const explicitImages = this.explicitImages();
-      // untracked: both methods read store state, which would otherwise re-run this effect on
-      // every browse step — setConfig would then reset the position the user just navigated to.
+      // untracked: both methods read store state, which would otherwise re-run this effect on every browse step
       untracked(() => {
         this.store.setConfig(section?.properties, section?.name, section?.okey);
         if (folder) this.store.setFolder(folder);
-        this.store.setExplicitImages(explicitImages);
       });
     });
   }

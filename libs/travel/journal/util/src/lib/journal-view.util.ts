@@ -100,6 +100,7 @@ function blocksOf(state: JournalState, footprintKey: string): BlockView[] {
       else block.imageKeys = Array.isArray(view['imageKeys']) ? (view['imageKeys'] as unknown[]).filter((k): k is string => typeof k === 'string') : [];
       return { ...block, okey: block.key };
     });
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   return sortByOrder(blocks).map(({ okey: _okey, ...block }) => block);
 }
 

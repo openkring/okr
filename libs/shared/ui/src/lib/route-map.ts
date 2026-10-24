@@ -70,6 +70,7 @@ export class RouteMap {
   private snapFrames = 0;
   private snapHandle?: number;
   private lastSnap = '';
+  private destroyed = false;
 
   public constructor() {
     afterNextRender(() => void this.init());
@@ -79,6 +80,7 @@ export class RouteMap {
       if (this.map) this.render(state.route, state.pins, state.selected, state.tiles);
     });
     inject(DestroyRef).onDestroy(() => {
+      this.destroyed = true; // an init still waiting for Leaflet must not create a map afterwards
       if (this.snapHandle !== undefined) cancelAnimationFrame(this.snapHandle);
       this.resizeObserver?.disconnect();
       this.map?.remove();
@@ -93,7 +95,7 @@ export class RouteMap {
       this.leaflet = (mod as { default?: typeof L }).default ?? mod;
     }
     const container = (this.el.nativeElement as HTMLElement).querySelector('.okr-route-map-canvas') as HTMLElement | null;
-    if (!container || this.map) return;
+    if (this.destroyed || !container || this.map) return;
     this.snapToPixels(container);
     this.map = this.leaflet.map(container, { zoomControl: true, attributionControl: true });
     this.map.on('moveend', () => this.emitView());

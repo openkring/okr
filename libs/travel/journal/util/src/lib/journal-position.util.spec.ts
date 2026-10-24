@@ -26,4 +26,11 @@ describe('journal position', () => {
       { takenAt: '2027-01-14T09:00:00', latitude: -64.83, longitude: -62.53 },
     ])).toEqual([[-62.97, -60.6], [-64.83, -62.53], [-64.9, -62.9]]);
   });
+
+  it('a GPS photo without a date still gives a position, after the dated ones', async () => {
+    const { footprintPosition } = await import('./journal-position.util');
+    expect(footprintPosition([{ latitude: -64.8, longitude: -62.5 }])).toEqual({ latitude: -64.8, longitude: -62.5 });
+    expect(footprintPosition([{ latitude: 1, longitude: 1 }, { takenAt: '2027-01-14T09:00:00', latitude: 2, longitude: 2 }]))
+      .toEqual({ latitude: 2, longitude: 2 });
+  });
 });

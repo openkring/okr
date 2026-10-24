@@ -101,8 +101,8 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
         @if(url(); as url) {
         @if(isThumbnail() === true) {
           <ion-thumbnail [slot]="slot()" [ngStyle]="style()" (click)="onImageClicked()">
-            @if(isExternalImage()) {
-              <img [src]="url" [alt]="altText()" />
+            @if(isLocalImage()) {
+              <img [src]="url" [alt]="altText()" loading="lazy" />
             } @else {
               <img [ngSrc]="thumbnailUrl()" [alt]="altText()" />
             }
@@ -181,6 +181,9 @@ export class Img {
   protected actionUrl = computed(() => this.image()?.actionUrl ?? '');
   // absolute http(s) and local files (capacitor://, file:, blob:, data:) are shown as is, never via imgix
   protected isExternalImage = computed(() => isDirectImageUrl(this.url()));
+  // thumbnails keep their file-type icon and imgix sizing for http(s) — only local files (capacitor://, file:,
+  // blob:, data:) are shown as they are
+  protected isLocalImage = computed(() => isDirectImageUrl(this.url()) && !/^https?:/i.test(this.url()));
   protected srcset = computed(() => this.generateSrcset());
   // title/credit caption, rendered as an overlay element on top of the image
   protected caption = computed(() => buildOverlayText(this.image(), this.imageStyle()));
