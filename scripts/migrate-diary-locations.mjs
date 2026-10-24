@@ -41,13 +41,15 @@
  */
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..');
+/** The main checkout; worktrees live elsewhere, so it is checked explicitly as well. */
+const MAIN_CHECKOUT = '/Users/bruno/proj/bkaiser/okr';
 
 const args = process.argv.slice(2);
 const flag = (name) => args.find((a) => a.startsWith(`--${name}=`))?.split('=').slice(1).join('=') ?? '';
@@ -66,8 +68,16 @@ let backupPath = '';
 if (isWrite) {
   if (!backupFlag) fail('--write needs --backup=<file> (a new file outside the repository).');
   backupPath = path.resolve(backupFlag);
-  if (backupPath === ROOT || backupPath.startsWith(ROOT + path.sep)) {
-    fail(`--backup must lie OUTSIDE the repository (${ROOT}). The file holds names from a private diary.`);
+  const parent = path.dirname(backupPath);
+  if (!existsSync(parent)) fail(`--backup directory ${parent} does not exist.`);
+  // Real paths, case-folded (APFS is case-insensitive), against this worktree AND the main
+  // checkout: a symlink or a different spelling must not smuggle the file into a repository.
+  const realBackup = path.join(realpathSync(parent), path.basename(backupPath)).toLowerCase();
+  const repoRoots = [ROOT, MAIN_CHECKOUT].filter((r) => existsSync(r)).map((r) => realpathSync(r).toLowerCase());
+  for (const root of repoRoots) {
+    if (realBackup === root || realBackup.startsWith(root + path.sep)) {
+      fail(`--backup must lie OUTSIDE the repository (${root}). The file holds names from a private diary.`);
+    }
   }
   if (existsSync(backupPath)) fail(`--backup file ${backupPath} already exists — refusing to overwrite it.`);
 }
@@ -181,7 +191,8 @@ function diaryAvatarName(a) {
 function diaryAvatarId(a) {
   if (a.key) return `key:${a.key}`;
   const name = diaryAvatarName(a);
-  return a.modelType === 'location' ? `label:${normaliseLocationLabel(name)}` : `label:${name.trim().toLowerCase()}`;
+  const plain = name.trim().toLowerCase();
+  return a.modelType === 'location' ? `label:${normaliseLocationLabel(name) || plain}` : `label:${plain}`;
 }
 function addDiaryAvatar(list, a) {
   const id = diaryAvatarId(a);
@@ -193,14 +204,14 @@ function needsDiaryLocationMigration(raw) {
   return LEGACY_DIARY_FIELDS.some((k) => k in record);
 }
 function isEmptyAvatar(a) {
-  return !a.key && !diaryAvatarName(a).trim();
+  return !a.key && !(a.label || `${a.name1 ?? ''} ${a.name2 ?? ''}`).trim();
 }
 function migrateDiaryReferences(raw, resolveLocation) {
   const fromText = (label) =>
     label.trim() ? (resolveLocation(label) ?? customLocationAvatar(label)) : undefined;
 
   let locations = [];
-  const main = raw.location ?? fromText(raw.customLocationLabel ?? '');
+  const main = raw.location && !isEmptyAvatar(raw.location) ? raw.location : fromText(raw.customLocationLabel ?? '');
   if (main && !isEmptyAvatar(main)) locations = addDiaryAvatar(locations, main);
   for (const place of raw.places ?? []) {
     const avatar = fromText(place ?? '');
@@ -213,7 +224,7 @@ function migrateDiaryReferences(raw, resolveLocation) {
   }
   return { locations, people };
 }
-guard('diary avatar util', LIB('content/diary/util/src/lib/diary-avatar.util.ts'), '5bdc98946ef89de3', [
+guard('diary avatar util', LIB('content/diary/util/src/lib/diary-avatar.util.ts'), '8002e8a53451613c', [
   'LEGACY_DIARY_FIELDS', 'collapseWhitespace', 'customLocationAvatar', 'customPersonAvatar', 'diaryAvatarName',
   'diaryAvatarId', 'addDiaryAvatar', 'needsDiaryLocationMigration', 'isEmptyAvatar', 'migrateDiaryReferences',
 ]);
@@ -350,6 +361,10 @@ function selfTest() {
     { locations: [], people: [] }, 'blank labels');
   eq(migrateDiaryReferences({ people: [], customPeopleLabels: ['Anna Maria Muster', 'anna maria muster'] }, () => undefined).people,
     [{ key: '', name1: 'Anna Maria', name2: 'Muster', label: '', modelType: 'person', type: '', subType: '' }], 'person split');
+  eq(migrateDiaryReferences({ customLocationLabel: 'Αθήνα', places: ['北京', '🏔️', 'αθήνα'] }, () => undefined).locations.map(diaryAvatarName),
+    ['Αθήνα', '北京', '🏔️'], 'empty normalised form falls back to the text');
+  eq(migrateDiaryReferences({ location: { key: '', name1: '', name2: '', label: '' }, customLocationLabel: 'Bern' }, () => undefined).locations.map(diaryAvatarName),
+    ['Bern'], 'empty location object falls through');
   eq(normaliseLocationLabel('Zürich ZH'), 'zuerich', 'normalise');
   const jass = 'Jass Schieber: Anna & Clara 2530 : Beat & Dora 1870 · Gewonnen: Anna & Clara · Weis 340 : 120 · Match 3 : 0 · 12 Runden';
   eq(diaryAlbumKeys({ people: [{ key: 'p1' }, { key: '' }], locations: [bern, customLocationAvatar('X')], events: ['ostern', jass], tags: 'b, a' }),
@@ -412,12 +427,12 @@ for (const doc of aliasSnap.docs) {
 }
 
 const counts = {
-  labelsOffered: 0, resolvedByAlias: 0, resolvedByName: 0, keptFreeText: 0,
+  labelsOffered: 0, resolvedByAlias: 0, resolvedByName: 0, keptFreeText: 0, emptyNormalised: 0,
 };
 function resolveLocation(label) {
   counts.labelsOffered++;
   const normalised = normaliseLocationLabel(label);
-  if (!normalised) { counts.keptFreeText++; return undefined; }
+  if (!normalised) { counts.keptFreeText++; counts.emptyNormalised++; return undefined; }
   const viaAlias = aliasTarget.get(`${tenantId}__${LOCATION_SPACE}__${normalised}`);
   if (viaAlias) { counts.resolvedByAlias++; return locationAvatar(viaAlias, locationsByKey.get(viaAlias)); }
   const viaName = locationByName.get(normalised);
@@ -452,10 +467,12 @@ for (const doc of snap.docs) {
   }
 
   stats.migrate++;
-  const hasMain = !!raw.location || !!(raw.customLocationLabel ?? '').trim();
+  // Same rule as migrateDiaryReferences: an empty `location` object falls through to the label.
+  const fromLocationField = !!raw.location && !isEmptyAvatar(raw.location);
+  const hasMain = fromLocationField || !!(raw.customLocationLabel ?? '').trim();
   const { locations, people } = migrateDiaryReferences(raw, resolveLocation);
   // The main location, when there is one, is always locations[0].
-  if (raw.location) stats.mainKeyed++;
+  if (fromLocationField) stats.mainKeyed++;
   else if (hasMain && locations[0]?.key) stats.mainResolved++;
   else if (hasMain) stats.mainFreeText++;
   if (locations.length === 0) stats.withoutLocation++;
@@ -489,8 +506,9 @@ console.log(`  to migrate=${stats.migrate} · already migrated=${stats.alreadyMi
 console.log(`  lookup: locations=${locationsByKey.size} (ambiguous names=${ambiguousNames}) `
   + `· location aliases=${aliasTarget.size} (skipped, target missing/archived=${aliasesDangling})`);
 console.log(`  labels offered=${counts.labelsOffered} · resolved via alias=${counts.resolvedByAlias} `
-  + `· via name=${counts.resolvedByName} · kept as free text=${counts.keptFreeText}`);
-console.log(`  main location: keyed=${stats.mainKeyed} · free text resolved=${stats.mainResolved} `
+  + `· via name=${counts.resolvedByName} · kept as free text=${counts.keptFreeText} `
+  + `(of these with an empty normalised form, identified by their text=${counts.emptyNormalised})`);
+console.log(`  main location: from the location field=${stats.mainKeyed} · free text resolved=${stats.mainResolved} `
   + `· free text kept=${stats.mainFreeText} · entries without any location=${stats.withoutLocation}`);
 console.log(`  locations written=${stats.locationsTotal} (keyed=${stats.locationsKeyed}, free text=${stats.locationsFreeText}) `
   + `· duplicates dropped=${stats.duplicatesDropped}`);

@@ -39,11 +39,16 @@ export function diaryAvatarName(a: AvatarInfo): string {
   return a.label || `${a.name1} ${a.name2}`.trim();
 }
 
-/** Identity of an entry: its key when linked, else its normalised free text. */
+/**
+ * Identity of an entry: its key when linked, else its normalised free text. A place name that
+ * normalises to '' (Greek, Cyrillic, CJK, emoji only) falls back to its lower-cased text, so
+ * such places do not all collapse into one entry.
+ */
 export function diaryAvatarId(a: AvatarInfo): string {
   if (a.key) return `key:${a.key}`;
   const name = diaryAvatarName(a);
-  return a.modelType === 'location' ? `label:${normaliseLocationLabel(name)}` : `label:${name.trim().toLowerCase()}`;
+  const plain = name.trim().toLowerCase();
+  return a.modelType === 'location' ? `label:${normaliseLocationLabel(name) || plain}` : `label:${plain}`;
 }
 
 export function addDiaryAvatar(list: AvatarInfo[], a: AvatarInfo): AvatarInfo[] {
@@ -76,9 +81,9 @@ export function needsDiaryLocationMigration(raw: object): boolean {
   return LEGACY_DIARY_FIELDS.some(k => k in record);
 }
 
-/** An entry without a key and without a name carries nothing and is dropped. */
-function isEmptyAvatar(a: AvatarInfo): boolean {
-  return !a.key && !diaryAvatarName(a).trim();
+/** An entry without a key and without a name carries nothing and is dropped. Tolerates a partial object. */
+function isEmptyAvatar(a: Partial<AvatarInfo>): boolean {
+  return !a.key && !(a.label || `${a.name1 ?? ''} ${a.name2 ?? ''}`).trim();
 }
 
 /**
@@ -99,7 +104,8 @@ export function migrateDiaryReferences(
     label.trim() ? (resolveLocation(label) ?? customLocationAvatar(label)) : undefined;
 
   let locations: AvatarInfo[] = [];
-  const main = raw.location ?? fromText(raw.customLocationLabel ?? '');
+  // A present but empty `location` object falls through to `customLocationLabel`.
+  const main = raw.location && !isEmptyAvatar(raw.location) ? raw.location : fromText(raw.customLocationLabel ?? '');
   if (main && !isEmptyAvatar(main)) locations = addDiaryAvatar(locations, main);
   for (const place of raw.places ?? []) {
     const avatar = fromText(place ?? '');

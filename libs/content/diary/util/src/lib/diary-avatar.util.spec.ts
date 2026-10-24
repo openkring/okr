@@ -120,6 +120,14 @@ describe('diary-avatar.util', () => {
       expect(result.people.map(diaryAvatarName)).toEqual(['Anna Muster', 'Beat Beispiel', 'Clara']);
       expect(result.people.map(a => a.key)).toEqual(['p1', '', '']);
     });
+    it('places whose normalised form is empty (Greek, CJK, emoji) all survive', () => {
+      const result = migrateDiaryReferences({ customLocationLabel: 'Αθήνα', places: ['北京', '🏔️', 'αθήνα'] }, () => undefined);
+      expect(result.locations.map(diaryAvatarName)).toEqual(['Αθήνα', '北京', '🏔️']);
+    });
+    it('an empty location object falls through to customLocationLabel', () => {
+      const result = migrateDiaryReferences({ location: { key: '', name1: '', name2: '', label: '', modelType: 'location', type: '', subType: '' }, customLocationLabel: 'Bern' }, () => undefined);
+      expect(result.locations.map(diaryAvatarName)).toEqual(['Bern']);
+    });
     it('withDiaryLocations is the same mapping without resolving', () => {
       const raw = { location: bern, places: ['bern', 'uetliberg'], people: [], customPeopleLabels: ['Anna Muster'] };
       const d = withDiaryLocations(raw as unknown as DiaryModel);
