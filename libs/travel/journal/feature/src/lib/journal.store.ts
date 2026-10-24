@@ -474,10 +474,18 @@ export const JournalStore = signalStore(
         const tenantId = store.appStore.tenantId();
         if (!store.native() || !author || !tenantId || store.bookPrints().state === 'running') return store.bookPrints();
         const setStatus = (status: BookPrintStatus) => { patchState(store, { bookPrints: status }); return status; };
-        if (!(await Network.getStatus()).connected) return setStatus({ ...NO_BOOK_PRINTS, state: 'offline', journalKey });
-        const book = (await firstValueFrom(store.bookService.book$(journalKey))) ?? new JournalBookModel();
-        const candidates = bookPrintCandidates(store.journalState(), journalKey, book, author.personKey);
-        let status: BookPrintStatus = setStatus({ ...NO_BOOK_PRINTS, state: 'running', journalKey, total: candidates.length });
+        // 'running' is set before the first await, so a second tap cannot start a second run
+        let status: BookPrintStatus = setStatus({ ...NO_BOOK_PRINTS, state: 'running', journalKey });
+        let candidates: ImageView[];
+        try {
+          if (!(await Network.getStatus()).connected) return setStatus({ ...NO_BOOK_PRINTS, state: 'offline', journalKey });
+          const book = (await firstValueFrom(store.bookService.book$(journalKey))) ?? new JournalBookModel();
+          candidates = bookPrintCandidates(store.journalState(), journalKey, book, author.personKey);
+        } catch (error) {
+          setStatus(NO_BOOK_PRINTS); // never stay at 'running'
+          throw error;
+        }
+        status = setStatus({ ...status, total: candidates.length });
         try {
           for (const chunk of pagesOf(candidates, PRINT_CHUNK)) {
             const exported = new Map<string, { imageKey: string; size: { width: number; height: number } }>(); // by file
