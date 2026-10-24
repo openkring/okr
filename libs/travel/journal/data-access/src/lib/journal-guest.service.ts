@@ -23,6 +23,7 @@ export interface GuestCommentView { key: string; authorName: string; text: strin
 export interface GuestFootprintView {
   key: string; title: string; placeName: string; date: string; time: string; latitude?: number; longitude?: number;
   weather?: { code: number; min: number; max: number; precip: number };
+  transport?: 'plane' | 'ship' | 'bus' | 'train' | 'car' | 'bike' | 'foot';
   blocks: GuestBlockView[]; likes: number; liked: boolean; comments: GuestCommentView[];
 }
 export interface GuestJournalView {

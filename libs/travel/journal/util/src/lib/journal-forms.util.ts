@@ -1,3 +1,4 @@
+import type { TransportMode } from '@okr/shared-models';
 import { staticSuite } from 'vest';
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { dateValidations, stringValidations, timeValidations } from '@okr/shared-util-core';
@@ -12,10 +13,11 @@ export interface FootprintFormModel {
   date: string; // StoreDate or ''
   time: string; // HH:mm or ''
   published: boolean;
+  transport: TransportMode | ''; // '' = not set
 }
 
 export function newFootprintFormModel(): FootprintFormModel {
-  return { title: '', placeName: '', date: '', time: '', published: false };
+  return { title: '', placeName: '', date: '', time: '', published: false, transport: '' };
 }
 
 export const footprintValidations = staticSuite((model: FootprintFormModel) => {

@@ -38,6 +38,7 @@ export class PageModel implements OkrModel, NamedModel, SearchableModel, TaggedM
   public placeName?: string; // e.g. «Neko Harbour»
   public weather?: DiaryWeather; // filled when the footprint is first online
   public publishState?: FootprintPublishState;
+  public transport?: TransportMode; // how the travellers got TO this footprint (flyover, phase 2; approved 2026-10-24)
   public notifyGuests?: boolean; // the author's choice at publish time
   public notifiedAt?: string; // ISO timestamp; makes the guest notification idempotent
 
@@ -47,6 +48,8 @@ export class PageModel implements OkrModel, NamedModel, SearchableModel, TaggedM
 }
 
 export type FootprintPublishState = 'draft' | 'published';
+export type TransportMode = 'plane' | 'ship' | 'bus' | 'train' | 'car' | 'bike' | 'foot';
+export const TRANSPORT_MODES: TransportMode[] = ['plane', 'ship', 'bus', 'train', 'car', 'bike', 'foot'];
 export const FOOTPRINT_PAGE_TYPE = 'footprint';
 
 export const PageCollection = 'pages';

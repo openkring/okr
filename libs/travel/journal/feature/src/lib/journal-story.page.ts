@@ -262,7 +262,9 @@ export class JournalStoryPage {
   protected async editFootprint(): Promise<void> {
     const fp = this.footprint();
     if (!fp) return;
-    const current: FootprintFormModel = { title: fp.title, placeName: fp.placeName, date: fp.date, time: fp.time, published: fp.publishState === 'published' };
+    const current: FootprintFormModel = {
+      title: fp.title, placeName: fp.placeName, date: fp.date, time: fp.time, published: fp.publishState === 'published', transport: fp.transport ?? '',
+    };
     const modal = await this.modalController.create({ component: FootprintEditModal, componentProps: { footprint: current }, cssClass: 'auto-height-modal' });
     await modal.present();
     const { data, role } = await modal.onWillDismiss<FootprintFormModel>();

@@ -3,7 +3,10 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { LONG_NAME_LENGTH } from '@okr/shared-constants';
-import { Checkbox, CheckboxI18n, DateInput, DateInputI18n, ErrorNote, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@okr/shared-ui';
+import {
+  Checkbox, CheckboxI18n, DateInput, DateInputI18n, ErrorNote, StringSelect, StringSelectI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n,
+} from '@okr/shared-ui';
+import { TRANSPORT_MODES } from '@okr/shared-models';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 import { FootprintFormModel, footprintValidations, JournalI18n } from '@okr/travel-journal-util';
@@ -12,7 +15,7 @@ import { FootprintFormModel, footprintValidations, JournalI18n } from '@okr/trav
 @Component({
   selector: 'okr-footprint-form',
   standalone: true,
-  imports: [TextInput, DateInput, TimeInput, Checkbox, ErrorNote, IonCard, IonCardContent, IonGrid, IonRow, IonCol],
+  imports: [TextInput, DateInput, TimeInput, Checkbox, StringSelect, ErrorNote, IonCard, IonCardContent, IonGrid, IonRow, IonCol],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     @if (showForm()) {
@@ -42,6 +45,12 @@ import { FootprintFormModel, footprintValidations, JournalI18n } from '@okr/trav
                   <okr-time-input [i18n]="timeI18n()" [value]="time()" (valueChange)="onFieldChange('time', $event)"
                     [locale]="'de-ch'" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="timeErrors()" />
+                </ion-col>
+              </ion-row>
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <okr-string-select [i18n]="transportI18n()" [stringList]="transportValues" [labels]="transportLabels()"
+                    [selectedString]="transport()" (selectedStringChange)="onFieldChange('transport', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
               <ion-row>
@@ -85,6 +94,17 @@ export class FootprintForm {
   protected readonly date = computed(() => this.formData()?.date ?? '');
   protected readonly time = computed(() => this.formData()?.time ?? '');
   protected readonly published = computed(() => this.formData()?.published ?? false);
+  protected readonly transport = computed(() => this.formData()?.transport ?? '');
+  /** '' first: «not set» */
+  protected readonly transportValues = ['', ...TRANSPORT_MODES];
+  protected readonly transportLabels = computed(() => {
+    const i18n = this.i18n();
+    return ['–', i18n.transport_plane(), i18n.transport_ship(), i18n.transport_bus(), i18n.transport_train(), i18n.transport_car(),
+      i18n.transport_bike(), i18n.transport_foot()];
+  });
+  protected readonly transportI18n = computed(() => ({
+    name: 'transport', label: this.i18n().transport_label(), helper: this.i18n().transport_helper(),
+  } as StringSelectI18n));
 
   protected readonly titleErrors = computed(() => this.validationResult().getErrors('title'));
   protected readonly placeErrors = computed(() => this.validationResult().getErrors('placeName'));

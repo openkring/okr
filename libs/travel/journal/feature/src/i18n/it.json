@@ -221,5 +221,16 @@
     "offline": "Puoi inviare messaggi agli ospiti solo con Internet.",
     "too_soon": "L’ultimo messaggio è partito solo pochi minuti fa. Riprova tra qualche minuto."
   },
-  "web_read_only": "Qui leggi i tuoi diari di viaggio. Scrivere, le foto e la mappa offline sono nell’app per iPad."
+  "web_read_only": "Qui leggi i tuoi diari di viaggio. Scrivere, le foto e la mappa offline sono nell’app per iPad.",
+  "transport": {
+    "label": "In viaggio con",
+    "helper": "Come siete arrivati qui? Il sorvolo lo mostra sulla strada verso questo footprint.",
+    "plane": "Aereo",
+    "ship": "Nave",
+    "bus": "Autobus",
+    "train": "Treno",
+    "car": "Auto",
+    "bike": "Bici",
+    "foot": "A piedi"
+  }
 }

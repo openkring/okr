@@ -34,7 +34,7 @@ const META_PHOTOS_PAUSED = 'photosPaused'; // before the three photo modes
  * database write succeeded. Plan 4: JournalSyncService exchanges the records with Firebase when
  * online (on start, when the network returns and every two minutes); offline nothing changes.
  */
-export type FootprintFields = Partial<Pick<FootprintView, 'title' | 'placeName' | 'date' | 'time' | 'latitude' | 'longitude' | 'publishState'>>;
+export type FootprintFields = Partial<Pick<FootprintView, 'title' | 'placeName' | 'date' | 'time' | 'latitude' | 'longitude' | 'publishState'>> & { transport?: string };
 
 interface JournalStoreState {
   ready: boolean;
@@ -529,6 +529,7 @@ export const JournalStore = signalStore(
         if (model.placeName !== fp.placeName) fields.placeName = model.placeName;
         if (model.date !== fp.date) fields.date = model.date;
         if (model.time !== fp.time) fields.time = model.time;
+        if (model.transport !== (fp.transport ?? '')) fields.transport = model.transport;
         const publishState = model.published ? 'published' : 'draft';
         if (publishState !== fp.publishState) fields.publishState = publishState;
         if (Object.keys(fields).length === 0) return;

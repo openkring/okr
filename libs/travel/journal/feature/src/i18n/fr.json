@@ -221,5 +221,16 @@
     "offline": "Tu ne peux envoyer des messages aux invités qu’avec Internet.",
     "too_soon": "Le dernier message est parti il y a quelques minutes seulement. Réessaie dans quelques minutes."
   },
-  "web_read_only": "Ici tu lis tes carnets de voyage. L’écriture, les photos et la carte hors ligne sont dans l’app iPad."
+  "web_read_only": "Ici tu lis tes carnets de voyage. L’écriture, les photos et la carte hors ligne sont dans l’app iPad.",
+  "transport": {
+    "label": "En voyage avec",
+    "helper": "Comment êtes-vous arrivés ici ? Le survol le montre sur le chemin vers ce footprint.",
+    "plane": "Avion",
+    "ship": "Bateau",
+    "bus": "Bus",
+    "train": "Train",
+    "car": "Voiture",
+    "bike": "Vélo",
+    "foot": "À pied"
+  }
 }

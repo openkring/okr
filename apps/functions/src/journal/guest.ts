@@ -122,7 +122,7 @@ async function guestView(db: Firestore, jk: string, ctx: GuestContext): Promise<
       .sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
     return {
       key: f.id, title: fp['title'] ?? '', placeName: fp['placeName'] ?? '', date: fp['date'] ?? '', time: fp['time'] ?? '',
-      latitude: fp['latitude'], longitude: fp['longitude'], weather: fp['weather'], blocks, likes: likes.length, liked: likes.includes(pk), comments: footprintComments,
+      latitude: fp['latitude'], longitude: fp['longitude'], weather: fp['weather'], transport: fp['transport'], blocks, likes: likes.length, liked: likes.includes(pk), comments: footprintComments,
     };
   }).sort((a, b) => (`${a.date}${a.time}` < `${b.date}${b.time}` ? -1 : 1));
 

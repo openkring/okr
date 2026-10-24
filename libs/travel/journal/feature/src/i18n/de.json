@@ -221,5 +221,16 @@
     "offline": "Nachrichten an Gäste sendest du nur mit Internet.",
     "too_soon": "Die letzte Nachricht ist erst wenige Minuten her. Versuch es in ein paar Minuten nochmals."
   },
-  "web_read_only": "Hier liest du deine Reisetagebücher. Schreiben, Fotos und die Offline-Karte gibt es in der iPad-App."
+  "web_read_only": "Hier liest du deine Reisetagebücher. Schreiben, Fotos und die Offline-Karte gibt es in der iPad-App.",
+  "transport": {
+    "label": "Unterwegs mit",
+    "helper": "Wie seid ihr hierher gekommen? Der Flyover zeigt es auf dem Weg zu diesem Footprint.",
+    "plane": "Flugzeug",
+    "ship": "Schiff",
+    "bus": "Bus",
+    "train": "Zug",
+    "car": "Auto",
+    "bike": "Velo",
+    "foot": "Zu Fuss"
+  }
 }

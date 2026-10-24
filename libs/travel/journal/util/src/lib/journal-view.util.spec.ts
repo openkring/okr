@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { JournalChange } from '@okr/shared-models';
 import { formatHlc } from './journal-hlc.util';
 import { materialize } from './journal-merge.util';
-import { footprintsOf, imagesOf, journalsOf, lastBlockOrder, weatherLine, weatherOf } from './journal-view.util';
+import { footprintsOf, imagesOf, journalsOf, lastBlockOrder, transportOf, weatherLine, weatherOf } from './journal-view.util';
 
 let n = 0;
 function rec(p: Pick<JournalChange, 'entity' | 'entityKey' | 'op'> & Partial<JournalChange>): JournalChange {
@@ -99,5 +99,16 @@ describe('footprint weather', () => {
     expect(weatherOf({ code: -1 })).toBeUndefined(); // no measurement
     expect(weatherOf('sunny')).toBeUndefined();
     expect(weatherLine(undefined)).toBe('');
+  });
+});
+
+describe('footprint transport', () => {
+  it('footprintsOf reads a valid transport and ignores others', () => {
+    const state = materialize([
+      rec({ entity: 'footprint', entityKey: 'f1', op: 'create', fields: { journalKey: 'j1', title: 'A', date: '20270101', transport: 'ship' } }),
+      rec({ entity: 'footprint', entityKey: 'f2', op: 'create', fields: { journalKey: 'j1', title: 'B', date: '20270102', transport: 'rocket' } }),
+    ]);
+    expect(footprintsOf(state, 'j1').map((f) => f.transport)).toEqual(['ship', undefined]);
+    expect(transportOf('')).toBeUndefined();
   });
 });

@@ -4,7 +4,7 @@ import {
 } from '@okr/shared-models';
 import { isValidHlc, parseHlc } from './journal-hlc.util';
 import { entityStateKey, JournalState, viewOf } from './journal-merge.util';
-import { weatherOf } from './journal-view.util';
+import { transportOf, weatherOf } from './journal-view.util';
 
 /**
  * What the applyJournalChange function writes to Firestore, built from the merged change log (spec
@@ -64,6 +64,7 @@ export function footprintPageOf(state: JournalState, footprintKey: string, tenan
     latitude: num(v['latitude']), longitude: num(v['longitude']),
     publishState: v['publishState'] === 'published' ? 'published' as const : 'draft' as const,
     weather: weatherOf(v['weather']),
+    transport: transportOf(v['transport']),
   });
 }
 

@@ -1,4 +1,4 @@
-import { DiaryWeather, JournalEntity } from '@okr/shared-models';
+import { DiaryWeather, JournalEntity, TRANSPORT_MODES, TransportMode } from '@okr/shared-models';
 import { EntityState, JournalState, viewOf } from './journal-merge.util';
 import { sortByOrder } from './journal-order.util';
 
@@ -46,7 +46,13 @@ export interface FootprintView {
   longitude?: number;
   publishState: 'draft' | 'published';
   weather?: DiaryWeather; // filled once online (spec §6.4, plan 8)
+  transport?: TransportMode; // how the travellers got here (flyover)
   blocks: BlockView[];
+}
+
+/** A stored means of transport, or undefined for an empty or unknown value. */
+export function transportOf(value: unknown): TransportMode | undefined {
+  return TRANSPORT_MODES.includes(value as TransportMode) ? (value as TransportMode) : undefined;
 }
 
 /** A stored weather value, or undefined when the field is missing or malformed. */
@@ -118,6 +124,7 @@ export function footprintsOf(state: JournalState, journalKey: string): Footprint
       longitude: num(view['longitude']),
       publishState: view['publishState'] === 'published' ? ('published' as const) : ('draft' as const),
       weather: weatherOf(view['weather']),
+      transport: transportOf(view['transport']),
       blocks: blocksOf(state, entity.entityKey),
     }))
     .sort((a, b) => cmp(a.date, b.date) || cmp(a.time, b.time) || cmp(a.key, b.key));
