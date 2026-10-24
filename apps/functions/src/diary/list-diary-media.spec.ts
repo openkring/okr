@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isDriveId, splitDiaryMedia } from './list-diary-media';
+import { isArchiveOwner, isDriveId, splitDiaryMedia } from './list-diary-media';
 
 const f = (name: string, mimeType: string, thumbnail = '') => ({ id: name, name, mimeType, thumbnail, webViewLink: 'w' });
 
@@ -34,3 +34,16 @@ describe('isDriveId', () => {
   it('rejects empty', () => expect(isDriveId('')).toBe(false));
 });
 
+
+describe('isArchiveOwner', () => {
+  it('is true only for the exact configured owner uid', () => {
+    expect(isArchiveOwner('owner-uid', 'owner-uid')).toBe(true);
+    expect(isArchiveOwner('some-other-admin-uid', 'owner-uid')).toBe(false);
+  });
+
+  it('is false for an unauthenticated or empty caller uid, and when the owner secret is unset', () => {
+    expect(isArchiveOwner(undefined, 'owner-uid')).toBe(false);
+    expect(isArchiveOwner('', 'owner-uid')).toBe(false);
+    expect(isArchiveOwner('', '')).toBe(false);
+  });
+});

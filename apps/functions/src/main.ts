@@ -401,10 +401,6 @@ export { listPoolProspects, claimPoolProspect, releasePoolProspect } from './bus
 export { submitTicket, listTickets, commentTicket, classifyTicket, triageTicket } from './business';
 export { submitSupportTicket, listSupportTickets, commentSupportTicket } from './business';
 
-// diary import (design 2026-08-22): proves Drive access before the import is built
-export { checkDriveAccess } from './diary/check-drive-access';
-// diary import (design 2026-08-22): the dry-run report and the windowed, cursor-driven commit
-export { dryRunDiaryImport, commitDiaryImport } from './diary/import-diary';
 // diary UI (Teilprojekt 3): weather for an entry written in the app
 export { fetchDiaryWeather } from './diary/fetch-diary-weather';
 // spec 1.106: the photos and documents of one diary day, read live from its Drive folder

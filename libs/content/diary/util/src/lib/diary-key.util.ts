@@ -2,8 +2,7 @@ import { DiaryModel } from '@okr/shared-models';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
 /**
- * The deterministic document id `diaries/<tenant>__<authorKey>__<date>` — the same shape the
- * import writes (`diaryDocId` in apps/functions/src/diary/import-diary.ts delegates here).
+ * The deterministic document id `diaries/<tenant>__<authorKey>__<date>`.
  * One id per (tenant, author, date) is what makes "one entry per day" structural: creating a
  * second entry for a day is an overwrite of the first, never a duplicate. The store guards
  * against that overwrite by reading the id first (DiaryStore.add).

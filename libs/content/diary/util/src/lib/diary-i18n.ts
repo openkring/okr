@@ -9,28 +9,6 @@ const PFX = '@content/diary/feature.';
 
 export const DIARY_I18N_KEYS = {
   title:                  PFX + 'title',
-  subtitle:               PFX + 'subtitle',
-
-  // ─── import prerequisites (moved off the privacy-audit screen, spec 1.34) ────
-  import_title:           PFX + 'import.title',
-  import_from_label:      PFX + 'import.fromLabel',
-  import_from_placeholder: PFX + 'import.fromPlaceholder',
-  import_from_helper:     PFX + 'import.fromHelper',
-  drive_action:           PFX + 'drive.action',
-  drive_running:          PFX + 'drive.running',
-  drive_ok:               PFX + 'drive.ok',
-  drive_failed:           PFX + 'drive.failed',
-  dryrun_action:          PFX + 'dryrun.action',
-  dryrun_running:         PFX + 'dryrun.running',
-  dryrun_ok:              PFX + 'dryrun.ok',
-  dryrun_failed:          PFX + 'dryrun.failed',
-  dryrun_top_unresolved:  PFX + 'dryrun.topUnresolved',
-  dryrun_first_error:     PFX + 'dryrun.firstError',
-  commit_action:          PFX + 'commit.action',
-  commit_running:         PFX + 'commit.running',
-  commit_ok:              PFX + 'commit.ok',
-  commit_failed:          PFX + 'commit.failed',
-  commit_hint:            PFX + 'commit.hint',
 
   // ─── the two reference lists ─────────────────────────────────────────────────
   locations_title:        PFX + 'locations.title',

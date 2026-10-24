@@ -1,21 +1,20 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular';
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { signalStore, withComputed, withMethods, withProps } from '@ngrx/signals';
 import { firstValueFrom, of } from 'rxjs';
 
-import { DiaryImportService, DiaryService, DriveAccessResult } from '@okr/content-diary-data-access';
+import { DiaryService } from '@okr/content-diary-data-access';
 import {
   DIARY_I18N_KEYS, DiaryReference, DiaryReferenceKind, DiaryUsage,
-  collectLocationReferences, collectPersonReferences, replaceDiaryAvatar, suggestImportFromDate, withDiaryLocations,
+  collectLocationReferences, collectPersonReferences, replaceDiaryAvatar, withDiaryLocations,
 } from '@okr/content-diary-util';
 import { LocationService } from '@okr/location-data-access';
 import {
-  AvatarInfo, DiaryImportModel, DiaryModel, LocationModel, OrgModel, PersonModel,
+  AvatarInfo, DiaryModel, LocationModel, OrgModel, PersonModel,
 } from '@okr/shared-models';
 import { AppStore, LocationSelectModal, PersonSelectModal } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 import { AlertService } from '@okr/shared-util-angular';
 import { PersonService } from '@okr/subject-person-data-access';
 import { PersonNewFormModel, convertFormToNewPerson } from '@okr/subject-person-util';
@@ -23,33 +22,8 @@ import { PersonNewFormModel, convertFormToNewPerson } from '@okr/subject-person-
 import type { DiaryReferenceListResult } from './diary-reference-list.modal';
 import type { DiaryUsageListResult } from './diary-usage-list.modal';
 
-export type DiaryImportState = {
-  isCheckingDrive: boolean;
-  driveResult: DriveAccessResult | undefined;
-  isDryRunning: boolean;
-  dryRunResult: DiaryImportModel | undefined;
-  dryRunError: string | undefined;
-  isCommitting: boolean;
-  commitResult: DiaryImportModel | undefined;
-  commitError: string | undefined;
-  /** the admin's own import floor; undefined = not touched yet, use the suggestion */
-  fromDateOverride: string | undefined;
-};
-
-export const initialState: DiaryImportState = {
-  isCheckingDrive: false,
-  driveResult: undefined,
-  isDryRunning: false,
-  dryRunResult: undefined,
-  dryRunError: undefined,
-  isCommitting: false,
-  commitResult: undefined,
-  commitError: undefined,
-  fromDateOverride: undefined,
-};
-
 /**
- * The import-preparation page's state (`/diary/import`) and every write it performs.
+ * The diary repair page's state (`/diary/import`) and every write it performs.
  *
  * The two modals it opens are deliberately dumb: they pick, this store acts, and the store
  * RE-OPENS them afterwards so the admin keeps working through the list instead of starting over
@@ -60,14 +34,12 @@ export const DiaryImportStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     diaryService: inject(DiaryService),
-    diaryImportService: inject(DiaryImportService),
     locationService: inject(LocationService),
     personService: inject(PersonService),
     modalController: inject(ModalController),
     alertService: inject(AlertService),
     i18nService: inject(I18nService),
   })),
-  withState(initialState),
   withProps(store => ({
     i18n: store.i18nService.translateAll(DIARY_I18N_KEYS),
 
@@ -101,13 +73,6 @@ export const DiaryImportStore = signalStore(
       return collectPersonReferences(store.diariesResource.value() ?? [])
         .map(r => (r.key && names.get(r.key) ? { ...r, label: names.get(r.key) as string } : r));
     }),
-    /** the day after the newest imported entry — what a routine catch-up import starts from */
-    suggestedFromDate: computed(() =>
-      suggestImportFromDate(store.diariesResource.value() ?? [], getTodayStr(DateFormat.StoreDate))),
-  })),
-  withComputed(store => ({
-    /** StoreDate floor both import actions send; '' = the whole archive (slow, see spec 1.34) */
-    fromDate: computed(() => store.fromDateOverride() ?? store.suggestedFromDate()),
   })),
   withComputed(store => ({
     unresolvedLocationCount: computed(() => store.locationReferences().filter(r => !r.resolved).length),
@@ -312,73 +277,6 @@ export const DiaryImportStore = signalStore(
     };
 
     return {
-      /** Proves the deployed function still reaches the Drive archive. Reads only. */
-      async checkDrive(): Promise<void> {
-        patchState(store, { isCheckingDrive: true, driveResult: undefined });
-        try {
-          patchState(store, { driveResult: await store.diaryImportService.checkDriveAccess() });
-        } catch (error) {
-          // The raw reason is kept: an expired refresh token, a missing share and a wrong folder
-          // id all surface as one generic failure otherwise, and they need different fixes.
-          store.alertService.error(`${store.i18n.drive_failed()} ${error}`);
-        } finally {
-          patchState(store, { isCheckingDrive: false });
-        }
-      },
-
-      setFromDate(fromDate: string): void {
-        patchState(store, { fromDateOverride: fromDate });
-      },
-
-      /**
-       * Runs the import to completion, one window of 200 at a time.
-       *
-       * The loop lives here rather than in the callable because that is what makes a long import
-       * survivable: each invocation writes its window and advances the cursor in `diaryImports`,
-       * so a failure mid-run leaves a resumable run rather than a half-written archive. Progress
-       * is patched after every window, so the screen shows movement over the ~40 calls a full
-       * archive needs instead of one silent multi-minute wait.
-       *
-       * `phase` is the only termination signal — never the processed/total ratio. A file whose
-       * date is missing is counted as processed but never written, so `processed === total` can
-       * be reached while the function still has windows to hand out, and comparing counts would
-       * stop the run early.
-       */
-      async commit(): Promise<void> {
-        patchState(store, { isCommitting: true, commitResult: undefined, commitError: undefined });
-        try {
-          // The floor goes with the START call only; the function stores it on the run, and the
-          // continuations below inherit it from there.
-          let run = await store.diaryImportService.commitDiaryImport(
-            { tenantId: store.appStore.tenantId(), fromDate: store.fromDate() });
-          patchState(store, { commitResult: run });
-          while (run.phase !== 'done') {
-            run = await store.diaryImportService.commitDiaryImport({ runId: run.okey });
-            patchState(store, { commitResult: run });
-          }
-        } catch (error) {
-          // The run row survives in `diaryImports` with its cursor intact — pressing the button
-          // again starts a NEW run, which is safe: the document ids are derived from the date, so
-          // re-importing a window overwrites it with the same content rather than duplicating it.
-          patchState(store, { commitError: `${error}` });
-        } finally {
-          patchState(store, { isCommitting: false });
-        }
-      },
-
-      /** Full read/parse/resolve/weather pass that writes no diary — safe to repeat. */
-      async dryRun(): Promise<void> {
-        patchState(store, { isDryRunning: true, dryRunResult: undefined, dryRunError: undefined });
-        try {
-          patchState(store, { dryRunResult: await store.diaryImportService.dryRunDiaryImport(store.appStore.tenantId(), store.fromDate()) });
-        } catch (error) {
-          patchState(store, { dryRunError: `${error}` });
-          store.alertService.error(`${store.i18n.dryrun_failed()} ${error}`);
-        } finally {
-          patchState(store, { isDryRunning: false });
-        }
-      },
-
       /**
        * The places (or people) list. Loops for the same reason `showUsages` does: an admin
        * working through unresolved rows should land back on the list after each one.

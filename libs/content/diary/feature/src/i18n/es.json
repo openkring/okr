@@ -1,33 +1,5 @@
 {
   "title": "Diario",
-  "subtitle": "Comprueba el acceso al archivo y mira qué encontraría una importación: ninguna de las dos acciones cambia tus entradas.",
-  "import": {
-    "title": "Preparar la importación",
-    "fromLabel": "Desde",
-    "fromPlaceholder": "DD.MM.AAAA",
-    "fromHelper": "Importa solo las entradas a partir de este día. Se propone el día siguiente a la última entrada importada. Déjalo vacío para importar todo el archivo — eso tarda mucho."
-  },
-  "drive": {
-    "action": "Comprobar el acceso a Drive",
-    "running": "Comprobando el acceso …",
-    "ok": "El acceso al archivo funciona.",
-    "failed": "El acceso al archivo no funciona."
-  },
-  "dryrun": {
-    "action": "Probar la importación del diario",
-    "running": "Prueba en curso: puede tardar varios minutos …",
-    "ok": "La prueba ha terminado. No se ha guardado nada.",
-    "failed": "La prueba ha fallado.",
-    "topUnresolved": "nombres abiertos más frecuentes:",
-    "firstError": "primer error:"
-  },
-  "commit": {
-    "action": "Ejecutar la importación del diario",
-    "running": "Importación en curso — {done} de {total} entradas …",
-    "ok": "La importación ha terminado: {written} entradas guardadas.",
-    "failed": "La importación ha fallado. Puedes volver a iniciarla.",
-    "hint": "Escribe las entradas en la base de datos. Ejecuta primero la prueba: debe terminar sin fechas duplicadas."
-  },
   "locations": {
     "title": "Lugares",
     "hint": "Todos los lugares que aparecen en tus entradas, asignados y sin asignar.",

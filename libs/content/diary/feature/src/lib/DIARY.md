@@ -1,39 +1,20 @@
-# Diary Domain (import preparation page)
+# Diary Domain (places and people repair page)
 
 ## Overview
 
-The diary is the repo owner's private archive, imported from Google Drive by two Cloud Functions
-(`dryRunDiaryImport` / `commitDiaryImport`, spec 1.34). This lib holds the single screen that
-prepares and repairs that import: `/diary/import`, `isAdminGuard`, reached from the Tagebuch context menu
-(«Import vorbereiten»).
+The diary was imported once from Google Drive. Since 2026-10-24 the app is the master of the diary
+(spec 1.117): the import and its two Cloud Functions (`dryRunDiaryImport` / `commitDiaryImport`)
+are retired, because a further run would overwrite entries edited in the app. This lib holds the
+single screen that repairs what the import could not match: `/diary/import`, `isAdminGuard`,
+reached from the Tagebuch context menu.
 
-Two halves:
+It shows every location and person the diaries mention, resolved and unresolved side by side,
+with the repairs on each unresolved one.
 
-1. **Import prerequisites** — the Drive health check and the import dry run. Both used to sit on
-   `/security/privacy-audit` because that was the app's only admin-only diagnostics surface while
-   the diary domain had no page; their own doc comments said to move them here.
-2. **Places and people** — every location and person the archive mentions, resolved and
-   unresolved side by side, with the repairs on each unresolved one.
+## Why the lists come from `diaries`
 
-## Import from a date (`fromDate`)
-
-Both callables take an optional `fromDate` (StoreDate) when a run starts: only archive files whose
-name is dated on or after it are downloaded and parsed. The screen pre-fills it with the day after
-the newest imported final entry (`suggestImportFromDate`), so a routine catch-up reads a few dozen
-files. Empty = the whole archive, which has outgrown the dry run's time limit (>7'400 files).
-The floor is stored on the `diaryImports` run, and continuations inherit it from there — never
-from the payload — so a resumed run cannot widen to the whole archive.
-
-Every write is still a full `set` of the day's document: an entry edited in the app is overwritten
-when its day is inside the range. Keep the floor after the last day you edited in the app.
-
-## Why the lists come from `diaries`, not from the dry run's report
-
-`DiaryImportModel.unresolvedLocations` / `unresolvedPeople` are slug→count maps. They can say
-*how often* something failed to match, but not *which entries* it appears in and not what to write
-the fix onto. The lists here are aggregated from the imported `DiaryModel` documents instead —
-which means they need at least one `commitDiaryImport` run to show anything, and in exchange every
-row is actionable.
+The lists are aggregated from the stored `DiaryModel` documents, so every row is actionable: the
+repair is written onto the entries the reference appears in.
 
 ## Field semantics this screen depends on
 
@@ -53,7 +34,7 @@ uses, so 'Zürich ZH' and 'Zuerich' are one row rather than two half-used ones.
 
 | File | Role |
 |---|---|
-| `diary-import.ts` | the screen: prerequisites card + a card per reference kind |
+| `diary-import.ts` | the screen: a card per reference kind |
 | `diary-import.store.ts` | component-provided `signalStore`; owns the diaries stream and performs every write |
 | `diary-reference-list.modal.ts` | the places/people list — search + all/open/matched filter, `checkmark` vs `help` per row |
 | `diary-usage-list.modal.ts` | the diaries one reference appears in, with 'create' / 'link' per entry |

@@ -9,15 +9,24 @@ import { DiaryCollection } from '@okr/shared-models';
 import { logger } from 'firebase-functions/v2';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 import { driveFetch, getDriveAccessToken } from './drive-client';
-import { isArchiveOwner } from './import-diary';
 
 const REGION = 'europe-west6';
 
 const DIARY_DRIVE_CLIENT_ID = defineSecret('DIARY_DRIVE_CLIENT_ID');
 const DIARY_DRIVE_CLIENT_SECRET = defineSecret('DIARY_DRIVE_CLIENT_SECRET');
 const DIARY_DRIVE_REFRESH_TOKEN = defineSecret('DIARY_DRIVE_REFRESH_TOKEN');
-/** The one person whose Drive the refresh token opens — the same gate as the import callables. */
+/** The one person whose Drive the refresh token opens. */
 const DIARY_OWNER_UID = defineSecret('DIARY_OWNER_UID');
+
+/**
+ * True when `callerUid` is the ONE person this deployment's Drive secrets belong to. The Drive
+ * credentials are ours, not the caller's, so `checkAdminRole` (global, not tenant-scoped) is not
+ * enough on its own. An unset secret resolves to '', which is rejected: a misconfigured deploy
+ * denies everyone rather than letting everyone through.
+ */
+export function isArchiveOwner(callerUid: string | undefined, ownerUid: string): boolean {
+  return callerUid !== undefined && callerUid !== '' && callerUid === ownerUid;
+}
 
 const FOLDER_MIME = 'application/vnd.google-apps.folder';
 

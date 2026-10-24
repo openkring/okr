@@ -1,33 +1,5 @@
 {
   "title": "Diario",
-  "subtitle": "Controlla l'accesso all'archivio e guarda che cosa troverebbe un'importazione: nessuna delle due azioni modifica le tue voci.",
-  "import": {
-    "title": "Preparare l'importazione",
-    "fromLabel": "A partire dal",
-    "fromPlaceholder": "GG.MM.AAAA",
-    "fromHelper": "Importa solo le voci a partire da questo giorno. Viene proposto il giorno dopo l'ultima voce importata. Lascia il campo vuoto per importare tutto l'archivio — ci vuole molto tempo."
-  },
-  "drive": {
-    "action": "Verificare l'accesso a Drive",
-    "running": "Verifica dell'accesso …",
-    "ok": "L'accesso all'archivio funziona.",
-    "failed": "L'accesso all'archivio non funziona."
-  },
-  "dryrun": {
-    "action": "Provare l'importazione del diario",
-    "running": "Prova in corso: può richiedere alcuni minuti …",
-    "ok": "La prova è terminata. Non è stato salvato nulla.",
-    "failed": "La prova non è riuscita.",
-    "topUnresolved": "nomi aperti più frequenti:",
-    "firstError": "primo errore:"
-  },
-  "commit": {
-    "action": "Esegui l'importazione del diario",
-    "running": "Importazione in corso — {done} di {total} voci …",
-    "ok": "L'importazione è terminata: {written} voci salvate.",
-    "failed": "L'importazione è fallita. Puoi riavviare l'esecuzione.",
-    "hint": "Scrive le voci nel database. Esegui prima il test: deve concludersi senza date duplicate."
-  },
   "locations": {
     "title": "Luoghi",
     "hint": "Tutti i luoghi che compaiono nelle tue voci, assegnati e non.",

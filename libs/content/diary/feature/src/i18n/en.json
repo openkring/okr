@@ -1,33 +1,5 @@
 {
   "title": "Diary",
-  "subtitle": "Check access to the archive and see what an import would find — neither action changes your entries.",
-  "import": {
-    "title": "Prepare the import",
-    "fromLabel": "From date",
-    "fromPlaceholder": "DD.MM.YYYY",
-    "fromHelper": "Imports only entries from this day on. The suggestion is the day after the last imported entry. Leave it empty to import the whole archive — that takes a very long time."
-  },
-  "drive": {
-    "action": "Check Drive access",
-    "running": "Checking access …",
-    "ok": "Access to the archive works.",
-    "failed": "Access to the archive does not work."
-  },
-  "dryrun": {
-    "action": "Test the diary import",
-    "running": "Test run in progress — this can take several minutes …",
-    "ok": "The test run finished. Nothing was saved.",
-    "failed": "The test run failed.",
-    "topUnresolved": "most frequent open names:",
-    "firstError": "first error:"
-  },
-  "commit": {
-    "action": "Run diary import",
-    "running": "Import running — {done} of {total} entries …",
-    "ok": "The import finished: {written} entries saved.",
-    "failed": "The import failed. You can start the run again.",
-    "hint": "Writes the entries to the database. Run the test first — it has to finish without duplicate dates."
-  },
   "locations": {
     "title": "Places",
     "hint": "Every place your entries mention — matched and unmatched.",

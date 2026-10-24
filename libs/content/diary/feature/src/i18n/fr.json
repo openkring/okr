@@ -1,33 +1,5 @@
 {
   "title": "Journal",
-  "subtitle": "Vérifie l'accès aux archives et regarde ce qu'un import trouverait — aucune de ces actions ne modifie tes entrées.",
-  "import": {
-    "title": "Préparer l'import",
-    "fromLabel": "À partir du",
-    "fromPlaceholder": "JJ.MM.AAAA",
-    "fromHelper": "N'importe que les entrées à partir de ce jour. La date proposée est le lendemain de la dernière entrée importée. Laisse le champ vide pour importer toutes les archives — cela prend très longtemps."
-  },
-  "drive": {
-    "action": "Vérifier l'accès à Drive",
-    "running": "Vérification de l'accès …",
-    "ok": "L'accès aux archives fonctionne.",
-    "failed": "L'accès aux archives ne fonctionne pas."
-  },
-  "dryrun": {
-    "action": "Tester l'import du journal",
-    "running": "Test en cours — cela peut prendre plusieurs minutes …",
-    "ok": "Le test s'est terminé. Rien n'a été enregistré.",
-    "failed": "Le test a échoué.",
-    "topUnresolved": "noms ouverts les plus fréquents :",
-    "firstError": "première erreur :"
-  },
-  "commit": {
-    "action": "Lancer l'import du journal",
-    "running": "Import en cours — {done} sur {total} entrées …",
-    "ok": "L'import est terminé : {written} entrées enregistrées.",
-    "failed": "L'import a échoué. Tu peux relancer le traitement.",
-    "hint": "Écrit les entrées dans la base de données. Lance d'abord le test : il doit se terminer sans dates en double."
-  },
   "locations": {
     "title": "Lieux",
     "hint": "Tous les lieux mentionnés dans tes entrées — attribués ou non.",
