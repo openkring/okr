@@ -75,6 +75,7 @@
     "@capacitor/share": "^8.0.3",
     "@capacitor/status-bar": "^8.0.4",
     "@capawesome/capacitor-file-picker": "^8.1.0",
+    "@capgo/background-geolocation": "8.4.14",
     "@capgo/nativegeocoder": "^7.3.18",
     "@ctrl/ngx-emoji-mart": "^9.3.0",
     "@fullcalendar/angular": "6.1.19",
