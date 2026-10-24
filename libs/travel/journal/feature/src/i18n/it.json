@@ -131,6 +131,15 @@
     "searching": "Cerco l’altro iPad …",
     "no_secret": "Per collegare i due iPad, apri il diario una volta con Internet."
   },
+  "prints": {
+    "action": "Carica le foto per il libro",
+    "hint": "Il libro viene stampato con foto in formato di stampa. Caricale da questo iPad, meglio a casa con Internet.",
+    "progress": "Foto per il libro: {done} di {total}",
+    "result": "{uploaded} caricate · {missing} non sono su questo iPad",
+    "failed": "{failed} non sono state caricate. Riprova più tardi.",
+    "nothing": "Tutte le tue foto per il libro sono già caricate.",
+    "offline": "Per caricare le foto serve Internet."
+  },
   "map": {
     "load": "Carica",
     "progress": "Mappa offline: {done} di {total}",

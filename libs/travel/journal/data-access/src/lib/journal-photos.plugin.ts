@@ -43,6 +43,15 @@ export interface JournalPhotosPlugin {
   fetchRange(options: { url: string; offset: number; length: number }): Promise<{ data: string }>;
   /** Plan 6b: the named tile paths that are already stored. */
   presentTiles(options: { paths: string[] }): Promise<{ paths: string[] }>;
+  /**
+   * Book export: the original of `localIdentifier` (iCloud allowed) as a print JPEG in Documents/journals/<journalKey>/<file>,
+   * scaled by min(1, max(fillLongPx / long, fillShortPx / short)) — never enlarged —, sRGB, JPEG 0.92. Resolves with the pixel
+   * size, or with `skipped` (notAccessible / notOnDevice / unreadable / writeFailed) when the photo is not in this iPad's library.
+   */
+  exportOriginal(options: { journalKey: string; localIdentifier: string; file: string; fillLongPx: number; fillShortPx: number }):
+    Promise<{ width: number; height: number } | { skipped: PhotoSkipReason }>;
+  /** Book export: removes Documents/journals/<journalKey>/<file> (the print file after its upload); a missing file is fine. */
+  deleteFile(options: { journalKey: string; file: string }): Promise<void>;
   /** Plan 8: deletes the named tiles («Speicher freigeben»). */
   deleteTiles(options: { paths: string[] }): Promise<{ deleted: number }>;
 }

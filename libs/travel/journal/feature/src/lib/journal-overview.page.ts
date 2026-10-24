@@ -18,6 +18,7 @@ import { showJournalError } from './journal-errors';
 import { openJournalFlyover } from './journal-flyover-open';
 import { openJournalInfo } from './journal-info';
 import { choosePhotoMode } from './journal-photo-mode';
+import { JournalBookPrints } from './journal-book-prints';
 import { JournalOfflineMap } from './journal-offline-map';
 import { JournalSyncLine } from './journal-sync-line';
 import { JournalStore } from './journal.store';
@@ -31,7 +32,7 @@ const WIDE_QUERY = '(min-width: 992px)';
  */
 @Component({
   selector: 'okr-journal-overview-page',
-  imports: [IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonButton, IonCard, IonCardContent, IonIcon, SvgIconPipe, RouteMap, JournalSyncLine, JournalOfflineMap],
+  imports: [IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonButton, IonCard, IonCardContent, IonIcon, SvgIconPipe, RouteMap, JournalSyncLine, JournalOfflineMap, JournalBookPrints],
   styles: [`
     .layout { display: flex; flex-direction: column; height: 100%; }
     .layout.wide { flex-direction: row; }
@@ -74,6 +75,7 @@ const WIDE_QUERY = '(min-width: 992px)';
             <okr-journal-sync-line [status]="store.syncStatus()" [photoMode]="store.photoMode()" [peerStatus]="store.peerStatus()" [i18n]="store.i18n"
               (syncNow)="store.syncNow()" (choosePhotoMode)="photoMode()" />
             <okr-journal-offline-map [journalKey]="journalKey()" [view]="view()" />
+            <okr-journal-book-prints [journalKey]="journalKey()" />
           }
           <div class="stats">
             <div class="stat"><b>{{ days() }}</b><span>{{ store.i18n.stats_days() }}</span></div>

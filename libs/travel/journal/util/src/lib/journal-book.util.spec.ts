@@ -4,7 +4,7 @@ import { formatHlc } from './journal-hlc.util';
 import { materialize } from './journal-merge.util';
 import { routeLengthKm } from './journal-map.util';
 import { templateBoxes } from './journal-book-layout.util';
-import { BookFrame, BookInput, BookLabels, BookPage, coverImageKeyOf, layoutBook, PaginateText, stripEmoji, stripUndefined } from './journal-book.util';
+import { BookFrame, BookInput, BookLabels, BookPage, bookPrintCandidates, coverImageKeyOf, layoutBook, PaginateText, stripEmoji, stripUndefined } from './journal-book.util';
 import { coverLayout } from './journal-book-cover.util';
 
 class Sentinel { constructor(public readonly tag: string) {} }
@@ -311,5 +311,37 @@ describe('stripEmoji', () => {
     expect(stripEmoji('Grüezi 🐧 «Pinguine» – 3 °C 👍🏽 🇨🇭')).toBe('Grüezi «Pinguine» – 3 °C');
     expect(stripEmoji('Ölfeld ❤️ Ära 👨‍👩‍👧 ß 1️⃣')).toBe('Ölfeld Ära ß 1');
     expect(stripEmoji('© swisstopo, 54° 48′ S')).toBe('© swisstopo, 54° 48′ S');
+  });
+});
+
+describe('bookPrintCandidates', () => {
+  const build = (extra: JournalChange[] = []) => materialize([
+    journal(), fp('f1', '20270102'), fp('f2', '20270103'), fp('d', '20270104', { publishState: 'draft' }),
+    img('i1'), img('i2'), img('i3'), img('i4'), img('i5'),
+    photos('s1', 'f1', 'a', ['i1', 'i2']), photos('s2', 'f2', 'a', ['i3', 'i2']), photos('s3', 'd', 'a', ['i4']),
+    ...extra,
+  ]);
+  const keys = (list: { key: string }[]) => list.map((i) => i.key);
+  const book = (b: Partial<JournalBookModel> = {}) => ({ ...new JournalBookModel(), ...b });
+
+  it('takes the images of published footprints, each once, in footprint order (drafts and unplaced images are left out)', () => {
+    expect(keys(bookPrintCandidates(build(), 'j1', book(), 'bruno'))).toEqual(['i1', 'i2', 'i3']);
+  });
+  it('skips hidden images but keeps a hidden cover', () => {
+    expect(keys(bookPrintCandidates(build(), 'j1', book({ hiddenImageKeys: ['i2', 'i1'], coverImageKey: 'i1' }), 'bruno'))).toEqual(['i1', 'i3']);
+  });
+  it('skips images already in prints', () => {
+    expect(keys(bookPrintCandidates(build(), 'j1', book({ prints: { i1: { width: 3000, height: 2000 } } }), 'bruno'))).toEqual(['i2', 'i3']);
+  });
+  it('only returns the own photos (the other author exports theirs)', () => {
+    const state = materialize([journal(), fp('f1', '20270102'), img('i1'), rec('image', 'i2', { journalKey: 'j1', width: 1, height: 1, path2048: 'a', path400: 'b', localIdentifier: 'x' }, 'anna'),
+      photos('s1', 'f1', 'a', ['i1', 'i2'])]);
+    expect(keys(bookPrintCandidates(state, 'j1', book(), 'anna'))).toEqual(['i2']);
+    expect(keys(bookPrintCandidates(state, 'j1', book(), 'bruno'))).toEqual(['i1']);
+  });
+  it('skips an image without a Photos identifier', () => {
+    const state = materialize([journal(), fp('f1', '20270102'), rec('image', 'i1', { journalKey: 'j1', width: 1, height: 1, path2048: 'a', path400: 'b', localIdentifier: '' }),
+      photos('s1', 'f1', 'a', ['i1'])]);
+    expect(bookPrintCandidates(state, 'j1', book(), 'bruno')).toEqual([]);
   });
 });

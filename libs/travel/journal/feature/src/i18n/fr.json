@@ -131,6 +131,15 @@
     "searching": "Recherche de l’autre iPad …",
     "no_secret": "Pour relier les deux iPad, ouvre une fois le carnet avec Internet."
   },
+  "prints": {
+    "action": "Envoyer les photos pour le livre",
+    "hint": "Le livre est imprimé avec des photos en taille d’impression. Envoie-les depuis cet iPad, idéalement chez toi avec Internet.",
+    "progress": "Photos pour le livre : {done} sur {total}",
+    "result": "{uploaded} envoyées · {missing} absentes de cet iPad",
+    "failed": "{failed} n’ont pas pu être envoyées. Réessaie plus tard.",
+    "nothing": "Toutes tes photos pour le livre sont déjà envoyées.",
+    "offline": "Il te faut Internet pour envoyer les photos."
+  },
   "map": {
     "load": "Charger",
     "progress": "Carte hors ligne : {done} sur {total}",

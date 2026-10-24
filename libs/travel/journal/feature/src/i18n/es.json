@@ -131,6 +131,15 @@
     "searching": "Buscando el otro iPad …",
     "no_secret": "Para conectar los dos iPad, abre el diario una vez con Internet."
   },
+  "prints": {
+    "action": "Subir las fotos para el libro",
+    "hint": "El libro se imprime con fotos en tamaño de impresión. Súbelas desde este iPad, mejor en casa con Internet.",
+    "progress": "Fotos para el libro: {done} de {total}",
+    "result": "{uploaded} subidas · {missing} no están en este iPad",
+    "failed": "{failed} no se pudieron subir. Inténtalo de nuevo más tarde.",
+    "nothing": "Todas tus fotos para el libro ya están subidas.",
+    "offline": "Necesitas Internet para subir las fotos."
+  },
   "map": {
     "load": "Cargar",
     "progress": "Mapa sin conexión: {done} de {total}",

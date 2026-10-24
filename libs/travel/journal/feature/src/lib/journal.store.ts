@@ -1,19 +1,20 @@
 import { computed, effect, inject, untracked } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { Network } from '@capacitor/network';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AvatarInfo, JournalChange } from '@okr/shared-models';
+import { AvatarInfo, JournalBookModel, JournalChange } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { convertDateFormatToString, DateFormat, getTodayStr } from '@okr/shared-util-core';
 import {
-  ChangeDraft, JournalDb, JournalIdentityService, JournalPeerService, JournalPhotos, JournalSyncService, OsmExtract, PickedPhoto, SkippedPhoto,
+  ChangeDraft, JournalBookService, JournalDb, JournalIdentityService, JournalPeerService, JournalPhotos, JournalSyncService, OsmExtract, PickedPhoto, SkippedPhoto,
   toBase64,
 } from '@okr/travel-journal-data-access';
 import {
-  entityStateKey, hasOthersBlocks, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
+  bookPrintCandidates, entityStateKey, hasOthersBlocks, pagesOf, PRINT_FILL_LONG_PX, PRINT_FILL_SHORT_PX, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
   allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, parseMapAreas, parsePhotoMode, TileJob, tilesToFree, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, publishedPhotoFiles, viewOf,
 } from '@okr/travel-journal-util';
 
@@ -44,6 +45,7 @@ interface JournalStoreState {
   photoMode: JournalPhotoMode;
   activeJournalKey: string;
   offlineMaps: Record<string, OfflineMapStatus>; // per journal
+  bookPrints: BookPrintStatus;
 }
 
 /**
@@ -67,7 +69,18 @@ function parseOfflineMap(raw: string | undefined): OfflineMapStatus {
   return NO_OFFLINE_MAP;
 }
 
-const initialState: JournalStoreState = { ready: false, native: Capacitor.isNativePlatform(), error: '', changes: [], photoMode: 'all', activeJournalKey: '', offlineMaps: {} };
+/**
+ * Print photos for the book (design §5.6): `uploaded` photos are in the bucket, `missing` are not in this iPad's Photos
+ * library (or outside a limited selection), `failed` could not be read, written or uploaded — they are tried again next time.
+ */
+export interface BookPrintStatus {
+  state: 'idle' | 'running' | 'done' | 'offline'; journalKey: string; done: number; total: number; uploaded: number; missing: number; failed: number;
+}
+export const NO_BOOK_PRINTS: BookPrintStatus = { state: 'idle', journalKey: '', done: 0, total: 0, uploaded: 0, missing: 0, failed: 0 };
+const PRINT_CHUNK = 50; // prepareJournalPhotoUploads takes at most 50 files per call
+const printFileOf = (imageKey: string): string => `${imageKey}-print.jpg`;
+
+const initialState: JournalStoreState = { ready: false, native: Capacitor.isNativePlatform(), error: '', changes: [], photoMode: 'all', activeJournalKey: '', offlineMaps: {}, bookPrints: NO_BOOK_PRINTS };
 
 export const JournalStore = signalStore(
   { providedIn: 'root' },
@@ -79,6 +92,7 @@ export const JournalStore = signalStore(
     peerService: inject(JournalPeerService),
     fileUrl: inject(JournalFileUrlService),
     appStore: inject(AppStore),
+    bookService: inject(JournalBookService),
   })),
   withProps(() => ({
     i18n: inject(I18nService).translateAll(JOURNAL_I18N_KEYS) as JournalI18n,
@@ -448,6 +462,56 @@ export const JournalStore = signalStore(
 
       cancelOfflineMap(): void {
         cancelMap = true;
+      },
+
+      /**
+       * «Fotos fürs Buch hochladen» (book export): exports this author's photos of the book from the iPad's own Photos
+       * library in print size, uploads them and records each one in `prints` (targeted write, so the other author's
+       * entries are untouched). Photos already in `prints` are skipped, so a stopped run resumes where it ended.
+       */
+      async uploadBookPrints(journalKey: string): Promise<BookPrintStatus> {
+        const author = store.identity.author();
+        const tenantId = store.appStore.tenantId();
+        if (!store.native() || !author || !tenantId || store.bookPrints().state === 'running') return store.bookPrints();
+        const setStatus = (status: BookPrintStatus) => { patchState(store, { bookPrints: status }); return status; };
+        if (!(await Network.getStatus()).connected) return setStatus({ ...NO_BOOK_PRINTS, state: 'offline', journalKey });
+        const book = (await firstValueFrom(store.bookService.book$(journalKey))) ?? new JournalBookModel();
+        const candidates = bookPrintCandidates(store.journalState(), journalKey, book, author.personKey);
+        let status: BookPrintStatus = setStatus({ ...NO_BOOK_PRINTS, state: 'running', journalKey, total: candidates.length });
+        try {
+          for (const chunk of pagesOf(candidates, PRINT_CHUNK)) {
+            const exported = new Map<string, { imageKey: string; size: { width: number; height: number } }>(); // by file
+            for (const image of chunk) {
+              const file = printFileOf(image.key);
+              const result = await JournalPhotos.exportOriginal({
+                journalKey, localIdentifier: image.localIdentifier, file, fillLongPx: PRINT_FILL_LONG_PX, fillShortPx: PRINT_FILL_SHORT_PX,
+              });
+              if ('skipped' in result) {
+                const missing = result.skipped === 'notAccessible' || result.skipped === 'notOnDevice';
+                status = setStatus({ ...status, done: status.done + 1, missing: status.missing + (missing ? 1 : 0), failed: status.failed + (missing ? 0 : 1) });
+              } else {
+                exported.set(file, { imageKey: image.key, size: result });
+              }
+            }
+            const stored = new Set(exported.size > 0 ? await store.syncService.uploadPrintFiles(journalKey, [...exported.keys()]) : []);
+            for (const [file, { imageKey, size }] of exported) {
+              let ok = stored.has(file);
+              if (ok) {
+                try {
+                  await store.bookService.setPrint(journalKey, tenantId, imageKey, size, author.personKey);
+                } catch {
+                  ok = false; // the file is up, but the book does not know it yet: next run finds it and records it
+                }
+              }
+              await JournalPhotos.deleteFile({ journalKey, file }).catch(() => undefined); // never keep print files on the iPad
+              status = setStatus({ ...status, done: status.done + 1, uploaded: status.uploaded + (ok ? 1 : 0), failed: status.failed + (ok ? 0 : 1) });
+            }
+          }
+        } catch {
+          // a callable or plugin failure ends the run; what was recorded stays, the rest is counted as failed
+          status = { ...status, failed: status.failed + (status.total - status.done), done: status.total };
+        }
+        return setStatus({ ...status, state: 'done' });
       },
 
       /** The journal now open becomes the active one: P2P switches to it. */

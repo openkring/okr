@@ -131,6 +131,15 @@
     "searching": "Looking for the other iPad …",
     "no_secret": "To connect the two iPads, open the journal once with an Internet connection."
   },
+  "prints": {
+    "action": "Upload photos for the book",
+    "hint": "The book is printed with photos in print size. Upload them from this iPad, ideally at home with an Internet connection.",
+    "progress": "Photos for the book: {done} of {total}",
+    "result": "{uploaded} uploaded · {missing} not on this iPad",
+    "failed": "{failed} could not be uploaded. Please try again later.",
+    "nothing": "All your photos for the book are already uploaded.",
+    "offline": "You need an Internet connection to upload."
+  },
   "map": {
     "load": "Load",
     "progress": "Offline map: {done} of {total}",

@@ -131,6 +131,15 @@
     "searching": "Suche das andere iPad …",
     "no_secret": "Für die Verbindung zwischen den iPads öffne das Reisetagebuch einmal mit Internet."
   },
+  "prints": {
+    "action": "Fotos fürs Buch hochladen",
+    "hint": "Das Buch wird mit Fotos in Druckgrösse gedruckt. Lade sie von diesem iPad hoch, am besten zu Hause mit Internet.",
+    "progress": "Fotos fürs Buch: {done} von {total}",
+    "result": "{uploaded} hochgeladen · {missing} fehlen auf diesem iPad",
+    "failed": "{failed} konnten nicht hochgeladen werden. Versuch es später nochmals.",
+    "nothing": "Alle deine Fotos fürs Buch sind schon hochgeladen.",
+    "offline": "Zum Hochladen brauchst du Internet."
+  },
   "map": {
     "load": "Laden",
     "progress": "Offline-Karte: {done} von {total}",

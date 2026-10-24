@@ -334,6 +334,25 @@ export class JournalSyncService {
     return this.call<DiaryWeather | null>('fetchDiaryWeather', { date, latitude, longitude });
   }
 
+  /**
+   * Book print photos: uploads the named, already exported files of Documents/journals/<journalKey>/ (≤ 50 per call).
+   * Returns the files that are in the bucket afterwards (uploaded now or before); a failed upload is left out, never thrown.
+   */
+  public async uploadPrintFiles(journalKey: string, files: string[]): Promise<string[]> {
+    const { uploads } = await this.call<{ uploads: { file: string; done: boolean; url?: string; headers?: Record<string, string> }[] }>(
+      'prepareJournalPhotoUploads', { journalKey, files });
+    const stored: string[] = [];
+    for (const upload of uploads) {
+      try {
+        if (!upload.done && upload.url) await JournalPhotos.uploadFile({ journalKey, file: upload.file, url: upload.url, headers: upload.headers ?? {} });
+        stored.push(upload.file);
+      } catch {
+        // stays out of prints; the next run exports and uploads it again
+      }
+    }
+    return stored;
+  }
+
   private async call<T>(name: string, payload: unknown): Promise<T> {
     const functions = getFunctions(getApp(), 'europe-west6');
     return (await withTimeout(httpsCallable<unknown, T>(functions, name)(payload))).data;

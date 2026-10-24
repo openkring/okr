@@ -262,6 +262,33 @@ export function coverImageKeyOf(state: JournalState, journalKey: string, book: J
   return undefined;
 }
 
+/**
+ * The photos this person still has to export from their own Photos library for the book (design §5.6): images of
+ * published footprints, not hidden — except the cover, which is always printed — taken by `personKey`, with a
+ * Photos identifier, whose print file is not in `book.prints` yet. In footprint order, each image once.
+ */
+export function bookPrintCandidates(state: JournalState, journalKey: string, book: JournalBookModel, personKey: string): ImageView[] {
+  const images = imagesOf(state, journalKey);
+  const hidden = new Set(book.hiddenImageKeys ?? []);
+  const prints = book.prints ?? {};
+  const cover = coverImageKeyOf(state, journalKey, book);
+  const wanted: string[] = [];
+  if (cover) wanted.push(cover);
+  for (const fp of footprintsOf(state, journalKey)) {
+    if (fp.publishState !== 'published') continue;
+    for (const b of fp.blocks) if (b.kind === 'photos') for (const key of b.imageKeys ?? []) if (!hidden.has(key)) wanted.push(key);
+  }
+  const seen = new Set<string>();
+  const result: ImageView[] = [];
+  for (const key of wanted) {
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const image = images.get(key);
+    if (image && image.authorKey === personKey && image.localIdentifier && !prints[key]) result.push(image);
+  }
+  return result;
+}
+
 /** A run of consecutive text blocks as one HTML flow; the author's name follows each change of author. */
 function runHtml(ctx: Ctx, run: BlockView[]): string {
   let html = '';
