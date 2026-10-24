@@ -892,8 +892,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     find: (c: SubjectCtx) => db().collection('diaries').where('authorKey', '==', c.uid),
     tenantScope: 'tenantsArray',
     // NO `matches` on `people[]`, deliberately — the one judgement call in this row.
-    // An entry names other people (`people[]` carries their personKey, `customPeopleLabels`
-    // and the prose carry names), so on the `trips` pattern above a mentioned person would
+    // An entry names other people (`people[]` carries their personKey or, for a free-text
+    // person, the name; the prose carries names too), so on the `trips` pattern above a mentioned person would
     // be a subject here too. They are not, for two reasons that have to hold together:
     //  - DSG Art. 2 Abs. 2 lit. a (and GDPR Art. 2(2)(c)): data a natural person processes
     //    exclusively for personal use falls outside the law's scope. A diary that nobody

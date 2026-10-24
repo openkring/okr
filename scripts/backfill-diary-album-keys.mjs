@@ -37,13 +37,16 @@ if (!config.exists) fail(`Tenant '${tenantId}' has no ${APP_CONFIG} document.`);
 
 const SLUG_SHAPE = /^[A-Za-z0-9_-]+$/;
 
-/** Mirror of diaryAlbumKeys in diary-album.util.ts. */
+/** Mirror of diaryAlbumKeys in diary-album.util.ts (reads `locations[]` since spec 1.117 — run it only after
+ * scripts/migrate-diary-locations.mjs, which also recomputes albumKeys). */
 function diaryAlbumKeys(diary) {
   const keys = new Set();
   for (const person of diary.people ?? []) {
     if (person?.key) keys.add(`person.${person.key}`);
   }
-  if (diary.location?.key) keys.add(`location.${diary.location.key}`);
+  for (const location of diary.locations ?? []) {
+    if (location?.key) keys.add(`location.${location.key}`);
+  }
   for (const event of diary.events ?? []) {
     // Jass result lines live in events[] on purpose (spec 1.77) and are not event slugs. The util skips
     // them via parseJassDiaryLine (diary-jass.util.ts); a Jass line always contains spaces, ':' and '·',

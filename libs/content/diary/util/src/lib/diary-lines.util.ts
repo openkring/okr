@@ -10,7 +10,7 @@ export function listToLines(list: string[]): string {
   return (list ?? []).join('\n');
 }
 
-/** Slug lists (`places`, `events`, `customPeopleLabels`) are edited comma-separated. */
+/** Slug lists (`events`) are edited comma-separated. */
 export function csvToList(text: string): string[] {
   return (text ?? '').split(',').map(s => s.trim()).filter(s => s.length > 0);
 }

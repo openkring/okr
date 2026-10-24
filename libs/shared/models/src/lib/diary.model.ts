@@ -74,16 +74,8 @@ export class DiaryModel implements OkrModel, TaggedModel, SearchableModel {
 
   /** first entry = main location (Hauptort); `key ''` = free text (spec 1.117) */
   public locations: AvatarInfo[] = [];
-  /** @deprecated spec 1.117 — read via withDiaryLocations, removed in Task 8 */
-  public location?: AvatarInfo;
-  /** @deprecated spec 1.117 — read via withDiaryLocations, removed in Task 8 */
-  public customLocationLabel = '';
   /** resolved persons */
   public people: AvatarInfo[] = [];
-  /** @deprecated spec 1.117 — read via withDiaryLocations, removed in Task 8 */
-  public customPeopleLabels: string[] = [];
-  /** @deprecated spec 1.117 — read via withDiaryLocations, removed in Task 8 */
-  public places: string[] = [];
   /** recurring event labels ('weihnachten', 'ostern') — a tag vocabulary, not calevents */
   public events: string[] = [];
   /** trips.okey of a TripModel with type 'travel' */
@@ -104,7 +96,7 @@ export class DiaryModel implements OkrModel, TaggedModel, SearchableModel {
 
   /**
    * Derived album keys ('person.p1', 'event.anrudern', 'tag.Familie'), used for array-contains
-   * queries. Never edited by hand — recomputed from people/location/events/tags, see `diaryAlbumKeys`.
+   * queries. Never edited by hand — recomputed from people/locations/events/tags, see `diaryAlbumKeys`.
    */
   public albumKeys: string[] = [];
 

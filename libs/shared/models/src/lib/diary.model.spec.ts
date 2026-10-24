@@ -16,8 +16,7 @@ describe('DiaryModel', () => {
   it('starts with empty collections rather than undefined', () => {
     const model = new DiaryModel('bka');
     expect(model.people).toEqual([]);
-    expect(model.customPeopleLabels).toEqual([]);
-    expect(model.places).toEqual([]);
+    expect(model.locations).toEqual([]);
     expect(model.events).toEqual([]);
     expect(model.done).toEqual([]);
     expect(model.media).toEqual([]);

@@ -19,7 +19,7 @@ import { findUserByLoginId, tenantAppDomain } from './login-id';
 
 const CF_NAME = 'loginWithLoginId';
 // The Firebase Web API key (public — it already ships in every app's environment.ts). Declared as a
-// secret purely for delivery, matching the repo convention (see DIARY_OWNER_UID in import-diary.ts):
+// secret purely for delivery, matching the repo convention (see DIARY_OWNER_UID in diary/list-diary-media.ts):
 // every .env file is git-ignored and dist/apps/functions is rebuilt on every deploy, so a defineString
 // param has nowhere to persist and would prompt on every unrelated functions deploy.
 const WEB_API_KEY = defineSecret('IDENTITY_TOOLKIT_APIKEY');

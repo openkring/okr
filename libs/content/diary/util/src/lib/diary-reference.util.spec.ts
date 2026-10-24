@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { AvatarInfo, DiaryModel } from '@okr/shared-models';
 
-import { customLocationAvatar, customPersonAvatar } from './diary-avatar.util';
+import { customLocationAvatar, customPersonAvatar, LegacyDiaryFields } from './diary-avatar.util';
 import {
   collectLocationReferences, collectPersonReferences, filterDiaryReferences, formatDiaryDate,
   formatDiaryDateLong, formatDiaryDateShort, formatDiaryMonthHeader,
@@ -10,7 +10,7 @@ import {
 
 const TENANT = 'scs';
 
-function diary(date: string, overrides: Partial<DiaryModel> = {}): DiaryModel {
+function diary(date: string, overrides: Partial<DiaryModel> & LegacyDiaryFields = {}): DiaryModel {
   const model = new DiaryModel(TENANT);
   model.okey = `d${date}`;
   model.date = date;

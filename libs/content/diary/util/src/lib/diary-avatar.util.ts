@@ -2,8 +2,20 @@ import { AvatarInfo, DiaryModel } from '@okr/shared-models';
 
 import { normaliseLocationLabel } from './location-normalise';
 
-/** The four fields that `locations` / `people` replace (spec 1.117); removed from the model in Task 8. */
+/** The four fields that `locations` / `people` replace (spec 1.117); no longer part of `DiaryModel`. */
 export const LEGACY_DIARY_FIELDS = ['location', 'customLocationLabel', 'places', 'customPeopleLabels'] as const;
+
+/**
+ * The shape of the four fields on a `diaries` document written before spec 1.117. Only the
+ * migration (`migrateDiaryReferences`, scripts/migrate-diary-locations.mjs) and the read-side shim
+ * `withDiaryLocations` read them.
+ */
+export interface LegacyDiaryFields {
+  location?: AvatarInfo | null;
+  customLocationLabel?: string;
+  places?: string[];
+  customPeopleLabels?: string[];
+}
 
 function collapseWhitespace(value: string): string {
   return value.trim().replace(/\s+/g, ' ');
@@ -57,18 +69,58 @@ export function mainLocation(d: Pick<DiaryModel, 'locations'>): AvatarInfo | und
   return d.locations?.[0];
 }
 
-/** Read-side shim: derives `locations` / `people` from the legacy fields on a document that predates spec 1.117. */
-export function withDiaryLocations<T extends DiaryModel>(raw: T): T {
-  if (raw.locations) return { ...raw, people: raw.people ?? [] };
+/** True for a document that predates spec 1.117: no `locations` yet, but at least one legacy field. */
+export function needsDiaryLocationMigration(raw: object): boolean {
+  const record = raw as Record<string, unknown>;
+  if (record['locations'] !== undefined && record['locations'] !== null) return false;
+  return LEGACY_DIARY_FIELDS.some(k => k in record);
+}
+
+/** An entry without a key and without a name carries nothing and is dropped. */
+function isEmptyAvatar(a: AvatarInfo): boolean {
+  return !a.key && !diaryAvatarName(a).trim();
+}
+
+/**
+ * Maps the legacy fields to `locations` / `people` (spec 1.117 D6): the main location first
+ * (`location`, else `customLocationLabel`), then every `places[]` entry, in order; then the
+ * free-text persons appended to `people`. Each free-text location label is offered to
+ * `resolveLocation` first; a hit replaces it, otherwise it stays free text with its text unchanged.
+ * Duplicates are dropped by `diaryAvatarId`, so a resolved place that names the main location
+ * collapses into it. Blank labels are skipped.
+ *
+ * scripts/migrate-diary-locations.mjs carries a fingerprinted copy of this function — change both.
+ */
+export function migrateDiaryReferences(
+  raw: Partial<Pick<DiaryModel, 'people'>> & LegacyDiaryFields,
+  resolveLocation: (label: string) => AvatarInfo | undefined,
+): { locations: AvatarInfo[]; people: AvatarInfo[] } {
+  const fromText = (label: string): AvatarInfo | undefined =>
+    label.trim() ? (resolveLocation(label) ?? customLocationAvatar(label)) : undefined;
 
   let locations: AvatarInfo[] = [];
-  const main = raw.location ?? (raw.customLocationLabel ? customLocationAvatar(raw.customLocationLabel) : undefined);
-  if (main) locations = addDiaryAvatar(locations, main);
-  for (const p of raw.places ?? []) locations = addDiaryAvatar(locations, customLocationAvatar(p));
+  const main = raw.location ?? fromText(raw.customLocationLabel ?? '');
+  if (main && !isEmptyAvatar(main)) locations = addDiaryAvatar(locations, main);
+  for (const place of raw.places ?? []) {
+    const avatar = fromText(place ?? '');
+    if (avatar && !isEmptyAvatar(avatar)) locations = addDiaryAvatar(locations, avatar);
+  }
 
   let people = raw.people ?? [];
-  for (const p of raw.customPeopleLabels ?? []) people = addDiaryAvatar(people, customPersonAvatar(p));
-  return { ...raw, locations, people };
+  for (const label of raw.customPeopleLabels ?? []) {
+    if ((label ?? '').trim()) people = addDiaryAvatar(people, customPersonAvatar(label));
+  }
+  return { locations, people };
+}
+
+/**
+ * Read-side shim: derives `locations` / `people` from the legacy fields on a document that
+ * predates spec 1.117 (no resolving — that is the migration's job). Delete the legacy branch once
+ * the migration has run on every document.
+ */
+export function withDiaryLocations<T extends DiaryModel>(raw: T): T {
+  if (raw.locations) return { ...raw, people: raw.people ?? [] };
+  return { ...raw, ...migrateDiaryReferences(raw as T & LegacyDiaryFields, () => undefined) };
 }
 
 export function stripLegacyDiaryFields<T extends object>(d: T): T {

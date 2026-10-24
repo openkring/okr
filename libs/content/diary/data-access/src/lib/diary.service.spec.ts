@@ -123,7 +123,7 @@ describe('DiaryService album queries and writes', () => {
   });
 
   it('update strips legacy fields from the written model', async () => {
-    await TestBed.inject(DiaryService).update(entry('k', '20240101', { customLocationLabel: 'x', places: ['y'] } as Partial<DiaryModel>));
+    await TestBed.inject(DiaryService).update(entry('k', '20240101', { customLocationLabel: 'x', places: ['y'] } as unknown as Partial<DiaryModel>));
     const written = updateModel.mock.calls[0][1] as Record<string, unknown>;
     expect(written).not.toHaveProperty('customLocationLabel');
     expect(written).not.toHaveProperty('places');
@@ -132,12 +132,12 @@ describe('DiaryService album queries and writes', () => {
   });
 
   it('create strips legacy fields too', async () => {
-    await TestBed.inject(DiaryService).create(entry('k', '20240101', { places: ['y'] } as Partial<DiaryModel>));
+    await TestBed.inject(DiaryService).create(entry('k', '20240101', { places: ['y'] } as unknown as Partial<DiaryModel>));
     expect(createModel.mock.calls[0][1]).not.toHaveProperty('places');
   });
 
   it('a listed legacy doc comes out with locations derived from places', async () => {
-    const legacy = entry('k', '20240101', { places: ['y'] } as Partial<DiaryModel>);
+    const legacy = entry('k', '20240101', { places: ['y'] } as unknown as Partial<DiaryModel>);
     delete (legacy as { locations?: unknown }).locations; // a pre-1.117 doc has no such key
     searchData.mockReturnValue(of([legacy]));
     const [d] = await firstValueFrom(TestBed.inject(DiaryService).listByRange('u1', 'bka'));
