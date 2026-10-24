@@ -20,3 +20,4 @@ export * from './lib/journal-guest.util';
 export * from './lib/journal-flyover.util';
 export * from './lib/journal-book.util';
 export * from './lib/journal-book-layout.util';
+export * from './lib/journal-book-cover.util';
