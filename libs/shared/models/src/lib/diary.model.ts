@@ -72,15 +72,17 @@ export class DiaryModel implements OkrModel, TaggedModel, SearchableModel {
   public done: string[] = [];
   public status: DiaryStatus = 'draft';
 
-  /** resolved location; absent when only customLocationLabel is known */
+  /** first entry = main location (Hauptort); `key ''` = free text (spec 1.117) */
+  public locations: AvatarInfo[] = [];
+  /** @deprecated spec 1.117 — read via withDiaryLocations, removed in Task 8 */
   public location?: AvatarInfo;
-  /** free text location, used when no locations entry matches (pattern: TripModel) */
+  /** @deprecated spec 1.117 — read via withDiaryLocations, removed in Task 8 */
   public customLocationLabel = '';
   /** resolved persons */
   public people: AvatarInfo[] = [];
-  /** slugs of persons that have no persons entry (pattern: TripModel) */
+  /** @deprecated spec 1.117 — read via withDiaryLocations, removed in Task 8 */
   public customPeopleLabels: string[] = [];
-  /** place slugs — not resolved to locations */
+  /** @deprecated spec 1.117 — read via withDiaryLocations, removed in Task 8 */
   public places: string[] = [];
   /** recurring event labels ('weihnachten', 'ostern') — a tag vocabulary, not calevents */
   public events: string[] = [];
