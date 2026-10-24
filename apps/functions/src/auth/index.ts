@@ -5,6 +5,7 @@ import { getAuth, UserRecord } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
 import { DocumentData, getFirestore } from 'firebase-admin/firestore';
 import { checkAdminRole, checkAppCheckToken, checkAuthentication, checkStringField, chunk, getCallerContext, getCallerTenantId, isOperatorUserData, isSoleTenantUserData, mayDeleteAuthUser } from '@okr/shared-util-functions';
+import { PasskeyCollection } from '@okr/shared-models';
 import { isSyntheticLoginEmail } from '@okr/user-util';
 import { getAppEmailConfig } from './email-templates';
 import { EmailAttachment, isValidProvider, sendEmailViaProvider } from './email-transport';
@@ -547,6 +548,19 @@ export const deleteFirebaseAuthUser = functions.onCall(
     }
     await getAuth().deleteUser(uid);
     logger.info(`${CF_NAME}: deleted user ${uid}`);
+    // spec 1.120 §11: a deleted login's passkeys must not outlive it. Best effort — the login is
+    // already gone, and loginVerify refuses a passkey whose Auth account no longer exists.
+    try {
+      const keys = await getFirestore().collection(PasskeyCollection).where('uid', '==', uid).get();
+      for (const slice of chunk(keys.docs, 500)) {
+        const batch = getFirestore().batch();
+        slice.forEach((d) => batch.delete(d.ref));
+        await batch.commit();
+      }
+      if (keys.size > 0) logger.info(`${CF_NAME}: deleted ${keys.size} passkey(s) of user ${uid}`);
+    } catch (error) {
+      logger.error(`${CF_NAME}: passkeys of user ${uid} not deleted`, { error: String(error) });
+    }
   }
 );
 

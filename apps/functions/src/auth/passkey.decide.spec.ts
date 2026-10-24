@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  checkLoginTarget, defaultPasskeyLabel, expectedOrigin, isChallengeUsable, isRecentSignIn, mayManagePasskey,
+  byCreatedAtDesc, checkLoginTarget, defaultPasskeyLabel, expectedOrigin, isChallengeUsable, isCredentialId, isRecentSignIn, mayManagePasskey,
+  normalizePasskeyLabel, toPasskeyItem,
   passkeyAddedMail, resolveRpId, StoredChallenge,
 } from './passkey.decide';
 
@@ -87,5 +88,46 @@ describe('passkeyAddedMail', () => {
     expect(m.html).not.toContain('<script>');
     expect(m.html).toContain('&lt;script&gt;');
     expect(m.html).not.toContain('<b>App</b>');
+  });
+});
+
+describe('isCredentialId', () => {
+  it('accepts base64url only', () => {
+    expect(isCredentialId('AbC-_09')).toBe(true);
+    expect(isCredentialId('')).toBe(false);
+    expect(isCredentialId('a/b')).toBe(false);
+    expect(isCredentialId('a+b=')).toBe(false);
+    expect(isCredentialId(undefined)).toBe(false);
+    expect(isCredentialId(42)).toBe(false);
+    expect(isCredentialId('a'.repeat(1025))).toBe(false);
+  });
+});
+
+describe('normalizePasskeyLabel', () => {
+  it('trims and enforces 1–40 characters', () => {
+    expect(normalizePasskeyLabel('  iPhone  ')).toBe('iPhone');
+    expect(normalizePasskeyLabel('   ')).toBeUndefined();
+    expect(normalizePasskeyLabel('x'.repeat(40))).toBe('x'.repeat(40));
+    expect(normalizePasskeyLabel('x'.repeat(41))).toBeUndefined();
+    expect(normalizePasskeyLabel(undefined)).toBeUndefined();
+  });
+});
+
+describe('toPasskeyItem', () => {
+  it('exposes only the five client fields', () => {
+    const item = toPasskeyItem('id1', {
+      uid: 'u', publicKey: 'pk', counter: 3, label: 'Mac', createdAt: '20261024120000', lastUsedAt: '', backedUp: true,
+    });
+    expect(item).toEqual({ okey: 'id1', label: 'Mac', createdAt: '20261024120000', lastUsedAt: '', backedUp: true });
+  });
+  it('fills defaults for a sparse doc', () => {
+    expect(toPasskeyItem('id2', undefined)).toEqual({ okey: 'id2', label: '', createdAt: '', lastUsedAt: '', backedUp: false });
+  });
+});
+
+describe('byCreatedAtDesc', () => {
+  it('sorts newest first', () => {
+    const items = [{ createdAt: '20250101000000' }, { createdAt: '20261024120000' }, { createdAt: '20260101000000' }];
+    expect(items.sort(byCreatedAtDesc).map((i) => i.createdAt)).toEqual(['20261024120000', '20260101000000', '20250101000000']);
   });
 });

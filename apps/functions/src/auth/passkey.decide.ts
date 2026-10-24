@@ -1,6 +1,8 @@
 // apps/functions/src/auth/passkey.decide.ts
 //
 // The pure decisions of the passkey callable (spec 1.120). No Firebase here — see the spec file.
+import type { PasskeyItem } from '@okr/shared-models';
+
 import { escapeHtml } from '../calendar/mail';
 
 export const CHALLENGE_TTL_MS = 300_000;
@@ -85,4 +87,38 @@ export function passkeyAddedMail(appName: string, label: string, when: string): 
       '<p>Warst du das nicht? Melde dich mit deinem Passwort an und lösche den Passkey in deinem Profil unter «Passkeys».</p>',
     ].join(''),
   };
+}
+
+/** Longest label a passkey may carry (rename). */
+export const PASSKEY_LABEL_MAX = 40;
+
+/**
+ * A credential id as it may name a `passkeys` doc: non-empty base64url only. Anything else — in
+ * particular a `/` — must never reach `collection().doc()`, where it would address another path.
+ */
+export function isCredentialId(id: unknown): id is string {
+  return typeof id === 'string' && id.length > 0 && id.length <= 1024 && /^[A-Za-z0-9_-]+$/.test(id);
+}
+
+/** The trimmed label, or undefined when it is empty or longer than PASSKEY_LABEL_MAX. */
+export function normalizePasskeyLabel(label: unknown): string | undefined {
+  if (typeof label !== 'string') return undefined;
+  const trimmed = label.trim();
+  return trimmed.length >= 1 && trimmed.length <= PASSKEY_LABEL_MAX ? trimmed : undefined;
+}
+
+/** What the client may see of a stored passkey — never the public key, counter or uid. */
+export function toPasskeyItem(okey: string, data: Record<string, unknown> | undefined): PasskeyItem {
+  return {
+    okey,
+    label: String(data?.['label'] ?? ''),
+    createdAt: String(data?.['createdAt'] ?? ''),
+    lastUsedAt: String(data?.['lastUsedAt'] ?? ''),
+    backedUp: data?.['backedUp'] === true,
+  };
+}
+
+/** Newest first (StoreDateTime strings sort lexically). */
+export function byCreatedAtDesc(a: { createdAt: string }, b: { createdAt: string }): number {
+  return b.createdAt.localeCompare(a.createdAt);
 }
