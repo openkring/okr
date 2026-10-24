@@ -111,6 +111,9 @@
       "conf": "The link to set a password has been requested.",
       "error": "The link to set a password could not be requested."
     },
+    "passkeys": {
+      "label": "Passkeys"
+    },
     "swap": {
       "label": "Swap email",
       "confirm": "{holder} hands the email over to {newcomer} and will log in with the username {loginId} from now on. {holder} is signed out once.",

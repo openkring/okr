@@ -108,5 +108,32 @@
   },
   "background": {
     "alt": "Immagine di sfondo"
+  },
+  "passkey": {
+    "login": {
+      "label": "Accedi con passkey",
+      "error": "L’accesso con passkey non è riuscito. Puoi continuare ad accedere con la tua password."
+    },
+    "title": "Passkey",
+    "intro": "Con una passkey accedi con il riconoscimento facciale, l’impronta digitale o il PIN del dispositivo, senza password.",
+    "add": "Aggiungi passkey",
+    "added": "Passkey aggiunta.",
+    "unavailable": "Le passkey non sono disponibili su questo dispositivo.",
+    "exists": "Su questo dispositivo c’è già una passkey per il tuo account.",
+    "reauth": "Per sicurezza, inserisci di nuovo la tua password.",
+    "synced": "sincronizzata",
+    "created": "Creata",
+    "lastUsed": "Ultimo utilizzo",
+    "never": "mai",
+    "rename": "Rinomina",
+    "delete": {
+      "label": "Elimina",
+      "confirm": "Eliminare questa passkey? Su quel dispositivo potrai poi accedere solo con la password."
+    },
+    "empty": "Non hai ancora una passkey.",
+    "error": "Non ha funzionato. Riprova, per favore.",
+    "modal": {
+      "title": "Passkey di {name}"
+    }
   }
 }

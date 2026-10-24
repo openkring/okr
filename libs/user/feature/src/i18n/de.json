@@ -111,6 +111,9 @@
       "conf": "Der Link zum Setzen des Passworts ist angefordert.",
       "error": "Der Link zum Setzen des Passworts konnte nicht angefordert werden."
     },
+    "passkeys": {
+      "label": "Passkeys"
+    },
     "swap": {
       "label": "E-Mail tauschen",
       "confirm": "{holder} gibt die E-Mail an {newcomer} ab und meldet sich künftig mit dem Benutzernamen {loginId} an. {holder} wird dabei einmal abgemeldet.",

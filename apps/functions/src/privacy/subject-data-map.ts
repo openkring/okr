@@ -1519,6 +1519,16 @@ export async function resolveArrayItemDocs(entry: SubjectDataEntry, ctx: Subject
 //   directly, never through `eraseMyData`. Turning it into a row would require SubjectCtx to
 //   carry an identity that does not exist in this system. Retention and the direct-request path
 //   are C3 §9's open item.
+// gap: passkeys — one WebAuthn credential per device (spec 1.120): uid, tenants, rpId, the
+//   public key, counter, aaguid, a device label and created/last-used timestamps. Personal data
+//   (linked by uid), no biometrics. Server-only (rules deny all client access; the `passkey`
+//   callable is the only reader/writer). Deleted with the login by deleteFirebaseAuthUser; NOT yet
+//   in exportMyData / eraseMyData — after an erasure the docs are useless (loginVerify requires
+//   the Auth account and users/{uid}) but remain until an admin deletes them. Row: 1.120 follow-up.
+// gap: webauthn-challenges — a single-use WebAuthn challenge (spec 1.120): purpose, challenge,
+//   rpId, origin, tenantId and, for a registration, the uid. Deleted on first use and by a
+//   Firestore TTL policy on `expireAt` within 5 minutes otherwise; never exported (nothing about
+//   the person outlives the sign-in attempt).
 // not personal data: aliasSpaces — alias namespace CONFIGURATION (charset, length, tracking
 //   default, roleNeeded). No person field, no createdBy; the aliases minted inside it are the
 //   personal-data side and have their own row.

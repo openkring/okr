@@ -29,6 +29,7 @@
     "@okr/subject-person-data-access": "*",
     "@okr/subject-person-feature": "*",
     "@okr/auth-data-access": "*",
+    "@okr/auth-feature": "*",
     "@okr/comment-feature": "*",
     "@okr/cms-menu-feature": "*"
   }

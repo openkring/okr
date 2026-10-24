@@ -66,6 +66,26 @@ export const AUTH_I18N_KEYS = {
 
   background_alt:           PFX + 'background.alt',
   password_changed:         PFX + 'password.changed',
+
+  passkey_login:            PFX + 'passkey.login.label',
+  passkey_login_error:      PFX + 'passkey.login.error',
+  passkey_title:            PFX + 'passkey.title',
+  passkey_modal_title:      PFX + 'passkey.modal.title',
+  passkey_intro:            PFX + 'passkey.intro',
+  passkey_add:              PFX + 'passkey.add',
+  passkey_added:            PFX + 'passkey.added',
+  passkey_unavailable:      PFX + 'passkey.unavailable',
+  passkey_exists:           PFX + 'passkey.exists',
+  passkey_reauth:           PFX + 'passkey.reauth',
+  passkey_synced:           PFX + 'passkey.synced',
+  passkey_created:          PFX + 'passkey.created',
+  passkey_lastUsed:         PFX + 'passkey.lastUsed',
+  passkey_never:            PFX + 'passkey.never',
+  passkey_rename:           PFX + 'passkey.rename',
+  passkey_delete:           PFX + 'passkey.delete.label',
+  passkey_delete_confirm:   PFX + 'passkey.delete.confirm',
+  passkey_empty:            PFX + 'passkey.empty',
+  passkey_error:            PFX + 'passkey.error',
 } satisfies Record<string, string>;
 
 export type AuthI18n = { [K in keyof typeof AUTH_I18N_KEYS]: Signal<string> };

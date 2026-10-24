@@ -81,6 +81,7 @@ export class UserAccountActions {
       case 'account.loginid':     return [i.account_login_id_change(), 'edit'];
       case 'account.swap':        return [i.account_swap(), 'email'];
       case 'fbuser.edit':         return [i.account_fbuser_edit(), 'key'];
+      case 'account.passkeys':    return [i.account_passkeys(), 'key'];
       case 'account.check':       return [i.account_check(), 'shield'];
       case 'account.impersonate': return [i.account_impersonate(), 'shield'];
       case 'matrix.provision':    return [i.account_matrix(), 'chatbubbles'];
@@ -102,6 +103,7 @@ export class UserAccountActions {
       case 'account.loginid':     await this.changeLoginId(row); break;
       case 'account.swap':        await this.swapLoginEmail(row); break;
       case 'fbuser.edit':         await this.editFirebaseUser(row); break;
+      case 'account.passkeys':    await this.showPasskeys(row); break;
       case 'account.check':       await this.checkAccount(row); break;
       case 'account.impersonate': await this.impersonate(row); break;
       case 'matrix.provision':    await this.provisionMatrix(row); break;
@@ -293,6 +295,17 @@ export class UserAccountActions {
   }
 
   /** Edits the Firebase login itself (email, display name, verified, disabled). */
+  private async showPasskeys(row: UserAccountRow): Promise<void> {
+    if (!row.uid) return;
+    // lazy: the modal injects stores that would otherwise land in the list's chunk
+    const { PasskeysModal } = await import('@okr/auth-feature');
+    const modal = await this.modalController.create({
+      component: PasskeysModal,
+      componentProps: { uid: row.uid, name: row.name || row.loginEmail || row.uid },
+    });
+    await modal.present();
+  }
+
   private async editFirebaseUser(row: UserAccountRow): Promise<void> {
     if (!row.uid) return;
     let fbuser: FirebaseUserModel | undefined;

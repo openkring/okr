@@ -7,6 +7,7 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
+    "@okr/auth-feature": "*",
     "@okr/shared-categories": "*",
     "@okr/shared-models": "*",
     "@okr/shared-feature": "*",

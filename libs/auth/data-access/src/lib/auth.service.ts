@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { browserLocalPersistence, confirmPasswordReset, setPersistence, signInWithCustomToken, signInWithEmailAndPassword, signOut, verifyPasswordResetCode } from 'firebase/auth';
+import { browserLocalPersistence, confirmPasswordReset, EmailAuthProvider, reauthenticateWithCredential, setPersistence, signInWithCustomToken, signInWithEmailAndPassword, signOut, verifyPasswordResetCode } from 'firebase/auth';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
@@ -11,9 +11,10 @@ import { clearOfflineSnapshots, die, warn } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { ActivityService } from '@okr/activity-data-access';
 import { isLoginIdInput, normalizeLoginIdInput } from '@okr/user-util';
-import { LoginFailure, PwdResetFailure, PwdResetResult, toLoginFailure, toPwdResetFailure } from '@okr/auth-util';
+import { LoginFailure, PwdResetFailure, PwdResetResult, passkeyErrorKind, toLoginFailure, toPwdResetFailure } from '@okr/auth-util';
 
 import { PFX } from './scope';
+import { PasskeyService } from './passkey.service';
 
 /** How long logout waits for its audit entry before signing out anyway (offline, see logout()). */
 const LOGOUT_AUDIT_TIMEOUT_MS = 2000;
@@ -41,6 +42,7 @@ export class AuthService {
   private readonly router = inject(Router);
   private readonly alertService = inject(AlertService);
   private readonly activityService = inject(ActivityService);
+  private readonly passkeyService = inject(PasskeyService);
   private readonly i18n = inject(I18nService).translateAll({
     login_conf:     PFX + 'login.conf',
     login_error:    PFX + 'login.error',
@@ -54,6 +56,7 @@ export class AuthService {
     logout_conf:    PFX + 'logout.conf',
     logout_error:   PFX + 'logout.error',
     logout_confirm: PFX + 'logout.confirm',
+    passkey_login_error: '@auth/feature.passkey.login.error',
   });
 
   /*-------------------------- login / logout / password reset --------------------------------*/
@@ -113,6 +116,51 @@ export class AuthService {
       getFunctions(getApp(), 'europe-west6'), 'loginWithLoginId');
     const { data } = await fn({ tenantId: this.env.tenantId, loginId, password });
     await signInWithCustomToken(this.auth, data.token);
+  }
+
+  /**
+   * Sign in with a passkey. Same persistence, toast, audit entry and navigation as login().
+   * A cancelled ceremony is silent; every other failure shows one generic sentence.
+   */
+  public async loginWithPasskey(rootUrl: string, loginUrl: string): Promise<void> {
+    try {
+      await setPersistence(this.auth, browserLocalPersistence);
+      const token = await this.passkeyService.getLoginToken();
+      await signInWithCustomToken(this.auth, token);
+      void this.activityService.logAuth('login', 'passkey: SUCCESS');
+      await this.alertService.showToast(this.i18n.login_conf());
+      await navigateByUrl(this.router, rootUrl);
+    } catch (ex) {
+      const kind = passkeyErrorKind(ex);
+      void this.activityService.logAuth('login', `passkey: ERROR (${kind})`);
+      if (kind === 'cancelled') return;
+      console.error('AuthService.loginWithPasskey: error: ', ex);
+      await this.alertService.showToast(this.i18n.passkey_login_error());
+      await navigateByUrl(this.router, loginUrl);
+    }
+  }
+
+  /**
+   * Prove the password again to get a fresh auth_time (passkey management requires a recent login).
+   * With a loginId (Benutzername account, synthetic email) the server checks the password and the
+   * user is signed in again; otherwise the current email credential is re-authenticated.
+   * @returns false on any failure
+   */
+  public async reauthenticate(password: string, loginId?: string): Promise<boolean> {
+    try {
+      if (!password) return false;
+      if (loginId) {
+        await this.signInWithLoginId(normalizeLoginIdInput(loginId), password);
+      } else {
+        const user = this.auth.currentUser;
+        if (!user?.email) return false;
+        await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, password));
+      }
+      return true;
+    } catch (ex) {
+      console.error('AuthService.reauthenticate: error: ', ex);
+      return false;
+    }
   }
 
   public async loginWithToken(token: string, url: string): Promise<void> {

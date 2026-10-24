@@ -83,6 +83,7 @@ export const USER_I18N_KEYS = {
   account_reset:                   PFX + 'account.reset.label',
   account_reset_conf:              PFX + 'account.reset.conf',
   account_reset_error:             PFX + 'account.reset.error',
+  account_passkeys:                PFX + 'account.passkeys.label',
   account_swap:                    PFX + 'account.swap.label',
   account_swap_confirm:            PFX + 'account.swap.confirm',
   account_swap_minor:              PFX + 'account.swap.minor',
