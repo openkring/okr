@@ -117,7 +117,7 @@ export class DiaryService {
         ...(last ? [startAfter(last)] : []), limit(NEIGHBOUR_PAGE));
       const snapshot = await getDocs(pageQuery);
       const hit = snapshot.docs
-        .map(d => withDiaryLocations({ ...d.data(), okey: d.id }) as DiaryModel)
+        .map(d => withDiaryLocations({ ...d.data(), okey: d.id } as DiaryModel))
         .find(d => !d.isArchived && diaryNeighbourScope(d) === scope);
       if (hit) return hit;
       if (snapshot.docs.length < NEIGHBOUR_PAGE) return undefined;
