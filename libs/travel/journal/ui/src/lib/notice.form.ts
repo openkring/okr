@@ -22,10 +22,10 @@ import { JournalI18n, NOTICE_SUBJECT_MAX, NOTICE_TEXT_MAX, NoticeFormModel, noti
           <ion-card-content class="ion-no-padding">
             @if (recipients()) { <p class="recipients">{{ recipients() }}</p> }
             <okr-text-input [i18n]="subjectI18n()" [value]="formData().subject" (valueChange)="onFieldChange('subject', $event)"
-              [maxLength]="subjectMax" [autofocus]="true" />
+              [maxLength]="subjectMax" [autofocus]="true" [readOnly]="false" />
             <okr-error-note [errors]="subjectErrors()" />
             <okr-textarea-input [i18n]="textI18n()" [value]="formData().text" (valueChange)="onFieldChange('text', $event)"
-              [maxLength]="textMax" [rows]="12" [showHelper]="true" />
+              [maxLength]="textMax" [rows]="12" [showHelper]="true" [readOnly]="false" />
             <okr-error-note [errors]="textErrors()" />
           </ion-card-content>
         </ion-card>
