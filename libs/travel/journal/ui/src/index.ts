@@ -7,3 +7,4 @@ export * from './lib/journal-reactions';
 export * from './lib/notice.form';
 export * from './lib/notice.modal';
 export * from './lib/journal-flyover';
+export * from './lib/journal-book-maps';

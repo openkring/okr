@@ -21,3 +21,4 @@ export * from './lib/journal-flyover.util';
 export * from './lib/journal-book.util';
 export * from './lib/journal-book-layout.util';
 export * from './lib/journal-book-cover.util';
+export * from './lib/journal-book-map.util';

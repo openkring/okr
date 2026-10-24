@@ -5,6 +5,8 @@ import type * as MapLibre from 'maplibre-gl';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { CLOSING_MS, FlyLeg, FlyStop, FlyTimeline, JournalI18n, JournalTileSource, OPENING_MS } from '@okr/travel-journal-util';
 
+import { addMapLibreStylesheet, loadMapLibre, rasterStyle } from './journal-maplibre';
+
 /**
  * The flyover (spec 1.113 phase 2, design 2026-10-24): a globe flight over the journal's route, opened as a
  * full-screen modal. It zooms in from space to the first footprint, moves a marker with the transport of each
@@ -13,17 +15,6 @@ import { CLOSING_MS, FlyLeg, FlyStop, FlyTimeline, JournalI18n, JournalTileSourc
  * are app assets under `assets/maplibre/` (also offline on the iPad).
  */
 const TRANSPORT_ICON: Record<string, string> = { plane: '✈️', ship: '🚢', bus: '🚌', train: '🚆', car: '🚗', bike: '🚲', foot: '🚶', row: '🚣', ski: '⛷️', motorbike: '🏍️' };
-const ASSET_BASE = 'assets/maplibre/';
-let stylesheetAdded = false;
-
-function addStylesheet(): void {
-  if (stylesheetAdded || typeof document === 'undefined') return;
-  stylesheetAdded = true;
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = `${ASSET_BASE}maplibre-gl.css`;
-  document.head.appendChild(link);
-}
 
 /** Cumulative distances along a path (plain degrees — enough to move a marker evenly). */
 function cumulative(path: [number, number][]): number[] {
@@ -122,26 +113,16 @@ export class JournalFlyover {
   }
 
   private async start(): Promise<void> {
-    addStylesheet();
-    const lib = await import('maplibre-gl');
+    addMapLibreStylesheet();
+    const lib = await loadMapLibre();
     if (this.destroyed) return;
     this.lib = lib;
-    lib.setWorkerUrl(new URL(`${ASSET_BASE}maplibre-gl-worker.mjs`, document.baseURI).href);
     const container = (this.el.nativeElement as HTMLElement).querySelector('.okr-flyover-map') as HTMLElement;
     const timeline = this.timeline();
-    const sources: Record<string, MapLibre.RasterSourceSpecification> = {};
-    const layers: MapLibre.LayerSpecification[] = [{ id: 'bg', type: 'background', paint: { 'background-color': '#163a5f' } }];
-    this.tiles().filter((t) => t.kind !== 'vector').forEach((t, i) => {
-      sources[`t${i}`] = {
-        type: 'raster', tiles: [t.urlTemplate], tileSize: 256, maxzoom: t.maxNativeZoom, minzoom: t.minNativeZoom ?? 0,
-        attribution: t.attribution, ...(t.bounds ? { bounds: t.bounds } : {}),
-      };
-      layers.push({ id: `t${i}`, type: 'raster', source: `t${i}`, ...(t.minZoom !== undefined ? { minzoom: t.minZoom } : {}) });
-    });
     const map = new lib.Map({
       container, attributionControl: { compact: true }, interactive: false,
       center: [timeline.start.lng, timeline.start.lat], zoom: 0.8,
-      style: { version: 8, projection: { type: 'globe' }, sources, layers },
+      style: rasterStyle(this.tiles(), '#163a5f', 'globe'),
     });
     this.map = map;
     map.on('load', () => void this.fly(map, lib, timeline));
