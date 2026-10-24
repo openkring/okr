@@ -1347,6 +1347,41 @@
     "unavailable": "Este documento no está disponible en este momento."
   },
   "validation": {
-    "documentKeyInvalid": "Elige un vídeo del álbum."
+    "documentKeyInvalid": "Elige un vídeo del álbum.",
+    "adventYearRange": "Introduce un año entre 2020 y 2100.",
+    "adventDoorCount": "El calendario necesita exactamente 25 ventanas. Reordena las ventanas."
+  },
+  "advent": {
+    "label": "Calendario de Adviento",
+    "title": "Calendario de Adviento",
+    "subtitle": "25 ventanas sobre una imagen de fondo, cada día de diciembre se abre una.",
+    "year": {
+      "label": "Año",
+      "placeholder": "2026",
+      "helper": "La ventana 1 se abre el 1 de diciembre de este año."
+    },
+    "showTitle": {
+      "label": "Mostrar título",
+      "helper": "Muestra el título en grande sobre la imagen de fondo."
+    },
+    "backgrounds": {
+      "title": "Imágenes de fondo"
+    },
+    "background": {
+      "label": "Imagen de fondo",
+      "helper": "Esta imagen queda detrás de las ventanas. Sin elección, se usa la primera imagen de la lista."
+    },
+    "doors": {
+      "title": "Ventanas",
+      "subtitle": "Toca una ventana para subir una imagen o definir su texto y enlace."
+    },
+    "door": "Ventana {d}",
+    "doorEmpty": "todavía sin imagen",
+    "doorUpload": "Subir imagen",
+    "doorRemove": "Quitar imagen",
+    "rearrange": "Reordenar ventanas",
+    "rearrangeHelper": "Vuelve a repartir las ventanas sobre la imagen. Imágenes, textos y enlaces se conservan.",
+    "locked": "Podrás abrir esta ventana el {d} de diciembre.",
+    "preview": "Vista previa: todas las ventanas abiertas"
   }
 }

@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
 
-import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
+import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
 import { Chips, ErrorNote, ImageConfigEdit, NotesInput, NotesInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole, sanitizeFileName } from '@okr/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@okr/shared-constants';
@@ -42,6 +42,7 @@ import { SpiderConfiguration } from './spider-configuration';
 import { TocConfiguration } from './toc-configuration';
 import { TestimonialConfiguration } from './testimonial-configuration';
 import { TimelineConfiguration } from './timeline-configuration';
+import { AdventConfiguration } from './advent-configuration';
 
 @Component({
   selector: 'okr-section-form',
@@ -54,7 +55,7 @@ import { TimelineConfiguration } from './timeline-configuration';
     ButtonStyleConfiguration, ButtonActionConfiguration, IconConfiguration, ChatConfiguration,
     MapConfiguration, TrackerConfiguration, TableGridConfiguration,  TableStyleConfiguration, TableHeader,
     TableBody, EventsConfiguration, InvitationsConfiguration, ImagesConfiguration, CalendarConfiguration, ChartConfiguration,
-    MemberConfiguration, RagConfiguration, SankeyConfiguration, SpiderConfiguration, TocConfiguration, TestimonialConfiguration, TimelineConfiguration
+    MemberConfiguration, RagConfiguration, SankeyConfiguration, SpiderConfiguration, TocConfiguration, TestimonialConfiguration, TimelineConfiguration, AdventConfiguration
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -421,6 +422,19 @@ import { TimelineConfiguration } from './timeline-configuration';
             />
           }
         }
+        @case('advent') {
+          @if(adventConfig(); as adventConfig) {
+            <okr-advent-config
+              [formData]="adventConfig" (formDataChange)="onAdventConfigChange($event)"
+              [storagePath]="storagePath()"
+              [currentUser]="currentUser()"
+              [tenantId]="tenantId()"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+              [errors]="errors()"
+            />
+          }
+        }
         @case('timeline') {
           @if(timelineConfig(); as timelineConfig) {
             <okr-timeline-config
@@ -571,6 +585,7 @@ export class SectionForm {
   protected tocConfig = computed(() => this.getTocConfig());
   protected testimonialConfig = computed(() => this.getTestimonialConfig());
   protected timelineConfig = computed(() => this.getTimelineConfig());
+  protected adventConfig = computed(() => this.getAdventConfig());
   protected memberConfig = computed(() => this.getMemberConfig());
   protected ragConfig = computed(() => this.getRagConfig());
   protected eventsConfig = computed(() => this.getEventsConfig());
@@ -705,6 +720,13 @@ export class SectionForm {
     if (this.formData().type === 'testimonial') {
       return ((this.formData() as TestimonialSection).properties as TestimonialConfig);
     }
+  }
+
+  private getAdventConfig(): AdventConfig | undefined {
+    if (this.formData().type === 'advent') {
+      return ((this.formData() as AdventSection).properties as AdventConfig);
+    }
+    return undefined;
   }
 
   private getTimelineConfig(): TimelineConfig | undefined {
@@ -1024,6 +1046,16 @@ export class SectionForm {
         ...section,
         properties: config
       } as TestimonialSection);
+    }
+  }
+
+  protected onAdventConfigChange(config: AdventConfig): void {
+    const section = this.formData();
+    if (section.type === 'advent') {
+      this.formData.set({
+        ...section,
+        properties: config
+      } as AdventSection);
     }
   }
 

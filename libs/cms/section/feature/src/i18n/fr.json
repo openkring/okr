@@ -1347,6 +1347,41 @@
     "unavailable": "Ce document n’est pas disponible pour le moment."
   },
   "validation": {
-    "documentKeyInvalid": "Choisis une vidéo de l'album."
+    "documentKeyInvalid": "Choisis une vidéo de l'album.",
+    "adventYearRange": "Saisis une année entre 2020 et 2100.",
+    "adventDoorCount": "Le calendrier a besoin d'exactement 25 fenêtres. Réorganise les fenêtres."
+  },
+  "advent": {
+    "label": "Calendrier de l'Avent",
+    "title": "Calendrier de l'Avent",
+    "subtitle": "25 fenêtres sur une image de fond, une s'ouvre chaque jour de décembre.",
+    "year": {
+      "label": "Année",
+      "placeholder": "2026",
+      "helper": "La fenêtre 1 s'ouvre le 1er décembre de cette année."
+    },
+    "showTitle": {
+      "label": "Afficher le titre",
+      "helper": "Affiche le titre en grand au-dessus de l'image de fond."
+    },
+    "backgrounds": {
+      "title": "Images de fond"
+    },
+    "background": {
+      "label": "Image de fond",
+      "helper": "Cette image se trouve derrière les fenêtres. Sans choix, la première image de la liste est utilisée."
+    },
+    "doors": {
+      "title": "Fenêtres",
+      "subtitle": "Touche une fenêtre pour téléverser une image ou définir son texte et son lien."
+    },
+    "door": "Fenêtre {d}",
+    "doorEmpty": "pas encore d'image",
+    "doorUpload": "Téléverser une image",
+    "doorRemove": "Retirer l'image",
+    "rearrange": "Réorganiser les fenêtres",
+    "rearrangeHelper": "Répartit à nouveau les fenêtres sur l'image. Images, textes et liens sont conservés.",
+    "locked": "Tu pourras ouvrir cette fenêtre le {d} décembre.",
+    "preview": "Aperçu : toutes les fenêtres ouvertes"
   }
 }

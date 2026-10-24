@@ -23,7 +23,7 @@ export const SECTION_TYPES = [
     'album', 'article', 'button', 'cal', 'chart', 'chat', 'emergency', 'hero', 'iframe', 'map',
     'people', 'responsibility', 'slider', 'table', 'tracker', 'video', 'accordion', 'events', 'invitations', 'tasks',
     'news', 'activities', 'messages', 'rag', 'orgchart', 'context', 'member-age', 'member-cat', 'trip-stats', 'form',
-    'sankey', 'spider', 'toc', 'testimonial', 'timeline', 'weather', 'learning',
+    'sankey', 'spider', 'toc', 'testimonial', 'timeline', 'weather', 'learning', 'advent',
 ] as const;
 
 export type SectionType = (typeof SECTION_TYPES)[number];
@@ -33,7 +33,7 @@ export type SectionModel =
     AlbumSection | ArticleSection | ButtonSection | CalendarSection | ChartSection | ChatSection |
     HeroSection | IframeSection | MapSection | PeopleSection | ResponsibilitySection | SliderSection |
     TableSection | TrackerSection | VideoSection | AccordionSection | EventsSection | InvitationsSection | TasksSection |
-    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection | SpiderSection | TocSection | TestimonialSection | TimelineSection | WeatherSection | LearningSection;
+    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection | SpiderSection | TocSection | TestimonialSection | TimelineSection | WeatherSection | LearningSection | AdventSection;
 
 // --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
 // --------------------------------------- ORGCHART ----------------------------------------
@@ -170,6 +170,34 @@ export interface TimelineConfig {
   orientation: 'horizontal' | 'vertical';
 }
 
+// --------------------------------------- ADVENT ----------------------------------------
+/**
+ * An Advent calendar: 25 doors cut out of a background image, door n opens from 1 December + n-1
+ * (device-local date). Spec 1.119 `2026-10-24-advent-calendar-section-spec.md`.
+ */
+export interface AdventSection extends BaseSection {
+  type: 'advent';
+  properties: AdventConfig;
+}
+
+export interface AdventConfig {
+  year: number; // calendar year of the doors
+  showTitle: boolean; // show section.title over the background
+  backgrounds: ImageConfig[]; // uploaded background images, in the editor's drag-and-drop order
+  backgroundUrl: string; // url of the chosen background; '' or not in backgrounds -> backgrounds[0]
+  layoutSeed: number; // seed of the generated door layout
+  doors: AdventDoor[]; // 25 entries, day 1..25
+}
+
+export interface AdventDoor {
+  day: number; // 1..25
+  x: number; // left edge, percent of the section width
+  y: number; // top edge, percent of the section height
+  w: number; // width, percent
+  h: number; // height, percent
+  image: ImageConfig; // url = thumbnail + full image, actionUrl = optional link, overlay = optional text
+}
+
 // --------------------------------------- MEMBER AGE ----------------------------------------
 export interface MemberAgeSection extends BaseSection {
   type: 'member-age';
@@ -222,7 +250,7 @@ export interface BaseSection {
   content: EditorConfig; // content from rich text editor
   properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | HeroConfig |
   IframeConfig | MapConfig | OrgchartConfig | ContextDiagramConfig | PeopleConfig | ResponsibilityConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig |
-  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig | SpiderConfig | TocConfig | TestimonialConfig | TimelineConfig | WeatherConfig | LearningConfig;
+  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig | SpiderConfig | TocConfig | TestimonialConfig | TimelineConfig | WeatherConfig | LearningConfig | AdventConfig;
   notes: string;
   tags: string;
   tenants: string[]; // list of tenant ids

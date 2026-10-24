@@ -52,6 +52,9 @@ export function getInlineErrorFields(type: SectionType, showAdvanced = false): s
     case 'chat':
       fields.push('chat.id', 'chat.name', 'chat.type', 'chat.url', 'chat.description');
       break;
+    case 'advent':
+      fields.push('adventYear');
+      break;
     case 'hero':
       if (showAdvanced) fields.push(...IMAGE_STYLE_FIELDS);
       break;

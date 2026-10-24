@@ -37,6 +37,7 @@ import { SpiderSectionComponent } from './spider-section';
 import { TocSectionComponent } from './toc-section';
 import { TestimonialSectionComponent } from './testimonial-section';
 import { TimelineSectionComponent } from './timeline-section';
+import { AdventSectionComponent } from './advent-section';
 import { TripStatsSectionComponent } from './trip-stats-section';
 import { FormSectionComponent } from './form-section';
 import { WeatherSectionComponent } from '@okr/weather-feature';
@@ -57,7 +58,7 @@ import { SectionStore } from './section.store';
     ArticleSectionComponent, MissingSectionComponent, TableSectionComponent, VideoSectionComponent, EventsSectionComponent,
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
     PeopleSectionComponent, ResponsibilitySectionComponent, TrackerSectionComponent, HeroSectionComponent,
-    InvitationsSectionComponent, TasksSectionComponent, ActivitiesSectionComponent, MessagesSectionComponent, NewsSectionComponent, OrgchartSectionComponent, RagSectionComponent, ContextDiagramSectionComponent, MemberAgeSectionComponent, MemberCatSectionComponent, SankeySectionComponent, SpiderSectionComponent, TocSectionComponent, TestimonialSectionComponent, TimelineSectionComponent,
+    InvitationsSectionComponent, TasksSectionComponent, ActivitiesSectionComponent, MessagesSectionComponent, NewsSectionComponent, OrgchartSectionComponent, RagSectionComponent, ContextDiagramSectionComponent, MemberAgeSectionComponent, MemberCatSectionComponent, SankeySectionComponent, SpiderSectionComponent, TocSectionComponent, TestimonialSectionComponent, TimelineSectionComponent, AdventSectionComponent,
     IonItem, IonLabel, Spinner, DeferError,
     CalendarSectionComponent, ChartSectionComponent, SliderSectionComponent,
     TripStatsSectionComponent,
@@ -221,6 +222,9 @@ import { SectionStore } from './section.store';
           }
           @case('timeline') {
             <okr-timeline-section [section]="section" />
+          }
+          @case('advent') {
+            <okr-advent-section [section]="section" [editMode]="editMode()" />
           }
           @case('toc') {
             <okr-toc-section [section]="section" [editMode]="editMode()" />

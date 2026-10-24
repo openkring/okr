@@ -1347,6 +1347,41 @@
     "unavailable": "Dieses Dokument ist gerade nicht verfügbar."
   },
   "validation": {
-    "documentKeyInvalid": "Wähle ein Video aus dem Album aus."
+    "documentKeyInvalid": "Wähle ein Video aus dem Album aus.",
+    "adventYearRange": "Gib ein Jahr zwischen 2020 und 2100 ein.",
+    "adventDoorCount": "Der Kalender braucht genau 25 Türchen. Ordne die Türchen neu an."
+  },
+  "advent": {
+    "label": "Adventskalender",
+    "title": "Adventskalender",
+    "subtitle": "25 Türchen auf einem Hintergrundbild, jeden Tag im Dezember geht eines auf.",
+    "year": {
+      "label": "Jahr",
+      "placeholder": "2026",
+      "helper": "Türchen 1 öffnet sich am 1. Dezember dieses Jahres."
+    },
+    "showTitle": {
+      "label": "Titel anzeigen",
+      "helper": "Zeigt den Titel gross über dem Hintergrundbild."
+    },
+    "backgrounds": {
+      "title": "Hintergrundbilder"
+    },
+    "background": {
+      "label": "Hintergrundbild",
+      "helper": "Dieses Bild liegt hinter den Türchen. Ohne Auswahl gilt das erste Bild der Liste."
+    },
+    "doors": {
+      "title": "Türchen",
+      "subtitle": "Tippe ein Türchen an, um ein Bild hochzuladen oder Text und Link festzulegen."
+    },
+    "door": "Türchen {d}",
+    "doorEmpty": "noch kein Bild",
+    "doorUpload": "Bild hochladen",
+    "doorRemove": "Bild entfernen",
+    "rearrange": "Türchen neu anordnen",
+    "rearrangeHelper": "Verteilt die Türchen neu auf dem Bild. Bilder, Texte und Links bleiben erhalten.",
+    "locked": "Dieses Türchen kannst du am {d}. Dezember öffnen.",
+    "preview": "Vorschau: alle Türchen offen"
   }
 }

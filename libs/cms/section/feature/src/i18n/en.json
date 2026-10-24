@@ -1347,6 +1347,41 @@
     "unavailable": "This document is not available right now."
   },
   "validation": {
-    "documentKeyInvalid": "Select a video from the album."
+    "documentKeyInvalid": "Select a video from the album.",
+    "adventYearRange": "Enter a year between 2020 and 2100.",
+    "adventDoorCount": "The calendar needs exactly 25 doors. Rearrange the doors."
+  },
+  "advent": {
+    "label": "Advent calendar",
+    "title": "Advent calendar",
+    "subtitle": "25 doors on a background image, one opens every day in December.",
+    "year": {
+      "label": "Year",
+      "placeholder": "2026",
+      "helper": "Door 1 opens on 1 December of this year."
+    },
+    "showTitle": {
+      "label": "Show title",
+      "helper": "Shows the title in large letters above the background image."
+    },
+    "backgrounds": {
+      "title": "Background images"
+    },
+    "background": {
+      "label": "Background image",
+      "helper": "This image lies behind the doors. Without a choice, the first image in the list is used."
+    },
+    "doors": {
+      "title": "Doors",
+      "subtitle": "Tap a door to upload an image or to set its text and link."
+    },
+    "door": "Door {d}",
+    "doorEmpty": "no image yet",
+    "doorUpload": "Upload image",
+    "doorRemove": "Remove image",
+    "rearrange": "Rearrange doors",
+    "rearrangeHelper": "Spreads the doors over the image again. Images, texts and links are kept.",
+    "locked": "You can open this door on {d} December.",
+    "preview": "Preview: all doors open"
   }
 }

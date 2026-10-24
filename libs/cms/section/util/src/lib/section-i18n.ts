@@ -588,6 +588,28 @@ export const SECTION_I18N_KEYS = {
   timeline_vertical_label:                  PFX + 'timeline.vertical.label',
   timeline_vertical_helper:                 PFX + 'timeline.vertical.helper',
 
+  // advent (spec 1.119)
+  advent_title:                             PFX + 'advent.title',
+  advent_subtitle:                          PFX + 'advent.subtitle',
+  advent_year_label:                        PFX + 'advent.year.label',
+  advent_year_placeholder:                  PFX + 'advent.year.placeholder',
+  advent_year_helper:                       PFX + 'advent.year.helper',
+  advent_showTitle_label:                   PFX + 'advent.showTitle.label',
+  advent_showTitle_helper:                  PFX + 'advent.showTitle.helper',
+  advent_backgrounds_title:                 PFX + 'advent.backgrounds.title',
+  advent_background_label:                  PFX + 'advent.background.label',
+  advent_background_helper:                 PFX + 'advent.background.helper',
+  advent_doors_title:                       PFX + 'advent.doors.title',
+  advent_doors_subtitle:                    PFX + 'advent.doors.subtitle',
+  advent_door:                              PFX + 'advent.door',
+  advent_door_empty:                        PFX + 'advent.doorEmpty',
+  advent_door_upload:                       PFX + 'advent.doorUpload',
+  advent_door_remove:                       PFX + 'advent.doorRemove',
+  advent_rearrange:                         PFX + 'advent.rearrange',
+  advent_rearrange_helper:                  PFX + 'advent.rearrangeHelper',
+  advent_locked:                            PFX + 'advent.locked',
+  advent_preview:                           PFX + 'advent.preview',
+
   // responsibility-config
   responsibility_edit:                      PFX + 'responsibility.edit',
   responsibility_okey_label:                PFX + 'responsibility.okey.label',

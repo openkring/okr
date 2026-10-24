@@ -1347,6 +1347,41 @@
     "unavailable": "Questo documento al momento non è disponibile."
   },
   "validation": {
-    "documentKeyInvalid": "Scegli un video dall'album."
+    "documentKeyInvalid": "Scegli un video dall'album.",
+    "adventYearRange": "Inserisci un anno tra il 2020 e il 2100.",
+    "adventDoorCount": "Il calendario ha bisogno di esattamente 25 finestrelle. Riordina le finestrelle."
+  },
+  "advent": {
+    "label": "Calendario dell'Avvento",
+    "title": "Calendario dell'Avvento",
+    "subtitle": "25 finestrelle su un'immagine di sfondo, ogni giorno di dicembre se ne apre una.",
+    "year": {
+      "label": "Anno",
+      "placeholder": "2026",
+      "helper": "La finestrella 1 si apre il 1° dicembre di quest'anno."
+    },
+    "showTitle": {
+      "label": "Mostra titolo",
+      "helper": "Mostra il titolo in grande sopra l'immagine di sfondo."
+    },
+    "backgrounds": {
+      "title": "Immagini di sfondo"
+    },
+    "background": {
+      "label": "Immagine di sfondo",
+      "helper": "Questa immagine sta dietro le finestrelle. Senza scelta si usa la prima immagine dell'elenco."
+    },
+    "doors": {
+      "title": "Finestrelle",
+      "subtitle": "Tocca una finestrella per caricare un'immagine o impostarne testo e link."
+    },
+    "door": "Finestrella {d}",
+    "doorEmpty": "ancora nessuna immagine",
+    "doorUpload": "Carica immagine",
+    "doorRemove": "Rimuovi immagine",
+    "rearrange": "Riordina le finestrelle",
+    "rearrangeHelper": "Ridistribuisce le finestrelle sull'immagine. Immagini, testi e link restano.",
+    "locked": "Potrai aprire questa finestrella il {d} dicembre.",
+    "preview": "Anteprima: tutte le finestrelle aperte"
   }
 }
