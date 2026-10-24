@@ -7,13 +7,12 @@ import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { DEFAULT_TAGS } from '@okr/shared-constants';
 
-import { DiaryI18n, formatDiaryDate } from '@okr/content-diary-util';
+import { DiaryI18n, addDiaryAvatar, formatDiaryDate } from '@okr/content-diary-util';
 import { DiaryForm } from './diary.form';
 
-/** What a location pick resolved to — a known place, free text, or nothing (cancelled). */
+/** What a location pick resolved to — a keyed place or free text (the store builds the avatar). */
 export interface DiaryLocationPick {
-  location?: AvatarInfo;
-  customLabel?: string;
+  location: AvatarInfo;
 }
 
 @Component({
@@ -74,26 +73,22 @@ export class DiaryEditModal {
     cancel: this.i18n().cancel(), save: this.i18n().save(),
   } as ChangeConfirmationI18n));
 
-  /** Applies a resolved location pick; also reachable directly for tests. */
-  public applyLocation(location: AvatarInfo | undefined, customLabel = ''): void {
+  /** Appends a resolved location (the first one is the main location); also reachable directly for tests. */
+  public applyLocation(location: AvatarInfo): void {
     this.formDirty.set(true);
-    this.formData.update(vm => ({ ...vm, location, customLocationLabel: location ? '' : customLabel }));
+    this.formData.update(vm => ({ ...vm, locations: addDiaryAvatar(vm.locations ?? [], location) }));
   }
 
-  /** Applies a resolved person pick; also reachable directly for tests. */
+  /** Appends a resolved person (keyed or free text); also reachable directly for tests. */
   public applyPerson(person: AvatarInfo): void {
     this.formDirty.set(true);
-    this.formData.update(vm => ({
-      ...vm,
-      people: [...(vm.people ?? []).filter(p => p.key !== person.key), person],
-    }));
+    this.formData.update(vm => ({ ...vm, people: addDiaryAvatar(vm.people ?? [], person) }));
   }
 
   /** The form asked for a location; run the store's picker callback and apply what it resolved. */
   protected async pickLocation(): Promise<void> {
     const pick = await this.selectLocation()?.();
-    if (!pick) return;
-    this.applyLocation(pick.location, pick.customLabel ?? '');
+    if (pick) this.applyLocation(pick.location);
   }
 
   /** The form asked for a person; run the store's picker callback and apply what it resolved. */

@@ -7,7 +7,7 @@ import { firstValueFrom, map, of, timeout } from 'rxjs';
 import type { DiaryLocationPick, DiaryNeighbours } from '@okr/content-diary-ui';
 import { DiaryAlbumService, DiaryMediaService, DiaryService, DiaryWeatherService } from '@okr/content-diary-data-access';
 import {
-  DIARY_FIRST_YEAR, DIARY_I18N_KEYS, DiaryFilter, DiaryMediaResult, DiaryRange, DiaryStateFilter, albumKey, albumRefOf,
+  DIARY_FIRST_YEAR, DIARY_I18N_KEYS, customLocationAvatar, DiaryFilter, DiaryMediaResult, DiaryRange, DiaryStateFilter, albumKey, albumRefOf,
   buildDiaryRangeTree, decodeDiaryFilter, diaryFilterLabel, diaryListUrl, diaryRangeOfYear, diaryStateMatches, encodeDiaryFilter,
   formatDiaryDate, getDiaryIndex, groupDiariesByMonth, hasDiaryWeather, inDiaryDateRange, newDiary,
 } from '@okr/content-diary-util';
@@ -240,11 +240,8 @@ export const DiaryStore = signalStore(
     const pickLocation = async (): Promise<DiaryLocationPick | undefined> => {
       const result = await store.modelSelectService.selectLocation('', false, true);
       if (!result) return undefined;
-      if (result.kind === 'predefined') {
-        const l = result.location;
-        return { location: { key: l.okey, name1: l.name, name2: '', label: l.name, modelType: 'location', type: l.type ?? '', subType: '' } };
-      }
-      return { customLabel: result.label };
+      if (result.kind === 'predefined') return { location: locationAvatar(result.location) };
+      return { location: customLocationAvatar(result.label) };
     };
 
     /** Albums point at real things only: a free-text location resolves to nothing. */
@@ -291,7 +288,7 @@ export const DiaryStore = signalStore(
           // pickers are passed IN as callbacks — the modal must not inject ModelSelectService or
           // the store back (see the dynamic import above; store-modal-dynamic-import memory).
           selectLocation: pickLocation,
-          selectPerson: () => store.modelSelectService.selectPersonAvatar(undefined, undefined, false, false),
+          selectPerson: () => store.modelSelectService.selectPersonAvatar(undefined, undefined, true, false),
         },
       });
       await modal.present();
@@ -532,7 +529,7 @@ export const DiaryStore = signalStore(
             component: DiaryAlbumEditModal,
             componentProps: {
               album: draft, isNew, i18n: store.i18n, currentUser: store.currentUser(),
-              selectPerson: () => store.modelSelectService.selectPersonAvatar(undefined, undefined, false, false),
+              selectPerson: () => store.modelSelectService.selectPersonAvatar(undefined, undefined, true, false),
               selectLocation: pickAlbumLocation,
             },
           });

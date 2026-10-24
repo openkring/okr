@@ -1,7 +1,7 @@
 import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
 import {
-  IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow, IonSelect, IonSelectOption,
+  IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonRow, IonSelect, IonSelectOption,
 } from '@ionic/angular';
 
 import { AvatarInfo, DiaryAlbumModel, DiaryModel, DiaryScope, DiaryStatus, RoleName, TripModel, UserModel } from '@okr/shared-models';
@@ -12,19 +12,18 @@ import {
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { DEFAULT_TAGS, LONG_NAME_LENGTH } from '@okr/shared-constants';
-import { SvgIconPipe } from '@okr/shared-pipes';
 import { Avatars } from '@okr/avatar-ui';
 
 import {
-  DiaryI18n, composeDiaryDate, csvToList, parseJassDiaryLine, diaryValidations, linesToList, listToCsv, listToLines, splitDiaryDate,
+  DiaryI18n, composeDiaryDate, parseJassDiaryLine, diaryValidations, linesToList, listToLines, splitDiaryDate,
 } from '@okr/content-diary-util';
 
 @Component({
   selector: 'okr-diary-form',
   standalone: true,
   imports: [
-    TextInput, NotesInput, DateInput, NumberInput, Chips, ErrorNote, Avatars, SvgIconPipe,
-    IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonIcon, IonSelect, IonSelectOption,
+    TextInput, NotesInput, DateInput, NumberInput, Chips, ErrorNote, Avatars,
+    IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonSelect, IonSelectOption,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
@@ -89,30 +88,6 @@ import {
               </ion-row>
               <okr-error-note [errors]="dateErrors()" />
 
-              <!-- location: resolved avatar OR free text, the TripModel hybrid -->
-              <ion-row>
-                <ion-col size="12" size-md="6">
-                  <ion-item lines="none">
-                    <ion-label>{{ i18n().form_location_label() }}</ion-label>
-                    @if (formData().location; as location) {
-                      <ion-label slot="end">{{ location.label || location.name1 }}</ion-label>
-                      @if (!isReadOnly()) {
-                        <ion-icon slot="end" src="{{ 'cancel-circle' | svgIcon }}" (click)="clearLocation()" />
-                      }
-                    } @else if (!isReadOnly()) {
-                      <ion-icon slot="end" src="{{ 'location' | svgIcon }}" (click)="locationSelectClicked.emit()" />
-                    }
-                  </ion-item>
-                </ion-col>
-                <ion-col size="12" size-md="6">
-                  @if (!formData().location) {
-                    <okr-text-input [i18n]="customLocationI18n()" [value]="customLocationLabel()"
-                      (valueChange)="onFieldChange('customLocationLabel', $event)" [maxLength]="longNameLength" [readOnly]="isReadOnly()" />
-                    <okr-error-note [errors]="customLocationLabelErrors()" />
-                  }
-                </ion-col>
-              </ion-row>
-
               <!-- trip: a plain select over the tenant's travel trips -->
               <ion-row>
                 <ion-col size="12" size-md="6">
@@ -140,16 +115,6 @@ import {
                     </ion-select>
                   </ion-item>
                 </ion-col>
-                <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="placesI18n()" [value]="places()" (valueChange)="onFieldChange('places', csvToList($event))"
-                    [maxLength]="200" [readOnly]="isReadOnly()" />
-                </ion-col>
-              </ion-row>
-              <ion-row>
-                <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="customPeopleI18n()" [value]="customPeople()"
-                    (valueChange)="onFieldChange('customPeopleLabels', csvToList($event))" [maxLength]="500" [readOnly]="isReadOnly()" />
-                </ion-col>
               </ion-row>
 
               <!-- done: one line per item -->
@@ -163,11 +128,21 @@ import {
           </ion-card-content>
         </ion-card>
 
-        <!-- resolved people -->
+        <!-- locations: sortable, the first one is the main location -->
+        @if (currentUser(); as currentUser) {
+          <okr-avatars selectIcon="location" (selectClicked)="locationSelectClicked.emit()" [avatars]="locations()"
+            (avatarsChange)="onFieldChange('locations', $event)" [readOnly]="isReadOnly()" [currentUser]="currentUser"
+            [title]="i18n().form_locations_label()" [label]="i18n().form_locations_select()"
+            [firstNote]="i18n().form_locations_main()" [showButton]="!isReadOnly()" />
+          <okr-error-note [errors]="locationsErrors()" />
+        }
+
+        <!-- people: keyed persons or free text, both entered through the selector -->
         @if (currentUser(); as currentUser) {
           <okr-avatars (selectClicked)="personSelectClicked.emit()" [avatars]="people()"
             (avatarsChange)="onFieldChange('people', $event)" [readOnly]="isReadOnly()" [currentUser]="currentUser"
             [title]="i18n().form_people_label()" [label]="i18n().form_people_select()" [showButton]="!isReadOnly()" />
+          <okr-error-note [errors]="peopleErrors()" />
         }
 
         <!-- guarded, last -->
@@ -219,7 +194,6 @@ export class DiaryForm {
   protected readonly date = computed(() => this.formData()?.date ?? '');
   protected readonly year = computed(() => splitDiaryDate(this.date())?.year ?? 0);
   protected readonly month = computed(() => splitDiaryDate(this.date())?.month ?? 0);
-  protected readonly customLocationLabel = computed(() => this.formData()?.customLocationLabel ?? '');
   protected readonly tripKey = computed(() => this.formData()?.tripKey ?? '');
   /** Jass result lines (spec 1.77) share events[]; they are not events: never offered, never shown selected, always preserved on save. */
   private readonly jassLines = computed(() => (this.formData()?.events ?? []).filter(e => !!parseJassDiaryLine(e)));
@@ -232,21 +206,20 @@ export class DiaryForm {
     }
     return options;
   });
-  protected readonly places = computed(() => listToCsv(this.formData()?.places ?? []));
-  protected readonly customPeople = computed(() => listToCsv(this.formData()?.customPeopleLabels ?? []));
   protected readonly done = computed(() => listToLines(this.formData()?.done ?? []));
+  protected readonly locations = computed(() => this.formData()?.locations ?? []);
   protected readonly people = computed(() => this.formData()?.people ?? []);
   protected readonly tags = computed(() => this.formData()?.tags ?? DEFAULT_TAGS);
 
   // per-field Vest errors are read from a direct suite call (menu.form.ts/alias.form.ts pattern) —
   // the Signal Form wrapper above drives overall validity, not per-field error text.
   private readonly validationResult = vestErrors(this.diaryForm);
-  protected customLocationLabelErrors = computed(() => this.validationResult().getErrors('customLocationLabel'));
+  protected locationsErrors = computed(() => this.validationResult().getErrors('locations'));
+  protected peopleErrors = computed(() => this.validationResult().getErrors('people'));
   protected textErrors = computed(() => this.validationResult().getErrors('text'));
   protected titleErrors = computed(() => this.validationResult().getErrors('title'));
   protected readonly dateErrors = computed(() => this.validationResult().getErrors('date'));
 
-  protected readonly csvToList = csvToList;
   protected readonly linesToList = linesToList;
 
   protected textI18n = computed(() => ({ name: 'text', label: this.i18n().form_text_label(), placeholder: this.i18n().form_text_placeholder() } as NotesInputI18n));
@@ -255,9 +228,6 @@ export class DiaryForm {
   protected dateI18n = computed(() => ({ name: 'date', label: this.i18n().form_date_label(), placeholder: '' } as DateInputI18n));
   protected yearI18n = computed(() => ({ name: 'year', label: this.i18n().form_year_label(), placeholder: '', helper: '' } as NumberInputI18n));
   protected monthI18n = computed(() => ({ name: 'month', label: this.i18n().form_month_label(), placeholder: '', helper: '' } as NumberInputI18n));
-  protected customLocationI18n = computed(() => ({ name: 'customLocationLabel', label: this.i18n().form_location_label(), placeholder: this.i18n().form_location_select(), helper: '' } as TextInputI18n));
-  protected placesI18n = computed(() => ({ name: 'places', label: this.i18n().form_places_label(), placeholder: '', helper: '' } as TextInputI18n));
-  protected customPeopleI18n = computed(() => ({ name: 'customPeopleLabels', label: this.i18n().form_custom_people_label(), placeholder: '', helper: this.i18n().form_custom_people_helper() } as TextInputI18n));
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | AvatarInfo[] | AvatarInfo | undefined): void {
     this.dirty.emit(true);
@@ -288,10 +258,6 @@ export class DiaryForm {
 
   protected onEventsChange(selected: string[]): void {
     this.onFieldChange('events', [...selected, ...this.jassLines()]);
-  }
-
-  protected clearLocation(): void {
-    this.onFieldChange('location', undefined);
   }
 
   protected hasRole(role: RoleName): boolean {

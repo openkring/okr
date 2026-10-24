@@ -10,7 +10,7 @@ import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
 import {
-  DiaryI18n, DiaryMediaResult, diarySliderImages, diaryWeatherLine, driveFolderUrl, formatDiaryDateLong, hasDiaryWeather,
+  DiaryI18n, DiaryMediaResult, diaryAvatarName, mainLocation, diarySliderImages, diaryWeatherLine, driveFolderUrl, formatDiaryDateLong, hasDiaryWeather,
   isDiaryVideo, JassDiaryResult, parseJassDiaryLine, renderDiaryHtml,
 } from '@okr/content-diary-util';
 
@@ -79,6 +79,17 @@ export interface DiaryNeighbours {
             } @else {
               <p>{{ locationLabel() }}</p>
             }
+            @if (otherLocations().length) {
+              <div class="people">
+                @for (loc of otherLocations(); track $index) {
+                  @if (loc.key) {
+                    <ion-chip class="location" (click)="openLocation()(loc)">{{ locationName(loc) }}</ion-chip>
+                  } @else {
+                    <ion-chip>{{ locationName(loc) }}</ion-chip>
+                  }
+                }
+              </div>
+            }
           </ion-label>
           @if (current().scope === 'day' && hasWeather()) {
             <ion-icon slot="end" src="{{ weatherIcon() | svgIcon: weatherIconSet }}" />
@@ -89,7 +100,7 @@ export interface DiaryNeighbours {
             </ion-button>
           }
         </ion-item>
-        @if (current().people.length || current().customPeopleLabels.length) {
+        @if (current().people.length) {
           <ion-item>
             <div class="people">
               @for (person of people(); track person[0].key) {
@@ -97,14 +108,13 @@ export interface DiaryNeighbours {
                   <okr-avatar-display [avatars]="person" [showName]="true" />
                 </div>
               }
-              @for (label of current().customPeopleLabels; track label) { <ion-chip color="medium">{{ label }}</ion-chip> }
+              @for (label of freeTextPeople(); track $index) { <ion-chip color="medium">{{ label }}</ion-chip> }
             </div>
           </ion-item>
         }
-        @if (events().length || current().places.length) {
+        @if (events().length) {
           <ion-item>
             @for (e of events(); track e) { <ion-chip color="tertiary">{{ e }}</ion-chip> }
-            @for (p of current().places; track p) { <ion-chip>{{ p }}</ion-chip> }
           </ion-item>
         }
       </ion-list>
@@ -176,14 +186,19 @@ export class DiaryViewModal {
 
   protected readonly title = computed(() => this.current().title || this.i18n().view_untitled());
   protected readonly dateLabel = computed(() => formatDiaryDateLong(this.current().date, this.lang()));
-  /** the resolved location — tappable; a free-text location is not */
-  protected readonly location = computed(() => this.current().location?.key ? this.current().location : undefined);
+  /** the main location when resolved — tappable; a free-text one is not */
+  protected readonly location = computed(() => mainLocation(this.current())?.key ? mainLocation(this.current()) : undefined);
   protected readonly locationLabel = computed(() => {
-    const d = this.current();
-    return d.location?.label || d.location?.name1 || d.customLocationLabel;
+    const main = mainLocation(this.current());
+    return main ? diaryAvatarName(main) : '';
   });
+  /** every location after the main one, shown as chips */
+  protected readonly otherLocations = computed(() => (this.current().locations ?? []).slice(1));
+  protected readonly locationName = diaryAvatarName;
   /** one single-element array per person, so each avatar is its own tap target */
-  protected readonly people = computed(() => this.current().people.filter(p => !!p.key).map(p => [p]));
+  protected readonly people = computed(() => (this.current().people ?? []).filter(p => !!p.key).map(p => [p]));
+  /** persons without a key are plain text */
+  protected readonly freeTextPeople = computed(() => (this.current().people ?? []).filter(p => !p.key).map(p => diaryAvatarName(p)));
   /** Jasstafel results are drawn as a card; every other event stays a chip */
   private readonly parsedEvents = computed(() => this.current().events.map(e => ({ e, jass: parseJassDiaryLine(e) })));
   protected readonly events = computed(() => this.parsedEvents().filter(p => !p.jass).map(p => p.e));
@@ -195,7 +210,7 @@ export class DiaryViewModal {
   protected readonly weatherIcon = computed(() => weatherCodeToIcon(this.current().weather.code));
   protected readonly weatherIconSet = WEATHER_ICON_SET;
   /** weather needs a day and a resolved location (its coordinates); free text has none */
-  protected readonly canRefreshWeather = computed(() => this.current().scope === 'day' && !!this.current().location?.key);
+  protected readonly canRefreshWeather = computed(() => this.current().scope === 'day' && !!mainLocation(this.current())?.key);
 
   constructor() {
     // Neighbours of whatever is on screen. A slow answer for an entry the user already paged

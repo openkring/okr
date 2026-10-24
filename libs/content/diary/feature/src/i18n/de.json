@@ -136,20 +136,14 @@
       "label": "Erledigt",
       "placeholder": "Eine Zeile pro Punkt"
     },
-    "location": {
-      "label": "Ort",
-      "select": "Ort wählen oder eintippen"
+    "locations": {
+      "label": "Orte",
+      "select": "Ort hinzufügen",
+      "main": "Hauptort"
     },
     "people": {
       "label": "Personen",
       "select": "Person hinzufügen"
-    },
-    "customPeople": {
-      "label": "Weitere Personen",
-      "helper": "Namen, die keine Karteikarte haben — mit Komma getrennt"
-    },
-    "places": {
-      "label": "Orte im Text"
     },
     "events": {
       "label": "Ereignisse"

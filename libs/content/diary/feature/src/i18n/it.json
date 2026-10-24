@@ -136,20 +136,14 @@
       "label": "Fatto",
       "placeholder": "Una riga per punto"
     },
-    "location": {
-      "label": "Luogo",
-      "select": "Scegli o digita un luogo"
+    "locations": {
+      "label": "Luoghi",
+      "select": "Aggiungi un luogo",
+      "main": "Luogo principale"
     },
     "people": {
       "label": "Persone",
       "select": "Aggiungi una persona"
-    },
-    "customPeople": {
-      "label": "Altre persone",
-      "helper": "Nomi senza scheda — separati da virgola"
-    },
-    "places": {
-      "label": "Luoghi nel testo"
     },
     "events": {
       "label": "Eventi"

@@ -136,20 +136,14 @@
       "label": "Fait",
       "placeholder": "Une ligne par point"
     },
-    "location": {
-      "label": "Lieu",
-      "select": "Choisis ou saisis un lieu"
+    "locations": {
+      "label": "Lieux",
+      "select": "Ajouter un lieu",
+      "main": "Lieu principal"
     },
     "people": {
       "label": "Personnes",
       "select": "Ajouter une personne"
-    },
-    "customPeople": {
-      "label": "Autres personnes",
-      "helper": "Noms sans fiche — séparés par une virgule"
-    },
-    "places": {
-      "label": "Lieux dans le texte"
     },
     "events": {
       "label": "Événements"

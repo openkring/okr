@@ -136,20 +136,14 @@
       "label": "Hecho",
       "placeholder": "Una línea por punto"
     },
-    "location": {
-      "label": "Lugar",
-      "select": "Elige o escribe un lugar"
+    "locations": {
+      "label": "Lugares",
+      "select": "Añadir un lugar",
+      "main": "Lugar principal"
     },
     "people": {
       "label": "Personas",
       "select": "Añadir una persona"
-    },
-    "customPeople": {
-      "label": "Otras personas",
-      "helper": "Nombres sin ficha — separados por comas"
-    },
-    "places": {
-      "label": "Lugares en el texto"
     },
     "events": {
       "label": "Eventos"

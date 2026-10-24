@@ -136,20 +136,14 @@
       "label": "Done",
       "placeholder": "One line per item"
     },
-    "location": {
-      "label": "Place",
-      "select": "Choose or type a place"
+    "locations": {
+      "label": "Places",
+      "select": "Add a place",
+      "main": "Main place"
     },
     "people": {
       "label": "People",
       "select": "Add a person"
-    },
-    "customPeople": {
-      "label": "Other people",
-      "helper": "Names without a record — comma-separated"
-    },
-    "places": {
-      "label": "Places in the text"
     },
     "events": {
       "label": "Events"
