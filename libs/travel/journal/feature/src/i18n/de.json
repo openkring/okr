@@ -154,7 +154,9 @@
     "too_large": "Dieser Ausschnitt ist zu gross. Zoome näher heran.",
     "name_prompt": "Wie heisst das Gebiet?",
     "remove": "Entfernen",
-    "remove_confirm": "«{name}» aus der Offline-Karte entfernen?"
+    "remove_confirm": "«{name}» aus der Offline-Karte entfernen?",
+    "free": "Offline-Karte von diesem iPad löschen",
+    "free_confirm": "Die Kartenteile dieses Reisetagebuchs werden gelöscht, ausser andere Reisetagebücher brauchen sie. Die Gebiete bleiben – mit «Laden» kommt die Karte wieder."
   },
   "reactions": {
     "like": "Gefällt mir",

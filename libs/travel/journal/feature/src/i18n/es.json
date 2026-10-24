@@ -154,7 +154,9 @@
     "too_large": "Esta zona es demasiado grande. Acércate más.",
     "name_prompt": "¿Cómo se llama la zona?",
     "remove": "Quitar",
-    "remove_confirm": "¿Quitar «{name}» del mapa sin conexión?"
+    "remove_confirm": "¿Quitar «{name}» del mapa sin conexión?",
+    "free": "Borrar el mapa sin conexión de este iPad",
+    "free_confirm": "Se borran las partes del mapa de este diario, salvo que otros diarios las necesiten. Las zonas se quedan – «Cargar» recupera el mapa."
   },
   "reactions": {
     "like": "Me gusta",

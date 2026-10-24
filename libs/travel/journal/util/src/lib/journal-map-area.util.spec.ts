@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ANTARCTICA_PRESET, areaTilePlan, detailLevels, estimateBytes, journalTilePlan, MapArea, mapLayers, parseMapAreas, sourceFor, TILE_CAP,
+  ANTARCTICA_PRESET, areaTilePlan, detailLevels, estimateBytes, journalTilePlan, MapArea, mapLayers, parseMapAreas, sourceFor, TILE_CAP, tilesToFree,
 } from './journal-map-area.util';
 import { offlineTilePlan } from './journal-tiles.util';
 
@@ -69,5 +69,14 @@ describe('journal map areas', () => {
     expect(offline.find((l) => l.kind === 'vector')).toMatchObject({ urlTemplate: `${base}/osm/{z}/{x}/{y}.mvt`, maxNativeZoom: 13, bounds: OSLO.bbox });
     expect(offline.find((l) => l.urlTemplate.endsWith('.jpeg'))?.urlTemplate).toBe(`${base}/swisstopo/{z}/{x}/{y}.jpeg`);
     expect(offline.find((l) => l.urlTemplate.endsWith('.png'))?.minZoom).toBe(9);
+  });
+
+  it('freeing keeps what another journal still needs', () => {
+    const mine = journalTilePlan([BERN, OSLO], []);
+    const other = journalTilePlan([OSLO], []);
+    const freed = tilesToFree(mine, other);
+    expect(freed.length).toBeGreaterThan(0);
+    expect(freed.every((p) => p.startsWith('tiles/swisstopo/'))).toBe(true); // Oslo and the world background stay
+    expect(tilesToFree(mine, [])).toHaveLength(mine.length);
   });
 });

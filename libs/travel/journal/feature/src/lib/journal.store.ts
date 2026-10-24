@@ -14,7 +14,7 @@ import {
 } from '@okr/travel-journal-data-access';
 import {
   entityStateKey, hasOthersBlocks, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
-  allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, parseMapAreas, parsePhotoMode, TileJob, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, publishedPhotoFiles, viewOf,
+  allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, parseMapAreas, parsePhotoMode, TileJob, tilesToFree, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, publishedPhotoFiles, viewOf,
 } from '@okr/travel-journal-util';
 
 import { JournalFileUrlService } from './journal-file-url.service';
@@ -407,6 +407,30 @@ export const JournalStore = signalStore(
         };
         setStatus(result);
         await store.db.setMeta(META_OFFLINE_MAP + journalKey, JSON.stringify(result));
+      },
+
+      /**
+       * «Offline-Karte löschen» (plan 8): deletes this journal's tiles that no other journal on this iPad needs
+       * and forgets its download state; the areas stay, so «Laden» brings the map back.
+       */
+      async freeOfflineMap(journalKey: string): Promise<number> {
+        if (!store.native()) return 0;
+        const plan = (key: string) => {
+          const areas = parseMapAreas(viewOf(store.journalState()[entityStateKey('journal', key)])?.['mapAreas']);
+          const positions = footprintsOf(store.journalState(), key)
+            .filter((f) => f.latitude !== undefined && f.longitude !== undefined)
+            .map((f) => ({ lat: f.latitude as number, lng: f.longitude as number }));
+          return areas.length > 0 ? journalTilePlan(areas, positions) : [];
+        };
+        const others = journalsOf(store.journalState()).filter((j) => j.key !== journalKey).flatMap((j) => plan(j.key));
+        const paths = tilesToFree(plan(journalKey), others);
+        let deleted = 0;
+        for (let i = 0; i < paths.length; i += 500) {
+          deleted += (await JournalPhotos.deleteTiles({ paths: paths.slice(i, i + 500) })).deleted;
+        }
+        patchState(store, { offlineMaps: { ...store.offlineMaps(), [journalKey]: NO_OFFLINE_MAP } });
+        await store.db.setMeta(META_OFFLINE_MAP + journalKey, JSON.stringify(NO_OFFLINE_MAP));
+        return deleted;
       },
 
       cancelOfflineMap(): void {

@@ -102,6 +102,8 @@ export const JOURNAL_I18N_KEYS = {
   map_name_prompt: PFX + 'map.name_prompt',
   map_remove: PFX + 'map.remove',
   map_remove_confirm: PFX + 'map.remove_confirm',
+  map_free: PFX + 'map.free',
+  map_free_confirm: PFX + 'map.free_confirm',
   map_load: PFX + 'map.load',
   map_progress: PFX + 'map.progress',
   map_cancel: PFX + 'map.cancel',

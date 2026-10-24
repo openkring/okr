@@ -123,6 +123,15 @@ export function journalTilePlan(areas: MapArea[], footprints: { lat: number; lng
   return [...jobs.values()];
 }
 
+/**
+ * The tiles a journal's map may delete (plan 8): its own plan minus everything another journal on this iPad still
+ * needs — tiles are shared on disk (one file per source and position).
+ */
+export function tilesToFree(own: TileJob[], others: TileJob[]): string[] {
+  const kept = new Set(others.map((j) => j.path));
+  return own.map((j) => j.path).filter((p) => !kept.has(p));
+}
+
 export function estimateBytes(jobs: TileJob[]): number {
   return jobs.reduce((n, j) => n + AVERAGE_BYTES[j.source], 0);
 }

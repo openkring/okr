@@ -100,6 +100,19 @@ export class JournalOfflineMap {
           text: this.i18n.map_add_antarctica(),
           handler: () => void this.store.addMapArea(journalKey, { ...ANTARCTICA_PRESET, name: this.i18n.map_preset_antarctica() }),
         }]),
+        ...(this.status().state === 'ready' || this.status().state === 'partial'
+          ? [{ text: this.i18n.map_free(), role: 'destructive', handler: () => void this.confirmFree(journalKey) }] : []),
+        { text: this.i18n.cancel(), role: 'cancel' },
+      ],
+    });
+    await sheet.present();
+  }
+
+  private async confirmFree(journalKey: string): Promise<void> {
+    const sheet = await this.actionSheetController.create({
+      header: this.i18n.map_free_confirm(),
+      buttons: [
+        { text: this.i18n.map_free(), role: 'destructive', handler: () => void this.store.freeOfflineMap(journalKey) },
         { text: this.i18n.cancel(), role: 'cancel' },
       ],
     });

@@ -154,7 +154,9 @@
     "too_large": "This area is too large. Zoom in closer.",
     "name_prompt": "What is the area called?",
     "remove": "Remove",
-    "remove_confirm": "Remove «{name}» from the offline map?"
+    "remove_confirm": "Remove «{name}» from the offline map?",
+    "free": "Delete the offline map from this iPad",
+    "free_confirm": "This journal’s map tiles are deleted unless other journals need them. The areas stay – «Load» brings the map back."
   },
   "reactions": {
     "like": "Like",

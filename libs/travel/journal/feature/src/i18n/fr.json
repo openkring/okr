@@ -154,7 +154,9 @@
     "too_large": "Cette zone est trop grande. Zoome davantage.",
     "name_prompt": "Comment s’appelle la zone ?",
     "remove": "Retirer",
-    "remove_confirm": "Retirer « {name} » de la carte hors ligne ?"
+    "remove_confirm": "Retirer « {name} » de la carte hors ligne ?",
+    "free": "Supprimer la carte hors ligne de cet iPad",
+    "free_confirm": "Les parties de carte de ce carnet sont supprimées, sauf si d’autres carnets en ont besoin. Les zones restent – « Charger » ramène la carte."
   },
   "reactions": {
     "like": "J’aime",

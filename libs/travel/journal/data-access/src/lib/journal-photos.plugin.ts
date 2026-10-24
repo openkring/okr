@@ -43,6 +43,8 @@ export interface JournalPhotosPlugin {
   fetchRange(options: { url: string; offset: number; length: number }): Promise<{ data: string }>;
   /** Plan 6b: the named tile paths that are already stored. */
   presentTiles(options: { paths: string[] }): Promise<{ paths: string[] }>;
+  /** Plan 8: deletes the named tiles («Speicher freigeben»). */
+  deleteTiles(options: { paths: string[] }): Promise<{ deleted: number }>;
 }
 
 export const JournalPhotos = registerPlugin<JournalPhotosPlugin>('JournalPhotos');

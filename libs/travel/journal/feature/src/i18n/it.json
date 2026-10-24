@@ -154,7 +154,9 @@
     "too_large": "Questa zona è troppo grande. Avvicinati di più.",
     "name_prompt": "Come si chiama la zona?",
     "remove": "Rimuovi",
-    "remove_confirm": "Rimuovere «{name}» dalla mappa offline?"
+    "remove_confirm": "Rimuovere «{name}» dalla mappa offline?",
+    "free": "Elimina la mappa offline da questo iPad",
+    "free_confirm": "Le parti di mappa di questo diario vengono eliminate, salvo che altri diari ne abbiano bisogno. Le zone restano – «Carica» riporta la mappa."
   },
   "reactions": {
     "like": "Mi piace",
