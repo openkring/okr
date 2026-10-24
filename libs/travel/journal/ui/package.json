@@ -16,6 +16,7 @@
     "@okr/shared-util-angular": "*",
     "@okr/shared-util-core": "*",
     "@okr/travel-journal-util": "*",
-    "@okr/shared-pipes": "*"
+    "@okr/shared-pipes": "*",
+    "maplibre-gl": "*"
   }
 }

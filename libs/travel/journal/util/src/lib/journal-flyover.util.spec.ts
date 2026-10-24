@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { CLOSING_MS, FlyStop, flyoverTimeline, greatCircle, OPENING_MS, stopTime } from './journal-flyover.util';
+import { CLOSING_MS, FlyStop, flyoverInputOf, flyoverTimeline, greatCircle, OPENING_MS, stopTime } from './journal-flyover.util';
+import { FootprintView, ImageView } from './journal-view.util';
 
 const stop = (key: string, lng: number, lat: number, at: string, transport?: FlyStop['transport']): FlyStop => ({ key, lat, lng, at, title: key, transport });
 
@@ -57,5 +58,16 @@ describe('journal flyover timeline', () => {
     expect(stopTime('20270114', '09:30')).toBe('2027-01-14T09:30');
     expect(stopTime('20270114', '')).toBe('2027-01-14T12:00');
     expect(stopTime('', '09:30')).toBe('');
+  });
+
+  it('the journal gives stops with a position and its first photo as thumbnail', () => {
+    const fp = (key: string, lat?: number, imageKeys: string[] = []): FootprintView => ({
+      key, journalKey: 'j1', title: key, placeName: '', date: '20270114', time: '09:00', latitude: lat, longitude: lat, publishState: 'published',
+      transport: 'ship', blocks: [{ key: `b${key}`, kind: 'photos', authorKey: 'bruno', order: 'V', imageKeys }],
+    });
+    const img = (key: string, lat?: number): ImageView => ({ key, authorKey: 'bruno', takenAt: '2027-01-14T08:00:00', latitude: lat, longitude: lat, width: 1, height: 1, path2048: `p/${key}-2048.jpg`, path400: `p/${key}-400.jpg`, localIdentifier: '' });
+    const { stops, points } = flyoverInputOf([fp('a', -60, ['i1']), fp('nowhere'), fp('b', -61, ['missing'])], new Map([['i1', img('i1', -60.5)], ['i2', img('i2')]]), (p) => (p ? `url:${p}` : ''));
+    expect(stops.map((s) => [s.key, s.thumb, s.at, s.transport])).toEqual([['a', 'url:p/i1-400.jpg', '2027-01-14T09:00', 'ship'], ['b', undefined, '2027-01-14T09:00', 'ship']]);
+    expect(points).toEqual([{ lat: -60.5, lng: -60.5, at: '2027-01-14T08:00:00' }]);
   });
 });

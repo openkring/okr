@@ -10,11 +10,12 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { MapView, RouteMap, RoutePin } from '@okr/shared-ui';
 import { FootprintEditModal } from '@okr/travel-journal-ui';
 import {
-  FootprintFormModel, footprintChips, journalMapData, newFootprintFormModel, routeLengthKm,
+  FootprintFormModel, flyoverInputOf, flyoverTimeline, footprintChips, journalMapData, newFootprintFormModel, routeLengthKm,
 } from '@okr/travel-journal-util';
 
 import { JournalFileUrlService } from './journal-file-url.service';
 import { showJournalError } from './journal-errors';
+import { openJournalFlyover } from './journal-flyover-open';
 import { openJournalInfo } from './journal-info';
 import { choosePhotoMode } from './journal-photo-mode';
 import { JournalOfflineMap } from './journal-offline-map';
@@ -56,6 +57,7 @@ const WIDE_QUERY = '(min-width: 992px)';
         <ion-buttons slot="start"><ion-back-button defaultHref="/journal" /></ion-buttons>
         <ion-title>{{ journal()?.title || store.i18n.untitled() }}</ion-title>
         <ion-buttons slot="end">
+          @if (flyover()) { <ion-button (click)="fly()">{{ store.i18n.flyover() }}</ion-button> }
           <ion-button (click)="info()" [attr.aria-label]="store.i18n.info()"><ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" /></ion-button>
           @if (store.native()) { <ion-button (click)="newFootprint()">{{ store.i18n.footprints_new() }}</ion-button> }
         </ion-buttons>
@@ -119,6 +121,10 @@ export class JournalOverviewPage {
   protected readonly map = computed(() => journalMapData(this.footprints(), this.images()));
   protected readonly pins = computed<RoutePin[]>(() =>
     this.map().pins.map((p) => ({ key: p.key, lat: p.lat, lng: p.lng, label: p.label, thumbnailUrl: this.fileUrl.url(p.imagePath) })));
+  protected readonly flyover = computed(() => {
+    const { stops, points } = flyoverInputOf(this.footprints(), this.images(), (path) => this.fileUrl.url(path) ?? '');
+    return flyoverTimeline(stops, points);
+  });
   protected readonly km = computed(() => routeLengthKm(this.map().route));
   protected readonly days = computed(() => new Set(this.footprints().map((f) => f.date).filter((d) => d !== '')).size);
   protected readonly cards = computed(() => {
@@ -152,6 +158,11 @@ export class JournalOverviewPage {
 
   protected info(): Promise<void> {
     return openJournalInfo(this.modalController);
+  }
+
+  protected async fly(): Promise<void> {
+    const timeline = this.flyover();
+    if (timeline) await openJournalFlyover(this.modalController, timeline, this.mapLayers(), this.store.i18n);
   }
 
   protected photoMode(): Promise<void> {

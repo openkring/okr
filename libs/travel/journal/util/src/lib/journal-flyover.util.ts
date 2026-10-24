@@ -1,4 +1,5 @@
 import type { TransportMode } from '@okr/shared-models';
+import type { FootprintView, ImageView } from './journal-view.util';
 
 /**
  * The flyover of a journal (spec 1.113 phase 2, design 2026-10-24): from the footprints and the photo positions a
@@ -53,6 +54,27 @@ export function stopTime(date: string, time: string): string {
   if (!/^\d{8}$/.test(date)) return '';
   const t = /^\d{2}:\d{2}$/.test(time) ? time : '12:00';
   return `${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)}T${t}`;
+}
+
+/**
+ * The stops and photo points of a journal on the iPad (or the authors' web view): footprints with a position, in
+ * travel order, thumbnail = the first photo of the first photo block (the same as its card).
+ */
+export function flyoverInputOf(footprints: FootprintView[], images: Map<string, ImageView>, thumbUrl: (path: string | undefined) => string):
+  { stops: FlyStop[]; points: FlyPoint[] } {
+  const stops = footprints
+    .filter((f) => f.latitude !== undefined && f.longitude !== undefined)
+    .map((f): FlyStop => {
+      const first = f.blocks.flatMap((b) => b.imageKeys ?? []).map((k) => images.get(k)).find((i) => i !== undefined);
+      return {
+        key: f.key, lat: f.latitude as number, lng: f.longitude as number, at: stopTime(f.date, f.time), title: f.title,
+        transport: f.transport, thumb: thumbUrl(first?.path400) || undefined,
+      };
+    });
+  const points = [...images.values()]
+    .filter((i) => i.latitude !== undefined && i.longitude !== undefined && !(i.latitude === 0 && i.longitude === 0))
+    .map((i): FlyPoint => ({ lat: i.latitude as number, lng: i.longitude as number, at: i.takenAt ?? '' }));
+  return { stops, points };
 }
 
 /**

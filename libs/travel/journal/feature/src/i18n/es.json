@@ -232,5 +232,11 @@
     "car": "Coche",
     "bike": "Bicicleta",
     "foot": "A pie"
+  },
+  "flyover": {
+    "button": "Sobrevuelo",
+    "pause": "Pausa",
+    "resume": "Seguir",
+    "skip": "Saltar"
   }
 }

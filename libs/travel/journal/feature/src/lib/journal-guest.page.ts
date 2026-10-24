@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, signal, untracked } from '@
 import { ActivatedRoute } from '@angular/router';
 import {
   ActionSheetController, AlertController, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonSpinner, IonTitle,
-  IonToolbar, ToastController,
+  IonToolbar, ModalController, ToastController,
 } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
@@ -11,7 +11,11 @@ import { okrPrompt } from '@okr/shared-util-angular';
 import { fill } from '@okr/shared-util-core';
 import { GuestFootprintView, GuestJournalView, guestErrorOf, JournalGuestService } from '@okr/travel-journal-data-access';
 import { JournalReactions, ReactionComment } from '@okr/travel-journal-ui';
-import { GIBS_BLUE_MARBLE, JOURNAL_I18N_KEYS, JournalI18n, weatherLine, weatherOf } from '@okr/travel-journal-util';
+import {
+  FlyPoint, FlyStop, flyoverTimeline, GIBS_BLUE_MARBLE, JOURNAL_I18N_KEYS, JournalI18n, stopTime, weatherLine, weatherOf,
+} from '@okr/travel-journal-util';
+
+import { openJournalFlyover } from './journal-flyover-open';
 
 /**
  * The journal for a guest (spec 1.113 §7, plan 7): opened with the personal link, no sign-in. Everything comes
@@ -47,7 +51,9 @@ import { GIBS_BLUE_MARBLE, JOURNAL_I18N_KEYS, JournalI18n, weatherLine, weatherO
         }
         <ion-title>{{ view()?.journal?.title || i18n.untitled() }}</ion-title>
         @if (view()) {
-          <ion-buttons slot="end"><ion-button (click)="settings()">{{ i18n.guest_settings() }}</ion-button></ion-buttons>
+          <ion-buttons slot="end">
+            @if (flyover() && !selected()) { <ion-button (click)="fly()">{{ i18n.flyover() }}</ion-button> }
+            <ion-button (click)="settings()">{{ i18n.guest_settings() }}</ion-button></ion-buttons>
         }
       </ion-toolbar>
     </ion-header>
@@ -108,6 +114,7 @@ export class JournalGuestPage {
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly alertController = inject(AlertController);
   private readonly toastController = inject(ToastController);
+  private readonly modalController = inject(ModalController);
   protected readonly i18n = inject(I18nService).translateAll(JOURNAL_I18N_KEYS) as JournalI18n;
 
   public readonly journalKey = input.required<string>();
@@ -127,6 +134,18 @@ export class JournalGuestPage {
     .filter((p) => typeof p.latitude === 'number' && typeof p.longitude === 'number')
     .sort((a, b) => ((a.takenAt ?? '') < (b.takenAt ?? '') ? -1 : 1))
     .map((p) => [p.latitude as number, p.longitude as number] as [number, number]));
+  /** Published footprints only (the guest view): a hidden draft merges into the next stretch. */
+  protected readonly flyover = computed(() => {
+    const footprints = (this.view()?.footprints ?? []).filter((f) => typeof f.latitude === 'number' && typeof f.longitude === 'number');
+    const stops = footprints.map((f): FlyStop => ({
+      key: f.key, lat: f.latitude as number, lng: f.longitude as number, at: stopTime(f.date, f.time), title: f.title,
+      transport: f.transport, thumb: this.thumbOf(f),
+    }));
+    const points = (this.view()?.footprints ?? []).flatMap((f) => f.blocks.flatMap((b) => b.photos))
+      .filter((p) => typeof p.latitude === 'number' && typeof p.longitude === 'number')
+      .map((p): FlyPoint => ({ lat: p.latitude as number, lng: p.longitude as number, at: p.takenAt ?? '' }));
+    return flyoverTimeline(stops, points);
+  });
   protected readonly hello = computed(() => fill(this.i18n.guest_hello(), { name: this.view()?.me.name ?? '' }));
 
   public constructor() {
@@ -152,6 +171,11 @@ export class JournalGuestPage {
       const { code } = guestErrorOf(error);
       this.error.set(code === 'permission-denied' || code === 'not-found' || code === 'invalid-argument' ? this.i18n.guest_link_invalid() : this.i18n.error_generic());
     }
+  }
+
+  protected async fly(): Promise<void> {
+    const timeline = this.flyover();
+    if (timeline) await openJournalFlyover(this.modalController, timeline, [GIBS_BLUE_MARBLE], this.i18n);
   }
 
   protected open(footprintKey: string): void {
