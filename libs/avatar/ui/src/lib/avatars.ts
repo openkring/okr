@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, model, output, viewChild } from '@angular/core';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonInput, IonItem, IonLabel, IonList, IonReorder, IonReorderGroup, IonRow, ItemReorderEventDetail, ToastController } from '@ionic/angular';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonInput, IonItem, IonLabel, IonList, IonNote, IonReorder, IonReorderGroup, IonRow, ItemReorderEventDetail, ToastController } from '@ionic/angular';
 
 import { ImgDirective } from '@okr/shared-ui';
 import { NAME_LENGTH } from '@okr/shared-constants';
@@ -27,7 +27,7 @@ import { AvatarPipe } from './avatar.pipe';
   imports: [
     ImgDirective, SvgIconPipe, AvatarPipe,
     AvatarDisplay,
-    IonList, IonItem, IonLabel, IonIcon, IonReorderGroup, IonReorder, IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonButton, IonAvatar, IonGrid, IonRow, IonCol
+    IonList, IonItem, IonLabel, IonNote, IonIcon, IonReorderGroup, IonReorder, IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonButton, IonAvatar, IonGrid, IonRow, IonCol
 ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px;} }
@@ -123,6 +123,9 @@ import { AvatarPipe } from './avatar.pipe';
                       <img okrImg src="{{ avatar.modelType + '.' + avatar.key | avatar:getDefaultIcon(avatar.modelType) }}" alt="Avatar" />
                     </ion-avatar>
                     <ion-label>{{ getAvatarName(avatar) }}</ion-label>
+                    @if ($index === 0 && firstNote().length > 0) {
+                      <ion-note slot="end">{{ firstNote() }}</ion-note>
+                    }
                     <ion-icon src="{{'cancel' | svgIcon }}" (click)="remove($index)" slot="end" />
                     @if (isCopyable()) {
                       <ion-icon slot="end" src="{{'copy' | svgIcon }}" (click)="copy(avatar)" />
@@ -172,6 +175,8 @@ export class Avatars {
   public titleIcon = input('');
   /** non-empty: the round '+' becomes a labelled button in the same place (e.g. '+ Person'). */
   public addLabel = input('');
+  /** non-empty: the first item of the editable list shows this note (e.g. 'Hauptort'). */
+  public firstNote = input('');
 
   // coerced boolean inputs
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
