@@ -59,4 +59,13 @@ describe('diary-avatar.util', () => {
     const raw = { customLocationLabel: '', places: [], people: [], customPeopleLabels: [] } as unknown as DiaryModel;
     expect(withDiaryLocations(raw).locations).toEqual([]);
   });
+  it('replaceDiaryAvatar keeps the replaced position when the target exists later', () => {
+    const x = customLocationAvatar('X');
+    const a = customLocationAvatar('A');
+    const b = { ...customLocationAvatar('B'), key: 'l2' };
+    const linked = { ...b, label: 'B linked' };
+    const result = replaceDiaryAvatar([x, a, b], diaryAvatarId(x), linked);
+    expect(result).toEqual([linked, a]);
+    expect(result[0]).toBe(linked);
+  });
 });

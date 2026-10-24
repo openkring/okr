@@ -39,13 +39,17 @@ export function addDiaryAvatar(list: AvatarInfo[], a: AvatarInfo): AvatarInfo[] 
   return list.some((x) => diaryAvatarId(x) === id) ? list : [...list, a];
 }
 
-/** Replaces the entry with `id` in place; drops it instead when `a` is already elsewhere in the list. */
+/**
+ * Replaces the entry with `id` by `a`, at the replaced entry's position (so linking never moves
+ * the main location). If `a`'s id already occurs elsewhere in the list, that other occurrence is removed.
+ */
 export function replaceDiaryAvatar(list: AvatarInfo[], id: string, a: AvatarInfo): AvatarInfo[] {
   const newId = diaryAvatarId(a);
-  const exists = list.some((x) => diaryAvatarId(x) !== id && diaryAvatarId(x) === newId);
-  return exists
-    ? list.filter((x) => diaryAvatarId(x) !== id)
-    : list.map((x) => (diaryAvatarId(x) === id ? a : x));
+  const index = list.findIndex((x) => diaryAvatarId(x) === id);
+  if (index < 0) return list;
+  return list
+    .map((x, i) => (i === index ? a : x))
+    .filter((x, i) => i === index || diaryAvatarId(x) !== newId);
 }
 
 /** The main location (Hauptort) is the first entry. */
