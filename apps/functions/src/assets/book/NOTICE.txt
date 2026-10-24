@@ -1,0 +1,25 @@
+Assets of the travel-journal book export (exportJournalBook, spec 1.113 phase 2 §7). Bundled with the
+Cloud Function, unchanged from their sources. Fetched 2026-10-25.
+
+ISOcoated_v2_eci.icc
+  ISO Coated v2 (ECI), characterisation data FOGRA39L. European Color Initiative (ECI), www.eci.org,
+  package "ECI_Offset_2009" (https://eci.org/lib/exe/eci_offset_2009.zip, file ECI_Offset_2009/ISOcoated_v2_eci.icc).
+  ECI: "The ECI offset profiles ... are available as a free download". Embedded unchanged as the PDF/X-4
+  output intent (DestOutputProfile), the use it is published for.
+  SHA-256 128dc02f7246cc3807af0323695379f64151a8f27a587736acc59f8b6ce894b8
+
+sRGB.icc
+  sRGB2014.icc (ICC v2, 3024 bytes), International Color Consortium,
+  https://registry.color.org/rgb-registry/profiles/sRGB2014.icc. ICC licence
+  (https://registry.color.org/profile-library/#license): "This profile is made available by the International
+  Color Consortium, and may be copied, distributed, embedded, made, used, and sold without restriction."
+  SHA-256 384b832de3412066743b52a75ee906b6fb9fb8d9e09e936fc2c43223815c6e0a
+
+IBMPlexSerif-Regular.ttf, IBMPlexSerif-Italic.ttf, IBMPlexSerif-Bold.ttf
+  IBM Plex Serif 2.0.0, https://github.com/IBM/plex/releases/tag/%40ibm%2Fplex-serif%402.0.0
+  (ibm-plex-serif.zip, fonts/complete/ttf). SIL Open Font License 1.1, see IBMPlexSerif-OFL.txt.
+  Reserved Font Name "Plex".
+
+InterTight-SemiBold.ttf
+  Inter Tight, https://github.com/googlefonts/inter-gf-tight (fonts/ttf, commit c194f94c60b5).
+  SIL Open Font License 1.1, see InterTight-OFL.txt. Carries U+2665 (heart) for the like line.

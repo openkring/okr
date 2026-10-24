@@ -1644,3 +1644,7 @@ export async function resolveArrayItemDocs(entry: SubjectDataEntry, ctx: Subject
 //   authors AND guests) — NOT reached by the top-level `comments` row. Guests are persons without an
 //   account: export/erasure of their comments and likes needs a journal-scoped row that reads the
 //   change log by authorKey; recorded as a gap until then (guests can ask the authors to delete).
+// gap: journal-books — the travel book of a journal (spec 1.113 phase 2 §6), one doc per journal: updatedBy
+//   (person key), the chosen guest commentKeys, export paths. The exported PDFs (exportJournalBook) in the
+//   private bucket under tenant/<t>/journal/<jk>/book/ print the authors' names and, when picked, guest
+//   comments with display names (design §9). Authors only; follows the journals row (plan 6).

@@ -523,6 +523,8 @@ export const ensureJournalPeerSecret = Journal.ensureJournalPeerSecret;
 export const journalGuest = Journal.journalGuest;
 export const manageJournalGuest = Journal.manageJournalGuest;
 export const notifyJournalGuests = Journal.notifyJournalGuests;
+// exportJournalBook: the travel book as print PDF/X-4 or screen PDF, streamed into the private bucket (spec 1.113 phase 2)
+export const exportJournalBook = Journal.exportJournalBook;
 // deleteLearningItem: learning rooms, a curator removes an item — detach from the room folder or archive (spec 1.115)
 export const deleteLearningItem = Learning.deleteLearningItem;
 // onRatingWritten: learning rooms, a rating write refreshes docs/{docKey}.ratingCount/ratingSum (spec 1.115)
