@@ -9,6 +9,7 @@ import { getQuery, getSystemQuery } from '@okr/shared-util-core';
 
 import {
   DIARY_I18N_KEYS, DiaryRange, diaryAlbumKeys, diaryHeadlineSortKey, diaryKey, diaryNeighbourQuery, diaryNeighbourScope, diaryRangeBounds,
+  stripLegacyDiaryFields, withDiaryLocations,
 } from '@okr/content-diary-util';
 
 /** Neighbour search pages: small, because the nearest hit is almost always in the first page. */
@@ -59,6 +60,7 @@ export class DiaryService {
       ], 'none'
     ).pipe(
       map(diaries => diaries
+        .map(diary => withDiaryLocations(diary))
         .filter(diary => !diary.isArchived)
         .sort((a, b) => diaryHeadlineSortKey(b.date).localeCompare(diaryHeadlineSortKey(a.date)))),
     );
@@ -66,9 +68,11 @@ export class DiaryService {
 
   /** Writes back an edited entry — used by the reference screen to attach a location or a person. */
   public async update(diary: DiaryModel, currentUser?: UserModel): Promise<string | undefined> {
-    diary.albumKeys = diaryAlbumKeys(diary);
+    const normalised = withDiaryLocations(diary);
+    normalised.albumKeys = diaryAlbumKeys(normalised);
+    diary.albumKeys = normalised.albumKeys;
     return await this.firestoreService.updateModel<DiaryModel>(
-      DiaryCollection, diary, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
+      DiaryCollection, stripLegacyDiaryFields(normalised), false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
   }
 
   /**
@@ -90,6 +94,7 @@ export class DiaryService {
     }
     return this.firestoreService.searchData<DiaryModel>(DiaryCollection, dbQuery, 'none').pipe(
       map(diaries => diaries
+        .map(diary => withDiaryLocations(diary))
         .filter(diary => !diary.isArchived)
         .sort((a, b) => diaryHeadlineSortKey(b.date).localeCompare(diaryHeadlineSortKey(a.date)))),
     );
@@ -112,7 +117,7 @@ export class DiaryService {
         ...(last ? [startAfter(last)] : []), limit(NEIGHBOUR_PAGE));
       const snapshot = await getDocs(pageQuery);
       const hit = snapshot.docs
-        .map(d => ({ ...d.data(), okey: d.id }) as DiaryModel)
+        .map(d => withDiaryLocations({ ...d.data(), okey: d.id }) as DiaryModel)
         .find(d => !d.isArchived && diaryNeighbourScope(d) === scope);
       if (hit) return hit;
       if (snapshot.docs.length < NEIGHBOUR_PAGE) return undefined;
@@ -146,7 +151,8 @@ export class DiaryService {
   }
 
   public read(key: string): Observable<DiaryModel | undefined> {
-    return this.firestoreService.readModel<DiaryModel>(DiaryCollection, key);
+    return this.firestoreService.readModel<DiaryModel>(DiaryCollection, key).pipe(
+      map(diary => diary ? withDiaryLocations(diary) : diary));
   }
 
   public async readOnce(key: string): Promise<DiaryModel | undefined> {
@@ -160,9 +166,11 @@ export class DiaryService {
    * ARCHIVED one be replaced, so a deleted day is not a dead end that can never be re-created.
    */
   public async create(diary: DiaryModel, currentUser?: UserModel): Promise<string | undefined> {
-    diary.albumKeys = diaryAlbumKeys(diary);
+    const normalised = withDiaryLocations(diary);
+    normalised.albumKeys = diaryAlbumKeys(normalised);
+    diary.albumKeys = normalised.albumKeys;
     return await this.firestoreService.createModel<DiaryModel>(
-      DiaryCollection, diary, this.i18n.create_conf(), this.i18n.create_error(), currentUser, false, true);
+      DiaryCollection, stripLegacyDiaryFields(normalised), this.i18n.create_conf(), this.i18n.create_error(), currentUser, false, true);
   }
 
   /**
@@ -192,7 +200,7 @@ export class DiaryService {
       { key: 'authorKey', operator: '==', value: authorKey },
       { key: 'albumKeys', operator: 'array-contains', value: key },
     ], 'date', 'desc').pipe(
-      map(diaries => diaries.filter(diary => !diary.isArchived && (diary.tenants ?? []).includes(tenantId))),
+      map(diaries => diaries.map(diary => withDiaryLocations(diary)).filter(diary => !diary.isArchived && (diary.tenants ?? []).includes(tenantId))),
     );
   }
 
@@ -204,7 +212,7 @@ export class DiaryService {
     if (from) dbQuery.push({ key: 'date', operator: '>=', value: from });
     if (to) dbQuery.push({ key: 'date', operator: '<=', value: to });
     return this.firestoreService.searchData<DiaryModel>(DiaryCollection, dbQuery, 'none').pipe(
-      map(diaries => this.newestFirst(diaries.filter(diary => !diary.isArchived))),
+      map(diaries => this.newestFirst(diaries.map(diary => withDiaryLocations(diary)).filter(diary => !diary.isArchived))),
     );
   }
 
@@ -225,7 +233,8 @@ export class DiaryService {
       : of([] as DiaryModel[]))
       .pipe(map(diaries => diaries.filter(diary => !diary.tripKey)));
     return combineLatest([tagged$, inSpan$]).pipe(
-      map(([tagged, inSpan]) => {
+      map(([taggedRaw, inSpan]) => {
+        const tagged = taggedRaw.map(diary => withDiaryLocations(diary));
         const byKey = new Map<string, DiaryModel>();
         for (const diary of [...tagged.filter(d => !d.isArchived), ...inSpan]) byKey.set(diary.okey, diary);
         return this.newestFirst([...byKey.values()]);
