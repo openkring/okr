@@ -64,8 +64,3 @@ export function bookMapMaxZoom(maxNativeZooms: number[]): number {
   const zooms = maxNativeZooms.filter((z) => Number.isFinite(z));
   return zooms.length ? Math.max(...zooms) : BOOK_MAP_DEFAULT_MAX_ZOOM;
 }
-
-/** `zoom` limited to [0, max]. */
-export function clampBookZoom(zoom: number, max: number): number {
-  return Math.max(0, Math.min(zoom, max));
-}

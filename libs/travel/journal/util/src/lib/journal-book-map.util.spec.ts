@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BOOK_MAP_DEFAULT_MAX_ZOOM, bookMapBounds, bookMapMaxZoom, bookMapPixels, clampBookZoom, mmToPx } from './journal-book-map.util';
+import { BOOK_MAP_DEFAULT_MAX_ZOOM, bookMapBounds, bookMapMaxZoom, bookMapPixels, mmToPx } from './journal-book-map.util';
 
 describe('bookMapPixels', () => {
   it('converts mm to pixels at 300 dpi', () => {
@@ -41,10 +41,5 @@ describe('zoom limit', () => {
   it('takes the finest layer', () => {
     expect(bookMapMaxZoom([8, 12, 10])).toBe(12);
     expect(bookMapMaxZoom([])).toBe(BOOK_MAP_DEFAULT_MAX_ZOOM);
-  });
-  it('clamps', () => {
-    expect(clampBookZoom(15, 8)).toBe(8);
-    expect(clampBookZoom(-2, 8)).toBe(0);
-    expect(clampBookZoom(5, 8)).toBe(5);
   });
 });

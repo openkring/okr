@@ -28,21 +28,26 @@ export interface BookMapSpec {
   credit?: string;
 }
 
-const IDLE_TIMEOUT_MS = 20_000;
+/** Total time for the map to load and its tiles to arrive. */
+const WAIT_BUDGET_MS = 20_000;
 const JPEG_QUALITY = 0.95;
 const PAD_RATIO = 0.12;
 const DOT_DIAMETER_MM = 3.8;
 const LINE_MM = 0.7;
 const CREDIT_MM = 1.9;
 
-function idle(map: MapLibre.Map): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('book map: tiles did not finish loading')), IDLE_TIMEOUT_MS);
-    const done = () => {
+/** Resolves true when `event` fired, false when the shared deadline ran out first. The listener is gone either way. */
+function waitFor(map: MapLibre.Map, event: 'load' | 'idle', deadline: number, before?: () => void): Promise<boolean> {
+  return new Promise((resolve) => {
+    const done = (fired: boolean) => {
       clearTimeout(timer);
-      resolve();
+      map.off(event, onEvent);
+      resolve(fired);
     };
-    map.once('idle', done); // fires once the pending tiles are in and the frame is drawn
+    const onEvent = () => done(true);
+    const timer = setTimeout(() => done(false), Math.max(0, deadline - Date.now()));
+    map.on(event, onEvent);
+    before?.(); // after the listener exists: idle may fire in the very next frame
   });
 }
 
@@ -80,8 +85,20 @@ function paintOverlay(ctx: CanvasRenderingContext2D, map: MapLibre.Map, spec: Bo
   }
 }
 
-/** Renders one book map; the map and its container are gone again when the promise settles. */
-export async function renderBookMap(spec: BookMapSpec): Promise<Blob> {
+export interface BookMapResult {
+  blob: Blob;
+  /** The wait ran out before all tiles were in: the JPEG shows what was drawn, with gaps. The caller should warn. */
+  incomplete: boolean;
+  /** Tile or source requests that failed (also normal outside a layer's coverage). */
+  tileErrors: number;
+}
+
+/**
+ * Renders one book map; the map and its container are gone again when the promise settles. A timeout does not
+ * reject (ruling R8): the result is flagged `incomplete`. It rejects only when nothing can be drawn at all
+ * (no positions, style or 2D canvas unavailable).
+ */
+export async function renderBookMap(spec: BookMapSpec): Promise<BookMapResult> {
   const { width, height } = bookMapPixels(spec.box, spec.dpi);
   const lib = await loadMapLibre();
   const container = document.createElement('div');
@@ -108,20 +125,22 @@ export async function renderBookMap(spec: BookMapSpec): Promise<Blob> {
       canvasContextAttributes: { preserveDrawingBuffer: true },
     });
     const m = map;
-    await new Promise<void>((resolve, reject) => {
-      m.once('load', () => resolve());
-      m.once('error', (e) => {
-        // tile errors are normal (outside a layer's coverage); only a style that never loads is fatal
-        if (!m.isStyleLoaded()) reject(e.error);
-      });
+    let tileErrors = 0;
+    m.on('error', () => {
+      // tile errors are normal outside a layer's coverage; they are counted, not fatal
+      tileErrors++;
     });
+    const deadline = Date.now() + WAIT_BUDGET_MS;
+    let incomplete = false;
+    if (!(await waitFor(m, 'load', deadline))) incomplete = true;
+    if (!m.isStyleLoaded()) throw new Error('book map: style did not load');
     if (line.length > 1) {
       m.addSource('line', { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: line } } });
       const w = mmToPx(LINE_MM, spec.dpi);
       m.addLayer({ id: 'line-casing', type: 'line', source: 'line', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#10253d', 'line-width': w * 1.8 } });
       m.addLayer({ id: 'line', type: 'line', source: 'line', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#ff7a3d', 'line-width': w } });
     }
-    await idle(m);
+    if (!(await waitFor(m, 'idle', deadline, () => m.triggerRepaint()))) incomplete = true;
 
     const out = document.createElement('canvas');
     out.width = width;
@@ -136,7 +155,7 @@ export async function renderBookMap(spec: BookMapSpec): Promise<Blob> {
     const blob = await toBlob(out);
     out.width = 0;
     out.height = 0;
-    return blob;
+    return { blob, incomplete, tileErrors };
   } finally {
     map?.remove();
     container.remove();

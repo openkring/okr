@@ -9,6 +9,7 @@ import type { JournalTileSource } from '@okr/travel-journal-util';
  */
 const ASSET_BASE = 'assets/maplibre/';
 let stylesheetAdded = false;
+let workerSet = false;
 
 export function addMapLibreStylesheet(): void {
   if (stylesheetAdded || typeof document === 'undefined') return;
@@ -22,7 +23,10 @@ export function addMapLibreStylesheet(): void {
 /** Loads MapLibre and points it at the worker asset. */
 export async function loadMapLibre(): Promise<typeof MapLibre> {
   const lib = await import('maplibre-gl');
-  lib.setWorkerUrl(new URL(`${ASSET_BASE}maplibre-gl-worker.mjs`, document.baseURI).href);
+  if (!workerSet) {
+    workerSet = true;
+    lib.setWorkerUrl(new URL(`${ASSET_BASE}maplibre-gl-worker.mjs`, document.baseURI).href);
+  }
   return lib;
 }
 
