@@ -18,3 +18,4 @@ export * from './lib/journal-tiles.util';
 export * from './lib/journal-map-area.util';
 export * from './lib/journal-guest.util';
 export * from './lib/journal-flyover.util';
+export * from './lib/journal-book.util';
