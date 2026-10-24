@@ -140,9 +140,22 @@ function isArea(value: unknown): value is MapArea {
     && (a['preset'] === undefined || a['preset'] === 'antarctica-expedition');
 }
 
-/** The journal field `mapAreas` as stored in the change log; anything malformed is dropped. */
+/**
+ * Areas arrive from the other iPad and from Firebase, so the limits the UI offers are checked again here:
+ * maxZoom at most the source's finest level, at most TILE_CAP tiles (the preset has its own fixed plan).
+ * Otherwise one oversized area would build a tile list large enough to freeze the app.
+ */
+function withinLimits(area: MapArea): boolean {
+  if (area.preset === 'antarctica-expedition') return true;
+  const finest = Math.max(...LEVELS[area.source].map((l) => l.maxZoom));
+  const [w, s, e, n] = area.bbox;
+  if (area.maxZoom > finest || w >= e || s >= n) return false;
+  return countTiles(area.bbox, minZoomOf(area.source), area.maxZoom) <= TILE_CAP;
+}
+
+/** The journal field `mapAreas` as stored in the change log; anything malformed or oversized is dropped. */
 export function parseMapAreas(value: unknown): MapArea[] {
-  return Array.isArray(value) ? value.filter(isArea) : [];
+  return Array.isArray(value) ? value.filter(isArea).filter(withinLimits) : [];
 }
 
 /**

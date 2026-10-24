@@ -52,6 +52,9 @@ describe('journal map areas', () => {
     expect(parseMapAreas([BERN, { id: 'x' }, null, { ...OSLO, bbox: [1, 2, 3] }, { ...OSLO, maxZoom: 99 }, ANTARCTICA_PRESET]))
       .toEqual([BERN, ANTARCTICA_PRESET]);
     expect(parseMapAreas('nonsense')).toEqual([]);
+    // limits are checked on synced data too: too fine a zoom, too many tiles, an inverted box
+    expect(parseMapAreas([{ ...OSLO, maxZoom: 17 }, { ...OSLO, bbox: [-180, -80, 180, 80], maxZoom: 12 }, { ...OSLO, bbox: [10.85, 59.88, 10.65, 59.96] }]))
+      .toEqual([]);
   });
 
   it('layers use local files only when downloaded', () => {
