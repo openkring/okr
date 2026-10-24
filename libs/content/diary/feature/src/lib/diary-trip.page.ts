@@ -5,7 +5,7 @@ import {
 } from '@ionic/angular';
 import { firstValueFrom, timeout } from 'rxjs';
 
-import { diaryListUrl, encodeDiaryFilter, formatDiaryDate, tripMapPoints, TripMapPoint } from '@okr/content-diary-util';
+import { diaryListUrl, encodeDiaryFilter, formatDiaryDate, mainLocation, tripMapPoints, TripMapPoint } from '@okr/content-diary-util';
 import { LocationService } from '@okr/location-data-access';
 import { TripModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -124,7 +124,7 @@ export class DiaryTripPage {
   private readonly coordsResource = resource({
     params: resourceParams(() => {
       const keys = new Set<string>();
-      for (const entry of this.entries()) if (entry.location?.key) keys.add(entry.location.key);
+      for (const entry of this.entries()) for (const location of entry.locations ?? []) if (location.key) keys.add(location.key);
       for (const location of this.trip()?.locations ?? []) if (location?.key) keys.add(location.key);
       return { keys: [...keys].sort() };
     }),
@@ -142,7 +142,8 @@ export class DiaryTripPage {
   protected readonly points = computed((): TripMapPoint[] => {
     const coords = this.coords();
     const entries = this.entries().map(entry => {
-      const c = entry.location?.key ? coords.get(entry.location.key) : undefined;
+      const mainKey = mainLocation(entry)?.key;
+      const c = mainKey ? coords.get(mainKey) : undefined;
       // pin detail = date + entry title
       const title = [formatDiaryDate(entry.date), entry.title].filter(part => !!part).join(' · ');
       return { date: entry.date, okey: entry.okey, title, lat: c?.lat, lng: c?.lng };
@@ -151,7 +152,12 @@ export class DiaryTripPage {
       const c = location?.key ? coords.get(location.key) : undefined;
       return c ? [{ lat: c.lat, lng: c.lng, title: location.name1 || location.label || '' }] : [];
     });
-    return tripMapPoints(entries, own);
+    // every further keyed location of an entry is an extra pin (not part of the route)
+    const extra = this.entries().flatMap(entry => (entry.locations ?? []).slice(1).flatMap(location => {
+      const c = location.key ? coords.get(location.key) : undefined;
+      return c ? [{ lat: c.lat, lng: c.lng, title: location.name1 || location.label || '', date: entry.date, diaryKey: entry.okey }] : [];
+    }));
+    return tripMapPoints(entries, own, extra);
   });
 
   protected readonly span = computed(() => {

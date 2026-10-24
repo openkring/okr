@@ -7,7 +7,7 @@ import { firstValueFrom, map, of, timeout } from 'rxjs';
 import type { DiaryLocationPick, DiaryNeighbours } from '@okr/content-diary-ui';
 import { DiaryAlbumService, DiaryMediaService, DiaryService, DiaryWeatherService } from '@okr/content-diary-data-access';
 import {
-  DIARY_FIRST_YEAR, DIARY_I18N_KEYS, customLocationAvatar, DiaryFilter, DiaryMediaResult, DiaryRange, DiaryStateFilter, albumKey, albumRefOf,
+  DIARY_FIRST_YEAR, DIARY_I18N_KEYS, customLocationAvatar, mainLocation, DiaryFilter, DiaryMediaResult, DiaryRange, DiaryStateFilter, albumKey, albumRefOf,
   buildDiaryRangeTree, decodeDiaryFilter, diaryFilterLabel, diaryListUrl, diaryRangeOfYear, diaryStateMatches, encodeDiaryFilter,
   formatDiaryDate, getDiaryIndex, groupDiariesByMonth, hasDiaryWeather, inDiaryDateRange, newDiary,
 } from '@okr/content-diary-util';
@@ -223,7 +223,7 @@ export const DiaryStore = signalStore(
      */
     const withWeather = async (diary: DiaryModel): Promise<DiaryModel> => {
       if (diary.scope !== 'day' || hasDiaryWeather(diary.weather)) return diary;
-      const coords = await coordinatesOf(diary.location);
+      const coords = await coordinatesOf(mainLocation(diary));
       if (!coords) {
         if (diary.status === 'final') store.alertService.showToast(store.i18n.weather_no_coords());
         return diary;
@@ -338,7 +338,7 @@ export const DiaryStore = signalStore(
      * weather (no coordinates, or Open-Meteo has none — the toast says which).
      */
     const refreshWeather = async (diary: DiaryModel): Promise<DiaryModel | undefined> => {
-      const coords = await coordinatesOf(diary.location);
+      const coords = await coordinatesOf(mainLocation(diary));
       if (!coords) { store.alertService.showToast(store.i18n.weather_no_coords()); return undefined; }
       const weather = await store.weatherService.fetch({ date: diary.date, ...coords }).catch(() => null);
       if (!weather) { store.alertService.showToast(store.i18n.weather_draft_hint()); return undefined; }

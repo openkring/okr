@@ -7,7 +7,7 @@ import { firstValueFrom, of } from 'rxjs';
 import { DiaryImportService, DiaryService, DriveAccessResult } from '@okr/content-diary-data-access';
 import {
   DIARY_I18N_KEYS, DiaryReference, DiaryReferenceKind, DiaryUsage,
-  collectLocationReferences, collectPersonReferences, suggestImportFromDate,
+  collectLocationReferences, collectPersonReferences, replaceDiaryAvatar, suggestImportFromDate, withDiaryLocations,
 } from '@okr/content-diary-util';
 import { LocationService } from '@okr/location-data-access';
 import {
@@ -71,6 +71,11 @@ export const DiaryImportStore = signalStore(
   withProps(store => ({
     i18n: store.i18nService.translateAll(DIARY_I18N_KEYS),
 
+    /** read once per import page open; feeds the current names of linked locations */
+    locationsResource: rxResource({
+      stream: () => store.locationService.list(),
+    }),
+
     diariesResource: rxResource({
       params: () => ({
         authorKey: store.appStore.fbUser()?.uid ?? '',
@@ -85,8 +90,17 @@ export const DiaryImportStore = signalStore(
   withComputed(store => ({
     isLoading: computed(() => store.diariesResource.isLoading()),
     diaries: computed((): DiaryModel[] => store.diariesResource.value() ?? []),
-    locationReferences: computed(() => collectLocationReferences(store.diariesResource.value() ?? [])),
-    personReferences: computed(() => collectPersonReferences(store.diariesResource.value() ?? [])),
+    // keyed rows show the record's CURRENT name, not the name stamped into the diary avatar
+    locationReferences: computed(() => {
+      const names = new Map((store.locationsResource.value() ?? []).map(l => [l.okey, l.name] as const));
+      return collectLocationReferences(store.diariesResource.value() ?? [])
+        .map(r => (r.key && names.get(r.key) ? { ...r, label: names.get(r.key) as string } : r));
+    }),
+    personReferences: computed(() => {
+      const names = new Map((store.appStore.allPersons() ?? []).map(p => [p.okey, `${p.firstName} ${p.lastName}`.trim()] as const));
+      return collectPersonReferences(store.diariesResource.value() ?? [])
+        .map(r => (r.key && names.get(r.key) ? { ...r, label: names.get(r.key) as string } : r));
+    }),
     /** the day after the newest imported entry — what a routine catch-up import starts from */
     suggestedFromDate: computed(() =>
       suggestImportFromDate(store.diariesResource.value() ?? [], getTodayStr(DateFormat.StoreDate))),
@@ -119,33 +133,29 @@ export const DiaryImportStore = signalStore(
     });
 
     /**
-     * Attaches a location to one diary. `customLocationLabel` is cleared in the same write:
-     * the two fields are the resolved and unresolved halves of ONE value, and leaving the text
-     * behind would make the entry show up in both halves of the list.
+     * Attaches a location to one diary, replacing the entry the reference stood for (free text
+     * or a previously matched record) in place, so its position in the sortable list is kept.
      */
-    const linkLocation = async (usage: DiaryUsage, location: LocationModel): Promise<boolean> => {
+    const linkLocation = async (usage: DiaryUsage, location: LocationModel, referenceId: string): Promise<boolean> => {
       const diary = diaryOf(usage);
       if (!diary) return false;
+      const normalised = withDiaryLocations(diary);
       await store.diaryService.update(
-        { ...diary, location: locationAvatar(location), customLocationLabel: '' },
+        { ...normalised, locations: replaceDiaryAvatar(normalised.locations ?? [], referenceId, locationAvatar(location)) },
         store.appStore.currentUser());
       return true;
     };
 
     /**
-     * Attaches a person to one diary, replacing whatever stood for them before: the raw slug for
-     * an unresolved reference, the previously matched avatar when a wrong match is corrected.
+     * Attaches a person to one diary, replacing whatever stood for them before: the free text
+     * for an unresolved reference, the previously matched avatar when a wrong match is corrected.
      */
-    const linkPerson = async (
-      reference: DiaryReference, usage: DiaryUsage, person: PersonModel,
-    ): Promise<boolean> => {
+    const linkPerson = async (usage: DiaryUsage, person: PersonModel, referenceId: string): Promise<boolean> => {
       const diary = diaryOf(usage);
       if (!diary) return false;
-      const people = (diary.people ?? []).filter(p => p.key !== reference.key && p.key !== person.okey);
-      const customPeopleLabels = (diary.customPeopleLabels ?? [])
-        .filter(label => label.toLowerCase() !== reference.label.toLowerCase());
+      const normalised = withDiaryLocations(diary);
       await store.diaryService.update(
-        { ...diary, people: [...people, personAvatar(person)], customPeopleLabels },
+        { ...normalised, people: replaceDiaryAvatar(normalised.people ?? [], referenceId, personAvatar(person)) },
         store.appStore.currentUser());
       return true;
     };
@@ -201,7 +211,7 @@ export const DiaryImportStore = signalStore(
       if (!saved) return false;
       const okey = await store.locationService.create(saved, store.appStore.currentUser());
       if (!okey) return false;
-      return await linkLocation(usage, { ...saved, okey });
+      return await linkLocation(usage, { ...saved, okey }, reference.id);
     };
 
     /**
@@ -234,7 +244,7 @@ export const DiaryImportStore = signalStore(
       const okey = await store.personService.create(person, store.appStore.currentUser());
       if (!okey) return false;
       store.appStore.reloadPersons();
-      return await linkPerson(reference, usage, { ...person, okey } as PersonModel);
+      return await linkPerson(usage, { ...person, okey } as PersonModel, reference.id);
     };
 
     /**
@@ -262,13 +272,13 @@ export const DiaryImportStore = signalStore(
             await addLocation(reference, data.usage);
           } else {
             const location = await pickLocation();
-            if (location) await linkLocation(data.usage, location);
+            if (location) await linkLocation(data.usage, location, reference.id);
           }
         } else if (data.action === 'add') {
           await addPerson(reference, data.usage);
         } else {
           const person = await pickPerson();
-          if (person) await linkPerson(reference, data.usage, person);
+          if (person) await linkPerson(data.usage, person, reference.id);
         }
         reference = referencesOf(kind).find(candidate => candidate.id === reference?.id);
       }

@@ -13,7 +13,7 @@ import { AlertService } from '@okr/shared-util-angular';
 import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
 
 import {
-  diaryStateOf, diaryWeatherLine, formatDiaryDateShort, formatDiaryMonthHeader, hasDiaryWeather, isWideDiaryRange, segmentDiaryGroupsByYear,
+  diaryAvatarName, diaryStateOf, diaryWeatherLine, mainLocation, formatDiaryDateShort, formatDiaryMonthHeader, hasDiaryWeather, isWideDiaryRange, segmentDiaryGroupsByYear,
   DiaryStateFilter,
 } from '@okr/content-diary-util';
 import { DiaryRangeSelect } from './diary-range-select';
@@ -145,7 +145,7 @@ const DIARY_STATE_I18N_SCOPE = '@content/diary/feature';
         @if (stateOf(diary) === 'draft') {
           <ion-badge slot="end" color="warning">{{ store.i18n.state_draft() }}</ion-badge>
         }
-        <ion-note slot="end" class="ion-hide-sm-down">{{ diary.location?.label || diary.location?.name1 || diary.customLocationLabel }}</ion-note>
+        <ion-note slot="end" class="ion-hide-sm-down">{{ mainLocationName(diary) }}</ion-note>
       </ion-item>
     </ng-template>
   `,
@@ -164,6 +164,11 @@ export class DiaryList {
       const contextMenuName = this.contextMenuName();
       untracked(() => this.store.initFromRoute(listId, contextMenuName));
     });
+  }
+
+  protected mainLocationName(diary: DiaryModel): string {
+    const main = mainLocation(diary);
+    return main ? diaryAvatarName(main) : '';
   }
 
   protected readonly count = computed(() => this.store.diaries().length);
