@@ -59,6 +59,53 @@ Defined in `@okr/shared-models`:
 
 Validated by the `authCredentials` Vest suite in `@okr/auth-util`.
 
+## Passkey login (spec 1.120, phase 1)
+
+Users sign in with Face ID, Touch ID, Android fingerprint or Windows Hello (WebAuthn) instead of a password. Web and installed PWA only; the native (Capacitor) app hides all passkey UI in phase 1 (phase 2 = `@capgo/capacitor-passkey`).
+
+### The `passkey` Cloud Function
+
+One router callable (`apps/functions/src/auth/passkey.ts`), selected by `op`:
+
+| op | Auth | Does |
+| --- | --- | --- |
+| `registerOptions` | signed in, sign-in within 5 minutes | creates a challenge, excludes already registered credentials |
+| `registerVerify` | signed in | verifies the attestation, stores the `passkeys` doc, mails the account holder |
+| `loginOptions` | none (App Check) | creates a challenge for the `rpId` |
+| `loginVerify` | none (App Check) | verifies the assertion, returns a custom token (like `loginWithLoginId`) |
+| `list` | owner or tenant admin | lists the passkeys of a user |
+| `rename` | owner | changes the label |
+| `delete` | owner or tenant admin | deletes one passkey |
+
+- Every `loginVerify` failure answers one generic `unauthenticated` error, no earlier than 900 ms after the request.
+- Challenges are single use and expire after 5 minutes (`webauthn-challenges`, TTL field `expireAt`).
+- Passkeys live in the flat `passkeys` collection, document id = credential id. Both collections are server-only in `firestore.rules`; all access, including `list` and `rename`, goes through the router.
+- Extra error codes: `invalid-argument` (`registerVerify`), `already-exists` (credential already registered).
+
+### Relying party
+
+`rpId` = `app-config/{tenantId}.appDomain`. `localhost` is accepted only from an `http://localhost` origin. A change of `appDomain` orphans all passkeys of that tenant: users fall back to the password and register again.
+
+### Rules
+
+- D4: adding a passkey requires a sign-in within the last 5 minutes. The client asks for the password; Benutzername accounts re-sign-in through `loginWithLoginId`.
+- D6: every new passkey sends a mail to the account holder (skipped for synthetic login emails).
+- Admin revoke: «Benutzer & Zugänge» row ActionSheet → «Passkeys» → delete. Deleting the Firebase login (`deleteFirebaseAuthUser`) cascades to the user's passkeys.
+
+### Known gaps
+
+- Passkeys are not part of data export or erasure yet (marked `gap` in `apps/functions/src/privacy/subject-data-map.ts`).
+- The Firestore TTL policy must be created by hand:
+  `gcloud firestore fields ttls update expireAt --collection-group=webauthn-challenges --enable-ttl`.
+
+### Manual test
+
+1. Run `pnpm nx serve scs-app` with the functions deployed to a test revision.
+2. Add a passkey in the profile; the notice mail arrives.
+3. Log out; «Mit Passkey anmelden» signs in; «Zuletzt verwendet» updates.
+4. Rename the passkey, then delete it; logging in with it now fails with the generic message.
+5. Cancel the OS prompt once on each path (add, login); no error toast appears.
+
 ---
 
 ## Role System
@@ -179,7 +226,7 @@ technical restriction.
 
 The **effective accessor** for a field is the stricter of the two layers:
 
-```
+```text
 effectiveAccessor = stricterAccessor(appConfig.showXXX, privacyUsageToAccessor(user.usageXXX))
 ```
 
