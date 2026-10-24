@@ -155,5 +155,37 @@
     "name_prompt": "What is the area called?",
     "remove": "Remove",
     "remove_confirm": "Remove «{name}» from the offline map?"
+  },
+  "reactions": {
+    "like": "Like",
+    "likes_count": "Liked {count} times",
+    "comments_title": "Comments",
+    "comments_empty": "No comments yet.",
+    "comment_write": "Write a comment",
+    "comment_prompt": "Your comment",
+    "comment_send": "Send",
+    "comment_delete": "Delete"
+  },
+  "guests": {
+    "menu": "Guests",
+    "title": "Guests",
+    "add": "Add guest",
+    "share": "Share link",
+    "share_text": "Follow our trip here: {url}",
+    "expiry": "Validity",
+    "expiry_title": "How long should the link work?",
+    "expiry_1m": "One month",
+    "expiry_3m": "Three months",
+    "expiry_1y": "One year",
+    "expiry_none": "No end date",
+    "revoke": "Block access",
+    "revoke_confirm": "{name} will no longer be able to open the travel journal.",
+    "remove": "Remove from the guest list",
+    "state_ok": "Link active",
+    "state_revoked": "blocked",
+    "state_expires": "valid until {date}",
+    "state_muted": "no notifications",
+    "state_none": "no link yet",
+    "offline": "You can only manage guests with an Internet connection."
   }
 }

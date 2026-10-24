@@ -155,5 +155,37 @@
     "name_prompt": "Wie heisst das Gebiet?",
     "remove": "Entfernen",
     "remove_confirm": "«{name}» aus der Offline-Karte entfernen?"
+  },
+  "reactions": {
+    "like": "Gefällt mir",
+    "likes_count": "Gefällt {count} Mal",
+    "comments_title": "Kommentare",
+    "comments_empty": "Noch keine Kommentare.",
+    "comment_write": "Kommentar schreiben",
+    "comment_prompt": "Dein Kommentar",
+    "comment_send": "Senden",
+    "comment_delete": "Löschen"
+  },
+  "guests": {
+    "menu": "Gäste",
+    "title": "Gäste",
+    "add": "Gast hinzufügen",
+    "share": "Link teilen",
+    "share_text": "Hier kannst du unsere Reise mitverfolgen: {url}",
+    "expiry": "Gültigkeit",
+    "expiry_title": "Wie lange soll der Link gelten?",
+    "expiry_1m": "Einen Monat",
+    "expiry_3m": "Drei Monate",
+    "expiry_1y": "Ein Jahr",
+    "expiry_none": "Ohne Ablauf",
+    "revoke": "Zugang sperren",
+    "revoke_confirm": "{name} kann das Reisetagebuch danach nicht mehr öffnen.",
+    "remove": "Aus der Gästeliste entfernen",
+    "state_ok": "Link aktiv",
+    "state_revoked": "gesperrt",
+    "state_expires": "gültig bis {date}",
+    "state_muted": "keine Benachrichtigungen",
+    "state_none": "noch kein Link",
+    "offline": "Gäste verwaltest du nur mit Internet."
   }
 }

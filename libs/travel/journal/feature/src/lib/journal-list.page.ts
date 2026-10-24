@@ -13,6 +13,7 @@ import { fill } from '@okr/shared-util-core';
 import { showJournalError } from './journal-errors';
 import { openJournalInfo } from './journal-info';
 import { choosePhotoMode } from './journal-photo-mode';
+import { JournalGuestsSheet } from './journal-guests';
 import { JournalSyncLine } from './journal-sync-line';
 import { JournalStore } from './journal.store';
 
@@ -62,6 +63,7 @@ export class JournalListPage {
   private readonly toastController = inject(ToastController);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly modelSelectService = inject(ModelSelectService);
+  private readonly guestsSheet = inject(JournalGuestsSheet);
   private readonly modalController = inject(ModalController);
 
   public constructor() {
@@ -87,6 +89,7 @@ export class JournalListPage {
       buttons: [
         { text: i18n.list_rename(), handler: () => void this.rename(journalKey, title) },
         { text: i18n.list_coauthor(), handler: () => void this.addCoAuthor(journalKey) },
+        { text: i18n.guests(), handler: () => void this.guestsSheet.open(journalKey) },
         { text: i18n.list_delete(), role: 'destructive', handler: () => void this.confirmDelete(journalKey) },
         { text: i18n.cancel(), role: 'cancel' },
       ],

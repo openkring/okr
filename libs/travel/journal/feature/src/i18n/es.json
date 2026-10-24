@@ -155,5 +155,37 @@
     "name_prompt": "¿Cómo se llama la zona?",
     "remove": "Quitar",
     "remove_confirm": "¿Quitar «{name}» del mapa sin conexión?"
+  },
+  "reactions": {
+    "like": "Me gusta",
+    "likes_count": "Le gusta a {count}",
+    "comments_title": "Comentarios",
+    "comments_empty": "Aún no hay comentarios.",
+    "comment_write": "Escribir un comentario",
+    "comment_prompt": "Tu comentario",
+    "comment_send": "Enviar",
+    "comment_delete": "Borrar"
+  },
+  "guests": {
+    "menu": "Invitados",
+    "title": "Invitados",
+    "add": "Añadir invitado",
+    "share": "Compartir enlace",
+    "share_text": "Sigue nuestro viaje aquí: {url}",
+    "expiry": "Validez",
+    "expiry_title": "¿Cuánto tiempo debe funcionar el enlace?",
+    "expiry_1m": "Un mes",
+    "expiry_3m": "Tres meses",
+    "expiry_1y": "Un año",
+    "expiry_none": "Sin fecha de fin",
+    "revoke": "Bloquear el acceso",
+    "revoke_confirm": "{name} ya no podrá abrir el diario de viaje.",
+    "remove": "Quitar de la lista de invitados",
+    "state_ok": "Enlace activo",
+    "state_revoked": "bloqueado",
+    "state_expires": "válido hasta el {date}",
+    "state_muted": "sin notificaciones",
+    "state_none": "aún sin enlace",
+    "offline": "Solo puedes gestionar invitados con Internet."
   }
 }

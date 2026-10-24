@@ -155,5 +155,37 @@
     "name_prompt": "Come si chiama la zona?",
     "remove": "Rimuovi",
     "remove_confirm": "Rimuovere «{name}» dalla mappa offline?"
+  },
+  "reactions": {
+    "like": "Mi piace",
+    "likes_count": "Piace a {count}",
+    "comments_title": "Commenti",
+    "comments_empty": "Ancora nessun commento.",
+    "comment_write": "Scrivi un commento",
+    "comment_prompt": "Il tuo commento",
+    "comment_send": "Invia",
+    "comment_delete": "Elimina"
+  },
+  "guests": {
+    "menu": "Ospiti",
+    "title": "Ospiti",
+    "add": "Aggiungi ospite",
+    "share": "Condividi il link",
+    "share_text": "Segui il nostro viaggio qui: {url}",
+    "expiry": "Validità",
+    "expiry_title": "Per quanto tempo deve funzionare il link?",
+    "expiry_1m": "Un mese",
+    "expiry_3m": "Tre mesi",
+    "expiry_1y": "Un anno",
+    "expiry_none": "Senza scadenza",
+    "revoke": "Blocca l’accesso",
+    "revoke_confirm": "{name} non potrà più aprire il diario di viaggio.",
+    "remove": "Togli dalla lista degli ospiti",
+    "state_ok": "Link attivo",
+    "state_revoked": "bloccato",
+    "state_expires": "valido fino al {date}",
+    "state_muted": "senza notifiche",
+    "state_none": "ancora nessun link",
+    "offline": "Puoi gestire gli ospiti solo con Internet."
   }
 }

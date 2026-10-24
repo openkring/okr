@@ -1,14 +1,15 @@
 import { Component, computed, effect, inject, input, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 import {
-  ActionSheetController, IonBackButton, IonButton, IonButtons, IonContent, IonFooter, IonHeader, IonTitle, IonToolbar,
+  ActionSheetController, AlertController, IonBackButton, IonButton, IonButtons, IonContent, IonFooter, IonHeader, IonTitle, IonToolbar,
   ModalController, ToastController,
 } from '@ionic/angular';
 
 import { AlbumSectionComponent, ArticleSectionComponent, HeroSectionComponent } from '@okr/cms-section-feature';
 import { AppStore } from '@okr/shared-feature';
 import { fill } from '@okr/shared-util-core';
-import { FootprintEditModal, TextBlockEditModal } from '@okr/travel-journal-ui';
+import { FootprintEditModal, JournalReactions, ReactionComment, TextBlockEditModal } from '@okr/travel-journal-ui';
+import { okrPrompt } from '@okr/shared-util-angular';
 import { AlbumSection, ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig } from '@okr/shared-models';
 import { openImageGallery } from '@okr/shared-ui';
 import { FootprintFormModel, StoryBlock, toStorySections } from '@okr/travel-journal-util';
@@ -25,6 +26,7 @@ import { JournalStore } from './journal.store';
 @Component({
   selector: 'okr-journal-story-page',
   imports: [
+    JournalReactions,
     IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonFooter, IonButton,
     HeroSectionComponent, ArticleSectionComponent, AlbumSectionComponent,
   ],
@@ -70,6 +72,8 @@ import { JournalStore } from './journal.store';
             }
           </div>
         }
+        <okr-journal-reactions [likes]="likes().length" [liked]="liked()" [comments]="comments()" [i18n]="store.i18n"
+          (likeToggled)="act(store.toggleLike(footprintKey()))" (writeClicked)="writeComment()" (deleteClicked)="act(store.archiveComment($event))" />
       }
     </ion-content>
     <ion-footer>
@@ -95,9 +99,29 @@ export class JournalStoryPage {
   private readonly modalController = inject(ModalController);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly toastController = inject(ToastController);
+  private readonly alertController = inject(AlertController);
 
   public readonly journalKey = input.required<string>();
   public readonly footprintKey = input.required<string>();
+
+  protected readonly likes = computed(() => this.store.likes(this.footprintKey()));
+  protected readonly liked = computed(() => this.likes().includes(this.store.author()?.personKey ?? ''));
+  protected readonly comments = computed<ReactionComment[]>(() => this.store.comments(this.footprintKey())
+    .map((c) => ({ ...c, mine: c.authorKey === this.store.author()?.personKey })));
+
+  protected async writeComment(): Promise<void> {
+    const i18n = this.store.i18n;
+    const text = await okrPrompt(this.alertController, i18n.comment_write(), i18n.comment_prompt(), i18n.comment_send(), i18n.cancel());
+    if (text?.trim()) await this.act(this.store.addComment(this.footprintKey(), text));
+  }
+
+  protected async act(action: Promise<unknown>): Promise<void> {
+    try {
+      await action;
+    } catch (error) {
+      await showJournalError(this.toastController, this.store.i18n, error);
+    }
+  }
 
   protected readonly footprints = computed(() => this.store.footprints(this.journalKey()));
   protected readonly footprint = computed(() => this.footprints().find((f) => f.key === this.footprintKey()));

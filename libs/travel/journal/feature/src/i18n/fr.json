@@ -155,5 +155,37 @@
     "name_prompt": "Comment s’appelle la zone ?",
     "remove": "Retirer",
     "remove_confirm": "Retirer « {name} » de la carte hors ligne ?"
+  },
+  "reactions": {
+    "like": "J’aime",
+    "likes_count": "Aimé {count} fois",
+    "comments_title": "Commentaires",
+    "comments_empty": "Pas encore de commentaires.",
+    "comment_write": "Écrire un commentaire",
+    "comment_prompt": "Ton commentaire",
+    "comment_send": "Envoyer",
+    "comment_delete": "Supprimer"
+  },
+  "guests": {
+    "menu": "Invités",
+    "title": "Invités",
+    "add": "Ajouter un invité",
+    "share": "Partager le lien",
+    "share_text": "Suis notre voyage ici : {url}",
+    "expiry": "Validité",
+    "expiry_title": "Combien de temps le lien doit-il fonctionner ?",
+    "expiry_1m": "Un mois",
+    "expiry_3m": "Trois mois",
+    "expiry_1y": "Un an",
+    "expiry_none": "Sans date de fin",
+    "revoke": "Bloquer l’accès",
+    "revoke_confirm": "{name} ne pourra plus ouvrir le carnet de voyage.",
+    "remove": "Retirer de la liste des invités",
+    "state_ok": "Lien actif",
+    "state_revoked": "bloqué",
+    "state_expires": "valable jusqu’au {date}",
+    "state_muted": "sans notifications",
+    "state_none": "pas encore de lien",
+    "offline": "Tu ne peux gérer les invités qu’avec Internet."
   }
 }

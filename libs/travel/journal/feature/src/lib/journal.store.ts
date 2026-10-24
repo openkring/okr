@@ -14,7 +14,7 @@ import {
 } from '@okr/travel-journal-data-access';
 import {
   entityStateKey, hasOthersBlocks, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
-  allPhotoFiles, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, parseMapAreas, parsePhotoMode, TileJob, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, publishedPhotoFiles, viewOf,
+  allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, parseMapAreas, parsePhotoMode, TileJob, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, publishedPhotoFiles, viewOf,
 } from '@okr/travel-journal-util';
 
 import { JournalFileUrlService } from './journal-file-url.service';
@@ -231,6 +231,73 @@ export const JournalStore = signalStore(
       },
 
       syncNow,
+
+      /** Comments of a footprint (plan 7), oldest first — from the log, so offline too. */
+      comments(footprintKey: string): CommentView[] {
+        return commentsOf(store.journalState(), footprintKey);
+      },
+
+      /** Who likes a footprint (person keys). */
+      likes(footprintKey: string): string[] {
+        return likesOf(store.journalState(), footprintKey);
+      },
+
+      async addComment(footprintKey: string, text: string): Promise<void> {
+        const fp = footprint(footprintKey);
+        const me = store.identity.author();
+        if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
+        if (!me) throw new JournalWriteRefused('noAuthor');
+        await write([{
+          journalKey: fp.journalKey, entity: 'comment', entityKey: crypto.randomUUID(), op: 'create',
+          fields: { footprintKey, text: text.trim(), authorName: me.name, createdAt: new Date().toISOString() },
+        }]);
+      },
+
+      /** Deletes one's own comment (owned entity: another author's archive would not count anyway). */
+      async archiveComment(commentKey: string): Promise<void> {
+        const comment = viewOf(store.journalState()[entityStateKey('comment', commentKey)]);
+        const fp = typeof comment?.['footprintKey'] === 'string' ? footprint(comment['footprintKey']) : undefined;
+        if (!fp) return;
+        if (store.journalState()[entityStateKey('comment', commentKey)]?.ownerKey !== store.identity.author()?.personKey) {
+          throw new JournalWriteRefused('notOwner');
+        }
+        await write([{ journalKey: fp.journalKey, entity: 'comment', entityKey: commentKey, op: 'archive', fields: {} }]);
+      },
+
+      async toggleLike(footprintKey: string): Promise<void> {
+        const fp = footprint(footprintKey);
+        const me = store.identity.author();
+        if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
+        if (!me) throw new JournalWriteRefused('noAuthor');
+        const liked = likesOf(store.journalState(), footprintKey).includes(me.personKey);
+        await write([liked
+          ? { journalKey: fp.journalKey, entity: 'reaction', entityKey: likeKey(footprintKey, me.personKey), op: 'archive', fields: {} }
+          : { journalKey: fp.journalKey, entity: 'reaction', entityKey: likeKey(footprintKey, me.personKey), op: 'create',
+            fields: { footprintKey, type: 'like', createdAt: new Date().toISOString() } }]);
+      },
+
+      /** The journal's guests as recorded on the journal (`guests: { person }[]`). */
+      guests(journalKey: string): AvatarInfo[] {
+        const view = viewOf(store.journalState()[entityStateKey('journal', journalKey)]);
+        return (Array.isArray(view?.['guests']) ? (view['guests'] as { person?: AvatarInfo }[]) : [])
+          .map((g) => g.person).filter((p): p is AvatarInfo => !!p && typeof p.key === 'string');
+      },
+
+      /** Adds a guest to the journal (a journal record); the link itself comes from manageJournalGuest. */
+      async addGuest(journalKey: string, person: AvatarInfo): Promise<void> {
+        const view = viewOf(store.journalState()[entityStateKey('journal', journalKey)]);
+        const current = Array.isArray(view?.['guests']) ? (view['guests'] as { person: AvatarInfo }[]) : [];
+        if (current.some((g) => g.person?.key === person.key)) return;
+        await write([{ journalKey, entity: 'journal', entityKey: journalKey, op: 'set', fields: { guests: [...current, { person }] } }]);
+        void syncNow();
+      },
+
+      async removeGuest(journalKey: string, personKey: string): Promise<void> {
+        const view = viewOf(store.journalState()[entityStateKey('journal', journalKey)]);
+        const current = Array.isArray(view?.['guests']) ? (view['guests'] as { person: AvatarInfo }[]) : [];
+        await write([{ journalKey, entity: 'journal', entityKey: journalKey, op: 'set', fields: { guests: current.filter((g) => g.person?.key !== personKey) } }]);
+        void syncNow();
+      },
 
       /** The journal's map areas (plan 6b), from the journal field `mapAreas`. */
       mapAreas(journalKey: string): MapArea[] {

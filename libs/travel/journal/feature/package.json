@@ -27,6 +27,7 @@
     "@okr/shared-i18n": "*",
     "@okr/shared-util-angular": "*",
     "@okr/travel-journal-ui": "*",
-    "@okr/shared-pipes": "*"
+    "@okr/shared-pipes": "*",
+    "@capacitor/share": "*"
   }
 }
