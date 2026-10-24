@@ -39,10 +39,24 @@ async function matrix(token: string, method: string, path: string, body?: unknow
 /** A bridge puppet of OUR homeserver (`@signal_<id>:<server>`) — never a look-alike from another server. */
 const isPuppet = (id: string, server: string) => id.startsWith('@signal_') && id.endsWith(`:${server}`);
 
-/** A real Signal DM: a puppet of our bridge among the members, at most three members. */
-async function isSignalDm(token: string, roomId: string, server: string): Promise<boolean> {
-  const members = Object.keys(((await matrix(token, 'GET', `/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/joined_members`))['joined'] ?? {}) as Json);
+/**
+ * A real Signal DM of OUR bridge, checked on the authoritative room state after joining (an invite's
+ * stripped state can be shaped by whoever sent it): the room lives on our server, it was created by the
+ * bridge bot or one of its puppets, a puppet is a member and there are at most three members.
+ */
+async function isSignalDm(token: string, roomId: string, server: string, bot: string): Promise<boolean> {
+  if (!roomId.endsWith(`:${server}`)) return false;
+  const room = encodeURIComponent(roomId);
+  const create = await matrix(token, 'GET', `/_matrix/client/v3/rooms/${room}/state/m.room.create/?format=event`).catch((): Json => ({}));
+  const creator = String(create['sender'] ?? (create['content'] as Json | undefined)?.['creator'] ?? create['creator'] ?? '');
+  if (creator !== bot && !isPuppet(creator, server)) return false;
+  const members = Object.keys(((await matrix(token, 'GET', `/_matrix/client/v3/rooms/${room}/joined_members`))['joined'] ?? {}) as Json);
   return members.some((id) => isPuppet(id, server)) && members.length <= 3;
+}
+
+/** Leaves a room that turned out not to be our Signal portal. */
+async function leave(token: string, roomId: string): Promise<void> {
+  await matrix(token, 'POST', `/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/leave`, {}).catch(() => undefined);
 }
 
 /** Opens (or finds) the portal room of a number through the bridge bot's `start-chat` command. */
@@ -73,8 +87,10 @@ async function openPortal(token: string, phone: string): Promise<string> {
       const invite = events.find((e) => e['type'] === 'm.room.member' && e['state_key'] === userId && (e['content'] as Json | undefined)?.['membership'] === 'invite');
       const inviter = String(invite?.['sender'] ?? '');
       if (inviter !== bot && !isPuppet(inviter, server)) continue;
+      if (!roomId.endsWith(`:${server}`)) continue;
       await matrix(token, 'POST', `/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/join`, {});
-      if (await isSignalDm(token, roomId, server)) return roomId;
+      if (await isSignalDm(token, roomId, server, bot)) return roomId;
+      await leave(token, roomId);
     }
     // an existing portal: the bot names it in its reply
     const chunk = ((await matrix(token, 'GET', `/_matrix/client/v3/rooms/${encodeURIComponent(management)}/messages?dir=b&limit=10`))['chunk'] ?? []) as Json[];
@@ -83,8 +99,9 @@ async function openPortal(token: string, phone: string): Promise<string> {
       const content = (e['content'] ?? {}) as Json;
       const match = decodeURIComponent(`${content['body'] ?? ''} ${content['formatted_body'] ?? ''}`).match(/(![A-Za-z0-9_-]+:[A-Za-z0-9.-]+)/);
       if (match && match[1] !== management) {
+        if (!match[1].endsWith(`:${server}`)) continue;
         await matrix(token, 'POST', `/_matrix/client/v3/join/${encodeURIComponent(match[1])}`, {}).catch(() => undefined);
-        if (await isSignalDm(token, match[1], server)) return match[1];
+        if (await isSignalDm(token, match[1], server, bot)) return match[1];
       }
     }
   }
