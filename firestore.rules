@@ -420,6 +420,16 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Server-only WebAuthn credentials (passkeys), accessed via Cloud Functions (spec 1.120).
+    match /passkeys/{id} {
+      allow read, write: if false;
+    }
+
+    // Server-only one-time WebAuthn challenges (spec 1.120).
+    match /webauthn-challenges/{id} {
+      allow read, write: if false;
+    }
+
     // ============================================================================
     //  Tenant-scoped, client-writable collections.
     //  Phase 1: any authenticated member of the document's tenant. Per-collection

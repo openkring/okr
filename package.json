@@ -94,6 +94,7 @@
     "@maskito/kit": "^5.6.0",
     "@ngrx/signals": "22.0.1",
     "@sentry/angular": "10.76.2",
+    "@simplewebauthn/browser": "^14.0.0",
     "axios": "1.20.0",
     "cors": "2.8.6",
     "countries-list": "^3.4.1",
