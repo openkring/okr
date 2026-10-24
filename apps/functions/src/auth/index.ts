@@ -687,7 +687,12 @@ export const sendEmail = functions.onCall(
         // misconfiguration (e.g. auth/unauthorized-continue-uri = appDomain missing from the
         // Auth authorized-domains list) that would otherwise be swallowed as a silent success.
         const code = e?.errorInfo?.code ?? e?.code ?? 'error';
-        if (code === 'auth/user-not-found') {
+        // With email-enumeration protection the backend no longer answers EMAIL_NOT_FOUND: an
+        // unregistered address comes back as 200 without a link, which the Admin SDK turns into
+        // auth/internal-error "INTERNAL ASSERT FAILED" (FUNCTIONS-2). Ask Auth whether the account exists.
+        const noAccount = code === 'auth/user-not-found'
+          || (code === 'auth/internal-error' && await getAuth().getUserByEmail(resetAuthEmail || recipients[0]).then(() => false, (err: any) => (err?.errorInfo?.code ?? err?.code) === 'auth/user-not-found'));
+        if (noAccount) {
           logger.info(`${CF_NAME}: password-reset requested for an address with no account — responding generically`);
         } else {
           // The caller gets the same generic success either way, so this is the ONLY signal that
