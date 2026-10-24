@@ -36,6 +36,7 @@ import { JOURNAL_I18N_KEYS, JournalI18n } from '@okr/travel-journal-util';
           <li>{{ i18n.info_before_2() }}</li>
           <li>{{ i18n.info_before_3() }}</li>
           <li>{{ i18n.info_before_4() }}</li>
+          <li>{{ i18n.info_before_5() }}</li>
         </ol>
 
         <h3>{{ i18n.info_internet_h() }}</h3>

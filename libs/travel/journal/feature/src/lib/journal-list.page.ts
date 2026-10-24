@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Network } from '@capacitor/network';
 import {
@@ -20,7 +20,12 @@ import { JournalStore } from './journal.store';
 @Component({
   selector: 'okr-journal-list-page',
   imports: [IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonList, IonItem, IonLabel, IonButton, IonIcon, SvgIconPipe, JournalSyncLine],
-  styles: [`.title { cursor: pointer; } okr-journal-sync-line { margin-top: 12px; }`],
+  styles: [`
+    .title { cursor: pointer; }
+    okr-journal-sync-line { margin-top: 12px; }
+    .offline-map { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 16px;
+      font-size: 0.8rem; color: var(--ion-color-medium); }
+  `],
   template: `
     <ion-header>
       <ion-toolbar>
@@ -46,6 +51,26 @@ import { JournalStore } from './journal.store';
           }
         </ion-list>
         <ion-button expand="block" (click)="create()">{{ store.i18n.list_new() }}</ion-button>
+        <div class="offline-map">
+          @switch (store.offlineMap().state) {
+            @case ('loading') {
+              <span>{{ mapProgress() }}</span>
+              <ion-button size="small" fill="clear" (click)="store.cancelOfflineMap()">{{ store.i18n.map_cancel() }}</ion-button>
+            }
+            @case ('ready') {
+              <span>{{ mapReady() }}</span>
+              <ion-button size="small" fill="clear" (click)="store.downloadOfflineMap()">{{ store.i18n.map_update() }}</ion-button>
+            }
+            @case ('partial') {
+              <span>{{ mapPartial() }}</span>
+              <ion-button size="small" fill="clear" (click)="store.downloadOfflineMap()">{{ store.i18n.map_resume() }}</ion-button>
+            }
+            @default {
+              <span>{{ store.i18n.map_hint() }}</span>
+              <ion-button size="small" fill="clear" (click)="store.downloadOfflineMap()">{{ store.i18n.map_load() }}</ion-button>
+            }
+          }
+        </div>
         <okr-journal-sync-line [status]="store.syncStatus()" [photoMode]="store.photoMode()" [peerStatus]="store.peerStatus()" [i18n]="store.i18n"
           (syncNow)="store.syncNow()" (choosePhotoMode)="photoMode()" />
       }
@@ -64,6 +89,12 @@ export class JournalListPage {
   public constructor() {
     void this.store.init();
   }
+
+  protected readonly mapProgress = computed(() =>
+    fill(this.store.i18n.map_progress(), { done: this.store.offlineMap().done, total: this.store.offlineMap().total }));
+  protected readonly mapReady = computed(() =>
+    fill(this.store.i18n.map_ready(), { date: this.store.offlineMap().at.slice(0, 10).split('-').reverse().join('.') }));
+  protected readonly mapPartial = computed(() => fill(this.store.i18n.map_partial(), { failed: this.store.offlineMap().failed }));
 
   protected info(): Promise<void> {
     return openJournalInfo(this.modalController);

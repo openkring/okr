@@ -13,13 +13,15 @@ import {
 } from '@okr/travel-journal-data-access';
 import {
   entityStateKey, hasOthersBlocks, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
-  allPhotoFiles, JournalPhotoMode, journalsOf, parsePhotoMode, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, publishedPhotoFiles, viewOf,
+  allPhotoFiles, GIBS_BLUE_MARBLE, JournalPhotoMode, JournalTileSource, journalsOf, localTileSources, offlineTilePlan, parsePhotoMode, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, publishedPhotoFiles, viewOf,
 } from '@okr/travel-journal-util';
 
 import { JournalFileUrlService } from './journal-file-url.service';
 
 const SYNC_INTERVAL_MS = 2 * 60 * 1000;
 const META_PHOTO_MODE = 'photoMode';
+const META_OFFLINE_MAP = 'offlineMap';
+const MAP_WORKERS = 4; // parallel tile requests: polite to GIBS and the USGS WMS
 const META_ACTIVE_JOURNAL = 'activeJournal'; // the journal last opened: the one P2P runs for
 const META_PHOTOS_PAUSED = 'photosPaused'; // before the three photo modes
 
@@ -39,9 +41,24 @@ interface JournalStoreState {
   changes: JournalChange[];
   photoMode: JournalPhotoMode;
   activeJournalKey: string;
+  offlineMap: OfflineMapStatus;
 }
 
-const initialState: JournalStoreState = { ready: false, native: Capacitor.isNativePlatform(), error: '', changes: [], photoMode: 'all', activeJournalKey: '' };
+/** The offline map (plan 6): none yet, downloading, complete, or finished with failed tiles. */
+export interface OfflineMapStatus { state: 'none' | 'loading' | 'ready' | 'partial'; done: number; total: number; failed: number; at: string }
+const NO_OFFLINE_MAP: OfflineMapStatus = { state: 'none', done: 0, total: 0, failed: 0, at: '' };
+
+function parseOfflineMap(raw: string | undefined): OfflineMapStatus {
+  try {
+    const value = raw ? (JSON.parse(raw) as Partial<OfflineMapStatus>) : undefined;
+    if (value?.state === 'ready' || value?.state === 'partial') return { ...NO_OFFLINE_MAP, ...value };
+  } catch {
+    // a damaged entry counts as no map
+  }
+  return NO_OFFLINE_MAP;
+}
+
+const initialState: JournalStoreState = { ready: false, native: Capacitor.isNativePlatform(), error: '', changes: [], photoMode: 'all', activeJournalKey: '', offlineMap: NO_OFFLINE_MAP };
 
 export const JournalStore = signalStore(
   { providedIn: 'root' },
@@ -65,6 +82,14 @@ export const JournalStore = signalStore(
       author: computed(() => store.identity.author()),
       syncStatus: computed(() => store.syncService.status()),
       peerStatus: computed(() => store.peerService.status()),
+      /** The overview's map layers: the downloaded files once (nearly) complete, else Blue Marble online. */
+      mapTiles: computed<JournalTileSource | JournalTileSource[]>(() => {
+        const map = store.offlineMap();
+        const base = store.fileUrl.dirUrl('tiles');
+        // a download stopped early must not swap the map for mostly missing tiles
+        const usable = map.state === 'ready' || (map.state === 'partial' && map.failed <= map.total * 0.1);
+        return usable && base ? localTileSources(base) : GIBS_BLUE_MARBLE;
+      }),
     };
   }),
   withMethods((store) => {
@@ -170,6 +195,8 @@ export const JournalStore = signalStore(
       void syncNow();
     }
 
+    let cancelMap = false;
+
     // one shared load: a second page instance must not replace state that a write already extended
     let loading: Promise<void> | undefined;
 
@@ -186,6 +213,7 @@ export const JournalStore = signalStore(
               changes: await store.db.listChanges(), ready: true, error: '',
               photoMode: parsePhotoMode(await store.db.getMeta(META_PHOTO_MODE), await store.db.getMeta(META_PHOTOS_PAUSED)),
               activeJournalKey: (await store.db.getMeta(META_ACTIVE_JOURNAL)) ?? '',
+              offlineMap: parseOfflineMap(await store.db.getMeta(META_OFFLINE_MAP)),
             });
             startAutoSync();
           } catch (error) {
@@ -197,6 +225,46 @@ export const JournalStore = signalStore(
       },
 
       syncNow,
+
+      /**
+       * Downloads the offline map (plan 6): route, peninsula and landing sites plus every footprint position of
+       * the journals on this iPad. Existing tiles are skipped natively, so it resumes after a stop.
+       */
+      async downloadOfflineMap(): Promise<void> {
+        if (!store.native() || store.offlineMap().state === 'loading') return;
+        const positions = journalsOf(store.journalState()).flatMap((j) => footprintsOf(store.journalState(), j.key))
+          .filter((f) => f.latitude !== undefined && f.longitude !== undefined)
+          .map((f) => ({ lat: f.latitude as number, lng: f.longitude as number }));
+        const jobs = offlineTilePlan(positions);
+        cancelMap = false;
+        let next = 0;
+        let done = 0;
+        let failed = 0;
+        patchState(store, { offlineMap: { ...store.offlineMap(), state: 'loading', done: 0, total: jobs.length, failed: 0 } });
+        const worker = async (): Promise<void> => {
+          while (!cancelMap && next < jobs.length) {
+            const job = jobs[next++];
+            try {
+              await JournalPhotos.downloadTile({ url: job.url, path: job.path });
+            } catch {
+              failed += 1; // open sea outside the mosaic, a timeout: retried on «Fortsetzen»
+            }
+            done += 1;
+            patchState(store, { offlineMap: { ...store.offlineMap(), done, failed } });
+          }
+        };
+        await Promise.all(Array.from({ length: MAP_WORKERS }, () => worker()));
+        const result: OfflineMapStatus = {
+          state: failed === 0 && done === jobs.length ? 'ready' : 'partial', done, total: jobs.length, failed: failed + (jobs.length - done),
+          at: new Date().toISOString(),
+        };
+        patchState(store, { offlineMap: result });
+        await store.db.setMeta(META_OFFLINE_MAP, JSON.stringify(result));
+      },
+
+      cancelOfflineMap(): void {
+        cancelMap = true;
+      },
 
       /** The journal now open becomes the active one: P2P switches to it. */
       async openJournal(journalKey: string): Promise<void> {

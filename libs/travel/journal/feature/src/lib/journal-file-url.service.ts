@@ -31,6 +31,12 @@ export class JournalFileUrlService {
     return version > 0 ? `${url}?v=${version}` : url;
   }
 
+  /** A folder URL for templates (map tiles): no version query, the template appends the file. */
+  public dirUrl(relativeDir: string): string {
+    const base = this.documentsUri();
+    return base ? Capacitor.convertFileSrc(`${base}/${relativeDir}`) : '';
+  }
+
   public refresh(): void {
     this.version.update((v) => v + 1);
   }

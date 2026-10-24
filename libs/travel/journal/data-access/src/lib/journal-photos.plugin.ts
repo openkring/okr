@@ -35,6 +35,8 @@ export interface JournalPhotosPlugin {
   downloadFile(options: { journalKey: string; file: string; url: string }): Promise<{ status: number }>;
   /** Plan 4: the named files that exist in Documents/journals/<journalKey>/. */
   presentFiles(options: { journalKey: string; files: string[] }): Promise<{ files: string[] }>;
+  /** Plan 6: one offline map tile into Documents/<path> (`tiles/gibs/z/x/y.jpg`, `tiles/lima/z/x/y.png`); existing tiles are skipped. */
+  downloadTile(options: { url: string; path: string }): Promise<{ skipped: boolean }>;
 }
 
 export const JournalPhotos = registerPlugin<JournalPhotosPlugin>('JournalPhotos');

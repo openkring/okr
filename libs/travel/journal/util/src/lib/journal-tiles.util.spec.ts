@@ -31,6 +31,8 @@ describe('journal offline tiles', () => {
     expect(url.searchParams.get('VERSION')).toBe('1.3.0');
     expect(url.searchParams.get('BBOX')).toBe('-62.995158,-60.644531,-62.915233,-60.468750');
     expect(url.searchParams.get('WIDTH')).toBe('256');
+    expect(url.searchParams.get('FORMAT')).toBe('image/png'); // transparent outside the mosaic
+    expect(url.searchParams.get('TRANSPARENT')).toBe('TRUE');
   });
 
   it('plan contains no tile twice', () => {
@@ -41,7 +43,7 @@ describe('journal offline tiles', () => {
     expect(route.length).toBe([3, 4, 5, 6, 7, 8].reduce((n, z) => n + count(ROUTE_BBOX, z), 0));
     expect(plan.filter((j) => j.source === 'lima' && j.z <= 10).length).toBe(count(PENINSULA_BBOX, 9) + count(PENINSULA_BBOX, 10));
     expect(plan.find((j) => j.source === 'gibs')?.url).toMatch(/GoogleMapsCompatible_Level8\/\d+\/\d+\/\d+\.jpg$/);
-    expect(plan[0].path).toMatch(/^tiles\/(gibs|lima)\/\d+\/\d+\/\d+\.jpg$/);
+    expect(plan.every((j) => /^tiles\/(gibs\/\d+\/\d+\/\d+\.jpg|lima\/\d+\/\d+\/\d+\.png)$/.test(j.path))).toBe(true);
   });
 
   it('footprints add detail around them', () => {
@@ -57,6 +59,7 @@ describe('journal offline tiles', () => {
     const [gibs, lima] = localTileSources('capacitor://localhost/_capacitor_file_/docs/tiles');
     expect(gibs.urlTemplate).toBe('capacitor://localhost/_capacitor_file_/docs/tiles/gibs/{z}/{x}/{y}.jpg');
     expect(gibs.maxNativeZoom).toBe(8);
+    expect(lima.urlTemplate).toBe('capacitor://localhost/_capacitor_file_/docs/tiles/lima/{z}/{x}/{y}.png');
     expect(lima.minZoom).toBe(9);
     expect(lima.maxNativeZoom).toBe(12);
   });

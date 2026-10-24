@@ -10,7 +10,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { RouteMap, RoutePin } from '@okr/shared-ui';
 import { FootprintEditModal } from '@okr/travel-journal-ui';
 import {
-  FootprintFormModel, footprintChips, GIBS_BLUE_MARBLE, journalMapData, newFootprintFormModel, routeLengthKm,
+  FootprintFormModel, footprintChips, journalMapData, newFootprintFormModel, routeLengthKm,
 } from '@okr/travel-journal-util';
 
 import { JournalFileUrlService } from './journal-file-url.service';
@@ -63,7 +63,7 @@ const WIDE_QUERY = '(min-width: 992px)';
     <ion-content [scrollY]="!wide()">
       <div class="layout" [class.wide]="wide()">
         <div class="map">
-          <okr-route-map [route]="map().route" [pins]="pins()" [selectedKey]="selectedKey()" [tiles]="tiles"
+          <okr-route-map [route]="map().route" [pins]="pins()" [selectedKey]="selectedKey()" [tiles]="store.mapTiles()"
             (pinClicked)="openFootprint($event)" />
         </div>
         <div class="side">
@@ -104,7 +104,6 @@ export class JournalOverviewPage {
 
   public readonly journalKey = input.required<string>();
 
-  protected readonly tiles = GIBS_BLUE_MARBLE;
   protected readonly selectedKey = signal<string | undefined>(undefined);
   protected readonly wide = signal(typeof window !== 'undefined' && window.matchMedia(WIDE_QUERY).matches);
 

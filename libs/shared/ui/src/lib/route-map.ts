@@ -7,7 +7,7 @@ import type * as L from 'leaflet';
  * tile source (offline, or tiles not yet downloaded) route and pins still show on a plain background.
  */
 export interface RoutePin { key: string; lat: number; lng: number; thumbnailUrl?: string; label: string }
-export interface TileSource { urlTemplate: string; maxNativeZoom: number; attribution: string }
+export interface TileSource { urlTemplate: string; maxNativeZoom: number; attribution: string; minZoom?: number; minNativeZoom?: number }
 
 const FIT_PADDING: L.PointExpression = [40, 40];
 const SINGLE_POINT_ZOOM = 10;
@@ -37,13 +37,14 @@ export class RouteMap {
   public readonly route = input<[number, number][]>([]);
   public readonly pins = input<RoutePin[]>([]);
   public readonly selectedKey = input<string | undefined>(undefined);
-  public readonly tiles = input<TileSource | undefined>(undefined);
+  /** One source or several stacked layers (e.g. an offline overview plus detail tiles from a higher zoom on). */
+  public readonly tiles = input<TileSource | TileSource[] | undefined>(undefined);
   public readonly pinClicked = output<string>();
 
   private readonly el = inject(ElementRef<HTMLElement>);
   private leaflet?: typeof L;
   private map?: L.Map;
-  private tileLayer?: L.TileLayer;
+  private tileLayers: L.TileLayer[] = [];
   private overlay?: L.LayerGroup;
   private resizeObserver?: ResizeObserver;
   private lastPoints: L.LatLngExpression[] = [];
@@ -130,18 +131,22 @@ export class RouteMap {
     this.snapHandle = requestAnimationFrame(tick);
   }
 
-  private render(route: [number, number][], pins: RoutePin[], selected: string | undefined, tiles: TileSource | undefined): void {
+  private render(route: [number, number][], pins: RoutePin[], selected: string | undefined, tiles: TileSource | TileSource[] | undefined): void {
     const Lf = this.leaflet;
-    if (!Lf || !this.map || !this.overlay) return;
+    const map = this.map;
+    if (!Lf || !map || !this.overlay) return;
 
     // rebuild the tile layer only when the source changes — not on every data change (no flicker)
-    const tilesKey = tiles ? `${tiles.urlTemplate}|${tiles.maxNativeZoom}` : undefined;
+    const sources = tiles === undefined ? [] : Array.isArray(tiles) ? tiles : [tiles];
+    const tilesKey = sources.map((t) => `${t.urlTemplate}|${t.minZoom ?? ''}|${t.minNativeZoom ?? ''}|${t.maxNativeZoom}`).join(';');
     if (tilesKey !== this.lastTilesKey) {
       this.lastTilesKey = tilesKey;
-      this.tileLayer?.remove();
-      this.tileLayer = tiles
-        ? Lf.tileLayer(tiles.urlTemplate, { maxNativeZoom: tiles.maxNativeZoom, maxZoom: 16, attribution: tiles.attribution }).addTo(this.map)
-        : undefined;
+      for (const layer of this.tileLayers) layer.remove();
+      this.tileLayers = sources.map((t) => Lf.tileLayer(t.urlTemplate, {
+        maxNativeZoom: t.maxNativeZoom, maxZoom: 16, attribution: t.attribution,
+        ...(t.minZoom !== undefined ? { minZoom: t.minZoom } : {}),
+        ...(t.minNativeZoom !== undefined ? { minNativeZoom: t.minNativeZoom } : {}),
+      }).addTo(map));
     }
 
     this.overlay.clearLayers();

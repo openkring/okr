@@ -122,12 +122,23 @@
     "local_h": "Entre les deux iPad",
     "local": "À bord, les deux iPad échangent leurs entrées et leurs photos directement, sans Internet : par le Wi-Fi du bateau ou, s’il n’y en a pas, par une liaison radio directe tant que les iPad sont proches. Rien ne passe par le satellite. Laisse pour cela le Wi-Fi et le Bluetooth activés, même sans être connecté à un réseau.",
     "home_h": "De retour à la maison",
-    "home": "Remets le transfert des photos sur « Toutes les photos » et réactive Photos iCloud. Les photos du voyage de l’app Photos partent alors vers iCloud par ton Internet à la maison."
+    "home": "Remets le transfert des photos sur « Toutes les photos » et réactive Photos iCloud. Les photos du voyage de l’app Photos partent alors vers iCloud par ton Internet à la maison.",
+    "before_5": "Dans la liste des carnets de voyage, charge la carte hors ligne tant que tu as le Wi-Fi à la maison. En voyage, la carte montre alors l’itinéraire et les lieux de débarquement sans Internet."
   },
   "peer": {
     "connected": "{names} connecté",
     "connected_received": "{names} connecté · {count} modifications reçues",
     "searching": "Recherche de l’autre iPad …",
     "no_secret": "Pour relier les deux iPad, ouvre une fois le carnet avec Internet."
+  },
+  "map": {
+    "hint": "Carte hors ligne : environ 80 Mo, à charger une fois à la maison en Wi-Fi.",
+    "load": "Charger",
+    "progress": "Carte hors ligne : {done} sur {total}",
+    "cancel": "Annuler",
+    "ready": "Carte hors ligne prête (état au {date})",
+    "update": "Mettre à jour",
+    "partial": "Carte hors ligne incomplète – il manque {failed} parties.",
+    "resume": "Continuer"
   }
 }

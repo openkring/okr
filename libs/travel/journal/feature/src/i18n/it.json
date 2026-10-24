@@ -122,12 +122,23 @@
     "local_h": "Tra i due iPad",
     "local": "A bordo i due iPad si scambiano voci e foto direttamente, senza Internet: tramite il Wi-Fi della nave o, se non c’è, tramite un collegamento radio diretto finché gli iPad sono vicini. Niente passa dal satellite. Per questo lascia attivi Wi-Fi e Bluetooth, anche se non sei connesso a nessuna rete.",
     "home_h": "Di nuovo a casa",
-    "home": "Rimetti il trasferimento foto su «Tutte le foto» e riattiva Foto di iCloud. Le foto del viaggio nell’app Foto vanno allora su iCloud con il tuo Internet di casa."
+    "home": "Rimetti il trasferimento foto su «Tutte le foto» e riattiva Foto di iCloud. Le foto del viaggio nell’app Foto vanno allora su iCloud con il tuo Internet di casa.",
+    "before_5": "Nell’elenco dei diari di viaggio carica la mappa offline finché hai il Wi-Fi a casa. In viaggio la mappa mostra poi il percorso e i luoghi di sbarco senza Internet."
   },
   "peer": {
     "connected": "{names} connesso",
     "connected_received": "{names} connesso · {count} modifiche ricevute",
     "searching": "Cerco l’altro iPad …",
     "no_secret": "Per collegare i due iPad, apri il diario una volta con Internet."
+  },
+  "map": {
+    "hint": "Mappa offline: circa 80 MB, da caricare una volta a casa con il Wi-Fi.",
+    "load": "Carica",
+    "progress": "Mappa offline: {done} di {total}",
+    "cancel": "Annulla",
+    "ready": "Mappa offline pronta (aggiornata al {date})",
+    "update": "Aggiorna",
+    "partial": "Mappa offline incompleta: mancano {failed} parti.",
+    "resume": "Continua"
   }
 }

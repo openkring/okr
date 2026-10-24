@@ -5,7 +5,8 @@ import { JournalTileSource } from './journal-map.util';
  * NASA GIBS Blue Marble for the whole route (z3–8, XYZ tiles) and LIMA, the Landsat mosaic of Antarctica,
  * from the USGS WMS for the peninsula (z9–10) and around the landing sites (z11–12). The WMS speaks only
  * EPSG:4326, so each Mercator tile is fetched as its latitude/longitude box at 256 px; inside one tile the
- * Mercator stretch changes by about 1 %, below one pixel.
+ * Mercator stretch changes by about 1 %, below one pixel. LIMA tiles are transparent PNGs: outside the
+ * mosaic the WMS paints white, which as JPEG would cover the sea of the Blue Marble layer below.
  */
 export type Bbox = [west: number, south: number, east: number, north: number];
 
@@ -74,7 +75,7 @@ export function limaUrl(z: number, x: number, y: number): string {
   const b = tileBounds(z, x, y);
   const bbox = [b.south, b.west, b.north, b.east].map((v) => v.toFixed(6)).join(',');
   return `${LIMA_WMS}?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=${LIMA_LAYERS}&STYLES=&CRS=EPSG:4326`
-    + `&BBOX=${bbox}&WIDTH=256&HEIGHT=256&FORMAT=image/jpeg`;
+    + `&BBOX=${bbox}&WIDTH=256&HEIGHT=256&FORMAT=image/png&TRANSPARENT=TRUE`;
 }
 
 function siteBbox(lat: number, lng: number): Bbox {
@@ -91,7 +92,7 @@ export function offlineTilePlan(extraSites: { lat: number; lng: number }[]): Til
       const r = tileRange(bbox, z);
       for (let x = r.x0; x <= r.x1; x++) {
         for (let y = r.y0; y <= r.y1; y++) {
-          const path = `tiles/${source}/${z}/${x}/${y}.jpg`;
+          const path = `tiles/${source}/${z}/${x}/${y}.${source === 'gibs' ? 'jpg' : 'png'}`;
           if (jobs.has(path)) continue;
           const url = source === 'gibs'
             ? GIBS_TEMPLATE.replace('{z}', String(z)).replace('{y}', String(y)).replace('{x}', String(x))
@@ -114,6 +115,6 @@ export function offlineTilePlan(extraSites: { lat: number; lng: number }[]): Til
 export function localTileSources(tilesBaseUrl: string): JournalTileSource[] {
   return [
     { urlTemplate: `${tilesBaseUrl}/gibs/{z}/{x}/{y}.jpg`, maxNativeZoom: 8, attribution: 'Imagery: NASA GIBS' },
-    { urlTemplate: `${tilesBaseUrl}/lima/{z}/{x}/{y}.jpg`, minZoom: 9, minNativeZoom: 9, maxNativeZoom: 12, attribution: 'Landsat LIMA: USGS' },
+    { urlTemplate: `${tilesBaseUrl}/lima/{z}/{x}/{y}.png`, minZoom: 9, minNativeZoom: 9, maxNativeZoom: 12, attribution: 'Landsat LIMA: USGS' },
   ];
 }
