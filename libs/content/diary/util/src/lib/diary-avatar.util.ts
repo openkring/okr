@@ -9,16 +9,17 @@ function collapseWhitespace(value: string): string {
   return value.trim().replace(/\s+/g, ' ');
 }
 
-/** A free-text location (key ''): the text lives in name2, like an org avatar. */
+/** A free-text location (key ''): the text lives in name1 and label. */
 export function customLocationAvatar(label: string): AvatarInfo {
-  return { key: '', name1: '', name2: collapseWhitespace(label), label: '', modelType: 'location', type: '', subType: '' };
+  const text = collapseWhitespace(label);
+  return { key: '', name1: text, name2: '', label: text, modelType: 'location', type: '', subType: '' };
 }
 
 /** A free-text person (key ''), split like ModelSelectService.selectPersonAvatar: last word = name2. */
 export function customPersonAvatar(label: string): AvatarInfo {
   const parts = collapseWhitespace(label).split(' ');
   const name1 = parts.length > 1 ? parts.slice(0, -1).join(' ') : '';
-  const name2 = parts[parts.length - 1] ?? label;
+  const name2 = parts[parts.length - 1];
   return { key: '', name1, name2, label: '', modelType: 'person', type: '', subType: '' };
 }
 
@@ -54,7 +55,7 @@ export function mainLocation(d: Pick<DiaryModel, 'locations'>): AvatarInfo | und
 
 /** Read-side shim: derives `locations` / `people` from the legacy fields on a document that predates spec 1.117. */
 export function withDiaryLocations<T extends DiaryModel>(raw: T): T {
-  if (raw.locations) return { ...raw, locations: raw.locations ?? [], people: raw.people ?? [] };
+  if (raw.locations) return { ...raw, people: raw.people ?? [] };
 
   let locations: AvatarInfo[] = [];
   const main = raw.location ?? (raw.customLocationLabel ? customLocationAvatar(raw.customLocationLabel) : undefined);

@@ -3,7 +3,7 @@ import { DiaryModel } from '@okr/shared-models';
 
 import {
   addDiaryAvatar, customLocationAvatar, customPersonAvatar, diaryAvatarId, diaryAvatarName,
-  replaceDiaryAvatar, stripLegacyDiaryFields, withDiaryLocations,
+  mainLocation, replaceDiaryAvatar, stripLegacyDiaryFields, withDiaryLocations,
 } from './diary-avatar.util';
 
 describe('diary-avatar.util', () => {
@@ -46,5 +46,17 @@ describe('diary-avatar.util', () => {
   });
   it('stripLegacyDiaryFields removes exactly the four legacy keys', () => {
     expect(Object.keys(stripLegacyDiaryFields({ a: 1, location: 1, customLocationLabel: 1, places: 1, customPeopleLabels: 1 }))).toEqual(['a']);
+  });
+  it('customLocationAvatar has the binding shape', () => {
+    expect(customLocationAvatar('Bern')).toEqual({ key: '', modelType: 'location', name1: 'Bern', name2: '', label: 'Bern', type: '', subType: '' });
+  });
+  it('mainLocation is the first entry, undefined when empty', () => {
+    const a = customLocationAvatar('A');
+    expect(mainLocation({ locations: [a, customLocationAvatar('B')] })).toBe(a);
+    expect(mainLocation({ locations: [] })).toBeUndefined();
+  });
+  it('withDiaryLocations on a legacy doc without any location gives []', () => {
+    const raw = { customLocationLabel: '', places: [], people: [], customPeopleLabels: [] } as unknown as DiaryModel;
+    expect(withDiaryLocations(raw).locations).toEqual([]);
   });
 });
