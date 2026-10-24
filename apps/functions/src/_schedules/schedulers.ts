@@ -51,7 +51,8 @@ export const HALF_HOURLY_JOBS: NamedJob[] = [
   { name: 'weatherFetch', run: runWeatherFetch, when: onTheHour },
 ];
 
-export const NIGHTLY_OPTIONS = { schedule: '0 2 * * *', timeZone: TIME_ZONE, region: REGION, timeoutSeconds: 540, secrets: [matrixAdminToken] };
+// 03:15, not 02:00: 02:00-02:59 is skipped/repeated at DST changes; 03:15 was already the old slot of three of these jobs.
+export const NIGHTLY_OPTIONS = { schedule: '15 3 * * *', timeZone: TIME_ZONE, region: REGION, timeoutSeconds: 540, secrets: [matrixAdminToken] };
 export const MORNING_OPTIONS = { schedule: '0 7 * * *', timeZone: TIME_ZONE, region: REGION, timeoutSeconds: 540, memory: '256MiB' as const };
 export const EVENING_OPTIONS = { schedule: '50 23 * * *', timeZone: TIME_ZONE, region: REGION, timeoutSeconds: 300 };
 export const HALF_HOURLY_OPTIONS = { schedule: '*/30 * * * *', timeZone: TIME_ZONE, region: REGION, timeoutSeconds: 540, memory: '256MiB' as const };

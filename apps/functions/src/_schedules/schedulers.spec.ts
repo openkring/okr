@@ -33,7 +33,7 @@ describe('time-slot schedulers', () => {
 
   it('scheduler options match the slot table', () => {
     const { secrets, ...nightly } = NIGHTLY_OPTIONS;
-    expect(nightly).toEqual({ schedule: '0 2 * * *', timeZone: 'Europe/Zurich', region: 'europe-west6', timeoutSeconds: 540 });
+    expect(nightly).toEqual({ schedule: '15 3 * * *', timeZone: 'Europe/Zurich', region: 'europe-west6', timeoutSeconds: 540 });
     expect(secrets).toHaveLength(1);
     expect(MORNING_OPTIONS).toEqual({ schedule: '0 7 * * *', timeZone: 'Europe/Zurich', region: 'europe-west6', timeoutSeconds: 540, memory: '256MiB' });
     expect(EVENING_OPTIONS).toEqual({ schedule: '50 23 * * *', timeZone: 'Europe/Zurich', region: 'europe-west6', timeoutSeconds: 300 });
@@ -45,7 +45,7 @@ describe('time-slot schedulers', () => {
       expect(typeof fn).toBe('function');
       expect(fn.__endpoint?.scheduleTrigger?.schedule).toBeTruthy();
     }
-    expect(nightlyMaintenance.__endpoint.scheduleTrigger?.schedule).toBe('0 2 * * *');
+    expect(nightlyMaintenance.__endpoint.scheduleTrigger?.schedule).toBe('15 3 * * *');
     expect(halfHourlyJobs.__endpoint.scheduleTrigger?.schedule).toBe('*/30 * * * *');
   });
 });

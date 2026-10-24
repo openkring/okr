@@ -27,7 +27,8 @@ export async function runJobs(scheduler: string, jobs: NamedJob[], now: Date = n
       logger.info(`${scheduler}:${job.name} done`, { durationMs: Date.now() - start });
     } catch (err) {
       failed.push(job.name);
-      logger.error(`${scheduler}:${job.name} failed`, { error: err, durationMs: Date.now() - start });
+      // Error as a positional arg, not inside the object: the logger then keeps its text/stack in the message and durationMs stays structured.
+      logger.error(`${scheduler}:${job.name} failed`, err, { durationMs: Date.now() - start });
     }
   }
   return { ran, skipped, failed };

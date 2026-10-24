@@ -19,6 +19,12 @@ describe('runHandlers', () => {
     expect(error).toHaveBeenCalledWith('groups:bad failed', expect.anything());
   });
 
+  it('passes the thrown Error itself to the logger so its text is kept', async () => {
+    const boom = new Error('boom');
+    await runHandlers('groups', 1, [{ name: 'bad', run: () => Promise.reject(boom) }]);
+    expect(error).toHaveBeenCalledWith('groups:bad failed', boom);
+  });
+
   it('survives a handler that throws synchronously', async () => {
     const res = await runHandlers('t', 1, [
       {
@@ -68,7 +74,13 @@ describe('runJobs', () => {
     ]);
     expect(later).toHaveBeenCalled();
     expect(res).toEqual({ ran: ['later'], skipped: [], failed: ['bad'] });
-    expect(error).toHaveBeenCalledWith('s:bad failed', expect.objectContaining({ durationMs: expect.any(Number) }));
+    expect(error).toHaveBeenCalledWith('s:bad failed', expect.any(Error), expect.objectContaining({ durationMs: expect.any(Number) }));
+  });
+
+  it('passes the thrown Error itself to the logger so its text is kept', async () => {
+    const boom = new Error('boom');
+    await runJobs('s', [{ name: 'bad', run: () => Promise.reject(boom) }]);
+    expect(error.mock.calls[0][1]).toBe(boom);
   });
 
   it('skips a job whose when() is false and passes now', async () => {
