@@ -14,3 +14,4 @@ export * from './lib/journal-i18n';
 export * from './lib/journal-server.util';
 export * from './lib/journal-sync.util';
 export * from './lib/journal-peer.util';
+export * from './lib/journal-tiles.util';

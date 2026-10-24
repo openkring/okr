@@ -5,7 +5,13 @@ import { FootprintView, ImageView } from './journal-view.util';
  * Map data for the journal overview (spec 1.113 §9.1, §6.3): one pin per footprint with a position, and
  * the dashed route through ALL photo positions in time order.
  */
-export interface JournalTileSource { urlTemplate: string; maxNativeZoom: number; attribution: string }
+export interface JournalTileSource {
+  urlTemplate: string;
+  maxNativeZoom: number;
+  attribution: string;
+  minZoom?: number; // the layer is hidden below
+  minNativeZoom?: number;
+}
 
 /** NASA GIBS Blue Marble, EPSG:3857, up to zoom 8 (spike S4, NASA open data). */
 export const GIBS_BLUE_MARBLE: JournalTileSource = {
