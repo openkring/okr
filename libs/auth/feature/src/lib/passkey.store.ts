@@ -34,7 +34,8 @@ export const PasskeyStore = signalStore(
     i18n: store.i18nService.translateAll(AUTH_I18N_KEYS),
   })),
   withMethods((store) => {
-    const reload = async (): Promise<void> => {
+    /** `quiet`: the initial load on every profile visit must not toast when offline or the function is unreachable. */
+    const reload = async (quiet = false): Promise<void> => {
       const uid = store.uid();
       if (!uid) return;
       patchState(store, { loading: true });
@@ -42,8 +43,9 @@ export const PasskeyStore = signalStore(
         const items = await store.passkeyService.list(uid);
         if (store.uid() !== uid) return; // user switched while loading: drop the stale result
         patchState(store, { items });
-      } catch {
-        if (store.uid() === uid) await showToast(store.toastController, store.i18n.passkey_error());
+      } catch (err) {
+        if (quiet) console.warn('passkey list failed', err);
+        else if (store.uid() === uid) await showToast(store.toastController, store.i18n.passkey_error());
       } finally {
         if (store.uid() === uid) patchState(store, { loading: false });
       }
@@ -54,7 +56,9 @@ export const PasskeyStore = signalStore(
       const password = await okrPrompt(store.alertController, store.i18n.passkey_reauth(), store.i18n.passkey_reauth(), store.i18n.ok(), store.i18n.cancel());
       if (!password) return false;
       const loginId = store.appStore.currentUser()?.loginId || undefined;
-      return store.authService.reauthenticate(password, loginId);
+      const ok = await store.authService.reauthenticate(password, loginId);
+      if (!ok) await showToast(store.toastController, store.i18n.passkey_error());
+      return ok;
     };
 
     const rename = async (item: PasskeyItem): Promise<void> => {
@@ -96,9 +100,9 @@ export const PasskeyStore = signalStore(
         }
         if (store.uid() !== uid) return; // superseded by a newer setUid
         patchState(store, { canRegister });
-        await reload();
+        await reload(true);
       },
-      reload,
+      reload: (): Promise<void> => reload(),
       rename,
       remove,
 
