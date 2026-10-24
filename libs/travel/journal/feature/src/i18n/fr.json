@@ -220,5 +220,6 @@
     "sent": "Message envoyé à {count} invités.",
     "offline": "Tu ne peux envoyer des messages aux invités qu’avec Internet.",
     "too_soon": "Le dernier message est parti il y a quelques minutes seulement. Réessaie dans quelques minutes."
-  }
+  },
+  "web_read_only": "Ici tu lis tes carnets de voyage. L’écriture, les photos et la carte hors ligne sont dans l’app iPad."
 }

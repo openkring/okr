@@ -28,7 +28,7 @@ export interface ReactionComment { key: string; authorName: string; text: string
   `],
   template: `
     <div class="likes">
-      <ion-button fill="clear" (click)="likeToggled.emit()" [attr.aria-pressed]="liked()" [attr.aria-label]="i18n().like()">
+      <ion-button fill="clear" [disabled]="readOnly()" (click)="likeToggled.emit()" [attr.aria-pressed]="liked()" [attr.aria-label]="i18n().like()">
         <ion-icon slot="icon-only" [color]="liked() ? 'danger' : 'medium'" src="{{ (liked() ? 'heart' : 'heart-outline') | svgIcon }}" />
       </ion-button>
       <span>{{ likesText() }}</span>
@@ -38,7 +38,7 @@ export interface ReactionComment { key: string; authorName: string; text: string
       <div class="comment">
         <div class="meta">
           <span>{{ comment.authorName }} · {{ when(comment.createdAt) }}</span>
-          @if (comment.mine) {
+          @if (comment.mine && !readOnly()) {
             <ion-button size="small" fill="clear" color="medium" (click)="deleteClicked.emit(comment.key)">{{ i18n().comment_delete() }}</ion-button>
           }
         </div>
@@ -47,9 +47,11 @@ export interface ReactionComment { key: string; authorName: string; text: string
     } @empty {
       <p class="empty">{{ i18n().comments_empty() }}</p>
     }
-    <ion-button fill="outline" size="small" (click)="writeClicked.emit()">
-      <ion-icon slot="start" src="{{ 'chatbubble' | svgIcon }}" />{{ i18n().comment_write() }}
-    </ion-button>
+    @if (!readOnly()) {
+      <ion-button fill="outline" size="small" (click)="writeClicked.emit()">
+        <ion-icon slot="start" src="{{ 'chatbubble' | svgIcon }}" />{{ i18n().comment_write() }}
+      </ion-button>
+    }
   `,
 })
 export class JournalReactions {
@@ -57,6 +59,8 @@ export class JournalReactions {
   public readonly liked = input(false);
   public readonly comments = input<ReactionComment[]>([]);
   public readonly i18n = input.required<JournalI18n>();
+  /** Shows likes and comments without the controls (the authors' web view). */
+  public readonly readOnly = input(false);
   public readonly likeToggled = output<void>();
   public readonly writeClicked = output<void>();
   public readonly deleteClicked = output<string>();

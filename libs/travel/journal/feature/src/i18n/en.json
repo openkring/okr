@@ -220,5 +220,6 @@
     "sent": "Message sent to {count} guests.",
     "offline": "You can only send messages to guests with an Internet connection.",
     "too_soon": "The last message went out only a few minutes ago. Try again in a few minutes."
-  }
+  },
+  "web_read_only": "Here you read your travel journals. Writing, photos and the offline map are in the iPad app."
 }

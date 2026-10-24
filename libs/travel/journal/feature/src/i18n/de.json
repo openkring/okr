@@ -220,5 +220,6 @@
     "sent": "Nachricht an {count} Gäste gesendet.",
     "offline": "Nachrichten an Gäste sendest du nur mit Internet.",
     "too_soon": "Die letzte Nachricht ist erst wenige Minuten her. Versuch es in ein paar Minuten nochmals."
-  }
+  },
+  "web_read_only": "Hier liest du deine Reisetagebücher. Schreiben, Fotos und die Offline-Karte gibt es in der iPad-App."
 }

@@ -301,6 +301,32 @@ export class JournalSyncService {
   }
 
   /**
+   * The web view for authors (plan 8): every record of the journals this person writes in, straight from
+   * Firestore (authors may read `journal-changes`), filtered like on the iPad. Read-only — nothing is stored.
+   */
+  public async loadRemoteJournals(personKey: string): Promise<JournalChange[]> {
+    const journals = await getDocsFromServer(query(collection(this.firestore, JournalCollection), where('authorKeys', 'array-contains', personKey)));
+    const out: JournalChange[] = [];
+    for (const journal of journals.docs.filter((d) => d.data()['isArchived'] !== true)) {
+      const snaps = await getDocsFromServer(query(collection(this.firestore, JournalChangeCollection), where('journalKey', '==', journal.id)));
+      for (const d of snaps.docs) {
+        const data = d.data() as JournalChange & { uploadedAt?: Timestamp };
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { uploadedAt, tenants, ...change } = data;
+        if (acceptRecord(change as JournalChange, uploadedAt?.toMillis() ?? Date.now())) out.push(change as JournalChange);
+      }
+    }
+    return out;
+  }
+
+  /** Signed URLs (15 min) for published photo files of a journal — the web view has no local files. */
+  public async signPhotos(journalKey: string, files: string[]): Promise<Record<string, string>> {
+    const urls: Record<string, string> = {};
+    for (const chunk of pagesOf(files, PHOTO_CHUNK)) Object.assign(urls, (await this.call<{ urls: Record<string, string> }>('signJournalPhotos', { journalKey, files: chunk })).urls);
+    return urls;
+  }
+
+  /**
    * The day's weather at a footprint (spec §6.4, plan 8) through the diary's `fetchDiaryWeather` callable —
    * only a date and a coordinate leave the device. `null` = no measurement for that day.
    */

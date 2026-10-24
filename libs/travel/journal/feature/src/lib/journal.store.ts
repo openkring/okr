@@ -255,6 +255,19 @@ export const JournalStore = signalStore(
 
       syncNow,
 
+      /**
+       * The web view for authors (plan 8): the journals this person writes in, loaded from Firestore and merged
+       * like on the iPad. Read-only — writing stays on the iPad (spec §9.5).
+       */
+      async loadWeb(personKey: string): Promise<void> {
+        if (store.native()) return;
+        try {
+          patchState(store, { changes: await store.syncService.loadRemoteJournals(personKey), ready: true, error: '' });
+        } catch (error) {
+          patchState(store, { ready: true, error: String(error) });
+        }
+      },
+
       /** Comments of a footprint (plan 7), oldest first — from the log, so offline too. */
       comments(footprintKey: string): CommentView[] {
         return commentsOf(store.journalState(), footprintKey);
@@ -621,7 +634,11 @@ export const JournalStore = signalStore(
       effect(() => {
         const user = store.appStore.currentUser();
         const person = store.appStore.currentPerson();
-        if (!store.native() || !user?.personKey) return;
+        if (!user?.personKey) return;
+        if (!store.native()) {
+          untracked(() => void store.loadWeb(user.personKey));
+          return;
+        }
         const name = person ? `${person.firstName} ${person.lastName}`.trim() : '';
         untracked(() => void store.identity.bindAuthor({ personKey: user.personKey, name }).catch(() => undefined));
       });

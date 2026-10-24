@@ -72,7 +72,7 @@ import { JournalStore } from './journal.store';
             }
           </div>
         }
-        <okr-journal-reactions [likes]="likes().length" [liked]="liked()" [comments]="comments()" [i18n]="store.i18n"
+        <okr-journal-reactions [likes]="likes().length" [liked]="liked()" [comments]="comments()" [i18n]="store.i18n" [readOnly]="!store.native()"
           (likeToggled)="act(store.toggleLike(footprintKey()))" (writeClicked)="writeComment()" (deleteClicked)="act(store.archiveComment($event))" />
       }
     </ion-content>
@@ -82,11 +82,13 @@ import { JournalStore } from './journal.store';
           <ion-button [disabled]="!previousKey()" (click)="go(previousKey())">{{ store.i18n.story_previous() }}</ion-button>
           <ion-button [disabled]="!nextKey()" (click)="go(nextKey())">{{ store.i18n.story_next() }}</ion-button>
         </ion-buttons>
-        <ion-buttons slot="end">
-          <ion-button (click)="addText()">{{ store.i18n.story_add_text() }}</ion-button>
-          <ion-button (click)="addPhotos()">{{ store.i18n.story_add_photos() }}</ion-button>
-          <ion-button (click)="footprintActions()">{{ store.i18n.story_footprint_menu() }}</ion-button>
-        </ion-buttons>
+        @if (store.native()) {
+          <ion-buttons slot="end">
+            <ion-button (click)="addText()">{{ store.i18n.story_add_text() }}</ion-button>
+            <ion-button (click)="addPhotos()">{{ store.i18n.story_add_photos() }}</ion-button>
+            <ion-button (click)="footprintActions()">{{ store.i18n.story_footprint_menu() }}</ion-button>
+          </ion-buttons>
+        }
       </ion-toolbar>
     </ion-footer>
   `,
@@ -154,7 +156,9 @@ export class JournalStoryPage {
   }
 
   protected isOwn(item: StoryBlock): boolean {
-    return item.block.authorKey === this.store.author()?.personKey;
+    // only on the iPad, and only with a known author (no identity yet = nothing is «own»)
+    const me = this.store.author()?.personKey;
+    return this.store.native() && !!me && item.block.authorKey === me;
   }
 
   protected authorLabel(item: StoryBlock): string {

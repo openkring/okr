@@ -57,7 +57,7 @@ const WIDE_QUERY = '(min-width: 992px)';
         <ion-title>{{ journal()?.title || store.i18n.untitled() }}</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="info()" [attr.aria-label]="store.i18n.info()"><ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" /></ion-button>
-          <ion-button (click)="newFootprint()">{{ store.i18n.footprints_new() }}</ion-button>
+          @if (store.native()) { <ion-button (click)="newFootprint()">{{ store.i18n.footprints_new() }}</ion-button> }
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -68,9 +68,11 @@ const WIDE_QUERY = '(min-width: 992px)';
             (pinClicked)="openFootprint($event)" (viewChanged)="view.set($event)" />
         </div>
         <div class="side">
-          <okr-journal-sync-line [status]="store.syncStatus()" [photoMode]="store.photoMode()" [peerStatus]="store.peerStatus()" [i18n]="store.i18n"
-            (syncNow)="store.syncNow()" (choosePhotoMode)="photoMode()" />
-          <okr-journal-offline-map [journalKey]="journalKey()" [view]="view()" />
+          @if (store.native()) {
+            <okr-journal-sync-line [status]="store.syncStatus()" [photoMode]="store.photoMode()" [peerStatus]="store.peerStatus()" [i18n]="store.i18n"
+              (syncNow)="store.syncNow()" (choosePhotoMode)="photoMode()" />
+            <okr-journal-offline-map [journalKey]="journalKey()" [view]="view()" />
+          }
           <div class="stats">
             <div class="stat"><b>{{ days() }}</b><span>{{ store.i18n.stats_days() }}</span></div>
             <div class="stat"><b>{{ km() }}</b><span>{{ store.i18n.stats_km() }}</span></div>

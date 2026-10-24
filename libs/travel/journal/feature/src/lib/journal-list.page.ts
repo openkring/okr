@@ -23,6 +23,7 @@ import { JournalStore } from './journal.store';
   imports: [IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonList, IonItem, IonLabel, IonButton, IonIcon, SvgIconPipe, JournalSyncLine],
   styles: [`
     .title { cursor: pointer; }
+    .hint { color: var(--ion-color-medium); font-size: 0.9rem; }
     okr-journal-sync-line { margin-top: 12px; }
   `],
   template: `
@@ -36,19 +37,20 @@ import { JournalStore } from './journal.store';
       </ion-toolbar>
     </ion-header>
     <ion-content class="ion-padding">
-      @if (!store.native()) {
-        <p>{{ store.i18n.native_only() }}</p>
-      } @else {
-        <ion-list>
+      @if (!store.native()) { <p class="hint">{{ store.i18n.web_read_only() }}</p> }
+      <ion-list>
           @for (journal of store.journals(); track journal.key) {
             <ion-item>
               <ion-label class="title" (click)="open(journal.key)">{{ journal.title || store.i18n.untitled() }}</ion-label>
-              <ion-button slot="end" fill="clear" (click)="actions(journal.key, journal.title)">{{ store.i18n.list_actions() }}</ion-button>
+              @if (store.native()) {
+                <ion-button slot="end" fill="clear" (click)="actions(journal.key, journal.title)">{{ store.i18n.list_actions() }}</ion-button>
+              }
             </ion-item>
           } @empty {
             <ion-item lines="none"><ion-label class="ion-text-wrap">{{ store.i18n.list_empty() }}</ion-label></ion-item>
           }
         </ion-list>
+      @if (store.native()) {
         <ion-button expand="block" (click)="create()">{{ store.i18n.list_new() }}</ion-button>
         <okr-journal-sync-line [status]="store.syncStatus()" [photoMode]="store.photoMode()" [peerStatus]="store.peerStatus()" [i18n]="store.i18n"
           (syncNow)="store.syncNow()" (choosePhotoMode)="photoMode()" />

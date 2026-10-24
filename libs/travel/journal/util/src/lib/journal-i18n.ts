@@ -166,6 +166,7 @@ export const JOURNAL_I18N_KEYS = {
   notice_sent: PFX + 'notice.sent',
   notice_offline: PFX + 'notice.offline',
   notice_too_soon: PFX + 'notice.too_soon',
+  web_read_only: PFX + 'web_read_only',
   info: PFX + 'info.button',
   info_before_5: PFX + 'info.before_5',
   info_title: PFX + 'info.title',

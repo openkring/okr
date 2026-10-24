@@ -220,5 +220,6 @@
     "sent": "Messaggio inviato a {count} ospiti.",
     "offline": "Puoi inviare messaggi agli ospiti solo con Internet.",
     "too_soon": "L’ultimo messaggio è partito solo pochi minuti fa. Riprova tra qualche minuto."
-  }
+  },
+  "web_read_only": "Qui leggi i tuoi diari di viaggio. Scrivere, le foto e la mappa offline sono nell’app per iPad."
 }
