@@ -13,6 +13,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { DateFormat, getTodayStr, isActiveMembership } from '@okr/shared-util-core';
 
 import { groupAdminKeys } from '../group/group-admin-keys';
+import type { GroupWrittenEvent } from '../group/group-written-event';
 
 import {
   matrixAdminToken, requireRole, requireProvisionedUser, requireUserPersonKey, requireParam, checkRateLimit,
@@ -164,25 +165,22 @@ export const onPinboardSourceMembershipWritten = onDocumentWritten(
 );
 
 /** Quellgruppen oder Teilnahme geaendert → ganze Pinnwand abgleichen. */
-export const onPinboardWritten = onDocumentWritten(
-  { document: 'groups/{groupId}', region: 'europe-west6' },
-  async (event) => {
-    const before = event.data?.before?.data() as GroupDoc | undefined;
-    const after = event.data?.after?.data() as GroupDoc | undefined;
-    if (!after || (after.kind ?? 'group') !== 'pinboard' || after.isArchived) return;
-    const sourcesChanged = JSON.stringify([...(before?.sourceGroupKeys ?? [])].sort()) !==
-      JSON.stringify([...(after.sourceGroupKeys ?? [])].sort());
-    const adminKeys = (g?: GroupDoc) => JSON.stringify((g?.admins ?? []).map((a) => a.key).filter(Boolean).sort());
-    const adminsChanged = adminKeys(before) !== adminKeys(after);
-    const modeChanged = (before?.joinMode ?? 'optOut') !== (after.joinMode ?? 'optOut');
-    if (!sourcesChanged && !modeChanged && !adminsChanged) return;
-    try {
-      await reconcilePinboard(event.params.groupId);
-    } catch (error) {
-      console.error(`onPinboardWritten: failed for ${event.params.groupId}:`, error);
-    }
-  },
-);
+export async function handlePinboard(event: GroupWrittenEvent): Promise<void> {
+  const before = event.data?.before?.data() as GroupDoc | undefined;
+  const after = event.data?.after?.data() as GroupDoc | undefined;
+  if (!after || (after.kind ?? 'group') !== 'pinboard' || after.isArchived) return;
+  const sourcesChanged = JSON.stringify([...(before?.sourceGroupKeys ?? [])].sort()) !==
+    JSON.stringify([...(after.sourceGroupKeys ?? [])].sort());
+  const adminKeys = (g?: GroupDoc) => JSON.stringify((g?.admins ?? []).map((a) => a.key).filter(Boolean).sort());
+  const adminsChanged = adminKeys(before) !== adminKeys(after);
+  const modeChanged = (before?.joinMode ?? 'optOut') !== (after.joinMode ?? 'optOut');
+  if (!sourcesChanged && !modeChanged && !adminsChanged) return;
+  try {
+    await reconcilePinboard(event.params.groupId);
+  } catch (error) {
+    console.error(`onPinboardWritten: failed for ${event.params.groupId}:`, error);
+  }
+}
 
 /** Naechtlicher Abgleich aller Pinnwaende — repariert verpasste Trigger. */
 export const sweepPinboards = onSchedule(

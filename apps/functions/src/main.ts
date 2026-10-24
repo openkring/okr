@@ -17,9 +17,6 @@ import * as LoginIdAdmin from './auth/login-id-admin';
 import * as MatrixSimple from './matrix-simple';
 import * as MatrixMembershipSync from './matrix-simple/membership-sync';
 import * as MatrixPostPolicy from './matrix-simple/post-policy-sync';
-import * as MatrixGroupNameSync from './matrix-simple/group-name-sync';
-import * as MatrixGroupChatCleanup from './matrix-simple/group-chat-cleanup';
-import * as MatrixChatModeSync from './matrix-simple/chat-mode-sync';
 import * as Rag from './rag';
 import * as Ocr from './ocr';
 import * as Vectorize from './vectorize';
@@ -109,7 +106,6 @@ export const onAddressChange = Replication.onAddressChange;
 export const onResourceChange = Replication.onResourceChange;
 export const onPersonChange = Replication.onPersonChange;
 export const onOrgChange = Replication.onOrgChange;
-export const onGroupChange = Replication.onGroupChange;
 export const onAppConfigChange = Replication.onAppConfigChange;
 
 // matrix-simple (Simpler Firebase → Matrix token exchange)
@@ -145,11 +141,12 @@ export const addAdhocChatMembers = MatrixSimple.addAdhocChatMembers;
 // Chat-Aktionen (TOC 1.109): Mitglied aus Ad-hoc-Chat entfernen, «Für alle» anheften
 export const removeAdhocChatMember = MatrixSimple.removeAdhocChatMember;
 export const setChatPins = MatrixSimple.setChatPins;
+// onGroupDocWritten: groups/{groupId}, one trigger fanning out to the seven former group triggers (replication, adminKeys, name, postPolicy, chatMode, chatCleanup, pinboard; 1.118 A3)
+export const onGroupDocWritten = Group.onGroupDocWritten;
 export const resolveNotesRoom = MatrixSimple.resolveNotesRoom;
 
 // Pinnwand: alle schreiben an alle, Antworten privat (spec 2026-10-11, TOC 1.95)
 export const onPinboardSourceMembershipWritten = MatrixSimple.onPinboardSourceMembershipWritten;
-export const onPinboardWritten = MatrixSimple.onPinboardWritten;
 export const sweepPinboards = MatrixSimple.sweepPinboards;
 export const sendChatReminders = MatrixSimple.sendChatReminders;
 export const createPinboard = MatrixSimple.createPinboard;
@@ -161,13 +158,6 @@ export const listAvailablePinboards = MatrixSimple.listAvailablePinboards;
 // membership → Matrix-room sync (server-side backstop; chat design review #3)
 export const onMembershipWritten = MatrixMembershipSync.onMembershipWritten;
 export const reconcileGroupRoomMembers = MatrixMembershipSync.reconcileGroupRoomMembers;
-export const onGroupPostPolicyWritten = MatrixPostPolicy.onGroupPostPolicyWritten;
-// Gruppe umbenannt → Chatraum-Anzeigename nachziehen
-export const onGroupNameWritten = MatrixGroupNameSync.onGroupNameWritten;
-// Gruppe abgeloest/archiviert/geloescht → Chatraum nachziehen (Marker leeren bzw. purgen)
-export const onGroupChatCleanup = MatrixGroupChatCleanup.onGroupChatCleanup;
-// geschlossene Gruppe (chatMode 'members') / Admin entfernt → Nicht-Mitglieder aus dem Raum
-export const onGroupChatModeWritten = MatrixChatModeSync.onGroupChatModeWritten;
 export const sweepRoomPostPolicies = MatrixPostPolicy.sweepRoomPostPolicies;
 export const syncRoomPostPolicy = MatrixPostPolicy.syncRoomPostPolicy;
 // group-room drift: report room members without a membership, and prune them on demand
@@ -565,5 +555,3 @@ export const notifyJournalGuests = Journal.notifyJournalGuests;
 export const deleteLearningItem = Learning.deleteLearningItem;
 // onRatingWritten: learning rooms, a rating write refreshes docs/{docKey}.ratingCount/ratingSum (spec 1.115)
 export const onRatingWritten = Learning.onRatingWritten;
-// onGroupWritten: groups, keeps groups/{id}.adminKeys (exact-case personKeys of admins[]) in step for firestore.rules
-export const onGroupWritten = Group.onGroupWritten;

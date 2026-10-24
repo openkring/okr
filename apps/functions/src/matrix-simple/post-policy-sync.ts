@@ -7,7 +7,7 @@
 // Sweep an (bis zu 24 h verzoegert), die AOC-Callable ist der sofortige Handgriff. Wer das
 // aendern will, aendert den Entwurf zuerst — die Begruendung steht dort in §3.2.
 
-import { onDocumentWritten } from 'firebase-functions/v2/firestore';
+import type { GroupWrittenEvent } from '../group/group-written-event';
 import { getFirestore } from 'firebase-admin/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
@@ -172,36 +172,29 @@ export async function applyRoomPostPolicy(
  * Fehler werden geloggt, nie geworfen — ein Synapse-Schluckauf darf den Firestore-Schreib-
  * vorgang nicht scheitern lassen.
  */
-export const onGroupPostPolicyWritten = onDocumentWritten(
-  {
-    document: `${GROUP_COLLECTION}/{groupId}`,
-    region: 'europe-west6',
-    secrets: [matrixAdminToken],
-  },
-  async (event) => {
-    const before = event.data?.before?.exists ? (event.data.before.data() as GroupDoc) : undefined;
-    const after = event.data?.after?.exists ? (event.data.after.data() as GroupDoc) : undefined;
-    if (!after) return; // geloescht — der Raum wird an anderer Stelle behandelt
+export async function handleGroupPostPolicy(event: GroupWrittenEvent): Promise<void> {
+  const before = event.data?.before?.exists ? (event.data.before.data() as GroupDoc) : undefined;
+  const after = event.data?.after?.exists ? (event.data.after.data() as GroupDoc) : undefined;
+  if (!after) return; // geloescht — der Raum wird an anderer Stelle behandelt
 
-    const had = before?.postPolicy ?? 'all';
-    const has = after.postPolicy ?? 'all';
-    if (had === has) return; // kein schreibrechts-relevanter Unterschied
+  const had = before?.postPolicy ?? 'all';
+  const has = after.postPolicy ?? 'all';
+  if (had === has) return; // kein schreibrechts-relevanter Unterschied
 
-    try {
-      // Einziger Aufrufer mit `allowReset: true` — er kennt Vor- und Nachzustand und
-      // traegt deshalb als Einziger den Rueckweg 'privileged' → 'all' (§3.1).
-      const result = await applyRoomPostPolicy(
-        event.params.groupId,
-        matrixAdminToken.value(),
-        serverHostname(),
-        { allowReset: true },
-      );
-      console.log(`onGroupPostPolicyWritten: ${event.params.groupId} ${had} → ${has} (${result})`);
-    } catch (error) {
-      console.error(`onGroupPostPolicyWritten: failed for group ${event.params.groupId}:`, error);
-    }
-  },
-);
+  try {
+    // Einziger Aufrufer mit `allowReset: true` — er kennt Vor- und Nachzustand und
+    // traegt deshalb als Einziger den Rueckweg 'privileged' → 'all' (§3.1).
+    const result = await applyRoomPostPolicy(
+      event.params.groupId,
+      matrixAdminToken.value(),
+      serverHostname(),
+      { allowReset: true },
+    );
+    console.log(`onGroupPostPolicyWritten: ${event.params.groupId} ${had} → ${has} (${result})`);
+  } catch (error) {
+    console.error(`onGroupPostPolicyWritten: failed for group ${event.params.groupId}:`, error);
+  }
+}
 
 /**
  * Ausloeser 2 von 3: der taegliche Lauf.

@@ -2,7 +2,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import * as logger from "firebase-functions/logger";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 
-import { AddressCollection, AddressModel, AppConfigCollection, CHANNEL_PRIVACY_INPUTS, GroupCollection, MembershipCollection, OrgCollection, OwnershipCollection, PersonalRelCollection, PersonCollection, PrivacySettings, ReservationCollection, ResourceCollection, WorkrelCollection } from "@okr/shared-models";
+import { AddressCollection, AddressModel, AppConfigCollection, CHANNEL_PRIVACY_INPUTS, MembershipCollection, OrgCollection, OwnershipCollection, PersonalRelCollection, PersonCollection, PrivacySettings, ReservationCollection, ResourceCollection, WorkrelCollection } from "@okr/shared-models";
 import {
   demoteFavorites,
   getActiveAddresses,
@@ -23,6 +23,8 @@ import {
   writeAddressDirectory
 } from "@okr/shared-util-functions";
 import { getStoreDateYear } from "@okr/shared-util-core";
+
+import type { GroupWrittenEvent } from "../group/group-written-event";
 
 const db = () => getFirestore();
 
@@ -497,53 +499,47 @@ export const onOrgChange = onDocumentWritten(
  * If a group is changed, we update all its relationships.
  * THIS UPDATES MEMBERSHIP - be cautious about circular updates!
  */
-export const onGroupChange = onDocumentWritten(
-  {
-    document: `${GroupCollection}/{groupId}`,
-    region: 'europe-west6'
-  },
-  async (event) => {
-    const groupId = event.params.groupId;
-    logger.info(`group ${groupId} has changed`);
+export async function handleGroupChange(event: GroupWrittenEvent): Promise<void> {
+  const groupId = event.params.groupId;
+  logger.info(`group ${groupId} has changed`);
 
-    try {
-      const group = event.data?.after.data();
-      if (group) {
+  try {
+    const group = event.data?.after.data();
+    if (group) {
 
-        // synchronize the memberships of the member group
-        const newMember = {
-          memberName1: '',
-          memberName2: group.name,
-          memberIsDeceased: false,
-          memberDeathYear: '',
-          memberZipCode: '',
-          memberBexioId: ''
-        };
-        const memberships = await getAllMembershipsOfMember(db(), groupId, 'group');
-        for (const membership of memberships) {
-          if (hasChanged(membership, newMember)) {
-            const membershipRef = db().doc(`${MembershipCollection}/${membership.okey}`);
-            await membershipRef.update(newMember);
-            logger.info(`Successfully updated membership ${membership.okey} for group ${groupId} (member)`);
-          }
+      // synchronize the memberships of the member group
+      const newMember = {
+        memberName1: '',
+        memberName2: group.name,
+        memberIsDeceased: false,
+        memberDeathYear: '',
+        memberZipCode: '',
+        memberBexioId: ''
+      };
+      const memberships = await getAllMembershipsOfMember(db(), groupId, 'group');
+      for (const membership of memberships) {
+        if (hasChanged(membership, newMember)) {
+          const membershipRef = db().doc(`${MembershipCollection}/${membership.okey}`);
+          await membershipRef.update(newMember);
+          logger.info(`Successfully updated membership ${membership.okey} for group ${groupId} (member)`);
         }
-
-        // synchronize the membership group (group objects only; an org may share this key)
-        const memberOrgs = await getAllMembershipsOfOrg(db(), groupId, 'group');
-        for (const membership of memberOrgs) {
-          if (membership.orgName !== group.name) {
-            const membershipRef = db().doc(`${MembershipCollection}/${membership.okey}`);
-            await membershipRef.update({
-              orgName: group.name,
-            });
-            logger.info(`Successfully updated membership ${membership.okey} for group ${groupId} (org)`);
-          }
-        }
-      } else {
-        logger.warn(`Org ${groupId} does not exist or has been deleted.`);
       }
-    } catch (error) {
-      logger.error(`Error updating org ${groupId}:`, { error });
+
+      // synchronize the membership group (group objects only; an org may share this key)
+      const memberOrgs = await getAllMembershipsOfOrg(db(), groupId, 'group');
+      for (const membership of memberOrgs) {
+        if (membership.orgName !== group.name) {
+          const membershipRef = db().doc(`${MembershipCollection}/${membership.okey}`);
+          await membershipRef.update({
+            orgName: group.name,
+          });
+          logger.info(`Successfully updated membership ${membership.okey} for group ${groupId} (org)`);
+        }
+      }
+    } else {
+      logger.warn(`Org ${groupId} does not exist or has been deleted.`);
     }
+  } catch (error) {
+    logger.error(`Error updating org ${groupId}:`, { error });
   }
-);
+}

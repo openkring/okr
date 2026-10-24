@@ -17,7 +17,7 @@
 // Deshalb ist ein Name mit Blanks und Sonderzeichen hier gefahrlos — solange nichts aus ihm
 // eine ID ableitet (siehe `setRoomName` in shared.ts).
 
-import { onDocumentWritten } from 'firebase-functions/v2/firestore';
+import type { GroupWrittenEvent } from '../group/group-written-event';
 
 import {
   matrixAdminToken,
@@ -27,7 +27,6 @@ import {
   serverHostname,
 } from './shared';
 
-const GROUP_COLLECTION = 'groups';
 
 interface GroupNameDoc {
   name?: string;
@@ -50,32 +49,25 @@ interface GroupNameDoc {
  * Fehler werden geloggt, nie geworfen — ein Synapse-Schluckauf darf das Speichern der
  * Gruppe nicht scheitern lassen.
  */
-export const onGroupNameWritten = onDocumentWritten(
-  {
-    document: `${GROUP_COLLECTION}/{groupId}`,
-    region: 'europe-west6',
-    secrets: [matrixAdminToken],
-  },
-  async (event) => {
-    const before = event.data?.before?.exists ? (event.data.before.data() as GroupNameDoc) : undefined;
-    const after = event.data?.after?.exists ? (event.data.after.data() as GroupNameDoc) : undefined;
-    if (!after) return; // geloescht — der Raum wird an anderer Stelle behandelt
+export async function handleGroupName(event: GroupWrittenEvent): Promise<void> {
+  const before = event.data?.before?.exists ? (event.data.before.data() as GroupNameDoc) : undefined;
+  const after = event.data?.after?.exists ? (event.data.after.data() as GroupNameDoc) : undefined;
+  if (!after) return; // geloescht — der Raum wird an anderer Stelle behandelt
 
-    const oldName = (before?.name ?? '').trim();
-    const newName = (after.name ?? '').trim();
-    if (!newName || oldName === newName) return;
+  const oldName = (before?.name ?? '').trim();
+  const newName = (after.name ?? '').trim();
+  if (!newName || oldName === newName) return;
 
-    const groupId = event.params.groupId;
-    try {
-      const adminToken = matrixAdminToken.value();
-      const roomId = await resolveGroupRoom(groupId, serverHostname(), adminToken, { create: false });
-      if (!roomId) return; // noch kein Raum — der bekommt den Namen bei seiner Erzeugung
+  const groupId = event.params.groupId;
+  try {
+    const adminToken = matrixAdminToken.value();
+    const roomId = await resolveGroupRoom(groupId, serverHostname(), adminToken, { create: false });
+    if (!roomId) return; // noch kein Raum — der bekommt den Namen bei seiner Erzeugung
 
-      await ensureAdminInRoom(roomId, adminToken);
-      const ok = await setRoomName(roomId, newName, adminToken);
-      console.log(`onGroupNameWritten: ${groupId} "${oldName}" → "${newName}" (${roomId}) ${ok ? 'ok' : 'failed'}`);
-    } catch (error) {
-      console.error(`onGroupNameWritten: failed for group ${groupId}:`, error);
-    }
-  },
-);
+    await ensureAdminInRoom(roomId, adminToken);
+    const ok = await setRoomName(roomId, newName, adminToken);
+    console.log(`onGroupNameWritten: ${groupId} "${oldName}" → "${newName}" (${roomId}) ${ok ? 'ok' : 'failed'}`);
+  } catch (error) {
+    console.error(`onGroupNameWritten: failed for group ${groupId}:`, error);
+  }
+}

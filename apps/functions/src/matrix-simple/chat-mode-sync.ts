@@ -18,7 +18,7 @@
 // beim Wechsel auf 'members' und bei einer Aenderung von `admins[]` einer 'members'-Gruppe.
 // Fuer 'shared'/'ask' tut er nichts — dort sind Nicht-Mitglieder gewollt (Kursteilnehmende).
 
-import { onDocumentWritten } from 'firebase-functions/v2/firestore';
+import type { GroupWrittenEvent } from '../group/group-written-event';
 
 import {
   matrixAdminToken,
@@ -29,7 +29,6 @@ import {
 } from './shared';
 import { readRoomMemberState, SERVICE_ACCOUNT_LOCALPARTS } from './membership-sync';
 
-const GROUP_COLLECTION = 'groups';
 
 interface GroupChatModeDoc {
   chatMode?: string;
@@ -90,44 +89,37 @@ export function closedRoomIntruders(
  * Fehler werden geloggt, nie geworfen. Was liegen bleibt, zeigt `auditGroupRoomMembers` und
  * entfernt `pruneGroupRoomExtras` (AOC).
  */
-export const onGroupChatModeWritten = onDocumentWritten(
-  {
-    document: `${GROUP_COLLECTION}/{groupId}`,
-    region: 'europe-west6',
-    secrets: [matrixAdminToken],
-  },
-  async (event) => {
-    const before = event.data?.before?.exists ? (event.data.before.data() as GroupChatModeDoc) : undefined;
-    const after = event.data?.after?.exists ? (event.data.after.data() as GroupChatModeDoc) : undefined;
-    if (!needsClosedRoomCleanup(before, after)) return;
+export async function handleGroupChatMode(event: GroupWrittenEvent): Promise<void> {
+  const before = event.data?.before?.exists ? (event.data.before.data() as GroupChatModeDoc) : undefined;
+  const after = event.data?.after?.exists ? (event.data.after.data() as GroupChatModeDoc) : undefined;
+  if (!needsClosedRoomCleanup(before, after)) return;
 
-    const groupId = event.params.groupId;
-    const roomId = after!.matrixRoomId!.trim();
-    try {
-      const adminToken = matrixAdminToken.value();
-      const hostname = serverHostname();
-      const roomMembers = await readRoomMemberState(roomId, adminToken);
-      const intruders = closedRoomIntruders(
-        roomMembers.keys(),
-        await activeGroupMemberKeys(groupId),
-        adminKeysOf(after),
-      );
-      if (intruders.length === 0) return;
+  const groupId = event.params.groupId;
+  const roomId = after!.matrixRoomId!.trim();
+  try {
+    const adminToken = matrixAdminToken.value();
+    const hostname = serverHostname();
+    const roomMembers = await readRoomMemberState(roomId, adminToken);
+    const intruders = closedRoomIntruders(
+      roomMembers.keys(),
+      await activeGroupMemberKeys(groupId),
+      adminKeysOf(after),
+    );
+    if (intruders.length === 0) return;
 
-      await ensureAdminInRoom(roomId, adminToken);
-      let kicked = 0;
-      for (const localpart of intruders) {
-        try {
-          if (await kickUserFromRoom(roomId, `@${localpart}:${hostname}`, adminToken, 'Keine Mitgliedschaft in dieser Gruppe')) {
-            kicked++;
-          }
-        } catch (error) {
-          console.error(`onGroupChatModeWritten: failed to kick @${localpart} from ${roomId}:`, error);
+    await ensureAdminInRoom(roomId, adminToken);
+    let kicked = 0;
+    for (const localpart of intruders) {
+      try {
+        if (await kickUserFromRoom(roomId, `@${localpart}:${hostname}`, adminToken, 'Keine Mitgliedschaft in dieser Gruppe')) {
+          kicked++;
         }
+      } catch (error) {
+        console.error(`onGroupChatModeWritten: failed to kick @${localpart} from ${roomId}:`, error);
       }
-      console.log(`onGroupChatModeWritten: ${groupId} closed → removed ${kicked}/${intruders.length} non-member(s) from room ${roomId}`);
-    } catch (error) {
-      console.error(`onGroupChatModeWritten: failed for group ${groupId}:`, error);
     }
-  },
-);
+    console.log(`onGroupChatModeWritten: ${groupId} closed → removed ${kicked}/${intruders.length} non-member(s) from room ${roomId}`);
+  } catch (error) {
+    console.error(`onGroupChatModeWritten: failed for group ${groupId}:`, error);
+  }
+}
