@@ -44,7 +44,9 @@ let counted = 0;
 
 for (const doc of snap.docs) {
   const t = doc.data();
-  if (!COUNTING_STATES.has(t.state)) continue;
+  // Tracker trips are private recorded tracks, not Logbuch trips: the stats function skips them
+  // too (TRACKER_TRIP_TYPE in libs/shared/models trip.model.ts, apps/functions/src/trip/index.ts).
+  if (t.type === 'tracker' || !COUNTING_STATES.has(t.state)) continue;
 
   const year = String(t.startDate ?? '').substring(0, 4);
   if (!/^\d{4}$/.test(year) || year === '0000') continue;

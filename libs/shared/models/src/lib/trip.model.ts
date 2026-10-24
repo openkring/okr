@@ -5,7 +5,12 @@ import { TransportMode } from './page.model';
 
 /** `trip_type` value of private recorded tracks (tracker, spec 1.121). Readable/writable by the owner only. */
 export const TRACKER_TRIP_TYPE = 'tracker';
-/** Every trip_type except tracker — the `in` filter every non-tracker trips query must carry (rules, design §4). */
+/**
+ * Mirrors the DB category `trip_type` (categories/fbmw7fvik244lye53tm6) minus `tracker`. A new category
+ * value must be added here too, or its trips vanish from the Logbuch list (the client `in` filter drops them).
+ *
+ * Every trip_type except tracker — the `in` filter every non-tracker trips query must carry (rules, design §4).
+ */
 export const NON_TRACKER_TRIP_TYPES = ['', 'logbuch', 'private', 'travel'];
 
 export type TrackMode = TransportMode;
