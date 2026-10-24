@@ -1627,5 +1627,9 @@ export async function resolveArrayItemDocs(entry: SubjectDataEntry, ctx: Subject
 //   paths); the files live in the private bucket under tenant/<t>/journal/<jk>/. Follows journal-changes.
 // gap: private — journals/{jk}/private/{peer,guestLinks}: the P2P secret and the guests' link codes
 //   (personKey per link). Function-only access; erasure of a guest's link with plan 6.
-// gap: reactions — likes on a footprint (spec 1.113 §3.4), personKey in the doc id; not written yet
-//   (plan 6 adds the row together with comments).
+// gap: reactions — likes on a travel-journal footprint (spec 1.113 §3.4, plan 7), at
+//   journals/{jk}/reactions: personKey in the doc id and field, materialised from journal-changes. The
+//   journal's comments live at journals/{jk}/comments (CommentModel shape, authorKey + authorName + text of
+//   authors AND guests) — NOT reached by the top-level `comments` row. Guests are persons without an
+//   account: export/erasure of their comments and likes needs a journal-scoped row that reads the
+//   change log by authorKey; recorded as a gap until then (guests can ask the authors to delete).
