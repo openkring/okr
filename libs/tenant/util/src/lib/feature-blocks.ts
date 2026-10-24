@@ -2968,7 +2968,7 @@ const meeting: FeatureBlock = {
 
 /**
  * `libs/content/diary/{data-access,feature,ui,util}` — the author's private day notes (spec
- * 1.34). Owns `diaries` and `diaryImports`; the import-preparation page (`DiaryImport`,
+ * 1.34). Owns `diaries` and `diaryImports`; the Orte/Personen repair page (`DiaryImport`,
  * `/diary/import`, row `diary-import`) lives here too; this block is the READING and WRITING surface.
  *
  * `defaultAvailability: 'beta'` + a `feature-rollout/diary` doc with `allowTenants: ['bka']`:

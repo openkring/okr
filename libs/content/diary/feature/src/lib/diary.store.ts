@@ -7,12 +7,12 @@ import { firstValueFrom, map, of, timeout } from 'rxjs';
 import type { DiaryLocationPick, DiaryNeighbours } from '@okr/content-diary-ui';
 import { DiaryAlbumService, DiaryMediaService, DiaryService, DiaryWeatherService } from '@okr/content-diary-data-access';
 import {
-  DIARY_FIRST_YEAR, DIARY_I18N_KEYS, customLocationAvatar, mainLocation, DiaryFilter, DiaryMediaResult, DiaryRange, DiaryStateFilter, albumKey, albumRefOf,
+  DIARY_FIRST_YEAR, DIARY_I18N_KEYS, customLocationAvatar, locationAvatar, mainLocation, DiaryFilter, DiaryMediaResult, DiaryRange, DiaryStateFilter, albumKey, albumRefOf,
   buildDiaryRangeTree, decodeDiaryFilter, diaryFilterLabel, diaryListUrl, diaryRangeOfYear, diaryStateMatches, encodeDiaryFilter,
   formatDiaryDate, getDiaryIndex, groupDiariesByMonth, hasDiaryWeather, inDiaryDateRange, newDiary,
 } from '@okr/content-diary-util';
 import { LocationService } from '@okr/location-data-access';
-import { AvatarInfo, DiaryAlbumKind, DiaryAlbumModel, DiaryModel, LocationModel, PersonModelName, TripModel } from '@okr/shared-models';
+import { AvatarInfo, DiaryAlbumKind, DiaryAlbumModel, DiaryModel, PersonModelName, TripModel } from '@okr/shared-models';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AlertService, resourceParams } from '@okr/shared-util-angular';
@@ -69,10 +69,6 @@ function readHandedFilter(): DiaryFilter | undefined {
 
 function tagsOf(tags: string): string[] {
   return [...new Set((tags ?? '').split(',').map(tag => tag.trim()).filter(tag => !!tag))].sort((a, b) => a.localeCompare(b));
-}
-
-function locationAvatar(l: LocationModel): AvatarInfo {
-  return { key: l.okey, name1: l.name, name2: '', label: l.name, modelType: 'location', type: l.type ?? '', subType: '' };
 }
 
 export const DiaryStore = signalStore(
@@ -529,7 +525,7 @@ export const DiaryStore = signalStore(
             component: DiaryAlbumEditModal,
             componentProps: {
               album: draft, isNew, i18n: store.i18n, currentUser: store.currentUser(),
-              selectPerson: () => store.modelSelectService.selectPersonAvatar(undefined, undefined, true, false),
+              selectPerson: () => store.modelSelectService.selectPersonAvatar(undefined, undefined, false, false),
               selectLocation: pickAlbumLocation,
             },
           });

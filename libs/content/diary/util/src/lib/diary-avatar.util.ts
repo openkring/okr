@@ -1,4 +1,4 @@
-import { AvatarInfo, DiaryModel } from '@okr/shared-models';
+import { AvatarInfo, DiaryModel, LocationModel } from '@okr/shared-models';
 
 import { normaliseLocationLabel } from './location-normalise';
 
@@ -133,4 +133,9 @@ export function stripLegacyDiaryFields<T extends object>(d: T): T {
   const copy = { ...d } as Record<string, unknown>;
   for (const k of LEGACY_DIARY_FIELDS) delete copy[k];
   return copy as T;
+}
+
+/** The avatar of a predefined location (keyed by its okey). */
+export function locationAvatar(l: LocationModel): AvatarInfo {
+  return { key: l.okey, name1: l.name, name2: '', label: l.name, modelType: 'location', type: l.type ?? '', subType: '' };
 }

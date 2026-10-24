@@ -7,7 +7,7 @@ import { firstValueFrom, of } from 'rxjs';
 import { DiaryService } from '@okr/content-diary-data-access';
 import {
   DIARY_I18N_KEYS, DiaryReference, DiaryReferenceKind, DiaryUsage,
-  collectLocationReferences, collectPersonReferences, replaceDiaryAvatar, withDiaryLocations,
+  collectLocationReferences, collectPersonReferences, locationAvatar, replaceDiaryAvatar, withDiaryLocations,
 } from '@okr/content-diary-util';
 import { LocationService } from '@okr/location-data-access';
 import {
@@ -87,10 +87,6 @@ export const DiaryImportStore = signalStore(
     const diaryOf = (usage: DiaryUsage): DiaryModel | undefined =>
       store.diaries().find(diary => diary.okey === usage.okey);
 
-    const locationAvatar = (location: LocationModel): AvatarInfo => ({
-      key: location.okey, name1: location.name, name2: '', modelType: 'location',
-      type: '', subType: '', label: location.name,
-    });
 
     const personAvatar = (person: PersonModel): AvatarInfo => ({
       key: person.okey, name1: person.firstName, name2: person.lastName, modelType: 'person',
