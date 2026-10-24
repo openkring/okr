@@ -31,6 +31,16 @@ export const textBlockValidations = staticSuite((model: TextBlockFormModel) => {
   stringValidations('text', model.text, DESCRIPTION_LENGTH, 0, true);
 });
 
+/** The author's message to the guests (plan 8): subject and text; links are added per guest when sending. */
+export interface NoticeFormModel { subject: string; text: string }
+export const NOTICE_SUBJECT_MAX = 120;
+export const NOTICE_TEXT_MAX = 4000;
+
+export const noticeValidations = staticSuite((model: NoticeFormModel) => {
+  stringValidations('subject', model.subject, NOTICE_SUBJECT_MAX, 0, true);
+  stringValidations('text', model.text, NOTICE_TEXT_MAX, 0, true);
+});
+
 const escapeHtml = (v: string): string => v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const unescapeHtml = (v: string): string =>
   v.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&');

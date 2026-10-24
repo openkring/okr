@@ -202,5 +202,20 @@
     "back": "Panoramica",
     "empty": "Non è ancora pubblicato nulla – torna presto.",
     "hello": "Ciao {name}, che bello che viaggi con noi."
+  },
+  "notice": {
+    "menu": "Avvisa gli ospiti",
+    "title": "Messaggio agli ospiti",
+    "subject_label": "Oggetto",
+    "subject_ph": "p. es. Notizie dall’Antartide",
+    "text_label": "Messaggio",
+    "text_ph": "Cosa vuoi dire agli ospiti?",
+    "text_helper": "Il diario aggiunge da solo il link personale e il link per disiscriversi per ogni ospite.",
+    "recipients": "Va a {email} per e-mail e {signal} via Signal.",
+    "muted": "{muted} hanno disattivato le notifiche.",
+    "no_guests": "Ancora nessun ospite con link – aggiungi prima qualcuno in «Ospiti».",
+    "send": "Invia",
+    "sent": "Messaggio inviato a {count} ospiti.",
+    "offline": "Puoi inviare messaggi agli ospiti solo con Internet."
   }
 }

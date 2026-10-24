@@ -18,6 +18,9 @@ import { windowExpiry } from '../video/video-sign.util';
 import { applyManage, deliveryFor, GuestRequest, GuestRequestError, ManageAction, memberName, newLinkCode, parseGuestRequest } from './guest.logic';
 import { isJournalKey } from './apply-journal-change.logic';
 import { requireJournalAuthor } from './journal-auth';
+import { checkNotice } from './notify.logic';
+import { previewNotice, sendNotice } from './notify';
+import { journalSenderToken } from './signal';
 
 const REGION = 'europe-west6';
 const imgixPrivateToken = defineSecret('IMGIX_PRIVATE_TOKEN');
@@ -189,11 +192,13 @@ export const journalGuest = onCall(
 );
 
 /**
- * Guest links of a journal for its authors (plan 7): list, create (or reuse a live one), expiry, revoke. The
- * link codes live in `journals/{jk}/private/guestLinks`, which no client can read.
+ * Guests of a journal for its authors (plans 7, 8): links — list, create (or reuse a live one), expiry, revoke;
+ * notices — `previewNotice` (what changed since the last notice, the proposed text, who would receive it) and
+ * `sendNotice` (the author's possibly changed text to every live, unmuted guest). The link codes live in
+ * `journals/{jk}/private/guestLinks`, which no client can read.
  */
 export const manageJournalGuest = onCall(
-  { ...SMALL, enforceAppCheck: true, cors: true },
+  { ...SMALL, timeoutSeconds: 300, enforceAppCheck: true, cors: true, secrets: [journalSenderToken] },
   async (request: CallableRequest<unknown>): Promise<Data> => {
     checkAppCheckToken(request as never, 'manageJournalGuest');
     checkAuthentication(request as never, 'manageJournalGuest');
@@ -206,6 +211,13 @@ export const manageJournalGuest = onCall(
     const view = (l: JournalGuestLink) => ({ personKey: l.personKey, url: url(l.linkCode), expiresAt: l.expiresAt ?? '', revokedAt: l.revokedAt ?? '', mutedAt: l.mutedAt ?? '' });
     const ref = privateDoc(db, caller.journalKey, JournalGuestLinksDoc);
     if (action === 'list') return { links: linksOf((await ref.get()).data()).map(view) };
+    if (action === 'previewNotice' || action === 'sendNotice') {
+      const journal = (await db.collection(JournalCollection).doc(caller.journalKey).get()).data() ?? {};
+      if (action === 'previewNotice') return { ...(await previewNotice(db, caller.journalKey, journal, caller.tenantId)) };
+      const notice = checkNotice(d['subject'], d['text']);
+      if (!notice) throw new HttpsError('invalid-argument', 'notice');
+      return { sent: await sendNotice(db, caller.journalKey, caller.tenantId, notice) };
+    }
     if (action !== 'create' && action !== 'expiry' && action !== 'revoke') throw new HttpsError('invalid-argument', 'action');
     const personKey = d['personKey'];
     if (!isJournalKey(personKey)) throw new HttpsError('invalid-argument', 'personKey');

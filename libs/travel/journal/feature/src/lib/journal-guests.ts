@@ -1,12 +1,14 @@
 import { inject, Injectable } from '@angular/core';
 import { Network } from '@capacitor/network';
 import { Share } from '@capacitor/share';
-import { ActionSheetController, ToastController } from '@ionic/angular';
+import { ActionSheetController, ModalController, ToastController } from '@ionic/angular';
 
 import { AvatarInfo } from '@okr/shared-models';
 import { ModelSelectService } from '@okr/shared-feature';
 import { fill } from '@okr/shared-util-core';
 import { GuestLinkView, guestErrorOf, JournalGuestService } from '@okr/travel-journal-data-access';
+import { NoticeModal } from '@okr/travel-journal-ui';
+import { NoticeFormModel } from '@okr/travel-journal-util';
 
 import { showJournalError } from './journal-errors';
 import { JournalStore } from './journal.store';
@@ -24,6 +26,39 @@ export class JournalGuestsSheet {
   private readonly modelSelectService = inject(ModelSelectService);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly toastController = inject(ToastController);
+  private readonly modalController = inject(ModalController);
+
+  /**
+   * «Gäste benachrichtigen» (plan 8): the server collects what changed since the last notice and proposes a
+   * text; the author may change it and sends it. Nothing goes out automatically.
+   */
+  public async notify(journalKey: string): Promise<void> {
+    const i18n = this.store.i18n;
+    if (!(await Network.getStatus()).connected) {
+      await this.toast(i18n.notice_offline());
+      return;
+    }
+    try {
+      const preview = await this.guestService.previewNotice(journalKey);
+      const reachable = preview.recipients.email + preview.recipients.signal;
+      if (reachable === 0) {
+        await this.toast(i18n.notice_no_guests());
+        return;
+      }
+      const recipients = [fill(i18n.notice_recipients(), { email: preview.recipients.email, signal: preview.recipients.signal }),
+        preview.recipients.muted > 0 ? fill(i18n.notice_muted(), { muted: preview.recipients.muted }) : ''].filter((x) => x).join(' ');
+      const modal = await this.modalController.create({
+        component: NoticeModal, componentProps: { notice: { subject: preview.subject, text: preview.text }, recipients },
+      });
+      await modal.present();
+      const { data, role } = await modal.onWillDismiss<NoticeFormModel>();
+      if (role !== 'confirm' || !data) return;
+      const sent = await this.guestService.sendNotice(journalKey, data.subject, data.text);
+      await this.toast(fill(i18n.notice_sent(), { count: sent.email + sent.signal }));
+    } catch (error) {
+      await showJournalError(this.toastController, i18n, error);
+    }
+  }
 
   public async open(journalKey: string): Promise<void> {
     const i18n = this.store.i18n;

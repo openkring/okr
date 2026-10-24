@@ -202,5 +202,20 @@
     "back": "Overview",
     "empty": "Nothing published yet – check back soon.",
     "hello": "Hello {name}, nice to have you along."
+  },
+  "notice": {
+    "menu": "Notify guests",
+    "title": "Message to the guests",
+    "subject_label": "Subject",
+    "subject_ph": "e.g. News from Antarctica",
+    "text_label": "Message",
+    "text_ph": "What would you like to tell the guests?",
+    "text_helper": "The travel journal adds each guest’s personal link and the unsubscribe link itself.",
+    "recipients": "Goes to {email} by email and {signal} by Signal.",
+    "muted": "{muted} have switched notifications off.",
+    "no_guests": "No guests with a link yet – add someone under «Guests» first.",
+    "send": "Send",
+    "sent": "Message sent to {count} guests.",
+    "offline": "You can only send messages to guests with an Internet connection."
   }
 }

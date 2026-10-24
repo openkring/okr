@@ -90,6 +90,7 @@ export class JournalListPage {
         { text: i18n.list_rename(), handler: () => void this.rename(journalKey, title) },
         { text: i18n.list_coauthor(), handler: () => void this.addCoAuthor(journalKey) },
         { text: i18n.guests(), handler: () => void this.guestsSheet.open(journalKey) },
+        { text: i18n.notice_menu(), handler: () => void this.guestsSheet.notify(journalKey) },
         { text: i18n.list_delete(), role: 'destructive', handler: () => void this.confirmDelete(journalKey) },
         { text: i18n.cancel(), role: 'cancel' },
       ],

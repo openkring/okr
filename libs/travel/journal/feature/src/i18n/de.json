@@ -202,5 +202,20 @@
     "back": "Übersicht",
     "empty": "Noch ist nichts veröffentlicht – schau bald wieder vorbei.",
     "hello": "Hallo {name}, schön, dass du mitreist."
+  },
+  "notice": {
+    "menu": "Gäste benachrichtigen",
+    "title": "Nachricht an die Gäste",
+    "subject_label": "Betreff",
+    "subject_ph": "z. B. Neues aus der Antarktis",
+    "text_label": "Nachricht",
+    "text_ph": "Was möchtest du den Gästen sagen?",
+    "text_helper": "Den persönlichen Link und den Link zum Abmelden fügt das Reisetagebuch für jeden Gast selbst an.",
+    "recipients": "Geht an {email} per E-Mail und {signal} per Signal.",
+    "muted": "{muted} haben Benachrichtigungen ausgeschaltet.",
+    "no_guests": "Noch keine Gäste mit Link – füge zuerst unter «Gäste» jemanden hinzu.",
+    "send": "Senden",
+    "sent": "Nachricht an {count} Gäste gesendet.",
+    "offline": "Nachrichten an Gäste sendest du nur mit Internet."
   }
 }

@@ -11,6 +11,12 @@ export interface GuestLinkView { personKey: string; url: string; expiresAt: stri
 
 export type GuestChannel = 'email' | 'signal' | 'none';
 
+export interface NoticePreview {
+  subject: string;
+  text: string;
+  recipients: { email: number; signal: number; none: number; muted: number };
+}
+
 export interface GuestPhotoView { key: string; width: number; height: number; latitude?: number; longitude?: number; takenAt?: string; url: string; thumb: string }
 export interface GuestBlockView { key: string; kind: 'text' | 'photos'; authorName: string; html: string; photos: GuestPhotoView[] }
 export interface GuestCommentView { key: string; authorName: string; text: string; createdAt: string; mine: boolean }
@@ -45,6 +51,15 @@ export class JournalGuestService {
 
   public async revoke(journalKey: string, personKey: string): Promise<GuestLinkView> {
     return (await this.call<{ link: GuestLinkView }>('manageJournalGuest', { journalKey, action: 'revoke', personKey })).link;
+  }
+
+  /** What changed since the last notice, the proposed text and who would receive it (plan 8). */
+  public previewNotice(journalKey: string): Promise<NoticePreview> {
+    return this.call<NoticePreview>('manageJournalGuest', { journalKey, action: 'previewNotice' });
+  }
+
+  public async sendNotice(journalKey: string, subject: string, text: string): Promise<{ email: number; signal: number }> {
+    return (await this.call<{ sent: { email: number; signal: number } }>('manageJournalGuest', { journalKey, action: 'sendNotice', subject, text })).sent;
   }
 
   // ---- guests (link code) ----

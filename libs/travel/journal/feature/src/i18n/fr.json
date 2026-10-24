@@ -202,5 +202,20 @@
     "back": "Vue d’ensemble",
     "empty": "Rien n’est encore publié – reviens bientôt.",
     "hello": "Bonjour {name}, ravi que tu voyages avec nous."
+  },
+  "notice": {
+    "menu": "Informer les invités",
+    "title": "Message aux invités",
+    "subject_label": "Objet",
+    "subject_ph": "p. ex. Nouvelles de l’Antarctique",
+    "text_label": "Message",
+    "text_ph": "Que veux-tu dire aux invités ?",
+    "text_helper": "Le carnet ajoute lui-même le lien personnel et le lien de désabonnement pour chaque invité.",
+    "recipients": "Envoyé à {email} par e-mail et {signal} par Signal.",
+    "muted": "{muted} ont désactivé les notifications.",
+    "no_guests": "Pas encore d’invités avec un lien – ajoute d’abord quelqu’un sous « Invités ».",
+    "send": "Envoyer",
+    "sent": "Message envoyé à {count} invités.",
+    "offline": "Tu ne peux envoyer des messages aux invités qu’avec Internet."
   }
 }

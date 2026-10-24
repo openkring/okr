@@ -1,5 +1,5 @@
 import { JournalChange, JournalGuestLink } from '@okr/shared-models';
-import { DigestItem, guestLinkState } from '@okr/travel-journal-util';
+import { DigestItem, guestLinkState, NOTICE_SUBJECT_MAX, NOTICE_TEXT_MAX } from '@okr/travel-journal-util';
 
 /*
  * Spec 1.113 §8, plan 7 — who hears about a journal's news, by which channel, with which words. Pure, so the
@@ -42,17 +42,36 @@ function itemLine(item: DigestItem): string {
 
 const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-/** The guest's message: a short list of what changed, the personal link, and how to switch it off. */
-export function guestDigest(journalTitle: string, items: DigestItem[], link: string, muteLink: string): { subject: string; text: string; html: string } {
+export { NOTICE_SUBJECT_MAX, NOTICE_TEXT_MAX };
+
+/**
+ * The proposed notice (plan 8): the author sees it, may change it, and sends it. The personal link and the
+ * mute link are not part of it — they are added per guest when sending.
+ */
+export function proposedNotice(journalTitle: string, items: DigestItem[]): { subject: string; text: string } {
   const title = journalTitle || 'Reisetagebuch';
   const subject = `Neues im Reisetagebuch «${title}»`;
-  const lines = items.map(itemLine);
-  const text = [`Neues im Reisetagebuch «${title}»:`, '', ...lines.map((l) => `• ${l}`), '', `Hier liest du weiter: ${link}`, '',
-    `Keine Nachrichten mehr zu diesem Reisetagebuch? ${muteLink}`].join('\n');
-  const html = `<p>Neues im Reisetagebuch «${escape(title)}»:</p><ul>${lines.map((l) => `<li>${escape(l)}</li>`).join('')}</ul>`
+  const text = items.length === 0
+    ? `Hallo zusammen\n\nEin kurzer Gruss von unterwegs aus dem Reisetagebuch «${title}».`
+    : [`Hallo zusammen`, '', `Neues im Reisetagebuch «${title}»:`, ...items.map((i) => `• ${itemLine(i)}`)].join('\n');
+  return { subject, text };
+}
+
+/** The author's notice, trimmed and checked; undefined when empty or too long. */
+export function checkNotice(subject: unknown, text: unknown): { subject: string; text: string } | undefined {
+  const s = typeof subject === 'string' ? subject.trim() : '';
+  const t = typeof text === 'string' ? text.trim() : '';
+  if (s === '' || t === '' || s.length > NOTICE_SUBJECT_MAX || t.length > NOTICE_TEXT_MAX) return undefined;
+  return { subject: s, text: t };
+}
+
+/** One guest's message: the author's text, then the personal link and how to switch notifications off. */
+export function guestMessage(notice: { subject: string; text: string }, link: string, muteLink: string): { subject: string; text: string; html: string } {
+  const text = [notice.text, '', `Hier liest du weiter: ${link}`, '', `Keine Nachrichten mehr zu diesem Reisetagebuch? ${muteLink}`].join('\n');
+  const html = notice.text.split(/\n{2,}/).map((p) => `<p>${escape(p).replace(/\n/g, '<br>')}</p>`).join('')
     + `<p><a href="${escape(link)}">Hier liest du weiter</a></p>`
     + `<p style="color:#888;font-size:12px">Keine Nachrichten mehr zu diesem Reisetagebuch? <a href="${escape(muteLink)}">Benachrichtigungen ausschalten</a></p>`;
-  return { subject, text, html };
+  return { subject: notice.subject, text, html };
 }
 
 /** New guest comments per footprint key — the news for the authors (their own comments are not news). */
