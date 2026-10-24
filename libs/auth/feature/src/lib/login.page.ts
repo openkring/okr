@@ -7,7 +7,7 @@ import { Header, ImgDirective } from '@okr/shared-ui';
 import { navigateByUrl } from '@okr/shared-util-angular';
 import { getImgixUrlWithAutoParams, getSafeReturnUrl } from '@okr/shared-util-core';
 
-import { AuthService } from '@okr/auth-data-access';
+import { AuthService, PasskeyService } from '@okr/auth-data-access';
 import { LoginForm, PwdResetSent } from '@okr/auth-ui';
 import { emailValidations } from '@okr/auth-util';
 
@@ -110,6 +110,13 @@ import { AuthStore } from './auth.store';
                     </ion-button>
                   </ion-col>
                 </ion-row>
+                @if (passkeyAvailable) {
+                  <ion-row>
+                    <ion-col>
+                      <ion-button fill="outline" [disabled]="passkeyRunning()" (click)="loginWithPasskey()">{{ store.i18n.passkey_login() }}</ion-button>
+                    </ion-col>
+                  </ion-row>
+                }
               </ion-grid>
             </div>
           }
@@ -123,6 +130,11 @@ export class LoginPage {
   private readonly route = inject(ActivatedRoute);
   protected readonly authService = inject(AuthService);
   protected readonly store = inject(AuthStore);
+  private readonly passkeyService = inject(PasskeyService);
+
+  /** Read once: browser support does not change while the page is open. */
+  protected readonly passkeyAvailable = this.passkeyService.canSignIn();
+  protected readonly passkeyRunning = signal(false);
 
   // computed
   public logoUrl = computed(() => `${this.store.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.store.config().logoUrl)}`);
@@ -179,6 +191,21 @@ export class LoginPage {
       returnUrl ?? this.store.config().rootUrl,
       this.retryUrl(returnUrl),
     );
+  }
+
+  /** Sign in with a passkey; AuthService handles cancel, errors and navigation. */
+  protected async loginWithPasskey(): Promise<void> {
+    if (this.passkeyRunning()) return;
+    const returnUrl = getSafeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'));
+    this.passkeyRunning.set(true);
+    try {
+      await this.authService.loginWithPasskey(
+        returnUrl ?? this.store.config().rootUrl,
+        this.retryUrl(returnUrl),
+      );
+    } finally {
+      this.passkeyRunning.set(false);
+    }
   }
 
   /** The login URL to return to after a failed attempt, carrying the returnUrl along. */
