@@ -700,7 +700,8 @@
   "news": {
     "empty": "Il n'y a aucune actualité.",
     "view": "Afficher l'article",
-    "edit": "Modifier l'article"
+    "edit": "Modifier l'article",
+    "label": "Actualités"
   },
   "orgchart": {
     "label": "Organigramme",
@@ -1383,5 +1384,26 @@
     "rearrangeHelper": "Répartit à nouveau les fenêtres sur l'image. Images, textes et liens sont conservés.",
     "locked": "Tu pourras ouvrir cette fenêtre le {d} décembre.",
     "preview": "Aperçu : toutes les fenêtres ouvertes"
+  },
+  "activities": {
+    "label": "Activités"
+  },
+  "messages": {
+    "label": "Messages"
+  },
+  "tasks": {
+    "label": "Tâches"
+  },
+  "invitations": {
+    "label": "Invitations"
+  },
+  "member-age": {
+    "label": "Pyramide des âges"
+  },
+  "member-cat": {
+    "label": "Catégories de membres"
+  },
+  "trip-stats": {
+    "label": "Statistiques des sorties"
   }
 }

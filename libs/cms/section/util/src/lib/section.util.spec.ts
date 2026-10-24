@@ -73,7 +73,7 @@ describe('createSection — completeness over every SectionType', () => {
   // listed, not fixed: each needs its own shape and default, which is not this change's job.
   // Removing one from the list is how you retire it.
   const WITHOUT_FACTORY: SectionType[] = [
-    'emergency', 'accordion', 'tasks', 'news', 'activities', 'messages', 'orgchart', 'trip-stats',
+    'emergency', 'accordion', 'orgchart',
   ];
 
   const creatable = SECTION_TYPES.filter((t) => !WITHOUT_FACTORY.includes(t));
@@ -109,7 +109,7 @@ describe('narrowSection — completeness over every SectionType', () => {
   //
   // WITHOUT_NARROW documents the types that predate weather and still return undefined.
   const WITHOUT_NARROW: SectionType[] = [
-    'emergency', 'accordion', 'tasks', 'news', 'activities', 'messages', 'orgchart', 'trip-stats',
+    'emergency', 'accordion', 'orgchart',
   ];
 
   const narrowable = SECTION_TYPES.filter((t) => !WITHOUT_NARROW.includes(t));

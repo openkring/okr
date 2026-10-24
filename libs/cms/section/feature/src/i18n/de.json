@@ -700,7 +700,8 @@
   "news": {
     "empty": "Es gibt keine Neuigkeiten.",
     "view": "Artikel anzeigen",
-    "edit": "Artikel ändern"
+    "edit": "Artikel ändern",
+    "label": "Neuigkeiten"
   },
   "orgchart": {
     "label": "Organigramm",
@@ -1383,5 +1384,26 @@
     "rearrangeHelper": "Verteilt die Türchen neu auf dem Bild. Bilder, Texte und Links bleiben erhalten.",
     "locked": "Dieses Türchen kannst du am {d}. Dezember öffnen.",
     "preview": "Vorschau: alle Türchen offen"
+  },
+  "activities": {
+    "label": "Aktivitäten"
+  },
+  "messages": {
+    "label": "Nachrichten"
+  },
+  "tasks": {
+    "label": "Aufgaben"
+  },
+  "invitations": {
+    "label": "Einladungen"
+  },
+  "member-age": {
+    "label": "Altersstruktur"
+  },
+  "member-cat": {
+    "label": "Mitgliederkategorien"
+  },
+  "trip-stats": {
+    "label": "Fahrtenstatistik"
   }
 }
