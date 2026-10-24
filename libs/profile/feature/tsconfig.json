@@ -20,6 +20,9 @@
   "exclude": ["dist/**/*"],
   "references": [
     {
+      "path": "../../auth/feature/tsconfig.lib.json"
+    },
+    {
       "path": "../../content/diary/data-access/tsconfig.lib.json"
     },
     {

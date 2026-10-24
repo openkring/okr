@@ -15,6 +15,7 @@ import { ProfileDataAccordion, ProfileDiaryTransferAccordion, ProfilePrivacyAcco
 import { ProfileStore } from './profile.store';
 import { EmailSignatureAccordion } from './email-signature.accordion';
 import { DataRightsAccordion } from './data-rights.accordion';
+import { PasskeysAccordion } from '@okr/auth-feature';
 import { MaintenanceAccordion } from './maintenance.accordion';
 
 @Component({
@@ -24,7 +25,7 @@ import { MaintenanceAccordion } from './maintenance.accordion';
     AsyncPipe,
     AvatarToolbar, Header, AddressesAccordion, ProfileDataAccordion,
     ChangeConfirmation, ProfileSettingsAccordion, ProfilePrivacyAccordion, EmailSignatureAccordion,
-    DataRightsAccordion, MaintenanceAccordion, ProfileDiaryTransferAccordion,
+    DataRightsAccordion, MaintenanceAccordion, PasskeysAccordion, ProfileDiaryTransferAccordion,
     IonContent, IonItem, IonAccordionGroup, IonLabel, IonCard, IonCardContent
   ],
   providers: [ProfileStore],
@@ -116,6 +117,7 @@ import { MaintenanceAccordion } from './maintenance.accordion';
                 />
               }
             }
+            <okr-passkeys-accordion />
             <!-- privacy 1.19 Phase 5A/5B: policy acceptance, data export, data erasure -->
             <okr-data-rights-accordion [i18n]="store.i18n" />
             <okr-email-signature-accordion [i18n]="store.i18n" />

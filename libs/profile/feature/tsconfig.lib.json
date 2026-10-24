@@ -17,6 +17,7 @@
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"],
   "references": [
+    { "path": "../../auth/feature/tsconfig.lib.json" },
     { "path": "../../avatar/data-access/tsconfig.lib.json" },
     { "path": "../../avatar/feature/tsconfig.lib.json" },
     { "path": "../../content/diary/data-access/tsconfig.lib.json" },
