@@ -187,6 +187,26 @@ service cloud.firestore {
     function callerPersonKey() {
       return userExists() ? userData().get('personKey', '') : '';
     }
+    // Tracker trips (spec 1.121): a trip of type 'tracker' is shared across the person's
+    // tenants (e.g. ['bkg','bka']) but belongs to ONE person, track.personKey — only the
+    // caller whose users/{uid}.personKey matches may read or write it, in any tenant.
+    // Every other trip type passes; legacy trips without a `type` field count as non-tracker.
+    function isTrackOwner(data) {
+      return data.get('type', '') != 'tracker' || isTrackOwnerOf(data);
+    }
+    function isTrackOwnerOf(data) {
+      return callerPersonKey() != '' && data.get('track', {}).get('personKey', '') == callerPersonKey();
+    }
+    // LIST variant. Rules are not filters: every trips list query must carry a type
+    // constraint that excludes 'tracker' (type in NON_TRACKER_TRIP_TYPES, type == 'travel'),
+    // or — for the owner — type == 'tracker' plus track.personKey == <own personKey>;
+    // otherwise the whole query is denied. It must read `data.type` WITHOUT a get() default:
+    // the query evaluator substitutes the default for an unconstrained field, so
+    // get('type', '') != 'tracker' proves true for a query with no type filter and returns
+    // other people's tracker trips (verified in the emulator, spec 1.121 task 8).
+    function isListableTrip(data) {
+      return data.type != 'tracker' || isTrackOwnerOf(data);
+    }
     // Folder lookup for member-upload / folder-owner checks (spec 1.22).
     function folderData(folderKey) {
       return get(/databases/$(database)/documents/folders/$(folderKey)).data;
@@ -893,22 +913,22 @@ service cloud.firestore {
       allow delete: if tenantDelete() && isPrivileged();
     }
     match /transfers/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    // resource == null: a get() of a missing trip must not dereference resource.data (see tenantRead).
     match /trips/{tripId} {
-      allow read: if tenantRead();
-      allow create, update: if tenantCreateOrDetach();
-      allow delete: if tenantDelete();
+      allow get:    if tenantRead() && (resource == null || isTrackOwner(resource.data));
+      allow list:   if tenantRead() && isListableTrip(resource.data);
+      allow create: if tenantCreate() && isTrackOwner(request.resource.data);
+      allow update: if tenantUpdate() && isTrackOwner(resource.data) && isTrackOwner(request.resource.data);
+      allow delete: if tenantDelete() && isTrackOwner(resource.data);
 
       // Recorded tracker points (encoded polyline per section). Only the recording person
-      // (trip.track.personKey) may read or write them; the trip doc itself stays tenant-readable.
+      // (trip.track.personKey) may read or write them, like the tracker trip doc itself.
       match /track-points/{n} {
-        function ownerOf(trip) {
-          return callerPersonKey() != '' && trip.get('track', {}).get('personKey', '') == callerPersonKey();
-        }
-        allow read: if ownerOf(get(/databases/$(database)/documents/trips/$(tripId)).data);
+        allow read: if isTrackOwnerOf(get(/databases/$(database)/documents/trips/$(tripId)).data);
         // getAfter: a corrected re-upload deletes stale points in the batch that may also create the trip
-        allow delete: if ownerOf(getAfter(/databases/$(database)/documents/trips/$(tripId)).data);
+        allow delete: if isTrackOwnerOf(getAfter(/databases/$(database)/documents/trips/$(tripId)).data);
         // getAfter: trip and points are written in one batch, so the trip may not exist yet before the commit
-        allow create, update: if ownerOf(getAfter(/databases/$(database)/documents/trips/$(tripId)).data)
+        allow create, update: if isTrackOwnerOf(getAfter(/databases/$(database)/documents/trips/$(tripId)).data)
                               && request.resource.data.tenants.hasAny(callerTenants());
       }
     }

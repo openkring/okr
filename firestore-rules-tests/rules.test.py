@@ -1253,5 +1253,68 @@ for label, expect, run in track_cases:
     passed += ok; failed += not ok
     print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
 
+# ------------------------------------------------ tracker trips (1.121) ---
+# A tracker trip is shared across tenants but belongs to ONE person (track.personKey):
+# only that person may read or write it. Every other trip keeps the plain tenant rules.
+# Rules are not filters: a trips list query must carry a type constraint that excludes
+# 'tracker' (or, for the owner, type == tracker + track.personKey), or it is denied as a whole.
+seed("users/uidT1", {"tenants": ["t1"], "roles": {}, "firstName": "T1", "personKey": "pB"})
+seed("users/uidT2", {"tenants": ["t2"], "roles": {}, "firstName": "T2", "personKey": "pB"})
+seed("trips/trLog",   {"tenants": ["t1"], "isArchived": False, "type": "logbuch", "name": "Log"})
+seed("trips/trNoType", {"tenants": ["t1"], "isArchived": False, "name": "Legacy"})  # pre-July-2026, no type field
+seed("trips/trTrack", {"tenants": ["t1", "t2"], "isArchived": False, "type": "tracker", "name": "Track",
+                       "track": {"personKey": "pB"}})
+TT1, TT2, TC = jwt("uidT1"), jwt("uidT2"), jwt("uidC")
+NON_TRACKER_TRIP_TYPES = ["", "logbuch", "private", "travel"]
+TRIPS_BASE = [("isArchived", "EQUAL", False), ("tenants", "ARRAY_CONTAINS_ANY", ["t1", "system"])]
+
+def tracker_trip_body(person):
+    return body({"tenants": ["t1"], "isArchived": False, "type": "tracker", "name": "New",
+                 "track": {"personKey": person}})
+
+tracker_cases = [
+    ("uidT1(pB, t1) GET own tracker trip -> ALLOW", True, lambda: req("GET", "trips/trTrack", token=TT1)),
+    ("uidT2(pB, t2) GET own tracker trip from the other tenant -> ALLOW", True,
+     lambda: req("GET", "trips/trTrack", token=TT2)),
+    ("uidC(pC, t1) GET pB's tracker trip -> DENY", False, lambda: req("GET", "trips/trTrack", token=TC)),
+    # 404 = rules allowed the get of a missing doc (resource == null guard); 403 would be a deny.
+    ("uidC GET trips/none (non-existent) -> ALLOW(404)", True,
+     lambda: {404: 200}.get(req("GET", "trips/none", token=TC), 403)),
+    ("uidC GET trLog (logbuch) -> ALLOW", True, lambda: req("GET", "trips/trLog", token=TC)),
+    ("uidC trips list with type in NON_TRACKER_TRIP_TYPES -> ALLOW", True,
+     lambda: field_query("trips", TRIPS_BASE + [("type", "IN", NON_TRACKER_TRIP_TYPES)], token=TC)),
+    ("uidC trips list with type == travel -> ALLOW", True,
+     lambda: field_query("trips", TRIPS_BASE + [("type", "EQUAL", "travel")], token=TC)),
+    ("uidC trips list without a type filter -> DENY (rules are not filters)", False,
+     lambda: field_query("trips", TRIPS_BASE, token=TC)),
+    ("uidC GET legacy trip without type field -> ALLOW", True, lambda: req("GET", "trips/trNoType", token=TC)),
+    ("uidT1 lists own tracker trips (type == tracker, track.personKey == pB) -> ALLOW", True,
+     lambda: field_query("trips", TRIPS_BASE + [("type", "EQUAL", "tracker"), ("track.personKey", "EQUAL", "pB")],
+                         token=TT1)),
+    ("uidT1 lists tracker trips without a personKey filter -> DENY", False,
+     lambda: field_query("trips", TRIPS_BASE + [("type", "EQUAL", "tracker")], token=TT1)),
+    ("uidC lists pB's tracker trips -> DENY", False,
+     lambda: field_query("trips", TRIPS_BASE + [("type", "EQUAL", "tracker"), ("track.personKey", "EQUAL", "pB")],
+                         token=TC)),
+    ("uidC CREATE tracker trip for pB -> DENY", False,
+     lambda: req("POST", "trips?documentId=trNewB", token=TC, data=tracker_trip_body("pB"))),
+    ("uidC CREATE tracker trip for pC -> ALLOW", True,
+     lambda: req("POST", "trips?documentId=trNewC", token=TC, data=tracker_trip_body("pC"))),
+    ("uidC UPDATE trLog -> ALLOW (Logbuch unchanged)", True,
+     lambda: req("PATCH", "trips/trLog", token=TC, data=body({"name": "Log2"}), mask=["name"])),
+    ("uidC UPDATE pB's tracker trip -> DENY", False,
+     lambda: req("PATCH", "trips/trTrack", token=TC, data=body({"name": "x"}), mask=["name"])),
+    ("uidT1 UPDATE own tracker trip -> ALLOW", True,
+     lambda: req("PATCH", "trips/trTrack", token=TT1, data=body({"name": "Track2"}), mask=["name"])),
+    ("uidT1 UPDATE own tracker trip handing it to pC -> DENY", False,
+     lambda: req("PATCH", "trips/trTrack", token=TT1, data=body({"track": {"personKey": "pC"}}), mask=["track"])),
+    ("uidC DELETE pB's tracker trip -> DENY", False, lambda: req("DELETE", "trips/trTrack", token=TC)),
+]
+for label, expect, run in tracker_cases:
+    code = run()
+    ok = (code in (200, 201)) == expect
+    passed += ok; failed += not ok
+    print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
+
 print(f"\n{passed} passed, {failed} failed")
 raise SystemExit(1 if failed else 0)
