@@ -32,13 +32,6 @@ import {
         <ion-card>
           <ion-card-content class="ion-no-padding">
             <ion-grid>
-              <!-- the text first: on a phone this is the field that matters -->
-              <ion-row>
-                <ion-col size="12">
-                  <okr-notes-input [i18n]="textI18n()" [value]="text()" (valueChange)="onFieldChange('text', $event)"
-                    [readOnly]="isReadOnly()" [errors]="textErrors()" />
-                </ion-col>
-              </ion-row>
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)"
@@ -88,7 +81,24 @@ import {
               </ion-row>
               <okr-error-note [errors]="dateErrors()" />
 
-              <!-- trip: a plain select over the tenant's travel trips -->
+              <!-- notes: plain multi-line text, clear + copy, no encryption -->
+              <ion-row>
+                <ion-col size="12">
+                  <okr-notes-input [i18n]="textI18n()" [value]="text()" (valueChange)="onFieldChange('text', $event)"
+                    [embedded]="true" [fieldStyle]="true" [encryptable]="false"
+                    [readOnly]="isReadOnly()" [errors]="textErrors()" />
+                </ion-col>
+              </ion-row>
+
+              <!-- done: one line per item -->
+              <ion-row>
+                <ion-col size="12">
+                  <okr-notes-input [i18n]="doneI18n()" [value]="done()" (valueChange)="onFieldChange('done', linesToList($event))"
+                    [embedded]="true" [fieldStyle]="true" [encryptable]="false" [readOnly]="isReadOnly()" />
+                </ion-col>
+              </ion-row>
+
+              <!-- trip: a plain select over the tenant's travel trips; events: slug vocabulary -->
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <ion-item lines="none">
@@ -101,10 +111,6 @@ import {
                     </ion-select>
                   </ion-item>
                 </ion-col>
-              </ion-row>
-
-              <!-- slug vocabularies, comma separated -->
-              <ion-row>
                 <ion-col size="12" size-md="6">
                   <ion-item lines="none">
                     <ion-select [label]="i18n().form_events_label()" [value]="eventSlugs()" [multiple]="true" interface="popover"
@@ -114,14 +120,6 @@ import {
                       }
                     </ion-select>
                   </ion-item>
-                </ion-col>
-              </ion-row>
-
-              <!-- done: one line per item -->
-              <ion-row>
-                <ion-col size="12">
-                  <okr-notes-input [i18n]="doneI18n()" [value]="done()" (valueChange)="onFieldChange('done', linesToList($event))"
-                    [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
             </ion-grid>

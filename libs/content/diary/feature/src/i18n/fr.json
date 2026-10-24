@@ -101,11 +101,11 @@
       "helper": "Une entrée sans météo reste un brouillon."
     },
     "text": {
-      "label": "Pensées personnelles",
+      "label": "Notes",
       "placeholder": "Écris simplement …"
     },
     "done": {
-      "label": "Fait",
+      "label": "Tâches terminées",
       "placeholder": "Une ligne par point"
     },
     "locations": {

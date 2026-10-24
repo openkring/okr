@@ -101,11 +101,11 @@
       "helper": "Una entrada sin tiempo se queda como borrador."
     },
     "text": {
-      "label": "Pensamientos personales",
+      "label": "Notas",
       "placeholder": "Empieza a escribir …"
     },
     "done": {
-      "label": "Hecho",
+      "label": "Tareas completadas",
       "placeholder": "Una línea por punto"
     },
     "locations": {

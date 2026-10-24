@@ -101,11 +101,11 @@
       "helper": "An entry without weather stays a draft."
     },
     "text": {
-      "label": "Personal thoughts",
+      "label": "Notes",
       "placeholder": "Just start writing …"
     },
     "done": {
-      "label": "Done",
+      "label": "Completed tasks",
       "placeholder": "One line per item"
     },
     "locations": {

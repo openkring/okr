@@ -101,11 +101,11 @@
       "helper": "Ein Eintrag ohne Wetter bleibt ein Entwurf."
     },
     "text": {
-      "label": "Persönliche Gedanken",
+      "label": "Notizen",
       "placeholder": "Schreib einfach los …"
     },
     "done": {
-      "label": "Erledigt",
+      "label": "Erledigte Aufgaben",
       "placeholder": "Eine Zeile pro Punkt"
     },
     "locations": {

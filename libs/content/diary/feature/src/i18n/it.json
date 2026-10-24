@@ -101,11 +101,11 @@
       "helper": "Una voce senza meteo resta una bozza."
     },
     "text": {
-      "label": "Pensieri personali",
+      "label": "Note",
       "placeholder": "Inizia a scrivere …"
     },
     "done": {
-      "label": "Fatto",
+      "label": "Attività completate",
       "placeholder": "Una riga per punto"
     },
     "locations": {

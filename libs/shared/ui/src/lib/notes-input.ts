@@ -167,9 +167,9 @@ export class NotesInput {
   public rows = input(5);
   public showTitle = input<boolean>(false);
   public title = input('');
-  protected clearable = input(true);
-  protected copyable = input(true);
-  protected encryptable = input(true);
+  public clearable = input(true);
+  public copyable = input(true);
+  public encryptable = input(true);
   public autoGrow = input(true);
   /** true: render without the surrounding ion-card, for use inside a parent card. */
   public embedded = input(false);
