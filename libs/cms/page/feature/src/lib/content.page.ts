@@ -149,7 +149,7 @@ import { PageStore } from './page.store';
                 <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
                   <ng-template>
                     <ion-content>
-                      <okr-menu [menuName]="contextMenuName" [forceVisible]="groupAdmin()" [excludeNames]="hiddenMenuItems()" [toggleStates]="{ toggleEditMode: editMode() }"/>
+                      <okr-menu [menuName]="contextMenuName" [forceVisible]="groupAdmin()" [excludeNames]="hiddenMenuItems()" [toggleStates]="{ toggleEditMode: editMode(), togglePreview: adventPreview() }"/>
                     </ion-content>
                   </ng-template>
                 </ion-popover>
@@ -250,6 +250,8 @@ export class ContentPage {
    */
   private static readonly EDIT_MODE_ONLY_MENU_ITEMS = ['cp-sort-sections', 'cp-select-section', 'cp-add-section', 'page-edit'];
   protected albumSection = computed(() => this.sectionDispatchers().map(d => d.albumSection()).find(Boolean));
+  private adventSections = computed(() => this.sectionDispatchers().map(d => d.adventSection()).filter(a => !!a));
+  protected adventPreview = computed(() => this.adventSections().some(a => a.preview()));
   protected hiddenMenuItems = computed(() => [
     ...(this.editMode() ? [] : ContentPage.EDIT_MODE_ONLY_MENU_ITEMS),
     // Uploading needs an album to upload into — AND a folder the user may write to. The
@@ -262,6 +264,9 @@ export class ContentPage {
     // too. The page therefore hides it itself: a registered user reaches this menu only for the
     // album upload and must not be able to switch the page into edit mode.
     ...(this.isEditable() ? [] : ['editmode-toggle']),
+    // the advent preview only means something on a page that shows an advent calendar, and only
+    // read-only: in edit mode the door interactions would get in the way of the section edits
+    ...(this.adventSections().length > 0 && !this.editMode() ? [] : ['advent-preview']),
   ]);
 
   /**
@@ -354,12 +359,18 @@ export class ContentPage {
     if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch(selectedMethod) {
       case 'toggleEditMode':  this.toggleEditMode(); break;
-      case 'editPage': 
+      case 'togglePreview': {
+        const preview = !this.adventPreview();
+        this.adventSections().forEach(a => a.setPreview(preview));
+        break;
+      }
+      case 'editPage': {
         const page = this.store.page();
         if (page) {
           await this.store.edit(page, false);
         }
         break;
+      }
       case 'sortSections':  await this.store.sortSections(); break;
       case 'selectSection': await this.store.selectSection(); break;
       case 'addSection':    await this.addSection(); break;

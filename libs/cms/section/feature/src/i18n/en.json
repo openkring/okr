@@ -1382,8 +1382,7 @@
     "doorRemove": "Remove image",
     "rearrange": "Rearrange doors",
     "rearrangeHelper": "Spreads the doors over the image again. Images, texts and links are kept.",
-    "locked": "You can open this door on {d} December.",
-    "preview": "Preview: all doors open"
+    "locked": "You can open this door on {d} December."
   },
   "activities": {
     "label": "Activities"

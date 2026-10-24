@@ -531,6 +531,9 @@ const cms: FeatureBlock = {
       { key: 'print', name: 'print', url: 'print', action: 'call', roleNeeded: 'registered', icon: 'print', label: '@item.print' },
       { key: 'cp-exportraw', name: 'cp-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.cp-exportraw' },
       { key: 'page-edit', name: 'page-edit', url: 'editPage', action: 'call', roleNeeded: 'contentAdmin', icon: 'edit', label: '@item.page-edit' },
+      // Advent calendar preview (spec 1.119): every door can be opened regardless of the date.
+      // `content.page.ts` hides the row on a page without an advent section.
+      { key: 'advent-preview', name: 'advent-preview', url: 'togglePreview', action: 'toggle', roleNeeded: 'contentAdmin', icon: 'eye-on', iconAlt: 'eye-off', label: '@item.advent-preview', labelAlt: '@item.advent-preview_alt' },
     ] },
     // Context menu of the ALBUM page (`/album/<folderKey>/c-album`), which renders a storage
     // folder rather than a page document. Wrapper is `registered` for the same reason

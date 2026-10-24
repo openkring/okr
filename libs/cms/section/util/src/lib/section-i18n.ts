@@ -608,7 +608,6 @@ export const SECTION_I18N_KEYS = {
   advent_rearrange:                         PFX + 'advent.rearrange',
   advent_rearrange_helper:                  PFX + 'advent.rearrangeHelper',
   advent_locked:                            PFX + 'advent.locked',
-  advent_preview:                           PFX + 'advent.preview',
 
   // responsibility-config
   responsibility_edit:                      PFX + 'responsibility.edit',

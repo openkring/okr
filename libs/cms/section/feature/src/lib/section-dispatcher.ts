@@ -263,6 +263,8 @@ export class SectionDispatcher {
    * route its context-menu 'addFiles' action to the album (which owns the current folder).
    */
   public readonly albumSection = viewChild(AlbumSectionComponent);
+  /** The rendered advent section, if any — the hosting page toggles its preview from the context menu. */
+  public readonly adventSection = viewChild(AdventSectionComponent);
 
   // derived
   protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.store.i18n.copy_conf() } as ButtonCopyI18n));

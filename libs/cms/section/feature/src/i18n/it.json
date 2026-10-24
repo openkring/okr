@@ -1382,8 +1382,7 @@
     "doorRemove": "Rimuovi immagine",
     "rearrange": "Riordina le finestrelle",
     "rearrangeHelper": "Ridistribuisce le finestrelle sull'immagine. Immagini, testi e link restano.",
-    "locked": "Potrai aprire questa finestrella il {d} dicembre.",
-    "preview": "Anteprima: tutte le finestrelle aperte"
+    "locked": "Potrai aprire questa finestrella il {d} dicembre."
   },
   "activities": {
     "label": "Attività"

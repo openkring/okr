@@ -1382,8 +1382,7 @@
     "doorRemove": "Bild entfernen",
     "rearrange": "Türchen neu anordnen",
     "rearrangeHelper": "Verteilt die Türchen neu auf dem Bild. Bilder, Texte und Links bleiben erhalten.",
-    "locked": "Dieses Türchen kannst du am {d}. Dezember öffnen.",
-    "preview": "Vorschau: alle Türchen offen"
+    "locked": "Dieses Türchen kannst du am {d}. Dezember öffnen."
   },
   "activities": {
     "label": "Aktivitäten"

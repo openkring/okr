@@ -1,9 +1,9 @@
 import { Component, computed, DestroyRef, effect, ElementRef, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
-import { IonChip, IonIcon, IonLabel, ModalController, ToastController } from '@ionic/angular';
+import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonPopover, ModalController, ToastController } from '@ionic/angular';
 
 import { ENV } from '@okr/shared-config';
-import { AdventDoor, AdventSection, IMAGE_STYLE_SHAPE } from '@okr/shared-models';
+import { AdventDoor, AdventSection, IMAGE_STYLE_SHAPE, ImageConfig } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -11,7 +11,7 @@ import { ImgDirective, showImageSlider } from '@okr/shared-ui';
 import { showToast } from '@okr/shared-util-angular';
 import { fill, getImgixUrlWithAutoParams } from '@okr/shared-util-core';
 import {
-  adventLinkKind, adventStorageKey, coverBox, isDoorUnlocked, openDoorsOnLoad, parseOpenedUpTo,
+  adventImageName, adventLinkKind, adventStorageKey, coverBox, isDoorUnlocked, openDoorsOnLoad, parseOpenedUpTo,
   resolveAdventBackground, SECTION_I18N_KEYS
 } from '@okr/cms-section-util';
 
@@ -26,6 +26,10 @@ const DOOR_THUMB_PARAMS = 'w=400&h=400&fit=crop&auto=format,compress';
  * door has no image), a tap on that follows the link or shows the image full-screen with its overlay. The highest door a user has opened is
  * kept in localStorage, so the doors stay open on the next visit.
  *
+ * With several backgrounds every user picks their own (the button top right); the choice is kept in
+ * localStorage, the section's `backgroundUrl` is only the default. The preview (toggled from the
+ * page's context menu, read-only mode only) unlocks every door regardless of the date and remembers nothing.
+ *
  * The cut-out: the cover box of the background (size + offset, as `background-size: cover` would
  * place it) is computed here and every door paints the same image shifted by its own offset.
  * `background-attachment: fixed` would be simpler but is broken on iOS Safari.
@@ -33,7 +37,7 @@ const DOOR_THUMB_PARAMS = 'w=400&h=400&fit=crop&auto=format,compress';
 @Component({
   selector: 'okr-advent-section',
   standalone: true,
-  imports: [ImgDirective, SvgIconPipe, IonChip, IonIcon, IonLabel],
+  imports: [ImgDirective, SvgIconPipe, IonButton, IonIcon, IonPopover, IonList, IonItem, IonLabel],
   styles: [`
     :host { display: block; }
     .advent {
@@ -48,7 +52,9 @@ const DOOR_THUMB_PARAMS = 'w=400&h=400&fit=crop&auto=format,compress';
       text-align: center; color: #fff; font-size: clamp(1.8rem, 6vmin, 4rem); font-weight: 700; line-height: 1.1;
       text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7), 0 0 2px rgba(0, 0, 0, 0.9);
     }
-    .preview { position: absolute; top: 8px; right: 8px; z-index: 3; }
+    .bg-select { position: absolute; top: 8px; right: 8px; z-index: 3; margin: 0; max-width: calc(100% - 16px);
+      text-transform: none; --background: rgba(0, 0, 0, 0.35); --background-hover: rgba(0, 0, 0, 0.5); --color: #fff; }
+    .bg-select span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .door {
       position: absolute; padding: 0; margin: 0; border: none; background: none; cursor: pointer;
       -webkit-tap-highlight-color: transparent;
@@ -101,11 +107,22 @@ const DOOR_THUMB_PARAMS = 'w=400&h=400&fit=crop&auto=format,compress';
         @if(section.properties.showTitle && section.title) {
           <h1 class="title">{{ section.title }}</h1>
         }
-        @if(editMode()) {
-          <ion-chip class="preview" [color]="preview() ? 'warning' : 'light'" (click)="preview.set(!preview())">
-            <ion-icon src="{{'eye-on' | svgIcon }}" />
-            <ion-label>{{ i18n.advent_preview() }}</ion-label>
-          </ion-chip>
+        @if(backgrounds().length > 1) {
+          <ion-button class="bg-select" size="small" [attr.aria-label]="i18n.advent_background()" (click)="openBackgrounds($event)">
+            <span>{{ backgroundName() }}</span>
+            <ion-icon slot="end" src="{{'chevron-down' | svgIcon }}" />
+          </ion-button>
+          <ion-popover [isOpen]="backgroundsOpen()" [event]="backgroundsEvent()" (didDismiss)="backgroundsOpen.set(false)">
+            <ng-template>
+              <ion-list lines="none">
+                @for(img of otherBackgrounds(); track img.url) {
+                  <ion-item button [detail]="false" (click)="chooseBackground(img.url)">
+                    <ion-label>{{ imageName(img) }}</ion-label>
+                  </ion-item>
+                }
+              </ion-list>
+            </ng-template>
+          </ion-popover>
         }
         @for(door of doors(); track door.day) {
           <button type="button" class="door"
@@ -150,7 +167,7 @@ export class AdventSectionComponent {
 
   protected readonly i18n = inject(I18nService).translateAll({
     advent_locked: SECTION_I18N_KEYS.advent_locked,
-    advent_preview: SECTION_I18N_KEYS.advent_preview,
+    advent_background: SECTION_I18N_KEYS.advent_background_label,
     advent_door: SECTION_I18N_KEYS.advent_door,
   });
 
@@ -162,7 +179,11 @@ export class AdventSectionComponent {
   private readonly imgixBaseUrl = this.env.services.imgixBaseUrl;
 
   // state
-  protected readonly preview = signal(false);
+  /** preview: every door can be opened regardless of the date; toggled by the hosting page */
+  public readonly preview = signal(false);
+  private readonly chosenBackgroundUrl = signal<string | undefined>(undefined); // this user's choice
+  protected readonly backgroundsOpen = signal(false);
+  protected readonly backgroundsEvent = signal<Event | undefined>(undefined);
   private readonly today = signal(new Date());
   private readonly opened = signal(new Set<number>());
   protected readonly instant = signal(new Set<number>()); // opened from storage: shown open without animation
@@ -174,13 +195,15 @@ export class AdventSectionComponent {
   // derived values
   private readonly year = computed(() => this.section()?.properties.year ?? new Date().getFullYear());
   protected readonly doors = computed(() => this.section()?.properties.doors ?? []);
-  private readonly background = computed(() =>
-    resolveAdventBackground(this.section()?.properties.backgrounds, this.section()?.properties.backgroundUrl));
+  protected readonly backgrounds = computed(() => (this.section()?.properties.backgrounds ?? []).filter(img => !!img.url));
   private readonly storageKey = computed(() => {
     const section = this.section();
     if (!section) return '';
     return adventStorageKey(this.appStore.tenantId(), section.okey, this.year(), this.appStore.fbUser()?.uid);
   });
+  private readonly backgroundKey = computed(() => this.storageKey() ? `${this.storageKey()}.bg` : '');
+  private readonly background = computed(() =>
+    resolveAdventBackground(this.backgrounds(), this.chosenBackgroundUrl() ?? this.section()?.properties.backgroundUrl));
   private readonly backgroundUrl = computed(() => {
     const url = this.background()?.url ?? '';
     const width = this.requestWidth();
@@ -198,6 +221,12 @@ export class AdventSectionComponent {
     const logo = this.appStore.appConfig()?.logoUrl;
     return logo ? `${this.imgixBaseUrl}/${getImgixUrlWithAutoParams(logo)}` : '';
   });
+  protected readonly backgroundName = computed(() => {
+    const bg = this.background();
+    return bg ? adventImageName(bg) : '';
+  });
+  /** the dropdown lists the backgrounds the user can switch to, not the current one */
+  protected readonly otherBackgrounds = computed(() => this.backgrounds().filter(img => img.url !== this.background()?.url));
   protected readonly backgroundCss = computed(() => this.backgroundUrl() ? `url("${this.backgroundUrl()}")` : 'none');
   protected readonly backgroundSize = computed(() => {
     const cover = this.cover();
@@ -244,13 +273,35 @@ export class AdventSectionComponent {
     effect(() => {
       const key = this.storageKey();
       if (!key) return;
-      const stored = parseOpenedUpTo(this.readStorage(key));
-      const open = openDoorsOnLoad(stored, this.year(), untracked(() => this.today()));
-      untracked(() => {
-        this.opened.set(open);
-        this.instant.set(new Set(open));
-      });
+      untracked(() => this.restoreOpened(key));
     });
+
+    // the door interactions would get in the way of editing the section: no preview in edit mode
+    effect(() => {
+      if (this.editMode()) untracked(() => this.setPreview(false));
+    });
+
+    // restore the background the user chose before (a background since removed falls back to the default)
+    effect(() => {
+      const key = this.backgroundKey();
+      if (!key) return;
+      const stored = this.readStorage(key) ?? undefined;
+      untracked(() => this.chosenBackgroundUrl.set(stored));
+    });
+  }
+
+  /** Switches the preview; leaving it closes the doors that only the preview could open. */
+  public setPreview(preview: boolean): void {
+    if (preview === this.preview()) return;
+    this.preview.set(preview);
+    if (!preview && this.storageKey()) this.restoreOpened(this.storageKey());
+  }
+
+  private restoreOpened(key: string): void {
+    const stored = parseOpenedUpTo(this.readStorage(key));
+    const open = openDoorsOnLoad(stored, this.year(), this.today());
+    this.opened.set(open);
+    this.instant.set(new Set(open));
   }
 
   /*-------------------------- door state --------------------------------*/
@@ -259,7 +310,7 @@ export class AdventSectionComponent {
   }
 
   protected isOpen(day: number): boolean {
-    return this.preview() || this.opened().has(day);
+    return this.opened().has(day);
   }
 
   protected doorLabel(day: number): string {
@@ -314,6 +365,21 @@ export class AdventSectionComponent {
     }
   }
 
+  protected imageName(img: ImageConfig): string {
+    return adventImageName(img);
+  }
+
+  protected openBackgrounds(event: Event): void {
+    this.backgroundsEvent.set(event);
+    this.backgroundsOpen.set(true);
+  }
+
+  protected chooseBackground(url: string): void {
+    this.backgroundsOpen.set(false);
+    this.chosenBackgroundUrl.set(url);
+    this.writeStorage(this.backgroundKey(), url);
+  }
+
   private shake(day: number): void {
     this.shaking.set(day);
     setTimeout(() => { if (this.shaking() === day) this.shaking.set(undefined); }, 450);
@@ -325,10 +391,15 @@ export class AdventSectionComponent {
     if (!key) return;
     const stored = parseOpenedUpTo(this.readStorage(key));
     if (day <= stored) return;
+    this.writeStorage(key, String(day));
+  }
+
+  private writeStorage(key: string, value: string): void {
+    if (!key) return;
     try {
-      localStorage.setItem(key, String(day));
+      localStorage.setItem(key, value);
     } catch {
-      // private mode or blocked storage: the doors are simply not remembered
+      // private mode or blocked storage: the choice is simply not remembered
     }
   }
 

@@ -1382,8 +1382,7 @@
     "doorRemove": "Quitar imagen",
     "rearrange": "Reordenar ventanas",
     "rearrangeHelper": "Vuelve a repartir las ventanas sobre la imagen. Imágenes, textos y enlaces se conservan.",
-    "locked": "Podrás abrir esta ventana el {d} de diciembre.",
-    "preview": "Vista previa: todas las ventanas abiertas"
+    "locked": "Podrás abrir esta ventana el {d} de diciembre."
   },
   "activities": {
     "label": "Actividades"
