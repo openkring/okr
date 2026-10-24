@@ -9,6 +9,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { AppConfigCollection } from '@okr/shared-models';
 
 import { OfflineNoticeService } from './offline-notice.service';
+import { type HealthProbeOutcome, isStuck } from './wake-watchdog.util';
 
 const PFX = '@shared/feature.';
 
@@ -128,13 +129,17 @@ export class WakeWatchdogService {
     }
   }
 
-  /** One bounded server read of this tenant's app-config: exercises App Check, auth and the stream. */
+  /**
+   * One bounded server read of this tenant's app-config: exercises App Check, auth and the stream.
+   * A refusal from the server (e.g. App Check denied) counts as healthy — the stack answered, and a
+   * reload would not change the answer (SCS-CS).
+   */
   private async firestoreHealthy(): Promise<boolean> {
     await ensureAppCheckToken(PROBE_TIMEOUT_MS);
-    return withTimeout(
-      getDocFromServer(doc(this.firestore, AppConfigCollection, this.env.tenantId)).then(() => true),
-      HEALTH_TIMEOUT_MS,
-    );
+    const read = getDocFromServer(doc(this.firestore, AppConfigCollection, this.env.tenantId))
+      .then((): HealthProbeOutcome => ({ kind: 'ok' }), (error: unknown): HealthProbeOutcome => ({ kind: 'error', error }));
+    const timeout = new Promise<HealthProbeOutcome>(resolve => setTimeout(() => resolve({ kind: 'timeout' }), HEALTH_TIMEOUT_MS));
+    return !isStuck(await Promise.race([read, timeout]));
   }
 
   private async reload(source: string, gapMs: number): Promise<void> {
