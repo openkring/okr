@@ -3,7 +3,8 @@ import { JournalBookModel, JournalChange } from '@okr/shared-models';
 import { formatHlc } from './journal-hlc.util';
 import { materialize } from './journal-merge.util';
 import { routeLengthKm } from './journal-map.util';
-import { BookFrame, BookInput, BookLabels, BookPage, layoutBook, PaginateText, stripEmoji, stripUndefined } from './journal-book.util';
+import { templateBoxes } from './journal-book-layout.util';
+import { BookFrame, BookInput, BookLabels, BookPage, coverImageKeyOf, layoutBook, PaginateText, stripEmoji, stripUndefined } from './journal-book.util';
 import { coverLayout } from './journal-book-cover.util';
 
 class Sentinel { constructor(public readonly tag: string) {} }
@@ -228,6 +229,45 @@ describe('layoutBook', () => {
     expect(five[4].role).toBe('stats');
   });
 
+  it('the cover photo defaults to the journal cover, else the first photo', () => {
+    // the journal cover (JournalModel.cover, an ImageConfig on the Firestore doc) is not in the change-log state,
+    // so the default falls through to the first visible photo of the first published footprint
+    const changes = [
+      journal(), fp('d', '20270101', { publishState: 'draft' }), img('i0'), photos('p0', 'd', 'a', ['i0']),
+      fp('f1', '20270102'), text('t1', 'f1', 'a', '<p>x</p>'), fp('f2', '20270103'), img('i1'), img('i2'), img('i3'), photos('p2', 'f2', 'a', ['i1', 'i2']),
+    ];
+    const state = materialize(changes);
+    const book = (b: Partial<JournalBookModel>): JournalBookModel => ({ ...new JournalBookModel(), ...b });
+    expect(coverImageKeyOf(state, 'j1', book({ coverImageKey: 'i3' }))).toBe('i3');
+    expect(coverImageKeyOf(state, 'j1', book({ coverImageKey: 'unknown' }))).toBe('i1');
+    expect(coverImageKeyOf(state, 'j1', book({}))).toBe('i1');
+    expect(coverImageKeyOf(state, 'j1', book({ hiddenImageKeys: ['i1'] }))).toBe('i2');
+    expect(coverImageKeyOf(state, 'j1', book({ hiddenImageKeys: ['i1', 'i2'] }))).toBeUndefined();
+    const bookInput = input(changes, { print: { bleedMm: 3, pageMultiple: 4, iccProfile: 'fogra39', cover: 'softcover', spineMm: 8 } });
+    const layout = layoutBook(bookInput);
+    expect(layout.coverImageKey).toBe('i1');
+    const cover = coverLayout(bookInput.book, layout.title, layout.period, layout.coverImageKey);
+    expect(cover?.frames.find((f) => f.kind === 'photo')).toMatchObject({ imageKey: 'i1' });
+  });
+
+  it('a short override page is re-laid out without empty slots', () => {
+    const changes = [journal(), fp('f1', '20270102'), img('i1'), img('i2'), img('i3'), img('i4'), photos('p1', 'f1', 'a', ['i1', 'i2', 'i3', 'i4'])];
+    const full = (pages: BookPage[]) => pages.filter((p) => p.role === 'photos')
+      .every((p) => p.template !== undefined && p.frames.length === templateBoxes(p.template, 3).length);
+    // the hero (i1) leaves the hand-set hero-3 page with three photos
+    const heroCut = layoutBook(input(changes, { albums: { p1: { pages: [{ template: 'hero-3', imageKeys: ['i1', 'i2', 'i3', 'i4'] }] } } })).pages;
+    expect(full(heroCut)).toBe(true);
+    expect(photoKeys(heroCut.filter((p) => p.role === 'photos'))).toEqual(['i2', 'i3', 'i4']);
+    expect(heroCut.find((p) => p.role === 'photos')?.template).toBe('hero-2');
+    // a hidden photo leaves a two-landscape page with one
+    const hidden = layoutBook(input(changes, {
+      hiddenImageKeys: ['i3'],
+      albums: { p1: { pages: [{ template: 'two-landscape', imageKeys: ['i2', 'i3'] }, { template: 'full', imageKeys: ['i4'] }] } },
+    })).pages;
+    expect(full(hidden)).toBe(true);
+    expect(hidden.filter((p) => p.role === 'photos').map((p) => [p.template, photoKeys([p])])).toEqual([['full', ['i2']], ['full', ['i4']]]);
+  });
+
   it('warnings: missing print photo, below 300, below 200', () => {
     const { pages, warnings } = layoutBook(input([
       journal(),
@@ -247,20 +287,22 @@ describe('layoutBook', () => {
 
 describe('coverLayout', () => {
   it("coverLayout is undefined for 'none' and 2 × (297 + bleed) + spine + 2 × wrap wide otherwise", () => {
-    const book = (print: Partial<JournalBookModel['print']>, coverImageKey?: string): JournalBookModel =>
-      ({ ...new JournalBookModel(), coverImageKey, print: { ...new JournalBookModel().print, ...print } });
-    expect(coverLayout(book({ cover: 'none' }), 'T', 'P')).toBeUndefined();
-    const soft = coverLayout(book({ cover: 'softcover', bleedMm: 3, spineMm: 10 }, 'i1'), 'Antarktis', '1.1.2027');
+    const book = (print: Partial<JournalBookModel['print']>): JournalBookModel =>
+      ({ ...new JournalBookModel(), print: { ...new JournalBookModel().print, ...print } });
+    expect(coverLayout(book({ cover: 'none' }), 'T', 'P', 'i1')).toBeUndefined();
+    const soft = coverLayout(book({ cover: 'softcover', bleedMm: 3, spineMm: 10 }), 'Antarktis', '1.1.2027', 'i1');
     expect(soft?.width).toBe(2 * (297 + 3) + 10);
     expect(soft?.height).toBe(210 + 2 * 3);
     expect(soft?.frames.find((f) => f.kind === 'photo')).toMatchObject({ imageKey: 'i1', box: { x: 3 + 297 + 10, y: 0, w: 297 + 3, h: 216 } });
     expect(soft?.frames.find((f) => f.kind === 'map')).toMatchObject({ file: 'book-map-back.jpg' });
     expect(soft?.frames.some((f) => f.kind === 'text' && f.rotate === 90)).toBe(true);
-    const hard = coverLayout(book({ cover: 'hardcover', bleedMm: 3, spineMm: 4, wrapMm: 15 }), 'A', 'B');
+    const hard = coverLayout(book({ cover: 'hardcover', bleedMm: 3, spineMm: 4, wrapMm: 15 }), 'A', 'B', undefined);
     expect(hard?.width).toBe(2 * (297 + 3) + 4 + 2 * 15);
     expect(hard?.height).toBe(210 + 2 * (3 + 15));
     expect(hard?.frames.some((f) => f.kind === 'photo')).toBe(false);
     expect(hard?.frames.some((f) => f.kind === 'text' && f.rotate === 90)).toBe(false); // spine < 6 mm: no spine title
+    const noBleed = coverLayout({ ...book({ cover: 'softcover' }), print: { pageMultiple: 4, iccProfile: 'fogra39', cover: 'softcover' } as JournalBookModel['print'] }, 'A', 'B', undefined);
+    expect(noBleed?.width).toBe(2 * (297 + 3)); // bleed defaults to 3 mm, as in layoutBook
   });
 });
 

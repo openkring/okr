@@ -81,8 +81,19 @@ export interface BookInput {
   authorName: (personKey: string) => string;
   paginate: PaginateText;
 }
-/** title and period are what the title page prints; pass them on to coverLayout. */
-export interface BookLayout { pages: BookPage[]; warnings: BookWarning[]; stats: BookStats; mapFiles: string[]; title: string; period: string }
+/** title, period and coverImageKey (resolved default, see coverImageKeyOf) are what coverLayout needs. */
+export interface BookLayout {
+  pages: BookPage[];
+  warnings: BookWarning[];
+  stats: BookStats;
+  mapFiles: string[];
+  title: string;
+  period: string;
+  coverImageKey?: string;
+}
+
+/** Bleed when the book document has none (the model's default). */
+export const DEFAULT_BLEED_MM = 3;
 
 export const MAP_OVERVIEW = 'book-map-overview.jpg';
 export const MAP_BACK = 'book-map-back.jpg';
@@ -208,18 +219,47 @@ function photoPage(ctx: Ctx, fpKey: string, blockKey: string, template: BookTemp
   return { role: 'photos', footprintKey: fpKey, blockKey, template, frames: keys.map((k, i) => photoFrame(ctx, boxes[i], k)) };
 }
 
-/** The photo pages of an album block; photos beyond a hand-set page's slots are laid out automatically after it. */
+/**
+ * The photo pages of an album block. A hand-set page keeps its template only when its photos fill it exactly:
+ * photos beyond its slots are laid out automatically after it, and a page left short (hero or hidden photo taken
+ * out) is re-picked by the auto-layout for its photos — never an empty slot (ruling R6).
+ */
 function albumBlockPages(ctx: Ctx, fpKey: string, block: BlockView, exclude: string | undefined): BookPage[] {
   const imgs = (block.imageKeys ?? []).map((k) => ctx.images.get(k)).filter((i): i is ImageView => i !== undefined && i.key !== exclude);
   const override: BookPageOverride[] | undefined = ctx.input.book.albums?.[block.key]?.pages;
+  const viewsOf = (keys: string[]) => keys.map((k) => ctx.images.get(k)).filter((i): i is ImageView => i !== undefined);
+  const auto = (keys: string[]) => autoLayout(viewsOf(keys)).map((q) => photoPage(ctx, fpKey, block.key, q.template, q.imageKeys));
   const pages: BookPage[] = [];
   for (const p of albumPages(imgs, override, ctx.hidden)) {
     const slots = templateBoxes(p.template, ctx.bleed).length;
+    if (p.imageKeys.length < slots) {
+      pages.push(...auto(p.imageKeys));
+      continue;
+    }
     pages.push(photoPage(ctx, fpKey, block.key, p.template, p.imageKeys.slice(0, slots)));
-    const rest = p.imageKeys.slice(slots).map((k) => ctx.images.get(k)).filter((i): i is ImageView => i !== undefined);
-    for (const q of autoLayout(rest)) pages.push(photoPage(ctx, fpKey, block.key, q.template, q.imageKeys));
+    pages.push(...auto(p.imageKeys.slice(slots)));
   }
   return pages;
+}
+
+/**
+ * The cover photo (design §5.1): the book's `coverImageKey` when it names an image of the journal, else the first
+ * visible photo of the first published footprint that has one. The journal's own cover (`JournalModel.cover`, an
+ * ImageConfig URL on the Firestore journal document) is not part of the change-log state, so it cannot be matched
+ * to an image here and is skipped.
+ */
+export function coverImageKeyOf(state: JournalState, journalKey: string, book: JournalBookModel): string | undefined {
+  const images = imagesOf(state, journalKey);
+  if (book.coverImageKey && images.has(book.coverImageKey)) return book.coverImageKey;
+  const hidden = new Set(book.hiddenImageKeys ?? []);
+  for (const fp of footprintsOf(state, journalKey)) {
+    if (fp.publishState !== 'published') continue;
+    for (const b of fp.blocks) {
+      const key = b.kind === 'photos' ? b.imageKeys?.find((k) => images.has(k) && !hidden.has(k)) : undefined;
+      if (key) return key;
+    }
+  }
+  return undefined;
 }
 
 /** A run of consecutive text blocks as one HTML flow; the author's name follows each change of author. */
@@ -340,7 +380,7 @@ export function layoutBook(input: BookInput): BookLayout {
   const journal = journalsOf(state).find((j) => j.key === journalKey);
   const footprints = footprintsOf(state, journalKey).filter((f) => f.publishState === 'published');
   const images = imagesOf(state, journalKey);
-  const ctx: Ctx = { input, images, hidden: new Set(book.hiddenImageKeys ?? []), whole: new Set(book.fitWhole ?? []), bleed: book.print?.bleedMm ?? 3 };
+  const ctx: Ctx = { input, images, hidden: new Set(book.hiddenImageKeys ?? []), whole: new Set(book.fitWhole ?? []), bleed: book.print?.bleedMm ?? DEFAULT_BLEED_MM };
 
   // 2. title page
   const title = stripEmoji(book.title || journal?.title || '');
@@ -401,5 +441,5 @@ export function layoutBook(input: BookInput): BookLayout {
   while (pages.length % multiple !== 0) pages.push({ role: 'blank', frames: [] });
   if (book.print?.cover && book.print.cover !== 'none') mapFiles.push(MAP_BACK);
 
-  return { pages, warnings: warningsOf(pages, ctx), stats, mapFiles, title, period };
+  return { pages, warnings: warningsOf(pages, ctx), stats, mapFiles, title, period, coverImageKey: coverImageKeyOf(state, journalKey, book) };
 }

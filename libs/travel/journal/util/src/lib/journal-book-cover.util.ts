@@ -1,6 +1,6 @@
 import { JournalBookModel } from '@okr/shared-models';
 import { Box, MARGIN, PAGE_H, PAGE_W } from './journal-book-layout.util';
-import { BookFrame, escapeHtml, MAP_BACK, stripEmoji } from './journal-book.util';
+import { BookFrame, DEFAULT_BLEED_MM, escapeHtml, MAP_BACK, stripEmoji } from './journal-book.util';
 
 /** Below this spine width the spine carries no title. */
 export const SPINE_TITLE_MIN_MM = 6;
@@ -10,13 +10,15 @@ const BACK_MAP_H = 85;
 /**
  * The cover sheet (design §5.4), mm from its top-left corner. Left to right: wrap, bleed, back (297), spine,
  * front (297), bleed, wrap — width 2 × (297 + bleed) + spine + 2 × wrap, height 210 + 2 × (bleed + wrap).
- * Front: the cover photo (`coverImageKey`, full bleed incl. wrap) + title + period; spine: the title rotated
- * (spine ≥ 6 mm); back: black with a small route map. Undefined when no cover is ordered.
+ * Front: the cover photo (full bleed incl. wrap) + title + period; spine: the title rotated (spine ≥ 6 mm); back:
+ * black with a small route map. Undefined when no cover is ordered. Pass `BookLayout.title`, `.period` and
+ * `.coverImageKey` (the resolved default, coverImageKeyOf) — `book.coverImageKey` itself is not read here.
  */
-export function coverLayout(book: JournalBookModel, title: string, period: string): { width: number; height: number; frames: BookFrame[] } | undefined {
+export function coverLayout(book: JournalBookModel, title: string, period: string, coverImageKey: string | undefined):
+  { width: number; height: number; frames: BookFrame[] } | undefined {
   const print = book.print;
   if (!print || print.cover === 'none') return undefined;
-  const bleed = print.bleedMm ?? 0;
+  const bleed = print.bleedMm ?? DEFAULT_BLEED_MM;
   const spine = print.spineMm ?? 0;
   const wrap = print.wrapMm ?? 0;
   const edge = wrap + bleed; // from the sheet edge to the trim
@@ -26,8 +28,8 @@ export function coverLayout(book: JournalBookModel, title: string, period: strin
   const spineX = backX + PAGE_W;
   const frontX = spineX + spine;
   const frames: BookFrame[] = [];
-  if (book.coverImageKey) {
-    frames.push({ kind: 'photo', box: { x: frontX, y: 0, w: width - frontX, h: height }, imageKey: book.coverImageKey, fit: 'fill' });
+  if (coverImageKey) {
+    frames.push({ kind: 'photo', box: { x: frontX, y: 0, w: width - frontX, h: height }, imageKey: coverImageKey, fit: 'fill' });
   }
   const textW = PAGE_W - 2 * MARGIN;
   const t = escapeHtml(stripEmoji(title));
