@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { DiaryModel } from '@okr/shared-models';
+import { customLocationAvatar, customPersonAvatar } from './diary-avatar.util';
 import { diaryValidations } from './diary.validations';
 
 function run(patch: Partial<DiaryModel>) {
@@ -15,4 +17,7 @@ describe('diaryValidations', () => {
   it('rejects an empty author', () => expect(run({ authorKey: '' }).hasErrors('authorKey')).toBe(true));
   it('rejects an unknown status', () => expect(run({ status: 'active' as never }).hasErrors('status')).toBe(true));
   it('limits the title', () => expect(run({ title: 'x'.repeat(101) }).hasErrors('title')).toBe(true));
+  it('limits a free-text location', () => expect(run({ locations: [customLocationAvatar('x'.repeat(LONG_NAME_LENGTH + 1))] }).hasErrors('locations')).toBe(true));
+  it('accepts a free-text location at the limit', () => expect(run({ locations: [customLocationAvatar('x'.repeat(LONG_NAME_LENGTH))] }).hasErrors('locations')).toBe(false));
+  it('limits a free-text person', () => expect(run({ people: [customPersonAvatar('x'.repeat(LONG_NAME_LENGTH + 1))] }).hasErrors('people')).toBe(true));
 });

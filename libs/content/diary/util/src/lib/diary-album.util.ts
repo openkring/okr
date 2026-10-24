@@ -20,12 +20,14 @@ export function albumKey(kind: DiaryAlbumKind | 'tag', ref: string): string {
 }
 
 /** Sorted, de-duplicated album keys of an entry. Tolerates legacy docs missing any field. */
-export function diaryAlbumKeys(diary: Partial<Pick<DiaryModel, 'people' | 'location' | 'events' | 'tags'>>): string[] {
+export function diaryAlbumKeys(diary: Partial<Pick<DiaryModel, 'people' | 'locations' | 'events' | 'tags'>>): string[] {
   const keys = new Set<string>();
   for (const person of diary.people ?? []) {
     if (person.key) keys.add(albumKey('person', person.key));
   }
-  if (diary.location?.key) keys.add(albumKey('location', diary.location.key));
+  for (const location of diary.locations ?? []) {
+    if (location.key) keys.add(albumKey('location', location.key));
+  }
   for (const event of diary.events ?? []) {
     // Jass result lines live in events[] on purpose (spec 1.77) but are not event slugs.
     if (event && !parseJassDiaryLine(event)) keys.add(albumKey('event', event));
@@ -155,18 +157,22 @@ export interface TripMapPoint {
 
 /**
  * The trip map's pins: the located diary entries in date order (the polyline follows them),
- * then the trip's own locations (`inRoute: false`, off the line). Entries without finite coordinates are dropped.
+ * then `extra` pins (located entries of other trips' places, `inRoute: false`), then the trip's own locations (`inRoute: false`). Entries without finite coordinates are dropped.
  */
 export function tripMapPoints(
   entries: { date: string; okey: string; title: string; lat?: number; lng?: number }[],
   own: { lat: number; lng: number; title: string }[],
+  extra: { lat: number; lng: number; title: string; date: string; diaryKey: string }[] = [],
 ): TripMapPoint[] {
   const dated = entries
     .filter(e => Number.isFinite(e.lat) && Number.isFinite(e.lng))
     .sort((a, b) => a.date.localeCompare(b.date))
     .map(e => ({ lat: e.lat as number, lng: e.lng as number, title: e.title, date: e.date, diaryKey: e.okey }));
+  const extras = extra
+    .filter(x => Number.isFinite(x.lat) && Number.isFinite(x.lng))
+    .map(x => ({ lat: x.lat, lng: x.lng, title: x.title, date: x.date, diaryKey: x.diaryKey, inRoute: false }));
   const located = own
     .filter(o => Number.isFinite(o.lat) && Number.isFinite(o.lng))
     .map(o => ({ lat: o.lat, lng: o.lng, title: o.title, date: '', diaryKey: '', inRoute: false }));
-  return [...dated, ...located];
+  return [...dated, ...extras, ...located];
 }

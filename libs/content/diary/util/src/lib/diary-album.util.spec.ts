@@ -1,4 +1,5 @@
 import { AvatarInfo } from '@okr/shared-models';
+import { customLocationAvatar } from './diary-avatar.util';
 import { parseJassDiaryLine } from './diary-jass.util';
 import { describe, expect, it } from 'vitest';
 import { avatarTitle, canApplyDiaryDateRange, decodeDiaryFilter, diaryListUrl, DiaryFilter, diaryAlbumId, diaryFilterLabel, mergeDiaryDateRange, diaryAlbumKeys, encodeDiaryFilter, eventSlug, inDiaryDateRange, tripMapPoints } from './diary-album.util';
@@ -8,11 +9,17 @@ describe('diary album utils', () => {
     expect(
       diaryAlbumKeys({
         people: [{ key: 'p1' } as AvatarInfo, { key: 'p1' } as AvatarInfo, { key: '' } as AvatarInfo],
-        location: { key: 'l1' } as AvatarInfo,
+        locations: [{ key: 'l1' } as AvatarInfo],
         events: ['anrudern'],
         tags: 'Familie, Segeln,',
       })
     ).toEqual(['event.anrudern', 'location.l1', 'person.p1', 'tag.Familie', 'tag.Segeln']);
+  });
+
+  it('keys every linked location and skips free-text ones', () => {
+    expect(
+      diaryAlbumKeys({ locations: [{ key: 'l1' } as AvatarInfo, customLocationAvatar('x'), { key: 'l2' } as AvatarInfo] })
+    ).toEqual(['location.l1', 'location.l2']);
   });
 
   it('survives a legacy doc without any of the fields', () => {
@@ -173,6 +180,21 @@ describe('tripMapPoints', () => {
       [{ lat: 9, lng: 90, title: 'Hafen' }],
     );
     expect(points.map(p => p.inRoute !== false)).toEqual([true, false]);
+  });
+
+  it('appends extra pins after the dated points and before own, off the route', () => {
+    const points = tripMapPoints(
+      [{ date: '20240102', okey: 'e1', title: 'A', lat: 5, lng: 6 }],
+      [{ lat: 7, lng: 8, title: 'own' }],
+      [{ lat: 1, lng: 2, title: 't', date: '20240101', diaryKey: 'd1' }],
+    );
+    expect(points.map(p => p.title)).toEqual(['A', 't', 'own']);
+    expect(points[1]).toMatchObject({ diaryKey: 'd1', date: '20240101', inRoute: false });
+  });
+
+  it('returns a single off-route point for one extra pin', () => {
+    expect(tripMapPoints([], [], [{ lat: 1, lng: 2, title: 't', date: '20240101', diaryKey: 'd1' }]))
+      .toEqual([{ lat: 1, lng: 2, title: 't', date: '20240101', diaryKey: 'd1', inRoute: false }]);
   });
 
   it('returns [] without entries and own locations', () => {

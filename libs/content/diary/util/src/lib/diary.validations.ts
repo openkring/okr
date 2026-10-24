@@ -4,6 +4,7 @@ import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { DiaryModel } from '@okr/shared-models';
 import { baseValidations, stringValidations } from '@okr/shared-util-core';
 
+import { diaryAvatarName } from './diary-avatar.util';
 import { diaryDateMatchesScope } from './diary-date.util';
 
 const SCOPES = new Set(['day', 'month', 'year']);
@@ -13,10 +14,9 @@ export const diaryValidations = staticSuite((model: DiaryModel, tenants: string,
   baseValidations(model, tenants, tags);
   stringValidations('title', model.title, LONG_NAME_LENGTH);
   stringValidations('text', model.text, DESCRIPTION_LENGTH * 10);
-  stringValidations('customLocationLabel', model.customLocationLabel, LONG_NAME_LENGTH);
   // `stringValidations`'s maxLength check only fires when `isMandatory` is true (see
   // `omitWhen(maxLength === undefined || isMandatory === false, ...)` in shared-util-core), but
-  // title/text/customLocationLabel are optional fields here — so the length ceiling is enforced
+  // title/text are optional fields here — so the length ceiling is enforced
   // explicitly instead of relying on that gated check.
   test('title', 'tooLong', () => {
     enforce(model.title).shorterThanOrEquals(LONG_NAME_LENGTH);
@@ -24,8 +24,11 @@ export const diaryValidations = staticSuite((model: DiaryModel, tenants: string,
   test('text', 'tooLong', () => {
     enforce(model.text).shorterThanOrEquals(DESCRIPTION_LENGTH * 10);
   });
-  test('customLocationLabel', 'tooLong', () => {
-    enforce(model.customLocationLabel).shorterThanOrEquals(LONG_NAME_LENGTH);
+  test('locations', 'tooLong', () => {
+    enforce((model.locations ?? []).every(l => diaryAvatarName(l).length <= LONG_NAME_LENGTH)).isTruthy();
+  });
+  test('people', 'tooLong', () => {
+    enforce((model.people ?? []).every(p => diaryAvatarName(p).length <= LONG_NAME_LENGTH)).isTruthy();
   });
 
   test('authorKey', '@content/diary/feature.validation.authorMissing', () => {

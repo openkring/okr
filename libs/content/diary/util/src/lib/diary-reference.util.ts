@@ -1,6 +1,6 @@
 import { DiaryModel } from '@okr/shared-models';
 
-import { normaliseLocationLabel } from './location-normalise';
+import { diaryAvatarId, diaryAvatarName, withDiaryLocations } from './diary-avatar.util';
 
 /** Which of the two reference kinds a diary carries: its place, or the people in it. */
 export type DiaryReferenceKind = 'location' | 'person';
@@ -19,11 +19,10 @@ export interface DiaryUsage {
 /**
  * One place or person the archive mentions, aggregated over every diary that mentions it.
  *
- * The import writes BOTH halves of each pair: a match against `locations`/`persons` lands in
- * `DiaryModel.location`/`.people` as an `AvatarInfo`, everything else stays as the raw text in
- * `.customLocationLabel`/`.customPeopleLabels`. This type puts the two halves in one list so the
- * unresolved ones can be seen next to the resolved ones and fixed — which is the whole point of
- * the screen. `resolved` is exactly "did the import find a record", i.e. `key !== ''`.
+ * Each entry of `DiaryModel.locations` / `.people` is an `AvatarInfo`: linked to a record (`key !== ''`)
+ * or free text (`key === ''`). This type puts both kinds in one list so the free-text ones can be
+ * seen next to the linked ones and fixed — which is the whole point of the screen. `resolved` is
+ * exactly "is the entry linked to a record", i.e. `key !== ''`.
  */
 export interface DiaryReference {
   kind: DiaryReferenceKind;
@@ -67,46 +66,28 @@ function addMention(
   into.set(id, { kind, id, label, key, resolved: key.length > 0, usages: [usageOf(diary)] });
 }
 
-/**
- * Every place the given diaries mention, resolved and unresolved together.
- *
- * `DiaryModel.places` is deliberately NOT folded in: it is a separate slug vocabulary with no
- * resolved counterpart in the model, so a "map to location" on one of its entries would have
- * nowhere to write. Only `location` (resolved) and `customLocationLabel` (not) are two halves
- * of the same field.
- */
-export function collectLocationReferences(diaries: DiaryModel[]): DiaryReference[] {
+function collect(diaries: DiaryModel[], kind: DiaryReferenceKind): DiaryReference[] {
   const byId = new Map<string, DiaryReference>();
-  for (const diary of diaries) {
-    const resolved = diary.location;
-    if (resolved?.key) {
-      addMention(byId, 'location', `key:${resolved.key}`, resolved.label || resolved.name1, resolved.key, diary);
-      continue;
-    }
-    const label = (diary.customLocationLabel ?? '').trim();
-    if (label) {
-      addMention(byId, 'location', `label:${normaliseLocationLabel(label)}`, label, '', diary);
+  for (const raw of diaries) {
+    // The shim also derives the lists for documents that predate spec 1.117.
+    const diary = withDiaryLocations(raw);
+    for (const avatar of (kind === 'location' ? diary.locations : diary.people) ?? []) {
+      const label = diaryAvatarName(avatar);
+      if (!avatar.key && !label) continue;
+      addMention(byId, kind, diaryAvatarId(avatar), label, avatar.key, diary);
     }
   }
   return sortReferences([...byId.values()]);
 }
 
-/** Every person the given diaries mention, resolved (`people`) and unresolved (`customPeopleLabels`). */
+/** Every place the given diaries mention (`locations`), linked and free text together. */
+export function collectLocationReferences(diaries: DiaryModel[]): DiaryReference[] {
+  return collect(diaries, 'location');
+}
+
+/** Every person the given diaries mention (`people`), linked and free text together. */
 export function collectPersonReferences(diaries: DiaryModel[]): DiaryReference[] {
-  const byId = new Map<string, DiaryReference>();
-  for (const diary of diaries) {
-    for (const person of diary.people ?? []) {
-      if (!person?.key) continue;
-      const label = person.label || `${person.name1} ${person.name2}`.trim();
-      addMention(byId, 'person', `key:${person.key}`, label, person.key, diary);
-    }
-    for (const raw of diary.customPeopleLabels ?? []) {
-      const label = (raw ?? '').trim();
-      if (!label) continue;
-      addMention(byId, 'person', `label:${label.toLowerCase()}`, label, '', diary);
-    }
-  }
-  return sortReferences([...byId.values()]);
+  return collect(diaries, 'person');
 }
 
 /**

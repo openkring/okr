@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { AvatarInfo, DiaryModel } from '@okr/shared-models';
 
+import { customLocationAvatar, customPersonAvatar } from './diary-avatar.util';
 import {
   collectLocationReferences, collectPersonReferences, filterDiaryReferences, formatDiaryDate,
   formatDiaryDateLong, formatDiaryDateShort, formatDiaryMonthHeader,
@@ -33,8 +34,8 @@ describe('collectLocationReferences', () => {
   it('aggregates a resolved location over every diary that uses it', () => {
     const location = locationAvatar('loc1', 'Stäfa');
     const references = collectLocationReferences([
-      diary('20220306', { location }),
-      diary('20220307', { location }),
+      diary('20220306', { locations: [location] }),
+      diary('20220307', { locations: [location] }),
     ]);
 
     expect(references).toHaveLength(1);
@@ -44,8 +45,8 @@ describe('collectLocationReferences', () => {
 
   it('aggregates unresolved labels by their normalised form, not verbatim', () => {
     const references = collectLocationReferences([
-      diary('20220306', { customLocationLabel: 'Zürich ZH' }),
-      diary('20220307', { customLocationLabel: 'Zuerich' }),
+      diary('20220306', { locations: [customLocationAvatar('Zürich ZH')] }),
+      diary('20220307', { locations: [customLocationAvatar('Zuerich')] }),
     ]);
 
     expect(references).toHaveLength(1);
@@ -53,28 +54,38 @@ describe('collectLocationReferences', () => {
     expect(references[0].usages).toHaveLength(2);
   });
 
-  it('ignores customLocationLabel when the diary already resolved its location', () => {
+  it('resolves a keyed location in second position', () => {
     const references = collectLocationReferences([
-      diary('20220306', { location: locationAvatar('loc1', 'Stäfa'), customLocationLabel: 'Staefa' }),
+      diary('20220306', { locations: [customLocationAvatar('Stansstad'), locationAvatar('loc1', 'Stäfa')] }),
     ]);
 
-    expect(references).toHaveLength(1);
-    expect(references[0].key).toBe('loc1');
+    expect(references.map(r => [r.label, r.resolved])).toEqual([['Stansstad', false], ['Stäfa', true]]);
   });
 
-  it('ignores blank labels and the separate places vocabulary', () => {
+  it('ignores blank free-text locations', () => {
     const references = collectLocationReferences([
-      diary('20220306', { customLocationLabel: '   ', places: ['seeufer'] }),
+      diary('20220306', { locations: [customLocationAvatar('   ')] }),
     ]);
 
     expect(references).toEqual([]);
   });
 
+  it('reads legacy documents through the shim', () => {
+    const references = collectLocationReferences([
+      diary('20220306', { locations: undefined as never, location: locationAvatar('loc1', 'Stäfa'), places: ['seeufer'] }),
+      diary('20220307', { locations: undefined as never, customLocationLabel: 'Zermatt' }),
+    ]);
+
+    expect(references.map(r => [r.id, r.resolved])).toEqual([
+      ['label:seeufer', false], ['label:zermatt', false], ['key:loc1', true],
+    ]);
+  });
+
   it('sorts unresolved first, then alphabetically', () => {
     const references = collectLocationReferences([
-      diary('20220306', { location: locationAvatar('loc1', 'Aarau') }),
-      diary('20220307', { customLocationLabel: 'Zermatt' }),
-      diary('20220308', { customLocationLabel: 'Basel' }),
+      diary('20220306', { locations: [locationAvatar('loc1', 'Aarau')] }),
+      diary('20220307', { locations: [customLocationAvatar('Zermatt')] }),
+      diary('20220308', { locations: [customLocationAvatar('Basel')] }),
     ]);
 
     expect(references.map(r => r.label)).toEqual(['Basel', 'Zermatt', 'Aarau']);
@@ -84,7 +95,7 @@ describe('collectLocationReferences', () => {
 describe('collectPersonReferences', () => {
   it('aggregates resolved people and custom labels side by side', () => {
     const references = collectPersonReferences([
-      diary('20220306', { people: [personAvatar('p1', 'Anna', 'Meier')], customPeopleLabels: ['fritz'] }),
+      diary('20220306', { people: [personAvatar('p1', 'Anna', 'Meier'), customPersonAvatar('fritz')] }),
       diary('20220307', { people: [personAvatar('p1', 'Anna', 'Meier')] }),
     ]);
 
@@ -92,9 +103,24 @@ describe('collectPersonReferences', () => {
       .toEqual([['fritz', false, 1], ['Anna Meier', true, 2]]);
   });
 
-  it('skips avatars without a key and blank custom labels', () => {
+  it('makes one row per free-text person', () => {
     const references = collectPersonReferences([
-      diary('20220306', { people: [personAvatar('', 'Anna', 'Meier')], customPeopleLabels: ['  '] }),
+      diary('20220306', { people: [customPersonAvatar('Anna Muster'), customPersonAvatar('Beat Beispiel')] }),
+    ]);
+
+    expect(references.map(r => r.label)).toEqual(['Anna Muster', 'Beat Beispiel']);
+    expect(references.every(r => !r.resolved)).toBe(true);
+  });
+
+  it('reads legacy customPeopleLabels through the shim', () => {
+    const references = collectPersonReferences([diary('20220306', { locations: undefined as never, people: undefined as never, customPeopleLabels: ['fritz'] })]);
+
+    expect(references.map(r => r.label)).toEqual(['fritz']);
+  });
+
+  it('skips blank free-text people', () => {
+    const references = collectPersonReferences([
+      diary('20220306', { people: [customPersonAvatar('  ')] }),
     ]);
 
     expect(references).toEqual([]);
@@ -102,8 +128,8 @@ describe('collectPersonReferences', () => {
 
   it('folds the same custom label under one row regardless of case', () => {
     const references = collectPersonReferences([
-      diary('20220306', { customPeopleLabels: ['Fritz'] }),
-      diary('20220307', { customPeopleLabels: ['fritz'] }),
+      diary('20220306', { people: [customPersonAvatar('Fritz')] }),
+      diary('20220307', { people: [customPersonAvatar('fritz')] }),
     ]);
 
     expect(references).toHaveLength(1);
@@ -113,8 +139,8 @@ describe('collectPersonReferences', () => {
 
 describe('filterDiaryReferences', () => {
   const references = collectLocationReferences([
-    diary('20220306', { location: locationAvatar('loc1', 'Stäfa') }),
-    diary('20220307', { customLocationLabel: 'Stansstad' }),
+    diary('20220306', { locations: [locationAvatar('loc1', 'Stäfa')] }),
+    diary('20220307', { locations: [customLocationAvatar('Stansstad')] }),
   ]);
 
   it('passes everything through without a term on the all filter', () => {
