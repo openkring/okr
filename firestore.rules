@@ -701,6 +701,16 @@ service cloud.firestore {
         allow write: if false; // private/{peer,guestLinks}: callables only
       }
     }
+    // travel book of a journal (spec 1.113 phase 2 §6): journal-books/{jk}, one per journal, authors only.
+    // `export` is written by the exportJournalBook function (Admin SDK) alone; `prints` is client-writable
+    // (the iPad records its uploaded print photos). Tenants must equal the journal's.
+    match /journal-books/{jk} {
+      allow read: if userExists() && isJournalAuthor(jk);
+      allow create, update: if userExists() && isJournalAuthor(jk)
+        && !request.resource.data.diff(resource == null ? {} : resource.data).affectedKeys().hasAny(['export'])
+        && request.resource.data.tenants == get(/databases/$(database)/documents/journals/$(jk)).data.tenants;
+      allow delete: if false;
+    }
     // ratings (learning rooms, spec 1.115): one star rating per person and document, okey =
     // `<docKey>__<personKey>`. Author-only reads (the aggregate lives on docs, written by the
     // onRatingWritten trigger with the Admin SDK). parentKey is 'document.<docKey>'.

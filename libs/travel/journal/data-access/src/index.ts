@@ -6,3 +6,4 @@ export * from './lib/journal-sync.service';
 export * from './lib/journal-peer.service';
 export * from './lib/journal-osm.source';
 export * from './lib/journal-guest.service';
+export * from './lib/journal-book.service';

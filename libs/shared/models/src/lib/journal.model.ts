@@ -94,3 +94,58 @@ export const JournalNotifyDoc = 'notify'; // private: { lastNotifiedAt } — the
 export const JournalGuestSeqDoc = 'guestSeq'; // private: per guest the last seq of their change records
 export const JournalSignalRoomsDoc = 'signalRooms'; // private: personKey → Signal portal room id
 export const JournalModelName = 'journal';
+
+/**
+ * The travel book of a journal (spec 1.113 phase 2 §6): one document per journal at `journal-books/{journalKey}`,
+ * read and written by the journal's authors only. `export` and `prints` are also written by the exportJournalBook
+ * function (Admin SDK). Image ids are the journal image entity keys (`ImageView.key`, `journals/{jk}/images`).
+ */
+export type BookTemplate = 'full' | 'two-portrait' | 'two-landscape' | 'hero-2' | 'hero-3';
+
+/** A hand-set page of an album block: which template, which photos. */
+export interface BookPageOverride {
+  template: BookTemplate;
+  imageKeys: string[];
+}
+
+export interface JournalBookPrint {
+  bleedMm: number;
+  pageMultiple: number;
+  iccProfile: 'fogra39';
+  cover: 'none' | 'softcover' | 'hardcover';
+  spineMm?: number;
+  wrapMm?: number;
+}
+
+/** The last export, written by the function only (rules forbid the client to touch it). */
+export interface JournalBookExport {
+  kind: 'print' | 'screen';
+  state: 'running' | 'done' | 'failed';
+  progress?: number;
+  startedAt: string; // ISO timestamp
+  finishedAt?: string; // ISO timestamp
+  bookPath?: string; // Storage path in the private bucket
+  coverPath?: string;
+  pageCount?: number;
+  warnings?: number;
+  error?: string;
+}
+
+export class JournalBookModel {
+  public okey = DEFAULT_KEY; // = journalKey
+  public tenants = DEFAULT_TENANTS;
+  public title?: string; // overrides the journal's title
+  public subTitle?: string;
+  public coverImageKey?: string; // always one of the journal's images
+  public hiddenImageKeys: string[] = []; // photos left out of the book
+  public fitWhole: string[] = []; // imageKeys shown «ganz zeigen»
+  public footprints: Record<string, { showComments: boolean; commentKeys: string[] }> = {}; // by footprint (page) key
+  public albums: Record<string, { pages: BookPageOverride[] }> = {}; // by album section key
+  public prints: Record<string, { width: number; height: number }> = {}; // uploaded print photos by imageKey
+  public print: JournalBookPrint = { bleedMm: 3, pageMultiple: 4, iccProfile: 'fogra39', cover: 'none' };
+  public export?: JournalBookExport;
+  public updatedAt = ''; // ISO timestamp
+  public updatedBy = ''; // person key
+}
+
+export const JournalBookCollection = 'journal-books';
