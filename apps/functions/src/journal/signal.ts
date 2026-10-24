@@ -36,17 +36,21 @@ async function matrix(token: string, method: string, path: string, body?: unknow
   return json;
 }
 
-/** A real Signal DM: a bridge puppet among the members, at most three members. */
-async function isSignalDm(token: string, roomId: string): Promise<boolean> {
+/** A bridge puppet of OUR homeserver (`@signal_<id>:<server>`) — never a look-alike from another server. */
+const isPuppet = (id: string, server: string) => id.startsWith('@signal_') && id.endsWith(`:${server}`);
+
+/** A real Signal DM: a puppet of our bridge among the members, at most three members. */
+async function isSignalDm(token: string, roomId: string, server: string): Promise<boolean> {
   const members = Object.keys(((await matrix(token, 'GET', `/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/joined_members`))['joined'] ?? {}) as Json);
-  return members.some((id) => id.startsWith('@signal_')) && members.length <= 3;
+  return members.some((id) => isPuppet(id, server)) && members.length <= 3;
 }
 
 /** Opens (or finds) the portal room of a number through the bridge bot's `start-chat` command. */
 async function openPortal(token: string, phone: string): Promise<string> {
   const me = await matrix(token, 'GET', '/_matrix/client/v3/account/whoami');
   const userId = String(me['user_id'] ?? '');
-  const bot = `@signalbot:${userId.split(':')[1] ?? ''}`;
+  const server = userId.split(':')[1] ?? '';
+  const bot = `@signalbot:${server}`;
   const rooms = ((await matrix(token, 'GET', '/_matrix/client/v3/joined_rooms'))['joined_rooms'] ?? []) as string[];
   let management = '';
   for (const roomId of rooms) {
@@ -60,11 +64,17 @@ async function openPortal(token: string, phone: string): Promise<string> {
   for (let i = 0; i < WAIT_ROUNDS; i++) {
     const sync = await matrix(token, 'GET', `/_matrix/client/v3/sync?timeout=3000&since=${encodeURIComponent(since)}`);
     since = String(sync['next_batch'] ?? since);
-    // a first chat with this number: the bridge invites us into a new portal
+    // a first chat with this number: the bridge invites us into a new portal. Only invites sent by the
+    // bridge bot or one of its puppets on our server count — any other invite in the window is ignored,
+    // because the message carries the guest's personal link.
     const invites = (((sync['rooms'] as Json | undefined)?.['invite'] ?? {}) as Record<string, Json>);
-    for (const roomId of Object.keys(invites)) {
+    for (const [roomId, room] of Object.entries(invites)) {
+      const events = (((room['invite_state'] as Json | undefined)?.['events'] ?? []) as Json[]);
+      const invite = events.find((e) => e['type'] === 'm.room.member' && e['state_key'] === userId && (e['content'] as Json | undefined)?.['membership'] === 'invite');
+      const inviter = String(invite?.['sender'] ?? '');
+      if (inviter !== bot && !isPuppet(inviter, server)) continue;
       await matrix(token, 'POST', `/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/join`, {});
-      if (await isSignalDm(token, roomId)) return roomId;
+      if (await isSignalDm(token, roomId, server)) return roomId;
     }
     // an existing portal: the bot names it in its reply
     const chunk = ((await matrix(token, 'GET', `/_matrix/client/v3/rooms/${encodeURIComponent(management)}/messages?dir=b&limit=10`))['chunk'] ?? []) as Json[];
@@ -74,7 +84,7 @@ async function openPortal(token: string, phone: string): Promise<string> {
       const match = decodeURIComponent(`${content['body'] ?? ''} ${content['formatted_body'] ?? ''}`).match(/(![A-Za-z0-9_-]+:[A-Za-z0-9.-]+)/);
       if (match && match[1] !== management) {
         await matrix(token, 'POST', `/_matrix/client/v3/join/${encodeURIComponent(match[1])}`, {}).catch(() => undefined);
-        if (await isSignalDm(token, match[1])) return match[1];
+        if (await isSignalDm(token, match[1], server)) return match[1];
       }
     }
   }
