@@ -40,11 +40,12 @@ export const PasskeyStore = signalStore(
       patchState(store, { loading: true });
       try {
         const items = await store.passkeyService.list(uid);
+        if (store.uid() !== uid) return; // user switched while loading: drop the stale result
         patchState(store, { items });
       } catch {
-        await showToast(store.toastController, store.i18n.passkey_error());
+        if (store.uid() === uid) await showToast(store.toastController, store.i18n.passkey_error());
       } finally {
-        patchState(store, { loading: false });
+        if (store.uid() === uid) patchState(store, { loading: false });
       }
     };
 
@@ -59,7 +60,12 @@ export const PasskeyStore = signalStore(
     const rename = async (item: PasskeyItem): Promise<void> => {
       const input = await okrPrompt(store.alertController, store.i18n.passkey_rename(), store.i18n.passkey_rename(), store.i18n.ok(), store.i18n.cancel(), item.label);
       const label = input?.trim();
-      if (!label || label.length > MAX_LABEL || label === item.label) return;
+      if (input === undefined) return; // cancelled
+      if (!label || label.length > MAX_LABEL) {
+        await showToast(store.toastController, store.i18n.passkey_error());
+        return;
+      }
+      if (label === item.label) return;
       try {
         await store.passkeyService.rename(item.okey, label);
         await reload();
@@ -81,8 +87,14 @@ export const PasskeyStore = signalStore(
     return {
       async setUid(uid: string): Promise<void> {
         if (uid === store.uid()) return;
-        patchState(store, { uid, items: [] });
-        const canRegister = await store.passkeyService.canRegister();
+        patchState(store, { uid, items: [], canRegister: false, loading: false });
+        let canRegister = false;
+        try {
+          canRegister = await store.passkeyService.canRegister();
+        } catch {
+          canRegister = false;
+        }
+        if (store.uid() !== uid) return; // superseded by a newer setUid
         patchState(store, { canRegister });
         await reload();
       },

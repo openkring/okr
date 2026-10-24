@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input, untracked } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 import { IonAccordion, IonButton, IonItem, IonLabel } from '@ionic/angular';
 
@@ -48,7 +48,7 @@ export class PasskeysAccordion {
   constructor() {
     effect(() => {
       const uid = this.uid();
-      if (this.visible && uid) void this.store.setUid(uid);
+      if (this.visible && uid) untracked(() => void this.store.setUid(uid));
     });
   }
 }
