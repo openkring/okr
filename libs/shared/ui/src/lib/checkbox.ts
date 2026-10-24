@@ -6,6 +6,7 @@ import { ColorsIonic, getCategoryStringField } from '@okr/shared-categories';
 import { ColorIonic } from '@okr/shared-models';
 import { getSvgIconUrl } from '@okr/shared-pipes';
 import { coerceBoolean } from '@okr/shared-util-core';
+import { HelperVisibility } from '@okr/shared-util-angular';
 import { ENV } from '@okr/shared-config';
 export type CheckboxLabelPlacement = 'start' | 'end' | 'fixed';
 export type CheckboxJustification = 'start' | 'end' | 'space-between';
@@ -73,6 +74,7 @@ export interface CheckboxI18n {
   `
 })
 export class Checkbox {
+  private readonly helperVisibility = inject(HelperVisibility);
   private env = inject(ENV);
 
   // model.required() already declares the matching `checkedChange` output — see TextInput.
@@ -96,7 +98,7 @@ export class Checkbox {
 
   // coerce the booleans
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
-  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
+  protected shouldShowHelper = computed(() => this.helperVisibility.showHelpers() && coerceBoolean(this.showHelper()));
   protected isIndeterminate = computed(() => coerceBoolean(this.indeterminate()));
   protected isToggle = computed(() => coerceBoolean(this.toggle()));
 

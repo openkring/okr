@@ -11,7 +11,7 @@ import { AUTH, ENV, FIRESTORE, usesLocalStorageOnlySession } from '@okr/shared-c
 import { AppConfigService, FirestoreService } from '@okr/shared-data-access';
 import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, getAddressDirectoryKey, AvailableLanguages, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, InvitationCollection, InvitationModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, TaskCollection, TaskModel, UserCollection, UserModel } from '@okr/shared-models';
 import { appLinkOrigins, die, getSystemQuery, indexBy, openInvitationsOf, pickForTenant, publicAppOrigin, replacePlaceholders, resolveAppOrigin, sortPersons, withOfflineSnapshot } from '@okr/shared-util-core';
-import { AppNavigationService, armStartupStallCheck, installScrollDiagnostics, isBrowser, markStartup, probeStoredSession, probeStoredSessionIdb, reportStartupTiming, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
+import { AppNavigationService, armStartupStallCheck, HelperVisibility, installScrollDiagnostics, isBrowser, markStartup, probeStoredSession, probeStoredSessionIdb, reportStartupTiming, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
 
 import { authPhase, isDegradedBoot, openBootGate, type BootState } from './boot-readiness.util';
 import { I18nService } from '@okr/shared-i18n';
@@ -759,6 +759,11 @@ export const AppStore = signalStore(
         const code = AvailableLanguages[user?.userLanguage ?? DefaultLanguage];
         store.i18nService.setActiveLang(code, DefaultLanguageCode, store.enabledLanguageCodes());
       });
+
+      // «Hilfetexte anzeigen»: the shared-ui fields read this, so the setting reaches every
+      // form without each one passing it down. No user (visitor) → helpers stay on.
+      const helperVisibility = inject(HelperVisibility);
+      effect(() => helperVisibility.showHelpers.set(store.currentUser()?.showHelpers ?? true));
 
       // Start anonymous session immediately on bootstrap
       store.sessionService.startSession();

@@ -1,9 +1,10 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular';
 
 import { DeliveryChannels } from '@okr/shared-categories';
 import { DeliveryChannel } from '@okr/shared-models';
 import { coerceBoolean } from '@okr/shared-util-core';
+import { HelperVisibility } from '@okr/shared-util-angular';
 
 import { Checkbox, CheckboxI18n } from './checkbox';
 
@@ -30,7 +31,7 @@ export interface DeliveryChannelsI18n {
     <ion-item lines="none">
       <ion-label>{{ i18n().label }}</ion-label>
     </ion-item>
-    @if (i18n().helper.length > 0) {
+    @if(shouldShowHelper() && i18n().helper) {
       <ion-item lines="none">
         <ion-note>{{ i18n().helper }}</ion-note>
       </ion-item>
@@ -53,6 +54,11 @@ export interface DeliveryChannelsI18n {
   `,
 })
 export class DeliveryChannelsControl {
+  private readonly helperVisibility = inject(HelperVisibility);
+  /** false hides the helper text; the user's «Hilfetexte anzeigen» setting hides it as well */
+  public readonly showHelper = input(true);
+  protected readonly shouldShowHelper = computed(() => this.helperVisibility.showHelpers() && coerceBoolean(this.showHelper()));
+
   // inputs
   public readonly i18n = input.required<DeliveryChannelsI18n>();
   public readonly value = input<DeliveryChannel[]>([]);

@@ -1,9 +1,10 @@
-import { Component, computed, input, model, viewChild } from '@angular/core';
+import { Component, computed, inject, input, model, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonInput, IonItem, IonNote } from '@ionic/angular';
 
 import { AutoComplete, InputMode, INT_LENGTH } from '@okr/shared-constants';
 import { coerceBoolean } from '@okr/shared-util-core';
+import { HelperVisibility } from '@okr/shared-util-angular';
 
 import { ButtonCopy, ButtonCopyI18n } from './button-copy';
 import { SkipClearTab } from './skip-clear-tab.directive';
@@ -61,6 +62,7 @@ export interface NumberInputI18n {
   `
 })
 export class NumberInput {
+  private readonly helperVisibility = inject(HelperVisibility);
   // inputs
   public value = model.required<number>();
   public i18n = input.required<NumberInputI18n>();
@@ -90,7 +92,7 @@ export class NumberInput {
 
   // coerced boolean inputs
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
-  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
+  protected shouldShowHelper = computed(() => this.helperVisibility.showHelpers() && coerceBoolean(this.showHelper()));
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
   protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf } as ButtonCopyI18n));

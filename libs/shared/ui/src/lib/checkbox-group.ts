@@ -1,7 +1,8 @@
-import { Component, computed, input, model } from '@angular/core';
+import { Component, computed, inject, input, model } from '@angular/core';
 import { IonCheckbox, IonItem, IonLabel, IonNote } from '@ionic/angular';
 
 import { coerceBoolean } from '@okr/shared-util-core';
+import { HelperVisibility } from '@okr/shared-util-angular';
 
 export interface CheckboxGroupI18n {
   name: string;
@@ -39,7 +40,7 @@ export interface CheckboxGroupI18n {
         </ion-checkbox>
       </ion-item>
     }
-    @if (i18n().helper) {
+    @if(shouldShowHelper() && i18n().helper) {
       <ion-item lines="none" class="helper">
         <ion-note>{{ i18n().helper }}</ion-note>
       </ion-item>
@@ -47,6 +48,11 @@ export interface CheckboxGroupI18n {
   `,
 })
 export class CheckboxGroup {
+  private readonly helperVisibility = inject(HelperVisibility);
+  /** false hides the helper text; the user's «Hilfetexte anzeigen» setting hides it as well */
+  public readonly showHelper = input(true);
+  protected readonly shouldShowHelper = computed(() => this.helperVisibility.showHelpers() && coerceBoolean(this.showHelper()));
+
   // inputs
   public readonly i18n = input.required<CheckboxGroupI18n>();
   public selectedStrings = model<string[]>([]); // the checked values, two-way bound

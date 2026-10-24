@@ -1,9 +1,10 @@
-import { Component, computed, input, model } from '@angular/core';
+import { Component, computed, inject, input, model } from '@angular/core';
 import { IonItem, IonLabel, IonNote, IonSelect, IonSelectOption } from '@ionic/angular';
 
 import { compareCategories } from '@okr/shared-categories';
 import { CategoryModel } from '@okr/shared-models';
 import { coerceBoolean } from '@okr/shared-util-core';
+import { HelperVisibility } from '@okr/shared-util-angular';
 import { TranslatePipe } from '@okr/shared-i18n';
 import { AsyncPipe } from '@angular/common';
 
@@ -52,7 +53,7 @@ export interface CategoryOldI18n {
         }
       </ion-item>
     }
-    @if(i18n().helper) {
+    @if(shouldShowHelper() && i18n().helper) {
       <ion-item lines="none" class="helper">
         <ion-note>{{ i18n().helper }}</ion-note>
       </ion-item>
@@ -60,6 +61,11 @@ export interface CategoryOldI18n {
   `
 })
 export class CategoryOld {
+  private readonly helperVisibility = inject(HelperVisibility);
+  /** false hides the helper text; the user's «Hilfetexte anzeigen» setting hides it as well */
+  public readonly showHelper = input(true);
+  protected readonly shouldShowHelper = computed(() => this.helperVisibility.showHelpers() && coerceBoolean(this.showHelper()));
+
   public i18n = input.required<CategoryOldI18n>();
   public value = model.required<number>(); // the selected category id
   public categories = input.required<CategoryModel[]>(); // mandatory view model

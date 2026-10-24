@@ -1,4 +1,4 @@
-import { Component, computed, input, model } from '@angular/core';
+import { Component, computed, inject, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonInput, IonItem, IonNote } from '@ionic/angular';
 
@@ -7,6 +7,7 @@ import { MaskitoElementPredicate } from '@maskito/core';
 
 import { PHONE_LENGTH } from '@okr/shared-constants';
 import { coerceBoolean } from '@okr/shared-util-core';
+import { HelperVisibility } from '@okr/shared-util-angular';
 import { IntlPhoneMask } from '@okr/shared-config';
 
 import { ButtonCopy } from './button-copy';
@@ -53,7 +54,7 @@ export interface PhoneInputI18n {
       <okr-button-copy [value]="value()" [i18n]="buttonCopyI18n()" tabindex="-1" />
     }
   </ion-item>
-  @if(i18n().helper) {
+  @if(shouldShowHelper() && i18n().helper) {
     <ion-item lines="none" class="helper">
       <ion-note>{{ i18n().helper }}</ion-note>
     </ion-item>
@@ -61,6 +62,11 @@ export interface PhoneInputI18n {
   `
 })
 export class PhoneInput {
+  private readonly helperVisibility = inject(HelperVisibility);
+  /** false hides the helper text; the user's «Hilfetexte anzeigen» setting hides it as well */
+  public readonly showHelper = input(true);
+  protected readonly shouldShowHelper = computed(() => this.helperVisibility.showHelpers() && coerceBoolean(this.showHelper()));
+
   // inputs
   public value = model.required<string>(); // mandatory view model
   public i18n = input.required<PhoneInputI18n>();

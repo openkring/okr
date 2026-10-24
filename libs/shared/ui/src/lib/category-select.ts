@@ -8,6 +8,7 @@ import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 import { CategoryItemModel, CategoryListModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { coerceBoolean, getItemLabel } from '@okr/shared-util-core';
+import { HelperVisibility } from '@okr/shared-util-angular';
 
 // unique id to avoid duplicated IDs in reusable component
 let id = 0;
@@ -117,6 +118,7 @@ let id = 0;
   `
 })
 export class CategorySelect {
+  private readonly helperVisibility = inject(HelperVisibility);
   // inputs
   public selectedItemName = model.required<string>(); // mandatory view model
   public category = input.required<CategoryListModel>(); // mandatory view model
@@ -125,7 +127,7 @@ export class CategorySelect {
   public readOnly = input.required<boolean>();
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public showHelper = input(false);
-  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
+  protected shouldShowHelper = computed(() => this.helperVisibility.showHelpers() && coerceBoolean(this.showHelper()));
   public showIcons = input(true);
   /**
    * true: render the select as a form field row (label above the value, chevron right) so it

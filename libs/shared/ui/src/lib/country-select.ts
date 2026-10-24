@@ -4,6 +4,7 @@ import { IonButton, IonButtons, IonIcon, IonInput, IonItem, IonLabel, IonList, I
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { coerceBoolean, getSortedCountries } from '@okr/shared-util-core';
+import { HelperVisibility } from '@okr/shared-util-angular';
 
 export interface CountrySelectI18n {
   name: string;
@@ -69,7 +70,7 @@ export interface CountrySelectI18n {
         <ion-icon slot="end" src="{{ 'chevron-expand' | svgIcon }}" aria-hidden="true" />
       }
     </ion-item>
-    @if (i18n().helper && showHelper()) {
+    @if (i18n().helper && shouldShowHelper()) {
       <ion-item lines="none" class="helper" [button]="false">
         <ion-note>{{ i18n().helper }}</ion-note>
       </ion-item>
@@ -108,6 +109,7 @@ export interface CountrySelectI18n {
   `
 })
 export class CountrySelect {
+  private readonly helperVisibility = inject(HelperVisibility);
   private readonly i18nService = inject(I18nService);
 
   // model
@@ -117,6 +119,7 @@ export class CountrySelect {
   public i18n = input.required<CountrySelectI18n>();
   public readOnly = input.required<boolean>();
   public showHelper = input(false);
+  protected shouldShowHelper = computed(() => this.helperVisibility.showHelpers() && coerceBoolean(this.showHelper()));
 
   // coerced boolean inputs
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));

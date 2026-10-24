@@ -1,4 +1,4 @@
-import { Component, computed, effect, input, model, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, input, model, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonInput, IonItem, IonNote } from '@ionic/angular';
 
@@ -8,6 +8,7 @@ import { MaskitoElementPredicate } from '@maskito/core';
 import { AnyCharacterMask } from '@okr/shared-config';
 import { AutoComplete, InputMode, NAME_LENGTH } from '@okr/shared-constants';
 import { coerceBoolean } from '@okr/shared-util-core';
+import { HelperVisibility } from '@okr/shared-util-angular';
 
 import { ButtonCopy } from './button-copy';
 import { SkipClearTab } from './skip-clear-tab.directive';
@@ -61,6 +62,7 @@ export interface TextInputI18n {
   `
 })
 export class TextInput {
+  private readonly helperVisibility = inject(HelperVisibility);
   // model.required() already declares the matching `valueChange` output; declaring a second
   // one by hand made TextInput's metadata invalid ("Output 'valueChange' is bound to both
   // 'value' and 'valueChange'"), which in turn made every consumer report the component as
@@ -87,7 +89,7 @@ export class TextInput {
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
-  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
+  protected shouldShowHelper = computed(() => this.helperVisibility.showHelpers() && coerceBoolean(this.showHelper()));
   protected buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf }));
 
   // passing constants to the template

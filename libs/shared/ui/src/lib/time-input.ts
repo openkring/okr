@@ -9,6 +9,7 @@ import { ChTimeMask } from '@okr/shared-config';
 import { InputMode, TIME_LENGTH } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { coerceBoolean, getCurrentTime } from '@okr/shared-util-core';
+import { HelperVisibility } from '@okr/shared-util-angular';
 
 import { TimeSelectModal } from './time-select.modal';
 import { SkipClearTab } from './skip-clear-tab.directive';
@@ -52,7 +53,7 @@ export interface TimeInputI18n {
           [readonly]="isReadOnly()"
           />
     </ion-item>
-    @if(i18n().helper) {
+    @if(shouldShowHelper() && i18n().helper) {
       <ion-item lines="none" class="helper">
         <ion-note>{{ i18n().helper }}</ion-note>
       </ion-item>
@@ -60,6 +61,11 @@ export interface TimeInputI18n {
   `
 })
 export class TimeInput {
+  private readonly helperVisibility = inject(HelperVisibility);
+  /** false hides the helper text; the user's «Hilfetexte anzeigen» setting hides it as well */
+  public readonly showHelper = input(true);
+  protected readonly shouldShowHelper = computed(() => this.helperVisibility.showHelpers() && coerceBoolean(this.showHelper()));
+
   protected modalController = inject(ModalController);
 
   // inputs

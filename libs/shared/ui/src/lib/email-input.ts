@@ -1,9 +1,10 @@
-import { Component, computed, effect, input, model, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, input, model, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonInput, IonItem, IonNote } from '@ionic/angular';
 
 import { EMAIL_LENGTH } from '@okr/shared-constants';
 import { coerceBoolean, normalizeEmail } from '@okr/shared-util-core';
+import { HelperVisibility } from '@okr/shared-util-angular';
 
 import { ButtonCopy } from './button-copy';
 import { SkipClearTab } from './skip-clear-tab.directive';
@@ -47,7 +48,7 @@ export interface EmailInputI18n {
       <okr-button-copy [value]="value()" [i18n]="buttonCopyI18n()" tabindex="-1" />
     }
   </ion-item>
-  @if(i18n().helper) {
+  @if(shouldShowHelper() && i18n().helper) {
     <ion-item lines="none" class="helper" [button]="false">
       <ion-note>{{ i18n().helper }}</ion-note>
     </ion-item>
@@ -55,6 +56,11 @@ export interface EmailInputI18n {
   `
 })
 export class EmailInput {
+  private readonly helperVisibility = inject(HelperVisibility);
+  /** false hides the helper text; the user's «Hilfetexte anzeigen» setting hides it as well */
+  public readonly showHelper = input(true);
+  protected readonly shouldShowHelper = computed(() => this.helperVisibility.showHelpers() && coerceBoolean(this.showHelper()));
+
   // inputs
   public value = model.required<string>(); // mandatory view model
   public i18n = input.required<EmailInputI18n>();

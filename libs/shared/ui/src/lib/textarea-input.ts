@@ -1,10 +1,11 @@
-import { Component, computed, input, model } from '@angular/core';
+import { Component, computed, inject, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonIcon, IonItem, IonNote, IonTextarea } from '@ionic/angular';
 
 import { COMMENT_LENGTH } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { coerceBoolean } from '@okr/shared-util-core';
+import { HelperVisibility } from '@okr/shared-util-angular';
 
 import { TextInputI18n } from './text-input';
 
@@ -48,6 +49,7 @@ import { TextInputI18n } from './text-input';
   `
 })
 export class TextareaInput {
+  private readonly helperVisibility = inject(HelperVisibility);
   public value = model.required<string>(); // mandatory view model, two-way bound
 
   // inputs
@@ -60,7 +62,7 @@ export class TextareaInput {
 
   // coerced boolean inputs
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
-  protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
+  protected shouldShowHelper = computed(() => this.helperVisibility.showHelpers() && coerceBoolean(this.showHelper()));
   protected isClearable = computed(() => coerceBoolean(this.clearable()));
 
   /** set() on the model already emits `valueChange` — no manual emit, that would fire twice. */

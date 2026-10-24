@@ -1,7 +1,8 @@
-import { Component, computed, input, model } from '@angular/core';
+import { Component, computed, inject, input, model } from '@angular/core';
 import { IonItem, IonLabel, IonNote } from '@ionic/angular';
 
 import { coerceBoolean } from '@okr/shared-util-core';
+import { HelperVisibility } from '@okr/shared-util-angular';
 
 export interface FileInputI18n {
   name: string;
@@ -40,7 +41,7 @@ export interface FileInputI18n {
         </ion-item>
       }
     }
-    @if (i18n().helper) {
+    @if(shouldShowHelper() && i18n().helper) {
       <ion-item lines="none" class="helper">
         <ion-note>{{ i18n().helper }}</ion-note>
       </ion-item>
@@ -48,6 +49,11 @@ export interface FileInputI18n {
   `,
 })
 export class FileInput {
+  private readonly helperVisibility = inject(HelperVisibility);
+  /** false hides the helper text; the user's «Hilfetexte anzeigen» setting hides it as well */
+  public readonly showHelper = input(true);
+  protected readonly shouldShowHelper = computed(() => this.helperVisibility.showHelpers() && coerceBoolean(this.showHelper()));
+
   // inputs
   public readonly i18n = input.required<FileInputI18n>();
   public files = model<File[]>([]); // the picked files, two-way bound

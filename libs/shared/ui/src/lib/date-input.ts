@@ -1,10 +1,11 @@
-import { Component, computed, input, linkedSignal, model, viewChild } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, model, viewChild } from '@angular/core';
 import { IonIcon, IonItem, IonNote } from '@ionic/angular';
 import { MaskitoOptions } from '@maskito/core';
 
 import { DATE_LENGTH, InputMode } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { classifyStoreDate, coerceBoolean, convertDateFormatToString, DateFormat, formatPartialStoreDate, getTodayStr, isRenderableStoreDate, parseFullViewDate, parsePartialViewDate } from '@okr/shared-util-core';
+import { HelperVisibility } from '@okr/shared-util-angular';
 import { ChAnyDate, ChPartialDate } from '@okr/shared-config';
 
 import { ViewDateInput, ViewDateInputI18n } from './viewdate-input';
@@ -53,7 +54,7 @@ export interface DateInputI18n {
       (dateSelected)="updateStoreDate($event, isoFormat)"
     />
 
-    @if(i18n().helper) {
+    @if(shouldShowHelper() && i18n().helper) {
       <ion-item lines="none" class="helper">
         <ion-note>{{ i18n().helper }}</ion-note>
       </ion-item>
@@ -61,6 +62,11 @@ export interface DateInputI18n {
   `
 })
 export class DateInput {
+  private readonly helperVisibility = inject(HelperVisibility);
+  /** false hides the helper text; the user's «Hilfetexte anzeigen» setting hides it as well */
+  public readonly showHelper = input(true);
+  protected readonly shouldShowHelper = computed(() => this.helperVisibility.showHelpers() && coerceBoolean(this.showHelper()));
+
   protected datePickerModal = viewChild.required<DatePickerModal>(DatePickerModal);
 
   // storeDate is the interface to the parent components (forms), because it is how the date is stored in the database.
