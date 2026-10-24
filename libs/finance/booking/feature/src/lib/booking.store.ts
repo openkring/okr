@@ -573,7 +573,14 @@ export const BookingStore = signalStore(
         const { OrgEditModal } = await import('@okr/subject-org-feature');
         const modal = await store.modalController.create({
           component: OrgEditModal,
-          componentProps: { org, currentUser: store.currentUser(), tags: '', readOnly: true },
+          componentProps: {
+            org,
+            currentUser: store.currentUser(),
+            tags: store.appStore.getTags('org'),
+            tenantId: store.tenantId(),
+            types: store.appStore.getCategory('org_type'),
+            readOnly: true,
+          },
         });
         await modal.present();
         await modal.onDidDismiss();

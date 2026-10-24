@@ -434,7 +434,14 @@ export const OwnershipStore = signalStore(
           const org = store.appStore.getOrg(ownership.ownerKey);
           if (!org || !store.orgEditModal) { console.warn(`OwnershipStore.openOwner: org ${ownership.ownerKey} or ORG_EDIT_MODAL not available`); return; }
           component = await store.orgEditModal();
-          componentProps = { org, currentUser: store.currentUser(), tags: '', readOnly };
+          componentProps = {
+            org,
+            currentUser: store.currentUser(),
+            tags: store.appStore.getTags('org'),
+            tenantId: store.tenantId(),
+            types: store.appStore.getCategory('org_type'),
+            readOnly
+          };
         } else {
           const person = store.appStore.getPerson(ownership.ownerKey);
           if (!person || !store.personEditModal) { console.warn(`OwnershipStore.openOwner: person ${ownership.ownerKey} or PERSON_EDIT_MODAL not available`); return; }

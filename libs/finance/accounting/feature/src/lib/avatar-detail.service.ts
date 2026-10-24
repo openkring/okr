@@ -64,7 +64,14 @@ export class AvatarDetailService {
     const OrgEditModal = await this.orgEditModal();
     const modal = await this.modalController.create({
       component: OrgEditModal,
-      componentProps: { org, currentUser: this.appStore.currentUser(), tags: '', readOnly: true },
+      componentProps: {
+        org,
+        currentUser: this.appStore.currentUser(),
+        tags: this.appStore.getTags('org'),
+        tenantId: this.appStore.tenantId(),
+        types: this.appStore.getCategory('org_type'),
+        readOnly: true,
+      },
     });
     await modal.present();
     await modal.onDidDismiss();
