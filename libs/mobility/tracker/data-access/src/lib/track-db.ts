@@ -75,7 +75,7 @@ export class TrackDb {
     return groupPointsBySection((res.values ?? []) as PointRow[]);
   }
 
-  /** All tracks, newest first. */
+  /** All tracks, newest first. A row whose JSON cannot be parsed is skipped. */
   public async list(): Promise<LocalTrack[]> {
     let tracks: LocalTrack[];
     if (!this.native()) {
@@ -83,7 +83,15 @@ export class TrackDb {
     } else {
       const db = await this.db();
       const res = await db.query('SELECT json FROM tracks;');
-      tracks = ((res.values ?? []) as { json: string }[]).map((r) => JSON.parse(r.json) as LocalTrack);
+      // a row that cannot be parsed is skipped (and logged), never fatal for the whole list
+      tracks = ((res.values ?? []) as { json: string }[]).flatMap((r) => {
+        try {
+          return [JSON.parse(r.json) as LocalTrack];
+        } catch (error) {
+          console.warn('TrackDb.list: skipping an unreadable track row', error);
+          return [];
+        }
+      });
     }
     return tracks.sort((a, b) => b.startedAt - a.startedAt);
   }
