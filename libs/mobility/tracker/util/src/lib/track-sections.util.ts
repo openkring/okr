@@ -43,6 +43,7 @@ export function setSectionMode(s: LocalSection[], index: number, mode: Transport
 export function splitSection(s: LocalSection[], index: number, pointIndex: number, mode: TransportMode): LocalSection[] {
   if (!validIndex(s, index)) return s;
   const sec = s[index];
+  if (sec.mode === mode) return s;
   if (!Number.isInteger(pointIndex) || pointIndex < 1 || pointIndex > sec.points.length - 2) return s;
   const head: LocalSection = { ...sec, points: sec.points.slice(0, pointIndex + 1) };
   const tail: LocalSection = { mode, detected: false, points: sec.points.slice(pointIndex) };

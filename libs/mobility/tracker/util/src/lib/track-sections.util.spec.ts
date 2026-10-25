@@ -23,6 +23,10 @@ describe('splitSection', () => {
     expect(r[1].mode).toBe('foot');
     expect(r[1].detected).toBe(false);
   });
+  it('same mode is a no-op', () => {
+    const s = [sec('car', 10)];
+    expect(splitSection(s, 0, 5, 'car')).toBe(s);
+  });
   it('out of range returns input', () => {
     const s = [sec('car', 10)];
     expect(splitSection(s, 3, 5, 'foot')).toBe(s);

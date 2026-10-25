@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DETECTION_STABLE_MS, detectStep, initialDetectState, proposeMode } from './track-detection.util';
+import { DETECTION_GAP_MS, DETECTION_STABLE_MS, detectStep, initialDetectState, proposeMode } from './track-detection.util';
 import type { DetectState, DetectionInput } from './track-detection.util';
 
 const inp = (activity: DetectionInput['activity'], at: number, extra: Partial<DetectionInput> = {}): DetectionInput => ({
@@ -54,8 +54,8 @@ describe('detectStep', () => {
     expect(s.candidateSince).toBeUndefined();
   });
   it('cycling 130 s -> bike', () => {
-    const { switches } = run(car, [inp('cycling', 0), inp('cycling', 65_000), inp('cycling', 130_000)]);
-    expect(switches).toEqual([{ at: 130_000, to: 'bike' }]);
+    const { switches } = run(car, [inp('cycling', 0), inp('cycling', 60_000), inp('cycling', 120_000), inp('cycling', 130_000)]);
+    expect(switches).toEqual([{ at: 120_000, to: 'bike' }]);
   });
   it('stationary 10 min: no switch', () => {
     const { switches } = run(car, [0, 300_000, 600_000].map((t) => inp('stationary', t)));
@@ -72,6 +72,26 @@ describe('detectStep', () => {
     expect(initialDetectState('car', false).locked).toBe(false);
   });
   it('chosenByHand locks any mode', () => expect(initialDetectState('car', true).locked).toBe(true));
+  it('confident stationary in between breaks the streak', () => {
+    const { switches, s } = run(car, [inp('walking', 0), inp('stationary', 10_000), inp('walking', 310_000), inp('walking', 320_000)]);
+    expect(switches).toEqual([]);
+    expect(s.candidateSince).toBe(310_000);
+  });
+  it('regular walking inputs every 30 s switch at the first input >= 120 s', () => {
+    const { switches } = run(car, [0, 30_000, 60_000, 90_000, 120_000, 150_000].map((t) => inp('walking', t)));
+    expect(switches).toEqual([{ at: 120_000, to: 'foot' }]);
+  });
+  it('a gap longer than DETECTION_GAP_MS restarts the candidate', () => {
+    const { switches, s } = run(car, [inp('walking', 0), inp('walking', 130_000)]);
+    expect(switches).toEqual([]);
+    expect(s.candidateSince).toBe(130_000);
+    expect(DETECTION_GAP_MS).toBe(60_000);
+  });
+  it('unknown / low confidence keep the candidate without refreshing it', () => {
+    const { s } = run(car, [inp('walking', 0), inp('unknown', 10_000), inp('walking', 20_000, { confidence: 'low' })]);
+    expect(s.candidate).toBe('foot');
+    expect(s.candidateLastSeen).toBe(0);
+  });
   it('a proposal equal to the current mode clears the candidate', () => {
     const { s } = run(car, [inp('walking', 0), inp('automotive', 10_000)]);
     expect(s.candidate).toBeUndefined();

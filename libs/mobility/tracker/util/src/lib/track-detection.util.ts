@@ -14,9 +14,12 @@ export interface DetectState {
   locked: boolean;
   candidate?: TransportMode;
   candidateSince?: number;
+  candidateLastSeen?: number; // last input that matched the candidate
 }
 
 export const DETECTION_STABLE_MS = 120_000;
+/** A candidate is only confirmed if its proposals arrive at most this far apart. */
+export const DETECTION_GAP_MS = 60_000;
 const TRAIN_MIN_SPEED_MPS = 36;
 const PLANE_MIN_ALTITUDE_M = 3000;
 const PLANE_MIN_SPEED_MPS = 83;
@@ -48,13 +51,18 @@ export function initialDetectState(mode: TransportMode, chosenByHand: boolean): 
 export function detectStep(s: DetectState, i: DetectionInput): { state: DetectState; switchTo?: TransportMode } {
   if (s.locked) return { state: s };
   const proposal = proposeMode(i);
-  if (proposal === undefined) return { state: s }; // no information: keep waiting
-  if (proposal === s.mode) return { state: { mode: s.mode, locked: s.locked } };
-  if (s.candidate !== proposal || s.candidateSince === undefined) {
-    return { state: { ...s, candidate: proposal, candidateSince: i.at } };
+  if (proposal === undefined) {
+    // a confident "stationary" breaks the streak; unknown / low confidence say nothing
+    if (i.activity === 'stationary' && i.confidence !== 'low') return { state: { mode: s.mode, locked: s.locked } };
+    return { state: s };
   }
-  if (i.at - s.candidateSince >= DETECTION_STABLE_MS) {
+  if (proposal === s.mode) return { state: { mode: s.mode, locked: s.locked } };
+  const continues = s.candidate === proposal && s.candidateSince !== undefined && s.candidateLastSeen !== undefined && i.at - s.candidateLastSeen <= DETECTION_GAP_MS;
+  if (!continues) {
+    return { state: { ...s, candidate: proposal, candidateSince: i.at, candidateLastSeen: i.at } };
+  }
+  if (i.at - (s.candidateSince as number) >= DETECTION_STABLE_MS) {
     return { state: { mode: proposal, locked: s.locked }, switchTo: proposal };
   }
-  return { state: s };
+  return { state: { ...s, candidateLastSeen: i.at } };
 }
