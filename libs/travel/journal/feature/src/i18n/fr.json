@@ -302,6 +302,7 @@
     "export_failed": "Le PDF n'a pas pu être créé. Réessaie, s'il te plaît.",
     "export_busy": "Un PDF est déjà en cours de création. Attends qu'il soit terminé, s'il te plaît.",
     "export_maps_incomplete": "{count} cartes sont incomplètes car toutes les tuiles n'ont pas été chargées. Le PDF est créé quand même.",
+    "export_maps_failed": "{count} cartes n'ont pas pu être dessinées ou téléversées. Dans le PDF, elles restent vides ou anciennes – réessaie plus tard.",
     "export_last": "Dernier PDF du {date} : {pages} pages.",
     "export_screen_hint": "Le PDF d'impression est pour l'imprimerie. Le PDF écran est plus léger, idéal pour l'envoyer et le regarder.",
     "settings_title": "Réglages du livre",

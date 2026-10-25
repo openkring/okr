@@ -12,7 +12,7 @@ import { acceptRecord, BookLayout, coverLayout, DEFAULT_BLEED_MM, journalDocOf, 
 import { privateBucket } from '../_storage/private-bucket';
 import { journalObjectPath } from './apply-journal-change.logic';
 import { applyPdfX4, bookAsset, createBookDoc, pdfkitPaginate, writeBookPdf, writeCoverPdf } from './book-pdf';
-import { BookExportKind, BookExportRequest, BookExportRequestError, bookObjectPath, canStartExport, parseBookExportRequest } from './book.logic';
+import { BookExportKind, BookExportRequest, BookExportRequestError, BookLinksRequest, bookObjectPath, canStartExport, exportLinkPaths, parseBookRequest } from './book.logic';
 import { memberName } from './guest.logic';
 import { JournalCaller, requireJournalAuthor } from './journal-auth';
 
@@ -21,6 +21,25 @@ const SIGNED_URL_MS = 24 * 60 * 60 * 1000;
 const PROGRESS_EVERY = 10; // pages
 
 export interface ExportJournalBookResult { bookUrl: string; coverUrl?: string; pageCount: number; warnings: number }
+/** `links`: fresh 24 h links of the last finished export; empty when there is none. */
+export type JournalBookLinksResult = Partial<ExportJournalBookResult>;
+
+/** Signs the PDFs of the last finished export again (ruling R10). */
+async function exportLinks(db: Firestore, caller: JournalCaller): Promise<JournalBookLinksResult> {
+  const snap = await db.collection(JournalBookCollection).doc(caller.journalKey).get();
+  const exp = (snap.data() as Partial<JournalBookModel> | undefined)?.export;
+  const paths = exportLinkPaths(exp, caller.tenantId, caller.journalKey);
+  if (!paths || !exp) return {};
+  const bucket = privateBucket();
+  const [exists] = await bucket.file(paths.bookPath).exists();
+  if (!exists) return {};
+  return {
+    bookUrl: await signedUrl(bucket, paths.bookPath),
+    ...(paths.coverPath ? { coverUrl: await signedUrl(bucket, paths.coverPath) } : {}),
+    pageCount: exp.pageCount ?? 0,
+    warnings: exp.warnings ?? 0,
+  };
+}
 
 type Bucket = ReturnType<typeof privateBucket>;
 
@@ -149,23 +168,27 @@ async function streamPdf(bucket: Bucket, doc: PDFKit.PDFDocument, path: string, 
  * `tenant/<tid>/journal/<jk>/book/<kind>-<ts>.pdf`; progress, paths and counts in `journal-books/{jk}.export`
  * (written only here). Returns signed read URLs valid for 24 h. Authors only; one export per book at a time.
  *
+ * `{ op: 'links', journalKey }` (ruling R10) signs the last finished export's PDFs again (24 h), e.g. after a reload.
+ *
  * Its own function (not the journal router of the functions consolidation): one hour, 1 GiB, one instance. The
  * client must call it with a long callable timeout (httpsCallable option `timeout`).
  */
 export const exportJournalBook = onCall(
   { region: REGION, cpu: 'gcf_gen1', memory: '1GiB', timeoutSeconds: 3600, maxInstances: 1, enforceAppCheck: true, cors: true },
-  async (request: CallableRequest<unknown>): Promise<ExportJournalBookResult> => {
+  async (request: CallableRequest<unknown>): Promise<ExportJournalBookResult | JournalBookLinksResult> => {
     checkAppCheckToken(request as never, 'exportJournalBook');
     checkAuthentication(request as never, 'exportJournalBook');
-    let req: BookExportRequest;
+    let parsed: BookExportRequest | BookLinksRequest;
     try {
-      req = parseBookExportRequest(request.data);
+      parsed = parseBookRequest(request.data);
     } catch (e) {
       if (e instanceof BookExportRequestError) throw new HttpsError('invalid-argument', e.message);
       throw e;
     }
     const db = getFirestore();
-    const caller = await requireJournalAuthor(db, request.auth?.uid ?? '', req.journalKey);
+    const caller = await requireJournalAuthor(db, request.auth?.uid ?? '', parsed.journalKey);
+    if (parsed.op === 'links') return exportLinks(db, caller);
+    const req = parsed;
     const nowMs = Date.now();
     const book = await startExport(db, caller, req.kind, nowMs);
     const ref = db.collection(JournalBookCollection).doc(caller.journalKey);

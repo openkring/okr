@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { JournalChange } from '@okr/shared-models';
 import { formatHlc } from '@okr/travel-journal-util';
 
-import { isJournalFileName, journalObjectPath, planEntityWrite, planFootprintSections, StoredRecord } from './apply-journal-change.logic';
+import { isBookMapFileName, isJournalFileName, journalObjectPath, mayOverwrite, planEntityWrite, planFootprintSections, StoredRecord } from './apply-journal-change.logic';
 
 let n = 0;
 function rec(p: Pick<JournalChange, 'entity' | 'entityKey' | 'op'> & Partial<JournalChange>, deviceId = 'dev-a', authorKey = 'bruno'): StoredRecord {
@@ -80,5 +80,21 @@ describe('applyJournalChange logic', () => {
     expect(isJournalFileName('journals/j1/a.jpg')).toBe(false);
     expect(isJournalFileName('a.png')).toBe(false);
     expect(journalObjectPath('bkg', 'j1', 'a-400.jpg')).toBe('tenant/bkg/journal/j1/a-400.jpg');
+  });
+});
+
+describe('book map overwrite (ruling R9)', () => {
+  it('only book-map-*.jpg may be overwritten, and only on request', () => {
+    expect(isBookMapFileName('book-map-overview.jpg')).toBe(true);
+    expect(isBookMapFileName('book-map-0f3a_b-c.jpg')).toBe(true);
+    expect(isBookMapFileName('a1b2-2048.jpg')).toBe(false);
+    expect(isBookMapFileName('a1b2-print.jpg')).toBe(false);
+    expect(isBookMapFileName('book-map-.jpg')).toBe(false);
+    expect(isBookMapFileName('book-map-../x.jpg')).toBe(false);
+    expect(isBookMapFileName('book-map-x.png')).toBe(false);
+    expect(mayOverwrite('book-map-overview.jpg', true)).toBe(true);
+    expect(mayOverwrite('book-map-overview.jpg', undefined)).toBe(false);
+    expect(mayOverwrite('book-map-overview.jpg', 'true')).toBe(false);
+    expect(mayOverwrite('a1b2-2048.jpg', true)).toBe(false);
   });
 });

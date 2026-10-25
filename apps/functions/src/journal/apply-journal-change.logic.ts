@@ -63,6 +63,16 @@ export function isJournalFileName(name: unknown): name is string {
   return typeof name === 'string' && /^[A-Za-z0-9_-]{1,100}\.jpg$/.test(name);
 }
 
+/** A book map rendered in the browser (`book-map-<name>.jpg`): the only files an upload may overwrite (ruling R9). */
+export function isBookMapFileName(name: unknown): name is string {
+  return typeof name === 'string' && /^book-map-[A-Za-z0-9_-]+\.jpg$/.test(name) && isJournalFileName(name);
+}
+
+/** Whether prepareJournalPhotoUploads hands out an upload URL for an object that exists already: only book maps, on request. */
+export function mayOverwrite(name: string, overwrite: unknown): boolean {
+  return overwrite === true && isBookMapFileName(name);
+}
+
 export function journalObjectPath(tenantId: string, journalKey: string, fileName: string): string {
   return `tenant/${tenantId}/journal/${journalKey}/${fileName}`;
 }

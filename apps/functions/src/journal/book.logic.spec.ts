@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { TRANSPORT_MODES } from '@okr/shared-models';
 
-import { BOOK_LABEL_KEYS, BookExportRequestError, bookObjectPath, canStartExport, parseBookExportRequest } from './book.logic';
+import { BOOK_LABEL_KEYS, BookExportRequestError, bookObjectPath, canStartExport, exportLinkPaths, parseBookExportRequest, parseBookRequest } from './book.logic';
 
 const NOW = Date.parse('2026-10-25T10:00:00Z');
 const labels = (): Record<string, unknown> => ({
@@ -44,5 +44,28 @@ describe('book export logic', () => {
   it('book files live under the journal folder of the private bucket', () => {
     expect(bookObjectPath('scs', 'j1', 'print', NOW)).toBe('tenant/scs/journal/j1/book/print-20261025T100000Z.pdf');
     expect(bookObjectPath('scs', 'j1', 'cover', NOW)).toBe('tenant/scs/journal/j1/book/cover-20261025T100000Z.pdf');
+  });
+});
+
+describe('the links op (ruling R10)', () => {
+  const jk = 'a'.repeat(20);
+
+  it('parses { op: links, journalKey } and still hands an export request to the export parser', () => {
+    expect(parseBookRequest({ op: 'links', journalKey: jk })).toEqual({ op: 'links', journalKey: jk });
+    expect(() => parseBookRequest({ op: 'links', journalKey: '../x' })).toThrow(BookExportRequestError);
+    expect(() => parseBookRequest({ op: 'delete', journalKey: jk })).toThrow(BookExportRequestError);
+    expect(() => parseBookRequest({ op: 'export', journalKey: jk, kind: 'print' })).toThrow(BookExportRequestError); // labels missing
+  });
+
+  it('signs only a finished export, and only PDFs inside the journal book folder', () => {
+    const bookPath = bookObjectPath('bkg', jk, 'print', 0);
+    const coverPath = bookObjectPath('bkg', jk, 'cover', 0);
+    const done = { kind: 'print' as const, state: 'done' as const, startedAt: '', bookPath, coverPath };
+    expect(exportLinkPaths(done, 'bkg', jk)).toEqual({ bookPath, coverPath });
+    expect(exportLinkPaths({ ...done, coverPath: undefined }, 'bkg', jk)).toEqual({ bookPath });
+    expect(exportLinkPaths({ ...done, state: 'running' }, 'bkg', jk)).toBeUndefined();
+    expect(exportLinkPaths({ ...done, bookPath: 'tenant/other/journal/x/book/print.pdf' }, 'bkg', jk)).toBeUndefined();
+    expect(exportLinkPaths({ ...done, coverPath: 'tenant/bkg/secret.pdf' }, 'bkg', jk)).toEqual({ bookPath });
+    expect(exportLinkPaths(undefined, 'bkg', jk)).toBeUndefined();
   });
 });

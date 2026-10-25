@@ -302,6 +302,7 @@
     "export_failed": "Das PDF konnte nicht erstellt werden. Versuch es bitte nochmals.",
     "export_busy": "Gerade wird schon ein PDF erstellt. Warte bitte, bis es fertig ist.",
     "export_maps_incomplete": "{count} Karten sind unvollständig, weil nicht alle Kartenteile geladen wurden. Das PDF wird trotzdem erstellt.",
+    "export_maps_failed": "{count} Karten konnten nicht gezeichnet oder hochgeladen werden. Im PDF bleiben sie leer oder alt – versuch es später nochmals.",
     "export_last": "Letztes PDF vom {date}: {pages} Seiten.",
     "export_screen_hint": "Das Druck-PDF ist für die Druckerei. Das Bildschirm-PDF ist kleiner und eignet sich zum Verschicken und Anschauen.",
     "settings_title": "Buch einstellen",

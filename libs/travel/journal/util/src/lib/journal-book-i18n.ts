@@ -63,6 +63,7 @@ export const BOOK_I18N_KEYS = {
   export_failed: PFX + 'export_failed',
   export_busy: PFX + 'export_busy',
   export_maps_incomplete: PFX + 'export_maps_incomplete',
+  export_maps_failed: PFX + 'export_maps_failed',
   export_last: PFX + 'export_last',
   export_screen_hint: PFX + 'export_screen_hint',
   settings_title: PFX + 'settings_title',

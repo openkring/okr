@@ -3,7 +3,7 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { ActionSheetController, IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar, ModalController, ToastController } from '@ionic/angular';
-import { switchMap } from 'rxjs';
+import { startWith, switchMap } from 'rxjs';
 
 import { BookTemplate, JournalBookModel, TRANSPORT_MODES, TransportMode } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -11,10 +11,9 @@ import { fill } from '@okr/shared-util-core';
 import { JournalBookService } from '@okr/travel-journal-data-access';
 import { BookCommentSetting, bookFontsReady, JournalBookEditor, JournalBookPreview, JournalBookSettingsModal } from '@okr/travel-journal-ui';
 import {
-  blockPagesOf, bookLabelsOf, BookSettingsFormModel, bookSettingsOf, bookSettingsPatch, layoutBook, missingPrintsByAuthor, movePhotoTo, spreadsOf, withTemplate,
+  blockPagesOf, bookLabelsOf, JournalBookEdits, BookSettingsFormModel, bookSettingsOf, bookSettingsPatch, layoutBook, missingPrintsByAuthor, movePhotoTo, spreadsOf, withTemplate,
 } from '@okr/travel-journal-util';
 
-import { JournalBookEdits } from './journal-book-edits';
 import { JournalBookExport } from './journal-book-export';
 import { domPaginate } from './journal-book-paginate';
 import { JournalFileUrlService } from './journal-file-url.service';
@@ -54,7 +53,7 @@ const PAGE_MAX_W = 560;
         <ion-buttons slot="start"><ion-back-button [defaultHref]="'/journal/' + journalKey()" /></ion-buttons>
         <ion-title>{{ i18n.title() }}{{ layout()?.title ? ' · ' + layout()?.title : '' }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button (click)="openSettings()"><ion-icon slot="start" src="{{ 'settings' | svgIcon }}" />{{ i18n.settings() }}</ion-button>
+          <ion-button [disabled]="!bookLoaded()" (click)="openSettings()"><ion-icon slot="start" src="{{ 'settings' | svgIcon }}" />{{ i18n.settings() }}</ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -106,7 +105,7 @@ const PAGE_MAX_W = 560;
               (templateChosen)="setTemplate($event)" (moveRequested)="move($event)" (hiddenChanged)="setHidden($event.imageKey, $event.hidden)"
               (wholeChanged)="edits.setWhole($event.imageKey, $event.whole)" (resetRequested)="reset()" (commentsChanged)="setComments($event)" />
             <hr />
-            <okr-journal-book-export [journalKey]="journalKey()" [book]="remoteBook()" />
+            <okr-journal-book-export [journalKey]="journalKey()" [book]="remoteBook() ?? undefined" [beforeExport]="flushEdits" />
           }
         </aside>
       </div>
@@ -128,7 +127,10 @@ export class JournalBookPage {
 
   protected readonly pagesHint = BOOK_PAGES_HINT;
   protected readonly journal = computed(() => this.store.journals().find((j) => j.key === this.journalKey()));
-  protected readonly remoteBook = toSignal(toObservable(this.journalKey).pipe(switchMap((k) => this.bookService.book$(k))));
+  /** null until the first snapshot of the book document arrived (undefined: no book document yet). */
+  protected readonly remoteBook = toSignal(
+    toObservable(this.journalKey).pipe(switchMap((k) => this.bookService.book$(k).pipe(startWith(null)))), { initialValue: null });
+  protected readonly bookLoaded = computed(() => this.remoteBook() !== null);
   protected readonly edits = new JournalBookEdits(this.bookService, () => this.target(), () => void this.toast(this.i18n.save_failed()));
   protected readonly book = computed(() => this.edits.apply(this.remoteBook() ?? new JournalBookModel()));
 
@@ -142,7 +144,8 @@ export class JournalBookPage {
     return bookLabelsOf(this.i18n, transport, credits);
   });
   protected readonly layout = computed(() => {
-    if (!this.fontsReady() || !this.journal()) return undefined;
+    // no layout and no editing before the stored book is known: an edit on the defaults would overwrite it
+    if (!this.fontsReady() || !this.journal() || !this.bookLoaded()) return undefined;
     return layoutBook({
       state: this.store.journalState(), journalKey: this.journalKey(), book: this.book(), labels: this.labels(),
       authorName: (k) => this.authorName(k), paginate: this.paginate,
@@ -243,6 +246,9 @@ export class JournalBookPage {
     destroyRef.onDestroy(() => void this.edits.flush());
   }
 
+  /** Pending edits are written before an export starts: the function lays out the stored book. */
+  protected readonly flushEdits = (): Promise<void> => this.edits.flush();
+
   protected select(index: number): void {
     if (this.selectedIndex() !== index) this.selectedImageKey.set(undefined);
     this.selectedIndex.set(index);
@@ -296,6 +302,7 @@ export class JournalBookPage {
   }
 
   protected async openSettings(): Promise<void> {
+    if (!this.bookLoaded()) return;
     const images = this.images();
     const seen = new Set<string>();
     const covers = this.footprints().filter((f) => f.publishState === 'published').flatMap((f) => f.blocks).flatMap((b) => b.imageKeys ?? [])

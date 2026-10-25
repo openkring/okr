@@ -302,6 +302,7 @@
     "export_failed": "The PDF could not be created. Please try again.",
     "export_busy": "A PDF is already being created. Please wait until it is done.",
     "export_maps_incomplete": "{count} maps are incomplete because not all map tiles loaded. The PDF is created anyway.",
+    "export_maps_failed": "{count} maps could not be drawn or uploaded. In the PDF they stay empty or show an older version – please try again later.",
     "export_last": "Last PDF from {date}: {pages} pages.",
     "export_screen_hint": "The print PDF is for the print shop. The screen PDF is smaller and good for sending and viewing.",
     "settings_title": "Book settings",

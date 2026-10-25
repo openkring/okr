@@ -88,12 +88,23 @@ export class JournalBookService {
     return (await fn({ op: 'export', journalKey, kind, labels })).data;
   }
 
-  /** Signed upload URLs for files of the journal folder (book maps here); files already there come back `done`. */
-  public async prepareUploads(journalKey: string, files: string[]): Promise<JournalFileUpload[]> {
+  /**
+   * Signed upload URLs for files of the journal folder. Files already there come back `done` — unless `overwrite` is
+   * set: then book maps (`book-map-*.jpg`, ruling R9) get a URL anyway, every other file still comes back `done`.
+   */
+  public async prepareUploads(journalKey: string, files: string[], overwrite = false): Promise<JournalFileUpload[]> {
     const fn = httpsCallable<unknown, { uploads: JournalFileUpload[] }>(getFunctions(getApp(), REGION), 'prepareJournalPhotoUploads');
     const out: JournalFileUpload[] = [];
-    for (let i = 0; i < files.length; i += UPLOAD_CHUNK) out.push(...(await fn({ journalKey, files: files.slice(i, i + UPLOAD_CHUNK) })).data.uploads);
+    for (let i = 0; i < files.length; i += UPLOAD_CHUNK) {
+      out.push(...(await fn({ journalKey, files: files.slice(i, i + UPLOAD_CHUNK), ...(overwrite ? { overwrite: true } : {}) })).data.uploads);
+    }
     return out;
+  }
+
+  /** Fresh 24 h links of the book's last finished export (ruling R10); empty when there is none. */
+  public async exportLinks(journalKey: string): Promise<Partial<JournalBookExportResult>> {
+    const fn = httpsCallable<unknown, Partial<JournalBookExportResult>>(getFunctions(getApp(), REGION), 'exportJournalBook');
+    return (await fn({ op: 'links', journalKey })).data;
   }
 
   /** PUTs a file to its signed URL from the browser (the iPad uses the native plugin instead). */

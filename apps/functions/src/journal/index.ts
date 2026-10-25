@@ -10,7 +10,7 @@ import {
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
 import { privateBucket } from '../_storage/private-bucket';
-import { isJournalFileName, journalObjectPath, planEntityWrite, planFootprintSections, StoredRecord } from './apply-journal-change.logic';
+import { isJournalFileName, journalObjectPath, planEntityWrite, planFootprintSections, StoredRecord, mayOverwrite } from './apply-journal-change.logic';
 import { requireJournalAuthor } from './journal-auth';
 
 const REGION = 'europe-west6';
@@ -95,10 +95,12 @@ export const prepareJournalPhotoUploads = onCall(
     const caller = await requireJournalAuthor(getFirestore(), request.auth?.uid ?? '', (request.data as { journalKey?: unknown })?.journalKey);
     const bucket = privateBucket();
     const headers = { 'Content-Type': 'image/jpeg', 'x-goog-content-length-range': `0,${MAX_PHOTO_BYTES}` };
+    // `overwrite: true` re-uploads book maps (drawn again on every export, ruling R9); every other file is written once
+    const overwrite = (request.data as { overwrite?: unknown } | undefined)?.overwrite;
     const uploads = await Promise.all(fileNames(request.data).map(async (file): Promise<JournalPhotoUpload> => {
       const object = bucket.file(journalObjectPath(caller.tenantId, caller.journalKey, file));
       const [exists] = await object.exists();
-      if (exists) return { file, done: true };
+      if (exists && !mayOverwrite(file, overwrite)) return { file, done: true };
       const [url] = await object.getSignedUrl({
         version: 'v4', action: 'write', expires: Date.now() + URL_WINDOW_MS, contentType: headers['Content-Type'],
         extensionHeaders: { 'x-goog-content-length-range': headers['x-goog-content-length-range'] },

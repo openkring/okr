@@ -1,7 +1,8 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { IonButton, IonIcon, IonProgressBar } from '@ionic/angular';
 
 import { JournalBookModel } from '@okr/shared-models';
+import { JournalBookExportResult, JournalBookService } from '@okr/travel-journal-data-access';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { convertDateFormatToString, DateFormat, fill } from '@okr/shared-util-core';
 
@@ -41,6 +42,7 @@ const STALE_MS = 65 * 60 * 1000;
       @if (progress() !== undefined) { <ion-progress-bar [value]="progress()" /> }
     }
     @if (incomplete(); as text) { <p class="warn">{{ text }}</p> }
+    @if (mapsFailed(); as text) { <p class="error">{{ text }}</p> }
     @if (status().phase === 'failed') {
       <p class="error">{{ status().error === 'busy' ? i18n.export_busy() : i18n.export_failed() }}</p>
     }
@@ -59,10 +61,12 @@ const STALE_MS = 65 * 60 * 1000;
 })
 export class JournalBookExport {
   private readonly store = inject(JournalStore);
+  private readonly bookService = inject(JournalBookService);
   protected readonly i18n = this.store.bookI18n;
 
   public readonly journalKey = input.required<string>();
   public readonly book = input<JournalBookModel | undefined>(undefined);
+  public readonly beforeExport = input<() => Promise<void>>(() => Promise.resolve());
 
   protected readonly status = computed(() => {
     const s = this.store.bookExport();
@@ -91,10 +95,34 @@ export class JournalBookExport {
     return (s.phase === 'pdf' || this.remoteRunning()) && e?.state === 'running' ? (e.progress ?? 0) / 100 : undefined;
   });
   protected readonly incomplete = computed(() => {
-    const n = this.status().mapsIncomplete + this.status().mapsFailed;
+    const n = this.status().mapsIncomplete;
     return n > 0 ? fill(this.i18n.export_maps_incomplete(), { count: n }) : '';
   });
-  protected readonly result = computed(() => (this.status().phase === 'done' ? this.status().result : undefined));
+  protected readonly mapsFailed = computed(() => {
+    const n = this.status().mapsFailed;
+    return n > 0 ? fill(this.i18n.export_maps_failed(), { count: n }) : '';
+  });
+  /** Links of the last finished export after a reload (ruling R10), fetched once per finished export. */
+  private readonly storedLinks = signal<Partial<JournalBookExportResult> | undefined>(undefined);
+  private linksFor = '';
+  protected readonly result = computed(() => {
+    if (this.status().phase === 'done') return this.status().result;
+    const stored = this.storedLinks();
+    return this.book()?.export?.state === 'done' && stored?.bookUrl ? (stored as JournalBookExportResult) : undefined;
+  });
+
+  public constructor() {
+    effect(() => {
+      const e = this.book()?.export;
+      const key = e?.state === 'done' && e.bookPath ? `${this.journalKey()}|${e.bookPath}` : '';
+      if (!key || key === this.linksFor || this.status().phase === 'done') return;
+      this.linksFor = key;
+      untracked(() => {
+        this.storedLinks.set(undefined);
+        this.bookService.exportLinks(this.journalKey()).then((links) => this.storedLinks.set(links)).catch(() => undefined);
+      });
+    });
+  }
   protected readonly last = computed(() => {
     const e = this.book()?.export;
     if (e?.state !== 'done' || !e.finishedAt) return '';
@@ -102,7 +130,8 @@ export class JournalBookExport {
     return fill(this.i18n.export_last(), { date, pages: e.pageCount ?? 0 });
   });
 
-  protected start(kind: 'print' | 'screen'): void {
-    void this.store.exportBook(this.journalKey(), kind);
+  protected async start(kind: 'print' | 'screen'): Promise<void> {
+    await this.beforeExport()(); // pending edits first: the function lays out the stored book (ruling R12)
+    await this.store.exportBook(this.journalKey(), kind);
   }
 }

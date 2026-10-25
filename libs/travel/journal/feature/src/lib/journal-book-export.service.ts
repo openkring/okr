@@ -1,4 +1,5 @@
 import { inject, Injectable } from '@angular/core';
+import { captureException } from '@sentry/angular';
 import { firstValueFrom } from 'rxjs';
 
 import { JournalBookModel } from '@okr/shared-models';
@@ -9,10 +10,10 @@ import { BookLabels, bookMapPlan, JournalState, JournalTileSource, layoutBook, M
 
 /**
  * The browser side of the book export (design §5.2, §8): the maps the book needs are drawn with MapLibre at 300 dpi and
- * uploaded as `book-map-*.jpg` into the journal folder, then exportJournalBook writes the PDF. A map that is already
- * in the bucket is kept (prepareJournalPhotoUploads reports it `done` and hands out no URL), so a later export only
- * draws the maps that are new. A map whose tiles did not all arrive is still uploaded and counted (ruling R8); a map
- * that cannot be drawn at all is left out — the PDF then shows a black frame and counts a warning.
+ * uploaded as `book-map-*.jpg` into the journal folder, then exportJournalBook writes the PDF. Every export draws all
+ * maps again and overwrites the old files (ruling R9: footprints may have moved or been renumbered). A map whose tiles
+ * did not all arrive is still uploaded and counted as incomplete (ruling R8); a map that cannot be drawn or uploaded
+ * is counted as failed and reported (console + Sentry) — the PDF then shows the old file or a black frame.
  */
 export interface BookExportStatus {
   journalKey: string;
@@ -60,7 +61,7 @@ export class JournalBookExporter {
       const plan = bookMapPlan(state, journalKey, book, layout).filter((p) => kind === 'print' || p.file !== MAP_BACK);
       for (let i = 0; i < plan.length; i += MAP_BATCH) {
         const batch = plan.slice(i, i + MAP_BATCH);
-        const uploads = await this.bookService.prepareUploads(journalKey, batch.map((p) => p.file));
+        const uploads = await this.bookService.prepareUploads(journalKey, batch.map((p) => p.file), true);
         const todo = batch.flatMap((p) => {
           const upload = uploads.find((u) => u.file === p.file);
           return upload && !upload.done && upload.url ? [{ p, upload }] : [];
@@ -74,11 +75,13 @@ export class JournalBookExporter {
             const map = await renderBookMap({ box: p.box, dpi: MAP_DPI, layers, route: p.route, stops: p.stops, legPath: p.legPath });
             incomplete = map.incomplete;
             await this.bookService.putFile(upload, map.blob);
-          } catch {
+          } catch (error) {
             failed = true;
+            console.error(`journal book: map ${p.file} could not be drawn or uploaded`, error);
+            captureException(error, { tags: { feature: 'journal-book', step: 'map', file: p.file } });
           }
           status = setStatus({
-            ...status, mapsDone: status.mapsDone + 1, mapsIncomplete: status.mapsIncomplete + (incomplete ? 1 : 0), mapsFailed: status.mapsFailed + (failed ? 1 : 0),
+            ...status, mapsDone: status.mapsDone + 1, mapsIncomplete: status.mapsIncomplete + (incomplete && !failed ? 1 : 0), mapsFailed: status.mapsFailed + (failed ? 1 : 0),
           });
         }
       }

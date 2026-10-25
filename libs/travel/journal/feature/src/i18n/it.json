@@ -302,6 +302,7 @@
     "export_failed": "Non è stato possibile creare il PDF. Riprova, per favore.",
     "export_busy": "Si sta già creando un PDF. Aspetta che sia pronto, per favore.",
     "export_maps_incomplete": "{count} mappe sono incomplete perché non tutte le parti della mappa sono state caricate. Il PDF viene creato comunque.",
+    "export_maps_failed": "Non è stato possibile disegnare o caricare {count} mappe. Nel PDF restano vuote o vecchie – riprova più tardi.",
     "export_last": "Ultimo PDF del {date}: {pages} pagine.",
     "export_screen_hint": "Il PDF di stampa è per la tipografia. Il PDF per schermo è più leggero, adatto da inviare e guardare.",
     "settings_title": "Impostazioni del libro",

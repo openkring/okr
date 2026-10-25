@@ -53,6 +53,31 @@ export function parseBookExportRequest(data: unknown): BookExportRequest {
   return { op: 'export', journalKey: d['journalKey'] as string, kind, labels: { ...flat, transport } };
 }
 
+/** `{ op: 'links', journalKey }` (ruling R10): fresh download links of the last finished export. */
+export interface BookLinksRequest { op: 'links'; journalKey: string }
+
+/** The callable's two ops: `export` (parseBookExportRequest) and `links`. */
+export function parseBookRequest(data: unknown): BookExportRequest | BookLinksRequest {
+  const d = (data ?? {}) as Record<string, unknown>;
+  if (d['op'] === 'links') {
+    if (!isJournalKey(d['journalKey'])) throw new BookExportRequestError('Invalid journalKey.');
+    return { op: 'links', journalKey: d['journalKey'] };
+  }
+  return parseBookExportRequest(data);
+}
+
+/**
+ * The PDFs of the last export that may be signed again: only a finished export, only paths inside this journal's
+ * `book/` folder (they are written by the function alone, checked anyway).
+ */
+export function exportLinkPaths(exp: JournalBookExport | undefined, tenantId: string, journalKey: string): { bookPath: string; coverPath?: string } | undefined {
+  if (exp?.state !== 'done' || !exp.bookPath) return undefined;
+  const folder = journalObjectPath(tenantId, journalKey, 'book/');
+  const inside = (p: string | undefined): p is string => typeof p === 'string' && p.startsWith(folder) && !p.includes('..') && p.endsWith('.pdf');
+  if (!inside(exp.bookPath)) return undefined;
+  return { bookPath: exp.bookPath, ...(inside(exp.coverPath) ? { coverPath: exp.coverPath } : {}) };
+}
+
 /** `20261025T100000Z` — sortable and safe in an object name. */
 export function stamp(ms: number): string {
   return new Date(ms).toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
