@@ -112,7 +112,7 @@ export function buildGpx(name: string, sections: LocalSection[]): string {
   const tracks = sections
     .filter((s) => s.points.length > 0)
     .map((s) => {
-      const pts = s.points.map((p) => `      <trkpt lat="${p.lat}" lon="${p.lng}"><time>${new Date(p.t).toISOString()}</time></trkpt>`);
+      const pts = s.points.map((p) => `      <trkpt lat="${p.lat.toFixed(7)}" lon="${p.lng.toFixed(7)}"><time>${new Date(p.t).toISOString()}</time></trkpt>`);
       return ['  <trk>', `    <name>${xml(name)}</name>`, `    <type>${s.mode}</type>`, '    <trkseg>', ...pts, '    </trkseg>', '  </trk>'].join('\n');
     });
   return [
@@ -129,4 +129,36 @@ export function buildGpx(name: string, sections: LocalSection[]): string {
 export function gpxFileName(name: string): string {
   const base = name.replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '');
   return `${base || 'track'}.gpx`;
+}
+
+/** True when two copies of a track carry the same name and sections (what an upload writes besides the points). */
+export function sameTrackContent(a: LocalTrack, b: LocalTrack): boolean {
+  return a.name === b.name
+    && a.sections.length === b.sections.length
+    && a.sections.every((s, i) => s.mode === b.sections[i].mode && s.detected === b.sections[i].detected);
+}
+
+/**
+ * The track after an owner correction or rename: new sections (and name), `uploaded:false` so it is uploaded
+ * again, and — when it got fewer sections — the old count remembered in `extraPointsUpTo`.
+ */
+export function correctedTrack(t: LocalTrack, sections: LocalTrack['sections'], name?: string): LocalTrack {
+  const bound = Math.max(t.extraPointsUpTo ?? 0, t.sections.length);
+  const out: LocalTrack = { ...t, name: name ?? t.name, sections: sections.map((s) => ({ mode: s.mode, detected: s.detected })), uploaded: false };
+  if (bound > sections.length) out.extraPointsUpTo = bound;
+  else delete out.extraPointsUpTo;
+  return out;
+}
+
+/** The leftover track-points doc indices [from, to) to delete after an upload, if any. */
+export function extraPointsRange(t: LocalTrack): { from: number; to: number } | undefined {
+  const to = t.extraPointsUpTo ?? 0;
+  return to > t.sections.length ? { from: t.sections.length, to } : undefined;
+}
+
+/** True when the native share sheet (or the Web Share API) was just closed without sharing. */
+export function isShareCancel(error: unknown): boolean {
+  if (typeof DOMException !== 'undefined' && error instanceof DOMException && error.name === 'AbortError') return true;
+  const message = (error as { message?: unknown } | undefined)?.message;
+  return typeof message === 'string' && /cancel/i.test(message);
 }

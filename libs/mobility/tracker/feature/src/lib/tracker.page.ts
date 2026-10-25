@@ -5,6 +5,7 @@ import {
   IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, IonHeader, IonIcon, IonItem, IonLabel,
   IonList, IonListHeader, IonNote, IonSelect, IonSelectOption, IonTitle, IonToolbar,
 } from '@ionic/angular';
+import { Capacitor } from '@capacitor/core';
 import { of, switchMap } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
@@ -162,12 +163,12 @@ export class TrackerPage {
   );
   private readonly localListTrigger = computed(() => {
     const active = this.store.active();
-    return `${active?.key}|${active?.state}|${this.store.resumable()?.key}|${this.store.uploadError() ?? ''}`;
+    return `${this.store.initialized()}|${active?.key}|${active?.state}|${this.store.resumable()?.key}|${this.store.uploadError() ?? ''}`;
   });
   protected readonly items = computed(() => mergeTrackLists(this.localTracks(), this.uploaded()));
 
   public constructor() {
-    void this.store.init().then(() => this.reloadLocal());
+    void this.store.init();
     const tick = setInterval(() => {
       if (this.store.active()) this.now.set(Date.now());
     }, 1000);
@@ -245,7 +246,9 @@ export class TrackerPage {
     void this.router.navigate(['/tracker', key]);
   }
 
+  /** Only on the device (nothing is local on the web) and once init() has opened TrackDb. */
   private async reloadLocal(): Promise<void> {
+    if (!Capacitor.isNativePlatform() || !this.store.initialized()) return;
     try {
       this.localTracks.set(await this.db.list());
     } catch (error) {

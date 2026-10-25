@@ -3,7 +3,7 @@ import type { TripModel } from '@okr/shared-models';
 import type { LocalTrack } from './track-local.model';
 import type { LocalSection } from './track-sections.util';
 import {
-  buildGpx, elapsedSeconds, fromLocalSections, gpxFileName, localFromTrip, mergeTrackLists, middlePointIndex, sectionRows, toLocalSections,
+  buildGpx, correctedTrack, elapsedSeconds, extraPointsRange, isShareCancel, sameTrackContent, fromLocalSections, gpxFileName, localFromTrip, mergeTrackLists, middlePointIndex, sectionRows, toLocalSections,
 } from './track-pages.util';
 
 function local(key: string, startedAt: number, extra: Partial<LocalTrack> = {}): LocalTrack {
@@ -125,9 +125,15 @@ describe('buildGpx', () => {
     expect(gpx).toContain('<gpx version="1.1" creator="okr" xmlns="http://www.topografix.com/GPX/1/1">');
     expect(gpx).toContain('<name>Zürich &lt;&gt; Bern &amp; &quot;zurück&quot;</name>');
     expect(gpx.match(/<trkseg>/g)).toHaveLength(2);
-    expect(gpx).toContain('<trkpt lat="47.1" lon="8.2"><time>2026-10-25T08:00:00.000Z</time></trkpt>');
+    expect(gpx).toContain('<trkpt lat="47.1000000" lon="8.2000000"><time>2026-10-25T08:00:00.000Z</time></trkpt>');
     expect(gpx).toContain('<type>bus</type>');
     expect(gpx.trimEnd().endsWith('</gpx>')).toBe(true);
+  });
+
+  it('never writes exponent notation', () => {
+    const gpx = buildGpx('x', [{ mode: 'foot', detected: true, points: [P(0.0000001, -0.00000012, 0)] }]);
+    expect(gpx).toContain('<trkpt lat="0.0000001" lon="-0.0000001">');
+    expect(gpx).not.toMatch(/e-/);
   });
 
   it('skips sections without points', () => {
@@ -144,5 +150,61 @@ describe('gpxFileName', () => {
 
   it('falls back to track.gpx', () => {
     expect(gpxFileName('  //  ')).toBe('track.gpx');
+  });
+});
+
+describe('sameTrackContent', () => {
+  it('is true when name and sections match, whatever else differs', () => {
+    expect(sameTrackContent(local('a', 1), local('a', 1, { uploaded: true, endedAt: 9, extraPointsUpTo: 3 }))).toBe(true);
+  });
+
+  it('is false when the name or a section differs', () => {
+    expect(sameTrackContent(local('a', 1), local('a', 1, { name: 'b' }))).toBe(false);
+    expect(sameTrackContent(local('a', 1), local('a', 1, { sections: [{ mode: 'foot', detected: false }] }))).toBe(false);
+    expect(sameTrackContent(local('a', 1), local('a', 1, { sections: [{ mode: 'foot', detected: true }, { mode: 'bus', detected: false }] }))).toBe(false);
+  });
+});
+
+describe('correctedTrack', () => {
+  const two = local('a', 1, { uploaded: true, sections: [{ mode: 'foot', detected: true }, { mode: 'bus', detected: true }] });
+
+  it('takes the new sections and name and marks the track for upload', () => {
+    const t = correctedTrack(two, [{ mode: 'car', detected: false }, { mode: 'bus', detected: true }], 'neu');
+    expect(t).toMatchObject({ name: 'neu', uploaded: false, sections: [{ mode: 'car', detected: false }, { mode: 'bus', detected: true }] });
+    expect(t.extraPointsUpTo).toBeUndefined();
+  });
+
+  it('remembers the old section count when the track got fewer sections', () => {
+    const t = correctedTrack(two, [{ mode: 'foot', detected: false }]);
+    expect(t.name).toBe('a');
+    expect(t.extraPointsUpTo).toBe(2);
+  });
+
+  it('keeps a larger remembered bound', () => {
+    expect(correctedTrack({ ...two, extraPointsUpTo: 4 }, [{ mode: 'foot', detected: false }]).extraPointsUpTo).toBe(4);
+  });
+});
+
+describe('extraPointsRange', () => {
+  it('returns the docs beyond the section count', () => {
+    expect(extraPointsRange(local('a', 1, { extraPointsUpTo: 3 }))).toEqual({ from: 1, to: 3 });
+  });
+
+  it('returns undefined when there is nothing beyond', () => {
+    expect(extraPointsRange(local('a', 1))).toBeUndefined();
+    expect(extraPointsRange(local('a', 1, { extraPointsUpTo: 1 }))).toBeUndefined();
+  });
+});
+
+describe('isShareCancel', () => {
+  it('recognises the share sheet being closed', () => {
+    expect(isShareCancel(new Error('Share canceled'))).toBe(true);
+    expect(isShareCancel({ message: 'Share Canceled' })).toBe(true);
+    expect(isShareCancel(new DOMException('aborted', 'AbortError'))).toBe(true);
+  });
+
+  it('is false for other errors', () => {
+    expect(isShareCancel(new Error('disk full'))).toBe(false);
+    expect(isShareCancel(undefined)).toBe(false);
   });
 });

@@ -8,7 +8,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { DateFormat, generateRandomString, getCurrentTime, getTodayStr } from '@okr/shared-util-core';
 import { NativeLocation, TrackDb, TrackerLocation, TrackService } from '@okr/mobility-tracker-data-access';
 import {
-  accumulateDistance, alignSections, DetectionInput, DetectState, initialDetectState, LocalTrack, MotionActivity, needsUpload, nextSectionStartPoint,
+  accumulateDistance, alignSections, correctedTrack, DetectionInput, extraPointsRange, LocalSection, sameTrackContent, DetectState, initialDetectState, LocalTrack, MotionActivity, needsUpload, nextSectionStartPoint,
   nextSections, resumeDecision, sessionDetectStep, StartWarning, startWarning, summarize, toTrackPoint, TRACK_PROFILES, TRACKER_I18N_KEYS, TrackerI18n,
   TrackPoint,
 } from '@okr/mobility-tracker-util';
@@ -30,10 +30,11 @@ export interface TrackerStoreState {
   proposal: TransportMode | undefined; // a change detected while detection is locked; applied only by acceptProposal()
   resumable: LocalTrack | undefined; // a track left recording/paused when the app went away
   uploadError: string | undefined;
+  initialized: boolean; // init() completed: the database is open
 }
 
 const initialState: TrackerStoreState = {
-  active: undefined, currentMode: undefined, points: 0, distanceM: 0, warning: 'none', proposal: undefined, resumable: undefined, uploadError: undefined,
+  active: undefined, currentMode: undefined, points: 0, distanceM: 0, warning: 'none', proposal: undefined, resumable: undefined, uploadError: undefined, initialized: false,
 };
 
 /** Mutable per-session bookkeeping that never renders. */
@@ -187,15 +188,45 @@ export const TrackerStore = signalStore(
       }).then(() => undefined);
     }
 
-    /** Uploads one finished local track; on success it is marked uploaded. Silent: no uploadError (retries at init). */
+    async function findTrack(key: string): Promise<LocalTrack | undefined> {
+      return (await store.db.list()).find((x) => x.key === key);
+    }
+
+    /**
+     * Uploads one finished local track; on success it is marked uploaded. Silent: no uploadError (retries at init).
+     * The track and its points are read inside the queue (never a stale copy next to corrected points), and the
+     * `uploaded` mark is written only if name and sections still equal the uploaded snapshot — a correction made
+     * meanwhile stays pending for its own upload. Leftover track-points docs of a shrunk track are deleted.
+     */
     async function uploadTrack(t: LocalTrack, silent: boolean): Promise<boolean> {
       const personKey = store.appStore.currentUser()?.personKey;
       const uid = store.appStore.fbUser()?.uid;
       try {
         if (!personKey || !uid) throw new Error('not signed in');
-        const points = alignSections(await store.db.points(t.key), t.sections.length);
-        await store.trackService.upload(t, points, { personKey, uid });
-        await store.db.updateTrack({ ...t, uploaded: true });
+        const snap = await enqueue(async () => {
+          const current = await findTrack(t.key);
+          if (!current || !needsUpload(current)) return { track: current, points: undefined };
+          return { track: current, points: alignSections(await store.db.points(current.key), current.sections.length) };
+        });
+        if (!snap?.track) return false; // gone (deleted) meanwhile
+        if (!snap.points) return snap.track.uploaded;
+        const uploaded = snap.track;
+        await store.trackService.upload(uploaded, snap.points, { personKey, uid });
+        const extra = extraPointsRange(uploaded);
+        if (extra) {
+          try {
+            await store.trackService.deleteExtraPoints(uploaded.key, extra.from, extra.to);
+          } catch (error) {
+            console.error('TrackerStore.deleteExtraPoints', error); // leftovers are never read: the trip lists its sections
+          }
+        }
+        await enqueue(async () => {
+          const now = await findTrack(uploaded.key);
+          if (!now || now.uploaded || !sameTrackContent(now, uploaded)) return;
+          const marked: LocalTrack = { ...now, uploaded: true };
+          delete marked.extraPointsUpTo;
+          await store.db.updateTrack(marked);
+        });
         return true;
       } catch (error) {
         console.error('TrackerStore.upload', error);
@@ -247,7 +278,7 @@ export const TrackerStore = signalStore(
           await refreshWarning();
           await store.db.open();
           const tracks = await store.db.list();
-          patchState(store, { resumable: resumeDecision(tracks) });
+          patchState(store, { resumable: resumeDecision(tracks), initialized: true });
           void (async () => {
             for (const t of tracks.filter(needsUpload)) await uploadTrack(t, true);
           })();
@@ -394,10 +425,34 @@ export const TrackerStore = signalStore(
         return stop();
       },
 
+      /**
+       * Owner correction or rename of a finished local track, on the queue: points and track are rewritten
+       * (`uploaded:false`), then the upload runs detached (offline it waits; init() retries it).
+       * @returns false when the track is missing, not finished, or the write failed
+       */
+      async correct(key: string, sections: LocalSection[], name?: string): Promise<boolean> {
+        const written = await enqueue(async () => {
+          const current = await findTrack(key);
+          if (!current || current.state !== 'done') return undefined;
+          const corrected = correctedTrack(current, sections, name);
+          await store.db.replacePoints(key, sections.map((x) => x.points));
+          await store.db.updateTrack(corrected);
+          return corrected;
+        });
+        if (!written) return false;
+        void uploadTrack(written, true);
+        return true;
+      },
+
+      /** Removes a local track (on the queue, so no upload snapshot reads it half-deleted). */
+      async removeLocal(key: string): Promise<void> {
+        await enqueue(() => store.db.remove(key));
+      },
+
       /** «Erneut hochladen» for a finished local track. */
       async retryUpload(key: string): Promise<boolean> {
         patchState(store, { uploadError: undefined });
-        const t = (await store.db.list()).find((x) => x.key === key);
+        const t = await findTrack(key);
         return t && needsUpload(t) ? uploadTrack(t, false) : false;
       },
     };

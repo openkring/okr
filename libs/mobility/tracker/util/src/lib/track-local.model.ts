@@ -10,6 +10,11 @@ export interface LocalTrack {
   startedAt: number;
   endedAt?: number;
   sections: { mode: TransportMode; detected: boolean }[];
+  /**
+   * Set by a correction that reduced the number of sections: track-points docs with an index from
+   * sections.length up to this bound (exclusive) may still exist uploaded and are deleted after the next upload.
+   */
+  extraPointsUpTo?: number;
 }
 
 /** A stored point row: a track point plus its section index. */

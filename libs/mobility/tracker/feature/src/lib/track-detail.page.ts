@@ -13,8 +13,8 @@ import { confirm, downloadFile, okrPrompt } from '@okr/shared-util-angular';
 import { TrackDb, TrackService } from '@okr/mobility-tracker-data-access';
 import { TrackMap, TrackMapSection, TrackModeChange, TrackSections } from '@okr/mobility-tracker-ui';
 import {
-  alignSections, buildGpx, fromLocalSections, gpxFileName, LocalSection, LocalTrack, localFromTrip, mergeWithNext, middlePointIndex, sectionRows,
-  setSectionMode, splitSection, toLocalSections,
+  alignSections, buildGpx, correctedTrack, fromLocalSections, gpxFileName, isShareCancel, LocalSection, LocalTrack, localFromTrip, mergeWithNext,
+  middlePointIndex, sectionRows, setSectionMode, splitSection, toLocalSections,
 } from '@okr/mobility-tracker-util';
 
 import { TrackerStore } from './tracker.store';
@@ -143,6 +143,7 @@ export class TrackDetailPage {
     try {
       await downloadFile(url, gpxFileName(t.name));
     } catch (error) {
+      if (isShareCancel(error)) return; // the share sheet was just closed
       console.error('TrackDetailPage.exportGpx', error);
       await this.toast(this.i18n.detail_share_error());
     } finally {
@@ -150,7 +151,12 @@ export class TrackDetailPage {
     }
   }
 
-  /** Delete = archive the uploaded trip (single-person, single-tenant: deleting-models) and drop the local copy. */
+  /**
+   * Delete = archive the uploaded trip (single-person, single-tenant: deleting-models) and drop the local copy.
+   * The local copy goes at once and the page closes; the archive write resolves only on the server's ack, so it
+   * runs detached (a trip that was never uploaded counts as deleted). A finished track is always archived: its
+   * upload may have started although `uploaded` is not set yet.
+   */
   protected async remove(): Promise<void> {
     const t = this.track();
     if (!t || this.busy()) return;
@@ -158,12 +164,14 @@ export class TrackDetailPage {
     if (!ok) return;
     this.busy.set(true);
     try {
-      const trip = this.trip();
-      if (trip || t.uploaded || !this.isLocal()) {
-        // deleteModel already showed the error toast when the write failed
-        if ((await this.trackService.archive(t.key, trip?.tenants)) === undefined) return;
+      if (t.state === 'done' || !this.isLocal()) {
+        const tenants = this.trip()?.tenants;
+        void this.trackService.archive(t.key, tenants).catch(async (error: unknown) => {
+          console.error('TrackDetailPage.archive', error);
+          await this.toast(this.i18n.detail_save_error());
+        });
       }
-      if (this.isLocal()) await this.db.remove(t.key);
+      if (this.isLocal()) await this.store.removeLocal(t.key);
       void this.router.navigate(['/tracker']);
     } catch (error) {
       console.error('TrackDetailPage.remove', error);
@@ -214,60 +222,64 @@ export class TrackDetailPage {
   }
 
   /**
-   * Writes a corrected (or renamed) track and uploads it again under the same key. Local: TrackDb first, re-read
-   * right before each write (the store's background upload may have written meanwhile) and `uploaded:false` until
-   * this upload succeeded — a failed upload is retried at the next app start. Track-points docs beyond the new
-   * section count are deleted after the upload.
+   * Writes a corrected (or renamed) track and uploads it again under the same key. A local track goes through
+   * TrackerStore.correct (on the store's queue: TrackDb first, then a detached upload; offline it waits and init()
+   * retries). An uploaded-only track is rebuilt from the trip and uploaded detached (Firestore resolves only on
+   * the server's ack); docs beyond the new section count are deleted after that upload.
    */
   private async save(next: LocalSection[], name?: string): Promise<void> {
     const before = this.track();
     const beforeSections = this.sections();
     if (!before || this.busy() || before.state !== 'done') return;
     if (next === beforeSections && name === undefined) return; // the correction changed nothing
+    const key = before.key;
+    if (this.isLocal()) {
+      this.busy.set(true);
+      this.track.set(correctedTrack(before, next, name));
+      this.sections.set(next);
+      try {
+        if (!(await this.store.correct(key, next, name))) throw new Error('correction not written');
+        const written = (await this.db.list()).find((t) => t.key === key);
+        if (written) this.track.set(written);
+      } catch (error) {
+        console.error('TrackDetailPage.save', error);
+        await this.toast(this.i18n.detail_save_error());
+        await this.reloadLocal(key); // show what TrackDb really holds
+      } finally {
+        this.busy.set(false);
+      }
+      return;
+    }
     const owner = this.owner();
     if (!owner) {
       await this.toast(this.i18n.detail_save_error());
       return;
     }
-    const key = before.key;
     const oldCount = Math.max(before.sections.length, this.trip()?.track?.sections.length ?? 0);
     const corrected = fromLocalSections({ ...before, name: name ?? before.name }, next);
-    this.busy.set(true);
     this.track.set(corrected.track);
     this.sections.set(next);
-    try {
-      if (this.isLocal()) {
-        const fresh = (await this.db.list()).find((t) => t.key === key) ?? before;
-        const pending: LocalTrack = { ...fresh, name: corrected.track.name, sections: corrected.track.sections, uploaded: false };
-        await this.db.replacePoints(key, corrected.points);
-        await this.db.updateTrack(pending);
-        this.track.set(pending);
-        try {
-          await this.trackService.upload(pending, corrected.points, owner);
-        } catch (error) {
-          console.error('TrackDetailPage.upload', error);
-          await this.toast(this.i18n.upload_error()); // saved on the device; uploaded again later
-          return;
+    this.trip.update((t) => (t?.track ? { ...t, name: corrected.track.name, track: { ...t.track, sections: t.track.sections.slice(0, next.length) } } : t));
+    void this.trackService.upload(corrected.track, corrected.points, owner)
+      .then(() => this.deleteExtraPoints(key, next.length, oldCount))
+      .catch(async (error: unknown) => {
+        console.error('TrackDetailPage.upload', error);
+        if (this.track()?.key === key) {
+          this.track.set(before);
+          this.sections.set(beforeSections);
         }
-        await this.deleteExtraPoints(key, next.length, oldCount);
-        const latest = (await this.db.list()).find((t) => t.key === key) ?? pending;
-        const done: LocalTrack = { ...latest, uploaded: true };
-        await this.db.updateTrack(done);
-        this.track.set(done);
-      } else {
-        await this.trackService.upload(corrected.track, corrected.points, owner);
-        await this.deleteExtraPoints(key, next.length, oldCount);
-      }
-      this.trip.update((t) => (t?.track ? { ...t, name: corrected.track.name, track: { ...t.track, sections: t.track.sections.slice(0, next.length) } } : t));
+        await this.toast(this.i18n.detail_save_error());
+      });
+  }
+
+  private async reloadLocal(key: string): Promise<void> {
+    try {
+      const local = (await this.db.list()).find((t) => t.key === key);
+      if (!local) return;
+      this.track.set(local);
+      this.sections.set(toLocalSections(local, alignSections(await this.db.points(key), local.sections.length)));
     } catch (error) {
-      console.error('TrackDetailPage.save', error);
-      if (!this.isLocal()) {
-        this.track.set(before);
-        this.sections.set(beforeSections);
-      }
-      await this.toast(this.i18n.detail_save_error());
-    } finally {
-      this.busy.set(false);
+      console.error('TrackDetailPage.reloadLocal', error);
     }
   }
 

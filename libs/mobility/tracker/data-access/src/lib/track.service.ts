@@ -1,11 +1,11 @@
 import { inject, Injectable } from '@angular/core';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { Observable } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { TRACKER_TRIP_TYPE, TransportMode, TripCollection, TripModel, TripTrack } from '@okr/shared-models';
-import { convertDateFormatToString, DateFormat, getSystemQuery } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, getDeletePatch, getSystemQuery } from '@okr/shared-util-core';
 import { decodeTrack, encodeTrack, LocalSection, LocalTrack, summarize, toTrackSections, TrackPoint } from '@okr/mobility-tracker-util';
 
 /** One section's points, stored as an encoded polyline in trips/{key}/track-points/{n}. */
@@ -131,14 +131,19 @@ export class TrackService {
   }
 
   /**
-   * Deletes an uploaded tracker trip the app way (deleting-models skill): through FirestoreService.deleteModel,
-   * which archives it (a tracker trip is single-person and single-tenant). Only `tenants` and `isArchived` are
-   * written. The points stay in place with the archived trip.
-   * @returns the key, or undefined if the write failed (deleteModel already showed the error)
+   * Deletes an uploaded tracker trip the app way (deleting-models skill): getDeletePatch decides between detach
+   * and archive (a tracker trip is single-person and single-tenant, so it is archived). Only that patch is
+   * written. A trip that was never uploaded (not-found) counts as deleted. Resolves only on the server's ack:
+   * callers run it detached.
    */
-  public archive(tripKey: string, tenants?: string[]): Promise<string | undefined> {
-    const model = { okey: tripKey, tenants: tenants && tenants.length > 0 ? [...tenants] : [this.env.tenantId] } as unknown as TripModel;
-    return this.firestoreService.deleteModel(TripCollection, model);
+  public async archive(tripKey: string, tenants?: string[]): Promise<void> {
+    const patch = getDeletePatch(tenants && tenants.length > 0 ? tenants : [this.env.tenantId], this.env.tenantId);
+    try {
+      await updateDoc(doc(this.firestoreService.firestore, `${TripCollection}/${tripKey}`), { ...patch });
+    } catch (error) {
+      if ((error as { code?: string }).code === 'not-found') return;
+      throw error;
+    }
   }
 
   /** The decoded points of one section; [] when the doc is missing. */
