@@ -1192,8 +1192,9 @@ for label, expect, run in journal_cases:
 
 # ------------------------------------------------ tracker track-points (plan 2) ---
 def commit_batch(writes, token):
-    """REST batch commit of plain document writes; returns the HTTP status."""
-    ws = [{"update": {"name": f"projects/{PROJ}/databases/(default)/documents/{path}", **body(d)}} for path, d in writes]
+    """REST batch commit of plain document writes (d None = delete); returns the HTTP status."""
+    name = lambda path: f"projects/{PROJ}/databases/(default)/documents/{path}"
+    ws = [{"delete": name(path)} if d is None else {"update": {"name": name(path), **body(d)}} for path, d in writes]
     hdr = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
     r = urllib.request.Request(f"{BASE}:commit", data=json.dumps({"writes": ws}).encode(), headers=hdr, method="POST")
     try:
@@ -1208,6 +1209,7 @@ def tracker_trip(owner):
 TA, TE = jwt("uidA"), jwt("uidE")
 seed("trips/tkSeed", tracker_trip("pA"))
 seed("trips/tkSeed/track-points/0", {"tenants": ["t1"], "section": 0, "mode": "foot", "count": 2, "encoded": "abc"})
+seed("trips/tkSeed/track-points/2", {"tenants": ["t1"], "section": 2, "mode": "bus", "count": 2, "encoded": "abc"})
 
 track_cases = [
     ("owner reads track-points/0 -> ALLOW", True, lambda: req("GET", "trips/tkSeed/track-points/0", token=TA)),
@@ -1217,6 +1219,11 @@ track_cases = [
                            ("trips/tkNew/track-points/0", {"tenants": ["t1"], "section": 0, "mode": "foot", "count": 1, "encoded": "x"})], TA)),
     ("non-owner writes points to the owner's trip -> DENY", False,
      lambda: commit_batch([("trips/tkSeed/track-points/1", {"tenants": ["t1"], "section": 1, "mode": "foot", "count": 1, "encoded": "x"})], TE)),
+    ("non-owner deletes a stale points doc -> DENY", False,
+     lambda: commit_batch([("trips/tkSeed/track-points/2", None)], TE)),
+    # a corrected re-upload: trip overwritten + stale points doc deleted in the SAME batch
+    ("owner batch = update trip + delete track-points/2 -> ALLOW", True,
+     lambda: commit_batch([("trips/tkSeed", tracker_trip("pA")), ("trips/tkSeed/track-points/2", None)], TA)),
 ]
 for label, expect, run in track_cases:
     code = run()

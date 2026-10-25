@@ -3,7 +3,7 @@ import type { TripModel } from '@okr/shared-models';
 import type { LocalTrack } from './track-local.model';
 import type { LocalSection } from './track-sections.util';
 import {
-  buildGpx, correctedTrack, elapsedSeconds, extraPointsRange, isShareCancel, sameTrackContent, fromLocalSections, gpxFileName, localFromTrip, mergeTrackLists, middlePointIndex, sectionRows, toLocalSections,
+  buildGpx, correctedTrack, elapsedSeconds, isShareCancel, sameTrackContent, fromLocalSections, gpxFileName, localFromTrip, mergeTrackLists, middlePointIndex, sectionRows, toLocalSections,
 } from './track-pages.util';
 
 function local(key: string, startedAt: number, extra: Partial<LocalTrack> = {}): LocalTrack {
@@ -182,17 +182,6 @@ describe('correctedTrack', () => {
 
   it('keeps a larger remembered bound', () => {
     expect(correctedTrack({ ...two, extraPointsUpTo: 4 }, [{ mode: 'foot', detected: false }]).extraPointsUpTo).toBe(4);
-  });
-});
-
-describe('extraPointsRange', () => {
-  it('returns the docs beyond the section count', () => {
-    expect(extraPointsRange(local('a', 1, { extraPointsUpTo: 3 }))).toEqual({ from: 1, to: 3 });
-  });
-
-  it('returns undefined when there is nothing beyond', () => {
-    expect(extraPointsRange(local('a', 1))).toBeUndefined();
-    expect(extraPointsRange(local('a', 1, { extraPointsUpTo: 1 }))).toBeUndefined();
   });
 });
 

@@ -166,7 +166,7 @@ export class TrackDetailPage {
     try {
       if (t.state === 'done' || !this.isLocal()) {
         const tenants = this.trip()?.tenants;
-        void this.trackService.archive(t.key, tenants).catch(async (error: unknown) => {
+        void this.store.archiveTrack(t.key, tenants).catch(async (error: unknown) => {
           console.error('TrackDetailPage.archive', error);
           await this.toast(this.i18n.detail_save_error());
         });
@@ -225,7 +225,7 @@ export class TrackDetailPage {
    * Writes a corrected (or renamed) track and uploads it again under the same key. A local track goes through
    * TrackerStore.correct (on the store's queue: TrackDb first, then a detached upload; offline it waits and init()
    * retries). An uploaded-only track is rebuilt from the trip and uploaded detached (Firestore resolves only on
-   * the server's ack); docs beyond the new section count are deleted after that upload.
+   * the server's ack); docs beyond the new section count are deleted in that upload's batch.
    */
   private async save(next: LocalSection[], name?: string): Promise<void> {
     const before = this.track();
@@ -260,8 +260,8 @@ export class TrackDetailPage {
     this.track.set(corrected.track);
     this.sections.set(next);
     this.trip.update((t) => (t?.track ? { ...t, name: corrected.track.name, track: { ...t.track, sections: t.track.sections.slice(0, next.length) } } : t));
-    void this.trackService.upload(corrected.track, corrected.points, owner)
-      .then(() => this.deleteExtraPoints(key, next.length, oldCount))
+    // stale track-points docs (fewer sections than before) are deleted in the upload's own batch
+    void this.trackService.upload(corrected.track, corrected.points, owner, oldCount)
       .catch(async (error: unknown) => {
         console.error('TrackDetailPage.upload', error);
         if (this.track()?.key === key) {
@@ -280,15 +280,6 @@ export class TrackDetailPage {
       this.sections.set(toLocalSections(local, alignSections(await this.db.points(key), local.sections.length)));
     } catch (error) {
       console.error('TrackDetailPage.reloadLocal', error);
-    }
-  }
-
-  private async deleteExtraPoints(key: string, fromIndex: number, toIndexExclusive: number): Promise<void> {
-    if (toIndexExclusive <= fromIndex) return;
-    try {
-      await this.trackService.deleteExtraPoints(key, fromIndex, toIndexExclusive);
-    } catch (error) {
-      console.error('TrackDetailPage.deleteExtraPoints', error); // leftovers are never read: the trip lists its sections
     }
   }
 

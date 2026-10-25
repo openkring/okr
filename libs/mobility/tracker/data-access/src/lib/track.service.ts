@@ -34,11 +34,14 @@ export class TrackService {
   /**
    * Upload a finished local track: the trip doc and one track-points doc per section in ONE batch.
    * The trip okey is the local track key and batch.set overwrites, so a retried upload replaces itself.
-   * NOTE: a re-upload with fewer sections leaves the extra track-points docs behind: remove them with
-   * deleteExtraPoints() once the upload succeeded.
+   * A re-upload with fewer sections passes `staleUpTo` (the former section count): the track-points docs
+   * sections.length … staleUpTo-1 are deleted in the SAME batch. Batches reach Firestore in the order they are
+   * issued, so a stale delete can never hit the points of a later upload. (A new trip has nothing stale; the
+   * delete rule reads the trip that exists before the batch.)
+   * The batch is issued synchronously (no await before commit): callers rely on that for ordering.
    * @returns the trip key
    */
-  public async upload(local: LocalTrack, sections: TrackPoint[][], owner: { personKey: string; uid: string }): Promise<string> {
+  public async upload(local: LocalTrack, sections: TrackPoint[][], owner: { personKey: string; uid: string }, staleUpTo?: number): Promise<string> {
     const tripKey = local.key;
     const tenantId = this.env.tenantId;
     const endedMs = local.endedAt ?? local.startedAt;
@@ -99,6 +102,9 @@ export class TrackService {
       };
       batch.set(doc(this.firestoreService.firestore, `${TripCollection}/${tripKey}/${TRACK_POINTS}/${i}`), pointsDoc);
     });
+    for (let n = sections.length; n < (staleUpTo ?? 0); n++) {
+      batch.delete(doc(this.firestoreService.firestore, `${TripCollection}/${tripKey}/${TRACK_POINTS}/${n}`));
+    }
     await batch.commit();
     return tripKey;
   }
@@ -115,19 +121,6 @@ export class TrackService {
       'startDate',
       'desc',
     );
-  }
-
-  /**
-   * Deletes the track-points docs fromIndex … toIndexExclusive-1 in one batch (left over after a correction
-   * reduced the number of sections). Call it only after the trip exists (the rules read the trip's owner).
-   */
-  public async deleteExtraPoints(tripKey: string, fromIndex: number, toIndexExclusive: number): Promise<void> {
-    if (toIndexExclusive <= fromIndex) return;
-    const batch = this.firestoreService.getBatch();
-    for (let n = Math.max(0, fromIndex); n < toIndexExclusive; n++) {
-      batch.delete(doc(this.firestoreService.firestore, `${TripCollection}/${tripKey}/${TRACK_POINTS}/${n}`));
-    }
-    await batch.commit();
   }
 
   /**

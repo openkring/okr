@@ -150,12 +150,6 @@ export function correctedTrack(t: LocalTrack, sections: LocalTrack['sections'], 
   return out;
 }
 
-/** The leftover track-points doc indices [from, to) to delete after an upload, if any. */
-export function extraPointsRange(t: LocalTrack): { from: number; to: number } | undefined {
-  const to = t.extraPointsUpTo ?? 0;
-  return to > t.sections.length ? { from: t.sections.length, to } : undefined;
-}
-
 /** True when the native share sheet (or the Web Share API) was just closed without sharing. */
 export function isShareCancel(error: unknown): boolean {
   if (typeof DOMException !== 'undefined' && error instanceof DOMException && error.name === 'AbortError') return true;

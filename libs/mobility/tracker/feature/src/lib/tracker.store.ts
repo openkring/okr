@@ -8,7 +8,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { DateFormat, generateRandomString, getCurrentTime, getTodayStr } from '@okr/shared-util-core';
 import { NativeLocation, TrackDb, TrackerLocation, TrackService } from '@okr/mobility-tracker-data-access';
 import {
-  accumulateDistance, alignSections, correctedTrack, DetectionInput, extraPointsRange, LocalSection, sameTrackContent, DetectState, initialDetectState, LocalTrack, MotionActivity, needsUpload, nextSectionStartPoint,
+  accumulateDistance, alignSections, correctedTrack, DetectionInput, LocalSection, sameTrackContent, DetectState, initialDetectState, LocalTrack, MotionActivity, needsUpload, nextSectionStartPoint,
   nextSections, resumeDecision, sessionDetectStep, StartWarning, startWarning, summarize, toTrackPoint, TRACK_PROFILES, TRACKER_I18N_KEYS, TrackerI18n,
   TrackPoint,
 } from '@okr/mobility-tracker-util';
@@ -196,30 +196,27 @@ export const TrackerStore = signalStore(
      * Uploads one finished local track; on success it is marked uploaded. Silent: no uploadError (retries at init).
      * The track and its points are read inside the queue (never a stale copy next to corrected points), and the
      * `uploaded` mark is written only if name and sections still equal the uploaded snapshot — a correction made
-     * meanwhile stays pending for its own upload. Leftover track-points docs of a shrunk track are deleted.
+     * meanwhile stays pending for its own upload. Leftover track-points docs of a shrunk track (extraPointsUpTo) are deleted in the same batch.
      */
     async function uploadTrack(t: LocalTrack, silent: boolean): Promise<boolean> {
       const personKey = store.appStore.currentUser()?.personKey;
       const uid = store.appStore.fbUser()?.uid;
       try {
         if (!personKey || !uid) throw new Error('not signed in');
+        // read AND issue inside the queue: batches reach Firestore in queue order, so a later correction or an
+        // archive of this track always lands after this upload (upload() has no await before its commit)
         const snap = await enqueue(async () => {
           const current = await findTrack(t.key);
-          if (!current || !needsUpload(current)) return { track: current, points: undefined };
-          return { track: current, points: alignSections(await store.db.points(current.key), current.sections.length) };
+          if (!current || !needsUpload(current)) return { track: current, commit: undefined };
+          const points = alignSections(await store.db.points(current.key), current.sections.length);
+          const commit = store.trackService.upload(current, points, { personKey, uid }, current.extraPointsUpTo);
+          commit.catch(() => undefined); // awaited below, outside the queue (offline it resolves only on reconnect)
+          return { track: current, commit };
         });
         if (!snap?.track) return false; // gone (deleted) meanwhile
-        if (!snap.points) return snap.track.uploaded;
+        if (!snap.commit) return snap.track.uploaded;
         const uploaded = snap.track;
-        await store.trackService.upload(uploaded, snap.points, { personKey, uid });
-        const extra = extraPointsRange(uploaded);
-        if (extra) {
-          try {
-            await store.trackService.deleteExtraPoints(uploaded.key, extra.from, extra.to);
-          } catch (error) {
-            console.error('TrackerStore.deleteExtraPoints', error); // leftovers are never read: the trip lists its sections
-          }
-        }
+        await snap.commit;
         await enqueue(async () => {
           const now = await findTrack(uploaded.key);
           if (!now || now.uploaded || !sameTrackContent(now, uploaded)) return;
@@ -442,6 +439,21 @@ export const TrackerStore = signalStore(
         if (!written) return false;
         void uploadTrack(written, true);
         return true;
+      },
+
+      /**
+       * Archives the uploaded trip, issued on the queue so it lands after any upload of this track already queued
+       * or issued (that upload would otherwise re-write the trip with isArchived:false). The returned promise
+       * resolves only on the server's ack — callers keep it detached from the UI.
+       */
+      async archiveTrack(key: string, tenants?: string[]): Promise<void> {
+        const issued = await enqueue(async () => {
+          const done = store.trackService.archive(key, tenants);
+          done.catch(() => undefined); // awaited below
+          return { done };
+        });
+        if (!issued) throw new Error('archive not issued');
+        await issued.done;
       },
 
       /** Removes a local track (on the queue, so no upload snapshot reads it half-deleted). */
