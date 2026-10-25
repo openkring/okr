@@ -7,6 +7,10 @@
   "private": true,
   "dependencies": {
     "@okr/mobility-tracker-util": "*",
+    "@okr/shared-config": "*",
+    "@okr/shared-data-access": "*",
+    "@okr/shared-models": "*",
+    "@okr/shared-util-core": "*",
     "tslib": "^2.8.1"
   }
 }

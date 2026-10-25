@@ -883,7 +883,23 @@ service cloud.firestore {
       allow delete: if tenantDelete() && isPrivileged();
     }
     match /transfers/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
-    match /trips/{id}              { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    match /trips/{tripId} {
+      allow read: if tenantRead();
+      allow create, update: if tenantCreateOrDetach();
+      allow delete: if tenantDelete();
+
+      // Recorded tracker points (encoded polyline per section). Only the recording person
+      // (trip.track.personKey) may read or write them; the trip doc itself stays tenant-readable.
+      match /track-points/{n} {
+        function ownerOf(trip) {
+          return callerPersonKey() != '' && trip.get('track', {}).get('personKey', '') == callerPersonKey();
+        }
+        allow read, delete: if ownerOf(get(/databases/$(database)/documents/trips/$(tripId)).data);
+        // getAfter: trip and points are written in one batch, so the trip may not exist yet before the commit
+        allow create, update: if ownerOf(getAfter(/databases/$(database)/documents/trips/$(tripId)).data)
+                              && request.resource.data.tenants.hasAny(callerTenants());
+      }
+    }
     match /websiteContent/{id}     { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     match /workrels/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
 
