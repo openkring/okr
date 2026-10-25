@@ -185,15 +185,23 @@ export class TrackDetailPage {
     this.loading.set(true);
     try {
       await this.store.init();
+      this.trip.set(undefined);
       const local = (await this.db.list()).find((t) => t.key === key);
-      const trip = await this.findTrip(key);
-      this.trip.set(trip);
       if (local) {
+        // the local copy shows at once; the uploaded trip (only needed for its tenants on delete) follows detached —
+        // listMine waits for the network, so it must never hold up a track that is right here on the device
         const points = alignSections(await this.db.points(key), local.sections.length);
         this.isLocal.set(true);
         this.track.set(local);
         this.sections.set(toLocalSections(local, points));
-      } else if (trip?.track) {
+        void this.findTrip(key).then((trip) => {
+          if (this.key() === key) this.trip.set(trip);
+        });
+        return;
+      }
+      const trip = await this.findTrip(key);
+      this.trip.set(trip);
+      if (trip?.track) {
         const points = await Promise.all(trip.track.sections.map((_, n) => this.trackService.readPoints(key, n)));
         const { track, sections } = localFromTrip(trip, points);
         this.isLocal.set(false);
