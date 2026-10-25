@@ -6,8 +6,7 @@ import { tenantIdOfUserData } from '@okr/shared-util-functions';
 
 import { isJournalKey } from './apply-journal-change.logic';
 
-/** `authorKeys`: the journal's authors (person keys) as the journal document lists them. */
-export interface JournalCaller { tenantId: string; personKey: string; journalKey: string; authorKeys: string[] }
+export interface JournalCaller { tenantId: string; personKey: string; journalKey: string }
 
 /**
  * The caller must be an author of the journal (spec 1.113 §3): their person key in the journal's
@@ -28,5 +27,5 @@ export async function requireJournalAuthor(db: Firestore, uid: string, journalKe
     || !Array.isArray(authorKeys) || !authorKeys.includes(personKey)) {
     throw new HttpsError('permission-denied', 'Not an author of this journal.');
   }
-  return { tenantId, personKey, journalKey, authorKeys: authorKeys.filter((k): k is string => typeof k === 'string') };
+  return { tenantId, personKey, journalKey };
 }

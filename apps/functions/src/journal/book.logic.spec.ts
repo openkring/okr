@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { TRANSPORT_MODES } from '@okr/shared-models';
 
 import {
-  BOOK_LABEL_KEYS, BookExportRequestError, bookObjectPath, bookPhotoSources, canStartExport, checkAuthorNames, exportLinkPaths, exportWarningCount, parseBookExportRequest,
+  BOOK_LABEL_KEYS, BookExportRequestError, bookObjectPath, bookAuthorName, bookPhotoSources, canStartExport, exportLinkPaths, exportWarningCount, parseBookExportRequest,
   parseBookRequest,
 } from './book.logic';
 
@@ -108,10 +108,20 @@ describe('author names (ruling R13)', () => {
     expect(() => parseBookExportRequest({ ...base, authorNames: 'Bruno' })).toThrow(BookExportRequestError);
   });
 
-  it("keys must be the journal's authors: an extra key is refused", () => {
-    expect(() => checkAuthorNames({ bruno: 'B', anna: 'A' }, ['bruno', 'anna', 'carla'])).not.toThrow();
-    expect(() => checkAuthorNames({}, ['bruno'])).not.toThrow();
-    expect(() => checkAuthorNames({ bruno: 'B', mallory: 'M' }, ['bruno'])).toThrow(BookExportRequestError);
+  it('extra keys are accepted and bounded (ruling R13b)', () => {
+    const names = (n: number) => Object.fromEntries(Array.from({ length: n }, (_, i) => [`p${i}`, `Name ${i}`]));
+    expect(Object.keys(parseBookExportRequest({ ...base, authorNames: names(100) }).authorNames)).toHaveLength(100);
+    expect(() => parseBookExportRequest({ ...base, authorNames: names(101) })).toThrow(BookExportRequestError);
+    expect(() => parseBookExportRequest({ ...base, authorNames: { bruno: 'x'.repeat(201) } })).toThrow(BookExportRequestError);
+    expect(() => parseBookExportRequest({ ...base, authorNames: { '../x': 'X' } })).toThrow(BookExportRequestError);
+    // a co-author not yet in the synced authorKeys: accepted, and printed
+    const req = parseBookExportRequest({ ...base, authorNames: { 'new-coauthor': 'Carla Neu' } });
+    expect(bookAuthorName(req.authorNames, 'new-coauthor')).toBe('Carla Neu');
+    expect(bookAuthorName(req.authorNames, 'someone-else')).toBe('');
+    // inherited members are never names
+    expect(bookAuthorName(req.authorNames, 'constructor')).toBe('');
+    expect(bookAuthorName(req.authorNames, 'toString')).toBe('');
+    expect(Object.getPrototypeOf(req.authorNames)).toBeNull();
   });
 });
 

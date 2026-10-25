@@ -13,7 +13,7 @@ import { privateBucket } from '../_storage/private-bucket';
 import { journalObjectPath } from './apply-journal-change.logic';
 import { applyPdfX4, bookAsset, createBookDoc, pdfkitPaginate, writeBookPdf, writeCoverPdf } from './book-pdf';
 import {
-  BookExportKind, BookExportRequest, BookExportRequestError, BookLinksRequest, bookObjectPath, bookPhotoSources, canStartExport, checkAuthorNames, exportLinkPaths,
+  BookExportKind, BookExportRequest, BookExportRequestError, BookLinksRequest, bookObjectPath, bookAuthorName, bookPhotoSources, canStartExport, exportLinkPaths,
   exportWarningCount, parseBookRequest,
 } from './book.logic';
 import { JournalCaller, requireJournalAuthor } from './journal-auth';
@@ -96,8 +96,8 @@ async function writeExport(db: Firestore, caller: JournalCaller, req: BookExport
   const layoutInput = print ? book : { ...book, print: { ...book.print, bleedMm: 0 } };
 
   const state = await journalState(db, caller.journalKey);
-  // the names the page's preview printed (ruling R13); an author without a name gets no name line
-  const authorName = (personKey: string) => req.authorNames[personKey] ?? '';
+  // the names the page's preview printed (rulings R13, R13b); an author without a name gets no name line
+  const authorName = (personKey: string) => bookAuthorName(req.authorNames, personKey);
 
   const path = (file: string) => journalObjectPath(caller.tenantId, caller.journalKey, file);
   const images = imagesOf(state, caller.journalKey);
@@ -197,12 +197,6 @@ export const exportJournalBook = onCall(
     const caller = await requireJournalAuthor(db, request.auth?.uid ?? '', parsed.journalKey);
     if (parsed.op === 'links') return exportLinks(db, caller);
     const req = parsed;
-    try {
-      checkAuthorNames(req.authorNames, caller.authorKeys);
-    } catch (e) {
-      if (e instanceof BookExportRequestError) throw new HttpsError('invalid-argument', e.message);
-      throw e;
-    }
     const nowMs = Date.now();
     const book = await startExport(db, caller, req.kind, nowMs);
     const ref = db.collection(JournalBookCollection).doc(caller.journalKey);

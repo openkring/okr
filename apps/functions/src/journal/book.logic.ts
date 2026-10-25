@@ -7,6 +7,8 @@ import { isJournalFileName, isJournalKey, journalObjectPath } from './apply-jour
 /** An export still «running» after this long has died with its instance (timeout 3600 s + margin): a new one may start. */
 export const EXPORT_STALE_MS = 65 * 60 * 1000;
 export const MAX_LABEL_LENGTH = 200;
+/** At most this many author names per export request (ruling R13b). */
+export const MAX_AUTHOR_NAMES = 100;
 
 /** False while another export of the book is running (started less than 65 minutes ago). */
 export function canStartExport(exp: JournalBookExport | undefined, nowMs: number): boolean {
@@ -37,9 +39,10 @@ const label = (value: unknown, name: string): string => {
 /**
  * The callable's input (ruling R3): `{ op: 'export', journalKey, kind: 'print' | 'screen', labels, authorNames }`. The
  * labels are the printed words, resolved in the author's UI language by the browser; each must be a string of at most
- * 200 characters (empty allowed), unknown keys are dropped. `authorNames` (ruling R13) maps person keys to names, each a
- * string of at most 200 characters; whether its keys are the journal's authors is checked by checkAuthorNames once the
- * journal is read. A request without `authorNames` prints no author names.
+ * 200 characters (empty allowed), unknown keys are dropped. `authorNames` (rulings R13, R13b) maps person keys to names:
+ * any person keys (a co-author added on the device may not be in the synced authorKeys yet), at most
+ * MAX_AUTHOR_NAMES, each key a plain id, each name a string of at most 200 characters. A request without
+ * `authorNames` prints no author names.
  */
 export function parseBookExportRequest(data: unknown): BookExportRequest {
   const d = (data ?? {}) as Record<string, unknown>;
@@ -58,10 +61,14 @@ export function parseBookExportRequest(data: unknown): BookExportRequest {
 }
 
 function authorNamesOf(raw: unknown): Record<string, string> {
-  if (raw === undefined) return {};
+  // null prototype: a key such as `constructor` or `__proto__` is just data, never an inherited member
+  const out = Object.create(null) as Record<string, string>;
+  if (raw === undefined) return out;
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) throw new BookExportRequestError('authorNames: an object.');
-  const out: Record<string, string> = {};
-  for (const [key, value] of Object.entries(raw)) {
+  const entries = Object.entries(raw);
+  if (entries.length > MAX_AUTHOR_NAMES) throw new BookExportRequestError(`authorNames: at most ${MAX_AUTHOR_NAMES} names.`);
+  for (const [key, value] of entries) {
+    if (!isJournalKey(key)) throw new BookExportRequestError('authorNames: keys must be person keys.');
     if (typeof value !== 'string' || value.length > MAX_LABEL_LENGTH) {
       throw new BookExportRequestError(`authorNames: strings of at most ${MAX_LABEL_LENGTH} characters.`);
     }
@@ -70,11 +77,12 @@ function authorNamesOf(raw: unknown): Record<string, string> {
   return out;
 }
 
-/** Ruling R13: every key of `authorNames` must be one of the journal's `authorKeys` — a name for anyone else is refused. */
-export function checkAuthorNames(authorNames: Record<string, string>, authorKeys: readonly string[]): void {
-  const allowed = new Set(authorKeys);
-  const extra = Object.keys(authorNames).filter((k) => !allowed.has(k));
-  if (extra.length > 0) throw new BookExportRequestError(`authorNames: ${extra.length} key(s) are not authors of this journal.`);
+/**
+ * The printed name of a person (ruling R13b): an own key of `authorNames` only, else '' (no name line). Same check as
+ * Object.hasOwn, which the functions' TypeScript lib (es2020) does not declare.
+ */
+export function bookAuthorName(authorNames: Record<string, string>, personKey: string): string {
+  return Object.prototype.hasOwnProperty.call(authorNames, personKey) ? authorNames[personKey] : '';
 }
 
 /**
