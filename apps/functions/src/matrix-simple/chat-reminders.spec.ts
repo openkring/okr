@@ -154,7 +154,7 @@ describe('strict ownership reads', () => {
   it('a passed botUserId skips whoami', async () => {
     const f = vi.fn()
       .mockResolvedValueOnce(res(200, { creator: '@bot:h' }))
-      .mockResolvedValueOnce(res(200, { tenants: ['scs'] }));
+      .mockResolvedValueOnce(res(200, { state: [{ type: 'org.okr.tenant', state_key: '', content: { tenants: ['scs'] } }] }));
     vi.stubGlobal('fetch', f);
     expect(await isOwnNotesRoom('!n:h', 'scs', 't', { strict: true, botUserId: '@bot:h' })).toBe(true);
     expect(f.mock.calls.some(([url]) => String(url).includes('whoami'))).toBe(false);

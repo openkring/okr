@@ -55,14 +55,16 @@ describe('ensureNotesRoom', () => {
   });
   const calls = () => fetchMock.mock.calls.map(([url, init]) => ({ url: String(url), init: init as RequestInit | undefined }));
 
+  /** The org.okr.tenant event as the Synapse admin state API lists it (getRoomTenantMarker reads it there). */
+  const tenantMarker = (tenants: string[]) => ({ type: 'org.okr.tenant', state_key: '', content: { tenants } });
   /** Mock Synapse for an existing alias whose room has the given creator/marker. */
   const mockExisting = (creator: string, marker: string[] | undefined) =>
     fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
       if (url.includes('/directory/room/') && init?.method === 'DELETE') return json({});
       if (url.includes('/directory/room/')) return json({ room_id: '!old:hs' });
       if (url.includes('/account/whoami')) return json({ user_id: '@bk2-bot:hs' });
+      if (url.includes('/_synapse/admin/v1/rooms/') && url.endsWith('/state')) return json({ state: marker ? [tenantMarker(marker)] : [] });
       if (url.includes('/_synapse/admin/v1/rooms/')) return json({ creator });
-      if (url.includes('/state/org.okr.tenant/')) return marker ? json({ tenants: marker }) : json({}, false);
       if (url.endsWith('/createRoom')) return json({ room_id: '!new:hs' });
       return json({ user_id: '@bk2-bot:hs' });
     });
@@ -127,8 +129,8 @@ describe('ensureNotesRoom', () => {
       if (url.includes('/directory/room/')) return ++lookups === 1 ? json({}, false) : json({ room_id: '!race:hs' });
       if (url.endsWith('/createRoom')) return json({ errcode: 'M_ROOM_IN_USE' }, false);
       if (url.includes('/account/whoami')) return json({ user_id: '@bk2-bot:hs' });
+      if (url.includes('/_synapse/admin/v1/rooms/') && url.endsWith('/state')) return json({ state: [tenantMarker(['scs'])] });
       if (url.includes('/_synapse/admin/v1/rooms/')) return json({ creator: '@bk2-bot:hs' });
-      if (url.includes('/state/org.okr.tenant/')) return json({ tenants: ['scs'] });
       return json({});
     });
     expect(await ensureNotesRoom('scs', 'kaiser', HOST, 'tok')).toBe('!race:hs');
