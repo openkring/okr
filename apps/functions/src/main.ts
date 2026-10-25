@@ -316,6 +316,8 @@ export const generateQrBill = Address.generateQrBill;
 
 // location conversion (address ↔ coords ↔ what3words)
 export const convertLocation = Location.convertLocation;
+// location avatar: Gemeinde coat of arms → canton/Bundesland → country flag, as shared avatars/location.<okey>
+export const onLocationWritten = Location.onLocationWritten;
 
 // flight tracker
 export const getFlightInfo = Flighttracker.getFlightInfo;

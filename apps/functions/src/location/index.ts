@@ -158,3 +158,5 @@ export const convertLocation = onCall(
     return result;
   }
 );
+
+export { onLocationWritten } from './location-avatar';
