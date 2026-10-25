@@ -21,7 +21,7 @@
 // ein Zustandsereignis und jederzeit umkehrbar — genau deshalb ist sie das richtige Werkzeug
 // fuer persoenliche Bruecken-Chats, wo Loeschen die falsche Antwort waere.
 
-import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onCall, HttpsError, type CallableRequest } from 'firebase-functions/v2/https';
 import { checkOperatorTenant } from '@okr/shared-util-functions';
 
 import {
@@ -75,6 +75,47 @@ interface SynapseRoom {
  * abgeleitete Zuordnung von Hand zu ueberschreiben. Uebrig bleibt, was eine Entscheidung
  * braucht: Bruecken-Raeume und alias-lose Altlasten.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleListUnassignedMatrixRooms(request: CallableRequest<any>): Promise<{ rooms: RoomAssignment[] }> {
+  await requireRole(request, 'listUnassignedMatrixRooms', ['admin']);
+  await checkOperatorTenant(request, 'listUnassignedMatrixRooms');
+  const adminToken = matrixAdminToken.value();
+
+  const rooms: SynapseRoom[] = [];
+  let from = 0;
+  for (;;) {
+    const resp = await fetch(
+      `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms?limit=200&from=${from}`,
+      { headers: { Authorization: `Bearer ${adminToken}` } },
+    );
+    if (!resp.ok) throw new HttpsError('internal', `Synapse room list failed: ${await resp.text()}`);
+    const page = await resp.json() as { rooms: SynapseRoom[]; next_batch?: number };
+    rooms.push(...page.rooms);
+    if (page.next_batch === undefined) break;
+    from = page.next_batch;
+  }
+
+  const candidates = rooms.filter(r => {
+    const alias = r.canonical_alias?.split(':')[0].replace(/^#/, '').toLowerCase();
+    return !alias?.startsWith('group_') && !alias?.startsWith('ask_');
+  });
+
+  const result: RoomAssignment[] = [];
+  for (const r of candidates) {
+    result.push({
+      roomId: r.room_id,
+      name: r.name || '',
+      creator: r.creator || '',
+      joinedMembers: r.joined_members ?? 0,
+      tenants: await getRoomTenantMarker(r.room_id, adminToken).catch(() => undefined),
+      bridged: isBridgeBotId(r.creator ?? undefined),
+    });
+  }
+
+  console.log(`listUnassignedMatrixRooms: ${result.length} of ${rooms.length} rooms need a decision`);
+  return { rooms: result };
+}
+
 export const listUnassignedMatrixRooms = onCall(
   {
     cors: true,
@@ -82,45 +123,7 @@ export const listUnassignedMatrixRooms = onCall(
     enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
-  async (request): Promise<{ rooms: RoomAssignment[] }> => {
-    await requireRole(request, 'listUnassignedMatrixRooms', ['admin']);
-    await checkOperatorTenant(request, 'listUnassignedMatrixRooms');
-    const adminToken = matrixAdminToken.value();
-
-    const rooms: SynapseRoom[] = [];
-    let from = 0;
-    for (;;) {
-      const resp = await fetch(
-        `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms?limit=200&from=${from}`,
-        { headers: { Authorization: `Bearer ${adminToken}` } },
-      );
-      if (!resp.ok) throw new HttpsError('internal', `Synapse room list failed: ${await resp.text()}`);
-      const page = await resp.json() as { rooms: SynapseRoom[]; next_batch?: number };
-      rooms.push(...page.rooms);
-      if (page.next_batch === undefined) break;
-      from = page.next_batch;
-    }
-
-    const candidates = rooms.filter(r => {
-      const alias = r.canonical_alias?.split(':')[0].replace(/^#/, '').toLowerCase();
-      return !alias?.startsWith('group_') && !alias?.startsWith('ask_');
-    });
-
-    const result: RoomAssignment[] = [];
-    for (const r of candidates) {
-      result.push({
-        roomId: r.room_id,
-        name: r.name || '',
-        creator: r.creator || '',
-        joinedMembers: r.joined_members ?? 0,
-        tenants: await getRoomTenantMarker(r.room_id, adminToken).catch(() => undefined),
-        bridged: isBridgeBotId(r.creator ?? undefined),
-      });
-    }
-
-    console.log(`listUnassignedMatrixRooms: ${result.length} of ${rooms.length} rooms need a decision`);
-    return { rooms: result };
-  },
+  handleListUnassignedMatrixRooms,
 );
 
 /**
@@ -136,6 +139,58 @@ export const listUnassignedMatrixRooms = onCall(
  * Handzuordnung waere beim naechsten Schreiben auf die Gruppe wieder weg — ein stiller
  * Rueckfall, der genau dann auffaellt, wenn man sich auf ihn verlaesst.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleAssignMatrixRoomTenants(request: CallableRequest<any>): Promise<{ roomId: string; tenants: string[] }> {
+  const uid = await requireRole(request, 'assignMatrixRoomTenants', ['admin']);
+
+  const { roomId, tenants } = request.data as { roomId: string; tenants: unknown };
+  requireParam(roomId, 'roomId');
+  if (!Array.isArray(tenants) || tenants.some(t => typeof t !== 'string' || !t.trim())) {
+    throw new HttpsError('invalid-argument', 'tenants must be an array of non-empty strings (empty array = no app)');
+  }
+  const wanted = [...new Set((tenants as string[]).map(t => t.trim()))];
+
+  const callerTenants = await getUserTenants(uid);
+  const foreign = wanted.filter(t => !callerTenants.includes(t));
+  if (foreign.length) {
+    throw new HttpsError('permission-denied', `not a member of tenant(s): ${foreign.join(', ')}`);
+  }
+
+  const adminToken = matrixAdminToken.value();
+
+  const resp = await fetch(
+    `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}`,
+    { headers: { Authorization: `Bearer ${adminToken}` } },
+  );
+  if (!resp.ok) throw new HttpsError('not-found', `room ${roomId} not found on the homeserver`);
+  const room = await resp.json() as SynapseRoom;
+
+  const alias = room.canonical_alias?.split(':')[0].replace(/^#/, '').toLowerCase();
+  if (alias?.startsWith('group_') || alias?.startsWith('ask_')) {
+    throw new HttpsError(
+      'failed-precondition',
+      `room ${roomId} belongs to a group (${room.canonical_alias}) — change the group's tenants instead`,
+    );
+  }
+
+  // Einen Raum, in dem der Aufrufer nichts verloren hat, darf er auch nicht einsammeln:
+  // ein bereits zugeordneter Raum bleibt den Mandanten vorbehalten, die ihn tragen.
+  const current = await getRoomTenantMarker(roomId, adminToken);
+  if (current?.length && !current.some(t => callerTenants.includes(t))) {
+    throw new HttpsError('permission-denied', `room ${roomId} belongs to another tenant`);
+  }
+
+  if (!await setRoomTenants(roomId, wanted, adminToken)) {
+    throw new HttpsError('internal', `failed to write the tenant marker of ${roomId}`);
+  }
+
+  console.log(
+    `assignMatrixRoomTenants: ${roomId} (${room.name || 'unnamed'}) ` +
+    `[${current ?? 'unmarked'}] → [${wanted}] by ${uid}`,
+  );
+  return { roomId, tenants: wanted };
+}
+
 export const assignMatrixRoomTenants = onCall(
   {
     cors: true,
@@ -143,54 +198,5 @@ export const assignMatrixRoomTenants = onCall(
     enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
-  async (request): Promise<{ roomId: string; tenants: string[] }> => {
-    const uid = await requireRole(request, 'assignMatrixRoomTenants', ['admin']);
-
-    const { roomId, tenants } = request.data as { roomId: string; tenants: unknown };
-    requireParam(roomId, 'roomId');
-    if (!Array.isArray(tenants) || tenants.some(t => typeof t !== 'string' || !t.trim())) {
-      throw new HttpsError('invalid-argument', 'tenants must be an array of non-empty strings (empty array = no app)');
-    }
-    const wanted = [...new Set((tenants as string[]).map(t => t.trim()))];
-
-    const callerTenants = await getUserTenants(uid);
-    const foreign = wanted.filter(t => !callerTenants.includes(t));
-    if (foreign.length) {
-      throw new HttpsError('permission-denied', `not a member of tenant(s): ${foreign.join(', ')}`);
-    }
-
-    const adminToken = matrixAdminToken.value();
-
-    const resp = await fetch(
-      `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}`,
-      { headers: { Authorization: `Bearer ${adminToken}` } },
-    );
-    if (!resp.ok) throw new HttpsError('not-found', `room ${roomId} not found on the homeserver`);
-    const room = await resp.json() as SynapseRoom;
-
-    const alias = room.canonical_alias?.split(':')[0].replace(/^#/, '').toLowerCase();
-    if (alias?.startsWith('group_') || alias?.startsWith('ask_')) {
-      throw new HttpsError(
-        'failed-precondition',
-        `room ${roomId} belongs to a group (${room.canonical_alias}) — change the group's tenants instead`,
-      );
-    }
-
-    // Einen Raum, in dem der Aufrufer nichts verloren hat, darf er auch nicht einsammeln:
-    // ein bereits zugeordneter Raum bleibt den Mandanten vorbehalten, die ihn tragen.
-    const current = await getRoomTenantMarker(roomId, adminToken);
-    if (current?.length && !current.some(t => callerTenants.includes(t))) {
-      throw new HttpsError('permission-denied', `room ${roomId} belongs to another tenant`);
-    }
-
-    if (!await setRoomTenants(roomId, wanted, adminToken)) {
-      throw new HttpsError('internal', `failed to write the tenant marker of ${roomId}`);
-    }
-
-    console.log(
-      `assignMatrixRoomTenants: ${roomId} (${room.name || 'unnamed'}) ` +
-      `[${current ?? 'unmarked'}] → [${wanted}] by ${uid}`,
-    );
-    return { roomId, tenants: wanted };
-  },
+  handleAssignMatrixRoomTenants,
 );

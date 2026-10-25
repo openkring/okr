@@ -3,7 +3,7 @@
 // Group-room lifecycle and admin room management: resolve/create, access,
 // invite/kick, rename, list, details, members, delete, aliases.
 
-import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onCall, HttpsError, type CallableRequest } from 'firebase-functions/v2/https';
 import { getFirestore } from 'firebase-admin/firestore';
 
 import {
@@ -220,6 +220,48 @@ export const kickPersonFromGroupRoom = onCall(
  * ensures the admin is in the room, then updates the m.room.name state event.
  * Optionally also registers a canonical alias for the new name.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleRenameMatrixRoom(request: CallableRequest<any>): Promise<{ roomId: string; name: string }> {
+  const uid = await requireRole(request, 'renameMatrixRoom', ['admin']);
+
+  // Accepts EITHER a roomId (AOC's room list, which knows no group) or a groupId. The AOC
+  // room actions always send roomId; requiring groupId is what made every rename from that
+  // screen fail with 400 invalid-argument.
+  const { groupId, roomId: roomIdArg, name } = request.data as { groupId?: string; roomId?: string; name: string };
+  requireParam(name, 'name');
+  if (!groupId && !roomIdArg) throw new HttpsError('invalid-argument', 'Either roomId or groupId is required');
+
+  const adminToken = matrixAdminToken.value();
+  const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
+
+  // Step 1: Resolve the room — given directly, or via the group (do not create)
+  const roomId = roomIdArg ?? await resolveGroupRoom(groupId!, hostname, adminToken, { create: false });
+  if (!roomId) throw new HttpsError('not-found', `No room found for group "${groupId}"`);
+
+  // The AOC room list sends a raw roomId, so the group document never constrains which room
+  // this reaches — gate on the room's own marker, which covers both entry shapes.
+  await requireRoomInTenant(roomId, uid, 'renameMatrixRoom', adminToken);
+
+  // Step 2: Ensure the admin is in the room (needed to send state events; ARCH-5 helper)
+  await ensureAdminInRoom(roomId, adminToken);
+
+  // Step 3: Set the room name via m.room.name state event
+  const nameResp = await fetch(
+    `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/state/m.room.name`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    }
+  );
+  if (!nameResp.ok) {
+    throw new HttpsError('internal', `Failed to rename room ${roomId}: ${await nameResp.text()}`);
+  }
+
+  console.log(`renameMatrixRoom: Room ${roomId} renamed to "${name}"`);
+  return { roomId, name };
+}
+
 export const renameMatrixRoom = onCall(
   {
     cors: true,
@@ -227,46 +269,7 @@ export const renameMatrixRoom = onCall(
     enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
-  async (request): Promise<{ roomId: string; name: string }> => {
-    const uid = await requireRole(request, 'renameMatrixRoom', ['admin']);
-
-    // Accepts EITHER a roomId (AOC's room list, which knows no group) or a groupId. The AOC
-    // room actions always send roomId; requiring groupId is what made every rename from that
-    // screen fail with 400 invalid-argument.
-    const { groupId, roomId: roomIdArg, name } = request.data as { groupId?: string; roomId?: string; name: string };
-    requireParam(name, 'name');
-    if (!groupId && !roomIdArg) throw new HttpsError('invalid-argument', 'Either roomId or groupId is required');
-
-    const adminToken = matrixAdminToken.value();
-    const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
-
-    // Step 1: Resolve the room — given directly, or via the group (do not create)
-    const roomId = roomIdArg ?? await resolveGroupRoom(groupId!, hostname, adminToken, { create: false });
-    if (!roomId) throw new HttpsError('not-found', `No room found for group "${groupId}"`);
-
-    // The AOC room list sends a raw roomId, so the group document never constrains which room
-    // this reaches — gate on the room's own marker, which covers both entry shapes.
-    await requireRoomInTenant(roomId, uid, 'renameMatrixRoom', adminToken);
-
-    // Step 2: Ensure the admin is in the room (needed to send state events; ARCH-5 helper)
-    await ensureAdminInRoom(roomId, adminToken);
-
-    // Step 3: Set the room name via m.room.name state event
-    const nameResp = await fetch(
-      `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/state/m.room.name`,
-      {
-        method: 'PUT',
-        headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
-      }
-    );
-    if (!nameResp.ok) {
-      throw new HttpsError('internal', `Failed to rename room ${roomId}: ${await nameResp.text()}`);
-    }
-
-    console.log(`renameMatrixRoom: Room ${roomId} renamed to "${name}"`);
-    return { roomId, name };
-  }
+  handleRenameMatrixRoom,
 );
 
 export interface AdminRoom {
@@ -290,6 +293,105 @@ export interface AdminRoom {
  * List Matrix rooms. If personKey is given, returns only rooms where that person
  * is a member. Otherwise returns all rooms in the installation (up to 1000).
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleListMatrixRooms(request: CallableRequest<any>): Promise<{ rooms: AdminRoom[]; total: number }> {
+  const uid = await requireRole(request, 'listMatrixRooms', ['admin']);
+
+  const { personKey } = request.data as { personKey?: string };
+  const adminToken = matrixAdminToken.value();
+  const callerTenants = await getUserTenants(uid);
+
+  /**
+   * Reduce a homeserver-global listing to what this tenant may see.
+   *
+   * `/_synapse/admin/v1/rooms` returns EVERY room on the homeserver, so an elab admin was
+   * handed scs's full room inventory — names, aliases, member counts, creators — and the
+   * room ids that every other callable in this file then accepts. Filtering here is what
+   * makes those per-room gates meaningful rather than merely correct.
+   *
+   * Unmarked rooms are kept and flagged (see roomAdmitsTenant): they are already visible in
+   * every tenant, and this listing is where an admin finds them to run the backfill.
+   */
+  const scopeToTenant = async (allRooms: AdminRoom[]): Promise<AdminRoom[]> => {
+    // Genuine «Notizen an mich» rooms carry the tenant marker but are nobody's admin business.
+    // Only a #notes_ alias triggers the check; a check that fails keeps the room listed —
+    // listing exposes no content, and reading/deleting still fail closed per room.
+    const candidates = allRooms.filter(r => r.canonicalAlias?.startsWith('#notes_'));
+    const personal = new Set<string>();
+    if (candidates.length > 0) {
+      const botUserId = await fetchBotUserId(adminToken).catch(() => undefined);
+      if (botUserId) {
+        await Promise.all(candidates.map(async (r) => {
+          const isPersonal = await isPersonalNotesRoom(r.roomId, r.canonicalAlias, adminToken, botUserId).catch(() => false);
+          if (isPersonal) personal.add(r.roomId);
+        }));
+      }
+    }
+    const rooms = allRooms.filter(r => !personal.has(r.roomId));
+    const markers = await getRoomTenantsBatch(rooms.map(r => r.roomId), adminToken);
+    const kept = rooms.filter(r => roomAdmitsTenant(markers.get(r.roomId) ?? [], callerTenants));
+    const unmarked = kept.filter(r => (markers.get(r.roomId) ?? []).length === 0).length;
+    if (kept.length !== rooms.length || unmarked > 0) {
+      console.warn(`listMatrixRooms: ${rooms.length} rooms on the homeserver, ${kept.length} for ${callerTenants.join(',')}, ${unmarked} unmarked`);
+    }
+    return kept;
+  };
+
+  // Helper: fetch all rooms from the admin API (paginated, max 1000)
+  async function fetchAllRooms(): Promise<AdminRoom[]> {
+    const rooms: AdminRoom[] = [];
+    let from = 0;
+    const limit = 100;
+
+    while (true) {
+      const resp = await fetch(
+        `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms?limit=${limit}&from=${from}`,
+        { headers: { Authorization: `Bearer ${adminToken}` } }
+      );
+      if (!resp.ok) throw new HttpsError('internal', `Failed to list rooms: ${await resp.text()}`);
+      const data = await resp.json() as {
+        rooms: Array<{ room_id: string; name: string; canonical_alias?: string; joined_members: number; creator?: string; public: boolean }>;
+        next_batch?: number;
+        total_rooms: number;
+      };
+      for (const r of data.rooms) {
+        rooms.push({ roomId: r.room_id, name: r.name, canonicalAlias: r.canonical_alias, joinedMembers: r.joined_members, creator: r.creator, public: r.public });
+      }
+      if (!data.next_batch || rooms.length >= 1000) break;
+      from = data.next_batch;
+    }
+    return rooms;
+  }
+
+  if (personKey) {
+    const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
+    const matrixUserId = `@${personKey.toLowerCase()}:${hostname}`;
+
+    // Get the room IDs the user belongs to
+    const joinedResp = await fetch(
+      `${MATRIX_HOMESERVER}/_synapse/admin/v1/users/${encodeURIComponent(matrixUserId)}/joined_rooms`,
+      { headers: { Authorization: `Bearer ${adminToken}` } }
+    );
+    if (!joinedResp.ok) {
+      if (joinedResp.status === 404) return { rooms: [], total: 0 }; // user not found
+      throw new HttpsError('internal', `Failed to get joined rooms for ${matrixUserId}: ${await joinedResp.text()}`);
+    }
+    const { joined_rooms: joinedRoomIds } = await joinedResp.json() as { joined_rooms: string[]; total: number };
+    if (joinedRoomIds.length === 0) return { rooms: [], total: 0 };
+
+    // Fetch details for each joined room via the per-room admin endpoint
+    const joinedSet = new Set(joinedRoomIds);
+    const allRooms = await fetchAllRooms();
+    const filtered = await scopeToTenant(allRooms.filter(r => joinedSet.has(r.roomId)));
+    await addDerivedNames(filtered, adminToken);
+    return { rooms: filtered, total: filtered.length };
+  }
+
+  const rooms = await scopeToTenant(await fetchAllRooms());
+  await addDerivedNames(rooms, adminToken);
+  return { rooms, total: rooms.length };
+}
+
 export const listMatrixRooms = onCall(
   {
     cors: true,
@@ -297,103 +399,7 @@ export const listMatrixRooms = onCall(
     enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
-  async (request): Promise<{ rooms: AdminRoom[]; total: number }> => {
-    const uid = await requireRole(request, 'listMatrixRooms', ['admin']);
-
-    const { personKey } = request.data as { personKey?: string };
-    const adminToken = matrixAdminToken.value();
-    const callerTenants = await getUserTenants(uid);
-
-    /**
-     * Reduce a homeserver-global listing to what this tenant may see.
-     *
-     * `/_synapse/admin/v1/rooms` returns EVERY room on the homeserver, so an elab admin was
-     * handed scs's full room inventory — names, aliases, member counts, creators — and the
-     * room ids that every other callable in this file then accepts. Filtering here is what
-     * makes those per-room gates meaningful rather than merely correct.
-     *
-     * Unmarked rooms are kept and flagged (see roomAdmitsTenant): they are already visible in
-     * every tenant, and this listing is where an admin finds them to run the backfill.
-     */
-    const scopeToTenant = async (allRooms: AdminRoom[]): Promise<AdminRoom[]> => {
-      // Genuine «Notizen an mich» rooms carry the tenant marker but are nobody's admin business.
-      // Only a #notes_ alias triggers the check; a check that fails keeps the room listed —
-      // listing exposes no content, and reading/deleting still fail closed per room.
-      const candidates = allRooms.filter(r => r.canonicalAlias?.startsWith('#notes_'));
-      const personal = new Set<string>();
-      if (candidates.length > 0) {
-        const botUserId = await fetchBotUserId(adminToken).catch(() => undefined);
-        if (botUserId) {
-          await Promise.all(candidates.map(async (r) => {
-            const isPersonal = await isPersonalNotesRoom(r.roomId, r.canonicalAlias, adminToken, botUserId).catch(() => false);
-            if (isPersonal) personal.add(r.roomId);
-          }));
-        }
-      }
-      const rooms = allRooms.filter(r => !personal.has(r.roomId));
-      const markers = await getRoomTenantsBatch(rooms.map(r => r.roomId), adminToken);
-      const kept = rooms.filter(r => roomAdmitsTenant(markers.get(r.roomId) ?? [], callerTenants));
-      const unmarked = kept.filter(r => (markers.get(r.roomId) ?? []).length === 0).length;
-      if (kept.length !== rooms.length || unmarked > 0) {
-        console.warn(`listMatrixRooms: ${rooms.length} rooms on the homeserver, ${kept.length} for ${callerTenants.join(',')}, ${unmarked} unmarked`);
-      }
-      return kept;
-    };
-
-    // Helper: fetch all rooms from the admin API (paginated, max 1000)
-    async function fetchAllRooms(): Promise<AdminRoom[]> {
-      const rooms: AdminRoom[] = [];
-      let from = 0;
-      const limit = 100;
-
-      while (true) {
-        const resp = await fetch(
-          `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms?limit=${limit}&from=${from}`,
-          { headers: { Authorization: `Bearer ${adminToken}` } }
-        );
-        if (!resp.ok) throw new HttpsError('internal', `Failed to list rooms: ${await resp.text()}`);
-        const data = await resp.json() as {
-          rooms: Array<{ room_id: string; name: string; canonical_alias?: string; joined_members: number; creator?: string; public: boolean }>;
-          next_batch?: number;
-          total_rooms: number;
-        };
-        for (const r of data.rooms) {
-          rooms.push({ roomId: r.room_id, name: r.name, canonicalAlias: r.canonical_alias, joinedMembers: r.joined_members, creator: r.creator, public: r.public });
-        }
-        if (!data.next_batch || rooms.length >= 1000) break;
-        from = data.next_batch;
-      }
-      return rooms;
-    }
-
-    if (personKey) {
-      const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
-      const matrixUserId = `@${personKey.toLowerCase()}:${hostname}`;
-
-      // Get the room IDs the user belongs to
-      const joinedResp = await fetch(
-        `${MATRIX_HOMESERVER}/_synapse/admin/v1/users/${encodeURIComponent(matrixUserId)}/joined_rooms`,
-        { headers: { Authorization: `Bearer ${adminToken}` } }
-      );
-      if (!joinedResp.ok) {
-        if (joinedResp.status === 404) return { rooms: [], total: 0 }; // user not found
-        throw new HttpsError('internal', `Failed to get joined rooms for ${matrixUserId}: ${await joinedResp.text()}`);
-      }
-      const { joined_rooms: joinedRoomIds } = await joinedResp.json() as { joined_rooms: string[]; total: number };
-      if (joinedRoomIds.length === 0) return { rooms: [], total: 0 };
-
-      // Fetch details for each joined room via the per-room admin endpoint
-      const joinedSet = new Set(joinedRoomIds);
-      const allRooms = await fetchAllRooms();
-      const filtered = await scopeToTenant(allRooms.filter(r => joinedSet.has(r.roomId)));
-      await addDerivedNames(filtered, adminToken);
-      return { rooms: filtered, total: filtered.length };
-    }
-
-    const rooms = await scopeToTenant(await fetchAllRooms());
-    await addDerivedNames(rooms, adminToken);
-    return { rooms, total: rooms.length };
-  }
+  handleListMatrixRooms,
 );
 
 
@@ -498,6 +504,62 @@ export interface MemberDetails {
  * Return details for a single Matrix room.
  * Combines the admin rooms endpoint with the room state to populate all fields.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleGetRoomDetails(request: CallableRequest<any>): Promise<RoomDetails> {
+  const uid = await requireRole(request, 'getRoomDetails', ['admin']);
+  const { roomId } = request.data as { roomId: string };
+  requireParam(roomId, 'roomId');
+
+  const adminToken = matrixAdminToken.value();
+  await requireRoomInTenant(roomId, uid, 'getRoomDetails', adminToken);
+
+  // Basic room info
+  const infoResp = await fetch(
+    `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}`,
+    { headers: { Authorization: `Bearer ${adminToken}` } }
+  );
+  if (!infoResp.ok) throw new HttpsError('not-found', `Room not found: ${await infoResp.text()}`);
+  const info = await infoResp.json() as {
+    room_id: string; name: string; canonical_alias?: string;
+    joined_members: number; creator: string; public: boolean;
+  };
+
+  // Room state events — avatar, topic, aliases, invited member count
+  const stateResp = await fetch(
+    `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/state`,
+    { headers: { Authorization: `Bearer ${adminToken}` } }
+  );
+  let avatarUrl: string | undefined;
+  let topic: string | undefined;
+  const aliases: string[] = [];
+  let numberOfInvitedMembers = 0;
+
+  if (stateResp.ok) {
+    const stateData = await stateResp.json() as { state: Array<{ type: string; state_key: string; content: Record<string, unknown> }> };
+    for (const event of stateData.state ?? []) {
+      if (event.type === 'm.room.avatar' && event.state_key === '') avatarUrl = event.content['url'] as string | undefined;
+      if (event.type === 'm.room.topic' && event.state_key === '') topic = event.content['topic'] as string | undefined;
+      if (event.type === 'm.room.aliases') aliases.push(...((event.content['aliases'] as string[]) ?? []));
+      if (event.type === 'm.room.member' && event.content['membership'] === 'invite') numberOfInvitedMembers++;
+    }
+    if (info.canonical_alias && !aliases.includes(info.canonical_alias)) aliases.unshift(info.canonical_alias);
+  }
+
+  return {
+    id: info.room_id,
+    name: info.name ?? '',
+    normalizedName: (info.name ?? '').toLowerCase().trim(),
+    isDirect: false,
+    isPublic: info.public ?? false,
+    creator: info.creator ?? '',
+    avatarUrl,
+    aliases,
+    topic,
+    numberOfJoinedMembers: info.joined_members ?? 0,
+    numberOfInvitedMembers,
+  };
+}
+
 export const getRoomDetails = onCall(
   {
     cors: true,
@@ -505,66 +567,49 @@ export const getRoomDetails = onCall(
     enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
-  async (request): Promise<RoomDetails> => {
-    const uid = await requireRole(request, 'getRoomDetails', ['admin']);
-    const { roomId } = request.data as { roomId: string };
-    requireParam(roomId, 'roomId');
-
-    const adminToken = matrixAdminToken.value();
-    await requireRoomInTenant(roomId, uid, 'getRoomDetails', adminToken);
-
-    // Basic room info
-    const infoResp = await fetch(
-      `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}`,
-      { headers: { Authorization: `Bearer ${adminToken}` } }
-    );
-    if (!infoResp.ok) throw new HttpsError('not-found', `Room not found: ${await infoResp.text()}`);
-    const info = await infoResp.json() as {
-      room_id: string; name: string; canonical_alias?: string;
-      joined_members: number; creator: string; public: boolean;
-    };
-
-    // Room state events — avatar, topic, aliases, invited member count
-    const stateResp = await fetch(
-      `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/state`,
-      { headers: { Authorization: `Bearer ${adminToken}` } }
-    );
-    let avatarUrl: string | undefined;
-    let topic: string | undefined;
-    const aliases: string[] = [];
-    let numberOfInvitedMembers = 0;
-
-    if (stateResp.ok) {
-      const stateData = await stateResp.json() as { state: Array<{ type: string; state_key: string; content: Record<string, unknown> }> };
-      for (const event of stateData.state ?? []) {
-        if (event.type === 'm.room.avatar' && event.state_key === '') avatarUrl = event.content['url'] as string | undefined;
-        if (event.type === 'm.room.topic' && event.state_key === '') topic = event.content['topic'] as string | undefined;
-        if (event.type === 'm.room.aliases') aliases.push(...((event.content['aliases'] as string[]) ?? []));
-        if (event.type === 'm.room.member' && event.content['membership'] === 'invite') numberOfInvitedMembers++;
-      }
-      if (info.canonical_alias && !aliases.includes(info.canonical_alias)) aliases.unshift(info.canonical_alias);
-    }
-
-    return {
-      id: info.room_id,
-      name: info.name ?? '',
-      normalizedName: (info.name ?? '').toLowerCase().trim(),
-      isDirect: false,
-      isPublic: info.public ?? false,
-      creator: info.creator ?? '',
-      avatarUrl,
-      aliases,
-      topic,
-      numberOfJoinedMembers: info.joined_members ?? 0,
-      numberOfInvitedMembers,
-    };
-  }
+  handleGetRoomDetails,
 );
 
 /**
  * Return all members of a Matrix room with their display name, avatar,
  * membership status, and power level — all derived from room state in one request.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleGetAllMembersFromRoom(request: CallableRequest<any>): Promise<{ members: RoomMemberInfo[]; total: number }> {
+  const uid = await requireRole(request, 'getAllMembersFromRoom', ['admin']);
+  const { roomId } = request.data as { roomId: string };
+  requireParam(roomId, 'roomId');
+
+  const adminToken = matrixAdminToken.value();
+  await requireRoomInTenant(roomId, uid, 'getAllMembersFromRoom', adminToken);
+  const stateResp = await fetch(
+    `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/state`,
+    { headers: { Authorization: `Bearer ${adminToken}` } }
+  );
+  if (!stateResp.ok) throw new HttpsError('internal', `Failed to get room state: ${await stateResp.text()}`);
+
+  const stateData = await stateResp.json() as { state: Array<{ type: string; state_key: string; content: Record<string, unknown> }> };
+  const events = stateData.state ?? [];
+
+  // Extract power levels (single event, state_key = '')
+  const powerEvent = events.find(e => e.type === 'm.room.power_levels' && e.state_key === '');
+  const userPowerLevels = (powerEvent?.content?.['users'] ?? {}) as Record<string, number>;
+  const defaultPowerLevel = (powerEvent?.content?.['users_default'] ?? 0) as number;
+
+  // Build member list from m.room.member state events
+  const members: RoomMemberInfo[] = events
+    .filter(e => e.type === 'm.room.member' && ['join', 'invite', 'ban'].includes(e.content['membership'] as string))
+    .map(e => ({
+      userId: e.state_key,
+      displayName: (e.content['displayname'] as string | undefined) ?? e.state_key.split(':')[0].substring(1),
+      avatarUrl: (e.content['avatar_url'] as string | undefined),
+      membership: (e.content['membership'] as string),
+      powerLevel: userPowerLevels[e.state_key] ?? defaultPowerLevel,
+    }));
+
+  return { members, total: members.length };
+}
+
 export const getAllMembersFromRoom = onCall(
   {
     cors: true,
@@ -572,46 +617,65 @@ export const getAllMembersFromRoom = onCall(
     enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
-  async (request): Promise<{ members: RoomMemberInfo[]; total: number }> => {
-    const uid = await requireRole(request, 'getAllMembersFromRoom', ['admin']);
-    const { roomId } = request.data as { roomId: string };
-    requireParam(roomId, 'roomId');
-
-    const adminToken = matrixAdminToken.value();
-    await requireRoomInTenant(roomId, uid, 'getAllMembersFromRoom', adminToken);
-    const stateResp = await fetch(
-      `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/state`,
-      { headers: { Authorization: `Bearer ${adminToken}` } }
-    );
-    if (!stateResp.ok) throw new HttpsError('internal', `Failed to get room state: ${await stateResp.text()}`);
-
-    const stateData = await stateResp.json() as { state: Array<{ type: string; state_key: string; content: Record<string, unknown> }> };
-    const events = stateData.state ?? [];
-
-    // Extract power levels (single event, state_key = '')
-    const powerEvent = events.find(e => e.type === 'm.room.power_levels' && e.state_key === '');
-    const userPowerLevels = (powerEvent?.content?.['users'] ?? {}) as Record<string, number>;
-    const defaultPowerLevel = (powerEvent?.content?.['users_default'] ?? 0) as number;
-
-    // Build member list from m.room.member state events
-    const members: RoomMemberInfo[] = events
-      .filter(e => e.type === 'm.room.member' && ['join', 'invite', 'ban'].includes(e.content['membership'] as string))
-      .map(e => ({
-        userId: e.state_key,
-        displayName: (e.content['displayname'] as string | undefined) ?? e.state_key.split(':')[0].substring(1),
-        avatarUrl: (e.content['avatar_url'] as string | undefined),
-        membership: (e.content['membership'] as string),
-        powerLevel: userPowerLevels[e.state_key] ?? defaultPowerLevel,
-      }));
-
-    return { members, total: members.length };
-  }
+  handleGetAllMembersFromRoom,
 );
 
 /**
  * Return profile details for a Matrix user.
  * If roomId is also provided, the power level and membership are resolved from that room's state.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleGetMemberDetails(request: CallableRequest<any>): Promise<MemberDetails> {
+  const uid = await requireRole(request, 'getMemberDetails', ['admin']);
+  const { userId, roomId } = request.data as { userId: string; roomId?: string };
+  requireParam(userId, 'userId');
+
+  const adminToken = matrixAdminToken.value();
+  // Only the room-scoped half needs a gate: the profile itself is a person's display name
+  // and avatar, and persons are deliberately shared across tenants. The power level and
+  // membership below, however, are room state.
+  if (roomId) await requireRoomInTenant(roomId, uid, 'getMemberDetails', adminToken);
+
+  // User profile from admin API
+  const userResp = await fetch(
+    `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(userId)}`,
+    { headers: { Authorization: `Bearer ${adminToken}` } }
+  );
+  if (!userResp.ok) throw new HttpsError('not-found', `User not found: ${await userResp.text()}`);
+  const user = await userResp.json() as { displayname?: string; avatar_url?: string };
+  const displayName = user.displayname ?? userId.split(':')[0].substring(1);
+
+  // Room-specific data (power level and membership) — only if roomId provided
+  let powerLevel = 0;
+  let membership: string | undefined;
+
+  if (roomId) {
+    const stateResp = await fetch(
+      `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/state`,
+      { headers: { Authorization: `Bearer ${adminToken}` } }
+    );
+    if (stateResp.ok) {
+      const stateData = await stateResp.json() as { state: Array<{ type: string; state_key: string; content: Record<string, unknown> }> };
+      const events = stateData.state ?? [];
+      const powerEvent = events.find(e => e.type === 'm.room.power_levels' && e.state_key === '');
+      const userPowerLevels = (powerEvent?.content?.['users'] ?? {}) as Record<string, number>;
+      const defaultPowerLevel = (powerEvent?.content?.['users_default'] ?? 0) as number;
+      powerLevel = userPowerLevels[userId] ?? defaultPowerLevel;
+      const memberEvent = events.find(e => e.type === 'm.room.member' && e.state_key === userId);
+      membership = memberEvent?.content?.['membership'] as string | undefined;
+    }
+  }
+
+  return {
+    userId,
+    name: displayName,
+    rawDisplayName: displayName,
+    powerLevel,
+    membership,
+    avatarUrl: user.avatar_url,
+  };
+}
+
 export const getMemberDetails = onCall(
   {
     cors: true,
@@ -619,56 +683,7 @@ export const getMemberDetails = onCall(
     enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
-  async (request): Promise<MemberDetails> => {
-    const uid = await requireRole(request, 'getMemberDetails', ['admin']);
-    const { userId, roomId } = request.data as { userId: string; roomId?: string };
-    requireParam(userId, 'userId');
-
-    const adminToken = matrixAdminToken.value();
-    // Only the room-scoped half needs a gate: the profile itself is a person's display name
-    // and avatar, and persons are deliberately shared across tenants. The power level and
-    // membership below, however, are room state.
-    if (roomId) await requireRoomInTenant(roomId, uid, 'getMemberDetails', adminToken);
-
-    // User profile from admin API
-    const userResp = await fetch(
-      `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(userId)}`,
-      { headers: { Authorization: `Bearer ${adminToken}` } }
-    );
-    if (!userResp.ok) throw new HttpsError('not-found', `User not found: ${await userResp.text()}`);
-    const user = await userResp.json() as { displayname?: string; avatar_url?: string };
-    const displayName = user.displayname ?? userId.split(':')[0].substring(1);
-
-    // Room-specific data (power level and membership) — only if roomId provided
-    let powerLevel = 0;
-    let membership: string | undefined;
-
-    if (roomId) {
-      const stateResp = await fetch(
-        `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/state`,
-        { headers: { Authorization: `Bearer ${adminToken}` } }
-      );
-      if (stateResp.ok) {
-        const stateData = await stateResp.json() as { state: Array<{ type: string; state_key: string; content: Record<string, unknown> }> };
-        const events = stateData.state ?? [];
-        const powerEvent = events.find(e => e.type === 'm.room.power_levels' && e.state_key === '');
-        const userPowerLevels = (powerEvent?.content?.['users'] ?? {}) as Record<string, number>;
-        const defaultPowerLevel = (powerEvent?.content?.['users_default'] ?? 0) as number;
-        powerLevel = userPowerLevels[userId] ?? defaultPowerLevel;
-        const memberEvent = events.find(e => e.type === 'm.room.member' && e.state_key === userId);
-        membership = memberEvent?.content?.['membership'] as string | undefined;
-      }
-    }
-
-    return {
-      userId,
-      name: displayName,
-      rawDisplayName: displayName,
-      powerLevel,
-      membership,
-      avatarUrl: user.avatar_url,
-    };
-  }
+  handleGetMemberDetails,
 );
 
 export interface RoomMessageInfo {
@@ -704,6 +719,81 @@ export interface RoomMessageInfo {
  * Gated exactly like every other AOC room tool: the 'admin' role plus requireRoomInTenant,
  * so an admin of one tenant can never read another tenant's room.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleGetRoomMessages(request: CallableRequest<any>): Promise<{ messages: RoomMessageInfo[]; end?: string }> {
+  const uid = await requireRole(request, 'getRoomMessages', ['admin']);
+  const { roomId, limit, from } = request.data as { roomId: string; limit?: number; from?: string };
+  requireParam(roomId, 'roomId');
+
+  const adminToken = matrixAdminToken.value();
+  await requireRoomInTenant(roomId, uid, 'getRoomMessages', adminToken);
+  await requireNotPersonalNotesRoom(roomId, 'getRoomMessages', adminToken);
+
+  // Synapse caps this server-side too; bound it here so one call cannot pull a whole room.
+  const pageSize = Math.min(Math.max(limit ?? 50, 1), 200);
+  const params = new URLSearchParams({ limit: String(pageSize), dir: 'b' });
+  if (from) params.set('from', from);
+
+  const [msgResp, stateResp] = await Promise.all([
+    fetch(
+      `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/messages?${params}`,
+      { headers: { Authorization: `Bearer ${adminToken}` } }
+    ),
+    fetch(
+      `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/state`,
+      { headers: { Authorization: `Bearer ${adminToken}` } }
+    ),
+  ]);
+  if (!msgResp.ok) throw new HttpsError('internal', `Failed to read messages: ${await msgResp.text()}`);
+
+  // Display names come from the room's member state, not from each event: an event carries
+  // the name the sender had WHEN THEY SENT IT, so a renamed person would show under two
+  // names in one timeline.
+  const names = new Map<string, string>();
+  if (stateResp.ok) {
+    const stateData = await stateResp.json() as { state: Array<{ type: string; state_key: string; content: Record<string, unknown> }> };
+    for (const e of stateData.state ?? []) {
+      if (e.type !== 'm.room.member') continue;
+      const displayName = e.content['displayname'] as string | undefined;
+      if (displayName) names.set(e.state_key, displayName);
+    }
+  }
+
+  const data = await msgResp.json() as {
+    chunk?: Array<{
+      event_id: string;
+      type: string;
+      sender: string;
+      origin_server_ts: number;
+      content?: Record<string, unknown>;
+      unsigned?: Record<string, unknown>;
+    }>;
+    end?: string;
+  };
+
+  const messages: RoomMessageInfo[] = (data.chunk ?? [])
+    .filter(e => e.type === 'm.room.message')
+    .map(e => {
+      const content = e.content ?? {};
+      // A redacted event keeps its place in the timeline with an empty content object —
+      // show it as redacted rather than dropping it, so a deletion stays visible to the admin.
+      const isRedacted = !!e.unsigned?.['redacted_because'] || Object.keys(content).length === 0;
+      return {
+        eventId: e.event_id,
+        sender: e.sender,
+        senderName: names.get(e.sender) ?? e.sender.split(':')[0].substring(1),
+        body: (content['body'] as string | undefined) ?? '',
+        msgtype: (content['msgtype'] as string | undefined) ?? 'm.text',
+        url: content['url'] as string | undefined,
+        timestamp: e.origin_server_ts,
+        isRedacted,
+      };
+    });
+
+  console.log(`getRoomMessages: uid ${uid} read ${messages.length} messages of ${roomId}`);
+  return { messages, end: data.end };
+}
+
 export const getRoomMessages = onCall(
   {
     cors: true,
@@ -711,79 +801,7 @@ export const getRoomMessages = onCall(
     enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
-  async (request): Promise<{ messages: RoomMessageInfo[]; end?: string }> => {
-    const uid = await requireRole(request, 'getRoomMessages', ['admin']);
-    const { roomId, limit, from } = request.data as { roomId: string; limit?: number; from?: string };
-    requireParam(roomId, 'roomId');
-
-    const adminToken = matrixAdminToken.value();
-    await requireRoomInTenant(roomId, uid, 'getRoomMessages', adminToken);
-    await requireNotPersonalNotesRoom(roomId, 'getRoomMessages', adminToken);
-
-    // Synapse caps this server-side too; bound it here so one call cannot pull a whole room.
-    const pageSize = Math.min(Math.max(limit ?? 50, 1), 200);
-    const params = new URLSearchParams({ limit: String(pageSize), dir: 'b' });
-    if (from) params.set('from', from);
-
-    const [msgResp, stateResp] = await Promise.all([
-      fetch(
-        `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/messages?${params}`,
-        { headers: { Authorization: `Bearer ${adminToken}` } }
-      ),
-      fetch(
-        `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/state`,
-        { headers: { Authorization: `Bearer ${adminToken}` } }
-      ),
-    ]);
-    if (!msgResp.ok) throw new HttpsError('internal', `Failed to read messages: ${await msgResp.text()}`);
-
-    // Display names come from the room's member state, not from each event: an event carries
-    // the name the sender had WHEN THEY SENT IT, so a renamed person would show under two
-    // names in one timeline.
-    const names = new Map<string, string>();
-    if (stateResp.ok) {
-      const stateData = await stateResp.json() as { state: Array<{ type: string; state_key: string; content: Record<string, unknown> }> };
-      for (const e of stateData.state ?? []) {
-        if (e.type !== 'm.room.member') continue;
-        const displayName = e.content['displayname'] as string | undefined;
-        if (displayName) names.set(e.state_key, displayName);
-      }
-    }
-
-    const data = await msgResp.json() as {
-      chunk?: Array<{
-        event_id: string;
-        type: string;
-        sender: string;
-        origin_server_ts: number;
-        content?: Record<string, unknown>;
-        unsigned?: Record<string, unknown>;
-      }>;
-      end?: string;
-    };
-
-    const messages: RoomMessageInfo[] = (data.chunk ?? [])
-      .filter(e => e.type === 'm.room.message')
-      .map(e => {
-        const content = e.content ?? {};
-        // A redacted event keeps its place in the timeline with an empty content object —
-        // show it as redacted rather than dropping it, so a deletion stays visible to the admin.
-        const isRedacted = !!e.unsigned?.['redacted_because'] || Object.keys(content).length === 0;
-        return {
-          eventId: e.event_id,
-          sender: e.sender,
-          senderName: names.get(e.sender) ?? e.sender.split(':')[0].substring(1),
-          body: (content['body'] as string | undefined) ?? '',
-          msgtype: (content['msgtype'] as string | undefined) ?? 'm.text',
-          url: content['url'] as string | undefined,
-          timestamp: e.origin_server_ts,
-          isRedacted,
-        };
-      });
-
-    console.log(`getRoomMessages: uid ${uid} read ${messages.length} messages of ${roomId}`);
-    return { messages, end: data.end };
-  }
+  handleGetRoomMessages,
 );
 
 /**
@@ -792,6 +810,47 @@ export const getRoomMessages = onCall(
  * and purges all events from the Synapse database.
  * The deletion runs asynchronously on Synapse; this function returns the delete_id.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleDeleteMatrixRoom(request: CallableRequest<any>): Promise<{ deleteId: string }> {
+  const uid = await requireRole(request, 'deleteMatrixRoom', ['admin']);
+
+  const { roomId } = request.data as { roomId: string };
+  requireParam(roomId, 'roomId');
+
+  const adminToken = matrixAdminToken.value();
+  // The most destructive callable in this file: DELETE + purge is irreversible, and the
+  // Synapse admin API is homeserver-global. Without this, an admin of one tenant could
+  // destroy another tenant's chat history.
+  await requireRoomInTenant(roomId, uid, 'deleteMatrixRoom', adminToken);
+  await requireNotPersonalNotesRoom(roomId, 'deleteMatrixRoom', adminToken);
+
+  console.log(`deleteMatrixRoom: deleting room ${roomId}`);
+
+  // Synapse removed `POST /_synapse/admin/v1/rooms/<id>/delete` — it answers M_UNRECOGNIZED
+  // ("Unrecognized request", HTTP 404), which this function reported as a bare 500. The
+  // replacement is the async v2 endpoint; it returns a delete_id to poll, same as before.
+  const deleteResp = await fetch(
+    `${MATRIX_HOMESERVER}/_synapse/admin/v2/rooms/${encodeURIComponent(roomId)}`,
+    {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        block: false,
+        purge: true,
+        message: 'Room deleted by administrator',
+      }),
+    }
+  );
+
+  if (!deleteResp.ok) {
+    throw new HttpsError('internal', `Failed to delete room ${roomId}: ${await deleteResp.text()}`);
+  }
+
+  const data = await deleteResp.json() as { delete_id: string };
+  console.log(`deleteMatrixRoom: room ${roomId} queued for deletion (delete_id=${data.delete_id})`);
+  return { deleteId: data.delete_id };
+}
+
 export const deleteMatrixRoom = onCall(
   {
     cors: true,
@@ -799,51 +858,48 @@ export const deleteMatrixRoom = onCall(
     enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
-  async (request): Promise<{ deleteId: string }> => {
-    const uid = await requireRole(request, 'deleteMatrixRoom', ['admin']);
-
-    const { roomId } = request.data as { roomId: string };
-    requireParam(roomId, 'roomId');
-
-    const adminToken = matrixAdminToken.value();
-    // The most destructive callable in this file: DELETE + purge is irreversible, and the
-    // Synapse admin API is homeserver-global. Without this, an admin of one tenant could
-    // destroy another tenant's chat history.
-    await requireRoomInTenant(roomId, uid, 'deleteMatrixRoom', adminToken);
-    await requireNotPersonalNotesRoom(roomId, 'deleteMatrixRoom', adminToken);
-
-    console.log(`deleteMatrixRoom: deleting room ${roomId}`);
-
-    // Synapse removed `POST /_synapse/admin/v1/rooms/<id>/delete` — it answers M_UNRECOGNIZED
-    // ("Unrecognized request", HTTP 404), which this function reported as a bare 500. The
-    // replacement is the async v2 endpoint; it returns a delete_id to poll, same as before.
-    const deleteResp = await fetch(
-      `${MATRIX_HOMESERVER}/_synapse/admin/v2/rooms/${encodeURIComponent(roomId)}`,
-      {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          block: false,
-          purge: true,
-          message: 'Room deleted by administrator',
-        }),
-      }
-    );
-
-    if (!deleteResp.ok) {
-      throw new HttpsError('internal', `Failed to delete room ${roomId}: ${await deleteResp.text()}`);
-    }
-
-    const data = await deleteResp.json() as { delete_id: string };
-    console.log(`deleteMatrixRoom: room ${roomId} queued for deletion (delete_id=${data.delete_id})`);
-    return { deleteId: data.delete_id };
-  }
+  handleDeleteMatrixRoom,
 );
 
 /**
  * Add a local room alias to a Matrix room.
  * The alias will be in the form #aliasName:homeserver
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleAddMatrixRoomAlias(request: CallableRequest<any>): Promise<{ alias: string }> {
+  const uid = await requireRole(request, 'addMatrixRoomAlias', ['admin']);
+
+  const { roomId, aliasName } = request.data as { roomId: string; aliasName: string };
+  requireParam(roomId, 'roomId');
+  requireParam(aliasName, 'aliasName');
+
+  await requireRoomInTenant(roomId, uid, 'addMatrixRoomAlias', matrixAdminToken.value());
+
+  const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
+  // Sanitise: lowercase, replace spaces with hyphens, strip disallowed chars
+  const sanitised = aliasName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_.\-]/g, '');
+  const fullAlias = `#${sanitised}:${hostname}`;
+  const adminToken = matrixAdminToken.value();
+
+  console.log(`addMatrixRoomAlias: adding alias ${fullAlias} to room ${roomId}`);
+
+  const resp = await fetch(
+    `${MATRIX_HOMESERVER}/_matrix/client/v3/directory/room/${encodeURIComponent(fullAlias)}`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ room_id: roomId }),
+    }
+  );
+
+  if (!resp.ok) {
+    throw new HttpsError('internal', `Failed to add alias ${fullAlias} to room ${roomId}: ${await resp.text()}`);
+  }
+
+  console.log(`addMatrixRoomAlias: alias ${fullAlias} added to room ${roomId}`);
+  return { alias: fullAlias };
+}
+
 export const addMatrixRoomAlias = onCall(
   {
     cors: true,
@@ -851,39 +907,7 @@ export const addMatrixRoomAlias = onCall(
     enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
-  async (request): Promise<{ alias: string }> => {
-    const uid = await requireRole(request, 'addMatrixRoomAlias', ['admin']);
-
-    const { roomId, aliasName } = request.data as { roomId: string; aliasName: string };
-    requireParam(roomId, 'roomId');
-    requireParam(aliasName, 'aliasName');
-
-    await requireRoomInTenant(roomId, uid, 'addMatrixRoomAlias', matrixAdminToken.value());
-
-    const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
-    // Sanitise: lowercase, replace spaces with hyphens, strip disallowed chars
-    const sanitised = aliasName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_.\-]/g, '');
-    const fullAlias = `#${sanitised}:${hostname}`;
-    const adminToken = matrixAdminToken.value();
-
-    console.log(`addMatrixRoomAlias: adding alias ${fullAlias} to room ${roomId}`);
-
-    const resp = await fetch(
-      `${MATRIX_HOMESERVER}/_matrix/client/v3/directory/room/${encodeURIComponent(fullAlias)}`,
-      {
-        method: 'PUT',
-        headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ room_id: roomId }),
-      }
-    );
-
-    if (!resp.ok) {
-      throw new HttpsError('internal', `Failed to add alias ${fullAlias} to room ${roomId}: ${await resp.text()}`);
-    }
-
-    console.log(`addMatrixRoomAlias: alias ${fullAlias} added to room ${roomId}`);
-    return { alias: fullAlias };
-  }
+  handleAddMatrixRoomAlias,
 );
 
 /**
@@ -898,6 +922,70 @@ export const addMatrixRoomAlias = onCall(
  * Idempotent: run it again after adding an admin. Existing power levels are merged, so any
  * unrelated per-user levels the room already carries survive.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleSetKioskCallRoomPolicy(request: CallableRequest<any>): Promise<{ roomId: string; adminUserIds: string[] }> {
+  const uid = await requireRole(request, 'setKioskCallRoomPolicy', ['admin']);
+
+  const { roomId, adminPersonKeys, kioskPersonKey } = request.data as {
+    roomId: string;
+    adminPersonKeys: string[];
+    kioskPersonKey: string;
+  };
+  requireParam(roomId, 'roomId');
+  requireParam(kioskPersonKey, 'kioskPersonKey');
+  if (!Array.isArray(adminPersonKeys) || adminPersonKeys.length === 0) {
+    throw new HttpsError('invalid-argument', 'adminPersonKeys must be a non-empty array');
+  }
+
+  const hostname = serverHostname();
+  const adminToken = matrixAdminToken.value();
+  await requireRoomInTenant(roomId, uid, 'setKioskCallRoomPolicy', adminToken);
+
+  const mxid = (personKey: string) => `@${personKey.toLowerCase()}:${hostname}`;
+  const adminUserIds = adminPersonKeys.map(key => mxid(requireParam(key, 'adminPersonKey')));
+
+  await ensureAdminInRoom(roomId, adminToken);
+
+  // Merge into the room's current power levels rather than overwriting them.
+  const stateUrl = `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/state/m.room.power_levels/`;
+  const currentResp = await fetch(stateUrl, { headers: { Authorization: `Bearer ${adminToken}` } });
+  const current = currentResp.ok
+    ? await currentResp.json() as { users?: Record<string, number>; events?: Record<string, number> }
+    : {};
+
+  const users: Record<string, number> = { ...current.users };
+  for (const userId of adminUserIds) users[userId] = KIOSK_ADMIN_POWER_LEVEL;
+  // The kiosk itself is a passive endpoint: it may talk, never invite, kick or call out.
+  users[mxid(kioskPersonKey)] = 0;
+
+  const body = {
+    ...current,
+    users,
+    events: {
+      ...current.events,
+      // the actual gate — everything below is consistency, this line is the control
+      'm.call.invite': KIOSK_ADMIN_POWER_LEVEL,
+      'm.call.candidates': KIOSK_ADMIN_POWER_LEVEL,
+      'm.room.power_levels': KIOSK_ADMIN_POWER_LEVEL,
+    },
+    invite: KIOSK_ADMIN_POWER_LEVEL,
+    kick: KIOSK_ADMIN_POWER_LEVEL,
+    ban: KIOSK_ADMIN_POWER_LEVEL,
+  };
+
+  const resp = await fetch(stateUrl, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!resp.ok) {
+    throw new HttpsError('internal', `Failed to set kiosk call policy on ${roomId}: ${await resp.text()}`);
+  }
+
+  console.log(`setKioskCallRoomPolicy: ${roomId} locked to ${adminUserIds.join(', ')}`);
+  return { roomId, adminUserIds };
+}
+
 export const setKioskCallRoomPolicy = onCall(
   {
     cors: true,
@@ -905,66 +993,5 @@ export const setKioskCallRoomPolicy = onCall(
     enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
-  async (request): Promise<{ roomId: string; adminUserIds: string[] }> => {
-    const uid = await requireRole(request, 'setKioskCallRoomPolicy', ['admin']);
-
-    const { roomId, adminPersonKeys, kioskPersonKey } = request.data as {
-      roomId: string;
-      adminPersonKeys: string[];
-      kioskPersonKey: string;
-    };
-    requireParam(roomId, 'roomId');
-    requireParam(kioskPersonKey, 'kioskPersonKey');
-    if (!Array.isArray(adminPersonKeys) || adminPersonKeys.length === 0) {
-      throw new HttpsError('invalid-argument', 'adminPersonKeys must be a non-empty array');
-    }
-
-    const hostname = serverHostname();
-    const adminToken = matrixAdminToken.value();
-    await requireRoomInTenant(roomId, uid, 'setKioskCallRoomPolicy', adminToken);
-
-    const mxid = (personKey: string) => `@${personKey.toLowerCase()}:${hostname}`;
-    const adminUserIds = adminPersonKeys.map(key => mxid(requireParam(key, 'adminPersonKey')));
-
-    await ensureAdminInRoom(roomId, adminToken);
-
-    // Merge into the room's current power levels rather than overwriting them.
-    const stateUrl = `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/state/m.room.power_levels/`;
-    const currentResp = await fetch(stateUrl, { headers: { Authorization: `Bearer ${adminToken}` } });
-    const current = currentResp.ok
-      ? await currentResp.json() as { users?: Record<string, number>; events?: Record<string, number> }
-      : {};
-
-    const users: Record<string, number> = { ...current.users };
-    for (const userId of adminUserIds) users[userId] = KIOSK_ADMIN_POWER_LEVEL;
-    // The kiosk itself is a passive endpoint: it may talk, never invite, kick or call out.
-    users[mxid(kioskPersonKey)] = 0;
-
-    const body = {
-      ...current,
-      users,
-      events: {
-        ...current.events,
-        // the actual gate — everything below is consistency, this line is the control
-        'm.call.invite': KIOSK_ADMIN_POWER_LEVEL,
-        'm.call.candidates': KIOSK_ADMIN_POWER_LEVEL,
-        'm.room.power_levels': KIOSK_ADMIN_POWER_LEVEL,
-      },
-      invite: KIOSK_ADMIN_POWER_LEVEL,
-      kick: KIOSK_ADMIN_POWER_LEVEL,
-      ban: KIOSK_ADMIN_POWER_LEVEL,
-    };
-
-    const resp = await fetch(stateUrl, {
-      method: 'PUT',
-      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    if (!resp.ok) {
-      throw new HttpsError('internal', `Failed to set kiosk call policy on ${roomId}: ${await resp.text()}`);
-    }
-
-    console.log(`setKioskCallRoomPolicy: ${roomId} locked to ${adminUserIds.join(', ')}`);
-    return { roomId, adminUserIds };
-  }
+  handleSetKioskCallRoomPolicy,
 );

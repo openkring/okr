@@ -18,6 +18,7 @@ import * as LoginIdAdmin from './auth/login-id-admin';
 import * as MatrixSimple from './matrix-simple';
 import * as MatrixMembershipSync from './matrix-simple/membership-sync';
 import * as MatrixPostPolicy from './matrix-simple/post-policy-sync';
+import * as MatrixAdmin from './matrix-simple/matrix-admin';
 import * as Rag from './rag';
 import * as Ocr from './ocr';
 import * as Vectorize from './vectorize';
@@ -160,6 +161,8 @@ export const listAvailablePinboards = MatrixSimple.listAvailablePinboards;
 // membership → Matrix-room sync (server-side backstop; chat design review #3)
 export const reconcileGroupRoomMembers = MatrixMembershipSync.reconcileGroupRoomMembers;
 export const syncRoomPostPolicy = MatrixPostPolicy.syncRoomPostPolicy;
+// matrixAdmin: one router callable for the 19 Matrix admin callables above, which stay as aliases (TOC 3.41 A1)
+export const matrixAdmin = MatrixAdmin.matrixAdmin;
 // group-room drift: report room members without a membership, and prune them on demand
 export const auditGroupRoomMembers = MatrixMembershipSync.auditGroupRoomMembers;
 export const pruneGroupRoomExtras = MatrixMembershipSync.pruneGroupRoomExtras;

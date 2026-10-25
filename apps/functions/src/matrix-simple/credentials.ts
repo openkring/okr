@@ -3,7 +3,7 @@
 // Matrix account lifecycle: Firebase→Matrix token exchange, user provisioning,
 // profile sync, and deactivation.
 
-import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onCall, HttpsError, type CallableRequest } from 'firebase-functions/v2/https';
 import { checkOperatorTenant } from '@okr/shared-util-functions';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -310,6 +310,47 @@ export const provisionMatrixUser = onCall(
  * messages and media from the Synapse database.
  * Note: Synapse does not hard-delete users; deactivation is the canonical "delete" operation.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleDeactivateMatrixUser(request: CallableRequest<any>): Promise<{ matrixUserId: string; deactivated: boolean }> {
+  await requireRole(request, 'deactivateMatrixUser', ['admin']);
+  await checkOperatorTenant(request, 'deactivateMatrixUser');
+
+  const { personKey, erase = false } = request.data as { personKey: string; erase?: boolean };
+  requireParam(personKey, 'personKey');
+
+  const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
+  const matrixUserId = `@${personKey.toLowerCase()}:${hostname}`;
+  const adminToken = matrixAdminToken.value();
+
+  console.log(`deactivateMatrixUser: deactivating ${matrixUserId} (erase=${erase})`);
+
+  // Check the user exists before attempting deactivation
+  const checkResp = await fetch(
+    `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
+    { headers: { Authorization: `Bearer ${adminToken}` } }
+  );
+  if (!checkResp.ok) {
+    console.warn(`deactivateMatrixUser: user ${matrixUserId} not found, nothing to deactivate`);
+    return { matrixUserId, deactivated: false };
+  }
+
+  const deactivateResp = await fetch(
+    `${MATRIX_HOMESERVER}/_synapse/admin/v1/deactivate/${encodeURIComponent(matrixUserId)}`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ erase }),
+    }
+  );
+
+  if (!deactivateResp.ok) {
+    throw new HttpsError('internal', `Failed to deactivate ${matrixUserId}: ${await deactivateResp.text()}`);
+  }
+
+  console.log(`deactivateMatrixUser: ${matrixUserId} deactivated (erase=${erase})`);
+  return { matrixUserId, deactivated: true };
+}
+
 export const deactivateMatrixUser = onCall(
   {
     cors: true,
@@ -317,45 +358,7 @@ export const deactivateMatrixUser = onCall(
     enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
-  async (request): Promise<{ matrixUserId: string; deactivated: boolean }> => {
-    await requireRole(request, 'deactivateMatrixUser', ['admin']);
-    await checkOperatorTenant(request, 'deactivateMatrixUser');
-
-    const { personKey, erase = false } = request.data as { personKey: string; erase?: boolean };
-    requireParam(personKey, 'personKey');
-
-    const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
-    const matrixUserId = `@${personKey.toLowerCase()}:${hostname}`;
-    const adminToken = matrixAdminToken.value();
-
-    console.log(`deactivateMatrixUser: deactivating ${matrixUserId} (erase=${erase})`);
-
-    // Check the user exists before attempting deactivation
-    const checkResp = await fetch(
-      `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
-      { headers: { Authorization: `Bearer ${adminToken}` } }
-    );
-    if (!checkResp.ok) {
-      console.warn(`deactivateMatrixUser: user ${matrixUserId} not found, nothing to deactivate`);
-      return { matrixUserId, deactivated: false };
-    }
-
-    const deactivateResp = await fetch(
-      `${MATRIX_HOMESERVER}/_synapse/admin/v1/deactivate/${encodeURIComponent(matrixUserId)}`,
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ erase }),
-      }
-    );
-
-    if (!deactivateResp.ok) {
-      throw new HttpsError('internal', `Failed to deactivate ${matrixUserId}: ${await deactivateResp.text()}`);
-    }
-
-    console.log(`deactivateMatrixUser: ${matrixUserId} deactivated (erase=${erase})`);
-    return { matrixUserId, deactivated: true };
-  }
+  handleDeactivateMatrixUser,
 );
 
 /**
@@ -459,6 +462,88 @@ interface DisplayNameRepairResult {
  * carry a real, non-placeholder custom name are never overwritten (reported under
  * `skippedCustomName`).
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleRepairMatrixDisplayNames(request: CallableRequest<any>): Promise<DisplayNameRepairResult> {
+  await requireRole(request, 'repairMatrixDisplayNames', ['admin']);
+  await checkOperatorTenant(request, 'repairMatrixDisplayNames');
+  const dryRun = (request.data as { dryRun?: boolean } | undefined)?.dryRun !== false; // default true
+  const adminToken = matrixAdminToken.value();
+
+  // 1. Build localpart → "Firstname Lastname" from a single persons scan.
+  const nameByLocalpart = new Map<string, string>();
+  const personsSnap = await getFirestore().collection('persons').get();
+  personsSnap.forEach((doc) => {
+    const d = doc.data();
+    const full = [d['firstName'], d['lastName']].filter(Boolean).join(' ').trim();
+    if (full) nameByLocalpart.set(doc.id.toLowerCase(), full);
+  });
+
+  const result: DisplayNameRepairResult = {
+    scanned: 0,
+    repaired: [],
+    skippedNoPerson: [],
+    skippedCustomName: [],
+    applied: !dryRun,
+  };
+
+  // 2. Page through all Synapse users.
+  let from = 0;
+  const limit = 100;
+  for (;;) {
+    const resp = await fetch(
+      `${MATRIX_HOMESERVER}/_synapse/admin/v2/users?from=${from}&limit=${limit}&guests=false&deactivated=false`,
+      { headers: { Authorization: `Bearer ${adminToken}` } }
+    );
+    if (!resp.ok) {
+      throw new HttpsError('internal', `Failed to list Matrix users: ${await resp.text()}`);
+    }
+    const data = await resp.json() as {
+      users: Array<{ name: string; displayname?: string; user_type?: string | null }>;
+      next_token?: string;
+    };
+
+    for (const u of data.users) {
+      // Only touch normal local users (skip appservice/bots/support users).
+      if (u.user_type) continue;
+      result.scanned++;
+
+      const matrixUserId = u.name; // @localpart:server
+      const localpart = matrixUserId.replace(/^@/, '').split(':')[0];
+      const current = (u.displayname ?? '').trim();
+      const desired = nameByLocalpart.get(localpart);
+
+      if (!desired) {
+        result.skippedNoPerson.push(matrixUserId);
+        continue;
+      }
+      if (current === desired) continue; // already correct
+
+      // A placeholder is an empty name, the bare localpart, or the full MXID.
+      const isPlaceholder = current === '' || current === localpart || current === matrixUserId;
+      if (!isPlaceholder) {
+        // A real custom name that differs from the person name — leave it alone.
+        result.skippedCustomName.push({ matrixUserId, from: current, to: desired });
+        continue;
+      }
+
+      if (!dryRun) {
+        await setMatrixDisplayName(matrixUserId, desired, adminToken);
+      }
+      result.repaired.push({ matrixUserId, from: current, to: desired });
+    }
+
+    if (data.next_token === undefined) break;
+    from = Number(data.next_token);
+  }
+
+  console.log(
+    `repairMatrixDisplayNames: scanned=${result.scanned} ` +
+    `repaired=${result.repaired.length} noPerson=${result.skippedNoPerson.length} ` +
+    `customName=${result.skippedCustomName.length} applied=${result.applied}`
+  );
+  return result;
+}
+
 export const repairMatrixDisplayNames = onCall(
   {
     cors: true,
@@ -466,86 +551,7 @@ export const repairMatrixDisplayNames = onCall(
     enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
-  async (request): Promise<DisplayNameRepairResult> => {
-    await requireRole(request, 'repairMatrixDisplayNames', ['admin']);
-    await checkOperatorTenant(request, 'repairMatrixDisplayNames');
-    const dryRun = (request.data as { dryRun?: boolean } | undefined)?.dryRun !== false; // default true
-    const adminToken = matrixAdminToken.value();
-
-    // 1. Build localpart → "Firstname Lastname" from a single persons scan.
-    const nameByLocalpart = new Map<string, string>();
-    const personsSnap = await getFirestore().collection('persons').get();
-    personsSnap.forEach((doc) => {
-      const d = doc.data();
-      const full = [d['firstName'], d['lastName']].filter(Boolean).join(' ').trim();
-      if (full) nameByLocalpart.set(doc.id.toLowerCase(), full);
-    });
-
-    const result: DisplayNameRepairResult = {
-      scanned: 0,
-      repaired: [],
-      skippedNoPerson: [],
-      skippedCustomName: [],
-      applied: !dryRun,
-    };
-
-    // 2. Page through all Synapse users.
-    let from = 0;
-    const limit = 100;
-    for (;;) {
-      const resp = await fetch(
-        `${MATRIX_HOMESERVER}/_synapse/admin/v2/users?from=${from}&limit=${limit}&guests=false&deactivated=false`,
-        { headers: { Authorization: `Bearer ${adminToken}` } }
-      );
-      if (!resp.ok) {
-        throw new HttpsError('internal', `Failed to list Matrix users: ${await resp.text()}`);
-      }
-      const data = await resp.json() as {
-        users: Array<{ name: string; displayname?: string; user_type?: string | null }>;
-        next_token?: string;
-      };
-
-      for (const u of data.users) {
-        // Only touch normal local users (skip appservice/bots/support users).
-        if (u.user_type) continue;
-        result.scanned++;
-
-        const matrixUserId = u.name; // @localpart:server
-        const localpart = matrixUserId.replace(/^@/, '').split(':')[0];
-        const current = (u.displayname ?? '').trim();
-        const desired = nameByLocalpart.get(localpart);
-
-        if (!desired) {
-          result.skippedNoPerson.push(matrixUserId);
-          continue;
-        }
-        if (current === desired) continue; // already correct
-
-        // A placeholder is an empty name, the bare localpart, or the full MXID.
-        const isPlaceholder = current === '' || current === localpart || current === matrixUserId;
-        if (!isPlaceholder) {
-          // A real custom name that differs from the person name — leave it alone.
-          result.skippedCustomName.push({ matrixUserId, from: current, to: desired });
-          continue;
-        }
-
-        if (!dryRun) {
-          await setMatrixDisplayName(matrixUserId, desired, adminToken);
-        }
-        result.repaired.push({ matrixUserId, from: current, to: desired });
-      }
-
-      if (data.next_token === undefined) break;
-      from = Number(data.next_token);
-    }
-
-    console.log(
-      `repairMatrixDisplayNames: scanned=${result.scanned} ` +
-      `repaired=${result.repaired.length} noPerson=${result.skippedNoPerson.length} ` +
-      `customName=${result.skippedCustomName.length} applied=${result.applied}`
-    );
-    return result;
-  }
+  handleRepairMatrixDisplayNames,
 );
 
 interface AvatarRepairEntry {
@@ -581,6 +587,118 @@ interface AvatarRepairResult {
  * `dryRun` (default true) reports what WOULD change without writing — review the list,
  * then call again with `dryRun: false` to apply.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleRepairMatrixAvatars(request: CallableRequest<any>): Promise<AvatarRepairResult> {
+  await requireRole(request, 'repairMatrixAvatars', ['admin']);
+  await checkOperatorTenant(request, 'repairMatrixAvatars');
+  const dryRun = (request.data as { dryRun?: boolean } | undefined)?.dryRun !== false; // default true
+  const adminToken = matrixAdminToken.value();
+
+  // 1. Build localpart → avatar URL from a single avatars scan. Only person avatars map to
+  //    Matrix users; skip org/resource/etc. avatars. The doc id is either the bare shared
+  //    default `person.<key>` or a tenant's own `<tenant>.person.<key>` — the shared default
+  //    wins (one Matrix identity per person, see resolvePersonAvatarUrl), a tenant avatar
+  //    only fills in when there is no default.
+  const avatarByLocalpart = new Map<string, string>();
+  const sharedDefaults = new Set<string>();
+  const avatarsSnap = await getFirestore().collection('avatars').get();
+  avatarsSnap.forEach((doc) => {
+    const match = /^(?:[^.]+\.)?person\.(.+)$/.exec(doc.id);
+    if (!match) return;
+    const storagePath = doc.data()['storagePath'] as string | undefined;
+    if (!storagePath) return;
+    const localpart = match[1].toLowerCase();
+    const isSharedDefault = doc.id.startsWith('person.');
+    if (sharedDefaults.has(localpart) && !isSharedDefault) return;
+    if (isSharedDefault) sharedDefaults.add(localpart);
+    avatarByLocalpart.set(localpart, personAvatarUrl(storagePath));
+  });
+
+  const result: AvatarRepairResult = {
+    scanned: 0,
+    repaired: [],
+    migratedHttp: [],
+    skippedNoAvatar: [],
+    skippedHasAvatar: 0,
+    applied: !dryRun,
+  };
+
+  // 2. Page through all Synapse users.
+  let from = 0;
+  const limit = 100;
+  for (;;) {
+    const resp = await fetch(
+      `${MATRIX_HOMESERVER}/_synapse/admin/v2/users?from=${from}&limit=${limit}&guests=false&deactivated=false`,
+      { headers: { Authorization: `Bearer ${adminToken}` } }
+    );
+    if (!resp.ok) {
+      throw new HttpsError('internal', `Failed to list Matrix users: ${await resp.text()}`);
+    }
+    const data = await resp.json() as {
+      users: Array<{ name: string; avatar_url?: string; user_type?: string | null }>;
+      next_token?: string;
+    };
+
+    for (const u of data.users) {
+      // Only touch normal local users (skip appservice/bots/support users).
+      if (u.user_type) continue;
+      result.scanned++;
+
+      const matrixUserId = u.name; // @localpart:server
+      const localpart = matrixUserId.replace(/^@/, '').split(':')[0];
+
+      const current = (u.avatar_url ?? '').trim();
+
+      // Already a spec-compliant mxc avatar (migrated, or a custom avatar the user set in
+      // Element) — never overwrite.
+      if (current.startsWith('mxc://')) {
+        result.skippedHasAvatar++;
+        continue;
+      }
+
+      // Legacy https avatar (one WE set — the imgix URL) — migrate it to mxc by
+      // re-uploading the same image to the Synapse media repo so Element and bridges render it.
+      if (current.startsWith('http')) {
+        try {
+          const mxc = dryRun ? current : await uploadUrlToMatrixMedia(current, adminToken);
+          if (!dryRun) await setMatrixAvatarUrl(matrixUserId, mxc, adminToken);
+          result.migratedHttp.push({ matrixUserId, avatarUrl: mxc });
+        } catch (e) {
+          console.warn(`repairMatrixAvatars: http→mxc failed for ${matrixUserId}: ${(e as Error).message}`);
+          result.skippedNoAvatar.push(matrixUserId);
+        }
+        continue;
+      }
+
+      // No avatar at all — fill from the person avatar, uploaded as mxc.
+      const desiredHttp = avatarByLocalpart.get(localpart);
+      if (!desiredHttp) {
+        result.skippedNoAvatar.push(matrixUserId);
+        continue;
+      }
+      try {
+        const mxc = dryRun ? desiredHttp : await uploadUrlToMatrixMedia(desiredHttp, adminToken);
+        if (!dryRun) await setMatrixAvatarUrl(matrixUserId, mxc, adminToken);
+        result.repaired.push({ matrixUserId, avatarUrl: mxc });
+      } catch (e) {
+        console.warn(`repairMatrixAvatars: fill failed for ${matrixUserId}: ${(e as Error).message}`);
+        result.skippedNoAvatar.push(matrixUserId);
+      }
+    }
+
+    if (data.next_token === undefined) break;
+    from = Number(data.next_token);
+  }
+
+  console.log(
+    `repairMatrixAvatars: scanned=${result.scanned} ` +
+    `repaired=${result.repaired.length} migratedHttp=${result.migratedHttp.length} ` +
+    `noAvatar=${result.skippedNoAvatar.length} ` +
+    `hasAvatar=${result.skippedHasAvatar} applied=${result.applied}`
+  );
+  return result;
+}
+
 export const repairMatrixAvatars = onCall(
   {
     cors: true,
@@ -588,114 +706,5 @@ export const repairMatrixAvatars = onCall(
     enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
-  async (request): Promise<AvatarRepairResult> => {
-    await requireRole(request, 'repairMatrixAvatars', ['admin']);
-    await checkOperatorTenant(request, 'repairMatrixAvatars');
-    const dryRun = (request.data as { dryRun?: boolean } | undefined)?.dryRun !== false; // default true
-    const adminToken = matrixAdminToken.value();
-
-    // 1. Build localpart → avatar URL from a single avatars scan. Only person avatars map to
-    //    Matrix users; skip org/resource/etc. avatars. The doc id is either the bare shared
-    //    default `person.<key>` or a tenant's own `<tenant>.person.<key>` — the shared default
-    //    wins (one Matrix identity per person, see resolvePersonAvatarUrl), a tenant avatar
-    //    only fills in when there is no default.
-    const avatarByLocalpart = new Map<string, string>();
-    const sharedDefaults = new Set<string>();
-    const avatarsSnap = await getFirestore().collection('avatars').get();
-    avatarsSnap.forEach((doc) => {
-      const match = /^(?:[^.]+\.)?person\.(.+)$/.exec(doc.id);
-      if (!match) return;
-      const storagePath = doc.data()['storagePath'] as string | undefined;
-      if (!storagePath) return;
-      const localpart = match[1].toLowerCase();
-      const isSharedDefault = doc.id.startsWith('person.');
-      if (sharedDefaults.has(localpart) && !isSharedDefault) return;
-      if (isSharedDefault) sharedDefaults.add(localpart);
-      avatarByLocalpart.set(localpart, personAvatarUrl(storagePath));
-    });
-
-    const result: AvatarRepairResult = {
-      scanned: 0,
-      repaired: [],
-      migratedHttp: [],
-      skippedNoAvatar: [],
-      skippedHasAvatar: 0,
-      applied: !dryRun,
-    };
-
-    // 2. Page through all Synapse users.
-    let from = 0;
-    const limit = 100;
-    for (;;) {
-      const resp = await fetch(
-        `${MATRIX_HOMESERVER}/_synapse/admin/v2/users?from=${from}&limit=${limit}&guests=false&deactivated=false`,
-        { headers: { Authorization: `Bearer ${adminToken}` } }
-      );
-      if (!resp.ok) {
-        throw new HttpsError('internal', `Failed to list Matrix users: ${await resp.text()}`);
-      }
-      const data = await resp.json() as {
-        users: Array<{ name: string; avatar_url?: string; user_type?: string | null }>;
-        next_token?: string;
-      };
-
-      for (const u of data.users) {
-        // Only touch normal local users (skip appservice/bots/support users).
-        if (u.user_type) continue;
-        result.scanned++;
-
-        const matrixUserId = u.name; // @localpart:server
-        const localpart = matrixUserId.replace(/^@/, '').split(':')[0];
-
-        const current = (u.avatar_url ?? '').trim();
-
-        // Already a spec-compliant mxc avatar (migrated, or a custom avatar the user set in
-        // Element) — never overwrite.
-        if (current.startsWith('mxc://')) {
-          result.skippedHasAvatar++;
-          continue;
-        }
-
-        // Legacy https avatar (one WE set — the imgix URL) — migrate it to mxc by
-        // re-uploading the same image to the Synapse media repo so Element and bridges render it.
-        if (current.startsWith('http')) {
-          try {
-            const mxc = dryRun ? current : await uploadUrlToMatrixMedia(current, adminToken);
-            if (!dryRun) await setMatrixAvatarUrl(matrixUserId, mxc, adminToken);
-            result.migratedHttp.push({ matrixUserId, avatarUrl: mxc });
-          } catch (e) {
-            console.warn(`repairMatrixAvatars: http→mxc failed for ${matrixUserId}: ${(e as Error).message}`);
-            result.skippedNoAvatar.push(matrixUserId);
-          }
-          continue;
-        }
-
-        // No avatar at all — fill from the person avatar, uploaded as mxc.
-        const desiredHttp = avatarByLocalpart.get(localpart);
-        if (!desiredHttp) {
-          result.skippedNoAvatar.push(matrixUserId);
-          continue;
-        }
-        try {
-          const mxc = dryRun ? desiredHttp : await uploadUrlToMatrixMedia(desiredHttp, adminToken);
-          if (!dryRun) await setMatrixAvatarUrl(matrixUserId, mxc, adminToken);
-          result.repaired.push({ matrixUserId, avatarUrl: mxc });
-        } catch (e) {
-          console.warn(`repairMatrixAvatars: fill failed for ${matrixUserId}: ${(e as Error).message}`);
-          result.skippedNoAvatar.push(matrixUserId);
-        }
-      }
-
-      if (data.next_token === undefined) break;
-      from = Number(data.next_token);
-    }
-
-    console.log(
-      `repairMatrixAvatars: scanned=${result.scanned} ` +
-      `repaired=${result.repaired.length} migratedHttp=${result.migratedHttp.length} ` +
-      `noAvatar=${result.skippedNoAvatar.length} ` +
-      `hasAvatar=${result.skippedHasAvatar} applied=${result.applied}`
-    );
-    return result;
-  }
+  handleRepairMatrixAvatars,
 );

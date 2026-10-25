@@ -32,6 +32,7 @@ import { HttpsError } from 'firebase-functions/v2/https';
 import { deactivateMatrixUser, repairMatrixAvatars, repairMatrixDisplayNames } from './credentials';
 import { backfillMatrixRoomTenants } from './tenant-backfill';
 import { listUnassignedMatrixRooms } from './room-assignment';
+import { matrixAdmin } from './matrix-admin';
 
 const req = (data: unknown = {}) => ({ auth: { uid: 'u1' }, app: {}, data }) as never;
 const fetchMock = vi.fn();
@@ -51,6 +52,28 @@ describe('operator gate on homeserver-wide chat tools', () => {
     fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => ({ rooms: [], users: [] }), text: async () => '{}' });
     vi.stubGlobal('fetch', fetchMock);
   });
+
+  // Review Focus 4: the same gate through the consolidated router (the guard lives in the body).
+  for (const name of Object.keys(handlers)) {
+    it(`matrixAdmin op ${name}: an admin of tenant scs gets permission-denied and nothing is read`, async () => {
+      state.user = { roles: { admin: true }, tenants: ['scs'] };
+      await expect(matrixAdmin.run(req({ op: name, personKey: 'p1' }))).rejects.toMatchObject({ code: 'permission-denied' });
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(state.scans).toBe(0);
+    });
+
+    it(`matrixAdmin op ${name}: an admin of tenant bka passes the gate`, async () => {
+      state.user = { roles: { admin: true }, tenants: ['bka'] };
+      let code: string | undefined;
+      try {
+        await matrixAdmin.run(req({ op: name, personKey: 'p1' }));
+      } catch (e) {
+        code = (e as { code?: string }).code;
+      }
+      expect(code).not.toBe('permission-denied');
+      expect(fetchMock.mock.calls.length + state.scans).toBeGreaterThan(0);
+    });
+  }
 
   for (const [name, handler] of Object.entries(handlers)) {
     it(`${name}: an admin of tenant scs gets permission-denied and nothing is read`, async () => {

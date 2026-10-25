@@ -9,7 +9,7 @@
 
 import type { GroupWrittenEvent } from '../group/group-written-event';
 import { getFirestore } from 'firebase-admin/firestore';
-import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onCall, HttpsError, type CallableRequest } from 'firebase-functions/v2/https';
 
 import {
   MATRIX_HOMESERVER,
@@ -232,6 +232,26 @@ export async function runRoomPostPolicySweep(): Promise<void> {
  * Reparaturweg fuer jede Drift — dieselbe Rolle, die reconcileGroupRoomMembers fuer die
  * Mitgliedschaften spielt, und derselbe Rollenkreis.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleSyncRoomPostPolicy(request: CallableRequest<any>): Promise<{ result: 'unchanged' | 'applied' | 'no-room' }> {
+  const uid = await requireRole(request, 'syncRoomPostPolicy', ['admin', 'memberAdmin', 'groupAdmin']);
+
+  const groupId = requireParam((request.data as { groupId?: unknown })?.groupId, 'groupId');
+
+  // Tenant-Grenze wie in pruneGroupRoomExtras (membership-sync.ts): sonst kann eine
+  // groupAdmin-Rolle in Mandant A einen Abgleich auf eine Gruppe in Mandant B ausloesen.
+  const groupSnap = await getFirestore().collection(GROUP_COLLECTION).doc(groupId).get();
+  if (!groupSnap.exists) throw new HttpsError('not-found', `Group ${groupId} not found`);
+  const groupTenants = (groupSnap.data()?.['tenants'] ?? []) as string[];
+  const callerTenants = await getUserTenants(uid);
+  if (!groupTenants.some((t) => callerTenants.includes(t))) {
+    throw new HttpsError('permission-denied', `Group ${groupId} is not in one of your tenants.`);
+  }
+
+  const result = await applyRoomPostPolicy(groupId, matrixAdminToken.value(), serverHostname());
+  return { result };
+}
+
 export const syncRoomPostPolicy = onCall(
   {
     cors: true,
@@ -239,22 +259,5 @@ export const syncRoomPostPolicy = onCall(
     enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
-  async (request): Promise<{ result: 'unchanged' | 'applied' | 'no-room' }> => {
-    const uid = await requireRole(request, 'syncRoomPostPolicy', ['admin', 'memberAdmin', 'groupAdmin']);
-
-    const groupId = requireParam((request.data as { groupId?: unknown })?.groupId, 'groupId');
-
-    // Tenant-Grenze wie in pruneGroupRoomExtras (membership-sync.ts): sonst kann eine
-    // groupAdmin-Rolle in Mandant A einen Abgleich auf eine Gruppe in Mandant B ausloesen.
-    const groupSnap = await getFirestore().collection(GROUP_COLLECTION).doc(groupId).get();
-    if (!groupSnap.exists) throw new HttpsError('not-found', `Group ${groupId} not found`);
-    const groupTenants = (groupSnap.data()?.['tenants'] ?? []) as string[];
-    const callerTenants = await getUserTenants(uid);
-    if (!groupTenants.some((t) => callerTenants.includes(t))) {
-      throw new HttpsError('permission-denied', `Group ${groupId} is not in one of your tenants.`);
-    }
-
-    const result = await applyRoomPostPolicy(groupId, matrixAdminToken.value(), serverHostname());
-    return { result };
-  },
+  handleSyncRoomPostPolicy,
 );

@@ -8,7 +8,7 @@
 // rooms that already existed before the marker was introduced. DMs are out of scope by
 // design — see the doc comment on the function.
 
-import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onCall, HttpsError, type CallableRequest } from 'firebase-functions/v2/https';
 import { checkOperatorTenant } from '@okr/shared-util-functions';
 import { getFirestore } from 'firebase-admin/firestore';
 
@@ -51,6 +51,92 @@ interface BackfillResult {
  * Idempotent: rooms that already carry a marker are skipped, so a re-run only picks up what
  * is new. Call with `{ dryRun: true }` first to see what it would do.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleBackfillMatrixRoomTenants(request: CallableRequest<any>): Promise<BackfillResult> {
+  await requireRole(request, 'backfillMatrixRoomTenants', ['admin']);
+  await checkOperatorTenant(request, 'backfillMatrixRoomTenants');
+
+  const { dryRun = false } = (request.data ?? {}) as { dryRun?: boolean };
+  const adminToken = matrixAdminToken.value();
+  const db = getFirestore();
+
+  // --- Firestore side: group rooms by alias localpart and by persisted matrixRoomId ---
+  const groupsSnap = await db.collection('groups').get();
+  const tenantsByAlias = new Map<string, string[]>();
+  const tenantsByRoomId = new Map<string, string[]>();
+  for (const doc of groupsSnap.docs) {
+    const tenants = (doc.data()['tenants'] as string[] | undefined) ?? [];
+    if (!tenants.length) continue;
+    tenantsByAlias.set(groupRoomAliasLocalpart(doc.id), tenants);
+    const roomId = doc.data()['matrixRoomId'] as string | undefined;
+    if (roomId) tenantsByRoomId.set(roomId, tenants);
+  }
+
+  // --- Matrix side: every room on the homeserver ---
+  const rooms: Array<{ roomId: string; canonicalAlias?: string; name?: string }> = [];
+  let from = 0;
+  for (;;) {
+    const resp = await fetch(
+      `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms?limit=100&from=${from}`,
+      { headers: { Authorization: `Bearer ${adminToken}` } }
+    );
+    if (!resp.ok) throw new HttpsError('internal', `Failed to list rooms: ${await resp.text()}`);
+    const data = await resp.json() as {
+      rooms: Array<{ room_id: string; canonical_alias?: string; name?: string }>;
+      next_batch?: number;
+    };
+    for (const r of data.rooms) rooms.push({ roomId: r.room_id, canonicalAlias: r.canonical_alias, name: r.name });
+    if (!data.next_batch || rooms.length >= 1000) break;
+    from = data.next_batch;
+  }
+
+  const result: BackfillResult = { stamped: 0, alreadyMarked: 0, ambiguous: [], changes: {}, names: {}, dryRun };
+
+  // Joining the admin into a room it isn't in costs a rate-limited make_room_admin call
+  // (~1/minute, see ensureAdminInRoom), so a run over many such rooms would hit the 540s
+  // function timeout. Stop early instead and let the operator press the button again — the
+  // whole thing is idempotent, and a partial run is progress, not damage.
+  const startedAt = Date.now();
+  const deadlineMs = 420_000;
+
+  for (const room of rooms) {
+    if (!dryRun && Date.now() - startedAt > deadlineMs) {
+      console.log(`backfillMatrixRoomTenants: stopping early after ${Math.round((Date.now() - startedAt) / 1000)}s — re-run to continue`);
+      break;
+    }
+    // Any marker at all means the room is already decided — INCLUDING an empty one, which
+    // says "assigned to no okr app" (an unassigned bridged chat, or an archived group's room).
+    // Reading that as "unmarked" would re-stamp an archived group's room from its still-present
+    // alias and resurrect it in the app, undoing the archive.
+    if ((await getRoomTenantMarker(room.roomId, adminToken)) !== undefined) {
+      result.alreadyMarked++;
+      continue;
+    }
+
+    // Group room: by canonical alias, or by the group's persisted matrixRoomId.
+    // Lowercased: `groupRoomAliasLocalpart` lowercases the okey, but rooms created by an
+    // older code path carry the okey's original case (`#group_Trainerteam`,
+    // `#group_memberAdmin`, `#group_contentAdmin`). Comparing raw missed exactly those.
+    const aliasLocalpart = room.canonicalAlias?.split(':')[0].replace(/^#/, '').toLowerCase();
+    const tenants = (aliasLocalpart ? tenantsByAlias.get(aliasLocalpart) : undefined)
+      ?? tenantsByRoomId.get(room.roomId);
+
+    // Not a group room (DM/ad-hoc) → leave unmarked, report it
+    if (!tenants?.length) {
+      result.ambiguous.push(room.roomId);
+      continue;
+    }
+
+    result.changes[room.roomId] = tenants;
+    result.names[room.roomId] = room.name || room.canonicalAlias || '';
+    if (!dryRun && await setRoomTenants(room.roomId, tenants, adminToken)) result.stamped++;
+  }
+
+  console.log(`backfillMatrixRoomTenants: ${rooms.length} rooms, stamped=${result.stamped}, ` +
+    `alreadyMarked=${result.alreadyMarked}, ambiguous=${result.ambiguous.length}, dryRun=${dryRun}`);
+  return result;
+}
+
 export const backfillMatrixRoomTenants = onCall(
   {
     cors: true,
@@ -59,88 +145,5 @@ export const backfillMatrixRoomTenants = onCall(
     secrets: [matrixAdminToken],
     timeoutSeconds: 540,
   },
-  async (request): Promise<BackfillResult> => {
-    await requireRole(request, 'backfillMatrixRoomTenants', ['admin']);
-    await checkOperatorTenant(request, 'backfillMatrixRoomTenants');
-
-    const { dryRun = false } = (request.data ?? {}) as { dryRun?: boolean };
-    const adminToken = matrixAdminToken.value();
-    const db = getFirestore();
-
-    // --- Firestore side: group rooms by alias localpart and by persisted matrixRoomId ---
-    const groupsSnap = await db.collection('groups').get();
-    const tenantsByAlias = new Map<string, string[]>();
-    const tenantsByRoomId = new Map<string, string[]>();
-    for (const doc of groupsSnap.docs) {
-      const tenants = (doc.data()['tenants'] as string[] | undefined) ?? [];
-      if (!tenants.length) continue;
-      tenantsByAlias.set(groupRoomAliasLocalpart(doc.id), tenants);
-      const roomId = doc.data()['matrixRoomId'] as string | undefined;
-      if (roomId) tenantsByRoomId.set(roomId, tenants);
-    }
-
-    // --- Matrix side: every room on the homeserver ---
-    const rooms: Array<{ roomId: string; canonicalAlias?: string; name?: string }> = [];
-    let from = 0;
-    for (;;) {
-      const resp = await fetch(
-        `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms?limit=100&from=${from}`,
-        { headers: { Authorization: `Bearer ${adminToken}` } }
-      );
-      if (!resp.ok) throw new HttpsError('internal', `Failed to list rooms: ${await resp.text()}`);
-      const data = await resp.json() as {
-        rooms: Array<{ room_id: string; canonical_alias?: string; name?: string }>;
-        next_batch?: number;
-      };
-      for (const r of data.rooms) rooms.push({ roomId: r.room_id, canonicalAlias: r.canonical_alias, name: r.name });
-      if (!data.next_batch || rooms.length >= 1000) break;
-      from = data.next_batch;
-    }
-
-    const result: BackfillResult = { stamped: 0, alreadyMarked: 0, ambiguous: [], changes: {}, names: {}, dryRun };
-
-    // Joining the admin into a room it isn't in costs a rate-limited make_room_admin call
-    // (~1/minute, see ensureAdminInRoom), so a run over many such rooms would hit the 540s
-    // function timeout. Stop early instead and let the operator press the button again — the
-    // whole thing is idempotent, and a partial run is progress, not damage.
-    const startedAt = Date.now();
-    const deadlineMs = 420_000;
-
-    for (const room of rooms) {
-      if (!dryRun && Date.now() - startedAt > deadlineMs) {
-        console.log(`backfillMatrixRoomTenants: stopping early after ${Math.round((Date.now() - startedAt) / 1000)}s — re-run to continue`);
-        break;
-      }
-      // Any marker at all means the room is already decided — INCLUDING an empty one, which
-      // says "assigned to no okr app" (an unassigned bridged chat, or an archived group's room).
-      // Reading that as "unmarked" would re-stamp an archived group's room from its still-present
-      // alias and resurrect it in the app, undoing the archive.
-      if ((await getRoomTenantMarker(room.roomId, adminToken)) !== undefined) {
-        result.alreadyMarked++;
-        continue;
-      }
-
-      // Group room: by canonical alias, or by the group's persisted matrixRoomId.
-      // Lowercased: `groupRoomAliasLocalpart` lowercases the okey, but rooms created by an
-      // older code path carry the okey's original case (`#group_Trainerteam`,
-      // `#group_memberAdmin`, `#group_contentAdmin`). Comparing raw missed exactly those.
-      const aliasLocalpart = room.canonicalAlias?.split(':')[0].replace(/^#/, '').toLowerCase();
-      const tenants = (aliasLocalpart ? tenantsByAlias.get(aliasLocalpart) : undefined)
-        ?? tenantsByRoomId.get(room.roomId);
-
-      // Not a group room (DM/ad-hoc) → leave unmarked, report it
-      if (!tenants?.length) {
-        result.ambiguous.push(room.roomId);
-        continue;
-      }
-
-      result.changes[room.roomId] = tenants;
-      result.names[room.roomId] = room.name || room.canonicalAlias || '';
-      if (!dryRun && await setRoomTenants(room.roomId, tenants, adminToken)) result.stamped++;
-    }
-
-    console.log(`backfillMatrixRoomTenants: ${rooms.length} rooms, stamped=${result.stamped}, ` +
-      `alreadyMarked=${result.alreadyMarked}, ambiguous=${result.ambiguous.length}, dryRun=${dryRun}`);
-    return result;
-  }
+  handleBackfillMatrixRoomTenants,
 );
