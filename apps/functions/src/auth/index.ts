@@ -89,48 +89,43 @@ export async function resolveAttachments(
  * @param: uid the firebase user id of the user to impersonate
  * @return: the custom token of the given user
  */
-export const createCustomToken = functions.onCall(
-  {
-    region: 'europe-west6',
-    enforceAppCheck: true,
-  },
-  async (request: functions.CallableRequest<{ uid: string }>) => {
-    const CF_NAME = 'createCustomToken';
-    logger.info(`${CF_NAME}: Processing request`, {
-      uid: request.data.uid,
-      authUid: request.auth?.uid,
-      appCheck: !!request.app,
-      serviceAccount: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'default',
-    });
+export async function handleCreateCustomToken(request: functions.CallableRequest<any>) {
+  const CF_NAME = 'createCustomToken';
+  logger.info(`${CF_NAME}: Processing request`, {
+    uid: request.data.uid,
+    authUid: request.auth?.uid,
+    appCheck: !!request.app,
+    serviceAccount: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'default',
+  });
 
-    checkAppCheckToken(request as any, CF_NAME);
-    checkAuthentication(request as any, CF_NAME);
-    await checkAdminRole(request as any, CF_NAME);
-    checkStringField(request as any, CF_NAME, 'uid');
-    const caller = await getCallerContext(request as any, CF_NAME);
-    if (!caller.isOperator) {
-      // only logins of the caller's own tenant, and never an operator login
-      const target = await loadTenantUser(request.data.uid, caller.tenantId);
-      if (isOperatorUserData(target.data())) {
-        logger.warn(`${CF_NAME}: refused, target ${request.data.uid} is an operator login`);
-        throw new functions.HttpsError('permission-denied', 'Dieses Benutzerkonto kannst du nicht übernehmen.');
-      }
-    }
-
-    try {
-      logger.info(`${CF_NAME}: user ${request.auth?.uid} (tenant ${caller.tenantId}) wants custom token of user ${request.data.uid}`);
-      // `impersonatedBy` marks the session, so it can never add a passkey to the member's account (spec 1.120)
-      const _customToken = await getAuth().createCustomToken(request.data.uid, { impersonatedBy: request.auth?.uid ?? 'unknown' });
-      // Do NOT log the token itself — a custom token can be exchanged for a full
-      // session of the impersonated user (H-4). Log only the target uid.
-      logger.info(`${CF_NAME}: custom token created successfully for uid ${request.data.uid}`);
-      return { success: true, token: _customToken };
-    } catch (error: any) {
-      console.error(`${CF_NAME}: ERROR: `, error);
-      throw new functions.HttpsError('internal', `Could not create custom token: ${error.message}`);
+  checkAppCheckToken(request as any, CF_NAME);
+  checkAuthentication(request as any, CF_NAME);
+  await checkAdminRole(request as any, CF_NAME);
+  checkStringField(request as any, CF_NAME, 'uid');
+  const caller = await getCallerContext(request as any, CF_NAME);
+  if (!caller.isOperator) {
+    // only logins of the caller's own tenant, and never an operator login
+    const target = await loadTenantUser(request.data.uid, caller.tenantId);
+    if (isOperatorUserData(target.data())) {
+      logger.warn(`${CF_NAME}: refused, target ${request.data.uid} is an operator login`);
+      throw new functions.HttpsError('permission-denied', 'Dieses Benutzerkonto kannst du nicht übernehmen.');
     }
   }
-);
+
+  try {
+    logger.info(`${CF_NAME}: user ${request.auth?.uid} (tenant ${caller.tenantId}) wants custom token of user ${request.data.uid}`);
+    // `impersonatedBy` marks the session, so it can never add a passkey to the member's account (spec 1.120)
+    const _customToken = await getAuth().createCustomToken(request.data.uid, { impersonatedBy: request.auth?.uid ?? 'unknown' });
+    // Do NOT log the token itself — a custom token can be exchanged for a full
+    // session of the impersonated user (H-4). Log only the target uid.
+    logger.info(`${CF_NAME}: custom token created successfully for uid ${request.data.uid}`);
+    return { success: true, token: _customToken };
+  } catch (error: any) {
+    console.error(`${CF_NAME}: ERROR: `, error);
+    throw new functions.HttpsError('internal', `Could not create custom token: ${error.message}`);
+  }
+}
+export const createCustomToken = functions.onCall({ region: 'europe-west6', enforceAppCheck: true }, handleCreateCustomToken);
 
 /**
  * Create a new firebase user.
@@ -138,171 +133,151 @@ export const createCustomToken = functions.onCall(
  * @param password the password of the new user
  * @param displayName the display name fo the new user
  */
-export const createFirebaseUser = functions.onCall(
-  {
-    region: 'europe-west6',
-    enforceAppCheck: true,
-  },
-  async (request: functions.CallableRequest<{ email: string; password: string; displayName: string }>) => {
-    const CF_NAME = 'createFirebaseUser';
-    // Do NOT log email/password/displayName — PII + credential (privacy inventory §7.1).
-    logger.info(`${CF_NAME}: Processing request`, {
-      authUid: request.auth?.uid,
-      appCheck: !!request.app,
-      serviceAccount: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'default',
-    });
+export async function handleCreateFirebaseUser(request: functions.CallableRequest<any>) {
+  const CF_NAME = 'createFirebaseUser';
+  // Do NOT log email/password/displayName — PII + credential (privacy inventory §7.1).
+  logger.info(`${CF_NAME}: Processing request`, {
+    authUid: request.auth?.uid,
+    appCheck: !!request.app,
+    serviceAccount: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'default',
+  });
 
-    checkAppCheckToken(request as any, CF_NAME);
-    checkAuthentication(request as any, CF_NAME);
-    await checkAdminRole(request as any, CF_NAME);
-    // a `…@login.<domain>` address belongs to a Benutzername account; only openAccount hands those out
-    if (isSyntheticLoginEmail(request.data?.email)) {
-      logger.warn(`${CF_NAME}: refused a Benutzername login address`);
-      throw new functions.HttpsError('failed-precondition', 'Eine Benutzername-Adresse vergibt nur die Konto-Eröffnung.');
-    }
-
-    try {
-      const userRecord = await getAuth().createUser({
-        email: request.data.email,
-        password: request.data.password,
-        displayName: request.data.displayName,
-      });
-      console.log(`${CF_NAME}: OK`);
-      return { uid: userRecord.uid };
-    } catch (error: any) {
-      console.error(`${CF_NAME}: ERROR: `, error);
-      throw new functions.HttpsError('internal', `Failed to create user: ${error.message}`);
-    }
+  checkAppCheckToken(request as any, CF_NAME);
+  checkAuthentication(request as any, CF_NAME);
+  await checkAdminRole(request as any, CF_NAME);
+  // a `…@login.<domain>` address belongs to a Benutzername account; only openAccount hands those out
+  if (isSyntheticLoginEmail(request.data?.email)) {
+    logger.warn(`${CF_NAME}: refused a Benutzername login address`);
+    throw new functions.HttpsError('failed-precondition', 'Eine Benutzername-Adresse vergibt nur die Konto-Eröffnung.');
   }
-);
+
+  try {
+    const userRecord = await getAuth().createUser({
+      email: request.data.email,
+      password: request.data.password,
+      displayName: request.data.displayName,
+    });
+    console.log(`${CF_NAME}: OK`);
+    return { uid: userRecord.uid };
+  } catch (error: any) {
+    console.error(`${CF_NAME}: ERROR: `, error);
+    throw new functions.HttpsError('internal', `Failed to create user: ${error.message}`);
+  }
+}
+export const createFirebaseUser = functions.onCall({ region: 'europe-west6', enforceAppCheck: true }, handleCreateFirebaseUser);
 
 /**
  * Lookup a firebase user by its loginEmail and return its uid.
  * @param: email the login email of the user to lookup
  * @return: the firebase uid of the user with the given email
  */
-export const getUidByEmail = functions.onCall(
-  {
-    region: 'europe-west6',
-    enforceAppCheck: true,
-  },
-  async (request: functions.CallableRequest<{ email: string }>) => {
-    const CF_NAME = 'getUidByEmail';
-    // Do NOT log the looked-up email — PII (privacy inventory §7.2).
-    logger.info(`${CF_NAME}: Processing request`, {
-      authUid: request.auth?.uid,
-      appCheck: !!request.app,
-      serviceAccount: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'default',
-    });
-    checkAppCheckToken(request as any, CF_NAME);
-    checkAuthentication(request as any, CF_NAME);
-    await checkAdminRole(request as any, CF_NAME);
-    checkStringField(request as any, CF_NAME, 'email');
-    const caller = await getCallerContext(request as any, CF_NAME);
+export async function handleGetUidByEmail(request: functions.CallableRequest<any>) {
+  const CF_NAME = 'getUidByEmail';
+  // Do NOT log the looked-up email — PII (privacy inventory §7.2).
+  logger.info(`${CF_NAME}: Processing request`, {
+    authUid: request.auth?.uid,
+    appCheck: !!request.app,
+    serviceAccount: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'default',
+  });
+  checkAppCheckToken(request as any, CF_NAME);
+  checkAuthentication(request as any, CF_NAME);
+  await checkAdminRole(request as any, CF_NAME);
+  checkStringField(request as any, CF_NAME, 'email');
+  const caller = await getCallerContext(request as any, CF_NAME);
 
-    try {
-      const user = await getAuth().getUserByEmail(request.data.email);
-      if (!caller.isOperator) {
-        const doc = await getFirestore().collection('users').doc(user.uid).get();
-        if (!doc.exists || !isSoleTenantUserData(doc.data(), caller.tenantId)) {
-          // answer exactly like an unknown email (same error path as getUserByEmail not-found)
-          throw new Error('There is no user record corresponding to the provided identifier.');
-        }
+  try {
+    const user = await getAuth().getUserByEmail(request.data.email);
+    if (!caller.isOperator) {
+      const doc = await getFirestore().collection('users').doc(user.uid).get();
+      if (!doc.exists || !isSoleTenantUserData(doc.data(), caller.tenantId)) {
+        // answer exactly like an unknown email (same error path as getUserByEmail not-found)
+        throw new Error('There is no user record corresponding to the provided identifier.');
       }
-      console.log('getUidByEmail: OK');
-      return { uid: user.uid };
-    } catch (error: any) {
-      console.error('getUidByEmail: ERROR: ', error);
-      throw new functions.HttpsError('internal', `Failed to get the uid: ${error.message}`);
     }
+    console.log('getUidByEmail: OK');
+    return { uid: user.uid };
+  } catch (error: any) {
+    console.error('getUidByEmail: ERROR: ', error);
+    throw new functions.HttpsError('internal', `Failed to get the uid: ${error.message}`);
   }
-);
+}
+export const getUidByEmail = functions.onCall({ region: 'europe-west6', enforceAppCheck: true }, handleGetUidByEmail);
 
 /**
  * Lookup a firebase user by its uid.
  * @param: uid the firebase user id to lookup
  * @return: limited user data to avoid exposing sensitive fields
  */
-export const getFirebaseUser = functions.onCall(
-  {
-    region: 'europe-west6',
-    enforceAppCheck: true,
-  },
-  async (request: functions.CallableRequest<{ uid: string }>) => {
-    const CF_NAME = 'getFirebaseUser';
-    logger.info(`${CF_NAME}: Processing request`, {
-      uid: request.data.uid,
-      authUid: request.auth?.uid,
-      appCheck: !!request.app,
-      serviceAccount: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'default',
-    });
-    checkAppCheckToken(request as any, CF_NAME);
-    checkAuthentication(request as any, CF_NAME);
-    await checkAdminRole(request as any, CF_NAME);
-    checkStringField(request as any, CF_NAME, 'uid');
-    const caller = await getCallerContext(request as any, CF_NAME);
-    if (!caller.isOperator) {
-      await loadTenantUser(request.data.uid, caller.tenantId);
-    }
-
-    try {
-      const user = await getAuth().getUser(request.data.uid);
-      console.log(`${CF_NAME}: OK`);
-      return {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        emailVerified: user.emailVerified,
-        disabled: user.disabled,
-        phone: user.phoneNumber,
-        photoUrl: user.photoURL,
-      };
-      // tbd: customClaims, multiFactor
-    } catch (error: any) {
-      if (error?.code === 'auth/user-not-found') {
-        throw new functions.HttpsError('not-found', 'Dieses Benutzerkonto gibt es nicht.');
-      }
-      console.error(`${CF_NAME}: ERROR: `, error);
-      throw new functions.HttpsError('internal', `Failed to get the firebase user: ${error.message}`);
-    }
+export async function handleGetFirebaseUser(request: functions.CallableRequest<any>) {
+  const CF_NAME = 'getFirebaseUser';
+  logger.info(`${CF_NAME}: Processing request`, {
+    uid: request.data.uid,
+    authUid: request.auth?.uid,
+    appCheck: !!request.app,
+    serviceAccount: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'default',
+  });
+  checkAppCheckToken(request as any, CF_NAME);
+  checkAuthentication(request as any, CF_NAME);
+  await checkAdminRole(request as any, CF_NAME);
+  checkStringField(request as any, CF_NAME, 'uid');
+  const caller = await getCallerContext(request as any, CF_NAME);
+  if (!caller.isOperator) {
+    await loadTenantUser(request.data.uid, caller.tenantId);
   }
-);
+
+  try {
+    const user = await getAuth().getUser(request.data.uid);
+    console.log(`${CF_NAME}: OK`);
+    return {
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+      emailVerified: user.emailVerified,
+      disabled: user.disabled,
+      phone: user.phoneNumber,
+      photoUrl: user.photoURL,
+    };
+    // tbd: customClaims, multiFactor
+  } catch (error: any) {
+    if (error?.code === 'auth/user-not-found') {
+      throw new functions.HttpsError('not-found', 'Dieses Benutzerkonto gibt es nicht.');
+    }
+    console.error(`${CF_NAME}: ERROR: `, error);
+    throw new functions.HttpsError('internal', `Failed to get the firebase user: ${error.message}`);
+  }
+}
+export const getFirebaseUser = functions.onCall({ region: 'europe-west6', enforceAppCheck: true }, handleGetFirebaseUser);
 
 /**
  * Change the password to a given value.
  * @param uid firebase user id of the user to set its password for
  * @param password the new password
  */
-export const setPassword = functions.onCall(
-  {
-    region: 'europe-west6',
-    enforceAppCheck: true,
-  },
-  async (request: functions.CallableRequest<{ uid: string; password: string }>) => {
-    const CF_NAME = 'setPassword';
-    // Do NOT log the password — credential in plaintext (privacy inventory §7.1).
-    logger.info(`${CF_NAME}: Processing request`, {
-      uid: request.data.uid,
-      authUid: request.auth?.uid,
-      appCheck: !!request.app,
-      serviceAccount: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'default',
-    });
-    checkAppCheckToken(request as any, CF_NAME);
-    checkAuthentication(request as any, CF_NAME);
-    await checkAdminRole(request as any, CF_NAME);
-    checkStringField(request as any, CF_NAME, 'uid');
-    checkStringField(request as any, CF_NAME, 'password');
-    // only an account of the caller's own tenant — an admin elsewhere must not take it over
-    await loadTenantUser(request.data.uid, await getCallerTenantId(request as any, CF_NAME));
-    try {
-      await getAuth().updateUser(request.data.uid, { password: request.data.password });
-      console.log(`${CF_NAME}: OK`);
-    } catch (error: any) {
-      console.error(`${CF_NAME}: ERROR: `, error);
-      throw new functions.HttpsError('internal', `Failed to set the password: ${error.message}`);
-    }
+export async function handleSetPassword(request: functions.CallableRequest<any>) {
+  const CF_NAME = 'setPassword';
+  // Do NOT log the password — credential in plaintext (privacy inventory §7.1).
+  logger.info(`${CF_NAME}: Processing request`, {
+    uid: request.data.uid,
+    authUid: request.auth?.uid,
+    appCheck: !!request.app,
+    serviceAccount: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'default',
+  });
+  checkAppCheckToken(request as any, CF_NAME);
+  checkAuthentication(request as any, CF_NAME);
+  await checkAdminRole(request as any, CF_NAME);
+  checkStringField(request as any, CF_NAME, 'uid');
+  checkStringField(request as any, CF_NAME, 'password');
+  // only an account of the caller's own tenant — an admin elsewhere must not take it over
+  await loadTenantUser(request.data.uid, await getCallerTenantId(request as any, CF_NAME));
+  try {
+    await getAuth().updateUser(request.data.uid, { password: request.data.password });
+    console.log(`${CF_NAME}: OK`);
+  } catch (error: any) {
+    console.error(`${CF_NAME}: ERROR: `, error);
+    throw new functions.HttpsError('internal', `Failed to set the password: ${error.message}`);
   }
-);
+}
+export const setPassword = functions.onCall({ region: 'europe-west6', enforceAppCheck: true }, handleSetPassword);
 
 /**
  * True when an admin edit would change the Auth email of a Benutzername account, or turn a real
@@ -327,75 +302,70 @@ export function isBlockedSyntheticEmailChange(currentEmail: string | undefined, 
  * @param phone the new phone number
  * @param photoUrl the new url to the picture of the user
  */
-export const updateFirebaseUser = functions.onCall(
-  {
-    region: 'europe-west6',
-    enforceAppCheck: true,
-  },
-  async (request: functions.CallableRequest<{ uid: string; email: string; displayName: string; emailVerified: boolean; disabled: boolean; phone: string; photoUrl: string }>) => {
-    const CF_NAME = 'updateFirebaseUser';
-    // Do NOT log email/displayName/phone/photoUrl — PII (privacy inventory §7.2).
-    logger.info(CF_NAME + ': Processing request', {
-      uid: request.data.uid,
+export async function handleUpdateFirebaseUser(request: functions.CallableRequest<any>) {
+  const CF_NAME = 'updateFirebaseUser';
+  // Do NOT log email/displayName/phone/photoUrl — PII (privacy inventory §7.2).
+  logger.info(CF_NAME + ': Processing request', {
+    uid: request.data.uid,
+    emailVerified: request.data.emailVerified,
+    disabled: request.data.disabled,
+    authUid: request.auth?.uid,
+    appCheck: !!request.app,
+    serviceAccount: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'default',
+  });
+  checkAppCheckToken(request as any, CF_NAME);
+  checkAuthentication(request as any, CF_NAME);
+  await checkAdminRole(request as any, CF_NAME);
+  checkStringField(request as any, CF_NAME, 'uid');
+  checkStringField(request as any, CF_NAME, 'email');
+  // only an account of the caller's own tenant — an admin elsewhere must not take it over
+  const userSnap = await loadTenantUser(request.data.uid, await getCallerTenantId(request as any, CF_NAME));
+  let currentEmail: string | undefined;
+  try {
+    currentEmail = (await getAuth().getUser(request.data.uid)).email;
+  } catch (error: any) {
+    if (error?.code === 'auth/user-not-found') {
+      logger.warn(CF_NAME + ': unknown uid', { uid: request.data.uid });
+      throw new functions.HttpsError('not-found', 'Dieses Benutzerkonto gibt es nicht.');
+    }
+    console.error(CF_NAME + ': ERROR: ', error);
+    throw new functions.HttpsError('internal', `Failed to read the firebase user: ${error.message}`);
+  }
+  if (isBlockedSyntheticEmailChange(currentEmail, request.data.email)) {
+    logger.warn(CF_NAME + ': refused an email change on a Benutzername account', { uid: request.data.uid });
+    throw new functions.HttpsError('failed-precondition', 'Die Anmelde-Adresse eines Benutzername-Kontos ändert sich nur über «Benutzername ändern» oder «E-Mail tauschen».');
+  }
+  let updatedEmail: string | undefined;
+  try {
+    updatedEmail = (await getAuth().updateUser(request.data.uid, {
+      email: request.data.email,
+      displayName: request.data.displayName || undefined,
       emailVerified: request.data.emailVerified,
       disabled: request.data.disabled,
-      authUid: request.auth?.uid,
-      appCheck: !!request.app,
-      serviceAccount: process.env.GOOGLE_APPLICATION_CREDENTIALS || 'default',
-    });
-    checkAppCheckToken(request as any, CF_NAME);
-    checkAuthentication(request as any, CF_NAME);
-    await checkAdminRole(request as any, CF_NAME);
-    checkStringField(request as any, CF_NAME, 'uid');
-    checkStringField(request as any, CF_NAME, 'email');
-    // only an account of the caller's own tenant — an admin elsewhere must not take it over
-    const userSnap = await loadTenantUser(request.data.uid, await getCallerTenantId(request as any, CF_NAME));
-    let currentEmail: string | undefined;
+      phoneNumber: request.data.phone || undefined,
+      photoURL: request.data.photoUrl || undefined,
+    })).email;
+    console.log(CF_NAME + ': OK');
+  } catch (error: any) {
+    console.error(CF_NAME + ': ERROR: ', error);
+    throw new functions.HttpsError('internal', `Failed to update the firebase user: ${error.message}`);
+  }
+  // users/{uid}.loginEmail is "the Auth email" and only the functions write it (the admin form shows
+  // it read-only) — so it is reconciled here, index included: after an email change, and also when
+  // it had drifted before. Should that write fail after an email change, the old Auth email is put
+  // back, so the two never drift apart.
+  const newEmail = updatedEmail ?? request.data.email;
+  if (isLoginEmailChange(String(userSnap.data()?.['loginEmail'] ?? ''), newEmail)) {
     try {
-      currentEmail = (await getAuth().getUser(request.data.uid)).email;
+      await userSnap.ref.update(withIndex(userSnap, { loginEmail: newEmail }));
     } catch (error: any) {
-      if (error?.code === 'auth/user-not-found') {
-        logger.warn(CF_NAME + ': unknown uid', { uid: request.data.uid });
-        throw new functions.HttpsError('not-found', 'Dieses Benutzerkonto gibt es nicht.');
-      }
-      console.error(CF_NAME + ': ERROR: ', error);
-      throw new functions.HttpsError('internal', `Failed to read the firebase user: ${error.message}`);
-    }
-    if (isBlockedSyntheticEmailChange(currentEmail, request.data.email)) {
-      logger.warn(CF_NAME + ': refused an email change on a Benutzername account', { uid: request.data.uid });
-      throw new functions.HttpsError('failed-precondition', 'Die Anmelde-Adresse eines Benutzername-Kontos ändert sich nur über «Benutzername ändern» oder «E-Mail tauschen».');
-    }
-    let updatedEmail: string | undefined;
-    try {
-      updatedEmail = (await getAuth().updateUser(request.data.uid, {
-        email: request.data.email,
-        displayName: request.data.displayName || undefined,
-        emailVerified: request.data.emailVerified,
-        disabled: request.data.disabled,
-        phoneNumber: request.data.phone || undefined,
-        photoURL: request.data.photoUrl || undefined,
-      })).email;
-      console.log(CF_NAME + ': OK');
-    } catch (error: any) {
-      console.error(CF_NAME + ': ERROR: ', error);
-      throw new functions.HttpsError('internal', `Failed to update the firebase user: ${error.message}`);
-    }
-    // users/{uid}.loginEmail is "the Auth email" and only the functions write it (the admin form shows
-    // it read-only) — so it is reconciled here, index included: after an email change, and also when
-    // it had drifted before. Should that write fail after an email change, the old Auth email is put
-    // back, so the two never drift apart.
-    const newEmail = updatedEmail ?? request.data.email;
-    if (isLoginEmailChange(String(userSnap.data()?.['loginEmail'] ?? ''), newEmail)) {
-      try {
-        await userSnap.ref.update(withIndex(userSnap, { loginEmail: newEmail }));
-      } catch (error: any) {
-        logger.error(CF_NAME + ': could not carry the Auth email over to the users doc', { uid: request.data.uid, message: error?.message });
-        if (currentEmail && isLoginEmailChange(currentEmail, newEmail)) await restoreAuthEmail(request.data.uid, currentEmail, CF_NAME);
-        throw new functions.HttpsError('internal', 'Die Anmelde-E-Mail konnte nicht geändert werden.');
-      }
+      logger.error(CF_NAME + ': could not carry the Auth email over to the users doc', { uid: request.data.uid, message: error?.message });
+      if (currentEmail && isLoginEmailChange(currentEmail, newEmail)) await restoreAuthEmail(request.data.uid, currentEmail, CF_NAME);
+      throw new functions.HttpsError('internal', 'Die Anmelde-E-Mail konnte nicht geändert werden.');
     }
   }
-);
+}
+export const updateFirebaseUser = functions.onCall({ region: 'europe-west6', enforceAppCheck: true }, handleUpdateFirebaseUser);
 
 /** True when `newEmail` is a different address than `currentEmail` (compared case-insensitively, as Firebase does). */
 export function isLoginEmailChange(currentEmail: string | undefined, newEmail: string | undefined): boolean {
@@ -426,75 +396,65 @@ function toFirebaseAuthUser(u: UserRecord): FirebaseAuthUser {
 }
 
 /** Firebase Auth users — all of them for the operator tenant, the caller tenant's own otherwise (spec 1.101 §6). Admin-only. */
-export const listFirebaseUsers = functions.onCall(
-  {
-    region: 'europe-west6',
-    enforceAppCheck: true,
-  },
-  async (request: functions.CallableRequest): Promise<{ users: FirebaseAuthUser[] }> => {
-    const CF_NAME = 'listFirebaseUsers';
-    checkAppCheckToken(request as any, CF_NAME);
-    checkAuthentication(request as any, CF_NAME);
-    await checkAdminRole(request as any, CF_NAME);
+export async function handleListFirebaseUsers(request: functions.CallableRequest<any>): Promise<{ users: FirebaseAuthUser[] }> {
+  const CF_NAME = 'listFirebaseUsers';
+  checkAppCheckToken(request as any, CF_NAME);
+  checkAuthentication(request as any, CF_NAME);
+  await checkAdminRole(request as any, CF_NAME);
 
-    // spec 1.101 §6: the whole project only for the operator tenant. Every other tenant gets the
-    // Auth records of ITS OWN users only — never the project-wide list (other tenants' login emails).
-    const caller = await getCallerContext(request as any, CF_NAME);
-    const users: FirebaseAuthUser[] = [];
+  // spec 1.101 §6: the whole project only for the operator tenant. Every other tenant gets the
+  // Auth records of ITS OWN users only — never the project-wide list (other tenants' login emails).
+  const caller = await getCallerContext(request as any, CF_NAME);
+  const users: FirebaseAuthUser[] = [];
 
-    if (caller.isOperator) {
-      let pageToken: string | undefined;
-      do {
-        const result = await getAuth().listUsers(1000, pageToken);
-        users.push(...result.users.map(toFirebaseAuthUser));
-        pageToken = result.pageToken;
-      } while (pageToken);
-    } else {
-      const snap = await getFirestore().collection('users').where('tenants', 'array-contains', caller.tenantId).get();
-      // getUsers takes at most 100 identifiers; a uid without a login is simply not returned.
-      // Same archive rule as listBkUsers (missing isArchived = active), so every login returned has a user doc there.
-      const activeIds = snap.docs.filter(d => d.data()['isArchived'] !== true).map(d => d.id);
-      for (const slice of chunk(activeIds.filter(id => id.length > 0 && id.length <= 128), 100)) {
-        const result = await getAuth().getUsers(slice.map(uid => ({ uid })));
-        users.push(...result.users.map(toFirebaseAuthUser));
-      }
+  if (caller.isOperator) {
+    let pageToken: string | undefined;
+    do {
+      const result = await getAuth().listUsers(1000, pageToken);
+      users.push(...result.users.map(toFirebaseAuthUser));
+      pageToken = result.pageToken;
+    } while (pageToken);
+  } else {
+    const snap = await getFirestore().collection('users').where('tenants', 'array-contains', caller.tenantId).get();
+    // getUsers takes at most 100 identifiers; a uid without a login is simply not returned.
+    // Same archive rule as listBkUsers (missing isArchived = active), so every login returned has a user doc there.
+    const activeIds = snap.docs.filter(d => d.data()['isArchived'] !== true).map(d => d.id);
+    for (const slice of chunk(activeIds.filter(id => id.length > 0 && id.length <= 128), 100)) {
+      const result = await getAuth().getUsers(slice.map(uid => ({ uid })));
+      users.push(...result.users.map(toFirebaseAuthUser));
     }
-
-    logger.info(`${CF_NAME}: returned ${users.length} users for tenant ${caller.tenantId}`);
-    return { users };
   }
-);
+
+  logger.info(`${CF_NAME}: returned ${users.length} users for tenant ${caller.tenantId}`);
+  return { users };
+}
+export const listFirebaseUsers = functions.onCall({ region: 'europe-west6', enforceAppCheck: true }, handleListFirebaseUsers);
 
 /**
  * List non-archived BK user documents — of ALL tenants for the operator tenant (to tell
  * "no BK account anywhere" apart from "BK account in another tenant"), of the caller's tenant
  * otherwise (spec 1.101 §6). Admin SDK bypasses the rules. Admin-only.
  */
-export const listBkUsers = functions.onCall(
-  {
-    region: 'europe-west6',
-    enforceAppCheck: true,
-  },
-  async (request: functions.CallableRequest): Promise<{ users: any[] }> => {
-    const CF_NAME = 'listBkUsers';
-    checkAppCheckToken(request as any, CF_NAME);
-    checkAuthentication(request as any, CF_NAME);
-    await checkAdminRole(request as any, CF_NAME);
+export async function handleListBkUsers(request: functions.CallableRequest<any>): Promise<{ users: any[] }> {
+  const CF_NAME = 'listBkUsers';
+  checkAppCheckToken(request as any, CF_NAME);
+  checkAuthentication(request as any, CF_NAME);
+  await checkAdminRole(request as any, CF_NAME);
 
-    const caller = await getCallerContext(request as any, CF_NAME);
-    const db = getFirestore();
-    // spec 1.101 §6: all tenants only for the operator tenant. The archive filter runs in memory for
-    // both branches: a missing isArchived field means active (isArchived !== true).
-    const docs = (caller.isOperator
-      ? (await db.collection('users').get()).docs
-      : (await db.collection('users').where('tenants', 'array-contains', caller.tenantId).get()).docs
-    ).filter(doc => doc.data()['isArchived'] !== true);
-    const users = docs.map(doc => ({ okey: doc.id, ...doc.data() }));
+  const caller = await getCallerContext(request as any, CF_NAME);
+  const db = getFirestore();
+  // spec 1.101 §6: all tenants only for the operator tenant. The archive filter runs in memory for
+  // both branches: a missing isArchived field means active (isArchived !== true).
+  const docs = (caller.isOperator
+    ? (await db.collection('users').get()).docs
+    : (await db.collection('users').where('tenants', 'array-contains', caller.tenantId).get()).docs
+  ).filter(doc => doc.data()['isArchived'] !== true);
+  const users = docs.map(doc => ({ okey: doc.id, ...doc.data() }));
 
-    logger.info(`${CF_NAME}: returned ${users.length} users for tenant ${caller.tenantId}`);
-    return { users };
-  }
-);
+  logger.info(`${CF_NAME}: returned ${users.length} users for tenant ${caller.tenantId}`);
+  return { users };
+}
+export const listBkUsers = functions.onCall({ region: 'europe-west6', enforceAppCheck: true }, handleListBkUsers);
 
 /**
  * Tenants the CALLER can actually log in to.
@@ -530,40 +490,38 @@ export const listMyLoginTenants = functions.onCall(
   }
 );
 
-export const deleteFirebaseAuthUser = functions.onCall(
-  { region: 'europe-west6', enforceAppCheck: true },
-  async (request: functions.CallableRequest<{ uid: string }>): Promise<void> => {
-    const CF_NAME = 'deleteFirebaseAuthUser';
-    checkAppCheckToken(request as any, CF_NAME);
-    checkAuthentication(request as any, CF_NAME);
-    await checkAdminRole(request as any, CF_NAME);
-    checkStringField(request as any, CF_NAME, 'uid');
-    const { uid } = request.data;
-    // spec 1.101 §6: any login for the operator tenant; otherwise only a login of the caller's own,
-    // single-tenant user. Without this an admin of any tenant could delete any login in the project.
-    const caller = await getCallerContext(request as any, CF_NAME);
-    const target = await getFirestore().collection('users').doc(uid).get();
-    if (!mayDeleteAuthUser(caller, target.data())) {
-      logger.error(`${CF_NAME}: tenant ${caller.tenantId} may not delete login ${uid}`);
-      throw new functions.HttpsError('permission-denied', 'Dieses Login gehört nicht zu deiner App. Du kannst es hier nicht löschen.');
-    }
-    await getAuth().deleteUser(uid);
-    logger.info(`${CF_NAME}: deleted user ${uid}`);
-    // spec 1.120 §11: a deleted login's passkeys must not outlive it. Best effort — the login is
-    // already gone, and loginVerify refuses a passkey whose Auth account no longer exists.
-    try {
-      const keys = await getFirestore().collection(PasskeyCollection).where('uid', '==', uid).get();
-      for (const slice of chunk(keys.docs, 500)) {
-        const batch = getFirestore().batch();
-        slice.forEach((d) => batch.delete(d.ref));
-        await batch.commit();
-      }
-      if (keys.size > 0) logger.info(`${CF_NAME}: deleted ${keys.size} passkey(s) of user ${uid}`);
-    } catch (error) {
-      logger.error(`${CF_NAME}: passkeys of user ${uid} not deleted`, { error: String(error) });
-    }
+export async function handleDeleteFirebaseAuthUser(request: functions.CallableRequest<any>): Promise<void> {
+  const CF_NAME = 'deleteFirebaseAuthUser';
+  checkAppCheckToken(request as any, CF_NAME);
+  checkAuthentication(request as any, CF_NAME);
+  await checkAdminRole(request as any, CF_NAME);
+  checkStringField(request as any, CF_NAME, 'uid');
+  const { uid } = request.data;
+  // spec 1.101 §6: any login for the operator tenant; otherwise only a login of the caller's own,
+  // single-tenant user. Without this an admin of any tenant could delete any login in the project.
+  const caller = await getCallerContext(request as any, CF_NAME);
+  const target = await getFirestore().collection('users').doc(uid).get();
+  if (!mayDeleteAuthUser(caller, target.data())) {
+    logger.error(`${CF_NAME}: tenant ${caller.tenantId} may not delete login ${uid}`);
+    throw new functions.HttpsError('permission-denied', 'Dieses Login gehört nicht zu deiner App. Du kannst es hier nicht löschen.');
   }
-);
+  await getAuth().deleteUser(uid);
+  logger.info(`${CF_NAME}: deleted user ${uid}`);
+  // spec 1.120 §11: a deleted login's passkeys must not outlive it. Best effort — the login is
+  // already gone, and loginVerify refuses a passkey whose Auth account no longer exists.
+  try {
+    const keys = await getFirestore().collection(PasskeyCollection).where('uid', '==', uid).get();
+    for (const slice of chunk(keys.docs, 500)) {
+      const batch = getFirestore().batch();
+      slice.forEach((d) => batch.delete(d.ref));
+      await batch.commit();
+    }
+    if (keys.size > 0) logger.info(`${CF_NAME}: deleted ${keys.size} passkey(s) of user ${uid}`);
+  } catch (error) {
+    logger.error(`${CF_NAME}: passkeys of user ${uid} not deleted`, { error: String(error) });
+  }
+}
+export const deleteFirebaseAuthUser = functions.onCall({ region: 'europe-west6', enforceAppCheck: true }, handleDeleteFirebaseAuthUser);
 
 /** Tenant-neutral marker that asks `sendEmail` for the password-reset flow. */
 const PASSWORD_RESET_TEMPLATE = 'password_reset';

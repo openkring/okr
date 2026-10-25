@@ -646,34 +646,33 @@ async function callerIsAdmin(uid: string | undefined, adminClaim: boolean): Prom
  * Manual entry point for the person-list actions. Calls exactly the same
  * openAccount/closeAccount as the trigger — one implementation, two entry points.
  */
-export const syncPersonAccount = onCall(
-  { cors: true, region: 'europe-west6', enforceAppCheck: true },
-  async (request: CallableRequest<{ personKey?: string; tenantId?: string; action?: string }>) => {
-    checkAppCheckToken(request as never, 'syncPersonAccount');
-    checkAuthentication(request as never, 'syncPersonAccount');
-    await checkRoles(request as never, 'syncPersonAccount', ['admin', 'memberAdmin']);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleSyncPersonAccount(request: CallableRequest<any>) {
+  checkAppCheckToken(request as never, 'syncPersonAccount');
+  checkAuthentication(request as never, 'syncPersonAccount');
+  await checkRoles(request as never, 'syncPersonAccount', ['admin', 'memberAdmin']);
 
-    const personKey = request.data?.personKey ?? '';
-    const tenantId = request.data?.tenantId ?? '';
-    const action = request.data?.action ?? '';
-    if (!personKey || !tenantId) {
-      throw new HttpsError('invalid-argument', 'personKey and tenantId are required');
-    }
-    // an admin acts inside their own tenant only — never on the tenant named by the request
-    if (tenantId !== (await getCallerTenantId(request as never, 'syncPersonAccount'))) {
-      throw new HttpsError('permission-denied', 'Dieser Mandant gehört nicht zu deinem Konto.');
-    }
-    if (action !== 'open' && action !== 'close') {
-      throw new HttpsError('invalid-argument', "action must be 'open' or 'close'");
-    }
-
-    // 'open' hands back openAccount's outcome so the admin UI can say what happened
-    // (created / createdWithLoginId + Benutzername / exists / noEmail). Old clients read only `ok`.
-    if (action === 'open') {
-      const restoreLogin = await callerIsAdmin(request.auth?.uid, request.auth?.token?.['admin'] === true);
-      return { ok: true, ...(await openAccount(personKey, tenantId, undefined, { restoreLogin })) };
-    }
-    await closeAccount(personKey, tenantId);
-    return { ok: true };
+  const personKey = request.data?.personKey ?? '';
+  const tenantId = request.data?.tenantId ?? '';
+  const action = request.data?.action ?? '';
+  if (!personKey || !tenantId) {
+    throw new HttpsError('invalid-argument', 'personKey and tenantId are required');
   }
-);
+  // an admin acts inside their own tenant only — never on the tenant named by the request
+  if (tenantId !== (await getCallerTenantId(request as never, 'syncPersonAccount'))) {
+    throw new HttpsError('permission-denied', 'Dieser Mandant gehört nicht zu deinem Konto.');
+  }
+  if (action !== 'open' && action !== 'close') {
+    throw new HttpsError('invalid-argument', "action must be 'open' or 'close'");
+  }
+
+  // 'open' hands back openAccount's outcome so the admin UI can say what happened
+  // (created / createdWithLoginId + Benutzername / exists / noEmail). Old clients read only `ok`.
+  if (action === 'open') {
+    const restoreLogin = await callerIsAdmin(request.auth?.uid, request.auth?.token?.['admin'] === true);
+    return { ok: true, ...(await openAccount(personKey, tenantId, undefined, { restoreLogin })) };
+  }
+  await closeAccount(personKey, tenantId);
+  return { ok: true };
+}
+export const syncPersonAccount = onCall({ cors: true, region: 'europe-west6', enforceAppCheck: true }, handleSyncPersonAccount);

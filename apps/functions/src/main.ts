@@ -11,6 +11,7 @@ import * as Calendar from './calendar';
 import * as Replication from './replication';
 import * as Auth from './auth';
 import * as AccountSync from './auth/account-sync';
+import * as AuthAdmin from './auth/auth-admin';
 import * as LoginId from './auth/login-id';
 import * as LoginWithLoginId from './auth/login-with-login-id';
 import * as Passkey from './auth/passkey';
@@ -181,6 +182,9 @@ export const passkey = Passkey.passkey;
 // email from one account to another (the swap), and change a Benutzername on purpose.
 export const swapLoginEmail = LoginIdAdmin.swapLoginEmail;
 export const setLoginId = LoginIdAdmin.setLoginId;
+// authAdmin: one router callable for the 12 auth admin callables above (createCustomToken … deleteFirebaseAuthUser,
+// syncPersonAccount, swapLoginEmail, setLoginId), which stay as aliases (TOC 3.41 A5)
+export const authAdmin = AuthAdmin.authAdmin;
 
 // workflow trigger rules — event producers, the side-effect outbox and the approval step
 // (specs 2026-08-12-workflow-trigger-rules-design.md, 2026-08-15-approval-workflow-spec.md)

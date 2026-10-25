@@ -41,7 +41,8 @@ async function writeLoginIdExclusively(user: DocumentSnapshot, tenantId: string,
   });
 }
 
-export const swapLoginEmail = onCall({ region: REGION, enforceAppCheck: true, cors: true }, async (request: CallableRequest<{ holderUid?: string; newcomerUid?: string }>) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleSwapLoginEmail(request: CallableRequest<any>) {
   const CF_NAME = 'swapLoginEmail';
   checkAppCheckToken(request as never, CF_NAME);
   await checkAdminRole(request as never, CF_NAME);
@@ -97,9 +98,11 @@ export const swapLoginEmail = onCall({ region: REGION, enforceAppCheck: true, co
   }
   logger.info(`${CF_NAME}: swapped the login email from users/${holderUid} to users/${newcomerUid} (${tenantId})`);
   return { holderLoginId };
-});
+}
+export const swapLoginEmail = onCall({ region: REGION, enforceAppCheck: true, cors: true }, handleSwapLoginEmail);
 
-export const setLoginId = onCall({ region: REGION, enforceAppCheck: true, cors: true }, async (request: CallableRequest<{ uid?: string; loginId?: string }>) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleSetLoginId(request: CallableRequest<any>) {
   const CF_NAME = 'setLoginId';
   checkAppCheckToken(request as never, CF_NAME);
   await checkAdminRole(request as never, CF_NAME);
@@ -145,4 +148,5 @@ export const setLoginId = onCall({ region: REGION, enforceAppCheck: true, cors: 
   }
   logger.info(`${CF_NAME}: users/${uid} has a new Benutzername (${tenantId})`);
   return { loginId };
-});
+}
+export const setLoginId = onCall({ region: REGION, enforceAppCheck: true, cors: true }, handleSetLoginId);
