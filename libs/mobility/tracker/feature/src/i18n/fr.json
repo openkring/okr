@@ -56,6 +56,7 @@
   "section": {
     "change_mode": "Changer de moyen de transport",
     "split": "Diviser",
-    "merge": "Fusionner"
+    "merge": "Fusionner",
+    "detected": "détecté automatiquement"
   }
 }

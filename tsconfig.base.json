@@ -230,6 +230,7 @@
       "@okr/instruments-calculator-ui": ["libs/instruments/calculator/ui/src/index.ts"],
       "@okr/instruments-calculator-util": ["libs/instruments/calculator/util/src/index.ts"],
       "@okr/mobility-flighttracker-util": ["libs/mobility/flighttracker/util/src/index.ts"],
+      "@okr/mobility-tracker-ui": ["libs/mobility/tracker/ui/src/index.ts"],
       "@okr/mobility-tracker-util": ["libs/mobility/tracker/util/src/index.ts"],
       "@okr/i18n-feature": ["libs/i18n/feature/src/index.ts"],
       "@okr/i18n-util": ["libs/i18n/util/src/index.ts"],

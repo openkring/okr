@@ -56,6 +56,7 @@
   "section": {
     "change_mode": "Cambia mezzo di trasporto",
     "split": "Dividi",
-    "merge": "Unisci"
+    "merge": "Unisci",
+    "detected": "rilevato automaticamente"
   }
 }

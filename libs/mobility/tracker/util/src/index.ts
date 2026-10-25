@@ -7,3 +7,5 @@ export * from './lib/track-sections.util';
 export * from './lib/track-summary.util';
 export * from './lib/tracker-session.util';
 export * from './lib/tracker-i18n';
+export * from './lib/track-format.util';
+export * from './lib/track-mode-color';

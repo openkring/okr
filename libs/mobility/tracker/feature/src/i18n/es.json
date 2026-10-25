@@ -56,6 +56,7 @@
   "section": {
     "change_mode": "Cambiar medio de transporte",
     "split": "Dividir",
-    "merge": "Unir"
+    "merge": "Unir",
+    "detected": "detectado automáticamente"
   }
 }

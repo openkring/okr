@@ -56,6 +56,7 @@
   "section": {
     "change_mode": "Verkehrsmittel ändern",
     "split": "Teilen",
-    "merge": "Zusammenlegen"
+    "merge": "Zusammenlegen",
+    "detected": "automatisch erkannt"
   }
 }

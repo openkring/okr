@@ -47,6 +47,7 @@ export const TRACKER_I18N_KEYS = {
   section_change_mode: PFX + 'section.change_mode',
   section_split: PFX + 'section.split',
   section_merge: PFX + 'section.merge',
+  section_detected: PFX + 'section.detected',
 } satisfies Record<string, string>;
 
 export type TrackerI18n = { [K in keyof typeof TRACKER_I18N_KEYS]: Signal<string> };

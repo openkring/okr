@@ -1,0 +1,31 @@
+{
+  "name": "mobility-tracker-ui",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/mobility/tracker/ui/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": [
+    "type:ui",
+    "scope:tracker",
+    "platform:mobile",
+    "platform:web"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/libs/mobility/tracker/ui",
+        "main": "libs/mobility/tracker/ui/src/index.ts",
+        "tsConfig": "libs/mobility/tracker/ui/tsconfig.lib.json",
+        "assets": [],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}
