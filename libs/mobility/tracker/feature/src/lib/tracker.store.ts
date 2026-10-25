@@ -199,18 +199,25 @@ export const TrackerStore = signalStore(
         return true;
       } catch (error) {
         console.error('TrackerStore.upload', error);
-        if (!silent) patchState(store, { uploadError: errorText(error) });
+        // a late result must not touch the state of a newer track started meanwhile
+        const active = store.active();
+        if (!silent && (!active || active.key === t.key)) patchState(store, { uploadError: errorText(error) });
         return false;
       }
     }
 
-    /** Stops recording, marks the track done and uploads it; a failed upload keeps it local (uploadError). */
+    /**
+     * Stops recording and marks the track done locally; resolves with its key right then. The upload runs
+     * fire-and-forget: Firestore's batch.commit() resolves only on the server's ack, so offline it can hang for hours.
+     * A failed upload keeps the track local (uploadError).
+     */
     async function stop(): Promise<string | undefined> {
       if (!store.active()) return undefined;
       s.stopping = true;
+      let done: LocalTrack | undefined;
       try {
-        await stopPlugin();
-        const done = await enqueue(async () => {
+        done = await enqueue(async () => {
+          await stopPlugin(); // inside the queue: a queued resume cannot restart GPS afterwards
           const t = store.active();
           if (!t) return undefined;
           const finished: LocalTrack = { ...t, state: 'done', endedAt: Date.now() };
@@ -218,12 +225,12 @@ export const TrackerStore = signalStore(
           patchState(store, { active: undefined, currentMode: undefined, proposal: undefined, uploadError: undefined });
           return finished;
         });
-        if (!done) return undefined;
-        await uploadTrack(done, false);
-        return done.key;
       } finally {
-        s.stopping = false;
+        s.stopping = false; // before the upload: a new track may start at once
       }
+      if (!done) return undefined;
+      void uploadTrack(done, false);
+      return done.key;
     }
 
     function resetSession(mode: TransportMode): void {
@@ -303,10 +310,10 @@ export const TrackerStore = signalStore(
 
       async pause(): Promise<void> {
         if (store.active()?.state !== 'recording') return;
-        await stopPlugin();
         await enqueue(async () => {
           const t = store.active(); // re-read: a section switch may have finished meanwhile
           if (!t || t.state !== 'recording') return;
+          await stopPlugin(); // inside the queue, like the start in resume()
           const paused: LocalTrack = { ...t, state: 'paused' };
           await store.db.updateTrack(paused);
           patchState(store, { active: paused });
