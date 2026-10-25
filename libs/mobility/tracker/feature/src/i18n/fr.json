@@ -37,7 +37,11 @@
   "resume": {
     "title": "Un enregistrement n’est pas encore terminé.",
     "continue": "Continuer l’enregistrement",
-    "finish": "Terminer"
+    "finish": "Terminer",
+    "open": "Ouvrir"
+  },
+  "stop": {
+    "empty": "Aucun point enregistré — le parcours a été abandonné."
   },
   "proposal": {
     "text": "Changement détecté : {mode} — l’adopter ?",

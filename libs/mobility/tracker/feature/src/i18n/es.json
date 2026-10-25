@@ -11,18 +11,18 @@
     "ski": "Esquí",
     "motorbike": "Moto"
   },
-  "default_name": "Ruta",
+  "default_name": "Recorrido",
   "warning": {
     "whenInUseOnly": "Permite la ubicación «Siempre» para que la grabación siga con la pantalla bloqueada.",
-    "locationDenied": "Sin tu ubicación no se puede grabar ninguna ruta. Puedes cambiarlo en Ajustes.",
+    "locationDenied": "Sin tu ubicación no se puede grabar ningún recorrido. Puedes cambiarlo en Ajustes.",
     "motionDenied": "Sin «Movimiento y forma física» la app no reconoce el medio de transporte. Puedes elegirlo tú.",
-    "notNative": "Solo puedes grabar rutas en la app de tu iPhone.",
+    "notNative": "Solo puedes grabar recorridos en la app de tu iPhone.",
     "startFailed": "No se ha podido iniciar la grabación. Inténtalo de nuevo, por favor.",
     "open_settings": "Abre Ajustes: Privacidad y seguridad › Localización › esta app."
   },
-  "upload_error": "La ruta está guardada en tu dispositivo, pero aún no se ha podido subir.",
+  "upload_error": "El recorrido está guardado en tu dispositivo, pero aún no se ha podido subir.",
   "start": {
-    "title": "Grabar una ruta",
+    "title": "Grabar un recorrido",
     "detect": "Reconocer automáticamente",
     "start": "Iniciar",
     "mode": "Medio de transporte"
@@ -37,7 +37,11 @@
   "resume": {
     "title": "Hay una grabación sin terminar.",
     "continue": "Seguir grabando",
-    "finish": "Terminar"
+    "finish": "Terminar",
+    "open": "Abrir"
+  },
+  "stop": {
+    "empty": "No se ha grabado ningún punto: el recorrido se ha descartado."
   },
   "proposal": {
     "text": "Cambio detectado: {mode} — ¿aplicarlo?",
@@ -45,14 +49,14 @@
     "dismiss": "No, gracias"
   },
   "list": {
-    "title": "Mis rutas",
-    "empty": "Aún no hay rutas. Empieza tu primera grabación.",
-    "not_uploaded": "Aún no subida",
+    "title": "Mis recorridos",
+    "empty": "Aún no hay recorridos. Empieza tu primera grabación.",
+    "not_uploaded": "Aún no subido",
     "retry_upload": "Subir de nuevo",
     "rename": "Renombrar",
     "rename_prompt": "Nuevo nombre",
     "delete": "Eliminar",
-    "delete_confirm": "¿Eliminar esta ruta?",
+    "delete_confirm": "¿Eliminar este recorrido?",
     "share_gpx": "Compartir GPX"
   },
   "section": {

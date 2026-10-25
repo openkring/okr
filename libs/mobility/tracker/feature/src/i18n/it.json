@@ -37,7 +37,11 @@
   "resume": {
     "title": "Una registrazione non è ancora terminata.",
     "continue": "Continua a registrare",
-    "finish": "Termina"
+    "finish": "Termina",
+    "open": "Apri"
+  },
+  "stop": {
+    "empty": "Nessun punto registrato: il percorso è stato scartato."
   },
   "proposal": {
     "text": "Cambio rilevato: {mode} — applicarlo?",

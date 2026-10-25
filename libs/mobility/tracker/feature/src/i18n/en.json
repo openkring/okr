@@ -37,7 +37,11 @@
   "resume": {
     "title": "A recording has not been finished yet.",
     "continue": "Keep recording",
-    "finish": "Finish"
+    "finish": "Finish",
+    "open": "Open"
+  },
+  "stop": {
+    "empty": "No points were recorded — the track was discarded."
   },
   "proposal": {
     "text": "Change detected: {mode} — switch?",

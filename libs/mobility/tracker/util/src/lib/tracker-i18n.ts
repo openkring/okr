@@ -33,6 +33,8 @@ export const TRACKER_I18N_KEYS = {
   resume_title: PFX + 'resume.title',
   resume_continue: PFX + 'resume.continue',
   resume_finish: PFX + 'resume.finish',
+  resume_open: PFX + 'resume.open',
+  stop_empty: PFX + 'stop.empty',
   proposal_text: PFX + 'proposal.text', // single braces: {mode} — translateAll strips {{…}}
   proposal_accept: PFX + 'proposal.accept',
   proposal_dismiss: PFX + 'proposal.dismiss',
