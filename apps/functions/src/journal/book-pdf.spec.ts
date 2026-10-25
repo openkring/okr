@@ -6,10 +6,13 @@ import PDFDocument from 'pdfkit';
 import type { BookPage } from '@okr/travel-journal-util';
 
 import { htmlToRuns } from './book-html';
-import { applyPdfX4, bookAsset, createBookDoc, glyphSegments, pdfkitPaginate, relieve, writeBookPdf } from './book-pdf';
+import { applyPdfX4, createBookDoc, glyphSegments, pdfkitPaginate, relieve, writeBookPdf } from './book-pdf';
 
 // a 4 × 3 px RGB JPEG
 const JPEG = Buffer.from('/9j/4AAQSkZJRgABAQAASABIAAD/4QBMRXhpZgAATU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAABKADAAQAAAABAAAAAwAAAAD/7QA4UGhvdG9zaG9wIDMuMAA4QklNBAQAAAAAAAA4QklNBCUAAAAAABDUHYzZjwCyBOmACZjs+EJ+/8AAEQgAAwAEAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/bAEMAAgICAgICAwICAwUDAwMFBgUFBQUGCAYGBgYGCAoICAgICAgKCgoKCgoKCgwMDAwMDA4ODg4ODw8PDw8PDw8PD//bAEMBAgICBAQEBwQEBxALCQsQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEP/dAAQAAf/aAAwDAQACEQMRAD8A8Pooor+dz/SA/9k=', 'base64');
+
+// stands in for the FOGRA39 profile (not in the repo, ruling R15)
+const FAKE_ICC = Buffer.alloc(512, 7);
 
 const pt = (mm: number) => Math.round(((mm * 72) / 25.4) * 1e6) / 1e6;
 
@@ -32,7 +35,7 @@ async function render(x4: boolean): Promise<{ pdf: string; missing: string[] }> 
   doc.on('data', (c: Buffer) => chunks.push(c));
   const ended = new Promise((resolve) => doc.on('end', resolve));
   const missing: string[] = [];
-  if (x4) applyPdfX4(doc, { title: 'Antarktis & zurück', iccFogra: bookAsset('ISOcoated_v2_eci.icc'), trim: { w: 297, h: 210 }, bleedMm: 3 });
+  if (x4) applyPdfX4(doc, { title: 'Antarktis & zurück', iccFogra: FAKE_ICC, trim: { w: 297, h: 210 }, bleedMm: 3 });
   await writeBookPdf(doc, PAGES, {
     bleedMm: x4 ? 3 : 0, x4,
     image: async (key) => (key === 'img1' ? JPEG : (missing.push(key), undefined)),
@@ -78,7 +81,7 @@ describe('book pdf', () => {
 
   it('applyPdfX4 refuses a page that is not trim plus bleed', () => {
     const doc = new PDFDocument({ pdfVersion: '1.6', autoFirstPage: false });
-    applyPdfX4(doc, { title: 't', iccFogra: bookAsset('ISOcoated_v2_eci.icc'), trim: { w: 297, h: 210 }, bleedMm: 3 });
+    applyPdfX4(doc, { title: 't', iccFogra: FAKE_ICC, trim: { w: 297, h: 210 }, bleedMm: 3 });
     expect(() => doc.addPage({ size: 'A4', margin: 0 })).toThrow(/trim/);
   });
 

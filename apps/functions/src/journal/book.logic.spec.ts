@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { TRANSPORT_MODES } from '@okr/shared-models';
 
 import {
-  BOOK_LABEL_KEYS, BookExportRequestError, bookObjectPath, bookAuthorName, bookPhotoSources, canStartExport, exportLinkPaths, exportWarningCount, parseBookExportRequest,
+  BOOK_LABEL_KEYS, BookExportRequestError, bookObjectPath, bookAuthorName, bookPhotoSources, canStartExport, exportLinkPaths, FOGRA_ICC_PATH, iccMissingMessage, exportWarningCount, parseBookExportRequest,
   parseBookRequest,
 } from './book.logic';
 
@@ -135,5 +135,12 @@ describe('export warning count', () => {
     expect(exportWarningCount(warnings, 'print', 2)).toBe(5);
     expect(exportWarningCount(warnings, 'screen', 0)).toBe(1);
     expect(exportWarningCount(warnings, 'screen', 1)).toBe(2);
+  });
+});
+
+describe('FOGRA ICC profile location (ruling R15)', () => {
+  it('names the private bucket object in the failure message', () => {
+    expect(FOGRA_ICC_PATH).toBe('assets/book/ISOcoated_v2_eci.icc');
+    expect(iccMissingMessage('bkaiser-org-private')).toBe('ICC profile missing: gs://bkaiser-org-private/assets/book/ISOcoated_v2_eci.icc');
   });
 });

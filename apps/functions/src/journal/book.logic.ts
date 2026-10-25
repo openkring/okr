@@ -140,3 +140,10 @@ export function stamp(ms: number): string {
 export function bookObjectPath(tenantId: string, journalKey: string, kind: BookExportKind | 'cover', ms: number): string {
   return journalObjectPath(tenantId, journalKey, `book/${kind}-${stamp(ms)}.pdf`);
 }
+
+/** The FOGRA39 output-intent profile in the private bucket (not in the repo: ECI licence, ruling R15). */
+export const FOGRA_ICC_PATH = 'assets/book/ISOcoated_v2_eci.icc';
+
+export function iccMissingMessage(bucketName: string): string {
+  return `ICC profile missing: gs://${bucketName}/${FOGRA_ICC_PATH}`;
+}

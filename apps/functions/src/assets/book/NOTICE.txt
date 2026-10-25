@@ -1,11 +1,14 @@
 Assets of the travel-journal book export (exportJournalBook, spec 1.113 phase 2 §7). Bundled with the
-Cloud Function, unchanged from their sources. Fetched 2026-10-25.
+Cloud Function (except the ECI profile, see below), unchanged from their sources. Fetched 2026-10-25.
 
-ISOcoated_v2_eci.icc
-  ISO Coated v2 (ECI), characterisation data FOGRA39L. European Color Initiative (ECI), www.eci.org,
-  package "ECI_Offset_2009" (https://eci.org/lib/exe/eci_offset_2009.zip, file ECI_Offset_2009/ISOcoated_v2_eci.icc).
-  ECI: "The ECI offset profiles ... are available as a free download". Embedded unchanged as the PDF/X-4
-  output intent (DestOutputProfile), the use it is published for.
+ISOcoated_v2_eci.icc  (NOT bundled)
+  ISO Coated v2 (ECI), characterisation data FOGRA39L. European Color Initiative (ECI), www.eci.org, package
+  "ECI_Offset_2009" (https://eci.org/lib/exe/eci_offset_2009.zip, file ECI_Offset_2009/ISOcoated_v2_eci.icc).
+  Not part of this repository: the function reads it at runtime from the private bucket object
+  assets/book/ISOcoated_v2_eci.icc and embeds it unchanged as the PDF/X-4 output intent (print export only).
+  Operator upload (once per project):
+    gcloud storage cp ISOcoated_v2_eci.icc gs://bkaiser-org-private/assets/book/ISOcoated_v2_eci.icc
+  While the object is missing, a print export fails with "ICC profile missing: gs://<bucket>/assets/book/ISOcoated_v2_eci.icc".
   SHA-256 128dc02f7246cc3807af0323695379f64151a8f27a587736acc59f8b6ce894b8
 
 sRGB.icc

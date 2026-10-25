@@ -11,10 +11,10 @@ import { acceptRecord, BookLayout, coverLayout, DEFAULT_BLEED_MM, imagesOf, layo
 
 import { privateBucket } from '../_storage/private-bucket';
 import { journalObjectPath } from './apply-journal-change.logic';
-import { applyPdfX4, bookAsset, createBookDoc, pdfkitPaginate, writeBookPdf, writeCoverPdf } from './book-pdf';
+import { applyPdfX4, createBookDoc, pdfkitPaginate, writeBookPdf, writeCoverPdf } from './book-pdf';
 import {
   BookExportKind, BookExportRequest, BookExportRequestError, BookLinksRequest, bookObjectPath, bookAuthorName, bookPhotoSources, canStartExport, exportLinkPaths,
-  exportWarningCount, parseBookRequest,
+  exportWarningCount, FOGRA_ICC_PATH, iccMissingMessage, parseBookRequest,
 } from './book.logic';
 import { JournalCaller, requireJournalAuthor } from './journal-auth';
 
@@ -86,6 +86,30 @@ async function signedUrl(bucket: Bucket, path: string): Promise<string> {
   return url;
 }
 
+let fograProfile: Promise<Buffer> | undefined;
+
+/**
+ * The FOGRA39 output-intent profile (ECI licence: not redistributed in the public repo, ruling R15), read once per
+ * instance from the private bucket. A missing object fails the export before any PDF byte is written; a failure is
+ * not cached, so uploading the file fixes the next export without a redeploy.
+ */
+function loadFograProfile(bucket: Bucket): Promise<Buffer> {
+  fograProfile ??= (async () => {
+    const [exists] = await bucket.file(FOGRA_ICC_PATH).exists();
+    if (!exists) {
+      const message = iccMissingMessage(bucket.name);
+      logger.error('exportJournalBook:' + message);
+      throw new Error(message);
+    }
+    const [data] = await bucket.file(FOGRA_ICC_PATH).download();
+    return data;
+  })().catch((e) => {
+    fograProfile = undefined;
+    throw e;
+  });
+  return fograProfile;
+}
+
 interface Written { bookPath: string; coverPath?: string; pageCount: number; warnings: number }
 
 async function writeExport(db: Firestore, caller: JournalCaller, req: BookExportRequest, book: JournalBookModel, nowMs: number): Promise<Written> {
@@ -93,6 +117,7 @@ async function writeExport(db: Firestore, caller: JournalCaller, req: BookExport
   const ref = db.collection(JournalBookCollection).doc(caller.journalKey);
   const print = req.kind === 'print';
   const bleedMm = print ? (book.print?.bleedMm ?? DEFAULT_BLEED_MM) : 0;
+  const iccFogra = print ? await loadFograProfile(bucket) : undefined;
   const layoutInput = print ? book : { ...book, print: { ...book.print, bleedMm: 0 } };
 
   const state = await journalState(db, caller.journalKey);
@@ -119,7 +144,7 @@ async function writeExport(db: Firestore, caller: JournalCaller, req: BookExport
   // the book
   const doc = createBookDoc();
   const layout: BookLayout = layoutBook({ state, journalKey: caller.journalKey, book: layoutInput, labels: req.labels, authorName, paginate: pdfkitPaginate(doc) });
-  if (print) applyPdfX4(doc, { title: layout.title, iccFogra: bookAsset('ISOcoated_v2_eci.icc'), trim: { w: 297, h: 210 }, bleedMm });
+  if (iccFogra) applyPdfX4(doc, { title: layout.title, iccFogra, trim: { w: 297, h: 210 }, bleedMm });
   const bookPath = bookObjectPath(caller.tenantId, caller.journalKey, req.kind, nowMs);
   const total = layout.pages.length;
   const written: string[] = [];
@@ -134,7 +159,7 @@ async function writeExport(db: Firestore, caller: JournalCaller, req: BookExport
     const cover = print ? coverLayout(book, layout.title, layout.period, layout.coverImageKey) : undefined;
     if (cover) {
       const cdoc = createBookDoc();
-      applyPdfX4(cdoc, { title: layout.title, iccFogra: bookAsset('ISOcoated_v2_eci.icc'), trim: { w: cover.width - 2 * bleedMm, h: cover.height - 2 * bleedMm }, bleedMm });
+      applyPdfX4(cdoc, { title: layout.title, iccFogra: iccFogra as Buffer, trim: { w: cover.width - 2 * bleedMm, h: cover.height - 2 * bleedMm }, bleedMm });
       coverPath = bookObjectPath(caller.tenantId, caller.journalKey, 'cover', nowMs);
       written.push(coverPath);
       await streamPdf(bucket, cdoc, coverPath, () => writeCoverPdf(cdoc, cover, { bleedMm, x4: true, image, mapImage }));
