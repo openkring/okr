@@ -156,6 +156,8 @@
     "add_view": "Add the map view",
     "add_antarctica": "Add Antarctica expedition",
     "preset_antarctica": "Antarctica expedition",
+    "add_subantarctic": "Add Falklands, South Georgia, South Sandwich",
+    "preset_subantarctic": "Falklands, South Georgia, South Sandwich",
     "level_title": "How detailed should the map be?",
     "level_overview": "Overview · about {mb} MB",
     "level_detail": "Detail · about {mb} MB",

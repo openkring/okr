@@ -101,6 +101,8 @@ export const JOURNAL_I18N_KEYS = {
   map_add_view: PFX + 'map.add_view',
   map_add_antarctica: PFX + 'map.add_antarctica',
   map_preset_antarctica: PFX + 'map.preset_antarctica',
+  map_add_subantarctic: PFX + 'map.add_subantarctic',
+  map_preset_subantarctic: PFX + 'map.preset_subantarctic',
   map_level_title: PFX + 'map.level_title',
   map_level_overview: PFX + 'map.level_overview',
   map_level_detail: PFX + 'map.level_detail',

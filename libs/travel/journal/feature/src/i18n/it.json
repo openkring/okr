@@ -156,6 +156,8 @@
     "add_view": "Aggiungi la vista della mappa",
     "add_antarctica": "Aggiungi spedizione in Antartide",
     "preset_antarctica": "Spedizione in Antartide",
+    "add_subantarctic": "Aggiungi Falkland, Georgia del Sud, Sandwich Australi",
+    "preset_subantarctic": "Falkland, Georgia del Sud, Sandwich Australi",
     "level_title": "Con quanto dettaglio?",
     "level_overview": "Panoramica · circa {mb} MB",
     "level_detail": "Dettaglio · circa {mb} MB",

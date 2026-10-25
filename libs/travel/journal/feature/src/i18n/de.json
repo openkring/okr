@@ -156,6 +156,8 @@
     "add_view": "Kartenausschnitt hinzufügen",
     "add_antarctica": "Antarktis-Expedition hinzufügen",
     "preset_antarctica": "Antarktis-Expedition",
+    "add_subantarctic": "Falkland, Südgeorgien, Süd-Sandwich hinzufügen",
+    "preset_subantarctic": "Falkland, Südgeorgien, Süd-Sandwich",
     "level_title": "Wie genau soll die Karte sein?",
     "level_overview": "Übersicht · etwa {mb} MB",
     "level_detail": "Detail · etwa {mb} MB",

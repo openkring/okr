@@ -156,6 +156,8 @@
     "add_view": "Añadir la vista del mapa",
     "add_antarctica": "Añadir expedición a la Antártida",
     "preset_antarctica": "Expedición a la Antártida",
+    "add_subantarctic": "Añadir Malvinas, Georgia del Sur, Sandwich del Sur",
+    "preset_subantarctic": "Malvinas, Georgia del Sur, Sandwich del Sur",
     "level_title": "¿Con cuánto detalle?",
     "level_overview": "Vista general · unos {mb} MB",
     "level_detail": "Detalle · unos {mb} MB",

@@ -5,7 +5,7 @@ import { MapView } from '@okr/shared-ui';
 import { okrPrompt } from '@okr/shared-util-angular';
 import { fill } from '@okr/shared-util-core';
 import {
-  ANTARCTICA_PRESET, areaTilePlan, Bbox, DetailLevel, detailLevels, estimateBytes, journalTilePlan, MapArea, sourceFor,
+  ANTARCTICA_PRESET, SUBANTARCTIC_PRESET, areaTilePlan, Bbox, DetailLevel, detailLevels, estimateBytes, journalTilePlan, MapArea, sourceFor,
 } from '@okr/travel-journal-util';
 
 import { JournalStore } from './journal.store';
@@ -100,6 +100,10 @@ export class JournalOfflineMap {
           text: this.i18n.map_add_antarctica(),
           handler: () => void this.store.addMapArea(journalKey, { ...ANTARCTICA_PRESET, name: this.i18n.map_preset_antarctica() }),
         }]),
+        ...(areas.some((a) => a.preset === 'subantarctic-islands') ? [] : [{
+          text: this.i18n.map_add_subantarctic(),
+          handler: () => void this.store.addMapArea(journalKey, { ...SUBANTARCTIC_PRESET, name: this.i18n.map_preset_subantarctic() }),
+        }]),
         ...(this.status().state === 'ready' || this.status().state === 'partial'
           ? [{ text: this.i18n.map_free(), role: 'destructive', handler: () => void this.confirmFree(journalKey) }] : []),
         { text: this.i18n.cancel(), role: 'cancel' },
@@ -120,7 +124,11 @@ export class JournalOfflineMap {
   }
 
   private areaLabel(area: MapArea): string {
-    return area.preset ? this.i18n.map_preset_antarctica() : area.name;
+    switch (area.preset) {
+      case 'antarctica-expedition': return this.i18n.map_preset_antarctica();
+      case 'subantarctic-islands': return this.i18n.map_preset_subantarctic();
+      default: return area.name;
+    }
   }
 
   private async confirmRemove(journalKey: string, area: MapArea): Promise<void> {

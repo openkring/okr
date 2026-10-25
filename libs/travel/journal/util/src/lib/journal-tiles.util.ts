@@ -44,7 +44,20 @@ export const LANDING_SITES: { name: string; lat: number; lng: number }[] = [
   { name: 'Vernadsky Station', lat: -65.245, lng: -64.257 },
 ];
 
-const GIBS_TEMPLATE = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief_Bathymetry/default/2004-08-01/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpg';
+/** Falklands → South Georgia → South Sandwich Islands: the open sea between them, as Blue Marble only. */
+export const SUBANTARCTIC_BBOX: Bbox = [-62, -60, -25, -50];
+
+/**
+ * The island groups of the Scotia Sea, north of the LIMA mosaic: OpenStreetMap detail, each to its own zoom.
+ * The South Sandwich Islands are mostly sea and rarely landed on, so they stop at overview.
+ */
+export const SUBANTARCTIC_ISLANDS: { name: string; bbox: Bbox; maxZoom: number }[] = [
+  { name: 'Falkland Islands', bbox: [-61.5, -52.5, -57.6, -51.0], maxZoom: 13 },
+  { name: 'South Georgia', bbox: [-38.3, -55.0, -35.6, -53.9], maxZoom: 13 },
+  { name: 'South Sandwich Islands', bbox: [-28.3, -59.6, -26.1, -56.2], maxZoom: 11 },
+];
+
+const GIBS_TEMPLATE ='https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief_Bathymetry/default/2004-08-01/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpg';
 const LIMA_WMS = 'https://nimbus.cr.usgs.gov/arcgis/services/Antarctica/USGS_EROS_Antarctica_LANDSAT/MapServer/WMSServer';
 const LIMA_LAYERS = [1, 2, 3, 4, 5, 6].map((n) => `LANDSAT_15M_RGB_REF_0${n}`).join(',');
 

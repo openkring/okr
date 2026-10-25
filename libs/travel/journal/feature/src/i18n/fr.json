@@ -156,6 +156,8 @@
     "add_view": "Ajouter la vue de la carte",
     "add_antarctica": "Ajouter l’expédition en Antarctique",
     "preset_antarctica": "Expédition en Antarctique",
+    "add_subantarctic": "Ajouter Malouines, Géorgie du Sud, Sandwich du Sud",
+    "preset_subantarctic": "Malouines, Géorgie du Sud, Sandwich du Sud",
     "level_title": "Quel niveau de détail ?",
     "level_overview": "Vue d’ensemble · environ {mb} Mo",
     "level_detail": "Détail · environ {mb} Mo",

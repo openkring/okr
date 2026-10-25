@@ -1,5 +1,5 @@
 import { GIBS_BLUE_MARBLE, JournalTileSource } from './journal-map.util';
-import { Bbox, limaUrl, offlineTilePlan, ROUTE_BBOX, TileJob, tileRange } from './journal-tiles.util';
+import { Bbox, limaUrl, offlineTilePlan, ROUTE_BBOX, SUBANTARCTIC_BBOX, SUBANTARCTIC_ISLANDS, TileJob, tileRange } from './journal-tiles.util';
 
 /**
  * Map areas of a journal (spec 1.113 §9.4, plan 6b): what the offline map covers, per journal. The source
@@ -9,6 +9,8 @@ import { Bbox, limaUrl, offlineTilePlan, ROUTE_BBOX, TileJob, tileRange } from '
  */
 export type MapSource = 'antarctica' | 'swisstopo' | 'osm';
 export type DetailLevel = 'overview' | 'detail' | 'hiking';
+export type MapPreset = 'antarctica-expedition' | 'subantarctic-islands';
+const PRESETS: MapPreset[] = ['antarctica-expedition', 'subantarctic-islands'];
 
 export interface MapArea {
   id: string;
@@ -16,7 +18,7 @@ export interface MapArea {
   source: MapSource;
   bbox: Bbox;
   maxZoom: number;
-  preset?: 'antarctica-expedition';
+  preset?: MapPreset;
 }
 
 /** At most this many tiles per area: the action sheet offers only levels below it. */
@@ -25,6 +27,12 @@ export const TILE_CAP = 20_000;
 /** Plan 6 as an area: route, peninsula and landing sites (plus the journal's footprints). */
 export const ANTARCTICA_PRESET: MapArea = {
   id: 'antarctica-expedition', name: 'Antarktis-Expedition', source: 'antarctica', bbox: ROUTE_BBOX, maxZoom: 12, preset: 'antarctica-expedition',
+};
+
+/** Falklands, South Georgia and the South Sandwich Islands: Blue Marble for the sea, OpenStreetMap per island group. */
+export const SUBANTARCTIC_PRESET: MapArea = {
+  id: 'subantarctic-islands', name: 'Falkland, Südgeorgien, Süd-Sandwich', source: 'osm', bbox: SUBANTARCTIC_BBOX, maxZoom: 13,
+  preset: 'subantarctic-islands',
 };
 
 const SWITZERLAND: Bbox = [5.9, 45.8, 10.5, 47.85];
@@ -103,6 +111,10 @@ function jobsFor(source: TileJob['source'], bbox: Bbox, zMin: number, zMax: numb
 
 export function areaTilePlan(area: MapArea, footprints: { lat: number; lng: number }[]): TileJob[] {
   if (area.preset === 'antarctica-expedition') return offlineTilePlan(footprints);
+  if (area.preset === 'subantarctic-islands') {
+    const jobs = [...jobsFor('gibs', SUBANTARCTIC_BBOX, 3, 8), ...SUBANTARCTIC_ISLANDS.flatMap((i) => jobsFor('osm', i.bbox, 0, i.maxZoom))];
+    return [...new Map(jobs.map((j) => [j.path, j])).values()]; // the island groups share their low-zoom tiles
+  }
   switch (area.source) {
     case 'antarctica':
       return [...jobsFor('gibs', area.bbox, 3, Math.min(8, area.maxZoom)), ...jobsFor('lima', area.bbox, 9, Math.min(12, area.maxZoom))];
@@ -146,16 +158,16 @@ function isArea(value: unknown): value is MapArea {
     && SOURCES.includes(a['source'] as MapSource)
     && Array.isArray(bbox) && bbox.length === 4 && bbox.every((v) => typeof v === 'number' && Number.isFinite(v))
     && typeof a['maxZoom'] === 'number' && Number.isInteger(a['maxZoom']) && (a['maxZoom'] as number) >= 0 && (a['maxZoom'] as number) <= 18
-    && (a['preset'] === undefined || a['preset'] === 'antarctica-expedition');
+    && (a['preset'] === undefined || PRESETS.includes(a['preset'] as MapPreset));
 }
 
 /**
  * Areas arrive from the other iPad and from Firebase, so the limits the UI offers are checked again here:
- * maxZoom at most the source's finest level, at most TILE_CAP tiles (the preset has its own fixed plan).
+ * maxZoom at most the source's finest level, at most TILE_CAP tiles (a preset has its own fixed plan).
  * Otherwise one oversized area would build a tile list large enough to freeze the app.
  */
 function withinLimits(area: MapArea): boolean {
-  if (area.preset === 'antarctica-expedition') return true;
+  if (area.preset !== undefined) return true;
   const finest = Math.max(...LEVELS[area.source].map((l) => l.maxZoom));
   const [w, s, e, n] = area.bbox;
   if (area.maxZoom > finest || w >= e || s >= n) return false;
@@ -193,7 +205,12 @@ export function mapLayers(areas: MapArea[], downloaded: Set<string>, tilesBaseUr
         });
         break;
       case 'osm':
-        if (local) {
+        if (local && area.preset === 'subantarctic-islands') {
+          for (const island of SUBANTARCTIC_ISLANDS) {
+            layers.push({ kind: 'vector', urlTemplate: `${tilesBaseUrl}/osm/{z}/{x}/{y}.mvt`, maxNativeZoom: island.maxZoom,
+              attribution: '© OpenStreetMap, Protomaps', bounds: island.bbox });
+          }
+        } else if (local) {
           layers.push({ kind: 'vector', urlTemplate: `${tilesBaseUrl}/osm/{z}/{x}/{y}.mvt`, maxNativeZoom: area.maxZoom,
             attribution: '© OpenStreetMap, Protomaps', bounds: area.bbox });
         }
