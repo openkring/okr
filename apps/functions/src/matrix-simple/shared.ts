@@ -856,17 +856,29 @@ export async function setRoomTenants(roomId: string, tenants: string[], adminTok
 export async function getRoomTenantMarker(
   roomId: string, adminToken: string, opts: { strict?: boolean } = {},
 ): Promise<string[] | undefined> {
+  // The ADMIN state API, not the client one: the bot is not a member of a DM (or of any room a
+  // member created), and the client API answers 403 «not in room» there — which read as
+  // «unmarked» and let the push gateway deliver an elab DM to the scs app.
   const resp = await fetch(
-    `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/state/${OKR_TENANT_EVENT}/`,
+    `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/state`,
     { headers: { Authorization: `Bearer ${adminToken}` } }
   );
-  // strict: 404 = no marker (a definite answer); any other failure throws instead of reading as «unmarked».
+  // strict: 404 = unknown room, no marker (a definite answer); any other failure throws instead of reading as «unmarked».
   if (!resp.ok) {
     if (opts.strict && resp.status !== 404) throw new Error(`getRoomTenantMarker ${roomId} → ${resp.status}`);
     return undefined;
   }
-  const content = await resp.json() as { tenants?: string[] };
-  return Array.isArray(content.tenants) ? content.tenants : undefined;
+  const body = await resp.json() as { state?: RoomStateEvent[] };
+  return markerFromRoomState(body.state);
+}
+
+interface RoomStateEvent { type?: string; state_key?: string; content?: unknown }
+
+/** The tenants marker within a room's full state (`undefined` = no marker); see `getRoomTenantMarker`. */
+export function markerFromRoomState(state: RoomStateEvent[] | undefined): string[] | undefined {
+  const event = state?.find(e => e.type === OKR_TENANT_EVENT && (e.state_key ?? '') === '');
+  const tenants = (event?.content as { tenants?: unknown } | undefined)?.tenants;
+  return Array.isArray(tenants) ? tenants as string[] : undefined;
 }
 
 /**

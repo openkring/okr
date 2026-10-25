@@ -6,6 +6,7 @@ import {
   BoundedTtlCache,
   groupRoomAliasLocalpart,
   isProtectedRoomAlias,
+  markerFromRoomState,
   mayPinForAll,
   muteBlocksPush,
   nextAdhocAdmin,
@@ -117,6 +118,26 @@ describe('askRoomsToLeave', () => {
       { room_id: '!ask', canonical_alias: '#ask_notfall_x:bkchat.etke.host' },
     ];
     expect(askRoomsToLeave(mixed, 'notfall', 'kaiser')).toEqual(['!ask']);
+  });
+});
+
+describe('markerFromRoomState', () => {
+  const marker = (content: unknown, state_key = '') => ({ type: 'org.okr.tenant', state_key, content });
+
+  it('reads the tenants of the marker event', () => {
+    expect(markerFromRoomState([{ type: 'm.room.create', state_key: '', content: {} }, marker({ tenants: ['elab'] })]))
+      .toEqual(['elab']);
+  });
+
+  it('keeps a deliberately empty marker apart from an absent one', () => {
+    expect(markerFromRoomState([marker({ tenants: [] })])).toEqual([]);
+    expect(markerFromRoomState([{ type: 'm.room.name', state_key: '', content: { name: 'x' } }])).toBeUndefined();
+  });
+
+  it('ignores a marker under another state key or with malformed content', () => {
+    expect(markerFromRoomState([marker({ tenants: ['scs'] }, 'other')])).toBeUndefined();
+    expect(markerFromRoomState([marker({ tenants: 'scs' })])).toBeUndefined();
+    expect(markerFromRoomState(undefined)).toBeUndefined();
   });
 });
 
