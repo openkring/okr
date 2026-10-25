@@ -49,10 +49,12 @@ export const SUBANTARCTIC_BBOX: Bbox = [-62, -60, -25, -50];
 
 /**
  * The island groups of the Scotia Sea, north of the LIMA mosaic: OpenStreetMap detail, each to its own zoom.
- * The South Sandwich Islands are mostly sea and rarely landed on, so they stop at overview.
+ * The South Sandwich Islands are mostly sea and rarely landed on, so they stop at overview. Hummock Island
+ * (King George Bay, West Falkland) gets hiking detail on top of the Falklands box.
  */
 export const SUBANTARCTIC_ISLANDS: { name: string; bbox: Bbox; maxZoom: number }[] = [
   { name: 'Falkland Islands', bbox: [-61.5, -52.5, -57.6, -51.0], maxZoom: 13 },
+  { name: 'Hummock Island', bbox: [-60.52, -51.66, -60.36, -51.57], maxZoom: 15 },
   { name: 'South Georgia', bbox: [-38.3, -55.0, -35.6, -53.9], maxZoom: 13 },
   { name: 'South Sandwich Islands', bbox: [-28.3, -59.6, -26.1, -56.2], maxZoom: 11 },
 ];
@@ -68,6 +70,7 @@ export const SUBANTARCTIC_SITES: { name: string; lat: number; lng: number }[] = 
   { name: 'Saunders Island (The Neck)', lat: -51.31, lng: -60.33 },
   { name: 'Carcass Island', lat: -51.29, lng: -60.56 },
   { name: 'West Point Island', lat: -51.355, lng: -60.68 },
+  { name: 'Hummock Island', lat: -51.614, lng: -60.442 },
   { name: 'New Island', lat: -51.718, lng: -61.288 },
   { name: 'Grand Jason', lat: -51.07, lng: -61.08 },
   { name: 'Steeple Jason', lat: -51.03, lng: -61.21 },

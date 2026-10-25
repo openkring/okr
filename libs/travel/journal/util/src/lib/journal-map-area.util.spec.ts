@@ -33,7 +33,7 @@ describe('journal map areas', () => {
       expect(osm.filter((j) => j.z === island.maxZoom && j.x >= r.x0 && j.x <= r.x1 && j.y >= r.y0 && j.y <= r.y1).length)
         .toBe((r.x1 - r.x0 + 1) * (r.y1 - r.y0 + 1));
     }
-    expect(Math.max(...osm.map((j) => j.z))).toBe(13);
+    expect(Math.max(...osm.map((j) => j.z))).toBe(15); // Hummock Island at hiking detail
     expect(osm.length).toBeLessThan(2 * TILE_CAP);
   });
 
