@@ -357,5 +357,8 @@
       "credit": "Cartes : {sources}",
       "colophon": "Réalisé avec le carnet de voyage"
     }
+  },
+  "tracker": {
+    "record": "Enregistrer un parcours"
   }
 }

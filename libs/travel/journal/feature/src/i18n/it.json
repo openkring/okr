@@ -357,5 +357,8 @@
       "credit": "Mappe: {sources}",
       "colophon": "Realizzato con il diario di viaggio"
     }
+  },
+  "tracker": {
+    "record": "Registra un percorso"
   }
 }

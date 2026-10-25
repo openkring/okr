@@ -17,13 +17,15 @@
     "locationDenied": "Sin tu ubicación no se puede grabar ninguna ruta. Puedes cambiarlo en Ajustes.",
     "motionDenied": "Sin «Movimiento y forma física» la app no reconoce el medio de transporte. Puedes elegirlo tú.",
     "notNative": "Solo puedes grabar rutas en la app de tu iPhone.",
-    "startFailed": "No se ha podido iniciar la grabación. Inténtalo de nuevo, por favor."
+    "startFailed": "No se ha podido iniciar la grabación. Inténtalo de nuevo, por favor.",
+    "open_settings": "Abre Ajustes: Privacidad y seguridad › Localización › esta app."
   },
   "upload_error": "La ruta está guardada en tu dispositivo, pero aún no se ha podido subir.",
   "start": {
     "title": "Grabar una ruta",
     "detect": "Reconocer automáticamente",
-    "start": "Iniciar"
+    "start": "Iniciar",
+    "mode": "Medio de transporte"
   },
   "recording": {
     "pause": "Pausa",
@@ -57,6 +59,20 @@
     "change_mode": "Cambiar medio de transporte",
     "split": "Dividir",
     "merge": "Unir",
-    "detected": "detectado automáticamente"
+    "detected": "detectado automáticamente",
+    "split_mode": "Medio de transporte para la segunda mitad"
+  },
+  "page": {
+    "title": "Recorridos"
+  },
+  "detail": {
+    "sections": "Tramos",
+    "not_found": "No se encontró este recorrido.",
+    "save_error": "No se pudo guardar el cambio. Inténtalo de nuevo, por favor.",
+    "share_error": "No se pudo compartir el archivo GPX."
+  },
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar"
   }
 }

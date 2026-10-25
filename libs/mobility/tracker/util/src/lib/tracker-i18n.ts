@@ -23,6 +23,7 @@ export const TRACKER_I18N_KEYS = {
   upload_error: PFX + 'upload_error',
   start_title: PFX + 'start.title',
   start_detect: PFX + 'start.detect',
+  start_mode: PFX + 'start.mode',
   start_start: PFX + 'start.start',
   recording_pause: PFX + 'recording.pause',
   recording_resume: PFX + 'recording.resume',
@@ -48,6 +49,15 @@ export const TRACKER_I18N_KEYS = {
   section_split: PFX + 'section.split',
   section_merge: PFX + 'section.merge',
   section_detected: PFX + 'section.detected',
+  section_split_mode: PFX + 'section.split_mode',
+  page_title: PFX + 'page.title',
+  warning_open_settings: PFX + 'warning.open_settings',
+  detail_sections: PFX + 'detail.sections',
+  detail_not_found: PFX + 'detail.not_found',
+  detail_save_error: PFX + 'detail.save_error',
+  detail_share_error: PFX + 'detail.share_error',
+  common_save: PFX + 'common.save',
+  common_cancel: PFX + 'common.cancel',
 } satisfies Record<string, string>;
 
 export type TrackerI18n = { [K in keyof typeof TRACKER_I18N_KEYS]: Signal<string> };

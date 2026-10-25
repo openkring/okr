@@ -17,13 +17,15 @@
     "locationDenied": "Ohne deinen Standort kann keine Strecke aufgezeichnet werden. Du kannst das in den Einstellungen ändern.",
     "motionDenied": "Ohne «Bewegung & Fitness» erkennt die App das Verkehrsmittel nicht. Du kannst es von Hand wählen.",
     "notNative": "Strecken aufzeichnen kannst du nur in der App auf dem iPhone.",
-    "startFailed": "Die Aufnahme konnte nicht starten. Versuch es bitte noch einmal."
+    "startFailed": "Die Aufnahme konnte nicht starten. Versuch es bitte noch einmal.",
+    "open_settings": "In den Einstellungen öffnen: Datenschutz & Sicherheit › Ortungsdienste › diese App."
   },
   "upload_error": "Die Strecke ist auf deinem Gerät gespeichert, konnte aber noch nicht hochgeladen werden.",
   "start": {
     "title": "Strecke aufzeichnen",
     "detect": "Automatisch erkennen",
-    "start": "Start"
+    "start": "Start",
+    "mode": "Verkehrsmittel"
   },
   "recording": {
     "pause": "Pause",
@@ -57,6 +59,20 @@
     "change_mode": "Verkehrsmittel ändern",
     "split": "Teilen",
     "merge": "Zusammenlegen",
-    "detected": "automatisch erkannt"
+    "detected": "automatisch erkannt",
+    "split_mode": "Verkehrsmittel für die zweite Hälfte"
+  },
+  "page": {
+    "title": "Strecken"
+  },
+  "detail": {
+    "sections": "Abschnitte",
+    "not_found": "Diese Strecke wurde nicht gefunden.",
+    "save_error": "Die Änderung konnte nicht gespeichert werden. Versuch es bitte noch einmal.",
+    "share_error": "Die GPX-Datei konnte nicht geteilt werden."
+  },
+  "common": {
+    "save": "Speichern",
+    "cancel": "Abbrechen"
   }
 }

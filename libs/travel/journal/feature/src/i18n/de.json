@@ -357,5 +357,8 @@
       "credit": "Karten: {sources}",
       "colophon": "Gestaltet mit dem Reisetagebuch"
     }
+  },
+  "tracker": {
+    "record": "Strecke aufnehmen"
   }
 }

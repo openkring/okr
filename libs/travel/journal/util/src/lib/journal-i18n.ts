@@ -21,6 +21,7 @@ export const JOURNAL_I18N_KEYS = {
   stats_photos: PFX + 'stats.photos',
   footprints_title: PFX + 'footprints.title',
   footprints_new: PFX + 'footprints.new',
+  tracker_record: PFX + 'tracker.record',
   footprints_empty: PFX + 'footprints.empty',
   story_add_text: PFX + 'story.add_text',
   story_add_photos: PFX + 'story.add_photos',

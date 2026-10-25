@@ -21,7 +21,7 @@ import {
  * Every state change of the active track (start, pause, resume, stop, section switch, each fix) runs through ONE
  * promise queue, so a write never works on a stale copy of the track.
  */
-interface TrackerStoreState {
+export interface TrackerStoreState {
   active: LocalTrack | undefined;
   currentMode: TransportMode | undefined;
   points: number;
@@ -37,7 +37,7 @@ const initialState: TrackerStoreState = {
 };
 
 /** Mutable per-session bookkeeping that never renders. */
-interface Session {
+export interface TrackerSession {
   detect: DetectState;
   lastPoint: TrackPoint | undefined;
   sectionHasPoints: boolean;
@@ -69,7 +69,7 @@ export const TrackerStore = signalStore(
     session: {
       detect: initialDetectState('foot'), lastPoint: undefined, sectionHasPoints: false, lastActivity: undefined, lastFix: undefined,
       handles: [], queue: Promise.resolve(), stopping: false, init: undefined,
-    } as Session,
+    } as TrackerSession,
   })),
   withMethods((store) => {
     const s = store.session;

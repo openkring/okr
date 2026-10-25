@@ -17,13 +17,15 @@
     "locationDenied": "Sans ta position, aucun parcours ne peut être enregistré. Tu peux changer cela dans les réglages.",
     "motionDenied": "Sans «Mouvements et forme», l’app ne reconnaît pas le moyen de transport. Tu peux le choisir toi-même.",
     "notNative": "Tu peux enregistrer des parcours uniquement dans l’app sur ton iPhone.",
-    "startFailed": "L’enregistrement n’a pas pu démarrer. Réessaie, s’il te plaît."
+    "startFailed": "L’enregistrement n’a pas pu démarrer. Réessaie, s’il te plaît.",
+    "open_settings": "Ouvre les Réglages : Confidentialité et sécurité › Service de localisation › cette app."
   },
   "upload_error": "Le parcours est enregistré sur ton appareil, mais n’a pas encore pu être envoyé.",
   "start": {
     "title": "Enregistrer un parcours",
     "detect": "Reconnaître automatiquement",
-    "start": "Démarrer"
+    "start": "Démarrer",
+    "mode": "Moyen de transport"
   },
   "recording": {
     "pause": "Pause",
@@ -57,6 +59,20 @@
     "change_mode": "Changer de moyen de transport",
     "split": "Diviser",
     "merge": "Fusionner",
-    "detected": "détecté automatiquement"
+    "detected": "détecté automatiquement",
+    "split_mode": "Moyen de transport pour la seconde moitié"
+  },
+  "page": {
+    "title": "Parcours"
+  },
+  "detail": {
+    "sections": "Sections",
+    "not_found": "Ce parcours est introuvable.",
+    "save_error": "La modification n’a pas pu être enregistrée. Réessaie, s’il te plaît.",
+    "share_error": "Le fichier GPX n’a pas pu être partagé."
+  },
+  "common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler"
   }
 }

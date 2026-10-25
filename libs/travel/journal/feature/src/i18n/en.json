@@ -357,5 +357,8 @@
       "credit": "Maps: {sources}",
       "colophon": "Made with the travel journal"
     }
+  },
+  "tracker": {
+    "record": "Record a track"
   }
 }

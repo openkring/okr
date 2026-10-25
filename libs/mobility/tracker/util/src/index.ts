@@ -9,3 +9,4 @@ export * from './lib/tracker-session.util';
 export * from './lib/tracker-i18n';
 export * from './lib/track-format.util';
 export * from './lib/track-mode-color';
+export * from './lib/track-pages.util';

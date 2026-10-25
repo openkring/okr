@@ -17,13 +17,15 @@
     "locationDenied": "Without your location no track can be recorded. You can change this in Settings.",
     "motionDenied": "Without «Motion & Fitness» the app cannot tell how you travel. You can choose it yourself.",
     "notNative": "You can record tracks only in the app on your iPhone.",
-    "startFailed": "Recording could not start. Please try again."
+    "startFailed": "Recording could not start. Please try again.",
+    "open_settings": "Open in Settings: Privacy & Security › Location Services › this app."
   },
   "upload_error": "The track is saved on your device but could not be uploaded yet.",
   "start": {
     "title": "Record a track",
     "detect": "Detect automatically",
-    "start": "Start"
+    "start": "Start",
+    "mode": "Mode of transport"
   },
   "recording": {
     "pause": "Pause",
@@ -57,6 +59,20 @@
     "change_mode": "Change transport",
     "split": "Split",
     "merge": "Merge",
-    "detected": "detected automatically"
+    "detected": "detected automatically",
+    "split_mode": "Mode of transport for the second half"
+  },
+  "page": {
+    "title": "Tracks"
+  },
+  "detail": {
+    "sections": "Sections",
+    "not_found": "This track could not be found.",
+    "save_error": "The change could not be saved. Please try again.",
+    "share_error": "The GPX file could not be shared."
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel"
   }
 }

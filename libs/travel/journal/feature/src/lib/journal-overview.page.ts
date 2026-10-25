@@ -62,6 +62,7 @@ const WIDE_QUERY = '(min-width: 992px)';
           <!-- the book is made in the browser on the desktop (design §1); the web view lists only the journals one writes in -->
           @if (!store.native() && journal()) { <ion-button (click)="openBook()">{{ store.bookI18n.button() }}</ion-button> }
           <ion-button (click)="info()" [attr.aria-label]="store.i18n.info()"><ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" /></ion-button>
+          @if (store.native()) { <ion-button (click)="recordTrack()">{{ store.i18n.tracker_record() }}</ion-button> }
           @if (store.native()) { <ion-button (click)="newFootprint()">{{ store.i18n.footprints_new() }}</ion-button> }
         </ion-buttons>
       </ion-toolbar>
@@ -176,6 +177,11 @@ export class JournalOverviewPage {
 
   protected openBook(): void {
     void this.router.navigate(['/journal', this.journalKey(), 'book']);
+  }
+
+  /** The tracker (spec 1.121) — a router link only: the journal does not depend on the tracker libs. */
+  protected recordTrack(): void {
+    void this.router.navigate(['/tracker']);
   }
 
   protected openFootprint(footprintKey: string): void {

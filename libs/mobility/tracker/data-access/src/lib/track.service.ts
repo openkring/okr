@@ -34,8 +34,8 @@ export class TrackService {
   /**
    * Upload a finished local track: the trip doc and one track-points doc per section in ONE batch.
    * The trip okey is the local track key and batch.set overwrites, so a retried upload replaces itself.
-   * NOTE: a re-upload with fewer sections leaves the extra track-points docs behind (handled in the
-   * correction task).
+   * NOTE: a re-upload with fewer sections leaves the extra track-points docs behind: remove them with
+   * deleteExtraPoints() once the upload succeeded.
    * @returns the trip key
    */
   public async upload(local: LocalTrack, sections: TrackPoint[][], owner: { personKey: string; uid: string }): Promise<string> {
@@ -115,6 +115,30 @@ export class TrackService {
       'startDate',
       'desc',
     );
+  }
+
+  /**
+   * Deletes the track-points docs fromIndex … toIndexExclusive-1 in one batch (left over after a correction
+   * reduced the number of sections). Call it only after the trip exists (the rules read the trip's owner).
+   */
+  public async deleteExtraPoints(tripKey: string, fromIndex: number, toIndexExclusive: number): Promise<void> {
+    if (toIndexExclusive <= fromIndex) return;
+    const batch = this.firestoreService.getBatch();
+    for (let n = Math.max(0, fromIndex); n < toIndexExclusive; n++) {
+      batch.delete(doc(this.firestoreService.firestore, `${TripCollection}/${tripKey}/${TRACK_POINTS}/${n}`));
+    }
+    await batch.commit();
+  }
+
+  /**
+   * Deletes an uploaded tracker trip the app way (deleting-models skill): through FirestoreService.deleteModel,
+   * which archives it (a tracker trip is single-person and single-tenant). Only `tenants` and `isArchived` are
+   * written. The points stay in place with the archived trip.
+   * @returns the key, or undefined if the write failed (deleteModel already showed the error)
+   */
+  public archive(tripKey: string, tenants?: string[]): Promise<string | undefined> {
+    const model = { okey: tripKey, tenants: tenants && tenants.length > 0 ? [...tenants] : [this.env.tenantId] } as unknown as TripModel;
+    return this.firestoreService.deleteModel(TripCollection, model);
   }
 
   /** The decoded points of one section; [] when the doc is missing. */

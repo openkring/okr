@@ -17,13 +17,15 @@
     "locationDenied": "Senza la tua posizione non si può registrare nessun percorso. Puoi cambiarlo nelle Impostazioni.",
     "motionDenied": "Senza «Movimento e fitness» l’app non riconosce il mezzo di trasporto. Puoi sceglierlo tu.",
     "notNative": "Puoi registrare percorsi solo nell’app sul tuo iPhone.",
-    "startFailed": "Non è stato possibile avviare la registrazione. Riprova, per favore."
+    "startFailed": "Non è stato possibile avviare la registrazione. Riprova, per favore.",
+    "open_settings": "Apri Impostazioni: Privacy e sicurezza › Localizzazione › questa app."
   },
   "upload_error": "Il percorso è salvato sul tuo dispositivo, ma non è ancora stato caricato.",
   "start": {
     "title": "Registra un percorso",
     "detect": "Riconosci automaticamente",
-    "start": "Avvia"
+    "start": "Avvia",
+    "mode": "Mezzo di trasporto"
   },
   "recording": {
     "pause": "Pausa",
@@ -57,6 +59,20 @@
     "change_mode": "Cambia mezzo di trasporto",
     "split": "Dividi",
     "merge": "Unisci",
-    "detected": "rilevato automaticamente"
+    "detected": "rilevato automaticamente",
+    "split_mode": "Mezzo di trasporto per la seconda metà"
+  },
+  "page": {
+    "title": "Percorsi"
+  },
+  "detail": {
+    "sections": "Tratti",
+    "not_found": "Questo percorso non è stato trovato.",
+    "save_error": "Non è stato possibile salvare la modifica. Riprova, per favore.",
+    "share_error": "Non è stato possibile condividere il file GPX."
+  },
+  "common": {
+    "save": "Salva",
+    "cancel": "Annulla"
   }
 }

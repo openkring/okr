@@ -15,6 +15,13 @@
     "@okr/mobility-tracker-util": "*",
     "@angular/core": "*",
     "@capacitor/core": "*",
-    "@ngrx/signals": "*"
+    "@ngrx/signals": "*",
+    "@okr/mobility-tracker-ui": "*",
+    "@okr/shared-pipes": "*",
+    "@okr/shared-util-angular": "*",
+    "@okr/auth-feature": "*",
+    "@angular/router": "*",
+    "@ionic/angular": "*",
+    "rxjs": "*"
   }
 }
