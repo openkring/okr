@@ -17,6 +17,7 @@
     "@okr/shared-ui-editor": "*",
     "@okr/shared-util-angular": "*",
     "@okr/shared-util-core": "*",
+    "@okr/avatar-ui": "*",
     "@okr/cms-menu-feature": "*",
     "@okr/content-diary-data-access": "*",
     "@okr/content-diary-ui": "*",

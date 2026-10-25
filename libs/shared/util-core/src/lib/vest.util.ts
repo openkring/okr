@@ -410,7 +410,7 @@ export function urlValidations(fieldName: string, url: unknown) {
 
 /**
  * Validates a url that will be RENDERED as an image (imgix), not navigated to.
- * Stricter than urlValidations on purpose: `checkUrlType` only recognises https / assets/ /
+ * Stricter than urlValidations on purpose: `checkUrlType` only recognises https / assets/ / general/ /
  * tenant… as renderable, and classifies everything else — including a leading '/' — as 'key'.
  * urlValidations accepts a leading '/' because navigation targets need it; on an image field
  * that same value passes the form and then silently renders as an empty image (getImgixUrl

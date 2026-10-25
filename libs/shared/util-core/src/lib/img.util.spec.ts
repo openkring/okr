@@ -210,6 +210,12 @@ describe('img.util', () => {
       expect(result).toBe('storage');
     });
 
+    it('should return storage for the shared general/ area (coats of arms, flags)', () => {
+      expect(checkUrlType('general/gemeinden/zh/8712_staefa_zh.png')).toBe('storage');
+      expect(checkUrlType('general/kantone/zh.svg')).toBe('storage');
+      expect(checkUrlType('generalized-key')).toBe('key');
+    });
+
     it('should return key for simple keys', () => {
       const result = checkUrlType('simple-key');
       expect(result).toBe('key');
@@ -218,7 +224,7 @@ describe('img.util', () => {
     it('should handle edge cases', () => {
       expect(checkUrlType('assets-similar')).toBe('key');
       expect(checkUrlType('https-similar')).toBe('key');
-      // only paths starting with 'tenant' are classified as storage
+      // only paths starting with 'tenant' or 'general/' are classified as storage
       expect(checkUrlType('path/with/multiple/slashes')).toBe('key');
       expect(checkUrlType('tenant/with/multiple/slashes')).toBe('storage');
     });

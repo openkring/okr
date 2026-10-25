@@ -1,16 +1,17 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, effect, inject, input, untracked } from '@angular/core';
 import {
-  IonAccordion, IonAccordionGroup, IonBadge, IonButton, IonButtons, IonChip, IonContent, IonHeader,
+  IonAccordion, IonAccordionGroup, IonAvatar, IonBadge, IonButton, IonButtons, IonChip, IonContent, IonHeader,
   IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonNote, IonPopover, IonTitle, IonToolbar,
 } from '@ionic/angular';
 
 import { Menu } from '@okr/cms-menu-feature';
-import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { EmptyList, ImgDirective, ListFilter, Spinner } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { CategoryItemModel, CategoryListModel, DiaryModel } from '@okr/shared-models';
 import { AlertService } from '@okr/shared-util-angular';
 import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
+import { AvatarPipe } from '@okr/avatar-ui';
 
 import {
   diaryAvatarName, diaryStateOf, diaryWeatherLine, mainLocation, formatDiaryDateShort, formatDiaryMonthHeader, hasDiaryWeather, isWideDiaryRange, segmentDiaryGroupsByYear,
@@ -32,14 +33,15 @@ const DIARY_STATE_I18N_SCOPE = '@content/diary/feature';
   selector: 'okr-diary-list',
   standalone: true,
   imports: [
-    NgTemplateOutlet, SvgIconPipe, Spinner, EmptyList, ListFilter, Menu, DiaryRangeSelect,
+    NgTemplateOutlet, SvgIconPipe, AvatarPipe, ImgDirective, Spinner, EmptyList, ListFilter, Menu, DiaryRangeSelect,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonPopover,
-    IonContent, IonList, IonItem, IonLabel, IonNote, IonBadge, IonAccordionGroup, IonAccordion, IonChip,
+    IonContent, IonList, IonItem, IonLabel, IonNote, IonBadge, IonAvatar, IonAccordionGroup, IonAccordion, IonChip,
   ],
   providers: [DiaryStore],
   styles: [`
     .preview { opacity: .75; }
     .placeholder ion-label { opacity: .6; }
+    ion-avatar.location { width: 28px; height: 28px; }
   `],
   template: `
     <ion-header>
@@ -146,6 +148,11 @@ const DIARY_STATE_I18N_SCOPE = '@content/diary/feature';
           <ion-badge slot="end" color="warning">{{ store.i18n.state_draft() }}</ion-badge>
         }
         <ion-note slot="end" class="ion-hide-sm-down">{{ mainLocationName(diary) }}</ion-note>
+        @if (mainLocationKey(diary); as key) {
+          <ion-avatar slot="end" class="location">
+            <img okrImg src="{{ key | avatar }}" [alt]="mainLocationName(diary)" />
+          </ion-avatar>
+        }
       </ion-item>
     </ng-template>
   `,
@@ -164,6 +171,12 @@ export class DiaryList {
       const contextMenuName = this.contextMenuName();
       untracked(() => this.store.initFromRoute(listId, contextMenuName));
     });
+  }
+
+  /** `location.<okey>` of the main location — its coat of arms or flag (a free-text place: the default icon). */
+  protected mainLocationKey(diary: DiaryModel): string | undefined {
+    const main = mainLocation(diary);
+    return main ? `location.${main.key}` : undefined;
   }
 
   protected mainLocationName(diary: DiaryModel): string {

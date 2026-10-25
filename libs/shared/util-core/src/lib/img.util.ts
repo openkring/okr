@@ -90,7 +90,8 @@ export function checkUrlType(url: string | undefined): UrlType | undefined {
     return 'http';
   } else if (url.startsWith('assets/')) {
     return 'assets';
-  } else if (url.startsWith('tenant')) {
+  } else if (url.startsWith('tenant') || url.startsWith('general/')) {
+    // general/ is the shared, tenant-less area: coats of arms and flags (location avatars)
     return 'storage';
   } else {
     return 'key';
