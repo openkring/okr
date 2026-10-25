@@ -70,7 +70,7 @@ const WIDE_QUERY = '(min-width: 992px)';
       <div class="layout" [class.wide]="wide()">
         <div class="map">
           <okr-route-map [route]="map().route" [pins]="pins()" [selectedKey]="selectedKey()" [tiles]="mapLayers()"
-            (pinClicked)="openFootprint($event)" (viewChanged)="view.set($event)" />
+            [places]="places()" (pinClicked)="openFootprint($event)" (viewChanged)="view.set($event)" />
         </div>
         <div class="side">
           @if (store.native()) {
@@ -117,6 +117,7 @@ export class JournalOverviewPage {
   protected readonly selectedKey = signal<string | undefined>(undefined);
   protected readonly view = signal<MapView | undefined>(undefined);
   protected readonly mapLayers = computed(() => this.store.mapLayersFor(this.journalKey()));
+  protected readonly places = computed(() => this.store.mapPlacesFor(this.journalKey()));
   protected readonly wide = signal(typeof window !== 'undefined' && window.matchMedia(WIDE_QUERY).matches);
 
   protected readonly journal = computed(() => this.store.journals().find((j) => j.key === this.journalKey()));

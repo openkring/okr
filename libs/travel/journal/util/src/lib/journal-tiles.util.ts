@@ -57,7 +57,48 @@ export const SUBANTARCTIC_ISLANDS: { name: string; bbox: Bbox; maxZoom: number }
   { name: 'South Sandwich Islands', bbox: [-28.3, -59.6, -26.1, -56.2], maxZoom: 11 },
 ];
 
-const GIBS_TEMPLATE ='https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief_Bathymetry/default/2004-08-01/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpg';
+/** Common landing sites of the island groups (approximate), shown as named points on the map. */
+export const SUBANTARCTIC_SITES: { name: string; lat: number; lng: number }[] = [
+  // Falkland Islands
+  { name: 'Stanley', lat: -51.692, lng: -57.858 },
+  { name: 'Gypsy Cove', lat: -51.674, lng: -57.8 },
+  { name: 'Volunteer Point', lat: -51.523, lng: -57.837 },
+  { name: 'Bleaker Island', lat: -52.2, lng: -58.85 },
+  { name: 'Sea Lion Island', lat: -52.43, lng: -59.08 },
+  { name: 'Saunders Island (The Neck)', lat: -51.31, lng: -60.33 },
+  { name: 'Carcass Island', lat: -51.29, lng: -60.56 },
+  { name: 'West Point Island', lat: -51.355, lng: -60.68 },
+  { name: 'New Island', lat: -51.718, lng: -61.288 },
+  { name: 'Grand Jason', lat: -51.07, lng: -61.08 },
+  { name: 'Steeple Jason', lat: -51.03, lng: -61.21 },
+  // South Georgia
+  { name: 'Elsehul', lat: -54.02, lng: -37.98 },
+  { name: 'Right Whale Bay', lat: -54.0, lng: -37.67 },
+  { name: 'Salisbury Plain', lat: -54.05, lng: -37.35 },
+  { name: 'Prion Island', lat: -54.03, lng: -37.25 },
+  { name: 'Fortuna Bay', lat: -54.13, lng: -36.8 },
+  { name: 'Stromness', lat: -54.16, lng: -36.71 },
+  { name: 'Jason Harbour', lat: -54.18, lng: -36.58 },
+  { name: 'Grytviken', lat: -54.282, lng: -36.508 },
+  { name: 'Godthul', lat: -54.29, lng: -36.3 },
+  { name: 'Ocean Harbour', lat: -54.33, lng: -36.27 },
+  { name: 'St Andrews Bay', lat: -54.43, lng: -36.17 },
+  { name: 'Gold Harbour', lat: -54.62, lng: -35.93 },
+  { name: 'Cooper Bay', lat: -54.79, lng: -35.8 },
+  { name: 'Drygalski Fjord', lat: -54.82, lng: -35.97 },
+  // South Sandwich Islands
+  { name: 'Zavodovski Island', lat: -56.3, lng: -27.57 },
+  { name: 'Visokoi Island', lat: -56.7, lng: -27.15 },
+  { name: 'Candlemas Island', lat: -57.08, lng: -26.7 },
+  { name: 'Saunders Island', lat: -57.8, lng: -26.45 },
+  { name: 'Montagu Island', lat: -58.42, lng: -26.38 },
+  { name: 'Bristol Island', lat: -59.03, lng: -26.55 },
+  { name: 'Bellingshausen Island', lat: -59.42, lng: -27.1 },
+  { name: 'Cook Island', lat: -59.45, lng: -27.15 },
+  { name: 'Thule Island', lat: -59.45, lng: -27.37 },
+];
+
+const GIBS_TEMPLATE = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief_Bathymetry/default/2004-08-01/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpg';
 const LIMA_WMS = 'https://nimbus.cr.usgs.gov/arcgis/services/Antarctica/USGS_EROS_Antarctica_LANDSAT/MapServer/WMSServer';
 const LIMA_LAYERS = [1, 2, 3, 4, 5, 6].map((n) => `LANDSAT_15M_RGB_REF_0${n}`).join(',');
 

@@ -8,8 +8,10 @@ import type * as ProtomapsLeaflet from 'protomaps-leaflet';
  * tile source (offline, or tiles not yet downloaded) route and pins still show on a plain background.
  * Layers can be raster tiles or OpenStreetMap vector tiles (`kind: 'vector'`, drawn by protomaps-leaflet,
  * which is loaded only when such a layer is on the map); `bounds` limits a layer to its area.
+ * `places` are named points (e.g. landing sites): small dots, labelled from PLACE_LABEL_ZOOM on, never refitted to.
  */
 export interface RoutePin { key: string; lat: number; lng: number; thumbnailUrl?: string; label: string }
+export interface RoutePlace { name: string; lat: number; lng: number }
 export interface TileSource {
   urlTemplate: string;
   maxNativeZoom: number;
@@ -24,6 +26,7 @@ export interface MapView { bounds: [number, number, number, number]; zoom: numbe
 
 const FIT_PADDING: L.PointExpression = [40, 40];
 const SINGLE_POINT_ZOOM = 10;
+const PLACE_LABEL_ZOOM = 7; // below, the labels of a whole island group would overlap
 
 function escapeHtml(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -43,6 +46,12 @@ function escapeHtml(value: string): string {
     .okr-route-pin img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .okr-route-pin.selected { width: 56px; height: 56px; border-color: var(--ion-color-tertiary, #13a89e); }
     .okr-route-pin-icon { background: transparent; border: none; }
+    .okr-route-place { width: 10px; height: 10px; border-radius: 50%; border: 2px solid #fff; box-sizing: border-box;
+      background: var(--ion-color-primary, #1d4e89); box-shadow: 0 0 2px rgba(0,0,0,.5); }
+    .leaflet-tooltip.okr-route-place-label { background: transparent; border: none; box-shadow: none; padding: 0 0 0 4px;
+      font-size: 12px; font-weight: 600; color: #fff; text-shadow: 0 0 3px #000, 0 0 2px #000; }
+    .leaflet-tooltip.okr-route-place-label::before { display: none; }
+    .okr-route-map-far .okr-route-place-label { display: none; }
   `],
   template: `<div class="okr-route-map-canvas"></div>`,
 })
@@ -52,6 +61,7 @@ export class RouteMap {
   public readonly selectedKey = input<string | undefined>(undefined);
   /** One source or several stacked layers (e.g. an offline overview plus detail tiles from a higher zoom on). */
   public readonly tiles = input<TileSource | TileSource[] | undefined>(undefined);
+  public readonly places = input<RoutePlace[]>([]);
   public readonly pinClicked = output<string>();
   /** After every pan or zoom: what the map shows (e.g. to save it as an offline area). */
   public readonly viewChanged = output<MapView>();
@@ -76,8 +86,8 @@ export class RouteMap {
     afterNextRender(() => void this.init());
     effect(() => {
       // re-render whenever an input changes (read all of them here so the effect tracks them)
-      const state = { route: this.route(), pins: this.pins(), selected: this.selectedKey(), tiles: this.tiles() };
-      if (this.map) this.render(state.route, state.pins, state.selected, state.tiles);
+      const state = { route: this.route(), pins: this.pins(), selected: this.selectedKey(), tiles: this.tiles(), places: this.places() };
+      if (this.map) this.render(state.route, state.pins, state.selected, state.tiles, state.places);
     });
     inject(DestroyRef).onDestroy(() => {
       this.destroyed = true; // an init still waiting for Leaflet must not create a map afterwards
@@ -99,8 +109,9 @@ export class RouteMap {
     this.snapToPixels(container);
     this.map = this.leaflet.map(container, { zoomControl: true, attributionControl: true });
     this.map.on('moveend', () => this.emitView());
+    this.map.on('zoomend', () => this.markFar());
     this.overlay = this.leaflet.layerGroup().addTo(this.map);
-    this.render(this.route(), this.pins(), this.selectedKey(), this.tiles());
+    this.render(this.route(), this.pins(), this.selectedKey(), this.tiles(), this.places());
     this.settleSnap(container);
     // the container may still be animating or change with the layout (A/B): keep Leaflet's size in sync
     // Ionic hides a page that stays in the stack (size 0) and shows it again on «back»: refit then,
@@ -151,7 +162,9 @@ export class RouteMap {
     this.snapHandle = requestAnimationFrame(tick);
   }
 
-  private render(route: [number, number][], pins: RoutePin[], selected: string | undefined, tiles: TileSource | TileSource[] | undefined): void {
+  private render(
+    route: [number, number][], pins: RoutePin[], selected: string | undefined, tiles: TileSource | TileSource[] | undefined, places: RoutePlace[],
+  ): void {
     const Lf = this.leaflet;
     const map = this.map;
     if (!Lf || !map || !this.overlay) return;
@@ -186,6 +199,13 @@ export class RouteMap {
     if (route.length > 1) {
       Lf.polyline(route, { color: '#e2531d', weight: 3, dashArray: '6 6', opacity: 0.9 }).addTo(this.overlay);
     }
+    const placeIcon = Lf.divIcon({ className: 'okr-route-pin-icon', html: '<div class="okr-route-place"></div>', iconSize: [10, 10], iconAnchor: [5, 5] });
+    for (const place of places) {
+      Lf.marker([place.lat, place.lng], { icon: placeIcon, interactive: false, keyboard: false, zIndexOffset: -1000 })
+        .bindTooltip(escapeHtml(place.name), { permanent: true, direction: 'right', offset: [4, 0], className: 'okr-route-place-label' })
+        .addTo(this.overlay);
+    }
+    this.markFar();
     for (const pin of pins) {
       const isSelected = pin.key === selected;
       const size = isSelected ? 56 : 44;
@@ -212,6 +232,12 @@ export class RouteMap {
     }
   }
 
+  /** Place labels only from PLACE_LABEL_ZOOM on (a class on the container, so no re-render on zoom). */
+  private markFar(): void {
+    if (!this.map) return;
+    this.map.getContainer().classList.toggle('okr-route-map-far', this.map.getZoom() < PLACE_LABEL_ZOOM);
+  }
+
   private emitView(): void {
     const map = this.map;
     if (!map) return;
@@ -226,7 +252,7 @@ export class RouteMap {
     try {
       (globalThis as { L?: unknown }).L ??= this.leaflet;
       this.vectorLib = await import('protomaps-leaflet');
-      this.render(this.route(), this.pins(), this.selectedKey(), this.tiles());
+      this.render(this.route(), this.pins(), this.selectedKey(), this.tiles(), this.places());
     } finally {
       this.vectorLoading = false;
     }

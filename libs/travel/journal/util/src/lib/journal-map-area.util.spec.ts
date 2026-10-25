@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ANTARCTICA_PRESET, areaTilePlan, detailLevels, estimateBytes, journalTilePlan, MapArea, mapLayers, parseMapAreas, sourceFor, SUBANTARCTIC_PRESET, TILE_CAP,
+  ANTARCTICA_PRESET, areaTilePlan, detailLevels, estimateBytes, journalTilePlan, MapArea, mapLayers, mapPlaces, parseMapAreas, sourceFor, SUBANTARCTIC_PRESET, TILE_CAP,
   tilesToFree,
 } from './journal-map-area.util';
-import { offlineTilePlan, SUBANTARCTIC_ISLANDS, tileRange } from './journal-tiles.util';
+import { LANDING_SITES, offlineTilePlan, SUBANTARCTIC_ISLANDS, SUBANTARCTIC_SITES, tileRange } from './journal-tiles.util';
 
 const BERN: MapArea = { id: 'a1', name: 'Bern', source: 'swisstopo', bbox: [7.38, 46.92, 7.5, 46.98], maxZoom: 14 };
 const OSLO: MapArea = { id: 'a2', name: 'Oslo', source: 'osm', bbox: [10.65, 59.88, 10.85, 59.96], maxZoom: 13 };
@@ -95,6 +95,18 @@ describe('journal map areas', () => {
     expect(mapLayers([SUBANTARCTIC_PRESET], new Set(), base).some((l) => l.kind === 'vector')).toBe(false);
     const vector = mapLayers([SUBANTARCTIC_PRESET], new Set([SUBANTARCTIC_PRESET.id]), base).filter((l) => l.kind === 'vector');
     expect(vector.map((l) => [l.bounds, l.maxNativeZoom])).toEqual(SUBANTARCTIC_ISLANDS.map((i) => [i.bbox, i.maxZoom]));
+  });
+
+  it('places are the landing sites of the presets, each preset once', () => {
+    expect(mapPlaces([BERN, OSLO])).toEqual([]);
+    expect(mapPlaces([ANTARCTICA_PRESET, BERN, ANTARCTICA_PRESET])).toEqual(LANDING_SITES);
+    expect(mapPlaces([SUBANTARCTIC_PRESET, ANTARCTICA_PRESET])).toEqual([...SUBANTARCTIC_SITES, ...LANDING_SITES]);
+  });
+
+  it('every subantarctic site lies inside the OpenStreetMap box of its island group', () => {
+    const inside = (s: { lat: number; lng: number }) =>
+      SUBANTARCTIC_ISLANDS.some(({ bbox: [w, so, e, n] }) => s.lng >= w && s.lng <= e && s.lat >= so && s.lat <= n);
+    expect(SUBANTARCTIC_SITES.filter((s) => !inside(s)).map((s) => s.name)).toEqual([]);
   });
 
   it('freeing keeps what another journal still needs', () => {

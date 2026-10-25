@@ -1,5 +1,7 @@
 import { GIBS_BLUE_MARBLE, JournalTileSource } from './journal-map.util';
-import { Bbox, limaUrl, offlineTilePlan, ROUTE_BBOX, SUBANTARCTIC_BBOX, SUBANTARCTIC_ISLANDS, TileJob, tileRange } from './journal-tiles.util';
+import {
+  Bbox, LANDING_SITES, limaUrl, offlineTilePlan, ROUTE_BBOX, SUBANTARCTIC_BBOX, SUBANTARCTIC_ISLANDS, SUBANTARCTIC_SITES, TileJob, tileRange,
+} from './journal-tiles.util';
 
 /**
  * Map areas of a journal (spec 1.113 §9.4, plan 6b): what the offline map covers, per journal. The source
@@ -19,6 +21,20 @@ export interface MapArea {
   bbox: Bbox;
   maxZoom: number;
   preset?: MapPreset;
+}
+
+/** A named point on the map (a landing site), drawn small and without a photo. */
+export interface MapPlace { name: string; lat: number; lng: number }
+
+const PRESET_PLACES: Record<MapPreset, MapPlace[]> = {
+  'antarctica-expedition': LANDING_SITES,
+  'subantarctic-islands': SUBANTARCTIC_SITES,
+};
+
+/** The landing sites of the journal's presets, each preset once. */
+export function mapPlaces(areas: MapArea[]): MapPlace[] {
+  const presets = new Set(areas.map((a) => a.preset).filter((p): p is MapPreset => p !== undefined));
+  return [...presets].flatMap((p) => PRESET_PLACES[p]);
 }
 
 /** At most this many tiles per area: the action sheet offers only levels below it. */
