@@ -8,3 +8,8 @@ export * from './lib/notice.form';
 export * from './lib/notice.modal';
 export * from './lib/journal-flyover';
 export * from './lib/journal-book-maps';
+export * from './lib/journal-book-styles';
+export * from './lib/journal-book-preview';
+export * from './lib/journal-book-editor';
+export * from './lib/journal-book-settings.form';
+export * from './lib/journal-book-settings.modal';

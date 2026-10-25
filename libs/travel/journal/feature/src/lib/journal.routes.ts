@@ -11,6 +11,8 @@ import { isAuthenticatedGuard } from '@okr/auth-feature';
 export const JOURNAL_CHILD_ROUTES: Route[] = [
   { path: '', loadComponent: () => import('./journal-list.page').then((m) => m.JournalListPage) },
   { path: ':journalKey', loadComponent: () => import('./journal-overview.page').then((m) => m.JournalOverviewPage) },
+  // the book (desktop browser, authors only) — before ':journalKey/:footprintKey', which would take 'book' as a footprint key
+  { path: ':journalKey/book', loadComponent: () => import('./journal-book.page').then((m) => m.JournalBookPage) },
   { path: ':journalKey/:footprintKey', loadComponent: () => import('./journal-story.page').then((m) => m.JournalStoryPage) },
 ];
 

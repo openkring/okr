@@ -1,9 +1,21 @@
 import { inject, Injectable } from '@angular/core';
+import { getApp } from 'firebase/app';
 import { arrayRemove, arrayUnion, deleteField, doc, setDoc } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { map, Observable } from 'rxjs';
 import { FirestoreService } from '@okr/shared-data-access';
 import { JournalBookCollection, JournalBookModel } from '@okr/shared-models';
-import { stripUndefined } from '@okr/travel-journal-util';
+import { BookLabels, stripUndefined } from '@okr/travel-journal-util';
+
+/** Response of the exportJournalBook callable: signed links (24 h), page count and warning count. */
+export interface JournalBookExportResult { bookUrl: string; coverUrl?: string; pageCount: number; warnings: number }
+/** One file of prepareJournalPhotoUploads: `done` = already in the bucket, else a signed PUT URL with its headers. */
+export interface JournalFileUpload { file: string; done: boolean; url?: string; headers?: Record<string, string> }
+
+const REGION = 'europe-west6';
+/** The export runs up to an hour in the function (timeoutSeconds 3600); the SDK default of 70 s would abort the call. */
+const EXPORT_TIMEOUT_MS = 3_600_000;
+const UPLOAD_CHUNK = 50; // prepareJournalPhotoUploads takes at most 50 files per call
 
 /**
  * The travel book document of a journal (spec 1.113 phase 2 §6), `journal-books/{journalKey}`. Authors only
@@ -65,5 +77,29 @@ export class JournalBookService {
     if (!journalKey || !tenantId) throw new Error('JournalBookService: journalKey and tenantId are mandatory.');
     const data = stripUndefined({ ...patch, tenants: [tenantId], updatedAt: new Date().toISOString(), updatedBy: personKey });
     await setDoc(doc(this.firestoreService.firestore, `${JournalBookCollection}/${journalKey}`), data, { merge: true });
+  }
+
+  /**
+   * Starts the PDF export (book task 6): the function lays the book out again with the same util, writes the PDF(s)
+   * to the private bucket and reports progress in `export` of the book document. Resolves when the PDF is written.
+   */
+  public async exportBook(journalKey: string, kind: 'print' | 'screen', labels: BookLabels): Promise<JournalBookExportResult> {
+    const fn = httpsCallable<unknown, JournalBookExportResult>(getFunctions(getApp(), REGION), 'exportJournalBook', { timeout: EXPORT_TIMEOUT_MS });
+    return (await fn({ op: 'export', journalKey, kind, labels })).data;
+  }
+
+  /** Signed upload URLs for files of the journal folder (book maps here); files already there come back `done`. */
+  public async prepareUploads(journalKey: string, files: string[]): Promise<JournalFileUpload[]> {
+    const fn = httpsCallable<unknown, { uploads: JournalFileUpload[] }>(getFunctions(getApp(), REGION), 'prepareJournalPhotoUploads');
+    const out: JournalFileUpload[] = [];
+    for (let i = 0; i < files.length; i += UPLOAD_CHUNK) out.push(...(await fn({ journalKey, files: files.slice(i, i + UPLOAD_CHUNK) })).data.uploads);
+    return out;
+  }
+
+  /** PUTs a file to its signed URL from the browser (the iPad uses the native plugin instead). */
+  public async putFile(upload: JournalFileUpload, data: Blob): Promise<void> {
+    if (!upload.url) return;
+    const response = await fetch(upload.url, { method: 'PUT', headers: upload.headers ?? {}, body: data });
+    if (!response.ok) throw new Error(`upload of ${upload.file} failed: ${response.status}`);
   }
 }

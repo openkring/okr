@@ -5,7 +5,7 @@ import { Capacitor } from '@capacitor/core';
 import { Network } from '@capacitor/network';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AvatarInfo, JournalBookModel, JournalChange } from '@okr/shared-models';
+import { AvatarInfo, JournalBookModel, JournalChange, TRANSPORT_MODES, TransportMode } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { convertDateFormatToString, DateFormat, getTodayStr } from '@okr/shared-util-core';
@@ -14,10 +14,11 @@ import {
   toBase64,
 } from '@okr/travel-journal-data-access';
 import {
-  bookPrintCandidates, entityStateKey, hasOthersBlocks, pagesOf, PRINT_FILL_LONG_PX, PRINT_FILL_SHORT_PX, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
+  BOOK_I18N_KEYS, bookLabelsOf, JournalBookI18n, bookPrintCandidates, entityStateKey, hasOthersBlocks, pagesOf, PRINT_FILL_LONG_PX, PRINT_FILL_SHORT_PX, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
   allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, parseMapAreas, parsePhotoMode, TileJob, tilesToFree, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, publishedPhotoFiles, viewOf,
 } from '@okr/travel-journal-util';
 
+import { BookExportStatus, JournalBookExporter, NO_BOOK_EXPORT } from './journal-book-export.service';
 import { JournalFileUrlService } from './journal-file-url.service';
 
 const SYNC_INTERVAL_MS = 2 * 60 * 1000;
@@ -46,6 +47,8 @@ interface JournalStoreState {
   activeJournalKey: string;
   offlineMaps: Record<string, OfflineMapStatus>; // per journal
   bookPrints: BookPrintStatus;
+  webLoaded: boolean; // web view: the authored journals have been loaded (or failed to)
+  bookExport: BookExportStatus;
 }
 
 /**
@@ -80,7 +83,10 @@ export const NO_BOOK_PRINTS: BookPrintStatus = { state: 'idle', journalKey: '', 
 const PRINT_CHUNK = 50; // prepareJournalPhotoUploads takes at most 50 files per call
 const printFileOf = (imageKey: string): string => `${imageKey}-print.jpg`;
 
-const initialState: JournalStoreState = { ready: false, native: Capacitor.isNativePlatform(), error: '', changes: [], photoMode: 'all', activeJournalKey: '', offlineMaps: {}, bookPrints: NO_BOOK_PRINTS };
+const initialState: JournalStoreState = {
+  ready: false, native: Capacitor.isNativePlatform(), error: '', changes: [], photoMode: 'all', activeJournalKey: '', offlineMaps: {}, bookPrints: NO_BOOK_PRINTS,
+  webLoaded: false, bookExport: NO_BOOK_EXPORT,
+};
 
 export const JournalStore = signalStore(
   { providedIn: 'root' },
@@ -93,9 +99,11 @@ export const JournalStore = signalStore(
     fileUrl: inject(JournalFileUrlService),
     appStore: inject(AppStore),
     bookService: inject(JournalBookService),
+    bookExporter: inject(JournalBookExporter),
   })),
   withProps(() => ({
     i18n: inject(I18nService).translateAll(JOURNAL_I18N_KEYS) as JournalI18n,
+    bookI18n: inject(I18nService).translateAll(BOOK_I18N_KEYS) as JournalBookI18n,
   })),
   withComputed((store) => {
     const journalState = computed<JournalState>(() => materialize(store.changes()));
@@ -233,6 +241,15 @@ export const JournalStore = signalStore(
       void syncNow();
     }
 
+    /** The overview's map layers: downloaded areas from local files, the rest live where allowed. */
+    function mapLayersFor(journalKey: string): JournalTileSource[] {
+      const map = store.offlineMaps()[journalKey] ?? NO_OFFLINE_MAP;
+      // a download stopped early must not swap the map for mostly missing tiles
+      const usable = map.state === 'ready' || (map.state === 'partial' && map.failed <= map.total * 0.1);
+      const areas = parseMapAreas(viewOf(store.journalState()[entityStateKey('journal', journalKey)])?.['mapAreas']);
+      return mapLayers(areas, new Set(usable ? map.areaIds : []), store.fileUrl.dirUrl('tiles'));
+    }
+
     let cancelMap = false;
 
     // one shared load: a second page instance must not replace state that a write already extended
@@ -276,10 +293,26 @@ export const JournalStore = signalStore(
       async loadWeb(personKey: string): Promise<void> {
         if (store.native()) return;
         try {
-          patchState(store, { changes: await store.syncService.loadRemoteJournals(personKey), ready: true, error: '' });
+          patchState(store, { changes: await store.syncService.loadRemoteJournals(personKey), ready: true, error: '', webLoaded: true });
         } catch (error) {
-          patchState(store, { ready: true, error: String(error) });
+          patchState(store, { ready: true, error: String(error), webLoaded: true });
         }
+      },
+
+      /**
+       * «Druck-PDF erstellen» / «Bildschirm-PDF» on the book page (browser only): draws and uploads the book maps that
+       * are not in the bucket yet, then runs the exportJournalBook function. Progress of the PDF itself is in the book
+       * document (`export`); this status covers the maps and the call. Only one export at a time.
+       */
+      async exportBook(journalKey: string, kind: 'print' | 'screen'): Promise<BookExportStatus> {
+        const tenantId = store.appStore.tenantId();
+        const running = store.bookExport();
+        if (store.native() || !tenantId || running.phase === 'maps' || running.phase === 'pdf') return running;
+        const setStatus = (status: BookExportStatus) => { patchState(store, { bookExport: status }); return status; };
+        const transport = Object.fromEntries(TRANSPORT_MODES.map((m) => [m, store.i18n[`transport_${m}`]()])) as Record<TransportMode, string>;
+        const layers = mapLayersFor(journalKey);
+        const labels = bookLabelsOf(store.bookI18n, transport, layers.filter((l) => l.kind !== 'vector').map((l) => l.attribution));
+        return store.bookExporter.run({ journalKey, kind, state: store.journalState(), layers, labels }, setStatus);
       },
 
       /** Comments of a footprint (plan 7), oldest first — from the log, so offline too. */
@@ -358,14 +391,7 @@ export const JournalStore = signalStore(
         return store.offlineMaps()[journalKey] ?? NO_OFFLINE_MAP;
       },
 
-      /** The overview's map layers: downloaded areas from local files, the rest live where allowed. */
-      mapLayersFor(journalKey: string): JournalTileSource[] {
-        const map = store.offlineMaps()[journalKey] ?? NO_OFFLINE_MAP;
-        // a download stopped early must not swap the map for mostly missing tiles
-        const usable = map.state === 'ready' || (map.state === 'partial' && map.failed <= map.total * 0.1);
-        const areas = parseMapAreas(viewOf(store.journalState()[entityStateKey('journal', journalKey)])?.['mapAreas']);
-        return mapLayers(areas, new Set(usable ? map.areaIds : []), store.fileUrl.dirUrl('tiles'));
-      },
+      mapLayersFor,
 
       async addMapArea(journalKey: string, area: MapArea): Promise<void> {
         const areas = parseMapAreas(viewOf(store.journalState()[entityStateKey('journal', journalKey)])?.['mapAreas']);

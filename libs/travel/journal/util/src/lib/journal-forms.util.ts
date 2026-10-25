@@ -1,7 +1,7 @@
-import type { TransportMode } from '@okr/shared-models';
-import { staticSuite } from 'vest';
+import type { JournalBookModel, JournalBookPrint, TransportMode } from '@okr/shared-models';
+import { omitWhen, staticSuite } from 'vest';
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH } from '@okr/shared-constants';
-import { dateValidations, stringValidations, timeValidations } from '@okr/shared-util-core';
+import { dateValidations, numberValidations, stringsValidations, stringValidations, timeValidations } from '@okr/shared-util-core';
 
 /**
  * Form models and Vest suites of the travel journal (spec 1.113 §9.2, building-forms skill). The
@@ -61,3 +61,65 @@ export function htmlToPlainText(html: string): string {
   const withBreaks = html.replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>\s*<p[^>]*>/gi, '\n\n');
   return unescapeHtml(withBreaks.replace(/<[^>]+>/g, '')).trim();
 }
+
+/**
+ * The book settings (design §5.1, §5.3): title and subtitle (defaults from the journal), the cover photo ('' = the
+ * automatic choice) and the print settings. Spine and wrap only count with a cover.
+ */
+export type BookCoverType = JournalBookPrint['cover'];
+export const BOOK_COVER_TYPES: BookCoverType[] = ['none', 'softcover', 'hardcover'];
+export const BOOK_BLEED_MAX_MM = 10;
+export const BOOK_PAGE_MULTIPLE_MAX = 16;
+export const BOOK_SPINE_MAX_MM = 100;
+export const BOOK_WRAP_MAX_MM = 30;
+
+export interface BookSettingsFormModel {
+  title: string;
+  subTitle: string;
+  coverImageKey: string;
+  bleedMm: number;
+  pageMultiple: number;
+  cover: BookCoverType;
+  spineMm: number;
+  wrapMm: number;
+}
+
+/** The form model of a book; `journal` gives the defaults of title and subtitle. */
+export function bookSettingsOf(book: JournalBookModel, journal: { title: string; subTitle: string } | undefined): BookSettingsFormModel {
+  const print = book.print;
+  return {
+    title: book.title || journal?.title || '',
+    subTitle: book.subTitle ?? journal?.subTitle ?? '',
+    coverImageKey: book.coverImageKey ?? '',
+    bleedMm: print?.bleedMm ?? 3,
+    pageMultiple: print?.pageMultiple ?? 4,
+    cover: print?.cover ?? 'none',
+    spineMm: print?.spineMm ?? 0,
+    wrapMm: print?.wrapMm ?? 0,
+  };
+}
+
+/** The book fields the settings write (title, subTitle, coverImageKey, print); nothing another writer touches. */
+export function bookSettingsPatch(model: BookSettingsFormModel): Pick<JournalBookModel, 'title' | 'subTitle' | 'coverImageKey' | 'print'> {
+  return {
+    title: model.title.trim(),
+    subTitle: model.subTitle.trim(),
+    coverImageKey: model.coverImageKey,
+    print: {
+      bleedMm: Number(model.bleedMm), pageMultiple: Math.round(Number(model.pageMultiple)), iccProfile: 'fogra39', cover: model.cover,
+      spineMm: Number(model.spineMm) || 0, wrapMm: Number(model.wrapMm) || 0,
+    },
+  };
+}
+
+export const bookSettingsValidations = staticSuite((model: BookSettingsFormModel) => {
+  stringValidations('title', model.title, LONG_NAME_LENGTH);
+  stringValidations('subTitle', model.subTitle, LONG_NAME_LENGTH);
+  numberValidations('bleedMm', model.bleedMm, false, 0, BOOK_BLEED_MAX_MM);
+  numberValidations('pageMultiple', model.pageMultiple, true, 1, BOOK_PAGE_MULTIPLE_MAX);
+  stringsValidations('cover', model.cover, BOOK_COVER_TYPES);
+  omitWhen(model.cover === 'none', () => {
+    numberValidations('spineMm', model.spineMm, false, 0, BOOK_SPINE_MAX_MM);
+    numberValidations('wrapMm', model.wrapMm, false, 0, BOOK_WRAP_MAX_MM);
+  });
+});

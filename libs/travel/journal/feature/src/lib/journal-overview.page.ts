@@ -59,6 +59,8 @@ const WIDE_QUERY = '(min-width: 992px)';
         <ion-title>{{ journal()?.title || store.i18n.untitled() }}</ion-title>
         <ion-buttons slot="end">
           @if (flyover()) { <ion-button (click)="fly()">{{ store.i18n.flyover() }}</ion-button> }
+          <!-- the book is made in the browser on the desktop (design §1); the web view lists only the journals one writes in -->
+          @if (!store.native() && journal()) { <ion-button (click)="openBook()">{{ store.bookI18n.button() }}</ion-button> }
           <ion-button (click)="info()" [attr.aria-label]="store.i18n.info()"><ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" /></ion-button>
           @if (store.native()) { <ion-button (click)="newFootprint()">{{ store.i18n.footprints_new() }}</ion-button> }
         </ion-buttons>
@@ -169,6 +171,10 @@ export class JournalOverviewPage {
 
   protected photoMode(): Promise<void> {
     return choosePhotoMode(this.actionSheetController, this.store.i18n, this.store.photoMode(), (mode) => this.store.setPhotoMode(mode));
+  }
+
+  protected openBook(): void {
+    void this.router.navigate(['/journal', this.journalKey(), 'book']);
   }
 
   protected openFootprint(footprintKey: string): void {

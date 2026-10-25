@@ -22,3 +22,7 @@ export * from './lib/journal-book.util';
 export * from './lib/journal-book-layout.util';
 export * from './lib/journal-book-cover.util';
 export * from './lib/journal-book-map.util';
+export * from './lib/journal-book-map-plan.util';
+export * from './lib/journal-book-edit.util';
+export * from './lib/journal-book-i18n';
+export * from './lib/journal-book-typography';
