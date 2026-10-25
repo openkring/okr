@@ -20,6 +20,21 @@ export interface Box {
   h: number;
 }
 
+/**
+ * The cover sheet's geometry (design §5.4) in mm from its top-left corner. Left to right: wrap, bleed, back (297), spine,
+ * front (297), bleed, wrap. `front` is the cover photo's frame (full bleed incl. wrap).
+ */
+export function coverGeometry(bleed: number, spine: number, wrap: number) {
+  const edge = wrap + bleed; // from the sheet edge to the trim
+  const width = 2 * (PAGE_W + bleed) + spine + 2 * wrap;
+  const height = PAGE_H + 2 * edge;
+  const backX = edge;
+  const spineX = backX + PAGE_W;
+  const frontX = spineX + spine;
+  const front: Box = { x: frontX, y: 0, w: width - frontX, h: height };
+  return { edge, width, height, backX, spineX, frontX, front };
+}
+
 /** Scale factor (<= 1) to bring a photo down to the smallest size that still fills a full-bleed page at 300 dpi. */
 export function printScale(width: number, height: number): number {
   const long = Math.max(width, height);

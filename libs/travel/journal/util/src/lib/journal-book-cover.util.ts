@@ -1,5 +1,5 @@
 import { JournalBookModel } from '@okr/shared-models';
-import { Box, MARGIN, PAGE_H, PAGE_W } from './journal-book-layout.util';
+import { Box, coverGeometry, MARGIN, PAGE_H, PAGE_W } from './journal-book-layout.util';
 import { BookFrame, DEFAULT_BLEED_MM, escapeHtml, MAP_BACK, stripEmoji } from './journal-book.util';
 
 /** Below this spine width the spine carries no title. */
@@ -21,16 +21,9 @@ export function coverLayout(book: JournalBookModel, title: string, period: strin
   const bleed = print.bleedMm ?? DEFAULT_BLEED_MM;
   const spine = print.spineMm ?? 0;
   const wrap = print.wrapMm ?? 0;
-  const edge = wrap + bleed; // from the sheet edge to the trim
-  const width = 2 * (PAGE_W + bleed) + spine + 2 * wrap;
-  const height = PAGE_H + 2 * edge;
-  const backX = edge;
-  const spineX = backX + PAGE_W;
-  const frontX = spineX + spine;
+  const { edge, width, height, backX, spineX, frontX, front } = coverGeometry(bleed, spine, wrap);
   const frames: BookFrame[] = [];
-  if (coverImageKey) {
-    frames.push({ kind: 'photo', box: { x: frontX, y: 0, w: width - frontX, h: height }, imageKey: coverImageKey, fit: 'fill' });
-  }
+  if (coverImageKey) frames.push({ kind: 'photo', box: front, imageKey: coverImageKey, fit: 'fill' });
   const textW = PAGE_W - 2 * MARGIN;
   const t = escapeHtml(stripEmoji(title));
   frames.push({ kind: 'text', box: { x: frontX + MARGIN, y: edge + MARGIN, w: textW, h: 30 }, html: `<p>${t}</p>`, style: 'title' });

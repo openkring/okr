@@ -27,7 +27,7 @@ const img = (key: string, width = 4000, height = 3000, author = 'bruno') =>
   rec('image', key, { journalKey: 'j1', width, height, path2048: `${key}.jpg`, path400: `${key}-400.jpg`, localIdentifier: key }, author);
 
 const LABELS = {
-  day: 'Tag', stretch: 'Etappe', cumulative: 'Gesamt', km: 'km', photos: 'Fotos', weather: 'Wetter', transportVia: 'Unterwegs mit',
+  day: 'Tag', stretch: 'Etappe', cumulative: 'Gesamt', km: 'km', photo: 'Foto', photos: 'Fotos', weather: 'Wetter', transportVia: 'Unterwegs mit',
   noTransport: 'ohne Angabe', transport: { plane: 'Flugzeug', ship: 'Schiff', bus: 'Bus', train: 'Zug', car: 'Auto', bike: 'Velo', foot: 'zu Fuss' },
   north: 'N', south: 'S', east: 'O', west: 'W', comments: 'Kommentare', statsTitle: 'Zahlen', days: 'Tage', footprints: 'Footprints',
   totalKm: 'Strecke', southernmost: 'Süd', northernmost: 'Nord', page: 'Seite', credit: '', colophon: '',

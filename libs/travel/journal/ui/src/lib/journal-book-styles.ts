@@ -22,9 +22,11 @@ const FACES: Record<BookFont, Face> = {
   sans: { family: SANS, weight: 600, style: 'normal' },
 };
 
+// as the PDF (glyphSegments): a character the face lacks is set in the sans (Inter Tight has ♥, ☀)
 const fontCss = (font: BookFont): string => {
   const f = FACES[font];
-  return `font-family: '${f.family}', serif; font-weight: ${f.weight}; font-style: ${f.style};`;
+  const fallback = f.family === SANS ? '' : ` '${SANS}',`;
+  return `font-family: '${f.family}',${fallback} serif; font-weight: ${f.weight}; font-style: ${f.style};`;
 };
 
 function bookCss(): string {
@@ -49,6 +51,8 @@ function bookCss(): string {
     ...styles,
     `.okr-book-text ul, .okr-book-text ol { margin: 0; padding: 0 0 0 ${BOOK_LIST_INDENT_EM}em; }`,
     '.okr-book-text li > p { margin: 0; }',
+    // the last paragraph's gap is not part of the text: a frame that holds its lines must not scroll (clip check)
+    '.okr-book-text > :last-child { margin-bottom: 0; }',
     '.okr-book-text li.book-cont { list-style: none; }',
     '.okr-book-text pre { white-space: pre-wrap; font: inherit; }',
     '.okr-book-text b, .okr-book-text strong { font-weight: 700; }',

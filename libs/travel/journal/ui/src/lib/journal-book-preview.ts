@@ -1,4 +1,4 @@
-import { Component, computed, input, output } from '@angular/core';
+import { afterRenderEffect, Component, computed, ElementRef, input, output, signal, viewChildren } from '@angular/core';
 import { IonIcon } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -17,7 +17,8 @@ type MapFrame = Extract<BookFrame, { kind: 'map' }>;
  * One page of the book preview (design §2 «Preview»): the page is drawn at its natural size (297 × 210 mm, text in pt
  * with the print fonts) and scaled down to `width` px with a transform, so lines break as in the measuring box. Black
  * background, the bleed is cut off; photo frames show the 2048 px photos (`imageUrls` by image key); map frames are
- * placeholders — the maps are drawn only for the export. A badge shows the page's warnings.
+ * placeholders — the maps are drawn only for the export. A badge shows the page's warnings, another one «Text
+ * abgeschnitten» when a text frame holds more than fits (frames clip, in the PDF too — e.g. a long footprint title).
  */
 @Component({
   selector: 'okr-journal-book-preview',
@@ -34,7 +35,8 @@ type MapFrame = Extract<BookFrame, { kind: 'map' }>;
     .photo.active { outline: 6px solid var(--ion-color-tertiary); outline-offset: -6px; }
     .map { background: #10253d; color: #9fb3c8; display: flex; align-items: center; justify-content: center; font: 600 14pt sans-serif; }
     .number { position: absolute; bottom: 2px; right: 6px; font-size: 0.7rem; color: #8a8a8a; }
-    .badge { position: absolute; top: 4px; right: 4px; display: flex; align-items: center; gap: 2px; padding: 1px 6px; border-radius: 8px;
+    .badges { position: absolute; top: 4px; right: 4px; display: flex; gap: 4px; }
+    .badge { display: flex; align-items: center; gap: 2px; padding: 1px 6px; border-radius: 8px;
       font-size: 0.7rem; background: var(--ion-color-warning); color: var(--ion-color-warning-contrast); }
   `],
   template: `
@@ -48,7 +50,7 @@ type MapFrame = Extract<BookFrame, { kind: 'map' }>;
             </div>
           }
           @if (textOf(f); as t) {
-            <div [class]="'frame ' + textClass(t.style)" [style.left.mm]="t.box.x" [style.top.mm]="t.box.y" [style.width.mm]="t.box.w"
+            <div #textFrame [class]="'frame ' + textClass(t.style)" [style.left.mm]="t.box.x" [style.top.mm]="t.box.y" [style.width.mm]="t.box.w"
               [style.height.mm]="t.box.h" [innerHTML]="t.html"></div>
           }
           @if (mapOf(f); as m) {
@@ -59,8 +61,11 @@ type MapFrame = Extract<BookFrame, { kind: 'map' }>;
         }
       </div>
       <span class="number">{{ number() }}</span>
-      @if (warnings() > 0) {
-        <span class="badge"><ion-icon src="{{ 'warning' | svgIcon }}" />{{ warnings() }}</span>
+      @if (warnings() > 0 || clipped()) {
+        <span class="badges">
+          @if (clipped()) { <span class="badge">{{ i18n().text_clipped() }}</span> }
+          @if (warnings() > 0) { <span class="badge"><ion-icon src="{{ 'warning' | svgIcon }}" />{{ warnings() }}</span> }
+        </span>
       }
     </div>
   `,
@@ -77,6 +82,10 @@ export class JournalBookPreview {
 
   public readonly photoClicked = output<string>();
 
+  private readonly textFrames = viewChildren<ElementRef<HTMLElement>>('textFrame');
+  /** True when a text frame's content is taller than the frame (measured after each render of the page). */
+  protected readonly clipped = signal(false);
+
   protected readonly pageW = PAGE_W;
   protected readonly pageH = PAGE_H;
   protected readonly height = computed(() => (this.width() * PAGE_H) / PAGE_W);
@@ -84,6 +93,13 @@ export class JournalBookPreview {
 
   public constructor() {
     ensureBookStyles();
+    afterRenderEffect({
+      read: () => {
+        this.page(); // the frames' HTML is bound with innerHTML: a new page re-measures even with the same elements
+        // layout sizes, not the scaled ones: scrollHeight / clientHeight ignore the page's transform
+        this.clipped.set(this.textFrames().some(({ nativeElement: el }) => el.scrollHeight > el.clientHeight + 1));
+      },
+    });
   }
 
   protected photoOf(f: BookFrame): PhotoFrame | undefined {

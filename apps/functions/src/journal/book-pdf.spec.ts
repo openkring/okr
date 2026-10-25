@@ -1,6 +1,6 @@
 import { Readable } from 'node:stream';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import PDFDocument from 'pdfkit';
 
 import type { BookPage } from '@okr/travel-journal-util';
@@ -90,10 +90,34 @@ describe('book pdf', () => {
     ]);
   });
 
-  it('the print fonts carry ♥ (Inter Tight) for the like line', () => {
+  it('the print fonts carry ♥ (Inter Tight) for the like line, and ↔ / ☀ that stripEmoji keeps', () => {
     const doc = createBookDoc();
-    doc.font('sans');
-    expect((doc as unknown as { _font: { font: { hasGlyphForCodePoint(cp: number): boolean } } })._font.font.hasGlyphForCodePoint(0x2665)).toBe(true);
+    const has = (font: string, cp: number) => {
+      doc.font(font);
+      return (doc as unknown as { _font: { font: { hasGlyphForCodePoint(cp: number): boolean } } })._font.font.hasGlyphForCodePoint(cp);
+    };
+    expect(has('sans', 0x2665)).toBe(true);
+    expect(has('serif', 0x2194)).toBe(true); // ↔ in Plex Serif
+    expect(has('serif', 0x2600) || has('sans', 0x2600)).toBe(true); // ☀ via the sans fallback
+    expect(has('serif', 0x2708) || has('sans', 0x2708)).toBe(false); // ✈ in neither: stripEmoji removes it
+  });
+
+  it('every text frame is clipped to its box, as the preview clips it', async () => {
+    const doc = createBookDoc();
+    doc.on('data', () => undefined);
+    const calls: string[] = [];
+    const rect = doc.rect.bind(doc);
+    vi.spyOn(doc, 'rect').mockImplementation((x: number, y: number, w: number, h: number) => (calls.push(`rect ${x.toFixed(2)} ${y.toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)}`), rect(x, y, w, h)));
+    const clip = doc.clip.bind(doc);
+    vi.spyOn(doc, 'clip').mockImplementation((rule?: string) => (calls.push('clip'), clip(rule as never)));
+    const long = `<p>${'Sehr langer Titel '.repeat(30)}</p>`;
+    await writeBookPdf(doc, [{ role: 'opening', frames: [{ kind: 'text', box: { x: 12, y: 12, w: 132, h: 22 }, html: long, style: 'title' }] }], {
+      bleedMm: 0, x4: false, image: async () => undefined, mapImage: async () => undefined,
+    });
+    doc.end();
+    const box = `rect ${pt(12).toFixed(2)} ${pt(12).toFixed(2)} ${pt(132).toFixed(2)} ${pt(22).toFixed(2)}`;
+    expect(calls).toContain(box);
+    expect(calls[calls.indexOf(box) + 1]).toBe('clip');
   });
 
   it('pdfkitPaginate splits a long text into chunks that keep every word, in order', () => {

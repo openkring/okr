@@ -1,6 +1,6 @@
 import { BookPageOverride, BookTemplate, JournalBookModel, TRANSPORT_MODES, TransportMode } from '@okr/shared-models';
 import { convertDateFormatToString, DateFormat, getDayDiff } from '@okr/shared-util-core';
-import { albumPages, autoLayout, Box, DPI_OK, DPI_POOR, effectiveDpi, GAP, MARGIN, PAGE_H, PAGE_W, templateBoxes } from './journal-book-layout.util';
+import { albumPages, autoLayout, Box, coverGeometry, DPI_OK, DPI_POOR, effectiveDpi, GAP, MARGIN, PAGE_H, PAGE_W, templateBoxes } from './journal-book-layout.util';
 import { flyoverInputOf, flyoverTimeline } from './journal-flyover.util';
 import { commentsOf, likesOf } from './journal-guest.util';
 import { routeLengthKm } from './journal-map.util';
@@ -40,7 +40,9 @@ export type BookFrame =
   | { kind: 'map'; box: Box; file: string }; // 'book-map-<name>.jpg'
 export type PageRole = 'title' | 'overview' | 'opening' | 'hero' | 'text' | 'photos' | 'comments' | 'stats' | 'blank';
 export interface BookPage { role: PageRole; footprintKey?: string; blockKey?: string; template?: BookTemplate; frames: BookFrame[] }
+/** pageIndex: the page in BookLayout.pages, or COVER_PAGE_INDEX (-1) for the front photo of the cover sheet. */
 export interface BookWarning { pageIndex: number; imageKey: string; level: 'poor' | 'veryPoor' | 'missing'; dpi?: number }
+export const COVER_PAGE_INDEX = -1;
 /** kmByTransport is keyed by TransportMode, stretches without transport under 'none'. extremeLat is signed. */
 export interface BookStats { days: number; footprints: number; km: number; kmByTransport: Record<string, number>; photos: number; extremeLat?: number }
 /** Splits html into one chunk per page: the first chunk must fit `first`, every further one `next`. */
@@ -52,6 +54,7 @@ export interface BookLabels {
   stretch: string; // 'Etappe' → «Etappe: 412 km»
   cumulative: string; // 'Gesamt' → «Gesamt: 1234 km»
   km: string; // 'km'
+  photo: string; // 'Foto' → «1 Foto»
   photos: string; // 'Fotos' → «12 Fotos», and the stats line
   weather: string; // 'Wetter'
   transportVia: string; // 'Unterwegs mit'
@@ -117,9 +120,10 @@ const CREDIT_BOX: Box = { x: MARGIN, y: PAGE_H - MARGIN - 6, w: CONTENT_W, h: 6 
 
 // pictographs, regional indicators (flags), skin tones, tag characters, ZWJ, variation selectors, keycap
 const EMOJI = /\p{Extended_Pictographic}|[\u{1F1E6}-\u{1F1FF}]|[\u{1F3FB}-\u{1F3FF}]|[\u{E0020}-\u{E007F}]|‍|︎|️|⃣/gu;
-const KEEP = new Set(['©', '®', '™']);
+// pictographic code points the print fonts can draw: ↔ in Plex Serif, ☀ in Inter Tight (the fallback of both renderers)
+const KEEP = new Set(['©', '®', '™', '↔', '☀']);
 
-/** Removes emoji and pictographs (the print font has none), keeps letters, punctuation, ©, ®, ™, °. */
+/** Removes emoji and pictographs (the print font has none), keeps letters, punctuation, ©, ®, ™, °, ↔, ☀. */
 export function stripEmoji(text: string): string {
   return text.replace(EMOJI, (ch) => (KEEP.has(ch) ? ch : '')).replace(/[ \t]{2,}/g, ' ').trim();
 }
@@ -130,6 +134,17 @@ export function escapeHtml(text: string): string {
 }
 
 const plain = (text: string): string => escapeHtml(stripEmoji(text));
+
+// a paragraph with nothing to print: only whitespace, &nbsp; or <br>
+const EMPTY_PARAGRAPH = /<p(?:\s[^>]*)?>(?:\s|&nbsp;|&#160;|<br\s*\/?>)*<\/p>/gi;
+
+/**
+ * An author's block HTML as both renderers get it: emoji removed and empty paragraphs (`<p></p>`, `<p><br></p>`)
+ * dropped — the DOM collapses them to nothing while pdfkit would set an empty line, so the util removes them once.
+ */
+export function bookBlockHtml(html: string): string {
+  return stripEmoji(html).replace(EMPTY_PARAGRAPH, '');
+}
 const para = (html: string, cls?: string): string => (cls ? `<p class="${cls}">${html}</p>` : `<p>${html}</p>`);
 const isStoreDate = (d: string | undefined): d is string => !!d && /^\d{8}$/.test(d);
 
@@ -293,8 +308,9 @@ export function bookPrintCandidates(state: JournalState, journalKey: string, boo
 function runHtml(ctx: Ctx, run: BlockView[]): string {
   let html = '';
   run.forEach((b, i) => {
-    html += stripEmoji(b.html ?? '');
-    if (run[i + 1]?.authorKey !== b.authorKey) html += para(plain(ctx.input.authorName(b.authorKey)), 'book-author');
+    html += bookBlockHtml(b.html ?? '');
+    const name = run[i + 1]?.authorKey !== b.authorKey ? plain(ctx.input.authorName(b.authorKey)) : '';
+    if (name) html += para(name, 'book-author'); // no name, no name line (ruling R13)
   });
   return html;
 }
@@ -304,7 +320,7 @@ function runsOf(blocks: BlockView[]): { kind: 'text' | 'photos'; blocks: BlockVi
   const runs: { kind: 'text' | 'photos'; blocks: BlockView[] }[] = [];
   for (const b of blocks) {
     if (b.kind === 'text') {
-      if (!stripEmoji(b.html ?? '')) continue;
+      if (!bookBlockHtml(b.html ?? '')) continue;
       const last = runs[runs.length - 1];
       if (last?.kind === 'text') last.blocks.push(b);
       else runs.push({ kind: 'text', blocks: [b] });
@@ -323,7 +339,10 @@ function commentPages(ctx: Ctx, fp: FootprintView): BookPage[] {
   const likes = likesOf(state, fp.key).length;
   let html = para(escapeHtml(labels.comments), 'book-heading');
   if (likes > 0) html += para(`♥ ${likes}`, 'book-likes');
-  for (const c of comments) html += para(plain(c.text)) + para(plain(c.authorName), 'book-author');
+  for (const c of comments) {
+    html += para(plain(c.text));
+    if (plain(c.authorName)) html += para(plain(c.authorName), 'book-author');
+  }
   return paginate(html, 'comment', TEXT_BOX, TEXT_BOX)
     .map((chunk): BookPage => ({ role: 'comments', footprintKey: fp.key, frames: [text(TEXT_BOX, chunk, 'comment')] }));
 }
@@ -344,7 +363,7 @@ function openingFrames(ctx: Ctx, fp: FootprintView, facts: FootprintFacts, photo
     facts.day !== undefined ? `${escapeHtml(labels.day)} ${facts.day}` : '',
     `${escapeHtml(labels.stretch)}: ${s ? s.km : '–'} ${km}${via}`,
     `${escapeHtml(labels.cumulative)}: ${facts.cumulative} ${km}`,
-    `${photoCount} ${escapeHtml(labels.photos)}`,
+    photoCount > 0 ? `${photoCount} ${escapeHtml(photoCount === 1 ? labels.photo : labels.photos)}` : '',
   ];
   const lines = (l: string[]) => l.filter((x) => x).map((x) => para(x)).join('');
   return [
@@ -384,21 +403,34 @@ function footprintPages(ctx: Ctx, fp: FootprintView, facts: FootprintFacts): Boo
 // ---------------------------------------------------------------------------------------------------------------
 // the book
 
-/** Per photo frame: 'missing' without print photo (dpi from the image's own size), else below 300 / 200 dpi. */
-function warningsOf(pages: BookPage[], ctx: Ctx): BookWarning[] {
+/** A photo frame's warning: 'missing' without print photo (dpi from the image's own size), else below 300 / 200 dpi. */
+function photoWarning(ctx: Ctx, pageIndex: number, f: Extract<BookFrame, { kind: 'photo' }>): BookWarning | undefined {
+  const print = ctx.input.book.prints?.[f.imageKey];
+  const own = ctx.images.get(f.imageKey);
+  const px = print ?? (own && own.width > 0 && own.height > 0 ? own : undefined);
+  const dpi = px ? Math.round(effectiveDpi(px, f.box, f.fit)) : undefined;
+  if (!print) return { pageIndex, imageKey: f.imageKey, level: 'missing', ...(dpi !== undefined ? { dpi } : {}) };
+  if (dpi !== undefined && dpi < DPI_POOR) return { pageIndex, imageKey: f.imageKey, level: 'veryPoor', dpi };
+  if (dpi !== undefined && dpi < DPI_OK) return { pageIndex, imageKey: f.imageKey, level: 'poor', dpi };
+  return undefined;
+}
+
+/** The warnings of every photo frame, then the cover's front photo (pageIndex COVER_PAGE_INDEX) when a cover is ordered. */
+function warningsOf(pages: BookPage[], ctx: Ctx, coverImageKey: string | undefined): BookWarning[] {
   const warnings: BookWarning[] = [];
   pages.forEach((page, pageIndex) => {
     for (const f of page.frames) {
-      if (f.kind !== 'photo') continue;
-      const print = ctx.input.book.prints?.[f.imageKey];
-      const own = ctx.images.get(f.imageKey);
-      const px = print ?? (own && own.width > 0 && own.height > 0 ? own : undefined);
-      const dpi = px ? Math.round(effectiveDpi(px, f.box, f.fit)) : undefined;
-      if (!print) warnings.push({ pageIndex, imageKey: f.imageKey, level: 'missing', ...(dpi !== undefined ? { dpi } : {}) });
-      else if (dpi !== undefined && dpi < DPI_POOR) warnings.push({ pageIndex, imageKey: f.imageKey, level: 'veryPoor', dpi });
-      else if (dpi !== undefined && dpi < DPI_OK) warnings.push({ pageIndex, imageKey: f.imageKey, level: 'poor', dpi });
+      const w = f.kind === 'photo' ? photoWarning(ctx, pageIndex, f) : undefined;
+      if (w) warnings.push(w);
     }
   });
+  const print = ctx.input.book.print;
+  if (coverImageKey && print?.cover && print.cover !== 'none') {
+    // the same frame as coverLayout's front photo
+    const { front } = coverGeometry(ctx.bleed, print.spineMm ?? 0, print.wrapMm ?? 0);
+    const w = photoWarning(ctx, COVER_PAGE_INDEX, { kind: 'photo', box: front, imageKey: coverImageKey, fit: 'fill' });
+    if (w) warnings.push(w);
+  }
   return warnings;
 }
 
@@ -468,5 +500,6 @@ export function layoutBook(input: BookInput): BookLayout {
   while (pages.length % multiple !== 0) pages.push({ role: 'blank', frames: [] });
   if (book.print?.cover && book.print.cover !== 'none') mapFiles.push(MAP_BACK);
 
-  return { pages, warnings: warningsOf(pages, ctx), stats, mapFiles, title, period, coverImageKey: coverImageKeyOf(state, journalKey, book) };
+  const coverImageKey = coverImageKeyOf(state, journalKey, book);
+  return { pages, warnings: warningsOf(pages, ctx, coverImageKey), stats, mapFiles, title, period, coverImageKey };
 }

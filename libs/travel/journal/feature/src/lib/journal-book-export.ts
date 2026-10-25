@@ -4,7 +4,8 @@ import { IonButton, IonIcon, IonProgressBar } from '@ionic/angular';
 import { JournalBookModel } from '@okr/shared-models';
 import { JournalBookExportResult, JournalBookService } from '@okr/travel-journal-data-access';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { convertDateFormatToString, DateFormat, fill } from '@okr/shared-util-core';
+import { fill } from '@okr/shared-util-core';
+import { localViewDateTime } from '@okr/travel-journal-util';
 
 import { NO_BOOK_EXPORT } from './journal-book-export.service';
 import { JournalStore } from './journal.store';
@@ -119,14 +120,18 @@ export class JournalBookExport {
       this.linksFor = key;
       untracked(() => {
         this.storedLinks.set(undefined);
-        this.bookService.exportLinks(this.journalKey()).then((links) => this.storedLinks.set(links)).catch(() => undefined);
+        // the service tries three times (ruling R14); after that, the next snapshot of the book may try again
+        this.bookService.exportLinks(this.journalKey()).then((links) => this.storedLinks.set(links)).catch(() => {
+          if (this.linksFor === key) this.linksFor = '';
+        });
       });
     });
   }
   protected readonly last = computed(() => {
     const e = this.book()?.export;
     if (e?.state !== 'done' || !e.finishedAt) return '';
-    const date = convertDateFormatToString(e.finishedAt.slice(0, 19), DateFormat.IsoDateTime, DateFormat.ViewDate, false);
+    const date = localViewDateTime(e.finishedAt);
+    if (!date) return '';
     return fill(this.i18n.export_last(), { date, pages: e.pageCount ?? 0 });
   });
 

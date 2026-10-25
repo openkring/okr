@@ -36,6 +36,8 @@ export interface BookExportInput {
   state: JournalState;
   layers: JournalTileSource[];
   labels: BookLabels;
+  /** The printed author names (ruling R13), as the preview shows them. */
+  authorNames: Record<string, string>;
 }
 
 const MAP_DPI = 300;
@@ -44,12 +46,21 @@ const MAP_BATCH = 8;
 /** As the function's guard (EXPORT_STALE_MS): a running export older than this is considered dead. */
 const EXPORT_STALE_MS = 65 * 60 * 1000;
 
+/**
+ * Another export of this book is running (failed-precondition), or both instances of the function are taken
+ * (resource-exhausted, ruling R14: maxInstances 2).
+ */
+export function isBusyError(error: unknown): boolean {
+  const code = (error as { code?: string } | undefined)?.code;
+  return code === 'functions/failed-precondition' || code === 'functions/resource-exhausted';
+}
+
 @Injectable({ providedIn: 'root' })
 export class JournalBookExporter {
   private readonly bookService = inject(JournalBookService);
 
   public async run(input: BookExportInput, setStatus: (s: BookExportStatus) => BookExportStatus): Promise<BookExportStatus> {
-    const { journalKey, kind, state, layers, labels } = input;
+    const { journalKey, kind, state, layers, labels, authorNames } = input;
     let status = setStatus({ ...NO_BOOK_EXPORT, journalKey, kind, phase: 'maps' });
     try {
       const book = (await firstValueFrom(this.bookService.book$(journalKey))) ?? new JournalBookModel();
@@ -87,11 +98,10 @@ export class JournalBookExporter {
       }
 
       status = setStatus({ ...status, phase: 'pdf' });
-      const result = await this.bookService.exportBook(journalKey, kind, labels);
+      const result = await this.bookService.exportBook(journalKey, kind, labels, authorNames);
       return setStatus({ ...status, phase: 'done', result });
     } catch (error) {
-      const code = (error as { code?: string } | undefined)?.code;
-      return setStatus({ ...status, phase: 'failed', error: code === 'functions/failed-precondition' ? 'busy' : 'failed' });
+      return setStatus({ ...status, phase: 'failed', error: isBusyError(error) ? 'busy' : 'failed' });
     }
   }
 }

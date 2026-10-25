@@ -5,7 +5,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { map, Observable } from 'rxjs';
 import { FirestoreService } from '@okr/shared-data-access';
 import { JournalBookCollection, JournalBookModel } from '@okr/shared-models';
-import { BookLabels, stripUndefined } from '@okr/travel-journal-util';
+import { BookLabels, retryWithBackoff, stripUndefined } from '@okr/travel-journal-util';
 
 /** Response of the exportJournalBook callable: signed links (24 h), page count and warning count. */
 export interface JournalBookExportResult { bookUrl: string; coverUrl?: string; pageCount: number; warnings: number }
@@ -16,6 +16,8 @@ const REGION = 'europe-west6';
 /** The export runs up to an hour in the function (timeoutSeconds 3600); the SDK default of 70 s would abort the call. */
 const EXPORT_TIMEOUT_MS = 3_600_000;
 const UPLOAD_CHUNK = 50; // prepareJournalPhotoUploads takes at most 50 files per call
+const LINKS_TRIES = 3;
+const LINKS_BACKOFF_MS = 2000;
 
 /**
  * The travel book document of a journal (spec 1.113 phase 2 §6), `journal-books/{journalKey}`. Authors only
@@ -83,9 +85,9 @@ export class JournalBookService {
    * Starts the PDF export (book task 6): the function lays the book out again with the same util, writes the PDF(s)
    * to the private bucket and reports progress in `export` of the book document. Resolves when the PDF is written.
    */
-  public async exportBook(journalKey: string, kind: 'print' | 'screen', labels: BookLabels): Promise<JournalBookExportResult> {
+  public async exportBook(journalKey: string, kind: 'print' | 'screen', labels: BookLabels, authorNames: Record<string, string>): Promise<JournalBookExportResult> {
     const fn = httpsCallable<unknown, JournalBookExportResult>(getFunctions(getApp(), REGION), 'exportJournalBook', { timeout: EXPORT_TIMEOUT_MS });
-    return (await fn({ op: 'export', journalKey, kind, labels })).data;
+    return (await fn({ op: 'export', journalKey, kind, labels, authorNames })).data;
   }
 
   /**
@@ -101,10 +103,13 @@ export class JournalBookService {
     return out;
   }
 
-  /** Fresh 24 h links of the book's last finished export (ruling R10); empty when there is none. */
+  /**
+   * Fresh 24 h links of the book's last finished export (ruling R10); empty when there is none. Tried three times with
+   * backoff (ruling R14): both instances of the function may be busy with exports (resource-exhausted).
+   */
   public async exportLinks(journalKey: string): Promise<Partial<JournalBookExportResult>> {
     const fn = httpsCallable<unknown, Partial<JournalBookExportResult>>(getFunctions(getApp(), REGION), 'exportJournalBook');
-    return (await fn({ op: 'links', journalKey })).data;
+    return retryWithBackoff(async () => (await fn({ op: 'links', journalKey })).data, LINKS_TRIES, LINKS_BACKOFF_MS);
   }
 
   /** PUTs a file to its signed URL from the browser (the iPad uses the native plugin instead). */

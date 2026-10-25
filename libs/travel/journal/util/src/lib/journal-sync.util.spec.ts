@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   advanceCursor, allPhotoFiles, classifyUploadError, CURSOR_OVERLAP_MS, downloadStart, pagesOf, parsePhotoMode, photoFileName, publishedPhotoFiles,
+  retryWithBackoff,
 } from './journal-sync.util';
 import { FootprintView, ImageView } from './journal-view.util';
 
@@ -51,5 +52,26 @@ describe('journal sync util', () => {
     expect(parsePhotoMode(undefined, '1')).toBe('paused');
     expect(parsePhotoMode(undefined, '0')).toBe('all');
     expect(parsePhotoMode('nonsense', undefined)).toBe('all');
+  });
+});
+
+describe('retryWithBackoff', () => {
+  it('tries up to three times, waiting 2 s and 4 s, and returns the first success', async () => {
+    const waits: number[] = [];
+    let calls = 0;
+    const result = await retryWithBackoff(async () => {
+      calls++;
+      if (calls < 3) throw new Error('resource-exhausted');
+      return 'links';
+    }, 3, 2000, async (ms) => { waits.push(ms); });
+    expect(result).toBe('links');
+    expect(calls).toBe(3);
+    expect(waits).toEqual([2000, 4000]);
+  });
+
+  it('throws the last error after the last try', async () => {
+    let calls = 0;
+    await expect(retryWithBackoff(async () => { calls++; throw new Error(`fail ${calls}`); }, 3, 1, async () => undefined)).rejects.toThrow('fail 3');
+    expect(calls).toBe(3);
   });
 });

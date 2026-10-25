@@ -1,7 +1,7 @@
 import { Signal } from '@angular/core';
 
 import type { TransportMode } from '@okr/shared-models';
-import { fill } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, fill } from '@okr/shared-util-core';
 
 import type { BookLabels } from './journal-book.util';
 
@@ -25,6 +25,8 @@ export const BOOK_I18N_KEYS = {
   warning_missing: PFX + 'warning_missing',
   warning_poor: PFX + 'warning_poor',
   warning_very_poor: PFX + 'warning_very_poor',
+  warning_cover: PFX + 'warning_cover',
+  text_clipped: PFX + 'text_clipped',
   prints_missing: PFX + 'prints_missing',
   prints_missing_unknown: PFX + 'prints_missing_unknown',
   prints_hint: PFX + 'prints_hint',
@@ -93,6 +95,7 @@ export const BOOK_I18N_KEYS = {
   label_stretch: PFX + 'label.stretch',
   label_cumulative: PFX + 'label.cumulative',
   label_km: PFX + 'label.km',
+  label_photo: PFX + 'label.photo',
   label_photos: PFX + 'label.photos',
   label_weather: PFX + 'label.weather',
   label_transport_via: PFX + 'label.transport_via',
@@ -131,6 +134,7 @@ export function bookLabelsOf(i18n: JournalBookI18n, transport: Record<TransportM
     stretch: i18n.label_stretch(),
     cumulative: i18n.label_cumulative(),
     km: i18n.label_km(),
+    photo: i18n.label_photo(),
     photos: i18n.label_photos(),
     weather: i18n.label_weather(),
     transportVia: i18n.label_transport_via(),
@@ -155,4 +159,14 @@ export function bookLabelsOf(i18n: JournalBookI18n, transport: Record<TransportM
   for (const [k, v] of Object.entries(labels)) if (typeof v === 'string') (out as unknown as Record<string, string>)[k] = clip(v);
   for (const [k, v] of Object.entries(labels.transport)) out.transport[k as TransportMode] = clip(v);
   return out;
+}
+
+/**
+ * An ISO instant (`toISOString`, UTC) as d.M.yyyy HH:mm in the browser's local time — «Letztes PDF vom …». '' when invalid.
+ * Date#toString gives the local wall clock as 'Sun Oct 25 2026 11:00:00 GMT+0100 …', which DateFormat.DateTime reads.
+ */
+export function localViewDateTime(iso: string | undefined): string {
+  const d = iso ? new Date(iso) : undefined;
+  if (!d || Number.isNaN(d.getTime())) return '';
+  return convertDateFormatToString(d.toString().slice(0, 24), DateFormat.DateTime, DateFormat.ViewDateTime, false);
 }

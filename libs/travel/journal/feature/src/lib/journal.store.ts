@@ -14,7 +14,7 @@ import {
   toBase64,
 } from '@okr/travel-journal-data-access';
 import {
-  BOOK_I18N_KEYS, bookLabelsOf, JournalBookI18n, bookPrintCandidates, entityStateKey, hasOthersBlocks, pagesOf, PRINT_FILL_LONG_PX, PRINT_FILL_SHORT_PX, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
+  BOOK_I18N_KEYS, BOOK_LABEL_MAX, bookLabelsOf, JournalBookI18n, bookPrintCandidates, entityStateKey, hasOthersBlocks, pagesOf, PRINT_FILL_LONG_PX, PRINT_FILL_SHORT_PX, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
   allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, parseMapAreas, parsePhotoMode, TileJob, tilesToFree, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, publishedPhotoFiles, viewOf,
 } from '@okr/travel-journal-util';
 
@@ -255,6 +255,23 @@ export const JournalStore = signalStore(
     // one shared load: a second page instance must not replace state that a write already extended
     let loading: Promise<void> | undefined;
 
+    /**
+     * The printed author names of the book (ruling R13), one source for the preview and the export request: the
+     * journal's author list, and the signed-in person when they are not on it (yet). Names longer than the callable
+     * accepts are shortened; an author without a name maps to '' (the book prints no name line then).
+     */
+    function bookAuthorNames(journalKey: string): Record<string, string> {
+      const view = viewOf(store.journalState()[entityStateKey('journal', journalKey)]);
+      const authors = Array.isArray(view?.['authors']) ? (view['authors'] as AvatarInfo[]) : [];
+      const clip = (s: string) => (s.length > BOOK_LABEL_MAX ? s.slice(0, BOOK_LABEL_MAX - 1) + '…' : s);
+      const out: Record<string, string> = {};
+      for (const a of authors) if (a?.key) out[a.key] = clip(`${a.name1 ?? ''} ${a.name2 ?? ''}`.trim() || (a.label ?? ''));
+      const me = store.appStore.currentPerson();
+      const myKey = store.appStore.currentUser()?.personKey;
+      if (me && myKey && out[myKey] === undefined) out[myKey] = clip(`${me.firstName} ${me.lastName}`.trim());
+      return out;
+    }
+
     return {
       init(): Promise<void> {
         loading ??= (async () => {
@@ -312,7 +329,8 @@ export const JournalStore = signalStore(
         const transport = Object.fromEntries(TRANSPORT_MODES.map((m) => [m, store.i18n[`transport_${m}`]()])) as Record<TransportMode, string>;
         const layers = mapLayersFor(journalKey);
         const labels = bookLabelsOf(store.bookI18n, transport, layers.filter((l) => l.kind !== 'vector').map((l) => l.attribution));
-        return store.bookExporter.run({ journalKey, kind, state: store.journalState(), layers, labels }, setStatus);
+        const authorNames = bookAuthorNames(journalKey);
+        return store.bookExporter.run({ journalKey, kind, state: store.journalState(), layers, labels, authorNames }, setStatus);
       },
 
       /** Comments of a footprint (plan 7), oldest first — from the log, so offline too. */
@@ -568,6 +586,9 @@ export const JournalStore = signalStore(
         const view = viewOf(store.journalState()[entityStateKey('journal', journalKey)]);
         return Array.isArray(view?.['authors']) ? (view['authors'] as AvatarInfo[]) : [];
       },
+
+      /** The printed author names of the book (ruling R13), one source for the preview and the export request. */
+      bookAuthorNames,
 
       /**
        * Adds a co-author (plan 4): a journal record with the full author list. The function derives the

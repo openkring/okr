@@ -11,7 +11,7 @@ import { fill } from '@okr/shared-util-core';
 import { JournalBookService } from '@okr/travel-journal-data-access';
 import { BookCommentSetting, bookFontsReady, JournalBookEditor, JournalBookPreview, JournalBookSettingsModal } from '@okr/travel-journal-ui';
 import {
-  blockPagesOf, bookLabelsOf, JournalBookEdits, BookSettingsFormModel, bookSettingsOf, bookSettingsPatch, layoutBook, missingPrintsByAuthor, movePhotoTo, spreadsOf, withTemplate,
+  blockPagesOf, bookLabelsOf, COVER_PAGE_INDEX, JournalBookEdits, BookSettingsFormModel, bookSettingsOf, bookSettingsPatch, layoutBook, missingPrintsByAuthor, movePhotoTo, spreadsOf, withTemplate,
 } from '@okr/travel-journal-util';
 
 import { JournalBookExport } from './journal-book-export';
@@ -143,6 +143,8 @@ export class JournalBookPage {
     const credits = this.store.mapLayersFor(this.journalKey()).filter((l) => l.kind !== 'vector').map((l) => l.attribution);
     return bookLabelsOf(this.i18n, transport, credits);
   });
+  /** Ruling R13: the names the preview prints are the names the export request carries (store.bookAuthorNames). */
+  private readonly authorNames = computed(() => this.store.bookAuthorNames(this.journalKey()));
   protected readonly layout = computed(() => {
     // no layout and no editing before the stored book is known: an edit on the defaults would overwrite it
     if (!this.fontsReady() || !this.journal() || !this.bookLoaded()) return undefined;
@@ -172,7 +174,8 @@ export class JournalBookPage {
   protected readonly warningsLine = computed(() => fill(this.i18n.warnings(), { count: this.layout()?.warnings.length ?? 0 }));
   protected readonly warningLines = computed(() => (this.layout()?.warnings ?? []).map((w) => {
     const template = w.level === 'missing' ? this.i18n.warning_missing() : w.level === 'veryPoor' ? this.i18n.warning_very_poor() : this.i18n.warning_poor();
-    return { pageIndex: w.pageIndex, imageKey: w.imageKey, text: fill(template, { page: w.pageIndex + 1, dpi: w.dpi ?? '–' }) };
+    const where = w.pageIndex === COVER_PAGE_INDEX ? this.i18n.warning_cover() : fill(this.i18n.page(), { page: w.pageIndex + 1 });
+    return { pageIndex: w.pageIndex, imageKey: w.imageKey, text: fill(template, { where, dpi: w.dpi ?? '–' }) };
   }));
   protected readonly missingLines = computed(() => {
     const layout = this.layout();
@@ -260,6 +263,10 @@ export class JournalBookPage {
   }
 
   protected jumpTo(pageIndex: number, imageKey?: string): void {
+    if (pageIndex === COVER_PAGE_INDEX) {
+      void this.openSettings(); // the cover photo is chosen in the settings
+      return;
+    }
     this.selectPhoto(pageIndex, imageKey ?? '');
     document.getElementById(`book-page-${pageIndex}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
@@ -328,12 +335,9 @@ export class JournalBookPage {
     return tenantId && personKey ? { journalKey: this.journalKey(), tenantId, personKey } : undefined;
   }
 
-  /** A member's display name: the journal's author list, else the signed-in person. */
+  /** A member's printed name (store.bookAuthorNames), '' when unknown — the book then prints no name line. */
   private authorName(personKey: string): string {
-    const a = this.store.authors(this.journalKey()).find((x) => x.key === personKey);
-    if (a) return `${a.name1} ${a.name2}`.trim() || a.label;
-    const me = this.store.appStore.currentPerson();
-    return me && this.store.appStore.currentUser()?.personKey === personKey ? `${me.firstName} ${me.lastName}`.trim() : '';
+    return this.authorNames()[personKey] ?? '';
   }
 
   private urls(field: 'path2048' | 'path400'): Record<string, string> {

@@ -90,3 +90,19 @@ export function allPhotoFiles(images: Map<string, ImageView>): string[] {
   }
   return [...files];
 }
+
+/**
+ * Calls `fn` up to `tries` times; after the n-th failure it waits `baseMs` × 2^(n-1) (2 s, 4 s …) before the next try.
+ * The last failure is thrown. `sleep` is replaceable for tests.
+ */
+export async function retryWithBackoff<T>(fn: () => Promise<T>, tries: number, baseMs: number,
+  sleep: (ms: number) => Promise<void> = (ms) => new Promise((resolve) => setTimeout(resolve, ms))): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (attempt >= tries) throw error;
+      await sleep(baseMs * 2 ** (attempt - 1));
+    }
+  }
+}

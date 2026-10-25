@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import { TRANSPORT_MODES } from '@okr/shared-models';
 
-import { BOOK_LABEL_KEYS, BookExportRequestError, bookObjectPath, canStartExport, exportLinkPaths, parseBookExportRequest, parseBookRequest } from './book.logic';
+import {
+  BOOK_LABEL_KEYS, BookExportRequestError, bookObjectPath, bookPhotoSources, canStartExport, checkAuthorNames, exportLinkPaths, exportWarningCount, parseBookExportRequest,
+  parseBookRequest,
+} from './book.logic';
 
 const NOW = Date.parse('2026-10-25T10:00:00Z');
 const labels = (): Record<string, unknown> => ({
@@ -67,5 +70,60 @@ describe('the links op (ruling R10)', () => {
     expect(exportLinkPaths({ ...done, bookPath: 'tenant/other/journal/x/book/print.pdf' }, 'bkg', jk)).toBeUndefined();
     expect(exportLinkPaths({ ...done, coverPath: 'tenant/bkg/secret.pdf' }, 'bkg', jk)).toEqual({ bookPath });
     expect(exportLinkPaths(undefined, 'bkg', jk)).toBeUndefined();
+  });
+});
+
+describe('photo sources (book final review)', () => {
+  // the 2048 px file is named after its own UUID (Swift `UUID()-2048.jpg`), not after the image entity key
+  const imageKey = '7f1c0d2e-1111-4a4a-8b8b-000000000001';
+  const image = { path2048: 'journals/j1/0a9b8c7d-2222-4c4c-9d9d-000000000002-2048.jpg' };
+
+  it('print: the print photo by image key first, then the 2048 px photo by its own file name', () => {
+    expect(bookPhotoSources(imageKey, image, true)).toEqual([`${imageKey}-print.jpg`, '0a9b8c7d-2222-4c4c-9d9d-000000000002-2048.jpg']);
+  });
+
+  it('screen: only the 2048 px photo, never a name built from the image key', () => {
+    expect(bookPhotoSources(imageKey, image, false)).toEqual(['0a9b8c7d-2222-4c4c-9d9d-000000000002-2048.jpg']);
+    expect(bookPhotoSources(imageKey, image, false)).not.toContain(`${imageKey}-2048.jpg`);
+  });
+
+  it('an image the state does not know, or a path that is not a plain photo file, adds nothing', () => {
+    expect(bookPhotoSources(imageKey, undefined, false)).toEqual([]);
+    expect(bookPhotoSources(imageKey, undefined, true)).toEqual([`${imageKey}-print.jpg`]);
+    expect(bookPhotoSources(imageKey, { path2048: '' }, false)).toEqual([]);
+    expect(bookPhotoSources(imageKey, { path2048: 'journals/j1/../x.png' }, false)).toEqual([]);
+    expect(bookPhotoSources('../evil', { path2048: '' }, true)).toEqual([]);
+  });
+});
+
+describe('author names (ruling R13)', () => {
+  const base = { op: 'export', journalKey: 'j1', kind: 'print', labels: labels() };
+
+  it('are strings of at most 200 characters, an empty name allowed, absent = none', () => {
+    expect(parseBookExportRequest({ ...base, authorNames: { bruno: 'Bruno Kaiser', anna: '' } }).authorNames).toEqual({ bruno: 'Bruno Kaiser', anna: '' });
+    expect(parseBookExportRequest(base).authorNames).toEqual({});
+    expect(() => parseBookExportRequest({ ...base, authorNames: { bruno: 7 } })).toThrow(BookExportRequestError);
+    expect(() => parseBookExportRequest({ ...base, authorNames: { bruno: 'x'.repeat(201) } })).toThrow(BookExportRequestError);
+    expect(() => parseBookExportRequest({ ...base, authorNames: ['Bruno'] })).toThrow(BookExportRequestError);
+    expect(() => parseBookExportRequest({ ...base, authorNames: 'Bruno' })).toThrow(BookExportRequestError);
+  });
+
+  it("keys must be the journal's authors: an extra key is refused", () => {
+    expect(() => checkAuthorNames({ bruno: 'B', anna: 'A' }, ['bruno', 'anna', 'carla'])).not.toThrow();
+    expect(() => checkAuthorNames({}, ['bruno'])).not.toThrow();
+    expect(() => checkAuthorNames({ bruno: 'B', mallory: 'M' }, ['bruno'])).toThrow(BookExportRequestError);
+  });
+});
+
+describe('export warning count', () => {
+  const warnings = [
+    { pageIndex: 3, imageKey: 'a', level: 'missing' as const, dpi: 170 },
+    { pageIndex: 4, imageKey: 'b', level: 'poor' as const, dpi: 250 },
+    { pageIndex: -1, imageKey: 'c', level: 'veryPoor' as const, dpi: 150 },
+  ];
+  it('print counts every warning, screen neither «Original fehlt» nor the cover; unreadable files add up', () => {
+    expect(exportWarningCount(warnings, 'print', 2)).toBe(5);
+    expect(exportWarningCount(warnings, 'screen', 0)).toBe(1);
+    expect(exportWarningCount(warnings, 'screen', 1)).toBe(2);
   });
 });

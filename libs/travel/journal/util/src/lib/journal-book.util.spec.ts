@@ -4,7 +4,8 @@ import { formatHlc } from './journal-hlc.util';
 import { materialize } from './journal-merge.util';
 import { routeLengthKm } from './journal-map.util';
 import { templateBoxes } from './journal-book-layout.util';
-import { BookFrame, BookInput, BookLabels, BookPage, bookPrintCandidates, coverImageKeyOf, layoutBook, PaginateText, stripEmoji, stripUndefined } from './journal-book.util';
+import { bookBlockHtml, BookFrame, BookInput, BookLabels, BookPage, bookPrintCandidates, coverImageKeyOf, COVER_PAGE_INDEX, layoutBook, PaginateText, stripEmoji, stripUndefined } from './journal-book.util';
+import { localViewDateTime } from './journal-book-i18n';
 import { coverLayout } from './journal-book-cover.util';
 
 class Sentinel { constructor(public readonly tag: string) {} }
@@ -45,7 +46,7 @@ const img = (key: string, width = 4000, height = 3000) =>
   rec('image', key, { journalKey: 'j1', width, height, path2048: `${key}.jpg`, path400: `${key}-400.jpg`, localIdentifier: key });
 
 const LABELS: BookLabels = {
-  day: 'Tag', stretch: 'Etappe', cumulative: 'Gesamt', km: 'km', photos: 'Fotos', weather: 'Wetter',
+  day: 'Tag', stretch: 'Etappe', cumulative: 'Gesamt', km: 'km', photo: 'Foto', photos: 'Fotos', weather: 'Wetter',
   transportVia: 'Unterwegs mit', noTransport: 'ohne Angabe',
   transport: { plane: 'Flugzeug', ship: 'Schiff', bus: 'Bus', train: 'Zug', car: 'Auto', bike: 'Velo', foot: 'zu Fuss' },
   north: 'N', south: 'S', east: 'O', west: 'W',
@@ -113,6 +114,36 @@ describe('layoutBook', () => {
     const { pages } = layoutBook(input([journal(), fp('f1', '20270102'), text('t1', 'f1', 'a', '<p>Hallo</p>', 'anna')]));
     const body = texts(ofFootprint(pages, 'f1')[0], 'body');
     expect(body).toContain('<p>Hallo</p><p class="book-author">Anna &lt;Muster&gt;</p>');
+  });
+
+  it('an author without a name gets no name line (ruling R13), in text runs and comments', () => {
+    const changes = [journal(), fp('f1', '20270102'), text('t1', 'f1', 'a', '<p>Hallo</p>', 'nobody'), text('t2', 'f1', 'b', '<p>Du</p>', 'anna')];
+    const noName = { ...input(changes), authorName: (k: string) => (k === 'anna' ? NAMES['anna'] : '') };
+    const body = texts(ofFootprint(layoutBook(noName).pages, 'f1')[0], 'body');
+    expect(body).toBe('<p>Hallo</p><p>Du</p><p class="book-author">Anna &lt;Muster&gt;</p>');
+    expect(body).not.toContain('<p class="book-author"></p>');
+    // the title page lists only the named authors
+    expect(texts(layoutBook(noName).pages[0], 'author')).toBe('<p>Anna &lt;Muster&gt;</p>');
+  });
+
+  it('empty paragraphs are dropped before pagination (the DOM and pdfkit would disagree on them)', () => {
+    expect(bookBlockHtml('<p>eins</p><p></p><p> &nbsp; </p><p><br></p><p class="x"><br/></p><p>zwei</p>')).toBe('<p>eins</p><p>zwei</p>');
+    expect(bookBlockHtml('<p>🐧</p>')).toBe('');
+    const paginate = vi.fn(PAGINATE);
+    layoutBook(input([journal(), fp('f1', '20270102'), text('t1', 'f1', 'a', '<p>eins</p><p></p><p>zwei</p>')], {}, paginate));
+    expect(paginate.mock.calls.find((c) => c[1] === 'body')?.[0]).toBe('<p>eins</p><p>zwei</p><p class="book-author">Bruno Kaiser</p>');
+    // a block of nothing but empty paragraphs is no text block at all
+    const { pages } = layoutBook(input([journal(), fp('f1', '20270102'), text('t1', 'f1', 'a', '<p></p><p><br></p>')]));
+    expect(texts(ofFootprint(pages, 'f1')[0], 'body')).toBe('');
+  });
+
+  it('the photo count of the opening page: «1 Foto», «2 Fotos», none at 0', () => {
+    const count = (keys: string[]) => texts(ofFootprint(layoutBook(input([
+      journal(), fp('f1', '20270102'), img('i1'), img('i2'), ...(keys.length > 0 ? [photos('p1', 'f1', 'a', keys)] : []),
+    ])).pages, 'f1')[0], 'stats');
+    expect(count(['i1'])).toContain('<p>1 Foto</p>');
+    expect(count(['i1', 'i2'])).toContain('<p>2 Fotos</p>');
+    expect(count([])).not.toMatch(/Foto/);
   });
 
   it('consecutive text blocks flow on together', () => {
@@ -285,6 +316,31 @@ describe('layoutBook', () => {
   });
 });
 
+describe('cover warning', () => {
+  it('the cover front photo is checked like a page photo, as pageIndex COVER_PAGE_INDEX', () => {
+    const changes = [journal(), fp('f1', '20270102'), img('i1'), photos('p1', 'f1', 'a', ['i1'])];
+    const print = { ...new JournalBookModel().print, cover: 'softcover' as const, bleedMm: 3, spineMm: 10 };
+    const prints = { i1: { width: 3000, height: 2000 } };
+    const { warnings } = layoutBook(input(changes, { print, prints }));
+    const cover = warnings.find((w) => w.pageIndex === COVER_PAGE_INDEX);
+    // front photo 300 × 216 mm (297 + bleed, 210 + 2 × bleed) from 3000 × 2000 px: fill by height → 2000 px / 8.5 in
+    expect(cover).toEqual({ pageIndex: -1, imageKey: 'i1', level: 'poor', dpi: 235 });
+    expect(layoutBook(input(changes, { prints })).warnings.some((w) => w.pageIndex === COVER_PAGE_INDEX)).toBe(false); // no cover ordered
+    expect(layoutBook(input(changes, { print })).warnings.find((w) => w.pageIndex === COVER_PAGE_INDEX)?.level).toBe('missing');
+  });
+});
+
+describe('localViewDateTime', () => {
+  it('shows an ISO instant in local time, not UTC', () => {
+    const iso = '2026-10-25T23:30:00.000Z';
+    const d = new Date(iso);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    expect(localViewDateTime(iso)).toBe(`${d.getDate()}.${d.getMonth() + 1}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`);
+    expect(localViewDateTime('garbage')).toBe('');
+    expect(localViewDateTime(undefined)).toBe('');
+  });
+});
+
 describe('coverLayout', () => {
   it("coverLayout is undefined for 'none' and 2 × (297 + bleed) + spine + 2 × wrap wide otherwise", () => {
     const book = (print: Partial<JournalBookModel['print']>): JournalBookModel =>
@@ -311,6 +367,8 @@ describe('stripEmoji', () => {
     expect(stripEmoji('Grüezi 🐧 «Pinguine» – 3 °C 👍🏽 🇨🇭')).toBe('Grüezi «Pinguine» – 3 °C');
     expect(stripEmoji('Ölfeld ❤️ Ära 👨‍👩‍👧 ß 1️⃣')).toBe('Ölfeld Ära ß 1');
     expect(stripEmoji('© swisstopo, 54° 48′ S')).toBe('© swisstopo, 54° 48′ S');
+    // ↔ and ☀ are in the print fonts (Plex Serif, Inter Tight): kept; ✈ is in neither
+    expect(stripEmoji('Zürich ↔ Ushuaia ☀️ ✈️')).toBe('Zürich ↔ Ushuaia ☀');
   });
 });
 

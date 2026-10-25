@@ -5,7 +5,8 @@ import type { Readable } from 'node:stream';
 
 import PDFDocument from 'pdfkit';
 
-import type { BookFrame, BookPage, Box, PaginateText, TextStyle } from '@okr/travel-journal-util';
+import { BOOK_FONT_FILES, BOOK_GREY, BOOK_HEADING_SCALE, BOOK_LIST_INDENT_EM, BOOK_SMALL_SCALE, BOOK_TEXT_STYLES } from '@okr/travel-journal-util';
+import type { BookFont, BookFrame, BookPage, BookTextStyle, Box, PaginateText, TextStyle } from '@okr/travel-journal-util';
 
 import { htmlToRuns, runsToHtml, TextRun } from './book-html';
 
@@ -25,13 +26,9 @@ const PAGE_H_MM = 210;
 // ---------------------------------------------------------------------------------------------------------------
 // assets and fonts
 
-export type FontKey = 'serif' | 'serifItalic' | 'serifBold' | 'sans';
-const FONT_FILES: Record<FontKey, string> = {
-  serif: 'IBMPlexSerif-Regular.ttf',
-  serifItalic: 'IBMPlexSerif-Italic.ttf',
-  serifBold: 'IBMPlexSerif-Bold.ttf',
-  sans: 'InterTight-SemiBold.ttf', // also carries ♥ (U+2665), which Plex Serif lacks
-};
+/** The four faces of the book (BOOK_FONT_FILES, shared with the preview); the sans also carries ♥ and ☀, which Plex Serif lacks. */
+export type FontKey = BookFont;
+const FONT_FILES = BOOK_FONT_FILES;
 
 /** `assets/book` next to the bundle (dist/apps/functions/main.js), or src/assets/book from this source file. */
 function assetDir(): string {
@@ -56,19 +53,10 @@ export function createBookDoc(): PDFKit.PDFDocument {
 // ---------------------------------------------------------------------------------------------------------------
 // text styles
 
-const WHITE = '#ffffff';
-const LIGHT = '#d9d9d9';
-const GREY = '#a6a6a6';
-
-interface StyleSpec { font: FontKey; size: number; leading: number; color: string; gap: number }
-const STYLES: Record<TextStyle, StyleSpec> = {
-  title: { font: 'serifBold', size: 26, leading: 1.15, color: WHITE, gap: 4 },
-  facts: { font: 'serif', size: 11, leading: 1.35, color: LIGHT, gap: 1 },
-  stats: { font: 'serif', size: 11, leading: 1.35, color: LIGHT, gap: 1 },
-  body: { font: 'serif', size: 11, leading: 1.45, color: WHITE, gap: 6 },
-  author: { font: 'sans', size: 10, leading: 1.4, color: GREY, gap: 4 },
-  comment: { font: 'serifItalic', size: 11, leading: 1.45, color: WHITE, gap: 6 },
-};
+// one typography for the PDF and the preview (journal-book-typography.ts)
+type StyleSpec = BookTextStyle;
+const STYLES = BOOK_TEXT_STYLES;
+const GREY = BOOK_GREY;
 
 function runFont(run: TextRun, base: FontKey): FontKey {
   if (run.cls || run.heading) return 'sans';
@@ -77,8 +65,8 @@ function runFont(run: TextRun, base: FontKey): FontKey {
   return base;
 }
 function runSize(run: TextRun, st: StyleSpec): number {
-  if (run.heading) return st.size * 1.1;
-  if (run.cls === 'author' || run.cls === 'likes') return st.size * 0.9;
+  if (run.heading) return st.size * BOOK_HEADING_SCALE;
+  if (run.cls === 'author' || run.cls === 'likes') return st.size * BOOK_SMALL_SCALE;
   return st.size;
 }
 const runColor = (run: TextRun, st: StyleSpec): string => (run.cls === 'author' || run.cls === 'number' ? GREY : st.color);
@@ -194,7 +182,7 @@ export function layoutRuns(runs: TextRun[], style: TextStyle, width: number, m: 
   const lines: Line[] = [];
   for (const para of paragraphsOf(runs)) {
     const first = para[0];
-    const indent = first.list ? st.size * 1.4 : 0;
+    const indent = first.list ? st.size * BOOK_LIST_INDENT_EM : 0;
     const avail = Math.max(1, width - indent);
     let pieces: Piece[] = [];
     let fragments: Fragment[] = [];
@@ -352,6 +340,8 @@ function drawTextFrame(doc: PDFKit.PDFDocument, frame: Extract<BookFrame, { kind
   const st = STYLES[frame.style];
   let lines = layoutRuns(runs, frame.style, rotated ? h : w, m);
   doc.save();
+  // nothing is drawn outside the frame, as in the preview (.frame overflow hidden): e.g. a long footprint title
+  doc.rect(x0, y0, w, h).clip();
   if (rotated) {
     // the spine: the title runs top to bottom, centred across the spine, scaled down to 80 % of its width
     const height = (ls: Line[]) => ls.reduce((s, l) => s + l.height, 0);
@@ -359,7 +349,7 @@ function drawTextFrame(doc: PDFKit.PDFDocument, frame: Extract<BookFrame, { kind
     if (scale < 1) lines = layoutRuns(runs, frame.style, h / scale, m);
     doc.translate(x0 + w - (w - height(lines) * scale) / 2, y0).rotate(90).scale(scale);
   } else doc.translate(x0, y0);
-  const indent = st.size * 1.4;
+  const indent = st.size * BOOK_LIST_INDENT_EM;
   let y = 0;
   for (const line of lines) {
     const baseline = y + line.height / 2 + line.size * 0.35;
