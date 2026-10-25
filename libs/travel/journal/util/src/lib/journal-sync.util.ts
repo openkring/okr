@@ -1,3 +1,6 @@
+import { JournalChange } from '@okr/shared-models';
+
+import { acceptRecord } from './journal-server.util';
 import { FootprintView, ImageView } from './journal-view.util';
 
 /**
@@ -105,4 +108,15 @@ export async function retryWithBackoff<T>(fn: () => Promise<T>, tries: number, b
       await sleep(baseMs * 2 ** (attempt - 1));
     }
   }
+}
+
+/**
+ * A `journal-changes` document as the browser reads it (web view, plan 8): the server's `uploadedAt` and
+ * `tenants` are dropped, and a record the device merge would refuse (`acceptRecord`: bad hlc, or a clock more
+ * than a day after its upload) is `undefined`. `uploadedAtMs` undefined = not stamped yet, judged against now.
+ */
+export function remoteChangeOf(data: Record<string, unknown>, uploadedAtMs: number | undefined): JournalChange | undefined {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { uploadedAt, tenants, ...change } = data;
+  return acceptRecord(change as unknown as JournalChange, uploadedAtMs ?? Date.now()) ? change as unknown as JournalChange : undefined;
 }

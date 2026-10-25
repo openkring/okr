@@ -12,6 +12,9 @@ import { JournalSyncService } from '@okr/travel-journal-data-access';
  * had failed to load before. In the browser (plan 8, web view for authors) there are no local files: the URLs are
  * signed links of the published photos, fetched in batches; drafts' photos stay empty.
  */
+/** signJournalPhotos links live 15 minutes; renew them a little before. */
+const SIGNED_URL_RENEW_MS = 12 * 60 * 1000;
+
 @Injectable({ providedIn: 'root' })
 export class JournalFileUrlService {
   private readonly documentsUri = signal('');
@@ -19,6 +22,7 @@ export class JournalFileUrlService {
   private readonly native = Capacitor.isNativePlatform();
   private readonly syncService = inject(JournalSyncService);
   private readonly signed = signal<Record<string, string>>({}); // relative path → signed URL (web)
+  private readonly signedAt = new Map<string, number>(); // relative path → when its URL was fetched
   private readonly requested = new Set<string>();
   private pending = new Map<string, Set<string>>(); // journalKey → file names
   private flushTimer?: ReturnType<typeof setTimeout>;
@@ -71,12 +75,37 @@ export class JournalFileUrlService {
       try {
         const urls = await this.syncService.signPhotos(journalKey, [...files]);
         const next = { ...this.signed() };
-        for (const file of files) next[`journals/${journalKey}/${file}`] = urls[file] ?? ''; // '' = not uploaded (a draft)
+        const now = Date.now();
+        for (const file of files) {
+          const path = `journals/${journalKey}/${file}`;
+          next[path] = urls[file] ?? ''; // '' = not uploaded (yet)
+          this.signedAt.set(path, now);
+        }
         this.signed.set(next);
       } catch {
         for (const file of files) this.requested.delete(`journals/${journalKey}/${file}`); // retry on the next render
       }
     }
+  }
+
+  /**
+   * Web view: forget the links that may have changed — photos that were not in the bucket yet (the iPad uploads the
+   * records first, the photos after them) and links close to their 15-minute expiry. The pages ask again on their
+   * next render. Called on every live change and once a minute while the web view is open.
+   */
+  public refreshWeb(): void {
+    if (this.native) return;
+    const now = Date.now();
+    const current = this.signed();
+    const stale = Object.keys(current).filter((path) => current[path] === '' || now - (this.signedAt.get(path) ?? 0) > SIGNED_URL_RENEW_MS);
+    if (stale.length === 0) return;
+    const next = { ...current };
+    for (const path of stale) {
+      delete next[path];
+      this.signedAt.delete(path);
+      this.requested.delete(path);
+    }
+    this.signed.set(next);
   }
 
   public refresh(): void {

@@ -1,15 +1,15 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { getApp } from 'firebase/app';
 import {
-  collection, doc, DocumentSnapshot, getDocFromServer, getDocsFromServer, limit, orderBy, query, serverTimestamp, setDoc, startAfter,
-  Timestamp, where, writeBatch,
+  collection, doc, DocumentSnapshot, getDocFromServer, getDocsFromServer, limit, onSnapshot, orderBy, query, serverTimestamp, setDoc, startAfter,
+  Timestamp, Unsubscribe, where, writeBatch,
 } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { FIRESTORE, ensureAppCheckToken } from '@okr/shared-config';
 import { DiaryWeather, JournalChange, JournalChangeCollection, JournalCollection } from '@okr/shared-models';
 import {
-  acceptRecord, advanceCursor, classifyUploadError, DOWNLOAD_PAGE, downloadStart, JournalPhotoMode, pagesOf, UPLOAD_PAGE,
+  acceptRecord, advanceCursor, remoteChangeOf, classifyUploadError, DOWNLOAD_PAGE, downloadStart, JournalPhotoMode, pagesOf, UPLOAD_PAGE,
 } from '@okr/travel-journal-util';
 
 import { JournalDb, RemoteChange } from './journal-db';
@@ -310,13 +310,55 @@ export class JournalSyncService {
     for (const journal of journals.docs.filter((d) => d.data()['isArchived'] !== true)) {
       const snaps = await getDocsFromServer(query(collection(this.firestore, JournalChangeCollection), where('journalKey', '==', journal.id)));
       for (const d of snaps.docs) {
-        const data = d.data() as JournalChange & { uploadedAt?: Timestamp };
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { uploadedAt, tenants, ...change } = data;
-        if (acceptRecord(change as JournalChange, uploadedAt?.toMillis() ?? Date.now())) out.push(change as JournalChange);
+        const change = remoteChangeOf(d.data(), (d.data()['uploadedAt'] as Timestamp | undefined)?.toMillis());
+        if (change) out.push(change);
       }
     }
     return out;
+  }
+
+  /**
+   * The live web view (browser): the journals this person writes in and all their change records, handed to
+   * `onChanges` as one list on every change — a footprint the iPad publishes appears without a reload. One
+   * listener on the journals, one per journal on its records; journals that disappear (archived, author removed)
+   * drop their listener. Returns the function that stops everything.
+   */
+  public watchRemoteJournals(personKey: string, onChanges: (changes: JournalChange[]) => void, onError: (error: unknown) => void): () => void {
+    const perJournal = new Map<string, { stop: Unsubscribe; changes: JournalChange[] }>();
+    const emit = () => onChanges([...perJournal.values()].flatMap((j) => j.changes));
+    const stopJournals = onSnapshot(
+      query(collection(this.firestore, JournalCollection), where('authorKeys', 'array-contains', personKey)),
+      (journals) => {
+        const live = new Set(journals.docs.filter((d) => d.data()['isArchived'] !== true).map((d) => d.id));
+        for (const [key, entry] of perJournal) {
+          if (!live.has(key)) { entry.stop(); perJournal.delete(key); }
+        }
+        let added = false;
+        for (const key of live) {
+          if (perJournal.has(key)) continue;
+          added = true;
+          const entry = { stop: (() => undefined) as Unsubscribe, changes: [] as JournalChange[] };
+          perJournal.set(key, entry);
+          entry.stop = onSnapshot(
+            query(collection(this.firestore, JournalChangeCollection), where('journalKey', '==', key)),
+            (snaps) => {
+              entry.changes = snaps.docs
+                .map((d) => remoteChangeOf(d.data(), (d.data()['uploadedAt'] as Timestamp | undefined)?.toMillis()))
+                .filter((c): c is JournalChange => c !== undefined);
+              emit();
+            },
+            onError,
+          );
+        }
+        if (!added) emit(); // a new journal emits once its records are there, not with an empty list first
+      },
+      onError,
+    );
+    return () => {
+      stopJournals();
+      for (const entry of perJournal.values()) entry.stop();
+      perJournal.clear();
+    };
   }
 
   /** Signed URLs (15 min) for published photo files of a journal — the web view has no local files. */

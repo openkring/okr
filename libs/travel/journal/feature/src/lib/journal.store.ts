@@ -116,6 +116,17 @@ export const JournalStore = signalStore(
     };
   }),
   withMethods((store) => {
+    let stopWeb: (() => void) | undefined; // the live web view's Firestore listeners
+    let webRefresh: ReturnType<typeof setInterval> | undefined;
+    let webPersonKey = '';
+    function stopWebView(): void {
+      stopWeb?.();
+      stopWeb = undefined;
+      webPersonKey = '';
+      if (webRefresh) clearInterval(webRefresh);
+      webRefresh = undefined;
+    }
+
     /** Stamps and stores the drafts, then applies them in memory. */
     async function write(drafts: ChangeDraft[]): Promise<JournalChange[]> {
       const changes = await store.identity.stampChanges(drafts);
@@ -312,13 +323,30 @@ export const JournalStore = signalStore(
        * The web view for authors (plan 8): the journals this person writes in, loaded from Firestore and merged
        * like on the iPad. Read-only — writing stays on the iPad (spec §9.5).
        */
-      async loadWeb(personKey: string): Promise<void> {
-        if (store.native()) return;
-        try {
-          patchState(store, { changes: await store.syncService.loadRemoteJournals(personKey), ready: true, error: '', webLoaded: true });
-        } catch (error) {
-          patchState(store, { ready: true, error: String(error), webLoaded: true });
-        }
+      /**
+       * The web view for authors (plan 8): the journals this person writes in, live from Firestore — a footprint the
+       * iPad publishes, or a photo it uploads later, appears without a reload. Started once per person; `stopWeb()`
+       * on logout. Photo links that were missing or are about to expire are asked for again on every change and once
+       * a minute (`JournalFileUrlService.refreshWeb`).
+       */
+      loadWeb(personKey: string): void {
+        if (store.native() || (stopWeb && webPersonKey === personKey)) return;
+        stopWebView();
+        webPersonKey = personKey;
+        stopWeb = store.syncService.watchRemoteJournals(
+          personKey,
+          (changes) => {
+            patchState(store, { changes, ready: true, error: '', webLoaded: true });
+            store.fileUrl.refreshWeb();
+          },
+          (error) => patchState(store, { ready: true, error: String(error), webLoaded: true }),
+        );
+        webRefresh = setInterval(() => store.fileUrl.refreshWeb(), 60_000);
+      },
+
+      /** Stops the live web view (logout, or another person signs in). */
+      stopWeb(): void {
+        stopWebView();
       },
 
       /**
@@ -763,9 +791,12 @@ export const JournalStore = signalStore(
       effect(() => {
         const user = store.appStore.currentUser();
         const person = store.appStore.currentPerson();
-        if (!user?.personKey) return;
+        if (!user?.personKey) {
+          untracked(() => store.stopWeb());
+          return;
+        }
         if (!store.native()) {
-          untracked(() => void store.loadWeb(user.personKey));
+          untracked(() => store.loadWeb(user.personKey));
           return;
         }
         const name = person ? `${person.firstName} ${person.lastName}`.trim() : '';

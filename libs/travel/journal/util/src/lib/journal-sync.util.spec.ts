@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   advanceCursor, allPhotoFiles, classifyUploadError, CURSOR_OVERLAP_MS, downloadStart, pagesOf, parsePhotoMode, photoFileName, publishedPhotoFiles,
-  retryWithBackoff,
+  remoteChangeOf, retryWithBackoff,
 } from './journal-sync.util';
+import { formatHlc } from './journal-hlc.util';
 import { FootprintView, ImageView } from './journal-view.util';
 
 const image = (key: string): ImageView => ({
@@ -73,5 +74,26 @@ describe('retryWithBackoff', () => {
     let calls = 0;
     await expect(retryWithBackoff(async () => { calls++; throw new Error(`fail ${calls}`); }, 3, 1, async () => undefined)).rejects.toThrow('fail 3');
     expect(calls).toBe(3);
+  });
+});
+
+describe('remoteChangeOf', () => {
+  const data = (wall: number, extra: Record<string, unknown> = {}) => ({
+    id: 'r1', journalKey: 'j1', deviceId: 'dev-a', seq: 1, hlc: formatHlc({ wall, counter: 0, deviceId: 'dev-a' }), authorKey: 'bruno',
+    entity: 'footprint', entityKey: 'f1', op: 'set', fields: { title: 'x' }, tenants: ['bkg'], uploadedAt: { seconds: 1 }, ...extra,
+  });
+
+  it('a stored record becomes a change without the server fields', () => {
+    const change = remoteChangeOf(data(1000), 2000);
+    expect(change).toEqual({ id: 'r1', journalKey: 'j1', deviceId: 'dev-a', seq: 1, hlc: formatHlc({ wall: 1000, counter: 0, deviceId: 'dev-a' }),
+      authorKey: 'bruno', entity: 'footprint', entityKey: 'f1', op: 'set', fields: { title: 'x' } });
+  });
+
+  it('a record whose clock lies more than a day after its upload is dropped', () => {
+    expect(remoteChangeOf(data(2000 + 25 * 60 * 60 * 1000), 2000)).toBeUndefined();
+  });
+
+  it('a malformed hlc is dropped', () => {
+    expect(remoteChangeOf(data(1000, { hlc: 'nonsense' }), 2000)).toBeUndefined();
   });
 });
