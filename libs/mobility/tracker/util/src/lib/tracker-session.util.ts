@@ -73,3 +73,30 @@ export function nextSections(
 export function alignSections(points: TrackPoint[][], count: number): TrackPoint[][] {
   return Array.from({ length: count }, (_, i) => points[i] ?? []);
 }
+
+/**
+ * Who pending uploads would be written for: an id once both the person and the auth uid are known, else undefined.
+ * The store runs the pending-upload loop whenever this id appears or changes (once per sign-in, not per emission).
+ */
+export function pendingUploadOwner(personKey: string | undefined, uid: string | undefined): string | undefined {
+  return personKey && uid ? `${uid}|${personKey}` : undefined;
+}
+
+/**
+ * The track's sections when recording resumes after a pause (or a relaunch): a section with points is closed and a
+ * new one in the same mode begins, NOT seeded with the last point — the map shows a gap and the distance across
+ * the pause is not counted. A section still without points simply continues.
+ */
+export function sectionsAfterPause(
+  sections: LocalTrack['sections'], currentHasPoints: boolean,
+): { sections: LocalTrack['sections']; newSection: boolean } {
+  const last = sections[sections.length - 1];
+  if (!last) return { sections: [{ mode: 'foot', detected: true }], newSection: true };
+  if (!currentHasPoints) return { sections, newSection: false };
+  return { sections: [...sections, { mode: last.mode, detected: last.detected }], newSection: true };
+}
+
+/** A recording without a single GPS point (discarded at stop instead of uploaded). */
+export function hasNoPoints(groups: TrackPoint[][]): boolean {
+  return groups.every((g) => g.length === 0);
+}

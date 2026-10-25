@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { initialDetectState } from './track-detection.util';
 import type { LocalTrack } from './track-local.model';
 import {
-  accumulateDistance, alignSections, needsUpload, nextSections, nextSectionStartPoint, resumeDecision, sessionDetectStep, startWarning, toTrackPoint,
+  accumulateDistance, alignSections, hasNoPoints, needsUpload, nextSections, nextSectionStartPoint, pendingUploadOwner, resumeDecision, sectionsAfterPause,
+  sessionDetectStep, startWarning, toTrackPoint,
 } from './tracker-session.util';
 
 function track(key: string, state: LocalTrack['state'], uploaded = false): LocalTrack {
@@ -109,4 +110,38 @@ describe('alignSections', () => {
   it('pads missing trailing sections with []', () => expect(alignSections([[p]], 3)).toEqual([[p], [], []]));
   it('fills holes', () => expect(alignSections([[p], undefined as unknown as never, [p]], 3)).toEqual([[p], [], [p]]));
   it('drops points beyond the known sections', () => expect(alignSections([[p], [p]], 1)).toEqual([[p]]));
+});
+
+describe('pendingUploadOwner', () => {
+  it('undefined without a person', () => expect(pendingUploadOwner(undefined, 'u1')).toBeUndefined());
+  it('undefined without an auth uid', () => expect(pendingUploadOwner('p1', undefined)).toBeUndefined());
+  it('undefined for empty strings', () => expect(pendingUploadOwner('', '')).toBeUndefined());
+  it('one id per owner', () => expect(pendingUploadOwner('p1', 'u1')).toBe('u1|p1'));
+  it('a different owner gives a different id', () => expect(pendingUploadOwner('p2', 'u2')).not.toBe(pendingUploadOwner('p1', 'u1')));
+});
+
+describe('sectionsAfterPause', () => {
+  it('a section with points: a new one in the same mode, detected copied', () => {
+    expect(sectionsAfterPause([{ mode: 'car', detected: true }, { mode: 'bike', detected: false }], true)).toEqual({
+      sections: [{ mode: 'car', detected: true }, { mode: 'bike', detected: false }, { mode: 'bike', detected: false }], newSection: true,
+    });
+  });
+  it('a section without points stays as it is', () => {
+    const sections = [{ mode: 'foot' as const, detected: true }];
+    expect(sectionsAfterPause(sections, false)).toEqual({ sections, newSection: false });
+  });
+  it('no section at all: a foot section (detected)', () => {
+    expect(sectionsAfterPause([], true)).toEqual({ sections: [{ mode: 'foot', detected: true }], newSection: true });
+  });
+  it('does not change the input', () => {
+    const sections = [{ mode: 'ski' as const, detected: false }];
+    sectionsAfterPause(sections, true);
+    expect(sections).toHaveLength(1);
+  });
+});
+
+describe('hasNoPoints', () => {
+  it('no groups', () => expect(hasNoPoints([])).toBe(true));
+  it('only empty groups', () => expect(hasNoPoints([[], []])).toBe(true));
+  it('one point somewhere', () => expect(hasNoPoints([[], [{ lat: 1, lng: 2, t: 3 }]])).toBe(false));
 });
