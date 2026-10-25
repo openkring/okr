@@ -18,6 +18,8 @@ import {
  * detection runs on every fix and every activity event (Core Motion only reports changes, so the last activity is
  * kept). The decisions live in tracker-session.util; this store only wires plugin, database and upload.
  * On the web the plugin rejects every call: the store then shows the `notNative` warning instead of failing.
+ * Every state change of the active track (start, pause, resume, stop, section switch, each fix) runs through ONE
+ * promise queue, so a write never works on a stale copy of the track.
  */
 interface TrackerStoreState {
   active: LocalTrack | undefined;
@@ -42,8 +44,9 @@ interface Session {
   lastActivity: MotionActivity | undefined;
   lastFix: NativeLocation | undefined;
   handles: PluginListenerHandle[];
-  queue: Promise<void>; // fixes and section changes run strictly in order
-  initialized: boolean;
+  queue: Promise<void>; // every change of the active track runs strictly in order
+  stopping: boolean; // set by stop(): late fixes, mode changes and proposals are ignored
+  init: Promise<void> | undefined; // a failed open is retried on the next init()
 }
 
 function profileOf(mode: TransportMode) {
@@ -64,17 +67,18 @@ export const TrackerStore = signalStore(
     appStore: inject(AppStore),
     i18n: inject(I18nService).translateAll(TRACKER_I18N_KEYS) as TrackerI18n,
     session: {
-      detect: initialDetectState('foot', false), lastPoint: undefined, sectionHasPoints: false, lastActivity: undefined, lastFix: undefined,
-      handles: [], queue: Promise.resolve(), initialized: false,
+      detect: initialDetectState('foot'), lastPoint: undefined, sectionHasPoints: false, lastActivity: undefined, lastFix: undefined,
+      handles: [], queue: Promise.resolve(), stopping: false, init: undefined,
     } as Session,
   })),
   withMethods((store) => {
     const s = store.session;
 
-    /** Runs a task after all earlier fixes/changes; a failing task never blocks the next one. */
-    function enqueue(task: () => Promise<void>): Promise<void> {
-      s.queue = s.queue.then(task).catch((error: unknown) => console.error('TrackerStore', error));
-      return s.queue;
+    /** Runs a task after all earlier ones; a failing task is logged, resolves to undefined and never blocks the next one. */
+    function enqueue<T>(task: () => Promise<T>): Promise<T | undefined> {
+      const run = s.queue.then(task);
+      s.queue = run.then(() => undefined, (error: unknown) => console.error('TrackerStore', error));
+      return run.catch(() => undefined);
     }
 
     async function refreshWarning(): Promise<Awaited<ReturnType<typeof TrackerLocation.permission>> | undefined> {
@@ -90,13 +94,16 @@ export const TrackerStore = signalStore(
       return p;
     }
 
-    async function startPlugin(mode: TransportMode): Promise<void> {
+    /** false when the plugin refused: `startFailed` on a device, `notNative` on the web. */
+    async function startPlugin(mode: TransportMode): Promise<boolean> {
       try {
         await ensureListeners();
         await TrackerLocation.start({ ...profileOf(mode), motion: true });
+        return true;
       } catch (error) {
         console.error('TrackerStore.startPlugin', error);
-        patchState(store, { warning: 'notNative' });
+        patchState(store, { warning: Capacitor.isNativePlatform() ? 'startFailed' : 'notNative' });
+        return false;
       }
     }
 
@@ -108,6 +115,7 @@ export const TrackerStore = signalStore(
       }
     }
 
+    // Registered once for the app's lifetime (the store is a root singleton); the handles are never removed.
     async function ensureListeners(): Promise<void> {
       if (s.handles.length > 0) return;
       s.handles.push(await TrackerLocation.addListener('location', (l) => void enqueue(() => onLocation(l))));
@@ -116,7 +124,7 @@ export const TrackerStore = signalStore(
 
     async function onLocation(l: NativeLocation): Promise<void> {
       const t = store.active();
-      if (!t || t.state !== 'recording') return;
+      if (!t || t.state !== 'recording' || s.stopping) return;
       const p = toTrackPoint(l);
       const prev = s.lastPoint;
       s.lastPoint = p;
@@ -132,7 +140,7 @@ export const TrackerStore = signalStore(
 
     async function onActivity(a: MotionActivity): Promise<void> {
       s.lastActivity = a;
-      if (store.active()?.state !== 'recording') return;
+      if (store.active()?.state !== 'recording' || s.stopping) return;
       await detect({
         activity: a.type, confidence: a.confidence, speedMps: s.lastFix?.speed ?? null, altitudeM: s.lastFix?.altitude ?? null, at: a.timestamp,
       });
@@ -145,10 +153,13 @@ export const TrackerStore = signalStore(
       else if (r.proposal && r.proposal !== store.proposal()) patchState(store, { proposal: r.proposal });
     }
 
-    /** Ends the current section and starts one in `mode` (connected by the old section's last point); new profile without a stop/start. */
+    /**
+     * Ends the current section and starts one in `mode` (connected by the old section's last point); new profile
+     * without a stop/start. Runs inside the queue only; does nothing once stop() began.
+     */
     async function switchSection(mode: TransportMode, detected: boolean): Promise<void> {
       const t = store.active();
-      if (!t || t.state === 'done') return;
+      if (!t || t.state === 'done' || s.stopping) return;
       const next = nextSections(t.sections, mode, detected, s.sectionHasPoints);
       const track: LocalTrack = { ...t, sections: next.sections };
       await store.db.updateTrack(track);
@@ -165,6 +176,15 @@ export const TrackerStore = signalStore(
           console.error('TrackerStore.setProfile', error);
         }
       }
+    }
+
+    /** A queued mode change for the track that is active now; skipped if stop() began or another track became active. */
+    function changeFor(task: () => Promise<void>): Promise<void> {
+      const key = store.active()?.key;
+      return enqueue(async () => {
+        if (!key || s.stopping || store.active()?.key !== key) return;
+        await task();
+      }).then(() => undefined);
     }
 
     /** Uploads one finished local track; on success it is marked uploaded. Silent: no uploadError (retries at init). */
@@ -186,20 +206,28 @@ export const TrackerStore = signalStore(
 
     /** Stops recording, marks the track done and uploads it; a failed upload keeps it local (uploadError). */
     async function stop(): Promise<string | undefined> {
-      const t = store.active();
-      if (!t) return undefined;
-      await stopPlugin();
-      await s.queue;
-      const latest = store.active() ?? t;
-      const done: LocalTrack = { ...latest, state: 'done', endedAt: Date.now() };
-      await store.db.updateTrack(done);
-      patchState(store, { active: undefined, currentMode: undefined, proposal: undefined, uploadError: undefined });
-      await uploadTrack(done, false);
-      return done.key;
+      if (!store.active()) return undefined;
+      s.stopping = true;
+      try {
+        await stopPlugin();
+        const done = await enqueue(async () => {
+          const t = store.active();
+          if (!t) return undefined;
+          const finished: LocalTrack = { ...t, state: 'done', endedAt: Date.now() };
+          await store.db.updateTrack(finished);
+          patchState(store, { active: undefined, currentMode: undefined, proposal: undefined, uploadError: undefined });
+          return finished;
+        });
+        if (!done) return undefined;
+        await uploadTrack(done, false);
+        return done.key;
+      } finally {
+        s.stopping = false;
+      }
     }
 
-    function resetSession(mode: TransportMode, chosenByHand: boolean): void {
-      s.detect = initialDetectState(mode, chosenByHand);
+    function resetSession(mode: TransportMode): void {
+      s.detect = initialDetectState(mode);
       s.lastPoint = undefined;
       s.lastFix = undefined;
       s.sectionHasPoints = false;
@@ -207,23 +235,26 @@ export const TrackerStore = signalStore(
 
     return {
       /** Opens the database, offers a resumable track (GPS is NOT restarted) and retries pending uploads once, silently. */
-      async init(): Promise<void> {
-        if (s.initialized) return;
-        s.initialized = true;
-        await refreshWarning();
-        try {
+      init(): Promise<void> {
+        s.init ??= (async () => {
+          await refreshWarning();
           await store.db.open();
           const tracks = await store.db.list();
           patchState(store, { resumable: resumeDecision(tracks) });
           void (async () => {
             for (const t of tracks.filter(needsUpload)) await uploadTrack(t, true);
           })();
-        } catch (error) {
+        })().catch((error: unknown) => {
           console.error('TrackerStore.init', error);
-        }
+          s.init = undefined; // a failed open is retried by the next init()
+        });
+        return s.init;
       },
 
-      /** mode undefined: detect, beginning with 'foot'; a mode chosen by hand locks detection (changes become proposals). */
+      /**
+       * mode undefined: detect, beginning with 'foot'. Only row, ski and ship lock detection (changes become proposals).
+       * A track still waiting as `resumable` is finished first (done, uploaded silently).
+       */
       async start(mode?: TransportMode): Promise<void> {
         const current = store.active();
         if (current && current.state !== 'done') return;
@@ -237,59 +268,81 @@ export const TrackerStore = signalStore(
           await refreshWarning();
         }
         if (store.warning() === 'notNative' || store.warning() === 'locationDenied') return;
-        const chosenByHand = mode !== undefined;
-        const m = mode ?? 'foot';
-        resetSession(m, chosenByHand);
-        const label = chosenByHand ? store.i18n[`mode_${m}` as const]() : store.i18n.default_name();
-        const track: LocalTrack = {
-          key: generateRandomString(20),
-          state: 'recording',
-          uploaded: false,
-          name: `${label} ${getTodayStr(DateFormat.ViewDate)} ${getCurrentTime()}`,
-          startedAt: Date.now(),
-          sections: [{ mode: m, detected: !chosenByHand }],
-        };
-        await store.db.open();
-        await store.db.createTrack(track);
-        patchState(store, { active: track, currentMode: m, points: 0, distanceM: 0, proposal: undefined, uploadError: undefined, resumable: undefined });
-        await startPlugin(m);
+        await enqueue(async () => {
+          const busy = store.active();
+          if (busy && busy.state !== 'done') return;
+          await store.db.open();
+          const old = store.resumable();
+          if (old) {
+            const finished: LocalTrack = { ...old, state: 'done', endedAt: old.endedAt ?? Date.now() };
+            await store.db.updateTrack(finished);
+            patchState(store, { resumable: undefined });
+            void uploadTrack(finished, true);
+          }
+          const chosenByHand = mode !== undefined;
+          const m = mode ?? 'foot';
+          resetSession(m);
+          const label = chosenByHand ? store.i18n[`mode_${m}` as const]() : store.i18n.default_name();
+          const track: LocalTrack = {
+            key: generateRandomString(20),
+            state: 'recording',
+            uploaded: false,
+            name: `${label} ${getTodayStr(DateFormat.ViewDate)} ${getCurrentTime()}`,
+            startedAt: Date.now(),
+            sections: [{ mode: m, detected: !chosenByHand }],
+          };
+          await store.db.createTrack(track);
+          patchState(store, { active: track, currentMode: m, points: 0, distanceM: 0, proposal: undefined, uploadError: undefined });
+          if (!(await startPlugin(m))) {
+            // no GPS running: drop the empty track instead of leaving a ghost 'recording' one
+            await store.db.remove(track.key);
+            patchState(store, { active: undefined, currentMode: undefined });
+          }
+        });
       },
 
       async pause(): Promise<void> {
-        const t = store.active();
-        if (!t || t.state !== 'recording') return;
+        if (store.active()?.state !== 'recording') return;
         await stopPlugin();
-        await s.queue;
-        const paused: LocalTrack = { ...t, state: 'paused' };
-        await store.db.updateTrack(paused);
-        patchState(store, { active: paused });
+        await enqueue(async () => {
+          const t = store.active(); // re-read: a section switch may have finished meanwhile
+          if (!t || t.state !== 'recording') return;
+          const paused: LocalTrack = { ...t, state: 'paused' };
+          await store.db.updateTrack(paused);
+          patchState(store, { active: paused });
+        });
       },
 
       async resume(): Promise<void> {
-        const t = store.active();
-        if (!t || t.state !== 'paused') return;
-        const recording: LocalTrack = { ...t, state: 'recording' };
-        await store.db.updateTrack(recording);
-        patchState(store, { active: recording });
-        await startPlugin(t.sections[t.sections.length - 1]?.mode ?? 'foot');
+        await enqueue(async () => {
+          const t = store.active();
+          if (!t || t.state !== 'paused') return;
+          const recording: LocalTrack = { ...t, state: 'recording' };
+          await store.db.updateTrack(recording);
+          patchState(store, { active: recording });
+          if (!(await startPlugin(recording.sections[recording.sections.length - 1]?.mode ?? 'foot'))) {
+            await store.db.updateTrack(t);
+            patchState(store, { active: t });
+          }
+        });
       },
 
       stop,
 
-      /** A mode chosen by hand: new section (detected=false), detection locked to it. */
-      async changeMode(mode: TransportMode): Promise<void> {
-        await enqueue(async () => {
-          s.detect = initialDetectState(mode, true);
+      /** A mode chosen by hand: new section (detected=false). Detection keeps running unless the mode is row/ski/ship. */
+      changeMode(mode: TransportMode): Promise<void> {
+        return changeFor(async () => {
+          s.detect = initialDetectState(mode);
           await switchSection(mode, false);
         });
       },
 
-      /** Applies the change detection proposed while it was locked; detection runs freely again (row/ski/ship stay locked). */
-      async acceptProposal(): Promise<void> {
-        await enqueue(async () => {
+      /** Applies the change detection proposed while it was locked (row/ski/ship); the new mode decides the lock again. */
+      acceptProposal(): Promise<void> {
+        return changeFor(async () => {
           const mode = store.proposal();
           if (!mode) return;
-          s.detect = initialDetectState(mode, false);
+          s.detect = initialDetectState(mode);
           await switchSection(mode, true);
         });
       },
@@ -300,28 +353,36 @@ export const TrackerStore = signalStore(
 
       /** «Weiter aufnehmen»: continues the resumable track with its last section's profile. */
       async resumeRecording(): Promise<void> {
-        const r = store.resumable();
-        if (!r) return;
-        const groups = alignSections(await store.db.points(r.key), r.sections.length);
-        const lastSection = r.sections[r.sections.length - 1] ?? { mode: 'foot' as TransportMode, detected: true };
-        const lastGroup = groups[groups.length - 1] ?? [];
-        resetSession(lastSection.mode, !lastSection.detected);
-        s.lastPoint = lastGroup[lastGroup.length - 1];
-        s.sectionHasPoints = lastGroup.length > 0;
-        const recording: LocalTrack = { ...r, state: 'recording' };
-        await store.db.updateTrack(recording);
-        patchState(store, {
-          active: recording, currentMode: lastSection.mode, resumable: undefined, proposal: undefined,
-          points: groups.reduce((n, g) => n + g.length, 0),
-          distanceM: groups.reduce((m, g) => m + summarize(g).distanceM, 0),
+        await enqueue(async () => {
+          const r = store.resumable();
+          const busy = store.active();
+          if (!r || (busy && busy.state !== 'done')) return;
+          const groups = alignSections(await store.db.points(r.key), r.sections.length);
+          const lastSection = r.sections[r.sections.length - 1] ?? { mode: 'foot' as TransportMode, detected: true };
+          const lastGroup = groups[groups.length - 1] ?? [];
+          resetSession(lastSection.mode);
+          s.lastPoint = lastGroup[lastGroup.length - 1];
+          s.sectionHasPoints = lastGroup.length > 0;
+          const recording: LocalTrack = { ...r, state: 'recording' };
+          await store.db.updateTrack(recording);
+          patchState(store, {
+            active: recording, currentMode: lastSection.mode, resumable: undefined, proposal: undefined,
+            points: groups.reduce((n, g) => n + g.length, 0),
+            distanceM: groups.reduce((m, g) => m + summarize(g).distanceM, 0),
+          });
+          if (!(await startPlugin(lastSection.mode))) {
+            // keep it paused: the person can try again or finish it
+            const paused: LocalTrack = { ...recording, state: 'paused' };
+            await store.db.updateTrack(paused);
+            patchState(store, { active: paused });
+          }
         });
-        await startPlugin(lastSection.mode);
       },
 
       /** «Beenden»: finishes the resumable track without recording more, and uploads it. */
       async finishResumable(): Promise<string | undefined> {
         const r = store.resumable();
-        if (!r) return undefined;
+        if (!r || store.active()) return undefined;
         patchState(store, { active: r, resumable: undefined });
         return stop();
       },

@@ -19,6 +19,7 @@ export const TRACKER_I18N_KEYS = {
   warning_locationDenied: PFX + 'warning.locationDenied',
   warning_motionDenied: PFX + 'warning.motionDenied',
   warning_notNative: PFX + 'warning.notNative',
+  warning_startFailed: PFX + 'warning.startFailed',
   upload_error: PFX + 'upload_error',
   start_title: PFX + 'start.title',
   start_detect: PFX + 'start.detect',

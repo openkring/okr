@@ -43,9 +43,12 @@ export function proposeMode(i: DetectionInput): TransportMode | undefined {
   }
 }
 
-/** row, ski and ship cannot be told apart by sensors, so they lock detection; so does any mode chosen by hand. */
-export function initialDetectState(mode: TransportMode, chosenByHand: boolean): DetectState {
-  return { mode, locked: chosenByHand || LOCKING_MODES.includes(mode) };
+/**
+ * row, ski and ship cannot be told apart by sensors, so they lock detection until changed by hand (design §5.3).
+ * Any other mode — detected or chosen by hand — leaves detection running.
+ */
+export function initialDetectState(mode: TransportMode): DetectState {
+  return { mode, locked: LOCKING_MODES.includes(mode) };
 }
 
 export function detectStep(s: DetectState, i: DetectionInput): { state: DetectState; switchTo?: TransportMode } {

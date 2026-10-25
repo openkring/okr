@@ -16,7 +16,8 @@
     "whenInUseOnly": "Allow location access «Always» so recording continues while the screen is locked.",
     "locationDenied": "Without your location no track can be recorded. You can change this in Settings.",
     "motionDenied": "Without «Motion & Fitness» the app cannot tell how you travel. You can choose it yourself.",
-    "notNative": "You can record tracks only in the app on your iPhone."
+    "notNative": "You can record tracks only in the app on your iPhone.",
+    "startFailed": "Recording could not start. Please try again."
   },
   "upload_error": "The track is saved on your device but could not be uploaded yet.",
   "start": {

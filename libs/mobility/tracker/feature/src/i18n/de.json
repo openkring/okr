@@ -16,7 +16,8 @@
     "whenInUseOnly": "Erlaube den Standort «Immer», damit die Aufnahme auch bei gesperrtem Bildschirm weiterläuft.",
     "locationDenied": "Ohne deinen Standort kann keine Strecke aufgezeichnet werden. Du kannst das in den Einstellungen ändern.",
     "motionDenied": "Ohne «Bewegung & Fitness» erkennt die App das Verkehrsmittel nicht. Du kannst es von Hand wählen.",
-    "notNative": "Strecken aufzeichnen kannst du nur in der App auf dem iPhone."
+    "notNative": "Strecken aufzeichnen kannst du nur in der App auf dem iPhone.",
+    "startFailed": "Die Aufnahme konnte nicht starten. Versuch es bitte noch einmal."
   },
   "upload_error": "Die Strecke ist auf deinem Gerät gespeichert, konnte aber noch nicht hochgeladen werden.",
   "start": {

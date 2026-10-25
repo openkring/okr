@@ -39,7 +39,7 @@ function run(state: DetectState, inputs: DetectionInput[]) {
 }
 
 describe('detectStep', () => {
-  const car = initialDetectState('car', false);
+  const car = initialDetectState('car');
   it('car -> walking 125 s switches to foot at first input >= 120 s', () => {
     const inputs = [0, 30_000, 60_000, 90_000, 119_000, 120_000, 125_000].map((t) => inp('walking', t));
     const { s, switches } = run(car, inputs);
@@ -62,16 +62,21 @@ describe('detectStep', () => {
     expect(switches).toEqual([]);
   });
   it('locked row ignores walking', () => {
-    const { s, switches } = run(initialDetectState('row', false), [0, 300_000, 600_000].map((t) => inp('walking', t)));
+    const { s, switches } = run(initialDetectState('row'), [0, 300_000, 600_000].map((t) => inp('walking', t)));
     expect(switches).toEqual([]);
     expect(s.mode).toBe('row');
   });
   it('initialDetectState locks ski/ship/row', () => {
-    expect(initialDetectState('ski', false).locked).toBe(true);
-    expect(initialDetectState('ship', false).locked).toBe(true);
-    expect(initialDetectState('car', false).locked).toBe(false);
+    expect(initialDetectState('ski').locked).toBe(true);
+    expect(initialDetectState('ship').locked).toBe(true);
+    expect(initialDetectState('car').locked).toBe(false);
   });
-  it('chosenByHand locks any mode', () => expect(initialDetectState('car', true).locked).toBe(true));
+  it('a hand-chosen car, foot or bike does not lock', () => {
+    expect(initialDetectState('car').locked).toBe(false);
+    expect(initialDetectState('foot').locked).toBe(false);
+    expect(initialDetectState('bike').locked).toBe(false);
+  });
+  it('row locks', () => expect(initialDetectState('row').locked).toBe(true));
   it('confident stationary in between breaks the streak', () => {
     const { switches, s } = run(car, [inp('walking', 0), inp('stationary', 10_000), inp('walking', 310_000), inp('walking', 320_000)]);
     expect(switches).toEqual([]);

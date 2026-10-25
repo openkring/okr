@@ -5,7 +5,8 @@ import type { TrackPoint } from './track-polyline.util';
 import { distanceM } from './track-summary.util';
 
 /** Pure decisions of a recording session; TrackerStore stays a thin orchestration over them. */
-export type StartWarning = 'none' | 'whenInUseOnly' | 'locationDenied' | 'motionDenied' | 'notNative';
+/** `startFailed` is set by the store when the native plugin refuses to start on a device (not a permission answer). */
+export type StartWarning = 'none' | 'whenInUseOnly' | 'locationDenied' | 'motionDenied' | 'notNative' | 'startFailed';
 
 /** The permission answer of the native plugin; undefined when there is no plugin (web, or the call failed). */
 export function startWarning(p: { location: string; motion: string } | undefined): StartWarning {
@@ -43,8 +44,8 @@ export function toTrackPoint(l: { lat: number; lng: number; accuracy: number | n
 }
 
 /**
- * detectStep for a session: an unlocked state switches as usual. A locked state (mode chosen by hand, or
- * row/ski/ship) never switches by itself; a stable change is returned as `proposal` for the person to accept.
+ * detectStep for a session: an unlocked state switches as usual. A locked state (row/ski/ship) never switches
+ * by itself; a stable change is returned as `proposal` for the person to accept.
  */
 export function sessionDetectStep(s: DetectState, i: DetectionInput): { state: DetectState; switchTo?: TransportMode; proposal?: TransportMode } {
   if (!s.locked) return detectStep(s, i);

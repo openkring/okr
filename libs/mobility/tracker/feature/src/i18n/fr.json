@@ -16,7 +16,8 @@
     "whenInUseOnly": "Autorise la localisation «Toujours» pour que l’enregistrement continue écran verrouillé.",
     "locationDenied": "Sans ta position, aucun parcours ne peut être enregistré. Tu peux changer cela dans les réglages.",
     "motionDenied": "Sans «Mouvements et forme», l’app ne reconnaît pas le moyen de transport. Tu peux le choisir toi-même.",
-    "notNative": "Tu peux enregistrer des parcours uniquement dans l’app sur ton iPhone."
+    "notNative": "Tu peux enregistrer des parcours uniquement dans l’app sur ton iPhone.",
+    "startFailed": "L’enregistrement n’a pas pu démarrer. Réessaie, s’il te plaît."
   },
   "upload_error": "Le parcours est enregistré sur ton appareil, mais n’a pas encore pu être envoyé.",
   "start": {

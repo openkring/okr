@@ -16,7 +16,8 @@
     "whenInUseOnly": "Consenti la posizione «Sempre», così la registrazione continua anche a schermo bloccato.",
     "locationDenied": "Senza la tua posizione non si può registrare nessun percorso. Puoi cambiarlo nelle Impostazioni.",
     "motionDenied": "Senza «Movimento e fitness» l’app non riconosce il mezzo di trasporto. Puoi sceglierlo tu.",
-    "notNative": "Puoi registrare percorsi solo nell’app sul tuo iPhone."
+    "notNative": "Puoi registrare percorsi solo nell’app sul tuo iPhone.",
+    "startFailed": "Non è stato possibile avviare la registrazione. Riprova, per favore."
   },
   "upload_error": "Il percorso è salvato sul tuo dispositivo, ma non è ancora stato caricato.",
   "start": {

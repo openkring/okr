@@ -52,14 +52,15 @@ describe('accumulateDistance', () => {
 
 describe('toTrackPoint', () => {
   it('maps a native fix', () => {
-    expect(toTrackPoint({ lat: 1, lng: 2, accuracy: 5, altitude: null, speed: null, time: 9 })).toEqual({ lat: 1, lng: 2, t: 9, acc: 5 });
+    const fix = { lat: 1, lng: 2, accuracy: 5, altitude: null, speed: null, time: 9 }; // a NativeLocation
+    expect(toTrackPoint(fix)).toEqual({ lat: 1, lng: 2, t: 9, acc: 5 });
   });
 });
 
 describe('sessionDetectStep', () => {
   const car = (at: number) => ({ activity: 'automotive' as const, confidence: 'high' as const, speedMps: 20, altitudeM: null, at });
   it('unlocked: switches after the stable time', () => {
-    let s = initialDetectState('foot', false);
+    let s = initialDetectState('foot');
     let r = sessionDetectStep(s, car(0));
     s = r.state;
     r = sessionDetectStep(s, car(60_000));
@@ -68,8 +69,8 @@ describe('sessionDetectStep', () => {
     expect(r.switchTo).toBe('car');
     expect(r.proposal).toBeUndefined();
   });
-  it('locked by hand: proposes instead of switching, stays locked', () => {
-    let s = initialDetectState('foot', true);
+  it('locked (ski): proposes instead of switching, stays locked', () => {
+    let s = initialDetectState('ski');
     let r = sessionDetectStep(s, car(0));
     s = r.state;
     r = sessionDetectStep(s, car(60_000));
@@ -77,10 +78,10 @@ describe('sessionDetectStep', () => {
     r = sessionDetectStep(s, car(120_000));
     expect(r.switchTo).toBeUndefined();
     expect(r.proposal).toBe('car');
-    expect(r.state).toEqual({ mode: 'foot', locked: true });
+    expect(r.state).toEqual({ mode: 'ski', locked: true });
   });
   it('locked: no proposal without a stable change', () => {
-    const r = sessionDetectStep(initialDetectState('row', true), car(0));
+    const r = sessionDetectStep(initialDetectState('row'), car(0));
     expect(r.proposal).toBeUndefined();
     expect(r.state.locked).toBe(true);
     expect(r.state.mode).toBe('row');
