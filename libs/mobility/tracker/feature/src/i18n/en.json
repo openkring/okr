@@ -1,0 +1,60 @@
+{
+  "mode": {
+    "plane": "Plane",
+    "ship": "Ship",
+    "bus": "Bus",
+    "train": "Train",
+    "car": "Car",
+    "bike": "Bike",
+    "foot": "On foot",
+    "row": "Rowing",
+    "ski": "Ski",
+    "motorbike": "Motorbike"
+  },
+  "default_name": "Track",
+  "warning": {
+    "whenInUseOnly": "Allow location access «Always» so recording continues while the screen is locked.",
+    "locationDenied": "Without your location no track can be recorded. You can change this in Settings.",
+    "motionDenied": "Without «Motion & Fitness» the app cannot tell how you travel. You can choose it yourself.",
+    "notNative": "You can record tracks only in the app on your iPhone."
+  },
+  "upload_error": "The track is saved on your device but could not be uploaded yet.",
+  "start": {
+    "title": "Record a track",
+    "detect": "Detect automatically",
+    "start": "Start"
+  },
+  "recording": {
+    "pause": "Pause",
+    "resume": "Continue",
+    "stop": "Stop",
+    "distance": "Distance",
+    "points": "Points"
+  },
+  "resume": {
+    "title": "A recording has not been finished yet.",
+    "continue": "Keep recording",
+    "finish": "Finish"
+  },
+  "proposal": {
+    "text": "Change detected: {mode} — switch?",
+    "accept": "Switch",
+    "dismiss": "No thanks"
+  },
+  "list": {
+    "title": "My tracks",
+    "empty": "No tracks yet. Start your first recording.",
+    "not_uploaded": "Not uploaded yet",
+    "retry_upload": "Upload again",
+    "rename": "Rename",
+    "rename_prompt": "New name",
+    "delete": "Delete",
+    "delete_confirm": "Delete this track?",
+    "share_gpx": "Share GPX"
+  },
+  "section": {
+    "change_mode": "Change transport",
+    "split": "Split",
+    "merge": "Merge"
+  }
+}

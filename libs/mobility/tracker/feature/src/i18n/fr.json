@@ -1,0 +1,60 @@
+{
+  "mode": {
+    "plane": "Avion",
+    "ship": "Bateau",
+    "bus": "Bus",
+    "train": "Train",
+    "car": "Voiture",
+    "bike": "Vélo",
+    "foot": "À pied",
+    "row": "Aviron",
+    "ski": "Ski",
+    "motorbike": "Moto"
+  },
+  "default_name": "Parcours",
+  "warning": {
+    "whenInUseOnly": "Autorise la localisation «Toujours» pour que l’enregistrement continue écran verrouillé.",
+    "locationDenied": "Sans ta position, aucun parcours ne peut être enregistré. Tu peux changer cela dans les réglages.",
+    "motionDenied": "Sans «Mouvements et forme», l’app ne reconnaît pas le moyen de transport. Tu peux le choisir toi-même.",
+    "notNative": "Tu peux enregistrer des parcours uniquement dans l’app sur ton iPhone."
+  },
+  "upload_error": "Le parcours est enregistré sur ton appareil, mais n’a pas encore pu être envoyé.",
+  "start": {
+    "title": "Enregistrer un parcours",
+    "detect": "Reconnaître automatiquement",
+    "start": "Démarrer"
+  },
+  "recording": {
+    "pause": "Pause",
+    "resume": "Reprendre",
+    "stop": "Arrêter",
+    "distance": "Distance",
+    "points": "Points"
+  },
+  "resume": {
+    "title": "Un enregistrement n’est pas encore terminé.",
+    "continue": "Continuer l’enregistrement",
+    "finish": "Terminer"
+  },
+  "proposal": {
+    "text": "Changement détecté : {mode} — l’adopter ?",
+    "accept": "Adopter",
+    "dismiss": "Non merci"
+  },
+  "list": {
+    "title": "Mes parcours",
+    "empty": "Pas encore de parcours. Lance ton premier enregistrement.",
+    "not_uploaded": "Pas encore envoyé",
+    "retry_upload": "Envoyer à nouveau",
+    "rename": "Renommer",
+    "rename_prompt": "Nouveau nom",
+    "delete": "Supprimer",
+    "delete_confirm": "Supprimer ce parcours ?",
+    "share_gpx": "Partager le GPX"
+  },
+  "section": {
+    "change_mode": "Changer de moyen de transport",
+    "split": "Diviser",
+    "merge": "Fusionner"
+  }
+}

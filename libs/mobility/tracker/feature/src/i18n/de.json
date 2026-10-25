@@ -1,0 +1,60 @@
+{
+  "mode": {
+    "plane": "Flugzeug",
+    "ship": "Schiff",
+    "bus": "Bus",
+    "train": "Zug",
+    "car": "Auto",
+    "bike": "Velo",
+    "foot": "Zu Fuss",
+    "row": "Rudern",
+    "ski": "Ski",
+    "motorbike": "Motorrad"
+  },
+  "default_name": "Strecke",
+  "warning": {
+    "whenInUseOnly": "Erlaube den Standort «Immer», damit die Aufnahme auch bei gesperrtem Bildschirm weiterläuft.",
+    "locationDenied": "Ohne deinen Standort kann keine Strecke aufgezeichnet werden. Du kannst das in den Einstellungen ändern.",
+    "motionDenied": "Ohne «Bewegung & Fitness» erkennt die App das Verkehrsmittel nicht. Du kannst es von Hand wählen.",
+    "notNative": "Strecken aufzeichnen kannst du nur in der App auf dem iPhone."
+  },
+  "upload_error": "Die Strecke ist auf deinem Gerät gespeichert, konnte aber noch nicht hochgeladen werden.",
+  "start": {
+    "title": "Strecke aufzeichnen",
+    "detect": "Automatisch erkennen",
+    "start": "Start"
+  },
+  "recording": {
+    "pause": "Pause",
+    "resume": "Weiter",
+    "stop": "Stopp",
+    "distance": "Strecke",
+    "points": "Punkte"
+  },
+  "resume": {
+    "title": "Eine Aufnahme ist noch nicht beendet.",
+    "continue": "Weiter aufnehmen",
+    "finish": "Beenden"
+  },
+  "proposal": {
+    "text": "Wechsel erkannt: {mode} — übernehmen?",
+    "accept": "Übernehmen",
+    "dismiss": "Nein danke"
+  },
+  "list": {
+    "title": "Meine Strecken",
+    "empty": "Noch keine Strecke. Starte deine erste Aufnahme.",
+    "not_uploaded": "Noch nicht hochgeladen",
+    "retry_upload": "Erneut hochladen",
+    "rename": "Umbenennen",
+    "rename_prompt": "Neuer Name",
+    "delete": "Löschen",
+    "delete_confirm": "Diese Strecke löschen?",
+    "share_gpx": "GPX teilen"
+  },
+  "section": {
+    "change_mode": "Verkehrsmittel ändern",
+    "split": "Teilen",
+    "merge": "Zusammenlegen"
+  }
+}

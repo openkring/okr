@@ -5,3 +5,5 @@ export * from './lib/track-polyline.util';
 export * from './lib/track-profile.util';
 export * from './lib/track-sections.util';
 export * from './lib/track-summary.util';
+export * from './lib/tracker-session.util';
+export * from './lib/tracker-i18n';

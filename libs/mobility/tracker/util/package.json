@@ -7,6 +7,7 @@
   "private": true,
   "dependencies": {
     "@okr/shared-models": "*",
-    "tslib": "^2.8.1"
+    "tslib": "^2.8.1",
+    "@angular/core": "*"
   }
 }

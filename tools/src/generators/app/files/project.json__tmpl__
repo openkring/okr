@@ -597,6 +597,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/mobility/tracker/feature/src/i18n",
+            "output": "./assets/i18n/mobility/tracker/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/profile/data-access/src/i18n",
             "output": "./assets/i18n/profile/data-access"
           },

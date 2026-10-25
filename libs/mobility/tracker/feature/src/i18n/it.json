@@ -1,0 +1,60 @@
+{
+  "mode": {
+    "plane": "Aereo",
+    "ship": "Nave",
+    "bus": "Bus",
+    "train": "Treno",
+    "car": "Auto",
+    "bike": "Bici",
+    "foot": "A piedi",
+    "row": "Canottaggio",
+    "ski": "Sci",
+    "motorbike": "Moto"
+  },
+  "default_name": "Percorso",
+  "warning": {
+    "whenInUseOnly": "Consenti la posizione «Sempre», così la registrazione continua anche a schermo bloccato.",
+    "locationDenied": "Senza la tua posizione non si può registrare nessun percorso. Puoi cambiarlo nelle Impostazioni.",
+    "motionDenied": "Senza «Movimento e fitness» l’app non riconosce il mezzo di trasporto. Puoi sceglierlo tu.",
+    "notNative": "Puoi registrare percorsi solo nell’app sul tuo iPhone."
+  },
+  "upload_error": "Il percorso è salvato sul tuo dispositivo, ma non è ancora stato caricato.",
+  "start": {
+    "title": "Registra un percorso",
+    "detect": "Riconosci automaticamente",
+    "start": "Avvia"
+  },
+  "recording": {
+    "pause": "Pausa",
+    "resume": "Riprendi",
+    "stop": "Ferma",
+    "distance": "Distanza",
+    "points": "Punti"
+  },
+  "resume": {
+    "title": "Una registrazione non è ancora terminata.",
+    "continue": "Continua a registrare",
+    "finish": "Termina"
+  },
+  "proposal": {
+    "text": "Cambio rilevato: {mode} — applicarlo?",
+    "accept": "Applica",
+    "dismiss": "No, grazie"
+  },
+  "list": {
+    "title": "I miei percorsi",
+    "empty": "Ancora nessun percorso. Avvia la tua prima registrazione.",
+    "not_uploaded": "Non ancora caricato",
+    "retry_upload": "Carica di nuovo",
+    "rename": "Rinomina",
+    "rename_prompt": "Nuovo nome",
+    "delete": "Elimina",
+    "delete_confirm": "Eliminare questo percorso?",
+    "share_gpx": "Condividi GPX"
+  },
+  "section": {
+    "change_mode": "Cambia mezzo di trasporto",
+    "split": "Dividi",
+    "merge": "Unisci"
+  }
+}
