@@ -1613,9 +1613,9 @@ export class MatrixChatService {
    * tenant (spec 1.109 §10.2, ruling R12).
    */
   async assignMatrixRoomTenants(roomId: string, tenants: string[]): Promise<string[]> {
-    const fn = httpsCallable<{ roomId: string; tenants: string[] }, { roomId: string; tenants: string[] }>(
-      getFunctions(getApp(), 'europe-west6'), 'assignMatrixRoomTenants');
-    return (await fn({ roomId, tenants })).data.tenants;
+    const fn = httpsCallable<{ roomId: string; tenants: string[] } & { op: string }, { roomId: string; tenants: string[] }>(
+      getFunctions(getApp(), 'europe-west6'), 'matrixAdmin');
+    return (await fn({ op: 'assignMatrixRoomTenants', roomId, tenants })).data.tenants;
   }
 
 

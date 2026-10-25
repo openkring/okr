@@ -73,8 +73,8 @@ export const UserStore = signalStore(
       params: () => store.fbUser(),   // reload on login/logout
       stream: () => {
         store.loadStarted('users');
-        const fn = httpsCallable<void, { users: UserModel[] }>(getFunctions(getApp(), 'europe-west6'), 'listBkUsers');
-        return from(fn().then(result => result.data.users).catch((ex: unknown) => { store.loadFailed('users', ex); return [] as UserModel[]; }));
+        const fn = httpsCallable<{ op: string }, { users: UserModel[] }>(getFunctions(getApp(), 'europe-west6'), 'authAdmin');
+        return from(fn({ op: 'listBkUsers' }).then(result => result.data.users).catch((ex: unknown) => { store.loadFailed('users', ex); return [] as UserModel[]; }));
       }
     }),
 
@@ -83,8 +83,8 @@ export const UserStore = signalStore(
       params: () => store.fbUser(),
       stream: () => {
         store.loadStarted('logins');
-        const fn = httpsCallable<void, { users: FirebaseLogin[] }>(getFunctions(getApp(), 'europe-west6'), 'listFirebaseUsers');
-        return from(fn().then(result => result.data.users).catch((ex: unknown) => { store.loadFailed('logins', ex); return [] as FirebaseLogin[]; }));
+        const fn = httpsCallable<{ op: string }, { users: FirebaseLogin[] }>(getFunctions(getApp(), 'europe-west6'), 'authAdmin');
+        return from(fn({ op: 'listFirebaseUsers' }).then(result => result.data.users).catch((ex: unknown) => { store.loadFailed('logins', ex); return [] as FirebaseLogin[]; }));
       }
     }),
 

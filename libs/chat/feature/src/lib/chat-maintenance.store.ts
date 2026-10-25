@@ -184,6 +184,12 @@ function getFn() {
   return getFunctions(getApp(), 'europe-west6');
 }
 
+/** One `matrixAdmin` router op (3.41): the old callable name travels as `op`, payload and result stay as they were. */
+function matrixAdminOp<Req, Res>(op: string) {
+  const fn = httpsCallable<Req & { op: string }, Res>(getFn(), 'matrixAdmin');
+  return (data: Req) => fn({ op, ...data });
+}
+
 export const ChatMaintenanceStore = signalStore(
   withState(initialState),
   withProps(() => {
@@ -233,9 +239,7 @@ export const ChatMaintenanceStore = signalStore(
     roomsResource: rxResource({
       params: () => ({ selectedPersonKey: store.selectedPersonKey() }),
       stream: ({ params }) => {
-        const fn = httpsCallable<{ personKey?: string }, { rooms: AdminRoom[]; total: number }>(
-          getFn(), 'listMatrixRooms'
-        );
+        const fn = matrixAdminOp<{ personKey?: string }, { rooms: AdminRoom[]; total: number }>('listMatrixRooms');
         return from(
           fn(params.selectedPersonKey ? { personKey: params.selectedPersonKey } : {})
             .then(r => r.data.rooms)
@@ -248,9 +252,7 @@ export const ChatMaintenanceStore = signalStore(
       params: () => ({ selectedRoomId: store.selectedRoomId() }),
       stream: ({ params }) => {
         if (!params.selectedRoomId) return of([] as RoomMemberInfo[]);
-        const fn = httpsCallable<{ roomId: string }, { members: RoomMemberInfo[] }>(
-          getFn(), 'getAllMembersFromRoom'
-        );
+        const fn = matrixAdminOp<{ roomId: string }, { members: RoomMemberInfo[] }>('getAllMembersFromRoom');
         return from(
           fn({ roomId: params.selectedRoomId }).then(r => r.data.members ?? [])
         );
@@ -265,7 +267,7 @@ export const ChatMaintenanceStore = signalStore(
       }),
       stream: ({ params }) => {
         if (!params.selectedRoomId || params.detailsTarget !== 'room') return of(undefined);
-        const fn = httpsCallable<{ roomId: string }, RoomDetails>(getFn(), 'getRoomDetails');
+        const fn = matrixAdminOp<{ roomId: string }, RoomDetails>('getRoomDetails');
         return from(fn({ roomId: params.selectedRoomId }).then(r => r.data));
       },
     }),
@@ -279,9 +281,7 @@ export const ChatMaintenanceStore = signalStore(
       }),
       stream: ({ params }) => {
         if (!params.selectedMemberId || params.detailsTarget !== 'member') return of(undefined);
-        const fn = httpsCallable<{ userId: string; roomId?: string }, MemberDetails>(
-          getFn(), 'getMemberDetails'
-        );
+        const fn = matrixAdminOp<{ userId: string; roomId?: string }, MemberDetails>('getMemberDetails');
         return from(
           fn({ userId: params.selectedMemberId, roomId: params.selectedRoomId ?? undefined })
             .then(r => r.data)
@@ -488,10 +488,10 @@ export const ChatMaintenanceStore = signalStore(
       if (!roomId) return;
       patchState(store, { historyLoading: true });
       try {
-        const fn = httpsCallable<
+        const fn = matrixAdminOp<
           { roomId: string; limit: number; from?: string },
           { messages: RoomMessageInfo[]; end?: string }
-        >(getFn(), 'getRoomMessages');
+        >('getRoomMessages');
         const result = await fn({ roomId, limit: 50, from: store.historyCursor() });
         // Guard against a page arriving after the admin closed the modal or opened another
         // room: `historyRoomId` is the only thing that says which request this answer belongs to.
@@ -531,9 +531,7 @@ export const ChatMaintenanceStore = signalStore(
       const newName = (data.values.name as string).trim();
       if (!newName) return;
       try {
-        const fn = httpsCallable<{ roomId: string; name: string }, { roomId: string; name: string }>(
-          getFn(), 'renameMatrixRoom'
-        );
+        const fn = matrixAdminOp<{ roomId: string; name: string }, { roomId: string; name: string }>('renameMatrixRoom');
         await fn({ roomId, name: newName });
         store.roomsResource.reload();
         await showToast(store.toastController, `${store.i18n.chat_room_rename_conf()}: ${newName}`);
@@ -769,7 +767,7 @@ export const ChatMaintenanceStore = signalStore(
       const { role } = await alert.onDidDismiss();
       if (role !== 'confirm') return;
       try {
-        const fn = httpsCallable<{ roomId: string }, { deleteId: string }>(getFn(), 'deleteMatrixRoom');
+        const fn = matrixAdminOp<{ roomId: string }, { deleteId: string }>('deleteMatrixRoom');
         await fn({ roomId });
         if (store.selectedRoomId() === roomId) {
           patchState(store, { selectedRoomId: undefined, detailsTarget: undefined });
@@ -796,9 +794,7 @@ export const ChatMaintenanceStore = signalStore(
       const aliasName = (data.values.alias as string).trim();
       if (!aliasName) return;
       try {
-        const fn = httpsCallable<{ roomId: string; aliasName: string }, { alias: string }>(
-          getFn(), 'addMatrixRoomAlias'
-        );
+        const fn = matrixAdminOp<{ roomId: string; aliasName: string }, { alias: string }>('addMatrixRoomAlias');
         const result = await fn({ roomId, aliasName });
         await showToast(store.toastController, `${store.i18n.chat_alias_add_conf()}: ${result.data.alias}`);
       } catch (e) {
@@ -846,9 +842,7 @@ export const ChatMaintenanceStore = signalStore(
     async previewDisplayNameRepair(): Promise<void> {
       patchState(store, { repairScanning: true });
       try {
-        const fn = httpsCallable<{ dryRun?: boolean }, DisplayNameRepairResult>(
-          getFn(), 'repairMatrixDisplayNames'
-        );
+        const fn = matrixAdminOp<{ dryRun?: boolean }, DisplayNameRepairResult>('repairMatrixDisplayNames');
         const dry = await fn({ dryRun: true });
         patchState(store, {
           repairPreview: dry.data.repaired,
@@ -886,9 +880,7 @@ export const ChatMaintenanceStore = signalStore(
 
       patchState(store, { repairApplying: true });
       try {
-        const fn = httpsCallable<{ dryRun?: boolean }, DisplayNameRepairResult>(
-          getFn(), 'repairMatrixDisplayNames'
-        );
+        const fn = matrixAdminOp<{ dryRun?: boolean }, DisplayNameRepairResult>('repairMatrixDisplayNames');
         const applied = await fn({ dryRun: false });
         const conf = await firstValueFrom(
           store.i18nService.translate('@chat/feature.maintenance.repair.names.conf', { count: applied.data.repaired.length })
@@ -911,9 +903,7 @@ export const ChatMaintenanceStore = signalStore(
     async previewAvatarRepair(): Promise<void> {
       patchState(store, { avatarRepairScanning: true });
       try {
-        const fn = httpsCallable<{ dryRun?: boolean }, AvatarRepairResult>(
-          getFn(), 'repairMatrixAvatars'
-        );
+        const fn = matrixAdminOp<{ dryRun?: boolean }, AvatarRepairResult>('repairMatrixAvatars');
         const dry = await fn({ dryRun: true });
         patchState(store, {
           // Both blank-fills and legacy-https→mxc migrations will change; show them together.
@@ -952,9 +942,7 @@ export const ChatMaintenanceStore = signalStore(
 
       patchState(store, { avatarRepairApplying: true });
       try {
-        const fn = httpsCallable<{ dryRun?: boolean }, AvatarRepairResult>(
-          getFn(), 'repairMatrixAvatars'
-        );
+        const fn = matrixAdminOp<{ dryRun?: boolean }, AvatarRepairResult>('repairMatrixAvatars');
         const applied = await fn({ dryRun: false });
         const conf = await firstValueFrom(
           store.i18nService.translate('@chat/feature.maintenance.repair.avatars.conf', { count: applied.data.repaired.length + applied.data.migratedHttp.length })
@@ -982,9 +970,7 @@ export const ChatMaintenanceStore = signalStore(
     async scanAssignableRooms(): Promise<void> {
       patchState(store, { assignScanning: true });
       try {
-        const fn = httpsCallable<Record<string, never>, { rooms: RoomAssignmentEntry[] }>(
-          getFn(), 'listUnassignedMatrixRooms'
-        );
+        const fn = matrixAdminOp<Record<string, never>, { rooms: RoomAssignmentEntry[] }>('listUnassignedMatrixRooms');
         const res = await fn({});
         // Bruecken-Raeume zuerst und die groessten oben: das ist die Reihenfolge, in der man
         // entscheidet — was viele Leute sieht, faellt zuerst auf.
@@ -1029,9 +1015,7 @@ export const ChatMaintenanceStore = signalStore(
 
       patchState(store, { assignBusyRoomId: entry.roomId });
       try {
-        const fn = httpsCallable<{ roomId: string; tenants: string[] }, { roomId: string; tenants: string[] }>(
-          getFn(), 'assignMatrixRoomTenants'
-        );
+        const fn = matrixAdminOp<{ roomId: string; tenants: string[] }, { roomId: string; tenants: string[] }>('assignMatrixRoomTenants');
         const res = await fn({ roomId: entry.roomId, tenants: toThisApp ? [tenantId] : [] });
         // Die Zeile an Ort und Stelle nachziehen statt neu zu scannen: ein Scan laeuft ueber
         // jeden Raum des Homeservers, und die Antwort sagt schon, was jetzt gilt.
@@ -1114,9 +1098,7 @@ export const ChatMaintenanceStore = signalStore(
 
       const personKey = userId.replace(/^@/, '').split(':')[0];
       try {
-        const fn = httpsCallable<{ personKey: string; erase?: boolean }, { matrixUserId: string; deactivated: boolean }>(
-          getFn(), 'deactivateMatrixUser'
-        );
+        const fn = matrixAdminOp<{ personKey: string; erase?: boolean }, { matrixUserId: string; deactivated: boolean }>('deactivateMatrixUser');
         const result = await fn({ personKey });
         store.roomsResource.reload();
         store.membersResource.reload();

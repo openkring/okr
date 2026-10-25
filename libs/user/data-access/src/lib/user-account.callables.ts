@@ -20,6 +20,12 @@ function callable<Req, Res>(name: string, useEmulators = false) {
   return httpsCallable<Req, Res>(functions(useEmulators), name);
 }
 
+/** One `authAdmin` router op (3.41): the old callable name travels as `op`, payload and result stay as they were. */
+function authAdminOp<Req, Res>(op: string, useEmulators = false) {
+  const fn = callable<Req & { op: string }, Res>('authAdmin', useEmulators);
+  return (data: Req) => fn({ op, ...data });
+}
+
 /** The Firebase error code of a failed callable, without the 'functions/' prefix. */
 export function callableErrorCode(ex: unknown): string {
   return String((ex as { code?: string })?.code ?? '').replace(/^functions\//, '');
@@ -40,31 +46,31 @@ export type OpenAccountResponse = {
  * would attach a child's person to the parent's uid when both share one email.
  */
 export async function openPersonAccount(personKey: string, tenantId: string): Promise<OpenAccountResponse> {
-  const { data } = await callable<{ personKey: string; tenantId: string; action: 'open' }, OpenAccountResponse>('syncPersonAccount')(
+  const { data } = await authAdminOp<{ personKey: string; tenantId: string; action: 'open' }, OpenAccountResponse>('syncPersonAccount')(
     { personKey, tenantId, action: 'open' });
   return data;
 }
 
 /** Deletes a Firebase Auth login (the users doc is not touched). */
 export async function deleteFirebaseAuthUser(uid: string): Promise<void> {
-  await callable<{ uid: string }, void>('deleteFirebaseAuthUser')({ uid });
+  await authAdminOp<{ uid: string }, void>('deleteFirebaseAuthUser')({ uid });
 }
 
 /** Sets the Benutzername (spec 1.71 §3); rejects with 'already-exists' when it is taken. */
 export async function setLoginId(uid: string, loginId: string): Promise<string> {
-  const { data } = await callable<{ uid: string; loginId: string }, { loginId: string }>('setLoginId')({ uid, loginId });
+  const { data } = await authAdminOp<{ uid: string; loginId: string }, { loginId: string }>('setLoginId')({ uid, loginId });
   return data.loginId;
 }
 
 /** The swap (spec 1.71 §6b): the holder hands its login email to the newcomer and gets a Benutzername. */
 export async function swapLoginEmail(holderUid: string, newcomerUid: string): Promise<string> {
-  const { data } = await callable<{ holderUid: string; newcomerUid: string }, { holderLoginId: string }>('swapLoginEmail')({ holderUid, newcomerUid });
+  const { data } = await authAdminOp<{ holderUid: string; newcomerUid: string }, { holderLoginId: string }>('swapLoginEmail')({ holderUid, newcomerUid });
   return data.holderLoginId;
 }
 
 /** Sets a password without a reset mail (the admin then knows it — avoid where possible). */
 export async function setPassword(uid: string, password: string, useEmulators = false): Promise<void> {
-  await callable<{ uid: string; password: string }, unknown>('setPassword', useEmulators)({ uid, password });
+  await authAdminOp<{ uid: string; password: string }, unknown>('setPassword', useEmulators)({ uid, password });
 }
 
 /**
@@ -74,7 +80,7 @@ export async function setPassword(uid: string, password: string, useEmulators = 
 export async function getFirebaseUser(uid: string): Promise<FirebaseUserModel | undefined> {
   let fbUser: FirebaseUserModel;
   try {
-    fbUser = (await callable<{ uid: string }, FirebaseUserModel>('getFirebaseUser')({ uid })).data;
+    fbUser = (await authAdminOp<{ uid: string }, FirebaseUserModel>('getFirebaseUser')({ uid })).data;
   } catch (ex) {
     if (isAuthUserNotFound(ex)) return undefined;
     throw ex;
@@ -91,12 +97,12 @@ export async function getFirebaseUser(uid: string): Promise<FirebaseUserModel | 
 export async function updateFirebaseUser(fbUser: FirebaseUserModel, useEmulators = false): Promise<void> {
   if (fbUser.phone?.length === 0) fbUser.phone = undefined;
   if (fbUser.photoUrl?.length === 0) fbUser.photoUrl = undefined;
-  await callable<FirebaseUserModel, unknown>('updateFirebaseUser', useEmulators)(fbUser);
+  await authAdminOp<FirebaseUserModel, unknown>('updateFirebaseUser', useEmulators)(fbUser);
 }
 
 /** A custom token to sign in as `uid` (impersonation). */
 export async function createCustomToken(uid: string, useEmulators = false): Promise<string> {
-  const result = await callable<{ uid: string }, string>('createCustomToken', useEmulators)({ uid });
+  const result = await authAdminOp<{ uid: string }, string>('createCustomToken', useEmulators)({ uid });
   return result.data;
 }
 

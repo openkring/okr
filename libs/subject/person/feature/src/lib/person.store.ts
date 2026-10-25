@@ -567,8 +567,8 @@ export const PersonStore = signalStore(
         async syncUserAccount(person: PersonModel, action: 'open' | 'close', confirmation: string): Promise<void> {
             try {
                 const functions = getFunctions(getApp(), 'europe-west6');
-                const syncPersonAccount = httpsCallable(functions, 'syncPersonAccount');
-                await syncPersonAccount({ personKey: person.okey, tenantId: store.tenantId(), action });
+                const syncPersonAccount = httpsCallable(functions, 'authAdmin');
+                await syncPersonAccount({ op: 'syncPersonAccount', personKey: person.okey, tenantId: store.tenantId(), action });
                 await showToast(store.toastController, confirmation);
             } catch (error) {
                 const msg = error instanceof Error ? error.message : store.i18n.account_error();

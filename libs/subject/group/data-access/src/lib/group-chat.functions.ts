@@ -14,8 +14,8 @@ import { GroupRoomDrift } from '@okr/subject-group-util';
  * the most non-members first.
  */
 export async function auditGroupRooms(functions: Functions, tenantId: string): Promise<GroupRoomDrift[]> {
-  const fn = httpsCallable<{ tenantId: string }, { groups: GroupRoomDrift[] }>(functions, 'auditGroupRoomMembers');
-  const { data } = await fn({ tenantId });
+  const fn = httpsCallable<{ tenantId: string; op: string }, { groups: GroupRoomDrift[] }>(functions, 'matrixAdmin');
+  const { data } = await fn({ op: 'auditGroupRoomMembers', tenantId });
   return data.groups
     .filter(g => g.extras.length > 0 || g.missing.length > 0)
     .sort((a, b) => b.extras.length - a.extras.length);
@@ -23,14 +23,14 @@ export async function auditGroupRooms(functions: Functions, tenantId: string): P
 
 /** Additive only: force-joins every person with an active membership into the group's room. */
 export async function reconcileGroupRoomMembers(functions: Functions, groupId: string): Promise<{ roomId: string; joined: string[]; alreadyIn: string[]; extras: string[] }> {
-  const fn = httpsCallable<{ groupId: string }, { roomId: string; joined: string[]; alreadyIn: string[]; extras: string[] }>(functions, 'reconcileGroupRoomMembers');
-  return (await fn({ groupId })).data;
+  const fn = httpsCallable<{ groupId: string; op: string }, { roomId: string; joined: string[]; alreadyIn: string[]; extras: string[] }>(functions, 'matrixAdmin');
+  return (await fn({ op: 'reconcileGroupRoomMembers', groupId })).data;
 }
 
 /** Re-applies the group's write-permission setting (postPolicy) to its room. */
 export async function syncRoomPostPolicy(functions: Functions, groupId: string): Promise<{ result: 'unchanged' | 'applied' | 'no-room' }> {
-  const fn = httpsCallable<{ groupId: string }, { result: 'unchanged' | 'applied' | 'no-room' }>(functions, 'syncRoomPostPolicy');
-  return (await fn({ groupId })).data;
+  const fn = httpsCallable<{ groupId: string; op: string }, { result: 'unchanged' | 'applied' | 'no-room' }>(functions, 'matrixAdmin');
+  return (await fn({ op: 'syncRoomPostPolicy', groupId })).data;
 }
 
 /**
@@ -38,7 +38,7 @@ export async function syncRoomPostPolicy(functions: Functions, groupId: string):
  * current memberships, so a stale preview can never remove a real member (those come back in `refused`).
  */
 export async function pruneGroupRoomExtras(functions: Functions, groupId: string, userIds: string[]): Promise<{ kicked: string[]; refused: string[] }> {
-  const fn = httpsCallable<{ groupId: string; userIds: string[] }, { roomId: string; kicked: string[]; refused: string[] }>(functions, 'pruneGroupRoomExtras');
-  const { data } = await fn({ groupId, userIds });
+  const fn = httpsCallable<{ groupId: string; userIds: string[]; op: string }, { roomId: string; kicked: string[]; refused: string[] }>(functions, 'matrixAdmin');
+  const { data } = await fn({ op: 'pruneGroupRoomExtras', groupId, userIds });
   return { kicked: data.kicked, refused: data.refused };
 }
