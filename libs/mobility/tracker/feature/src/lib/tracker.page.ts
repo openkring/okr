@@ -48,7 +48,7 @@ type ModeChoice = TransportMode | typeof AUTO;
       @if (store.active(); as active) {
         <okr-tracker-banner [mode]="store.currentMode() ?? 'foot'" [distanceM]="store.distanceM()" [durationS]="durationS()"
           [state]="active.state === 'recording' ? 'recording' : 'paused'" [proposal]="store.proposal()" [i18n]="i18n"
-          (pause)="store.pause()" (resume)="store.resume()" (stop)="stop()" (modeChange)="store.changeMode($event)"
+          (pauseTap)="store.pause()" (resumeTap)="store.resume()" (stop)="stop()" (modeChange)="store.changeMode($event)"
           (acceptProposal)="store.acceptProposal()" (dismissProposal)="store.dismissProposal()" />
         <okr-track-map [sections]="liveSections()" [live]="true" />
       } @else if (store.resumable(); as resumable) {

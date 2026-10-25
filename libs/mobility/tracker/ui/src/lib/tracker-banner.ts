@@ -31,9 +31,9 @@ import { SvgIconPipe } from '@okr/shared-pipes';
         <span class="numbers" aria-live="off">{{ distanceText() }} · {{ durationText() }}</span>
       </div>
       @if (state() === 'recording') {
-        <ion-button fill="outline" (click)="pause.emit()">{{ i18n().recording_pause() }}</ion-button>
+        <ion-button fill="outline" (click)="pauseTap.emit()">{{ i18n().recording_pause() }}</ion-button>
       } @else {
-        <ion-button fill="outline" (click)="resume.emit()">
+        <ion-button fill="outline" (click)="resumeTap.emit()">
           <ion-icon slot="start" src="{{ 'play' | svgIcon }}" />{{ i18n().recording_resume() }}
         </ion-button>
       }
@@ -60,8 +60,8 @@ export class TrackerBanner {
   public readonly proposal = input<TransportMode | undefined>(undefined);
   public readonly i18n = input.required<TrackerI18n>();
 
-  public readonly pause = output<void>();
-  public readonly resume = output<void>();
+  public readonly pauseTap = output<void>();
+  public readonly resumeTap = output<void>();
   public readonly stop = output<void>();
   /** Emits the proposed mode. */
   public readonly acceptProposal = output<TransportMode>();
