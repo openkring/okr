@@ -1,6 +1,10 @@
-import { inject } from '@angular/core';
+import { computed, inject } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
+import { ToastController } from '@ionic/angular';
 import { Capacitor, type PluginListenerHandle } from '@capacitor/core';
 import { patchState, signalStore, withMethods, withProps, withState } from '@ngrx/signals';
+import { distinctUntilChanged, filter } from 'rxjs';
 
 import { TransportMode } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
@@ -8,9 +12,9 @@ import { I18nService } from '@okr/shared-i18n';
 import { DateFormat, generateRandomString, getCurrentTime, getTodayStr } from '@okr/shared-util-core';
 import { NativeLocation, TrackDb, TrackerLocation, TrackService } from '@okr/mobility-tracker-data-access';
 import {
-  accumulateDistance, alignSections, correctedTrack, DetectionInput, LocalSection, sameTrackContent, DetectState, initialDetectState, LocalTrack, MotionActivity, needsUpload, nextSectionStartPoint,
-  nextSections, resumeDecision, sessionDetectStep, StartWarning, startWarning, summarize, toTrackPoint, TRACK_PROFILES, TRACKER_I18N_KEYS, TrackerI18n,
-  TrackPoint,
+  accumulateDistance, alignSections, correctedTrack, DetectionInput, hasNoPoints, LocalSection, sameTrackContent, DetectState, initialDetectState, LocalTrack,
+  MotionActivity, needsUpload, nextSectionStartPoint, nextSections, pendingUploadOwner, resumeDecision, sectionsAfterPause, sessionDetectStep, StartWarning,
+  startWarning, summarize, toTrackPoint, TRACK_PROFILES, TRACKER_I18N_KEYS, TrackerI18n, TrackPoint,
 } from '@okr/mobility-tracker-util';
 
 /**
@@ -48,6 +52,7 @@ export interface TrackerSession {
   queue: Promise<void>; // every change of the active track runs strictly in order
   stopping: boolean; // set by stop(): late fixes, mode changes and proposals are ignored
   init: Promise<void> | undefined; // a failed open is retried on the next init()
+  ownerWatch: boolean; // the pending-upload loop is subscribed to the signed-in owner
 }
 
 function profileOf(mode: TransportMode) {
@@ -62,16 +67,25 @@ function errorText(error: unknown): string {
 export const TrackerStore = signalStore(
   { providedIn: 'root' },
   withState(initialState),
-  withProps(() => ({
-    db: inject(TrackDb),
-    trackService: inject(TrackService),
-    appStore: inject(AppStore),
-    i18n: inject(I18nService).translateAll(TRACKER_I18N_KEYS) as TrackerI18n,
-    session: {
-      detect: initialDetectState('foot'), lastPoint: undefined, sectionHasPoints: false, lastActivity: undefined, lastFix: undefined,
-      handles: [], queue: Promise.resolve(), stopping: false, init: undefined,
-    } as TrackerSession,
-  })),
+  withProps(() => {
+    const appStore = inject(AppStore);
+    const i18nService = inject(I18nService);
+    return {
+      db: inject(TrackDb),
+      trackService: inject(TrackService),
+      appStore,
+      i18nService,
+      toastController: inject(ToastController),
+      router: inject(Router),
+      i18n: i18nService.translateAll(TRACKER_I18N_KEYS) as TrackerI18n,
+      /** Emits an id whenever person and auth uid are both known (pendingUploadOwner); undefined while signed out. */
+      owner$: toObservable(computed(() => pendingUploadOwner(appStore.currentUser()?.personKey, appStore.fbUser()?.uid))),
+      session: {
+        detect: initialDetectState('foot'), lastPoint: undefined, sectionHasPoints: false, lastActivity: undefined, lastFix: undefined,
+        handles: [], queue: Promise.resolve(), stopping: false, init: undefined, ownerWatch: false,
+      } as TrackerSession,
+    };
+  }),
   withMethods((store) => {
     const s = store.session;
 
@@ -235,6 +249,44 @@ export const TrackerStore = signalStore(
     }
 
     /**
+     * A short, non-blocking toast; the text is awaited (the lazy i18n scope may not be loaded yet at app start).
+     * `unless` is checked right before it shows (e.g. the person is already on the page the action leads to).
+     */
+    async function toast(key: string, action?: { key: string; handler: () => void; unless?: () => boolean }): Promise<void> {
+      try {
+        const message = await store.i18nService.translateOnce(key);
+        const buttons = action ? [{ text: await store.i18nService.translateOnce(action.key), handler: action.handler }] : undefined;
+        if (action?.unless?.()) return;
+        const t = await store.toastController.create({ message, duration: action ? 8000 : 4000, buttons });
+        await t.present();
+      } catch (error) {
+        console.error('TrackerStore.toast', error);
+      }
+    }
+
+    /**
+     * Retries every finished, not yet uploaded track, silently. All uploads are issued on the queue in order;
+     * their acks are awaited in parallel (offline each resolves only on reconnect).
+     */
+    async function uploadPending(): Promise<void> {
+      try {
+        const pending = (await store.db.list()).filter(needsUpload);
+        const results = await Promise.all(pending.map((t) => uploadTrack(t, true)));
+        // an earlier failure (e.g. stopped before the user was loaded) is no longer true once everything went up
+        if (results.every(Boolean)) patchState(store, { uploadError: undefined });
+      } catch (error) {
+        console.error('TrackerStore.uploadPending', error);
+      }
+    }
+
+    /** Runs uploadPending once each time an owner (person + auth uid) appears — at start the user is not loaded yet. */
+    function watchOwner(): void {
+      if (s.ownerWatch) return;
+      s.ownerWatch = true;
+      store.owner$.pipe(distinctUntilChanged(), filter((id): id is string => id !== undefined)).subscribe(() => void uploadPending());
+    }
+
+    /**
      * Stops recording and marks the track done locally; resolves with its key right then. The upload runs
      * fire-and-forget: Firestore's batch.commit() resolves only on the server's ack, so offline it can hang for hours.
      * A failed upload keeps the track local (uploadError).
@@ -242,12 +294,18 @@ export const TrackerStore = signalStore(
     async function stop(): Promise<string | undefined> {
       if (!store.active()) return undefined;
       s.stopping = true;
-      let done: LocalTrack | undefined;
+      let done: LocalTrack | 'empty' | undefined;
       try {
         done = await enqueue(async () => {
           await stopPlugin(); // inside the queue: a queued resume cannot restart GPS afterwards
           const t = store.active();
           if (!t) return undefined;
+          if (hasNoPoints(await store.db.points(t.key))) {
+            // nothing recorded: drop it locally, never upload an empty trip
+            await store.db.remove(t.key);
+            patchState(store, { active: undefined, currentMode: undefined, proposal: undefined, uploadError: undefined });
+            return 'empty' as const;
+          }
           const finished: LocalTrack = { ...t, state: 'done', endedAt: Date.now() };
           await store.db.updateTrack(finished);
           patchState(store, { active: undefined, currentMode: undefined, proposal: undefined, uploadError: undefined });
@@ -255,6 +313,10 @@ export const TrackerStore = signalStore(
         });
       } finally {
         s.stopping = false; // before the upload: a new track may start at once
+      }
+      if (done === 'empty') {
+        void toast(TRACKER_I18N_KEYS.stop_empty);
+        return undefined;
       }
       if (!done) return undefined;
       void uploadTrack(done, false);
@@ -269,16 +331,27 @@ export const TrackerStore = signalStore(
     }
 
     return {
-      /** Opens the database, offers a resumable track (GPS is NOT restarted) and retries pending uploads once, silently. */
+      /**
+       * Opens the database and offers a resumable track: native GPS that may still run after a WebView reload (with
+       * no JS listener left) is stopped first, and a toast «Öffnen» leads to /tracker. Pending uploads are retried
+       * silently whenever the owner (person + auth uid) becomes known — not here: at app start nobody is signed in yet.
+       */
       init(): Promise<void> {
         s.init ??= (async () => {
           await refreshWarning();
           await store.db.open();
           const tracks = await store.db.list();
-          patchState(store, { resumable: resumeDecision(tracks), initialized: true });
-          void (async () => {
-            for (const t of tracks.filter(needsUpload)) await uploadTrack(t, true);
-          })();
+          const resumable = resumeDecision(tracks);
+          if (resumable && !store.active()) await stopPlugin();
+          patchState(store, { resumable, initialized: true });
+          watchOwner();
+          if (resumable) {
+            void toast(TRACKER_I18N_KEYS.resume_title, {
+              key: TRACKER_I18N_KEYS.resume_open,
+              handler: () => void store.router.navigate(['/tracker']),
+              unless: () => store.router.url.startsWith('/tracker'),
+            });
+          }
         })().catch((error: unknown) => {
           console.error('TrackerStore.init', error);
           s.init = undefined; // a failed open is retried by the next init()
@@ -309,10 +382,14 @@ export const TrackerStore = signalStore(
           await store.db.open();
           const old = store.resumable();
           if (old) {
-            const finished: LocalTrack = { ...old, state: 'done', endedAt: old.endedAt ?? Date.now() };
-            await store.db.updateTrack(finished);
+            if (hasNoPoints(await store.db.points(old.key))) {
+              await store.db.remove(old.key); // an empty leftover is discarded, like an empty stop
+            } else {
+              const finished: LocalTrack = { ...old, state: 'done', endedAt: old.endedAt ?? Date.now() };
+              await store.db.updateTrack(finished);
+              void uploadTrack(finished, true);
+            }
             patchState(store, { resumable: undefined });
-            void uploadTrack(finished, true);
           }
           const chosenByHand = mode !== undefined;
           const m = mode ?? 'foot';
@@ -352,12 +429,19 @@ export const TrackerStore = signalStore(
         await enqueue(async () => {
           const t = store.active();
           if (!t || t.state !== 'paused') return;
-          const recording: LocalTrack = { ...t, state: 'recording' };
+          // no line and no distance across the pause: a new section in the same mode, not seeded with the last point
+          const next = sectionsAfterPause(t.sections, s.sectionHasPoints);
+          const recording: LocalTrack = { ...t, state: 'recording', sections: next.sections };
+          const before = { lastPoint: s.lastPoint, sectionHasPoints: s.sectionHasPoints };
+          s.lastPoint = undefined;
+          s.sectionHasPoints = false;
           await store.db.updateTrack(recording);
           patchState(store, { active: recording });
           if (!(await startPlugin(recording.sections[recording.sections.length - 1]?.mode ?? 'foot'))) {
             await store.db.updateTrack(t);
             patchState(store, { active: t });
+            s.lastPoint = before.lastPoint; // still paused on the old sections
+            s.sectionHasPoints = before.sectionHasPoints;
           }
         });
       },
@@ -395,10 +479,9 @@ export const TrackerStore = signalStore(
           const groups = alignSections(await store.db.points(r.key), r.sections.length);
           const lastSection = r.sections[r.sections.length - 1] ?? { mode: 'foot' as TransportMode, detected: true };
           const lastGroup = groups[groups.length - 1] ?? [];
-          resetSession(lastSection.mode);
-          s.lastPoint = lastGroup[lastGroup.length - 1];
-          s.sectionHasPoints = lastGroup.length > 0;
-          const recording: LocalTrack = { ...r, state: 'recording' };
+          resetSession(lastSection.mode); // lastPoint undefined: the time the app was away is a gap, like a pause
+          const next = sectionsAfterPause(r.sections, lastGroup.length > 0);
+          const recording: LocalTrack = { ...r, state: 'recording', sections: next.sections };
           await store.db.updateTrack(recording);
           patchState(store, {
             active: recording, currentMode: lastSection.mode, resumable: undefined, proposal: undefined,
