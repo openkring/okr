@@ -1,25 +1,33 @@
 import { Component, computed, input, output } from '@angular/core';
-import { IonButton, IonIcon } from '@ionic/angular';
-import type { TransportMode } from '@okr/shared-models';
+import { IonButton, IonIcon, IonSelect, IonSelectOption } from '@ionic/angular';
+import { TRANSPORT_MODES, type TransportMode } from '@okr/shared-models';
 import { formatDuration, formatKm, type TrackerI18n } from '@okr/mobility-tracker-util';
 import { SvgIconPipe } from '@okr/shared-pipes';
 
-/** The recording banner: mode, distance, duration, pause/resume/stop and an optional mode-change proposal. */
+/**
+ * The recording banner: mode (a select — a correction by hand while recording), distance, duration,
+ * pause/resume/stop and an optional mode-change proposal.
+ */
 @Component({
   selector: 'okr-tracker-banner',
-  imports: [IonButton, IonIcon, SvgIconPipe],
+  imports: [IonButton, IonIcon, IonSelect, IonSelectOption, SvgIconPipe],
   styles: [`
     :host { display: block; padding: 8px 12px; background: var(--ion-color-light); color: var(--ion-color-dark); }
     .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .stats { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; }
-    .mode { font-weight: 600; }
+    .mode { font-weight: 600; --padding-start: 0; --padding-top: 0; --padding-bottom: 0; min-height: 0; }
     .numbers { font-variant-numeric: tabular-nums; }
     .proposal { margin-top: 4px; border-top: 1px solid var(--ion-color-medium-tint); padding-top: 4px; }
   `],
   template: `
     <div class="row">
       <div class="stats">
-        <span class="mode">{{ modeLabel() }}</span>
+        <ion-select class="mode" interface="popover" [value]="mode()" [attr.aria-label]="i18n().start_mode()"
+          (ionChange)="onModeChange($event.detail.value)">
+          @for (m of modes; track m) {
+            <ion-select-option [value]="m">{{ modeLabel(m) }}</ion-select-option>
+          }
+        </ion-select>
         <span class="numbers" aria-live="off">{{ distanceText() }} · {{ durationText() }}</span>
       </div>
       @if (state() === 'recording') {
@@ -58,13 +66,24 @@ export class TrackerBanner {
   /** Emits the proposed mode. */
   public readonly acceptProposal = output<TransportMode>();
   public readonly dismissProposal = output<void>();
+  /** A mode chosen by hand in the select (only when it differs from the current one). */
+  public readonly modeChange = output<TransportMode>();
+
+  protected readonly modes = TRANSPORT_MODES;
 
   protected readonly distanceText = computed(() => formatKm(this.distanceM()));
   protected readonly durationText = computed(() => formatDuration(this.durationS()));
-  protected readonly modeLabel = computed(() => this.i18n()[`mode_${this.mode()}`]());
   protected readonly proposalText = computed(() => {
     const proposed = this.proposal();
     if (!proposed) return '';
     return this.i18n().proposal_text().replace('{mode}', this.i18n()[`mode_${proposed}`]());
   });
+
+  protected modeLabel(mode: TransportMode): string {
+    return this.i18n()[`mode_${mode}`]();
+  }
+
+  protected onModeChange(value: TransportMode | undefined): void {
+    if (value && value !== this.mode()) this.modeChange.emit(value);
+  }
 }

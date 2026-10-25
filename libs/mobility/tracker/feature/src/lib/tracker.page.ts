@@ -48,7 +48,7 @@ type ModeChoice = TransportMode | typeof AUTO;
       @if (store.active(); as active) {
         <okr-tracker-banner [mode]="store.currentMode() ?? 'foot'" [distanceM]="store.distanceM()" [durationS]="durationS()"
           [state]="active.state === 'recording' ? 'recording' : 'paused'" [proposal]="store.proposal()" [i18n]="i18n"
-          (pause)="store.pause()" (resume)="store.resume()" (stop)="stop()"
+          (pause)="store.pause()" (resume)="store.resume()" (stop)="stop()" (modeChange)="store.changeMode($event)"
           (acceptProposal)="store.acceptProposal()" (dismissProposal)="store.dismissProposal()" />
         <okr-track-map [sections]="liveSections()" [live]="true" />
       } @else if (store.resumable(); as resumable) {
@@ -149,6 +149,8 @@ export class TrackerPage {
   private readonly livePoints = signal<TrackPoint[][]>([]);
   private refreshTimer: ReturnType<typeof setTimeout> | undefined;
   private lastRefresh = 0;
+  /** false after ionViewDidLeave (another page on top) until ionViewWillEnter. */
+  private entered = true;
   protected readonly liveSections = computed<TrackMapSection[]>(() => {
     const points = this.livePoints();
     return (this.store.active()?.sections ?? []).map((s, i) => ({ mode: s.mode, points: points[i] ?? [] }));
@@ -169,11 +171,17 @@ export class TrackerPage {
 
   public constructor() {
     void this.store.init();
+    // no tick and no live reload behind a locked screen or another page; one refresh when the page shows again
     const tick = setInterval(() => {
-      if (this.store.active()) this.now.set(Date.now());
+      if (this.store.active() && this.isShown()) this.now.set(Date.now());
     }, 1000);
+    const onVisibility = (): void => {
+      if (this.isShown()) this.refreshNow();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
     inject(DestroyRef).onDestroy(() => {
       clearInterval(tick);
+      document.removeEventListener('visibilitychange', onVisibility);
       if (this.refreshTimer) clearTimeout(this.refreshTimer);
     });
     // reload the live points whenever a fix arrives — throttled to LIVE_REFRESH_MS
@@ -191,7 +199,16 @@ export class TrackerPage {
 
   /** Ionic lifecycle: back from the detail page (rename, delete, correction). */
   public ionViewWillEnter(): void {
+    this.entered = true;
+    this.refreshNow();
     void this.reloadLocal();
+  }
+
+  /** Ionic lifecycle: another page covers this one — the tick and the live map pause. */
+  public ionViewDidLeave(): void {
+    this.entered = false;
+    if (this.refreshTimer) clearTimeout(this.refreshTimer);
+    this.refreshTimer = undefined;
   }
 
   protected modeLabel(mode: TransportMode): string {
@@ -264,6 +281,7 @@ export class TrackerPage {
       this.livePoints.set([]);
       return;
     }
+    if (!this.isShown()) return; // refreshNow() catches up when the page shows again
     if (this.refreshTimer) return; // one reload is already planned; it reads the newest points
     const wait = Math.max(0, this.lastRefresh + LIVE_REFRESH_MS - Date.now());
     this.refreshTimer = setTimeout(() => {
@@ -273,7 +291,23 @@ export class TrackerPage {
     }, wait);
   }
 
+  private isShown(): boolean {
+    return this.entered && document.visibilityState === 'visible';
+  }
+
+  /** The page shows again: duration and live map catch up at once. */
+  private refreshNow(): void {
+    this.now.set(Date.now());
+    const key = this.store.active()?.key;
+    if (!key) return;
+    if (this.refreshTimer) clearTimeout(this.refreshTimer);
+    this.refreshTimer = undefined;
+    this.lastRefresh = Date.now();
+    void this.loadLive(key);
+  }
+
   private async loadLive(key: string): Promise<void> {
+    if (!this.isShown()) return;
     try {
       const points = await this.db.points(key);
       if (this.store.active()?.key === key) this.livePoints.set(points);
