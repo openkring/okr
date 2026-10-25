@@ -894,7 +894,9 @@ service cloud.firestore {
         function ownerOf(trip) {
           return callerPersonKey() != '' && trip.get('track', {}).get('personKey', '') == callerPersonKey();
         }
-        allow read, delete: if ownerOf(get(/databases/$(database)/documents/trips/$(tripId)).data);
+        allow read: if ownerOf(get(/databases/$(database)/documents/trips/$(tripId)).data);
+        // getAfter: a corrected re-upload deletes stale points in the batch that may also create the trip
+        allow delete: if ownerOf(getAfter(/databases/$(database)/documents/trips/$(tripId)).data);
         // getAfter: trip and points are written in one batch, so the trip may not exist yet before the commit
         allow create, update: if ownerOf(getAfter(/databases/$(database)/documents/trips/$(tripId)).data)
                               && request.resource.data.tenants.hasAny(callerTenants());

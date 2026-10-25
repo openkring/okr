@@ -158,6 +158,15 @@ describe('sameTrackContent', () => {
     expect(sameTrackContent(local('a', 1), local('a', 1, { uploaded: true, endedAt: 9, extraPointsUpTo: 3 }))).toBe(true);
   });
 
+  it('treats a missing rev as 0', () => {
+    expect(sameTrackContent(local('a', 1), local('a', 1, { rev: 0 }))).toBe(true);
+  });
+
+  it('is false for a newer correction with equal content (rev differs)', () => {
+    expect(sameTrackContent(local('a', 1, { rev: 1 }), local('a', 1, { rev: 2 }))).toBe(false);
+    expect(sameTrackContent(local('a', 1), local('a', 1, { rev: 1 }))).toBe(false);
+  });
+
   it('is false when the name or a section differs', () => {
     expect(sameTrackContent(local('a', 1), local('a', 1, { name: 'b' }))).toBe(false);
     expect(sameTrackContent(local('a', 1), local('a', 1, { sections: [{ mode: 'foot', detected: false }] }))).toBe(false);
@@ -172,6 +181,12 @@ describe('correctedTrack', () => {
     const t = correctedTrack(two, [{ mode: 'car', detected: false }, { mode: 'bus', detected: true }], 'neu');
     expect(t).toMatchObject({ name: 'neu', uploaded: false, sections: [{ mode: 'car', detected: false }, { mode: 'bus', detected: true }] });
     expect(t.extraPointsUpTo).toBeUndefined();
+    expect(t.rev).toBe(1);
+  });
+
+  it('counts every correction', () => {
+    const once = correctedTrack(two, two.sections);
+    expect(correctedTrack(once, once.sections).rev).toBe(2);
   });
 
   it('remembers the old section count when the track got fewer sections', () => {

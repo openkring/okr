@@ -15,6 +15,8 @@ export interface LocalTrack {
    * sections.length up to this bound (exclusive) may still exist uploaded and are deleted in the next upload's batch.
    */
   extraPointsUpTo?: number;
+  /** Correction counter: +1 on every correction or rename (missing on old rows = 0). */
+  rev?: number;
 }
 
 /** A stored point row: a track point plus its section index. */

@@ -1224,6 +1224,13 @@ track_cases = [
     # a corrected re-upload: trip overwritten + stale points doc deleted in the SAME batch
     ("owner batch = update trip + delete track-points/2 -> ALLOW", True,
      lambda: commit_batch([("trips/tkSeed", tracker_trip("pA")), ("trips/tkSeed/track-points/2", None)], TA)),
+    # a track whose sections shrank before its FIRST upload: the stale delete sits in the batch that creates the trip
+    ("owner batch = create NEW trip + delete track-points/1 -> ALLOW", True,
+     lambda: commit_batch([("trips/tkFirst", tracker_trip("pA")),
+                           ("trips/tkFirst/track-points/0", {"tenants": ["t1"], "section": 0, "mode": "foot", "count": 1, "encoded": "x"}),
+                           ("trips/tkFirst/track-points/1", None)], TA)),
+    ("owner delete-only of points on an existing trip -> ALLOW", True,
+     lambda: commit_batch([("trips/tkSeed/track-points/0", None)], TA)),
 ]
 for label, expect, run in track_cases:
     code = run()

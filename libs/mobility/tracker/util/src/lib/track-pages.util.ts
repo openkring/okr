@@ -131,20 +131,27 @@ export function gpxFileName(name: string): string {
   return `${base || 'track'}.gpx`;
 }
 
-/** True when two copies of a track carry the same name and sections (what an upload writes besides the points). */
+/**
+ * True when two copies of a track are the same version: same correction counter (`rev`, missing = 0) and the
+ * same name and sections (what an upload writes besides the points). The counter tells apart a newer correction
+ * that happens to restore equal content.
+ */
 export function sameTrackContent(a: LocalTrack, b: LocalTrack): boolean {
-  return a.name === b.name
+  return (a.rev ?? 0) === (b.rev ?? 0)
+    && a.name === b.name
     && a.sections.length === b.sections.length
     && a.sections.every((s, i) => s.mode === b.sections[i].mode && s.detected === b.sections[i].detected);
 }
 
 /**
  * The track after an owner correction or rename: new sections (and name), `uploaded:false` so it is uploaded
- * again, and — when it got fewer sections — the old count remembered in `extraPointsUpTo`.
+ * again, the correction counter `rev` + 1, and — when it got fewer sections — the old count in `extraPointsUpTo`.
  */
 export function correctedTrack(t: LocalTrack, sections: LocalTrack['sections'], name?: string): LocalTrack {
   const bound = Math.max(t.extraPointsUpTo ?? 0, t.sections.length);
-  const out: LocalTrack = { ...t, name: name ?? t.name, sections: sections.map((s) => ({ mode: s.mode, detected: s.detected })), uploaded: false };
+  const out: LocalTrack = {
+    ...t, name: name ?? t.name, sections: sections.map((s) => ({ mode: s.mode, detected: s.detected })), uploaded: false, rev: (t.rev ?? 0) + 1,
+  };
   if (bound > sections.length) out.extraPointsUpTo = bound;
   else delete out.extraPointsUpTo;
   return out;

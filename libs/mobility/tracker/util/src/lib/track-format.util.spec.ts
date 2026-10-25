@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { formatDuration, formatKm } from './track-format.util';
 
 describe('formatDuration', () => {
