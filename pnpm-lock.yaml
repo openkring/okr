@@ -274,9 +274,6 @@ importers:
       '@capawesome/capacitor-file-picker':
         specifier: ^8.1.0
         version: 8.1.0(@capacitor/core@8.5.3)
-      '@capgo/background-geolocation':
-        specifier: 8.4.14
-        version: 8.4.14(@capacitor/core@8.5.3)
       '@capgo/nativegeocoder':
         specifier: ^7.3.18
         version: 7.3.18(@capacitor/core@8.5.3)
@@ -1879,11 +1876,6 @@ packages:
 
   '@capawesome/capacitor-file-picker@8.1.0':
     resolution: {integrity: sha512-vBWB9VWwW/Yf1EewXZ2Ng2COZwSbbJplJ5vcNVEIgCWqr9OfQI0tZdRx3i2F661mrDWftAGLG4zmYZ75MLUmJg==}
-    peerDependencies:
-      '@capacitor/core': '>=8.0.0'
-
-  '@capgo/background-geolocation@8.4.14':
-    resolution: {integrity: sha512-cO+b51OjitO0qsAZnJvDgbc9CbbQG1off3vr/+Qky8ZRa9qvLR6FMwCqxx5BP8N3kFlVHKblqx0DVf3SSkI5GQ==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
@@ -14263,10 +14255,6 @@ snapshots:
   '@capacitor/synapse@1.0.4': {}
 
   '@capawesome/capacitor-file-picker@8.1.0(@capacitor/core@8.5.3)':
-    dependencies:
-      '@capacitor/core': 8.5.3
-
-  '@capgo/background-geolocation@8.4.14(@capacitor/core@8.5.3)':
     dependencies:
       '@capacitor/core': 8.5.3
 

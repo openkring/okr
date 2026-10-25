@@ -18,5 +18,5 @@
   },
   "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
   "exclude": ["dist/**/*"],
-  "references": []
+  "references": [{ "path": "../util/tsconfig.lib.json" }]
 }

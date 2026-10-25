@@ -1,1 +1,1 @@
-export * from './lib/tracker-motion.plugin';
+export * from './lib/tracker-location.plugin';
