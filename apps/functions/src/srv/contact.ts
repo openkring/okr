@@ -14,8 +14,6 @@ import {
   srvMembersAdapter,
   srvMemberDetailAdapter,
   mapSrvContact,
-  mapSrvLicensed,
-  selectLicensed,
 } from '../_gateway/adapters/srv';
 
 import { regasoftApiKey, regasoftClubId, REGASOFT_BASE } from './shared';
@@ -82,36 +80,6 @@ export const getSrvContacts = onCall(
     const res = await runGateway(srvMembersAdapter, {}, ctx);
     logger.info(`${CF_NAME}: ${res.data.length} members`, { cached: res.cached });
     return res.data.map(mapSrvContact);
-  }
-);
-
-/**
- * Fetch all members with an active license from the Regasoft SRV API.
- *
- * Shares the `srv-members` cache entry with getSrvContacts — same endpoint, and
- * "licensed" is a local filter — so after an index build this costs no upstream
- * call at all.
- */
-export const getSrvLicensedMembers = onCall(
-  {
-    region: 'europe-west6',
-    enforceAppCheck: true,
-    secrets: SRV_SECRETS,
-  },
-  async (request: CallableRequest) => {
-    const CF_NAME = 'getSrvLicensedMembers';
-
-    if (!request.auth) {
-      throw new HttpsError('unauthenticated', 'Authentication required');
-    }
-    // SRV member data is person PII — memberAdmin/admin only (privacy inventory §7.2).
-    await checkRoles(request, CF_NAME, ['memberAdmin']);
-
-    const ctx = await srvContext(request);
-    const res = await runGateway(srvMembersAdapter, {}, ctx);
-    const licensed = selectLicensed(res.data);
-    logger.info(`${CF_NAME}: ${licensed.length} licensed members`, { cached: res.cached });
-    return licensed.map(mapSrvLicensed);
   }
 );
 

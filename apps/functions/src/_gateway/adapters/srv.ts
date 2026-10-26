@@ -12,10 +12,9 @@
 //
 // TWO adapters, not three, for three callables:
 //
-//  - `srv-members` backs BOTH `getSrvContacts` and `getSrvLicensedMembers`.
-//    They always hit the same endpoint; "licensed" was only ever a local
-//    `hasLicense` filter over the same payload. Sharing one adapter means the
-//    second callable costs nothing once the first has run. Its `map` therefore
+//  - `srv-members` backs `getSrvContacts` (and, until retired in 3.41 D3, the
+//    former licensed-members callable: "licensed" was only ever a local
+//    `hasLicense` filter over the same payload). Its `map` therefore
 //    stops at the unwrapped member list and each callable applies its own
 //    projection — the two need different fields (the licensed shape carries the
 //    licence image, which must NOT be pushed into the much more frequently
@@ -133,7 +132,7 @@ export function mapSrvLicensed(m: RegasoftMember) {
   };
 }
 
-/** The `hasLicense === true` filter `getSrvLicensedMembers` has always applied. */
+/** The `hasLicense === true` filter the (retired) licensed-members callable applied. */
 export function selectLicensed(members: RegasoftMember[]): RegasoftMember[] {
   return members.filter((m) => m.hasLicense === true);
 }

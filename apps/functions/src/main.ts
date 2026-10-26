@@ -241,7 +241,6 @@ export const syncBexioAccounts = Bexio.syncBexioAccounts;
 
 // srv (Regasoft SRV) contact sync
 export const getSrvContacts = Srv.getSrvContacts;
-export const getSrvLicensedMembers = Srv.getSrvLicensedMembers;
 export const getSrvMemberDetail = Srv.getSrvMemberDetail;
 export const createSrvContact = Srv.createSrvContact;
 export const updateSrvContact = Srv.updateSrvContact;
@@ -252,7 +251,6 @@ export const zefixSearch = Gateway.zefixSearch;
 export const zefixGetByUid = Gateway.zefixGetByUid;
 
 // external-data-gateway: OECD statistics (2.59) — first new consumer
-export const oecdQuery = Gateway.oecdQuery;
 
 // search.ch person-address lookup
 // external-data-gateway: retrofitted onto the gateway (tenant-scoped cache + quota + attribution)
@@ -339,7 +337,6 @@ export const reportIncident          = Trip.reportIncident;
 
 // test
 export const getEcho = Test.getEcho;
-export const getIpInfo = Test.getIpInfo;
 
 // public api (SCS website)
 import * as PublicApi from './publicApi';
@@ -427,13 +424,11 @@ export { allocateTenant, getAllocationEmails } from './tenant-allocation';
 
 // exchange rates
 export { fetchMeteoSwissRadar } from './weather/fetch-meteoswiss-radar';
-export { setManualRate } from './exchange-rate/set-manual-rate';
 
 // payment
 export { generatePain001 } from './payment/generate-pain001';
 export { approvePaymentOrder } from './payment/approve-payment-order';
 export { parseQrInvoice } from './payment/parse-qr-invoice';
-export { generateDunningPdf } from './payment/generate-dunning-pdf';
 
 // privacy 1.19 Phase 5B: GDPR/revDSG subject-access export delivery (D-P5-1) —
 // exportMyData zips + signs the caller's own export (stale artifacts are reaped by nightlyMaintenance)
