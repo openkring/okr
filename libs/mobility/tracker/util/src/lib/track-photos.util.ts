@@ -55,6 +55,16 @@ export function placePhotos(
   return out;
 }
 
+/**
+ * End of the photo window: the last recorded point's time (a resumed track may end long after it), never later
+ * than endedAt; endedAt when there are no points.
+ */
+export function photoWindowEnd(sections: TrackPoint[][], endedAt: number): number {
+  let last: number | undefined;
+  for (const s of sections) for (const p of s) if (last === undefined || p.t > last) last = p.t;
+  return last === undefined ? endedAt : Math.min(last, endedAt);
+}
+
 /** The trip's own tenant first, then the diary targets that take `tracker` entries on that date. */
 export function trackTenants(own: string, targets: DiaryTarget[] | undefined, startDate: string): string[] {
   const out = [own];

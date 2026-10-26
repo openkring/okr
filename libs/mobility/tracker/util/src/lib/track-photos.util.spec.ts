@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LibraryPhoto, placePhotos, positionAt, trackThumbPath, trackTenants, localStoreDate } from './track-photos.util';
+import { LibraryPhoto, photoWindowEnd, placePhotos, positionAt, trackThumbPath, trackTenants, localStoreDate } from './track-photos.util';
 import { TrackPoint } from './track-polyline.util';
 
 const P = (t: number, lat: number, lng: number): TrackPoint => ({ t, lat, lng });
@@ -55,4 +55,10 @@ describe('trackThumbPath', () => {
 
 describe('localStoreDate', () => {
   it('formats the local day', () => expect(localStoreDate(new Date(2026, 9, 5, 23, 59).getTime())).toBe('20261005'));
+});
+
+describe('photoWindowEnd', () => {
+  it('the last recorded point, not the end of a long gap', () => expect(photoWindowEnd([[P(10, 0, 0), P(50, 0, 0)], [P(30, 0, 0)]], 9999)).toBe(50));
+  it('falls back to endedAt without points', () => expect(photoWindowEnd([[], []], 9999)).toBe(9999));
+  it('never later than endedAt', () => expect(photoWindowEnd([[P(20000, 0, 0)]], 9999)).toBe(9999));
 });

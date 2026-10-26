@@ -32,11 +32,12 @@ function missingThumb(p: NonNullable<LocalTrack['photos']>[number]): boolean {
 }
 
 /**
- * The trip is on the server but a visible photo still lacks its thumbnail: the thumbnail step runs (after the trip
- * commit, since the storage rule reads the trip) and the pending-upload loop retries it.
+ * The trip is on the server but its visible photos are not confirmed there yet (a thumbnail is missing, or the photo
+ * list with the thumb paths was not acked): the thumbnail step runs after the trip commit (the storage rule reads
+ * the trip) and the pending-upload loop retries it.
  */
 export function needsThumbUpload(t: LocalTrack): boolean {
-  return t.uploaded && !t.photosUploaded && (t.photos ?? []).some(missingThumb);
+  return t.uploaded && !t.photosUploaded && (t.photos ?? []).some((p) => !p.hidden);
 }
 
 /** True when every visible photo carries its thumbPath. */
@@ -44,14 +45,18 @@ export function allThumbsUploaded(photos: LocalTrack['photos']): boolean {
   return !(photos ?? []).some(missingThumb);
 }
 
-/** The photos with the uploaded thumbnails' paths copied in by assetId (a new array; unknown assetIds are ignored). */
+/**
+ * The photos with the uploaded thumbnails' paths (and a refreshed local path400, if any) copied in by assetId
+ * (a new array; unknown assetIds are ignored).
+ */
 export function withThumbPaths(
-  photos: NonNullable<LocalTrack['photos']>, uploaded: { assetId: string; thumbPath: string }[],
+  photos: NonNullable<LocalTrack['photos']>, uploaded: { assetId: string; thumbPath: string; path400?: string }[],
 ): NonNullable<LocalTrack['photos']> {
-  const byAsset = new Map(uploaded.map((u) => [u.assetId, u.thumbPath]));
+  const byAsset = new Map(uploaded.map((u) => [u.assetId, u]));
   return photos.map((p) => {
-    const thumbPath = byAsset.get(p.assetId);
-    return thumbPath === undefined ? p : { ...p, thumbPath };
+    const u = byAsset.get(p.assetId);
+    if (!u) return p;
+    return u.path400 === undefined ? { ...p, thumbPath: u.thumbPath } : { ...p, thumbPath: u.thumbPath, path400: u.path400 };
   });
 }
 

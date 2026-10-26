@@ -157,7 +157,7 @@ describe('needsThumbUpload', () => {
   it('photos already uploaded', () => expect(needsThumbUpload(up([photo('x')], true))).toBe(false));
   it('no photos', () => expect(needsThumbUpload(up(undefined))).toBe(false));
   it('only hidden photos', () => expect(needsThumbUpload(up([photo('x', { hidden: true })]))).toBe(false));
-  it('every visible photo has its thumb', () => expect(needsThumbUpload(up([photo('x', { thumbPath: 't/x.jpg' }), photo('y', { hidden: true })]))).toBe(false));
+  it('every visible photo has its thumb, list not confirmed yet', () => expect(needsThumbUpload(up([photo('x', { thumbPath: 't/x.jpg' }), photo('y', { hidden: true })]))).toBe(true));
   it('one visible photo still missing', () => expect(needsThumbUpload(up([photo('x', { thumbPath: 't/x.jpg' }), photo('y')]))).toBe(true));
 });
 
@@ -169,6 +169,10 @@ describe('withThumbPaths', () => {
   it('ignores an uploaded asset that is no longer in the list', () => {
     const out = withThumbPaths([photo('x')], [{ assetId: 'gone', thumbPath: 't/0.jpg' }]);
     expect(out).toEqual([photo('x')]);
+  });
+  it('copies a refreshed path400 too', () => {
+    const out = withThumbPaths([photo('x')], [{ assetId: 'x', thumbPath: 't/0.jpg', path400: '/cache/new.jpg' }]);
+    expect(out[0]).toEqual(photo('x', { thumbPath: 't/0.jpg', path400: '/cache/new.jpg' }));
   });
   it('does not mutate the input', () => {
     const input = [photo('x')];

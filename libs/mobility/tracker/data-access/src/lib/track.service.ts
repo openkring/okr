@@ -36,6 +36,14 @@ function toTrackPhoto(p: TrackPhoto & { path400?: string }): TrackPhoto {
   return out;
 }
 
+/** uploadThumb could not read the device-local rendition (e.g. iOS purged the app cache): re-render it and retry. */
+export class ThumbSourceMissingError extends Error {
+  public constructor(public readonly localPath: string, cause: unknown) {
+    super(`thumbnail source missing: ${localPath}`, { cause });
+    this.name = 'ThumbSourceMissingError';
+  }
+}
+
 @Injectable({ providedIn: 'root' })
 export class TrackService {
   private readonly firestoreService = inject(FirestoreService);
@@ -171,11 +179,19 @@ export class TrackService {
     ]);
   }
 
-  /** Uploads one 400 px thumbnail (a device file) to the private bucket; returns its Storage path. */
+  /**
+   * Uploads one 400 px thumbnail (a device file) to the private bucket; returns its Storage path.
+   * @throws ThumbSourceMissingError when the device file cannot be read
+   */
   public async uploadThumb(tenantId: string, tripKey: string, n: number, localPath: string): Promise<string> {
     const path = trackThumbPath(tenantId, tripKey, n);
     // the Swift plugin returns a bare absolute path; Filesystem.readFile on iOS needs a URI
-    const { data } = await Filesystem.readFile({ path: localPath.startsWith('file://') ? localPath : 'file://' + localPath });
+    let data: string | Blob;
+    try {
+      ({ data } = await Filesystem.readFile({ path: localPath.startsWith('file://') ? localPath : 'file://' + localPath }));
+    } catch (error) {
+      throw new ThumbSourceMissingError(localPath, error);
+    }
     let blob: Blob;
     if (typeof data === 'string') {
       const bin = atob(data);
