@@ -67,10 +67,10 @@ def auth(token): return {"Authorization": f"Bearer {token}"} if token else {}
 def get_obj(path, token=None):
     return call(urllib.request.Request(obj_url(path), headers=auth(token), method="GET"))
 
-def put_obj(path, token=None, ctype="video/mp4"):
+def put_obj(path, token=None, ctype="video/mp4", data=b"x"):
     enc = urllib.parse.quote(path, safe="")
     hdr = {"Content-Type": ctype, **auth(token)}
-    return call(urllib.request.Request(f"http://{ST}/v0/b/{BUCKET}/o?name={enc}", data=b"x",
+    return call(urllib.request.Request(f"http://{ST}/v0/b/{BUCKET}/o?name={enc}", data=data,
                                        headers=hdr, method="POST"))
 
 def delete_obj(path, token=None):
@@ -91,6 +91,16 @@ seed_doc("folders", "fRoom", {"matrixRoomId": "!room:matrix.test"})
 EXISTING = "tenant/t1/section/s1/album/a/existing.mp4"
 if put_obj(EXISTING, "owner") != 200:
     raise SystemExit("could not seed the existing private video")
+
+# Track thumbnails (tracker photos): owner by track.personKey, across tenants.
+seed_doc("trips", "trTrack", {"track": {"personKey": "pB"}})
+seed_doc("users", "uidT1", {"tenants": ["t1"], "roles": {}, "personKey": "pB"})
+seed_doc("users", "uidT2", {"tenants": ["t2"], "roles": {}, "personKey": "pB"})
+seed_doc("users", "uidC", {"tenants": ["t1"], "roles": {}, "personKey": "pC"})
+T1, T2, C = jwt("uidT1"), jwt("uidT2"), jwt("uidC")
+THUMB = "tenant/t1/tracks/trTrack/0.jpg"
+if put_obj(THUMB, "owner", "image/jpeg") != 200:
+    raise SystemExit("could not seed the existing thumbnail")
 
 # read: no client read, ever (denied -> 403 even though the object exists)
 read_cases = [
@@ -127,6 +137,19 @@ delete_cases = [
     ("uidB(admin t2) DELETE album video -> DENY",    EXISTING, B),
 ]
 
+thumb_cases = [
+    ("owner uidT1 uploads thumbnail -> ALLOW",        200, lambda: put_obj("tenant/t1/tracks/trTrack/1.jpg", T1, "image/jpeg")),
+    ("owner uidT2 (other tenant) reads -> ALLOW",     200, lambda: get_obj(THUMB, T2)),
+    ("uidC (other person) reads -> DENY",             403, lambda: get_obj(THUMB, C)),
+    ("anon reads thumbnail -> DENY",                  403, lambda: get_obj(THUMB, None)),
+    ("owner uploads x.png -> DENY",                   403, lambda: put_obj("tenant/t1/tracks/trTrack/x.png", T1, "image/png")),
+    ("owner uploads 600 KB -> DENY",                  403, lambda: put_obj("tenant/t1/tracks/trTrack/2.jpg", T1, "image/jpeg", b"x" * 600 * 1024)),
+    ("uidC uploads thumbnail -> DENY",                403, lambda: put_obj("tenant/t1/tracks/trTrack/3.jpg", C, "image/jpeg")),
+    ("owner uploads for missing trip -> DENY",        403, lambda: put_obj("tenant/t1/tracks/trMissing/0.jpg", T1, "image/jpeg")),
+    ("uidC deletes thumbnail -> DENY",                403, lambda: delete_obj(THUMB, C)),
+    ("owner uidT1 deletes thumbnail -> ALLOW",        204, lambda: delete_obj("tenant/t1/tracks/trTrack/1.jpg", T1)),
+]
+
 passed = failed = 0
 def report(ok, code, label):
     global passed, failed
@@ -139,6 +162,8 @@ for label, expect, path, tok in write_cases:
     c = put_obj(path, tok); report((c == 200) == expect, c, label)
 for label, path, tok in delete_cases:
     c = delete_obj(path, tok); report(c == 403, c, label)
+for label, expect, fn in thumb_cases:
+    c = fn(); report(c == expect, c, label)
 # the denied deletes must have left the object in place
 c = get_obj(EXISTING, "owner"); report(c == 200, c, "existing video survives the denied deletes")
 

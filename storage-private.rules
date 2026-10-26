@@ -1,7 +1,8 @@
 rules_version = '2';
 
-// The private bucket (spec 1.74, 1.82). Clients never READ here — delivery is signed URLs from
-// Cloud Functions (signVideoUrls, signFinanceDocuments). The only client write is an album video
+// The private bucket (spec 1.74, 1.82). Clients read here only for tracker thumbnails
+// (tenant/*/tracks/**, owner-only); everything else is delivered as signed URLs from Cloud
+// Functions (signVideoUrls, signFinanceDocuments). The other client write is an album video
 // upload. Finance files, exports and everything else written by the Admin SDK need no grant.
 service firebase.storage {
   match /b/{bucket}/o {
@@ -30,6 +31,21 @@ service firebase.storage {
         && (modelType == 'section' || (modelType == 'folder' && folderHasNoRoom(key)))
         && sub != 'renderings'
         && isVideoUpload() && videoSizeOk();
+    }
+    // Thumbnails of tracker photos (tracker spec §6). Owner = the person on the trip's track, by
+    // personKey and across tenants (one person, several tenants). Read by the client with the
+    // Storage SDK: the exception to "clients never read here". firestore.get on a missing
+    // user or trip errors, which denies (fail closed).
+    function trackOwner(tripKey) {
+      return request.auth != null
+        && firestore.get(userPath()).data.get('personKey', '') != ''
+        && firestore.get(/databases/(default)/documents/trips/$(tripKey)).data.get('track', {}).get('personKey', '')
+          == firestore.get(userPath()).data.get('personKey', '');
+    }
+    match /tenant/{tenantId}/tracks/{tripKey}/{file} {
+      allow read, delete: if trackOwner(tripKey);
+      allow create, update: if trackOwner(tripKey) && file.matches('[0-9]+[.]jpg')
+        && request.resource.size < 512 * 1024;
     }
     match /{all=**} {
       allow read, write: if false;
