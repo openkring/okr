@@ -10,11 +10,12 @@ import { TransportMode } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { DateFormat, generateRandomString, getCurrentTime, getTodayStr } from '@okr/shared-util-core';
-import { NativeLocation, PhotoAccess, ThumbSourceMissingError, TrackDb, TrackerLocation, TrackerPhotos, TrackService } from '@okr/mobility-tracker-data-access';
+import { NativeLocation, PhotoAccess, queryPedometerSteps, ThumbSourceMissingError, TrackDb, TrackerLocation, TrackerPhotos, TrackService } from '@okr/mobility-tracker-data-access';
 import {
   accumulateDistance, allThumbsUploaded, alignSections, correctedTrack, DetectionInput, hasNoPoints, LocalSection, sameTrackContent, DetectState, initialDetectState, LocalTrack,
   mergePhotos, MotionActivity, needsThumbUpload, needsUpload, nextThumbNumber, photoWindowEnd, placePhotos, nextSectionStartPoint, nextSections, pendingUploadOwner, resumeDecision, sectionsAfterPause, sessionDetectStep, StartWarning, localStoreDate, trackTenants,
   startWarning, summarize, toTrackPoint, TRACK_PROFILES, TRACKER_I18N_KEYS, TrackerI18n, TrackPoint, withPhotoHidden, withThumbPaths,
+  LIVE_SPLIT_WINDOW_MS, liveSplitS, sectionMeta, toLocalSections, withQueriedSteps,
 } from '@okr/mobility-tracker-util';
 
 /**
@@ -36,10 +37,14 @@ export interface TrackerStoreState {
   uploadError: string | undefined;
   initialized: boolean; // init() completed: the database is open
   photoAccess: PhotoAccess | undefined; // last known photo-library access (native only; undefined until asked)
+  liveSteps: number | undefined; // foot: pedometer steps of the current section so far (spec 1.122)
+  liveSplitS: number | undefined; // row: current split, s per 500 m, from the GPS speed of the last 10 s
+  calibrating: boolean; // admin option: record raw rowing motion while a row section records (spec 1.122 §5.2)
 }
 
 const initialState: TrackerStoreState = {
   active: undefined, currentMode: undefined, points: 0, distanceM: 0, warning: 'none', proposal: undefined, resumable: undefined, uploadError: undefined, initialized: false, photoAccess: undefined,
+  liveSteps: undefined, liveSplitS: undefined, calibrating: false,
 };
 
 /** Mutable per-session bookkeeping that never renders. */
@@ -55,7 +60,13 @@ export interface TrackerSession {
   init: Promise<void> | undefined; // a failed open is retried on the next init()
   ownerWatch: boolean; // the pending-upload loop is subscribed to the signed-in owner
   thumbsInFlight: Set<string>; // track keys whose thumbnail step is running (no overlapping runs per track)
+  sectionStartMs: number | undefined; // time of the current section's first fix (live steps)
+  lastStepsQueryMs: number; // live steps are polled at most every LIVE_STEPS_INTERVAL_MS
+  recentFixes: { speed: number | null; time: number }[]; // fixes of the last 10 s (live split)
+  calibrationOpen: boolean; // a native calibration recording is running
 }
+
+const LIVE_STEPS_INTERVAL_MS = 15_000;
 
 function profileOf(mode: TransportMode) {
   const { distanceFilter, accuracy, minIntervalMs } = TRACK_PROFILES[mode];
@@ -85,6 +96,7 @@ export const TrackerStore = signalStore(
       session: {
         detect: initialDetectState('foot'), lastPoint: undefined, sectionHasPoints: false, lastActivity: undefined, lastFix: undefined,
         handles: [], queue: Promise.resolve(), stopping: false, init: undefined, ownerWatch: false, thumbsInFlight: new Set<string>(),
+        sectionStartMs: undefined, lastStepsQueryMs: 0, recentFixes: [], calibrationOpen: false,
       } as TrackerSession,
     };
   }),
@@ -149,6 +161,7 @@ export const TrackerStore = signalStore(
       s.sectionHasPoints = true;
       patchState(store, { points: store.points() + 1, distanceM: accumulateDistance(store.distanceM(), prev, p) });
       await store.db.appendPoint(t.key, t.sections.length - 1, p);
+      liveFigures(l);
       await detect({
         activity: s.lastActivity?.type ?? 'unknown', confidence: s.lastActivity?.confidence ?? 'low',
         speedMps: l.speed, altitudeM: l.altitude, at: l.time,
@@ -186,6 +199,7 @@ export const TrackerStore = signalStore(
         s.sectionHasPoints = first !== undefined;
       }
       patchState(store, { active: track, currentMode: mode, proposal: undefined });
+      if (next.newSection) resetLive();
       if (t.state === 'recording') {
         try {
           await TrackerLocation.setProfile(profileOf(mode));
@@ -193,6 +207,50 @@ export const TrackerStore = signalStore(
           console.error('TrackerStore.setProfile', error);
         }
       }
+      await syncCalibration();
+    }
+
+    /** Live step count (foot, polled) and live split (row) from one fix; never blocks the queue. */
+    function liveFigures(l: NativeLocation): void {
+      s.sectionStartMs ??= l.time;
+      const mode = store.currentMode();
+      if (mode === 'foot' && l.time - s.lastStepsQueryMs >= LIVE_STEPS_INTERVAL_MS) {
+        s.lastStepsQueryMs = l.time;
+        const since = s.sectionStartMs;
+        void queryPedometerSteps(since, l.time).then((steps) => {
+          if (steps !== undefined && s.sectionStartMs === since) patchState(store, { liveSteps: steps });
+        });
+      } else if (mode === 'row') {
+        s.recentFixes = [...s.recentFixes, { speed: l.speed, time: l.time }].filter((f) => f.time >= l.time - LIVE_SPLIT_WINDOW_MS);
+        patchState(store, { liveSplitS: liveSplitS(s.recentFixes, l.time) });
+      }
+    }
+
+    function resetLive(): void {
+      s.sectionStartMs = undefined;
+      s.lastStepsQueryMs = 0;
+      s.recentFixes = [];
+      patchState(store, { liveSteps: undefined, liveSplitS: undefined });
+    }
+
+    /** Runs the native calibration recording exactly while calibrating is on and a row section records. */
+    async function syncCalibration(): Promise<void> {
+      const want = store.calibrating() && store.active()?.state === 'recording' && store.currentMode() === 'row' && !s.stopping;
+      if (want === s.calibrationOpen) return;
+      try {
+        if (want) await TrackerLocation.calibrationStart();
+        else await TrackerLocation.calibrationStop();
+        s.calibrationOpen = want;
+      } catch (error) {
+        console.error('TrackerStore.calibration', error);
+        s.calibrationOpen = false;
+      }
+    }
+
+    /** The finished track with the pedometer steps of its foot sections (the plugin answers nothing on the web). */
+    async function withSteps(t: LocalTrack, groups: TrackPoint[][]): Promise<LocalTrack> {
+      const sections = await withQueriedSteps(toLocalSections(t, alignSections(groups, t.sections.length)), queryPedometerSteps, Date.now());
+      return { ...t, sections: sections.map(sectionMeta) };
     }
 
     /** A queued mode change for the track that is active now; skipped if stop() began or another track became active. */
@@ -451,13 +509,15 @@ export const TrackerStore = signalStore(
           await stopPlugin(); // inside the queue: a queued resume cannot restart GPS afterwards
           const t = store.active();
           if (!t) return undefined;
-          if (hasNoPoints(await store.db.points(t.key))) {
+          s.calibrationOpen = false; // stopPlugin() also closed a native calibration recording
+          const groups = await store.db.points(t.key);
+          if (hasNoPoints(groups)) {
             // nothing recorded: drop it locally, never upload an empty trip
             await store.db.remove(t.key);
             patchState(store, { active: undefined, currentMode: undefined, proposal: undefined, uploadError: undefined });
             return 'empty' as const;
           }
-          const finished: LocalTrack = { ...t, state: 'done', endedAt: Date.now() };
+          const finished: LocalTrack = await withSteps({ ...t, state: 'done', endedAt: Date.now() }, groups);
           await store.db.updateTrack(finished);
           patchState(store, { active: undefined, currentMode: undefined, proposal: undefined, uploadError: undefined });
           return finished;
@@ -480,6 +540,7 @@ export const TrackerStore = signalStore(
       s.lastPoint = undefined;
       s.lastFix = undefined;
       s.sectionHasPoints = false;
+      resetLive();
     }
 
     return {
@@ -534,10 +595,11 @@ export const TrackerStore = signalStore(
           await store.db.open();
           const old = store.resumable();
           if (old) {
-            if (hasNoPoints(await store.db.points(old.key))) {
+            const oldGroups = await store.db.points(old.key);
+            if (hasNoPoints(oldGroups)) {
               await store.db.remove(old.key); // an empty leftover is discarded, like an empty stop
             } else {
-              const finished: LocalTrack = { ...old, state: 'done', endedAt: old.endedAt ?? Date.now() };
+              const finished: LocalTrack = await withSteps({ ...old, state: 'done', endedAt: old.endedAt ?? Date.now() }, oldGroups);
               await store.db.updateTrack(finished);
               void uploadTrack(finished, true);
               void attachPhotos(finished.key);
@@ -563,6 +625,7 @@ export const TrackerStore = signalStore(
             await store.db.remove(track.key);
             patchState(store, { active: undefined, currentMode: undefined });
           }
+          await syncCalibration();
         });
       },
 
@@ -572,6 +635,7 @@ export const TrackerStore = signalStore(
           const t = store.active(); // re-read: a section switch may have finished meanwhile
           if (!t || t.state !== 'recording') return;
           await stopPlugin(); // inside the queue, like the start in resume()
+          s.calibrationOpen = false; // stopPlugin() also closed a native calibration recording
           const paused: LocalTrack = { ...t, state: 'paused' };
           await store.db.updateTrack(paused);
           patchState(store, { active: paused });
@@ -588,6 +652,7 @@ export const TrackerStore = signalStore(
           const before = { lastPoint: s.lastPoint, sectionHasPoints: s.sectionHasPoints };
           s.lastPoint = undefined;
           s.sectionHasPoints = false;
+          resetLive();
           await store.db.updateTrack(recording);
           patchState(store, { active: recording });
           if (!(await startPlugin(recording.sections[recording.sections.length - 1]?.mode ?? 'foot'))) {
@@ -596,6 +661,7 @@ export const TrackerStore = signalStore(
             s.lastPoint = before.lastPoint; // still paused on the old sections
             s.sectionHasPoints = before.sectionHasPoints;
           }
+          await syncCalibration();
         });
       },
 
@@ -621,6 +687,12 @@ export const TrackerStore = signalStore(
 
       dismissProposal(): void {
         patchState(store, { proposal: undefined });
+      },
+
+      /** Admin option (spec 1.122 §5.2): raw rowing motion is recorded while on and a row section records; not persisted. */
+      setCalibration(on: boolean): Promise<void> {
+        patchState(store, { calibrating: on });
+        return enqueue(() => syncCalibration()).then(() => undefined);
       },
 
       /** «Weiter aufnehmen»: continues the resumable track with its last section's profile. */

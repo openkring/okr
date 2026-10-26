@@ -40,3 +40,8 @@ export interface TrackerLocationPlugin {
 }
 
 export const TrackerLocation = registerPlugin<TrackerLocationPlugin>('TrackerLocation');
+
+/** Pedometer steps for a time window, or undefined (web, no permission, unavailable) — the shape withQueriedSteps takes. */
+export function queryPedometerSteps(fromMs: number, toMs: number): Promise<number | undefined> {
+  return TrackerLocation.steps({ fromMs, toMs }).then((r) => r.steps ?? undefined, () => undefined);
+}

@@ -11,12 +11,12 @@ import { AppStore } from '@okr/shared-feature';
 import { TRANSPORT_MODES, TrackPhoto, TransportMode, TripModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { confirm, downloadFile, okrPrompt } from '@okr/shared-util-angular';
-import { TrackDb, TrackService } from '@okr/mobility-tracker-data-access';
+import { queryPedometerSteps, TrackDb, TrackService } from '@okr/mobility-tracker-data-access';
 import { TrackMap, TrackMapPhoto, TrackMapSection, TrackModeChange, TrackPhotoItem, TrackPhotos, TrackPhotoToggle, TrackSections } from '@okr/mobility-tracker-ui';
 import {
   alignSections, buildGpx, correctedTrack, fromLocalSections, gpxFileName, isShareCancel, LocalSection, LocalTrack, localFromTrip, mergeWithNext,
   localStoreDate, middlePointIndex, sectionRows, setSectionMode, splitSection, toLocalSections, trackTenants, wantsPhotoReattach, withoutPhoto,
-  withPhotoHidden,
+  withPhotoHidden, withQueriedSteps,
 } from '@okr/mobility-tracker-util';
 
 import { TrackerStore } from './tracker.store';
@@ -398,6 +398,13 @@ export class TrackDetailPage {
     const beforeSections = this.sections();
     if (!before || this.busy() || before.state !== 'done') return;
     if (next === beforeSections && name === undefined) return; // the correction changed nothing
+    // re-read the steps of foot sections within the pedometer history; elsewhere the corrected values stand (spec 1.122)
+    this.busy.set(true); // no second correction while the pedometer answers
+    try {
+      next = await withQueriedSteps(next, queryPedometerSteps, Date.now());
+    } finally {
+      this.busy.set(false);
+    }
     const key = before.key;
     if (this.isLocal()) {
       this.busy.set(true);
