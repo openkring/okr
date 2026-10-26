@@ -1,5 +1,4 @@
-import { resolveDiaryTargets } from '@okr/content-diary-util';
-import { DiaryTarget, TrackPhoto } from '@okr/shared-models';
+import { DiaryTarget, resolveDiaryTargets, TrackPhoto } from '@okr/shared-models';
 import { TrackPoint } from './track-polyline.util';
 
 /** A photo from the device library, with its local 400 px rendition. */
@@ -29,7 +28,7 @@ export function positionAt(points: TrackPoint[], t: number): { lat: number; lng:
   return { lat: last.lat, lng: last.lng };
 }
 
-/** Photos taken within [from, to], positioned by own GPS or interpolated from the track, sorted by time. */
+/** Photos taken within [from, to], positioned by own GPS or interpolated from the track, sorted by time. `path400` is device-local and must be stripped before persisting. */
 export function placePhotos(
   photos: LibraryPhoto[],
   sections: TrackPoint[][],

@@ -16,3 +16,25 @@ export interface DiaryTarget {
   from: string;
   to: string;
 }
+
+/**
+ * The diary tenants that receive `source` for an item dated `date` (StoreDate) — spec 1.77 §6.1.
+ * A target matches when it ticks `source` and `from <= date <= to`; an empty bound is open. Bounds are inclusive.
+ * Order follows the stored targets; a tenant appears once.
+ */
+export function resolveDiaryTargets(
+  targets: DiaryTarget[] | undefined,
+  source: DiarySource,
+  date: string,
+): string[] {
+  const out: string[] = [];
+  for (const target of targets ?? []) {
+    if (!target.tenantId || !(target.sources ?? []).includes(source)) continue;
+    const from = target.from ?? '';
+    const to = target.to ?? '';
+    if (from && date < from) continue;
+    if (to && date > to) continue;
+    if (!out.includes(target.tenantId)) out.push(target.tenantId);
+  }
+  return out;
+}

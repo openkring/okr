@@ -18,5 +18,5 @@
   },
   "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
   "exclude": ["dist/**/*"],
-  "references": [{ "path": "../../../content/diary/util/tsconfig.lib.json" }, { "path": "../../../shared/models/tsconfig.lib.json" }]
+  "references": [{ "path": "../../../shared/models/tsconfig.lib.json" }]
 }

@@ -1,4 +1,3 @@
-import '@angular/compiler';
 import { describe, expect, it } from 'vitest';
 import { LibraryPhoto, placePhotos, positionAt, trackThumbPath, trackTenants } from './track-photos.util';
 import { TrackPoint } from './track-polyline.util';
