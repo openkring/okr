@@ -109,6 +109,9 @@
     "bag": "In a bag",
     "mounted": "Mounted in the boat",
     "counted": "Counted strokes (optional)",
-    "empty": "No recording yet"
+    "empty": "No recording yet",
+    "check": "Check",
+    "check_result": "Count in app code: {ts} · in iPhone code: {native}",
+    "close": "Close"
   }
 }

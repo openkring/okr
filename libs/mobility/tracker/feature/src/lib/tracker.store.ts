@@ -39,12 +39,14 @@ export interface TrackerStoreState {
   photoAccess: PhotoAccess | undefined; // last known photo-library access (native only; undefined until asked)
   liveSteps: number | undefined; // foot: pedometer steps of the current section so far (spec 1.122)
   liveSplitS: number | undefined; // row: current split, s per 500 m, from the GPS speed of the last 10 s
+  liveStrokes: number | undefined; // row: strokes of the current section so far (spec 1.122 2c)
+  liveStrokeRate: number | undefined; // row: current stroke rate per minute (from the detector's period)
   calibrating: boolean; // admin option: record raw rowing motion while a row section records (spec 1.122 §5.2)
 }
 
 const initialState: TrackerStoreState = {
   active: undefined, currentMode: undefined, points: 0, distanceM: 0, warning: 'none', proposal: undefined, resumable: undefined, uploadError: undefined, initialized: false, photoAccess: undefined,
-  liveSteps: undefined, liveSplitS: undefined, calibrating: false,
+  liveSteps: undefined, liveSplitS: undefined, liveStrokes: undefined, liveStrokeRate: undefined, calibrating: false,
 };
 
 /** Mutable per-session bookkeeping that never renders. */
@@ -64,6 +66,7 @@ export interface TrackerSession {
   lastStepsQueryMs: number; // live steps are polled at most every LIVE_STEPS_INTERVAL_MS
   recentFixes: { speed: number | null; time: number }[]; // fixes of the last 10 s (live split)
   calibrationOpen: boolean; // a native calibration recording is running
+  strokesOn: boolean; // native stroke detection is on
 }
 
 const LIVE_STEPS_INTERVAL_MS = 15_000;
@@ -96,7 +99,7 @@ export const TrackerStore = signalStore(
       session: {
         detect: initialDetectState('foot'), lastPoint: undefined, sectionHasPoints: false, lastActivity: undefined, lastFix: undefined,
         handles: [], queue: Promise.resolve(), stopping: false, init: undefined, ownerWatch: false, thumbsInFlight: new Set<string>(),
-        sectionStartMs: undefined, lastStepsQueryMs: 0, recentFixes: [], calibrationOpen: false,
+        sectionStartMs: undefined, lastStepsQueryMs: 0, recentFixes: [], calibrationOpen: false, strokesOn: false,
       } as TrackerSession,
     };
   }),
@@ -149,6 +152,7 @@ export const TrackerStore = signalStore(
       if (s.handles.length > 0) return;
       s.handles.push(await TrackerLocation.addListener('location', (l) => void enqueue(() => onLocation(l))));
       s.handles.push(await TrackerLocation.addListener('activity', (a) => void enqueue(() => onActivity(a))));
+      s.handles.push(await TrackerLocation.addListener('stroke', (k) => void enqueue(() => onStroke(k.time, k.periodMs))));
     }
 
     async function onLocation(l: NativeLocation): Promise<void> {
@@ -230,11 +234,36 @@ export const TrackerStore = signalStore(
       s.sectionStartMs = undefined;
       s.lastStepsQueryMs = 0;
       s.recentFixes = [];
-      patchState(store, { liveSteps: undefined, liveSplitS: undefined });
+      patchState(store, { liveSteps: undefined, liveSplitS: undefined, liveStrokes: undefined, liveStrokeRate: undefined });
+    }
+
+    /** One detected stroke: stored with the current row section, counted live (spec 1.122 2c). */
+    async function onStroke(time: number, periodMs: number | null): Promise<void> {
+      const t = store.active();
+      if (!t || t.state !== 'recording' || s.stopping || store.currentMode() !== 'row') return;
+      await store.db.appendStroke(t.key, t.sections.length - 1, time);
+      patchState(store, {
+        liveStrokes: (store.liveStrokes() ?? 0) + 1,
+        liveStrokeRate: periodMs ? Math.round((60_000 / periodMs) * 10) / 10 : store.liveStrokeRate(),
+      });
+    }
+
+    /** Native stroke detection runs exactly while a row section records. */
+    async function syncStrokes(): Promise<void> {
+      const want = store.active()?.state === 'recording' && store.currentMode() === 'row' && !s.stopping;
+      if (want === s.strokesOn) return;
+      try {
+        await TrackerLocation.strokes({ on: want });
+        s.strokesOn = want;
+      } catch (error) {
+        console.error('TrackerStore.strokes', error);
+        s.strokesOn = false;
+      }
     }
 
     /** Runs the native calibration recording exactly while calibrating is on and a row section records. */
     async function syncCalibration(): Promise<void> {
+      await syncStrokes(); // same call sites: both follow the recording state and the current mode
       const want = store.calibrating() && store.active()?.state === 'recording' && store.currentMode() === 'row' && !s.stopping;
       if (want === s.calibrationOpen) return;
       try {
@@ -283,7 +312,8 @@ export const TrackerStore = signalStore(
           const current = await findTrack(t.key);
           if (!current || !needsUpload(current)) return { track: current, commit: undefined };
           const points = alignSections(await store.db.points(current.key), current.sections.length);
-          const commit = store.trackService.upload(current, points, { personKey, uid, tenants: trackTenants(store.appStore.tenantId(), store.appStore.currentUser()?.diaryTargets, localStoreDate(current.startedAt)) }, current.extraPointsUpTo);
+          const strokes = await store.db.strokes(current.key);
+          const commit = store.trackService.upload(current, points, { personKey, uid, tenants: trackTenants(store.appStore.tenantId(), store.appStore.currentUser()?.diaryTargets, localStoreDate(current.startedAt)) }, current.extraPointsUpTo, strokes);
           commit.catch(() => undefined); // awaited below, outside the queue (offline it resolves only on reconnect)
           return { track: current, commit };
         });
@@ -510,6 +540,7 @@ export const TrackerStore = signalStore(
           const t = store.active();
           if (!t) return undefined;
           s.calibrationOpen = false; // stopPlugin() also closed a native calibration recording
+          s.strokesOn = false; // … and turned stroke detection off
           const groups = await store.db.points(t.key);
           if (hasNoPoints(groups)) {
             // nothing recorded: drop it locally, never upload an empty trip
@@ -636,6 +667,7 @@ export const TrackerStore = signalStore(
           if (!t || t.state !== 'recording') return;
           await stopPlugin(); // inside the queue, like the start in resume()
           s.calibrationOpen = false; // stopPlugin() also closed a native calibration recording
+          s.strokesOn = false; // … and turned stroke detection off
           const paused: LocalTrack = { ...t, state: 'paused' };
           await store.db.updateTrack(paused);
           patchState(store, { active: paused });
@@ -741,6 +773,7 @@ export const TrackerStore = signalStore(
           if (!current || current.state !== 'done') return undefined;
           const corrected = correctedTrack(current, sections, name);
           await store.db.replacePoints(key, sections.map((x) => x.points));
+          await store.db.replaceStrokes(key, sections.map((x) => x.strokeTimes ?? []));
           await store.db.updateTrack(corrected);
           return corrected;
         });

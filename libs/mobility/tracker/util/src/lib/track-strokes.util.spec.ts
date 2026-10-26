@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decodeStrokeTimes, encodeStrokeTimes, strokeFigures } from './track-strokes.util';
+import { decodeStrokeTimes, encodeStrokeTimes, parseCalibrationCsv, strokeFigures } from './track-strokes.util';
 
 const T0 = 1_761_465_600_000;
 const every = (n: number, gapMs: number, from = T0) => Array.from({ length: n }, (_, i) => from + i * gapMs);
@@ -38,4 +38,14 @@ describe('encodeStrokeTimes / decodeStrokeTimes', () => {
     expect(decodeStrokeTimes(undefined, T0)).toEqual([]);
     expect(decodeStrokeTimes('', T0)).toEqual([]);
   });
+});
+
+describe('parseCalibrationCsv', () => {
+  it('parses the rows after the header; an empty speed is null', () => {
+    expect(parseCalibrationCsv('t_ms,ax,ay,az,gps_speed\n1000,0.1,-0.2,0.3,2.50\n1020,0.0,0.0,0.1,\n')).toEqual([
+      { t: 1000, ax: 0.1, ay: -0.2, az: 0.3, speed: 2.5 },
+      { t: 1020, ax: 0, ay: 0, az: 0.1, speed: null },
+    ]);
+  });
+  it('skips broken lines', () => expect(parseCalibrationCsv('t_ms,ax,ay,az,gps_speed\nx,1,2\n\n')).toEqual([]));
 });

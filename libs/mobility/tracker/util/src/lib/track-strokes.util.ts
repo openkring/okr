@@ -1,3 +1,5 @@
+import type { StrokeSample } from './stroke-detector';
+
 /** Gaps longer than this are breaks and are left out of the average stroke rate (spec 1.122 §5.2). */
 export const STROKE_PAUSE_MS = 10_000;
 /** The maximum stroke rate is the highest over any window this long … */
@@ -44,4 +46,17 @@ export function decodeStrokeTimes(s: string | undefined, startMs: number): numbe
   if (!s) return [];
   let at = startMs;
   return s.split(',').map((d) => (at += Number(d)));
+}
+
+/** The rows of a calibration CSV (`t_ms,ax,ay,az,gps_speed`, spec 1.122 §5.2) as detector samples; broken lines are skipped. */
+export function parseCalibrationCsv(text: string): StrokeSample[] {
+  const out: StrokeSample[] = [];
+  for (const line of text.split('\n').slice(1)) {
+    const f = line.split(',');
+    if (f.length < 5) continue;
+    const [t, ax, ay, az] = f.slice(0, 4).map(Number);
+    if (![t, ax, ay, az].every(Number.isFinite) || f[0] === '') continue;
+    out.push({ t, ax, ay, az, speed: f[4].trim() === '' ? null : Number(f[4]) });
+  }
+  return out;
 }

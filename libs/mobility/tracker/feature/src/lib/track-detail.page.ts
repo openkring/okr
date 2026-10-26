@@ -323,9 +323,10 @@ export class TrackDetailPage {
         // the local copy shows at once; the uploaded trip (only needed for its tenants on delete) follows detached —
         // listMine waits for the network, so it must never hold up a track that is right here on the device
         const points = alignSections(await this.db.points(key), local.sections.length);
+        const strokes = await this.db.strokes(key);
         this.isLocal.set(true);
         this.track.set(local);
-        this.sections.set(toLocalSections(local, points));
+        this.sections.set(toLocalSections(local, points, strokes));
         void this.findTrip(key).then((trip) => {
           if (this.key() === key) this.trip.set(trip);
         });
@@ -338,8 +339,8 @@ export class TrackDetailPage {
       const trip = await this.findTrip(key);
       this.trip.set(trip);
       if (trip?.track) {
-        const points = await Promise.all(trip.track.sections.map((_, n) => this.trackService.readPoints(key, n)));
-        const { track, sections } = localFromTrip(trip, points);
+        const read = await Promise.all(trip.track.sections.map((_, n) => this.trackService.readSection(key, n)));
+        const { track, sections } = localFromTrip(trip, read.map((r) => r.points), read.map((r) => r.strokeTimes));
         this.isLocal.set(false);
         this.track.set(track);
         this.sections.set(sections);
@@ -434,7 +435,7 @@ export class TrackDetailPage {
     this.sections.set(next);
     this.trip.update((t) => (t?.track ? { ...t, name: corrected.track.name, track: { ...t.track, sections: t.track.sections.slice(0, next.length) } } : t));
     // stale track-points docs (fewer sections than before) are deleted in the upload's own batch
-    void this.trackService.upload(corrected.track, corrected.points, owner, oldCount)
+    void this.trackService.upload(corrected.track, corrected.points, owner, oldCount, corrected.strokes)
       .catch(async (error: unknown) => {
         console.error('TrackDetailPage.upload', error);
         if (this.track()?.key === key) {
@@ -450,7 +451,7 @@ export class TrackDetailPage {
       const local = (await this.db.list()).find((t) => t.key === key);
       if (!local) return;
       this.track.set(local);
-      this.sections.set(toLocalSections(local, alignSections(await this.db.points(key), local.sections.length)));
+      this.sections.set(toLocalSections(local, alignSections(await this.db.points(key), local.sections.length), await this.db.strokes(key)));
     } catch (error) {
       console.error('TrackDetailPage.reloadLocal', error);
     }

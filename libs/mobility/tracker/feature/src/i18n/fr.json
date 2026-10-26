@@ -109,6 +109,9 @@
     "bag": "Dans un sac",
     "mounted": "Fixé dans le bateau",
     "counted": "Coups comptés (facultatif)",
-    "empty": "Pas encore d’enregistrement"
+    "empty": "Pas encore d’enregistrement",
+    "check": "Vérifier",
+    "check_result": "Comptage code app : {ts} · code iPhone : {native}",
+    "close": "Fermer"
   }
 }

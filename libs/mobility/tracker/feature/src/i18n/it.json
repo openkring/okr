@@ -109,6 +109,9 @@
     "bag": "In una borsa",
     "mounted": "Fissato nella barca",
     "counted": "Colpi contati (facoltativo)",
-    "empty": "Ancora nessuna registrazione"
+    "empty": "Ancora nessuna registrazione",
+    "check": "Verifica",
+    "check_result": "Conteggio codice app: {ts} · codice iPhone: {native}",
+    "close": "Chiudi"
   }
 }

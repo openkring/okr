@@ -11,10 +11,10 @@ import { of, switchMap } from 'rxjs';
 import { AppStore } from '@okr/shared-feature';
 import { TRANSPORT_MODES, TransportMode, TripModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { listCalibrationFiles, shareCalibration, TrackDb, TrackService } from '@okr/mobility-tracker-data-access';
+import { listCalibrationFiles, readCalibrationCsv, shareCalibration, TrackDb, TrackerLocation, TrackService } from '@okr/mobility-tracker-data-access';
 import { TrackerBanner, TrackMap, TrackMapSection } from '@okr/mobility-tracker-ui';
-import { calibrationStartedAt, elapsedSeconds, figureTexts, formatKm, isShareCancel, LocalTrack, mergeTrackLists, TrackPoint } from '@okr/mobility-tracker-util';
-import { hasRole } from '@okr/shared-util-core';
+import { calibrationStartedAt, parseCalibrationCsv, StrokeDetector, elapsedSeconds, figureTexts, formatKm, isShareCancel, LocalTrack, mergeTrackLists, TrackPoint } from '@okr/mobility-tracker-util';
+import { fill, hasRole } from '@okr/shared-util-core';
 import { okrPrompt } from '@okr/shared-util-angular';
 
 import { TrackerStore } from './tracker.store';
@@ -126,6 +126,7 @@ type ModeChoice = TransportMode | typeof AUTO;
           @for (file of calibrationFiles(); track file) {
             <ion-item>
               <ion-label>{{ calibrationLabel(file) }}</ion-label>
+              <ion-button slot="end" fill="clear" (click)="checkCalibrationFile(file)">{{ i18n.calibration_check() }}</ion-button>
               <ion-button slot="end" fill="clear" (click)="shareCalibrationFile(file)">{{ i18n.calibration_share() }}</ion-button>
             </ion-item>
           } @empty {
@@ -285,6 +286,22 @@ export class TrackerPage {
       });
     } catch (error) {
       if (!isShareCancel(error)) console.error('TrackerPage.shareCalibration', error);
+    }
+  }
+
+  /** Debug check (spec 1.122 §10): both detectors count the same file; the two numbers must match. */
+  protected async checkCalibrationFile(file: string): Promise<void> {
+    try {
+      const detector = new StrokeDetector();
+      let ts = 0;
+      for (const sample of parseCalibrationCsv(await readCalibrationCsv(file))) if (detector.push(sample) !== undefined) ts++;
+      const native = (await TrackerLocation.replayCalibration({ file })).strokes.length;
+      const alert = await this.alertController.create({
+        header: this.i18n.calibration_title(), message: fill(this.i18n.calibration_check_result(), { ts, native }), buttons: [this.i18n.calibration_close()],
+      });
+      await alert.present();
+    } catch (error) {
+      console.error('TrackerPage.checkCalibration', error);
     }
   }
 

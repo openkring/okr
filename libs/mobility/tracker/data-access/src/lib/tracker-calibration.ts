@@ -30,3 +30,9 @@ export async function shareCalibration(file: string, meta: CalibrationMeta): Pro
   ]);
   await Share.share({ files: [csv.uri, json.uri] });
 }
+
+/** The text of a calibration CSV (Documents-relative path), for the replay check against the native detector. */
+export async function readCalibrationCsv(file: string): Promise<string> {
+  const { data } = await Filesystem.readFile({ path: file, directory: Directory.Documents, encoding: Encoding.UTF8 });
+  return typeof data === 'string' ? data : await data.text();
+}

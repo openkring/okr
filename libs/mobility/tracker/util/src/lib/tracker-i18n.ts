@@ -82,6 +82,9 @@ export const TRACKER_I18N_KEYS = {
   calibration_mounted: PFX + 'calibration.mounted',
   calibration_counted: PFX + 'calibration.counted',
   calibration_empty: PFX + 'calibration.empty',
+  calibration_check: PFX + 'calibration.check',
+  calibration_close: PFX + 'calibration.close',
+  calibration_check_result: PFX + 'calibration.check_result', // single braces: {ts}, {native}
   photos_search_added_one: PFX + 'photos.search_added_one',
   photos_search_none: PFX + 'photos.search_none',
   common_save: PFX + 'common.save',

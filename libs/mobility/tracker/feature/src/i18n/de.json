@@ -109,6 +109,9 @@
     "bag": "In der Tasche",
     "mounted": "Im Boot befestigt",
     "counted": "Gezählte Schläge (optional)",
-    "empty": "Noch keine Aufzeichnung"
+    "empty": "Noch keine Aufzeichnung",
+    "check": "Prüfen",
+    "check_result": "Zählung im App-Code: {ts} · im iPhone-Code: {native}",
+    "close": "Schliessen"
   }
 }

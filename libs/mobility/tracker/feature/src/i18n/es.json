@@ -109,6 +109,9 @@
     "bag": "En una bolsa",
     "mounted": "Fijado en el barco",
     "counted": "Paladas contadas (opcional)",
-    "empty": "Todavía no hay grabaciones"
+    "empty": "Todavía no hay grabaciones",
+    "check": "Comprobar",
+    "check_result": "Recuento código app: {ts} · código iPhone: {native}",
+    "close": "Cerrar"
   }
 }
