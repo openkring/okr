@@ -57,7 +57,7 @@ interface DiaryTrackPhotoCard { index: number; time: string; src?: string; ariaL
     .photo:focus-visible { outline: 2px solid var(--ion-color-primary, #0f6e63); outline-offset: 2px; }
     .photo.active { border-color: var(--okr-dt-fg); box-shadow: 0 0 0 1px var(--okr-dt-fg); }
     .frame { aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center;
-      background: var(--ion-color-light, #eef2f4); }
+      background: var(--ion-color-step-100, #eef2f4); }
     .frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .frame ion-icon { font-size: 32px; color: var(--okr-dt-muted); }
     .photo small { padding-inline: 10px; color: var(--okr-dt-muted); font-family: var(--okr-dt-mono); font-size: 12px;
@@ -145,8 +145,8 @@ export class DiaryTrackModal {
   private readonly mapRef = viewChild(TrackMap, { read: ElementRef });
 
   protected readonly dateLabel = computed(() => formatTrackDate(this.card().startDate, this.lang()));
-  protected readonly totals = computed(() => trackTotals(this.card()));
-  protected readonly tiles = computed(() => toStretchTiles(this.card()));
+  protected readonly totals = computed(() => trackTotals(this.card(), this.lang()));
+  protected readonly tiles = computed(() => toStretchTiles(this.card(), this.lang()));
   protected readonly mapSections = computed<TrackMapSection[]>(() => this.card().sections);
   protected readonly mapPhotos = computed<TrackMapPhoto[]>(() => {
     const thumbs = this.thumbs();
@@ -182,12 +182,19 @@ export class DiaryTrackModal {
     return diaryTrackModeLabel(this.i18n(), mode);
   }
 
-  /** a tap shows the photo on the map; a second tap on the same photo clears the highlight */
+  /**
+   * A tap shows the photo on the map; the highlight stays until another photo is tapped. Tapping the selected photo
+   * again re-centres the map on it: the map pans on a change of `selectedPhoto` only, so the selection is cleared for
+   * one render and then set again.
+   */
   protected select(index: number): void {
-    const next = this.selected() === index ? undefined : index;
-    this.selected.set(next);
-    if (next === undefined) return;
+    if (this.selected() === index) {
+      this.selected.set(undefined);
+      setTimeout(() => this.selected.set(index));
+    } else {
+      this.selected.set(index);
+    }
     const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-    (this.mapRef()?.nativeElement as HTMLElement | undefined)?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest' });
+    (this.mapRef()?.nativeElement as HTMLElement | undefined)?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
   }
 }

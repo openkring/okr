@@ -32,6 +32,10 @@ describe('trackTotals', () => {
     expect(trackTotals(card())).toEqual({ distance: '4.3 km', points: 5, timeRange: '18:05–21:12', photos: 2 });
   });
 
+  it('formats the distance in the UI language', () => {
+    expect(trackTotals(card(), 'fr').distance).toBe('4,3 km');
+  });
+
   it('falls back to the start time when there are no points', () => {
     const c = card({ sections: [{ mode: 'foot', points: [] }], photos: [] });
     expect(trackTotals(c)).toEqual({ distance: '4.3 km', points: 0, timeRange: '18:05', photos: 0 });
@@ -56,6 +60,20 @@ describe('toStretchTiles', () => {
   it('shows a dash for the speed when the section has no duration', () => {
     const [tile] = toStretchTiles(card({ sections: [{ mode: 'plane', points: [pt(47, 9, 0)] }] }));
     expect(tile).toMatchObject({ timeRange: '09:00', distance: '0.0 km', speed: '–' });
+  });
+
+  it('shows a dash for a section under 5 s (GPS jitter)', () => {
+    const t = at(9, 0);
+    const points = [{ lat: 47, lng: 8.7, t }, { lat: 47.001, lng: 8.7, t: t + 4000 }];
+    expect(toStretchTiles(card({ sections: [{ mode: 'foot', points }] }))[0].speed).toBe('–');
+    const five = [{ lat: 47, lng: 8.7, t }, { lat: 47.001, lng: 8.7, t: t + 5000 }];
+    expect(toStretchTiles(card({ sections: [{ mode: 'foot', points: five }] }))[0].speed).not.toBe('–');
+  });
+
+  it('formats distance, speed and steps in the UI language', () => {
+    const [foot, car] = toStretchTiles(card(), 'fr');
+    expect(foot).toMatchObject({ distance: '1,1 km', speed: '2,2 km/h', steps: formatSteps(2345, 'fr-CH') });
+    expect(car.speed).toBe('16,7 km/h');
   });
 
   it('keeps a section without points (no time, dash for the speed)', () => {

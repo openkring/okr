@@ -59,26 +59,35 @@ function timeRange(points: TrackPoint[]): string {
   return points.length === 1 || from === to ? from : `${from}–${to}`;
 }
 
-/** km/h with exactly one decimal (de-CH), «–» when the section has no duration. */
-function speed(distanceM: number, durationS: number): string {
-  if (durationS <= 0) return '–';
-  const kmh = (distanceM / durationS) * 3.6;
-  return `${new Intl.NumberFormat('de-CH', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(kmh)} km/h`;
+/** below this a section's speed is GPS jitter, not movement */
+const MIN_SPEED_DURATION_S = 5;
+
+/** The Swiss regional locale of a UI language («fr» → «fr-CH»), as for the date. */
+function trackLocale(lang: string): string {
+  return `${lang}-CH`;
 }
 
-/** The totals line of a track: the card's distance, all points, first to last point, visible photos. */
-export function trackTotals(card: DiaryTrackCard): DiaryTrackTotals {
+/** km/h with exactly one decimal in `locale`, «–» when the section lasts under 5 s. */
+function speed(distanceM: number, durationS: number, locale: string): string {
+  if (durationS < MIN_SPEED_DURATION_S) return '–';
+  const kmh = (distanceM / durationS) * 3.6;
+  return `${new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(kmh)} km/h`;
+}
+
+/** The totals line of a track: the card's distance, all points, first to last point, visible photos; numbers in `lang`. */
+export function trackTotals(card: DiaryTrackCard, lang = 'de'): DiaryTrackTotals {
   const points = card.sections.flatMap(s => s.points);
   return {
-    distance: formatKm(card.distanceM),
+    distance: formatKm(card.distanceM, trackLocale(lang)),
     points: points.length,
     timeRange: timeRange(points) || card.startTime,
     photos: card.photos.filter(p => !p.hidden).length,
   };
 }
 
-/** One tile per section, in track order; distance and speed from the section's own points. */
-export function toStretchTiles(card: DiaryTrackCard): DiaryStretchTile[] {
+/** One tile per section, in track order; distance and speed from the section's own points; numbers in `lang`. */
+export function toStretchTiles(card: DiaryTrackCard, lang = 'de'): DiaryStretchTile[] {
+  const locale = trackLocale(lang);
   return card.sections.map(s => {
     const { distanceM, durationS } = summarize(s.points);
     const tile: DiaryStretchTile = {
@@ -86,10 +95,10 @@ export function toStretchTiles(card: DiaryTrackCard): DiaryStretchTile[] {
       color: TRACK_MODE_COLOR[s.mode],
       icon: trackModeIcon(s.mode),
       timeRange: timeRange(s.points),
-      distance: formatKm(distanceM),
-      speed: speed(distanceM, durationS),
+      distance: formatKm(distanceM, locale),
+      speed: speed(distanceM, durationS, locale),
     };
-    if (s.steps !== undefined) tile.steps = formatSteps(s.steps);
+    if (s.steps !== undefined) tile.steps = formatSteps(s.steps, locale);
     return tile;
   });
 }
@@ -98,5 +107,5 @@ export function toStretchTiles(card: DiaryTrackCard): DiaryStretchTile[] {
 export function formatTrackDate(storeDate: string, lang: string): string {
   if (!/^\d{8}$/.test(storeDate) || storeDate.endsWith('00') || storeDate.slice(4, 6) === '00') return '';
   const day = new Date(Date.UTC(+storeDate.slice(0, 4), +storeDate.slice(4, 6) - 1, +storeDate.slice(6, 8)));
-  return new Intl.DateTimeFormat(`${lang}-CH`, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(day);
+  return new Intl.DateTimeFormat(trackLocale(lang), { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(day);
 }
