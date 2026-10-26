@@ -14,3 +14,4 @@ export * from './lib/track-mode-color';
 export * from './lib/track-pages.util';
 export * from './lib/track-photos.util';
 export * from './lib/stroke-detector';
+export * from './lib/track-strokes.util';

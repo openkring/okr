@@ -56,20 +56,26 @@ export function mergeTrackLists(local: LocalTrack[], uploaded: TripModel[]): Tra
 }
 
 /** Pairs the section metadata of a local track with its points (a missing group becomes []). */
-export function toLocalSections(track: LocalTrack, points: TrackPoint[][]): LocalSection[] {
-  return track.sections.map((s, i) => ({ ...sectionMeta(s), points: points[i] ?? [] }));
+export function toLocalSections(track: LocalTrack, points: TrackPoint[][], strokes?: number[][]): LocalSection[] {
+  return track.sections.map((s, i) => {
+    const sec: LocalSection = { ...sectionMeta(s), points: points[i] ?? [] };
+    const times = strokes?.[i];
+    if (s.mode === 'row' && times && times.length > 0) sec.strokeTimes = times;
+    return sec;
+  });
 }
 
 /** The inverse of toLocalSections: the track with the (corrected) section metadata and the points per section. */
-export function fromLocalSections(track: LocalTrack, sections: LocalSection[]): { track: LocalTrack; points: TrackPoint[][] } {
+export function fromLocalSections(track: LocalTrack, sections: LocalSection[]): { track: LocalTrack; points: TrackPoint[][]; strokes: number[][] } {
   return {
     track: { ...track, sections: sections.map(sectionMeta) },
     points: sections.map((s) => s.points),
+    strokes: sections.map((s) => s.strokeTimes ?? []),
   };
 }
 
 /** An uploaded tracker trip as a local track (done, uploaded) plus its sections with points. */
-export function localFromTrip(trip: TripModel, pointsBySection: TrackPoint[][]): { track: LocalTrack; sections: LocalSection[] } {
+export function localFromTrip(trip: TripModel, pointsBySection: TrackPoint[][], strokesBySection?: number[][]): { track: LocalTrack; sections: LocalSection[] } {
   const startedAt = tripStartMs(trip);
   const endedMs = Date.parse(trip.track?.endedAt ?? '');
   const track: LocalTrack = {
@@ -81,14 +87,18 @@ export function localFromTrip(trip: TripModel, pointsBySection: TrackPoint[][]):
     endedAt: Number.isNaN(endedMs) ? startedAt : endedMs,
     sections: (trip.track?.sections ?? []).map(sectionMeta),
   };
-  return { track, sections: toLocalSections(track, pointsBySection) };
+  return { track, sections: toLocalSections(track, pointsBySection, strokesBySection) };
 }
 
 /** Rows for okr-track-sections. */
 export function sectionRows(sections: LocalSection[]): {
   mode: TransportMode; distanceM: number; durationS: number; detected: boolean; steps?: number; splitAvgS?: number; splitBestS?: number;
+  strokes?: number; strokeRateAvg?: number; strokeRateMax?: number; distancePerStrokeM?: number;
 }[] {
-  return sections.map((s) => ({ mode: s.mode, detected: s.detected, ...summarize(s.points), ...sectionFigures(s) }));
+  return sections.map((s) => {
+    const row = { mode: s.mode, detected: s.detected, ...summarize(s.points), ...sectionFigures(s) };
+    return row.strokes ? { ...row, distancePerStrokeM: Math.round((row.distanceM / row.strokes) * 10) / 10 } : row;
+  });
 }
 
 /** The inner point a section is split at (its middle); -1 when it has no inner point (fewer than 3 points). */
@@ -170,6 +180,6 @@ export function isShareCancel(error: unknown): boolean {
  * The trip's `track.sections` for an upload: the local section metadata (incl. steps) with its points, then
  * distance, times and activity figures (spec 1.122). The one mapping TrackService.upload uses.
  */
-export function tripSections(track: LocalTrack, points: TrackPoint[][], tripKey = track.key): TrackSection[] {
-  return toTrackSections(toLocalSections(track, points), tripKey);
+export function tripSections(track: LocalTrack, points: TrackPoint[][], tripKey = track.key, strokes?: number[][]): TrackSection[] {
+  return toTrackSections(toLocalSections(track, points, strokes), tripKey);
 }

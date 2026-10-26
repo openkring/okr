@@ -2,6 +2,7 @@ import type { TrackSection, TransportMode } from '@okr/shared-models';
 import type { TrackPoint } from './track-polyline.util';
 import { summarize } from './track-summary.util';
 import { rowSplits } from './track-split.util';
+import { strokeFigures } from './track-strokes.util';
 
 /** A section with its points, as kept locally before upload. */
 export interface LocalSection {
@@ -9,6 +10,7 @@ export interface LocalSection {
   detected: boolean;
   points: TrackPoint[];
   steps?: number; // foot only (spec 1.122)
+  strokeTimes?: number[]; // row only: stroke times in ms (spec 1.122 2c); kept in TrackDb / track-points, never in the track row
 }
 
 /** A section's metadata as kept in `LocalTrack.sections`: steps only when known. */
@@ -21,6 +23,14 @@ function withSteps<T extends { steps?: number }>(s: T, steps: number | undefined
   const out = { ...s };
   if (steps === undefined) delete out.steps;
   else out.steps = steps;
+  return out;
+}
+
+/** Sets or removes `strokeTimes` (never writes an undefined key). */
+function withStrokes<T extends { strokeTimes?: number[] }>(s: T, times: number[] | undefined): T {
+  const out = { ...s };
+  if (times === undefined) delete out.strokeTimes;
+  else out.strokeTimes = times;
   return out;
 }
 
@@ -47,13 +57,16 @@ function joinPoints(a: TrackPoint[], b: TrackPoint[]): TrackPoint[] {
 function combine(a: LocalSection, b: LocalSection, mode: TransportMode): LocalSection {
   const known = [a.steps, b.steps].filter((x): x is number => x !== undefined);
   const steps = mode === 'foot' && known.length > 0 ? known.reduce((x, y) => x + y, 0) : undefined;
-  return withSteps<LocalSection>({ mode, detected: a.detected && b.detected, points: joinPoints(a.points, b.points) }, steps);
+  const strokes = mode === 'row' && (a.strokeTimes || b.strokeTimes) ? [...(a.strokeTimes ?? []), ...(b.strokeTimes ?? [])] : undefined;
+  return withStrokes(withSteps<LocalSection>({ mode, detected: a.detected && b.detected, points: joinPoints(a.points, b.points) }, steps), strokes);
 }
 
 /** Owner correction: sets the mode (detected=false) and merges with an equal-mode neighbour. */
 export function setSectionMode(s: LocalSection[], index: number, mode: TransportMode): LocalSection[] {
   if (!validIndex(s, index)) return s;
-  const out = s.map((x, i) => (i === index ? withSteps({ ...x, mode, detected: false }, mode === 'foot' ? x.steps : undefined) : x));
+  const out = s.map((x, i) => (i === index
+    ? withStrokes(withSteps({ ...x, mode, detected: false }, mode === 'foot' ? x.steps : undefined), mode === 'row' ? x.strokeTimes : undefined)
+    : x));
   let at = index;
   if (at > 0 && out[at - 1].mode === mode) {
     out.splice(at - 1, 2, combine(out[at - 1], out[at], mode));
@@ -74,8 +87,11 @@ export function splitSection(s: LocalSection[], index: number, pointIndex: numbe
   const headPoints = sec.points.slice(0, pointIndex + 1);
   const tailPoints = sec.points.slice(pointIndex);
   const [headSteps, tailSteps] = splitStepsByDistance(sec.steps, summarize(headPoints).distanceM, summarize(tailPoints).distanceM);
-  const head = withSteps({ ...sec, points: headPoints }, headSteps);
-  const tail = withSteps<LocalSection>({ mode, detected: false, points: tailPoints }, mode === 'foot' ? tailSteps : undefined);
+  const splitT = sec.points[pointIndex].t;
+  const headStrokes = sec.strokeTimes?.filter((t) => t <= splitT);
+  const tailStrokes = sec.strokeTimes?.filter((t) => t > splitT);
+  const head = withStrokes(withSteps({ ...sec, points: headPoints }, headSteps), headStrokes);
+  const tail = withStrokes(withSteps<LocalSection>({ mode, detected: false, points: tailPoints }, mode === 'foot' ? tailSteps : undefined), mode === 'row' ? tailStrokes : undefined);
   return [...s.slice(0, index), head, tail, ...s.slice(index + 1)];
 }
 
@@ -103,8 +119,10 @@ export function toTrackSections(s: LocalSection[], tripKey: string): TrackSectio
 }
 
 /** The activity figures of a section (spec 1.122): steps on foot, splits on row; only defined keys. */
-export function sectionFigures(sec: LocalSection): { steps?: number; splitAvgS?: number; splitBestS?: number } {
+export function sectionFigures(sec: LocalSection): {
+  steps?: number; splitAvgS?: number; splitBestS?: number; strokes?: number; strokeRateAvg?: number; strokeRateMax?: number;
+} {
   if (sec.mode === 'foot') return sec.steps === undefined ? {} : { steps: sec.steps };
-  if (sec.mode === 'row') return rowSplits(sec.points);
+  if (sec.mode === 'row') return { ...rowSplits(sec.points), ...strokeFigures(sec.strokeTimes ?? []) };
   return {};
 }

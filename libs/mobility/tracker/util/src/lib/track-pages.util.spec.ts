@@ -257,3 +257,34 @@ describe('tripSections (upload, spec 1.122)', () => {
     expect(s[1].pointsPath).toBe('trips/a/track-points/1');
   });
 });
+
+describe('stroke times in the local model (spec 1.122 2c)', () => {
+  const rowTrack = () => local('r', 1, { sections: [{ mode: 'row', detected: false }, { mode: 'foot', detected: false }] });
+  const pts = [[P(47, 8, 0), P(47.001, 8, 60000), P(47.002, 8, 120000)], [P(47.002, 8, 120000), P(47.003, 8, 180000)]];
+  it('toLocalSections takes the stroke times of each section', () => {
+    const s = toLocalSections(rowTrack(), pts, [[1000, 3500], []]);
+    expect(s[0].strokeTimes).toEqual([1000, 3500]);
+    expect('strokeTimes' in s[1]).toBe(false);
+  });
+  it('fromLocalSections hands the stroke times back per section', () => {
+    const back = fromLocalSections(rowTrack(), toLocalSections(rowTrack(), pts, [[1000, 3500], []]));
+    expect(back.strokes).toEqual([[1000, 3500], []]);
+    expect(back.track.sections[0]).toEqual({ mode: 'row', detected: false });
+  });
+  it('sectionRows gives the distance per stroke', () => {
+    const rows = sectionRows(toLocalSections(rowTrack(), pts, [[1000, 3500], []]));
+    expect(rows[0].strokes).toBe(2);
+    expect(rows[0].distancePerStrokeM).toBeCloseTo(Math.round(rows[0].distanceM / 2 * 10) / 10, 5);
+    expect('distancePerStrokeM' in rows[1]).toBe(false);
+  });
+  it('tripSections carries the stroke figures; legacy calls without strokes still work', () => {
+    expect(tripSections(rowTrack(), pts, 'r', [[1000, 3500, 6000, 8500, 11000], []])[0].strokes).toBe(5);
+    expect('strokes' in tripSections(rowTrack(), pts)[0]).toBe(false);
+  });
+  it('localFromTrip reads stroke times passed in', () => {
+    const t = trip('k', '2026-10-25T08:00:00.000Z', [10, 20]);
+    (t.track as NonNullable<TripModel['track']>).sections[1].mode = 'row'; // only row sections carry stroke times
+    const { sections } = localFromTrip(t, [[P(1, 1, 1)], [P(2, 2, 2)]], [[], [5, 6]]);
+    expect(sections[1].strokeTimes).toEqual([5, 6]);
+  });
+});

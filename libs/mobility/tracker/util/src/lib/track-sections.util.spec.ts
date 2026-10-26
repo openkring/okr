@@ -149,3 +149,36 @@ describe('toTrackSections figures (spec 1.122)', () => {
     expect('splitAvgS' in t).toBe(false);
   });
 });
+
+describe('stroke times through corrections (spec 1.122 2c)', () => {
+  const row = (n: number, startLat = 47): LocalSection => {
+    const x = sec('row', n, startLat);
+    return { ...x, strokeTimes: x.points.slice(1).map((p) => p.t - 1000) };
+  };
+  it('partitions the stroke times at the split point', () => {
+    const r = splitSection([row(11)], 0, 4, 'foot');
+    expect(r[0].strokeTimes).toEqual(row(11).strokeTimes?.slice(0, 4));
+    expect('strokeTimes' in r[1]).toBe(false);
+  });
+  it('concatenates the stroke times when two row sections merge', () => {
+    const a = row(5);
+    const b = row(5, 47.004);
+    const r = mergeWithNext([a, b], 0);
+    expect(r[0].strokeTimes).toEqual([...(a.strokeTimes ?? []), ...(b.strokeTimes ?? [])]);
+  });
+  it('drops the stroke times when the merged mode is not row', () => {
+    const r = mergeWithNext([row(3), sec('car', 10, 47.003)], 0);
+    expect(r[0].mode).toBe('car');
+    expect('strokeTimes' in r[0]).toBe(false);
+  });
+  it('drops the stroke times on a mode change away from row', () => {
+    expect('strokeTimes' in setSectionMode([row(5)], 0, 'ship')[0]).toBe(false);
+  });
+  it('writes the stroke figures of a row section with times, none without', () => {
+    const [withTimes] = toTrackSections([row(11)], 'k');
+    expect(withTimes.strokes).toBe(10);
+    expect(withTimes.strokeRateAvg).toBe(6);
+    const [without] = toTrackSections([sec('row', 11)], 'k');
+    expect('strokes' in without).toBe(false);
+  });
+});
