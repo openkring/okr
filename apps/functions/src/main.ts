@@ -194,7 +194,6 @@ export const onApplicationCreated = WorkflowEmit.onApplicationCreated;
 export const onApplicationStateChanged = WorkflowEmit.onApplicationStateChanged;
 // UI-originated triggers: a CMS button press / a menu selection with no document behind it
 export const emitUiEvent = WorkflowUiEvent.emitUiEvent;
-export const onTaskCompleted = WorkflowEmit.onTaskCompleted;
 export const onWorkflowOutbox = WorkflowOutbox.onWorkflowOutbox;
 export const decideApproval = Approval.decideApproval;
 export const onApprovalDecided = Approval.onApprovalDecided;
@@ -278,7 +277,6 @@ export const onStorageDeleted = Storage.onStorageDeleted;
 export const createExpense = Expense.createExpense;
 export const deleteExpense = Expense.deleteExpense;
 export const updateExpense = Expense.updateExpense;
-export const onExpenseTaskWritten = Expense.onExpenseTaskWritten;
 export const onExpenseDone = Expense.onExpenseDone;
 // treasurer approve/reject on forReview bookings (bookings/booking-lines are CF-write-only)
 export const reviewBooking = Booking.reviewBooking;
@@ -331,7 +329,7 @@ export const getFlightInfo = Flighttracker.getFlightInfo;
 export const endSession = Session.endSession;
 
 // task notifications
-export const onTaskWritten = Task.onTaskWritten;
+export { onTaskDocWritten } from './task/on-task-doc-written';
 // closed-group task list: membership check for chatMode 'members' groups (spec 1.75)
 export const listGroupTasks = Task.listGroupTasks;
 

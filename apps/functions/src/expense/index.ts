@@ -1,12 +1,12 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
-import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { getFirestore } from 'firebase-admin/firestore';
 import { checkAppCheckToken, checkAuthentication, lockedExpenseFields, nextStatusForCompletedTask } from '@okr/shared-util-functions';
 import { getTodayStr, DateFormat, isProfitAndLossAccountId } from '@okr/shared-util-core';
 
 import { assertProjectKeyShapes, assertProjectsAssignable } from '../project/project-context';
 import { emitEvent } from '../workflow/emit';
+import type { TaskWrittenEvent } from '../task/task-written-event';
 import { CreateExpenseFields, memberExpenseFields, pickMemberIban, taskToCompleteOnDone } from './expense.util';
 
 const REGION = 'europe-west6';
@@ -294,9 +294,7 @@ async function completeExpenseTask(db: FirebaseFirestore.Firestore, expenseKey: 
  * the back door. `nextStatusForCompletedTask` holds the decision (and its 'done'/'cancelled'
  * guard, which fires on every approved booking) so it is unit-tested without the emulator.
  */
-export const onExpenseTaskWritten = onDocumentWritten(
-  { document: `${TASK_COLLECTION}/{taskId}`, region: REGION },
-  async (event) => {
+export const handleExpenseTaskWritten = async (event: TaskWrittenEvent): Promise<void> => {
     const before = event.data?.before?.data();
     const after = event.data?.after?.data();
     if (!after) return;   // deletes are not our business
@@ -331,7 +329,6 @@ export const onExpenseTaskWritten = onDocumentWritten(
 
     await expenseRef.set({ status }, { merge: true });
     logger.info(`onExpenseTaskWritten: ${expenseKey} → ${status} (task ${event.params['taskId']})`);
-  },
-);
+};
 
 export { onExpenseDone } from './expense-payment';

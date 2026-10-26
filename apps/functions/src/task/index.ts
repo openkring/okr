@@ -1,5 +1,4 @@
 // apps/functions/src/task/index.ts
-import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
@@ -7,11 +6,11 @@ import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 import { pushToPersons } from '../srv/push';
 import { decideDiaryTransition, decideTaskPush, TASK_LIST_URL, type TaskDocLike } from './task-decisions';
 import { applyTaskToDiary } from './task-diary';
+import type { TaskWrittenEvent } from './task-written-event';
 
 export { runTaskDaily } from './task-daily';
 export { listGroupTasks } from './list-group-tasks';
 
-const REGION = 'europe-west6';
 const TASK_COLLECTION = 'tasks';
 
 /**
@@ -24,9 +23,7 @@ const TASK_COLLECTION = 'tasks';
  * Badge count mirrors the dashboard query (tasks-section.store.ts):
  *   isArchived==false, tenants array-contains tenantId, completionDate=='', assignee.key == personKey.
  */
-export const onTaskWritten = onDocumentWritten(
-  { document: `${TASK_COLLECTION}/{taskId}`, region: REGION },
-  async (event) => {
+export const handleTaskWritten = async (event: TaskWrittenEvent): Promise<void> => {
     const before = event.data?.before?.data() as TaskDocLike | undefined;
     const after = event.data?.after?.data() as TaskDocLike | undefined;
 
@@ -89,6 +86,5 @@ export const onTaskWritten = onDocumentWritten(
       `onTaskWritten: badgeCount=${badgeCount} sent=${result.sent} ` +
       `failed=${result.failed} task=${event.params['taskId']}`
     );
-  }
-);
+};
 

@@ -26,6 +26,7 @@ import { ApplicationCollection, AvatarInfo, ReservationCollection, TaskCollectio
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
 import { runWorkflow } from './index';
+import type { TaskWrittenEvent } from '../task/task-written-event';
 
 const REGION = 'europe-west6';
 
@@ -164,18 +165,16 @@ const DONE = 'done';
  * them; `authorIsNotAssignee` is the probe that keeps people from being told about their
  * own work.
  */
-export const onTaskCompleted = onDocumentUpdated(
-  { document: `${TaskCollection}/{id}`, region: REGION },
-  async (event) => {
-    const before = event.data?.before.data();
-    const after = event.data?.after.data();
+export const handleTaskCompleted = async (event: TaskWrittenEvent): Promise<void> => {
+    const before = event.data?.before?.data();
+    const after = event.data?.after?.data();
     if (!before || !after) return;
     if ((before['state'] as string) === DONE || (after['state'] as string) !== DONE) return;
 
     const author = after['author'] as AvatarInfo | undefined;
     const assignee = after['assignee'] as AvatarInfo | undefined;
     for (const tenantId of (after['tenants'] as string[] | undefined) ?? []) {
-      await emitEvent('task.completed', tenantId, `task.${event.params['id']}`, {
+      await emitEvent('task.completed', tenantId, `task.${event.params['taskId']}`, {
         personKey: author?.key ?? '',
         subjectName: (after['name'] as string) ?? '',
         params: {
@@ -188,9 +187,8 @@ export const onTaskCompleted = onDocumentUpdated(
         },
       });
     }
-    logger.info(`onTaskCompleted: emitted for ${event.params['id']}`);
-  },
-);
+    logger.info(`onTaskCompleted: emitted for ${event.params['taskId']}`);
+};
 
 /**
  * True only when `state` actually changed.
