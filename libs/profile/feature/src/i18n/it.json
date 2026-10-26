@@ -285,7 +285,8 @@
     "to": "al",
     "source": {
       "taskDone": "Attività completate",
-      "jasstafel": "Lavagna del jass"
+      "jasstafel": "Lavagna del jass",
+      "tracker": "Percorsi"
     },
     "period": {
       "error": "La data d'inizio è dopo la data di fine."

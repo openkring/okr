@@ -1,6 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { Capacitor } from '@capacitor/core';
 import { Photo } from '@capacitor/camera';
 import { from, of, take } from 'rxjs';
 
@@ -16,6 +17,7 @@ import { AvatarService } from '@okr/avatar-data-access';
 import { PersonService, SensitivePersonData } from '@okr/subject-person-data-access';
 import { PersonFormModel } from '@okr/subject-person-util';
 import { PROFILE_I18N_KEYS, ProfileI18n } from '@okr/profile-util';
+import { mergeDiarySources } from '@okr/content-diary-util';
 import { DiaryLineService, DiaryTenantInfo } from '@okr/content-diary-data-access';
 
 /**
@@ -119,7 +121,7 @@ export const ProfileStore = signalStore(
       async loadDiaryTenants(): Promise<void> {
         try {
           const result = await store.diaryLineService.listMyDiaryTenants();
-          patchState(store, { diaryTenants: { diaries: result?.diaries ?? [], sources: result?.sources ?? [] } });
+          patchState(store, { diaryTenants: { diaries: result?.diaries ?? [], sources: mergeDiarySources(result?.sources ?? [], Capacitor.isNativePlatform() ? ['tracker'] : []) } });
         } catch (e) {
           console.warn('ProfileStore.loadDiaryTenants', e);
         }

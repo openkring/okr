@@ -177,6 +177,7 @@ export class ProfileDiaryTransferAccordion {
     switch (source) {
       case 'taskDone': return this.i18n().diaryTransfer_source_taskDone();
       case 'jasstafel': return this.i18n().diaryTransfer_source_jasstafel();
+      case 'tracker': return this.i18n().diaryTransfer_source_tracker();
       default: return source;
     }
   }

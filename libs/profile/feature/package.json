@@ -26,6 +26,7 @@
     "@okr/shared-util-angular": "*",
     "@okr/shared-data-access": "*",
     "@okr/profile-util": "*",
-    "@okr/content-diary-data-access": "*"
+    "@okr/content-diary-data-access": "*",
+    "@okr/content-diary-util": "*"
   }
 }

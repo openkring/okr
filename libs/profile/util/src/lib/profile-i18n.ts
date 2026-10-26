@@ -69,6 +69,7 @@ export const PROFILE_I18N_KEYS = {
   diaryTransfer_to:                PFX + 'diaryTransfer.to',
   diaryTransfer_source_taskDone:   PFX + 'diaryTransfer.source.taskDone',
   diaryTransfer_source_jasstafel:  PFX + 'diaryTransfer.source.jasstafel',
+  diaryTransfer_source_tracker:    PFX + 'diaryTransfer.source.tracker',
   diaryTransfer_period_error:      PFX + 'diaryTransfer.period.error',
 
   // email signature (spec 2026-06-16)

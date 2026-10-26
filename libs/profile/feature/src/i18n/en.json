@@ -285,7 +285,8 @@
     "to": "to",
     "source": {
       "taskDone": "Completed tasks",
-      "jasstafel": "Jass scoreboard"
+      "jasstafel": "Jass scoreboard",
+      "tracker": "Tracks"
     },
     "period": {
       "error": "The start date is after the end date."

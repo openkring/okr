@@ -285,7 +285,8 @@
     "to": "bis",
     "source": {
       "taskDone": "Erledigte Aufgaben",
-      "jasstafel": "Jasstafel"
+      "jasstafel": "Jasstafel",
+      "tracker": "Strecken"
     },
     "period": {
       "error": "Das Startdatum liegt nach dem Enddatum."

@@ -285,7 +285,8 @@
     "to": "hasta",
     "source": {
       "taskDone": "Tareas completadas",
-      "jasstafel": "Pizarra de jass"
+      "jasstafel": "Pizarra de jass",
+      "tracker": "Recorridos"
     },
     "period": {
       "error": "La fecha de inicio es posterior a la fecha de fin."
