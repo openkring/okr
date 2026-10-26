@@ -17,9 +17,8 @@ import { isAdminGuard } from '@okr/auth-feature';
  * resolved against nothing and failed coverage — while the route itself was perfectly fine.
  * Both specs now append this array, so the picker is catalogued for the purpose of "does every
  * menu row open?" WITHOUT being catalogued as a gateable feature. Keeping the definition here
- * also stops the catalogue-driven apps (scs, p13, okr) from drifting apart on it. `bkg` and
- * `kring` still hand-write their route tables and do not call `composeGatedFeatureRoutes` at
- * all, so they carry no picker route — that is a separate, pre-existing gap.
+ * also stops the apps from drifting apart on it — every tenant app composes its table from
+ * `composeGatedFeatureRoutes()` plus this array.
  *
  * The bar for adding an entry is the same as `NON_BLOCK_DOMAINS`: cross-cutting control plane
  * with a menu row. A product screen belongs in `FEATURE_ROUTES` behind its block.

@@ -79,11 +79,11 @@ describe('visibleAocCards', () => {
     expect(ids('ops', ctx('kring', { enabled: ['aoc'] }))).not.toContain('escalations');
   });
 
-  it('leaves Zugang, Eskalationen and Features on kring', () => {
+  it('shows all four areas on kring, like on every catalogue-composed app', () => {
     expect(ids('access', ctx('kring'))).toEqual(['users', 'sessions', 'register', 'privacyAudit', 'iban']);
-    expect(ids('ops', ctx('kring'))).toEqual(['escalations']);
-    expect(ids('config', ctx('kring'))).toEqual(['features']);
-    expect(ids('data', ctx('kring'))).toEqual([]);
+    expect(ids('ops', ctx('kring'))).toEqual(['activity', 'escalations']);
+    expect(ids('config', ctx('kring'))).toEqual(['features', 'workflow']);
+    expect(ids('data', ctx('kring'))).toEqual(['validate', 'reindex']);
   });
 
   it('filters by role', () => {

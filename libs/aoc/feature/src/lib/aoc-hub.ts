@@ -78,8 +78,8 @@ export class AocHub {
   private readonly ctx = this.store.cardContext;
 
   /**
-   * The areas that have a card for this user, plus the current one. On scs/bka these are all four;
-   * on kring (only /aoc/ops exists there) a segment never points at an area without a route.
+   * The areas that have a card for this user, plus the current one — so a segment never points at
+   * an area whose cards are all hidden (tenant, feature block or role).
    */
   protected readonly segments = computed(() => {
     const ctx = this.ctx();
