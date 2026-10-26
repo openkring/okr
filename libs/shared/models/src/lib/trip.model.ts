@@ -42,6 +42,7 @@ export interface TrackPhoto {
   takenAt: string;
   lat: number;
   lng: number; // own GPS, else interpolated from the track at takenAt
+  ownGps: boolean; // true = lat/lng from the photo's EXIF, false = interpolated
   hidden: boolean;
   imageKey?: string; // JournalImageModel okey when attached to a journal
   thumbPath?: string; // 400 px thumbnail in the private bucket otherwise
