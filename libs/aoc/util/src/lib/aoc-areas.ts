@@ -36,7 +36,7 @@ export interface AocCard {
 /** The platform tenant (kring-app). There is no shared constant for it in the libs. */
 const KRING_TENANT_ID = 'kring';
 
-/** kring-app has no /aoc, /user, /activity or /security routes: only Eskalationen and Features exist there. */
+/** kring-app hand-writes its routes: it has the Zugang targets (/user, /aoc/sessions, /security) but no /activity, /workflow or Datenqualität. */
 const NOT_ON_KRING = [KRING_TENANT_ID];
 
 type CardOptions = Pick<AocCard, 'tenants' | 'notOnApps'>;
@@ -72,11 +72,11 @@ function card(
 
 /** Display order = array order. */
 export const AOC_AREAS: readonly AocCard[] = [
-  card('users', 'access', 'operation', { route: '/user/all/c-users' }, 'user', { notOnApps: NOT_ON_KRING }),
-  card('sessions', 'access', 'report', { route: '/aoc/sessions' }, 'aoc', { notOnApps: NOT_ON_KRING }),
-  card('register', 'access', 'report', { route: '/security/register' }, 'security', { notOnApps: NOT_ON_KRING }),
-  card('privacyAudit', 'access', 'check', { route: '/security/privacy-audit' }, 'security', { notOnApps: NOT_ON_KRING }),
-  card('iban', 'access', 'report', { operation: 'iban' }, 'aoc', { notOnApps: NOT_ON_KRING }),
+  card('users', 'access', 'operation', { route: '/user/all/c-users' }, 'user'),
+  card('sessions', 'access', 'report', { route: '/aoc/sessions' }, 'aoc'),
+  card('register', 'access', 'report', { route: '/security/register' }, 'security'),
+  card('privacyAudit', 'access', 'check', { route: '/security/privacy-audit' }, 'security'),
+  card('iban', 'access', 'report', { operation: 'iban' }, 'aoc'),
   card('allocation', 'access', 'operation', { route: '/operator/allocation' }, 'aoc', { tenants: [OPERATOR_TENANT_ID] }),
   card('activity', 'ops', 'report', { route: '/activity' }, 'activity', { notOnApps: NOT_ON_KRING }),
   card('emailEvents', 'ops', 'report', { route: '/aoc/email' }, 'aoc', { tenants: [OPERATOR_TENANT_ID] }),

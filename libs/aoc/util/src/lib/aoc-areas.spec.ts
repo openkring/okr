@@ -79,8 +79,8 @@ describe('visibleAocCards', () => {
     expect(ids('ops', ctx('kring', { enabled: ['aoc'] }))).not.toContain('escalations');
   });
 
-  it('leaves exactly Eskalationen and Features on kring', () => {
-    expect(ids('access', ctx('kring'))).toEqual([]);
+  it('leaves Zugang, Eskalationen and Features on kring', () => {
+    expect(ids('access', ctx('kring'))).toEqual(['users', 'sessions', 'register', 'privacyAudit', 'iban']);
     expect(ids('ops', ctx('kring'))).toEqual(['escalations']);
     expect(ids('config', ctx('kring'))).toEqual(['features']);
     expect(ids('data', ctx('kring'))).toEqual([]);
@@ -100,7 +100,7 @@ describe('isOperationVisible', () => {
   it('allows an operation only when its card is visible in some area', () => {
     expect(isOperationVisible(AOC_AREAS, 'validate', ctx('scs'))).toBe(true);
     expect(isOperationVisible(AOC_AREAS, 'iban', ctx('scs'))).toBe(true);
-    expect(isOperationVisible(AOC_AREAS, 'iban', ctx('kring'))).toBe(false);
+    expect(isOperationVisible(AOC_AREAS, 'iban', ctx('kring'))).toBe(true);
     expect(isOperationVisible(AOC_AREAS, 'validate', ctx('scs', { roles: ['registered'] }))).toBe(false);
     expect(isOperationVisible(AOC_AREAS, 'reindex', ctx('scs', { enabled: ['user'] }))).toBe(false);
     expect(isOperationVisible(AOC_AREAS, 'unknown', ctx('bka'))).toBe(false);

@@ -1,3 +1,4 @@
 export * from './lib/feature-catalogue';
 export * from './lib/compose-gated-routes';
 export * from './lib/ungated-routes';
+export * from './lib/user-edit-redirect';
