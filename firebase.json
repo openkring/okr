@@ -54,6 +54,10 @@
           "destination": "/web/datenschutz.html"
         },
         {
+          "source": "/web/app",
+          "destination": "/web/app.html"
+        },
+        {
           "source": "/web",
           "destination": "/web/index.html"
         },
