@@ -255,5 +255,23 @@
     "noPoints": "Questo viaggio non ha ancora luoghi con coordinate.",
     "notes": "Note",
     "notFound": "Questo viaggio non è stato trovato."
+  },
+  "track": {
+    "mode": {
+      "plane": "Aereo",
+      "ship": "Nave",
+      "bus": "Bus",
+      "train": "Treno",
+      "car": "Auto",
+      "bike": "Bici",
+      "foot": "A piedi",
+      "row": "Canottaggio",
+      "ski": "Sci",
+      "motorbike": "Moto"
+    },
+    "photos": "Foto",
+    "sections": "Tratti",
+    "hidden": "Nascosta",
+    "detected": "rilevato automaticamente"
   }
 }

@@ -255,5 +255,23 @@
     "noPoints": "Für diese Reise gibt es noch keine Orte mit Koordinaten.",
     "notes": "Notizen",
     "notFound": "Diese Reise wurde nicht gefunden."
+  },
+  "track": {
+    "mode": {
+      "plane": "Flugzeug",
+      "ship": "Schiff",
+      "bus": "Bus",
+      "train": "Zug",
+      "car": "Auto",
+      "bike": "Velo",
+      "foot": "Zu Fuss",
+      "row": "Rudern",
+      "ski": "Ski",
+      "motorbike": "Motorrad"
+    },
+    "photos": "Fotos",
+    "sections": "Abschnitte",
+    "hidden": "Ausgeblendet",
+    "detected": "automatisch erkannt"
   }
 }

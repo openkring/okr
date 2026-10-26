@@ -6,12 +6,12 @@ import { catchError, firstValueFrom, map, of, switchMap, take, timeout } from 'r
 
 import type { DiaryLocationPick, DiaryNeighbours } from '@okr/content-diary-ui';
 import { TrackService } from '@okr/mobility-tracker-data-access';
-import { TRACKER_I18N_KEYS, TrackPoint } from '@okr/mobility-tracker-util';
+import { TrackPoint } from '@okr/mobility-tracker-util';
 import { DiaryAlbumService, DiaryMediaService, DiaryService, DiaryWeatherService } from '@okr/content-diary-data-access';
 import {
   DIARY_FIRST_YEAR, DIARY_I18N_KEYS, DiaryTrackCard, toDiaryTrackCards, customLocationAvatar, locationAvatar, mainLocation, DiaryFilter, DiaryMediaResult, DiaryRange, DiaryStateFilter, albumKey, albumRefOf,
   buildDiaryRangeTree, decodeDiaryFilter, diaryFilterLabel, diaryListUrl, diaryRangeOfYear, diaryStateMatches, encodeDiaryFilter,
-  formatDiaryDate, getDiaryIndex, groupDiariesByMonth, hasDiaryWeather, inDiaryDateRange, newDiary, trackFilterDates, trackFilterTitle,
+  diaryTrackModeLabel, formatDiaryDate, getDiaryIndex, groupDiariesByMonth, hasDiaryWeather, inDiaryDateRange, newDiary, trackFilterDates, trackFilterTitle,
 } from '@okr/content-diary-util';
 import { LocationService } from '@okr/location-data-access';
 import { AvatarInfo, DiaryAlbumKind, DiaryAlbumModel, DiaryModel, PersonModelName, TransportMode, TripModel } from '@okr/shared-models';
@@ -94,7 +94,6 @@ export const DiaryStore = signalStore(
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(DIARY_I18N_KEYS),
-    trackI18n: store.i18nService.translateAll(TRACKER_I18N_KEYS),
     diariesResource: rxResource({
       params: resourceParams(() => ({
         authorKey: store.appStore.fbUser()?.uid ?? '',
@@ -142,7 +141,11 @@ export const DiaryStore = signalStore(
           return store.trackService.listMine(params.personKey).pipe(
             take(1),
             timeout(TRACKS_TIMEOUT_MS),
-            catchError(() => of([] as TripModel[])),
+            catchError(err => {
+              // searchData turns listener errors into [] — this warning is the only trace of a timeout / failure
+              console.warn('DiaryStore: «Strecken» trips not loaded', err);
+              return of([] as TripModel[]);
+            }),
             switchMap(trips => {
               const dates = trackFilterDates(trips, key, from, to);
               if (dates.length === 0) return of([] as DiaryModel[]);
@@ -185,7 +188,7 @@ export const DiaryStore = signalStore(
       if (filter.kind === 'track') {
         const title = trackFilterTitle(filter.key, {
           tracks: store.i18n.albums_seg_track(),
-          mode: (mode: TransportMode) => store.trackI18n[`mode_${mode}`]?.() || mode,
+          mode: (mode: TransportMode) => diaryTrackModeLabel(store.i18n, mode),
         });
         return { ...filter, title };
       }
@@ -401,12 +404,25 @@ export const DiaryStore = signalStore(
         const trips = await firstValueFrom(store.trackService.listOfDay(personKey, store.tenantId(), diary.date));
         const pointsByTrip: Record<string, TrackPoint[][]> = {};
         await Promise.all(trips.filter(t => !!t.track).map(async t => {
-          pointsByTrip[t.okey] = await Promise.all((t.track?.sections ?? []).map((_, n) => store.trackService.readPoints(t.okey, n).catch(() => [])));
+          pointsByTrip[t.okey] = await Promise.all((t.track?.sections ?? []).map((_, n) => store.trackService.readPoints(t.okey, n).catch(err => {
+            console.warn(`DiaryStore: points of track ${t.okey}/${n} not loaded`, err);
+            return [];
+          })));
         }));
         return toDiaryTrackCards(trips, pointsByTrip);
       })();
-      const giveUp = new Promise<DiaryTrackCard[]>(resolve => setTimeout(() => resolve([]), TRACKS_TIMEOUT_MS));
-      return Promise.race([work.catch(() => []), giveUp]);
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const giveUp = new Promise<DiaryTrackCard[]>(resolve => {
+        timer = setTimeout(() => {
+          console.warn(`DiaryStore: tracks of ${diary.date} gave up after ${TRACKS_TIMEOUT_MS} ms`);
+          resolve([]);
+        }, TRACKS_TIMEOUT_MS);
+      });
+      const loaded = work.catch(err => {
+        console.warn(`DiaryStore: tracks of ${diary.date} not loaded`, err);
+        return [] as DiaryTrackCard[];
+      });
+      return Promise.race([loaded, giveUp]).finally(() => clearTimeout(timer));
     };
 
     /** Read-only track view; dynamic import like the view modal (store-modal-dynamic-import). */
@@ -415,7 +431,7 @@ export const DiaryStore = signalStore(
       const modal = await store.modalController.create({
         component: DiaryTrackModal,
         cssClass: 'wide-modal',
-        componentProps: { card, i18n: store.trackI18n, loadThumb: (path: string) => store.trackService.readThumb(path) },
+        componentProps: { card, i18n: store.i18n, loadThumb: (path: string) => store.trackService.readThumb(path) },
       });
       await modal.present();
     };
@@ -611,6 +627,21 @@ export const DiaryStore = signalStore(
           return albums;
         };
 
+        // «Strecken» only for a person with at least one recorded track — asked when the modal opens, not before
+        const hasTracks = async (): Promise<boolean> => {
+          const personKey = store.appStore.currentUser()?.personKey;
+          if (!personKey) return false;
+          return firstValueFrom(store.trackService.listMine(personKey).pipe(
+            take(1),
+            timeout(TRACKS_TIMEOUT_MS),
+            map(trips => trips.length > 0),
+            catchError(err => {
+              console.warn('DiaryStore: «Strecken» availability not loaded', err);
+              return of(false);
+            }),
+          ));
+        };
+
         const editTrip = async (trip?: TripModel): Promise<TripModel[]> => {
           const saved = await editTravelTrip(trip);
           if (saved) trips = [...trips.filter(t => t.okey !== saved.okey), saved];
@@ -624,7 +655,7 @@ export const DiaryStore = signalStore(
             i18n: store.i18n, albums, trips, tags: tagsOf(store.appStore.getTags('diary')),
             imgixBaseUrl: store.appStore.env.services.imgixBaseUrl,
             newestDate: (key: string) => store.diaryService.newestAlbumDate(authorKey, tenantId, key),
-            editAlbum, editTrip, archiveAlbum, activeFilter: store.activeFilter(), trackI18n: store.trackI18n,
+            editAlbum, editTrip, archiveAlbum, activeFilter: store.activeFilter(), hasTracks,
             openTrip: (trip: TripModel) => { void store.navController.navigateForward(`/diary/trip/${trip.okey}`); },
           },
         });
@@ -641,7 +672,7 @@ export const DiaryStore = signalStore(
           componentProps: {
             diary, i18n: store.i18n, lang: store.lang(),
             neighbours: neighboursOf, openPerson: openPersonView, openLocation: openLocationView, loadMedia, loadImage, refreshWeather,
-            loadTracks, openTrack, trackI18n: store.trackI18n,
+            loadTracks, openTrack,
           },
         });
         await modal.present();

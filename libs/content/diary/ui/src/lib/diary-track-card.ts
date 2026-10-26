@@ -1,8 +1,8 @@
 import { Component, computed, input, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle } from '@ionic/angular';
 
-import { DiaryTrackCard } from '@okr/content-diary-util';
-import { formatDuration, formatKm, TrackerI18n } from '@okr/mobility-tracker-util';
+import { DiaryI18n, DiaryTrackCard, diaryTrackModeLabel } from '@okr/content-diary-util';
+import { formatDuration, formatKm } from '@okr/mobility-tracker-util';
 import { TrackMap, TrackMapSection } from '@okr/mobility-tracker-ui';
 
 /**
@@ -31,12 +31,12 @@ import { TrackMap, TrackMapSection } from '@okr/mobility-tracker-ui';
 })
 export class DiaryTrackCardView {
   public readonly card = input.required<DiaryTrackCard>();
-  public readonly i18n = input.required<TrackerI18n>();
+  public readonly i18n = input.required<DiaryI18n>();
 
   public readonly open = output<DiaryTrackCard>();
 
   protected readonly sections = computed<TrackMapSection[]>(() => this.card().sections);
-  protected readonly modes = computed(() => this.card().modes.map(m => this.i18n()[`mode_${m}`]()).join(' · '));
+  protected readonly modes = computed(() => this.card().modes.map(m => diaryTrackModeLabel(this.i18n(), m)).join(' · '));
   protected readonly km = computed(() => formatKm(this.card().distanceM));
   protected readonly duration = computed(() => formatDuration(this.card().durationS));
 }

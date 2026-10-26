@@ -5,14 +5,13 @@ import {
 } from '@ionic/angular';
 
 import { DiaryAlbumKind, DiaryAlbumModel, TRANSPORT_MODES, TransportMode, TripModel } from '@okr/shared-models';
-import { TrackerI18n } from '@okr/mobility-tracker-util';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Header } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetOptions, dismissOverlay } from '@okr/shared-util-angular';
 
 import {
   DiaryDateRange, DiaryFilter, DiaryI18n, DiaryTrackFilterKey, albumKey, albumRefOf, canApplyDiaryDateRange, formatDiaryDate,
-  mergeDiaryDateRange, trackFilterTitle,
+  diaryTrackModeLabel, mergeDiaryDateRange, trackFilterTitle,
 } from '@okr/content-diary-util';
 import { DiaryDateRangeForm } from './diary-date-range.form';
 
@@ -72,7 +71,7 @@ const TRACK_KEYS: DiaryTrackFilterKey[] = ['all', ...TRANSPORT_MODES];
     <okr-header [i18n]="{ title: i18n().albums_title() }" [isModal]="true" />
     <ion-toolbar color="light">
       <ion-segment [value]="segment()" [scrollable]="true" (ionChange)="onSegmentChange($event)">
-        @for (s of segments; track s) {
+        @for (s of segments(); track s) {
           <ion-segment-button [value]="s"><ion-label>{{ segmentLabel(s) }}</ion-label></ion-segment-button>
         }
       </ion-segment>
@@ -134,15 +133,18 @@ export class DiaryAlbumsModal {
   public readonly editAlbum = input.required<(kind: DiaryAlbumKind, album?: DiaryAlbumModel) => Promise<DiaryAlbumModel[]>>();
   /** opens the trip edit modal; returns the refreshed trip list */
   public readonly editTrip = input.required<(trip?: TripModel) => Promise<TripModel[]>>();
+  /** whether the person has recorded at least one track — decides whether «Strecken» is offered; asked once on open */
+  public readonly hasTracks = input<() => Promise<boolean>>(() => Promise.resolve(false));
   public readonly archiveAlbum = input.required<(album: DiaryAlbumModel) => Promise<DiaryAlbumModel[]>>();
   public readonly openTrip = input.required<(trip: TripModel) => void>();
   /** the list's current filter: a range from the Datum segment narrows an album/tag/trip filter */
   public readonly activeFilter = input<DiaryFilter | undefined>(undefined);
-  /** the tracker's labels, for the transport modes of the «Strecken» segment */
-  public readonly trackI18n = input<TrackerI18n | undefined>(undefined);
 
-  protected readonly segments = SEGMENTS;
   protected readonly segment = signal<DiaryAlbumsSegment>(readSegment());
+  /** undefined while the check runs: a remembered «Strecken» segment stays until the answer is known */
+  private readonly tracksAvailable = signal<boolean | undefined>(undefined);
+  protected readonly segments = computed(() => SEGMENTS.filter(s => s !== 'track' || this.tracksAvailable()
+    || (this.tracksAvailable() === undefined && this.segment() === 'track')));
   protected readonly searchTerm = signal('');
   /** starts at the active filter's range, so an applied narrowing can be seen and removed again */
   protected readonly range = linkedSignal<DiaryDateRange>(() => ({ from: this.activeFilter()?.from ?? '', to: this.activeFilter()?.to ?? '' }));
@@ -222,11 +224,20 @@ export class DiaryAlbumsModal {
       const keys = this.datedKeys();
       untracked(() => this.fetchDates(keys));
     });
+    effect(() => {
+      const hasTracks = this.hasTracks();
+      untracked(() => {
+        hasTracks().catch(() => false).then(available => {
+          this.tracksAvailable.set(available);
+          if (!available && this.segment() === 'track') this.segment.set('event');
+        });
+      });
+    });
   }
 
-  /** «Rudern» from the tracker's labels; the mode itself while they are missing */
+  /** «Rudern» from the diary's own labels */
   private modeLabel(mode: TransportMode): string {
-    return this.trackI18n()?.[`mode_${mode}` as keyof TrackerI18n]?.() || mode;
+    return diaryTrackModeLabel(this.i18n(), mode);
   }
 
   private keyOf(album: DiaryAlbumModel): string {

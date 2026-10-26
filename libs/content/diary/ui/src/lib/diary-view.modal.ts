@@ -8,7 +8,6 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { AvatarDisplay } from '@okr/avatar-ui';
 import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
-import type { TrackerI18n } from '@okr/mobility-tracker-util';
 
 import {
   DiaryI18n, DiaryMediaResult, DiaryTrackCard, diaryAvatarName, mainLocation, diarySliderImages, diaryWeatherLine, driveFolderUrl, formatDiaryDateLong, hasDiaryWeather,
@@ -130,7 +129,7 @@ export interface DiaryNeighbours {
         <ion-list-header><ion-label>{{ i18n().view_tracks() }}</ion-label></ion-list-header>
         <div class="tracks">
           @for (card of tracks(); track card.key) {
-            <okr-diary-track-card [card]="card" [i18n]="trackI18n()" (open)="openTrack()($event)" />
+            <okr-diary-track-card [card]="card" [i18n]="i18n()" (open)="openTrack()($event)" />
           }
         </div>
       }
@@ -190,8 +189,6 @@ export class DiaryViewModal {
   public readonly loadTracks = input.required<(d: DiaryModel) => Promise<DiaryTrackCard[]>>();
   /** opens the read-only track view */
   public readonly openTrack = input.required<(card: DiaryTrackCard) => Promise<void>>();
-  /** tracker labels: transport modes on the track cards */
-  public readonly trackI18n = input.required<TrackerI18n>();
 
   /** the entry on screen — starts at `diary`, swapped by prev/next/up */
   protected readonly current = linkedSignal(() => this.diary());

@@ -255,5 +255,23 @@
     "noPoints": "Ce voyage n'a pas encore de lieux avec des coordonnées.",
     "notes": "Notes",
     "notFound": "Ce voyage est introuvable."
+  },
+  "track": {
+    "mode": {
+      "plane": "Avion",
+      "ship": "Bateau",
+      "bus": "Bus",
+      "train": "Train",
+      "car": "Voiture",
+      "bike": "Vélo",
+      "foot": "À pied",
+      "row": "Aviron",
+      "ski": "Ski",
+      "motorbike": "Moto"
+    },
+    "photos": "Photos",
+    "sections": "Sections",
+    "hidden": "Masquée",
+    "detected": "détecté automatiquement"
   }
 }

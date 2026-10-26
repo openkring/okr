@@ -1,4 +1,5 @@
-import { Signal } from '@angular/core';
+import type { Signal } from '@angular/core';
+import type { TransportMode } from '@okr/shared-models';
 
 /**
  * Scope prefix. It must mirror the path of the lib that SHIPS the JSON bundle
@@ -109,6 +110,23 @@ export const DIARY_I18N_KEYS = {
   media_load_failed:      PFX + 'view.mediaLoadFailed',
   media_reload:           PFX + 'view.mediaReload',
   view_tracks:            PFX + 'view.tracks',
+
+  // ─── recorded tracks (spec 1.121 §7) — the diary's own copy, so no diary app needs the tracker scope ───
+  track_mode_plane:       PFX + 'track.mode.plane',
+  track_mode_ship:        PFX + 'track.mode.ship',
+  track_mode_bus:         PFX + 'track.mode.bus',
+  track_mode_train:       PFX + 'track.mode.train',
+  track_mode_car:         PFX + 'track.mode.car',
+  track_mode_bike:        PFX + 'track.mode.bike',
+  track_mode_foot:        PFX + 'track.mode.foot',
+  track_mode_row:         PFX + 'track.mode.row',
+  track_mode_ski:         PFX + 'track.mode.ski',
+  track_mode_motorbike:   PFX + 'track.mode.motorbike',
+  track_photos:           PFX + 'track.photos',
+  track_sections:         PFX + 'track.sections',
+  track_hidden:           PFX + 'track.hidden',
+  track_detected:         PFX + 'track.detected',
+
   jass_draw:              PFX + 'jass.draw',
   jass_match:             PFX + 'jass.match',
   jass_close:             PFX + 'jass.close',
@@ -177,3 +195,8 @@ export const DIARY_I18N_KEYS = {
 } satisfies Record<string, string>;
 
 export type DiaryI18n = { [K in keyof typeof DIARY_I18N_KEYS]: Signal<string> };
+
+/** «Rudern» for `row` from the diary's own labels; the mode itself while they are missing. */
+export function diaryTrackModeLabel(i18n: DiaryI18n, mode: TransportMode): string {
+  return i18n[`track_mode_${mode}`]?.() || mode;
+}

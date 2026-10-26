@@ -1,10 +1,12 @@
 import { Component, computed, effect, input, signal } from '@angular/core';
 import { IonContent, IonLabel, IonListHeader } from '@ionic/angular';
 
-import { DiaryTrackCard } from '@okr/content-diary-util';
-import { summarize, TrackerI18n } from '@okr/mobility-tracker-util';
+import { DiaryI18n, DiaryTrackCard } from '@okr/content-diary-util';
+import { summarize } from '@okr/mobility-tracker-util';
 import { TrackMap, TrackMapPhoto, TrackMapSection, TrackPhotoItem, TrackPhotos, TrackSectionRow, TrackSections } from '@okr/mobility-tracker-ui';
 import { Header } from '@okr/shared-ui';
+
+import { diaryTrackerI18n } from './diary-track-i18n';
 
 /**
  * Read-only view of one recorded track from the diary day (spec 1.121 §7): a large map with the visible photos as
@@ -21,23 +23,25 @@ import { Header } from '@okr/shared-ui';
     <ion-content>
       <okr-track-map [sections]="mapSections()" [photos]="mapPhotos()" [live]="false" />
       @if (photoItems().length > 0) {
-        <ion-list-header><ion-label>{{ i18n().photos_title() }}</ion-label></ion-list-header>
-        <okr-track-photos [photos]="photoItems()" [i18n]="i18n()" [readonly]="true" />
+        <ion-list-header><ion-label>{{ i18n().track_photos() }}</ion-label></ion-list-header>
+        <okr-track-photos [photos]="photoItems()" [i18n]="trackI18n()" [readonly]="true" />
       }
-      <ion-list-header><ion-label>{{ i18n().detail_sections() }}</ion-label></ion-list-header>
-      <okr-track-sections [sections]="rows()" [i18n]="i18n()" [readonly]="true" />
+      <ion-list-header><ion-label>{{ i18n().track_sections() }}</ion-label></ion-list-header>
+      <okr-track-sections [sections]="rows()" [i18n]="trackI18n()" [readonly]="true" />
     </ion-content>
   `,
 })
 export class DiaryTrackModal {
   public readonly card = input.required<DiaryTrackCard>();
-  public readonly i18n = input.required<TrackerI18n>();
+  public readonly i18n = input.required<DiaryI18n>();
   /** a thumbnail (private bucket) as a displayable URL — the store caches per path */
   public readonly loadThumb = input.required<(thumbPath: string) => Promise<string>>();
 
   /** displayable picture per thumbPath, filled asynchronously; a failed read leaves the placeholder */
   private readonly thumbs = signal<ReadonlyMap<string, string>>(new Map());
 
+  /** the tracker components' labels, built from the diary scope */
+  protected readonly trackI18n = computed(() => diaryTrackerI18n(this.i18n()));
   protected readonly mapSections = computed<TrackMapSection[]>(() => this.card().sections);
   protected readonly rows = computed<TrackSectionRow[]>(() =>
     this.card().sections.map(s => ({ mode: s.mode, detected: false, ...summarize(s.points) })));

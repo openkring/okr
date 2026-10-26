@@ -255,5 +255,23 @@
     "noPoints": "This trip has no places with coordinates yet.",
     "notes": "Notes",
     "notFound": "This trip was not found."
+  },
+  "track": {
+    "mode": {
+      "plane": "Plane",
+      "ship": "Ship",
+      "bus": "Bus",
+      "train": "Train",
+      "car": "Car",
+      "bike": "Bike",
+      "foot": "On foot",
+      "row": "Rowing",
+      "ski": "Ski",
+      "motorbike": "Motorbike"
+    },
+    "photos": "Photos",
+    "sections": "Sections",
+    "hidden": "Hidden",
+    "detected": "detected automatically"
   }
 }
