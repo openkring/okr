@@ -8,7 +8,7 @@ import { ENV, getBkStorage } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { TRACKER_TRIP_TYPE, TrackPhoto, TransportMode, TripCollection, TripModel, TripTrack } from '@okr/shared-models';
 import { convertDateFormatToString, DateFormat, getDeletePatch, getSystemQuery } from '@okr/shared-util-core';
-import { decodeTrack, encodeTrack, LocalTrack, serverPhotos, summarize, trackThumbPath, TrackPoint, tripSections } from '@okr/mobility-tracker-util';
+import { decodeStrokeTimes, decodeTrack, encodeStrokeTimes, encodeTrack, LocalTrack, serverPhotos, summarize, trackThumbPath, TrackPoint, tripSections } from '@okr/mobility-tracker-util';
 
 /** One section's points, stored as an encoded polyline in trips/{key}/track-points/{n}. */
 export interface TrackPointsDoc {
@@ -57,7 +57,9 @@ export class TrackService {
    * (offline), so a photo without thumbPath overwrites a stored one on the merge (arrays are replaced).
    * @returns the trip key
    */
-  public async upload(local: LocalTrack, sections: TrackPoint[][], owner: { personKey: string; uid: string; tenants: string[] }, staleUpTo?: number): Promise<string> {
+  public async upload(
+    local: LocalTrack, sections: TrackPoint[][], owner: { personKey: string; uid: string; tenants: string[] }, staleUpTo?: number, strokes?: number[][],
+  ): Promise<string> {
     const tripKey = local.key;
     const endedMs = local.endedAt ?? local.startedAt;
     if (local.sections.length !== sections.length) throw new Error('track sections and points differ');
@@ -75,7 +77,7 @@ export class TrackService {
       startedAt: new Date(local.startedAt).toISOString(),
       endedAt: new Date(endedMs).toISOString(),
       durationS,
-      sections: tripSections(local, sections, tripKey), // keeps steps (spec 1.122)
+      sections: tripSections(local, sections, tripKey, strokes), // keeps steps, adds the stroke figures (spec 1.122)
     } as TripTrack;
     // photos: only from the local list — hidden ones left out (spec §6: never uploaded), path400 stripped, thumbPath
     // kept. Without a local list the key is omitted, so the merge keeps what is stored and never wipes thumb paths.
@@ -116,6 +118,8 @@ export class TrackService {
         count: points.length,
         encoded: encodeTrack(points),
       };
+      const times = local.sections[i].mode === 'row' ? strokes?.[i] ?? [] : [];
+      if (times.length > 0) pointsDoc.strokeTimes = encodeStrokeTimes(times, points[0]?.t ?? 0);
       batch.set(doc(this.firestoreService.firestore, `${TripCollection}/${tripKey}/${TRACK_POINTS}/${i}`), pointsDoc);
     });
     for (let n = sections.length; n < (staleUpTo ?? 0); n++) {
@@ -153,6 +157,15 @@ export class TrackService {
       if ((error as { code?: string }).code === 'not-found') return;
       throw error;
     }
+  }
+
+  /** One section's points and stroke times (spec 1.122 2c); both empty when the doc is missing. */
+  public async readSection(tripKey: string, n: number): Promise<{ points: TrackPoint[]; strokeTimes: number[] }> {
+    const snap = await getDoc(doc(this.firestoreService.firestore, `${TripCollection}/${tripKey}/${TRACK_POINTS}/${n}`));
+    if (!snap.exists()) return { points: [], strokeTimes: [] };
+    const data = snap.data() as TrackPointsDoc;
+    const points = decodeTrack(data.encoded);
+    return { points, strokeTimes: decodeStrokeTimes(data.strokeTimes, points[0]?.t ?? 0) };
   }
 
   /** The decoded points of one section; [] when the doc is missing. */

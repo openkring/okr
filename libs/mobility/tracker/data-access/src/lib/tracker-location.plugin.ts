@@ -35,8 +35,14 @@ export interface TrackerLocationPlugin {
   calibrationStart(): Promise<{ file: string }>;
   /** Stops it; `file: null` when no recording ran. */
   calibrationStop(): Promise<{ file: string; samples: number } | { file: null }>;
+  /** Stroke detection on the motion stream (spec 1.122 2c): on while a row section records. */
+  strokes(o: { on: boolean }): Promise<void>;
+  /** Runs the native stroke detector over a calibration CSV (Documents-relative path): the debug check against the TS detector. */
+  replayCalibration(o: { file: string }): Promise<{ strokes: number[] }>;
   addListener(event: 'location', cb: (l: NativeLocation) => void): Promise<PluginListenerHandle>;
   addListener(event: 'activity', cb: (a: MotionActivity) => void): Promise<PluginListenerHandle>;
+  /** One detected stroke: its time (ms epoch) and the current stroke period. */
+  addListener(event: 'stroke', cb: (s: { time: number; periodMs: number | null }) => void): Promise<PluginListenerHandle>;
 }
 
 export const TrackerLocation = registerPlugin<TrackerLocationPlugin>('TrackerLocation');

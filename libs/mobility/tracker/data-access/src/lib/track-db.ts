@@ -16,15 +16,27 @@ const SCHEMA = [
   'CREATE TABLE IF NOT EXISTS points (' +
     'track_key TEXT NOT NULL, section INTEGER NOT NULL, lat REAL NOT NULL, lng REAL NOT NULL, t INTEGER NOT NULL, acc REAL);',
   'CREATE INDEX IF NOT EXISTS points_track ON points (track_key, section, t);',
+  // rowing stroke times (spec 1.122 2c); added later, created on the next open of an existing database
+  'CREATE TABLE IF NOT EXISTS strokes (track_key TEXT NOT NULL, section INTEGER NOT NULL, t INTEGER NOT NULL);',
+  'CREATE INDEX IF NOT EXISTS strokes_track ON strokes (track_key, section, t);',
 ].join('\n');
 
 const INSERT_POINT = 'INSERT INTO points (track_key, section, lat, lng, t, acc) VALUES (?, ?, ?, ?, ?, ?);';
+const INSERT_STROKE = 'INSERT INTO strokes (track_key, section, t) VALUES (?, ?, ?);';
+
+/** Stroke rows grouped by section index, each group ascending; missing sections are empty groups. */
+function groupStrokes(rows: { section: number; t: number }[]): number[][] {
+  const groups: number[][] = [];
+  for (const r of rows) (groups[r.section] ??= []).push(r.t);
+  return Array.from(groups, (g) => (g ?? []).sort((a, b) => a - b));
+}
 
 @Injectable({ providedIn: 'root' })
 export class TrackDb {
   private connection?: Promise<SQLiteDBConnection>;
   private readonly memTracks = new Map<string, LocalTrack>();
   private readonly memPoints = new Map<string, PointRow[]>();
+  private readonly memStrokes = new Map<string, { section: number; t: number }[]>();
 
   /** Idempotent: the first call opens the database and creates the tables (native only). */
   public async open(): Promise<void> {
@@ -67,6 +79,38 @@ export class TrackDb {
     await db.executeSet(set, true);
   }
 
+  /** One INSERT per detected rowing stroke (spec 1.122 2c). */
+  public async appendStroke(trackKey: string, section: number, t: number): Promise<void> {
+    if (!this.native()) {
+      this.memStrokes.set(trackKey, [...(this.memStrokes.get(trackKey) ?? []), { section, t }]);
+      return;
+    }
+    const db = await this.db();
+    await db.run(INSERT_STROKE, [trackKey, section, Math.round(t)]);
+  }
+
+  /** Stroke times grouped by section index (ascending); [] for a track without strokes. */
+  public async strokes(trackKey: string): Promise<number[][]> {
+    if (!this.native()) return groupStrokes(this.memStrokes.get(trackKey) ?? []);
+    const db = await this.db();
+    const res = await db.query('SELECT section, t FROM strokes WHERE track_key = ? ORDER BY section, t;', [trackKey]);
+    return groupStrokes((res.values ?? []) as { section: number; t: number }[]);
+  }
+
+  /** Replaces all stroke times of a track (after a correction) in one transaction. */
+  public async replaceStrokes(trackKey: string, sections: number[][]): Promise<void> {
+    const rows = sections.flatMap((times, section) => times.map((t) => ({ section, t })));
+    if (!this.native()) {
+      this.memStrokes.set(trackKey, rows);
+      return;
+    }
+    const db = await this.db();
+    await db.executeSet([
+      { statement: 'DELETE FROM strokes WHERE track_key = ?;', values: [trackKey] },
+      ...rows.map((r) => ({ statement: INSERT_STROKE, values: [trackKey, r.section, Math.round(r.t)] })),
+    ], true);
+  }
+
   /** Points grouped by section index, each group ordered by t. */
   public async points(trackKey: string): Promise<TrackPoint[][]> {
     if (!this.native()) return groupPointsBySection(this.memPoints.get(trackKey) ?? []);
@@ -100,11 +144,13 @@ export class TrackDb {
     if (!this.native()) {
       this.memTracks.delete(trackKey);
       this.memPoints.delete(trackKey);
+      this.memStrokes.delete(trackKey);
       return;
     }
     const db = await this.db();
     await db.executeSet([
       { statement: 'DELETE FROM points WHERE track_key = ?;', values: [trackKey] },
+      { statement: 'DELETE FROM strokes WHERE track_key = ?;', values: [trackKey] },
       { statement: 'DELETE FROM tracks WHERE key = ?;', values: [trackKey] },
     ], true);
   }
