@@ -35,6 +35,16 @@ export interface TrackSection {
   endedAt: string;
   distanceM: number;
   pointsPath: string; // Storage path of the encoded points
+
+  // activity figures (spec 1.122); absent = not measured, never 0 for unknown
+  steps?: number; // foot: steps from the iPhone pedometer for startedAt…endedAt
+  strokes?: number; // row: detected strokes (phase 2)
+  strokeRateAvg?: number; // row: strokes per minute over rowing time, pauses excluded (phase 2)
+  strokeRateMax?: number; // row: highest rate over any 30-second window (phase 2)
+  splitAvgS?: number; // row: average split, seconds per 500 m over moving time
+  splitBestS?: number; // row: fastest continuous 500 m, seconds (absent below 500 m)
+  heartRateAvg?: number; // beats per minute, time-weighted, from Apple Health (phase 3)
+  heartRateMax?: number; // beats per minute, highest sample (phase 3)
 }
 
 export interface TrackPhoto {

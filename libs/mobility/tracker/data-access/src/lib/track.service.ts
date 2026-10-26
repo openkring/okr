@@ -17,6 +17,8 @@ export interface TrackPointsDoc {
   mode: TransportMode;
   count: number;
   encoded: string;
+  /** row: stroke times, delta-encoded ms since the section start (spec 1.122, phase 2) */
+  strokeTimes?: string;
 }
 
 const TRACK_POINTS = 'track-points';
