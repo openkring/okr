@@ -942,6 +942,15 @@
       ],
       "headers": [
         {
+          "source": "/app",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
+        {
           "source": "**/*.html",
           "headers": [
             {
@@ -980,6 +989,15 @@
         "**/node_modules/**"
       ],
       "headers": [
+        {
+          "source": "/app",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
         {
           "source": "**/*.html",
           "headers": [
@@ -1020,6 +1038,15 @@
       ],
       "headers": [
         {
+          "source": "/app",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
+        {
           "source": "**/*.html",
           "headers": [
             {
@@ -1049,6 +1076,15 @@
         "**/node_modules/**"
       ],
       "headers": [
+        {
+          "source": "/app",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
         {
           "comment": "The '**/*.html' glob matches the file name, not the served path. With cleanUrls the entry points are served as '/', '/licenses' and '/assets/brand-styleguide', which fell through to Firebase's 1h default and served the previous release after a deploy. Each needs its own source.",
           "source": "/",
@@ -1117,6 +1153,15 @@
       ],
       "headers": [
         {
+          "source": "/app",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
+        {
           "comment": "The '**/*.html' glob matches the file name, not the served path. With cleanUrls the entry point is served as '/', which would otherwise fall through to Firebase's 1h default and serve the previous release after a deploy.",
           "source": "/",
           "headers": [
@@ -1184,6 +1229,15 @@
         }
       ],
       "headers": [
+        {
+          "source": "/app",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
         {
           "comment": "cleanUrls serves the entry points as \"/\", \"/impressum\" and \"/datenschutz\", and the two rewrites as \"/thema/*\" and \"/galerie/*\". None of those match the \"**/*.html\" glob (that matches the FILE name), so each needs its own no-cache source — otherwise they fall through to Firebase's 1h default and serve the previous release after a deploy.",
           "source": "/",
@@ -1269,6 +1323,15 @@
         "**/node_modules/**"
       ],
       "headers": [
+        {
+          "source": "/app",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
         {
           "comment": "cleanUrls serves the entry point as \"/\", which does not match the \"**/*.html\" glob (that matches the FILE name), so it needs its own no-cache source — otherwise it falls through to Firebase's 1h default and serves the previous release after a deploy. Add one such source per further clean URL / rewrite.",
           "source": "/",
