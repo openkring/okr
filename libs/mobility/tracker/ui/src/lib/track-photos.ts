@@ -47,13 +47,13 @@ export interface TrackPhotoToggle { index: number; hidden: boolean }
           @if (readonly()) {
             <!-- the diary's read-only view: no actions -->
           } @else if (removable()) {
-            <ion-button fill="clear" size="small" color="danger" (click)="photoToggle.emit({ index: i, hidden: true })"
+            <ion-button fill="clear" size="small" color="danger" [disabled]="disabled()" (click)="photoToggle.emit({ index: i, hidden: true })"
               [attr.aria-label]="removeAriaLabel(photo)">
               <ion-icon slot="start" src="{{ 'trash' | svgIcon }}" />
               {{ i18n().photos_remove() }}
             </ion-button>
           } @else {
-            <ion-button fill="clear" size="small" (click)="photoToggle.emit({ index: i, hidden: !photo.hidden })"
+            <ion-button fill="clear" size="small" [disabled]="disabled()" (click)="photoToggle.emit({ index: i, hidden: !photo.hidden })"
               [attr.aria-label]="ariaLabel(photo)">
               <ion-icon slot="start" src="{{ (photo.hidden ? 'eye-on' : 'eye-off') | svgIcon }}" />
               {{ photo.hidden ? i18n().photos_show() : i18n().photos_hide() }}
@@ -71,6 +71,8 @@ export class TrackPhotos {
   public readonly readonly = input(false);
   /** true = «Entfernen» instead of hide / show: an uploaded-only track, where a hidden photo cannot come back */
   public readonly removable = input(false);
+  /** true = the buttons are disabled (e.g. while a library search re-sorts the list) */
+  public readonly disabled = input(false);
 
   public readonly photoToggle = output<TrackPhotoToggle>();
 

@@ -76,25 +76,28 @@ describe('withPhotoHidden', () => {
   const ph = (assetId: string, hidden: boolean) => ({ assetId, takenAt: '2026-10-26T10:00:00.000Z', lat: 1, lng: 2, ownGps: true, hidden });
   it('sets hidden on one photo in a new array', () => {
     const photos = [ph('a', false), ph('b', false)];
-    const out = withPhotoHidden(photos, 1, true);
+    const out = withPhotoHidden(photos, 'b', true);
     expect(out).not.toBe(photos);
     expect(out.map((p) => p.hidden)).toEqual([false, true]);
     expect(photos[1].hidden).toBe(false);
   });
-  it('shows a hidden photo again', () => expect(withPhotoHidden([ph('a', true)], 0, false)[0].hidden).toBe(false));
+  it('shows a hidden photo again', () => expect(withPhotoHidden([ph('a', true)], 'a', false)[0].hidden).toBe(false));
   it('returns the same array when nothing changes', () => {
     const photos = [ph('a', true)];
-    expect(withPhotoHidden(photos, 0, true)).toBe(photos);
-    expect(withPhotoHidden(photos, 3, false)).toBe(photos);
-    expect(withPhotoHidden(photos, -1, false)).toBe(photos);
+    expect(withPhotoHidden(photos, 'a', true)).toBe(photos);
+    expect(withPhotoHidden(photos, 'zz', false)).toBe(photos);
+  });
+  it('finds the photo by assetId after a re-sort', () => {
+    const photos = [ph('new', false), ph('a', false)]; // a merge put a new photo in front of 'a'
+    expect(withPhotoHidden(photos, 'a', true).map((p) => p.hidden)).toEqual([false, true]);
   });
 });
 
 describe('withPhotoHidden thumbnails', () => {
   const ph = { assetId: 'a', takenAt: '2026-10-26T10:00:00.000Z', lat: 1, lng: 2, ownGps: true, hidden: false, thumbPath: 'tenant/t/tracks/k/0.jpg' };
-  it('drops the thumbPath when hiding', () => expect(withPhotoHidden([ph], 0, true)[0].thumbPath).toBeUndefined());
+  it('drops the thumbPath when hiding', () => expect(withPhotoHidden([ph], 'a', true)[0].thumbPath).toBeUndefined());
   it('keeps the thumbPath of the other photos', () => {
-    const out = withPhotoHidden([ph, { ...ph, assetId: 'b' }], 0, true);
+    const out = withPhotoHidden([ph, { ...ph, assetId: 'b' }], 'a', true);
     expect(out[1].thumbPath).toBe('tenant/t/tracks/k/0.jpg');
   });
 });

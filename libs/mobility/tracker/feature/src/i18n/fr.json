@@ -88,7 +88,8 @@
     "remove_aria": "Retirer la photo de {time}",
     "remove_confirm": "Cette photo sera retirée du parcours. Comme le parcours n’est plus sur cet appareil, tu ne pourras plus l’afficher ensuite.",
     "search": "Rechercher à nouveau les photos",
-    "search_added": "{count} photos de plus sur le parcours.",
+    "search_added": "{count} photos de plus trouvées.",
+    "search_added_one": "1 photo de plus trouvée.",
     "search_none": "Aucune autre photo trouvée."
   },
   "common": {

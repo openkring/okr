@@ -88,7 +88,8 @@
     "remove_aria": "Quitar la foto de las {time}",
     "remove_confirm": "Esta foto se quitará del recorrido. Como el recorrido ya no está en este dispositivo, no podrás volver a mostrarla.",
     "search": "Buscar fotos de nuevo",
-    "search_added": "{count} fotos más en el recorrido.",
+    "search_added": "Se han encontrado {count} fotos más.",
+    "search_added_one": "Se ha encontrado 1 foto más.",
     "search_none": "No se han encontrado más fotos."
   },
   "common": {

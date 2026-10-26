@@ -88,7 +88,8 @@
     "remove_aria": "Remove photo from {time}",
     "remove_confirm": "This photo will be removed from the track. Because the track is no longer on this device, you cannot show it again afterwards.",
     "search": "Search photos again",
-    "search_added": "{count} more photos on the track.",
+    "search_added": "{count} more photos found.",
+    "search_added_one": "1 more photo found.",
     "search_none": "No more photos found."
   },
   "common": {

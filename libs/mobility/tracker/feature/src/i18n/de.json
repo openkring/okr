@@ -88,7 +88,8 @@
     "remove_aria": "Foto von {time} entfernen",
     "remove_confirm": "Dieses Foto wird von der Strecke entfernt. Weil die Strecke nicht mehr auf diesem Gerät ist, kannst du es danach nicht wieder einblenden.",
     "search": "Fotos erneut suchen",
-    "search_added": "{count} weitere Fotos an der Strecke.",
+    "search_added": "{count} weitere Fotos gefunden.",
+    "search_added_one": "1 weiteres Foto gefunden.",
     "search_none": "Keine weiteren Fotos gefunden."
   },
   "common": {

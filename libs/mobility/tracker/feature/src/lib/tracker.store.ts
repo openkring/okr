@@ -697,17 +697,19 @@ export const TrackerStore = signalStore(
        * false, then the trip is uploaded again detached — its photo list leaves hidden photos out (spec §6). A hidden
        * photo's thumbnail is deleted from the bucket (detached) and its local thumbPath cleared; after the upload's ack
        * uploadThumbs gives a photo shown again a new thumbnail.
+       * The photo is looked up by assetId inside the queue: a merge search may have re-sorted the list meanwhile.
        * @returns false when the track or photo is missing or the track is not finished
        */
-      async setPhotoHidden(key: string, index: number, hidden: boolean): Promise<boolean> {
+      async setPhotoHidden(key: string, assetId: string, hidden: boolean): Promise<boolean> {
         const written = await enqueue(async () => {
           const current = await findTrack(key);
-          if (!current?.photos || current.state !== 'done' || !current.photos[index]) return undefined;
-          const photos = withPhotoHidden(current.photos, index, hidden);
+          const photo = current?.photos?.find((p) => p.assetId === assetId);
+          if (!current?.photos || current.state !== 'done' || !photo) return undefined;
+          const photos = withPhotoHidden(current.photos, assetId, hidden);
           if (photos === current.photos) return current; // already in that state
           const next: LocalTrack = { ...current, photos, rev: (current.rev ?? 0) + 1, uploaded: false, photosUploaded: false };
           await store.db.updateTrack(next);
-          const dropped = hidden ? current.photos[index].thumbPath : undefined;
+          const dropped = hidden ? photo.thumbPath : undefined;
           if (dropped) deleteThumbDetached(dropped);
           return next;
         });

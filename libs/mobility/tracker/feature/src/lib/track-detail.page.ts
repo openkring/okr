@@ -72,7 +72,8 @@ import { TrackerStore } from './tracker.store';
         }
         @if (photoItems().length > 0) {
           <ion-list-header><ion-label>{{ i18n.photos_title() }}</ion-label></ion-list-header>
-          <okr-track-photos [photos]="photoItems()" [i18n]="i18n" [removable]="!isLocal()" (photoToggle)="togglePhoto($event)" />
+          <okr-track-photos [photos]="photoItems()" [i18n]="i18n" [removable]="!isLocal()" [disabled]="searching()"
+            (photoToggle)="togglePhoto($event)" />
         }
         @if (isLocal() && t.state === 'done') {
           <ion-button fill="clear" size="small" [disabled]="searching()" (click)="searchPhotos()">
@@ -166,12 +167,16 @@ export class TrackDetailPage {
     if (!t || this.busy()) return;
     const key = t.key;
     if (this.isLocal()) {
+      if (this.searching()) return; // the strip is disabled meanwhile: a merge search re-sorts the list
       const before = t.photos ?? [];
-      const next = withPhotoHidden(before, change.index, change.hidden);
+      // the index is the strip's position right now; from here on the photo is named by its assetId
+      const assetId = before[change.index]?.assetId;
+      if (!assetId) return;
+      const next = withPhotoHidden(before, assetId, change.hidden);
       if (next === before) return;
       this.track.set({ ...t, photos: next });
       try {
-        if (!(await this.store.setPhotoHidden(key, change.index, change.hidden))) throw new Error('photo change not written');
+        if (!(await this.store.setPhotoHidden(key, assetId, change.hidden))) throw new Error('photo change not written');
         const written = (await this.db.list()).find((x) => x.key === key);
         if (written && this.track()?.key === key) this.track.set(written);
       } catch (error) {
@@ -211,7 +216,14 @@ export class TrackDetailPage {
     const t = this.track();
     if (!t || !this.isLocal() || this.searching()) return;
     const added = await this.reattach(t.key);
-    await this.toast(added > 0 ? this.i18n.photos_search_added().replace('{count}', String(added)) : this.i18n.photos_search_none());
+    const access = this.photoAccess();
+    if (access !== 'full' && access !== 'limited') {
+      await this.toast(this.i18n.photos_denied()); // denied, never asked, or the web: nothing could be searched
+      return;
+    }
+    if (added === 0) await this.toast(this.i18n.photos_search_none());
+    else if (added === 1) await this.toast(this.i18n.photos_search_added_one());
+    else await this.toast(this.i18n.photos_search_added().replace('{count}', String(added)));
   }
 
   /** Runs the merge search and shows what TrackDb holds afterwards; one search at a time. */

@@ -71,6 +71,7 @@ export const TRACKER_I18N_KEYS = {
   photos_remove_confirm: PFX + 'photos.remove_confirm',
   photos_search: PFX + 'photos.search',
   photos_search_added: PFX + 'photos.search_added', // single braces: {count}
+  photos_search_added_one: PFX + 'photos.search_added_one',
   photos_search_none: PFX + 'photos.search_none',
   common_save: PFX + 'common.save',
   common_cancel: PFX + 'common.cancel',

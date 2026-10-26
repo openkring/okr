@@ -69,15 +69,15 @@ export function photoWindowEnd(sections: TrackPoint[][], endedAt: number): numbe
 }
 
 /**
- * The photos with photos[index].hidden set (a new array); the same array when the index is out of range or nothing
- * changes. Hiding drops the photo's thumbPath: its thumbnail is deleted from the bucket (hidden photos are never
+ * The photos with the photo `assetId` hidden or shown (a new array); the same array when no photo has that assetId
+ * or nothing changes. By assetId, not index: a merge search may re-sort the list meanwhile. Hiding drops the photo's thumbPath: its thumbnail is deleted from the bucket (hidden photos are never
  * uploaded) and a photo shown again gets a new one.
  */
-export function withPhotoHidden<T extends TrackPhoto>(photos: T[], index: number, hidden: boolean): T[] {
-  const p = photos[index];
+export function withPhotoHidden<T extends TrackPhoto>(photos: T[], assetId: string, hidden: boolean): T[] {
+  const p = photos.find((x) => x.assetId === assetId);
   if (!p || p.hidden === hidden) return photos;
-  return photos.map((x, i) => {
-    if (i !== index) return x;
+  return photos.map((x) => {
+    if (x !== p) return x;
     const next = { ...x, hidden };
     if (hidden) delete next.thumbPath;
     return next;
