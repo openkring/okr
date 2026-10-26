@@ -15,7 +15,7 @@
     "rootDir": "."
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"],
+  "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/*.testing.ts", "**/test-setup.ts", "vite.config.ts"],
   "references": [
     { "path": "../../../shared/models/tsconfig.lib.json" }
   ]
