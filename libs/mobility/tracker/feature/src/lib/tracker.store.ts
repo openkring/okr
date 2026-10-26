@@ -13,7 +13,7 @@ import { DateFormat, generateRandomString, getCurrentTime, getTodayStr } from '@
 import { NativeLocation, PhotoAccess, ThumbSourceMissingError, TrackDb, TrackerLocation, TrackerPhotos, TrackService } from '@okr/mobility-tracker-data-access';
 import {
   accumulateDistance, allThumbsUploaded, alignSections, correctedTrack, DetectionInput, hasNoPoints, LocalSection, sameTrackContent, DetectState, initialDetectState, LocalTrack,
-  MotionActivity, needsThumbUpload, needsUpload, photoWindowEnd, placePhotos, nextSectionStartPoint, nextSections, pendingUploadOwner, resumeDecision, sectionsAfterPause, sessionDetectStep, StartWarning, localStoreDate, trackTenants,
+  mergePhotos, MotionActivity, needsThumbUpload, needsUpload, nextThumbNumber, photoWindowEnd, placePhotos, nextSectionStartPoint, nextSections, pendingUploadOwner, resumeDecision, sectionsAfterPause, sessionDetectStep, StartWarning, localStoreDate, trackTenants,
   startWarning, summarize, toTrackPoint, TRACK_PROFILES, TRACKER_I18N_KEYS, TrackerI18n, TrackPoint, withPhotoHidden, withThumbPaths,
 } from '@okr/mobility-tracker-util';
 
@@ -261,35 +261,52 @@ export const TrackerStore = signalStore(
      * places them on the track and stores them in the local track (on the queue). Attaching is a content change:
      * rev + 1 and uploaded:false, so a trip upload still in flight is not marked uploaded and the photos go up with
      * the next upload; the thumbnails follow once that commit is acked.
+     * `merge` = the search «again on demand» (spec §6, reattachPhotos): the photos found are merged into the ones
+     * already there (mergePhotos: hidden flags and thumb paths stay); only new photos make it a content change.
+     * @returns the number of photos added
      */
-    async function attachPhotos(key: string): Promise<void> {
-      if (!Capacitor.isNativePlatform()) return;
+    async function searchPhotos(key: string, merge: boolean): Promise<number> {
+      if (!Capacitor.isNativePlatform()) return 0;
       try {
         let { access } = await TrackerPhotos.access();
         if (access === 'notDetermined') ({ access } = await TrackerPhotos.requestAccess());
         patchState(store, { photoAccess: access });
-        if (access !== 'full' && access !== 'limited') return;
+        if (access !== 'full' && access !== 'limited') return 0;
         const t = await findTrack(key);
-        if (!t || t.state !== 'done' || t.photos) return;
+        if (!t || t.state !== 'done' || (!merge && t.photos)) return 0;
         // a resumed track may end long after its last fix: photos from that gap are not collected
         const to = photoWindowEnd(await store.db.points(key), t.endedAt ?? t.startedAt);
         const found = await TrackerPhotos.between({ from: t.startedAt, to, maxPx: 400 });
         patchState(store, { photoAccess: found.access });
-        if (found.photos.length === 0) return;
-        const attached = await enqueue(async () => {
+        const searched = found.access === 'full' || found.access === 'limited' ? found.access : undefined;
+        if (found.photos.length === 0 && !merge) return 0;
+        const result = await enqueue(async () => {
           const now = await findTrack(key);
-          if (!now || now.state !== 'done' || now.photos) return undefined; // gone, or attached meanwhile
+          if (!now || now.state !== 'done' || (!merge && now.photos)) return undefined; // gone, or attached meanwhile
           const points = alignSections(await store.db.points(key), now.sections.length);
-          const photos = placePhotos(found.photos, points, now.startedAt, photoWindowEnd(points, now.endedAt ?? now.startedAt));
-          if (photos.length === 0) return undefined;
-          const next: LocalTrack = { ...now, photos, rev: (now.rev ?? 0) + 1, uploaded: false, photosUploaded: false };
+          const placed = placePhotos(found.photos, points, now.startedAt, photoWindowEnd(points, now.endedAt ?? now.startedAt));
+          const { photos, added } = mergePhotos(now.photos, placed);
+          if (added === 0) {
+            // nothing new: only the fresh local renditions and the access of this search are kept (local, no upload)
+            if (now.photos) await store.db.updateTrack({ ...now, photos, photosAccess: searched ?? now.photosAccess });
+            return { track: undefined, added };
+          }
+          const next: LocalTrack = {
+            ...now, photos, photosAccess: searched ?? now.photosAccess, rev: (now.rev ?? 0) + 1, uploaded: false, photosUploaded: false,
+          };
           await store.db.updateTrack(next);
-          return next;
+          return { track: next, added };
         });
-        if (attached) void uploadTrack(attached, true);
+        if (result?.track) void uploadTrack(result.track, true);
+        return result?.added ?? 0;
       } catch (error) {
-        console.error('TrackerStore.attachPhotos', error);
+        console.error(merge ? 'TrackerStore.reattachPhotos' : 'TrackerStore.attachPhotos', error);
+        return 0;
       }
+    }
+
+    function attachPhotos(key: string): Promise<number> {
+      return searchPhotos(key, false);
     }
 
     /**
@@ -311,17 +328,22 @@ export const TrackerStore = signalStore(
         const tenantId = store.appStore.tenantId();
         const uploaded: { assetId: string; thumbPath: string; path400?: string }[] = [];
         const photos = snap.photos ?? [];
-        for (let i = 0; i < photos.length; i++) {
-          const p = photos[i];
+        // numbers only grow (thumbSeq): a merged-in photo never overwrites another photo's file
+        let n = nextThumbNumber(photos, snap.thumbSeq);
+        for (const p of photos) {
           if (p.hidden || p.thumbPath || !p.path400) continue;
-          const done = await uploadOneThumb(tenantId, key, i, p);
+          const done = await uploadOneThumb(tenantId, key, n++, p);
           if (done) uploaded.push(done);
         }
         if (uploaded.length === 0 && !allThumbsUploaded(photos)) return; // nothing new to write; retried later
         const issued = await enqueue(async () => {
           const now = await findTrack(key);
           if (!now?.photos) return undefined;
-          const next: LocalTrack = { ...now, photos: withThumbPaths(now.photos, uploaded) };
+          // a photo hidden while its thumbnail was going up: that file is deleted, never referenced
+          const hiddenNow = new Set(now.photos.filter((p) => p.hidden).map((p) => p.assetId));
+          for (const u of uploaded.filter((x) => hiddenNow.has(x.assetId))) deleteThumbDetached(u.thumbPath);
+          const visible = uploaded.filter((x) => !hiddenNow.has(x.assetId));
+          const next: LocalTrack = { ...now, photos: withThumbPaths(now.photos, visible), thumbSeq: Math.max(now.thumbSeq ?? 0, n) };
           await store.db.updateTrack(next);
           // issued on the queue: lands in order with the trip uploads of this track
           const done = store.trackService.setPhotos(key, next.photos ?? []);
@@ -342,15 +364,20 @@ export const TrackerStore = signalStore(
       }
     }
 
+    /** Deletes a thumbnail of a hidden or removed photo from the bucket, detached (resolves only on the server's answer). */
+    function deleteThumbDetached(thumbPath: string): void {
+      void store.trackService.deleteThumb(thumbPath).catch((error: unknown) => console.error('TrackerStore.deleteThumb', error));
+    }
+
     /**
      * One thumbnail. When its local rendition is gone (iOS purged the cache), the photo is rendered again from the
      * library (a ±1 s window around takenAt, matched by assetId) and the upload is retried once with the new path400.
      */
     async function uploadOneThumb(
-      tenantId: string, key: string, index: number, p: NonNullable<LocalTrack['photos']>[number],
+      tenantId: string, key: string, n: number, p: NonNullable<LocalTrack['photos']>[number],
     ): Promise<{ assetId: string; thumbPath: string; path400?: string } | undefined> {
       try {
-        return { assetId: p.assetId, thumbPath: await store.trackService.uploadThumb(tenantId, key, index, p.path400 ?? '') };
+        return { assetId: p.assetId, thumbPath: await store.trackService.uploadThumb(tenantId, key, n, p.path400 ?? '') };
       } catch (error) {
         if (!(error instanceof ThumbSourceMissingError)) {
           console.error('TrackerStore.uploadThumb', error);
@@ -362,7 +389,7 @@ export const TrackerStore = signalStore(
         const { photos } = await TrackerPhotos.between({ from: at - 1000, to: at + 1000, maxPx: 400 });
         const again = photos.find((x) => x.assetId === p.assetId);
         if (!again) return undefined;
-        return { assetId: p.assetId, thumbPath: await store.trackService.uploadThumb(tenantId, key, index, again.path400), path400: again.path400 };
+        return { assetId: p.assetId, thumbPath: await store.trackService.uploadThumb(tenantId, key, n, again.path400), path400: again.path400 };
       } catch (error) {
         console.error('TrackerStore.uploadThumb (re-rendered)', error);
         return undefined;
@@ -667,8 +694,9 @@ export const TrackerStore = signalStore(
 
       /**
        * Hides or shows one photo of a finished local track, on the queue: rev + 1, `uploaded` and `photosUploaded`
-       * false, then the trip is uploaded again detached (it carries the photo list); after its ack uploadThumbs
-       * adds a missing thumbnail of a photo shown again.
+       * false, then the trip is uploaded again detached — its photo list leaves hidden photos out (spec §6). A hidden
+       * photo's thumbnail is deleted from the bucket (detached) and its local thumbPath cleared; after the upload's ack
+       * uploadThumbs gives a photo shown again a new thumbnail.
        * @returns false when the track or photo is missing or the track is not finished
        */
       async setPhotoHidden(key: string, index: number, hidden: boolean): Promise<boolean> {
@@ -679,6 +707,8 @@ export const TrackerStore = signalStore(
           if (photos === current.photos) return current; // already in that state
           const next: LocalTrack = { ...current, photos, rev: (current.rev ?? 0) + 1, uploaded: false, photosUploaded: false };
           await store.db.updateTrack(next);
+          const dropped = hidden ? current.photos[index].thumbPath : undefined;
+          if (dropped) deleteThumbDetached(dropped);
           return next;
         });
         if (!written) return false;
@@ -686,15 +716,27 @@ export const TrackerStore = signalStore(
         return true;
       },
 
-      /** Refreshes the last known photo-library access without asking (native only). */
-      async checkPhotoAccess(): Promise<void> {
-        if (!Capacitor.isNativePlatform()) return;
+      /** Refreshes the last known photo-library access without asking (native only); undefined on the web or on failure. */
+      async checkPhotoAccess(): Promise<PhotoAccess | undefined> {
+        if (!Capacitor.isNativePlatform()) return undefined;
         try {
           const { access } = await TrackerPhotos.access();
           patchState(store, { photoAccess: access });
+          return access;
         } catch (error) {
           console.error('TrackerStore.checkPhotoAccess', error);
+          return undefined;
         }
+      },
+
+      /**
+       * Searches the library again for a finished local track (spec §6 «again on demand»): the photos found are merged
+       * into the existing ones by assetId (hidden flags and thumb paths stay); new photos bump rev, clear
+       * photosUploaded and go up with the usual upload chain (trip, then thumbnails). Native only.
+       * @returns the number of photos added
+       */
+      reattachPhotos(key: string): Promise<number> {
+        return searchPhotos(key, true);
       },
 
       /** Removes a local track (on the queue, so no upload snapshot reads it half-deleted). */

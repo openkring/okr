@@ -68,11 +68,91 @@ export function photoWindowEnd(sections: TrackPoint[][], endedAt: number): numbe
   return last === undefined ? endedAt : Math.min(last + PHOTO_WINDOW_AFTER_LAST_FIX_MS, endedAt);
 }
 
-/** The photos with photos[index].hidden set (a new array); the same array when the index is out of range or nothing changes. */
+/**
+ * The photos with photos[index].hidden set (a new array); the same array when the index is out of range or nothing
+ * changes. Hiding drops the photo's thumbPath: its thumbnail is deleted from the bucket (hidden photos are never
+ * uploaded) and a photo shown again gets a new one.
+ */
 export function withPhotoHidden<T extends TrackPhoto>(photos: T[], index: number, hidden: boolean): T[] {
   const p = photos[index];
   if (!p || p.hidden === hidden) return photos;
-  return photos.map((x, i) => (i === index ? { ...x, hidden } : x));
+  return photos.map((x, i) => {
+    if (i !== index) return x;
+    const next = { ...x, hidden };
+    if (hidden) delete next.thumbPath;
+    return next;
+  });
+}
+
+/** The photos without photos[index] (a new array); the same array when the index is out of range. */
+export function withoutPhoto<T>(photos: T[], index: number): T[] {
+  if (index < 0 || index >= photos.length) return photos;
+  return photos.filter((_, i) => i !== index);
+}
+
+/** A local photo as stored on the trip: the device-local path400 is never persisted, and no key is written as undefined. */
+export function toServerPhoto(p: TrackPhoto & { path400?: string }): TrackPhoto {
+  const out: TrackPhoto = { assetId: p.assetId, takenAt: p.takenAt, lat: p.lat, lng: p.lng, ownGps: p.ownGps, hidden: p.hidden };
+  if (p.imageKey !== undefined) out.imageKey = p.imageKey;
+  if (p.thumbPath !== undefined) out.thumbPath = p.thumbPath;
+  return out;
+}
+
+/**
+ * The photo list as written to the trip (spec §6: hidden photos are never uploaded): the hidden ones are left out
+ * entirely — the local list keeps them with `hidden: true` — and path400 is stripped.
+ */
+export function serverPhotos(photos: readonly (TrackPhoto & { path400?: string })[] | undefined): TrackPhoto[] {
+  return (photos ?? []).filter((p) => !p.hidden).map(toServerPhoto);
+}
+
+/**
+ * A second search of the library merged into the photos already on the track (spec §6 «again on demand»): a photo
+ * already there (same assetId) keeps its hidden flag and thumbPath and only takes the fresh local rendition; new
+ * photos are added; the result is in time order. `added` = how many new photos came in.
+ */
+export function mergePhotos<T extends TrackPhoto & { path400?: string }>(
+  existing: readonly T[] | undefined, found: readonly (TrackPhoto & { path400: string })[],
+): { photos: (T | (TrackPhoto & { path400: string }))[]; added: number } {
+  const byAsset = new Map(found.map((f) => [f.assetId, f]));
+  const known = new Set((existing ?? []).map((p) => p.assetId));
+  const kept = (existing ?? []).map((p) => {
+    const f = byAsset.get(p.assetId);
+    return f ? { ...p, path400: f.path400 } : p;
+  });
+  const fresh = found.filter((f) => !known.has(f.assetId));
+  const photos = [...kept, ...fresh].sort((a, b) => Date.parse(a.takenAt) - Date.parse(b.takenAt));
+  return { photos, added: fresh.length };
+}
+
+/**
+ * True when the photos of a finished local track should be searched again: the library is readable now and the
+ * track has none yet, or its photos were found under limited access (more may be shared by now).
+ */
+export function wantsPhotoReattach(
+  t: { state: string; photos?: readonly unknown[]; photosAccess?: 'full' | 'limited' }, access: string | undefined,
+): boolean {
+  if (t.state !== 'done' || (access !== 'full' && access !== 'limited')) return false;
+  return !t.photos || t.photos.length === 0 || t.photosAccess === 'limited';
+}
+
+/** The number of a thumbnail path (`…/{n}.jpg`); undefined for anything else. */
+export function thumbNumber(thumbPath: string | undefined): number | undefined {
+  const m = thumbPath?.match(/\/([0-9]+)\.jpg$/);
+  return m ? Number(m[1]) : undefined;
+}
+
+/**
+ * The next free thumbnail number of a track: above the stored sequence, every number still referenced and the
+ * photo count (the first uploads numbered thumbnails by list index).
+ */
+export function nextThumbNumber(photos: readonly { thumbPath?: string }[] | undefined, thumbSeq: number | undefined): number {
+  let next = Math.max(thumbSeq ?? 0, photos?.length ?? 0);
+  for (const p of photos ?? []) {
+    const n = thumbNumber(p.thumbPath);
+    if (n !== undefined && n >= next) next = n + 1;
+  }
+  return next;
 }
 
 /** The trip's own tenant first, then the diary targets that take `tracker` entries on that date. */

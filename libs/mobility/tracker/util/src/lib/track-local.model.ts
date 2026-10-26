@@ -21,6 +21,13 @@ export interface LocalTrack {
   photos?: (TrackPhoto & { path400?: string })[];
   /** Every visible photo's thumbnail is uploaded and the trip's photo list carries its thumbPath (missing = false). */
   photosUploaded?: boolean;
+  /** The photo-library access the photos were last searched with; 'limited' = a later search may find more. */
+  photosAccess?: 'full' | 'limited';
+  /**
+   * The next free thumbnail number (`{n}.jpg`): numbers only grow, so a merged-in photo never takes the file of
+   * another one and a detached delete of a hidden photo's file never hits a newer upload (missing = derive, see nextThumbNumber).
+   */
+  thumbSeq?: number;
 }
 
 /** A stored point row: a track point plus its section index. */

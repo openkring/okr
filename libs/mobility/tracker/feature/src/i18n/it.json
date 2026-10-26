@@ -83,7 +83,13 @@
     "hide_aria": "Nascondi la foto delle {time}",
     "show_aria": "Mostra la foto delle {time}",
     "limited": "Hai condiviso con l’app solo alcune foto: altre foto appariranno se nelle Impostazioni consenti «Tutte le foto».",
-    "denied": "Consenti all’app di accedere alle tue foto, così le foto scattate in viaggio appaiono sul percorso."
+    "denied": "Consenti all’app di accedere alle tue foto, così le foto scattate in viaggio appaiono sul percorso.",
+    "remove": "Rimuovi",
+    "remove_aria": "Rimuovi la foto delle {time}",
+    "remove_confirm": "Questa foto verrà rimossa dal percorso. Poiché il percorso non è più su questo dispositivo, non potrai più mostrarla.",
+    "search": "Cerca di nuovo le foto",
+    "search_added": "{count} foto in più sul percorso.",
+    "search_none": "Nessun’altra foto trovata."
   },
   "common": {
     "save": "Salva",

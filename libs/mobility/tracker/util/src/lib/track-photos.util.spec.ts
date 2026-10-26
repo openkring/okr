@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { LibraryPhoto, photoWindowEnd, withPhotoHidden, placePhotos, positionAt, trackThumbPath, trackTenants, localStoreDate } from './track-photos.util';
+import {
+  LibraryPhoto, mergePhotos, nextThumbNumber, photoWindowEnd, serverPhotos, thumbNumber, wantsPhotoReattach, withoutPhoto, withPhotoHidden, placePhotos, positionAt,
+  trackThumbPath, trackTenants, localStoreDate,
+} from './track-photos.util';
 import { TrackPoint } from './track-polyline.util';
 
 const P = (t: number, lat: number, lng: number): TrackPoint => ({ t, lat, lng });
@@ -84,5 +87,90 @@ describe('withPhotoHidden', () => {
     expect(withPhotoHidden(photos, 0, true)).toBe(photos);
     expect(withPhotoHidden(photos, 3, false)).toBe(photos);
     expect(withPhotoHidden(photos, -1, false)).toBe(photos);
+  });
+});
+
+describe('withPhotoHidden thumbnails', () => {
+  const ph = { assetId: 'a', takenAt: '2026-10-26T10:00:00.000Z', lat: 1, lng: 2, ownGps: true, hidden: false, thumbPath: 'tenant/t/tracks/k/0.jpg' };
+  it('drops the thumbPath when hiding', () => expect(withPhotoHidden([ph], 0, true)[0].thumbPath).toBeUndefined());
+  it('keeps the thumbPath of the other photos', () => {
+    const out = withPhotoHidden([ph, { ...ph, assetId: 'b' }], 0, true);
+    expect(out[1].thumbPath).toBe('tenant/t/tracks/k/0.jpg');
+  });
+});
+
+describe('withoutPhoto', () => {
+  it('removes one entry in a new array', () => expect(withoutPhoto(['a', 'b', 'c'], 1)).toEqual(['a', 'c']));
+  it('returns the same array out of range', () => {
+    const list = ['a'];
+    expect(withoutPhoto(list, 1)).toBe(list);
+    expect(withoutPhoto(list, -1)).toBe(list);
+  });
+});
+
+describe('serverPhotos', () => {
+  const base = { takenAt: '2026-10-26T10:00:00.000Z', lat: 1, lng: 2, ownGps: false };
+  it('leaves hidden photos out and strips path400', () => {
+    const out = serverPhotos([
+      { ...base, assetId: 'a', hidden: false, path400: '/c/a.jpg', thumbPath: 'tenant/t/tracks/k/0.jpg' },
+      { ...base, assetId: 'b', hidden: true, path400: '/c/b.jpg' },
+    ]);
+    expect(out).toEqual([{ ...base, assetId: 'a', hidden: false, thumbPath: 'tenant/t/tracks/k/0.jpg' }]);
+  });
+  it('writes no undefined keys', () => {
+    const [p] = serverPhotos([{ ...base, assetId: 'a', hidden: false }]);
+    expect(Object.keys(p)).not.toContain('thumbPath');
+    expect(Object.keys(p)).not.toContain('imageKey');
+  });
+  it('is empty without photos', () => expect(serverPhotos(undefined)).toEqual([]));
+});
+
+describe('mergePhotos', () => {
+  const at = (min: number) => new Date(Date.UTC(2026, 9, 26, 10, min)).toISOString();
+  const ph = (assetId: string, min: number, extra: Record<string, unknown> = {}) =>
+    ({ assetId, takenAt: at(min), lat: 1, lng: 2, ownGps: true, hidden: false, path400: `/old/${assetId}.jpg`, ...extra });
+  const found = (assetId: string, min: number) => ({ assetId, takenAt: at(min), lat: 3, lng: 4, ownGps: false, hidden: false, path400: `/new/${assetId}.jpg` });
+  it('keeps hidden flag and thumbPath of a known photo, takes the fresh rendition', () => {
+    const { photos, added } = mergePhotos([ph('a', 5, { hidden: true }), ph('b', 10, { thumbPath: 'tenant/t/tracks/k/1.jpg' })], [found('a', 5), found('b', 10)]);
+    expect(added).toBe(0);
+    expect(photos[0]).toMatchObject({ assetId: 'a', hidden: true, lat: 1, path400: '/new/a.jpg' });
+    expect(photos[1]).toMatchObject({ assetId: 'b', thumbPath: 'tenant/t/tracks/k/1.jpg', path400: '/new/b.jpg' });
+  });
+  it('adds new photos in time order', () => {
+    const { photos, added } = mergePhotos([ph('a', 5), ph('c', 20)], [found('b', 10), found('a', 5)]);
+    expect(added).toBe(1);
+    expect(photos.map((p) => p.assetId)).toEqual(['a', 'b', 'c']);
+  });
+  it('keeps a known photo the new search no longer returns', () => {
+    const { photos } = mergePhotos([ph('a', 5)], []);
+    expect(photos).toEqual([ph('a', 5)]);
+  });
+  it('takes all found photos when there were none', () => expect(mergePhotos(undefined, [found('a', 1)]).added).toBe(1));
+});
+
+describe('wantsPhotoReattach', () => {
+  const done = { state: 'done' };
+  it('searches a done track without photos', () => expect(wantsPhotoReattach(done, 'full')).toBe(true));
+  it('searches a done track with an empty list', () => expect(wantsPhotoReattach({ ...done, photos: [] }, 'limited')).toBe(true));
+  it('searches again after a limited search', () => expect(wantsPhotoReattach({ ...done, photos: [1], photosAccess: 'limited' }, 'full')).toBe(true));
+  it('does not search again after a full search', () => expect(wantsPhotoReattach({ ...done, photos: [1], photosAccess: 'full' }, 'full')).toBe(false));
+  it('does not search without access', () => {
+    expect(wantsPhotoReattach(done, 'denied')).toBe(false);
+    expect(wantsPhotoReattach(done, undefined)).toBe(false);
+  });
+  it('does not search a recording track', () => expect(wantsPhotoReattach({ state: 'recording' }, 'full')).toBe(false));
+});
+
+describe('thumbnail numbers', () => {
+  it('parses the number of a thumb path', () => {
+    expect(thumbNumber('tenant/t/tracks/k/12.jpg')).toBe(12);
+    expect(thumbNumber(undefined)).toBeUndefined();
+    expect(thumbNumber('tenant/t/tracks/k/a.jpg')).toBeUndefined();
+  });
+  it('is above every referenced number, the photo count and the sequence', () => {
+    expect(nextThumbNumber([{ thumbPath: 'x/7.jpg' }, {}], undefined)).toBe(8);
+    expect(nextThumbNumber([{}, {}, {}], undefined)).toBe(3);
+    expect(nextThumbNumber([{ thumbPath: 'x/1.jpg' }], 9)).toBe(9);
+    expect(nextThumbNumber(undefined, undefined)).toBe(0);
   });
 });

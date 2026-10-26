@@ -83,7 +83,13 @@
     "hide_aria": "Ocultar la foto de las {time}",
     "show_aria": "Mostrar la foto de las {time}",
     "limited": "Solo has compartido algunas fotos con la app: aparecerán más fotos si permites «Todas las fotos» en Ajustes.",
-    "denied": "Permite que la app acceda a tus fotos para que las fotos del camino aparezcan en el recorrido."
+    "denied": "Permite que la app acceda a tus fotos para que las fotos del camino aparezcan en el recorrido.",
+    "remove": "Quitar",
+    "remove_aria": "Quitar la foto de las {time}",
+    "remove_confirm": "Esta foto se quitará del recorrido. Como el recorrido ya no está en este dispositivo, no podrás volver a mostrarla.",
+    "search": "Buscar fotos de nuevo",
+    "search_added": "{count} fotos más en el recorrido.",
+    "search_none": "No se han encontrado más fotos."
   },
   "common": {
     "save": "Guardar",

@@ -15,7 +15,8 @@ import { TrackDb, TrackService } from '@okr/mobility-tracker-data-access';
 import { TrackMap, TrackMapPhoto, TrackMapSection, TrackModeChange, TrackPhotoItem, TrackPhotos, TrackPhotoToggle, TrackSections } from '@okr/mobility-tracker-ui';
 import {
   alignSections, buildGpx, correctedTrack, fromLocalSections, gpxFileName, isShareCancel, LocalSection, LocalTrack, localFromTrip, mergeWithNext,
-  localStoreDate, middlePointIndex, sectionRows, setSectionMode, splitSection, toLocalSections, trackTenants, withPhotoHidden,
+  localStoreDate, middlePointIndex, sectionRows, setSectionMode, splitSection, toLocalSections, trackTenants, wantsPhotoReattach, withoutPhoto,
+  withPhotoHidden,
 } from '@okr/mobility-tracker-util';
 
 import { TrackerStore } from './tracker.store';
@@ -27,6 +28,9 @@ import { TrackerStore } from './tracker.store';
  * corrected. Corrections need a finished track.
  * Photos (plan 3 task 6): pins on the map and a strip with hide/show. The picture is the local 400 px rendition when
  * the track and its file are on this device, otherwise the uploaded thumbnail; a photo without either is a dot.
+ * A local track searches the library again when it has no photos or was searched under limited access (spec §6
+ * «again on demand»), and «Fotos erneut suchen» does it by hand. An uploaded-only track offers «Entfernen» instead of
+ * hide/show: hidden photos are never on the server, so one hidden there could not come back.
  */
 @Component({
   selector: 'okr-track-detail-page',
@@ -68,7 +72,12 @@ import { TrackerStore } from './tracker.store';
         }
         @if (photoItems().length > 0) {
           <ion-list-header><ion-label>{{ i18n.photos_title() }}</ion-label></ion-list-header>
-          <okr-track-photos [photos]="photoItems()" [i18n]="i18n" (photoToggle)="togglePhoto($event)" />
+          <okr-track-photos [photos]="photoItems()" [i18n]="i18n" [removable]="!isLocal()" (photoToggle)="togglePhoto($event)" />
+        }
+        @if (isLocal() && t.state === 'done') {
+          <ion-button fill="clear" size="small" [disabled]="searching()" (click)="searchPhotos()">
+            <ion-icon slot="start" src="{{ 'search' | svgIcon }}" />{{ i18n.photos_search() }}
+          </ion-button>
         }
         @if (photoAccess() === 'limited') {
           <ion-note class="note">{{ i18n.photos_limited() }}</ion-note>
@@ -105,7 +114,9 @@ export class TrackDetailPage {
   protected readonly track = signal<LocalTrack | undefined>(undefined);
   protected readonly sections = signal<LocalSection[]>([]);
   /** true when the track is (also) in TrackDb on this device. */
-  private readonly isLocal = signal(false);
+  protected readonly isLocal = signal(false);
+  /** a library search («Fotos erneut suchen» or the automatic one) is running */
+  protected readonly searching = signal(false);
   /** The uploaded trip, when one was found. */
   private readonly trip = signal<TripModel | undefined>(undefined);
 
@@ -147,7 +158,8 @@ export class TrackDetailPage {
   /**
    * Hide or show one photo. A local track goes through TrackerStore.setPhotoHidden (TrackDb on the queue, then a
    * detached re-upload; a photo shown again gets its thumbnail after that). An uploaded-only track writes the photo
-   * list detached — no thumbnail can be made there, so a photo that never had one stays a dot.
+   * list detached — no thumbnail can be made there, so a photo that never had one stays a dot. Hidden photos are not
+   * on the server, so there «Entfernen» (after a confirm) drops the photo from the list and deletes its thumbnail.
    */
   protected async togglePhoto(change: TrackPhotoToggle): Promise<void> {
     const t = this.track();
@@ -169,18 +181,49 @@ export class TrackDetailPage {
       }
       return;
     }
+    if (!change.hidden) return; // uploaded-only: a photo can only be removed
+    const ok = await confirm(this.alertController, this.i18n.photos_remove_confirm(), this.i18n.photos_remove(), this.i18n.common_cancel(), true);
+    if (!ok) return;
     const trip = this.trip();
     const before = trip?.track?.photos;
-    if (!trip?.track || !before) return;
-    const next = withPhotoHidden(before, change.index, change.hidden);
-    if (next === before) return;
+    if (!trip?.track || !before || trip.okey !== key) return;
+    const removed = before[change.index];
+    const next = withoutPhoto(before, change.index);
+    if (!removed || next === before) return;
     this.trip.set({ ...trip, track: { ...trip.track, photos: next } });
-    void this.trackService.setPhotos(key, next).catch(async (error: unknown) => {
-      console.error('TrackDetailPage.setPhotos', error);
-      const now = this.trip();
-      if (now?.okey === key && now.track) this.trip.set({ ...now, track: { ...now.track, photos: before } });
-      await this.toast(this.i18n.detail_save_error());
-    });
+    void this.trackService.setPhotos(key, next)
+      .then(() => {
+        // the list no longer points at it: only now the file goes (a failed write keeps photo and thumbnail)
+        if (removed.thumbPath) {
+          void this.trackService.deleteThumb(removed.thumbPath).catch((error: unknown) => console.error('TrackDetailPage.deleteThumb', error));
+        }
+      })
+      .catch(async (error: unknown) => {
+        console.error('TrackDetailPage.setPhotos', error);
+        const now = this.trip();
+        if (now?.okey === key && now.track) this.trip.set({ ...now, track: { ...now.track, photos: before } });
+        await this.toast(this.i18n.detail_save_error());
+      });
+  }
+
+  /** «Fotos erneut suchen»: merges newly found photos into the local track (TrackerStore.reattachPhotos). */
+  protected async searchPhotos(): Promise<void> {
+    const t = this.track();
+    if (!t || !this.isLocal() || this.searching()) return;
+    const added = await this.reattach(t.key);
+    await this.toast(added > 0 ? this.i18n.photos_search_added().replace('{count}', String(added)) : this.i18n.photos_search_none());
+  }
+
+  /** Runs the merge search and shows what TrackDb holds afterwards; one search at a time. */
+  private async reattach(key: string): Promise<number> {
+    this.searching.set(true);
+    try {
+      const added = await this.store.reattachPhotos(key);
+      if (this.key() === key) await this.reloadLocal(key);
+      return added;
+    } finally {
+      this.searching.set(false);
+    }
   }
 
   protected changeMode(change: TrackModeChange): Promise<void> {
@@ -259,7 +302,7 @@ export class TrackDetailPage {
     this.loading.set(true);
     try {
       await this.store.init();
-      void this.store.checkPhotoAccess();
+      const access = this.store.checkPhotoAccess();
       this.trip.set(undefined);
       this.photoSrcs.set(new Map());
       this.resolving.clear();
@@ -273,6 +316,10 @@ export class TrackDetailPage {
         this.sections.set(toLocalSections(local, points));
         void this.findTrip(key).then((trip) => {
           if (this.key() === key) this.trip.set(trip);
+        });
+        // spec §6 «again on demand»: no photos yet, or found under limited access — search again, detached
+        void access.then((a) => {
+          if (this.key() === key && wantsPhotoReattach(local, a) && !this.searching()) void this.reattach(key);
         });
         return;
       }

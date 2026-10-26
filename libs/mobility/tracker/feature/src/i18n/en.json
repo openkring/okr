@@ -83,7 +83,13 @@
     "hide_aria": "Hide photo from {time}",
     "show_aria": "Show photo from {time}",
     "limited": "You have shared only selected photos with the app — more photos appear once you allow “All Photos” in Settings.",
-    "denied": "Allow the app to access your photos so that photos from your trip appear along the track."
+    "denied": "Allow the app to access your photos so that photos from your trip appear along the track.",
+    "remove": "Remove",
+    "remove_aria": "Remove photo from {time}",
+    "remove_confirm": "This photo will be removed from the track. Because the track is no longer on this device, you cannot show it again afterwards.",
+    "search": "Search photos again",
+    "search_added": "{count} more photos on the track.",
+    "search_none": "No more photos found."
   },
   "common": {
     "save": "Save",

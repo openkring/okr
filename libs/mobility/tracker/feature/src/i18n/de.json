@@ -83,7 +83,13 @@
     "hide_aria": "Foto von {time} ausblenden",
     "show_aria": "Foto von {time} einblenden",
     "limited": "Du hast der App nur ausgewählte Fotos freigegeben — weitere Fotos erscheinen, wenn du in den Einstellungen «Alle Fotos» erlaubst.",
-    "denied": "Erlaube der App den Zugriff auf deine Fotos, damit Fotos von unterwegs an der Strecke erscheinen."
+    "denied": "Erlaube der App den Zugriff auf deine Fotos, damit Fotos von unterwegs an der Strecke erscheinen.",
+    "remove": "Entfernen",
+    "remove_aria": "Foto von {time} entfernen",
+    "remove_confirm": "Dieses Foto wird von der Strecke entfernt. Weil die Strecke nicht mehr auf diesem Gerät ist, kannst du es danach nicht wieder einblenden.",
+    "search": "Fotos erneut suchen",
+    "search_added": "{count} weitere Fotos an der Strecke.",
+    "search_none": "Keine weiteren Fotos gefunden."
   },
   "common": {
     "save": "Speichern",

@@ -66,6 +66,12 @@ export const TRACKER_I18N_KEYS = {
   photos_show_aria: PFX + 'photos.show_aria', // single braces: {time}
   photos_limited: PFX + 'photos.limited',
   photos_denied: PFX + 'photos.denied',
+  photos_remove: PFX + 'photos.remove',
+  photos_remove_aria: PFX + 'photos.remove_aria', // single braces: {time}
+  photos_remove_confirm: PFX + 'photos.remove_confirm',
+  photos_search: PFX + 'photos.search',
+  photos_search_added: PFX + 'photos.search_added', // single braces: {count}
+  photos_search_none: PFX + 'photos.search_none',
   common_save: PFX + 'common.save',
   common_cancel: PFX + 'common.cancel',
 } satisfies Record<string, string>;

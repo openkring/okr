@@ -83,7 +83,13 @@
     "hide_aria": "Masquer la photo de {time}",
     "show_aria": "Afficher la photo de {time}",
     "limited": "Tu n’as partagé que certaines photos avec l’app — d’autres photos apparaîtront si tu autorises « Toutes les photos » dans les réglages.",
-    "denied": "Autorise l’app à accéder à tes photos pour que les photos prises en route apparaissent sur le parcours."
+    "denied": "Autorise l’app à accéder à tes photos pour que les photos prises en route apparaissent sur le parcours.",
+    "remove": "Retirer",
+    "remove_aria": "Retirer la photo de {time}",
+    "remove_confirm": "Cette photo sera retirée du parcours. Comme le parcours n’est plus sur cet appareil, tu ne pourras plus l’afficher ensuite.",
+    "search": "Rechercher à nouveau les photos",
+    "search_added": "{count} photos de plus sur le parcours.",
+    "search_none": "Aucune autre photo trouvée."
   },
   "common": {
     "save": "Enregistrer",

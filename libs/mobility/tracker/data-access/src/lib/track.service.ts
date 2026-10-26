@@ -1,14 +1,14 @@
 import { inject, Injectable } from '@angular/core';
 import { Filesystem } from '@capacitor/filesystem';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { getBlob, ref, uploadBytes } from 'firebase/storage';
+import { deleteObject, getBlob, ref, uploadBytes } from 'firebase/storage';
 import { Observable } from 'rxjs';
 
 import { ENV, getBkStorage } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { TRACKER_TRIP_TYPE, TrackPhoto, TransportMode, TripCollection, TripModel, TripTrack } from '@okr/shared-models';
 import { convertDateFormatToString, DateFormat, getDeletePatch, getSystemQuery } from '@okr/shared-util-core';
-import { decodeTrack, encodeTrack, LocalSection, LocalTrack, summarize, toTrackSections, trackThumbPath, TrackPoint } from '@okr/mobility-tracker-util';
+import { decodeTrack, encodeTrack, LocalSection, LocalTrack, serverPhotos, summarize, toTrackSections, trackThumbPath, TrackPoint } from '@okr/mobility-tracker-util';
 
 /** One section's points, stored as an encoded polyline in trips/{key}/track-points/{n}. */
 export interface TrackPointsDoc {
@@ -26,14 +26,6 @@ function toLocalIso(ms: number): string {
   const d = new Date(ms);
   const p = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-}
-
-/** A local photo as a stored TrackPhoto: the device-local path400 is never persisted, and no key is written as undefined. */
-function toTrackPhoto(p: TrackPhoto & { path400?: string }): TrackPhoto {
-  const out: TrackPhoto = { assetId: p.assetId, takenAt: p.takenAt, lat: p.lat, lng: p.lng, ownGps: p.ownGps, hidden: p.hidden };
-  if (p.imageKey !== undefined) out.imageKey = p.imageKey;
-  if (p.thumbPath !== undefined) out.thumbPath = p.thumbPath;
-  return out;
 }
 
 /** uploadThumb could not read the device-local rendition (e.g. iOS purged the app cache): re-render it and retry. */
@@ -84,9 +76,9 @@ export class TrackService {
       durationS,
       sections: toTrackSections(localSections, tripKey),
     } as TripTrack;
-    // photos: only from the local list (path400 stripped, thumbPath kept). Without a local list the key is omitted,
-    // so the merge keeps what is stored and never wipes uploaded thumb paths.
-    if (local.photos) track.photos = local.photos.map(toTrackPhoto);
+    // photos: only from the local list — hidden ones left out (spec §6: never uploaded), path400 stripped, thumbPath
+    // kept. Without a local list the key is omitted, so the merge keeps what is stored and never wipes thumb paths.
+    if (local.photos) track.photos = serverPhotos(local.photos);
 
     // SECURITY NOTE: the points are only owner-private once the owner-only trips rules (branch
     // work/tracker-rules) are deployed. Under today's tenant-writable trips rules a tenant member
@@ -235,8 +227,25 @@ export class TrackService {
     return pending;
   }
 
-  /** Writes the photo list (without path400). Resolves only on the server's ack: callers run it detached. */
-  public async setPhotos(tripKey: string, photos: TrackPhoto[]): Promise<void> {
-    await updateDoc(doc(this.firestoreService.firestore, `${TripCollection}/${tripKey}`), { 'track.photos': photos.map(toTrackPhoto) });
+  /**
+   * Writes the photo list: hidden photos are left out (spec §6), path400 is stripped. Resolves only on the server's
+   * ack: callers run it detached.
+   */
+  public async setPhotos(tripKey: string, photos: (TrackPhoto & { path400?: string })[]): Promise<void> {
+    await updateDoc(doc(this.firestoreService.firestore, `${TripCollection}/${tripKey}`), { 'track.photos': serverPhotos(photos) });
+  }
+
+  /**
+   * Deletes one thumbnail from the private bucket (a photo was hidden or removed). A missing file counts as deleted.
+   * Callers run it detached; the cached data URL goes at once.
+   */
+  public async deleteThumb(thumbPath: string): Promise<void> {
+    this.thumbCache.delete(thumbPath);
+    try {
+      await deleteObject(ref(getBkStorage('private'), thumbPath));
+    } catch (error) {
+      if ((error as { code?: string }).code === 'storage/object-not-found') return;
+      throw error;
+    }
   }
 }

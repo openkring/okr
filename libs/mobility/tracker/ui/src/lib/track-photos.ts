@@ -10,6 +10,8 @@ export interface TrackPhotoToggle { index: number; hidden: boolean }
 /**
  * The photos of a track as a horizontal strip, in time order. Hidden photos stay in the strip, dimmed and marked
  * «Ausgeblendet»; each photo has a button to hide or show it again (`photoToggle` emits the wanted state).
+ * `removable`: a track that is only on the server (its hidden photos are not there, so nothing can be shown again)
+ * offers «Entfernen» instead; `photoToggle` then emits `hidden: true` and the page asks before it removes the photo.
  */
 @Component({
   selector: 'okr-track-photos',
@@ -42,7 +44,15 @@ export interface TrackPhotoToggle { index: number; hidden: boolean }
             }
           </div>
           <span class="time">{{ time(photo.takenAt) }}</span>
-          @if (!readonly()) {
+          @if (readonly()) {
+            <!-- the diary's read-only view: no actions -->
+          } @else if (removable()) {
+            <ion-button fill="clear" size="small" color="danger" (click)="photoToggle.emit({ index: i, hidden: true })"
+              [attr.aria-label]="removeAriaLabel(photo)">
+              <ion-icon slot="start" src="{{ 'trash' | svgIcon }}" />
+              {{ i18n().photos_remove() }}
+            </ion-button>
+          } @else {
             <ion-button fill="clear" size="small" (click)="photoToggle.emit({ index: i, hidden: !photo.hidden })"
               [attr.aria-label]="ariaLabel(photo)">
               <ion-icon slot="start" src="{{ (photo.hidden ? 'eye-on' : 'eye-off') | svgIcon }}" />
@@ -59,6 +69,8 @@ export class TrackPhotos {
   public readonly i18n = input.required<TrackerI18n>();
   /** true = no hide / show buttons: the diary's read-only track view */
   public readonly readonly = input(false);
+  /** true = «Entfernen» instead of hide / show: an uploaded-only track, where a hidden photo cannot come back */
+  public readonly removable = input(false);
 
   public readonly photoToggle = output<TrackPhotoToggle>();
 
@@ -69,5 +81,9 @@ export class TrackPhotos {
   protected ariaLabel(photo: TrackPhotoItem): string {
     const label = photo.hidden ? this.i18n().photos_show_aria() : this.i18n().photos_hide_aria();
     return label.replace('{time}', formatClockTime(photo.takenAt));
+  }
+
+  protected removeAriaLabel(photo: TrackPhotoItem): string {
+    return this.i18n().photos_remove_aria().replace('{time}', formatClockTime(photo.takenAt));
   }
 }
