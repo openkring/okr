@@ -227,6 +227,76 @@ export const getMatrixCredentials = onCall(
  * hasn't logged in yet and therefore has no Matrix account.
  * Uses the Synapse admin API, so no password or login from the target user is needed.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleProvisionMatrixUser(request: CallableRequest<any>): Promise<{ matrixUserId: string }> {
+  // Provisioning a Matrix account for a person is part of the normal direct-chat
+  // flow — any provisioned app user may do it (creating accounts only for real persons).
+  const callerUid = await requireProvisionedUser(request, 'provisionMatrixUser');
+  checkRateLimit(callerUid, 'provisionMatrixUser', 20);
+  const { personKey } = request.data as { personKey: string };
+  requireParam(personKey, 'personKey');
+
+  const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
+  const matrixUserId = `@${personKey.toLowerCase()}:${hostname}`;
+  const adminToken = matrixAdminToken.value();
+
+  // Check if the user already exists
+  const checkResp = await fetch(
+    `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
+    { headers: { Authorization: `Bearer ${adminToken}` } }
+  );
+  if (checkResp.ok) {
+    const checkData = await checkResp.json() as { deactivated?: boolean };
+    if (checkData.deactivated) {
+      console.log(`provisionMatrixUser: ${matrixUserId} exists but is deactivated — reactivating`);
+      const reactivateResp = await fetch(
+        `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
+        {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deactivated: false }),
+        }
+      );
+      if (!reactivateResp.ok) {
+        throw new HttpsError('internal', `Failed to reactivate ${matrixUserId}: ${await reactivateResp.text()}`);
+      }
+      console.log(`provisionMatrixUser: ${matrixUserId} reactivated`);
+    } else {
+      console.log(`provisionMatrixUser: ${matrixUserId} already exists and is active`);
+    }
+    return { matrixUserId };
+  }
+  console.log(`provisionMatrixUser: ${matrixUserId} not found (status=${checkResp.status}), creating...`);
+
+  // Resolve a display name from the persons Firestore doc
+  let displayName = personKey;
+  try {
+    const doc = await getFirestore().collection('persons').doc(personKey).get();
+    const d = doc.data();
+    if (d) {
+      const fullName = [d['firstName'], d['lastName']].filter(Boolean).join(' ');
+      if (fullName) displayName = fullName;
+    }
+  } catch { /* fallback to personKey */ }
+
+  // Create the Matrix user via admin API (no password required)
+  const createResp = await fetch(
+    `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ displayname: displayName, admin: false, deactivated: false }),
+    }
+  );
+  if (!createResp.ok) {
+    const errText = await createResp.text();
+    throw new HttpsError('internal', `Failed to provision Matrix user ${matrixUserId}: ${errText}`);
+  }
+
+  console.log(`provisionMatrixUser: Created Matrix user ${matrixUserId} (${displayName})`);
+  return { matrixUserId };
+}
+
 export const provisionMatrixUser = onCall(
   {
     cors: true,
@@ -234,74 +304,7 @@ export const provisionMatrixUser = onCall(
     enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
-  async (request): Promise<{ matrixUserId: string }> => {
-    // Provisioning a Matrix account for a person is part of the normal direct-chat
-    // flow — any provisioned app user may do it (creating accounts only for real persons).
-    const callerUid = await requireProvisionedUser(request, 'provisionMatrixUser');
-    checkRateLimit(callerUid, 'provisionMatrixUser', 20);
-    const { personKey } = request.data as { personKey: string };
-    requireParam(personKey, 'personKey');
-
-    const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
-    const matrixUserId = `@${personKey.toLowerCase()}:${hostname}`;
-    const adminToken = matrixAdminToken.value();
-
-    // Check if the user already exists
-    const checkResp = await fetch(
-      `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
-      { headers: { Authorization: `Bearer ${adminToken}` } }
-    );
-    if (checkResp.ok) {
-      const checkData = await checkResp.json() as { deactivated?: boolean };
-      if (checkData.deactivated) {
-        console.log(`provisionMatrixUser: ${matrixUserId} exists but is deactivated — reactivating`);
-        const reactivateResp = await fetch(
-          `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
-          {
-            method: 'PUT',
-            headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ deactivated: false }),
-          }
-        );
-        if (!reactivateResp.ok) {
-          throw new HttpsError('internal', `Failed to reactivate ${matrixUserId}: ${await reactivateResp.text()}`);
-        }
-        console.log(`provisionMatrixUser: ${matrixUserId} reactivated`);
-      } else {
-        console.log(`provisionMatrixUser: ${matrixUserId} already exists and is active`);
-      }
-      return { matrixUserId };
-    }
-    console.log(`provisionMatrixUser: ${matrixUserId} not found (status=${checkResp.status}), creating...`);
-
-    // Resolve a display name from the persons Firestore doc
-    let displayName = personKey;
-    try {
-      const doc = await getFirestore().collection('persons').doc(personKey).get();
-      const d = doc.data();
-      if (d) {
-        const fullName = [d['firstName'], d['lastName']].filter(Boolean).join(' ');
-        if (fullName) displayName = fullName;
-      }
-    } catch { /* fallback to personKey */ }
-
-    // Create the Matrix user via admin API (no password required)
-    const createResp = await fetch(
-      `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
-      {
-        method: 'PUT',
-        headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ displayname: displayName, admin: false, deactivated: false }),
-      }
-    );
-    if (!createResp.ok) {
-      const errText = await createResp.text();
-      throw new HttpsError('internal', `Failed to provision Matrix user ${matrixUserId}: ${errText}`);
-    }
-
-    console.log(`provisionMatrixUser: Created Matrix user ${matrixUserId} (${displayName})`);
-    return { matrixUserId };
-  }
+  handleProvisionMatrixUser,
 );
 
 /**
@@ -366,69 +369,62 @@ export const deactivateMatrixUser = onCall(
  *
  * Call this when user updates their profile in Firebase
  */
-export const syncFirebaseProfileToMatrix = onCall(
-  {
-    cors: true,
-    region: 'europe-west6',
-    enforceAppCheck: true,
-    secrets: [matrixAdminToken],
-  },
-  async (request): Promise<{ success: boolean }> => {
-    try {
-      const firebaseUid = request.auth?.uid;
-      if (!firebaseUid) {
-        throw new HttpsError('unauthenticated', 'Not authenticated with Firebase');
-      }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleSyncFirebaseProfileToMatrix(request: CallableRequest<any>): Promise<{ success: boolean }> {
+  try {
+    const firebaseUid = request.auth?.uid;
+    if (!firebaseUid) {
+      throw new HttpsError('unauthenticated', 'Not authenticated with Firebase');
+    }
 
-      const userRecord = await getAuth().getUser(firebaseUid);
-      const hostname = serverHostname();
-      checkRateLimit(firebaseUid, 'syncFirebaseProfileToMatrix', 10);
-      const personKey = await requireUserPersonKey(firebaseUid, 'syncFirebaseProfileToMatrix');
-      const matrixUserId = `@${personKey.toLowerCase()}:${hostname}`;
+    const userRecord = await getAuth().getUser(firebaseUid);
+    const hostname = serverHostname();
+    checkRateLimit(firebaseUid, 'syncFirebaseProfileToMatrix', 10);
+    const personKey = await requireUserPersonKey(firebaseUid, 'syncFirebaseProfileToMatrix');
+    const matrixUserId = `@${personKey.toLowerCase()}:${hostname}`;
 
-      // Prefer the person's real name (persons/{personKey}); fall back to the Firebase
-      // profile. Set via the Synapse admin API so it works for password users too (who
-      // carry no Firebase Auth displayName).
-      const desiredDisplayName =
-        (await resolvePersonDisplayName(personKey)) ||
-        userRecord.displayName ||
-        userRecord.email?.split('@')[0];
+    // Prefer the person's real name (persons/{personKey}); fall back to the Firebase
+    // profile. Set via the Synapse admin API so it works for password users too (who
+    // carry no Firebase Auth displayName).
+    const desiredDisplayName =
+      (await resolvePersonDisplayName(personKey)) ||
+      userRecord.displayName ||
+      userRecord.email?.split('@')[0];
 
-      if (desiredDisplayName) {
-        await setMatrixDisplayName(matrixUserId, desiredDisplayName, matrixAdminToken.value());
-      }
+    if (desiredDisplayName) {
+      await setMatrixDisplayName(matrixUserId, desiredDisplayName, matrixAdminToken.value());
+    }
 
-      // Fill an empty Matrix avatar from the person's avatar (never overwrite a custom one).
-      // Stored as a spec-compliant mxc:// URI (uploaded to the Synapse media repo) so
-      // Element and bridges render it. Best-effort — an upload failure never breaks the sync.
-      const desiredAvatarUrl = await resolvePersonAvatarUrl(personKey, await getUserTenants(firebaseUid));
-      if (desiredAvatarUrl) {
-        const checkResp = await fetch(
-          `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
-          { headers: { Authorization: `Bearer ${matrixAdminToken.value()}` } }
-        );
-        const existingAvatarUrl = checkResp.ok
-          ? ((await checkResp.json() as { avatar_url?: string }).avatar_url ?? undefined)
-          : undefined;
-        if (!existingAvatarUrl) {
-          try {
-            const mxc = await uploadUrlToMatrixMedia(desiredAvatarUrl, matrixAdminToken.value());
-            await setMatrixAvatarUrl(matrixUserId, mxc, matrixAdminToken.value());
-          } catch (e) {
-            console.warn(`syncFirebaseProfileToMatrix: avatar mxc sync failed for ${matrixUserId}: ${(e as Error).message}`);
-          }
+    // Fill an empty Matrix avatar from the person's avatar (never overwrite a custom one).
+    // Stored as a spec-compliant mxc:// URI (uploaded to the Synapse media repo) so
+    // Element and bridges render it. Best-effort — an upload failure never breaks the sync.
+    const desiredAvatarUrl = await resolvePersonAvatarUrl(personKey, await getUserTenants(firebaseUid));
+    if (desiredAvatarUrl) {
+      const checkResp = await fetch(
+        `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
+        { headers: { Authorization: `Bearer ${matrixAdminToken.value()}` } }
+      );
+      const existingAvatarUrl = checkResp.ok
+        ? ((await checkResp.json() as { avatar_url?: string }).avatar_url ?? undefined)
+        : undefined;
+      if (!existingAvatarUrl) {
+        try {
+          const mxc = await uploadUrlToMatrixMedia(desiredAvatarUrl, matrixAdminToken.value());
+          await setMatrixAvatarUrl(matrixUserId, mxc, matrixAdminToken.value());
+        } catch (e) {
+          console.warn(`syncFirebaseProfileToMatrix: avatar mxc sync failed for ${matrixUserId}: ${(e as Error).message}`);
         }
       }
-
-      console.log(`Synced profile to Matrix for ${matrixUserId} ("${desiredDisplayName ?? ''}")`);
-
-      return { success: true };
-    } catch (error) {
-      console.error('Error syncing profile to Matrix:', error);
-      throw error;
     }
+
+    console.log(`Synced profile to Matrix for ${matrixUserId} ("${desiredDisplayName ?? ''}")`);
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error syncing profile to Matrix:', error);
+    throw error;
   }
-);
+}
 
 interface DisplayNameRepairEntry {
   matrixUserId: string;

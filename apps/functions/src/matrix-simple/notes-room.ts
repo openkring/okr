@@ -4,7 +4,7 @@
 // (spec 1.104 §3.1–3.2). One room per (person, tenant), created by @bk2-bot, identified
 // solely by its alias `#notes_<tenantId>_<personKey>` — nothing is persisted in Firestore.
 
-import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onCall, HttpsError, type CallableRequest } from 'firebase-functions/v2/https';
 import { getFirestore } from 'firebase-admin/firestore';
 
 import {
@@ -305,6 +305,24 @@ export async function ensureNotesRoom(
 }
 
 /** Resolve (find or create) the caller's «Notizen an mich» room for one of their tenants. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleResolveNotesRoom(request: CallableRequest<any>): Promise<{ roomId: string }> {
+  const uid = await requireProvisionedUser(request, 'resolveNotesRoom');
+  checkRateLimit(uid, 'resolveNotesRoom', 10);
+
+  const tenant = assertCallerTenant(
+    (request.data as { tenantId?: string } | undefined)?.tenantId,
+    await getUserTenants(uid),
+  );
+
+  const userDoc = await getFirestore().collection('users').doc(uid).get();
+  assertNotKioskOnly(userDoc.data()?.['roles'] as Record<string, unknown> | undefined);
+
+  const personKey = await requireUserPersonKey(uid, 'resolveNotesRoom');
+  const roomId = await ensureNotesRoom(tenant, personKey, serverHostname(), matrixAdminToken.value());
+  return { roomId };
+}
+
 export const resolveNotesRoom = onCall(
   {
     cors: true,
@@ -312,20 +330,5 @@ export const resolveNotesRoom = onCall(
     enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
-  async (request): Promise<{ roomId: string }> => {
-    const uid = await requireProvisionedUser(request, 'resolveNotesRoom');
-    checkRateLimit(uid, 'resolveNotesRoom', 10);
-
-    const tenant = assertCallerTenant(
-      (request.data as { tenantId?: string } | undefined)?.tenantId,
-      await getUserTenants(uid),
-    );
-
-    const userDoc = await getFirestore().collection('users').doc(uid).get();
-    assertNotKioskOnly(userDoc.data()?.['roles'] as Record<string, unknown> | undefined);
-
-    const personKey = await requireUserPersonKey(uid, 'resolveNotesRoom');
-    const roomId = await ensureNotesRoom(tenant, personKey, serverHostname(), matrixAdminToken.value());
-    return { roomId };
-  },
+  handleResolveNotesRoom,
 );

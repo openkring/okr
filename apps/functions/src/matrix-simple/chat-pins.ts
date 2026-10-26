@@ -5,7 +5,7 @@
 // Members of bot-created rooms sit at power level 0 and cannot write either state event, so
 // they come here; the bot writes both after checking who may pin.
 
-import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onCall, HttpsError, type CallableRequest } from 'firebase-functions/v2/https';
 import { getFirestore } from 'firebase-admin/firestore';
 
 import {
@@ -147,6 +147,97 @@ function sameExpiry(a: Record<string, unknown>, b: Record<string, unknown>): boo
  * Write order: for `pin` the expiry FIRST, then `pinned` — a failed second write leaves an unused
  * expiry entry, never a permanent pin. For `unpin`/`cleanup` `pinned` first, then the pruned expiry.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleSetChatPins(request: CallableRequest<any>): Promise<{ pinned: string[] }> {
+  const uid = await requireProvisionedUser(request, 'setChatPins');
+  checkRateLimit(uid, 'setChatPins', 30);
+
+  const { roomId, op, eventId, until } = request.data as {
+    roomId?: string; op?: string; eventId?: string; until?: number | null;
+  };
+  const room = requireParam(roomId, 'roomId', 255);
+  if (op !== 'pin' && op !== 'unpin' && op !== 'cleanup') {
+    throw new HttpsError('invalid-argument', 'op must be pin, unpin or cleanup');
+  }
+  const event = op === 'cleanup' ? undefined : requireParam(eventId, 'eventId', 255);
+  if (until !== undefined && !validUntil(until)) {
+    throw new HttpsError('invalid-argument', 'until must be null or a timestamp in ms');
+  }
+
+  const adminToken = matrixAdminToken.value();
+  await requireRoomInTenant(room, uid, 'setChatPins', adminToken);
+
+  const personKey = await requireUserPersonKey(uid, 'setChatPins');
+  const callerMatrixId = `@${personKey.toLowerCase()}:${serverHostname()}`;
+  let members: Set<string>;
+  try {
+    members = await getJoinedMemberIds(room, adminToken);
+  } catch (e) {
+    console.error('setChatPins: member lookup failed', e);
+    throw new HttpsError('unavailable', 'Room members could not be read.');
+  }
+  if (!members.has(callerMatrixId)) {
+    throw new HttpsError('permission-denied', 'Only members of the room may change its pins.');
+  }
+
+  let mayPin = false;
+  if (op !== 'cleanup') {
+    const db = getFirestore();
+    const groups = await db.collection('groups').where('matrixRoomId', '==', room).limit(1).get();
+    let group = groups.empty ? undefined : groups.docs[0].data();
+    if (!group) {
+      // No matrixRoomId on the group doc (older rooms): fall back to the canonical alias, as the client does.
+      const aliasKey = groupKeyOfRoomAlias((await getRoomSummary(room, adminToken))?.canonicalAlias, serverHostname());
+      const doc = aliasKey ? await db.collection('groups').doc(aliasKey).get() : undefined;
+      group = doc?.exists ? doc.data() : undefined;
+    }
+    const kind = group ? pinKindOfGroup(group['kind']) : 'other';
+    const isGroupAdmin = Array.isArray(group?.['admins']) &&
+      (group['admins'] as { key?: string }[]).some((a) => a?.key === personKey);
+    mayPin = mayPinForAll(kind, await getCallerRoles(uid), isGroupAdmin);
+  }
+
+  await ensureAdminInRoom(room, adminToken);
+  let current: { pinned: string[]; expiry: Record<string, unknown> };
+  try {
+    const pinnedContent = await getRoomStateContent(room, MATRIX_PINNED_EVENTS, adminToken);
+    const rawPinned = pinnedContent?.['pinned'];
+    current = {
+      pinned: Array.isArray(rawPinned) ? rawPinned.filter((id): id is string => typeof id === 'string') : [],
+      expiry: (await getRoomStateContent(room, OKR_PIN_EXPIRY_EVENT, adminToken)) ?? {},
+    };
+  } catch (e) {
+    // Never write after a failed read: «unreadable» must not become «no pins».
+    console.error('setChatPins: reading the pin state failed', e);
+    throw new HttpsError('unavailable', 'The pins could not be read.');
+  }
+
+  const now = Date.now();
+  const next = applyPinOp(current.pinned, current.expiry, op, event, until, now, mayPin);
+
+  if (op === 'pin' && event && !(await roomEventExists(room, event, adminToken).catch(() => false))) {
+    throw new HttpsError('not-found', 'Message not found.');
+  }
+
+  const pinnedChanged = !sameStrings(next.pinned, current.pinned);
+  const expiryChanged = !sameExpiry(next.expiry, current.expiry);
+  try {
+    if (op === 'pin') {
+      if (expiryChanged) await putRoomStateContent(room, OKR_PIN_EXPIRY_EVENT, next.expiry, adminToken);
+      if (pinnedChanged) await putRoomStateContent(room, MATRIX_PINNED_EVENTS, { pinned: next.pinned }, adminToken);
+    } else {
+      if (pinnedChanged) await putRoomStateContent(room, MATRIX_PINNED_EVENTS, { pinned: next.pinned }, adminToken);
+      if (expiryChanged) await putRoomStateContent(room, OKR_PIN_EXPIRY_EVENT, next.expiry, adminToken);
+    }
+  } catch (e) {
+    console.error('setChatPins: writing the pin state failed', e);
+    throw new HttpsError('internal', 'The pins could not be saved.');
+  }
+
+  console.log(`setChatPins: ${op} in ${room} by ${personKey} → ${next.pinned.length} pinned`);
+  return { pinned: next.pinned };
+}
+
 export const setChatPins = onCall(
   {
     cors: true,
@@ -154,93 +245,5 @@ export const setChatPins = onCall(
     enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
-  async (request): Promise<{ pinned: string[] }> => {
-    const uid = await requireProvisionedUser(request, 'setChatPins');
-    checkRateLimit(uid, 'setChatPins', 30);
-
-    const { roomId, op, eventId, until } = request.data as {
-      roomId?: string; op?: string; eventId?: string; until?: number | null;
-    };
-    const room = requireParam(roomId, 'roomId', 255);
-    if (op !== 'pin' && op !== 'unpin' && op !== 'cleanup') {
-      throw new HttpsError('invalid-argument', 'op must be pin, unpin or cleanup');
-    }
-    const event = op === 'cleanup' ? undefined : requireParam(eventId, 'eventId', 255);
-    if (until !== undefined && !validUntil(until)) {
-      throw new HttpsError('invalid-argument', 'until must be null or a timestamp in ms');
-    }
-
-    const adminToken = matrixAdminToken.value();
-    await requireRoomInTenant(room, uid, 'setChatPins', adminToken);
-
-    const personKey = await requireUserPersonKey(uid, 'setChatPins');
-    const callerMatrixId = `@${personKey.toLowerCase()}:${serverHostname()}`;
-    let members: Set<string>;
-    try {
-      members = await getJoinedMemberIds(room, adminToken);
-    } catch (e) {
-      console.error('setChatPins: member lookup failed', e);
-      throw new HttpsError('unavailable', 'Room members could not be read.');
-    }
-    if (!members.has(callerMatrixId)) {
-      throw new HttpsError('permission-denied', 'Only members of the room may change its pins.');
-    }
-
-    let mayPin = false;
-    if (op !== 'cleanup') {
-      const db = getFirestore();
-      const groups = await db.collection('groups').where('matrixRoomId', '==', room).limit(1).get();
-      let group = groups.empty ? undefined : groups.docs[0].data();
-      if (!group) {
-        // No matrixRoomId on the group doc (older rooms): fall back to the canonical alias, as the client does.
-        const aliasKey = groupKeyOfRoomAlias((await getRoomSummary(room, adminToken))?.canonicalAlias, serverHostname());
-        const doc = aliasKey ? await db.collection('groups').doc(aliasKey).get() : undefined;
-        group = doc?.exists ? doc.data() : undefined;
-      }
-      const kind = group ? pinKindOfGroup(group['kind']) : 'other';
-      const isGroupAdmin = Array.isArray(group?.['admins']) &&
-        (group['admins'] as { key?: string }[]).some((a) => a?.key === personKey);
-      mayPin = mayPinForAll(kind, await getCallerRoles(uid), isGroupAdmin);
-    }
-
-    await ensureAdminInRoom(room, adminToken);
-    let current: { pinned: string[]; expiry: Record<string, unknown> };
-    try {
-      const pinnedContent = await getRoomStateContent(room, MATRIX_PINNED_EVENTS, adminToken);
-      const rawPinned = pinnedContent?.['pinned'];
-      current = {
-        pinned: Array.isArray(rawPinned) ? rawPinned.filter((id): id is string => typeof id === 'string') : [],
-        expiry: (await getRoomStateContent(room, OKR_PIN_EXPIRY_EVENT, adminToken)) ?? {},
-      };
-    } catch (e) {
-      // Never write after a failed read: «unreadable» must not become «no pins».
-      console.error('setChatPins: reading the pin state failed', e);
-      throw new HttpsError('unavailable', 'The pins could not be read.');
-    }
-
-    const now = Date.now();
-    const next = applyPinOp(current.pinned, current.expiry, op, event, until, now, mayPin);
-
-    if (op === 'pin' && event && !(await roomEventExists(room, event, adminToken).catch(() => false))) {
-      throw new HttpsError('not-found', 'Message not found.');
-    }
-
-    const pinnedChanged = !sameStrings(next.pinned, current.pinned);
-    const expiryChanged = !sameExpiry(next.expiry, current.expiry);
-    try {
-      if (op === 'pin') {
-        if (expiryChanged) await putRoomStateContent(room, OKR_PIN_EXPIRY_EVENT, next.expiry, adminToken);
-        if (pinnedChanged) await putRoomStateContent(room, MATRIX_PINNED_EVENTS, { pinned: next.pinned }, adminToken);
-      } else {
-        if (pinnedChanged) await putRoomStateContent(room, MATRIX_PINNED_EVENTS, { pinned: next.pinned }, adminToken);
-        if (expiryChanged) await putRoomStateContent(room, OKR_PIN_EXPIRY_EVENT, next.expiry, adminToken);
-      }
-    } catch (e) {
-      console.error('setChatPins: writing the pin state failed', e);
-      throw new HttpsError('internal', 'The pins could not be saved.');
-    }
-
-    console.log(`setChatPins: ${op} in ${room} by ${personKey} → ${next.pinned.length} pinned`);
-    return { pinned: next.pinned };
-  }
+  handleSetChatPins,
 );

@@ -20,6 +20,7 @@ import * as MatrixSimple from './matrix-simple';
 import * as MatrixMembershipSync from './matrix-simple/membership-sync';
 import * as MatrixPostPolicy from './matrix-simple/post-policy-sync';
 import * as MatrixAdmin from './matrix-simple/matrix-admin';
+import * as MatrixUser from './matrix-simple/matrix-user';
 import * as Rag from './rag';
 import * as Ocr from './ocr';
 import * as Vectorize from './vectorize';
@@ -115,7 +116,6 @@ export const onAppConfigChange = Replication.onAppConfigChange;
 
 // matrix-simple (Simpler Firebase → Matrix token exchange)
 export const getMatrixCredentials = MatrixSimple.getMatrixCredentials;
-export const syncFirebaseProfileToMatrix = MatrixSimple.syncFirebaseProfileToMatrix;
 export const requestGroupRoomAccess = MatrixSimple.requestGroupRoomAccess;
 export const provisionMatrixUser = MatrixSimple.provisionMatrixUser;
 export const renameMatrixRoom = MatrixSimple.renameMatrixRoom;
@@ -165,6 +165,8 @@ export const reconcileGroupRoomMembers = MatrixMembershipSync.reconcileGroupRoom
 export const syncRoomPostPolicy = MatrixPostPolicy.syncRoomPostPolicy;
 // matrixAdmin: one router callable for the 19 Matrix admin callables above, which stay as aliases (TOC 3.41 A1)
 export const matrixAdmin = MatrixAdmin.matrixAdmin;
+// matrixUser: one router callable for 16 user-facing chat callables above (aliases) plus syncFirebaseProfileToMatrix (op only, no export) (TOC 3.41 A2)
+export const matrixUser = MatrixUser.matrixUser;
 // group-room drift: report room members without a membership, and prune them on demand
 export const auditGroupRoomMembers = MatrixMembershipSync.auditGroupRoomMembers;
 export const pruneGroupRoomExtras = MatrixMembershipSync.pruneGroupRoomExtras;

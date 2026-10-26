@@ -47,6 +47,83 @@ const KIOSK_ADMIN_POWER_LEVEL = 100;
  * Call this from the client whenever the user opens a group chat tab and the
  * room is not yet in their joined-rooms list.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleRequestGroupRoomAccess(request: CallableRequest<any>): Promise<{ roomId: string; joined: boolean }> {
+  const firebaseUid = request.auth?.uid;
+  if (!firebaseUid) {
+    throw new HttpsError('unauthenticated', 'Not authenticated with Firebase');
+  }
+
+  const { groupId } = request.data as { groupId: string };
+  if (!groupId) {
+    throw new HttpsError('invalid-argument', 'groupId is required');
+  }
+
+  // Authorization: the only requirement for group-chat access is being a provisioned
+  // system user. Group chats legitimately include non-members and past-members (e.g.
+  // training-course participants), so membership is NOT required. SEC-1 (invite-only
+  // rooms) ensures non-system Matrix accounts still cannot reach the room.
+  // SEC-3: the localpart MUST come from the personKey — no UID fallback, or this
+  // becomes a second avenue for duplicate `@<uid>` accounts (S1).
+  checkRateLimit(firebaseUid, 'requestGroupRoomAccess', 30);
+  // Raw (case-sensitive) key for Firestore lookups, lowercased for the Matrix localpart.
+  const personKey = await requireUserPersonKey(firebaseUid, 'requestGroupRoomAccess');
+  const localpart = personKey.toLowerCase();
+
+  const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
+  const matrixUserId = `@${localpart}:${hostname}`;
+  const adminToken = matrixAdminToken.value();
+
+  console.log(`requestGroupRoomAccess: uid=${firebaseUid}, matrixUserId=${matrixUserId}, groupId=${groupId}`);
+
+  // Ensure the Matrix account exists (first chat access provisions it)
+  await ensureMatrixUserExists(matrixUserId, adminToken, { firebaseUid });
+
+  // `chatMode` decides what a NON-member gets (members always land in the shared room):
+  //  - 'shared'  (default): force-joined into the group room — open, topical rooms.
+  //  - 'ask':    their own room with the whole group — reachable by all, confidential
+  //              per requester (Notfall, Support, Vorstand, Kommissionen).
+  //  - 'members': refused. The room mirrors the member list exactly (a boat crew).
+  //
+  // 'shared' and 'ask' admit non-members PERMANENTLY — nothing here or elsewhere ever
+  // removes them again, which is why a group room drifts from its member list. That is
+  // deliberate for course participants; 'members' is the opt-out for groups where it is not.
+  //
+  // 'members' groups are closed and need the explicit permission check below — the room
+  // resolution further down (`resolveChatRoomForPerson`) never denies access, it only
+  // picks which room a member/admin lands in.
+  const groupData = (await getFirestore().collection('groups').doc(groupId).get()).data();
+  const chatMode = (groupData?.['chatMode'] as string) ?? 'shared';
+  if (chatMode === 'members') {
+    const memberKeys = await activeGroupMemberKeys(groupId);
+    // A group admin without a membership must not be locked out of their own group's chat.
+    const admins = (groupData?.['admins'] ?? []) as Array<{ key?: string }>;
+    const isMember =
+      memberKeys.some((k) => k.toLowerCase() === localpart) ||
+      admins.some((a) => a.key?.toLowerCase() === localpart);
+    if (!isMember) {
+      console.warn(`requestGroupRoomAccess: ${matrixUserId} has no membership in closed group ${groupId}`);
+      throw new HttpsError('permission-denied', `Group ${groupId} is members-only.`);
+    }
+  }
+
+  const roomId = await resolveChatRoomForPerson(groupId, personKey, hostname, adminToken, { create: true });
+  if (!roomId) throw new HttpsError('not-found', `No room for group ${groupId}`);
+
+  // Steps 3-6 (provision, get the admin in, invite, force-join) are shared with the
+  // workflow outbox's openChat action — see ensurePersonInRoom.
+  try {
+    await ensurePersonInRoom(roomId, personKey, hostname, adminToken);
+  } catch (error) {
+    const errText = error instanceof Error ? error.message : String(error);
+    console.error(`requestGroupRoomAccess: Admin join failed for ${matrixUserId} in room ${roomId}: ${errText}`);
+    throw new HttpsError('internal', `Room access denied for group ${groupId}: ${errText}`);
+  }
+
+  console.log(`requestGroupRoomAccess: User ${matrixUserId} joined room ${roomId} for group ${groupId}`);
+  return { roomId, joined: true };
+}
+
 export const requestGroupRoomAccess = onCall(
   {
     cors: true,
@@ -54,81 +131,7 @@ export const requestGroupRoomAccess = onCall(
     enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
-  async (request): Promise<{ roomId: string; joined: boolean }> => {
-    const firebaseUid = request.auth?.uid;
-    if (!firebaseUid) {
-      throw new HttpsError('unauthenticated', 'Not authenticated with Firebase');
-    }
-
-    const { groupId } = request.data as { groupId: string };
-    if (!groupId) {
-      throw new HttpsError('invalid-argument', 'groupId is required');
-    }
-
-    // Authorization: the only requirement for group-chat access is being a provisioned
-    // system user. Group chats legitimately include non-members and past-members (e.g.
-    // training-course participants), so membership is NOT required. SEC-1 (invite-only
-    // rooms) ensures non-system Matrix accounts still cannot reach the room.
-    // SEC-3: the localpart MUST come from the personKey — no UID fallback, or this
-    // becomes a second avenue for duplicate `@<uid>` accounts (S1).
-    checkRateLimit(firebaseUid, 'requestGroupRoomAccess', 30);
-    // Raw (case-sensitive) key for Firestore lookups, lowercased for the Matrix localpart.
-    const personKey = await requireUserPersonKey(firebaseUid, 'requestGroupRoomAccess');
-    const localpart = personKey.toLowerCase();
-
-    const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
-    const matrixUserId = `@${localpart}:${hostname}`;
-    const adminToken = matrixAdminToken.value();
-
-    console.log(`requestGroupRoomAccess: uid=${firebaseUid}, matrixUserId=${matrixUserId}, groupId=${groupId}`);
-
-    // Ensure the Matrix account exists (first chat access provisions it)
-    await ensureMatrixUserExists(matrixUserId, adminToken, { firebaseUid });
-
-    // `chatMode` decides what a NON-member gets (members always land in the shared room):
-    //  - 'shared'  (default): force-joined into the group room — open, topical rooms.
-    //  - 'ask':    their own room with the whole group — reachable by all, confidential
-    //              per requester (Notfall, Support, Vorstand, Kommissionen).
-    //  - 'members': refused. The room mirrors the member list exactly (a boat crew).
-    //
-    // 'shared' and 'ask' admit non-members PERMANENTLY — nothing here or elsewhere ever
-    // removes them again, which is why a group room drifts from its member list. That is
-    // deliberate for course participants; 'members' is the opt-out for groups where it is not.
-    //
-    // 'members' groups are closed and need the explicit permission check below — the room
-    // resolution further down (`resolveChatRoomForPerson`) never denies access, it only
-    // picks which room a member/admin lands in.
-    const groupData = (await getFirestore().collection('groups').doc(groupId).get()).data();
-    const chatMode = (groupData?.['chatMode'] as string) ?? 'shared';
-    if (chatMode === 'members') {
-      const memberKeys = await activeGroupMemberKeys(groupId);
-      // A group admin without a membership must not be locked out of their own group's chat.
-      const admins = (groupData?.['admins'] ?? []) as Array<{ key?: string }>;
-      const isMember =
-        memberKeys.some((k) => k.toLowerCase() === localpart) ||
-        admins.some((a) => a.key?.toLowerCase() === localpart);
-      if (!isMember) {
-        console.warn(`requestGroupRoomAccess: ${matrixUserId} has no membership in closed group ${groupId}`);
-        throw new HttpsError('permission-denied', `Group ${groupId} is members-only.`);
-      }
-    }
-
-    const roomId = await resolveChatRoomForPerson(groupId, personKey, hostname, adminToken, { create: true });
-    if (!roomId) throw new HttpsError('not-found', `No room for group ${groupId}`);
-
-    // Steps 3-6 (provision, get the admin in, invite, force-join) are shared with the
-    // workflow outbox's openChat action — see ensurePersonInRoom.
-    try {
-      await ensurePersonInRoom(roomId, personKey, hostname, adminToken);
-    } catch (error) {
-      const errText = error instanceof Error ? error.message : String(error);
-      console.error(`requestGroupRoomAccess: Admin join failed for ${matrixUserId} in room ${roomId}: ${errText}`);
-      throw new HttpsError('internal', `Room access denied for group ${groupId}: ${errText}`);
-    }
-
-    console.log(`requestGroupRoomAccess: User ${matrixUserId} joined room ${roomId} for group ${groupId}`);
-    return { roomId, joined: true };
-  }
+  handleRequestGroupRoomAccess,
 );
 
 /**
@@ -137,6 +140,36 @@ export const requestGroupRoomAccess = onCall(
  * gets access to the group chat immediately without having to open the chat tab first.
  * Provisions the Matrix user account if it doesn't exist yet.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleInvitePersonToGroupRoom(request: CallableRequest<any>): Promise<{ roomId: string; joined: boolean }> {
+  // Group-membership management — performed by member/group admins.
+  await requireRole(request, 'invitePersonToGroupRoom', ['admin', 'memberAdmin', 'groupAdmin']);
+
+  const { groupId, personKey } = request.data as { groupId: string; personKey: string };
+  requireParam(groupId, 'groupId');
+  requireParam(personKey, 'personKey');
+
+  const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
+  const matrixUserId = `@${personKey.toLowerCase()}:${hostname}`;
+  const adminToken = matrixAdminToken.value();
+
+  console.log(`invitePersonToGroupRoom: groupId=${groupId}, personKey=${personKey}, matrixUserId=${matrixUserId}`);
+
+  // Step 1: Provision the Matrix user if needed
+  await ensureMatrixUserExists(matrixUserId, adminToken, { personKey });
+
+  // Step 2: Resolve (or create) the group's room — single source of truth (fixes S5)
+  const roomId = await resolveGroupRoom(groupId, hostname, adminToken, { create: true });
+  if (!roomId) throw new HttpsError('internal', `No room for group ${groupId}`);
+
+  // Step 3: Ensure admin is in the room, then force-join the person (ARCH-5 helpers)
+  await ensureAdminInRoom(roomId, adminToken);
+  await forceJoinUserToRoom(roomId, matrixUserId, adminToken);
+
+  console.log(`invitePersonToGroupRoom: ${matrixUserId} joined room ${roomId}`);
+  return { roomId, joined: true };
+}
+
 export const invitePersonToGroupRoom = onCall(
   {
     cors: true,
@@ -144,40 +177,42 @@ export const invitePersonToGroupRoom = onCall(
     enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
-  async (request): Promise<{ roomId: string; joined: boolean }> => {
-    // Group-membership management — performed by member/group admins.
-    await requireRole(request, 'invitePersonToGroupRoom', ['admin', 'memberAdmin', 'groupAdmin']);
-
-    const { groupId, personKey } = request.data as { groupId: string; personKey: string };
-    requireParam(groupId, 'groupId');
-    requireParam(personKey, 'personKey');
-
-    const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
-    const matrixUserId = `@${personKey.toLowerCase()}:${hostname}`;
-    const adminToken = matrixAdminToken.value();
-
-    console.log(`invitePersonToGroupRoom: groupId=${groupId}, personKey=${personKey}, matrixUserId=${matrixUserId}`);
-
-    // Step 1: Provision the Matrix user if needed
-    await ensureMatrixUserExists(matrixUserId, adminToken, { personKey });
-
-    // Step 2: Resolve (or create) the group's room — single source of truth (fixes S5)
-    const roomId = await resolveGroupRoom(groupId, hostname, adminToken, { create: true });
-    if (!roomId) throw new HttpsError('internal', `No room for group ${groupId}`);
-
-    // Step 3: Ensure admin is in the room, then force-join the person (ARCH-5 helpers)
-    await ensureAdminInRoom(roomId, adminToken);
-    await forceJoinUserToRoom(roomId, matrixUserId, adminToken);
-
-    console.log(`invitePersonToGroupRoom: ${matrixUserId} joined room ${roomId}`);
-    return { roomId, joined: true };
-  }
+  handleInvitePersonToGroupRoom,
 );
 
 /**
  * Remove a specific person (by personKey) from the Matrix room of a group.
  * Called when a group membership is ended so the member loses access to the group chat.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleKickPersonFromGroupRoom(request: CallableRequest<any>): Promise<{ roomId: string; kicked: boolean }> {
+  // Group-membership management — performed by member/group admins.
+  await requireRole(request, 'kickPersonFromGroupRoom', ['admin', 'memberAdmin', 'groupAdmin']);
+
+  const { groupId, personKey } = request.data as { groupId: string; personKey: string };
+  requireParam(groupId, 'groupId');
+  requireParam(personKey, 'personKey');
+
+  const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
+  const matrixUserId = `@${personKey.toLowerCase()}:${hostname}`;
+  const adminToken = matrixAdminToken.value();
+
+  console.log(`kickPersonFromGroupRoom: groupId=${groupId}, personKey=${personKey}, matrixUserId=${matrixUserId}`);
+
+  // Step 1: Resolve the group's room (do not create — nothing to kick from if absent)
+  const roomId = await resolveGroupRoom(groupId, hostname, adminToken, { create: false });
+  if (!roomId) {
+    console.warn(`kickPersonFromGroupRoom: No room found for group "${groupId}", nothing to kick from`);
+    return { roomId: '', kicked: false };
+  }
+
+  // Step 2: Ensure admin is in the room, then kick (ARCH-5 helpers; M_NOT_IN_ROOM tolerated)
+  await ensureAdminInRoom(roomId, adminToken);
+  const kicked = await kickUserFromRoom(roomId, matrixUserId, adminToken, 'Membership ended');
+  console.log(`kickPersonFromGroupRoom: ${matrixUserId} ${kicked ? 'kicked from' : 'was not in'} room ${roomId}`);
+  return { roomId, kicked };
+}
+
 export const kickPersonFromGroupRoom = onCall(
   {
     cors: true,
@@ -185,33 +220,7 @@ export const kickPersonFromGroupRoom = onCall(
     enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
-  async (request): Promise<{ roomId: string; kicked: boolean }> => {
-    // Group-membership management — performed by member/group admins.
-    await requireRole(request, 'kickPersonFromGroupRoom', ['admin', 'memberAdmin', 'groupAdmin']);
-
-    const { groupId, personKey } = request.data as { groupId: string; personKey: string };
-    requireParam(groupId, 'groupId');
-    requireParam(personKey, 'personKey');
-
-    const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
-    const matrixUserId = `@${personKey.toLowerCase()}:${hostname}`;
-    const adminToken = matrixAdminToken.value();
-
-    console.log(`kickPersonFromGroupRoom: groupId=${groupId}, personKey=${personKey}, matrixUserId=${matrixUserId}`);
-
-    // Step 1: Resolve the group's room (do not create — nothing to kick from if absent)
-    const roomId = await resolveGroupRoom(groupId, hostname, adminToken, { create: false });
-    if (!roomId) {
-      console.warn(`kickPersonFromGroupRoom: No room found for group "${groupId}", nothing to kick from`);
-      return { roomId: '', kicked: false };
-    }
-
-    // Step 2: Ensure admin is in the room, then kick (ARCH-5 helpers; M_NOT_IN_ROOM tolerated)
-    await ensureAdminInRoom(roomId, adminToken);
-    const kicked = await kickUserFromRoom(roomId, matrixUserId, adminToken, 'Membership ended');
-    console.log(`kickPersonFromGroupRoom: ${matrixUserId} ${kicked ? 'kicked from' : 'was not in'} room ${roomId}`);
-    return { roomId, kicked };
-  }
+  handleKickPersonFromGroupRoom,
 );
 
 /**

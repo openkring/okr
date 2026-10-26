@@ -15,7 +15,7 @@
 //  - der Client schreibt damit gar nicht nach `groups`, und die offene Schreibregel
 //    (TOC 2.105) kann verschaerft werden, ohne diesen Weg zu brechen.
 
-import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onCall, HttpsError, type CallableRequest } from 'firebase-functions/v2/https';
 import { getFirestore } from 'firebase-admin/firestore';
 
 import { DateFormat, getTodayStr, isActiveMembership } from '@okr/shared-util-core';
@@ -92,6 +92,158 @@ type PersonRow = { okey: string; firstName: string; lastName: string };
  * (`M_ROOM_IN_USE` ist auf dem Erzeugungspfad nicht behandelt). Mit persistierter
  * `matrixRoomId` nimmt der Trigger die schnelle Spur und tritt nur noch bei.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleCreateAdhocChat(request: CallableRequest<any>): Promise<{ groupKey: string; roomId: string; name: string }> {
+  const uid = await requireProvisionedUser(request, 'createAdhocChat');
+  checkRateLimit(uid, 'createAdhocChat', 5);
+
+  const { name, personKeys, tenantId } = request.data as {
+    name?: string;
+    personKeys?: string[];
+    tenantId?: string;
+  };
+  const tenant = requireParam(tenantId, 'tenantId', 50);
+  if (!Array.isArray(personKeys) || personKeys.length === 0) {
+    throw new HttpsError('invalid-argument', 'personKeys is required');
+  }
+  if (typeof name === 'string' && name.length > 50) {
+    throw new HttpsError('invalid-argument', 'name exceeds maximum length of 50');
+  }
+
+  // Der Mandant muss einer der eigenen sein — sonst legte jemand einen Chat in einem
+  // fremden Verein an, den dessen Mitglieder in ihrer Liste saehen.
+  const callerTenants = await getUserTenants(uid);
+  if (!callerTenants.includes(tenant)) {
+    throw new HttpsError('permission-denied', 'Not a member of this tenant.');
+  }
+
+  const creatorKey = await requireUserPersonKey(uid, 'createAdhocChat');
+  const memberKeys = [...new Set([creatorKey, ...personKeys])];
+  if (memberKeys.length < 2) {
+    throw new HttpsError('invalid-argument', 'A chat needs at least one other person.');
+  }
+  if (memberKeys.length > ADHOC_CHAT_MAX_MEMBERS) {
+    throw new HttpsError('invalid-argument', `A chat may have at most ${ADHOC_CHAT_MAX_MEMBERS} members.`);
+  }
+
+  const db = getFirestore();
+
+  // Jede eingeladene Person muss im selben Mandanten gefuehrt sein. Das ist die einzige
+  // serverseitige Schranke dagegen, jemanden aus einem fremden Verein in einen Chat zu
+  // ziehen — der Client filtert die Auswahlliste, aber der Client entscheidet nichts.
+  const persons: PersonRow[] = [];
+  for (const key of memberKeys) {
+    const snap = await db.collection('persons').doc(key).get();
+    const data = snap.data();
+    if (!snap.exists || !data) {
+      throw new HttpsError('not-found', `Person ${key} not found`);
+    }
+    if (!((data['tenants'] ?? []) as string[]).includes(tenant)) {
+      throw new HttpsError('permission-denied', `Person ${key} does not belong to this tenant.`);
+    }
+    persons.push({
+      okey: key,
+      firstName: (data['firstName'] as string) ?? '',
+      lastName: (data['lastName'] as string) ?? '',
+    });
+  }
+
+  const chatName = (name ?? '').trim() ||
+    deriveAdhocChatName(persons.filter((p) => p.okey !== creatorKey).map((p) => p.firstName));
+
+  // Freien Zufallsschluessel suchen. Bei 36^10 Moeglichkeiten ist eine Kollision
+  // theoretisch; die Schleife kostet nichts und schliesst sie aus.
+  let groupKey = '';
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const candidate = adhocChatKey(tenant, randomKeyPart());
+    if (!(await db.collection('groups').doc(candidate).get()).exists) {
+      groupKey = candidate;
+      break;
+    }
+  }
+  if (!groupKey) throw new HttpsError('internal', 'Could not allocate a chat key.');
+
+  const creator = persons.find((p) => p.okey === creatorKey);
+
+  const admins = creator
+    ? [{
+        key: creator.okey,
+        name1: creator.firstName,
+        name2: creator.lastName,
+        modelType: 'person',
+        type: '',
+        subType: '',
+        label: '',
+      }]
+    : [];
+
+  // Schritt 1: das Gruppendokument. `kind: 'chat'` haelt es aus jeder Gruppenoberflaeche
+  // heraus, `chatMode: 'members'` weist Nicht-Mitglieder am Raum ab.
+  await db.collection('groups').doc(groupKey).set({
+    name: chatName,
+    kind: 'chat',
+    notes: '',
+    tags: '',
+    icon: 'group',
+    hasContent: false,
+    hasChat: true,
+    hasCalendar: false,
+    hasTasks: false,
+    hasFiles: false,
+    filesFolder: '',
+    hasMembers: false,
+    matrixRoomId: '',
+    admins,
+    // written with admins so the creator can archive at once (rules test adminKeys); the
+    // adminKeys handler of onGroupDocWritten finds it equal and does not write again.
+    adminKeys: groupAdminKeys(admins),
+    parentKey: tenant,
+    parentName: '',
+    parentModelType: 'org',
+    visibility: '',
+    notifyType: 'memberOnly',
+    chatMode: 'members',
+    postPolicy: 'all',
+    tenants: [tenant],
+    isArchived: false,
+    index: `n:${chatName} k:${groupKey}`,
+  });
+
+  const hostname = serverHostname();
+  const adminToken = matrixAdminToken.value();
+
+  // Schritt 2: Raum anlegen (Alias + Tenant-Marker kommen aus resolveGroupRoom) und den
+  // Anzeigenamen setzen — der Raum hiesse sonst nach dem Zufallsschluessel (Spec §2).
+  const roomId = await resolveGroupRoom(groupKey, hostname, adminToken, { create: true });
+  if (!roomId) throw new HttpsError('internal', `No room for chat ${groupKey}`);
+  await ensureAdminInRoom(roomId, adminToken);
+  await setRoomName(roomId, chatName, adminToken);
+  // Wer spaeter dazukommt, liest ab dem Beitritt mit — nicht, was vorher geschrieben
+  // wurde. Die Matrix-Vorgabe des `private_chat`-Presets waere `shared`, also der ganze
+  // Verlauf; in einem privaten Chat, den Mitglieder selbst zusammenstellen, ist das die
+  // falsche Vorgabe (Spec §10.2). Gruppenraeume bleiben unberuehrt: das steht hier und
+  // nicht in resolveGroupRoom.
+  await setHistoryVisibility(roomId, 'joined', adminToken);
+
+  // Schritt 3: Mitgliedschaften — sie tragen den Zwangsbeitritt (und spaeter das
+  // Verlassen). Der Beitritt geschieht hier zusaetzlich direkt, damit der Chat sofort
+  // benutzbar ist und nicht auf den Trigger wartet; beides ist idempotent.
+  const batch = db.batch();
+  for (const person of persons) {
+    batch.set(db.collection('memberships').doc(), adhocMembershipDoc(person, groupKey, chatName, tenant));
+  }
+  await batch.commit();
+
+  for (const person of persons) {
+    const matrixUserId = `@${person.okey.toLowerCase()}:${hostname}`;
+    await ensureMatrixUserExists(matrixUserId, adminToken, { personKey: person.okey });
+    await forceJoinUserToRoom(roomId, matrixUserId, adminToken);
+  }
+
+  console.log(`createAdhocChat: ${groupKey} ("${chatName}") with ${persons.length} members in room ${roomId}`);
+  return { groupKey, roomId, name: chatName };
+}
+
 export const createAdhocChat = onCall(
   {
     cors: true,
@@ -99,156 +251,7 @@ export const createAdhocChat = onCall(
     enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
-  async (request): Promise<{ groupKey: string; roomId: string; name: string }> => {
-    const uid = await requireProvisionedUser(request, 'createAdhocChat');
-    checkRateLimit(uid, 'createAdhocChat', 5);
-
-    const { name, personKeys, tenantId } = request.data as {
-      name?: string;
-      personKeys?: string[];
-      tenantId?: string;
-    };
-    const tenant = requireParam(tenantId, 'tenantId', 50);
-    if (!Array.isArray(personKeys) || personKeys.length === 0) {
-      throw new HttpsError('invalid-argument', 'personKeys is required');
-    }
-    if (typeof name === 'string' && name.length > 50) {
-      throw new HttpsError('invalid-argument', 'name exceeds maximum length of 50');
-    }
-
-    // Der Mandant muss einer der eigenen sein — sonst legte jemand einen Chat in einem
-    // fremden Verein an, den dessen Mitglieder in ihrer Liste saehen.
-    const callerTenants = await getUserTenants(uid);
-    if (!callerTenants.includes(tenant)) {
-      throw new HttpsError('permission-denied', 'Not a member of this tenant.');
-    }
-
-    const creatorKey = await requireUserPersonKey(uid, 'createAdhocChat');
-    const memberKeys = [...new Set([creatorKey, ...personKeys])];
-    if (memberKeys.length < 2) {
-      throw new HttpsError('invalid-argument', 'A chat needs at least one other person.');
-    }
-    if (memberKeys.length > ADHOC_CHAT_MAX_MEMBERS) {
-      throw new HttpsError('invalid-argument', `A chat may have at most ${ADHOC_CHAT_MAX_MEMBERS} members.`);
-    }
-
-    const db = getFirestore();
-
-    // Jede eingeladene Person muss im selben Mandanten gefuehrt sein. Das ist die einzige
-    // serverseitige Schranke dagegen, jemanden aus einem fremden Verein in einen Chat zu
-    // ziehen — der Client filtert die Auswahlliste, aber der Client entscheidet nichts.
-    const persons: PersonRow[] = [];
-    for (const key of memberKeys) {
-      const snap = await db.collection('persons').doc(key).get();
-      const data = snap.data();
-      if (!snap.exists || !data) {
-        throw new HttpsError('not-found', `Person ${key} not found`);
-      }
-      if (!((data['tenants'] ?? []) as string[]).includes(tenant)) {
-        throw new HttpsError('permission-denied', `Person ${key} does not belong to this tenant.`);
-      }
-      persons.push({
-        okey: key,
-        firstName: (data['firstName'] as string) ?? '',
-        lastName: (data['lastName'] as string) ?? '',
-      });
-    }
-
-    const chatName = (name ?? '').trim() ||
-      deriveAdhocChatName(persons.filter((p) => p.okey !== creatorKey).map((p) => p.firstName));
-
-    // Freien Zufallsschluessel suchen. Bei 36^10 Moeglichkeiten ist eine Kollision
-    // theoretisch; die Schleife kostet nichts und schliesst sie aus.
-    let groupKey = '';
-    for (let attempt = 0; attempt < 5; attempt++) {
-      const candidate = adhocChatKey(tenant, randomKeyPart());
-      if (!(await db.collection('groups').doc(candidate).get()).exists) {
-        groupKey = candidate;
-        break;
-      }
-    }
-    if (!groupKey) throw new HttpsError('internal', 'Could not allocate a chat key.');
-
-    const creator = persons.find((p) => p.okey === creatorKey);
-
-    const admins = creator
-      ? [{
-          key: creator.okey,
-          name1: creator.firstName,
-          name2: creator.lastName,
-          modelType: 'person',
-          type: '',
-          subType: '',
-          label: '',
-        }]
-      : [];
-
-    // Schritt 1: das Gruppendokument. `kind: 'chat'` haelt es aus jeder Gruppenoberflaeche
-    // heraus, `chatMode: 'members'` weist Nicht-Mitglieder am Raum ab.
-    await db.collection('groups').doc(groupKey).set({
-      name: chatName,
-      kind: 'chat',
-      notes: '',
-      tags: '',
-      icon: 'group',
-      hasContent: false,
-      hasChat: true,
-      hasCalendar: false,
-      hasTasks: false,
-      hasFiles: false,
-      filesFolder: '',
-      hasMembers: false,
-      matrixRoomId: '',
-      admins,
-      // written with admins so the creator can archive at once (rules test adminKeys); the
-      // adminKeys handler of onGroupDocWritten finds it equal and does not write again.
-      adminKeys: groupAdminKeys(admins),
-      parentKey: tenant,
-      parentName: '',
-      parentModelType: 'org',
-      visibility: '',
-      notifyType: 'memberOnly',
-      chatMode: 'members',
-      postPolicy: 'all',
-      tenants: [tenant],
-      isArchived: false,
-      index: `n:${chatName} k:${groupKey}`,
-    });
-
-    const hostname = serverHostname();
-    const adminToken = matrixAdminToken.value();
-
-    // Schritt 2: Raum anlegen (Alias + Tenant-Marker kommen aus resolveGroupRoom) und den
-    // Anzeigenamen setzen — der Raum hiesse sonst nach dem Zufallsschluessel (Spec §2).
-    const roomId = await resolveGroupRoom(groupKey, hostname, adminToken, { create: true });
-    if (!roomId) throw new HttpsError('internal', `No room for chat ${groupKey}`);
-    await ensureAdminInRoom(roomId, adminToken);
-    await setRoomName(roomId, chatName, adminToken);
-    // Wer spaeter dazukommt, liest ab dem Beitritt mit — nicht, was vorher geschrieben
-    // wurde. Die Matrix-Vorgabe des `private_chat`-Presets waere `shared`, also der ganze
-    // Verlauf; in einem privaten Chat, den Mitglieder selbst zusammenstellen, ist das die
-    // falsche Vorgabe (Spec §10.2). Gruppenraeume bleiben unberuehrt: das steht hier und
-    // nicht in resolveGroupRoom.
-    await setHistoryVisibility(roomId, 'joined', adminToken);
-
-    // Schritt 3: Mitgliedschaften — sie tragen den Zwangsbeitritt (und spaeter das
-    // Verlassen). Der Beitritt geschieht hier zusaetzlich direkt, damit der Chat sofort
-    // benutzbar ist und nicht auf den Trigger wartet; beides ist idempotent.
-    const batch = db.batch();
-    for (const person of persons) {
-      batch.set(db.collection('memberships').doc(), adhocMembershipDoc(person, groupKey, chatName, tenant));
-    }
-    await batch.commit();
-
-    for (const person of persons) {
-      const matrixUserId = `@${person.okey.toLowerCase()}:${hostname}`;
-      await ensureMatrixUserExists(matrixUserId, adminToken, { personKey: person.okey });
-      await forceJoinUserToRoom(roomId, matrixUserId, adminToken);
-    }
-
-    console.log(`createAdhocChat: ${groupKey} ("${chatName}") with ${persons.length} members in room ${roomId}`);
-    return { groupKey, roomId, name: chatName };
-  }
+  handleCreateAdhocChat,
 );
 
 /**
@@ -320,6 +323,83 @@ export async function setHistoryVisibility(roomId: string, visibility: 'joined' 
  * Neue Mitglieder lesen ab dem Beitritt mit, nicht rueckwaerts — der Raum traegt seit
  * seiner Anlage `history_visibility: 'joined'`.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleAddAdhocChatMembers(request: CallableRequest<any>): Promise<{ added: string[] }> {
+  const uid = await requireProvisionedUser(request, 'addAdhocChatMembers');
+  checkRateLimit(uid, 'addAdhocChatMembers', 20);
+
+  const { groupKey, personKeys } = request.data as { groupKey?: string; personKeys?: string[] };
+  const chatKey = requireParam(groupKey, 'groupKey', 100);
+  if (!Array.isArray(personKeys) || personKeys.length === 0) {
+    throw new HttpsError('invalid-argument', 'personKeys is required');
+  }
+
+  const callerKey = await requireUserPersonKey(uid, 'addAdhocChatMembers');
+  const db = getFirestore();
+
+  const groupSnap = await db.collection('groups').doc(chatKey).get();
+  const group = groupSnap.data();
+  if (!groupSnap.exists || !group) throw new HttpsError('not-found', `Chat ${chatKey} not found`);
+  if ((group['kind'] ?? 'group') !== 'chat') {
+    throw new HttpsError('failed-precondition', `${chatKey} is not an ad-hoc chat.`);
+  }
+  const tenant = ((group['tenants'] ?? []) as string[])[0];
+  if (!tenant) throw new HttpsError('failed-precondition', `Chat ${chatKey} has no tenant.`);
+  const chatName = (group['name'] as string) ?? '';
+
+  // Wer nicht drin ist, fuegt auch niemanden hinzu — sonst koennte jede Person mit dem
+  // Schluessel eines fremden Chats sich selbst hineinschreiben.
+  const currentKeys = await activeGroupMemberKeys(chatKey);
+  if (!currentKeys.includes(callerKey)) {
+    throw new HttpsError('permission-denied', 'Only members of the chat may add people.');
+  }
+
+  const wanted = [...new Set(personKeys)].filter((k) => !currentKeys.includes(k));
+  if (wanted.length === 0) return { added: [] };
+  if (currentKeys.length + wanted.length > ADHOC_CHAT_MAX_MEMBERS) {
+    throw new HttpsError('invalid-argument', `A chat may have at most ${ADHOC_CHAT_MAX_MEMBERS} members.`);
+  }
+
+  const persons: PersonRow[] = [];
+  for (const key of wanted) {
+    const snap = await db.collection('persons').doc(key).get();
+    const data = snap.data();
+    if (!snap.exists || !data) throw new HttpsError('not-found', `Person ${key} not found`);
+    if (!((data['tenants'] ?? []) as string[]).includes(tenant)) {
+      throw new HttpsError('permission-denied', `Person ${key} does not belong to this tenant.`);
+    }
+    persons.push({
+      okey: key,
+      firstName: (data['firstName'] as string) ?? '',
+      lastName: (data['lastName'] as string) ?? '',
+    });
+  }
+
+  const batch = db.batch();
+  for (const person of persons) {
+    batch.set(db.collection('memberships').doc(), adhocMembershipDoc(person, chatKey, chatName, tenant));
+  }
+  await batch.commit();
+
+  // Der Trigger wuerde das auch tun; direkt beitreten heisst, dass die neue Person den
+  // Chat sofort sieht statt in zehn Sekunden. Beides ist idempotent.
+  const hostname = serverHostname();
+  const adminToken = matrixAdminToken.value();
+  const roomId = (group['matrixRoomId'] as string) ||
+    await resolveGroupRoom(chatKey, hostname, adminToken, { create: false });
+  if (roomId) {
+    await ensureAdminInRoom(roomId, adminToken);
+    for (const person of persons) {
+      const matrixUserId = `@${person.okey.toLowerCase()}:${hostname}`;
+      await ensureMatrixUserExists(matrixUserId, adminToken, { personKey: person.okey });
+      await forceJoinUserToRoom(roomId, matrixUserId, adminToken);
+    }
+  }
+
+  console.log(`addAdhocChatMembers: ${persons.length} added to ${chatKey} by ${callerKey}`);
+  return { added: persons.map((p) => p.okey) };
+}
+
 export const addAdhocChatMembers = onCall(
   {
     cors: true,
@@ -327,81 +407,7 @@ export const addAdhocChatMembers = onCall(
     enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
-  async (request): Promise<{ added: string[] }> => {
-    const uid = await requireProvisionedUser(request, 'addAdhocChatMembers');
-    checkRateLimit(uid, 'addAdhocChatMembers', 20);
-
-    const { groupKey, personKeys } = request.data as { groupKey?: string; personKeys?: string[] };
-    const chatKey = requireParam(groupKey, 'groupKey', 100);
-    if (!Array.isArray(personKeys) || personKeys.length === 0) {
-      throw new HttpsError('invalid-argument', 'personKeys is required');
-    }
-
-    const callerKey = await requireUserPersonKey(uid, 'addAdhocChatMembers');
-    const db = getFirestore();
-
-    const groupSnap = await db.collection('groups').doc(chatKey).get();
-    const group = groupSnap.data();
-    if (!groupSnap.exists || !group) throw new HttpsError('not-found', `Chat ${chatKey} not found`);
-    if ((group['kind'] ?? 'group') !== 'chat') {
-      throw new HttpsError('failed-precondition', `${chatKey} is not an ad-hoc chat.`);
-    }
-    const tenant = ((group['tenants'] ?? []) as string[])[0];
-    if (!tenant) throw new HttpsError('failed-precondition', `Chat ${chatKey} has no tenant.`);
-    const chatName = (group['name'] as string) ?? '';
-
-    // Wer nicht drin ist, fuegt auch niemanden hinzu — sonst koennte jede Person mit dem
-    // Schluessel eines fremden Chats sich selbst hineinschreiben.
-    const currentKeys = await activeGroupMemberKeys(chatKey);
-    if (!currentKeys.includes(callerKey)) {
-      throw new HttpsError('permission-denied', 'Only members of the chat may add people.');
-    }
-
-    const wanted = [...new Set(personKeys)].filter((k) => !currentKeys.includes(k));
-    if (wanted.length === 0) return { added: [] };
-    if (currentKeys.length + wanted.length > ADHOC_CHAT_MAX_MEMBERS) {
-      throw new HttpsError('invalid-argument', `A chat may have at most ${ADHOC_CHAT_MAX_MEMBERS} members.`);
-    }
-
-    const persons: PersonRow[] = [];
-    for (const key of wanted) {
-      const snap = await db.collection('persons').doc(key).get();
-      const data = snap.data();
-      if (!snap.exists || !data) throw new HttpsError('not-found', `Person ${key} not found`);
-      if (!((data['tenants'] ?? []) as string[]).includes(tenant)) {
-        throw new HttpsError('permission-denied', `Person ${key} does not belong to this tenant.`);
-      }
-      persons.push({
-        okey: key,
-        firstName: (data['firstName'] as string) ?? '',
-        lastName: (data['lastName'] as string) ?? '',
-      });
-    }
-
-    const batch = db.batch();
-    for (const person of persons) {
-      batch.set(db.collection('memberships').doc(), adhocMembershipDoc(person, chatKey, chatName, tenant));
-    }
-    await batch.commit();
-
-    // Der Trigger wuerde das auch tun; direkt beitreten heisst, dass die neue Person den
-    // Chat sofort sieht statt in zehn Sekunden. Beides ist idempotent.
-    const hostname = serverHostname();
-    const adminToken = matrixAdminToken.value();
-    const roomId = (group['matrixRoomId'] as string) ||
-      await resolveGroupRoom(chatKey, hostname, adminToken, { create: false });
-    if (roomId) {
-      await ensureAdminInRoom(roomId, adminToken);
-      for (const person of persons) {
-        const matrixUserId = `@${person.okey.toLowerCase()}:${hostname}`;
-        await ensureMatrixUserExists(matrixUserId, adminToken, { personKey: person.okey });
-        await forceJoinUserToRoom(roomId, matrixUserId, adminToken);
-      }
-    }
-
-    console.log(`addAdhocChatMembers: ${persons.length} added to ${chatKey} by ${callerKey}`);
-    return { added: persons.map((p) => p.okey) };
-  }
+  handleAddAdhocChatMembers,
 );
 
 /**
@@ -413,6 +419,39 @@ export const addAdhocChatMembers = onCall(
  * Mitgliedschaft zurueck (Spec §5, offener Punkt). Verlaesst der Admin des Chats ihn, geht
  * `group.admins` an das verbleibende Mitglied mit dem fruehesten Eintritt (spec 1.109 §8.3).
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleLeaveAdhocChat(request: CallableRequest<any>): Promise<{ left: boolean }> {
+  const uid = await requireProvisionedUser(request, 'leaveAdhocChat');
+  checkRateLimit(uid, 'leaveAdhocChat', 20);
+
+  const { groupKey } = request.data as { groupKey?: string };
+  const chatKey = requireParam(groupKey, 'groupKey', 100);
+
+  const personKey = await requireUserPersonKey(uid, 'leaveAdhocChat');
+  const db = getFirestore();
+
+  const groupSnap = await db.collection('groups').doc(chatKey).get();
+  const group = groupSnap.data();
+  if (!groupSnap.exists || !group) throw new HttpsError('not-found', `Chat ${chatKey} not found`);
+  // Nur Ad-hoc-Chats: aus einer gefuehrten Vereinsgruppe tritt man nicht selbst aus —
+  // die Mitgliedschaft dort ist eine Vereinstatsache, keine Chat-Teilnahme.
+  if ((group['kind'] ?? 'group') !== 'chat') {
+    throw new HttpsError('failed-precondition', `${chatKey} is not an ad-hoc chat.`);
+  }
+
+  const snap = await db.collection('memberships')
+    .where('orgKey', '==', chatKey)
+    .where('orgModelType', '==', 'group')
+    .where('memberKey', '==', personKey)
+    .get();
+  if (snap.empty) return { left: false };
+
+  await endAdhocMembership(chatKey, group, personKey, snap.docs);
+
+  console.log(`leaveAdhocChat: ${personKey} left ${chatKey}`);
+  return { left: true };
+}
+
 export const leaveAdhocChat = onCall(
   {
     cors: true,
@@ -420,37 +459,7 @@ export const leaveAdhocChat = onCall(
     enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
-  async (request): Promise<{ left: boolean }> => {
-    const uid = await requireProvisionedUser(request, 'leaveAdhocChat');
-    checkRateLimit(uid, 'leaveAdhocChat', 20);
-
-    const { groupKey } = request.data as { groupKey?: string };
-    const chatKey = requireParam(groupKey, 'groupKey', 100);
-
-    const personKey = await requireUserPersonKey(uid, 'leaveAdhocChat');
-    const db = getFirestore();
-
-    const groupSnap = await db.collection('groups').doc(chatKey).get();
-    const group = groupSnap.data();
-    if (!groupSnap.exists || !group) throw new HttpsError('not-found', `Chat ${chatKey} not found`);
-    // Nur Ad-hoc-Chats: aus einer gefuehrten Vereinsgruppe tritt man nicht selbst aus —
-    // die Mitgliedschaft dort ist eine Vereinstatsache, keine Chat-Teilnahme.
-    if ((group['kind'] ?? 'group') !== 'chat') {
-      throw new HttpsError('failed-precondition', `${chatKey} is not an ad-hoc chat.`);
-    }
-
-    const snap = await db.collection('memberships')
-      .where('orgKey', '==', chatKey)
-      .where('orgModelType', '==', 'group')
-      .where('memberKey', '==', personKey)
-      .get();
-    if (snap.empty) return { left: false };
-
-    await endAdhocMembership(chatKey, group, personKey, snap.docs);
-
-    console.log(`leaveAdhocChat: ${personKey} left ${chatKey}`);
-    return { left: true };
-  }
+  handleLeaveAdhocChat,
 );
 
 /** An entry of `group.admins` (an AvatarInfo-shaped person reference). */
@@ -535,6 +544,56 @@ async function endAdhocMembership(
  * themselves here — that is «Verlassen» (`leaveAdhocChat`). Ends the membership like
  * `leaveAdhocChat`; the kick follows via `onMembershipDocWritten`.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleRemoveAdhocChatMember(request: CallableRequest<any>): Promise<{ removed: boolean }> {
+  const uid = await requireProvisionedUser(request, 'removeAdhocChatMember');
+  checkRateLimit(uid, 'removeAdhocChatMember', 20);
+
+  const { groupKey, personKey } = request.data as { groupKey?: string; personKey?: string };
+  const chatKey = requireParam(groupKey, 'groupKey', 100);
+  const targetKey = requireParam(personKey, 'personKey', 100);
+
+  const callerKey = await requireUserPersonKey(uid, 'removeAdhocChatMember');
+  if (callerKey === targetKey) {
+    throw new HttpsError('failed-precondition', 'Use leaveAdhocChat to leave a chat yourself.');
+  }
+
+  const db = getFirestore();
+  const groupSnap = await db.collection('groups').doc(chatKey).get();
+  const group = groupSnap.data();
+  if (!groupSnap.exists || !group) throw new HttpsError('not-found', `Chat ${chatKey} not found`);
+  if ((group['kind'] ?? 'group') !== 'chat') {
+    throw new HttpsError('failed-precondition', `${chatKey} is not an ad-hoc chat.`);
+  }
+
+  // The chat must belong to the caller's tenant — `admin` is a per-tenant role, and a chat key
+  // of another tenant must not even be confirmed to exist.
+  const chatTenants = (group['tenants'] ?? []) as string[];
+  const callerTenants = await getUserTenants(uid);
+  if (!chatTenants.some((t) => callerTenants.includes(t))) {
+    throw new HttpsError('not-found', `Chat ${chatKey} not found`);
+  }
+
+  const isChatAdmin = Array.isArray(group['admins']) &&
+    (group['admins'] as { key?: string }[]).some((a) => a?.key === callerKey);
+  if (!isChatAdmin && (await getCallerRoles(uid))['admin'] !== true) {
+    throw new HttpsError('permission-denied', 'Only the chat\'s admin may remove members.');
+  }
+
+  const snap = await db.collection('memberships')
+    .where('orgKey', '==', chatKey)
+    .where('orgModelType', '==', 'group')
+    .where('memberKey', '==', targetKey)
+    .get();
+  const open = snap.docs.filter((d) => d.data()['isArchived'] !== true);
+  if (open.length === 0) return { removed: false };
+
+  await endAdhocMembership(chatKey, group, targetKey, open);
+
+  console.log(`removeAdhocChatMember: ${targetKey} removed from ${chatKey} by ${callerKey}`);
+  return { removed: true };
+}
+
 export const removeAdhocChatMember = onCall(
   {
     cors: true,
@@ -542,52 +601,5 @@ export const removeAdhocChatMember = onCall(
     enforceAppCheck: true,
     secrets: [matrixAdminToken],
   },
-  async (request): Promise<{ removed: boolean }> => {
-    const uid = await requireProvisionedUser(request, 'removeAdhocChatMember');
-    checkRateLimit(uid, 'removeAdhocChatMember', 20);
-
-    const { groupKey, personKey } = request.data as { groupKey?: string; personKey?: string };
-    const chatKey = requireParam(groupKey, 'groupKey', 100);
-    const targetKey = requireParam(personKey, 'personKey', 100);
-
-    const callerKey = await requireUserPersonKey(uid, 'removeAdhocChatMember');
-    if (callerKey === targetKey) {
-      throw new HttpsError('failed-precondition', 'Use leaveAdhocChat to leave a chat yourself.');
-    }
-
-    const db = getFirestore();
-    const groupSnap = await db.collection('groups').doc(chatKey).get();
-    const group = groupSnap.data();
-    if (!groupSnap.exists || !group) throw new HttpsError('not-found', `Chat ${chatKey} not found`);
-    if ((group['kind'] ?? 'group') !== 'chat') {
-      throw new HttpsError('failed-precondition', `${chatKey} is not an ad-hoc chat.`);
-    }
-
-    // The chat must belong to the caller's tenant — `admin` is a per-tenant role, and a chat key
-    // of another tenant must not even be confirmed to exist.
-    const chatTenants = (group['tenants'] ?? []) as string[];
-    const callerTenants = await getUserTenants(uid);
-    if (!chatTenants.some((t) => callerTenants.includes(t))) {
-      throw new HttpsError('not-found', `Chat ${chatKey} not found`);
-    }
-
-    const isChatAdmin = Array.isArray(group['admins']) &&
-      (group['admins'] as { key?: string }[]).some((a) => a?.key === callerKey);
-    if (!isChatAdmin && (await getCallerRoles(uid))['admin'] !== true) {
-      throw new HttpsError('permission-denied', 'Only the chat\'s admin may remove members.');
-    }
-
-    const snap = await db.collection('memberships')
-      .where('orgKey', '==', chatKey)
-      .where('orgModelType', '==', 'group')
-      .where('memberKey', '==', targetKey)
-      .get();
-    const open = snap.docs.filter((d) => d.data()['isArchived'] !== true);
-    if (open.length === 0) return { removed: false };
-
-    await endAdhocMembership(chatKey, group, targetKey, open);
-
-    console.log(`removeAdhocChatMember: ${targetKey} removed from ${chatKey} by ${callerKey}`);
-    return { removed: true };
-  }
+  handleRemoveAdhocChatMember,
 );

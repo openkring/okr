@@ -5,7 +5,7 @@
 // abgeleitet aus `sourceGroupKeys` — `onMembershipDocWritten` macht daraus unveraendert den
 // Zwangsbeitritt und den Kick. Hier steht nur, WER Mitglied ist.
 
-import { onCall, HttpsError, CallableOptions } from 'firebase-functions/v2/https';
+import { onCall, HttpsError, CallableOptions, type CallableRequest } from 'firebase-functions/v2/https';
 import { getFirestore } from 'firebase-admin/firestore';
 
 import { DateFormat, getTodayStr, isActiveMembership } from '@okr/shared-util-core';
@@ -237,7 +237,8 @@ async function personMembershipDocs(groupKey: string, personKey: string) {
   return snap.docs;
 }
 
-export const createPinboard = onCall(CALLABLE, async (request): Promise<{ groupKey: string; roomId: string; name: string }> => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleCreatePinboard(request: CallableRequest<any>): Promise<{ groupKey: string; roomId: string; name: string }> {
   const uid = await requireRole(request, 'createPinboard', ['privileged', 'admin']);
   checkRateLimit(uid, 'createPinboard', 5);
   const data = request.data as { tenantId?: string; name?: string; description?: string; sourceGroupKeys?: string[]; joinMode?: 'optOut' | 'optIn'; allowReplyAll?: boolean };
@@ -307,9 +308,12 @@ export const createPinboard = onCall(CALLABLE, async (request): Promise<{ groupK
     if (error instanceof HttpsError) throw error;
     throw new HttpsError('internal', `Could not create pinboard ${groupKey}.`);
   }
-});
+}
 
-export const updatePinboard = onCall(CALLABLE, async (request): Promise<{ updated: true }> => {
+export const createPinboard = onCall(CALLABLE, handleCreatePinboard);
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleUpdatePinboard(request: CallableRequest<any>): Promise<{ updated: true }> {
   const uid = await requireRole(request, 'updatePinboard', ['privileged', 'admin']);
   checkRateLimit(uid, 'updatePinboard', 20);
   const data = request.data as { groupKey?: string; name?: string; description?: string; sourceGroupKeys?: string[]; joinMode?: 'optOut' | 'optIn'; allowReplyAll?: boolean };
@@ -342,9 +346,12 @@ export const updatePinboard = onCall(CALLABLE, async (request): Promise<{ update
   }
   // Quellen- und Modus-Aenderungen gleicht der Gruppen-Trigger (onGroupDocWritten, Handler pinboard) ab.
   return { updated: true };
-});
+}
 
-export const archivePinboard = onCall(CALLABLE, async (request): Promise<{ archived: true }> => {
+export const updatePinboard = onCall(CALLABLE, handleUpdatePinboard);
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleArchivePinboard(request: CallableRequest<any>): Promise<{ archived: true }> {
   const uid = await requireRole(request, 'archivePinboard', ['privileged', 'admin']);
   checkRateLimit(uid, 'archivePinboard', 5);
   const groupKey = requireParam((request.data as { groupKey?: string }).groupKey, 'groupKey', 100);
@@ -364,9 +371,12 @@ export const archivePinboard = onCall(CALLABLE, async (request): Promise<{ archi
   // Den Raum raeumt onGroupDocWritten (Handler chatCleanup) auf.
   console.log(`archivePinboard: ${groupKey} ended ${snap.size} candidate membership docs`);
   return { archived: true };
-});
+}
 
-export const leavePinboard = onCall(CALLABLE, async (request): Promise<{ left: boolean }> => {
+export const archivePinboard = onCall(CALLABLE, handleArchivePinboard);
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleLeavePinboard(request: CallableRequest<any>): Promise<{ left: boolean }> {
   const uid = await requireProvisionedUser(request, 'leavePinboard');
   checkRateLimit(uid, 'leavePinboard', 20);
   const groupKey = requireParam((request.data as { groupKey?: string }).groupKey, 'groupKey', 100);
@@ -382,9 +392,12 @@ export const leavePinboard = onCall(CALLABLE, async (request): Promise<{ left: b
   for (const doc of active) batch.update(doc.ref, { dateOfExit: today, isArchived: true, isOptedOut: true });
   await batch.commit();
   return { left: true };
-});
+}
 
-export const joinPinboard = onCall(CALLABLE, async (request): Promise<{ roomId: string }> => {
+export const leavePinboard = onCall(CALLABLE, handleLeavePinboard);
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleJoinPinboard(request: CallableRequest<any>): Promise<{ roomId: string }> {
   const uid = await requireProvisionedUser(request, 'joinPinboard');
   checkRateLimit(uid, 'joinPinboard', 20);
   const groupKey = requireParam((request.data as { groupKey?: string }).groupKey, 'groupKey', 100);
@@ -434,9 +447,12 @@ export const joinPinboard = onCall(CALLABLE, async (request): Promise<{ roomId: 
     }
   }
   return { roomId };
-});
+}
 
-export const listAvailablePinboards = onCall(CALLABLE, async (request): Promise<{ pinboards: { groupKey: string; name: string; description: string; roomId: string }[] }> => {
+export const joinPinboard = onCall(CALLABLE, handleJoinPinboard);
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleListAvailablePinboards(request: CallableRequest<any>): Promise<{ pinboards: { groupKey: string; name: string; description: string; roomId: string }[] }> {
   const uid = await requireProvisionedUser(request, 'listAvailablePinboards');
   checkRateLimit(uid, 'listAvailablePinboards', 60);
   const tenant = requireParam((request.data as { tenantId?: string }).tenantId, 'tenantId', 50);
@@ -461,4 +477,6 @@ export const listAvailablePinboards = onCall(CALLABLE, async (request): Promise<
     .filter(({ g }) => isEligibleForPinboard({ personKey, admins: g.admins, sourceGroupKeys: g.sourceGroupKeys, eligibleSources, activeOrgKeys }))
     .map(({ key, g }) => ({ groupKey: key, name: g.name ?? '', description: g.notes ?? '', roomId: g.matrixRoomId ?? '' }));
   return { pinboards };
-});
+}
+
+export const listAvailablePinboards = onCall(CALLABLE, handleListAvailablePinboards);
