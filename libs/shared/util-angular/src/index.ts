@@ -33,3 +33,4 @@ export * from './lib/scroll-diagnostics';
 export * from './lib/model-selector';
 export * from './lib/tag-editor';
 export * from './lib/helper-visibility.service';
+export * from './lib/diary-sources';

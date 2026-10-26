@@ -1,14 +1,13 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { Capacitor } from '@capacitor/core';
 import { Photo } from '@capacitor/camera';
 import { from, of, take } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { DiarySource, PersonCollection, PersonModel, PersonModelName, UserCollection, UserModel } from '@okr/shared-models';
-import { AhvFormat, AppNavigationService, formatAhv, isBlankAhv } from '@okr/shared-util-angular';
+import { AhvFormat, AppNavigationService, DIARY_EXTRA_SOURCES, formatAhv, isBlankAhv } from '@okr/shared-util-angular';
 import { debugItemLoaded } from '@okr/shared-util-core';
 import { FirestoreService } from '@okr/shared-data-access';
 
@@ -46,6 +45,8 @@ export const ProfileStore = signalStore(
     firestoreService: inject(FirestoreService),
     i18nService: inject(I18nService),
     diaryLineService: inject(DiaryLineService),
+    /** diary sources this app offers beyond its feature blocks (bkg-app: the tracker) */
+    diaryExtraSources: inject(DIARY_EXTRA_SOURCES),
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(PROFILE_I18N_KEYS) as ProfileI18n,
@@ -121,7 +122,7 @@ export const ProfileStore = signalStore(
       async loadDiaryTenants(): Promise<void> {
         try {
           const result = await store.diaryLineService.listMyDiaryTenants();
-          patchState(store, { diaryTenants: { diaries: result?.diaries ?? [], sources: mergeDiarySources(result?.sources ?? [], Capacitor.isNativePlatform() ? ['tracker'] : []) } });
+          patchState(store, { diaryTenants: { diaries: result?.diaries ?? [], sources: mergeDiarySources(result?.sources ?? [], store.diaryExtraSources) } });
         } catch (e) {
           console.warn('ProfileStore.loadDiaryTenants', e);
         }

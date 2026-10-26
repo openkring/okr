@@ -2,8 +2,8 @@ import { DIARY_SOURCES, DiarySource } from '@okr/shared-models';
 
 /**
  * Which feature block must be effective in the source app for a source to be offered (spec 1.77
- * §5.1). Only implemented sources are listed: `tripDone` (Phase 2), `albumImage` (Phase 3) and
- * `tracker` join when their transfer is built — until then no row is shown for them.
+ * §5.1). Only implemented sources are listed: `tripDone` (Phase 2) and `albumImage` (Phase 3) join
+ * when their transfer is built. `tracker` has no block — an app offers it via `DIARY_EXTRA_SOURCES`.
  */
 export const DIARY_SOURCE_BLOCKS: Partial<Record<DiarySource, string>> = {
   taskDone: 'task',
@@ -18,10 +18,10 @@ export function mergeDiarySources(sources: readonly DiarySource[], extra: readon
 
 /**
  * The rows of the profile's «Tagebuch-Transfer» table for an app with these effective blocks.
- * `extra` are sources the caller knows to be available independent of any block (e.g. `tracker`
- * on a native build, which only the client can tell).
+ * `extra` are sources the app offers independent of any block (`DIARY_EXTRA_SOURCES`, e.g. `tracker`
+ * in bkg-app, which only the app can tell).
  */
-export function offeredDiarySources(effective: ReadonlySet<string>, extra: DiarySource[] = []): DiarySource[] {
+export function offeredDiarySources(effective: ReadonlySet<string>, extra: readonly DiarySource[] = []): DiarySource[] {
   const fromBlocks = (Object.entries(DIARY_SOURCE_BLOCKS) as [DiarySource, string][])
     .filter(([, block]) => effective.has(block))
     .map(([source]) => source);
