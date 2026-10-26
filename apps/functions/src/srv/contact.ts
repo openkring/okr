@@ -61,220 +61,229 @@ async function invalidateSrvCaches(ctx: GatewayContext): Promise<void> {
  * Fetch all members from the Regasoft SRV API.
  * Gateway-backed (cache + quota + retry); response shape unchanged.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleGetSrvContacts(request: CallableRequest) {
+  const CF_NAME = 'getSrvContacts';
+
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Authentication required');
+  }
+  // SRV member data is person PII — memberAdmin/admin only (privacy inventory §7.2).
+  await checkRoles(request, CF_NAME, ['memberAdmin']);
+
+  const ctx = await srvContext(request);
+  const res = await runGateway(srvMembersAdapter, {}, ctx);
+  logger.info(`${CF_NAME}: ${res.data.length} members`, { cached: res.cached });
+  return res.data.map(mapSrvContact);
+}
+
 export const getSrvContacts = onCall(
   {
     region: 'europe-west6',
     enforceAppCheck: true,
     secrets: SRV_SECRETS,
   },
-  async (request: CallableRequest) => {
-    const CF_NAME = 'getSrvContacts';
-
-    if (!request.auth) {
-      throw new HttpsError('unauthenticated', 'Authentication required');
-    }
-    // SRV member data is person PII — memberAdmin/admin only (privacy inventory §7.2).
-    await checkRoles(request, CF_NAME, ['memberAdmin']);
-
-    const ctx = await srvContext(request);
-    const res = await runGateway(srvMembersAdapter, {}, ctx);
-    logger.info(`${CF_NAME}: ${res.data.length} members`, { cached: res.cached });
-    return res.data.map(mapSrvContact);
-  }
+  handleGetSrvContacts
 );
 
 /**
  * Fetch member detail from GET /api/club/members/{id} for a list of rids.
  * Returns license dates taken from the individual detail records.
  */
+export async function handleGetSrvMemberDetail(request: CallableRequest<{ rids: number[] }>) {
+  const CF_NAME = 'getSrvMemberDetail';
+
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Authentication required');
+  }
+  // SRV member data is person PII — memberAdmin/admin only (privacy inventory §7.2).
+  await checkRoles(request, CF_NAME, ['memberAdmin']);
+
+  const { rids } = request.data;
+  if (!Array.isArray(rids) || rids.length === 0) {
+    throw new HttpsError('invalid-argument', 'rids must be a non-empty array');
+  }
+
+  logger.info(`${CF_NAME}: fetching details for ${rids.length} members`);
+
+  // One gateway call PER rid, so each member's detail is cached individually
+  // and reused by the next index build (and by any other rid set that includes
+  // them). Keeping allSettled preserves the existing contract: a member whose
+  // record cannot be fetched is skipped, not fatal to the whole enrichment.
+  const ctx = await srvContext(request);
+  const unique = [...new Set(rids)];
+  const results = await Promise.allSettled(
+    unique.map(rid => runGateway(srvMemberDetailAdapter, { rid }, ctx))
+  );
+
+  const details: SrvMemberLicenseDetail[] = [];
+  let cachedCount = 0;
+  for (let i = 0; i < results.length; i++) {
+    const r = results[i];
+    if (r.status === 'fulfilled') {
+      if (r.value.cached) cachedCount++;
+      if (r.value.data) details.push(r.value.data);
+    } else {
+      logger.warn(`${CF_NAME}: failed to fetch rid ${unique[i]}`, {
+        message: r.reason instanceof Error ? r.reason.message : String(r.reason),
+      });
+    }
+  }
+
+  logger.info(
+    `${CF_NAME}: resolved ${details.length} of ${unique.length} members (${cachedCount} from cache)`
+  );
+  return details;
+}
+
 export const getSrvMemberDetail = onCall(
   {
     region: 'europe-west6',
     enforceAppCheck: true,
     secrets: [regasoftApiKey, regasoftClubId],
   },
-  async (request: CallableRequest<{ rids: number[] }>) => {
-    const CF_NAME = 'getSrvMemberDetail';
-
-    if (!request.auth) {
-      throw new HttpsError('unauthenticated', 'Authentication required');
-    }
-    // SRV member data is person PII — memberAdmin/admin only (privacy inventory §7.2).
-    await checkRoles(request, CF_NAME, ['memberAdmin']);
-
-    const { rids } = request.data;
-    if (!Array.isArray(rids) || rids.length === 0) {
-      throw new HttpsError('invalid-argument', 'rids must be a non-empty array');
-    }
-
-    logger.info(`${CF_NAME}: fetching details for ${rids.length} members`);
-
-    // One gateway call PER rid, so each member's detail is cached individually
-    // and reused by the next index build (and by any other rid set that includes
-    // them). Keeping allSettled preserves the existing contract: a member whose
-    // record cannot be fetched is skipped, not fatal to the whole enrichment.
-    const ctx = await srvContext(request);
-    const unique = [...new Set(rids)];
-    const results = await Promise.allSettled(
-      unique.map(rid => runGateway(srvMemberDetailAdapter, { rid }, ctx))
-    );
-
-    const details: SrvMemberLicenseDetail[] = [];
-    let cachedCount = 0;
-    for (let i = 0; i < results.length; i++) {
-      const r = results[i];
-      if (r.status === 'fulfilled') {
-        if (r.value.cached) cachedCount++;
-        if (r.value.data) details.push(r.value.data);
-      } else {
-        logger.warn(`${CF_NAME}: failed to fetch rid ${unique[i]}`, {
-          message: r.reason instanceof Error ? r.reason.message : String(r.reason),
-        });
-      }
-    }
-
-    logger.info(
-      `${CF_NAME}: resolved ${details.length} of ${unique.length} members (${cachedCount} from cache)`
-    );
-    return details;
-  }
+  handleGetSrvMemberDetail
 );
 
 /**
  * Create a new member in the Regasoft SRV API.
  * Returns the newly assigned SRV member ID.
  */
+export async function handleCreateSrvContact(request: CallableRequest<SrvContactData>) {
+  const CF_NAME = 'createSrvContact';
+
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Authentication required');
+  }
+  // SRV member data is person PII — memberAdmin/admin only (privacy inventory §7.2).
+  await checkRoles(request, CF_NAME, ['memberAdmin']);
+
+  const { firstName, lastName, email, mobile, dateOfBirth, gender } = request.data;
+  if (!firstName || !lastName) {
+    throw new HttpsError('invalid-argument', 'firstName and lastName are required');
+  }
+
+  logger.info(`${CF_NAME}: creating SRV member "${firstName} ${lastName}"`);
+
+  const { fullname, membershipType, nationIOC, language, hasNewsletter, hasLicense,
+          street, streetAdditional, postcode, city, countryName, countryId, telefon } = request.data;
+  const payload: Partial<RegasoftMember> = {
+    id: 0,
+    firstName,
+    lastName,
+    fullname,
+    email: email ?? null,
+    mobile: mobile ?? null,
+    birthday: storeDateToRegasoftDate(dateOfBirth),
+    gender,
+    membershipType,
+    nationIOC,
+    language,
+    hasNewsletter,
+    hasLicense,
+    street: street ?? null,
+    streetAdditional: streetAdditional ?? null,
+    postcode: postcode ?? null,
+    city: city ?? null,
+    countryName: countryName ?? null,
+    countryId: countryId ? Number(countryId) || null : null,
+    telefon: telefon ?? null,
+  };
+
+  try {
+    const response = await axios.post<RegasoftMember>(
+      `${REGASOFT_BASE}/api/club/members`,
+      payload,
+      { headers: regasoftHeaders(regasoftApiKey.value(), regasoftClubId.value()) }
+    );
+
+    logger.info(`${CF_NAME}: created SRV member with id ${response.data.id}`);
+    await invalidateSrvCaches(await srvContext(request));
+    return { id: String(response.data.id) };
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const body = JSON.stringify(error.response?.data);
+      logger.error(`${CF_NAME}: Regasoft API error ${status}: ${body}`);
+      throw new HttpsError('internal', `Regasoft API error ${status}: ${body}`);
+    }
+    logger.error(`${CF_NAME}: unexpected error`, error);
+    throw new HttpsError('internal', 'Regasoft member creation failed');
+  }
+}
+
 export const createSrvContact = onCall(
   {
     region: 'europe-west6',
     enforceAppCheck: true,
     secrets: [regasoftApiKey, regasoftClubId],
   },
-  async (request: CallableRequest<SrvContactData>) => {
-    const CF_NAME = 'createSrvContact';
-
-    if (!request.auth) {
-      throw new HttpsError('unauthenticated', 'Authentication required');
-    }
-    // SRV member data is person PII — memberAdmin/admin only (privacy inventory §7.2).
-    await checkRoles(request, CF_NAME, ['memberAdmin']);
-
-    const { firstName, lastName, email, mobile, dateOfBirth, gender } = request.data;
-    if (!firstName || !lastName) {
-      throw new HttpsError('invalid-argument', 'firstName and lastName are required');
-    }
-
-    logger.info(`${CF_NAME}: creating SRV member "${firstName} ${lastName}"`);
-
-    const { fullname, membershipType, nationIOC, language, hasNewsletter, hasLicense,
-            street, streetAdditional, postcode, city, countryName, countryId, telefon } = request.data;
-    const payload: Partial<RegasoftMember> = {
-      id: 0,
-      firstName,
-      lastName,
-      fullname,
-      email: email ?? null,
-      mobile: mobile ?? null,
-      birthday: storeDateToRegasoftDate(dateOfBirth),
-      gender,
-      membershipType,
-      nationIOC,
-      language,
-      hasNewsletter,
-      hasLicense,
-      street: street ?? null,
-      streetAdditional: streetAdditional ?? null,
-      postcode: postcode ?? null,
-      city: city ?? null,
-      countryName: countryName ?? null,
-      countryId: countryId ? Number(countryId) || null : null,
-      telefon: telefon ?? null,
-    };
-
-    try {
-      const response = await axios.post<RegasoftMember>(
-        `${REGASOFT_BASE}/api/club/members`,
-        payload,
-        { headers: regasoftHeaders(regasoftApiKey.value(), regasoftClubId.value()) }
-      );
-
-      logger.info(`${CF_NAME}: created SRV member with id ${response.data.id}`);
-      await invalidateSrvCaches(await srvContext(request));
-      return { id: String(response.data.id) };
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        const status = error.response?.status;
-        const body = JSON.stringify(error.response?.data);
-        logger.error(`${CF_NAME}: Regasoft API error ${status}: ${body}`);
-        throw new HttpsError('internal', `Regasoft API error ${status}: ${body}`);
-      }
-      logger.error(`${CF_NAME}: unexpected error`, error);
-      throw new HttpsError('internal', 'Regasoft member creation failed');
-    }
-  }
+  handleCreateSrvContact
 );
 
 /**
  * Update an existing member in the Regasoft SRV API.
  */
+export async function handleUpdateSrvContact(request: CallableRequest<SrvContactData & { srvId: number }>) {
+  const CF_NAME = 'updateSrvContact';
+
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Authentication required');
+  }
+  // SRV member data is person PII — memberAdmin/admin only (privacy inventory §7.2).
+  await checkRoles(request, CF_NAME, ['memberAdmin']);
+
+  const { srvId, firstName, lastName, email, mobile, dateOfBirth, gender,
+          membershipType, street, postcode, city, dateOfDeath, leavingDate } = request.data;
+  if (!srvId || !firstName || !lastName) {
+    throw new HttpsError('invalid-argument', 'srvId, firstName and lastName are required');
+  }
+
+  logger.info(`${CF_NAME}: updating SRV member ${srvId} "${firstName} ${lastName}"`);
+
+  const payload: Partial<RegasoftMember> = {
+    id: srvId,
+    firstName,
+    lastName,
+    email: email ?? null,
+    mobile: mobile ?? null,
+    birthday: storeDateToRegasoftDate(dateOfBirth),
+    gender,
+    membershipType,
+    street: street ?? null,
+    postcode: postcode ?? null,
+    city: city ?? null,
+    dateOfDeath: storeDateToRegasoftDate(dateOfDeath ?? undefined),
+    leavingDate: storeDateToRegasoftDate(leavingDate ?? undefined),
+  };
+
+  try {
+    await axios.put<RegasoftMember>(
+      `${REGASOFT_BASE}/api/club/members/${srvId}`,
+      payload,
+      { headers: regasoftHeaders(regasoftApiKey.value(), regasoftClubId.value()) }
+    );
+
+    logger.info(`${CF_NAME}: updated SRV member ${srvId}`);
+    await invalidateSrvCaches(await srvContext(request));
+    return { id: String(srvId) };
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const body = JSON.stringify(error.response?.data);
+      logger.error(`${CF_NAME}: Regasoft API error ${status}: ${body}`);
+      throw new HttpsError('internal', `Regasoft API error ${status}: ${body}`);
+    }
+    logger.error(`${CF_NAME}: unexpected error`, error);
+    throw new HttpsError('internal', 'Regasoft member update failed');
+  }
+}
+
 export const updateSrvContact = onCall(
   {
     region: 'europe-west6',
     enforceAppCheck: true,
     secrets: [regasoftApiKey, regasoftClubId],
   },
-  async (request: CallableRequest<SrvContactData & { srvId: number }>) => {
-    const CF_NAME = 'updateSrvContact';
-
-    if (!request.auth) {
-      throw new HttpsError('unauthenticated', 'Authentication required');
-    }
-    // SRV member data is person PII — memberAdmin/admin only (privacy inventory §7.2).
-    await checkRoles(request, CF_NAME, ['memberAdmin']);
-
-    const { srvId, firstName, lastName, email, mobile, dateOfBirth, gender,
-            membershipType, street, postcode, city, dateOfDeath, leavingDate } = request.data;
-    if (!srvId || !firstName || !lastName) {
-      throw new HttpsError('invalid-argument', 'srvId, firstName and lastName are required');
-    }
-
-    logger.info(`${CF_NAME}: updating SRV member ${srvId} "${firstName} ${lastName}"`);
-
-    const payload: Partial<RegasoftMember> = {
-      id: srvId,
-      firstName,
-      lastName,
-      email: email ?? null,
-      mobile: mobile ?? null,
-      birthday: storeDateToRegasoftDate(dateOfBirth),
-      gender,
-      membershipType,
-      street: street ?? null,
-      postcode: postcode ?? null,
-      city: city ?? null,
-      dateOfDeath: storeDateToRegasoftDate(dateOfDeath ?? undefined),
-      leavingDate: storeDateToRegasoftDate(leavingDate ?? undefined),
-    };
-
-    try {
-      await axios.put<RegasoftMember>(
-        `${REGASOFT_BASE}/api/club/members/${srvId}`,
-        payload,
-        { headers: regasoftHeaders(regasoftApiKey.value(), regasoftClubId.value()) }
-      );
-
-      logger.info(`${CF_NAME}: updated SRV member ${srvId}`);
-      await invalidateSrvCaches(await srvContext(request));
-      return { id: String(srvId) };
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        const status = error.response?.status;
-        const body = JSON.stringify(error.response?.data);
-        logger.error(`${CF_NAME}: Regasoft API error ${status}: ${body}`);
-        throw new HttpsError('internal', `Regasoft API error ${status}: ${body}`);
-      }
-      logger.error(`${CF_NAME}: unexpected error`, error);
-      throw new HttpsError('internal', 'Regasoft member update failed');
-    }
-  }
+  handleUpdateSrvContact
 );

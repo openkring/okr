@@ -151,6 +151,23 @@ export function stripTenantId<P>(data: P): P {
   return rest as P;
 }
 
+/** The request handler of an adapter's callable — shared by makeGatewayCallable and op routers. */
+export function makeGatewayHandler<P, R, M>(adapter: ProviderAdapter<P, R, M>) {
+  return async (request: CallableRequest<P>): Promise<GatewayResult<M>> => {
+    if (adapter.requiresAuth && !request.auth) {
+      throw new HttpsError('unauthenticated', 'Authentication required');
+    }
+    const token = request.auth?.token as Record<string, unknown> | undefined;
+    const uid = request.auth?.uid ?? null;
+    const ctx: GatewayContext = {
+      tenantId: await resolveTenantId(uid, adapter.scope),
+      uid,
+      isAdmin: token?.['admin'] === true || token?.['contentAdmin'] === true,
+    };
+    return runGateway(adapter, stripTenantId(request.data), ctx);
+  };
+}
+
 /**
  * Turn an adapter into a callable. Resolves auth/tenant context, enforces
  * requiresAuth, binds region + AppCheck + declared secrets.
@@ -158,18 +175,6 @@ export function stripTenantId<P>(data: P): P {
 export function makeGatewayCallable<P, R, M>(adapter: ProviderAdapter<P, R, M>) {
   return onCall(
     { region: 'europe-west6', enforceAppCheck: true, secrets: adapter.secrets },
-    async (request: CallableRequest<P>): Promise<GatewayResult<M>> => {
-      if (adapter.requiresAuth && !request.auth) {
-        throw new HttpsError('unauthenticated', 'Authentication required');
-      }
-      const token = request.auth?.token as Record<string, unknown> | undefined;
-      const uid = request.auth?.uid ?? null;
-      const ctx: GatewayContext = {
-        tenantId: await resolveTenantId(uid, adapter.scope),
-        uid,
-        isAdmin: token?.['admin'] === true || token?.['contentAdmin'] === true,
-      };
-      return runGateway(adapter, stripTenantId(request.data), ctx);
-    },
+    makeGatewayHandler(adapter),
   );
 }

@@ -40,8 +40,10 @@ import * as Bexio from './bexio';
 import * as BexioRouter from './bexio/bexio-router';
 import * as BexioSchedules from './bexio/bexio-schedules';
 import * as Gateway from './_gateway';
+import * as ZefixRouter from './_gateway/zefix-router';
 import * as Location from './location';
 import * as Srv from './srv';
+import * as SrvRouter from './srv/srv-router';
 import * as Flighttracker from './flighttracker';
 import * as Session from './session';
 import * as Task from './task';
@@ -239,11 +241,17 @@ export const showBillPdf = Bexio.showBillPdf;
 // bexio journal sync
 export const scheduleBexioJournalSync = Bexio.scheduleBexioJournalSync;
 
+// srv router (3.41 A8); the four names below stay as aliases
+export const srv = SrvRouter.srv;
+
 // srv (Regasoft SRV) contact sync
 export const getSrvContacts = Srv.getSrvContacts;
 export const getSrvMemberDetail = Srv.getSrvMemberDetail;
 export const createSrvContact = Srv.createSrvContact;
 export const updateSrvContact = Srv.updateSrvContact;
+
+// zefix router (3.41 A8); zefixSearch/zefixGetByUid stay as aliases
+export const zefix = ZefixRouter.zefix;
 
 // zefix registry lookup
 // external-data-gateway: zefix retrofitted onto the gateway (cache + quota + attribution)
