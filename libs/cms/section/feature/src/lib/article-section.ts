@@ -203,7 +203,9 @@ export class ArticleSectionComponent {
   });
 
   protected imageStyle = computed(() => this.section()?.properties.imageStyle ?? IMAGE_STYLE_SHAPE);
-  protected content = computed(() => this.section()?.content?.htmlContent ?? '<p></p>');
+  // Shared texts (e.g. the privacy statement, one set of sections for every tenant) name the
+  // tenant through placeholders such as @APPNAME@ and @DOMAIN@, like the title does.
+  protected content = computed(() => this.store.appStore.replacePlaceholders(this.section()?.content?.htmlContent ?? '<p></p>'));
   protected colSizeImage = computed(() => this.section()?.content?.colSize ?? 6);
   protected colSizeText = computed(() => 12 - this.colSizeImage());
   protected title = computed(() => this.store.appStore.replacePlaceholders(this.section()?.title ?? ''));
