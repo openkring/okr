@@ -110,43 +110,51 @@ export function dayFolderMatches(date: string, candidates: DriveFolderCandidate[
   return candidates.filter(c => (c.name ?? '').startsWith(date) && isDriveId(c.id ?? ''));
 }
 
+/** Name and parents of a folder above a day-folder candidate, keyed by its id. */
+export type DriveFolderInfo = Record<string, { name: string; parents?: string[] }>;
+
 /**
  * The day folder of `date` among the search hits, '' when there is none or it stays ambiguous.
- * One prefix match wins outright. Several are narrowed to those whose parent is the month folder
- * (`MM`, spec 1.106: archive → 202x → yyyy → MM → day); `parentNames` maps a parent id to its name.
+ * The search covers the owner's whole Drive, so every candidate must sit where the archive puts a
+ * day (spec 1.106: archive → 202x → yyyy → MM → day): its parent is named `MM` AND that parent's
+ * parent is named `yyyy`. Exactly one such candidate wins. `folders` holds the looked-up parents
+ * and grandparents.
  */
-export function pickDayFolder(date: string, candidates: DriveFolderCandidate[], parentNames: Record<string, string>): string {
-  const matches = dayFolderMatches(date, candidates);
-  if (matches.length === 1) return matches[0].id;
-  if (matches.length === 0) return '';
+export function pickDayFolder(date: string, candidates: DriveFolderCandidate[], folders: DriveFolderInfo): string {
+  const year = date.slice(0, 4);
   const month = date.slice(4, 6);
-  const inMonth = matches.filter(c => (c.parents ?? []).some(p => parentNames[p] === month));
-  return inMonth.length === 1 ? inMonth[0].id : '';
+  const inPlace = dayFolderMatches(date, candidates).filter(c => (c.parents ?? []).some(p =>
+    folders[p]?.name === month && (folders[p]?.parents ?? []).some(g => folders[g]?.name === year)));
+  return inPlace.length === 1 ? inPlace[0].id : '';
 }
 
 /**
  * Looks the day folder of `date` up in Drive by name ('' when not found or ambiguous). The date is
- * checked to be 8 digits before it goes into the query.
+ * checked to be 8 digits before it goes into the query. Each candidate's parent and grandparent
+ * are read once (cached within the call) to verify the `yyyy/MM` placement.
  */
 async function findDayFolder(token: string, date: string, name: string): Promise<string> {
   if (!/^\d{8}$/.test(date)) return '';
   const response = await driveFetch(token, '/files', {
-    q: `mimeType = '${FOLDER_MIME}' and name contains '${date}' and trashed = false`,
+    // 'me' in owners: a folder someone else shared into the owner's Drive can never match
+    q: `mimeType = '${FOLDER_MIME}' and name contains '${date}' and 'me' in owners and trashed = false`,
     fields: 'files(id,name,parents)',
     pageSize: '50',
   });
   if (!response.ok) throw new HttpsError('unavailable', `${name}: drive folder search failed: ${response.status}`);
   const files = ((await response.json()) as { files?: DriveFolderCandidate[] }).files ?? [];
-  const matches = dayFolderMatches(date, files);
-  const parentNames: Record<string, string> = {};
-  if (matches.length > 1) {
-    const parentIds = [...new Set(matches.flatMap(m => m.parents ?? []))].filter(isDriveId);
-    await Promise.all(parentIds.map(async id => {
-      const parent = await driveFetch(token, `/files/${id}`, { fields: 'name' });
-      if (parent.ok) parentNames[id] = ((await parent.json()) as { name?: string }).name ?? '';
+  const folders: DriveFolderInfo = {};
+  const readFolders = (ids: string[]) => Promise.all(
+    [...new Set(ids)].filter(id => isDriveId(id) && !(id in folders)).map(async id => {
+      const r = await driveFetch(token, `/files/${id}`, { fields: 'name,parents' });
+      const json = r.ok ? ((await r.json()) as { name?: string; parents?: string[] }) : {};
+      folders[id] = { name: json.name ?? '', parents: json.parents ?? [] };
     }));
-  }
-  return pickDayFolder(date, files, parentNames);
+  const matches = dayFolderMatches(date, files);
+  await readFolders(matches.flatMap(m => m.parents ?? []));
+  const month = date.slice(4, 6);
+  await readFolders(matches.flatMap(m => m.parents ?? []).filter(p => folders[p]?.name === month).flatMap(p => folders[p].parents ?? []));
+  return pickDayFolder(date, files, folders);
 }
 
 /**

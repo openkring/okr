@@ -49,31 +49,51 @@ describe('isArchiveOwner', () => {
 });
 
 describe('pickDayFolder', () => {
-  const folder = (id: string, name: string, parent = 'p10') => ({ id, name, parents: [parent] });
+  const folder = (id: string, name: string, parent = 'm10') => ({ id, name, parents: [parent] });
+  // archive → 2020er → 2026 → 10 / 09; and an unrelated "10" under 2025
+  const tree = {
+    m10: { name: '10', parents: ['y2026'] },
+    m09: { name: '09', parents: ['y2026'] },
+    o10: { name: '10', parents: ['y2025'] },
+    x: { name: 'Fotos', parents: ['y2026'] },
+    y2026: { name: '2026', parents: ['dec'] },
+    y2025: { name: '2025', parents: ['dec'] },
+  };
 
-  it('takes the one folder whose name starts with the date', () => {
-    expect(pickDayFolder('20261020', [folder('a1', '20261020moToteFische')], {})).toBe('a1');
+  it('takes the one folder whose name starts with the date and sits under yyyy/MM', () => {
+    expect(pickDayFolder('20261020', [folder('a1', '20261020moToteFische')], tree)).toBe('a1');
   });
 
   it('prefers a prefix match over a name that only contains the date', () => {
-    expect(pickDayFolder('20261020', [folder('x1', 'Kopie 20261020mo'), folder('a1', '20261020mo')], {})).toBe('a1');
-    expect(dayFolderMatches('20261020', [folder('x1', 'Kopie 20261020mo'), folder('a1', '20261020mo')]).map(f => f.id)).toEqual(['a1']);
+    const candidates = [folder('x1', 'Kopie 20261020mo'), folder('a1', '20261020mo')];
+    expect(pickDayFolder('20261020', candidates, tree)).toBe('a1');
+    expect(dayFolderMatches('20261020', candidates).map(f => f.id)).toEqual(['a1']);
   });
 
   it('disambiguates two matches by the month folder of the parent', () => {
-    const candidates = [folder('a1', '20261020mo', 'p10'), folder('b2', '20261020mo', 'p09')];
-    expect(pickDayFolder('20261020', candidates, { p10: '10', p09: '09' })).toBe('a1');
+    expect(pickDayFolder('20261020', [folder('a1', '20261020mo', 'm10'), folder('b2', '20261020mo', 'm09')], tree)).toBe('a1');
   });
 
-  it('returns empty when the month does not settle it', () => {
-    const candidates = [folder('a1', '20261020mo', 'p10'), folder('b2', '20261020di', 'q10')];
-    expect(pickDayFolder('20261020', candidates, { p10: '10', q10: '10' })).toBe('');
-    expect(pickDayFolder('20261020', candidates, {})).toBe('');
+  it('rejects a single candidate under the wrong month', () => {
+    expect(pickDayFolder('20261020', [folder('a1', '20261020mo', 'm09')], tree)).toBe('');
+    expect(pickDayFolder('20261020', [folder('a1', '20261020mo', 'x')], tree)).toBe('');
+  });
+
+  it('rejects the correct month under the wrong year', () => {
+    expect(pickDayFolder('20261020', [folder('a1', '20261020mo', 'o10')], tree)).toBe('');
+  });
+
+  it('rejects a candidate whose parents are unknown', () => {
+    expect(pickDayFolder('20261020', [folder('a1', '20261020mo')], {})).toBe('');
+  });
+
+  it('returns empty when the placement does not settle it', () => {
+    expect(pickDayFolder('20261020', [folder('a1', '20261020mo', 'm10'), folder('b2', '20261020di', 'm10')], tree)).toBe('');
   });
 
   it('returns empty when no folder matches, or the id is not a Drive id', () => {
-    expect(pickDayFolder('20261020', [], {})).toBe('');
-    expect(pickDayFolder('20261020', [folder('a1', '20261021di')], {})).toBe('');
-    expect(pickDayFolder('20261020', [folder("a' or '", '20261020mo')], {})).toBe('');
+    expect(pickDayFolder('20261020', [], tree)).toBe('');
+    expect(pickDayFolder('20261020', [folder('a1', '20261021di')], tree)).toBe('');
+    expect(pickDayFolder('20261020', [folder("a' or '", '20261020mo')], tree)).toBe('');
   });
 });
