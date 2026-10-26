@@ -1,12 +1,14 @@
 import { inject, Injectable } from '@angular/core';
+import { Filesystem } from '@capacitor/filesystem';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { getBlob, ref, uploadBytes } from 'firebase/storage';
 import { Observable } from 'rxjs';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, getBkStorage } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
-import { TRACKER_TRIP_TYPE, TransportMode, TripCollection, TripModel, TripTrack } from '@okr/shared-models';
+import { TRACKER_TRIP_TYPE, TrackPhoto, TransportMode, TripCollection, TripModel, TripTrack } from '@okr/shared-models';
 import { convertDateFormatToString, DateFormat, getDeletePatch, getSystemQuery } from '@okr/shared-util-core';
-import { decodeTrack, encodeTrack, LocalSection, LocalTrack, summarize, toTrackSections, TrackPoint } from '@okr/mobility-tracker-util';
+import { decodeTrack, encodeTrack, LocalSection, LocalTrack, summarize, toTrackSections, trackThumbPath, TrackPoint } from '@okr/mobility-tracker-util';
 
 /** One section's points, stored as an encoded polyline in trips/{key}/track-points/{n}. */
 export interface TrackPointsDoc {
@@ -26,14 +28,22 @@ function toLocalIso(ms: number): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
+/** A local photo as a stored TrackPhoto: the device-local path400 is never persisted. */
+function toTrackPhoto(p: TrackPhoto & { path400?: string }): TrackPhoto {
+  const { path400: _path400, ...rest } = p;
+  return rest;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TrackService {
   private readonly firestoreService = inject(FirestoreService);
   private readonly env = inject(ENV);
+  /** Thumbnails are immutable per path, so a data URL is read once. */
+  private readonly thumbCache = new Map<string, string>();
 
   /**
    * Upload a finished local track: the trip doc and one track-points doc per section in ONE batch.
-   * The trip okey is the local track key and batch.set overwrites, so a retried upload replaces itself.
+   * The trip okey is the local track key and the trip is set with merge (fields not written here, e.g. uploaded photo thumb paths, survive); points docs are overwritten, so a retried upload replaces itself.
    * A re-upload with fewer sections passes `staleUpTo` (the former section count): the track-points docs
    * sections.length … staleUpTo-1 are deleted in the SAME batch. Batches reach Firestore in the order they are
    * issued, so a stale delete can never hit the points of a later upload. (A new trip has nothing stale; the
@@ -41,9 +51,8 @@ export class TrackService {
    * The batch is issued synchronously (no await before commit): callers rely on that for ordering.
    * @returns the trip key
    */
-  public async upload(local: LocalTrack, sections: TrackPoint[][], owner: { personKey: string; uid: string }, staleUpTo?: number): Promise<string> {
+  public async upload(local: LocalTrack, sections: TrackPoint[][], owner: { personKey: string; uid: string; tenants: string[] }, staleUpTo?: number): Promise<string> {
     const tripKey = local.key;
-    const tenantId = this.env.tenantId;
     const endedMs = local.endedAt ?? local.startedAt;
     if (local.sections.length !== sections.length) throw new Error('track sections and points differ');
     // ONE source for the section count: trip.track.sections and the track-points docs both follow it
@@ -55,15 +64,17 @@ export class TrackService {
     const startIso = toLocalIso(local.startedAt);
     const endIso = toLocalIso(endedMs);
 
-    const track: TripTrack = {
+    const track = {
       personKey: owner.personKey,
       ownerUid: owner.uid,
       startedAt: new Date(local.startedAt).toISOString(),
       endedAt: new Date(endedMs).toISOString(),
       durationS,
       sections: toTrackSections(localSections, tripKey),
-      photos: [],
-    };
+    } as TripTrack;
+    // photos: only from the local list (path400 stripped, thumbPath kept). Without a local list the key is omitted,
+    // so the merge keeps what is stored and never wipes uploaded thumb paths.
+    if (local.photos) track.photos = local.photos.map(toTrackPhoto);
 
     // SECURITY NOTE: the points are only owner-private once the owner-only trips rules (branch
     // work/tracker-rules) are deployed. Under today's tenant-writable trips rules a tenant member
@@ -71,7 +82,7 @@ export class TrackService {
     // work/tracker-rules, which checks the owner on both resource and request.
     // Plain object without `okey` (FirestoreService strips it on write as well).
     const trip = {
-      tenants: [tenantId],
+      tenants: owner.tenants,
       isArchived: false,
       name: local.name,
       type: TRACKER_TRIP_TYPE,
@@ -91,10 +102,10 @@ export class TrackService {
     };
 
     const batch = this.firestoreService.getBatch();
-    batch.set(doc(this.firestoreService.firestore, `${TripCollection}/${tripKey}`), trip);
+    batch.set(doc(this.firestoreService.firestore, `${TripCollection}/${tripKey}`), trip, { merge: true });
     sections.forEach((points, i) => {
       const pointsDoc: TrackPointsDoc = {
-        tenants: [tenantId],
+        tenants: owner.tenants,
         section: i,
         mode: local.sections[i].mode,
         count: points.length,
@@ -144,5 +155,52 @@ export class TrackService {
     const snap = await getDoc(doc(this.firestoreService.firestore, `${TripCollection}/${tripKey}/${TRACK_POINTS}/${n}`));
     if (!snap.exists()) return [];
     return decodeTrack((snap.data() as TrackPointsDoc).encoded);
+  }
+
+  /** Tracker trips of one person on one day (the diary's view). Unordered: equality-only query; callers sort by startTime. */
+  public listOfDay(personKey: string, tenantId: string, date: string): Observable<TripModel[]> {
+    return this.firestoreService.searchData<TripModel>(TripCollection, [
+      ...getSystemQuery(tenantId),
+      { key: 'type', operator: '==', value: TRACKER_TRIP_TYPE },
+      { key: 'track.personKey', operator: '==', value: personKey },
+      { key: 'startDate', operator: '==', value: date },
+    ]);
+  }
+
+  /** Uploads one 400 px thumbnail (a device file) to the private bucket; returns its Storage path. */
+  public async uploadThumb(tenantId: string, tripKey: string, n: number, localPath: string): Promise<string> {
+    const path = trackThumbPath(tenantId, tripKey, n);
+    const { data } = await Filesystem.readFile({ path: localPath });
+    let blob: Blob;
+    if (typeof data === 'string') {
+      const bin = atob(data);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      blob = new Blob([bytes], { type: 'image/jpeg' });
+    } else {
+      blob = data;
+    }
+    await uploadBytes(ref(getBkStorage('private'), path), blob, { contentType: 'image/jpeg' });
+    return path;
+  }
+
+  /** A thumbnail as a data: URL (private bucket, owner-only), cached per path. */
+  public async readThumb(thumbPath: string): Promise<string> {
+    const cached = this.thumbCache.get(thumbPath);
+    if (cached) return cached;
+    const blob = await getBlob(ref(getBkStorage('private'), thumbPath));
+    const url = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(blob);
+    });
+    this.thumbCache.set(thumbPath, url);
+    return url;
+  }
+
+  /** Writes the photo list (without path400). Resolves only on the server's ack: callers run it detached. */
+  public async setPhotos(tripKey: string, photos: TrackPhoto[]): Promise<void> {
+    await updateDoc(doc(this.firestoreService.firestore, `${TripCollection}/${tripKey}`), { 'track.photos': photos.map(toTrackPhoto) });
   }
 }

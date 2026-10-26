@@ -14,7 +14,7 @@ import { TrackDb, TrackService } from '@okr/mobility-tracker-data-access';
 import { TrackMap, TrackMapSection, TrackModeChange, TrackSections } from '@okr/mobility-tracker-ui';
 import {
   alignSections, buildGpx, correctedTrack, fromLocalSections, gpxFileName, isShareCancel, LocalSection, LocalTrack, localFromTrip, mergeWithNext,
-  middlePointIndex, sectionRows, setSectionMode, splitSection, toLocalSections,
+  localStoreDate, middlePointIndex, sectionRows, setSectionMode, splitSection, toLocalSections, trackTenants,
 } from '@okr/mobility-tracker-util';
 
 import { TrackerStore } from './tracker.store';
@@ -291,10 +291,15 @@ export class TrackDetailPage {
     }
   }
 
-  private owner(): { personKey: string; uid: string } | undefined {
+  private owner(): { personKey: string; uid: string; tenants: string[] } | undefined {
     const personKey = this.appStore.currentUser()?.personKey;
     const uid = this.appStore.fbUser()?.uid;
-    return personKey && uid ? { personKey, uid } : undefined;
+    if (!personKey || !uid) return undefined;
+    // an already uploaded trip keeps its tenants; a local-only one resolves them from the diary targets
+    const existing = this.trip()?.tenants;
+    const startedAt = this.track()?.startedAt;
+    const tenants = existing && existing.length > 0 ? existing : trackTenants(this.appStore.tenantId(), this.appStore.currentUser()?.diaryTargets, localStoreDate(startedAt ?? Date.now()));
+    return { personKey, uid, tenants };
   }
 
   /** The transport mode of the second half of a split (any but the current one). */

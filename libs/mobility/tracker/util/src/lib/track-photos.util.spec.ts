@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LibraryPhoto, placePhotos, positionAt, trackThumbPath, trackTenants } from './track-photos.util';
+import { LibraryPhoto, placePhotos, positionAt, trackThumbPath, trackTenants, localStoreDate } from './track-photos.util';
 import { TrackPoint } from './track-polyline.util';
 
 const P = (t: number, lat: number, lng: number): TrackPoint => ({ t, lat, lng });
@@ -51,4 +51,8 @@ describe('trackTenants', () => {
 
 describe('trackThumbPath', () => {
   it('builds the private bucket path', () => expect(trackThumbPath('bkg', 'k1', 2)).toBe('tenant/bkg/tracks/k1/2.jpg'));
+});
+
+describe('localStoreDate', () => {
+  it('formats the local day', () => expect(localStoreDate(new Date(2026, 9, 5, 23, 59).getTime())).toBe('20261005'));
 });

@@ -1,4 +1,4 @@
-import type { TransportMode } from '@okr/shared-models';
+import type { TrackPhoto, TransportMode } from '@okr/shared-models';
 import type { TrackPoint } from './track-polyline.util';
 
 /** A track as held in the device's local store (recording, paused or finished; uploaded or not). */
@@ -17,6 +17,8 @@ export interface LocalTrack {
   extraPointsUpTo?: number;
   /** Correction counter: +1 on every correction or rename (missing on old rows = 0). */
   rev?: number;
+  /** Photos placed on the track; `path400` is the device-local rendition and is never uploaded. */
+  photos?: (TrackPhoto & { path400?: string })[];
 }
 
 /** A stored point row: a track point plus its section index. */

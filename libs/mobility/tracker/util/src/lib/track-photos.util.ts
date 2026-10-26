@@ -67,3 +67,10 @@ export function trackTenants(own: string, targets: DiaryTarget[] | undefined, st
 export function trackThumbPath(tenantId: string, tripKey: string, n: number): string {
   return `tenant/${tenantId}/tracks/${tripKey}/${n}.jpg`;
 }
+
+/** The local calendar day (StoreDate yyyyMMdd) of an epoch-millisecond timestamp. */
+export function localStoreDate(ms: number): string {
+  const d = new Date(ms);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}`;
+}

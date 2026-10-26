@@ -13,7 +13,7 @@ import { DateFormat, generateRandomString, getCurrentTime, getTodayStr } from '@
 import { NativeLocation, TrackDb, TrackerLocation, TrackService } from '@okr/mobility-tracker-data-access';
 import {
   accumulateDistance, alignSections, correctedTrack, DetectionInput, hasNoPoints, LocalSection, sameTrackContent, DetectState, initialDetectState, LocalTrack,
-  MotionActivity, needsUpload, nextSectionStartPoint, nextSections, pendingUploadOwner, resumeDecision, sectionsAfterPause, sessionDetectStep, StartWarning,
+  MotionActivity, needsUpload, nextSectionStartPoint, nextSections, pendingUploadOwner, resumeDecision, sectionsAfterPause, sessionDetectStep, StartWarning, localStoreDate, trackTenants,
   startWarning, summarize, toTrackPoint, TRACK_PROFILES, TRACKER_I18N_KEYS, TrackerI18n, TrackPoint,
 } from '@okr/mobility-tracker-util';
 
@@ -223,7 +223,7 @@ export const TrackerStore = signalStore(
           const current = await findTrack(t.key);
           if (!current || !needsUpload(current)) return { track: current, commit: undefined };
           const points = alignSections(await store.db.points(current.key), current.sections.length);
-          const commit = store.trackService.upload(current, points, { personKey, uid }, current.extraPointsUpTo);
+          const commit = store.trackService.upload(current, points, { personKey, uid, tenants: trackTenants(store.appStore.tenantId(), store.appStore.currentUser()?.diaryTargets, localStoreDate(current.startedAt)) }, current.extraPointsUpTo);
           commit.catch(() => undefined); // awaited below, outside the queue (offline it resolves only on reconnect)
           return { track: current, commit };
         });
