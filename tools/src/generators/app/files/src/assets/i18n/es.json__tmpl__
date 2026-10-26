@@ -470,7 +470,11 @@
     "message": "Hay una nueva versión de la aplicación. Actualmente utiliza la versión {current}. Actualice la aplicación para disfrutar de las últimas funciones y mejoras.",
     "messageWithVersion": "Hay una nueva versión ({latest}) de la aplicación. Actualmente utiliza la versión {current}. Actualice la aplicación para disfrutar de las últimas funciones y mejoras.",
     "now": "Actualizar ahora",
-    "later": "Más tarde"
+    "later": "Más tarde",
+    "menuReady": "Versión v{current} → v{latest} lista",
+    "menuReadyNoVersion": "Versión v{current} → actualización lista",
+    "menuDownloading": "Descargando la nueva versión",
+    "menuRetry": "No se pudo cargar la nueva versión. Toca aquí para intentarlo de nuevo."
   },
   "boot": {
     "degraded1": "La aplicación no pudo iniciarse por completo.",

@@ -1,10 +1,11 @@
 import { Component, ElementRef, computed, effect, forwardRef, inject, input, signal } from '@angular/core';
-import { IonAccordion, IonAccordionGroup, IonItem, IonItemDivider, IonLabel, IonList, IonSegment, IonSegmentButton } from '@ionic/angular';
+import { IonAccordion, IonAccordionGroup, IonItem, IonItemDivider, IonLabel, IonList, IonProgressBar, IonSegment, IonSegmentButton } from '@ionic/angular';
 
 import { SelectedBooks } from '@okr/shared-feature';
 import { MenuItemModel } from '@okr/shared-models';
 import { Spinner } from '@okr/shared-ui';
 import { debugData, hasRole } from '@okr/shared-util-core';
+import { VersionCheckService } from '@okr/shared-util-angular';
 import { DEFAULT_MENU_ACTION } from '@okr/shared-constants';
 
 import { MenuInfo, MultiAvatar } from '@okr/cms-menu-ui';
@@ -17,7 +18,7 @@ import { MenuStore } from './menu.store';
   standalone: true,
   imports: [
     forwardRef(() => Menu), Spinner, MultiAvatar, MenuInfo,
-    IonList, IonItem, IonLabel, IonAccordionGroup, IonAccordion, IonItemDivider, IonSegment, IonSegmentButton
+    IonList, IonItem, IonLabel, IonAccordionGroup, IonAccordion, IonItemDivider, IonSegment, IonSegmentButton, IonProgressBar
   ],
   styles: [`
     /* the info-circle on a sub-menu header sits on the primary colour */
@@ -29,6 +30,7 @@ import { MenuStore } from './menu.store';
     ::ng-deep ion-accordion ion-icon[slot="start"] { margin-inline-end: 8px; }
     ion-item-divider.separator { min-height: 2px; --padding-start: 0; --inner-padding-end: 0;
       --background: var(--ion-color-step-150, #d7d8da); }
+    ion-progress-bar.update { height: 2px; }
     `],
   providers: [MenuStore],
   template: `
@@ -42,7 +44,19 @@ import { MenuStore } from './menu.store';
               <okr-multi-avatar [icon]="icon()" [label]="menuStore.translatedMenuLabel()" [info]="menuStore.translatedMenuInfo()" [badge]="notificationCount()" (click)="select(menuItem)" />
             }
             @case('browse') {
-              <okr-multi-avatar [icon]="icon()" [label]="menuStore.translatedMenuLabel()" [info]="menuStore.translatedMenuInfo()" [badge]="notificationCount()" (click)="select(menuItem)" />
+              @if (isReleaseRow()) {
+                <!-- the Release row mirrors the service worker's next version: a bar while it
+                     downloads (ngsw reports no progress, hence indeterminate), «… bereit» + tap
+                     installs once downloaded, a red retry icon when the download failed -->
+                <okr-multi-avatar [icon]="icon()" [label]="appUpdate.readyLabel() || menuStore.translatedMenuLabel()" [info]="menuStore.translatedMenuInfo()"
+                  [statusIcon]="appUpdate.updateState() === 'failed' ? 'reload' : ''" [statusLabel]="appUpdate.retryLabel()"
+                  (statusClicked)="appUpdate.retryUpdate()" (click)="selectRelease(menuItem)" />
+                @if (appUpdate.updateState() === 'downloading') {
+                  <ion-progress-bar class="update" type="indeterminate" [attr.aria-label]="appUpdate.downloadingLabel()" />
+                }
+              } @else {
+                <okr-multi-avatar [icon]="icon()" [label]="menuStore.translatedMenuLabel()" [info]="menuStore.translatedMenuInfo()" [badge]="notificationCount()" (click)="select(menuItem)" />
+              }
             }
             @case('sub') {
               <!-- The entries of a sub-menu are created on the FIRST expand, not at boot: every
@@ -152,6 +166,7 @@ import { MenuStore } from './menu.store';
 export class Menu {
   protected readonly menuStore = inject(MenuStore);
   protected readonly selectedBooks = inject(SelectedBooks);
+  protected readonly appUpdate = inject(VersionCheckService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   // inputs
@@ -190,6 +205,8 @@ export class Menu {
     if (name && this.excludeNames().includes(name)) return false;
     return this.forceVisible() || this.forceVisibleSelf() || hasRole(this.roleNeeded(), this.currentUser());
   });
+  /** the release-notes row (catalogue `version`; a tenant fork keeps the name) */
+  protected readonly isReleaseRow = computed(() => this.menuItem()?.name === 'version');
   protected readonly notificationCount = computed(() => this.menuStore.notificationCount());
   /** 'sub' only: whether the accordion has been opened at least once — its entries render from then on. */
   protected readonly expanded = signal(false);
@@ -232,6 +249,15 @@ export class Menu {
   protected onBooks(event: Event): void {
     event.stopPropagation();
     this.selectedBooks.switchTo(String((event as CustomEvent<{ value?: string }>).detail?.value ?? ''));
+  }
+
+  /** Release row: installs a downloaded update; otherwise opens the release notes as usual. */
+  protected async selectRelease(menuItem: MenuItemModel): Promise<void> {
+    if (this.appUpdate.updateState() === 'ready') {
+      await this.appUpdate.installUpdate();
+      return;
+    }
+    await this.select(menuItem);
   }
 
   protected async select(menuItem: MenuItemModel) {
