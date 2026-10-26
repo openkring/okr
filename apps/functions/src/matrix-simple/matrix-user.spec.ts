@@ -14,7 +14,6 @@ vi.mock('firebase-functions/params', () => ({ defineSecret: () => ({ value: () =
 
 import { MATRIX_USER_OPS, MATRIX_USER_OPTIONS, matrixUser } from './matrix-user';
 import * as adhoc from './adhoc-chat';
-import * as chatPins from './chat-pins';
 import * as credentials from './credentials';
 import * as notesRoom from './notes-room';
 import * as pinboard from './pinboard';
@@ -24,14 +23,16 @@ const NAMES = [
   'createAdhocChat', 'addAdhocChatMembers', 'leaveAdhocChat', 'removeAdhocChatMember',
   'createPinboard', 'updatePinboard', 'archivePinboard', 'leavePinboard', 'joinPinboard', 'listAvailablePinboards',
   'invitePersonToGroupRoom', 'kickPersonFromGroupRoom', 'requestGroupRoomAccess',
-  'resolveNotesRoom', 'setChatPins', 'provisionMatrixUser', 'syncFirebaseProfileToMatrix',
+  'resolveNotesRoom', 'provisionMatrixUser', 'syncFirebaseProfileToMatrix',
 ];
 const OP_ONLY = ['syncFirebaseProfileToMatrix'];
-const modules: Record<string, unknown>[] = [adhoc, chatPins, credentials, notesRoom, pinboard, rooms];
+const modules: Record<string, unknown>[] = [adhoc, credentials, notesRoom, pinboard, rooms];
 const req = (data: unknown) => ({ auth: { uid: 'u1' }, app: {}, data }) as never;
 
 describe('matrixUser op table', () => {
-  it('has exactly the 17 op names as keys', () => {
+  it('has exactly the 16 op names as keys', () => {
+    // setChatPins stays its own callable: its payload has an `op` field that dispatchOp would strip (R5).
+    expect(Object.keys(MATRIX_USER_OPS)).not.toContain('setChatPins');
     expect(Object.keys(MATRIX_USER_OPS).sort()).toEqual([...NAMES].sort());
   });
 
@@ -61,7 +62,7 @@ describe('matrixUser op table', () => {
     await expect(matrixUser.run(req({ op: 'createPinboard', name: 'x' }))).rejects.toMatchObject({ code: 'permission-denied' });
   });
 
-  it('invitePersonToGroupRoom through the router: a plain member is denied', async () => {
+  it('invitePersonToGroupRoom through the router: a privileged-only caller is denied', async () => {
     state.user = { roles: { privileged: true }, tenants: ['scs'] };
     await expect(
       matrixUser.run(req({ op: 'invitePersonToGroupRoom', groupId: 'g', personKey: 'p' })),

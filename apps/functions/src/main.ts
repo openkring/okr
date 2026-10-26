@@ -169,7 +169,7 @@ export const reconcileGroupRoomMembers = MatrixMembershipSync.reconcileGroupRoom
 export const syncRoomPostPolicy = MatrixPostPolicy.syncRoomPostPolicy;
 // matrixAdmin: one router callable for the 19 Matrix admin callables above, which stay as aliases (TOC 3.41 A1)
 export const matrixAdmin = MatrixAdmin.matrixAdmin;
-// matrixUser: one router callable for 16 user-facing chat callables above (aliases) plus syncFirebaseProfileToMatrix (op only, no export) (TOC 3.41 A2)
+// matrixUser: one router callable for 15 user-facing chat callables above (aliases) plus syncFirebaseProfileToMatrix (op only, no export) (TOC 3.41 A2)
 export const matrixUser = MatrixUser.matrixUser;
 // group-room drift: report room members without a membership, and prune them on demand
 export const auditGroupRoomMembers = MatrixMembershipSync.auditGroupRoomMembers;

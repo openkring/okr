@@ -3,12 +3,12 @@
  *
  * Each op runs the same handler as its stand-alone callable, which keeps its own role guard and
  * rate-limit key (the old function name) inside the body; the router checks nothing per op.
- * The old names stay as aliases, except syncFirebaseProfileToMatrix, which is op-only.
+ * 16 ops: the old names stay as aliases, except syncFirebaseProfileToMatrix, which is op-only.
+ * setChatPins is not an op: its payload carries its own `op` field, which dispatchOp strips (R5).
  */
 import { makeOpRouter, type OpHandler } from '../_router';
 import { matrixAdminToken } from './shared';
 import { handleAddAdhocChatMembers, handleCreateAdhocChat, handleLeaveAdhocChat, handleRemoveAdhocChatMember } from './adhoc-chat';
-import { handleSetChatPins } from './chat-pins';
 import { handleProvisionMatrixUser, handleSyncFirebaseProfileToMatrix } from './credentials';
 import { handleResolveNotesRoom } from './notes-room';
 import {
@@ -36,7 +36,6 @@ export const MATRIX_USER_OPS: Record<string, OpHandler> = {
   kickPersonFromGroupRoom: handleKickPersonFromGroupRoom,
   requestGroupRoomAccess: handleRequestGroupRoomAccess,
   resolveNotesRoom: handleResolveNotesRoom,
-  setChatPins: handleSetChatPins,
   provisionMatrixUser: handleProvisionMatrixUser,
   syncFirebaseProfileToMatrix: handleSyncFirebaseProfileToMatrix,
 };
