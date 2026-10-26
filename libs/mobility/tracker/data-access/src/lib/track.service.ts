@@ -28,18 +28,20 @@ function toLocalIso(ms: number): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
-/** A local photo as a stored TrackPhoto: the device-local path400 is never persisted. */
+/** A local photo as a stored TrackPhoto: the device-local path400 is never persisted, and no key is written as undefined. */
 function toTrackPhoto(p: TrackPhoto & { path400?: string }): TrackPhoto {
-  const { path400: _path400, ...rest } = p;
-  return rest;
+  const out: TrackPhoto = { assetId: p.assetId, takenAt: p.takenAt, lat: p.lat, lng: p.lng, ownGps: p.ownGps, hidden: p.hidden };
+  if (p.imageKey !== undefined) out.imageKey = p.imageKey;
+  if (p.thumbPath !== undefined) out.thumbPath = p.thumbPath;
+  return out;
 }
 
 @Injectable({ providedIn: 'root' })
 export class TrackService {
   private readonly firestoreService = inject(FirestoreService);
   private readonly env = inject(ENV);
-  /** Thumbnails are immutable per path, so a data URL is read once. */
-  private readonly thumbCache = new Map<string, string>();
+  /** Thumbnails are immutable per path, so a data URL is read once (the promise is cached: concurrent reads share one fetch). */
+  private readonly thumbCache = new Map<string, Promise<string>>();
 
   /**
    * Upload a finished local track: the trip doc and one track-points doc per section in ONE batch.
@@ -49,6 +51,8 @@ export class TrackService {
    * issued, so a stale delete can never hit the points of a later upload. (A new trip has nothing stale; the
    * delete rule reads the trip that exists before the batch.)
    * The batch is issued synchronously (no await before commit): callers rely on that for ordering.
+   * Photos: `local.photos` must carry `thumbPath` once a thumbnail is uploaded. The service never reads the server doc
+   * (offline), so a photo without thumbPath overwrites a stored one on the merge (arrays are replaced).
    * @returns the trip key
    */
   public async upload(local: LocalTrack, sections: TrackPoint[][], owner: { personKey: string; uid: string; tenants: string[] }, staleUpTo?: number): Promise<string> {
@@ -170,7 +174,8 @@ export class TrackService {
   /** Uploads one 400 px thumbnail (a device file) to the private bucket; returns its Storage path. */
   public async uploadThumb(tenantId: string, tripKey: string, n: number, localPath: string): Promise<string> {
     const path = trackThumbPath(tenantId, tripKey, n);
-    const { data } = await Filesystem.readFile({ path: localPath });
+    // the Swift plugin returns a bare absolute path; Filesystem.readFile on iOS needs a URI
+    const { data } = await Filesystem.readFile({ path: localPath.startsWith('file://') ? localPath : 'file://' + localPath });
     let blob: Blob;
     if (typeof data === 'string') {
       const bin = atob(data);
@@ -181,22 +186,27 @@ export class TrackService {
       blob = data;
     }
     await uploadBytes(ref(getBkStorage('private'), path), blob, { contentType: 'image/jpeg' });
+    this.thumbCache.delete(path);
     return path;
   }
 
   /** A thumbnail as a data: URL (private bucket, owner-only), cached per path. */
-  public async readThumb(thumbPath: string): Promise<string> {
+  public readThumb(thumbPath: string): Promise<string> {
     const cached = this.thumbCache.get(thumbPath);
     if (cached) return cached;
-    const blob = await getBlob(ref(getBkStorage('private'), thumbPath));
-    const url = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = () => reject(reader.error);
-      reader.readAsDataURL(blob);
-    });
-    this.thumbCache.set(thumbPath, url);
-    return url;
+    const pending = getBlob(ref(getBkStorage('private'), thumbPath)).then(
+      (blob) =>
+        new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(blob);
+        }),
+    );
+    this.thumbCache.set(thumbPath, pending);
+    // a failed read must not stay cached
+    pending.catch(() => this.thumbCache.delete(thumbPath));
+    return pending;
   }
 
   /** Writes the photo list (without path400). Resolves only on the server's ack: callers run it detached. */
