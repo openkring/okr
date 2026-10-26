@@ -1,5 +1,4 @@
 import { onCall } from 'firebase-functions/v2/https';
-import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
@@ -94,94 +93,81 @@ async function runBillSync(billDateStart: string, tenantId: string, label: strin
 /**
  * Manual one-shot bill sync (onCall). Full history unless { billDateStart: "yyyy-MM-dd" } is passed.
  */
-export const syncBexioBills = onCall(
-  {
-    region: 'europe-west6',
-    enforceAppCheck: true,
-    secrets: [bexioApiKey, bexioTenantId],
-  },
-  async (request: CallableRequest<{ billDateStart?: string }>) => {
-    if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
-    await checkRoles(request as never, 'syncBexioBills', ['treasurer', 'privileged']);
-    if (!(await loadIsBexioBackend(admin.firestore(), bexioTenantId.value()))) {
-      throw new HttpsError('failed-precondition', 'The accounting backend is no longer bexio (spec 1.68).');
-    }
-    // Manual sync defaults to full history; pass billDateStart to limit the window.
-    const billDateStart = request.data?.billDateStart ?? BILL_DATE_FULL_HISTORY;
-    return runBillSync(billDateStart, bexioTenantId.value(), 'syncBexioBills');
+export async function handleSyncBexioBills(request: CallableRequest<{ billDateStart?: string }>) {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
+  await checkRoles(request as never, 'syncBexioBills', ['treasurer', 'privileged']);
+  if (!(await loadIsBexioBackend(admin.firestore(), bexioTenantId.value()))) {
+    throw new HttpsError('failed-precondition', 'The accounting backend is no longer bexio (spec 1.68).');
   }
-);
+  // Manual sync defaults to full history; pass billDateStart to limit the window.
+  const billDateStart = request.data?.billDateStart ?? BILL_DATE_FULL_HISTORY;
+  return runBillSync(billDateStart, bexioTenantId.value(), 'syncBexioBills');
+}
 
 /**
  * Scheduled daily bill sync at 06:00 Europe/Zurich.
  */
-export const scheduleBexioBillSync = onSchedule(
-  {
-    schedule: '0 6 * * *',
-    timeZone: 'Europe/Zurich',
-    region: 'europe-west6',
-    secrets: [bexioApiKey, bexioTenantId],
-  },
-  async () => {
-    const tenantId = bexioTenantId.value();
-    if (!(await loadIsBexioBackend(admin.firestore(), tenantId))) {
-      logger.info(`scheduleBexioBillSync: accounting backend of ${tenantId} is not bexio — skipped`);
-      return;
-    }
-    // Scheduled sync: only page the recent bill_date window.
-    await runBillSync(billDateWindowStart(), tenantId, 'scheduleBexioBillSync');
+export async function runBillSyncScheduled(): Promise<void> {
+  const tenantId = bexioTenantId.value();
+  if (!(await loadIsBexioBackend(admin.firestore(), tenantId))) {
+    logger.info(`scheduleBexioBillSync: accounting backend of ${tenantId} is not bexio — skipped`);
+    return;
   }
-);
+  // Scheduled sync: only page the recent bill_date window.
+  await runBillSync(billDateWindowStart(), tenantId, 'scheduleBexioBillSync');
+}
 
 /**
  * Fetch the PDF for a bill attachment from Bexio.
  * Input: { attachmentId: string } — Bexio file ID from bill.attachments[]
  * Returns { content: string } as base64-encoded PDF.
  */
+export async function handleShowBillPdf(request: CallableRequest<{ attachmentId: string }>) {
+  const CF_NAME = 'showBillPdf';
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
+  const { attachmentId } = request.data;
+  if (!attachmentId) throw new HttpsError('invalid-argument', 'attachmentId is required');
+  // bills are treasurer data — before 1.68 any signed-in user could stream an attachment
+  await checkRoles(request as never, CF_NAME, ['treasurer', 'privileged']);
+
+  // migrated from bexio (spec 1.68): bill.attachments now hold finance-documents okeys
+  if (attachmentId.startsWith('bexio-file-') || attachmentId.startsWith('bill-')) {
+    const tenantId = await getCallerTenantId(request as never, CF_NAME);
+    const doc = (await admin.firestore().collection(FinanceDocumentCollection).doc(attachmentId).get()).data();
+    const local = await readFinanceDocument(admin.firestore(), privateBucket(), attachmentId, [tenantId]);
+    if (!local) throw new HttpsError('not-found', 'Document not found');
+    return { content: local, mimeType: String(doc?.['mimeType'] || 'application/pdf') };
+  }
+
+  logger.info(`${CF_NAME}: fetching PDF for attachment ${attachmentId}`);
+  try {
+    const response = await axios.get(
+      `https://api.bexio.com/3.0/files/${attachmentId}/download`,
+      {
+        headers: { 'Authorization': `Bearer ${bexioApiKey.value()}` },
+        responseType: 'arraybuffer',
+      }
+    );
+    const content = Buffer.from(response.data as ArrayBuffer).toString('base64');
+    logger.info(`${CF_NAME}: fetched PDF for attachment ${attachmentId}, ${content.length} base64 chars`);
+    return { content, mimeType: 'application/pdf' };
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const body = JSON.stringify(error.response?.data);
+      logger.error(`${CF_NAME}: Bexio API error ${status}: ${body}`);
+      throw new HttpsError('internal', `Bexio API error ${status}: ${body}`);
+    }
+    logger.error(`${CF_NAME}: unexpected error`, error);
+    throw new HttpsError('internal', 'Bexio PDF fetch failed');
+  }
+}
+
 export const showBillPdf = onCall(
   {
     region: 'europe-west6',
     enforceAppCheck: true,
     secrets: [bexioApiKey],
   },
-  async (request: CallableRequest<{ attachmentId: string }>) => {
-    const CF_NAME = 'showBillPdf';
-    if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
-    const { attachmentId } = request.data;
-    if (!attachmentId) throw new HttpsError('invalid-argument', 'attachmentId is required');
-    // bills are treasurer data — before 1.68 any signed-in user could stream an attachment
-    await checkRoles(request as never, CF_NAME, ['treasurer', 'privileged']);
-
-    // migrated from bexio (spec 1.68): bill.attachments now hold finance-documents okeys
-    if (attachmentId.startsWith('bexio-file-') || attachmentId.startsWith('bill-')) {
-      const tenantId = await getCallerTenantId(request as never, CF_NAME);
-      const doc = (await admin.firestore().collection(FinanceDocumentCollection).doc(attachmentId).get()).data();
-      const local = await readFinanceDocument(admin.firestore(), privateBucket(), attachmentId, [tenantId]);
-      if (!local) throw new HttpsError('not-found', 'Document not found');
-      return { content: local, mimeType: String(doc?.['mimeType'] || 'application/pdf') };
-    }
-
-    logger.info(`${CF_NAME}: fetching PDF for attachment ${attachmentId}`);
-    try {
-      const response = await axios.get(
-        `https://api.bexio.com/3.0/files/${attachmentId}/download`,
-        {
-          headers: { 'Authorization': `Bearer ${bexioApiKey.value()}` },
-          responseType: 'arraybuffer',
-        }
-      );
-      const content = Buffer.from(response.data as ArrayBuffer).toString('base64');
-      logger.info(`${CF_NAME}: fetched PDF for attachment ${attachmentId}, ${content.length} base64 chars`);
-      return { content, mimeType: 'application/pdf' };
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        const status = error.response?.status;
-        const body = JSON.stringify(error.response?.data);
-        logger.error(`${CF_NAME}: Bexio API error ${status}: ${body}`);
-        throw new HttpsError('internal', `Bexio API error ${status}: ${body}`);
-      }
-      logger.error(`${CF_NAME}: unexpected error`, error);
-      throw new HttpsError('internal', 'Bexio PDF fetch failed');
-    }
-  }
+  handleShowBillPdf,
 );

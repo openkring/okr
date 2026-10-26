@@ -1,4 +1,4 @@
-import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
+import { HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
 import * as admin from 'firebase-admin';
@@ -150,19 +150,12 @@ async function runAccountSync(tenantId: string, label: string): Promise<{ groups
  * the Firestore 'accounts' collection as a hierarchical AccountModel tree.
  * Root: okey='bexio_root'. Groups and accounts use the Bexio integer id as okey.
  */
-export const syncBexioAccounts = onCall(
-  {
-    region: 'europe-west6',
-    enforceAppCheck: true,
-    secrets: [bexioApiKey, bexioTenantId],
-  },
-  async (request: CallableRequest) => {
-    if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
-    // Rewrites the whole `accounts` tree: an admin operation (1.101 phase 3, was open to any signed-in user).
-    await checkAdminRole(request, 'syncBexioAccounts');
-    if (!(await loadIsBexioBackend(admin.firestore(), bexioTenantId.value()))) {
-      throw new HttpsError('failed-precondition', 'The accounting backend is no longer bexio (spec 1.68).');
-    }
-    return runAccountSync(bexioTenantId.value(), 'syncBexioAccounts');
+export async function handleSyncBexioAccounts(request: CallableRequest) {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
+  // Rewrites the whole `accounts` tree: an admin operation (1.101 phase 3, was open to any signed-in user).
+  await checkAdminRole(request, 'syncBexioAccounts');
+  if (!(await loadIsBexioBackend(admin.firestore(), bexioTenantId.value()))) {
+    throw new HttpsError('failed-precondition', 'The accounting backend is no longer bexio (spec 1.68).');
   }
-);
+  return runAccountSync(bexioTenantId.value(), 'syncBexioAccounts');
+}

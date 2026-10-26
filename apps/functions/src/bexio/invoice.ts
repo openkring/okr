@@ -1,6 +1,5 @@
 import { onCall } from 'firebase-functions/v2/https';
 import { checkAdminRole, checkRoles } from '@okr/shared-util-functions';
-import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
@@ -288,62 +287,64 @@ async function runInvoiceSync(fromDate: string, tenantId: string, label: string)
  * Returns the PDF as a base64-encoded string in the `content` field.
  * Input: { invoiceId: string } — the Bexio invoice ID (= invoice.okey in Firestore)
  */
+export async function handleShowInvoicePdf(request: CallableRequest<{ invoiceId: string }>) {
+  const CF_NAME = 'showInvoicePdf';
+
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
+  const { invoiceId } = request.data;
+  if (!invoiceId) throw new HttpsError('invalid-argument', 'invoiceId is required');
+  // Invoice PDFs carry recipient PII — treasurer flows + privileged/admin (privacy
+  // inventory §7.2), plus the recipient themselves for their own invoice.
+  await checkInvoiceReadAccess(request as CallableRequest, CF_NAME, invoiceId);
+
+  // migrated from bexio (spec 1.68): serve the stored copy, bexio only as the fallback
+  const invoice = (await admin.firestore().collection('invoices').doc(invoiceId).get()).data();
+  const local = await readFinanceDocument(admin.firestore(), privateBucket(),
+    (invoice?.['documentKey'] as string | undefined) ?? '', (invoice?.['tenants'] as string[] | undefined) ?? []);
+  if (local) {
+    logger.info(`${CF_NAME}: served stored PDF for invoice ${invoiceId}`);
+    return { content: local };
+  }
+  // a native invoice has no bexio copy: report the missing PDF instead of a bexio API error
+  const acct = (invoice?.['accountingTenantId'] as string | undefined) || ((invoice?.['tenants'] as string[] | undefined) ?? [])[0] || '';
+  if (!acct || !(await loadIsBexioBackend(admin.firestore(), acct))) {
+    throw new HttpsError('not-found', 'no PDF stored for this invoice', { reason: 'no-pdf' });
+  }
+
+  logger.info(`${CF_NAME}: fetching PDF for invoice ${invoiceId}`);
+
+  try {
+    const response = await axios.get<{ content: string }>(
+      `${BEXIO_BASE}/kb_invoice/${invoiceId}/pdf`,
+      {
+        headers: {
+          'Authorization': `Bearer ${bexioApiKey.value()}`,
+          'Accept': 'application/json',
+        },
+      }
+    );
+    const content = response.data.content;
+    logger.info(`${CF_NAME}: fetched PDF for invoice ${invoiceId}, ${content?.length ?? 0} base64 chars`);
+    return { content };
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const body = JSON.stringify(error.response?.data);
+      logger.error(`${CF_NAME}: Bexio API error ${status}: ${body}`);
+      throw new HttpsError('internal', `Bexio API error ${status}: ${body}`);
+    }
+    logger.error(`${CF_NAME}: unexpected error`, error);
+    throw new HttpsError('internal', 'Bexio PDF fetch failed');
+  }
+}
+
 export const showInvoicePdf = onCall(
   {
     region: 'europe-west6',
     enforceAppCheck: true,
     secrets: [bexioApiKey],
   },
-  async (request: CallableRequest<{ invoiceId: string }>) => {
-    const CF_NAME = 'showInvoicePdf';
-
-    if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
-    const { invoiceId } = request.data;
-    if (!invoiceId) throw new HttpsError('invalid-argument', 'invoiceId is required');
-    // Invoice PDFs carry recipient PII — treasurer flows + privileged/admin (privacy
-    // inventory §7.2), plus the recipient themselves for their own invoice.
-    await checkInvoiceReadAccess(request as CallableRequest, CF_NAME, invoiceId);
-
-    // migrated from bexio (spec 1.68): serve the stored copy, bexio only as the fallback
-    const invoice = (await admin.firestore().collection('invoices').doc(invoiceId).get()).data();
-    const local = await readFinanceDocument(admin.firestore(), privateBucket(),
-      (invoice?.['documentKey'] as string | undefined) ?? '', (invoice?.['tenants'] as string[] | undefined) ?? []);
-    if (local) {
-      logger.info(`${CF_NAME}: served stored PDF for invoice ${invoiceId}`);
-      return { content: local };
-    }
-    // a native invoice has no bexio copy: report the missing PDF instead of a bexio API error
-    const acct = (invoice?.['accountingTenantId'] as string | undefined) || ((invoice?.['tenants'] as string[] | undefined) ?? [])[0] || '';
-    if (!acct || !(await loadIsBexioBackend(admin.firestore(), acct))) {
-      throw new HttpsError('not-found', 'no PDF stored for this invoice', { reason: 'no-pdf' });
-    }
-
-    logger.info(`${CF_NAME}: fetching PDF for invoice ${invoiceId}`);
-
-    try {
-      const response = await axios.get<{ content: string }>(
-        `${BEXIO_BASE}/kb_invoice/${invoiceId}/pdf`,
-        {
-          headers: {
-            'Authorization': `Bearer ${bexioApiKey.value()}`,
-            'Accept': 'application/json',
-          },
-        }
-      );
-      const content = response.data.content;
-      logger.info(`${CF_NAME}: fetched PDF for invoice ${invoiceId}, ${content?.length ?? 0} base64 chars`);
-      return { content };
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        const status = error.response?.status;
-        const body = JSON.stringify(error.response?.data);
-        logger.error(`${CF_NAME}: Bexio API error ${status}: ${body}`);
-        throw new HttpsError('internal', `Bexio API error ${status}: ${body}`);
-      }
-      logger.error(`${CF_NAME}: unexpected error`, error);
-      throw new HttpsError('internal', 'Bexio PDF fetch failed');
-    }
-  }
+  handleShowInvoicePdf,
 );
 
 /**
@@ -351,25 +352,17 @@ export const showInvoicePdf = onCall(
  * Pass { fromDate: "YYYY-MM-DD HH:mm:ss" } to start from a specific date,
  * or omit fromDate to download the full history.
  */
-export const syncBexioInvoices = onCall(
-  {
-    region: 'europe-west6',
-    enforceAppCheck: true,
-    timeoutSeconds: 540, // per-paid-invoice payment lookups make a full backfill slow
-    secrets: [bexioApiKey, bexioTenantId],
-  },
-  async (request: CallableRequest<{ fromDate?: string }>) => {
-    if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
-    await checkRoles(request as never, 'syncBexioInvoices', ['treasurer', 'privileged']);
-    if (!(await loadIsBexioBackend(admin.firestore(), bexioTenantId.value()))) {
-      throw new HttpsError('failed-precondition', 'The accounting backend is no longer bexio (spec 1.68).');
-    }
-    // Full-collection person/org read + invoice import is an AOC admin operation (privacy inventory §7.2).
-    await checkAdminRole(request, 'syncBexioInvoices');
-    const fromDate = request.data?.fromDate ?? '2000-01-01 00:00:00';
-    return runInvoiceSync(fromDate, bexioTenantId.value(), 'syncBexioInvoices');
+export async function handleSyncBexioInvoices(request: CallableRequest<{ fromDate?: string }>) {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
+  await checkRoles(request as never, 'syncBexioInvoices', ['treasurer', 'privileged']);
+  if (!(await loadIsBexioBackend(admin.firestore(), bexioTenantId.value()))) {
+    throw new HttpsError('failed-precondition', 'The accounting backend is no longer bexio (spec 1.68).');
   }
-);
+  // Full-collection person/org read + invoice import is an AOC admin operation (privacy inventory §7.2).
+  await checkAdminRole(request, 'syncBexioInvoices');
+  const fromDate = request.data?.fromDate ?? '2000-01-01 00:00:00';
+  return runInvoiceSync(fromDate, bexioTenantId.value(), 'syncBexioInvoices');
+}
 
 export interface InvoicePositionInput {
   text: string;
@@ -392,13 +385,7 @@ interface BexioKbPosition {
  * Create a new invoice in Bexio (POST /2.0/kb_invoice).
  * Returns the newly assigned Bexio invoice ID.
  */
-export const createBexioInvoice = onCall(
-  {
-    region: 'europe-west6',
-    enforceAppCheck: true,
-    secrets: [bexioApiKey, bexioDefaultTaxId, bexioTenantId],
-  },
-  async (request: CallableRequest<{
+export async function handleCreateBexioInvoice(request: CallableRequest<{
     title: string;
     bexioId: string;
     header?: string;
@@ -407,109 +394,108 @@ export const createBexioInvoice = onCall(
     validTo?: string;
     positions?: InvoicePositionInput[];
     template_slug?: string;
-  }>) => {
-    const CF_NAME = 'createBexioInvoice';
+  }>) {
+  const CF_NAME = 'createBexioInvoice';
 
-    if (!request.auth) {
-      throw new HttpsError('unauthenticated', 'Authentication required');
-    }
-    // Creates invoices for member contacts — treasurer flows + privileged/admin (privacy inventory §7.2).
-    await checkRoles(request, CF_NAME, ['treasurer', 'privileged']);
-    // After the cut-over an invoice created in bexio would never reach okr again (spec 1.68 D13).
-    if (!(await loadIsBexioBackend(admin.firestore(), bexioTenantId.value()))) {
-      throw new HttpsError('failed-precondition', 'The accounting backend is no longer bexio (spec 1.68).');
-    }
-
-    const { title, bexioId, header = '', footer = '', positions = [], template_slug = '' } = request.data;
-
-    if (!title) throw new HttpsError('invalid-argument', 'title is required');
-    if (!bexioId) throw new HttpsError('invalid-argument', 'bexioId is required');
-
-    const resolvedFrom = request.data.validFrom || getTodayStr();
-    const resolvedTo = request.data.validTo || addDuration(resolvedFrom, { days: 30 });
-    const isoFrom = convertDateFormatToString(resolvedFrom, DateFormat.StoreDate, DateFormat.IsoDate);
-    const isoTo = convertDateFormatToString(resolvedTo, DateFormat.StoreDate, DateFormat.IsoDate);
-
-    const defaultTaxId = parseInt(bexioDefaultTaxId.value(), 10);
-    const bexioPositions: BexioKbPosition[] = positions.map(p => ({
-      type: 'KbPositionCustom',
-      amount: String(p.amount ?? 1),
-      unit_price: String(p.unit_price),
-      account_id: p.account_id,
-      tax_id: defaultTaxId,
-      text: p.text,
-      discount_in_percent: '0',
-    }));
-    logger.info(`${CF_NAME}: positions: ${JSON.stringify(bexioPositions)}`);
-
-    logger.info(`${CF_NAME}: creating invoice "${title}" for contact ${bexioId}`);
-
-    try {
-      const response = await axios.post<{ id: number }>(
-        `${BEXIO_BASE}/kb_invoice`,
-        {
-          title,
-          contact_id: parseInt(bexioId, 10),
-          user_id: 1,
-          header,
-          footer,
-          is_valid_from: isoFrom,
-          is_valid_to: isoTo,
-          mwst_type: 2,
-          mwst_is_net: false,
-          show_position_taxes: false,
-          language_id: 1,
-          bank_account_id: 1,
-          currency_id: 1,
-          payment_type_id: 4,
-          template_slug,
-          positions: bexioPositions,
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${bexioApiKey.value()}`,
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      logger.info(`${CF_NAME}: created invoice with id ${response.data.id}`);
-      return { id: String(response.data.id) };
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        const status = error.response?.status;
-        const body = JSON.stringify(error.response?.data);
-        logger.error(`${CF_NAME}: Bexio API error ${status}: ${body}`);
-        throw new HttpsError('internal', `Bexio API error ${status}: ${body}`);
-      }
-      logger.error(`${CF_NAME}: unexpected error`, error);
-      throw new HttpsError('internal', 'Bexio invoice creation failed');
-    }
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Authentication required');
   }
+  // Creates invoices for member contacts — treasurer flows + privileged/admin (privacy inventory §7.2).
+  await checkRoles(request, CF_NAME, ['treasurer', 'privileged']);
+  // After the cut-over an invoice created in bexio would never reach okr again (spec 1.68 D13).
+  if (!(await loadIsBexioBackend(admin.firestore(), bexioTenantId.value()))) {
+    throw new HttpsError('failed-precondition', 'The accounting backend is no longer bexio (spec 1.68).');
+  }
+
+  const { title, bexioId, header = '', footer = '', positions = [], template_slug = '' } = request.data;
+
+  if (!title) throw new HttpsError('invalid-argument', 'title is required');
+  if (!bexioId) throw new HttpsError('invalid-argument', 'bexioId is required');
+
+  const resolvedFrom = request.data.validFrom || getTodayStr();
+  const resolvedTo = request.data.validTo || addDuration(resolvedFrom, { days: 30 });
+  const isoFrom = convertDateFormatToString(resolvedFrom, DateFormat.StoreDate, DateFormat.IsoDate);
+  const isoTo = convertDateFormatToString(resolvedTo, DateFormat.StoreDate, DateFormat.IsoDate);
+
+  const defaultTaxId = parseInt(bexioDefaultTaxId.value(), 10);
+  const bexioPositions: BexioKbPosition[] = positions.map(p => ({
+    type: 'KbPositionCustom',
+    amount: String(p.amount ?? 1),
+    unit_price: String(p.unit_price),
+    account_id: p.account_id,
+    tax_id: defaultTaxId,
+    text: p.text,
+    discount_in_percent: '0',
+  }));
+  logger.info(`${CF_NAME}: positions: ${JSON.stringify(bexioPositions)}`);
+
+  logger.info(`${CF_NAME}: creating invoice "${title}" for contact ${bexioId}`);
+
+  try {
+    const response = await axios.post<{ id: number }>(
+      `${BEXIO_BASE}/kb_invoice`,
+      {
+        title,
+        contact_id: parseInt(bexioId, 10),
+        user_id: 1,
+        header,
+        footer,
+        is_valid_from: isoFrom,
+        is_valid_to: isoTo,
+        mwst_type: 2,
+        mwst_is_net: false,
+        show_position_taxes: false,
+        language_id: 1,
+        bank_account_id: 1,
+        currency_id: 1,
+        payment_type_id: 4,
+        template_slug,
+        positions: bexioPositions,
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${bexioApiKey.value()}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    logger.info(`${CF_NAME}: created invoice with id ${response.data.id}`);
+    return { id: String(response.data.id) };
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const body = JSON.stringify(error.response?.data);
+      logger.error(`${CF_NAME}: Bexio API error ${status}: ${body}`);
+      throw new HttpsError('internal', `Bexio API error ${status}: ${body}`);
+    }
+    logger.error(`${CF_NAME}: unexpected error`, error);
+    throw new HttpsError('internal', 'Bexio invoice creation failed');
+  }
+}
+
+export const createBexioInvoice = onCall(
+  {
+    region: 'europe-west6',
+    enforceAppCheck: true,
+    secrets: [bexioApiKey, bexioDefaultTaxId, bexioTenantId],
+  },
+  handleCreateBexioInvoice,
 );
 
 /**
  * Scheduled daily invoice sync at 06:00 Europe/Zurich.
  * Reads the last sync pointer from config/bexioSync.lastSyncedAt and fetches only new/updated invoices.
  */
-export const scheduledBexioInvoiceSync = onSchedule(
-  {
-    schedule: '0 6 * * *',
-    timeZone: 'Europe/Zurich',
-    region: 'europe-west6',
-    timeoutSeconds: 540, // per-paid-invoice payment lookups make a large sync slow
-    secrets: [bexioApiKey, bexioTenantId],
-  },
-  async () => {
-    const db = admin.firestore();
-    const tenantId = bexioTenantId.value();
-    if (!(await loadIsBexioBackend(db, tenantId))) {
-      logger.info(`scheduledBexioInvoiceSync: accounting backend of ${tenantId} is not bexio — skipped`);
-      return;
-    }
-    const configDoc = await db.collection('config').doc('bexioSync').get();
-    const fromDate: string = configDoc.data()?.lastSyncedAt ?? '2000-01-01 00:00:00';
-    await runInvoiceSync(fromDate, tenantId, 'scheduledBexioInvoiceSync');
+export async function runInvoiceSyncScheduled(): Promise<void> {
+  const db = admin.firestore();
+  const tenantId = bexioTenantId.value();
+  if (!(await loadIsBexioBackend(db, tenantId))) {
+    logger.info(`scheduledBexioInvoiceSync: accounting backend of ${tenantId} is not bexio — skipped`);
+    return;
   }
-);
+  const configDoc = await db.collection('config').doc('bexioSync').get();
+  const fromDate: string = configDoc.data()?.lastSyncedAt ?? '2000-01-01 00:00:00';
+  await runInvoiceSync(fromDate, tenantId, 'scheduledBexioInvoiceSync');
+}

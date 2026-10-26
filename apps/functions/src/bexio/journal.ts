@@ -1,4 +1,3 @@
-import { onCall } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
@@ -169,22 +168,14 @@ async function runJournalSync(tenantId: string, label: string): Promise<{ count:
  * Fetches all journal entries from Bexio and stores them in Firestore collections
  * 'bookings' (one doc per entry) and 'booking-lines' (two docs per entry: debit + credit).
  */
-export const syncBexioJournal = onCall(
-  {
-    region: 'europe-west6',
-    enforceAppCheck: true,
-    memory: '1GiB',
-    secrets: [bexioApiKey, bexioTenantId],
-  },
-  async (request: CallableRequest) => {
-    if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
-    await checkRoles(request as never, 'syncBexioJournal', ['treasurer', 'privileged']);
-    if (!(await loadIsBexioBackend(admin.firestore(), bexioTenantId.value()))) {
-      throw new HttpsError('failed-precondition', 'The accounting backend is no longer bexio (spec 1.68).');
-    }
-    return runJournalSync(bexioTenantId.value(), 'syncBexioJournal');
+export async function handleSyncBexioJournal(request: CallableRequest) {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
+  await checkRoles(request as never, 'syncBexioJournal', ['treasurer', 'privileged']);
+  if (!(await loadIsBexioBackend(admin.firestore(), bexioTenantId.value()))) {
+    throw new HttpsError('failed-precondition', 'The accounting backend is no longer bexio (spec 1.68).');
   }
-);
+  return runJournalSync(bexioTenantId.value(), 'syncBexioJournal');
+}
 
 /**
  * Scheduled daily journal sync at 06:15 Europe/Zurich.

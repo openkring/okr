@@ -25,7 +25,7 @@ vi.mock('firebase-functions/params', () => ({ defineSecret: () => ({ value: () =
 vi.mock('axios', () => ({ default: { get: vi.fn(async () => ({ data: [] })) } }));
 
 import axios from 'axios';
-import { syncBexioAccounts } from './account';
+import { handleSyncBexioAccounts } from './account';
 
 const req = () => ({ auth: { uid: 'u1', token: {} }, app: {}, data: {} }) as never;
 
@@ -38,24 +38,24 @@ describe('syncBexioAccounts authorization', () => {
   });
 
   it('rejects a signed-in user who is not an admin', async () => {
-    await expect(syncBexioAccounts.run(req())).rejects.toMatchObject({ code: 'permission-denied' });
+    await expect(handleSyncBexioAccounts(req())).rejects.toMatchObject({ code: 'permission-denied' });
   });
 
   it('rejects a treasurer who is not an admin', async () => {
     roles = { treasurer: true };
-    await expect(syncBexioAccounts.run(req())).rejects.toMatchObject({ code: 'permission-denied' });
+    await expect(handleSyncBexioAccounts(req())).rejects.toMatchObject({ code: 'permission-denied' });
   });
 
   it('lets an admin pass the role check, then stops at the backend gate when the books are native', async () => {
     roles = { admin: true };
     backend = 'native';
-    await expect(syncBexioAccounts.run(req())).rejects.toMatchObject({ code: 'failed-precondition' });
+    await expect(handleSyncBexioAccounts(req())).rejects.toMatchObject({ code: 'failed-precondition' });
   });
 
   it('lets an admin on the bexio backend reach the sync', async () => {
     roles = { admin: true };
     backend = 'bexio';
-    await syncBexioAccounts.run(req());
+    await handleSyncBexioAccounts(req());
     expect(axios.get).toHaveBeenCalledTimes(2);
     expect(commit).toHaveBeenCalled();
     expect(batchSet).toHaveBeenCalled();

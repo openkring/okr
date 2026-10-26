@@ -33,192 +33,198 @@ export interface BexioContact {
  * Create a new contact in the Bexio API.
  * Returns the newly assigned Bexio contact ID.
  */
+export async function handleCreateBexioContact(request: CallableRequest<{ name_1: string; name_2: string | null; street_name: string, house_number: string, postcode: string, city: string, mail: string, contact_type_id: number }>) {
+  const CF_NAME = 'createBexioContact';
+
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Authentication required');
+  }
+  // bexio contact PII sync is an AOC admin operation (privacy inventory §7.2).
+  await checkAdminRole(request, CF_NAME);
+
+  const { name_1, name_2, street_name, house_number, postcode, city, mail, contact_type_id } = request.data;
+  if (!name_1) {
+    throw new HttpsError('invalid-argument', 'name_1 is required');
+  }
+
+  const userId = parseInt(bexioUserId.value(), 10);
+  logger.info(`${CF_NAME}: creating contact "${name_1}" by bexio user ${userId}`);
+
+  const validMail = isValidEmail(mail);
+  if (mail && !validMail) {
+    logger.warn(`${CF_NAME}: dropping invalid mail "${mail}" for contact "${name_1}" (not a valid email address)`);
+  }
+
+  try {
+    const response = await axios.post<BexioContact>(
+      `${BEXIO_BASE}/contact`,
+      { name_1, name_2, street_name, house_number, postcode, city, contact_type_id, user_id: userId, owner_id: userId, ...(validMail ? { mail } : {}) },
+      {
+        headers: {
+          'Authorization': `Bearer ${bexioApiKey.value()}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    logger.info(`${CF_NAME}: created contact with id ${response.data.id}`);
+    return { id: String(response.data.id) };
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const body = JSON.stringify(error.response?.data);
+      logger.error(`${CF_NAME}: Bexio API error ${status}: ${body}`);
+      throw new HttpsError('internal', `Bexio API error ${status}: ${body}`);
+    }
+    logger.error(`${CF_NAME}: unexpected error`, error);
+    throw new HttpsError('internal', 'Bexio contact creation failed');
+  }
+}
+
 export const createBexioContact = onCall(
   {
     region: 'europe-west6',
     enforceAppCheck: true,
     secrets: [bexioApiKey, bexioUserId],
   },
-  async (request: CallableRequest<{ name_1: string; name_2: string | null; street_name: string, house_number: string, postcode: string, city: string, mail: string, contact_type_id: number }>) => {
-    const CF_NAME = 'createBexioContact';
-
-    if (!request.auth) {
-      throw new HttpsError('unauthenticated', 'Authentication required');
-    }
-    // bexio contact PII sync is an AOC admin operation (privacy inventory §7.2).
-    await checkAdminRole(request, CF_NAME);
-
-    const { name_1, name_2, street_name, house_number, postcode, city, mail, contact_type_id } = request.data;
-    if (!name_1) {
-      throw new HttpsError('invalid-argument', 'name_1 is required');
-    }
-
-    const userId = parseInt(bexioUserId.value(), 10);
-    logger.info(`${CF_NAME}: creating contact "${name_1}" by bexio user ${userId}`);
-
-    const validMail = isValidEmail(mail);
-    if (mail && !validMail) {
-      logger.warn(`${CF_NAME}: dropping invalid mail "${mail}" for contact "${name_1}" (not a valid email address)`);
-    }
-
-    try {
-      const response = await axios.post<BexioContact>(
-        `${BEXIO_BASE}/contact`,
-        { name_1, name_2, street_name, house_number, postcode, city, contact_type_id, user_id: userId, owner_id: userId, ...(validMail ? { mail } : {}) },
-        {
-          headers: {
-            'Authorization': `Bearer ${bexioApiKey.value()}`,
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      logger.info(`${CF_NAME}: created contact with id ${response.data.id}`);
-      return { id: String(response.data.id) };
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        const status = error.response?.status;
-        const body = JSON.stringify(error.response?.data);
-        logger.error(`${CF_NAME}: Bexio API error ${status}: ${body}`);
-        throw new HttpsError('internal', `Bexio API error ${status}: ${body}`);
-      }
-      logger.error(`${CF_NAME}: unexpected error`, error);
-      throw new HttpsError('internal', 'Bexio contact creation failed');
-    }
-  }
+  handleCreateBexioContact,
 );
 
 /**
  * Update an existing contact in the Bexio API.
  */
+export async function handleUpdateBexioContact(request: CallableRequest<{ id: string; name_1: string; name_2: string | null; street_name: string, house_number: string, postcode: string, city: string, mail: string, contact_type_id: number }>) {
+  const CF_NAME = 'updateBexioContact';
+
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Authentication required');
+  }
+  // bexio contact PII sync is an AOC admin operation (privacy inventory §7.2).
+  await checkAdminRole(request, CF_NAME);
+
+  const { id, name_1, name_2, street_name, house_number, postcode, city, mail, contact_type_id } = request.data;
+  if (!id || !name_1) {
+    throw new HttpsError('invalid-argument', 'id and name_1 are required');
+  }
+
+  const userId = parseInt(bexioUserId.value(), 10);
+  logger.info(`${CF_NAME}: updating contact ${id} "${name_1}"`);
+
+  const validMail = isValidEmail(mail);
+  if (mail && !validMail) {
+    logger.warn(`${CF_NAME}: dropping invalid mail "${mail}" for contact ${id} "${name_1}" (not a valid email address)`);
+  }
+
+  try {
+    await axios.post<BexioContact>(
+      `${BEXIO_BASE}/contact/${id}`,
+      { name_1, name_2, street_name, house_number, postcode, city, contact_type_id, user_id: userId, owner_id: userId, ...(validMail ? { mail } : {}) },
+      {
+        headers: {
+          'Authorization': `Bearer ${bexioApiKey.value()}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    logger.info(`${CF_NAME}: updated contact ${id}`);
+    return { id: String(id) };
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const body = JSON.stringify(error.response?.data);
+      logger.error(`${CF_NAME}: Bexio API error ${status}: ${body}`);
+      throw new HttpsError('internal', `Bexio API error ${status}: ${body}`);
+    }
+    logger.error(`${CF_NAME}: unexpected error`, error);
+    throw new HttpsError('internal', 'Bexio contact update failed');
+  }
+}
+
 export const updateBexioContact = onCall(
   {
     region: 'europe-west6',
     enforceAppCheck: true,
     secrets: [bexioApiKey, bexioUserId],
   },
-  async (request: CallableRequest<{ id: string; name_1: string; name_2: string | null; street_name: string, house_number: string, postcode: string, city: string, mail: string, contact_type_id: number }>) => {
-    const CF_NAME = 'updateBexioContact';
-
-    if (!request.auth) {
-      throw new HttpsError('unauthenticated', 'Authentication required');
-    }
-    // bexio contact PII sync is an AOC admin operation (privacy inventory §7.2).
-    await checkAdminRole(request, CF_NAME);
-
-    const { id, name_1, name_2, street_name, house_number, postcode, city, mail, contact_type_id } = request.data;
-    if (!id || !name_1) {
-      throw new HttpsError('invalid-argument', 'id and name_1 are required');
-    }
-
-    const userId = parseInt(bexioUserId.value(), 10);
-    logger.info(`${CF_NAME}: updating contact ${id} "${name_1}"`);
-
-    const validMail = isValidEmail(mail);
-    if (mail && !validMail) {
-      logger.warn(`${CF_NAME}: dropping invalid mail "${mail}" for contact ${id} "${name_1}" (not a valid email address)`);
-    }
-
-    try {
-      await axios.post<BexioContact>(
-        `${BEXIO_BASE}/contact/${id}`,
-        { name_1, name_2, street_name, house_number, postcode, city, contact_type_id, user_id: userId, owner_id: userId, ...(validMail ? { mail } : {}) },
-        {
-          headers: {
-            'Authorization': `Bearer ${bexioApiKey.value()}`,
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      logger.info(`${CF_NAME}: updated contact ${id}`);
-      return { id: String(id) };
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        const status = error.response?.status;
-        const body = JSON.stringify(error.response?.data);
-        logger.error(`${CF_NAME}: Bexio API error ${status}: ${body}`);
-        throw new HttpsError('internal', `Bexio API error ${status}: ${body}`);
-      }
-      logger.error(`${CF_NAME}: unexpected error`, error);
-      throw new HttpsError('internal', 'Bexio contact update failed');
-    }
-  }
+  handleUpdateBexioContact,
 );
 
 /**
  * Fetch all contacts from the Bexio API using pagination.
  * The API key is stored securely as a GCP secret (BEXIO_APIKEY).
  */
+export async function handleGetBexioContacts(request: CallableRequest) {
+  const CF_NAME = 'getBexioContacts';
+
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Authentication required');
+  }
+  // bexio contact PII sync is an AOC admin operation (privacy inventory §7.2).
+  await checkAdminRole(request, CF_NAME);
+
+  logger.info(`${CF_NAME}: fetching all contacts (paginated)`);
+
+  const PAGE_SIZE = 500;
+  const allContacts: BexioContact[] = [];
+
+  try {
+    let offset = 0;
+    while (true) {
+      const response = await axios.get<BexioContact[]>(`${BEXIO_BASE}/contact`, {
+        params: { limit: PAGE_SIZE, offset },
+        headers: {
+          'Authorization': `Bearer ${bexioApiKey.value()}`,
+          'Accept': 'application/json',
+        },
+      });
+
+      const page = Array.isArray(response.data) ? response.data : [];
+      allContacts.push(...page);
+      logger.info(`${CF_NAME}: fetched page offset=${offset}, got ${page.length} contacts`);
+
+      if (page.length < PAGE_SIZE) break; // last page
+      offset += PAGE_SIZE;
+    }
+
+    logger.info(`${CF_NAME}: total ${allContacts.length} contacts`);
+
+    return allContacts.map(c => ({
+      id: c.id,
+      name_1: c.name_1,
+      name_2: c.name_2,
+      street_name: c.street_name,
+      house_number: c.house_number,
+      postcode: c.postcode,
+      city: c.city,
+      mail: c.mail,
+      phone: c.phone_fixed || c.phone_mobile || '', // prefer landline, fall back to mobile
+      contact_type_id: c.contact_type_id
+    }));
+  } catch (error: unknown) {
+    // Never log the raw axios error: its `config`/`request` fields serialize the
+    // request headers, which would write the Bexio API token into Cloud Logging.
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const body = JSON.stringify(error.response?.data);
+      logger.error(`${CF_NAME}: Bexio API error ${status}: ${body}`);
+      if (status === 401 || status === 403) {
+        throw new HttpsError('failed-precondition', `Bexio rejected the API token (${status}). The BEXIO_APIKEY secret has to be renewed.`);
+      }
+      throw new HttpsError('internal', `Bexio API error ${status}: ${body}`);
+    }
+    logger.error(`${CF_NAME}: unexpected error`, error);
+    throw new HttpsError('internal', 'Bexio API request failed');
+  }
+}
+
 export const getBexioContacts = onCall(
   {
     region: 'europe-west6',
     enforceAppCheck: true,
     secrets: [bexioApiKey],
   },
-  async (request: CallableRequest) => {
-    const CF_NAME = 'getBexioContacts';
-
-    if (!request.auth) {
-      throw new HttpsError('unauthenticated', 'Authentication required');
-    }
-    // bexio contact PII sync is an AOC admin operation (privacy inventory §7.2).
-    await checkAdminRole(request, CF_NAME);
-
-    logger.info(`${CF_NAME}: fetching all contacts (paginated)`);
-
-    const PAGE_SIZE = 500;
-    const allContacts: BexioContact[] = [];
-
-    try {
-      let offset = 0;
-      while (true) {
-        const response = await axios.get<BexioContact[]>(`${BEXIO_BASE}/contact`, {
-          params: { limit: PAGE_SIZE, offset },
-          headers: {
-            'Authorization': `Bearer ${bexioApiKey.value()}`,
-            'Accept': 'application/json',
-          },
-        });
-
-        const page = Array.isArray(response.data) ? response.data : [];
-        allContacts.push(...page);
-        logger.info(`${CF_NAME}: fetched page offset=${offset}, got ${page.length} contacts`);
-
-        if (page.length < PAGE_SIZE) break; // last page
-        offset += PAGE_SIZE;
-      }
-
-      logger.info(`${CF_NAME}: total ${allContacts.length} contacts`);
-
-      return allContacts.map(c => ({
-        id: c.id,
-        name_1: c.name_1,
-        name_2: c.name_2,
-        street_name: c.street_name,
-        house_number: c.house_number,
-        postcode: c.postcode,
-        city: c.city,
-        mail: c.mail,
-        phone: c.phone_fixed || c.phone_mobile || '', // prefer landline, fall back to mobile
-        contact_type_id: c.contact_type_id
-      }));
-    } catch (error: unknown) {
-      // Never log the raw axios error: its `config`/`request` fields serialize the
-      // request headers, which would write the Bexio API token into Cloud Logging.
-      if (axios.isAxiosError(error)) {
-        const status = error.response?.status;
-        const body = JSON.stringify(error.response?.data);
-        logger.error(`${CF_NAME}: Bexio API error ${status}: ${body}`);
-        if (status === 401 || status === 403) {
-          throw new HttpsError('failed-precondition', `Bexio rejected the API token (${status}). The BEXIO_APIKEY secret has to be renewed.`);
-        }
-        throw new HttpsError('internal', `Bexio API error ${status}: ${body}`);
-      }
-      logger.error(`${CF_NAME}: unexpected error`, error);
-      throw new HttpsError('internal', 'Bexio API request failed');
-    }
-  }
+  handleGetBexioContacts,
 );

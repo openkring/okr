@@ -37,6 +37,8 @@ import * as Bill from './bill';
 import * as BankImport from './bank-import';
 import * as Email from './email';
 import * as Bexio from './bexio';
+import * as BexioRouter from './bexio/bexio-router';
+import * as BexioSchedules from './bexio/bexio-schedules';
 import * as Gateway from './_gateway';
 import * as Location from './location';
 import * as Srv from './srv';
@@ -216,6 +218,10 @@ export const invitationAnswer = Calendar.invitationAnswer;
 export const mailtrapWebhook = Email.mailtrapWebhook;
 export const onMailJob = Email.onMailJob;
 
+// bexio router (3.41 A6) + one 06:00 sync slot (D4); the six names below stay as aliases
+export const bexio = BexioRouter.bexio;
+export const bexioMorningSync = BexioSchedules.bexioMorningSync;
+
 // bexio contact sync
 export const getBexioContacts = Bexio.getBexioContacts;
 export const createBexioContact = Bexio.createBexioContact;
@@ -225,21 +231,13 @@ export const updateBexioContact = Bexio.updateBexioContact;
 export const createBexioInvoice = Bexio.createBexioInvoice;
 
 // bexio invoice sync
-export const syncBexioInvoices = Bexio.syncBexioInvoices;
-export const scheduledBexioInvoiceSync = Bexio.scheduledBexioInvoiceSync;
 export const showInvoicePdf = Bexio.showInvoicePdf;
 
 // bexio bill sync
-export const syncBexioBills = Bexio.syncBexioBills;
-export const scheduleBexioBillSync = Bexio.scheduleBexioBillSync;
 export const showBillPdf = Bexio.showBillPdf;
 
 // bexio journal sync
-export const syncBexioJournal = Bexio.syncBexioJournal;
 export const scheduleBexioJournalSync = Bexio.scheduleBexioJournalSync;
-
-// bexio account sync
-export const syncBexioAccounts = Bexio.syncBexioAccounts;
 
 // srv (Regasoft SRV) contact sync
 export const getSrvContacts = Srv.getSrvContacts;
