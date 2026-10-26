@@ -431,7 +431,7 @@ export const DiaryStore = signalStore(
       const modal = await store.modalController.create({
         component: DiaryTrackModal,
         cssClass: 'wide-modal',
-        componentProps: { card, i18n: store.i18n, loadThumb: (path: string) => store.trackService.readThumb(path) },
+        componentProps: { card, i18n: store.i18n, lang: store.lang(), loadThumb: (path: string) => store.trackService.readThumb(path) },
       });
       await modal.present();
     };

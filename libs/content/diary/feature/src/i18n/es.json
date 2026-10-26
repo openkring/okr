@@ -279,6 +279,19 @@
     "strokes": "{strokes} paladas",
     "rate_avg": "Ø {rate}/min",
     "rate_max": "máx {rate}/min",
-    "per_stroke": "{m} m/palada"
+    "per_stroke": "{m} m/palada",
+    "view": {
+      "total": "en total",
+      "points": "puntos",
+      "photos": "fotos",
+      "time": "Hora",
+      "distance": "Distancia",
+      "speed": "Velocidad",
+      "steps": "Pasos",
+      "photosTitle": "Fotos del camino",
+      "mapLabel": "Mapa con el recorrido grabado",
+      "photoShow": "Mostrar en el mapa la foto de las {time}",
+      "mapNote": "Mapa: © swisstopo"
+    }
   }
 }

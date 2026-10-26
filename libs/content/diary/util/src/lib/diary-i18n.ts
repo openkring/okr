@@ -133,6 +133,17 @@ export const DIARY_I18N_KEYS = {
   track_rate_avg:         PFX + 'track.rate_avg',   // single braces: {rate}
   track_rate_max:         PFX + 'track.rate_max',   // single braces: {rate}
   track_per_stroke:       PFX + 'track.per_stroke', // single braces: {m}
+  track_view_total:       PFX + 'track.view.total',
+  track_view_points:      PFX + 'track.view.points',
+  track_view_photos:      PFX + 'track.view.photos',
+  track_view_time:        PFX + 'track.view.time',
+  track_view_distance:    PFX + 'track.view.distance',
+  track_view_speed:       PFX + 'track.view.speed',
+  track_view_steps:       PFX + 'track.view.steps',
+  track_view_photos_title: PFX + 'track.view.photosTitle',
+  track_view_map_label:   PFX + 'track.view.mapLabel',
+  track_view_photo_show:  PFX + 'track.view.photoShow', // single braces: {time}
+  track_view_map_note:    PFX + 'track.view.mapNote',
 
   jass_draw:              PFX + 'jass.draw',
   jass_match:             PFX + 'jass.match',

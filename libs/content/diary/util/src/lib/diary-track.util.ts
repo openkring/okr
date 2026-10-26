@@ -5,6 +5,8 @@ import type { TrackPoint } from '@okr/mobility-tracker-util';
 export interface DiaryTrackCard {
   key: string;
   name: string;
+  /** StoreDate (yyyyMMdd) of the trip; '' when unknown */
+  startDate: string;
   startTime: string;
   /** transport modes in order, consecutive duplicates collapsed */
   modes: TransportMode[];
@@ -42,6 +44,7 @@ export function toDiaryTrackCards(trips: TripModel[], pointsByTrip: Record<strin
     const card: DiaryTrackCard = {
       key: trip.okey,
       name: trip.name ?? '',
+      startDate: trip.startDate ?? '',
       startTime: trip.startTime ?? '',
       modes,
       distanceM: sections.reduce((m, s) => m + (s.distanceM ?? 0), 0),

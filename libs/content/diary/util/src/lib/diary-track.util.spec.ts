@@ -39,6 +39,12 @@ describe('toDiaryTrackCards', () => {
     expect(card.photos).toEqual([{ lat: 47, lng: 8, thumbPath: 'p/0.jpg', hidden: false, takenAt: '2026-10-26T08:05:00' }]);
   });
 
+  it('carries the start date, empty when the trip has none', () => {
+    const dated = { ...trip('a', '08:00', {}), startDate: '20261025' } as TripModel;
+    expect(toDiaryTrackCards([dated], {})[0].startDate).toBe('20261025');
+    expect(toDiaryTrackCards([trip('b', '08:00', {})], {})[0].startDate).toBe('');
+  });
+
   it('sorts several trips by start time', () => {
     const cards = toDiaryTrackCards([trip('late', '17:30', {}), trip('early', '07:15', {}), trip('noon', '12:00', {})], {});
     expect(cards.map(c => c.key)).toEqual(['early', 'noon', 'late']);

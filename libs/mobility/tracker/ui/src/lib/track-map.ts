@@ -1,4 +1,4 @@
-import { afterNextRender, Component, DestroyRef, effect, ElementRef, inject, input, ViewEncapsulation } from '@angular/core';
+import { afterNextRender, Component, DestroyRef, effect, ElementRef, inject, input, untracked, ViewEncapsulation } from '@angular/core';
 import type * as L from 'leaflet';
 import type { TransportMode } from '@okr/shared-models';
 import { TRACK_MODE_COLOR, type TrackPoint } from '@okr/mobility-tracker-util';
@@ -14,6 +14,9 @@ const MAX_FIT_ZOOM = 17;
 const DEFAULT_VIEW: L.LatLngExpression = [46.8, 8.2]; // Switzerland, until the first point arrives
 const PHOTO_PIN_PX = 32;
 const PHOTO_DOT_PX = 16;
+const PHOTO_PIN_SELECTED_PX = 46;
+const PHOTO_DOT_SELECTED_PX = 22;
+const SELECTED_MIN_ZOOM = 16;
 
 /**
  * The recorded track on a swisstopo map: one polyline per section in the colour of its transport mode
@@ -21,6 +24,8 @@ const PHOTO_DOT_PX = 16;
  * photos live in their own layer, so a new thumbnail never redraws or refits the track). Fits to the data on first data and whenever the number of
  * sections changes; with `live` the map follows the last point without touching the zoom.
  * Leaflet is loaded lazily on first render (its stylesheet is global in the apps).
+ * `selectedPhoto` (index into `photos`) pans the map to that pin (zoom at least 16) and draws it enlarged; undefined
+ * clears the highlight without moving the map.
  * Height: CSS variable `--okr-track-map-height` (default max(280px, 50vh)).
  */
 @Component({
@@ -39,6 +44,8 @@ const PHOTO_DOT_PX = 16;
       box-shadow: 0 0 3px rgba(0,0,0,.6); object-fit: cover; display: block; background: #fff; }
     .okr-track-photo-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #fff; box-sizing: border-box;
       box-shadow: 0 0 3px rgba(0,0,0,.6); background: #455a64; position: relative; }
+    .okr-track-photo-pin.selected { width: 46px; height: 46px; border: 3px solid #ffd34d; box-shadow: 0 1px 6px rgba(0,0,0,.6); }
+    .okr-track-photo-dot.selected { width: 22px; height: 22px; border: 3px solid #ffd34d; }
     .okr-track-photo-dot::after { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: #fff; transform: scale(.55); }
   `],
   template: `<div class="okr-track-map-canvas"></div>`,
@@ -47,6 +54,8 @@ export class TrackMap {
   public readonly sections = input<TrackMapSection[]>([]);
   public readonly live = input(false);
   public readonly photos = input<TrackMapPhoto[]>([]);
+  /** index into `photos` of the highlighted pin; undefined = none */
+  public readonly selectedPhoto = input<number | undefined>(undefined);
 
   private readonly el = inject<ElementRef<HTMLElement>>(ElementRef);
   private leaflet?: typeof L;
@@ -67,7 +76,13 @@ export class TrackMap {
     });
     effect(() => {
       const photos = this.photos();
-      if (this.map) this.renderPhotos(photos);
+      const selected = this.selectedPhoto();
+      if (this.map) this.renderPhotos(photos, selected);
+    });
+    // pan only when the selection changes, not when a thumbnail arrives
+    effect(() => {
+      const selected = this.selectedPhoto();
+      if (this.map) untracked(() => this.panToPhoto(selected));
     });
     inject(DestroyRef).onDestroy(() => this.teardown());
   }
@@ -87,7 +102,8 @@ export class TrackMap {
     this.photoLayer = this.leaflet.layerGroup().addTo(this.map); // above the track
     this.map.setView(DEFAULT_VIEW, 8);
     this.render(this.sections(), this.live());
-    this.renderPhotos(this.photos());
+    this.renderPhotos(this.photos(), this.selectedPhoto());
+    this.panToPhoto(this.selectedPhoto());
     this.resizeObserver = new ResizeObserver(() => {
       if (this.destroyed || !this.map) return;
       this.map.invalidateSize();
@@ -128,31 +144,39 @@ export class TrackMap {
     }
   }
 
-  private renderPhotos(photos: TrackMapPhoto[]): void {
+  private panToPhoto(selected: number | undefined): void {
+    const photo = selected === undefined ? undefined : this.photos()[selected];
+    if (!this.map || this.destroyed || !photo || photo.hidden) return;
+    const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.map.setView([photo.lat, photo.lng], Math.max(this.map.getZoom(), SELECTED_MIN_ZOOM), { animate: !reduced });
+  }
+
+  private renderPhotos(photos: TrackMapPhoto[], selected: number | undefined): void {
     const Lf = this.leaflet;
     const layer = this.photoLayer;
     if (!Lf || !this.map || !layer || this.destroyed) return;
     layer.clearLayers();
-    for (const photo of photos) {
-      if (photo.hidden) continue;
+    photos.forEach((photo, index) => {
+      if (photo.hidden) return;
+      const isSelected = index === selected;
       // DOM nodes, not an HTML string: the src never becomes markup
       let html: HTMLElement;
       let size: number;
       if (photo.src) {
         const img = document.createElement('img');
-        img.className = 'okr-track-photo-pin';
+        img.className = isSelected ? 'okr-track-photo-pin selected' : 'okr-track-photo-pin';
         img.src = photo.src;
         img.alt = '';
         html = img;
-        size = PHOTO_PIN_PX;
+        size = isSelected ? PHOTO_PIN_SELECTED_PX : PHOTO_PIN_PX;
       } else {
         html = document.createElement('div');
-        html.className = 'okr-track-photo-dot';
-        size = PHOTO_DOT_PX;
+        html.className = isSelected ? 'okr-track-photo-dot selected' : 'okr-track-photo-dot';
+        size = isSelected ? PHOTO_DOT_SELECTED_PX : PHOTO_DOT_PX;
       }
       const icon = Lf.divIcon({ className: 'okr-track-dot-icon', html, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
-      Lf.marker([photo.lat, photo.lng], { icon, interactive: false, keyboard: false }).addTo(layer);
-    }
+      Lf.marker([photo.lat, photo.lng], { icon, interactive: false, keyboard: false, zIndexOffset: isSelected ? 1000 : 0 }).addTo(layer);
+    });
   }
 
   private addDot(Lf: typeof L, at: L.LatLngTuple, kind: 'start' | 'end'): void {

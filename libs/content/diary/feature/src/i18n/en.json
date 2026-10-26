@@ -279,6 +279,19 @@
     "strokes": "{strokes} strokes",
     "rate_avg": "Ø {rate}/min",
     "rate_max": "max {rate}/min",
-    "per_stroke": "{m} m/stroke"
+    "per_stroke": "{m} m/stroke",
+    "view": {
+      "total": "total",
+      "points": "points",
+      "photos": "photos",
+      "time": "Time",
+      "distance": "Distance",
+      "speed": "Speed",
+      "steps": "Steps",
+      "photosTitle": "Photos along the way",
+      "mapLabel": "Map with the recorded route",
+      "photoShow": "Show the photo from {time} on the map",
+      "mapNote": "Map: © swisstopo"
+    }
   }
 }
