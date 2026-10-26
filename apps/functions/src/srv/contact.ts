@@ -61,7 +61,6 @@ async function invalidateSrvCaches(ctx: GatewayContext): Promise<void> {
  * Fetch all members from the Regasoft SRV API.
  * Gateway-backed (cache + quota + retry); response shape unchanged.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function handleGetSrvContacts(request: CallableRequest) {
   const CF_NAME = 'getSrvContacts';
 
