@@ -26,6 +26,35 @@ export function needsUpload(t: LocalTrack): boolean {
   return t.state === 'done' && !t.uploaded;
 }
 
+/** A visible photo whose thumbnail is not uploaded yet. */
+function missingThumb(p: NonNullable<LocalTrack['photos']>[number]): boolean {
+  return !p.hidden && !p.thumbPath;
+}
+
+/**
+ * The trip is on the server but a visible photo still lacks its thumbnail: the thumbnail step runs (after the trip
+ * commit, since the storage rule reads the trip) and the pending-upload loop retries it.
+ */
+export function needsThumbUpload(t: LocalTrack): boolean {
+  return t.uploaded && !t.photosUploaded && (t.photos ?? []).some(missingThumb);
+}
+
+/** True when every visible photo carries its thumbPath. */
+export function allThumbsUploaded(photos: LocalTrack['photos']): boolean {
+  return !(photos ?? []).some(missingThumb);
+}
+
+/** The photos with the uploaded thumbnails' paths copied in by assetId (a new array; unknown assetIds are ignored). */
+export function withThumbPaths(
+  photos: NonNullable<LocalTrack['photos']>, uploaded: { assetId: string; thumbPath: string }[],
+): NonNullable<LocalTrack['photos']> {
+  const byAsset = new Map(uploaded.map((u) => [u.assetId, u.thumbPath]));
+  return photos.map((p) => {
+    const thumbPath = byAsset.get(p.assetId);
+    return thumbPath === undefined ? p : { ...p, thumbPath };
+  });
+}
+
 /** A new section begins with the last point of the old one, so the line stays connected. */
 export function nextSectionStartPoint(lastPoint: TrackPoint | undefined): TrackPoint | undefined {
   return lastPoint ? { ...lastPoint } : undefined;

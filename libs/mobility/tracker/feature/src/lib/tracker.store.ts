@@ -10,11 +10,11 @@ import { TransportMode } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { DateFormat, generateRandomString, getCurrentTime, getTodayStr } from '@okr/shared-util-core';
-import { NativeLocation, TrackDb, TrackerLocation, TrackService } from '@okr/mobility-tracker-data-access';
+import { NativeLocation, PhotoAccess, TrackDb, TrackerLocation, TrackerPhotos, TrackService } from '@okr/mobility-tracker-data-access';
 import {
-  accumulateDistance, alignSections, correctedTrack, DetectionInput, hasNoPoints, LocalSection, sameTrackContent, DetectState, initialDetectState, LocalTrack,
-  MotionActivity, needsUpload, nextSectionStartPoint, nextSections, pendingUploadOwner, resumeDecision, sectionsAfterPause, sessionDetectStep, StartWarning, localStoreDate, trackTenants,
-  startWarning, summarize, toTrackPoint, TRACK_PROFILES, TRACKER_I18N_KEYS, TrackerI18n, TrackPoint,
+  accumulateDistance, allThumbsUploaded, alignSections, correctedTrack, DetectionInput, hasNoPoints, LocalSection, sameTrackContent, DetectState, initialDetectState, LocalTrack,
+  MotionActivity, needsThumbUpload, needsUpload, placePhotos, nextSectionStartPoint, nextSections, pendingUploadOwner, resumeDecision, sectionsAfterPause, sessionDetectStep, StartWarning, localStoreDate, trackTenants,
+  startWarning, summarize, toTrackPoint, TRACK_PROFILES, TRACKER_I18N_KEYS, TrackerI18n, TrackPoint, withThumbPaths,
 } from '@okr/mobility-tracker-util';
 
 /**
@@ -35,10 +35,11 @@ export interface TrackerStoreState {
   resumable: LocalTrack | undefined; // a track left recording/paused when the app went away
   uploadError: string | undefined;
   initialized: boolean; // init() completed: the database is open
+  photoAccess: PhotoAccess | undefined; // last known photo-library access (native only; undefined until asked)
 }
 
 const initialState: TrackerStoreState = {
-  active: undefined, currentMode: undefined, points: 0, distanceM: 0, warning: 'none', proposal: undefined, resumable: undefined, uploadError: undefined, initialized: false,
+  active: undefined, currentMode: undefined, points: 0, distanceM: 0, warning: 'none', proposal: undefined, resumable: undefined, uploadError: undefined, initialized: false, photoAccess: undefined,
 };
 
 /** Mutable per-session bookkeeping that never renders. */
@@ -231,13 +232,16 @@ export const TrackerStore = signalStore(
         if (!snap.commit) return snap.track.uploaded;
         const uploaded = snap.track;
         await snap.commit;
-        await enqueue(async () => {
+        const marked = await enqueue(async () => {
           const now = await findTrack(uploaded.key);
-          if (!now || now.uploaded || !sameTrackContent(now, uploaded)) return;
-          const marked: LocalTrack = { ...now, uploaded: true };
-          delete marked.extraPointsUpTo;
-          await store.db.updateTrack(marked);
+          if (!now || now.uploaded || !sameTrackContent(now, uploaded)) return undefined;
+          const next: LocalTrack = { ...now, uploaded: true };
+          delete next.extraPointsUpTo;
+          await store.db.updateTrack(next);
+          return next;
         });
+        // the trip exists on the server now: the storage rule for its thumbnails can read it
+        if (marked && needsThumbUpload(marked)) void uploadThumbs(marked.key);
         return true;
       } catch (error) {
         console.error('TrackerStore.upload', error);
@@ -245,6 +249,87 @@ export const TrackerStore = signalStore(
         const active = store.active();
         if (!silent && (!active || active.key === t.key)) patchState(store, { uploadError: errorText(error) });
         return false;
+      }
+    }
+
+    /**
+     * Photos taken during a finished track (native only, spec §6): asks for library access if never asked (this waits
+     * for the person's answer, so it runs detached and OUTSIDE the queue), reads the photos between start and end,
+     * places them on the track and stores them in the local track (on the queue). Attaching is a content change:
+     * rev + 1 and uploaded:false, so a trip upload still in flight is not marked uploaded and the photos go up with
+     * the next upload; the thumbnails follow once that commit is acked.
+     */
+    async function attachPhotos(key: string): Promise<void> {
+      if (!Capacitor.isNativePlatform()) return;
+      try {
+        let { access } = await TrackerPhotos.access();
+        if (access === 'notDetermined') ({ access } = await TrackerPhotos.requestAccess());
+        patchState(store, { photoAccess: access });
+        if (access !== 'full' && access !== 'limited') return;
+        const t = await findTrack(key);
+        if (!t || t.state !== 'done' || t.photos) return;
+        const found = await TrackerPhotos.between({ from: t.startedAt, to: t.endedAt ?? t.startedAt, maxPx: 400 });
+        patchState(store, { photoAccess: found.access });
+        if (found.photos.length === 0) return;
+        const attached = await enqueue(async () => {
+          const now = await findTrack(key);
+          if (!now || now.state !== 'done' || now.photos) return undefined; // gone, or attached meanwhile
+          const points = alignSections(await store.db.points(key), now.sections.length);
+          const photos = placePhotos(found.photos, points, now.startedAt, now.endedAt ?? now.startedAt);
+          if (photos.length === 0) return undefined;
+          const next: LocalTrack = { ...now, photos, rev: (now.rev ?? 0) + 1, uploaded: false, photosUploaded: false };
+          await store.db.updateTrack(next);
+          return next;
+        });
+        if (attached) void uploadTrack(attached, true);
+      } catch (error) {
+        console.error('TrackerStore.attachPhotos', error);
+      }
+    }
+
+    /**
+     * Uploads the missing thumbnails of an uploaded trip (never blocks the UI). Runs only after the trip commit was
+     * acked: the private-bucket rule reads the trip. The thumb paths are copied into the local photos (by assetId)
+     * and the trip's photo list is written; `photosUploaded` is set only after that write's ack, and only if the
+     * track's rev did not change meanwhile (a correction re-uploads the photo list with the thumb paths anyway).
+     * A failed thumbnail stays missing: the pending-upload loop retries it.
+     */
+    async function uploadThumbs(key: string): Promise<void> {
+      try {
+        const snap = await findTrack(key);
+        if (!snap || !needsThumbUpload(snap)) return;
+        const tenantId = store.appStore.tenantId();
+        const uploaded: { assetId: string; thumbPath: string }[] = [];
+        const photos = snap.photos ?? [];
+        for (let i = 0; i < photos.length; i++) {
+          const p = photos[i];
+          if (p.hidden || p.thumbPath || !p.path400) continue;
+          try {
+            uploaded.push({ assetId: p.assetId, thumbPath: await store.trackService.uploadThumb(tenantId, key, i, p.path400) });
+          } catch (error) {
+            console.error('TrackerStore.uploadThumb', error);
+          }
+        }
+        if (uploaded.length === 0) return;
+        const issued = await enqueue(async () => {
+          const now = await findTrack(key);
+          if (!now?.photos) return undefined;
+          const next: LocalTrack = { ...now, photos: withThumbPaths(now.photos, uploaded) };
+          await store.db.updateTrack(next);
+          // issued on the queue: lands in order with the trip uploads of this track
+          const done = store.trackService.setPhotos(key, next.photos ?? []);
+          done.catch(() => undefined); // awaited below, outside the queue
+          return { done };
+        });
+        if (!issued) return;
+        await issued.done;
+        await enqueue(async () => {
+          const now = await findTrack(key);
+          if (!now || (now.rev ?? 0) !== (snap.rev ?? 0) || !allThumbsUploaded(now.photos)) return;
+          await store.db.updateTrack({ ...now, photosUploaded: true });
+        });
+      } catch (error) {
+        console.error('TrackerStore.uploadThumbs', error);
       }
     }
 
@@ -266,11 +351,14 @@ export const TrackerStore = signalStore(
 
     /**
      * Retries every finished, not yet uploaded track, silently. All uploads are issued on the queue in order;
-     * their acks are awaited in parallel (offline each resolves only on reconnect).
+     * their acks are awaited in parallel (offline each resolves only on reconnect). Uploaded trips that still miss
+     * thumbnails get their thumbnail step again.
      */
     async function uploadPending(): Promise<void> {
       try {
-        const pending = (await store.db.list()).filter(needsUpload);
+        const tracks = await store.db.list();
+        const pending = tracks.filter(needsUpload);
+        for (const t of tracks.filter(needsThumbUpload)) void uploadThumbs(t.key);
         const results = await Promise.all(pending.map((t) => uploadTrack(t, true)));
         // an earlier failure (e.g. stopped before the user was loaded) is no longer true once everything went up
         if (results.every(Boolean)) patchState(store, { uploadError: undefined });
@@ -320,6 +408,7 @@ export const TrackerStore = signalStore(
       }
       if (!done) return undefined;
       void uploadTrack(done, false);
+      void attachPhotos(done.key); // native only; waits for the photo permission detached from the stop
       return done.key;
     }
 
@@ -388,6 +477,7 @@ export const TrackerStore = signalStore(
               const finished: LocalTrack = { ...old, state: 'done', endedAt: old.endedAt ?? Date.now() };
               await store.db.updateTrack(finished);
               void uploadTrack(finished, true);
+              void attachPhotos(finished.key);
             }
             patchState(store, { resumable: undefined });
           }

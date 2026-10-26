@@ -19,6 +19,8 @@ export interface LocalTrack {
   rev?: number;
   /** Photos placed on the track; `path400` is the device-local rendition and is never uploaded. */
   photos?: (TrackPhoto & { path400?: string })[];
+  /** Every visible photo's thumbnail is uploaded and the trip's photo list carries its thumbPath (missing = false). */
+  photosUploaded?: boolean;
 }
 
 /** A stored point row: a track point plus its section index. */

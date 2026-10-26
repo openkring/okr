@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { initialDetectState } from './track-detection.util';
 import type { LocalTrack } from './track-local.model';
 import {
-  accumulateDistance, alignSections, hasNoPoints, needsUpload, nextSections, nextSectionStartPoint, pendingUploadOwner, resumeDecision, sectionsAfterPause,
-  sessionDetectStep, startWarning, toTrackPoint,
+  accumulateDistance, alignSections, allThumbsUploaded, hasNoPoints, needsThumbUpload, needsUpload, nextSections, nextSectionStartPoint, pendingUploadOwner, resumeDecision, sectionsAfterPause,
+  sessionDetectStep, startWarning, toTrackPoint, withThumbPaths,
 } from './tracker-session.util';
 
 function track(key: string, state: LocalTrack['state'], uploaded = false): LocalTrack {
@@ -144,4 +144,41 @@ describe('hasNoPoints', () => {
   it('no groups', () => expect(hasNoPoints([])).toBe(true));
   it('only empty groups', () => expect(hasNoPoints([[], []])).toBe(true));
   it('one point somewhere', () => expect(hasNoPoints([[], [{ lat: 1, lng: 2, t: 3 }]])).toBe(false));
+});
+
+function photo(assetId: string, extra: Partial<NonNullable<LocalTrack['photos']>[number]> = {}): NonNullable<LocalTrack['photos']>[number] {
+  return { assetId, takenAt: '2026-10-26T10:00:00.000Z', lat: 47, lng: 8, ownGps: true, hidden: false, path400: `/cache/${assetId}.jpg`, ...extra };
+}
+
+describe('needsThumbUpload', () => {
+  const up = (photos: LocalTrack['photos'], photosUploaded?: boolean): LocalTrack => ({ ...track('a', 'done', true), photos, photosUploaded });
+  it('uploaded trip with a visible photo without thumb', () => expect(needsThumbUpload(up([photo('x')]))).toBe(true));
+  it('trip not uploaded yet', () => expect(needsThumbUpload({ ...up([photo('x')]), uploaded: false })).toBe(false));
+  it('photos already uploaded', () => expect(needsThumbUpload(up([photo('x')], true))).toBe(false));
+  it('no photos', () => expect(needsThumbUpload(up(undefined))).toBe(false));
+  it('only hidden photos', () => expect(needsThumbUpload(up([photo('x', { hidden: true })]))).toBe(false));
+  it('every visible photo has its thumb', () => expect(needsThumbUpload(up([photo('x', { thumbPath: 't/x.jpg' }), photo('y', { hidden: true })]))).toBe(false));
+  it('one visible photo still missing', () => expect(needsThumbUpload(up([photo('x', { thumbPath: 't/x.jpg' }), photo('y')]))).toBe(true));
+});
+
+describe('withThumbPaths', () => {
+  it('copies thumb paths by assetId and leaves others alone', () => {
+    const out = withThumbPaths([photo('x'), photo('y'), photo('z', { thumbPath: 'old' })], [{ assetId: 'y', thumbPath: 't/1.jpg' }]);
+    expect(out.map((p) => p.thumbPath)).toEqual([undefined, 't/1.jpg', 'old']);
+  });
+  it('ignores an uploaded asset that is no longer in the list', () => {
+    const out = withThumbPaths([photo('x')], [{ assetId: 'gone', thumbPath: 't/0.jpg' }]);
+    expect(out).toEqual([photo('x')]);
+  });
+  it('does not mutate the input', () => {
+    const input = [photo('x')];
+    withThumbPaths(input, [{ assetId: 'x', thumbPath: 't/0.jpg' }]);
+    expect(input[0].thumbPath).toBeUndefined();
+  });
+});
+
+describe('allThumbsUploaded', () => {
+  it('no photos', () => expect(allThumbsUploaded(undefined)).toBe(true));
+  it('hidden photos need no thumb', () => expect(allThumbsUploaded([photo('x', { hidden: true }), photo('y', { thumbPath: 't' })])).toBe(true));
+  it('a visible photo without thumb', () => expect(allThumbsUploaded([photo('x')])).toBe(false));
 });
