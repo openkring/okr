@@ -75,6 +75,16 @@
     "save_error": "La modification n’a pas pu être enregistrée. Réessaie, s’il te plaît.",
     "share_error": "Le fichier GPX n’a pas pu être partagé."
   },
+  "photos": {
+    "title": "Photos",
+    "hide": "Masquer",
+    "show": "Afficher",
+    "hidden": "Masquée",
+    "hide_aria": "Masquer la photo de {time}",
+    "show_aria": "Afficher la photo de {time}",
+    "limited": "Tu n’as partagé que certaines photos avec l’app — d’autres photos apparaîtront si tu autorises « Toutes les photos » dans les réglages.",
+    "denied": "Autorise l’app à accéder à tes photos pour que les photos prises en route apparaissent sur le parcours."
+  },
   "common": {
     "save": "Enregistrer",
     "cancel": "Annuler"

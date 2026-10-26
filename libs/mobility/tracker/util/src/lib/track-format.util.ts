@@ -12,3 +12,11 @@ export function formatKm(meters: number, locale = 'de-CH'): string {
   const km = new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(Math.max(0, meters) / 1000);
   return `${km} km`;
 }
+
+/** Local wall-clock time (HH:mm) of an ISO timestamp; '' when it cannot be parsed. */
+export function formatClockTime(iso: string): string {
+  const ms = Date.parse(iso);
+  if (Number.isNaN(ms)) return '';
+  const d = new Date(ms);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}

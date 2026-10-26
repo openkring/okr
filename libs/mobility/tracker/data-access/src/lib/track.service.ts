@@ -206,6 +206,16 @@ export class TrackService {
     return path;
   }
 
+  /** True when a device-local file (e.g. a photo's path400 in the app cache, which iOS may purge) still exists. */
+  public async hasLocalFile(localPath: string): Promise<boolean> {
+    try {
+      await Filesystem.stat({ path: localPath.startsWith('file://') ? localPath : 'file://' + localPath });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   /** A thumbnail as a data: URL (private bucket, owner-only), cached per path. */
   public readThumb(thumbPath: string): Promise<string> {
     const cached = this.thumbCache.get(thumbPath);

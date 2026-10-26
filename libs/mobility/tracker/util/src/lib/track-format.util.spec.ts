@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDuration, formatKm } from './track-format.util';
+import { formatClockTime, formatDuration, formatKm } from './track-format.util';
 
 describe('formatDuration', () => {
   it('formats h:mm:ss', () => {
@@ -23,4 +23,9 @@ describe('formatKm', () => {
   it('uses the de-CH decimal separator', () => {
     expect(formatKm(1234, 'de-CH')).toBe('1.2 km');
   });
+});
+
+describe('formatClockTime', () => {
+  it('formats the local time with leading zeros', () => expect(formatClockTime(new Date(2026, 9, 26, 7, 5).toISOString())).toBe('07:05'));
+  it('is empty for an unparsable value', () => expect(formatClockTime('')).toBe(''));
 });

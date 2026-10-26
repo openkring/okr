@@ -55,14 +55,24 @@ export function placePhotos(
   return out;
 }
 
+/** How long after the last GPS fix a photo still belongs to the track. */
+export const PHOTO_WINDOW_AFTER_LAST_FIX_MS = 30 * 60_000;
+
 /**
- * End of the photo window: the last recorded point's time (a resumed track may end long after it), never later
- * than endedAt; endedAt when there are no points.
+ * End of the photo window: 30 min after the last recorded point (a resumed track may end long after it), never
+ * later than endedAt; endedAt when there are no points.
  */
 export function photoWindowEnd(sections: TrackPoint[][], endedAt: number): number {
   let last: number | undefined;
   for (const s of sections) for (const p of s) if (last === undefined || p.t > last) last = p.t;
-  return last === undefined ? endedAt : Math.min(last, endedAt);
+  return last === undefined ? endedAt : Math.min(last + PHOTO_WINDOW_AFTER_LAST_FIX_MS, endedAt);
+}
+
+/** The photos with photos[index].hidden set (a new array); the same array when the index is out of range or nothing changes. */
+export function withPhotoHidden<T extends TrackPhoto>(photos: T[], index: number, hidden: boolean): T[] {
+  const p = photos[index];
+  if (!p || p.hidden === hidden) return photos;
+  return photos.map((x, i) => (i === index ? { ...x, hidden } : x));
 }
 
 /** The trip's own tenant first, then the diary targets that take `tracker` entries on that date. */

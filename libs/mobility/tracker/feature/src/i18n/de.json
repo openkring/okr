@@ -75,6 +75,16 @@
     "save_error": "Die Änderung konnte nicht gespeichert werden. Versuch es bitte noch einmal.",
     "share_error": "Die GPX-Datei konnte nicht geteilt werden."
   },
+  "photos": {
+    "title": "Fotos",
+    "hide": "Ausblenden",
+    "show": "Einblenden",
+    "hidden": "Ausgeblendet",
+    "hide_aria": "Foto von {time} ausblenden",
+    "show_aria": "Foto von {time} einblenden",
+    "limited": "Du hast der App nur ausgewählte Fotos freigegeben — weitere Fotos erscheinen, wenn du in den Einstellungen «Alle Fotos» erlaubst.",
+    "denied": "Erlaube der App den Zugriff auf deine Fotos, damit Fotos von unterwegs an der Strecke erscheinen."
+  },
   "common": {
     "save": "Speichern",
     "cancel": "Abbrechen"

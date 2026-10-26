@@ -75,6 +75,16 @@
     "save_error": "Non è stato possibile salvare la modifica. Riprova, per favore.",
     "share_error": "Non è stato possibile condividere il file GPX."
   },
+  "photos": {
+    "title": "Foto",
+    "hide": "Nascondi",
+    "show": "Mostra",
+    "hidden": "Nascosta",
+    "hide_aria": "Nascondi la foto delle {time}",
+    "show_aria": "Mostra la foto delle {time}",
+    "limited": "Hai condiviso con l’app solo alcune foto: altre foto appariranno se nelle Impostazioni consenti «Tutte le foto».",
+    "denied": "Consenti all’app di accedere alle tue foto, così le foto scattate in viaggio appaiono sul percorso."
+  },
   "common": {
     "save": "Salva",
     "cancel": "Annulla"

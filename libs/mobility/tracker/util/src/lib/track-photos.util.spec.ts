@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LibraryPhoto, photoWindowEnd, placePhotos, positionAt, trackThumbPath, trackTenants, localStoreDate } from './track-photos.util';
+import { LibraryPhoto, photoWindowEnd, withPhotoHidden, placePhotos, positionAt, trackThumbPath, trackTenants, localStoreDate } from './track-photos.util';
 import { TrackPoint } from './track-polyline.util';
 
 const P = (t: number, lat: number, lng: number): TrackPoint => ({ t, lat, lng });
@@ -58,7 +58,31 @@ describe('localStoreDate', () => {
 });
 
 describe('photoWindowEnd', () => {
-  it('the last recorded point, not the end of a long gap', () => expect(photoWindowEnd([[P(10, 0, 0), P(50, 0, 0)], [P(30, 0, 0)]], 9999)).toBe(50));
+  const MIN = 60_000;
+  const lastFix = 1_000_000;
+  const sections = [[P(10, 0, 0), P(lastFix, 0, 0)], [P(30, 0, 0)]];
+  const endedAt = lastFix + 5 * 60 * MIN; // a resumed track that ended hours after its last fix
+  it('ends 30 min after the last fix, not at the end of a long gap', () => expect(photoWindowEnd(sections, endedAt)).toBe(lastFix + 30 * MIN));
+  it('includes a photo 20 min after the last fix', () => expect(lastFix + 20 * MIN <= photoWindowEnd(sections, endedAt)).toBe(true));
+  it('excludes a photo 40 min after the last fix', () => expect(lastFix + 40 * MIN <= photoWindowEnd(sections, endedAt)).toBe(false));
   it('falls back to endedAt without points', () => expect(photoWindowEnd([[], []], 9999)).toBe(9999));
-  it('never later than endedAt', () => expect(photoWindowEnd([[P(20000, 0, 0)]], 9999)).toBe(9999));
+  it('never later than endedAt', () => expect(photoWindowEnd([[P(20000, 0, 0)]], 25000)).toBe(25000));
+});
+
+describe('withPhotoHidden', () => {
+  const ph = (assetId: string, hidden: boolean) => ({ assetId, takenAt: '2026-10-26T10:00:00.000Z', lat: 1, lng: 2, ownGps: true, hidden });
+  it('sets hidden on one photo in a new array', () => {
+    const photos = [ph('a', false), ph('b', false)];
+    const out = withPhotoHidden(photos, 1, true);
+    expect(out).not.toBe(photos);
+    expect(out.map((p) => p.hidden)).toEqual([false, true]);
+    expect(photos[1].hidden).toBe(false);
+  });
+  it('shows a hidden photo again', () => expect(withPhotoHidden([ph('a', true)], 0, false)[0].hidden).toBe(false));
+  it('returns the same array when nothing changes', () => {
+    const photos = [ph('a', true)];
+    expect(withPhotoHidden(photos, 0, true)).toBe(photos);
+    expect(withPhotoHidden(photos, 3, false)).toBe(photos);
+    expect(withPhotoHidden(photos, -1, false)).toBe(photos);
+  });
 });

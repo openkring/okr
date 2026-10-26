@@ -14,7 +14,7 @@ import { NativeLocation, PhotoAccess, ThumbSourceMissingError, TrackDb, TrackerL
 import {
   accumulateDistance, allThumbsUploaded, alignSections, correctedTrack, DetectionInput, hasNoPoints, LocalSection, sameTrackContent, DetectState, initialDetectState, LocalTrack,
   MotionActivity, needsThumbUpload, needsUpload, photoWindowEnd, placePhotos, nextSectionStartPoint, nextSections, pendingUploadOwner, resumeDecision, sectionsAfterPause, sessionDetectStep, StartWarning, localStoreDate, trackTenants,
-  startWarning, summarize, toTrackPoint, TRACK_PROFILES, TRACKER_I18N_KEYS, TrackerI18n, TrackPoint, withThumbPaths,
+  startWarning, summarize, toTrackPoint, TRACK_PROFILES, TRACKER_I18N_KEYS, TrackerI18n, TrackPoint, withPhotoHidden, withThumbPaths,
 } from '@okr/mobility-tracker-util';
 
 /**
@@ -299,8 +299,8 @@ export const TrackerStore = signalStore(
      * (a lost setPhotos). `photosUploaded` is set only after that write's ack, only if the track's rev did not change
      * meanwhile and every visible photo has its thumb. A failed thumbnail stays missing: the pending loop retries it.
      * One run per track at a time (thumbsInFlight).
-     * Task 6 note: setPhotoHidden must bump rev and clear photosUploaded (re-upload), then run uploadThumbs after that
-     * upload is acked (a photo made visible again needs its thumbnail).
+     * setPhotoHidden bumps rev and clears photosUploaded; the trip upload it starts runs this step after its ack
+     * (a photo made visible again gets its thumbnail).
      */
     async function uploadThumbs(key: string): Promise<void> {
       if (s.thumbsInFlight.has(key)) return;
@@ -663,6 +663,38 @@ export const TrackerStore = signalStore(
         });
         if (!issued) throw new Error('archive not issued');
         await issued.done;
+      },
+
+      /**
+       * Hides or shows one photo of a finished local track, on the queue: rev + 1, `uploaded` and `photosUploaded`
+       * false, then the trip is uploaded again detached (it carries the photo list); after its ack uploadThumbs
+       * adds a missing thumbnail of a photo shown again.
+       * @returns false when the track or photo is missing or the track is not finished
+       */
+      async setPhotoHidden(key: string, index: number, hidden: boolean): Promise<boolean> {
+        const written = await enqueue(async () => {
+          const current = await findTrack(key);
+          if (!current?.photos || current.state !== 'done' || !current.photos[index]) return undefined;
+          const photos = withPhotoHidden(current.photos, index, hidden);
+          if (photos === current.photos) return current; // already in that state
+          const next: LocalTrack = { ...current, photos, rev: (current.rev ?? 0) + 1, uploaded: false, photosUploaded: false };
+          await store.db.updateTrack(next);
+          return next;
+        });
+        if (!written) return false;
+        if (needsUpload(written)) void uploadTrack(written, true);
+        return true;
+      },
+
+      /** Refreshes the last known photo-library access without asking (native only). */
+      async checkPhotoAccess(): Promise<void> {
+        if (!Capacitor.isNativePlatform()) return;
+        try {
+          const { access } = await TrackerPhotos.access();
+          patchState(store, { photoAccess: access });
+        } catch (error) {
+          console.error('TrackerStore.checkPhotoAccess', error);
+        }
       },
 
       /** Removes a local track (on the queue, so no upload snapshot reads it half-deleted). */

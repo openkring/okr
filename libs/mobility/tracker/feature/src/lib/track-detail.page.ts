@@ -4,17 +4,18 @@ import {
   AlertController, IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonLabel, IonListHeader, IonNote, IonSpinner, IonTitle,
   IonToolbar, ToastController,
 } from '@ionic/angular';
+import { Capacitor } from '@capacitor/core';
 import { firstValueFrom } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
-import { TRANSPORT_MODES, TransportMode, TripModel } from '@okr/shared-models';
+import { TRANSPORT_MODES, TrackPhoto, TransportMode, TripModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { confirm, downloadFile, okrPrompt } from '@okr/shared-util-angular';
 import { TrackDb, TrackService } from '@okr/mobility-tracker-data-access';
-import { TrackMap, TrackMapSection, TrackModeChange, TrackSections } from '@okr/mobility-tracker-ui';
+import { TrackMap, TrackMapPhoto, TrackMapSection, TrackModeChange, TrackPhotoItem, TrackPhotos, TrackPhotoToggle, TrackSections } from '@okr/mobility-tracker-ui';
 import {
   alignSections, buildGpx, correctedTrack, fromLocalSections, gpxFileName, isShareCancel, LocalSection, LocalTrack, localFromTrip, mergeWithNext,
-  localStoreDate, middlePointIndex, sectionRows, setSectionMode, splitSection, toLocalSections, trackTenants,
+  localStoreDate, middlePointIndex, sectionRows, setSectionMode, splitSection, toLocalSections, trackTenants, withPhotoHidden,
 } from '@okr/mobility-tracker-util';
 
 import { TrackerStore } from './tracker.store';
@@ -24,12 +25,14 @@ import { TrackerStore } from './tracker.store';
  * delete and GPX export. A track still on this device is corrected in TrackDb first and then uploaded again
  * (same key: the trip is overwritten); a track that only exists uploaded is rebuilt from the trip and uploaded
  * corrected. Corrections need a finished track.
+ * Photos (plan 3 task 6): pins on the map and a strip with hide/show. The picture is the local 400 px rendition when
+ * the track and its file are on this device, otherwise the uploaded thumbnail; a photo without either is a dot.
  */
 @Component({
   selector: 'okr-track-detail-page',
   imports: [
     IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonButton, IonIcon, IonListHeader, IonLabel, IonNote, IonSpinner,
-    SvgIconPipe, TrackMap, TrackSections,
+    SvgIconPipe, TrackMap, TrackPhotos, TrackSections,
   ],
   styles: [`
     .center { display: flex; justify-content: center; padding: 24px; }
@@ -59,9 +62,18 @@ import { TrackerStore } from './tracker.store';
       @if (loading()) {
         <div class="center"><ion-spinner /></div>
       } @else if (track(); as t) {
-        <okr-track-map [sections]="mapSections()" [live]="false" />
+        <okr-track-map [sections]="mapSections()" [photos]="mapPhotos()" [live]="false" />
         @if (!t.uploaded) {
           <ion-note class="note" color="warning">{{ i18n.list_not_uploaded() }}</ion-note>
+        }
+        @if (photoItems().length > 0) {
+          <ion-list-header><ion-label>{{ i18n.photos_title() }}</ion-label></ion-list-header>
+          <okr-track-photos [photos]="photoItems()" [i18n]="i18n" (photoToggle)="togglePhoto($event)" />
+        }
+        @if (photoAccess() === 'limited') {
+          <ion-note class="note">{{ i18n.photos_limited() }}</ion-note>
+        } @else if (photoAccess() === 'denied' && photoItems().length === 0) {
+          <ion-note class="note">{{ i18n.photos_denied() }}</ion-note>
         }
         <ion-list-header><ion-label>{{ i18n.detail_sections() }}</ion-label></ion-list-header>
         @if (editable()) {
@@ -101,11 +113,73 @@ export class TrackDetailPage {
   protected readonly mapSections = computed<TrackMapSection[]>(() => this.sections().map((s) => ({ mode: s.mode, points: s.points })));
   protected readonly rows = computed(() => sectionRows(this.sections()));
   protected readonly pointCounts = computed(() => this.sections().map((s) => s.points.length));
+  protected readonly photoAccess = this.store.photoAccess;
+  /** The track's photos: the local list for a track on this device, else the uploaded trip's. */
+  private readonly photos = computed<(TrackPhoto & { path400?: string })[]>(() =>
+    (this.isLocal() ? this.track()?.photos : this.trip()?.track?.photos) ?? []);
+  /** Displayable picture per photo (by assetId), filled asynchronously. */
+  private readonly photoSrcs = signal<ReadonlyMap<string, string>>(new Map());
+  /** Source keys already being resolved (assetId + path400 + thumbPath): a new thumbPath resolves again. */
+  private readonly resolving = new Set<string>();
+  protected readonly mapPhotos = computed<TrackMapPhoto[]>(() => {
+    const srcs = this.photoSrcs();
+    return this.photos().map((p) => ({ lat: p.lat, lng: p.lng, hidden: p.hidden, src: srcs.get(p.assetId) }));
+  });
+  protected readonly photoItems = computed<TrackPhotoItem[]>(() => {
+    const srcs = this.photoSrcs();
+    return this.photos().map((p) => ({ takenAt: p.takenAt, hidden: p.hidden, src: srcs.get(p.assetId) }));
+  });
 
   public constructor() {
     effect(() => {
       const key = this.key();
       untracked(() => void this.load(key));
+    });
+    effect(() => {
+      const photos = this.photos();
+      const local = this.isLocal();
+      untracked(() => {
+        for (const p of photos) void this.resolvePhotoSrc(p, local);
+      });
+    });
+  }
+
+  /**
+   * Hide or show one photo. A local track goes through TrackerStore.setPhotoHidden (TrackDb on the queue, then a
+   * detached re-upload; a photo shown again gets its thumbnail after that). An uploaded-only track writes the photo
+   * list detached — no thumbnail can be made there, so a photo that never had one stays a dot.
+   */
+  protected async togglePhoto(change: TrackPhotoToggle): Promise<void> {
+    const t = this.track();
+    if (!t || this.busy()) return;
+    const key = t.key;
+    if (this.isLocal()) {
+      const before = t.photos ?? [];
+      const next = withPhotoHidden(before, change.index, change.hidden);
+      if (next === before) return;
+      this.track.set({ ...t, photos: next });
+      try {
+        if (!(await this.store.setPhotoHidden(key, change.index, change.hidden))) throw new Error('photo change not written');
+        const written = (await this.db.list()).find((x) => x.key === key);
+        if (written && this.track()?.key === key) this.track.set(written);
+      } catch (error) {
+        console.error('TrackDetailPage.togglePhoto', error);
+        await this.toast(this.i18n.detail_save_error());
+        await this.reloadLocal(key);
+      }
+      return;
+    }
+    const trip = this.trip();
+    const before = trip?.track?.photos;
+    if (!trip?.track || !before) return;
+    const next = withPhotoHidden(before, change.index, change.hidden);
+    if (next === before) return;
+    this.trip.set({ ...trip, track: { ...trip.track, photos: next } });
+    void this.trackService.setPhotos(key, next).catch(async (error: unknown) => {
+      console.error('TrackDetailPage.setPhotos', error);
+      const now = this.trip();
+      if (now?.okey === key && now.track) this.trip.set({ ...now, track: { ...now.track, photos: before } });
+      await this.toast(this.i18n.detail_save_error());
     });
   }
 
@@ -185,7 +259,10 @@ export class TrackDetailPage {
     this.loading.set(true);
     try {
       await this.store.init();
+      void this.store.checkPhotoAccess();
       this.trip.set(undefined);
+      this.photoSrcs.set(new Map());
+      this.resolving.clear();
       const local = (await this.db.list()).find((t) => t.key === key);
       if (local) {
         // the local copy shows at once; the uploaded trip (only needed for its tenants on delete) follows detached —
@@ -217,6 +294,28 @@ export class TrackDetailPage {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  /** The local 400 px file when the track and the file are on this device, else the uploaded thumbnail (if any). */
+  private async resolvePhotoSrc(p: TrackPhoto & { path400?: string }, local: boolean): Promise<void> {
+    const sourceKey = `${p.assetId}|${local ? p.path400 ?? '' : ''}|${p.thumbPath ?? ''}`;
+    if (this.resolving.has(sourceKey)) return;
+    this.resolving.add(sourceKey);
+    const trackKey = this.key();
+    let src: string | undefined;
+    try {
+      if (local && p.path400 && Capacitor.isNativePlatform() && (await this.trackService.hasLocalFile(p.path400))) {
+        src = Capacitor.convertFileSrc(p.path400);
+      } else if (p.thumbPath) {
+        src = await this.trackService.readThumb(p.thumbPath);
+      }
+    } catch (error) {
+      console.error('TrackDetailPage.resolvePhotoSrc', error);
+      this.resolving.delete(sourceKey); // a failed read may be retried on the next photo change
+    }
+    if (!src || this.key() !== trackKey) return;
+    const resolved = src;
+    this.photoSrcs.update((m) => new Map(m).set(p.assetId, resolved));
   }
 
   private async findTrip(key: string): Promise<TripModel | undefined> {

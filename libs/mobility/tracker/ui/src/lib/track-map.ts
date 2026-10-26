@@ -4,16 +4,21 @@ import type { TransportMode } from '@okr/shared-models';
 import { TRACK_MODE_COLOR, type TrackPoint } from '@okr/mobility-tracker-util';
 
 export interface TrackMapSection { mode: TransportMode; points: TrackPoint[] }
+/** A photo pin: `src` is a displayable URL (local file or data URL); without one a small camera dot is drawn. */
+export interface TrackMapPhoto { lat: number; lng: number; src?: string; hidden: boolean }
 
 const TILE_URL = 'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg';
 const FIT_PADDING: L.PointExpression = [32, 32];
 const SINGLE_POINT_ZOOM = 15;
 const MAX_FIT_ZOOM = 17;
 const DEFAULT_VIEW: L.LatLngExpression = [46.8, 8.2]; // Switzerland, until the first point arrives
+const PHOTO_PIN_PX = 32;
+const PHOTO_DOT_PX = 16;
 
 /**
  * The recorded track on a swisstopo map: one polyline per section in the colour of its transport mode
- * (plane dashed), a start and an end dot. Fits to the data on first data and whenever the number of
+ * (plane dashed), a start and an end dot, and a round thumbnail pin per visible photo (hidden photos are not drawn;
+ * photos live in their own layer, so a new thumbnail never redraws or refits the track). Fits to the data on first data and whenever the number of
  * sections changes; with `live` the map follows the last point without touching the zoom.
  * Leaflet is loaded lazily on first render (its stylesheet is global in the apps).
  * Height: CSS variable `--okr-track-map-height` (default max(280px, 50vh)).
@@ -30,17 +35,24 @@ const DEFAULT_VIEW: L.LatLngExpression = [46.8, 8.2]; // Switzerland, until the 
       box-shadow: 0 0 3px rgba(0,0,0,.6); }
     .okr-track-dot.start { background: #2e7d32; }
     .okr-track-dot.end { background: #c62828; }
+    .okr-track-photo-pin { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #fff; box-sizing: border-box;
+      box-shadow: 0 0 3px rgba(0,0,0,.6); object-fit: cover; display: block; background: #fff; }
+    .okr-track-photo-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #fff; box-sizing: border-box;
+      box-shadow: 0 0 3px rgba(0,0,0,.6); background: #455a64; position: relative; }
+    .okr-track-photo-dot::after { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: #fff; transform: scale(.55); }
   `],
   template: `<div class="okr-track-map-canvas"></div>`,
 })
 export class TrackMap {
   public readonly sections = input<TrackMapSection[]>([]);
   public readonly live = input(false);
+  public readonly photos = input<TrackMapPhoto[]>([]);
 
   private readonly el = inject<ElementRef<HTMLElement>>(ElementRef);
   private leaflet?: typeof L;
   private map?: L.Map;
   private overlay?: L.LayerGroup;
+  private photoLayer?: L.LayerGroup;
   private resizeObserver?: ResizeObserver;
   private destroyed = false;
   private fitted = false;
@@ -52,6 +64,10 @@ export class TrackMap {
       const sections = this.sections();
       const live = this.live();
       if (this.map) this.render(sections, live);
+    });
+    effect(() => {
+      const photos = this.photos();
+      if (this.map) this.renderPhotos(photos);
     });
     inject(DestroyRef).onDestroy(() => this.teardown());
   }
@@ -68,8 +84,10 @@ export class TrackMap {
     this.map = this.leaflet.map(container, { zoomControl: true, attributionControl: true });
     this.leaflet.tileLayer(TILE_URL, { maxZoom: 19, attribution: '© swisstopo' }).addTo(this.map);
     this.overlay = this.leaflet.layerGroup().addTo(this.map);
+    this.photoLayer = this.leaflet.layerGroup().addTo(this.map); // above the track
     this.map.setView(DEFAULT_VIEW, 8);
     this.render(this.sections(), this.live());
+    this.renderPhotos(this.photos());
     this.resizeObserver = new ResizeObserver(() => {
       if (this.destroyed || !this.map) return;
       this.map.invalidateSize();
@@ -110,6 +128,33 @@ export class TrackMap {
     }
   }
 
+  private renderPhotos(photos: TrackMapPhoto[]): void {
+    const Lf = this.leaflet;
+    const layer = this.photoLayer;
+    if (!Lf || !this.map || !layer || this.destroyed) return;
+    layer.clearLayers();
+    for (const photo of photos) {
+      if (photo.hidden) continue;
+      // DOM nodes, not an HTML string: the src never becomes markup
+      let html: HTMLElement;
+      let size: number;
+      if (photo.src) {
+        const img = document.createElement('img');
+        img.className = 'okr-track-photo-pin';
+        img.src = photo.src;
+        img.alt = '';
+        html = img;
+        size = PHOTO_PIN_PX;
+      } else {
+        html = document.createElement('div');
+        html.className = 'okr-track-photo-dot';
+        size = PHOTO_DOT_PX;
+      }
+      const icon = Lf.divIcon({ className: 'okr-track-dot-icon', html, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
+      Lf.marker([photo.lat, photo.lng], { icon, interactive: false, keyboard: false }).addTo(layer);
+    }
+  }
+
   private addDot(Lf: typeof L, at: L.LatLngTuple, kind: 'start' | 'end'): void {
     if (!this.overlay) return;
     const icon = Lf.divIcon({ className: 'okr-track-dot-icon', html: `<div class="okr-track-dot ${kind}"></div>`, iconSize: [14, 14], iconAnchor: [7, 7] });
@@ -123,5 +168,6 @@ export class TrackMap {
     this.map?.remove();
     this.map = undefined;
     this.overlay = undefined;
+    this.photoLayer = undefined;
   }
 }

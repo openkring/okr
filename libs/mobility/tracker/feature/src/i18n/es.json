@@ -75,6 +75,16 @@
     "save_error": "No se pudo guardar el cambio. Inténtalo de nuevo, por favor.",
     "share_error": "No se pudo compartir el archivo GPX."
   },
+  "photos": {
+    "title": "Fotos",
+    "hide": "Ocultar",
+    "show": "Mostrar",
+    "hidden": "Oculta",
+    "hide_aria": "Ocultar la foto de las {time}",
+    "show_aria": "Mostrar la foto de las {time}",
+    "limited": "Solo has compartido algunas fotos con la app: aparecerán más fotos si permites «Todas las fotos» en Ajustes.",
+    "denied": "Permite que la app acceda a tus fotos para que las fotos del camino aparezcan en el recorrido."
+  },
   "common": {
     "save": "Guardar",
     "cancel": "Cancelar"
