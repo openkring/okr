@@ -27,7 +27,14 @@ export interface TrackerLocationPlugin {
   start(o: { distanceFilter: number; accuracy: TrackAccuracy; minIntervalMs?: number; motion: boolean }): Promise<void>;
   /** Switches profile without a stop/start gap. */
   setProfile(o: { distanceFilter: number; accuracy: TrackAccuracy; minIntervalMs?: number }): Promise<void>;
+  /** Also closes a running calibration recording. */
   stop(): Promise<void>;
+  /** Pedometer steps between two times (spec 1.122); `null` when step counting is unavailable or not allowed. */
+  steps(o: { fromMs: number; toMs: number }): Promise<{ steps: number | null }>;
+  /** Starts the raw rowing-motion CSV (Documents-relative path); idempotent. */
+  calibrationStart(): Promise<{ file: string }>;
+  /** Stops it; `file: null` when no recording ran. */
+  calibrationStop(): Promise<{ file: string; samples: number } | { file: null }>;
   addListener(event: 'location', cb: (l: NativeLocation) => void): Promise<PluginListenerHandle>;
   addListener(event: 'activity', cb: (a: MotionActivity) => void): Promise<PluginListenerHandle>;
 }
