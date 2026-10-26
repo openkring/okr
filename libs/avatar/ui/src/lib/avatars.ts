@@ -120,7 +120,7 @@ import { AvatarPipe } from './avatar.pipe';
                   <ion-item>
                     <ion-reorder slot="start" />
                     <ion-avatar slot="start">
-                      <img okrImg src="{{ avatar.modelType + '.' + avatar.key | avatar:getDefaultIcon(avatar.modelType) }}" alt="Avatar" />
+                      <img okrImg src="{{ avatar.modelType + '.' + avatar.key | avatar:iconOf(avatar) }}" alt="Avatar" />
                     </ion-avatar>
                     <ion-label>{{ getAvatarName(avatar) }}</ion-label>
                     @if ($index === 0 && firstNote().length > 0) {
@@ -177,6 +177,8 @@ export class Avatars {
   public addLabel = input('');
   /** non-empty: the first item of the editable list shows this note (e.g. 'Hauptort'). */
   public firstNote = input('');
+  /** non-empty: the fallback icon of a free-text entry (no key), e.g. 'location'; else the modelType default. */
+  public textIcon = input('');
 
   // coerced boolean inputs
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
@@ -235,8 +237,8 @@ export class Avatars {
     return getAvatarName(avatar, this.currentUser()?.nameDisplay);
   }
 
-  protected getDefaultIcon(modelType: string): string {
-    return getDefaultIcon(modelType);
+  protected iconOf(avatar: AvatarInfo): string {
+    return !avatar.key && this.textIcon() ? this.textIcon() : getDefaultIcon(avatar.modelType);
   }
 
   /**

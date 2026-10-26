@@ -1,5 +1,6 @@
 export * from './lib/diary-album.util';
 export * from './lib/diary-avatar.util';
+export * from './lib/diary-location-avatar.util';
 export * from './lib/diary-date.util';
 export * from './lib/diary-file';
 export * from './lib/diary-frontmatter';

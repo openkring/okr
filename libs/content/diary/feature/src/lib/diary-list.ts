@@ -14,7 +14,7 @@ import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
 import { AvatarPipe } from '@okr/avatar-ui';
 
 import {
-  diaryAvatarName, diaryStateOf, diaryWeatherLine, mainLocation, formatDiaryDateShort, formatDiaryMonthHeader, hasDiaryWeather, isWideDiaryRange, segmentDiaryGroupsByYear,
+  diaryListLocations, diaryLocationAvatarKey, diaryLocationIcon, diaryLocationLabel, diaryStateOf, diaryWeatherLine, formatDiaryDateShort, formatDiaryMonthHeader, hasDiaryWeather, isWideDiaryRange, segmentDiaryGroupsByYear,
   DiaryStateFilter,
 } from '@okr/content-diary-util';
 import { DiaryRangeSelect } from './diary-range-select';
@@ -41,6 +41,7 @@ const DIARY_STATE_I18N_SCOPE = '@content/diary/feature';
   styles: [`
     .preview { opacity: .75; }
     .placeholder ion-label { opacity: .6; }
+    .locations { display: flex; gap: 4px; }
     ion-avatar.location { width: 28px; height: 28px; }
   `],
   template: `
@@ -147,11 +148,16 @@ const DIARY_STATE_I18N_SCOPE = '@content/diary/feature';
         @if (stateOf(diary) === 'draft') {
           <ion-badge slot="end" color="warning">{{ store.i18n.state_draft() }}</ion-badge>
         }
-        <ion-note slot="end" class="ion-hide-sm-down">{{ mainLocationName(diary) }}</ion-note>
-        @if (mainLocationKey(diary); as key) {
-          <ion-avatar slot="end" class="location">
-            <img okrImg src="{{ key | avatar }}" [alt]="mainLocationName(diary)" />
-          </ion-avatar>
+        <!-- the location logos only, main location first; the name lives in title/aria-label -->
+        @let locs = listLocations(diary);
+        @if (locs.length) {
+          <div slot="end" class="locations">
+            @for (loc of locs; track $index) {
+              <ion-avatar class="location" [title]="locationName(loc)" [attr.aria-label]="locationName(loc)">
+                <img okrImg src="{{ locationKey(loc) | avatar: locationIcon(loc) }}" [alt]="locationName(loc)" />
+              </ion-avatar>
+            }
+          </div>
         }
       </ion-item>
     </ng-template>
@@ -173,16 +179,11 @@ export class DiaryList {
     });
   }
 
-  /** `location.<okey>` of the main location — its coat of arms or flag (a free-text place: the default icon). */
-  protected mainLocationKey(diary: DiaryModel): string | undefined {
-    const main = mainLocation(diary);
-    return main ? `location.${main.key}` : undefined;
-  }
-
-  protected mainLocationName(diary: DiaryModel): string {
-    const main = mainLocation(diary);
-    return main ? diaryAvatarName(main) : '';
-  }
+  /** up to DIARY_LIST_MAX_LOCATIONS locations, main first — coat of arms/flag, a free-text place shows the location icon */
+  protected readonly listLocations = diaryListLocations;
+  protected readonly locationName = diaryLocationLabel;
+  protected readonly locationKey = diaryLocationAvatarKey;
+  protected readonly locationIcon = diaryLocationIcon;
 
   protected readonly count = computed(() => this.store.diaries().length);
   protected readonly filteredCount = computed(() => this.store.filteredDiaries().length);

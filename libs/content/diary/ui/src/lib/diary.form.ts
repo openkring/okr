@@ -15,7 +15,7 @@ import { DEFAULT_TAGS, LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { Avatars } from '@okr/avatar-ui';
 
 import {
-  DiaryI18n, composeDiaryDate, parseJassDiaryLine, diaryValidations, linesToList, listToLines, splitDiaryDate,
+  DIARY_TEXT_LOCATION_ICON, DiaryI18n, composeDiaryDate, parseJassDiaryLine, diaryValidations, linesToList, listToLines, splitDiaryDate,
 } from '@okr/content-diary-util';
 
 @Component({
@@ -131,7 +131,7 @@ import {
           <okr-avatars selectIcon="location" (selectClicked)="locationSelectClicked.emit()" [avatars]="locations()"
             (avatarsChange)="onFieldChange('locations', $event)" [readOnly]="isReadOnly()" [currentUser]="currentUser"
             [title]="i18n().form_locations_label()" [label]="i18n().form_locations_select()"
-            [firstNote]="i18n().form_locations_main()" [showButton]="!isReadOnly()" />
+            [firstNote]="i18n().form_locations_main()" [showButton]="!isReadOnly()" [textIcon]="textLocationIcon" />
           <okr-error-note [errors]="locationsErrors()" />
         }
 
@@ -206,6 +206,8 @@ export class DiaryForm {
   });
   protected readonly done = computed(() => listToLines(this.formData()?.done ?? []));
   protected readonly locations = computed(() => this.formData()?.locations ?? []);
+  /** a free-text location shows the location icon, not the generic 'other' */
+  protected readonly textLocationIcon = DIARY_TEXT_LOCATION_ICON;
   protected readonly people = computed(() => this.formData()?.people ?? []);
   protected readonly tags = computed(() => this.formData()?.tags ?? DEFAULT_TAGS);
 

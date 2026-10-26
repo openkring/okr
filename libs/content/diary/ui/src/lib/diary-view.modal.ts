@@ -1,16 +1,16 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal, untracked } from '@angular/core';
-import { IonButton, IonButtons, IonChip, IonContent, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonNote, IonProgressBar, IonToolbar, ModalController } from '@ionic/angular';
+import { IonAvatar, IonButton, IonButtons, IonChip, IonContent, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonNote, IonProgressBar, IonToolbar, ModalController } from '@ionic/angular';
 import { Browser } from '@capacitor/browser';
 
 import { AvatarInfo, DiaryModel, IMAGE_STYLE_SHAPE } from '@okr/shared-models';
-import { Header, showImageSlider } from '@okr/shared-ui';
+import { Header, ImgDirective, showImageSlider } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { AvatarDisplay } from '@okr/avatar-ui';
+import { AvatarDisplay, AvatarPipe } from '@okr/avatar-ui';
 import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
 import {
-  DiaryI18n, DiaryMediaResult, DiaryTrackCard, diaryAvatarName, mainLocation, diarySliderImages, diaryWeatherLine, driveFolderUrl, formatDiaryDateLong, hasDiaryWeather,
+  DiaryI18n, DiaryMediaResult, DiaryTrackCard, diaryAvatarName, diaryLocationAvatarKey, diaryLocationIcon, diaryLocationLabel, mainLocation, diarySliderImages, diaryWeatherLine, driveFolderUrl, formatDiaryDateLong, hasDiaryWeather,
   isDiaryVideo, JassDiaryResult, parseJassDiaryLine, renderDiaryHtml,
 } from '@okr/content-diary-util';
 
@@ -37,13 +37,18 @@ export interface DiaryNeighbours {
 @Component({
   selector: 'okr-diary-view-modal',
   standalone: true,
-  imports: [Header, AvatarDisplay, DiaryMediaRow, DiaryJassCard, DiaryTrackCardView, SvgIconPipe, IonContent, IonListHeader, IonProgressBar, IonItem, IonLabel, IonList, IonNote, IonChip, IonIcon, IonButton, IonButtons, IonToolbar],
+  imports: [Header, AvatarDisplay, AvatarPipe, ImgDirective, IonAvatar, DiaryMediaRow, DiaryJassCard, DiaryTrackCardView, SvgIconPipe, IonContent, IonListHeader, IonProgressBar, IonItem, IonLabel, IonList, IonNote, IonChip, IonIcon, IonButton, IonButtons, IonToolbar],
   styles: [`
     .body { padding: 16px; line-height: 1.5; }
     .meta ion-chip { margin-right: 4px; }
     .people { display: flex; flex-wrap: wrap; gap: 8px; }
     .person, .location { cursor: pointer; }
     .tracks { padding: 0 8px; }
+    .when { display: flex; flex-wrap: wrap; align-items: center; column-gap: 4px; }
+    .when h2 { margin: 0 4px 0 0; }
+    /* the same chip as a person's (okr-avatar-display with showName) */
+    .place { background-color: var(--ion-color-light); color: var(--ion-color-light-contrast); margin: 2px 0; }
+    .place ion-avatar { width: 30px; height: 30px; }
   `],
   template: `
     <okr-header [i18n]="{ title: title() }" [isModal]="true" actionIcon="edit" [actionTitle]="i18n().edit()" (actionClicked)="edit()" />
@@ -75,23 +80,18 @@ export interface DiaryNeighbours {
       <ion-list lines="none" class="meta">
         <ion-item>
           <ion-label>
-            <h2>{{ dateLabel() }}</h2>
-            @if (location(); as loc) {
-              <p class="location" (click)="openLocation()(loc)">{{ locationLabel() }}</p>
-            } @else {
-              <p>{{ locationLabel() }}</p>
-            }
-            @if (otherLocations().length) {
-              <div class="people">
-                @for (loc of otherLocations(); track $index) {
-                  @if (loc.key) {
-                    <ion-chip class="location" (click)="openLocation()(loc)">{{ locationName(loc) }}</ion-chip>
-                  } @else {
-                    <ion-chip>{{ locationName(loc) }}</ion-chip>
-                  }
-                }
-              </div>
-            }
+            <!-- one wrapping line: «25.10.2026: [Stäfa] [Männedorf]» — the first chip is the main location -->
+            <div class="when">
+              <h2>{{ dateLabel() }}@if (locations().length) {:}</h2>
+              @for (loc of locations(); track $index) {
+                <ion-chip color="light" class="place" [class.location]="!!loc.key" [title]="locationName(loc)" (click)="tapLocation(loc)">
+                  <ion-avatar>
+                    <img okrImg src="{{ locationKey(loc) | avatar: locationIcon(loc) }}" [alt]="locationName(loc)" />
+                  </ion-avatar>
+                  <ion-label><small>{{ locationName(loc) }}</small></ion-label>
+                </ion-chip>
+              }
+            </div>
           </ion-label>
           @if (current().scope === 'day' && hasWeather()) {
             <ion-icon slot="end" src="{{ weatherIcon() | svgIcon: weatherIconSet }}" />
@@ -202,15 +202,11 @@ export class DiaryViewModal {
 
   protected readonly title = computed(() => this.current().title || this.i18n().view_untitled());
   protected readonly dateLabel = computed(() => formatDiaryDateLong(this.current().date, this.lang()));
-  /** the main location when resolved — tappable; a free-text one is not */
-  protected readonly location = computed(() => mainLocation(this.current())?.key ? mainLocation(this.current()) : undefined);
-  protected readonly locationLabel = computed(() => {
-    const main = mainLocation(this.current());
-    return main ? diaryAvatarName(main) : '';
-  });
-  /** every location after the main one, shown as chips */
-  protected readonly otherLocations = computed(() => (this.current().locations ?? []).slice(1));
-  protected readonly locationName = diaryAvatarName;
+  /** every location in order — the first one is the main location */
+  protected readonly locations = computed(() => this.current().locations ?? []);
+  protected readonly locationName = diaryLocationLabel;
+  protected readonly locationKey = diaryLocationAvatarKey;
+  protected readonly locationIcon = diaryLocationIcon;
   /** one single-element array per person, so each avatar is its own tap target */
   protected readonly people = computed(() => (this.current().people ?? []).filter(p => !!p.key).map(p => [p]));
   /** persons without a key are plain text */
@@ -337,6 +333,11 @@ export class DiaryViewModal {
     this.media.set(media);
     this.resolvedOkey.set(shown.okey);
     this.resolvedFolderId.set(media.folderId ?? '');
+  }
+
+  /** a linked location opens its read-only view; a free-text one has nothing to open */
+  protected tapLocation(loc: AvatarInfo): void {
+    if (loc.key) void this.openLocation()(loc);
   }
 
   protected go(target: DiaryModel | undefined): void {
