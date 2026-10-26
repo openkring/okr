@@ -16,7 +16,7 @@ export interface OcrVatLine {
 
 /**
  * Generic output of the OCR pipeline (one per uploaded file). Tenant-scoped.
- * Written by `onOcrFileFinalized`; consumed + updated by `onOcrResultWritten`.
+ * Written by the `ocr` handler of `onStorageFinalized`; consumed + updated by `onOcrResultWritten`.
  */
 export class OcrResultModel implements OkrModel, SearchableModel {
   public okey = DEFAULT_KEY;
