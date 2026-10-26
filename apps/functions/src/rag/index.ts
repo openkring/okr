@@ -9,6 +9,7 @@ import axios from 'axios';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { tmpdir } from 'os';
+import { randomUUID } from 'crypto';
 import { checkAdminRole, checkAppCheckToken, checkAuthentication, checkStringField, getCallerTenantId } from '@okr/shared-util-functions';
 import { checkWindowQuota, getMonthlyCount, incrementMonthlyCount } from '../_gateway/quota';
 import { AppConfigCollection, SectionCollection } from '@okr/shared-models';
@@ -77,7 +78,7 @@ async function indexStorageFile(
 
     const bucket = admin.storage().bucket(bucketName);
     const file = bucket.file(objectName);
-    const tempFilePath = path.join(tmpdir(), path.basename(objectName));
+    const tempFilePath = path.join(tmpdir(), `${randomUUID()}-${path.basename(objectName)}`);
 
     try {
         await file.download({ destination: tempFilePath });

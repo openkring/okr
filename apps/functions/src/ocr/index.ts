@@ -8,6 +8,7 @@ import * as admin from 'firebase-admin';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { tmpdir } from 'os';
+import { randomUUID } from 'crypto';
 
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 import { parseOcrPath } from './ocr-path.util';
@@ -174,7 +175,7 @@ async function extractReceipt(opts: {
   const { tenantId, ocrUsage, correlationKey } = parsed;
   const db = getFirestore();
   const resultRef = db.collection(OCR_RESULT_COLLECTION).doc(ocrResultId(objectName, generation));
-  const tempFilePath = path.join(tmpdir(), path.basename(objectName));
+  const tempFilePath = path.join(tmpdir(), `${randomUUID()}-${path.basename(objectName)}`);
   try {
     await admin.storage().bucket(bucketName).file(objectName).download({ destination: tempFilePath });
     const accountingTenantId = tenantId;
