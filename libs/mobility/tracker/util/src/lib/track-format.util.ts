@@ -47,3 +47,9 @@ export function figureTexts(
   if (f.splitBestS !== undefined && labels.splitBest) out.push(labels.splitBest.replace('{split}', formatSplit(f.splitBestS)));
   return out;
 }
+
+/** Start time encoded in a calibration file name (`row-<ms>.csv`, spec 1.122 §5.2), as ISO; '' for any other name. */
+export function calibrationStartedAt(file: string): string {
+  const ms = Number(/row-(\d+)\.csv$/.exec(file)?.[1]);
+  return Number.isFinite(ms) && ms > 0 ? new Date(ms).toISOString() : '';
+}

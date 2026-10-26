@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { figureTexts, formatClockTime, formatDuration, formatKm, formatSplit, formatSteps } from './track-format.util';
+import { calibrationStartedAt, figureTexts, formatClockTime, formatDuration, formatKm, formatSplit, formatSteps } from './track-format.util';
 
 describe('formatDuration', () => {
   it('formats h:mm:ss', () => {
@@ -48,4 +48,9 @@ describe('figureTexts', () => {
   });
   it('renders nothing without figures', () => expect(figureTexts({}, labels)).toEqual([]));
   it('leaves out a figure whose label is empty', () => expect(figureTexts({ splitAvgS: 148, splitBestS: 131 }, { ...labels, splitBest: '' })).toEqual(['Ø 2:28 /500 m']));
+});
+
+describe('calibrationStartedAt', () => {
+  it('reads the start time from the file name', () => expect(calibrationStartedAt('calibration/row-1761465600000.csv')).toBe('2025-10-26T08:00:00.000Z'));
+  it('is empty for another name', () => expect(calibrationStartedAt('calibration/notes.csv')).toBe(''));
 });

@@ -3,7 +3,7 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import {
   IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, IonHeader, IonIcon, IonItem, IonLabel,
-  IonList, IonListHeader, IonNote, IonSelect, IonSelectOption, IonTitle, IonToolbar,
+  IonList, IonListHeader, IonNote, IonSelect, IonSelectOption, IonTitle, IonToggle, IonToolbar, AlertController,
 } from '@ionic/angular';
 import { Capacitor } from '@capacitor/core';
 import { of, switchMap } from 'rxjs';
@@ -11,9 +11,11 @@ import { of, switchMap } from 'rxjs';
 import { AppStore } from '@okr/shared-feature';
 import { TRANSPORT_MODES, TransportMode, TripModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { TrackDb, TrackService } from '@okr/mobility-tracker-data-access';
+import { listCalibrationFiles, shareCalibration, TrackDb, TrackService } from '@okr/mobility-tracker-data-access';
 import { TrackerBanner, TrackMap, TrackMapSection } from '@okr/mobility-tracker-ui';
-import { elapsedSeconds, figureTexts, formatKm, LocalTrack, mergeTrackLists, TrackPoint } from '@okr/mobility-tracker-util';
+import { calibrationStartedAt, elapsedSeconds, figureTexts, formatKm, isShareCancel, LocalTrack, mergeTrackLists, TrackPoint } from '@okr/mobility-tracker-util';
+import { hasRole } from '@okr/shared-util-core';
+import { okrPrompt } from '@okr/shared-util-angular';
 
 import { TrackerStore } from './tracker.store';
 
@@ -29,7 +31,7 @@ type ModeChoice = TransportMode | typeof AUTO;
 @Component({
   selector: 'okr-tracker-page',
   imports: [
-    IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonSelect,
+    IonHeader, IonToggle, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonSelect,
     IonSelectOption, IonButton, IonList, IonListHeader, IonItem, IonLabel, IonNote, IonIcon, SvgIconPipe, TrackerBanner, TrackMap,
   ],
   styles: [`
@@ -115,6 +117,22 @@ type ModeChoice = TransportMode | typeof AUTO;
           <ion-item lines="none"><ion-label color="medium">{{ i18n.list_empty() }}</ion-label></ion-item>
         }
       </ion-list>
+      @if (showCalibration()) {
+        <ion-list>
+          <ion-list-header><ion-label>{{ i18n.calibration_title() }}</ion-label></ion-list-header>
+          <ion-item>
+            <ion-toggle [checked]="store.calibrating()" (ionChange)="setCalibration($event.detail.checked)">{{ i18n.calibration_toggle() }}</ion-toggle>
+          </ion-item>
+          @for (file of calibrationFiles(); track file) {
+            <ion-item>
+              <ion-label>{{ calibrationLabel(file) }}</ion-label>
+              <ion-button slot="end" fill="clear" (click)="shareCalibrationFile(file)">{{ i18n.calibration_share() }}</ion-button>
+            </ion-item>
+          } @empty {
+            <ion-item lines="none"><ion-label color="medium">{{ i18n.calibration_empty() }}</ion-label></ion-item>
+          }
+        </ion-list>
+      }
     </ion-content>
   `,
 })
@@ -125,6 +143,7 @@ export class TrackerPage {
   private readonly trackService = inject(TrackService);
   private readonly appStore = inject(AppStore);
   private readonly router = inject(Router);
+  private readonly alertController = inject(AlertController);
 
   protected readonly modes = TRANSPORT_MODES;
   protected readonly auto = AUTO;
@@ -149,6 +168,9 @@ export class TrackerPage {
     const f = mode === 'foot' ? { steps: this.store.liveSteps() } : mode === 'row' ? { splitAvgS: this.store.liveSplitS() } : {};
     return figureTexts(f, { steps: this.i18n.figure_steps(), splitAvg: '{split}', splitBest: '' })[0] ?? '';
   });
+  /** admin-only raw-motion recording for tuning the stroke detector (spec 1.122 §5.2); needs the native app */
+  protected readonly showCalibration = computed(() => Capacitor.isNativePlatform() && hasRole('admin', this.appStore.currentUser()));
+  protected readonly calibrationFiles = signal<string[]>([]);
   protected readonly showSettingsHint = computed(() => this.store.warning() === 'whenInUseOnly' || this.store.warning() === 'locationDenied');
 
   // live map of the active track
@@ -201,6 +223,13 @@ export class TrackerPage {
       this.localListTrigger();
       untracked(() => void this.reloadLocal());
     });
+    // a recording ended or calibration was switched: the calibration files may have changed
+    effect(() => {
+      const recording = this.store.active()?.state === 'recording';
+      const calibrating = this.store.calibrating();
+      // a file appears when a row recording starts with calibration on, and is complete once recording stops
+      if (calibrating || !recording) untracked(() => void this.reloadCalibration());
+    });
   }
 
   /** Ionic lifecycle: back from the detail page (rename, delete, correction). */
@@ -223,6 +252,44 @@ export class TrackerPage {
 
   protected km(meters: number): string {
     return formatKm(meters);
+  }
+
+  protected setCalibration(on: boolean): void {
+    void this.store.setCalibration(on);
+  }
+
+  protected calibrationLabel(file: string): string {
+    const iso = calibrationStartedAt(file);
+    return iso ? this.dateText(Date.parse(iso)) : file;
+  }
+
+  /** Asks where the phone was and how many strokes were counted, writes the sidecar JSON and shares both files. */
+  protected async shareCalibrationFile(file: string): Promise<void> {
+    const alert = await this.alertController.create({
+      header: this.i18n.calibration_placement(),
+      inputs: [
+        { type: 'radio', label: this.i18n.calibration_bag(), value: 'bag', checked: true },
+        { type: 'radio', label: this.i18n.calibration_mounted(), value: 'mounted' },
+      ],
+      buttons: [{ text: this.i18n.common_cancel(), role: 'cancel' }, { text: this.i18n.calibration_share(), role: 'confirm' }],
+    });
+    await alert.present();
+    const { data, role } = await alert.onDidDismiss<{ values: 'bag' | 'mounted' }>();
+    if (role !== 'confirm' || !data) return;
+    const counted = await okrPrompt(this.alertController, this.i18n.calibration_counted(), '', this.i18n.calibration_share(), this.i18n.common_cancel());
+    if (counted === undefined) return;
+    const strokes = Number.parseInt(counted, 10);
+    try {
+      await shareCalibration(file, {
+        placement: data.values, startedAt: calibrationStartedAt(file), ...(Number.isFinite(strokes) && strokes > 0 ? { countedStrokes: strokes } : {}),
+      });
+    } catch (error) {
+      if (!isShareCancel(error)) console.error('TrackerPage.shareCalibration', error);
+    }
+  }
+
+  private async reloadCalibration(): Promise<void> {
+    if (this.showCalibration()) this.calibrationFiles.set(await listCalibrationFiles());
   }
 
   protected dateText(ms: number): string {
