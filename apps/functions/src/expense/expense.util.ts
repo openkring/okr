@@ -82,7 +82,7 @@ export function collectingMessageId(tenantId: string, storeDate: string, n: numb
 /**
  * The task to complete when a treasurer sets an expense to 'done' by hand (updateExpense), '' for
  * none. Only on the move INTO done: the other two paths there (task completed, booking approved)
- * already close the task themselves, and onExpenseTaskWritten ignores a task that is already done.
+ * already close the task themselves, and the `expense` handler of `onTaskDocWritten` ignores a task that is already done.
  */
 export function taskToCompleteOnDone(expense: { status?: string; taskKey?: string }, nextStatus: string | undefined): string {
   if (nextStatus !== 'done' || expense.status === 'done') return '';

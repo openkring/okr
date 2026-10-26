@@ -21,7 +21,7 @@ export function isAlbumVideoPath(objectName: string): boolean {
  * in opposite directions but for the same reason — a trigger that fires on its own output runs
  * forever:
  *   - `onAlbumVideoFinalized` must not transcode the mp4 it just wrote.
- *   - `onAlbumSourceDeleted` must not reap the reaping: every object IT deletes fires
+ *   - the `albumSource` handler of `onStorageDeleted` must not reap the reaping: every object IT deletes fires
  *     `onObjectDeleted` again, and without this test the second delivery would look for the
  *     renderings of a rendering.
  */

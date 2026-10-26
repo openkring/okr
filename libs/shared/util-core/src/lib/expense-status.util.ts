@@ -2,7 +2,7 @@
  * Pure decisions of the expense lifecycle
  * (planning/specs/2026-09-02-expense-workflow-design.md §3.6, §3.7).
  *
- * They live here so the `updateExpense` callable, the `onExpenseTaskWritten` trigger and the
+ * They live here so the `updateExpense` callable, the `expense` handler of the `onTaskDocWritten` trigger and the
  * edit form share one implementation. A UI-only copy of the locked-field rule would be a
  * security hole, not a duplication: `expenses` is CF-write-only, the callable is the boundary.
  */

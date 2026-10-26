@@ -1,7 +1,7 @@
 // apps/functions/src/task/task-diary.ts
 //
 // Writes a completed task's name as one line into the assignee's diaries of the day it was
-// completed — and removes it again on reopen (spec 1.72 §9). Runs from `onTaskWritten`. Which
+// completed — and removes it again on reopen (spec 1.72 §9). Runs from the `notify` handler of `onTaskDocWritten`. Which
 // diaries receive it is the assignee's `diaryTargets` routing for `taskDone` (spec 1.77 §6.3);
 // an empty routing sends nothing.
 

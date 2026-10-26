@@ -27,7 +27,7 @@ export class ExternalDataService {
   }
 }
 
-// --- OECD typed shapes (mirror adapters/oecd.ts) ---
+// --- OECD typed shapes (the OECD gateway callable was retired 2026-10-26; types kept) ---
 export interface OecdParams {
   dataflowId: string;
   filter?: string;

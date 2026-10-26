@@ -84,7 +84,7 @@ async function reapStaleTempFiles(): Promise<void> {
  * perform", and the imgix Video API is not enabled on our source (spec §7.1) — so this is exactly
  * that.
  *
- * WHAT THIS DOES *NOT* BUY US — the derived files are only PARTLY reaped on delete. `onAlbumSourceDeleted`
+ * WHAT THIS DOES *NOT* BUY US — the derived files are only PARTLY reaped on delete. the `albumSource` handler of `onStorageDeleted`
  * (./reap-renderings.ts) now removes them whenever the ORIGINAL object really leaves Storage, but
  * that is not the route a member takes. The facts, as of this writing:
  *   - `DocumentService.delete()` calls `FirestoreService.deleteModel`, i.e. it ARCHIVES the
@@ -95,7 +95,7 @@ async function reapStaleTempFiles(): Promise<void> {
  * deletion leaves roughly TWICE the clip behind (original plus mp4), forever, and the member who
  * deleted it has every reason to believe it is gone.
  *
- * `onAlbumSourceDeleted` closes the second bullet and every path that genuinely purges the object;
+ * That handler closes the second bullet and every path that genuinely purges the object;
  * the FIRST bullet — archiving, the only delete a member is offered — is still open, because no
  * Storage object is deleted there and the reaper never fires. Fixing THAT is deliberately not done
  * here: `delete()` is shared by every document in the app and the archive-vs-purge decision is a

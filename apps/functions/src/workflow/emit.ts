@@ -14,10 +14,12 @@
 //
 // The create-triggers of the second kind are TABLE-DRIVEN (§6c): adding a collection to the
 // workflow surface costs a row in CREATED_EMITTERS plus a `workflow_event` category item —
-// still a deploy, because Firebase needs a distinct export per trigger, but no new code path
-// and no new definition of "created". Emitters that do MORE than lift fields keep their own
-// bodies: `onTaskCompleted` (a transition guard), `onApplicationStateChanged` (a before/after
-// comparison) and the membership emitters in `auth/account-sync.ts`.
+// still a deploy, because Firebase needs a distinct export per trigger (`onReservationCreated`),
+// but no new code path and no new definition of "created". Emitters that do MORE than lift
+// fields keep their own bodies: `handleTaskCompleted` (a transition guard), `handleApplicationStateChanged`
+// (a before/after comparison) and the membership emitters in `auth/account-sync.ts`. The task and
+// application emitters are not triggers of their own any more: they are handlers of `onTaskDocWritten`
+// (`task/on-task-doc-written.ts`) and `onApplicationDocWritten` (`workflow/on-application-doc-written.ts`).
 
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';

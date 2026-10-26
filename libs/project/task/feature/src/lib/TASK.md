@@ -67,7 +67,7 @@ lists directly. Meeting keys and keys that name no group keep the behaviour abov
 
 ## Cloud Functions (`apps/functions/src/task`)
 
-- `onTaskWritten` — pushes the assignee on create, reassignment or reopen (never to oneself), and
+- `onTaskDocWritten` (handler `notify`) — pushes the assignee on create, reassignment or reopen (never to oneself), and
   syncs the assignee's diary: a completed task's name goes into `done` of the day entry in
   every diary tenant of the assignee's `UserModel.diaryTargets` (shared with the Jasstafel, spec 1.77), a reopen removes it (`appendToDiary`).
 - `listGroupTasks` — callable (spec 1.75): a closed group's tasks for staff and active members;

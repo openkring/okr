@@ -720,7 +720,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     // bookingKey in the same write or leaves the expense unsettled:
     //   'processing'  createExpense; redoExpenseOcr (ocr/index.ts). A failed OCR stays
     //                 'processing' and sets `ocrError` (reportExpenseOcrFailure)
-    //   'done'        reviewBooking on APPROVE (with bookingKey); onExpenseTaskWritten when
+    //   'done'        reviewBooking on APPROVE (with bookingKey); the `expense` handler of `onTaskDocWritten` when
     //                 the linked task completes
     //   'cancelled'   reviewBooking on REJECT
     //   hand-set      updateExpense, restricted to processing | done | cancelled

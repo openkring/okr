@@ -161,7 +161,7 @@ async function createVoucher(
 /**
  * Extract ONE receipt file: download → Gemini → write the ocr-results doc (status 'extracted'),
  * or on failure write status 'failed' + open a treasurer task (and, for expense usage, latch its
- * taskKey onto the expense). No idempotency guard here — callers (onOcrFileFinalized / redoExpenseOcr)
+ * taskKey onto the expense). No idempotency guard here — callers (the `ocr` handler of `onStorageFinalized` / redoExpenseOcr)
  * decide whether to (re)run. Shared by the storage trigger and the treasurer redo callable.
  */
 async function extractReceipt(opts: {
@@ -400,7 +400,7 @@ export const onOcrResultWritten = onDocumentWritten(
       bookingKey: bookingRef.id,
     }, { merge: true });
 
-    // Open a review task for the treasurer (existing onTaskWritten sends the FCM push).
+    // Open a review task for the treasurer (the `notify` handler of `onTaskDocWritten` sends the FCM push).
     // Deliberately AFTER the latch above: if task creation throws, the result is already marked
     // processed, so a redelivery cannot create a second booking. taskKey is latched separately.
     const taskKey = await createReviewTask(tenantId, cfg['reviewAssigneePersonKey'] ?? '',

@@ -55,7 +55,7 @@ export function getCompletionPatch(task: TaskModel, today: string): Pick<TaskMod
 /**
  * Restoring an archived task reopens it (spec 1.72 §10): otherwise a completed task restored
  * after the archive cut-off is archived again by the next taskDaily run. Reopening also fires
- * the diary reopen in onTaskWritten, like the completion toggle. An open task only loses
+ * the diary reopen in the `notify` handler of `onTaskDocWritten`, like the completion toggle. An open task only loses
  * `isArchived`.
  */
 export function getRestorePatch(task: TaskModel): Partial<Pick<TaskModel, 'isArchived' | 'state' | 'completionDate'>> {
@@ -71,7 +71,7 @@ export function isTaskCompleted(task: TaskModel): boolean {
 
 /**
  * The expense a task belongs to, '' for any other task. A treasurer opening such a task gets the
- * expense edit modal instead of the task modal. `linkKey || relatedKey` mirrors onExpenseTaskWritten:
+ * expense edit modal instead of the task modal. `linkKey || relatedKey` mirrors the `expense` handler of `onTaskDocWritten`:
  * the workflow engine sets relatedKey and leaves linkKey empty; legacy documents lack both.
  */
 export function getTaskExpenseKey(task: TaskModel): string {

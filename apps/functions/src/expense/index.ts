@@ -267,8 +267,8 @@ const TASK_COLLECTION = 'tasks';
 
 /**
  * Setting the expense to 'done' by hand settles its review task too — the mirror of
- * onExpenseTaskWritten. A task that is already closed (done, or cancelled by a rejection) or gone
- * stays as it is. The write re-fires onExpenseTaskWritten, which finds the expense already done.
+ * the `expense` handler of `onTaskDocWritten`. A task that is already closed (done, or cancelled by a rejection) or gone
+ * stays as it is. The write re-fires that handler, which finds the expense already done.
  */
 async function completeExpenseTask(db: FirebaseFirestore.Firestore, expenseKey: string, taskKey: string): Promise<void> {
   if (!taskKey) return;

@@ -250,8 +250,6 @@ export const updateSrvContact = Srv.updateSrvContact;
 export const zefixSearch = Gateway.zefixSearch;
 export const zefixGetByUid = Gateway.zefixGetByUid;
 
-// external-data-gateway: OECD statistics (2.59) — first new consumer
-
 // search.ch person-address lookup
 // external-data-gateway: retrofitted onto the gateway (tenant-scoped cache + quota + attribution)
 export const searchChSearchPerson = Gateway.searchChSearchPerson;

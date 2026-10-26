@@ -32,7 +32,7 @@ live account. Rules only decide who gets told.
 | `probeArg` | single argument for a one-probe rule, e.g. `key`, `locker`, `passive` |
 | `responsibilityKey` | `ResponsibilityModel.okey` → who gets the task. One per rule: it applies to every step |
 | `steps[]` | the consequences, **in execution order**. Never empty — the editor keeps the last step and offers deleting the rule instead |
-| `steps[].action` | `openTask` \| `sendEmail` \| `sendMessage` \| `esign` \| `requestApproval` \| `openChat`. A task already produces a push (`onTaskWritten`) |
+| `steps[].action` | `openTask` \| `sendEmail` \| `sendMessage` \| `esign` \| `requestApproval` \| `openChat`. A task already produces a push (`onTaskDocWritten`) |
 | `steps[].actionArg` | the ONE variable string per action: email template · esign storage path · approval kind · chat group key |
 | `steps[].messageKey` | i18n key resolved **server-side** from `i18nTenantOverride` → `i18nDefault`; `{name}` is replaced with the member's name (single braces — `{{…}}` would be eaten by Transloco) |
 | `steps[].dueInDays` | `openTask` only; `0` = no due date |
