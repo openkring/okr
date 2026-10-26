@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { IonBadge, IonIcon, IonAvatar, IonItem, IonLabel } from '@ionic/angular';
 
 import { ImgDirective } from '@okr/shared-ui';
@@ -41,6 +41,9 @@ import { MenuInfo } from './menu-info';
       ion-icon { color: var(--ion-color-white); margin-inline-end: 8px; }
       .letter { color: white; }
     }
+
+    /* after the dark-mode rule: a status icon stays red in both themes */
+    ion-icon.status { color: var(--ion-color-danger); margin-inline-end: 0; cursor: pointer; }
 
     .letter-avatar {
       background: var(--ion-color-light);
@@ -117,6 +120,11 @@ import { MenuInfo } from './menu-info';
             @if(badge() > 0) {
               <ion-badge slot="end" color="danger">{{ badge() }}</ion-badge>
             }
+            @if(statusIcon(); as statusIcon) {
+              <ion-icon slot="end" class="status" color="danger" src="{{ statusIcon | svgIcon }}"
+                role="button" [attr.aria-label]="statusLabel()" [attr.title]="statusLabel()"
+                (click)="onStatusClick($event)" />
+            }
             @if(info()) {
               <okr-menu-info slot="end" [text]="info()" [title]="label() ?? ''" />
             }
@@ -132,6 +140,16 @@ export class MultiAvatar {
   public safariWorkaround = input<boolean>(false);
   /** info as HTML (translated); when set, an info-circle on the right opens it in a modal */
   public info = input<string>('');
+  /** an icon on the right, in red, that acts on its own (e.g. retry a failed update); '' = none */
+  public statusIcon = input<string>('');
+  public statusLabel = input<string>('');
+  public statusClicked = output<void>();
+
+  /** the status icon must not also fire the row's own click */
+  protected onStatusClick(event: Event): void {
+    event.stopPropagation();
+    this.statusClicked.emit();
+  }
 
   protected name = computed(() => {
     const icon = this.icon();

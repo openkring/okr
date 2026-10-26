@@ -470,7 +470,11 @@
     "message": "Eine neue Version der App ist verfügbar. Du verwendest aktuell Version {current}. Bitte aktualisiere die App, um die neuesten Funktionen und Verbesserungen zu nutzen.",
     "messageWithVersion": "Eine neue Version ({latest}) der App ist verfügbar. Du verwendest aktuell Version {current}. Bitte aktualisiere die App, um die neuesten Funktionen und Verbesserungen zu nutzen.",
     "now": "Jetzt aktualisieren",
-    "later": "Später"
+    "later": "Später",
+    "menuReady": "Release v{current} → v{latest} bereit",
+    "menuReadyNoVersion": "Release v{current} → Update bereit",
+    "menuDownloading": "Neue Version wird geladen",
+    "menuRetry": "Die neue Version konnte nicht geladen werden. Tippe hier, um es nochmals zu versuchen."
   },
   "boot": {
     "degraded1": "Die App konnte nicht vollständig starten.",

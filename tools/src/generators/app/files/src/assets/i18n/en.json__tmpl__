@@ -470,7 +470,11 @@
     "message": "A new version of the app is available. You are currently using version {current}. Please update the app to use the latest features and improvements.",
     "messageWithVersion": "A new version ({latest}) of the app is available. You are currently using version {current}. Please update the app to use the latest features and improvements.",
     "now": "Update now",
-    "later": "Later"
+    "later": "Later",
+    "menuReady": "Release v{current} → v{latest} ready",
+    "menuReadyNoVersion": "Release v{current} → update ready",
+    "menuDownloading": "Downloading the new version",
+    "menuRetry": "The new version could not be loaded. Tap here to try again."
   },
   "boot": {
     "degraded1": "The app could not finish starting.",

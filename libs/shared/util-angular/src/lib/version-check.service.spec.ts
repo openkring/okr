@@ -167,4 +167,85 @@ describe('VersionCheckService unrecoverable-state handling', () => {
       });
     });
   });
+
+  // The Release menu row mirrors the download: bar while downloading, install when ready,
+  // red retry icon when the download failed.
+  describe('updateState', () => {
+    const emit = (evt: Record<string, unknown>) => mockSwUpdate.versionUpdates.next(evt as unknown as VersionEvent);
+
+    beforeEach(() => {
+      mockAlertController.create.mockResolvedValue({
+        present: vi.fn(), onWillDismiss: vi.fn().mockResolvedValue({ role: 'cancel' }),
+      });
+    });
+
+    it('starts idle', () => {
+      expect(makeService().service.updateState()).toBe('idle');
+    });
+
+    it('is downloading once a new version is detected', () => {
+      const { service } = makeService();
+      emit({ type: 'VERSION_DETECTED', version: { hash: 'h' } });
+      expect(service.updateState()).toBe('downloading');
+    });
+
+    it('is ready with the incoming version once it is downloaded', () => {
+      const { service } = makeService();
+      emit({ type: 'VERSION_DETECTED', version: { hash: 'h' } });
+      emit({ type: 'VERSION_READY', latestVersion: { hash: 'h', appData: { version: '99.0.0' } } });
+      expect(service.updateState()).toBe('ready');
+      expect(service.incomingVersion()).toBe('99.0.0');
+    });
+
+    it('is failed when the installation fails', () => {
+      const { service } = makeService();
+      emit({ type: 'VERSION_DETECTED', version: { hash: 'h' } });
+      emit({ type: 'VERSION_INSTALLATION_FAILED', version: { hash: 'h' }, error: 'boom' });
+      expect(service.updateState()).toBe('failed');
+    });
+
+    it('retries the download immediately, bypassing the foreground throttle', async () => {
+      const { service } = makeService();
+      emit({ type: 'VERSION_INSTALLATION_FAILED', version: { hash: 'h' }, error: 'boom' });
+      mockSwUpdate.checkForUpdate.mockClear();
+      const retry = service.retryUpdate();
+      expect(service.updateState()).toBe('downloading');
+      await retry;
+      expect(mockSwUpdate.checkForUpdate).toHaveBeenCalledTimes(1);
+    });
+
+    it('returns to idle when the retry finds nothing to download', async () => {
+      const { service } = makeService();
+      emit({ type: 'VERSION_INSTALLATION_FAILED', version: { hash: 'h' }, error: 'boom' });
+      mockSwUpdate.checkForUpdate.mockResolvedValue(false);
+      await service.retryUpdate();
+      expect(service.updateState()).toBe('idle');
+    });
+
+    it('stays failed when the retry fails again', async () => {
+      const { service } = makeService();
+      emit({ type: 'VERSION_INSTALLATION_FAILED', version: { hash: 'h' }, error: 'boom' });
+      mockSwUpdate.checkForUpdate.mockImplementation(async () => {
+        emit({ type: 'VERSION_INSTALLATION_FAILED', version: { hash: 'h' }, error: 'boom' });
+        return false;
+      });
+      await service.retryUpdate();
+      expect(service.updateState()).toBe('failed');
+    });
+
+    it('is failed when the retry check itself rejects', async () => {
+      const { service } = makeService();
+      emit({ type: 'VERSION_INSTALLATION_FAILED', version: { hash: 'h' }, error: 'boom' });
+      mockSwUpdate.checkForUpdate.mockRejectedValue(new Error('offline'));
+      await service.retryUpdate();
+      expect(service.updateState()).toBe('failed');
+    });
+
+    it('activates the downloaded version and reloads on install', async () => {
+      const { service, reloadSpy } = makeService();
+      await service.installUpdate();
+      expect(mockSwUpdate.activateUpdate).toHaveBeenCalledTimes(1);
+      expect(reloadSpy).toHaveBeenCalledTimes(1);
+    });
+  });
 });

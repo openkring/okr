@@ -1,4 +1,4 @@
-import { inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { inject, Injectable, PLATFORM_ID, computed, signal } from '@angular/core';
 import { isBrowser } from './platform.util';
 import { AlertController } from '@ionic/angular';
 import { SwUpdate } from '@angular/service-worker';
@@ -25,6 +25,13 @@ export interface AppVersionConfig {
    */
   deployed?: Record<string, string>;
 }
+
+/**
+ * Where the service worker is with the next version, as the Release menu row shows it:
+ * `downloading` (indeterminate bar — ngsw reports no byte progress), `ready` (tap installs),
+ * `failed` (red retry icon).
+ */
+export type AppUpdateState = 'idle' | 'downloading' | 'ready' | 'failed';
 
 export const AppVersionCollection = 'app-version';  // same for collection and document id
 
@@ -53,6 +60,8 @@ export class VersionCheckService {
   private readonly updateI18n = inject(I18nService).translateAll({
     header: '@appUpdate.header', message: '@appUpdate.message',
     messageWithVersion: '@appUpdate.messageWithVersion', now: '@appUpdate.now', later: '@appUpdate.later',
+    menuReady: '@appUpdate.menuReady', menuReadyNoVersion: '@appUpdate.menuReadyNoVersion',
+    menuDownloading: '@appUpdate.menuDownloading', menuRetry: '@appUpdate.menuRetry',
   });
   private readonly platformId = inject(PLATFORM_ID);
   private readonly swUpdate = inject(SwUpdate);
@@ -64,6 +73,24 @@ export class VersionCheckService {
   private versionConfig: AppVersionConfig | undefined;
   private alertShown = false;
   private lastCheckAt = 0;
+
+  private readonly _updateState = signal<AppUpdateState>('idle');
+  public readonly updateState = this._updateState.asReadonly();
+  /** The version the service worker downloaded (ngsw appData), once `updateState` is `ready`. */
+  private readonly _incomingVersion = signal<string | undefined>(undefined);
+  public readonly incomingVersion = this._incomingVersion.asReadonly();
+
+  // Release row texts, resolved once here: the menu component exists ~170 times per menu.
+  /** The Release row's label while an update is ready to install; '' in every other state. */
+  public readonly readyLabel = computed(() => {
+    if (this._updateState() !== 'ready') return '';
+    const latest = this._incomingVersion();
+    return latest
+      ? fill(this.updateI18n.menuReady(), { current: this.currentVersion, latest })
+      : fill(this.updateI18n.menuReadyNoVersion(), { current: this.currentVersion });
+  });
+  public readonly downloadingLabel = this.updateI18n.menuDownloading;
+  public readonly retryLabel = this.updateI18n.menuRetry;
 
   getCurrentVersion(): string {
     return this.currentVersion;
@@ -114,13 +141,18 @@ export class VersionCheckService {
     if (!this.swUpdate.isEnabled) return;
 
     this.swUpdate.versionUpdates.subscribe((evt) => {
-      if (evt.type === 'VERSION_READY') {
+      if (evt.type === 'VERSION_DETECTED') {
+        this._updateState.set('downloading');
+      } else if (evt.type === 'VERSION_READY') {
         // set-env.js stamps the build version into ngsw-config.json's appData, so the incoming
         // manifest names the version we are about to activate — no Firestore round trip needed.
         const version = (evt.latestVersion.appData as { version?: string } | undefined)?.version;
+        this._incomingVersion.set(version);
+        this._updateState.set('ready');
         void this.promptForUpdate(version);
       } else if (evt.type === 'VERSION_INSTALLATION_FAILED') {
         console.error('VersionCheckService: failed to install the new version:', evt.error);
+        this._updateState.set('failed');
       }
     });
 
@@ -157,6 +189,30 @@ export class VersionCheckService {
     this.swUpdate.checkForUpdate().catch((error) => {
       console.error('VersionCheckService: checkForUpdate failed:', error);
     });
+  }
+
+  /**
+   * Retry after a failed download (the red icon on the Release row). Not throttled: the user asked.
+   * ngsw keeps no record of a version whose installation failed, so a fresh check downloads it again;
+   * the outcome arrives as VERSION_READY / VERSION_INSTALLATION_FAILED before the check resolves.
+   */
+  public async retryUpdate(): Promise<void> {
+    if (!this.swUpdate.isEnabled) return;
+    this._updateState.set('downloading');
+    this.lastCheckAt = Date.now();
+    try {
+      const found = await this.swUpdate.checkForUpdate();
+      // nothing new on the server (e.g. the failed deploy was rolled back): back to the plain row
+      if (!found && this._updateState() === 'downloading') this._updateState.set('idle');
+    } catch (error) {
+      console.error('VersionCheckService: retrying the update failed:', error);
+      this._updateState.set('failed');
+    }
+  }
+
+  /** Install the downloaded version now (the Release row in state `ready`). */
+  public async installUpdate(): Promise<void> {
+    await this.activateAndReload();
   }
 
   /**
@@ -256,6 +312,6 @@ export class VersionCheckService {
     } catch (error) {
       console.error('VersionCheckService: failed to activate the new version:', error);
     }
-    window.location.reload();
+    this.reloadPage();
   }
 }

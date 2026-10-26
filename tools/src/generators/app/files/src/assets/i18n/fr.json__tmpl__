@@ -470,7 +470,11 @@
     "message": "Une nouvelle version de l’application est disponible. Vous utilisez actuellement la version {current}. Veuillez mettre à jour l’application pour profiter des dernières fonctionnalités et améliorations.",
     "messageWithVersion": "Une nouvelle version ({latest}) de l’application est disponible. Vous utilisez actuellement la version {current}. Veuillez mettre à jour l’application pour profiter des dernières fonctionnalités et améliorations.",
     "now": "Mettre à jour",
-    "later": "Plus tard"
+    "later": "Plus tard",
+    "menuReady": "Version v{current} → v{latest} prête",
+    "menuReadyNoVersion": "Version v{current} → mise à jour prête",
+    "menuDownloading": "Téléchargement de la nouvelle version",
+    "menuRetry": "La nouvelle version n'a pas pu être chargée. Touche ici pour réessayer."
   },
   "boot": {
     "degraded1": "L’application n’a pas pu démarrer complètement.",
