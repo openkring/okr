@@ -73,6 +73,18 @@ def put_obj(path, token=None, ctype="video/mp4", data=b"x"):
     return call(urllib.request.Request(f"http://{ST}/v0/b/{BUCKET}/o?name={enc}", data=data,
                                        headers=hdr, method="POST"))
 
+def put_jpeg(path, token=None, ctype="image/jpeg", data=b"x"):
+    """Multipart upload with metadata, like the SDK's uploadBytes: the emulator takes contentType from the metadata
+    part only (a plain POST leaves request.resource.contentType unset)."""
+    boundary = "rulesTestBoundary"
+    meta = json.dumps({"name": path, "contentType": ctype}).encode()
+    body = (f"--{boundary}\r\nContent-Type: application/json; charset=utf-8\r\n\r\n".encode() + meta
+            + f"\r\n--{boundary}\r\nContent-Type: {ctype}\r\n\r\n".encode() + data + f"\r\n--{boundary}--".encode())
+    hdr = {"Content-Type": f"multipart/related; boundary={boundary}", "X-Goog-Upload-Protocol": "multipart", **auth(token)}
+    enc = urllib.parse.quote(path, safe="")
+    return call(urllib.request.Request(f"http://{ST}/v0/b/{BUCKET}/o?name={enc}&uploadType=multipart", data=body,
+                                       headers=hdr, method="POST"))
+
 def delete_obj(path, token=None):
     return call(urllib.request.Request(obj_url(path), headers=auth(token), method="DELETE"))
 
@@ -138,14 +150,15 @@ delete_cases = [
 ]
 
 thumb_cases = [
-    ("owner uidT1 uploads thumbnail -> ALLOW",        200, lambda: put_obj("tenant/t1/tracks/trTrack/1.jpg", T1, "image/jpeg")),
+    ("owner uidT1 uploads thumbnail -> ALLOW",        200, lambda: put_jpeg("tenant/t1/tracks/trTrack/1.jpg", T1, "image/jpeg")),
     ("owner uidT2 (other tenant) reads -> ALLOW",     200, lambda: get_obj(THUMB, T2)),
     ("uidC (other person) reads -> DENY",             403, lambda: get_obj(THUMB, C)),
     ("anon reads thumbnail -> DENY",                  403, lambda: get_obj(THUMB, None)),
-    ("owner uploads x.png -> DENY",                   403, lambda: put_obj("tenant/t1/tracks/trTrack/x.png", T1, "image/png")),
-    ("owner uploads 600 KB -> DENY",                  403, lambda: put_obj("tenant/t1/tracks/trTrack/2.jpg", T1, "image/jpeg", b"x" * 600 * 1024)),
-    ("uidC uploads thumbnail -> DENY",                403, lambda: put_obj("tenant/t1/tracks/trTrack/3.jpg", C, "image/jpeg")),
-    ("owner uploads for missing trip -> DENY",        403, lambda: put_obj("tenant/t1/tracks/trMissing/0.jpg", T1, "image/jpeg")),
+    ("owner uploads x.png -> DENY",                   403, lambda: put_jpeg("tenant/t1/tracks/trTrack/x.png", T1, "image/png")),
+    ("owner uploads 4.jpg as image/png -> DENY",      403, lambda: put_jpeg("tenant/t1/tracks/trTrack/4.jpg", T1, "image/png")),
+    ("owner uploads 600 KB -> DENY",                  403, lambda: put_jpeg("tenant/t1/tracks/trTrack/2.jpg", T1, "image/jpeg", b"x" * 600 * 1024)),
+    ("uidC uploads thumbnail -> DENY",                403, lambda: put_jpeg("tenant/t1/tracks/trTrack/3.jpg", C, "image/jpeg")),
+    ("owner uploads for missing trip -> DENY",        403, lambda: put_jpeg("tenant/t1/tracks/trMissing/0.jpg", T1, "image/jpeg")),
     ("uidC deletes thumbnail -> DENY",                403, lambda: delete_obj(THUMB, C)),
     ("owner uidT1 deletes thumbnail -> ALLOW",        204, lambda: delete_obj("tenant/t1/tracks/trTrack/1.jpg", T1)),
 ]

@@ -45,6 +45,7 @@ service firebase.storage {
     match /tenant/{tenantId}/tracks/{tripKey}/{file} {
       allow read, delete: if trackOwner(tripKey);
       allow create, update: if trackOwner(tripKey) && file.matches('[0-9]+[.]jpg')
+        && request.resource.contentType == 'image/jpeg'
         && request.resource.size < 512 * 1024;
     }
     match /{all=**} {
