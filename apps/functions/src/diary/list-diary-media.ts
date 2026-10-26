@@ -94,12 +94,70 @@ async function mapLimited<T, R>(items: T[], limit: number, fn: (item: T) => Prom
   return results;
 }
 
+/** A Drive folder as the day-folder search returns it. */
+export interface DriveFolderCandidate {
+  id: string;
+  name: string;
+  parents?: string[];
+}
+
+/**
+ * The folders that can be the day folder of `date` (yyyyMMdd): the name STARTS with the date
+ * (`20260820do`, `20260820doToteFische`) and the id is a valid Drive id. The Drive search is a
+ * `name contains`, so a folder that only mentions the date further in is dropped here.
+ */
+export function dayFolderMatches(date: string, candidates: DriveFolderCandidate[]): DriveFolderCandidate[] {
+  return candidates.filter(c => (c.name ?? '').startsWith(date) && isDriveId(c.id ?? ''));
+}
+
+/**
+ * The day folder of `date` among the search hits, '' when there is none or it stays ambiguous.
+ * One prefix match wins outright. Several are narrowed to those whose parent is the month folder
+ * (`MM`, spec 1.106: archive → 202x → yyyy → MM → day); `parentNames` maps a parent id to its name.
+ */
+export function pickDayFolder(date: string, candidates: DriveFolderCandidate[], parentNames: Record<string, string>): string {
+  const matches = dayFolderMatches(date, candidates);
+  if (matches.length === 1) return matches[0].id;
+  if (matches.length === 0) return '';
+  const month = date.slice(4, 6);
+  const inMonth = matches.filter(c => (c.parents ?? []).some(p => parentNames[p] === month));
+  return inMonth.length === 1 ? inMonth[0].id : '';
+}
+
+/**
+ * Looks the day folder of `date` up in Drive by name ('' when not found or ambiguous). The date is
+ * checked to be 8 digits before it goes into the query.
+ */
+async function findDayFolder(token: string, date: string, name: string): Promise<string> {
+  if (!/^\d{8}$/.test(date)) return '';
+  const response = await driveFetch(token, '/files', {
+    q: `mimeType = '${FOLDER_MIME}' and name contains '${date}' and trashed = false`,
+    fields: 'files(id,name,parents)',
+    pageSize: '50',
+  });
+  if (!response.ok) throw new HttpsError('unavailable', `${name}: drive folder search failed: ${response.status}`);
+  const files = ((await response.json()) as { files?: DriveFolderCandidate[] }).files ?? [];
+  const matches = dayFolderMatches(date, files);
+  const parentNames: Record<string, string> = {};
+  if (matches.length > 1) {
+    const parentIds = [...new Set(matches.flatMap(m => m.parents ?? []))].filter(isDriveId);
+    await Promise.all(parentIds.map(async id => {
+      const parent = await driveFetch(token, `/files/${id}`, { fields: 'name' });
+      if (parent.ok) parentNames[id] = ((await parent.json()) as { name?: string }).name ?? '';
+    }));
+  }
+  return pickDayFolder(date, files, parentNames);
+}
+
 /**
  * The two gates every diary-media call needs, both required: the caller must be the entry's
  * `authorKey` (the diary is personal), AND the archive owner — the refresh token opens the
  * owner's whole Drive, and `driveFolderId` is a field the author can write, so without the owner
  * gate any signed-in user could read any folder of that Drive through their own diary entry
  * (confused deputy). Returns '' as folder id when the entry has no Drive folder.
+ *
+ * A day entry created in the app has `driveFolderId: ''` — its day folder is looked up by date
+ * and the id written back, so the next read needs no search (the id survives folder renames).
  */
 async function openDiaryFolder(request: CallableRequest<{ diaryKey?: string }>, name: string): Promise<{ folderId: string; token: string }> {
   checkAppCheckToken(request, name);
@@ -111,19 +169,32 @@ async function openDiaryFolder(request: CallableRequest<{ diaryKey?: string }>, 
   const diaryKey = request.data?.diaryKey;
   if (!diaryKey) throw new HttpsError('invalid-argument', `${name}: diaryKey is required`);
 
-  const snapshot = await getFirestore().collection(DiaryCollection).doc(diaryKey).get();
+  const ref = getFirestore().collection(DiaryCollection).doc(diaryKey);
+  const snapshot = await ref.get();
   if (!snapshot.exists) throw new HttpsError('not-found', `${name}: diary not found`);
-  const diary = snapshot.data() as { authorKey?: string; driveFolderId?: string };
+  const diary = snapshot.data() as { authorKey?: string; driveFolderId?: string; scope?: string; date?: string };
   if (diary.authorKey !== request.auth?.uid) throw new HttpsError('permission-denied', `${name}: not the author`);
-  if (!diary.driveFolderId) return { folderId: '', token: '' };
-  if (!isDriveId(diary.driveFolderId)) throw new HttpsError('failed-precondition', `${name}: invalid driveFolderId`);
+
+  const canLookUp = !diary.driveFolderId && diary.scope === 'day' && /^\d{8}$/.test(diary.date ?? '');
+  if (!diary.driveFolderId && !canLookUp) return { folderId: '', token: '' };
+  if (diary.driveFolderId && !isDriveId(diary.driveFolderId)) throw new HttpsError('failed-precondition', `${name}: invalid driveFolderId`);
 
   const token = await getDriveAccessToken(
     DIARY_DRIVE_REFRESH_TOKEN.value(),
     DIARY_DRIVE_CLIENT_ID.value(),
     DIARY_DRIVE_CLIENT_SECRET.value(),
   );
-  return { folderId: diary.driveFolderId, token };
+  if (diary.driveFolderId) return { folderId: diary.driveFolderId, token };
+
+  const date = diary.date ?? '';
+  const found = await findDayFolder(token, date, name);
+  if (!found) {
+    logger.info(`${name}: no unique Drive day folder for diary ${diaryKey} (${date})`);
+    return { folderId: '', token: '' };
+  }
+  await ref.update({ driveFolderId: found });
+  logger.info(`${name}: resolved Drive day folder ${found} for diary ${diaryKey} (${date})`);
+  return { folderId: found, token };
 }
 
 const MEDIA_OPTIONS = {
@@ -154,13 +225,14 @@ export const listDiaryMedia = onCall<{ diaryKey?: string }, Promise<DiaryMediaRe
     const json = (await response.json()) as { files?: (Partial<DiaryMediaFile> & { thumbnailLink?: string })[] };
     const raw = json.files ?? [];
     const thumbnails = await mapLimited(raw, THUMB_CONCURRENCY, f => fetchDriveThumbnail(token, f.thumbnailLink ?? '', DIARY_THUMB_PX));
-    return splitDiaryMedia(raw.map((f, i) => ({
+    const media = splitDiaryMedia(raw.map((f, i) => ({
       id: f.id ?? '',
       name: f.name ?? '',
       mimeType: f.mimeType ?? '',
       thumbnail: thumbnails[i],
       webViewLink: f.webViewLink ?? '',
     })));
+    return { ...media, folderId };
   },
 );
 

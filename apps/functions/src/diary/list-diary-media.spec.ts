@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isArchiveOwner, isDriveId, splitDiaryMedia } from './list-diary-media';
+import { dayFolderMatches, isArchiveOwner, isDriveId, pickDayFolder, splitDiaryMedia } from './list-diary-media';
 
 const f = (name: string, mimeType: string, thumbnail = '') => ({ id: name, name, mimeType, thumbnail, webViewLink: 'w' });
 
@@ -45,5 +45,35 @@ describe('isArchiveOwner', () => {
     expect(isArchiveOwner(undefined, 'owner-uid')).toBe(false);
     expect(isArchiveOwner('', 'owner-uid')).toBe(false);
     expect(isArchiveOwner('', '')).toBe(false);
+  });
+});
+
+describe('pickDayFolder', () => {
+  const folder = (id: string, name: string, parent = 'p10') => ({ id, name, parents: [parent] });
+
+  it('takes the one folder whose name starts with the date', () => {
+    expect(pickDayFolder('20261020', [folder('a1', '20261020moToteFische')], {})).toBe('a1');
+  });
+
+  it('prefers a prefix match over a name that only contains the date', () => {
+    expect(pickDayFolder('20261020', [folder('x1', 'Kopie 20261020mo'), folder('a1', '20261020mo')], {})).toBe('a1');
+    expect(dayFolderMatches('20261020', [folder('x1', 'Kopie 20261020mo'), folder('a1', '20261020mo')]).map(f => f.id)).toEqual(['a1']);
+  });
+
+  it('disambiguates two matches by the month folder of the parent', () => {
+    const candidates = [folder('a1', '20261020mo', 'p10'), folder('b2', '20261020mo', 'p09')];
+    expect(pickDayFolder('20261020', candidates, { p10: '10', p09: '09' })).toBe('a1');
+  });
+
+  it('returns empty when the month does not settle it', () => {
+    const candidates = [folder('a1', '20261020mo', 'p10'), folder('b2', '20261020di', 'q10')];
+    expect(pickDayFolder('20261020', candidates, { p10: '10', q10: '10' })).toBe('');
+    expect(pickDayFolder('20261020', candidates, {})).toBe('');
+  });
+
+  it('returns empty when no folder matches, or the id is not a Drive id', () => {
+    expect(pickDayFolder('20261020', [], {})).toBe('');
+    expect(pickDayFolder('20261020', [folder('a1', '20261021di')], {})).toBe('');
+    expect(pickDayFolder('20261020', [folder("a' or '", '20261020mo')], {})).toBe('');
   });
 });

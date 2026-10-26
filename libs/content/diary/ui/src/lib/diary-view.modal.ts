@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, linkedSignal, signal, untracked } from '@angular/core';
 import { IonButton, IonButtons, IonChip, IonContent, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonNote, IonProgressBar, IonToolbar, ModalController } from '@ionic/angular';
 import { Browser } from '@capacitor/browser';
 
@@ -220,7 +220,15 @@ export class DiaryViewModal {
   protected readonly events = computed(() => this.parsedEvents().filter(p => !p.jass).map(p => p.e));
   protected readonly jassResults = computed(() => this.parsedEvents().map(p => p.jass).filter((j): j is JassDiaryResult => !!j));
   protected readonly html = computed(() => renderDiaryHtml(this.current().text));
-  protected readonly driveUrl = computed(() => driveFolderUrl(this.current().driveFolderId));
+  /**
+   * A day entry created in the app has no `driveFolderId`; the function then looks the day folder
+   * up and returns it with the listing (and writes it back, so the next stream emission carries it).
+   * Kept in its own signal so the buttons do not blink away while «Neu laden» re-reads the folder.
+   */
+  private readonly resolvedFolderId = signal('');
+  /** the entry `resolvedFolderId` belongs to — paging to another entry drops it */
+  private readonly resolvedOkey = signal('');
+  protected readonly driveUrl = computed(() => driveFolderUrl(this.current().driveFolderId || this.resolvedFolderId()));
   protected readonly hasWeather = computed(() => hasDiaryWeather(this.current().weather));
   protected readonly weatherLine = computed(() => diaryWeatherLine(this.current().weather));
   protected readonly weatherIcon = computed(() => weatherCodeToIcon(this.current().weather.code));
@@ -245,9 +253,11 @@ export class DiaryViewModal {
       const load = this.loadMedia();
       this.media.set(undefined);
       this.mediaFailed.set(false);
-      if (!shown.driveFolderId) return;
+      if (untracked(this.resolvedOkey) !== shown.okey) { this.resolvedFolderId.set(''); this.resolvedOkey.set(''); }   // paged to another entry
+      // a day entry without folder id still asks: the function finds its day folder by date
+      if (!shown.driveFolderId && shown.scope !== 'day') return;
       load(shown)
-        .then(media => { if (this.current().okey === shown.okey) this.media.set(media); })
+        .then(media => { if (this.current().okey === shown.okey) this.showMedia(shown, media); })
         .catch(() => { if (this.current().okey === shown.okey) this.mediaFailed.set(true); });
     });
     // The day's recorded tracks, same stale-answer guard; no tracks is the fallback for any failure.
@@ -319,8 +329,14 @@ export class DiaryViewModal {
     this.media.set(undefined);
     this.mediaFailed.set(false);
     this.loadMedia()(shown, true)
-      .then(media => { if (this.current().okey === shown.okey) this.media.set(media); })
+      .then(media => { if (this.current().okey === shown.okey) this.showMedia(shown, media); })
       .catch(() => { if (this.current().okey === shown.okey) this.mediaFailed.set(true); });
+  }
+
+  private showMedia(shown: DiaryModel, media: DiaryMediaResult): void {
+    this.media.set(media);
+    this.resolvedOkey.set(shown.okey);
+    this.resolvedFolderId.set(media.folderId ?? '');
   }
 
   protected go(target: DiaryModel | undefined): void {

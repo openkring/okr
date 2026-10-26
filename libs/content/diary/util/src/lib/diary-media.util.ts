@@ -20,6 +20,11 @@ export interface DiaryMediaResult {
   /** images AND videos — the thumbnail row; a video tile opens Drive's player */
   images: DiaryMediaFile[];
   documents: DiaryMediaFile[];
+  /**
+   * The Drive day folder that was read — also when the function had to look it up by date
+   * because the entry was created in the app (`driveFolderId: ''`); absent when there is none.
+   */
+  folderId?: string;
 }
 
 /** A Drive thumbnail link at another size: replaces a trailing `=s<n>` or appends `=s<px>`. */
