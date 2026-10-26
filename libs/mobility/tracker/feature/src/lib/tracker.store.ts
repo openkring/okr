@@ -751,6 +751,9 @@ export const TrackerStore = signalStore(
             await store.db.updateTrack(paused);
             patchState(store, { active: paused });
           }
+          // every path into 'recording' (start, resume, resumeRecording) ends here: stroke detection and calibration
+          // follow the resumed row section (init() stopped the native side)
+          await syncCalibration();
         });
       },
 

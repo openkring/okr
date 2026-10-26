@@ -8,7 +8,7 @@ import { ENV, getBkStorage } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { TRACKER_TRIP_TYPE, TrackPhoto, TransportMode, TripCollection, TripModel, TripTrack } from '@okr/shared-models';
 import { convertDateFormatToString, DateFormat, getDeletePatch, getSystemQuery } from '@okr/shared-util-core';
-import { decodeStrokeTimes, decodeTrack, encodeStrokeTimes, encodeTrack, LocalTrack, serverPhotos, summarize, trackThumbPath, TrackPoint, tripSections } from '@okr/mobility-tracker-util';
+import { decodeStrokeTimes, decodeTrack, encodeStrokeTimes, encodeTrack, LocalTrack, strokeTimesBase, serverPhotos, summarize, trackThumbPath, TrackPoint, tripSections } from '@okr/mobility-tracker-util';
 
 /** One section's points, stored as an encoded polyline in trips/{key}/track-points/{n}. */
 export interface TrackPointsDoc {
@@ -119,7 +119,7 @@ export class TrackService {
         encoded: encodeTrack(points),
       };
       const times = local.sections[i].mode === 'row' ? strokes?.[i] ?? [] : [];
-      if (times.length > 0) pointsDoc.strokeTimes = encodeStrokeTimes(times, points[0]?.t ?? 0);
+      if (times.length > 0) pointsDoc.strokeTimes = encodeStrokeTimes(times, strokeTimesBase(points));
       batch.set(doc(this.firestoreService.firestore, `${TripCollection}/${tripKey}/${TRACK_POINTS}/${i}`), pointsDoc);
     });
     for (let n = sections.length; n < (staleUpTo ?? 0); n++) {
@@ -165,7 +165,7 @@ export class TrackService {
     if (!snap.exists()) return { points: [], strokeTimes: [] };
     const data = snap.data() as TrackPointsDoc;
     const points = decodeTrack(data.encoded);
-    return { points, strokeTimes: decodeStrokeTimes(data.strokeTimes, points[0]?.t ?? 0) };
+    return { points, strokeTimes: decodeStrokeTimes(data.strokeTimes, strokeTimesBase(points)) };
   }
 
   /** The decoded points of one section; [] when the doc is missing. */

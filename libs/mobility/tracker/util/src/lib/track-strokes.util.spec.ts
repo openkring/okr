@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { decodeStrokeTimes, encodeStrokeTimes, parseCalibrationCsv, strokeFigures } from './track-strokes.util';
+import { decodeTrack, encodeTrack } from './track-polyline.util';
+import { decodeStrokeTimes, encodeStrokeTimes, parseCalibrationCsv, strokeFigures, strokeTimesBase } from './track-strokes.util';
 
 const T0 = 1_761_465_600_000;
 const every = (n: number, gapMs: number, from = T0) => Array.from({ length: n }, (_, i) => from + i * gapMs);
@@ -48,4 +49,15 @@ describe('parseCalibrationCsv', () => {
     ]);
   });
   it('skips broken lines', () => expect(parseCalibrationCsv('t_ms,ax,ay,az,gps_speed\nx,1,2\n\n')).toEqual([]));
+});
+
+describe('strokeTimesBase (upload and read-back agree, spec 1.122 2c)', () => {
+  it('round-trips stroke times through the polyline encoding exactly', () => {
+    const points = [{ lat: 47, lng: 8, t: T0 + 499 }, { lat: 47.001, lng: 8, t: T0 + 60_499 }];
+    const times = [T0 + 2_100, T0 + 4_600, T0 + 7_050];
+    const stored = encodeStrokeTimes(times, strokeTimesBase(points));
+    const readBack = decodeTrack(encodeTrack(points));
+    expect(decodeStrokeTimes(stored, strokeTimesBase(readBack))).toEqual(times);
+  });
+  it('is 0 without points', () => expect(strokeTimesBase([])).toBe(0));
 });

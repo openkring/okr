@@ -60,3 +60,11 @@ export function parseCalibrationCsv(text: string): StrokeSample[] {
   }
   return out;
 }
+
+/**
+ * The base time stroke times are delta-encoded against: the section's first point at whole seconds — the precision
+ * the polyline keeps (encodeTrack), so upload and read-back use the same base. 0 without points.
+ */
+export function strokeTimesBase(points: { t: number }[]): number {
+  return points.length > 0 ? Math.round(points[0].t / 1000) * 1000 : 0;
+}
