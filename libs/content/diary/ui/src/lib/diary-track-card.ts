@@ -2,7 +2,7 @@ import { Component, computed, input, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle } from '@ionic/angular';
 
 import { DiaryI18n, DiaryTrackCard, diaryTrackModeLabel } from '@okr/content-diary-util';
-import { formatDuration, formatKm } from '@okr/mobility-tracker-util';
+import { figureTexts, formatDuration, formatKm } from '@okr/mobility-tracker-util';
 import { TrackMap, TrackMapSection } from '@okr/mobility-tracker-ui';
 
 /**
@@ -25,7 +25,7 @@ import { TrackMap, TrackMapSection } from '@okr/mobility-tracker-ui';
         <ion-card-subtitle>{{ card().startTime }} · {{ modes() }}</ion-card-subtitle>
         <ion-card-title>{{ card().name }}</ion-card-title>
       </ion-card-header>
-      <ion-card-content>{{ km() }} · {{ duration() }}</ion-card-content>
+      <ion-card-content>{{ line() }}</ion-card-content>
     </ion-card>
   `,
 })
@@ -37,6 +37,11 @@ export class DiaryTrackCardView {
 
   protected readonly sections = computed<TrackMapSection[]>(() => this.card().sections);
   protected readonly modes = computed(() => this.card().modes.map(m => diaryTrackModeLabel(this.i18n(), m)).join(' · '));
-  protected readonly km = computed(() => formatKm(this.card().distanceM));
-  protected readonly duration = computed(() => formatDuration(this.card().durationS));
+  /** distance · duration, then the track's steps and row split when it has any (spec 1.122) */
+  protected readonly line = computed(() => {
+    const card = this.card();
+    const i18n = this.i18n();
+    const figures = figureTexts(card, { steps: i18n.track_steps(), splitAvg: i18n.track_split_avg(), splitBest: '' });
+    return [formatKm(card.distanceM), formatDuration(card.durationS), ...figures].join(' · ');
+  });
 }

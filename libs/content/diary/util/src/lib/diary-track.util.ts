@@ -1,4 +1,4 @@
-import type { TransportMode, TripModel } from '@okr/shared-models';
+import type { TrackSection, TransportMode, TripModel } from '@okr/shared-models';
 import type { TrackPoint } from '@okr/mobility-tracker-util';
 
 /** One recorded track of a diary day, ready for the card and the read-only track view (spec 1.121 §7). */
@@ -10,7 +10,11 @@ export interface DiaryTrackCard {
   modes: TransportMode[];
   distanceM: number;
   durationS: number;
-  sections: { mode: TransportMode; points: TrackPoint[] }[];
+  sections: { mode: TransportMode; points: TrackPoint[]; steps?: number; splitAvgS?: number; splitBestS?: number }[];
+  /** spec 1.122: steps of all foot sections (absent when none has any) */
+  steps?: number;
+  /** spec 1.122: average split of the longest row section, s per 500 m */
+  splitAvgS?: number;
   photos: { lat: number; lng: number; thumbPath?: string; hidden: boolean; takenAt: string }[];
 }
 
@@ -28,20 +32,33 @@ export function toDiaryTrackCards(trips: TripModel[], pointsByTrip: Record<strin
     const points = pointsByTrip[trip.okey] ?? [];
     const modes: TransportMode[] = [];
     for (const s of sections) if (modes[modes.length - 1] !== s.mode) modes.push(s.mode);
-    cards.push({
+    const card: DiaryTrackCard = {
       key: trip.okey,
       name: trip.name ?? '',
       startTime: trip.startTime ?? '',
       modes,
       distanceM: sections.reduce((m, s) => m + (s.distanceM ?? 0), 0),
       durationS: track.durationS ?? 0,
-      sections: sections.map((s, i) => ({ mode: s.mode, points: points[i] ?? [] })),
+      sections: sections.map((s, i) => {
+        const out: DiaryTrackCard['sections'][number] = { mode: s.mode, points: points[i] ?? [] };
+        if (s.steps !== undefined) out.steps = s.steps;
+        if (s.splitAvgS !== undefined) out.splitAvgS = s.splitAvgS;
+        if (s.splitBestS !== undefined) out.splitBestS = s.splitBestS;
+        return out;
+      }),
       photos: (track.photos ?? []).map(p => {
         const photo: DiaryTrackCard['photos'][number] = { lat: p.lat, lng: p.lng, hidden: !!p.hidden, takenAt: p.takenAt };
         if (p.thumbPath) photo.thumbPath = p.thumbPath;
         return photo;
       }),
-    });
+    };
+    const foot = sections.filter(s => s.mode === 'foot' && s.steps !== undefined);
+    if (foot.length > 0) card.steps = foot.reduce((n, s) => n + (s.steps ?? 0), 0);
+    const longestRow = sections
+      .filter(s => s.mode === 'row' && s.splitAvgS !== undefined)
+      .reduce<TrackSection | undefined>((best, s) => (!best || (s.distanceM ?? 0) > (best.distanceM ?? 0) ? s : best), undefined);
+    if (longestRow?.splitAvgS !== undefined) card.splitAvgS = longestRow.splitAvgS;
+    cards.push(card);
   }
   return cards.sort((a, b) => a.startTime.localeCompare(b.startTime));
 }

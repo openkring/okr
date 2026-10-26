@@ -71,6 +71,17 @@ export const TRACKER_I18N_KEYS = {
   photos_remove_confirm: PFX + 'photos.remove_confirm',
   photos_search: PFX + 'photos.search',
   photos_search_added: PFX + 'photos.search_added', // single braces: {count}
+  figure_steps: PFX + 'figure.steps', // single braces: {steps}
+  figure_split_avg: PFX + 'figure.split_avg', // single braces: {split}
+  figure_split_best: PFX + 'figure.split_best', // single braces: {split}
+  calibration_title: PFX + 'calibration.title',
+  calibration_toggle: PFX + 'calibration.toggle',
+  calibration_share: PFX + 'calibration.share',
+  calibration_placement: PFX + 'calibration.placement',
+  calibration_bag: PFX + 'calibration.bag',
+  calibration_mounted: PFX + 'calibration.mounted',
+  calibration_counted: PFX + 'calibration.counted',
+  calibration_empty: PFX + 'calibration.empty',
   photos_search_added_one: PFX + 'photos.search_added_one',
   photos_search_none: PFX + 'photos.search_none',
   common_save: PFX + 'common.save',

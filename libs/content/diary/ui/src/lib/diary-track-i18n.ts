@@ -27,6 +27,9 @@ export function diaryTrackerI18n(i18n: DiaryI18n): TrackerI18n {
     photos_hidden: i18n.track_hidden,
     detail_sections: i18n.track_sections,
     section_detected: i18n.track_detected,
+    figure_steps: i18n.track_steps,
+    figure_split_avg: i18n.track_split_avg,
+    figure_split_best: i18n.track_split_best,
   };
   const keys = Object.keys(TRACKER_I18N_KEYS) as (keyof TrackerI18n)[];
   return Object.fromEntries(keys.map(k => [k, fromDiary[k] ?? EMPTY])) as TrackerI18n;

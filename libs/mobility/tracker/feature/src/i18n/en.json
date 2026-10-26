@@ -95,5 +95,20 @@
   "common": {
     "save": "Save",
     "cancel": "Cancel"
+  },
+  "figure": {
+    "steps": "{steps} steps",
+    "split_avg": "Ø {split}",
+    "split_best": "best {split}"
+  },
+  "calibration": {
+    "title": "Rowing calibration",
+    "toggle": "Record motion data while rowing",
+    "share": "Share",
+    "placement": "Where was the phone?",
+    "bag": "In a bag",
+    "mounted": "Mounted in the boat",
+    "counted": "Counted strokes (optional)",
+    "empty": "No recording yet"
   }
 }

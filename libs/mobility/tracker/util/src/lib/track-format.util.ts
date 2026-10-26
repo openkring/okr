@@ -31,3 +31,19 @@ export function formatSplit(seconds: number): string {
 export function formatSteps(steps: number, locale = 'de-CH'): string {
   return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(Math.max(0, Math.round(steps)));
 }
+
+/**
+ * The activity figures of a section or track as display texts (spec 1.122), in the order steps, average split,
+ * best split. Labels carry single-brace placeholders ({steps}, {split}); an absent figure or an empty label is
+ * left out, so a legacy track renders nothing.
+ */
+export function figureTexts(
+  f: { steps?: number; splitAvgS?: number; splitBestS?: number },
+  labels: { steps: string; splitAvg: string; splitBest: string },
+): string[] {
+  const out: string[] = [];
+  if (f.steps !== undefined && labels.steps) out.push(labels.steps.replace('{steps}', formatSteps(f.steps)));
+  if (f.splitAvgS !== undefined && labels.splitAvg) out.push(labels.splitAvg.replace('{split}', formatSplit(f.splitAvgS)));
+  if (f.splitBestS !== undefined && labels.splitBest) out.push(labels.splitBest.replace('{split}', formatSplit(f.splitBestS)));
+  return out;
+}

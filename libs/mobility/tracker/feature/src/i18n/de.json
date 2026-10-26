@@ -95,5 +95,20 @@
   "common": {
     "save": "Speichern",
     "cancel": "Abbrechen"
+  },
+  "figure": {
+    "steps": "{steps} Schritte",
+    "split_avg": "Ø {split}",
+    "split_best": "beste {split}"
+  },
+  "calibration": {
+    "title": "Ruder-Kalibrierung",
+    "toggle": "Bewegungsdaten beim Rudern aufzeichnen",
+    "share": "Teilen",
+    "placement": "Wo war das Handy?",
+    "bag": "In der Tasche",
+    "mounted": "Im Boot befestigt",
+    "counted": "Gezählte Schläge (optional)",
+    "empty": "Noch keine Aufzeichnung"
   }
 }

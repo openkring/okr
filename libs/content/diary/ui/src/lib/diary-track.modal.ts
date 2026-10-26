@@ -44,7 +44,9 @@ export class DiaryTrackModal {
   protected readonly trackI18n = computed(() => diaryTrackerI18n(this.i18n()));
   protected readonly mapSections = computed<TrackMapSection[]>(() => this.card().sections);
   protected readonly rows = computed<TrackSectionRow[]>(() =>
-    this.card().sections.map(s => ({ mode: s.mode, detected: false, ...summarize(s.points) })));
+    this.card().sections.map(s => ({
+      mode: s.mode, detected: false, ...summarize(s.points), steps: s.steps, splitAvgS: s.splitAvgS, splitBestS: s.splitBestS,
+    })));
   protected readonly mapPhotos = computed<TrackMapPhoto[]>(() => {
     const thumbs = this.thumbs();
     return this.card().photos.map(p => ({ lat: p.lat, lng: p.lng, hidden: p.hidden, src: p.thumbPath ? thumbs.get(p.thumbPath) : undefined }));

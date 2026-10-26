@@ -272,6 +272,9 @@
     "photos": "Photos",
     "sections": "Sections",
     "hidden": "Masquée",
-    "detected": "détecté automatiquement"
+    "detected": "détecté automatiquement",
+    "steps": "{steps} pas",
+    "split_avg": "Ø {split}",
+    "split_best": "meilleur {split}"
   }
 }

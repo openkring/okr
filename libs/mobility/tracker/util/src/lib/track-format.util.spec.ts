@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatClockTime, formatDuration, formatKm, formatSplit, formatSteps } from './track-format.util';
+import { figureTexts, formatClockTime, formatDuration, formatKm, formatSplit, formatSteps } from './track-format.util';
 
 describe('formatDuration', () => {
   it('formats h:mm:ss', () => {
@@ -38,4 +38,14 @@ describe('formatSplit', () => {
 describe('formatSteps', () => {
   // the separator character depends on the ICU/CLDR version (’ in browsers, ' in some Node builds)
   it('groups thousands', () => expect(formatSteps(6240)).toMatch(/^6\D240$/));
+});
+
+describe('figureTexts', () => {
+  const labels = { steps: '{steps} Schritte', splitAvg: 'Ø {split}', splitBest: 'beste {split}' };
+  it('renders steps', () => expect(figureTexts({ steps: 6240 }, labels)).toEqual([`${formatSteps(6240)} Schritte`]));
+  it('renders average and best split', () => {
+    expect(figureTexts({ splitAvgS: 148, splitBestS: 131 }, labels)).toEqual(['Ø 2:28 /500 m', 'beste 2:11 /500 m']);
+  });
+  it('renders nothing without figures', () => expect(figureTexts({}, labels)).toEqual([]));
+  it('leaves out a figure whose label is empty', () => expect(figureTexts({ splitAvgS: 148, splitBestS: 131 }, { ...labels, splitBest: '' })).toEqual(['Ø 2:28 /500 m']));
 });

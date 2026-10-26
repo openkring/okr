@@ -272,6 +272,9 @@
     "photos": "Foto",
     "sections": "Tratti",
     "hidden": "Nascosta",
-    "detected": "rilevato automaticamente"
+    "detected": "rilevato automaticamente",
+    "steps": "{steps} passi",
+    "split_avg": "Ø {split}",
+    "split_best": "migliore {split}"
   }
 }

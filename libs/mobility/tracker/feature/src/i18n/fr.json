@@ -95,5 +95,20 @@
   "common": {
     "save": "Enregistrer",
     "cancel": "Annuler"
+  },
+  "figure": {
+    "steps": "{steps} pas",
+    "split_avg": "Ø {split}",
+    "split_best": "meilleur {split}"
+  },
+  "calibration": {
+    "title": "Calibrage aviron",
+    "toggle": "Enregistrer les données de mouvement pendant que tu rames",
+    "share": "Partager",
+    "placement": "Où était le téléphone ?",
+    "bag": "Dans un sac",
+    "mounted": "Fixé dans le bateau",
+    "counted": "Coups comptés (facultatif)",
+    "empty": "Pas encore d’enregistrement"
   }
 }

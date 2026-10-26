@@ -1,10 +1,13 @@
 import { Component, input, output } from '@angular/core';
 import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonNote, IonSelect, IonSelectOption } from '@ionic/angular';
 import { TRANSPORT_MODES, type TransportMode } from '@okr/shared-models';
-import { formatDuration, formatKm, type TrackerI18n } from '@okr/mobility-tracker-util';
+import { figureTexts, formatDuration, formatKm, type TrackerI18n } from '@okr/mobility-tracker-util';
 import { SvgIconPipe } from '@okr/shared-pipes';
 
-export interface TrackSectionRow { mode: TransportMode; distanceM: number; durationS: number; detected: boolean }
+export interface TrackSectionRow {
+  mode: TransportMode; distanceM: number; durationS: number; detected: boolean;
+  steps?: number; splitAvgS?: number; splitBestS?: number; // activity figures (spec 1.122)
+}
 export interface TrackModeChange { index: number; mode: TransportMode }
 
 /** The sections of a track: mode (changeable), distance, duration, split and merge-with-next per row; `readonly` shows them only. */
@@ -26,7 +29,7 @@ export interface TrackModeChange { index: number; mode: TransportMode }
                 }
               </ion-select>
             }
-            <p>{{ km(section.distanceM) }} · {{ duration(section.durationS) }}</p>
+            <p>{{ line(section) }}</p>
             @if (section.detected) {
               <ion-note>{{ i18n().section_detected() }}</ion-note>
             }
@@ -64,12 +67,11 @@ export class TrackSections {
     return this.i18n()[`mode_${mode}`]();
   }
 
-  protected km(meters: number): string {
-    return formatKm(meters);
-  }
-
-  protected duration(seconds: number): string {
-    return formatDuration(seconds);
+  /** distance · duration, then the section's activity figures (steps, splits) when it has any */
+  protected line(section: TrackSectionRow): string {
+    const i18n = this.i18n();
+    const figures = figureTexts(section, { steps: i18n.figure_steps(), splitAvg: i18n.figure_split_avg(), splitBest: i18n.figure_split_best() });
+    return [formatKm(section.distanceM), formatDuration(section.durationS), ...figures].join(' · ');
   }
 
   protected onMode(index: number, mode: TransportMode): void {

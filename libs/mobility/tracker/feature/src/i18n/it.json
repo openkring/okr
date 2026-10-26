@@ -95,5 +95,20 @@
   "common": {
     "save": "Salva",
     "cancel": "Annulla"
+  },
+  "figure": {
+    "steps": "{steps} passi",
+    "split_avg": "Ø {split}",
+    "split_best": "migliore {split}"
+  },
+  "calibration": {
+    "title": "Calibrazione canottaggio",
+    "toggle": "Registra i dati di movimento mentre remi",
+    "share": "Condividi",
+    "placement": "Dov’era il telefono?",
+    "bag": "In una borsa",
+    "mounted": "Fissato nella barca",
+    "counted": "Colpi contati (facoltativo)",
+    "empty": "Ancora nessuna registrazione"
   }
 }

@@ -13,7 +13,7 @@ import { TRANSPORT_MODES, TransportMode, TripModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { TrackDb, TrackService } from '@okr/mobility-tracker-data-access';
 import { TrackerBanner, TrackMap, TrackMapSection } from '@okr/mobility-tracker-ui';
-import { elapsedSeconds, formatKm, LocalTrack, mergeTrackLists, TrackPoint } from '@okr/mobility-tracker-util';
+import { elapsedSeconds, figureTexts, formatKm, LocalTrack, mergeTrackLists, TrackPoint } from '@okr/mobility-tracker-util';
 
 import { TrackerStore } from './tracker.store';
 
@@ -47,7 +47,7 @@ type ModeChoice = TransportMode | typeof AUTO;
     <ion-content>
       @if (store.active(); as active) {
         <okr-tracker-banner [mode]="store.currentMode() ?? 'foot'" [distanceM]="store.distanceM()" [durationS]="durationS()"
-          [state]="active.state === 'recording' ? 'recording' : 'paused'" [proposal]="store.proposal()" [i18n]="i18n"
+          [state]="active.state === 'recording' ? 'recording' : 'paused'" [proposal]="store.proposal()" [i18n]="i18n" [figure]="liveFigure()"
           (pauseTap)="store.pause()" (resumeTap)="store.resume()" (stop)="stop()" (modeChange)="store.changeMode($event)"
           (acceptProposal)="store.acceptProposal()" (dismissProposal)="store.dismissProposal()" />
         <okr-track-map [sections]="liveSections()" [live]="true" />
@@ -142,6 +142,12 @@ export class TrackerPage {
   protected readonly warningText = computed(() => {
     const w = this.store.warning();
     return w === 'none' ? '' : this.i18n[`warning_${w}`]();
+  });
+  /** steps so far on foot, the current split on row (spec 1.122) */
+  protected readonly liveFigure = computed(() => {
+    const mode = this.store.currentMode();
+    const f = mode === 'foot' ? { steps: this.store.liveSteps() } : mode === 'row' ? { splitAvgS: this.store.liveSplitS() } : {};
+    return figureTexts(f, { steps: this.i18n.figure_steps(), splitAvg: '{split}', splitBest: '' })[0] ?? '';
   });
   protected readonly showSettingsHint = computed(() => this.store.warning() === 'whenInUseOnly' || this.store.warning() === 'locationDenied');
 

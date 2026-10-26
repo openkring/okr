@@ -61,3 +61,28 @@ describe('toDiaryTrackCards', () => {
     expect(toDiaryTrackCards([trip('legacy', '08:00')], {})).toEqual([]);
   });
 });
+
+describe('toDiaryTrackCards figures (spec 1.122)', () => {
+  it('sums foot steps, takes the split of the longest row section and keeps each section figure', () => {
+    const t = trip('f', '09:00', {
+      sections: [
+        { ...section('foot', 1000), steps: 6240 },
+        { ...section('foot', 200), steps: 1000 },
+        { ...section('row', 300), splitAvgS: 160, splitBestS: 150 },
+        { ...section('row', 5000), splitAvgS: 148, splitBestS: 131 },
+      ],
+    });
+    const [card] = toDiaryTrackCards([t], {});
+    expect(card.steps).toBe(7240);
+    expect(card.splitAvgS).toBe(148);
+    expect(card.sections[0].steps).toBe(6240);
+    expect(card.sections[3]).toEqual({ mode: 'row', points: [], splitAvgS: 148, splitBestS: 131 });
+  });
+
+  it('has no figure keys for a legacy trip', () => {
+    const [card] = toDiaryTrackCards([trip('l', '09:00', { sections: [section('foot', 1000), section('row', 2000)] })], {});
+    expect('steps' in card).toBe(false);
+    expect('splitAvgS' in card).toBe(false);
+    expect(card.sections).toEqual([{ mode: 'foot', points: [] }, { mode: 'row', points: [] }]);
+  });
+});

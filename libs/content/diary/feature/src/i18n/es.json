@@ -272,6 +272,9 @@
     "photos": "Fotos",
     "sections": "Tramos",
     "hidden": "Oculta",
-    "detected": "detectado automáticamente"
+    "detected": "detectado automáticamente",
+    "steps": "{steps} pasos",
+    "split_avg": "Ø {split}",
+    "split_best": "mejor {split}"
   }
 }

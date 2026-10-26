@@ -126,6 +126,9 @@ export const DIARY_I18N_KEYS = {
   track_sections:         PFX + 'track.sections',
   track_hidden:           PFX + 'track.hidden',
   track_detected:         PFX + 'track.detected',
+  track_steps:            PFX + 'track.steps',      // single braces: {steps}
+  track_split_avg:        PFX + 'track.split_avg',  // single braces: {split}
+  track_split_best:       PFX + 'track.split_best', // single braces: {split}
 
   jass_draw:              PFX + 'jass.draw',
   jass_match:             PFX + 'jass.match',

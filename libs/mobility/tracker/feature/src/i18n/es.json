@@ -95,5 +95,20 @@
   "common": {
     "save": "Guardar",
     "cancel": "Cancelar"
+  },
+  "figure": {
+    "steps": "{steps} pasos",
+    "split_avg": "Ø {split}",
+    "split_best": "mejor {split}"
+  },
+  "calibration": {
+    "title": "Calibración de remo",
+    "toggle": "Grabar datos de movimiento mientras remas",
+    "share": "Compartir",
+    "placement": "¿Dónde estaba el móvil?",
+    "bag": "En una bolsa",
+    "mounted": "Fijado en el barco",
+    "counted": "Paladas contadas (opcional)",
+    "empty": "Todavía no hay grabaciones"
   }
 }
