@@ -23,3 +23,4 @@ export * from './lib/diary-weather.util';
 export * from './lib/location-normalise';
 export * from './lib/trip-collection';
 export * from './lib/diary-album.validations';
+export * from './lib/diary-track.util';

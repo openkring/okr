@@ -9,3 +9,5 @@ export * from './lib/diary-trip.form';
 export * from './lib/diary-trip-edit.modal';
 export * from './lib/diary-date-range.form';
 export * from './lib/diary-albums.modal';
+export * from './lib/diary-track-card';
+export * from './lib/diary-track.modal';

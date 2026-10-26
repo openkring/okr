@@ -140,7 +140,8 @@
     "navNext": "Giorno successivo",
     "navUp": "Panoramica",
     "mediaLoadFailed": "Non è stato possibile caricare foto e documenti da Drive.",
-    "mediaReload": "Ricarica da Google Drive"
+    "mediaReload": "Ricarica da Google Drive",
+    "tracks": "Percorsi"
   },
   "diaryState": {
     "all": {

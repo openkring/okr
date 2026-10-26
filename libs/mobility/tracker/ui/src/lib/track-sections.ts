@@ -7,7 +7,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 export interface TrackSectionRow { mode: TransportMode; distanceM: number; durationS: number; detected: boolean }
 export interface TrackModeChange { index: number; mode: TransportMode }
 
-/** The sections of a track: mode (changeable), distance, duration, split and merge-with-next per row. */
+/** The sections of a track: mode (changeable), distance, duration, split and merge-with-next per row; `readonly` shows them only. */
 @Component({
   selector: 'okr-track-sections',
   imports: [IonList, IonItem, IonLabel, IonNote, IonSelect, IonSelectOption, IonButton, IonIcon, SvgIconPipe],
@@ -16,23 +16,27 @@ export interface TrackModeChange { index: number; mode: TransportMode }
       @for (section of sections(); track $index; let i = $index; let last = $last) {
         <ion-item>
           <ion-label>
-            <ion-select interface="popover" [label]="i18n().section_change_mode()" label-placement="stacked"
-              [value]="section.mode" (ionChange)="onMode(i, $event.detail.value)">
-              @for (m of modes; track m) {
-                <ion-select-option [value]="m">{{ modeLabel(m) }}</ion-select-option>
-              }
-            </ion-select>
+            @if (readonly()) {
+              <h3>{{ modeLabel(section.mode) }}</h3>
+            } @else {
+              <ion-select interface="popover" [label]="i18n().section_change_mode()" label-placement="stacked"
+                [value]="section.mode" (ionChange)="onMode(i, $event.detail.value)">
+                @for (m of modes; track m) {
+                  <ion-select-option [value]="m">{{ modeLabel(m) }}</ion-select-option>
+                }
+              </ion-select>
+            }
             <p>{{ km(section.distanceM) }} · {{ duration(section.durationS) }}</p>
             @if (section.detected) {
               <ion-note>{{ i18n().section_detected() }}</ion-note>
             }
           </ion-label>
-          @if ((pointCounts()[i] ?? 0) >= 3) {
+          @if (!readonly() && (pointCounts()[i] ?? 0) >= 3) {
             <ion-button slot="end" fill="clear" size="small" (click)="split.emit({ index: i })">
               <ion-icon slot="start" src="{{ 'cancel' | svgIcon }}" />{{ i18n().section_split() }}
             </ion-button>
           }
-          @if (!last) {
+          @if (!readonly() && !last) {
             <ion-button slot="end" fill="clear" size="small" (click)="merge.emit({ index: i })">
               <ion-icon slot="start" src="{{ 'link' | svgIcon }}" />{{ i18n().section_merge() }}
             </ion-button>
@@ -47,6 +51,8 @@ export class TrackSections {
   /** Number of points per section (same order); a section with fewer than 3 points cannot be split. */
   public readonly pointCounts = input<number[]>([]);
   public readonly i18n = input.required<TrackerI18n>();
+  /** true = a plain list (mode as text, no split / merge): the diary's read-only track view */
+  public readonly readonly = input(false);
 
   public readonly modeChanged = output<TrackModeChange>();
   public readonly split = output<{ index: number }>();

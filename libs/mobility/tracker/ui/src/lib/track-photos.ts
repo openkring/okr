@@ -42,11 +42,13 @@ export interface TrackPhotoToggle { index: number; hidden: boolean }
             }
           </div>
           <span class="time">{{ time(photo.takenAt) }}</span>
-          <ion-button fill="clear" size="small" (click)="photoToggle.emit({ index: i, hidden: !photo.hidden })"
-            [attr.aria-label]="ariaLabel(photo)">
-            <ion-icon slot="start" src="{{ (photo.hidden ? 'eye-on' : 'eye-off') | svgIcon }}" />
-            {{ photo.hidden ? i18n().photos_show() : i18n().photos_hide() }}
-          </ion-button>
+          @if (!readonly()) {
+            <ion-button fill="clear" size="small" (click)="photoToggle.emit({ index: i, hidden: !photo.hidden })"
+              [attr.aria-label]="ariaLabel(photo)">
+              <ion-icon slot="start" src="{{ (photo.hidden ? 'eye-on' : 'eye-off') | svgIcon }}" />
+              {{ photo.hidden ? i18n().photos_show() : i18n().photos_hide() }}
+            </ion-button>
+          }
         </div>
       }
     </div>
@@ -55,6 +57,8 @@ export interface TrackPhotoToggle { index: number; hidden: boolean }
 export class TrackPhotos {
   public readonly photos = input<TrackPhotoItem[]>([]);
   public readonly i18n = input.required<TrackerI18n>();
+  /** true = no hide / show buttons: the diary's read-only track view */
+  public readonly readonly = input(false);
 
   public readonly photoToggle = output<TrackPhotoToggle>();
 

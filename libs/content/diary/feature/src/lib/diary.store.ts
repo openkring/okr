@@ -5,9 +5,11 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { firstValueFrom, map, of, timeout } from 'rxjs';
 
 import type { DiaryLocationPick, DiaryNeighbours } from '@okr/content-diary-ui';
+import { TrackService } from '@okr/mobility-tracker-data-access';
+import { TRACKER_I18N_KEYS, TrackPoint } from '@okr/mobility-tracker-util';
 import { DiaryAlbumService, DiaryMediaService, DiaryService, DiaryWeatherService } from '@okr/content-diary-data-access';
 import {
-  DIARY_FIRST_YEAR, DIARY_I18N_KEYS, customLocationAvatar, locationAvatar, mainLocation, DiaryFilter, DiaryMediaResult, DiaryRange, DiaryStateFilter, albumKey, albumRefOf,
+  DIARY_FIRST_YEAR, DIARY_I18N_KEYS, DiaryTrackCard, toDiaryTrackCards, customLocationAvatar, locationAvatar, mainLocation, DiaryFilter, DiaryMediaResult, DiaryRange, DiaryStateFilter, albumKey, albumRefOf,
   buildDiaryRangeTree, decodeDiaryFilter, diaryFilterLabel, diaryListUrl, diaryRangeOfYear, diaryStateMatches, encodeDiaryFilter,
   formatDiaryDate, getDiaryIndex, groupDiariesByMonth, hasDiaryWeather, inDiaryDateRange, newDiary,
 } from '@okr/content-diary-util';
@@ -38,6 +40,8 @@ export type DiaryStoreState = {
 };
 
 const GROUP_BY_MONTH_KEY = 'okr.diary.groupByMonth';
+/** the diary's track cards give up after this long (offline: the trip query never answers) */
+const TRACKS_TIMEOUT_MS = 5000;
 
 function readGroupByMonth(): boolean {
   try { return localStorage.getItem(GROUP_BY_MONTH_KEY) === 'true'; } catch { return false; }
@@ -86,9 +90,11 @@ export const DiaryStore = signalStore(
     alertController: inject(AlertController),
     alertService: inject(AlertService),
     i18nService: inject(I18nService),
+    trackService: inject(TrackService),
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(DIARY_I18N_KEYS),
+    trackI18n: store.i18nService.translateAll(TRACKER_I18N_KEYS),
     diariesResource: rxResource({
       params: resourceParams(() => ({
         authorKey: store.appStore.fbUser()?.uid ?? '',
@@ -358,6 +364,36 @@ export const DiaryStore = signalStore(
       return pending;
     };
 
+    /**
+     * The current person's recorded tracks of a day (spec 1.121 §7). Read once; offline or a slow first answer
+     * must not hang the view, so both the trip query and the points reads give up after TRACKS_TIMEOUT_MS → [].
+     */
+    const loadTracks = async (diary: DiaryModel): Promise<DiaryTrackCard[]> => {
+      const personKey = store.appStore.currentUser()?.personKey;
+      if (!personKey || diary.scope !== 'day') return [];
+      const work = (async () => {
+        const trips = await firstValueFrom(store.trackService.listOfDay(personKey, store.tenantId(), diary.date));
+        const pointsByTrip: Record<string, TrackPoint[][]> = {};
+        await Promise.all(trips.filter(t => !!t.track).map(async t => {
+          pointsByTrip[t.okey] = await Promise.all((t.track?.sections ?? []).map((_, n) => store.trackService.readPoints(t.okey, n).catch(() => [])));
+        }));
+        return toDiaryTrackCards(trips, pointsByTrip);
+      })();
+      const giveUp = new Promise<DiaryTrackCard[]>(resolve => setTimeout(() => resolve([]), TRACKS_TIMEOUT_MS));
+      return Promise.race([work.catch(() => []), giveUp]);
+    };
+
+    /** Read-only track view; dynamic import like the view modal (store-modal-dynamic-import). */
+    const openTrack = async (card: DiaryTrackCard): Promise<void> => {
+      const { DiaryTrackModal } = await import('@okr/content-diary-ui');
+      const modal = await store.modalController.create({
+        component: DiaryTrackModal,
+        cssClass: 'wide-modal',
+        componentProps: { card, i18n: store.trackI18n, loadThumb: (path: string) => store.trackService.readThumb(path) },
+      });
+      await modal.present();
+    };
+
     /** prev/next/up of the shown entry (spec 1.106 §2.1) — queried, not taken from the loaded list. */
     const neighboursOf = async (diary: DiaryModel): Promise<DiaryNeighbours> => {
       const [prev, next, up] = await Promise.all([
@@ -579,6 +615,7 @@ export const DiaryStore = signalStore(
           componentProps: {
             diary, i18n: store.i18n, lang: store.lang(),
             neighbours: neighboursOf, openPerson: openPersonView, openLocation: openLocationView, loadMedia, loadImage, refreshWeather,
+            loadTracks, openTrack, trackI18n: store.trackI18n,
           },
         });
         await modal.present();

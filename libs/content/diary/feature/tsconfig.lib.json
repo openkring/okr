@@ -25,6 +25,8 @@
     { "path": "../../../geo/location/data-access/tsconfig.lib.json" },
     { "path": "../../../geo/location/feature/tsconfig.lib.json" },
     { "path": "../../../geo/weather/util/tsconfig.lib.json" },
+    { "path": "../../../mobility/tracker/data-access/tsconfig.lib.json" },
+    { "path": "../../../mobility/tracker/util/tsconfig.lib.json" },
     { "path": "../../../shared/feature/tsconfig.lib.json" },
     { "path": "../../../shared/i18n/tsconfig.lib.json" },
     { "path": "../../../shared/models/tsconfig.lib.json" },

@@ -27,6 +27,8 @@
     "@okr/subject-person-data-access": "*",
     "@okr/subject-person-feature": "*",
     "@okr/subject-person-util": "*",
-    "@okr/weather-util": "*"
+    "@okr/weather-util": "*",
+    "@okr/mobility-tracker-data-access": "*",
+    "@okr/mobility-tracker-util": "*"
   }
 }

@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonButton, IonButtons, IonChip, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonProgressBar, IonToolbar, ModalController } from '@ionic/angular';
+import { IonButton, IonButtons, IonChip, IonContent, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonNote, IonProgressBar, IonToolbar, ModalController } from '@ionic/angular';
 import { Browser } from '@capacitor/browser';
 
 import { AvatarInfo, DiaryModel, IMAGE_STYLE_SHAPE } from '@okr/shared-models';
@@ -8,14 +8,16 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { AvatarDisplay } from '@okr/avatar-ui';
 import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
+import type { TrackerI18n } from '@okr/mobility-tracker-util';
 
 import {
-  DiaryI18n, DiaryMediaResult, diaryAvatarName, mainLocation, diarySliderImages, diaryWeatherLine, driveFolderUrl, formatDiaryDateLong, hasDiaryWeather,
+  DiaryI18n, DiaryMediaResult, DiaryTrackCard, diaryAvatarName, mainLocation, diarySliderImages, diaryWeatherLine, driveFolderUrl, formatDiaryDateLong, hasDiaryWeather,
   isDiaryVideo, JassDiaryResult, parseJassDiaryLine, renderDiaryHtml,
 } from '@okr/content-diary-util';
 
 import { DiaryJassCard } from './diary-jass-card';
 import { DiaryMediaRow } from './diary-media-row';
+import { DiaryTrackCardView } from './diary-track-card';
 
 /** Slider-size downloads in flight at once when the slider opens. */
 const IMAGE_CONCURRENCY = 4;
@@ -36,12 +38,13 @@ export interface DiaryNeighbours {
 @Component({
   selector: 'okr-diary-view-modal',
   standalone: true,
-  imports: [Header, AvatarDisplay, DiaryMediaRow, DiaryJassCard, SvgIconPipe, IonContent, IonProgressBar, IonItem, IonLabel, IonList, IonNote, IonChip, IonIcon, IonButton, IonButtons, IonToolbar],
+  imports: [Header, AvatarDisplay, DiaryMediaRow, DiaryJassCard, DiaryTrackCardView, SvgIconPipe, IonContent, IonListHeader, IonProgressBar, IonItem, IonLabel, IonList, IonNote, IonChip, IonIcon, IonButton, IonButtons, IonToolbar],
   styles: [`
     .body { padding: 16px; line-height: 1.5; }
     .meta ion-chip { margin-right: 4px; }
     .people { display: flex; flex-wrap: wrap; gap: 8px; }
     .person, .location { cursor: pointer; }
+    .tracks { padding: 0 8px; }
   `],
   template: `
     <okr-header [i18n]="{ title: title() }" [isModal]="true" actionIcon="edit" [actionTitle]="i18n().edit()" (actionClicked)="edit()" />
@@ -123,6 +126,15 @@ export interface DiaryNeighbours {
         <okr-diary-jass-card [result]="jass" [i18n]="i18n()" />
       }
 
+      @if (current().scope === 'day' && tracks().length) {
+        <ion-list-header><ion-label>{{ i18n().view_tracks() }}</ion-label></ion-list-header>
+        <div class="tracks">
+          @for (card of tracks(); track card.key) {
+            <okr-diary-track-card [card]="card" [i18n]="trackI18n()" (open)="openTrack()($event)" />
+          }
+        </div>
+      }
+
       @if (driveUrl()) {
         @if (sliderLoading()) { <ion-progress-bar type="indeterminate" /> }
         @if (mediaFailed()) {
@@ -174,6 +186,12 @@ export class DiaryViewModal {
   public readonly loadImage = input.required<(d: DiaryModel, fileId: string) => Promise<string>>();
   /** fetches and saves the measured weather of a day; resolves to the saved entry, undefined = none */
   public readonly refreshWeather = input.required<(d: DiaryModel) => Promise<DiaryModel | undefined>>();
+  /** the recorded tracks of a day (spec 1.121 §7); [] for other scopes, offline or without a person */
+  public readonly loadTracks = input.required<(d: DiaryModel) => Promise<DiaryTrackCard[]>>();
+  /** opens the read-only track view */
+  public readonly openTrack = input.required<(card: DiaryTrackCard) => Promise<void>>();
+  /** tracker labels: transport modes on the track cards */
+  public readonly trackI18n = input.required<TrackerI18n>();
 
   /** the entry on screen — starts at `diary`, swapped by prev/next/up */
   protected readonly current = linkedSignal(() => this.diary());
@@ -183,6 +201,7 @@ export class DiaryViewModal {
   protected readonly mediaFailed = signal(false);
   protected readonly sliderLoading = signal(false);
   protected readonly weatherBusy = signal(false);
+  protected readonly tracks = signal<DiaryTrackCard[]>([]);
 
   protected readonly title = computed(() => this.current().title || this.i18n().view_untitled());
   protected readonly dateLabel = computed(() => formatDiaryDateLong(this.current().date, this.lang()));
@@ -233,6 +252,16 @@ export class DiaryViewModal {
       load(shown)
         .then(media => { if (this.current().okey === shown.okey) this.media.set(media); })
         .catch(() => { if (this.current().okey === shown.okey) this.mediaFailed.set(true); });
+    });
+    // The day's recorded tracks, same stale-answer guard; no tracks is the fallback for any failure.
+    effect(() => {
+      const shown = this.current();
+      const load = this.loadTracks();
+      this.tracks.set([]);
+      if (shown.scope !== 'day') return;
+      load(shown)
+        .then(tracks => { if (this.current().okey === shown.okey) this.tracks.set(tracks); })
+        .catch(() => { /* no tracks */ });
     });
   }
 
