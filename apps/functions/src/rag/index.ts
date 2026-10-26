@@ -1,5 +1,5 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
-import { onObjectFinalized, onObjectDeleted } from 'firebase-functions/v2/storage';
+import type { StorageEvent } from 'firebase-functions/v2/storage';
 import { defineSecret } from 'firebase-functions/params';
 import { logger } from 'firebase-functions/v2';
 import { GoogleGenAI } from '@google/genai';
@@ -141,58 +141,46 @@ async function removeFromFileStore(
  * Automatically index a file into the RAG store when it is uploaded to
  * tenant/{tenantId}/rag/{fileName} in Firebase Storage.
  */
-export const onRagFileCreated = onObjectFinalized(
-    {
-        region: 'europe-west6',
-        secrets: [geminiApiKey],
-    },
-    async (event) => {
-        const objectName = event.data.name;
-        const bucketName = event.data.bucket;
-        const contentType = event.data.contentType ?? 'application/octet-stream';
+export async function handleRagFileCreated(event: StorageEvent): Promise<void> {
+    const objectName = event.data.name;
+    const bucketName = event.data.bucket;
+    const contentType = event.data.contentType ?? 'application/octet-stream';
 
-        const tenantId = tenantIdFromPath(objectName);
-        if (!tenantId) {
-            // Not a RAG path — ignore silently
-            return;
-        }
+    const tenantId = tenantIdFromPath(objectName);
+    if (!tenantId) {
+        // Not a RAG path — ignore silently
+        return;
+    }
 
-        logger.info(`onRagFileCreated: "${objectName}" (${contentType})`);
+    logger.info(`onRagFileCreated: "${objectName}" (${contentType})`);
 
-        try {
-            const ai = new GoogleGenAI({ apiKey: geminiApiKey.value() });
-            await indexStorageFile(ai, bucketName, objectName, contentType, tenantId);
-        } catch (error: any) {
-            logger.error(`onRagFileCreated: failed to index "${objectName}":`, error);
-        }
-    },
-);
+    try {
+        const ai = new GoogleGenAI({ apiKey: geminiApiKey.value() });
+        await indexStorageFile(ai, bucketName, objectName, contentType, tenantId);
+    } catch (error: any) {
+        logger.error(`onRagFileCreated: failed to index "${objectName}":`, error);
+    }
+}
 
 /**
  * Remove a file from the RAG store when it is deleted from
  * tenant/{tenantId}/rag/{fileName} in Firebase Storage.
  */
-export const onRagFileDeleted = onObjectDeleted(
-    {
-        region: 'europe-west6',
-        secrets: [geminiApiKey],
-    },
-    async (event) => {
-        const objectName = event.data.name;
+export async function handleRagFileDeleted(event: StorageEvent): Promise<void> {
+    const objectName = event.data.name;
 
-        const tenantId = tenantIdFromPath(objectName);
-        if (!tenantId) return;
+    const tenantId = tenantIdFromPath(objectName);
+    if (!tenantId) return;
 
-        logger.info(`onRagFileDeleted: "${objectName}"`);
+    logger.info(`onRagFileDeleted: "${objectName}"`);
 
-        try {
-            const ai = new GoogleGenAI({ apiKey: geminiApiKey.value() });
-            await removeFromFileStore(ai, objectName, tenantId);
-        } catch (error: any) {
-            logger.error(`onRagFileDeleted: failed to remove "${objectName}":`, error);
-        }
-    },
-);
+    try {
+        const ai = new GoogleGenAI({ apiKey: geminiApiKey.value() });
+        await removeFromFileStore(ai, objectName, tenantId);
+    } catch (error: any) {
+        logger.error(`onRagFileDeleted: failed to remove "${objectName}":`, error);
+    }
+}
 
 // --------------------------------- onCall functions ---------------------------------
 

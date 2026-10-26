@@ -20,7 +20,7 @@ import {
 
 // The other half of the video lifecycle: the original leaves Storage → its renderings follow.
 // Re-exported here so `main.ts` reaches both video triggers through the same `Video` namespace.
-export { onAlbumSourceDeleted } from './reap-renderings';
+export { handleAlbumSourceDeleted } from './reap-renderings';
 export { signVideoUrls } from './sign-video-urls';
 export { prepareChatVideoUpload } from './prepare-chat-video-upload';
 

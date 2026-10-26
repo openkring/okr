@@ -1,4 +1,4 @@
-import { onObjectFinalized } from 'firebase-functions/v2/storage';
+import type { StorageEvent } from 'firebase-functions/v2/storage';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
@@ -21,7 +21,7 @@ import { emitEvent } from '../workflow/emit';
 import { getTodayStr, DateFormat } from '@okr/shared-util-core';
 
 const REGION = 'europe-west6';
-const geminiApiKey = defineSecret('GEMINI_API_KEY');
+export const geminiApiKey = defineSecret('GEMINI_API_KEY');
 
 // Collection names (inlined to keep the function bundle self-contained — same convention as task/index.ts).
 const OCR_RESULT_COLLECTION = 'ocr-results';
@@ -229,35 +229,37 @@ async function extractReceipt(opts: {
   }
 }
 
-export const onOcrFileFinalized = onObjectFinalized(
-  // 1GiB, not the 256MiB default: the shared bundle alone takes ~135MiB, then the downloaded file
-  // (/tmp is memory on Cloud Run), its base64 copy for Gemini and each decoded QR rendering
-  // (~14MB at 1600px, ~32MB at 2400px) come on top. A second upload on a warm instance hit
-  // 267MiB and died before writing its ocr-results doc (2026-10-08, bill scan).
-  { region: REGION, secrets: [geminiApiKey], memory: '1GiB' },
-  async (event) => {
-    const objectName = event.data.name;
-    const bucketName = event.data.bucket;
-    const contentType = event.data.contentType ?? 'application/octet-stream';
-    const generation = String(event.data.generation ?? '');
-    const size = Number(event.data.size ?? 0);
-    const downloadToken = (event.data.metadata?.['firebaseStorageDownloadTokens'] ?? '').split(',')[0] ?? '';
+/**
+ * Storage-finalize handler for OCR uploads; fanned out by `onStorageFinalized` (../storage). That trigger
+ * carries OCR's options (memory 1GiB, geminiApiKey).
+ *
+ * 1GiB, not the 256MiB default: the shared bundle alone takes ~135MiB, then the downloaded file
+ * (/tmp is memory on Cloud Run), its base64 copy for Gemini and each decoded QR rendering
+ * (~14MB at 1600px, ~32MB at 2400px) come on top. A second upload on a warm instance hit
+ * 267MiB and died before writing its ocr-results doc (2026-10-08, bill scan).
+ */
+export async function handleOcrFileFinalized(event: StorageEvent): Promise<void> {
+  const objectName = event.data.name;
+  const bucketName = event.data.bucket;
+  const contentType = event.data.contentType ?? 'application/octet-stream';
+  const generation = String(event.data.generation ?? '');
+  const size = Number(event.data.size ?? 0);
+  const downloadToken = (event.data.metadata?.['firebaseStorageDownloadTokens'] ?? '').split(',')[0] ?? '';
 
-    const parsed = parseOcrPath(objectName);
-    if (!parsed) return; // not an OCR path — ignore silently
+  const parsed = parseOcrPath(objectName);
+  if (!parsed) return; // not an OCR path — ignore silently
 
-    const resultId = ocrResultId(objectName, generation);
-    const db = getFirestore();
-    const existing = await db.collection(OCR_RESULT_COLLECTION).doc(resultId).get();
-    if (existing.exists) {
-      logger.info(`onOcrFileFinalized: result ${resultId} already exists — skip`);
-      return;
-    }
+  const resultId = ocrResultId(objectName, generation);
+  const db = getFirestore();
+  const existing = await db.collection(OCR_RESULT_COLLECTION).doc(resultId).get();
+  if (existing.exists) {
+    logger.info(`onOcrFileFinalized: result ${resultId} already exists — skip`);
+    return;
+  }
 
-    logger.info(`onOcrFileFinalized: "${objectName}" usage=${parsed.ocrUsage}`);
-    await extractReceipt({ objectName, bucketName, contentType, size, downloadToken, generation, apiKey: geminiApiKey.value() });
-  },
-);
+  logger.info(`onOcrFileFinalized: "${objectName}" usage=${parsed.ocrUsage}`);
+  await extractReceipt({ objectName, bucketName, contentType, size, downloadToken, generation, apiKey: geminiApiKey.value() });
+}
 
 interface OcrResultDoc {
   ocrUsage: string;

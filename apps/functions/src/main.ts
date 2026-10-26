@@ -27,6 +27,7 @@ import * as Video from './video';
 import * as FileTransfer from './file-transfer';
 import * as Learning from './learning';
 import * as Group from './group';
+import * as Storage from './storage';
 import * as Membership from './membership';
 import * as Expense from './expense';
 import * as Booking from './booking';
@@ -262,20 +263,17 @@ export const searchChSearchPerson = Gateway.searchChSearchPerson;
 // google file search rag
 export const getOrCreateStore = Rag.getOrCreateStore;
 export const queryRag = Rag.queryRag;
-// storage triggers: auto-index/remove files at tenant/{tenantId}/rag/{fileName}
-export const onRagFileCreated = Rag.onRagFileCreated;
-export const onRagFileDeleted = Rag.onRagFileDeleted;
-// storage + firestore triggers: OCR pipeline at tenant/{tenantId}/ocr/{ocrUsage}/...
-export const onOcrFileFinalized = Ocr.onOcrFileFinalized;
+// OCR result trigger (the OCR/RAG storage handlers run inside onStorageFinalized / onStorageDeleted below)
 export const onOcrResultWritten = Ocr.onOcrResultWritten;
 export const redoExpenseOcr = Ocr.redoExpenseOcr;
 // document renderings: raster → SVG (vtracer)
 export const vectorizeDocument = Vectorize.vectorizeDocument;
 // storage trigger: album videos → playable mp4 + poster frame (ffmpeg renderings)
 export const onAlbumVideoFinalized = Video.onAlbumVideoFinalized;
-// storage trigger: the original leaves the bucket → its mp4/poster renderings go with it.
-// Only covers real Storage deletions; the UI's delete ARCHIVES and leaves the object in place.
-export const onAlbumSourceDeleted = Video.onAlbumSourceDeleted;
+// storage triggers (default bucket): finalize = OCR + RAG index; delete = RAG remove + album renderings reap.
+// Delete only covers real Storage deletions; the UI's delete ARCHIVES and leaves the object in place.
+export const onStorageFinalized = Storage.onStorageFinalized;
+export const onStorageDeleted = Storage.onStorageDeleted;
 // expense creation (CF-only writes to the `expenses` collection)
 export const createExpense = Expense.createExpense;
 export const deleteExpense = Expense.deleteExpense;
