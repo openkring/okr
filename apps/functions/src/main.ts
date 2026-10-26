@@ -190,8 +190,7 @@ export const authAdmin = AuthAdmin.authAdmin;
 // workflow trigger rules — event producers, the side-effect outbox and the approval step
 // (specs 2026-08-12-workflow-trigger-rules-design.md, 2026-08-15-approval-workflow-spec.md)
 export const onReservationCreated = WorkflowEmit.onReservationCreated;
-export const onApplicationCreated = WorkflowEmit.onApplicationCreated;
-export const onApplicationStateChanged = WorkflowEmit.onApplicationStateChanged;
+export { onApplicationDocWritten } from './workflow/on-application-doc-written';
 // UI-originated triggers: a CMS button press / a menu selection with no document behind it
 export const emitUiEvent = WorkflowUiEvent.emitUiEvent;
 export const onWorkflowOutbox = WorkflowOutbox.onWorkflowOutbox;

@@ -19,7 +19,7 @@
 // bodies: `onTaskCompleted` (a transition guard), `onApplicationStateChanged` (a before/after
 // comparison) and the membership emitters in `auth/account-sync.ts`.
 
-import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore';
+import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
 
 import { ApplicationCollection, AvatarInfo, ReservationCollection, TaskCollection } from '@okr/shared-models';
@@ -27,6 +27,7 @@ import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
 import { runWorkflow } from './index';
 import type { TaskWrittenEvent } from '../task/task-written-event';
+import type { ApplicationWrittenEvent } from './application-written-event';
 
 const REGION = 'europe-west6';
 
@@ -131,23 +132,37 @@ export function buildEmitArgs(
   };
 }
 
+/** Emit one created-event per tenant of the new row; shared by createdEmitter and handleApplicationCreated. */
+async function emitCreated(collection: string, spec: CreatedEmitSpec, id: string, d: DocData): Promise<void> {
+  const args = buildEmitArgs(spec, id, d);
+  for (const tenantId of (d['tenants'] as string[] | undefined) ?? []) {
+    await emitEvent(spec.event, tenantId, args.relatedKey, args);
+  }
+  logger.info(`createdEmitter(${collection}): emitted ${spec.event} for ${id}`);
+}
+
 /** Build one `onDocumentCreated` trigger from a table row. */
 function createdEmitter(collection: string, spec: CreatedEmitSpec) {
   return onDocumentCreated({ document: `${collection}/{id}`, region: REGION }, async (event) => {
     const d = event.data?.data() as DocData | undefined;
     if (!d) return;
-    const id = event.params['id'];
-    const args = buildEmitArgs(spec, id, d);
-    for (const tenantId of (d['tenants'] as string[] | undefined) ?? []) {
-      await emitEvent(spec.event, tenantId, args.relatedKey, args);
-    }
-    logger.info(`createdEmitter(${collection}): emitted ${spec.event} for ${id}`);
+    await emitCreated(collection, spec, event.params['id'], d);
   });
 }
 
 // Firebase needs a distinct export per trigger, but not a distinct hand-written body.
 export const onReservationCreated = createdEmitter(ReservationCollection, CREATED_EMITTERS[ReservationCollection]);
-export const onApplicationCreated = createdEmitter(ApplicationCollection, CREATED_EMITTERS[ApplicationCollection]);
+
+/**
+ * The `applications` created-emitter as a handler of the single applications trigger. The trigger is
+ * onDocumentWritten, so this ignores updates and deletes itself (it was an onDocumentCreated trigger).
+ */
+export const handleApplicationCreated = async (event: ApplicationWrittenEvent): Promise<void> => {
+  const before = event.data?.before?.data();
+  const after = event.data?.after?.data() as DocData | undefined;
+  if (before || !after) return;
+  await emitCreated(ApplicationCollection, CREATED_EMITTERS[ApplicationCollection], event.params['id'], after);
+};
 
 /** The state a task reaches when it is done; the `task_state` category item of the same name. */
 const DONE = 'done';
@@ -208,11 +223,9 @@ export function isStateChange(before: DocData, after: DocData): boolean {
  *
  * `personKey` stays empty for the same reason as on create: an applicant is not a person yet.
  */
-export const onApplicationStateChanged = onDocumentUpdated(
-  { document: `${ApplicationCollection}/{id}`, region: REGION },
-  async (event) => {
-    const before = event.data?.before.data() as DocData | undefined;
-    const after = event.data?.after.data() as DocData | undefined;
+export const handleApplicationStateChanged = async (event: ApplicationWrittenEvent): Promise<void> => {
+    const before = event.data?.before?.data() as DocData | undefined;
+    const after = event.data?.after?.data() as DocData | undefined;
     if (!before || !after) return;
     if (!isStateChange(before, after)) return;
 
@@ -228,5 +241,4 @@ export const onApplicationStateChanged = onDocumentUpdated(
       });
     }
     logger.info(`onApplicationStateChanged: emitted for ${event.params['id']}`);
-  },
-);
+};
