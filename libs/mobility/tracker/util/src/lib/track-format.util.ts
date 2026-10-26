@@ -20,3 +20,14 @@ export function formatClockTime(iso: string): string {
   const d = new Date(ms);
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
+
+/** A split as m:ss per 500 m, e.g. «2:05 /500 m» (whole seconds). */
+export function formatSplit(seconds: number): string {
+  const total = Math.max(0, Math.round(seconds));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')} /500 m`;
+}
+
+/** A step count with grouped thousands, e.g. «6’240» (de-CH). */
+export function formatSteps(steps: number, locale = 'de-CH'): string {
+  return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(Math.max(0, Math.round(steps)));
+}

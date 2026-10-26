@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatClockTime, formatDuration, formatKm } from './track-format.util';
+import { formatClockTime, formatDuration, formatKm, formatSplit, formatSteps } from './track-format.util';
 
 describe('formatDuration', () => {
   it('formats h:mm:ss', () => {
@@ -28,4 +28,13 @@ describe('formatKm', () => {
 describe('formatClockTime', () => {
   it('formats the local time with leading zeros', () => expect(formatClockTime(new Date(2026, 9, 26, 7, 5).toISOString())).toBe('07:05'));
   it('is empty for an unparsable value', () => expect(formatClockTime('')).toBe(''));
+});
+
+describe('formatSplit', () => {
+  it('formats m:ss per 500 m', () => expect(formatSplit(125)).toBe('2:05 /500 m'));
+  it('rounds to whole seconds', () => expect(formatSplit(59.6)).toBe('1:00 /500 m'));
+});
+
+describe('formatSteps', () => {
+  it('groups thousands the de-CH way', () => expect(formatSteps(6240)).toBe('6’240'));
 });
