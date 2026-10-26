@@ -8,7 +8,7 @@ import { ENV, getBkStorage } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { TRACKER_TRIP_TYPE, TrackPhoto, TransportMode, TripCollection, TripModel, TripTrack } from '@okr/shared-models';
 import { convertDateFormatToString, DateFormat, getDeletePatch, getSystemQuery } from '@okr/shared-util-core';
-import { decodeTrack, encodeTrack, LocalSection, LocalTrack, serverPhotos, summarize, toTrackSections, trackThumbPath, TrackPoint } from '@okr/mobility-tracker-util';
+import { decodeTrack, encodeTrack, LocalTrack, serverPhotos, summarize, trackThumbPath, TrackPoint, tripSections } from '@okr/mobility-tracker-util';
 
 /** One section's points, stored as an encoded polyline in trips/{key}/track-points/{n}. */
 export interface TrackPointsDoc {
@@ -62,7 +62,6 @@ export class TrackService {
     const endedMs = local.endedAt ?? local.startedAt;
     if (local.sections.length !== sections.length) throw new Error('track sections and points differ');
     // ONE source for the section count: trip.track.sections and the track-points docs both follow it
-    const localSections: LocalSection[] = local.sections.map((s, i) => ({ mode: s.mode, detected: s.detected, points: sections[i] }));
 
     const durationS = Math.max(0, Math.round((endedMs - local.startedAt) / 1000));
     // sum per section: no phantom distance across the jump between two sections
@@ -76,7 +75,7 @@ export class TrackService {
       startedAt: new Date(local.startedAt).toISOString(),
       endedAt: new Date(endedMs).toISOString(),
       durationS,
-      sections: toTrackSections(localSections, tripKey),
+      sections: tripSections(local, sections, tripKey), // keeps steps (spec 1.122)
     } as TripTrack;
     // photos: only from the local list — hidden ones left out (spec §6: never uploaded), path400 stripped, thumbPath
     // kept. Without a local list the key is omitted, so the merge keeps what is stored and never wipes thumb paths.

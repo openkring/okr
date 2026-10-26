@@ -3,7 +3,7 @@ import type { TripModel } from '@okr/shared-models';
 import type { LocalTrack } from './track-local.model';
 import type { LocalSection } from './track-sections.util';
 import {
-  buildGpx, correctedTrack, elapsedSeconds, isShareCancel, sameTrackContent, fromLocalSections, gpxFileName, localFromTrip, mergeTrackLists, middlePointIndex, sectionRows, toLocalSections,
+  tripSections, buildGpx, correctedTrack, elapsedSeconds, isShareCancel, sameTrackContent, fromLocalSections, gpxFileName, localFromTrip, mergeTrackLists, middlePointIndex, sectionRows, toLocalSections,
 } from './track-pages.util';
 
 function local(key: string, startedAt: number, extra: Partial<LocalTrack> = {}): LocalTrack {
@@ -245,5 +245,15 @@ describe('steps in the local model (spec 1.122)', () => {
     expect(rows[1].splitAvgS).toBeGreaterThan(0);
     expect(rows[1].splitBestS).toBeGreaterThan(0);
     expect('steps' in rows[1]).toBe(false);
+  });
+});
+
+describe('tripSections (upload, spec 1.122)', () => {
+  it('carries the stored steps of a foot section into the uploaded section', () => {
+    const t = local('a', 1, { sections: [{ mode: 'foot', detected: true, steps: 640 }, { mode: 'bus', detected: false }] });
+    const s = tripSections(t, [[P(47, 8, 0), P(47.001, 8, 60000)], [P(47.001, 8, 60000), P(47.01, 8, 120000)]]);
+    expect(s[0].steps).toBe(640);
+    expect('steps' in s[1]).toBe(false);
+    expect(s[1].pointsPath).toBe('trips/a/track-points/1');
   });
 });

@@ -1,7 +1,7 @@
-import type { TransportMode, TripModel } from '@okr/shared-models';
+import type { TrackSection, TransportMode, TripModel } from '@okr/shared-models';
 import type { LocalTrack } from './track-local.model';
 import type { TrackPoint } from './track-polyline.util';
-import { sectionFigures, sectionMeta, type LocalSection } from './track-sections.util';
+import { sectionFigures, sectionMeta, toTrackSections, type LocalSection } from './track-sections.util';
 import { summarize } from './track-summary.util';
 
 /** Pure helpers of the tracker pages (spec 1.121, plan 2 task 9). */
@@ -164,4 +164,12 @@ export function isShareCancel(error: unknown): boolean {
   if (typeof DOMException !== 'undefined' && error instanceof DOMException && error.name === 'AbortError') return true;
   const message = (error as { message?: unknown } | undefined)?.message;
   return typeof message === 'string' && /cancel/i.test(message);
+}
+
+/**
+ * The trip's `track.sections` for an upload: the local section metadata (incl. steps) with its points, then
+ * distance, times and activity figures (spec 1.122). The one mapping TrackService.upload uses.
+ */
+export function tripSections(track: LocalTrack, points: TrackPoint[][], tripKey = track.key): TrackSection[] {
+  return toTrackSections(toLocalSections(track, points), tripKey);
 }
