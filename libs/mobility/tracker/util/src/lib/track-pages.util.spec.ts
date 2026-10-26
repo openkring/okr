@@ -212,3 +212,38 @@ describe('isShareCancel', () => {
     expect(isShareCancel(undefined)).toBe(false);
   });
 });
+
+describe('steps in the local model (spec 1.122)', () => {
+  it('round-trips steps through toLocalSections / fromLocalSections / correctedTrack', () => {
+    const t = local('a', 1, { sections: [{ mode: 'foot', detected: true, steps: 640 }, { mode: 'bus', detected: false }] });
+    const s = toLocalSections(t, [[P(1, 1, 1)], []]);
+    expect(s[0].steps).toBe(640);
+    expect('steps' in s[1]).toBe(false);
+    const back = fromLocalSections(t, s);
+    expect(back.track.sections).toEqual(t.sections);
+    expect(correctedTrack(t, back.track.sections).sections).toEqual(t.sections);
+  });
+  it('reads steps from the trip', () => {
+    const t = trip('k', '2026-10-25T08:00:00.000Z', [10, 20]);
+    (t.track as NonNullable<TripModel['track']>).sections[1].steps = 77;
+    const { track, sections } = localFromTrip(t, [[P(1, 1, 1)], [P(2, 2, 2)]]);
+    expect(track.sections[1].steps).toBe(77);
+    expect(sections[1].steps).toBe(77);
+    expect('steps' in track.sections[0]).toBe(false);
+  });
+  it('sameTrackContent sees a change of steps', () => {
+    const a = local('a', 1, { sections: [{ mode: 'foot', detected: true, steps: 1 }] });
+    const b = local('a', 1, { sections: [{ mode: 'foot', detected: true, steps: 2 }] });
+    expect(sameTrackContent(a, b)).toBe(false);
+  });
+  it('sectionRows carries steps and row splits', () => {
+    const rows = sectionRows([
+      { mode: 'foot', detected: true, steps: 640, points: [P(47, 8, 0), P(47.001, 8, 60000)] },
+      { mode: 'row', detected: false, points: [P(47, 8, 0), P(47.001, 8, 60000), P(47.002, 8, 120000), P(47.003, 8, 180000), P(47.004, 8, 240000), P(47.005, 8, 300000)] },
+    ]);
+    expect(rows[0].steps).toBe(640);
+    expect(rows[1].splitAvgS).toBeGreaterThan(0);
+    expect(rows[1].splitBestS).toBeGreaterThan(0);
+    expect('steps' in rows[1]).toBe(false);
+  });
+});

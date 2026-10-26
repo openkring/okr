@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mergeWithNext, setSectionMode, splitSection, toTrackSections } from './track-sections.util';
+import { mergeWithNext, setSectionMode, splitSection, splitStepsByDistance, toTrackSections } from './track-sections.util';
 import type { LocalSection } from './track-sections.util';
 import type { TrackPoint } from './track-polyline.util';
 
@@ -86,5 +86,66 @@ describe('toTrackSections', () => {
     expect(r[0].pointsPath).toBe('trips/trip1/track-points/0');
     expect(r[1].pointsPath).toBe('trips/trip1/track-points/1');
     expect(r[1].detected).toBe(false);
+  });
+});
+
+describe('steps through corrections (spec 1.122)', () => {
+  const withSteps = (x: LocalSection, steps: number): LocalSection => ({ ...x, steps });
+
+  it('drops steps when the mode changes away from foot', () => {
+    const r = setSectionMode([withSteps(sec('foot', 5), 500)], 0, 'car');
+    expect('steps' in r[0]).toBe(false);
+  });
+  it('sums steps when a mode change merges foot neighbours', () => {
+    const r = setSectionMode([withSteps(sec('foot', 5), 100), sec('car', 5, 47.004), withSteps(sec('foot', 5, 47.008), 200)], 1, 'foot');
+    expect(r).toHaveLength(1);
+    expect(r[0].steps).toBe(300);
+  });
+  it('sums steps when merging two foot sections', () => {
+    const r = mergeWithNext([withSteps(sec('foot', 5), 100), withSteps(sec('foot', 5, 47.004), 200)], 0);
+    expect(r[0].steps).toBe(300);
+  });
+  it('keeps the present count when a longer foot section absorbs a car section', () => {
+    const r = mergeWithNext([withSteps(sec('foot', 10), 300), sec('car', 3, 47.009)], 0);
+    expect(r[0].mode).toBe('foot');
+    expect(r[0].steps).toBe(300);
+  });
+  it('has no steps when neither merged section had any', () => {
+    const r = mergeWithNext([sec('foot', 5), sec('foot', 5, 47.004)], 0);
+    expect('steps' in r[0]).toBe(false);
+  });
+  it('gives the head of a split foot section its distance share; the non-foot tail gets none', () => {
+    const r = splitSection([withSteps(sec('foot', 11), 1000)], 0, 3, 'bus');
+    expect(r[0].steps).toBe(300);
+    expect('steps' in r[1]).toBe(false);
+  });
+});
+
+describe('splitStepsByDistance', () => {
+  it('splits by distance', () => expect(splitStepsByDistance(1000, 300, 700)).toEqual([300, 700]));
+  it('preserves the sum when rounding', () => {
+    const [a, b] = splitStepsByDistance(1001, 1, 2);
+    expect((a ?? 0) + (b ?? 0)).toBe(1001);
+  });
+  it('keeps unknown steps unknown', () => expect(splitStepsByDistance(undefined, 1, 2)).toEqual([undefined, undefined]));
+  it('puts all steps on the head when there is no distance', () => expect(splitStepsByDistance(500, 0, 0)).toEqual([500, 0]));
+});
+
+describe('toTrackSections figures (spec 1.122)', () => {
+  it('writes steps for foot and no split fields', () => {
+    const [t] = toTrackSections([{ ...sec('foot', 5), steps: 640 }], 'k');
+    expect(t.steps).toBe(640);
+    expect('splitAvgS' in t).toBe(false);
+  });
+  it('writes the splits for row', () => {
+    const [t] = toTrackSections([sec('row', 10)], 'k');
+    expect(t.splitAvgS).toBeGreaterThan(0);
+    expect(t.splitBestS).toBeGreaterThan(0);
+    expect('steps' in t).toBe(false);
+  });
+  it('writes no figure keys for a legacy section', () => {
+    const [t] = toTrackSections([sec('foot', 5)], 'k');
+    expect('steps' in t).toBe(false);
+    expect('splitAvgS' in t).toBe(false);
   });
 });

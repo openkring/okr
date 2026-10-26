@@ -1,7 +1,7 @@
 import type { TransportMode, TripModel } from '@okr/shared-models';
 import type { LocalTrack } from './track-local.model';
 import type { TrackPoint } from './track-polyline.util';
-import type { LocalSection } from './track-sections.util';
+import { sectionFigures, sectionMeta, type LocalSection } from './track-sections.util';
 import { summarize } from './track-summary.util';
 
 /** Pure helpers of the tracker pages (spec 1.121, plan 2 task 9). */
@@ -57,13 +57,13 @@ export function mergeTrackLists(local: LocalTrack[], uploaded: TripModel[]): Tra
 
 /** Pairs the section metadata of a local track with its points (a missing group becomes []). */
 export function toLocalSections(track: LocalTrack, points: TrackPoint[][]): LocalSection[] {
-  return track.sections.map((s, i) => ({ mode: s.mode, detected: s.detected, points: points[i] ?? [] }));
+  return track.sections.map((s, i) => ({ ...sectionMeta(s), points: points[i] ?? [] }));
 }
 
 /** The inverse of toLocalSections: the track with the (corrected) section metadata and the points per section. */
 export function fromLocalSections(track: LocalTrack, sections: LocalSection[]): { track: LocalTrack; points: TrackPoint[][] } {
   return {
-    track: { ...track, sections: sections.map((s) => ({ mode: s.mode, detected: s.detected })) },
+    track: { ...track, sections: sections.map(sectionMeta) },
     points: sections.map((s) => s.points),
   };
 }
@@ -79,14 +79,16 @@ export function localFromTrip(trip: TripModel, pointsBySection: TrackPoint[][]):
     name: trip.name,
     startedAt,
     endedAt: Number.isNaN(endedMs) ? startedAt : endedMs,
-    sections: (trip.track?.sections ?? []).map((s) => ({ mode: s.mode, detected: s.detected })),
+    sections: (trip.track?.sections ?? []).map(sectionMeta),
   };
   return { track, sections: toLocalSections(track, pointsBySection) };
 }
 
 /** Rows for okr-track-sections. */
-export function sectionRows(sections: LocalSection[]): { mode: TransportMode; distanceM: number; durationS: number; detected: boolean }[] {
-  return sections.map((s) => ({ mode: s.mode, detected: s.detected, ...summarize(s.points) }));
+export function sectionRows(sections: LocalSection[]): {
+  mode: TransportMode; distanceM: number; durationS: number; detected: boolean; steps?: number; splitAvgS?: number; splitBestS?: number;
+}[] {
+  return sections.map((s) => ({ mode: s.mode, detected: s.detected, ...summarize(s.points), ...sectionFigures(s) }));
 }
 
 /** The inner point a section is split at (its middle); -1 when it has no inner point (fewer than 3 points). */
@@ -140,7 +142,7 @@ export function sameTrackContent(a: LocalTrack, b: LocalTrack): boolean {
   return (a.rev ?? 0) === (b.rev ?? 0)
     && a.name === b.name
     && a.sections.length === b.sections.length
-    && a.sections.every((s, i) => s.mode === b.sections[i].mode && s.detected === b.sections[i].detected);
+    && a.sections.every((s, i) => s.mode === b.sections[i].mode && s.detected === b.sections[i].detected && s.steps === b.sections[i].steps);
 }
 
 /**
@@ -150,7 +152,7 @@ export function sameTrackContent(a: LocalTrack, b: LocalTrack): boolean {
 export function correctedTrack(t: LocalTrack, sections: LocalTrack['sections'], name?: string): LocalTrack {
   const bound = Math.max(t.extraPointsUpTo ?? 0, t.sections.length);
   const out: LocalTrack = {
-    ...t, name: name ?? t.name, sections: sections.map((s) => ({ mode: s.mode, detected: s.detected })), uploaded: false, rev: (t.rev ?? 0) + 1,
+    ...t, name: name ?? t.name, sections: sections.map(sectionMeta), uploaded: false, rev: (t.rev ?? 0) + 1,
   };
   if (bound > sections.length) out.extraPointsUpTo = bound;
   else delete out.extraPointsUpTo;

@@ -6,6 +6,7 @@ export * from './lib/track-profile.util';
 export * from './lib/track-sections.util';
 export * from './lib/track-summary.util';
 export * from './lib/track-split.util';
+export * from './lib/track-steps.util';
 export * from './lib/tracker-session.util';
 export * from './lib/tracker-i18n';
 export * from './lib/track-format.util';

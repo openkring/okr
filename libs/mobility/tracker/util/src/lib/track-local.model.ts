@@ -9,7 +9,7 @@ export interface LocalTrack {
   name: string;
   startedAt: number;
   endedAt?: number;
-  sections: { mode: TransportMode; detected: boolean }[];
+  sections: { mode: TransportMode; detected: boolean; steps?: number }[]; // steps: foot only (spec 1.122)
   /**
    * Set by a correction that reduced the number of sections: track-points docs with an index from
    * sections.length up to this bound (exclusive) may still exist uploaded and are deleted in the next upload's batch.

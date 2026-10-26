@@ -1,12 +1,36 @@
 import type { TrackSection, TransportMode } from '@okr/shared-models';
 import type { TrackPoint } from './track-polyline.util';
 import { summarize } from './track-summary.util';
+import { rowSplits } from './track-split.util';
 
 /** A section with its points, as kept locally before upload. */
 export interface LocalSection {
   mode: TransportMode;
   detected: boolean;
   points: TrackPoint[];
+  steps?: number; // foot only (spec 1.122)
+}
+
+/** A section's metadata as kept in `LocalTrack.sections`: steps only when known. */
+export function sectionMeta(s: { mode: TransportMode; detected: boolean; steps?: number }): { mode: TransportMode; detected: boolean; steps?: number } {
+  return s.steps === undefined ? { mode: s.mode, detected: s.detected } : { mode: s.mode, detected: s.detected, steps: s.steps };
+}
+
+/** Sets or removes `steps` (never writes an undefined key). */
+function withSteps<T extends { steps?: number }>(s: T, steps: number | undefined): T {
+  const out = { ...s };
+  if (steps === undefined) delete out.steps;
+  else out.steps = steps;
+  return out;
+}
+
+/** Splits a step count by the distance of two parts; the sum is preserved, no distance → all on the head. */
+export function splitStepsByDistance(steps: number | undefined, headM: number, tailM: number): [number | undefined, number | undefined] {
+  if (steps === undefined) return [undefined, undefined];
+  const total = headM + tailM;
+  if (total <= 0) return [steps, 0];
+  const head = Math.round((steps * headM) / total);
+  return [head, steps - head];
 }
 
 function validIndex(s: LocalSection[], index: number): boolean {
@@ -21,13 +45,15 @@ function joinPoints(a: TrackPoint[], b: TrackPoint[]): TrackPoint[] {
 }
 
 function combine(a: LocalSection, b: LocalSection, mode: TransportMode): LocalSection {
-  return { mode, detected: a.detected && b.detected, points: joinPoints(a.points, b.points) };
+  const known = [a.steps, b.steps].filter((x): x is number => x !== undefined);
+  const steps = mode === 'foot' && known.length > 0 ? known.reduce((x, y) => x + y, 0) : undefined;
+  return withSteps<LocalSection>({ mode, detected: a.detected && b.detected, points: joinPoints(a.points, b.points) }, steps);
 }
 
 /** Owner correction: sets the mode (detected=false) and merges with an equal-mode neighbour. */
 export function setSectionMode(s: LocalSection[], index: number, mode: TransportMode): LocalSection[] {
   if (!validIndex(s, index)) return s;
-  const out = s.map((x, i) => (i === index ? { ...x, mode, detected: false } : x));
+  const out = s.map((x, i) => (i === index ? withSteps({ ...x, mode, detected: false }, mode === 'foot' ? x.steps : undefined) : x));
   let at = index;
   if (at > 0 && out[at - 1].mode === mode) {
     out.splice(at - 1, 2, combine(out[at - 1], out[at], mode));
@@ -45,8 +71,11 @@ export function splitSection(s: LocalSection[], index: number, pointIndex: numbe
   const sec = s[index];
   if (sec.mode === mode) return s;
   if (!Number.isInteger(pointIndex) || pointIndex < 1 || pointIndex > sec.points.length - 2) return s;
-  const head: LocalSection = { ...sec, points: sec.points.slice(0, pointIndex + 1) };
-  const tail: LocalSection = { mode, detected: false, points: sec.points.slice(pointIndex) };
+  const headPoints = sec.points.slice(0, pointIndex + 1);
+  const tailPoints = sec.points.slice(pointIndex);
+  const [headSteps, tailSteps] = splitStepsByDistance(sec.steps, summarize(headPoints).distanceM, summarize(tailPoints).distanceM);
+  const head = withSteps({ ...sec, points: headPoints }, headSteps);
+  const tail = withSteps<LocalSection>({ mode, detected: false, points: tailPoints }, mode === 'foot' ? tailSteps : undefined);
   return [...s.slice(0, index), head, tail, ...s.slice(index + 1)];
 }
 
@@ -60,12 +89,22 @@ export function mergeWithNext(s: LocalSection[], index: number): LocalSection[] 
 }
 
 export function toTrackSections(s: LocalSection[], tripKey: string): TrackSection[] {
-  return s.map((sec, i) => ({
-    mode: sec.mode,
-    detected: sec.detected,
-    startedAt: new Date(sec.points[0]?.t ?? 0).toISOString(),
-    endedAt: new Date(sec.points[sec.points.length - 1]?.t ?? 0).toISOString(),
-    distanceM: summarize(sec.points).distanceM,
-    pointsPath: `trips/${tripKey}/track-points/${i}`,
-  }));
+  return s.map((sec, i) => {
+    const t: TrackSection = {
+      mode: sec.mode,
+      detected: sec.detected,
+      startedAt: new Date(sec.points[0]?.t ?? 0).toISOString(),
+      endedAt: new Date(sec.points[sec.points.length - 1]?.t ?? 0).toISOString(),
+      distanceM: summarize(sec.points).distanceM,
+      pointsPath: `trips/${tripKey}/track-points/${i}`,
+    };
+    return { ...t, ...sectionFigures(sec) };
+  });
+}
+
+/** The activity figures of a section (spec 1.122): steps on foot, splits on row; only defined keys. */
+export function sectionFigures(sec: LocalSection): { steps?: number; splitAvgS?: number; splitBestS?: number } {
+  if (sec.mode === 'foot') return sec.steps === undefined ? {} : { steps: sec.steps };
+  if (sec.mode === 'row') return rowSplits(sec.points);
+  return {};
 }
