@@ -41,7 +41,9 @@ export class DiaryTrackCardView {
   protected readonly line = computed(() => {
     const card = this.card();
     const i18n = this.i18n();
-    const figures = figureTexts(card, { steps: i18n.track_steps(), splitAvg: i18n.track_split_avg(), splitBest: '' });
+    const figures = figureTexts(card, {
+      steps: i18n.track_steps(), splitAvg: i18n.track_split_avg(), splitBest: '', strokes: i18n.track_strokes(), rateAvg: i18n.track_rate_avg(),
+    });
     return [formatKm(card.distanceM), formatDuration(card.durationS), ...figures].join(' · ');
   });
 }

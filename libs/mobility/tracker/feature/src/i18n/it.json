@@ -99,7 +99,12 @@
   "figure": {
     "steps": "{steps} passi",
     "split_avg": "Ø {split}",
-    "split_best": "migliore {split}"
+    "split_best": "migliore {split}",
+    "strokes": "{strokes} colpi",
+    "rate": "{rate}/min",
+    "rate_avg": "Ø {rate}/min",
+    "rate_max": "max {rate}/min",
+    "per_stroke": "{m} m/colpo"
   },
   "calibration": {
     "title": "Calibrazione canottaggio",

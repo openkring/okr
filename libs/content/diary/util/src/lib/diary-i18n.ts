@@ -129,6 +129,10 @@ export const DIARY_I18N_KEYS = {
   track_steps:            PFX + 'track.steps',      // single braces: {steps}
   track_split_avg:        PFX + 'track.split_avg',  // single braces: {split}
   track_split_best:       PFX + 'track.split_best', // single braces: {split}
+  track_strokes:          PFX + 'track.strokes',    // single braces: {strokes}
+  track_rate_avg:         PFX + 'track.rate_avg',   // single braces: {rate}
+  track_rate_max:         PFX + 'track.rate_max',   // single braces: {rate}
+  track_per_stroke:       PFX + 'track.per_stroke', // single braces: {m}
 
   jass_draw:              PFX + 'jass.draw',
   jass_match:             PFX + 'jass.match',

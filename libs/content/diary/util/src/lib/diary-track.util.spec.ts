@@ -86,3 +86,23 @@ describe('toDiaryTrackCards figures (spec 1.122)', () => {
     expect(card.sections).toEqual([{ mode: 'foot', points: [] }, { mode: 'row', points: [] }]);
   });
 });
+
+describe('toDiaryTrackCards stroke figures (spec 1.122 2c)', () => {
+  it('sums the strokes of row sections and takes the stroke rate of the longest one', () => {
+    const t = trip('s', '07:00', {
+      sections: [
+        { ...section('row', 2000), strokes: 200, strokeRateAvg: 26, strokeRateMax: 30 },
+        { ...section('row', 6000), strokes: 600, strokeRateAvg: 22.4, strokeRateMax: 28 },
+      ],
+    });
+    const [card] = toDiaryTrackCards([t], {});
+    expect(card.strokes).toBe(800);
+    expect(card.strokeRateAvg).toBe(22.4);
+    expect(card.sections[1]).toMatchObject({ strokes: 600, strokeRateAvg: 22.4, strokeRateMax: 28 });
+  });
+  it('has no stroke keys for a legacy row trip', () => {
+    const [card] = toDiaryTrackCards([trip('l', '07:00', { sections: [section('row', 2000)] })], {});
+    expect('strokes' in card).toBe(false);
+    expect('strokes' in card.sections[0]).toBe(false);
+  });
+});

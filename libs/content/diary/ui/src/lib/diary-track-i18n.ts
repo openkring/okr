@@ -30,6 +30,10 @@ export function diaryTrackerI18n(i18n: DiaryI18n): TrackerI18n {
     figure_steps: i18n.track_steps,
     figure_split_avg: i18n.track_split_avg,
     figure_split_best: i18n.track_split_best,
+    figure_strokes: i18n.track_strokes,
+    figure_rate_avg: i18n.track_rate_avg,
+    figure_rate_max: i18n.track_rate_max,
+    figure_per_stroke: i18n.track_per_stroke,
   };
   const keys = Object.keys(TRACKER_I18N_KEYS) as (keyof TrackerI18n)[];
   return Object.fromEntries(keys.map(k => [k, fromDiary[k] ?? EMPTY])) as TrackerI18n;

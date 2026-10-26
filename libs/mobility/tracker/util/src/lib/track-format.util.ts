@@ -32,19 +32,35 @@ export function formatSteps(steps: number, locale = 'de-CH'): string {
   return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(Math.max(0, Math.round(steps)));
 }
 
+/** A rate or distance with at most one decimal, e.g. «22.4», «31» (de-CH). */
+function formatOneDecimal(v: number, locale = 'de-CH'): string {
+  return new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(v);
+}
+
 /**
- * The activity figures of a section or track as display texts (spec 1.122), in the order steps, average split,
- * best split. Labels carry single-brace placeholders ({steps}, {split}); an absent figure or an empty label is
- * left out, so a legacy track renders nothing.
+ * The activity figures of a section or track as display texts (spec 1.122), in the order steps, strokes, average
+ * and maximum stroke rate, average and best split, distance per stroke. Labels carry single-brace placeholders
+ * ({steps}, {strokes}, {rate}, {split}, {m}); an absent figure or an empty / missing label is left out, so a
+ * legacy track renders nothing.
  */
 export function figureTexts(
-  f: { steps?: number; splitAvgS?: number; splitBestS?: number },
-  labels: { steps: string; splitAvg: string; splitBest: string },
+  f: {
+    steps?: number; strokes?: number; strokeRateAvg?: number; strokeRateMax?: number;
+    splitAvgS?: number; splitBestS?: number; distancePerStrokeM?: number;
+  },
+  labels: { steps: string; splitAvg: string; splitBest: string; strokes?: string; rateAvg?: string; rateMax?: string; perStroke?: string },
 ): string[] {
   const out: string[] = [];
-  if (f.steps !== undefined && labels.steps) out.push(labels.steps.replace('{steps}', formatSteps(f.steps)));
-  if (f.splitAvgS !== undefined && labels.splitAvg) out.push(labels.splitAvg.replace('{split}', formatSplit(f.splitAvgS)));
-  if (f.splitBestS !== undefined && labels.splitBest) out.push(labels.splitBest.replace('{split}', formatSplit(f.splitBestS)));
+  const add = (value: number | undefined, label: string | undefined, key: string, text: (v: number) => string) => {
+    if (value !== undefined && label) out.push(label.replace(`{${key}}`, text(value)));
+  };
+  add(f.steps, labels.steps, 'steps', (v) => formatSteps(v));
+  add(f.strokes, labels.strokes, 'strokes', (v) => formatSteps(v));
+  add(f.strokeRateAvg, labels.rateAvg, 'rate', (v) => formatOneDecimal(v));
+  add(f.strokeRateMax, labels.rateMax, 'rate', (v) => formatOneDecimal(v));
+  add(f.splitAvgS, labels.splitAvg, 'split', (v) => formatSplit(v));
+  add(f.splitBestS, labels.splitBest, 'split', (v) => formatSplit(v));
+  add(f.distancePerStrokeM, labels.perStroke, 'm', (v) => formatOneDecimal(v));
   return out;
 }
 

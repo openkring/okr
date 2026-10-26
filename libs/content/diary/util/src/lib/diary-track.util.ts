@@ -10,11 +10,18 @@ export interface DiaryTrackCard {
   modes: TransportMode[];
   distanceM: number;
   durationS: number;
-  sections: { mode: TransportMode; points: TrackPoint[]; steps?: number; splitAvgS?: number; splitBestS?: number }[];
+  sections: {
+    mode: TransportMode; points: TrackPoint[]; steps?: number; splitAvgS?: number; splitBestS?: number;
+    strokes?: number; strokeRateAvg?: number; strokeRateMax?: number;
+  }[];
   /** spec 1.122: steps of all foot sections (absent when none has any) */
   steps?: number;
   /** spec 1.122: average split of the longest row section, s per 500 m */
   splitAvgS?: number;
+  /** spec 1.122 2c: strokes of all row sections (absent when none has any) */
+  strokes?: number;
+  /** spec 1.122 2c: average stroke rate of the longest row section with strokes */
+  strokeRateAvg?: number;
   photos: { lat: number; lng: number; thumbPath?: string; hidden: boolean; takenAt: string }[];
 }
 
@@ -44,6 +51,9 @@ export function toDiaryTrackCards(trips: TripModel[], pointsByTrip: Record<strin
         if (s.steps !== undefined) out.steps = s.steps;
         if (s.splitAvgS !== undefined) out.splitAvgS = s.splitAvgS;
         if (s.splitBestS !== undefined) out.splitBestS = s.splitBestS;
+        if (s.strokes !== undefined) out.strokes = s.strokes;
+        if (s.strokeRateAvg !== undefined) out.strokeRateAvg = s.strokeRateAvg;
+        if (s.strokeRateMax !== undefined) out.strokeRateMax = s.strokeRateMax;
         return out;
       }),
       photos: (track.photos ?? []).map(p => {
@@ -58,6 +68,12 @@ export function toDiaryTrackCards(trips: TripModel[], pointsByTrip: Record<strin
       .filter(s => s.mode === 'row' && s.splitAvgS !== undefined)
       .reduce<TrackSection | undefined>((best, s) => (!best || (s.distanceM ?? 0) > (best.distanceM ?? 0) ? s : best), undefined);
     if (longestRow?.splitAvgS !== undefined) card.splitAvgS = longestRow.splitAvgS;
+    const stroked = sections.filter(s => s.mode === 'row' && s.strokes !== undefined);
+    if (stroked.length > 0) {
+      card.strokes = stroked.reduce((n, s) => n + (s.strokes ?? 0), 0);
+      const longest = stroked.reduce((best, s) => ((s.distanceM ?? 0) > (best.distanceM ?? 0) ? s : best));
+      if (longest.strokeRateAvg !== undefined) card.strokeRateAvg = longest.strokeRateAvg;
+    }
     cards.push(card);
   }
   return cards.sort((a, b) => a.startTime.localeCompare(b.startTime));

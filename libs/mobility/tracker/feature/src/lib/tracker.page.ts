@@ -166,8 +166,13 @@ export class TrackerPage {
   /** steps so far on foot, the current split on row (spec 1.122) */
   protected readonly liveFigure = computed(() => {
     const mode = this.store.currentMode();
-    const f = mode === 'foot' ? { steps: this.store.liveSteps() } : mode === 'row' ? { splitAvgS: this.store.liveSplitS() } : {};
-    return figureTexts(f, { steps: this.i18n.figure_steps(), splitAvg: '{split}', splitBest: '' })[0] ?? '';
+    const f = mode === 'foot'
+      ? { steps: this.store.liveSteps() }
+      : mode === 'row' ? { strokes: this.store.liveStrokes(), strokeRateAvg: this.store.liveStrokeRate(), splitAvgS: this.store.liveSplitS() } : {};
+    // row: «812 Schläge · 24/min · 2:05 /500 m»
+    return figureTexts(f, {
+      steps: this.i18n.figure_steps(), splitAvg: '{split}', splitBest: '', strokes: this.i18n.figure_strokes(), rateAvg: this.i18n.figure_rate(),
+    }).join(' · ');
   });
   /** admin-only raw-motion recording for tuning the stroke detector (spec 1.122 §5.2); needs the native app */
   protected readonly showCalibration = computed(() => Capacitor.isNativePlatform() && hasRole('admin', this.appStore.currentUser()));

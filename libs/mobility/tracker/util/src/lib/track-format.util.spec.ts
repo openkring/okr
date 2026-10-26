@@ -54,3 +54,18 @@ describe('calibrationStartedAt', () => {
   it('reads the start time from the file name', () => expect(calibrationStartedAt('calibration/row-1761465600000.csv')).toBe('2025-10-26T08:00:00.000Z'));
   it('is empty for another name', () => expect(calibrationStartedAt('calibration/notes.csv')).toBe(''));
 });
+
+describe('figureTexts with strokes (spec 1.122 2c)', () => {
+  it('renders all figures in order: steps, strokes, rates, splits, distance per stroke', () => {
+    const labels = {
+      steps: '{steps} Schritte', strokes: '{strokes} Schläge', rateAvg: 'Ø {rate}/min', rateMax: 'max {rate}/min',
+      splitAvg: 'Ø {split}', splitBest: 'beste {split}', perStroke: '{m} m/Schlag',
+    };
+    expect(figureTexts({ strokes: 812, strokeRateAvg: 22.4, strokeRateMax: 31, splitAvgS: 148, splitBestS: 131, distancePerStrokeM: 9.8 }, labels)).toEqual([
+      `${formatSteps(812)} Schläge`, 'Ø 22.4/min', 'max 31/min', 'Ø 2:28 /500 m', 'beste 2:11 /500 m', '9.8 m/Schlag',
+    ]);
+  });
+  it('leaves the stroke figures out when their labels are not given', () => {
+    expect(figureTexts({ strokes: 812 }, { steps: 'x', splitAvg: 'y', splitBest: 'z' })).toEqual([]);
+  });
+});

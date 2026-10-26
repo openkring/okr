@@ -99,7 +99,12 @@
   "figure": {
     "steps": "{steps} Schritte",
     "split_avg": "Ø {split}",
-    "split_best": "beste {split}"
+    "split_best": "beste {split}",
+    "strokes": "{strokes} Schläge",
+    "rate": "{rate}/min",
+    "rate_avg": "Ø {rate}/min",
+    "rate_max": "max {rate}/min",
+    "per_stroke": "{m} m/Schlag"
   },
   "calibration": {
     "title": "Ruder-Kalibrierung",

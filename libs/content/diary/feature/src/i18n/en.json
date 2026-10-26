@@ -275,6 +275,10 @@
     "detected": "detected automatically",
     "steps": "{steps} steps",
     "split_avg": "Ø {split}",
-    "split_best": "best {split}"
+    "split_best": "best {split}",
+    "strokes": "{strokes} strokes",
+    "rate_avg": "Ø {rate}/min",
+    "rate_max": "max {rate}/min",
+    "per_stroke": "{m} m/stroke"
   }
 }

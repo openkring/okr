@@ -46,6 +46,8 @@ export class DiaryTrackModal {
   protected readonly rows = computed<TrackSectionRow[]>(() =>
     this.card().sections.map(s => ({
       mode: s.mode, detected: false, ...summarize(s.points), steps: s.steps, splitAvgS: s.splitAvgS, splitBestS: s.splitBestS,
+      strokes: s.strokes, strokeRateAvg: s.strokeRateAvg, strokeRateMax: s.strokeRateMax,
+      distancePerStrokeM: s.strokes ? Math.round((summarize(s.points).distanceM / s.strokes) * 10) / 10 : undefined,
     })));
   protected readonly mapPhotos = computed<TrackMapPhoto[]>(() => {
     const thumbs = this.thumbs();

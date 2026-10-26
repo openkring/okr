@@ -74,6 +74,11 @@ export const TRACKER_I18N_KEYS = {
   figure_steps: PFX + 'figure.steps', // single braces: {steps}
   figure_split_avg: PFX + 'figure.split_avg', // single braces: {split}
   figure_split_best: PFX + 'figure.split_best', // single braces: {split}
+  figure_strokes: PFX + 'figure.strokes', // single braces: {strokes}
+  figure_rate: PFX + 'figure.rate', // single braces: {rate}
+  figure_rate_avg: PFX + 'figure.rate_avg', // single braces: {rate}
+  figure_rate_max: PFX + 'figure.rate_max', // single braces: {rate}
+  figure_per_stroke: PFX + 'figure.per_stroke', // single braces: {m}
   calibration_title: PFX + 'calibration.title',
   calibration_toggle: PFX + 'calibration.toggle',
   calibration_share: PFX + 'calibration.share',

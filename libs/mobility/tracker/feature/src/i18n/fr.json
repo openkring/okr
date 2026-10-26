@@ -99,7 +99,12 @@
   "figure": {
     "steps": "{steps} pas",
     "split_avg": "Ø {split}",
-    "split_best": "meilleur {split}"
+    "split_best": "meilleur {split}",
+    "strokes": "{strokes} coups",
+    "rate": "{rate}/min",
+    "rate_avg": "Ø {rate}/min",
+    "rate_max": "max {rate}/min",
+    "per_stroke": "{m} m/coup"
   },
   "calibration": {
     "title": "Calibrage aviron",

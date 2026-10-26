@@ -99,7 +99,12 @@
   "figure": {
     "steps": "{steps} pasos",
     "split_avg": "Ø {split}",
-    "split_best": "mejor {split}"
+    "split_best": "mejor {split}",
+    "strokes": "{strokes} paladas",
+    "rate": "{rate}/min",
+    "rate_avg": "Ø {rate}/min",
+    "rate_max": "máx {rate}/min",
+    "per_stroke": "{m} m/palada"
   },
   "calibration": {
     "title": "Calibración de remo",

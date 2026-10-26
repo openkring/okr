@@ -7,6 +7,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 export interface TrackSectionRow {
   mode: TransportMode; distanceM: number; durationS: number; detected: boolean;
   steps?: number; splitAvgS?: number; splitBestS?: number; // activity figures (spec 1.122)
+  strokes?: number; strokeRateAvg?: number; strokeRateMax?: number; distancePerStrokeM?: number; // row (spec 1.122 2c)
 }
 export interface TrackModeChange { index: number; mode: TransportMode }
 
@@ -70,7 +71,10 @@ export class TrackSections {
   /** distance · duration, then the section's activity figures (steps, splits) when it has any */
   protected line(section: TrackSectionRow): string {
     const i18n = this.i18n();
-    const figures = figureTexts(section, { steps: i18n.figure_steps(), splitAvg: i18n.figure_split_avg(), splitBest: i18n.figure_split_best() });
+    const figures = figureTexts(section, {
+      steps: i18n.figure_steps(), splitAvg: i18n.figure_split_avg(), splitBest: i18n.figure_split_best(),
+      strokes: i18n.figure_strokes(), rateAvg: i18n.figure_rate_avg(), rateMax: i18n.figure_rate_max(), perStroke: i18n.figure_per_stroke(),
+    });
     return [formatKm(section.distanceM), formatDuration(section.durationS), ...figures].join(' · ');
   }
 
