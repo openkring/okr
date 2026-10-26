@@ -7,7 +7,7 @@ import * as admin from 'firebase-admin';
 import { convertDateFormatToString, addDuration, getTodayStr, getFullName, addIndexElement, DateFormat } from '@okr/shared-util-core';
 
 import { bexioApiKey, bexioTenantId, bexioDefaultTaxId, BEXIO_BASE } from './shared';
-import { loadIsBexioBackend } from './backend-gate';
+import { invoiceBooksId, loadIsBexioBackend } from './backend-gate';
 import { readFinanceDocument } from './finance-document';
 import { privateBucket } from '../_storage/private-bucket';
 import { invoiceSyncFields } from './invoice.mapper';
@@ -306,7 +306,8 @@ export async function handleShowInvoicePdf(request: CallableRequest<{ invoiceId:
     return { content: local };
   }
   // a native invoice has no bexio copy: report the missing PDF instead of a bexio API error
-  const acct = (invoice?.['accountingTenantId'] as string | undefined) || ((invoice?.['tenants'] as string[] | undefined) ?? [])[0] || '';
+  const acct = invoiceBooksId(invoice);
+  if (!acct) logger.error(`${CF_NAME}: invoice ${invoiceId} has no accountingTenantId — not guessing the books from its tenant`);
   if (!acct || !(await loadIsBexioBackend(admin.firestore(), acct))) {
     throw new HttpsError('not-found', 'no PDF stored for this invoice', { reason: 'no-pdf' });
   }
