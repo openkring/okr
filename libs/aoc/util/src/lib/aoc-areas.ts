@@ -36,9 +36,6 @@ export interface AocCard {
 /** The platform tenant (kring-app). There is no shared constant for it in the libs. */
 const KRING_TENANT_ID = 'kring';
 
-/** kring-app hand-writes its routes: it has the Zugang targets (/user, /aoc/sessions, /security) but no /activity, /workflow or Datenqualität. */
-const NOT_ON_KRING = [KRING_TENANT_ID];
-
 type CardOptions = Pick<AocCard, 'tenants' | 'notOnApps'>;
 
 type HubKey = keyof typeof AOC_HUB_I18N_KEYS;
@@ -78,14 +75,14 @@ export const AOC_AREAS: readonly AocCard[] = [
   card('privacyAudit', 'access', 'check', { route: '/security/privacy-audit' }, 'security'),
   card('iban', 'access', 'report', { operation: 'iban' }, 'aoc'),
   card('allocation', 'access', 'operation', { route: '/operator/allocation' }, 'aoc', { tenants: [OPERATOR_TENANT_ID] }),
-  card('activity', 'ops', 'report', { route: '/activity' }, 'activity', { notOnApps: NOT_ON_KRING }),
+  card('activity', 'ops', 'report', { route: '/activity' }, 'activity'),
   card('emailEvents', 'ops', 'report', { route: '/aoc/email' }, 'aoc', { tenants: [OPERATOR_TENANT_ID] }),
   card('chatMaintenance', 'ops', 'operation', { route: '/operator/chat' }, 'aoc', { tenants: [OPERATOR_TENANT_ID] }),
   card('escalations', 'ops', 'report', { route: '/ticket/all' }, 'business', { tenants: [KRING_TENANT_ID] }),
   card('features', 'config', 'operation', { route: '/tenant/features' }, 'aoc'),
-  card('workflow', 'config', 'operation', { route: '/workflow/all/workflow-context' }, 'aoc', { notOnApps: NOT_ON_KRING }),
-  card('validate', 'data', 'check', { operation: 'validate' }, 'aoc', { notOnApps: NOT_ON_KRING }),
-  card('reindex', 'data', 'check', { operation: 'reindex' }, 'aoc', { notOnApps: NOT_ON_KRING }),
+  card('workflow', 'config', 'operation', { route: '/workflow/all/workflow-context' }, 'aoc'),
+  card('validate', 'data', 'check', { operation: 'validate' }, 'aoc'),
+  card('reindex', 'data', 'check', { operation: 'reindex' }, 'aoc'),
 ];
 
 export interface AocCardContext {

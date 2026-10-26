@@ -65,15 +65,8 @@ Bulk fixes have no UI. Use `node scripts/fix-models.mjs --collection <name> [--m
 
 ## kring
 
-kring-app hand-writes its route table and declares only `/aoc/ops` and `/aoc/config` (pinned in
-`scripts/app-routes.test.mjs`). Cards whose targets do not exist in kring carry `notOnApps: ['kring']`,
-so kring shows Betrieb (Eskalationen) and Konfiguration (Features), and the segment bar offers only
-those two areas.
-
-kring's `aoc-menu` is a fork that lists only `aoc-ops` and `aoc-config` (phase 5 menu script). The
-catalogue still declares all four hub rows, so the feature picker can add `aoc-access` and `aoc-data`
-back to that fork. Both rows are dead on kring: it has no `/aoc/access` or `/aoc/data` route. Do not
-use «Ins Menü» for `aoc` on kring. If the two rows reappear, remove them from the fork by hand.
+kring-app composes its routes from the catalogue like every other app (since 2026-10-26), so all
+four hub areas exist there. The only kring-specific card is Eskalationen (`tenants: ['kring']`).
 
 ## Where the moved tools live
 
