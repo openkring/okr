@@ -109,7 +109,7 @@ import { AvatarPipe } from './avatar.pipe';
         }
         @if(isReadOnly()) {
           <ion-item lines="none">
-            <okr-avatar-display [avatars]="avatars()" [showName]="false" />
+            <okr-avatar-display [avatars]="avatars()" [showName]="false" [textIcon]="textIcon()" />
           </ion-item>
         } @else {
           @if(avatars(); as avatars) {

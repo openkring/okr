@@ -2,19 +2,14 @@ import { AvatarInfo, DiaryModel } from '@okr/shared-models';
 
 import { diaryAvatarName } from './diary-avatar.util';
 
-/** The icon of a free-text location (no linked location record, key ''). */
+/**
+ * The fallback icon of every diary location: free text, or a linked location without an uploaded
+ * logo. A linked location with a logo (coat of arms, flag) still shows that logo.
+ */
 export const DIARY_TEXT_LOCATION_ICON = 'location';
 
 /** How many location avatars a diary list row shows at most (main location first). */
 export const DIARY_LIST_MAX_LOCATIONS = 3;
-
-/**
- * Fallback icon of a diary location avatar: 'location' for free text; undefined for a linked
- * location, which keeps the avatar's own default (its coat of arms or flag when there is one).
- */
-export function diaryLocationIcon(a: AvatarInfo): string | undefined {
-  return a.key ? undefined : DIARY_TEXT_LOCATION_ICON;
-}
 
 /** The avatar key `location.<okey>`; '' for free text, so the avatar pipe shows the fallback icon. */
 export function diaryLocationAvatarKey(a: AvatarInfo): string {

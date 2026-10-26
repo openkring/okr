@@ -14,7 +14,7 @@ import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
 import { AvatarPipe } from '@okr/avatar-ui';
 
 import {
-  diaryListLocations, diaryLocationAvatarKey, diaryLocationIcon, diaryLocationLabel, diaryStateOf, diaryWeatherLine, formatDiaryDateShort, formatDiaryMonthHeader, hasDiaryWeather, isWideDiaryRange, segmentDiaryGroupsByYear,
+  diaryListLocations, diaryLocationAvatarKey, DIARY_TEXT_LOCATION_ICON, diaryLocationLabel, diaryStateOf, diaryWeatherLine, formatDiaryDateShort, formatDiaryMonthHeader, hasDiaryWeather, isWideDiaryRange, segmentDiaryGroupsByYear,
   DiaryStateFilter,
 } from '@okr/content-diary-util';
 import { DiaryRangeSelect } from './diary-range-select';
@@ -154,7 +154,7 @@ const DIARY_STATE_I18N_SCOPE = '@content/diary/feature';
           <div slot="end" class="locations">
             @for (loc of locs; track $index) {
               <ion-avatar class="location" [title]="locationName(loc)" [attr.aria-label]="locationName(loc)">
-                <img okrImg src="{{ locationKey(loc) | avatar: locationIcon(loc) }}" [alt]="locationName(loc)" />
+                <img okrImg src="{{ locationKey(loc) | avatar: locationIcon }}" [alt]="locationName(loc)" />
               </ion-avatar>
             }
           </div>
@@ -183,7 +183,7 @@ export class DiaryList {
   protected readonly listLocations = diaryListLocations;
   protected readonly locationName = diaryLocationLabel;
   protected readonly locationKey = diaryLocationAvatarKey;
-  protected readonly locationIcon = diaryLocationIcon;
+  protected readonly locationIcon = DIARY_TEXT_LOCATION_ICON;
 
   protected readonly count = computed(() => this.store.diaries().length);
   protected readonly filteredCount = computed(() => this.store.filteredDiaries().length);

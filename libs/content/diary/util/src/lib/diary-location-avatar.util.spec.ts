@@ -3,19 +3,15 @@ import { AvatarInfo } from '@okr/shared-models';
 
 import { customLocationAvatar } from './diary-avatar.util';
 import {
-  DIARY_TEXT_LOCATION_ICON, diaryListLocations, diaryLocationAvatarKey, diaryLocationIcon, diaryLocationLabel,
+  DIARY_TEXT_LOCATION_ICON, diaryListLocations, diaryLocationAvatarKey, diaryLocationLabel,
 } from './diary-location-avatar.util';
 
 const keyed = (key: string, name: string): AvatarInfo =>
   ({ key, name1: name, name2: '', label: name, modelType: 'location', type: '', subType: '' });
 
 describe('diary-location-avatar.util', () => {
-  it('a free-text location falls back to the location icon', () => {
+  it('every location falls back to the location icon', () => {
     expect(DIARY_TEXT_LOCATION_ICON).toBe('location');
-    expect(diaryLocationIcon(customLocationAvatar('Stäfa ZH'))).toBe('location');
-  });
-  it('a linked location keeps the avatar default icon', () => {
-    expect(diaryLocationIcon(keyed('l1', 'Stäfa ZH'))).toBeUndefined();
   });
   it('the avatar key of a linked location is location.<okey>', () => {
     expect(diaryLocationAvatarKey(keyed('l1', 'Stäfa ZH'))).toBe('location.l1');

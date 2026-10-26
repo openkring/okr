@@ -10,7 +10,7 @@ import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
 import {
-  DiaryI18n, DiaryMediaResult, DiaryTrackCard, diaryAvatarName, diaryLocationAvatarKey, diaryLocationIcon, diaryLocationLabel, mainLocation, diarySliderImages, diaryWeatherLine, driveFolderUrl, formatDiaryDateLong, hasDiaryWeather,
+  DiaryI18n, DiaryMediaResult, DiaryTrackCard, diaryAvatarName, diaryLocationAvatarKey, DIARY_TEXT_LOCATION_ICON, diaryLocationLabel, mainLocation, diarySliderImages, diaryWeatherLine, driveFolderUrl, formatDiaryDateLong, hasDiaryWeather,
   isDiaryVideo, JassDiaryResult, parseJassDiaryLine, renderDiaryHtml,
 } from '@okr/content-diary-util';
 
@@ -86,7 +86,7 @@ export interface DiaryNeighbours {
               @for (loc of locations(); track $index) {
                 <ion-chip color="light" class="place" [class.location]="!!loc.key" [title]="locationName(loc)" (click)="tapLocation(loc)">
                   <ion-avatar>
-                    <img okrImg src="{{ locationKey(loc) | avatar: locationIcon(loc) }}" [alt]="locationName(loc)" />
+                    <img okrImg src="{{ locationKey(loc) | avatar: locationIcon }}" [alt]="locationName(loc)" />
                   </ion-avatar>
                   <ion-label><small>{{ locationName(loc) }}</small></ion-label>
                 </ion-chip>
@@ -206,7 +206,7 @@ export class DiaryViewModal {
   protected readonly locations = computed(() => this.current().locations ?? []);
   protected readonly locationName = diaryLocationLabel;
   protected readonly locationKey = diaryLocationAvatarKey;
-  protected readonly locationIcon = diaryLocationIcon;
+  protected readonly locationIcon = DIARY_TEXT_LOCATION_ICON;
   /** one single-element array per person, so each avatar is its own tap target */
   protected readonly people = computed(() => (this.current().people ?? []).filter(p => !!p.key).map(p => [p]));
   /** persons without a key are plain text */

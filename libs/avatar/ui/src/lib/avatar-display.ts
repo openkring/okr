@@ -53,9 +53,15 @@ import { getDefaultIcon } from "@okr/avatar-util";
           } @else {
             @if(shouldShowName()) {
               <ion-chip color="light">
-                <ion-avatar class="letter-avatar">G</ion-avatar>
+                @if(textIcon()) {
+                  <ion-avatar><img okrImg src="{{ '' | avatar:textIcon() }}" alt="Avatar" /></ion-avatar>
+                } @else {
+                  <ion-avatar class="letter-avatar">G</ion-avatar>
+                }
                 <ion-label><small>{{ avatars[0].name1 | fullName:avatars[0].name2 }}</small></ion-label>
               </ion-chip>
+            } @else if(textIcon()) {
+              <ion-avatar><img okrImg src="{{ '' | avatar:textIcon() }}" alt="Avatar" /></ion-avatar>
             } @else {
               <ion-avatar class="letter-avatar">G</ion-avatar>
             }
@@ -68,6 +74,10 @@ import { getDefaultIcon } from "@okr/avatar-util";
                 @if(avatar.key && avatar.key.length > 0) {
                   <ion-avatar [class.stacked-avatar]="true" [style.zIndex]="avatars.length - $index">
                     <img okrImg src="{{ avatar.modelType + '.' + avatar.key | avatar:getDefaultIcon(avatar.modelType) }}" alt="Avatar of person or org" />
+                  </ion-avatar>
+                } @else if(textIcon()) {
+                  <ion-avatar [class.stacked-avatar]="true" [style.zIndex]="avatars.length - $index">
+                    <img okrImg src="{{ '' | avatar:textIcon() }}" alt="Avatar" />
                   </ion-avatar>
                 } @else {
                   <ion-avatar class="letter-avatar stacked-avatar" [style.zIndex]="avatars.length - $index">G</ion-avatar>
@@ -89,6 +99,8 @@ export class AvatarDisplay {
   public avatars = input<AvatarInfo[]>([]);
   public showName = input(true);
   public maxAvatarsToShow = input(5);
+  /** non-empty: a key-less (free-text) entry shows this icon instead of the letter avatar, e.g. 'location'. */
+  public textIcon = input('');
   protected shouldShowName = computed(() => coerceBoolean(this.showName()));
 
   protected getDefaultIcon(modelType: string): string {
