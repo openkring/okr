@@ -1,13 +1,16 @@
-import { AvatarInfo, DiaryAlbumKind, DiaryAlbumModel, DiaryModel } from '@okr/shared-models';
+import { AvatarInfo, DiaryAlbumKind, DiaryAlbumModel, DiaryModel, TRANSPORT_MODES, TransportMode, TripModel } from '@okr/shared-models';
 
 import { splitDiaryDate } from './diary-date.util';
 import { parseJassDiaryLine } from './diary-jass.util';
 
-export type DiaryFilterKind = DiaryAlbumKind | 'tag' | 'trip' | 'date';
+export type DiaryFilterKind = DiaryAlbumKind | 'tag' | 'trip' | 'date' | 'track';
+
+/** The key of a «Strecken» filter: one transport mode, or every recorded track. */
+export type DiaryTrackFilterKey = TransportMode | 'all';
 
 export interface DiaryFilter {
   kind: DiaryFilterKind;
-  /** album key (person/location/event/tag), trip okey (trip), '' (date only) */
+  /** album key (person/location/event/tag), trip okey (trip), a TransportMode or 'all' (track), '' (date only) */
   key: string;
   title: string;
   /** StoreDate bounds, '' = open */
@@ -79,10 +82,11 @@ function diaryPeriodStart(date: string): string {
   return `${String(parts.year).padStart(4, '0')}${pad2(parts.month || 1)}${pad2(parts.day || 1)}`;
 }
 
-/** The listId for a filter: album key, `trip.<okey>`, or 'all' for a pure date filter. */
+/** The listId for a filter: album key, `trip.<okey>`, `track.<mode>` / `track.all`, or 'all' for a pure date filter. */
 export function encodeDiaryFilter(filter: DiaryFilter): string {
   if (filter.kind === 'date') return 'all';
-  return filter.kind === 'trip' ? `trip.${filter.key}` : filter.key;
+  if (filter.kind === 'trip' || filter.kind === 'track') return `${filter.kind}.${filter.key}`;
+  return filter.key;
 }
 
 /**
@@ -100,8 +104,34 @@ export function decodeDiaryFilter(listId: string): Pick<DiaryFilter, 'kind' | 'k
   const kind = listId.slice(0, dot);
   const rest = listId.slice(dot + 1);
   if (kind === 'trip') return { kind: 'trip', key: rest };
+  if (kind === 'track') return isTrackFilterKey(rest) ? { kind: 'track', key: rest } : undefined;
   if (kind === 'person' || kind === 'location' || kind === 'event' || kind === 'tag') return { kind, key: listId };
   return undefined;
+}
+
+export function isTrackFilterKey(key: string): key is DiaryTrackFilterKey {
+  return key === 'all' || (TRANSPORT_MODES as string[]).includes(key);
+}
+
+/** The title of a «Strecken» filter: «Strecken», or «Strecken: Rudern» for one mode. */
+export function trackFilterTitle(key: string, words: { tracks: string; mode: (mode: TransportMode) => string }): string {
+  return (TRANSPORT_MODES as string[]).includes(key) ? `${words.tracks}: ${words.mode(key as TransportMode)}` : words.tracks;
+}
+
+/**
+ * The days of a «Strecken» filter: the start dates of the tracker trips that have a section of `key`'s mode
+ * (any section for 'all'), inside the from/to bounds ('' = open), de-duplicated and sorted ascending.
+ */
+export function trackFilterDates(trips: TripModel[], key: string, from: string, to: string): string[] {
+  const dates = new Set<string>();
+  for (const trip of trips) {
+    const sections = trip.track?.sections;
+    const date = trip.startDate ?? '';
+    if (!sections || !date) continue;
+    if (key !== 'all' && !sections.some(s => s.mode === key)) continue;
+    if (inDiaryDateRange(date, from, to)) dates.add(date);
+  }
+  return [...dates].sort();
 }
 
 /** Display name of a picked avatar, used to prefill an empty album title. */

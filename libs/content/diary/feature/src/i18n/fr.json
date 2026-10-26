@@ -220,7 +220,8 @@
       "location": "Lieux",
       "trip": "Voyages",
       "tag": "Tags",
-      "date": "Date"
+      "date": "Date",
+      "track": "Parcours"
     },
     "search": "Rechercher",
     "empty": "Il n'y a encore rien ici.",
@@ -243,7 +244,8 @@
     },
     "appliesTo": "s'applique à : {title}",
     "loadFailed": "Tes albums n'ont pas pu être chargés.",
-    "actionFailed": "Cela n'a pas fonctionné. Réessaie, s'il te plaît."
+    "actionFailed": "Cela n'a pas fonctionné. Réessaie, s'il te plaît.",
+    "trackAll": "Tous"
   },
   "trip": {
     "day": "1 jour dans le journal",

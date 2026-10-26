@@ -4,22 +4,24 @@ import {
   IonNote, IonSearchbar, IonSegment, IonSegmentButton, IonToolbar, ModalController,
 } from '@ionic/angular';
 
-import { DiaryAlbumKind, DiaryAlbumModel, TripModel } from '@okr/shared-models';
+import { DiaryAlbumKind, DiaryAlbumModel, TRANSPORT_MODES, TransportMode, TripModel } from '@okr/shared-models';
+import { TrackerI18n } from '@okr/mobility-tracker-util';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Header } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetOptions, dismissOverlay } from '@okr/shared-util-angular';
 
 import {
-  DiaryDateRange, DiaryFilter, DiaryI18n, albumKey, albumRefOf, canApplyDiaryDateRange, formatDiaryDate, mergeDiaryDateRange,
+  DiaryDateRange, DiaryFilter, DiaryI18n, DiaryTrackFilterKey, albumKey, albumRefOf, canApplyDiaryDateRange, formatDiaryDate,
+  mergeDiaryDateRange, trackFilterTitle,
 } from '@okr/content-diary-util';
 import { DiaryDateRangeForm } from './diary-date-range.form';
 
-export type DiaryAlbumsSegment = DiaryAlbumKind | 'trip' | 'tag' | 'date';
+export type DiaryAlbumsSegment = DiaryAlbumKind | 'trip' | 'track' | 'tag' | 'date';
 
-const SEGMENTS: DiaryAlbumsSegment[] = ['event', 'person', 'location', 'trip', 'tag', 'date'];
+const SEGMENTS: DiaryAlbumsSegment[] = ['event', 'person', 'location', 'trip', 'track', 'tag', 'date'];
 const SEGMENT_KEY = 'okr.diary.albumSegment';
 const ICONS: Record<DiaryAlbumsSegment, string> = {
-  event: 'star', person: 'person', location: 'location', trip: 'airplane', tag: 'tag', date: 'calendar',
+  event: 'star', person: 'person', location: 'location', trip: 'airplane', track: 'map', tag: 'tag', date: 'calendar',
 };
 
 function readSegment(): DiaryAlbumsSegment {
@@ -43,10 +45,16 @@ interface AlbumRow {
   album?: DiaryAlbumModel;
   trip?: TripModel;
   tag?: string;
+  /** «Strecken»: a transport mode, or 'all' */
+  track?: DiaryTrackFilterKey;
 }
 
+/** «Alle» first, then the transport modes in the tracker's order. */
+const TRACK_KEYS: DiaryTrackFilterKey[] = ['all', ...TRANSPORT_MODES];
+
 /**
- * «Alben» (spec 1.114 §4): pick an album, a trip, a tag or a date range to filter the diary list.
+ * «Alben» (spec 1.114 §4): pick an album, a trip, a transport mode («Strecken», spec 1.121 §7), a tag or a
+ * date range to filter the diary list.
  * A picker, not an edit dialog — all data comes in as inputs and every write goes through the
  * callbacks, so the modal never injects the store (store-modal-dynamic-import). A tap dismisses
  * with role 'filter' and a `DiaryFilter`.
@@ -98,7 +106,7 @@ interface AlbumRow {
               <ion-icon slot="start" src="{{ icon() | svgIcon }}" />
               <ion-label>{{ row.title }}</ion-label>
               <ion-note slot="end">{{ row.note }}</ion-note>
-              @if (!row.tag) {
+              @if (!row.tag && !row.track) {
                 <ion-button slot="end" fill="clear" (click)="$event.stopPropagation(); showActions(row)">
                   <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
                 </ion-button>
@@ -130,6 +138,8 @@ export class DiaryAlbumsModal {
   public readonly openTrip = input.required<(trip: TripModel) => void>();
   /** the list's current filter: a range from the Datum segment narrows an album/tag/trip filter */
   public readonly activeFilter = input<DiaryFilter | undefined>(undefined);
+  /** the tracker's labels, for the transport modes of the «Strecken» segment */
+  public readonly trackI18n = input<TrackerI18n | undefined>(undefined);
 
   protected readonly segments = SEGMENTS;
   protected readonly segment = signal<DiaryAlbumsSegment>(readSegment());
@@ -147,7 +157,7 @@ export class DiaryAlbumsModal {
   private readonly requested = new Set<string>();
 
   protected readonly icon = computed(() => ICONS[this.segment()]);
-  protected readonly canAdd = computed(() => !['tag', 'date'].includes(this.segment()));
+  protected readonly canAdd = computed(() => !['track', 'tag', 'date'].includes(this.segment()));
   /** the album, tag or trip a range would narrow; undefined for none or a date filter */
   private readonly narrowable = computed(() => {
     const filter = this.activeFilter();
@@ -186,6 +196,12 @@ export class DiaryAlbumsModal {
         const date = dates[albumKey('tag', tag)] ?? '';
         return { id: tag, title: tag, sortDate: date, note: date ? formatDiaryDate(date) : '', tag };
       });
+    } else if (segment === 'track') {
+      // a fixed choice, kept in its order (no dates to sort by)
+      const term = this.searchTerm().trim().toLowerCase();
+      return TRACK_KEYS
+        .map(track => ({ id: track, title: track === 'all' ? this.i18n().albums_track_all() : this.modeLabel(track), sortDate: '', note: '', track }))
+        .filter(row => !term || row.title.toLowerCase().includes(term));
     } else if (segment === 'date') {
       rows = [];
     } else {
@@ -206,6 +222,11 @@ export class DiaryAlbumsModal {
       const keys = this.datedKeys();
       untracked(() => this.fetchDates(keys));
     });
+  }
+
+  /** «Rudern» from the tracker's labels; the mode itself while they are missing */
+  private modeLabel(mode: TransportMode): string {
+    return this.trackI18n()?.[`mode_${mode}` as keyof TrackerI18n]?.() || mode;
   }
 
   private keyOf(album: DiaryAlbumModel): string {
@@ -231,6 +252,7 @@ export class DiaryAlbumsModal {
       case 'person': return i18n.albums_seg_person();
       case 'location': return i18n.albums_seg_location();
       case 'trip': return i18n.albums_seg_trip();
+      case 'track': return i18n.albums_seg_track();
       case 'tag': return i18n.albums_seg_tag();
       case 'date': return i18n.albums_seg_date();
     }
@@ -270,6 +292,9 @@ export class DiaryAlbumsModal {
     } else if (row.trip) {
       // the trip query decides its days (tripKey or span); from/to are only a user narrowing
       filter = { kind: 'trip', key: row.trip.okey, title: row.title, from: '', to: '' };
+    } else if (row.track) {
+      const title = trackFilterTitle(row.track, { tracks: this.i18n().albums_seg_track(), mode: mode => this.modeLabel(mode) });
+      filter = { kind: 'track', key: row.track, title, from: '', to: '' };
     }
     if (filter) await dismissOverlay(this.modalController, filter, 'filter');
   }

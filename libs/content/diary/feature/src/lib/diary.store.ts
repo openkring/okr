@@ -2,7 +2,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, NavController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { firstValueFrom, map, of, timeout } from 'rxjs';
+import { catchError, firstValueFrom, map, of, switchMap, take, timeout } from 'rxjs';
 
 import type { DiaryLocationPick, DiaryNeighbours } from '@okr/content-diary-ui';
 import { TrackService } from '@okr/mobility-tracker-data-access';
@@ -11,10 +11,10 @@ import { DiaryAlbumService, DiaryMediaService, DiaryService, DiaryWeatherService
 import {
   DIARY_FIRST_YEAR, DIARY_I18N_KEYS, DiaryTrackCard, toDiaryTrackCards, customLocationAvatar, locationAvatar, mainLocation, DiaryFilter, DiaryMediaResult, DiaryRange, DiaryStateFilter, albumKey, albumRefOf,
   buildDiaryRangeTree, decodeDiaryFilter, diaryFilterLabel, diaryListUrl, diaryRangeOfYear, diaryStateMatches, encodeDiaryFilter,
-  formatDiaryDate, getDiaryIndex, groupDiariesByMonth, hasDiaryWeather, inDiaryDateRange, newDiary,
+  formatDiaryDate, getDiaryIndex, groupDiariesByMonth, hasDiaryWeather, inDiaryDateRange, newDiary, trackFilterDates, trackFilterTitle,
 } from '@okr/content-diary-util';
 import { LocationService } from '@okr/location-data-access';
-import { AvatarInfo, DiaryAlbumKind, DiaryAlbumModel, DiaryModel, PersonModelName, TripModel } from '@okr/shared-models';
+import { AvatarInfo, DiaryAlbumKind, DiaryAlbumModel, DiaryModel, PersonModelName, TransportMode, TripModel } from '@okr/shared-models';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AlertService, resourceParams } from '@okr/shared-util-angular';
@@ -125,6 +125,8 @@ export const DiaryStore = signalStore(
           key: filter?.key ?? '',
           from: filter?.from ?? '',
           to: filter?.to ?? '',
+          // «Strecken»: the tracker trips are the recording person's (owner-only rules)
+          personKey: filter?.kind === 'track' ? store.appStore.currentUser()?.personKey ?? '' : '',
           // identities only: the trip's span decides which untagged days belong to it
           trip: trip ? { okey: trip.okey, startDate: trip.startDate ?? '', endDate: trip.endDate ?? '' } : undefined,
         };
@@ -133,6 +135,23 @@ export const DiaryStore = signalStore(
         const { authorKey, tenantId, kind, key, from, to } = params;
         if (!authorKey || !tenantId || !kind) return of([] as DiaryModel[]);
         if (kind === 'date') return store.diaryService.listByDateRange(authorKey, tenantId, from, to);
+        if (kind === 'track') {
+          // The list stays diary-doc based: a day with a recorded track but no diary entry is not shown.
+          // Offline the trip query may never answer — give up after TRACKS_TIMEOUT_MS with an empty list.
+          if (!params.personKey) return of([] as DiaryModel[]);
+          return store.trackService.listMine(params.personKey).pipe(
+            take(1),
+            timeout(TRACKS_TIMEOUT_MS),
+            catchError(() => of([] as TripModel[])),
+            switchMap(trips => {
+              const dates = trackFilterDates(trips, key, from, to);
+              if (dates.length === 0) return of([] as DiaryModel[]);
+              const days = new Set(dates);
+              return store.diaryService.listByDateRange(authorKey, tenantId, dates[0], dates[dates.length - 1])
+                .pipe(map(diaries => diaries.filter(d => days.has(d.date))));
+            }),
+          );
+        }
         // until the trips are loaded: the days pointing at it by tripKey only
         const entries$ = kind === 'trip'
           ? store.diaryService.listByTrip(authorKey, tenantId, (params.trip ?? { okey: key, startDate: '', endDate: '' }) as TripModel)
@@ -163,6 +182,13 @@ export const DiaryStore = signalStore(
       const filter = store.filter();
       if (!filter || filter.title || filter.kind === 'date') return filter;
       if (filter.kind === 'tag') return { ...filter, title: filter.key.slice('tag.'.length) };
+      if (filter.kind === 'track') {
+        const title = trackFilterTitle(filter.key, {
+          tracks: store.i18n.albums_seg_track(),
+          mode: (mode: TransportMode) => store.trackI18n[`mode_${mode}`]?.() || mode,
+        });
+        return { ...filter, title };
+      }
       if (filter.kind === 'trip') {
         const trip = store.tripsResource.value()?.find(t => t.okey === filter.key);
         return trip ? { ...filter, title: trip.name } : filter;
@@ -598,7 +624,7 @@ export const DiaryStore = signalStore(
             i18n: store.i18n, albums, trips, tags: tagsOf(store.appStore.getTags('diary')),
             imgixBaseUrl: store.appStore.env.services.imgixBaseUrl,
             newestDate: (key: string) => store.diaryService.newestAlbumDate(authorKey, tenantId, key),
-            editAlbum, editTrip, archiveAlbum, activeFilter: store.activeFilter(),
+            editAlbum, editTrip, archiveAlbum, activeFilter: store.activeFilter(), trackI18n: store.trackI18n,
             openTrip: (trip: TripModel) => { void store.navController.navigateForward(`/diary/trip/${trip.okey}`); },
           },
         });

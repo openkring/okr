@@ -139,6 +139,8 @@ export const DIARY_I18N_KEYS = {
   albums_seg_trip:        PFX + 'albums.segment.trip',
   albums_seg_tag:         PFX + 'albums.segment.tag',
   albums_seg_date:        PFX + 'albums.segment.date',
+  albums_seg_track:       PFX + 'albums.segment.track',
+  albums_track_all:       PFX + 'albums.trackAll',
   albums_search:          PFX + 'albums.search',
   albums_empty:           PFX + 'albums.empty',
   albums_apply:           PFX + 'albums.apply',

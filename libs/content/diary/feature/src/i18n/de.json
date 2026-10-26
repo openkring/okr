@@ -220,7 +220,8 @@
       "location": "Orte",
       "trip": "Reisen",
       "tag": "Tags",
-      "date": "Datum"
+      "date": "Datum",
+      "track": "Strecken"
     },
     "search": "Suchen",
     "empty": "Hier gibt es noch nichts.",
@@ -243,7 +244,8 @@
     },
     "appliesTo": "gilt für: {title}",
     "loadFailed": "Deine Alben konnten nicht geladen werden.",
-    "actionFailed": "Das hat leider nicht geklappt. Versuch es bitte nochmals."
+    "actionFailed": "Das hat leider nicht geklappt. Versuch es bitte nochmals.",
+    "trackAll": "Alle"
   },
   "trip": {
     "day": "1 Tag im Tagebuch",

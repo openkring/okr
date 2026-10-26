@@ -1,8 +1,8 @@
-import { AvatarInfo } from '@okr/shared-models';
+import { AvatarInfo, TripModel } from '@okr/shared-models';
 import { customLocationAvatar } from './diary-avatar.util';
 import { parseJassDiaryLine } from './diary-jass.util';
 import { describe, expect, it } from 'vitest';
-import { avatarTitle, canApplyDiaryDateRange, decodeDiaryFilter, diaryListUrl, DiaryFilter, diaryAlbumId, diaryFilterLabel, mergeDiaryDateRange, diaryAlbumKeys, encodeDiaryFilter, eventSlug, inDiaryDateRange, tripMapPoints } from './diary-album.util';
+import { avatarTitle, canApplyDiaryDateRange, decodeDiaryFilter, diaryListUrl, DiaryFilter, diaryAlbumId, diaryFilterLabel, mergeDiaryDateRange, diaryAlbumKeys, encodeDiaryFilter, eventSlug, inDiaryDateRange, trackFilterDates, trackFilterTitle, tripMapPoints } from './diary-album.util';
 
 describe('diary album utils', () => {
   it('derives sorted, de-duplicated keys', () => {
@@ -199,5 +199,57 @@ describe('tripMapPoints', () => {
 
   it('returns [] without entries and own locations', () => {
     expect(tripMapPoints([], [])).toEqual([]);
+  });
+});
+
+describe('track filter («Strecken»)', () => {
+  const filter = (key: string): DiaryFilter => ({ kind: 'track', key, title: '', from: '', to: '' });
+
+  it('round-trips track.row and track.all', () => {
+    expect(encodeDiaryFilter(filter('row'))).toBe('track.row');
+    expect(encodeDiaryFilter(filter('all'))).toBe('track.all');
+    expect(decodeDiaryFilter('track.row')).toEqual({ kind: 'track', key: 'row' });
+    expect(decodeDiaryFilter('track.all')).toEqual({ kind: 'track', key: 'all' });
+  });
+
+  it('rejects an unknown mode', () => {
+    expect(decodeDiaryFilter('track.teleport')).toBeUndefined();
+  });
+
+  it('titles the filter «Strecken» or «Strecken: Rudern»', () => {
+    const words = { tracks: 'Strecken', mode: (m: string) => (m === 'row' ? 'Rudern' : m) };
+    expect(trackFilterTitle('all', words)).toBe('Strecken');
+    expect(trackFilterTitle('row', words)).toBe('Strecken: Rudern');
+    expect(diaryFilterLabel({ ...filter('row'), title: trackFilterTitle('row', words) }, d => d, { from: 'ab', to: 'bis' }))
+      .toBe('Strecken: Rudern');
+  });
+
+  describe('trackFilterDates', () => {
+    const trip = (startDate: string, modes: string[], withTrack = true): TripModel =>
+      ({ startDate, track: withTrack ? { sections: modes.map(mode => ({ mode })) } : undefined }) as unknown as TripModel;
+    const trips = [
+      trip('20261003', ['row']),
+      trip('20261001', ['foot', 'row']),
+      trip('20261001', ['row']),
+      trip('20261002', ['bike']),
+      trip('20261005', ['row'], false),
+    ];
+
+    it('keeps the days with a section of the mode, de-duplicated and sorted', () => {
+      expect(trackFilterDates(trips, 'row', '', '')).toEqual(['20261001', '20261003']);
+    });
+
+    it('takes every tracked day for all', () => {
+      expect(trackFilterDates(trips, 'all', '', '')).toEqual(['20261001', '20261002', '20261003']);
+    });
+
+    it('respects the date bounds', () => {
+      expect(trackFilterDates(trips, 'all', '20261002', '20261003')).toEqual(['20261002', '20261003']);
+      expect(trackFilterDates(trips, 'row', '20261002', '')).toEqual(['20261003']);
+    });
+
+    it('is empty without matches', () => {
+      expect(trackFilterDates(trips, 'ski', '', '')).toEqual([]);
+    });
   });
 });
