@@ -26,6 +26,12 @@ function authAdminOp<Req, Res>(op: string, useEmulators = false) {
   return (data: Req) => fn({ op, ...data });
 }
 
+/** One `matrixUser` router op (3.41): the old callable name travels as `op`, payload and result stay as they were. */
+function matrixUserOp<Req, Res>(op: string, useEmulators = false) {
+  const fn = callable<Req & { op: string }, Res>('matrixUser', useEmulators);
+  return (data: Req) => fn({ ...data, op });
+}
+
 /** The Firebase error code of a failed callable, without the 'functions/' prefix. */
 export function callableErrorCode(ex: unknown): string {
   return String((ex as { code?: string })?.code ?? '').replace(/^functions\//, '');
@@ -108,7 +114,7 @@ export async function createCustomToken(uid: string, useEmulators = false): Prom
 
 /** Creates (or confirms) the person's Matrix account. */
 export async function provisionMatrixUser(personKey: string): Promise<string> {
-  const result = await callable<{ personKey: string }, { matrixUserId: string; provisioned: boolean }>('provisionMatrixUser')({ personKey });
+  const result = await matrixUserOp<{ personKey: string }, { matrixUserId: string; provisioned: boolean }>('provisionMatrixUser')({ personKey });
   return result.data.matrixUserId;
 }
 

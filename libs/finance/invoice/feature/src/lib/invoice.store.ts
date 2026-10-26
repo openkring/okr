@@ -918,10 +918,10 @@ export const InvoiceStore = signalStore(
 
     async showPdf(invoice: InvoiceModel): Promise<void> {
       try {
-        const fn = httpsCallable<{ invoiceId: string }, { content: string }>(
-          store.functions, 'showInvoicePdf'
+        const fn = httpsCallable<{ invoiceId: string; op: string }, { content: string }>(
+          store.functions, 'bexio'
         );
-        const result = await fn({ invoiceId: invoice.okey });
+        const result = await fn({ invoiceId: invoice.okey, op: 'showInvoicePdf' });
         saveBase64Pdf(result.data.content, `${invoice.invoiceId}.pdf`);
       } catch (e) {
         // Without this the callable's rejection escapes as an unhandled promise

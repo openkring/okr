@@ -72,7 +72,8 @@ export class InvoiceNewModal {
       validTo: string;
       positions: BexioInvoicePosition[];
       template_slug: string;
-    }, { id: string }>(functions, 'createBexioInvoice');
+      op: string;
+    }, { id: string }>(functions, 'bexio');
 
     try {
       const result = await fn({
@@ -84,6 +85,7 @@ export class InvoiceNewModal {
         validTo: data.validTo,
         positions: data.positions,
         template_slug: data.template_slug,
+        op: 'createBexioInvoice',
       });
       await dismissOverlay(this.store.modalController, { id: result.data.id }, 'confirm');
     } catch (error) {

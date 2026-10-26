@@ -261,8 +261,8 @@ export const MembershipSrvStore = signalStore(
       }
       let regasoftContacts: SrvContact[] = [];
       try {
-        const fn = httpsCallable<void, SrvContact[]>(functions, 'getSrvContacts');
-        const result = await fn();
+        const fn = httpsCallable<{ op: string }, SrvContact[]>(functions, 'srv');
+        const result = await fn({ op: 'getSrvContacts' });
         regasoftContacts = result.data;
         patchState(store, { regasoftItems: regasoftContacts.length });
         console.log(`MembershipSrvStore.buildIndex: ${regasoftContacts.length} Regasoft contacts loaded`);
@@ -362,8 +362,8 @@ export const MembershipSrvStore = signalStore(
       const allRids = index.map(i => Number(i.rid)).filter(n => n > 0);
       if (allRids.length > 0) {
         try {
-          const detailFn = httpsCallable<{ rids: number[] }, SrvMemberLicenseDetail[]>(functions, 'getSrvMemberDetail');
-          const detailResult = await detailFn({ rids: allRids });
+          const detailFn = httpsCallable<{ rids: number[]; op: string }, SrvMemberLicenseDetail[]>(functions, 'srv');
+          const detailResult = await detailFn({ rids: allRids, op: 'getSrvMemberDetail' });
           const detailMap = new Map(detailResult.data.map(d => [d.rid, d]));
           for (const entry of index) {
             const detail = detailMap.get(Number(entry.rid));
@@ -533,7 +533,7 @@ export const MembershipSrvStore = signalStore(
       if (store.appStore.env.useEmulators) {
         connectFunctionsEmulator(functions, 'localhost', 5001);
       }
-      const fn = httpsCallable<object, { id: string }>(functions, 'createSrvContact');
+      const fn = httpsCallable<{ op: string } & Record<string, unknown>, { id: string }>(functions, 'srv');
       const srvPostalAddresses = await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, [
         { key: 'parentKey', operator: '==', value: 'person.' + item.personKey },
         { key: 'addressChannel', operator: '==', value: 'postal' },
@@ -562,6 +562,7 @@ export const MembershipSrvStore = signalStore(
           countryName:    srvPostal?.countryCode ? 'Schweiz' : null,
           countryId:      srvPostal?.countryCode || null,
           telefon:        null,
+          op:             'createSrvContact',
         });
         srvId = String(result.data.id);
       } catch (e) {
@@ -583,7 +584,7 @@ export const MembershipSrvStore = signalStore(
       if (store.appStore.env.useEmulators) {
         connectFunctionsEmulator(functions, 'localhost', 5001);
       }
-      const fn = httpsCallable<object, { id: string }>(functions, 'updateSrvContact');
+      const fn = httpsCallable<{ op: string } & Record<string, unknown>, { id: string }>(functions, 'srv');
       const changed = new Set(getMismatches(item).map(m => m.field));
       // dateOfDeath lives in the addresses vault (spec 1.19 'dod' channel), not on the
       // person document — the AOC console runs privileged, so this is a raw vault read.
@@ -605,6 +606,7 @@ export const MembershipSrvStore = signalStore(
           city:           changed.has('city')        ? item.mCity   || null   : item.rCity   || null,
           leavingDate:    item.mDateOfExit || null,
           dateOfDeath:    sensitive.dod || null,
+          op:             'updateSrvContact',
         });
       } catch (e) {
         console.error('MembershipSrvStore.updateRegasoft: updateSrvContact failed', e);

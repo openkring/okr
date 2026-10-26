@@ -595,10 +595,10 @@ export const BillStore = signalStore(
     async showPdf(bill: BillModel): Promise<void> {
       const attachmentId = bill.attachments[0];
       if (!attachmentId) return;
-      const fn = httpsCallable<{ attachmentId: string }, { content: string; mimeType?: string }>(
-        store.functions, 'showBillPdf'
+      const fn = httpsCallable<{ attachmentId: string; op: string }, { content: string; mimeType?: string }>(
+        store.functions, 'bexio'
       );
-      const result = await fn({ attachmentId });
+      const result = await fn({ attachmentId, op: 'showBillPdf' });
       const bytes = Uint8Array.from(atob(result.data.content), c => c.charCodeAt(0));
       const mimeType = result.data.mimeType ?? 'application/pdf';
       const blob = new Blob([bytes], { type: mimeType });

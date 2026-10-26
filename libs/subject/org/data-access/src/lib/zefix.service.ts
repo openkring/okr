@@ -24,20 +24,20 @@ export class ZefixService {
   private readonly functions = getFunctions(getApp(), 'europe-west6');
 
   async searchCompany(name: string): Promise<ZefixSearchResult[]> {
-    const fn = httpsCallable<{ name: string }, { data: { results: ZefixSearchResult[] } }>(
+    const fn = httpsCallable<{ name: string; op: string }, { data: { results: ZefixSearchResult[] } }>(
       this.functions,
-      'zefixSearch'
+      'zefix'
     );
-    const result = await fn({ name });
+    const result = await fn({ name, op: 'zefixSearch' });
     return result.data.data.results;
   }
 
   async getCompanyDetails(uid: string): Promise<ZefixCompanyDetails> {
-    const fn = httpsCallable<{ uid: string }, { data: ZefixCompanyDetails }>(
+    const fn = httpsCallable<{ uid: string; op: string }, { data: ZefixCompanyDetails }>(
       this.functions,
-      'zefixGetByUid'
+      'zefix'
     );
-    const result = await fn({ uid });
+    const result = await fn({ uid, op: 'zefixGetByUid' });
     return result.data.data;
   }
 }

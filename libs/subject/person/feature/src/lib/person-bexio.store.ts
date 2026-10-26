@@ -227,8 +227,8 @@ export const PersonBexioStore = signalStore(
         if (store.appStore.env.useEmulators) {
           connectFunctionsEmulator(functions, 'localhost', 5001);
         }
-        const getBexioContacts = httpsCallable<void, BexioContact[]>(functions, 'getBexioContacts');
-        const result = await getBexioContacts();
+        const getBexioContacts = httpsCallable<{ op: string }, BexioContact[]>(functions, 'bexio');
+        const result = await getBexioContacts({ op: 'getBexioContacts' });
         const contacts = result.data;
 
 
@@ -331,9 +331,9 @@ export const PersonBexioStore = signalStore(
         connectFunctionsEmulator(functions, 'localhost', 5001);
       }
       const createBexioContactFn = httpsCallable<
-        { name_1: string; name_2: string | null; street_name: string, house_number: string, postcode: string, city: string, mail: string, contact_type_id: number },
+        { name_1: string; name_2: string | null; street_name: string, house_number: string, postcode: string, city: string, mail: string, contact_type_id: number; op: string },
         { id: string }
-      >(functions, 'createBexioContact');
+      >(functions, 'bexio');
 
       let bxid: string;
       try {
@@ -346,6 +346,7 @@ export const PersonBexioStore = signalStore(
           city: item.city,
           mail: item.email,
           contact_type_id: item.type === 'org' ? 1 : 2,
+          op: 'createBexioContact',
         });
         bxid = String(result.data.id);
       } catch (e) {
@@ -416,9 +417,9 @@ export const PersonBexioStore = signalStore(
         connectFunctionsEmulator(functions, 'localhost', 5001);
       }
       const updateBexioContact = httpsCallable<
-        { id: string; name_1: string; name_2: string | null; street_name: string, house_number: string, postcode: string, city: string, mail: string, contact_type_id: number },
+        { id: string; name_1: string; name_2: string | null; street_name: string, house_number: string, postcode: string, city: string, mail: string, contact_type_id: number; op: string },
         { id: string }
-      >(functions, 'updateBexioContact');
+      >(functions, 'bexio');
 
       await updateBexioContact({
         id: item.bx_id,
@@ -430,6 +431,7 @@ export const PersonBexioStore = signalStore(
         city: item.city,
         mail: item.email,
         contact_type_id: item.type === 'org' ? 1 : 2,
+        op: 'updateBexioContact',
       });
 
       patchState(store, {

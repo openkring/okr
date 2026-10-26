@@ -45,6 +45,12 @@ export interface MatrixPollData {
   maxSelections?: number; // 1 = single choice (default), >1 = multiple choice
 }
 
+/** One `matrixUser` router op (3.41): the old callable name travels as `op`, payload and result stay as they were. */
+function matrixUserOp(op: string) {
+  const fn = httpsCallable<object, unknown>(getFunctions(getApp(), 'europe-west6'), 'matrixUser');
+  return (data: object) => fn({ ...data, op });
+}
+
 /**
  * The `msgtype` an attachment must be sent as. Three-way, and the video branch is the
  * reason this is a named function: everything that is not an image used to be `m.file`,
@@ -495,7 +501,7 @@ export class MatrixChatService {
    * cannot post into.
    */
   public async requestGroupRoomAccess(groupId: string): Promise<{ roomId: string; joined: boolean }> {
-    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'requestGroupRoomAccess');
+    const fn = matrixUserOp('requestGroupRoomAccess');
     const result = await fn({ groupId });
     return result.data as { roomId: string; joined: boolean };
   }
@@ -508,7 +514,7 @@ export class MatrixChatService {
    * @param roomName localized name for the stub shown until the real room arrives via sync
    */
   public async resolveNotesRoom(tenantId: string, roomName = ''): Promise<string> {
-    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'resolveNotesRoom');
+    const fn = matrixUserOp('resolveNotesRoom');
     const result = await fn({ tenantId });
     const { roomId } = result.data as { roomId: string };
     if (!roomId) throw new Error('resolveNotesRoom: no roomId returned');
@@ -1519,7 +1525,7 @@ export class MatrixChatService {
       const localpart = matrixUserId.split(':')[0].substring(1); // strip leading @
       debugMessage(`MatrixChatService.createDirectRoom: user not found, provisioning via CF for personKey=${localpart}`, this.appStore.currentUser());
       try {
-        const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'provisionMatrixUser');
+        const fn = matrixUserOp('provisionMatrixUser');
         const result = await fn({ personKey: localpart });
         debugData(`MatrixChatService.createDirectRoom: provisionMatrixUser succeeded:`, result.data, this.appStore.currentUser());
         // Trust the CF result — the user now exists on Synapse. Proceed to room creation.
@@ -1723,7 +1729,7 @@ export class MatrixChatService {
    * The Cloud Function provisions the Matrix user if needed and force-joins them.
    */
   public async inviteToGroupRoom(groupId: string, personKey: string): Promise<void> {
-    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'invitePersonToGroupRoom');
+    const fn = matrixUserOp('invitePersonToGroupRoom');
     await fn({ groupId, personKey });
   }
 
@@ -1737,7 +1743,7 @@ export class MatrixChatService {
    * der Raum erst mit dem naechsten Sync in der Raumliste erscheint.
    */
   public async createAdhocChat(tenantId: string, personKeys: string[], name?: string): Promise<{ groupKey: string; roomId: string; name: string }> {
-    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'createAdhocChat');
+    const fn = matrixUserOp('createAdhocChat');
     const result = await fn({ tenantId, personKeys, name });
     return result.data as { groupKey: string; roomId: string; name: string };
   }
@@ -1749,7 +1755,7 @@ export class MatrixChatService {
    * @returns die personKeys, die tatsaechlich dazugekommen sind (schon Anwesende fallen weg)
    */
   public async addAdhocChatMembers(groupKey: string, personKeys: string[]): Promise<string[]> {
-    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'addAdhocChatMembers');
+    const fn = matrixUserOp('addAdhocChatMembers');
     const result = await fn({ groupKey, personKeys });
     return (result.data as { added: string[] }).added;
   }
@@ -1760,36 +1766,36 @@ export class MatrixChatService {
    * Sekunden Verzoegerung.
    */
   public async leaveAdhocChat(groupKey: string): Promise<void> {
-    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'leaveAdhocChat');
+    const fn = matrixUserOp('leaveAdhocChat');
     await fn({ groupKey });
   }
 
   /** Pinnwand anlegen (nur privileged; spec 2026-10-11). Dokument, Raum und Mitglieder legt die Cloud Function an. */
   public async createPinboard(input: PinboardInput & { tenantId: string }): Promise<{ groupKey: string; roomId: string; name: string }> {
-    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'createPinboard');
+    const fn = matrixUserOp('createPinboard');
     return (await fn(input)).data as { groupKey: string; roomId: string; name: string };
   }
 
   public async updatePinboard(groupKey: string, patch: Partial<PinboardInput>): Promise<void> {
-    await httpsCallable(getFunctions(getApp(), 'europe-west6'), 'updatePinboard')({ groupKey, ...patch });
+    await matrixUserOp('updatePinboard')({ groupKey, ...patch });
   }
 
   public async archivePinboard(groupKey: string): Promise<void> {
-    await httpsCallable(getFunctions(getApp(), 'europe-west6'), 'archivePinboard')({ groupKey });
+    await matrixUserOp('archivePinboard')({ groupKey });
   }
 
   /** Verlassen = Austritt mit Merker: der Abgleich nimmt die Person nicht wieder auf. */
   public async leavePinboard(groupKey: string): Promise<void> {
-    await httpsCallable(getFunctions(getApp(), 'europe-west6'), 'leavePinboard')({ groupKey });
+    await matrixUserOp('leavePinboard')({ groupKey });
   }
 
   public async joinPinboard(groupKey: string): Promise<string> {
-    const result = await httpsCallable(getFunctions(getApp(), 'europe-west6'), 'joinPinboard')({ groupKey });
+    const result = await matrixUserOp('joinPinboard')({ groupKey });
     return (result.data as { roomId: string }).roomId;
   }
 
   public async listAvailablePinboards(tenantId: string): Promise<AvailablePinboard[]> {
-    const result = await httpsCallable(getFunctions(getApp(), 'europe-west6'), 'listAvailablePinboards')({ tenantId });
+    const result = await matrixUserOp('listAvailablePinboards')({ tenantId });
     return (result.data as { pinboards: AvailablePinboard[] }).pinboards;
   }
 
@@ -1798,7 +1804,7 @@ export class MatrixChatService {
    * Called when a group membership is ended.
    */
   public async kickFromGroupRoom(groupId: string, personKey: string): Promise<void> {
-    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'kickPersonFromGroupRoom');
+    const fn = matrixUserOp('kickPersonFromGroupRoom');
     await fn({ groupId, personKey });
   }
 
@@ -1824,7 +1830,7 @@ export class MatrixChatService {
 
   /** Remove a person from an ad-hoc chat (callable `removeAdhocChatMember`). */
   public async removeAdhocChatMember(groupKey: string, personKey: string): Promise<void> {
-    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'removeAdhocChatMember');
+    const fn = matrixUserOp('removeAdhocChatMember');
     await fn({ groupKey, personKey });
   }
 

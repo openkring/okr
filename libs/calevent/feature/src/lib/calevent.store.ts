@@ -510,8 +510,8 @@ export const CalEventStore = signalStore(
         if (this.isChatBlocked()) return;
         try {
           const functions = getFunctions(getApp(), 'europe-west6');
-          const fn = httpsCallable<{ groupId: string }, { roomId: string }>(functions, 'requestGroupRoomAccess');
-          const { data } = await fn({ groupId });
+          const fn = httpsCallable<{ groupId: string; op: string }, { roomId: string }>(functions, 'matrixUser');
+          const { data } = await fn({ groupId, op: 'requestGroupRoomAccess' });
           const matrix = await store.matrixChatService();
           await matrix.ensureInitialized();
           await matrix.sendMessage(data.roomId, message);

@@ -431,7 +431,8 @@ export const _MemberFeesStore = signalStore(
         footer?: string;
         template_slug: string;
         positions?: { text: string; unit_price: number; account_id: number; amount: number }[];
-      }, { id: string }>(store.functions, 'createBexioInvoice');
+        op: string;
+      }, { id: string }>(store.functions, 'bexio');
 
       const result = await fn({
         title: `Jahresbeitrag ${getYear()}`,
@@ -440,6 +441,7 @@ export const _MemberFeesStore = signalStore(
         footer: data.footer,
         template_slug: fee.templateId,
         positions,
+        op: 'createBexioInvoice',
       });
 
       // Mark as uploaded and store the Bexio invoice ID
@@ -514,11 +516,11 @@ export const _MemberFeesStore = signalStore(
         patchState(store, { version: store.version() + 1 });
       }
 
-      const fn = httpsCallable<{ invoiceId: string }, { content: string }>(
-        store.functions, 'showInvoicePdf'
+      const fn = httpsCallable<{ invoiceId: string; op: string }, { content: string }>(
+        store.functions, 'bexio'
       );
       const memberName = `${fee.member?.name2 ?? ''}_${fee.member?.name1 ?? ''}`;
-      const result = await fn({ invoiceId: invoiceBexioId });
+      const result = await fn({ invoiceId: invoiceBexioId, op: 'showInvoicePdf' });
       const bytes = Uint8Array.from(atob(result.data.content), c => c.charCodeAt(0));
       const blob = new Blob([bytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);

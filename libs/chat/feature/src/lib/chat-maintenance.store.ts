@@ -190,6 +190,12 @@ function matrixAdminOp<Req, Res>(op: string) {
   return (data: Req) => fn({ op, ...data });
 }
 
+/** One `matrixUser` router op (3.41): the old callable name travels as `op`, payload and result stay as they were. */
+function matrixUserOp<Req, Res>(op: string) {
+  const fn = httpsCallable<Req & { op: string }, Res>(getFn(), 'matrixUser');
+  return (data: Req) => fn({ ...data, op });
+}
+
 export const ChatMaintenanceStore = signalStore(
   withState(initialState),
   withProps(() => {
@@ -823,9 +829,7 @@ export const ChatMaintenanceStore = signalStore(
       const pk = (data.values.personKey as string).trim();
       if (!pk) return;
       try {
-        const fn = httpsCallable<{ groupId: string; personKey: string }, { roomId: string; joined: boolean }>(
-          getFn(), 'invitePersonToGroupRoom'
-        );
+        const fn = matrixUserOp<{ groupId: string; personKey: string }, { roomId: string; joined: boolean }>('invitePersonToGroupRoom');
         await fn({ groupId, personKey: pk });
         store.membersResource.reload();
         await showToast(store.toastController, `${pk} ${store.i18n.chat_room_invite_conf()}`);
@@ -1071,9 +1075,7 @@ export const ChatMaintenanceStore = signalStore(
       // Extract personKey from userId (@personkey:homeserver → personkey)
       const personKey = userId.replace(/^@/, '').split(':')[0];
       try {
-        const fn = httpsCallable<{ groupId: string; personKey: string }, { roomId: string; kicked: boolean }>(
-          getFn(), 'kickPersonFromGroupRoom'
-        );
+        const fn = matrixUserOp<{ groupId: string; personKey: string }, { roomId: string; kicked: boolean }>('kickPersonFromGroupRoom');
         await fn({ groupId, personKey });
         store.membersResource.reload();
         await showToast(store.toastController, `${userId} ${store.i18n.chat_member_kick_conf()}`);
