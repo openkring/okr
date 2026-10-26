@@ -13,7 +13,7 @@ export interface TrackerPhotosPlugin {
   /** Resolves after the user answered the system dialog. */
   requestAccess(): Promise<{ access: PhotoAccess }>;
   /** from/to: ms epoch. At most 200 photos per call; the rest and unloadable ones are counted in `skipped`. */
-  between(o: { from: number; to: number; maxPx: number }): Promise<{ photos: LibraryPhoto[]; access: string; skipped: number }>;
+  between(o: { from: number; to: number; maxPx: number }): Promise<{ photos: LibraryPhoto[]; access: PhotoAccess; skipped: number }>;
 }
 
 export const TrackerPhotos = registerPlugin<TrackerPhotosPlugin>('TrackerPhotos');
