@@ -13,8 +13,11 @@ import {
   type CrewTrackSection,
   type LocalSection,
 } from '@okr/mobility-tracker-util';
-import { TripCollection, type TripModel } from '@okr/shared-models';
+import { TRACKER_TRIP_TYPE, TripCollection, type TripModel } from '@okr/shared-models';
 import { crewTrackDeadline } from '@okr/trip-util';
+
+/** The longest stretch of a recording a crew member can get, however the Logbuch times were edited (spec 1.123 §5.3). */
+export const CREW_TRACK_MAX_SPAN_MS = 12 * 3_600_000;
 
 export type CrewAccess = 'ok' | 'none' | 'denied' | 'gone';
 
@@ -33,7 +36,7 @@ export function decideCrewAccess(
   recordingExists: boolean,
   today: string,
 ): CrewAccess {
-  if (!logbuch || logbuch.type !== 'logbuch' || !logbuch.trackKey) return 'none';
+  if (!logbuch || logbuch.type !== 'logbuch' || !logbuch.trackKey || logbuch.deletedAt) return 'none';
   if (!isCrewMember(logbuch, callerPersonKey)) return 'denied';
   const deadline = crewTrackDeadline(logbuch);
   if (deadline !== '' && today > deadline) return 'none';
@@ -58,6 +61,29 @@ export function toCrewSections(sections: LocalSection[]): CrewTrackSection[] {
   });
 }
 
+/** The recording behind a Logbuch `trackKey` is only trusted when it points back (trackKey is client-writable). Pure. */
+export function isLinkedRecording(
+  rec: Pick<TripModel, 'type' | 'tenants' | 'isArchived' | 'deletedAt' | 'track'> | undefined,
+  logbuchKey: string,
+  tenantId: string,
+): boolean {
+  return (
+    !!rec &&
+    rec.type === TRACKER_TRIP_TYPE &&
+    !!rec.track &&
+    rec.track.logbuchKey === logbuchKey &&
+    (rec.tenants ?? []).includes(tenantId) &&
+    !rec.isArchived &&
+    !rec.deletedAt
+  );
+}
+
+/** Logbuch window, with the upper bound capped at CREW_TRACK_MAX_SPAN_MS after the lower one. Pure. */
+export function crewWindowMs(logbuch: TripModel, recordingEndMs: number): { fromMs: number; toMs: number } {
+  const { fromMs, toMs } = logbuchWindowMs(logbuch, recordingEndMs);
+  return { fromMs, toMs: Math.min(toMs, fromMs + CREW_TRACK_MAX_SPAN_MS) };
+}
+
 interface PointsDocData {
   mode: LocalSection['mode'];
   encoded: string;
@@ -68,11 +94,11 @@ interface PointsDocData {
  * The linked recording's sections clipped to the Logbuch window; undefined when the recording trip is
  * missing or archived. Reads the owner-only docs with admin rights - only the clipped result leaves.
  */
-export async function loadClippedTrack(db: Firestore, logbuch: TripModel): Promise<LocalSection[] | undefined> {
+export async function loadClippedTrack(db: Firestore, logbuch: TripModel, logbuchKey: string, tenantId: string): Promise<LocalSection[] | undefined> {
   if (!logbuch.trackKey) return undefined;
   const rec = await db.collection(TripCollection).doc(logbuch.trackKey).get();
-  const recData = rec.data() as Pick<TripModel, 'isArchived' | 'track' | 'deletedAt'> | undefined;
-  if (!rec.exists || !recData || recData.isArchived || recData.deletedAt || !recData.track) return undefined;
+  const recData = rec.data() as TripModel | undefined;
+  if (!rec.exists || !recData || !isLinkedRecording(recData, logbuchKey, tenantId) || !recData.track) return undefined;
 
   const snap = await db.collection(TripCollection).doc(logbuch.trackKey).collection('track-points').get();
   const docs = snap.docs
@@ -87,6 +113,6 @@ export async function loadClippedTrack(db: Firestore, logbuch: TripModel): Promi
   const endedMs = Date.parse(recData.track.endedAt);
   const lastPoint = sections.reduce((m, s) => Math.max(m, s.points[s.points.length - 1]?.t ?? 0), 0);
   const recordingEndMs = Number.isNaN(endedMs) ? lastPoint : endedMs;
-  const { fromMs, toMs } = logbuchWindowMs(logbuch, recordingEndMs);
+  const { fromMs, toMs } = crewWindowMs(logbuch, recordingEndMs);
   return clipSections(sections, fromMs, toMs);
 }

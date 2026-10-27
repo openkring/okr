@@ -4,7 +4,8 @@ import { getFirestore } from 'firebase-admin/firestore';
 import type { GetLogbuchTrackRes } from '@okr/mobility-tracker-util';
 import { TripCollection, UserCollection, type TripModel } from '@okr/shared-models';
 import { crewTrackDeadline } from '@okr/trip-util';
-import { checkAppCheckToken } from '@okr/shared-util-functions';
+import { isKioskOnly } from '@okr/shared-util-core';
+import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
 import { toStoreDate } from '../srv/zurich-time';
 import { decideCrewAccess, loadClippedTrack, toCrewSections } from './crew-track';
@@ -25,8 +26,8 @@ export const getLogbuchTrack = onCall<GetLogbuchTrackReq, Promise<GetLogbuchTrac
   { region: 'europe-west6', memory: '256MiB', timeoutSeconds: 30, enforceAppCheck: true },
   async (request) => {
     checkAppCheckToken(request, 'getLogbuchTrack');
-    const uid = request.auth?.uid;
-    if (!uid) throw new HttpsError('unauthenticated', 'sign in first');
+    checkAuthentication(request, 'getLogbuchTrack');
+    const uid = request.auth?.uid as string;
     const { tenantId, tripKey } = request.data ?? ({} as Partial<GetLogbuchTrackReq>);
     if (typeof tenantId !== 'string' || tenantId === '' || typeof tripKey !== 'string' || tripKey === '') {
       throw new HttpsError('invalid-argument', 'tenantId and tripKey required');
@@ -36,6 +37,8 @@ export const getLogbuchTrack = onCall<GetLogbuchTrackReq, Promise<GetLogbuchTrac
     const user = (await db.collection(UserCollection).doc(uid).get()).data() ?? {};
     const tenants = (user['tenants'] as string[] | undefined) ?? [];
     if (tenants[0] !== tenantId) throw new HttpsError('permission-denied', 'wrong tenant');
+    // the kiosk is a shared account: never a crew member (spec 1.123 §5.1)
+    if (isKioskOnly({ roles: user['roles'] ?? {} } as Parameters<typeof isKioskOnly>[0])) return { state: 'denied' };
     const personKey = (user['personKey'] as string | undefined) ?? '';
 
     const snap = await db.collection(TripCollection).doc(tripKey).get();
@@ -48,8 +51,8 @@ export const getLogbuchTrack = onCall<GetLogbuchTrackReq, Promise<GetLogbuchTrac
     const early = decideCrewAccess(logbuch, personKey, true, today);
     if (early !== 'ok' || !logbuch) return { state: early === 'ok' ? 'none' : early };
 
-    const clipped = await loadClippedTrack(db, logbuch);
-    if (decideCrewAccess(logbuch, personKey, clipped !== undefined, today) !== 'ok' || !clipped) return { state: 'gone' };
+    const clipped = await loadClippedTrack(db, logbuch, tripKey, tenantId);
+    if (!clipped) return { state: 'gone' };
     return {
       state: 'ok',
       name: logbuch.name,
