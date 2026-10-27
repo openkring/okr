@@ -1,5 +1,5 @@
 import { Route } from '@angular/router';
-import { isAuthenticatedGuard } from '@okr/auth-feature';
+import { isAuthenticatedGuard, kioskTrackerLockGuard } from '@okr/auth-feature';
 
 /** The pages under /tracker; the feature catalogue lazy-loads these (loadChildren, `trip` block), the app mounts TRACKER_ROUTES. */
 export const TRACKER_CHILD_ROUTES: Route[] = [
@@ -12,5 +12,5 @@ export const TRACKER_CHILD_ROUTES: Route[] = [
  * isAppReadyGuard parent: recording must open on an offline cold start (only the Firebase sign-in is required).
  */
 export const TRACKER_ROUTES: Route[] = [
-  { path: 'tracker', canActivate: [isAuthenticatedGuard], children: TRACKER_CHILD_ROUTES },
+  { path: 'tracker', canActivate: [isAuthenticatedGuard, kioskTrackerLockGuard], children: TRACKER_CHILD_ROUTES },
 ];

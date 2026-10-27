@@ -490,7 +490,8 @@ const trip: BlockRoutes = {
     },
     // The tracker (spec 1.121, 1.123 §8) behind the Logbuch switch, for the `trip-tracker` menu row. Apps that
     // record (bkg, scs) also mount TRACKER_ROUTES before the app-ready gate; that ungated copy matches first.
-    // Lazy, so no app's start bundle carries the tracker.
+    // Lazy, so no app's start bundle carries the tracker. No kiosk guard here: this copy sits inside each app's
+    // feature parent, which in scs (the only app with a kiosk) already carries kioskLockGuard.
     {
       path: 'tracker',
       canActivate: [isAuthenticatedGuard],

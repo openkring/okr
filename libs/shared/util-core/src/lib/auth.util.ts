@@ -89,6 +89,18 @@ export function isKioskOnly(currentUser?: UserModel): boolean {
   return Object.entries(roles).every(([key, value]) => key === 'kiosk' || value !== true);
 }
 
+/**
+ * Non-blocking kiosk lock decision for routes mounted outside the app-ready gate (e.g. /tracker, which must open on
+ * an offline cold start). Redirects only once the app is ready AND the user is kiosk-only; before readiness it passes,
+ * because waiting for readiness would block the offline start (see kioskTrackerLockGuard).
+ * @param ready appStore.isAppReady()
+ * @param currentUser appStore.currentUser()
+ * @returns true if the navigation must be redirected to the kiosk url
+ */
+export function shouldRedirectKiosk(ready: boolean, currentUser?: UserModel): boolean {
+  return ready && isKioskOnly(currentUser);
+}
+
 // privacy access checks
 export function isVisibleToUser(privacyAccessor?: PrivacyAccessor, currentUser?: UserModel): boolean {
   if (!privacyAccessor) return false;
