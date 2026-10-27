@@ -396,6 +396,7 @@ export { fetchDiaryWeather } from './diary/fetch-diary-weather';
 export { getDiaryMediaImage, listDiaryMedia } from './diary/list-diary-media';
 // Jasstafel (spec 1.67): a finished game's result into the caller's diary in every tenant of their `diaryTargets`
 export { recordDiaryLine } from './diary/record-diary-line';
+export { getLogbuchTrack } from './trip/get-logbuch-track';
 export { listMyDiaryTenants } from './diary/list-my-diary-tenants';
 
 // re-derive the dob/dod replicas from the live vault (the dateOfDeath migration ran and was retired 2026-10-24, spec 1.118 D3)

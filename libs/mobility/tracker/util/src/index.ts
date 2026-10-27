@@ -16,3 +16,4 @@ export * from './lib/track-photos.util';
 export * from './lib/stroke-detector';
 export * from './lib/track-strokes.util';
 export * from './lib/track-clip.util';
+export * from './lib/crew-track.model';
