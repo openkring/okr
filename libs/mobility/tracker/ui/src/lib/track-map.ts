@@ -20,8 +20,8 @@ const SELECTED_MIN_ZOOM = 16;
 /** dimmed base map, so the coloured track stands out (over a white background, also in dark mode) */
 const TILE_OPACITY = 0.55;
 const MAX_ZOOM = 19;
-/** highest zoom the swisstopo layer is requested at; above it Leaflet scales the tiles up */
-const SWISSTOPO_MAX_NATIVE_ZOOM = 18;
+/** highest zoom the swisstopo layer is requested at (level 19 exists, checked 2026-10-27); above it Leaflet scales the tiles up */
+const SWISSTOPO_MAX_NATIVE_ZOOM = 19;
 /** user input on the map container that ends the automatic re-fitting */
 const USER_MOVE_EVENTS = ['mousedown', 'touchstart', 'wheel', 'keydown'] as const;
 
