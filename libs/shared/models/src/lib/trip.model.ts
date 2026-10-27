@@ -26,6 +26,8 @@ export interface TripTrack {
   journalKey?: string; // set when attached to a journal
   footprintKey?: string;
   role?: 'leg' | 'tour'; // leg = route to footprintKey; tour = a tour shown inside footprintKey
+  logbuchKey?: string; // the Logbuch trip (trips/{okey}) this recorded track is linked to (spec 1.123 L2)
+  copyOf?: string; // okey of the track trip this copy was made from (spec 1.123 L2)
 }
 
 export interface TrackSection {
@@ -78,7 +80,9 @@ export class TripModel implements OkrModel, NamedModel, SearchableModel, TaggedM
   public participants: AvatarInfo[] = []; // person.okey: the persons participating in the trip
   public state = 'draft';
   public track?: TripTrack; // recorded track metadata (type 'tracker'); not initialised — legacy trips lack it
-  
+  public trackRequest?: { personKey: string }; // crew-track request: personKey = the carrier, after linking the recorder (spec 1.123 L1); not initialised
+  public trackKey?: string; // okey of the linked recorded-track trip (pairs with track.logbuchKey; spec 1.123 L1); not initialised
+
   // soft delete pattern
   public deletedAt?: string | null;      // ISO timestamp, null = active
   public deletedBy?: string | null;     // optional: device id, station name, or admin who deleted
@@ -88,6 +92,11 @@ export class TripModel implements OkrModel, NamedModel, SearchableModel, TaggedM
     this.tenants = [tenantId];
   }
 }
+
+/** Days a Logbuch trip stays open for a crew-track request / link (spec 1.123). */
+export const CREW_TRACK_DAYS = 7;
+/** Time margin (ms) around a trip when matching a recorded track to it (spec 1.123). */
+export const CREW_TRACK_MARGIN_MS = 300_000;
 
 export const TripCollection = 'trips';
 export const TripModelName = 'trip';
