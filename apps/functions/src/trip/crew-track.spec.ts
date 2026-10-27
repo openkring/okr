@@ -4,7 +4,7 @@ import type { LocalSection } from '@okr/mobility-tracker-util';
 import { clipSections, decodeStrokeTimes, decodeTrack, strokeTimesBase } from '@okr/mobility-tracker-util';
 import {
   buildCrewCopy, CREW_TRACK_MAX_SPAN_MS, crewPushTexts, crewTrackActions, crewWindowMs, decideCrewAccess, isCrewMember,
-  isLinkedRecording, selectCrewDiaryTarget, toCrewSections, isTrackReferenced, crewCleanupDecision,
+  isLinkedRecording, selectCrewDiaryTarget, toCrewSections, isTrackReferenced, crewCleanupDecision, logbuchCleanupDeadline, thumbPrefixes,
 } from './crew-track';
 
 function logbuch(over: Partial<TripModel> = {}): TripModel {
@@ -44,6 +44,10 @@ describe('decideCrewAccess', () => {
   });
   it('none for a soft-deleted logbuch', () => {
     expect(decideCrewAccess(logbuch({ deletedAt: '2026-10-21T10:00:00Z' }), 'p1', true, '20261021')).toBe('none');
+  });
+  it('none for an archived or state-deleted logbuch', () => {
+    expect(decideCrewAccess(logbuch({ isArchived: true }), 'p1', true, '20261021')).toBe('none');
+    expect(decideCrewAccess(logbuch({ state: 'deleted' }), 'p1', true, '20261021')).toBe('none');
   });
   it('open trip never expires', () => {
     expect(decideCrewAccess(logbuch({ endDate: '' }), 'p1', true, '20990101')).toBe('ok');
@@ -315,12 +319,36 @@ describe('crewCleanupDecision', () => {
     expect(crewCleanupDecision(lb(), undefined, 'lb1', T, after)).toEqual({ copy: false, unlink: true, unlinkRecording: false, delete: false }));
   it('recording points to another Logbuch -> unlink Logbuch only', () =>
     expect(crewCleanupDecision(lb(), rec({}, { logbuchKey: 'other' }), 'lb1', T, after)).toEqual({ copy: false, unlink: true, unlinkRecording: false, delete: false }));
-  it('soft-deleted Logbuch before deadline -> unlink, no delete', () =>
-    expect(crewCleanupDecision(lb({ deletedAt: '2026-10-21T10:00:00Z' }), rec(), 'lb1', T, before)).toEqual({ copy: false, unlink: true, unlinkRecording: true, delete: false }));
-  it('state deleted counts as deleted', () =>
-    expect(crewCleanupDecision(lb({ state: 'deleted' }), rec(), 'lb1', T, before)).toMatchObject({ unlink: true, delete: false }));
+  it('soft-deleted Logbuch before deadline -> nothing (no copy, no unlink, no delete)', () =>
+    expect(crewCleanupDecision(lb({ deletedAt: '2026-10-21T10:00:00Z' }), rec(), 'lb1', T, before)).toEqual({ copy: false, unlink: false, unlinkRecording: false, delete: false }));
+  it('state deleted / archived before deadline -> nothing', () => {
+    expect(crewCleanupDecision(lb({ state: 'deleted' }), rec(), 'lb1', T, before)).toMatchObject({ copy: false, unlink: false, delete: false });
+    expect(crewCleanupDecision(lb({ isArchived: true }), rec(), 'lb1', T, before)).toMatchObject({ copy: false, unlink: false, delete: false });
+  });
+  it('soft-deleted Logbuch after deadline -> unlink + delete-if-unreferenced, no copy', () => {
+    expect(crewCleanupDecision(lb({ deletedAt: '2026-10-21T10:00:00Z' }), rec(), 'lb1', T, after)).toEqual({ copy: false, unlink: true, unlinkRecording: true, delete: true });
+    expect(crewCleanupDecision(lb({ deletedAt: '2026-10-21T10:00:00Z' }), rec({}, { journalKey: 'j' }), 'lb1', T, after)).toMatchObject({ unlink: true, delete: false });
+  });
   it('a crew copy is never deleted', () =>
     expect(crewCleanupDecision(lb(), rec({}, { copyOf: 'x' }), 'lb1', T, after).delete).toBe(false));
   it('open trip never expires', () =>
     expect(crewCleanupDecision(lb({ state: 'open', endDate: '' }), rec(), 'lb1', T, after)).toMatchObject({ copy: false, unlink: false, delete: false }));
+});
+
+describe('logbuchCleanupDeadline', () => {
+  it('endDate + 7, else startDate + 7, else never', () => {
+    expect(logbuchCleanupDeadline({ endDate: '20261020', startDate: '20261019' })).toBe('20261027');
+    expect(logbuchCleanupDeadline({ endDate: '', startDate: '20261019' })).toBe('20261026');
+    expect(logbuchCleanupDeadline({ endDate: '', startDate: '' })).toBe('');
+  });
+});
+
+describe('thumbPrefixes', () => {
+  it('derives per-tenant prefixes of this recording only', () => {
+    expect(thumbPrefixes({ okey: 'rec1', tenants: ['scs', 'kring'] })).toEqual(['tenant/scs/tracks/rec1/', 'tenant/kring/tracks/rec1/']);
+  });
+  it('refuses path-like keys or tenants', () => {
+    expect(thumbPrefixes({ okey: '../x', tenants: ['scs'] })).toEqual([]);
+    expect(thumbPrefixes({ okey: 'rec1', tenants: ['a/b', '..', ''] })).toEqual([]);
+  });
 });

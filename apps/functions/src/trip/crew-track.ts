@@ -8,6 +8,7 @@ import {
   encodeTrack,
   logbuchWindowMs,
   clipSections,
+  trackThumbPath,
   sectionFigures,
   strokeTimesBase,
   summarize,
@@ -15,6 +16,7 @@ import {
   type LocalSection,
 } from '@okr/mobility-tracker-util';
 import {
+  CREW_TRACK_DAYS,
   resolveDiaryTargets,
   TRACKER_TRIP_TYPE,
   TripCollection,
@@ -36,6 +38,11 @@ export const CREW_TRACK_MAX_SPAN_MS = 12 * 3_600_000;
 
 export type CrewAccess = 'ok' | 'none' | 'denied' | 'gone';
 
+/** Soft-deleted, archived or state 'deleted': the crew has no access any more. Pure. */
+export function isLogbuchGone(t: Pick<TripModel, 'deletedAt' | 'isArchived' | 'state'>): boolean {
+  return !!t.deletedAt || !!t.isArchived || t.state === 'deleted';
+}
+
 /** Is the person on the Logbuch trip's crew? `participants[].key` is the person okey (AvatarInfo). */
 export function isCrewMember(trip: Pick<TripModel, 'participants'>, personKey: string): boolean {
   return personKey !== '' && (trip.participants ?? []).some((p) => p.key === personKey);
@@ -51,7 +58,7 @@ export function decideCrewAccess(
   recordingExists: boolean,
   today: string,
 ): CrewAccess {
-  if (!logbuch || logbuch.type !== 'logbuch' || !logbuch.trackKey || logbuch.deletedAt) return 'none';
+  if (!logbuch || logbuch.type !== 'logbuch' || !logbuch.trackKey || isLogbuchGone(logbuch)) return 'none';
   if (!isCrewMember(logbuch, callerPersonKey)) return 'denied';
   const deadline = crewTrackDeadline(logbuch);
   if (deadline !== '' && today > deadline) return 'none';
@@ -450,7 +457,11 @@ export async function handleCrewTrack(before: TripModel | undefined, after: Trip
 
 /*----------------------------- nightly day-7 cleanup (spec 1.123 §7) -----------------------------*/
 
-/** Does anything besides the Logbuch still hold the recording: a journal, or a diary tenant other than the Logbuch's? Pure. */
+/**
+ * Does anything besides the Logbuch still hold the recording: a journal, or a diary tenant other than the Logbuch's? Pure.
+ * Assumes a recorder's diary tenant is never the Logbuch (source) tenant itself (diary targets point to other apps), so
+ * "tenants contains a tenant other than the Logbuch tenant" means "kept in a diary".
+ */
 export function isTrackReferenced(recording: Pick<TripModel, 'tenants' | 'track'>, logbuchTenant: string): boolean {
   return !!recording.track?.journalKey || (recording.tenants ?? []).some((t) => t !== logbuchTenant);
 }
@@ -462,10 +473,23 @@ export interface CrewCleanupDecision {
   delete: boolean;
 }
 
+/** Deadline for the nightly pass: crewTrackDeadline, or startDate + CREW_TRACK_DAYS when there is no end date. '' = never. Pure. */
+export function logbuchCleanupDeadline(trip: Pick<TripModel, 'endDate' | 'startDate'>): string {
+  const d = crewTrackDeadline(trip);
+  if (d !== '' || !trip.startDate) return d;
+  return crewTrackDeadline({ endDate: trip.startDate });
+}
+
+/** Storage prefixes of a recording's thumbnails, derived from the server-side layout, never from stored paths. Pure. */
+export function thumbPrefixes(rec: Pick<TripModel, 'okey' | 'tenants'>): string[] {
+  if (!rec.okey || /[/.]/.test(rec.okey)) return [];
+  return [...new Set((rec.tenants ?? []).filter((t) => t !== '' && !/[/.]/.test(t)))].map((t) => trackThumbPath(t, rec.okey, 0).replace(/0\.jpg$/, ''));
+}
+
 /**
  * What the nightly pass does for one Logbuch trip that has a `trackKey` (pure). `today` = Zurich StoreDate.
- * - copy: the retry for copies the trigger missed - a valid linked recording and an ended Logbuch trip, every night until day 7.
- * - unlink: past the deadline, or the Logbuch trip is deleted / archived.
+ * - copy: the retry for copies the trigger missed - a valid linked recording and an ended, not deleted Logbuch trip, every night until day 7.
+ * - unlink: past the deadline (also for a deleted / archived Logbuch trip, which keeps its link until then).
  * - unlinkRecording: only when the recording points back to this Logbuch trip.
  * - delete: past the deadline only, the recording was linked to this Logbuch trip, nothing else holds it, and it is no crew copy.
  */
@@ -476,13 +500,13 @@ export function crewCleanupDecision(
   tenantId: string,
   today: string,
 ): CrewCleanupDecision {
-  const deadline = crewTrackDeadline(logbuch);
+  const deadline = logbuchCleanupDeadline(logbuch);
   const pastDeadline = deadline !== '' && today > deadline;
-  const gone = !!logbuch.deletedAt || logbuch.state === 'deleted' || !!logbuch.isArchived;
-  const unlink = pastDeadline || gone;
+  // a deleted / archived Logbuch trip keeps its link until the deadline like any other (the crew has no access meanwhile)
+  const unlink = pastDeadline;
   const linkedBack = !!rec && rec.type === TRACKER_TRIP_TYPE && rec.track?.logbuchKey === logbuchKey;
   return {
-    copy: isLogbuchEnded(logbuch) && isLinkedRecording(rec, logbuch, logbuchKey, tenantId),
+    copy: !isLogbuchGone(logbuch) && isLogbuchEnded(logbuch) && isLinkedRecording(rec, logbuch, logbuchKey, tenantId),
     unlink,
     unlinkRecording: unlink && linkedBack,
     delete: pastDeadline && linkedBack && !!rec && !rec.track?.copyOf && !isTrackReferenced(rec, tenantId),
@@ -498,10 +522,8 @@ async function deleteRecording(db: Firestore, rec: TripModel): Promise<void> {
     points.slice(i, i + 400).forEach((d) => batch.delete(d));
     await batch.commit();
   }
-  for (const photo of rec.track?.photos ?? []) {
-    if (!photo.thumbPath) continue;
-    await privateBucket().file(photo.thumbPath).delete({ ignoreNotFound: true });
-  }
+  // by the server-derived prefix of this recording only - the stored thumbPath is client-writable and never trusted
+  for (const prefix of thumbPrefixes(rec)) await privateBucket().deleteFiles({ prefix, force: true });
   await ref.delete();
 }
 
@@ -522,15 +544,25 @@ export async function runCrewTrackCleanup(now: Date = new Date()): Promise<void>
       const recSnap = await db.collection(TripCollection).doc(logbuch.trackKey).get();
       const rec = recSnap.exists ? ({ ...(recSnap.data() as TripModel), okey: recSnap.id } as TripModel) : undefined;
       const d = crewCleanupDecision(logbuch, rec, doc.id, tenantId, today);
-      if (d.copy && rec) copies += await copyForCrew(db, logbuch, rec);
+      if (d.copy && rec) {
+        try {
+          copies += await copyForCrew(db, logbuch, rec);
+        } catch (error) {
+          // past the deadline a failing last attempt must not keep the recording alive
+          if (!d.unlink) throw error;
+          logger.error(`crewTrackCleanup: final copy failed logbuch=${doc.id}`, error);
+        }
+      }
       if (!d.unlink) continue;
-      await doc.ref.update({ trackKey: FieldValue.delete(), trackRequest: FieldValue.delete() });
-      unlinked++;
-      if (d.unlinkRecording && rec) await recSnap.ref.update({ 'track.logbuchKey': FieldValue.delete() });
+      // the recording first, the Logbuch link last: a failure leaves the link and the next night retries
       if (d.delete && rec) {
         await deleteRecording(db, rec);
         deleted++;
+      } else if (d.unlinkRecording && rec) {
+        await recSnap.ref.update({ 'track.logbuchKey': FieldValue.delete() });
       }
+      await doc.ref.update({ trackKey: FieldValue.delete(), trackRequest: FieldValue.delete() });
+      unlinked++;
     } catch (error) {
       failed++;
       logger.error(`crewTrackCleanup: failed logbuch=${doc.id}`, error);
