@@ -253,7 +253,9 @@ describe('SUBJECT_DATA_MAP — tiers and tenant-exit disposition', () => {
     // owner-locked (`personKey`), voluntary, no club record; it leaves with its owner.
     // `ratings` joined 2026-10-23 (1.115): a person's own star rating of a learning document —
     // author-only reads, voluntary, no club record; the aggregate is recomputed without it.
-    expect(SUBJECT_DATA_MAP.filter((e) => e.tier === 'T2').map((e) => e.collection)).toEqual(['avatars', 'prospects', 'diaries', 'diaryAlbums', 'diaryImports', 'hearingQuizResults', 'chatReminders', 'ratings']);
+    // `trips/tracker` joined 2026-10-27 (1.121 / 1.123): a person's own GPS recordings and the crew
+    // copies made for them — owned via `track.personKey`, voluntary, not the club's Logbuch record.
+    expect(SUBJECT_DATA_MAP.filter((e) => e.tier === 'T2').map((e) => e.collection)).toEqual(['avatars', 'prospects', 'trips/tracker', 'diaries', 'diaryAlbums', 'diaryImports', 'hearingQuizResults', 'chatReminders', 'ratings']);
   });
 
   // Regression guard on the strictest-tier rule. `addresses` holds both the favorite
@@ -663,6 +665,7 @@ describe('subject-data-map — collection names are constants, not literals', ()
   const NON_MODEL_COLLECTIONS = new Set([
     'users/fcmTokens', // subcollection path, not a top-level collection
     'stats_members', // derived stats, written by a scheduled function, no model
+    'trips/tracker', // the tracker-type half of TripCollection, keyed by track.personKey (own row, other fate)
   ]);
 
   it('every entry resolves to an exported collection constant', () => {
