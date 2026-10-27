@@ -8,7 +8,7 @@ export interface TrackMapSection { mode: TransportMode; points: TrackPoint[] }
 export interface TrackMapPhoto { lat: number; lng: number; src?: string; hidden: boolean }
 
 const TILE_URL = 'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg';
-const FIT_PADDING: L.PointExpression = [32, 32];
+const FIT_PADDING: L.PointTuple = [32, 32];
 const SINGLE_POINT_ZOOM = 15;
 const MAX_FIT_ZOOM = 17;
 const DEFAULT_VIEW: L.LatLngExpression = [46.8, 8.2]; // Switzerland, until the first point arrives
@@ -22,8 +22,12 @@ const TILE_OPACITY = 0.55;
 const MAX_ZOOM = 19;
 /** highest zoom the swisstopo layer is requested at (level 19 exists, checked 2026-10-27); above it Leaflet scales the tiles up */
 const SWISSTOPO_MAX_NATIVE_ZOOM = 19;
-/** user input on the map container that ends the automatic re-fitting */
-const USER_MOVE_EVENTS = ['mousedown', 'touchstart', 'wheel', 'keydown'] as const;
+/**
+ * user input on the map container that ends the automatic re-fitting; listened to in the capture phase, because
+ * Leaflet's zoom buttons stop the propagation of their own mousedown/touchstart
+ */
+const USER_MOVE_EVENTS = ['pointerdown', 'mousedown', 'touchstart', 'wheel', 'keydown'] as const;
+const USER_MOVE_OPTIONS: AddEventListenerOptions = { capture: true, passive: true };
 
 type MapFit = { bounds: L.LatLngBounds } | { center: L.LatLngTuple };
 
@@ -87,6 +91,10 @@ export class TrackMap {
   private lastFit?: MapFit;
   private userMoved = false;
   private wasEmpty = true;
+  /** the container had a real size at least once — later 0 → size changes are re-shows (Ionic display:none) */
+  private shownOnce = false;
+  /** the last point of the track, where a re-shown live map pans to */
+  private lastPoint?: L.LatLngTuple;
   private readonly onUserMove = (): void => { this.userMoved = true; };
 
   public constructor() {
@@ -124,7 +132,7 @@ export class TrackMap {
       ? { tileSize: 128, zoomOffset: 1, maxNativeZoom: SWISSTOPO_MAX_NATIVE_ZOOM - 1 }
       : { maxNativeZoom: SWISSTOPO_MAX_NATIVE_ZOOM };
     this.leaflet.tileLayer(TILE_URL, { ...tiles, maxZoom: MAX_ZOOM, opacity: TILE_OPACITY, attribution: '© swisstopo' }).addTo(this.map);
-    for (const type of USER_MOVE_EVENTS) container.addEventListener(type, this.onUserMove, { passive: true });
+    for (const type of USER_MOVE_EVENTS) container.addEventListener(type, this.onUserMove, USER_MOVE_OPTIONS);
     this.overlay = this.leaflet.layerGroup().addTo(this.map);
     this.photoLayer = this.leaflet.layerGroup().addTo(this.map); // above the track
     this.map.setView(DEFAULT_VIEW, 8);
@@ -152,6 +160,7 @@ export class TrackMap {
         }).addTo(this.overlay);
       }
     }
+    this.lastPoint = all.length > 0 ? all[all.length - 1] : undefined;
     if (all.length > 0) {
       this.addDot(Lf, all[0], 'start');
       this.addDot(Lf, all[all.length - 1], 'end');
@@ -177,21 +186,37 @@ export class TrackMap {
 
   /**
    * Leaflet fits against the container size of the moment; inside an animating modal that is 0 or a fraction of the
-   * final size. So every resize repeats the last fit (or the pan to the selected photo) until the user touched the
-   * map, and the first real size after none always does. A live map keeps following its last point instead.
+   * final size. So a resize repeats the last fit (or the centring on the selected photo) until the user touched the
+   * map; never afterwards. The first real size always re-fits once; a later re-show (0 → size, Ionic hides pages
+   * with display:none) leaves a static map as it was and pans a live map to its last point.
    */
   private onResize(container: HTMLElement): void {
-    if (this.destroyed || !this.map) return;
-    this.map.invalidateSize({ animate: false });
+    const map = this.map;
+    if (this.destroyed || !map) return;
+    map.invalidateSize({ animate: false });
     const empty = container.clientWidth === 0 || container.clientHeight === 0;
     const becameVisible = this.wasEmpty && !empty;
     this.wasEmpty = empty;
-    if (empty || !this.lastFit) return;
-    if (!becameVisible && (this.userMoved || this.live())) return;
+    if (empty) return;
+    const reShown = becameVisible && this.shownOnce;
+    this.shownOnce = true;
+    if (this.userMoved || !this.lastFit) return;
+    if (this.live()) {
+      if (reShown && this.lastPoint) map.panTo(this.lastPoint, { animate: false });
+      else if (becameVisible) this.applyFit(this.lastFit);
+      return;
+    }
+    if (reShown) return;
     const selected = this.selectedPhoto();
     const photo = selected === undefined ? undefined : this.photos()[selected];
-    if (photo && !photo.hidden) this.map.setView([photo.lat, photo.lng], Math.max(this.map.getZoom(), SELECTED_MIN_ZOOM), { animate: false });
+    if (photo && !photo.hidden) map.setView([photo.lat, photo.lng], Math.max(SELECTED_MIN_ZOOM, this.fitZoom(this.lastFit)), { animate: false });
     else this.applyFit(this.lastFit);
+  }
+
+  /** the zoom `applyFit` would choose at the current container size */
+  private fitZoom(fit: MapFit): number {
+    if (!this.map || !('bounds' in fit)) return SINGLE_POINT_ZOOM;
+    return Math.min(this.map.getBoundsZoom(fit.bounds, false, this.leaflet?.point(FIT_PADDING[0] * 2, FIT_PADDING[1] * 2)), MAX_FIT_ZOOM);
   }
 
   private panToPhoto(selected: number | undefined): void {
@@ -238,7 +263,7 @@ export class TrackMap {
   private teardown(): void {
     this.destroyed = true; // an init still waiting for Leaflet must not create a map afterwards
     const container = this.map?.getContainer();
-    if (container) for (const type of USER_MOVE_EVENTS) container.removeEventListener(type, this.onUserMove);
+    if (container) for (const type of USER_MOVE_EVENTS) container.removeEventListener(type, this.onUserMove, { capture: true });
     this.resizeObserver?.disconnect();
     this.resizeObserver = undefined;
     this.map?.remove();

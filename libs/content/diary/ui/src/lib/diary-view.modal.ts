@@ -207,7 +207,7 @@ export class DiaryViewModal {
   protected readonly sliderLoading = signal(false);
   protected readonly weatherBusy = signal(false);
   protected readonly tracks = signal<DiaryTrackCard[]>([]);
-  /** displayable track photo per thumbPath, filled asynchronously; a failed read leaves the placeholder */
+  /** displayable track photo per thumbPath, filled asynchronously; '' = read failed (placeholder) */
   private readonly trackThumbs = signal<ReadonlyMap<string, string>>(new Map());
   /** the visible photos of the day's tracks, after the Drive images */
   private readonly trackPhotos = computed(() => diaryTrackPhotoTiles(this.tracks()));
@@ -215,7 +215,7 @@ export class DiaryViewModal {
     const thumbs = this.trackThumbs();
     const label = this.i18n().track_view_photo_show();
     return this.trackPhotos().map(t => ({
-      key: t.key, src: t.thumbPath ? thumbs.get(t.thumbPath) : undefined, label: label.replace('{time}', formatClockTime(t.takenAt)),
+      key: t.key, src: (t.thumbPath && thumbs.get(t.thumbPath)) || undefined, loading: !!t.thumbPath && !thumbs.has(t.thumbPath), label: label.replace('{time}', formatClockTime(t.takenAt)),
     }));
   });
   /** Drive images (undefined = still loading); none without a folder or after a failed listing */
@@ -300,7 +300,7 @@ export class DiaryViewModal {
         if (!path || known.has(path)) continue;
         load(path)
           .then(src => { if (this.current().okey === okey) this.trackThumbs.update(m => new Map(m).set(path, src)); })
-          .catch(() => { /* placeholder stays */ });
+          .catch(() => { if (this.current().okey === okey) this.trackThumbs.update(m => new Map(m).set(path, '')); });
       }
     });
   }

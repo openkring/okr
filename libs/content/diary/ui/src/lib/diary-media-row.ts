@@ -7,8 +7,8 @@ import { DiaryMediaFile, diaryFileIconName, isDiaryVideo } from '@okr/content-di
 /** Placeholder tiles shown while the folder listing itself is still loading. */
 const LOADING_TILES = [0, 1, 2, 3];
 
-/** A tile after the files: a picture from elsewhere (a track photo), `src` absent = placeholder. */
-export interface DiaryMediaExtraTile { key: string; src?: string; label: string }
+/** A tile after the files: a picture from elsewhere (a track photo); `loading` = skeleton, no `src` = placeholder. */
+export interface DiaryMediaExtraTile { key: string; src?: string; loading?: boolean; label: string }
 
 /**
  * One horizontal strip of a diary day's Drive files (spec 1.106 §2.3) — images and videos, or
@@ -66,7 +66,7 @@ export interface DiaryMediaExtraTile { key: string; src?: string; label: string 
       @for (extra of extras(); track extra.key; let i = $index) {
         <div class="tile" role="button" [attr.aria-label]="extra.label" [title]="extra.label" (click)="extraOpened.emit(i)">
           @if (!isLoaded(extraId(extra))) {
-            @if (extra.src && !hasFailed(extraId(extra))) {
+            @if (extra.loading || (extra.src && !hasFailed(extraId(extra)))) {
               <ion-skeleton-text [animated]="true" />
             } @else {
               <ion-icon src="{{ 'camera' | svgIcon }}" />
