@@ -75,9 +75,13 @@ export function toCrewSections(sections: LocalSection[]): CrewTrackSection[] {
   });
 }
 
-/** The recording behind a Logbuch `trackKey` is only trusted when it points back (trackKey is client-writable). Pure. */
+/**
+ * The recording behind a Logbuch `trackKey` is only trusted when it points back (trackKey is client-writable) and its
+ * recorder is on the Logbuch crew (spec §1) - a forged link cannot pull a stranger's recording into a crew. Pure.
+ */
 export function isLinkedRecording(
   rec: Pick<TripModel, 'type' | 'tenants' | 'isArchived' | 'deletedAt' | 'track'> | undefined,
+  logbuch: Pick<TripModel, 'participants'>,
   logbuchKey: string,
   tenantId: string,
 ): boolean {
@@ -86,6 +90,7 @@ export function isLinkedRecording(
     rec.type === TRACKER_TRIP_TYPE &&
     !!rec.track &&
     rec.track.logbuchKey === logbuchKey &&
+    isCrewMember(logbuch, rec.track.personKey ?? '') &&
     (rec.tenants ?? []).includes(tenantId) &&
     !rec.isArchived &&
     !rec.deletedAt
@@ -112,7 +117,7 @@ export async function loadClippedTrack(db: Firestore, logbuch: TripModel, logbuc
   if (!logbuch.trackKey) return undefined;
   const rec = await db.collection(TripCollection).doc(logbuch.trackKey).get();
   const recData = rec.data() as TripModel | undefined;
-  if (!rec.exists || !recData || !isLinkedRecording(recData, logbuchKey, tenantId) || !recData.track) return undefined;
+  if (!rec.exists || !recData || !isLinkedRecording(recData, logbuch, logbuchKey, tenantId) || !recData.track) return undefined;
 
   const snap = await db.collection(TripCollection).doc(logbuch.trackKey).collection('track-points').get();
   const docs = snap.docs
@@ -150,7 +155,7 @@ export function isLogbuchEnded(t: Pick<TripModel, 'type' | 'state' | 'deletedAt'
 /**
  * What the trips trigger has to do for one write (pure). Deletes (no `after`, incl. the day-7 cleanup) and crew
  * copies (`track.copyOf`) never act - a copy carries no `logbuchKey`, so a copy can never trigger another one.
- * - requestPush: an open Logbuch trip got a (new) `trackRequest` and has no recording linked yet.
+ * - requestPush: an open Logbuch trip got a (new) `trackRequest` for a crew member and has no recording linked yet.
  * - stopPush: the Logbuch trip left 'open' with a recording linked; the caller pushes only while the recording
  *   is not uploaded yet.
  * - copies: the Logbuch trip ended with a recording (or got one linked after the end), or a recording linked to
@@ -167,7 +172,10 @@ export function crewTrackActions(before?: TripModel, after?: TripModel): CrewTra
 
   const out: CrewTrackAction[] = [];
   const carrier = after.trackRequest?.personKey ?? '';
-  if (carrier && !after.trackKey && isOpen(after) && before?.trackRequest?.personKey !== carrier) out.push('requestPush');
+  if (carrier && isCrewMember(after, carrier) && !after.trackKey && isOpen(after) && before?.trackRequest?.personKey !== carrier) {
+    out.push('requestPush');
+  }
+  // any end counts, 'deleted' too (on purpose: the boat is back, stop recording) - unlike copies, which need 'closed*'
   if (after.trackKey && before && isOpen(before) && !isOpen(after)) out.push('stopPush');
   if (after.trackKey && isLogbuchEnded(after) && (!isLogbuchEnded(before) || before?.trackKey !== after.trackKey)) {
     out.push('copies');
@@ -286,9 +294,15 @@ export function buildCrewCopy(args: {
   if (clipped.length === 0) return undefined;
   const id = `${recordingKey}_${personKey}`;
   const crew = toCrewSections(clipped);
-  const times = clipped.flatMap((s) => s.points.map((p) => p.t));
-  const startMs = Math.min(...times);
-  const endMs = Math.max(...times);
+  // a loop, not Math.min(...all points): a long 1 Hz recording has more points than a call can take as arguments
+  let startMs = Infinity;
+  let endMs = -Infinity;
+  for (const s of clipped) {
+    for (const p of s.points) {
+      if (p.t < startMs) startMs = p.t;
+      if (p.t > endMs) endMs = p.t;
+    }
+  }
 
   const sections: TrackSection[] = crew.map((c, i) => {
     const pts = clipped[i].points;

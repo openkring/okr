@@ -73,17 +73,22 @@ describe('toCrewSections', () => {
 });
 
 describe('isLinkedRecording', () => {
+  const crew = logbuch();
   const rec = (over: Record<string, unknown> = {}) =>
-    ({ type: 'tracker', tenants: ['scs'], isArchived: false, deletedAt: null, track: { logbuchKey: 'L1' }, ...over }) as never;
-  it('accepts the linked recording', () => expect(isLinkedRecording(rec(), 'L1', 'scs')).toBe(true));
+    ({ type: 'tracker', tenants: ['scs'], isArchived: false, deletedAt: null, track: { logbuchKey: 'L1', personKey: 'p1' }, ...over }) as never;
+  it('accepts the linked recording of a crew member', () => expect(isLinkedRecording(rec(), crew, 'L1', 'scs')).toBe(true));
   it('rejects each failing condition', () => {
-    expect(isLinkedRecording(undefined, 'L1', 'scs')).toBe(false);
-    expect(isLinkedRecording(rec({ type: 'logbuch' }), 'L1', 'scs')).toBe(false);
-    expect(isLinkedRecording(rec({ track: undefined }), 'L1', 'scs')).toBe(false);
-    expect(isLinkedRecording(rec({ track: { logbuchKey: 'other' } }), 'L1', 'scs')).toBe(false);
-    expect(isLinkedRecording(rec({ tenants: ['gss'] }), 'L1', 'scs')).toBe(false);
-    expect(isLinkedRecording(rec({ isArchived: true }), 'L1', 'scs')).toBe(false);
-    expect(isLinkedRecording(rec({ deletedAt: '2026' }), 'L1', 'scs')).toBe(false);
+    expect(isLinkedRecording(undefined, crew, 'L1', 'scs')).toBe(false);
+    expect(isLinkedRecording(rec({ type: 'logbuch' }), crew, 'L1', 'scs')).toBe(false);
+    expect(isLinkedRecording(rec({ track: undefined }), crew, 'L1', 'scs')).toBe(false);
+    expect(isLinkedRecording(rec({ track: { logbuchKey: 'other', personKey: 'p1' } }), crew, 'L1', 'scs')).toBe(false);
+    expect(isLinkedRecording(rec({ tenants: ['gss'] }), crew, 'L1', 'scs')).toBe(false);
+    expect(isLinkedRecording(rec({ isArchived: true }), crew, 'L1', 'scs')).toBe(false);
+    expect(isLinkedRecording(rec({ deletedAt: '2026' }), crew, 'L1', 'scs')).toBe(false);
+  });
+  it('rejects a recorder who is not on the crew (forged link)', () => {
+    expect(isLinkedRecording(rec({ track: { logbuchKey: 'L1', personKey: 'stranger' } }), crew, 'L1', 'scs')).toBe(false);
+    expect(isLinkedRecording(rec({ track: { logbuchKey: 'L1', personKey: '' } }), crew, 'L1', 'scs')).toBe(false);
   });
 });
 
@@ -138,6 +143,9 @@ describe('crewTrackActions', () => {
     expect(crewTrackActions(openLogbuch(), openLogbuch())).toEqual([]);
     const ended = logbuch({ state: 'closed', trackKey: 'rec1' });
     expect(crewTrackActions(ended, ended)).toEqual([]);
+  });
+  it('no request push for a carrier who is not on the crew', () => {
+    expect(crewTrackActions(undefined, openLogbuch({ trackRequest: { personKey: 'stranger' } }))).toEqual([]);
   });
   it('no request push once a recording is linked', () => {
     expect(crewTrackActions(undefined, openLogbuch({ trackKey: 'rec1' }))).toEqual([]);
@@ -257,6 +265,12 @@ describe('buildCrewCopy', () => {
     expect(copy?.points[0].strokeTimes).toBeTruthy();
     expect(copy?.points[1].strokeTimes).toBeUndefined();
     expect(decodeTrack(copy?.points[1].encoded ?? '')).toHaveLength(4);
+  });
+  it('a 12 h+ recording with 500k points does not overflow the stack', () => {
+    const big: LocalSection = { mode: 'row', detected: false, points: pts(500_000, t0) };
+    const c = buildCrewCopy({ logbuch: lb, recordingKey: 'rec1', personKey: 'p2', uid: 'u2', tenants: ['bkd'], clipped: [big] });
+    expect(c?.trip.track?.durationS).toBe(4_999_990);
+    expect(c?.trip.track?.startedAt).toBe(new Date(t0).toISOString());
   });
   it('nothing to copy -> undefined', () => {
     expect(buildCrewCopy({ logbuch: lb, recordingKey: 'rec1', personKey: 'p2', uid: 'u2', tenants: ['bkd'], clipped: [] })).toBeUndefined();
