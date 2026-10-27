@@ -54,7 +54,10 @@
       "error": "Le signalement a été enregistré, mais le bateau n'a pas pu être bloqué."
     },
     "conf": "Ton signalement a été transmis.",
-    "error": "Le signalement n’a pas pu être transmis. Merci de réessayer."
+    "error": "Le signalement n’a pas pu être transmis. Merci de réessayer.",
+    "damageRecord": {
+      "name": "Dommage : {name}"
+    }
   },
   "boatReserved": {
     "title": "Bateau indisponible",

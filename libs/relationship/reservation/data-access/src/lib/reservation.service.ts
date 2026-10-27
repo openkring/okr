@@ -4,10 +4,10 @@ import { map, Observable, of } from 'rxjs';
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
-import { ReservationCollection, ReservationModel, UserModel } from '@okr/shared-models';
-import { getFullName, getSystemQuery } from '@okr/shared-util-core';
+import { AvatarInfo, ReservationCollection, ReservationModel, UserModel } from '@okr/shared-models';
+import { fill, getAvatarInfoForCurrentUser, getFullName, getSystemQuery, getTodayStr } from '@okr/shared-util-core';
 
-import { getReservationIndex } from '@okr/relationship-reservation-util';
+import { getReservationIndex, newLockReservation } from '@okr/relationship-reservation-util';
 import { ActivityService } from '@okr/activity-data-access';
 import { PFX } from './scope';
 
@@ -28,6 +28,8 @@ export class ReservationService {
     delete_error: PFX + 'delete.error',
     end_conf:     PFX + 'end.conf',
     end_error:    PFX + 'end.error',
+    lock_name:    PFX + 'lock.name',            // {name}
+    lock_defaultReason: PFX + 'lock.defaultReason',
   });
 
   /*-------------------------- CRUD operations on reservation --------------------------------*/
@@ -35,11 +37,12 @@ export class ReservationService {
    * Create a new reservation and save it to the database.
    * @param reservation the new reservation to save
    * @param currentUser the user who is creating the reservation
+   * @param silent true: no confirmation toast (a record written as a side effect, e.g. of a damage report)
    * @returns the document id of the stored reservation in the database
    */
-  public async create(reservation: ReservationModel, currentUser?: UserModel): Promise<string | undefined> {
+  public async create(reservation: ReservationModel, currentUser?: UserModel, silent = false): Promise<string | undefined> {
     reservation.index = getReservationIndex(reservation);
-    const key = await this.firestoreService.createModel<ReservationModel>(ReservationCollection, reservation, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
+    const key = await this.firestoreService.createModel<ReservationModel>(ReservationCollection, reservation, silent ? undefined : this.i18n.create_conf(), this.i18n.create_error(), currentUser);
     const payload = `${key}: ${getFullName(reservation.reserver?.name1, reservation.reserver?.name2)} of ${reservation.resource?.key}/${reservation.resource?.name2} on ${reservation.startDate}`;
     void this.activityService.log('reservation', 'create', currentUser, payload);
     return key;
@@ -93,6 +96,39 @@ export class ReservationService {
       return await this.firestoreService.updateModel<ReservationModel>(ReservationCollection, reservation, false, this.i18n.end_conf(), this.i18n.end_error(), currentUser);
     }
     return undefined;
+  }
+
+  /*-------------------------- lock --------------------------------*/
+  /**
+   * Lock a resource (e.g. a rowing boat) until further notice: an open-ended 'blocked' reservation,
+   * which the Logbuch treats like a damage-report lock (findActiveReservationForResource).
+   * @param resource the resource to lock, as AvatarInfo (getAvatarInfo(resource, 'resource'))
+   * @param reason why it is locked; a blank reason is replaced by a generic text, because the
+   * description is what a member reads when the Logbuch refuses the boat
+   * @returns the key of the lock reservation, or undefined if it could not be stored
+   */
+  public async lockResource(resource: AvatarInfo, reason: string, currentUser?: UserModel): Promise<string | undefined> {
+    const reservation = newLockReservation(
+      this.env.tenantId, resource,
+      currentUser ? getAvatarInfoForCurrentUser(currentUser) : undefined,
+      fill(this.i18n.lock_name(), { name: resource.name2 || resource.name1 }),
+      reason.trim() || this.i18n.lock_defaultReason(),
+    );
+    return await this.create(reservation, currentUser);
+  }
+
+  /**
+   * End the given lock reservations (findActiveLockReservations) as of today. 'completed' is not a
+   * blocking state, so the resource is free again immediately; the reservation stays as history.
+   * @returns true if every lock was ended
+   */
+  public async unlockResource(locks: ReservationModel[], currentUser?: UserModel): Promise<boolean> {
+    let ok = true;
+    for (const lock of locks) {
+      const key = await this.update({ ...lock, state: 'completed', endDate: getTodayStr() }, currentUser);
+      if (!key) ok = false;
+    }
+    return ok;
   }
 
   /*-------------------------- list --------------------------------*/

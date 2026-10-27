@@ -297,7 +297,9 @@
     "archive": "archive",
     "delete": "delete",
     "ownerView": "View user",
-    "combine": "{action} {group}"
+    "combine": "{action} {group}",
+    "lock": "lock",
+    "unlock": "unlock"
   },
   "archive": {
     "confirm": "Normally a usage is ended. Do you really want to archive this usage?"
@@ -310,5 +312,9 @@
     "archiveConfirm": "Do you really want to archive {name}?",
     "purgeConfirm": "{name} will be deleted permanently and cannot be restored. Do you want to continue?",
     "purgeInUse": "{name} still has usages and therefore cannot be deleted. Delete the usages first or archive {name}."
+  },
+  "lock": {
+    "header": "Lock boat",
+    "placeholder": "Reason, e.g. crack in the hull"
   }
 }

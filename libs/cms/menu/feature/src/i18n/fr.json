@@ -700,7 +700,9 @@
     "file-transfer-monitor": "Surveillance des transferts",
     "journal": "Carnet de voyage",
     "learning-rooms": "Espaces d'apprentissage",
-    "tracker": "Parcours"
+    "tracker": "Parcours",
+    "damage-list": "Liste des dommages",
+    "damage-exportraw": "Exporter la liste des dommages"
   },
   "ownership": {
     "fork_confirm": "« {name} » appartient au catalogue de fonctionnalités ({blocks}).\n\nL'enregistrement crée une copie propre au locataire « {forkKey} » et détache ce locataire de l'original partagé. Les corrections futures du catalogue (URL, action, rôle) n'atteindront plus cette entrée.\n\nEnregistrer quand même ?",

@@ -297,7 +297,9 @@
     "archive": "archiver",
     "delete": "supprimer",
     "ownerView": "Afficher l'utilisateur/trice",
-    "combine": "{action} {group}"
+    "combine": "{action} {group}",
+    "lock": "bloquer",
+    "unlock": "débloquer"
   },
   "archive": {
     "confirm": "Normalement, une utilisation est terminée. Veux-tu vraiment archiver cette utilisation ?"
@@ -310,5 +312,9 @@
     "archiveConfirm": "Veux-tu vraiment archiver {name} ?",
     "purgeConfirm": "{name} sera supprimé définitivement et ne pourra pas être restauré. Veux-tu continuer ?",
     "purgeInUse": "{name} a encore des utilisations et ne peut donc pas être supprimé. Supprime d'abord les utilisations ou archive {name}."
+  },
+  "lock": {
+    "header": "Bloquer le bateau",
+    "placeholder": "Raison, p. ex. fissure dans la coque"
   }
 }

@@ -54,7 +54,10 @@
       "error": "El aviso se ha registrado, pero no se ha podido bloquear el barco."
     },
     "conf": "Tu aviso se ha enviado.",
-    "error": "No se ha podido enviar el aviso. Inténtalo de nuevo."
+    "error": "No se ha podido enviar el aviso. Inténtalo de nuevo.",
+    "damageRecord": {
+      "name": "Daño: {name}"
+    }
   },
   "boatReserved": {
     "title": "Barco no disponible",

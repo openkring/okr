@@ -1226,11 +1226,18 @@ const resource: FeatureBlock = {
       // `relationship`'s, and `dependsOn: ['relationship']` is what makes that safe.
       { key: 'ownerships-all', name: 'ownerships-all', url: '/ownership/all/c-ownership', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'own', label: '@item.ownerships-all' },
       { key: 'reservation-all', name: 'reservation-all', url: '/reservation/all/c-reservations', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'reservation', label: '@item.reservation-all' },
+      // Schadensliste: read from the reservations (damage reports and boat locks). The route admits
+      // privileged too (isResourceStaffGuard), but a row has ONE roleNeeded and its parent
+      // `resource-menu` is resourceAdmin anyway.
+      { key: 'damage-list', name: 'damage-list', url: '/reservation/damages/c-damages', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'lock-closed', label: '@item.damage-list' },
       // Copied verbatim, including the missing leading slash — `urlResolves` matches by
       // path segment, not string prefix, so this still resolves; not "fixed" per the
       // mirror-verbatim rule.
       { key: 'transfer-all', name: 'transfer-all', url: 'transfer/all/c-transfers', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'arrow-forward', label: '@item.transfer-all' },
     ]),
+    { key: 'c-damages', name: 'c-damages', url: '', action: 'context', roleNeeded: 'resourceAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'damage-exportraw', name: 'damage-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: '@item.damage-exportraw' },
+    ] },
     { key: 'c-resources', name: 'c-resources', url: '', action: 'context', roleNeeded: 'resourceAdmin', icon: 'help-circle', label: '', children: [
       { key: 'resource-add', name: 'resource-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: '@item.resource-add' },
       { key: 'resource-exportraw', name: 'resource-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: '@item.resource-exportraw' },
