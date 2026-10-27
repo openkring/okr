@@ -34,6 +34,7 @@ import { TripService } from '@okr/trip-data-access';
           [category]="category()"
           [locations]="store.locations()"
           [locale]="locale()"
+          [mode]="mode()"
           [i18n]="store.i18n"
           (personSelectClicked)="addPerson()"
           (boatSelectClicked)="addBoat()"

@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow } from '@ionic/angular';
 
 import { AvatarInfo, CategoryItemModel, CategoryListModel, LocationModel, ResourceModel, RoleName, TripModel, UserModel } from '@okr/shared-models';
-import { DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TimeInput, TimeInputI18n } from '@okr/shared-ui';
+import { Checkbox, CheckboxI18n, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TimeInput, TimeInputI18n } from '@okr/shared-ui';
 import { debugFormModel, getDurationLabel, hasRole } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { DEFAULT_NOTES } from '@okr/shared-constants';
@@ -19,7 +19,7 @@ import { formatTripTime, isTrainingCrewBoat, MAX_TRIP_DISTANCE_KM, TripI18n, tri
   imports: [
     SvgIconPipe,
     IonItem, IonLabel, IonGrid, IonRow, IonCol, IonIcon, IonCard, IonCardContent, IonButton,
-    NotesInput, Avatars, NumberInput, DateInput, TimeInput, ErrorNote
+    NotesInput, Avatars, NumberInput, DateInput, TimeInput, ErrorNote, Checkbox, StringSelect
   ],
   styles: [`
     ion-thumbnail { width: 30px; height: 30px; }
@@ -167,6 +167,21 @@ import { formatTripTime, isTrainingCrewBoat, MAX_TRIP_DISTANCE_KM, TripI18n, tri
         }
       }
 
+      <!-- recording request: the kiosk asks one crew member to record the route on their iPhone (add mode only) -->
+      @if(mode() === 'add') {
+        <ion-card>
+          <ion-card-content class="ion-no-padding">
+            <okr-checkbox [i18n]="trackRequestI18n()" [checked]="trackRequested()" (checkedChange)="onTrackRequestToggle($event)"
+              [readOnly]="false" [toggle]="true" />
+            @if(trackRequested()) {
+              <okr-string-select [i18n]="trackCarrierI18n()" [stringList]="carrierKeys()" [labels]="carrierLabels()"
+                [selectedString]="carrierKey()" (selectedStringChange)="onCarrierChange($event)" [readOnly]="false" />
+              <okr-error-note [errors]="trackRequestErrors()" />
+            }
+          </ion-card-content>
+        </ion-card>
+      }
+
     @if(hasRole('admin')) {
       <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="false" />
     }
@@ -182,6 +197,8 @@ export class TripEditForm {
   public readonly locations = input.required<LocationModel[]>();
   public readonly category = input.required<CategoryListModel>();
   public readonly locale = input.required<string>();
+  /** the recording request is only offered when a trip is entered ('add'); a copy, edit or end never touches it */
+  public readonly mode = input<'add' | 'copy' | 'edit' | 'end'>('edit');
 
   // outputs
   public dirty = output<boolean>();
@@ -218,6 +235,15 @@ export class TripEditForm {
   protected startTimeErrors = computed(() => this.validationResult().getErrors('startTime'));
   protected endDateErrors = computed(() => this.validationResult().getErrors('endDate'));
   protected endTimeErrors = computed(() => this.validationResult().getErrors('endTime'));
+  protected trackRequestErrors = computed(() => this.validationResult().getErrors('trackRequest'));
+
+  // recording request
+  protected trackRequested = computed(() => !!this.formData().trackRequest);
+  protected carrierKey = computed(() => this.formData().trackRequest?.personKey ?? '');
+  protected carrierKeys = computed(() => this.participants().map((p) => p.key));
+  protected carrierLabels = computed(() => this.participants().map((p) => `${p.name1} ${p.name2}`.trim()));
+  protected trackRequestI18n = computed(() => ({ name: 'trackRequest', label: this.i18n().track_request_label(), helper: '' } as CheckboxI18n));
+  protected trackCarrierI18n = computed(() => ({ name: 'trackCarrier', label: this.i18n().track_carrier_label(), helper: this.i18n().track_carrier_helper() } as StringSelectI18n));
 
   // derived
   /** the selected boat's tripAlert; empty for no boat, an ad-hoc boat, or a legacy doc without the field */
@@ -268,6 +294,22 @@ export class TripEditForm {
    */
   protected onDistanceChange(distance: number): void {
     this.onFieldChange('distance', distance == null ? distance : Math.min(Math.trunc(distance), MAX_TRIP_DISTANCE_KM));
+  }
+
+  /** on: an empty carrier until one is chosen (the Vest suite flags it); off: the field is removed, never written as undefined */
+  protected onTrackRequestToggle(on: boolean): void {
+    if (on === this.trackRequested()) return;
+    this.dirty.emit(true);
+    this.formData.update((vm) => {
+      const { trackRequest: _removed, ...rest } = vm;
+      return (on ? { ...rest, trackRequest: { personKey: '' } } : rest) as TripModel;
+    });
+  }
+
+  protected onCarrierChange(personKey: string): void {
+    if (!this.trackRequested() || personKey === this.carrierKey()) return;
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({ ...vm, trackRequest: { personKey } }));
   }
 
   protected clearBoat(): void {

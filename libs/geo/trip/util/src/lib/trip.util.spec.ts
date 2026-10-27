@@ -72,6 +72,15 @@ describe('copyTrip', () => {
     expect(copy.type).toBe(source().type);
   });
 
+  it('does not carry the track request or link over', () => {
+    const copy = copyTrip(
+      { ...source(), trackRequest: { personKey: 'p1' }, trackKey: 'track-1' } as TripModel,
+      TENANT,
+    );
+    expect(copy.trackRequest).toBeUndefined();
+    expect(copy.trackKey).toBeUndefined();
+  });
+
   it('drops the identity and the end of the copied trip', () => {
     const copy = copyTrip(source(), TENANT);
     expect(copy.okey).toBe('');

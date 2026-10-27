@@ -119,7 +119,9 @@
     "note": "Per evitare abusi, in background vengono eseguiti vari controlli. Qualora venga rilevato un abuso, l'amministratore viene avvisato.",
     "end_before_start": "La fine dell'uscita è precedente al suo inizio.",
     "boat_required": "Scegli una barca.",
-    "participants_required": "Scegli almeno una persona a bordo."
+    "participants_required": "Scegli almeno una persona a bordo.",
+    "track_carrier_missing": "Scegli chi porta con sé l'iPhone.",
+    "track_carrier_not_crew": "Questa persona non fa più parte dell'equipaggio."
   },
   "boat": "Imbarcazione",
   "distance": {
@@ -291,5 +293,14 @@
       "seconds": "Conto alla rovescia (secondi)"
     },
     "today_trips": "Uscite di oggi"
+  },
+  "track": {
+    "request": {
+      "label": "Registra il percorso"
+    },
+    "carrier": {
+      "label": "Chi porta con sé l'iPhone?",
+      "helper": "La persona ha bisogno dell'app sul suo iPhone."
+    }
   }
 }

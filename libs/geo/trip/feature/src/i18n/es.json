@@ -119,7 +119,9 @@
     "note": "Para evitar abusos, se realizan varias comprobaciones en segundo plano. Si se detecta un abuso, se notifica al administrador.",
     "end_before_start": "El final de la salida es anterior a su inicio.",
     "boat_required": "Elige un barco.",
-    "participants_required": "Elige al menos a una persona a bordo."
+    "participants_required": "Elige al menos a una persona a bordo.",
+    "track_carrier_missing": "Elige quién se lleva el iPhone.",
+    "track_carrier_not_crew": "Esta persona ya no está en la tripulación."
   },
   "boat": "Embarcación",
   "distance": {
@@ -291,5 +293,14 @@
       "seconds": "Cuenta atrás (segundos)"
     },
     "today_trips": "Salidas de hoy"
+  },
+  "track": {
+    "request": {
+      "label": "Grabar el recorrido"
+    },
+    "carrier": {
+      "label": "¿Quién se lleva el iPhone?",
+      "helper": "La persona necesita la app en su iPhone."
+    }
   }
 }

@@ -119,7 +119,9 @@
     "note": "Um Missbräuche zu vermeiden, finden im Hintergrund verschiedene Checks statt. Sollte ein Missbrauch festgestellt werden, wird der Admin notifiziert.",
     "end_before_start": "Das Ende der Fahrt liegt vor ihrem Start.",
     "boat_required": "Wähle ein Boot aus.",
-    "participants_required": "Wähle mindestens eine Person aus, die mitfährt."
+    "participants_required": "Wähle mindestens eine Person aus, die mitfährt.",
+    "track_carrier_missing": "Wähle aus, wer das iPhone mitnimmt.",
+    "track_carrier_not_crew": "Diese Person ist nicht mehr in der Crew."
   },
   "boat": "Boot",
   "distance": {
@@ -291,5 +293,14 @@
       "seconds": "Countdown (Sekunden)"
     },
     "today_trips": "Fahrten heute"
+  },
+  "track": {
+    "request": {
+      "label": "Strecke aufzeichnen"
+    },
+    "carrier": {
+      "label": "Wer nimmt das iPhone mit?",
+      "helper": "Die Person braucht die App auf dem iPhone."
+    }
   }
 }

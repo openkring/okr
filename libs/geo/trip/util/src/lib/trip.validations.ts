@@ -57,4 +57,17 @@ export const tripValidationSuite = staticSuite((trip: TripModel) => {
       enforce(count === seats || count === seats - 1).equals(true);
     }
   });
+
+  // a requested recording needs a carrier, and the carrier must still be in the crew
+  // (the select derives its options from the participants, so removing the person afterwards lands here)
+  omitWhen(!trip.trackRequest, () => {
+    test('trackRequest', '@geo/trip/feature.warning.track_carrier_missing', () => {
+      enforce(trip.trackRequest?.personKey ?? '').isNotBlank();
+    });
+    omitWhen(!trip.trackRequest?.personKey, () => {
+      test('trackRequest', '@geo/trip/feature.warning.track_carrier_not_crew', () => {
+        enforce((trip.participants ?? []).some((p) => p.key === trip.trackRequest?.personKey)).equals(true);
+      });
+    });
+  });
 });
