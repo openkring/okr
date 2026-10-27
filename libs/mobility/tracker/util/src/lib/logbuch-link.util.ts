@@ -71,6 +71,27 @@ export function withoutLogbuchLink(t: LocalTrack): LocalTrack {
   return out;
 }
 
+/** Firestore error codes that mean «try again later» (no network, timeout, contention); the web SDK may prefix them. */
+const TRANSIENT_CODES = ['unavailable', 'deadline-exceeded', 'aborted', 'cancelled', 'resource-exhausted'];
+
+/**
+ * True when a failed link transaction may succeed later: a transient Firestore code, or an error without any code
+ * (a plain network failure). Every other code (permission-denied, not-found, failed-precondition,
+ * invalid-argument, …) is permanent: the link is dropped instead of staying pending forever.
+ */
+export function isTransientLinkError(error: unknown): boolean {
+  const code = (error as { code?: unknown } | undefined)?.code;
+  if (typeof code !== 'string' || code === '') return true;
+  return TRANSIENT_CODES.includes(code.replace(/^firestore\//, ''));
+}
+
+/** «Alpha, 09:30»: the boat and the start time ('HHmm' or 'HH:mm') of a Logbuch trip. */
+export function logbuchTripLabel(trip: Pick<TripModel, 'resource' | 'startTime'>): string {
+  const digits = (trip.startTime ?? '').replace(/\D/g, '');
+  const time = digits === '' ? '' : `${digits.padStart(4, '0').slice(-4, -2)}:${digits.padStart(4, '0').slice(-2)}`;
+  return [trip.resource?.name1 ?? '', time].filter((x) => x !== '').join(', ');
+}
+
 /** A recording waiting for its link transaction (offline at start): retried before the upload. */
 export function hasPendingLogbuchLink(t: LocalTrack): boolean {
   return !!t.logbuchKey && !t.logbuchLinked;

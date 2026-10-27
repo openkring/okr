@@ -16,7 +16,7 @@ import {
   accumulateDistance, allThumbsUploaded, alignSections, correctedTrack, DetectionInput, hasNoPoints, LocalSection, sameTrackContent, DetectState, initialDetectState, LocalTrack,
   mergePhotos, MotionActivity, needsThumbUpload, needsUpload, nextThumbNumber, photoWindowEnd, placePhotos, nextSectionStartPoint, nextSections, pendingUploadOwner, resumeDecision, sectionsAfterPause, sessionDetectStep, StartWarning, localStoreDate, trackTenants,
   startWarning, summarize, toTrackPoint, TRACK_PROFILES, TRACKER_I18N_KEYS, TrackerI18n, TrackPoint, withPhotoHidden, withThumbPaths,
-  LIVE_SPLIT_WINDOW_MS, liveSplitS, sectionMeta, toLocalSections, withQueriedSteps, hasPendingLogbuchLink, withoutLogbuchLink,
+  LIVE_SPLIT_WINDOW_MS, liveSplitS, sectionMeta, toLocalSections, withQueriedSteps, hasPendingLogbuchLink, isTransientLinkError, withoutLogbuchLink,
 } from '@okr/mobility-tracker-util';
 
 /**
@@ -504,7 +504,9 @@ export const TrackerStore = signalStore(
      * Runs the link transaction for a track that carries a `logbuchKey` not yet confirmed (spec 1.123 §4.3), never on
      * the queue (the transaction waits for the network). ok → `logbuchLinked`, and a finished track is uploaded again
      * (callers start it) so the trip gets `track.logbuchKey`; taken or not linkable → the link is dropped with a toast
-     * and the track goes on unlinked; an error (offline) leaves it pending for the next upload. One attempt per track
+     * naming the track and the track goes on unlinked. A transient error (offline, timeout: isTransientLinkError)
+     * leaves it pending for the next upload; any other error (permission-denied, not-found, …) can never succeed and
+     * is treated like a refusal, so a link is never stuck pending. One attempt per track
      * at a time. @returns the track as written, undefined when nothing changed
      */
     function linkTrack(key: string): Promise<LocalTrack | undefined> {
@@ -520,7 +522,8 @@ export const TrackerStore = signalStore(
           result = await store.trackService.linkLogbuch(logbuchKey, key, personKey);
         } catch (error) {
           console.error('TrackerStore.linkLogbuch', error);
-          return undefined;
+          if (isTransientLinkError(error)) return undefined;
+          result = { ok: false, recorderName: '' };
         }
         const written = await enqueue(async () => {
           const now = await findTrack(key);
@@ -532,7 +535,7 @@ export const TrackerStore = signalStore(
           if (store.active()?.key === key) patchState(store, { active: next });
           return next;
         });
-        if (!result.ok) void toastLinkRefused(result.recorderName);
+        if (!result.ok && written) void toastLinkRefused(written.name, result.recorderName);
         return written;
       })();
       s.links.set(key, attempt);
@@ -540,13 +543,13 @@ export const TrackerStore = signalStore(
       return attempt;
     }
 
-    /** «Diese Ausfahrt wird bereits von {name} aufgezeichnet.», or that the trip cannot be linked any more. */
-    async function toastLinkRefused(recorderName: string): Promise<void> {
-      if (recorderName === '') {
-        await toast(TRACKER_I18N_KEYS.link_unavailable);
-        return;
-      }
-      await toastText(fill(await store.i18nService.translateOnce(TRACKER_I18N_KEYS.link_taken), { name: recorderName }));
+    /**
+     * «{track}: Diese Ausfahrt wird bereits von {name} aufgezeichnet. …», or that the trip cannot be linked any more.
+     * Names the track: the toast may come from a retry at app start, long after the recording.
+     */
+    async function toastLinkRefused(trackName: string, recorderName: string): Promise<void> {
+      const key = recorderName === '' ? TRACKER_I18N_KEYS.link_unavailable_track : TRACKER_I18N_KEYS.link_taken_track;
+      await toastText(fill(await store.i18nService.translateOnce(key), { track: trackName, name: recorderName }));
     }
 
     async function toastText(message: string): Promise<void> {
@@ -799,9 +802,20 @@ export const TrackerStore = signalStore(
        * «Verbindung zum Logbuch lösen» (spec 1.123 §4.3): the Logbuch trip forgets this recording (needs the network;
        * throws offline), then the recording loses `track.logbuchKey` — a track on this device in TrackDb and by its next
        * upload (which deletes the field), an uploaded-only one by a detached patch. The crew view is gone at once.
+       * A link still pending is dropped even offline (the Logbuch transaction is tried, its failure ignored): a pending
+       * link is never a dead end.
        */
       async unlinkLogbuch(key: string, logbuchKey: string): Promise<void> {
-        await store.trackService.unlinkLogbuch(logbuchKey, key);
+        const local = await findTrack(key);
+        const pending = !!local && !local.logbuchLinked; // a link still waiting for its transaction
+        try {
+          await store.trackService.unlinkLogbuch(logbuchKey, key);
+        } catch (error) {
+          // a link still pending never reached the Logbuch trip for sure: it is dropped locally even offline (a
+          // stale trackKey there is harmless — the server trusts it only while the recording points back)
+          if (!pending) throw error;
+          console.error('TrackerStore.unlinkLogbuch (pending)', error);
+        }
         const written = await enqueue(async () => {
           const now = await findTrack(key);
           if (!now) {

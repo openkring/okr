@@ -14,9 +14,8 @@ import { confirm, downloadFile, okrPrompt } from '@okr/shared-util-angular';
 import { queryPedometerSteps, TrackDb, TrackService } from '@okr/mobility-tracker-data-access';
 import { TrackMap, TrackMapPhoto, TrackMapSection, TrackModeChange, TrackPhotoItem, TrackPhotos, TrackPhotoToggle, TrackSections } from '@okr/mobility-tracker-ui';
 import { fill } from '@okr/shared-util-core';
-import { formatTripTime } from '@okr/trip-util';
 import {
-  alignSections, buildGpx, correctedTrack, fromLocalSections, gpxFileName, isShareCancel, LocalSection, LocalTrack, localFromTrip, mergeWithNext,
+  alignSections, buildGpx, logbuchTripLabel, correctedTrack, fromLocalSections, gpxFileName, isShareCancel, LocalSection, LocalTrack, localFromTrip, mergeWithNext,
   localStoreDate, middlePointIndex, sectionRows, setSectionMode, splitSection, toLocalSections, trackTenants, wantsPhotoReattach, withoutPhoto,
   withPhotoHidden, withQueriedSteps,
 } from '@okr/mobility-tracker-util';
@@ -72,8 +71,8 @@ import { TrackerStore } from './tracker.store';
         @if (!t.uploaded) {
           <ion-note class="note" color="warning">{{ i18n.list_not_uploaded() }}</ion-note>
         }
-        @if (isLinked()) {
-          <ion-note class="note">{{ linkedText() }}</ion-note>
+        @if (isLinked() || isPendingLink()) {
+          <ion-note class="note">{{ isLinked() ? linkedText() : i18n.link_pending() }}</ion-note>
           <ion-button fill="clear" size="small" [disabled]="busy()" (click)="unlink()">
             <ion-icon slot="start" src="{{ 'cancel' | svgIcon }}" />{{ i18n.link_unlink() }}
           </ion-button>
@@ -137,6 +136,11 @@ export class TrackDetailPage {
   protected readonly isLinked = computed(() => {
     const t = this.track();
     return !!t?.logbuchKey && !!t.logbuchLinked && t.state === 'done';
+  });
+  /** A link from the start still waiting for its transaction (offline): it can be dropped, so it is never a dead end. */
+  protected readonly isPendingLink = computed(() => {
+    const t = this.track();
+    return !!t?.logbuchKey && !t.logbuchLinked && t.state === 'done';
   });
   /**
    * «Mit Logbuch-Ausfahrt verbinden»: an own, finished recording without a link (a link still pending from the start
@@ -341,9 +345,8 @@ export class TrackDetailPage {
     return role === 'confirm' ? trips.find((trip) => trip.okey === data?.values) : undefined;
   }
 
-  /** «Alpha, 09:30»: the boat and the start time of a Logbuch trip. */
   private tripLabel(trip: TripModel): string {
-    return [trip.resource?.name1 ?? '', formatTripTime(trip.startTime ?? '')].filter((x) => x !== '').join(', ');
+    return logbuchTripLabel(trip);
   }
 
   /** Reads the linked Logbuch trip for its label; offline or gone, the label says «Mit einer Logbuch-Ausfahrt verbunden». */

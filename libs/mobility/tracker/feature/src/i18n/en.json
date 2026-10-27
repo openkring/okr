@@ -134,6 +134,9 @@
     "unlink": "Unlink from the logbook",
     "unlink_confirm": "Your crew will no longer see this track. Do you want to unlink it?",
     "done": "The track is now linked to the logbook.",
-    "offline": "This needs an internet connection. Please try again later."
+    "offline": "This needs an internet connection. Please try again later.",
+    "pending": "Will be linked to the logbook as soon as you are online.",
+    "taken_track": "“{track}”: {name} is already recording this outing. Your track stays without the logbook.",
+    "unavailable_track": "“{track}”: this logbook outing can no longer be linked. Your track stays without the logbook."
   }
 }

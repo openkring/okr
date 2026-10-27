@@ -32,9 +32,6 @@
   ],
   "references": [
     {
-      "path": "../../../geo/trip/util/tsconfig.lib.json"
-    },
-    {
       "path": "../data-access/tsconfig.lib.json"
     },
     {

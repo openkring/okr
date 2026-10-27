@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { AvatarInfo, TripModel } from '@okr/shared-models';
-import { isLogbuchCrew, logbuchLinkCandidates, pickLogbuchPreset, withoutLogbuchLink } from './logbuch-link.util';
+import { isLogbuchCrew, isTransientLinkError, logbuchLinkCandidates, logbuchTripLabel, pickLogbuchPreset, withoutLogbuchLink } from './logbuch-link.util';
 import type { LocalTrack } from './track-local.model';
 
 const ME = 'p-me';
@@ -83,6 +83,31 @@ describe('logbuchLinkCandidates', () => {
     const trips = [ended('a', { participants: [person('p-other')] }), ended('b', { state: 'deleted' })];
     expect(logbuchLinkCandidates(trips, ME, startedAt, endedAt)).toEqual([]);
   });
+});
+
+describe('isTransientLinkError', () => {
+  it('network-like codes stay pending', () => {
+    for (const code of ['unavailable', 'deadline-exceeded', 'aborted', 'firestore/unavailable']) {
+      expect(isTransientLinkError({ code })).toBe(true);
+    }
+  });
+  it('an error without a code (plain network failure) stays pending', () => {
+    expect(isTransientLinkError(new TypeError('Failed to fetch'))).toBe(true);
+    expect(isTransientLinkError(undefined)).toBe(true);
+  });
+  it('permanent codes drop the link', () => {
+    for (const code of ['permission-denied', 'not-found', 'failed-precondition', 'invalid-argument', 'unauthenticated']) {
+      expect(isTransientLinkError({ code })).toBe(false);
+    }
+  });
+});
+
+describe('logbuchTripLabel', () => {
+  it('boat and time, legacy HHmm normalised', () =>
+    expect(logbuchTripLabel({ resource: person('b', 'Alpha'), startTime: '0930' })).toBe('Alpha, 09:30'));
+  it('HH:mm kept', () => expect(logbuchTripLabel({ resource: person('b', 'Alpha'), startTime: '14:05' })).toBe('Alpha, 14:05'));
+  it('no boat: the time only', () => expect(logbuchTripLabel({ startTime: '09:30' })).toBe('09:30'));
+  it('nothing known: empty', () => expect(logbuchTripLabel({ startTime: '' })).toBe(''));
 });
 
 describe('withoutLogbuchLink', () => {

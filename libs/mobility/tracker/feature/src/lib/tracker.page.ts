@@ -14,10 +14,9 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { listCalibrationFiles, readCalibrationCsv, shareCalibration, TrackDb, TrackerLocation, TrackService } from '@okr/mobility-tracker-data-access';
 import { TrackerBanner, TrackMap, TrackMapSection } from '@okr/mobility-tracker-ui';
 import {
-  calibrationStartedAt, parseCalibrationCsv, StrokeDetector, elapsedSeconds, figureTexts, formatKm, isShareCancel, LocalTrack, localStoreDate, mergeTrackLists, pickLogbuchPreset,
+  calibrationStartedAt, parseCalibrationCsv, StrokeDetector, elapsedSeconds, figureTexts, formatKm, isShareCancel, LocalTrack, localStoreDate, logbuchTripLabel, mergeTrackLists, pickLogbuchPreset,
   TrackPoint,
 } from '@okr/mobility-tracker-util';
-import { formatTripTime } from '@okr/trip-util';
 import { fill, hasRole } from '@okr/shared-util-core';
 import { okrPrompt } from '@okr/shared-util-angular';
 
@@ -398,7 +397,7 @@ export class TrackerPage {
 
   /** «Alpha, 09:30»: the boat and the start time of a Logbuch trip. */
   protected tripLabel(trip: TripModel): string {
-    return [trip.resource?.name1 ?? '', formatTripTime(trip.startTime ?? '')].filter((x) => x !== '').join(', ');
+    return logbuchTripLabel(trip);
   }
 
   protected presetText(trip: TripModel): string {

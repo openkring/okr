@@ -134,6 +134,9 @@
     "unlink": "Délier du journal de bord",
     "unlink_confirm": "Ton équipage ne verra plus ce parcours. Veux-tu supprimer le lien ?",
     "done": "Le parcours est maintenant relié au journal de bord.",
-    "offline": "Cela nécessite une connexion internet. Réessaie plus tard."
+    "offline": "Cela nécessite une connexion internet. Réessaie plus tard.",
+    "pending": "Sera relié au journal de bord dès que tu seras en ligne.",
+    "taken_track": "« {track} » : {name} enregistre déjà cette sortie. Ton parcours reste sans journal de bord.",
+    "unavailable_track": "« {track} » : cette sortie du journal de bord ne peut plus être reliée. Ton parcours reste sans journal de bord."
   }
 }

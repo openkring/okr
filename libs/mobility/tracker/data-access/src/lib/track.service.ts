@@ -219,6 +219,8 @@ export class TrackService {
   /**
    * Logbuch trips of the recording's day a finished recording can still be linked to: open or ended, the person on
    * the crew, the Logbuch window overlapping the recording, and the deadline (end + CREW_TRACK_DAYS) not passed.
+   * Only the recording's START day is searched (startDate equality, one indexed query): a Logbuch trip that started
+   * the evening before a recording begun after midnight is not offered.
    */
   public async findMyLogbuchTripsOverlapping(personKey: string, tenantId: string, startedAtMs: number, endedAtMs: number): Promise<TripModel[]> {
     const today = localStoreDate(Date.now());

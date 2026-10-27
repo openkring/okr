@@ -134,6 +134,9 @@
     "unlink": "Desvincular del cuaderno de bitácora",
     "unlink_confirm": "Tu tripulación ya no verá este recorrido. ¿Quieres desvincularlo?",
     "done": "El recorrido ya está vinculado al cuaderno de bitácora.",
-    "offline": "Esto necesita conexión a internet. Inténtalo de nuevo más tarde."
+    "offline": "Esto necesita conexión a internet. Inténtalo de nuevo más tarde.",
+    "pending": "Se vinculará al cuaderno de bitácora en cuanto tengas conexión.",
+    "taken_track": "«{track}»: {name} ya está grabando esta salida. Tu recorrido queda sin cuaderno de bitácora.",
+    "unavailable_track": "«{track}»: esta salida del cuaderno de bitácora ya no se puede vincular. Tu recorrido queda sin cuaderno de bitácora."
   }
 }

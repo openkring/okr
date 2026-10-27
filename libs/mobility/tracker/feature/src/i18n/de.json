@@ -134,6 +134,9 @@
     "unlink": "Verbindung zum Logbuch lösen",
     "unlink_confirm": "Deine Crew sieht diese Strecke dann nicht mehr. Möchtest du die Verbindung lösen?",
     "done": "Die Strecke ist jetzt mit dem Logbuch verbunden.",
-    "offline": "Das geht nur mit Internetverbindung. Versuch es bitte später noch einmal."
+    "offline": "Das geht nur mit Internetverbindung. Versuch es bitte später noch einmal.",
+    "pending": "Wird mit dem Logbuch verbunden, sobald du online bist.",
+    "taken_track": "«{track}»: Diese Ausfahrt wird bereits von {name} aufgezeichnet. Deine Strecke bleibt ohne Logbuch.",
+    "unavailable_track": "«{track}»: Diese Logbuch-Ausfahrt kann nicht mehr verbunden werden. Deine Strecke bleibt ohne Logbuch."
   }
 }
