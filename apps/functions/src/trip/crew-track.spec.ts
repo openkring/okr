@@ -4,7 +4,7 @@ import type { LocalSection } from '@okr/mobility-tracker-util';
 import { clipSections, decodeStrokeTimes, decodeTrack, strokeTimesBase } from '@okr/mobility-tracker-util';
 import {
   buildCrewCopy, CREW_TRACK_MAX_SPAN_MS, crewPushTexts, crewTrackActions, crewWindowMs, decideCrewAccess, isCrewMember,
-  isLinkedRecording, selectCrewDiaryTarget, toCrewSections,
+  isLinkedRecording, selectCrewDiaryTarget, toCrewSections, isTrackReferenced, crewCleanupDecision,
 } from './crew-track';
 
 function logbuch(over: Partial<TripModel> = {}): TripModel {
@@ -275,4 +275,52 @@ describe('buildCrewCopy', () => {
   it('nothing to copy -> undefined', () => {
     expect(buildCrewCopy({ logbuch: lb, recordingKey: 'rec1', personKey: 'p2', uid: 'u2', tenants: ['bkd'], clipped: [] })).toBeUndefined();
   });
+});
+
+describe('isTrackReferenced', () => {
+  const rec = (over: Partial<TripModel> = {}, track: Record<string, unknown> = {}) => {
+    const t = new TripModel('scs');
+    t.type = 'tracker';
+    t.tenants = ['scs'];
+    t.track = { personKey: 'p1', ...track } as TripModel['track'];
+    return Object.assign(t, over);
+  };
+  it('journalKey set -> referenced', () => expect(isTrackReferenced(rec({}, { journalKey: 'j1' }), 'scs')).toBe(true));
+  it('diary tenant -> referenced', () => expect(isTrackReferenced(rec({ tenants: ['scs', 'kring'] }), 'scs')).toBe(true));
+  it('only the Logbuch tenant -> not referenced', () => expect(isTrackReferenced(rec(), 'scs')).toBe(false));
+});
+
+describe('crewCleanupDecision', () => {
+  const T = 'scs';
+  const rec = (over: Partial<TripModel> = {}, track: Record<string, unknown> = {}) => {
+    const t = new TripModel(T);
+    t.type = 'tracker';
+    t.tenants = [T];
+    t.track = { personKey: 'p1', logbuchKey: 'lb1', ...track } as TripModel['track'];
+    return Object.assign(t, over);
+  };
+  const lb = (over: Partial<TripModel> = {}) => logbuch({ tenants: [T], state: 'closed', endDate: '20261020', ...over });
+  const before = '20261025'; // deadline 20261027
+  const after = '20261028';
+
+  it('ended, before deadline -> copy only', () =>
+    expect(crewCleanupDecision(lb(), rec(), 'lb1', T, before)).toEqual({ copy: true, unlink: false, unlinkRecording: false, delete: false }));
+  it('past deadline, unreferenced -> copy, unlink and delete', () =>
+    expect(crewCleanupDecision(lb(), rec(), 'lb1', T, after)).toEqual({ copy: true, unlink: true, unlinkRecording: true, delete: true }));
+  it('past deadline, journalKey -> unlink, no delete', () =>
+    expect(crewCleanupDecision(lb(), rec({}, { journalKey: 'j' }), 'lb1', T, after)).toMatchObject({ unlink: true, unlinkRecording: true, delete: false }));
+  it('past deadline, diary tenant -> unlink, no delete', () =>
+    expect(crewCleanupDecision(lb(), rec({ tenants: [T, 'kring'] }), 'lb1', T, after)).toMatchObject({ unlink: true, delete: false }));
+  it('recording missing -> unlink only', () =>
+    expect(crewCleanupDecision(lb(), undefined, 'lb1', T, after)).toEqual({ copy: false, unlink: true, unlinkRecording: false, delete: false }));
+  it('recording points to another Logbuch -> unlink Logbuch only', () =>
+    expect(crewCleanupDecision(lb(), rec({}, { logbuchKey: 'other' }), 'lb1', T, after)).toEqual({ copy: false, unlink: true, unlinkRecording: false, delete: false }));
+  it('soft-deleted Logbuch before deadline -> unlink, no delete', () =>
+    expect(crewCleanupDecision(lb({ deletedAt: '2026-10-21T10:00:00Z' }), rec(), 'lb1', T, before)).toEqual({ copy: false, unlink: true, unlinkRecording: true, delete: false }));
+  it('state deleted counts as deleted', () =>
+    expect(crewCleanupDecision(lb({ state: 'deleted' }), rec(), 'lb1', T, before)).toMatchObject({ unlink: true, delete: false }));
+  it('a crew copy is never deleted', () =>
+    expect(crewCleanupDecision(lb(), rec({}, { copyOf: 'x' }), 'lb1', T, after).delete).toBe(false));
+  it('open trip never expires', () =>
+    expect(crewCleanupDecision(lb({ state: 'open', endDate: '' }), rec(), 'lb1', T, after)).toMatchObject({ copy: false, unlink: false, delete: false }));
 });

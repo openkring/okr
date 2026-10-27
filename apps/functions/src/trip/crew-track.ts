@@ -1,5 +1,5 @@
 import { logger } from 'firebase-functions/v2';
-import { getFirestore, type Firestore } from 'firebase-admin/firestore';
+import { FieldValue, getFirestore, type Firestore } from 'firebase-admin/firestore';
 
 import {
   decodeStrokeTimes,
@@ -29,6 +29,7 @@ import { crewTrackDeadline, formatTripTime } from '@okr/trip-util';
 import { pickDiaryAuthor } from '../diary/diary-transfer';
 import { pushToPersons } from '../srv/push';
 import { TIME_FMT, toStoreDate } from '../srv/zurich-time';
+import { privateBucket } from '../_storage/private-bucket';
 
 /** The longest stretch of a recording a crew member can get, however the Logbuch times were edited (spec 1.123 §5.3). */
 export const CREW_TRACK_MAX_SPAN_MS = 12 * 3_600_000;
@@ -445,4 +446,95 @@ export async function handleCrewTrack(before: TripModel | undefined, after: Trip
   } catch (error) {
     logger.error(`onTripWrite: crew track failed trip=${tripId}`, error);
   }
+}
+
+/*----------------------------- nightly day-7 cleanup (spec 1.123 §7) -----------------------------*/
+
+/** Does anything besides the Logbuch still hold the recording: a journal, or a diary tenant other than the Logbuch's? Pure. */
+export function isTrackReferenced(recording: Pick<TripModel, 'tenants' | 'track'>, logbuchTenant: string): boolean {
+  return !!recording.track?.journalKey || (recording.tenants ?? []).some((t) => t !== logbuchTenant);
+}
+
+export interface CrewCleanupDecision {
+  copy: boolean;
+  unlink: boolean;
+  unlinkRecording: boolean;
+  delete: boolean;
+}
+
+/**
+ * What the nightly pass does for one Logbuch trip that has a `trackKey` (pure). `today` = Zurich StoreDate.
+ * - copy: the retry for copies the trigger missed - a valid linked recording and an ended Logbuch trip, every night until day 7.
+ * - unlink: past the deadline, or the Logbuch trip is deleted / archived.
+ * - unlinkRecording: only when the recording points back to this Logbuch trip.
+ * - delete: past the deadline only, the recording was linked to this Logbuch trip, nothing else holds it, and it is no crew copy.
+ */
+export function crewCleanupDecision(
+  logbuch: TripModel,
+  rec: TripModel | undefined,
+  logbuchKey: string,
+  tenantId: string,
+  today: string,
+): CrewCleanupDecision {
+  const deadline = crewTrackDeadline(logbuch);
+  const pastDeadline = deadline !== '' && today > deadline;
+  const gone = !!logbuch.deletedAt || logbuch.state === 'deleted' || !!logbuch.isArchived;
+  const unlink = pastDeadline || gone;
+  const linkedBack = !!rec && rec.type === TRACKER_TRIP_TYPE && rec.track?.logbuchKey === logbuchKey;
+  return {
+    copy: isLogbuchEnded(logbuch) && isLinkedRecording(rec, logbuch, logbuchKey, tenantId),
+    unlink,
+    unlinkRecording: unlink && linkedBack,
+    delete: pastDeadline && linkedBack && !!rec && !rec.track?.copyOf && !isTrackReferenced(rec, tenantId),
+  };
+}
+
+/** Deletes a recording: its track-points, the photo thumbnails in the private bucket (missing files are fine), then the trip doc. */
+async function deleteRecording(db: Firestore, rec: TripModel): Promise<void> {
+  const ref = db.collection(TripCollection).doc(rec.okey);
+  const points = await ref.collection('track-points').listDocuments();
+  for (let i = 0; i < points.length; i += 400) {
+    const batch = db.batch();
+    points.slice(i, i + 400).forEach((d) => batch.delete(d));
+    await batch.commit();
+  }
+  for (const photo of rec.track?.photos ?? []) {
+    if (!photo.thumbPath) continue;
+    await privateBucket().file(photo.thumbPath).delete({ ignoreNotFound: true });
+  }
+  await ref.delete();
+}
+
+/** Nightly: copies once more, unlinks the recording from the Logbuch trip after day 7, deletes it when nobody kept it. */
+export async function runCrewTrackCleanup(now: Date = new Date()): Promise<void> {
+  const db = getFirestore();
+  const today = toStoreDate(now);
+  const snap = await db.collection(TripCollection).where('trackKey', '>', '').get();
+  let copies = 0;
+  let unlinked = 0;
+  let deleted = 0;
+  let failed = 0;
+  for (const doc of snap.docs) {
+    try {
+      const logbuch = { ...(doc.data() as TripModel), okey: doc.id } as TripModel;
+      if (logbuch.type !== LOGBUCH_TRIP_TYPE || !logbuch.trackKey) continue;
+      const tenantId = logbuch.tenants?.[0] ?? '';
+      const recSnap = await db.collection(TripCollection).doc(logbuch.trackKey).get();
+      const rec = recSnap.exists ? ({ ...(recSnap.data() as TripModel), okey: recSnap.id } as TripModel) : undefined;
+      const d = crewCleanupDecision(logbuch, rec, doc.id, tenantId, today);
+      if (d.copy && rec) copies += await copyForCrew(db, logbuch, rec);
+      if (!d.unlink) continue;
+      await doc.ref.update({ trackKey: FieldValue.delete(), trackRequest: FieldValue.delete() });
+      unlinked++;
+      if (d.unlinkRecording && rec) await recSnap.ref.update({ 'track.logbuchKey': FieldValue.delete() });
+      if (d.delete && rec) {
+        await deleteRecording(db, rec);
+        deleted++;
+      }
+    } catch (error) {
+      failed++;
+      logger.error(`crewTrackCleanup: failed logbuch=${doc.id}`, error);
+    }
+  }
+  logger.info(`crewTrackCleanup: logbuch=${snap.size} copies=${copies} unlinked=${unlinked} deleted=${deleted} failed=${failed}`);
 }
