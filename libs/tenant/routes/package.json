@@ -41,6 +41,7 @@
     "@okr/relationship-responsibility-feature": "*",
     "@okr/resource-feature": "*",
     "@okr/mobility-flighttracker-feature": "*",
+    "@okr/mobility-tracker-feature": "*",
     "@okr/finance-account-feature": "*",
     "@okr/finance-cost-center-feature": "*",
     "@okr/finance-budget-feature": "*",

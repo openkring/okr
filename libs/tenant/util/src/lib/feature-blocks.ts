@@ -778,6 +778,9 @@ const trip: FeatureBlock = {
     // authored onto the tenant-bespoke `sport-menu` grouping before this catalogue existed);
     // the next `applyFeatureSelection` for `scs` converges that, one time, intentionally.
     { key: 'logbuch', name: 'logbuch', url: '/trips/logbuch/c-trips', action: 'navigate', roleNeeded: 'registered', icon: 'track', label: '@item.logbuch' },
+    // The tracker (spec 1.123 §8): a member records an outing on the phone; the crew sees it in the Logbuch.
+    // Top-level like `logbuch`, so the picker appends it to the root nav (admins may move it under `sport-menu`).
+    { key: 'trip-tracker', name: 'trip-tracker', url: '/tracker', action: 'navigate', roleNeeded: 'registered', icon: 'track', label: '@item.trip-tracker' },
     // 'registered', not 'kiosk': every member may open the sheet to reach the two read-only
     // statistics. The write actions below keep their own 'kiosk'/'admin' gate, so a member sees
     // a context menu holding nothing but boat + person statistics.

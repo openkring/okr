@@ -488,6 +488,14 @@ const trip: BlockRoutes = {
         { path: ':listId/:contextMenuName', loadComponent: () => import('@okr/trip-feature').then(m => m.TripList) },
       ],
     },
+    // The tracker (spec 1.121, 1.123 §8) behind the Logbuch switch, for the `trip-tracker` menu row. Apps that
+    // record (bkg, scs) also mount TRACKER_ROUTES before the app-ready gate; that ungated copy matches first.
+    // Lazy, so no app's start bundle carries the tracker.
+    {
+      path: 'tracker',
+      canActivate: [isAuthenticatedGuard],
+      loadChildren: () => import('@okr/mobility-tracker-feature').then(m => m.TRACKER_CHILD_ROUTES),
+    },
   ],
 };
 
