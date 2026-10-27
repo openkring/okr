@@ -8,14 +8,15 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { AvatarDisplay, AvatarPipe } from '@okr/avatar-ui';
 import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
+import { formatClockTime } from '@okr/mobility-tracker-util';
 
 import {
-  DiaryI18n, DiaryMediaResult, DiaryTrackCard, diaryAvatarName, diaryLocationAvatarKey, DIARY_TEXT_LOCATION_ICON, diaryLocationLabel, mainLocation, diarySliderImages, diaryWeatherLine, driveFolderUrl, formatDiaryDateLong, hasDiaryWeather,
+  DiaryI18n, DiaryMediaResult, DiaryTrackCard, diaryTrackPhotoTiles, diaryAvatarName, diaryLocationAvatarKey, DIARY_TEXT_LOCATION_ICON, diaryLocationLabel, mainLocation, diarySliderImages, diaryWeatherLine, driveFolderUrl, formatDiaryDateLong, hasDiaryWeather,
   isDiaryVideo, JassDiaryResult, parseJassDiaryLine, renderDiaryHtml,
 } from '@okr/content-diary-util';
 
 import { DiaryJassCard } from './diary-jass-card';
-import { DiaryMediaRow } from './diary-media-row';
+import { DiaryMediaExtraTile, DiaryMediaRow } from './diary-media-row';
 import { DiaryTrackCardView } from './diary-track-card';
 
 /** Slider-size downloads in flight at once when the slider opens. */
@@ -136,13 +137,16 @@ export interface DiaryNeighbours {
         </div>
       }
 
+      @if (driveUrl() && sliderLoading()) { <ion-progress-bar type="indeterminate" /> }
+      @if (driveUrl() && mediaFailed()) {
+        <ion-note class="ion-padding-start">{{ i18n().media_load_failed() }}</ion-note>
+      }
+      @if (showImageRow()) {
+        <!-- the Drive images, then the visible photos of the day's tracks -->
+        <okr-diary-media-row kind="image" [files]="imageFiles()" [extras]="trackPhotoExtras()"
+          (opened)="openImage($event)" (extraOpened)="openTrackPhoto($event)" />
+      }
       @if (driveUrl()) {
-        @if (sliderLoading()) { <ion-progress-bar type="indeterminate" /> }
-        @if (mediaFailed()) {
-          <ion-note class="ion-padding-start">{{ i18n().media_load_failed() }}</ion-note>
-        } @else if (!media() || media()?.images?.length) {
-          <okr-diary-media-row kind="image" [files]="media()?.images" (opened)="openImage($event)" />
-        }
         <ion-item lines="none" button [detail]="false" (click)="openDrive()">
           <ion-icon slot="start" src="{{ 'folder-open' | svgIcon }}" />
           <ion-label>{{ i18n().open_drive() }}</ion-label>
@@ -189,8 +193,10 @@ export class DiaryViewModal {
   public readonly refreshWeather = input.required<(d: DiaryModel) => Promise<DiaryModel | undefined>>();
   /** the recorded tracks of a day (spec 1.121 §7); [] for other scopes, offline or without a person */
   public readonly loadTracks = input.required<(d: DiaryModel) => Promise<DiaryTrackCard[]>>();
-  /** opens the read-only track view */
-  public readonly openTrack = input.required<(card: DiaryTrackCard) => Promise<void>>();
+  /** opens the read-only track view, optionally with one photo (index into the track's photos) shown on the map */
+  public readonly openTrack = input.required<(card: DiaryTrackCard, photoIndex?: number) => Promise<void>>();
+  /** a track photo's thumbnail (private bucket) as a displayable URL — the store's TrackService.readThumb */
+  public readonly loadTrackThumb = input.required<(thumbPath: string) => Promise<string>>();
 
   /** the entry on screen — starts at `diary`, swapped by prev/next/up */
   protected readonly current = linkedSignal(() => this.diary());
@@ -201,6 +207,21 @@ export class DiaryViewModal {
   protected readonly sliderLoading = signal(false);
   protected readonly weatherBusy = signal(false);
   protected readonly tracks = signal<DiaryTrackCard[]>([]);
+  /** displayable track photo per thumbPath, filled asynchronously; a failed read leaves the placeholder */
+  private readonly trackThumbs = signal<ReadonlyMap<string, string>>(new Map());
+  /** the visible photos of the day's tracks, after the Drive images */
+  private readonly trackPhotos = computed(() => diaryTrackPhotoTiles(this.tracks()));
+  protected readonly trackPhotoExtras = computed<DiaryMediaExtraTile[]>(() => {
+    const thumbs = this.trackThumbs();
+    const label = this.i18n().track_view_photo_show();
+    return this.trackPhotos().map(t => ({
+      key: t.key, src: t.thumbPath ? thumbs.get(t.thumbPath) : undefined, label: label.replace('{time}', formatClockTime(t.takenAt)),
+    }));
+  });
+  /** Drive images (undefined = still loading); none without a folder or after a failed listing */
+  protected readonly imageFiles = computed(() => (!this.driveUrl() || this.mediaFailed() ? [] : this.media()?.images));
+  protected readonly showImageRow = computed(() => this.trackPhotos().length > 0
+    || (!!this.driveUrl() && !this.mediaFailed() && (!this.media() || !!this.media()?.images?.length)));
 
   protected readonly title = computed(() => this.current().title || this.i18n().view_untitled());
   protected readonly dateLabel = computed(() => formatDiaryDateLong(this.current().date, this.lang()));
@@ -268,6 +289,20 @@ export class DiaryViewModal {
         .then(tracks => { if (this.current().okey === shown.okey) this.tracks.set(tracks); })
         .catch(() => { /* no tracks */ });
     });
+    // Thumbnails of the track photos (cached per path in the store); an answer after paging away is dropped.
+    effect(() => {
+      const tiles = this.trackPhotos();
+      const load = this.loadTrackThumb();
+      const okey = untracked(this.current).okey;
+      const known = untracked(this.trackThumbs);
+      for (const tile of tiles) {
+        const path = tile.thumbPath;
+        if (!path || known.has(path)) continue;
+        load(path)
+          .then(src => { if (this.current().okey === okey) this.trackThumbs.update(m => new Map(m).set(path, src)); })
+          .catch(() => { /* placeholder stays */ });
+      }
+    });
   }
 
   /**
@@ -303,6 +338,13 @@ export class DiaryViewModal {
     if (this.current().okey !== shown.okey) return;   // paged away while loading
     const { images, startIndex } = diarySliderImages(this.media()?.images ?? [], index, large);
     await showImageSlider(this.modalController, images, { ...IMAGE_STYLE_SHAPE }, startIndex);
+  }
+
+  /** A track photo opens its track's view with that photo shown on the map. */
+  protected openTrackPhoto(index: number): void {
+    const tile = this.trackPhotos()[index];
+    const card = tile ? this.tracks()[tile.cardIndex] : undefined;
+    if (tile && card) void this.openTrack()(card, tile.photoIndex);
   }
 
   protected async openDocument(index: number): Promise<void> {

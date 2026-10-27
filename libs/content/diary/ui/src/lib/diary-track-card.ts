@@ -6,7 +6,8 @@ import { figureTexts, formatDuration, formatKm } from '@okr/mobility-tracker-uti
 import { TrackMap, TrackMapSection } from '@okr/mobility-tracker-ui';
 
 /**
- * One recorded track of a diary day (spec 1.121 §7): a small map without photo pins, the transport modes in
+ * One recorded track of a diary day (spec 1.121 §7): a small map without photo pins (detail-boosted: finer
+ * map detail over the same area), the transport modes in
  * order («zu Fuss · Zug»), distance and duration. The whole card is one button; `open` asks for the track view.
  */
 @Component({
@@ -20,7 +21,7 @@ import { TrackMap, TrackMapSection } from '@okr/mobility-tracker-ui';
   `],
   template: `
     <ion-card button (click)="open.emit(card())">
-      <okr-track-map [sections]="sections()" [live]="false" />
+      <okr-track-map [sections]="sections()" [live]="false" [detailBoost]="true" />
       <ion-card-header>
         <ion-card-subtitle>{{ card().startTime }} · {{ modes() }}</ion-card-subtitle>
         <ion-card-title>{{ card().name }}</ion-card-title>

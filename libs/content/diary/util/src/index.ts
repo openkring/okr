@@ -26,3 +26,4 @@ export * from './lib/trip-collection';
 export * from './lib/diary-album.validations';
 export * from './lib/diary-track.util';
 export * from './lib/diary-track-view.util';
+export * from './lib/diary-track-photo.util';

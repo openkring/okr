@@ -7,6 +7,9 @@ import { DiaryMediaFile, diaryFileIconName, isDiaryVideo } from '@okr/content-di
 /** Placeholder tiles shown while the folder listing itself is still loading. */
 const LOADING_TILES = [0, 1, 2, 3];
 
+/** A tile after the files: a picture from elsewhere (a track photo), `src` absent = placeholder. */
+export interface DiaryMediaExtraTile { key: string; src?: string; label: string }
+
 /**
  * One horizontal strip of a diary day's Drive files (spec 1.106 §2.3) — images and videos, or
  * documents. A video tile carries a play overlay.
@@ -14,6 +17,7 @@ const LOADING_TILES = [0, 1, 2, 3];
  * so the layout never jumps. The thumbnail arrives inline as a `data:` URL (the Drive files are
  * private; see DiaryMediaFile) and only replaces the placeholder once its `load` event fired; a
  * missing or failing thumbnail simply leaves the placeholder.
+ * `extras` follow the files in the same tile style (the day's track photos); a tap emits `extraOpened`.
  */
 @Component({
   selector: 'okr-diary-media-row',
@@ -59,6 +63,21 @@ const LOADING_TILES = [0, 1, 2, 3];
           <div class="tile"><ion-skeleton-text [animated]="true" /></div>
         }
       }
+      @for (extra of extras(); track extra.key; let i = $index) {
+        <div class="tile" role="button" [attr.aria-label]="extra.label" [title]="extra.label" (click)="extraOpened.emit(i)">
+          @if (!isLoaded(extraId(extra))) {
+            @if (extra.src && !hasFailed(extraId(extra))) {
+              <ion-skeleton-text [animated]="true" />
+            } @else {
+              <ion-icon src="{{ 'camera' | svgIcon }}" />
+            }
+          }
+          @if (extra.src && !hasFailed(extraId(extra))) {
+            <img [src]="extra.src" alt="" [class.loaded]="isLoaded(extraId(extra))"
+              (load)="markLoaded(extraId(extra))" (error)="markFailed(extraId(extra))" />
+          }
+        </div>
+      }
     </div>
   `,
 })
@@ -66,8 +85,12 @@ export class DiaryMediaRow {
   /** undefined while the folder listing is loading */
   public readonly files = input<DiaryMediaFile[] | undefined>();
   public readonly kind = input.required<'image' | 'document'>();
+  /** tiles after the files (the day's track photos) */
+  public readonly extras = input<DiaryMediaExtraTile[]>([]);
   /** index of the tapped tile in `files` */
   public readonly opened = output<number>();
+  /** index of the tapped tile in `extras` */
+  public readonly extraOpened = output<number>();
 
   protected readonly loadingTiles = LOADING_TILES;
   private readonly loaded = signal<ReadonlySet<string>>(new Set());
@@ -79,6 +102,11 @@ export class DiaryMediaRow {
 
   protected fileIcon(file: DiaryMediaFile): string {
     return diaryFileIconName(file.mimeType);
+  }
+
+  /** extras share the loaded/failed sets with the files, under their own prefix */
+  protected extraId(extra: DiaryMediaExtraTile): string {
+    return `extra:${extra.key}`;
   }
 
   protected isLoaded(id: string): boolean {

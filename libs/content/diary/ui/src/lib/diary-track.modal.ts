@@ -1,4 +1,4 @@
-import { Component, computed, effect, ElementRef, input, signal, viewChild } from '@angular/core';
+import { Component, computed, effect, ElementRef, input, linkedSignal, signal, viewChild } from '@angular/core';
 import { IonContent, IonIcon } from '@ionic/angular';
 
 import {
@@ -137,11 +137,13 @@ export class DiaryTrackModal {
   public readonly loadThumb = input.required<(thumbPath: string) => Promise<string>>();
   /** the active UI language — month name of the date */
   public readonly lang = input('de');
+  /** index into the track's photos to show on the map when the view opens (a tap in the diary day's photo row) */
+  public readonly initialPhoto = input<number | undefined>(undefined);
 
   /** displayable picture per thumbPath, filled asynchronously; a failed read leaves the placeholder */
   private readonly thumbs = signal<ReadonlyMap<string, string>>(new Map());
   /** index into `mapPhotos` of the photo shown on the map; undefined = none */
-  protected readonly selected = signal<number | undefined>(undefined);
+  protected readonly selected = linkedSignal<number | undefined>(() => this.initialPhoto());
   private readonly mapRef = viewChild(TrackMap, { read: ElementRef });
 
   protected readonly dateLabel = computed(() => formatTrackDate(this.card().startDate, this.lang()));

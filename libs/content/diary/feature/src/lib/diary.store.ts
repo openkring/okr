@@ -425,13 +425,19 @@ export const DiaryStore = signalStore(
       return Promise.race([loaded, giveUp]).finally(() => clearTimeout(timer));
     };
 
-    /** Read-only track view; dynamic import like the view modal (store-modal-dynamic-import). */
-    const openTrack = async (card: DiaryTrackCard): Promise<void> => {
+    /** a track photo's thumbnail as a displayable URL (TrackService caches per path) */
+    const loadTrackThumb = (path: string): Promise<string> => store.trackService.readThumb(path);
+
+    /**
+     * Read-only track view; dynamic import like the view modal (store-modal-dynamic-import). `photoIndex` (into the
+     * track's photos) is shown on the map when the view opens.
+     */
+    const openTrack = async (card: DiaryTrackCard, photoIndex?: number): Promise<void> => {
       const { DiaryTrackModal } = await import('@okr/content-diary-ui');
       const modal = await store.modalController.create({
         component: DiaryTrackModal,
         cssClass: 'wide-modal',
-        componentProps: { card, i18n: store.i18n, lang: store.lang(), loadThumb: (path: string) => store.trackService.readThumb(path) },
+        componentProps: { card, i18n: store.i18n, lang: store.lang(), loadThumb: loadTrackThumb, initialPhoto: photoIndex },
       });
       await modal.present();
     };
@@ -672,7 +678,7 @@ export const DiaryStore = signalStore(
           componentProps: {
             diary, i18n: store.i18n, lang: store.lang(),
             neighbours: neighboursOf, openPerson: openPersonView, openLocation: openLocationView, loadMedia, loadImage, refreshWeather,
-            loadTracks, openTrack,
+            loadTracks, openTrack, loadTrackThumb,
           },
         });
         await modal.present();
