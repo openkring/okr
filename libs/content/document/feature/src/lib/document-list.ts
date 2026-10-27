@@ -89,7 +89,10 @@ type DocumentSortField = 'title' | 'size' | 'dateOfDocLastUpdate';
             <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
-                  <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [toggleStates]="{ toggleFilter: showFilter(), toggleEditMode: editMode() }"/>
+                  <!-- forceVisibleSelf: the button is already gated by canChange() (contentAdmin OR privileged),
+                       but c-documents needs contentAdmin, which privileged does not satisfy → empty popover.
+                       The entries keep their own roleNeeded gate. -->
+                  <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [forceVisibleSelf]="true" [toggleStates]="{ toggleFilter: showFilter(), toggleEditMode: editMode() }"/>
                 </ion-content>
               </ng-template>
             </ion-popover>
@@ -99,12 +102,15 @@ type DocumentSortField = 'title' | 'size' | 'dateOfDocLastUpdate';
     </ion-toolbar>
 
     <!-- search and filters — always visible from md up; on smaller screens hidden by default
-         and toggled via the context-menu 'toggleFilter' action -->
-    <okr-list-filter [class.ion-hide-sm-down]="!showFilter()"
-      (searchTermChanged)="onSearchtermChange($event)"
-      (tagChanged)="onTagSelected($event)" [tags]="tags()"
-      (typeChanged)="onTypeSelected($event)" [types]="types()"
-    />
+         and toggled via the context-menu 'toggleFilter' action. Hiding clears the filters; the
+         @for over filterResetCount re-creates okr-list-filter so its searchbar text is cleared too. -->
+    @for(resetCount of [filterResetCount()]; track resetCount) {
+      <okr-list-filter [class.ion-hide-sm-down]="!showFilter()"
+        (searchTermChanged)="onSearchtermChange($event)"
+        (tagChanged)="onTagSelected($event)" [tags]="tags()"
+        (typeChanged)="onTypeSelected($event)" [types]="types()"
+      />
+    }
 
     <!-- list header -->
     @if(isListView()) {
@@ -296,6 +302,8 @@ export class DocumentList {
   public isListView = linkedSignal(() => (this.viewParam() ?? this.view()) === 'list');
   // filter row hidden by default; toggled via the context-menu 'toggleFilter' action
   protected readonly showFilter = signal(false);
+  // bumped on every hide, so okr-list-filter is re-created with an empty searchbar
+  protected readonly filterResetCount = signal(0);
   // read-only by default: tapping a folder navigates into it, tapping a file opens the viewer overlay.
   // The context-menu 'toggleEditMode' action flips this to show the per-item action sheets.
   protected readonly editMode = signal(false);
@@ -418,7 +426,7 @@ export class DocumentList {
       case 'addFiles': break; // handled by the toolbar label→input (Safari-compatible)
       case 'addFolder': await this.store.addFolder(); break;
       case 'exportRaw': await this.store.export('raw'); break;
-      case 'toggleFilter': this.showFilter.update(v => !v); break;
+      case 'toggleFilter': this.toggleFilter(); break;
       case 'toggleEditMode': this.editMode.update(v => !v); break;
       default: error(undefined, `DocumentList.call: unknown method ${selectedMethod}`);
     }
@@ -553,6 +561,17 @@ export class DocumentList {
           break;
       }
     }
+  }
+
+  /** Show/hide the filter row. Hiding resets search, tag and type, so no invisible filter stays active. */
+  private toggleFilter(): void {
+    if (this.showFilter()) {
+      this.store.setSearchTerm('');
+      this.store.setSelectedTag('');
+      this.store.setSelectedType('all');
+      this.filterResetCount.update(n => n + 1);
+    }
+    this.showFilter.update(v => !v);
   }
 
   /** Flip between list and grid view. Public so a parent toolbar (group view) can drive the hoisted toggle. */
