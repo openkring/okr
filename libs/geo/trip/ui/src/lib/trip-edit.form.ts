@@ -240,8 +240,10 @@ export class TripEditForm {
   // recording request
   protected trackRequested = computed(() => !!this.formData().trackRequest);
   protected carrierKey = computed(() => this.formData().trackRequest?.personKey ?? '');
-  protected carrierKeys = computed(() => this.participants().map((p) => p.key));
-  protected carrierLabels = computed(() => this.participants().map((p) => `${p.name1} ${p.name2}`.trim()));
+  // guests have no person key ('') - they have no app and cannot carry the phone
+  private readonly carriers = computed(() => this.participants().filter((p) => p.key !== ''));
+  protected carrierKeys = computed(() => this.carriers().map((p) => p.key));
+  protected carrierLabels = computed(() => this.carriers().map((p) => `${p.name1} ${p.name2}`.trim()));
   protected trackRequestI18n = computed(() => ({ name: 'trackRequest', label: this.i18n().track_request_label(), helper: '' } as CheckboxI18n));
   protected trackCarrierI18n = computed(() => ({ name: 'trackCarrier', label: this.i18n().track_carrier_label(), helper: this.i18n().track_carrier_helper() } as StringSelectI18n));
 
