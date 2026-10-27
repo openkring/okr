@@ -986,10 +986,5 @@
   "archive": {
     "conf": "La entrada se ha archivado.",
     "error": "No se pudo archivar la entrada."
-  },
-  "locked": {
-    "title": "El barco está bloqueado",
-    "label": "Bloquear el barco",
-    "helper": "Un barco bloqueado no se puede elegir en el cuaderno de bitácora. El aviso del cuaderno se muestra como motivo."
   }
 }

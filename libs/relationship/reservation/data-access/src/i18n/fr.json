@@ -19,9 +19,5 @@
     "label": "Terminer la réservation",
     "conf": "La réservation a été terminée.",
     "error": "La réservation n'a pas pu être terminée."
-  },
-  "lock": {
-    "name": "Bloqué : {name}",
-    "defaultReason": "Ce bateau est temporairement bloqué."
   }
 }

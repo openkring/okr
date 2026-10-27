@@ -817,9 +817,7 @@ service cloud.firestore {
     // API access can therefore read another group's minutes — recorded ceiling, not an
     // oversight. Tightening this is the upgrade path named in the spec.
     match /meetings/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
-    // damages and locks (reason maintenance/blocked/damage) are the Schadensliste's history:
-    // they are ended, never deleted — keep the list in sync with DAMAGE_REASONS (reservation-util)
-    match /reservations/{id}       { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete() && !(resource.data.get('reason', '') in ['maintenance', 'blocked', 'damage']); }
+    match /reservations/{id}       { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     match /member-fees/{id}        { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     // Pre-rename home of the member-fee rows; the retired migrateMemberFees migration copied
     // them id-for-id and left the originals in place, so they stay readable/erasable until the

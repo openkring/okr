@@ -3,7 +3,7 @@ import { AvatarModelTypes, OrgModel, PersonModel, ReservationModel, ResourceMode
 import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import * as coreUtils from '@okr/shared-util-core';
 
-import { findActiveLockReservations, findActiveReservationForResource, getReservationIndex, getReservationIndexInfo, isReservation, isReservationActiveNow, isReservationOpen, newLockReservation } from './reservation.util';
+import { findActiveReservationForResource, getReservationIndex, getReservationIndexInfo, isReservation, isReservationActiveNow, isReservationOpen } from './reservation.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -243,43 +243,5 @@ describe('findActiveReservationForResource', () => {
       resource: { key: 'boat4', name1: '', name2: 'Skiff 2', modelType: 'resource', type: 'rboat', subType: 'b1x', label: '' },
     });
     expect(findActiveReservationForResource([course], 'boat4', '20260903')).toBeUndefined();
-  });
-});
-
-describe('findActiveLockReservations', () => {
-  function make(partial: Partial<ReservationModel>): ReservationModel {
-    return { ...new ReservationModel('scs'), ...partial } as ReservationModel;
-  }
-  const boat = { key: 'boat1', name1: '', name2: 'Gig 4x', modelType: 'resource' as const, type: 'rboat', subType: 'b4x', label: '' };
-
-  it('returns every active lock of the resource, and nothing else', () => {
-    const damage = make({ okey: 'a', state: 'active', startDate: '20200101', endDate: END_FUTURE_DATE_STR, reason: 'maintenance', resource: boat });
-    const blocked = make({ okey: 'b', state: 'active', startDate: '20200101', endDate: END_FUTURE_DATE_STR, reason: 'blocked', resource: boat });
-    const course = make({ okey: 'c', state: 'active', startDate: '20200101', endDate: END_FUTURE_DATE_STR, reason: 'course', resource: boat });
-    const ended = make({ okey: 'd', state: 'completed', startDate: '20200101', endDate: END_FUTURE_DATE_STR, reason: 'blocked', resource: boat });
-    const other = make({ okey: 'e', state: 'active', startDate: '20200101', endDate: END_FUTURE_DATE_STR, reason: 'blocked', resource: { ...boat, key: 'boat2' } });
-    expect(findActiveLockReservations([damage, blocked, course, ended, other], 'boat1', '20261027').map(r => r.okey)).toEqual(['a', 'b']);
-  });
-
-  it('returns nothing for an empty resource key', () => {
-    expect(findActiveLockReservations([], '')).toEqual([]);
-  });
-});
-
-describe('newLockReservation', () => {
-  const boat = { key: 'boat1', name1: '', name2: 'Gig 4x', modelType: 'resource' as const, type: 'rboat', subType: 'b4x', label: '' };
-
-  it('builds an open-ended, active lock that blocks the boat from today on', () => {
-    const lock = newLockReservation('scs', boat, undefined, 'Gesperrt: Gig 4x', 'Riss im Rumpf');
-    expect(lock.tenants).toEqual(['scs']);
-    expect(lock.reason).toBe('blocked');
-    expect(lock.state).toBe('active');
-    expect(lock.endDate).toBe(END_FUTURE_DATE_STR);
-    expect(lock.description).toBe('Riss im Rumpf');
-    expect(findActiveLockReservations([lock], 'boat1', lock.startDate)).toHaveLength(1);
-  });
-
-  it('takes the maintenance reason for a damage report', () => {
-    expect(newLockReservation('scs', boat, undefined, 'n', 'd', 'maintenance').reason).toBe('maintenance');
   });
 });

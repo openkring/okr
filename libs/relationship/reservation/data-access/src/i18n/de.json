@@ -19,9 +19,5 @@
     "label": "Reservation beenden",
     "conf": "Die Reservation wurde beendet.",
     "error": "Die Reservaton konnte nicht beendet werden."
-  },
-  "lock": {
-    "name": "Gesperrt: {name}",
-    "defaultReason": "Das Boot ist vorübergehend gesperrt."
   }
 }

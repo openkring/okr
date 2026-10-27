@@ -19,8 +19,6 @@
     "@okr/relationship-ownership-data-access": "*",
     "@okr/relationship-ownership-ui": "*",
     "@okr/relationship-ownership-util": "*",
-    "@okr/relationship-reservation-data-access": "*",
-    "@okr/relationship-reservation-util": "*",
     "@okr/avatar-ui": "*",
     "@okr/cms-menu-feature": "*",
     "@okr/resource-data-access": "*",

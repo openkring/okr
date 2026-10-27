@@ -14,7 +14,7 @@ import { buildExportTable, chipMatches, convertDateFormatToString, DateFormat, d
 import { I18nService } from '@okr/shared-i18n';
 
 import { ReservationService } from '@okr/relationship-reservation-data-access';
-import { getReservationExportColumns, getReservationExportFileName, isDamageReservation, isReservation, RESERVATION_I18N_KEYS, ReservationI18n } from '@okr/relationship-reservation-util';
+import { getReservationExportColumns, getReservationExportFileName, isReservation, RESERVATION_I18N_KEYS, ReservationI18n } from '@okr/relationship-reservation-util';
 import { PersonService } from '@okr/subject-person-data-access';
 import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
 
@@ -380,11 +380,6 @@ export const ReservationStore = signalStore(
       },
 
       async delete(reservation?: ReservationModel, readOnly = true): Promise<void> {
-        // damages and locks are the Schadensliste's history (also refused by the Firestore rules)
-        if (reservation && isDamageReservation(reservation)) {
-          showToast(store.toastController, store.i18n.delete_damage());
-          return;
-        }
         if (reservation && !readOnly) {
           const result = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
           if (result === true) {

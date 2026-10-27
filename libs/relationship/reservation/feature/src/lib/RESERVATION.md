@@ -49,27 +49,6 @@ Collection name: `reservations`
 
 Configured in the `reservation_reason` category list. Typical values: `course`, `workshop`, `meeting`, `party`, `socialEvent`, `maintenance`, `sportsEvent`, `businessEvent`, `privateEvent`, `publicEvent`, `storagePlace`, `clubEvent`.
 
-## Boat locks and the Schadensliste
-
-Three reasons record the damage history of the rowing boats. There is no separate damage
-collection — the Schadensliste (`DamageList`, route `/reservation/damages/:contextMenuName`,
-privileged or resourceAdmin) is a filtered view of these reservations
-(`filterDamages` in `damage-list.ts`, reservation-util).
-
-| Reason | Written by | Blocks the boat |
-| --- | --- | --- |
-| `maintenance` | damage report with «Boot sperren» (Logbuch) | yes, until ended |
-| `blocked` | «Ruderboot sperren» in the boat lists, or the checkbox in the boat modal | yes, until ended |
-| `damage` | damage report without a lock (`newDamageRecord`) | never (completed on the report day) |
-
-- A lock is open-ended (`endDate = 99991231`); «Sperrung aufheben» sets `state: 'completed'` and
-  `endDate` to today, so the entry stays as history.
-- These reservations are **never deleted**: the store, the action sheets and the Firestore rules
-  all refuse it (`isDamageReservation`). End a lock instead.
-- `description` carries the reason (shown to members), `notes` the internal follow-up — who caused
-  it, repair, cost, insurance. `notes` is shown only to privileged / resourceAdmin, but like every
-  reservation field it is readable by all tenant members through the API.
-
 ## `ReservationApplyModel`
 
 A simplified form model (not persisted directly) used by the public-facing `ReservationApplyModal`. It collects the minimum required information for an application/booking request. Fields mirror `ReservationModel` but omit administrative fields. Additional fields: `usesTent` (boolean), `company` (string), `isConfirmed` (boolean — when true, the confirmation toolbar is shown).

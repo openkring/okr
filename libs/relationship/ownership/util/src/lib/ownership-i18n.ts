@@ -53,10 +53,6 @@ export const OWNERSHIP_I18N_KEYS = {
   action_delete:                    PFX + 'action.delete',
   action_ownerView:                 PFX + 'action.ownerView',
   action_combine:                   PFX + 'action.combine',           // {group} {action}
-  action_lock:                      PFX + 'action.lock',
-  action_unlock:                    PFX + 'action.unlock',
-  lock_header:                      PFX + 'lock.header',
-  lock_placeholder:                 PFX + 'lock.placeholder',
   archive_confirm:                  PFX + 'archive.confirm',
   purge_confirm:                    PFX + 'purge.confirm',
   resource_archive_confirm:         PFX + 'resourceAction.archiveConfirm',   // {name}

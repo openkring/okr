@@ -42,8 +42,7 @@
     "label": "Elimina prenotazione",
     "confirm": "Normalmente una prenotazione dovrebbe essere terminata, ma non eliminata. L'eliminazione è prevista solo per correggere voci errate. Eliminare davvero la prenotazione?",
     "conf": "La prenotazione è stata eliminata.",
-    "error": "Impossibile eliminare la prenotazione.",
-    "damage": "Danni e blocchi non vengono eliminati perché fanno parte dell'elenco danni. Termina invece il blocco."
+    "error": "Impossibile eliminare la prenotazione."
   },
   "end": {
     "label": "Termina prenotazione",
@@ -222,10 +221,6 @@
     "club": {
       "label": "Evento del club",
       "description": "Prenotato per un evento del club"
-    },
-    "damage": {
-      "label": "Danno",
-      "description": "Danno segnalato a una barca, senza blocco."
     }
   },
   "reservation_state": {
@@ -273,23 +268,5 @@
       "title": "Chat temporaneamente non disponibile",
       "default": "La chat è in manutenzione. Tornerà presto."
     }
-  },
-  "damage": {
-    "title": "Elenco danni",
-    "empty": "Nessun danno trovato.",
-    "boat": "Barca",
-    "boatType": "Tipo di barca",
-    "kind": {
-      "label": "Tipo",
-      "maintenance": "Danno, bloccata",
-      "blocked": "Bloccata",
-      "damage": "Danno"
-    },
-    "from": "Dal",
-    "to": "Al",
-    "open": "aperto",
-    "days": "Giorni bloccata",
-    "reason": "Motivo",
-    "reporter": "Segnalato da"
   }
 }

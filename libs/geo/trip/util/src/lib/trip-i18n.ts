@@ -58,7 +58,6 @@ export const TRIP_I18N_KEYS = {
   report_lock_boat_helper:  PFX + 'report.lockBoat.helper',
   report_lock_name:         PFX + 'report.lockBoat.name',
   report_lock_error:        PFX + 'report.lockBoat.error',
-  report_damage_name:       PFX + 'report.damageRecord.name',   // {name}
   boat_reserved_title:      PFX + 'boatReserved.title',
   boat_reserved_maintenance: PFX + 'boatReserved.maintenance',
   boat_reserved_blocked:    PFX + 'boatReserved.blocked',

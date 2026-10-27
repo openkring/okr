@@ -180,8 +180,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
         <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       }
 
-      <!-- internal notes (Schadensliste: who caused it, repair, cost, insurance) — staff only -->
-      @if(hasRole('privileged') || hasRole('resourceAdmin')) {
+      @if(hasRole('resourceAdmin')) {
         <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>

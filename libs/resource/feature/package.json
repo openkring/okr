@@ -21,8 +21,6 @@
     "@okr/resource-ui": "*",
     "@okr/resource-util": "*",
     "@okr/resource-data-access": "*",
-    "@okr/relationship-ownership-feature": "*",
-    "@okr/relationship-reservation-data-access": "*",
-    "@okr/relationship-reservation-util": "*"
+    "@okr/relationship-ownership-feature": "*"
   }
 }

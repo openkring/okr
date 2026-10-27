@@ -9,7 +9,7 @@ import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { PersonModel, ResourceModel, TripStatsConfig } from '@okr/shared-models';
 
-import { Quarter, StatsRollup, TripStatsService } from '@okr/trip-data-access';
+import { StatsRollup, TripStatsService } from '@okr/trip-data-access';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 export interface StatsRow {
@@ -32,8 +32,6 @@ type TripStatsSectionState = {
   viewType: 'list' | 'graph';
   contentType: 'boat' | 'member';
   selectedYear: number;
-  /** 0 = the whole year, 1–4 = one quarter of selectedYear */
-  selectedQuarter: Quarter;
   sortField: StatsSortField;
   sortAsc: boolean;
   searchTerm: string;
@@ -43,7 +41,6 @@ const initialState: TripStatsSectionState = {
   viewType: 'list',
   contentType: 'boat',
   selectedYear: new Date().getFullYear(),
-  selectedQuarter: 0,
   sortField: 'km',
   sortAsc: false,
   searchTerm: '',
@@ -65,18 +62,16 @@ export const TripStatsSectionStore = signalStore(
     rboatTypes: computed(() => store.appStore.tryGetCategory('rboat_type')),
   })),
   withProps(store => ({
-    // One document holds the whole ranking for the selected year — active when viewType === 'list'.
-    // A selected quarter has no rollup document; the service aggregates that quarter's trips instead.
+    // One document holds the whole ranking for the selected year — active when viewType === 'list'
     listResource: rxResource({
       params: () => ({
-        viewType:        store.viewType(),
-        entityType:      store.contentType() === 'boat' ? 'boats' as const : 'members' as const,
-        selectedYear:    store.selectedYear(),
-        selectedQuarter: store.selectedQuarter(),
+        viewType:     store.viewType(),
+        entityType:   store.contentType() === 'boat' ? 'boats' as const : 'members' as const,
+        selectedYear: store.selectedYear(),
       }),
       stream: ({ params }) => params.viewType !== 'list'
         ? of(undefined)
-        : store.tripStatsService.getQuarterRollup(params.entityType, params.selectedYear, params.selectedQuarter),
+        : store.tripStatsService.getRollup(params.entityType, params.selectedYear),
     }),
     // One query over all years' rollups — active when viewType === 'graph'
     graphResource: rxResource({
@@ -184,13 +179,8 @@ export const TripStatsSectionStore = signalStore(
       await modal.onDidDismiss();
     },
 
-    /** A new year starts on the whole year again: the quarter is picked within the year. */
     setYear(selectedYear: number): void {
-      patchState(store, { selectedYear, selectedQuarter: 0 });
-    },
-
-    setQuarter(selectedQuarter: number): void {
-      patchState(store, { selectedQuarter: selectedQuarter as Quarter });
+      patchState(store, { selectedYear });
     },
 
     setSearchTerm(searchTerm: string): void {

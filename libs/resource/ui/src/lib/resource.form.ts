@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { BaseProperty, CategoryListModel, ResourceModel, RoleName, UserModel } from '@okr/shared-models';
-import { Checkbox, CheckboxI18n, CategorySelect, Chips, Color, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, PropertyList, TextareaInput, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategorySelect, Chips, Color, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, PropertyList, TextareaInput, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, getYear, hasRole } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PET_TYPE, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE, DEFAULT_RBOAT_USAGE, DEFAULT_TAGS, COMMENT_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
@@ -14,7 +14,7 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
   selector: 'okr-resource-form',
   standalone: true,
   imports: [
-    Checkbox, Chips, NotesInput, PropertyList, TextInput, TextareaInput, NumberInput, ErrorNote, CategorySelect, Color,
+    Chips, NotesInput, PropertyList, TextInput, TextareaInput, NumberInput, ErrorNote, CategorySelect, Color,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -69,12 +69,6 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
                       <okr-textarea-input [i18n]="tripAlertI18n()" [value]="tripAlert()" (valueChange)="onFieldChange('tripAlert', $event)" [maxLength]="commentLength" [rows]="2" [showHelper]="true" [clearable]="true" [readOnly]="isReadOnly()" />
                       <okr-error-note [errors]="tripAlertErrors()" />
                     </ion-col>
-                    @if(showLock()) {
-                      <ion-col size="12">
-                        <!-- an open-ended lock reservation; the Logbuch notice above is shown as its reason -->
-                        <okr-checkbox [i18n]="lockedI18n()" [checked]="locked()" (checkedChange)="onLockedChange($event)" [showHelper]="true" [readOnly]="isReadOnly()" />
-                      </ion-col>
-                    }
                   </ion-row>
                 </ion-grid>
               </ion-card-content>
@@ -369,9 +363,6 @@ export class ResourceForm {
   public readonly usages = input<CategoryListModel | undefined>();
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
-  /** «Boot sperren» — not a model field: the lock is a reservation, the parent stores it on save */
-  public locked = model(false);
-  public readonly showLock = input(false);
 
   // signals
   public dirty = output<boolean>();
@@ -486,11 +477,6 @@ export class ResourceForm {
     helper: this.i18n().tripAlert_helper()
   } as TextInputI18n));
   protected colorLabel = computed(() => this.i18n().color_label());
-  protected lockedI18n = computed(() => ({
-    name: 'locked',
-    label: this.i18n().locked_label(),
-    helper: this.i18n().locked_helper()
-  } as CheckboxI18n));
 
   /******************************* actions *************************************** */
   private getDefaultType(type: string): string {
@@ -507,13 +493,6 @@ export class ResourceForm {
   protected onUsageChange(usage: string): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, usage: setUsageFromYear(vm.usage, getYear(), usage) }));
-  }
-
-  /** Unlocking also clears the Logbuch notice — it was the reason for the lock (same as «Sperrung aufheben»). */
-  protected onLockedChange(locked: boolean): void {
-    this.dirty.emit(true);
-    this.locked.set(locked);
-    if (!locked) this.formData.update((vm) => ({ ...vm, tripAlert: '' }));
   }
 
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean | string[] | BaseProperty[]): void {

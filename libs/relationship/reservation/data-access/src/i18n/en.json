@@ -19,9 +19,5 @@
     "label": "End reservation",
     "conf": "The reservation was ended.",
     "error": "The reservation could not be ended."
-  },
-  "lock": {
-    "name": "Locked: {name}",
-    "defaultReason": "This boat is temporarily locked."
   }
 }

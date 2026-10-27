@@ -297,9 +297,7 @@
     "archive": "archivia",
     "delete": "elimina",
     "ownerView": "Visualizza utente",
-    "combine": "{action} {group}",
-    "lock": "bloccare",
-    "unlock": "sbloccare"
+    "combine": "{action} {group}"
   },
   "archive": {
     "confirm": "Normalmente un utilizzo viene terminato. Vuoi davvero archiviare questo utilizzo?"
@@ -312,9 +310,5 @@
     "archiveConfirm": "Vuoi davvero archiviare {name}?",
     "purgeConfirm": "{name} verrà eliminato definitivamente e non potrà essere ripristinato. Vuoi continuare?",
     "purgeInUse": "{name} ha ancora degli utilizzi e quindi non può essere eliminato. Elimina prima gli utilizzi o archivia {name}."
-  },
-  "lock": {
-    "header": "Bloccare la barca",
-    "placeholder": "Motivo, ad es. crepa nello scafo"
   }
 }

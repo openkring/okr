@@ -16,8 +16,6 @@ export const RESOURCE_ACTION = {
   resourceEdit:     'resource.edit',
   resourceArchive:  'resource.archive',
   resourceDelete:   'resource.delete',
-  resourceLock:     'resource.lock',
-  resourceUnlock:   'resource.unlock',
   ownerView:        'owner.view',
   ownershipAdd:     'ownership.add',
   ownershipView:    'ownership.view',
@@ -33,15 +31,12 @@ export interface ResourceActionPermissions {
   canRead: boolean;     // registered
   canWrite: boolean;    // resourceAdmin
   isAdmin: boolean;     // admin
-  canLock?: boolean;    // privileged or resourceAdmin: may lock / unlock a rowing boat
 }
 
 export interface ResourceActionTarget {
   hasResource: boolean;   // the row points to a resource
   hasOwnership: boolean;  // there is a Nutzung to show (the row's own, or the resource's current one)
   isOngoing: boolean;     // that Nutzung has not ended yet
-  isLockable?: boolean;   // the resource can be locked (rowing boats only)
-  isLocked?: boolean;     // it is locked right now (an active lock reservation)
 }
 
 /** Translated labels; verbs alone (e.g. 'anzeigen'), they are combined with the group noun. */
@@ -56,8 +51,6 @@ export interface ResourceActionLabels {
   end: string;
   archive: string;
   delete: string;
-  lock?: string;          // 'sperren'
-  unlock?: string;        // 'Sperrung aufheben'
 }
 
 export function getResourceActionEntries(perm: ResourceActionPermissions, target: ResourceActionTarget, labels: ResourceActionLabels): ActionSheetEntry[] {
@@ -67,12 +60,6 @@ export function getResourceActionEntries(perm: ResourceActionPermissions, target
   if (target.hasResource) {
     const actions: ActionSheetAction[] = [{ action: RESOURCE_ACTION.resourceView, text: labels.view, icon: 'eye-on' }];
     if (perm.canWrite) actions.push({ action: RESOURCE_ACTION.resourceEdit, text: labels.edit, icon: 'edit' });
-    // a locked boat offers only the way back, an unlocked one only the lock
-    if (perm.canLock && target.isLockable) {
-      actions.push(target.isLocked ?
-        { action: RESOURCE_ACTION.resourceUnlock, text: labels.unlock ?? '', icon: 'lock-open' } :
-        { action: RESOURCE_ACTION.resourceLock, text: labels.lock ?? '', icon: 'lock-closed' });
-    }
     if (perm.isAdmin) {
       actions.push({ action: RESOURCE_ACTION.resourceArchive, text: labels.archive, icon: 'archive' });
       actions.push({ action: RESOURCE_ACTION.resourceDelete, text: labels.delete, icon: 'trash' });

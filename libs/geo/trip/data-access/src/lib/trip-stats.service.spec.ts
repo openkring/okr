@@ -24,7 +24,6 @@ vi.mock('@okr/shared-data-access', () => ({
 import { inject } from '@angular/core';
 import { TripStatsService, YearStats } from './trip-stats.service';
 import { FirestoreService } from '@okr/shared-data-access';
-import { ENV } from '@okr/shared-config';
 
 describe('TripStatsService', () => {
   let service: TripStatsService;
@@ -38,7 +37,6 @@ describe('TripStatsService', () => {
     mockSearchData.mockReset();
     (inject as ReturnType<typeof vi.fn>).mockImplementation((token: unknown) => {
       if (token === FirestoreService) return mockFirestoreService;
-      if (token === ENV) return { tenantId: 'scs' };
       return undefined;
     });
     service = new TripStatsService();
@@ -67,27 +65,5 @@ describe('TripStatsService', () => {
     const result = await firstValueFrom(service.getHistory('boats', 'B1'));
     expect(mockSearchData).toHaveBeenCalledWith('stats_boats/B1/years', [], '__name__', 'asc');
     expect(result).toEqual(history);
-  });
-
-  it('getQuarterRollup with quarter 0 reads the yearly rollup', async () => {
-    mockReadObject.mockReturnValue(of({ entries: {} }));
-    await firstValueFrom(service.getQuarterRollup('boats', 2026, 0));
-    expect(mockReadObject).toHaveBeenCalledWith('stats_rollup', 'boats_2026');
-    expect(mockSearchData).not.toHaveBeenCalled();
-  });
-
-  it('getQuarterRollup queries the quarter\'s trips and aggregates them', async () => {
-    mockSearchData.mockReturnValue(of([
-      { state: 'closed', type: 'logbuch', distance: 8, resource: { key: 'B1' }, participants: [] },
-      { state: 'open',   type: 'logbuch', distance: 5, resource: { key: 'B1' }, participants: [] },
-    ]));
-    const result = await firstValueFrom(service.getQuarterRollup('boats', 2026, 2));
-    const [collection, query] = mockSearchData.mock.calls[0];
-    expect(collection).toBe('trips');
-    expect(query).toEqual(expect.arrayContaining([
-      { key: 'startDate', operator: '>=', value: '20260401' },
-      { key: 'startDate', operator: '<=', value: '20260631' },
-    ]));
-    expect(result).toEqual({ okey: 'boats_2026_Q2', entries: { B1: { km: 8, count: 1 } } });
   });
 });

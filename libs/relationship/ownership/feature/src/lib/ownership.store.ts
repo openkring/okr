@@ -8,14 +8,12 @@ import { ownerTypeMatches } from '@okr/shared-categories';
 import { AppStore } from '@okr/shared-feature';
 import { OrgModel, OwnershipModel, PersonModel, PersonModelName, ResourceModel } from '@okr/shared-models';
 import { selectDate } from '@okr/shared-ui';
-import { confirm, exportCsv, getExportFileName, okrPrompt, selectNestedAction, showToast } from '@okr/shared-util-angular';
-import { buildExportTable, chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, fill, getAvatarInfo, getItemLabel, getTodayStr, hasRole, isAfterDate, isOngoing, isOwnership, isResource, nameMatches } from '@okr/shared-util-core';
+import { confirm, exportCsv, getExportFileName, selectNestedAction, showToast } from '@okr/shared-util-angular';
+import { buildExportTable, chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, fill, getItemLabel, getTodayStr, hasRole, isAfterDate, isOngoing, isOwnership, isResource, nameMatches } from '@okr/shared-util-core';
 import { DEFAULT_RBOAT_TYPE, DEFAULT_RESOURCE_TYPE } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
 
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
-import { ReservationService } from '@okr/relationship-reservation-data-access';
-import { findActiveLockReservations, LOCK_REASONS, isReservationActiveNow } from '@okr/relationship-reservation-util';
 import { ResourceService } from '@okr/resource-data-access';
 import { RESOURCE_EDIT_MODAL } from '@okr/resource-ui';
 import { ORG_EDIT_MODAL } from '@okr/subject-org-ui';
@@ -67,7 +65,6 @@ export const OwnershipStore = signalStore(
   withProps(() => ({
     ownershipService: inject(OwnershipService),
     resourceService: inject(ResourceService),
-    reservationService: inject(ReservationService),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
@@ -91,11 +88,6 @@ export const OwnershipStore = signalStore(
           debugListLoaded('OwnershipStore.allOwnerships', store.appStore.currentUser())
         );
       }
-    }),
-
-    // all reservations of this tenant — only the lock reservations matter here (locked boats)
-    reservationsResource: rxResource({
-      stream: () => store.reservationService.list()
     })
   })),
 
@@ -113,12 +105,6 @@ export const OwnershipStore = signalStore(
         state.allOwnershipsResource.value() ?? []),
 
       isLoading: computed(() => state.allOwnershipsResource.isLoading()),
-
-      // keys of the resources that are locked right now (damage report or «sperren»), marked red in the lists
-      lockedResourceKeys: computed(() => new Set((state.reservationsResource.value() ?? [])
-        .filter(r => LOCK_REASONS.includes(r.reason) && isReservationActiveNow(r))
-        .map(r => r.resource?.key ?? '')
-        .filter(key => key.length > 0))),
 
       // all ownerships of a given owner (person or org). This can be used e.g. in ownership-accordion
       ownerships: computed(() => {
@@ -495,11 +481,6 @@ export const OwnershipStore = signalStore(
       /**
        * The current (not yet ended) Nutzung of a resource; the most recent one if there are several.
        */
-      /** Whether the resource is locked right now (an active 'maintenance' or 'blocked' reservation). */
-      isLocked(resourceKey: string | undefined): boolean {
-        return !!resourceKey && store.lockedResourceKeys().has(resourceKey);
-      },
-
       currentOwnershipOf(resourceKey: string): OwnershipModel | undefined {
         return (store.allOwnershipsResource.value() ?? [])
           .filter(o => o.resourceKey === resourceKey && isAfterDate(o.validTo, getTodayStr(DateFormat.StoreDate)))
@@ -523,17 +504,14 @@ export const OwnershipStore = signalStore(
         const resourceTypes = store.appStore.tryGetCategory('resource_type');
         const typeLabel = resourceTypes ? getItemLabel(resourceTypes, resourceType) : resourceType;
         const entries = getResourceActionEntries(
-          { canRead: hasRole('registered', user), canWrite: writable, isAdmin: hasRole('admin', user),
-            canLock: hasRole('privileged', user) || writable },
-          { hasResource: withResource && resourceKey.length > 0, hasOwnership: !!ownership, isOngoing: !!ownership && isOngoing(ownership.validTo),
-            isLockable: resourceType === 'rboat', isLocked: this.isLocked(resourceKey) },
+          { canRead: hasRole('registered', user), canWrite: writable, isAdmin: hasRole('admin', user) },
+          { hasResource: withResource && resourceKey.length > 0, hasOwnership: !!ownership, isOngoing: !!ownership && isOngoing(ownership.validTo) },
           {
             resource: typeLabel.startsWith('@') ? await store.i18nService.translateOnce(typeLabel) : typeLabel,
             resourceIcon: store.appStore.getCategoryItem('resource_type', resourceType)?.icon,
             ownership: i18n.ownership(), ownerView: i18n.action_ownerView(),
             add: i18n.action_add(), view: i18n.action_view(), edit: i18n.action_edit(), end: i18n.action_end(),
-            archive: i18n.action_archive(), delete: i18n.action_delete(),
-            lock: i18n.action_lock(), unlock: i18n.action_unlock()
+            archive: i18n.action_archive(), delete: i18n.action_delete()
           });
         const combine = (group: string, action: string): string => {
           const text = fill(i18n.action_combine() || '{group} {action}', { group, action });
@@ -549,16 +527,6 @@ export const OwnershipStore = signalStore(
           case RESOURCE_ACTION.resourceEdit: {
             const res = await loadResource();
             if (res) await this.openResource(res, action === RESOURCE_ACTION.resourceView || !writable);
-            break;
-          }
-          case RESOURCE_ACTION.resourceLock: {
-            const res = await loadResource();
-            if (res) await this.lockResource(res);
-            break;
-          }
-          case RESOURCE_ACTION.resourceUnlock: {
-            const res = await loadResource();
-            if (res) await this.unlockResource(res);
             break;
           }
           case RESOURCE_ACTION.resourceArchive: {
@@ -596,40 +564,6 @@ export const OwnershipStore = signalStore(
             break;
         }
         return action;
-      },
-
-      /**
-       * «Ruderboot sperren»: asks for the reason, stores an open-ended lock reservation (the Logbuch
-       * then refuses the boat) and shows the reason as the boat's tripAlert. privileged / resourceAdmin.
-       */
-      async lockResource(resource: ResourceModel): Promise<void> {
-        const user = store.currentUser();
-        if (!hasRole('privileged', user) && !hasRole('resourceAdmin', user)) return;
-        const reason = await okrPrompt(store.alertController, store.i18n.lock_header(), store.i18n.lock_placeholder(),
-          store.i18n.ok(), store.i18n.cancel(), resource.tripAlert ?? '');
-        if (reason === undefined) return;   // cancelled
-        const avatar = getAvatarInfo(resource, 'resource');
-        if (!avatar) return;
-        const key = await store.reservationService.lockResource(avatar, reason, user);
-        if (!key) return;   // the service already showed the error toast
-        if (reason.trim() !== (resource.tripAlert ?? '').trim()) {
-          await store.resourceService.update({ ...resource, tripAlert: reason.trim() }, user);
-          store.appStore.reloadResources();
-        }
-        store.reservationsResource.reload();
-      },
-
-      /** «Sperrung aufheben»: ends every active lock of the resource and clears its tripAlert. privileged / resourceAdmin. */
-      async unlockResource(resource: ResourceModel): Promise<void> {
-        const user = store.currentUser();
-        if (!hasRole('privileged', user) && !hasRole('resourceAdmin', user)) return;
-        const locks = findActiveLockReservations(store.reservationsResource.value() ?? [], resource.okey);
-        await store.reservationService.unlockResource(locks, user);
-        if (resource.tripAlert) {
-          await store.resourceService.update({ ...resource, tripAlert: '' }, user);
-          store.appStore.reloadResources();
-        }
-        store.reservationsResource.reload();
       },
 
       /** Archive a resource (isArchived = true). admin only. */

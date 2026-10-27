@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import type { Route } from '@angular/router';
-import { isAdminGuard, isAuthenticatedGuard, isContentAdminGuard, isContractReaderGuard, isMemberAdminGuard, isPrivilegedGuard, isResourceStaffGuard, isTreasurerGuard, isTripAdminGuard } from '@okr/auth-feature';
+import { isAdminGuard, isAuthenticatedGuard, isContentAdminGuard, isContractReaderGuard, isMemberAdminGuard, isPrivilegedGuard, isTreasurerGuard, isTripAdminGuard } from '@okr/auth-feature';
 import { AppStore } from '@okr/shared-feature';
 import { memberFeesRedirectGuard } from './member-fees-redirect';
 import { userEditRedirect } from './user-edit-redirect';
@@ -607,11 +607,7 @@ const relationship: BlockRoutes = {
     {
       path: 'reservation',
       canActivate: [isAuthenticatedGuard],
-      children: [
-        // Schadensliste (damages and locks of the rowing boats) — before ':listId', which would swallow it
-        { path: 'damages/:contextMenuName', canActivate: [isResourceStaffGuard], loadComponent: () => import('@okr/relationship-reservation-feature').then(m => m.DamageList) },
-        { path: ':listId/:contextMenuName', loadComponent: () => import('@okr/relationship-reservation-feature').then(m => m.ReservationList) },
-      ],
+      children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/relationship-reservation-feature').then(m => m.ReservationList) }],
     },
     {
       path: 'personalrel',

@@ -700,9 +700,7 @@
     "file-transfer-monitor": "Supervisión de transferencias",
     "journal": "Diario de viaje",
     "learning-rooms": "Espacios de aprendizaje",
-    "tracker": "Recorridos",
-    "damage-list": "Lista de daños",
-    "damage-exportraw": "Exportar lista de daños"
+    "tracker": "Recorridos"
   },
   "ownership": {
     "fork_confirm": "«{name}» pertenece al catálogo de funciones ({blocks}).\n\nAl guardar se crea una copia propia del inquilino «{forkKey}» y se desvincula este inquilino del original compartido. Las futuras correcciones del catálogo (URL, acción, rol) ya no llegarán a esta entrada.\n\n¿Guardar de todos modos?",

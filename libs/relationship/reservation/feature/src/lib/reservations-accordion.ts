@@ -7,8 +7,6 @@ import { EmptyList, ImgDirective } from '@okr/shared-ui';
 import { coerceBoolean, getCategoryIcon, hasRole, isOngoing } from '@okr/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 
-import { isDamageReservation } from '@okr/relationship-reservation-util';
-
 import { ReservationStore } from './reservation.store';
 
 @Component({
@@ -111,8 +109,7 @@ export class ReservationsAccordion {
           actionSheetOptions.buttons.push(createActionSheetButton('endres', this.store.i18n.end(), this.imgixBaseUrl, 'stop-circle'));
         }
       }
-      // damages and locks are the Schadensliste's history: end them, never delete them
-      if (hasRole('admin', this.currentUser()) && !isDamageReservation(reservation)) {
+      if (hasRole('admin', this.currentUser())) {
         actionSheetOptions.buttons.push(createActionSheetButton('delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
       }
       if (actionSheetOptions.buttons.length === 1) { // only cancel button

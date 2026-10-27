@@ -700,9 +700,7 @@
     "file-transfer-monitor": "Transfer-Überwachung",
     "journal": "Reisetagebuch",
     "learning-rooms": "Lernräume",
-    "tracker": "Strecken",
-    "damage-list": "Schadensliste",
-    "damage-exportraw": "Schadensliste exportieren"
+    "tracker": "Strecken"
   },
   "ownership": {
     "fork_confirm": "«{name}» gehört zum Feature-Katalog ({blocks}).\n\nBeim Speichern wird eine eigene Kopie «{forkKey}» für diesen Mandanten angelegt und der Mandant vom gemeinsamen Original abgehängt. Künftige Katalog-Korrekturen (URL, Aktion, Berechtigung) erreichen diesen Eintrag dann nicht mehr.\n\nTrotzdem speichern?",

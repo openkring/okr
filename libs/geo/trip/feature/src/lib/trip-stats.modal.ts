@@ -35,7 +35,7 @@ import { TRIP_I18N_KEYS, TripI18n } from '@okr/trip-util';
       </ion-segment>
     </ion-toolbar>
     <ion-content>
-      <okr-trip-stats-section [section]="section()" [showQuarter]="true" />
+      <okr-trip-stats-section [section]="section()" />
     </ion-content>
   `,
 })

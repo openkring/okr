@@ -54,10 +54,7 @@
       "error": "La segnalazione è stata registrata, ma non è stato possibile bloccare la barca."
     },
     "conf": "La tua segnalazione è stata inviata.",
-    "error": "Non è stato possibile inviare la segnalazione. Riprova.",
-    "damageRecord": {
-      "name": "Danno: {name}"
-    }
+    "error": "Non è stato possibile inviare la segnalazione. Riprova."
   },
   "boatReserved": {
     "title": "Barca non disponibile",

@@ -986,10 +986,5 @@
   "archive": {
     "conf": "The entry was archived.",
     "error": "The entry could not be archived."
-  },
-  "locked": {
-    "title": "Boat is locked",
-    "label": "Lock boat",
-    "helper": "A locked boat cannot be chosen in the logbook. The logbook notice is shown as the reason."
   }
 }

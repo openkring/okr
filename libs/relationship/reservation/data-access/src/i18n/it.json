@@ -19,9 +19,5 @@
     "label": "Termina prenotazione",
     "conf": "La prenotazione è stata terminata.",
     "error": "Impossibile terminare la prenotazione."
-  },
-  "lock": {
-    "name": "Bloccata: {name}",
-    "defaultReason": "Questa barca è temporaneamente bloccata."
   }
 }

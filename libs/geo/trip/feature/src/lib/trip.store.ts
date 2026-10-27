@@ -9,13 +9,14 @@ import { AppStore, KioskStatus, KioskStatusService, LocationSelectResult, ModelS
 import { I18nService } from '@okr/shared-i18n';
 import { AvatarInfo, PersonModel, ReservationModel, TaskModel, TripModel, UserModel } from '@okr/shared-models';
 import { AlertService } from '@okr/shared-util-angular';
-import { chatBlockedAlertMessage, fill, getAvatarInfoForCurrentUser, getFullName, getYear, hasRole, isChatBlockedError, isKioskOnly, nameMatches } from '@okr/shared-util-core';
+import { chatBlockedAlertMessage, fill, getAvatarInfoForCurrentUser, getFullName, getTodayStr, getYear, hasRole, isChatBlockedError, isKioskOnly, nameMatches } from '@okr/shared-util-core';
 import { yearMatches } from '@okr/shared-categories';
+import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
 
 import { TaskService } from '@okr/project-task-data-access';
 import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
 import { ReservationService } from '@okr/relationship-reservation-data-access';
-import { findActiveReservationForResource, newDamageRecord, newLockReservation } from '@okr/relationship-reservation-util';
+import { findActiveReservationForResource } from '@okr/relationship-reservation-util';
 import { LocationService } from '@okr/location-data-access';
 import { CalEventService } from '@okr/calevent-data-access';
 
@@ -478,10 +479,8 @@ export const TripStore = signalStore(
         console.error('TripStore.report: reportIncident failed', error);
         return;
       }
-      if (kind === 'damage' && report.boat) {
-        await (report.lockBoat ?
-          this.lockBoat(report.boat, report.person, report.message) :
-          this.recordDamage(report.boat, report.person, report.message));
+      if (kind === 'damage' && report.lockBoat && report.boat) {
+        await this.lockBoat(report.boat, report.person, report.message);
       }
     },
 
@@ -499,8 +498,18 @@ export const TripStore = signalStore(
      * the `!key` branch.
      */
     async lockBoat(boat: AvatarInfo, reporter: AvatarInfo | undefined, message: string): Promise<void> {
-      const reservation = newLockReservation(store.tenantId(), boat, reporter,
-        fill(store.i18n.report_lock_name(), { name: boat.name2 || boat.name1 }), message, 'maintenance');
+      const reservation = new ReservationModel(store.tenantId());
+      reservation.name = fill(store.i18n.report_lock_name(), { name: boat.name2 || boat.name1 });
+      reservation.reserver = reporter;
+      reservation.resource = boat;
+      reservation.reason = 'maintenance';
+      reservation.description = message;
+      reservation.state = 'active';
+      reservation.fullDay = true;
+      reservation.durationMinutes = 1440;
+      reservation.startDate = getTodayStr();
+      reservation.startTime = '';
+      reservation.endDate = END_FUTURE_DATE_STR;
       try {
         const key = await store.reservationService.create(reservation, store.currentUser());
         if (!key) {
@@ -512,21 +521,6 @@ export const TripStore = signalStore(
         // the report itself is already filed — say only the lock failed
         await store.alertService.showToast(store.i18n.report_lock_error());
         console.error('TripStore.lockBoat: could not create the lock reservation', error);
-      }
-    },
-
-    /**
-     * A damage report without a lock still belongs in the Schadensliste: a 'damage' reservation
-     * that never blocks the boat (newDamageRecord). Silent — the reporter already got their
-     * confirmation, and a failure here must not make the filed report look lost.
-     */
-    async recordDamage(boat: AvatarInfo, reporter: AvatarInfo | undefined, message: string): Promise<void> {
-      const record = newDamageRecord(store.tenantId(), boat, reporter,
-        fill(store.i18n.report_damage_name(), { name: boat.name2 || boat.name1 }), message);
-      try {
-        await store.reservationService.create(record, store.currentUser(), true);
-      } catch (error) {
-        console.error('TripStore.recordDamage: could not store the damage record', error);
       }
     },
 

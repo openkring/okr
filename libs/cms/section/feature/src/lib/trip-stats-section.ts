@@ -66,9 +66,6 @@ import { StatsRow, StatsSortField, TripStatsSectionStore } from './trip-stats-se
         [years]="store.viewType() === 'list' ? availableYears : undefined"
         [selectedYear]="store.selectedYear()"
         (yearChanged)="store.setYear($event)"
-        [showQuarter]="showQuarter() && store.viewType() === 'list'"
-        [selectedQuarter]="store.selectedQuarter()"
-        (quarterChanged)="store.setQuarter($event)"
         (searchTermChanged)="store.setSearchTerm($event)"
       />
       @if(store.listRows().length === 0 && store.viewType() === 'list') {
@@ -138,8 +135,6 @@ export class TripStatsSectionComponent {
   // inputs
   public section  = input<TripStatsSection>();
   public editMode = input<boolean>(false);
-  /** true adds the quarter filter (Alle/Q1–Q4) after the year — set by the Logbuch statistics modal. */
-  public showQuarter = input<boolean>(false);
 
   // derived
   protected readonly title    = computed(() => this.section()?.title);

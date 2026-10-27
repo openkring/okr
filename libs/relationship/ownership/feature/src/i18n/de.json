@@ -297,9 +297,7 @@
     "archive": "archivieren",
     "delete": "löschen",
     "ownerView": "Nutzer/in anzeigen",
-    "combine": "{group} {action}",
-    "lock": "sperren",
-    "unlock": "Sperrung aufheben"
+    "combine": "{group} {action}"
   },
   "archive": {
     "confirm": "Normalerweise wird eine Nutzung beendet. Möchtest du diese Nutzung wirklich archivieren?"
@@ -312,9 +310,5 @@
     "archiveConfirm": "Möchtest du {name} wirklich archivieren?",
     "purgeConfirm": "{name} wird endgültig gelöscht und kann nicht wiederhergestellt werden. Möchtest du fortfahren?",
     "purgeInUse": "{name} hat noch Nutzungen und kann darum nicht gelöscht werden. Lösche zuerst die Nutzungen oder archiviere {name}."
-  },
-  "lock": {
-    "header": "Boot sperren",
-    "placeholder": "Grund, z.B. Riss im Rumpf"
   }
 }
