@@ -99,7 +99,7 @@ export const onTripWrite = onDocumentWritten(
     const deltas = computeDeltas(rawBefore, rawAfter);
     if (deltas.length) await applyStatDeltas(deltas);
 
-    // spec 1.123: crew-track pushes and diary copies — never throws, so the stats above are never affected
+    // spec 1.123: crew-track pushes (diary copies are nightly only) — never throws, so the stats above are never affected
     await handleCrewTrack(
       event.data?.before?.data() as TripModel | undefined,
       event.data?.after?.data() as TripModel | undefined,

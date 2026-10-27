@@ -49,7 +49,19 @@ export function isCrewMember(trip: Pick<TripModel, 'participants'>, personKey: s
 }
 
 /**
- * The callable's decision, in the spec's order: no logbuch / no link -> none; not crew -> denied;
+ * The state runTripEndOfDayClose (trip/index.ts) leaves on a trip that was still open at 23:50 (no client path sets it).
+ * Such a trip has no real end time - the stamped 'now' would stretch the crew window over the recorder's evening and way
+ * home - so it gets no crew view and no diary copies (spec 1.123 §5.3, final-review ruling).
+ */
+export const AUTO_CLOSED_STATE = 'closed.rev';
+
+/** Closed by the system's end-of-day sweep, not by the kiosk. Pure. */
+export function isAutoClosed(t: Pick<TripModel, 'state'> | undefined): boolean {
+  return t?.state === AUTO_CLOSED_STATE;
+}
+
+/**
+ * The callable's decision, in the spec's order: no logbuch / no link / auto-closed -> none; not crew -> denied;
  * deadline passed -> none; recording missing -> gone. `today` is a Zurich StoreDate; an open trip ('' deadline) never expires.
  */
 export function decideCrewAccess(
@@ -58,7 +70,7 @@ export function decideCrewAccess(
   recordingExists: boolean,
   today: string,
 ): CrewAccess {
-  if (!logbuch || logbuch.type !== 'logbuch' || !logbuch.trackKey || isLogbuchGone(logbuch)) return 'none';
+  if (!logbuch || logbuch.type !== 'logbuch' || !logbuch.trackKey || isLogbuchGone(logbuch) || isAutoClosed(logbuch)) return 'none';
   if (!isCrewMember(logbuch, callerPersonKey)) return 'denied';
   const deadline = crewTrackDeadline(logbuch);
   if (deadline !== '' && today > deadline) return 'none';
@@ -144,9 +156,9 @@ export async function loadClippedTrack(db: Firestore, logbuch: TripModel, logbuc
   return clipSections(sections, fromMs, toMs);
 }
 
-/*----------------------------- trips trigger: pushes and diary copies (spec 1.123 §4.1, §4.4, §6) -----------------*/
+/*----------------------------- trips trigger: pushes (spec 1.123 §4.1, §4.4) -----------------*/
 
-export type CrewTrackAction = 'requestPush' | 'stopPush' | 'copies';
+export type CrewTrackAction = 'requestPush' | 'stopPush';
 
 const LOGBUCH_TRIP_TYPE = 'logbuch';
 
@@ -161,33 +173,23 @@ export function isLogbuchEnded(t: Pick<TripModel, 'type' | 'state' | 'deletedAt'
 }
 
 /**
- * What the trips trigger has to do for one write (pure). Deletes (no `after`, incl. the day-7 cleanup) and crew
- * copies (`track.copyOf`) never act - a copy carries no `logbuchKey`, so a copy can never trigger another one.
+ * What the trips trigger has to do for one write (pure). Deletes (no `after`, incl. the day-7 cleanup), crew copies
+ * and recordings never act. The trigger makes no diary copies: the kiosk can still change the crew and the end time
+ * for 15 minutes after the close, so copies are made only by the nightly runCrewTrackCleanup (final-review ruling).
  * - requestPush: an open Logbuch trip got a (new) `trackRequest` for a crew member and has no recording linked yet.
  * - stopPush: the Logbuch trip left 'open' with a recording linked; the caller pushes only while the recording
  *   is not uploaded yet.
- * - copies: the Logbuch trip ended with a recording (or got one linked after the end), or a recording linked to
- *   a Logbuch trip was uploaded / newly linked; the caller checks that the Logbuch trip has ended.
  */
 export function crewTrackActions(before?: TripModel, after?: TripModel): CrewTrackAction[] {
-  if (!after || after.track?.copyOf || after.deletedAt || after.isArchived) return [];
-
-  if (after.type === TRACKER_TRIP_TYPE) {
-    const key = after.track?.logbuchKey;
-    return key && before?.track?.logbuchKey !== key ? ['copies'] : [];
-  }
-  if (after.type !== LOGBUCH_TRIP_TYPE) return [];
+  if (!after || after.deletedAt || after.isArchived || after.type !== LOGBUCH_TRIP_TYPE) return [];
 
   const out: CrewTrackAction[] = [];
   const carrier = after.trackRequest?.personKey ?? '';
   if (carrier && isCrewMember(after, carrier) && !after.trackKey && isOpen(after) && before?.trackRequest?.personKey !== carrier) {
     out.push('requestPush');
   }
-  // any end counts, 'deleted' too (on purpose: the boat is back, stop recording) - unlike copies, which need 'closed*'
+  // any end counts, 'deleted' and the auto-close too (on purpose: the boat is back, stop recording)
   if (after.trackKey && before && isOpen(before) && !isOpen(after)) out.push('stopPush');
-  if (after.trackKey && isLogbuchEnded(after) && (!isLogbuchEnded(before) || before?.trackKey !== after.trackKey)) {
-    out.push('copies');
-  }
   return out;
 }
 
@@ -383,7 +385,7 @@ const ALREADY_EXISTS = 6;
  */
 export async function copyForCrew(db: Firestore, logbuch: TripModel, recording: TripModel): Promise<number> {
   const tenantId = logbuch.tenants?.[0];
-  if (!tenantId || logbuch.trackKey !== recording.okey) return 0;
+  if (!tenantId || logbuch.trackKey !== recording.okey || isAutoClosed(logbuch)) return 0;
   const clipped = await loadClippedTrack(db, logbuch, logbuch.okey, tenantId);
   if (!clipped || clipped.length === 0) return 0;
 
@@ -422,33 +424,19 @@ export async function handleCrewTrack(before: TripModel | undefined, after: Trip
     const db = getFirestore();
     const trip = { ...after, okey: tripId } as TripModel;
 
-    if (trip.type === TRACKER_TRIP_TYPE) {
-      const logbuchKey = trip.track?.logbuchKey ?? '';
-      const snap = await db.collection(TripCollection).doc(logbuchKey).get();
-      const logbuch = snap.exists ? ({ ...(snap.data() as TripModel), okey: logbuchKey }) : undefined;
-      if (!isLogbuchEnded(logbuch) || !logbuch || logbuch.trackKey !== tripId) return;
-      const n = await copyForCrew(db, logbuch, trip);
-      logger.info(`onTripWrite: crew copies=${n} recording=${tripId} logbuch=${logbuchKey}`);
-      return;
-    }
-
     if (actions.includes('requestPush') && trip.trackRequest?.personKey) {
       const p = crewPushTexts.request(trip);
       const r = await pushToPersons([trip.trackRequest.personKey], { ...p, tenantId, channelId: `trackRequest_${tripId}` }, 'onTripWrite');
       logger.info(`onTripWrite: trackRequest sent=${r.sent} trip=${tripId}`);
     }
-    if (!trip.trackKey || (!actions.includes('stopPush') && !actions.includes('copies'))) return;
+    if (!trip.trackKey || !actions.includes('stopPush')) return;
 
+    // the stop push only while the recording is not uploaded yet (an uploaded one has stopped already)
     const recSnap = await db.collection(TripCollection).doc(trip.trackKey).get();
-    if (actions.includes('stopPush') && !recSnap.exists && trip.trackRequest?.personKey) {
+    if (!recSnap.exists && trip.trackRequest?.personKey) {
       const p = crewPushTexts.stop();
       const r = await pushToPersons([trip.trackRequest.personKey], { ...p, tenantId, channelId: `trackStop_${tripId}` }, 'onTripWrite');
       logger.info(`onTripWrite: trackStop sent=${r.sent} trip=${tripId}`);
-    }
-    if (actions.includes('copies') && recSnap.exists) {
-      const recording = { ...(recSnap.data() as TripModel), okey: trip.trackKey };
-      const n = await copyForCrew(db, trip, recording);
-      logger.info(`onTripWrite: crew copies=${n} recording=${trip.trackKey} logbuch=${tripId}`);
     }
   } catch (error) {
     logger.error(`onTripWrite: crew track failed trip=${tripId}`, error);
@@ -488,7 +476,8 @@ export function thumbPrefixes(rec: Pick<TripModel, 'okey' | 'tenants'>): string[
 
 /**
  * What the nightly pass does for one Logbuch trip that has a `trackKey` (pure). `today` = Zurich StoreDate.
- * - copy: the retry for copies the trigger missed - a valid linked recording and an ended, not deleted Logbuch trip, every night until day 7.
+ * - copy: the only place diary copies are made (the trigger makes none) - a valid linked recording and an ended, not deleted,
+ *   not auto-closed Logbuch trip, every night until day 7 (a copy that exists is skipped, so later nights only retry failures).
  * - unlink: past the deadline (also for a deleted / archived Logbuch trip, which keeps its link until then).
  * - unlinkRecording: only when the recording points back to this Logbuch trip.
  * - delete: past the deadline only, the recording was linked to this Logbuch trip, nothing else holds it, and it is no crew copy.
@@ -506,7 +495,7 @@ export function crewCleanupDecision(
   const unlink = pastDeadline;
   const linkedBack = !!rec && rec.type === TRACKER_TRIP_TYPE && rec.track?.logbuchKey === logbuchKey;
   return {
-    copy: !isLogbuchGone(logbuch) && isLogbuchEnded(logbuch) && isLinkedRecording(rec, logbuch, logbuchKey, tenantId),
+    copy: !isLogbuchGone(logbuch) && isLogbuchEnded(logbuch) && !isAutoClosed(logbuch) && isLinkedRecording(rec, logbuch, logbuchKey, tenantId),
     unlink,
     unlinkRecording: unlink && linkedBack,
     delete: pastDeadline && linkedBack && !!rec && !rec.track?.copyOf && !isTrackReferenced(rec, tenantId),
@@ -527,7 +516,7 @@ async function deleteRecording(db: Firestore, rec: TripModel): Promise<void> {
   await ref.delete();
 }
 
-/** Nightly: copies once more, unlinks the recording from the Logbuch trip after day 7, deletes it when nobody kept it. */
+/** Nightly: makes the crew's diary copies, unlinks the recording from the Logbuch trip after day 7, deletes it when nobody kept it. */
 export async function runCrewTrackCleanup(now: Date = new Date()): Promise<void> {
   const db = getFirestore();
   const today = toStoreDate(now);

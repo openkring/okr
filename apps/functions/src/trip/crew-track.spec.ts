@@ -49,6 +49,11 @@ describe('decideCrewAccess', () => {
     expect(decideCrewAccess(logbuch({ isArchived: true }), 'p1', true, '20261021')).toBe('none');
     expect(decideCrewAccess(logbuch({ state: 'deleted' }), 'p1', true, '20261021')).toBe('none');
   });
+  it('auto-closed by the system (closed.rev) -> none; kiosk-closed (closed) -> ok', () => {
+    expect(decideCrewAccess(logbuch({ state: 'closed.rev' }), 'p1', true, '20261021')).toBe('none');
+    expect(decideCrewAccess(logbuch({ state: 'closed.rev' }), 'p2', true, '20261021')).toBe('none');
+    expect(decideCrewAccess(logbuch({ state: 'closed' }), 'p1', true, '20261021')).toBe('ok');
+  });
   it('open trip never expires', () => {
     expect(decideCrewAccess(logbuch({ endDate: '' }), 'p1', true, '20990101')).toBe('ok');
   });
@@ -154,20 +159,21 @@ describe('crewTrackActions', () => {
   it('no request push once a recording is linked', () => {
     expect(crewTrackActions(undefined, openLogbuch({ trackKey: 'rec1' }))).toEqual([]);
   });
-  it('end with trackKey -> stopPush and copies', () => {
-    const out = crewTrackActions(openLogbuch({ trackKey: 'rec1' }), logbuch({ state: 'closed', trackKey: 'rec1' }));
-    expect(out).toContain('stopPush');
-    expect(out).toContain('copies');
+  it('end with trackKey -> stopPush only (copies are nightly)', () => {
+    expect(crewTrackActions(openLogbuch({ trackKey: 'rec1' }), logbuch({ state: 'closed', trackKey: 'rec1' }))).toEqual(['stopPush']);
+  });
+  it('auto-close with trackKey -> stopPush too', () => {
+    expect(crewTrackActions(openLogbuch({ trackKey: 'rec1' }), logbuch({ state: 'closed.rev', trackKey: 'rec1' }))).toEqual(['stopPush']);
   });
   it('end without trackKey -> []', () => {
     expect(crewTrackActions(openLogbuch(), logbuch({ state: 'closed', trackKey: undefined }))).toEqual([]);
   });
-  it('trackKey linked after the end -> copies only', () => {
+  it('trackKey linked after the end -> [] (no copies from the trigger)', () => {
     expect(crewTrackActions(logbuch({ state: 'closed', trackKey: undefined }), logbuch({ state: 'closed', trackKey: 'rec1' })))
-      .toEqual(['copies']);
+      .toEqual([]);
   });
-  it('tracker trip with logbuchKey -> copies', () => {
-    expect(crewTrackActions(undefined, tracker({}, { logbuchKey: 'L1' }))).toEqual(['copies']);
+  it('tracker trip uploaded with logbuchKey -> [] (no copies from the trigger)', () => {
+    expect(crewTrackActions(undefined, tracker({}, { logbuchKey: 'L1' }))).toEqual([]);
   });
   it('tracker trip without logbuchKey -> []', () => {
     expect(crewTrackActions(undefined, tracker())).toEqual([]);
@@ -307,6 +313,10 @@ describe('crewCleanupDecision', () => {
   const before = '20261025'; // deadline 20261027
   const after = '20261028';
 
+  it('auto-closed (closed.rev) Logbuch -> no copy, cleanup unchanged', () => {
+    expect(crewCleanupDecision(lb({ state: 'closed.rev' }), rec(), 'lb1', T, before)).toEqual({ copy: false, unlink: false, unlinkRecording: false, delete: false });
+    expect(crewCleanupDecision(lb({ state: 'closed.rev' }), rec(), 'lb1', T, after)).toEqual({ copy: false, unlink: true, unlinkRecording: true, delete: true });
+  });
   it('ended, before deadline -> copy only', () =>
     expect(crewCleanupDecision(lb(), rec(), 'lb1', T, before)).toEqual({ copy: true, unlink: false, unlinkRecording: false, delete: false }));
   it('past deadline, unreferenced -> copy, unlink and delete', () =>
