@@ -196,7 +196,7 @@ export class TrackService {
       { key: 'type', operator: '==', value: TRACKER_TRIP_TYPE },
       { key: 'track.personKey', operator: '==', value: personKey },
       { key: 'startDate', operator: '==', value: date },
-    ]);
+    ], 'none'); // no orderBy: the default 'name' needs a composite index that does not exist (the query failed into []); callers sort by startTime
   }
 
   /** One Logbuch trip (the push «Strecke aufzeichnen?» names it); undefined when it is missing or not a Logbuch trip. */
