@@ -92,6 +92,21 @@ export const TRACKER_I18N_KEYS = {
   calibration_check_result: PFX + 'calibration.check_result', // single braces: {ts}, {native}
   photos_search_added_one: PFX + 'photos.search_added_one',
   photos_search_none: PFX + 'photos.search_none',
+  link_preset: PFX + 'link.preset', // single braces: {trip}
+  link_choose: PFX + 'link.choose',
+  link_without: PFX + 'link.without',
+  link_remove: PFX + 'link.remove',
+  link_taken: PFX + 'link.taken', // single braces: {name}
+  link_unavailable: PFX + 'link.unavailable',
+  link_connect: PFX + 'link.connect',
+  link_choose_title: PFX + 'link.choose_title',
+  link_none_found: PFX + 'link.none_found',
+  link_linked: PFX + 'link.linked', // single braces: {trip}
+  link_linked_unknown: PFX + 'link.linked_unknown',
+  link_unlink: PFX + 'link.unlink',
+  link_unlink_confirm: PFX + 'link.unlink_confirm',
+  link_done: PFX + 'link.done',
+  link_offline: PFX + 'link.offline',
   common_save: PFX + 'common.save',
   common_cancel: PFX + 'common.cancel',
 } satisfies Record<string, string>;

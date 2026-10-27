@@ -118,5 +118,22 @@
     "check": "Comprobar",
     "check_result": "Recuento código app: {ts} · código iPhone: {native}",
     "close": "Cerrar"
+  },
+  "link": {
+    "preset": "Cuaderno de bitácora: {trip}",
+    "choose": "Salida del cuaderno de bitácora",
+    "without": "Sin cuaderno de bitácora",
+    "remove": "Quitar la salida del cuaderno de bitácora",
+    "taken": "{name} ya está grabando esta salida.",
+    "unavailable": "Esta salida del cuaderno de bitácora ya no se puede vincular.",
+    "connect": "Vincular a una salida del cuaderno de bitácora",
+    "choose_title": "¿Qué salida?",
+    "none_found": "Ninguna salida del cuaderno de bitácora en la que participaste coincide con este recorrido.",
+    "linked": "Vinculado al cuaderno de bitácora: {trip}",
+    "linked_unknown": "Vinculado a una salida del cuaderno de bitácora",
+    "unlink": "Desvincular del cuaderno de bitácora",
+    "unlink_confirm": "Tu tripulación ya no verá este recorrido. ¿Quieres desvincularlo?",
+    "done": "El recorrido ya está vinculado al cuaderno de bitácora.",
+    "offline": "Esto necesita conexión a internet. Inténtalo de nuevo más tarde."
   }
 }

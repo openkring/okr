@@ -1,14 +1,18 @@
 import { inject, Injectable } from '@angular/core';
 import { Filesystem } from '@capacitor/filesystem';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, deleteField, doc, getDoc, getDocs, query, runTransaction, updateDoc, where } from 'firebase/firestore';
 import { deleteObject, getBlob, ref, uploadBytes } from 'firebase/storage';
 import { Observable } from 'rxjs';
 
 import { ENV, getBkStorage } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
-import { TRACKER_TRIP_TYPE, TrackPhoto, TransportMode, TripCollection, TripModel, TripTrack } from '@okr/shared-models';
+import { AvatarInfo, TRACKER_TRIP_TYPE, TrackPhoto, TransportMode, TripCollection, TripModel, TripTrack } from '@okr/shared-models';
 import { convertDateFormatToString, DateFormat, getDeletePatch, getSystemQuery } from '@okr/shared-util-core';
-import { decodeStrokeTimes, decodeTrack, encodeStrokeTimes, encodeTrack, LocalTrack, strokeTimesBase, serverPhotos, summarize, trackThumbPath, TrackPoint, tripSections } from '@okr/mobility-tracker-util';
+import { crewTrackDeadline } from '@okr/trip-util';
+import {
+  decodeStrokeTimes, decodeTrack, encodeStrokeTimes, encodeTrack, isLogbuchCrew, localStoreDate, LocalTrack, logbuchLinkCandidates, strokeTimesBase, serverPhotos,
+  summarize, trackThumbPath, TrackPoint, tripSections,
+} from '@okr/mobility-tracker-util';
 
 /** One section's points, stored as an encoded polyline in trips/{key}/track-points/{n}. */
 export interface TrackPointsDoc {
@@ -22,6 +26,10 @@ export interface TrackPointsDoc {
 }
 
 const TRACK_POINTS = 'track-points';
+const LOGBUCH_TRIP_TYPE = 'logbuch';
+
+/** Result of linkLogbuch: `recorderName` is the first name of the person recording already ('' = cannot be linked). */
+export type LogbuchLinkResult = { ok: true } | { ok: false; recorderName: string };
 
 /** A local wall-clock ISO timestamp (yyyy-MM-ddTHH:mm:ss) for the given epoch milliseconds. */
 function toLocalIso(ms: number): string {
@@ -82,6 +90,10 @@ export class TrackService {
     // photos: only from the local list — hidden ones left out (spec §6: never uploaded), path400 stripped, thumbPath
     // kept. Without a local list the key is omitted, so the merge keeps what is stored and never wipes thumb paths.
     if (local.photos) track.photos = serverPhotos(local.photos);
+    // Logbuch link (spec 1.123 §4): written once the link transaction succeeded; a track without a link removes a
+    // stored one (the set merges, so leaving the field out would keep it); a link still pending leaves it alone
+    if (local.logbuchKey && local.logbuchLinked) track.logbuchKey = local.logbuchKey;
+    else if (!local.logbuchKey) (track as unknown as Record<string, unknown>)['logbuchKey'] = deleteField();
 
     // SECURITY NOTE: the points are only owner-private once the owner-only trips rules (branch
     // work/tracker-rules) are deployed. Under today's tenant-writable trips rules a tenant member
@@ -106,6 +118,8 @@ export class TrackService {
       participants: [],
       state: 'done',
       track,
+      // the boat of the linked Logbuch trip (only when known: Firestore rejects undefined)
+      ...(local.resource ? { resource: local.resource } : {}),
     };
 
     const batch = this.firestoreService.getBatch();
@@ -183,6 +197,100 @@ export class TrackService {
       { key: 'track.personKey', operator: '==', value: personKey },
       { key: 'startDate', operator: '==', value: date },
     ]);
+  }
+
+  /** One Logbuch trip (the push «Strecke aufzeichnen?» names it); undefined when it is missing or not a Logbuch trip. */
+  public async readLogbuch(logbuchKey: string): Promise<TripModel | undefined> {
+    const snap = await getDoc(doc(this.firestoreService.firestore, `${TripCollection}/${logbuchKey}`));
+    if (!snap.exists()) return undefined;
+    const trip = { ...(snap.data() as TripModel), okey: snap.id };
+    return trip.type === LOGBUCH_TRIP_TYPE ? trip : undefined;
+  }
+
+  /**
+   * Today's open Logbuch trips with the person on the crew (spec 1.123 §4.2). `participants` is an AvatarInfo[] and
+   * cannot be queried, so the crew and the state are filtered here (the query uses the existing
+   * isArchived/tenants/type/startDate index).
+   */
+  public async findMyOpenLogbuchTrips(personKey: string, tenantId: string, date: string): Promise<TripModel[]> {
+    return (await this.logbuchTripsOfDay(tenantId, date)).filter((t) => (t.state ?? '').startsWith('open') && isLogbuchCrew(t, personKey));
+  }
+
+  /**
+   * Logbuch trips of the recording's day a finished recording can still be linked to: open or ended, the person on
+   * the crew, the Logbuch window overlapping the recording, and the deadline (end + CREW_TRACK_DAYS) not passed.
+   */
+  public async findMyLogbuchTripsOverlapping(personKey: string, tenantId: string, startedAtMs: number, endedAtMs: number): Promise<TripModel[]> {
+    const today = localStoreDate(Date.now());
+    const trips = await this.logbuchTripsOfDay(tenantId, localStoreDate(startedAtMs));
+    return logbuchLinkCandidates(trips, personKey, startedAtMs, endedAtMs).filter((t) => {
+      const deadline = crewTrackDeadline(t);
+      return deadline === '' || today <= deadline;
+    });
+  }
+
+  private async logbuchTripsOfDay(tenantId: string, date: string): Promise<TripModel[]> {
+    const snap = await getDocs(query(
+      collection(this.firestoreService.firestore, TripCollection),
+      where('isArchived', '==', false),
+      where('tenants', 'array-contains', tenantId),
+      where('type', '==', LOGBUCH_TRIP_TYPE),
+      where('startDate', '==', date),
+    ));
+    return snap.docs.map((d) => ({ ...(d.data() as TripModel), okey: d.id }));
+  }
+
+  /**
+   * Links a recording to a Logbuch trip (spec 1.123 §4.3), in a transaction: only a crew member may link, and only
+   * when the trip has no recording yet (or already this one). `trackRequest` names the recorder: the stop push goes
+   * there. A trip recorded by someone else answers with that person's first name; a trip that is gone, or a person
+   * not on the crew, with ''. Needs the network (a transaction fails offline).
+   */
+  public async linkLogbuch(logbuchKey: string, trackKey: string, personKey: string): Promise<LogbuchLinkResult> {
+    const ref = doc(this.firestoreService.firestore, `${TripCollection}/${logbuchKey}`);
+    return runTransaction(this.firestoreService.firestore, async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists()) return { ok: false, recorderName: '' };
+      const trip = snap.data() as TripModel;
+      if (trip.type !== LOGBUCH_TRIP_TYPE || trip.isArchived || trip.deletedAt || trip.state === 'deleted' || !isLogbuchCrew(trip, personKey)) {
+        return { ok: false, recorderName: '' };
+      }
+      const current = trip.trackKey ?? '';
+      if (current === '' || current === trackKey) {
+        tx.update(ref, { trackKey, trackRequest: { personKey } });
+        return { ok: true };
+      }
+      const recorder = trip.trackRequest?.personKey ?? '';
+      const recorderName = (trip.participants ?? []).find((p) => p.key === recorder)?.name1 ?? '';
+      return { ok: false, recorderName };
+    });
+  }
+
+  /** Removes the link from the Logbuch trip (`trackKey` and `trackRequest`), only while it still names this recording. */
+  public async unlinkLogbuch(logbuchKey: string, trackKey: string): Promise<void> {
+    const ref = doc(this.firestoreService.firestore, `${TripCollection}/${logbuchKey}`);
+    await runTransaction(this.firestoreService.firestore, async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists() || (snap.data() as TripModel).trackKey !== trackKey) return;
+      tx.update(ref, { trackKey: deleteField(), trackRequest: deleteField() });
+    });
+  }
+
+  /**
+   * Writes (or with `link` undefined, deletes) `track.logbuchKey` and the boat on an uploaded recording that is not
+   * on this device. A recording that was never uploaded (not-found) is left alone. Resolves only on the server's ack:
+   * callers run it detached.
+   */
+  public async setLogbuchLink(tripKey: string, link: { logbuchKey: string; resource?: AvatarInfo } | undefined): Promise<void> {
+    const patch: Record<string, unknown> = link
+      ? { 'track.logbuchKey': link.logbuchKey, ...(link.resource ? { resource: link.resource } : {}) }
+      : { 'track.logbuchKey': deleteField() };
+    try {
+      await updateDoc(doc(this.firestoreService.firestore, `${TripCollection}/${tripKey}`), patch);
+    } catch (error) {
+      if ((error as { code?: string }).code === 'not-found') return;
+      throw error;
+    }
   }
 
   /**

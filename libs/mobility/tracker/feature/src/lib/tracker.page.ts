@@ -1,8 +1,8 @@
-import { Component, computed, DestroyRef, effect, inject, signal, untracked } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import {
-  IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, IonHeader, IonIcon, IonItem, IonLabel,
+  IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel,
   IonList, IonListHeader, IonNote, IonSelect, IonSelectOption, IonTitle, IonToggle, IonToolbar, AlertController,
 } from '@ionic/angular';
 import { Capacitor } from '@capacitor/core';
@@ -13,7 +13,11 @@ import { TRANSPORT_MODES, TransportMode, TripModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { listCalibrationFiles, readCalibrationCsv, shareCalibration, TrackDb, TrackerLocation, TrackService } from '@okr/mobility-tracker-data-access';
 import { TrackerBanner, TrackMap, TrackMapSection } from '@okr/mobility-tracker-ui';
-import { calibrationStartedAt, parseCalibrationCsv, StrokeDetector, elapsedSeconds, figureTexts, formatKm, isShareCancel, LocalTrack, mergeTrackLists, TrackPoint } from '@okr/mobility-tracker-util';
+import {
+  calibrationStartedAt, parseCalibrationCsv, StrokeDetector, elapsedSeconds, figureTexts, formatKm, isShareCancel, LocalTrack, localStoreDate, mergeTrackLists, pickLogbuchPreset,
+  TrackPoint,
+} from '@okr/mobility-tracker-util';
+import { formatTripTime } from '@okr/trip-util';
 import { fill, hasRole } from '@okr/shared-util-core';
 import { okrPrompt } from '@okr/shared-util-angular';
 
@@ -32,11 +36,12 @@ type ModeChoice = TransportMode | typeof AUTO;
   selector: 'okr-tracker-page',
   imports: [
     IonHeader, IonToggle, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonSelect,
-    IonSelectOption, IonButton, IonList, IonListHeader, IonItem, IonLabel, IonNote, IonIcon, SvgIconPipe, TrackerBanner, TrackMap,
+    IonSelectOption, IonButton, IonList, IonListHeader, IonItem, IonLabel, IonNote, IonIcon, IonChip, SvgIconPipe, TrackerBanner, TrackMap,
   ],
   styles: [`
     .warning { display: block; margin-top: 8px; }
     .error { display: block; padding: 8px 16px; }
+    .logbuch { margin: 0 0 8px 0; }
     okr-track-map { --okr-track-map-height: max(240px, 40vh); }
   `],
   template: `
@@ -80,7 +85,25 @@ type ModeChoice = TransportMode | typeof AUTO;
                   }
                 </ion-select>
               </ion-item>
+              @if (presetTrips().length > 1) {
+                <ion-item>
+                  <ion-select interface="popover" [label]="i18n.link_choose()" labelPlacement="stacked"
+                    [value]="selectedLogbuch()?.okey ?? ''" (ionChange)="chooseLogbuch($event.detail.value)">
+                    <ion-select-option value="">{{ i18n.link_without() }}</ion-select-option>
+                    @for (t of presetTrips(); track t.okey) {
+                      <ion-select-option [value]="t.okey">{{ tripLabel(t) }}</ion-select-option>
+                    }
+                  </ion-select>
+                </ion-item>
+              }
             </ion-list>
+            @if (presetTrips().length <= 1 && selectedLogbuch(); as lb) {
+              <ion-chip class="logbuch" color="primary" (click)="chooseLogbuch('')" [attr.aria-label]="i18n.link_remove()">
+                <ion-icon src="{{ 'boat' | svgIcon }}" />
+                <ion-label>{{ presetText(lb) }}</ion-label>
+                <ion-icon src="{{ 'cancel' | svgIcon }}" />
+              </ion-chip>
+            }
             <ion-button expand="block" [disabled]="starting() || store.warning() === 'notNative'" (click)="start()">
               <ion-icon slot="start" src="{{ 'recording' | svgIcon }}" />{{ i18n.start_start() }}
             </ion-button>
@@ -138,6 +161,9 @@ type ModeChoice = TransportMode | typeof AUTO;
   `,
 })
 export class TrackerPage {
+  /** Query param `logbuch` (the push «Strecke aufzeichnen?», spec 1.123 §4.1): the Logbuch trip to preselect. */
+  public readonly logbuch = input<string>();
+
   protected readonly store = inject(TrackerStore);
   protected readonly i18n = this.store.i18n;
   private readonly db = inject(TrackDb);
@@ -203,6 +229,14 @@ export class TrackerPage {
   });
   protected readonly items = computed(() => mergeTrackLists(this.localTracks(), this.uploaded()));
 
+  // Logbuch link before Start (spec 1.123 §4.1/§4.2): one trip → a removable chip, several → a select
+  protected readonly presetTrips = signal<TripModel[]>([]);
+  protected readonly selectedLogbuch = signal<TripModel | undefined>(undefined);
+  /** A newer preset load makes an older answer stale. */
+  private presetSeq = 0;
+  /** Logbuch trips whose chip the person removed: a reload does not offer them preselected again. */
+  private readonly dismissed = new Set<string>();
+
   public constructor() {
     void this.store.init();
     // no tick and no live reload behind a locked screen or another page; one refresh when the page shows again
@@ -229,6 +263,12 @@ export class TrackerPage {
       this.localListTrigger();
       untracked(() => void this.reloadLocal());
     });
+    // the person or the pushed Logbuch trip changed: offer the Logbuch trip(s) to link to
+    effect(() => {
+      const personKey = this.personKey();
+      const logbuchKey = this.logbuch();
+      untracked(() => void this.loadPreset(personKey, logbuchKey));
+    });
     // a recording ended or calibration was switched: the calibration files may have changed
     effect(() => {
       const recording = this.store.active()?.state === 'recording';
@@ -243,6 +283,7 @@ export class TrackerPage {
     this.entered = true;
     this.refreshNow();
     void this.reloadLocal();
+    if (!this.store.active()) void this.loadPreset(this.personKey(), this.logbuch());
   }
 
   /** Ionic lifecycle: another page covers this one — the tick and the live map pause. */
@@ -323,7 +364,8 @@ export class TrackerPage {
     this.starting.set(true);
     try {
       const mode = this.mode();
-      await this.store.start(mode === AUTO ? undefined : mode);
+      const lb = this.selectedLogbuch();
+      await this.store.start(mode === AUTO ? undefined : mode, lb ? { logbuchKey: lb.okey, resource: lb.resource } : undefined);
     } finally {
       this.starting.set(false);
     }
@@ -351,6 +393,67 @@ export class TrackerPage {
     } finally {
       this.retrying.set(undefined);
       await this.reloadLocal();
+    }
+  }
+
+  /** «Alpha, 09:30»: the boat and the start time of a Logbuch trip. */
+  protected tripLabel(trip: TripModel): string {
+    return [trip.resource?.name1 ?? '', formatTripTime(trip.startTime ?? '')].filter((x) => x !== '').join(', ');
+  }
+
+  protected presetText(trip: TripModel): string {
+    return fill(this.i18n.link_preset(), { trip: this.tripLabel(trip) });
+  }
+
+  /** '' = no Logbuch trip. Choosing one while the mode is still «Automatisch» takes rowing. */
+  protected chooseLogbuch(okey: string): void {
+    const before = this.selectedLogbuch();
+    if (okey === '' && before) this.dismissed.add(before.okey);
+    const trip = this.presetTrips().find((t) => t.okey === okey);
+    this.selectedLogbuch.set(trip);
+    if (trip && this.mode() === AUTO) this.mode.set('row');
+  }
+
+  /**
+   * The Logbuch trip(s) to offer: the pushed one when the person is on its crew and it is still open (mode row and
+   * its boat), otherwise today's open Logbuch trips with the person on the crew. Failures leave nothing offered.
+   */
+  private async loadPreset(personKey: string | undefined, logbuchKey: string | undefined): Promise<void> {
+    const seq = ++this.presetSeq;
+    if (!personKey) {
+      this.presetTrips.set([]);
+      this.selectedLogbuch.set(undefined);
+      return;
+    }
+    try {
+      if (logbuchKey) {
+        const pushed = await this.trackService.readLogbuch(logbuchKey);
+        if (seq !== this.presetSeq) return;
+        const preset = pickLogbuchPreset(pushed ? [pushed] : [], personKey);
+        if (preset.kind === 'one' && !this.dismissed.has(preset.trip.okey)) {
+          this.presetTrips.set([preset.trip]);
+          this.selectedLogbuch.set(preset.trip);
+          if (this.mode() === AUTO) this.mode.set('row'); // a mode picked by hand stays on a reload
+          return;
+        }
+      }
+      const trips = await this.trackService.findMyOpenLogbuchTrips(personKey, this.appStore.tenantId(), localStoreDate(Date.now()));
+      if (seq !== this.presetSeq) return;
+      const preset = pickLogbuchPreset(trips, personKey);
+      if (preset.kind === 'one') {
+        this.presetTrips.set([preset.trip]);
+        const offer = !this.dismissed.has(preset.trip.okey);
+        this.selectedLogbuch.set(offer ? preset.trip : undefined);
+        if (offer && this.mode() === AUTO) this.mode.set('row');
+      } else {
+        const list = preset.kind === 'many' ? preset.trips : [];
+        this.presetTrips.set(list);
+        // a choice made in the select survives a reload while that trip is still offered
+        const kept = list.find((t) => t.okey === this.selectedLogbuch()?.okey);
+        this.selectedLogbuch.set(kept);
+      }
+    } catch (error) {
+      console.error('TrackerPage.loadPreset', error);
     }
   }
 

@@ -58,6 +58,16 @@ describe('localFromTrip', () => {
     expect(sections).toEqual([{ mode: 'bike', detected: true, points: [P(1, 1, 1)] }, { mode: 'foot', detected: false, points: [P(2, 2, 2)] }]);
   });
 
+  it('keeps the Logbuch link and the boat of a linked trip (spec 1.123 §4)', () => {
+    const boat = { key: 'b1', name1: 'Alpha', name2: '', modelType: 'resource' as const, type: '', subType: '', label: '' };
+    const t = trip('k', '2026-10-25T08:00:00.000Z');
+    const linked = { ...t, resource: boat, track: { ...t.track!, logbuchKey: 'l1' } } as TripModel;
+    const { track } = localFromTrip(linked, [[P(1, 1, 1)]]);
+    expect(track.logbuchKey).toBe('l1');
+    expect(track.logbuchLinked).toBe(true);
+    expect(track.resource).toEqual(boat);
+  });
+
   it('fills a missing points group with an empty one', () => {
     const { sections } = localFromTrip(trip('k', '2026-10-25T08:00:00.000Z', [10, 20]), [[P(1, 1, 1)]]);
     expect(sections[1].points).toEqual([]);
@@ -154,6 +164,12 @@ describe('gpxFileName', () => {
 });
 
 describe('sameTrackContent', () => {
+  it('is false when the Logbuch link differs (spec 1.123 §4)', () => {
+    expect(sameTrackContent(local('a', 1), local('a', 1, { logbuchKey: 'l' }))).toBe(false);
+    expect(sameTrackContent(local('a', 1, { logbuchKey: 'l' }), local('a', 1, { logbuchKey: 'l', logbuchLinked: true }))).toBe(false);
+    expect(sameTrackContent(local('a', 1, { logbuchKey: 'l', logbuchLinked: true }), local('a', 1, { logbuchKey: 'l', logbuchLinked: true }))).toBe(true);
+  });
+
   it('is true when name and sections match, whatever else differs', () => {
     expect(sameTrackContent(local('a', 1), local('a', 1, { uploaded: true, endedAt: 9, extraPointsUpTo: 3 }))).toBe(true);
   });

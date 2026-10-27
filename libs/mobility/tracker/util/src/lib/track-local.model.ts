@@ -1,4 +1,4 @@
-import type { TrackPhoto, TransportMode } from '@okr/shared-models';
+import type { AvatarInfo, TrackPhoto, TransportMode } from '@okr/shared-models';
 import type { TrackPoint } from './track-polyline.util';
 
 /** A track as held in the device's local store (recording, paused or finished; uploaded or not). */
@@ -28,6 +28,15 @@ export interface LocalTrack {
    * another one and a detached delete of a hidden photo's file never hits a newer upload (missing = derive, see nextThumbNumber).
    */
   thumbSeq?: number;
+  /**
+   * The Logbuch trip (trips/{okey}) this recording is linked to, or is about to be (spec 1.123 §4). Uploaded as
+   * `track.logbuchKey` only once `logbuchLinked` is true; a track without it uploads a deleted `track.logbuchKey`.
+   */
+  logbuchKey?: string;
+  /** The link transaction on the Logbuch trip succeeded (its `trackKey` is this track). Missing = not yet. */
+  logbuchLinked?: boolean;
+  /** The boat of the Logbuch trip; uploaded as the trip's `resource`. */
+  resource?: AvatarInfo;
 }
 
 /** A stored point row: a track point plus its section index. */

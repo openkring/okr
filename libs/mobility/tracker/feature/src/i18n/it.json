@@ -118,5 +118,22 @@
     "check": "Verifica",
     "check_result": "Conteggio codice app: {ts} · codice iPhone: {native}",
     "close": "Chiudi"
+  },
+  "link": {
+    "preset": "Giornale di bordo: {trip}",
+    "choose": "Uscita del giornale di bordo",
+    "without": "Senza giornale di bordo",
+    "remove": "Rimuovi l'uscita del giornale di bordo",
+    "taken": "{name} sta già registrando questa uscita.",
+    "unavailable": "Questa uscita del giornale di bordo non può più essere collegata.",
+    "connect": "Collega a un’uscita del giornale di bordo",
+    "choose_title": "Quale uscita?",
+    "none_found": "Nessuna uscita del giornale di bordo a cui hai partecipato corrisponde a questo percorso.",
+    "linked": "Collegato al giornale di bordo: {trip}",
+    "linked_unknown": "Collegato a un’uscita del giornale di bordo",
+    "unlink": "Scollega dal giornale di bordo",
+    "unlink_confirm": "Il tuo equipaggio non vedrà più questo percorso. Vuoi scollegarlo?",
+    "done": "Il percorso è ora collegato al giornale di bordo.",
+    "offline": "Serve una connessione internet. Riprova più tardi."
   }
 }
