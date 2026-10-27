@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { TripModel } from '@okr/shared-models';
 import type { LocalSection } from '@okr/mobility-tracker-util';
 import { clipSections, decodeStrokeTimes, decodeTrack, strokeTimesBase } from '@okr/mobility-tracker-util';
-import { CREW_TRACK_MAX_SPAN_MS, crewWindowMs, decideCrewAccess, isCrewMember, isLinkedRecording, toCrewSections } from './crew-track';
+import {
+  buildCrewCopy, CREW_TRACK_MAX_SPAN_MS, crewPushTexts, crewTrackActions, crewWindowMs, decideCrewAccess, isCrewMember,
+  isLinkedRecording, selectCrewDiaryTarget, toCrewSections,
+} from './crew-track';
 
 function logbuch(over: Partial<TripModel> = {}): TripModel {
   const t = new TripModel('scs');
@@ -107,5 +110,155 @@ describe('clip -> crew round trip', () => {
     const times = decodeStrokeTimes(out.strokeTimes, strokeTimesBase(decodedPoints));
     expect(times).toHaveLength(clipped[0].strokeTimes?.length ?? -1);
     times.forEach((x, i) => expect(Math.abs(x - (clipped[0].strokeTimes as number[])[i])).toBeLessThanOrEqual(1000));
+  });
+});
+
+const person = (key: string) => ({ key, name1: key, name2: '', modelType: 'person' as const, type: '', subType: '', label: '' });
+
+function openLogbuch(over: Partial<TripModel> = {}): TripModel {
+  return logbuch({ state: 'open', trackKey: undefined, endDate: '', trackRequest: { personKey: 'p1' }, ...over });
+}
+
+function tracker(over: Partial<TripModel> = {}, track: Record<string, unknown> = {}): TripModel {
+  const t = new TripModel('scs');
+  t.type = 'tracker';
+  t.state = 'done';
+  t.track = { personKey: 'p1', ownerUid: 'u1', startedAt: '', endedAt: '', durationS: 0, sections: [], photos: [], ...track };
+  return Object.assign(t, over);
+}
+
+describe('crewTrackActions', () => {
+  it('create with a request -> requestPush', () => {
+    expect(crewTrackActions(undefined, openLogbuch())).toEqual(['requestPush']);
+  });
+  it('request newly set on an existing open trip -> requestPush', () => {
+    expect(crewTrackActions(openLogbuch({ trackRequest: undefined }), openLogbuch())).toEqual(['requestPush']);
+  });
+  it('same doc rewritten unchanged -> []', () => {
+    expect(crewTrackActions(openLogbuch(), openLogbuch())).toEqual([]);
+    const ended = logbuch({ state: 'closed', trackKey: 'rec1' });
+    expect(crewTrackActions(ended, ended)).toEqual([]);
+  });
+  it('no request push once a recording is linked', () => {
+    expect(crewTrackActions(undefined, openLogbuch({ trackKey: 'rec1' }))).toEqual([]);
+  });
+  it('end with trackKey -> stopPush and copies', () => {
+    const out = crewTrackActions(openLogbuch({ trackKey: 'rec1' }), logbuch({ state: 'closed', trackKey: 'rec1' }));
+    expect(out).toContain('stopPush');
+    expect(out).toContain('copies');
+  });
+  it('end without trackKey -> []', () => {
+    expect(crewTrackActions(openLogbuch(), logbuch({ state: 'closed', trackKey: undefined }))).toEqual([]);
+  });
+  it('trackKey linked after the end -> copies only', () => {
+    expect(crewTrackActions(logbuch({ state: 'closed', trackKey: undefined }), logbuch({ state: 'closed', trackKey: 'rec1' })))
+      .toEqual(['copies']);
+  });
+  it('tracker trip with logbuchKey -> copies', () => {
+    expect(crewTrackActions(undefined, tracker({}, { logbuchKey: 'L1' }))).toEqual(['copies']);
+  });
+  it('tracker trip without logbuchKey -> []', () => {
+    expect(crewTrackActions(undefined, tracker())).toEqual([]);
+  });
+  it('tracker trip re-uploaded with the same logbuchKey -> []', () => {
+    expect(crewTrackActions(tracker({}, { logbuchKey: 'L1' }), tracker({}, { logbuchKey: 'L1' }))).toEqual([]);
+  });
+  it('a crew copy (copyOf set) -> [] even with a logbuchKey', () => {
+    expect(crewTrackActions(undefined, tracker({}, { copyOf: 'rec1' }))).toEqual([]);
+    expect(crewTrackActions(undefined, tracker({}, { copyOf: 'rec1', logbuchKey: 'L1' }))).toEqual([]);
+  });
+  it('after undefined (delete) -> []', () => {
+    expect(crewTrackActions(logbuch({ state: 'closed' }), undefined)).toEqual([]);
+    expect(crewTrackActions(tracker({}, { logbuchKey: 'L1' }), undefined)).toEqual([]);
+  });
+});
+
+describe('crewPushTexts', () => {
+  it('request names boat and time (HHmm normalised)', () => {
+    const t = openLogbuch({ okey: 'L1', startTime: '0930', resource: { ...person('b1'), modelType: 'resource', name1: 'Gig 4' } });
+    expect(crewPushTexts.request(t)).toEqual({
+      title: 'Logbuch: Gig 4, 09:30', body: 'Strecke aufzeichnen?', url: '/tracker?logbuch=L1', type: 'trackRequest',
+    });
+  });
+  it('request without a boat keeps the time', () => {
+    expect(crewPushTexts.request(openLogbuch({ okey: 'L1', startTime: '09:30' })).title).toBe('Logbuch: 09:30');
+  });
+  it('stop', () => {
+    expect(crewPushTexts.stop()).toEqual({ title: 'Ausfahrt beendet', body: 'Aufzeichnung stoppen?', url: '/tracker', type: 'trackStop' });
+  });
+});
+
+describe('selectCrewDiaryTarget', () => {
+  const target = (tenantId: string, sources: string[] = ['tracker']) => ({ tenantId, sources, from: '', to: '' });
+  it('routes by the source-tenant user and drops the source tenant', () => {
+    const users = [
+      { id: 'uScs', tenants: ['scs'], diaryTargets: [target('scs'), target('bkd')] },
+      { id: 'uBkd', tenants: ['bkd'] },
+    ];
+    expect(selectCrewDiaryTarget(users as never, 'scs', '20261027')).toEqual({ tenants: ['bkd'], uid: 'uBkd' });
+  });
+  it('undefined without a user in the source tenant, without tracker targets, or without a diary user', () => {
+    expect(selectCrewDiaryTarget([{ id: 'u', tenants: ['gss'], diaryTargets: [target('bkd')] }] as never, 'scs', '20261027')).toBeUndefined();
+    expect(selectCrewDiaryTarget([{ id: 'u', tenants: ['scs'], diaryTargets: [target('bkd', ['tripDone'])] }, { id: 'v', tenants: ['bkd'] }] as never, 'scs', '20261027')).toBeUndefined();
+    expect(selectCrewDiaryTarget([{ id: 'u', tenants: ['scs'], diaryTargets: [target('bkd')] }] as never, 'scs', '20261027')).toBeUndefined();
+  });
+  it('ignores an archived source user', () => {
+    const users = [{ id: 'u', tenants: ['scs'], isArchived: true, diaryTargets: [target('bkd')] }, { id: 'v', tenants: ['bkd'] }];
+    expect(selectCrewDiaryTarget(users as never, 'scs', '20261027')).toBeUndefined();
+  });
+});
+
+describe('buildCrewCopy', () => {
+  const t0 = Date.UTC(2026, 9, 27, 8, 0, 0); // 09:00 Zurich (CET since 25.10.)
+  const row: LocalSection = {
+    mode: 'row', detected: false, points: pts(10, t0), strokeTimes: [t0 + 5_000, t0 + 25_000, t0 + 45_000],
+  };
+  const foot: LocalSection = { mode: 'foot', detected: false, points: pts(4, t0 + 100_000), steps: 50 };
+  const lb = logbuch({
+    okey: 'L1', name: 'Morgenrunde', state: 'closed',
+    resource: { ...person('b1'), modelType: 'resource', name1: 'Gig 4' },
+  });
+  const copy = buildCrewCopy({ logbuch: lb, recordingKey: 'rec1', personKey: 'p2', uid: 'u2', tenants: ['bkd'], clipped: [row, foot] });
+
+  it('deterministic id, owner and copyOf, no logbuchKey', () => {
+    expect(copy?.id).toBe('rec1_p2');
+    expect(copy?.trip.track?.personKey).toBe('p2');
+    expect(copy?.trip.track?.ownerUid).toBe('u2');
+    expect(copy?.trip.track?.copyOf).toBe('rec1');
+    expect(copy?.trip.track && 'logbuchKey' in copy.trip.track).toBe(false);
+    expect(copy?.trip.tenants).toEqual(['bkd']);
+    expect(copy?.trip.type).toBe('tracker');
+    expect(copy?.trip.state).toBe('done');
+    expect(copy?.trip.name).toBe('Morgenrunde');
+    expect(copy?.trip.resource?.name1).toBe('Gig 4');
+    expect(copy?.trip.participants).toEqual([]);
+  });
+  it('no steps, heart rate, photos or notes', () => {
+    expect(copy?.trip.track?.photos).toEqual([]);
+    expect(copy?.trip.notes).toBe('');
+    for (const s of copy?.trip.track?.sections ?? []) {
+      expect('steps' in s).toBe(false);
+      expect('heartRateAvg' in s || 'heartRateMax' in s).toBe(false);
+    }
+    expect(copy?.trip.track?.sections[0].strokes).toBe(3);
+  });
+  it('span, wall clock and points docs', () => {
+    const end = t0 + 100_000 + 30_000;
+    expect(copy?.trip.track?.startedAt).toBe(new Date(t0).toISOString());
+    expect(copy?.trip.track?.endedAt).toBe(new Date(end).toISOString());
+    expect(copy?.trip.track?.durationS).toBe(130);
+    expect(copy?.trip.startDate).toBe('20261027');
+    expect(copy?.trip.startTime).toBe('09:00');
+    expect(copy?.trip.endTime).toBe('09:02');
+    expect(copy?.trip.index).toBe('d:20261027');
+    expect(copy?.trip.track?.sections.map((s) => s.pointsPath)).toEqual(['trips/rec1_p2/track-points/0', 'trips/rec1_p2/track-points/1']);
+    expect(copy?.points).toHaveLength(2);
+    expect(copy?.points[0]).toMatchObject({ tenants: ['bkd'], section: 0, mode: 'row', count: 10 });
+    expect(copy?.points[0].strokeTimes).toBeTruthy();
+    expect(copy?.points[1].strokeTimes).toBeUndefined();
+    expect(decodeTrack(copy?.points[1].encoded ?? '')).toHaveLength(4);
+  });
+  it('nothing to copy -> undefined', () => {
+    expect(buildCrewCopy({ logbuch: lb, recordingKey: 'rec1', personKey: 'p2', uid: 'u2', tenants: ['bkd'], clipped: [] })).toBeUndefined();
   });
 });

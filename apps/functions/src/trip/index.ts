@@ -2,6 +2,9 @@
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
+import type { TripModel } from '@okr/shared-models';
+
+import { handleCrewTrack } from './crew-track';
 
 const REGION = 'europe-west6';
 
@@ -19,7 +22,8 @@ const COUNTING_STATES = new Set([
 // GPS tracks live in `trips` but are private and never count toward Logbuch stats.
 const TRACKER_TRIP_TYPE = 'tracker';
 
-// Inlined — no monorepo cross-bundle imports
+// Inlined — no monorepo cross-bundle imports (the stats code only; the crew-track half of the
+// trigger lives in ./crew-track and uses the shared models)
 interface TripDoc {
   state: string;
   type?: string;
@@ -93,38 +97,48 @@ export const onTripWrite = onDocumentWritten(
     const rawAfter  = event.data?.after?.data()  as TripDoc | undefined;
 
     const deltas = computeDeltas(rawBefore, rawAfter);
-    if (!deltas.length) return;
+    if (deltas.length) await applyStatDeltas(deltas);
 
-    const db = getFirestore();
-    await db.runTransaction(async (tx) => {
-      const refs  = deltas.map(d => db.doc(d.path));
-      const snaps = await Promise.all(refs.map(r => tx.get(r)));
-      for (let i = 0; i < deltas.length; i++) {
-        const cur = snaps[i].data() ?? { totalKm: 0, tripCount: 0 };
-        tx.set(refs[i], {
-          totalKm:   (cur['totalKm']   as number ?? 0) + deltas[i].km,
-          tripCount: (cur['tripCount'] as number ?? 0) + deltas[i].count,
-          updatedAt: FieldValue.serverTimestamp(),
-        });
-      }
-
-      // Same deltas, aggregated into one doc per (type, year) — increments need no read.
-      const rollups = new Map<string, Record<string, unknown>>();
-      for (const d of deltas) {
-        const target = rollupTarget(d.path);
-        if (!target) continue;
-        const entries = rollups.get(target.doc) ?? {};
-        entries[target.key] = { km: FieldValue.increment(d.km), count: FieldValue.increment(d.count) };
-        rollups.set(target.doc, entries);
-      }
-      for (const [path, entries] of rollups) {
-        tx.set(db.doc(path), { entries, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
-      }
-    });
-
-    logger.info(`onTripWrite: applied ${deltas.length} stat delta(s)`);
+    // spec 1.123: crew-track pushes and diary copies — never throws, so the stats above are never affected
+    await handleCrewTrack(
+      event.data?.before?.data() as TripModel | undefined,
+      event.data?.after?.data() as TripModel | undefined,
+      event.params['tripId'],
+    );
   }
 );
+
+/** The stat deltas of one trip write, applied to the per-entity docs and the rollups in one transaction. */
+async function applyStatDeltas(deltas: StatDelta[]): Promise<void> {
+  const db = getFirestore();
+  await db.runTransaction(async (tx) => {
+    const refs  = deltas.map(d => db.doc(d.path));
+    const snaps = await Promise.all(refs.map(r => tx.get(r)));
+    for (let i = 0; i < deltas.length; i++) {
+      const cur = snaps[i].data() ?? { totalKm: 0, tripCount: 0 };
+      tx.set(refs[i], {
+        totalKm:   (cur['totalKm']   as number ?? 0) + deltas[i].km,
+        tripCount: (cur['tripCount'] as number ?? 0) + deltas[i].count,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    }
+
+    // Same deltas, aggregated into one doc per (type, year) — increments need no read.
+    const rollups = new Map<string, Record<string, unknown>>();
+    for (const d of deltas) {
+      const target = rollupTarget(d.path);
+      if (!target) continue;
+      const entries = rollups.get(target.doc) ?? {};
+      entries[target.key] = { km: FieldValue.increment(d.km), count: FieldValue.increment(d.count) };
+      rollups.set(target.doc, entries);
+    }
+    for (const [path, entries] of rollups) {
+      tx.set(db.doc(path), { entries, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    }
+  });
+
+  logger.info(`onTripWrite: applied ${deltas.length} stat delta(s)`);
+}
 
 export async function runTripStatsReconcile(): Promise<void> {
   const db = getFirestore();
