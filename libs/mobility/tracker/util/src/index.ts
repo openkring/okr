@@ -18,3 +18,4 @@ export * from './lib/track-strokes.util';
 export * from './lib/track-clip.util';
 export * from './lib/crew-track.model';
 export * from './lib/logbuch-link.util';
+export * from './lib/crew-track.util';

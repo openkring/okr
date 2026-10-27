@@ -1,17 +1,34 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
-import { IonCard, IonCardContent, IonContent, IonIcon, IonItem, IonLabel, ModalController } from '@ionic/angular';
+import { Component, computed, inject, input, resource } from '@angular/core';
+import { IonButton, IonCard, IonCardContent, IonContent, IonIcon, IonItem, IonLabel, IonNote, ModalController } from '@ionic/angular';
 
 import { AvatarInfo, PersonModelName, TripModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { PERSON_EDIT_MODAL, PersonEditModalLoader } from '@okr/subject-person-ui';
 import { Header } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
-import { getWeekdayI18nKey } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, fill, getWeekdayI18nKey, isKioskOnly } from '@okr/shared-util-core';
+import { AlertService, downloadFile, resourceParams } from '@okr/shared-util-angular';
 import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 import { AvatarDisplay } from '@okr/avatar-ui';
+import { buildGpx, crewToLocalSections, gpxFileName, isShareCancel, TRACKER_I18N_KEYS, TrackerI18n } from '@okr/mobility-tracker-util';
+import type { CrewTrackSection, GetLogbuchTrackRes } from '@okr/mobility-tracker-util';
+import { TrackMap, TrackMapSection, TrackSectionRow, TrackSections } from '@okr/mobility-tracker-ui';
+import { LogbuchTrackService } from '@okr/trip-data-access';
 
-import { formatTripTime, TRIP_I18N_KEYS, TripI18n } from '@okr/trip-util';
+import { crewTrackDeadline, formatTripTime, TRIP_I18N_KEYS, TripI18n } from '@okr/trip-util';
+import { GpxInfoModal } from './gpx-info.modal';
+
+type CrewTrackOk = Extract<GetLogbuchTrackRes, { state: 'ok' }>;
+
+/** A crew section as a row of the read-only section list: rowing figures only on a row section. */
+function crewSectionRow(s: CrewTrackSection): TrackSectionRow {
+  const row: TrackSectionRow = { mode: s.mode, distanceM: s.distanceM, durationS: s.durationS, detected: false };
+  if (s.mode !== 'row') return row;
+  return {
+    ...row, splitAvgS: s.splitAvgS, splitBestS: s.splitBestS, strokes: s.strokes, strokeRateAvg: s.strokeRateAvg, strokeRateMax: s.strokeRateMax,
+  };
+}
 
 /** Read-only trip representation for registered users — the counterpart of okr-calevent-view-modal. */
 @Component({
@@ -19,8 +36,8 @@ import { formatTripTime, TRIP_I18N_KEYS, TripI18n } from '@okr/trip-util';
   standalone: true,
   imports: [
     AsyncPipe, PrettyDatePipe, SvgIconPipe, TranslatePipe,
-    Header, AvatarDisplay,
-    IonContent, IonCard, IonCardContent, IonItem, IonLabel, IonIcon,
+    Header, AvatarDisplay, TrackMap, TrackSections,
+    IonContent, IonCard, IonCardContent, IonItem, IonLabel, IonIcon, IonButton, IonNote,
   ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px; } }
@@ -30,6 +47,10 @@ import { formatTripTime, TRIP_I18N_KEYS, TripI18n } from '@okr/trip-util';
     .participant-row { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 4px 0; }
     .participant { cursor: pointer; }
     .participant ::ng-deep ion-chip ion-label small { font-size: 1rem; }
+    .crew-track-title { font-size: 1.1rem; font-weight: 600; margin: 0 0 8px; color: var(--ion-text-color); }
+    okr-track-map { --okr-track-map-height: 220px; border-radius: 8px; }
+    .gpx-row { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 8px; }
+    .deadline { display: block; font-size: 0.9rem; margin-top: 4px; }
   `],
   template: `
     <okr-header [i18n]="{ title: trip().name }" [isModal]="true" />
@@ -103,6 +124,27 @@ import { formatTripTime, TRIP_I18N_KEYS, TripI18n } from '@okr/trip-util';
 
         </ion-card-content>
       </ion-card>
+
+      <!-- the crew route (spec 1.123 §5): only a crew member of a linked trip gets it; anything else shows nothing -->
+      @if (crewTrack(); as ct) {
+        <ion-card>
+          <ion-card-content>
+            <h2 class="crew-track-title">{{ i18n.track_route_title() }}</h2>
+            <okr-track-map [sections]="mapSections()" [live]="false" />
+            <okr-track-sections [sections]="sectionRows()" [i18n]="trackerI18n" [readonly]="true" />
+            <div class="gpx-row">
+              <ion-button fill="outline" (click)="downloadGpx(ct)">
+                <ion-icon slot="start" src="{{'download' | svgIcon}}" />
+                {{ i18n.track_gpx_download() }}
+              </ion-button>
+              <ion-button fill="clear" (click)="openGpxInfo()" [attr.aria-label]="i18n.track_info_title()">
+                <ion-icon slot="icon-only" src="{{'info-circle' | svgIcon}}" />
+              </ion-button>
+            </div>
+            <ion-note class="deadline">{{ deadlineNote() }}</ion-note>
+          </ion-card-content>
+        </ion-card>
+      }
     </ion-content>
   `
 })
@@ -110,9 +152,64 @@ export class TripViewModal {
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
   private readonly personEditModal = inject<PersonEditModalLoader | null>(PERSON_EDIT_MODAL, { optional: true });
-  protected readonly i18n = inject(I18nService).translateAll(TRIP_I18N_KEYS) as TripI18n;
+  private readonly logbuchTrackService = inject(LogbuchTrackService);
+  private readonly alertService = inject(AlertService);
+  private readonly i18nService = inject(I18nService);
+  protected readonly i18n = this.i18nService.translateAll(TRIP_I18N_KEYS) as TripI18n;
+  protected readonly trackerI18n = this.i18nService.translateAll(TRACKER_I18N_KEYS) as TrackerI18n;
 
   public trip = input.required<TripModel>();
+
+  /**
+   * Ask for the crew route only when the trip has one and the viewer is on its crew (by personKey, never by role,
+   * never the kiosk): everyone else makes no call at all. Value-compared, so a new currentUser reference with the
+   * same person does not call again.
+   */
+  private readonly crewTrackParams = resourceParams(() => {
+    const trip = this.trip();
+    const user = this.appStore.currentUser();
+    const personKey = user?.personKey;
+    if (!trip.trackKey || !trip.okey || !personKey || isKioskOnly(user)) return undefined;
+    if (!trip.participants.some(p => p.key === personKey)) return undefined;
+    return { tenantId: this.appStore.tenantId(), tripKey: trip.okey };
+  });
+  private readonly crewTrackResource = resource({
+    params: this.crewTrackParams,
+    loader: ({ params }) => this.logbuchTrackService.get(params.tenantId, params.tripKey),
+  });
+  /** the route when the callable granted it; none / gone / denied / an error all render nothing */
+  protected readonly crewTrack = computed<CrewTrackOk | undefined>(() => {
+    if (!this.crewTrackResource.hasValue()) return undefined;
+    const res = this.crewTrackResource.value();
+    return res.state === 'ok' && res.sections.length > 0 ? res : undefined;
+  });
+  private readonly localSections = computed(() => crewToLocalSections(this.crewTrack()?.sections ?? []));
+  protected readonly mapSections = computed<TrackMapSection[]>(() => this.localSections().map(s => ({ mode: s.mode, points: s.points })));
+  protected readonly sectionRows = computed(() => (this.crewTrack()?.sections ?? []).map(crewSectionRow));
+  /** «Verfügbar bis …»: the callable's deadline, else the trip's own; an open trip has none yet */
+  protected readonly deadlineNote = computed(() => {
+    const deadline = this.crewTrack()?.deadline || crewTrackDeadline(this.trip());
+    if (!deadline) return this.i18n.track_deadline_open();
+    return fill(this.i18n.track_deadline_date(), { date: convertDateFormatToString(deadline, DateFormat.StoreDate, DateFormat.ViewDate, false) });
+  });
+
+  protected async downloadGpx(track: CrewTrackOk): Promise<void> {
+    const url = URL.createObjectURL(new Blob([buildGpx(track.name, this.localSections())], { type: 'application/gpx+xml' }));
+    try {
+      await downloadFile(url, gpxFileName(track.name));
+    } catch (error) {
+      if (isShareCancel(error)) return; // the share sheet was just closed
+      console.error('TripViewModal.downloadGpx', error);
+      await this.alertService.showToast(this.i18n.track_gpx_error());
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  protected async openGpxInfo(): Promise<void> {
+    const modal = await this.modalController.create({ component: GpxInfoModal });
+    await modal.present();
+  }
 
   protected readonly weekdayKey = computed(() => getWeekdayI18nKey(this.trip().startDate, false));
   /** one single-element array per person, so each avatar is rendered with its name on its own line */

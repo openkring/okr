@@ -301,6 +301,31 @@
     "carrier": {
       "label": "Qui emporte l'iPhone ?",
       "helper": "La personne a besoin de l'application sur son iPhone."
+    },
+    "route": {
+      "title": "Parcours enregistré"
+    },
+    "gpx": {
+      "download": "Télécharger en fichier GPX",
+      "error": "Le fichier n'a pas pu être créé."
+    },
+    "deadline": {
+      "date": "Disponible jusqu'au {date}. Ensuite, le parcours sera supprimé ici.",
+      "open": "Disponible jusqu'à 7 jours après la fin de la sortie."
+    },
+    "info": {
+      "title": "Qu'est-ce qu'un fichier GPX ?",
+      "what": "Le GPX est un format répandu pour les parcours enregistrés. Le fichier contient le tracé de ta sortie avec l'heure, mais ni photos ni cadence.",
+      "where": {
+        "title": "Où se retrouve le fichier ?",
+        "ios": "iPhone et iPad : tu peux l'enregistrer dans l'app « Fichiers » ou le transmettre directement à une autre app.",
+        "android": "Android : dans le dossier « Téléchargements ».",
+        "computer": "Ordinateur : dans ton dossier de téléchargements."
+      },
+      "use": {
+        "title": "À quoi peut-il te servir ?",
+        "text": "De nombreuses apps de sport et de cartes peuvent ouvrir ou importer des fichiers GPX, par exemple Strava, Garmin Connect, Komoot, l'app swisstopo ou Google Earth. Tu retrouves ainsi la sortie dans ton app habituelle ou tu la gardes."
+      }
     }
   }
 }

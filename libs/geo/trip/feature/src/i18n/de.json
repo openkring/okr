@@ -301,6 +301,31 @@
     "carrier": {
       "label": "Wer nimmt das iPhone mit?",
       "helper": "Die Person braucht die App auf dem iPhone."
+    },
+    "route": {
+      "title": "Aufgezeichnete Strecke"
+    },
+    "gpx": {
+      "download": "Als GPX-Datei herunterladen",
+      "error": "Die Datei konnte nicht erstellt werden."
+    },
+    "deadline": {
+      "date": "Verfügbar bis {date}. Danach wird die Strecke hier gelöscht.",
+      "open": "Verfügbar bis 7 Tage nach dem Ende der Ausfahrt."
+    },
+    "info": {
+      "title": "Was ist eine GPX-Datei?",
+      "what": "GPX ist ein verbreitetes Format für aufgezeichnete Strecken. Die Datei enthält den Weg deiner Ausfahrt mit Uhrzeit, aber keine Fotos und keine Schlagzahl.",
+      "where": {
+        "title": "Wo landet die Datei?",
+        "ios": "iPhone und iPad: Du kannst sie in der App «Dateien» sichern oder direkt an eine andere App weitergeben.",
+        "android": "Android: im Ordner «Downloads».",
+        "computer": "Computer: in deinem Download-Ordner."
+      },
+      "use": {
+        "title": "Wofür kannst du sie brauchen?",
+        "text": "Viele Sport- und Karten-Apps können GPX-Dateien öffnen oder importieren, zum Beispiel Strava, Garmin Connect, Komoot, die swisstopo-App oder Google Earth. So siehst du die Ausfahrt in deiner gewohnten App oder bewahrst sie auf."
+      }
     }
   }
 }
