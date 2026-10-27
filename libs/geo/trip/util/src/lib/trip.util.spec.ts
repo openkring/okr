@@ -15,6 +15,7 @@ import {
   findOpenTripForBoat,
   TRIP_EDIT_WINDOW_MS,
   crewTrackDeadline,
+  withoutTrackLink,
 } from './trip.util';
 
 const TENANT = 'test-tenant';
@@ -332,4 +333,20 @@ describe('crewTrackDeadline', () => {
   it('deadline is end + 7 days across a month end', () =>
     expect(crewTrackDeadline({ endDate: '20261028' })).toBe('20261104'));
   it('deadline empty for an open trip', () => expect(crewTrackDeadline({ endDate: '' })).toBe(''));
+});
+
+describe('withoutTrackLink', () => {
+  it('drops trackKey and trackRequest, keeps everything else, leaves the input alone', () => {
+    const t = Object.assign(new TripModel('scs'), { okey: 'L1', name: 'x', trackKey: 'rec1', trackRequest: { personKey: 'p1' } });
+    const out = withoutTrackLink(t);
+    expect('trackKey' in out).toBe(false);
+    expect('trackRequest' in out).toBe(false);
+    expect(out).toMatchObject({ okey: 'L1', name: 'x' });
+    expect(t.trackKey).toBe('rec1');
+    expect(t.trackRequest).toEqual({ personKey: 'p1' });
+  });
+  it('is a no-op shape-wise on a trip without a link', () => {
+    const t = Object.assign(new TripModel('scs'), { okey: 'L2' });
+    expect(withoutTrackLink(t)).toMatchObject({ okey: 'L2' });
+  });
 });

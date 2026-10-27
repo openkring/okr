@@ -166,3 +166,16 @@ export function crewTrackDeadline(trip: Pick<TripModel, 'endDate'>): string {
   const end = Date.UTC(Number(trip.endDate.slice(0, 4)), Number(trip.endDate.slice(4, 6)) - 1, Number(trip.endDate.slice(6, 8)));
   return new Date(end + CREW_TRACK_DAYS * 86_400_000).toISOString().slice(0, 10).replace(/-/g, '');
 }
+
+/**
+ * The trip without its crew-track link fields, for every update of an existing Logbuch trip (spec 1.123).
+ * `trackKey` and `trackRequest` belong to the tracker's link transaction (TrackService.linkLogbuch) and the
+ * nightly cleanup; only the add path writes `trackRequest`. A modal opened before the phone linked holds a
+ * stale copy - writing it back (updateModel merges every field) would redirect the stop push to the wrong
+ * person. Left out of the patch, the fields stay as they are in Firestore. Pure; the input is not changed.
+ */
+export function withoutTrackLink<T extends Pick<TripModel, 'trackKey' | 'trackRequest'>>(trip: T): Omit<T, 'trackKey' | 'trackRequest'> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { trackKey, trackRequest, ...rest } = trip;
+  return rest;
+}
