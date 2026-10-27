@@ -79,20 +79,7 @@ export interface DiaryNeighbours {
 
       <ion-list lines="none" class="meta">
         <ion-item>
-          <ion-label>
-            <!-- one wrapping line: «25.10.2026: [Stäfa] [Männedorf]» — the first chip is the main location -->
-            <div class="when">
-              <h2>{{ dateLabel() }}@if (locations().length) {:}</h2>
-              @for (loc of locations(); track $index) {
-                <ion-chip color="light" class="place" [class.location]="!!loc.key" [title]="locationName(loc)" (click)="tapLocation(loc)">
-                  <ion-avatar>
-                    <img okrImg src="{{ locationKey(loc) | avatar: locationIcon }}" [alt]="locationName(loc)" />
-                  </ion-avatar>
-                  <ion-label><small>{{ locationName(loc) }}</small></ion-label>
-                </ion-chip>
-              }
-            </div>
-          </ion-label>
+          <ion-label><h2>{{ dateLabel() }}</h2></ion-label>
           @if (current().scope === 'day' && hasWeather()) {
             <ion-icon slot="end" src="{{ weatherIcon() | svgIcon: weatherIconSet }}" />
             <ion-note slot="end">{{ weatherLine() }}</ion-note>
@@ -102,6 +89,21 @@ export interface DiaryNeighbours {
             </ion-button>
           }
         </ion-item>
+        @if (locations().length) {
+          <ion-item>
+            <!-- one wrapping line of location chips — the first chip is the main location -->
+            <div class="when">
+              @for (loc of locations(); track $index) {
+                <ion-chip color="light" class="place" [class.location]="!!loc.key" [title]="locationName(loc)" (click)="tapLocation(loc)">
+                  <ion-avatar>
+                    <img okrImg src="{{ locationKey(loc) | avatar: locationIcon }}" [alt]="locationName(loc)" />
+                  </ion-avatar>
+                  <ion-label><small>{{ locationName(loc) }}</small></ion-label>
+                </ion-chip>
+              }
+            </div>
+          </ion-item>
+        }
         @if (current().people.length) {
           <ion-item>
             <div class="people">
