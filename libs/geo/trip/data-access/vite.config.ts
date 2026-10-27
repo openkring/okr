@@ -8,6 +8,7 @@ const libraryConfig = defineConfig({
   cacheDir: '../../../../node_modules/.vite/libs/geo/trip/data-access',
   plugins: [nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
   test: {
+    setupFiles: ['./test-setup.ts'],
     coverage: {
       reportsDirectory: '../../../../coverage/libs/geo/trip/data-access',
       provider: 'v8' as const,
