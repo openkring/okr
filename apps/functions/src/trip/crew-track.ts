@@ -16,7 +16,6 @@ import {
   type LocalSection,
 } from '@okr/mobility-tracker-util';
 import {
-  CREW_TRACK_DAYS,
   resolveDiaryTargets,
   TRACKER_TRIP_TYPE,
   TripCollection,

@@ -303,6 +303,7 @@ export class TripEditForm {
     if (on === this.trackRequested()) return;
     this.dirty.emit(true);
     this.formData.update((vm) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { trackRequest: _removed, ...rest } = vm;
       return (on ? { ...rest, trackRequest: { personKey: '' } } : rest) as TripModel;
     });
