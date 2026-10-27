@@ -1,4 +1,5 @@
-import { Signal } from '@angular/core';
+// type-only: @okr/trip-util is bundled into the Cloud Functions, which must never pull @angular/core
+import type { Signal } from '@angular/core';
 
 const PFX = '@geo/trip/feature.';
 
