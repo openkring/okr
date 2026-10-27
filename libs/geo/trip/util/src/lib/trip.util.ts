@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 
-import { TripModel } from '@okr/shared-models';
+import { CREW_TRACK_DAYS, TripModel } from '@okr/shared-models';
 import { addIndexElement, convertDateFormatToString, DateFormat, getCurrentTime, getTodayStr, parseDate } from '@okr/shared-util-core';
 
 /** Editing of an ended trip is allowed for this long after its endTime. */
@@ -158,4 +158,11 @@ export function compareTripDate(a: TripModel, b: TripModel): number {
 export function formatTripTime(time: string): string {
   if (!time || time.length !== 4) return time ?? '';
   return `${time.substring(0, 2)}:${time.substring(2, 4)}`;
+}
+
+/** Last day (StoreDate) on which the crew may still see the track: `endDate` + CREW_TRACK_DAYS; '' for an open trip. */
+export function crewTrackDeadline(trip: Pick<TripModel, 'endDate'>): string {
+  if (!trip.endDate) return '';
+  const end = Date.UTC(Number(trip.endDate.slice(0, 4)), Number(trip.endDate.slice(4, 6)) - 1, Number(trip.endDate.slice(6, 8)));
+  return new Date(end + CREW_TRACK_DAYS * 86_400_000).toISOString().slice(0, 10).replace(/-/g, '');
 }

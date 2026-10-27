@@ -14,6 +14,7 @@ import {
   isTripEditable,
   findOpenTripForBoat,
   TRIP_EDIT_WINDOW_MS,
+  crewTrackDeadline,
 } from './trip.util';
 
 const TENANT = 'test-tenant';
@@ -316,4 +317,10 @@ describe('getBoatSeats', () => {
     expect(getBoatSeats(undefined)).toBe(0);
     expect(getBoatSeats('kayak')).toBe(0);
   });
+});
+
+describe('crewTrackDeadline', () => {
+  it('deadline is end + 7 days across a month end', () =>
+    expect(crewTrackDeadline({ endDate: '20261028' })).toBe('20261104'));
+  it('deadline empty for an open trip', () => expect(crewTrackDeadline({ endDate: '' })).toBe(''));
 });
