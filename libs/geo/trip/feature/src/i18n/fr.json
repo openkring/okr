@@ -54,7 +54,10 @@
       "error": "Le signalement a été enregistré, mais le bateau n'a pas pu être bloqué."
     },
     "conf": "Ton signalement a été transmis.",
-    "error": "Le signalement n’a pas pu être transmis. Merci de réessayer."
+    "error": "Le signalement n’a pas pu être transmis. Merci de réessayer.",
+    "damageRecord": {
+      "name": "Dommage : {name}"
+    }
   },
   "boatReserved": {
     "title": "Bateau indisponible",
@@ -119,7 +122,9 @@
     "note": "Afin d'éviter les abus, différents contrôles s'exécutent en arrière-plan. En cas d'abus constaté, l'administrateur est notifié.",
     "end_before_start": "La fin de la sortie est antérieure à son début.",
     "boat_required": "Choisis un bateau.",
-    "participants_required": "Choisis au moins une personne à bord."
+    "participants_required": "Choisis au moins une personne à bord.",
+    "track_carrier_missing": "Choisis qui emporte l'iPhone.",
+    "track_carrier_not_crew": "Cette personne ne fait plus partie de l'équipage."
   },
   "boat": "Bateau",
   "distance": {
@@ -291,5 +296,39 @@
       "seconds": "Compte à rebours (secondes)"
     },
     "today_trips": "Sorties d'aujourd'hui"
+  },
+  "track": {
+    "request": {
+      "label": "Enregistrer le parcours"
+    },
+    "carrier": {
+      "label": "Qui emporte l'iPhone ?",
+      "helper": "La personne a besoin de l'application sur son iPhone."
+    },
+    "route": {
+      "title": "Parcours enregistré"
+    },
+    "gpx": {
+      "download": "Télécharger en fichier GPX",
+      "error": "Le fichier n'a pas pu être créé."
+    },
+    "deadline": {
+      "date": "Disponible jusqu'au {date}. Ensuite, le parcours sera supprimé ici.",
+      "open": "Disponible jusqu'à 7 jours après la fin de la sortie."
+    },
+    "info": {
+      "title": "Qu'est-ce qu'un fichier GPX ?",
+      "what": "Le GPX est un format répandu pour les parcours enregistrés. Le fichier contient le tracé de ta sortie avec l'heure, mais ni photos ni cadence.",
+      "where": {
+        "title": "Où se retrouve le fichier ?",
+        "ios": "iPhone et iPad : tu peux l'enregistrer dans l'app « Fichiers » ou le transmettre directement à une autre app.",
+        "android": "Android : dans le dossier « Téléchargements ».",
+        "computer": "Ordinateur : dans ton dossier de téléchargements."
+      },
+      "use": {
+        "title": "À quoi peut-il te servir ?",
+        "text": "De nombreuses apps de sport et de cartes peuvent ouvrir ou importer des fichiers GPX, par exemple Strava, Garmin Connect, Komoot, l'app swisstopo ou Google Earth. Tu retrouves ainsi la sortie dans ton app habituelle ou tu la gardes."
+      }
+    }
   }
 }

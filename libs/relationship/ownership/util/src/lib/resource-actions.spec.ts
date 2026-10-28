@@ -66,4 +66,20 @@ describe('getResourceActionEntries', () => {
     const all = getResourceActionEntries(admin, owned, labels).flatMap(e => 'actions' in e ? e.actions : [e]);
     expect(all.filter(a => a.action.endsWith('delete')).map(a => a.action)).toEqual(['resource.delete', 'ownership.delete']);
   });
+
+  it('lets a privileged user lock an unlocked rowing boat', () => {
+    const privileged = { ...registered, canLock: true };
+    expect(shape(getResourceActionEntries(privileged, { ...free, isLockable: true }, labels))[0]).toBe('Ruderboot: resource.view, resource.lock');
+  });
+
+  it('offers «Sperrung aufheben» instead of «sperren» for a locked boat', () => {
+    const lockAdmin = { ...resourceAdmin, canLock: true };
+    expect(shape(getResourceActionEntries(lockAdmin, { ...free, isLockable: true, isLocked: true }, labels))[0])
+      .toBe('Ruderboot: resource.view, resource.edit, resource.unlock');
+  });
+
+  it('offers no lock without the permission or for a resource that cannot be locked', () => {
+    expect(shape(getResourceActionEntries(resourceAdmin, { ...free, isLockable: true }, labels))[0]).toBe('Ruderboot: resource.view, resource.edit');
+    expect(shape(getResourceActionEntries({ ...resourceAdmin, canLock: true }, free, labels))[0]).toBe('Ruderboot: resource.view, resource.edit');
+  });
 });

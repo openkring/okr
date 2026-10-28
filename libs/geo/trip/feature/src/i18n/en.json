@@ -54,7 +54,10 @@
       "error": "The report was filed, but the boat could not be locked."
     },
     "conf": "Your report has been submitted.",
-    "error": "The report could not be submitted. Please try again."
+    "error": "The report could not be submitted. Please try again.",
+    "damageRecord": {
+      "name": "Damage: {name}"
+    }
   },
   "boatReserved": {
     "title": "Boat unavailable",
@@ -119,7 +122,9 @@
     "note": "To prevent misuse, various checks run in the background. Should misuse be detected, the admin is notified.",
     "end_before_start": "The end of the trip is before its start.",
     "boat_required": "Select a boat.",
-    "participants_required": "Select at least one person on board."
+    "participants_required": "Select at least one person on board.",
+    "track_carrier_missing": "Choose who is taking the iPhone.",
+    "track_carrier_not_crew": "This person is no longer in the crew."
   },
   "boat": "Boat",
   "distance": {
@@ -291,5 +296,39 @@
       "seconds": "Countdown (seconds)"
     },
     "today_trips": "Trips today"
+  },
+  "track": {
+    "request": {
+      "label": "Record the route"
+    },
+    "carrier": {
+      "label": "Who is taking the iPhone?",
+      "helper": "The person needs the app on their iPhone."
+    },
+    "route": {
+      "title": "Recorded route"
+    },
+    "gpx": {
+      "download": "Download as GPX file",
+      "error": "The file could not be created."
+    },
+    "deadline": {
+      "date": "Available until {date}. After that, the route is deleted here.",
+      "open": "Available until 7 days after the end of the outing."
+    },
+    "info": {
+      "title": "What is a GPX file?",
+      "what": "GPX is a common format for recorded routes. The file contains the path of your outing with the time of day, but no photos and no stroke rate.",
+      "where": {
+        "title": "Where does the file end up?",
+        "ios": "iPhone and iPad: you can save it in the Files app or pass it straight on to another app.",
+        "android": "Android: in the Downloads folder.",
+        "computer": "Computer: in your downloads folder."
+      },
+      "use": {
+        "title": "What can you use it for?",
+        "text": "Many sports and map apps can open or import GPX files, for example Strava, Garmin Connect, Komoot, the swisstopo app or Google Earth. That way you see the outing in the app you already use, or keep it for later."
+      }
+    }
   }
 }

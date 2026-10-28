@@ -42,7 +42,8 @@
     "label": "Delete reservation",
     "confirm": "Normally a reservation should be ended, not deleted. Deletion is only intended to correct incorrect entries. Do you really want to delete the reservation?",
     "conf": "The reservation has been deleted.",
-    "error": "The reservation could not be deleted."
+    "error": "The reservation could not be deleted.",
+    "damage": "Damages and locks are not deleted because they belong to the damage list. End a lock instead."
   },
   "end": {
     "label": "End reservation",
@@ -221,6 +222,10 @@
     "club": {
       "label": "Club event",
       "description": "Reserved for a club event"
+    },
+    "damage": {
+      "label": "Damage",
+      "description": "Reported damage to a boat, without a lock."
     }
   },
   "reservation_state": {
@@ -268,5 +273,23 @@
       "title": "Chat temporarily unavailable",
       "default": "The chat is currently under maintenance. It will be back soon."
     }
+  },
+  "damage": {
+    "title": "Damage list",
+    "empty": "No damages found.",
+    "boat": "Boat",
+    "boatType": "Boat type",
+    "kind": {
+      "label": "Kind",
+      "maintenance": "Damage, locked",
+      "blocked": "Locked",
+      "damage": "Damage"
+    },
+    "from": "From",
+    "to": "To",
+    "open": "open",
+    "days": "Days locked",
+    "reason": "Reason",
+    "reporter": "Reported by"
   }
 }

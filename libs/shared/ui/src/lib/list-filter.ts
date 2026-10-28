@@ -5,7 +5,7 @@ import { IonButton, IonButtons, IonCol, IonGrid, IonIcon, IonRow, IonToolbar } f
 import { AsyncPipe } from '@angular/common';
 
 import { CategoryListModel } from '@okr/shared-models';
-import { coerceBoolean, getYear, getYearList, ListFilterName, parseListFilters } from '@okr/shared-util-core';
+import { coerceBoolean, getYear, getYearList, ListFilterName, parseListFilters, YEAR_ROLLING_WINDOW } from '@okr/shared-util-core';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { TranslatePipe } from '@okr/shared-i18n';
 
@@ -13,6 +13,7 @@ import { CategorySelect } from './category-select';
 import { Searchbar } from './searchbar';
 import { SingleTag } from './single-tag';
 import { YearSelect } from './year-select';
+import { QuarterSelect } from './quarter-select';
 import { StringSelect } from './string-select';
 
 /**
@@ -24,7 +25,7 @@ import { StringSelect } from './string-select';
  * 2. tags
  * 3. category e.g. OwnershipCategory (ocat_), MembershipCategory (mcat_)
  * 4. type 
- * 5. year
+ * 5. year (optionally followed by its quarter, see showQuarter)
  * 6. state tbd: move to db mstate_, ostate_, pstate_, rstate_, 
  * 7. strings (a string-select)
  *
@@ -41,7 +42,7 @@ import { StringSelect } from './string-select';
   standalone: true,
   imports: [
     SvgIconPipe, TranslatePipe, AsyncPipe,
-    Searchbar, SingleTag, CategorySelect, YearSelect, StringSelect,
+    Searchbar, SingleTag, CategorySelect, YearSelect, QuarterSelect, StringSelect,
     IonToolbar, IonGrid, IonRow, IonCol, IonButtons, IonButton, IonIcon
   ],
   template: `
@@ -50,7 +51,7 @@ import { StringSelect } from './string-select';
       <ion-grid class="ion-no-padding ion-align-items-center">
         <ion-row class="ion-align-items-center">
           @if(showSearchField()) {
-            <ion-col [size]="searchSize()" [attr.size-md]="compact() ? null : (mdSize() ?? '3')" class="ion-no-padding">
+            <ion-col [size]="searchSize()" [attr.size-md]="showQuarterSelect() ? '6' : compact() ? null : (mdSize() ?? '3')" class="ion-no-padding">
               <okr-searchbar (ionInput)="onSearchTermChange($event)" placeholder="{{ '@search.label' | translate | async }}" />
             </ion-col>
           }
@@ -70,9 +71,14 @@ import { StringSelect } from './string-select';
             </ion-col>
           }
           @if(showYear()) {
-            <ion-col size="6" [attr.size-md]="compact() ? null : (mdSize() ?? '2')" class="ion-no-padding">
+            <ion-col size="6" [attr.size-md]="showQuarterSelect() ? '3' : compact() ? null : (mdSize() ?? '2')" class="ion-no-padding">
               <okr-year-select [selectedYear]="selectedYear()" (selectedYearChange)="yearChanged.emit($event)" [years]="yearList()" [label]="yearLabel()!" [readOnly]="false" [showAllYears]="showAllYears()" [showRollingWindow]="showRollingWindow()" />
             </ion-col>
+            @if(showQuarterSelect()) {
+              <ion-col size="6" size-md="3" class="ion-no-padding">
+                <okr-quarter-select [selectedQuarter]="selectedQuarter()" (selectedQuarterChange)="quarterChanged.emit($event)" />
+              </ion-col>
+            }
           }
           @if(showState()) {
             <ion-col size="6" [attr.size-md]="compact() ? null : (mdSize() ?? '2')" class="ion-no-padding">
@@ -123,6 +129,7 @@ export class ListFilter {
   public selectedType = input<string>('');
   public selectedCategory = input<string>('');
   public selectedYear = input<number>(getYear());
+  public selectedQuarter = input<number>(0);
   public selectedState = input<string>('all');
   public selectedString = input<string>('');
 
@@ -132,6 +139,8 @@ export class ListFilter {
   public showAllYears = input(true);
   /** true adds the rolling window 'Demnächst' (YEAR_ROLLING_WINDOW) to the year filter */
   public showRollingWindow = input(false);
+  /** true adds a quarter filter (Alle/Q1–Q4) right after the year; it narrows the selected year */
+  public showQuarter = input(false);
   public yearLabel = input<string>();
   public compact = input(false);
   /** Uniform size-md for every filter column, overriding the per-filter defaults (compact wins). */
@@ -156,6 +165,9 @@ export class ListFilter {
   protected showCategory = computed(() => this.categories() !== undefined && this.isVisible('categories'));
   protected showYear = computed(()     => this.years() !== undefined && this.isVisible('years'));
   protected showState = computed(()    => this.states() !== undefined && this.isVisible('states'));
+  /** A quarter only means something within one concrete year — not for 'all years' or the rolling window. */
+  protected showQuarterSelect = computed(() =>
+    this.showQuarter() && this.showYear() && this.selectedYear() !== 99 && this.selectedYear() !== YEAR_ROLLING_WINDOW);
   protected yearList = computed(()     => this.years() ?? getYearList());   // default is last 8 years
   protected showStrings = computed(() => ((this.strings() && this.strings()!.length > 0) ?? false) && this.isVisible('strings'));
   protected showsAnyFilter = computed(() =>
@@ -167,7 +179,7 @@ export class ListFilter {
    */
   protected searchSize = computed(() =>
     (this.showTags() && !this.hideTagsOnMobile()) || (this.showType() && !this.hideTypesOnMobile())
-    || this.showCategory() || this.showYear() || this.showState() || this.showStrings() ? '6' : '12');
+    || this.showCategory() || this.showYear() || this.showState() || this.showStrings() ? (this.showQuarterSelect() ? '12' : '6') : '12');
 
   // outputs
   public searchTermChanged = output<string>();
@@ -175,6 +187,7 @@ export class ListFilter {
   public typeChanged = output<string>();
   public categoryChanged = output<string>();
   public yearChanged = output<number>();
+  public quarterChanged = output<number>();
   public stateChanged = output<string>();
   public viewToggleChanged = output<boolean>();
   public stringsChanged = output<string>();

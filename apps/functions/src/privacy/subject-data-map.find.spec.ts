@@ -243,6 +243,18 @@ describe('find() query shapes', () => {
     expect(stats.path).toEqual([`doc:${CTX.personKey}`, 'collection:years']);
   });
 
+  // spec 1.121 / 1.123: recordings and crew copies are owned via track.personKey (RAW okey);
+  // participants is [] on them, so the Logbuch `trips` row never reaches them
+  it('finds tracker trips (recordings and crew copies) by the RAW personKey on track.personKey', () => {
+    const r = record('trips/tracker');
+    expect(r.root).toBe('trips');
+    expect(r.predicates).toEqual([{ field: 'track.personKey', op: '==', value: CTX.personKey }]);
+    const e = SUBJECT_DATA_MAP.find((x) => x.collection === 'trips/tracker');
+    expect(e?.tier).toBe('T2');
+    expect(e?.onErasure).toBe('delete');
+    expect(e?.resolve).toBeDefined();
+  });
+
   it('reaches esignAudit through a collection-group query', () => {
     const r = record('esignAudit');
     expect(r.kind).toBe('collectionGroup');
@@ -269,6 +281,7 @@ describe('find() query shapes', () => {
       'users/fcmTokens': 'users',
       seen: 'users',
       stats_members: 'stats_members',
+      'trips/tracker': 'trips',
       esignAudit: 'deletions',
     };
     for (const e of SUBJECT_DATA_MAP) {

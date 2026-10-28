@@ -3,19 +3,20 @@ import { toObservable } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { ToastController } from '@ionic/angular';
 import { Capacitor, type PluginListenerHandle } from '@capacitor/core';
+import { PushNotifications } from '@capacitor/push-notifications';
 import { patchState, signalStore, withMethods, withProps, withState } from '@ngrx/signals';
 import { distinctUntilChanged, filter } from 'rxjs';
 
-import { TransportMode } from '@okr/shared-models';
+import { AvatarInfo, TransportMode, TripModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { DateFormat, generateRandomString, getCurrentTime, getTodayStr } from '@okr/shared-util-core';
-import { NativeLocation, PhotoAccess, queryPedometerSteps, ThumbSourceMissingError, TrackDb, TrackerLocation, TrackerPhotos, TrackService } from '@okr/mobility-tracker-data-access';
+import { DateFormat, fill, generateRandomString, getCurrentTime, getTodayStr } from '@okr/shared-util-core';
+import { LogbuchLinkResult, NativeLocation, PhotoAccess, queryPedometerSteps, ThumbSourceMissingError, TrackDb, TrackerLocation, TrackerPhotos, TrackService } from '@okr/mobility-tracker-data-access';
 import {
   accumulateDistance, allThumbsUploaded, alignSections, correctedTrack, DetectionInput, hasNoPoints, LocalSection, sameTrackContent, DetectState, initialDetectState, LocalTrack,
   mergePhotos, MotionActivity, needsThumbUpload, needsUpload, nextThumbNumber, photoWindowEnd, placePhotos, nextSectionStartPoint, nextSections, pendingUploadOwner, resumeDecision, sectionsAfterPause, sessionDetectStep, StartWarning, localStoreDate, trackTenants,
   startWarning, summarize, toTrackPoint, TRACK_PROFILES, TRACKER_I18N_KEYS, TrackerI18n, TrackPoint, withPhotoHidden, withThumbPaths,
-  LIVE_SPLIT_WINDOW_MS, liveSplitS, sectionMeta, toLocalSections, withQueriedSteps,
+  LIVE_SPLIT_WINDOW_MS, liveSplitS, sectionMeta, toLocalSections, withQueriedSteps, hasPendingLogbuchLink, isTransientLinkError, withoutLogbuchLink,
 } from '@okr/mobility-tracker-util';
 
 /**
@@ -67,7 +68,18 @@ export interface TrackerSession {
   recentFixes: { speed: number | null; time: number }[]; // fixes of the last 10 s (live split)
   calibrationOpen: boolean; // a native calibration recording is running
   strokesOn: boolean; // native stroke detection is on
+  links: Map<string, Promise<LocalTrack | undefined>>; // track key -> its running Logbuch link attempt (one at a time)
+  pushTaps: boolean; // the native push-tap listener (trackRequest / trackStop) is registered
 }
+
+/** A Logbuch trip to link a recording to (spec 1.123 §4): its key and the boat. */
+export interface LogbuchLink {
+  logbuchKey: string;
+  resource?: AvatarInfo;
+}
+
+/** Push types of the crew track (spec 1.123 §4.1, §4.4) whose tap opens the tracker. */
+const TRACKER_PUSH_TYPES = ['trackRequest', 'trackStop'];
 
 const LIVE_STEPS_INTERVAL_MS = 15_000;
 
@@ -100,6 +112,7 @@ export const TrackerStore = signalStore(
         detect: initialDetectState('foot'), lastPoint: undefined, sectionHasPoints: false, lastActivity: undefined, lastFix: undefined,
         handles: [], queue: Promise.resolve(), stopping: false, init: undefined, ownerWatch: false, thumbsInFlight: new Set<string>(),
         sectionStartMs: undefined, lastStepsQueryMs: 0, recentFixes: [], calibrationOpen: false, strokesOn: false,
+        links: new Map(), pushTaps: false,
       } as TrackerSession,
     };
   }),
@@ -306,6 +319,9 @@ export const TrackerStore = signalStore(
       const uid = store.appStore.fbUser()?.uid;
       try {
         if (!personKey || !uid) throw new Error('not signed in');
+        // a Logbuch link that failed at start (offline) is tried once more before the upload (spec 1.123 §4)
+        const before = await findTrack(t.key);
+        if (before && hasPendingLogbuchLink(before)) await linkTrack(t.key);
         // read AND issue inside the queue: batches reach Firestore in queue order, so a later correction or an
         // archive of this track always lands after this upload (upload() has no await before its commit)
         const snap = await enqueue(async () => {
@@ -485,6 +501,87 @@ export const TrackerStore = signalStore(
     }
 
     /**
+     * Runs the link transaction for a track that carries a `logbuchKey` not yet confirmed (spec 1.123 §4.3), never on
+     * the queue (the transaction waits for the network). ok → `logbuchLinked`, and a finished track is uploaded again
+     * (callers start it) so the trip gets `track.logbuchKey`; taken or not linkable → the link is dropped with a toast
+     * naming the track and the track goes on unlinked. A transient error (offline, timeout: isTransientLinkError)
+     * leaves it pending for the next upload; any other error (permission-denied, not-found, …) can never succeed and
+     * is treated like a refusal, so a link is never stuck pending. One attempt per track
+     * at a time. @returns the track as written, undefined when nothing changed
+     */
+    function linkTrack(key: string): Promise<LocalTrack | undefined> {
+      const running = s.links.get(key);
+      if (running) return running;
+      const attempt = (async (): Promise<LocalTrack | undefined> => {
+        const t = await findTrack(key);
+        const personKey = store.appStore.currentUser()?.personKey;
+        if (!t?.logbuchKey || t.logbuchLinked || !personKey) return undefined;
+        const logbuchKey = t.logbuchKey;
+        let result: LogbuchLinkResult;
+        try {
+          result = await store.trackService.linkLogbuch(logbuchKey, key, personKey);
+        } catch (error) {
+          console.error('TrackerStore.linkLogbuch', error);
+          if (isTransientLinkError(error)) return undefined;
+          result = { ok: false, recorderName: '' };
+        }
+        const written = await enqueue(async () => {
+          const now = await findTrack(key);
+          if (!now || now.logbuchKey !== logbuchKey || now.logbuchLinked) return undefined;
+          const next: LocalTrack = result.ok
+            ? { ...now, logbuchLinked: true, uploaded: now.state === 'done' ? false : now.uploaded }
+            : withoutLogbuchLink(now);
+          await store.db.updateTrack(next);
+          if (store.active()?.key === key) patchState(store, { active: next });
+          return next;
+        });
+        if (!result.ok && written) void toastLinkRefused(written.name, result.recorderName);
+        return written;
+      })();
+      s.links.set(key, attempt);
+      void attempt.finally(() => s.links.delete(key));
+      return attempt;
+    }
+
+    /**
+     * «{track}: Diese Ausfahrt wird bereits von {name} aufgezeichnet. …», or that the trip cannot be linked any more.
+     * Names the track: the toast may come from a retry at app start, long after the recording.
+     */
+    async function toastLinkRefused(trackName: string, recorderName: string): Promise<void> {
+      const key = recorderName === '' ? TRACKER_I18N_KEYS.link_unavailable_track : TRACKER_I18N_KEYS.link_taken_track;
+      await toastText(fill(await store.i18nService.translateOnce(key), { track: trackName, name: recorderName }));
+    }
+
+    async function toastText(message: string): Promise<void> {
+      try {
+        const t = await store.toastController.create({ message, duration: 4000 });
+        await t.present();
+      } catch (error) {
+        console.error('TrackerStore.toast', error);
+      }
+    }
+
+    /**
+     * Native push tap (spec 1.123 §4.1/§4.4): «Strecke aufzeichnen?» opens the tracker with the Logbuch trip, «Aufzeichnung
+     * stoppen?» the tracker. Only these two types: every other push is the chat lib's business (its generic listener
+     * may navigate to the same url as well, which is harmless).
+     */
+    async function listenForPushTaps(): Promise<void> {
+      if (s.pushTaps || !Capacitor.isNativePlatform()) return;
+      s.pushTaps = true;
+      try {
+        await PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
+          const data = action.notification.data as Record<string, string> | undefined;
+          const url = data?.['url'];
+          if (url && TRACKER_PUSH_TYPES.includes(data?.['type'] ?? '')) void store.router.navigateByUrl(url);
+        });
+      } catch (error) {
+        s.pushTaps = false;
+        console.error('TrackerStore.listenForPushTaps', error);
+      }
+    }
+
+    /**
      * A short, non-blocking toast; the text is awaited (the lazy i18n scope may not be loaded yet at app start).
      * `unless` is checked right before it shows (e.g. the person is already on the page the action leads to).
      */
@@ -508,6 +605,10 @@ export const TrackerStore = signalStore(
     async function uploadPending(): Promise<void> {
       try {
         const tracks = await store.db.list();
+        // a recording uploaded while its Logbuch link was still pending: link, then upload it again with the link
+        for (const t of tracks.filter((x) => x.state === 'done' && x.uploaded && hasPendingLogbuchLink(x))) {
+          void linkTrack(t.key).then((linked) => (linked && needsUpload(linked) ? uploadTrack(linked, true) : undefined));
+        }
         const pending = tracks.filter(needsUpload);
         for (const t of tracks.filter(needsThumbUpload)) void uploadThumbs(t.key);
         const results = await Promise.all(pending.map((t) => uploadTrack(t, true)));
@@ -581,6 +682,7 @@ export const TrackerStore = signalStore(
        * silently whenever the owner (person + auth uid) becomes known — not here: at app start nobody is signed in yet.
        */
       init(): Promise<void> {
+        void listenForPushTaps(); // first: a tap that cold-started the app is delivered once a listener exists
         s.init ??= (async () => {
           await refreshWarning();
           await store.db.open();
@@ -606,8 +708,11 @@ export const TrackerStore = signalStore(
       /**
        * mode undefined: detect, beginning with 'foot'. Only row, ski and ship lock detection (changes become proposals).
        * A track still waiting as `resumable` is finished first (done, uploaded silently).
+       * `link`: the Logbuch trip this recording belongs to (spec 1.123 §4). The link transaction runs right after the
+       * local track exists (detached): offline the track keeps `logbuchKey` and the link is tried again before the
+       * upload; a trip someone else records already gives a toast and this track goes on unlinked.
        */
-      async start(mode?: TransportMode): Promise<void> {
+      async start(mode?: TransportMode, link?: LogbuchLink): Promise<void> {
         const current = store.active();
         if (current && current.state !== 'done') return;
         const p = await refreshWarning();
@@ -649,15 +754,81 @@ export const TrackerStore = signalStore(
             startedAt: Date.now(),
             sections: [{ mode: m, detected: !chosenByHand }],
           };
+          if (link?.logbuchKey) track.logbuchKey = link.logbuchKey;
+          if (link?.resource) track.resource = link.resource;
           await store.db.createTrack(track);
           patchState(store, { active: track, currentMode: m, points: 0, distanceM: 0, proposal: undefined, uploadError: undefined });
           if (!(await startPlugin(m))) {
             // no GPS running: drop the empty track instead of leaving a ghost 'recording' one
             await store.db.remove(track.key);
             patchState(store, { active: undefined, currentMode: undefined });
+          } else if (track.logbuchKey) {
+            void linkTrack(track.key); // not awaited: it queues its own write behind this task
           }
           await syncCalibration();
         });
+      },
+
+      /**
+       * Links a finished recording afterwards (spec 1.123 §4.2) to an overlapping Logbuch trip: the transaction on the
+       * Logbuch trip first (needs the network; throws offline), then the recording — a track on this device is changed
+       * in TrackDb and uploaded again (the upload writes `track.logbuchKey` and the boat), an uploaded-only one gets a
+       * detached patch. @returns the transaction's answer (taken: the recorder's first name)
+       */
+      async linkLogbuch(key: string, logbuch: TripModel): Promise<LogbuchLinkResult> {
+        const personKey = store.appStore.currentUser()?.personKey;
+        if (!personKey) throw new Error('not signed in');
+        const result = await store.trackService.linkLogbuch(logbuch.okey, key, personKey);
+        if (!result.ok) return result;
+        const written = await enqueue(async () => {
+          const now = await findTrack(key);
+          if (!now) {
+            // issued on the queue: lands after any upload of this track already issued
+            void store.trackService.setLogbuchLink(key, { logbuchKey: logbuch.okey, resource: logbuch.resource })
+              .catch((error: unknown) => console.error('TrackerStore.setLogbuchLink', error));
+            return undefined;
+          }
+          const next: LocalTrack = { ...now, logbuchKey: logbuch.okey, logbuchLinked: true, uploaded: now.state === 'done' ? false : now.uploaded };
+          if (logbuch.resource) next.resource = logbuch.resource;
+          await store.db.updateTrack(next);
+          if (store.active()?.key === key) patchState(store, { active: next });
+          return next;
+        });
+        if (written && needsUpload(written)) void uploadTrack(written, true);
+        return result;
+      },
+
+      /**
+       * «Verbindung zum Logbuch lösen» (spec 1.123 §4.3): the Logbuch trip forgets this recording (needs the network;
+       * throws offline), then the recording loses `track.logbuchKey` — a track on this device in TrackDb and by its next
+       * upload (which deletes the field), an uploaded-only one by a detached patch. The crew view is gone at once.
+       * A link still pending is dropped even offline (the Logbuch transaction is tried, its failure ignored): a pending
+       * link is never a dead end.
+       */
+      async unlinkLogbuch(key: string, logbuchKey: string): Promise<void> {
+        const local = await findTrack(key);
+        const pending = !!local && !local.logbuchLinked; // a link still waiting for its transaction
+        try {
+          await store.trackService.unlinkLogbuch(logbuchKey, key);
+        } catch (error) {
+          // a link still pending never reached the Logbuch trip for sure: it is dropped locally even offline (a
+          // stale trackKey there is harmless — the server trusts it only while the recording points back)
+          if (!pending) throw error;
+          console.error('TrackerStore.unlinkLogbuch (pending)', error);
+        }
+        const written = await enqueue(async () => {
+          const now = await findTrack(key);
+          if (!now) {
+            void store.trackService.setLogbuchLink(key, undefined)
+              .catch((error: unknown) => console.error('TrackerStore.setLogbuchLink', error));
+            return undefined;
+          }
+          const next: LocalTrack = { ...withoutLogbuchLink(now), uploaded: now.state === 'done' ? false : now.uploaded };
+          await store.db.updateTrack(next);
+          if (store.active()?.key === key) patchState(store, { active: next });
+          return next;
+        });
+        if (written && needsUpload(written)) void uploadTrack(written, true);
       },
 
       async pause(): Promise<void> {

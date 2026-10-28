@@ -3,6 +3,8 @@
   "allYears": "Tutti gli anni",
   "upcomingMonths": "Prossimamente",
   "year": "Anno",
+  "quarter": "Trimestre",
+  "allQuarters": "Tutti",
   "copy": {
     "conf": "Il valore è stato copiato.",
     "label": "Copia"

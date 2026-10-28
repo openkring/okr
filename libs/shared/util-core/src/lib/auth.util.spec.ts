@@ -5,6 +5,7 @@ import {
   hasRole,
   isAdmin,
   isKioskOnly,
+  shouldRedirectKiosk,
   isPrivileged,
   isPrivilegedOr,
   isSensitiveFieldVisible,
@@ -419,6 +420,24 @@ describe('auth.util', () => {
 
     it('returns false for an undefined user', () => {
       expect(isKioskOnly(undefined)).toBe(false);
+    });
+  });
+
+  describe('shouldRedirectKiosk', () => {
+    it('redirects a kiosk-only user once the app is ready', () => {
+      expect(shouldRedirectKiosk(true, createUserWithRoles({ kiosk: true }))).toBe(true);
+    });
+
+    it('passes a kiosk-only user before the app is ready (offline cold start)', () => {
+      expect(shouldRedirectKiosk(false, createUserWithRoles({ kiosk: true }))).toBe(false);
+    });
+
+    it('passes a member with more roles than kiosk', () => {
+      expect(shouldRedirectKiosk(true, createUserWithRoles({ kiosk: true, registered: true }))).toBe(false);
+    });
+
+    it('passes when no user is loaded', () => {
+      expect(shouldRedirectKiosk(true, undefined)).toBe(false);
     });
   });
 

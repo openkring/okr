@@ -27,7 +27,11 @@ type OwnershipSortField = 'owner' | 'name' | 'type' | 'duration';
     IonLabel, IonContent, IonItem, IonAvatar, IonList, IonPopover
   ],
   providers: [OwnershipStore],
-  styles: [`.clickable { cursor: pointer; user-select: none; }`],
+  styles: [`
+    .clickable { cursor: pointer; user-select: none; }
+    /* a locked boat (damage report or «sperren»): its type icon on a red disc */
+    ion-icon.locked { background: var(--ion-color-danger); color: var(--ion-color-danger-contrast); border-radius: 50%; padding: 4px; }
+  `],
   template: `
     <ion-header>
     <ion-toolbar color="secondary">
@@ -94,7 +98,7 @@ type OwnershipSortField = 'owner' | 'name' | 'type' | 'duration';
           @for(ownership of filteredOwnerships(); track ownership.okey) {
             @if(listId() === 'scsBoats') {
               <ion-item class="ion-text-wrap" (click)="showActions(ownership)">
-                <ion-icon slot="start" src="{{ getIcon(ownership) | svgIcon }}" />
+                <ion-icon slot="start" src="{{ getIcon(ownership) | svgIcon }}" [class.locked]="store.isLocked(ownership.resourceKey)" />
                 <ion-label>{{ ownership.resourceName }}</ion-label>
                 <ion-label>{{ typeLabel(ownership.resourceSubType) | translate | async }}</ion-label>
                 <ion-label class="ion-hide-md-down">{{ ownership.validFrom | duration:ownership.validTo }}</ion-label>

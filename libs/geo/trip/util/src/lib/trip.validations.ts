@@ -57,4 +57,20 @@ export const tripValidationSuite = staticSuite((trip: TripModel) => {
       enforce(count === seats || count === seats - 1).equals(true);
     }
   });
+
+  // a requested recording needs a carrier, and the carrier must still be in the crew
+  // (the select derives its options from the participants, so removing the person afterwards lands here)
+  // Only for a not-yet-saved trip: newTrip() starts every trip as 'draft' and the add path flips it to
+  // 'open' on save, so a stored trip is never 'draft'. The form shows these notes in add mode only, so an
+  // edit/end of an existing trip whose recorder left the crew must not be blocked by a rule nobody sees.
+  omitWhen(!trip.trackRequest || trip.state !== 'draft', () => {
+    test('trackRequest', '@geo/trip/feature.warning.track_carrier_missing', () => {
+      enforce(trip.trackRequest?.personKey ?? '').isNotBlank();
+    });
+    omitWhen(!trip.trackRequest?.personKey, () => {
+      test('trackRequest', '@geo/trip/feature.warning.track_carrier_not_crew', () => {
+        enforce((trip.participants ?? []).some((p) => p.key === trip.trackRequest?.personKey)).equals(true);
+      });
+    });
+  });
 });

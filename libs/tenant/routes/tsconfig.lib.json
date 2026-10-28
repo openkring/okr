@@ -80,6 +80,7 @@
     { "path": "../../instruments/feature/tsconfig.lib.json" },
     { "path": "../../instruments/whiteboard/feature/tsconfig.lib.json" },
     { "path": "../../mobility/flighttracker/feature/tsconfig.lib.json" },
+    { "path": "../../mobility/tracker/feature/tsconfig.lib.json" },
     { "path": "../../profile/feature/tsconfig.lib.json" },
     { "path": "../../project/project/feature/tsconfig.lib.json" },
     { "path": "../../project/task/feature/tsconfig.lib.json" },

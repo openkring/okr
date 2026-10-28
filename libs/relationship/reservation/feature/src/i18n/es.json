@@ -42,7 +42,8 @@
     "label": "Eliminar reserva",
     "confirm": "Normalmente una reserva debería finalizarse, pero no eliminarse. La eliminación solo está prevista para corregir entradas erróneas. ¿Realmente desea eliminar la reserva?",
     "conf": "La reserva se ha eliminado.",
-    "error": "La reserva no se pudo eliminar."
+    "error": "La reserva no se pudo eliminar.",
+    "damage": "Los daños y bloqueos no se eliminan porque forman parte de la lista de daños. Mejor termina el bloqueo."
   },
   "end": {
     "label": "Finalizar reserva",
@@ -221,6 +222,10 @@
     "club": {
       "label": "Evento del club",
       "description": "Reservado para un evento del club"
+    },
+    "damage": {
+      "label": "Daño",
+      "description": "Daño notificado en un barco, sin bloqueo."
     }
   },
   "reservation_state": {
@@ -268,5 +273,23 @@
       "title": "Chat no disponible temporalmente",
       "default": "El chat está en mantenimiento. Volverá pronto."
     }
+  },
+  "damage": {
+    "title": "Lista de daños",
+    "empty": "No se encontraron daños.",
+    "boat": "Barco",
+    "boatType": "Tipo de barco",
+    "kind": {
+      "label": "Tipo",
+      "maintenance": "Daño, bloqueado",
+      "blocked": "Bloqueado",
+      "damage": "Daño"
+    },
+    "from": "Desde",
+    "to": "Hasta",
+    "open": "abierto",
+    "days": "Días bloqueado",
+    "reason": "Motivo",
+    "reporter": "Notificado por"
   }
 }

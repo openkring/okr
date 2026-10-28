@@ -1,4 +1,5 @@
-import { ReservationApplyModel, ReservationModel, ResourceModel, UserModel } from '@okr/shared-models';
+import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
+import { AvatarInfo, ReservationApplyModel, ReservationModel, ResourceModel, UserModel } from '@okr/shared-models';
 import { addIndexElement, DateFormat, getAvatarInfo, getAvatarInfoForCurrentUser, getTodayStr, isAfterDate, isAfterOrEqualDate, isType } from '@okr/shared-util-core';
 
 export function isReservation(reservation: unknown, tenantId: string): reservation is ReservationModel {
@@ -70,6 +71,52 @@ export function findActiveReservationForResource(
     reservation.resource?.key === resourceKey &&
     LOCK_REASONS.includes(reservation.reason) &&
     isReservationActiveNow(reservation, today));
+}
+
+/**
+ * All reservations that currently lock this resource. A boat can carry more than one (a damage
+ * report and a lock from the boat list), and «Sperrung aufheben» must end every one of them —
+ * ending only the first would leave the boat refused in the Logbuch.
+ */
+export function findActiveLockReservations(
+  reservations: ReservationModel[],
+  resourceKey: string,
+  today = getTodayStr(),
+): ReservationModel[] {
+  if (!resourceKey) return [];
+  return reservations.filter(reservation =>
+    reservation.resource?.key === resourceKey &&
+    LOCK_REASONS.includes(reservation.reason) &&
+    isReservationActiveNow(reservation, today));
+}
+
+/**
+ * An open-ended lock reservation: takes the resource out of service from today until somebody
+ * ends it. `description` carries the reason — it is what a member sees when the Logbuch refuses
+ * the boat, so the caller must pass a non-empty text.
+ * @param reason 'maintenance' for a defect (damage report), 'blocked' for any other lock
+ */
+export function newLockReservation(
+  tenantId: string,
+  resource: AvatarInfo,
+  reserver: AvatarInfo | undefined,
+  name: string,
+  description: string,
+  reason: 'maintenance' | 'blocked' = 'blocked',
+): ReservationModel {
+  const reservation = new ReservationModel(tenantId);
+  reservation.name = name;
+  reservation.reserver = reserver;
+  reservation.resource = resource;
+  reservation.reason = reason;
+  reservation.description = description;
+  reservation.state = 'active';
+  reservation.fullDay = true;
+  reservation.durationMinutes = 1440;
+  reservation.startDate = getTodayStr();
+  reservation.startTime = '';
+  reservation.endDate = END_FUTURE_DATE_STR;
+  return reservation;
 }
 
 /*-------------------------- search index --------------------------------*/

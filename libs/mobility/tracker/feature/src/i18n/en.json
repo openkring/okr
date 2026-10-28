@@ -118,5 +118,25 @@
     "check": "Check",
     "check_result": "Count in app code: {ts} · in iPhone code: {native}",
     "close": "Close"
+  },
+  "link": {
+    "preset": "Logbook: {trip}",
+    "choose": "Logbook outing",
+    "without": "No logbook",
+    "remove": "Remove logbook outing",
+    "taken": "{name} is already recording this outing.",
+    "unavailable": "This logbook outing can no longer be linked.",
+    "connect": "Link to a logbook outing",
+    "choose_title": "Which outing?",
+    "none_found": "No logbook outing you were on matches this track.",
+    "linked": "Linked to logbook: {trip}",
+    "linked_unknown": "Linked to a logbook outing",
+    "unlink": "Unlink from the logbook",
+    "unlink_confirm": "Your crew will no longer see this track. Do you want to unlink it?",
+    "done": "The track is now linked to the logbook.",
+    "offline": "This needs an internet connection. Please try again later.",
+    "pending": "Will be linked to the logbook as soon as you are online.",
+    "taken_track": "“{track}”: {name} is already recording this outing. Your track stays without the logbook.",
+    "unavailable_track": "“{track}”: this logbook outing can no longer be linked. Your track stays without the logbook."
   }
 }

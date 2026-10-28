@@ -3,6 +3,8 @@
   "allYears": "All years",
   "upcomingMonths": "Upcoming",
   "year": "Year",
+  "quarter": "Quarter",
+  "allQuarters": "All",
   "copy": {
     "conf": "The value was copied.",
     "label": "Copy"

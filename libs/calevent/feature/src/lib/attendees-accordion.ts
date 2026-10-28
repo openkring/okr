@@ -1,16 +1,18 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonItem, IonLabel, IonList, ModalController, ToastController } from '@ionic/angular';
 
-import { Attendee, CalEventModel, MembershipModel, UserModel } from '@okr/shared-models';
+import { Attendee, CalEventModel, InvitationCollection, InvitationModel, MembershipModel, UserModel } from '@okr/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { CountPill, EmptyList, ImgDirective } from '@okr/shared-ui';
-import { coerceBoolean, fill, getAttendanceColor, getAttendanceIcon, isOngoing, isPerson } from '@okr/shared-util-core';
+import { coerceBoolean, fill, getAttendanceColor, getAttendanceIcon, getSystemQuery, isOngoing, isPerson } from '@okr/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
+import { InvitationService } from '@okr/relationship-invitation-data-access';
 import { CALEVENT_I18N_KEYS, CaleventI18n, isAttendanceClosed, splitAttendees } from '@okr/calevent-util';
 
 import { AvatarPipe } from '@okr/avatar-ui';
@@ -125,8 +127,10 @@ export class AttendeesAccordion {
   private modalController = inject(ModalController);
   private toastController = inject(ToastController);
   private firestoreService = inject(FirestoreService);
+  private invitationService = inject(InvitationService);
   protected readonly i18n = inject(I18nService).translateAll(CALEVENT_I18N_KEYS) as CaleventI18n;
-  private imgixBaseUrl = inject(ENV).services.imgixBaseUrl;
+  private env = inject(ENV);
+  private imgixBaseUrl = this.env.services.imgixBaseUrl;
 
   // inputs
   public calevent = input.required<CalEventModel>();
@@ -171,7 +175,9 @@ export class AttendeesAccordion {
    */
   protected async showActions(attendee: Attendee): Promise<void> {
     // attendance can no longer be changed for past, locked or cancelled events
-    if (this.isReadOnly() || isAttendanceClosed(this.calevent())) return;
+    if (isAttendanceClosed(this.calevent())) return;
+    // read-only (view modal, edit modal of a non-organiser): only the user's own row stays answerable
+    if (this.isReadOnly() && !this.isMe(attendee)) return;
     const actionSheetOptions = createActionSheetOptions(this.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, attendee);
     await this.executeActions(actionSheetOptions, attendee);
@@ -183,7 +189,7 @@ export class AttendeesAccordion {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, attendee: Attendee): void {
     // first person for my own attendance, third person when the organiser changes someone else's
-    const isMe = attendee.person.key === this.currentUser()?.personKey;
+    const isMe = this.isMe(attendee);
     const subscribe = isMe ? this.i18n.invitation_subscribe() : this.i18n.attendance_subscribe();
     const unsubscribe = isMe ? this.i18n.invitation_unsubscribe() : this.i18n.attendance_unsubscribe();
     if (attendee.state !== 'accepted') {
@@ -211,10 +217,10 @@ export class AttendeesAccordion {
       if (!data) return;
       switch (data.action) {
         case 'calevent.subscribe':
-          await this.changeState(attendee, 'accepted');
+          await this.changeAnyState(attendee, 'accepted');
           break;
         case 'calevent.unsubscribe':
-          await this.changeState(attendee, 'declined');
+          await this.changeAnyState(attendee, 'declined');
           break;
       }
     }
@@ -268,11 +274,61 @@ export class AttendeesAccordion {
    * Same rule as CalEventStore.changeAttendanceState.
    */
   private async changeState(attendee: Attendee, newState: 'accepted' | 'declined'): Promise<void> {
+    await this.saveAttendees(this.withState(attendee, newState));
+  }
+
+  private withState(attendee: Attendee, newState: 'accepted' | 'declined'): Attendee[] {
     if (newState === 'accepted' && attendee.state !== 'accepted') {
-      await this.saveAttendees([...this.attendees().filter(a => a !== attendee), { ...attendee, state: newState }]);
+      return [...this.attendees().filter(a => a !== attendee), { ...attendee, state: newState }];
+    }
+    return this.attendees().map(a => a === attendee ? { ...a, state: newState } : a);
+  }
+
+  private async changeAnyState(attendee: Attendee, newState: 'accepted' | 'declined'): Promise<void> {
+    if (this.isMe(attendee)) {
+      await this.changeOwnState(attendee, newState);
+    } else {
+      await this.changeState(attendee, newState);
+    }
+  }
+
+  /**
+   * The current user answers for themselves — allowed even when the accordion is read-only.
+   * Same routing as CalEventStore.changeOwnAttendance: an invitation, if the user holds one, is
+   * answered through InvitationService.respond (answer trail + the attendee entry, in a transaction);
+   * otherwise the attendee list is written directly.
+   */
+  private async changeOwnState(attendee: Attendee, newState: 'accepted' | 'declined'): Promise<void> {
+    const invitation = await this.findOwnInvitation();
+    if (!invitation) {
+      await this.changeState(attendee, newState);
       return;
     }
-    await this.saveAttendees(this.attendees().map(a => a === attendee ? { ...a, state: newState } : a));
+    if (invitation.isLocked) {
+      error(this.toastController, this.i18n.invitation_locked_hint());
+      return;
+    }
+    // show the answer at once; the service writes it to Firestore
+    const attendees = this.withState(attendee, newState);
+    this.calevent().attendees = attendees;
+    this.attendees.set(attendees);
+    await this.invitationService.respond(invitation, newState, this.currentUser());
+  }
+
+  /** The current user's invitation to this occurrence, if any (same cached query as CalEventStore). */
+  private async findOwnInvitation(): Promise<InvitationModel | undefined> {
+    const personKey = this.currentUser()?.personKey;
+    const caleventKey = this.calevent().okey;
+    if (!personKey || !caleventKey) return undefined;
+    const invitations = await firstValueFrom(
+      this.firestoreService.searchData<InvitationModel>(InvitationCollection, getSystemQuery(this.env.tenantId), 'inviteeKey', 'asc')
+    );
+    return invitations.find(inv => inv.inviteeKey === personKey && inv.caleventKey === caleventKey);
+  }
+
+  private isMe(attendee: Attendee): boolean {
+    const personKey = this.currentUser()?.personKey;
+    return !!personKey && attendee.person.key === personKey;
   }
 
   /** Removes the attendee from the calevent (organiser/admin only). */

@@ -118,5 +118,25 @@
     "check": "Vérifier",
     "check_result": "Comptage code app : {ts} · code iPhone : {native}",
     "close": "Fermer"
+  },
+  "link": {
+    "preset": "Journal de bord : {trip}",
+    "choose": "Sortie du journal de bord",
+    "without": "Sans journal de bord",
+    "remove": "Retirer la sortie du journal de bord",
+    "taken": "{name} enregistre déjà cette sortie.",
+    "unavailable": "Cette sortie du journal de bord ne peut plus être reliée.",
+    "connect": "Relier à une sortie du journal de bord",
+    "choose_title": "Quelle sortie ?",
+    "none_found": "Aucune sortie du journal de bord à laquelle tu as participé ne correspond à ce parcours.",
+    "linked": "Relié au journal de bord : {trip}",
+    "linked_unknown": "Relié à une sortie du journal de bord",
+    "unlink": "Délier du journal de bord",
+    "unlink_confirm": "Ton équipage ne verra plus ce parcours. Veux-tu supprimer le lien ?",
+    "done": "Le parcours est maintenant relié au journal de bord.",
+    "offline": "Cela nécessite une connexion internet. Réessaie plus tard.",
+    "pending": "Sera relié au journal de bord dès que tu seras en ligne.",
+    "taken_track": "« {track} » : {name} enregistre déjà cette sortie. Ton parcours reste sans journal de bord.",
+    "unavailable_track": "« {track} » : cette sortie du journal de bord ne peut plus être reliée. Ton parcours reste sans journal de bord."
   }
 }
