@@ -341,13 +341,17 @@ describe('crewCleanupDecision', () => {
   });
   it('a crew copy is never deleted', () =>
     expect(crewCleanupDecision(lb(), rec({}, { copyOf: 'x' }), 'lb1', T, after).delete).toBe(false));
-  it('back-dated Logbuch trip -> unlink, but no delete before the recording\'s own deadline', () => {
+  it('back-dated Logbuch trip -> link and recording kept until the recording\'s own deadline, then unlink + delete', () => {
     const backdated = lb({ endDate: '20261001' }); // Logbuch deadline 20261008, recording ended 20261020 -> 20261027
-    expect(crewCleanupDecision(backdated, rec(), 'lb1', T, before)).toMatchObject({ unlink: true, unlinkRecording: true, delete: false });
-    expect(crewCleanupDecision(backdated, rec(), 'lb1', T, after)).toMatchObject({ delete: true });
+    expect(crewCleanupDecision(backdated, rec(), 'lb1', T, before)).toMatchObject({ unlink: false, unlinkRecording: false, delete: false });
+    expect(crewCleanupDecision(backdated, rec(), 'lb1', T, after)).toMatchObject({ unlink: true, unlinkRecording: true, delete: true });
   });
-  it('recording without a readable end -> never deleted', () =>
-    expect(crewCleanupDecision(lb(), rec({}, { endedAt: '' }), 'lb1', T, after).delete).toBe(false));
+  it('back-dated Logbuch trip, recording points elsewhere -> Logbuch unlinked on its own deadline', () =>
+    expect(crewCleanupDecision(lb({ endDate: '20261001' }), rec({}, { logbuchKey: 'other' }), 'lb1', T, before)).toMatchObject({ unlink: true, unlinkRecording: false, delete: false }));
+  it('recording without a readable end -> falls back to the Logbuch deadline', () => {
+    expect(crewCleanupDecision(lb(), rec({}, { endedAt: '' }), 'lb1', T, before)).toMatchObject({ unlink: false, delete: false });
+    expect(crewCleanupDecision(lb(), rec({}, { endedAt: '' }), 'lb1', T, after)).toMatchObject({ unlink: true, delete: true });
+  });
   it('open trip never expires', () =>
     expect(crewCleanupDecision(lb({ state: 'open', endDate: '' }), rec(), 'lb1', T, after)).toMatchObject({ copy: false, unlink: false, delete: false }));
 });

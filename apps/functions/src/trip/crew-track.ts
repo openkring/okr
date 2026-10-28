@@ -470,7 +470,7 @@ export function logbuchCleanupDeadline(trip: Pick<TripModel, 'endDate' | 'startD
 /**
  * The recording's own deadline: its end (Zurich date) + CREW_TRACK_DAYS. Server-trusted, unlike the Logbuch dates,
  * which any club member can edit — a back-dated Logbuch trip must not get a recording deleted early. '' when the
- * end is missing or unreadable (then the recording is never deleted). Pure.
+ * end is missing or unreadable (the caller then falls back to the Logbuch deadline). Pure.
  */
 export function recordingDeadline(rec: Pick<TripModel, 'track'>): string {
   const ms = Date.parse(rec.track?.endedAt ?? '');
@@ -483,9 +483,10 @@ export function thumbPrefixes(rec: Pick<TripModel, 'okey' | 'tenants'>): string[
   return [...new Set((rec.tenants ?? []).filter((t) => t !== '' && !/[/.]/.test(t)))].map((t) => trackThumbPath(t, rec.okey, 0).replace(/0\.jpg$/, ''));
 }
 
-function pastRecordingDeadline(rec: Pick<TripModel, 'track'>, today: string): boolean {
-  const d = recordingDeadline(rec);
-  return d !== '' && today > d;
+
+/** The later of two StoreDates; '' counts as no date. Pure. */
+function maxStoreDate(a: string, b: string): string {
+  return a > b ? a : b;
 }
 
 /**
@@ -495,7 +496,7 @@ function pastRecordingDeadline(rec: Pick<TripModel, 'track'>, today: string): bo
  * - unlink: past the deadline (also for a deleted / archived Logbuch trip, which keeps its link until then).
  * - unlinkRecording: only when the recording points back to this Logbuch trip.
  * - delete: past the deadline only, the recording was linked to this Logbuch trip, nothing else holds it, it is no crew copy,
- *   and its own deadline (recordingDeadline) has passed too.
+ *   (the deadline of a linked recording is the later of the Logbuch's and its own, see below).
  */
 export function crewCleanupDecision(
   logbuch: TripModel,
@@ -504,16 +505,20 @@ export function crewCleanupDecision(
   tenantId: string,
   today: string,
 ): CrewCleanupDecision {
-  const deadline = logbuchCleanupDeadline(logbuch);
+  const linkedBack = !!rec && rec.type === TRACKER_TRIP_TYPE && rec.track?.logbuchKey === logbuchKey;
+  // A recording linked back keeps its link until the LATER of the Logbuch deadline (editable by any club member)
+  // and its own deadline (server-trusted end): a back-dated trip can neither delete it early nor unlink it before
+  // the delete can run (which would orphan it). A recording without a readable end uses the Logbuch deadline.
+  const logbuchDeadline = logbuchCleanupDeadline(logbuch);
+  const deadline = linkedBack && logbuchDeadline !== '' ? maxStoreDate(logbuchDeadline, recordingDeadline(rec)) : logbuchDeadline;
   const pastDeadline = deadline !== '' && today > deadline;
   // a deleted / archived Logbuch trip keeps its link until the deadline like any other (the crew has no access meanwhile)
   const unlink = pastDeadline;
-  const linkedBack = !!rec && rec.type === TRACKER_TRIP_TYPE && rec.track?.logbuchKey === logbuchKey;
   return {
     copy: !isLogbuchGone(logbuch) && isLogbuchEnded(logbuch) && !isAutoClosed(logbuch) && isLinkedRecording(rec, logbuch, logbuchKey, tenantId),
     unlink,
     unlinkRecording: unlink && linkedBack,
-    delete: pastDeadline && linkedBack && !!rec && !rec.track?.copyOf && !isTrackReferenced(rec, tenantId) && pastRecordingDeadline(rec, today),
+    delete: pastDeadline && linkedBack && !!rec && !rec.track?.copyOf && !isTrackReferenced(rec, tenantId),
   };
 }
 
