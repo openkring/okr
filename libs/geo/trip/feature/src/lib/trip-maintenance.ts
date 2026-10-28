@@ -204,7 +204,7 @@ const TripMaintenanceStore = signalStore(
                     <p>{{ trip.notes }}</p>
                   </ion-label>
                   <ion-button slot="end" fill="clear" color="medium" (click)="store.clearFlag(trip)">
-                    <ion-icon src="{{ 'flag-outline' | svgIcon }}" slot="icon-only" />
+                    <ion-icon src="{{ 'flag' | svgIcon }}" slot="icon-only" />
                   </ion-button>
                   <ion-button slot="end" fill="clear" color="danger" (click)="store.softDeleteFlagged(trip)">
                     <ion-icon src="{{ 'trash' | svgIcon }}" slot="icon-only" />
