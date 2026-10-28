@@ -7,9 +7,9 @@ import { ReservationModel, RoleName } from '@okr/shared-models';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { error, exportCsv, getExportFileName, showToast } from '@okr/shared-util-angular';
-import { buildExportTable, getAvatarName, getCategoryIcon, getItemLabel, getYear, getYearList, hasRole } from '@okr/shared-util-core';
+import { buildExportTable, getAvatarName, getCategoryIcon, getItemLabel, getYear, getYearList, hasRole, contextMenuId } from '@okr/shared-util-core';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { filterDamages, getDamageExportColumns, getDamageKindLabel, getLockedDays, isOpenLock } from '@okr/relationship-reservation-util';
 
 import { ReservationStore } from './reservation.store';
@@ -40,16 +40,18 @@ import { ReservationStore } from './reservation.store';
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
       <ion-title>{{ damages().length }} {{ store.i18n.damage_title() }}</ion-title>
       <ion-buttons slot="end">
-        <ion-button id="c_damages">
-          <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
-        </ion-button>
-        <ion-popover trigger="c_damages" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
-          <ng-template>
-            <ion-content>
-              <okr-menu [menuName]="contextMenuName()"/>
-            </ion-content>
-          </ng-template>
-        </ion-popover>
+        @if (menuItemsStore.canOpen(contextMenuName())) {
+          <ion-button id="{{ popupId }}">
+            <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
+          </ion-button>
+          <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+            <ng-template>
+              <ion-content>
+                <okr-menu [menuName]="contextMenuName()"/>
+              </ion-content>
+            </ng-template>
+          </ion-popover>
+        }
       </ion-buttons>
     </ion-toolbar>
 
@@ -100,6 +102,8 @@ import { ReservationStore } from './reservation.store';
   `
 })
 export class DamageList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
+  protected readonly popupId = contextMenuId('c_damages');
   protected readonly store = inject(ReservationStore);
 
   // inputs
