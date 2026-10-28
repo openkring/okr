@@ -13,7 +13,7 @@ import { MenuService } from '@okr/cms-menu-data-access';
 
 import { formatTripTime, isTripEditable } from '@okr/trip-util';
 import { TripStore } from './trip.store';
-import { getCategoryIcon, getCurrentTime, getWeekdayI18nKey, getYear, getYearList, hasRole, isKioskOnly } from '@okr/shared-util-core';
+import { getCategoryIcon, getCurrentTime, getWeekdayI18nKey, getYear, getYearList, hasRole, isKioskOnly, contextMenuId } from '@okr/shared-util-core';
 import { TranslatePipe } from '@okr/shared-i18n';
 import { AsyncPipe } from '@angular/common';
 import { AvatarDisplay } from '@okr/avatar-ui';
@@ -52,10 +52,10 @@ import { AvatarDisplay } from '@okr/avatar-ui';
           </ion-buttons>
           @if (canOpenContextMenu()) {
             <ion-buttons slot="end">
-              <ion-button id="{{ popupId() }}">
+              <ion-button id="{{ popupId }}">
                 <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon}}" />
               </ion-button>
-              <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"
+              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"
                 (ionPopoverDidDismiss)="onPopoverDismiss($event)">
                 <ng-template>
                   <ion-content>
@@ -194,7 +194,7 @@ export class TripList {
   public showMenuButton = input(true, { transform: keepDefaultTrue });
 
   // derived
-  protected readonly popupId = computed(() => 'c_trips_' + this.listId());
+  protected readonly popupId = contextMenuId('c_trips');
 
   // the context menu doc carries its own roleNeeded; honour it instead of hard-coding kiosk/admin
   private readonly contextMenu = toSignal(toObservable(this.contextMenuName).pipe(

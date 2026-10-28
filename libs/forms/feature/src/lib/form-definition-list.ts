@@ -10,6 +10,7 @@ import { Menu } from '@okr/cms-menu-feature';
 
 import { FormDefinitionStore } from './form-definition.store';
 
+import { contextMenuId } from '@okr/shared-util-core';
 @Component({
   selector: 'okr-form-definition-list',
   standalone: true,
@@ -28,10 +29,10 @@ import { FormDefinitionStore } from './form-definition.store';
         <ion-title>{{ store.filteredForms().length }}/{{ store.formsCount() }} {{ store.i18n.list_title() }}</ion-title>
         @if (store.canWrite()) {
           <ion-buttons slot="end">
-            <ion-button id="c-forms">
+            <ion-button id="{{ popupId }}">
               <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
-            <ion-popover trigger="c-forms" triggerAction="click" [showBackdrop]="true"
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true"
               [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
               <ng-template>
                 <ion-content><okr-menu [menuName]="contextMenuName()" /></ion-content>
@@ -65,6 +66,7 @@ import { FormDefinitionStore } from './form-definition.store';
   `,
 })
 export class FormDefinitionList {
+  protected readonly popupId = contextMenuId('c_forms');
   protected readonly store = inject(FormDefinitionStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly alertService = inject(AlertService);

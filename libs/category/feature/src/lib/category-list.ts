@@ -4,7 +4,7 @@ import { CategoryListModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
-import { hasRole } from '@okr/shared-util-core';
+import { hasRole, contextMenuId } from '@okr/shared-util-core';
 import { AppStore } from '@okr/shared-feature';
 
 import { Menu } from '@okr/cms-menu-feature';
@@ -32,10 +32,10 @@ type CategorySortField = 'name' | 'i18nBase' | 'nrItems';
         <ion-title>{{ selectedCategoriesCount()}}/{{categoriesCount()}} {{ store.i18n.categories() }}</ion-title>
         @if(hasRole('privileged') || hasRole('eventAdmin')) {
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId() }}">
+            <ion-button id="{{ popupId }}">
               <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
-            <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
                   <okr-menu [menuName]="contextMenuName()"/>
@@ -123,7 +123,7 @@ export class CategoryList {
   protected categoriesCount = computed(() => this.store.categoriesCount());
   protected selectedCategoriesCount = computed(() => this.filteredCategories().length);
   protected isLoading = computed(() => this.store.isLoading());
-  protected popupId = computed(() => `c_category_${this.listId}`);
+  protected readonly popupId = contextMenuId('c_category');
   protected tags = computed(() => this.store.getTags());
   protected currentUser = computed(() => this.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()));

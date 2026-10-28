@@ -7,7 +7,7 @@ import { of } from 'rxjs';
 import { AppStore } from '@okr/shared-feature';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Header, Spinner } from '@okr/shared-ui';
-import { coerceBoolean, extractFirstPartOfOptionalTupel } from '@okr/shared-util-core';
+import { coerceBoolean, extractFirstPartOfOptionalTupel, contextMenuId } from '@okr/shared-util-core';
 import { copyToClipboardWithConfirmation, error, keepDefaultTrue } from '@okr/shared-util-angular';
 
 import { Menu } from '@okr/cms-menu-feature';
@@ -73,10 +73,10 @@ import { FolderService } from '@okr/content-folder-data-access';
               <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
               <ion-title>{{ headerTitle() }}</ion-title>
               <ion-buttons slot="end">
-                <ion-button id="{{ popupId() }}">
+                <ion-button id="{{ popupId }}">
                   <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
                 </ion-button>
-                <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+                <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
                   <ng-template>
                     <ion-content>
                       <okr-menu [menuName]="menuName" [excludeNames]="hiddenMenuItems()" [toggleStates]="{ toggleFolders: foldersVisible() }" />
@@ -147,7 +147,7 @@ export class AlbumPage {
   /** Root, or the subfolder named by ?folder= — the folder actually on screen. */
   protected readonly currentFolderKey = computed(() => this.param('folder') || this.rootFolderKey());
   /** Unique trigger id for the context-menu popover. */
-  protected readonly popupId = computed(() => 'c_albumpage_' + this.rootFolderKey());
+  protected readonly popupId = contextMenuId('c_albumpage');
 
   // The header used to show the raw folder key ('p13_2024'); show the folder's own title ('2024').
   // Resolved for the folder on screen, so a deep link into a subfolder names that subfolder.

@@ -23,6 +23,7 @@ export * from './lib/zoom.util';
 export * from './lib/index-by';
 export * from './lib/invitation.util';
 export * from './lib/log.util';
+export * from './lib/popover.util';
 export * from './lib/membership.util';
 export * from './lib/photo-declaration.util';
 export * from './lib/query.util';

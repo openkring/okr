@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonBadge, IonButton, IonButtons, IonContent, IonHeader, IonIcon,
   IonItem, IonLabel, IonList, IonMenuButton, IonNote, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
 
@@ -7,7 +7,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { formatMinorAmount } from '@okr/finance-booking-util';
-import { generateRandomString, hasRole } from '@okr/shared-util-core';
+import { hasRole, contextMenuId } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 
@@ -33,10 +33,10 @@ import { PeriodStore } from './period.store';
         @if (canChange()) {
           <okr-accounting-books slot="end" />
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId() }}">
+            <ion-button id="{{ popupId }}">
               <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
-            <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
               <ng-template>
                 <ion-content>
                   <okr-menu [menuName]="contextMenuName()" />
@@ -91,7 +91,7 @@ export class PeriodList {
 
   // Unique per instance: Ionic keeps the previous page in the DOM, so a fixed id (same for scs and gss books)
   // binds the popover of the next page to the hidden button of the previous one.
-  protected readonly popupId = signal(`c_periods_${generateRandomString(8)}`);
+  protected readonly popupId = contextMenuId('c_periods');
   protected readonly periods = computed(() => this.store.periods());
   protected readonly count = computed(() => this.periods().length);
   protected readonly isLoading = computed(() => this.store.isLoading());

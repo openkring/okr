@@ -4,7 +4,7 @@ import { LocationModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
-import { hasRole } from '@okr/shared-util-core';
+import { hasRole, contextMenuId } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 
@@ -31,10 +31,10 @@ type LocationSortField = 'name' | 'type';
       <ion-title>{{ selectedLocationsCount()}}/{{locationsCount()}} {{ store.i18n.locations() }}</ion-title>
       @if(hasRole('privileged') || hasRole('admin')) {
         <ion-buttons slot="end">
-          <ion-button id="{{ popupId() }}">
+          <ion-button id="{{ popupId }}">
             <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
           </ion-button>
-          <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+          <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
             <ng-template>
               <ion-content>
                 <okr-menu [menuName]="contextMenuName()"/>
@@ -130,7 +130,7 @@ export class LocationList {
   protected isLoading = computed(() => this.store.isLoading());
   protected tags = computed(() => this.store.getTags());
   protected types = computed(() => this.store.appStore.getCategory('location_type'))
-  protected popupId = computed(() => 'c_locations_' + this.listId());
+  protected readonly popupId = contextMenuId('c_locations');
   protected currentUser = computed(() => this.store.currentUser());
   protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()));
 

@@ -8,7 +8,7 @@ import { GroupModel, PageModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, DeferError } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { resourceParams } from '@okr/shared-util-angular';
-import { hasRole, safeStructuredClone } from '@okr/shared-util-core';
+import { hasRole, safeStructuredClone, contextMenuId } from '@okr/shared-util-core';
 import { canAccessGroup, isAdminMember } from '@okr/subject-group-util';
 import { canManageFolders } from '@okr/content-folder-util';
 import { groupFilesSegment, groupLearningPageKey } from '@okr/content-learning-util';
@@ -326,7 +326,7 @@ export class GroupViewPage implements ViewWillEnter {
   // content/chat render through the PageDispatcher; it exposes a hoist facade we delegate to.
   private readonly pageDispatcher = viewChild(PageDispatcher);
 
-  protected readonly segmentPopupId = 'group-segment-menu';
+  protected readonly segmentPopupId = contextMenuId('group-segment-menu');
 
   // Context menu name of the selected segment.
   protected readonly segmentContextMenuName = computed<string | undefined>(() => {

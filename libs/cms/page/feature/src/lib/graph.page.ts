@@ -1,8 +1,8 @@
-import { Component, computed, effect, inject, input } from '@angular/core';
+import { Component, effect, inject, input } from '@angular/core';
 import { IonButton, IonButtons, IonCheckbox, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
 import { MenuItemModel, PageModel, RoleName, SectionModel } from '@okr/shared-models';
 import { Spinner } from '@okr/shared-ui';
-import { hasRole } from '@okr/shared-util-core';
+import { hasRole, contextMenuId } from '@okr/shared-util-core';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { error } from '@okr/shared-util-angular';
 
@@ -95,11 +95,11 @@ import { PageStore } from './page.store';
               <ion-button id="help" (click)="showHelp()">
                 <ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" />
               </ion-button>
-              <ion-button id="{{ popupId() }}">
+              <ion-button id="{{ popupId }}">
                 <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
               </ion-button>
               @if(contextMenuName(); as contextMenuName) {
-                <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+                <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
                   <ng-template>
                     <ion-content>
                       <okr-menu [menuName]="contextMenuName"/>
@@ -188,7 +188,7 @@ export class GraphPage {
   public showMenu = input(true);
 
   // derived signals
-  protected popupId = computed(() => 'c_graphpage_' + this.store.page()?.okey);
+  protected readonly popupId = contextMenuId('c_graphpage');
 
   /** Expand the sitemap to the default level once, as soon as the tree has loaded. */
   private hasAutoExpanded = false;

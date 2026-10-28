@@ -17,7 +17,7 @@ import { HearingQuizNodeModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Spinner } from '@okr/shared-ui';
 import { error } from '@okr/shared-util-angular';
-import { fill } from '@okr/shared-util-core';
+import { fill, contextMenuId } from '@okr/shared-util-core';
 
 import { HearingQuizTreeRow, hasDirectQuestions, questionCount } from '@okr/games-hearing-quiz-util';
 
@@ -69,10 +69,10 @@ import { HearingQuizStore } from './hearing-quiz.store';
         <ion-title>{{ store.i18n.title() }}</ion-title>
         @if (store.isContentAdmin()) {
           <ion-buttons slot="end">
-            <ion-button id="c_hearing_quiz">
+            <ion-button id="{{ popupId }}">
               <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
-            <ion-popover trigger="c_hearing_quiz" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
               <ng-template>
                 <ion-content>
                   <okr-menu [menuName]="menuName()" [toggleStates]="{ toggleEditMode: store.editMode() }" />
@@ -152,6 +152,7 @@ import { HearingQuizStore } from './hearing-quiz.store';
   `,
 })
 export class HearingQuizTreePage {
+  protected readonly popupId = contextMenuId('c_hearing_quiz');
   protected readonly store = inject(HearingQuizStore);
 
   /** route params: `:listId` is unused (always 'all'), `:contextMenuName` names the context menu */

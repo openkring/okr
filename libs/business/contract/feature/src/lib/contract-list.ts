@@ -11,7 +11,7 @@ import { ContractModel, DeadlineKind, MoneyModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, formatMinorAmount, ListFilter, Spinner } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
-import { convertDateFormatToString, DateFormat, fill } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, fill, contextMenuId } from '@okr/shared-util-core';
 
 import { ContractListId, ContractStore } from './contract.store';
 
@@ -51,10 +51,10 @@ function toListId(value: string | undefined | null): ContractListId {
         <ion-title>{{ filteredCount() }}/{{ count() }} {{ title() }}</ion-title>
         @if (contextMenuName()) {
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId() }}">
+            <ion-button id="{{ popupId }}">
               <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
-            <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
               <ng-template>
                 <ion-content>
                   <okr-menu [menuName]="contextMenuName()" />
@@ -148,7 +148,7 @@ export class ContractList {
   /** the `my` list is read-only even for a treasurer (spec §8) */
   protected readonly canEdit = computed(() => this.store.canEdit() && !this.isMyList());
   protected readonly title = computed(() => this.isMyList() ? this.store.i18n.myPlural() : this.store.i18n.plural());
-  protected readonly popupId = computed(() => `c_contracts_${this.listId()}`);
+  protected readonly popupId = contextMenuId('c_contracts');
   protected readonly types = computed(() => contractTypeFilterCategory(this.store.tenantId()));
   protected readonly states = computed(() => contractStateFilterCategory(this.store.tenantId()));
   protected readonly loanTotals = computed(() => {

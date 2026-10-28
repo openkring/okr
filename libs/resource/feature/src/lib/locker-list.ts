@@ -4,7 +4,7 @@ import { ResourceModel, RoleName } from '@okr/shared-models';
 import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { error } from '@okr/shared-util-angular';
-import { hasRole } from '@okr/shared-util-core';
+import { hasRole, contextMenuId } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 
@@ -32,10 +32,10 @@ import { ResourceStore } from './resource.store';
       <ion-title class="ion-hide-sm-up">{{selectedLockersCount()}} {{ store.i18n.locker_plural() }}</ion-title>
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
         <ion-buttons slot="end">
-          <ion-button id="c_resource">
+          <ion-button id="{{ popupId }}">
             <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
           </ion-button>
-          <ion-popover trigger="c_resource" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+          <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
             <ng-template>
               <ion-content>
                 <okr-menu [menuName]="contextMenuName()"/>
@@ -88,6 +88,7 @@ import { ResourceStore } from './resource.store';
   `
 })
 export class LockerList {
+  protected readonly popupId = contextMenuId('c_resource');
   protected readonly store = inject(ResourceStore);
   protected readonly ownershipStore = inject(OwnershipStore);
 

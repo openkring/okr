@@ -8,7 +8,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ImgDirective, ListFilter, Spinner } from '@okr/shared-ui';
 import { AvatarPipe } from '@okr/avatar-ui';
 import { error, showToast } from '@okr/shared-util-angular';
-import { hasRole } from '@okr/shared-util-core';
+import { hasRole, contextMenuId } from '@okr/shared-util-core';
 
 import { UserAccountKind, UserAccountRow, UserEditRequest, userEditRequest } from '@okr/user-util';
 
@@ -41,10 +41,10 @@ import { UserStore } from './user.store';
         <ion-title>{{ selectedUsersCount()}}/{{usersCount()}} {{ store.i18n.title() }}</ion-title>
         @if(hasRole('privileged')) {
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId() }}">
+            <ion-button id="{{ popupId }}">
               <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
-            <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
                   <okr-menu [menuName]="contextMenuName()"/>
@@ -144,7 +144,7 @@ export class UserList {
   protected extendedRolesCount = computed(() => this.store.extendedRolesCount());
   protected isLoading = computed(() => this.store.isLoading());
   protected tags = computed(() => this.store.getTags());
-  protected popupId = computed(() => `c_user_${this.listId}`);
+  protected readonly popupId = contextMenuId('c_user');
   protected currentUser = computed(() => this.store.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('admin', this.currentUser()));
 

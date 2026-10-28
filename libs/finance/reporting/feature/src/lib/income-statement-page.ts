@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
-import { generateRandomString } from '@okr/shared-util-core';
+import { contextMenuId } from '@okr/shared-util-core';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
@@ -38,10 +38,10 @@ import { AccountingBooks, AccountingSegments } from '@okr/finance-accounting-fea
         <ion-title>{{ store.i18n.income_title() }} {{ store.currentFy().label }}</ion-title>
         <okr-accounting-books slot="end" />
         <ion-buttons slot="end">
-          <ion-button id="{{ popupId() }}">
+          <ion-button id="{{ popupId }}">
             <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
           </ion-button>
-          <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true"
+          <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true"
             [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
             <ng-template>
               <ion-content><okr-menu [menuName]="contextMenuName()" /></ion-content>
@@ -91,7 +91,7 @@ export class IncomeStatementPage {
   protected readonly costCenterI18n = computed(() => ({ name: 'costCenterKey', label: this.store.i18n.filter_cost_center(), helper: '' } as StringSelectI18n));
   // Unique per instance: Ionic keeps the previous page in the DOM, so a fixed id (same for scs and gss books)
   // binds the popover of the next page to the hidden button of the previous one.
-  protected readonly popupId = signal(`c_income_${generateRandomString(8)}`);
+  protected readonly popupId = contextMenuId('c_income');
   /** account rows opened to their bookings — the PDF prints them too */
   protected readonly openKeys = signal<ReadonlySet<string>>(new Set());
 

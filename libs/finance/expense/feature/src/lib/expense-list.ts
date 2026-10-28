@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input } from '@angular/core';
 import {
   ActionSheetController, ModalController, ToastController,
   IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonFab, IonFabButton, IonGrid, IonHeader, IonIcon,
@@ -11,7 +11,7 @@ import { TranslatePipe } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner, ImgDirective } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
-import { convertDateFormatToString, DateFormat, generateRandomString, getItemLabel, hasRole } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, getItemLabel, hasRole, contextMenuId } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
@@ -68,10 +68,10 @@ import { AccountingBooks, AccountingSegments } from '@okr/finance-accounting-fea
         @if (canAdd()) {
           <okr-accounting-books slot="end" />
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId() }}">
+            <ion-button id="{{ popupId }}">
               <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
-            <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true"
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true"
               [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
               <ng-template>
                 <ion-content>
@@ -197,7 +197,7 @@ export class ExpenseList {
   protected readonly canAdd = computed(() => hasRole('registered', this.currentUser()));
   // Unique per instance: Ionic keeps the previous page in the DOM, so a fixed id (same for scs and gss books)
   // binds the popover of the next page to the hidden button of the previous one.
-  protected readonly popupId = signal(`c_expense_${generateRandomString(8)}`);
+  protected readonly popupId = contextMenuId('c_expense');
   protected readonly title = computed(() =>
     this.listId() === 'all' ? this.store.i18n.list_title_all() : this.store.i18n.list_title_my()
   );

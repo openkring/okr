@@ -4,7 +4,7 @@ import { FolderModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetOptions, keepDefaultTrue } from '@okr/shared-util-angular';
-import { hasRole } from '@okr/shared-util-core';
+import { hasRole, contextMenuId } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 
@@ -30,10 +30,10 @@ import { FolderStore } from './folder.store';
           <ion-title>{{ filteredFoldersCount() }}/{{ foldersCount() }} {{ store.i18n.plural() }}</ion-title>
           @if(!readOnly()) {
             <ion-buttons slot="end">
-              <ion-button id="{{ popupId() }}">
+              <ion-button id="{{ popupId }}">
                 <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
               </ion-button>
-              <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
                 <ng-template>
                   <ion-content>
                     <okr-menu [menuName]="contextMenuName()" />
@@ -90,7 +90,7 @@ export class FolderList {
   protected readonly isLoading = computed(() => this.store.isLoading());
   protected readonly currentUser = computed(() => this.store.currentUser());
   protected readonly readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()));
-  protected readonly popupId = computed(() => `c_folders_list`);
+  protected readonly popupId = contextMenuId('c_folders_list');
 
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 

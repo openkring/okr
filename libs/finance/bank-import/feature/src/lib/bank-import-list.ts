@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, effect, inject, input, untracked } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
@@ -11,7 +11,7 @@ import { BankImportRowModel } from '@okr/shared-models';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
-import { convertDateFormatToString, DateFormat, generateRandomString } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, contextMenuId } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 
@@ -39,10 +39,10 @@ const STATUS_FILTERS: BankImportStatusFilter[] = ['open', 'all', 'unmapped', 'ma
         <ion-title>{{ store.filtered().length }}/{{ store.rows().length }} {{ store.i18n.plural() }}</ion-title>
         <okr-accounting-books slot="end" />
         <ion-buttons slot="end">
-          <ion-button id="{{ popupId() }}">
+          <ion-button id="{{ popupId }}">
             <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
           </ion-button>
-          <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true"
+          <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true"
             [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
             <ng-template>
               <ion-content>
@@ -134,7 +134,7 @@ export class BankImportList {
   public readonly action = input<string | undefined>();
   // Unique per instance: Ionic keeps the previous page in the DOM, so a fixed id (same for scs and gss books)
   // binds the popover of the next page to the hidden button of the previous one.
-  protected readonly popupId = signal(`c_bankimport_${generateRandomString(8)}`);
+  protected readonly popupId = contextMenuId('c_bankimport');
 
   constructor() {
     effect(() => {

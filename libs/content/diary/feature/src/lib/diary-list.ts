@@ -20,6 +20,7 @@ import {
 import { DiaryRangeSelect } from './diary-range-select';
 import { DiaryStore } from './diary.store';
 
+import { contextMenuId } from '@okr/shared-util-core';
 /** The i18n scope carrying the diaryState category labels (see the 'diaryState' block in the five bundles). */
 const DIARY_STATE_I18N_SCOPE = '@content/diary/feature';
 
@@ -51,10 +52,10 @@ const DIARY_STATE_I18N_SCOPE = '@content/diary/feature';
         <ion-title>{{ filteredCount() }}/{{ count() }} {{ store.i18n.plural() }}</ion-title>
         @if (store.canWrite()) {
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId() }}">
+            <ion-button id="{{ popupId }}">
               <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
-            <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"
               (ionPopoverDidDismiss)="onPopoverDismiss($event)">
               <ng-template>
                 <ion-content><okr-menu [menuName]="contextMenuName()" [toggleStates]="{ toggleMonthGroups: store.groupByMonth() }" /></ion-content>
@@ -187,7 +188,7 @@ export class DiaryList {
 
   protected readonly count = computed(() => this.store.diaries().length);
   protected readonly filteredCount = computed(() => this.store.filteredDiaries().length);
-  protected readonly popupId = computed(() => `c_diaries_${this.listId()}`);
+  protected readonly popupId = contextMenuId('c_diaries');
   protected readonly isWide = computed(() => isWideDiaryRange(this.store.selectedRange()));
   /**
    * One block per year: its aggregate above its own month accordions. `monthKeys` opens every

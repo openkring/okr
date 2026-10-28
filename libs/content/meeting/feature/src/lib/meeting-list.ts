@@ -6,7 +6,7 @@ import { MeetingModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
-import { convertDateFormatToString, DateFormat, hasRole } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, hasRole, contextMenuId } from '@okr/shared-util-core';
 
 import { MeetingStore } from './meeting.store';
 
@@ -29,10 +29,10 @@ type MeetingSortField = 'date' | 'name' | 'status';
         <ion-title>{{ filteredCount() }}/{{ count() }} {{ store.i18n.plural() }}</ion-title>
         @if (!readOnly()) {
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId() }}">
+            <ion-button id="{{ popupId }}">
               <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
-            <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true"
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true"
               [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
               <ng-template>
                 <ion-content><okr-menu [menuName]="contextMenuName()" /></ion-content>
@@ -111,7 +111,7 @@ export class MeetingList {
   protected readonly currentUser = computed(() => this.store.currentUser());
   protected readonly readOnly = computed(() => !hasRole('privileged', this.currentUser()));
   protected readonly tags = computed(() => this.store.getTags());
-  protected readonly popupId = computed(() => `c_meetings_${this.listId()}`);
+  protected readonly popupId = contextMenuId('c_meetings');
 
   constructor() {
     effect(() => this.store.setListId(this.listId()));

@@ -7,7 +7,7 @@ import { CalEventModel, RoleName } from '@okr/shared-models';
 import { LabelPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error, navigateByUrl } from '@okr/shared-util-angular';
-import { extractSecondPartOfOptionalTupel, getAttendanceColor, getAttendanceIcon, getAttendanceState, getYearFromDate, hasRole } from '@okr/shared-util-core';
+import { extractSecondPartOfOptionalTupel, getAttendanceColor, getAttendanceIcon, getAttendanceState, getYearFromDate, hasRole, contextMenuId } from '@okr/shared-util-core';
 import { canAttendCalevent, isAttendanceClosed, mayJoinOpenCalevent } from '@okr/calevent-util';
 
 import { Menu } from '@okr/cms-menu-feature';
@@ -46,10 +46,10 @@ type AttendanceFilter = AttendanceState | 'all';
       <ion-buttons slot="end">
         @if(hasRole('privileged') || hasRole('eventAdmin')) {
           <ion-buttons slot="end">
-            <ion-button id="c-yevents">
+            <ion-button id="{{ popupId }}">
               <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
-            <ion-popover trigger="c-yevents" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
                   <okr-menu [menuName]="contextMenuName()"/>
@@ -143,6 +143,7 @@ type AttendanceFilter = AttendanceState | 'all';
     `
 })
 export class YearlyEvents {
+  protected readonly popupId = contextMenuId('c_yevents');
   protected store = inject(CalEventStore);
   private actionSheetController = inject(ActionSheetController);
   private router = inject(Router);

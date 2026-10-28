@@ -8,7 +8,7 @@ import { PartnerModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
-import { hasRole } from '@okr/shared-util-core';
+import { hasRole, contextMenuId } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { heartbeatStatus } from '@okr/business-metering-util';
@@ -40,10 +40,10 @@ import { PartnerStore } from './partner.store';
         <ion-title>{{ filteredPartnersCount() }}/{{ partnersCount() }} {{ store.i18n.partners() }}</ion-title>
         @if(!readOnly()) {
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId() }}">
+            <ion-button id="{{ popupId }}">
               <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
-            <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
               <ng-template>
                 <ion-content>
                   <okr-menu [menuName]="contextMenuName()" />
@@ -103,7 +103,7 @@ export class PartnerList {
   protected readonly isLoading = computed(() => this.store.isLoading());
   protected readonly currentUser = computed(() => this.store.currentUser());
   protected readonly readOnly = computed(() => !hasRole('admin', this.currentUser()));
-  protected readonly popupId = computed(() => `c_partners_${this.listId()}`);
+  protected readonly popupId = contextMenuId('c_partners');
 
   private readonly imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 

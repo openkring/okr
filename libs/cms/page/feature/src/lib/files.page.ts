@@ -4,7 +4,7 @@ import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCo
 import { ArticleSection, ButtonSection, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error, getColSizes } from '@okr/shared-util-angular';
-import { hasRole, replaceSubstring } from '@okr/shared-util-core';
+import { hasRole, replaceSubstring, contextMenuId } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { SectionDispatcher, SectionStore } from '@okr/cms-section-feature';
@@ -110,11 +110,11 @@ import { PageStore } from './page.store';
           <ion-title>{{ store.page()?.name }}</ion-title>
           @if(hasRole('contentAdmin')) {
             <ion-buttons slot="end">
-              <ion-button id="{{ popupId() }}">
+              <ion-button id="{{ popupId }}">
                 <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
               </ion-button>
               @if(contextMenuName(); as contextMenuName) {
-                <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+                <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
                   <ng-template>
                     <ion-content>
                       <okr-menu [menuName]="contextMenuName" [toggleStates]="{ toggleEditMode: editMode() }"/>
@@ -191,7 +191,7 @@ export class FilesPage {
 
   // derived signals
   protected tenantId = computed(() => this.store.tenantId());
-  protected popupId = computed(() => 'c_blogpage_' + this.store.page()?.okey);
+  protected readonly popupId = contextMenuId('c_blogpage');
   protected editMode = signal(false);
   protected page = computed(() => this.store.page());
   // Accordion sections are not supported in Blog pages. Makes the implementation easier.

@@ -10,7 +10,7 @@ import { CostAllocationModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { hasRole } from '@okr/shared-util-core';
+import { hasRole, contextMenuId } from '@okr/shared-util-core';
 
 import { AccountingBooks, AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
 import { formatMinorAmount } from '@okr/finance-booking-util';
@@ -100,7 +100,7 @@ export class CostAllocationList {
   private readonly imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   public readonly contextMenuName = input.required<string>();
-  protected readonly popupId = 'c_cost_allocations';
+  protected readonly popupId = contextMenuId('c_cost_allocations');
   protected readonly year = signal(this.store.currentFiscalYear());
 
   protected readonly rules = computed(() =>

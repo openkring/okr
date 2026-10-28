@@ -5,7 +5,7 @@ import { AccountModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { generateRandomString, hasRole } from '@okr/shared-util-core';
+import { hasRole, contextMenuId } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { CostCenterStore } from '@okr/finance-cost-center-feature';
@@ -41,10 +41,10 @@ import { AccountStore } from './account.store';
       }
       @if(hasRole('privileged') || hasRole('admin')) {
         <ion-buttons slot="end">
-          <ion-button id="{{ popupId() }}">
+          <ion-button id="{{ popupId }}">
             <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
           </ion-button>
-          <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+          <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
             <ng-template>
               <ion-content>
                 <okr-menu [menuName]="contextMenuName()" [toggleStates]="{ toggleEditMode: editMode(), toggleAccounts: store.showAccounts(), toggleGroups: store.showGroups(), toggleCostCenters: store.showCostCenters() }" />
@@ -112,7 +112,7 @@ export class AccountList {
   // Unique per instance: Ionic keeps the previous page (e.g. the scs Kontoplan) in the DOM, so a fixed id
   // binds the popover of the next Kontoplan (gss) to the hidden button. AccountingStore is a root
   // singleton, so its accountingTenantId would not separate the two instances either.
-  protected readonly popupId = signal(`c_accounts_${generateRandomString(8)}`);
+  protected readonly popupId = contextMenuId('c_accounts');
   protected isLoading = computed(() => this.store.isLoading());
   protected visibleNodes = computed(() => this.store.visibleNodes());
   protected currentUser = computed(() => this.store.currentUser());

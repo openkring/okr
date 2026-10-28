@@ -4,7 +4,7 @@ import { AvatarInfo, OrgModel, PersonModel, ReservationModel, ResourceModelName,
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, ImgDirective } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { getAvatarKey, getAvatarName, getFullName, getYear, getYearList, hasRole, isOngoing, isPerson } from '@okr/shared-util-core';
+import { getAvatarKey, getAvatarName, getFullName, getYear, getYearList, hasRole, isOngoing, isPerson, contextMenuId } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { AvatarService } from '@okr/avatar-data-access';
@@ -37,10 +37,10 @@ type ReservationSortField = 'reserver' | 'name' | 'startdate' | 'status';
         <ion-title class="ion-hide-md-up">{{ selectedReservationsCount()}} BH Reservationen</ion-title>
         @if(hasRole('privileged') || hasRole('resourceAdmin')) {
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId() }}">
+            <ion-button id="{{ popupId }}">
               <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
-            <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
                   <okr-menu [menuName]="contextMenuName()"/>
@@ -356,7 +356,7 @@ export class ReservationList {
   protected tags = computed(() => this.store.getTags());
   protected reasons = computed(() => this.store.appStore.getCategory('reservation_reason'));
   protected states = computed(() => this.store.appStore.getCategory('reservation_state'));
-  protected popupId = computed(() => 'c_reservation_' + this.listId());
+  protected readonly popupId = contextMenuId('c_reservation');
   protected currentUser = computed(() => this.store.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
   protected readonly years = computed(() => getYearList(getYear() + 1, 7));

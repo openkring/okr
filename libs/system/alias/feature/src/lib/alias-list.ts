@@ -13,7 +13,7 @@ import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import {
   AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions,
 } from '@okr/shared-util-angular';
-import { hasRole } from '@okr/shared-util-core';
+import { hasRole, contextMenuId } from '@okr/shared-util-core';
 import { getAliasUsability } from '@okr/system-alias-util';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
@@ -45,10 +45,10 @@ import { AliasStore } from './alias.store';
         <ion-title>{{ filteredCount() }}/{{ count() }} {{ store.i18n.alias_plural() }}</ion-title>
         @if (!readOnly()) {
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId() }}">
+            <ion-button id="{{ popupId }}">
               <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
-            <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true"
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true"
               [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
               <ng-template>
                 <ion-content><okr-menu [menuName]="contextMenuName()" /></ion-content>
@@ -124,7 +124,7 @@ export class AliasList {
   protected readonly spaceCategory = computed(() => this.store.spaceCategory());
   protected readonly currentUser = computed(() => this.store.currentUser());
   protected readonly readOnly = computed(() => !hasRole('privileged', this.currentUser()));
-  protected readonly popupId = computed(() => `c_aliases_${this.listId()}`);
+  protected readonly popupId = contextMenuId('c_aliases');
 
   /** Leer, wenn der Alias benutzbar ist — ein Chip nur dort, wo etwas NICHT stimmt. */
   protected stateLabel(alias: AliasModel): string {

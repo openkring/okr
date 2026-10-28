@@ -7,7 +7,7 @@ import { AccordionSection, ArticleSection, ButtonSection, RoleName, SectionModel
 import { DEFAULT_ACCEPT_ATTRIBUTE } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error, getColSizes } from '@okr/shared-util-angular';
-import { hasRole } from '@okr/shared-util-core';
+import { hasRole, contextMenuId } from '@okr/shared-util-core';
 import { fragmentScrollTop } from '@okr/cms-page-util';
 
 import { Menu } from '@okr/cms-menu-feature';
@@ -142,11 +142,11 @@ import { PageStore } from './page.store';
           <ion-title>{{ store.page()?.name }}</ion-title>
           @if(canOpenContextMenu()) {
             <ion-buttons slot="end">
-              <ion-button id="{{ popupId() }}">
+              <ion-button id="{{ popupId }}">
                 <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
               </ion-button>
               @if(contextMenuName(); as contextMenuName) {
-                <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+                <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
                   <ng-template>
                     <ion-content>
                       <okr-menu [menuName]="contextMenuName" [forceVisible]="groupAdmin()" [excludeNames]="hiddenMenuItems()" [toggleStates]="{ toggleEditMode: editMode(), togglePreview: adventPreview() }"/>
@@ -238,7 +238,7 @@ export class ContentPage {
   // derived signals
   protected tenantId = computed(() => this.store.tenantId());
   protected showDebugInfo = computed(() => this.store.showDebugInfo());
-  protected popupId = computed(() => 'c_contentpage_' + this.store.page()?.okey);
+  protected readonly popupId = contextMenuId('c_contentpage');
   protected editMode = signal(false);
   /** Whether edit mode is active. Public so a parent (group view) can reflect it in a hoisted toggle menu item. */
   public isEditModeActive(): boolean {

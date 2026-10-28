@@ -4,7 +4,7 @@ import { INVOICE_STATE_VALUES, RoleName, MemberFeeModel, UserModel } from '@okr/
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner, ImgDirective } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { hasRole } from '@okr/shared-util-core';
+import { hasRole, contextMenuId } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 
@@ -204,7 +204,7 @@ export class MemberFees {
       return av < bv ? -dir : av > bv ? dir : 0;
     });
   });
-  protected readonly popupId = crypto.randomUUID();
+  protected readonly popupId = contextMenuId('c_member_fee_list');
 
   // constants for the view template
   protected states = [...INVOICE_STATE_VALUES, 'all' ];

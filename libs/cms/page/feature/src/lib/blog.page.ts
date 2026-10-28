@@ -6,7 +6,7 @@ import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCo
 import { ArticleSection, BlogLayoutType, ButtonSection, RoleName, SectionModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { hasRole, replaceSubstring } from '@okr/shared-util-core';
+import { hasRole, replaceSubstring, contextMenuId } from '@okr/shared-util-core';
 import { fragmentScrollTop } from '@okr/cms-page-util';
 
 import { Menu } from '@okr/cms-menu-feature';
@@ -57,11 +57,11 @@ import { BlogStream } from './blog-stream';
           <ion-title>{{ store.page()?.name }}</ion-title>
           @if (hasRole('contentAdmin')) {
             <ion-buttons slot="end">
-              <ion-button id="{{ popupId() }}">
+              <ion-button id="{{ popupId }}">
                 <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
               </ion-button>
               @if (contextMenuName(); as contextMenuName) {
-                <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+                <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
                   <ng-template>
                     <ion-content>
                       <okr-menu [menuName]="contextMenuName" [toggleStates]="{ toggleEditMode: editMode() }" />
@@ -133,7 +133,7 @@ export class BlogPage {
   public showMenu = input(true);
 
   protected tenantId = computed(() => this.store.tenantId());
-  protected popupId = computed(() => 'c_blogpage_' + this.store.page()?.okey);
+  protected readonly popupId = contextMenuId('c_blogpage');
   protected editMode = signal(false);
   protected sections = computed(() => this.store.pageSections().filter(s => s.state === 'published' || this.hasRole('contentAdmin')));
   protected isEmptyPage = computed(() => this.sections().length === 0);

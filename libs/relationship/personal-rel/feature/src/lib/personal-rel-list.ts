@@ -5,7 +5,7 @@ import { PersonalRelModel, RoleName } from '@okr/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner, ImgDirective } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { hasRole, isOngoing } from '@okr/shared-util-core';
+import { hasRole, isOngoing, contextMenuId } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
@@ -36,10 +36,10 @@ type PersonalRelSortField = 'person1' | 'type' | 'person2';
         <ion-buttons slot="end">
           @if(hasRole('privileged') || hasRole('memberAdmin')) {
             <ion-buttons slot="end">
-              <ion-button id="c-prel">
+              <ion-button id="{{ popupId }}">
                 <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
               </ion-button>
-              <ion-popover trigger="c-prel" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
                 <ng-template>
                   <ion-content>
                     <okr-menu [menuName]="contextMenuName()"/>
@@ -116,6 +116,7 @@ type PersonalRelSortField = 'person1' | 'type' | 'person2';
     `
 })
 export class PersonalRelList {
+  protected readonly popupId = contextMenuId('c_prel');
   protected store = inject(PersonalRelStore);
   private actionSheetController = inject(ActionSheetController);
 

@@ -5,7 +5,7 @@ import { PageModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { OkrListSkeleton, EmptyList, ErrorBanner, ListFilter } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { hasRole } from '@okr/shared-util-core';
+import { hasRole, contextMenuId } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 
@@ -31,10 +31,10 @@ type PageSortField = 'id' | 'name' | 'nrSections';
       <ion-title>{{selectedPagesCount()}}/{{pagesCount()}} {{ store.i18n.pages() }}</ion-title>
         @if(!readOnly()) {
         <ion-buttons slot="end">
-          <ion-button id="c_page">
+          <ion-button id="{{ popupId }}">
             <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
           </ion-button>
-          <ion-popover trigger="c_page" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+          <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
             <ng-template>
               <ion-content>
                 <okr-menu [menuName]="contextMenuName()"/>
@@ -107,6 +107,7 @@ type PageSortField = 'id' | 'name' | 'nrSections';
   `
 })
 export class PageList {
+  protected readonly popupId = contextMenuId('c_page');
   protected store = inject(PageStore);
   private actionSheetController = inject(ActionSheetController);
 

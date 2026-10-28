@@ -1,5 +1,5 @@
-import { Component, effect, inject, input, signal } from '@angular/core';
-import { generateRandomString } from '@okr/shared-util-core';
+import { Component, effect, inject, input } from '@angular/core';
+import { contextMenuId } from '@okr/shared-util-core';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
@@ -37,10 +37,10 @@ import { AccountingBooks, AccountingSegments } from '@okr/finance-accounting-fea
         <ion-title>{{ store.i18n.balance_title() }} {{ store.currentFy().label }}</ion-title>
         <okr-accounting-books slot="end" />
         <ion-buttons slot="end">
-          <ion-button id="{{ popupId() }}">
+          <ion-button id="{{ popupId }}">
             <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
           </ion-button>
-          <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true"
+          <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true"
             [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
             <ng-template>
               <ion-content><okr-menu [menuName]="contextMenuName()" /></ion-content>
@@ -85,7 +85,7 @@ export class BalanceSheetPage {
   public readonly contextMenuName = input.required<string>();
   // Unique per instance: Ionic keeps the previous page in the DOM, so a fixed id (same for scs and gss books)
   // binds the popover of the next page to the hidden button of the previous one.
-  protected readonly popupId = signal(`c_balance_${generateRandomString(8)}`);
+  protected readonly popupId = contextMenuId('c_balance');
 
   // `?year=<yyyy>` (query param): the period list opens the report for that fiscal year.
   // An invalid/absent value is ignored by the store, which then keeps the current fiscal year.

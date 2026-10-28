@@ -1,10 +1,10 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton,
   IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { error } from '@okr/shared-util-angular';
-import { generateRandomString } from '@okr/shared-util-core';
+import { contextMenuId } from '@okr/shared-util-core';
 import { Menu } from '@okr/cms-menu-feature';
 import { AccountingBooks, AccountingSegments } from '@okr/finance-accounting-feature';
 
@@ -27,10 +27,10 @@ const ASSET_CONTEXT_MENU = 'c-asset';
         <okr-accounting-books slot="end" />
         @if (!store.isReadOnly()) {
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId() }}">
+            <ion-button id="{{ popupId }}">
               <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
-            <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
               <ng-template>
                 <ion-content>
                   <okr-menu [menuName]="contextMenuName" />
@@ -64,7 +64,7 @@ export class AssetList {
   protected readonly store = inject(AssetStore);
   protected readonly contextMenuName = ASSET_CONTEXT_MENU;
   // unique per instance: Ionic keeps the previous page in the DOM
-  protected readonly popupId = signal(`c_assets_${generateRandomString(8)}`);
+  protected readonly popupId = contextMenuId('c_assets');
 
   /** an empty register says how to start, unless the books are read-only */
   protected readonly emptyText = computed(() =>

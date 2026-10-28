@@ -4,7 +4,7 @@ import { RoleName, TransferModel } from '@okr/shared-models';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { getAvatarName, getYearList, hasRole } from '@okr/shared-util-core';
+import { getAvatarName, getYearList, hasRole, contextMenuId } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
@@ -33,10 +33,10 @@ type TransferSortField = 'date' | 'from' | 'to' | 'resource' | 'status';
       <ion-buttons slot="end">
         @if(hasRole('privileged') || hasRole('resourceAdmin')) {
           <ion-buttons slot="end">
-            <ion-button id="c-transfers">
+            <ion-button id="{{ popupId }}">
               <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
-            <ion-popover trigger="c-transfers" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
                   <okr-menu [menuName]="contextMenuName()"/>
@@ -91,6 +91,7 @@ type TransferSortField = 'date' | 'from' | 'to' | 'resource' | 'status';
     `
 })
 export class TransferList {
+  protected readonly popupId = contextMenuId('c_transfers');
   protected readonly store = inject(TransferStore);
   private actionSheetController = inject(ActionSheetController);
 

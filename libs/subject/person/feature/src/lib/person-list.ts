@@ -6,7 +6,7 @@ import { NameDisplay, PersonModel, PersonModelName, RoleName } from '@okr/shared
 import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner, ImgDirective } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
-import { getFullName, getPhotoUsageName, hasPhotoRestriction, hasRole, objectsToPhotos } from '@okr/shared-util-core';
+import { getFullName, getPhotoUsageName, hasPhotoRestriction, hasRole, objectsToPhotos, contextMenuId } from '@okr/shared-util-core';
 import { getPhotoUsageCategory } from '@okr/shared-categories';
 import { SIZE_MD } from '@okr/shared-constants';
 import { I18nService, TranslatePipe } from '@okr/shared-i18n';
@@ -45,10 +45,10 @@ type PersonSortField = 'name' | 'phone' | 'email';
       <ion-title class="ion-hide-sm-up">{{ filteredPersonsCount()}} {{ store.i18n.persons() }}</ion-title>
       @if(hasRole('privileged') || hasRole('memberAdmin')) {
         <ion-buttons slot="end">
-          <ion-button id="c-persons">
+          <ion-button id="{{ popupId }}">
             <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
           </ion-button>
-          <ion-popover trigger="c-persons" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+          <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
             <ng-template>
               <ion-content>
                 <okr-menu [menuName]="contextMenuName()"/>
@@ -126,6 +126,7 @@ type PersonSortField = 'name' | 'phone' | 'email';
     `
 })
 export class PersonList {
+  protected readonly popupId = contextMenuId('c_persons');
   protected readonly store = inject(PersonStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly alertService = inject(AlertService);

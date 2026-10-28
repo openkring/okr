@@ -4,7 +4,7 @@ import { ResourceModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { error } from '@okr/shared-util-angular';
-import { hasRole } from '@okr/shared-util-core';
+import { hasRole, contextMenuId } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 
@@ -35,10 +35,10 @@ type ResourceSortField = 'name' | 'value';
       <ion-title class="ion-hide-sm-up">{{selectedResourcesCount()}} {{ store.i18n.resources() }}</ion-title>
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
         <ion-buttons slot="end">
-          <ion-button id="c_resource">
+          <ion-button id="{{ popupId }}">
             <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
           </ion-button>
-          <ion-popover trigger="c_resource" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+          <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
             <ng-template>
               <ion-content>
                 <okr-menu [menuName]="contextMenuName()"/>
@@ -93,6 +93,7 @@ type ResourceSortField = 'name' | 'value';
   `
 })
 export class ResourceList {
+  protected readonly popupId = contextMenuId('c_resource');
   protected readonly store = inject(ResourceStore);
   protected readonly ownershipStore = inject(OwnershipStore);
 

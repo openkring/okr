@@ -6,7 +6,7 @@ import { ModelSelectService } from '@okr/shared-feature';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { DateTimeSelectModal, EmptyList, ListFilter, ImgDirective } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, keepDefaultTrue, QuickEntryService } from '@okr/shared-util-angular';
-import { convertDateFormatToString, DateFormat, getAvatarInfo, getAvatarInfoForCurrentUser, hasRole } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, getAvatarInfo, getAvatarInfoForCurrentUser, hasRole, contextMenuId } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
@@ -71,10 +71,10 @@ import { TaskMove, TaskStore } from './task.store';
                wrapper (c-tasks, privileged) is forced visible so members reach 'add'. The id is per
                list: Ionic keeps /task/my and /task/all in the DOM together, and a shared id binds the
                popover to the hidden page's button (a click then does nothing). -->
-          <ion-button [id]="popupId()">
+          <ion-button [id]="popupId">
             <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
           </ion-button>
-          <ion-popover [trigger]="popupId()" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+          <ion-popover [trigger]="popupId" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
             <ng-template>
               <ion-content>
                 <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [forceVisibleSelf]="true" [toggleStates]="{ toggleFilter: showFilter(), toggleArchived: store.showArchived() }"/>
@@ -197,7 +197,7 @@ export class TaskList {
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   public readonly isListView = signal(true);
-  protected readonly popupId = computed(() => `c_tasks_${this.listId()}`);
+  protected readonly popupId = contextMenuId('c_tasks');
 
   constructor() {
     effect(() => {

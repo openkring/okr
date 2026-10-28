@@ -28,6 +28,7 @@ import { CostCenterService } from '@okr/finance-cost-center-data-access';
 import { PROJECT_I18N_SCOPE } from '@okr/project-project-util';
 import { ProjectStore } from './project.store';
 
+import { contextMenuId } from '@okr/shared-util-core';
 /**
  * All (non-archived) projects of the tenant, newest start first. Actions: *add* in the context
  * menu; open / edit / duplicate / delete per row through the ActionSheet. Staff only (the route
@@ -59,10 +60,10 @@ import { ProjectStore } from './project.store';
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ filteredCount() }}/{{ store.projectsCount() }} {{ store.i18n.plural() }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button [id]="popupId()">
+          <ion-button [id]="popupId">
             <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
           </ion-button>
-          <ion-popover [trigger]="popupId()" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+          <ion-popover [trigger]="popupId" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
             <ng-template>
               <ion-content><okr-menu [menuName]="contextMenuName()" [toggleStates]="{ toggleBudget: budgetView() }" /></ion-content>
             </ng-template>
@@ -190,7 +191,7 @@ export class ProjectList {
   protected fmt(minor: number): string {
     return formatMinorAmount(minor);
   }
-  protected readonly popupId = computed(() => `c_projects_${this.listId()}`);
+  protected readonly popupId = contextMenuId('c_projects');
 
   protected stateKey(project: ProjectModel): string {
     return `${PROJECT_I18N_SCOPE}.project_state.${(project.state ?? DEFAULT_PROJECT_STATE)}.label`;

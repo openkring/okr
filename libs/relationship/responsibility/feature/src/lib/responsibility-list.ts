@@ -5,7 +5,7 @@ import { ResponsibilityModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error, keepDefaultTrue } from '@okr/shared-util-angular';
-import { hasRole } from '@okr/shared-util-core';
+import { hasRole, contextMenuId } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
@@ -37,10 +37,10 @@ type ResponsibilitySortField = 'name' | 'responsible';
           }
           <ion-title>{{ count() }} {{ store.i18n.responsibilities() }}</ion-title>
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId() }}">
+            <ion-button id="{{ popupId }}">
               <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
-            <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
               <ng-template>
                 <ion-content><okr-menu [menuName]="contextMenuName()" /></ion-content>
               </ng-template>
@@ -130,7 +130,7 @@ export class ResponsibilityList {
     ));
   });
   protected count = computed(() => this.filteredResponsibilities().length);
-  protected popupId = computed(() => `responsibility-list-menu-${this.listId()}`);
+  protected readonly popupId = contextMenuId('responsibility-list-menu');
   protected isLoading = computed(() => this.store.isLoading());
 
   constructor() {

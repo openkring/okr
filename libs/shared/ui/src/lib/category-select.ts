@@ -7,11 +7,9 @@ import { switchMap } from 'rxjs/operators';
 import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 import { CategoryItemModel, CategoryListModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { coerceBoolean, getItemLabel } from '@okr/shared-util-core';
+import { coerceBoolean, getItemLabel, contextMenuId } from '@okr/shared-util-core';
 import { HelperVisibility } from '@okr/shared-util-angular';
 
-// unique id to avoid duplicated IDs in reusable component
-let id = 0;
 
 /**
  * A category consists of some metadata and a list of items.
@@ -151,7 +149,7 @@ export class CategorySelect {
     return this.category().items;
   });
 
-  protected popoverId = `select-cat-${id++}`;
+  protected readonly popoverId = contextMenuId('select-cat');
   private readonly i18nService = inject(I18nService);
   /** The translated label of the selected item; '' until the first translation has resolved. */
   protected readonly selectedLabel = toSignal(

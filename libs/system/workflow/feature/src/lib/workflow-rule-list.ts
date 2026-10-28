@@ -7,7 +7,7 @@ import { RoleName, WorkflowRuleModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetOptions, keepDefaultTrue } from '@okr/shared-util-angular';
-import { getItemLabel, hasRole } from '@okr/shared-util-core';
+import { getItemLabel, hasRole, contextMenuId } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { getWorkflowRuleActions, getWorkflowRuleCondition, isWorkflowRuleComplete } from '@okr/system-workflow-util';
@@ -51,10 +51,10 @@ import { WorkflowRuleStore } from './workflow-rule.store';
           <ion-title>{{ filteredRulesCount() }}/{{ rulesCount() }} {{ store.i18n.plural() }}</ion-title>
           @if(!readOnly()) {
             <ion-buttons slot="end">
-              <ion-button id="{{ popupId() }}">
+              <ion-button id="{{ popupId }}">
                 <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
               </ion-button>
-              <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
                 <ng-template>
                   <ion-content>
                     <okr-menu [menuName]="contextMenuName()" />
@@ -151,7 +151,7 @@ export class WorkflowRuleList {
   protected readonly currentUser = computed(() => this.store.currentUser());
   // a rule decides who gets told about a membership event — admin-only, like its rules
   protected readonly readOnly = computed(() => !hasRole('admin', this.currentUser()));
-  protected readonly popupId = computed(() => `c_workflow_rules_list`);
+  protected readonly popupId = contextMenuId('c_workflow_rules_list');
 
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 

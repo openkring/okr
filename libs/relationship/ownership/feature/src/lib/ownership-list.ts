@@ -7,7 +7,7 @@ import { OwnershipModel, PersonModelName, RoleName } from '@okr/shared-models';
 import { DurationPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner, ImgDirective } from '@okr/shared-ui';
 import { error } from '@okr/shared-util-angular';
-import { getCategoryIcon, getItemLabel, getYearList, hasRole } from '@okr/shared-util-core';
+import { getCategoryIcon, getItemLabel, getYearList, hasRole, contextMenuId } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
@@ -36,10 +36,10 @@ type OwnershipSortField = 'owner' | 'name' | 'type' | 'duration';
       <ion-title class="ion-hide-md-up">{{ selectedOwnershipsCount()}} {{ title() | translate | async }}</ion-title>
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
         <ion-buttons slot="end">
-          <ion-button id="{{ popupId() }}">
+          <ion-button id="{{ popupId }}">
             <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
           </ion-button>
-          <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+          <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
             <ng-template>
               <ion-content>
                 <okr-menu [menuName]="contextMenuName()"/>
@@ -199,7 +199,7 @@ export class OwnershipList {
   protected selectedOwnershipsCount = computed(() => this.filteredOwnerships().length);
   protected isLoading = computed(() => this.store.isLoading());
   protected tags = computed(() => this.store.getTags());
-  protected popupId = computed(() => 'c_ownerships_' + this.listId());
+  protected readonly popupId = contextMenuId('c_ownerships');
 
   private rboatTypes = computed(() => this.store.appStore.tryGetCategory('rboat_type'));
   private resourceTypes = computed(() => this.store.appStore.tryGetCategory('resource_type'));

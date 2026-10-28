@@ -10,7 +10,7 @@ import { BudgetStatus, BudgetVersionModel, CategoryItemModel, CategoryListModel,
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { hasRole } from '@okr/shared-util-core';
+import { hasRole, contextMenuId } from '@okr/shared-util-core';
 
 import { AccountingBooks, AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
 import { BUDGET_I18N_SCOPE, isVersionEditable } from '@okr/finance-budget-util';
@@ -106,7 +106,7 @@ export class BudgetVersionList {
 
   public readonly contextMenuName = input.required<string>();
 
-  protected readonly popupId = 'c_budget_versions';
+  protected readonly popupId = contextMenuId('c_budget_versions');
   protected readonly filteredCount = computed(() => this.store.versions().length);
   protected readonly currentUser = computed(() => this.store.currentUser());
   /** a treasurer on natively managed books; bexio books carry no budgets (D9) */

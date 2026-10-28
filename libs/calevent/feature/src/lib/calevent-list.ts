@@ -11,7 +11,7 @@ import { ModelSelectService } from '@okr/shared-feature';
 import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { DateTimeSelectModal, EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { AppNavigationService, confirm, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, keepDefaultTrue, lazyService, navigateByUrl, okrPrompt, QuickEntryService } from '@okr/shared-util-angular';
-import { convertDateFormatToString, DateFormat, addTime, debugData, extractFirstPartOfOptionalTupel, getAttendanceColor, getAttendanceIcon, getAttendanceState, getAvatarInfo, getIsoDateTime, isCalendarPublic, fill, getYear, getYearList, hasRole, parseEventString, warn, YEAR_ROLLING_WINDOW, isChatBlockedError } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, addTime, debugData, extractFirstPartOfOptionalTupel, getAttendanceColor, getAttendanceIcon, getAttendanceState, getAvatarInfo, getIsoDateTime, isCalendarPublic, fill, getYear, getYearList, hasRole, parseEventString, warn, YEAR_ROLLING_WINDOW, isChatBlockedError, contextMenuId } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
@@ -191,10 +191,10 @@ type CalEventSortField = 'date' | 'topic' | 'location' | 'organiser';
               <!-- no canChange() gate here: okr-menu already role-gates every entry (registered users
                    get 'Filter'/'Termin erfassen', privileged ones the export/schedule actions). Gating the
                    trigger as well hid the whole menu from registered users on shared calendars. -->
-              <ion-button id="{{ popupId() }}">
+              <ion-button id="{{ popupId }}">
                 <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
               </ion-button>
-              <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
                 <ng-template>
                   <ion-content>
                     <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [forceVisibleSelf]="isPersonalCalendar()" [excludeNames]="excludedMenuNames()" [toggleStates]="{ toggleFilter: showFilter(), toggleArchived: store.showArchived() }"/>
@@ -451,7 +451,7 @@ export class CalEventList implements OnInit {
   }
   protected isLoading = computed(() => this.store.isLoading());
   protected tags = computed(() => this.store.getTags());
-  protected popupId = computed(() => `c_calevent_${this.listId}`);
+  protected readonly popupId = contextMenuId('c_calevent');
   protected types = computed(() => this.store.appStore.tryGetCategory('calevent_type'));
   private currentUser = computed(() => this.store.appStore.currentUser());
   protected readonly years = computed(() => getYearList(getYear() + 1, 30));

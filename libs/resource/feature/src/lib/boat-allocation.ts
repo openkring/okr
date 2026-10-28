@@ -11,7 +11,7 @@ import { TranslatePipe } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { error, exportCsv, getExportFileName } from '@okr/shared-util-angular';
-import { chipMatches, DateFormat, getImgixUrlWithAutoParams, getItemLabel, getSystemQuery, getTodayStr, hasRole, nameMatches } from '@okr/shared-util-core';
+import { chipMatches, DateFormat, getImgixUrlWithAutoParams, getItemLabel, getSystemQuery, getTodayStr, hasRole, nameMatches, contextMenuId } from '@okr/shared-util-core';
 
 import { BoatLabelRef, boatLabelKey, boatTargetKey, getBoatBudget, getBoatSuffix, getPrivateBoatKeys, getUsageForYear, parseBoatLabelKey } from '@okr/resource-util';
 
@@ -85,10 +85,10 @@ type StrategyLine = { type: string; text: string; flags: string; price: number; 
         <ion-button (click)="store.showBoatAllocationInfo()">
           <ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" />
         </ion-button>
-        <ion-button id="c_rballoc">
+        <ion-button id="{{ popupId }}">
           <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
         </ion-button>
-        <ion-popover trigger="c_rballoc" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+        <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
           <ng-template>
             <ion-content>
               <!-- the shared 'editmode-toggle' doc is roleNeeded 'registered'; only a resourceAdmin
@@ -254,6 +254,7 @@ type StrategyLine = { type: string; text: string; flags: string; price: number; 
   `
 })
 export class BoatAllocation {
+  protected readonly popupId = contextMenuId('c_rballoc');
   protected readonly store = inject(ResourceStore);
   private readonly firestoreService = inject(FirestoreService);
 

@@ -6,7 +6,7 @@ import { GroupModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner, ImgDirective } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
-import { fill, generateRandomString, hasRole } from '@okr/shared-util-core';
+import { fill, hasRole, contextMenuId } from '@okr/shared-util-core';
 
 import { AvatarPipe, AvatarDisplay } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
@@ -43,10 +43,10 @@ import { GroupStore } from './group.store';
         </ion-buttons>
         @if(canCreate()) {
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId() }}">
+            <ion-button id="{{ popupId }}">
               <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
-            <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
                   <okr-menu [menuName]="contextMenuName()"/>
@@ -109,7 +109,7 @@ export class GroupList {
   protected isLoading = computed(() => this.store.isLoading());
   private currentUser = computed(() => this.store.currentUser());
   protected readOnly = computed(() => !this.canChange());
-  protected popupId = computed(() => 'c_groups_' + generateRandomString(5));
+  protected readonly popupId = contextMenuId('c_groups');
 
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 

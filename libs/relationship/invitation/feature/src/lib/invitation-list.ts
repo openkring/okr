@@ -5,7 +5,7 @@ import { RoleName, InvitationModel } from '@okr/shared-models';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { getItemLabel, getYearList, hasRole } from '@okr/shared-util-core';
+import { getItemLabel, getYearList, hasRole, contextMenuId } from '@okr/shared-util-core';
 import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 
 import { Menu } from '@okr/cms-menu-feature';
@@ -42,10 +42,10 @@ type InvitationSortField = 'date' | 'name' | 'invitee' | 'inviter' | 'state';
         </ion-button>
         @if(hasRole('privileged') || hasRole('resourceAdmin')) {
           <ion-buttons slot="end">
-            <ion-button id="c-invitations">
+            <ion-button id="{{ popupId }}">
               <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
-            <ion-popover trigger="c-invitations" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
                   <okr-menu [menuName]="contextMenuName()" [toggleStates]="{ togglePast: showPast() }"/>
@@ -96,6 +96,7 @@ type InvitationSortField = 'date' | 'name' | 'invitee' | 'inviter' | 'state';
     `
 })
 export class InvitationList {
+  protected readonly popupId = contextMenuId('c_invitations');
   protected readonly store = inject(InvitationStore);
   private actionSheetController = inject(ActionSheetController);
   private modalController = inject(ModalController);

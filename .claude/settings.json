@@ -30,6 +30,12 @@
           },
           {
             "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/check-popover-triggers.mjs\" --hook",
+            "timeout": 30,
+            "statusMessage": "check-popover-triggers"
+          },
+          {
+            "type": "command",
             "command": "node \"$CLAUDE_PROJECT_DIR/scripts/check-skill-contents-hook.mjs\"",
             "timeout": 30,
             "statusMessage": "check-skill-contents"

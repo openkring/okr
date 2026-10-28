@@ -9,7 +9,7 @@ import { DEFAULT_ACCEPT_ATTRIBUTE } from '@okr/shared-constants';
 import { FileNamePipe, FileSizePipe, PrettyDatePipe, SvgIconPipe, FileLogoPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, openImageGallery, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error, keepDefaultTrue } from '@okr/shared-util-angular';
-import { hasRole } from '@okr/shared-util-core';
+import { hasRole, contextMenuId } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { FolderBreadcrumb } from '@okr/content-folder-ui';
@@ -83,10 +83,10 @@ type DocumentSortField = 'title' | 'size' | 'dateOfDocLastUpdate';
             <ion-icon slot="icon-only" src="{{ viewIcon() | svgIcon }}" />
           </ion-button>
           @if(canChange()) {
-            <ion-button id="{{ popupId() }}">
+            <ion-button id="{{ popupId }}">
               <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
-            <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
                   <!-- forceVisibleSelf: the button is already gated by canChange() (contentAdmin OR privileged),
@@ -312,7 +312,7 @@ export class DocumentList {
   protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()) && !this.groupAdmin());
   protected readonly currentFolder = computed(() => this.store.currentFolder());
   protected readonly canUpload = computed(() => canUploadToFolder(this.currentFolder(), this.currentUser(), this.groupAdmin()));
-  protected popupId = computed(() => `c_docs_${this.listId}`);
+  protected readonly popupId = contextMenuId('c_docs');
   protected readonly folderKey = computed(() => this.getFolderName(this.store.listId()));
 
   private readonly imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;

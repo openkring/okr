@@ -9,7 +9,7 @@ import { CategoryItemModel, CategoryListModel, CostCenterModel, CostCenterType, 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { generateRandomString, hasRole } from '@okr/shared-util-core';
+import { hasRole, contextMenuId } from '@okr/shared-util-core';
 
 import { AccountingBooks, AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
 import { COST_CENTER_I18N_SCOPE } from '@okr/finance-cost-center-util';
@@ -107,7 +107,7 @@ export class CostCenterList {
 
   // Unique per instance: Ionic keeps the previous page in the DOM, so a fixed id (same for scs and gss books)
   // binds the popover of the next page to the hidden button of the previous one.
-  protected readonly popupId = `c_cost_centers_${generateRandomString(8)}`;
+  protected readonly popupId = contextMenuId('c_cost_centers');
   protected readonly rows = computed(() => this.store.filteredTree());
   protected readonly filteredCount = computed(() => this.rows().length);
   protected readonly currentUser = computed(() => this.store.currentUser());

@@ -7,7 +7,7 @@ import { GroupModel, MembershipModel, NameDisplay, PersonModelName, RoleName, Us
 import { FullNamePipe, RellogPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner, ImgDirective } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, keepDefaultTrue } from '@okr/shared-util-angular';
-import { DateFormat, getSvgIconUrl, getTodayStr, getYearList, hasRole, isOngoing } from '@okr/shared-util-core';
+import { DateFormat, getSvgIconUrl, getTodayStr, getYearList, hasRole, isOngoing, contextMenuId } from '@okr/shared-util-core';
 import { SIZE_SM } from '@okr/shared-constants';
 
 import { AvatarPipe } from '@okr/avatar-ui';
@@ -180,7 +180,7 @@ export class MembershipList {
   protected membershipCategory = linkedSignal(() => this.listId() !== 'active' || this.store.isLoading() ? undefined : this.store.membershipCategory());
   protected genders = computed(() => this.store.genders());
   protected orgTypes = computed(() => this.store.orgTypes());
-  protected readonly popupId = crypto.randomUUID();
+  protected readonly popupId = contextMenuId('c_membership_list');
   protected orgName = computed(() => this.store.orgName());
   protected admin = computed(() => getMainContact(this.group()));
   protected tags = computed(() => this.store.getTags());

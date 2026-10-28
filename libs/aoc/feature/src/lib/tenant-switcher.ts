@@ -21,6 +21,7 @@ import {
 
 import { TenantSwitcherGrid } from './tenant-switcher-grid';
 
+import { contextMenuId } from '@okr/shared-util-core';
 @Component({
   selector: 'okr-tenant-switcher',
   standalone: true,
@@ -31,11 +32,11 @@ import { TenantSwitcherGrid } from './tenant-switcher-grid';
   `],
   template: `
     @if (isVisible()) {
-      <ion-button id="okr-tenant-switcher-trigger" fill="clear"
+      <ion-button id="{{ popupId }}" fill="clear"
                   [attr.title]="i18n.switcher_tooltip()" [attr.aria-label]="i18n.switcher_tooltip()">
         <ion-icon slot="icon-only" src="{{ 'apps' | svgIcon }}" />
       </ion-button>
-      <ion-popover #switcherPopover trigger="okr-tenant-switcher-trigger" side="bottom" alignment="end">
+      <ion-popover #switcherPopover trigger="{{ popupId }}" side="bottom" alignment="end">
         <ng-template>
           <ion-content>
             <div class="switcher-title">{{ i18n.switcher_title() }}</div>
@@ -51,6 +52,7 @@ import { TenantSwitcherGrid } from './tenant-switcher-grid';
   `,
 })
 export class TenantSwitcher {
+  protected readonly popupId = contextMenuId('okr_tenant_switcher_trigger');
   private readonly appStore = inject(AppStore);
   private readonly appConfigService = inject(AppConfigService);
   protected readonly i18n = inject(I18nService).translateAll(TENANT_SWITCHER_I18N_KEYS);

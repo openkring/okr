@@ -9,7 +9,7 @@ import { CrosswordTopicModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { confirm, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { fill, hasRole, nameMatches } from '@okr/shared-util-core';
+import { fill, hasRole, nameMatches, contextMenuId } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 
@@ -45,10 +45,10 @@ import { CROSSWORD_I18N_KEYS, CrosswordI18n } from '@okr/games-crossword-util';
         <ion-title>{{ filteredCount() }}/{{ count() }} {{ i18n.list_title() }}</ion-title>
         @if (isContentAdmin()) {
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId() }}">
+            <ion-button id="{{ popupId }}">
               <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
-            <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"
               (ionPopoverDidDismiss)="onPopoverDismiss($event)">
               <ng-template>
                 <ion-content>
@@ -119,7 +119,7 @@ export class CrosswordTopicList {
       (admin || topic.state === 'published') && nameMatches(topic.title, this.searchTerm()));
   });
   protected readonly filteredCount = computed(() => this.filtered().length);
-  protected readonly popupId = computed(() => `c_crossword_${this.listId()}`);
+  protected readonly popupId = contextMenuId('c_crossword');
 
   protected markerFor(topic: CrosswordTopicModel): string {
     if (!topic.grid) return this.i18n.no_grid();

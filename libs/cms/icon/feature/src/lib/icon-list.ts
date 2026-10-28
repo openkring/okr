@@ -10,7 +10,7 @@ import { IconModel, RoleName } from '@okr/shared-models';
 import { FileSizePipe, PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions, dismissOverlay, error, keepDefaultTrue } from '@okr/shared-util-angular';
-import { hasRole } from '@okr/shared-util-core';
+import { hasRole, contextMenuId } from '@okr/shared-util-core';
 
 import { ICON_SETS, IconStore } from './icon.store';
 
@@ -63,10 +63,10 @@ import { ICON_SETS, IconStore } from './icon.store';
           <ion-title>{{ filteredCount() }}/{{ store.iconsCount() }} {{ store.i18n.icons() }}</ion-title>
           @if(hasRole('privileged') || hasRole('admin')) {
             <ion-buttons slot="end">
-              <ion-button id="{{ popupId() }}">
+              <ion-button id="{{ popupId }}">
                 <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon}}" />
               </ion-button>
-              <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"
+              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"
                 (ionPopoverDidDismiss)="onPopoverDismiss($event)">
                 <ng-template>
                   <ion-content>
@@ -183,7 +183,7 @@ export class IconList {
   protected isListView = linkedSignal(() => this.view() === 'grid');
 
   protected filteredCount = computed(() => this.store.filteredIcons().length);
-  protected popupId = computed(() => `c_icon_${this.listId()}`);
+  protected readonly popupId = contextMenuId('c_icon');
   protected currentUser = computed(() => this.store.currentUser());
   protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()));
   protected tags = computed(() => this.store.tags());

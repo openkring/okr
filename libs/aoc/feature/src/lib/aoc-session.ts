@@ -6,7 +6,7 @@ import { SessionModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, dismissOverlay } from '@okr/shared-util-angular';
-import { DateFormat, convertDateFormatToString, generateRandomString } from '@okr/shared-util-core';
+import { DateFormat, convertDateFormatToString, contextMenuId } from '@okr/shared-util-core';
 import { getSessionStatus, getSessionStatusColor } from '@okr/session-util';
 
 import { AocSessionStore } from './aoc-session.store';
@@ -28,10 +28,10 @@ import { AocSessionStore } from './aoc-session.store';
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ filteredCount() }}/{{ totalCount() }} {{ store.i18n.session_title() }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button id="{{ popupId() }}">
+          <ion-button id="{{ popupId }}">
             <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
           </ion-button>
-          <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+          <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
             <ng-template>
               <ion-content>
                 <ion-list>
@@ -149,7 +149,7 @@ export class AocSession {
   protected readonly sessions = computed(() => this.store.filteredSessions());
   protected readonly filteredCount = computed(() => this.store.filteredSessions().length);
   protected readonly totalCount = computed(() => this.store.allSessions().length);
-  protected readonly popupId = computed(() => `c_sessions_${generateRandomString(5)}`);
+  protected readonly popupId = contextMenuId('c_sessions');
   protected readonly loggedInUsers = computed(() => this.store.loggedInUsers());
   protected readonly selectedUserKey = computed(() => this.store.selectedUserKey());
 
