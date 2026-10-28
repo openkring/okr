@@ -42,7 +42,8 @@
     "label": "Reservation löschen",
     "confirm": "Normalerweise sollte eine Reservation beendet, aber nicht gelöscht werden. Das Löschen ist nur vorgesehen, um falsche Einträge zu korrigieren. Möchtest du die Reservation wirklich löschen?",
     "conf": "Die Reservation wurde gelöscht.",
-    "error": "Die Reservation konnte nicht gelöscht werden."
+    "error": "Die Reservation konnte nicht gelöscht werden.",
+    "damage": "Schäden und Sperren werden nicht gelöscht, weil sie in die Schadensliste gehören. Beende eine Sperre stattdessen."
   },
   "end": {
     "label": "Reservation beenden",
@@ -221,6 +222,10 @@
     "club": {
       "label": "Clubanlass",
       "description": "Reserviert für einen Clubanlass"
+    },
+    "damage": {
+      "label": "Schaden",
+      "description": "Gemeldeter Schaden an einem Boot, ohne Sperre."
     }
   },
   "reservation_state": {
@@ -268,5 +273,23 @@
       "title": "Chat vorübergehend nicht verfügbar",
       "default": "Der Chat wird gerade gewartet. Er ist bald wieder da."
     }
+  },
+  "damage": {
+    "title": "Schadensliste",
+    "empty": "Keine Schäden gefunden.",
+    "boat": "Boot",
+    "boatType": "Bootstyp",
+    "kind": {
+      "label": "Art",
+      "maintenance": "Schaden, gesperrt",
+      "blocked": "Gesperrt",
+      "damage": "Schaden"
+    },
+    "from": "Von",
+    "to": "Bis",
+    "open": "offen",
+    "days": "Tage gesperrt",
+    "reason": "Grund",
+    "reporter": "Gemeldet von"
   }
 }

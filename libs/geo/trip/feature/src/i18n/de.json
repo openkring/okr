@@ -54,7 +54,10 @@
       "error": "Die Meldung ist erfasst, aber das Boot konnte nicht gesperrt werden."
     },
     "conf": "Deine Meldung wurde übermittelt.",
-    "error": "Die Meldung konnte nicht übermittelt werden. Bitte versuche es nochmals."
+    "error": "Die Meldung konnte nicht übermittelt werden. Bitte versuche es nochmals.",
+    "damageRecord": {
+      "name": "Schaden: {name}"
+    }
   },
   "boatReserved": {
     "title": "Boot nicht verfügbar",

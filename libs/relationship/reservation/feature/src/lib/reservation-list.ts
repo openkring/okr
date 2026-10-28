@@ -8,7 +8,7 @@ import { getAvatarKey, getAvatarName, getFullName, getYear, getYearList, hasRole
 
 import { Menu } from '@okr/cms-menu-feature';
 import { AvatarService } from '@okr/avatar-data-access';
-import { isReservationOpen } from '@okr/relationship-reservation-util';
+import { isDamageReservation, isReservationOpen } from '@okr/relationship-reservation-util';
 
 import { THUMBNAIL_SIZE } from '@okr/shared-constants';
 
@@ -426,7 +426,8 @@ export class ReservationList {
       if (isOngoing(reservation.endDate)) {
         actionSheetOptions.buttons.push(createActionSheetButton('reservation.end', this.store.i18n.end(), this.imgixBaseUrl, 'stop-circle'));
       }
-      if (hasRole('admin', this.currentUser())) {
+      // damages and locks are the Schadensliste's history: end them, never delete them
+      if (hasRole('admin', this.currentUser()) && !isDamageReservation(reservation)) {
         actionSheetOptions.buttons.push(createActionSheetButton('reservation.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
       }
       actionSheetOptions.buttons.push(createActionSheetDivider());

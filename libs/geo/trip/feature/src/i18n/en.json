@@ -54,7 +54,10 @@
       "error": "The report was filed, but the boat could not be locked."
     },
     "conf": "Your report has been submitted.",
-    "error": "The report could not be submitted. Please try again."
+    "error": "The report could not be submitted. Please try again.",
+    "damageRecord": {
+      "name": "Damage: {name}"
+    }
   },
   "boatReserved": {
     "title": "Boat unavailable",

@@ -147,7 +147,7 @@ function storeToView(d: string): string {
                  Eine Liste fuer alle: Mitglieder wie Eingeladene stehen seit 2026-09 in
                  calevent.attendees, Eingeladene mit dem Zustand 'invited'. -->
             <ion-accordion-group value="attendees">
-              <okr-attendees-accordion [calevent]="calevent()" [readOnly]="true" />
+              <okr-attendees-accordion [calevent]="calevent()" [currentUser]="appStore.currentUser()" [readOnly]="true" />
               <!-- documents: only the organiser (edit modal) may add/delete; commenting is open to every registered user -->
               <okr-documents-accordion [parentKey]="parentKey()" [readOnly]="true" />
               <okr-comments-accordion [parentKey]="parentKey()" [readOnly]="false" />
@@ -161,7 +161,7 @@ function storeToView(d: string): string {
 })
 export class CalEventViewModal {
   private readonly modalController = inject(ModalController);
-  private readonly appStore = inject(AppStore);
+  protected readonly appStore = inject(AppStore);
   protected readonly i18n = inject(I18nService).translateAll(CALEVENT_I18N_KEYS) as CaleventI18n;
 
   // inputs (keep signature identical so all callers continue to work unchanged)
