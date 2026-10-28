@@ -56,8 +56,9 @@ export function figureTexts(
   };
   add(f.steps, labels.steps, 'steps', (v) => formatSteps(v));
   add(f.strokes, labels.strokes, 'strokes', (v) => formatSteps(v));
-  add(f.strokeRateAvg, labels.rateAvg, 'rate', (v) => formatOneDecimal(v));
-  add(f.strokeRateMax, labels.rateMax, 'rate', (v) => formatOneDecimal(v));
+  // stroke rates as whole numbers, e.g. «Ø 22/min» (Bruno 2026-10-28); the stored values keep one decimal
+  add(f.strokeRateAvg, labels.rateAvg, 'rate', (v) => String(Math.round(v)));
+  add(f.strokeRateMax, labels.rateMax, 'rate', (v) => String(Math.round(v)));
   add(f.splitAvgS, labels.splitAvg, 'split', (v) => formatSplit(v));
   add(f.splitBestS, labels.splitBest, 'split', (v) => formatSplit(v));
   add(f.distancePerStrokeM, labels.perStroke, 'm', (v) => formatOneDecimal(v));

@@ -62,10 +62,17 @@ describe('figureTexts with strokes (spec 1.122 2c)', () => {
       splitAvg: 'Ø {split}', splitBest: 'beste {split}', perStroke: '{m} m/Schlag',
     };
     expect(figureTexts({ strokes: 812, strokeRateAvg: 22.4, strokeRateMax: 31, splitAvgS: 148, splitBestS: 131, distancePerStrokeM: 9.8 }, labels)).toEqual([
-      `${formatSteps(812)} Schläge`, 'Ø 22.4/min', 'max 31/min', 'Ø 2:28 /500 m', 'beste 2:11 /500 m', '9.8 m/Schlag',
+      `${formatSteps(812)} Schläge`, 'Ø 22/min', 'max 31/min', 'Ø 2:28 /500 m', 'beste 2:11 /500 m', '9.8 m/Schlag',
     ]);
   });
   it('leaves the stroke figures out when their labels are not given', () => {
     expect(figureTexts({ strokes: 812 }, { steps: 'x', splitAvg: 'y', splitBest: 'z' })).toEqual([]);
+  });
+});
+
+describe('stroke rate display (Bruno 2026-10-28: whole numbers)', () => {
+  it('rounds the rate to a whole number', () => {
+    expect(figureTexts({ strokeRateAvg: 22.6, strokeRateMax: 30.4 }, { steps: '', splitAvg: '', splitBest: '', rateAvg: 'Ø {rate}/min', rateMax: 'max {rate}/min' }))
+      .toEqual(['Ø 23/min', 'max 30/min']);
   });
 });
