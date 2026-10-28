@@ -7,6 +7,7 @@ import { MenuItemModel } from '@okr/shared-models';
 import { debugData, withOfflineSnapshot } from '@okr/shared-util-core';
 
 import { MenuService } from '@okr/cms-menu-data-access';
+import { canOpenMenu } from '@okr/cms-menu-util';
 import { resourceParams } from '@okr/shared-util-angular';
 
 /**
@@ -110,6 +111,15 @@ export class MenuItemsStore {
         debugData('MenuItemsStore: stream error', this.resource.error(), this.appStore.currentUser());
       }
     });
+  }
+
+  /**
+   * Ob das Menü `name` für den aktuellen Benutzer etwas zeigt (`canOpenMenu`): die «…»-Schaltfläche
+   * eines Kontextmenüs hängt daran, damit sie nie ein leeres Popover öffnet. Liest Signale —
+   * im Template aufgerufen, wird es neu ausgewertet, sobald Liste oder Benutzer wechseln.
+   */
+  public canOpen(name: string | undefined): boolean {
+    return canOpenMenu(this.menuItems(), name, this.appStore.currentUser());
   }
 
   /** Nach einem Schreibvorgang auf `menuItems` — der Live-Stream selbst braucht das nicht. */

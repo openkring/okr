@@ -6,7 +6,7 @@ import {
 } from '@ionic/angular';
 import type { ActionSheetOptions } from '@ionic/angular';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { AliasModel } from '@okr/shared-models';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
@@ -45,15 +45,17 @@ import { AliasStore } from './alias.store';
         <ion-title>{{ filteredCount() }}/{{ count() }} {{ store.i18n.alias_plural() }}</ion-title>
         @if (!readOnly()) {
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId }}">
-              <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
-            </ion-button>
-            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true"
-              [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
-              <ng-template>
-                <ion-content><okr-menu [menuName]="contextMenuName()" /></ion-content>
-              </ng-template>
-            </ion-popover>
+            @if (menuItemsStore.canOpen(contextMenuName())) {
+              <ion-button id="{{ popupId }}">
+                <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
+              </ion-button>
+              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true"
+                [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+                <ng-template>
+                  <ion-content><okr-menu [menuName]="contextMenuName()" /></ion-content>
+                </ng-template>
+              </ion-popover>
+            }
           </ion-buttons>
         }
       </ion-toolbar>
@@ -103,6 +105,7 @@ import { AliasStore } from './alias.store';
   `,
 })
 export class AliasList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly store = inject(AliasStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly alertService = inject(AlertService);

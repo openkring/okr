@@ -12,7 +12,7 @@ import { SIZE_MD } from '@okr/shared-constants';
 import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 
 import { AvatarPipe } from '@okr/avatar-ui';
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { resolveVcardCapability, VCARD_I18N_KEYS, VcardI18n } from '@okr/vcard-util';
 
 import { PersonStore } from './person.store';
@@ -45,16 +45,18 @@ type PersonSortField = 'name' | 'phone' | 'email';
       <ion-title class="ion-hide-sm-up">{{ filteredPersonsCount()}} {{ store.i18n.persons() }}</ion-title>
       @if(hasRole('privileged') || hasRole('memberAdmin')) {
         <ion-buttons slot="end">
-          <ion-button id="{{ popupId }}">
-            <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
-          </ion-button>
-          <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
-            <ng-template>
-              <ion-content>
-                <okr-menu [menuName]="contextMenuName()"/>
-              </ion-content>
-            </ng-template>
-          </ion-popover>
+          @if (menuItemsStore.canOpen(contextMenuName())) {
+            <ion-button id="{{ popupId }}">
+              <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
+            </ion-button>
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+              <ng-template>
+                <ion-content>
+                  <okr-menu [menuName]="contextMenuName()"/>
+                </ion-content>
+              </ng-template>
+            </ion-popover>
+          }
         </ion-buttons>
       }
     </ion-toolbar>
@@ -126,6 +128,7 @@ type PersonSortField = 'name' | 'phone' | 'email';
     `
 })
 export class PersonList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly popupId = contextMenuId('c_persons');
   protected readonly store = inject(PersonStore);
   private readonly actionSheetController = inject(ActionSheetController);

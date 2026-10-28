@@ -5,7 +5,7 @@ import {
   IonItemDivider, IonMenuButton, IonNote, IonPopover, IonSelect, IonSelectOption, IonTitle, IonToolbar
 } from '@ionic/angular';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { CostAllocationModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Spinner } from '@okr/shared-ui';
@@ -40,14 +40,16 @@ import { BudgetStore } from './budget.store';
         @if (canChange()) {
           <okr-accounting-books slot="end" />
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId }}">
-              <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
-            </ion-button>
-            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
-              <ng-template>
-                <ion-content><okr-menu [menuName]="contextMenuName()" /></ion-content>
-              </ng-template>
-            </ion-popover>
+            @if (menuItemsStore.canOpen(contextMenuName())) {
+              <ion-button id="{{ popupId }}">
+                <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
+              </ion-button>
+              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+                <ng-template>
+                  <ion-content><okr-menu [menuName]="contextMenuName()" /></ion-content>
+                </ng-template>
+              </ion-popover>
+            }
           </ion-buttons>
         }
       </ion-toolbar>
@@ -95,6 +97,7 @@ import { BudgetStore } from './budget.store';
   `
 })
 export class CostAllocationList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly store = inject(BudgetStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;

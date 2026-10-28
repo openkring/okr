@@ -9,7 +9,7 @@ import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetOptions, keepDefaultTrue } from '@okr/shared-util-angular';
 import { getItemLabel, hasRole, contextMenuId } from '@okr/shared-util-core';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { getWorkflowRuleActions, getWorkflowRuleCondition, isWorkflowRuleComplete } from '@okr/system-workflow-util';
 
 import { WorkflowRuleStore } from './workflow-rule.store';
@@ -51,16 +51,18 @@ import { WorkflowRuleStore } from './workflow-rule.store';
           <ion-title>{{ filteredRulesCount() }}/{{ rulesCount() }} {{ store.i18n.plural() }}</ion-title>
           @if(!readOnly()) {
             <ion-buttons slot="end">
-              <ion-button id="{{ popupId }}">
-                <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
-              </ion-button>
-              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
-                <ng-template>
-                  <ion-content>
-                    <okr-menu [menuName]="contextMenuName()" />
-                  </ion-content>
-                </ng-template>
-              </ion-popover>
+              @if (menuItemsStore.canOpen(contextMenuName())) {
+                <ion-button id="{{ popupId }}">
+                  <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
+                </ion-button>
+                <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+                  <ng-template>
+                    <ion-content>
+                      <okr-menu [menuName]="contextMenuName()" />
+                    </ion-content>
+                  </ng-template>
+                </ion-popover>
+              }
             </ion-buttons>
           }
         </ion-toolbar>
@@ -109,6 +111,7 @@ import { WorkflowRuleStore } from './workflow-rule.store';
   `
 })
 export class WorkflowRuleList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly store = inject(WorkflowRuleStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly alertService = inject(AlertService);

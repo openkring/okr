@@ -10,7 +10,7 @@ import { Header, Spinner } from '@okr/shared-ui';
 import { coerceBoolean, extractFirstPartOfOptionalTupel, contextMenuId } from '@okr/shared-util-core';
 import { copyToClipboardWithConfirmation, error, keepDefaultTrue } from '@okr/shared-util-angular';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { AlbumSectionComponent } from '@okr/cms-section-feature';
 import { createSection } from '@okr/cms-section-util';
 import { DEFAULT_ACCEPT_ATTRIBUTE } from '@okr/shared-constants';
@@ -73,16 +73,18 @@ import { FolderService } from '@okr/content-folder-data-access';
               <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
               <ion-title>{{ headerTitle() }}</ion-title>
               <ion-buttons slot="end">
-                <ion-button id="{{ popupId }}">
-                  <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
-                </ion-button>
-                <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
-                  <ng-template>
-                    <ion-content>
-                      <okr-menu [menuName]="menuName" [excludeNames]="hiddenMenuItems()" [toggleStates]="{ toggleFolders: foldersVisible() }" />
-                    </ion-content>
-                  </ng-template>
-                </ion-popover>
+                @if (menuItemsStore.canOpen(menuName)) {
+                  <ion-button id="{{ popupId }}">
+                    <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
+                  </ion-button>
+                  <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+                    <ng-template>
+                      <ion-content>
+                        <okr-menu [menuName]="menuName" [excludeNames]="hiddenMenuItems()" [toggleStates]="{ toggleFolders: foldersVisible() }" />
+                      </ion-content>
+                    </ng-template>
+                  </ion-popover>
+                }
               </ion-buttons>
             </ion-toolbar>
           </ion-header>
@@ -109,6 +111,7 @@ import { FolderService } from '@okr/content-folder-data-access';
   `
 })
 export class AlbumPage {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   // AppStore, not PageStore: the album needs the tenant id and nothing else from the page pipeline.
   // Injecting PageStore made the direct route depend on a page document that need not exist.
   private readonly appStore = inject(AppStore);

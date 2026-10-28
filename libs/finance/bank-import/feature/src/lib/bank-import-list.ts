@@ -13,7 +13,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, contextMenuId } from '@okr/shared-util-core';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 
 import { BANK_IMPORT_PROVIDERS, BankImportStatusFilter, BankImportStore } from './bank-import.store';
 import { AccountingBooks, AccountingSegments } from '@okr/finance-accounting-feature';
@@ -39,17 +39,19 @@ const STATUS_FILTERS: BankImportStatusFilter[] = ['open', 'all', 'unmapped', 'ma
         <ion-title>{{ store.filtered().length }}/{{ store.rows().length }} {{ store.i18n.plural() }}</ion-title>
         <okr-accounting-books slot="end" />
         <ion-buttons slot="end">
-          <ion-button id="{{ popupId }}">
-            <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
-          </ion-button>
-          <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true"
-            [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
-            <ng-template>
-              <ion-content>
-                <okr-menu [menuName]="contextMenuName()" />
-              </ion-content>
-            </ng-template>
-          </ion-popover>
+          @if (menuItemsStore.canOpen(contextMenuName())) {
+            <ion-button id="{{ popupId }}">
+              <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
+            </ion-button>
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true"
+              [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+              <ng-template>
+                <ion-content>
+                  <okr-menu [menuName]="contextMenuName()" />
+                </ion-content>
+              </ng-template>
+            </ion-popover>
+          }
         </ion-buttons>
       </ion-toolbar>
       <okr-accounting-segments />
@@ -118,6 +120,7 @@ const STATUS_FILTERS: BankImportStatusFilter[] = ['open', 'all', 'unmapped', 'ma
   `,
 })
 export class BankImportList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly store = inject(BankImportStore);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

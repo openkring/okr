@@ -5,7 +5,7 @@ import {
   IonIcon, IonLabel, IonMenuButton, IonNote, IonPopover, IonRow, IonTitle, IonToolbar,
 } from '@ionic/angular';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { contractStateFilterCategory, contractTypeFilterCategory } from '@okr/business-contract-util';
 import { ContractModel, DeadlineKind, MoneyModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -51,16 +51,18 @@ function toListId(value: string | undefined | null): ContractListId {
         <ion-title>{{ filteredCount() }}/{{ count() }} {{ title() }}</ion-title>
         @if (contextMenuName()) {
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId }}">
-              <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
-            </ion-button>
-            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
-              <ng-template>
-                <ion-content>
-                  <okr-menu [menuName]="contextMenuName()" />
-                </ion-content>
-              </ng-template>
-            </ion-popover>
+            @if (menuItemsStore.canOpen(contextMenuName())) {
+              <ion-button id="{{ popupId }}">
+                <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
+              </ion-button>
+              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+                <ng-template>
+                  <ion-content>
+                    <okr-menu [menuName]="contextMenuName()" />
+                  </ion-content>
+                </ng-template>
+              </ion-popover>
+            }
           </ion-buttons>
         }
       </ion-toolbar>
@@ -130,6 +132,7 @@ function toListId(value: string | undefined | null): ContractListId {
   `,
 })
 export class ContractList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly store = inject(ContractStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly alertService = inject(AlertService);

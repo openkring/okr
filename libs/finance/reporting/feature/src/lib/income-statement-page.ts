@@ -10,7 +10,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner, StringSelect, StringSelectI18n } from '@okr/shared-ui';
 import { AlertService } from '@okr/shared-util-angular';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { ReportTable } from '@okr/finance-reporting-ui';
 
 import { ReportingStore } from './reporting.store';
@@ -38,15 +38,17 @@ import { AccountingBooks, AccountingSegments } from '@okr/finance-accounting-fea
         <ion-title>{{ store.i18n.income_title() }} {{ store.currentFy().label }}</ion-title>
         <okr-accounting-books slot="end" />
         <ion-buttons slot="end">
-          <ion-button id="{{ popupId }}">
-            <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
-          </ion-button>
-          <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true"
-            [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
-            <ng-template>
-              <ion-content><okr-menu [menuName]="contextMenuName()" /></ion-content>
-            </ng-template>
-          </ion-popover>
+          @if (menuItemsStore.canOpen(contextMenuName())) {
+            <ion-button id="{{ popupId }}">
+              <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
+            </ion-button>
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true"
+              [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+              <ng-template>
+                <ion-content><okr-menu [menuName]="contextMenuName()" /></ion-content>
+              </ng-template>
+            </ion-popover>
+          }
         </ion-buttons>
       </ion-toolbar>
       <okr-accounting-segments />
@@ -82,6 +84,7 @@ import { AccountingBooks, AccountingSegments } from '@okr/finance-accounting-fea
   `,
 })
 export class IncomeStatementPage {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly store = inject(ReportingStore);
   private readonly route = inject(ActivatedRoute);
   private readonly alertService = inject(AlertService);

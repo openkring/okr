@@ -13,7 +13,7 @@ import { createActionSheetButton, createActionSheetOptions, error } from '@okr/s
 import { convertDateFormatToString, DateFormat, getTodayStr, getYear, getYearList, hasRole, contextMenuId } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { AccountingBooks, AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
 
 import { InvoiceStore } from './invoice.store';
@@ -48,35 +48,37 @@ import { InvoiceStore } from './invoice.store';
         @if(canWriteDrafts()) {
           <okr-accounting-books slot="end" />
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId }}">
-              <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
-            </ion-button>
-            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"
-              (ionPopoverDidDismiss)="onPopoverDismiss($event)">
-              <ng-template>
-                <ion-content>
-                  <okr-menu [menuName]="contextMenuName()" />
-                  <!-- not a menuItems row: it is offered only while the list holds drafts -->
-                  @if (canIssueAllDrafts() || canRunMahnlauf()) {
-                    <ion-list lines="none">
-                      @if (canIssueAllDrafts()) {
-                        <ion-item button="true" detail="false" (click)="selectPopoverAction('issueAllDrafts')">
-                          <ion-icon slot="start" src="{{ 'send' | svgIcon }}" />
-                          <ion-label>{{ store.i18n.issue_all() }}</ion-label>
-                        </ion-item>
-                      }
-                      <!-- likewise not a menuItems row: offered only while invoices of the list are due for a reminder -->
-                      @if (canRunMahnlauf()) {
-                        <ion-item button="true" detail="false" (click)="selectPopoverAction('mahnlauf')">
-                          <ion-icon slot="start" src="{{ 'alarm' | svgIcon }}" />
-                          <ion-label>{{ store.i18n.mahnlauf() }}</ion-label>
-                        </ion-item>
-                      }
-                    </ion-list>
-                  }
-                </ion-content>
-              </ng-template>
-            </ion-popover>
+            @if (menuItemsStore.canOpen(contextMenuName())) {
+              <ion-button id="{{ popupId }}">
+                <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
+              </ion-button>
+              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"
+                (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+                <ng-template>
+                  <ion-content>
+                    <okr-menu [menuName]="contextMenuName()" />
+                    <!-- not a menuItems row: it is offered only while the list holds drafts -->
+                    @if (canIssueAllDrafts() || canRunMahnlauf()) {
+                      <ion-list lines="none">
+                        @if (canIssueAllDrafts()) {
+                          <ion-item button="true" detail="false" (click)="selectPopoverAction('issueAllDrafts')">
+                            <ion-icon slot="start" src="{{ 'send' | svgIcon }}" />
+                            <ion-label>{{ store.i18n.issue_all() }}</ion-label>
+                          </ion-item>
+                        }
+                        <!-- likewise not a menuItems row: offered only while invoices of the list are due for a reminder -->
+                        @if (canRunMahnlauf()) {
+                          <ion-item button="true" detail="false" (click)="selectPopoverAction('mahnlauf')">
+                            <ion-icon slot="start" src="{{ 'alarm' | svgIcon }}" />
+                            <ion-label>{{ store.i18n.mahnlauf() }}</ion-label>
+                          </ion-item>
+                        }
+                      </ion-list>
+                    }
+                  </ion-content>
+                </ng-template>
+              </ion-popover>
+            }
           </ion-buttons>
         }
       </ion-toolbar>
@@ -132,6 +134,7 @@ import { InvoiceStore } from './invoice.store';
   `
 })
 export class InvoiceList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly store = inject(InvoiceStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly cdr = inject(ChangeDetectorRef);

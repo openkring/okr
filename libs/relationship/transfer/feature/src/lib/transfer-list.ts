@@ -6,7 +6,7 @@ import { EmptyList, ListFilter } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { getAvatarName, getYearList, hasRole, contextMenuId } from '@okr/shared-util-core';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 
 import { TransferStore } from './transfer.store';
@@ -33,16 +33,18 @@ type TransferSortField = 'date' | 'from' | 'to' | 'resource' | 'status';
       <ion-buttons slot="end">
         @if(hasRole('privileged') || hasRole('resourceAdmin')) {
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId }}">
-              <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
-            </ion-button>
-            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
-              <ng-template>
-                <ion-content>
-                  <okr-menu [menuName]="contextMenuName()"/>
-                </ion-content>
-              </ng-template>
-            </ion-popover>
+            @if (menuItemsStore.canOpen(contextMenuName())) {
+              <ion-button id="{{ popupId }}">
+                <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
+              </ion-button>
+              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+                <ng-template>
+                  <ion-content>
+                    <okr-menu [menuName]="contextMenuName()"/>
+                  </ion-content>
+                </ng-template>
+              </ion-popover>
+            }
           </ion-buttons>                  }
       </ion-buttons>
     </ion-toolbar>
@@ -91,6 +93,7 @@ type TransferSortField = 'date' | 'from' | 'to' | 'resource' | 'status';
     `
 })
 export class TransferList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly popupId = contextMenuId('c_transfers');
   protected readonly store = inject(TransferStore);
   private actionSheetController = inject(ActionSheetController);

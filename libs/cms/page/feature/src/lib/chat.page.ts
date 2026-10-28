@@ -4,7 +4,7 @@ import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonMenuButton, I
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { I18nService } from '@okr/shared-i18n';
 import { PAGE_I18N_KEYS, PageI18n } from '@okr/cms-page-util';
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { ChatBlockedCard, Spinner } from '@okr/shared-ui';
 import { isBrowser } from '@okr/shared-util-angular';
 import { ChatStatusService } from '@okr/shared-data-access';
@@ -48,7 +48,7 @@ import type { MatrixChat } from '@okr/chat-feature';
               <ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" />
             </ion-button>
             <!-- room context menu, hoisted from the room-list toolbar; action delegated to MatrixChat -->
-            @if(canOpenRoomMenu()) {
+            @if(canOpenRoomMenu() && menuItemsStore.canOpen(contextMenuName())) {
               <!-- present imperatively (not via [trigger]) so a late-rendered button / cached page
                    can't break Ionic's one-shot getElementById trigger wiring -->
               <ion-button (click)="ctxPopover.present($event)">
@@ -81,6 +81,7 @@ import type { MatrixChat } from '@okr/chat-feature';
   `
 })
 export class ChatPage {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly i18n = inject(I18nService).translateAll(PAGE_I18N_KEYS) as PageI18n;

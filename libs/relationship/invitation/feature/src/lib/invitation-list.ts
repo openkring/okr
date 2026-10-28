@@ -8,7 +8,7 @@ import { createActionSheetButton, createActionSheetOptions, error } from '@okr/s
 import { getItemLabel, getYearList, hasRole, contextMenuId } from '@okr/shared-util-core';
 import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 
 import { CALEVENT_I18N_KEYS } from '@okr/calevent-util';
@@ -42,16 +42,18 @@ type InvitationSortField = 'date' | 'name' | 'invitee' | 'inviter' | 'state';
         </ion-button>
         @if(hasRole('privileged') || hasRole('resourceAdmin')) {
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId }}">
-              <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
-            </ion-button>
-            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
-              <ng-template>
-                <ion-content>
-                  <okr-menu [menuName]="contextMenuName()" [toggleStates]="{ togglePast: showPast() }"/>
-                </ion-content>
-              </ng-template>
-            </ion-popover>
+            @if (menuItemsStore.canOpen(contextMenuName())) {
+              <ion-button id="{{ popupId }}">
+                <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
+              </ion-button>
+              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+                <ng-template>
+                  <ion-content>
+                    <okr-menu [menuName]="contextMenuName()" [toggleStates]="{ togglePast: showPast() }"/>
+                  </ion-content>
+                </ng-template>
+              </ion-popover>
+            }
           </ion-buttons>                  }
       </ion-buttons>
     </ion-toolbar>
@@ -96,6 +98,7 @@ type InvitationSortField = 'date' | 'name' | 'invitee' | 'inviter' | 'state';
     `
 })
 export class InvitationList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly popupId = contextMenuId('c_invitations');
   protected readonly store = inject(InvitationStore);
   private actionSheetController = inject(ActionSheetController);

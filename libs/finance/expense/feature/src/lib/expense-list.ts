@@ -14,7 +14,7 @@ import { AlertService, createActionSheetButton, createActionSheetDivider, create
 import { convertDateFormatToString, DateFormat, getItemLabel, hasRole, contextMenuId } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import {
   canDeleteExpense, canEditExpense, canOpenBooking, canRedoOcr, canViewExpense, centsToCHF,
   expenseStatusColor, ExpenseSortField, nextExpenseStateFilter,
@@ -68,17 +68,19 @@ import { AccountingBooks, AccountingSegments } from '@okr/finance-accounting-fea
         @if (canAdd()) {
           <okr-accounting-books slot="end" />
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId }}">
-              <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
-            </ion-button>
-            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true"
-              [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
-              <ng-template>
-                <ion-content>
-                  <okr-menu [menuName]="contextMenuName()" />
-                </ion-content>
-              </ng-template>
-            </ion-popover>
+            @if (menuItemsStore.canOpen(contextMenuName())) {
+              <ion-button id="{{ popupId }}">
+                <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
+              </ion-button>
+              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true"
+                [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+                <ng-template>
+                  <ion-content>
+                    <okr-menu [menuName]="contextMenuName()" />
+                  </ion-content>
+                </ng-template>
+              </ion-popover>
+            }
           </ion-buttons>
         }
       </ion-toolbar>
@@ -178,6 +180,7 @@ import { AccountingBooks, AccountingSegments } from '@okr/finance-accounting-fea
   `,
 })
 export class ExpenseList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly store = inject(ExpenseStore);
   private readonly modalController = inject(ModalController);
   private readonly toastController = inject(ToastController);

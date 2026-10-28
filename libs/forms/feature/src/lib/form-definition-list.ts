@@ -6,7 +6,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetOptions, keepDefaultTrue } from '@okr/shared-util-angular';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 
 import { FormDefinitionStore } from './form-definition.store';
 
@@ -29,15 +29,17 @@ import { contextMenuId } from '@okr/shared-util-core';
         <ion-title>{{ store.filteredForms().length }}/{{ store.formsCount() }} {{ store.i18n.list_title() }}</ion-title>
         @if (store.canWrite()) {
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId }}">
-              <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
-            </ion-button>
-            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true"
-              [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
-              <ng-template>
-                <ion-content><okr-menu [menuName]="contextMenuName()" /></ion-content>
-              </ng-template>
-            </ion-popover>
+            @if (menuItemsStore.canOpen(contextMenuName())) {
+              <ion-button id="{{ popupId }}">
+                <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
+              </ion-button>
+              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true"
+                [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+                <ng-template>
+                  <ion-content><okr-menu [menuName]="contextMenuName()" /></ion-content>
+                </ng-template>
+              </ion-popover>
+            }
           </ion-buttons>
         }
       </ion-toolbar>
@@ -66,6 +68,7 @@ import { contextMenuId } from '@okr/shared-util-core';
   `,
 })
 export class FormDefinitionList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly popupId = contextMenuId('c_forms');
   protected readonly store = inject(FormDefinitionStore);
   private readonly actionSheetController = inject(ActionSheetController);

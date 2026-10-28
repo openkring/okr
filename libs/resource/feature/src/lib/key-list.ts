@@ -7,7 +7,7 @@ import { error } from '@okr/shared-util-angular';
 import { hasRole, contextMenuId } from '@okr/shared-util-core';
 import { DEFAULT_TAGS } from '@okr/shared-constants';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 
 import { OwnershipStore } from '@okr/relationship-ownership-feature';
 
@@ -32,16 +32,18 @@ import { ResourceStore } from './resource.store';
       <ion-title>{{selectedKeysCount()}}/{{keysCount() }} {{ store.i18n.key_plural() }}</ion-title>
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
         <ion-buttons slot="end">
-          <ion-button id="{{ popupId }}">
-            <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
-          </ion-button>
-          <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
-            <ng-template>
-              <ion-content>
-                <okr-menu [menuName]="contextMenuName()"/>
-              </ion-content>
-            </ng-template>
-          </ion-popover>
+          @if (menuItemsStore.canOpen(contextMenuName())) {
+            <ion-button id="{{ popupId }}">
+              <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
+            </ion-button>
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+              <ng-template>
+                <ion-content>
+                  <okr-menu [menuName]="contextMenuName()"/>
+                </ion-content>
+              </ng-template>
+            </ion-popover>
+          }
         </ion-buttons>       
       }
     </ion-toolbar>
@@ -84,6 +86,7 @@ import { ResourceStore } from './resource.store';
   `
 })
 export class KeyList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly popupId = contextMenuId('c_key');
   protected readonly store = inject(ResourceStore);
   protected readonly ownershipStore = inject(OwnershipStore);

@@ -10,7 +10,7 @@ import { createActionSheetButton, createActionSheetOptions, error, navigateByUrl
 import { extractSecondPartOfOptionalTupel, getAttendanceColor, getAttendanceIcon, getAttendanceState, getYearFromDate, hasRole, contextMenuId } from '@okr/shared-util-core';
 import { canAttendCalevent, isAttendanceClosed, mayJoinOpenCalevent } from '@okr/calevent-util';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 
 import { CalEventStore } from './calevent.store';
@@ -46,16 +46,18 @@ type AttendanceFilter = AttendanceState | 'all';
       <ion-buttons slot="end">
         @if(hasRole('privileged') || hasRole('eventAdmin')) {
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId }}">
-              <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
-            </ion-button>
-            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
-              <ng-template>
-                <ion-content>
-                  <okr-menu [menuName]="contextMenuName()"/>
-                </ion-content>
-              </ng-template>
-            </ion-popover>
+            @if (menuItemsStore.canOpen(contextMenuName())) {
+              <ion-button id="{{ popupId }}">
+                <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
+              </ion-button>
+              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+                <ng-template>
+                  <ion-content>
+                    <okr-menu [menuName]="contextMenuName()"/>
+                  </ion-content>
+                </ng-template>
+              </ion-popover>
+            }
           </ion-buttons>
         }
       </ion-buttons>
@@ -143,6 +145,7 @@ type AttendanceFilter = AttendanceState | 'all';
     `
 })
 export class YearlyEvents {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly popupId = contextMenuId('c_yevents');
   protected store = inject(CalEventStore);
   private actionSheetController = inject(ActionSheetController);

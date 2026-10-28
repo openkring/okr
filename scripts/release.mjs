@@ -185,9 +185,9 @@ async function releaseApp(app) {
   // 1a*. ion-popover triggers: a fixed or data-derived trigger id repeats once the same list sits
   //      twice in Ionic's page stack, and the popover binds to the hidden page's button — the
   //      ellipsis shows, a click does nothing. Breaks no build and no test.
-  console.log('\n[1/6] Checking ion-popover triggers (pnpm check-popover-triggers)…');
-  try { run('node', ['scripts/check-popover-triggers.mjs']); }
-  catch { abort('check-popover-triggers failed — release aborted (no version bump made). Use contextMenuId() for the ids above.'); }
+  console.log('\n[1/6] Checking ion-popover triggers (pnpm check-context-menus)…');
+  try { run('node', ['scripts/check-context-menus.mjs']); }
+  catch { abort('check-context-menus failed — release aborted (no version bump made). Use contextMenuId() for the ids above.'); }
 
   // 1a'. i18n gate: every key the code names must resolve, in all five languages. A missing key
   //      breaks no build and no test — it renders raw in production and opens one Sentry

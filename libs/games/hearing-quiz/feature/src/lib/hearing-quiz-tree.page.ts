@@ -12,7 +12,7 @@ import {
   IonToolbar,
 } from '@ionic/angular';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { HearingQuizNodeModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Spinner } from '@okr/shared-ui';
@@ -69,16 +69,18 @@ import { HearingQuizStore } from './hearing-quiz.store';
         <ion-title>{{ store.i18n.title() }}</ion-title>
         @if (store.isContentAdmin()) {
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId }}">
-              <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
-            </ion-button>
-            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
-              <ng-template>
-                <ion-content>
-                  <okr-menu [menuName]="menuName()" [toggleStates]="{ toggleEditMode: store.editMode() }" />
-                </ion-content>
-              </ng-template>
-            </ion-popover>
+            @if (menuItemsStore.canOpen(menuName())) {
+              <ion-button id="{{ popupId }}">
+                <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
+              </ion-button>
+              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+                <ng-template>
+                  <ion-content>
+                    <okr-menu [menuName]="menuName()" [toggleStates]="{ toggleEditMode: store.editMode() }" />
+                  </ion-content>
+                </ng-template>
+              </ion-popover>
+            }
           </ion-buttons>
         }
       </ion-toolbar>
@@ -152,6 +154,7 @@ import { HearingQuizStore } from './hearing-quiz.store';
   `,
 })
 export class HearingQuizTreePage {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly popupId = contextMenuId('c_hearing_quiz');
   protected readonly store = inject(HearingQuizStore);
 

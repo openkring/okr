@@ -10,7 +10,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
 
 import { AccountStore } from '@okr/finance-account-feature';
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 
 import { OcrRuleStore } from './ocr-rule.store';
 import { AccountingBooks, AccountingSegments } from '@okr/finance-accounting-feature';
@@ -32,17 +32,19 @@ import { AccountingBooks, AccountingSegments } from '@okr/finance-accounting-fea
         <ion-title>{{ store.rules().length }} {{ store.i18n.list_title() }}</ion-title>
         <okr-accounting-books slot="end" />
         <ion-buttons slot="end">
-          <ion-button id="{{ popupId }}">
-            <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
-          </ion-button>
-          <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true"
-            [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
-            <ng-template>
-              <ion-content>
-                <okr-menu [menuName]="contextMenuName()" />
-              </ion-content>
-            </ng-template>
-          </ion-popover>
+          @if (menuItemsStore.canOpen(contextMenuName())) {
+            <ion-button id="{{ popupId }}">
+              <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
+            </ion-button>
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true"
+              [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+              <ng-template>
+                <ion-content>
+                  <okr-menu [menuName]="contextMenuName()" />
+                </ion-content>
+              </ng-template>
+            </ion-popover>
+          }
         </ion-buttons>
       </ion-toolbar>
       <okr-accounting-segments />
@@ -71,6 +73,7 @@ import { AccountingBooks, AccountingSegments } from '@okr/finance-accounting-fea
   `,
 })
 export class OcrRuleList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly store = inject(OcrRuleStore);
   private readonly route = inject(ActivatedRoute);
   private readonly actionSheetController = inject(ActionSheetController);

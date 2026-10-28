@@ -8,7 +8,7 @@ import { error } from '@okr/shared-util-angular';
 
 import { I18nService } from '@okr/shared-i18n';
 import { MENU_I18N_KEYS } from '@okr/cms-menu-util';
-import { Menu, MenuStore } from '@okr/cms-menu-feature';
+import { Menu, MenuStore, MenuItemsStore } from '@okr/cms-menu-feature';
 import { SectionStore } from '@okr/cms-section-feature';
 
 import { DependencyNode, MenuGraphStore } from './menu-graph.store';
@@ -95,17 +95,19 @@ import { PageStore } from './page.store';
               <ion-button id="help" (click)="showHelp()">
                 <ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" />
               </ion-button>
-              <ion-button id="{{ popupId }}">
-                <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
-              </ion-button>
               @if(contextMenuName(); as contextMenuName) {
-                <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
-                  <ng-template>
-                    <ion-content>
-                      <okr-menu [menuName]="contextMenuName"/>
-                    </ion-content>
-                  </ng-template>
-                </ion-popover>
+                @if (menuItemsStore.canOpen(contextMenuName)) {
+                  <ion-button id="{{ popupId }}">
+                    <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
+                  </ion-button>
+                  <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+                    <ng-template>
+                      <ion-content>
+                        <okr-menu [menuName]="contextMenuName"/>
+                      </ion-content>
+                    </ng-template>
+                  </ion-popover>
+                }
               }
             </ion-buttons>
           }
@@ -169,6 +171,7 @@ import { PageStore } from './page.store';
   `
 })
 export class GraphPage {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected store  = inject(PageStore);
   protected graphStore = inject(MenuGraphStore);
   private menuStore    = inject(MenuStore);

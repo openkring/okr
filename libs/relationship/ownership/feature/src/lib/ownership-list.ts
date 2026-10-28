@@ -10,7 +10,7 @@ import { error } from '@okr/shared-util-angular';
 import { getCategoryIcon, getItemLabel, getYearList, hasRole, contextMenuId } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { getOwnerName } from '@okr/relationship-ownership-util';
 
 import { OwnershipStore } from './ownership.store';
@@ -36,16 +36,18 @@ type OwnershipSortField = 'owner' | 'name' | 'type' | 'duration';
       <ion-title class="ion-hide-md-up">{{ selectedOwnershipsCount()}} {{ title() | translate | async }}</ion-title>
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
         <ion-buttons slot="end">
-          <ion-button id="{{ popupId }}">
-            <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
-          </ion-button>
-          <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
-            <ng-template>
-              <ion-content>
-                <okr-menu [menuName]="contextMenuName()"/>
-              </ion-content>
-            </ng-template>
-          </ion-popover>
+          @if (menuItemsStore.canOpen(contextMenuName())) {
+            <ion-button id="{{ popupId }}">
+              <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
+            </ion-button>
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+              <ng-template>
+                <ion-content>
+                  <okr-menu [menuName]="contextMenuName()"/>
+                </ion-content>
+              </ng-template>
+            </ion-popover>
+          }
         </ion-buttons>
       }
     </ion-toolbar>
@@ -116,6 +118,7 @@ type OwnershipSortField = 'owner' | 'name' | 'type' | 'duration';
     `
 })
 export class OwnershipList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected store = inject(OwnershipStore);
 
   // inputs

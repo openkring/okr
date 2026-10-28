@@ -6,7 +6,7 @@ import { EmptyList, ListFilter, ImgDirective } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { getAvatarKey, getAvatarName, getFullName, getYear, getYearList, hasRole, isOngoing, isPerson, contextMenuId } from '@okr/shared-util-core';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { AvatarService } from '@okr/avatar-data-access';
 import { isReservationOpen } from '@okr/relationship-reservation-util';
 
@@ -37,16 +37,18 @@ type ReservationSortField = 'reserver' | 'name' | 'startdate' | 'status';
         <ion-title class="ion-hide-md-up">{{ selectedReservationsCount()}} BH Reservationen</ion-title>
         @if(hasRole('privileged') || hasRole('resourceAdmin')) {
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId }}">
-              <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
-            </ion-button>
-            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
-              <ng-template>
-                <ion-content>
-                  <okr-menu [menuName]="contextMenuName()"/>
-                </ion-content>
-              </ng-template>
-            </ion-popover>
+            @if (menuItemsStore.canOpen(contextMenuName())) {
+              <ion-button id="{{ popupId }}">
+                <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
+              </ion-button>
+              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+                <ng-template>
+                  <ion-content>
+                    <okr-menu [menuName]="contextMenuName()"/>
+                  </ion-content>
+                </ng-template>
+              </ion-popover>
+            }
           </ion-buttons>          
         }
       </ion-toolbar>
@@ -295,6 +297,7 @@ type ReservationSortField = 'reserver' | 'name' | 'startdate' | 'status';
   `]
 })
 export class ReservationList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected store = inject(ReservationStore);
   private actionSheetController = inject(ActionSheetController);
   private avatarService = inject(AvatarService);

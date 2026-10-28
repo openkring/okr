@@ -8,7 +8,7 @@ import { createActionSheetButton, createActionSheetOptions, error } from '@okr/s
 import { hasRole, isOngoing, contextMenuId } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { PersonalRelNamePipe } from '@okr/relationship-personal-rel-util';
 import { PersonalRelStore } from './personal-rel.store';
 
@@ -36,16 +36,18 @@ type PersonalRelSortField = 'person1' | 'type' | 'person2';
         <ion-buttons slot="end">
           @if(hasRole('privileged') || hasRole('memberAdmin')) {
             <ion-buttons slot="end">
-              <ion-button id="{{ popupId }}">
-                <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
-              </ion-button>
-              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
-                <ng-template>
-                  <ion-content>
-                    <okr-menu [menuName]="contextMenuName()"/>
-                  </ion-content>
-                </ng-template>
-              </ion-popover>
+              @if (menuItemsStore.canOpen(contextMenuName())) {
+                <ion-button id="{{ popupId }}">
+                  <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
+                </ion-button>
+                <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+                  <ng-template>
+                    <ion-content>
+                      <okr-menu [menuName]="contextMenuName()"/>
+                    </ion-content>
+                  </ng-template>
+                </ion-popover>
+              }
           </ion-buttons>          
         }
         </ion-buttons>
@@ -116,6 +118,7 @@ type PersonalRelSortField = 'person1' | 'type' | 'person2';
     `
 })
 export class PersonalRelList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly popupId = contextMenuId('c_prel');
   protected store = inject(PersonalRelStore);
   private actionSheetController = inject(ActionSheetController);

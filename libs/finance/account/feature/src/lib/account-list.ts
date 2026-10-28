@@ -7,7 +7,7 @@ import { EmptyList, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { hasRole, contextMenuId } from '@okr/shared-util-core';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { CostCenterStore } from '@okr/finance-cost-center-feature';
 import { costCenterLabel } from '@okr/finance-cost-center-util';
 
@@ -41,16 +41,18 @@ import { AccountStore } from './account.store';
       }
       @if(hasRole('privileged') || hasRole('admin')) {
         <ion-buttons slot="end">
-          <ion-button id="{{ popupId }}">
-            <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
-          </ion-button>
-          <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
-            <ng-template>
-              <ion-content>
-                <okr-menu [menuName]="contextMenuName()" [toggleStates]="{ toggleEditMode: editMode(), toggleAccounts: store.showAccounts(), toggleGroups: store.showGroups(), toggleCostCenters: store.showCostCenters() }" />
-              </ion-content>
-            </ng-template>
-          </ion-popover>
+          @if (menuItemsStore.canOpen(contextMenuName())) {
+            <ion-button id="{{ popupId }}">
+              <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
+            </ion-button>
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+              <ng-template>
+                <ion-content>
+                  <okr-menu [menuName]="contextMenuName()" [toggleStates]="{ toggleEditMode: editMode(), toggleAccounts: store.showAccounts(), toggleGroups: store.showGroups(), toggleCostCenters: store.showCostCenters() }" />
+                </ion-content>
+              </ng-template>
+            </ion-popover>
+          }
         </ion-buttons>
       }
     </ion-toolbar>
@@ -97,6 +99,7 @@ import { AccountStore } from './account.store';
   `
 })
 export class AccountList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected store = inject(AccountStore);
   private costCenterStore = inject(CostCenterStore);
   private actionSheetController = inject(ActionSheetController);

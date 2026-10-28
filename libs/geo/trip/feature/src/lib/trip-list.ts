@@ -8,7 +8,7 @@ import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, keepDefaultTrue } from '@okr/shared-util-angular';
 import { RoleName, TripModel } from '@okr/shared-models';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { MenuService } from '@okr/cms-menu-data-access';
 
 import { formatTripTime, isTripEditable } from '@okr/trip-util';
@@ -52,17 +52,19 @@ import { AvatarDisplay } from '@okr/avatar-ui';
           </ion-buttons>
           @if (canOpenContextMenu()) {
             <ion-buttons slot="end">
-              <ion-button id="{{ popupId }}">
-                <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon}}" />
-              </ion-button>
-              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"
-                (ionPopoverDidDismiss)="onPopoverDismiss($event)">
-                <ng-template>
-                  <ion-content>
-                    <okr-menu [menuName]="contextMenuName()" />
-                  </ion-content>
-                </ng-template>
-              </ion-popover>
+              @if (menuItemsStore.canOpen(contextMenuName())) {
+                <ion-button id="{{ popupId }}">
+                  <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon}}" />
+                </ion-button>
+                <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"
+                  (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+                  <ng-template>
+                    <ion-content>
+                      <okr-menu [menuName]="contextMenuName()" />
+                    </ion-content>
+                  </ng-template>
+                </ion-popover>
+              }
             </ion-buttons>
           }
         </ion-toolbar>
@@ -182,6 +184,7 @@ import { AvatarDisplay } from '@okr/avatar-ui';
   `],
 })
 export class TripList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly store = inject(TripStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly menuService = inject(MenuService);

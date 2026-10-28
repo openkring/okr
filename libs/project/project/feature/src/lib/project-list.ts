@@ -10,7 +10,7 @@ import {
 
 import { DEFAULT_PROJECT_STATE } from '@okr/shared-constants';
 import { AvatarPipe } from '@okr/avatar-ui';
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { BookingLineModel, ProjectModel } from '@okr/shared-models';
 import { TranslatePipe } from '@okr/shared-i18n';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
@@ -60,14 +60,16 @@ import { contextMenuId } from '@okr/shared-util-core';
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ filteredCount() }}/{{ store.projectsCount() }} {{ store.i18n.plural() }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button [id]="popupId">
-            <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
-          </ion-button>
-          <ion-popover [trigger]="popupId" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
-            <ng-template>
-              <ion-content><okr-menu [menuName]="contextMenuName()" [toggleStates]="{ toggleBudget: budgetView() }" /></ion-content>
-            </ng-template>
-          </ion-popover>
+          @if (menuItemsStore.canOpen(contextMenuName())) {
+            <ion-button [id]="popupId">
+              <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
+            </ion-button>
+            <ion-popover [trigger]="popupId" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+              <ng-template>
+                <ion-content><okr-menu [menuName]="contextMenuName()" [toggleStates]="{ toggleBudget: budgetView() }" /></ion-content>
+              </ng-template>
+            </ion-popover>
+          }
         </ion-buttons>
       </ion-toolbar>
 
@@ -122,6 +124,7 @@ import { contextMenuId } from '@okr/shared-util-core';
   `
 })
 export class ProjectList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly store = inject(ProjectStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly router = inject(Router);

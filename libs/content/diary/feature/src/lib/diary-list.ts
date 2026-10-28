@@ -5,7 +5,7 @@ import {
   IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonNote, IonPopover, IonTitle, IonToolbar,
 } from '@ionic/angular';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { EmptyList, ImgDirective, ListFilter, Spinner } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { CategoryItemModel, CategoryListModel, DiaryModel } from '@okr/shared-models';
@@ -52,15 +52,17 @@ const DIARY_STATE_I18N_SCOPE = '@content/diary/feature';
         <ion-title>{{ filteredCount() }}/{{ count() }} {{ store.i18n.plural() }}</ion-title>
         @if (store.canWrite()) {
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId }}">
-              <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
-            </ion-button>
-            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"
-              (ionPopoverDidDismiss)="onPopoverDismiss($event)">
-              <ng-template>
-                <ion-content><okr-menu [menuName]="contextMenuName()" [toggleStates]="{ toggleMonthGroups: store.groupByMonth() }" /></ion-content>
-              </ng-template>
-            </ion-popover>
+            @if (menuItemsStore.canOpen(contextMenuName())) {
+              <ion-button id="{{ popupId }}">
+                <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
+              </ion-button>
+              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"
+                (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+                <ng-template>
+                  <ion-content><okr-menu [menuName]="contextMenuName()" [toggleStates]="{ toggleMonthGroups: store.groupByMonth() }" /></ion-content>
+                </ng-template>
+              </ion-popover>
+            }
           </ion-buttons>
         }
       </ion-toolbar>
@@ -165,6 +167,7 @@ const DIARY_STATE_I18N_SCOPE = '@content/diary/feature';
   `,
 })
 export class DiaryList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly store = inject(DiaryStore);
   private readonly alertService = inject(AlertService);
 

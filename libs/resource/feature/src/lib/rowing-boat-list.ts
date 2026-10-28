@@ -10,7 +10,7 @@ import { getCategoryIcon, getItemLabel, hasRole, contextMenuId } from '@okr/shar
 
 type BoatSortField = 'name' | 'type' | 'load';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 
 import { OwnershipStore } from '@okr/relationship-ownership-feature';
 
@@ -35,16 +35,18 @@ import { ResourceStore } from './resource.store';
       <ion-title>{{selectedBoatsCount()}}/{{boatsCount() }} {{ store.i18n.rboat_plural() }}</ion-title>
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
         <ion-buttons slot="end">
-          <ion-button id="{{ popupId }}">
-            <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
-          </ion-button>
-          <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
-            <ng-template>
-              <ion-content>
-                <okr-menu [menuName]="contextMenuName()"/>
-              </ion-content>
-            </ng-template>
-          </ion-popover>
+          @if (menuItemsStore.canOpen(contextMenuName())) {
+            <ion-button id="{{ popupId }}">
+              <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
+            </ion-button>
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+              <ng-template>
+                <ion-content>
+                  <okr-menu [menuName]="contextMenuName()"/>
+                </ion-content>
+              </ng-template>
+            </ion-popover>
+          }
         </ion-buttons>       
       }
     </ion-toolbar>
@@ -94,6 +96,7 @@ import { ResourceStore } from './resource.store';
   `
 })
 export class RowingBoatList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly popupId = contextMenuId('c_rboat');
   protected readonly store = inject(ResourceStore);
   protected readonly ownershipStore = inject(OwnershipStore);

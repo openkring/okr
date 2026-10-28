@@ -9,7 +9,7 @@ import { createActionSheetButton, createActionSheetOptions, error } from '@okr/s
 import { hasRole, replaceSubstring, contextMenuId } from '@okr/shared-util-core';
 import { fragmentScrollTop } from '@okr/cms-page-util';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { SectionStore } from '@okr/cms-section-feature';
 
 import { PageStore } from './page.store';
@@ -57,17 +57,19 @@ import { BlogStream } from './blog-stream';
           <ion-title>{{ store.page()?.name }}</ion-title>
           @if (hasRole('contentAdmin')) {
             <ion-buttons slot="end">
-              <ion-button id="{{ popupId }}">
-                <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
-              </ion-button>
               @if (contextMenuName(); as contextMenuName) {
-                <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
-                  <ng-template>
-                    <ion-content>
-                      <okr-menu [menuName]="contextMenuName" [toggleStates]="{ toggleEditMode: editMode() }" />
-                    </ion-content>
-                  </ng-template>
-                </ion-popover>
+                @if (menuItemsStore.canOpen(contextMenuName)) {
+                  <ion-button id="{{ popupId }}">
+                    <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
+                  </ion-button>
+                  <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+                    <ng-template>
+                      <ion-content>
+                        <okr-menu [menuName]="contextMenuName" [toggleStates]="{ toggleEditMode: editMode() }" />
+                      </ion-content>
+                    </ng-template>
+                  </ion-popover>
+                }
               }
             </ion-buttons>
           }
@@ -118,6 +120,7 @@ import { BlogStream } from './blog-stream';
   `
 })
 export class BlogPage {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected store = inject(PageStore);
   private sectionStore = inject(SectionStore);
   private readonly meta = inject(Meta);

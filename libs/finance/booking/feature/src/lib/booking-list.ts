@@ -9,7 +9,7 @@ import { ListFilter } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { hasRole, contextMenuId } from '@okr/shared-util-core';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { AccountingBooks, AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
 
 import { BookingAction, isForReview, JournalRow, sideAccountKeys } from '@okr/finance-booking-util';
@@ -59,16 +59,18 @@ function parseAmount(amount: string): number {
       @if(hasRole('privileged') || hasRole('admin')) {
         <okr-accounting-books slot="end" />
         <ion-buttons slot="end">
-          <ion-button id="{{ popupId }}">
-            <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
-          </ion-button>
-          <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
-            <ng-template>
-              <ion-content>
-                <okr-menu [menuName]="contextMenuName()" [excludeNames]="excludedMenuItems()" [toggleStates]="{ toggleSaldo: store.showSaldo(), toggleMonthGroups: store.groupByMonth() }" />
-              </ion-content>
-            </ng-template>
-          </ion-popover>
+          @if (menuItemsStore.canOpen(contextMenuName())) {
+            <ion-button id="{{ popupId }}">
+              <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
+            </ion-button>
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+              <ng-template>
+                <ion-content>
+                  <okr-menu [menuName]="contextMenuName()" [excludeNames]="excludedMenuItems()" [toggleStates]="{ toggleSaldo: store.showSaldo(), toggleMonthGroups: store.groupByMonth() }" />
+                </ion-content>
+              </ng-template>
+            </ion-popover>
+          }
         </ion-buttons>
       }
     </ion-toolbar>
@@ -219,6 +221,7 @@ function parseAmount(amount: string): number {
   `],
 })
 export class BookingList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly store = inject(BookingStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;

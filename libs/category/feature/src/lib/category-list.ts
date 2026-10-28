@@ -7,7 +7,7 @@ import { AlertService, createActionSheetButton, createActionSheetOptions } from 
 import { hasRole, contextMenuId } from '@okr/shared-util-core';
 import { AppStore } from '@okr/shared-feature';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 
 import { CategoryStore } from './category.store';
 
@@ -32,16 +32,18 @@ type CategorySortField = 'name' | 'i18nBase' | 'nrItems';
         <ion-title>{{ selectedCategoriesCount()}}/{{categoriesCount()}} {{ store.i18n.categories() }}</ion-title>
         @if(hasRole('privileged') || hasRole('eventAdmin')) {
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId }}">
-              <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
-            </ion-button>
-            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
-              <ng-template>
-                <ion-content>
-                  <okr-menu [menuName]="contextMenuName()"/>
-                </ion-content>
-              </ng-template>
-            </ion-popover>
+            @if (menuItemsStore.canOpen(contextMenuName())) {
+              <ion-button id="{{ popupId }}">
+                <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
+              </ion-button>
+              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+                <ng-template>
+                  <ion-content>
+                    <okr-menu [menuName]="contextMenuName()"/>
+                  </ion-content>
+                </ng-template>
+              </ion-popover>
+            }
           </ion-buttons>          
         }
       </ion-toolbar>
@@ -93,6 +95,7 @@ type CategorySortField = 'name' | 'i18nBase' | 'nrItems';
     `
 })
 export class CategoryList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected store = inject(CategoryStore);
   private actionSheetController = inject(ActionSheetController);
   private readonly appStore = inject(AppStore);

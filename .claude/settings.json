@@ -30,9 +30,9 @@
           },
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/check-popover-triggers.mjs\" --hook",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/check-context-menus.mjs\" --hook",
             "timeout": 30,
-            "statusMessage": "check-popover-triggers"
+            "statusMessage": "check-context-menus"
           },
           {
             "type": "command",

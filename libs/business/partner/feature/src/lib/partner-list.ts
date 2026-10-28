@@ -10,7 +10,7 @@ import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 import { hasRole, contextMenuId } from '@okr/shared-util-core';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { heartbeatStatus } from '@okr/business-metering-util';
 
 import { PartnerStore } from './partner.store';
@@ -40,16 +40,18 @@ import { PartnerStore } from './partner.store';
         <ion-title>{{ filteredPartnersCount() }}/{{ partnersCount() }} {{ store.i18n.partners() }}</ion-title>
         @if(!readOnly()) {
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId }}">
-              <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
-            </ion-button>
-            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
-              <ng-template>
-                <ion-content>
-                  <okr-menu [menuName]="contextMenuName()" />
-                </ion-content>
-              </ng-template>
-            </ion-popover>
+            @if (menuItemsStore.canOpen(contextMenuName())) {
+              <ion-button id="{{ popupId }}">
+                <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
+              </ion-button>
+              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+                <ng-template>
+                  <ion-content>
+                    <okr-menu [menuName]="contextMenuName()" />
+                  </ion-content>
+                </ng-template>
+              </ion-popover>
+            }
           </ion-buttons>
         }
       </ion-toolbar>
@@ -88,6 +90,7 @@ import { PartnerStore } from './partner.store';
   `,
 })
 export class PartnerList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly store = inject(PartnerStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly alertService = inject(AlertService);

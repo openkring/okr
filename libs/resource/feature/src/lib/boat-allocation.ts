@@ -4,7 +4,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { IonButton, IonButtons, IonCheckbox, IonContent, IonHeader, IonIcon, IonInput, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { FirestoreService } from '@okr/shared-data-access';
 import { BOAT_SLOT_NO_COLOR, BoatSlotLabel, BoatStrategyType, CategoryItemModel, OwnershipCollection, OwnershipModel, ResourceModel } from '@okr/shared-models';
 import { TranslatePipe } from '@okr/shared-i18n';
@@ -85,18 +85,20 @@ type StrategyLine = { type: string; text: string; flags: string; price: number; 
         <ion-button (click)="store.showBoatAllocationInfo()">
           <ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" />
         </ion-button>
-        <ion-button id="{{ popupId }}">
-          <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
-        </ion-button>
-        <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
-          <ng-template>
-            <ion-content>
-              <!-- the shared 'editmode-toggle' doc is roleNeeded 'registered'; only a resourceAdmin
-                   can actually edit here, so hide the row for everyone else -->
-              <okr-menu menuName="c-rballoc" [excludeNames]="excludedMenuNames()" [toggleStates]="{ toggleEditMode: editMode() }" />
-            </ion-content>
-          </ng-template>
-        </ion-popover>
+        @if (menuItemsStore.canOpen('c-rballoc')) {
+          <ion-button id="{{ popupId }}">
+            <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
+          </ion-button>
+          <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+            <ng-template>
+              <ion-content>
+                <!-- the shared 'editmode-toggle' doc is roleNeeded 'registered'; only a resourceAdmin
+                     can actually edit here, so hide the row for everyone else -->
+                <okr-menu menuName="c-rballoc" [excludeNames]="excludedMenuNames()" [toggleStates]="{ toggleEditMode: editMode() }" />
+              </ion-content>
+            </ng-template>
+          </ion-popover>
+        }
       </ion-buttons>
     </ion-toolbar>
     <okr-list-filter
@@ -254,6 +256,7 @@ type StrategyLine = { type: string; text: string; flags: string; price: number; 
   `
 })
 export class BoatAllocation {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly popupId = contextMenuId('c_rballoc');
   protected readonly store = inject(ResourceStore);
   private readonly firestoreService = inject(FirestoreService);

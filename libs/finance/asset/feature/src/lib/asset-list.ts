@@ -5,7 +5,7 @@ import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabe
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { error } from '@okr/shared-util-angular';
 import { contextMenuId } from '@okr/shared-util-core';
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { AccountingBooks, AccountingSegments } from '@okr/finance-accounting-feature';
 
 import { AssetStore } from './asset.store';
@@ -27,16 +27,18 @@ const ASSET_CONTEXT_MENU = 'c-asset';
         <okr-accounting-books slot="end" />
         @if (!store.isReadOnly()) {
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId }}">
-              <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
-            </ion-button>
-            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
-              <ng-template>
-                <ion-content>
-                  <okr-menu [menuName]="contextMenuName" />
-                </ion-content>
-              </ng-template>
-            </ion-popover>
+            @if (menuItemsStore.canOpen(contextMenuName)) {
+              <ion-button id="{{ popupId }}">
+                <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
+              </ion-button>
+              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+                <ng-template>
+                  <ion-content>
+                    <okr-menu [menuName]="contextMenuName" />
+                  </ion-content>
+                </ng-template>
+              </ion-popover>
+            }
           </ion-buttons>
         }
       </ion-toolbar>
@@ -61,6 +63,7 @@ const ASSET_CONTEXT_MENU = 'c-asset';
   `,
 })
 export class AssetList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly store = inject(AssetStore);
   protected readonly contextMenuName = ASSET_CONTEXT_MENU;
   // unique per instance: Ionic keeps the previous page in the DOM

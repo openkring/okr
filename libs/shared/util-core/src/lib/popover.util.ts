@@ -8,7 +8,7 @@ let contextMenuSeq = 0;
  * repeats as soon as the same list is open twice in the stack, and the new popover binds to the
  * HIDDEN page's button: the visible button shows, but a click does nothing. Call this once per
  * component instance (as a field initializer) and bind the result to both `id` and `trigger`.
- * `pnpm check-popover-triggers` rejects every trigger that does not come from here.
+ * `pnpm check-context-menus` rejects every trigger that does not come from here.
  */
 export function contextMenuId(prefix: string): string {
   return `${prefix}_${++contextMenuSeq}`;

@@ -8,7 +8,7 @@ import { createActionSheetButton, createActionSheetOptions, error } from '@okr/s
 import { hasRole, isOngoing, contextMenuId } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { WorkrelNamePipe } from '@okr/relationship-workrel-util';
 
 import { WorkrelStore } from './workrel.store';
@@ -36,16 +36,18 @@ type WorkrelSortField = 'person' | 'type' | 'org';
         <ion-buttons slot="end">
           @if(hasRole('privileged') || hasRole('memberAdmin')) {
             <ion-buttons slot="end">
-              <ion-button id="{{ popupId }}">
-                <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
-              </ion-button>
-              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
-                <ng-template>
-                  <ion-content>
-                    <okr-menu [menuName]="contextMenuName()"/>
-                  </ion-content>
-                </ng-template>
-              </ion-popover>
+              @if (menuItemsStore.canOpen(contextMenuName())) {
+                <ion-button id="{{ popupId }}">
+                  <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
+                </ion-button>
+                <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+                  <ng-template>
+                    <ion-content>
+                      <okr-menu [menuName]="contextMenuName()"/>
+                    </ion-content>
+                  </ng-template>
+                </ion-popover>
+              }
           </ion-buttons>          }
         </ion-buttons>
       </ion-toolbar>
@@ -116,6 +118,7 @@ type WorkrelSortField = 'person' | 'type' | 'org';
     `
 })
 export class WorkrelList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly popupId = contextMenuId('c_wrel');
   protected store = inject(WorkrelStore);
   private actionSheetController = inject(ActionSheetController);

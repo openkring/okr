@@ -12,7 +12,7 @@ import { EmptyList, Spinner } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 
 import { BankProfileStore } from './bank-profile.store';
 import { AccountingBooks, AccountingSegments } from '@okr/finance-accounting-feature';
@@ -39,17 +39,19 @@ function formatIban(iban: string): string {
         <ion-title>{{ store.profiles().length }} {{ store.i18n.plural() }}</ion-title>
         <okr-accounting-books slot="end" />
         <ion-buttons slot="end">
-          <ion-button id="{{ popupId }}">
-            <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
-          </ion-button>
-          <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true"
-            [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
-            <ng-template>
-              <ion-content>
-                <okr-menu [menuName]="contextMenuName()" />
-              </ion-content>
-            </ng-template>
-          </ion-popover>
+          @if (menuItemsStore.canOpen(contextMenuName())) {
+            <ion-button id="{{ popupId }}">
+              <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
+            </ion-button>
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true"
+              [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+              <ng-template>
+                <ion-content>
+                  <okr-menu [menuName]="contextMenuName()" />
+                </ion-content>
+              </ng-template>
+            </ion-popover>
+          }
         </ion-buttons>
       </ion-toolbar>
       <okr-accounting-segments />
@@ -75,6 +77,7 @@ function formatIban(iban: string): string {
   `,
 })
 export class BankProfileList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly store = inject(BankProfileStore);
   private readonly route = inject(ActivatedRoute);
   private readonly actionSheetController = inject(ActionSheetController);

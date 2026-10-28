@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, linkedSignal, untracked } f
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonAvatar, IonBadge, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, ToastController } from '@ionic/angular';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { PersonModelName, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ImgDirective, ListFilter, Spinner } from '@okr/shared-ui';
@@ -41,16 +41,18 @@ import { UserStore } from './user.store';
         <ion-title>{{ selectedUsersCount()}}/{{usersCount()}} {{ store.i18n.title() }}</ion-title>
         @if(hasRole('privileged')) {
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId }}">
-              <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
-            </ion-button>
-            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
-              <ng-template>
-                <ion-content>
-                  <okr-menu [menuName]="contextMenuName()"/>
-                </ion-content>
-              </ng-template>
-            </ion-popover>
+            @if (menuItemsStore.canOpen(contextMenuName())) {
+              <ion-button id="{{ popupId }}">
+                <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
+              </ion-button>
+              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+                <ng-template>
+                  <ion-content>
+                    <okr-menu [menuName]="contextMenuName()"/>
+                  </ion-content>
+                </ng-template>
+              </ion-popover>
+            }
           </ion-buttons>
         }
       </ion-toolbar>
@@ -119,6 +121,7 @@ import { UserStore } from './user.store';
     `
 })
 export class UserList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected store = inject(UserStore);
   private readonly actions = inject(UserAccountActions);
   private readonly router = inject(Router);

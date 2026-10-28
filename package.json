@@ -21,7 +21,7 @@
     "catalogue:check": "node scripts/check-feature-catalogue.mjs",
     "catalogue:doc": "node scripts/check-feature-catalogue.mjs --write-doc",
     "check-forms": "node scripts/check-forms.mjs",
-    "check-popover-triggers": "node scripts/check-popover-triggers.mjs",
+    "check-context-menus": "node scripts/check-context-menus.mjs",
     "check-i18n": "node scripts/check-i18n.mjs",
     "check-menu-labels": "node scripts/check-menu-labels.mjs",
     "check-skill-contents": "node scripts/check-skill-contents.mjs",

@@ -7,7 +7,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error, getColSizes } from '@okr/shared-util-angular';
 import { hasRole, replaceSubstring, contextMenuId } from '@okr/shared-util-core';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { SectionDispatcher, SectionStore } from '@okr/cms-section-feature';
 
 import { PageStore } from './page.store';
@@ -263,17 +263,19 @@ interface DashboardItem { section: SectionModel; order: number; }
           <ion-title>{{ store.page()?.name }}</ion-title>
           @if(hasRole('contentAdmin')) {
             <ion-buttons slot="end">
-              <ion-button id="{{ popupId }}">
-                <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
-              </ion-button>
               @if(contextMenuName(); as contextMenuName) {
-                <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
-                  <ng-template>
-                    <ion-content>
-                      <okr-menu [menuName]="contextMenuName" [toggleStates]="{ toggleEditMode: editMode() }"/>
-                    </ion-content>
-                  </ng-template>
-                </ion-popover>
+                @if (menuItemsStore.canOpen(contextMenuName)) {
+                  <ion-button id="{{ popupId }}">
+                    <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
+                  </ion-button>
+                  <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+                    <ng-template>
+                      <ion-content>
+                        <okr-menu [menuName]="contextMenuName" [toggleStates]="{ toggleEditMode: editMode() }"/>
+                      </ion-content>
+                    </ng-template>
+                  </ion-popover>
+                }
               }
             </ion-buttons>
           }
@@ -331,6 +333,7 @@ interface DashboardItem { section: SectionModel; order: number; }
   `
 })
 export class DashboardPage {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly store = inject(PageStore);
   private readonly sectionStore = inject(SectionStore);
   private readonly meta = inject(Meta);

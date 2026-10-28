@@ -11,7 +11,7 @@ import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { confirm, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { fill, hasRole, nameMatches, contextMenuId } from '@okr/shared-util-core';
 
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 
 import { CrosswordTopicService } from '@okr/games-crossword-data-access';
 import { CrosswordTopicEditModal } from '@okr/games-crossword-ui';
@@ -45,17 +45,19 @@ import { CROSSWORD_I18N_KEYS, CrosswordI18n } from '@okr/games-crossword-util';
         <ion-title>{{ filteredCount() }}/{{ count() }} {{ i18n.list_title() }}</ion-title>
         @if (isContentAdmin()) {
           <ion-buttons slot="end">
-            <ion-button id="{{ popupId }}">
-              <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
-            </ion-button>
-            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"
-              (ionPopoverDidDismiss)="onPopoverDismiss($event)">
-              <ng-template>
-                <ion-content>
-                  <okr-menu [menuName]="contextMenuName()" [toggleStates]="{ toggleEditMode: editMode() }" />
-                </ion-content>
-              </ng-template>
-            </ion-popover>
+            @if (menuItemsStore.canOpen(contextMenuName())) {
+              <ion-button id="{{ popupId }}">
+                <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
+              </ion-button>
+              <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"
+                (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+                <ng-template>
+                  <ion-content>
+                    <okr-menu [menuName]="contextMenuName()" [toggleStates]="{ toggleEditMode: editMode() }" />
+                  </ion-content>
+                </ng-template>
+              </ion-popover>
+            }
           </ion-buttons>
         }
       </ion-toolbar>
@@ -88,6 +90,7 @@ import { CROSSWORD_I18N_KEYS, CrosswordI18n } from '@okr/games-crossword-util';
   `,
 })
 export class CrosswordTopicList {
+  protected readonly menuItemsStore = inject(MenuItemsStore);
   private readonly topicService = inject(CrosswordTopicService);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly modalController = inject(ModalController);
