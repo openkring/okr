@@ -9,7 +9,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { NON_TRACKER_TRIP_TYPES, TripCollection, TripModel, UserModel } from '@okr/shared-models';
 import { getSystemQuery } from '@okr/shared-util-core';
 
-import { getTripIndex, newTripName } from '@okr/trip-util';
+import { getTripIndex, newTripName, withoutTrackLink } from '@okr/trip-util';
 import { PFX } from './scope';
 
 /** Payload of the `reportIncident` callable — mirrors ReportIncidentData in apps/functions/src/trip/report.ts. */
@@ -72,8 +72,10 @@ export class TripService {
   public async update(trip: TripModel, currentUser?: UserModel): Promise<string | undefined> {
     trip.name = newTripName(trip);
     trip.index = getTripIndex(trip);
+    // every edit/end/delete/maintenance save goes through here: never write the crew-track link fields
+    // (owned by the tracker's link transaction and the nightly cleanup; a stale modal copy would redirect the stop push)
     return this.firestoreService.updateModel<TripModel>(
-      TripCollection, trip, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser
+      TripCollection, withoutTrackLink(trip) as TripModel, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser
     );
   }
 

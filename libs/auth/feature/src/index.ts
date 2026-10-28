@@ -7,6 +7,7 @@ export * from './lib/isTripAdmin.guard';
 export * from './lib/isContractReader.guard';
 export * from './lib/isMemberAdmin.guard';
 export * from './lib/isPrivileged.guard';
+export * from './lib/isResourceStaff.guard';
 export * from './lib/isTreasurer.guard';
 export * from './lib/kioskLock.guard';
 export * from './lib/rootUrl.guard';

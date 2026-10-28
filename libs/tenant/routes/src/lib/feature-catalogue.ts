@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import type { Route } from '@angular/router';
-import { isAdminGuard, isAuthenticatedGuard, isContentAdminGuard, isContractReaderGuard, isMemberAdminGuard, isPrivilegedGuard, isTreasurerGuard, isTripAdminGuard } from '@okr/auth-feature';
+import { isAdminGuard, isAuthenticatedGuard, isContentAdminGuard, isContractReaderGuard, isMemberAdminGuard, isPrivilegedGuard, isResourceStaffGuard, isTreasurerGuard, isTripAdminGuard } from '@okr/auth-feature';
 import { AppStore } from '@okr/shared-feature';
 import { memberFeesRedirectGuard } from './member-fees-redirect';
 import { userEditRedirect } from './user-edit-redirect';
@@ -488,6 +488,15 @@ const trip: BlockRoutes = {
         { path: ':listId/:contextMenuName', loadComponent: () => import('@okr/trip-feature').then(m => m.TripList) },
       ],
     },
+    // The tracker (spec 1.121, 1.123 §8) behind the Logbuch switch, for the `trip-tracker` menu row. Apps that
+    // record (bkg, scs) also mount TRACKER_ROUTES before the app-ready gate; that ungated copy matches first.
+    // Lazy, so no app's start bundle carries the tracker. No kiosk guard here: this copy sits inside each app's
+    // feature parent, which in scs (the only app with a kiosk) already carries kioskLockGuard.
+    {
+      path: 'tracker',
+      canActivate: [isAuthenticatedGuard],
+      loadChildren: () => import('@okr/mobility-tracker-feature').then(m => m.TRACKER_CHILD_ROUTES),
+    },
   ],
 };
 
@@ -607,7 +616,11 @@ const relationship: BlockRoutes = {
     {
       path: 'reservation',
       canActivate: [isAuthenticatedGuard],
-      children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/relationship-reservation-feature').then(m => m.ReservationList) }],
+      children: [
+        // Schadensliste (damages and locks of the rowing boats) — before ':listId', which would swallow it
+        { path: 'damages/:contextMenuName', canActivate: [isResourceStaffGuard], loadComponent: () => import('@okr/relationship-reservation-feature').then(m => m.DamageList) },
+        { path: ':listId/:contextMenuName', loadComponent: () => import('@okr/relationship-reservation-feature').then(m => m.ReservationList) },
+      ],
     },
     {
       path: 'personalrel',

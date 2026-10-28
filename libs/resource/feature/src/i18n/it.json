@@ -986,5 +986,10 @@
   "archive": {
     "conf": "La voce è stata archiviata.",
     "error": "Non è stato possibile archiviare la voce."
+  },
+  "locked": {
+    "title": "La barca è bloccata",
+    "label": "Bloccare la barca",
+    "helper": "Una barca bloccata non può essere scelta nel giornale di bordo. L'avviso del giornale viene mostrato come motivo."
   }
 }

@@ -882,6 +882,34 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     retention: CLUB_RECORD,
   },
   {
+    // Tracker trips (spec 1.121) and crew copies (spec 1.123 §6): `trips` docs of type 'tracker'
+    // owned by ONE person via `track.personKey` (the raw person okey) — the person's own GPS
+    // recordings and the clipped copies of a crew recording made for them. They share the
+    // `trips` collection with the Logbuch, but the Logbuch row above matches `participants`,
+    // which is always [] on these docs, so without this row export and erasure never see them.
+    // A separate row (named after the collection + type, like `users/fcmTokens`) because the
+    // fate differs: the Logbuch is the club's record (anonymize), a recording is the person's own.
+    collection: 'trips/tracker',
+    dataClass: 'content',
+    tier: 'T2',               // voluntary recording (location data) — nothing may block its erasure
+    onTenantExit: 'delete',   // not a club record: the recordings leave with their owner
+    // Shape only; `resolve` is the access path (the points subcollection needs the parent hop).
+    find: (c: SubjectCtx) => db().collection('trips').where('track.personKey', '==', c.personKey),
+    // The trip docs PLUS their `track-points/{n}` docs (the encoded GPS points): deleting a trip
+    // does not cascade to its subcollection, so the points would outlive the erasure. Every
+    // points doc carries the trip's `tenants`, so the tenant post-filter applies to both.
+    resolve: async (c: SubjectCtx) => {
+      if (!c.personKey) return [];
+      const trips = await db().collection('trips').where('track.personKey', '==', c.personKey).get();
+      const points = await Promise.all(trips.docs.map((d) => d.ref.collection('track-points').get()));
+      return [...points.flatMap((q) => q.docs), ...trips.docs];
+    },
+    tenantScope: 'tenantsArray',
+    onExport: 'full',         // the substance IS the route; an index would not answer Art. 25 DSG
+    onErasure: 'delete',      // NOTE: the photo thumbnails in the private bucket are not reached here
+    retention: { months: 'indefinite', legalBasis: 'Persönliche Aufzeichnung — bleibt, bis die Person sie löscht' },
+  },
+  {
     collection: 'diaries',
     dataClass: 'content',
     tier: 'T2',              // a private diary is voluntary — and nothing may block a T2 erasure

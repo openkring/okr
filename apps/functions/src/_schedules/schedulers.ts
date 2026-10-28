@@ -4,6 +4,7 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { runJobs, type NamedJob } from '../_fanout';
 import { matrixAdminToken } from '../matrix-simple/shared';
 import { runTripStatsReconcile, runTripEndOfDayClose } from '../trip';
+import { runCrewTrackCleanup } from '../trip/crew-track';
 import { runRoomPostPolicySweep } from '../matrix-simple/post-policy-sync';
 import { runExpiredMembershipSweep } from '../auth/account-sync';
 import { runPinboardSweep } from '../matrix-simple/pinboard';
@@ -23,6 +24,7 @@ const TIME_ZONE = 'Europe/Zurich';
 
 export const NIGHTLY_JOBS: NamedJob[] = [
   { name: 'tripStatsReconcile', run: runTripStatsReconcile },
+  { name: 'crewTrackCleanup', run: runCrewTrackCleanup },
   { name: 'roomPostPolicySweep', run: runRoomPostPolicySweep },
   { name: 'expiredMembershipSweep', run: runExpiredMembershipSweep },
   { name: 'pinboardSweep', run: runPinboardSweep },

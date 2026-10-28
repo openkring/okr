@@ -13,8 +13,9 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { confirm, downloadFile, okrPrompt } from '@okr/shared-util-angular';
 import { queryPedometerSteps, TrackDb, TrackService } from '@okr/mobility-tracker-data-access';
 import { TrackMap, TrackMapPhoto, TrackMapSection, TrackModeChange, TrackPhotoItem, TrackPhotos, TrackPhotoToggle, TrackSections } from '@okr/mobility-tracker-ui';
+import { fill } from '@okr/shared-util-core';
 import {
-  alignSections, buildGpx, correctedTrack, fromLocalSections, gpxFileName, isShareCancel, LocalSection, LocalTrack, localFromTrip, mergeWithNext,
+  alignSections, buildGpx, logbuchTripLabel, correctedTrack, fromLocalSections, gpxFileName, isShareCancel, LocalSection, LocalTrack, localFromTrip, mergeWithNext,
   localStoreDate, middlePointIndex, sectionRows, setSectionMode, splitSection, toLocalSections, trackTenants, wantsPhotoReattach, withoutPhoto,
   withPhotoHidden, withQueriedSteps,
 } from '@okr/mobility-tracker-util';
@@ -70,6 +71,16 @@ import { TrackerStore } from './tracker.store';
         @if (!t.uploaded) {
           <ion-note class="note" color="warning">{{ i18n.list_not_uploaded() }}</ion-note>
         }
+        @if (isLinked() || isPendingLink()) {
+          <ion-note class="note">{{ isLinked() ? linkedText() : i18n.link_pending() }}</ion-note>
+          <ion-button fill="clear" size="small" [disabled]="busy()" (click)="unlink()">
+            <ion-icon slot="start" src="{{ 'cancel' | svgIcon }}" />{{ i18n.link_unlink() }}
+          </ion-button>
+        } @else if (canLink()) {
+          <ion-button fill="clear" size="small" [disabled]="busy()" (click)="link()">
+            <ion-icon slot="start" src="{{ 'link' | svgIcon }}" />{{ i18n.link_connect() }}
+          </ion-button>
+        }
         @if (photoItems().length > 0) {
           <ion-list-header><ion-label>{{ i18n.photos_title() }}</ion-label></ion-list-header>
           <okr-track-photos [photos]="photoItems()" [i18n]="i18n" [removable]="!isLocal()" [disabled]="searching()"
@@ -121,6 +132,31 @@ export class TrackDetailPage {
   /** The uploaded trip, when one was found. */
   private readonly trip = signal<TripModel | undefined>(undefined);
 
+  /** Linked to a Logbuch trip (spec 1.123 §4): the link transaction succeeded. */
+  protected readonly isLinked = computed(() => {
+    const t = this.track();
+    return !!t?.logbuchKey && !!t.logbuchLinked && t.state === 'done';
+  });
+  /** A link from the start still waiting for its transaction (offline): it can be dropped, so it is never a dead end. */
+  protected readonly isPendingLink = computed(() => {
+    const t = this.track();
+    return !!t?.logbuchKey && !t.logbuchLinked && t.state === 'done';
+  });
+  /**
+   * «Mit Logbuch-Ausfahrt verbinden»: an own, finished recording without a link (a link still pending from the start
+   * is retried by the store). Crew copies (`track.copyOf`) are never linked.
+   */
+  protected readonly canLink = computed(() => {
+    const t = this.track();
+    return !!t && t.state === 'done' && !t.logbuchKey && !this.trip()?.track?.copyOf;
+  });
+  /** The linked Logbuch trip, read for its boat and time. */
+  private readonly linkedTrip = signal<TripModel | undefined>(undefined);
+  protected readonly linkedText = computed(() => {
+    const lb = this.linkedTrip();
+    return lb ? fill(this.i18n.link_linked(), { trip: this.tripLabel(lb) }) : this.i18n.link_linked_unknown();
+  });
+
   protected readonly editable = computed(() => this.track()?.state === 'done' && !this.busy());
   protected readonly mapSections = computed<TrackMapSection[]>(() => this.sections().map((s) => ({ mode: s.mode, points: s.points })));
   protected readonly rows = computed(() => sectionRows(this.sections()));
@@ -146,6 +182,10 @@ export class TrackDetailPage {
     effect(() => {
       const key = this.key();
       untracked(() => void this.load(key));
+    });
+    effect(() => {
+      const logbuchKey = this.isLinked() ? this.track()?.logbuchKey : undefined;
+      untracked(() => void this.loadLinkedTrip(logbuchKey));
     });
     effect(() => {
       const photos = this.photos();
@@ -209,6 +249,119 @@ export class TrackDetailPage {
         if (now?.okey === key && now.track) this.trip.set({ ...now, track: { ...now.track, photos: before } });
         await this.toast(this.i18n.detail_save_error());
       });
+  }
+
+  /**
+   * Links this finished recording to an overlapping Logbuch trip the person was on (spec 1.123 §4.2): the candidates
+   * are offered in a choice (also a single one: the person confirms which outing). Needs the network.
+   */
+  protected async link(): Promise<void> {
+    const t = this.track();
+    const personKey = this.appStore.currentUser()?.personKey;
+    if (!t || !personKey || this.busy()) return;
+    this.busy.set(true);
+    try {
+      const trips = await this.trackService.findMyLogbuchTripsOverlapping(personKey, this.appStore.tenantId(), t.startedAt, t.endedAt ?? t.startedAt);
+      if (trips.length === 0) {
+        await this.toast(this.i18n.link_none_found());
+        return;
+      }
+      const chosen = await this.chooseLogbuch(trips);
+      if (!chosen || this.key() !== t.key) return;
+      const result = await this.store.linkLogbuch(t.key, chosen);
+      if (!result.ok) {
+        await this.toast(result.recorderName ? fill(this.i18n.link_taken(), { name: result.recorderName }) : this.i18n.link_unavailable());
+        return;
+      }
+      await this.showLink(t.key, chosen);
+      await this.toast(this.i18n.link_done());
+    } catch (error) {
+      console.error('TrackDetailPage.link', error);
+      await this.toast(this.i18n.link_offline());
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  /** «Verbindung zum Logbuch lösen» after a confirm: the crew no longer sees the recording. Needs the network. */
+  protected async unlink(): Promise<void> {
+    const t = this.track();
+    if (!t?.logbuchKey || this.busy()) return;
+    const ok = await confirm(this.alertController, this.i18n.link_unlink_confirm(), this.i18n.link_unlink(), this.i18n.common_cancel(), true);
+    if (!ok) return;
+    this.busy.set(true);
+    try {
+      await this.store.unlinkLogbuch(t.key, t.logbuchKey);
+      await this.showLink(t.key, undefined);
+    } catch (error) {
+      console.error('TrackDetailPage.unlink', error);
+      await this.toast(this.i18n.link_offline());
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  /** The page after a link change: a local track from TrackDb, an uploaded-only one patched in place. */
+  private async showLink(key: string, logbuch: TripModel | undefined): Promise<void> {
+    if (this.key() !== key) return;
+    if (this.isLocal()) {
+      await this.reloadLocal(key);
+      return;
+    }
+    const t = this.track();
+    if (!t) return;
+    const next: LocalTrack = { ...t };
+    if (logbuch) {
+      next.logbuchKey = logbuch.okey;
+      next.logbuchLinked = true;
+      if (logbuch.resource) next.resource = logbuch.resource;
+    } else {
+      delete next.logbuchKey;
+      delete next.logbuchLinked;
+    }
+    this.track.set(next);
+    this.trip.update((trip) => {
+      if (!trip?.track) return trip;
+      const track = { ...trip.track };
+      if (logbuch) track.logbuchKey = logbuch.okey;
+      else delete track.logbuchKey;
+      return { ...trip, track, ...(logbuch?.resource ? { resource: logbuch.resource } : {}) };
+    });
+    if (logbuch) this.linkedTrip.set(logbuch);
+  }
+
+  /** The Logbuch trip to link to: a radio choice, the first one checked. */
+  private async chooseLogbuch(trips: TripModel[]): Promise<TripModel | undefined> {
+    const alert = await this.alertController.create({
+      header: this.i18n.link_choose_title(),
+      inputs: trips.map((trip, i) => ({ type: 'radio' as const, label: this.tripLabel(trip), value: trip.okey, checked: i === 0 })),
+      buttons: [
+        { text: this.i18n.common_cancel(), role: 'cancel' },
+        { text: this.i18n.link_connect(), role: 'confirm' },
+      ],
+    });
+    await alert.present();
+    const { data, role } = await alert.onWillDismiss<{ values?: string }>();
+    return role === 'confirm' ? trips.find((trip) => trip.okey === data?.values) : undefined;
+  }
+
+  private tripLabel(trip: TripModel): string {
+    return logbuchTripLabel(trip);
+  }
+
+  /** Reads the linked Logbuch trip for its label; offline or gone, the label says «Mit einer Logbuch-Ausfahrt verbunden». */
+  private async loadLinkedTrip(logbuchKey: string | undefined): Promise<void> {
+    if (!logbuchKey) {
+      this.linkedTrip.set(undefined);
+      return;
+    }
+    if (this.linkedTrip()?.okey === logbuchKey) return;
+    try {
+      const trip = await this.trackService.readLogbuch(logbuchKey);
+      if (this.track()?.logbuchKey === logbuchKey) this.linkedTrip.set(trip);
+    } catch (error) {
+      console.error('TrackDetailPage.loadLinkedTrip', error);
+    }
   }
 
   /** «Fotos erneut suchen»: merges newly found photos into the local track (TrackerStore.reattachPhotos). */

@@ -8,8 +8,8 @@ import {
 const names = (jobs: { name: string }[]) => jobs.map((j) => j.name);
 
 describe('time-slot schedulers', () => {
-  it('nightly runs its six jobs in order', () => {
-    expect(names(NIGHTLY_JOBS)).toEqual(['tripStatsReconcile', 'roomPostPolicySweep', 'expiredMembershipSweep', 'pinboardSweep', 'billScanReap', 'privacyExportReap']);
+  it('nightly runs its seven jobs in order', () => {
+    expect(names(NIGHTLY_JOBS)).toEqual(['tripStatsReconcile', 'crewTrackCleanup', 'roomPostPolicySweep', 'expiredMembershipSweep', 'pinboardSweep', 'billScanReap', 'privacyExportReap']);
   });
 
   it('morning runs its four jobs in order', () => {

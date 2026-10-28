@@ -97,3 +97,35 @@ describe('tripValidationSuite: boat', () => {
     expect(errorsOf(trip, 'resource').length).toBeGreaterThan(0);
   });
 });
+
+describe('tripValidationSuite: track request', () => {
+  const draft = { state: 'draft' } as const;
+
+  it('accepts a trip without a trackRequest', () => {
+    expect(errorsOf(makeTrip(), 'trackRequest')).toEqual([]);
+  });
+
+  it('accepts a carrier who is in the crew', () => {
+    expect(errorsOf(makeTrip({ ...draft, trackRequest: { personKey: 'p2' } }), 'trackRequest')).toEqual([]);
+  });
+
+  it('rejects an empty carrier', () => {
+    expect(errorsOf(makeTrip({ ...draft, trackRequest: { personKey: '' } }), 'trackRequest')).toContain(
+      '@geo/trip/feature.warning.track_carrier_missing',
+    );
+  });
+
+  it('rejects a carrier who is not in the crew', () => {
+    expect(errorsOf(makeTrip({ ...draft, trackRequest: { personKey: 'gone' } }), 'trackRequest')).toContain(
+      '@geo/trip/feature.warning.track_carrier_not_crew',
+    );
+  });
+
+  it('never blocks an existing trip whose carrier left the crew', () => {
+    for (const state of ['open', 'closed']) {
+      const trip = makeTrip({ state, okey: 'trip-1', trackRequest: { personKey: 'gone' } });
+      expect(errorsOf(trip, 'trackRequest')).toEqual([]);
+      expect(tripValidationSuite(trip).isValid()).toBe(true);
+    }
+  });
+});

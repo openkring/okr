@@ -12,6 +12,7 @@
     "@okr/shared-constants": "*",
     "@okr/shared-data-access": "*",
     "@okr/shared-util-core": "*",
-    "@okr/trip-util": "*"
+    "@okr/trip-util": "*",
+    "@okr/mobility-tracker-util": "*"
   }
 }

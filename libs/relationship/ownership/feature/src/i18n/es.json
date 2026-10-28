@@ -297,7 +297,9 @@
     "archive": "archivar",
     "delete": "eliminar",
     "ownerView": "Ver usuario/a",
-    "combine": "{action} {group}"
+    "combine": "{action} {group}",
+    "lock": "bloquear",
+    "unlock": "desbloquear"
   },
   "archive": {
     "confirm": "Normalmente un uso se finaliza. ¿De verdad quieres archivar este uso?"
@@ -310,5 +312,9 @@
     "archiveConfirm": "¿De verdad quieres archivar {name}?",
     "purgeConfirm": "{name} se eliminará definitivamente y no se podrá restaurar. ¿Quieres continuar?",
     "purgeInUse": "{name} todavía tiene usos y por eso no se puede eliminar. Elimina primero los usos o archiva {name}."
+  },
+  "lock": {
+    "header": "Bloquear el barco",
+    "placeholder": "Motivo, p. ej. grieta en el casco"
   }
 }

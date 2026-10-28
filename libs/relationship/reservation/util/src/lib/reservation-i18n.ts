@@ -143,6 +143,23 @@ export const RESERVATION_I18N_KEYS = {
   export_yes:                     PFX + 'export.yes',
   export_no:                      PFX + 'export.no',
 
+  // Schadensliste (damage-list.ts)
+  damage_title:                   PFX + 'damage.title',
+  damage_empty:                   PFX + 'damage.empty',
+  damage_boat:                    PFX + 'damage.boat',
+  damage_boatType:                PFX + 'damage.boatType',
+  damage_kind:                    PFX + 'damage.kind.label',
+  damage_kind_maintenance:        PFX + 'damage.kind.maintenance',
+  damage_kind_blocked:            PFX + 'damage.kind.blocked',
+  damage_kind_damage:             PFX + 'damage.kind.damage',
+  damage_from:                    PFX + 'damage.from',
+  damage_to:                      PFX + 'damage.to',
+  damage_open:                    PFX + 'damage.open',
+  damage_days:                    PFX + 'damage.days',
+  damage_reason:                  PFX + 'damage.reason',
+  damage_reporter:                PFX + 'damage.reporter',
+  delete_damage:                  PFX + 'delete.damage',
+
   as_title:                        '@actionsheet.title',
   ok:                              '@ok',
   cancel:                          '@cancel',

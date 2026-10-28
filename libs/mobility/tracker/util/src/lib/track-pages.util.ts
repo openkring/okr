@@ -87,6 +87,12 @@ export function localFromTrip(trip: TripModel, pointsBySection: TrackPoint[][], 
     endedAt: Number.isNaN(endedMs) ? startedAt : endedMs,
     sections: (trip.track?.sections ?? []).map(sectionMeta),
   };
+  // a corrected re-upload of a linked trip keeps its link and boat (spec 1.123 §4)
+  if (trip.track?.logbuchKey) {
+    track.logbuchKey = trip.track.logbuchKey;
+    track.logbuchLinked = true;
+  }
+  if (trip.resource) track.resource = trip.resource;
   return { track, sections: toLocalSections(track, pointsBySection, strokesBySection) };
 }
 
@@ -151,6 +157,8 @@ export function gpxFileName(name: string): string {
 export function sameTrackContent(a: LocalTrack, b: LocalTrack): boolean {
   return (a.rev ?? 0) === (b.rev ?? 0)
     && a.name === b.name
+    // the Logbuch link is uploaded with the trip (spec 1.123 §4): a link made or removed meanwhile needs its own upload
+    && (a.logbuchKey ?? '') === (b.logbuchKey ?? '') && !!a.logbuchLinked === !!b.logbuchLinked
     && a.sections.length === b.sections.length
     && a.sections.every((s, i) => s.mode === b.sections[i].mode && s.detected === b.sections[i].detected && s.steps === b.sections[i].steps);
 }

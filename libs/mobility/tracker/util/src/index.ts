@@ -15,3 +15,7 @@ export * from './lib/track-pages.util';
 export * from './lib/track-photos.util';
 export * from './lib/stroke-detector';
 export * from './lib/track-strokes.util';
+export * from './lib/track-clip.util';
+export * from './lib/crew-track.model';
+export * from './lib/logbuch-link.util';
+export * from './lib/crew-track.util';

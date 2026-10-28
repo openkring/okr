@@ -986,5 +986,10 @@
   "archive": {
     "conf": "Der Eintrag wurde archiviert.",
     "error": "Der Eintrag konnte nicht archiviert werden."
+  },
+  "locked": {
+    "title": "Boot ist gesperrt",
+    "label": "Boot sperren",
+    "helper": "Ein gesperrtes Boot kann im Logbuch nicht ausgewählt werden. Der Hinweis im Logbuch erscheint als Grund."
   }
 }

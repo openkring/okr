@@ -160,6 +160,10 @@ seed("orgs/oA",      {"tenants": ["t1"], "isArchived": False, "name": "Org A"})
 seed("orgs/oB",      {"tenants": ["t2"], "isArchived": False, "name": "Org B"})
 seed("resources/rA", {"tenants": ["t1"], "isArchived": False, "name": "Res A"})
 seed("tags/tgA",     {"tenants": ["t1"], "isArchived": False, "tagModel": "x"})
+# Schadensliste: damage / lock reservations are ended, never deleted; a plain one may go.
+seed("reservations/resLock",   {"tenants": ["t1"], "isArchived": False, "reason": "blocked"})
+seed("reservations/resDamage", {"tenants": ["t1"], "isArchived": False, "reason": "damage"})
+seed("reservations/resCourse", {"tenants": ["t1"], "isArchived": False, "reason": "course"})
 # CMS content stays public-readable.
 seed("pages/home",   {"tenants": ["t1"], "isArchived": False, "title": "Home"})
 seed("sections/secA",{"tenants": ["t1"], "isArchived": False, "type": "article"})
@@ -500,6 +504,17 @@ single_cases = [
     ("userA GET orgs/oB (other tenant) -> DENY", False, GET, "orgs/oB", A, None, None),
     ("userA GET resources/rA (own tenant) -> ALLOW", True, GET, "resources/rA", A, None, None),
     ("userA GET tags/tgA (own tenant) -> ALLOW", True, GET, "tags/tgA", A, None, None),
+    ("userD(admin t1) DELETE lock reservation -> DENY (Schadensliste)", False, DELETE, "reservations/resLock", D, None, None),
+    ("userD(admin t1) DELETE damage reservation -> DENY (Schadensliste)", False, DELETE, "reservations/resDamage", D, None, None),
+    ("userD(admin t1) re-classes a course reservation -> ALLOW", True, PATCH,
+     "reservations/resCourse", D, body({"reason": "social"}), ["reason"]),
+    ("userD(admin t1) DELETE course reservation -> ALLOW", True, DELETE, "reservations/resCourse", D, None, None),
+    ("userD(admin t1) re-classes a lock reservation -> DENY (reason frozen)", False, PATCH,
+     "reservations/resLock", D, body({"reason": "course"}), ["reason"]),
+    ("userD(admin t1) ends a lock reservation -> ALLOW", True, PATCH,
+     "reservations/resLock", D, body({"state": "completed", "endDate": "20261028"}), ["state", "endDate"]),
+    ("userA(member) adds notes to a damage reservation -> ALLOW", True, PATCH,
+     "reservations/resDamage", A, body({"notes": "Reparatur bestellt"}), ["notes"]),
     # CMS content stays public-readable (PWA anonymous landing renders it).
     ("anon GET pages/home (public) -> ALLOW", True, GET, "pages/home", None, None, None),
     ("anon GET sections/secA (public) -> ALLOW", True, GET, "sections/secA", None, None, None),

@@ -118,5 +118,25 @@
     "check": "Prüfen",
     "check_result": "Zählung im App-Code: {ts} · im iPhone-Code: {native}",
     "close": "Schliessen"
+  },
+  "link": {
+    "preset": "Logbuch: {trip}",
+    "choose": "Logbuch-Ausfahrt",
+    "without": "Ohne Logbuch",
+    "remove": "Logbuch-Ausfahrt entfernen",
+    "taken": "Diese Ausfahrt wird bereits von {name} aufgezeichnet.",
+    "unavailable": "Diese Logbuch-Ausfahrt kann nicht mehr verbunden werden.",
+    "connect": "Mit Logbuch-Ausfahrt verbinden",
+    "choose_title": "Welche Ausfahrt?",
+    "none_found": "Zu dieser Strecke passt keine Logbuch-Ausfahrt, auf der du dabei warst.",
+    "linked": "Verbunden mit Logbuch: {trip}",
+    "linked_unknown": "Mit einer Logbuch-Ausfahrt verbunden",
+    "unlink": "Verbindung zum Logbuch lösen",
+    "unlink_confirm": "Deine Crew sieht diese Strecke dann nicht mehr. Möchtest du die Verbindung lösen?",
+    "done": "Die Strecke ist jetzt mit dem Logbuch verbunden.",
+    "offline": "Das geht nur mit Internetverbindung. Versuch es bitte später noch einmal.",
+    "pending": "Wird mit dem Logbuch verbunden, sobald du online bist.",
+    "taken_track": "«{track}»: Diese Ausfahrt wird bereits von {name} aufgezeichnet. Deine Strecke bleibt ohne Logbuch.",
+    "unavailable_track": "«{track}»: Diese Logbuch-Ausfahrt kann nicht mehr verbunden werden. Deine Strecke bleibt ohne Logbuch."
   }
 }

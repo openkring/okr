@@ -96,6 +96,12 @@
     },
     {
       "path": "../util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../mobility/tracker/util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../mobility/tracker/ui/tsconfig.lib.json"
     }
   ]
 }

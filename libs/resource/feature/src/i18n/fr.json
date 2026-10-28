@@ -986,5 +986,10 @@
   "archive": {
     "conf": "L'entrée a été archivée.",
     "error": "L'entrée n'a pas pu être archivée."
+  },
+  "locked": {
+    "title": "Le bateau est bloqué",
+    "label": "Bloquer le bateau",
+    "helper": "Un bateau bloqué ne peut pas être choisi dans le journal de bord. La remarque du journal sert de raison."
   }
 }

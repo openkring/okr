@@ -22,6 +22,7 @@
     "@okr/auth-feature": "*",
     "@angular/router": "*",
     "@ionic/angular": "*",
-    "rxjs": "*"
+    "rxjs": "*",
+    "@capacitor/push-notifications": "*"
   }
 }

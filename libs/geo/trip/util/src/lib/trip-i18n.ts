@@ -1,4 +1,5 @@
-import { Signal } from '@angular/core';
+// type-only: @okr/trip-util is bundled into the Cloud Functions, which must never pull @angular/core
+import type { Signal } from '@angular/core';
 
 const PFX = '@geo/trip/feature.';
 
@@ -58,6 +59,7 @@ export const TRIP_I18N_KEYS = {
   report_lock_boat_helper:  PFX + 'report.lockBoat.helper',
   report_lock_name:         PFX + 'report.lockBoat.name',
   report_lock_error:        PFX + 'report.lockBoat.error',
+  report_damage_name:       PFX + 'report.damageRecord.name',   // {name}
   boat_reserved_title:      PFX + 'boatReserved.title',
   boat_reserved_maintenance: PFX + 'boatReserved.maintenance',
   boat_reserved_blocked:    PFX + 'boatReserved.blocked',
@@ -118,6 +120,26 @@ export const TRIP_I18N_KEYS = {
   warning_seats_mismatch:   PFX + 'warning.seats_mismatch',
   warning_max_participants: PFX + 'warning.max_participants',
   warning_note:             PFX + 'warning.note',
+  warning_track_carrier_missing: PFX + 'warning.track_carrier_missing',
+  warning_track_carrier_not_crew: PFX + 'warning.track_carrier_not_crew',
+
+  track_request_label:      PFX + 'track.request.label',
+  track_carrier_label:      PFX + 'track.carrier.label',
+  track_carrier_helper:     PFX + 'track.carrier.helper',
+  // the crew route in the view modal (spec 1.123 §5.2); deadline_date carries a single-brace {date}
+  track_route_title:        PFX + 'track.route.title',
+  track_gpx_download:       PFX + 'track.gpx.download',
+  track_gpx_error:          PFX + 'track.gpx.error',
+  track_deadline_date:      PFX + 'track.deadline.date',
+  track_deadline_open:      PFX + 'track.deadline.open',
+  track_info_title:         PFX + 'track.info.title',
+  track_info_what:          PFX + 'track.info.what',
+  track_info_where_title:   PFX + 'track.info.where.title',
+  track_info_where_ios:     PFX + 'track.info.where.ios',
+  track_info_where_android: PFX + 'track.info.where.android',
+  track_info_where_computer: PFX + 'track.info.where.computer',
+  track_info_use_title:     PFX + 'track.info.use.title',
+  track_info_use_text:      PFX + 'track.info.use.text',
 
   boat:                     PFX + 'boat',
   distance_label:           PFX + 'distance.label',

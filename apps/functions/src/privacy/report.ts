@@ -124,6 +124,8 @@ export const COLLECTION_LABELS: Record<string, string> = {
   documents: 'Dokumente',
   calevents: 'Kalendereinträge',
   trips: 'Fahrten', // libs/geo/trip/feature/src/i18n/de.json: trips (not "Ausfahrten")
+  // recordings + crew copies (spec 1.121 / 1.123); the tracker's own word for a recording
+  'trips/tracker': 'Aufgezeichnete Strecken',
   diaries: 'Tagesnotizen', // libs/content/diary — the spec's own word, not "Tagebuch"
   diaryAlbums: 'Tagesnotizen-Alben', // libs/content/diary — the author's person/location/event albums (spec 1.114)
   hearingQuizResults: 'Hörtraining-Ergebnisse',

@@ -1,16 +1,19 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { IonAccordionGroup, IonCol, IonContent, IonGrid, IonRow, ModalController } from '@ionic/angular';
 
 import { CategoryListModel, ResourceModel, ResourceModelName, RoleName } from '@okr/shared-models';
 import { CategorySelect, ChangeConfirmation, ChangeConfirmationI18n, Header, IconToolbar } from '@okr/shared-ui';
-import { coerceBoolean, hasRole, safeStructuredClone } from '@okr/shared-util-core';
+import { coerceBoolean, getAvatarInfo, hasRole, safeStructuredClone } from '@okr/shared-util-core';
 import { DEFAULT_RESOURCE_TYPE } from '@okr/shared-constants';
 
 import { CommentsAccordion } from '@okr/comment-feature';
+import { ReservationService } from '@okr/relationship-reservation-data-access';
 import { ReservationsAccordion } from '@okr/relationship-reservation-feature';
+import { findActiveLockReservations } from '@okr/relationship-reservation-util';
 import { ResourceOwnersAccordion } from '@okr/relationship-ownership-feature';
 
-import { ResourceForm } from '@okr/resource-ui';
+import { ResourceForm, ResourceLockedBanner } from '@okr/resource-ui';
 import { getCategoryNameForResourceType, getUsageNameForResourceType, isReservable } from '@okr/resource-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { ResourceStore } from './resource.store';
@@ -20,7 +23,7 @@ import { ResourceStore } from './resource.store';
   standalone: true,
   imports: [
     Header, ChangeConfirmation, ReservationsAccordion, ResourceOwnersAccordion,
-    ResourceForm, IconToolbar, CommentsAccordion, CategorySelect,
+    ResourceForm, ResourceLockedBanner, IconToolbar, CommentsAccordion, CategorySelect,
     IonContent, IonAccordionGroup, IonGrid, IonRow, IonCol
   ],
   providers: [ResourceStore],
@@ -31,6 +34,9 @@ import { ResourceStore } from './resource.store';
     }
     <ion-content class="ion-no-padding">
       <okr-icon-toolbar icon="{{icon()}}" [title]="toolbarTitle()"/>
+      @if(isLocked()) {
+        <okr-resource-locked-banner [title]="store.i18n.locked_title()" [reason]="lockReason()" />
+      }
       @if(isTypeEditable() && types()) {
         <ion-grid>
           <ion-row>
@@ -51,6 +57,10 @@ import { ResourceStore } from './resource.store';
           [allTags]="tags()"
           [tenantId]="tenantId()"
           [readOnly]="isReadOnly()"
+          [showForm]="showForm()"
+          [locked]="locked()"
+          (lockedChange)="lockedEdit.set($event)"
+          [showLock]="showLock()"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
         />
@@ -74,6 +84,7 @@ import { ResourceStore } from './resource.store';
 })
 export class ResourceEditModal {
   private readonly modalController = inject(ModalController);
+  private readonly reservationService = inject(ReservationService);
   protected readonly store = inject(ResourceStore);
 
   // inputs
@@ -107,6 +118,24 @@ export class ResourceEditModal {
   private resourceIcon = computed(() => this.store.appStore.getCategoryIcon('resource_type', this.formData()?.type));
   protected icon = computed(() => this.type() === 'rboat' ? this.rowingBoatIcon() : this.resourceIcon());
 
+  // lock: an active 'maintenance' (damage report) or 'blocked' reservation of this boat
+  private readonly reservationsResource = rxResource({
+    params: () => ({ resourceKey: this.resourceKey() }),
+    stream: ({ params }) => this.reservationService.listReservationsForResource(params.resourceKey)
+  });
+  private readonly activeLocks = computed(() => findActiveLockReservations(this.reservationsResource.value() ?? [], this.resourceKey()));
+  protected readonly isLocked = computed(() => this.activeLocks().length > 0);
+  /** the stored tripAlert; the reservation text for a lock without one (damage report) */
+  protected readonly lockReason = computed(() => (this.resource()?.tripAlert ?? '').trim() || this.activeLocks()[0]?.description || '');
+  /**
+   * The checkbox value the user chose; undefined = untouched, then it follows the stored state.
+   * Deliberately not a linkedSignal over the reservations stream — a re-emission would reset the user's choice.
+   */
+  protected readonly lockedEdit = signal<boolean | undefined>(undefined);
+  protected readonly locked = computed(() => this.lockedEdit() ?? this.isLocked());
+  // a lock needs the boat's key, so a new boat is locked only after it was saved once
+  protected readonly showLock = computed(() => this.type() === 'rboat' && this.resourceKey().length > 0);
+
   private getUsages(): CategoryListModel | undefined {
     const usageName = getUsageNameForResourceType(this.type());
     if (usageName) return this.store.appStore.getCategory(usageName);
@@ -119,11 +148,28 @@ export class ResourceEditModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
+    await this.saveLock();
     await dismissOverlay(this.modalController, this.formData(), 'confirm');  
+  }
+
+  /**
+   * Store a changed «Boot sperren» checkbox. The lock is a reservation, not a resource field, so the
+   * modal writes it itself; the resource (with its tripAlert as the reason) is saved by the caller.
+   */
+  private async saveLock(): Promise<void> {
+    const locked = this.lockedEdit();
+    if (locked === undefined || locked === this.isLocked() || this.isReadOnly()) return;
+    if (locked) {
+      const avatar = getAvatarInfo(this.formData(), 'resource');
+      if (avatar) await this.reservationService.lockResource(avatar, this.formData()?.tripAlert ?? '', this.store.currentUser());
+    } else {
+      await this.reservationService.unlockResource(this.activeLocks(), this.store.currentUser());
+    }
   }
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
+    this.lockedEdit.set(undefined);
     this.formData.set(safeStructuredClone(this.resource()));  // reset the form
     // re-mount the form so its field state (touched, error notes) starts fresh
     this.showForm.set(false);

@@ -778,6 +778,9 @@ const trip: FeatureBlock = {
     // authored onto the tenant-bespoke `sport-menu` grouping before this catalogue existed);
     // the next `applyFeatureSelection` for `scs` converges that, one time, intentionally.
     { key: 'logbuch', name: 'logbuch', url: '/trips/logbuch/c-trips', action: 'navigate', roleNeeded: 'registered', icon: 'track', label: '@item.logbuch' },
+    // The tracker (spec 1.123 §8): a member records an outing on the phone; the crew sees it in the Logbuch.
+    // Top-level like `logbuch`, so the picker appends it to the root nav (admins may move it under `sport-menu`).
+    { key: 'trip-tracker', name: 'trip-tracker', url: '/tracker', action: 'navigate', roleNeeded: 'registered', icon: 'track', label: '@item.trip-tracker' },
     // 'registered', not 'kiosk': every member may open the sheet to reach the two read-only
     // statistics. The write actions below keep their own 'kiosk'/'admin' gate, so a member sees
     // a context menu holding nothing but boat + person statistics.
@@ -1226,11 +1229,18 @@ const resource: FeatureBlock = {
       // `relationship`'s, and `dependsOn: ['relationship']` is what makes that safe.
       { key: 'ownerships-all', name: 'ownerships-all', url: '/ownership/all/c-ownership', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'own', label: '@item.ownerships-all' },
       { key: 'reservation-all', name: 'reservation-all', url: '/reservation/all/c-reservations', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'reservation', label: '@item.reservation-all' },
+      // Schadensliste: read from the reservations (damage reports and boat locks). The route admits
+      // privileged too (isResourceStaffGuard), but a row has ONE roleNeeded and its parent
+      // `resource-menu` is resourceAdmin anyway.
+      { key: 'damage-list', name: 'damage-list', url: '/reservation/damages/c-damages', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'lock-closed', label: '@item.damage-list' },
       // Copied verbatim, including the missing leading slash — `urlResolves` matches by
       // path segment, not string prefix, so this still resolves; not "fixed" per the
       // mirror-verbatim rule.
       { key: 'transfer-all', name: 'transfer-all', url: 'transfer/all/c-transfers', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'arrow-forward', label: '@item.transfer-all' },
     ]),
+    { key: 'c-damages', name: 'c-damages', url: '', action: 'context', roleNeeded: 'resourceAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'damage-exportraw', name: 'damage-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: '@item.damage-exportraw' },
+    ] },
     { key: 'c-resources', name: 'c-resources', url: '', action: 'context', roleNeeded: 'resourceAdmin', icon: 'help-circle', label: '', children: [
       { key: 'resource-add', name: 'resource-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: '@item.resource-add' },
       { key: 'resource-exportraw', name: 'resource-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: '@item.resource-exportraw' },
