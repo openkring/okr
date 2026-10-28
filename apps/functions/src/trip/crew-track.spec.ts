@@ -306,7 +306,7 @@ describe('crewCleanupDecision', () => {
     const t = new TripModel(T);
     t.type = 'tracker';
     t.tenants = [T];
-    t.track = { personKey: 'p1', logbuchKey: 'lb1', ...track } as TripModel['track'];
+    t.track = { personKey: 'p1', logbuchKey: 'lb1', endedAt: '2026-10-20T10:00:00.000Z', ...track } as TripModel['track'];
     return Object.assign(t, over);
   };
   const lb = (over: Partial<TripModel> = {}) => logbuch({ tenants: [T], state: 'closed', endDate: '20261020', ...over });
@@ -341,6 +341,13 @@ describe('crewCleanupDecision', () => {
   });
   it('a crew copy is never deleted', () =>
     expect(crewCleanupDecision(lb(), rec({}, { copyOf: 'x' }), 'lb1', T, after).delete).toBe(false));
+  it('back-dated Logbuch trip -> unlink, but no delete before the recording\'s own deadline', () => {
+    const backdated = lb({ endDate: '20261001' }); // Logbuch deadline 20261008, recording ended 20261020 -> 20261027
+    expect(crewCleanupDecision(backdated, rec(), 'lb1', T, before)).toMatchObject({ unlink: true, unlinkRecording: true, delete: false });
+    expect(crewCleanupDecision(backdated, rec(), 'lb1', T, after)).toMatchObject({ delete: true });
+  });
+  it('recording without a readable end -> never deleted', () =>
+    expect(crewCleanupDecision(lb(), rec({}, { endedAt: '' }), 'lb1', T, after).delete).toBe(false));
   it('open trip never expires', () =>
     expect(crewCleanupDecision(lb({ state: 'open', endDate: '' }), rec(), 'lb1', T, after)).toMatchObject({ copy: false, unlink: false, delete: false }));
 });

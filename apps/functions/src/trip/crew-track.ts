@@ -467,10 +467,25 @@ export function logbuchCleanupDeadline(trip: Pick<TripModel, 'endDate' | 'startD
   return crewTrackDeadline({ endDate: trip.startDate });
 }
 
+/**
+ * The recording's own deadline: its end (Zurich date) + CREW_TRACK_DAYS. Server-trusted, unlike the Logbuch dates,
+ * which any club member can edit — a back-dated Logbuch trip must not get a recording deleted early. '' when the
+ * end is missing or unreadable (then the recording is never deleted). Pure.
+ */
+export function recordingDeadline(rec: Pick<TripModel, 'track'>): string {
+  const ms = Date.parse(rec.track?.endedAt ?? '');
+  return Number.isFinite(ms) ? crewTrackDeadline({ endDate: toStoreDate(new Date(ms)) }) : '';
+}
+
 /** Storage prefixes of a recording's thumbnails, derived from the server-side layout, never from stored paths. Pure. */
 export function thumbPrefixes(rec: Pick<TripModel, 'okey' | 'tenants'>): string[] {
   if (!rec.okey || /[/.]/.test(rec.okey)) return [];
   return [...new Set((rec.tenants ?? []).filter((t) => t !== '' && !/[/.]/.test(t)))].map((t) => trackThumbPath(t, rec.okey, 0).replace(/0\.jpg$/, ''));
+}
+
+function pastRecordingDeadline(rec: Pick<TripModel, 'track'>, today: string): boolean {
+  const d = recordingDeadline(rec);
+  return d !== '' && today > d;
 }
 
 /**
@@ -479,7 +494,8 @@ export function thumbPrefixes(rec: Pick<TripModel, 'okey' | 'tenants'>): string[
  *   not auto-closed Logbuch trip, every night until day 7 (a copy that exists is skipped, so later nights only retry failures).
  * - unlink: past the deadline (also for a deleted / archived Logbuch trip, which keeps its link until then).
  * - unlinkRecording: only when the recording points back to this Logbuch trip.
- * - delete: past the deadline only, the recording was linked to this Logbuch trip, nothing else holds it, and it is no crew copy.
+ * - delete: past the deadline only, the recording was linked to this Logbuch trip, nothing else holds it, it is no crew copy,
+ *   and its own deadline (recordingDeadline) has passed too.
  */
 export function crewCleanupDecision(
   logbuch: TripModel,
@@ -497,7 +513,7 @@ export function crewCleanupDecision(
     copy: !isLogbuchGone(logbuch) && isLogbuchEnded(logbuch) && !isAutoClosed(logbuch) && isLinkedRecording(rec, logbuch, logbuchKey, tenantId),
     unlink,
     unlinkRecording: unlink && linkedBack,
-    delete: pastDeadline && linkedBack && !!rec && !rec.track?.copyOf && !isTrackReferenced(rec, tenantId),
+    delete: pastDeadline && linkedBack && !!rec && !rec.track?.copyOf && !isTrackReferenced(rec, tenantId) && pastRecordingDeadline(rec, today),
   };
 }
 
