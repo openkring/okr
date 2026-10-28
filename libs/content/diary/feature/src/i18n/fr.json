@@ -140,8 +140,7 @@
     "navNext": "Jour suivant",
     "navUp": "Vue d'ensemble",
     "mediaLoadFailed": "Les photos et documents de Drive n'ont pas pu être chargés.",
-    "mediaReload": "Recharger depuis Google Drive",
-    "tracks": "Trajets"
+    "mediaReload": "Recharger depuis Google Drive"
   },
   "diaryState": {
     "all": {
@@ -290,8 +289,11 @@
       "steps": "Pas",
       "photosTitle": "Photos en route",
       "mapLabel": "Carte avec le parcours enregistré",
-      "photoShow": "Afficher la photo de {time} sur la carte",
-      "mapNote": "Carte : © swisstopo"
+      "photoShow": "Afficher la photo de {time} en grand",
+      "mapNote": "Carte : © swisstopo",
+      "rename": "Modifier le titre",
+      "renamePrompt": "Titre du parcours",
+      "renameFailed": "Le titre n'a pas pu être enregistré."
     }
   }
 }

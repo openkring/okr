@@ -11,9 +11,14 @@ export function diaryKey(tenantId: string, authorKey: string, date: string): str
   return `${tenantId}__${authorKey}__${date}`;
 }
 
-/** A fresh entry for the author, keyed for its date, tagged like every imported one. */
+/**
+ * A fresh entry for the author, keyed for its date, tagged like every imported one. It starts 'final': the
+ * diary has a single author, so the draft step adds nothing — a day whose weather cannot be measured is
+ * still demoted to a draft on save (DiaryStore.withWeather).
+ */
 export function newDiary(tenantId: string, authorKey: string, date = getTodayStr(DateFormat.StoreDate)): DiaryModel {
   const diary = new DiaryModel(tenantId);
+  diary.status = 'final';
   diary.authorKey = authorKey;
   diary.date = date;
   diary.okey = diaryKey(tenantId, authorKey, date);

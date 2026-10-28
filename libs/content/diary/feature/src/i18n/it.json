@@ -140,8 +140,7 @@
     "navNext": "Giorno successivo",
     "navUp": "Panoramica",
     "mediaLoadFailed": "Non è stato possibile caricare foto e documenti da Drive.",
-    "mediaReload": "Ricarica da Google Drive",
-    "tracks": "Percorsi"
+    "mediaReload": "Ricarica da Google Drive"
   },
   "diaryState": {
     "all": {
@@ -290,8 +289,11 @@
       "steps": "Passi",
       "photosTitle": "Foto lungo il percorso",
       "mapLabel": "Mappa con il percorso registrato",
-      "photoShow": "Mostra sulla mappa la foto delle {time}",
-      "mapNote": "Mappa: © swisstopo"
+      "photoShow": "Mostra in grande la foto delle {time}",
+      "mapNote": "Mappa: © swisstopo",
+      "rename": "Modifica titolo",
+      "renamePrompt": "Titolo del percorso",
+      "renameFailed": "Non è stato possibile salvare il titolo."
     }
   }
 }

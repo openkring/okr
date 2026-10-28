@@ -93,9 +93,9 @@ describe('toStretchTiles', () => {
 });
 
 describe('formatTrackDate', () => {
-  it('formats a StoreDate with the month name', () => {
-    expect(formatTrackDate('20261025', 'de')).toBe('25. Oktober 2026');
-    expect(formatTrackDate('20261025', 'en')).toBe('25 October 2026');
+  it('formats a StoreDate with the weekday and month name', () => {
+    expect(formatTrackDate('20261025', 'de')).toBe('Sonntag, 25. Oktober 2026');
+    expect(formatTrackDate('20261025', 'en')).toBe('Sunday, 25 October 2026');
   });
 
   it('returns empty for a missing or malformed date', () => {

@@ -19,3 +19,4 @@ export * from './lib/track-clip.util';
 export * from './lib/crew-track.model';
 export * from './lib/logbuch-link.util';
 export * from './lib/crew-track.util';
+export * from './lib/photo-fan.util';

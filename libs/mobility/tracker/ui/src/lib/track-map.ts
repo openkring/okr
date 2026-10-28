@@ -1,7 +1,7 @@
-import { afterNextRender, Component, DestroyRef, effect, ElementRef, inject, input, untracked, ViewEncapsulation } from '@angular/core';
+import { afterNextRender, Component, DestroyRef, effect, ElementRef, inject, input, output, untracked, ViewEncapsulation } from '@angular/core';
 import type * as L from 'leaflet';
 import type { TransportMode } from '@okr/shared-models';
-import { TRACK_MODE_COLOR, type TrackPoint } from '@okr/mobility-tracker-util';
+import { fanOutOffsets, TRACK_MODE_COLOR, type TrackPoint } from '@okr/mobility-tracker-util';
 
 export interface TrackMapSection { mode: TransportMode; points: TrackPoint[] }
 /** A photo pin: `src` is a displayable URL (local file or data URL); without one a small camera dot is drawn. */
@@ -17,6 +17,8 @@ const PHOTO_DOT_PX = 16;
 const PHOTO_PIN_SELECTED_PX = 46;
 const PHOTO_DOT_SELECTED_PX = 22;
 const SELECTED_MIN_ZOOM = 16;
+/** pins whose centres are closer than this (px) fan out around their common centre */
+const PHOTO_FAN_THRESHOLD_PX = 24;
 /** dimmed base map, so the coloured track stands out (over a white background, also in dark mode) */
 const TILE_OPACITY = 0.55;
 const MAX_ZOOM = 19;
@@ -45,6 +47,9 @@ type MapFit = { bounds: L.LatLngBounds } | { center: L.LatLngTuple };
  * going from 0 to a real size always re-fits once.
  * `detailBoost` draws the tiles of the next finer zoom level at half size: the same area, finer detail and smaller
  * labels (for the small diary card).
+ * Photo pins at (nearly) the same place fan out on a small circle, recomputed per zoom level. With
+ * `photosClickable` a pin is a button and emits `photoClicked` (index into `photos`); `wheelZoom` false leaves the
+ * mouse wheel to the page that scrolls around the map (zoom stays on the buttons, double-click and pinch).
  */
 @Component({
   selector: 'okr-track-map',
@@ -59,8 +64,12 @@ type MapFit = { bounds: L.LatLngBounds } | { center: L.LatLngTuple };
       box-shadow: 0 0 3px rgba(0,0,0,.6); }
     .okr-track-dot.start { background: #2e7d32; }
     .okr-track-dot.end { background: #c62828; }
+    /* a fixed round frame around the img: global img rules (height:auto, max-width) can never make it an ellipse */
     .okr-track-photo-pin { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #fff; box-sizing: border-box;
-      box-shadow: 0 0 3px rgba(0,0,0,.6); object-fit: cover; display: block; background: #fff; }
+      box-shadow: 0 0 3px rgba(0,0,0,.6); overflow: hidden; background: #fff; }
+    .okr-track-photo-pin img { width: 100% !important; height: 100% !important; max-width: none !important;
+      max-height: none !important; object-fit: cover; display: block; border-radius: 50%; }
+    .okr-track-photo-clickable { cursor: pointer; }
     .okr-track-photo-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #fff; box-sizing: border-box;
       box-shadow: 0 0 3px rgba(0,0,0,.6); background: #455a64; position: relative; }
     .okr-track-photo-pin.selected { width: 46px; height: 46px; border: 3px solid #ffd34d; box-shadow: 0 1px 6px rgba(0,0,0,.6); }
@@ -77,6 +86,13 @@ export class TrackMap {
   public readonly selectedPhoto = input<number | undefined>(undefined);
   /** tiles of the next zoom level at half size: same area, finer detail, smaller labels; read once at init */
   public readonly detailBoost = input(false);
+  /** photo pins are buttons and emit `photoClicked`; read once at init */
+  public readonly photosClickable = input(false);
+  /** false: the mouse wheel scrolls the page instead of zooming the map; read once at init */
+  public readonly wheelZoom = input(true);
+
+  /** a tapped photo pin, as index into `photos` (only with `photosClickable`) */
+  public readonly photoClicked = output<number>();
 
   private readonly el = inject<ElementRef<HTMLElement>>(ElementRef);
   private leaflet?: typeof L;
@@ -126,7 +142,7 @@ export class TrackMap {
     const container = this.el.nativeElement.querySelector('.okr-track-map-canvas') as HTMLElement | null;
     // the host may be gone (conditional block toggled) while Leaflet was loading
     if (this.destroyed || !container || !container.isConnected || this.map) return;
-    this.map = this.leaflet.map(container, { zoomControl: true, attributionControl: true });
+    this.map = this.leaflet.map(container, { zoomControl: true, attributionControl: true, scrollWheelZoom: this.wheelZoom() });
     // boosted: map zoom z requests tiles of z + 1, so the native cap is one level lower
     const tiles: L.TileLayerOptions = this.detailBoost()
       ? { tileSize: 128, zoomOffset: 1, maxNativeZoom: SWISSTOPO_MAX_NATIVE_ZOOM - 1 }
@@ -136,6 +152,8 @@ export class TrackMap {
     this.overlay = this.leaflet.layerGroup().addTo(this.map);
     this.photoLayer = this.leaflet.layerGroup().addTo(this.map); // above the track
     this.map.setView(DEFAULT_VIEW, 8);
+    // the fan-out is in pixels: lay the pins out again for every zoom level
+    this.map.on('zoomend', () => this.renderPhotos(this.photos(), this.selectedPhoto()));
     this.render(this.sections(), this.live());
     this.renderPhotos(this.photos(), this.selectedPhoto());
     this.panToPhoto(this.selectedPhoto());
@@ -228,29 +246,39 @@ export class TrackMap {
 
   private renderPhotos(photos: TrackMapPhoto[], selected: number | undefined): void {
     const Lf = this.leaflet;
+    const map = this.map;
     const layer = this.photoLayer;
-    if (!Lf || !this.map || !layer || this.destroyed) return;
+    if (!Lf || !map || !layer || this.destroyed) return;
     layer.clearLayers();
-    photos.forEach((photo, index) => {
-      if (photo.hidden) return;
+    const shown = photos.map((photo, index) => ({ photo, index })).filter(({ photo }) => !photo.hidden);
+    const offsets = fanOutOffsets(shown.map(({ photo }) => map.latLngToLayerPoint([photo.lat, photo.lng])), PHOTO_FAN_THRESHOLD_PX, PHOTO_PIN_PX);
+    const clickable = this.photosClickable();
+    shown.forEach(({ photo, index }, k) => {
       const isSelected = index === selected;
       // DOM nodes, not an HTML string: the src never becomes markup
       let html: HTMLElement;
       let size: number;
       if (photo.src) {
+        html = document.createElement('div');
+        html.className = isSelected ? 'okr-track-photo-pin selected' : 'okr-track-photo-pin';
         const img = document.createElement('img');
-        img.className = isSelected ? 'okr-track-photo-pin selected' : 'okr-track-photo-pin';
         img.src = photo.src;
         img.alt = '';
-        html = img;
+        html.appendChild(img);
         size = isSelected ? PHOTO_PIN_SELECTED_PX : PHOTO_PIN_PX;
       } else {
         html = document.createElement('div');
         html.className = isSelected ? 'okr-track-photo-dot selected' : 'okr-track-photo-dot';
         size = isSelected ? PHOTO_DOT_SELECTED_PX : PHOTO_DOT_PX;
       }
-      const icon = Lf.divIcon({ className: 'okr-track-dot-icon', html, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
-      Lf.marker([photo.lat, photo.lng], { icon, interactive: false, keyboard: false, zIndexOffset: isSelected ? 1000 : 0 }).addTo(layer);
+      const { dx, dy } = offsets[k];
+      const icon = Lf.divIcon({
+        className: clickable ? 'okr-track-dot-icon okr-track-photo-clickable' : 'okr-track-dot-icon',
+        html, iconSize: [size, size], iconAnchor: [size / 2 - dx, size / 2 - dy],
+      });
+      const marker = Lf.marker([photo.lat, photo.lng], { icon, interactive: clickable, keyboard: clickable, zIndexOffset: isSelected ? 1000 : 0 });
+      if (clickable) marker.on('click', () => this.photoClicked.emit(index));
+      marker.addTo(layer);
     });
   }
 

@@ -109,7 +109,6 @@ export const DIARY_I18N_KEYS = {
   nav_up:                 PFX + 'view.navUp',
   media_load_failed:      PFX + 'view.mediaLoadFailed',
   media_reload:           PFX + 'view.mediaReload',
-  view_tracks:            PFX + 'view.tracks',
 
   // ─── recorded tracks (spec 1.121 §7) — the diary's own copy, so no diary app needs the tracker scope ───
   track_mode_plane:       PFX + 'track.mode.plane',
@@ -141,6 +140,9 @@ export const DIARY_I18N_KEYS = {
   track_view_speed:       PFX + 'track.view.speed',
   track_view_steps:       PFX + 'track.view.steps',
   track_view_photos_title: PFX + 'track.view.photosTitle',
+  track_view_rename:      PFX + 'track.view.rename',
+  track_view_rename_prompt: PFX + 'track.view.renamePrompt',
+  track_view_rename_failed: PFX + 'track.view.renameFailed',
   track_view_map_label:   PFX + 'track.view.mapLabel',
   track_view_photo_show:  PFX + 'track.view.photoShow', // single braces: {time}
   track_view_map_note:    PFX + 'track.view.mapNote',

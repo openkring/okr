@@ -256,7 +256,8 @@ export const DiaryStore = signalStore(
       if (diary.scope !== 'day' || hasDiaryWeather(diary.weather)) return diary;
       const coords = await coordinatesOf(mainLocation(diary));
       if (!coords) {
-        if (diary.status === 'final') store.alertService.showToast(store.i18n.weather_no_coords());
+        // new entries start 'final' (newDiary), so only a set but unresolvable place is worth a hint
+        if (diary.status === 'final' && mainLocation(diary)) store.alertService.showToast(store.i18n.weather_no_coords());
         return diary;
       }
       const weather = await store.weatherService.fetch({ date: diary.date, ...coords }).catch(() => null);
@@ -429,17 +430,31 @@ export const DiaryStore = signalStore(
     const loadTrackThumb = (path: string): Promise<string> => store.trackService.readThumb(path);
 
     /**
-     * Read-only track view; dynamic import like the view modal (store-modal-dynamic-import). `photoIndex` (into the
-     * track's photos) is shown on the map when the view opens.
+     * Read-only track view; dynamic import like the view modal (store-modal-dynamic-import). Resolves, once the view
+     * is closed, to the title the track was renamed to there (undefined = unchanged).
      */
-    const openTrack = async (card: DiaryTrackCard, photoIndex?: number): Promise<void> => {
+    const openTrack = async (card: DiaryTrackCard): Promise<string | undefined> => {
       const { DiaryTrackModal } = await import('@okr/content-diary-ui');
+      let renamed: string | undefined;
+      const renameTrack = async (track: DiaryTrackCard, name: string): Promise<boolean> => {
+        try {
+          await store.trackService.rename(track.key, name);
+          renamed = name;
+          return true;
+        } catch (error) {
+          console.error('DiaryStore.renameTrack', error);
+          void store.alertService.showToast(store.i18n.track_view_rename_failed());
+          return false;
+        }
+      };
       const modal = await store.modalController.create({
         component: DiaryTrackModal,
         cssClass: 'wide-modal',
-        componentProps: { card, i18n: store.i18n, lang: store.lang(), loadThumb: loadTrackThumb, initialPhoto: photoIndex },
+        componentProps: { card, i18n: store.i18n, lang: store.lang(), loadThumb: loadTrackThumb, renameTrack },
       });
       await modal.present();
+      await modal.onWillDismiss();
+      return renamed;
     };
 
     /** prev/next/up of the shown entry (spec 1.106 §2.1) — queried, not taken from the loaded list. */

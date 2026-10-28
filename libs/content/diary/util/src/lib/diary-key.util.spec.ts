@@ -8,14 +8,14 @@ describe('diaryKey', () => {
 });
 
 describe('newDiary', () => {
-  it('seeds tenant, author, key, today, day scope, draft', () => {
+  it('seeds tenant, author, key, today, day scope, final', () => {
     const d = newDiary('bka', 'owner_bka', '20260903');
     expect(d.tenants).toEqual(['bka']);
     expect(d.authorKey).toBe('owner_bka');
     expect(d.okey).toBe('bka__owner_bka__20260903');
     expect(d.date).toBe('20260903');
     expect(d.scope).toBe('day');
-    expect(d.status).toBe('draft');
+    expect(d.status).toBe('final');
     expect(d.tags).toBe('diary');
     expect(d.weather.code).toBe(-1);
   });

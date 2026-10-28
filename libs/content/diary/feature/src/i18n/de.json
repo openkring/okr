@@ -140,8 +140,7 @@
     "navNext": "Nächster Tag",
     "navUp": "Übersicht",
     "mediaLoadFailed": "Bilder und Dokumente aus Drive konnten nicht geladen werden.",
-    "mediaReload": "Neu aus Google Drive laden",
-    "tracks": "Strecken"
+    "mediaReload": "Neu aus Google Drive laden"
   },
   "diaryState": {
     "all": {
@@ -290,8 +289,11 @@
       "steps": "Schritte",
       "photosTitle": "Fotos unterwegs",
       "mapLabel": "Karte mit der aufgezeichneten Strecke",
-      "photoShow": "Foto von {time} auf der Karte zeigen",
-      "mapNote": "Karte: © swisstopo"
+      "photoShow": "Foto von {time} gross anzeigen",
+      "mapNote": "Karte: © swisstopo",
+      "rename": "Titel ändern",
+      "renamePrompt": "Titel der Strecke",
+      "renameFailed": "Der Titel konnte nicht gespeichert werden."
     }
   }
 }

@@ -103,9 +103,9 @@ export function toStretchTiles(card: DiaryTrackCard, lang = 'de'): DiaryStretchT
   });
 }
 
-/** `20261025` → «25. Oktober 2026» in `lang` (Swiss region); '' for a missing, partial or malformed date. */
+/** `20261025` → «Sonntag, 25. Oktober 2026» in `lang` (Swiss region); '' for a missing, partial or malformed date. */
 export function formatTrackDate(storeDate: string, lang: string): string {
   if (!/^\d{8}$/.test(storeDate) || storeDate.endsWith('00') || storeDate.slice(4, 6) === '00') return '';
   const day = new Date(Date.UTC(+storeDate.slice(0, 4), +storeDate.slice(4, 6) - 1, +storeDate.slice(6, 8)));
-  return new Intl.DateTimeFormat(trackLocale(lang), { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(day);
+  return new Intl.DateTimeFormat(trackLocale(lang), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(day);
 }

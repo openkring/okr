@@ -140,8 +140,7 @@
     "navNext": "Next day",
     "navUp": "Overview",
     "mediaLoadFailed": "Photos and documents from Drive could not be loaded.",
-    "mediaReload": "Reload from Google Drive",
-    "tracks": "Tracks"
+    "mediaReload": "Reload from Google Drive"
   },
   "diaryState": {
     "all": {
@@ -290,8 +289,11 @@
       "steps": "Steps",
       "photosTitle": "Photos along the way",
       "mapLabel": "Map with the recorded route",
-      "photoShow": "Show the photo from {time} on the map",
-      "mapNote": "Map: © swisstopo"
+      "photoShow": "Show the photo from {time} full size",
+      "mapNote": "Map: © swisstopo",
+      "rename": "Change title",
+      "renamePrompt": "Title of the track",
+      "renameFailed": "The title could not be saved."
     }
   }
 }

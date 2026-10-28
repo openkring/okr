@@ -16,7 +16,8 @@ import { TrackMap, TrackMapSection } from '@okr/mobility-tracker-ui';
   imports: [TrackMap, IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent],
   styles: [`
     :host { display: block; }
-    ion-card { max-width: 480px; cursor: pointer; }
+    ion-card { margin: 8px; cursor: pointer; }
+    ion-card-title { font-size: 1.05rem; font-weight: 600; }
     okr-track-map { --okr-track-map-height: 180px; pointer-events: none; }
   `],
   template: `

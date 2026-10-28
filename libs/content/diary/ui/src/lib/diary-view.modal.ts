@@ -1,8 +1,8 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal, untracked } from '@angular/core';
-import { IonAvatar, IonButton, IonButtons, IonChip, IonContent, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonNote, IonProgressBar, IonToolbar, ModalController } from '@ionic/angular';
+import { IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote, IonProgressBar, IonRow, IonToolbar, ModalController } from '@ionic/angular';
 import { Browser } from '@capacitor/browser';
 
-import { AvatarInfo, DiaryModel, IMAGE_STYLE_SHAPE } from '@okr/shared-models';
+import { AvatarInfo, DiaryModel, IMAGE_STYLE_SHAPE, ImageType } from '@okr/shared-models';
 import { Header, ImgDirective, showImageSlider } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { AvatarDisplay, AvatarPipe } from '@okr/avatar-ui';
@@ -38,13 +38,14 @@ export interface DiaryNeighbours {
 @Component({
   selector: 'okr-diary-view-modal',
   standalone: true,
-  imports: [Header, AvatarDisplay, AvatarPipe, ImgDirective, IonAvatar, DiaryMediaRow, DiaryJassCard, DiaryTrackCardView, SvgIconPipe, IonContent, IonListHeader, IonProgressBar, IonItem, IonLabel, IonList, IonNote, IonChip, IonIcon, IonButton, IonButtons, IonToolbar],
+  imports: [Header, AvatarDisplay, AvatarPipe, ImgDirective, IonAvatar, DiaryMediaRow, DiaryJassCard, DiaryTrackCardView, SvgIconPipe, IonContent, IonGrid, IonRow, IonCol, IonProgressBar, IonItem, IonLabel, IonList, IonNote, IonChip, IonIcon, IonButton, IonButtons, IonToolbar],
   styles: [`
     .body { padding: 16px; line-height: 1.5; }
     .meta ion-chip { margin-right: 4px; }
     .people { display: flex; flex-wrap: wrap; gap: 8px; }
     .person, .location { cursor: pointer; }
-    .tracks { padding: 0 8px; }
+    .tracks { padding: 0; }
+    .tracks ion-col { padding: 0; }
     .when { display: flex; flex-wrap: wrap; align-items: center; column-gap: 4px; }
     .when h2 { margin: 0 4px 0 0; }
     /* the same chip as a person's (okr-avatar-display with showName) */
@@ -52,7 +53,20 @@ export interface DiaryNeighbours {
     .place ion-avatar { width: 30px; height: 30px; }
   `],
   template: `
-    <okr-header [i18n]="{ title: title() }" [isModal]="true" actionIcon="edit" [actionTitle]="i18n().edit()" (actionClicked)="edit()" />
+    <okr-header [i18n]="{ title: title() }" [isModal]="true" actionIcon="edit" [actionTitle]="i18n().edit()" (actionClicked)="edit()">
+      @if (driveUrl()) {
+        <!-- left of the edit button: the day's Drive folder, and reading it again -->
+        <ion-buttons okrHeaderEnd slot="end">
+          <ion-button (click)="openDrive()" [title]="i18n().open_drive()" [attr.aria-label]="i18n().open_drive()">
+            <ion-icon slot="icon-only" src="{{ 'folder-open' | svgIcon }}" />
+          </ion-button>
+          <ion-button [disabled]="media() === undefined && !mediaFailed()" (click)="reloadMedia()"
+            [title]="i18n().media_reload()" [attr.aria-label]="i18n().media_reload()">
+            <ion-icon slot="icon-only" src="{{ 'reload' | svgIcon }}" />
+          </ion-button>
+        </ion-buttons>
+      }
+    </okr-header>
     <ion-content>
       <ion-toolbar>
         <ion-buttons slot="start">
@@ -129,12 +143,15 @@ export interface DiaryNeighbours {
       }
 
       @if (current().scope === 'day' && tracks().length) {
-        <ion-list-header><ion-label>{{ i18n().view_tracks() }}</ion-label></ion-list-header>
-        <div class="tracks">
-          @for (card of tracks(); track card.key) {
-            <okr-diary-track-card [card]="card" [i18n]="i18n()" (open)="openTrack()($event)" />
-          }
-        </div>
+        <ion-grid class="tracks">
+          <ion-row>
+            @for (card of tracks(); track card.key) {
+              <ion-col size="12" size-md="6">
+                <okr-diary-track-card [card]="card" [i18n]="i18n()" (open)="showTrack($event)" />
+              </ion-col>
+            }
+          </ion-row>
+        </ion-grid>
       }
 
       @if (driveUrl() && sliderLoading()) { <ion-progress-bar type="indeterminate" /> }
@@ -145,16 +162,6 @@ export interface DiaryNeighbours {
         <!-- the Drive images, then the visible photos of the day's tracks -->
         <okr-diary-media-row kind="image" [files]="imageFiles()" [extras]="trackPhotoExtras()"
           (opened)="openImage($event)" (extraOpened)="openTrackPhoto($event)" />
-      }
-      @if (driveUrl()) {
-        <ion-item lines="none" button [detail]="false" (click)="openDrive()">
-          <ion-icon slot="start" src="{{ 'folder-open' | svgIcon }}" />
-          <ion-label>{{ i18n().open_drive() }}</ion-label>
-        </ion-item>
-        <ion-item lines="none" button [detail]="false" [disabled]="media() === undefined && !mediaFailed()" (click)="reloadMedia()">
-          <ion-icon slot="start" src="{{ 'reload' | svgIcon }}" />
-          <ion-label>{{ i18n().media_reload() }}</ion-label>
-        </ion-item>
       }
 
       <!-- markdown, sanitized by Angular; images are stripped (they live in Drive, decision 6) -->
@@ -193,8 +200,8 @@ export class DiaryViewModal {
   public readonly refreshWeather = input.required<(d: DiaryModel) => Promise<DiaryModel | undefined>>();
   /** the recorded tracks of a day (spec 1.121 §7); [] for other scopes, offline or without a person */
   public readonly loadTracks = input.required<(d: DiaryModel) => Promise<DiaryTrackCard[]>>();
-  /** opens the read-only track view, optionally with one photo (index into the track's photos) shown on the map */
-  public readonly openTrack = input.required<(card: DiaryTrackCard, photoIndex?: number) => Promise<void>>();
+  /** opens the read-only track view; resolves to the new title when it was renamed there */
+  public readonly openTrack = input.required<(card: DiaryTrackCard) => Promise<string | undefined>>();
   /** a track photo's thumbnail (private bucket) as a displayable URL — the store's TrackService.readThumb */
   public readonly loadTrackThumb = input.required<(thumbPath: string) => Promise<string>>();
 
@@ -305,21 +312,31 @@ export class DiaryViewModal {
     });
   }
 
-  /**
-   * Full-size slider over all images of the day, starting at the tapped one. The slider takes its
-   * URLs up front, so the slider-size renditions are loaded first (the store caches them, a second
-   * tap opens at once); an image whose rendition fails is shown at thumbnail size.
-   */
+  /** A Drive image (index into the Drive images) opens the slider; a video opens in Drive's own player. */
   protected async openImage(index: number): Promise<void> {
     const tapped = this.media()?.images[index];
     if (isDiaryVideo(tapped)) {   // Drive's own player — the slider shows images only
       if (tapped?.webViewLink) await Browser.open({ url: tapped.webViewLink });
       return;
     }
+    await this.openSlider({ drive: index });
+  }
+
+  /** A track photo (index into the track tiles) opens the same slider as the Drive images. */
+  protected async openTrackPhoto(index: number): Promise<void> {
+    await this.openSlider({ track: index });
+  }
+
+  /**
+   * Full-size slider over all images of the day — the Drive images, then the visible track photos — starting at the
+   * tapped one. The slider takes its URLs up front, so the slider-size renditions of the Drive images are loaded
+   * first (the store caches them, a second tap opens at once); an image whose rendition fails is shown at thumbnail
+   * size. Track photos only exist as thumbnails; one without a loaded thumbnail is left out.
+   */
+  private async openSlider(tapped: { drive: number } | { track: number }): Promise<void> {
     if (this.sliderLoading()) return;
     const shown = this.current();
     const files = (this.media()?.images ?? []).filter(f => !!f.thumbnail && !isDiaryVideo(f));
-    if (!files.length) return;
     const large = new Map<string, string>();
     this.sliderLoading.set(true);
     try {
@@ -336,15 +353,23 @@ export class DiaryViewModal {
       this.sliderLoading.set(false);
     }
     if (this.current().okey !== shown.okey) return;   // paged away while loading
-    const { images, startIndex } = diarySliderImages(this.media()?.images ?? [], index, large);
-    await showImageSlider(this.modalController, images, { ...IMAGE_STYLE_SHAPE }, startIndex);
+    const drive = diarySliderImages(this.media()?.images ?? [], 'drive' in tapped ? tapped.drive : -1, large);
+    const images = [...drive.images];
+    let startIndex = 'drive' in tapped ? drive.startIndex : 0;
+    const photos = this.trackPhotos();
+    this.trackPhotoExtras().forEach((tile, k) => {
+      if (!tile.src) return;
+      if ('track' in tapped && tapped.track === k) startIndex = images.length;
+      const label = formatClockTime(photos[k].takenAt);
+      images.push({ label, type: ImageType.Image, url: tile.src, actionUrl: '', altText: label, overlay: '' });
+    });
+    if (images.length) await showImageSlider(this.modalController, images, { ...IMAGE_STYLE_SHAPE }, startIndex);
   }
 
-  /** A track photo opens its track's view with that photo shown on the map. */
-  protected openTrackPhoto(index: number): void {
-    const tile = this.trackPhotos()[index];
-    const card = tile ? this.tracks()[tile.cardIndex] : undefined;
-    if (tile && card) void this.openTrack()(card, tile.photoIndex);
+  /** Opens a track; a title changed there is shown on its card at once. */
+  protected async showTrack(card: DiaryTrackCard): Promise<void> {
+    const name = await this.openTrack()(card);
+    if (name) this.tracks.update(list => list.map(c => (c.key === card.key ? { ...c, name } : c)));
   }
 
   protected async openDocument(index: number): Promise<void> {

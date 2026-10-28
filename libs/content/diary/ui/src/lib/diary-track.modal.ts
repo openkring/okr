@@ -1,23 +1,27 @@
-import { Component, computed, effect, ElementRef, input, linkedSignal, signal, viewChild } from '@angular/core';
-import { IonContent, IonIcon } from '@ionic/angular';
+import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
+import { AlertController, IonContent, IonIcon, ModalController } from '@ionic/angular';
 
 import {
   DiaryI18n, DiaryTrackCard, diaryTrackModeLabel, formatTrackDate, toStretchTiles, trackTotals,
 } from '@okr/content-diary-util';
 import { formatClockTime } from '@okr/mobility-tracker-util';
 import { TrackMap, TrackMapPhoto, TrackMapSection } from '@okr/mobility-tracker-ui';
+import { IMAGE_STYLE_SHAPE, ImageConfig, ImageType } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { Header } from '@okr/shared-ui';
+import { Header, showImageSlider } from '@okr/shared-ui';
+import { okrPrompt } from '@okr/shared-util-angular';
 
 /** a visible photo of the grid; `index` points into the map's `photos` (hidden ones included there) */
 interface DiaryTrackPhotoCard { index: number; time: string; src?: string; ariaLabel: string }
 
 /**
- * Read-only view of one recorded track from the diary day (spec 1.121 §7), laid out map-first: title, date and a
- * totals line, the large map (coloured sections, start / end dots, photo pins), one tile per stretch (time,
- * distance, speed, steps when measured), the visible photos as a grid — a tap pans the map to that photo's pin and
- * enlarges it — and the map credit. Hidden photos never appear. Nothing is edited here, so there is no
- * change-confirmation; corrections stay on the tracker's own page.
+ * Read-only view of one recorded track from the diary day (spec 1.121 §7), laid out map-first: the title in the
+ * toolbar (its edit button renames the track), the date with its weekday and a totals line, the map (coloured
+ * sections, start / end dots, photo pins fanned out where they share a place), one tile per stretch (time,
+ * distance, speed, steps when measured), the visible photos as a grid and the map credit. A tap on a photo — pin or
+ * grid — opens the full-screen slider over all visible photos of the track. Hidden photos never appear. The title is
+ * the only thing changed here (a prompt, no form); corrections stay on the tracker's own page.
+ * The map is kept well below the viewport height and ignores the mouse wheel, so the page scrolls past it.
  * Thumbnails come in through `loadThumb` (the store's TrackService.readThumb) — this ui modal injects no service.
  */
 @Component({
@@ -33,13 +37,12 @@ interface DiaryTrackPhotoCard { index: number; time: string; src?: string; ariaL
       --okr-dt-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
     .wrap { max-width: 1100px; margin: 0 auto; padding: 20px 16px 40px; display: grid; gap: 20px; }
-    header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; }
-    h1 { font-weight: 700; font-size: clamp(26px, 5vw, 36px); line-height: 1.1; margin: 0; text-wrap: balance; }
-    .sub { color: var(--okr-dt-muted); margin: 4px 0 0; }
+    header { display: grid; gap: 6px; }
+    .date { font-weight: 600; font-size: 18px; margin: 0; }
     .totals { display: flex; flex-wrap: wrap; gap: 4px 20px; font-family: var(--okr-dt-mono); font-size: 13px;
       color: var(--okr-dt-muted); font-variant-numeric: tabular-nums; }
     .totals b { color: var(--okr-dt-fg); font-weight: 400; }
-    okr-track-map { --okr-track-map-height: max(320px, min(62vh, 560px)); border-radius: 10px;
+    okr-track-map { --okr-track-map-height: max(220px, min(42vh, 420px)); border-radius: 10px;
       border: 1px solid var(--okr-dt-line); }
     .stretches { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 12px; }
     .stretch { background: var(--okr-dt-surface); border: 1px solid var(--okr-dt-line); border-left: 4px solid var(--c);
@@ -55,7 +58,6 @@ interface DiaryTrackPhotoCard { index: number; time: string; src?: string; ariaL
     .photo { all: unset; cursor: pointer; display: grid; gap: 6px; background: var(--okr-dt-surface);
       border: 1px solid var(--okr-dt-line); border-radius: 10px; overflow: hidden; padding-bottom: 10px; }
     .photo:focus-visible { outline: 2px solid var(--ion-color-primary, #0f6e63); outline-offset: 2px; }
-    .photo.active { border-color: var(--okr-dt-fg); box-shadow: 0 0 0 1px var(--okr-dt-fg); }
     .frame { aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center;
       background: var(--ion-color-step-100, #eef2f4); }
     .frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -65,16 +67,13 @@ interface DiaryTrackPhotoCard { index: number; time: string; src?: string; ariaL
     .note { color: var(--okr-dt-muted); font-size: 13px; margin: 0; }
   `],
   template: `
-    <okr-header [i18n]="{ title: card().name }" [isModal]="true" />
+    <okr-header [i18n]="{ title: name() }" [isModal]="true" actionIcon="edit" [actionTitle]="i18n().track_view_rename()" (actionClicked)="rename()" />
     <ion-content>
       <div class="wrap">
         <header>
-          <div>
-            <h1>{{ card().name }}</h1>
-            @if (dateLabel()) {
-              <p class="sub">{{ dateLabel() }}</p>
-            }
-          </div>
+          @if (dateLabel()) {
+            <p class="date">{{ dateLabel() }}</p>
+          }
           <div class="totals">
             <span><b>{{ totals().distance }}</b> {{ i18n().track_view_total() }}</span>
             <span><b>{{ totals().points }}</b> {{ i18n().track_view_points() }}</span>
@@ -86,7 +85,8 @@ interface DiaryTrackPhotoCard { index: number; time: string; src?: string; ariaL
         </header>
 
         <okr-track-map role="region" [attr.aria-label]="i18n().track_view_map_label()"
-          [sections]="mapSections()" [photos]="mapPhotos()" [selectedPhoto]="selected()" [live]="false" />
+          [sections]="mapSections()" [photos]="mapPhotos()" [live]="false" [photosClickable]="true" [wheelZoom]="false"
+          (photoClicked)="openSlider($event)" />
 
         @if (tiles().length > 0) {
           <div class="stretches">
@@ -110,8 +110,7 @@ interface DiaryTrackPhotoCard { index: number; time: string; src?: string; ariaL
           <h3>{{ i18n().track_view_photos_title() }}</h3>
           <div class="photos">
             @for (photo of photoCards(); track photo.index) {
-              <button type="button" class="photo" [class.active]="selected() === photo.index"
-                [attr.aria-pressed]="selected() === photo.index" [attr.aria-label]="photo.ariaLabel" (click)="select(photo.index)">
+              <button type="button" class="photo" [attr.aria-label]="photo.ariaLabel" (click)="openSlider(photo.index)">
                 <div class="frame">
                   @if (photo.src) {
                     <img [src]="photo.src" alt="" loading="lazy" />
@@ -131,20 +130,23 @@ interface DiaryTrackPhotoCard { index: number; time: string; src?: string; ariaL
   `,
 })
 export class DiaryTrackModal {
+  private readonly modalController = inject(ModalController);
+  private readonly alertController = inject(AlertController);
+
   public readonly card = input.required<DiaryTrackCard>();
   public readonly i18n = input.required<DiaryI18n>();
   /** a thumbnail (private bucket) as a displayable URL — the store caches per path */
   public readonly loadThumb = input.required<(thumbPath: string) => Promise<string>>();
-  /** the active UI language — month name of the date */
+  /** saves a new title of the track; resolves false when the write failed */
+  public readonly renameTrack = input.required<(card: DiaryTrackCard, name: string) => Promise<boolean>>();
+  /** the active UI language — weekday and month name of the date */
   public readonly lang = input('de');
-  /** index into the track's photos to show on the map when the view opens (a tap in the diary day's photo row) */
-  public readonly initialPhoto = input<number | undefined>(undefined);
 
   /** displayable picture per thumbPath, filled asynchronously; a failed read leaves the placeholder */
   private readonly thumbs = signal<ReadonlyMap<string, string>>(new Map());
-  /** index into `mapPhotos` of the photo shown on the map; undefined = none */
-  protected readonly selected = linkedSignal<number | undefined>(() => this.initialPhoto());
-  private readonly mapRef = viewChild(TrackMap, { read: ElementRef });
+  /** the title on screen — the card's name until it is renamed here */
+  protected readonly name = linkedSignal(() => this.card().name);
+  private readonly sliderBusy = signal(false);
 
   protected readonly dateLabel = computed(() => formatTrackDate(this.card().startDate, this.lang()));
   protected readonly totals = computed(() => trackTotals(this.card(), this.lang()));
@@ -185,18 +187,38 @@ export class DiaryTrackModal {
   }
 
   /**
-   * A tap shows the photo on the map; the highlight stays until another photo is tapped. Tapping the selected photo
-   * again re-centres the map on it: the map pans on a change of `selectedPhoto` only, so the selection is cleared for
-   * one render and then set again.
+   * Full-screen slider over the visible photos of the track that have a picture, starting at the tapped one
+   * (`index` into the track's photos). The slider takes its URLs up front, so a thumbnail still on its way is
+   * awaited first; there is no larger rendition than the thumbnail.
    */
-  protected select(index: number): void {
-    if (this.selected() === index) {
-      this.selected.set(undefined);
-      setTimeout(() => this.selected.set(index));
-    } else {
-      this.selected.set(index);
+  protected async openSlider(index: number): Promise<void> {
+    if (this.sliderBusy()) return;
+    this.sliderBusy.set(true);
+    try {
+      const photos = this.card().photos.map((p, i) => ({ p, i })).filter(({ p }) => !p.hidden && !!p.thumbPath);
+      const known = this.thumbs();
+      const urls = await Promise.all(photos.map(({ p }) => known.get(p.thumbPath ?? '') ?? this.loadThumb()(p.thumbPath ?? '').catch(() => '')));
+      const images: ImageConfig[] = [];
+      let startIndex = 0;
+      photos.forEach(({ p, i }, k) => {
+        if (!urls[k]) return;
+        if (i === index) startIndex = images.length;
+        const label = formatClockTime(p.takenAt);
+        images.push({ label, type: ImageType.Image, url: urls[k], actionUrl: '', altText: label, overlay: '' });
+      });
+      if (images.length) await showImageSlider(this.modalController, images, { ...IMAGE_STYLE_SHAPE }, startIndex);
+    } finally {
+      this.sliderBusy.set(false);
     }
-    const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-    (this.mapRef()?.nativeElement as HTMLElement | undefined)?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
+  }
+
+  /** Renames the track; the title changes only once the write succeeded. */
+  protected async rename(): Promise<void> {
+    const i18n = this.i18n();
+    const current = this.name();
+    const entered = await okrPrompt(this.alertController, i18n.track_view_rename(), i18n.track_view_rename_prompt(), i18n.save(), i18n.cancel(), current);
+    const name = entered?.trim();
+    if (!name || name === current) return;
+    if (await this.renameTrack()(this.card(), name)) this.name.set(name);
   }
 }

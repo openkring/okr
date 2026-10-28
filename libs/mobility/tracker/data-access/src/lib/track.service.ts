@@ -352,6 +352,14 @@ export class TrackService {
   }
 
   /**
+   * Renames an uploaded trip on the server only (the diary's track view). The recording device keeps its own name:
+   * a later re-upload of that track from the device (a correction, merged photos) writes the device's name again.
+   */
+  public async rename(tripKey: string, name: string): Promise<void> {
+    await updateDoc(doc(this.firestoreService.firestore, `${TripCollection}/${tripKey}`), { name });
+  }
+
+  /**
    * Writes the photo list: hidden photos are left out (spec §6), path400 is stripped. Resolves only on the server's
    * ack: callers run it detached.
    */
