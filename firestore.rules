@@ -128,11 +128,13 @@ service cloud.firestore {
     function belongsToTenant(data) {
       return data.tenants.hasAny(callerTenants()) || data.tenants.hasAny(['system']);
     }
-    // WRITE. Strictly the caller's own tenant — 'system' is deliberately NOT accepted, so
-    // fleet-shared reference data can only be curated centrally (Admin SDK / scripts), never
-    // from a tenant app. Mirrored client-side by canWriteTenant() in `query.util.ts`.
+    // WRITE. Strictly the caller's own tenant — 'system' is NOT accepted for tenant users, so
+    // fleet-shared reference data is curated centrally: Admin SDK / scripts, or the operator
+    // (admin of exactly ['bka'], see isOperator) from the bka app. Mirrored client-side by
+    // canWriteTenant() in `query.util.ts`.
     function canWriteTenant(data) {
-      return data.tenants.hasAny(callerTenants());
+      return data.tenants.hasAny(callerTenants())
+             || (data.tenants.hasAny(['system']) && isOperator());
     }
     // A get() on a NON-EXISTENT document evaluates rules with resource == null.
     // Dereferencing resource.data.tenants there raises an error → the client sees

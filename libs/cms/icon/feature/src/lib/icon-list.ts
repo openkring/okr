@@ -10,7 +10,7 @@ import { IconModel, RoleName } from '@okr/shared-models';
 import { FileSizePipe, PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions, dismissOverlay, error, keepDefaultTrue } from '@okr/shared-util-angular';
-import { hasRole, contextMenuId } from '@okr/shared-util-core';
+import { canWriteTenant, contextMenuId, hasRole, isOperator } from '@okr/shared-util-core';
 
 import { ICON_SETS, IconStore } from './icon.store';
 
@@ -215,12 +215,18 @@ export class IconList {
   /******************************* actions *************************************** */
   protected async showActions(icon: IconModel): Promise<void> {
     const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
-    this.addActionSheetButtons(actionSheetOptions);
+    this.addActionSheetButtons(actionSheetOptions, icon);
     await this.executeActions(actionSheetOptions, icon);
   }
 
-  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions): void {
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, icon: IconModel): void {
     actionSheetOptions.buttons.push(createActionSheetButton('icon.copy', this.store.i18n.copy(), this.imgixBaseUrl, 'copy'));
+    // a 'system' icon is shared by every tenant; only the operator may change it (firestore.rules canWriteTenant)
+    const canWrite = canWriteTenant(icon, this.store.tenantId(), isOperator(this.currentUser()));
+    if (!canWrite) {
+      actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
+      return;
+    }
     actionSheetOptions.buttons.push(createActionSheetButton('icon.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
     if (hasRole('admin', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('icon.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));

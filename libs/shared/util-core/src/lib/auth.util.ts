@@ -67,6 +67,17 @@ export function isAdmin(currentUser?: UserModel): boolean {
   return hasRole('admin', currentUser);
 }
 
+/**
+ * The operator: an admin whose users doc has tenants exactly [OPERATOR_TENANT_ID]. Mirrors
+ * isOperator() in `firestore.rules` and isOperatorUserData in `@okr/shared-util-functions` —
+ * hasAny would let a tenant admin who wrote ['bka', <own>] pass, so the match is exact.
+ */
+export function isOperator(currentUser?: UserModel): boolean {
+  const tenants = currentUser?.tenants;
+  return currentUser?.roles?.admin === true
+    && Array.isArray(tenants) && tenants.length === 1 && tenants[0] === OPERATOR_TENANT_ID;
+}
+
 export function isPrivileged(currentUser?: UserModel): boolean {
   return hasRole('privileged', currentUser);
 }

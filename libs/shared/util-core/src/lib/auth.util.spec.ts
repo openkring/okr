@@ -5,6 +5,7 @@ import {
   hasRole,
   isAdmin,
   isKioskOnly,
+  isOperator,
   shouldRedirectKiosk,
   isPrivileged,
   isPrivilegedOr,
@@ -243,6 +244,25 @@ describe('auth.util', () => {
     it('should return false when no user provided', () => {
       const result = isAdmin();
       expect(result).toBe(false);
+    });
+  });
+
+  describe('isOperator', () => {
+    it('is true for an admin whose tenants are exactly [bka]', () => {
+      expect(isOperator({ ...createUserWithRoles({ admin: true }), tenants: ['bka'] })).toBe(true);
+    });
+
+    it('is false for a bka user without admin', () => {
+      expect(isOperator({ ...createUserWithRoles({ privileged: true }), tenants: ['bka'] })).toBe(false);
+    });
+
+    it('is false for an admin of another tenant, or one that also lists bka', () => {
+      expect(isOperator({ ...createUserWithRoles({ admin: true }), tenants: ['scs'] })).toBe(false);
+      expect(isOperator({ ...createUserWithRoles({ admin: true }), tenants: ['bka', 'scs'] })).toBe(false);
+    });
+
+    it('is false without a user', () => {
+      expect(isOperator()).toBe(false);
     });
   });
 

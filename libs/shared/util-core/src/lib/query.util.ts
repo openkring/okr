@@ -111,15 +111,21 @@ export function belongsToTenant(
  * Read-sharing and write-sharing must not use one predicate. A `'system'` document is read by
  * every tenant, so allowing a tenant client to write it would let any signed-in user of any
  * tenant rewrite data the whole fleet reads. Shared reference data is curated centrally
- * (Admin SDK / scripts), never from a tenant app. Mirrors `canWriteTenant()` in
- * `firestore.rules`, which is the authoritative check — this one exists so the UI can hide or
- * disable the action rather than let the user hit a raw PERMISSION_DENIED.
+ * (Admin SDK / scripts, or the operator — see `isOperator` in auth.util), never from a tenant
+ * app. Mirrors `canWriteTenant()` in `firestore.rules`, which is the authoritative check — this
+ * one exists so the UI can hide or disable the action rather than let the user hit a raw
+ * PERMISSION_DENIED.
+ *
+ * @param operator whether the caller is the operator (admin of exactly ['bka']), who may also
+ *        write {@link SYSTEM_TENANT} documents
  */
 export function canWriteTenant(
   doc: { tenants?: string[] } | undefined | null,
-  tenantId: string
+  tenantId: string,
+  operator = false
 ): boolean {
-  return !!doc && Array.isArray(doc.tenants) && doc.tenants.includes(tenantId);
+  return !!doc && Array.isArray(doc.tenants)
+    && (doc.tenants.includes(tenantId) || (operator && doc.tenants.includes(SYSTEM_TENANT)));
 }
 
 /* ────────────────────────── SHARED-vs-OWN RESOLUTION ──────────────────────────────────────

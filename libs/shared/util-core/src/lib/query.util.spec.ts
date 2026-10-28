@@ -323,6 +323,11 @@ describe('query.util', () => {
       expect(canWriteTenant(shared, 'scs')).toBe(false);
     });
 
+    it('the operator may WRITE a system document', () => {
+      expect(canWriteTenant(shared, 'bka', true)).toBe(true);
+      expect(canWriteTenant(owned, 'bka', true)).toBe(false);
+    });
+
     it('an ordinary shared document is unaffected — read and write still agree', () => {
       expect(belongsToTenant(owned, 'scs')).toBe(true);
       expect(canWriteTenant(owned, 'scs')).toBe(true);
