@@ -27,6 +27,7 @@
     "vite.config.ts"
   ],
   "references": [
+    { "path": "../../../cms/menu/ui/tsconfig.lib.json" },
     { "path": "../../../shared/constants/tsconfig.lib.json" },
     { "path": "../../../shared/i18n/tsconfig.lib.json" },
     { "path": "../../../shared/models/tsconfig.lib.json" },

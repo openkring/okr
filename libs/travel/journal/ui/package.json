@@ -18,6 +18,7 @@
     "@okr/travel-journal-util": "*",
     "@okr/shared-pipes": "*",
     "maplibre-gl": "*",
-    "@okr/shared-models": "*"
+    "@okr/shared-models": "*",
+    "@okr/cms-menu-ui": "*"
   }
 }
