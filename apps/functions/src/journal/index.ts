@@ -8,7 +8,7 @@ import {
   JournalChange, JournalChangeCollection, JournalCollection, JournalPeerDoc, JournalPrivateCollection, JournalSectionCollection,
 } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
-import { originalOfCopy } from '@okr/travel-journal-util';
+import { originalOfCopy, withCheckedBases } from '@okr/travel-journal-util';
 
 import { privateBucket } from '../_storage/private-bucket';
 import { isJournalFileName, journalObjectPath, planEntityWrite, planFootprintSections, planSectionWrites, StoredRecord, mayOverwrite } from './apply-journal-change.logic';
@@ -39,7 +39,8 @@ export const applyJournalChange = onDocumentCreated(
     const toRecord = (d: { data: () => unknown }): StoredRecord => {
       const data = d.data() as JournalChange;
       const uploadedAt = data.uploadedAt as unknown as Timestamp | undefined;
-      return { change: data, uploadedAtMs: uploadedAt?.toMillis?.() ?? 0 };
+      // a malformed `bases` is dropped: the record counts as legacy (latest wins), like on the devices
+      return { change: withCheckedBases(data) as JournalChange, uploadedAtMs: uploadedAt?.toMillis?.() ?? 0 };
     };
     const ofEntity = () => db.collection(JournalChangeCollection).where('journalKey', '==', change.journalKey).where('entity', '==', change.entity);
 
@@ -53,7 +54,10 @@ export const applyJournalChange = onDocumentCreated(
       ]);
       const plan = planSectionWrites([...own.docs, ...copies.docs].map(toRecord), change.journalKey, original, tenants, stored.docs.map((d) => d.id));
       if (plan.writes.length === 0) return;
-      for (const write of plan.writes) await db.doc(write.path).set(write.data);
+      // the original and its copies in one batch: a reader never sees the lost value both gone and not yet copied
+      const batch = db.batch();
+      for (const write of plan.writes) batch.set(db.doc(write.path), write.data);
+      await batch.commit();
       // the footprint comes from the unarchived state: the stored doc of an archived block no longer has it
       if (plan.footprintKey) await writeFootprintSections(change.journalKey, plan.footprintKey, tenants);
       return;
