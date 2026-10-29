@@ -293,19 +293,16 @@ export class AuthService {
         // the await never settled and logout hung with the user still signed in. Online the
         // ack arrives well within the bound; offline the queued entry is lost (it would be
         // sent after signOut and denied) — an accepted gap in the audit trail.
-        await Promise.race([
-          this.activityService.log('auth', 'logout', currentUser, `${msg}: SUCCESS`),
-          new Promise<void>(resolve => setTimeout(resolve, LOGOUT_AUDIT_TIMEOUT_MS)),
-        ]);
         // Remove this device's push token and Matrix pusher while still authenticated
         // (rules on fcmTokens, App Check on the callable). disablePush never throws but is
-        // not time-bounded offline, so bound it like the audit write.
-        if (currentUser) {
-          await Promise.race([
-            this.fcmService.disablePush(currentUser.okey),
-            new Promise<void>(resolve => setTimeout(resolve, LOGOUT_AUDIT_TIMEOUT_MS)),
-          ]);
-        }
+        // not time-bounded offline, so both steps share ONE bound.
+        await Promise.race([
+          Promise.allSettled([
+            this.activityService.log('auth', 'logout', currentUser, `${msg}: SUCCESS`),
+            currentUser ? this.fcmService.disablePush(currentUser.okey) : Promise.resolve(),
+          ]),
+          new Promise<void>(resolve => setTimeout(resolve, LOGOUT_AUDIT_TIMEOUT_MS)),
+        ]);
         await signOut(this.auth);
         // The offline copy of users/{uid} must not outlive the session on a shared device.
         clearOfflineSnapshots('user.');

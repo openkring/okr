@@ -122,6 +122,11 @@ export class FcmService {
   async disablePush(uid: string): Promise<void> {
     const token = this._currentToken;
     if (!token) return;
+    // Reset BEFORE the first await: a registerPusher still in flight must not re-mark the token
+    // as registered, and a slow disablePush must not wipe the state of a login that follows.
+    this._currentToken = null;
+    this.pusherToken = undefined;
+    this.pusherInFlight = undefined;
     try {
       const unregister = httpsCallable<{ pushkey: string }, { removed: boolean }>(
         getFunctions(getApp(), 'europe-west6'), 'unregisterMatrixPusher');
@@ -136,9 +141,6 @@ export class FcmService {
     } catch (err) {
       console.warn('FcmService.disablePush: failed (ignored):', err);
     }
-    this._currentToken = null;
-    this.pusherToken = undefined;
-    this.pusherInFlight = undefined;
   }
 
   private async registerPusher(token: string): Promise<void> {
@@ -150,7 +152,7 @@ export class FcmService {
         deviceDisplayName: (navigator.userAgent ?? 'Unknown').substring(0, 100),
         lang: navigator.language || 'de',
       });
-      this.pusherToken = token;
+      if (this._currentToken === token) this.pusherToken = token;
     } catch (err) {
       console.warn('FcmService.registerPusher: Matrix pusher registration failed (non-critical):', err);
     }

@@ -274,6 +274,9 @@ export class MatrixInitializationService {
       // Synapse's clearing push is dropped server-side (matrixPushGateway), so this is the
       // only signal. Video-call banners are left alone: they ring with requireInteraction.
       const closeReadNotifications = async () => {
+        // Subscribed at bootstrap, before Matrix has synced: unreadRooms() is [] until then, so
+        // without this guard every chat banner would be closed as "read".
+        if (!this.matrixService.isInitialized) return;
         if (!('serviceWorker' in navigator)) return;
         // The FCM worker's registration: the banners are its own, ngsw's lists none of them.
         const reg = await this.fcmService.getPushRegistration().catch(() => undefined);
