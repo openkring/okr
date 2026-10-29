@@ -6,7 +6,7 @@ import { LngLat } from './journal-book-map.util';
 import { BookLayout, MAP_BACK, MAP_OVERVIEW, mapFileOf } from './journal-book.util';
 import { flyoverInputOf, flyoverTimeline } from './journal-flyover.util';
 import { JournalState } from './journal-merge.util';
-import { footprintsOf, imagesOf } from './journal-view.util';
+import { imagesOf, publishedFootprintsOf } from './journal-view.util';
 
 /**
  * What each book map shows (design §8), for the browser renderer: one entry per file of `layout.mapFiles`, with the
@@ -22,7 +22,7 @@ export interface BookMapPlan {
 }
 
 export function bookMapPlan(state: JournalState, journalKey: string, book: JournalBookModel, layout: BookLayout): BookMapPlan[] {
-  const published = footprintsOf(state, journalKey).filter((f) => f.publishState === 'published');
+  const published = publishedFootprintsOf(state, journalKey);
   const numberOf = new Map(published.map((f, i) => [f.key, i + 1]));
   const positioned = published.filter((f) => f.latitude !== undefined && f.longitude !== undefined);
   const stops = positioned.map((f) => ({ lng: f.longitude as number, lat: f.latitude as number, n: numberOf.get(f.key) ?? 0 }));

@@ -5,7 +5,7 @@ import { flyoverInputOf, flyoverTimeline } from './journal-flyover.util';
 import { commentsOf, likesOf } from './journal-guest.util';
 import { routeLengthKm } from './journal-map.util';
 import { JournalState } from './journal-merge.util';
-import { BlockView, FootprintView, footprintsOf, ImageView, imagesOf, journalsOf, weatherLine } from './journal-view.util';
+import { BlockView, FootprintView, ImageView, imagesOf, journalsOf, publishedFootprintsOf, weatherLine } from './journal-view.util';
 
 /**
  * Deep copy of a Firestore write payload without `undefined` values (Firestore rejects them). Plain objects and
@@ -267,8 +267,7 @@ export function coverImageKeyOf(state: JournalState, journalKey: string, book: J
   const images = imagesOf(state, journalKey);
   if (book.coverImageKey && images.has(book.coverImageKey)) return book.coverImageKey;
   const hidden = new Set(book.hiddenImageKeys ?? []);
-  for (const fp of footprintsOf(state, journalKey)) {
-    if (fp.publishState !== 'published') continue;
+  for (const fp of publishedFootprintsOf(state, journalKey)) {
     for (const b of fp.blocks) {
       const key = b.kind === 'photos' ? b.imageKeys?.find((k) => images.has(k) && !hidden.has(k)) : undefined;
       if (key) return key;
@@ -289,8 +288,7 @@ export function bookPrintCandidates(state: JournalState, journalKey: string, boo
   const cover = coverImageKeyOf(state, journalKey, book);
   const wanted: string[] = [];
   if (cover) wanted.push(cover);
-  for (const fp of footprintsOf(state, journalKey)) {
-    if (fp.publishState !== 'published') continue;
+  for (const fp of publishedFootprintsOf(state, journalKey)) {
     for (const b of fp.blocks) if (b.kind === 'photos') for (const key of b.imageKeys ?? []) if (!hidden.has(key)) wanted.push(key);
   }
   const seen = new Set<string>();
@@ -437,7 +435,7 @@ function warningsOf(pages: BookPage[], ctx: Ctx, coverImageKey: string | undefin
 export function layoutBook(input: BookInput): BookLayout {
   const { state, journalKey, book, labels } = input;
   const journal = journalsOf(state).find((j) => j.key === journalKey);
-  const footprints = footprintsOf(state, journalKey).filter((f) => f.publishState === 'published');
+  const footprints = publishedFootprintsOf(state, journalKey);
   const images = imagesOf(state, journalKey);
   const ctx: Ctx = { input, images, hidden: new Set(book.hiddenImageKeys ?? []), whole: new Set(book.fitWhole ?? []), bleed: book.print?.bleedMm ?? DEFAULT_BLEED_MM };
 

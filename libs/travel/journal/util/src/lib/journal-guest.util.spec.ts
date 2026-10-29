@@ -3,9 +3,9 @@ import { JournalChange } from '@okr/shared-models';
 import { formatHlc, isValidHlc } from './journal-hlc.util';
 import { materialize } from './journal-merge.util';
 import {
-  commentsOf, digestOf, findGuestLink, guestChangeRecord, guestDeviceId, guestFootprintsOf, guestLinkState, likeKey, likesOf,
+  commentsOf, digestOf, findGuestLink, guestChangeRecord, guestDeviceId, guestLinkState, likeKey, likesOf,
 } from './journal-guest.util';
-import { footprintsOf } from './journal-view.util';
+import { footprintsOf, publishedFootprintsOf } from './journal-view.util';
 
 let n = 0;
 function rec(p: Pick<JournalChange, 'entity' | 'entityKey' | 'op'> & Partial<JournalChange>, authorKey = 'bruno', deviceId = 'dev-a'): JournalChange {
@@ -85,7 +85,7 @@ describe('journal guests', () => {
     expect(footprintsOf(state, 'j1')[0].blocks).toHaveLength(2); // the authors see the copy and the reminder
     expect(footprintsOf(state, 'j1')[0].lostValues).toHaveLength(1);
 
-    const guest = guestFootprintsOf(state, 'j1');
+    const guest = publishedFootprintsOf(state, 'j1');
     expect(guest.map((f) => f.key)).toEqual(['f1']);
     expect(guest[0].blocks.map((b) => [b.key, b.imageKeys, b.conflict])).toEqual([['s1', ['i3'], false]]);
     expect(guest[0].lostValues).toEqual([]);

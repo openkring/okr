@@ -185,6 +185,21 @@ export function footprintsOf(state: JournalState, journalKey: string): Footprint
     .sort((a, b) => cmp(a.date, b.date) || cmp(a.time, b.time) || cmp(a.key, b.key));
 }
 
+/**
+ * The published footprints as they are shown outside the editing app — the guest view, the guest digest
+ * and the printed book: no conflict copies and no conflict reminders, those are for the authors to
+ * resolve (spec 1.126 §6.3).
+ */
+export function publishedFootprintsOf(state: JournalState, journalKey: string): FootprintView[] {
+  return footprintsOf(state, journalKey)
+    .filter((f) => f.publishState === 'published')
+    .map((f) => ({
+      ...f,
+      lostValues: [],
+      blocks: f.blocks.filter((b) => b.conflictOf === undefined).map((b) => ({ ...b, conflict: false })),
+    }));
+}
+
 export function imagesOf(state: JournalState, journalKey: string): Map<string, ImageView> {
   const images = new Map<string, ImageView>();
   for (const { entity, view } of live(state, 'image')) {

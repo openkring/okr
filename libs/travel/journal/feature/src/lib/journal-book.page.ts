@@ -11,7 +11,7 @@ import { fill } from '@okr/shared-util-core';
 import { JournalBookService } from '@okr/travel-journal-data-access';
 import { BookCommentSetting, bookFontsReady, JournalBookEditor, JournalBookPreview, JournalBookSettingsModal } from '@okr/travel-journal-ui';
 import {
-  blockPagesOf, bookLabelsOf, COVER_PAGE_INDEX, JournalBookEdits, BookSettingsFormModel, bookSettingsOf, bookSettingsPatch, layoutBook, missingPrintsByAuthor, movePhotoTo, spreadsOf, withTemplate,
+  blockPagesOf, bookLabelsOf, COVER_PAGE_INDEX, JournalBookEdits, BookSettingsFormModel, bookSettingsOf, bookSettingsPatch, layoutBook, missingPrintsByAuthor, movePhotoTo, publishedFootprintsOf, spreadsOf, withTemplate,
 } from '@okr/travel-journal-util';
 
 import { JournalBookExport } from './journal-book-export';
@@ -137,7 +137,8 @@ export class JournalBookPage {
   private readonly fontsReady = signal(false);
   private readonly paginate = domPaginate((html) => this.sanitizer.sanitize(SecurityContext.HTML, html) ?? '');
   private readonly images = computed(() => this.store.images(this.journalKey()));
-  private readonly footprints = computed(() => this.store.footprints(this.journalKey()));
+  /** What the book prints: published footprints without conflict copies (spec 1.126 §6.3). */
+  private readonly footprints = computed(() => publishedFootprintsOf(this.store.journalState(), this.journalKey()));
   private readonly labels = computed(() => {
     const transport = Object.fromEntries(TRANSPORT_MODES.map((m) => [m, this.store.i18n[`transport_${m}`]()])) as Record<TransportMode, string>;
     const credits = this.store.mapLayersFor(this.journalKey()).filter((l) => l.kind !== 'vector').map((l) => l.attribution);
@@ -312,7 +313,7 @@ export class JournalBookPage {
     if (!this.bookLoaded()) return;
     const images = this.images();
     const seen = new Set<string>();
-    const covers = this.footprints().filter((f) => f.publishState === 'published').flatMap((f) => f.blocks).flatMap((b) => b.imageKeys ?? [])
+    const covers = this.footprints().flatMap((f) => f.blocks).flatMap((b) => b.imageKeys ?? [])
       .filter((k) => images.has(k) && !seen.has(k) && seen.add(k))
       .map((key) => ({ key, url: this.fileUrl.url(images.get(key)?.path400) }));
     const modal = await this.modalController.create({

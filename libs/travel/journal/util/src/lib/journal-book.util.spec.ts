@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { JournalBookModel, JournalChange } from '@okr/shared-models';
 import { formatHlc } from './journal-hlc.util';
 import { materialize } from './journal-merge.util';
+import { footprintsOf } from './journal-view.util';
 import { routeLengthKm } from './journal-map.util';
 import { templateBoxes } from './journal-book-layout.util';
 import { bookBlockHtml, BookFrame, BookInput, BookLabels, BookPage, bookPrintCandidates, coverImageKeyOf, COVER_PAGE_INDEX, layoutBook, PaginateText, stripEmoji, stripUndefined } from './journal-book.util';
@@ -96,6 +97,27 @@ describe('layoutBook', () => {
     expect(texts(own[2], 'body')).toContain('weiter');
     expect(own[3].blockKey).toBe('p1');
     expect(texts(own[4], 'body')).toContain('zwei');
+  });
+
+  it('conflict copies do not reach the book', () => {
+    const t1 = text('t1', 'f1', 'a', '<p>Original</p>');
+    const p1 = photos('p1', 'f1', 'b', ['i1']);
+    const set = (r: JournalChange, base: string): JournalChange => ({ ...r, op: 'set', bases: { [Object.keys(r.fields)[0]]: base } });
+    const changes = [
+      journal(), fp('f1', '20270102'), img('i1'), img('i2'), img('i3'), t1, p1,
+      set(rec('section', 't1', { html: '<p>Anna</p>' }, 'anna'), t1.hlc), set(rec('section', 't1', { html: '<p>Bruno</p>' }), t1.hlc),
+      set(rec('section', 'p1', { imageKeys: ['i2'] }, 'anna'), p1.hlc), set(rec('section', 'p1', { imageKeys: ['i3'] }), p1.hlc),
+    ];
+    const book = input(changes);
+    expect(footprintsOf(book.state, 'j1')[0].blocks.filter((b) => b.conflictOf)).toHaveLength(2); // the authors see both copies
+    const { pages } = layoutBook(book);
+    const all = pages.map((p) => texts(p)).join('\n');
+    expect(all).toContain('Bruno</p>');
+    expect(all).not.toContain('<p>Anna</p>');
+    expect(all).not.toContain('Anna &lt;Muster&gt;'); // the copy's author is no book author
+    expect(pages.every((p) => !p.blockKey?.includes('_c_'))).toBe(true);
+    expect(photoKeys(pages)).not.toContain('i2');
+    expect(bookPrintCandidates(book.state, 'j1', book.book, 'bruno').map((i) => i.key)).not.toContain('i2');
   });
 
   it('the hero photo is not repeated in its album', () => {
