@@ -56,9 +56,13 @@ describe('journal guest logic', () => {
     expect(deliveryFor('none')).toEqual([]);
   });
 
-  it('a guest never sees a conflict copy or an archived block', () => {
+  it('a guest never sees an open conflict copy or an archived block', () => {
     expect(isGuestVisibleSection({ footprintKey: 'f1' })).toBe(true);
-    expect(isGuestVisibleSection({ footprintKey: 'f1', conflictOf: 's1' })).toBe(false);
+    expect(isGuestVisibleSection({ footprintKey: 'f1', conflictOf: 's1', conflict: true })).toBe(false);
     expect(isGuestVisibleSection({ footprintKey: 'f1', isArchived: true })).toBe(false);
+  });
+
+  it('a copy that outlived its original is a normal block for guests', () => {
+    expect(isGuestVisibleSection({ footprintKey: 'f1', conflictOf: 's1', conflict: false })).toBe(true);
   });
 });

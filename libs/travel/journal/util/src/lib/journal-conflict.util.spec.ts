@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { JournalChange } from '@okr/shared-models';
 import { formatHlc } from './journal-hlc.util';
 import { FieldRecord, materialize } from './journal-merge.util';
-import { footprintsOf } from './journal-view.util';
+import { footprintsOf, publishedFootprintsOf } from './journal-view.util';
 import { conflictCopyKey, isConflictCopyKey, lostValues, originalOfCopy } from './journal-conflict.util';
 
 const DEVICE: Record<string, string> = { bruno: 'dev-b', anna: 'dev-a' };
@@ -132,6 +132,15 @@ describe('journal conflict copies', () => {
     const archive = rec({ entity: 'section', entityKey: 's1', op: 'archive' }, 400);
     const blocks = footprintsOf(materialize([...CONCURRENT, archive]), 'j1')[0].blocks;
     expect(blocks.map((b) => [b.key, b.html, b.conflictOf, b.conflict])).toEqual([[conflictCopyKey('s1', ANNA.hlc), '<p>Anna</p>', 's1', false]]);
+  });
+
+  it('the published view hides an open copy but keeps one that outlived its original', () => {
+    const published = rec({ entity: 'footprint', entityKey: 'f1', op: 'set', fields: { publishState: 'published' }, bases: { publishState: FP.hlc } }, 50);
+    const open = publishedFootprintsOf(materialize([...CONCURRENT, published]), 'j1')[0];
+    expect(open.blocks.map((b) => [b.key, b.html])).toEqual([['s1', '<p>Bruno</p>']]);
+    const archive = rec({ entity: 'section', entityKey: 's1', op: 'archive' }, 400);
+    const orphaned = publishedFootprintsOf(materialize([...CONCURRENT, published, archive]), 'j1')[0];
+    expect(orphaned.blocks.map((b) => [b.key, b.html, b.conflict])).toEqual([[conflictCopyKey('s1', ANNA.hlc), '<p>Anna</p>', false]]);
   });
 
   it('footprint lost value is listed and can be dismissed', () => {

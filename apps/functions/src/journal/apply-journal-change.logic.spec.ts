@@ -109,6 +109,21 @@ describe('applyJournalChange logic', () => {
       expect(planSectionWrites([...forward].reverse(), 'j1', 's1', ['bkg'], [])).toEqual(planSectionWrites(forward, 'j1', 's1', ['bkg'], []));
     });
 
+    it('a copy is written conflict: true while its original lives and conflict: false after the original\'s archive', () => {
+      const c = create();
+      const anna = edit('<p>Anna</p>', c.change.hlc, 'dev-b', 'anna');
+      const bruno = edit('<p>Bruno</p>', c.change.hlc, 'dev-a', 'bruno');
+      const copyKey = conflictCopyKey('s1', anna.change.hlc);
+      const open = planSectionWrites([c, anna, bruno], 'j1', 's1', ['bkg'], []).writes;
+      expect(open.find((w) => w.path.endsWith(copyKey))?.data).toMatchObject({ conflictOf: 's1', conflict: true });
+      const gone = rec({ entity: 'section', entityKey: 's1', op: 'archive', bases: {} });
+      const after = planSectionWrites([c, anna, bruno, gone], 'j1', 's1', ['bkg'], [copyKey]).writes;
+      expect(after[0].data).toEqual({ isArchived: true });
+      expect(after.find((w) => w.path.endsWith(copyKey))?.data).toMatchObject({
+        conflictOf: 's1', conflict: false, isArchived: false, content: { htmlContent: '<p>Anna</p>' },
+      });
+    });
+
     it('the footprint key is returned even when the original is archived', () => {
       const c = create();
       const gone = rec({ entity: 'section', entityKey: 's1', op: 'archive', bases: {} });

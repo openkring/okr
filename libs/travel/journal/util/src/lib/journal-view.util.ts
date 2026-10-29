@@ -188,8 +188,8 @@ export function footprintsOf(state: JournalState, journalKey: string): Footprint
 
 /**
  * The published footprints as they are shown outside the editing app — the guest view, the guest digest
- * and the printed book: no conflict copies and no conflict reminders, those are for the authors to
- * resolve (spec 1.126 §6.3).
+ * and the printed book: no open conflict copies and no conflict reminders, those are for the authors to
+ * resolve (spec 1.126 §6.3). A copy whose original is deleted is no longer a conflict: it is a normal block.
  */
 export function publishedFootprintsOf(state: JournalState, journalKey: string): FootprintView[] {
   return footprintsOf(state, journalKey)
@@ -197,7 +197,7 @@ export function publishedFootprintsOf(state: JournalState, journalKey: string): 
     .map((f) => ({
       ...f,
       lostValues: [],
-      blocks: f.blocks.filter((b) => b.conflictOf === undefined).map((b) => ({ ...b, conflict: false })),
+      blocks: f.blocks.filter((b) => !(b.conflictOf !== undefined && b.conflict)).map((b) => ({ ...b, conflict: false })),
     }));
 }
 

@@ -68,18 +68,21 @@ export function footprintPageOf(state: JournalState, footprintKey: string, tenan
   });
 }
 
-/** A section doc; a conflict copy additionally names the block it was split from (spec 1.126 §6.3). */
-export type SectionDoc = ArticleSection & { conflictOf?: string };
+/**
+ * A section doc; a conflict copy additionally names the block it was split from and whether the conflict
+ * is open — `conflict: false` once the original is deleted: the copy is then a normal block (spec 1.126 §6.3).
+ */
+export type SectionDoc = ArticleSection & { conflictOf?: string; conflict?: boolean };
 
 interface SectionParts {
-  footprintKey: string; authorKey: string; order: string; kind: string; html: string; imageKeys: string[]; conflictOf?: string;
+  footprintKey: string; authorKey: string; order: string; kind: string; html: string; imageKeys: string[]; conflictOf?: string; conflict?: boolean;
 }
 
 function sectionDocFrom(sectionKey: string, journalKey: string, tenants: string[], p: SectionParts): SectionDoc {
   const isPhotos = p.kind === 'photos';
   return defined({
     ...ARTICLE_SECTION_SHAPE, okey: sectionKey, name: sectionKey, title: '', subTitle: '', tenants, isArchived: false,
-    journalKey, footprintKey: p.footprintKey, authorKey: p.authorKey, order: p.order, conflictOf: p.conflictOf,
+    journalKey, footprintKey: p.footprintKey, authorKey: p.authorKey, order: p.order, conflictOf: p.conflictOf, conflict: p.conflict,
     content: { ...ARTICLE_SECTION_SHAPE.content, htmlContent: isPhotos ? '' : p.html },
     properties: {
       ...ARTICLE_SECTION_SHAPE.properties,
@@ -97,11 +100,11 @@ export function sectionDocOf(state: JournalState, sectionKey: string, journalKey
   });
 }
 
-/** The doc of a derived conflict copy: the original's block with the lost value, `conflictOf` set. */
+/** The doc of a derived conflict copy: the original's block with the lost value, `conflictOf` and `conflict` set. */
 export function conflictCopyDocOf(block: BlockView, footprintKey: string, journalKey: string, tenants: string[]): SectionDoc {
   return sectionDocFrom(block.key, journalKey, tenants, {
     footprintKey, authorKey: block.authorKey, order: block.order, kind: block.kind, html: block.html ?? '',
-    imageKeys: block.imageKeys ?? [], conflictOf: block.conflictOf,
+    imageKeys: block.imageKeys ?? [], conflictOf: block.conflictOf, conflict: block.conflict,
   });
 }
 
