@@ -11,7 +11,9 @@
     "delete_confirm": "Delete this travel journal with all its footprints?",
     "coauthor": "Add co-author",
     "coauthor_done": "{name} now writes along.",
-    "coauthor_offline": "You can only add co-authors with an Internet connection."
+    "coauthor_offline": "You can only add co-authors with an Internet connection.",
+    "rename_journal": "Rename travel journal",
+    "open": "Open"
   },
   "native_only": "For now the travel journal is only available in the iPad app.",
   "untitled": "Untitled",
@@ -45,7 +47,9 @@
     "edit": "Edit",
     "delete": "Delete",
     "delete_confirm": "Delete this block?",
-    "add_photos": "Add photos"
+    "add_photos": "Add photos",
+    "edit_action": "Edit block",
+    "delete_action": "Delete block"
   },
   "photos": {
     "added": "{count} photo(s) added",
@@ -199,7 +203,10 @@
     "state_expires": "valid until {date}",
     "state_muted": "no notifications",
     "state_none": "no link yet",
-    "offline": "You can only manage guests with an Internet connection."
+    "offline": "You can only manage guests with an Internet connection.",
+    "manage": "Manage guests",
+    "empty": "No guests invited yet.",
+    "remove_confirm": "Remove {name} as a guest?"
   },
   "guest": {
     "loading": "Loading the travel journal …",
@@ -360,5 +367,35 @@
   },
   "tracker": {
     "record": "Record a track"
+  },
+  "menu": {
+    "open": "Menu",
+    "new_journal": "New travel journal",
+    "photo_sync": "Sync photos",
+    "offline_maps": "Manage offline maps",
+    "photo_book": "Create or change the photo book",
+    "edit_on": "Edit",
+    "edit_off": "Finish editing",
+    "add_block": "Add block",
+    "edit_footprint": "Edit footprint",
+    "delete_footprint": "Delete footprint"
+  },
+  "add_block": {
+    "title": "What would you like to add?"
+  },
+  "photo_sync": {
+    "title": "Sync photos",
+    "all_info": "Uploads your photos and fetches everyone else’s. Best at home or in a hotel with good internet.",
+    "upload_only_info": "Uploads your photos but fetches none. On board, the other iPad’s photos arrive directly, without going through the internet.",
+    "paused_info": "Only texts are synced, no photos. For very slow or expensive internet.",
+    "state_title": "Current status"
+  },
+  "offline_maps": {
+    "title": "Offline maps"
+  },
+  "book_modal": {
+    "title": "Photo book",
+    "open": "Design the photo book",
+    "desktop_hint": "You design the photo book in the browser on a computer. Here you upload the photos for it."
   }
 }

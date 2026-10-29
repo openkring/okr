@@ -11,7 +11,9 @@
     "delete_confirm": "¿Eliminar este diario de viaje con todas sus etapas?",
     "coauthor": "Añadir coautor",
     "coauthor_done": "{name} escribe ahora contigo.",
-    "coauthor_offline": "Solo puedes añadir coautores con conexión a Internet."
+    "coauthor_offline": "Solo puedes añadir coautores con conexión a Internet.",
+    "rename_journal": "Renombrar el diario de viaje",
+    "open": "Abrir"
   },
   "native_only": "Por ahora el diario de viaje solo está disponible en la app de iPad.",
   "untitled": "Sin título",
@@ -45,7 +47,9 @@
     "edit": "Editar",
     "delete": "Eliminar",
     "delete_confirm": "¿Eliminar este bloque?",
-    "add_photos": "Añadir fotos"
+    "add_photos": "Añadir fotos",
+    "edit_action": "Editar bloque",
+    "delete_action": "Eliminar bloque"
   },
   "photos": {
     "added": "{count} foto(s) añadida(s)",
@@ -199,7 +203,10 @@
     "state_expires": "válido hasta el {date}",
     "state_muted": "sin notificaciones",
     "state_none": "aún sin enlace",
-    "offline": "Solo puedes gestionar invitados con Internet."
+    "offline": "Solo puedes gestionar invitados con Internet.",
+    "manage": "Gestionar invitados",
+    "empty": "Aún no has invitado a nadie.",
+    "remove_confirm": "¿Quitar a {name} como invitado?"
   },
   "guest": {
     "loading": "Cargando el diario de viaje …",
@@ -360,5 +367,35 @@
   },
   "tracker": {
     "record": "Grabar un recorrido"
+  },
+  "menu": {
+    "open": "Menú",
+    "new_journal": "Nuevo diario de viaje",
+    "photo_sync": "Sincronizar fotos",
+    "offline_maps": "Gestionar mapas sin conexión",
+    "photo_book": "Crear o cambiar el fotolibro",
+    "edit_on": "Editar",
+    "edit_off": "Terminar de editar",
+    "add_block": "Añadir bloque",
+    "edit_footprint": "Editar footprint",
+    "delete_footprint": "Eliminar footprint"
+  },
+  "add_block": {
+    "title": "¿Qué quieres añadir?"
+  },
+  "photo_sync": {
+    "title": "Sincronizar fotos",
+    "all_info": "Sube tus fotos y descarga las de los demás. Lo mejor en casa o en el hotel con buena conexión.",
+    "upload_only_info": "Sube tus fotos pero no descarga ninguna. A bordo, las fotos del otro iPad llegan directamente, sin pasar por internet.",
+    "paused_info": "Solo se sincronizan los textos, no las fotos. Para internet muy lento o caro.",
+    "state_title": "Estado actual"
+  },
+  "offline_maps": {
+    "title": "Mapas sin conexión"
+  },
+  "book_modal": {
+    "title": "Fotolibro",
+    "open": "Diseñar el fotolibro",
+    "desktop_hint": "El fotolibro lo diseñas en el navegador del ordenador. Aquí subes las fotos para él."
   }
 }

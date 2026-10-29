@@ -11,7 +11,9 @@
     "delete_confirm": "Supprimer ce carnet de voyage avec toutes ses étapes ?",
     "coauthor": "Ajouter un co-auteur",
     "coauthor_done": "{name} écrit désormais avec toi.",
-    "coauthor_offline": "Tu ne peux ajouter des co-auteurs qu’avec une connexion Internet."
+    "coauthor_offline": "Tu ne peux ajouter des co-auteurs qu’avec une connexion Internet.",
+    "rename_journal": "Renommer le carnet de voyage",
+    "open": "Ouvrir"
   },
   "native_only": "Pour l'instant, le carnet de voyage n'est disponible que dans l'app iPad.",
   "untitled": "Sans titre",
@@ -45,7 +47,9 @@
     "edit": "Modifier",
     "delete": "Supprimer",
     "delete_confirm": "Supprimer ce bloc ?",
-    "add_photos": "Ajouter des photos"
+    "add_photos": "Ajouter des photos",
+    "edit_action": "Modifier le bloc",
+    "delete_action": "Supprimer le bloc"
   },
   "photos": {
     "added": "{count} photo(s) ajoutée(s)",
@@ -199,7 +203,10 @@
     "state_expires": "valable jusqu’au {date}",
     "state_muted": "sans notifications",
     "state_none": "pas encore de lien",
-    "offline": "Tu ne peux gérer les invités qu’avec Internet."
+    "offline": "Tu ne peux gérer les invités qu’avec Internet.",
+    "manage": "Gérer les invités",
+    "empty": "Aucun invité pour l’instant.",
+    "remove_confirm": "Retirer {name} des invités ?"
   },
   "guest": {
     "loading": "Chargement du carnet de voyage …",
@@ -360,5 +367,35 @@
   },
   "tracker": {
     "record": "Enregistrer un parcours"
+  },
+  "menu": {
+    "open": "Menu",
+    "new_journal": "Nouveau carnet de voyage",
+    "photo_sync": "Synchroniser les photos",
+    "offline_maps": "Gérer les cartes hors ligne",
+    "photo_book": "Créer ou modifier le livre photo",
+    "edit_on": "Modifier",
+    "edit_off": "Terminer la modification",
+    "add_block": "Ajouter un bloc",
+    "edit_footprint": "Modifier le footprint",
+    "delete_footprint": "Supprimer le footprint"
+  },
+  "add_block": {
+    "title": "Que veux-tu ajouter ?"
+  },
+  "photo_sync": {
+    "title": "Synchroniser les photos",
+    "all_info": "Envoie tes photos et récupère celles des autres. Idéal à la maison ou à l’hôtel avec une bonne connexion.",
+    "upload_only_info": "Envoie tes photos sans en récupérer. À bord, les photos de l’autre iPad arrivent directement, sans passer par internet.",
+    "paused_info": "Seuls les textes sont synchronisés, pas les photos. Pour une connexion très lente ou chère.",
+    "state_title": "État actuel"
+  },
+  "offline_maps": {
+    "title": "Cartes hors ligne"
+  },
+  "book_modal": {
+    "title": "Livre photo",
+    "open": "Mettre en page le livre photo",
+    "desktop_hint": "Tu mets en page le livre photo dans le navigateur, sur un ordinateur. Ici, tu envoies les photos pour celui-ci."
   }
 }

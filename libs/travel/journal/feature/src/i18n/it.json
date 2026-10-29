@@ -11,7 +11,9 @@
     "delete_confirm": "Eliminare questo diario di viaggio con tutte le sue tappe?",
     "coauthor": "Aggiungi coautore",
     "coauthor_done": "{name} ora scrive con te.",
-    "coauthor_offline": "Puoi aggiungere coautori solo con una connessione Internet."
+    "coauthor_offline": "Puoi aggiungere coautori solo con una connessione Internet.",
+    "rename_journal": "Rinomina il diario di viaggio",
+    "open": "Apri"
   },
   "native_only": "Per ora il diario di viaggio è disponibile solo nell'app per iPad.",
   "untitled": "Senza titolo",
@@ -45,7 +47,9 @@
     "edit": "Modifica",
     "delete": "Elimina",
     "delete_confirm": "Eliminare questo blocco?",
-    "add_photos": "Aggiungi foto"
+    "add_photos": "Aggiungi foto",
+    "edit_action": "Modifica blocco",
+    "delete_action": "Elimina blocco"
   },
   "photos": {
     "added": "{count} foto aggiunte",
@@ -199,7 +203,10 @@
     "state_expires": "valido fino al {date}",
     "state_muted": "senza notifiche",
     "state_none": "ancora nessun link",
-    "offline": "Puoi gestire gli ospiti solo con Internet."
+    "offline": "Puoi gestire gli ospiti solo con Internet.",
+    "manage": "Gestisci gli ospiti",
+    "empty": "Nessun ospite invitato finora.",
+    "remove_confirm": "Rimuovere {name} dagli ospiti?"
   },
   "guest": {
     "loading": "Caricamento del diario di viaggio …",
@@ -360,5 +367,35 @@
   },
   "tracker": {
     "record": "Registra un percorso"
+  },
+  "menu": {
+    "open": "Menu",
+    "new_journal": "Nuovo diario di viaggio",
+    "photo_sync": "Sincronizza le foto",
+    "offline_maps": "Gestisci le mappe offline",
+    "photo_book": "Crea o modifica il fotolibro",
+    "edit_on": "Modifica",
+    "edit_off": "Termina la modifica",
+    "add_block": "Aggiungi blocco",
+    "edit_footprint": "Modifica footprint",
+    "delete_footprint": "Elimina footprint"
+  },
+  "add_block": {
+    "title": "Cosa vuoi aggiungere?"
+  },
+  "photo_sync": {
+    "title": "Sincronizza le foto",
+    "all_info": "Carica le tue foto e scarica quelle degli altri. Ideale a casa o in albergo con una buona connessione.",
+    "upload_only_info": "Carica le tue foto ma non ne scarica. A bordo le foto dell’altro iPad arrivano direttamente, senza passare da internet.",
+    "paused_info": "Vengono sincronizzati solo i testi, nessuna foto. Per connessioni molto lente o costose.",
+    "state_title": "Stato attuale"
+  },
+  "offline_maps": {
+    "title": "Mappe offline"
+  },
+  "book_modal": {
+    "title": "Fotolibro",
+    "open": "Impagina il fotolibro",
+    "desktop_hint": "Il fotolibro lo impagini nel browser al computer. Qui carichi le foto che servono."
   }
 }
