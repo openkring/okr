@@ -1672,6 +1672,9 @@ export async function resolveArrayItemDocs(entry: SubjectDataEntry, ctx: Subject
 //   authors AND guests) — NOT reached by the top-level `comments` row. Guests are persons without an
 //   account: export/erasure of their comments and likes needs a journal-scoped row that reads the
 //   change log by authorKey; recorded as a gap until then (guests can ask the authors to delete).
+// gap: journal-locks — ephemeral edit locks of a travel journal (spec 1.126 §6.2): personKey and display name
+//   of the author who is editing a block right now, expiring after two minutes. Authors only; nothing to
+//   export, erase on journal erasure (plan 6).
 // gap: journal-books — the travel book of a journal (spec 1.113 phase 2 §6), one doc per journal: updatedBy
 //   (person key), the chosen guest commentKeys, export paths. The exported PDFs (exportJournalBook) in the
 //   private bucket under tenant/<t>/journal/<jk>/book/ print the authors' names and, when picked, guest
