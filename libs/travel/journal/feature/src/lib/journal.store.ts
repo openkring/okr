@@ -3,10 +3,13 @@ import { firstValueFrom, Subscription } from 'rxjs';
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { Network } from '@capacitor/network';
+import { doc, getDoc } from 'firebase/firestore';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AvatarInfo, JournalBookModel, JournalChange, TRANSPORT_MODES, TransportMode } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
+import { FIRESTORE } from '@okr/shared-config';
+import { AppVersionConfig, compareAppVersions, CURRENT_APP_VERSION } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 import { convertDateFormatToString, DateFormat, getTodayStr } from '@okr/shared-util-core';
 import {
@@ -29,6 +32,7 @@ const MAP_WORKERS = 4; // parallel tile requests: polite to GIBS, the USGS WMS, 
 const PRESENT_CHUNK = 200;
 const META_ACTIVE_JOURNAL = 'activeJournal'; // the journal last opened: the one P2P runs for
 const META_PHOTOS_PAUSED = 'photosPaused'; // before the three photo modes
+const META_WRITE_MIN_VERSION = 'writeMinVersion'; // app-version/app-version journalWriteMinVersion, cached for offline
 
 /**
  * The travel journal on this device (spec 1.113, plan 2). Reads and writes only SQLite through
@@ -51,6 +55,7 @@ interface JournalStoreState {
   webLoaded: boolean; // web view: the authored journals have been loaded (or failed to)
   bookExport: BookExportStatus;
   locks: Record<string, JournalLock>; // edit locks of the active journal (spec 1.126 §6.2)
+  writeMinVersion: string; // '' = no minimum known; below it the app may read but not write (spec 1.126 §6.4)
   lockClock: number; // Date.now(), refreshed every LOCK_CLOCK_MS, so lockOf re-evaluates expiry
 }
 
@@ -88,7 +93,7 @@ const printFileOf = (imageKey: string): string => `${imageKey}-print.jpg`;
 
 const initialState: JournalStoreState = {
   ready: false, native: Capacitor.isNativePlatform(), error: '', changes: [], photoMode: 'all', activeJournalKey: '', offlineMaps: {}, bookPrints: NO_BOOK_PRINTS,
-  webLoaded: false, bookExport: NO_BOOK_EXPORT, locks: {}, lockClock: 0,
+  webLoaded: false, bookExport: NO_BOOK_EXPORT, locks: {}, writeMinVersion: '', lockClock: 0,
 };
 const LOCK_CLOCK_MS = 15_000;
 
@@ -105,6 +110,7 @@ export const JournalStore = signalStore(
     bookService: inject(JournalBookService),
     bookExporter: inject(JournalBookExporter),
     lockService: inject(JournalLockService),
+    firestore: inject(FIRESTORE),
   })),
   withProps(() => ({
     i18n: inject(I18nService).translateAll(JOURNAL_I18N_KEYS) as JournalI18n,
@@ -134,6 +140,8 @@ export const JournalStore = signalStore(
 
     /** Stamps and stores the drafts, then applies them in memory. */
     async function write(drafts: ChangeDraft[]): Promise<JournalChange[]> {
+      const minVersion = store.writeMinVersion();
+      if (minVersion && compareAppVersions(CURRENT_APP_VERSION, minVersion) < 0) throw new JournalWriteRefused('outdated');
       const changes = await store.identity.stampChanges(drafts);
       patchState(store, { changes: [...store.changes(), ...changes] });
       store.peerService.push(changes); // the other iPad, when connected, gets it at once
@@ -346,6 +354,20 @@ export const JournalStore = signalStore(
       return mapPlaces(parseMapAreas(viewOf(store.journalState()[entityStateKey('journal', journalKey)])?.['mapAreas']));
     }
 
+    /** Online: reads the minimum app version for writes and caches it. Offline the cached value stays. Never throws. */
+    async function refreshWriteMinVersion(): Promise<void> {
+      try {
+        if (!(await Network.getStatus()).connected) return;
+        const snap = await getDoc(doc(store.firestore, 'app-version', 'app-version'));
+        const value = (snap.data() as AppVersionConfig | undefined)?.journalWriteMinVersion;
+        const minVersion = typeof value === 'string' ? value : '';
+        await store.db.setMeta(META_WRITE_MIN_VERSION, minVersion);
+        patchState(store, { writeMinVersion: minVersion });
+      } catch (error) {
+        console.error('journal: reading the minimum write version failed', error);
+      }
+    }
+
     let cancelMap = false;
 
     // one shared load: a second page instance must not replace state that a write already extended
@@ -381,6 +403,7 @@ export const JournalStore = signalStore(
               changes: await store.db.listChanges(), ready: true, error: '',
               photoMode: parsePhotoMode(await store.db.getMeta(META_PHOTO_MODE), await store.db.getMeta(META_PHOTOS_PAUSED)),
               activeJournalKey: (await store.db.getMeta(META_ACTIVE_JOURNAL)) ?? '',
+              writeMinVersion: (await store.db.getMeta(META_WRITE_MIN_VERSION)) ?? '',
 
             });
             const offlineMaps: Record<string, OfflineMapStatus> = {};
@@ -389,6 +412,7 @@ export const JournalStore = signalStore(
             }
             patchState(store, { offlineMaps });
             startAutoSync();
+            void refreshWriteMinVersion(); // fire and forget: never blocks startup
             if (store.activeJournalKey()) void startLockWatch(store.activeJournalKey());
           } catch (error) {
             loading = undefined; // allow a retry

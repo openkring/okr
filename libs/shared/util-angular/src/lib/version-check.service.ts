@@ -9,6 +9,10 @@ import { I18nService } from '@okr/shared-i18n';
 import { fill } from '@okr/shared-util-core';
 
 import packageJson from '../../../../../package.json';
+import { compareAppVersions } from './app-version.util';
+
+/** The version of this build (the monorepo version). */
+export const CURRENT_APP_VERSION: string = packageJson.version;
 
 export interface AppVersionConfig {
   minVersion: string;
@@ -24,6 +28,8 @@ export interface AppVersionConfig {
    * version that has been deployed to every app, or you force clients toward a build they cannot get.
    */
   deployed?: Record<string, string>;
+  /** Journal writes need at least this app version; older builds may still read (spec 1.126 §6.4). */
+  journalWriteMinVersion?: string;
 }
 
 /**
@@ -69,7 +75,7 @@ export class VersionCheckService {
 
   /** Which app this build is, so the deployed-version map can be read for it. */
   private readonly appId = inject(ENV, { optional: true })?.appId ?? '';
-  private readonly currentVersion = packageJson.version;
+  private readonly currentVersion = CURRENT_APP_VERSION;
   private versionConfig: AppVersionConfig | undefined;
   private alertShown = false;
   private lastCheckAt = 0;
@@ -233,21 +239,6 @@ export class VersionCheckService {
     window.location.reload();
   }
 
-  private compareVersions(v1: string, v2: string): number {
-    const parts1 = v1.split('.').map(Number);
-    const parts2 = v2.split('.').map(Number);
-
-    for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
-      const part1 = parts1[i] || 0;
-      const part2 = parts2[i] || 0;
-
-      if (part1 < part2) return -1;
-      if (part1 > part2) return 1;
-    }
-
-    return 0;
-  }
-
   /**
    * @param incomingVersion version the service worker just downloaded, read from the new build's
    * own manifest (ngsw appData). Undefined for builds made before that stamp existed.
@@ -261,10 +252,10 @@ export class VersionCheckService {
     // is set by hand after the hosting deploy — so it can still name the version we already run;
     // then quote nothing ("new version 7.13.2 available, you run 7.13.2") and use the plain message.
     const configured = incomingVersion ?? this.getLatestVersion();
-    const latestVersion = configured && this.compareVersions(configured, this.currentVersion) > 0
+    const latestVersion = configured && compareAppVersions(configured, this.currentVersion) > 0
       ? configured : undefined;
     const forceUpdate = config?.forceUpdate === true ||
-      (config?.minVersion !== undefined && this.compareVersions(this.currentVersion, config.minVersion) < 0);
+      (config?.minVersion !== undefined && compareAppVersions(this.currentVersion, config.minVersion) < 0);
 
     const i18n = this.updateI18n;
     const message = latestVersion

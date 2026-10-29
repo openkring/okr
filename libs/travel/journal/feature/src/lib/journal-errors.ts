@@ -6,6 +6,7 @@ export async function showJournalError(toastController: ToastController, i18n: J
   const message = !(error instanceof JournalWriteRefused) ? i18n.error_generic()
     : error.reason === 'noAuthor' ? i18n.error_no_author()
     : error.reason === 'othersContent' ? i18n.error_others_content()
+    : error.reason === 'outdated' ? i18n.error_outdated()
     : i18n.error_not_owner();
   const toast = await toastController.create({ message, duration: 4000, position: 'bottom', color: 'warning' });
   await toast.present();

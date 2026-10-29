@@ -62,7 +62,8 @@
     "no_author": "Ouvre le carnet de voyage une fois avec internet, ensuite tu pourras écrire.",
     "not_owner": "Seule la personne qui a écrit ce bloc peut le modifier.",
     "generic": "Cela n'a pas fonctionné. Réessaie.",
-    "others_content": "Ceci contient aussi des contributions de l'autre personne. Supprime d'abord seulement tes propres blocs."
+    "others_content": "Ceci contient aussi des contributions de l'autre personne. Supprime d'abord seulement tes propres blocs.",
+    "outdated": "Mets à jour l'application avant de continuer à écrire."
   },
   "footprint_form": {
     "title": "Étape",

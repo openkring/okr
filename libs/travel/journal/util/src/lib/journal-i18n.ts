@@ -46,6 +46,7 @@ export const JOURNAL_I18N_KEYS = {
   error_not_owner: PFX + 'error.not_owner',
   error_generic: PFX + 'error.generic',
   error_others_content: PFX + 'error.others_content',
+  error_outdated: PFX + 'error.outdated',
   footprint_form_title: PFX + 'footprint_form.title',
   footprint_form_title_label: PFX + 'footprint_form.title_label',
   footprint_form_title_ph: PFX + 'footprint_form.title_ph',

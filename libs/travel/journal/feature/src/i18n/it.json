@@ -62,7 +62,8 @@
     "no_author": "Apri il diario di viaggio una volta con internet, poi potrai scrivere.",
     "not_owner": "Solo chi ha scritto questo blocco può modificarlo.",
     "generic": "Non ha funzionato. Riprova.",
-    "others_content": "Qui ci sono anche contributi dell'altra persona. Elimina prima solo i tuoi blocchi."
+    "others_content": "Qui ci sono anche contributi dell'altra persona. Elimina prima solo i tuoi blocchi.",
+    "outdated": "Aggiorna l'app prima di continuare a scrivere."
   },
   "footprint_form": {
     "title": "Tappa",
