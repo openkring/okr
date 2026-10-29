@@ -68,9 +68,9 @@ import { JournalStore } from './journal.store';
         @for (item of story.blocks; track item.block.key) {
           <div class="block" [class.editable]="editMode() && isOwn(item)" (click)="tapBlock(item)">
             @if (asArticle(item); as article) {
-              <okr-article-section [section]="article" />
+              <okr-article-section [section]="article" [editMode]="editMode()" />
             } @else if (asAlbum(item); as album) {
-              <okr-album-section [section]="album" [explicitImages]="item.images" [showStyleSelect]="false"
+              <okr-album-section [section]="album" [explicitImages]="item.images" [showStyleSelect]="false" [editMode]="editMode()"
                 [emitImageClicks]="isOwn(item) && !editMode()" (imageSelected)="photoActions(item, $event)" />
             }
           </div>
