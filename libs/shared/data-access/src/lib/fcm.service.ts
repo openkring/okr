@@ -29,6 +29,8 @@ export class FcmService {
   private _currentToken: string | null = null;
   /** The token the Matrix pusher was last registered for (undefined = not yet on this token). */
   private pusherToken: string | undefined;
+  /** Registration currently in flight, so overlapping calls for the same token share one call. */
+  private pusherInFlight?: { token: string; promise: Promise<void> };
 
   /** The FCM/APNs token most recently registered on this device, or null if not yet registered. */
   get currentToken(): string | null { return this._currentToken; }
@@ -98,12 +100,18 @@ export class FcmService {
   async ensureMatrixPusher(): Promise<void> {
     const token = this._currentToken;
     if (!token || this.pusherToken === token) return;
-    await this.registerPusher(token);
+    if (this.pusherInFlight?.token === token) return this.pusherInFlight.promise;
+    const promise = this.registerPusher(token).finally(() => {
+      if (this.pusherInFlight?.promise === promise) this.pusherInFlight = undefined;
+    });
+    this.pusherInFlight = { token, promise };
+    return promise;
   }
 
   /**
    * Remove this device from push on logout: the token doc, the Matrix pusher and (native) the OS
    * registration. Never throws; does nothing when no token was registered on this device.
+   * Not time-bounded offline: callers wrap it in a timeout.
    */
   async disablePush(uid: string): Promise<void> {
     const token = this._currentToken;
@@ -124,6 +132,7 @@ export class FcmService {
     }
     this._currentToken = null;
     this.pusherToken = undefined;
+    this.pusherInFlight = undefined;
   }
 
   private async registerPusher(token: string): Promise<void> {
