@@ -254,28 +254,35 @@ export const JournalStore = signalStore(
     let lockWatch: Subscription | undefined;
     let lockClock: ReturnType<typeof setInterval> | undefined;
     let watched = new Set<string>(); // entities the last Firestore snapshot held
+    let lockJournalKey = ''; // the journal the lock state belongs to
 
-    async function publishLock(lock: JournalLock): Promise<void> {
+    function publishLock(lock: JournalLock): void {
       patchState(store, { locks: mergeLocks(store.locks(), [lock]) });
       store.peerService.pushLock(lock);
       const tenantId = store.appStore.tenantId();
-      if (lock.until > 0 && tenantId && (await Network.getStatus()).connected) await store.lockService.put(lock, tenantId);
+      // fire and forget: on Wi-Fi without internet a Firestore write never settles, and editing must not wait for it
+      if (lock.until > 0 && tenantId) void Network.getStatus().then((n) => n.connected && void store.lockService.put(lock, tenantId));
     }
 
     function stopLockWatch(): void {
       lockWatch?.unsubscribe();
       lockWatch = undefined;
+      lockJournalKey = '';
       watched = new Set();
       for (const timer of heartbeats.values()) clearInterval(timer);
       heartbeats.clear();
       patchState(store, { locks: {} });
     }
 
+    /** Idempotent: starts the clock and, when online and not yet running for this journal, the Firestore watch. */
     async function startLockWatch(journalKey: string): Promise<void> {
-      stopLockWatch();
+      if (lockJournalKey !== journalKey) {
+        stopLockWatch();
+        lockJournalKey = journalKey;
+      }
       patchState(store, { lockClock: Date.now() });
       lockClock ??= setInterval(() => patchState(store, { lockClock: Date.now() }), LOCK_CLOCK_MS);
-      if (!(await Network.getStatus()).connected) return;
+      if (lockWatch || !(await Network.getStatus()).connected || lockWatch) return; // second check: another call may have won meanwhile
       lockWatch = store.lockService.watch(journalKey).subscribe((incoming) => {
         const now = new Set(incoming.map((l) => l.entityKey));
         // a lock document that vanished was released (deleted) by its holder
@@ -307,7 +314,12 @@ export const JournalStore = signalStore(
     function startAutoSync(): void {
       if (autoSync) return;
       autoSync = true;
-      void Network.addListener('networkStatusChange', (status) => { if (status.connected) void syncNow(); });
+      void Network.addListener('networkStatusChange', (status) => { if (status.connected) {
+          void syncNow();
+          const key = store.activeJournalKey();
+          if (key) void startLockWatch(key); // a journal opened offline gets its watch now
+        }
+      });
       // iOS runs the peer link only in the foreground: stop it in the background, start it again on return
       void App.addListener('appStateChange', ({ isActive }) => {
         if (isActive) {
@@ -377,6 +389,7 @@ export const JournalStore = signalStore(
             }
             patchState(store, { offlineMaps });
             startAutoSync();
+            if (store.activeJournalKey()) void startLockWatch(store.activeJournalKey());
           } catch (error) {
             loading = undefined; // allow a retry
             patchState(store, { ready: true, error: String(error) });
@@ -671,7 +684,11 @@ export const JournalStore = signalStore(
       /** The journal now open becomes the active one: P2P switches to it. */
       async openJournal(journalKey: string): Promise<void> {
         await loading;
-        if (!store.native() || store.activeJournalKey() === journalKey) return;
+        if (!store.native()) return;
+        if (store.activeJournalKey() === journalKey) {
+          await startLockWatch(journalKey); // restored at startup, or opened offline before
+          return;
+        }
         patchState(store, { activeJournalKey: journalKey });
         await store.db.setMeta(META_ACTIVE_JOURNAL, journalKey);
         await startPeers();
@@ -687,11 +704,11 @@ export const JournalStore = signalStore(
         if (!me) return undefined;
         const other = lockedBy(store.locks(), entityKey, me.personKey, Date.now());
         if (other) return other;
-        const renew = (): Promise<void> =>
+        const renew = (): void =>
           publishLock({ journalKey, entityKey, personKey: me.personKey, name: me.name, until: Date.now() + LOCK_TTL_MS });
         clearInterval(heartbeats.get(entityKey));
-        heartbeats.set(entityKey, setInterval(() => void renew(), LOCK_HEARTBEAT_MS));
-        await renew();
+        heartbeats.set(entityKey, setInterval(() => renew(), LOCK_HEARTBEAT_MS));
+        renew();
         return undefined;
       },
 
@@ -705,7 +722,7 @@ export const JournalStore = signalStore(
         const lock: JournalLock = { journalKey, entityKey, personKey: me.personKey, name: me.name, until: 0 };
         patchState(store, { locks: mergeLocks(store.locks(), [lock]) });
         store.peerService.pushLock(lock);
-        if ((await Network.getStatus()).connected) await store.lockService.release(journalKey, entityKey);
+        void Network.getStatus().then((n) => n.connected && void store.lockService.release(journalKey, entityKey));
       },
 
       /** The live lock another person holds on this entity, else undefined (re-evaluated every 15 s). */
