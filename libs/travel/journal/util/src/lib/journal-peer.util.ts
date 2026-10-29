@@ -1,4 +1,5 @@
 import { JournalChange, JournalChangeOp, JournalEntity } from '@okr/shared-models';
+import { isJournalLock, JournalLock } from './journal-lock.util';
 import { acceptRecord } from './journal-server.util';
 
 /**
@@ -10,7 +11,8 @@ import { acceptRecord } from './journal-server.util';
 export type PeerMessage =
   | { t: 'vv'; journalKey: string; vv: Record<string, number> }
   | { t: 'records'; journalKey: string; records: unknown[] }
-  | { t: 'photoReq'; journalKey: string; files: string[] };
+  | { t: 'photoReq'; journalKey: string; files: string[] }
+  | { t: 'lock'; journalKey: string; lock: JournalLock };
 
 export const PEER_RECORD_PAGE = 200;
 
@@ -71,6 +73,11 @@ export function parsePeerMessage(text: string, journalKey: string): PeerMessage 
       return Array.isArray(m['files'])
         ? { t: 'photoReq', journalKey, files: (m['files'] as unknown[]).filter((f): f is string => typeof f === 'string' && FILE_NAME.test(f)) }
         : undefined;
+    case 'lock': {
+      const l = m['lock'];
+      if (!isJournalLock(l, journalKey)) return undefined;
+      return { t: 'lock', journalKey, lock: { journalKey, entityKey: l.entityKey, personKey: l.personKey, name: l.name, until: l.until } };
+    }
     default:
       return undefined;
   }

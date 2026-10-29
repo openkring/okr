@@ -714,6 +714,16 @@ service cloud.firestore {
                 && request.resource.data.get('entityKey', '') == request.resource.data.journalKey));
       allow update, delete: if false;
     }
+    // Ephemeral edit locks (spec 1.126 §6.2): doc id journalKey_entityKey, any author may clear a stale one.
+    match /journal-locks/{id} {
+      allow read: if userExists() && isJournalAuthor(resource.data.journalKey);
+      allow create, update: if tenantCreate()
+        && callerPersonKey() != ''
+        && isJournalAuthor(request.resource.data.get('journalKey', ''))
+        && request.resource.data.get('personKey', '') == callerPersonKey()
+        && id == request.resource.data.get('journalKey', '') + '_' + request.resource.data.get('entityKey', '');
+      allow delete: if userExists() && isJournalAuthor(resource.data.journalKey);
+    }
     match /journals/{jk} {
       allow read: if userExists() && resource != null && callerPersonKey() != ''
         && callerPersonKey() in resource.data.get('authorKeys', []);

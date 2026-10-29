@@ -29,3 +29,4 @@ export * from './lib/journal-book-edit.util';
 export * from './lib/journal-book-i18n';
 export * from './lib/journal-book-typography';
 export * from './lib/journal-book-edits';
+export * from './lib/journal-lock.util';

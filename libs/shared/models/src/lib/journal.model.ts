@@ -87,6 +87,7 @@ export const JournalSectionCollection = 'sections';
 export const JournalImageCollection = 'images';
 export const JournalCommentCollection = 'comments'; // CommentModel shape, parentKey 'page.<footprintKey>'
 export const JournalReactionCollection = 'reactions'; // ReactionModel shape, id reactionKey(parentKey, personKey)
+export const JournalLockCollection = 'journal-locks'; // ephemeral edit locks, doc id `${journalKey}_${entityKey}` (1.126 §6.2)
 export const JournalPrivateCollection = 'private'; // subcollection, authors only: docs 'peer' and 'guestLinks'
 export const JournalGuestLinksDoc = 'guestLinks';
 export const JournalPeerDoc = 'peer';

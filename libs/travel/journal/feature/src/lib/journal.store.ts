@@ -1,5 +1,5 @@
 import { computed, effect, inject, untracked } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Subscription } from 'rxjs';
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { Network } from '@capacitor/network';
@@ -10,12 +10,13 @@ import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { convertDateFormatToString, DateFormat, getTodayStr } from '@okr/shared-util-core';
 import {
-  ChangeDraft, JournalBookService, JournalDb, JournalIdentityService, JournalPeerService, JournalPhotos, JournalSyncService, OsmExtract, PickedPhoto, SkippedPhoto,
+  ChangeDraft, JournalBookService, JournalDb, JournalIdentityService, JournalLockService, JournalPeerService, JournalPhotos, JournalSyncService, OsmExtract, PickedPhoto, SkippedPhoto,
   toBase64,
 } from '@okr/travel-journal-data-access';
 import {
   BOOK_I18N_KEYS, BOOK_LABEL_MAX, bookLabelsOf, JournalBookI18n, bookPrintCandidates, entityStateKey, hasOthersBlocks, pagesOf, PRINT_FILL_LONG_PX, PRINT_FILL_SHORT_PX, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
   allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, MapPlace, mapPlaces, parseMapAreas, parsePhotoMode, TileJob, tilesToFree, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, reorderedOrders, CONFLICT_FIELDS, isConflictCopyKey, originalOfCopy, BlockView, publishedPhotoFiles, viewOf,
+  JournalLock, LOCK_HEARTBEAT_MS, LOCK_TTL_MS, lockedBy, mergeLocks,
 } from '@okr/travel-journal-util';
 
 import { BookExportStatus, JournalBookExporter, NO_BOOK_EXPORT } from './journal-book-export.service';
@@ -49,6 +50,8 @@ interface JournalStoreState {
   bookPrints: BookPrintStatus;
   webLoaded: boolean; // web view: the authored journals have been loaded (or failed to)
   bookExport: BookExportStatus;
+  locks: Record<string, JournalLock>; // edit locks of the active journal (spec 1.126 §6.2)
+  lockClock: number; // Date.now(), refreshed every LOCK_CLOCK_MS, so lockOf re-evaluates expiry
 }
 
 /**
@@ -85,8 +88,9 @@ const printFileOf = (imageKey: string): string => `${imageKey}-print.jpg`;
 
 const initialState: JournalStoreState = {
   ready: false, native: Capacitor.isNativePlatform(), error: '', changes: [], photoMode: 'all', activeJournalKey: '', offlineMaps: {}, bookPrints: NO_BOOK_PRINTS,
-  webLoaded: false, bookExport: NO_BOOK_EXPORT,
+  webLoaded: false, bookExport: NO_BOOK_EXPORT, locks: {}, lockClock: 0,
 };
+const LOCK_CLOCK_MS = 15_000;
 
 export const JournalStore = signalStore(
   { providedIn: 'root' },
@@ -100,6 +104,7 @@ export const JournalStore = signalStore(
     appStore: inject(AppStore),
     bookService: inject(JournalBookService),
     bookExporter: inject(JournalBookExporter),
+    lockService: inject(JournalLockService),
   })),
   withProps(() => ({
     i18n: inject(I18nService).translateAll(JOURNAL_I18N_KEYS) as JournalI18n,
@@ -240,6 +245,49 @@ export const JournalStore = signalStore(
       }
     }
 
+    // Edit locks (spec 1.126 §6.2): memory + P2P + Firestore when online, all best effort.
+    function receiveLock(lock: JournalLock): void {
+      if (lock.journalKey !== store.activeJournalKey()) return;
+      patchState(store, { locks: mergeLocks(store.locks(), [lock]) });
+    }
+    const heartbeats = new Map<string, ReturnType<typeof setInterval>>();
+    let lockWatch: Subscription | undefined;
+    let lockClock: ReturnType<typeof setInterval> | undefined;
+    let watched = new Set<string>(); // entities the last Firestore snapshot held
+
+    async function publishLock(lock: JournalLock): Promise<void> {
+      patchState(store, { locks: mergeLocks(store.locks(), [lock]) });
+      store.peerService.pushLock(lock);
+      const tenantId = store.appStore.tenantId();
+      if (lock.until > 0 && tenantId && (await Network.getStatus()).connected) await store.lockService.put(lock, tenantId);
+    }
+
+    function stopLockWatch(): void {
+      lockWatch?.unsubscribe();
+      lockWatch = undefined;
+      watched = new Set();
+      for (const timer of heartbeats.values()) clearInterval(timer);
+      heartbeats.clear();
+      patchState(store, { locks: {} });
+    }
+
+    async function startLockWatch(journalKey: string): Promise<void> {
+      stopLockWatch();
+      patchState(store, { lockClock: Date.now() });
+      lockClock ??= setInterval(() => patchState(store, { lockClock: Date.now() }), LOCK_CLOCK_MS);
+      if (!(await Network.getStatus()).connected) return;
+      lockWatch = store.lockService.watch(journalKey).subscribe((incoming) => {
+        const now = new Set(incoming.map((l) => l.entityKey));
+        // a lock document that vanished was released (deleted) by its holder
+        const gone = [...watched].filter((k) => !now.has(k)).flatMap((k) => {
+          const held = store.locks()[k];
+          return held ? [{ ...held, until: 0 }] : [];
+        });
+        watched = now;
+        patchState(store, { locks: mergeLocks(store.locks(), [...gone, ...incoming]) });
+      });
+    }
+
     /** P2P for the active journal while the app is in the foreground (spec §5.4). */
     async function startPeers(): Promise<void> {
       const journalKey = store.activeJournalKey();
@@ -251,6 +299,7 @@ export const JournalStore = signalStore(
         photoFiles: () => allPhotoFiles(imagesOf(store.journalState(), journalKey)),
         onRecordsStored: reload,
         onPhotosStored: () => store.fileUrl.refresh(),
+        onLock: receiveLock,
       }).catch(() => undefined);
     }
 
@@ -626,6 +675,44 @@ export const JournalStore = signalStore(
         patchState(store, { activeJournalKey: journalKey });
         await store.db.setMeta(META_ACTIVE_JOURNAL, journalKey);
         await startPeers();
+        await startLockWatch(journalKey);
+      },
+
+      /**
+       * Takes the edit lock on a block or footprint. Returns the other person's live lock when refused,
+       * otherwise locks it for this author and keeps renewing it until `releaseLock`.
+       */
+      async acquireLock(journalKey: string, entityKey: string): Promise<JournalLock | undefined> {
+        const me = store.identity.author();
+        if (!me) return undefined;
+        const other = lockedBy(store.locks(), entityKey, me.personKey, Date.now());
+        if (other) return other;
+        const renew = (): Promise<void> =>
+          publishLock({ journalKey, entityKey, personKey: me.personKey, name: me.name, until: Date.now() + LOCK_TTL_MS });
+        clearInterval(heartbeats.get(entityKey));
+        heartbeats.set(entityKey, setInterval(() => void renew(), LOCK_HEARTBEAT_MS));
+        await renew();
+        return undefined;
+      },
+
+      async releaseLock(journalKey: string, entityKey: string): Promise<void> {
+        const me = store.identity.author();
+        clearInterval(heartbeats.get(entityKey));
+        heartbeats.delete(entityKey);
+        if (!me) return;
+        const held = store.locks()[entityKey];
+        if (held && held.personKey !== me.personKey) return; // never clear someone else's lock
+        const lock: JournalLock = { journalKey, entityKey, personKey: me.personKey, name: me.name, until: 0 };
+        patchState(store, { locks: mergeLocks(store.locks(), [lock]) });
+        store.peerService.pushLock(lock);
+        if ((await Network.getStatus()).connected) await store.lockService.release(journalKey, entityKey);
+      },
+
+      /** The live lock another person holds on this entity, else undefined (re-evaluated every 15 s). */
+      lockOf(entityKey: string): JournalLock | undefined {
+        store.lockClock();
+        const me = store.identity.author()?.personKey ?? '';
+        return lockedBy(store.locks(), entityKey, me, Date.now());
       },
 
       async setPhotoMode(mode: JournalPhotoMode): Promise<void> {

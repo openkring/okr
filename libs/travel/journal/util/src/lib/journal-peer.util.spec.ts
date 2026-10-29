@@ -54,4 +54,13 @@ describe('journal peer util', () => {
     expect(out.map((c) => c.bases)).toEqual([{ title: 'h1' }, undefined, undefined]);
     expect('bases' in out[1]).toBe(false);
   });
+
+  it('parsePeerMessage accepts lock and rejects a malformed lock', () => {
+    const lock = { journalKey: 'j1', entityKey: 'f1', personKey: 'anna', name: 'Anna', until: NOW };
+    expect(parsePeerMessage(JSON.stringify({ t: 'lock', journalKey: 'j1', lock }), 'j1')).toEqual({ t: 'lock', journalKey: 'j1', lock });
+    expect(parsePeerMessage(JSON.stringify({ t: 'lock', journalKey: 'j1', lock: { ...lock, until: 'x' } }), 'j1')).toBeUndefined();
+    expect(parsePeerMessage(JSON.stringify({ t: 'lock', journalKey: 'j1', lock: { ...lock, entityKey: '' } }), 'j1')).toBeUndefined();
+    expect(parsePeerMessage(JSON.stringify({ t: 'lock', journalKey: 'j1', lock: { ...lock, journalKey: 'other' } }), 'j1')).toBeUndefined();
+    expect(parsePeerMessage(JSON.stringify({ t: 'lock', journalKey: 'j1' }), 'j1')).toBeUndefined();
+  });
 });
