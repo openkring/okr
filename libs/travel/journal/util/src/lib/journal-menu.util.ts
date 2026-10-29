@@ -8,7 +8,7 @@ import { JOURNAL_I18N_KEYS } from './journal-i18n';
 export type JournalMenuAction =
   | 'newJournal' | 'photoSync'
   | 'flyover' | 'newFootprint' | 'recordTrack' | 'offlineMaps' | 'photoBook'
-  | 'toggleEditMode' | 'addBlock' | 'editFootprint' | 'deleteFootprint';
+  | 'toggleEditMode' | 'addBlock' | 'sortBlocks' | 'editFootprint' | 'deleteFootprint';
 
 export type JournalBlockAction = 'block.edit' | 'block.addphotos' | 'block.delete';
 
@@ -54,6 +54,7 @@ export function footprintMenu(ctx: { native: boolean; editMode: boolean }): Jour
     [
       { action: 'toggleEditMode', label: ctx.editMode ? 'menu_edit_off' : 'menu_edit_on', icon: 'edit' },
       { action: 'addBlock', label: 'menu_add_block', icon: 'add' },
+      { action: 'sortBlocks', label: 'menu_sort_blocks', icon: 'sync-circle' },
     ],
     [
       { action: 'editFootprint', label: 'menu_edit_footprint', icon: 'edit' },
@@ -62,8 +63,8 @@ export function footprintMenu(ctx: { native: boolean; editMode: boolean }): Jour
   );
 }
 
-/** The block ActionSheet's actions; phase 1 keeps block ownership, so others' blocks get none. */
-export function blockActions(ctx: { kind: 'text' | 'photos'; own: boolean }): JournalBlockAction[] {
-  if (!ctx.own) return [];
+/** The block ActionSheet's actions; every author may edit every block (phase 2), `editable` = native with a known author. */
+export function blockActions(ctx: { kind: 'text' | 'photos'; editable: boolean }): JournalBlockAction[] {
+  if (!ctx.editable) return [];
   return [ctx.kind === 'text' ? 'block.edit' : 'block.addphotos', 'block.delete'];
 }

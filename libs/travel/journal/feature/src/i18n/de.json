@@ -49,7 +49,10 @@
     "delete_confirm": "Diesen Block löschen?",
     "add_photos": "Fotos hinzufügen",
     "edit_action": "Block bearbeiten",
-    "delete_action": "Block löschen"
+    "delete_action": "Block löschen",
+    "locked": "{name} bearbeitet gerade",
+    "conflict": "Zwei Fassungen – bitte lösch eine davon.",
+    "photos_label": "{count} Fotos"
   },
   "photos": {
     "added": "{count} Foto(s) hinzugefügt",
@@ -377,7 +380,8 @@
     "edit_off": "Bearbeiten beenden",
     "add_block": "Block hinzufügen",
     "edit_footprint": "Footprint bearbeiten",
-    "delete_footprint": "Footprint löschen"
+    "delete_footprint": "Footprint löschen",
+    "sort_blocks": "Blöcke sortieren"
   },
   "add_block": {
     "title": "Was möchtest du hinzufügen?"
@@ -396,5 +400,13 @@
     "title": "Fotobuch",
     "open": "Fotobuch gestalten",
     "desktop_hint": "Das Fotobuch gestaltest du am Computer im Browser. Hier lädst du die Fotos dafür hoch."
+  },
+  "footprint_conflict": {
+    "overwritten": "Überschrieben: {field} war «{value}»",
+    "check": "Fassungen prüfen",
+    "done": "Erledigt"
+  },
+  "sort": {
+    "title": "Blöcke sortieren"
   }
 }

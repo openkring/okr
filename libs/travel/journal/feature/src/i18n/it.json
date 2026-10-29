@@ -49,7 +49,10 @@
     "delete_confirm": "Eliminare questo blocco?",
     "add_photos": "Aggiungi foto",
     "edit_action": "Modifica blocco",
-    "delete_action": "Elimina blocco"
+    "delete_action": "Elimina blocco",
+    "locked": "{name} sta modificando adesso",
+    "conflict": "Due versioni – elimina una delle due.",
+    "photos_label": "{count} foto"
   },
   "photos": {
     "added": "{count} foto aggiunte",
@@ -377,7 +380,8 @@
     "edit_off": "Termina la modifica",
     "add_block": "Aggiungi blocco",
     "edit_footprint": "Modifica footprint",
-    "delete_footprint": "Elimina footprint"
+    "delete_footprint": "Elimina footprint",
+    "sort_blocks": "Ordina i blocchi"
   },
   "add_block": {
     "title": "Cosa vuoi aggiungere?"
@@ -396,5 +400,13 @@
     "title": "Fotolibro",
     "open": "Impagina il fotolibro",
     "desktop_hint": "Il fotolibro lo impagini nel browser al computer. Qui carichi le foto che servono."
+  },
+  "footprint_conflict": {
+    "overwritten": "Sovrascritto: {field} era «{value}»",
+    "check": "Controlla le versioni",
+    "done": "Fatto"
+  },
+  "sort": {
+    "title": "Ordina i blocchi"
   }
 }

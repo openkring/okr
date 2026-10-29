@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   ActionSheetController, AlertController, IonBackButton, IonButton, IonButtons, IonContent, IonFooter, IonHeader, IonIcon, IonTitle, IonToolbar,
@@ -8,12 +8,12 @@ import {
 import { AlbumSectionComponent, ArticleSectionComponent, HeroSectionComponent } from '@okr/cms-section-feature';
 import { AppStore } from '@okr/shared-feature';
 import { fill } from '@okr/shared-util-core';
-import { FootprintEditModal, JournalReactions, ReactionComment, TextBlockEditModal } from '@okr/travel-journal-ui';
+import { FootprintEditModal, JournalBlockSortModal, JournalReactions, ReactionComment, TextBlockEditModal } from '@okr/travel-journal-ui';
 import { createActionSheetButton, createActionSheetOptions, okrPrompt } from '@okr/shared-util-angular';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { AlbumSection, ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig } from '@okr/shared-models';
 import { openImageGallery } from '@okr/shared-ui';
-import { blockActions, footprintMenu, FootprintFormModel, StoryBlock, toStorySections } from '@okr/travel-journal-util';
+import { blockActions, footprintMenu, FootprintFormModel, htmlToPlainText, StoryBlock, toStorySections } from '@okr/travel-journal-util';
 
 import { JournalFileUrlService } from './journal-file-url.service';
 import { showJournalError } from './journal-errors';
@@ -24,7 +24,8 @@ import { JournalStore } from './journal.store';
  * A footprint's story page (spec 1.113 §9.2): hero cover, then the text and photo blocks rendered by
  * the standalone CMS section components (not the SectionDispatcher, whose SectionStore queries
  * Firestore). Edited like a CMS content page (spec 1.126 §5): ⋮ menu with an edit-mode toggle, blocks highlighted in
- * edit mode, a tap on a block opens its ActionSheet. Phase 1: only the author of a block can edit or delete it.
+ * edit mode, a tap on a block opens its ActionSheet. Phase 2: every author edits every block; an edit takes a lock first (released in `finally`, and
+ * on page destroy), conflict copies and overwritten footprint values are flagged until resolved.
  */
 @Component({
   selector: 'okr-journal-story-page',
@@ -40,6 +41,9 @@ import { JournalStore } from './journal.store';
     .block { position: relative; }
     /* the CMS edit-mode highlight (content.page .section-wrapper.editable) */
     .block.editable { border: 3px solid var(--ion-color-primary); border-radius: 8px; margin: 8px; padding: 4px; cursor: pointer; }
+    .note { font-size: 0.8rem; margin: 4px 8px; color: var(--ion-color-warning-shade); }
+    .banner { margin: 8px; padding: 8px 12px; border-radius: 8px; background: var(--ion-color-warning-tint); display: flex; align-items: center; gap: 8px; }
+    .banner p { margin: 0; flex: 1; }
     .badge { font-size: 0.75rem; padding: 2px 8px; border-radius: 8px; background: var(--ion-color-light); }
   `],
   template: `
@@ -65,13 +69,27 @@ import { JournalStore } from './journal.store';
             <p>{{ footprint()?.placeName }}</p>
           </div>
         }
+        @if (canEdit()) {
+          @for (lost of footprint()?.lostValues ?? []; track lost.hlc + lost.field) {
+            <div class="banner">
+              <p>{{ overwritten(lost.field, lost.value) }}</p>
+              <ion-button size="small" fill="outline" (click)="act(store.dismissFootprintConflict(footprintKey(), lost.hlc))">{{ store.i18n.conflict_done() }}</ion-button>
+            </div>
+          }
+        }
         @for (item of story.blocks; track item.block.key) {
-          <div class="block" [class.editable]="editMode() && isOwn(item)" (click)="tapBlock(item)">
+          @if (canEdit() && item.block.conflict) {
+            <p class="note">{{ store.i18n.block_conflict() }}</p>
+          }
+          @if (editMode() && lockedBy(item); as name) {
+            <p class="note">{{ fillName(name) }}</p>
+          }
+          <div class="block" [class.editable]="editMode() && canEdit()" (click)="tapBlock(item)">
             @if (asArticle(item); as article) {
               <okr-article-section [section]="article" [editMode]="editMode()" />
             } @else if (asAlbum(item); as album) {
               <okr-album-section [section]="album" [explicitImages]="item.images" [showStyleSelect]="false" [editMode]="editMode()"
-                [emitImageClicks]="isOwn(item) && !editMode()" (imageSelected)="photoActions(item, $event)" />
+                [emitImageClicks]="canEdit() && !editMode()" (imageSelected)="photoActions(item, $event)" />
             }
           </div>
         }
@@ -145,7 +163,15 @@ export class JournalStoryPage {
       const journalKey = this.journalKey();
       untracked(() => void this.store.openJournal(journalKey));
     });
+    // the store is a root singleton: a lock's heartbeat keeps running until released, also when the page goes while a modal is open
+    inject(DestroyRef).onDestroy(() => {
+      for (const entityKey of this.heldLocks) void this.store.releaseLock(this.journalKey(), entityKey);
+      this.heldLocks.clear();
+    });
   }
+
+  /** Entities this page holds a lock on right now. */
+  private readonly heldLocks = new Set<string>();
 
   protected asArticle(item: StoryBlock): ArticleSection | undefined {
     return item.section.type === 'article' ? item.section : undefined;
@@ -155,16 +181,53 @@ export class JournalStoryPage {
     return item.section.type === 'album' ? item.section : undefined;
   }
 
-  protected isOwn(item: StoryBlock): boolean {
-    // only on the iPad, and only with a known author (no identity yet = nothing is «own»)
-    const me = this.store.author()?.personKey;
-    return this.store.native() && !!me && item.block.authorKey === me;
+  /** Every author edits every block (spec 1.126 §5) — but only on the iPad and with a known author. */
+  protected canEdit(): boolean {
+    return this.store.native() && !!this.store.author()?.personKey;
+  }
+
+  /** The name of the person editing this block right now, if somebody else is. */
+  protected lockedBy(item: StoryBlock): string | undefined {
+    return this.store.lockOf(item.block.key)?.name;
+  }
+
+  protected fillName(name: string): string {
+    return fill(this.store.i18n.block_locked(), { name });
+  }
+
+  protected overwritten(field: string, value: unknown): string {
+    return fill(this.store.i18n.footprint_overwritten(), { field, value: String(value ?? '') });
+  }
+
+  private async toastText(message: string): Promise<void> {
+    const toast = await this.toastController.create({ message, duration: 3000, position: 'bottom' });
+    await toast.present();
+  }
+
+  /**
+   * Runs an edit under the lock on `entityKey`. A refused lock shows who is editing and runs nothing;
+   * a taken lock is released afterwards whatever happens (save, cancel or error).
+   */
+  private async withLock(entityKey: string, edit: () => Promise<unknown>): Promise<void> {
+    const other = await this.store.acquireLock(this.journalKey(), entityKey);
+    if (other) {
+      await this.toastText(this.fillName(other.name));
+      return;
+    }
+    this.heldLocks.add(entityKey);
+    try {
+      await edit();
+    } finally {
+      this.heldLocks.delete(entityKey);
+      await this.store.releaseLock(this.journalKey(), entityKey);
+    }
   }
 
   protected async menu(event: Event): Promise<void> {
     switch (await openJournalMenu(this.popoverController, event, this.menuItems(), this.store.i18n)) {
       case 'toggleEditMode': return this.editMode.update((on) => !on);
       case 'addBlock': return this.addBlock();
+      case 'sortBlocks': return this.sortBlocks();
       case 'editFootprint': return this.editFootprint();
       case 'deleteFootprint': return this.confirmDeleteFootprint();
     }
@@ -186,9 +249,27 @@ export class JournalStoryPage {
     else if (data?.action === 'block.photos') await this.addPhotos();
   }
 
-  /** In edit mode a tap on an own block opens its ActionSheet; outside edit mode a tap does nothing. */
+  /** In edit mode a tap on a block opens its ActionSheet (unless somebody else is editing it); outside edit mode a tap does nothing. */
   protected tapBlock(item: StoryBlock): void {
-    if (this.editMode() && this.isOwn(item)) void this.blockSheet(item);
+    if (!this.editMode() || !this.canEdit()) return;
+    const name = this.lockedBy(item);
+    if (name) void this.toastText(this.fillName(name));
+    else void this.blockSheet(item);
+  }
+
+  private async sortBlocks(): Promise<void> {
+    const fp = this.footprint();
+    if (!fp || fp.blocks.length < 2) return;
+    const blocks = fp.blocks.map((b) => ({
+      key: b.key,
+      label: b.kind === 'text'
+        ? htmlToPlainText(b.html ?? '').slice(0, 40)
+        : fill(this.store.i18n.block_photos_label(), { count: b.imageKeys?.length ?? 0 }),
+    }));
+    const modal = await this.modalController.create({ component: JournalBlockSortModal, componentProps: { blocks } });
+    await modal.present();
+    const { data, role } = await modal.onWillDismiss<string[]>();
+    if (role === 'confirm' && data) await this.run(() => this.store.reorderBlocks(fp.key, data));
   }
 
   protected go(footprintKey: string | undefined): void {
@@ -203,7 +284,7 @@ export class JournalStoryPage {
       'block.addphotos': [i18n.story_add_photos(), 'images'],
       'block.delete': [i18n.block_delete_action(), 'trash'],
     };
-    const actions = blockActions({ kind: item.block.kind, own: this.isOwn(item) });
+    const actions = blockActions({ kind: item.block.kind, editable: this.canEdit() });
     if (actions.length === 0) return;
     const options = createActionSheetOptions(i18n.block_edit_action());
     options.buttons.push(
@@ -214,7 +295,7 @@ export class JournalStoryPage {
     await sheet.present();
     const { data } = await sheet.onDidDismiss<{ action: string }>();
     switch (data?.action) {
-      case 'block.edit': return this.editText(item.block.key, item.block.html ?? '');
+      case 'block.edit': return this.withLock(item.block.key, () => this.editText(item.block.key, item.block.html ?? ''));
       case 'block.addphotos': return this.addPhotosToBlock(item.block.key);
       case 'block.delete': return this.confirmDeleteBlock(item.block.key);
     }
@@ -300,10 +381,12 @@ export class JournalStoryPage {
     const current: FootprintFormModel = {
       title: fp.title, placeName: fp.placeName, date: fp.date, time: fp.time, published: fp.publishState === 'published', transport: fp.transport ?? '',
     };
-    const modal = await this.modalController.create({ component: FootprintEditModal, componentProps: { footprint: current }, cssClass: 'auto-height-modal' });
-    await modal.present();
-    const { data, role } = await modal.onWillDismiss<FootprintFormModel>();
-    if (role === 'confirm' && data) await this.run(() => this.store.saveFootprintForm(fp.key, data));
+    await this.withLock(fp.key, async () => {
+      const modal = await this.modalController.create({ component: FootprintEditModal, componentProps: { footprint: current }, cssClass: 'auto-height-modal' });
+      await modal.present();
+      const { data, role } = await modal.onWillDismiss<FootprintFormModel>();
+      if (role === 'confirm' && data) await this.run(() => this.store.saveFootprintForm(fp.key, data));
+    });
   }
 
   private async openTextModal(html: string): Promise<string | undefined> {

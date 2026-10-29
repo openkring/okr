@@ -14,3 +14,4 @@ export * from './lib/journal-book-editor';
 export * from './lib/journal-book-settings.form';
 export * from './lib/journal-book-settings.modal';
 export * from './lib/journal-context-menu';
+export * from './lib/journal-block-sort.modal';

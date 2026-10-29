@@ -49,7 +49,10 @@
     "delete_confirm": "Delete this block?",
     "add_photos": "Add photos",
     "edit_action": "Edit block",
-    "delete_action": "Delete block"
+    "delete_action": "Delete block",
+    "locked": "{name} is editing right now",
+    "conflict": "Two versions – please delete one of them.",
+    "photos_label": "{count} photos"
   },
   "photos": {
     "added": "{count} photo(s) added",
@@ -377,7 +380,8 @@
     "edit_off": "Finish editing",
     "add_block": "Add block",
     "edit_footprint": "Edit footprint",
-    "delete_footprint": "Delete footprint"
+    "delete_footprint": "Delete footprint",
+    "sort_blocks": "Sort blocks"
   },
   "add_block": {
     "title": "What would you like to add?"
@@ -396,5 +400,13 @@
     "title": "Photo book",
     "open": "Design the photo book",
     "desktop_hint": "You design the photo book in the browser on a computer. Here you upload the photos for it."
+  },
+  "footprint_conflict": {
+    "overwritten": "Overwritten: {field} was «{value}»",
+    "check": "Check versions",
+    "done": "Done"
+  },
+  "sort": {
+    "title": "Sort blocks"
   }
 }

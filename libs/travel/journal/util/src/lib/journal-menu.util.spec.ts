@@ -24,7 +24,7 @@ describe('journal menus (spec 1.126 phase 1)', () => {
 
   it('footprint: native, edit mode off and on', () => {
     const off = footprintMenu({ native: true, editMode: false });
-    expect(actions(off)).toEqual(['toggleEditMode', 'addBlock', 'divider', 'editFootprint', 'deleteFootprint']);
+    expect(actions(off)).toEqual(['toggleEditMode', 'addBlock', 'sortBlocks', 'divider', 'editFootprint', 'deleteFootprint']);
     expect(off[0]).toMatchObject({ label: 'menu_edit_on' });
     expect(footprintMenu({ native: true, editMode: true })[0]).toMatchObject({ label: 'menu_edit_off' });
     expect(off[off.length - 1]).toMatchObject({ destructive: true });
@@ -34,9 +34,9 @@ describe('journal menus (spec 1.126 phase 1)', () => {
     expect(footprintMenu({ native: false, editMode: false })).toEqual([]);
   });
 
-  it('block actions follow kind and ownership', () => {
-    expect(blockActions({ kind: 'text', own: true })).toEqual(['block.edit', 'block.delete']);
-    expect(blockActions({ kind: 'photos', own: true })).toEqual(['block.addphotos', 'block.delete']);
-    expect(blockActions({ kind: 'text', own: false })).toEqual([]);
+  it('block actions follow kind and editability', () => {
+    expect(blockActions({ kind: 'text', editable: true })).toEqual(['block.edit', 'block.delete']);
+    expect(blockActions({ kind: 'photos', editable: true })).toEqual(['block.addphotos', 'block.delete']);
+    expect(blockActions({ kind: 'text', editable: false })).toEqual([]);
   });
 });
