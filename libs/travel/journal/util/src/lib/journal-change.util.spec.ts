@@ -28,4 +28,9 @@ describe('createChange', () => {
     expect(change.fields).toEqual({ title: 'Neko Harbour' });
     expect(Object.keys(change).sort()).toEqual(['authorKey', 'deviceId', 'entity', 'entityKey', 'fields', 'hlc', 'id', 'journalKey', 'op', 'seq']);
   });
+
+  it('createChange copies bases', () => {
+    const { change } = createChange({ ...draft, op: 'set', bases: { title: 'h1' } }, { clock: undefined, seq: 0 }, 1000);
+    expect(change.bases).toEqual({ title: 'h1' });
+  });
 });

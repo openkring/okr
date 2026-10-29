@@ -17,11 +17,22 @@ import { compareHlc, isValidHlc } from './journal-hlc.util';
  * who owns a block, so it must at least be the writer's own. Authors are trusted (only they can write
  * change records); the server additionally checks the author and clamps clocks from the future (spec §5.3).
  */
-export const OWNED_ENTITIES: JournalEntity[] = ['section', 'comment', 'reaction', 'image'];
+export const OWNED_ENTITIES: JournalEntity[] = ['comment', 'reaction', 'image'];
+
+/**
+ * Fields whose every written value is kept in `EntityState.history`, so a later step can offer the
+ * losing values of a concurrent edit as a conflict copy. Sections are not owned: any author edits them.
+ */
+export const CONFLICT_FIELDS: Partial<Record<JournalEntity, string[]>> = {
+  section: ['html', 'imageKeys'],
+  footprint: ['title', 'placeName', 'date', 'time', 'latitude', 'longitude', 'publishState', 'transport'],
+};
 
 const ARCHIVED_FIELD = 'archived';
 
 export interface FieldCandidate { value: unknown; hlc: string; authorKey: string }
+
+export interface FieldRecord { value: unknown; hlc: string; authorKey: string; base?: string }
 
 export interface EntityState {
   entity: JournalEntity;
@@ -30,6 +41,7 @@ export interface EntityState {
   ownerHlc?: string; // hlc of that create record; the earliest create decides the owner
   created: boolean;
   fields: Record<string, Record<string, FieldCandidate>>; // field → authorKey → best candidate
+  history?: Record<string, FieldRecord[]>; // CONFLICT_FIELDS only: every create/set value, one per hlc, sorted by hlc ascending
 }
 
 export type JournalState = Record<string, EntityState>; // key `${entity}:${entityKey}`
@@ -43,6 +55,7 @@ export function applyChange(state: JournalState, change: JournalChange): Journal
   const key = entityStateKey(change.entity, change.entityKey);
   const current: EntityState = state[key] ?? { entity: change.entity, entityKey: change.entityKey, created: false, fields: {} };
   const next: EntityState = { ...current, fields: { ...current.fields } };
+  const conflictFields = change.op === 'archive' ? undefined : CONFLICT_FIELDS[change.entity];
 
   if (change.op === 'create') {
     next.created = true;
@@ -61,6 +74,15 @@ export function applyChange(state: JournalState, change: JournalChange): Journal
     const best = byAuthor[change.authorKey];
     if (!best || compareHlc(change.hlc, best.hlc) > 0) {
       next.fields[field] = { ...byAuthor, [change.authorKey]: { value, hlc: change.hlc, authorKey: change.authorKey } };
+    }
+    if (conflictFields?.includes(field)) {
+      const known = next.history?.[field] ?? [];
+      if (!known.some((r) => r.hlc === change.hlc)) {
+        const record: FieldRecord = { value, hlc: change.hlc, authorKey: change.authorKey };
+        const base = change.bases?.[field];
+        if (base !== undefined) record.base = base;
+        next.history = { ...next.history, [field]: [...known, record].sort((a, b) => compareHlc(a.hlc, b.hlc)) };
+      }
     }
   }
   return { ...state, [key]: next };

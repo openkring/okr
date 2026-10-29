@@ -70,10 +70,16 @@ describe('journal merge', () => {
     expect(viewOf(applyChange(afterSet, create)['section:s1'])?.['html']).toBe('<p>later</p>');
   });
 
-  it('non-owner change to an owned section is ignored', () => {
+  it("another author's edit of a section wins by hlc", () => {
     const create = change({ entity: 'section', entityKey: 's1', op: 'create', fields: { html: '<p>Bruno</p>' } }, 100);
-    const intruder = change({ entity: 'section', entityKey: 's1', op: 'set', authorKey: 'barbara', fields: { html: '<p>Barbara</p>' } }, 500, 'dev-b');
-    expect(viewOf(materialize([create, intruder])['section:s1'])?.['html']).toBe('<p>Bruno</p>');
+    const other = change({ entity: 'section', entityKey: 's1', op: 'set', authorKey: 'barbara', fields: { html: '<p>Barbara</p>' } }, 500, 'dev-b');
+    expect(viewOf(materialize([create, other])['section:s1'])?.['html']).toBe('<p>Barbara</p>');
+  });
+
+  it('comments stay owned', () => {
+    const create = change({ entity: 'comment', entityKey: 'c1', op: 'create', fields: { text: 'Bruno' } }, 100);
+    const intruder = change({ entity: 'comment', entityKey: 'c1', op: 'set', authorKey: 'barbara', fields: { text: 'Barbara' } }, 500, 'dev-b');
+    expect(viewOf(materialize([create, intruder])['comment:c1'])?.['text']).toBe('Bruno');
   });
 
   it('shared footprint fields accept both authors', () => {
@@ -104,9 +110,37 @@ describe('journal merge', () => {
     expect(viewOf(materialize([create, archive, revive])['footprint:f1'])).toBeUndefined();
   });
 
-  it('non-owner archive of an owned section is ignored', () => {
-    const create = change({ entity: 'section', entityKey: 's1', op: 'create', fields: { html: '<p>x</p>' } }, 100);
-    const archive = change({ entity: 'section', entityKey: 's1', op: 'archive', authorKey: 'barbara' }, 200, 'dev-b');
-    expect(viewOf(materialize([create, archive])['section:s1'])?.['html']).toBe('<p>x</p>');
+  it('non-owner archive of an owned comment is ignored', () => {
+    const create = change({ entity: 'comment', entityKey: 'c1', op: 'create', fields: { text: 'x' } }, 100);
+    const archive = change({ entity: 'comment', entityKey: 'c1', op: 'archive', authorKey: 'barbara' }, 200, 'dev-b');
+    expect(viewOf(materialize([create, archive])['comment:c1'])?.['text']).toBe('x');
+  });
+
+  const historyRecords = () => [
+    change({ entity: 'section', entityKey: 's1', op: 'create', fields: { html: '<p>1</p>' }, bases: {} }, 100),
+    change({ entity: 'section', entityKey: 's1', op: 'set', fields: { html: '<p>2</p>' }, bases: { html: formatHlc({ wall: 100, counter: 0, deviceId: 'dev-a' }) } }, 200),
+    change({ entity: 'section', entityKey: 's1', op: 'set', authorKey: 'barbara', fields: { html: '<p>3</p>' }, bases: { html: formatHlc({ wall: 100, counter: 0, deviceId: 'dev-a' }) } }, 300, 'dev-b'),
+  ];
+
+  it('history keeps every value of a conflict field once', () => {
+    const records = historyRecords();
+    const shuffled = [records[2], records[0], records[1], records[1], records[2], records[0]];
+    const history = materialize(shuffled)['section:s1'].history?.['html'];
+    expect(history?.map((r) => r.value)).toEqual(['<p>1</p>', '<p>2</p>', '<p>3</p>']);
+    expect(history?.map((r) => r.base)).toEqual([undefined, records[1].bases?.['html'], records[2].bases?.['html']]);
+    expect(history?.[2].authorKey).toBe('barbara');
+  });
+
+  it('history is order-independent', () => {
+    const records = [
+      ...historyRecords(),
+      change({ entity: 'footprint', entityKey: 'f1', op: 'create', fields: { title: 'Neko' } }, 110),
+      change({ entity: 'footprint', entityKey: 'f1', op: 'set', fields: { title: 'Neko Harbour' } }, 210),
+      change({ entity: 'footprint', entityKey: 'f1', op: 'set', authorKey: 'barbara', fields: { title: 'Neko Hbr' } }, 310, 'dev-b'),
+    ];
+    const sorted = [...records].sort((a, b) => a.hlc.localeCompare(b.hlc));
+    const shuffled = [records[4], records[1], records[5], records[0], records[3], records[2]];
+    expect(materialize(shuffled)).toEqual(materialize(sorted));
+    expect(materialize(shuffled)['footprint:f1'].history?.['title']).toHaveLength(3);
   });
 });

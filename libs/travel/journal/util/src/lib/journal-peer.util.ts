@@ -86,6 +86,10 @@ function isChange(r: unknown, journalKey: string): r is JournalChange {
     && OPS.includes(c['op'] as JournalChangeOp) && typeof c['fields'] === 'object' && c['fields'] !== null && !Array.isArray(c['fields']);
 }
 
+function isBases(b: unknown): b is Record<string, string> {
+  return typeof b === 'object' && b !== null && !Array.isArray(b) && Object.values(b).every((v) => typeof v === 'string');
+}
+
 /**
  * The records of a peer page this device stores: well-formed, of this journal, and with a clock the server
  * would accept too (not more than 24 h ahead of now) — so both iPads and Firebase merge the same set.
@@ -93,7 +97,9 @@ function isChange(r: unknown, journalKey: string): r is JournalChange {
 export function acceptPeerRecords(records: unknown[], journalKey: string, nowMs: number): JournalChange[] {
   return records
     .filter((r): r is JournalChange => isChange(r, journalKey))
-    .map(({ id, journalKey: jk, deviceId, seq, hlc, authorKey, entity, entityKey, op, fields }) =>
-      ({ id, journalKey: jk, deviceId, seq, hlc, authorKey, entity, entityKey, op, fields }))
+    .map(({ id, journalKey: jk, deviceId, seq, hlc, authorKey, entity, entityKey, op, fields, bases }) => {
+      const base = { id, journalKey: jk, deviceId, seq, hlc, authorKey, entity, entityKey, op, fields };
+      return isBases(bases) ? { ...base, bases } : base;
+    })
     .filter((c) => acceptRecord(c, nowMs));
 }

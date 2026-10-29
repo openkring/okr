@@ -16,6 +16,7 @@ export interface NewChange {
   entityKey: string;
   op: JournalChangeOp;
   fields: Record<string, unknown>;
+  bases?: Record<string, string>;
 }
 
 export function createChange(input: NewChange, last: ChangeStamp, now: number): { change: JournalChange; stamp: ChangeStamp } {
@@ -32,6 +33,7 @@ export function createChange(input: NewChange, last: ChangeStamp, now: number): 
     entityKey: input.entityKey,
     op: input.op,
     fields: { ...input.fields },
+    ...(input.bases ? { bases: { ...input.bases } } : {}),
   };
   return { change, stamp: { clock, seq } };
 }
