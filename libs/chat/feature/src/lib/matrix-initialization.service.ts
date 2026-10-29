@@ -3,8 +3,6 @@ import { toObservable } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
-import { getApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
 
 import { AppStore } from '@okr/shared-feature';
 import { MatrixChatService } from '@okr/chat-data-access';
@@ -21,6 +19,10 @@ import { MatrixChatStore } from './matrix-chat.store';
 /**
  * Service to initialize Matrix chat early in the app lifecycle.
  * This runs after user authentication and prepares Matrix before the user navigates to chat.
+ *
+ * Push (FCM token, listeners) and the icon badge do NOT wait for Matrix (1.127): they start at
+ * bootstrap, so a blocked or failing chat still leaves task, invitation and calendar pushes
+ * working. Only the Matrix pusher (chat pushes) follows once Matrix is in use.
  */
 @Injectable({
   providedIn: 'root'
@@ -40,7 +42,8 @@ export class MatrixInitializationService {
   private readonly chatStatus = inject(ChatStatusService);
   private initializationStarted = false;
   private kioskCallWindowMounted = false;
-  private sessionSetupDone = false;
+  /** The uid this device last registered for push; undefined while signed out. */
+  private pushUid: string | undefined;
 
   /**
    * 1.107 gate state: 'none' (signed out), 'blocked' (chat blocked for this person) or 'open'.
@@ -68,6 +71,9 @@ export class MatrixInitializationService {
     // the chat never connects (blocked, credentials or sync failing) or push registration hangs.
     this.startBadgeSync();
 
+    // Independent of Matrix as well (1.127): push listeners and token registration.
+    this.startPushSession();
+
     // Live transitions (1.107): connect while chat is open for the signed-in user, disconnect
     // (keeping the cache) when an admin blocks it. runInInjectionContext is needed because this
     // is called from APP_BOOTSTRAP_LISTENER. Only chatGate is tracked; the async work is untracked.
@@ -89,14 +95,11 @@ export class MatrixInitializationService {
   }
 
   /**
-   * Mount the floating call window on a kiosk device, once, outside the router outlet, so an
-   * auto-answered admin call is visible on top of the Logbuch without taking it over.
-   * Non-kiosk users never get it — they answer calls in the chat view as before.
-   */
-  /**
    * After login: if push is undecided on this device (native app or installed PWA), ask in-app
    * before the system prompt — iOS shows that one only once. «Erlauben» is the user gesture the
-   * system prompt needs; «Später» snoozes for PUSH_PROMPT_SNOOZE_MS on this device.
+   * system prompt needs, so its handler starts the registration synchronously — the
+   * permission request must run inside the tap, not after the alert's dismiss animation.
+   * «Später» (and a backdrop tap) snoozes for PUSH_PROMPT_SNOOZE_MS on this device.
    */
   private async askForPushIfUndecided(uid: string): Promise<void> {
     const snoozeKey = 'okr.pushPrompt.snoozedUntil';
@@ -113,17 +116,35 @@ export class MatrixInitializationService {
       message: i18n.message(),
       buttons: [
         { text: i18n.later(), role: 'cancel' },
-        { text: i18n.allow(), role: 'confirm' },
+        {
+          text: i18n.allow(),
+          role: 'confirm',
+          // Not awaited: enablePush runs synchronously up to Notification.requestPermission(),
+          // so the prompt is reached inside the click (1.127).
+          handler: () => {
+            void this.registerPush(uid, true).catch(err =>
+              console.warn('MatrixInitializationService: push registration after prompt failed:', err));
+          },
+        },
       ],
     });
     await alert.present();
     const { role } = await alert.onWillDismiss();
-    if (role === 'confirm') {
-      await this.fcmService.enablePush(uid, true).catch(err =>
-        console.warn('MatrixInitializationService: push registration after prompt failed:', err));
-    } else {
+    if (role !== 'confirm') {
       try { localStorage.setItem(snoozeKey, String(Date.now() + PUSH_PROMPT_SNOOZE_MS)); } catch { /* best effort */ }
     }
+  }
+
+  /**
+   * Register this device's push token for uid. The Matrix pusher comes along only while chat is
+   * open; while blocked, initializeMatrix adds it after an unblock (ensureMatrixPusher). If the
+   * gate opened while the token was being fetched, the pusher follows here so it is not missed.
+   */
+  private async registerPush(uid: string, allowPrompt: boolean): Promise<string | null> {
+    const withPusher = this.chatGate() === 'open';
+    const token = await this.fcmService.enablePush(uid, allowPrompt, withPusher);
+    if (token && !withPusher && this.chatGate() === 'open') await this.fcmService.ensureMatrixPusher();
+    return token;
   }
 
   /**
@@ -184,6 +205,119 @@ export class MatrixInitializationService {
     });
   }
 
+  /**
+   * Push listeners and token registration, started at bootstrap and independent of Matrix
+   * (1.127): they used to run behind ensureInitialized, so a blocked chat or a failing Matrix
+   * login meant no push at all on this device. Listeners attach once, synchronously.
+   */
+  private startPushSession(): void {
+    if (Capacitor.isNativePlatform()) {
+      // Native iOS/Android: PushNotifications fires when app is open (foreground).
+      // The OS suppresses the notification banner on native foreground — navigate directly.
+      PushNotifications.addListener('pushNotificationReceived', notification => {
+        const data = notification.data as Record<string, string> | undefined;
+        if (data?.['type'] !== 'video-call') return;
+        if (this.isChatBlockedForMe()) return; // 1.107: no call to land on while blocked
+        const url = data['url'];
+        if (url) {
+          this.router.navigateByUrl(url);
+        }
+      });
+
+      // Native: tapping a notification when app was backgrounded/closed
+      PushNotifications.addListener('pushNotificationActionPerformed', action => {
+        const data = action.notification.data as Record<string, string> | undefined;
+        const url = data?.['url'];
+        if (url) {
+          this.router.navigateByUrl(url);
+        }
+      });
+    } else {
+      // Web / PWA: foreground FCM messages (service worker doesn't show a banner when app is open).
+      this.fcmService.listenForMessages().subscribe(payload => {
+        if (payload?.data?.['type'] !== 'video-call') return;
+        if (this.isChatBlockedForMe()) return; // 1.107: no «Video-Anruf» banner, no navigation
+        const callerName = payload.data['callerName'] ?? 'Unbekannt';
+        const roomName   = payload.data['roomName']   ?? '';
+        const url        = payload.data['url']        as string | undefined;
+
+        // Show a notification via the service worker — works on all platforms including iOS Safari.
+        // new Notification() from the main thread is blocked on iOS and unreliable on Android
+        // when a service worker is active; SW.showNotification() is the correct cross-platform API.
+        // Through the FCM worker's registration, not `ready` (ngsw): only the FCM worker's
+        // notificationclick opens `data.url`.
+        if (Notification.permission === 'granted' && 'serviceWorker' in navigator) {
+          this.fcmService.getPushRegistration().then(sw => {
+            sw?.showNotification(`📹 Video-Anruf von ${callerName}`, {
+              body: roomName ? `In ${roomName}` : 'Eingehender Video-Anruf',
+              icon: `${this.appStore.services.imgixBaseUrl()}/tenant/${this.appStore.tenantId()}/logo/logo-master.png?w=192&h=192&fm=png&auto=`,
+              tag: 'video-call',
+              requireInteraction: true,
+              data: { url },
+            } as NotificationOptions);
+          }).catch(() => {});
+        }
+
+        // Navigate directly to the chat page so the user lands on the call
+        if (url) {
+          this.router.navigateByUrl(url);
+        }
+      });
+
+      // A tapped notification whose worker could not route the open window itself
+      // (see focusOrOpen in firebase-messaging-sw.js).
+      this.fcmService.notificationClicks().subscribe(url => this.router.navigateByUrl(url));
+
+      // Close chat banners for rooms that are no longer unread. Nothing else ever closes a
+      // displayed notification (only notificationclick does), so a DM the user already read
+      // or answered — here or on another device — kept sitting in the OS notification centre.
+      // Synapse's clearing push is dropped server-side (matrixPushGateway), so this is the
+      // only signal. Video-call banners are left alone: they ring with requireInteraction.
+      const closeReadNotifications = async () => {
+        if (!('serviceWorker' in navigator)) return;
+        // The FCM worker's registration: the banners are its own, ngsw's lists none of them.
+        const reg = await this.fcmService.getPushRegistration().catch(() => undefined);
+        // Safari on macOS only exposes getNotifications() in an installed PWA (SCS-4N).
+        if (!reg || typeof reg.getNotifications !== 'function') return;
+        const unread = new Set(this.matrixChatStore.unreadRooms().map(r => r.roomId));
+        for (const n of await reg.getNotifications()) {
+          const data = n.data as { type?: string; roomId?: string } | undefined;
+          if (data?.type === 'chat' && data.roomId && !unread.has(data.roomId)) n.close();
+        }
+      };
+      runInInjectionContext(this.injector, () =>
+        toObservable(this.matrixChatStore.unreadRooms).subscribe(() => closeReadNotifications())
+      );
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') closeReadNotifications();
+      });
+    }
+
+    // Register for push per signed-in user (FCM token; the Matrix pusher only while chat is open,
+    // see registerPush). Without a decided permission nothing registers here — iOS and Android 13+
+    // need a user gesture — so ask once, in-app first (spec 1.10 Phase 3 follow-up). A logout
+    // resets the uid (AuthService.logout removes the token), so the next user registers anew.
+    const uid = computed(() => this.appStore.currentUser()?.okey);
+    runInInjectionContext(this.injector, () => effect(() => {
+      const current = uid();
+      untracked(() => {
+        if (!current) {
+          this.pushUid = undefined;
+          return;
+        }
+        if (current === this.pushUid || !this.fcmService.isSupported()) return;
+        this.pushUid = current;
+        void this.registerPush(current, false)
+          .catch(err => {
+            console.warn('MatrixInitializationService: push registration failed (non-critical):', err);
+            return null;
+          })
+          .then(token => token ? undefined : this.askForPushIfUndecided(current))
+          .catch(err => console.warn('MatrixInitializationService: push prompt failed:', err));
+      });
+    }));
+  }
+
   /** The chat was blocked during a call: the call is gone, show the admin's message. */
   private async showCallEndedByBlockAlert(): Promise<void> {
     const i18n = this.blockedAlertI18n;
@@ -201,6 +335,11 @@ export class MatrixInitializationService {
     return this.chatGate() === 'blocked';
   }
 
+  /**
+   * Mount the floating call window on a kiosk device, once, outside the router outlet, so an
+   * auto-answered admin call is visible on top of the Logbuch without taking it over.
+   * Non-kiosk users never get it — they answer calls in the chat view as before.
+   */
   private mountKioskCallWindow(): void {
     if (this.kioskCallWindowMounted || !isKioskOnly(this.appStore.currentUser())) return;
     this.kioskCallWindowMounted = true;
@@ -230,105 +369,9 @@ export class MatrixInitializationService {
 
       this.mountKioskCallWindow();
 
-      // Push registration, listeners and badge sync run once per app lifetime; a reconnect
-      // after an unblock (or a token refresh) must not register them a second time.
-      if (this.sessionSetupDone) return;
-      this.sessionSetupDone = true;
-
-      // Register for push (FCM token + Matrix pusher, see FcmService.enablePush). Without a decided
-      // permission nothing registers here — iOS and Android 13+ need a user gesture — so ask once,
-      // in-app first (spec 1.10 Phase 3 follow-up).
-      const uid = getAuth(getApp()).currentUser?.uid;
-      if (uid && this.fcmService.isSupported()) {
-        const fcmToken = await this.fcmService.enablePush(uid).catch(err => {
-          console.warn('MatrixInitializationService: push registration failed (non-critical):', err);
-          return null;
-        });
-        if (!fcmToken) await this.askForPushIfUndecided(uid);
-      }
-
-      if (Capacitor.isNativePlatform()) {
-        // Native iOS/Android: PushNotifications fires when app is open (foreground).
-        // The OS suppresses the notification banner on native foreground — navigate directly.
-        PushNotifications.addListener('pushNotificationReceived', notification => {
-          const data = notification.data as Record<string, string> | undefined;
-          if (data?.['type'] !== 'video-call') return;
-          if (this.isChatBlockedForMe()) return; // 1.107: no call to land on while blocked
-          const url = data['url'];
-          if (url) {
-            this.router.navigateByUrl(url);
-          }
-        });
-
-        // Native: tapping a notification when app was backgrounded/closed
-        PushNotifications.addListener('pushNotificationActionPerformed', action => {
-          const data = action.notification.data as Record<string, string> | undefined;
-          const url = data?.['url'];
-          if (url) {
-            this.router.navigateByUrl(url);
-          }
-        });
-      } else {
-        // Web / PWA: foreground FCM messages (service worker doesn't show a banner when app is open).
-        this.fcmService.listenForMessages().subscribe(payload => {
-          if (payload?.data?.['type'] !== 'video-call') return;
-          if (this.isChatBlockedForMe()) return; // 1.107: no «Video-Anruf» banner, no navigation
-          const callerName = payload.data['callerName'] ?? 'Unbekannt';
-          const roomName   = payload.data['roomName']   ?? '';
-          const url        = payload.data['url']        as string | undefined;
-
-          // Show a notification via the service worker — works on all platforms including iOS Safari.
-          // new Notification() from the main thread is blocked on iOS and unreliable on Android
-          // when a service worker is active; SW.showNotification() is the correct cross-platform API.
-          // Through the FCM worker's registration, not `ready` (ngsw): only the FCM worker's
-          // notificationclick opens `data.url`.
-          if (Notification.permission === 'granted' && 'serviceWorker' in navigator) {
-            this.fcmService.getPushRegistration().then(sw => {
-              sw?.showNotification(`📹 Video-Anruf von ${callerName}`, {
-                body: roomName ? `In ${roomName}` : 'Eingehender Video-Anruf',
-                icon: `${this.appStore.services.imgixBaseUrl()}/tenant/${this.appStore.tenantId()}/logo/logo-master.png?w=192&h=192&fm=png&auto=`,
-                tag: 'video-call',
-                requireInteraction: true,
-                data: { url },
-              } as NotificationOptions);
-            }).catch(() => {});
-          }
-
-          // Navigate directly to the chat page so the user lands on the call
-          if (url) {
-            this.router.navigateByUrl(url);
-          }
-        });
-
-        // A tapped notification whose worker could not route the open window itself
-        // (see focusOrOpen in firebase-messaging-sw.js).
-        this.fcmService.notificationClicks().subscribe(url => this.router.navigateByUrl(url));
-
-        // Close chat banners for rooms that are no longer unread. Nothing else ever closes a
-        // displayed notification (only notificationclick does), so a DM the user already read
-        // or answered — here or on another device — kept sitting in the OS notification centre.
-        // Synapse's clearing push is dropped server-side (matrixPushGateway), so this is the
-        // only signal. Video-call banners are left alone: they ring with requireInteraction.
-        const closeReadNotifications = async () => {
-          if (!('serviceWorker' in navigator)) return;
-          // The FCM worker's registration: the banners are its own, ngsw's lists none of them.
-          const reg = await this.fcmService.getPushRegistration().catch(() => undefined);
-          // Safari on macOS only exposes getNotifications() in an installed PWA (SCS-4N).
-          if (!reg || typeof reg.getNotifications !== 'function') return;
-          const unread = new Set(this.matrixChatStore.unreadRooms().map(r => r.roomId));
-          for (const n of await reg.getNotifications()) {
-            const data = n.data as { type?: string; roomId?: string } | undefined;
-            if (data?.type === 'chat' && data.roomId && !unread.has(data.roomId)) n.close();
-          }
-        };
-        runInInjectionContext(this.injector, () =>
-          toObservable(this.matrixChatStore.unreadRooms).subscribe(() => closeReadNotifications())
-        );
-        document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'visible') closeReadNotifications();
-        });
-
-      }
+      // The Matrix pusher (chat pushes) once Matrix is in use: on the first connect, and again
+      // after an unblock. Registers once per token; a no-op before push is enabled on this device.
+      await this.fcmService.ensureMatrixPusher();
 
     } catch (error) {
       if (error instanceof ChatBlockedError) {

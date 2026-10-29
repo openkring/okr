@@ -4,7 +4,7 @@ import { PushNotifications } from '@capacitor/push-notifications';
 import { getApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage, isSupported as isMessagingSupported, Messaging } from 'firebase/messaging';
 import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp, collection, query, where, documentId, getDocs, writeBatch } from 'firebase/firestore';
-import { EMPTY, Observable, fromEvent, of } from 'rxjs';
+import { EMPTY, Observable, fromEvent } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 
 import { ENV } from '@okr/shared-config';
@@ -24,6 +24,11 @@ const FCM_SW_SCOPE = '/firebase-cloud-messaging-push-scope';
 })
 export class FcmService {
   private messaging: Messaging | null = null;
+  /**
+   * Settles once the Messaging init below has finished (with null when unsupported). Push
+   * listeners and registration start at bootstrap now (1.127), often before that init is done.
+   */
+  private messagingReady: Promise<Messaging | null> = Promise.resolve(null);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly env = inject(ENV);
   private _currentToken: string | null = null;
@@ -41,14 +46,15 @@ export class FcmService {
     // It returns false e.g. on iOS Safari in a regular browser tab (web push there only works
     // for home-screen PWAs), so we skip getMessaging() rather than let it throw
     // messaging/unsupported-browser and pollute error reporting.
-    isMessagingSupported().then((supported) => {
-      if (!supported) return;
+    this.messagingReady = isMessagingSupported().then((supported) => {
+      if (!supported) return null;
       try {
         this.messaging = getMessaging(getApp());
       } catch (error) {
         console.error('FcmService: Failed to initialize Firebase Messaging', error);
       }
-    });
+      return this.messaging;
+    }).catch(() => null);
   }
 
   /**
@@ -213,6 +219,9 @@ export class FcmService {
       console.warn('FcmService.registerWebAndSave: fcmVapidKey not configured in environment');
       return null;
     }
+    // Only wait while the init is still running: an await here on the prompt path would run
+    // requestPermission() outside the user's tap. Once initialised this stays synchronous.
+    if (!this.messaging) await this.messagingReady;
     if (!this.messaging) {
       console.warn('FcmService.registerWebAndSave: Messaging not initialized');
       return null;
@@ -263,15 +272,16 @@ export class FcmService {
    * Background messages are handled by the service worker (firebase-messaging-sw.js).
    */
   listenForMessages(): Observable<any> {
-    if (!this.messaging) {
-      return of(null);
-    }
-
+    // Subscribed at bootstrap, possibly before Messaging is initialised: attach once it is.
+    // Emits nothing where Messaging is unsupported.
     return new Observable(subscriber => {
-      const unsubscribe = onMessage(this.messaging!, (payload) => {
-        subscriber.next(payload);
+      let unsubscribe: (() => void) | undefined;
+      let closed = false;
+      void this.messagingReady.then(messaging => {
+        if (!messaging || closed) return;
+        unsubscribe = onMessage(messaging, (payload) => subscriber.next(payload));
       });
-      return () => unsubscribe();
+      return () => { closed = true; unsubscribe?.(); };
     });
   }
 
