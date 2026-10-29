@@ -43,3 +43,41 @@ export function sortByOrder<T extends { order?: string; okey: string }>(items: T
     return x.okey < y.okey ? -1 : x.okey > y.okey ? 1 : 0;
   });
 }
+
+/**
+ * New `order` values for the blocks that must move so that `keys` reads strictly increasing. The
+ * longest run of blocks already in the right order stays untouched; every other block gets a key
+ * between its kept neighbours, so a drag rewrites one block and two authors reordering different
+ * blocks rarely collide. Keys without a block are ignored.
+ */
+export function reorderedOrders(blocks: { key: string; order: string }[], keys: string[]): Record<string, string> {
+  const orderOf = new Map(blocks.map((b) => [b.key, b.order]));
+  const seq = keys.filter((k) => orderOf.has(k));
+  const orders = seq.map((k) => orderOf.get(k) as string);
+
+  // longest strictly increasing subsequence (O(n²): a footprint holds a handful of blocks)
+  const length: number[] = [];
+  const prev: number[] = [];
+  let best = -1;
+  for (let i = 0; i < seq.length; i++) {
+    length[i] = 1;
+    prev[i] = -1;
+    for (let j = 0; j < i; j++) {
+      if (orders[j] < orders[i] && length[j] + 1 > length[i]) { length[i] = length[j] + 1; prev[i] = j; }
+    }
+    if (best < 0 || length[i] > length[best]) best = i;
+  }
+  const kept = new Set<number>();
+  for (let i = best; i >= 0; i = prev[i]) kept.add(i);
+
+  const result: Record<string, string> = {};
+  let lower: string | undefined;
+  for (let i = 0; i < seq.length; i++) {
+    if (kept.has(i)) { lower = orders[i]; continue; }
+    let upper: string | undefined;
+    for (let j = i + 1; j < seq.length; j++) if (kept.has(j)) { upper = orders[j]; break; }
+    lower = orderBetween(lower, upper);
+    result[seq[i]] = lower;
+  }
+  return result;
+}

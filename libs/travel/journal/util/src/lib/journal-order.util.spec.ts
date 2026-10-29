@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { orderBetween, sortByOrder } from './journal-order.util';
+import { orderBetween, reorderedOrders, sortByOrder } from './journal-order.util';
 
 describe('journal order', () => {
   it('orderBetween stays strictly ordered', () => {
@@ -49,5 +49,31 @@ describe('journal order', () => {
       { okey: 'd', order: 'a' },
     ];
     expect(sortByOrder(items).map((i) => i.okey)).toEqual(['d', 'a', 'c', 'b']);
+  });
+  describe('reorderedOrders', () => {
+    const blocks = [{ key: 'x', order: 'a0' }, { key: 'y', order: 'a1' }, { key: 'z', order: 'a2' }];
+
+    it('reorder moves one block', () => {
+      const changed = reorderedOrders(blocks, ['z', 'x', 'y']);
+      expect(Object.keys(changed)).toEqual(['z']);
+      expect(changed['z'] < 'a0').toBe(true);
+    });
+
+    it('reorder with equal orders', () => {
+      const tied = [{ key: 'p', order: 'a1' }, { key: 'q', order: 'a1' }, { key: 'r', order: 'a2' }];
+      const changed = reorderedOrders(tied, ['p', 'q', 'r']);
+      const seq = ['p', 'q', 'r'].map((k) => changed[k] ?? tied.find((b) => b.key === k)?.order ?? '');
+      expect(seq[0] < seq[1] && seq[1] < seq[2]).toBe(true);
+    });
+
+    it('reorder unchanged returns {}', () => {
+      expect(reorderedOrders(blocks, ['x', 'y', 'z'])).toEqual({});
+    });
+
+    it('reorder moves several blocks into one gap', () => {
+      const changed = reorderedOrders(blocks, ['y', 'z', 'x']);
+      const seq = ['y', 'z', 'x'].map((k) => changed[k] ?? blocks.find((b) => b.key === k)?.order ?? '');
+      expect(seq[0] < seq[1] && seq[1] < seq[2]).toBe(true);
+    });
   });
 });
