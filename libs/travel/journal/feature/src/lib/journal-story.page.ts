@@ -1,33 +1,36 @@
-import { Component, computed, effect, inject, input, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 import {
-  ActionSheetController, AlertController, IonBackButton, IonButton, IonButtons, IonContent, IonFooter, IonHeader, IonTitle, IonToolbar,
-  ModalController, ToastController,
+  ActionSheetController, AlertController, IonBackButton, IonButton, IonButtons, IonContent, IonFooter, IonHeader, IonIcon, IonTitle, IonToolbar,
+  ModalController, PopoverController, ToastController,
 } from '@ionic/angular';
 
 import { AlbumSectionComponent, ArticleSectionComponent, HeroSectionComponent } from '@okr/cms-section-feature';
 import { AppStore } from '@okr/shared-feature';
 import { fill } from '@okr/shared-util-core';
 import { FootprintEditModal, JournalReactions, ReactionComment, TextBlockEditModal } from '@okr/travel-journal-ui';
-import { okrPrompt } from '@okr/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, okrPrompt } from '@okr/shared-util-angular';
+import { SvgIconPipe } from '@okr/shared-pipes';
 import { AlbumSection, ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig } from '@okr/shared-models';
 import { openImageGallery } from '@okr/shared-ui';
-import { FootprintFormModel, StoryBlock, toStorySections } from '@okr/travel-journal-util';
+import { blockActions, footprintMenu, FootprintFormModel, StoryBlock, toStorySections } from '@okr/travel-journal-util';
 
 import { JournalFileUrlService } from './journal-file-url.service';
 import { showJournalError } from './journal-errors';
+import { openJournalMenu } from './journal-menu-open';
 import { JournalStore } from './journal.store';
 
 /**
  * A footprint's story page (spec 1.113 §9.2): hero cover, then the text and photo blocks rendered by
  * the standalone CMS section components (not the SectionDispatcher, whose SectionStore queries
- * Firestore). Only the author of a block can edit or delete it.
+ * Firestore). Edited like a CMS content page (spec 1.126 §5): ⋮ menu with an edit-mode toggle, blocks highlighted in
+ * edit mode, a tap on a block opens its ActionSheet. Phase 1: only the author of a block can edit or delete it.
  */
 @Component({
   selector: 'okr-journal-story-page',
   imports: [
     JournalReactions,
-    IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonFooter, IonButton,
+    IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonFooter, IonButton, IonIcon, SvgIconPipe,
     HeroSectionComponent, ArticleSectionComponent, AlbumSectionComponent,
   ],
   styles: [`
@@ -35,16 +38,20 @@ import { JournalStore } from './journal.store';
     .plain-title h1 { margin: 0; }
     .plain-title p { margin: 4px 0 0; color: var(--ion-color-medium); }
     .block { position: relative; }
-    .block-meta { display: flex; justify-content: space-between; align-items: center; padding: 0 16px; font-size: 0.8rem; color: var(--ion-color-medium); }
+    /* the CMS edit-mode highlight (content.page .section-wrapper.editable) */
+    .block.editable { border: 3px solid var(--ion-color-primary); border-radius: 8px; margin: 8px; padding: 4px; cursor: pointer; }
     .badge { font-size: 0.75rem; padding: 2px 8px; border-radius: 8px; background: var(--ion-color-light); }
   `],
   template: `
     <ion-header>
-      <ion-toolbar>
+      <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-back-button [defaultHref]="'/journal/' + journalKey()" /></ion-buttons>
         <ion-title>{{ footprint()?.title || store.i18n.untitled() }}</ion-title>
         <ion-buttons slot="end">
           <span class="badge">{{ footprint()?.publishState === 'published' ? store.i18n.story_published() : store.i18n.story_draft() }}</span>
+          @if (menuItems().length > 0) {
+            <ion-button (click)="menu($event)" [attr.aria-label]="store.i18n.menu_open()"><ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" /></ion-button>
+          }
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -59,16 +66,12 @@ import { JournalStore } from './journal.store';
           </div>
         }
         @for (item of story.blocks; track item.block.key) {
-          <div class="block">
-            <div class="block-meta">
-              <span>{{ authorLabel(item) }}</span>
-              @if (isOwn(item)) { <ion-button fill="clear" size="small" (click)="blockActions(item)">{{ store.i18n.block_actions() }}</ion-button> }
-            </div>
+          <div class="block" [class.editable]="editMode() && isOwn(item)" (click)="tapBlock(item)">
             @if (asArticle(item); as article) {
               <okr-article-section [section]="article" />
             } @else if (asAlbum(item); as album) {
               <okr-album-section [section]="album" [explicitImages]="item.images" [showStyleSelect]="false"
-                [emitImageClicks]="isOwn(item)" (imageSelected)="photoActions(item, $event)" />
+                [emitImageClicks]="isOwn(item) && !editMode()" (imageSelected)="photoActions(item, $event)" />
             }
           </div>
         }
@@ -82,13 +85,6 @@ import { JournalStore } from './journal.store';
           <ion-button [disabled]="!previousKey()" (click)="go(previousKey())">{{ store.i18n.story_previous() }}</ion-button>
           <ion-button [disabled]="!nextKey()" (click)="go(nextKey())">{{ store.i18n.story_next() }}</ion-button>
         </ion-buttons>
-        @if (store.native()) {
-          <ion-buttons slot="end">
-            <ion-button (click)="addText()">{{ store.i18n.story_add_text() }}</ion-button>
-            <ion-button (click)="addPhotos()">{{ store.i18n.story_add_photos() }}</ion-button>
-            <ion-button (click)="footprintActions()">{{ store.i18n.story_footprint_menu() }}</ion-button>
-          </ion-buttons>
-        }
       </ion-toolbar>
     </ion-footer>
   `,
@@ -102,9 +98,13 @@ export class JournalStoryPage {
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly toastController = inject(ToastController);
   private readonly alertController = inject(AlertController);
+  private readonly popoverController = inject(PopoverController);
 
   public readonly journalKey = input.required<string>();
   public readonly footprintKey = input.required<string>();
+
+  protected readonly editMode = signal(false);
+  protected readonly menuItems = computed(() => footprintMenu({ native: this.store.native(), editMode: this.editMode() }));
 
   protected readonly likes = computed(() => this.store.likes(this.footprintKey()));
   protected readonly liked = computed(() => this.likes().includes(this.store.author()?.personKey ?? ''));
@@ -161,26 +161,74 @@ export class JournalStoryPage {
     return this.store.native() && !!me && item.block.authorKey === me;
   }
 
-  protected authorLabel(item: StoryBlock): string {
-    if (this.isOwn(item)) return this.store.i18n.story_by_you();
-    // other authors' names arrive with the journal's author list (plan 5/6); until then no name
-    return '';
+  protected async menu(event: Event): Promise<void> {
+    switch (await openJournalMenu(this.popoverController, event, this.menuItems(), this.store.i18n)) {
+      case 'toggleEditMode': return this.editMode.update((on) => !on);
+      case 'addBlock': return this.addBlock();
+      case 'editFootprint': return this.editFootprint();
+      case 'deleteFootprint': return this.confirmDeleteFootprint();
+    }
+  }
+
+  private async addBlock(): Promise<void> {
+    const i18n = this.store.i18n;
+    const imgix = this.appStore.services.imgixBaseUrl();
+    const options = createActionSheetOptions(i18n.add_block_title());
+    options.buttons.push(
+      createActionSheetButton('block.text', i18n.story_add_text(), imgix, 'text'),
+      createActionSheetButton('block.photos', i18n.story_add_photos(), imgix, 'images'),
+      createActionSheetButton('cancel', i18n.cancel(), imgix, 'cancel'),
+    );
+    const sheet = await this.actionSheetController.create(options);
+    await sheet.present();
+    const { data } = await sheet.onDidDismiss<{ action: string }>();
+    if (data?.action === 'block.text') await this.addText();
+    else if (data?.action === 'block.photos') await this.addPhotos();
+  }
+
+  /** In edit mode a tap on an own block opens its ActionSheet; outside edit mode a tap does nothing. */
+  protected tapBlock(item: StoryBlock): void {
+    if (this.editMode() && this.isOwn(item)) void this.blockSheet(item);
   }
 
   protected go(footprintKey: string | undefined): void {
     if (footprintKey) void this.router.navigate(['/journal', this.journalKey(), footprintKey], { replaceUrl: true });
   }
 
-  protected async blockActions(item: StoryBlock): Promise<void> {
+  private async blockSheet(item: StoryBlock): Promise<void> {
     const i18n = this.store.i18n;
-    const buttons = [
-      ...(item.block.kind === 'text'
-        ? [{ text: i18n.block_edit(), handler: () => void this.editText(item.block.key, item.block.html ?? '') }]
-        : [{ text: i18n.block_add_photos(), handler: () => void this.addPhotosToBlock(item.block.key) }]),
-      { text: i18n.block_delete(), role: 'destructive', handler: () => void this.run(() => this.store.archiveBlock(item.block.key)) },
-      { text: i18n.cancel(), role: 'cancel' },
-    ];
-    const sheet = await this.actionSheetController.create({ header: i18n.block_delete_confirm(), buttons });
+    const imgix = this.appStore.services.imgixBaseUrl();
+    const texts: Record<string, [string, string]> = {
+      'block.edit': [i18n.block_edit_action(), 'edit'],
+      'block.addphotos': [i18n.story_add_photos(), 'images'],
+      'block.delete': [i18n.block_delete_action(), 'trash'],
+    };
+    const actions = blockActions({ kind: item.block.kind, own: this.isOwn(item) });
+    if (actions.length === 0) return;
+    const options = createActionSheetOptions(i18n.block_edit_action());
+    options.buttons.push(
+      ...actions.map((a) => createActionSheetButton(a, texts[a][0], imgix, texts[a][1])),
+      createActionSheetButton('cancel', i18n.cancel(), imgix, 'cancel'),
+    );
+    const sheet = await this.actionSheetController.create(options);
+    await sheet.present();
+    const { data } = await sheet.onDidDismiss<{ action: string }>();
+    switch (data?.action) {
+      case 'block.edit': return this.editText(item.block.key, item.block.html ?? '');
+      case 'block.addphotos': return this.addPhotosToBlock(item.block.key);
+      case 'block.delete': return this.confirmDeleteBlock(item.block.key);
+    }
+  }
+
+  private async confirmDeleteBlock(blockKey: string): Promise<void> {
+    const i18n = this.store.i18n;
+    const sheet = await this.actionSheetController.create({
+      header: i18n.block_delete_confirm(),
+      buttons: [
+        { text: i18n.block_delete_action(), role: 'destructive', handler: () => void this.run(() => this.store.archiveBlock(blockKey)) },
+        { text: i18n.cancel(), role: 'cancel' },
+      ],
+    });
     await sheet.present();
   }
 
@@ -192,19 +240,6 @@ export class JournalStoryPage {
       buttons: [
         { text: i18n.photo_view(), handler: () => void openImageGallery(this.modalController, item.images ?? [], image, IMAGE_STYLE_SHAPE) },
         { text: i18n.photo_remove(), role: 'destructive', handler: () => void this.run(() => this.store.removePhotoFromBlock(item.block.key, image.label)) },
-        { text: i18n.cancel(), role: 'cancel' },
-      ],
-    });
-    await sheet.present();
-  }
-
-  protected async footprintActions(): Promise<void> {
-    const i18n = this.store.i18n;
-    const sheet = await this.actionSheetController.create({
-      header: this.footprint()?.title || i18n.untitled(),
-      buttons: [
-        { text: i18n.story_edit_footprint(), handler: () => void this.editFootprint() },
-        { text: i18n.story_footprint_delete(), role: 'destructive', handler: () => void this.confirmDeleteFootprint() },
         { text: i18n.cancel(), role: 'cancel' },
       ],
     });
