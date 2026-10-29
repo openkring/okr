@@ -46,17 +46,16 @@ export const applyJournalChange = onDocumentCreated(
     if (change.entity === 'section') {
       // a block and its conflict copies (`<block>_c_<hlc>`) materialise together (spec 1.126 §6.3)
       const original = originalOfCopy(change.entityKey);
-      const [own, copies] = await Promise.all([
+      const [own, copies, stored] = await Promise.all([
         ofEntity().where('entityKey', '==', original).get(),
         ofEntity().where('entityKey', '>=', `${original}_c_`).where('entityKey', '<', `${original}_c_~`).get(),
+        db.collection(`${JournalCollection}/${change.journalKey}/${JournalSectionCollection}`).where('conflictOf', '==', original).get(),
       ]);
-      const writes = planSectionWrites([...own.docs, ...copies.docs].map(toRecord), change.journalKey, original, tenants);
-      if (writes.length === 0) return;
-      // the footprint of an archived block is only on the stored document
-      const before = (await db.doc(writes[0].path).get()).data();
-      for (const write of writes) await db.doc(write.path).set(write.data);
-      const footprintKey = (writes[0].data['footprintKey'] ?? before?.['footprintKey']) as string | undefined;
-      if (footprintKey) await writeFootprintSections(change.journalKey, footprintKey, tenants);
+      const plan = planSectionWrites([...own.docs, ...copies.docs].map(toRecord), change.journalKey, original, tenants, stored.docs.map((d) => d.id));
+      if (plan.writes.length === 0) return;
+      for (const write of plan.writes) await db.doc(write.path).set(write.data);
+      // the footprint comes from the unarchived state: the stored doc of an archived block no longer has it
+      if (plan.footprintKey) await writeFootprintSections(change.journalKey, plan.footprintKey, tenants);
       return;
     }
     const snaps = await ofEntity().where('entityKey', '==', change.entityKey).get();

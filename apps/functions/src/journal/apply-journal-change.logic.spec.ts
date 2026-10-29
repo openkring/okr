@@ -52,7 +52,7 @@ describe('applyJournalChange logic', () => {
       const anna = edit('<p>Anna</p>', c.change.hlc, 'dev-b', 'anna');
       const bruno = edit('<p>Bruno</p>', c.change.hlc, 'dev-a', 'bruno');
       const copyKey = conflictCopyKey('s1', anna.change.hlc);
-      const writes = planSectionWrites([c, anna, bruno], 'j1', 's1', ['bkg']);
+      const writes = planSectionWrites([c, anna, bruno], 'j1', 's1', ['bkg'], []).writes;
       expect(writes.map((w) => w.path)).toEqual(['journals/j1/sections/s1', `journals/j1/sections/${copyKey}`]);
       expect(writes[0].data).toMatchObject({ content: { htmlContent: '<p>Bruno</p>' } });
       expect(writes[0].data['conflictOf']).toBeUndefined();
@@ -67,7 +67,7 @@ describe('applyJournalChange logic', () => {
       const bruno = edit('<p>Bruno</p>', c.change.hlc, 'dev-a', 'bruno');
       const copyKey = conflictCopyKey('s1', anna.change.hlc);
       const fix = edit('<p>Anna 2</p>', anna.change.hlc, 'dev-b', 'anna', copyKey);
-      const writes = planSectionWrites([fix, c, anna, bruno], 'j1', 's1', ['bkg']);
+      const writes = planSectionWrites([fix, c, anna, bruno], 'j1', 's1', ['bkg'], []).writes;
       expect(writes.find((w) => w.path.endsWith(copyKey))?.data).toMatchObject({ conflictOf: 's1', content: { htmlContent: '<p>Anna 2</p>' } });
     });
 
@@ -77,17 +77,53 @@ describe('applyJournalChange logic', () => {
       const bruno = edit('<p>Bruno</p>', c.change.hlc, 'dev-a', 'bruno');
       const copyKey = conflictCopyKey('s1', anna.change.hlc);
       const gone = rec({ entity: 'section', entityKey: copyKey, op: 'archive', bases: {} });
-      const writes = planSectionWrites([c, anna, bruno, gone], 'j1', 's1', ['bkg']);
+      const writes = planSectionWrites([c, anna, bruno, gone], 'j1', 's1', ['bkg'], []).writes;
       expect(writes.find((w) => w.path.endsWith(copyKey))?.data).toEqual({ isArchived: true });
+    });
+
+    it('a copy that stops being lost is archived (A1, B, then A2 based on A1)', () => {
+      const c = create();
+      const a1 = edit('<p>A1</p>', c.change.hlc, 'dev-b', 'anna');
+      const b = edit('<p>B</p>', c.change.hlc, 'dev-a', 'bruno');
+      const a2 = edit('<p>A2</p>', a1.change.hlc, 'dev-b', 'anna');
+      const copyA1 = conflictCopyKey('s1', a1.change.hlc);
+      const copyB = conflictCopyKey('s1', b.change.hlc);
+      const step1 = planSectionWrites([c, a1, b], 'j1', 's1', ['bkg'], []).writes;
+      expect(step1.find((w) => w.path.endsWith(copyA1))?.data).toMatchObject({ conflictOf: 's1' });
+      const step2 = planSectionWrites([c, a1, b, a2], 'j1', 's1', ['bkg'], [copyA1]).writes;
+      expect(step2.find((w) => w.path.endsWith(copyA1))?.data).toEqual({ isArchived: true });
+      expect(step2.find((w) => w.path.endsWith(copyB))?.data).toMatchObject({ conflictOf: 's1', content: { htmlContent: '<p>B</p>' } });
+    });
+
+    it('an existing copy that is not live is archived', () => {
+      const c = create();
+      const writes = planSectionWrites([c], 'j1', 's1', ['bkg'], ['s1_c_gone']).writes;
+      expect(writes.find((w) => w.path.endsWith('s1_c_gone'))?.data).toEqual({ isArchived: true });
+    });
+
+    it('the same records in reverse order give the same writes', () => {
+      const c = create();
+      const a1 = edit('<p>A1</p>', c.change.hlc, 'dev-b', 'anna');
+      const b = edit('<p>B</p>', c.change.hlc, 'dev-a', 'bruno');
+      const forward = [c, a1, b];
+      expect(planSectionWrites([...forward].reverse(), 'j1', 's1', ['bkg'], [])).toEqual(planSectionWrites(forward, 'j1', 's1', ['bkg'], []));
+    });
+
+    it('the footprint key is returned even when the original is archived', () => {
+      const c = create();
+      const gone = rec({ entity: 'section', entityKey: 's1', op: 'archive', bases: {} });
+      const plan = planSectionWrites([c, gone], 'j1', 's1', ['bkg'], []);
+      expect(plan.writes[0].data).toEqual({ isArchived: true });
+      expect(plan.footprintKey).toBe('f1');
     });
 
     it('nothing is written before the original was created', () => {
       const anna = edit('<p>Anna</p>', 'x', 'dev-b', 'anna');
-      expect(planSectionWrites([anna], 'j1', 's1', ['bkg'])).toEqual([]);
+      expect(planSectionWrites([anna], 'j1', 's1', ['bkg'], []).writes).toEqual([]);
     });
 
     it('a block without concurrent edits writes only itself', () => {
-      expect(planSectionWrites([create()], 'j1', 's1', ['bkg']).map((w) => w.path)).toEqual(['journals/j1/sections/s1']);
+      expect(planSectionWrites([create()], 'j1', 's1', ['bkg'], []).writes.map((w) => w.path)).toEqual(['journals/j1/sections/s1']);
     });
   });
 

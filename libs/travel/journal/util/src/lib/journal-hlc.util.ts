@@ -40,7 +40,8 @@ export function compareHlc(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
 
-const HLC_PATTERN = /^\d{15}:\d{6}:(.+)$/;
+// the device id ends up in conflict-copy keys, i.e. in Firestore paths: journal-key characters only
+const HLC_PATTERN = /^\d{15}:\d{6}:([A-Za-z0-9_-]+)$/;
 
 /** True when `hlc` has the exact format and names `deviceId` — the device that wrote the record. */
 export function isValidHlc(hlc: string, deviceId: string): boolean {
