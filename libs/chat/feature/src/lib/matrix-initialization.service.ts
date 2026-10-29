@@ -136,14 +136,14 @@ export class MatrixInitializationService {
   }
 
   /**
-   * Register this device's push token for uid. The Matrix pusher comes along only while chat is
-   * open; while blocked, initializeMatrix adds it after an unblock (ensureMatrixPusher). If the
-   * gate opened while the token was being fetched, the pusher follows here so it is not missed.
+   * Register this device's push token for uid. The Matrix pusher follows only once Matrix is up
+   * and chat is open: chatGate() reads 'open' while the block status is still loading, and the
+   * Synapse account may not exist yet on a first login. If Matrix comes up later,
+   * initializeMatrix adds the pusher (ensureMatrixPusher); this covers the other ordering.
    */
   private async registerPush(uid: string, allowPrompt: boolean): Promise<string | null> {
-    const withPusher = this.chatGate() === 'open';
-    const token = await this.fcmService.enablePush(uid, allowPrompt, withPusher);
-    if (token && !withPusher && this.chatGate() === 'open') await this.fcmService.ensureMatrixPusher();
+    const token = await this.fcmService.enablePush(uid, allowPrompt, false);
+    if (token && this.matrixService.isInitialized && this.chatGate() === 'open') await this.fcmService.ensureMatrixPusher();
     return token;
   }
 
@@ -293,7 +293,7 @@ export class MatrixInitializationService {
       });
     }
 
-    // Register for push per signed-in user (FCM token; the Matrix pusher only while chat is open,
+    // Register for push per signed-in user (FCM token; the Matrix pusher only once Matrix is up,
     // see registerPush). Without a decided permission nothing registers here — iOS and Android 13+
     // need a user gesture — so ask once, in-app first (spec 1.10 Phase 3 follow-up). A logout
     // resets the uid (AuthService.logout removes the token), so the next user registers anew.
