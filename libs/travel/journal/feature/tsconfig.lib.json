@@ -28,6 +28,7 @@
   ],
   "references": [
     { "path": "../../../auth/feature/tsconfig.lib.json" },
+    { "path": "../../../avatar/ui/tsconfig.lib.json" },
     { "path": "../../../cms/section/feature/tsconfig.lib.json" },
     { "path": "../../../shared/feature/tsconfig.lib.json" },
     { "path": "../../../shared/i18n/tsconfig.lib.json" },

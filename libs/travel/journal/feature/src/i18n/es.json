@@ -205,8 +205,7 @@
     "state_none": "aún sin enlace",
     "offline": "Solo puedes gestionar invitados con Internet.",
     "manage": "Gestionar invitados",
-    "empty": "Aún no has invitado a nadie.",
-    "remove_confirm": "¿Quitar a {name} como invitado?"
+    "empty": "Aún no has invitado a nadie."
   },
   "guest": {
     "loading": "Cargando el diario de viaje …",

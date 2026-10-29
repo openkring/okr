@@ -29,6 +29,7 @@
     "@okr/travel-journal-ui": "*",
     "@okr/shared-pipes": "*",
     "@capacitor/share": "*",
-    "@sentry/angular": "*"
+    "@sentry/angular": "*",
+    "@okr/avatar-ui": "*"
   }
 }

@@ -205,8 +205,7 @@
     "state_none": "ancora nessun link",
     "offline": "Puoi gestire gli ospiti solo con Internet.",
     "manage": "Gestisci gli ospiti",
-    "empty": "Nessun ospite invitato finora.",
-    "remove_confirm": "Rimuovere {name} dagli ospiti?"
+    "empty": "Nessun ospite invitato finora."
   },
   "guest": {
     "loading": "Caricamento del diario di viaggio …",

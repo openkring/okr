@@ -16,8 +16,8 @@ import { JournalStore } from './journal.store';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
- * The «Gäste» sheet of a journal (spec 1.113 §7, plan 7): add a guest (person picker), share the personal
- * link, set how long it works, block access, remove. Online only — the links live behind a callable.
+ * Guest actions of a journal (spec 1.113 §7, plan 7; listed in the «Gäste verwalten» modal since 1.126 §3): add a
+ * guest (person picker), share the personal link, set how long it works, block access, remove (confirmed).
  */
 @Injectable({ providedIn: 'root' })
 export class JournalGuestsSheet {
@@ -61,36 +61,28 @@ export class JournalGuestsSheet {
     }
   }
 
-  public async open(journalKey: string): Promise<void> {
-    const i18n = this.store.i18n;
-    if (!(await Network.getStatus()).connected) {
-      await this.toast(i18n.guest_offline());
-      return;
-    }
-    try {
-      const links = new Map((await this.guestService.links(journalKey)).filter((l) => !l.revokedAt).map((l) => [l.personKey, l]));
-      const guests = this.store.guests(journalKey);
-      // a live link of a person who is no longer on the guest list stays visible, so it can still be blocked
-      for (const personKey of links.keys()) {
-        if (!guests.some((g) => g.key === personKey)) {
-          guests.push({ key: personKey, name1: personKey, name2: '', modelType: 'person', type: '', subType: '', label: personKey });
-        }
+  /**
+   * The journal's guests with their link state, for the «Gäste verwalten» modal. Online only — the links live behind a
+   * callable. A live link of a person who is no longer on the guest list stays visible, so it can still be blocked.
+   */
+  public async load(journalKey: string): Promise<{ guest: AvatarInfo; state: string }[]> {
+    const links = new Map((await this.guestService.links(journalKey)).filter((l) => !l.revokedAt).map((l) => [l.personKey, l]));
+    const guests = [...this.store.guests(journalKey)];
+    for (const personKey of links.keys()) {
+      if (!guests.some((g) => g.key === personKey)) {
+        guests.push({ key: personKey, name1: personKey, name2: '', modelType: 'person', type: '', subType: '', label: personKey });
       }
-      const sheet = await this.actionSheetController.create({
-        header: i18n.guests_title(),
-        buttons: [
-          ...guests.map((guest) => ({ text: `${this.nameOf(guest)} · ${this.stateOf(links.get(guest.key))}`, handler: () => void this.guestActions(journalKey, guest) })),
-          { text: i18n.guest_add(), handler: () => void this.add(journalKey) },
-          { text: i18n.cancel(), role: 'cancel' },
-        ],
-      });
-      await sheet.present();
-    } catch (error) {
-      await showJournalError(this.toastController, i18n, error);
     }
+    return guests.map((guest) => ({ guest, state: this.stateOf(links.get(guest.key)) }));
   }
 
-  private nameOf(person: AvatarInfo): string {
+  public async isOnline(): Promise<boolean> {
+    if ((await Network.getStatus()).connected) return true;
+    await this.toast(this.store.i18n.guest_offline());
+    return false;
+  }
+
+  public nameOf(person: AvatarInfo): string {
     return `${person.name1} ${person.name2}`.trim() || person.label;
   }
 
@@ -104,26 +96,29 @@ export class JournalGuestsSheet {
     return parts.join(', ');
   }
 
-  private async add(journalKey: string): Promise<void> {
+  public async add(journalKey: string, changed: () => void): Promise<void> {
     const person = await this.modelSelectService.selectPersonAvatar();
     if (!person?.key) return; // cancelled, or a free-text name without a person
     try {
       await this.store.addGuest(journalKey, person);
+      changed();
       await this.share(journalKey, person);
+      changed(); // the share created the link
     } catch (error) {
       await showJournalError(this.toastController, this.store.i18n, error);
     }
   }
 
-  private async guestActions(journalKey: string, guest: AvatarInfo): Promise<void> {
+  /** The per-guest sheet; `changed` runs after an action that alters the guest list or a link. */
+  public async guestActions(journalKey: string, guest: AvatarInfo, changed: () => void): Promise<void> {
     const i18n = this.store.i18n;
     const sheet = await this.actionSheetController.create({
       header: this.nameOf(guest),
       buttons: [
         { text: i18n.guest_share(), handler: () => void this.share(journalKey, guest) },
-        { text: i18n.guest_expiry(), handler: () => void this.expiry(journalKey, guest) },
-        { text: i18n.guest_revoke(), role: 'destructive', handler: () => void this.confirmRevoke(journalKey, guest, false) },
-        { text: i18n.guest_remove(), role: 'destructive', handler: () => void this.confirmRevoke(journalKey, guest, true) },
+        { text: i18n.guest_expiry(), handler: () => void this.expiry(journalKey, guest, changed) },
+        { text: i18n.guest_revoke(), role: 'destructive', handler: () => void this.confirmRevoke(journalKey, guest, false, changed) },
+        { text: i18n.guest_remove(), role: 'destructive', handler: () => void this.confirmRevoke(journalKey, guest, true, changed) },
         { text: i18n.cancel(), role: 'cancel' },
       ],
     });
@@ -141,12 +136,13 @@ export class JournalGuestsSheet {
     }
   }
 
-  private async expiry(journalKey: string, guest: AvatarInfo): Promise<void> {
+  private async expiry(journalKey: string, guest: AvatarInfo, changed: () => void): Promise<void> {
     const i18n = this.store.i18n;
     const set = (days: number | null) => async () => {
       try {
         await this.guestService.createLink(journalKey, guest.key); // a link must exist before it can expire
         await this.guestService.setExpiry(journalKey, guest.key, days === null ? null : new Date(Date.now() + days * DAY_MS).toISOString());
+        changed();
       } catch (error) {
         await showJournalError(this.toastController, i18n, error);
       }
@@ -164,7 +160,7 @@ export class JournalGuestsSheet {
     await sheet.present();
   }
 
-  private async confirmRevoke(journalKey: string, guest: AvatarInfo, remove: boolean): Promise<void> {
+  private async confirmRevoke(journalKey: string, guest: AvatarInfo, remove: boolean, changed: () => void): Promise<void> {
     const i18n = this.store.i18n;
     const sheet = await this.actionSheetController.create({
       header: fill(i18n.guest_revoke_confirm(), { name: this.nameOf(guest) }),
@@ -180,6 +176,7 @@ export class JournalGuestsSheet {
                 if (guestErrorOf(error).code !== 'not-found') throw error;
               }
               if (remove) await this.store.removeGuest(journalKey, guest.key);
+              changed();
             } catch (error) {
               await showJournalError(this.toastController, i18n, error);
             }

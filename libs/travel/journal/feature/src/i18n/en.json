@@ -205,8 +205,7 @@
     "state_none": "no link yet",
     "offline": "You can only manage guests with an Internet connection.",
     "manage": "Manage guests",
-    "empty": "No guests invited yet.",
-    "remove_confirm": "Remove {name} as a guest?"
+    "empty": "No guests invited yet."
   },
   "guest": {
     "loading": "Loading the travel journal …",

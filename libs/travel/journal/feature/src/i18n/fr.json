@@ -205,8 +205,7 @@
     "state_none": "pas encore de lien",
     "offline": "Tu ne peux gérer les invités qu’avec Internet.",
     "manage": "Gérer les invités",
-    "empty": "Aucun invité pour l’instant.",
-    "remove_confirm": "Retirer {name} des invités ?"
+    "empty": "Aucun invité pour l’instant."
   },
   "guest": {
     "loading": "Chargement du carnet de voyage …",

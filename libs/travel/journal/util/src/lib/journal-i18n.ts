@@ -229,7 +229,6 @@ export const JOURNAL_I18N_KEYS = {
   list_open: PFX + 'list.open',
   guests_manage: PFX + 'guests.manage',
   guests_empty: PFX + 'guests.empty',
-  guests_remove_confirm: PFX + 'guests.remove_confirm',
   block_edit_action: PFX + 'block.edit_action',
   block_delete_action: PFX + 'block.delete_action',
   add_block_title: PFX + 'add_block.title',
