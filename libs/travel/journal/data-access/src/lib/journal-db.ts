@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { CapacitorSQLite, capSQLiteSet, SQLiteConnection, SQLiteDBConnection } from '@capacitor-community/sqlite';
 import { JournalChange } from '@okr/shared-models';
-import { decodeChangeRow, StoredChangeRow } from '@okr/travel-journal-util';
+import { decodeChangeRow, encodeBases, StoredChangeRow } from '@okr/travel-journal-util';
 
 /**
  * The travel journal's local store on the iPad (spec 1.113 §4): the append-only change log plus a
@@ -17,7 +17,7 @@ const SCHEMA = [
   'CREATE TABLE IF NOT EXISTS changes (' +
     'id TEXT PRIMARY KEY, journalKey TEXT NOT NULL, deviceId TEXT NOT NULL, seq INTEGER NOT NULL, ' +
     'hlc TEXT NOT NULL, authorKey TEXT NOT NULL, entity TEXT NOT NULL, entityKey TEXT NOT NULL, ' +
-    'op TEXT NOT NULL, fields TEXT NOT NULL, uploadedAt TEXT);',
+    'op TEXT NOT NULL, fields TEXT NOT NULL, uploadedAt TEXT, bases TEXT);',
   'CREATE INDEX IF NOT EXISTS changes_journal ON changes (journalKey, hlc);',
   'CREATE UNIQUE INDEX IF NOT EXISTS changes_device_seq ON changes (deviceId, seq);',
   'CREATE INDEX IF NOT EXISTS changes_pending ON changes (uploadedAt);',
@@ -25,6 +25,16 @@ const SCHEMA = [
   'CREATE TABLE IF NOT EXISTS photo_files (' +
     'file TEXT PRIMARY KEY, journalKey TEXT NOT NULL, uploaded INTEGER NOT NULL DEFAULT 0, present INTEGER NOT NULL DEFAULT 0);',
 ].join('\n');
+
+/**
+ * Columns added after the first release, as `ALTER TABLE … ADD COLUMN` (nullable, so every stored row is
+ * kept and reads NULL). `CREATE TABLE IF NOT EXISTS` never changes a table an iPad holds already: each
+ * column is added on open when the table lacks it — idempotent, no version bump, no data copied.
+ */
+const ADDED_COLUMNS: { table: string; column: string; type: string }[] = [
+  // spec 1.126 phase 2: field → hlc the edit was made on top of (JSON); NULL = legacy record, latest wins
+  { table: 'changes', column: 'bases', type: 'TEXT' },
+];
 
 /** A record received from the server, with its upload time (ms). */
 export interface RemoteChange { change: JournalChange; uploadedAtMs: number }
@@ -60,8 +70,8 @@ export class JournalDb {
     if (changes.length === 0 && Object.keys(meta).length === 0) return;
     const db = await this.db();
     const set: capSQLiteSet[] = changes.map((c) => ({
-      statement: 'INSERT INTO changes (id, journalKey, deviceId, seq, hlc, authorKey, entity, entityKey, op, fields) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
-      values: [c.id, c.journalKey, c.deviceId, c.seq, c.hlc, c.authorKey, c.entity, c.entityKey, c.op, JSON.stringify(c.fields)],
+      statement: 'INSERT INTO changes (id, journalKey, deviceId, seq, hlc, authorKey, entity, entityKey, op, fields, bases) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+      values: [c.id, c.journalKey, c.deviceId, c.seq, c.hlc, c.authorKey, c.entity, c.entityKey, c.op, JSON.stringify(c.fields), encodeBases(c.bases)],
     }));
     for (const [key, value] of Object.entries(meta)) {
       set.push({ statement: 'INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?);', values: [key, value] });
@@ -120,8 +130,8 @@ export class JournalDb {
     const db = await this.db();
     const set: capSQLiteSet[] = remote.flatMap(({ change: c, uploadedAtMs }) => [
       {
-        statement: 'INSERT OR IGNORE INTO changes (id, journalKey, deviceId, seq, hlc, authorKey, entity, entityKey, op, fields, uploadedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
-        values: [c.id, c.journalKey, c.deviceId, c.seq, c.hlc, c.authorKey, c.entity, c.entityKey, c.op, JSON.stringify(c.fields), String(uploadedAtMs)],
+        statement: 'INSERT OR IGNORE INTO changes (id, journalKey, deviceId, seq, hlc, authorKey, entity, entityKey, op, fields, bases, uploadedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+        values: [c.id, c.journalKey, c.deviceId, c.seq, c.hlc, c.authorKey, c.entity, c.entityKey, c.op, JSON.stringify(c.fields), encodeBases(c.bases), String(uploadedAtMs)],
       },
       { statement: 'UPDATE changes SET uploadedAt = ? WHERE id = ? AND uploadedAt IS NULL;', values: [String(uploadedAtMs), c.id] },
     ]);
@@ -136,8 +146,8 @@ export class JournalDb {
     if (changes.length === 0) return;
     const db = await this.db();
     await db.executeSet(changes.map((c) => ({
-      statement: 'INSERT OR IGNORE INTO changes (id, journalKey, deviceId, seq, hlc, authorKey, entity, entityKey, op, fields) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
-      values: [c.id, c.journalKey, c.deviceId, c.seq, c.hlc, c.authorKey, c.entity, c.entityKey, c.op, JSON.stringify(c.fields)],
+      statement: 'INSERT OR IGNORE INTO changes (id, journalKey, deviceId, seq, hlc, authorKey, entity, entityKey, op, fields, bases) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+      values: [c.id, c.journalKey, c.deviceId, c.seq, c.hlc, c.authorKey, c.entity, c.entityKey, c.op, JSON.stringify(c.fields), encodeBases(c.bases)],
     })), true);
   }
 
@@ -182,11 +192,20 @@ export class JournalDb {
         : await sqlite.createConnection(DB_NAME, false, 'no-encryption', DB_VERSION, false);
       await db.open();
       await db.execute(SCHEMA);
+      await addMissingColumns(db);
       return db;
     })().catch((error: unknown) => {
       this.connection = undefined; // allow a retry
       throw error;
     });
     return this.connection;
+  }
+}
+
+async function addMissingColumns(db: SQLiteDBConnection): Promise<void> {
+  for (const { table, column, type } of ADDED_COLUMNS) {
+    const info = await db.query(`PRAGMA table_info(${table});`);
+    const present = ((info.values ?? []) as { name?: string }[]).some((c) => c.name === column);
+    if (!present) await db.execute(`ALTER TABLE ${table} ADD COLUMN ${column} ${type};`);
   }
 }

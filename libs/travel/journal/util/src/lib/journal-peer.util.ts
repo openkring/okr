@@ -1,4 +1,5 @@
 import { JournalChange, JournalChangeOp, JournalEntity } from '@okr/shared-models';
+import { isBases } from './journal-change.util';
 import { isJournalLock, JournalLock } from './journal-lock.util';
 import { acceptRecord } from './journal-server.util';
 
@@ -91,10 +92,6 @@ function isChange(r: unknown, journalKey: string): r is JournalChange {
     && typeof c['hlc'] === 'string' && typeof c['authorKey'] === 'string' && c['authorKey'] !== ''
     && ENTITIES.includes(c['entity'] as JournalEntity) && typeof c['entityKey'] === 'string' && c['entityKey'] !== ''
     && OPS.includes(c['op'] as JournalChangeOp) && typeof c['fields'] === 'object' && c['fields'] !== null && !Array.isArray(c['fields']);
-}
-
-function isBases(b: unknown): b is Record<string, string> {
-  return typeof b === 'object' && b !== null && !Array.isArray(b) && Object.values(b).every((v) => typeof v === 'string');
 }
 
 /**
