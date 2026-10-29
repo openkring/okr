@@ -138,6 +138,7 @@ export const getMemberDetails = MatrixSimple.getMemberDetails;
 export const addMatrixRoomAlias = MatrixSimple.addMatrixRoomAlias;
 export const sendCallNotification = MatrixSimple.sendCallNotification;
 export const registerMatrixPusher = MatrixSimple.registerMatrixPusher;
+export const unregisterMatrixPusher = MatrixSimple.unregisterMatrixPusher;
 export const matrixPushGateway = MatrixSimple.matrixPushGateway;
 export const backfillMatrixRoomTenants = MatrixSimple.backfillMatrixRoomTenants;
 // Mandantenzuordnung von Hand, fuer Raeume die der Backfill nicht ableiten kann (Bruecken-Raeume)
