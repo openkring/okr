@@ -133,8 +133,6 @@ export const appConfig: ApplicationConfig = {
         const appStore = inject(AppStore);
         return () => {
           if (!isBrowser(platformId)) return;
-          // Skip Matrix init on public routes — matrix-js-sdk is ~700KB and not needed there.
-          if (window.location.pathname.startsWith('/public')) return;
           const start = async () => {
             const { MatrixInitializationService } = await import('@okr/chat-feature');
             injector.get(MatrixInitializationService).startEarlyInitialization();
