@@ -4,11 +4,11 @@ import { PushNotifications } from '@capacitor/push-notifications';
 import { getApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage, isSupported as isMessagingSupported, Messaging } from 'firebase/messaging';
 import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp, collection, query, where, documentId, getDocs, writeBatch } from 'firebase/firestore';
-import { EMPTY, Observable, from, fromEvent, of } from 'rxjs';
-import { catchError, filter, map } from 'rxjs/operators';
+import { EMPTY, Observable, fromEvent, of } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
 
 import { ENV } from '@okr/shared-config';
-import { isBrowser, type PushPermissionState } from '@okr/shared-util-core';
+import { fcmTokenDocId, isBrowser, type PushPermissionState } from '@okr/shared-util-core';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { ensureNativePushChannel } from './native-push-channel';
 
@@ -27,6 +27,8 @@ export class FcmService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly env = inject(ENV);
   private _currentToken: string | null = null;
+  /** The token the Matrix pusher was last registered for (undefined = not yet on this token). */
+  private pusherToken: string | undefined;
 
   /** The FCM/APNs token most recently registered on this device, or null if not yet registered. */
   get currentToken(): string | null { return this._currentToken; }
@@ -74,18 +76,57 @@ export class FcmService {
   }
 
   /**
-   * Register this device for push — the FCM token in Firestore AND the Matrix HTTP pusher, so chat
-   * messages reach it as well as tasks and calendar pushes. One path for the automatic start-up
-   * registration, the post-login prompt and the profile button: before, only the start-up path
-   * registered the pusher, so a member who enabled push in the profile got chat pushes only after
-   * the next app start.
+   * Register this device for push: the FCM token in Firestore and, when `withPusher`, the Matrix
+   * HTTP pusher so chat messages reach it as well as tasks and calendar pushes. The pusher is its
+   * own step ({@link ensureMatrixPusher}) so it can follow later, once Matrix is actually in use.
    *
    * @param allowPrompt see {@link registerAndSave}; `true` only from a user gesture
+   * @param withPusher register the Matrix pusher too (default true)
    * @return the token, or null when push is not (yet) allowed or registration failed
    */
-  async enablePush(uid: string, allowPrompt = false): Promise<string | null> {
+  async enablePush(uid: string, allowPrompt = false, withPusher = true): Promise<string | null> {
     const token = await this.registerAndSave(uid, allowPrompt);
     if (!token) return null;
+    if (withPusher) await this.ensureMatrixPusher();
+    return token;
+  }
+
+  /**
+   * Register the Matrix pusher for the current token, once per token. No-op without a token.
+   * Never throws: a failure is only logged and retried by the next call.
+   */
+  async ensureMatrixPusher(): Promise<void> {
+    const token = this._currentToken;
+    if (!token || this.pusherToken === token) return;
+    await this.registerPusher(token);
+  }
+
+  /**
+   * Remove this device from push on logout: the token doc, the Matrix pusher and (native) the OS
+   * registration. Never throws; does nothing when no token was registered on this device.
+   */
+  async disablePush(uid: string): Promise<void> {
+    const token = this._currentToken;
+    if (!token) return;
+    try {
+      const unregister = httpsCallable<{ pushkey: string }, { removed: boolean }>(
+        getFunctions(getApp(), 'europe-west6'), 'unregisterMatrixPusher');
+      const results = await Promise.allSettled([
+        this.removeToken(uid, token),
+        unregister({ pushkey: token }),
+        Capacitor.isNativePlatform() ? PushNotifications.unregister() : Promise.resolve(),
+      ]);
+      for (const r of results) {
+        if (r.status === 'rejected') console.warn('FcmService.disablePush: step failed (ignored):', r.reason);
+      }
+    } catch (err) {
+      console.warn('FcmService.disablePush: failed (ignored):', err);
+    }
+    this._currentToken = null;
+    this.pusherToken = undefined;
+  }
+
+  private async registerPusher(token: string): Promise<void> {
     try {
       // Via a Cloud Function so the push-gateway secret and URL never ship in the bundle (S3, SEC-2).
       const registerPusher = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'registerMatrixPusher');
@@ -94,10 +135,10 @@ export class FcmService {
         deviceDisplayName: (navigator.userAgent ?? 'Unknown').substring(0, 100),
         lang: navigator.language || 'de',
       });
+      this.pusherToken = token;
     } catch (err) {
-      console.warn('FcmService.enablePush: Matrix pusher registration failed (non-critical):', err);
+      console.warn('FcmService.registerPusher: Matrix pusher registration failed (non-critical):', err);
     }
-    return token;
   }
 
   async registerAndSave(uid: string, allowPrompt = false): Promise<string | null> {
@@ -202,38 +243,10 @@ export class FcmService {
   async removeToken(uid: string, token: string): Promise<void> {
     try {
       const db = getFirestore(getApp());
-      await deleteDoc(doc(db, 'users', uid, 'fcmTokens', token));
+      await deleteDoc(doc(db, 'users', uid, 'fcmTokens', fcmTokenDocId(token)));
     } catch (error) {
       console.warn('FcmService.removeToken: Failed to remove token:', error);
     }
-  }
-
-  /**
-   * Request permission and get FCM device token.
-   * @param vapidKey - Web Push certificate key from Firebase Console → Project Settings → Cloud Messaging
-   */
-  requestPermission(vapidKey: string): Observable<string | undefined> {
-    if (!this.messaging) {
-      console.error('FcmService.requestPermission: Messaging not initialized');
-      return of(undefined);
-    }
-
-    return from(
-      Notification.requestPermission().then(async (permission) => {
-        if (permission === 'granted') {
-          const token = await getToken(this.messaging!, { vapidKey });
-          console.log('FcmService: FCM token obtained');
-          return token;
-        }
-        console.log('FcmService: Notification permission denied');
-        return undefined;
-      })
-    ).pipe(
-      catchError((error) => {
-        console.error('FcmService.requestPermission: Error getting token', error);
-        return of(undefined);
-      })
-    );
   }
 
   /**
@@ -295,8 +308,7 @@ export class FcmService {
 
   private async saveToken(uid: string, token: string): Promise<void> {
     const db = getFirestore(getApp());
-    // Use first 128 chars of token as doc ID (tokens are URL-safe, well under Firestore's 1500-byte limit)
-    const tokenDocId = token.substring(0, 128);
+    const tokenDocId = fcmTokenDocId(token);
     await setDoc(
       doc(db, 'users', uid, 'fcmTokens', tokenDocId),
       { token, updatedAt: serverTimestamp() },
@@ -317,7 +329,7 @@ export class FcmService {
    */
   private async removeSupersededTokens(db: ReturnType<typeof getFirestore>, uid: string, token: string, keepDocId: string): Promise<void> {
     const colon = token.indexOf(':');
-    if (colon <= 0) return;                      // native APNs tokens carry no instance id
+    if (colon <= 0) return;                      // token without an instance id: nothing to match siblings by
     const prefix = token.substring(0, colon + 1);
     try {
       const siblings = await getDocs(query(
