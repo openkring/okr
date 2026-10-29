@@ -1,38 +1,42 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Network } from '@capacitor/network';
 import {
   ActionSheetController, AlertController, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton,
-  IonTitle, IonToolbar, ModalController, ToastController,
+  IonTitle, IonToolbar, ModalController, PopoverController, ToastController,
 } from '@ionic/angular';
 
 import { ModelSelectService } from '@okr/shared-feature';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { okrPrompt } from '@okr/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, okrPrompt } from '@okr/shared-util-angular';
 import { fill } from '@okr/shared-util-core';
+import { journalListMenu } from '@okr/travel-journal-util';
 import { showJournalError } from './journal-errors';
 import { openJournalInfo } from './journal-info';
-import { choosePhotoMode } from './journal-photo-mode';
 import { JournalGuestsSheet } from './journal-guests';
-import { JournalSyncLine } from './journal-sync-line';
+import { openGuestsModal } from './journal-guests.modal';
+import { openJournalMenu } from './journal-menu-open';
+import { openPhotoSyncModal } from './journal-photo-sync.modal';
 import { JournalStore } from './journal.store';
 
 /** All travel journals on this device (spec 1.113); opens one, or creates a new one. */
 @Component({
   selector: 'okr-journal-list-page',
-  imports: [IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonList, IonItem, IonLabel, IonButton, IonIcon, SvgIconPipe, JournalSyncLine],
+  imports: [IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonList, IonItem, IonLabel, IonButton, IonIcon, SvgIconPipe],
   styles: [`
     .title { cursor: pointer; }
     .hint { color: var(--ion-color-medium); font-size: 0.9rem; }
-    okr-journal-sync-line { margin-top: 12px; }
   `],
   template: `
     <ion-header>
-      <ion-toolbar>
+      <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ store.i18n.list_title() }}</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="info()" [attr.aria-label]="store.i18n.info()"><ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" /></ion-button>
+          @if (menuItems().length > 0) {
+            <ion-button (click)="menu($event)" [attr.aria-label]="store.i18n.menu_open()"><ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" /></ion-button>
+          }
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -50,11 +54,6 @@ import { JournalStore } from './journal.store';
             <ion-item lines="none"><ion-label class="ion-text-wrap">{{ store.i18n.list_empty() }}</ion-label></ion-item>
           }
         </ion-list>
-      @if (store.native()) {
-        <ion-button expand="block" (click)="create()">{{ store.i18n.list_new() }}</ion-button>
-        <okr-journal-sync-line [status]="store.syncStatus()" [photoMode]="store.photoMode()" [peerStatus]="store.peerStatus()" [i18n]="store.i18n"
-          (syncNow)="store.syncNow()" (choosePhotoMode)="photoMode()" />
-      }
     </ion-content>
   `,
 })
@@ -67,6 +66,9 @@ export class JournalListPage {
   private readonly modelSelectService = inject(ModelSelectService);
   private readonly guestsSheet = inject(JournalGuestsSheet);
   private readonly modalController = inject(ModalController);
+  private readonly popoverController = inject(PopoverController);
+
+  protected readonly menuItems = computed(() => journalListMenu({ native: this.store.native() }));
 
   public constructor() {
     void this.store.init();
@@ -76,8 +78,11 @@ export class JournalListPage {
     return openJournalInfo(this.modalController);
   }
 
-  protected photoMode(): Promise<void> {
-    return choosePhotoMode(this.actionSheetController, this.store.i18n, this.store.photoMode(), (mode) => this.store.setPhotoMode(mode));
+  protected async menu(event: Event): Promise<void> {
+    switch (await openJournalMenu(this.popoverController, event, this.menuItems(), this.store.i18n)) {
+      case 'newJournal': return this.create();
+      case 'photoSync': return openPhotoSyncModal(this.modalController);
+    }
   }
 
   protected open(journalKey: string): void {
@@ -86,23 +91,33 @@ export class JournalListPage {
 
   protected async actions(journalKey: string, title: string): Promise<void> {
     const i18n = this.store.i18n;
-    const sheet = await this.actionSheetController.create({
-      header: title || i18n.untitled(),
-      buttons: [
-        { text: i18n.list_rename(), handler: () => void this.rename(journalKey, title) },
-        { text: i18n.list_coauthor(), handler: () => void this.addCoAuthor(journalKey) },
-        { text: i18n.guests(), handler: () => void this.guestsSheet.open(journalKey) },
-        { text: i18n.notice_menu(), handler: () => void this.guestsSheet.notify(journalKey) },
-        { text: i18n.list_delete(), role: 'destructive', handler: () => void this.confirmDelete(journalKey) },
-        { text: i18n.cancel(), role: 'cancel' },
-      ],
-    });
+    const imgix = this.store.appStore.services.imgixBaseUrl();
+    const options = createActionSheetOptions(title || i18n.untitled());
+    options.buttons.push(
+      createActionSheetButton('journal.open', i18n.list_open(), imgix, 'map'),
+      createActionSheetButton('journal.rename', i18n.list_rename_journal(), imgix, 'edit'),
+      createActionSheetButton('journal.coauthor', i18n.list_coauthor(), imgix, 'person-add'),
+      createActionSheetButton('journal.guests', i18n.guests_manage(), imgix, 'people'),
+      createActionSheetButton('journal.notice', i18n.notice_menu(), imgix, 'send'),
+      createActionSheetButton('journal.delete', i18n.list_delete(), imgix, 'trash'),
+      createActionSheetButton('cancel', i18n.cancel(), imgix, 'cancel'),
+    );
+    const sheet = await this.actionSheetController.create(options);
     await sheet.present();
+    const { data } = await sheet.onDidDismiss<{ action: string }>();
+    switch (data?.action) {
+      case 'journal.open': return this.open(journalKey);
+      case 'journal.rename': return this.rename(journalKey, title);
+      case 'journal.coauthor': return this.addCoAuthor(journalKey);
+      case 'journal.guests': return openGuestsModal(this.modalController, this.guestsSheet, journalKey);
+      case 'journal.notice': return this.guestsSheet.notify(journalKey);
+      case 'journal.delete': return this.confirmDelete(journalKey);
+    }
   }
 
   private async rename(journalKey: string, current: string): Promise<void> {
     const i18n = this.store.i18n;
-    const title = await okrPrompt(this.alertController, i18n.list_rename(), i18n.list_rename_prompt(), i18n.save(), i18n.cancel(), current);
+    const title = await okrPrompt(this.alertController, i18n.list_rename_journal(), i18n.list_rename_prompt(), i18n.save(), i18n.cancel(), current);
     if (!title?.trim() || title.trim() === current) return;
     await this.run(() => this.store.renameJournal(journalKey, title.trim()));
   }
