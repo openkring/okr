@@ -1,8 +1,8 @@
 import { Component, computed, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 import {
-  ActionSheetController, IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar,
-  ModalController, ToastController,
+  IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonIcon, IonTitle, IonToolbar,
+  ModalController, PopoverController, ToastController,
 } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -10,17 +10,17 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { MapView, RouteMap, RoutePin } from '@okr/shared-ui';
 import { FootprintEditModal } from '@okr/travel-journal-ui';
 import {
-  FootprintFormModel, flyoverInputOf, flyoverTimeline, footprintChips, journalMapData, newFootprintFormModel, routeLengthKm,
+  FootprintFormModel, flyoverInputOf, flyoverTimeline, footprintChips, journalMapData, journalOverviewMenu, newFootprintFormModel, routeLengthKm,
 } from '@okr/travel-journal-util';
 
 import { JournalFileUrlService } from './journal-file-url.service';
 import { showJournalError } from './journal-errors';
 import { openJournalFlyover } from './journal-flyover-open';
 import { openJournalInfo } from './journal-info';
-import { choosePhotoMode } from './journal-photo-mode';
-import { JournalBookPrints } from './journal-book-prints';
-import { JournalOfflineMap } from './journal-offline-map';
-import { JournalSyncLine } from './journal-sync-line';
+import { openJournalMenu } from './journal-menu-open';
+import { openOfflineMapsModal } from './journal-offline-maps.modal';
+import { openPhotoBookModal } from './journal-photo-book.modal';
+import { openPhotoSyncModal } from './journal-photo-sync.modal';
 import { JournalStore } from './journal.store';
 
 /** Wide screens (iPad landscape, desktop) get layout B — Ionic's `lg` breakpoint, spec 1.113 §9.1. */
@@ -32,7 +32,7 @@ const WIDE_QUERY = '(min-width: 992px)';
  */
 @Component({
   selector: 'okr-journal-overview-page',
-  imports: [IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonButton, IonCard, IonCardContent, IonIcon, SvgIconPipe, RouteMap, JournalSyncLine, JournalOfflineMap, JournalBookPrints],
+  imports: [IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonButton, IonCard, IonCardContent, IonIcon, SvgIconPipe, RouteMap],
   styles: [`
     .layout { display: flex; flex-direction: column; height: 100%; }
     .layout.wide { flex-direction: row; }
@@ -54,16 +54,14 @@ const WIDE_QUERY = '(min-width: 992px)';
   `],
   template: `
     <ion-header>
-      <ion-toolbar>
+      <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-back-button defaultHref="/journal" /></ion-buttons>
         <ion-title>{{ journal()?.title || store.i18n.untitled() }}</ion-title>
         <ion-buttons slot="end">
-          @if (flyover()) { <ion-button (click)="fly()">{{ store.i18n.flyover() }}</ion-button> }
-          <!-- the book is made in the browser on the desktop (design §1); the web view lists only the journals one writes in -->
-          @if (!store.native() && journal()) { <ion-button (click)="openBook()">{{ store.bookI18n.button() }}</ion-button> }
           <ion-button (click)="info()" [attr.aria-label]="store.i18n.info()"><ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" /></ion-button>
-          @if (store.native()) { <ion-button (click)="recordTrack()">{{ store.i18n.tracker_record() }}</ion-button> }
-          @if (store.native()) { <ion-button (click)="newFootprint()">{{ store.i18n.footprints_new() }}</ion-button> }
+          @if (menuItems().length > 0) {
+            <ion-button (click)="menu($event)" [attr.aria-label]="store.i18n.menu_open()"><ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" /></ion-button>
+          }
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -74,12 +72,6 @@ const WIDE_QUERY = '(min-width: 992px)';
             [places]="places()" (pinClicked)="openFootprint($event)" (viewChanged)="view.set($event)" />
         </div>
         <div class="side">
-          @if (store.native()) {
-            <okr-journal-sync-line [status]="store.syncStatus()" [photoMode]="store.photoMode()" [peerStatus]="store.peerStatus()" [i18n]="store.i18n"
-              (syncNow)="store.syncNow()" (choosePhotoMode)="photoMode()" />
-            <okr-journal-offline-map [journalKey]="journalKey()" [view]="view()" />
-            <okr-journal-book-prints [journalKey]="journalKey()" />
-          }
           <div class="stats">
             <div class="stat"><b>{{ days() }}</b><span>{{ store.i18n.stats_days() }}</span></div>
             <div class="stat"><b>{{ km() }}</b><span>{{ store.i18n.stats_km() }}</span></div>
@@ -111,7 +103,7 @@ export class JournalOverviewPage {
   private readonly router = inject(Router);
   private readonly modalController = inject(ModalController);
   private readonly toastController = inject(ToastController);
-  private readonly actionSheetController = inject(ActionSheetController);
+  private readonly popoverController = inject(PopoverController);
 
   public readonly journalKey = input.required<string>();
 
@@ -131,6 +123,8 @@ export class JournalOverviewPage {
     const { stops, points } = flyoverInputOf(this.footprints(), this.images(), (path) => this.fileUrl.url(path) ?? '');
     return flyoverTimeline(stops, points);
   });
+  // the book is made in the browser (design §1); the web view lists only the journals one writes in
+  protected readonly menuItems = computed(() => journalOverviewMenu({ native: this.store.native(), hasFlyover: !!this.flyover() }));
   protected readonly km = computed(() => routeLengthKm(this.map().route));
   protected readonly days = computed(() => new Set(this.footprints().map((f) => f.date).filter((d) => d !== '')).size);
   protected readonly cards = computed(() => {
@@ -171,8 +165,17 @@ export class JournalOverviewPage {
     if (timeline) await openJournalFlyover(this.modalController, timeline, this.mapLayers(), this.store.i18n);
   }
 
-  protected photoMode(): Promise<void> {
-    return choosePhotoMode(this.actionSheetController, this.store.i18n, this.store.photoMode(), (mode) => this.store.setPhotoMode(mode));
+  protected async menu(event: Event): Promise<void> {
+    switch (await openJournalMenu(this.popoverController, event, this.menuItems(), this.store.i18n)) {
+      case 'flyover': return this.fly();
+      case 'newFootprint': return this.newFootprint();
+      case 'recordTrack': return this.recordTrack();
+      case 'photoSync': return openPhotoSyncModal(this.modalController);
+      case 'offlineMaps': return openOfflineMapsModal(this.modalController, this.journalKey(), this.view());
+      case 'photoBook':
+        if (await openPhotoBookModal(this.modalController, this.journalKey())) this.openBook();
+        return;
+    }
   }
 
   protected openBook(): void {
