@@ -722,6 +722,8 @@ service cloud.firestore {
         && isJournalAuthor(request.resource.data.get('journalKey', ''))
         && request.resource.data.get('personKey', '') == callerPersonKey()
         && request.resource.data.get('entityKey', null) is string
+        && request.resource.data.get('name', null) is string
+        && request.resource.data.name.size() < 200
         && request.resource.data.get('until', null) is timestamp
         && request.resource.data.until < request.time + duration.value(5, 'm')
         && id == request.resource.data.get('journalKey', '') + '_' + request.resource.data.get('entityKey', '');
@@ -731,6 +733,8 @@ service cloud.firestore {
         && request.resource.data.get('journalKey', '') == resource.data.journalKey
         && request.resource.data.get('personKey', '') == callerPersonKey()
         && request.resource.data.get('entityKey', null) is string
+        && request.resource.data.get('name', null) is string
+        && request.resource.data.name.size() < 200
         && request.resource.data.get('until', null) is timestamp
         && request.resource.data.until < request.time + duration.value(5, 'm')
         && id == request.resource.data.get('journalKey', '') + '_' + request.resource.data.get('entityKey', '');
