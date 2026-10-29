@@ -197,7 +197,7 @@ export function publishedFootprintsOf(state: JournalState, journalKey: string): 
     .map((f) => ({
       ...f,
       lostValues: [],
-      blocks: f.blocks.filter((b) => !(b.conflictOf !== undefined && b.conflict)).map((b) => ({ ...b, conflict: false })),
+      blocks: f.blocks.filter((b) => b.conflictOf === undefined || b.conflict === false).map((b) => ({ ...b, conflict: false })),
     }));
 }
 

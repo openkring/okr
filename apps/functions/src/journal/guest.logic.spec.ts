@@ -62,6 +62,10 @@ describe('journal guest logic', () => {
     expect(isGuestVisibleSection({ footprintKey: 'f1', isArchived: true })).toBe(false);
   });
 
+  it('copy doc without conflict field is hidden from guests', () => {
+    expect(isGuestVisibleSection({ footprintKey: 'f1', conflictOf: 's1' })).toBe(false);
+  });
+
   it('a copy that outlived its original is a normal block for guests', () => {
     expect(isGuestVisibleSection({ footprintKey: 'f1', conflictOf: 's1', conflict: false })).toBe(true);
   });

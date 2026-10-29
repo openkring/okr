@@ -108,8 +108,9 @@ export function deliveryFor(channel: GuestChannel): string[] {
 
 /**
  * Open conflict copies of a block are for the authors to resolve: a guest never receives them. A copy that
- * outlived its original (`conflict: false`) is a normal block (spec 1.126 §6.3).
+ * outlived its original (`conflict: false`) is a normal block (spec 1.126 §6.3). Fails closed: a copy doc
+ * without an explicit `conflict: false` (e.g. from an older function revision) stays hidden.
  */
 export function isGuestVisibleSection(section: Record<string, unknown>): boolean {
-  return section['isArchived'] !== true && section['conflict'] !== true;
+  return section['isArchived'] !== true && (section['conflictOf'] === undefined || section['conflict'] === false);
 }
