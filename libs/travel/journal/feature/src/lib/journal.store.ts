@@ -15,7 +15,7 @@ import {
 } from '@okr/travel-journal-data-access';
 import {
   BOOK_I18N_KEYS, BOOK_LABEL_MAX, bookLabelsOf, JournalBookI18n, bookPrintCandidates, entityStateKey, hasOthersBlocks, pagesOf, PRINT_FILL_LONG_PX, PRINT_FILL_SHORT_PX, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
-  allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, MapPlace, mapPlaces, parseMapAreas, parsePhotoMode, TileJob, tilesToFree, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, reorderedOrders, BlockView, publishedPhotoFiles, viewOf,
+  allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, MapPlace, mapPlaces, parseMapAreas, parsePhotoMode, TileJob, tilesToFree, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, reorderedOrders, CONFLICT_FIELDS, isConflictCopyKey, originalOfCopy, BlockView, publishedPhotoFiles, viewOf,
 } from '@okr/travel-journal-util';
 
 import { BookExportStatus, JournalBookExporter, NO_BOOK_EXPORT } from './journal-book-export.service';
@@ -164,20 +164,29 @@ export const JournalStore = signalStore(
 
     /**
      * Where a block (or a conflict copy of one) lives — existence check only: every author may edit any
-     * block (spec 1.126 §6); the merge, not the store, resolves a clash.
+     * block (spec 1.126 §6); the merge, not the store, resolves a clash. A copy has no entity of its own,
+     * so its footprint comes from the original's raw fields (the original may be archived by now).
      */
     function blockOf(blockKey: string): { footprint: FootprintView; journalKey: string; block: BlockView } {
-      const section = viewOf(store.journalState()[entityStateKey('section', blockKey)]);
-      const fp = typeof section?.['footprintKey'] === 'string' ? footprint(section['footprintKey']) : undefined;
+      const entityKey = isConflictCopyKey(blockKey) ? originalOfCopy(blockKey) : blockKey;
+      const state = store.journalState()[entityStateKey('section', entityKey)];
+      const footprintKey = isConflictCopyKey(blockKey)
+        ? Object.values(state?.fields['footprintKey'] ?? {})[0]?.value
+        : viewOf(state)?.['footprintKey'];
+      const fp = typeof footprintKey === 'string' ? footprint(footprintKey) : undefined;
       const block = fp?.blocks.find((b) => b.key === blockKey);
       if (!fp || !block) throw new Error(`unknown block ${blockKey}`);
       return { footprint: fp, journalKey: fp.journalKey, block };
     }
 
-    /** The winning hlc of each written field the editor started from — the `bases` of a write (absent when none). */
-    function basesOf(hlcs: Record<string, string>, fields: Record<string, unknown>): Record<string, string> | undefined {
+    /**
+     * The `bases` of a write: for every conflict field written, the winning hlc the editor started from, or
+     * '' ("based on nothing") when there is none. A field without a base would make the record count as legacy
+     * and switch conflict detection off for everything before it.
+     */
+    function basesOf(hlcs: Record<string, string>, fields: Record<string, unknown>, conflictFields: readonly string[]): Record<string, string> | undefined {
       const bases: Record<string, string> = {};
-      for (const field of Object.keys(fields)) if (hlcs[field] !== undefined) bases[field] = hlcs[field];
+      for (const field of Object.keys(fields)) if (conflictFields.includes(field)) bases[field] = hlcs[field] ?? '';
       return Object.keys(bases).length > 0 ? bases : undefined;
     }
 
@@ -680,7 +689,7 @@ export const JournalStore = signalStore(
       async setFootprint(footprintKey: string, fields: FootprintFields): Promise<void> {
         const fp = footprint(footprintKey);
         if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
-        await write([{ journalKey: fp.journalKey, entity: 'footprint', entityKey: footprintKey, op: 'set', fields: { ...fields }, bases: basesOf(fp.hlcs, fields) }]);
+        await write([{ journalKey: fp.journalKey, entity: 'footprint', entityKey: footprintKey, op: 'set', fields: { ...fields }, bases: basesOf(fp.hlcs, fields, CONFLICT_FIELDS['footprint'] ?? []) }]);
       },
 
       /** Saves the footprint modal's form model (title, place, date, time, publish state). */
@@ -696,7 +705,7 @@ export const JournalStore = signalStore(
         const publishState = model.published ? 'published' : 'draft';
         if (publishState !== fp.publishState) fields.publishState = publishState;
         if (Object.keys(fields).length === 0) return;
-        await write([{ journalKey: fp.journalKey, entity: 'footprint', entityKey: footprintKey, op: 'set', fields: { ...fields }, bases: basesOf(fp.hlcs, fields) }]);
+        await write([{ journalKey: fp.journalKey, entity: 'footprint', entityKey: footprintKey, op: 'set', fields: { ...fields }, bases: basesOf(fp.hlcs, fields, CONFLICT_FIELDS['footprint'] ?? []) }]);
       },
 
       /** Puts the blocks of a footprint into the order of `keys`; only the blocks that must move get a new key. */
@@ -734,7 +743,7 @@ export const JournalStore = signalStore(
       async updateTextBlock(blockKey: string, html: string): Promise<void> {
         const { journalKey, block } = blockOf(blockKey);
         const fields = { html };
-        await write([{ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields, bases: basesOf(block.hlcs, fields) }]);
+        await write([{ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields, bases: basesOf(block.hlcs, fields, CONFLICT_FIELDS['section'] ?? []) }]);
       },
 
       /** Adds photos to an existing photo block (any author's). */
@@ -743,7 +752,7 @@ export const JournalStore = signalStore(
         const { drafts, imageKeys, photos, skipped } = await pickImages(journalKey);
         if (photos.length === 0) return { added: 0, skipped };
         const fields = { imageKeys: [...(block.imageKeys ?? []), ...imageKeys] };
-        drafts.push({ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields, bases: basesOf(block.hlcs, fields) });
+        drafts.push({ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields, bases: basesOf(block.hlcs, fields, CONFLICT_FIELDS['section'] ?? []) });
         await write(drafts);
         return { added: photos.length, skipped };
       },
@@ -752,7 +761,7 @@ export const JournalStore = signalStore(
       async removePhotoFromBlock(blockKey: string, imageKey: string): Promise<void> {
         const { journalKey, block } = blockOf(blockKey);
         const fields = { imageKeys: (block.imageKeys ?? []).filter((k) => k !== imageKey) };
-        await write([{ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields, bases: basesOf(block.hlcs, fields) }]);
+        await write([{ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields, bases: basesOf(block.hlcs, fields, CONFLICT_FIELDS['section'] ?? []) }]);
       },
 
       /** Deletes (archives) a footprint; footprints are shared, so either author may. */
@@ -808,7 +817,7 @@ export const JournalStore = signalStore(
           if (time) fill['time'] = time;
         }
         if (Object.keys(fill).length > 0) {
-          drafts.push({ journalKey, entity: 'footprint', entityKey: footprintKey, op: 'set', fields: fill });
+          drafts.push({ journalKey, entity: 'footprint', entityKey: footprintKey, op: 'set', fields: fill, bases: basesOf(fp.hlcs, fill, CONFLICT_FIELDS['footprint'] ?? []) });
         }
         await write(drafts);
         return { added: photos.length, skipped };

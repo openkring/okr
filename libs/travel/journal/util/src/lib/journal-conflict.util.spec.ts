@@ -50,6 +50,16 @@ describe('journal conflict helpers', () => {
     expect(lostValues([r('1'), r('2', '1'), r('3')])).toEqual([]); // no base: based on every earlier entry
     expect(lostValues([r('3', '1'), r('1'), r('2', '1')]).map((x) => x.hlc)).toEqual(['2']); // unsorted input
   });
+
+  it('two first writes (base empty) of one field: the lower hlc is lost', () => {
+    const r = (h: string, base?: string): FieldRecord => ({ value: h, hlc: h, authorKey: 'x', ...(base === undefined ? {} : { base }) });
+    expect(lostValues([r('1', ''), r('2', '')]).map((x) => x.hlc)).toEqual(['1']);
+  });
+
+  it('a base-less legacy write after a lost value hides it (legacy rule)', () => {
+    const r = (h: string, base?: string): FieldRecord => ({ value: h, hlc: h, authorKey: 'x', ...(base === undefined ? {} : { base }) });
+    expect(lostValues([r('1', ''), r('2', ''), r('3')])).toEqual([]);
+  });
 });
 
 describe('journal conflict copies', () => {
