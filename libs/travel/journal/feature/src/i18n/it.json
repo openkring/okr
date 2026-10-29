@@ -404,7 +404,8 @@
   "footprint_conflict": {
     "overwritten": "Sovrascritto: {field} era «{value}»",
     "check": "Controlla le versioni",
-    "done": "Fatto"
+    "done": "Fatto",
+    "position": "Posizione"
   },
   "sort": {
     "title": "Ordina i blocchi"

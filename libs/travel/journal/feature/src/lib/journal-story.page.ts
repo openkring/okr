@@ -13,7 +13,7 @@ import { createActionSheetButton, createActionSheetOptions, okrPrompt } from '@o
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { AlbumSection, ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig } from '@okr/shared-models';
 import { openImageGallery } from '@okr/shared-ui';
-import { blockActions, footprintMenu, FootprintFormModel, htmlToPlainText, StoryBlock, toStorySections } from '@okr/travel-journal-util';
+import { blockActions, footprintMenu, FootprintFormModel, htmlToPlainText, lostValueText, StoryBlock, toStorySections } from '@okr/travel-journal-util';
 
 import { JournalFileUrlService } from './journal-file-url.service';
 import { showJournalError } from './journal-errors';
@@ -196,7 +196,7 @@ export class JournalStoryPage {
   }
 
   protected overwritten(field: string, value: unknown): string {
-    return fill(this.store.i18n.footprint_overwritten(), { field, value: String(value ?? '') });
+    return fill(this.store.i18n.footprint_overwritten(), lostValueText(field, value, this.store.i18n));
   }
 
   private async toastText(message: string): Promise<void> {

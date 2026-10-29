@@ -404,7 +404,8 @@
   "footprint_conflict": {
     "overwritten": "Overwritten: {field} was «{value}»",
     "check": "Check versions",
-    "done": "Done"
+    "done": "Done",
+    "position": "Position"
   },
   "sort": {
     "title": "Sort blocks"

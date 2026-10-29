@@ -234,6 +234,7 @@ export const JOURNAL_I18N_KEYS = {
   block_conflict: PFX + 'block.conflict',
   block_photos_label: PFX + 'block.photos_label',
   footprint_overwritten: PFX + 'footprint_conflict.overwritten',
+  footprint_position: PFX + 'footprint_conflict.position',
   footprint_check: PFX + 'footprint_conflict.check',
   conflict_done: PFX + 'footprint_conflict.done',
   sort_title: PFX + 'sort.title',

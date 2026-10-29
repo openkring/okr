@@ -404,7 +404,8 @@
   "footprint_conflict": {
     "overwritten": "Écrasé : {field} était «{value}»",
     "check": "Vérifier les versions",
-    "done": "Terminé"
+    "done": "Terminé",
+    "position": "Position"
   },
   "sort": {
     "title": "Trier les blocs"
