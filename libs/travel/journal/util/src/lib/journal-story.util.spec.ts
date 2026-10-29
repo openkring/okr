@@ -8,10 +8,10 @@ function image(key: string): ImageView {
 }
 const base: FootprintView = {
   key: 'f1', journalKey: 'j1', title: 'Neko Harbour', placeName: 'Antarktische Halbinsel', date: '20270114', time: '09:00',
-  latitude: -64.8333, longitude: -62.5333, publishState: 'draft',
+  latitude: -64.8333, longitude: -62.5333, publishState: 'draft', hlcs: {}, lostValues: [],
   blocks: [
-    { key: 's1', kind: 'text', authorKey: 'bruno', order: 'G', html: '<p>Pinguine</p>' },
-    { key: 's2', kind: 'photos', authorKey: 'barbara', order: 'V', imageKeys: ['i1', 'missing', 'i2'] },
+    { key: 's1', kind: 'text', authorKey: 'bruno', order: 'G', html: '<p>Pinguine</p>', hlcs: {}, conflict: false },
+    { key: 's2', kind: 'photos', authorKey: 'barbara', order: 'V', imageKeys: ['i1', 'missing', 'i2'], hlcs: {}, conflict: false },
   ],
 };
 

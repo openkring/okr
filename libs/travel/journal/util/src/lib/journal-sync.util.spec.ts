@@ -10,8 +10,8 @@ const image = (key: string): ImageView => ({
   key, authorKey: 'bruno', width: 1, height: 1, path2048: `journals/j1/${key}-2048.jpg`, path400: `journals/j1/${key}-400.jpg`, localIdentifier: '',
 });
 const footprint = (key: string, publishState: 'draft' | 'published', imageKeys: string[]): FootprintView => ({
-  key, journalKey: 'j1', title: '', placeName: '', date: '', time: '', publishState,
-  blocks: [{ key: `b-${key}`, kind: 'photos', authorKey: 'bruno', order: 'V', imageKeys }],
+  key, journalKey: 'j1', title: '', placeName: '', date: '', time: '', publishState, hlcs: {}, lostValues: [],
+  blocks: [{ key: `b-${key}`, kind: 'photos', authorKey: 'bruno', order: 'V', imageKeys, hlcs: {}, conflict: false }],
 });
 
 describe('journal sync util', () => {

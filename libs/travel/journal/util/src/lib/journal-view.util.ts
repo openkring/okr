@@ -1,5 +1,6 @@
 import { DiaryWeather, JournalEntity, TRANSPORT_MODES, TransportMode } from '@okr/shared-models';
-import { EntityState, JournalState, viewOf } from './journal-merge.util';
+import { conflictCopyKey, dismissedField, isConflictCopyKey, lostValues, winningHlcs } from './journal-conflict.util';
+import { CONFLICT_FIELDS, EntityState, entityStateKey, JournalState, viewOf } from './journal-merge.util';
 import { sortByOrder } from './journal-order.util';
 
 /**
@@ -20,7 +21,13 @@ export interface BlockView {
   order: string;
   html?: string; // kind 'text'
   imageKeys?: string[]; // kind 'photos', in pick order — may name images not (yet) received; look them up in imagesOf
+  hlcs: Record<string, string>; // conflict field → hlc of the value shown (the `bases` of the next edit)
+  conflictOf?: string; // a conflict copy: the key of the block it was split from (spec 1.126 §6.3)
+  conflict: boolean; // a live copy and its live original both carry the flag
 }
+
+/** A concurrent footprint value that lost and was not dismissed yet (spec 1.126 §6.3). */
+export interface LostValueView { field: string; value: unknown; authorKey: string; hlc: string }
 
 export interface ImageView {
   key: string;
@@ -48,6 +55,8 @@ export interface FootprintView {
   weather?: DiaryWeather; // filled once online (spec §6.4, plan 8)
   transport?: TransportMode; // how the travellers got here (flyover)
   blocks: BlockView[];
+  hlcs: Record<string, string>; // conflict field → hlc of the value shown
+  lostValues: LostValueView[]; // reminders; a `dismissed_<hlc>: true` field hides one
 }
 
 /** A stored means of transport, or undefined for an empty or unknown value. */
@@ -96,18 +105,62 @@ export function journalsOf(state: JournalState): JournalView[] {
     .sort((a, b) => cmp(a.startDate, b.startDate) || cmp(a.title, b.title));
 }
 
+/** The values of a section as if it were not archived: a copy outlives its original's archive. */
+function unarchived(entity: EntityState): EntityState {
+  return { ...entity, fields: Object.fromEntries(Object.entries(entity.fields).filter(([field]) => field !== 'archived')) };
+}
+
+const imageKeysOf = (v: unknown): string[] => (Array.isArray(v) ? (v as unknown[]).filter((k): k is string => typeof k === 'string') : []);
+
+/**
+ * One derived block per lost value of the block's content field. A copy is the original with that
+ * value, placed right after it (same order, key tie-break); records written against the copy key
+ * (`set` and `archive` only) are laid over it.
+ */
+function copiesOf(state: JournalState, original: BlockView, history: EntityState['history'], originalLive: boolean): BlockView[] {
+  const field = original.kind === 'text' ? 'html' : 'imageKeys';
+  const copies: BlockView[] = [];
+  for (const lost of lostValues(history?.[field])) {
+    const key = conflictCopyKey(original.key, lost.hlc);
+    const own = state[entityStateKey('section', key)];
+    const overlay = own ? viewOf({ ...own, created: true }) : {};
+    if (!overlay) continue; // the copy was archived
+    const copy: BlockView = {
+      ...original, key, authorKey: lost.authorKey, conflictOf: original.key, conflict: originalLive,
+      hlcs: { ...original.hlcs, [field]: lost.hlc, ...(own ? winningHlcs(own) : {}) },
+    };
+    if (field === 'html') copy.html = str('html' in overlay ? overlay['html'] : lost.value);
+    else copy.imageKeys = imageKeysOf('imageKeys' in overlay ? overlay['imageKeys'] : lost.value);
+    if ('order' in overlay) copy.order = str(overlay['order']);
+    copies.push(copy);
+  }
+  return copies;
+}
+
 function blocksOf(state: JournalState, footprintKey: string): BlockView[] {
-  const blocks = live(state, 'section')
-    .filter(({ view }) => view['footprintKey'] === footprintKey)
-    .map(({ entity, view }) => {
-      const kind: BlockKind = view['kind'] === 'photos' ? 'photos' : 'text';
-      const block: BlockView = { key: entity.entityKey, kind, authorKey: entity.ownerKey ?? '', order: str(view['order']) };
-      if (kind === 'text') block.html = str(view['html']);
-      else block.imageKeys = Array.isArray(view['imageKeys']) ? (view['imageKeys'] as unknown[]).filter((k): k is string => typeof k === 'string') : [];
-      return { ...block, okey: block.key };
-    });
+  const blocks: BlockView[] = [];
+  for (const section of Object.values(state)) {
+    if (section.entity !== 'section' || isConflictCopyKey(section.entityKey)) continue;
+    const view = viewOf(unarchived(section));
+    if (!view || view['footprintKey'] !== footprintKey) continue;
+    const kind: BlockKind = view['kind'] === 'photos' ? 'photos' : 'text';
+    const block: BlockView = { key: section.entityKey, kind, authorKey: section.ownerKey ?? '', order: str(view['order']), hlcs: winningHlcs(section), conflict: false };
+    if (kind === 'text') block.html = str(view['html']);
+    else block.imageKeys = imageKeysOf(view['imageKeys']);
+    const live = viewOf(section) !== undefined;
+    const copies = copiesOf(state, block, section.history, live);
+    if (live) blocks.push({ ...block, conflict: copies.length > 0 });
+    blocks.push(...copies);
+  }
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  return sortByOrder(blocks).map(({ okey: _okey, ...block }) => block);
+  return sortByOrder(blocks.map((block) => ({ ...block, okey: block.key }))).map(({ okey: _okey, ...block }) => block);
+}
+
+/** The footprint's lost values that nobody dismissed, field by field in CONFLICT_FIELDS order. */
+function lostValuesOf(entity: EntityState, view: Record<string, unknown>): LostValueView[] {
+  return (CONFLICT_FIELDS.footprint ?? []).flatMap((field) => lostValues(entity.history?.[field])
+    .filter((lost) => view[dismissedField(lost.hlc)] !== true)
+    .map(({ value, authorKey, hlc }) => ({ field, value, authorKey, hlc })));
 }
 
 export function footprintsOf(state: JournalState, journalKey: string): FootprintView[] {
@@ -126,6 +179,8 @@ export function footprintsOf(state: JournalState, journalKey: string): Footprint
       weather: weatherOf(view['weather']),
       transport: transportOf(view['transport']),
       blocks: blocksOf(state, entity.entityKey),
+      hlcs: winningHlcs(entity),
+      lostValues: lostValuesOf(entity, view),
     }))
     .sort((a, b) => cmp(a.date, b.date) || cmp(a.time, b.time) || cmp(a.key, b.key));
 }
