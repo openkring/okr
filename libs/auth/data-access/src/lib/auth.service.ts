@@ -10,6 +10,7 @@ import { AlertService, navigateByUrl } from '@okr/shared-util-angular';
 import { clearOfflineSnapshots, die, warn } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { ActivityService } from '@okr/activity-data-access';
+import { FcmService } from '@okr/shared-data-access';
 import { isLoginIdInput, normalizeLoginIdInput } from '@okr/user-util';
 import { LoginFailure, PwdResetFailure, PwdResetResult, passkeyErrorKind, toLoginFailure, toPwdResetFailure } from '@okr/auth-util';
 
@@ -43,6 +44,7 @@ export class AuthService {
   private readonly alertService = inject(AlertService);
   private readonly activityService = inject(ActivityService);
   private readonly passkeyService = inject(PasskeyService);
+  private readonly fcmService = inject(FcmService);
   private readonly i18n = inject(I18nService).translateAll({
     login_conf:     PFX + 'login.conf',
     login_error:    PFX + 'login.error',
@@ -295,6 +297,15 @@ export class AuthService {
           this.activityService.log('auth', 'logout', currentUser, `${msg}: SUCCESS`),
           new Promise<void>(resolve => setTimeout(resolve, LOGOUT_AUDIT_TIMEOUT_MS)),
         ]);
+        // Remove this device's push token and Matrix pusher while still authenticated
+        // (rules on fcmTokens, App Check on the callable). disablePush never throws but is
+        // not time-bounded offline, so bound it like the audit write.
+        if (currentUser) {
+          await Promise.race([
+            this.fcmService.disablePush(currentUser.okey),
+            new Promise<void>(resolve => setTimeout(resolve, LOGOUT_AUDIT_TIMEOUT_MS)),
+          ]);
+        }
         await signOut(this.auth);
         // The offline copy of users/{uid} must not outlive the session on a shared device.
         clearOfflineSnapshots('user.');
