@@ -18,7 +18,7 @@ import {
 } from '@okr/travel-journal-data-access';
 import {
   BOOK_I18N_KEYS, BOOK_LABEL_MAX, bookLabelsOf, JournalBookI18n, bookPrintCandidates, entityStateKey, hasOthersBlocks, pagesOf, PRINT_FILL_LONG_PX, PRINT_FILL_SHORT_PX, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
-  allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, MapPlace, mapPlaces, parseMapAreas, parsePhotoMode, TileJob, tilesToFree, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, reorderedOrders, CONFLICT_FIELDS, isConflictCopyKey, originalOfCopy, BlockView, publishedPhotoFiles, viewOf,
+  allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, MapPlace, mapPlaces, parseMapAreas, parsePhotoMode, TileJob, tilesToFree, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, reorderedOrders, CONFLICT_FIELDS, dismissedField, isConflictCopyKey, originalOfCopy, BlockView, publishedPhotoFiles, viewOf,
   JournalLock, LOCK_HEARTBEAT_MS, LOCK_TTL_MS, lockedBy, mergeLocks,
 } from '@okr/travel-journal-util';
 
@@ -194,7 +194,8 @@ export const JournalStore = signalStore(
 
     /**
      * The `bases` of a write: for every conflict field written, the winning hlc the editor started from, or
-     * '' ("based on nothing") when there is none. A field without a base would make the record count as legacy
+     * '' ("based on nothing") when there is none. `hlcs` must be captured when the editor OPENED: a value
+     * delivered while it was open was never seen, so it must not count as a base (spec 1.126 anti-goal 1). A field without a base would make the record count as legacy
      * and switch conflict detection off for everything before it.
      */
     function basesOf(hlcs: Record<string, string>, fields: Record<string, unknown>, conflictFields: readonly string[]): Record<string, string> | undefined {
@@ -820,10 +821,16 @@ export const JournalStore = signalStore(
         await write([{ journalKey: fp.journalKey, entity: 'footprint', entityKey: footprintKey, op: 'set', fields: { ...fields }, bases: basesOf(fp.hlcs, fields, CONFLICT_FIELDS['footprint'] ?? []) }]);
       },
 
-      /** Saves the footprint modal's form model (title, place, date, time, publish state). */
-      async saveFootprintForm(footprintKey: string, model: FootprintFormModel): Promise<void> {
-        const fp = footprint(footprintKey);
-        if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
+      /**
+       * Saves the footprint modal's form model (title, place, date, time, publish state). `opened` is the
+       * footprint as the modal showed it: only fields the user changed against it are written, based on its
+       * hlcs — an edit delivered while the modal was open is neither overwritten unseen nor counted as seen.
+       * Without it (a footprint just created) the current state is the baseline.
+       */
+      async saveFootprintForm(footprintKey: string, model: FootprintFormModel, opened?: FootprintView): Promise<void> {
+        const current = footprint(footprintKey);
+        if (!current) throw new Error(`unknown footprint ${footprintKey}`);
+        const fp = opened ?? current;
         const fields: FootprintFields = {};
         if (model.title !== fp.title) fields.title = model.title;
         if (model.placeName !== fp.placeName) fields.placeName = model.placeName;
@@ -833,7 +840,7 @@ export const JournalStore = signalStore(
         const publishState = model.published ? 'published' : 'draft';
         if (publishState !== fp.publishState) fields.publishState = publishState;
         if (Object.keys(fields).length === 0) return;
-        await write([{ journalKey: fp.journalKey, entity: 'footprint', entityKey: footprintKey, op: 'set', fields: { ...fields }, bases: basesOf(fp.hlcs, fields, CONFLICT_FIELDS['footprint'] ?? []) }]);
+        await write([{ journalKey: current.journalKey, entity: 'footprint', entityKey: footprintKey, op: 'set', fields: { ...fields }, bases: basesOf(fp.hlcs, fields, CONFLICT_FIELDS['footprint'] ?? []) }]);
       },
 
       /** Puts the blocks of a footprint into the order of `keys`; only the blocks that must move get a new key. */
@@ -853,7 +860,7 @@ export const JournalStore = signalStore(
         if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
         await write([{
           journalKey: fp.journalKey, entity: 'footprint', entityKey: footprintKey, op: 'set',
-          fields: { ['dismissed_' + hlc.replace(/:/g, '_')]: true },
+          fields: { [dismissedField(hlc)]: true },
         }]);
       },
 
@@ -868,28 +875,32 @@ export const JournalStore = signalStore(
         return key;
       },
 
-      async updateTextBlock(blockKey: string, html: string): Promise<void> {
+      /**
+       * `seen` (here and in the photo methods) = the block's hlcs when the editor or action sheet opened; a
+       * value delivered after that was not seen and must stay a conflict. Without it the current block counts.
+       */
+      async updateTextBlock(blockKey: string, html: string, seen?: Record<string, string>): Promise<void> {
         const { journalKey, block } = blockOf(blockKey);
         const fields = { html };
-        await write([{ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields, bases: basesOf(block.hlcs, fields, CONFLICT_FIELDS['section'] ?? []) }]);
+        await write([{ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields, bases: basesOf(seen ?? block.hlcs, fields, CONFLICT_FIELDS['section'] ?? []) }]);
       },
 
       /** Adds photos to an existing photo block (any author's). */
-      async addPhotosToBlock(blockKey: string): Promise<{ added: number; skipped: SkippedPhoto[] }> {
+      async addPhotosToBlock(blockKey: string, seen?: Record<string, string>): Promise<{ added: number; skipped: SkippedPhoto[] }> {
         const { journalKey, block } = blockOf(blockKey);
         const { drafts, imageKeys, photos, skipped } = await pickImages(journalKey);
         if (photos.length === 0) return { added: 0, skipped };
         const fields = { imageKeys: [...(block.imageKeys ?? []), ...imageKeys] };
-        drafts.push({ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields, bases: basesOf(block.hlcs, fields, CONFLICT_FIELDS['section'] ?? []) });
+        drafts.push({ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields, bases: basesOf(seen ?? block.hlcs, fields, CONFLICT_FIELDS['section'] ?? []) });
         await write(drafts);
         return { added: photos.length, skipped };
       },
 
       /** Removes one photo from a photo block; the image record stays (other blocks may not use it). */
-      async removePhotoFromBlock(blockKey: string, imageKey: string): Promise<void> {
+      async removePhotoFromBlock(blockKey: string, imageKey: string, seen?: Record<string, string>): Promise<void> {
         const { journalKey, block } = blockOf(blockKey);
         const fields = { imageKeys: (block.imageKeys ?? []).filter((k) => k !== imageKey) };
-        await write([{ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields, bases: basesOf(block.hlcs, fields, CONFLICT_FIELDS['section'] ?? []) }]);
+        await write([{ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields, bases: basesOf(seen ?? block.hlcs, fields, CONFLICT_FIELDS['section'] ?? []) }]);
       },
 
       /** Deletes (archives) a footprint; footprints are shared, so either author may. */

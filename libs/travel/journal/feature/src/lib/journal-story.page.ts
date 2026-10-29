@@ -173,6 +173,22 @@ export class JournalStoryPage {
   /** Entities this page holds a lock on right now. */
   private readonly heldLocks = new Set<string>();
 
+  /**
+   * One block/footprint interaction at a time — sheet, editor and save. A fast double tap would otherwise
+   * stack two sheets, and two saves from the same opened state would make the first one a conflict copy.
+   */
+  private busy = false;
+
+  private async exclusive(interaction: () => Promise<void>): Promise<void> {
+    if (this.busy) return;
+    this.busy = true;
+    try {
+      await interaction();
+    } finally {
+      this.busy = false;
+    }
+  }
+
   protected asArticle(item: StoryBlock): ArticleSection | undefined {
     return item.section.type === 'article' ? item.section : undefined;
   }
@@ -254,7 +270,7 @@ export class JournalStoryPage {
     if (!this.editMode() || !this.canEdit()) return;
     const name = this.lockedBy(item);
     if (name) void this.toastText(this.fillName(name));
-    else void this.blockSheet(item);
+    else void this.exclusive(() => this.blockSheet(item));
   }
 
   private async sortBlocks(): Promise<void> {
@@ -277,6 +293,8 @@ export class JournalStoryPage {
   }
 
   private async blockSheet(item: StoryBlock): Promise<void> {
+    // what the author sees now is what the edit builds on (spec 1.126 §6.1), not what the store holds at save time
+    const seen = { ...item.block.hlcs };
     const i18n = this.store.i18n;
     const imgix = this.appStore.services.imgixBaseUrl();
     const texts: Record<string, [string, string]> = {
@@ -295,8 +313,8 @@ export class JournalStoryPage {
     await sheet.present();
     const { data } = await sheet.onDidDismiss<{ action: string }>();
     switch (data?.action) {
-      case 'block.edit': return this.withLock(item.block.key, () => this.editText(item.block.key, item.block.html ?? ''));
-      case 'block.addphotos': return this.addPhotosToBlock(item.block.key);
+      case 'block.edit': return this.withLock(item.block.key, () => this.editText(item.block.key, item.block.html ?? '', seen));
+      case 'block.addphotos': return this.addPhotosToBlock(item.block.key, seen);
       case 'block.delete': return this.confirmDeleteBlock(item.block.key);
     }
   }
@@ -314,17 +332,22 @@ export class JournalStoryPage {
   }
 
   /** Own photo block: view the photo in the gallery, or remove it from the block. */
-  protected async photoActions(item: StoryBlock, image: ImageConfig): Promise<void> {
-    const i18n = this.store.i18n;
-    const sheet = await this.actionSheetController.create({
-      header: i18n.photo_actions(),
-      buttons: [
-        { text: i18n.photo_view(), handler: () => void openImageGallery(this.modalController, item.images ?? [], image, IMAGE_STYLE_SHAPE) },
-        { text: i18n.photo_remove(), role: 'destructive', handler: () => void this.run(() => this.store.removePhotoFromBlock(item.block.key, image.label)) },
-        { text: i18n.cancel(), role: 'cancel' },
-      ],
+  protected photoActions(item: StoryBlock, image: ImageConfig): Promise<void> {
+    return this.exclusive(async () => {
+      const seen = { ...item.block.hlcs };
+      const i18n = this.store.i18n;
+      const sheet = await this.actionSheetController.create({
+        header: i18n.photo_actions(),
+        buttons: [
+          { text: i18n.photo_view(), handler: () => void openImageGallery(this.modalController, item.images ?? [], image, IMAGE_STYLE_SHAPE) },
+          { text: i18n.photo_remove(), role: 'destructive', data: { action: 'remove' } },
+          { text: i18n.cancel(), role: 'cancel' },
+        ],
+      });
+      await sheet.present();
+      const { data } = await sheet.onDidDismiss<{ action: string }>();
+      if (data?.action === 'remove') await this.run(() => this.store.removePhotoFromBlock(item.block.key, image.label, seen));
     });
-    await sheet.present();
   }
 
   private async confirmDeleteFootprint(): Promise<void> {
@@ -346,8 +369,8 @@ export class JournalStoryPage {
     await sheet.present();
   }
 
-  private async addPhotosToBlock(blockKey: string): Promise<void> {
-    await this.run(async () => this.toastResult(await this.store.addPhotosToBlock(blockKey)));
+  private async addPhotosToBlock(blockKey: string, seen: Record<string, string>): Promise<void> {
+    await this.run(async () => this.toastResult(await this.store.addPhotosToBlock(blockKey, seen)));
   }
 
   protected async addText(): Promise<void> {
@@ -355,9 +378,9 @@ export class JournalStoryPage {
     if (html !== undefined) await this.run(() => this.store.addTextBlock(this.footprintKey(), html));
   }
 
-  private async editText(blockKey: string, current: string): Promise<void> {
+  private async editText(blockKey: string, current: string, seen: Record<string, string>): Promise<void> {
     const html = await this.openTextModal(current);
-    if (html !== undefined) await this.run(() => this.store.updateTextBlock(blockKey, html));
+    if (html !== undefined) await this.run(() => this.store.updateTextBlock(blockKey, html, seen));
   }
 
   protected async addPhotos(): Promise<void> {
@@ -375,17 +398,20 @@ export class JournalStoryPage {
     await toast.present();
   }
 
-  protected async editFootprint(): Promise<void> {
-    const fp = this.footprint();
-    if (!fp) return;
-    const current: FootprintFormModel = {
-      title: fp.title, placeName: fp.placeName, date: fp.date, time: fp.time, published: fp.publishState === 'published', transport: fp.transport ?? '',
-    };
-    await this.withLock(fp.key, async () => {
-      const modal = await this.modalController.create({ component: FootprintEditModal, componentProps: { footprint: current }, cssClass: 'auto-height-modal' });
-      await modal.present();
-      const { data, role } = await modal.onWillDismiss<FootprintFormModel>();
-      if (role === 'confirm' && data) await this.run(() => this.store.saveFootprintForm(fp.key, data));
+  protected editFootprint(): Promise<void> {
+    return this.exclusive(async () => {
+      // the footprint as the modal shows it: the baseline of the changed fields and of their bases
+      const fp = this.footprint();
+      if (!fp) return;
+      const current: FootprintFormModel = {
+        title: fp.title, placeName: fp.placeName, date: fp.date, time: fp.time, published: fp.publishState === 'published', transport: fp.transport ?? '',
+      };
+      await this.withLock(fp.key, async () => {
+        const modal = await this.modalController.create({ component: FootprintEditModal, componentProps: { footprint: current }, cssClass: 'auto-height-modal' });
+        await modal.present();
+        const { data, role } = await modal.onWillDismiss<FootprintFormModel>();
+        if (role === 'confirm' && data) await this.run(() => this.store.saveFootprintForm(fp.key, data, fp));
+      });
     });
   }
 
