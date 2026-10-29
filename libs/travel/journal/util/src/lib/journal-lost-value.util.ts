@@ -1,3 +1,5 @@
+import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
+
 import { JournalI18n } from './journal-i18n';
 
 /** The labels the lost-value text needs, as the store's i18n signals provide them. */
@@ -10,8 +12,7 @@ export type LostValueLabels = Pick<JournalI18n,
 const EMPTY = '–';
 
 function dateText(value: string): string {
-  const m = /^(\d{4})(\d{2})(\d{2})$/.exec(value);
-  return m ? `${m[3]}.${m[2]}.${m[1]}` : value;
+  return convertDateFormatToString(value, DateFormat.StoreDate, DateFormat.ViewDate, false) || value;
 }
 
 /** A lost footprint value in words a club member understands: a field label and a readable value (spec 1.126 §6.3). */
