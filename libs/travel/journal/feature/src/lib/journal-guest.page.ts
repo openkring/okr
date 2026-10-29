@@ -1,8 +1,7 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {
-  ActionSheetController, AlertController, IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonSpinner, IonTitle,
-  IonToolbar, ModalController, ToastController,
+  ActionSheetController, AlertController, IonContent, IonHeader, IonSpinner, ModalController, ToastController,
 } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
@@ -22,40 +21,63 @@ import { openJournalFlyover } from './journal-flyover-open';
  * from the `journalGuest` callable with the link code — published footprints, photos, likes and comments —
  * and the guest likes, comments and chooses their notifications. `?mute=1` (the link in every message)
  * switches notifications off on opening.
+ *
+ * Looks like the tenant's website, not like the app (spec 1.126 §2.1): fonts, colours and a plain header from the
+ * app's `--okr-site-*` tokens (apps/<app>/src/theme/site-tokens.scss), each with the app theme as fallback.
  */
 @Component({
   selector: 'okr-journal-guest-page',
-  imports: [IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonCard, IonCardContent, IonSpinner, RouteMap, JournalReactions],
+  imports: [IonHeader, IonContent, IonSpinner, RouteMap, JournalReactions],
   styles: [`
-    .center { text-align: center; padding: 48px 16px; color: var(--ion-color-medium); }
+    :host {
+      --site-font: var(--okr-site-font, var(--ion-font-family));
+      --site-paper: var(--okr-site-paper, var(--ion-background-color));
+      --site-surface: var(--okr-site-surface, var(--ion-card-background, var(--ion-background-color)));
+      --site-ink: var(--okr-site-ink, var(--ion-text-color));
+      --site-ink-soft: var(--okr-site-ink-soft, var(--ion-color-medium));
+      --site-line: var(--okr-site-line, var(--ion-color-light));
+      --site-brand: var(--okr-site-brand, var(--ion-color-secondary));
+      --site-accent: var(--okr-site-accent, var(--ion-color-primary));
+      --site-radius: var(--okr-site-radius, 8px);
+      --site-max-w: var(--okr-site-max-w, 860px);
+      font-family: var(--site-font); color: var(--site-ink);
+    }
+    ion-header { box-shadow: none; }
+    ion-header::after { display: none; }
+    ion-content { --background: var(--site-paper); --color: var(--site-ink); font-family: var(--site-font); }
+    .site-header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; padding-top: calc(12px + var(--ion-safe-area-top, 0px));
+      background: var(--site-surface); border-bottom: 1px solid var(--site-line); font-family: var(--site-font); }
+    .site-header h1 { flex: 1; margin: 0; font-size: 1.15rem; font-weight: 600; color: var(--site-brand); letter-spacing: -0.01em; }
+    .site-header button { background: none; border: none; padding: 6px 8px; font: inherit; font-weight: 500; color: var(--site-accent); cursor: pointer; }
+    .site-header button:hover { text-decoration: underline; }
+    .center { text-align: center; padding: 48px 16px; color: var(--site-ink-soft); }
     .map { height: 40vh; min-height: 240px; }
-    .wrap { max-width: 860px; margin: 0 auto; padding: 8px; }
-    .hello { color: var(--ion-color-medium); font-size: 0.9rem; margin: 8px 8px 0; }
-    .card { display: flex; gap: 12px; align-items: center; cursor: pointer; }
-    .thumb { width: 72px; height: 72px; border-radius: 8px; object-fit: cover; background: var(--ion-color-light); flex: none; }
-    .card h3 { margin: 0 0 4px; font-size: 1rem; }
-    .card p { margin: 0; font-size: 0.8rem; color: var(--ion-color-medium); }
+    .wrap { max-width: var(--site-max-w); margin: 0 auto; padding: 8px 16px; }
+    .hello { color: var(--site-ink-soft); font-size: 0.95rem; margin: 12px 0 4px; }
+    .card { display: flex; gap: 12px; align-items: center; cursor: pointer; margin: 10px 0; padding: 12px;
+      background: var(--site-surface); border: 1px solid var(--site-line); border-radius: var(--site-radius); }
+    .card:hover { border-color: var(--site-accent); }
+    .thumb { width: 72px; height: 72px; border-radius: 8px; object-fit: cover; background: var(--site-line); flex: none; }
+    .card h3 { margin: 0 0 4px; font-size: 1rem; font-weight: 600; color: var(--site-ink); }
+    .card p { margin: 0; font-size: 0.85rem; color: var(--site-ink-soft); }
     .story { max-width: 760px; margin: 0 auto; padding: 0 16px; }
-    .story h2 { margin: 16px 0 4px; }
-    .story .facts { color: var(--ion-color-medium); font-size: 0.9rem; margin-bottom: 16px; }
+    .story h2 { margin: 24px 0 4px; font-weight: 600; color: var(--site-brand); letter-spacing: -0.01em; }
+    .story .facts { color: var(--site-ink-soft); font-size: 0.9rem; margin-bottom: 16px; }
     .block { margin: 16px 0; }
-    .block .by { font-size: 0.8rem; color: var(--ion-color-medium); }
+    .block .by { font-size: 0.8rem; color: var(--site-ink-soft); }
     .photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px; }
     .photos img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 6px; cursor: zoom-in; }
   `],
   template: `
     <ion-header>
-      <ion-toolbar>
-        @if (selected()) {
-          <ion-buttons slot="start"><ion-button (click)="selectedKey.set(undefined)">{{ i18n.guest_back() }}</ion-button></ion-buttons>
-        }
-        <ion-title>{{ view()?.journal?.title || i18n.untitled() }}</ion-title>
+      <header class="site-header">
+        @if (selected()) { <button type="button" (click)="selectedKey.set(undefined)">{{ i18n.guest_back() }}</button> }
+        <h1>{{ view()?.journal?.title || i18n.untitled() }}</h1>
         @if (view()) {
-          <ion-buttons slot="end">
-            @if (flyover() && !selected()) { <ion-button (click)="fly()">{{ i18n.flyover() }}</ion-button> }
-            <ion-button (click)="settings()">{{ i18n.guest_settings() }}</ion-button></ion-buttons>
+          @if (flyover() && !selected()) { <button type="button" (click)="fly()">{{ i18n.flyover() }}</button> }
+          <button type="button" (click)="settings()">{{ i18n.guest_settings() }}</button>
         }
-      </ion-toolbar>
+      </header>
     </ion-header>
     <ion-content>
       @if (error()) {
@@ -90,16 +112,14 @@ import { openJournalFlyover } from './journal-flyover-open';
         <div class="wrap">
           <p class="hello">{{ hello() }}</p>
           @for (fp of view()?.footprints ?? []; track fp.key) {
-            <ion-card (click)="open(fp.key)">
-              <ion-card-content class="card">
-                @if (thumbOf(fp); as thumb) { <img class="thumb" [src]="thumb" alt="" /> } @else { <div class="thumb"></div> }
-                <div>
-                  <h3>{{ fp.title || i18n.untitled() }}</h3>
-                  <p>{{ facts(fp) }}</p>
-                  <p>{{ counts(fp) }}</p>
-                </div>
-              </ion-card-content>
-            </ion-card>
+            <div class="card" role="button" tabindex="0" (click)="open(fp.key)" (keydown.enter)="open(fp.key)">
+              @if (thumbOf(fp); as thumb) { <img class="thumb" [src]="thumb" alt="" /> } @else { <div class="thumb"></div> }
+              <div>
+                <h3>{{ fp.title || i18n.untitled() }}</h3>
+                <p>{{ facts(fp) }}</p>
+                <p>{{ counts(fp) }}</p>
+              </div>
+            </div>
           } @empty {
             <p class="center">{{ i18n.guest_empty() }}</p>
           }
