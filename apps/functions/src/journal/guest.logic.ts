@@ -105,3 +105,8 @@ export function applyManage(
 export function deliveryFor(channel: GuestChannel): string[] {
   return channel === 'none' ? [] : [channel];
 }
+
+/** Conflict copies of a block are for the authors to resolve: a guest never receives them (spec 1.126 §6.3). */
+export function isGuestVisibleSection(section: Record<string, unknown>): boolean {
+  return section['isArchived'] !== true && section['conflictOf'] === undefined;
+}

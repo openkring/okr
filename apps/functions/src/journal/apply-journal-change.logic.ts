@@ -3,7 +3,7 @@ import {
   JournalReactionCollection, JournalSectionCollection,
 } from '@okr/shared-models';
 import {
-  acceptRecord, commentDocOf, entityStateKey, footprintPageOf, imageDocOf, journalDocOf, materialize, reactionDocOf, sectionDocOf, sortByOrder,
+  acceptRecord, blocksOf, commentDocOf, conflictCopyDocOf, isConflictCopyKey, originalOfCopy, entityStateKey, footprintPageOf, imageDocOf, journalDocOf, materialize, reactionDocOf, sectionDocOf, sortByOrder, viewOf,
 } from '@okr/travel-journal-util';
 
 /** A change record as stored in `journal-changes`, with its server upload time. */
@@ -45,6 +45,34 @@ export function planEntityWrite(records: StoredRecord[], journalKey: string, ent
     default:
       return undefined;
   }
+}
+
+/**
+ * The block's documents (spec 1.126 §6.3): the original plus one per conflict copy. `records` are
+ * every record of the original key and of its copy keys. A copy that is archived — or whose lost
+ * value is no longer lost — is written `{ isArchived: true }`. Nothing is written before the
+ * original's create arrived.
+ */
+export function planSectionWrites(records: StoredRecord[], journalKey: string, blockKey: string, tenants: string[]): JournalWrite[] {
+  const original = planEntityWrite(records.filter((r) => r.change.entityKey === blockKey), journalKey, 'section', blockKey, tenants);
+  if (!original) return [];
+  const writes: JournalWrite[] = [original];
+  const state = materialize(records.filter((r) => acceptRecord(r.change, r.uploadedAtMs)).map((r) => r.change));
+  // the footprint of an archived original is still wanted: its copies outlive it
+  const entity = state[entityStateKey('section', blockKey)];
+  const unarchived = entity && { ...entity, fields: Object.fromEntries(Object.entries(entity.fields).filter(([field]) => field !== 'archived')) };
+  const footprint = viewOf(unarchived)?.['footprintKey'];
+  if (typeof footprint !== 'string') return writes;
+  const live = new Set<string>();
+  for (const block of blocksOf(state, footprint).filter((b) => b.conflictOf === blockKey)) {
+    live.add(block.key);
+    writes.push({ path: journalPath(journalKey, JournalSectionCollection, block.key), data: { ...conflictCopyDocOf(block, footprint, journalKey, tenants) } });
+  }
+  const ownCopyKeys = new Set(records.map((r) => r.change.entityKey).filter((k) => isConflictCopyKey(k) && originalOfCopy(k) === blockKey && isJournalKey(k)));
+  for (const key of ownCopyKeys) {
+    if (!live.has(key)) writes.push({ path: journalPath(journalKey, JournalSectionCollection, key), data: ARCHIVED });
+  }
+  return writes;
 }
 
 /** The footprint's `sections` list: its live blocks in their fractional order. */

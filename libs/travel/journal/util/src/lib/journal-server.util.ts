@@ -4,7 +4,7 @@ import {
 } from '@okr/shared-models';
 import { isValidHlc, parseHlc } from './journal-hlc.util';
 import { entityStateKey, JournalState, viewOf } from './journal-merge.util';
-import { transportOf, weatherOf } from './journal-view.util';
+import { BlockView, transportOf, weatherOf } from './journal-view.util';
 
 /**
  * What the applyJournalChange function writes to Firestore, built from the merged change log (spec
@@ -68,18 +68,40 @@ export function footprintPageOf(state: JournalState, footprintKey: string, tenan
   });
 }
 
-export function sectionDocOf(state: JournalState, sectionKey: string, journalKey: string, tenants: string[]): ArticleSection | undefined {
-  const { entityState, view: v } = view(state, 'section', sectionKey);
-  if (!v) return undefined;
-  const isPhotos = v['kind'] === 'photos';
+/** A section doc; a conflict copy additionally names the block it was split from (spec 1.126 §6.3). */
+export type SectionDoc = ArticleSection & { conflictOf?: string };
+
+interface SectionParts {
+  footprintKey: string; authorKey: string; order: string; kind: string; html: string; imageKeys: string[]; conflictOf?: string;
+}
+
+function sectionDocFrom(sectionKey: string, journalKey: string, tenants: string[], p: SectionParts): SectionDoc {
+  const isPhotos = p.kind === 'photos';
   return defined({
     ...ARTICLE_SECTION_SHAPE, okey: sectionKey, name: sectionKey, title: '', subTitle: '', tenants, isArchived: false,
-    journalKey, footprintKey: str(v['footprintKey']), authorKey: entityState?.ownerKey ?? '', order: str(v['order']),
-    content: { ...ARTICLE_SECTION_SHAPE.content, htmlContent: isPhotos ? '' : str(v['html']) },
+    journalKey, footprintKey: p.footprintKey, authorKey: p.authorKey, order: p.order, conflictOf: p.conflictOf,
+    content: { ...ARTICLE_SECTION_SHAPE.content, htmlContent: isPhotos ? '' : p.html },
     properties: {
       ...ARTICLE_SECTION_SHAPE.properties,
-      images: isPhotos ? strings(v['imageKeys']).map((key) => ({ ...IMAGE_CONFIG_SHAPE, label: key, url: '', altText: '' })) : [],
+      images: isPhotos ? p.imageKeys.map((key) => ({ ...IMAGE_CONFIG_SHAPE, label: key, url: '', altText: '' })) : [],
     },
+  });
+}
+
+export function sectionDocOf(state: JournalState, sectionKey: string, journalKey: string, tenants: string[]): SectionDoc | undefined {
+  const { entityState, view: v } = view(state, 'section', sectionKey);
+  if (!v) return undefined;
+  return sectionDocFrom(sectionKey, journalKey, tenants, {
+    footprintKey: str(v['footprintKey']), authorKey: entityState?.ownerKey ?? '', order: str(v['order']),
+    kind: str(v['kind']), html: str(v['html']), imageKeys: strings(v['imageKeys']),
+  });
+}
+
+/** The doc of a derived conflict copy: the original's block with the lost value, `conflictOf` set. */
+export function conflictCopyDocOf(block: BlockView, footprintKey: string, journalKey: string, tenants: string[]): SectionDoc {
+  return sectionDocFrom(block.key, journalKey, tenants, {
+    footprintKey, authorKey: block.authorKey, order: block.order, kind: block.kind, html: block.html ?? '',
+    imageKeys: block.imageKeys ?? [], conflictOf: block.conflictOf,
   });
 }
 

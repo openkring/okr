@@ -137,7 +137,8 @@ function copiesOf(state: JournalState, original: BlockView, history: EntityState
   return copies;
 }
 
-function blocksOf(state: JournalState, footprintKey: string): BlockView[] {
+/** The footprint's blocks in order, including the conflict copies derived from lost values. */
+export function blocksOf(state: JournalState, footprintKey: string): BlockView[] {
   const blocks: BlockView[] = [];
   for (const section of Object.values(state)) {
     if (section.entity !== 'section' || isConflictCopyKey(section.entityKey)) continue;

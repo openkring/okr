@@ -4840,6 +4840,24 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "journal-changes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "journalKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "entity",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "entityKey",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [

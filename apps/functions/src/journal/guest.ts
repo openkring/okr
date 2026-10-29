@@ -15,7 +15,7 @@ import { findGuestLink, guestChangeRecord, guestLinkState, likeKey } from '@okr/
 import { IMGIX_PRIVATE_HOST, signImgixUrl } from '../_storage/imgix-sign';
 import { tenantLinks } from '../calendar/deliver';
 import { windowExpiry } from '../video/video-sign.util';
-import { applyManage, deliveryFor, GuestRequest, GuestRequestError, ManageAction, memberName, newLinkCode, parseGuestRequest } from './guest.logic';
+import { applyManage, deliveryFor, GuestRequest, GuestRequestError, isGuestVisibleSection, ManageAction, memberName, newLinkCode, parseGuestRequest } from './guest.logic';
 import { isJournalKey } from './apply-journal-change.logic';
 import { requireJournalAuthor } from './journal-auth';
 import { checkNotice } from './notify.logic';
@@ -99,7 +99,7 @@ async function guestView(db: Firestore, jk: string, ctx: GuestContext): Promise<
     const fp = f.data();
     const parentKey = `page.${f.id}`;
     const order = (fp['sections'] as string[] | undefined) ?? [];
-    const blocks = live(sections.docs).filter((s) => s.data()['footprintKey'] === f.id)
+    const blocks = live(sections.docs).filter((s) => isGuestVisibleSection(s.data()) && s.data()['footprintKey'] === f.id)
       .sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id))
       .map((s) => {
         const section = s.data();
