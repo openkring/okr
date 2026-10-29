@@ -145,6 +145,7 @@ for (const path of [...files('*.form.ts'), ...files('*-edit.modal.ts')]) {
  * is reported as stale. Adding an entry is a design decision — not a way to silence the check.
  */
 const MODAL_ALLOWLIST = {
+  'libs/travel/journal/feature/src/lib/journal-photo-sync.modal.ts': 'settings: photo mode applies on tap, plus sync status (spec 1.126 §3)',
   'libs/shared/ui/src/lib/date-time-select.modal.ts': 'picker: date (+ optional time), confirmed by OK',
   'libs/shared/ui/src/lib/date-picker.modal.ts': 'picker: ion-datetime calendar',
   'libs/shared/ui/src/lib/date-select.modal.ts': 'picker: ion-datetime calendar',
