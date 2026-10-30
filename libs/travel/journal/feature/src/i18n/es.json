@@ -56,14 +56,17 @@
   },
   "photos": {
     "added": "{count} foto(s) añadida(s)",
-    "skipped": "{count} foto(s) omitida(s)"
+    "skipped": "{count} foto(s) omitida(s)",
+    "on_ipad": "{count} fotos siguen en el iPad.",
+    "uploading": "Subiendo fotos: {done} de {total}"
   },
   "error": {
     "no_author": "Abre el diario de viaje una vez con internet y luego podrás escribir.",
     "not_owner": "Solo quien escribió este bloque puede cambiarlo.",
     "generic": "No ha funcionado. Inténtalo de nuevo.",
     "others_content": "Aquí también hay contribuciones de la otra persona. Elimina primero solo tus propios bloques.",
-    "outdated": "Actualiza la app antes de seguir escribiendo."
+    "outdated": "Actualiza la app antes de seguir escribiendo.",
+    "offline": "Estás sin conexión. Guarda de nuevo cuando tengas internet."
   },
   "footprint_form": {
     "title": "Etapa",
@@ -242,7 +245,7 @@
     "offline": "Solo puedes enviar mensajes a los invitados con Internet.",
     "too_soon": "El último mensaje salió hace solo unos minutos. Vuelve a intentarlo dentro de unos minutos."
   },
-  "web_read_only": "Aquí lees tus diarios de viaje. Escribir, las fotos y el mapa sin conexión están en la app del iPad.",
+  "write_slow": "La conexión es lenta. Tu cambio se enviará en cuanto sea posible – deja la página abierta.",
   "transport": {
     "label": "Viajando en",
     "helper": "¿Cómo llegasteis aquí? El sobrevuelo lo muestra en el camino hacia este footprint.",

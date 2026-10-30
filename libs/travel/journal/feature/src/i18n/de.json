@@ -56,14 +56,17 @@
   },
   "photos": {
     "added": "{count} Foto(s) hinzugefügt",
-    "skipped": "{count} Foto(s) übersprungen"
+    "skipped": "{count} Foto(s) übersprungen",
+    "on_ipad": "{count} Fotos sind noch auf dem iPad.",
+    "uploading": "Fotos werden hochgeladen: {done} von {total}"
   },
   "error": {
     "no_author": "Öffne das Reisetagebuch einmal mit Internet, dann kannst du schreiben.",
     "not_owner": "Nur wer den Block geschrieben hat, kann ihn ändern.",
     "generic": "Das hat nicht geklappt. Versuch es nochmals.",
     "others_content": "Hier stehen auch Beiträge der anderen Person. Lösche zuerst nur deine eigenen Blöcke.",
-    "outdated": "Bitte aktualisiere die App, bevor du weiter schreibst."
+    "outdated": "Bitte aktualisiere die App, bevor du weiter schreibst.",
+    "offline": "Du bist offline. Speichere wieder, wenn du Internet hast."
   },
   "footprint_form": {
     "title": "Footprint",
@@ -242,7 +245,7 @@
     "offline": "Nachrichten an Gäste sendest du nur mit Internet.",
     "too_soon": "Die letzte Nachricht ist erst wenige Minuten her. Versuch es in ein paar Minuten nochmals."
   },
-  "web_read_only": "Hier liest du deine Reisetagebücher. Schreiben, Fotos und die Offline-Karte gibt es in der iPad-App.",
+  "write_slow": "Die Verbindung ist langsam. Deine Änderung wird gesendet, sobald es geht – lass die Seite offen.",
   "transport": {
     "label": "Unterwegs mit",
     "helper": "Wie seid ihr hierher gekommen? Der Flyover zeigt es auf dem Weg zu diesem Footprint.",

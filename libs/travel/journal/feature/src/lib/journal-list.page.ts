@@ -26,7 +26,6 @@ import { JournalStore } from './journal.store';
   imports: [IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonList, IonItem, IonLabel, IonButton, IonIcon, SvgIconPipe],
   styles: [`
     .title { cursor: pointer; }
-    .hint { color: var(--ion-color-medium); font-size: 0.9rem; }
   `],
   template: `
     <ion-header>
@@ -42,12 +41,11 @@ import { JournalStore } from './journal.store';
       </ion-toolbar>
     </ion-header>
     <ion-content class="ion-padding">
-      @if (!store.native()) { <p class="hint">{{ store.i18n.web_read_only() }}</p> }
       <ion-list>
           @for (journal of store.journals(); track journal.key) {
             <ion-item>
               <ion-label class="title" (click)="open(journal.key)">{{ journal.title || store.i18n.untitled() }}</ion-label>
-              @if (store.native()) {
+              @if (store.canWrite()) {
                 <ion-button slot="end" fill="clear" (click)="actions(journal.key, journal.title)">{{ store.i18n.list_actions() }}</ion-button>
               }
             </ion-item>
@@ -69,7 +67,7 @@ export class JournalListPage {
   private readonly modalController = inject(ModalController);
   private readonly popoverController = inject(PopoverController);
 
-  protected readonly menuItems = computed(() => journalListMenu({ native: this.store.native() }));
+  protected readonly menuItems = computed(() => journalListMenu({ native: this.store.native(), canWrite: this.store.canWrite() }));
 
   public constructor() {
     registerBundledIcons(JOURNAL_ICONS); // the journal renders its icons offline (spec 1.126)

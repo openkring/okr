@@ -61,6 +61,9 @@ import { JournalStore } from './journal.store';
       </ion-toolbar>
     </ion-header>
     <ion-content>
+      @if (store.webUpload(); as upload) {
+        <p class="note">{{ uploading(upload.done, upload.total) }}</p>
+      }
       @if (story(); as story) {
         @if (story.hero; as hero) {
           <okr-hero-section [section]="hero" />
@@ -93,8 +96,11 @@ import { JournalStore } from './journal.store';
                 [emitImageClicks]="canEdit() && !editMode()" (imageSelected)="photoActions(item, $event)" />
             }
           </div>
+          @if (item.missing > 0) {
+            <p class="note">{{ onIpad(item.missing) }}</p>
+          }
         }
-        <okr-journal-reactions [likes]="likes().length" [liked]="liked()" [comments]="comments()" [i18n]="store.i18n" [readOnly]="!store.native()"
+        <okr-journal-reactions [likes]="likes().length" [liked]="liked()" [comments]="comments()" [i18n]="store.i18n" [readOnly]="!store.canWrite()"
           (likeToggled)="act(store.toggleLike(footprintKey()))" (writeClicked)="writeComment()" (deleteClicked)="act(store.archiveComment($event))" />
       }
     </ion-content>
@@ -123,7 +129,7 @@ export class JournalStoryPage {
   public readonly footprintKey = input.required<string>();
 
   protected readonly editMode = signal(false);
-  protected readonly menuItems = computed(() => footprintMenu({ native: this.store.native(), editMode: this.editMode() }));
+  protected readonly menuItems = computed(() => footprintMenu({ native: this.store.native(), canWrite: this.store.canWrite(), editMode: this.editMode() }));
 
   protected readonly likes = computed(() => this.store.likes(this.footprintKey()));
   protected readonly liked = computed(() => this.likes().includes(this.store.author()?.personKey ?? ''));
@@ -146,9 +152,25 @@ export class JournalStoryPage {
 
   protected readonly footprints = computed(() => this.store.footprints(this.journalKey()));
   protected readonly footprint = computed(() => this.footprints().find((f) => f.key === this.footprintKey()));
+  /**
+   * The story as the CMS sections render it. In the browser, a photo that is signed but not in the bucket (still a draft
+   * photo on the iPad) is left out of the album and counted per block for a note; the block's `imageKeys` stay as they are.
+   */
   protected readonly story = computed(() => {
     const fp = this.footprint();
-    return fp ? toStorySections(fp, this.store.images(this.journalKey()), (p) => this.fileUrl.url(p), this.appStore.tenantId()) : undefined;
+    if (!fp) return undefined;
+    const images = this.store.images(this.journalKey());
+    const story = toStorySections(fp, images, (p) => this.fileUrl.url(p), this.appStore.tenantId());
+    const native = this.store.native();
+    const isMissing = (key: string | undefined) => !native && !!key && this.fileUrl.isMissing(images.get(key)?.path2048);
+    return {
+      ...story,
+      blocks: story.blocks.map((item) => ({
+        ...item,
+        images: item.images?.filter((image) => !isMissing(image.label)),
+        missing: (item.block.imageKeys ?? []).filter((key) => isMissing(key)).length,
+      })),
+    };
   });
   private readonly index = computed(() => this.footprints().findIndex((f) => f.key === this.footprintKey()));
   protected readonly previousKey = computed(() => (this.index() > 0 ? this.footprints()[this.index() - 1].key : undefined));
@@ -199,14 +221,22 @@ export class JournalStoryPage {
     return item.section.type === 'album' ? item.section : undefined;
   }
 
-  /** Every author edits every block (spec 1.126 §5) — but only on the iPad and with a known author. */
+  /** Every author edits every block (spec 1.126 §5) — on the iPad with a bound author, in the browser when signed in as a person. */
   protected canEdit(): boolean {
-    return this.store.native() && !!this.store.author()?.personKey;
+    return this.store.canWrite();
   }
 
   /** The name of the person editing this block right now, if somebody else is. */
   protected lockedBy(item: StoryBlock): string | undefined {
     return this.store.lockOf(item.block.key)?.name;
+  }
+
+  protected onIpad(count: number): string {
+    return fill(this.store.i18n.photos_on_ipad(), { count });
+  }
+
+  protected uploading(done: number, total: number): string {
+    return fill(this.store.i18n.photos_uploading(), { done, total });
   }
 
   protected fillName(name: string): string {

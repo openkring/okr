@@ -56,14 +56,17 @@
   },
   "photos": {
     "added": "{count} photo(s) ajoutée(s)",
-    "skipped": "{count} photo(s) ignorée(s)"
+    "skipped": "{count} photo(s) ignorée(s)",
+    "on_ipad": "{count} photos sont encore sur l’iPad.",
+    "uploading": "Envoi des photos : {done} sur {total}"
   },
   "error": {
     "no_author": "Ouvre le carnet de voyage une fois avec internet, ensuite tu pourras écrire.",
     "not_owner": "Seule la personne qui a écrit ce bloc peut le modifier.",
     "generic": "Cela n'a pas fonctionné. Réessaie.",
     "others_content": "Ceci contient aussi des contributions de l'autre personne. Supprime d'abord seulement tes propres blocs.",
-    "outdated": "Mets à jour l'application avant de continuer à écrire."
+    "outdated": "Mets à jour l'application avant de continuer à écrire.",
+    "offline": "Tu es hors ligne. Enregistre à nouveau quand tu as internet."
   },
   "footprint_form": {
     "title": "Étape",
@@ -242,7 +245,7 @@
     "offline": "Tu ne peux envoyer des messages aux invités qu’avec Internet.",
     "too_soon": "Le dernier message est parti il y a quelques minutes seulement. Réessaie dans quelques minutes."
   },
-  "web_read_only": "Ici tu lis tes carnets de voyage. L’écriture, les photos et la carte hors ligne sont dans l’app iPad.",
+  "write_slow": "La connexion est lente. Ta modification sera envoyée dès que possible – laisse la page ouverte.",
   "transport": {
     "label": "En voyage avec",
     "helper": "Comment êtes-vous arrivés ici ? Le survol le montre sur le chemin vers ce footprint.",
