@@ -14,6 +14,7 @@ import { runContractDeadlineScan } from '../contract';
 import { runSnbRates } from '../exchange-rate/fetch-snb-rates';
 import { runPartnerHeartbeats } from '../business';
 import { runTaskDaily } from '../task/task-daily';
+import { runPruneStalePushTokens } from '../push-tokens/prune-stale-tokens';
 import { runBillApproverDaily } from '../bill/bill-approver-daily';
 import { runOrphanSessionCleanup } from '../session';
 import { runFileTransferReap } from '../file-transfer/reap-file-transfers';
@@ -37,6 +38,7 @@ export const MORNING_JOBS: NamedJob[] = [
   { name: 'snbRates', run: runSnbRates },
   { name: 'partnerHeartbeats', run: runPartnerHeartbeats },
   { name: 'taskDaily', run: runTaskDaily },
+  { name: 'pruneStalePushTokens', run: runPruneStalePushTokens },
 ];
 
 export const EVENING_JOBS: NamedJob[] = [
@@ -56,7 +58,7 @@ export const HALF_HOURLY_JOBS: NamedJob[] = [
 // 03:15, not 02:00: 02:00-02:59 is skipped/repeated at DST changes; 03:15 was already the old slot of three of these jobs.
 // 512MiB: each job fit 256MiB alone, but six in one instance hit 267MiB on 2026-10-25 (privacyExportReap was lost).
 export const NIGHTLY_OPTIONS = { schedule: '15 3 * * *', timeZone: TIME_ZONE, region: REGION, timeoutSeconds: 540, memory: '512MiB' as const, secrets: [matrixAdminToken] };
-export const MORNING_OPTIONS = { schedule: '0 7 * * *', timeZone: TIME_ZONE, region: REGION, timeoutSeconds: 540, memory: '256MiB' as const };
+export const MORNING_OPTIONS = { schedule: '0 7 * * *', timeZone: TIME_ZONE, region: REGION, timeoutSeconds: 540, memory: '256MiB' as const, secrets: [matrixAdminToken] };
 export const EVENING_OPTIONS = { schedule: '50 23 * * *', timeZone: TIME_ZONE, region: REGION, timeoutSeconds: 300 };
 export const HALF_HOURLY_OPTIONS = { schedule: '*/30 * * * *', timeZone: TIME_ZONE, region: REGION, timeoutSeconds: 540, memory: '256MiB' as const };
 

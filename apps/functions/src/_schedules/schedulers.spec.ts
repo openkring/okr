@@ -4,6 +4,7 @@ import {
   NIGHTLY_OPTIONS, MORNING_OPTIONS, EVENING_OPTIONS, HALF_HOURLY_OPTIONS,
   nightlyMaintenance, morningJobs, eveningJobs, halfHourlyJobs,
 } from './schedulers';
+import { matrixAdminToken } from '../matrix-simple/shared';
 
 const names = (jobs: { name: string }[]) => jobs.map((j) => j.name);
 
@@ -12,8 +13,8 @@ describe('time-slot schedulers', () => {
     expect(names(NIGHTLY_JOBS)).toEqual(['tripStatsReconcile', 'crewTrackCleanup', 'roomPostPolicySweep', 'expiredMembershipSweep', 'pinboardSweep', 'billScanReap', 'privacyExportReap']);
   });
 
-  it('morning runs its four jobs in order', () => {
-    expect(names(MORNING_JOBS)).toEqual(['contractDeadlineScan', 'snbRates', 'partnerHeartbeats', 'taskDaily']);
+  it('morning runs its five jobs in order', () => {
+    expect(names(MORNING_JOBS)).toEqual(['contractDeadlineScan', 'snbRates', 'partnerHeartbeats', 'taskDaily', 'pruneStalePushTokens']);
   });
 
   it('evening runs its two jobs in order', () => {
@@ -35,7 +36,7 @@ describe('time-slot schedulers', () => {
     const { secrets, ...nightly } = NIGHTLY_OPTIONS;
     expect(nightly).toEqual({ schedule: '15 3 * * *', timeZone: 'Europe/Zurich', region: 'europe-west6', timeoutSeconds: 540, memory: '512MiB' });
     expect(secrets).toHaveLength(1);
-    expect(MORNING_OPTIONS).toEqual({ schedule: '0 7 * * *', timeZone: 'Europe/Zurich', region: 'europe-west6', timeoutSeconds: 540, memory: '256MiB' });
+    expect(MORNING_OPTIONS).toEqual({ schedule: '0 7 * * *', timeZone: 'Europe/Zurich', region: 'europe-west6', timeoutSeconds: 540, memory: '256MiB', secrets: [matrixAdminToken] });
     expect(EVENING_OPTIONS).toEqual({ schedule: '50 23 * * *', timeZone: 'Europe/Zurich', region: 'europe-west6', timeoutSeconds: 300 });
     expect(HALF_HOURLY_OPTIONS).toEqual({ schedule: '*/30 * * * *', timeZone: 'Europe/Zurich', region: 'europe-west6', timeoutSeconds: 540, memory: '256MiB' });
   });

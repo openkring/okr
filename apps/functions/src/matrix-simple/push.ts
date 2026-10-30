@@ -336,35 +336,53 @@ export const unregisterMatrixPusher = onCall(
     const { pushkey } = request.data as { pushkey?: string };
     if (!pushkey) throw new HttpsError('invalid-argument', 'pushkey is required');
 
-    const { accessToken, matrixUserId } = await mintMatrixUserToken(uid, 'unregisterMatrixPusher');
-
-    const listResp = await fetch(`${MATRIX_HOMESERVER}/_matrix/client/v3/pushers`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    if (!listResp.ok) {
-      throw new HttpsError('internal', `pushers list failed: ${await listResp.text()}`);
-    }
-    const { pushers } = (await listResp.json()) as {
-      pushers?: Array<{ app_id: string; pushkey: string }>;
-    };
-    const matches = (pushers ?? []).filter((p) => p.pushkey === pushkey);
-    await Promise.all(
-      matches.map(async (p) => {
-        const resp = await fetch(`${MATRIX_HOMESERVER}/_matrix/client/v3/pushers/set`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-          // kind:null deletes the pusher (Matrix spec).
-          body: JSON.stringify({ app_id: p.app_id, pushkey: p.pushkey, kind: null }),
-        });
-        if (!resp.ok) {
-          throw new HttpsError('internal', `pushers/set (delete) failed: ${await resp.text()}`);
-        }
-      })
-    );
-    console.log(`unregisterMatrixPusher: removed ${matches.length} pusher(s) for ${matrixUserId}`);
-    return { removed: matches.length > 0 };
+    const removed = await removeMatrixPushers(uid, [pushkey], 'unregisterMatrixPusher');
+    return { removed: removed > 0 };
   }
 );
+
+/**
+ * Delete the given pushkeys' Matrix pushers of `uid`'s Matrix account (any app_id): one minted
+ * user token, one `GET /pushers`, and a `pushers/set kind:null` only for listed pushers whose
+ * pushkey is in `pushkeys` — never another device's pusher (a person's Matrix account is shared
+ * by all their tenant apps). Returns the number of pushers deleted; an unknown pushkey is not an
+ * error. Throws when the uid has no Matrix account or Synapse fails.
+ */
+export async function removeMatrixPushers(
+  uid: string,
+  pushkeys: string[],
+  fn = 'removeMatrixPushers'
+): Promise<number> {
+  if (pushkeys.length === 0) return 0;
+  const wanted = new Set(pushkeys);
+  const { accessToken, matrixUserId } = await mintMatrixUserToken(uid, fn);
+
+  const listResp = await fetch(`${MATRIX_HOMESERVER}/_matrix/client/v3/pushers`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!listResp.ok) {
+    throw new HttpsError('internal', `pushers list failed: ${await listResp.text()}`);
+  }
+  const { pushers } = (await listResp.json()) as {
+    pushers?: Array<{ app_id: string; pushkey: string }>;
+  };
+  const matches = (pushers ?? []).filter((p) => wanted.has(p.pushkey));
+  await Promise.all(
+    matches.map(async (p) => {
+      const resp = await fetch(`${MATRIX_HOMESERVER}/_matrix/client/v3/pushers/set`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        // kind:null deletes the pusher (Matrix spec).
+        body: JSON.stringify({ app_id: p.app_id, pushkey: p.pushkey, kind: null }),
+      });
+      if (!resp.ok) {
+        throw new HttpsError('internal', `pushers/set (delete) failed: ${await resp.text()}`);
+      }
+    })
+  );
+  console.log(`${fn}: removed ${matches.length} pusher(s) for ${matrixUserId}`);
+  return matches.length;
+}
 
 /**
  * A room's `org.okr.tenant` marker, cached per instance: one chat message fans out to one

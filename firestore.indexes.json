@@ -4908,6 +4908,25 @@
   ],
   "fieldOverrides": [
     {
+      "collectionGroup": "fcmTokens",
+      "fieldPath": "updatedAt",
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        }
+      ],
+      "ttl": false
+    },
+    {
       "collectionGroup": "deletions",
       "fieldPath": "deletedBy",
       "indexes": [
