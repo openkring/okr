@@ -10,11 +10,11 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { MapView, RouteMap, RoutePin } from '@okr/shared-ui';
 import { FootprintEditModal } from '@okr/travel-journal-ui';
 import {
-  FootprintFormModel, flyoverInputOf, flyoverTimeline, footprintChips, journalMapData, journalOverviewMenu, newFootprintFormModel, routeLengthKm,
+  FootprintFormModel, flyoverInputOf, flyoverTimeline, footprintChips, journalMapData, journalOverviewMenu, JournalWriteSlow, newFootprintFormModel, routeLengthKm,
 } from '@okr/travel-journal-util';
 
 import { JournalFileUrlService } from './journal-file-url.service';
-import { showJournalError } from './journal-errors';
+import { continueWhenSlow, showJournalError } from './journal-errors';
 import { openJournalFlyover } from './journal-flyover-open';
 import { openJournalInfo } from './journal-info';
 import { openJournalMenu } from './journal-menu-open';
@@ -208,12 +208,17 @@ export class JournalOverviewPage {
     await modal.present();
     const { data, role } = await modal.onWillDismiss<FootprintFormModel>();
     if (role !== 'confirm' || !data) return;
+    // the key is chosen here: a slow first write keeps its record (it will land), and the flow goes on with it
+    const key = crypto.randomUUID();
+    let slow = false;
     try {
-      const key = await this.store.addFootprint(this.journalKey(), data.title);
-      await this.store.saveFootprintForm(key, data);
+      slow = await continueWhenSlow(() => this.store.addFootprint(this.journalKey(), data.title, key));
+      slow = (await continueWhenSlow(() => this.store.saveFootprintForm(key, data))) || slow;
       this.openFootprint(key);
     } catch (error) {
       await showJournalError(this.toastController, this.store.i18n, error);
+      return;
     }
+    if (slow) await showJournalError(this.toastController, this.store.i18n, new JournalWriteSlow());
   }
 }

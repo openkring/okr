@@ -931,14 +931,14 @@ export const JournalStore = signalStore(
         return imagesOf(store.journalState(), journalKey);
       },
 
-      async createJournal(title: string): Promise<string> {
-        const key = crypto.randomUUID();
+      /** `key`: the caller may choose it, so a slow browser write (records kept) still knows the new journal. */
+      async createJournal(title: string, key: string = crypto.randomUUID()): Promise<string> {
         await write([{ journalKey: key, entity: 'journal', entityKey: key, op: 'create', fields: { title, subTitle: '', startDate: '', endDate: '' } }]);
         return key;
       },
 
-      async addFootprint(journalKey: string, title: string): Promise<string> {
-        const key = crypto.randomUUID();
+      /** `key`: as in createJournal. */
+      async addFootprint(journalKey: string, title: string, key: string = crypto.randomUUID()): Promise<string> {
         await write([{
           journalKey, entity: 'footprint', entityKey: key, op: 'create',
           fields: { journalKey, title, placeName: '', date: '', time: '', publishState: 'draft' },

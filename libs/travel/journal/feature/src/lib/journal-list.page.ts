@@ -10,8 +10,8 @@ import { ModelSelectService } from '@okr/shared-feature';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, okrPrompt } from '@okr/shared-util-angular';
 import { fill, registerBundledIcons } from '@okr/shared-util-core';
-import { journalListMenu } from '@okr/travel-journal-util';
-import { showJournalError } from './journal-errors';
+import { journalListMenu, JournalWriteSlow } from '@okr/travel-journal-util';
+import { continueWhenSlow, showJournalError } from './journal-errors';
 import { openJournalInfo } from './journal-info';
 import { JournalGuestsSheet } from './journal-guests';
 import { openGuestsModal } from './journal-guests.modal';
@@ -166,11 +166,16 @@ export class JournalListPage {
     const i18n = this.store.i18n;
     const title = await okrPrompt(this.alertController, i18n.list_new_prompt(), i18n.list_new(), i18n.save(), i18n.cancel());
     if (!title?.trim()) return;
+    // the key is chosen here: a slow write keeps its record (it will land), so the new journal opens anyway
+    const key = crypto.randomUUID();
+    let slow: boolean;
     try {
-      const key = await this.store.createJournal(title.trim());
-      this.open(key);
+      slow = await continueWhenSlow(() => this.store.createJournal(title.trim(), key));
     } catch (error) {
       await showJournalError(this.toastController, i18n, error);
+      return;
     }
+    this.open(key);
+    if (slow) await showJournalError(this.toastController, i18n, new JournalWriteSlow());
   }
 }
