@@ -18,6 +18,7 @@ const EXPORT_TIMEOUT_MS = 3_600_000;
 const UPLOAD_CHUNK = 50; // prepareJournalPhotoUploads takes at most 50 files per call
 const LINKS_TRIES = 3;
 const LINKS_BACKOFF_MS = 2000;
+const PUT_TIMEOUT_MS = 120_000; // a stalled signed-URL upload throws like any failed one
 
 /**
  * The travel book document of a journal (spec 1.113 phase 2 §6), `journal-books/{journalKey}`. Authors only
@@ -112,10 +113,10 @@ export class JournalBookService {
     return retryWithBackoff(async () => (await fn({ op: 'links', journalKey })).data, LINKS_TRIES, LINKS_BACKOFF_MS);
   }
 
-  /** PUTs a file to its signed URL from the browser (the iPad uses the native plugin instead). */
+  /** PUTs a file to its signed URL from the browser (the iPad uses the native plugin instead); a stalled upload aborts after 2 min. */
   public async putFile(upload: JournalFileUpload, data: Blob): Promise<void> {
     if (!upload.url) return;
-    const response = await fetch(upload.url, { method: 'PUT', headers: upload.headers ?? {}, body: data });
+    const response = await fetch(upload.url, { method: 'PUT', headers: upload.headers ?? {}, body: data, signal: AbortSignal.timeout(PUT_TIMEOUT_MS) });
     if (!response.ok) throw new Error(`upload of ${upload.file} failed: ${response.status}`);
   }
 }
