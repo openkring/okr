@@ -46,7 +46,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
               [currentUser]="currentUser"
               [locale]="appStore.appConfig().locale"
               [membershipCategories]="currentMcat()"
-              [allTags]="tags()"
+              [allTags]="allTags()"
               [readOnly]="isReadOnly()"
               [priv]="priv()"
               [i18n]="i18n"
@@ -77,7 +77,10 @@ export class MembershipEditModal {
   // inputs
   public membership = input.required<MembershipModel>();
   public currentUser = input.required<UserModel>();
-  public tags = input.required<string>();
+  public tags = input<string>('');
+  /** When set, the tag vocabulary is read live, so a value added via «Werte bearbeiten» validates at once. */
+  public tagModel = input<string>('');
+  protected readonly allTags = computed(() => this.tagModel() ? this.appStore.getTags(this.tagModel()) : this.tags());
   public priv = input.required<PrivacySettings>();
   public mcat = input<CategoryListModel | undefined>(); // undefined for groups / tenants without a shared mcat
   public isNew = input.required<boolean>();

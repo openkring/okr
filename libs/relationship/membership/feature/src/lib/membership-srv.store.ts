@@ -446,7 +446,7 @@ export const MembershipSrvStore = signalStore(
           componentProps: {
               person,
               currentUser: store.currentUser(),
-              tags: store.appStore.getTags('person'),
+              tagModel: 'person',
               tenantId: store.tenantId(),
               genders: store.appStore.getCategory('gender'),
               readOnly: false
@@ -471,7 +471,7 @@ export const MembershipSrvStore = signalStore(
         componentProps: {
           membership: { ...membership },
           currentUser: store.appStore.currentUser(),
-          tags: store.appStore.getTags('membership'),
+          tagModel: 'membership',
           priv: store.appStore.privacySettings(),
           mcat,
           isNew: false,
@@ -497,7 +497,7 @@ export const MembershipSrvStore = signalStore(
         componentProps: {
           membership: { ...membership },
           currentUser: store.appStore.currentUser(),
-          tags: store.appStore.getTags('membership'),
+          tagModel: 'membership',
           priv: store.appStore.privacySettings(),
           mcat,
           isNew: false,

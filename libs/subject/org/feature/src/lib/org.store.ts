@@ -161,7 +161,7 @@ export const OrgStore = signalStore(
         component: OrgNewModal,
         componentProps: {
           currentUser: store.currentUser(),
-          tags: store.tags(),
+          tagModel: 'org',
           types: store.types(),
         }
       });
@@ -199,7 +199,7 @@ export const OrgStore = signalStore(
           org,
           currentUser: store.currentUser(),
           resource: store.defaultResource(),
-          tags: store.tags(),
+          tagModel: 'org',
           tenantId: store.tenantId(),
           types: store.types(),
           readOnly

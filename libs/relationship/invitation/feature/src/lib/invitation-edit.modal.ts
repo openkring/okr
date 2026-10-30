@@ -4,7 +4,7 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController
 import { InvitationModel, InvitationModelName, RoleName, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { coerceBoolean, hasRole, safeStructuredClone } from '@okr/shared-util-core';
-import { ModelSelectService } from '@okr/shared-feature';
+import { ModelSelectService, AppStore } from '@okr/shared-feature';
 
 import { CommentsAccordion } from '@okr/comment-feature';
 
@@ -36,7 +36,7 @@ import { InvitationStore } from './invitation.store';
             [formData]="formData"
             (formDataChange)="onFormDataChange($event)"
             [currentUser]="currentUser"
-            [allTags]="tags()"
+            [allTags]="allTags()"
             [locale]="locale()"
             [readOnly]="readOnly()"
             [showForm]="showForm()"
@@ -66,7 +66,11 @@ export class InvitationEditModal {
   // inputs
   public invitation = input.required<InvitationModel>();
   public currentUser = input.required<UserModel>();
-  public tags = input.required<string>();
+  public tags = input<string>('');
+  /** When set, the tag vocabulary is read live, so a value added via «Werte bearbeiten» validates at once. */
+  public tagModel = input<string>('');
+  private readonly appStore = inject(AppStore);
+  protected readonly allTags = computed(() => this.tagModel() ? this.appStore.getTags(this.tagModel()) : this.tags());
   public locale = input.required<string>();
   public readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));

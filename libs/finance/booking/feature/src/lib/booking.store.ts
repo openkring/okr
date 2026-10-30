@@ -576,7 +576,7 @@ export const BookingStore = signalStore(
           componentProps: {
             org,
             currentUser: store.currentUser(),
-            tags: store.appStore.getTags('org'),
+            tagModel: 'org',
             tenantId: store.tenantId(),
             types: store.appStore.getCategory('org_type'),
             readOnly: true,

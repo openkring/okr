@@ -91,7 +91,7 @@ export const TasksStore = signalStore(
         componentProps: {
           task,
           currentUser: store.currentUser(),
-          tags: store.tags(),
+          tagModel: 'task',
           tenantId: store.tenantId(),
           states: store.states(),
           priorities: store.priorities(),

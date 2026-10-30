@@ -251,7 +251,7 @@ export const GroupStore = signalStore(
         componentProps: {
           group,
           currentUser: store.currentUser(),
-          tags: this.getTags(),
+          tagModel: 'group',
           tenantId: store.tenantId(),
           isNew,
           readOnly

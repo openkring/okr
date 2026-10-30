@@ -231,7 +231,7 @@ export const AocSessionStore = signalStore(
         componentProps: {
           person,
           currentUser: store.appStore.currentUser(),
-          tags: store.appStore.getTags('person'),
+          tagModel: 'person',
           tenantId: store.appStore.tenantId(),
           genders: store.appStore.getCategory('gender'),
           readOnly: false,

@@ -24,6 +24,7 @@ import {
 } from '@okr/relationship-membership-util';
 
 import { TaskStore } from './task.store';
+import { AppStore } from '@okr/shared-feature';
 
 @Component({
   selector: 'okr-task-edit-modal',
@@ -60,7 +61,7 @@ import { TaskStore } from './task.store';
           (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser()"
           [showForm]="showForm()"
-          [allTags]="tags()"
+          [allTags]="allTags()"
           [tenantId]="tenantId()"
           [states]="states()"
           [priorities]="priorities()"
@@ -134,7 +135,11 @@ export class TaskEditModal {
   // inputs
   public task = input.required<TaskModel>();
   public currentUser = input<UserModel | undefined>();
-  public readonly tags = input.required<string>();
+  public readonly tags = input<string>('');
+  /** When set, the tag vocabulary is read live, so a value added via «Werte bearbeiten» validates at once. */
+  public readonly tagModel = input<string>('');
+  private readonly appStore = inject(AppStore);
+  protected readonly allTags = computed(() => this.tagModel() ? this.appStore.getTags(this.tagModel()) : this.tags());
   public readonly tenantId = input.required<string>();
   public readonly states = input.required<CategoryListModel>();
   public readonly priorities = input.required<CategoryListModel>();

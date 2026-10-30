@@ -620,7 +620,7 @@ export const PersonBexioStore = signalStore(
         componentProps: {
           person,
           currentUser: store.currentUser(),
-          tags: store.appStore.getTags('person'),
+          tagModel: 'person',
           tenantId: store.tenantId(),
           genders: store.appStore.getCategory('gender'),
           readOnly: false,
@@ -644,7 +644,7 @@ export const PersonBexioStore = signalStore(
           org,
           currentUser: store.currentUser(),
           resource: store.appStore.defaultResource(),
-          tags: store.appStore.getTags('org'),
+          tagModel: 'org',
           tenantId: store.tenantId(),
           types: store.appStore.getCategory('org_type'),
           readOnly: false,
@@ -668,7 +668,7 @@ export const PersonBexioStore = signalStore(
         componentProps: {
           membership: { ...membership },
           currentUser: store.currentUser(),
-          tags: store.appStore.getTags('membership'),
+          tagModel: 'membership',
           priv: store.appStore.privacySettings(),
           mcat: store.appStore.getCategory('mcat_' + store.tenantId()),
           isNew: false,

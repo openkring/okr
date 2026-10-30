@@ -5,7 +5,7 @@ import { DEFAULT_TAGS } from '@okr/shared-constants';
 import { AvatarInfo, ContractModel, UserModel } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
-import { dismissOverlay } from '@okr/shared-util-angular';
+import { dismissOverlay, TAG_EDITOR } from '@okr/shared-util-angular';
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 
 import { ContractDocumentService } from '@okr/business-contract-data-access';
@@ -34,7 +34,7 @@ import { ContractForm, ContractSelectTarget } from './contract.form';
     <ion-content class="ion-no-padding">
       @if (formData(); as formData) {
         <okr-contract-form [formData]="formData" (formDataChange)="onFormDataChange($event)"
-          [i18n]="i18n" [currentUser]="currentUser()" [tenantId]="tenantId()" [allTags]="allTags()"
+          [i18n]="i18n" [currentUser]="currentUser()" [tenantId]="tenantId()" [allTags]="tagVocabulary()"
           [readOnly]="isReadOnly()" [showForm]="showForm()"
           [summarizing]="summarizing()" [summarizeError]="summarizeError()"
           (selectClicked)="onSelect($event)" (summarizeClicked)="summarize()"
@@ -53,6 +53,13 @@ export class ContractEditModal {
   public readonly currentUser = input<UserModel | undefined>();
   public readonly tenantId = input.required<string>();
   public readonly allTags = input(DEFAULT_TAGS);
+  /** When set, the tag vocabulary is read live (TAG_EDITOR), so a value added via «Werte bearbeiten» validates at once. */
+  public readonly tagModel = input('');
+  private readonly tagEditor = inject(TAG_EDITOR, { optional: true });
+  protected readonly tagVocabulary = computed(() => {
+    const tagModel = this.tagModel();
+    return tagModel && this.tagEditor ? this.tagEditor.values(tagModel).join(',') : this.allTags();
+  });
   public readonly readOnly = input(true);
   public readonly selectPerson = input<() => Promise<AvatarInfo | undefined>>();
   public readonly selectOrg = input<() => Promise<AvatarInfo | undefined>>();

@@ -11,6 +11,7 @@ import { DOCUMENT_I18N_KEYS, DocumentI18n } from '@okr/content-document-util';
 
 import { DocumentForm } from '@okr/content-document-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
+import { AppStore } from '@okr/shared-feature';
 
 @Component({
   selector: 'okr-document-edit-modal',
@@ -35,7 +36,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
           [types]="types()"
           [sources]="sources()"
           [showForm]="showForm()"
-          [allTags]="tags()"
+          [allTags]="allTags()"
           [readOnly]="isReadOnly()"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
@@ -53,7 +54,11 @@ export class DocumentEditModal {
   // inputs
   public document = input.required<DocumentModel>();
   public currentUser = input<UserModel | undefined>();
-  public tags = input.required<string>();
+  public tags = input<string>('');
+  /** When set, the tag vocabulary is read live, so a value added via «Werte bearbeiten» validates at once. */
+  public tagModel = input<string>('');
+  private readonly appStore = inject(AppStore);
+  protected readonly allTags = computed(() => this.tagModel() ? this.appStore.getTags(this.tagModel()) : this.tags());
   public types = input.required<CategoryListModel>();
   public sources = input.required<CategoryListModel>();
   public readOnly = input<boolean>(true);
@@ -102,6 +107,7 @@ export class DocumentEditModal {
         document: prior,
         currentUser: this.currentUser(),
         tags: this.tags(),
+        tagModel: this.tagModel(),
         types: this.types(),
         sources: this.sources(),
         readOnly: true

@@ -7,7 +7,7 @@ import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 
 import { MEETING_I18N_KEYS, MeetingI18n } from '@okr/content-meeting-util';
-import { dismissOverlay } from '@okr/shared-util-angular';
+import { dismissOverlay, TAG_EDITOR } from '@okr/shared-util-angular';
 import { MeetingForm } from './meeting.form';
 
 /**
@@ -35,7 +35,7 @@ import { MeetingForm } from './meeting.form';
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser()"
-          [allTags]="allTags()"
+          [allTags]="tagVocabulary()"
           [showForm]="showForm()"
           [readOnly]="isReadOnly()"
           [minutesMode]="isMinutesMode()"
@@ -56,6 +56,13 @@ export class MeetingEditModal {
   public readonly meeting = input.required<MeetingModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public readonly allTags = input('');
+  /** When set, the tag vocabulary is read live (TAG_EDITOR), so a value added via «Werte bearbeiten» validates at once. */
+  public readonly tagModel = input('');
+  private readonly tagEditor = inject(TAG_EDITOR, { optional: true });
+  protected readonly tagVocabulary = computed(() => {
+    const tagModel = this.tagModel();
+    return tagModel && this.tagEditor ? this.tagEditor.values(tagModel).join(',') : this.allTags();
+  });
   public readonly readOnly = input(true);
   /** true when the modal is opened to write the minutes rather than to prepare the agenda */
   public readonly minutesMode = input(false);

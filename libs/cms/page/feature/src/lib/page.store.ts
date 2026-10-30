@@ -275,7 +275,7 @@ export const _PageStore = signalStore(
           componentProps: {
             page,
             currentUser: store.currentUser(),
-            tags: this.getTags(),
+            tagModel: 'page',
             roles: this.getStates(),
             types: this.getTypes(),
             states: this.getStates(),

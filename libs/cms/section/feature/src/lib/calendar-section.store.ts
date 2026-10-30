@@ -279,7 +279,7 @@ export const CalendarStore = signalStore(
             currentUser: store.currentUser(),
             types: this.getTypes(),
             periodicities: this.getPeriodicities(),
-            tags: this.getTags(),
+            tagModel: 'calevent',
             tenantId: store.appStore.tenantId(),
             locale: this.getLocale(),
             readOnly,

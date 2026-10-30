@@ -451,7 +451,7 @@ export const OwnershipStore = signalStore(
           componentProps = {
             org,
             currentUser: store.currentUser(),
-            tags: store.appStore.getTags('org'),
+            tagModel: 'org',
             tenantId: store.tenantId(),
             types: store.appStore.getCategory('org_type'),
             readOnly
@@ -463,7 +463,7 @@ export const OwnershipStore = signalStore(
           componentProps = {
             person,
             currentUser: store.currentUser(),
-            tags: store.appStore.getTags(PersonModelName),
+            tagModel: PersonModelName,
             tenantId: store.tenantId(),
             genders: store.appStore.getCategory('gender'),
             readOnly

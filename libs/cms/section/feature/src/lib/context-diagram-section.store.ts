@@ -199,7 +199,7 @@ export const ContextDiagramStore = signalStore(
           componentProps: {
             group,
             currentUser: store.appStore.currentUser(),
-            tags: store.appStore.getTags(GroupModelName),
+            tagModel: GroupModelName,
             tenantId: store.appStore.tenantId(),
             isNew: false,
             readOnly: false,
@@ -219,7 +219,7 @@ export const ContextDiagramStore = signalStore(
             org,
             currentUser: store.appStore.currentUser(),
             resource: store.appStore.defaultResource(),
-            tags: store.appStore.getTags(OrgModelName),
+            tagModel: OrgModelName,
             tenantId: store.appStore.tenantId(),
             types: store.appStore.getCategory('org_type'),
             readOnly: false,
@@ -237,7 +237,7 @@ export const ContextDiagramStore = signalStore(
           componentProps: {
             person,
             currentUser: store.appStore.currentUser(),
-            tags: store.appStore.getTags(PersonModelName),
+            tagModel: PersonModelName,
             tenantId: store.appStore.tenantId(),
             genders: store.appStore.getCategory('gender'),
             readOnly: false,

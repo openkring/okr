@@ -113,7 +113,7 @@ export const WorkflowRuleStore = signalStore(
           probeCategory: store.appStore.getCategory('workflow_probe'),
           actionCategory: store.appStore.getCategory('workflow_action'),
           responsibilities: store.responsibilityOptions(),
-          allTags: store.appStore.getTags(WorkflowRuleModelName),
+          tagModel: WorkflowRuleModelName,
           readOnly,
         },
       });

@@ -47,7 +47,7 @@ export class AvatarDetailService {
       componentProps: {
         person,
         currentUser: this.appStore.currentUser(),
-        tags: this.appStore.getTags(PersonModelName),
+        tagModel: PersonModelName,
         tenantId: this.appStore.tenantId(),
         genders: this.appStore.getCategory('gender'),
         readOnly: true,
@@ -67,7 +67,7 @@ export class AvatarDetailService {
       componentProps: {
         org,
         currentUser: this.appStore.currentUser(),
-        tags: this.appStore.getTags('org'),
+        tagModel: 'org',
         tenantId: this.appStore.tenantId(),
         types: this.appStore.getCategory('org_type'),
         readOnly: true,

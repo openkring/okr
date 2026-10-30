@@ -153,7 +153,7 @@ export const PersonalRelStore = signalStore(
           componentProps: {
             personalRel,
             currentUser: store.currentUser(),
-            tags: this.getTags(),
+            tagModel: 'personalrel',
             types: this.getTypes(),
             readOnly
           }

@@ -10,6 +10,7 @@ import { ReservationForm } from '@okr/relationship-reservation-ui';
 import { RelationshipToolbar } from '@okr/avatar-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { ReservationStore } from './reservation.store';
+import { AppStore } from '@okr/shared-feature';
 
 @Component({
   selector: 'okr-reservation-edit-modal',
@@ -47,7 +48,7 @@ import { ReservationStore } from './reservation.store';
             [formData]="formData"
             (formDataChange)="onFormDataChange($event)"
             [currentUser]="currentUser"
-            [allTags]="tags()"
+            [allTags]="allTags()"
             [tenantId]="tenantId()"
             [reasons]="reasons()"
             [states]="states()"
@@ -82,7 +83,11 @@ export class ReservationEditModal {
   // inputs
   public reservation = input.required<ReservationModel>();
   public currentUser = input.required<UserModel>();
-  public tags = input.required<string>();
+  public tags = input<string>('');
+  /** When set, the tag vocabulary is read live, so a value added via «Werte bearbeiten» validates at once. */
+  public tagModel = input<string>('');
+  private readonly appStore = inject(AppStore);
+  protected readonly allTags = computed(() => this.tagModel() ? this.appStore.getTags(this.tagModel()) : this.tags());
   public reasons = input.required<CategoryListModel>();
   public states = input.required<CategoryListModel>();
   public periodicities = input.required<CategoryListModel>();

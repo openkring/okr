@@ -149,7 +149,7 @@ export const MeetingStore = signalStore(
         componentProps: {
           meeting,
           currentUser: store.currentUser(),
-          allTags: this.getTags(),
+          tagModel: MeetingModelName,
           readOnly,
           minutesMode,
         }

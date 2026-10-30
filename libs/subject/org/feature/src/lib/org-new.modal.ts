@@ -8,6 +8,7 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { ORG_I18N_KEYS, ORG_NEW_FORM_SHAPE, OrgI18n, OrgNewFormModel } from '@okr/subject-org-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
+import { AppStore } from '@okr/shared-feature';
 
 @Component({
   selector: 'okr-org-new-modal',
@@ -28,7 +29,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
           (formDataChange)="onFormDataChange($event)"
           [i18n]="i18n"
           [currentUser]="currentUser"
-          [allTags]="tags()"
+          [allTags]="allTags()"
           [types]="types()"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
@@ -43,7 +44,11 @@ export class OrgNewModal {
 
   // inputs
   public currentUser = input.required<UserModel>();
-  public tags = input.required<string>();
+  public tags = input<string>('');
+  /** When set, the tag vocabulary is read live, so a value added via «Werte bearbeiten» validates at once. */
+  public tagModel = input<string>('');
+  private readonly appStore = inject(AppStore);
+  protected readonly allTags = computed(() => this.tagModel() ? this.appStore.getTags(this.tagModel()) : this.tags());
   public types = input.required<CategoryListModel>();
 
   // signals

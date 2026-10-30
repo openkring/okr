@@ -1647,7 +1647,7 @@ export class MatrixChat implements OnDestroy {
       componentProps: {
         person,
         currentUser: this.store.appStore.currentUser(),
-        tags: this.store.appStore.getTags(PersonModelName),
+        tagModel: PersonModelName,
         tenantId: this.store.appStore.tenantId(),
         genders: this.store.appStore.getCategory('gender'),
         readOnly: true,

@@ -150,10 +150,10 @@ async function createVoucher(
     // Write a COMPLETE DocumentModel: without these, a group-view Files segment
     // (listId 'f:<key>') iterates all docs and crashes on `folderKeys.includes()`.
     folderKeys: [],
-    // Same shape as extractTagsFromStoragePath (@okr/content-document-util): tenant tag first, then the
-    // subject tag. Every OCR voucher is a finance document (see `type` above), so it is '@tag.finance'
+    // Same shape as extractTagsFromStoragePath (@okr/content-document-util): the subject tag only, no
+    // tenant tag. Every OCR voucher is a finance document (see `type` above), so it is '@tag.finance'
     // rather than the path's '@tag.ocr' segment.
-    tags: `@tag.${tenantId},@tag.finance`,
+    tags: '@tag.finance',
     index: '',
   });
   return ref.id;

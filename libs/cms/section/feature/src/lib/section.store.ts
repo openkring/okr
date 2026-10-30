@@ -217,7 +217,6 @@ export const _SectionStore = signalStore(
 
       async edit(section?: SectionModel, readOnly = true): Promise<string | undefined> {
         if (!section) return;
-        const tags = this.getTags();
         const roles = this.getRoles();
         const states = store.appStore.getCategory('content_state');
         const { SectionEditModal } = await import('./section-edit.modal');
@@ -227,7 +226,7 @@ export const _SectionStore = signalStore(
           componentProps: {
             section,
             currentUser: store.currentUser(),
-            tags,
+            tagModel: 'section',
             roles,
             states,
             readOnly

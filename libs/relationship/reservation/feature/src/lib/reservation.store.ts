@@ -334,7 +334,7 @@ export const ReservationStore = signalStore(
           componentProps: {
             reservation,
             currentUser: store.currentUser(),
-            tags: this.getTags(),
+            tagModel: 'reservation',
             reasons: this.getReasons(),
             states: this.getStates(),
             periodicities: this.getPeriodicities(),
@@ -404,7 +404,7 @@ export const ReservationStore = signalStore(
           componentProps: {
             person,
             currentUser: store.currentUser(),
-            tags: store.appStore.getTags(PersonModelName),
+            tagModel: PersonModelName,
             tenantId: store.tenantId(),
             genders: store.genders(),
             readOnly
@@ -503,7 +503,7 @@ export const ReservationStore = signalStore(
                 currentUser: store.currentUser(),
                 types: store.appStore.getCategory('calevent_type'),
                 periodicities,
-                tags: store.appStore.getTags('calevent'),
+                tagModel: 'calevent',
                 tenantId: store.tenantId(),
                 locale: store.appStore.appConfig().locale,
                 readOnly

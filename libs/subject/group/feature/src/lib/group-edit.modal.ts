@@ -4,7 +4,7 @@ import { IonContent, ModalController } from '@ionic/angular';
 import { AVATAR_INFO_SHAPE, GroupModel, PersonModel, PersonModelName, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { coerceBoolean, isPerson, safeStructuredClone } from '@okr/shared-util-core';
-import { PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
+import { PersonSelectModal, PersonSelectResult, AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 
 import { GroupForm } from '@okr/subject-group-ui';
@@ -32,7 +32,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
               (formDataChange)="onFormDataChange($event)"
               [currentUser]="currentUser"
               [showForm]="showForm()"
-              [allTags]="tags()"
+              [allTags]="allTags()"
               [tenantId]="tenantId()"
               [isNew]="isNew()"
               [readOnly]="isReadOnly()"
@@ -53,7 +53,11 @@ export class GroupEditModal {
   // inputs
   public group = input.required<GroupModel>();
   public currentUser = input<UserModel | undefined>();
-  public readonly tags = input.required<string>();
+  public readonly tags = input<string>('');
+  /** When set, the tag vocabulary is read live, so a value added via «Werte bearbeiten» validates at once. */
+  public readonly tagModel = input<string>('');
+  private readonly appStore = inject(AppStore);
+  protected readonly allTags = computed(() => this.tagModel() ? this.appStore.getTags(this.tagModel()) : this.tags());
   public readonly tenantId = input.required<string>();
   public readonly isNew = input(false);
   public readOnly = input(true);

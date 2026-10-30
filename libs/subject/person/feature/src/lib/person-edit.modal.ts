@@ -23,6 +23,7 @@ import { PersonFormModel } from '@okr/subject-person-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { PersonStore } from './person.store';
+import { AppStore } from '@okr/shared-feature';
 
 @Component({
   selector: 'okr-person-edit-modal',
@@ -58,7 +59,7 @@ import { PersonStore } from './person.store';
                 [priv]="priv()"
                 [genders]="genders()"
                 [showForm]="showForm()"
-                [allTags]="tags()"
+                [allTags]="allTags()"
                 [tenantId]="tenantId()"
                 [readOnly]="isReadOnly()"
                 (dirty)="formDirty.set($event)"
@@ -97,7 +98,11 @@ export class PersonEditModal {
   // the plain person document — ssn/dob are hydrated from the vault below (spec 1.19 Phase 4, D9)
   public person = input.required<PersonFormModel>();
   public currentUser = input<UserModel | undefined>();
-  public tags = input.required<string>();
+  public tags = input<string>('');
+  /** When set, the tag vocabulary is read live, so a value added via «Werte bearbeiten» validates at once. */
+  public tagModel = input<string>('');
+  private readonly appStore = inject(AppStore);
+  protected readonly allTags = computed(() => this.tagModel() ? this.appStore.getTags(this.tagModel()) : this.tags());
   public tenantId = input.required<string>();
   public genders = input.required<CategoryListModel>();
   public readOnly = input<boolean>(true);

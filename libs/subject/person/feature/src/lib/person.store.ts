@@ -403,7 +403,7 @@ export const PersonStore = signalStore(
                 componentProps: {
                     person,
                     currentUser: store.currentUser(),
-                    tags: this.getTags(),
+                    tagModel: PersonModelName,
                     tenantId: store.tenantId(),
                     genders: store.appStore.getCategory('gender'),
                     readOnly
@@ -456,7 +456,7 @@ export const PersonStore = signalStore(
                     componentProps: {
                         person,
                         currentUser: store.currentUser(),
-                        tags: this.getTags(),
+                        tagModel: PersonModelName,
                         tenantId: store.tenantId(),
                         genders: store.appStore.getCategory('gender'),
                         readOnly: data.readOnly

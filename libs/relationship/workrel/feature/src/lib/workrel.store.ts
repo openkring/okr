@@ -195,7 +195,7 @@ export const WorkrelStore = signalStore(
           componentProps: {
             workrel,
             currentUser: store.currentUser(),
-            tags: this.getTags(),
+            tagModel: 'workrel',
             types: this.getTypes(),
             states: this.getStates(),
             tenantId: store.tenantId(),

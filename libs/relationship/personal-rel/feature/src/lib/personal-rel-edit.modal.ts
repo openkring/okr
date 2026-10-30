@@ -4,7 +4,7 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController
 import { CategoryListModel, PersonalRelModel, PersonalRelModelName, PersonModel, PersonModelName, RoleName, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { coerceBoolean, hasRole, isPerson, safeStructuredClone } from '@okr/shared-util-core';
-import { PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
+import { PersonSelectModal, PersonSelectResult, AppStore } from '@okr/shared-feature';
 
 import { PERSON_EDIT_MODAL, PersonEditModalLoader } from '@okr/subject-person-ui';
 import { CommentsAccordion } from '@okr/comment-feature';
@@ -36,7 +36,7 @@ import { PersonalRelStore } from './personal-rel.store';
           (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser()"
           [types]="types()"
-          [allTags]="tags()"
+          [allTags]="allTags()"
           [readOnly]="isReadOnly()"
           [tenants]="tenantId()"
           (selectPerson)="selectPerson($event)"
@@ -68,7 +68,11 @@ export class PersonalRelEditModal {
   public personalRel = input.required<PersonalRelModel>();
   public currentUser = input.required<UserModel>();
   protected tenantId = computed(() => this.store.tenantId());
-  public tags = input.required<string>();
+  public tags = input<string>('');
+  /** When set, the tag vocabulary is read live, so a value added via «Werte bearbeiten» validates at once. */
+  public tagModel = input<string>('');
+  private readonly appStore = inject(AppStore);
+  protected readonly allTags = computed(() => this.tagModel() ? this.appStore.getTags(this.tagModel()) : this.tags());
   public types = input.required<CategoryListModel>();
   public readonly readOnly = input<boolean>(true);
 
@@ -172,7 +176,7 @@ export class PersonalRelEditModal {
       componentProps: {
         person,
         currentUser: this.currentUser(),
-        tags: this.store.getTags(PersonModelName),
+        tagModel: PersonModelName,
         tenantId: this.store.tenantId(),
         genders: this.store.appStore.getCategory('gender'),
         readOnly: true,

@@ -425,7 +425,7 @@ function buildLocation(tenant, row) {
     // getLocationIndex in libs/geo/location/util). Every location list filters on it — with
     // an empty index the picker's search matched nothing (found in the TP 3 smoke test;
     // scripts/backfill-location-index.mjs repaired the already-seeded rows).
-    index: `n:${row.label} w:`, name: row.label, address: '', tags: 'diary',
+    index: `n:${row.label} w:`, name: row.label, address: '', tags: '@tag.diary',
     type: LOCATION_TYPE,
     latitude: row.latitude,
     longitude: row.longitude,

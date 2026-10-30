@@ -24,6 +24,7 @@ import { AddressesAccordion } from '@okr/subject-address-feature';
 import { OrgForm } from '@okr/subject-org-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { OrgStore } from './org.store';
+import { AppStore } from '@okr/shared-feature';
 
 @Component({
   selector: 'okr-org-edit-modal',
@@ -54,7 +55,7 @@ import { OrgStore } from './org.store';
           [currentUser]="currentUser()"
           [types]="types()"
           [showForm]="showForm()"
-          [allTags]="tags()"
+          [allTags]="allTags()"
           [tenantId]="tenantId()"
           [readOnly]="isReadOnly()"
           (dirty)="formDirty.set($event)"
@@ -97,7 +98,11 @@ export class OrgEditModal {
   public org = input.required<OrgModel>();
   public currentUser = input<UserModel | undefined>();
   public resource = input<ResourceModel | undefined>();
-  public tags = input.required<string>();
+  public tags = input<string>('');
+  /** When set, the tag vocabulary is read live, so a value added via «Werte bearbeiten» validates at once. */
+  public tagModel = input<string>('');
+  private readonly appStore = inject(AppStore);
+  protected readonly allTags = computed(() => this.tagModel() ? this.appStore.getTags(this.tagModel()) : this.tags());
   public tenantId = input.required<string>();
   public types = input.required<CategoryListModel>();
   public readOnly = input<boolean>(true);

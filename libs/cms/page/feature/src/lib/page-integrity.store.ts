@@ -185,7 +185,6 @@ export const PageIntegrityStore = signalStore(
 
       async editSection(section: SectionModel): Promise<void> {
         const currentUser: UserModel | undefined = store.currentUser();
-        const tags = store.appStore.getTags('section_default');
         const roles = store.appStore.getCategory('roles');
         const states = store.appStore.getCategory('content_state');
         const modal = await store.modalController.create({
@@ -194,7 +193,7 @@ export const PageIntegrityStore = signalStore(
           componentProps: { 
             section, 
             currentUser, 
-            tags,
+            tagModel: 'section_default',
             roles,
             states,
             readOnly: false
@@ -268,7 +267,7 @@ export const PageIntegrityStore = signalStore(
           componentProps: {
             menuItem: _menuItem,
             currentUser: store.currentUser(),
-            tags: store.appStore.getTags('menuitem'),
+            tagModel: 'menuitem',
             roles: store.appStore.getCategory('roles'),
             types: store.appStore.getCategory('menu_action'),
             readOnly: false,
@@ -323,14 +322,13 @@ export const PageIntegrityStore = signalStore(
 
       async createMissingSection(ref: MissingSectionRef): Promise<void> {
         const currentUser = store.currentUser();
-        const tags = store.appStore.getTags('section_default');
         const roles = store.appStore.getCategory('roles');
         const states = store.appStore.getCategory('content_state');
         const newSection = { okey: '', type: 'article', state: 'active', name: ref.resolvedKey, title: '', tenants: [store.appStore.env.tenantId] } as unknown as SectionModel;
         const modal = await store.modalController.create({
           component: SectionEditModal,
           cssClass: 'full-modal',
-          componentProps: { section: newSection, currentUser, tags, roles, states, readOnly: false, isNew: true },
+          componentProps: { section: newSection, currentUser, tagModel: 'section_default', roles, states, readOnly: false, isNew: true },
         });
         await modal.present();
         const { data, role } = await modal.onWillDismiss();

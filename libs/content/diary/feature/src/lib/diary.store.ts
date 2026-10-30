@@ -14,7 +14,7 @@ import {
   diaryTrackModeLabel, formatDiaryDate, getDiaryIndex, groupDiariesByMonth, hasDiaryWeather, inDiaryDateRange, newDiary, trackFilterDates, trackFilterTitle,
 } from '@okr/content-diary-util';
 import { LocationService } from '@okr/location-data-access';
-import { AvatarInfo, DiaryAlbumKind, DiaryAlbumModel, DiaryModel, PersonModelName, TransportMode, TripModel } from '@okr/shared-models';
+import { AvatarInfo, DiaryAlbumKind, DiaryAlbumModel, DiaryModel, PersonModelName, TransportMode, TripModel, DiaryModelName } from '@okr/shared-models';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AlertService, resourceParams } from '@okr/shared-util-angular';
@@ -316,7 +316,7 @@ export const DiaryStore = signalStore(
         cssClass: 'wide-modal',
         componentProps: {
           diary, i18n: store.i18n, currentUser: store.currentUser(), tenantId: store.tenantId(),
-          allTags: store.appStore.getTags('diary'), travelTrips: store.travelTrips(), eventAlbums, readOnly: false, lockDate,
+          tagModel: DiaryModelName, travelTrips: store.travelTrips(), eventAlbums, readOnly: false, lockDate,
           // pickers are passed IN as callbacks — the modal must not inject ModelSelectService or
           // the store back (see the dynamic import above; store-modal-dynamic-import memory).
           selectLocation: pickLocation,
@@ -478,7 +478,7 @@ export const DiaryStore = signalStore(
         componentProps: {
           person,
           currentUser: store.appStore.currentUser(),
-          tags: store.appStore.getTags(PersonModelName),
+          tagModel: PersonModelName,
           tenantId: store.appStore.tenantId(),
           genders: store.appStore.getCategory('gender'),
           readOnly: true,

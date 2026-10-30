@@ -99,7 +99,7 @@ export const CategoryStore = signalStore(
           componentProps: {
             category,
             currentUser: store.currentUser(),
-            tags: this.getTags(),
+            tagModel: 'category',
             hasAbbreviation: category.hasAbbreviation,
             readOnly,
           }

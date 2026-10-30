@@ -129,7 +129,7 @@ export class UserAccountActions {
       componentProps: {
         person,
         currentUser: this.appStore.currentUser(),
-        tags: this.appStore.getTags('person'),
+        tagModel: 'person',
         tenantId: this.appStore.tenantId(),
         genders: this.appStore.getCategory('gender'),
         readOnly: false,

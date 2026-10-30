@@ -4,7 +4,7 @@ import { IonContent, ModalController } from '@ionic/angular';
 import { I18nService } from '@okr/shared-i18n';
 import { AliasModel, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
-import { dismissOverlay } from '@okr/shared-util-angular';
+import { dismissOverlay, TAG_EDITOR } from '@okr/shared-util-angular';
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 import { ALIAS_I18N_KEYS, AliasI18n } from '@okr/system-alias-util';
 
@@ -36,7 +36,7 @@ import { AliasForm } from './alias.form';
           [i18n]="i18n"
           [currentUser]="currentUser()"
           [tenantId]="tenantId()"
-          [allTags]="allTags()"
+          [allTags]="tagVocabulary()"
           [readOnly]="isReadOnly()"
           [showForm]="showForm()"
           (dirty)="formDirty.set($event)"
@@ -54,6 +54,13 @@ export class AliasEditModal {
   public readonly currentUser = input<UserModel | undefined>();
   public readonly tenantId = input.required<string>();
   public readonly allTags = input('');
+  /** When set, the tag vocabulary is read live (TAG_EDITOR), so a value added via «Werte bearbeiten» validates at once. */
+  public readonly tagModel = input('');
+  private readonly tagEditor = inject(TAG_EDITOR, { optional: true });
+  protected readonly tagVocabulary = computed(() => {
+    const tagModel = this.tagModel();
+    return tagModel && this.tagEditor ? this.tagEditor.values(tagModel).join(',') : this.allTags();
+  });
   public readonly readOnly = input(true);
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));

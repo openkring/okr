@@ -12,6 +12,7 @@ import { ContractService } from '@okr/business-contract-data-access';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { SectionStore } from './section.store';
+import { AppStore } from '@okr/shared-feature';
 
 
 /**
@@ -47,7 +48,7 @@ import { SectionStore } from './section.store';
             [albumStyles]="albumStyles()"
             [weatherLocations]="weatherLocations()"
             [contracts]="contracts()"
-            [allTags]="tags()"
+            [allTags]="allTags()"
             [tenantId]="tenantId()"
             [linkOrigins]="store.appStore.appLinkOrigins()"
             [readOnly]="isReadOnly()"
@@ -64,7 +65,11 @@ export class SectionEditModal {
   // inputs
   public section = input.required<SectionModel>();
   public currentUser = input.required<UserModel>();
-  public tags = input.required<string>();
+  public tags = input<string>('');
+  /** When set, the tag vocabulary is read live, so a value added via «Werte bearbeiten» validates at once. */
+  public tagModel = input<string>('');
+  private readonly appStore = inject(AppStore);
+  protected readonly allTags = computed(() => this.tagModel() ? this.appStore.getTags(this.tagModel()) : this.tags());
   public roles = input.required<CategoryListModel>();
   public states = input.required<CategoryListModel>();
   public readOnly = input(true);

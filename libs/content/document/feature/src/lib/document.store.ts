@@ -280,7 +280,7 @@ export const DocumentStore = signalStore(
           componentProps: {
             document,
             currentUser,
-            tags: store.appStore.getTags(DocumentModelName),
+            tagModel: DocumentModelName,
             types: store.appStore.getCategory('document_type'),
             sources: store.appStore.getCategory('document_source'),
             readOnly: false
@@ -530,7 +530,7 @@ export const DocumentStore = signalStore(
           componentProps: {
             document,
             currentUser: store.currentUser(),
-            tags: store.appStore.getTags(DocumentModelName),
+            tagModel: DocumentModelName,
             types: store.appStore.getCategory('document_type'),
             sources: store.appStore.getCategory('document_source'),
             readOnly

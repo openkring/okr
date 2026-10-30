@@ -7,7 +7,7 @@ import { getMetadata, listAll, ref } from 'firebase/storage';
 
 import { STORAGE } from '@okr/shared-config';
 import { AppStore } from '@okr/shared-feature';
-import { IconModel } from '@okr/shared-models';
+import { IconModel, IconModelName } from '@okr/shared-models';
 import { resourceParams } from '@okr/shared-util-angular';
 import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, nameMatches, sanitizeFileName } from '@okr/shared-util-core';
 
@@ -135,7 +135,7 @@ export const IconStore = signalStore(
           componentProps: {
             icon,
             currentUser: store.currentUser(),
-            tags: this.getTags(),
+            tagModel: IconModelName,
             readOnly: readOnly
           }
         });

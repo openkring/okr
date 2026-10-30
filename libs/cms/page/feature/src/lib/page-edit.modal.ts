@@ -8,6 +8,7 @@ import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 import { PageForm } from '@okr/cms-page-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { PageStore } from './page.store';
+import { AppStore } from '@okr/shared-feature';
 
 @Component({
   selector: 'okr-page-edit-modal',
@@ -35,7 +36,7 @@ import { PageStore } from './page.store';
             [showForm]="showForm()"
             [types]="types()"
             [states]="states()"
-            [allTags]="tags()"
+            [allTags]="allTags()"
             [tenantId]="store.tenantId()"
             [readOnly]="isReadOnly()"
             (dirty)="formDirty.set($event)"
@@ -53,7 +54,11 @@ export class PageEditModal {
   // inputs
   public page = input.required<PageModel>();
   public currentUser = input.required<UserModel>();
-  public tags = input.required<string>();
+  public tags = input<string>('');
+  /** When set, the tag vocabulary is read live, so a value added via «Werte bearbeiten» validates at once. */
+  public tagModel = input<string>('');
+  private readonly appStore = inject(AppStore);
+  protected readonly allTags = computed(() => this.tagModel() ? this.appStore.getTags(this.tagModel()) : this.tags());
   public roles = input.required<CategoryListModel>();
   public types = input.required<CategoryListModel>();
   public states = input.required<CategoryListModel>();

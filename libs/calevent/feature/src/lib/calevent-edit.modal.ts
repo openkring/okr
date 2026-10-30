@@ -5,7 +5,7 @@ import { CalEventModel, CalEventModelName, CategoryListModel, LocationModel, Use
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { coerceBoolean, hasRole, safeStructuredClone } from '@okr/shared-util-core';
-import { CalendarSelectModal } from '@okr/shared-feature';
+import { CalendarSelectModal, AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 
 import { CalEventForm } from '@okr/calevent-ui';
@@ -80,7 +80,7 @@ import { AttendeesAccordion } from './attendees-accordion';
           [(showAdvanced)]="showAdvanced"
           [types]="types()"
           [periodicities]="periodicities()"
-          [allTags]="tags()"
+          [allTags]="allTags()"
           [tenantId]="tenantId()"
           [locale]="locale()"
           [locations]="locations()"
@@ -124,7 +124,11 @@ export class CalEventEditModal {
   public currentUser = input.required<UserModel>();
   public types = input.required<CategoryListModel>();
   public periodicities = input.required<CategoryListModel>();
-  public tags = input.required<string>();
+  public tags = input<string>('');
+  /** When set, the tag vocabulary is read live, so a value added via «Werte bearbeiten» validates at once. */
+  public tagModel = input<string>('');
+  private readonly appStore = inject(AppStore);
+  protected readonly allTags = computed(() => this.tagModel() ? this.appStore.getTags(this.tagModel()) : this.tags());
   public tenantId = input.required<string>();
   public locale = input.required<string>();
   public locations = input<LocationModel[]>([]);

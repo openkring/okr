@@ -143,7 +143,7 @@ export const TransferStore = signalStore(
             types: this.getTypes(),
             states: this.getStates(),
             periodicities: this.getPeriodicities(),
-            tags: this.getTags(),
+            tagModel: 'transfer',
             tenantId: store.tenantId(),
             readOnly
           }

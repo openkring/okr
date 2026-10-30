@@ -4,7 +4,7 @@ import { IonContent, ModalController } from '@ionic/angular';
 import { AvatarInfo, DiaryAlbumModel, DiaryModel, TripModel, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
-import { dismissOverlay } from '@okr/shared-util-angular';
+import { dismissOverlay, TAG_EDITOR } from '@okr/shared-util-angular';
 import { DEFAULT_TAGS } from '@okr/shared-constants';
 
 import { DiaryI18n, addDiaryAvatar, formatDiaryDate } from '@okr/content-diary-util';
@@ -27,7 +27,7 @@ export interface DiaryLocationPick {
     <ion-content class="ion-no-padding">
       @if (formData(); as formData) {
         <okr-diary-form [formData]="formData" (formDataChange)="onFormDataChange($event)"
-          [i18n]="i18n()" [currentUser]="currentUser()" [tenantId]="tenantId()" [allTags]="allTags()"
+          [i18n]="i18n()" [currentUser]="currentUser()" [tenantId]="tenantId()" [allTags]="tagVocabulary()"
           [travelTrips]="travelTrips()" [eventAlbums]="eventAlbums()" [readOnly]="isReadOnly()" [lockDate]="lockDate()" [showForm]="showForm()"
           (locationSelectClicked)="pickLocation()" (personSelectClicked)="pickPerson()"
           (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" />
@@ -47,6 +47,13 @@ export class DiaryEditModal {
   public readonly currentUser = input<UserModel | undefined>();
   public readonly tenantId = input.required<string>();
   public readonly allTags = input(DEFAULT_TAGS);
+  /** When set, the tag vocabulary is read live (TAG_EDITOR), so a value added via «Werte bearbeiten» validates at once. */
+  public readonly tagModel = input('');
+  private readonly tagEditor = inject(TAG_EDITOR, { optional: true });
+  protected readonly tagVocabulary = computed(() => {
+    const tagModel = this.tagModel();
+    return tagModel && this.tagEditor ? this.tagEditor.values(tagModel).join(',') : this.allTags();
+  });
   public readonly travelTrips = input<TripModel[]>([]);
   public readonly eventAlbums = input<DiaryAlbumModel[]>([]);
   public readonly readOnly = input(false);

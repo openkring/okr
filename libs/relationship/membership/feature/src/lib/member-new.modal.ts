@@ -29,7 +29,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
           [formData]="formData" (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser()"
           [genders]="genders()"
-          [allTags]="tags()"
+          [allTags]="allTags()"
           [tenantId]="tenantId()"
           [readOnly]="false"
           [membershipCategories]="selectedMembershipCategory()"
@@ -52,7 +52,10 @@ export class MemberNewModal {
   // inputs
   public currentUser = input.required<UserModel>();
   public mcat = input.required<CategoryListModel>();
-  public tags = input.required<string>();
+  public tags = input<string>('');
+  /** When set, the tag vocabulary is read live, so a value added via «Werte bearbeiten» validates at once. */
+  public tagModel = input<string>('');
+  protected readonly allTags = computed(() => this.tagModel() ? this.appStore.getTags(this.tagModel()) : this.tags());
   public tenantId = input.required<string>();
   public genders = input.required<CategoryListModel>();
   public org = input.required<OrgModel>();

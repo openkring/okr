@@ -164,7 +164,7 @@ export const InvitationStore = signalStore(
           componentProps: {
             invitation,
             currentUser: store.currentUser(),
-            tags: this.getTags(),
+            tagModel: 'invitation',
             locale: this.getLocale(),
             readOnly
           }

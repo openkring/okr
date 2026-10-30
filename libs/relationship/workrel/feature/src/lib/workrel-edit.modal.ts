@@ -9,6 +9,7 @@ import { CommentsAccordion } from '@okr/comment-feature';
 import { WorkrelForm } from '@okr/relationship-workrel-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { WorkrelStore } from './workrel.store';
+import { AppStore } from '@okr/shared-feature';
 
 @Component({
   selector: 'okr-workrel-edit-modal',
@@ -34,7 +35,7 @@ import { WorkrelStore } from './workrel.store';
             (formDataChange)="onFormDataChange($event)"
             [currentUser]="currentUser"
             [showForm]="showForm()"
-            [allTags]="tags()"
+            [allTags]="allTags()"
             [types]="types()"
             [states]="states()" 
             [tenantId]="tenantId()"
@@ -67,7 +68,11 @@ export class WorkrelEditModal {
   // inputs
   public workrel = input.required<WorkrelModel>();
   public currentUser = input.required<UserModel>();
-  public tags = input.required<string>();
+  public tags = input<string>('');
+  /** When set, the tag vocabulary is read live, so a value added via «Werte bearbeiten» validates at once. */
+  public tagModel = input<string>('');
+  private readonly appStore = inject(AppStore);
+  protected readonly allTags = computed(() => this.tagModel() ? this.appStore.getTags(this.tagModel()) : this.tags());
   public tenantId = input.required<string>();
   public types = input.required<CategoryListModel>();
   public states = input.required<CategoryListModel>();

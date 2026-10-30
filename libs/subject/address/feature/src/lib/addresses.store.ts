@@ -220,7 +220,7 @@ export const AddressStore = signalStore(
         componentProps: {
             address,
             currentUser: store.currentUser(),
-            tags: this.getTags(),
+            tagModel: 'address',
             addressChannels: this.getChannels(),
             addressUsages: this.getUsages(),
             tenantId: store.tenantId(),
@@ -423,9 +423,8 @@ export const AddressStore = signalStore(
         doc.url = url;
         doc.title = store.i18n.qrinvoice() + ' ' + creditorName;
         doc.folderKeys = [ezsKey];
-        // Only '@tag.ezs' — extractTagsFromStoragePath would also emit '@tag.<tenant>' and
-        // '@tag.address', and any tag missing from the tenant's `document` tag definition makes
-        // tagValidations invalidate the WHOLE edit form (the document can then never be saved).
+        // Only '@tag.ezs', not extractTagsFromStoragePath: any tag missing from the tenant's `document`
+        // tag definition makes tagValidations invalidate the WHOLE edit form (the document can then never be saved).
         doc.tags = '@tag.ezs';
         await store.documentService.create(doc, store.currentUser());
 

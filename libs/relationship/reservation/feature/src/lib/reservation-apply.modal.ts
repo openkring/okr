@@ -147,7 +147,7 @@ export class ReservationApplyModal {
             currentUser: this.currentUser(),
             types: this.store.appStore.getCategory('calevent_type'),
             periodicities: this.periodicities(),
-            tags: this.store.appStore.getTags('calevent'),
+            tagModel: 'calevent',
             tenantId: this.tenantId(),
             locale: this.store.appStore.appConfig().locale,
             readOnly: false

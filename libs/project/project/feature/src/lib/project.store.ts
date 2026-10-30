@@ -5,10 +5,10 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { of } from 'rxjs';
 import { ModalController } from '@ionic/angular';
 
-import { DEFAULT_PROJECT_STATE, DEFAULT_TAGS, DEFAULT_TASK_STATE } from '@okr/shared-constants';
+import { DEFAULT_PROJECT_STATE, DEFAULT_TASK_STATE } from '@okr/shared-constants';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { ProjectModel, TaskModel } from '@okr/shared-models';
+import { ProjectModel, TaskModel, ProjectModelName } from '@okr/shared-models';
 import { AlertService } from '@okr/shared-util-angular';
 import { chipMatches, getDayDiff, nameMatches } from '@okr/shared-util-core';
 import { duplicateProjectTasks, getProjectParentKey, isProject, PROJECT_I18N_KEYS } from '@okr/project-project-util';
@@ -71,7 +71,6 @@ export const ProjectStore = signalStore(
     currentUser: computed(() => state.appStore.currentUser()),
     tenantId: computed(() => state.appStore.tenantId()),
     tags: computed(() => state.appStore.getTags('project')),
-    allTags: computed(() => state.appStore.getTags('project') || DEFAULT_TAGS),
     states: computed(() => state.appStore.getCategory('project_state')),
     isLoading: computed(() => state.projectsResource.isLoading()),
   })),
@@ -123,7 +122,7 @@ export const ProjectStore = signalStore(
           project,
           currentUser: store.currentUser(),
           i18n: store.i18n,
-          allTags: store.allTags(),
+          tagModel: ProjectModelName,
           states: store.states(),
           readOnly,
         },

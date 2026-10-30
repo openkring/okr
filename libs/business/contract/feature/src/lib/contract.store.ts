@@ -13,7 +13,7 @@ import { ContractEditModal, ContractNoticeModal } from '@okr/business-contract-u
 import { CONTRACT_I18N_KEYS, ContractI18n, newContractModel, sumLoans } from '@okr/business-contract-util';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { ContractModel } from '@okr/shared-models';
+import { ContractModel, ContractModelName } from '@okr/shared-models';
 import { AlertService, resourceParams } from '@okr/shared-util-angular';
 import { addDuration, debugListLoaded, getTodayStr, hasRole, nameMatches } from '@okr/shared-util-core';
 
@@ -134,6 +134,7 @@ export const ContractStore = signalStore(
           contract,
           currentUser: store.currentUser(),
           tenantId: store.tenantId(),
+          tagModel: ContractModelName,
           readOnly: isReadOnly,
           // pickers are passed IN as callbacks: the ui lib must not depend on @okr/shared-feature
           selectPerson: () => store.modelSelectService.selectPersonAvatar(undefined, undefined, false, false),

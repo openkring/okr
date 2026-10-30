@@ -9,7 +9,7 @@ import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 import { DEFAULT_TAGS } from '@okr/shared-constants';
 
 import { ResponsibilityOption, WORKFLOW_I18N_KEYS, WorkflowI18n } from '@okr/system-workflow-util';
-import { dismissOverlay } from '@okr/shared-util-angular';
+import { dismissOverlay, TAG_EDITOR } from '@okr/shared-util-angular';
 
 import { WorkflowRuleForm } from './workflow-rule.form';
 
@@ -35,7 +35,7 @@ import { WorkflowRuleForm } from './workflow-rule.form';
           [probeCategory]="probeCategory()"
           [actionCategory]="actionCategory()"
           [responsibilities]="responsibilities()"
-          [allTags]="allTags()"
+          [allTags]="tagVocabulary()"
           [showForm]="showForm()"
           [readOnly]="isReadOnly()"
           [i18n]="i18n"
@@ -59,6 +59,13 @@ export class WorkflowRuleEditModal {
   public readonly actionCategory = input.required<CategoryListModel>();
   public readonly responsibilities = input<ResponsibilityOption[]>([]);
   public readonly allTags = input(DEFAULT_TAGS);
+  /** When set, the tag vocabulary is read live (TAG_EDITOR), so a value added via «Werte bearbeiten» validates at once. */
+  public readonly tagModel = input('');
+  private readonly tagEditor = inject(TAG_EDITOR, { optional: true });
+  protected readonly tagVocabulary = computed(() => {
+    const tagModel = this.tagModel();
+    return tagModel && this.tagEditor ? this.tagEditor.values(tagModel).join(',') : this.allTags();
+  });
   public readonly readOnly = input(true);
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 

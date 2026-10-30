@@ -9,20 +9,20 @@ import { map, of } from 'rxjs';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
-import { ExportFormat, FeeScheduleEntry, INVOICE_STATE, MembershipCollection, MembershipModel, OwnershipCollection, OwnershipModel, MemberFeeCollection, MemberFeeModel } from '@okr/shared-models';
+import { ExportFormat, FeeScheduleEntry, INVOICE_STATE, MembershipCollection, MembershipModel, MembershipModelName, OwnershipCollection, OwnershipModel, MemberFeeCollection, MemberFeeModel } from '@okr/shared-models';
 import { confirm, exportCsv, okrPrompt, resourceParams, showToast } from '@okr/shared-util-angular';
-import { DateFormat, debugListLoaded, fill, generateRandomString, getDataRow, getFullName, getSystemQuery, getTodayStr, getYear, isAfterDate, nameMatches } from '@okr/shared-util-core';
+import { DateFormat, debugListLoaded, fill, generateRandomString, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, getYear, isAfterDate, nameMatches } from '@okr/shared-util-core';
 import { ExportFormats } from '@okr/shared-categories';
 import { I18nService } from '@okr/shared-i18n';
 
 import { ActivityService } from '@okr/activity-data-access';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { ownerOrgOfBooks } from '@okr/finance-accounting-util';
-import { MemberFeeService, getTemplateId } from '@okr/relationship-membership-data-access';
+import { MemberFeeService, MembershipService, getTemplateId } from '@okr/relationship-membership-data-access';
 
 import { MembershipEditModal } from './membership-edit.modal';
 import { MemberFeesTotalsModal } from './member-fee-totals.modal';
-import { BexioPosition, billedCategoryKey, billedMemberships, buildPositions, feeRowsOfBooks, feeScreenState, getFeeTotal, reloadRefusal, rowMemberKeysOfBooks, MemberFeesScreenState, rebatePosition, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
+import { BexioPosition, billedCategoryKey, billedMemberships, buildPositions, feeRowsOfBooks, feeScreenState, getFeeTotal, reloadRefusal, rowMemberKeysOfBooks, MemberFeesScreenState, rebatePosition, getRelLogEntry, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
 import { MemberFeeUploadModal } from '@okr/relationship-membership-ui';
 
 export type MemberFeesState = {
@@ -49,6 +49,7 @@ export const _MemberFeesStore = signalStore(
     }
     return {
       memberFeeService: inject(MemberFeeService),
+      membershipService: inject(MembershipService),
       accountingStore: inject(AccountingStore),
       appStore,
       firestoreService: inject(FirestoreService),
@@ -547,7 +548,7 @@ export const _MemberFeesStore = signalStore(
         componentProps: {
           membership: { ...membership },
           currentUser: store.appStore.currentUser(),
-          tags: '',
+          tagModel: MembershipModelName,
           priv: store.appStore.privacySettings(),
           mcat,
           isNew: false,
@@ -555,6 +556,12 @@ export const _MemberFeesStore = signalStore(
         },
       });
       await modal.present();
+      // Persist the edit like MembershipStore.edit's update branch; without this the save bar
+      // closed the modal and the change was silently dropped.
+      const { data, role } = await modal.onDidDismiss<MembershipModel>();
+      if (role !== 'confirm' || !data || readOnly) return;
+      data.relLog = getRelLogEntry(data.dateOfEntry, getCatAbbreviation(mcat, data.category));
+      await store.membershipService.update(data, store.appStore.currentUser());
     },
   })),
 

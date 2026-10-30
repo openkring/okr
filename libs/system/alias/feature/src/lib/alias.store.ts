@@ -5,7 +5,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { AliasModel, AliasSpaceModel, CategoryItemModel, CategoryListModel } from '@okr/shared-models';
+import { AliasModel, AliasSpaceModel, CategoryItemModel, CategoryListModel, AliasModelName, AliasSpaceModelName } from '@okr/shared-models';
 import { AlertService } from '@okr/shared-util-angular';
 import { debugListLoaded } from '@okr/shared-util-core';
 
@@ -145,7 +145,7 @@ export const AliasStore = signalStore(
       const modal = await store.modalController.create({
         component: AliasEditModal,
         componentProps: {
-          alias: draft, currentUser: store.currentUser(), tenantId: store.tenantId(), readOnly: false,
+          alias: draft, currentUser: store.currentUser(), tenantId: store.tenantId(), tagModel: AliasModelName, readOnly: false,
         },
       });
       modal.present();
@@ -179,7 +179,7 @@ export const AliasStore = signalStore(
       const modal = await store.modalController.create({
         component: AliasEditModal,
         componentProps: {
-          alias, currentUser: store.currentUser(), tenantId: store.tenantId(), readOnly: true,
+          alias, currentUser: store.currentUser(), tenantId: store.tenantId(), tagModel: AliasModelName, readOnly: true,
         },
       });
       await modal.present();
@@ -194,6 +194,7 @@ export const AliasStore = signalStore(
           hasAliases: this.hasAliases(space),
           currentUser: store.currentUser(),
           tenantId: store.tenantId(),
+          tagModel: AliasSpaceModelName,
           readOnly,
         },
       });

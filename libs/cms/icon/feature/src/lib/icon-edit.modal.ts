@@ -30,7 +30,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
             [formData]="formData"
             (formDataChange)="onFormDataChange($event)"
             [currentUser]="currentUser"
-            [allTags]="tags()"
+            [allTags]="allTags()"
             [tenants]="tenantId()"
             [readOnly]="isReadOnly()"
             [showForm]="showForm()"
@@ -52,6 +52,8 @@ export class IconEditModal {
   public icon = input.required<IconModel>();
   public currentUser = input<UserModel | undefined>();
   public tags = input<string>('');
+  /** When set, the tag vocabulary is read live, so a value added via «Werte bearbeiten» validates at once. */
+  public tagModel = input<string>('');
   public readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
@@ -66,6 +68,7 @@ export class IconEditModal {
     if (this.isReadOnly()) return this.i18n.view();
     return this.icon()?.okey ? this.i18n.update() : this.i18n.create();
   });
+  protected readonly allTags = computed(() => this.tagModel() ? this.appStore.getTags(this.tagModel()) : this.tags());
   protected tenantId = computed(() => this.appStore.tenantId());
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.i18n.cancel(), save: this.i18n.save()} as ChangeConfirmationI18n));

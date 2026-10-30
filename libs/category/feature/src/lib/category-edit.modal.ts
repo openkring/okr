@@ -30,7 +30,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
             [formData]="formData"
             (formDataChange)="onFormDataChange($event)"
             [currentUser]="currentUser"
-            [allTags]="tags()"
+            [allTags]="allTags()"
             [tenants]="tenantId()"
             [hasAbbreviation]="hasAbbreviation()"
             [readOnly]="isReadOnly()"
@@ -51,7 +51,10 @@ export class CategoryEditModal {
   // inputs
   public category = input.required<CategoryListModel>();
   public currentUser = input<UserModel | undefined>();
-  public tags = input.required<string>();
+  public tags = input<string>('');
+  /** When set, the tag vocabulary is read live, so a value added via «Werte bearbeiten» validates at once. */
+  public tagModel = input<string>('');
+  protected readonly allTags = computed(() => this.tagModel() ? this.appStore.getTags(this.tagModel()) : this.tags());
   public hasAbbreviation = input<boolean>(false);
   public readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));

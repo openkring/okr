@@ -9,6 +9,7 @@ import { CommentsAccordion } from '@okr/comment-feature';
 import { TransferForm } from '@okr/relationship-transfer-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { TransferStore } from './transfer.store';
+import { AppStore } from '@okr/shared-feature';
 
 
 @Component({
@@ -32,7 +33,7 @@ import { TransferStore } from './transfer.store';
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser()"
-          [allTags]="tags()"
+          [allTags]="allTags()"
           [tenantId]="tenantId()"
           [types]="types()"
           [states]="states()"
@@ -69,7 +70,11 @@ export class TransferEditModal {
   public types = input.required<CategoryListModel>();
   public states = input.required<CategoryListModel>();
   public periodicities = input.required<CategoryListModel>();
-  public tags = input.required<string>();
+  public tags = input<string>('');
+  /** When set, the tag vocabulary is read live, so a value added via «Werte bearbeiten» validates at once. */
+  public tagModel = input<string>('');
+  private readonly appStore = inject(AppStore);
+  protected readonly allTags = computed(() => this.tagModel() ? this.appStore.getTags(this.tagModel()) : this.tags());
   public tenantId = input.required<string>();
 
   // signals

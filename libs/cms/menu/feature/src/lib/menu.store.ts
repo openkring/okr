@@ -272,7 +272,7 @@ export const _MenuStore = signalStore(
           componentProps: {
             menuItem: _menuItem,
             currentUser: store.currentUser(),
-            tags: this.getTags(),
+            tagModel: 'menuitem',
             roles: this.getRoles(),
             types: this.getTypes(),
             readOnly,

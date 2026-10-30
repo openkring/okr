@@ -135,7 +135,7 @@ export const OrgchartStore = signalStore(
         componentProps: {
           group: newGroup,
           currentUser: store.appStore.currentUser(),
-          tags: store.appStore.getTags(GroupModelName),
+          tagModel: GroupModelName,
           tenantId: store.appStore.tenantId(),
           isNew: true,
           readOnly: false,
@@ -179,7 +179,7 @@ export const OrgchartStore = signalStore(
         componentProps: {
           group,
           currentUser: store.appStore.currentUser(),
-          tags: store.appStore.getTags(GroupModelName),
+          tagModel: GroupModelName,
           tenantId: store.appStore.tenantId(),
           isNew: false,
           readOnly: false,
@@ -205,7 +205,7 @@ export const OrgchartStore = signalStore(
             org,
             currentUser: store.appStore.currentUser(),
             resource: store.appStore.defaultResource(),
-            tags: store.appStore.getTags('org'),
+            tagModel: 'org',
             tenantId: store.appStore.tenantId(),
             types: store.appStore.getCategory('org_type'),
             readOnly: true,
@@ -223,7 +223,7 @@ export const OrgchartStore = signalStore(
           componentProps: {
             group,
             currentUser: store.appStore.currentUser(),
-            tags: store.appStore.getTags('group'),
+            tagModel: 'group',
             tenantId: store.appStore.tenantId(),
             isNew: false,
             readOnly: true,

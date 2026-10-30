@@ -9,6 +9,7 @@ import { I18nService } from "@okr/shared-i18n";
 import { AddressForm } from "@okr/subject-address-ui";
 import { ADDRESSES_I18N_KEYS, AddressesI18n } from "@okr/subject-address-util";
 import { dismissOverlay } from '@okr/shared-util-angular';
+import { AppStore } from '@okr/shared-feature';
 
 @Component({
   selector: 'okr-address-edit-modal',
@@ -32,7 +33,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
             [currentUser]="currentUser"
             [readOnly]="isReadOnly()"
             [showForm]="showForm()"
-            [allTags]="tags()"
+            [allTags]="allTags()"
             [addressChannels]="addressChannels()"
             [addressUsages]="addressUsages()"
             [tenantId]="tenantId()"
@@ -51,7 +52,11 @@ export class AddressEditModal {
   // inputs
   public address = input.required<AddressModel>();
   public currentUser = input<UserModel | undefined>();
-  public tags = input.required<string>();
+  public tags = input<string>('');
+  /** When set, the tag vocabulary is read live, so a value added via «Werte bearbeiten» validates at once. */
+  public tagModel = input<string>('');
+  private readonly appStore = inject(AppStore);
+  protected readonly allTags = computed(() => this.tagModel() ? this.appStore.getTags(this.tagModel()) : this.tags());
   public readonly addressChannels = input.required<CategoryListModel>();
   public readonly addressUsages = input.required<CategoryListModel>();
   public tenantId = input.required<string>();

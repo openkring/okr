@@ -119,23 +119,22 @@ export function extractParentsFromStoragePath(fullPath: string): string[] {
  * Derives a space-separated tag string from a Firebase Storage fullPath.
  *
  * Rules applied (in order):
- * 1. Tenant segment → @tag.TENANT_ID
- * 2. Model-type segment → EXTRA_TAG_MAP entry if present, else @tag.MODEL_TYPE
- * 3. Inline keyword scan (avatar, ezs, tenu) → corresponding tag
+ * 1. Model-type segment → EXTRA_TAG_MAP entry if present, else @tag.MODEL_TYPE
+ * 2. Inline keyword scan (avatar, ezs, tenu) → corresponding tag
+ *
+ * No tenant tag: `tenants[]` already scopes the document, nothing reads an `@tag.<tenant>`, and a
+ * tag missing from the tenant's `document` definition makes the whole edit form unsaveable.
  *
  * Examples:
- *   "tenant/scs/logo/..."          →  "@tag.scs,@tag.logo,@tag.marketing"
- *   "tenant/scs/theme/..."         →  "@tag.scs,@tag.app"
- *   "tenant/scs/person/123/avatar" →  "@tag.scs,@tag.person,@tag.avatar"
- *   "tenant/scs/address/456/ezs"   →  "@tag.scs,@tag.address,@tag.ezs"
+ *   "tenant/scs/logo/..."          →  "@tag.logo,@tag.marketing"
+ *   "tenant/scs/theme/..."         →  "@tag.app"
+ *   "tenant/scs/person/123/avatar" →  "@tag.person,@tag.avatar"
+ *   "tenant/scs/address/456/ezs"   →  "@tag.address,@tag.ezs"
  */
 export function extractTagsFromStoragePath(fullPath: string): string {
   const segments = fullPath.split('/');
-  const tenantId = segments[1];
   const modelType = segments[2];
   const tags = new Set<string>();
-
-  if (tenantId) tags.add(`@tag.${tenantId}`);
 
   if (modelType) {
     const extra = EXTRA_TAG_MAP[modelType];

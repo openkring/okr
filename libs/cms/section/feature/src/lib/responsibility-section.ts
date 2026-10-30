@@ -107,7 +107,7 @@ export class ResponsibilitySectionComponent {
       componentProps: {
         person,
         currentUser: this.appStore.currentUser(),
-        tags: this.appStore.getTags(PersonModelName),
+        tagModel: PersonModelName,
         tenantId: this.appStore.tenantId(),
         genders: this.appStore.getCategory('gender'),
         readOnly: true,
