@@ -8,7 +8,7 @@ import { IconModel, RoleName, UserModel } from '@okr/shared-models';
 import { Chips, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
-import { DEFAULT_INDEX, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
+import { DEFAULT_NOTES, DEFAULT_TAGS, LONG_NAME_LENGTH } from '@okr/shared-constants';
 
 export interface IconEditFormI18n {
   okey_label: Signal<string>;
@@ -23,9 +23,9 @@ export interface IconEditFormI18n {
   fullPath_label: Signal<string>;
   fullPath_placeholder: Signal<string>;
   fullPath_helper: Signal<string>;
-  index_label: Signal<string>;
-  index_placeholder: Signal<string>;
-  index_helper: Signal<string>;
+  searchFields_label: Signal<string>;
+  searchFields_placeholder: Signal<string>;
+  searchFields_helper: Signal<string>;
   notes_label: Signal<string>;
   notes_placeholder: Signal<string>;
 }
@@ -67,10 +67,10 @@ export interface IconEditFormI18n {
             </ion-row>
             <ion-row>
               <ion-col size="12">
-                <!-- index: editable list of words, e.g. 'create edit new' -->
-                <okr-text-input [i18n]="indexI18n()" [value]="index()" (valueChange)="onFieldChange('index', $event)"
-                  [showHelper]="true" [readOnly]="isReadOnly()" />
-                <okr-error-note [errors]="indexErrors()" />
+                <!-- additional search keywords, e.g. 'create edit new'; the index is generated from them -->
+                <okr-text-input [i18n]="searchFieldsI18n()" [value]="searchFields()" (valueChange)="onFieldChange('searchFields', $event)"
+                  [maxLength]="searchFieldsLength" [showHelper]="true" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="searchFieldsErrors()" />
               </ion-col>
             </ion-row>
             <ion-row>
@@ -126,7 +126,7 @@ export class IconEditForm {
   // per-field errors for the notes under each field
   private readonly validationResult = vestErrors(this.iconForm);
   protected fullPathErrors = computed(() => this.validationResult().getErrors('fullPath'));
-  protected indexErrors = computed(() => this.validationResult().getErrors('index'));
+  protected searchFieldsErrors = computed(() => this.validationResult().getErrors('searchFields'));
 
   constructor() { effect(() => this.valid.emit(this.iconForm().valid())); }
 
@@ -135,7 +135,9 @@ export class IconEditForm {
   protected name = computed(() => this.formData().name ?? '');
   protected type = computed(() => this.formData().type ?? '');
   protected fullPath = computed(() => this.formData().fullPath ?? '');
-  protected index = computed(() => this.formData().index ?? DEFAULT_INDEX);
+  protected searchFields = computed(() => this.formData().searchFields ?? '');
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly searchFieldsLength = LONG_NAME_LENGTH;
   protected notes = computed(() => this.formData().notes ?? DEFAULT_NOTES);
   protected tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
   protected size = computed(() => this.formData().size ?? 0);
@@ -169,11 +171,11 @@ export class IconEditForm {
     helper: this.i18n().fullPath_helper()
   } as TextInputI18n));
 
-  protected indexI18n = computed(() => ({
-    name: 'index',
-    label: this.i18n().index_label(),
-    placeholder: this.i18n().index_placeholder(),
-    helper: this.i18n().index_helper()
+  protected searchFieldsI18n = computed(() => ({
+    name: 'searchFields',
+    label: this.i18n().searchFields_label(),
+    placeholder: this.i18n().searchFields_placeholder(),
+    helper: this.i18n().searchFields_helper()
   } as TextInputI18n));
 
   protected notesI18n = computed(() => ({

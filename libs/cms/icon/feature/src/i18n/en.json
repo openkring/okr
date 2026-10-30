@@ -2,7 +2,6 @@
   "icon": "Icon",
   "icons": "Icons",
   "empty": "No icons found.",
-
   "copy": {
     "label": "Copy icon name"
   },
@@ -34,7 +33,6 @@
   "view": {
     "label": "Show icon details"
   },
-
   "okey": {
     "label": "ID",
     "placeholder": "ssssss",
@@ -58,16 +56,16 @@
     "placeholder": "/asdf/asf",
     "helper": "The path to the icon in Storage."
   },
-  "index": {
-    "label": "Index",
-    "placeholder": "sssss sssss",
-    "helper": "Space-separated search terms"
+  "searchFields": {
+    "label": "Additional search fields",
+    "placeholder": "edit new create",
+    "helper": "More search terms, separated by spaces. Name and icon set are searched automatically."
   },
   "notes": {
     "label": "Notes",
     "placeholder": "Text"
   },
-   "size": {
+  "size": {
     "label": "Size",
     "placeholder": "40",
     "helper": "The size of the icon in pixels, e.g. 24, 32, 48 etc.",

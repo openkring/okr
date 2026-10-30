@@ -42,9 +42,9 @@ export const ICON_I18N_KEYS = {
   fullPath_placeholder: PFX + 'fullPath.placeholder',
   fullPath_helper:   PFX + 'fullPath.helper',
 
-  index_label:       PFX + 'index.label',
-  index_placeholder: PFX + 'index.placeholder',
-  index_helper:      PFX + 'index.helper',
+  searchFields_label:       PFX + 'searchFields.label',
+  searchFields_placeholder: PFX + 'searchFields.placeholder',
+  searchFields_helper:      PFX + 'searchFields.helper',
 
   notes_label:       PFX + 'notes.label',
   notes_placeholder: PFX + 'notes.placeholder',

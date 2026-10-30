@@ -14,7 +14,7 @@ import { ActivityCollection, ActivityModel, AddressCollection, AddressModel, Okr
   MenuItemModel, OrgCollection, OrgModel, OwnershipCollection, OwnershipModel, PageCollection, PageModel, PersonalRelCollection, PersonalRelModel, PersonCollection,
   PersonModel, ReservationCollection, ReservationModel, SessionCollection, SessionModel, TaskCollection, TransferCollection, UserCollection,
   WorkrelCollection, TaskModel, ResourceModel, ResourceCollection, TransferModel, UserModel, WorkrelModel, GroupModel, CategoryModel,
-  CategoryListModel, DbQuery, ResponsibilityModel, ResponsibilityCollection } from '@okr/shared-models';
+  CategoryListModel, DbQuery, ResponsibilityModel, ResponsibilityCollection, IconModel, IconCollection } from '@okr/shared-models';
 import { fill, getCategoryIndex, getFullName, getSystemQuery, hasRole, logToFindings, ReportFinding } from '@okr/shared-util-core';
 import { resourceParams, showToast } from '@okr/shared-util-angular';
 import { openReport } from '@okr/shared-ui';
@@ -43,6 +43,7 @@ import { categoryListValidations } from '@okr/category-util';
 import { getGroupIndex, groupValidations } from '@okr/subject-group-util';
 import { getResponsibilityIndex } from '@okr/relationship-responsibility-util';
 import { getSessionIndex } from '@okr/session-util';
+import { getIconIndex } from '@okr/cms-icon-util';
 
 /** One collection's reindex preview: the docs whose index differs, and how to write them. */
 interface ReindexPlan {
@@ -252,6 +253,8 @@ export const AocHubStore = signalStore(
       group: () => planIndex<GroupModel>(GroupCollection, getGroupIndex),
       responsibility: () => planIndex<ResponsibilityModel>(ResponsibilityCollection, getResponsibilityIndex),
       session: () => planIndex<SessionModel>(SessionCollection, getSessionIndex, 'startedAt'),
+      // system icons are written by operators only (canWriteTenant); a non-operator run fails per doc
+      icon: () => planIndex<IconModel>(IconCollection, getIconIndex, 'name'),
       // account, avatar, bill, competitionLevel, expense, invoice, invoicePosition, section, trip:
       // not yet implemented (unchanged)
     });

@@ -210,6 +210,7 @@ export const AOC_HUB_I18N_KEYS = {
   type_group: PFX + 'hub.type.group',
   type_responsibility: PFX + 'hub.type.responsibility',
   type_session: PFX + 'hub.type.session',
+  type_icon: PFX + 'hub.type.icon',
   validate_explanation: PFX + 'hub.validate.explanation',
   reindex_explanation: PFX + 'hub.reindex.explanation',
   reindex_apply: PFX + 'hub.reindex.apply',

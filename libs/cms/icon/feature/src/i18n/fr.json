@@ -2,7 +2,6 @@
   "icon": "Icône",
   "icons": "Icônes",
   "empty": "Aucune icône trouvée.",
-
   "copy": {
     "label": "Copier le nom de l'icône"
   },
@@ -34,7 +33,6 @@
   "view": {
     "label": "Afficher les détails de l'icône"
   },
-
   "okey": {
     "label": "ID",
     "placeholder": "ssssss",
@@ -58,16 +56,16 @@
     "placeholder": "/asdf/asf",
     "helper": "Le chemin vers l'icône dans le Storage."
   },
-  "index": {
-    "label": "Index",
-    "placeholder": "sssss sssss",
-    "helper": "Termes de recherche séparés par des espaces"
+  "searchFields": {
+    "label": "Champs de recherche supplémentaires",
+    "placeholder": "modifier nouveau créer",
+    "helper": "Autres termes de recherche, séparés par des espaces. Le nom et le jeu d'icônes sont recherchés automatiquement."
   },
   "notes": {
     "label": "Notes",
     "placeholder": "Text"
   },
-   "size": {
+  "size": {
     "label": "Taille",
     "placeholder": "40",
     "helper": "La taille de l'icône en pixels, p. ex. 24, 32, 48 etc.",

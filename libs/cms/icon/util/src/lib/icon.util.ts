@@ -1,15 +1,24 @@
 import { DEFAULT_DATE } from '@okr/shared-constants';
 import { IconModel } from '@okr/shared-models';
+import { addIndexElement } from '@okr/shared-util-core';
 
 /**
- * Build a searchable index string for an icon from its name, type, and tags.
+ * Build the search index of an icon from its name, type (icon set) and additional search fields.
+ * The index is always rebuilt from scratch; it never reads the previous index.
+ * @param icon the icon to build the index for
+ * @returns the index string
  */
 export function getIconIndex(icon: IconModel): string {
-  const parts: string[] = [];
-  if (icon.name) parts.push(icon.name.toLowerCase());
-  if (icon.type) parts.push(icon.type.toLowerCase());
-  if (icon.index) parts.push(icon.index.toLowerCase());
-  return parts.join(' ');
+  let index = '';
+  index = addIndexElement(index, 'n', icon.name ?? '');
+  index = addIndexElement(index, 't', icon.type ?? '');
+  // legacy docs lack searchFields (Firestore reads skip model defaults)
+  index = addIndexElement(index, 's', icon.searchFields ?? '');
+  return index;
+}
+
+export function getIconIndexInfo(): string {
+  return 'n:name t:type s:searchFields';
 }
 
 /**

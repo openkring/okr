@@ -28,8 +28,7 @@ export class IconService {
   /*-------------------------- CRUD operations --------------------------------*/
 
   public async create(icon: IconModel, currentUser?: UserModel): Promise<string | undefined> {
-    // index is editable in icon. That's why we don't generate the index here.
-    // icon.index = getIconIndex(icon);
+    icon.index = getIconIndex(icon);
     return await this.firestoreService.createModel<IconModel>(IconCollection, icon, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
   }
 

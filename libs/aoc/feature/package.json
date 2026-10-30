@@ -22,6 +22,7 @@
     "@okr/subject-person-data-access": "*",
     "@okr/subject-person-feature": "*",
     "@okr/session-util": "*",
+    "@okr/cms-icon-util": "*",
     "@okr/aoc-ui": "*",
     "@okr/avatar-ui": "*",
     "@okr/calevent-util": "*",

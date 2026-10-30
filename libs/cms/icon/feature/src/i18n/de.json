@@ -2,7 +2,6 @@
   "icon": "Icon",
   "icons": "Icons",
   "empty": "Keine Icons gefunden.",
-
   "copy": {
     "label": "Icon Name kopieren"
   },
@@ -34,7 +33,6 @@
   "view": {
     "label": "Icon Details anzeigen"
   },
-
   "okey": {
     "label": "ID",
     "placeholder": "ssssss",
@@ -58,16 +56,16 @@
     "placeholder": "/asdf/asf",
     "helper": "Der Pfad zum Icon im Storage."
   },
-  "index": {
-    "label": "Index",
-    "placeholder": "sssss sssss",
-    "helper": "Leerzeichen-getrennte Suchbegriffe"
+  "searchFields": {
+    "label": "Zusätzliche Suchfelder",
+    "placeholder": "bearbeiten neu erstellen",
+    "helper": "Weitere Suchbegriffe, getrennt durch Leerzeichen. Name und Icon-Set werden automatisch gesucht."
   },
   "notes": {
     "label": "Notizen",
     "placeholder": "Text"
   },
-   "size": {
+  "size": {
     "label": "Grösse",
     "placeholder": "40",
     "helper": "Die Grösse des Icons in Pixel, z.B. 24, 32, 48 etc.",

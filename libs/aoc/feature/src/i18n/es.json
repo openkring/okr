@@ -358,7 +358,8 @@
       "category": "Categorías",
       "group": "Grupos",
       "responsibility": "Responsabilidades",
-      "session": "Sesiones"
+      "session": "Sesiones",
+      "icon": "Iconos"
     }
   }
 }

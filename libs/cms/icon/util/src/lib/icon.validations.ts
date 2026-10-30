@@ -1,4 +1,5 @@
 
+import { LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { IconModel } from '@okr/shared-models';
 import { baseValidations, stringValidations } from '@okr/shared-util-core';
 import { staticSuite } from 'vest';
@@ -10,5 +11,6 @@ export const iconValidations = staticSuite((model: IconModel, tenants: string, t
   // this suite runs — a cap here can only reject a value the user cannot see or edit, so the
   // form would just never offer its save bar. Left uncapped on purpose; see vest.util.
   stringValidations('index', model.index);
+  stringValidations('searchFields', model.searchFields, LONG_NAME_LENGTH);
   stringValidations('fullPath', model.fullPath);
 });
