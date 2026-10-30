@@ -1,6 +1,6 @@
 import { Component, CUSTOM_ELEMENTS_SCHEMA, computed, effect, ElementRef, inject, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonButton, IonIcon, IonTextarea } from '@ionic/angular';
+import { IonButton, IonIcon, IonTextarea, Platform } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ButtonCopy, ButtonCopyI18n } from '@okr/shared-ui';
@@ -251,6 +251,7 @@ import { CommentListI18n, isImageFile } from '@okr/comment-util';
 })
 export class CommentComposer {
   private readonly hostElement = inject(ElementRef);
+  private readonly platform = inject(Platform);
 
   // inputs
   public readonly i18n = input.required<CommentListI18n>();
@@ -274,6 +275,12 @@ export class CommentComposer {
 
   /** ButtonCopy resolves its own generic confirmation when none is supplied. */
   protected readonly buttonCopyI18n = computed<ButtonCopyI18n>(() => ({}));
+
+  /**
+   * Enter only sends where a physical keyboard is the norm. On a touch device the Return key of
+   * the on-screen keyboard is the only way to type a line break, so it must stay a line break.
+   */
+  protected readonly sendsOnEnter = this.platform.is('desktop');
 
   protected readonly canSend = computed(() =>
     (this.text().trim().length > 0 || this.pendingFiles().length > 0) && !this.isBusy());
@@ -319,10 +326,13 @@ export class CommentComposer {
   }
 
   /* ---------------------- text -------------------------------*/
-  /** Enter sends, Shift+Enter inserts a newline — same contract as the chat composer. */
+  /**
+   * Same contract as the chat composer: on desktop Enter sends and Shift+Enter inserts a newline;
+   * on a touch device Enter is a plain line break and only the send button sends.
+   */
   protected onEnterKey(event: Event): void {
     const keyboardEvent = event as KeyboardEvent;
-    if (keyboardEvent.shiftKey) return;
+    if (!this.sendsOnEnter || keyboardEvent.shiftKey) return;
     keyboardEvent.preventDefault();
     this.send();
   }
