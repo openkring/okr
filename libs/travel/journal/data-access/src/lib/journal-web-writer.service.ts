@@ -77,7 +77,8 @@ export class JournalWebWriter {
 
   /**
    * True once this instance stamps under its own in-memory id. That happens when the profile id cannot
-   * be stored, or when the stamp write-back fails: tabs that share a device id but cannot publish
+   * be stored, when the browser has no Web Locks (or acquiring the lock fails), or when the stamp
+   * write-back fails: tabs that share a device id but cannot publish
    * their seq/hlc would stamp the same (deviceId, seq), and the iPads keep only one of the two records.
    */
   private privateId = false;
@@ -89,6 +90,11 @@ export class JournalWebWriter {
   }
 
   private loadDeviceId(): string {
+    // without Web Locks, tabs cannot serialise the shared stamp: each instance stamps under its own id
+    if (!lockManager()) {
+      this.privateId = true;
+      return newUuid();
+    }
     const stored = readStorage(KEY_DEVICE);
     if (isWebDeviceId(stored)) return stored;
     const id = newUuid();
@@ -106,9 +112,26 @@ export class JournalWebWriter {
 
   /** Stamps drafts for `authorKey` (Web Lock around read-merge-write of the localStorage stamp; `known` = loaded records for maxSeqOf). */
   public stamp(drafts: ChangeDraft[], authorKey: string, known: readonly JournalChange[]): Promise<JournalChange[]> {
-    const run = () => this.stampLocked(drafts, authorKey, known);
+    return this.underLock(() => this.stampLocked(drafts, authorKey, known));
+  }
+
+  /**
+   * Runs `run` under the stamp lock. Without Web Locks, or when acquiring the lock fails, this instance
+   * switches to a private id and runs unlocked (a private stamp needs no lock). A rejection thrown by
+   * `run` itself inside the lock is passed on, never re-run.
+   */
+  private underLock<T>(run: () => T): Promise<T> {
     const locks = lockManager();
-    return locks ? locks.request(STAMP_LOCK, run) : Promise.resolve().then(run);
+    if (!locks) {
+      if (!this.privateId) this.switchToPrivateId();
+      return Promise.resolve().then(run);
+    }
+    let acquired = false;
+    return locks.request(STAMP_LOCK, () => { acquired = true; return run(); }).catch((error: unknown) => {
+      if (acquired) throw error;
+      if (!this.privateId) this.switchToPrivateId();
+      return run();
+    });
   }
 
   /** Synchronous on purpose: nothing may wait on the network while the lock is held. */
@@ -157,9 +180,7 @@ export class JournalWebWriter {
     const run = () => {
       if (!this.saveStamp(receiveClocksInto(this.loadStamp([]), hlcs, this.id, Date.now()))) this.switchToPrivateId();
     };
-    const locks = lockManager();
-    if (!locks) { run(); return; }
-    locks.request(STAMP_LOCK, run).catch(() => run());
+    this.underLock(run).catch(() => undefined); // best effort: the next stamp merges the clocks again
   }
 
   // ---------------------------------------------------------------- internals ---------------
