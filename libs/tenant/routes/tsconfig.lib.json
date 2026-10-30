@@ -69,6 +69,7 @@
     { "path": "../../games/mampf/feature/tsconfig.lib.json" },
     { "path": "../../games/memory/feature/tsconfig.lib.json" },
     { "path": "../../games/muehle/feature/tsconfig.lib.json" },
+    { "path": "../../games/murdoku/feature/tsconfig.lib.json" },
     { "path": "../../games/quiz/feature/tsconfig.lib.json" },
     { "path": "../../games/sudoku/feature/tsconfig.lib.json" },
     { "path": "../../games/tetris/feature/tsconfig.lib.json" },

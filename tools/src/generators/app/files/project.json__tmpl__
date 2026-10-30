@@ -507,6 +507,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/games/murdoku/feature/src/i18n",
+            "output": "./assets/i18n/games/murdoku/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/games/sudoku/feature/src/i18n",
             "output": "./assets/i18n/games/sudoku/feature"
           },

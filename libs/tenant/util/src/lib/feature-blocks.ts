@@ -2437,6 +2437,7 @@ const instruments: FeatureBlock = {
  *     muehle, battleship, bimaru, hearing-quiz, jasstafel, tetris, mampf, wordle, chess — same shape (added 2026-09-28/29)
  *     sudoku, memory, backgammon, klondike — same shape (added 2026-10-03)
  *     mahjong — same shape (added 2026-10-30)
+ *     murdoku — same shape (added 2026-10-30)
  *
  * Every game block carries `bundle: 'games'` (since 2026-09-29), so the picker lists them
  * together under «Spiele» instead of scattering them through «Spezial».
@@ -2717,6 +2718,30 @@ const sudoku: FeatureBlock = {
   collections: [],
   menu: [gamesMenuParent([
     { key: 'game-sudoku', name: 'game-sudoku', url: '/sudoku', action: 'navigate', roleNeeded: 'registered', icon: 'game-sudoku', label: '@item.game-sudoku' },
+  ])],
+};
+
+/**
+ * `libs/games/murdoku` — `MurdokuPage` + `MurdokuStore` at `/murdoku`, over the pure
+ * `@okr/games-murdoku-util` (a seeded case generator that proves each floor plan has exactly one
+ * placement, three board sizes, hints, a guide and solving tips).
+ *
+ * The running case is kept in `localStorage` only (seed + moves), so a reload resumes it — no
+ * service, no Firestore, hence `collections: []`.
+ *
+ * `defaultAvailability: 'ga'`, like `sudoku`: nothing tenant-side to configure. Icon: the
+ * generic `personSearch` until an own `game-murdoku` icon is uploaded to `logo/icons/`.
+ */
+const murdoku: FeatureBlock = {
+  id: 'murdoku',
+  bundle: 'games',
+  label: '@tenant/util.feature.murdoku.label',
+  icon: 'personSearch',
+  defaultAvailability: 'ga',
+  dependsOn: ['games'],
+  collections: [],
+  menu: [gamesMenuParent([
+    { key: 'game-murdoku', name: 'game-murdoku', url: '/murdoku', action: 'navigate', roleNeeded: 'registered', icon: 'personSearch', label: '@item.game-murdoku' },
   ])],
 };
 
@@ -3234,7 +3259,7 @@ const learningBlock: FeatureBlock = {
 };
 
 export const FEATURE_BLOCKS: FeatureBlock[] = [
-  calevent, fileTransfer, learningBlock, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, memory, backgammon, klondike, mahjong, jasstafel, tetris, mampf, wordle, chess,
+  calevent, fileTransfer, learningBlock, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, murdoku, memory, backgammon, klondike, mahjong, jasstafel, tetris, mampf, wordle, chess,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

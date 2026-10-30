@@ -1,0 +1,138 @@
+{
+  "title": "Murdoku",
+  "desc": "Un omicidio sulla pianta della casa: metti ogni persona al suo posto in modo che tutte le dichiarazioni siano vere e scopri chi è stato. Ogni caso ha esattamente una soluzione.",
+  "option": {
+    "difficulty_label": "Difficoltà",
+    "difficulty_easy": "Facile (4×4)",
+    "difficulty_medium": "Medio (5×5)",
+    "difficulty_hard": "Difficile (6×6)"
+  },
+  "action": {
+    "hint": "Aiuto",
+    "mark": "Segna",
+    "clear": "Svuota",
+    "give_up": "Arrenditi",
+    "give_up_confirm": "Vuoi davvero arrenderti?",
+    "new_game": "Nuovo caso",
+    "next_case": "Caso successivo"
+  },
+  "role": {
+    "victim": "Vittima",
+    "suspect": "Sospettato",
+    "killer": "Colpevole"
+  },
+  "dossier": {
+    "statements": "Dichiarazioni",
+    "stats": "{solved} risolti · serie {streak}",
+    "stats_best": "{solved} risolti · record {best} · serie {streak}"
+  },
+  "room": {
+    "kitchen": "Cucina",
+    "library": "Biblioteca",
+    "greenhouse": "Serra",
+    "workshop": "Officina",
+    "music": "Sala della musica",
+    "pantry": "Dispensa",
+    "sunroom": "Veranda",
+    "bedroom": "Camera da letto",
+    "office": "Studio",
+    "laundry": "Lavanderia",
+    "gallery": "Galleria",
+    "cellar": "Cantina",
+    "studio": "Atelier",
+    "chapel": "Cappella",
+    "salon": "Salotto",
+    "nursery": "Cameretta"
+  },
+  "furniture": {
+    "chair": "Sedia",
+    "rug": "Tappeto",
+    "bed": "Letto",
+    "table": "Tavolo",
+    "plant": "Pianta",
+    "shelf": "Libreria"
+  },
+  "legend": {
+    "rooms": "Stanze",
+    "furniture": "Mobili",
+    "blocked": "non calpestabile"
+  },
+  "clue": {
+    "room": "Era nella stanza «{room}».",
+    "not_room": "Non era nella stanza «{room}».",
+    "on_chair": "Era seduto su una sedia.",
+    "on_rug": "Stava su un tappeto.",
+    "on_bed": "Era sdraiato su un letto.",
+    "beside_chair": "Stava proprio accanto a una sedia.",
+    "beside_rug": "Stava proprio accanto a un tappeto.",
+    "beside_bed": "Stava proprio accanto a un letto.",
+    "beside_table": "Stava proprio accanto a un tavolo.",
+    "beside_plant": "Stava proprio accanto a una pianta.",
+    "beside_shelf": "Stava proprio accanto a una libreria.",
+    "bare": "Stava sul pavimento libero, senza mobili.",
+    "edge": "Stava contro un muro esterno.",
+    "inner": "Stava lontano da tutti i muri esterni.",
+    "row": "Era nella riga {row}.",
+    "col": "Era nella colonna {col}.",
+    "alone": "Era da solo nella stanza.",
+    "company": "Non era da solo nella stanza.",
+    "north": "Era più a nord di {name}.",
+    "west": "Era più a ovest di {name}."
+  },
+  "accuse": {
+    "title": "Chi è stato?",
+    "text": "Tutti sono al posto giusto. Chi era nella stessa stanza di {victim}?",
+    "closed_title": "Caso risolto",
+    "closed_text": "Solo {killer} era con {victim} nella stanza «{room}».",
+    "revealed_title": "La soluzione"
+  },
+  "cell": {
+    "label": "Casella {at}, {room}",
+    "marked": "barrata",
+    "person": "{name}, {role}",
+    "compass": "N"
+  },
+  "status": {
+    "pick": "{placed} di {total} posizionati. Scegli una persona.",
+    "placing": "{placed} di {total} posizionati. Tocca una casella per {name}.",
+    "marking": "Segna è attivo: tocca le caselle per barrarle.",
+    "broken": "Tutti sono posizionati, ma la storia non torna. Almeno una dichiarazione è ancora falsa.",
+    "pick_first": "Scegli prima una persona, poi una casella.",
+    "blocked_table": "Nessuno può stare su un tavolo.",
+    "blocked_plant": "Nessuno può stare su una pianta.",
+    "blocked_shelf": "Nessuno può stare su una libreria.",
+    "locked": "{name} è stato posizionato con un aiuto e resta lì.",
+    "hint": "Aiuto: {name} va su {at}.",
+    "accuse": "Tutte le dichiarazioni sono vere. Ora di' chi è stato.",
+    "alibi": "{name} ha un alibi. Guarda chi è nella stessa stanza di {victim}.",
+    "solved": "Caso risolto in {time}.",
+    "solved_hints": "Caso risolto in {time}, con {count} aiuti.",
+    "revealed": "Ecco la soluzione. Con «Caso successivo» continui a giocare."
+  },
+  "guide": {
+    "title": "Come si gioca",
+    "goal": "In una casa è avvenuto un omicidio. Metti ogni persona al suo posto sulla pianta e così scopri chi era da solo con la vittima.",
+    "rules": "Le regole",
+    "rule_rows": "Ogni riga e ogni colonna contiene esattamente una persona.",
+    "rule_furniture": "Nessuno può stare su un tavolo, una pianta o una libreria – quelle caselle sono tratteggiate. Sedie, tappeti e letti vanno bene.",
+    "rule_clues": "Ogni dichiarazione è vera. «Proprio accanto» significa lato contro lato, non in diagonale. Il nord è in alto, l'ovest a sinistra.",
+    "rule_killer": "Nella stanza della vittima c'è esattamente un'altra persona. È lei la colpevole.",
+    "controls": "Comandi",
+    "place": "Scegli una persona sotto la pianta o nelle sue dichiarazioni, poi tocca una casella. Tocca una persona già posizionata per toglierla.",
+    "mark": "«Segna» barra le caselle dove non può esserci nessuno. Sul computer funziona anche il clic destro.",
+    "hint": "«Aiuto» mette una persona al suo posto giusto. Un caso risolto con aiuti conta come risolto, ma non per il record.",
+    "finish": "Quando tutti sono al posto giusto, indichi la persona colpevole. «Caso successivo» avvia subito il prossimo."
+  },
+  "tips": {
+    "title": "Consigli per risolvere",
+    "start": "Comincia dalle dichiarazioni più precise. «Era nella stanza …», «Era seduto su una sedia» o «Era nella riga 2» spesso lasciano solo una o due caselle.",
+    "blocked": "Le caselle tratteggiate si scartano subito. Lì non c'è mai nessuno.",
+    "lines": "Quando una persona è fissata, la sua riga e la sua colonna sono occupate per tutti gli altri. Barrale con «Segna».",
+    "last": "Se in una riga o colonna resta una sola casella libera, lì deve stare qualcuno. Chiediti chi ci sta bene.",
+    "alone": "«Era da solo nella stanza» tiene tutti gli altri fuori da quella stanza. «Non era da solo» richiede una seconda persona nella stessa stanza.",
+    "victim": "Nella stanza della vittima ci sono esattamente due persone. Chi sta di sicuro altrove è scagionato.",
+    "compare": "«Più a nord di …» vale nei due sensi: una persona non è nell'ultima riga, l'altra non è nella prima.",
+    "negative": "Anche «Non era nella stanza …» aiuta: se vale per quasi tutti, resta solo una persona per quella stanza.",
+    "assume": "Se sei bloccato, prova un'ipotesi. Se porta a una contraddizione, è vero il contrario."
+  }
+}

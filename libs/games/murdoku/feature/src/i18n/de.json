@@ -1,0 +1,138 @@
+{
+  "title": "Murdoku",
+  "desc": "Ein Mordfall auf dem Grundriss: Stelle alle Personen so auf, dass jede Aussage stimmt, und finde heraus, wer es war. Jeder Fall hat genau eine Lösung.",
+  "option": {
+    "difficulty_label": "Schwierigkeit",
+    "difficulty_easy": "Leicht (4×4)",
+    "difficulty_medium": "Mittel (5×5)",
+    "difficulty_hard": "Schwer (6×6)"
+  },
+  "action": {
+    "hint": "Tipp",
+    "mark": "Markieren",
+    "clear": "Leeren",
+    "give_up": "Aufgeben",
+    "give_up_confirm": "Wirklich aufgeben?",
+    "new_game": "Neuer Fall",
+    "next_case": "Nächster Fall"
+  },
+  "role": {
+    "victim": "Opfer",
+    "suspect": "Verdächtigt",
+    "killer": "Schuldig"
+  },
+  "dossier": {
+    "statements": "Aussagen",
+    "stats": "{solved} gelöst · Serie {streak}",
+    "stats_best": "{solved} gelöst · Bestzeit {best} · Serie {streak}"
+  },
+  "room": {
+    "kitchen": "Küche",
+    "library": "Bibliothek",
+    "greenhouse": "Gewächshaus",
+    "workshop": "Werkstatt",
+    "music": "Musikzimmer",
+    "pantry": "Vorratskammer",
+    "sunroom": "Wintergarten",
+    "bedroom": "Schlafzimmer",
+    "office": "Büro",
+    "laundry": "Waschküche",
+    "gallery": "Galerie",
+    "cellar": "Weinkeller",
+    "studio": "Atelier",
+    "chapel": "Kapelle",
+    "salon": "Salon",
+    "nursery": "Kinderzimmer"
+  },
+  "furniture": {
+    "chair": "Stuhl",
+    "rug": "Teppich",
+    "bed": "Bett",
+    "table": "Tisch",
+    "plant": "Pflanze",
+    "shelf": "Bücherregal"
+  },
+  "legend": {
+    "rooms": "Räume",
+    "furniture": "Möbel",
+    "blocked": "nicht betretbar"
+  },
+  "clue": {
+    "room": "War im Raum «{room}».",
+    "not_room": "War nicht im Raum «{room}».",
+    "on_chair": "Sass auf einem Stuhl.",
+    "on_rug": "Stand auf einem Teppich.",
+    "on_bed": "Lag auf einem Bett.",
+    "beside_chair": "Stand direkt neben einem Stuhl.",
+    "beside_rug": "Stand direkt neben einem Teppich.",
+    "beside_bed": "Stand direkt neben einem Bett.",
+    "beside_table": "Stand direkt neben einem Tisch.",
+    "beside_plant": "Stand direkt neben einer Pflanze.",
+    "beside_shelf": "Stand direkt neben einem Bücherregal.",
+    "bare": "Stand auf freiem Boden, ohne Möbel.",
+    "edge": "Stand an einer Aussenwand.",
+    "inner": "Stand weg von allen Aussenwänden.",
+    "row": "War in Zeile {row}.",
+    "col": "War in Spalte {col}.",
+    "alone": "War allein im Raum.",
+    "company": "War nicht allein im Raum.",
+    "north": "War weiter nördlich als {name}.",
+    "west": "War weiter westlich als {name}."
+  },
+  "accuse": {
+    "title": "Wer war es?",
+    "text": "Alle stehen am richtigen Ort. Wer war mit {victim} im selben Raum?",
+    "closed_title": "Fall gelöst",
+    "closed_text": "Nur {killer} war mit {victim} im Raum «{room}».",
+    "revealed_title": "Die Lösung"
+  },
+  "cell": {
+    "label": "Feld {at}, {room}",
+    "marked": "durchgestrichen",
+    "person": "{name}, {role}",
+    "compass": "N"
+  },
+  "status": {
+    "pick": "{placed} von {total} platziert. Wähle eine Person.",
+    "placing": "{placed} von {total} platziert. Tippe auf ein Feld für {name}.",
+    "marking": "Markieren ist an: Tippe auf Felder, um sie durchzustreichen.",
+    "broken": "Alle stehen, aber die Geschichte geht nicht auf. Mindestens eine Aussage stimmt noch nicht.",
+    "pick_first": "Wähle zuerst eine Person, dann ein Feld.",
+    "blocked_table": "Auf einem Tisch kann niemand stehen.",
+    "blocked_plant": "Auf einer Pflanze kann niemand stehen.",
+    "blocked_shelf": "Auf einem Bücherregal kann niemand stehen.",
+    "locked": "{name} wurde durch einen Tipp platziert und bleibt stehen.",
+    "hint": "Tipp: {name} gehört auf {at}.",
+    "accuse": "Alle Aussagen stimmen. Jetzt nennst du, wer es war.",
+    "alibi": "{name} hat ein Alibi. Schau, wer mit {victim} im selben Raum steht.",
+    "solved": "Fall gelöst in {time}.",
+    "solved_hints": "Fall gelöst in {time}, mit {count} Tipps.",
+    "revealed": "Hier ist die Lösung. Mit «Nächster Fall» geht es weiter."
+  },
+  "guide": {
+    "title": "So spielst du",
+    "goal": "Auf dem Grundriss eines Hauses ist ein Mord geschehen. Du stellst alle Personen an ihren Platz und findest so heraus, wer mit dem Opfer allein war.",
+    "rules": "Die Regeln",
+    "rule_rows": "In jeder Zeile und in jeder Spalte steht genau eine Person.",
+    "rule_furniture": "Auf Tischen, Pflanzen und Bücherregalen kann niemand stehen – sie sind schraffiert. Stühle, Teppiche und Betten sind erlaubt.",
+    "rule_clues": "Jede Aussage stimmt. «Direkt neben» heisst Kante an Kante, nicht über Eck. Norden ist oben, Westen links.",
+    "rule_killer": "Im Raum des Opfers steht genau eine weitere Person. Sie ist schuldig.",
+    "controls": "Bedienung",
+    "place": "Wähle eine Person unter dem Grundriss oder in ihren Aussagen und tippe dann auf ein Feld. Tippst du auf eine platzierte Person, nimmst du sie wieder weg.",
+    "mark": "Mit «Markieren» streichst du Felder durch, auf denen sicher niemand steht. Am Computer geht das auch mit der rechten Maustaste.",
+    "hint": "«Tipp» stellt eine Person an ihren richtigen Platz. Ein Fall mit Tipps zählt als gelöst, aber nicht für die Bestzeit.",
+    "finish": "Stehen alle richtig, nennst du die schuldige Person. Mit «Nächster Fall» geht es gleich weiter."
+  },
+  "tips": {
+    "title": "Lösungstipps",
+    "start": "Beginne mit den genauesten Aussagen. «War im Raum …», «Sass auf einem Stuhl» oder «War in Zeile 2» lassen oft nur ein, zwei Felder übrig.",
+    "blocked": "Schraffierte Felder fallen sofort weg. Auf ihnen steht nie jemand.",
+    "lines": "Steht eine Person fest, sind ihre Zeile und ihre Spalte für alle anderen besetzt. Streiche sie mit «Markieren» durch.",
+    "last": "Bleibt in einer Zeile oder Spalte nur noch ein freies Feld, muss dort jemand stehen. Frag dich, wer dort hinpasst.",
+    "alone": "«War allein im Raum» hält alle anderen aus diesem Raum fern. «War nicht allein» verlangt eine zweite Person im selben Raum.",
+    "victim": "Im Raum des Opfers stehen genau zwei Personen. Wer sicher woanders steht, ist entlastet.",
+    "compare": "«Weiter nördlich als …» wirkt in beide Richtungen: Die eine Person steht nicht in der untersten Zeile, die andere nicht in der obersten.",
+    "negative": "Auch «War nicht im Raum …» hilft: Gilt das für fast alle, bleibt für den Raum nur noch jemand übrig.",
+    "assume": "Kommst du nicht weiter, probiere eine Annahme durch. Führt sie zu einem Widerspruch, gilt das Gegenteil."
+  }
+}

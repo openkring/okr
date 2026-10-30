@@ -187,6 +187,8 @@
       "@okr/games-bimaru-util": ["libs/games/bimaru/util/src/index.ts"],
       "@okr/games-sudoku-feature": ["libs/games/sudoku/feature/src/index.ts"],
       "@okr/games-sudoku-util": ["libs/games/sudoku/util/src/index.ts"],
+      "@okr/games-murdoku-feature": ["libs/games/murdoku/feature/src/index.ts"],
+      "@okr/games-murdoku-util": ["libs/games/murdoku/util/src/index.ts"],
       "@okr/games-klondike-feature": ["libs/games/klondike/feature/src/index.ts"],
       "@okr/games-klondike-util": ["libs/games/klondike/util/src/index.ts"],
       "@okr/games-mahjong-feature": ["libs/games/mahjong/feature/src/index.ts"],

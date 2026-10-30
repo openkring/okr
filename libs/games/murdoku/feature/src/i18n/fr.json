@@ -1,0 +1,138 @@
+{
+  "title": "Murdoku",
+  "desc": "Un meurtre sur le plan de la maison : place chaque personne pour que toutes les déclarations soient vraies, et découvre qui l'a fait. Chaque affaire a exactement une solution.",
+  "option": {
+    "difficulty_label": "Difficulté",
+    "difficulty_easy": "Facile (4×4)",
+    "difficulty_medium": "Moyen (5×5)",
+    "difficulty_hard": "Difficile (6×6)"
+  },
+  "action": {
+    "hint": "Indice",
+    "mark": "Marquer",
+    "clear": "Effacer",
+    "give_up": "Abandonner",
+    "give_up_confirm": "Vraiment abandonner ?",
+    "new_game": "Nouvelle affaire",
+    "next_case": "Affaire suivante"
+  },
+  "role": {
+    "victim": "Victime",
+    "suspect": "Suspect",
+    "killer": "Coupable"
+  },
+  "dossier": {
+    "statements": "Déclarations",
+    "stats": "{solved} résolues · série {streak}",
+    "stats_best": "{solved} résolues · record {best} · série {streak}"
+  },
+  "room": {
+    "kitchen": "Cuisine",
+    "library": "Bibliothèque",
+    "greenhouse": "Serre",
+    "workshop": "Atelier de bricolage",
+    "music": "Salle de musique",
+    "pantry": "Garde-manger",
+    "sunroom": "Véranda",
+    "bedroom": "Chambre",
+    "office": "Bureau",
+    "laundry": "Buanderie",
+    "gallery": "Galerie",
+    "cellar": "Cave à vin",
+    "studio": "Atelier d'artiste",
+    "chapel": "Chapelle",
+    "salon": "Salon",
+    "nursery": "Chambre d'enfant"
+  },
+  "furniture": {
+    "chair": "Chaise",
+    "rug": "Tapis",
+    "bed": "Lit",
+    "table": "Table",
+    "plant": "Plante",
+    "shelf": "Bibliothèque murale"
+  },
+  "legend": {
+    "rooms": "Pièces",
+    "furniture": "Meubles",
+    "blocked": "impossible d'y être"
+  },
+  "clue": {
+    "room": "Était dans la pièce « {room} ».",
+    "not_room": "N'était pas dans la pièce « {room} ».",
+    "on_chair": "Était assis·e sur une chaise.",
+    "on_rug": "Se tenait sur un tapis.",
+    "on_bed": "Était allongé·e sur un lit.",
+    "beside_chair": "Se tenait juste à côté d'une chaise.",
+    "beside_rug": "Se tenait juste à côté d'un tapis.",
+    "beside_bed": "Se tenait juste à côté d'un lit.",
+    "beside_table": "Se tenait juste à côté d'une table.",
+    "beside_plant": "Se tenait juste à côté d'une plante.",
+    "beside_shelf": "Se tenait juste à côté d'une bibliothèque murale.",
+    "bare": "Se tenait sur le sol nu, sans meuble.",
+    "edge": "Se tenait contre un mur extérieur.",
+    "inner": "Se tenait loin de tous les murs extérieurs.",
+    "row": "Était dans la ligne {row}.",
+    "col": "Était dans la colonne {col}.",
+    "alone": "Était seul·e dans la pièce.",
+    "company": "N'était pas seul·e dans la pièce.",
+    "north": "Était plus au nord que {name}.",
+    "west": "Était plus à l'ouest que {name}."
+  },
+  "accuse": {
+    "title": "Qui l'a fait ?",
+    "text": "Tout le monde est à sa place. Qui était dans la même pièce que {victim} ?",
+    "closed_title": "Affaire résolue",
+    "closed_text": "Seul·e {killer} était avec {victim} dans la pièce « {room} ».",
+    "revealed_title": "La solution"
+  },
+  "cell": {
+    "label": "Case {at}, {room}",
+    "marked": "barrée",
+    "person": "{name}, {role}",
+    "compass": "N"
+  },
+  "status": {
+    "pick": "{placed} sur {total} placé·e·s. Choisis une personne.",
+    "placing": "{placed} sur {total} placé·e·s. Touche une case pour {name}.",
+    "marking": "Le marquage est actif : touche des cases pour les barrer.",
+    "broken": "Tout le monde est placé, mais l'histoire ne tient pas. Au moins une déclaration est encore fausse.",
+    "pick_first": "Choisis d'abord une personne, puis une case.",
+    "blocked_table": "Personne ne peut se tenir sur une table.",
+    "blocked_plant": "Personne ne peut se tenir sur une plante.",
+    "blocked_shelf": "Personne ne peut se tenir sur une bibliothèque murale.",
+    "locked": "{name} a été placé·e par un indice et ne bouge plus.",
+    "hint": "Indice : {name} va sur {at}.",
+    "accuse": "Toutes les déclarations sont vraies. À toi de nommer le ou la coupable.",
+    "alibi": "{name} a un alibi. Regarde qui partage la pièce de {victim}.",
+    "solved": "Affaire résolue en {time}.",
+    "solved_hints": "Affaire résolue en {time}, avec {count} indices.",
+    "revealed": "Voici la solution. « Affaire suivante » te permet de continuer."
+  },
+  "guide": {
+    "title": "Comment jouer",
+    "goal": "Un meurtre a eu lieu dans une maison. Tu places chaque personne sur le plan et découvres ainsi qui était seul·e avec la victime.",
+    "rules": "Les règles",
+    "rule_rows": "Chaque ligne et chaque colonne contient exactement une personne.",
+    "rule_furniture": "Personne ne peut se tenir sur une table, une plante ou une bibliothèque murale – ces cases sont hachurées. Les chaises, tapis et lits sont permis.",
+    "rule_clues": "Chaque déclaration est vraie. « Juste à côté » veut dire bord contre bord, pas en diagonale. Le nord est en haut, l'ouest à gauche.",
+    "rule_killer": "Dans la pièce de la victime se trouve exactement une autre personne. C'est elle la coupable.",
+    "controls": "Commandes",
+    "place": "Choisis une personne sous le plan ou dans ses déclarations, puis touche une case. Touche une personne placée pour la reprendre.",
+    "mark": "« Marquer » barre les cases où personne ne peut être. Sur un ordinateur, le clic droit fait de même.",
+    "hint": "« Indice » met une personne à sa bonne place. Une affaire résolue avec des indices compte comme résolue, mais pas pour le record.",
+    "finish": "Quand tout le monde est bien placé, tu nommes la personne coupable. « Affaire suivante » lance aussitôt la prochaine."
+  },
+  "tips": {
+    "title": "Astuces de résolution",
+    "start": "Commence par les déclarations les plus précises. « Était dans la pièce … », « Était assis·e sur une chaise » ou « Était dans la ligne 2 » ne laissent souvent qu'une ou deux cases.",
+    "blocked": "Les cases hachurées sont éliminées d'emblée. Personne ne s'y tient jamais.",
+    "lines": "Dès qu'une personne est fixée, sa ligne et sa colonne sont prises pour les autres. Barre-les avec « Marquer ».",
+    "last": "S'il ne reste qu'une case libre dans une ligne ou une colonne, quelqu'un doit s'y tenir. Demande-toi qui y correspond.",
+    "alone": "« Était seul·e dans la pièce » tient tous les autres hors de cette pièce. « N'était pas seul·e » demande une deuxième personne dans la même pièce.",
+    "victim": "La pièce de la victime contient exactement deux personnes. Qui se trouve sûrement ailleurs est disculpé.",
+    "compare": "« Plus au nord que … » agit dans les deux sens : l'une n'est pas dans la dernière ligne, l'autre pas dans la première.",
+    "negative": "« N'était pas dans la pièce … » aide aussi : si c'est vrai pour presque tout le monde, il ne reste qu'une personne pour cette pièce.",
+    "assume": "Si tu bloques, essaie une hypothèse. Si elle mène à une contradiction, c'est le contraire qui est vrai."
+  }
+}

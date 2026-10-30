@@ -1,0 +1,138 @@
+{
+  "title": "Murdoku",
+  "desc": "A murder on the floor plan: place everyone so that every statement is true, and find out who did it. Every case has exactly one solution.",
+  "option": {
+    "difficulty_label": "Difficulty",
+    "difficulty_easy": "Easy (4×4)",
+    "difficulty_medium": "Medium (5×5)",
+    "difficulty_hard": "Hard (6×6)"
+  },
+  "action": {
+    "hint": "Hint",
+    "mark": "Mark",
+    "clear": "Clear",
+    "give_up": "Give up",
+    "give_up_confirm": "Really give up?",
+    "new_game": "New case",
+    "next_case": "Next case"
+  },
+  "role": {
+    "victim": "Victim",
+    "suspect": "Suspect",
+    "killer": "Guilty"
+  },
+  "dossier": {
+    "statements": "Statements",
+    "stats": "{solved} solved · streak {streak}",
+    "stats_best": "{solved} solved · best {best} · streak {streak}"
+  },
+  "room": {
+    "kitchen": "Kitchen",
+    "library": "Library",
+    "greenhouse": "Greenhouse",
+    "workshop": "Workshop",
+    "music": "Music room",
+    "pantry": "Pantry",
+    "sunroom": "Sunroom",
+    "bedroom": "Bedroom",
+    "office": "Office",
+    "laundry": "Laundry",
+    "gallery": "Gallery",
+    "cellar": "Wine cellar",
+    "studio": "Studio",
+    "chapel": "Chapel",
+    "salon": "Salon",
+    "nursery": "Nursery"
+  },
+  "furniture": {
+    "chair": "Chair",
+    "rug": "Rug",
+    "bed": "Bed",
+    "table": "Table",
+    "plant": "Plant",
+    "shelf": "Bookshelf"
+  },
+  "legend": {
+    "rooms": "Rooms",
+    "furniture": "Furniture",
+    "blocked": "no standing"
+  },
+  "clue": {
+    "room": "Was in the room «{room}».",
+    "not_room": "Was not in the room «{room}».",
+    "on_chair": "Was sitting on a chair.",
+    "on_rug": "Was standing on a rug.",
+    "on_bed": "Was lying on a bed.",
+    "beside_chair": "Was right beside a chair.",
+    "beside_rug": "Was right beside a rug.",
+    "beside_bed": "Was right beside a bed.",
+    "beside_table": "Was right beside a table.",
+    "beside_plant": "Was right beside a plant.",
+    "beside_shelf": "Was right beside a bookshelf.",
+    "bare": "Was standing on bare floor, no furniture.",
+    "edge": "Was against an outer wall.",
+    "inner": "Was away from every outer wall.",
+    "row": "Was in row {row}.",
+    "col": "Was in column {col}.",
+    "alone": "Was alone in the room.",
+    "company": "Was not alone in the room.",
+    "north": "Was further north than {name}.",
+    "west": "Was further west than {name}."
+  },
+  "accuse": {
+    "title": "Who did it?",
+    "text": "Everyone is in the right place. Who was in the same room as {victim}?",
+    "closed_title": "Case closed",
+    "closed_text": "Only {killer} was with {victim} in the room «{room}».",
+    "revealed_title": "The solution"
+  },
+  "cell": {
+    "label": "Square {at}, {room}",
+    "marked": "crossed out",
+    "person": "{name}, {role}",
+    "compass": "N"
+  },
+  "status": {
+    "pick": "{placed} of {total} placed. Pick a person.",
+    "placing": "{placed} of {total} placed. Tap a square for {name}.",
+    "marking": "Mark is on: tap squares to cross them out.",
+    "broken": "Everyone is placed, but the story does not add up. At least one statement is still false.",
+    "pick_first": "Pick a person first, then a square.",
+    "blocked_table": "Nobody can stand on a table.",
+    "blocked_plant": "Nobody can stand on a plant.",
+    "blocked_shelf": "Nobody can stand on a bookshelf.",
+    "locked": "{name} was placed by a hint and stays put.",
+    "hint": "Hint: {name} belongs on {at}.",
+    "accuse": "Every statement holds. Now name who did it.",
+    "alibi": "{name} has an alibi. Look at who shares a room with {victim}.",
+    "solved": "Case solved in {time}.",
+    "solved_hints": "Case solved in {time}, with {count} hints.",
+    "revealed": "Here is the solution. «Next case» takes you on."
+  },
+  "guide": {
+    "title": "How to play",
+    "goal": "There has been a murder in a house. You put everyone in their place on the floor plan and so find out who was alone with the victim.",
+    "rules": "The rules",
+    "rule_rows": "Every row and every column holds exactly one person.",
+    "rule_furniture": "Nobody can stand on a table, plant or bookshelf – those squares are hatched. Chairs, rugs and beds are fine.",
+    "rule_clues": "Every statement is true. «Right beside» means sharing an edge, not a corner. North is up, west is left.",
+    "rule_killer": "Exactly one other person is in the victim's room. That person is guilty.",
+    "controls": "Controls",
+    "place": "Pick a person below the floor plan or in their statements, then tap a square. Tap a placed person to pick them up again.",
+    "mark": "«Mark» crosses out squares where nobody can be. On a computer, right-click does the same.",
+    "hint": "«Hint» puts one person in their correct place. A case solved with hints counts as solved, but not for your best time.",
+    "finish": "Once everyone is right, you name the guilty person. «Next case» starts the next one straight away."
+  },
+  "tips": {
+    "title": "Solving tips",
+    "start": "Start with the most precise statements. «Was in the room …», «Was sitting on a chair» or «Was in row 2» often leave only one or two squares.",
+    "blocked": "Hatched squares drop out at once. Nobody ever stands there.",
+    "lines": "Once a person is fixed, their row and column are taken for everyone else. Cross them out with «Mark».",
+    "last": "If a row or column has only one free square left, someone must stand there. Ask yourself who fits.",
+    "alone": "«Was alone in the room» keeps everyone else out of that room. «Was not alone» needs a second person in the same room.",
+    "victim": "The victim's room holds exactly two people. Anyone who is surely elsewhere is cleared.",
+    "compare": "«Further north than …» works both ways: one person is not in the bottom row, the other not in the top row.",
+    "negative": "«Was not in the room …» helps too: if it holds for almost everyone, only one person is left for that room.",
+    "assume": "If you are stuck, try an assumption. If it leads to a contradiction, the opposite is true."
+  }
+}

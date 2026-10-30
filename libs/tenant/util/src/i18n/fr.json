@@ -162,6 +162,9 @@
     "sudoku": {
       "label": "Sudoku"
     },
+    "murdoku": {
+      "label": "Murdoku"
+    },
     "memory": {
       "label": "Trouver les paires"
     },

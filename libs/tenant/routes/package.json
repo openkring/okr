@@ -74,6 +74,7 @@
     "@okr/games-battleship-feature": "*",
     "@okr/games-bimaru-feature": "*",
     "@okr/games-sudoku-feature": "*",
+    "@okr/games-murdoku-feature": "*",
     "@okr/games-memory-feature": "*",
     "@okr/games-backgammon-feature": "*",
     "@okr/games-klondike-feature": "*",

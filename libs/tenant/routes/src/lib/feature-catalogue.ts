@@ -1347,6 +1347,19 @@ const sudoku: BlockRoutes = {
 };
 
 /**
+ * `/murdoku` — Murdoku in `libs/games/murdoku`. `localStorage` only, no `:contextMenuName`
+ * segment — the same shape as `/sudoku`.
+ */
+const murdoku: BlockRoutes = {
+  id: 'murdoku',
+  routes: (): Route[] => [{
+    path: 'murdoku',
+    canActivate: [isAuthenticatedGuard],
+    loadComponent: () => import('@okr/games-murdoku-feature').then(m => m.MurdokuPage),
+  }],
+};
+
+/**
  * `/memory` — Pairs («Paare finden») in `libs/games/memory`. `localStorage` only, no
  * `:contextMenuName` segment — the same shape as `/zip`.
  */
@@ -1716,7 +1729,7 @@ const learning: BlockRoutes = {
 };
 
 export const FEATURE_ROUTES: BlockRoutes[] = [
-  calevent, fileTransfer, learning, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, memory, backgammon, klondike, mahjong, jasstafel, tetris, mampf, wordle, chess,
+  calevent, fileTransfer, learning, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, murdoku, memory, backgammon, klondike, mahjong, jasstafel, tetris, mampf, wordle, chess,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

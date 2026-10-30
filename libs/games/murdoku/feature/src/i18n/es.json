@@ -1,0 +1,138 @@
+{
+  "title": "Murdoku",
+  "desc": "Un asesinato en el plano de la casa: coloca a cada persona para que todas las declaraciones sean ciertas y descubre quién fue. Cada caso tiene exactamente una solución.",
+  "option": {
+    "difficulty_label": "Dificultad",
+    "difficulty_easy": "Fácil (4×4)",
+    "difficulty_medium": "Medio (5×5)",
+    "difficulty_hard": "Difícil (6×6)"
+  },
+  "action": {
+    "hint": "Pista",
+    "mark": "Marcar",
+    "clear": "Vaciar",
+    "give_up": "Rendirse",
+    "give_up_confirm": "¿De verdad te rindes?",
+    "new_game": "Nuevo caso",
+    "next_case": "Siguiente caso"
+  },
+  "role": {
+    "victim": "Víctima",
+    "suspect": "Sospechoso",
+    "killer": "Culpable"
+  },
+  "dossier": {
+    "statements": "Declaraciones",
+    "stats": "{solved} resueltos · racha {streak}",
+    "stats_best": "{solved} resueltos · récord {best} · racha {streak}"
+  },
+  "room": {
+    "kitchen": "Cocina",
+    "library": "Biblioteca",
+    "greenhouse": "Invernadero",
+    "workshop": "Taller",
+    "music": "Sala de música",
+    "pantry": "Despensa",
+    "sunroom": "Galería acristalada",
+    "bedroom": "Dormitorio",
+    "office": "Despacho",
+    "laundry": "Lavadero",
+    "gallery": "Galería",
+    "cellar": "Bodega",
+    "studio": "Estudio",
+    "chapel": "Capilla",
+    "salon": "Salón",
+    "nursery": "Cuarto infantil"
+  },
+  "furniture": {
+    "chair": "Silla",
+    "rug": "Alfombra",
+    "bed": "Cama",
+    "table": "Mesa",
+    "plant": "Planta",
+    "shelf": "Estantería"
+  },
+  "legend": {
+    "rooms": "Habitaciones",
+    "furniture": "Muebles",
+    "blocked": "no se puede pisar"
+  },
+  "clue": {
+    "room": "Estaba en la habitación «{room}».",
+    "not_room": "No estaba en la habitación «{room}».",
+    "on_chair": "Estaba sentado en una silla.",
+    "on_rug": "Estaba de pie sobre una alfombra.",
+    "on_bed": "Estaba tumbado en una cama.",
+    "beside_chair": "Estaba justo al lado de una silla.",
+    "beside_rug": "Estaba justo al lado de una alfombra.",
+    "beside_bed": "Estaba justo al lado de una cama.",
+    "beside_table": "Estaba justo al lado de una mesa.",
+    "beside_plant": "Estaba justo al lado de una planta.",
+    "beside_shelf": "Estaba justo al lado de una estantería.",
+    "bare": "Estaba en el suelo libre, sin muebles.",
+    "edge": "Estaba junto a una pared exterior.",
+    "inner": "Estaba lejos de todas las paredes exteriores.",
+    "row": "Estaba en la fila {row}.",
+    "col": "Estaba en la columna {col}.",
+    "alone": "Estaba solo en la habitación.",
+    "company": "No estaba solo en la habitación.",
+    "north": "Estaba más al norte que {name}.",
+    "west": "Estaba más al oeste que {name}."
+  },
+  "accuse": {
+    "title": "¿Quién fue?",
+    "text": "Todos están en su sitio. ¿Quién estaba en la misma habitación que {victim}?",
+    "closed_title": "Caso resuelto",
+    "closed_text": "Solo {killer} estaba con {victim} en la habitación «{room}».",
+    "revealed_title": "La solución"
+  },
+  "cell": {
+    "label": "Casilla {at}, {room}",
+    "marked": "tachada",
+    "person": "{name}, {role}",
+    "compass": "N"
+  },
+  "status": {
+    "pick": "{placed} de {total} colocados. Elige una persona.",
+    "placing": "{placed} de {total} colocados. Toca una casilla para {name}.",
+    "marking": "Marcar está activo: toca casillas para tacharlas.",
+    "broken": "Todos están colocados, pero la historia no cuadra. Al menos una declaración aún es falsa.",
+    "pick_first": "Elige primero una persona y luego una casilla.",
+    "blocked_table": "Nadie puede estar sobre una mesa.",
+    "blocked_plant": "Nadie puede estar sobre una planta.",
+    "blocked_shelf": "Nadie puede estar sobre una estantería.",
+    "locked": "{name} fue colocado con una pista y se queda ahí.",
+    "hint": "Pista: {name} va en {at}.",
+    "accuse": "Todas las declaraciones son ciertas. Ahora di quién fue.",
+    "alibi": "{name} tiene coartada. Fíjate en quién comparte habitación con {victim}.",
+    "solved": "Caso resuelto en {time}.",
+    "solved_hints": "Caso resuelto en {time}, con {count} pistas.",
+    "revealed": "Aquí tienes la solución. Con «Siguiente caso» sigues jugando."
+  },
+  "guide": {
+    "title": "Cómo se juega",
+    "goal": "Ha habido un asesinato en una casa. Colocas a cada persona en el plano y así descubres quién estuvo a solas con la víctima.",
+    "rules": "Las reglas",
+    "rule_rows": "Cada fila y cada columna tiene exactamente una persona.",
+    "rule_furniture": "Nadie puede estar sobre una mesa, una planta o una estantería – esas casillas están rayadas. Sillas, alfombras y camas sí se permiten.",
+    "rule_clues": "Cada declaración es cierta. «Justo al lado» significa borde con borde, no en diagonal. El norte está arriba y el oeste a la izquierda.",
+    "rule_killer": "En la habitación de la víctima hay exactamente otra persona. Esa persona es culpable.",
+    "controls": "Controles",
+    "place": "Elige una persona debajo del plano o en sus declaraciones y luego toca una casilla. Toca a una persona colocada para quitarla.",
+    "mark": "«Marcar» tacha casillas donde no puede haber nadie. En un ordenador, el clic derecho hace lo mismo.",
+    "hint": "«Pista» coloca a una persona en su sitio correcto. Un caso resuelto con pistas cuenta como resuelto, pero no para el récord.",
+    "finish": "Cuando todos estén bien colocados, nombras a la persona culpable. «Siguiente caso» empieza el próximo enseguida."
+  },
+  "tips": {
+    "title": "Consejos para resolver",
+    "start": "Empieza por las declaraciones más precisas. «Estaba en la habitación …», «Estaba sentado en una silla» o «Estaba en la fila 2» suelen dejar solo una o dos casillas.",
+    "blocked": "Las casillas rayadas quedan descartadas de entrada. Nunca hay nadie en ellas.",
+    "lines": "Cuando una persona está fija, su fila y su columna quedan ocupadas para los demás. Táchalas con «Marcar».",
+    "last": "Si en una fila o columna solo queda una casilla libre, alguien tiene que estar ahí. Pregúntate quién encaja.",
+    "alone": "«Estaba solo en la habitación» mantiene a todos los demás fuera de esa habitación. «No estaba solo» exige una segunda persona en la misma habitación.",
+    "victim": "La habitación de la víctima tiene exactamente dos personas. Quien está seguro en otro sitio queda descartado.",
+    "compare": "«Más al norte que …» funciona en ambos sentidos: una persona no está en la última fila y la otra no está en la primera.",
+    "negative": "«No estaba en la habitación …» también ayuda: si vale para casi todos, solo queda una persona para esa habitación.",
+    "assume": "Si te atascas, prueba una suposición. Si lleva a una contradicción, lo contrario es cierto."
+  }
+}
