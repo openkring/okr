@@ -51,7 +51,9 @@ export class JournalWebPhotos {
       };
       input.addEventListener('change', () => finish(Array.from(input.files ?? [])), { once: true });
       input.addEventListener('cancel', () => finish([]), { once: true });
-      window.addEventListener('focus', onFocus);
+      // only where the input has no `cancel` event: elsewhere a slow `change` (Safari transcoding many HEIC picks) can
+      // arrive after the focus timer and the real selection would be lost
+      if (!('oncancel' in input)) window.addEventListener('focus', onFocus);
       input.click();
     });
   }
