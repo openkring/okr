@@ -43,6 +43,12 @@ export class FcmService {
    * shared device keeps receiving the signed-out member's pushes.
    */
   private generation = 0;
+  /**
+   * Token saves still running (saveTokenUnlessLoggedOut). disablePush waits for them so a save
+   * that sees the logout deletes its doc while the user is still signed in — after signOut the
+   * rules deny that delete and the doc would survive on a shared device.
+   */
+  private readonly savesInFlight = new Set<Promise<boolean>>();
 
   /** The FCM/APNs token most recently registered on this device, or null if not yet registered. */
   get currentToken(): string | null { return this._currentToken; }
@@ -130,8 +136,9 @@ export class FcmService {
     // First, and even without a token: a registration still inside getToken / saveToken has not
     // set _currentToken yet, and must see the logout when it resumes.
     this.generation++;
+    // Read synchronously right after the bump: from now on no registration can adopt a token
+    // (the adopting check and assignment are one synchronous step), so this is complete.
     const token = this._currentToken;
-    if (!token) return;
     // A pusher registration still running when the user logs out would land AFTER the
     // unregister call and leave a pusher behind (chat pushes to a signed-out device). Keep its
     // promise to wait for it below; the logout timeout in AuthService bounds the wait.
@@ -141,6 +148,12 @@ export class FcmService {
     this._currentToken = null;
     this.pusherToken = undefined;
     this.pusherInFlight = undefined;
+    // Let running token saves finish while still signed in: each one now sees the bumped
+    // generation and deletes the doc it wrote (or writes none). Bounded by the logout timeout.
+    // Only the save phase is tracked, not the whole registration: a native registration that
+    // never gets its event (N4) must not hold up the logout of an existing token.
+    await Promise.all([...this.savesInFlight].map(p => p.catch(() => false)));
+    if (!token) return;
     try {
       const unregister = httpsCallable<{ pushkey: string }, { removed: boolean }>(
         getFunctions(getApp(), 'europe-west6'), 'unregisterMatrixPusher');
@@ -221,7 +234,6 @@ export class FcmService {
               resolve(null);
               return;
             }
-            this._currentToken = tokenData.value;
             console.log('FcmService: Native push token registered and saved');
             resolve(tokenData.value);
           } catch (e) {
@@ -275,7 +287,6 @@ export class FcmService {
       const token = await getToken(this.messaging, { vapidKey });
       if (!token) return null;
       if (!(await this.saveTokenUnlessLoggedOut(uid, token, generation))) return null;
-      this._currentToken = token;
       console.log('FcmService.registerWebAndSave: Token registered and saved');
       return token;
     } catch (error) {
@@ -355,18 +366,28 @@ export class FcmService {
   }
 
   /**
-   * saveToken, but only while the push session that started the registration is still current.
-   * Checked before the write (no doc for a session that already ended) and after it (a logout
-   * during the write): then the doc is deleted again, so a registration that outlives the logout
-   * never leaves a token doc behind. Same-client Firestore writes apply in order.
-   * @return true when the token is saved for the current session
+   * Save the token and adopt it as _currentToken, but only while the push session that started
+   * the registration is still current. Checked before the write (no doc for a session that already
+   * ended) and after it (a logout during the write): then the doc is deleted again — while still
+   * signed in, because disablePush waits for this promise (savesInFlight). The final check and the
+   * adoption are one synchronous step, so no logout can slip in between. Same-client Firestore
+   * writes apply in order.
+   * @return true when the token is saved and adopted for the current session
    */
-  private async saveTokenUnlessLoggedOut(uid: string, token: string, generation: number): Promise<boolean> {
-    if (generation !== this.generation) return false;
-    await this.saveToken(uid, token);
-    if (generation === this.generation) return true;
-    await this.removeToken(uid, token);
-    return false;
+  private saveTokenUnlessLoggedOut(uid: string, token: string, generation: number): Promise<boolean> {
+    const save = (async () => {
+      if (generation !== this.generation) return false;
+      await this.saveToken(uid, token);
+      if (generation === this.generation) {
+        this._currentToken = token;
+        return true;
+      }
+      await this.removeToken(uid, token);
+      return false;
+    })();
+    this.savesInFlight.add(save);
+    void save.finally(() => this.savesInFlight.delete(save)).catch(() => undefined);
+    return save;
   }
 
   private async saveToken(uid: string, token: string): Promise<void> {

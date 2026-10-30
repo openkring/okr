@@ -162,8 +162,8 @@ export class MatrixInitializationService {
    * Silent daily refresh for long-lived sessions (1.127): the token doc's updatedAt moves only on
    * a registration (app start), and the morning job prunes tokens unused for 60 days together
    * with their Matrix pushers — so an always-open desktop PWA or a native app that only ever
-   * resumes would lose push while still running. (The kiosk iPad stays fresh through its 5-minute
-   * idle reload, a cold start.) Runs when the app becomes visible again (Capacitor fires
+   * resumes would lose push while still running. (The kiosk iPad stays fresh anyway: Kiosker
+   * reloads the page on its native timer, «Zeit zwischen Neuladen», which is a cold start.) Runs when the app becomes visible again (Capacitor fires
    * visibilitychange on native resume too), only with permission already granted, and never
    * prompts.
    */
