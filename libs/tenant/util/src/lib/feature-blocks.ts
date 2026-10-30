@@ -2729,19 +2729,18 @@ const sudoku: FeatureBlock = {
  * The running case is kept in `localStorage` only (seed + moves), so a reload resumes it — no
  * service, no Firestore, hence `collections: []`.
  *
- * `defaultAvailability: 'ga'`, like `sudoku`: nothing tenant-side to configure. Icon: the
- * generic `personSearch` until an own `game-murdoku` icon is uploaded to `logo/icons/`.
+ * `defaultAvailability: 'ga'`, like `sudoku`: nothing tenant-side to configure.
  */
 const murdoku: FeatureBlock = {
   id: 'murdoku',
   bundle: 'games',
   label: '@tenant/util.feature.murdoku.label',
-  icon: 'personSearch',
+  icon: 'game-murdoku',
   defaultAvailability: 'ga',
   dependsOn: ['games'],
   collections: [],
   menu: [gamesMenuParent([
-    { key: 'game-murdoku', name: 'game-murdoku', url: '/murdoku', action: 'navigate', roleNeeded: 'registered', icon: 'personSearch', label: '@item.game-murdoku' },
+    { key: 'game-murdoku', name: 'game-murdoku', url: '/murdoku', action: 'navigate', roleNeeded: 'registered', icon: 'game-murdoku', label: '@item.game-murdoku' },
   ])],
 };
 
