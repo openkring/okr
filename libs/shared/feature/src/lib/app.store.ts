@@ -10,7 +10,7 @@ import { App } from '@capacitor/app';
 import { AUTH, ENV, FIRESTORE, usesLocalStorageOnlySession } from '@okr/shared-config';
 import { AppConfigService, FirestoreService } from '@okr/shared-data-access';
 import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, getAddressDirectoryKey, AvailableLanguages, CalEventCollection, CalEventModel, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, InvitationCollection, InvitationModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, TaskCollection, TaskModel, UserCollection, UserModel } from '@okr/shared-models';
-import { appLinkOrigins, countableInvitationsOf, die, getSystemQuery, indexBy, openInvitationsOf, pickForTenant, publicAppOrigin, replacePlaceholders, resolveAppOrigin, sortPersons, withOfflineSnapshot } from '@okr/shared-util-core';
+import { appLinkOrigins, countableInvitationsOf, die, getSystemQuery, hasRole, indexBy, openInvitationsOf, pickForTenant, publicAppOrigin, replacePlaceholders, resolveAppOrigin, sortPersons, withOfflineSnapshot } from '@okr/shared-util-core';
 import { AppNavigationService, armStartupStallCheck, HelperVisibility, installScrollDiagnostics, isBrowser, markStartup, probeStoredSession, probeStoredSessionIdb, reportStartupTiming, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
 
 import { authPhase, isDegradedBoot, openBootGate, type BootState } from './boot-readiness.util';
@@ -355,7 +355,11 @@ export const AppStore = signalStore(
       allTags: computed(() => state.tagsResource.value() ?? []),
       allCategories: computed(() => state.categoriesResource.value() ?? []),
       /** Number of open tasks assigned to the signed-in user — the task half of every badge. */
-      openTaskCount: computed(() => (state.openTasksResource.value() ?? []).length),
+      openTaskCount: computed(() => {
+        // the dashboard cards need 'registered'; the badge must not count what they hide
+        if (!hasRole('registered', state.currentUserResource.value())) return 0;
+        return (state.openTasksResource.value() ?? []).length;
+      }),
       /**
        * Number of invitations the signed-in person can still answer — the invitation half of every
        * badge (countableInvitationsOf, the same rule as the dashboard invitations card and the
@@ -364,7 +368,9 @@ export const AppStore = signalStore(
        * never a transient too-high number.
        */
       openInvitationCount: computed(() => {
-        const personKey = state.currentUserResource.value()?.personKey;
+        const currentUser = state.currentUserResource.value();
+        if (!hasRole('registered', currentUser)) return 0;
+        const personKey = currentUser?.personKey;
         if (!personKey) return 0;
         const events = state.openInvitationEventsResource.value() ?? new Map<string, CalEventModel | null>();
         return countableInvitationsOf(state.openInvitationsResource.value() ?? [], personKey, events).length;

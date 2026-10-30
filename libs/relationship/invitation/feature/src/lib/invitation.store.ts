@@ -6,7 +6,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { AvatarInfo, CalEventModel, CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
-import { chipMatches, DateFormat, extractSecondPartOfOptionalTupel, getSystemQuery, getTodayStr, isAfterDate, nameMatches } from '@okr/shared-util-core';
+import { chipMatches, DateFormat, extractSecondPartOfOptionalTupel, getSystemQuery, getTodayStr, isPastDate, nameMatches } from '@okr/shared-util-core';
 import { confirm, notify } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -62,7 +62,7 @@ export const InvitationStore = signalStore(
     return {
       // all invitations, either only the current ones or all that ever existed (based on showOnlyCurrent)
       allInvitations: computed(() => state.showOnlyCurrent() ? 
-        state.invitationsResource.value()?.filter(inv => isAfterDate(inv.date, getTodayStr(DateFormat.StoreDate))) ?? [] : 
+        state.invitationsResource.value()?.filter(inv => !isPastDate(inv.date)) ?? [] : 
         state.invitationsResource.value() ?? []),
       invitationsCount: computed(() => state.invitationsResource.value()?.length ?? 0), 
 
