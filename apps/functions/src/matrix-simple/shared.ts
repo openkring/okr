@@ -8,7 +8,10 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { defineSecret } from 'firebase-functions/params';
 
-import { DateFormat, getTodayStr, isActiveMembership, objectsToPhotos } from '@okr/shared-util-core';
+import { DateFormat, getTodayStr, isActiveMembership, objectsToPhotos, SYSTEM_TENANT } from '@okr/shared-util-core';
+
+// Type-only: room-admission.ts imports this module at runtime, so a value import would be a cycle.
+import type { RoomFacts, TenantRoomScope } from './room-admission';
 
 export const matrixAdminToken = defineSecret('MATRIX_ADMIN_TOKEN');
 // Shared secret embedded in the Matrix push-gateway URL (SEC-2). Synapse stores the
@@ -888,9 +891,10 @@ export function markerFromRoomState(state: RoomStateEvent[] | undefined): string
  * invited, left, banned and knocking users are NOT included. Throws on any non-2xx so
  * access checks can fail closed.
  */
-export async function getJoinedMemberIds(roomId: string, adminToken: string): Promise<Set<string>> {
+export async function getJoinedMemberIds(roomId: string, adminToken: string, timeoutMs?: number): Promise<Set<string>> {
   const res = await fetch(`${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/members`, {
     headers: { Authorization: `Bearer ${adminToken}` },
+    ...(timeoutMs ? { signal: AbortSignal.timeout(timeoutMs) } : {}),
   });
   if (!res.ok) throw new Error(`getJoinedMemberIds: ${res.status} for ${roomId}`);
   const body = (await res.json()) as { members?: string[] };
@@ -1417,4 +1421,181 @@ export async function getUserGlobalAccountData(
   const body = await resp.json() as { account_data?: { global?: Record<string, unknown> } };
   const content = body.account_data?.global?.[eventType];
   return isPlainRecord(content) ? content : undefined;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Chat push gateway: which rooms the receiving app shows, and where a chat push leads
+// (spec 1.127 2.1 / 2.3). Pure helpers first, then the two cached loaders.
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Matrix `server_name` from the homeserver URL.
+ * keep in sync with libs/chat/util/src/lib/chat.util.ts: serverNameOf
+ */
+export function serverNameOf(homeserverUrl: string): string {
+  return homeserverUrl.replace(/^https?:\/\//, '').replace(/^matrix\./, '').replace(/\/+$/, '');
+}
+
+/**
+ * The group okey a room alias points at (`#group_scs_notfall:host` -> `scs_notfall`), lowercased;
+ * undefined for a non-group alias.
+ * keep in sync with libs/chat/util/src/lib/chat.util.ts: groupKeyFromRoomAlias
+ */
+export function groupKeyFromRoomAlias(alias: string | undefined): string | undefined {
+  const localpart = alias?.split(':')[0]?.replace(/^#/, '').toLowerCase();
+  return localpart?.startsWith('group_') ? localpart.slice('group_'.length) : undefined;
+}
+
+/**
+ * Deep link of a chat push: the group's `<okey>_chat` CMS page when `groupKey` names a group that
+ * has one (the caller decides that, see `hasGroupChatPage` in push.ts), else the tenant's generic
+ * chat page. `?selectedRoom` carries the Matrix room id either way, so the right room is
+ * pre-selected whichever page opens. Shared by the video-call push and the chat push.
+ */
+export function chatDeepLink(roomId: string, groupKey?: string): string {
+  const selected = `selectedRoom=${encodeURIComponent(roomId)}`;
+  return groupKey ? `/private/${groupKey}_chat?${selected}` : `/private/chat?${selected}`;
+}
+
+/**
+ * Room facts as cached per room: the DM counterpart is not a room fact — it depends on WHO
+ * receives the push — so the cache holds the two joined members and each device derives its own
+ * counterpart (`directCounterpartOf`).
+ */
+export type CachedRoomFacts = Omit<RoomFacts, 'directCounterpart'> & {
+  /** both joined members, only for a room without canonical alias and exactly 2 joined members */
+  members?: string[];
+};
+
+/**
+ * The DM counterpart for one pusher: the member that is not the pusher's owner. A pusher
+ * registered before `matrixUserId` was put into its data falls back to the message sender — in a
+ * 2-member room the sender of a pushed message is the receiver's counterpart. Undefined when the
+ * room is no 2-member room or neither id is one of its members.
+ */
+export function directCounterpartOf(
+  members: string[] | undefined,
+  ownMatrixUserId: string | undefined,
+  sender: string | undefined,
+): string | undefined {
+  if (members?.length !== 2) return undefined;
+  const lower = members.map((m) => m.toLowerCase());
+  if (ownMatrixUserId) {
+    const own = lower.indexOf(ownMatrixUserId.toLowerCase());
+    if (own >= 0) return members[1 - own];
+  }
+  if (sender && lower.includes(sender.toLowerCase())) return members[lower.indexOf(sender.toLowerCase())];
+  return undefined;
+}
+
+/** A tenant scope older than this is reloaded once on a DM-counterpart miss (Review Focus 1). */
+export const SCOPE_REFRESH_AFTER_MS = 60_000;
+
+/**
+ * Whether an unknown DM counterpart justifies reloading the tenant scope: a person who joined
+ * the tenant minutes ago must not have their DMs dropped for the whole cache TTL. Only for a
+ * counterpart not in `personKeys`, and only once the cached scope is older than 60 s — so a real
+ * stranger costs at most one reload per minute.
+ */
+export function needsScopeRefresh(facts: RoomFacts | undefined, scope: TenantRoomScope, ageMs: number): boolean {
+  if (!facts?.directCounterpart) return false;
+  const localpart = facts.directCounterpart.split(':')[0].replace(/^@/, '').toLowerCase();
+  return !scope.personKeys.has(localpart) && ageMs > SCOPE_REFRESH_AFTER_MS;
+}
+
+const GATEWAY_CACHE_TTL_MS = 5 * 60_000;
+/** A failed read is cached briefly only: fail open now, retry soon, never hammer Synapse. */
+const GATEWAY_FAILURE_TTL_MS = 10_000;
+const SYNAPSE_READ_TIMEOUT_MS = 3_000;
+
+export type CachedTenantScope = TenantRoomScope & { loadedAt: number };
+
+const scopeCache = new BoundedTtlCache<CachedTenantScope | undefined>(200, GATEWAY_CACHE_TTL_MS);
+
+/**
+ * The rooms the app of `tenantId` shows, as the inputs of `admitsUnmarkedRoom` — read the way the
+ * client sources them for `filterRoomsOfTenant`:
+ *
+ *  - groups = `AppStore.allGroupsAndChats()` = `groupsResource`: collection `groups`,
+ *    `getSystemQuery(tenantId)` (not archived, tenants contains tenantId or 'system'), groups
+ *    AND ad-hoc chats (no `kind` filter);
+ *  - persons = `AppStore.allPersons()` = `personsResource`: collection `persons`, same query;
+ *    okeys lowercased as the matrix-chat store does.
+ *
+ * keep in sync with libs/shared/feature/src/lib/app.store.ts: groupsResource, personsResource.
+ * Cached 5 min per tenant; `refreshIfOlderThan` forces a reload of an older entry (DM counterpart
+ * miss). `undefined` on failure (fail open), cached for 10 s.
+ */
+export async function loadTenantRoomScope(
+  tenantId: string,
+  options: { refreshIfOlderThan?: number } = {},
+): Promise<CachedTenantScope | undefined> {
+  const now = Date.now();
+  const hit = scopeCache.get(tenantId, now);
+  if (hit && !(hit.value && options.refreshIfOlderThan !== undefined && now - hit.value.loadedAt > options.refreshIfOlderThan)) {
+    return hit.value;
+  }
+  try {
+    const db = getFirestore();
+    // getSystemQuery(tenantId); the client's orderBy is kept so the read uses the same indexes.
+    const scoped = (collection: string, orderBy: string) => db.collection(collection)
+      .where('isArchived', '==', false)
+      .where('tenants', 'array-contains-any', [tenantId, SYSTEM_TENANT])
+      .orderBy(orderBy, 'asc');
+    const [groups, persons] = await Promise.all([
+      scoped('groups', 'name').select('matrixRoomId').get(),
+      scoped('persons', 'lastName').select().get(),
+    ]);
+    const scope: CachedTenantScope = {
+      groupRoomIds: new Set(groups.docs
+        .map((d) => d.get('matrixRoomId') as string | undefined)
+        .filter((id): id is string => !!id)),
+      groupAliasLocalparts: new Set(groups.docs.map((d) => groupRoomAliasLocalpart(d.id))),
+      personKeys: new Set(persons.docs.map((d) => d.id.toLowerCase())),
+      serverName: serverNameOf(MATRIX_HOMESERVER),
+      loadedAt: now,
+    };
+    scopeCache.set(tenantId, scope, now);
+    return scope;
+  } catch (err) {
+    console.warn(`loadTenantRoomScope(${tenantId}) failed, admitting unmarked rooms:`, err);
+    scopeCache.set(tenantId, undefined, now, GATEWAY_FAILURE_TTL_MS);
+    return undefined;
+  }
+}
+
+const roomFactsCache = new BoundedTtlCache<CachedRoomFacts | undefined>(2_000, GATEWAY_CACHE_TTL_MS);
+
+/**
+ * A room's facts for the push gateway: canonical alias and creator (`getRoomSummary`), plus — for
+ * a room WITHOUT alias and with exactly 2 joined members — those two members. Both Synapse reads
+ * are bounded to 3 s. Cached 5 min per room; `undefined` when either read fails (the gateway then
+ * delivers and treats the room as protected, fail open), cached for 10 s.
+ */
+export async function loadRoomFacts(roomId: string, adminToken: string): Promise<CachedRoomFacts | undefined> {
+  const now = Date.now();
+  const hit = roomFactsCache.get(roomId, now);
+  if (hit) return hit.value;
+  const fail = (why: unknown): undefined => {
+    console.warn(`loadRoomFacts(${roomId}) failed, delivering:`, why);
+    roomFactsCache.set(roomId, undefined, now, GATEWAY_FAILURE_TTL_MS);
+    return undefined;
+  };
+  const summary = await getRoomSummary(roomId, adminToken);
+  if (!summary) return fail('room summary unavailable');
+  const facts: CachedRoomFacts = {
+    roomId,
+    ...(summary.canonicalAlias ? { canonicalAlias: summary.canonicalAlias } : {}),
+    ...(summary.creator ? { creator: summary.creator } : {}),
+  };
+  if (!facts.canonicalAlias) {
+    try {
+      const members = await getJoinedMemberIds(roomId, adminToken, SYNAPSE_READ_TIMEOUT_MS);
+      if (members.size === 2) facts.members = [...members];
+    } catch (err) {
+      return fail(err);
+    }
+  }
+  roomFactsCache.set(roomId, facts, now);
+  return facts;
 }

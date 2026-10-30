@@ -18,15 +18,26 @@ import {
   checkRateLimit,
   getUserTenants,
   getRoomTenantMarker,
-  pusherAdmitsRoom,
-  getRoomSummary,
+  chatDeepLink,
+  groupKeyFromRoomAlias,
+  directCounterpartOf,
+  needsScopeRefresh,
+  loadRoomFacts,
+  loadTenantRoomScope,
+  SCOPE_REFRESH_AFTER_MS,
+  type CachedRoomFacts,
+  type CachedTenantScope,
   getUserGlobalAccountData,
   isProtectedRoomAlias,
   muteBlocksPush,
   BoundedTtlCache,
   OKR_MUTE_EVENT,
 } from './shared';
+import { decideAdmission, type RoomFacts } from './room-admission';
 import { androidDisplay, appNameFor, collectTokens, withAppName } from '../srv/push';
+
+const chatPageCache = new BoundedTtlCache<boolean>(2_000, 5 * 60_000);
+const CHAT_PAGE_FAILURE_TTL_MS = 10_000;
 
 /**
  * Does the group behind `groupKey` have a `<okey>_chat` CMS page to deep-link into?
@@ -37,12 +48,18 @@ import { androidDisplay, appNameFor, collectTokens, withAppName } from '../srv/p
  * answers false — a generic chat page is always safe, a 404 never is.
  */
 async function hasGroupChatPage(groupKey: string): Promise<boolean> {
+  // Cached per group key: every chat push asks this now, and `kind` never changes after creation.
+  const now = Date.now();
+  const hit = chatPageCache.get(groupKey, now);
+  if (hit) return hit.value;
   try {
     const snap = await getFirestore().collection('groups').doc(groupKey).get();
-    if (!snap.exists) return false;
-    return ((snap.data()?.['kind'] as string | undefined) ?? 'group') === 'group';
+    const hasPage = snap.exists && ((snap.data()?.['kind'] as string | undefined) ?? 'group') === 'group';
+    chatPageCache.set(groupKey, hasPage, now);
+    return hasPage;
   } catch (e) {
     console.warn(`hasGroupChatPage(${groupKey}) failed, linking to the generic chat page:`, e);
+    chatPageCache.set(groupKey, false, now, CHAT_PAGE_FAILURE_TTL_MS);
     return false;
   }
 }
@@ -104,9 +121,7 @@ export const sendCallNotification = onCall(
     // group room), the key names an ad-hoc chat, or its document is gone. ?selectedRoom
     // carries the Matrix room ID either way, so the right room is pre-selected regardless
     // of which page opens.
-    const chatUrl = (roomKey && await hasGroupChatPage(roomKey))
-      ? `/private/${roomKey}_chat?selectedRoom=${encodeURIComponent(roomId)}`
-      : `/private/chat?selectedRoom=${encodeURIComponent(roomId)}`;
+    const chatUrl = chatDeepLink(roomId, (roomKey && await hasGroupChatPage(roomKey)) ? roomKey : undefined);
 
     const appName = await appNameFor(tenantId);
     const title = withAppName(appName, `📹 Video-Anruf von ${callerName}`);
@@ -357,38 +372,39 @@ export const unregisterMatrixPusher = onCall(
  * (unmarked) — delivered as before, never dropped on a Synapse hiccup.
  */
 const MARKER_TTL_MS = 5 * 60_000;
-const markerCache = new Map<string, { marker: string[] | undefined; at: number }>();
+const MARKER_FAILURE_TTL_MS = 10_000;
+const markerCache = new BoundedTtlCache<{ marker: string[] | undefined; failed: boolean }>(2_000, MARKER_TTL_MS);
 
-async function cachedRoomTenantMarker(roomId: string, adminToken: string): Promise<string[] | undefined> {
-  const hit = markerCache.get(roomId);
-  if (hit && Date.now() - hit.at < MARKER_TTL_MS) return hit.marker;
-  const marker = await getRoomTenantMarker(roomId, adminToken).catch(() => undefined);
-  markerCache.set(roomId, { marker, at: Date.now() });
-  return marker;
+/**
+ * `failed` tells a failed read apart from «no marker» (strict read): since spec 1.127 2.1 an
+ * unmarked room is checked against the tenant's rooms, and a room whose marker could not be read
+ * must not be subjected to that check — it is delivered, as before. A failure is cached briefly.
+ */
+async function cachedRoomTenantMarker(roomId: string, adminToken: string): Promise<{ marker: string[] | undefined; failed: boolean }> {
+  const now = Date.now();
+  const hit = markerCache.get(roomId, now);
+  if (hit) return hit.value;
+  try {
+    const read = { marker: await getRoomTenantMarker(roomId, adminToken, { strict: true }), failed: false };
+    markerCache.set(roomId, read, now);
+    return read;
+  } catch (err) {
+    console.warn(`matrixPushGateway: marker read failed for ${roomId}, delivering:`, err);
+    const read = { marker: undefined, failed: true };
+    markerCache.set(roomId, read, now, MARKER_FAILURE_TTL_MS);
+    return read;
+  }
 }
 
 /**
  * A room's canonical alias localpart (`#group_scs_support:host` → `group_scs_support`; '' when the
- * room has none), cached per instance like the marker. `undefined` = the read failed: the gateway
- * then treats the room as protected (fails open — a support room must never be silenced), and the
- * failure is cached only briefly.
+ * room has none), from the cached room facts. `undefined` = the read failed: the gateway then
+ * treats the room as protected (fails open — a support room must never be silenced).
  */
-const ALIAS_FAILURE_TTL_MS = 10_000;
-const aliasCache = new BoundedTtlCache<string | undefined>(2_000, MARKER_TTL_MS);
-
-async function cachedRoomAliasLocalpart(roomId: string, adminToken: string): Promise<string | undefined> {
-  const now = Date.now();
-  const hit = aliasCache.get(roomId, now);
-  if (hit) return hit.value;
-  const summary = await getRoomSummary(roomId, adminToken);
-  if (!summary) {
-    aliasCache.set(roomId, undefined, now, ALIAS_FAILURE_TTL_MS);
-    return undefined;
-  }
-  const alias = summary.canonicalAlias;
-  const localpart = alias.startsWith('#') ? alias.slice(1).split(':')[0] : '';
-  aliasCache.set(roomId, localpart, now);
-  return localpart;
+function aliasLocalpartOf(facts: CachedRoomFacts | undefined): string | undefined {
+  if (!facts) return undefined;
+  const alias = facts.canonicalAlias ?? '';
+  return alias.startsWith('#') ? alias.slice(1).split(':')[0] : '';
 }
 
 /**
@@ -424,6 +440,39 @@ function roomIsProtected(aliasLocalpart: string | undefined, tenantId: string | 
   if (aliasLocalpart === '') return false;
   const tenants = tenantId ? [tenantId] : (roomMarker ?? []);
   return isProtectedRoomAlias(aliasLocalpart, '') || tenants.some((t) => isProtectedRoomAlias(aliasLocalpart, t));
+}
+
+/**
+ * Whether one pusher gets this room's message (spec 1.127 2.1): `decideAdmission` on the room's
+ * marker, the facts with THIS pusher's DM counterpart, and the scope of THIS pusher's tenant. On a
+ * DM-counterpart miss against a scope older than 60 s the scope is reloaded once and the decision
+ * repeated — a person who joined the tenant minutes ago is not dropped for the cache TTL (Review
+ * Focus 1). Any failed read leaves facts or scope `undefined`, which delivers (Review Focus 2).
+ */
+async function admitsDevice(
+  roomMarker: string[] | undefined,
+  pusherTenant: string | undefined,
+  cachedFacts: CachedRoomFacts | undefined,
+  matrixUserId: string | undefined,
+  sender: string | undefined,
+  scopeOf: (tenant: string, refreshIfOlderThan?: number) => Promise<CachedTenantScope | undefined>,
+): Promise<boolean> {
+  // Marked room, or a pusher without tenant: the marker alone decides — no scope read.
+  if (roomMarker !== undefined || !pusherTenant || !cachedFacts) {
+    return decideAdmission(roomMarker, pusherTenant, cachedFacts, undefined);
+  }
+  const ownId = typeof matrixUserId === 'string' && matrixUserId.startsWith('@') ? matrixUserId : undefined;
+  const facts: RoomFacts = {
+    roomId: cachedFacts.roomId,
+    canonicalAlias: cachedFacts.canonicalAlias,
+    creator: cachedFacts.creator,
+    directCounterpart: directCounterpartOf(cachedFacts.members, ownId, sender),
+  };
+  const scope = await scopeOf(pusherTenant);
+  if (decideAdmission(undefined, pusherTenant, facts, scope)) return true;
+  if (!scope || !needsScopeRefresh(facts, scope, Date.now() - scope.loadedAt)) return false;
+  const fresh = await scopeOf(pusherTenant, SCOPE_REFRESH_AFTER_MS);
+  return decideAdmission(undefined, pusherTenant, facts, fresh);
 }
 
 interface MatrixPushDevice {
@@ -505,36 +554,55 @@ export const matrixPushGateway = onRequest(
       // the apps of the room's tenants (spec 1.93 §3). Skipped devices are NOT `rejected` —
       // that would make Synapse delete a healthy pusher.
       const adminToken = matrixAdminToken.value();
-      const roomMarker = roomId ? await cachedRoomTenantMarker(roomId, adminToken) : undefined;
+      const markerRead = roomId ? await cachedRoomTenantMarker(roomId, adminToken) : { marker: undefined, failed: false };
+      const roomMarker = markerRead.marker;
+      // Spec 1.127 2.1: the room's facts (alias, creator, the 2 members of a DM) — read once per
+      // notification, cached per room. `undefined` = Synapse failed or was slow (3 s bound): the
+      // push is then delivered as before (Review Focus 2) and the room counts as protected.
+      const roomFacts = roomId ? await loadRoomFacts(roomId, adminToken) : undefined;
+      const aliasLocalpart = aliasLocalpartOf(roomFacts);
+      // A failed marker read must not look «unmarked» to the admission rule: without facts it delivers.
+      const admissionFacts = markerRead.failed ? undefined : roomFacts;
+      // Deep link: the group behind a `#group_<okey>` alias, if it owns a `<okey>_chat` page.
+      const aliasGroupKey = groupKeyFromRoomAlias(roomFacts?.canonicalAlias);
+      const chatUrl = roomId
+        ? chatDeepLink(roomId, (aliasGroupKey && await hasGroupChatPage(aliasGroupKey)) ? aliasGroupKey : undefined)
+        : '';
+      // Tenant scope, read at most once per distinct pusher tenant and notification.
+      const scopes = new Map<string, Promise<CachedTenantScope | undefined>>();
+      const scopeOf = (tenant: string, refreshIfOlderThan?: number) => {
+        const key = refreshIfOlderThan === undefined ? tenant : `${tenant}\u0000refresh`;
+        let scope = scopes.get(key);
+        if (!scope) {
+          scope = loadTenantRoomScope(tenant, { refreshIfOlderThan });
+          scopes.set(key, scope);
+        }
+        return scope;
+      };
       let skippedForeign = 0;
       let skippedMuted = 0;
-      // Read lazily: only once a device's owner has mute content at all.
-      let aliasRead = false;
-      let aliasLocalpart: string | undefined;
 
       for (const device of notification.devices) {
         const token = device.pushkey;
         if (!token) continue;
         // Only deliver to our own app's pusher entries.
         if (device.app_id && device.app_id !== PUSH_APP_ID) continue;
-        if (!pusherAdmitsRoom(roomMarker, device.data?.['tenantId'])) {
+        const pusherTenant = device.data?.['tenantId'] || undefined;
+        const matrixUserId = device.data?.['matrixUserId'];
+        if (!(await admitsDevice(roomMarker, pusherTenant, admissionFacts, matrixUserId, notification.sender, scopeOf))) {
+          // Both kinds of skip: a marker naming other tenants, or an unmarked room this app
+          // does not show (spec 1.127 2.1).
           skippedForeign++;
           continue;
         }
         // Mute (spec 1.109 §9): the pusher's owner muted this room or this app. Pushers registered
         // before `matrixUserId` was put into their data carry none → delivered (dies out with
         // the next app start). Never `rejected` — the pusher is healthy.
-        const matrixUserId = device.data?.['matrixUserId'];
         if (roomId && typeof matrixUserId === 'string' && matrixUserId.startsWith('@')) {
           const mute = await cachedUserMute(matrixUserId, adminToken);
           if (mute) {
-            if (!aliasRead) {
-              aliasLocalpart = await cachedRoomAliasLocalpart(roomId, adminToken);
-              aliasRead = true;
-            }
-            const tenantId = device.data?.['tenantId'] || undefined;
-            const isProtected = roomIsProtected(aliasLocalpart, tenantId, roomMarker);
-            if (muteBlocksPush(mute, roomId, tenantId, Date.now(), isProtected)) {
+            const isProtected = roomIsProtected(aliasLocalpart, pusherTenant, roomMarker);
+            if (muteBlocksPush(mute, roomId, pusherTenant, Date.now(), isProtected)) {
               skippedMuted++;
               continue;
             }
@@ -546,9 +614,16 @@ export const matrixPushGateway = onRequest(
             token,
             data: {
               type: 'chat',
+              // The pusher's own tenant, i.e. always the tenant of the app that registered this
+              // FCM token — so the service worker's tenant-mismatch drop (it compares this to the
+              // app's okrTenantId) never fires for a chat push; it only lets the worker and the tap
+              // handler know which app the push belongs to. Omitted for pre-tenant pushers.
+              ...(pusherTenant ? { tenantId: pusherTenant } : {}),
               title,
               body: msgBody,
               roomId,
+              // Spec 1.127 2.3: open the room, not just the app.
+              ...(chatUrl ? { url: chatUrl } : {}),
               // One new chat message (spec 1.93). Never Synapse's `counts.unread`: it spans every
               // tenant's rooms and the badge's other parts are unknown here.
               badgeAdd: 'chat',

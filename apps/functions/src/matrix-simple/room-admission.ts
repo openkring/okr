@@ -14,6 +14,7 @@
  * the caller delivers, fail open).
  */
 import { BRIDGE_BOT_LOCALPARTS, isBridgeBotId } from './room-assignment';
+import { pusherAdmitsRoom } from './shared';
 
 export interface RoomFacts {
   roomId: string;
@@ -57,4 +58,26 @@ export function admitsUnmarkedRoom(room: RoomFacts, scope: TenantRoomScope): boo
 
   if (isBridgeBotId(room.creator)) return false;
   return true;
+}
+
+/**
+ * The gateway's admission decision for one pusher (spec 1.127 2.1):
+ *
+ *  - the room carries a marker, or the pusher carries no tenant -> `pusherAdmitsRoom` (spec 1.93 §3);
+ *  - unmarked, but the room facts or the tenant scope could not be read -> deliver (fail open:
+ *    a Synapse or Firestore hiccup must never drop a member's push);
+ *  - unmarked with facts and scope -> `admitsUnmarkedRoom`, the client's room-list rule.
+ *
+ * Lives here, not in shared.ts: shared.ts must not import this module at runtime (room-assignment
+ * imports shared.ts, so the cycle would read a secret before it is defined).
+ */
+export function decideAdmission(
+  roomMarker: string[] | undefined,
+  pusherTenant: string | undefined,
+  facts: RoomFacts | undefined,
+  scope: TenantRoomScope | undefined,
+): boolean {
+  if (roomMarker !== undefined || !pusherTenant) return pusherAdmitsRoom(roomMarker, pusherTenant);
+  if (!facts || !scope) return true;
+  return admitsUnmarkedRoom(facts, scope);
 }

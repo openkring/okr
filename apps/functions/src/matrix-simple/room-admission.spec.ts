@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { admitsUnmarkedRoom, TenantRoomScope } from './room-admission';
+import { admitsUnmarkedRoom, decideAdmission, TenantRoomScope } from './room-admission';
 
 // Mirrors describe('filterRoomsOfTenant') in libs/chat/util/src/lib/chat.util.spec.ts (unmarked cases).
 describe('admitsUnmarkedRoom', () => {
@@ -47,5 +47,33 @@ describe('admitsUnmarkedRoom', () => {
   });
   it('skips the homeserver rule without a server name', () => {
     expect(admitsUnmarkedRoom({ roomId: '!x:other' }, { ...scope, serverName: '' })).toBe(true);
+  });
+});
+
+describe('decideAdmission', () => {
+  const scope: TenantRoomScope = {
+    groupRoomIds: new Set(), groupAliasLocalparts: new Set(), personKeys: new Set(['kaiser']), serverName: 'hs',
+  };
+  const foreignDm = { roomId: '!dm:hs', directCounterpart: '@stranger:hs' };
+
+  it('follows the marker when the room carries one (pusherAdmitsRoom)', () => {
+    expect(decideAdmission(['scs'], 'scs', foreignDm, scope)).toBe(true);
+    expect(decideAdmission(['scs'], 'kring', undefined, undefined)).toBe(false);
+    expect(decideAdmission([], 'scs', undefined, undefined)).toBe(false);
+  });
+  it('delivers an unmarked room to a pusher without tenant', () => {
+    expect(decideAdmission(undefined, undefined, foreignDm, scope)).toBe(true);
+    expect(decideAdmission(undefined, '', foreignDm, scope)).toBe(true);
+  });
+  // Review Focus 2: Synapse admin API down or slow -> no facts -> delivered, as before.
+  it('fails open when the room facts could not be read', () => {
+    expect(decideAdmission(undefined, 'scs', undefined, scope)).toBe(true);
+  });
+  it('fails open when the tenant scope could not be read', () => {
+    expect(decideAdmission(undefined, 'scs', foreignDm, undefined)).toBe(true);
+  });
+  it('applies admitsUnmarkedRoom to an unmarked room with facts and scope', () => {
+    expect(decideAdmission(undefined, 'scs', foreignDm, scope)).toBe(false);
+    expect(decideAdmission(undefined, 'scs', { roomId: '!dm:hs', directCounterpart: '@kaiser:hs' }, scope)).toBe(true);
   });
 });

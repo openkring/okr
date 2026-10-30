@@ -4,16 +4,22 @@ import {
   askRoomAliasLocalpart,
   askRoomsToLeave,
   BoundedTtlCache,
+  chatDeepLink,
+  directCounterpartOf,
+  groupKeyFromRoomAlias,
   groupRoomAliasLocalpart,
   isProtectedRoomAlias,
   markerFromRoomState,
   mayPinForAll,
   muteBlocksPush,
+  needsScopeRefresh,
   nextAdhocAdmin,
   pusherAdmitsRoom,
   roomAdmitsTenant,
+  serverNameOf,
   useAskRoom,
 } from './shared';
+import type { TenantRoomScope } from './room-admission';
 
 describe('askRoomAliasLocalpart', () => {
   it('derives a stable localpart from group + person', () => {
@@ -282,5 +288,88 @@ describe('BoundedTtlCache', () => {
     expect(c.size).toBe(2);
     expect(c.get('a', 3)).toBeUndefined();
     expect(c.get('c', 3)).toEqual({ value: 3 });
+  });
+});
+
+describe('chatDeepLink', () => {
+  it('links into the group chat page when a group key is given', () => {
+    expect(chatDeepLink('!abc:hs', 'scs_notfall')).toBe('/private/scs_notfall_chat?selectedRoom=!abc%3Ahs');
+  });
+  it('falls back to the generic chat page without a group key', () => {
+    expect(chatDeepLink('!abc:hs')).toBe('/private/chat?selectedRoom=!abc%3Ahs');
+    expect(chatDeepLink('!abc:hs', '')).toBe('/private/chat?selectedRoom=!abc%3Ahs');
+  });
+  it('URL-encodes the room id', () => {
+    expect(chatDeepLink('!a/b?c&d:hs')).toBe('/private/chat?selectedRoom=!a%2Fb%3Fc%26d%3Ahs');
+  });
+});
+
+// Mirrors describe('groupKeyFromRoomAlias') in libs/chat/util/src/lib/chat.util.spec.ts.
+describe('groupKeyFromRoomAlias', () => {
+  it('reads the okey off a group alias', () => {
+    expect(groupKeyFromRoomAlias('#group_scs_notfall:bkchat.etke.host')).toBe('scs_notfall');
+  });
+  it('lowercases a legacy mixed-case alias', () => {
+    expect(groupKeyFromRoomAlias('#group_Trainerteam:bkchat.etke.host')).toBe('trainerteam');
+  });
+  it('is undefined for a non-group alias or none', () => {
+    expect(groupKeyFromRoomAlias('#ask_notfall_kaiser:bkchat.etke.host')).toBeUndefined();
+    expect(groupKeyFromRoomAlias(undefined)).toBeUndefined();
+    expect(groupKeyFromRoomAlias('')).toBeUndefined();
+  });
+});
+
+// Mirrors describe('serverNameOf') in libs/chat/util/src/lib/chat.util.spec.ts.
+describe('serverNameOf', () => {
+  it('strips the scheme and the matrix. api subdomain', () => {
+    expect(serverNameOf('https://matrix.bkchat.etke.host')).toBe('bkchat.etke.host');
+  });
+  it('leaves a bare server name alone and drops a trailing slash', () => {
+    expect(serverNameOf('bkchat.etke.host')).toBe('bkchat.etke.host');
+    expect(serverNameOf('https://matrix.bkchat.etke.host/')).toBe('bkchat.etke.host');
+  });
+});
+
+describe('directCounterpartOf', () => {
+  const members = ['@kaiser:hs', '@anna:hs'];
+  it('is the member that is not the pusher owner', () => {
+    expect(directCounterpartOf(members, '@kaiser:hs', '@anna:hs')).toBe('@anna:hs');
+    expect(directCounterpartOf(members, '@anna:hs', '@anna:hs')).toBe('@kaiser:hs');
+  });
+  it('falls back to the sender when the pusher carries no matrixUserId', () => {
+    expect(directCounterpartOf(members, undefined, '@anna:hs')).toBe('@anna:hs');
+  });
+  it('is undefined without exactly two members', () => {
+    expect(directCounterpartOf(undefined, '@kaiser:hs', '@anna:hs')).toBeUndefined();
+    expect(directCounterpartOf(['@kaiser:hs'], '@kaiser:hs', '@anna:hs')).toBeUndefined();
+  });
+  it('is undefined when neither the owner nor the sender is one of the members', () => {
+    expect(directCounterpartOf(members, '@other:hs', '@x:hs')).toBeUndefined();
+    expect(directCounterpartOf(members, undefined, '@x:hs')).toBeUndefined();
+    expect(directCounterpartOf(members, undefined, undefined)).toBeUndefined();
+  });
+});
+
+// Review Focus 1: a DM with a person who joined the tenant minutes ago must not be dropped for
+// the whole 5-minute scope TTL — a counterpart miss reloads the scope once it is older than 60 s.
+describe('needsScopeRefresh', () => {
+  const scope: TenantRoomScope = {
+    groupRoomIds: new Set(), groupAliasLocalparts: new Set(), personKeys: new Set(['kaiser']), serverName: 'hs',
+  };
+  const dmWith = (who: string) => ({ roomId: '!dm:hs', directCounterpart: who });
+
+  it('is true for an unknown DM counterpart once the scope is older than 60 s', () => {
+    expect(needsScopeRefresh(dmWith('@newbie:hs'), scope, 61_000)).toBe(true);
+  });
+  it('is false while the scope is at most 60 s old', () => {
+    expect(needsScopeRefresh(dmWith('@newbie:hs'), scope, 60_000)).toBe(false);
+    expect(needsScopeRefresh(dmWith('@newbie:hs'), scope, 5_000)).toBe(false);
+  });
+  it('is false for a known counterpart (case-insensitive)', () => {
+    expect(needsScopeRefresh(dmWith('@Kaiser:hs'), scope, 240_000)).toBe(false);
+  });
+  it('is false for a room that is not a DM, or without facts', () => {
+    expect(needsScopeRefresh({ roomId: '!g:hs', canonicalAlias: '#group_x:hs' }, scope, 240_000)).toBe(false);
+    expect(needsScopeRefresh(undefined, scope, 240_000)).toBe(false);
   });
 });
