@@ -1,5 +1,20 @@
+/**
+ * Icons bundled with a feature as data URLs, by name (default set `icons` only). A feature that must render
+ * offline registers the few icons it needs (e.g. the travel journal, spec 1.126), so they never depend on the
+ * imgix HTTP cache; every other icon still loads from the icon repository.
+ */
+const bundledIcons = new Map<string, string>();
+
+export function registerBundledIcons(icons: Record<string, string>): void {
+  for (const [name, dataUrl] of Object.entries(icons)) bundledIcons.set(name, dataUrl);
+}
+
 export function getSvgIconUrl(imgixBaseUrl: string, iconName: string, dir = 'icons'): string {
   if (iconName.length === 0) return '';
+  if (dir === 'icons') {
+    const bundled = bundledIcons.get(iconName);
+    if (bundled) return bundled;
+  }
   return `${imgixBaseUrl}/logo/${dir}/${iconName}.svg`;
 }
 

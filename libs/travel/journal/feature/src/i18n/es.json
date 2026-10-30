@@ -49,7 +49,10 @@
     "delete_confirm": "¿Eliminar este bloque?",
     "add_photos": "Añadir fotos",
     "edit_action": "Editar bloque",
-    "delete_action": "Eliminar bloque"
+    "delete_action": "Eliminar bloque",
+    "locked": "{name} está editando ahora",
+    "conflict": "Dos versiones – elimina una de ellas.",
+    "photos_label": "{count} fotos"
   },
   "photos": {
     "added": "{count} foto(s) añadida(s)",
@@ -59,7 +62,8 @@
     "no_author": "Abre el diario de viaje una vez con internet y luego podrás escribir.",
     "not_owner": "Solo quien escribió este bloque puede cambiarlo.",
     "generic": "No ha funcionado. Inténtalo de nuevo.",
-    "others_content": "Aquí también hay contribuciones de la otra persona. Elimina primero solo tus propios bloques."
+    "others_content": "Aquí también hay contribuciones de la otra persona. Elimina primero solo tus propios bloques.",
+    "outdated": "Actualiza la app antes de seguir escribiendo."
   },
   "footprint_form": {
     "title": "Etapa",
@@ -377,7 +381,8 @@
     "edit_off": "Terminar de editar",
     "add_block": "Añadir bloque",
     "edit_footprint": "Editar footprint",
-    "delete_footprint": "Eliminar footprint"
+    "delete_footprint": "Eliminar footprint",
+    "sort_blocks": "Ordenar bloques"
   },
   "add_block": {
     "title": "¿Qué quieres añadir?"
@@ -396,5 +401,14 @@
     "title": "Fotolibro",
     "open": "Diseñar el fotolibro",
     "desktop_hint": "El fotolibro lo diseñas en el navegador del ordenador. Aquí subes las fotos para él."
+  },
+  "footprint_conflict": {
+    "overwritten": "Sobrescrito: {field} era «{value}»",
+    "check": "Revisar versiones",
+    "done": "Hecho",
+    "position": "Posición"
+  },
+  "sort": {
+    "title": "Ordenar bloques"
   }
 }

@@ -62,7 +62,7 @@ describe('journal server util', () => {
     });
   });
 
-  it('server view matches device view for a non-owner record', () => {
+  it("server view matches device view for another author's section edit", () => {
     const state = materialize([
       rec({ entity: 'footprint', entityKey: 'f1', op: 'create', fields: { journalKey: 'j1', title: 'Neko' } }),
       rec({ entity: 'section', entityKey: 's1', op: 'create', fields: { footprintKey: 'f1', kind: 'text', html: '<p>mine</p>', order: 'V' } }),
@@ -71,7 +71,7 @@ describe('journal server util', () => {
     const device = footprintsOf(state, 'j1')[0].blocks[0];
     const server = sectionDocOf(state, 's1', 'j1', ['bkg']);
     expect(server?.content.htmlContent).toBe(device.html);
-    expect(server?.content.htmlContent).toBe('<p>mine</p>');
+    expect(server?.content.htmlContent).toBe('<p>hijack</p>');
     expect(server?.authorKey).toBe('bruno');
     expect(server?.footprintKey).toBe('f1');
     expect(server?.order).toBe('V');

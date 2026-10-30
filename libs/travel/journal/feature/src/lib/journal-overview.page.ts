@@ -21,6 +21,8 @@ import { openJournalMenu } from './journal-menu-open';
 import { openOfflineMapsModal } from './journal-offline-maps.modal';
 import { openPhotoBookModal } from './journal-photo-book.modal';
 import { openPhotoSyncModal } from './journal-photo-sync.modal';
+import { registerBundledIcons } from '@okr/shared-util-core';
+import { JOURNAL_ICONS } from './journal-icons';
 import { JournalStore } from './journal.store';
 
 /** Wide screens (iPad landscape, desktop) get layout B — Ionic's `lg` breakpoint, spec 1.113 §9.1. */
@@ -50,6 +52,7 @@ const WIDE_QUERY = '(min-width: 992px)';
     .card h3 { margin: 0 0 2px; font-size: 1rem; }
     .card p { margin: 0; font-size: 0.8rem; color: var(--ion-color-medium); }
     .badge { font-size: 0.7rem; padding: 1px 6px; border-radius: 8px; background: var(--ion-color-light); }
+    .badge.check { background: var(--ion-color-warning-tint); margin-left: 4px; }
     .empty { color: var(--ion-color-medium); padding: 12px 4px; }
   `],
   template: `
@@ -86,6 +89,7 @@ const WIDE_QUERY = '(min-width: 992px)';
                   <h3>{{ card.title || store.i18n.untitled() }}</h3>
                   <p>{{ card.facts }}</p>
                   <span class="badge">{{ card.published ? store.i18n.story_published() : store.i18n.story_draft() }}</span>
+                  @if (card.check) { <span class="badge check">{{ store.i18n.footprint_check() }}</span> }
                 </div>
               </ion-card-content>
             </ion-card>
@@ -129,6 +133,7 @@ export class JournalOverviewPage {
   protected readonly days = computed(() => new Set(this.footprints().map((f) => f.date).filter((d) => d !== '')).size);
   protected readonly cards = computed(() => {
     const images = this.images();
+    const native = this.store.native();
     return this.footprints().map((f) => {
       const firstKey = f.blocks.find((b) => b.kind === 'photos')?.imageKeys?.find((k) => images.has(k));
       return {
@@ -136,12 +141,15 @@ export class JournalOverviewPage {
         title: f.title,
         facts: footprintChips(f).join(' · '),
         published: f.publishState === 'published',
+        // two versions of a block, or a footprint value that lost (spec 1.126 §6.3); only the iPad authors resolve them
+        check: native && (f.lostValues.length > 0 || f.blocks.some((b) => b.conflict)),
         thumbnail: this.fileUrl.url(firstKey ? images.get(firstKey)?.path400 : undefined),
       };
     });
   });
 
   public constructor() {
+    registerBundledIcons(JOURNAL_ICONS); // the journal renders its icons offline (spec 1.126)
     void this.store.init();
     // the journal on screen is the one the other iPad syncs with (P2P, plan 5)
     effect(() => {

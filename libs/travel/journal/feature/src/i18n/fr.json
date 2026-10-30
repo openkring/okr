@@ -49,7 +49,10 @@
     "delete_confirm": "Supprimer ce bloc ?",
     "add_photos": "Ajouter des photos",
     "edit_action": "Modifier le bloc",
-    "delete_action": "Supprimer le bloc"
+    "delete_action": "Supprimer le bloc",
+    "locked": "{name} est en train de modifier",
+    "conflict": "Deux versions – supprime-en une.",
+    "photos_label": "{count} photos"
   },
   "photos": {
     "added": "{count} photo(s) ajoutée(s)",
@@ -59,7 +62,8 @@
     "no_author": "Ouvre le carnet de voyage une fois avec internet, ensuite tu pourras écrire.",
     "not_owner": "Seule la personne qui a écrit ce bloc peut le modifier.",
     "generic": "Cela n'a pas fonctionné. Réessaie.",
-    "others_content": "Ceci contient aussi des contributions de l'autre personne. Supprime d'abord seulement tes propres blocs."
+    "others_content": "Ceci contient aussi des contributions de l'autre personne. Supprime d'abord seulement tes propres blocs.",
+    "outdated": "Mets à jour l'application avant de continuer à écrire."
   },
   "footprint_form": {
     "title": "Étape",
@@ -377,7 +381,8 @@
     "edit_off": "Terminer la modification",
     "add_block": "Ajouter un bloc",
     "edit_footprint": "Modifier le footprint",
-    "delete_footprint": "Supprimer le footprint"
+    "delete_footprint": "Supprimer le footprint",
+    "sort_blocks": "Trier les blocs"
   },
   "add_block": {
     "title": "Que veux-tu ajouter ?"
@@ -396,5 +401,14 @@
     "title": "Livre photo",
     "open": "Mettre en page le livre photo",
     "desktop_hint": "Tu mets en page le livre photo dans le navigateur, sur un ordinateur. Ici, tu envoies les photos pour celui-ci."
+  },
+  "footprint_conflict": {
+    "overwritten": "Écrasé : {field} était «{value}»",
+    "check": "Vérifier les versions",
+    "done": "Terminé",
+    "position": "Position"
+  },
+  "sort": {
+    "title": "Trier les blocs"
   }
 }

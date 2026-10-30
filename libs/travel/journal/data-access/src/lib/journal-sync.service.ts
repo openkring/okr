@@ -9,7 +9,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { FIRESTORE, ensureAppCheckToken } from '@okr/shared-config';
 import { DiaryWeather, JournalChange, JournalChangeCollection, JournalCollection } from '@okr/shared-models';
 import {
-  acceptRecord, advanceCursor, remoteChangeOf, classifyUploadError, DOWNLOAD_PAGE, downloadStart, JournalPhotoMode, pagesOf, UPLOAD_PAGE,
+  acceptRecord, advanceCursor, remoteChangeOf, withCheckedBases, classifyUploadError, DOWNLOAD_PAGE, downloadStart, JournalPhotoMode, pagesOf, UPLOAD_PAGE,
 } from '@okr/travel-journal-util';
 
 import { JournalDb, RemoteChange } from './journal-db';
@@ -198,7 +198,8 @@ export class JournalSyncService {
         const data = d.data() as JournalChange & { uploadedAt?: Timestamp };
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { uploadedAt, tenants, ...change } = data;
-        return { change: change as JournalChange, uploadedAtMs: uploadedAt?.toMillis() ?? Date.now() };
+        // a malformed `bases` is dropped: the record then counts as legacy (latest wins)
+        return { change: withCheckedBases(change) as JournalChange, uploadedAtMs: uploadedAt?.toMillis() ?? Date.now() };
       });
       // the same filter as the server (applyJournalChange): a record it ignores must not count here either
       const accepted = remote.filter((r) => acceptRecord(r.change, r.uploadedAtMs));

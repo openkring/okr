@@ -1,21 +1,25 @@
 import { computed, effect, inject, untracked } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Subscription } from 'rxjs';
 import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { Network } from '@capacitor/network';
+import { doc, getDoc } from 'firebase/firestore';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AvatarInfo, JournalBookModel, JournalChange, TRANSPORT_MODES, TransportMode } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
+import { FIRESTORE } from '@okr/shared-config';
+import { AppVersionConfig, compareAppVersions, CURRENT_APP_VERSION } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 import { convertDateFormatToString, DateFormat, getTodayStr } from '@okr/shared-util-core';
 import {
-  ChangeDraft, JournalBookService, JournalDb, JournalIdentityService, JournalPeerService, JournalPhotos, JournalSyncService, OsmExtract, PickedPhoto, SkippedPhoto,
+  ChangeDraft, JournalBookService, JournalDb, JournalIdentityService, JournalLockService, JournalPeerService, JournalPhotos, JournalSyncService, OsmExtract, PickedPhoto, SkippedPhoto,
   toBase64,
 } from '@okr/travel-journal-data-access';
 import {
   BOOK_I18N_KEYS, BOOK_LABEL_MAX, bookLabelsOf, JournalBookI18n, bookPrintCandidates, entityStateKey, hasOthersBlocks, pagesOf, PRINT_FILL_LONG_PX, PRINT_FILL_SHORT_PX, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
-  allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, MapPlace, mapPlaces, parseMapAreas, parsePhotoMode, TileJob, tilesToFree, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, publishedPhotoFiles, viewOf,
+  allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, MapPlace, mapPlaces, parseMapAreas, parsePhotoMode, TileJob, tilesToFree, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, reorderedOrders, CONFLICT_FIELDS, dismissedField, isConflictCopyKey, originalOfCopy, BlockView, publishedPhotoFiles, viewOf,
+  JournalLock, LOCK_HEARTBEAT_MS, LOCK_TTL_MS, lockedBy, mergeLocks,
 } from '@okr/travel-journal-util';
 
 import { BookExportStatus, JournalBookExporter, NO_BOOK_EXPORT } from './journal-book-export.service';
@@ -28,6 +32,7 @@ const MAP_WORKERS = 4; // parallel tile requests: polite to GIBS, the USGS WMS, 
 const PRESENT_CHUNK = 200;
 const META_ACTIVE_JOURNAL = 'activeJournal'; // the journal last opened: the one P2P runs for
 const META_PHOTOS_PAUSED = 'photosPaused'; // before the three photo modes
+const META_WRITE_MIN_VERSION = 'writeMinVersion'; // app-version/app-version journalWriteMinVersion, cached for offline
 
 /**
  * The travel journal on this device (spec 1.113, plan 2). Reads and writes only SQLite through
@@ -49,6 +54,9 @@ interface JournalStoreState {
   bookPrints: BookPrintStatus;
   webLoaded: boolean; // web view: the authored journals have been loaded (or failed to)
   bookExport: BookExportStatus;
+  locks: Record<string, JournalLock>; // edit locks of the active journal (spec 1.126 §6.2)
+  writeMinVersion: string; // '' = no minimum known; below it the app may read but not write (spec 1.126 §6.4)
+  lockClock: number; // Date.now(), refreshed every LOCK_CLOCK_MS, so lockOf re-evaluates expiry
 }
 
 /**
@@ -85,8 +93,9 @@ const printFileOf = (imageKey: string): string => `${imageKey}-print.jpg`;
 
 const initialState: JournalStoreState = {
   ready: false, native: Capacitor.isNativePlatform(), error: '', changes: [], photoMode: 'all', activeJournalKey: '', offlineMaps: {}, bookPrints: NO_BOOK_PRINTS,
-  webLoaded: false, bookExport: NO_BOOK_EXPORT,
+  webLoaded: false, bookExport: NO_BOOK_EXPORT, locks: {}, writeMinVersion: '', lockClock: 0,
 };
+const LOCK_CLOCK_MS = 15_000;
 
 export const JournalStore = signalStore(
   { providedIn: 'root' },
@@ -100,6 +109,8 @@ export const JournalStore = signalStore(
     appStore: inject(AppStore),
     bookService: inject(JournalBookService),
     bookExporter: inject(JournalBookExporter),
+    lockService: inject(JournalLockService),
+    firestore: inject(FIRESTORE),
   })),
   withProps(() => ({
     i18n: inject(I18nService).translateAll(JOURNAL_I18N_KEYS) as JournalI18n,
@@ -129,6 +140,8 @@ export const JournalStore = signalStore(
 
     /** Stamps and stores the drafts, then applies them in memory. */
     async function write(drafts: ChangeDraft[]): Promise<JournalChange[]> {
+      const minVersion = store.writeMinVersion();
+      if (minVersion && compareAppVersions(CURRENT_APP_VERSION, minVersion) < 0) throw new JournalWriteRefused('outdated');
       const changes = await store.identity.stampChanges(drafts);
       patchState(store, { changes: [...store.changes(), ...changes] });
       store.peerService.push(changes); // the other iPad, when connected, gets it at once
@@ -162,13 +175,33 @@ export const JournalStore = signalStore(
       return { drafts, imageKeys, photos, skipped };
     }
 
-    function ownBlock(blockKey: string): { footprint: FootprintView; journalKey: string } {
-      const section = viewOf(store.journalState()[entityStateKey('section', blockKey)]);
-      const fp = typeof section?.['footprintKey'] === 'string' ? footprint(section['footprintKey']) : undefined;
+    /**
+     * Where a block (or a conflict copy of one) lives — existence check only: every author may edit any
+     * block (spec 1.126 §6); the merge, not the store, resolves a clash. A copy has no entity of its own,
+     * so its footprint comes from the original's raw fields (the original may be archived by now).
+     */
+    function blockOf(blockKey: string): { footprint: FootprintView; journalKey: string; block: BlockView } {
+      const entityKey = isConflictCopyKey(blockKey) ? originalOfCopy(blockKey) : blockKey;
+      const state = store.journalState()[entityStateKey('section', entityKey)];
+      const footprintKey = isConflictCopyKey(blockKey)
+        ? Object.values(state?.fields['footprintKey'] ?? {})[0]?.value
+        : viewOf(state)?.['footprintKey'];
+      const fp = typeof footprintKey === 'string' ? footprint(footprintKey) : undefined;
       const block = fp?.blocks.find((b) => b.key === blockKey);
       if (!fp || !block) throw new Error(`unknown block ${blockKey}`);
-      if (block.authorKey !== store.identity.author()?.personKey) throw new JournalWriteRefused('notOwner');
-      return { footprint: fp, journalKey: fp.journalKey };
+      return { footprint: fp, journalKey: fp.journalKey, block };
+    }
+
+    /**
+     * The `bases` of a write: for every conflict field written, the winning hlc the editor started from, or
+     * '' ("based on nothing") when there is none. `hlcs` must be captured when the editor OPENED: a value
+     * delivered while it was open was never seen, so it must not count as a base (spec 1.126 anti-goal 1). A field without a base would make the record count as legacy
+     * and switch conflict detection off for everything before it.
+     */
+    function basesOf(hlcs: Record<string, string>, fields: Record<string, unknown>, conflictFields: readonly string[]): Record<string, string> | undefined {
+      const bases: Record<string, string> = {};
+      for (const field of Object.keys(fields)) if (conflictFields.includes(field)) bases[field] = hlcs[field] ?? '';
+      return Object.keys(bases).length > 0 ? bases : undefined;
     }
 
     /** Re-reads the log after a download; keeps records a write added meanwhile. */
@@ -221,6 +254,56 @@ export const JournalStore = signalStore(
       }
     }
 
+    // Edit locks (spec 1.126 §6.2): memory + P2P + Firestore when online, all best effort.
+    function receiveLock(lock: JournalLock): void {
+      if (lock.journalKey !== store.activeJournalKey()) return;
+      patchState(store, { locks: mergeLocks(store.locks(), [lock]) });
+    }
+    const heartbeats = new Map<string, ReturnType<typeof setInterval>>();
+    let lockWatch: Subscription | undefined;
+    let lockClock: ReturnType<typeof setInterval> | undefined;
+    let watched = new Set<string>(); // entities the last Firestore snapshot held
+    let lockJournalKey = ''; // the journal the lock state belongs to
+
+    function publishLock(lock: JournalLock): void {
+      patchState(store, { locks: mergeLocks(store.locks(), [lock]) });
+      store.peerService.pushLock(lock);
+      const tenantId = store.appStore.tenantId();
+      // fire and forget: on Wi-Fi without internet a Firestore write never settles, and editing must not wait for it
+      if (lock.until > 0 && tenantId) void Network.getStatus().then((n) => n.connected && void store.lockService.put(lock, tenantId));
+    }
+
+    function stopLockWatch(): void {
+      lockWatch?.unsubscribe();
+      lockWatch = undefined;
+      lockJournalKey = '';
+      watched = new Set();
+      for (const timer of heartbeats.values()) clearInterval(timer);
+      heartbeats.clear();
+      patchState(store, { locks: {} });
+    }
+
+    /** Idempotent: starts the clock and, when online and not yet running for this journal, the Firestore watch. */
+    async function startLockWatch(journalKey: string): Promise<void> {
+      if (lockJournalKey !== journalKey) {
+        stopLockWatch();
+        lockJournalKey = journalKey;
+      }
+      patchState(store, { lockClock: Date.now() });
+      lockClock ??= setInterval(() => patchState(store, { lockClock: Date.now() }), LOCK_CLOCK_MS);
+      if (lockWatch || !(await Network.getStatus()).connected || lockWatch) return; // second check: another call may have won meanwhile
+      lockWatch = store.lockService.watch(journalKey).subscribe((incoming) => {
+        const now = new Set(incoming.map((l) => l.entityKey));
+        // a lock document that vanished was released (deleted) by its holder
+        const gone = [...watched].filter((k) => !now.has(k)).flatMap((k) => {
+          const held = store.locks()[k];
+          return held ? [{ ...held, until: 0 }] : [];
+        });
+        watched = now;
+        patchState(store, { locks: mergeLocks(store.locks(), [...gone, ...incoming]) });
+      });
+    }
+
     /** P2P for the active journal while the app is in the foreground (spec §5.4). */
     async function startPeers(): Promise<void> {
       const journalKey = store.activeJournalKey();
@@ -232,6 +315,7 @@ export const JournalStore = signalStore(
         photoFiles: () => allPhotoFiles(imagesOf(store.journalState(), journalKey)),
         onRecordsStored: reload,
         onPhotosStored: () => store.fileUrl.refresh(),
+        onLock: receiveLock,
       }).catch(() => undefined);
     }
 
@@ -239,7 +323,12 @@ export const JournalStore = signalStore(
     function startAutoSync(): void {
       if (autoSync) return;
       autoSync = true;
-      void Network.addListener('networkStatusChange', (status) => { if (status.connected) void syncNow(); });
+      void Network.addListener('networkStatusChange', (status) => { if (status.connected) {
+          void syncNow();
+          const key = store.activeJournalKey();
+          if (key) void startLockWatch(key); // a journal opened offline gets its watch now
+        }
+      });
       // iOS runs the peer link only in the foreground: stop it in the background, start it again on return
       void App.addListener('appStateChange', ({ isActive }) => {
         if (isActive) {
@@ -264,6 +353,20 @@ export const JournalStore = signalStore(
     /** Landing sites of the journal's map presets, as named points on the map. */
     function mapPlacesFor(journalKey: string): MapPlace[] {
       return mapPlaces(parseMapAreas(viewOf(store.journalState()[entityStateKey('journal', journalKey)])?.['mapAreas']));
+    }
+
+    /** Online: reads the minimum app version for writes and caches it. Offline the cached value stays. Never throws. */
+    async function refreshWriteMinVersion(): Promise<void> {
+      try {
+        if (!(await Network.getStatus()).connected) return;
+        const snap = await getDoc(doc(store.firestore, 'app-version', 'app-version'));
+        const value = (snap.data() as AppVersionConfig | undefined)?.journalWriteMinVersion;
+        const minVersion = typeof value === 'string' ? value : '';
+        await store.db.setMeta(META_WRITE_MIN_VERSION, minVersion);
+        patchState(store, { writeMinVersion: minVersion });
+      } catch (error) {
+        console.error('journal: reading the minimum write version failed', error);
+      }
     }
 
     let cancelMap = false;
@@ -301,6 +404,7 @@ export const JournalStore = signalStore(
               changes: await store.db.listChanges(), ready: true, error: '',
               photoMode: parsePhotoMode(await store.db.getMeta(META_PHOTO_MODE), await store.db.getMeta(META_PHOTOS_PAUSED)),
               activeJournalKey: (await store.db.getMeta(META_ACTIVE_JOURNAL)) ?? '',
+              writeMinVersion: (await store.db.getMeta(META_WRITE_MIN_VERSION)) ?? '',
 
             });
             const offlineMaps: Record<string, OfflineMapStatus> = {};
@@ -309,6 +413,8 @@ export const JournalStore = signalStore(
             }
             patchState(store, { offlineMaps });
             startAutoSync();
+            void refreshWriteMinVersion(); // fire and forget: never blocks startup
+            if (store.activeJournalKey()) void startLockWatch(store.activeJournalKey());
           } catch (error) {
             loading = undefined; // allow a retry
             patchState(store, { ready: true, error: String(error) });
@@ -603,10 +709,52 @@ export const JournalStore = signalStore(
       /** The journal now open becomes the active one: P2P switches to it. */
       async openJournal(journalKey: string): Promise<void> {
         await loading;
-        if (!store.native() || store.activeJournalKey() === journalKey) return;
+        if (!store.native()) return;
+        if (store.activeJournalKey() === journalKey) {
+          await startLockWatch(journalKey); // restored at startup, or opened offline before
+          return;
+        }
         patchState(store, { activeJournalKey: journalKey });
         await store.db.setMeta(META_ACTIVE_JOURNAL, journalKey);
         await startPeers();
+        await startLockWatch(journalKey);
+      },
+
+      /**
+       * Takes the edit lock on a block or footprint. Returns the other person's live lock when refused,
+       * otherwise locks it for this author and keeps renewing it until `releaseLock`.
+       */
+      async acquireLock(journalKey: string, entityKey: string): Promise<JournalLock | undefined> {
+        const me = store.identity.author();
+        if (!me) return undefined;
+        const other = lockedBy(store.locks(), entityKey, me.personKey, Date.now());
+        if (other) return other;
+        const renew = (): void =>
+          publishLock({ journalKey, entityKey, personKey: me.personKey, name: me.name, until: Date.now() + LOCK_TTL_MS });
+        clearInterval(heartbeats.get(entityKey));
+        heartbeats.set(entityKey, setInterval(() => renew(), LOCK_HEARTBEAT_MS));
+        renew();
+        return undefined;
+      },
+
+      async releaseLock(journalKey: string, entityKey: string): Promise<void> {
+        const me = store.identity.author();
+        clearInterval(heartbeats.get(entityKey));
+        heartbeats.delete(entityKey);
+        if (!me) return;
+        const held = store.locks()[entityKey];
+        if (held && held.personKey !== me.personKey) return; // never clear someone else's lock
+        const lock: JournalLock = { journalKey, entityKey, personKey: me.personKey, name: me.name, until: 0 };
+        patchState(store, { locks: mergeLocks(store.locks(), [lock]) });
+        store.peerService.pushLock(lock);
+        void Network.getStatus().then((n) => n.connected && void store.lockService.release(journalKey, entityKey));
+      },
+
+      /** The live lock another person holds on this entity, else undefined (re-evaluated every 15 s). */
+      lockOf(entityKey: string): JournalLock | undefined {
+        store.lockClock();
+        const me = store.identity.author()?.personKey ?? '';
+        return lockedBy(store.locks(), entityKey, me, Date.now());
       },
 
       async setPhotoMode(mode: JournalPhotoMode): Promise<void> {
@@ -670,13 +818,19 @@ export const JournalStore = signalStore(
       async setFootprint(footprintKey: string, fields: FootprintFields): Promise<void> {
         const fp = footprint(footprintKey);
         if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
-        await write([{ journalKey: fp.journalKey, entity: 'footprint', entityKey: footprintKey, op: 'set', fields: { ...fields } }]);
+        await write([{ journalKey: fp.journalKey, entity: 'footprint', entityKey: footprintKey, op: 'set', fields: { ...fields }, bases: basesOf(fp.hlcs, fields, CONFLICT_FIELDS['footprint'] ?? []) }]);
       },
 
-      /** Saves the footprint modal's form model (title, place, date, time, publish state). */
-      async saveFootprintForm(footprintKey: string, model: FootprintFormModel): Promise<void> {
-        const fp = footprint(footprintKey);
-        if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
+      /**
+       * Saves the footprint modal's form model (title, place, date, time, publish state). `opened` is the
+       * footprint as the modal showed it: only fields the user changed against it are written, based on its
+       * hlcs — an edit delivered while the modal was open is neither overwritten unseen nor counted as seen.
+       * Without it (a footprint just created) the current state is the baseline.
+       */
+      async saveFootprintForm(footprintKey: string, model: FootprintFormModel, opened?: FootprintView): Promise<void> {
+        const current = footprint(footprintKey);
+        if (!current) throw new Error(`unknown footprint ${footprintKey}`);
+        const fp = opened ?? current;
         const fields: FootprintFields = {};
         if (model.title !== fp.title) fields.title = model.title;
         if (model.placeName !== fp.placeName) fields.placeName = model.placeName;
@@ -686,7 +840,28 @@ export const JournalStore = signalStore(
         const publishState = model.published ? 'published' : 'draft';
         if (publishState !== fp.publishState) fields.publishState = publishState;
         if (Object.keys(fields).length === 0) return;
-        await write([{ journalKey: fp.journalKey, entity: 'footprint', entityKey: footprintKey, op: 'set', fields: { ...fields } }]);
+        await write([{ journalKey: current.journalKey, entity: 'footprint', entityKey: footprintKey, op: 'set', fields: { ...fields }, bases: basesOf(fp.hlcs, fields, CONFLICT_FIELDS['footprint'] ?? []) }]);
+      },
+
+      /** Puts the blocks of a footprint into the order of `keys`; only the blocks that must move get a new key. */
+      async reorderBlocks(footprintKey: string, keys: string[]): Promise<void> {
+        const fp = footprint(footprintKey);
+        if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
+        const changed = reorderedOrders(fp.blocks, keys);
+        const drafts: ChangeDraft[] = Object.entries(changed).map(([key, order]) => ({
+          journalKey: fp.journalKey, entity: 'section', entityKey: key, op: 'set', fields: { order },
+        }));
+        if (drafts.length > 0) await write(drafts);
+      },
+
+      /** Dismisses the reminder about a lost footprint value (identified by the hlc of the lost record). */
+      async dismissFootprintConflict(footprintKey: string, hlc: string): Promise<void> {
+        const fp = footprint(footprintKey);
+        if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
+        await write([{
+          journalKey: fp.journalKey, entity: 'footprint', entityKey: footprintKey, op: 'set',
+          fields: { [dismissedField(hlc)]: true },
+        }]);
       },
 
       async addTextBlock(footprintKey: string, html: string): Promise<string> {
@@ -700,28 +875,32 @@ export const JournalStore = signalStore(
         return key;
       },
 
-      async updateTextBlock(blockKey: string, html: string): Promise<void> {
-        const { journalKey } = ownBlock(blockKey);
-        await write([{ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields: { html } }]);
+      /**
+       * `seen` (here and in the photo methods) = the block's hlcs when the editor or action sheet opened; a
+       * value delivered after that was not seen and must stay a conflict. Without it the current block counts.
+       */
+      async updateTextBlock(blockKey: string, html: string, seen?: Record<string, string>): Promise<void> {
+        const { journalKey, block } = blockOf(blockKey);
+        const fields = { html };
+        await write([{ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields, bases: basesOf(seen ?? block.hlcs, fields, CONFLICT_FIELDS['section'] ?? []) }]);
       },
 
-      /** Adds photos to an existing photo block of this author. */
-      async addPhotosToBlock(blockKey: string): Promise<{ added: number; skipped: SkippedPhoto[] }> {
-        const { footprint: fp, journalKey } = ownBlock(blockKey);
-        const block = fp.blocks.find((b) => b.key === blockKey);
+      /** Adds photos to an existing photo block (any author's). */
+      async addPhotosToBlock(blockKey: string, seen?: Record<string, string>): Promise<{ added: number; skipped: SkippedPhoto[] }> {
+        const { journalKey, block } = blockOf(blockKey);
         const { drafts, imageKeys, photos, skipped } = await pickImages(journalKey);
         if (photos.length === 0) return { added: 0, skipped };
-        drafts.push({ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields: { imageKeys: [...(block?.imageKeys ?? []), ...imageKeys] } });
+        const fields = { imageKeys: [...(block.imageKeys ?? []), ...imageKeys] };
+        drafts.push({ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields, bases: basesOf(seen ?? block.hlcs, fields, CONFLICT_FIELDS['section'] ?? []) });
         await write(drafts);
         return { added: photos.length, skipped };
       },
 
-      /** Removes one photo from a photo block of this author; the image record stays (other blocks may not use it). */
-      async removePhotoFromBlock(blockKey: string, imageKey: string): Promise<void> {
-        const { footprint: fp, journalKey } = ownBlock(blockKey);
-        const block = fp.blocks.find((b) => b.key === blockKey);
-        const imageKeys = (block?.imageKeys ?? []).filter((k) => k !== imageKey);
-        await write([{ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields: { imageKeys } }]);
+      /** Removes one photo from a photo block; the image record stays (other blocks may not use it). */
+      async removePhotoFromBlock(blockKey: string, imageKey: string, seen?: Record<string, string>): Promise<void> {
+        const { journalKey, block } = blockOf(blockKey);
+        const fields = { imageKeys: (block.imageKeys ?? []).filter((k) => k !== imageKey) };
+        await write([{ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields, bases: basesOf(seen ?? block.hlcs, fields, CONFLICT_FIELDS['section'] ?? []) }]);
       },
 
       /** Deletes (archives) a footprint; footprints are shared, so either author may. */
@@ -747,7 +926,7 @@ export const JournalStore = signalStore(
       },
 
       async archiveBlock(blockKey: string): Promise<void> {
-        const { journalKey } = ownBlock(blockKey);
+        const { journalKey } = blockOf(blockKey);
         await write([{ journalKey, entity: 'section', entityKey: blockKey, op: 'archive', fields: {} }]);
       },
 
@@ -777,7 +956,7 @@ export const JournalStore = signalStore(
           if (time) fill['time'] = time;
         }
         if (Object.keys(fill).length > 0) {
-          drafts.push({ journalKey, entity: 'footprint', entityKey: footprintKey, op: 'set', fields: fill });
+          drafts.push({ journalKey, entity: 'footprint', entityKey: footprintKey, op: 'set', fields: fill, bases: basesOf(fp.hlcs, fill, CONFLICT_FIELDS['footprint'] ?? []) });
         }
         await write(drafts);
         return { added: photos.length, skipped };

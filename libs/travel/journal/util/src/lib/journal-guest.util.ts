@@ -1,7 +1,7 @@
 import { JournalChange, JournalChangeOp, JournalEntity, JournalGuestLink } from '@okr/shared-models';
 import { formatHlc } from './journal-hlc.util';
 import { entityStateKey, JournalState, viewOf } from './journal-merge.util';
-import { footprintsOf } from './journal-view.util';
+import { publishedFootprintsOf } from './journal-view.util';
 
 /**
  * Guests, comments and likes of a travel journal (spec 1.113 §7, §8, plan 7). Guests have no account: their
@@ -92,7 +92,7 @@ export interface DigestItem { footprintKey: string; title: string; date: string;
  * changed (`updated`), or comments were added. Drafts and archived footprints never appear.
  */
 export function digestOf(records: JournalChange[], state: JournalState, journalKey: string): DigestItem[] {
-  const published = new Map(footprintsOf(state, journalKey).filter((f) => f.publishState === 'published').map((f) => [f.key, f]));
+  const published = new Map(publishedFootprintsOf(state, journalKey).map((f) => [f.key, f]));
   const imageToFootprints = new Map<string, string[]>();
   for (const fp of published.values()) {
     for (const block of fp.blocks) for (const key of block.imageKeys ?? []) imageToFootprints.set(key, [...(imageToFootprints.get(key) ?? []), fp.key]);

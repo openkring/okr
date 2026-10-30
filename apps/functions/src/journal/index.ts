@@ -8,9 +8,10 @@ import {
   JournalChange, JournalChangeCollection, JournalCollection, JournalPeerDoc, JournalPrivateCollection, JournalSectionCollection,
 } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
+import { originalOfCopy, withCheckedBases } from '@okr/travel-journal-util';
 
 import { privateBucket } from '../_storage/private-bucket';
-import { isJournalFileName, journalObjectPath, planEntityWrite, planFootprintSections, StoredRecord, mayOverwrite } from './apply-journal-change.logic';
+import { isJournalFileName, journalObjectPath, planEntityWrite, planFootprintSections, planSectionWrites, StoredRecord, mayOverwrite } from './apply-journal-change.logic';
 import { requireJournalAuthor } from './journal-auth';
 
 const REGION = 'europe-west6';
@@ -35,24 +36,37 @@ export const applyJournalChange = onDocumentCreated(
       return;
     }
     const db = getFirestore();
-    const snaps = await db.collection(JournalChangeCollection)
-      .where('journalKey', '==', change.journalKey).where('entity', '==', change.entity).where('entityKey', '==', change.entityKey).get();
-    const records: StoredRecord[] = snaps.docs.map((d) => {
+    const toRecord = (d: { data: () => unknown }): StoredRecord => {
       const data = d.data() as JournalChange;
       const uploadedAt = data.uploadedAt as unknown as Timestamp | undefined;
-      return { change: data, uploadedAtMs: uploadedAt?.toMillis?.() ?? 0 };
-    });
+      // a malformed `bases` is dropped: the record counts as legacy (latest wins), like on the devices
+      return { change: withCheckedBases(data) as JournalChange, uploadedAtMs: uploadedAt?.toMillis?.() ?? 0 };
+    };
+    const ofEntity = () => db.collection(JournalChangeCollection).where('journalKey', '==', change.journalKey).where('entity', '==', change.entity);
+
+    if (change.entity === 'section') {
+      // a block and its conflict copies (`<block>_c_<hlc>`) materialise together (spec 1.126 §6.3)
+      const original = originalOfCopy(change.entityKey);
+      const [own, copies, stored] = await Promise.all([
+        ofEntity().where('entityKey', '==', original).get(),
+        ofEntity().where('entityKey', '>=', `${original}_c_`).where('entityKey', '<', `${original}_c_~`).get(),
+        db.collection(`${JournalCollection}/${change.journalKey}/${JournalSectionCollection}`).where('conflictOf', '==', original).get(),
+      ]);
+      const plan = planSectionWrites([...own.docs, ...copies.docs].map(toRecord), change.journalKey, original, tenants, stored.docs.map((d) => d.id));
+      if (plan.writes.length === 0) return;
+      // the original and its copies in one batch: a reader never sees the lost value both gone and not yet copied
+      const batch = db.batch();
+      for (const write of plan.writes) batch.set(db.doc(write.path), write.data);
+      await batch.commit();
+      // the footprint comes from the unarchived state: the stored doc of an archived block no longer has it
+      if (plan.footprintKey) await writeFootprintSections(change.journalKey, plan.footprintKey, tenants);
+      return;
+    }
+    const snaps = await ofEntity().where('entityKey', '==', change.entityKey).get();
+    const records = snaps.docs.map(toRecord);
     const write = planEntityWrite(records, change.journalKey, change.entity, change.entityKey, tenants);
     if (!write) return;
 
-    if (change.entity === 'section') {
-      // the footprint of an archived block is only on the stored document
-      const before = (await db.doc(write.path).get()).data();
-      await db.doc(write.path).set(write.data);
-      const footprintKey = (write.data['footprintKey'] ?? before?.['footprintKey']) as string | undefined;
-      if (footprintKey) await writeFootprintSections(change.journalKey, footprintKey, tenants);
-      return;
-    }
     if (change.entity === 'footprint') {
       await db.doc(write.path).set(write.data);
       await writeFootprintSections(change.journalKey, change.entityKey, tenants);

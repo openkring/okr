@@ -2,7 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { PluginListenerHandle } from '@capacitor/core';
 
 import { JournalChange } from '@okr/shared-models';
-import { acceptPeerRecords, missingFor, pagesOf, parsePeerMessage, PEER_RECORD_PAGE, PeerMessage, versionVector } from '@okr/travel-journal-util';
+import { acceptPeerRecords, JournalLock, missingFor, pagesOf, parsePeerMessage, PEER_RECORD_PAGE, PeerMessage, versionVector } from '@okr/travel-journal-util';
 
 import { JournalDb } from './journal-db';
 import { JournalIdentityService } from './journal-identity.service';
@@ -25,6 +25,8 @@ export interface JournalPeerContext {
   photoFiles: () => string[];
   onRecordsStored: () => Promise<void>;
   onPhotosStored: () => void;
+  /** A lock (or release, until 0) another iPad sent. */
+  onLock: (lock: JournalLock) => void;
 }
 
 export type JournalPeerState = 'off' | 'noSecret' | 'searching' | 'connected';
@@ -90,6 +92,15 @@ export class JournalPeerService {
     if (records.length === 0) return;
     void this.enqueue(async () => {
       for (const peerId of this.peers.keys()) await this.sendRecords(peerId, records);
+    });
+  }
+
+  /** Sends an edit lock (or a release, `until: 0`) to every connected peer right away. */
+  public pushLock(lock: JournalLock): void {
+    const ctx = this.ctx;
+    if (!ctx || this.peers.size === 0 || lock.journalKey !== ctx.journalKey) return;
+    void this.enqueue(async () => {
+      for (const peerId of this.peers.keys()) await this.send(peerId, { t: 'lock', journalKey: ctx.journalKey, lock });
     });
   }
 
@@ -161,6 +172,9 @@ export class JournalPeerService {
         await this.requestPhotos(peerId); // new image records name files this iPad does not have yet
         return;
       }
+      case 'lock':
+        ctx.onLock(message.lock);
+        return;
       case 'photoReq': {
         const { files } = await JournalPhotos.presentFiles({ journalKey: ctx.journalKey, files: message.files });
         for (const file of files) await LocalPeer.sendFile({ peerId, file }).catch(() => undefined);

@@ -1,9 +1,10 @@
+import { logger } from 'firebase-functions/v2';
 import {
   JournalChange, JournalCollection, JournalCommentCollection, JournalEntity, JournalFootprintCollection, JournalImageCollection,
   JournalReactionCollection, JournalSectionCollection,
 } from '@okr/shared-models';
 import {
-  acceptRecord, commentDocOf, entityStateKey, footprintPageOf, imageDocOf, journalDocOf, materialize, reactionDocOf, sectionDocOf, sortByOrder,
+  acceptRecord, blocksOf, commentDocOf, conflictCopyDocOf, isConflictCopyKey, originalOfCopy, entityStateKey, footprintPageOf, imageDocOf, journalDocOf, materialize, reactionDocOf, sectionDocOf, sortByOrder, viewOf,
 } from '@okr/travel-journal-util';
 
 /** A change record as stored in `journal-changes`, with its server upload time. */
@@ -45,6 +46,42 @@ export function planEntityWrite(records: StoredRecord[], journalKey: string, ent
     default:
       return undefined;
   }
+}
+
+/**
+ * The block's documents (spec 1.126 §6.3): the original plus one per conflict copy. `records` are
+ * every record of the original key and of its copy keys; `existingCopyKeys` the copy docs stored
+ * already. A stored copy that is not live now — archived, or its value is no longer lost — is
+ * written `{ isArchived: true }`. Nothing is written before the original's create arrived.
+ * `footprintKey` is read from the unarchived state: the footprint of an archived block is still wanted.
+ */
+export function planSectionWrites(
+  records: StoredRecord[], journalKey: string, blockKey: string, tenants: string[], existingCopyKeys: string[],
+): { writes: JournalWrite[]; footprintKey?: string } {
+  const original = planEntityWrite(records.filter((r) => r.change.entityKey === blockKey), journalKey, 'section', blockKey, tenants);
+  if (!original) return { writes: [] };
+  const writes: JournalWrite[] = [original];
+  const state = materialize(records.filter((r) => acceptRecord(r.change, r.uploadedAtMs)).map((r) => r.change));
+  const entity = state[entityStateKey('section', blockKey)];
+  const unarchived = entity && { ...entity, fields: Object.fromEntries(Object.entries(entity.fields).filter(([field]) => field !== 'archived')) };
+  const footprint = viewOf(unarchived)?.['footprintKey'];
+  if (typeof footprint !== 'string') return { writes };
+  const live = new Set<string>();
+  for (const block of blocksOf(state, footprint).filter((b) => b.conflictOf === blockKey)) {
+    if (!isJournalKey(block.key)) {
+      logger.warn('planSectionWrites: conflict copy with an invalid key skipped', { journalKey, blockKey });
+      continue;
+    }
+    live.add(block.key);
+    writes.push({ path: journalPath(journalKey, JournalSectionCollection, block.key), data: { ...conflictCopyDocOf(block, footprint, journalKey, tenants) } });
+  }
+  const stored = new Set([...existingCopyKeys, ...records.map((r) => r.change.entityKey)]);
+  for (const key of [...stored].sort()) {
+    if (isConflictCopyKey(key) && originalOfCopy(key) === blockKey && isJournalKey(key) && !live.has(key)) {
+      writes.push({ path: journalPath(journalKey, JournalSectionCollection, key), data: ARCHIVED });
+    }
+  }
+  return { writes, footprintKey: footprint };
 }
 
 /** The footprint's `sections` list: its live blocks in their fractional order. */

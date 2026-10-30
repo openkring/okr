@@ -10,8 +10,8 @@ const image = (key: string): ImageView => ({
   key, authorKey: 'bruno', width: 1, height: 1, path2048: `journals/j1/${key}-2048.jpg`, path400: `journals/j1/${key}-400.jpg`, localIdentifier: '',
 });
 const footprint = (key: string, publishState: 'draft' | 'published', imageKeys: string[]): FootprintView => ({
-  key, journalKey: 'j1', title: '', placeName: '', date: '', time: '', publishState,
-  blocks: [{ key: `b-${key}`, kind: 'photos', authorKey: 'bruno', order: 'V', imageKeys }],
+  key, journalKey: 'j1', title: '', placeName: '', date: '', time: '', publishState, hlcs: {}, lostValues: [],
+  blocks: [{ key: `b-${key}`, kind: 'photos', authorKey: 'bruno', order: 'V', imageKeys, hlcs: {}, conflict: false }],
 });
 
 describe('journal sync util', () => {
@@ -95,5 +95,14 @@ describe('remoteChangeOf', () => {
 
   it('a malformed hlc is dropped', () => {
     expect(remoteChangeOf(data(1000, { hlc: 'nonsense' }), 2000)).toBeUndefined();
+  });
+
+  it('bases are carried through, the first-write sentinel included', () => {
+    expect(remoteChangeOf(data(1000, { bases: { title: '', placeName: 'h1' } }), 2000)?.bases).toEqual({ title: '', placeName: 'h1' });
+  });
+
+  it('a malformed bases is dropped and the record counts as legacy', () => {
+    expect(remoteChangeOf(data(1000, { bases: { title: 7 } }), 2000)).not.toHaveProperty('bases');
+    expect(remoteChangeOf(data(1000, { bases: 'h1' }), 2000)).not.toHaveProperty('bases');
   });
 });

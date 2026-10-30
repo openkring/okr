@@ -9,7 +9,7 @@ import {
 import { ModelSelectService } from '@okr/shared-feature';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, okrPrompt } from '@okr/shared-util-angular';
-import { fill } from '@okr/shared-util-core';
+import { fill, registerBundledIcons } from '@okr/shared-util-core';
 import { journalListMenu } from '@okr/travel-journal-util';
 import { showJournalError } from './journal-errors';
 import { openJournalInfo } from './journal-info';
@@ -17,6 +17,7 @@ import { JournalGuestsSheet } from './journal-guests';
 import { openGuestsModal } from './journal-guests.modal';
 import { openJournalMenu } from './journal-menu-open';
 import { openPhotoSyncModal } from './journal-photo-sync.modal';
+import { JOURNAL_ICONS } from './journal-icons';
 import { JournalStore } from './journal.store';
 
 /** All travel journals on this device (spec 1.113); opens one, or creates a new one. */
@@ -71,6 +72,7 @@ export class JournalListPage {
   protected readonly menuItems = computed(() => journalListMenu({ native: this.store.native() }));
 
   public constructor() {
+    registerBundledIcons(JOURNAL_ICONS); // the journal renders its icons offline (spec 1.126)
     void this.store.init();
   }
 

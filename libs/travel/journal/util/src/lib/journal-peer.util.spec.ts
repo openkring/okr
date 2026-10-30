@@ -45,4 +45,22 @@ describe('journal peer util', () => {
     const future = rec('a', 1, 'j1', NOW + 25 * 60 * 60 * 1000);
     expect(acceptPeerRecords([future, rec('a', 2)], 'j1', NOW).map((c) => c.id)).toEqual(['a-2']);
   });
+
+  it('acceptPeerRecords keeps a valid bases map and drops a malformed one', () => {
+    const good = { ...rec('a', 1), bases: { title: 'h1' } };
+    const bad = { ...rec('a', 2), bases: { title: 5 } };
+    const notObject = { ...rec('a', 3), bases: 'x' };
+    const out = acceptPeerRecords([good, bad, notObject], 'j1', NOW);
+    expect(out.map((c) => c.bases)).toEqual([{ title: 'h1' }, undefined, undefined]);
+    expect('bases' in out[1]).toBe(false);
+  });
+
+  it('parsePeerMessage accepts lock and rejects a malformed lock', () => {
+    const lock = { journalKey: 'j1', entityKey: 'f1', personKey: 'anna', name: 'Anna', until: NOW };
+    expect(parsePeerMessage(JSON.stringify({ t: 'lock', journalKey: 'j1', lock }), 'j1')).toEqual({ t: 'lock', journalKey: 'j1', lock });
+    expect(parsePeerMessage(JSON.stringify({ t: 'lock', journalKey: 'j1', lock: { ...lock, until: 'x' } }), 'j1')).toBeUndefined();
+    expect(parsePeerMessage(JSON.stringify({ t: 'lock', journalKey: 'j1', lock: { ...lock, entityKey: '' } }), 'j1')).toBeUndefined();
+    expect(parsePeerMessage(JSON.stringify({ t: 'lock', journalKey: 'j1', lock: { ...lock, journalKey: 'other' } }), 'j1')).toBeUndefined();
+    expect(parsePeerMessage(JSON.stringify({ t: 'lock', journalKey: 'j1' }), 'j1')).toBeUndefined();
+  });
 });

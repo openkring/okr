@@ -16,6 +16,7 @@ export interface NewChange {
   entityKey: string;
   op: JournalChangeOp;
   fields: Record<string, unknown>;
+  bases?: Record<string, string>;
 }
 
 export function createChange(input: NewChange, last: ChangeStamp, now: number): { change: JournalChange; stamp: ChangeStamp } {
@@ -32,6 +33,21 @@ export function createChange(input: NewChange, last: ChangeStamp, now: number): 
     entityKey: input.entityKey,
     op: input.op,
     fields: { ...input.fields },
+    ...(input.bases ? { bases: { ...input.bases } } : {}),
   };
   return { change, stamp: { clock, seq } };
+}
+
+/** A well-formed `bases` (spec 1.126 §6.1): field → hlc of the value the edit was made on top of. */
+export function isBases(b: unknown): b is Record<string, string> {
+  return typeof b === 'object' && b !== null && !Array.isArray(b) && Object.values(b).every((v) => typeof v === 'string');
+}
+
+/**
+ * A record from storage or the network with its `bases` shape-checked: a malformed `bases` is dropped, so
+ * the record counts as legacy (latest wins) instead of feeding garbage into the conflict rule.
+ */
+export function withCheckedBases<T extends { bases?: unknown }>(change: T): Omit<T, 'bases'> & { bases?: Record<string, string> } {
+  const { bases, ...rest } = change;
+  return isBases(bases) ? { ...rest, bases } : rest;
 }

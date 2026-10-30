@@ -5,6 +5,7 @@ import { materialize } from './journal-merge.util';
 import {
   commentsOf, digestOf, findGuestLink, guestChangeRecord, guestDeviceId, guestLinkState, likeKey, likesOf,
 } from './journal-guest.util';
+import { footprintsOf, publishedFootprintsOf } from './journal-view.util';
 
 let n = 0;
 function rec(p: Pick<JournalChange, 'entity' | 'entityKey' | 'op'> & Partial<JournalChange>, authorKey = 'bruno', deviceId = 'dev-a'): JournalChange {
@@ -70,5 +71,26 @@ describe('journal guests', () => {
     const state = materialize([...base, ...fresh]);
     expect(digestOf(fresh, state, 'j1')).toEqual([{ footprintKey: 'f1', title: 'Neko', date: '20270114', updated: true, newComments: 2 }]);
     expect(digestOf([fresh[4]], state, 'j1')).toEqual([]); // a like alone is no news
+  });
+
+  it('guest view hides conflict copies and reminders', () => {
+    const fp = rec({ entity: 'footprint', entityKey: 'f1', op: 'create', fields: { journalKey: 'j1', title: 'Neko', date: '20270114', publishState: 'published' }, bases: {} });
+    const draft = rec({ entity: 'footprint', entityKey: 'f2', op: 'create', fields: { journalKey: 'j1', title: 'Entwurf', date: '20270115' }, bases: {} });
+    const c = rec({ entity: 'section', entityKey: 's1', op: 'create', fields: { footprintKey: 'f1', kind: 'photos', imageKeys: ['i1'], order: 'V' }, bases: {} });
+    const anna = rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { imageKeys: ['i2'] }, bases: { imageKeys: c.hlc } }, 'anna', 'dev-b');
+    const bruno = rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { imageKeys: ['i3'] }, bases: { imageKeys: c.hlc } });
+    const titleA = rec({ entity: 'footprint', entityKey: 'f1', op: 'set', fields: { title: 'Neko Harbour' }, bases: { title: fp.hlc } }, 'anna', 'dev-b');
+    const titleB = rec({ entity: 'footprint', entityKey: 'f1', op: 'set', fields: { title: 'Neko Bay' }, bases: { title: fp.hlc } });
+    const state = materialize([fp, draft, c, anna, bruno, titleA, titleB]);
+    expect(footprintsOf(state, 'j1')[0].blocks).toHaveLength(2); // the authors see the copy and the reminder
+    expect(footprintsOf(state, 'j1')[0].lostValues).toHaveLength(1);
+
+    const guest = publishedFootprintsOf(state, 'j1');
+    expect(guest.map((f) => f.key)).toEqual(['f1']);
+    expect(guest[0].blocks.map((b) => [b.key, b.imageKeys, b.conflict])).toEqual([['s1', ['i3'], false]]);
+    expect(guest[0].lostValues).toEqual([]);
+
+    const imageOfCopy = rec({ entity: 'image', entityKey: 'i2', op: 'create', fields: { journalKey: 'j1' } });
+    expect(digestOf([imageOfCopy], materialize([fp, draft, c, anna, bruno, imageOfCopy]), 'j1')).toEqual([]);
   });
 });

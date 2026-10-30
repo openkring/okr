@@ -63,7 +63,7 @@ describe('journal flyover timeline', () => {
   it('the journal gives stops with a position and its first photo as thumbnail', () => {
     const fp = (key: string, lat?: number, imageKeys: string[] = []): FootprintView => ({
       key, journalKey: 'j1', title: key, placeName: '', date: '20270114', time: '09:00', latitude: lat, longitude: lat, publishState: 'published',
-      transport: 'ship', blocks: [{ key: `b${key}`, kind: 'photos', authorKey: 'bruno', order: 'V', imageKeys }],
+      transport: 'ship', hlcs: {}, lostValues: [], blocks: [{ key: `b${key}`, kind: 'photos', authorKey: 'bruno', order: 'V', imageKeys, hlcs: {}, conflict: false }],
     });
     const img = (key: string, lat?: number): ImageView => ({ key, authorKey: 'bruno', takenAt: '2027-01-14T08:00:00', latitude: lat, longitude: lat, width: 1, height: 1, path2048: `p/${key}-2048.jpg`, path400: `p/${key}-400.jpg`, localIdentifier: '' });
     const { stops, points } = flyoverInputOf([fp('a', -60, ['i1']), fp('nowhere'), fp('b', -61, ['missing'])], new Map([['i1', img('i1', -60.5)], ['i2', img('i2')]]), (p) => (p ? `url:${p}` : ''));

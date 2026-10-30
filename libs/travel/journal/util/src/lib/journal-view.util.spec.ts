@@ -36,17 +36,19 @@ describe('journal view', () => {
   });
 
   it('blocks are ordered by order and skip archived ones', () => {
+    const sV = rec({ entity: 'section', entityKey: 'sV', op: 'create', fields: { footprintKey: 'f1', kind: 'text', html: '<p>v</p>', order: 'V' } });
+    const sG = rec({ entity: 'section', entityKey: 'sG', op: 'create', fields: { footprintKey: 'f1', kind: 'photos', imageKeys: ['i1'], order: 'G' } });
     const state = materialize([
       rec({ entity: 'footprint', entityKey: 'f1', op: 'create', fields: { journalKey: 'j1', title: 'Neko' } }),
-      rec({ entity: 'section', entityKey: 'sV', op: 'create', fields: { footprintKey: 'f1', kind: 'text', html: '<p>v</p>', order: 'V' } }),
-      rec({ entity: 'section', entityKey: 'sG', op: 'create', fields: { footprintKey: 'f1', kind: 'photos', imageKeys: ['i1'], order: 'G' } }),
+      sV,
+      sG,
       rec({ entity: 'section', entityKey: 'sX', op: 'create', fields: { footprintKey: 'f1', kind: 'text', html: '<p>x</p>', order: 'X' } }),
       rec({ entity: 'section', entityKey: 'sX', op: 'archive' }),
     ]);
     const [footprint] = footprintsOf(state, 'j1');
     expect(footprint.blocks.map((b) => b.key)).toEqual(['sG', 'sV']);
-    expect(footprint.blocks[0]).toEqual({ key: 'sG', kind: 'photos', authorKey: 'bruno', order: 'G', imageKeys: ['i1'] });
-    expect(footprint.blocks[1]).toEqual({ key: 'sV', kind: 'text', authorKey: 'bruno', order: 'V', html: '<p>v</p>' });
+    expect(footprint.blocks[0]).toEqual({ key: 'sG', kind: 'photos', authorKey: 'bruno', order: 'G', imageKeys: ['i1'], hlcs: { imageKeys: sG.hlc }, conflict: false });
+    expect(footprint.blocks[1]).toEqual({ key: 'sV', kind: 'text', authorKey: 'bruno', order: 'V', html: '<p>v</p>', hlcs: { html: sV.hlc }, conflict: false });
     expect(lastBlockOrder(footprint)).toBe('V');
   });
 
@@ -76,8 +78,8 @@ describe('journal view', () => {
 
 describe('hasOthersBlocks', () => {
   const fp = (blocks: { authorKey: string }[]) =>
-    ({ key: 'f', journalKey: 'j1', title: '', placeName: '', date: '', time: '', publishState: 'draft' as const,
-      blocks: blocks.map((b, i) => ({ key: `b${i}`, kind: 'text' as const, order: 'V', ...b })) });
+    ({ key: 'f', journalKey: 'j1', title: '', placeName: '', date: '', time: '', publishState: 'draft' as const, hlcs: {}, lostValues: [],
+      blocks: blocks.map((b, i) => ({ key: `b${i}`, kind: 'text' as const, order: 'V', hlcs: {}, conflict: false, ...b })) });
 
   it('a footprint with only own blocks may be deleted', async () => {
     const { hasOthersBlocks } = await import('./journal-view.util');

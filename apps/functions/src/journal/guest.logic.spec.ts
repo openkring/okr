@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { applyManage, deliveryFor, GuestRequestError, memberName, parseGuestRequest } from './guest.logic';
+import { applyManage, deliveryFor, GuestRequestError, isGuestVisibleSection, memberName, parseGuestRequest } from './guest.logic';
 
 const CODE = '0123456789abcdef0123456789abcdef';
 const avatar = (key: string, name1: string, name2: string) => ({ key, name1, name2, modelType: 'person' as const, type: '', subType: '', label: '' });
@@ -54,5 +54,19 @@ describe('journal guest logic', () => {
   it('the delivery choice', () => {
     expect(deliveryFor('signal')).toEqual(['signal']);
     expect(deliveryFor('none')).toEqual([]);
+  });
+
+  it('a guest never sees an open conflict copy or an archived block', () => {
+    expect(isGuestVisibleSection({ footprintKey: 'f1' })).toBe(true);
+    expect(isGuestVisibleSection({ footprintKey: 'f1', conflictOf: 's1', conflict: true })).toBe(false);
+    expect(isGuestVisibleSection({ footprintKey: 'f1', isArchived: true })).toBe(false);
+  });
+
+  it('copy doc without conflict field is hidden from guests', () => {
+    expect(isGuestVisibleSection({ footprintKey: 'f1', conflictOf: 's1' })).toBe(false);
+  });
+
+  it('a copy that outlived its original is a normal block for guests', () => {
+    expect(isGuestVisibleSection({ footprintKey: 'f1', conflictOf: 's1', conflict: false })).toBe(true);
   });
 });
