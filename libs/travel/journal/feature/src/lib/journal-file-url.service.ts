@@ -101,11 +101,28 @@ export class JournalFileUrlService {
     if (stale.length === 0) return;
     const next = { ...current };
     for (const path of stale) {
+      if (next[path].startsWith('blob:')) URL.revokeObjectURL(next[path]); // a seeded local copy (seed)
       delete next[path];
       this.signedAt.delete(path);
       this.requested.delete(path);
     }
     this.signed.set(next);
+  }
+
+  /**
+   * Browser editing (phase 3 §3): a photo this browser just uploaded is shown from its local object URL right away,
+   * without asking signJournalPhotos. Counts as freshly signed, so `refreshWeb` replaces it with a real link only
+   * after the renew window.
+   */
+  public seed(path: string, url: string): void {
+    this.requested.add(path);
+    this.signedAt.set(path, Date.now());
+    this.signed.set({ ...this.signed(), [path]: url });
+  }
+
+  /** True only when the file was asked for and is not in the bucket (signed value ''); false while unknown. */
+  public isMissing(path: string | undefined): boolean {
+    return path !== undefined && this.signed()[path] === '';
   }
 
   public refresh(): void {
