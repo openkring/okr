@@ -1,0 +1,232 @@
+import { Injectable, inject } from '@angular/core';
+import { doc, getDocFromServer, serverTimestamp, writeBatch } from 'firebase/firestore';
+
+import { FIRESTORE } from '@okr/shared-config';
+import { JournalChange, JournalChangeCollection, JournalCollection } from '@okr/shared-models';
+import {
+  ChangeStamp, createChange, formatHlc, isNewJournalRefusal, isWebDeviceId, maxSeqOf, mergeStamps, parseStamp, receiveClocksInto,
+} from '@okr/travel-journal-util';
+
+import { ChangeDraft } from './journal-identity.service';
+
+/**
+ * Browser editing (spec 1.126 phase 3 §1, §2): the browser writes its change records straight to
+ * Firestore `journal-changes`, in the same shape the iPad uploads. One device id per browser profile;
+ * every tab of the profile shares its stamp through localStorage under a Web Lock, because two records
+ * with the same (deviceId, seq) would collide on the iPads' unique index (INSERT OR IGNORE drops one).
+ *
+ * A commit the server has not confirmed within 30 s is «slow», not failed: the web SDK keeps retrying
+ * it. A refusal is final — except permission-denied on a journal that is not materialised yet, which
+ * the function writes about a second after the journal's create record.
+ */
+const KEY_DEVICE = 'okr.journal.deviceId';
+const KEY_HLC = 'okr.journal.hlc';
+const KEY_SEQ = 'okr.journal.seq';
+const STAMP_LOCK = 'okr.journal.stamp';
+const COMMIT_TIMEOUT_MS = 30_000;
+const NEW_JOURNAL_PAUSES_MS = [1000, 2000, 4000, 8000];
+
+interface LockManagerLike { request<T>(name: string, callback: () => T | Promise<T>): Promise<T> }
+
+function errorCode(error: unknown): string | undefined {
+  const code = (error as { code?: unknown } | undefined)?.code;
+  return typeof code === 'string' ? code.replace(/^(firestore|functions)\//, '') : undefined;
+}
+
+function readStorage(key: string): string | undefined {
+  try {
+    return globalThis.localStorage?.getItem(key) ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function writeStorage(key: string, value: string): boolean {
+  try {
+    if (!globalThis.localStorage) return false;
+    globalThis.localStorage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function newUuid(): string {
+  try {
+    if (typeof globalThis.crypto?.randomUUID === 'function') return globalThis.crypto.randomUUID();
+  } catch { /* insecure context: fall through */ }
+  const hex = () => Math.floor(Math.random() * 0x1_0000_0000).toString(16).padStart(8, '0');
+  return `${hex()}-${hex()}-${hex()}-${hex()}`;
+}
+
+function lockManager(): LockManagerLike | undefined {
+  try {
+    const locks = (globalThis.navigator as { locks?: LockManagerLike } | undefined)?.locks;
+    return typeof locks?.request === 'function' ? locks : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+const pause = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+@Injectable({ providedIn: 'root' })
+export class JournalWebWriter {
+  private readonly firestore = inject(FIRESTORE);
+  private memory: ChangeStamp = { clock: undefined, seq: 0 };
+
+  /**
+   * True once this instance stamps under its own in-memory id. That happens when the profile id cannot
+   * be stored, when the browser has no Web Locks (or acquiring the lock fails), or when the stamp
+   * write-back fails: tabs that share a device id but cannot publish
+   * their seq/hlc would stamp the same (deviceId, seq), and the iPads keep only one of the two records.
+   */
+  private privateId = false;
+  private id: string = this.loadDeviceId();
+
+  /** The profile's device id (created on first use), or this instance's private id (see `privateId`). */
+  public get deviceId(): string {
+    return this.id;
+  }
+
+  private loadDeviceId(): string {
+    // without Web Locks, tabs cannot serialise the shared stamp: each instance stamps under its own id
+    if (!lockManager()) {
+      this.privateId = true;
+      return newUuid();
+    }
+    const stored = readStorage(KEY_DEVICE);
+    if (isWebDeviceId(stored)) return stored;
+    const id = newUuid();
+    if (!writeStorage(KEY_DEVICE, id)) this.privateId = true;
+    return id;
+  }
+
+  /** From now on, a fresh id kept in memory only; the clock carries over (causality), the seq restarts. */
+  private switchToPrivateId(): void {
+    const clock = this.memory.clock;
+    this.privateId = true;
+    this.id = newUuid();
+    this.memory = { clock: clock ? { ...clock, deviceId: this.id } : undefined, seq: 0 };
+  }
+
+  /** Stamps drafts for `authorKey` (Web Lock around read-merge-write of the localStorage stamp; `known` = loaded records for maxSeqOf). */
+  public stamp(drafts: ChangeDraft[], authorKey: string, known: readonly JournalChange[]): Promise<JournalChange[]> {
+    return this.underLock(() => this.stampLocked(drafts, authorKey, known));
+  }
+
+  /**
+   * Runs `run` under the stamp lock. Without Web Locks, or when acquiring the lock fails, this instance
+   * switches to a private id and runs unlocked (a private stamp needs no lock). A rejection thrown by
+   * `run` itself inside the lock is passed on, never re-run.
+   */
+  private underLock<T>(run: () => T): Promise<T> {
+    const locks = lockManager();
+    if (!locks) {
+      if (!this.privateId) this.switchToPrivateId();
+      return Promise.resolve().then(run);
+    }
+    let acquired = false;
+    return locks.request(STAMP_LOCK, () => { acquired = true; return run(); }).catch((error: unknown) => {
+      if (acquired) throw error;
+      if (!this.privateId) this.switchToPrivateId();
+      return run();
+    });
+  }
+
+  /** Synchronous on purpose: nothing may wait on the network while the lock is held. */
+  private stampLocked(drafts: ChangeDraft[], authorKey: string, known: readonly JournalChange[]): JournalChange[] {
+    const first = this.stampUnder(drafts, authorKey, known);
+    if (this.saveStamp(first.stamp)) return first.changes;
+    // the seq could not be published: no record may leave under the shared id — re-stamp privately
+    this.switchToPrivateId();
+    const second = this.stampUnder(drafts, authorKey, known);
+    this.saveStamp(second.stamp);
+    return second.changes;
+  }
+
+  private stampUnder(drafts: ChangeDraft[], authorKey: string, known: readonly JournalChange[]): { changes: JournalChange[]; stamp: ChangeStamp } {
+    const deviceId = this.id;
+    let stamp = this.loadStamp(known);
+    const changes: JournalChange[] = [];
+    for (const draft of drafts) {
+      const next = createChange({ ...draft, id: newUuid(), deviceId, authorKey }, stamp, Date.now());
+      changes.push(next.change);
+      stamp = next.stamp;
+    }
+    return { changes, stamp };
+  }
+
+  /** Commits one batch (records of one journal). Resolves 'confirmed'; 'slow' after 30 s (the SDK keeps trying); rejects on refusal after the new-journal retries. */
+  public async commit(changes: JournalChange[], tenantId: string): Promise<'confirmed' | 'slow'> {
+    if (changes.length === 0) return 'confirmed';
+    const journalKey = changes[0].journalKey;
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await this.commitOnce(changes, tenantId);
+      } catch (error) {
+        if (attempt >= NEW_JOURNAL_PAUSES_MS.length) throw error;
+        const code = errorCode(error);
+        if (code !== 'permission-denied') throw error;
+        if (!isNewJournalRefusal(code, await this.journalExists(journalKey))) throw error;
+        await pause(NEW_JOURNAL_PAUSES_MS[attempt]);
+      }
+    }
+  }
+
+  /** Moves the clock past received records (accepted hlcs only). */
+  public receiveClocks(hlcs: readonly string[]): void {
+    if (hlcs.length === 0) return;
+    const run = () => {
+      if (!this.saveStamp(receiveClocksInto(this.loadStamp([]), hlcs, this.id, Date.now()))) this.switchToPrivateId();
+    };
+    this.underLock(run).catch(() => undefined); // best effort: the next stamp merges the clocks again
+  }
+
+  // ---------------------------------------------------------------- internals ---------------
+
+  /** A private id has no stored stamp: memory and the loaded records alone. */
+  private loadStamp(known: readonly JournalChange[]): ChangeStamp {
+    const storedMaxSeq = maxSeqOf(known, this.id);
+    const stored = this.privateId
+      ? { clock: undefined, seq: storedMaxSeq }
+      : parseStamp(readStorage(KEY_HLC), readStorage(KEY_SEQ), this.id, storedMaxSeq);
+    return mergeStamps(this.memory, stored);
+  }
+
+  /** Sets memory; false when the shared stamp could not be written back (a private id needs no write). */
+  private saveStamp(stamp: ChangeStamp): boolean {
+    this.memory = stamp;
+    if (this.privateId) return true;
+    const hlcSaved = stamp.clock ? writeStorage(KEY_HLC, formatHlc(stamp.clock)) : true;
+    const seqSaved = writeStorage(KEY_SEQ, String(stamp.seq));
+    return hlcSaved && seqSaved;
+  }
+
+  /** A fresh batch per attempt: a rejected batch cannot be committed again. */
+  private commitOnce(changes: JournalChange[], tenantId: string): Promise<'confirmed' | 'slow'> {
+    const batch = writeBatch(this.firestore);
+    for (const c of changes) {
+      batch.set(doc(this.firestore, JournalChangeCollection, c.id), { ...c, tenants: [tenantId], uploadedAt: serverTimestamp() });
+    }
+    return new Promise<'confirmed' | 'slow'>((resolve, reject) => {
+      const timer = setTimeout(() => resolve('slow'), COMMIT_TIMEOUT_MS); // the SDK's pending write stays queued
+      batch.commit().then(
+        () => { clearTimeout(timer); resolve('confirmed'); },
+        (e: unknown) => { clearTimeout(timer); reject(e); },
+      );
+    });
+  }
+
+  /**
+   * Rules deny reading a journal that does not exist (`resource != null`), so a denied read counts as
+   * «not yet». Any other read failure counts as «exists»: no retry, the commit's own error is rethrown.
+   */
+  private async journalExists(journalKey: string): Promise<boolean> {
+    try {
+      return (await getDocFromServer(doc(this.firestore, JournalCollection, journalKey))).exists();
+    } catch (error) {
+      return errorCode(error) !== 'permission-denied';
+    }
+  }
+}

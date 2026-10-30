@@ -10,11 +10,11 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { MapView, RouteMap, RoutePin } from '@okr/shared-ui';
 import { FootprintEditModal } from '@okr/travel-journal-ui';
 import {
-  FootprintFormModel, flyoverInputOf, flyoverTimeline, footprintChips, journalMapData, journalOverviewMenu, newFootprintFormModel, routeLengthKm,
+  FootprintFormModel, flyoverInputOf, flyoverTimeline, footprintChips, journalMapData, journalOverviewMenu, JournalWriteSlow, newFootprintFormModel, routeLengthKm,
 } from '@okr/travel-journal-util';
 
 import { JournalFileUrlService } from './journal-file-url.service';
-import { showJournalError } from './journal-errors';
+import { continueWhenSlow, showJournalError } from './journal-errors';
 import { openJournalFlyover } from './journal-flyover-open';
 import { openJournalInfo } from './journal-info';
 import { openJournalMenu } from './journal-menu-open';
@@ -128,12 +128,13 @@ export class JournalOverviewPage {
     return flyoverTimeline(stops, points);
   });
   // the book is made in the browser (design §1); the web view lists only the journals one writes in
-  protected readonly menuItems = computed(() => journalOverviewMenu({ native: this.store.native(), hasFlyover: !!this.flyover() }));
+  protected readonly menuItems = computed(() =>
+    journalOverviewMenu({ native: this.store.native(), canWrite: this.store.canWrite(), hasFlyover: !!this.flyover() }));
   protected readonly km = computed(() => routeLengthKm(this.map().route));
   protected readonly days = computed(() => new Set(this.footprints().map((f) => f.date).filter((d) => d !== '')).size);
   protected readonly cards = computed(() => {
     const images = this.images();
-    const native = this.store.native();
+    const canWrite = this.store.canWrite();
     return this.footprints().map((f) => {
       const firstKey = f.blocks.find((b) => b.kind === 'photos')?.imageKeys?.find((k) => images.has(k));
       return {
@@ -141,8 +142,8 @@ export class JournalOverviewPage {
         title: f.title,
         facts: footprintChips(f).join(' · '),
         published: f.publishState === 'published',
-        // two versions of a block, or a footprint value that lost (spec 1.126 §6.3); only the iPad authors resolve them
-        check: native && (f.lostValues.length > 0 || f.blocks.some((b) => b.conflict)),
+        // two versions of a block, or a footprint value that lost (spec 1.126 §6.3); only authors resolve them
+        check: canWrite && (f.lostValues.length > 0 || f.blocks.some((b) => b.conflict)),
         thumbnail: this.fileUrl.url(firstKey ? images.get(firstKey)?.path400 : undefined),
       };
     });
@@ -207,12 +208,17 @@ export class JournalOverviewPage {
     await modal.present();
     const { data, role } = await modal.onWillDismiss<FootprintFormModel>();
     if (role !== 'confirm' || !data) return;
+    // the key is chosen here: a slow first write keeps its record (it will land), and the flow goes on with it
+    const key = crypto.randomUUID();
+    let slow = false;
     try {
-      const key = await this.store.addFootprint(this.journalKey(), data.title);
-      await this.store.saveFootprintForm(key, data);
+      slow = await continueWhenSlow(() => this.store.addFootprint(this.journalKey(), data.title, key));
+      slow = (await continueWhenSlow(() => this.store.saveFootprintForm(key, data))) || slow;
       this.openFootprint(key);
     } catch (error) {
       await showJournalError(this.toastController, this.store.i18n, error);
+      return;
     }
+    if (slow) await showJournalError(this.toastController, this.store.i18n, new JournalWriteSlow());
   }
 }

@@ -16,6 +16,7 @@ import { openImageGallery } from '@okr/shared-ui';
 import { blockActions, footprintMenu, FootprintFormModel, htmlToPlainText, lostValueText, StoryBlock, toStorySections } from '@okr/travel-journal-util';
 
 import { JournalFileUrlService } from './journal-file-url.service';
+import { JournalWebPhotos } from './journal-web-photos.service';
 import { showJournalError } from './journal-errors';
 import { openJournalMenu } from './journal-menu-open';
 import { JOURNAL_ICONS } from './journal-icons';
@@ -61,6 +62,9 @@ import { JournalStore } from './journal.store';
       </ion-toolbar>
     </ion-header>
     <ion-content>
+      @if (store.webUpload(); as upload) {
+        <p class="note">{{ uploading(upload.done, upload.total) }}</p>
+      }
       @if (story(); as story) {
         @if (story.hero; as hero) {
           <okr-hero-section [section]="hero" />
@@ -93,8 +97,11 @@ import { JournalStore } from './journal.store';
                 [emitImageClicks]="canEdit() && !editMode()" (imageSelected)="photoActions(item, $event)" />
             }
           </div>
+          @if (item.missing > 0) {
+            <p class="note">{{ onIpad(item.missing) }}</p>
+          }
         }
-        <okr-journal-reactions [likes]="likes().length" [liked]="liked()" [comments]="comments()" [i18n]="store.i18n" [readOnly]="!store.native()"
+        <okr-journal-reactions [likes]="likes().length" [liked]="liked()" [comments]="comments()" [i18n]="store.i18n" [readOnly]="!store.canWrite()"
           (likeToggled)="act(store.toggleLike(footprintKey()))" (writeClicked)="writeComment()" (deleteClicked)="act(store.archiveComment($event))" />
       }
     </ion-content>
@@ -112,6 +119,7 @@ export class JournalStoryPage {
   protected readonly store = inject(JournalStore);
   private readonly appStore = inject(AppStore);
   private readonly fileUrl = inject(JournalFileUrlService);
+  private readonly webPhotos = inject(JournalWebPhotos);
   private readonly router = inject(Router);
   private readonly modalController = inject(ModalController);
   private readonly actionSheetController = inject(ActionSheetController);
@@ -123,7 +131,7 @@ export class JournalStoryPage {
   public readonly footprintKey = input.required<string>();
 
   protected readonly editMode = signal(false);
-  protected readonly menuItems = computed(() => footprintMenu({ native: this.store.native(), editMode: this.editMode() }));
+  protected readonly menuItems = computed(() => footprintMenu({ native: this.store.native(), canWrite: this.store.canWrite(), editMode: this.editMode() }));
 
   protected readonly likes = computed(() => this.store.likes(this.footprintKey()));
   protected readonly liked = computed(() => this.likes().includes(this.store.author()?.personKey ?? ''));
@@ -146,9 +154,25 @@ export class JournalStoryPage {
 
   protected readonly footprints = computed(() => this.store.footprints(this.journalKey()));
   protected readonly footprint = computed(() => this.footprints().find((f) => f.key === this.footprintKey()));
+  /**
+   * The story as the CMS sections render it. In the browser, a photo that is signed but not in the bucket (still a draft
+   * photo on the iPad) is left out of the album and counted per block for a note; the block's `imageKeys` stay as they are.
+   */
   protected readonly story = computed(() => {
     const fp = this.footprint();
-    return fp ? toStorySections(fp, this.store.images(this.journalKey()), (p) => this.fileUrl.url(p), this.appStore.tenantId()) : undefined;
+    if (!fp) return undefined;
+    const images = this.store.images(this.journalKey());
+    const story = toStorySections(fp, images, (p) => this.fileUrl.url(p), this.appStore.tenantId());
+    const native = this.store.native();
+    const isMissing = (key: string | undefined) => !native && !!key && this.fileUrl.isMissing(images.get(key)?.path2048);
+    return {
+      ...story,
+      blocks: story.blocks.map((item) => ({
+        ...item,
+        images: item.images?.filter((image) => !isMissing(image.label)),
+        missing: (item.block.imageKeys ?? []).filter((key) => isMissing(key)).length,
+      })),
+    };
   });
   private readonly index = computed(() => this.footprints().findIndex((f) => f.key === this.footprintKey()));
   protected readonly previousKey = computed(() => (this.index() > 0 ? this.footprints()[this.index() - 1].key : undefined));
@@ -199,14 +223,22 @@ export class JournalStoryPage {
     return item.section.type === 'album' ? item.section : undefined;
   }
 
-  /** Every author edits every block (spec 1.126 §5) — but only on the iPad and with a known author. */
+  /** Every author edits every block (spec 1.126 §5) — on the iPad with a bound author, in the browser when signed in as a person. */
   protected canEdit(): boolean {
-    return this.store.native() && !!this.store.author()?.personKey;
+    return this.store.canWrite();
   }
 
   /** The name of the person editing this block right now, if somebody else is. */
   protected lockedBy(item: StoryBlock): string | undefined {
     return this.store.lockOf(item.block.key)?.name;
+  }
+
+  protected onIpad(count: number): string {
+    return fill(this.store.i18n.photos_on_ipad(), { count });
+  }
+
+  protected uploading(done: number, total: number): string {
+    return fill(this.store.i18n.photos_uploading(), { done, total });
   }
 
   protected fillName(name: string): string {
@@ -255,16 +287,30 @@ export class JournalStoryPage {
     const i18n = this.store.i18n;
     const imgix = this.appStore.services.imgixBaseUrl();
     const options = createActionSheetOptions(i18n.add_block_title());
+    let files: Promise<File[]> | undefined;
+    const photos = createActionSheetButton('block.photos', i18n.story_add_photos(), imgix, 'images');
+    if (!this.store.native()) photos.handler = () => { files = this.pickWebFiles(); };
     options.buttons.push(
       createActionSheetButton('block.text', i18n.story_add_text(), imgix, 'text'),
-      createActionSheetButton('block.photos', i18n.story_add_photos(), imgix, 'images'),
+      photos,
       createActionSheetButton('cancel', i18n.cancel(), imgix, 'cancel'),
     );
     const sheet = await this.actionSheetController.create(options);
     await sheet.present();
     const { data } = await sheet.onDidDismiss<{ action: string }>();
     if (data?.action === 'block.text') await this.addText();
-    else if (data?.action === 'block.photos') await this.addPhotos();
+    else if (data?.action === 'block.photos') await this.addPhotos(files);
+  }
+
+  /**
+   * Browser only: opens the file dialog NOW. Call it from an action-sheet button `handler`, which runs inside the
+   * user's tap — WebKit may ignore a file dialog opened after the sheet has closed, and the pick would never end.
+   * Undefined on native (the store opens the Photos library itself), offline or without an author: the store
+   * then refuses with its own message before any dialog.
+   */
+  private pickWebFiles(): Promise<File[]> | undefined {
+    if (this.store.native() || !navigator.onLine || !this.store.author()) return undefined;
+    return this.webPhotos.pickFiles();
   }
 
   /** In edit mode a tap on a block opens its ActionSheet (unless somebody else is editing it); outside edit mode a tap does nothing. */
@@ -307,8 +353,14 @@ export class JournalStoryPage {
     const actions = blockActions({ kind: item.block.kind, editable: this.canEdit() });
     if (actions.length === 0) return;
     const options = createActionSheetOptions(i18n.block_edit_action());
+    let files: Promise<File[]> | undefined;
+    const button = (a: string) => {
+      const b = createActionSheetButton(a, texts[a][0], imgix, texts[a][1]);
+      if (a === 'block.addphotos' && !this.store.native()) b.handler = () => { files = this.pickWebFiles(); };
+      return b;
+    };
     options.buttons.push(
-      ...actions.map((a) => createActionSheetButton(a, texts[a][0], imgix, texts[a][1])),
+      ...actions.map(button),
       createActionSheetButton('cancel', i18n.cancel(), imgix, 'cancel'),
     );
     const sheet = await this.actionSheetController.create(options);
@@ -316,7 +368,11 @@ export class JournalStoryPage {
     const { data } = await sheet.onDidDismiss<{ action: string }>();
     switch (data?.action) {
       case 'block.edit': return this.withLock(item.block.key, () => this.editText(item.block.key, item.block.html ?? '', seen));
-      case 'block.addphotos': return this.addPhotosToBlock(item.block.key, seen);
+      case 'block.addphotos':
+        if (this.store.native()) return this.addPhotosToBlock(item.block.key, seen);
+        // browser: the page stays free while the file dialog is open; the lock is taken again once files are there
+        void this.addPickedPhotosToBlock(item.block.key, seen, files);
+        return;
       case 'block.delete': return this.confirmDeleteBlock(item.block.key);
     }
   }
@@ -375,6 +431,13 @@ export class JournalStoryPage {
     await this.run(async () => this.toastResult(await this.store.addPhotosToBlock(blockKey, seen)));
   }
 
+  /** Browser: waits for the dialog outside the page lock, then uploads and writes under it (`seen` = when the sheet opened). */
+  private async addPickedPhotosToBlock(blockKey: string, seen: Record<string, string>, files: Promise<File[]> | undefined): Promise<void> {
+    const picked = files ? await files : undefined; // undefined: offline / no author — the store refuses with its message
+    if (picked?.length === 0) return;
+    await this.exclusive(() => this.run(async () => this.toastResult(await this.store.addPhotosToBlock(blockKey, seen, picked))));
+  }
+
   protected async addText(): Promise<void> {
     const html = await this.openTextModal('');
     if (html !== undefined) await this.run(() => this.store.addTextBlock(this.footprintKey(), html));
@@ -385,9 +448,10 @@ export class JournalStoryPage {
     if (html !== undefined) await this.run(() => this.store.updateTextBlock(blockKey, html, seen));
   }
 
-  protected async addPhotos(): Promise<void> {
+  /** `files`: browser files picked inside the tap (see pickWebFiles); native leaves it undefined. */
+  protected async addPhotos(files?: Promise<File[]>): Promise<void> {
     await this.run(async () => {
-      await this.toastResult(await this.store.addPhotoBlock(this.journalKey(), this.footprintKey()));
+      await this.toastResult(await this.store.addPhotoBlock(this.journalKey(), this.footprintKey(), files));
     });
   }
 

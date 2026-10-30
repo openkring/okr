@@ -9,12 +9,20 @@ import { ChangeStamp } from './journal-change.util';
 export interface BoundAuthor { personKey: string; name: string }
 
 /** Why a write was refused; the UI shows a message per reason. */
-export type JournalWriteRefusal = 'noAuthor' | 'notOwner' | 'othersContent' | 'outdated';
+export type JournalWriteRefusal = 'noAuthor' | 'notOwner' | 'othersContent' | 'outdated' | 'offline';
 
 export class JournalWriteRefused extends Error {
   public constructor(public readonly reason: JournalWriteRefusal) {
     super(`journal write refused: ${reason}`);
     this.name = 'JournalWriteRefused';
+  }
+}
+
+/** A browser write the server has not confirmed within the timeout; the Firestore SDK keeps retrying it (outcome unknown). */
+export class JournalWriteSlow extends Error {
+  public constructor(message = 'journal write not yet confirmed') {
+    super(message);
+    this.name = 'JournalWriteSlow';
   }
 }
 

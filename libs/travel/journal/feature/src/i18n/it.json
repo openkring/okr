@@ -56,14 +56,17 @@
   },
   "photos": {
     "added": "{count} foto aggiunte",
-    "skipped": "{count} foto saltate"
+    "skipped": "{count} foto saltate",
+    "on_ipad": "{count} foto sono ancora sull’iPad.",
+    "uploading": "Caricamento delle foto: {done} di {total}"
   },
   "error": {
     "no_author": "Apri il diario di viaggio una volta con internet, poi potrai scrivere.",
     "not_owner": "Solo chi ha scritto questo blocco può modificarlo.",
     "generic": "Non ha funzionato. Riprova.",
     "others_content": "Qui ci sono anche contributi dell'altra persona. Elimina prima solo i tuoi blocchi.",
-    "outdated": "Aggiorna l'app prima di continuare a scrivere."
+    "outdated": "Aggiorna l'app prima di continuare a scrivere.",
+    "offline": "Sei offline. Salva di nuovo quando hai Internet."
   },
   "footprint_form": {
     "title": "Tappa",
@@ -193,6 +196,7 @@
     "add": "Aggiungi ospite",
     "share": "Condividi il link",
     "share_text": "Segui il nostro viaggio qui: {url}",
+    "link_copied": "Il link è copiato. Ora puoi condividerlo.",
     "expiry": "Validità",
     "expiry_title": "Per quanto tempo deve funzionare il link?",
     "expiry_1m": "Un mese",
@@ -242,7 +246,7 @@
     "offline": "Puoi inviare messaggi agli ospiti solo con Internet.",
     "too_soon": "L’ultimo messaggio è partito solo pochi minuti fa. Riprova tra qualche minuto."
   },
-  "web_read_only": "Qui leggi i tuoi diari di viaggio. Scrivere, le foto e la mappa offline sono nell’app per iPad.",
+  "write_slow": "La connessione è lenta. La tua modifica verrà inviata appena possibile – lascia la pagina aperta.",
   "transport": {
     "label": "In viaggio con",
     "helper": "Come siete arrivati qui? Il sorvolo lo mostra sulla strada verso questo footprint.",

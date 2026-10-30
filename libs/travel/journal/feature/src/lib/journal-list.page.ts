@@ -10,8 +10,8 @@ import { ModelSelectService } from '@okr/shared-feature';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, okrPrompt } from '@okr/shared-util-angular';
 import { fill, registerBundledIcons } from '@okr/shared-util-core';
-import { journalListMenu } from '@okr/travel-journal-util';
-import { showJournalError } from './journal-errors';
+import { journalListMenu, JournalWriteSlow } from '@okr/travel-journal-util';
+import { continueWhenSlow, showJournalError } from './journal-errors';
 import { openJournalInfo } from './journal-info';
 import { JournalGuestsSheet } from './journal-guests';
 import { openGuestsModal } from './journal-guests.modal';
@@ -26,7 +26,6 @@ import { JournalStore } from './journal.store';
   imports: [IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonList, IonItem, IonLabel, IonButton, IonIcon, SvgIconPipe],
   styles: [`
     .title { cursor: pointer; }
-    .hint { color: var(--ion-color-medium); font-size: 0.9rem; }
   `],
   template: `
     <ion-header>
@@ -42,12 +41,11 @@ import { JournalStore } from './journal.store';
       </ion-toolbar>
     </ion-header>
     <ion-content class="ion-padding">
-      @if (!store.native()) { <p class="hint">{{ store.i18n.web_read_only() }}</p> }
       <ion-list>
           @for (journal of store.journals(); track journal.key) {
             <ion-item>
               <ion-label class="title" (click)="open(journal.key)">{{ journal.title || store.i18n.untitled() }}</ion-label>
-              @if (store.native()) {
+              @if (store.canWrite()) {
                 <ion-button slot="end" fill="clear" (click)="actions(journal.key, journal.title)">{{ store.i18n.list_actions() }}</ion-button>
               }
             </ion-item>
@@ -69,7 +67,7 @@ export class JournalListPage {
   private readonly modalController = inject(ModalController);
   private readonly popoverController = inject(PopoverController);
 
-  protected readonly menuItems = computed(() => journalListMenu({ native: this.store.native() }));
+  protected readonly menuItems = computed(() => journalListMenu({ native: this.store.native(), canWrite: this.store.canWrite() }));
 
   public constructor() {
     registerBundledIcons(JOURNAL_ICONS); // the journal renders its icons offline (spec 1.126)
@@ -168,11 +166,16 @@ export class JournalListPage {
     const i18n = this.store.i18n;
     const title = await okrPrompt(this.alertController, i18n.list_new_prompt(), i18n.list_new(), i18n.save(), i18n.cancel());
     if (!title?.trim()) return;
+    // the key is chosen here: a slow write keeps its record (it will land), so the new journal opens anyway
+    const key = crypto.randomUUID();
+    let slow: boolean;
     try {
-      const key = await this.store.createJournal(title.trim());
-      this.open(key);
+      slow = await continueWhenSlow(() => this.store.createJournal(title.trim(), key));
     } catch (error) {
       await showJournalError(this.toastController, i18n, error);
+      return;
     }
+    this.open(key);
+    if (slow) await showJournalError(this.toastController, i18n, new JournalWriteSlow());
   }
 }

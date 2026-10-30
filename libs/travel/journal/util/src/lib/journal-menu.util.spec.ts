@@ -3,35 +3,53 @@ import { blockActions, footprintMenu, JournalMenuItem, journalListMenu, journalO
 
 const actions = (items: JournalMenuItem[]) => items.map((i) => i.action);
 
-describe('journal menus (spec 1.126 phase 1)', () => {
-  it('list: native offers new journal and photo sync; the browser offers nothing', () => {
-    expect(actions(journalListMenu({ native: true }))).toEqual(['newJournal', 'photoSync']);
-    expect(journalListMenu({ native: false })).toEqual([]);
+describe('journal menus (spec 1.126 phase 3: write entries follow canWrite)', () => {
+  it('list: native author offers new journal and photo sync', () => {
+    expect(actions(journalListMenu({ native: true, canWrite: true }))).toEqual(['newJournal', 'photoSync']);
   });
 
-  it('overview: native order', () => {
-    expect(actions(journalOverviewMenu({ native: true, hasFlyover: true })))
+  it('list: browser author offers new journal only', () => {
+    expect(actions(journalListMenu({ native: false, canWrite: true }))).toEqual(['newJournal']);
+  });
+
+  it('list: without write permission nothing', () => {
+    expect(journalListMenu({ native: false, canWrite: false })).toEqual([]);
+    expect(journalListMenu({ native: true, canWrite: false })).toEqual([]);
+  });
+
+  it('overview: native author order', () => {
+    expect(actions(journalOverviewMenu({ native: true, canWrite: true, hasFlyover: true })))
       .toEqual(['flyover', 'newFootprint', 'recordTrack', 'photoSync', 'divider', 'offlineMaps', 'photoBook']);
   });
 
-  it('overview: browser keeps flyover and photo book only', () => {
-    expect(actions(journalOverviewMenu({ native: false, hasFlyover: true }))).toEqual(['flyover', 'photoBook']);
+  it('overview: browser author gets new footprint, no native-only entries', () => {
+    expect(actions(journalOverviewMenu({ native: false, canWrite: true, hasFlyover: true })))
+      .toEqual(['flyover', 'newFootprint', 'photoBook']);
+  });
+
+  it('overview: without write permission flyover and photo book only', () => {
+    expect(actions(journalOverviewMenu({ native: false, canWrite: false, hasFlyover: true }))).toEqual(['flyover', 'photoBook']);
+    // the native overview keeps its divider between the groups
+    expect(actions(journalOverviewMenu({ native: true, canWrite: false, hasFlyover: true }))).toEqual(['flyover', 'divider', 'photoBook']);
   });
 
   it('overview: no flyover entry without a flyover', () => {
-    expect(actions(journalOverviewMenu({ native: false, hasFlyover: false }))).toEqual(['photoBook']);
+    expect(actions(journalOverviewMenu({ native: false, canWrite: false, hasFlyover: false }))).toEqual(['photoBook']);
   });
 
-  it('footprint: native, edit mode off and on', () => {
-    const off = footprintMenu({ native: true, editMode: false });
-    expect(actions(off)).toEqual(['toggleEditMode', 'addBlock', 'sortBlocks', 'divider', 'editFootprint', 'deleteFootprint']);
-    expect(off[0]).toMatchObject({ label: 'menu_edit_on' });
-    expect(footprintMenu({ native: true, editMode: true })[0]).toMatchObject({ label: 'menu_edit_off' });
-    expect(off[off.length - 1]).toMatchObject({ destructive: true });
+  it('footprint: author, edit mode off and on, on every device', () => {
+    for (const native of [true, false]) {
+      const off = footprintMenu({ native, canWrite: true, editMode: false });
+      expect(actions(off)).toEqual(['toggleEditMode', 'addBlock', 'sortBlocks', 'divider', 'editFootprint', 'deleteFootprint']);
+      expect(off[0]).toMatchObject({ label: 'menu_edit_on' });
+      expect(footprintMenu({ native, canWrite: true, editMode: true })[0]).toMatchObject({ label: 'menu_edit_off' });
+      expect(off[off.length - 1]).toMatchObject({ destructive: true });
+    }
   });
 
-  it('footprint: the browser gets no menu in phase 1', () => {
-    expect(footprintMenu({ native: false, editMode: false })).toEqual([]);
+  it('footprint: without write permission no menu', () => {
+    expect(footprintMenu({ native: false, canWrite: false, editMode: false })).toEqual([]);
+    expect(footprintMenu({ native: true, canWrite: false, editMode: false })).toEqual([]);
   });
 
   it('block actions follow kind and editability', () => {

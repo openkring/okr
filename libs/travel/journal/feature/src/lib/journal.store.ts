@@ -13,17 +13,18 @@ import { AppVersionConfig, compareAppVersions, CURRENT_APP_VERSION } from '@okr/
 import { I18nService } from '@okr/shared-i18n';
 import { convertDateFormatToString, DateFormat, getTodayStr } from '@okr/shared-util-core';
 import {
-  ChangeDraft, JournalBookService, JournalDb, JournalIdentityService, JournalLockService, JournalPeerService, JournalPhotos, JournalSyncService, OsmExtract, PickedPhoto, SkippedPhoto,
+  ChangeDraft, JournalBookService, JournalDb, JournalIdentityService, JournalLockService, JournalPeerService, JournalPhotos, JournalSyncService, JournalWebWriter, OsmExtract, PickedPhoto, SkippedPhoto,
   toBase64,
 } from '@okr/travel-journal-data-access';
 import {
   BOOK_I18N_KEYS, BOOK_LABEL_MAX, bookLabelsOf, JournalBookI18n, bookPrintCandidates, entityStateKey, hasOthersBlocks, pagesOf, PRINT_FILL_LONG_PX, PRINT_FILL_SHORT_PX, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
   allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, MapPlace, mapPlaces, parseMapAreas, parsePhotoMode, TileJob, tilesToFree, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, reorderedOrders, CONFLICT_FIELDS, dismissedField, isConflictCopyKey, originalOfCopy, BlockView, publishedPhotoFiles, viewOf,
-  JournalLock, LOCK_HEARTBEAT_MS, LOCK_TTL_MS, lockedBy, mergeLocks,
+  JournalLock, LOCK_HEARTBEAT_MS, LOCK_TTL_MS, lockedBy, mergeLocks, BoundAuthor, JournalWriteSlow, mergePending,
 } from '@okr/travel-journal-util';
 
 import { BookExportStatus, JournalBookExporter, NO_BOOK_EXPORT } from './journal-book-export.service';
 import { JournalFileUrlService } from './journal-file-url.service';
+import { JournalWebPhotos, WebPhoto } from './journal-web-photos.service';
 
 const SYNC_INTERVAL_MS = 2 * 60 * 1000;
 const META_PHOTO_MODE = 'photoMode';
@@ -57,6 +58,7 @@ interface JournalStoreState {
   locks: Record<string, JournalLock>; // edit locks of the active journal (spec 1.126 §6.2)
   writeMinVersion: string; // '' = no minimum known; below it the app may read but not write (spec 1.126 §6.4)
   lockClock: number; // Date.now(), refreshed every LOCK_CLOCK_MS, so lockOf re-evaluates expiry
+  webUpload: { done: number; total: number } | undefined; // browser photo upload in progress (spec 1.126 phase 3 §3)
 }
 
 /**
@@ -88,14 +90,21 @@ export interface BookPrintStatus {
   state: 'idle' | 'running' | 'done' | 'offline'; journalKey: string; done: number; total: number; uploaded: number; missing: number; failed: number;
 }
 export const NO_BOOK_PRINTS: BookPrintStatus = { state: 'idle', journalKey: '', done: 0, total: 0, uploaded: 0, missing: 0, failed: 0 };
+
+/** The browser's offline flag (always false outside a browser). */
+function isOffline(): boolean {
+  return typeof navigator !== 'undefined' && !navigator.onLine;
+}
+
 const PRINT_CHUNK = 50; // prepareJournalPhotoUploads takes at most 50 files per call
 const printFileOf = (imageKey: string): string => `${imageKey}-print.jpg`;
 
 const initialState: JournalStoreState = {
   ready: false, native: Capacitor.isNativePlatform(), error: '', changes: [], photoMode: 'all', activeJournalKey: '', offlineMaps: {}, bookPrints: NO_BOOK_PRINTS,
-  webLoaded: false, bookExport: NO_BOOK_EXPORT, locks: {}, writeMinVersion: '', lockClock: 0,
+  webLoaded: false, bookExport: NO_BOOK_EXPORT, locks: {}, writeMinVersion: '', lockClock: 0, webUpload: undefined,
 };
 const LOCK_CLOCK_MS = 15_000;
+const isWebPhoto = (photo: PickedPhoto): photo is WebPhoto => 'imageKey' in photo && 'printSize' in photo;
 
 export const JournalStore = signalStore(
   { providedIn: 'root' },
@@ -110,6 +119,8 @@ export const JournalStore = signalStore(
     bookService: inject(JournalBookService),
     bookExporter: inject(JournalBookExporter),
     lockService: inject(JournalLockService),
+    webWriter: inject(JournalWebWriter),
+    webPhotos: inject(JournalWebPhotos),
     firestore: inject(FIRESTORE),
   })),
   withProps(() => ({
@@ -121,7 +132,16 @@ export const JournalStore = signalStore(
     return {
       journalState,
       journals: computed(() => journalsOf(journalState())),
-      author: computed(() => store.identity.author()),
+      /** Who writes: on the iPad the bound author (SQLite, offline too); in the browser the signed-in person. */
+      author: computed<BoundAuthor | undefined>(() => {
+        if (store.native()) return store.identity.author();
+        const personKey = store.appStore.currentUser()?.personKey;
+        if (!personKey) return undefined;
+        const person = store.appStore.currentPerson();
+        return { personKey, name: person ? `${person.firstName} ${person.lastName}`.trim() : '' };
+      }),
+      /** Whether this device may write at all (menus and actions follow it, spec 1.126 phase 3 §2). */
+      canWrite: computed(() => (store.native() ? !!store.identity.author() : !!store.appStore.currentUser()?.personKey)),
       syncStatus: computed(() => store.syncService.status()),
       peerStatus: computed(() => store.peerService.status()),
     };
@@ -130,10 +150,12 @@ export const JournalStore = signalStore(
     let stopWeb: (() => void) | undefined; // the live web view's Firestore listeners
     let webRefresh: ReturnType<typeof setInterval> | undefined;
     let webPersonKey = '';
+    let pending: JournalChange[] = []; // browser: records written here that no snapshot has confirmed yet
     function stopWebView(): void {
       stopWeb?.();
       stopWeb = undefined;
       webPersonKey = '';
+      pending = [];
       if (webRefresh) clearInterval(webRefresh);
       webRefresh = undefined;
     }
@@ -142,9 +164,38 @@ export const JournalStore = signalStore(
     async function write(drafts: ChangeDraft[]): Promise<JournalChange[]> {
       const minVersion = store.writeMinVersion();
       if (minVersion && compareAppVersions(CURRENT_APP_VERSION, minVersion) < 0) throw new JournalWriteRefused('outdated');
+      if (!store.native()) return writeWeb(drafts);
       const changes = await store.identity.stampChanges(drafts);
       patchState(store, { changes: [...store.changes(), ...changes] });
       store.peerService.push(changes); // the other iPad, when connected, gets it at once
+      return changes;
+    }
+
+    /**
+     * The browser write (spec 1.126 phase 3, design §2): stamp, show at once (pending), commit to Firestore.
+     * A refusal takes the records back out and rethrows; a commit not confirmed within 30 s keeps them (the SDK
+     * keeps trying) and throws JournalWriteSlow, so the page can tell the user.
+     */
+    async function writeWeb(drafts: ChangeDraft[]): Promise<JournalChange[]> {
+      if (isOffline()) throw new JournalWriteRefused('offline');
+      const author = store.author();
+      if (!author) throw new JournalWriteRefused('noAuthor');
+      const tenantId = store.appStore.tenantId();
+      if (!tenantId) throw new Error('journal: no tenant for the browser write');
+      const changes = await store.webWriter.stamp(drafts, author.personKey, store.changes());
+      if (changes.length === 0) return changes;
+      pending = [...pending, ...changes];
+      patchState(store, { changes: [...store.changes(), ...changes] });
+      let result: 'confirmed' | 'slow';
+      try {
+        result = await store.webWriter.commit(changes, tenantId);
+      } catch (error) {
+        const ids = new Set(changes.map((c) => c.id));
+        pending = pending.filter((c) => !ids.has(c.id));
+        patchState(store, { changes: store.changes().filter((c) => !ids.has(c.id)) });
+        throw error;
+      }
+      if (result === 'slow') throw new JournalWriteSlow();
       return changes;
     }
 
@@ -154,9 +205,13 @@ export const JournalStore = signalStore(
       return journalKey ? footprintsOf(store.journalState(), journalKey).find((f) => f.key === footprintKey) : undefined;
     }
 
-    /** Picks photos and builds one image record per imported photo (not yet written). */
-    async function pickImages(journalKey: string): Promise<{ drafts: ChangeDraft[]; imageKeys: string[]; photos: PickedPhoto[]; skipped: SkippedPhoto[] }> {
-      if (!store.identity.author()) throw new JournalWriteRefused('noAuthor'); // before the picker opens
+    /**
+     * Picks photos and builds one image record per imported photo (not yet written). `files` (browser only) are files
+     * the page already picked inside the user's tap (a file dialog opened later may be ignored); native ignores it.
+     */
+    async function pickImages(journalKey: string, files?: File[] | Promise<File[]>): Promise<{ drafts: ChangeDraft[]; imageKeys: string[]; photos: PickedPhoto[]; skipped: SkippedPhoto[] }> {
+      if (!store.author()) throw new JournalWriteRefused('noAuthor'); // before the picker opens
+      if (!store.native()) return pickWebImages(journalKey, files);
       const { photos, skipped } = await JournalPhotos.pick({ journalKey });
       const drafts: ChangeDraft[] = [];
       const imageKeys: string[] = [];
@@ -173,6 +228,72 @@ export const JournalStore = signalStore(
         });
       }
       return { drafts, imageKeys, photos, skipped };
+    }
+
+    /**
+     * Browser (spec 1.126 phase 3, design §3): picks files and uploads all their files FIRST; only photos whose
+     * files are in the bucket get an image record, so an iPad never receives a block without its photos.
+     */
+    async function pickWebImages(journalKey: string, picked?: File[] | Promise<File[]>): Promise<{ drafts: ChangeDraft[]; imageKeys: string[]; photos: WebPhoto[]; skipped: SkippedPhoto[] }> {
+      // offline every upload would fail and each photo would count as «skipped»: say «offline» instead
+      if (isOffline()) throw new JournalWriteRefused('offline');
+      const files = await (picked ?? store.webPhotos.pickFiles());
+      if (files.length === 0) return { drafts: [], imageKeys: [], photos: [], skipped: [] };
+      if (isOffline()) throw new JournalWriteRefused('offline'); // went offline while the dialog was open
+      patchState(store, { webUpload: { done: 0, total: files.length } });
+      let uploaded: { photos: WebPhoto[]; skipped: SkippedPhoto[] };
+      try {
+        uploaded = await store.webPhotos.upload(journalKey, files, (done, total) => patchState(store, { webUpload: { done, total } }));
+      } finally {
+        patchState(store, { webUpload: undefined });
+      }
+      const { photos, skipped } = uploaded;
+      const drafts: ChangeDraft[] = [];
+      const imageKeys: string[] = [];
+      for (const photo of photos) {
+        imageKeys.push(photo.imageKey);
+        drafts.push({
+          journalKey, entity: 'image', entityKey: photo.imageKey, op: 'create',
+          fields: {
+            journalKey, takenAt: photo.takenAt, latitude: photo.latitude, longitude: photo.longitude,
+            width: photo.width, height: photo.height, path2048: photo.path2048, path400: photo.path400,
+            localIdentifier: '',
+          },
+        });
+      }
+      return { drafts, imageKeys, photos, skipped };
+    }
+
+    /**
+     * Writes the image + block records of a photo pick; in the browser then records each photo's print size in the
+     * book (design §3). A slow commit keeps the records (they will land), so the prints are recorded then too; any
+     * other failure records none. A failed print entry is logged only: the book falls back to the 2048 px file.
+     */
+    async function writePhotos(journalKey: string, drafts: ChangeDraft[], photos: PickedPhoto[]): Promise<void> {
+      if (store.native()) {
+        await write(drafts);
+        return;
+      }
+      let slow: JournalWriteSlow | undefined;
+      try {
+        await write(drafts);
+      } catch (error) {
+        if (!(error instanceof JournalWriteSlow)) throw error;
+        slow = error;
+      }
+      const tenantId = store.appStore.tenantId();
+      const personKey = store.author()?.personKey;
+      if (tenantId && personKey) {
+        for (const photo of photos) {
+          if (!isWebPhoto(photo)) continue;
+          try {
+            await store.bookService.setPrint(journalKey, tenantId, photo.imageKey, photo.printSize, personKey);
+          } catch (error) {
+            console.error('journal: recording the print size failed', photo.imageKey, error);
+          }
+        }
+      }
+      if (slow) throw slow;
     }
 
     /**
@@ -212,7 +333,7 @@ export const JournalStore = signalStore(
     }
 
     async function syncNow(): Promise<void> {
-      const author = store.identity.author();
+      const author = store.author();
       const tenantId = store.appStore.tenantId();
       if (!store.native() || !store.ready() || !author || !tenantId) return;
       if (!(await Network.getStatus()).connected) return;
@@ -238,7 +359,7 @@ export const JournalStore = signalStore(
      */
     let fillingWeather = false;
     async function fillWeather(): Promise<void> {
-      if (fillingWeather || !store.identity.author()) return;
+      if (fillingWeather || !store.author()) return;
       fillingWeather = true;
       try {
         const today = getTodayStr(DateFormat.StoreDate);
@@ -310,7 +431,7 @@ export const JournalStore = signalStore(
       if (!store.native() || !store.ready() || !journalKey) return;
       await store.peerService.start({
         journalKey,
-        displayName: store.identity.author()?.name || 'iPad',
+        displayName: store.author()?.name || 'iPad',
         changes: () => store.changes(),
         photoFiles: () => allPhotoFiles(imagesOf(store.journalState(), journalKey)),
         onRecordsStored: reload,
@@ -362,7 +483,7 @@ export const JournalStore = signalStore(
         const snap = await getDoc(doc(store.firestore, 'app-version', 'app-version'));
         const value = (snap.data() as AppVersionConfig | undefined)?.journalWriteMinVersion;
         const minVersion = typeof value === 'string' ? value : '';
-        await store.db.setMeta(META_WRITE_MIN_VERSION, minVersion);
+        if (store.native()) await store.db.setMeta(META_WRITE_MIN_VERSION, minVersion); // SQLite is native-only
         patchState(store, { writeMinVersion: minVersion });
       } catch (error) {
         console.error('journal: reading the minimum write version failed', error);
@@ -396,6 +517,7 @@ export const JournalStore = signalStore(
         loading ??= (async () => {
           if (!store.native()) {
             patchState(store, { ready: true });
+            void refreshWriteMinVersion(); // the browser has no cache: below the minimum it reads but does not write
             return;
           }
           try {
@@ -441,8 +563,12 @@ export const JournalStore = signalStore(
         webPersonKey = personKey;
         stopWeb = store.syncService.watchRemoteJournals(
           personKey,
-          (changes) => {
-            patchState(store, { changes, ready: true, error: '', webLoaded: true });
+          (snapshot) => {
+            // own writes not yet in the snapshot stay visible until Firestore confirms them
+            const merged = mergePending(snapshot, pending);
+            pending = merged.pending;
+            patchState(store, { changes: merged.changes, ready: true, error: '', webLoaded: true });
+            store.webWriter.receiveClocks(snapshot.map((c) => c.hlc));
             store.fileUrl.refreshWeb();
           },
           (error) => patchState(store, { ready: true, error: String(error), webLoaded: true }),
@@ -484,7 +610,7 @@ export const JournalStore = signalStore(
 
       async addComment(footprintKey: string, text: string): Promise<void> {
         const fp = footprint(footprintKey);
-        const me = store.identity.author();
+        const me = store.author();
         if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
         if (!me) throw new JournalWriteRefused('noAuthor');
         await write([{
@@ -498,7 +624,7 @@ export const JournalStore = signalStore(
         const comment = viewOf(store.journalState()[entityStateKey('comment', commentKey)]);
         const fp = typeof comment?.['footprintKey'] === 'string' ? footprint(comment['footprintKey']) : undefined;
         if (!fp) return;
-        if (store.journalState()[entityStateKey('comment', commentKey)]?.ownerKey !== store.identity.author()?.personKey) {
+        if (store.journalState()[entityStateKey('comment', commentKey)]?.ownerKey !== store.author()?.personKey) {
           throw new JournalWriteRefused('notOwner');
         }
         await write([{ journalKey: fp.journalKey, entity: 'comment', entityKey: commentKey, op: 'archive', fields: {} }]);
@@ -506,7 +632,7 @@ export const JournalStore = signalStore(
 
       async toggleLike(footprintKey: string): Promise<void> {
         const fp = footprint(footprintKey);
-        const me = store.identity.author();
+        const me = store.author();
         if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
         if (!me) throw new JournalWriteRefused('noAuthor');
         const liked = likesOf(store.journalState(), footprintKey).includes(me.personKey);
@@ -654,7 +780,7 @@ export const JournalStore = signalStore(
        * entries are untouched). Photos already in `prints` are skipped, so a stopped run resumes where it ended.
        */
       async uploadBookPrints(journalKey: string): Promise<BookPrintStatus> {
-        const author = store.identity.author();
+        const author = store.author();
         const tenantId = store.appStore.tenantId();
         if (!store.native() || !author || !tenantId || store.bookPrints().state === 'running') return store.bookPrints();
         const setStatus = (status: BookPrintStatus) => { patchState(store, { bookPrints: status }); return status; };
@@ -709,7 +835,12 @@ export const JournalStore = signalStore(
       /** The journal now open becomes the active one: P2P switches to it. */
       async openJournal(journalKey: string): Promise<void> {
         await loading;
-        if (!store.native()) return;
+        if (!store.native()) {
+          // browser: no SQLite meta, no peers — only the edit locks of this journal
+          patchState(store, { activeJournalKey: journalKey });
+          await startLockWatch(journalKey);
+          return;
+        }
         if (store.activeJournalKey() === journalKey) {
           await startLockWatch(journalKey); // restored at startup, or opened offline before
           return;
@@ -725,7 +856,7 @@ export const JournalStore = signalStore(
        * otherwise locks it for this author and keeps renewing it until `releaseLock`.
        */
       async acquireLock(journalKey: string, entityKey: string): Promise<JournalLock | undefined> {
-        const me = store.identity.author();
+        const me = store.author();
         if (!me) return undefined;
         const other = lockedBy(store.locks(), entityKey, me.personKey, Date.now());
         if (other) return other;
@@ -738,7 +869,7 @@ export const JournalStore = signalStore(
       },
 
       async releaseLock(journalKey: string, entityKey: string): Promise<void> {
-        const me = store.identity.author();
+        const me = store.author();
         clearInterval(heartbeats.get(entityKey));
         heartbeats.delete(entityKey);
         if (!me) return;
@@ -753,7 +884,7 @@ export const JournalStore = signalStore(
       /** The live lock another person holds on this entity, else undefined (re-evaluated every 15 s). */
       lockOf(entityKey: string): JournalLock | undefined {
         store.lockClock();
-        const me = store.identity.author()?.personKey ?? '';
+        const me = store.author()?.personKey ?? '';
         return lockedBy(store.locks(), entityKey, me, Date.now());
       },
 
@@ -777,7 +908,7 @@ export const JournalStore = signalStore(
        * journal's authorKeys from it; the creator always stays an author.
        */
       async addCoAuthor(journalKey: string, person: AvatarInfo): Promise<void> {
-        const me = store.identity.author();
+        const me = store.author();
         if (!me) throw new JournalWriteRefused('noAuthor');
         const entity = store.journalState()[entityStateKey('journal', journalKey)];
         const view = viewOf(entity);
@@ -800,14 +931,14 @@ export const JournalStore = signalStore(
         return imagesOf(store.journalState(), journalKey);
       },
 
-      async createJournal(title: string): Promise<string> {
-        const key = crypto.randomUUID();
+      /** `key`: the caller may choose it, so a slow browser write (records kept) still knows the new journal. */
+      async createJournal(title: string, key: string = crypto.randomUUID()): Promise<string> {
         await write([{ journalKey: key, entity: 'journal', entityKey: key, op: 'create', fields: { title, subTitle: '', startDate: '', endDate: '' } }]);
         return key;
       },
 
-      async addFootprint(journalKey: string, title: string): Promise<string> {
-        const key = crypto.randomUUID();
+      /** `key`: as in createJournal. */
+      async addFootprint(journalKey: string, title: string, key: string = crypto.randomUUID()): Promise<string> {
         await write([{
           journalKey, entity: 'footprint', entityKey: key, op: 'create',
           fields: { journalKey, title, placeName: '', date: '', time: '', publishState: 'draft' },
@@ -886,13 +1017,13 @@ export const JournalStore = signalStore(
       },
 
       /** Adds photos to an existing photo block (any author's). */
-      async addPhotosToBlock(blockKey: string, seen?: Record<string, string>): Promise<{ added: number; skipped: SkippedPhoto[] }> {
+      async addPhotosToBlock(blockKey: string, seen?: Record<string, string>, files?: File[] | Promise<File[]>): Promise<{ added: number; skipped: SkippedPhoto[] }> {
         const { journalKey, block } = blockOf(blockKey);
-        const { drafts, imageKeys, photos, skipped } = await pickImages(journalKey);
+        const { drafts, imageKeys, photos, skipped } = await pickImages(journalKey, files);
         if (photos.length === 0) return { added: 0, skipped };
         const fields = { imageKeys: [...(block.imageKeys ?? []), ...imageKeys] };
         drafts.push({ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields, bases: basesOf(seen ?? block.hlcs, fields, CONFLICT_FIELDS['section'] ?? []) });
-        await write(drafts);
+        await writePhotos(journalKey, drafts, photos);
         return { added: photos.length, skipped };
       },
 
@@ -907,7 +1038,7 @@ export const JournalStore = signalStore(
       async archiveFootprint(footprintKey: string): Promise<void> {
         const fp = footprint(footprintKey);
         if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
-        const me = store.identity.author()?.personKey;
+        const me = store.author()?.personKey;
         if (!me) throw new JournalWriteRefused('noAuthor');
         if (hasOthersBlocks([fp], me)) throw new JournalWriteRefused('othersContent');
         await write([{ journalKey: fp.journalKey, entity: 'footprint', entityKey: footprintKey, op: 'archive', fields: {} }]);
@@ -919,7 +1050,7 @@ export const JournalStore = signalStore(
 
       /** Deletes (archives) a whole journal; its footprints disappear with it from every list. */
       async archiveJournal(journalKey: string): Promise<void> {
-        const me = store.identity.author()?.personKey;
+        const me = store.author()?.personKey;
         if (!me) throw new JournalWriteRefused('noAuthor');
         if (hasOthersBlocks(footprintsOf(store.journalState(), journalKey), me)) throw new JournalWriteRefused('othersContent');
         await write([{ journalKey, entity: 'journal', entityKey: journalKey, op: 'archive', fields: {} }]);
@@ -934,10 +1065,10 @@ export const JournalStore = signalStore(
        * Picks photos, stores one image record per imported photo plus one photo block — all in one
        * transaction. A footprint without date or position takes them from the photos (ship time).
        */
-      async addPhotoBlock(journalKey: string, footprintKey: string): Promise<{ added: number; skipped: SkippedPhoto[] }> {
+      async addPhotoBlock(journalKey: string, footprintKey: string, files?: File[] | Promise<File[]>): Promise<{ added: number; skipped: SkippedPhoto[] }> {
         const fp = footprint(footprintKey);
         if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
-        const { drafts, imageKeys, photos, skipped } = await pickImages(journalKey);
+        const { drafts, imageKeys, photos, skipped } = await pickImages(journalKey, files);
         if (photos.length === 0) return { added: 0, skipped };
         drafts.push({
           journalKey, entity: 'section', entityKey: crypto.randomUUID(), op: 'create',
@@ -958,7 +1089,7 @@ export const JournalStore = signalStore(
         if (Object.keys(fill).length > 0) {
           drafts.push({ journalKey, entity: 'footprint', entityKey: footprintKey, op: 'set', fields: fill, bases: basesOf(fp.hlcs, fill, CONFLICT_FIELDS['footprint'] ?? []) });
         }
-        await write(drafts);
+        await writePhotos(journalKey, drafts, photos);
         return { added: photos.length, skipped };
       },
     };

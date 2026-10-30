@@ -31,3 +31,5 @@ export * from './lib/journal-book-typography';
 export * from './lib/journal-book-edits';
 export * from './lib/journal-lock.util';
 export * from './lib/journal-lost-value.util';
+export * from './lib/journal-web.util';
+export * from './lib/journal-web-photo.util';
