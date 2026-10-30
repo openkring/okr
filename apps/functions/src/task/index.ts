@@ -4,7 +4,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 
 import { pushToPersons } from '../srv/push';
-import { decideDiaryTransition, decideTaskPush, TASK_LIST_URL, type TaskDocLike } from './task-decisions';
+import { decideDiaryTransition, decideTaskPush, openTaskCountFilters, TASK_LIST_URL, type TaskDocLike } from './task-decisions';
 import { applyTaskToDiary } from './task-diary';
 import type { TaskWrittenEvent } from './task-written-event';
 
@@ -20,8 +20,9 @@ const TASK_COLLECTION = 'tasks';
  * The push/skip decision (create vs. reassignment vs. reopen, self-assignment, done/archived/
  * unassigned) lives in `decideTaskPush` (spec 1.72 §7.1).
  *
- * Badge count mirrors the dashboard query (tasks-section.store.ts):
- *   isArchived==false, tenants array-contains tenantId, completionDate=='', assignee.key == personKey.
+ * Badge count mirrors the app's open-task count (app.store.ts `openTasksResource`, built on
+ * `getSystemQuery`): isArchived==false, tenants array-contains-any [tenantId, 'system'],
+ * completionDate=='', assignee.key == personKey. See `openTaskCountFilters`.
  */
 export const handleTaskWritten = async (event: TaskWrittenEvent): Promise<void> => {
     const before = event.data?.before?.data() as TaskDocLike | undefined;
@@ -60,13 +61,12 @@ export const handleTaskWritten = async (event: TaskWrittenEvent): Promise<void> 
     const tenantId = after?.tenants?.[0];
     if (!tenantId) return;
 
-    // Count open tasks for the assignee — mirrors tasks-section.store.ts exactly
-    const openSnap = await db.collection(TASK_COLLECTION)
-      .where('isArchived', '==', false)
-      .where('tenants', 'array-contains', tenantId)
-      .where('completionDate', '==', '')
-      .where('assignee.key', '==', assigneeKey)
-      .count().get();
+    // Count open tasks for the assignee — same tenant set as the app (incl. 'system')
+    let openQuery: FirebaseFirestore.Query = db.collection(TASK_COLLECTION);
+    for (const [field, op, value] of openTaskCountFilters(tenantId, assigneeKey)) {
+      openQuery = openQuery.where(field, op, value);
+    }
+    const openSnap = await openQuery.count().get();
     const badgeCount = openSnap.data().count;
 
     const title = after?.name || 'Neue Aufgabe';

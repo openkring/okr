@@ -21,11 +21,25 @@ vi.mock('../workflow', () => ({ runWorkflow: (a: unknown) => calls.runWorkflow(a
 
 import { handleTaskCompleted } from '../workflow/emit';
 import type { TaskWrittenEvent } from './task-written-event';
+import { openTaskCountFilters } from './task-decisions';
 import { TASK_HANDLERS, onTaskDocWritten } from './on-task-doc-written';
 
 const snap = (data: Record<string, unknown> | undefined) => ({ data: () => data, exists: data !== undefined });
 const ev = (before: Record<string, unknown> | undefined, after: Record<string, unknown> | undefined) =>
   ({ params: { taskId: 't1' }, data: { before: snap(before), after: snap(after) } }) as unknown as TaskWrittenEvent;
+
+describe('openTaskCountFilters (badge parity with the app, 1.127)', () => {
+  it('counts the tenant and the system tasks', () => {
+    expect(openTaskCountFilters('scs', 'p1')).toContainEqual(['tenants', 'array-contains-any', ['scs', 'system']]);
+  });
+  it('keeps the open/unarchived/assignee clauses', () => {
+    const f = openTaskCountFilters('scs', 'p1');
+    expect(f).toContainEqual(['isArchived', '==', false]);
+    expect(f).toContainEqual(['completionDate', '==', '']);
+    expect(f).toContainEqual(['assignee.key', '==', 'p1']);
+    expect(f).toHaveLength(4);
+  });
+});
 
 describe('tasks trigger', () => {
   beforeEach(() => {

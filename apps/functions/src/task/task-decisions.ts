@@ -74,3 +74,18 @@ export function decideDiaryTransition(before: TaskDocLike | undefined, after: Ta
   if (beforeDone && !afterDone) return before?.assignee?.key ? 'reopen' : 'none';
   return 'none';
 }
+
+/** One where-clause of the open-task badge count. */
+export type OpenTaskFilter = readonly [field: string, op: '==' | 'array-contains-any', value: unknown];
+
+/**
+ * The where-clauses of the badge's open-task count for one assignee. Keep in sync with
+ * libs/shared/feature/src/lib/app.store.ts `openTasksResource` (via `getSystemQuery`): the app counts
+ * the tenant's own tasks AND the shared `'system'` ones, so the server must too.
+ */
+export const openTaskCountFilters = (tenantId: string, assigneeKey: string): OpenTaskFilter[] => [
+  ['isArchived', '==', false],
+  ['tenants', 'array-contains-any', [tenantId, 'system']],
+  ['completionDate', '==', ''],
+  ['assignee.key', '==', assigneeKey],
+];
