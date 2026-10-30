@@ -1,7 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { getAvatarKey, getIconColor } from './icon.util';
+import { getAvatarKey, getIconColor, getSvgIconUrl, registerBundledIcons } from './icon.util';
 
 describe('icon.util', () => {
+  describe('getSvgIconUrl with bundled icons', () => {
+    const base = 'https://img.example';
+
+    it('builds the imgix url for an icon that is not bundled', () => {
+      expect(getSvgIconUrl(base, 'not-bundled-x')).toBe('https://img.example/logo/icons/not-bundled-x.svg');
+    });
+
+    it('returns the bundled data url once registered, only for the default set', () => {
+      registerBundledIcons({ 'bundled-y': 'data:image/svg+xml;utf8,%3Csvg%2F%3E' });
+      expect(getSvgIconUrl(base, 'bundled-y')).toBe('data:image/svg+xml;utf8,%3Csvg%2F%3E');
+      expect(getSvgIconUrl(base, 'bundled-y', 'section')).toBe('https://img.example/logo/section/bundled-y.svg');
+    });
+
+    it('keeps an empty name empty', () => {
+      expect(getSvgIconUrl(base, '')).toBe('');
+    });
+  });
+
   describe('getIconColor', () => {
     it('should return gold color when isValidated is true', () => {
       const result = getIconColor(true);

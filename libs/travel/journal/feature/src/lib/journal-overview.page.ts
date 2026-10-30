@@ -21,6 +21,8 @@ import { openJournalMenu } from './journal-menu-open';
 import { openOfflineMapsModal } from './journal-offline-maps.modal';
 import { openPhotoBookModal } from './journal-photo-book.modal';
 import { openPhotoSyncModal } from './journal-photo-sync.modal';
+import { registerBundledIcons } from '@okr/shared-util-core';
+import { JOURNAL_ICONS } from './journal-icons';
 import { JournalStore } from './journal.store';
 
 /** Wide screens (iPad landscape, desktop) get layout B — Ionic's `lg` breakpoint, spec 1.113 §9.1. */
@@ -147,6 +149,7 @@ export class JournalOverviewPage {
   });
 
   public constructor() {
+    registerBundledIcons(JOURNAL_ICONS); // the journal renders its icons offline (spec 1.126)
     void this.store.init();
     // the journal on screen is the one the other iPad syncs with (P2P, plan 5)
     effect(() => {

@@ -7,7 +7,7 @@ import {
 
 import { AlbumSectionComponent, ArticleSectionComponent, HeroSectionComponent } from '@okr/cms-section-feature';
 import { AppStore } from '@okr/shared-feature';
-import { fill } from '@okr/shared-util-core';
+import { fill, registerBundledIcons } from '@okr/shared-util-core';
 import { FootprintEditModal, JournalBlockSortModal, JournalReactions, ReactionComment, TextBlockEditModal } from '@okr/travel-journal-ui';
 import { createActionSheetButton, createActionSheetOptions, okrPrompt } from '@okr/shared-util-angular';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -18,6 +18,7 @@ import { blockActions, footprintMenu, FootprintFormModel, htmlToPlainText, lostV
 import { JournalFileUrlService } from './journal-file-url.service';
 import { showJournalError } from './journal-errors';
 import { openJournalMenu } from './journal-menu-open';
+import { JOURNAL_ICONS } from './journal-icons';
 import { JournalStore } from './journal.store';
 
 /**
@@ -157,6 +158,7 @@ export class JournalStoryPage {
   });
 
   public constructor() {
+    registerBundledIcons(JOURNAL_ICONS); // the journal renders its icons offline (spec 1.126)
     void this.store.init();
     // the journal on screen is the one the other iPad syncs with (P2P, plan 5)
     effect(() => {
