@@ -51,3 +51,11 @@ export function mergePending(snapshot: readonly JournalChange[], pending: readon
   const open = pending.filter((c) => !known.has(c.id));
   return { changes: [...snapshot, ...open], pending: open };
 }
+
+/**
+ * True for a refusal the new-journal retry should wait out: permission-denied on a batch whose journal
+ * is not materialised yet (applyJournalChange writes the journal doc about a second after its create record).
+ */
+export function isNewJournalRefusal(code: string | undefined, journalExists: boolean): boolean {
+  return code === 'permission-denied' && !journalExists;
+}

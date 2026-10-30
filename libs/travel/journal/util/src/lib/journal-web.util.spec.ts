@@ -1,6 +1,6 @@
 import { JournalChange } from '@okr/shared-models';
 import { formatHlc } from './journal-hlc.util';
-import { isWebDeviceId, maxSeqOf, mergePending, mergeStamps, receiveClocksInto } from './journal-web.util';
+import { isNewJournalRefusal, isWebDeviceId, maxSeqOf, mergePending, mergeStamps, receiveClocksInto } from './journal-web.util';
 
 const rec = (id: string, deviceId = 'dev', seq = 1) => ({ id, deviceId, seq }) as unknown as JournalChange;
 
@@ -53,5 +53,14 @@ describe('mergePending', () => {
   it('returns the snapshot unchanged with empty pending', () => {
     const a = rec('a');
     expect(mergePending([a], [])).toEqual({ changes: [a], pending: [] });
+  });
+});
+
+describe('isNewJournalRefusal', () => {
+  it('is true only for permission-denied on a journal that is not materialised yet', () => {
+    expect(isNewJournalRefusal('permission-denied', false)).toBe(true);
+    expect(isNewJournalRefusal('permission-denied', true)).toBe(false);
+    expect(isNewJournalRefusal('unavailable', false)).toBe(false);
+    expect(isNewJournalRefusal(undefined, false)).toBe(false);
   });
 });
