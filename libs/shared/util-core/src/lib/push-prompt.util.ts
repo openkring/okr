@@ -23,3 +23,19 @@ export function shouldAskForPush(input: {
   if (!input.isNative && !input.isStandalone) return false;
   return !(input.snoozedUntil !== undefined && input.now < input.snoozedUntil);
 }
+
+/** A long-lived session refreshes its push registration once this much time has passed. */
+export const PUSH_REGISTRATION_REFRESH_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Whether this session's push registration needs a silent refresh (1.127). The token doc's
+ * `updatedAt` moves only on a registration, and the morning job prunes tokens unused for 60 days
+ * together with their Matrix pushers — so a session that stays open for weeks (kiosk iPad,
+ * always-open desktop PWA) must re-register now and then. Stale when nothing registered yet in
+ * this session, after PUSH_REGISTRATION_REFRESH_MS, or when the last time lies in the future
+ * (clock set back — never "fresh forever").
+ */
+export function isRegistrationStale(lastMs: number | undefined, nowMs: number): boolean {
+  if (lastMs === undefined || lastMs > nowMs) return true;
+  return nowMs - lastMs >= PUSH_REGISTRATION_REFRESH_MS;
+}

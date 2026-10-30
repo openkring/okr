@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PUSH_PROMPT_SNOOZE_MS, shouldAskForPush } from './push-prompt.util';
+import { isRegistrationStale, PUSH_PROMPT_SNOOZE_MS, PUSH_REGISTRATION_REFRESH_MS, shouldAskForPush } from './push-prompt.util';
 
 const NOW = Date.parse('2026-10-17T12:00:00Z');
 const base = { state: 'prompt' as const, isNative: true, isStandalone: false, now: NOW };
@@ -32,5 +32,29 @@ describe('shouldAskForPush', () => {
 
   it('snoozes for 30 days', () => {
     expect(PUSH_PROMPT_SNOOZE_MS).toBe(30 * 24 * 60 * 60 * 1000);
+  });
+});
+
+describe('isRegistrationStale', () => {
+  it('is stale when this session never registered successfully', () => {
+    expect(isRegistrationStale(undefined, NOW)).toBe(true);
+  });
+
+  it('is fresh within 24 hours of the last registration', () => {
+    expect(PUSH_REGISTRATION_REFRESH_MS).toBe(24 * 60 * 60 * 1000);
+    expect(isRegistrationStale(NOW, NOW)).toBe(false);
+    expect(isRegistrationStale(NOW - PUSH_REGISTRATION_REFRESH_MS + 1, NOW)).toBe(false);
+  });
+
+  // A kiosk iPad or an always-open desktop PWA: the token doc must be refreshed long before the
+  // 60-day prune job removes it (and its Matrix pusher).
+  it('is stale once 24 hours have passed', () => {
+    expect(isRegistrationStale(NOW - PUSH_REGISTRATION_REFRESH_MS, NOW)).toBe(true);
+    expect(isRegistrationStale(NOW - 3 * PUSH_REGISTRATION_REFRESH_MS, NOW)).toBe(true);
+  });
+
+  // The clock was set back: a registration "in the future" is treated as stale, never as fresh forever.
+  it('is stale when the last registration lies in the future', () => {
+    expect(isRegistrationStale(NOW + 60_000, NOW)).toBe(true);
   });
 });

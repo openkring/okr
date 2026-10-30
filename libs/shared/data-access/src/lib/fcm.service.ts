@@ -122,6 +122,10 @@ export class FcmService {
   async disablePush(uid: string): Promise<void> {
     const token = this._currentToken;
     if (!token) return;
+    // A pusher registration still running when the user logs out would land AFTER the
+    // unregister call and leave a pusher behind (chat pushes to a signed-out device). Keep its
+    // promise to wait for it below; the logout timeout in AuthService bounds the wait.
+    const inFlight = this.pusherInFlight?.promise;
     // Reset BEFORE the first await: a registerPusher still in flight must not re-mark the token
     // as registered, and a slow disablePush must not wipe the state of a login that follows.
     this._currentToken = null;
@@ -130,9 +134,13 @@ export class FcmService {
     try {
       const unregister = httpsCallable<{ pushkey: string }, { removed: boolean }>(
         getFunctions(getApp(), 'europe-west6'), 'unregisterMatrixPusher');
+      const unregisterPusher = async () => {
+        await inFlight?.catch(() => undefined);
+        return unregister({ pushkey: token });
+      };
       const results = await Promise.allSettled([
         this.removeToken(uid, token),
-        unregister({ pushkey: token }),
+        unregisterPusher(),
         Capacitor.isNativePlatform() ? PushNotifications.unregister() : Promise.resolve(),
       ]);
       for (const r of results) {

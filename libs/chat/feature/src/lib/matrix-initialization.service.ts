@@ -8,7 +8,7 @@ import { AppStore } from '@okr/shared-feature';
 import { MatrixChatService } from '@okr/chat-data-access';
 import { ChatStatusService, FcmService, writeBadgeLedgerFromPage } from '@okr/shared-data-access';
 import { ChatBlockedError } from '@okr/shared-models';
-import { chatBlockedAlertMessage, isKioskOnly, PUSH_PROMPT_SNOOZE_MS, shouldAskForPush } from '@okr/shared-util-core';
+import { chatBlockedAlertMessage, isKioskOnly, isRegistrationStale, PUSH_PROMPT_SNOOZE_MS, shouldAskForPush } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { CHAT_BLOCKED_ALERT_I18N_KEYS, ChatBlockedAlertI18n, PUSH_PROMPT_I18N_KEYS, PushPromptI18n } from '@okr/chat-util';
 import { AlertController } from '@ionic/angular';
@@ -44,6 +44,10 @@ export class MatrixInitializationService {
   private kioskCallWindowMounted = false;
   /** The uid this device last registered for push; undefined while signed out. */
   private pushUid: string | undefined;
+  /** When pushUid last registered successfully (epoch ms); in memory only, see refreshPushIfStale. */
+  private pushRegisteredAt: number | undefined;
+  /** A registerPush is running: the visibility refresh must not start a second one. */
+  private pushRegistering = false;
 
   /**
    * 1.107 gate state: 'none' (signed out), 'blocked' (chat blocked for this person) or 'open'.
@@ -142,9 +146,32 @@ export class MatrixInitializationService {
    * initializeMatrix adds the pusher (ensureMatrixPusher); this covers the other ordering.
    */
   private async registerPush(uid: string, allowPrompt: boolean): Promise<string | null> {
-    const token = await this.fcmService.enablePush(uid, allowPrompt, false);
-    if (token && this.matrixService.isInitialized && this.chatGate() === 'open') await this.fcmService.ensureMatrixPusher();
-    return token;
+    // No await before enablePush: on the prompt path it must reach requestPermission() in the tap.
+    this.pushRegistering = true;
+    try {
+      const token = await this.fcmService.enablePush(uid, allowPrompt, false);
+      if (token && this.matrixService.isInitialized && this.chatGate() === 'open') await this.fcmService.ensureMatrixPusher();
+      if (token && uid === this.pushUid) this.pushRegisteredAt = Date.now();
+      return token;
+    } finally {
+      this.pushRegistering = false;
+    }
+  }
+
+  /**
+   * Silent daily refresh for long-lived sessions (1.127): the token doc's updatedAt moves only on
+   * a registration, and the morning job prunes tokens unused for 60 days together with their
+   * Matrix pushers — a kiosk iPad or an always-open desktop PWA registers once at app start and
+   * would lose push while still running. Runs when the app becomes visible again (Capacitor fires
+   * visibilitychange on native resume too), only with permission already granted, and never
+   * prompts.
+   */
+  private async refreshPushIfStale(): Promise<void> {
+    const uid = this.pushUid;
+    if (!uid || this.pushRegistering || !isRegistrationStale(this.pushRegisteredAt, Date.now())) return;
+    if (await this.fcmService.getPermissionState() !== 'granted') return;
+    if (uid !== this.pushUid || this.pushRegistering) return; // signed out or started meanwhile
+    await this.registerPush(uid, false);
   }
 
   /**
@@ -259,8 +286,13 @@ export class MatrixInitializationService {
       // only signal. Video-call banners are left alone: they ring with requireInteraction.
       const closeReadNotifications = async () => {
         // Subscribed at bootstrap, before Matrix has synced: unreadRooms() is [] until then, so
-        // without this guard every chat banner would be closed as "read".
+        // without this guard every chat banner would be closed as "read". isInitialized alone is
+        // not enough — it is true right after startClient — and neither is PREPARED: with the
+        // IndexedDB cache PREPARED fires first for the cache replay, whose unread counts predate
+        // the banners that arrived while the app was closed. Only SYNCING (a live /sync after
+        // PREPARED) reflects what was read here or on another device.
         if (!this.matrixService.isInitialized) return;
+        if (this.matrixChatStore.syncState() !== 'SYNCING') return;
         if (!('serviceWorker' in navigator)) return;
         // The FCM worker's registration: the banners are its own, ngsw's lists none of them.
         const reg = await this.fcmService.getPushRegistration().catch(() => undefined);
@@ -272,8 +304,14 @@ export class MatrixInitializationService {
           if (data?.type === 'chat' && data.roomId && !unread.has(data.roomId)) n.close();
         }
       };
+      // Re-run on unread changes AND when the live sync arrives: the unread list may already be
+      // settled from the cache replay, so the transition to SYNCING alone must trigger a pass.
+      const unreadAfterLiveSync = computed(() => ({
+        live: this.matrixChatStore.syncState() === 'SYNCING',
+        unread: this.matrixChatStore.unreadRooms(),
+      }), { equal: (x, y) => x.live === y.live && x.unread === y.unread });
       runInInjectionContext(this.injector, () =>
-        toObservable(this.matrixChatStore.unreadRooms).subscribe(() => closeReadNotifications())
+        toObservable(unreadAfterLiveSync).subscribe(() => closeReadNotifications())
       );
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') closeReadNotifications();
@@ -290,6 +328,7 @@ export class MatrixInitializationService {
       untracked(() => {
         if (!current) {
           this.pushUid = undefined;
+          this.pushRegisteredAt = undefined;
           return;
         }
         if (current === this.pushUid || !this.fcmService.isSupported()) return;
@@ -303,6 +342,12 @@ export class MatrixInitializationService {
           .catch(err => console.warn('MatrixInitializationService: push prompt failed:', err));
       });
     }));
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible') return;
+      void this.refreshPushIfStale()
+        .catch(err => console.warn('MatrixInitializationService: push refresh failed (non-critical):', err));
+    });
   }
 
   /** The chat was blocked during a call: the call is gone, show the admin's message. */
