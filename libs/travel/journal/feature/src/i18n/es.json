@@ -196,6 +196,7 @@
     "add": "Añadir invitado",
     "share": "Compartir enlace",
     "share_text": "Sigue nuestro viaje aquí: {url}",
+    "link_copied": "El enlace está copiado. Ya puedes compartirlo.",
     "expiry": "Validez",
     "expiry_title": "¿Cuánto tiempo debe funcionar el enlace?",
     "expiry_1m": "Un mes",

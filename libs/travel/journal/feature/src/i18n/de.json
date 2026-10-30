@@ -196,6 +196,7 @@
     "add": "Gast hinzufügen",
     "share": "Link teilen",
     "share_text": "Hier kannst du unsere Reise mitverfolgen: {url}",
+    "link_copied": "Der Link ist kopiert. Du kannst ihn jetzt weitergeben.",
     "expiry": "Gültigkeit",
     "expiry_title": "Wie lange soll der Link gelten?",
     "expiry_1m": "Einen Monat",

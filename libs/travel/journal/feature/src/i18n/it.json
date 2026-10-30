@@ -196,6 +196,7 @@
     "add": "Aggiungi ospite",
     "share": "Condividi il link",
     "share_text": "Segui il nostro viaggio qui: {url}",
+    "link_copied": "Il link è copiato. Ora puoi condividerlo.",
     "expiry": "Validità",
     "expiry_title": "Per quanto tempo deve funzionare il link?",
     "expiry_1m": "Un mese",

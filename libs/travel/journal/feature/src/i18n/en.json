@@ -196,6 +196,7 @@
     "add": "Add guest",
     "share": "Share link",
     "share_text": "Follow our trip here: {url}",
+    "link_copied": "The link is copied. You can pass it on now.",
     "expiry": "Validity",
     "expiry_title": "How long should the link work?",
     "expiry_1m": "One month",

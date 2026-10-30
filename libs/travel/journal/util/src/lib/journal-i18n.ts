@@ -138,6 +138,7 @@ export const JOURNAL_I18N_KEYS = {
   guest_add: PFX + 'guests.add',
   guest_share: PFX + 'guests.share',
   guest_share_text: PFX + 'guests.share_text',
+  guests_link_copied: PFX + 'guests.link_copied',
   guest_expiry: PFX + 'guests.expiry',
   guest_expiry_title: PFX + 'guests.expiry_title',
   guest_expiry_1m: PFX + 'guests.expiry_1m',

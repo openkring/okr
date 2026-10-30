@@ -1,10 +1,12 @@
 import { inject, Injectable } from '@angular/core';
+import { Capacitor } from '@capacitor/core';
 import { Network } from '@capacitor/network';
 import { Share } from '@capacitor/share';
 import { ActionSheetController, ModalController, ToastController } from '@ionic/angular';
 
 import { AvatarInfo } from '@okr/shared-models';
 import { ModelSelectService } from '@okr/shared-feature';
+import { copyToClipboardDeferred } from '@okr/shared-util-angular';
 import { fill } from '@okr/shared-util-core';
 import { GuestLinkView, guestErrorOf, JournalGuestService } from '@okr/travel-journal-data-access';
 import { NoticeModal } from '@okr/travel-journal-ui';
@@ -14,6 +16,15 @@ import { showJournalError } from './journal-errors';
 import { JournalStore } from './journal.store';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Web Share is missing («Share API not available in this browser», from Capacitor's web Share) or refused
+ * (NotAllowedError: the tap no longer counts after the link was created on the server).
+ */
+function isShareUnavailable(error: unknown): boolean {
+  const message = String((error as Error)?.message ?? '').toLowerCase();
+  return message.includes('not available') || message.includes('unavailable') || (error as { name?: unknown })?.name === 'NotAllowedError';
+}
 
 /**
  * Guest actions of a journal (spec 1.113 §7, plan 7; listed in the «Gäste verwalten» modal since 1.126 §3): add a
@@ -125,15 +136,34 @@ export class JournalGuestsSheet {
     await sheet.present();
   }
 
-  /** The personal link (created on first use) through the share sheet: Messages, Mail, Signal, AirDrop … */
+  /**
+   * The personal link (created on first use) through the share sheet: Messages, Mail, Signal, AirDrop … A browser
+   * without Web Share (desktop Firefox, some Chromium builds) gets the link on the clipboard instead. Runs from the
+   * sheet button's handler: nothing is awaited before the clipboard write starts (the tap must still count).
+   */
   private async share(journalKey: string, guest: AvatarInfo): Promise<void> {
+    const url = this.guestService.createLink(journalKey, guest.key).then((link) => link.url);
+    const web = !Capacitor.isNativePlatform();
+    if (web && typeof navigator.share !== 'function') return this.copyLink(url);
     try {
-      const link = await this.guestService.createLink(journalKey, guest.key);
-      await Share.share({ title: this.nameOf(guest), text: fill(this.store.i18n.guest_share_text(), { url: link.url }), url: link.url });
+      const link = await url;
+      await Share.share({ title: this.nameOf(guest), text: fill(this.store.i18n.guest_share_text(), { url: link }), url: link });
     } catch (error) {
       if (String((error as Error)?.message ?? '').toLowerCase().includes('cancel')) return; // share sheet closed
+      if (web && isShareUnavailable(error)) return this.copyLink(url);
       await showJournalError(this.toastController, this.store.i18n, error);
     }
+  }
+
+  /** Browser fallback of `share`: the link on the clipboard, then a short toast. */
+  private async copyLink(url: Promise<string>): Promise<void> {
+    try {
+      await copyToClipboardDeferred(url);
+    } catch (error) {
+      await showJournalError(this.toastController, this.store.i18n, error);
+      return;
+    }
+    await this.toast(this.store.i18n.guests_link_copied());
   }
 
   private async expiry(journalKey: string, guest: AvatarInfo, changed: () => void): Promise<void> {
