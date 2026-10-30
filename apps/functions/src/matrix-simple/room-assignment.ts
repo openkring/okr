@@ -49,12 +49,12 @@ interface RoomAssignment {
  * Localparts der mautrix-Bruecken-Bots. Spiegelt `BRIDGE_BOT_LOCALPARTS` in `@okr/chat-util`
  * (libs sind im Functions-Build nicht importierbar — beide zusammen pflegen).
  */
-const BRIDGE_BOT_LOCALPARTS = [
+export const BRIDGE_BOT_LOCALPARTS = [
   'signalbot', 'whatsappbot', 'telegrambot', 'discordbot', 'slackbot',
   'instagrambot', 'messengerbot', 'gmessagesbot', 'twitterbot',
 ];
 
-function isBridgeBotId(userId: string | undefined): boolean {
+export function isBridgeBotId(userId: string | undefined): boolean {
   if (!userId) return false;
   return BRIDGE_BOT_LOCALPARTS.includes(userId.split(':')[0].replace(/^@/, '').toLowerCase());
 }
