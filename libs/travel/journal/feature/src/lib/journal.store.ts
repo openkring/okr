@@ -90,6 +90,12 @@ export interface BookPrintStatus {
   state: 'idle' | 'running' | 'done' | 'offline'; journalKey: string; done: number; total: number; uploaded: number; missing: number; failed: number;
 }
 export const NO_BOOK_PRINTS: BookPrintStatus = { state: 'idle', journalKey: '', done: 0, total: 0, uploaded: 0, missing: 0, failed: 0 };
+
+/** The browser's offline flag (always false outside a browser). */
+function isOffline(): boolean {
+  return typeof navigator !== 'undefined' && !navigator.onLine;
+}
+
 const PRINT_CHUNK = 50; // prepareJournalPhotoUploads takes at most 50 files per call
 const printFileOf = (imageKey: string): string => `${imageKey}-print.jpg`;
 
@@ -171,7 +177,7 @@ export const JournalStore = signalStore(
      * keeps trying) and throws JournalWriteSlow, so the page can tell the user.
      */
     async function writeWeb(drafts: ChangeDraft[]): Promise<JournalChange[]> {
-      if (typeof navigator !== 'undefined' && !navigator.onLine) throw new JournalWriteRefused('offline');
+      if (isOffline()) throw new JournalWriteRefused('offline');
       const author = store.author();
       if (!author) throw new JournalWriteRefused('noAuthor');
       const tenantId = store.appStore.tenantId();
@@ -199,10 +205,13 @@ export const JournalStore = signalStore(
       return journalKey ? footprintsOf(store.journalState(), journalKey).find((f) => f.key === footprintKey) : undefined;
     }
 
-    /** Picks photos and builds one image record per imported photo (not yet written). */
-    async function pickImages(journalKey: string): Promise<{ drafts: ChangeDraft[]; imageKeys: string[]; photos: PickedPhoto[]; skipped: SkippedPhoto[] }> {
+    /**
+     * Picks photos and builds one image record per imported photo (not yet written). `files` (browser only) are files
+     * the page already picked inside the user's tap (a file dialog opened later may be ignored); native ignores it.
+     */
+    async function pickImages(journalKey: string, files?: File[] | Promise<File[]>): Promise<{ drafts: ChangeDraft[]; imageKeys: string[]; photos: PickedPhoto[]; skipped: SkippedPhoto[] }> {
       if (!store.author()) throw new JournalWriteRefused('noAuthor'); // before the picker opens
-      if (!store.native()) return pickWebImages(journalKey);
+      if (!store.native()) return pickWebImages(journalKey, files);
       const { photos, skipped } = await JournalPhotos.pick({ journalKey });
       const drafts: ChangeDraft[] = [];
       const imageKeys: string[] = [];
@@ -225,9 +234,12 @@ export const JournalStore = signalStore(
      * Browser (spec 1.126 phase 3, design §3): picks files and uploads all their files FIRST; only photos whose
      * files are in the bucket get an image record, so an iPad never receives a block without its photos.
      */
-    async function pickWebImages(journalKey: string): Promise<{ drafts: ChangeDraft[]; imageKeys: string[]; photos: WebPhoto[]; skipped: SkippedPhoto[] }> {
-      const files = await store.webPhotos.pickFiles();
+    async function pickWebImages(journalKey: string, picked?: File[] | Promise<File[]>): Promise<{ drafts: ChangeDraft[]; imageKeys: string[]; photos: WebPhoto[]; skipped: SkippedPhoto[] }> {
+      // offline every upload would fail and each photo would count as «skipped»: say «offline» instead
+      if (isOffline()) throw new JournalWriteRefused('offline');
+      const files = await (picked ?? store.webPhotos.pickFiles());
       if (files.length === 0) return { drafts: [], imageKeys: [], photos: [], skipped: [] };
+      if (isOffline()) throw new JournalWriteRefused('offline'); // went offline while the dialog was open
       patchState(store, { webUpload: { done: 0, total: files.length } });
       let uploaded: { photos: WebPhoto[]; skipped: SkippedPhoto[] };
       try {
@@ -1005,9 +1017,9 @@ export const JournalStore = signalStore(
       },
 
       /** Adds photos to an existing photo block (any author's). */
-      async addPhotosToBlock(blockKey: string, seen?: Record<string, string>): Promise<{ added: number; skipped: SkippedPhoto[] }> {
+      async addPhotosToBlock(blockKey: string, seen?: Record<string, string>, files?: File[] | Promise<File[]>): Promise<{ added: number; skipped: SkippedPhoto[] }> {
         const { journalKey, block } = blockOf(blockKey);
-        const { drafts, imageKeys, photos, skipped } = await pickImages(journalKey);
+        const { drafts, imageKeys, photos, skipped } = await pickImages(journalKey, files);
         if (photos.length === 0) return { added: 0, skipped };
         const fields = { imageKeys: [...(block.imageKeys ?? []), ...imageKeys] };
         drafts.push({ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields, bases: basesOf(seen ?? block.hlcs, fields, CONFLICT_FIELDS['section'] ?? []) });
@@ -1053,10 +1065,10 @@ export const JournalStore = signalStore(
        * Picks photos, stores one image record per imported photo plus one photo block — all in one
        * transaction. A footprint without date or position takes them from the photos (ship time).
        */
-      async addPhotoBlock(journalKey: string, footprintKey: string): Promise<{ added: number; skipped: SkippedPhoto[] }> {
+      async addPhotoBlock(journalKey: string, footprintKey: string, files?: File[] | Promise<File[]>): Promise<{ added: number; skipped: SkippedPhoto[] }> {
         const fp = footprint(footprintKey);
         if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
-        const { drafts, imageKeys, photos, skipped } = await pickImages(journalKey);
+        const { drafts, imageKeys, photos, skipped } = await pickImages(journalKey, files);
         if (photos.length === 0) return { added: 0, skipped };
         drafts.push({
           journalKey, entity: 'section', entityKey: crypto.randomUUID(), op: 'create',

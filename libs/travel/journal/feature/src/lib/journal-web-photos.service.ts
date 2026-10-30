@@ -30,7 +30,7 @@ export class JournalWebPhotos {
   private readonly bookService = inject(JournalBookService);
   private readonly fileUrlService = inject(JournalFileUrlService);
 
-  /** Opens the file dialog (multiple, WEB_PHOTO_ACCEPT); resolves [] on cancel. */
+  /** Opens the file dialog (multiple, WEB_PHOTO_ACCEPT); resolves [] on cancel. Call it synchronously inside the user's tap (WebKit may ignore the click otherwise). */
   public pickFiles(): Promise<File[]> {
     return new Promise<File[]>((resolve) => {
       const input = document.createElement('input');
