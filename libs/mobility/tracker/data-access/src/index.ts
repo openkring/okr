@@ -3,3 +3,4 @@ export * from './lib/track-db';
 export * from './lib/track.service';
 export * from './lib/tracker-photos.plugin';
 export * from './lib/tracker-calibration';
+export * from './lib/terrain-elevation.service';

@@ -138,5 +138,11 @@
     "pending": "Se vinculará al cuaderno de bitácora en cuanto tengas conexión.",
     "taken_track": "«{track}»: {name} ya está grabando esta salida. Tu recorrido queda sin cuaderno de bitácora.",
     "unavailable_track": "«{track}»: esta salida del cuaderno de bitácora ya no se puede vincular. Tu recorrido queda sin cuaderno de bitácora."
+  },
+  "elevation": {
+    "title": "Perfil de altitud",
+    "gain": "subida",
+    "loss": "bajada",
+    "terrain": "Altitudes del modelo de terreno de {provider}"
   }
 }

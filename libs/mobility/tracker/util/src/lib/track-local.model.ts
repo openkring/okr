@@ -46,6 +46,7 @@ export interface PointRow {
   lng: number;
   t: number;
   acc?: number | null;
+  alt?: number | null;
 }
 
 /** Groups point rows by section index (ascending), each group ordered by t. Gaps in indices are kept as empty groups. */
@@ -54,6 +55,7 @@ export function groupPointsBySection(rows: PointRow[]): TrackPoint[][] {
   for (const r of rows) {
     const p: TrackPoint = { lat: r.lat, lng: r.lng, t: r.t };
     if (r.acc !== null && r.acc !== undefined) p.acc = r.acc;
+    if (r.alt !== null && r.alt !== undefined) p.alt = r.alt;
     (groups[r.section] ??= []).push(p);
   }
   return Array.from(groups, (g) => (g ?? []).sort((a, b) => a.t - b.t));

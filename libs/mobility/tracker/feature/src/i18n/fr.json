@@ -138,5 +138,11 @@
     "pending": "Sera relié au journal de bord dès que tu seras en ligne.",
     "taken_track": "« {track} » : {name} enregistre déjà cette sortie. Ton parcours reste sans journal de bord.",
     "unavailable_track": "« {track} » : cette sortie du journal de bord ne peut plus être reliée. Ton parcours reste sans journal de bord."
+  },
+  "elevation": {
+    "title": "Profil altimétrique",
+    "gain": "montée",
+    "loss": "descente",
+    "terrain": "Altitudes tirées du modèle de terrain de {provider}"
   }
 }

@@ -58,6 +58,10 @@ export const TRACKER_I18N_KEYS = {
   detail_not_found: PFX + 'detail.not_found',
   detail_save_error: PFX + 'detail.save_error',
   detail_share_error: PFX + 'detail.share_error',
+  elevation_title: PFX + 'elevation.title',
+  elevation_gain: PFX + 'elevation.gain',
+  elevation_loss: PFX + 'elevation.loss',
+  elevation_terrain: PFX + 'elevation.terrain', // single braces: {provider}
   photos_title: PFX + 'photos.title',
   photos_hide: PFX + 'photos.hide',
   photos_show: PFX + 'photos.show',

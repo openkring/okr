@@ -71,9 +71,10 @@ export function accumulateDistance(totalM: number, prev: TrackPoint | undefined,
 }
 
 /** A native location fix as a track point. */
-export function toTrackPoint(l: { lat: number; lng: number; accuracy: number | null; time: number }): TrackPoint {
+export function toTrackPoint(l: { lat: number; lng: number; accuracy: number | null; time: number; altitude?: number | null }): TrackPoint {
   const p: TrackPoint = { lat: l.lat, lng: l.lng, t: l.time };
   if (l.accuracy !== null && l.accuracy !== undefined) p.acc = l.accuracy;
+  if (l.altitude !== null && l.altitude !== undefined && Number.isFinite(l.altitude)) p.alt = Math.round(l.altitude);
   return p;
 }
 
