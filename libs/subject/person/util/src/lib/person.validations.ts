@@ -36,7 +36,7 @@ export const personValidations = staticSuite((model: PersonFormModel, tenants: s
 
   // cross field validations
   omitWhen(!model.dateOfDeath || !model.dateOfBirth, () => {
-    test('dateOfDeath', '@personDeathAfterBirth', () => {
+    test('dateOfDeath', 'personDateOfDeathAfterBirth', () => {
       // compares at the coarsest precision the two dates share; a pair with no
       // comparable year (a birthday without a year) reports no conflict
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

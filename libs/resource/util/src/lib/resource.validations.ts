@@ -34,7 +34,7 @@ export const resourceValidations = staticSuite((model: ResourceModel, tenants: s
   numberValidations('height', model.height, false, 0, 50);
 
   omitWhen(model.data === undefined, () => {
-    test('data', '@resourceData', () => {
+    test('data', 'invalidValue', () => {
       enforce(isArrayOfBaseProperties(model.data)).isTruthy();
     });
   });

@@ -40,7 +40,7 @@ export const ownershipValidations = staticSuite((model: OwnershipModel, tenants:
   dateValidations('validTo', model.validTo);
 
    omitWhen(model.validFrom === '' || model.validTo === '', () => {
-    test('validTo', '@ownershipValidToAfterValidFrom', () => {
+    test('validTo', 'ownershipValidToAfterValidFrom', () => {
       enforce(isAfterDate(model.validTo, model.validFrom)).isTruthy();
     });
   });

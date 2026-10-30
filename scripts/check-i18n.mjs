@@ -8,9 +8,14 @@
  *   2. references — every key the code (libs + scripts/seed-*.mjs) names resolves in `de`:
  *                     '@scope.path.key'              literal
  *                     PFX + 'path.key'               where `const PFX = '@scope.'`
+ *                     '@key'                         a dot-less root key of each app's main bundle
  *                   A scope containing `/` is a lib (libs/<scope>/src/i18n), `@item.*` is a menu
  *                   label (libs/cms/menu/feature), anything else is a top-level key of each app's
  *                   main bundle. A key may resolve to an object (a base the code extends).
+ *                   A dot-less '@key' must exist at the top of every main bundle — '@quarter' (SCS-E7)
+ *                   and '@allQuarters' (SCS-E8) lived in libs/shared/ui and rendered raw everywhere.
+ *                   That includes a Vest message: okr-error-note sends '@key' to the main bundle,
+ *                   not to `validation.key` — a bare message is the one that lands there.
  *   3. validation — a bare Vest message (`test('field', 'msg', …)` with no `@`) is looked up by
  *                   okr-error-note as `validation.msg` in the main bundle, so it must exist there.
  *                   Prefer scoped messages ('@<scope>.validation.msg') for lib-specific text.
@@ -67,6 +72,8 @@ const ALLOWLIST = {
   'libs/shared/categories/src/lib/shipment-type.ts': ['*'],
   // placeholder text shown in the key input, not a lookup
   'libs/aoc/feature/src/lib/tag-string.form.ts': ['@tag.name'],
+  // the mention trigger for a room, not a lookup
+  'libs/chat/ui/src/lib/mention-autocomplete.ts': ['@room'],
 };
 const allowed = (file, key) => {
   const list = ALLOWLIST[file];
@@ -140,6 +147,7 @@ const checkKey = (where, fullKey) => {
 
 // ---------------------------------------------------------------- 2. references
 const KEY_LITERAL = /(['"`])(@[a-z][\w-]*(?:\/[\w-]+)*\.[\w.-]*)\1/g;
+const ROOT_KEY_LITERAL = /(['"`])(@[a-zA-Z][\w-]*)\1/g;
 const PFX_DECL = /const\s+(\w+)\s*=\s*(['"`])(@[a-z][\w-]*(?:\/[\w-]+)*\.[\w.-]*)\2/g;
 
 // seed scripts write menuItems docs — their '@item.*' labels must exist before they are seeded
@@ -166,6 +174,15 @@ for (const file of sources) {
     // skip npm import specifiers ('@angular/core.x' never occurs; '@okr/x' has no dot after scope)
     if (allowed(file, key)) continue;
     checkKey(`${file}:${lineOf(src, m.index)}`, key);
+  }
+  if (mainBundles.length > 0) {
+    for (const m of src.matchAll(ROOT_KEY_LITERAL)) {
+      const key = m[2];
+      if (allowed(file, key)) continue;
+      for (const b of mainBundles) {
+        if (typeof b.json[key.slice(1)] !== 'string') report(`${file}:${lineOf(src, m.index)}`, `reference: root key "${key}" missing from ${b.file}`);
+      }
+    }
   }
   for (const [name, pfx] of prefixes) {
     const use = new RegExp(String.raw`\b${name}\s*\+\s*(['"\`])([\w.-]+)\1`, 'g');

@@ -38,7 +38,7 @@ export const memberNewFormValidations = staticSuite((model: MemberNewFormModel) 
   // year has no year to compare and is skipped.
   const dobPrecision = classifyStoreDate(model.dateOfBirth);
   omitWhen(model.dateOfBirth === '' || dobPrecision === 'dayMonthOnly', () => {
-    test('dateOfBirth', '@personDateOfBirthNotFuture', () => {
+    test('dateOfBirth', 'personDateOfBirthNotFuture', () => {
       if (dobPrecision === 'yearOnly') {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         enforce(Number(model.dateOfBirth!.substring(0, 4))).lessThanOrEquals(getYear());
@@ -51,7 +51,7 @@ export const memberNewFormValidations = staticSuite((model: MemberNewFormModel) 
 
   const dodPrecision = classifyStoreDate(model.dateOfDeath);
   omitWhen(model.dateOfDeath === '' || dodPrecision === 'dayMonthOnly', () => {
-    test('dateOfDeath', '@personDateOfDeathNotFuture', () => {
+    test('dateOfDeath', 'personDateOfDeathNotFuture', () => {
       if (dodPrecision === 'yearOnly') {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         enforce(Number(model.dateOfDeath!.substring(0, 4))).lessThanOrEquals(getYear());
@@ -63,7 +63,7 @@ export const memberNewFormValidations = staticSuite((model: MemberNewFormModel) 
   });
 
   omitWhen(model.dateOfDeath === '' || model.dateOfBirth === '', () => {
-    test('dateOfDeath', '@personDateOfDeathAfterBirth', () => {
+    test('dateOfDeath', 'personDateOfDeathAfterBirth', () => {
       // compares at the coarsest precision the two dates share; a pair with no
       // comparable year (a birthday without a year) reports no conflict
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

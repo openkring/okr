@@ -11,10 +11,10 @@ export const commentValidations = staticSuite((model: CommentModel, tenants: str
   
   // check the parentCollection to be a supported collection: subject, resource, membership, ownership
   
-  test('description', '@commentNotEmpty', () => {
+  test('description', 'commentNotEmpty', () => {
     enforce(model.description).isNotEmpty();
   });
-  test('description', '@commentShouldMakeSense', () => {
+  test('description', 'commentShouldMakeSense', () => {
     enforce(model.description).notEquals('Neuer Kommentar wurde erstellt');
     enforce(model.description).notEquals('initial comment');
     enforce(model.description).notEquals('initial');

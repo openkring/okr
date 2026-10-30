@@ -23,19 +23,19 @@ export const documentValidations = staticSuite((model: DocumentModel, tenants: s
 
   // cross validations
   omitWhen(model.dateOfDocCreation === '', () => {
-    test('dateOfDocCreation', '@docCreationNotFuture', () => {
+    test('dateOfDocCreation', 'docCreationNotFuture', () => {
       enforce(isFutureDate(model.dateOfDocCreation)).isFalsy();
     })
   });
 
   omitWhen(model.dateOfDocLastUpdate === '', () => {
-    test('dateOfDocLastUpdate', '@docUpdateNotFuture', () => {
+    test('dateOfDocLastUpdate', 'docUpdateNotFuture', () => {
       enforce(isFutureDate(model.dateOfDocLastUpdate)).isFalsy();
     })
   });
 
   omitWhen(model.dateOfDocCreation === '' || model.dateOfDocLastUpdate === '', () => {
-    test('dateOfDocLastUpdate', '@docUpdateAfterCreation', () => {
+    test('dateOfDocLastUpdate', 'docUpdateAfterCreation', () => {
       enforce(compareDate(model.dateOfDocLastUpdate, model.dateOfDocCreation) >= 0);
     });
   })
