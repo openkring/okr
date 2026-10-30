@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { InvitationModel } from '@okr/shared-models';
+import { CalEventModel, InvitationModel } from '@okr/shared-models';
 
-import { isOpenInvitation, openInvitationsOf } from './invitation.util';
+import { countableInvitationsOf, isCountableInvitation, isOpenInvitation, openInvitationsOf } from './invitation.util';
 import { DateFormat, getTodayStr } from './date.util';
 
 const ME = 'person-me';
@@ -68,3 +68,77 @@ describe('openInvitationsOf', () => {
   });
 });
 
+
+function event(overrides: Partial<CalEventModel> = {}): CalEventModel {
+  return Object.assign(new CalEventModel('scs'), { okey: 'event-1', startDate: FUTURE, endDate: '' }, overrides);
+}
+
+describe('isCountableInvitation', () => {
+  it('counts a pending invitation for an open event', () => {
+    expect(isCountableInvitation(invitation(), ME, event())).toBe(true);
+  });
+
+  it('counts today\'s pending invitation for an event happening today', () => {
+    expect(isCountableInvitation(invitation({ date: TODAY }), ME, event({ startDate: TODAY }))).toBe(true);
+  });
+
+  it('does not count a locked invitation', () => {
+    expect(isCountableInvitation(invitation({ isLocked: true }), ME, event())).toBe(false);
+  });
+
+  it('does not count an invitation that is not open', () => {
+    expect(isCountableInvitation(invitation({ state: 'accepted' }), ME, event())).toBe(false);
+  });
+
+  it('does not count an invitation for a cancelled event', () => {
+    expect(isCountableInvitation(invitation(), ME, event({ state: 'cancelled' }))).toBe(false);
+  });
+
+  it('does not count an invitation for a locked event', () => {
+    expect(isCountableInvitation(invitation(), ME, event({ isLocked: true }))).toBe(false);
+  });
+
+  it('does not count an invitation for an event that is over', () => {
+    expect(isCountableInvitation(invitation(), ME, event({ startDate: PAST, endDate: '20200102' }))).toBe(false);
+  });
+
+  it('does not count an invitation for an archived event', () => {
+    expect(isCountableInvitation(invitation(), ME, event({ isArchived: true }))).toBe(false);
+  });
+
+  it('does not count an invitation whose event was deleted (null)', () => {
+    expect(isCountableInvitation(invitation(), ME, null)).toBe(false);
+  });
+
+  it('does not count an invitation whose event is not loaded (undefined)', () => {
+    expect(isCountableInvitation(invitation(), ME, undefined)).toBe(false);
+  });
+
+  it('counts an invitation without caleventKey, whatever the event argument', () => {
+    expect(isCountableInvitation(invitation({ caleventKey: '' }), ME, null)).toBe(true);
+    expect(isCountableInvitation(invitation({ caleventKey: '' }), ME, undefined)).toBe(true);
+  });
+});
+
+describe('countableInvitationsOf', () => {
+  it('keeps only the answerable ones, looking each event up by caleventKey', () => {
+    const events = new Map<string, CalEventModel | null>([
+      ['ev-open', event({ okey: 'ev-open' })],
+      ['ev-cancelled', event({ okey: 'ev-cancelled', state: 'cancelled' })],
+      ['ev-deleted', null],
+    ]);
+    const list = [
+      invitation({ okey: 'a', caleventKey: 'ev-open' }),
+      invitation({ okey: 'b', caleventKey: 'ev-cancelled' }),
+      invitation({ okey: 'c', caleventKey: 'ev-deleted' }),
+      invitation({ okey: 'd', caleventKey: 'ev-not-loaded' }),
+      invitation({ okey: 'e', caleventKey: '' }),
+      invitation({ okey: 'f', caleventKey: 'ev-open', state: 'declined' }),
+    ];
+    expect(countableInvitationsOf(list, ME, events).map(i => i.okey)).toEqual(['a', 'e']);
+  });
+
+  it('returns an empty list for an empty input', () => {
+    expect(countableInvitationsOf([], ME, new Map())).toEqual([]);
+  });
+});

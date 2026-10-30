@@ -1,7 +1,7 @@
 import type { EventInput } from '@fullcalendar/core';
 
 import { Attendee, AvatarInfo, CalEventModel, InvitationState } from '@okr/shared-models';
-import { addTime, applyInvitationAnswer, convertDateFormatToString, DateFormat, getIsoDateTime, isPastDate, isType, toAttendeeState } from '@okr/shared-util-core';
+import { addTime, applyInvitationAnswer, convertDateFormatToString, DateFormat, getIsoDateTime, isCaleventAttendanceClosed, isPastDate, isType, toAttendeeState } from '@okr/shared-util-core';
 
 export { applyInvitationAnswer, toAttendeeState };
 
@@ -32,11 +32,12 @@ export function isPastCalevent(calevent: CalEventModel): boolean {
  * Whether An-/Abmeldung is closed on this event, regardless of who asks: it is over, locked by the
  * organiser, or called off (state 'cancelled'). The one rule every attendance action and write
  * path checks — the calendar list, the yearly view, the attendees accordion and the dashboard
- * widgets alike.
+ * widgets alike. Delegates to `isCaleventAttendanceClosed` in `@okr/shared-util-core`, which the
+ * invitation badge rule shares.
  * @param calevent
  */
 export function isAttendanceClosed(calevent: CalEventModel): boolean {
-  return isPastCalevent(calevent) || !!calevent.isLocked || calevent.state === 'cancelled';
+  return isCaleventAttendanceClosed(calevent);
 }
 
 /**

@@ -1,13 +1,13 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { firstValueFrom, of } from 'rxjs';
+import { combineLatest, firstValueFrom, map, of } from 'rxjs';
 import { AlertController, ModalController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
-import { CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
-import { chipMatches, DateFormat, getSystemQuery, getTodayStr, isAfterDate, nameMatches, openInvitationsOf } from '@okr/shared-util-core';
+import { CalEventModel, CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
+import { chipMatches, countableInvitationsOf, DateFormat, getSystemQuery, getTodayStr, isAfterDate, nameMatches, openInvitationsOf } from '@okr/shared-util-core';
 import { notify, resourceParams } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -73,6 +73,25 @@ export const InvitationSectionStore = signalStore(
       }
     })
   })),
+  withProps((store) => ({
+    // The events behind the open invitations of `inviteeKey`, for countableInvitationsOf (scope
+    // 'open'). Same reads as AppStore.openInvitationEventsResource (the doc listeners are shared by
+    // FirestoreService), so card and badge see the same events. Missing/archived event -> null.
+    openInvitationEventsResource: rxResource({
+      params: resourceParams(() => {
+        const keys = openInvitationsOf(store.invitationsResource.value() ?? [], store.inviteeKey())
+          .map(inv => inv.caleventKey)
+          .filter((key): key is string => !!key);
+        return { keys: [...new Set(keys)].sort() };
+      }),
+      stream: ({ params }) => {
+        if (params.keys.length === 0) return of(new Map<string, CalEventModel | null>());
+        return combineLatest(params.keys.map(key =>
+          store.calEventService.read(key).pipe(map(event => [key, event ?? null] as const)))
+        ).pipe(map(entries => new Map<string, CalEventModel | null>(entries)));
+      }
+    })
+  })),
 
   withComputed((state) => {
     return {
@@ -110,12 +129,16 @@ export const InvitationSectionStore = signalStore(
         return state.allInvitations().filter((invitation: InvitationModel) =>
           invitation.inviteeKey === state.inviteeKey()) ?? [];
       }),
-      // Scope 'open': the invitations the user still owes an answer for. Derived from the raw
-      // resource rather than allInvitations() on purpose — isOpenInvitation carries its own
-      // (inclusive of today) date cut-off, and it is the same predicate the notification badge
-      // counts with, so widget and badge cannot drift apart.
+      // Scope 'open': the invitations the user can still answer. Derived from the raw resource
+      // rather than allInvitations() on purpose — isOpenInvitation carries its own (inclusive of
+      // today) date cut-off — and filtered with countableInvitationsOf, the same rule the
+      // notification badge counts with and the push gate mirrors, so card, badge and push cannot
+      // drift apart. While the events load, invitations with a caleventKey are left out.
       openInvitations: computed(() =>
-        openInvitationsOf(state.invitationsResource.value() ?? [], state.inviteeKey())),
+        countableInvitationsOf(
+          state.invitationsResource.value() ?? [],
+          state.inviteeKey(),
+          state.openInvitationEventsResource.value() ?? new Map<string, CalEventModel | null>())),
     }
   }),
 
@@ -162,15 +185,19 @@ export const InvitationSectionStore = signalStore(
 
       /******************************** actions ******************************************* */
       /**
-       * Whether the invitation can still be answered: not locked, and its event is neither past,
-       * locked nor cancelled. The invitation does not carry the event's state, so the event is read.
-       * A missing event does not block the answer (respond skips the attendee mirror then).
+       * Whether the invitation can still be answered: not locked, and its event exists and is
+       * neither archived, past, locked nor cancelled — the event half of `isCountableInvitation`
+       * (badge, card and push gate share it), so an invitation the card leaves out cannot be
+       * answered either. A deleted event blocks the answer (spec 1.127 2.4); an invitation without
+       * caleventKey is answerable. Unlike `isCountableInvitation` it does not require `pending`:
+       * an answer may be changed (accepted -> declined) while the event is still open.
+       * calEventService.read is tenant-scoped and reads an archived event as undefined.
        */
       async isAnswerable(invitation: InvitationModel): Promise<boolean> {
         if (invitation.isLocked) return false;
         if (!invitation.caleventKey) return true;
         const calevent = await firstValueFrom(store.calEventService.read(invitation.caleventKey));
-        return !calevent || !isAttendanceClosed(calevent);
+        return !!calevent && !calevent.isArchived && !isAttendanceClosed(calevent);
       },
 
       /** Opens the read-only view of the calevent the invitation belongs to. */

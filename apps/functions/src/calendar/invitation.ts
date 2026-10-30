@@ -31,16 +31,28 @@ export interface InvitationDoc {
 export interface AnswerableEvent {
   name?: string;
   startDate?: string;
+  endDate?: string;
   startTime?: string;
   locationKey?: string;
   isArchived?: boolean;
+  isLocked?: boolean;
+  state?: string;
 }
 
+/**
+ * Whether a new invitation is pushed/mailed: only when the invitee can actually answer it.
+ * keep in sync with libs/shared/util-core/src/lib/invitation.util.ts:isCountableInvitation (and
+ * calevent-attendance.util.ts:isCaleventAttendanceClosed) — the app badge and the dashboard
+ * invitations card count with that rule, so no push announces an invitation they would not show
+ * (spec 1.127 2.4). Differences: the push needs an event (no caleventKey, nothing to open) and
+ * the open-invitation date check is replaced by the event's last day.
+ * Legacy event docs may lack isLocked/state: undefined reads as "not locked / not cancelled".
+ */
 export function shouldNotifyInvitation(inv: InvitationDoc, event: AnswerableEvent | undefined, today: string): boolean {
-  if (inv.isArchived || inv.state !== 'pending') return false;
+  if (inv.isArchived || inv.isLocked || inv.state !== 'pending') return false;
   if (!inv.tenants?.[0] || !inv.inviteeKey || !inv.caleventKey) return false;
-  if (!event || event.isArchived) return false;
-  return (event.startDate ?? '') >= today;
+  if (!event || event.isArchived || event.isLocked || event.state === 'cancelled') return false;
+  return (event.endDate || event.startDate || '') >= today;
 }
 
 export function invitationPushBody(inviterName: string, when: string): string {

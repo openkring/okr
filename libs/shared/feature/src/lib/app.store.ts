@@ -4,13 +4,13 @@ import { Title } from '@angular/platform-browser';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 import { captureMessage } from '@sentry/angular';
 import { authState } from 'rxfire/auth';
-import { from, of, takeUntil, timer } from 'rxjs';
+import { combineLatest, from, map, of, takeUntil, timer } from 'rxjs';
 import { App } from '@capacitor/app';
 
 import { AUTH, ENV, FIRESTORE, usesLocalStorageOnlySession } from '@okr/shared-config';
 import { AppConfigService, FirestoreService } from '@okr/shared-data-access';
-import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, getAddressDirectoryKey, AvailableLanguages, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, InvitationCollection, InvitationModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, TaskCollection, TaskModel, UserCollection, UserModel } from '@okr/shared-models';
-import { appLinkOrigins, die, getSystemQuery, indexBy, openInvitationsOf, pickForTenant, publicAppOrigin, replacePlaceholders, resolveAppOrigin, sortPersons, withOfflineSnapshot } from '@okr/shared-util-core';
+import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, getAddressDirectoryKey, AvailableLanguages, CalEventCollection, CalEventModel, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, InvitationCollection, InvitationModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, TaskCollection, TaskModel, UserCollection, UserModel } from '@okr/shared-models';
+import { appLinkOrigins, countableInvitationsOf, die, getSystemQuery, indexBy, openInvitationsOf, pickForTenant, publicAppOrigin, replacePlaceholders, resolveAppOrigin, sortPersons, withOfflineSnapshot } from '@okr/shared-util-core';
 import { AppNavigationService, armStartupStallCheck, HelperVisibility, installScrollDiagnostics, isBrowser, markStartup, probeStoredSession, probeStoredSessionIdb, reportStartupTiming, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
 
 import { authPhase, isDegradedBoot, openBootGate, type BootState } from './boot-readiness.util';
@@ -254,6 +254,38 @@ export const AppStore = signalStore(
         return store.firestoreService.searchData<InvitationModel>(InvitationCollection, invitationQuery, 'date', 'asc');
       }
     }),
+  })),
+
+  withProps((store) => ({
+    // The events behind the open invitations, so the badge counts only invitations that can still
+    // be answered (countableInvitationsOf: not cancelled, locked, over, archived or deleted —
+    // spec 1.127 2.4). One live doc listener per caleventKey (readTenantModel, shared and cached by
+    // FirestoreService); a member has only a handful of open invitations, so no `in` batching.
+    // Keyed on the sorted, de-duplicated keys (value-compared by resourceParams), so a new
+    // invitation snapshot with the same events does not re-open the listeners.
+    // A missing doc (deleted event) reads as undefined and is stored as `null`; so does a read that
+    // fails for good (FirestoreService settles a failed listener on undefined) — not counted.
+    openInvitationEventsResource: rxResource({
+      params: resourceParams(() => {
+        const personKey = store.currentUserResource.value()?.personKey ?? '';
+        const keys = openInvitationsOf(store.openInvitationsResource.value() ?? [], personKey)
+          .map(inv => inv.caleventKey)
+          .filter((key): key is string => !!key);
+        return { keys: [...new Set(keys)].sort(), tenantId: store.tenantId() };
+      }),
+      stream: ({params}) => {
+        if (params.keys.length === 0 || !params.tenantId) return of(new Map<string, CalEventModel | null>());
+        // readTenantModel = CalEventService.read (the invitations card reads the same way): an
+        // archived or other-tenant event reads as undefined, too.
+        return combineLatest(params.keys.map(key =>
+          store.firestoreService.readTenantModel<CalEventModel>(CalEventCollection, key, params.tenantId).pipe(
+            map(event => [key, event ?? null] as const)))
+        ).pipe(map(entries => new Map<string, CalEventModel | null>(entries)));
+      }
+    }),
+  })),
+
+  withProps((store) => ({
     categoriesResource: rxResource({
       params: resourceParams(() => ({
         fbUserUid: store.fbUser()?.uid ?? '',
@@ -324,11 +356,18 @@ export const AppStore = signalStore(
       allCategories: computed(() => state.categoriesResource.value() ?? []),
       /** Number of open tasks assigned to the signed-in user — the task half of every badge. */
       openTaskCount: computed(() => (state.openTasksResource.value() ?? []).length),
-      /** Number of unanswered invitations to future events — the invitation half of every badge. */
+      /**
+       * Number of invitations the signed-in person can still answer — the invitation half of every
+       * badge (countableInvitationsOf, the same rule as the dashboard invitations card and the
+       * invitation push gate). While the events are still loading the map is empty, so invitations
+       * WITH a caleventKey count 0 until their event is known: the badge may briefly show too few,
+       * never a transient too-high number.
+       */
       openInvitationCount: computed(() => {
         const personKey = state.currentUserResource.value()?.personKey;
         if (!personKey) return 0;
-        return openInvitationsOf(state.openInvitationsResource.value() ?? [], personKey).length;
+        const events = state.openInvitationEventsResource.value() ?? new Map<string, CalEventModel | null>();
+        return countableInvitationsOf(state.openInvitationsResource.value() ?? [], personKey, events).length;
       }),
       appConfig: computed(() => {
         const loaded = state.appConfigResource.value();

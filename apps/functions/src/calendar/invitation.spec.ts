@@ -19,6 +19,28 @@ describe('shouldNotifyInvitation', () => {
     expect(shouldNotifyInvitation(inv, { ...event, isArchived: true }, '20260930')).toBe(false);
     expect(shouldNotifyInvitation(inv, event, '20261002')).toBe(false);
   });
+  // Mirrors isCountableInvitation / isCaleventAttendanceClosed (libs/shared/util-core): no push
+  // for an invitation the badge and the card would not count (spec 1.127 2.4).
+  it('skips a locked invitation', () => expect(shouldNotifyInvitation({ ...inv, isLocked: true }, event, '20260930')).toBe(false));
+  it('skips a cancelled event', () => expect(shouldNotifyInvitation(inv, { ...event, state: 'cancelled' }, '20260930')).toBe(false));
+  it('skips a locked event', () => expect(shouldNotifyInvitation(inv, { ...event, isLocked: true }, '20260930')).toBe(false));
+  it('notifies a provisional or proposed event', () => {
+    expect(shouldNotifyInvitation(inv, { ...event, state: 'provisional' }, '20260930')).toBe(true);
+    expect(shouldNotifyInvitation(inv, { ...event, state: 'proposed' }, '20260930')).toBe(true);
+  });
+  it('compares the last day (endDate) of a multi-day event', () => {
+    const multiDay = { ...event, startDate: '20260928', endDate: '20261003' };
+    expect(shouldNotifyInvitation(inv, multiDay, '20261001')).toBe(true);
+    expect(shouldNotifyInvitation(inv, multiDay, '20261003')).toBe(true);
+    expect(shouldNotifyInvitation(inv, multiDay, '20261004')).toBe(false);
+  });
+  it('falls back to startDate when endDate is empty', () => {
+    expect(shouldNotifyInvitation(inv, { ...event, endDate: '' }, '20261001')).toBe(true);
+    expect(shouldNotifyInvitation(inv, { ...event, endDate: '' }, '20261002')).toBe(false);
+  });
+  it('treats a legacy event doc without isLocked/state as open', () => {
+    expect(shouldNotifyInvitation(inv, { startDate: '20261001' }, '20260930')).toBe(true);
+  });
 });
 
 describe('invitationPushBody', () => {
