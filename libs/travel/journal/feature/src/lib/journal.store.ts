@@ -24,6 +24,7 @@ import {
 
 import { BookExportStatus, JournalBookExporter, NO_BOOK_EXPORT } from './journal-book-export.service';
 import { JournalFileUrlService } from './journal-file-url.service';
+import { JournalWebPhotos, WebPhoto } from './journal-web-photos.service';
 
 const SYNC_INTERVAL_MS = 2 * 60 * 1000;
 const META_PHOTO_MODE = 'photoMode';
@@ -57,6 +58,7 @@ interface JournalStoreState {
   locks: Record<string, JournalLock>; // edit locks of the active journal (spec 1.126 §6.2)
   writeMinVersion: string; // '' = no minimum known; below it the app may read but not write (spec 1.126 §6.4)
   lockClock: number; // Date.now(), refreshed every LOCK_CLOCK_MS, so lockOf re-evaluates expiry
+  webUpload: { done: number; total: number } | undefined; // browser photo upload in progress (spec 1.126 phase 3 §3)
 }
 
 /**
@@ -93,9 +95,10 @@ const printFileOf = (imageKey: string): string => `${imageKey}-print.jpg`;
 
 const initialState: JournalStoreState = {
   ready: false, native: Capacitor.isNativePlatform(), error: '', changes: [], photoMode: 'all', activeJournalKey: '', offlineMaps: {}, bookPrints: NO_BOOK_PRINTS,
-  webLoaded: false, bookExport: NO_BOOK_EXPORT, locks: {}, writeMinVersion: '', lockClock: 0,
+  webLoaded: false, bookExport: NO_BOOK_EXPORT, locks: {}, writeMinVersion: '', lockClock: 0, webUpload: undefined,
 };
 const LOCK_CLOCK_MS = 15_000;
+const isWebPhoto = (photo: PickedPhoto): photo is WebPhoto => 'imageKey' in photo && 'printSize' in photo;
 
 export const JournalStore = signalStore(
   { providedIn: 'root' },
@@ -111,6 +114,7 @@ export const JournalStore = signalStore(
     bookExporter: inject(JournalBookExporter),
     lockService: inject(JournalLockService),
     webWriter: inject(JournalWebWriter),
+    webPhotos: inject(JournalWebPhotos),
     firestore: inject(FIRESTORE),
   })),
   withProps(() => ({
@@ -198,6 +202,7 @@ export const JournalStore = signalStore(
     /** Picks photos and builds one image record per imported photo (not yet written). */
     async function pickImages(journalKey: string): Promise<{ drafts: ChangeDraft[]; imageKeys: string[]; photos: PickedPhoto[]; skipped: SkippedPhoto[] }> {
       if (!store.author()) throw new JournalWriteRefused('noAuthor'); // before the picker opens
+      if (!store.native()) return pickWebImages(journalKey);
       const { photos, skipped } = await JournalPhotos.pick({ journalKey });
       const drafts: ChangeDraft[] = [];
       const imageKeys: string[] = [];
@@ -214,6 +219,69 @@ export const JournalStore = signalStore(
         });
       }
       return { drafts, imageKeys, photos, skipped };
+    }
+
+    /**
+     * Browser (spec 1.126 phase 3, design §3): picks files and uploads all their files FIRST; only photos whose
+     * files are in the bucket get an image record, so an iPad never receives a block without its photos.
+     */
+    async function pickWebImages(journalKey: string): Promise<{ drafts: ChangeDraft[]; imageKeys: string[]; photos: WebPhoto[]; skipped: SkippedPhoto[] }> {
+      const files = await store.webPhotos.pickFiles();
+      if (files.length === 0) return { drafts: [], imageKeys: [], photos: [], skipped: [] };
+      patchState(store, { webUpload: { done: 0, total: files.length } });
+      let uploaded: { photos: WebPhoto[]; skipped: SkippedPhoto[] };
+      try {
+        uploaded = await store.webPhotos.upload(journalKey, files, (done, total) => patchState(store, { webUpload: { done, total } }));
+      } finally {
+        patchState(store, { webUpload: undefined });
+      }
+      const { photos, skipped } = uploaded;
+      const drafts: ChangeDraft[] = [];
+      const imageKeys: string[] = [];
+      for (const photo of photos) {
+        imageKeys.push(photo.imageKey);
+        drafts.push({
+          journalKey, entity: 'image', entityKey: photo.imageKey, op: 'create',
+          fields: {
+            journalKey, takenAt: photo.takenAt, latitude: photo.latitude, longitude: photo.longitude,
+            width: photo.width, height: photo.height, path2048: photo.path2048, path400: photo.path400,
+            localIdentifier: '',
+          },
+        });
+      }
+      return { drafts, imageKeys, photos, skipped };
+    }
+
+    /**
+     * Writes the image + block records of a photo pick; in the browser then records each photo's print size in the
+     * book (design §3). A slow commit keeps the records (they will land), so the prints are recorded then too; any
+     * other failure records none. A failed print entry is logged only: the book falls back to the 2048 px file.
+     */
+    async function writePhotos(journalKey: string, drafts: ChangeDraft[], photos: PickedPhoto[]): Promise<void> {
+      if (store.native()) {
+        await write(drafts);
+        return;
+      }
+      let slow: JournalWriteSlow | undefined;
+      try {
+        await write(drafts);
+      } catch (error) {
+        if (!(error instanceof JournalWriteSlow)) throw error;
+        slow = error;
+      }
+      const tenantId = store.appStore.tenantId();
+      const personKey = store.author()?.personKey;
+      if (tenantId && personKey) {
+        for (const photo of photos) {
+          if (!isWebPhoto(photo)) continue;
+          try {
+            await store.bookService.setPrint(journalKey, tenantId, photo.imageKey, photo.printSize, personKey);
+          } catch (error) {
+            console.error('journal: recording the print size failed', photo.imageKey, error);
+          }
+        }
+      }
+      if (slow) throw slow;
     }
 
     /**
@@ -943,7 +1011,7 @@ export const JournalStore = signalStore(
         if (photos.length === 0) return { added: 0, skipped };
         const fields = { imageKeys: [...(block.imageKeys ?? []), ...imageKeys] };
         drafts.push({ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields, bases: basesOf(seen ?? block.hlcs, fields, CONFLICT_FIELDS['section'] ?? []) });
-        await write(drafts);
+        await writePhotos(journalKey, drafts, photos);
         return { added: photos.length, skipped };
       },
 
@@ -1009,7 +1077,7 @@ export const JournalStore = signalStore(
         if (Object.keys(fill).length > 0) {
           drafts.push({ journalKey, entity: 'footprint', entityKey: footprintKey, op: 'set', fields: fill, bases: basesOf(fp.hlcs, fill, CONFLICT_FIELDS['footprint'] ?? []) });
         }
-        await write(drafts);
+        await writePhotos(journalKey, drafts, photos);
         return { added: photos.length, skipped };
       },
     };
