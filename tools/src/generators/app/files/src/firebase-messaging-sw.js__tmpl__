@@ -1,5 +1,6 @@
 // Firebase Messaging Service Worker
-// This file handles background push notifications when the app is not in focus
+// Shows a notification for every FCM push — while the app is hidden (onBackgroundMessage) and
+// while a window is visible (the 'push' listener below) — and keeps the app-icon badge ledger.
 
 importScripts('https://www.gstatic.com/firebasejs/12.7.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/12.7.0/firebase-messaging-compat.js');
@@ -18,10 +19,54 @@ const appIconUrl = typeof okrTenantId === 'string' && okrTenantId
   ? `https://bkaiser.imgix.net/tenant/${okrTenantId}/logo/logo-master.png?w=192&h=192&fm=png&auto=`
   : '';
 
-// Handle background messages
+// Background path: no window of this origin is visible. The SDK calls this from inside the
+// push event and awaits the returned promise, so the notification is part of that event.
 messaging.onBackgroundMessage(payload => {
   console.log('[firebase-messaging-sw.js] Received background message:', payload);
+  return handlePush(payload, { updateBadge: true });
+});
 
+// Foreground path (spec 1.127 R3, confirmed on an iPhone 2026-10-30): when a window is VISIBLE,
+// the SDK's own push handler forwards the push to the page (onMessage) and ends the push event
+// WITHOUT a notification — onBackgroundMessage is not called. WebKit counts that as a silent
+// push and revoked the PWA's subscription after 25 of them; a notification shown later by the
+// page does not count. So this listener shows the notification itself, inside this event.
+//
+// It uses the SDK's own visibility rule (hasVisibleClients in @firebase/messaging's sw build),
+// so exactly one of the two paths runs: visible ⇒ this listener, hidden ⇒ onBackgroundMessage.
+// `includeUncontrolled` because ngsw, not this worker, controls the app windows. In a race (a
+// window turns visible/hidden between the two matchAll calls) both may show — the identical
+// `tag` makes the second banner replace the first, so the user still sees one.
+self.addEventListener('push', event => {
+  let payload;
+  try {
+    payload = event.data ? event.data.json() : null;
+  } catch {
+    payload = null; // not JSON ⇒ not an FCM message; the SDK ignores it too
+  }
+  if (!payload) return;
+  // waitUntil must be called synchronously in the listener — never after an await.
+  event.waitUntil((async () => {
+    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    if (!hasVisibleClients(windows)) return; // background path: onBackgroundMessage shows it
+    console.log('[firebase-messaging-sw.js] Received push while a window is visible:', payload);
+    // The open page writes the badge ledger itself; the worker must not add this push on top.
+    await handlePush(payload, { updateBadge: false });
+  })());
+});
+
+/** Mirrors `hasVisibleClients` of the Firebase messaging SDK (service-worker build). */
+function hasVisibleClients(clientList) {
+  return clientList.some(client => client.visibilityState === 'visible' &&
+    // Extension background pages always count as visible.
+    !client.url.startsWith('chrome-extension://'));
+}
+
+/**
+ * Show the notification for one FCM push (`{ data, notification? }`) and, with `updateBadge`,
+ * apply it to the badge ledger. Returns the promise the push event must wait for.
+ */
+function handlePush(payload, { updateBadge }) {
   // One person may hold accounts in several tenants and have several of our apps installed.
   // The sender picks the account of the tenant it speaks for, so a push for another tenant
   // should never reach this worker — but if one does (an old sender, a token registered
@@ -45,7 +90,7 @@ messaging.onBackgroundMessage(payload => {
   // message, one new invitation); the ledger holds the rest, written by the open app. The
   // badge promise MUST be part of what this handler returns — iOS suspends the worker as soon
   // as the push event settles, and a fire-and-forget setAppBadge was silently dropped.
-  const badgeUpdate = updateBadgeLedger(payload.data || {});
+  const badgeUpdate = updateBadge ? updateBadgeLedger(payload.data || {}) : Promise.resolve();
 
   // "Read elsewhere" sync (spec 1.93 §5): a push must SHOW a notification (iOS/Firefox revoke
   // the subscription after silent ones), so show one under the room's tag — replacing that
@@ -92,7 +137,7 @@ messaging.onBackgroundMessage(payload => {
     badgeUpdate,
     self.registration.showNotification(notificationTitle, notificationOptions),
   ]);
-});
+}
 
 // Handle notification click
 self.addEventListener('notificationclick', event => {

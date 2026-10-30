@@ -233,30 +233,14 @@ export class MatrixInitializationService {
         }
       });
     } else {
-      // Web / PWA: foreground FCM messages (service worker doesn't show a banner when app is open).
+      // Web / PWA: foreground FCM messages. The banner for a push that arrives while a window is
+      // visible is shown by the FCM worker's own `push` listener (firebase-messaging-sw.js,
+      // 1.127 R3) — it must be shown inside the push event, or iOS counts the push as silent
+      // and revokes the subscription. The page only routes a video call to its room.
       this.fcmService.listenForMessages().subscribe(payload => {
         if (payload?.data?.['type'] !== 'video-call') return;
-        if (this.isChatBlockedForMe()) return; // 1.107: no «Video-Anruf» banner, no navigation
-        const callerName = payload.data['callerName'] ?? 'Unbekannt';
-        const roomName   = payload.data['roomName']   ?? '';
-        const url        = payload.data['url']        as string | undefined;
-
-        // Show a notification via the service worker — works on all platforms including iOS Safari.
-        // new Notification() from the main thread is blocked on iOS and unreliable on Android
-        // when a service worker is active; SW.showNotification() is the correct cross-platform API.
-        // Through the FCM worker's registration, not `ready` (ngsw): only the FCM worker's
-        // notificationclick opens `data.url`.
-        if (Notification.permission === 'granted' && 'serviceWorker' in navigator) {
-          this.fcmService.getPushRegistration().then(sw => {
-            sw?.showNotification(`📹 Video-Anruf von ${callerName}`, {
-              body: roomName ? `In ${roomName}` : 'Eingehender Video-Anruf',
-              icon: `${this.appStore.services.imgixBaseUrl()}/tenant/${this.appStore.tenantId()}/logo/logo-master.png?w=192&h=192&fm=png&auto=`,
-              tag: 'video-call',
-              requireInteraction: true,
-              data: { url },
-            } as NotificationOptions);
-          }).catch(() => {});
-        }
+        if (this.isChatBlockedForMe()) return; // 1.107: no navigation to a call while blocked
+        const url = payload.data['url'] as string | undefined;
 
         // Navigate directly to the chat page so the user lands on the call
         if (url) {
