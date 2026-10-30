@@ -176,6 +176,32 @@ export const sendCallNotification = onCall(
  * look-up required.  The client registers this pusher via MatrixChatService.setPusher().
  */
 /**
+ * Mint a short-lived (5 min) Matrix user token via the Synapse admin API, so a callable can
+ * act as the calling user (e.g. /pushers/set). Shared by register/unregisterMatrixPusher.
+ */
+async function mintMatrixUserToken(
+  uid: string,
+  fn: string
+): Promise<{ accessToken: string; matrixUserId: string }> {
+  const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
+  const localpart = await requireMatrixLocalpart(uid, fn);
+  const matrixUserId = `@${localpart}:${hostname}`;
+  const loginResp = await fetch(
+    `${MATRIX_HOMESERVER}/_synapse/admin/v1/users/${encodeURIComponent(matrixUserId)}/login`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${matrixAdminToken.value()}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ valid_until_ms: Date.now() + 5 * 60 * 1000 }),
+    }
+  );
+  if (!loginResp.ok) {
+    throw new HttpsError('internal', `Failed to mint Matrix token: ${await loginResp.text()}`);
+  }
+  const { access_token } = await loginResp.json() as { access_token: string };
+  return { accessToken: access_token, matrixUserId };
+}
+
+/**
  * Register an HTTP pusher with Synapse on behalf of the calling user (S3 + SEC-2).
  *
  * Done server-side so the gateway shared secret never ships in the client bundle: the
@@ -200,24 +226,7 @@ export const registerMatrixPusher = onCall(
     };
     if (!pushkey) throw new HttpsError('invalid-argument', 'pushkey is required');
 
-    const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
-    const localpart = await requireMatrixLocalpart(uid, 'registerMatrixPusher');
-    const matrixUserId = `@${localpart}:${hostname}`;
-    const adminToken = matrixAdminToken.value();
-
-    // Mint a short-lived user token so we can call /pushers/set as the user.
-    const loginResp = await fetch(
-      `${MATRIX_HOMESERVER}/_synapse/admin/v1/users/${encodeURIComponent(matrixUserId)}/login`,
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ valid_until_ms: Date.now() + 5 * 60 * 1000 }),
-      }
-    );
-    if (!loginResp.ok) {
-      throw new HttpsError('internal', `Failed to mint Matrix token: ${await loginResp.text()}`);
-    }
-    const { access_token } = await loginResp.json() as { access_token: string };
+    const { accessToken: access_token, matrixUserId } = await mintMatrixUserToken(uid, 'registerMatrixPusher');
 
     const appIdToUse = appId || PUSH_APP_ID;
     // Echoed back by Synapse as `devices[].data` on every push, so matrixPushGateway can send a
@@ -289,6 +298,56 @@ export const registerMatrixPusher = onCall(
     }
     console.log(`registerMatrixPusher: registered pusher for ${matrixUserId}`);
     return { registered: true };
+  }
+);
+
+/**
+ * Remove this device's Matrix pusher on logout (spec 1.127 phase 1), so Synapse stops sending
+ * chat pushes to a logged-out device. Deletes every pusher of the caller with the given
+ * pushkey (any app_id). An unknown pushkey is not an error: `{ removed: false }`.
+ *
+ * Input: { pushkey (FCM token) }
+ */
+export const unregisterMatrixPusher = onCall(
+  {
+    cors: true,
+    region: 'europe-west6',
+    enforceAppCheck: true,
+    secrets: [matrixAdminToken],
+  },
+  async (request): Promise<{ removed: boolean }> => {
+    const uid = await requireProvisionedUser(request, 'unregisterMatrixPusher');
+    checkRateLimit(uid, 'unregisterMatrixPusher', 10);
+    const { pushkey } = request.data as { pushkey?: string };
+    if (!pushkey) throw new HttpsError('invalid-argument', 'pushkey is required');
+
+    const { accessToken, matrixUserId } = await mintMatrixUserToken(uid, 'unregisterMatrixPusher');
+
+    const listResp = await fetch(`${MATRIX_HOMESERVER}/_matrix/client/v3/pushers`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!listResp.ok) {
+      throw new HttpsError('internal', `pushers list failed: ${await listResp.text()}`);
+    }
+    const { pushers } = (await listResp.json()) as {
+      pushers?: Array<{ app_id: string; pushkey: string }>;
+    };
+    const matches = (pushers ?? []).filter((p) => p.pushkey === pushkey);
+    await Promise.all(
+      matches.map(async (p) => {
+        const resp = await fetch(`${MATRIX_HOMESERVER}/_matrix/client/v3/pushers/set`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          // kind:null deletes the pusher (Matrix spec).
+          body: JSON.stringify({ app_id: p.app_id, pushkey: p.pushkey, kind: null }),
+        });
+        if (!resp.ok) {
+          throw new HttpsError('internal', `pushers/set (delete) failed: ${await resp.text()}`);
+        }
+      })
+    );
+    console.log(`unregisterMatrixPusher: removed ${matches.length} pusher(s) for ${matrixUserId}`);
+    return { removed: matches.length > 0 };
   }
 );
 

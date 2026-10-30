@@ -16,6 +16,7 @@ export * from './lib/delivery-channel.util';
 export * from './lib/expense-status.util';
 export * from './lib/swiss-qr-bill.util';
 export * from './lib/export.util';
+export * from './lib/fcm-token.util';
 export * from './lib/file.util';
 export * from './lib/icon.util';
 export * from './lib/img.util';
