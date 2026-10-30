@@ -10,8 +10,8 @@ import { AvatarInfo, TRACKER_TRIP_TYPE, TrackPhoto, TransportMode, TripCollectio
 import { convertDateFormatToString, DateFormat, getDeletePatch, getSystemQuery } from '@okr/shared-util-core';
 import { crewTrackDeadline } from '@okr/trip-util';
 import {
-  decodeStrokeTimes, decodeTrack, encodeStrokeTimes, encodeTrack, isLogbuchCrew, localStoreDate, LocalTrack, logbuchLinkCandidates, strokeTimesBase, serverPhotos,
-  summarize, trackThumbPath, TrackPoint, tripSections,
+  decodeAltitudes, decodeStrokeTimes, decodeTrack, encodeAltitudes, encodeStrokeTimes, encodeTrack, isLogbuchCrew, localStoreDate, LocalTrack, logbuchLinkCandidates, strokeTimesBase, serverPhotos,
+  summarize, trackThumbPath, TrackPoint, tripSections, withAltitudes,
 } from '@okr/mobility-tracker-util';
 
 /** One section's points, stored as an encoded polyline in trips/{key}/track-points/{n}. */
@@ -23,6 +23,20 @@ export interface TrackPointsDoc {
   encoded: string;
   /** row: stroke times, delta-encoded ms since the section start (spec 1.122, phase 2) */
   strokeTimes?: string;
+  /** GPS heights per point, delta-encoded whole metres (spec 1.128); missing on Strecken recorded before */
+  altitudes?: string;
+  /** terrain heights per point from getTerrainElevations, written by the owner on first view; dropped by a re-upload */
+  terrainAltitudes?: string;
+  /** who the terrain heights come from (attribution under the chart), e.g. 'swisstopo' */
+  terrainProvider?: string;
+}
+
+/** One section as read from Firestore: terrain heights only when they were looked up once (spec 1.128). */
+export interface SectionRead {
+  points: TrackPoint[];
+  strokeTimes: number[];
+  terrain?: (number | undefined)[];
+  terrainProvider?: string;
 }
 
 const TRACK_POINTS = 'track-points';
@@ -134,6 +148,8 @@ export class TrackService {
       };
       const times = local.sections[i].mode === 'row' ? strokes?.[i] ?? [] : [];
       if (times.length > 0) pointsDoc.strokeTimes = encodeStrokeTimes(times, strokeTimesBase(points));
+      const altitudes = encodeAltitudes(points);
+      if (altitudes) pointsDoc.altitudes = altitudes;
       batch.set(doc(this.firestoreService.firestore, `${TripCollection}/${tripKey}/${TRACK_POINTS}/${i}`), pointsDoc);
     });
     for (let n = sections.length; n < (staleUpTo ?? 0); n++) {
@@ -173,20 +189,49 @@ export class TrackService {
     }
   }
 
-  /** One section's points and stroke times (spec 1.122 2c); both empty when the doc is missing. */
-  public async readSection(tripKey: string, n: number): Promise<{ points: TrackPoint[]; strokeTimes: number[] }> {
+  /**
+   * One section's points (with their GPS heights), stroke times (spec 1.122 2c) and stored terrain heights
+   * (spec 1.128; undefined when never looked up); all empty when the doc is missing.
+   */
+  public async readSection(tripKey: string, n: number): Promise<SectionRead> {
     const snap = await getDoc(doc(this.firestoreService.firestore, `${TripCollection}/${tripKey}/${TRACK_POINTS}/${n}`));
     if (!snap.exists()) return { points: [], strokeTimes: [] };
     const data = snap.data() as TrackPointsDoc;
-    const points = decodeTrack(data.encoded);
-    return { points, strokeTimes: decodeStrokeTimes(data.strokeTimes, strokeTimesBase(points)) };
+    const decoded = decodeTrack(data.encoded);
+    const points = withAltitudes(decoded, decodeAltitudes(data.altitudes, decoded.length));
+    const out: SectionRead = {
+      points, strokeTimes: decodeStrokeTimes(data.strokeTimes, strokeTimesBase(points)),
+    };
+    if (data.terrainAltitudes) {
+      out.terrain = decodeAltitudes(data.terrainAltitudes, points.length);
+      out.terrainProvider = data.terrainProvider ?? '';
+    }
+    return out;
+  }
+
+  /**
+   * Stores the terrain heights of an uploaded Strecke on its track-points docs (spec 1.128 §2), so the lookup runs
+   * once. Owner only (rules); a section without heights is skipped. Resolves on the server's ack: run it detached.
+   */
+  public async saveTerrainAltitudes(tripKey: string, perSection: (number | undefined)[][], provider: string): Promise<void> {
+    const batch = this.firestoreService.getBatch();
+    let writes = 0;
+    perSection.forEach((alts, n) => {
+      const encoded = encodeAltitudes(alts.map((alt) => ({ alt })));
+      if (!encoded) return;
+      batch.update(doc(this.firestoreService.firestore, `${TripCollection}/${tripKey}/${TRACK_POINTS}/${n}`), { terrainAltitudes: encoded, terrainProvider: provider });
+      writes++;
+    });
+    if (writes > 0) await batch.commit();
   }
 
   /** The decoded points of one section; [] when the doc is missing. */
   public async readPoints(tripKey: string, n: number): Promise<TrackPoint[]> {
     const snap = await getDoc(doc(this.firestoreService.firestore, `${TripCollection}/${tripKey}/${TRACK_POINTS}/${n}`));
     if (!snap.exists()) return [];
-    return decodeTrack((snap.data() as TrackPointsDoc).encoded);
+    const data = snap.data() as TrackPointsDoc;
+    const points = decodeTrack(data.encoded);
+    return withAltitudes(points, decodeAltitudes(data.altitudes, points.length));
   }
 
   /** Tracker trips of one person on one day (the diary's view). Unordered: equality-only query; callers sort by startTime. */

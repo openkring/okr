@@ -47,7 +47,7 @@ export const membershipValidations = staticSuite((model: MembershipModel, tenant
   
    // cross field validations
   omitWhen(model.dateOfEntry === '' || model.dateOfExit === '', () => {
-    test('dateOfExit', '@membershipExitAfterEntry', () => {
+    test('dateOfExit', 'membershipExitAfterEntry', () => {
       enforce(isAfterDate(model.dateOfExit, model.dateOfEntry)).isTruthy();
     });
   });

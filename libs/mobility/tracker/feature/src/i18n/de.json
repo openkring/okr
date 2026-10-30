@@ -138,5 +138,11 @@
     "pending": "Wird mit dem Logbuch verbunden, sobald du online bist.",
     "taken_track": "«{track}»: Diese Ausfahrt wird bereits von {name} aufgezeichnet. Deine Strecke bleibt ohne Logbuch.",
     "unavailable_track": "«{track}»: Diese Logbuch-Ausfahrt kann nicht mehr verbunden werden. Deine Strecke bleibt ohne Logbuch."
+  },
+  "elevation": {
+    "title": "Höhenprofil",
+    "gain": "Aufstieg",
+    "loss": "Abstieg",
+    "terrain": "Höhen aus dem Geländemodell von {provider}"
   }
 }

@@ -21,7 +21,9 @@ const SCHEMA = [
   'CREATE INDEX IF NOT EXISTS strokes_track ON strokes (track_key, section, t);',
 ].join('\n');
 
-const INSERT_POINT = 'INSERT INTO points (track_key, section, lat, lng, t, acc) VALUES (?, ?, ?, ?, ?, ?);';
+const INSERT_POINT = 'INSERT INTO points (track_key, section, lat, lng, t, acc, alt) VALUES (?, ?, ?, ?, ?, ?, ?);';
+/** GPS altitude per point (spec 1.128), added later: an existing database gets the column on its next open. */
+const ADD_ALT_COLUMN = 'ALTER TABLE points ADD COLUMN alt REAL;';
 const INSERT_STROKE = 'INSERT INTO strokes (track_key, section, t) VALUES (?, ?, ?);';
 
 /** Stroke rows grouped by section index, each group ascending; missing sections are empty groups. */
@@ -29,6 +31,13 @@ function groupStrokes(rows: { section: number; t: number }[]): number[][] {
   const groups: number[][] = [];
   for (const r of rows) (groups[r.section] ??= []).push(r.t);
   return Array.from(groups, (g) => (g ?? []).sort((a, b) => a - b));
+}
+
+/** Adds points.alt once; a database that has it already is left alone. */
+async function addAltColumn(db: SQLiteDBConnection): Promise<void> {
+  const cols = await db.query('PRAGMA table_info(points);');
+  if (((cols.values ?? []) as { name: string }[]).some((c) => c.name === 'alt')) return;
+  await db.execute(ADD_ALT_COLUMN);
 }
 
 @Injectable({ providedIn: 'root' })
@@ -55,18 +64,18 @@ export class TrackDb {
   public async appendPoint(trackKey: string, section: number, p: TrackPoint): Promise<void> {
     if (!this.native()) {
       const rows = this.memPoints.get(trackKey) ?? [];
-      rows.push({ section, lat: p.lat, lng: p.lng, t: p.t, acc: p.acc ?? null });
+      rows.push({ section, lat: p.lat, lng: p.lng, t: p.t, acc: p.acc ?? null, alt: p.alt ?? null });
       this.memPoints.set(trackKey, rows);
       return;
     }
     const db = await this.db();
-    await db.run(INSERT_POINT, [trackKey, section, p.lat, p.lng, p.t, p.acc ?? null]);
+    await db.run(INSERT_POINT, [trackKey, section, p.lat, p.lng, p.t, p.acc ?? null, p.alt ?? null]);
   }
 
   /** Replaces all points of a track (after a correction) in one transaction. */
   public async replacePoints(trackKey: string, sections: TrackPoint[][]): Promise<void> {
     const rows = sections.flatMap((pts, section) =>
-      pts.map((p): PointRow => ({ section, lat: p.lat, lng: p.lng, t: p.t, acc: p.acc ?? null })));
+      pts.map((p): PointRow => ({ section, lat: p.lat, lng: p.lng, t: p.t, acc: p.acc ?? null, alt: p.alt ?? null })));
     if (!this.native()) {
       this.memPoints.set(trackKey, rows);
       return;
@@ -74,7 +83,7 @@ export class TrackDb {
     const db = await this.db();
     const set: capSQLiteSet[] = [
       { statement: 'DELETE FROM points WHERE track_key = ?;', values: [trackKey] },
-      ...rows.map((r) => ({ statement: INSERT_POINT, values: [trackKey, r.section, r.lat, r.lng, r.t, r.acc ?? null] })),
+      ...rows.map((r) => ({ statement: INSERT_POINT, values: [trackKey, r.section, r.lat, r.lng, r.t, r.acc ?? null, r.alt ?? null] })),
     ];
     await db.executeSet(set, true);
   }
@@ -115,7 +124,7 @@ export class TrackDb {
   public async points(trackKey: string): Promise<TrackPoint[][]> {
     if (!this.native()) return groupPointsBySection(this.memPoints.get(trackKey) ?? []);
     const db = await this.db();
-    const res = await db.query('SELECT section, lat, lng, t, acc FROM points WHERE track_key = ? ORDER BY section, t;', [trackKey]);
+    const res = await db.query('SELECT section, lat, lng, t, acc, alt FROM points WHERE track_key = ? ORDER BY section, t;', [trackKey]);
     return groupPointsBySection((res.values ?? []) as PointRow[]);
   }
 
@@ -177,6 +186,7 @@ export class TrackDb {
         : await sqlite.createConnection(DB_NAME, false, 'no-encryption', DB_VERSION, false);
       await db.open();
       await db.execute(SCHEMA);
+      await addAltColumn(db);
       return db;
     })().catch((error: unknown) => {
       this.connection = undefined; // allow a retry

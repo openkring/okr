@@ -138,5 +138,11 @@
     "pending": "Verrà collegato al giornale di bordo appena sarai online.",
     "taken_track": "«{track}»: {name} sta già registrando questa uscita. Il tuo percorso resta senza giornale di bordo.",
     "unavailable_track": "«{track}»: quest’uscita del giornale di bordo non può più essere collegata. Il tuo percorso resta senza giornale di bordo."
+  },
+  "elevation": {
+    "title": "Profilo altimetrico",
+    "gain": "salita",
+    "loss": "discesa",
+    "terrain": "Quote dal modello del terreno di {provider}"
   }
 }

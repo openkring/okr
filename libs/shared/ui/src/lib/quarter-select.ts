@@ -31,10 +31,10 @@ import { TranslatePipe } from '@okr/shared-i18n';
     <ion-select
       [value]="selectedQuarter()"
       (ionChange)="selectedQuarter.set($event.detail.value)"
-      label="{{ '@quarter' | translate | async }}"
+      label="{{ '@shared/ui.quarter' | translate | async }}"
       label-placement="floating"
       interface="popover">
-      <ion-select-option [value]="0">{{ '@allQuarters' | translate | async }}</ion-select-option>
+      <ion-select-option [value]="0">{{ '@shared/ui.allQuarters' | translate | async }}</ion-select-option>
       @for(quarter of quarters; track quarter) {
         <ion-select-option [value]="quarter">Q{{ quarter }}</ion-select-option>
       }

@@ -138,5 +138,11 @@
     "pending": "Will be linked to the logbook as soon as you are online.",
     "taken_track": "“{track}”: {name} is already recording this outing. Your track stays without the logbook.",
     "unavailable_track": "“{track}”: this logbook outing can no longer be linked. Your track stays without the logbook."
+  },
+  "elevation": {
+    "title": "Elevation profile",
+    "gain": "ascent",
+    "loss": "descent",
+    "terrain": "Heights from the {provider} terrain model"
   }
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildReceiptAriaLabel, buildReceiptRows, filterRoomsOfTenant, isBridgedRoom, isForeignRoom, serverNameOf, isRoomClassifiable, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower, groupRoomAliasLocalpart, groupKeyFromRoomAlias, isRoomGoneError, askRoomAliasLocalpart, shouldDeferAskRoom, findGroupOfRoom, fileTransferKeyOf, isFileTransferCardBody, fileTransferCardOf, isFileTransferBot, fileTransferRoomPreset, isFileReadable, fileTransferCardStatusOf } from './chat.util';
+import { buildReceiptAriaLabel, buildReceiptRows, filterRoomsOfTenant, isBridgedRoom, isForeignRoom, serverNameOf, isRoomClassifiable, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower, groupRoomAliasLocalpart, groupKeyFromRoomAlias, isRoomGoneError, isAbortError, askRoomAliasLocalpart, shouldDeferAskRoom, findGroupOfRoom, fileTransferKeyOf, isFileTransferCardBody, fileTransferCardOf, isFileTransferBot, fileTransferRoomPreset, isFileReadable, fileTransferCardStatusOf } from './chat.util';
 
 describe('buildReceiptAriaLabel', () => {
   it('returns empty string for no receipts', () => {
@@ -439,6 +439,25 @@ describe('isRoomGoneError', () => {
     expect(isRoomGoneError({ errcode: 'M_LIMIT_EXCEEDED', message: 'Too many requests' })).toBe(false);
     expect(isRoomGoneError(null)).toBe(false);
     expect(isRoomGoneError(undefined)).toBe(false);
+  });
+});
+
+describe('isAbortError', () => {
+  it('recognises a cancelled fetch (DOMException AbortError)', () => {
+    expect(isAbortError(new DOMException('The operation was aborted. ', 'AbortError'))).toBe(true);
+  });
+
+  it('recognises an AbortError-named plain error', () => {
+    const e = new Error('aborted');
+    e.name = 'AbortError';
+    expect(isAbortError(e)).toBe(true);
+  });
+
+  it('does not treat transport or Matrix errors as a cancellation', () => {
+    expect(isAbortError(new TypeError('Failed to fetch'))).toBe(false);
+    expect(isAbortError({ errcode: 'M_FORBIDDEN', message: 'not in room' })).toBe(false);
+    expect(isAbortError(null)).toBe(false);
+    expect(isAbortError('AbortError')).toBe(false);
   });
 });
 

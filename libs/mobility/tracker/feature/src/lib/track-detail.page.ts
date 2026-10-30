@@ -11,11 +11,11 @@ import { AppStore } from '@okr/shared-feature';
 import { TRANSPORT_MODES, TrackPhoto, TransportMode, TripModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { confirm, downloadFile, okrPrompt } from '@okr/shared-util-angular';
-import { queryPedometerSteps, TrackDb, TrackService } from '@okr/mobility-tracker-data-access';
-import { TrackMap, TrackMapPhoto, TrackMapSection, TrackModeChange, TrackPhotoItem, TrackPhotos, TrackPhotoToggle, TrackSections } from '@okr/mobility-tracker-ui';
+import { queryPedometerSteps, TerrainElevationService, TrackDb, TrackService } from '@okr/mobility-tracker-data-access';
+import { TrackElevation, TrackMap, TrackMapPhoto, TrackMapSection, TrackModeChange, TrackPhotoItem, TrackPhotos, TrackPhotoToggle, TrackSections } from '@okr/mobility-tracker-ui';
 import { fill } from '@okr/shared-util-core';
 import {
-  alignSections, buildGpx, logbuchTripLabel, correctedTrack, fromLocalSections, gpxFileName, isShareCancel, LocalSection, LocalTrack, localFromTrip, mergeWithNext,
+  alignSections, buildGpx, ElevationPoint, elevationProfile, hasRelief, needsTerrain, sectionsWithHeights, terrainAltitudes, terrainSamples, logbuchTripLabel, correctedTrack, fromLocalSections, gpxFileName, isShareCancel, LocalSection, LocalTrack, localFromTrip, mergeWithNext,
   localStoreDate, middlePointIndex, sectionRows, setSectionMode, splitSection, toLocalSections, trackTenants, wantsPhotoReattach, withoutPhoto,
   withPhotoHidden, withQueriedSteps,
 } from '@okr/mobility-tracker-util';
@@ -37,7 +37,7 @@ import { TrackerStore } from './tracker.store';
   selector: 'okr-track-detail-page',
   imports: [
     IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonButton, IonIcon, IonListHeader, IonLabel, IonNote, IonSpinner,
-    SvgIconPipe, TrackMap, TrackPhotos, TrackSections,
+    SvgIconPipe, TrackElevation, TrackMap, TrackPhotos, TrackSections,
   ],
   styles: [`
     .center { display: flex; justify-content: center; padding: 24px; }
@@ -67,7 +67,11 @@ import { TrackerStore } from './tracker.store';
       @if (loading()) {
         <div class="center"><ion-spinner /></div>
       } @else if (track(); as t) {
-        <okr-track-map [sections]="mapSections()" [photos]="mapPhotos()" [live]="false" />
+        <okr-track-map [sections]="mapSections()" [photos]="mapPhotos()" [live]="false" [highlight]="highlight()" />
+        @if (relief(); as profile) {
+          <ion-list-header><ion-label>{{ i18n.elevation_title() }}</ion-label></ion-list-header>
+          <okr-track-elevation [profile]="profile" [i18n]="i18n" [note]="terrainNote()" (pointed)="highlight.set($event)" />
+        }
         @if (!t.uploaded) {
           <ion-note class="note" color="warning">{{ i18n.list_not_uploaded() }}</ion-note>
         }
@@ -120,6 +124,7 @@ export class TrackDetailPage {
   private readonly router = inject(Router);
   private readonly alertController = inject(AlertController);
   private readonly toastController = inject(ToastController);
+  private readonly terrainService = inject(TerrainElevationService);
 
   protected readonly loading = signal(true);
   protected readonly busy = signal(false);
@@ -157,6 +162,32 @@ export class TrackDetailPage {
     return lb ? fill(this.i18n.link_linked(), { trip: this.tripLabel(lb) }) : this.i18n.link_linked_unknown();
   });
 
+  /**
+   * Terrain heights (spec 1.128 §2) for exactly these `sections` (a correction makes a new array and so a new lookup);
+   * only used when too few points carry a GPS altitude.
+   */
+  private readonly terrain = signal<{ sections: LocalSection[]; alts: (number | undefined)[][]; provider: string } | undefined>(undefined);
+  /** the sections a terrain lookup was started for: one lookup per sections array */
+  private terrainRequested?: LocalSection[];
+  /** the sections with the heights to show and export: GPS, or terrain when GPS is too sparse */
+  private readonly heightSections = computed(() => {
+    const t = this.terrain();
+    const sections = this.sections();
+    return sectionsWithHeights(sections, t?.sections === sections ? t.alts : undefined);
+  });
+  /** the height profile, only when it has relief (> 20 m) */
+  protected readonly relief = computed(() => {
+    const p = elevationProfile(this.heightSections());
+    return hasRelief(p) ? p : undefined;
+  });
+  protected readonly terrainNote = computed(() => {
+    const t = this.terrain();
+    return t?.sections === this.sections() && needsTerrain(this.sections()) && t.provider
+      ? fill(this.i18n.elevation_terrain(), { provider: t.provider }) : '';
+  });
+  /** the profile point under the finger, marked on the map */
+  protected readonly highlight = signal<ElevationPoint | undefined>(undefined);
+
   protected readonly editable = computed(() => this.track()?.state === 'done' && !this.busy());
   protected readonly mapSections = computed<TrackMapSection[]>(() => this.sections().map((s) => ({ mode: s.mode, points: s.points })));
   protected readonly rows = computed(() => sectionRows(this.sections()));
@@ -182,6 +213,14 @@ export class TrackDetailPage {
     effect(() => {
       const key = this.key();
       untracked(() => void this.load(key));
+    });
+    // heights from the terrain model for a Strecke without (enough) GPS altitude, once per sections array
+    effect(() => {
+      const sections = this.sections();
+      const loading = this.loading();
+      untracked(() => {
+        if (!loading) void this.ensureTerrain(this.key(), sections);
+      });
     });
     effect(() => {
       const logbuchKey = this.isLinked() ? this.track()?.logbuchKey : undefined;
@@ -421,7 +460,7 @@ export class TrackDetailPage {
   protected async exportGpx(): Promise<void> {
     const t = this.track();
     if (!t) return;
-    const url = URL.createObjectURL(new Blob([buildGpx(t.name, this.sections())], { type: 'application/gpx+xml' }));
+    const url = URL.createObjectURL(new Blob([buildGpx(t.name, this.heightSections())], { type: 'application/gpx+xml' }));
     try {
       await downloadFile(url, gpxFileName(t.name));
     } catch (error) {
@@ -469,6 +508,9 @@ export class TrackDetailPage {
       await this.store.init();
       const access = this.store.checkPhotoAccess();
       this.trip.set(undefined);
+      this.terrain.set(undefined);
+      this.terrainRequested = undefined;
+      this.highlight.set(undefined);
       this.photoSrcs.set(new Map());
       this.resolving.clear();
       const local = (await this.db.list()).find((t) => t.key === key);
@@ -497,6 +539,10 @@ export class TrackDetailPage {
         this.isLocal.set(false);
         this.track.set(track);
         this.sections.set(sections);
+        // terrain heights looked up on an earlier view (spec 1.128): no second lookup
+        if (read.every((r) => r.terrain)) {
+          this.terrain.set({ sections, alts: read.map((r) => r.terrain ?? []), provider: read.find((r) => r.terrainProvider)?.terrainProvider ?? '' });
+        }
       } else {
         this.track.set(undefined);
         this.sections.set([]);
@@ -506,6 +552,33 @@ export class TrackDetailPage {
       this.track.set(undefined);
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  /**
+   * Looks the terrain heights up when the GPS heights are too sparse (spec 1.128 §2) and, for an uploaded Strecke of
+   * the owner, stores them on its track-points docs (detached). Offline or failed: no profile, nothing else changes.
+   */
+  private async ensureTerrain(key: string, sections: LocalSection[]): Promise<void> {
+    if (this.terrain()?.sections === sections || this.terrainRequested === sections || !needsTerrain(sections)) return;
+    const samples = terrainSamples(sections);
+    if (samples.length < 2) return;
+    this.terrainRequested = sections;
+    try {
+      const res = await this.terrainService.heights(samples.map((s) => ({ lat: s.lat, lng: s.lng })));
+      if (this.key() !== key || this.sections() !== sections) return;
+      const alts = terrainAltitudes(sections, samples, res.alts);
+      const provider = res.attribution?.provider ?? '';
+      this.terrain.set({ sections, alts, provider });
+      // only the uploaded copy of exactly these points: a local track not uploaded yet has no docs to write to
+      const trip = this.trip();
+      if (trip?.okey === key && (!this.isLocal() || this.track()?.uploaded)) {
+        void this.trackService.saveTerrainAltitudes(key, alts, provider)
+          .catch((error: unknown) => console.warn('TrackDetailPage.saveTerrainAltitudes', error));
+      }
+    } catch (error) {
+      console.warn('TrackDetailPage.ensureTerrain', error);
+      if (this.terrainRequested === sections) this.terrainRequested = undefined; // a later view may try again
     }
   }
 

@@ -14,7 +14,7 @@ export const pageValidations = staticSuite((model: PageModel, tenants: string, t
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
   // sections: string[] = []; // section.okey, section.name
 
-  test('sections', '@sectionsTypeStringArray', () => {
+  test('sections', 'notArray', () => {
     enforce(isArrayOfStrings(model.sections)).isTruthy();
   });
 });

@@ -29,7 +29,7 @@ export const personalRelValidations = staticSuite((model: PersonalRelModel, tena
 
     // cross field validations
   omitWhen(model.validFrom === '' || model.validTo === '', () => {
-    test('validTo', '@personalRelValidToAfterValidFrom', () => {
+    test('validTo', 'ownershipValidToAfterValidFrom', () => {
       enforce(isAfterOrEqualDate(model.validTo, model.validFrom)).isTruthy();
     });
   });

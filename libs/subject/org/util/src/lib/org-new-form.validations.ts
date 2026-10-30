@@ -27,7 +27,7 @@ export const orgNewFormValidations = staticSuite((model: OrgNewFormModel) => {
 
   // cross field validations
   omitWhen(model.dateOfLiquidation === '' || model.dateOfFoundation === '', () => {
-    test('dateOfLiquidation', '@orgLiguidationAfterFoundation', () => {
+    test('dateOfLiquidation', 'orgLiguidationAfterFoundation', () => {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       enforce(isAfterDate(model.dateOfLiquidation!, model.dateOfFoundation!)).isTruthy();
     });

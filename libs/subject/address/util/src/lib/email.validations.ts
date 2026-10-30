@@ -9,7 +9,7 @@ export function emailValidations(fieldName: string, email: unknown) {
   stringValidations(fieldName, email, LONG_NAME_LENGTH);
 
   omitWhen(email === '', () => {
-    test(fieldName, '@validEmailFormat', () => {
+    test(fieldName, 'validEmailFormat', () => {
       enforce(email).isEmail();
     });
   });

@@ -8,7 +8,7 @@ import { MatrixMessage, MatrixReadReceipt } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { debugData, debugMessage } from '@okr/shared-util-core';
 import {
-  EvictedRooms, evictedRoomsStorageKey, evictionAction, isMessageGoneError, isRenderableChatEvent, isRoomGoneError, threadRootOf,
+  EvictedRooms, evictedRoomsStorageKey, evictionAction, isMessageGoneError, isAbortError, isRenderableChatEvent, isRoomGoneError, threadRootOf,
   mediaRetryDelayMs, parseEvictedRooms, parsePollContent, recordEvictedRoom,
 } from '@okr/chat-util';
 import { AvatarService } from '@okr/avatar-data-access';
@@ -592,6 +592,7 @@ export class MatrixMessageService {
    * it identifies a specific private conversation.
    */
   private reportPaginationFailure(error: unknown): void {
+    if (isAbortError(error)) return; // the page is reloading/unloading — not a failure (SCS-DJ)
     const message = (error as Error | null)?.message ?? 'unknown';
     const errcode = (error as MatrixError | null)?.errcode;
     const reason = errcode ? `${errcode}: ${message}` : message;

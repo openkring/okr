@@ -490,6 +490,20 @@ export function isRoomGoneError(error: unknown): boolean {
   return errcode === 'M_FORBIDDEN' && /not in room/i.test(message ?? '');
 }
 
+/**
+ * True when a Matrix request was cancelled rather than failed — the `AbortError` the SDK
+ * rethrows unwrapped (every other transport failure becomes a `ConnectionError`).
+ *
+ * The app never aborts a request itself (`stopClient()` leaves in-flight requests alone and
+ * no `localTimeoutMs` is set), so in practice this is the browser cancelling fetches while the
+ * page reloads, navigates or unloads. The user is already leaving the room — nothing to report
+ * (SCS-DJ: Firefox's "The operation was aborted."). Duck-typed on `name`: a DOMException is not
+ * reliably `instanceof Error`.
+ */
+export function isAbortError(error: unknown): boolean {
+  return !!error && typeof error === 'object' && (error as { name?: unknown }).name === 'AbortError';
+}
+
 /** The part of a group document this module needs to match a room back to it. */
 export interface RoomOwningGroup {
   okey: string;

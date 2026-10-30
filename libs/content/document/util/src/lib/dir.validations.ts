@@ -8,7 +8,7 @@ export function dirValidations(fieldName: string, dir: unknown) {
   stringValidations(fieldName, dir, LONG_NAME_LENGTH);
 
   omitWhen(dir === '', () => {
-    test(fieldName, '@validDirPathFormat', () => {
+    test(fieldName, 'validDirPathFormat', () => {
       enforce(dir)['isURL']({
         protocols: ['http', 'https', 'ftp'],
         require_tld: false,

@@ -130,7 +130,7 @@ export function buildGpx(name: string, sections: LocalSection[]): string {
   const tracks = sections
     .filter((s) => s.points.length > 0)
     .map((s) => {
-      const pts = s.points.map((p) => `      <trkpt lat="${p.lat.toFixed(7)}" lon="${p.lng.toFixed(7)}"><time>${new Date(p.t).toISOString()}</time></trkpt>`);
+      const pts = s.points.map((p) => `      <trkpt lat="${p.lat.toFixed(7)}" lon="${p.lng.toFixed(7)}">${p.alt !== undefined ? `<ele>${p.alt}</ele>` : ''}<time>${new Date(p.t).toISOString()}</time></trkpt>`);
       return ['  <trk>', `    <name>${xml(name)}</name>`, `    <type>${s.mode}</type>`, '    <trkseg>', ...pts, '    </trkseg>', '  </trk>'].join('\n');
     });
   return [

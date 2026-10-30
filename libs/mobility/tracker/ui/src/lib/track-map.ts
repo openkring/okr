@@ -64,6 +64,7 @@ type MapFit = { bounds: L.LatLngBounds } | { center: L.LatLngTuple };
       box-shadow: 0 0 3px rgba(0,0,0,.6); }
     .okr-track-dot.start { background: #2e7d32; }
     .okr-track-dot.end { background: #c62828; }
+    .okr-track-dot.here { background: #1565c0; width: 16px; height: 16px; }
     /* a fixed round frame around the img: global img rules (height:auto, max-width) can never make it an ellipse */
     .okr-track-photo-pin { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #fff; box-sizing: border-box;
       box-shadow: 0 0 3px rgba(0,0,0,.6); overflow: hidden; background: #fff; }
@@ -90,6 +91,8 @@ export class TrackMap {
   public readonly photosClickable = input(false);
   /** false: the mouse wheel scrolls the page instead of zooming the map; read once at init */
   public readonly wheelZoom = input(true);
+  /** a spot to mark (the point under the finger on the height profile, spec 1.128); undefined = none. Never moves the map. */
+  public readonly highlight = input<{ lat: number; lng: number } | undefined>(undefined);
 
   /** a tapped photo pin, as index into `photos` (only with `photosClickable`) */
   public readonly photoClicked = output<number>();
@@ -99,6 +102,7 @@ export class TrackMap {
   private map?: L.Map;
   private overlay?: L.LayerGroup;
   private photoLayer?: L.LayerGroup;
+  private highlightMarker?: L.Marker;
   private resizeObserver?: ResizeObserver;
   private destroyed = false;
   private fitted = false;
@@ -130,7 +134,27 @@ export class TrackMap {
       const selected = this.selectedPhoto();
       if (this.map) untracked(() => this.panToPhoto(selected));
     });
+    effect(() => {
+      const at = this.highlight();
+      if (this.map) this.renderHighlight(at);
+    });
     inject(DestroyRef).onDestroy(() => this.teardown());
+  }
+
+  private renderHighlight(at: { lat: number; lng: number } | undefined): void {
+    const Lf = this.leaflet;
+    if (!Lf || !this.map || this.destroyed) return;
+    if (!at) {
+      this.highlightMarker?.remove();
+      this.highlightMarker = undefined;
+      return;
+    }
+    if (this.highlightMarker) {
+      this.highlightMarker.setLatLng([at.lat, at.lng]);
+      return;
+    }
+    const icon = Lf.divIcon({ className: 'okr-track-dot-icon', html: '<div class="okr-track-dot here"></div>', iconSize: [16, 16], iconAnchor: [8, 8] });
+    this.highlightMarker = Lf.marker([at.lat, at.lng], { icon, interactive: false, keyboard: false, zIndexOffset: 1000 }).addTo(this.map);
   }
 
   private async init(): Promise<void> {
@@ -157,6 +181,7 @@ export class TrackMap {
     this.render(this.sections(), this.live());
     this.renderPhotos(this.photos(), this.selectedPhoto());
     this.panToPhoto(this.selectedPhoto());
+    this.renderHighlight(this.highlight());
     this.resizeObserver = new ResizeObserver(() => this.onResize(container));
     this.resizeObserver.observe(this.el.nativeElement);
   }
@@ -298,5 +323,6 @@ export class TrackMap {
     this.map = undefined;
     this.overlay = undefined;
     this.photoLayer = undefined;
+    this.highlightMarker = undefined;
   }
 }

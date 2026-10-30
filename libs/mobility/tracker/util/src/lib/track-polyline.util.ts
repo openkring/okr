@@ -3,6 +3,7 @@ export interface TrackPoint {
   lng: number;
   t: number; // ms epoch
   acc?: number;
+  alt?: number; // metres above sea level (GPS), rounded; stored apart from the polyline (track-elevation.util)
 }
 
 const FACTOR = 1e5;
