@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { resetActivity, seenKeyFor, toSeenCounts, unseenActivity } from './calevent-activity.util';
+import { resetActivity, seenKeyFor, toSeenCounts, unseenActivity, unseenActivityFor } from './calevent-activity.util';
 
 describe('unseenActivity', () => {
   it('is the difference between the event counter and the seen marker', () => {
@@ -43,5 +43,23 @@ describe('resetActivity', () => {
   it('clears both fields so a copied event does not inherit a badge', () => {
     const original = { activityCount: 7, lastActivityAt: '20260915120000' };
     expect({ ...original, ...resetActivity() }).toEqual({ activityCount: 0, lastActivityAt: '' });
+  });
+});
+
+describe('unseenActivityFor', () => {
+  const att = (state: string) => [{ person: { key: 'p1' }, state }] as never;
+  const ev = (attendees: never[] = []) => ({ okey: 'e1', activityCount: 5, attendees });
+
+  it('is 0 for a declined event', () => {
+    expect(unseenActivityFor(ev(att('declined')), { 'calevent.e1': 3 }, 'p1')).toBe(0);
+  });
+
+  it.each(['accepted', 'invited'])('counts for a %s attendee', (state) => {
+    expect(unseenActivityFor(ev(att(state)), { 'calevent.e1': 3 }, 'p1')).toBe(2);
+  });
+
+  it('counts when the user is not listed', () => {
+    expect(unseenActivityFor(ev(att('declined')), { 'calevent.e1': 3 }, 'p2')).toBe(2);
+    expect(unseenActivityFor(ev(), {}, 'p1')).toBe(5);
   });
 });

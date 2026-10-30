@@ -1,4 +1,5 @@
 import { CalEventModel, CalEventModelName, SeenModel } from '@okr/shared-models';
+import { getAttendanceState } from '@okr/shared-util-core';
 
 /** The seen-marker id of an event — the same `<modelType>.<okey>` shape comments use as parentKey. */
 export function seenKeyFor(caleventKey: string): string {
@@ -23,6 +24,19 @@ export function unseenActivity(calevent: Pick<CalEventModel, 'okey' | 'activityC
   const total = calevent.activityCount ?? 0;
   const seen = seenCounts[seenKeyFor(calevent.okey)] ?? 0;
   return Math.max(0, total - seen);
+}
+
+/**
+ * `unseenActivity` for a given user: 0 when the user declined the event (the same rule the comment and
+ * document pushes follow — they skip declined attendees). Accepted, invited and unlisted users count.
+ */
+export function unseenActivityFor(
+  calevent: Pick<CalEventModel, 'okey' | 'activityCount' | 'attendees'>,
+  seenCounts: Record<string, number>,
+  personKey: string
+): number {
+  if (getAttendanceState(calevent as CalEventModel, personKey) === 'declined') return 0;
+  return unseenActivity(calevent, seenCounts);
 }
 
 /**

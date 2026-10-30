@@ -11,7 +11,7 @@ import { getAttendanceStates, getAttendee, getAvatarInfoForCurrentUser, getInvit
 import { notify, resourceParams } from '@okr/shared-util-angular';
 
 import { CalEventService } from '@okr/calevent-data-access';
-import { isAttendanceClosed, seenKeyFor, toSeenCounts, unseenActivity } from '@okr/calevent-util';
+import { isAttendanceClosed, seenKeyFor, toSeenCounts, unseenActivityFor } from '@okr/calevent-util';
 import { SeenService } from '@okr/user-data-access';
 import { getVisibleGroupKeys } from '@okr/subject-group-util';
 
@@ -258,7 +258,7 @@ export const CalendarStore = signalStore(
 
       /** Comments/documents on the event the user has not looked at yet — the widget badge. */
       unseen(calevent: CalEventModel): number {
-        return unseenActivity(calevent, store.seenCounts());
+        return unseenActivityFor(calevent, store.seenCounts(), store.appStore.currentUser()?.personKey ?? '');
       },
 
       /** Same contract as CalEventStore.markSeen: opening either modal counts as having looked. */
