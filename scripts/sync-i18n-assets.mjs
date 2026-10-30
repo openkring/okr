@@ -8,6 +8,11 @@
  *
  * Run after adding a new lib with i18n files:
  *   node scripts/sync-i18n-assets.mjs
+ *
+ * With --check it writes nothing and exits 1 when any project.json is out of sync (release gate).
+ * A lib whose de.json is not listed ships no asset: the scope's <lang>.json then falls through to
+ * the SPA fallback (index.html, HTTP 200) and every key of it opens an `i18n scope-load-failed`
+ * Sentry ticket (SCS-DK…SCS-E6: the tracker scope was never listed for scs-app).
  */
 
 import { execSync } from 'child_process';
@@ -16,6 +21,8 @@ import { resolve, join } from 'path';
 import { fileURLToPath } from 'url';
 
 const ROOT = resolve(fileURLToPath(import.meta.url), '..', '..');
+const CHECK = process.argv.includes('--check');
+const drifted = [];
 
 function findI18nLibs() {
   const out = execSync('find libs -path "*/src/i18n/de.json"', { cwd: ROOT }).toString();
@@ -71,6 +78,23 @@ function updateProjectJson(label, projectJsonPath, i18nEntries) {
     ? [...others, ...i18nEntries]
     : [...others.slice(0, insertIdx), ...i18nEntries, ...others.slice(insertIdx)];
 
+  if (CHECK) {
+    const key = a => `${a.input} -> ${a.output}`;
+    const have = new Set(assets.filter(isI18nEntry).map(key));
+    const want = new Set(i18nEntries.map(key));
+    const missing = [...want].filter(k => !have.has(k));
+    const stale = [...have].filter(k => !want.has(k));
+    if (missing.length || stale.length) {
+      drifted.push(label);
+      console.log(`  ${label}: out of sync`);
+      missing.forEach(k => console.log(`    missing: ${k}`));
+      stale.forEach(k => console.log(`    stale:   ${k}`));
+    } else {
+      console.log(`  ${label}: ok`);
+    }
+    return;
+  }
+
   config.targets.build.options.assets = newAssets;
   writeFileSync(projectJsonPath, JSON.stringify(config, null, 2) + '\n');
   console.log(`  ${label}: ${i18nEntries.length} i18n entries written`);
@@ -96,7 +120,7 @@ const i18nEntries = [
 const apps = readdirSync(join(ROOT, 'apps')).filter(
   a => existsSync(join(ROOT, 'apps', a, 'project.json'))
 );
-console.log(`Updating apps: ${apps.join(', ')}`);
+console.log(`${CHECK ? 'Checking' : 'Updating'} apps: ${apps.join(', ')}`);
 apps.forEach(app => updateProjectJson(app, join(ROOT, 'apps', app, 'project.json'), i18nEntries));
 
 // The app generator's template is a tokenized copy of an app's project.json and carries its own
@@ -109,4 +133,10 @@ updateProjectJson(
   join(ROOT, 'tools', 'src', 'generators', 'app', 'files', 'project.json__tmpl__'),
   i18nEntries,
 );
+
+if (CHECK && drifted.length) {
+  console.error(`\ni18n asset entries out of sync in: ${drifted.join(', ')}`);
+  console.error('Run `pnpm sync-i18n-assets` and commit the changed project.json files (app submodules included).');
+  process.exit(1);
+}
 console.log('Done.');

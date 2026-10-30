@@ -196,6 +196,14 @@ async function releaseApp(app) {
   try { run('node', ['scripts/check-i18n.mjs']); }
   catch { abort('check-i18n failed — release aborted (no version bump made). Fix the findings above.'); }
 
+  // 1a'''. i18n asset gate: every lib with a src/i18n/de.json must be copied into every app's build.
+  //        An unlisted scope breaks no build and no test — its <lang>.json falls through to the SPA
+  //        fallback (index.html, HTTP 200) and every key opens an `i18n scope-load-failed` ticket
+  //        (SCS-DK…SCS-E6: the tracker scope was never listed for scs-app).
+  console.log('\n[1/6] Checking i18n asset entries (pnpm check-i18n-assets)…');
+  try { run('node', ['scripts/sync-i18n-assets.mjs', '--check']); }
+  catch { abort('check-i18n-assets failed — release aborted (no version bump made). Run `pnpm sync-i18n-assets` and commit the app project.json files.'); }
+
   // 1a''. live menu labels: a menuItems doc created in the CMS or by the feature picker can name a
   //       label no source file knows. Data, not code — so ask, and never block on missing creds.
   console.log('\n[1/6] Checking live menu labels (pnpm check-menu-labels)…');
