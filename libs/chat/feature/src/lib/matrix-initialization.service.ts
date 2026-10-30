@@ -46,8 +46,8 @@ export class MatrixInitializationService {
   private pushUid: string | undefined;
   /** When pushUid last registered successfully (epoch ms); in memory only, see refreshPushIfStale. */
   private pushRegisteredAt: number | undefined;
-  /** A registerPush is running: the visibility refresh must not start a second one. */
-  private pushRegistering = false;
+  /** registerPush calls still running (exact per call); the visibility refresh waits for 0. */
+  private pushRegistrationsRunning = 0;
 
   /**
    * 1.107 gate state: 'none' (signed out), 'blocked' (chat blocked for this person) or 'open'.
@@ -147,30 +147,31 @@ export class MatrixInitializationService {
    */
   private async registerPush(uid: string, allowPrompt: boolean): Promise<string | null> {
     // No await before enablePush: on the prompt path it must reach requestPermission() in the tap.
-    this.pushRegistering = true;
+    this.pushRegistrationsRunning++;
     try {
       const token = await this.fcmService.enablePush(uid, allowPrompt, false);
       if (token && this.matrixService.isInitialized && this.chatGate() === 'open') await this.fcmService.ensureMatrixPusher();
       if (token && uid === this.pushUid) this.pushRegisteredAt = Date.now();
       return token;
     } finally {
-      this.pushRegistering = false;
+      this.pushRegistrationsRunning--;
     }
   }
 
   /**
    * Silent daily refresh for long-lived sessions (1.127): the token doc's updatedAt moves only on
-   * a registration, and the morning job prunes tokens unused for 60 days together with their
-   * Matrix pushers — a kiosk iPad or an always-open desktop PWA registers once at app start and
-   * would lose push while still running. Runs when the app becomes visible again (Capacitor fires
+   * a registration (app start), and the morning job prunes tokens unused for 60 days together
+   * with their Matrix pushers — so an always-open desktop PWA or a native app that only ever
+   * resumes would lose push while still running. (The kiosk iPad stays fresh through its 5-minute
+   * idle reload, a cold start.) Runs when the app becomes visible again (Capacitor fires
    * visibilitychange on native resume too), only with permission already granted, and never
    * prompts.
    */
   private async refreshPushIfStale(): Promise<void> {
     const uid = this.pushUid;
-    if (!uid || this.pushRegistering || !isRegistrationStale(this.pushRegisteredAt, Date.now())) return;
+    if (!uid || this.pushRegistrationsRunning > 0 || !isRegistrationStale(this.pushRegisteredAt, Date.now())) return;
     if (await this.fcmService.getPermissionState() !== 'granted') return;
-    if (uid !== this.pushUid || this.pushRegistering) return; // signed out or started meanwhile
+    if (uid !== this.pushUid || this.pushRegistrationsRunning > 0) return; // signed out or started meanwhile
     await this.registerPush(uid, false);
   }
 

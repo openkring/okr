@@ -36,6 +36,13 @@ export class FcmService {
   private pusherToken: string | undefined;
   /** Registration currently in flight, so overlapping calls for the same token share one call. */
   private pusherInFlight?: { token: string; promise: Promise<void> };
+  /**
+   * Push session generation, bumped synchronously by disablePush (logout). A registration that
+   * started in an earlier generation and finishes after the logout drops its result: it sets no
+   * token, deletes a token doc it already wrote and registers no Matrix pusher — otherwise a
+   * shared device keeps receiving the signed-out member's pushes.
+   */
+  private generation = 0;
 
   /** The FCM/APNs token most recently registered on this device, or null if not yet registered. */
   get currentToken(): string | null { return this._currentToken; }
@@ -107,7 +114,7 @@ export class FcmService {
     const token = this._currentToken;
     if (!token || this.pusherToken === token) return;
     if (this.pusherInFlight?.token === token) return this.pusherInFlight.promise;
-    const promise = this.registerPusher(token).finally(() => {
+    const promise = this.registerPusher(token, this.generation).finally(() => {
       if (this.pusherInFlight?.promise === promise) this.pusherInFlight = undefined;
     });
     this.pusherInFlight = { token, promise };
@@ -120,6 +127,9 @@ export class FcmService {
    * Not time-bounded offline: callers wrap it in a timeout.
    */
   async disablePush(uid: string): Promise<void> {
+    // First, and even without a token: a registration still inside getToken / saveToken has not
+    // set _currentToken yet, and must see the logout when it resumes.
+    this.generation++;
     const token = this._currentToken;
     if (!token) return;
     // A pusher registration still running when the user logs out would land AFTER the
@@ -151,7 +161,9 @@ export class FcmService {
     }
   }
 
-  private async registerPusher(token: string): Promise<void> {
+  private async registerPusher(token: string, generation: number): Promise<void> {
+    // Logged out since the caller read the token: register nothing (see generation).
+    if (generation !== this.generation) return;
     try {
       // Via a Cloud Function so the push-gateway secret and URL never ship in the bundle (S3, SEC-2).
       const registerPusher = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'registerMatrixPusher');
@@ -160,7 +172,8 @@ export class FcmService {
         deviceDisplayName: (navigator.userAgent ?? 'Unknown').substring(0, 100),
         lang: navigator.language || 'de',
       });
-      if (this._currentToken === token) this.pusherToken = token;
+      // A logout during the call: disablePush waits for this promise, then unregisters the pusher.
+      if (generation === this.generation && this._currentToken === token) this.pusherToken = token;
     } catch (err) {
       console.warn('FcmService.registerPusher: Matrix pusher registration failed (non-critical):', err);
     }
@@ -178,6 +191,7 @@ export class FcmService {
 
   /** Native Capacitor (iOS / Android / macOS) — uses APNs / FCM native SDK. */
   private async registerNativeAndSave(uid: string, allowPrompt: boolean): Promise<string | null> {
+    const generation = this.generation;
     try {
       let { receive } = await PushNotifications.checkPermissions();
       if (receive === 'prompt' || receive === 'prompt-with-rationale') {
@@ -202,7 +216,11 @@ export class FcmService {
       return new Promise<string | null>((resolve) => {
         PushNotifications.addListener('registration', async tokenData => {
           try {
-            await this.saveToken(uid, tokenData.value);
+            // Also drops the events an earlier session's listener still receives (N4).
+            if (!(await this.saveTokenUnlessLoggedOut(uid, tokenData.value, generation))) {
+              resolve(null);
+              return;
+            }
             this._currentToken = tokenData.value;
             console.log('FcmService: Native push token registered and saved');
             resolve(tokenData.value);
@@ -224,6 +242,7 @@ export class FcmService {
 
   /** Web / PWA — uses Firebase Messaging + VAPID key + service worker. */
   private async registerWebAndSave(uid: string, allowPrompt: boolean): Promise<string | null> {
+    const generation = this.generation;
     const vapidKey = this.env.services.fcmVapidKey;
     if (!vapidKey) {
       console.warn('FcmService.registerWebAndSave: fcmVapidKey not configured in environment');
@@ -255,7 +274,7 @@ export class FcmService {
       }
       const token = await getToken(this.messaging, { vapidKey });
       if (!token) return null;
-      await this.saveToken(uid, token);
+      if (!(await this.saveTokenUnlessLoggedOut(uid, token, generation))) return null;
       this._currentToken = token;
       console.log('FcmService.registerWebAndSave: Token registered and saved');
       return token;
@@ -333,6 +352,21 @@ export class FcmService {
     if (!isBrowser(this.platformId)) return false;
     if (Capacitor.isNativePlatform()) return true;
     return 'Notification' in window && 'serviceWorker' in navigator;
+  }
+
+  /**
+   * saveToken, but only while the push session that started the registration is still current.
+   * Checked before the write (no doc for a session that already ended) and after it (a logout
+   * during the write): then the doc is deleted again, so a registration that outlives the logout
+   * never leaves a token doc behind. Same-client Firestore writes apply in order.
+   * @return true when the token is saved for the current session
+   */
+  private async saveTokenUnlessLoggedOut(uid: string, token: string, generation: number): Promise<boolean> {
+    if (generation !== this.generation) return false;
+    await this.saveToken(uid, token);
+    if (generation === this.generation) return true;
+    await this.removeToken(uid, token);
+    return false;
   }
 
   private async saveToken(uid: string, token: string): Promise<void> {
