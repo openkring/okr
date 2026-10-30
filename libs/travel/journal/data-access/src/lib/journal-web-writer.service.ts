@@ -75,15 +75,33 @@ export class JournalWebWriter {
   private readonly firestore = inject(FIRESTORE);
   private memory: ChangeStamp = { clock: undefined, seq: 0 };
 
-  /** The profile's device id (created on first use; kept in memory when storage is unavailable). */
-  public readonly deviceId: string = JournalWebWriter.loadDeviceId();
+  /**
+   * True once this instance stamps under its own in-memory id. That happens when the profile id cannot
+   * be stored, or when the stamp write-back fails: tabs that share a device id but cannot publish
+   * their seq/hlc would stamp the same (deviceId, seq), and the iPads keep only one of the two records.
+   */
+  private privateId = false;
+  private id: string = this.loadDeviceId();
 
-  private static loadDeviceId(): string {
+  /** The profile's device id (created on first use), or this instance's private id (see `privateId`). */
+  public get deviceId(): string {
+    return this.id;
+  }
+
+  private loadDeviceId(): string {
     const stored = readStorage(KEY_DEVICE);
     if (isWebDeviceId(stored)) return stored;
     const id = newUuid();
-    writeStorage(KEY_DEVICE, id);
+    if (!writeStorage(KEY_DEVICE, id)) this.privateId = true;
     return id;
+  }
+
+  /** From now on, a fresh id kept in memory only; the clock carries over (causality), the seq restarts. */
+  private switchToPrivateId(): void {
+    const clock = this.memory.clock;
+    this.privateId = true;
+    this.id = newUuid();
+    this.memory = { clock: clock ? { ...clock, deviceId: this.id } : undefined, seq: 0 };
   }
 
   /** Stamps drafts for `authorKey` (Web Lock around read-merge-write of the localStorage stamp; `known` = loaded records for maxSeqOf). */
@@ -95,7 +113,17 @@ export class JournalWebWriter {
 
   /** Synchronous on purpose: nothing may wait on the network while the lock is held. */
   private stampLocked(drafts: ChangeDraft[], authorKey: string, known: readonly JournalChange[]): JournalChange[] {
-    const deviceId = this.deviceId;
+    const first = this.stampUnder(drafts, authorKey, known);
+    if (this.saveStamp(first.stamp)) return first.changes;
+    // the seq could not be published: no record may leave under the shared id — re-stamp privately
+    this.switchToPrivateId();
+    const second = this.stampUnder(drafts, authorKey, known);
+    this.saveStamp(second.stamp);
+    return second.changes;
+  }
+
+  private stampUnder(drafts: ChangeDraft[], authorKey: string, known: readonly JournalChange[]): { changes: JournalChange[]; stamp: ChangeStamp } {
+    const deviceId = this.id;
     let stamp = this.loadStamp(known);
     const changes: JournalChange[] = [];
     for (const draft of drafts) {
@@ -103,8 +131,7 @@ export class JournalWebWriter {
       changes.push(next.change);
       stamp = next.stamp;
     }
-    this.saveStamp(stamp);
-    return changes;
+    return { changes, stamp };
   }
 
   /** Commits one batch (records of one journal). Resolves 'confirmed'; 'slow' after 30 s (the SDK keeps trying); rejects on refusal after the new-journal retries. */
@@ -127,7 +154,9 @@ export class JournalWebWriter {
   /** Moves the clock past received records (accepted hlcs only). */
   public receiveClocks(hlcs: readonly string[]): void {
     if (hlcs.length === 0) return;
-    const run = () => this.saveStamp(receiveClocksInto(this.loadStamp([]), hlcs, this.deviceId, Date.now()));
+    const run = () => {
+      if (!this.saveStamp(receiveClocksInto(this.loadStamp([]), hlcs, this.id, Date.now()))) this.switchToPrivateId();
+    };
     const locks = lockManager();
     if (!locks) { run(); return; }
     locks.request(STAMP_LOCK, run).catch(() => run());
@@ -135,15 +164,22 @@ export class JournalWebWriter {
 
   // ---------------------------------------------------------------- internals ---------------
 
+  /** A private id has no stored stamp: memory and the loaded records alone. */
   private loadStamp(known: readonly JournalChange[]): ChangeStamp {
-    const stored = parseStamp(readStorage(KEY_HLC), readStorage(KEY_SEQ), this.deviceId, maxSeqOf(known, this.deviceId));
+    const storedMaxSeq = maxSeqOf(known, this.id);
+    const stored = this.privateId
+      ? { clock: undefined, seq: storedMaxSeq }
+      : parseStamp(readStorage(KEY_HLC), readStorage(KEY_SEQ), this.id, storedMaxSeq);
     return mergeStamps(this.memory, stored);
   }
 
-  private saveStamp(stamp: ChangeStamp): void {
-    if (stamp.clock) writeStorage(KEY_HLC, formatHlc(stamp.clock));
-    writeStorage(KEY_SEQ, String(stamp.seq));
+  /** Sets memory; false when the shared stamp could not be written back (a private id needs no write). */
+  private saveStamp(stamp: ChangeStamp): boolean {
     this.memory = stamp;
+    if (this.privateId) return true;
+    const hlcSaved = stamp.clock ? writeStorage(KEY_HLC, formatHlc(stamp.clock)) : true;
+    const seqSaved = writeStorage(KEY_SEQ, String(stamp.seq));
+    return hlcSaved && seqSaved;
   }
 
   /** A fresh batch per attempt: a rejected batch cannot be committed again. */
