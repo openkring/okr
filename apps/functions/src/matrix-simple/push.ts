@@ -42,19 +42,20 @@ const CHAT_PAGE_FAILURE_TTL_MS = 10_000;
 /**
  * Does the group behind `groupKey` have a `<okey>_chat` CMS page to deep-link into?
  *
- * True only for a real group: `GroupStore.save()` creates the page and its chat section
- * alongside the group, while `createAdhocChat` creates neither. Reads `kind ?? 'group'`
- * because documents predating the ad-hoc feature do not carry the field. Any read failure
- * answers false — a generic chat page is always safe, a 404 never is.
+ * Reads the page itself (`pages/<okey>_chat`, PageCollection): `GroupStore.save()` creates it
+ * alongside a real group, but not every group with a room has one (older groups, groups whose
+ * page was removed), and `createAdhocChat` creates none at all. A missing or archived page
+ * answers false. Any read failure answers false, too — a generic chat page is always safe, a 404
+ * never is.
  */
-async function hasGroupChatPage(groupKey: string): Promise<boolean> {
-  // Cached per group key: every chat push asks this now, and `kind` never changes after creation.
+export async function hasGroupChatPage(groupKey: string): Promise<boolean> {
+  // Cached per group key: every chat push asks this.
   const now = Date.now();
   const hit = chatPageCache.get(groupKey, now);
   if (hit) return hit.value;
   try {
-    const snap = await getFirestore().collection('groups').doc(groupKey).get();
-    const hasPage = snap.exists && ((snap.data()?.['kind'] as string | undefined) ?? 'group') === 'group';
+    const snap = await getFirestore().collection('pages').doc(`${groupKey}_chat`).get();
+    const hasPage = snap.exists && snap.data()?.['isArchived'] !== true;
     chatPageCache.set(groupKey, hasPage, now);
     return hasPage;
   } catch (e) {
@@ -113,12 +114,12 @@ export const sendCallNotification = onCall(
     // derived from the room name again. That coupling only ever worked because rooms used to
     // be named by their key; since rooms carry the group's display name ("Freitags 8-er",
     // "Kandidat:innen & Instrukt."), a name-derived id would be blanks-and-colons garbage.
-    // A key alone is not enough, though: only a real GROUP owns a `<okey>_chat` page.
+    // A key alone is not enough, though: not every group owns a `<okey>_chat` page.
     // Ad-hoc chats are group documents with `kind: 'chat'` and no page or sections —
-    // `createAdhocChat` writes the document and the room, nothing else — so their deep
-    // link would land on PageDispatcher's `pageNotFound`. So fall back to the tenant's
-    // generic chat page whenever there is no key (older client, or a room that is not a
-    // group room), the key names an ad-hoc chat, or its document is gone. ?selectedRoom
+    // `createAdhocChat` writes the document and the room, nothing else — and some real groups
+    // have a room but no page, so their deep link would land on PageDispatcher's
+    // `pageNotFound`. So fall back to the tenant's generic chat page whenever there is no key
+    // (older client, or a room that is not a group room) or no live `<okey>_chat` page. ?selectedRoom
     // carries the Matrix room ID either way, so the right room is pre-selected regardless
     // of which page opens.
     const chatUrl = chatDeepLink(roomId, (roomKey && await hasGroupChatPage(roomKey)) ? roomKey : undefined);
@@ -217,6 +218,19 @@ async function mintMatrixUserToken(
 }
 
 /**
+ * The tenant stored on a Matrix pusher: the client's app tenant when it is one of the account's
+ * tenants, else the account's first tenant (with a warning for a foreign value). '' when the
+ * account has none. Pure apart from the log line.
+ */
+export function pusherTenantFor(requested: unknown, accountTenants: string[], uid: string): string {
+  if (typeof requested === 'string' && requested && accountTenants.includes(requested)) return requested;
+  if (requested !== undefined && requested !== null && requested !== '') {
+    console.warn(`registerMatrixPusher: tenant ${String(requested).substring(0, 50)} is not one of ${uid}'s tenants, using ${accountTenants[0] ?? '(none)'}`);
+  }
+  return accountTenants[0] ?? '';
+}
+
+/**
  * Register an HTTP pusher with Synapse on behalf of the calling user (S3 + SEC-2).
  *
  * Done server-side so the gateway shared secret never ships in the client bundle: the
@@ -224,7 +238,7 @@ async function mintMatrixUserToken(
  * secret-bearing gateway URL, which is required to end with /_matrix/push/v1/notify
  * (Synapse rejects any other URL with 400 — the original S3 bug).
  *
- * Input: { pushkey (FCM token), deviceDisplayName?, lang?, appId? }
+ * Input: { pushkey (FCM token), deviceDisplayName?, lang?, appId?, tenantId? (the app's tenant) }
  */
 export const registerMatrixPusher = onCall(
   {
@@ -236,8 +250,10 @@ export const registerMatrixPusher = onCall(
   async (request): Promise<{ registered: boolean }> => {
     const uid = await requireProvisionedUser(request, 'registerMatrixPusher');
     checkRateLimit(uid, 'registerMatrixPusher', 10);
-    const { pushkey, deviceDisplayName, lang, appId } = request.data as {
+    const { pushkey, deviceDisplayName, lang, appId, tenantId } = request.data as {
       pushkey: string; deviceDisplayName?: string; lang?: string; appId?: string;
+      /** The registering app's build tenant (1.127 final review M1); absent from older clients. */
+      tenantId?: unknown;
     };
     if (!pushkey) throw new HttpsError('invalid-argument', 'pushkey is required');
 
@@ -245,9 +261,10 @@ export const registerMatrixPusher = onCall(
 
     const appIdToUse = appId || PUSH_APP_ID;
     // Echoed back by Synapse as `devices[].data` on every push, so matrixPushGateway can send a
-    // room's messages only to the apps of the room's tenants (spec 1.93 §3). Users are
-    // single-tenant, so the account's tenant is the app's.
-    const pusherTenantId = (await getUserTenants(uid))[0] ?? '';
+    // room's messages only to the apps of the room's tenants (spec 1.93 §3). The tenant of the
+    // APP that registers this token — named by the client, accepted only if it is one of the
+    // account's tenants; older clients (or a foreign value) fall back to the account's first.
+    const pusherTenantId = pusherTenantFor(tenantId, await getUserTenants(uid), uid);
     const deviceName = (deviceDisplayName || 'Unknown').substring(0, 100);
 
     // Prune stale pushers for THIS device before registering the new one. The FCM token
@@ -632,10 +649,13 @@ export const matrixPushGateway = onRequest(
             token,
             data: {
               type: 'chat',
-              // The pusher's own tenant, i.e. always the tenant of the app that registered this
-              // FCM token — so the service worker's tenant-mismatch drop (it compares this to the
-              // app's okrTenantId) never fires for a chat push; it only lets the worker and the tap
-              // handler know which app the push belongs to. Omitted for pre-tenant pushers.
+              // The pusher's own tenant: the tenant of the app that registered this FCM token
+              // (registerMatrixPusher validates the client's value against the account). Pushers of
+              // older clients carry the account's first tenant instead, which is the same app for a
+              // single-tenant account. With it, the service worker's tenant-mismatch drop (it
+              // compares this to the app's okrTenantId) does not fire for a chat push; it lets the
+              // worker and the tap handler know which app the push belongs to. Omitted for
+              // pre-tenant pushers.
               ...(pusherTenant ? { tenantId: pusherTenant } : {}),
               title,
               body: msgBody,

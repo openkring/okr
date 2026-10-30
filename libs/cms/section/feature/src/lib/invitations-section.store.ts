@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, linkedSignal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { combineLatest, firstValueFrom, map, of } from 'rxjs';
 import { AlertController, ModalController } from '@ionic/angular';
@@ -93,6 +93,20 @@ export const InvitationSectionStore = signalStore(
     })
   })),
 
+  withProps((store) => ({
+    // The last resolved event map, held while the next one loads — same as AppStore.openInvitationEvents
+    // (1.127 final review M2): no flicker of the open card when the keys change; a key missing from
+    // the held map is still left out (never too many). A failed resource reads as empty.
+    openInvitationEvents: linkedSignal<Map<string, CalEventModel | null> | undefined, Map<string, CalEventModel | null>>({
+      source: () => {
+        const events = store.openInvitationEventsResource;
+        if (events.hasValue()) return events.value();
+        return events.status() === 'error' ? new Map<string, CalEventModel | null>() : undefined;
+      },
+      computation: (next, previous) => next ?? previous?.value ?? new Map<string, CalEventModel | null>(),
+    }),
+  })),
+
   withComputed((state) => {
     return {
       // all invitations, either only the current ones or all that ever existed (based on showOnlyCurrent)
@@ -133,12 +147,13 @@ export const InvitationSectionStore = signalStore(
       // rather than allInvitations() on purpose — isOpenInvitation carries its own (inclusive of
       // today) date cut-off — and filtered with countableInvitationsOf, the same rule the
       // notification badge counts with and the push gate mirrors, so card, badge and push cannot
-      // drift apart. While the events load, invitations with a caleventKey are left out.
+      // drift apart. While the events load, the last resolved map is held; an invitation whose event
+      // is not in it is left out.
       openInvitations: computed(() =>
         countableInvitationsOf(
           state.invitationsResource.value() ?? [],
           state.inviteeKey(),
-          state.openInvitationEventsResource.value() ?? new Map<string, CalEventModel | null>())),
+          state.openInvitationEvents())),
     }
   }),
 

@@ -1,4 +1,4 @@
-import { computed, effect, inject, PLATFORM_ID } from '@angular/core';
+import { computed, effect, inject, linkedSignal, PLATFORM_ID } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
@@ -286,6 +286,22 @@ export const AppStore = signalStore(
   })),
 
   withProps((store) => ({
+    // The last resolved event map, held while the next one loads (1.127 final review M2): a new or
+    // answered invitation changes the keys, the resource then reads undefined until every listener
+    // has emitted, and without this every keyed invitation would count 0 for that moment (badge
+    // flicker). A key missing from the held map still counts 0 (countableInvitationsOf), so the
+    // count can be too low while loading, never too high. A failed resource reads as empty.
+    openInvitationEvents: linkedSignal<Map<string, CalEventModel | null> | undefined, Map<string, CalEventModel | null>>({
+      source: () => {
+        const events = store.openInvitationEventsResource;
+        if (events.hasValue()) return events.value();
+        return events.status() === 'error' ? new Map<string, CalEventModel | null>() : undefined;
+      },
+      computation: (next, previous) => next ?? previous?.value ?? new Map<string, CalEventModel | null>(),
+    }),
+  })),
+
+  withProps((store) => ({
     categoriesResource: rxResource({
       params: resourceParams(() => ({
         fbUserUid: store.fbUser()?.uid ?? '',
@@ -363,17 +379,16 @@ export const AppStore = signalStore(
       /**
        * Number of invitations the signed-in person can still answer — the invitation half of every
        * badge (countableInvitationsOf, the same rule as the dashboard invitations card and the
-       * invitation push gate). While the events are still loading the map is empty, so invitations
-       * WITH a caleventKey count 0 until their event is known: the badge may briefly show too few,
-       * never a transient too-high number.
+       * invitation push gate). While the events load, the last resolved map is held
+       * (openInvitationEvents); an invitation WITH a caleventKey that is not in it counts 0 until
+       * its event is known: the badge may briefly show too few, never a transient too-high number.
        */
       openInvitationCount: computed(() => {
         const currentUser = state.currentUserResource.value();
         if (!hasRole('registered', currentUser)) return 0;
         const personKey = currentUser?.personKey;
         if (!personKey) return 0;
-        const events = state.openInvitationEventsResource.value() ?? new Map<string, CalEventModel | null>();
-        return countableInvitationsOf(state.openInvitationsResource.value() ?? [], personKey, events).length;
+        return countableInvitationsOf(state.openInvitationsResource.value() ?? [], personKey, state.openInvitationEvents()).length;
       }),
       appConfig: computed(() => {
         const loaded = state.appConfigResource.value();

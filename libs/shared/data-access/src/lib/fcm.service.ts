@@ -44,6 +44,13 @@ export class FcmService {
    */
   private generation = 0;
   /**
+   * Logout latch, set by disablePush and cleared only by {@link beginSession} for the next
+   * signed-in uid. The generation alone is not enough: a registration that STARTS inside the
+   * logout window (after disablePush, before signOut — e.g. the resume refresh) captures the new
+   * generation and would write a token doc and a pusher for the signed-out member.
+   */
+  private loggedOut = false;
+  /**
    * Token saves still running (saveTokenUnlessLoggedOut). disablePush waits for them so a save
    * that sees the logout deletes its doc while the user is still signed in — after signOut the
    * rules deny that delete and the doc would survive on a shared device.
@@ -106,6 +113,7 @@ export class FcmService {
    * @return the token, or null when push is not (yet) allowed or registration failed
    */
   async enablePush(uid: string, allowPrompt = false, withPusher = true): Promise<string | null> {
+    if (this.loggedOut) return null;
     const token = await this.registerAndSave(uid, allowPrompt);
     if (!token) return null;
     if (withPusher) await this.ensureMatrixPusher();
@@ -118,7 +126,7 @@ export class FcmService {
    */
   async ensureMatrixPusher(): Promise<void> {
     const token = this._currentToken;
-    if (!token || this.pusherToken === token) return;
+    if (!token || this.loggedOut || this.pusherToken === token) return;
     if (this.pusherInFlight?.token === token) return this.pusherInFlight.promise;
     const promise = this.registerPusher(token, this.generation).finally(() => {
       if (this.pusherInFlight?.promise === promise) this.pusherInFlight = undefined;
@@ -134,8 +142,10 @@ export class FcmService {
    */
   async disablePush(uid: string): Promise<void> {
     // First, and even without a token: a registration still inside getToken / saveToken has not
-    // set _currentToken yet, and must see the logout when it resumes.
+    // set _currentToken yet, and must see the logout when it resumes. The latch stops the ones
+    // that start from now on, until the next sign-in (beginSession).
     this.generation++;
+    this.loggedOut = true;
     // Read synchronously right after the bump: from now on no registration can adopt a token
     // (the adopting check and assignment are one synchronous step), so this is complete.
     const token = this._currentToken;
@@ -174,9 +184,23 @@ export class FcmService {
     }
   }
 
+  /**
+   * Start the push session of a newly signed-in uid: clears the logout latch set by disablePush.
+   * Called by MatrixInitializationService's per-uid effect when currentUser changes to a uid it
+   * has not registered yet (after a logout, currentUser goes null first, so the same member
+   * signing in again counts as new). Also bumps the generation, so a registration that started
+   * inside the logout window drops its result instead of writing for the previous member.
+   * No-op without a preceding logout.
+   */
+  beginSession(): void {
+    if (!this.loggedOut) return;
+    this.loggedOut = false;
+    this.generation++;
+  }
+
   private async registerPusher(token: string, generation: number): Promise<void> {
-    // Logged out since the caller read the token: register nothing (see generation).
-    if (generation !== this.generation) return;
+    // Logged out since the caller read the token: register nothing (see generation, loggedOut).
+    if (this.loggedOut || generation !== this.generation) return;
     try {
       // Via a Cloud Function so the push-gateway secret and URL never ship in the bundle (S3, SEC-2).
       const registerPusher = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'registerMatrixPusher');
@@ -184,6 +208,9 @@ export class FcmService {
         pushkey: token,
         deviceDisplayName: (navigator.userAgent ?? 'Unknown').substring(0, 100),
         lang: navigator.language || 'de',
+        // The app's build tenant, stored on the pusher (the server accepts it only if it is one
+        // of the account's tenants).
+        tenantId: this.env.tenantId,
       });
       // A logout during the call: disablePush waits for this promise, then unregisters the pusher.
       if (generation === this.generation && this._currentToken === token) this.pusherToken = token;
@@ -193,7 +220,7 @@ export class FcmService {
   }
 
   async registerAndSave(uid: string, allowPrompt = false): Promise<string | null> {
-    if (!isBrowser(this.platformId)) return null;
+    if (!isBrowser(this.platformId) || this.loggedOut) return null;
 
     if (Capacitor.isNativePlatform()) {
       return this.registerNativeAndSave(uid, allowPrompt);
@@ -376,9 +403,9 @@ export class FcmService {
    */
   private saveTokenUnlessLoggedOut(uid: string, token: string, generation: number): Promise<boolean> {
     const save = (async () => {
-      if (generation !== this.generation) return false;
+      if (this.loggedOut || generation !== this.generation) return false;
       await this.saveToken(uid, token);
-      if (generation === this.generation) {
+      if (!this.loggedOut && generation === this.generation) {
         this._currentToken = token;
         return true;
       }

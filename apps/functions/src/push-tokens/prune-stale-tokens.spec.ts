@@ -5,57 +5,95 @@ vi.mock('../matrix-simple/shared', async (importOriginal) => ({
   requireMatrixLocalpart: vi.fn(async () => 'person1'),
 }));
 
-import { groupStaleTokens, PUSH_TOKEN_MAX_AGE_DAYS } from './prune-stale-tokens';
+import {
+  classifySendError,
+  groupByUid,
+  needsValidation,
+  pruneDecision,
+  tokenAgeDays,
+  PUSH_TOKEN_HARD_MAX_AGE_DAYS,
+  PUSH_TOKEN_MAX_AGE_DAYS,
+} from './prune-stale-tokens';
 import { removeMatrixPushers } from '../matrix-simple/push';
 
 const DAY = 24 * 60 * 60 * 1000;
 const NOW = Date.UTC(2026, 9, 30, 6, 0);
 
-describe('groupStaleTokens', () => {
-  it('uses a 60-day window', () => {
+describe('prune limits', () => {
+  it('uses 60 days soft, 270 days hard (FCM inactivity expiry)', () => {
     expect(PUSH_TOKEN_MAX_AGE_DAYS).toBe(60);
+    expect(PUSH_TOKEN_HARD_MAX_AGE_DAYS).toBe(270);
+  });
+});
+
+describe('tokenAgeDays', () => {
+  it('counts whole days; a missing updatedAt is infinitely old', () => {
+    expect(tokenAgeDays(NOW - 61 * DAY - 1000, NOW)).toBe(61);
+    expect(tokenAgeDays(NOW - 59 * DAY, NOW)).toBe(59);
+    expect(tokenAgeDays(null, NOW)).toBe(Number.POSITIVE_INFINITY);
+  });
+});
+
+describe('needsValidation', () => {
+  it('only between 60 and 270 days', () => {
+    expect(needsValidation(59)).toBe(false);
+    expect(needsValidation(60)).toBe(true);
+    expect(needsValidation(269)).toBe(true);
+    expect(needsValidation(270)).toBe(false);
+    expect(needsValidation(Number.POSITIVE_INFINITY)).toBe(false);
+  });
+});
+
+describe('pruneDecision', () => {
+  it('keeps a token younger than 60 days, whatever FCM says', () => {
+    expect(pruneDecision(59, 'invalid')).toBe('keep');
+    expect(pruneDecision(0)).toBe('keep');
   });
 
-  it('61 days old is stale, 59 days old is kept', () => {
-    const groups = groupStaleTokens(
-      [
-        { uid: 'u1', docId: 'old', token: 'tOld', updatedAtMs: NOW - 61 * DAY },
-        { uid: 'u1', docId: 'fresh', token: 'tFresh', updatedAtMs: NOW - 59 * DAY },
-      ],
-      NOW,
-      60
-    );
-    expect([...groups.entries()]).toEqual([['u1', [{ docId: 'old', token: 'tOld' }]]]);
+  // I1: a native start may not refresh updatedAt (N4), so age alone never deletes before 270 days.
+  it('deletes a 61-day-old token only when FCM reports it dead', () => {
+    expect(pruneDecision(61, 'invalid')).toBe('delete');
+    expect(pruneDecision(61, 'valid')).toBe('keep');
+    expect(pruneDecision(61)).toBe('keep');
   });
 
-  it('a token without updatedAt is stale', () => {
-    const groups = groupStaleTokens([{ uid: 'u1', docId: 'd', token: 't', updatedAtMs: null }], NOW, 60);
-    expect(groups.get('u1')).toEqual([{ docId: 'd', token: 't' }]);
+  it('keeps it when the check failed (network, quota)', () => {
+    expect(pruneDecision(200, 'error')).toBe('keep');
   });
 
-  it('a user with no stale token gets no entry', () => {
-    const groups = groupStaleTokens([{ uid: 'u1', docId: 'd', token: 't', updatedAtMs: NOW }], NOW, 60);
-    expect(groups.size).toBe(0);
+  it('deletes at 270 days regardless, also without updatedAt', () => {
+    expect(pruneDecision(270, 'valid')).toBe('delete');
+    expect(pruneDecision(270)).toBe('delete');
+    expect(pruneDecision(Number.POSITIVE_INFINITY)).toBe('delete');
+  });
+});
+
+describe('classifySendError', () => {
+  it('unregistered, invalid and malformed tokens are invalid', () => {
+    expect(classifySendError({ code: 'messaging/registration-token-not-registered' })).toBe('invalid');
+    expect(classifySendError({ code: 'messaging/invalid-registration-token' })).toBe('invalid');
+    expect(classifySendError({ code: 'messaging/invalid-argument' })).toBe('invalid');
   });
 
-  // Review Focus 4: one person, two tenant accounts (two users/{uid} docs). Each account's stale
-  // docs stay under its own uid; a fresh token of either account is never in the result.
+  it('anything else is no verdict', () => {
+    expect(classifySendError({ code: 'messaging/quota-exceeded' })).toBe('error');
+    expect(classifySendError({ code: 'messaging/server-unavailable' })).toBe('error');
+    expect(classifySendError(new Error('ECONNRESET'))).toBe('error');
+    expect(classifySendError(undefined)).toBe('error');
+  });
+});
+
+describe('groupByUid', () => {
+  // Review Focus 4: one person, two tenant accounts (two users/{uid} docs) — each account's
+  // deleted tokens stay under its own uid.
   it('keeps the accounts of a member of several tenants apart', () => {
-    const groups = groupStaleTokens(
-      [
-        { uid: 'scsUid', docId: 'a1', token: 'phoneOld', updatedAtMs: NOW - 90 * DAY },
-        { uid: 'kringUid', docId: 'b1', token: 'laptopOld', updatedAtMs: NOW - 70 * DAY },
-        { uid: 'scsUid', docId: 'a2', token: 'phoneNew', updatedAtMs: NOW - 1 * DAY },
-        { uid: 'kringUid', docId: 'b2', token: 'tabletOld', updatedAtMs: null },
-      ],
-      NOW,
-      60
-    );
-    expect(groups.get('scsUid')).toEqual([{ docId: 'a1', token: 'phoneOld' }]);
-    expect(groups.get('kringUid')).toEqual([
-      { docId: 'b1', token: 'laptopOld' },
-      { docId: 'b2', token: 'tabletOld' },
+    const groups = groupByUid([
+      { uid: 'scsUid', token: 'phoneOld' },
+      { uid: 'kringUid', token: 'laptopOld' },
+      { uid: 'kringUid', token: 'tabletOld' },
     ]);
+    expect(groups.get('scsUid')).toEqual([{ uid: 'scsUid', token: 'phoneOld' }]);
+    expect(groups.get('kringUid')?.map((r) => r.token)).toEqual(['laptopOld', 'tabletOld']);
     expect(groups.size).toBe(2);
   });
 });

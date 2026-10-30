@@ -66,6 +66,15 @@ const CLUB_RECORD = { months: 'indefinite', legalBasis: 'Vereinsdokumentation (b
 const APPLICATION_RECORD = { months: 24, legalBasis: 'Nachweis über das Aufnahmeverfahren — 2 Jahre' } as const;
 const LOG_12M = { months: 12, legalBasis: 'Betriebssicherheit und Missbrauchserkennung — 12 Monate' } as const;
 const LOG_24M = { months: 24, legalBasis: 'Nachvollziehbarkeit von Datenänderungen — 24 Monate' } as const;
+/**
+ * Device push tokens (spec 1.127 phase 2, `pruneStalePushTokens`): deleted 60 days after the last
+ * refresh once FCM reports the device as gone, at the latest after 270 days (FCM's own inactivity
+ * expiry) — 9 months is that hard upper bound, rounded up.
+ */
+const PUSH_TOKEN_270D = {
+  months: 9,
+  legalBasis: 'Zustellung von Push-Mitteilungen — nach 60 Tagen gelöscht, wenn das Gerät abgemeldet ist, spätestens nach 270 Tagen',
+} as const;
 
 /**
  * Reads a (possibly dotted) `AvatarInfo[]` field and tells whether the subject is in it.
@@ -229,7 +238,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     tenantScope: 'none',          // path is already pinned to the subject's uid
     onExport: 'none',             // a push token is a device credential, not useful to the member
     onErasure: 'delete',
-    retention: LOG_12M,
+    retention: PUSH_TOKEN_270D,
   },
   {
     // `SeenCollection`: the subcollection `users/{uid}/seen/{parentKey}` (SeenModel) — "I have

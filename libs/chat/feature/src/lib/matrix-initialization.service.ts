@@ -334,6 +334,8 @@ export class MatrixInitializationService {
         }
         if (current === this.pushUid || !this.fcmService.isSupported()) return;
         this.pushUid = current;
+        // A new signed-in uid: the one point that lifts the logout latch (FcmService.disablePush).
+        this.fcmService.beginSession();
         void this.registerPush(current, false)
           .catch(err => {
             console.warn('MatrixInitializationService: push registration failed (non-critical):', err);
