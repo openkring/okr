@@ -2436,6 +2436,7 @@ const instruments: FeatureBlock = {
  *     zip   dependsOn ['games']  → /zip    + one child row under `games-menu`
  *     muehle, battleship, bimaru, hearing-quiz, jasstafel, tetris, mampf, wordle, chess — same shape (added 2026-09-28/29)
  *     sudoku, memory, backgammon, klondike — same shape (added 2026-10-03)
+ *     mahjong — same shape (added 2026-10-30)
  *
  * Every game block carries `bundle: 'games'` (since 2026-09-29), so the picker lists them
  * together under «Spiele» instead of scattering them through «Spezial».
@@ -2785,6 +2786,28 @@ const klondike: FeatureBlock = {
   collections: [],
   menu: [gamesMenuParent([
     { key: 'game-klondike', name: 'game-klondike', url: '/klondike', action: 'navigate', roleNeeded: 'registered', icon: 'game-klondike', label: '@item.game-klondike' },
+  ])],
+};
+
+/**
+ * `libs/games/mahjong` — `MahjongPage` + `MahjongStore` at `/mahjong`, over the pure
+ * `@okr/games-mahjong-util` (three layouts, always-solvable deals, solvable reshuffle, hints).
+ *
+ * The running game, the best time per layout and the «dim blocked tiles» switch live in
+ * `localStorage` — no Firestore, hence `collections: []`.
+ *
+ * `defaultAvailability: 'ga'`, like `klondike`: nothing tenant-side to configure.
+ */
+const mahjong: FeatureBlock = {
+  id: 'mahjong',
+  bundle: 'games',
+  label: '@tenant/util.feature.mahjong.label',
+  icon: 'game-mahjong',
+  defaultAvailability: 'ga',
+  dependsOn: ['games'],
+  collections: [],
+  menu: [gamesMenuParent([
+    { key: 'game-mahjong', name: 'game-mahjong', url: '/mahjong', action: 'navigate', roleNeeded: 'registered', icon: 'game-mahjong', label: '@item.game-mahjong' },
   ])],
 };
 
@@ -3211,7 +3234,7 @@ const learningBlock: FeatureBlock = {
 };
 
 export const FEATURE_BLOCKS: FeatureBlock[] = [
-  calevent, fileTransfer, learningBlock, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, memory, backgammon, klondike, jasstafel, tetris, mampf, wordle, chess,
+  calevent, fileTransfer, learningBlock, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, memory, backgammon, klondike, mahjong, jasstafel, tetris, mampf, wordle, chess,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

@@ -1,0 +1,53 @@
+{
+  "title": "Mahjong",
+  "desc": "Togli tutte le tessere eliminando coppie uguali. Una tessera è libera quando non ha niente sopra e il lato sinistro o destro è libero. Ogni fiore va con ogni fiore, ogni stagione con ogni stagione. Ogni partita si può risolvere.",
+  "option": {
+    "layout_label": "Disposizione",
+    "layout_pagoda": "Pagoda (144 tessere)",
+    "layout_towers": "Due torri (144 tessere)",
+    "layout_pyramid": "Piccola piramide (82 tessere)",
+    "dim_locked": "Scurisci le tessere bloccate"
+  },
+  "action": {
+    "new_game": "Nuova partita",
+    "undo": "Annulla",
+    "hint": "Suggerimento",
+    "shuffle": "Mescola"
+  },
+  "status": {
+    "play": "Scegli una tessera libera.",
+    "selected": "Scegli la seconda tessera uguale.",
+    "blocked": "Questa tessera è ancora bloccata.",
+    "no_match": "Queste due non vanno insieme.",
+    "hint": "Queste due tessere vanno insieme.",
+    "stuck": "Non c'è più nessuna coppia. Mescola le tessere rimaste o annulla qualche mossa.",
+    "shuffled": "Le tessere rimaste sono mescolate di nuovo. La partita si può ancora risolvere.",
+    "won": "Tutto libero in {time}.",
+    "won_best": "Tutto libero in {time}. È il tuo nuovo miglior tempo.",
+    "stats": "Tessere: {tiles} · coppie libere: {pairs} · tempo: {time}",
+    "best": "Miglior tempo: {time}"
+  },
+  "tile": {
+    "dot": "Cerchi {n}",
+    "bam": "Bambù {n}",
+    "char": "Caratteri {n}",
+    "wind_E": "Vento dell'est",
+    "wind_S": "Vento del sud",
+    "wind_W": "Vento dell'ovest",
+    "wind_N": "Vento del nord",
+    "dragon_R": "Drago rosso",
+    "dragon_G": "Drago verde",
+    "dragon_W": "Drago bianco",
+    "flower": "Fiore: {name}",
+    "season": "Stagione: {name}",
+    "blocked": "{name}, bloccata",
+    "flower_1": "Pruno",
+    "flower_2": "Orchidea",
+    "flower_3": "Crisantemo",
+    "flower_4": "Bambù",
+    "season_1": "Primavera",
+    "season_2": "Estate",
+    "season_3": "Autunno",
+    "season_4": "Inverno"
+  }
+}

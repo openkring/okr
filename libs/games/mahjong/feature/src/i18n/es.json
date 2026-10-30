@@ -1,0 +1,53 @@
+{
+  "title": "Mahjong",
+  "desc": "Retira todas las fichas quitando parejas iguales. Una ficha está libre cuando no tiene nada encima y su lado izquierdo o derecho está libre. Cada flor va con cada flor y cada estación con cada estación. Todas las partidas tienen solución.",
+  "option": {
+    "layout_label": "Disposición",
+    "layout_pagoda": "Pagoda (144 fichas)",
+    "layout_towers": "Dos torres (144 fichas)",
+    "layout_pyramid": "Pirámide pequeña (82 fichas)",
+    "dim_locked": "Oscurecer las fichas bloqueadas"
+  },
+  "action": {
+    "new_game": "Nueva partida",
+    "undo": "Deshacer",
+    "hint": "Pista",
+    "shuffle": "Mezclar"
+  },
+  "status": {
+    "play": "Elige una ficha libre.",
+    "selected": "Elige la segunda ficha que hace pareja.",
+    "blocked": "Esta ficha todavía está bloqueada.",
+    "no_match": "Estas dos no hacen pareja.",
+    "hint": "Estas dos fichas hacen pareja.",
+    "stuck": "Ya no queda ninguna pareja. Mezcla las fichas que quedan o deshaz algunas jugadas.",
+    "shuffled": "Las fichas que quedan se han mezclado de nuevo. La partida sigue teniendo solución.",
+    "won": "Todo despejado en {time}.",
+    "won_best": "Todo despejado en {time}. Es tu nuevo mejor tiempo.",
+    "stats": "Fichas: {tiles} · parejas libres: {pairs} · tiempo: {time}",
+    "best": "Mejor tiempo: {time}"
+  },
+  "tile": {
+    "dot": "Círculos {n}",
+    "bam": "Bambú {n}",
+    "char": "Caracteres {n}",
+    "wind_E": "Viento del este",
+    "wind_S": "Viento del sur",
+    "wind_W": "Viento del oeste",
+    "wind_N": "Viento del norte",
+    "dragon_R": "Dragón rojo",
+    "dragon_G": "Dragón verde",
+    "dragon_W": "Dragón blanco",
+    "flower": "Flor: {name}",
+    "season": "Estación: {name}",
+    "blocked": "{name}, bloqueada",
+    "flower_1": "Ciruelo",
+    "flower_2": "Orquídea",
+    "flower_3": "Crisantemo",
+    "flower_4": "Bambú",
+    "season_1": "Primavera",
+    "season_2": "Verano",
+    "season_3": "Otoño",
+    "season_4": "Invierno"
+  }
+}

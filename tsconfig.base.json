@@ -189,6 +189,8 @@
       "@okr/games-sudoku-util": ["libs/games/sudoku/util/src/index.ts"],
       "@okr/games-klondike-feature": ["libs/games/klondike/feature/src/index.ts"],
       "@okr/games-klondike-util": ["libs/games/klondike/util/src/index.ts"],
+      "@okr/games-mahjong-feature": ["libs/games/mahjong/feature/src/index.ts"],
+      "@okr/games-mahjong-util": ["libs/games/mahjong/util/src/index.ts"],
       "@okr/games-memory-feature": ["libs/games/memory/feature/src/index.ts"],
       "@okr/games-memory-util": ["libs/games/memory/util/src/index.ts"],
       "@okr/games-backgammon-feature": ["libs/games/backgammon/feature/src/index.ts"],

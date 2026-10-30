@@ -1,0 +1,53 @@
+{
+  "title": "Mahjong",
+  "desc": "Retire toutes les tuiles en enlevant des paires identiques. Une tuile est libre quand rien n'est posé dessus et que son côté gauche ou droit est dégagé. Chaque fleur va avec chaque fleur, chaque saison avec chaque saison. Chaque partie peut être résolue.",
+  "option": {
+    "layout_label": "Disposition",
+    "layout_pagoda": "Pagode (144 tuiles)",
+    "layout_towers": "Deux tours (144 tuiles)",
+    "layout_pyramid": "Petite pyramide (82 tuiles)",
+    "dim_locked": "Assombrir les tuiles bloquées"
+  },
+  "action": {
+    "new_game": "Nouvelle partie",
+    "undo": "Annuler",
+    "hint": "Indice",
+    "shuffle": "Mélanger"
+  },
+  "status": {
+    "play": "Choisis une tuile libre.",
+    "selected": "Choisis la deuxième tuile qui va avec.",
+    "blocked": "Cette tuile est encore bloquée.",
+    "no_match": "Ces deux tuiles ne vont pas ensemble.",
+    "hint": "Ces deux tuiles vont ensemble.",
+    "stuck": "Plus aucune paire ne va. Mélange les tuiles restantes ou annule des coups.",
+    "shuffled": "Les tuiles restantes sont mélangées. La partie peut toujours être résolue.",
+    "won": "Tout est dégagé en {time}.",
+    "won_best": "Tout est dégagé en {time}. C'est ton nouveau meilleur temps.",
+    "stats": "Tuiles : {tiles} · paires libres : {pairs} · temps : {time}",
+    "best": "Meilleur temps : {time}"
+  },
+  "tile": {
+    "dot": "Cercles {n}",
+    "bam": "Bambous {n}",
+    "char": "Caractères {n}",
+    "wind_E": "Vent d'est",
+    "wind_S": "Vent du sud",
+    "wind_W": "Vent d'ouest",
+    "wind_N": "Vent du nord",
+    "dragon_R": "Dragon rouge",
+    "dragon_G": "Dragon vert",
+    "dragon_W": "Dragon blanc",
+    "flower": "Fleur : {name}",
+    "season": "Saison : {name}",
+    "blocked": "{name}, bloquée",
+    "flower_1": "Prunier",
+    "flower_2": "Orchidée",
+    "flower_3": "Chrysanthème",
+    "flower_4": "Bambou",
+    "season_1": "Printemps",
+    "season_2": "Été",
+    "season_3": "Automne",
+    "season_4": "Hiver"
+  }
+}

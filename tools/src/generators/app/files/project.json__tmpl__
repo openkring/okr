@@ -487,6 +487,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/games/mahjong/feature/src/i18n",
+            "output": "./assets/i18n/games/mahjong/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/games/mampf/feature/src/i18n",
             "output": "./assets/i18n/games/mampf/feature"
           },

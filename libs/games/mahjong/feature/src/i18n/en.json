@@ -1,0 +1,53 @@
+{
+  "title": "Mahjong",
+  "desc": "Clear all tiles by taking away matching pairs. A tile is free when nothing lies on it and its left or right side is open. Any flower matches any flower, and any season matches any season. Every game can be solved.",
+  "option": {
+    "layout_label": "Layout",
+    "layout_pagoda": "Pagoda (144 tiles)",
+    "layout_towers": "Twin towers (144 tiles)",
+    "layout_pyramid": "Little pyramid (82 tiles)",
+    "dim_locked": "Darken blocked tiles"
+  },
+  "action": {
+    "new_game": "New game",
+    "undo": "Undo",
+    "hint": "Hint",
+    "shuffle": "Shuffle"
+  },
+  "status": {
+    "play": "Pick a free tile.",
+    "selected": "Pick the matching second tile.",
+    "blocked": "This tile is still blocked.",
+    "no_match": "These two do not match.",
+    "hint": "These two tiles match.",
+    "stuck": "No pair fits any more. Shuffle the remaining tiles or undo some moves.",
+    "shuffled": "The remaining tiles are reshuffled. The game can still be solved.",
+    "won": "All cleared in {time}.",
+    "won_best": "All cleared in {time}. That is your new best time.",
+    "stats": "Tiles: {tiles} · free pairs: {pairs} · time: {time}",
+    "best": "Best time: {time}"
+  },
+  "tile": {
+    "dot": "Dots {n}",
+    "bam": "Bamboo {n}",
+    "char": "Characters {n}",
+    "wind_E": "East wind",
+    "wind_S": "South wind",
+    "wind_W": "West wind",
+    "wind_N": "North wind",
+    "dragon_R": "Red dragon",
+    "dragon_G": "Green dragon",
+    "dragon_W": "White dragon",
+    "flower": "Flower: {name}",
+    "season": "Season: {name}",
+    "blocked": "{name}, blocked",
+    "flower_1": "Plum",
+    "flower_2": "Orchid",
+    "flower_3": "Chrysanthemum",
+    "flower_4": "Bamboo",
+    "season_1": "Spring",
+    "season_2": "Summer",
+    "season_3": "Autumn",
+    "season_4": "Winter"
+  }
+}

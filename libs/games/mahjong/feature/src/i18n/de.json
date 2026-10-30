@@ -1,0 +1,53 @@
+{
+  "title": "Mahjong",
+  "desc": "Räume alle Steine ab, indem du gleiche Paare wegnimmst. Ein Stein ist frei, wenn nichts auf ihm liegt und links oder rechts Platz ist. Jede Blume passt zu jeder Blume, jede Jahreszeit zu jeder Jahreszeit. Jedes Spiel lässt sich lösen.",
+  "option": {
+    "layout_label": "Aufbau",
+    "layout_pagoda": "Pagode (144 Steine)",
+    "layout_towers": "Zwei Türme (144 Steine)",
+    "layout_pyramid": "Kleine Pyramide (82 Steine)",
+    "dim_locked": "Blockierte Steine abdunkeln"
+  },
+  "action": {
+    "new_game": "Neues Spiel",
+    "undo": "Zurück",
+    "hint": "Tipp",
+    "shuffle": "Mischen"
+  },
+  "status": {
+    "play": "Wähle einen freien Stein.",
+    "selected": "Wähle den passenden zweiten Stein.",
+    "blocked": "Dieser Stein ist noch blockiert.",
+    "no_match": "Diese zwei passen nicht zusammen.",
+    "hint": "Diese zwei Steine passen zusammen.",
+    "stuck": "Es passt kein Paar mehr. Mische die übrigen Steine oder nimm Züge zurück.",
+    "shuffled": "Die übrigen Steine sind neu gemischt. Das Spiel lässt sich weiterhin lösen.",
+    "won": "Alles abgeräumt in {time}.",
+    "won_best": "Alles abgeräumt in {time}. Das ist deine neue Bestzeit.",
+    "stats": "Steine: {tiles} · freie Paare: {pairs} · Zeit: {time}",
+    "best": "Bestzeit: {time}"
+  },
+  "tile": {
+    "dot": "Kreis {n}",
+    "bam": "Bambus {n}",
+    "char": "Zeichen {n}",
+    "wind_E": "Ostwind",
+    "wind_S": "Südwind",
+    "wind_W": "Westwind",
+    "wind_N": "Nordwind",
+    "dragon_R": "Roter Drache",
+    "dragon_G": "Grüner Drache",
+    "dragon_W": "Weisser Drache",
+    "flower": "Blume: {name}",
+    "season": "Jahreszeit: {name}",
+    "blocked": "{name}, blockiert",
+    "flower_1": "Pflaume",
+    "flower_2": "Orchidee",
+    "flower_3": "Chrysantheme",
+    "flower_4": "Bambus",
+    "season_1": "Frühling",
+    "season_2": "Sommer",
+    "season_3": "Herbst",
+    "season_4": "Winter"
+  }
+}

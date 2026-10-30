@@ -171,6 +171,9 @@
     "klondike": {
       "label": "Solitario"
     },
+    "mahjong": {
+      "label": "Mahjong"
+    },
     "jasstafel": {
       "label": "Lavagna del Jass"
     },

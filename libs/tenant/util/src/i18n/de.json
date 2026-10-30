@@ -171,6 +171,9 @@
     "klondike": {
       "label": "Patience"
     },
+    "mahjong": {
+      "label": "Mahjong"
+    },
     "jasstafel": {
       "label": "Jasstafel"
     },
