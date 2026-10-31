@@ -8,7 +8,7 @@ import type {
   ChartSection, ChatConfig, ChatSection, ContextDiagramConfig, ContextDiagramSection, EditorConfig, EventsConfig, EventsSection,
   FormSection, FormSectionConfig,
   HeroConfig, HeroSection, IconConfig, IframeConfig,
-  IframeSection, InvitationsConfig, InvitationsSection, MapConfig, WeatherConfig, WeatherSection, MapSection, MemberAgeConfig, MemberAgeSection, MemberCatConfig, MemberCatSection, OrgchartConfig, OrgchartSection, PeopleConfig,
+  IframeSection, InvitationsConfig, InvitationsSection, MapConfig, WeatherConfig, WeatherSection, ConnectionsConfig, ConnectionsSection, MapSection, MemberAgeConfig, MemberAgeSection, MemberCatConfig, MemberCatSection, OrgchartConfig, OrgchartSection, PeopleConfig,
   PeopleSection, RagConfig, RagSection, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, AdventConfig, AdventSection, NewsConfig, NewsSection, TasksConfig, TasksSection, ActivitiesConfig, ActivitiesSection, MessagesConfig, MessagesSection, TripStatsConfig, TripStatsSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
   TrackerConfig, TrackerSection, VideoConfig, VideoSection
 } from "./section.model";
@@ -303,6 +303,18 @@ export const WEATHER_SECTION_SHAPE = {
   type: 'weather',
   properties: WEATHER_CONFIG_SHAPE
 } as WeatherSection;
+
+// --------------------------------------- CONNECTIONS ----------------------------------------
+export const CONNECTIONS_CONFIG_SHAPE = {
+  destinationKey: '',
+  sourceKey: ''
+} as ConnectionsConfig;
+
+export const CONNECTIONS_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'connections',
+  properties: CONNECTIONS_CONFIG_SHAPE
+} as ConnectionsSection;
 
 export const PEOPLE_SECTION_SHAPE = {
   ...BASE_SECTION_SHAPE,

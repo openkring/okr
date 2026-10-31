@@ -1,0 +1,53 @@
+{
+  "title": "Verbindungen",
+  "mode": {
+    "transit": "ÖV",
+    "walk": "zu Fuss",
+    "bike": "Velo",
+    "car": "Auto"
+  },
+  "from": "Von",
+  "to": "Nach",
+  "myPosition": "Mein Standort",
+  "changeSource": "ändern",
+  "anchor": {
+    "arrive": "Ankunft bis",
+    "depart": "Abfahrt ab"
+  },
+  "time": "Zeit",
+  "search": "Verbindungen suchen",
+  "direct": "direkt",
+  "transfers": {
+    "one": "1 Umstieg",
+    "many": "{count} Umstiege"
+  },
+  "delay": "+{minutes}' Verspätung",
+  "late": "kommt zu spät an",
+  "cancelled": "fällt aus",
+  "leg": {
+    "walk": "Fussweg",
+    "transfer": "Umsteigen",
+    "platform": "Gleis/Kante {platform}",
+    "direction": "Richtung"
+  },
+  "return": {
+    "from": "Rückfahrt ab {time}",
+    "show": "anzeigen",
+    "hide": "ausblenden"
+  },
+  "outbound": "Hinfahrt",
+  "maps": {
+    "open": "Route in Karten öffnen",
+    "hint": "Die Abfahrtszeit wählst du in der Karten-App."
+  },
+  "sbb": {
+    "open": "In der SBB-Fahrplanabfrage öffnen"
+  },
+  "source": "Daten:",
+  "empty": "Für diese Zeit haben wir keine Verbindung gefunden.",
+  "error": "Die Verbindungen konnten nicht geladen werden. Versuch es bitte später nochmals.",
+  "offline": "Verbindungen kannst du nur mit Internetverbindung suchen.",
+  "positionUnavailable": "Dein Standort ist nicht verfügbar. Wähle mit «ändern», von wo du losfährst.",
+  "noCoordinates": "Für diesen Ort ist keine genaue Lage hinterlegt, darum können wir keine Verbindungen suchen.",
+  "abroad": "Verbindungen gibt es nur für Orte in der Schweiz."
+}

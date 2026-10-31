@@ -1,0 +1,53 @@
+{
+  "title": "Connections",
+  "mode": {
+    "transit": "Public transport",
+    "walk": "Walk",
+    "bike": "Bike",
+    "car": "Car"
+  },
+  "from": "From",
+  "to": "To",
+  "myPosition": "My location",
+  "changeSource": "change",
+  "anchor": {
+    "arrive": "Arrive by",
+    "depart": "Depart at"
+  },
+  "time": "Time",
+  "search": "Find connections",
+  "direct": "direct",
+  "transfers": {
+    "one": "1 change",
+    "many": "{count} changes"
+  },
+  "delay": "+{minutes}' delay",
+  "late": "arrives too late",
+  "cancelled": "cancelled",
+  "leg": {
+    "walk": "Walk",
+    "transfer": "Change",
+    "platform": "Platform/stop {platform}",
+    "direction": "towards"
+  },
+  "return": {
+    "from": "Return from {time}",
+    "show": "show",
+    "hide": "hide"
+  },
+  "outbound": "Outward",
+  "maps": {
+    "open": "Open route in maps",
+    "hint": "You choose the departure time in the maps app."
+  },
+  "sbb": {
+    "open": "Open in the SBB timetable"
+  },
+  "source": "Data:",
+  "empty": "We found no connection for this time.",
+  "error": "The connections could not be loaded. Please try again later.",
+  "offline": "You can only search connections with an internet connection.",
+  "positionUnavailable": "Your location is not available. Use «change» to choose where you start.",
+  "noCoordinates": "This place has no exact position, so we cannot search connections.",
+  "abroad": "Connections are only available for places in Switzerland."
+}

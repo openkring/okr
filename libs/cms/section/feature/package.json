@@ -52,6 +52,7 @@
     "@okr/business-contract-data-access": "*",
     "@okr/content-folder-util": "*",
     "@okr/user-data-access": "*",
-    "@okr/finance-expense-feature": "*"
+    "@okr/finance-expense-feature": "*",
+    "@okr/mobility-transit-feature": "*"
   }
 }

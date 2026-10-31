@@ -1,0 +1,31 @@
+{
+  "name": "mobility-transit-feature",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/mobility/transit/feature/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": [
+    "type:feature",
+    "scope:mobility",
+    "platform:mobile",
+    "platform:web"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/libs/mobility/transit/feature",
+        "main": "libs/mobility/transit/feature/src/index.ts",
+        "tsConfig": "libs/mobility/transit/feature/tsconfig.lib.json",
+        "assets": [],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

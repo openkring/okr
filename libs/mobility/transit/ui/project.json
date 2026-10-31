@@ -1,0 +1,31 @@
+{
+  "name": "mobility-transit-ui",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/mobility/transit/ui/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": [
+    "type:ui",
+    "scope:mobility",
+    "platform:mobile",
+    "platform:web"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/libs/mobility/transit/ui",
+        "main": "libs/mobility/transit/ui/src/index.ts",
+        "tsConfig": "libs/mobility/transit/ui/tsconfig.lib.json",
+        "assets": [],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

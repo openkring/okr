@@ -1,0 +1,53 @@
+{
+  "title": "Collegamenti",
+  "mode": {
+    "transit": "TP",
+    "walk": "A piedi",
+    "bike": "Bici",
+    "car": "Auto"
+  },
+  "from": "Da",
+  "to": "A",
+  "myPosition": "La mia posizione",
+  "changeSource": "modifica",
+  "anchor": {
+    "arrive": "Arrivo entro",
+    "depart": "Partenza da"
+  },
+  "time": "Ora",
+  "search": "Cerca collegamenti",
+  "direct": "diretto",
+  "transfers": {
+    "one": "1 cambio",
+    "many": "{count} cambi"
+  },
+  "delay": "+{minutes}' di ritardo",
+  "late": "arriva in ritardo",
+  "cancelled": "soppresso",
+  "leg": {
+    "walk": "A piedi",
+    "transfer": "Cambio",
+    "platform": "Binario/corsia {platform}",
+    "direction": "direzione"
+  },
+  "return": {
+    "from": "Ritorno dalle {time}",
+    "show": "mostra",
+    "hide": "nascondi"
+  },
+  "outbound": "Andata",
+  "maps": {
+    "open": "Apri il percorso nelle mappe",
+    "hint": "L’orario di partenza lo scegli nell’app delle mappe."
+  },
+  "sbb": {
+    "open": "Apri nell’orario FFS"
+  },
+  "source": "Dati:",
+  "empty": "Non abbiamo trovato collegamenti per quest’ora.",
+  "error": "Non è stato possibile caricare i collegamenti. Riprova più tardi.",
+  "offline": "Puoi cercare collegamenti solo con una connessione Internet.",
+  "positionUnavailable": "La tua posizione non è disponibile. Scegli con «modifica» da dove parti.",
+  "noCoordinates": "Questo luogo non ha una posizione esatta, quindi non possiamo cercare collegamenti.",
+  "abroad": "I collegamenti sono disponibili solo per luoghi in Svizzera."
+}

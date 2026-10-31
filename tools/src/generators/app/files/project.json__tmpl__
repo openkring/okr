@@ -612,6 +612,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/mobility/transit/feature/src/i18n",
+            "output": "./assets/i18n/mobility/transit/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/profile/data-access/src/i18n",
             "output": "./assets/i18n/profile/data-access"
           },

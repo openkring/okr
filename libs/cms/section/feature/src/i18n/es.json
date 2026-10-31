@@ -1404,5 +1404,19 @@
   },
   "trip-stats": {
     "label": "Estadísticas de salidas"
+  },
+  "connections": {
+    "title": "Conexiones",
+    "label": "Conexiones",
+    "edit": "Cambiar la configuración de conexiones",
+    "description": "Conexiones en transporte público a un lugar, y a pie, en bici o en coche con la app de mapas",
+    "destination": {
+      "label": "Destino",
+      "helper": "Déjalo vacío para usar el lugar de la página"
+    },
+    "source": {
+      "label": "Salida",
+      "helper": "Déjalo vacío para salir de la ubicación de quien ve la página"
+    }
   }
 }

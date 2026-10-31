@@ -1404,5 +1404,19 @@
   },
   "trip-stats": {
     "label": "Statistiques des sorties"
+  },
+  "connections": {
+    "title": "Correspondances",
+    "label": "Correspondances",
+    "edit": "Modifier la configuration des correspondances",
+    "description": "Correspondances en transports publics vers un lieu, ainsi qu’à pied, à vélo ou en voiture via l’app de cartes",
+    "destination": {
+      "label": "Destination",
+      "helper": "Laisse vide pour reprendre le lieu de la page"
+    },
+    "source": {
+      "label": "Départ",
+      "helper": "Laisse vide pour partir de la position de la personne qui consulte la page"
+    }
   }
 }

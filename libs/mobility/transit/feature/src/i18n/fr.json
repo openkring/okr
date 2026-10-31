@@ -1,0 +1,53 @@
+{
+  "title": "Correspondances",
+  "mode": {
+    "transit": "TP",
+    "walk": "À pied",
+    "bike": "Vélo",
+    "car": "Voiture"
+  },
+  "from": "De",
+  "to": "À",
+  "myPosition": "Ma position",
+  "changeSource": "modifier",
+  "anchor": {
+    "arrive": "Arrivée avant",
+    "depart": "Départ dès"
+  },
+  "time": "Heure",
+  "search": "Chercher des correspondances",
+  "direct": "direct",
+  "transfers": {
+    "one": "1 changement",
+    "many": "{count} changements"
+  },
+  "delay": "+{minutes}' de retard",
+  "late": "arrive trop tard",
+  "cancelled": "supprimé",
+  "leg": {
+    "walk": "À pied",
+    "transfer": "Changement",
+    "platform": "Voie/quai {platform}",
+    "direction": "direction"
+  },
+  "return": {
+    "from": "Retour dès {time}",
+    "show": "afficher",
+    "hide": "masquer"
+  },
+  "outbound": "Aller",
+  "maps": {
+    "open": "Ouvrir l’itinéraire dans Cartes",
+    "hint": "Tu choisis l’heure de départ dans l’app de cartes."
+  },
+  "sbb": {
+    "open": "Ouvrir dans l’horaire CFF"
+  },
+  "source": "Données :",
+  "empty": "Nous n’avons trouvé aucune correspondance pour cette heure.",
+  "error": "Les correspondances n’ont pas pu être chargées. Réessaie plus tard.",
+  "offline": "Tu ne peux chercher des correspondances qu’avec une connexion Internet.",
+  "positionUnavailable": "Ta position n’est pas disponible. Choisis avec « modifier » d’où tu pars.",
+  "noCoordinates": "Ce lieu n’a pas de position exacte, nous ne pouvons donc pas chercher de correspondances.",
+  "abroad": "Les correspondances ne sont disponibles que pour des lieux en Suisse."
+}

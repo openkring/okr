@@ -23,7 +23,7 @@ export const SECTION_TYPES = [
     'album', 'article', 'button', 'cal', 'chart', 'chat', 'emergency', 'hero', 'iframe', 'map',
     'people', 'responsibility', 'slider', 'table', 'tracker', 'video', 'accordion', 'events', 'invitations', 'tasks',
     'news', 'activities', 'messages', 'rag', 'orgchart', 'context', 'member-age', 'member-cat', 'trip-stats', 'form',
-    'sankey', 'spider', 'toc', 'testimonial', 'timeline', 'weather', 'learning', 'advent',
+    'sankey', 'spider', 'toc', 'testimonial', 'timeline', 'weather', 'learning', 'advent', 'connections',
 ] as const;
 
 export type SectionType = (typeof SECTION_TYPES)[number];
@@ -33,7 +33,7 @@ export type SectionModel =
     AlbumSection | ArticleSection | ButtonSection | CalendarSection | ChartSection | ChatSection |
     HeroSection | IframeSection | MapSection | PeopleSection | ResponsibilitySection | SliderSection |
     TableSection | TrackerSection | VideoSection | AccordionSection | EventsSection | InvitationsSection | TasksSection |
-    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection | SpiderSection | TocSection | TestimonialSection | TimelineSection | WeatherSection | LearningSection | AdventSection;
+    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection | SpiderSection | TocSection | TestimonialSection | TimelineSection | WeatherSection | LearningSection | AdventSection | ConnectionsSection;
 
 // --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
 // --------------------------------------- ORGCHART ----------------------------------------
@@ -250,7 +250,7 @@ export interface BaseSection {
   content: EditorConfig; // content from rich text editor
   properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | HeroConfig |
   IframeConfig | MapConfig | OrgchartConfig | ContextDiagramConfig | PeopleConfig | ResponsibilityConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig |
-  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig | SpiderConfig | TocConfig | TestimonialConfig | TimelineConfig | WeatherConfig | LearningConfig | AdventConfig;
+  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig | SpiderConfig | TocConfig | TestimonialConfig | TimelineConfig | WeatherConfig | LearningConfig | AdventConfig | ConnectionsConfig;
   notes: string;
   tags: string;
   tenants: string[]; // list of tenant ids
@@ -750,6 +750,24 @@ export interface WeatherConfig {
   orientation?: 'horizontal' | 'vertical';
   /** forecast_overview / forecast_table / forecast_detail — number of days, default 6. */
   days?: number;
+}
+
+// --------------------------------------- CONNECTIONS ----------------------------------------
+/**
+ * Public-transport connections to a place, «So erreichst du uns» (spec 1.131 §4.1). Both keys
+ * are `LocationModel` okeys; the viewer may still change the start and the time in the view,
+ * which never writes back here.
+ */
+export interface ConnectionsSection extends BaseSection {
+  type: 'connections';
+  properties: ConnectionsConfig;
+}
+
+export interface ConnectionsConfig {
+  /** Empty ⇒ inherit the page's `locationKey`. */
+  destinationKey: string;
+  /** Empty ⇒ the viewer's current position. */
+  sourceKey: string;
 }
 
 // --------------------------------------- LEARNING ----------------------------------------

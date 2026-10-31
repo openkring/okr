@@ -324,6 +324,13 @@ export const SECTION_I18N_KEYS = {
   weather_orientation_label:                PFX + 'weather.orientation.label',
   weather_days_label:                       PFX + 'weather.days.label',
 
+  // connections (spec 1.131)
+  connections_title:                        PFX + 'connections.title',
+  connections_destination_label:            PFX + 'connections.destination.label',
+  connections_destination_helper:           PFX + 'connections.destination.helper',
+  connections_source_label:                 PFX + 'connections.source.label',
+  connections_source_helper:                PFX + 'connections.source.helper',
+
   // image upload / advanced toggle
   form_advanced_label:                      PFX + 'form.advanced.label',
   image_upload_action:                      PFX + 'image.upload.action',

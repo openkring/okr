@@ -1,7 +1,9 @@
 import { Component, computed, inject, input } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { map, of, switchMap } from 'rxjs';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, IonIcon, IonItem, IonLabel, ModalController } from '@ionic/angular';
 
-import { CalEventModel, CalEventModelName, CategoryListModel } from '@okr/shared-models';
+import { CalEventModel, CalEventModelName, CategoryListModel, LocationModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
 import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { addTime, convertDateFormatToString, DateFormat, getWeekdayI18nKey, getSafeLinkUrl, hasRole } from '@okr/shared-util-core';
@@ -15,6 +17,10 @@ import { AvatarDisplay } from '@okr/avatar-ui';
 import { CALEVENT_I18N_KEYS, CaleventI18n } from '@okr/calendar-calevent-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
+import { LocationService } from '@okr/location-data-access';
+import { TransitConnections } from '@okr/mobility-transit-feature';
+import { TRANSIT_I18N_KEYS, eventTransitTimes, locationPoint } from '@okr/mobility-transit-util';
+
 import { AttendeesAccordion } from './attendees-accordion';
 
 function storeToView(d: string): string {
@@ -26,7 +32,7 @@ function storeToView(d: string): string {
   standalone: true,
   imports: [
     PartPipe, SvgIconPipe,
-    Header, AvatarDisplay, DocumentsAccordion, CommentsAccordion, AttendeesAccordion,
+    Header, AvatarDisplay, DocumentsAccordion, CommentsAccordion, AttendeesAccordion, TransitConnections,
     IonContent, IonCard, IonCardContent, IonAccordionGroup, IonItem, IonLabel, IonIcon,
   ],
   styles: [`
@@ -139,6 +145,23 @@ function storeToView(d: string): string {
         </ion-card-content>
       </ion-card>
 
+      <!-- Getting there (spec 1.131 §4.2): nothing loads or is requested until the row is tapped -->
+      @if(transit(); as t) {
+        <ion-card>
+          <ion-card-content>
+            @defer (on interaction) {
+              <okr-transit-connections [destination]="t.destination" [at]="t.at" anchor="arriveBy"
+                [allowReturn]="!!t.returnAt" [returnAt]="t.returnAt" />
+            } @placeholder {
+              <ion-item lines="none" button="true" [detail]="true">
+                <ion-icon slot="start" src="{{'map' | svgIcon}}" />
+                <ion-label>{{ transitI18n.title() }}</ion-label>
+              </ion-item>
+            }
+          </ion-card-content>
+        </ion-card>
+      }
+
       <!-- Accordions -->
       @if(calevent().okey) {
         <ion-card>
@@ -170,6 +193,29 @@ export class CalEventViewModal {
   public locale = input.required<string>();
 
   protected readonly parentKey = computed(() => `${CalEventModelName}.${this.calevent().okey}`);
+
+  private readonly locationService = inject(LocationService);
+  protected readonly transitI18n = inject(I18nService).translateAll(TRANSIT_I18N_KEYS);
+  /** `locationKey` is `name@okey`; only the okey identifies the location */
+  private readonly locationOkey = computed(() => (this.calevent().locationKey ?? '').split('@').pop()?.trim() ?? '');
+  private readonly location = toSignal(
+    toObservable(this.locationOkey).pipe(
+      switchMap((okey) => (okey ? this.locationService.read(okey) : of(undefined))),
+      map((l): LocationModel | undefined => l ?? undefined),
+    ),
+    { initialValue: undefined },
+  );
+  /**
+   * Connections to the event: only for an upcoming event that takes place, at a location with coordinates. The
+   * occurrence being viewed supplies the date, so a series shows the right day.
+   */
+  protected readonly transit = computed(() => {
+    const e = this.calevent();
+    const destination = this.location();
+    if (e.state === 'cancelled' || !destination || !locationPoint(destination)) return undefined;
+    const times = eventTransitTimes(e);
+    return times ? { destination, ...times } : undefined;
+  });
   /** one single-element array per person, so each avatar is rendered with its name on its own line */
   protected readonly responsiblePersons = computed(() => this.calevent().responsiblePersons.map(p => [p]));
   /** the link text: the label if set, else the raw url */

@@ -1404,5 +1404,19 @@
   },
   "trip-stats": {
     "label": "Trip statistics"
+  },
+  "connections": {
+    "title": "Connections",
+    "label": "Connections",
+    "edit": "Change connections settings",
+    "description": "Public transport connections to a place, plus walking, cycling or driving via the maps app",
+    "destination": {
+      "label": "Destination",
+      "helper": "Leave empty to use the page's location"
+    },
+    "source": {
+      "label": "Start",
+      "helper": "Leave empty to start from the viewer's current location"
+    }
   }
 }

@@ -30,6 +30,8 @@
     "@okr/relationship-invitation-data-access": "*",
     "@okr/relationship-invitation-ui": "*",
     "@okr/relationship-invitation-util": "*",
-    "@okr/user-data-access": "*"
+    "@okr/user-data-access": "*",
+    "@okr/mobility-transit-feature": "*",
+    "@okr/mobility-transit-util": "*"
   }
 }

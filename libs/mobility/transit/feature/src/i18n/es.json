@@ -1,0 +1,53 @@
+{
+  "title": "Conexiones",
+  "mode": {
+    "transit": "Transporte público",
+    "walk": "A pie",
+    "bike": "Bici",
+    "car": "Coche"
+  },
+  "from": "Desde",
+  "to": "Hasta",
+  "myPosition": "Mi ubicación",
+  "changeSource": "cambiar",
+  "anchor": {
+    "arrive": "Llegada antes de",
+    "depart": "Salida desde"
+  },
+  "time": "Hora",
+  "search": "Buscar conexiones",
+  "direct": "directo",
+  "transfers": {
+    "one": "1 transbordo",
+    "many": "{count} transbordos"
+  },
+  "delay": "+{minutes}' de retraso",
+  "late": "llega tarde",
+  "cancelled": "cancelado",
+  "leg": {
+    "walk": "A pie",
+    "transfer": "Transbordo",
+    "platform": "Vía/andén {platform}",
+    "direction": "dirección"
+  },
+  "return": {
+    "from": "Vuelta desde las {time}",
+    "show": "mostrar",
+    "hide": "ocultar"
+  },
+  "outbound": "Ida",
+  "maps": {
+    "open": "Abrir la ruta en mapas",
+    "hint": "La hora de salida la eliges en la app de mapas."
+  },
+  "sbb": {
+    "open": "Abrir en el horario de SBB"
+  },
+  "source": "Datos:",
+  "empty": "No hemos encontrado ninguna conexión para esta hora.",
+  "error": "No se han podido cargar las conexiones. Inténtalo de nuevo más tarde.",
+  "offline": "Solo puedes buscar conexiones con conexión a Internet.",
+  "positionUnavailable": "Tu ubicación no está disponible. Elige con «cambiar» desde dónde sales.",
+  "noCoordinates": "Este lugar no tiene una posición exacta, así que no podemos buscar conexiones.",
+  "abroad": "Solo hay conexiones para lugares en Suiza."
+}

@@ -1404,5 +1404,19 @@
   },
   "trip-stats": {
     "label": "Fahrtenstatistik"
+  },
+  "connections": {
+    "title": "Verbindungen",
+    "label": "Verbindungen",
+    "edit": "Verbindungen-Konfiguration ändern",
+    "description": "ÖV-Verbindungen zu einem Ort, mit Weg zu Fuss, mit dem Velo oder dem Auto über die Karten-App",
+    "destination": {
+      "label": "Ziel",
+      "helper": "Leer lassen, um den Ort der Seite zu übernehmen"
+    },
+    "source": {
+      "label": "Start",
+      "helper": "Leer lassen, dann startet die Suche beim Standort der Person, die die Seite ansieht"
+    }
   }
 }

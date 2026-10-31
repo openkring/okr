@@ -41,6 +41,7 @@ import { AdventSectionComponent } from './advent-section';
 import { TripStatsSectionComponent } from './trip-stats-section';
 import { FormSectionComponent } from './form-section';
 import { WeatherSectionComponent } from '@okr/weather-feature';
+import { ConnectionsSectionComponent } from '@okr/mobility-transit-feature';
 import { SectionStore } from './section.store';
 
 /**
@@ -64,6 +65,7 @@ import { SectionStore } from './section.store';
     TripStatsSectionComponent,
     FormSectionComponent,
     WeatherSectionComponent,
+    ConnectionsSectionComponent,
   ],
   template: `
     @if (section(); as section) {
@@ -172,6 +174,9 @@ import { SectionStore } from './section.store';
           @case('weather') {
             <okr-weather-section [section]="section" [pageLocationKey]="pageLocationKey()" />
           }
+          @case('connections') {
+            <okr-connections-section [section]="section" [pageLocationKey]="pageLocationKey()" />
+          }
           @case('member-age') {
             @defer (on viewport) {
               <okr-member-age-section [section]="section" [editMode]="editMode()" />
@@ -252,7 +257,7 @@ export class SectionDispatcher {
   public currentUser = input.required<UserModel | undefined>();
   public editMode = input.required<boolean>();
   /**
-   * The hosting page's `locationKey`. Weather sections inherit it when they do not name a
+   * The hosting page's `locationKey`. Weather and connections sections inherit it when they do not name a
    * location of their own; every other section type ignores it. Optional, so the page types
    * that cannot host a weather section need not pass anything.
    */
