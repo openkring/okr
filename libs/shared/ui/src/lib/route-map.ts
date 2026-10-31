@@ -44,9 +44,9 @@ const PLACE_LABEL_ZOOM = 7; // below, the labels of a whole island group would o
 /** Raster and offline layers stop here (unchanged); Google layers follow their native levels up to GOOGLE_MAX_ZOOM. */
 const DEFAULT_MAX_ZOOM = 16;
 const GOOGLE_MAX_ZOOM = 20;
-/** A missing or zero-byte raster tile (empty-tile marker, design §5) draws nothing instead of a broken image. */
 /** `googleTileError` fires at most once per map type in this interval (the caller renews the session). */
 const GOOGLE_TILE_ERROR_MS = 60 * 1000;
+/** A missing or zero-byte raster tile (empty-tile marker, design §5) draws nothing instead of a broken image. */
 const TRANSPARENT_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
 
 function escapeHtml(value: string): string {
