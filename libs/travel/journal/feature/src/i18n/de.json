@@ -449,6 +449,7 @@
     "skipped_too_long": "Das Video ist länger als 60 Sekunden. Kürze es in der Fotos-App.",
     "skipped_too_large": "Das Video ist zu gross geworden und wurde nicht übernommen.",
     "limit": "Ein Videoblock hat Platz für 5 Videos.",
-    "native_only": "Videos kannst du nur auf dem iPad hinzufügen."
+    "native_only": "Videos kannst du nur auf dem iPad hinzufügen.",
+    "not_loaded": "Video noch nicht geladen"
   }
 }

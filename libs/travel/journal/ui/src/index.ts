@@ -16,3 +16,4 @@ export * from './lib/journal-book-settings.modal';
 export * from './lib/journal-context-menu';
 export * from './lib/journal-block-sort.modal';
 export * from './lib/journal-world-map';
+export * from './lib/journal-video-block';

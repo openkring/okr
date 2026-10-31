@@ -8,13 +8,14 @@ import {
 import { AlbumSectionComponent, ArticleSectionComponent, HeroSectionComponent } from '@okr/cms-section-feature';
 import { AppStore } from '@okr/shared-feature';
 import { fill, registerBundledIcons } from '@okr/shared-util-core';
-import { FootprintEditModal, JournalBlockSortModal, JournalReactions, ReactionComment, TextBlockEditModal } from '@okr/travel-journal-ui';
+import { FootprintEditModal, JournalBlockSortModal, JournalReactions, JournalVideoBlock, ReactionComment, TextBlockEditModal } from '@okr/travel-journal-ui';
 import { createActionSheetButton, createActionSheetOptions, okrPrompt } from '@okr/shared-util-angular';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { AlbumSection, ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig } from '@okr/shared-models';
 import { openImageGallery } from '@okr/shared-ui';
 import { blockActions, footprintMenu, FootprintFormModel, htmlToPlainText, lostValueText, StoryBlock, toStorySections } from '@okr/travel-journal-util';
 
+import type { VideoSkipReason } from '@okr/travel-journal-data-access';
 import { JournalFileUrlService } from './journal-file-url.service';
 import { JournalWebPhotos } from './journal-web-photos.service';
 import { showJournalError } from './journal-errors';
@@ -32,7 +33,7 @@ import { JournalStore } from './journal.store';
 @Component({
   selector: 'okr-journal-story-page',
   imports: [
-    JournalReactions,
+    JournalReactions, JournalVideoBlock,
     IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonFooter, IonButton, IonIcon, SvgIconPipe,
     HeroSectionComponent, ArticleSectionComponent, AlbumSectionComponent,
   ],
@@ -92,6 +93,8 @@ import { JournalStore } from './journal.store';
           <div class="block" [class.editable]="editMode() && canEdit()" (click)="tapBlock(item)">
             @if (asArticle(item); as article) {
               <okr-article-section [section]="article" [editMode]="editMode()" />
+            } @else if (item.clips; as clips) {
+              <okr-journal-video-block [clips]="clips" [caption]="item.block.html ?? ''" [i18n]="{ notLoaded: store.i18n.video_not_loaded() }" />
             } @else if (asAlbum(item); as album) {
               <okr-album-section [section]="album" [explicitImages]="item.images" [showStyleSelect]="false" [editMode]="editMode()"
                 [emitImageClicks]="canEdit() && !editMode()" (imageSelected)="photoActions(item, $event)" />
@@ -170,7 +173,10 @@ export class JournalStoryPage {
       blocks: story.blocks.map((item) => ({
         ...item,
         images: item.images?.filter((image) => !isMissing(image.label)),
-        missing: (item.block.imageKeys ?? []).filter((key) => isMissing(key)).length,
+        clips: item.clips?.map((clip) => ({
+          ...clip, src: clip.src === '' || (!native && this.fileUrl.isMissing(clip.videoPath)) ? '' : clip.src,
+        })),
+        missing: item.clips ? 0 : (item.block.imageKeys ?? []).filter((key) => isMissing(key)).length,
       })),
     };
   });
@@ -290,9 +296,12 @@ export class JournalStoryPage {
     let files: Promise<File[]> | undefined;
     const photos = createActionSheetButton('block.photos', i18n.story_add_photos(), imgix, 'images');
     if (!this.store.native()) photos.handler = () => { files = this.pickWebFiles(); };
+    const video = createActionSheetButton('block.video', i18n.story_add_video(), imgix, 'video');
+    if (!this.store.native()) video.handler = () => { files = this.pickWebFiles(); };
     options.buttons.push(
       createActionSheetButton('block.text', i18n.story_add_text(), imgix, 'text'),
       photos,
+      video,
       createActionSheetButton('cancel', i18n.cancel(), imgix, 'cancel'),
     );
     const sheet = await this.actionSheetController.create(options);
@@ -300,6 +309,7 @@ export class JournalStoryPage {
     const { data } = await sheet.onDidDismiss<{ action: string }>();
     if (data?.action === 'block.text') await this.addText();
     else if (data?.action === 'block.photos') await this.addPhotos(files);
+    else if (data?.action === 'block.video') await this.addVideos(files);
   }
 
   /**
@@ -348,6 +358,7 @@ export class JournalStoryPage {
     const texts: Record<string, [string, string]> = {
       'block.edit': [i18n.block_edit_action(), 'edit'],
       'block.addphotos': [i18n.story_add_photos(), 'images'],
+      'block.addvideos': [i18n.block_add_videos(), 'video'],
       'block.delete': [i18n.block_delete_action(), 'trash'],
     };
     const actions = blockActions({ kind: item.block.kind, editable: this.canEdit() });
@@ -356,7 +367,7 @@ export class JournalStoryPage {
     let files: Promise<File[]> | undefined;
     const button = (a: string) => {
       const b = createActionSheetButton(a, texts[a][0], imgix, texts[a][1]);
-      if (a === 'block.addphotos' && !this.store.native()) b.handler = () => { files = this.pickWebFiles(); };
+      if ((a === 'block.addphotos' || a === 'block.addvideos') && !this.store.native()) b.handler = () => { files = this.pickWebFiles(); };
       return b;
     };
     options.buttons.push(
@@ -372,6 +383,10 @@ export class JournalStoryPage {
         if (this.store.native()) return this.addPhotosToBlock(item.block.key, seen);
         // browser: the page stays free while the file dialog is open; the lock is taken again once files are there
         void this.addPickedPhotosToBlock(item.block.key, seen, files);
+        return;
+      case 'block.addvideos':
+        if (this.store.native()) return this.addVideosToBlock(item.block.key, seen);
+        void this.addPickedVideosToBlock(item.block.key, seen, files);
         return;
       case 'block.delete': return this.confirmDeleteBlock(item.block.key);
     }
@@ -436,6 +451,35 @@ export class JournalStoryPage {
     const picked = files ? await files : undefined; // undefined: offline / no author — the store refuses with its message
     if (picked?.length === 0) return;
     await this.exclusive(() => this.run(async () => this.toastResult(await this.store.addPhotosToBlock(blockKey, seen, picked))));
+  }
+
+  private async addVideosToBlock(blockKey: string, seen: Record<string, string>): Promise<void> {
+    await this.run(async () => this.toastVideoResult(await this.store.addVideosToBlock(blockKey, seen)));
+  }
+
+  /** Browser: as addPickedPhotosToBlock. */
+  private async addPickedVideosToBlock(blockKey: string, seen: Record<string, string>, files: Promise<File[]> | undefined): Promise<void> {
+    const picked = files ? await files : undefined;
+    if (picked?.length === 0) return;
+    await this.exclusive(() => this.run(async () => this.toastVideoResult(await this.store.addVideosToBlock(blockKey, seen, picked))));
+  }
+
+  /** `files`: browser files picked inside the tap (see pickWebFiles); native leaves it undefined. */
+  protected async addVideos(files?: Promise<File[]>): Promise<void> {
+    await this.run(async () => {
+      await this.toastVideoResult(await this.store.addVideoBlock(this.journalKey(), this.footprintKey(), files));
+    });
+  }
+
+  /** Skipped clips, one line per reason (too long, too large, anything else counted as a skipped file). */
+  private async toastVideoResult({ skipped }: { added: number; skipped: { reason: VideoSkipReason }[] }): Promise<void> {
+    const i18n = this.store.i18n;
+    const parts: string[] = [];
+    if (skipped.some((s) => s.reason === 'tooLong')) parts.push(i18n.video_skipped_too_long());
+    if (skipped.some((s) => s.reason === 'tooLarge')) parts.push(i18n.video_skipped_too_large());
+    const other = skipped.filter((s) => s.reason !== 'tooLong' && s.reason !== 'tooLarge').length;
+    if (other > 0) parts.push(fill(i18n.photos_skipped(), { count: other }));
+    if (parts.length > 0) await this.toastText(parts.join(' · '));
   }
 
   protected async addText(): Promise<void> {

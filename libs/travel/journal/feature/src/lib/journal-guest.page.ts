@@ -9,8 +9,8 @@ import { I18nService } from '@okr/shared-i18n';
 import { MapView, RouteMap, RoutePin } from '@okr/shared-ui';
 import { okrPrompt } from '@okr/shared-util-angular';
 import { fill } from '@okr/shared-util-core';
-import { GuestFootprintView, GuestJournalView, guestErrorOf, JournalGuestService } from '@okr/travel-journal-data-access';
-import { JournalReactions, ReactionComment } from '@okr/travel-journal-ui';
+import { GuestBlockView, GuestFootprintView, GuestJournalView, guestErrorOf, JournalGuestService } from '@okr/travel-journal-data-access';
+import { JournalReactions, JournalVideoBlock, ReactionComment, VideoClip } from '@okr/travel-journal-ui';
 import {
   baseLayerOptions, FlyPoint, FlyStop, flyoverTimeline, GIBS_BLUE_MARBLE, JOURNAL_I18N_KEYS, JournalI18n, pickBaseLayer, stopTime,
   weatherLine, weatherOf,
@@ -39,7 +39,7 @@ const browserOnline = (): boolean => typeof navigator === 'undefined' || navigat
  */
 @Component({
   selector: 'okr-journal-guest-page',
-  imports: [IonHeader, IonContent, IonSpinner, RouteMap, JournalReactions],
+  imports: [IonHeader, IonContent, IonSpinner, RouteMap, JournalReactions, JournalVideoBlock],
   styles: [`
     :host {
       --site-font: var(--okr-site-font, var(--ion-font-family));
@@ -107,12 +107,7 @@ const browserOnline = (): boolean => typeof navigator === 'undefined' || navigat
               @if (block.kind === 'text') {
                 <div [innerHTML]="block.html"></div>
               } @else if (block.kind === 'video') {
-                @if (block.html) {
-                  <div [innerHTML]="block.html"></div>
-                }
-                @for (clip of block.videos; track clip.key) {
-                  <video class="clip" controls playsinline preload="none" [poster]="clip.poster" [src]="clip.url"></video>
-                }
+                <okr-journal-video-block [caption]="block.html ?? ''" [clips]="guestClips(block.videos)" [i18n]="{ notLoaded: i18n.video_not_loaded() }" />
               } @else {
                 <div class="photos">
                   @for (photo of block.photos; track photo.key) {
@@ -272,6 +267,10 @@ export class JournalGuestPage {
 
   protected thumbOf(fp: GuestFootprintView): string | undefined {
     return fp.blocks.flatMap((b) => b.photos)[0]?.thumb;
+  }
+
+  protected guestClips(videos: GuestBlockView['videos']): VideoClip[] {
+    return videos.map((v) => ({ key: v.key, poster: v.poster, src: v.url || undefined }));
   }
 
   protected facts(fp: GuestFootprintView): string {

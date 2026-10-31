@@ -449,6 +449,7 @@
     "skipped_too_long": "The video is longer than 60 seconds. Trim it in the Photos app.",
     "skipped_too_large": "The video became too large and was not added.",
     "limit": "A video block has room for 5 videos.",
-    "native_only": "You can only add videos on the iPad."
+    "native_only": "You can only add videos on the iPad.",
+    "not_loaded": "Video not loaded yet"
   }
 }

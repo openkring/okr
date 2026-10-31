@@ -449,6 +449,7 @@
     "skipped_too_long": "Il video dura più di 60 secondi. Accorcialo nell’app Foto.",
     "skipped_too_large": "Il video è diventato troppo grande e non è stato aggiunto.",
     "limit": "Un blocco video può contenere 5 video.",
-    "native_only": "Puoi aggiungere video solo sull’iPad."
+    "native_only": "Puoi aggiungere video solo sull’iPad.",
+    "not_loaded": "Video non ancora caricato"
   }
 }

@@ -10,7 +10,10 @@ import { BlockView, FootprintView, ImageView, weatherLine } from './journal-view
  * text block and one collage album per photo block. The objects are fed straight into the standalone
  * section components — they are never stored in Firestore.
  */
-export interface StoryBlock { block: BlockView; section: ArticleSection | AlbumSection; images?: ImageConfig[] }
+/** A clip of a video block: its poster, the mp4 URL ('' while unknown) and the relative path of the mp4 (to look up whether it arrived). */
+export interface StoryClip { key: string; poster: string; src: string; videoPath: string; durationSec?: number }
+/** A video block is an article section carrying the caption, plus its `clips`. */
+export interface StoryBlock { block: BlockView; section: ArticleSection | AlbumSection; images?: ImageConfig[]; clips?: StoryClip[] }
 export interface Story { hero: HeroSection | undefined; blocks: StoryBlock[] }
 
 function coordinate(value: number, positive: string, negative: string): string {
@@ -50,6 +53,17 @@ export function toStorySections(
         properties: { ...ARTICLE_SECTION_SHAPE.properties, images: [] },
       };
       return { block, section };
+    }
+    if (block.kind === 'video') {
+      const section: ArticleSection = {
+        ...ARTICLE_SECTION_SHAPE, ...common, okey: block.key, name: block.key, title: '', subTitle: '',
+        authorKey: block.authorKey, order: block.order,
+        content: { ...ARTICLE_SECTION_SHAPE.content, htmlContent: block.html ?? '' },
+        properties: { ...ARTICLE_SECTION_SHAPE.properties, images: [] },
+      };
+      const clips = (block.imageKeys ?? []).map((k) => images.get(k)).filter((i): i is ImageView => i?.videoPath !== undefined)
+        .map((i) => ({ key: i.key, poster: fileUrl(i.path2048), src: fileUrl(i.videoPath as string), videoPath: i.videoPath as string, durationSec: i.durationSec }));
+      return { block, section, clips };
     }
     const present = (block.imageKeys ?? []).map((k) => images.get(k)).filter((i): i is ImageView => i !== undefined);
     const section: AlbumSection = {
