@@ -123,6 +123,8 @@ export function imageDocOf(state: JournalState, imageKey: string, tenants: strin
     width: num(v['width']) ?? 0, height: num(v['height']) ?? 0,
     path2048: storagePath(tenant, journalKey, str(v['path2048'])),
     path400: storagePath(tenant, journalKey, str(v['path400'])),
+    videoPath: str(v['videoPath']) === '' ? undefined : storagePath(tenant, journalKey, str(v['videoPath'])),
+    durationSec: num(v['durationSec']),
   });
 }
 

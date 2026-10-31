@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { applyManage, deliveryFor, GuestRequestError, guestBlockKind, isGuestVisibleSection, memberName, parseGuestRequest } from './guest.logic';
+import { applyManage, deliveryFor, GuestRequestError, guestBlockKind, guestVideoClips, isGuestVisibleSection, memberName, parseGuestRequest } from './guest.logic';
 
 const CODE = '0123456789abcdef0123456789abcdef';
 const avatar = (key: string, name1: string, name2: string) => ({ key, name1, name2, modelType: 'person' as const, type: '', subType: '', label: '' });
@@ -75,4 +75,18 @@ describe('guestBlockKind', () => {
   it('video block', () => expect(guestBlockKind({ blockKind: 'video' }, ['i1'], '<p>x</p>')).toBe('video'));
   it('photos only', () => expect(guestBlockKind({}, ['i1'], '')).toBe('photos'));
   it('text', () => expect(guestBlockKind({}, [], '<p>x</p>')).toBe('text'));
+});
+
+describe('guestVideoClips', () => {
+  const images = new Map<string, Record<string, unknown>>([
+    ['a', { width: 1920, height: 1080, durationSec: 5, videoPath: 'tenant/t/journal/j/a-video.mp4', path2048: 'tenant/t/journal/j/a-2048.jpg' }],
+    ['b', { width: 10, height: 10, path2048: 'tenant/t/journal/j/b-2048.jpg' }],
+    ['c', { width: 640, height: 360, durationSec: 2, videoPath: 'tenant/t/journal/j/c-video.mp4' }],
+  ]);
+  it('keeps pick order and skips unknown images and photos without videoPath', () => {
+    expect(guestVideoClips(['c', 'x', 'b', 'a'], images)).toEqual([
+      { key: 'c', width: 640, height: 360, durationSec: 2, objectPath: 'tenant/t/journal/j/c-video.mp4', posterPath: '' },
+      { key: 'a', width: 1920, height: 1080, durationSec: 5, objectPath: 'tenant/t/journal/j/a-video.mp4', posterPath: 'tenant/t/journal/j/a-2048.jpg' },
+    ]);
+  });
 });

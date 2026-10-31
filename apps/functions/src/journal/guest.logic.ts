@@ -120,3 +120,15 @@ export function guestBlockKind(section: Record<string, unknown>, imageKeys: stri
   if (section['blockKind'] === 'video') return 'video';
   return imageKeys.length > 0 && html === '' ? 'photos' : 'text';
 }
+
+/** The playable clips of a video block, in pick order: images without a `videoPath` (or unknown keys) are left out. */
+export function guestVideoClips(imageKeys: string[], imageById: Map<string, Record<string, unknown>>): {
+  key: string; width?: unknown; height?: unknown; durationSec?: unknown; objectPath: string; posterPath: string;
+}[] {
+  return imageKeys.flatMap((key) => {
+    const image = imageById.get(key);
+    const objectPath = typeof image?.['videoPath'] === 'string' ? image['videoPath'] : '';
+    if (!image || objectPath === '') return [];
+    return [{ key, width: image['width'], height: image['height'], durationSec: image['durationSec'], objectPath, posterPath: typeof image['path2048'] === 'string' ? image['path2048'] : '' }];
+  });
+}

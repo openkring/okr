@@ -114,6 +114,18 @@ describe('journal server util', () => {
     });
   });
 
+  it('imageDocOf carries a clip\'s videoPath and durationSec, a photo has none', () => {
+    const clip = materialize([
+      rec({ entity: 'image', entityKey: 'v1', op: 'create', fields: { journalKey: 'j1', path2048: 'journals/j1/n-2048.jpg', path400: 'journals/j1/n-400.jpg', videoPath: 'journals/j1/n-video.mp4', durationSec: 12.3 } }),
+      rec({ entity: 'image', entityKey: 'p1', op: 'create', fields: { journalKey: 'j1', path2048: 'journals/j1/a-2048.jpg', path400: 'journals/j1/a-400.jpg' } }),
+    ]);
+    const doc = imageDocOf(clip, 'v1', ['bkg']);
+    expect(doc?.videoPath).toBe('tenant/bkg/journal/j1/n-video.mp4');
+    expect(doc?.durationSec).toBe(12.3);
+    expect(imageDocOf(clip, 'p1', ['bkg'])).not.toHaveProperty('videoPath');
+    expect(imageDocOf(clip, 'p1', ['bkg'])).not.toHaveProperty('durationSec');
+  });
+
   it("storagePath strips the device's journals/<jk>/ prefix", () => {
     expect(storagePath('bkg', 'j1', 'journals/j1/x-400.jpg')).toBe('tenant/bkg/journal/j1/x-400.jpg');
     expect(storagePath('bkg', 'j1', '')).toBe('');
