@@ -64,7 +64,7 @@
     "split": "Dividi",
     "merge": "Unisci",
     "detected": "rilevato automaticamente",
-    "split_mode": "Mezzo di trasporto per la seconda metà"
+    "split_mode": "Mezzo di trasporto da qui"
   },
   "page": {
     "title": "Percorsi"
@@ -144,5 +144,16 @@
     "gain": "salita",
     "loss": "discesa",
     "terrain": "Quote dal modello del terreno di {provider}"
+  },
+  "point": {
+    "prev": "Punto precedente",
+    "next": "Punto successivo",
+    "close": "Annulla la selezione",
+    "split": "Dividi qui",
+    "remove": "Rimuovi il punto",
+    "remove_spike": "Rimuovi la deviazione",
+    "remove_confirm": "Rimuovere questo punto dal percorso?",
+    "spike_confirm": "Rimuovere i {count} punti di questa deviazione dal percorso?",
+    "split_hint": "Scegli sulla mappa dove inizia il nuovo tratto."
   }
 }

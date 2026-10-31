@@ -1,5 +1,6 @@
 import { DiaryTarget, resolveDiaryTargets, TrackPhoto } from '@okr/shared-models';
 import { TrackPoint } from './track-polyline.util';
+import { distanceM } from './track-summary.util';
 
 /** A photo from the device library, with its local 400 px rendition. */
 export interface LibraryPhoto {
@@ -26,6 +27,34 @@ export function positionAt(points: TrackPoint[], t: number): { lat: number; lng:
   }
   const last = points[points.length - 1];
   return { lat: last.lat, lng: last.lng };
+}
+
+/** A photo's own GPS farther than this from the track at its time is not trusted (spec 1.129 §3.3). */
+export const PHOTO_MAX_OFF_TRACK_M = 250;
+
+/**
+ * The photos checked against the (spike-free) track, spec 1.129 §3.3: a photo taken while the track ran is placed on
+ * it when its position was interpolated, or when its own GPS lies more than PHOTO_MAX_OFF_TRACK_M away — a photo
+ * taken during a GPS spike carries the spike's position. Photos outside the track's time stay as they are.
+ * The same array when nothing moves.
+ */
+export function photosOnTrack<T extends TrackPhoto>(photos: T[], sections: TrackPoint[][]): T[] {
+  const points = sections.flat().sort((a, b) => a.t - b.t);
+  if (points.length === 0) return photos;
+  const first = points[0].t;
+  const last = points[points.length - 1].t;
+  let changed = false;
+  const out = photos.map((p) => {
+    const t = Date.parse(p.takenAt);
+    if (Number.isNaN(t) || t < first || t > last) return p;
+    const pos = positionAt(points, t);
+    if (!pos) return p;
+    if (p.ownGps && distanceM(p, pos) <= PHOTO_MAX_OFF_TRACK_M) return p;
+    if (!p.ownGps && p.lat === pos.lat && p.lng === pos.lng) return p;
+    changed = true;
+    return { ...p, lat: pos.lat, lng: pos.lng, ownGps: false };
+  });
+  return changed ? out : photos;
 }
 
 /** Photos taken within [from, to], positioned by own GPS or interpolated from the track, sorted by time. `path400` is device-local and must be stripped before persisting. */

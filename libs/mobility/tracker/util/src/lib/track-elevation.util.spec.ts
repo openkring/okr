@@ -119,7 +119,7 @@ describe('coverage and terrain', () => {
 
 describe('thinProfile', () => {
   it('keeps first and last', () => {
-    const pts = Array.from({ length: 1000 }, (_, i) => ({ distM: i, altM: i, lat: 0, lng: 0 }));
+    const pts = Array.from({ length: 1000 }, (_, i) => ({ distM: i, altM: i, lat: 0, lng: 0, section: 0, index: i }));
     const thin = thinProfile(pts, 100);
     expect(thin.length).toBe(100);
     expect(thin[0].distM).toBe(0);

@@ -13,6 +13,7 @@ const MAX_CHART_POINTS = 400;
  * descent above it. Moving the pointer or a finger across it emits the point underneath (`pointed`), which the page
  * marks on the map; lifting a mouse off the chart clears it, a finger leaves the mark where it was.
  * `note` (e.g. which terrain model the heights come from) shows under the chart.
+ * Lifting the finger or releasing the mouse button emits `picked` (spec 1.129 §5.1): the page selects that point.
  */
 @Component({
   selector: 'okr-track-elevation',
@@ -40,7 +41,7 @@ const MAX_CHART_POINTS = 400;
       <span>↓ {{ profile().lossM }} m {{ i18n().elevation_loss() }}</span>
     </div>
     <div class="chart" role="img" [attr.aria-label]="ariaLabel()"
-      (pointerdown)="onPointer($event)" (pointermove)="onPointer($event)" (pointerleave)="onLeave($event)">
+      (pointerdown)="onPointer($event)" (pointermove)="onPointer($event)" (pointerleave)="onLeave($event)" (pointerup)="onUp($event)">
       <svg [attr.viewBox]="'0 0 ' + width + ' ' + height" preserveAspectRatio="none" aria-hidden="true">
         <path class="area" [attr.d]="paths().area" />
         <path class="line" [attr.d]="paths().line" vector-effect="non-scaling-stroke" />
@@ -69,6 +70,8 @@ export class TrackElevation {
 
   /** the profile point under the pointer; undefined when the mouse left the chart */
   public readonly pointed = output<ElevationPoint | undefined>();
+  /** the point where the finger was lifted or the mouse released: a selection, not a hover */
+  public readonly picked = output<ElevationPoint>();
 
   protected readonly width = W;
   protected readonly height = H;
@@ -114,6 +117,12 @@ export class TrackElevation {
     if (point === this.active()) return;
     this.active.set(point);
     this.pointed.emit(point);
+  }
+
+  protected onUp(event: PointerEvent): void {
+    this.onPointer(event);
+    const point = this.active();
+    if (point) this.picked.emit(point);
   }
 
   protected onLeave(event: PointerEvent): void {

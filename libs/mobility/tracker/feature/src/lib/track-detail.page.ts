@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   AlertController, IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonLabel, IonListHeader, IonNote, IonSpinner, IonTitle,
@@ -12,12 +12,14 @@ import { TRANSPORT_MODES, TrackPhoto, TransportMode, TripModel } from '@okr/shar
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { confirm, downloadFile, okrPrompt } from '@okr/shared-util-angular';
 import { queryPedometerSteps, TerrainElevationService, TrackDb, TrackService } from '@okr/mobility-tracker-data-access';
-import { TrackElevation, TrackMap, TrackMapPhoto, TrackMapSection, TrackModeChange, TrackPhotoItem, TrackPhotos, TrackPhotoToggle, TrackSections } from '@okr/mobility-tracker-ui';
+import {
+  TrackElevation, TrackMap, TrackMapPhoto, TrackMapPoint, TrackMapSection, TrackModeChange, TrackPhotoItem, TrackPhotos, TrackPhotoToggle, TrackPointBar, TrackSections,
+} from '@okr/mobility-tracker-ui';
 import { fill } from '@okr/shared-util-core';
 import {
   alignSections, buildGpx, ElevationPoint, elevationProfile, hasRelief, needsTerrain, sectionsWithHeights, terrainAltitudes, terrainSamples, logbuchTripLabel, correctedTrack, fromLocalSections, gpxFileName, isShareCancel, LocalSection, LocalTrack, localFromTrip, mergeWithNext,
   localStoreDate, middlePointIndex, sectionRows, setSectionMode, splitSection, toLocalSections, trackTenants, wantsPhotoReattach, withoutPhoto,
-  withPhotoHidden, withQueriedSteps,
+  withPhotoHidden, withQueriedSteps, distanceAlong, formatKm, photosOnTrack, removePoints, spikeRunAround, withoutSpikes,
 } from '@okr/mobility-tracker-util';
 
 import { TrackerStore } from './tracker.store';
@@ -32,12 +34,16 @@ import { TrackerStore } from './tracker.store';
  * A local track searches the library again when it has no photos or was searched under limited access (spec §6
  * «again on demand»), and «Fotos erneut suchen» does it by hand. An uploaded-only track offers «Entfernen» instead of
  * hide/show: hidden photos are never on the server, so one hidden there could not come back.
+ * Point corrections (spec 1.129 §5): GPS spikes are left out on display; on an editable track a tap on the map or a
+ * touch of the height profile selects a point, and the bar under the map steps through the points, splits there,
+ * removes the point or the detour around it. «Teilen» in a section row selects the section's middle point and asks
+ * where the new section begins. A correction writes the shown (spike-free) points, also into TrackDb.
  */
 @Component({
   selector: 'okr-track-detail-page',
   imports: [
     IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonButton, IonIcon, IonListHeader, IonLabel, IonNote, IonSpinner,
-    SvgIconPipe, TrackElevation, TrackMap, TrackPhotos, TrackSections,
+    SvgIconPipe, TrackElevation, TrackMap, TrackPhotos, TrackPointBar, TrackSections,
   ],
   styles: [`
     .center { display: flex; justify-content: center; padding: 24px; }
@@ -67,10 +73,18 @@ import { TrackerStore } from './tracker.store';
       @if (loading()) {
         <div class="center"><ion-spinner /></div>
       } @else if (track(); as t) {
-        <okr-track-map [sections]="mapSections()" [photos]="mapPhotos()" [live]="false" [highlight]="highlight()" />
+        <okr-track-map [sections]="mapSections()" [photos]="mapPhotos()" [live]="false" [highlight]="mapMark()"
+          [pickable]="editable()" (pointPicked)="pick($event)" />
+        @if (editable() && selected(); as sel) {
+          <okr-track-point-bar [i18n]="i18n" [label]="sel.label" [hint]="splitHint() ? i18n.point_split_hint() : ''"
+            [canPrev]="!!stepFrom(sel.at, -1)" [canNext]="!!stepFrom(sel.at, 1)" [canSplit]="sel.inner" [canRemove]="sel.inner"
+            [hasSpike]="!!sel.spike" [disabled]="busy()"
+            (step)="step($event)" (splitHere)="splitHere()" (removePoint)="removePoint()" (removeSpike)="removeSpike()" (closed)="pick(undefined)" />
+        }
         @if (relief(); as profile) {
           <ion-list-header><ion-label>{{ i18n.elevation_title() }}</ion-label></ion-list-header>
-          <okr-track-elevation [profile]="profile" [i18n]="i18n" [note]="terrainNote()" (pointed)="highlight.set($event)" />
+          <okr-track-elevation [profile]="profile" [i18n]="i18n" [note]="terrainNote()" (pointed)="highlight.set($event)"
+            (picked)="pickProfile($event)" />
         }
         @if (!t.uploaded) {
           <ion-note class="note" color="warning">{{ i18n.list_not_uploaded() }}</ion-note>
@@ -125,6 +139,7 @@ export class TrackDetailPage {
   private readonly alertController = inject(AlertController);
   private readonly toastController = inject(ToastController);
   private readonly terrainService = inject(TerrainElevationService);
+  private readonly content = viewChild(IonContent);
 
   protected readonly loading = signal(true);
   protected readonly busy = signal(false);
@@ -185,8 +200,27 @@ export class TrackDetailPage {
     return t?.sections === this.sections() && needsTerrain(this.sections()) && t.provider
       ? fill(this.i18n.elevation_terrain(), { provider: t.provider }) : '';
   });
-  /** the profile point under the finger, marked on the map */
+  /** the profile point under the mouse, marked on the map while hovering */
   protected readonly highlight = signal<ElevationPoint | undefined>(undefined);
+  /** the selected track point (spec 1.129 §5.1) */
+  protected readonly cursor = signal<TrackMapPoint | undefined>(undefined);
+  /** «Teilen» in a section row asked for the split point: the bar says so */
+  protected readonly splitHint = signal(false);
+  /** an uploaded Strecke had GPS spikes left out on reading: its stored points are not these, so no terrain write */
+  private readSpikes = false;
+  /** the selected point with what the bar shows and offers; undefined when nothing (valid) is selected */
+  protected readonly selected = computed(() => {
+    const at = this.cursor();
+    const sections = this.sections();
+    const sec = at ? sections[at.section] : undefined;
+    const point = at && sec ? sec.points[at.index] : undefined;
+    if (!at || !sec || !point) return undefined;
+    const label = [clock(point.t), formatKm(distanceAlong(sections, at.section, at.index)), this.i18n[`mode_${sec.mode}`]()].join(' · ');
+    const inner = at.index >= 1 && at.index <= sec.points.length - 2;
+    return { at, point, label, inner, spike: spikeRunAround(sec.points, at.index) };
+  });
+  /** the map mark: the hovered profile point, else the selected point */
+  protected readonly mapMark = computed(() => this.highlight() ?? this.selected()?.point);
 
   protected readonly editable = computed(() => this.track()?.state === 'done' && !this.busy());
   protected readonly mapSections = computed<TrackMapSection[]>(() => this.sections().map((s) => ({ mode: s.mode, points: s.points })));
@@ -202,7 +236,9 @@ export class TrackDetailPage {
   private readonly resolving = new Set<string>();
   protected readonly mapPhotos = computed<TrackMapPhoto[]>(() => {
     const srcs = this.photoSrcs();
-    return this.photos().map((p) => ({ lat: p.lat, lng: p.lng, hidden: p.hidden, src: srcs.get(p.assetId) }));
+    // checked against the shown track (spec 1.129 §3.3): a photo stored with a spike's position sits on the track
+    const placed = photosOnTrack(this.photos(), this.sections().map((s) => s.points));
+    return placed.map((p) => ({ lat: p.lat, lng: p.lng, hidden: p.hidden, src: srcs.get(p.assetId) }));
   });
   protected readonly photoItems = computed<TrackPhotoItem[]>(() => {
     const srcs = this.photoSrcs();
@@ -434,14 +470,85 @@ export class TrackDetailPage {
     return this.save(setSectionMode(this.sections(), change.index, change.mode));
   }
 
+  /** «Teilen» in a section row (spec 1.129 §5.3): selects the middle point and asks where the new section begins. */
   protected async split(index: number): Promise<void> {
     const section = this.sections()[index];
     if (!section) return;
     const pointIndex = middlePointIndex(section.points.length);
     if (pointIndex < 0) return;
-    const mode = await this.chooseMode(section.mode);
+    this.cursor.set({ section: index, index: pointIndex });
+    this.splitHint.set(true);
+    await this.content()?.scrollToTop(300);
+  }
+
+  /** A tap on the map: the nearest point, or none. */
+  protected pick(at: TrackMapPoint | undefined): void {
+    this.cursor.set(at);
+    if (!at) this.splitHint.set(false);
+  }
+
+  /** A finger lifted on the height profile: that point is selected, the hover mark gives way to it. */
+  protected pickProfile(point: ElevationPoint): void {
+    this.cursor.set({ section: point.section, index: point.index });
+    this.highlight.set(undefined);
+  }
+
+  protected step(direction: number): void {
+    const at = this.cursor();
+    const next = at ? this.stepFrom(at, direction) : undefined;
+    if (next) this.cursor.set(next);
+  }
+
+  /**
+   * The point before (-1) or after (+1), across section borders. A section starts with the last point of the one
+   * before (the line stays connected), so that shared point is skipped.
+   */
+  protected stepFrom(at: TrackMapPoint, direction: number): TrackMapPoint | undefined {
+    const sections = this.sections();
+    const len = sections[at.section]?.points.length ?? 0;
+    if (direction > 0) {
+      if (at.index < len - 1) return { section: at.section, index: at.index + 1 };
+      const next = sections[at.section + 1];
+      return next && next.points.length > 1 ? { section: at.section + 1, index: 1 } : undefined;
+    }
+    const prevLen = sections[at.section - 1]?.points.length ?? 0;
+    if (at.index > 1 || (at.index === 1 && prevLen === 0)) return { section: at.section, index: at.index - 1 };
+    if (prevLen === 0) return undefined;
+    // index 1 → the shared start point, shown as the end of the section before; index 0 → one before it
+    return { section: at.section - 1, index: prevLen - (at.index === 1 ? 1 : 2) };
+  }
+
+  /** «Hier teilen»: the section is split at the selected point, the mode from here on is asked. */
+  protected async splitHere(): Promise<void> {
+    const sel = this.selected();
+    if (!sel?.inner) return;
+    const mode = await this.chooseMode(this.sections()[sel.at.section].mode);
     if (!mode) return;
-    await this.save(splitSection(this.sections(), index, pointIndex, mode));
+    this.cursor.set(undefined);
+    this.splitHint.set(false);
+    await this.save(splitSection(this.sections(), sel.at.section, sel.at.index, mode));
+  }
+
+  /** «Punkt entfernen» after a confirm; the point before stays selected. */
+  protected async removePoint(): Promise<void> {
+    const sel = this.selected();
+    if (!sel?.inner) return;
+    const ok = await confirm(this.alertController, this.i18n.point_remove_confirm(), this.i18n.point_remove(), this.i18n.common_cancel(), true);
+    if (!ok) return;
+    this.cursor.set({ section: sel.at.section, index: sel.at.index - 1 });
+    await this.save(removePoints(this.sections(), sel.at.section, sel.at.index, sel.at.index));
+  }
+
+  /** «Ausreisser entfernen»: the whole out-and-back run around the selected point, after a confirm. */
+  protected async removeSpike(): Promise<void> {
+    const sel = this.selected();
+    const run = sel?.spike;
+    if (!sel || !run) return;
+    const count = String(run.end - run.start + 1);
+    const ok = await confirm(this.alertController, fill(this.i18n.point_spike_confirm(), { count }), this.i18n.point_remove_spike(), this.i18n.common_cancel(), true);
+    if (!ok) return;
+    this.cursor.set({ section: sel.at.section, index: run.start - 1 });
+    await this.save(removePoints(this.sections(), sel.at.section, run.start, run.end));
   }
 
   protected merge(index: number): Promise<void> {
@@ -511,6 +618,9 @@ export class TrackDetailPage {
       this.terrain.set(undefined);
       this.terrainRequested = undefined;
       this.highlight.set(undefined);
+      this.cursor.set(undefined);
+      this.splitHint.set(false);
+      this.readSpikes = false;
       this.photoSrcs.set(new Map());
       this.resolving.clear();
       const local = (await this.db.list()).find((t) => t.key === key);
@@ -521,7 +631,7 @@ export class TrackDetailPage {
         const strokes = await this.db.strokes(key);
         this.isLocal.set(true);
         this.track.set(local);
-        this.sections.set(toLocalSections(local, points, strokes));
+        this.sections.set(withoutSpikes(toLocalSections(local, points, strokes))); // spec 1.129 §3.2
         void this.findTrip(key).then((trip) => {
           if (this.key() === key) this.trip.set(trip);
         });
@@ -537,6 +647,7 @@ export class TrackDetailPage {
         const read = await Promise.all(trip.track.sections.map((_, n) => this.trackService.readSection(key, n)));
         const { track, sections } = localFromTrip(trip, read.map((r) => r.points), read.map((r) => r.strokeTimes));
         this.isLocal.set(false);
+        this.readSpikes = read.some((r) => r.spikes > 0); // left out by readSection (spec 1.129 §3.2)
         this.track.set(track);
         this.sections.set(sections);
         // terrain heights looked up on an earlier view (spec 1.128): no second lookup
@@ -572,7 +683,8 @@ export class TrackDetailPage {
       this.terrain.set({ sections, alts, provider });
       // only the uploaded copy of exactly these points: a local track not uploaded yet has no docs to write to
       const trip = this.trip();
-      if (trip?.okey === key && (!this.isLocal() || this.track()?.uploaded)) {
+      // not over stored points that still hold spikes: the heights would land on the wrong points (spec 1.129 §3.2)
+      if (trip?.okey === key && (!this.isLocal() || this.track()?.uploaded) && !this.readSpikes) {
         void this.trackService.saveTerrainAltitudes(key, alts, provider)
           .catch((error: unknown) => console.warn('TrackDetailPage.saveTerrainAltitudes', error));
       }
@@ -657,6 +769,7 @@ export class TrackDetailPage {
     }
     const oldCount = Math.max(before.sections.length, this.trip()?.track?.sections.length ?? 0);
     const corrected = fromLocalSections({ ...before, name: name ?? before.name }, next);
+    this.readSpikes = false; // the upload replaces the stored points with these
     this.track.set(corrected.track);
     this.sections.set(next);
     this.trip.update((t) => (t?.track ? { ...t, name: corrected.track.name, track: { ...t.track, sections: t.track.sections.slice(0, next.length) } } : t));
@@ -677,7 +790,7 @@ export class TrackDetailPage {
       const local = (await this.db.list()).find((t) => t.key === key);
       if (!local) return;
       this.track.set(local);
-      this.sections.set(toLocalSections(local, alignSections(await this.db.points(key), local.sections.length), await this.db.strokes(key)));
+      this.sections.set(withoutSpikes(toLocalSections(local, alignSections(await this.db.points(key), local.sections.length), await this.db.strokes(key))));
     } catch (error) {
       console.error('TrackDetailPage.reloadLocal', error);
     }
@@ -694,7 +807,7 @@ export class TrackDetailPage {
     return { personKey, uid, tenants };
   }
 
-  /** The transport mode of the second half of a split (any but the current one). */
+  /** The transport mode from the split point on (any but the current one). */
   private async chooseMode(current: TransportMode): Promise<TransportMode | undefined> {
     const alert = await this.alertController.create({
       header: this.i18n.section_split_mode(),
@@ -715,4 +828,10 @@ export class TrackDetailPage {
     const toast = await this.toastController.create({ message, duration: 3000 });
     await toast.present();
   }
+}
+
+/** Local wall-clock time with seconds (HH:mm:ss): neighbouring points are seconds apart. */
+function clock(ms: number): string {
+  const d = new Date(ms);
+  return [d.getHours(), d.getMinutes(), d.getSeconds()].map((n) => String(n).padStart(2, '0')).join(':');
 }

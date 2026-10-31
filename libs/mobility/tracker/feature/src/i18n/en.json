@@ -64,7 +64,7 @@
     "split": "Split",
     "merge": "Merge",
     "detected": "detected automatically",
-    "split_mode": "Mode of transport for the second half"
+    "split_mode": "Mode of transport from here"
   },
   "page": {
     "title": "Tracks"
@@ -144,5 +144,16 @@
     "gain": "ascent",
     "loss": "descent",
     "terrain": "Heights from the {provider} terrain model"
+  },
+  "point": {
+    "prev": "Previous point",
+    "next": "Next point",
+    "close": "Clear selection",
+    "split": "Split here",
+    "remove": "Remove point",
+    "remove_spike": "Remove outlier",
+    "remove_confirm": "Remove this point from the route?",
+    "spike_confirm": "Remove the {count} points of this outlier from the route?",
+    "split_hint": "Choose on the map where the new section begins."
   }
 }

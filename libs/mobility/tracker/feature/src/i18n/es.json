@@ -64,7 +64,7 @@
     "split": "Dividir",
     "merge": "Unir",
     "detected": "detectado automáticamente",
-    "split_mode": "Medio de transporte para la segunda mitad"
+    "split_mode": "Medio de transporte desde aquí"
   },
   "page": {
     "title": "Recorridos"
@@ -144,5 +144,16 @@
     "gain": "subida",
     "loss": "bajada",
     "terrain": "Altitudes del modelo de terreno de {provider}"
+  },
+  "point": {
+    "prev": "Punto anterior",
+    "next": "Punto siguiente",
+    "close": "Quitar la selección",
+    "split": "Dividir aquí",
+    "remove": "Quitar el punto",
+    "remove_spike": "Quitar la desviación",
+    "remove_confirm": "¿Quitar este punto del recorrido?",
+    "spike_confirm": "¿Quitar los {count} puntos de esta desviación del recorrido?",
+    "split_hint": "Elige en el mapa dónde empieza el nuevo tramo."
   }
 }

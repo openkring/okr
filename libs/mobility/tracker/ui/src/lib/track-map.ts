@@ -6,6 +6,8 @@ import { fanOutOffsets, TRACK_MODE_COLOR, type TrackPoint } from '@okr/mobility-
 export interface TrackMapSection { mode: TransportMode; points: TrackPoint[] }
 /** A photo pin: `src` is a displayable URL (local file or data URL); without one a small camera dot is drawn. */
 export interface TrackMapPhoto { lat: number; lng: number; src?: string; hidden: boolean }
+/** A point of the track: index into `sections` and into that section's points. */
+export interface TrackMapPoint { section: number; index: number }
 
 const TILE_URL = 'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg';
 const FIT_PADDING: L.PointTuple = [32, 32];
@@ -19,6 +21,8 @@ const PHOTO_DOT_SELECTED_PX = 22;
 const SELECTED_MIN_ZOOM = 16;
 /** pins whose centres are closer than this (px) fan out around their common centre */
 const PHOTO_FAN_THRESHOLD_PX = 24;
+/** a tap selects the nearest track point at most this far away (px); farther clears the selection */
+const PICK_RADIUS_PX = 40;
 /** dimmed base map, so the coloured track stands out (over a white background, also in dark mode) */
 const TILE_OPACITY = 0.55;
 const MAX_ZOOM = 19;
@@ -50,6 +54,8 @@ type MapFit = { bounds: L.LatLngBounds } | { center: L.LatLngTuple };
  * Photo pins at (nearly) the same place fan out on a small circle, recomputed per zoom level. With
  * `photosClickable` a pin is a button and emits `photoClicked` (index into `photos`); `wheelZoom` false leaves the
  * mouse wheel to the page that scrolls around the map (zoom stays on the buttons, double-click and pinch).
+ * With `pickable` (spec 1.129 §5.1) a tap on the map emits `pointPicked`: the nearest track point within 40 px, or
+ * undefined for a tap away from the line. The page marks the selection through `highlight`.
  */
 @Component({
   selector: 'okr-track-map',
@@ -93,9 +99,13 @@ export class TrackMap {
   public readonly wheelZoom = input(true);
   /** a spot to mark (the point under the finger on the height profile, spec 1.128); undefined = none. Never moves the map. */
   public readonly highlight = input<{ lat: number; lng: number } | undefined>(undefined);
+  /** a tap selects the nearest track point (`pointPicked`); read once at init */
+  public readonly pickable = input(false);
 
   /** a tapped photo pin, as index into `photos` (only with `photosClickable`) */
   public readonly photoClicked = output<number>();
+  /** the track point nearest to a tap (only with `pickable`); undefined for a tap away from the line */
+  public readonly pointPicked = output<TrackMapPoint | undefined>();
 
   private readonly el = inject<ElementRef<HTMLElement>>(ElementRef);
   private leaflet?: typeof L;
@@ -178,6 +188,7 @@ export class TrackMap {
     this.map.setView(DEFAULT_VIEW, 8);
     // the fan-out is in pixels: lay the pins out again for every zoom level
     this.map.on('zoomend', () => this.renderPhotos(this.photos(), this.selectedPhoto()));
+    if (this.pickable()) this.map.on('click', (e: L.LeafletMouseEvent) => this.pointPicked.emit(this.nearestPoint(e.containerPoint)));
     this.render(this.sections(), this.live());
     this.renderPhotos(this.photos(), this.selectedPhoto());
     this.panToPhoto(this.selectedPhoto());
@@ -305,6 +316,22 @@ export class TrackMap {
       if (clickable) marker.on('click', () => this.photoClicked.emit(index));
       marker.addTo(layer);
     });
+  }
+
+  /** The track point nearest to a container pixel, within PICK_RADIUS_PX. */
+  private nearestPoint(at: L.Point): TrackMapPoint | undefined {
+    const map = this.map;
+    if (!map) return undefined;
+    let best: TrackMapPoint | undefined;
+    let bestPx = PICK_RADIUS_PX;
+    this.sections().forEach((s, section) => s.points.forEach((p, index) => {
+      const px = map.latLngToContainerPoint([p.lat, p.lng]).distanceTo(at);
+      if (px <= bestPx) {
+        bestPx = px;
+        best = { section, index };
+      }
+    }));
+    return best;
   }
 
   private addDot(Lf: typeof L, at: L.LatLngTuple, kind: 'start' | 'end'): void {

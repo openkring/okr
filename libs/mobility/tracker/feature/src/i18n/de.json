@@ -64,7 +64,7 @@
     "split": "Teilen",
     "merge": "Zusammenlegen",
     "detected": "automatisch erkannt",
-    "split_mode": "Verkehrsmittel für die zweite Hälfte"
+    "split_mode": "Verkehrsmittel ab hier"
   },
   "page": {
     "title": "Strecken"
@@ -144,5 +144,16 @@
     "gain": "Aufstieg",
     "loss": "Abstieg",
     "terrain": "Höhen aus dem Geländemodell von {provider}"
+  },
+  "point": {
+    "prev": "Vorheriger Punkt",
+    "next": "Nächster Punkt",
+    "close": "Auswahl aufheben",
+    "split": "Hier teilen",
+    "remove": "Punkt entfernen",
+    "remove_spike": "Ausreisser entfernen",
+    "remove_confirm": "Diesen Punkt aus der Strecke entfernen?",
+    "spike_confirm": "Die {count} Punkte dieses Ausreissers aus der Strecke entfernen?",
+    "split_hint": "Wähle auf der Karte, wo der neue Abschnitt beginnt."
   }
 }

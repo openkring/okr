@@ -3,6 +3,7 @@ import type { TrackPoint } from './track-polyline.util';
 import { summarize } from './track-summary.util';
 import { rowSplits } from './track-split.util';
 import { strokeFigures } from './track-strokes.util';
+import { dropGpsSpikes } from './track-spikes.util';
 
 /** A section with its points, as kept locally before upload. */
 export interface LocalSection {
@@ -102,6 +103,38 @@ export function mergeWithNext(s: LocalSection[], index: number): LocalSection[] 
   const b = s[index + 1];
   const mode = summarize(b.points).distanceM > summarize(a.points).distanceM ? b.mode : a.mode;
   return [...s.slice(0, index), combine(a, b, mode), ...s.slice(index + 2)];
+}
+
+/**
+ * Owner correction (spec 1.129 §5.2): removes the points `start..end` (inclusive) of section `index`. The first and
+ * the last point stay — they join the neighbouring sections. Steps and strokes are kept (they were counted, not
+ * derived from the positions).
+ */
+export function removePoints(s: LocalSection[], index: number, start: number, end: number): LocalSection[] {
+  if (!validIndex(s, index)) return s;
+  const sec = s[index];
+  if (!Number.isInteger(start) || !Number.isInteger(end) || start < 1 || end < start || end > sec.points.length - 2) return s;
+  const points = [...sec.points.slice(0, start), ...sec.points.slice(end + 1)];
+  return s.map((x, i) => (i === index ? { ...x, points } : x));
+}
+
+/** The sections without their GPS spikes (spec 1.129 §3); the same array when no section has one. */
+export function withoutSpikes(s: LocalSection[]): LocalSection[] {
+  let changed = false;
+  const out = s.map((sec) => {
+    const points = dropGpsSpikes(sec.points, sec.mode);
+    if (points === sec.points) return sec;
+    changed = true;
+    return { ...sec, points };
+  });
+  return changed ? out : s;
+}
+
+/** Distance in metres from the start of the track to point `index` of section `section` (summed per section). */
+export function distanceAlong(s: { points: TrackPoint[] }[], section: number, index: number): number {
+  let d = 0;
+  for (let n = 0; n < section && n < s.length; n++) d += summarize(s[n].points).distanceM;
+  return d + summarize(s[section]?.points.slice(0, index + 1) ?? []).distanceM;
 }
 
 export function toTrackSections(s: LocalSection[], tripKey: string): TrackSection[] {

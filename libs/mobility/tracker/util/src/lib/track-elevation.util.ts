@@ -21,6 +21,9 @@ export interface ElevationPoint {
   altM: number;
   lat: number;
   lng: number;
+  /** the track point it stands for (spec 1.129 §5.1: the profile selects a point) */
+  section: number;
+  index: number;
 }
 
 export interface ElevationProfile {
@@ -141,7 +144,9 @@ export function elevationProfile(sections: ElevationSection[]): ElevationProfile
       ref = v;
     }
   }
-  const points = raw.map((w, i) => ({ distM: Math.round(w.distM), altM: Math.round(smoothed[i]), lat: w.point.lat, lng: w.point.lng }));
+  const points = raw.map((w, i) => ({
+    distM: Math.round(w.distM), altM: Math.round(smoothed[i]), lat: w.point.lat, lng: w.point.lng, section: w.section, index: w.index,
+  }));
   return {
     points,
     totalM: Math.round(all[all.length - 1].distM),

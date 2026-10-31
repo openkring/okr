@@ -10,8 +10,8 @@ import { AvatarInfo, TRACKER_TRIP_TYPE, TrackPhoto, TransportMode, TripCollectio
 import { convertDateFormatToString, DateFormat, getDeletePatch, getSystemQuery } from '@okr/shared-util-core';
 import { crewTrackDeadline } from '@okr/trip-util';
 import {
-  decodeAltitudes, decodeStrokeTimes, decodeTrack, encodeAltitudes, encodeStrokeTimes, encodeTrack, isLogbuchCrew, localStoreDate, LocalTrack, logbuchLinkCandidates, strokeTimesBase, serverPhotos,
-  summarize, trackThumbPath, TrackPoint, tripSections, withAltitudes,
+  decodeAltitudes, decodeStrokeTimes, decodeTrack, dropGpsSpikes, encodeAltitudes, encodeStrokeTimes, encodeTrack, isLogbuchCrew, localStoreDate, LocalTrack, logbuchLinkCandidates,
+  photosOnTrack, pickIndices, spikeFreeIndices, strokeTimesBase, serverPhotos, summarize, trackThumbPath, TrackPoint, tripSections, withAltitudes,
 } from '@okr/mobility-tracker-util';
 
 /** One section's points, stored as an encoded polyline in trips/{key}/track-points/{n}. */
@@ -37,6 +37,8 @@ export interface SectionRead {
   strokeTimes: number[];
   terrain?: (number | undefined)[];
   terrainProvider?: string;
+  /** GPS spikes left out of `points` (and `terrain`) on reading, spec 1.129 §3.2; 0 for a Strecke uploaded clean */
+  spikes: number;
 }
 
 const TRACK_POINTS = 'track-points';
@@ -85,6 +87,8 @@ export class TrackService {
     const tripKey = local.key;
     const endedMs = local.endedAt ?? local.startedAt;
     if (local.sections.length !== sections.length) throw new Error('track sections and points differ');
+    // GPS spikes never leave the device (spec 1.129 §3.2): TrackDb keeps the raw points, the trip gets the clean ones
+    sections = sections.map((points, i) => dropGpsSpikes(points, local.sections[i].mode));
     // ONE source for the section count: trip.track.sections and the track-points docs both follow it
 
     const durationS = Math.max(0, Math.round((endedMs - local.startedAt) / 1000));
@@ -103,7 +107,8 @@ export class TrackService {
     } as TripTrack;
     // photos: only from the local list — hidden ones left out (spec §6: never uploaded), path400 stripped, thumbPath
     // kept. Without a local list the key is omitted, so the merge keeps what is stored and never wipes thumb paths.
-    if (local.photos) track.photos = serverPhotos(local.photos);
+    // checked against the clean track: a photo taken during a spike carries the spike's position (spec 1.129 §3.3)
+    if (local.photos) track.photos = serverPhotos(photosOnTrack(local.photos, sections));
     // Logbuch link (spec 1.123 §4): written once the link transaction succeeded; a track without a link removes a
     // stored one (the set merges, so leaving the field out would keep it); a link still pending leaves it alone
     if (local.logbuchKey && local.logbuchLinked) track.logbuchKey = local.logbuchKey;
@@ -195,15 +200,18 @@ export class TrackService {
    */
   public async readSection(tripKey: string, n: number): Promise<SectionRead> {
     const snap = await getDoc(doc(this.firestoreService.firestore, `${TripCollection}/${tripKey}/${TRACK_POINTS}/${n}`));
-    if (!snap.exists()) return { points: [], strokeTimes: [] };
+    if (!snap.exists()) return { points: [], strokeTimes: [], spikes: 0 };
     const data = snap.data() as TrackPointsDoc;
     const decoded = decodeTrack(data.encoded);
-    const points = withAltitudes(decoded, decodeAltitudes(data.altitudes, decoded.length));
+    const raw = withAltitudes(decoded, decodeAltitudes(data.altitudes, decoded.length));
+    // a Strecke uploaded before the spike filter (spec 1.129 §3.2): left out on reading, terrain heights in step
+    const keep = spikeFreeIndices(raw, data.mode);
+    const points = keep.length === raw.length ? raw : keep.map((k) => raw[k]);
     const out: SectionRead = {
-      points, strokeTimes: decodeStrokeTimes(data.strokeTimes, strokeTimesBase(points)),
+      points, strokeTimes: decodeStrokeTimes(data.strokeTimes, strokeTimesBase(points)), spikes: raw.length - keep.length,
     };
     if (data.terrainAltitudes) {
-      out.terrain = decodeAltitudes(data.terrainAltitudes, points.length);
+      out.terrain = pickIndices(decodeAltitudes(data.terrainAltitudes, raw.length), keep);
       out.terrainProvider = data.terrainProvider ?? '';
     }
     return out;
@@ -231,7 +239,7 @@ export class TrackService {
     if (!snap.exists()) return [];
     const data = snap.data() as TrackPointsDoc;
     const points = decodeTrack(data.encoded);
-    return withAltitudes(points, decodeAltitudes(data.altitudes, points.length));
+    return dropGpsSpikes(withAltitudes(points, decodeAltitudes(data.altitudes, points.length)), data.mode);
   }
 
   /** Tracker trips of one person on one day (the diary's view). Unordered: equality-only query; callers sort by startTime. */

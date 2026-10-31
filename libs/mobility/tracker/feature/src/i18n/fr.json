@@ -64,7 +64,7 @@
     "split": "Diviser",
     "merge": "Fusionner",
     "detected": "détecté automatiquement",
-    "split_mode": "Moyen de transport pour la seconde moitié"
+    "split_mode": "Moyen de transport à partir d’ici"
   },
   "page": {
     "title": "Parcours"
@@ -144,5 +144,16 @@
     "gain": "montée",
     "loss": "descente",
     "terrain": "Altitudes tirées du modèle de terrain de {provider}"
+  },
+  "point": {
+    "prev": "Point précédent",
+    "next": "Point suivant",
+    "close": "Annuler la sélection",
+    "split": "Diviser ici",
+    "remove": "Supprimer le point",
+    "remove_spike": "Supprimer l’écart",
+    "remove_confirm": "Supprimer ce point du parcours ?",
+    "spike_confirm": "Supprimer les {count} points de cet écart du parcours ?",
+    "split_hint": "Choisis sur la carte où commence le nouveau tronçon."
   }
 }

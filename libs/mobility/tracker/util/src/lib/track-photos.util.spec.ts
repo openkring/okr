@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  LibraryPhoto, mergePhotos, nextThumbNumber, photoWindowEnd, serverPhotos, thumbNumber, wantsPhotoReattach, withoutPhoto, withPhotoHidden, placePhotos, positionAt,
+  LibraryPhoto, mergePhotos, nextThumbNumber, photoWindowEnd, serverPhotos, thumbNumber, wantsPhotoReattach, withoutPhoto, withPhotoHidden, placePhotos, positionAt, photosOnTrack,
   trackThumbPath, trackTenants, localStoreDate,
 } from './track-photos.util';
 import { TrackPoint } from './track-polyline.util';
@@ -175,5 +175,30 @@ describe('thumbnail numbers', () => {
     expect(nextThumbNumber([{}, {}, {}], undefined)).toBe(3);
     expect(nextThumbNumber([{ thumbPath: 'x/1.jpg' }], 9)).toBe(9);
     expect(nextThumbNumber(undefined, undefined)).toBe(0);
+  });
+});
+
+describe('photosOnTrack', () => {
+  const track = [[P(0, 47, 8), P(100_000, 47.001, 8)]];
+  const shot = (takenAt: number, lat: number, lng: number, ownGps: boolean) => ({
+    assetId: 'a', takenAt: new Date(takenAt).toISOString(), lat, lng, ownGps, hidden: false,
+  });
+
+  it('keeps own GPS close to the track', () => {
+    const photos = [shot(50_000, 47.0005, 8.001, true)]; // ~76 m off
+    expect(photosOnTrack(photos, track)).toBe(photos);
+  });
+
+  it('moves own GPS far off the track onto it, as interpolated', () => {
+    const [p] = photosOnTrack([shot(50_000, 47.0005, 8.01, true)], track); // ~760 m off
+    expect(p.lat).toBeCloseTo(47.0005);
+    expect(p.lng).toBeCloseTo(8);
+    expect(p.ownGps).toBe(false);
+  });
+
+  it('re-interpolates a photo without own GPS, leaves photos outside the track time alone', () => {
+    const [moved, outside] = photosOnTrack([shot(50_000, 47.2, 8.2, false), shot(200_000, 47.2, 8.2, true)], track);
+    expect(moved.lat).toBeCloseTo(47.0005);
+    expect(outside.lat).toBe(47.2);
   });
 });

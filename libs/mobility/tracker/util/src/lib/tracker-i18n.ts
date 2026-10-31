@@ -62,6 +62,15 @@ export const TRACKER_I18N_KEYS = {
   elevation_gain: PFX + 'elevation.gain',
   elevation_loss: PFX + 'elevation.loss',
   elevation_terrain: PFX + 'elevation.terrain', // single braces: {provider}
+  point_prev: PFX + 'point.prev',
+  point_next: PFX + 'point.next',
+  point_close: PFX + 'point.close',
+  point_split: PFX + 'point.split',
+  point_remove: PFX + 'point.remove',
+  point_remove_spike: PFX + 'point.remove_spike',
+  point_remove_confirm: PFX + 'point.remove_confirm',
+  point_spike_confirm: PFX + 'point.spike_confirm', // single braces: {count}
+  point_split_hint: PFX + 'point.split_hint',
   photos_title: PFX + 'photos.title',
   photos_hide: PFX + 'photos.hide',
   photos_show: PFX + 'photos.show',

@@ -4,6 +4,7 @@ export * from './lib/track-local.model';
 export * from './lib/track-polyline.util';
 export * from './lib/track-profile.util';
 export * from './lib/track-sections.util';
+export * from './lib/track-spikes.util';
 export * from './lib/track-summary.util';
 export * from './lib/track-split.util';
 export * from './lib/track-steps.util';

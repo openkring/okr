@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { mergeWithNext, setSectionMode, splitSection, splitStepsByDistance, toTrackSections } from './track-sections.util';
+import { distanceAlong, mergeWithNext, removePoints, setSectionMode, splitSection, splitStepsByDistance, toTrackSections, withoutSpikes } from './track-sections.util';
+import { summarize } from './track-summary.util';
 import type { LocalSection } from './track-sections.util';
 import type { TrackPoint } from './track-polyline.util';
 
@@ -180,5 +181,46 @@ describe('stroke times through corrections (spec 1.122 2c)', () => {
     expect(withTimes.strokeRateAvg).toBe(6);
     const [without] = toTrackSections([sec('row', 11)], 'k');
     expect('strokes' in without).toBe(false);
+  });
+});
+
+describe('removePoints', () => {
+  it('removes an inner range and keeps steps', () => {
+    const s: LocalSection[] = [{ ...sec('foot', 10), steps: 500 }];
+    const r = removePoints(s, 0, 3, 5);
+    expect(r[0].points).toHaveLength(7);
+    expect(r[0].points[3]).toEqual(s[0].points[6]);
+    expect(r[0].steps).toBe(500);
+  });
+  it('never removes the first or last point', () => {
+    const s = [sec('foot', 10)];
+    expect(removePoints(s, 0, 0, 2)).toBe(s);
+    expect(removePoints(s, 0, 7, 9)).toBe(s);
+    expect(removePoints(s, 1, 3, 4)).toBe(s);
+  });
+});
+
+describe('withoutSpikes', () => {
+  it('returns the same array when no section has a spike', () => {
+    const s = [sec('foot', 10)];
+    expect(withoutSpikes(s)).toBe(s);
+  });
+  it('drops a spike of one section only', () => {
+    const a = sec('foot', 10, 47, 0.0001);
+    a.points[5] = { ...a.points[5], lng: 8.004 };
+    const b = sec('car', 5, 47.01);
+    const r = withoutSpikes([a, b]);
+    expect(r[0].points).toHaveLength(9);
+    expect(r[1]).toBe(b);
+  });
+});
+
+describe('distanceAlong', () => {
+  it('sums whole sections before and the part of the current one', () => {
+    const s = [sec('foot', 3), sec('car', 3, 47.002)];
+    const first = summarize(s[0].points).distanceM;
+    expect(distanceAlong(s, 0, 0)).toBe(0);
+    expect(distanceAlong(s, 0, 2)).toBeCloseTo(first);
+    expect(distanceAlong(s, 1, 1)).toBeCloseTo(first + summarize(s[1].points.slice(0, 2)).distanceM);
   });
 });
