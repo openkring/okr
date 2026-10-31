@@ -282,3 +282,18 @@ export type AutoComplete = 'name' | 'email' | 'tel' | 'url' | 'off' | 'given-nam
  * FCM default channel, so the id must never change.
  */
 export const NATIVE_PUSH_CHANNEL_ID = 'okr_default';
+
+/**
+ * The Android channels the native app creates (spec 1.127 §3.5): one per kind of push, so a member
+ * can silence one kind in the system settings. Ids never change once shipped; `okr_default`
+ * ("Weitere") stays for everything else and for builds that predate the other channels.
+ */
+export const NATIVE_PUSH_CHANNELS = [
+  { id: 'okr_chat', name: 'Chat' },
+  { id: 'okr_call', name: 'Videoanrufe' },
+  { id: 'okr_tasks', name: 'Aufgaben' },
+  { id: 'okr_events', name: 'Termine und Einladungen' },
+  { id: 'okr_default', name: 'Weitere' },
+] as const;
+
+export type NativePushChannelId = (typeof NATIVE_PUSH_CHANNELS)[number]['id'];

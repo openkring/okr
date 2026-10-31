@@ -154,3 +154,4 @@ export * from './lib/enums/vertical-position.enum';
 export * from './lib/enums/view-position.enum';
 export * from './lib/enums/weather-condition.enum';
 
+export * from './lib/badge-counts.model';
