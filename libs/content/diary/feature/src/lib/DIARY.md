@@ -29,21 +29,13 @@ main location. References group by `diaryAvatarId`: the key for a linked entry, 
 normalised text (`normaliseLocationLabel` for places), so 'Zürich ZH' and 'Zuerich' are one row
 rather than two half-used ones.
 
-### Legacy fields and the migration
+### Legacy fields (removed)
 
 Before spec 1.117 an entry carried `location` (one avatar), `customLocationLabel` (its free-text
-fallback), `places[]` (slugs) and `customPeopleLabels[]`. They are no longer part of `DiaryModel`
-(`LegacyDiaryFields` in the util lib describes them). Until every document is migrated, the
-service reads each entry through `withDiaryLocations`, which derives `locations`/`people` from them,
-and strips them on every save.
-
-`scripts/migrate-diary-locations.mjs` converts the documents once (spec 1.117 D6): dry run by
-default, `--write --backup=<file outside the repo>` to apply, `--tenant` validated. Free-text places
-are resolved through the location aliases (`aliases/<tenant>__location__<normalised>`) and then
-through an unambiguous exact name match; the rest stay free text. Documents that already have
-`locations` are skipped, so the run is idempotent. It carries fingerprinted copies of
-`migrateDiaryReferences`, `diaryAlbumKeys` and `getDiaryIndex` and refuses to run once the library
-drifts. When it has run, delete the legacy branch of `withDiaryLocations`.
+fallback), `places[]` (slugs) and `customPeopleLabels[]`. A one-off script converted every document
+to `locations`/`people` on 2026-10-24 (spec 1.117 D6); a dry run on 2026-10-31 found no document
+left with a legacy field, so the read-side shim, its helpers and the script were deleted.
+`withDiaryLocations` now only fills missing `locations`/`people` with `[]`.
 
 ## Components
 
@@ -88,7 +80,6 @@ write recomputes them. Trip queries use the index `authorKey`, `tenants`, `tripK
 **Scripts** (dry run is the default, `--write` must be explicit, `--tenant` is validated):
 
 - `scripts/backfill-diary-album-keys.mjs` fills `albumKeys` on existing entries.
-- `scripts/migrate-diary-locations.mjs` migrates the legacy location and person fields (above).
 - `scripts/seed-diary-event-albums.mjs` seeds event albums from the Drive notes; orphan slugs only
   with `--with-orphans`.
 

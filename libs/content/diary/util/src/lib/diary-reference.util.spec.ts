@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { AvatarInfo, DiaryModel } from '@okr/shared-models';
 
-import { customLocationAvatar, customPersonAvatar, LegacyDiaryFields } from './diary-avatar.util';
+import { customLocationAvatar, customPersonAvatar } from './diary-avatar.util';
 import {
   collectLocationReferences, collectPersonReferences, filterDiaryReferences, formatDiaryDate,
   formatDiaryDateLong, formatDiaryDateShort, formatDiaryMonthHeader,
@@ -10,7 +10,7 @@ import {
 
 const TENANT = 'scs';
 
-function diary(date: string, overrides: Partial<DiaryModel> & LegacyDiaryFields = {}): DiaryModel {
+function diary(date: string, overrides: Partial<DiaryModel> = {}): DiaryModel {
   const model = new DiaryModel(TENANT);
   model.okey = `d${date}`;
   model.date = date;
@@ -70,17 +70,6 @@ describe('collectLocationReferences', () => {
     expect(references).toEqual([]);
   });
 
-  it('reads legacy documents through the shim', () => {
-    const references = collectLocationReferences([
-      diary('20220306', { locations: undefined as never, location: locationAvatar('loc1', 'Stäfa'), places: ['seeufer'] }),
-      diary('20220307', { locations: undefined as never, customLocationLabel: 'Zermatt' }),
-    ]);
-
-    expect(references.map(r => [r.id, r.resolved])).toEqual([
-      ['label:seeufer', false], ['label:zermatt', false], ['key:loc1', true],
-    ]);
-  });
-
   it('sorts unresolved first, then alphabetically', () => {
     const references = collectLocationReferences([
       diary('20220306', { locations: [locationAvatar('loc1', 'Aarau')] }),
@@ -110,12 +99,6 @@ describe('collectPersonReferences', () => {
 
     expect(references.map(r => r.label)).toEqual(['Anna Muster', 'Beat Beispiel']);
     expect(references.every(r => !r.resolved)).toBe(true);
-  });
-
-  it('reads legacy customPeopleLabels through the shim', () => {
-    const references = collectPersonReferences([diary('20220306', { locations: undefined as never, people: undefined as never, customPeopleLabels: ['fritz'] })]);
-
-    expect(references.map(r => r.label)).toEqual(['fritz']);
   });
 
   it('skips blank free-text people', () => {

@@ -69,7 +69,6 @@ function addMention(
 function collect(diaries: DiaryModel[], kind: DiaryReferenceKind): DiaryReference[] {
   const byId = new Map<string, DiaryReference>();
   for (const raw of diaries) {
-    // The shim also derives the lists for documents that predate spec 1.117.
     const diary = withDiaryLocations(raw);
     for (const avatar of (kind === 'location' ? diary.locations : diary.people) ?? []) {
       const label = diaryAvatarName(avatar);

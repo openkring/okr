@@ -122,27 +122,14 @@ describe('DiaryService album queries and writes', () => {
     expect((updateModel.mock.calls[0][1] as DiaryModel).albumKeys).toEqual(['event.x']);
   });
 
-  it('update strips legacy fields from the written model', async () => {
-    await TestBed.inject(DiaryService).update(entry('k', '20240101', { customLocationLabel: 'x', places: ['y'] } as unknown as Partial<DiaryModel>));
-    const written = updateModel.mock.calls[0][1] as Record<string, unknown>;
-    expect(written).not.toHaveProperty('customLocationLabel');
-    expect(written).not.toHaveProperty('places');
-    expect(written).not.toHaveProperty('location');
-    expect(written).not.toHaveProperty('customPeopleLabels');
-  });
-
-  it('create strips legacy fields too', async () => {
-    await TestBed.inject(DiaryService).create(entry('k', '20240101', { places: ['y'] } as unknown as Partial<DiaryModel>));
-    expect(createModel.mock.calls[0][1]).not.toHaveProperty('places');
-  });
-
-  it('a listed legacy doc comes out with locations derived from places', async () => {
-    const legacy = entry('k', '20240101', { places: ['y'] } as unknown as Partial<DiaryModel>);
-    delete (legacy as { locations?: unknown }).locations; // a pre-1.117 doc has no such key
-    searchData.mockReturnValue(of([legacy]));
+  it('a listed doc without locations or people comes out with empty lists', async () => {
+    const bare = entry('k', '20240101');
+    delete (bare as { locations?: unknown }).locations; // reads skip model defaults
+    delete (bare as { people?: unknown }).people;
+    searchData.mockReturnValue(of([bare]));
     const [d] = await firstValueFrom(TestBed.inject(DiaryService).listByRange('u1', 'bka'));
-    expect(d.locations[0].name1).toBe('y');
-    expect(d.people).toBeDefined();
+    expect(d.locations).toEqual([]);
+    expect(d.people).toEqual([]);
   });
 
   it('listByTrip merges tripKey hits and untagged in-span entries, de-duplicated; a different tripKey is excluded', async () => {

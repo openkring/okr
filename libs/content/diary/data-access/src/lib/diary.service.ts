@@ -9,7 +9,7 @@ import { getQuery, getSystemQuery } from '@okr/shared-util-core';
 
 import {
   DIARY_I18N_KEYS, DiaryRange, diaryAlbumKeys, diaryHeadlineSortKey, diaryKey, diaryNeighbourQuery, diaryNeighbourScope, diaryRangeBounds,
-  stripLegacyDiaryFields, withDiaryLocations,
+  withDiaryLocations,
 } from '@okr/content-diary-util';
 
 /** Neighbour search pages: small, because the nearest hit is almost always in the first page. */
@@ -72,7 +72,7 @@ export class DiaryService {
     normalised.albumKeys = diaryAlbumKeys(normalised);
     diary.albumKeys = normalised.albumKeys;
     return await this.firestoreService.updateModel<DiaryModel>(
-      DiaryCollection, stripLegacyDiaryFields(normalised), false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
+      DiaryCollection, normalised, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
   }
 
   /**
@@ -170,7 +170,7 @@ export class DiaryService {
     normalised.albumKeys = diaryAlbumKeys(normalised);
     diary.albumKeys = normalised.albumKeys;
     return await this.firestoreService.createModel<DiaryModel>(
-      DiaryCollection, stripLegacyDiaryFields(normalised), this.i18n.create_conf(), this.i18n.create_error(), currentUser, false, true);
+      DiaryCollection, normalised, this.i18n.create_conf(), this.i18n.create_error(), currentUser, false, true);
   }
 
   /**
