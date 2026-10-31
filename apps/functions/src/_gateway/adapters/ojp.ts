@@ -22,7 +22,7 @@ import { gatewayFetch } from '../http';
 const ojpApiKey = defineSecret('OJP_APIKEY');
 
 const OJP_URL = 'https://api.opentransportdata.swiss/ojp20';
-const REQUESTOR_REF = 'okr_prod';
+const REQUESTOR_REF = 'openkring_prod';
 const DAY = 24 * 60 * 60;
 /** a connection may leave this long before the section's first point (detection lags behind the departure) */
 const EARLY_MS = 15 * 60_000;
