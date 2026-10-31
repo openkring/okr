@@ -62,7 +62,8 @@ export const SUBANTARCTIC_PRESET: MapArea = {
   preset: 'subantarctic-islands', layers: [{ kind: 'satellite', maxZoom: 8 }, { kind: 'osm', maxZoom: 13 }],
 };
 
-const SWITZERLAND: Bbox = [5.9, 45.8, 10.5, 47.85];
+/** The box `sourceFor` and `layerKindsFor` test a bbox's centre against. */
+export const SWITZERLAND: Bbox = [5.9, 45.8, 10.5, 47.85];
 const SWISSTOPO_TEMPLATE = 'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg';
 const SWISSTOPO_MIN_ZOOM = 6;
 const GIBS_TEMPLATE = GIBS_BLUE_MARBLE.urlTemplate;
@@ -321,41 +322,53 @@ export function parseMapAreas(value: unknown): MapArea[] {
   return value.filter(isArea).map(withLayers).filter((a): a is MapArea => a !== undefined);
 }
 
+/** Downloaded Blue Marble tiles (`tiles/gibs`): up to z4 the world background, up to z8 inside satellite areas. */
+export function localGibsSource(tilesBaseUrl: string, maxNativeZoom: number, bounds?: Bbox): JournalTileSource {
+  const source: JournalTileSource = { urlTemplate: `${tilesBaseUrl}/gibs/{z}/{x}/{y}.jpg`, maxNativeZoom, attribution: 'Imagery: NASA GIBS' };
+  return bounds ? { ...source, bounds } : source;
+}
+
+/** Downloaded LIMA tiles (`tiles/lima`) from z9, bounded to the area. */
+export function localLimaSource(tilesBaseUrl: string, maxZoom: number, bounds: Bbox): JournalTileSource {
+  return { urlTemplate: `${tilesBaseUrl}/lima/{z}/{x}/{y}.png`, minZoom: 9, minNativeZoom: 9,
+    maxNativeZoom: Math.min(LIMA_MAX_ZOOM, maxZoom), attribution: 'Landsat LIMA: USGS', bounds };
+}
+
+/** swisstopo from z6, bounded: the downloaded tiles up to `maxZoom`, or live up to z18 when `tilesBaseUrl` is undefined. */
+export function swisstopoSource(tilesBaseUrl: string | undefined, maxZoom: number, bounds: Bbox): JournalTileSource {
+  return {
+    urlTemplate: tilesBaseUrl !== undefined ? `${tilesBaseUrl}/swisstopo/{z}/{x}/{y}.jpeg` : SWISSTOPO_TEMPLATE,
+    minZoom: SWISSTOPO_MIN_ZOOM, minNativeZoom: SWISSTOPO_MIN_ZOOM, maxNativeZoom: tilesBaseUrl !== undefined ? maxZoom : 18,
+    attribution: '© swisstopo', bounds,
+  };
+}
+
+/** Downloaded OpenStreetMap vector tiles of an area; the subantarctic preset has one source per island group. */
+export function localOsmSources(area: MapArea, maxZoom: number, tilesBaseUrl: string): JournalTileSource[] {
+  const vector = (bounds: Bbox, maxNativeZoom: number): JournalTileSource => ({ kind: 'vector', urlTemplate: `${tilesBaseUrl}/osm/{z}/{x}/{y}.mvt`,
+    maxNativeZoom, attribution: '© OpenStreetMap, Protomaps', bounds });
+  if (area.preset === 'subantarctic-islands') return SUBANTARCTIC_ISLANDS.map((island) => vector(island.bbox, island.maxZoom));
+  return [vector(area.bbox, maxZoom)];
+}
+
 /**
  * The map's layers for a journal. Areas in `downloaded` read local files; otherwise only sources that may be
  * used live are shown (Blue Marble, swisstopo) — OpenStreetMap and LIMA come only from downloaded areas.
  */
 export function mapLayers(areas: MapArea[], downloaded: Set<string>, tilesBaseUrl: string): JournalTileSource[] {
   const offline = downloaded.size > 0 && tilesBaseUrl !== '';
-  const layers: JournalTileSource[] = [
-    offline ? { urlTemplate: `${tilesBaseUrl}/gibs/{z}/{x}/{y}.jpg`, maxNativeZoom: 8, attribution: 'Imagery: NASA GIBS' } : GIBS_BLUE_MARBLE,
-  ];
+  const layers: JournalTileSource[] = [offline ? localGibsSource(tilesBaseUrl, GIBS_MAX_ZOOM) : GIBS_BLUE_MARBLE];
   for (const area of areas) {
     const local = downloaded.has(area.id) && tilesBaseUrl !== '';
     switch (area.source) {
       case 'antarctica':
-        if (local) {
-          layers.push({ urlTemplate: `${tilesBaseUrl}/lima/{z}/{x}/{y}.png`, minZoom: 9, minNativeZoom: 9,
-            maxNativeZoom: Math.min(12, area.maxZoom), attribution: 'Landsat LIMA: USGS', bounds: area.bbox });
-        }
+        if (local) layers.push(localLimaSource(tilesBaseUrl, area.maxZoom, area.bbox));
         break;
       case 'swisstopo':
-        layers.push({
-          urlTemplate: local ? `${tilesBaseUrl}/swisstopo/{z}/{x}/{y}.jpeg` : SWISSTOPO_TEMPLATE,
-          minZoom: SWISSTOPO_MIN_ZOOM, minNativeZoom: SWISSTOPO_MIN_ZOOM, maxNativeZoom: local ? area.maxZoom : 18,
-          attribution: '© swisstopo', bounds: area.bbox,
-        });
+        layers.push(swisstopoSource(local ? tilesBaseUrl : undefined, area.maxZoom, area.bbox));
         break;
       case 'osm':
-        if (local && area.preset === 'subantarctic-islands') {
-          for (const island of SUBANTARCTIC_ISLANDS) {
-            layers.push({ kind: 'vector', urlTemplate: `${tilesBaseUrl}/osm/{z}/{x}/{y}.mvt`, maxNativeZoom: island.maxZoom,
-              attribution: '© OpenStreetMap, Protomaps', bounds: island.bbox });
-          }
-        } else if (local) {
-          layers.push({ kind: 'vector', urlTemplate: `${tilesBaseUrl}/osm/{z}/{x}/{y}.mvt`, maxNativeZoom: area.maxZoom,
-            attribution: '© OpenStreetMap, Protomaps', bounds: area.bbox });
-        }
+        if (local) layers.push(...localOsmSources(area, area.maxZoom, tilesBaseUrl));
         break;
     }
   }
