@@ -178,7 +178,15 @@
     "remove": "Quitar",
     "remove_confirm": "¿Quitar «{name}» del mapa sin conexión?",
     "free": "Borrar el mapa sin conexión de este iPad",
-    "free_confirm": "Se borran las partes del mapa de este diario, salvo que otros diarios las necesiten. Las zonas se quedan – «Cargar» recupera el mapa."
+    "free_confirm": "Se borran las partes del mapa de este diario, salvo que otros diarios las necesiten. Las zonas se quedan – «Cargar» recupera el mapa.",
+    "layer_google_roadmap": "Google mapa de carreteras",
+    "layer_google_satellite": "Google satélite",
+    "layer_swisstopo_live": "swisstopo",
+    "layer_offline_osm": "OpenStreetMap (sin conexión)",
+    "layer_offline_satellite": "Satélite (sin conexión)",
+    "layer_offline_swisstopo": "swisstopo (sin conexión)",
+    "layer_world": "Mapa del mundo",
+    "layer_switch": "Elegir mapa"
   },
   "reactions": {
     "like": "Me gusta",

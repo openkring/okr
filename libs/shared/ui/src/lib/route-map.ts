@@ -45,6 +45,8 @@ const PLACE_LABEL_ZOOM = 7; // below, the labels of a whole island group would o
 const DEFAULT_MAX_ZOOM = 16;
 const GOOGLE_MAX_ZOOM = 20;
 /** A missing or zero-byte raster tile (empty-tile marker, design §5) draws nothing instead of a broken image. */
+/** `googleTileError` fires at most once per map type in this interval (the caller renews the session). */
+const GOOGLE_TILE_ERROR_MS = 60 * 1000;
 const TRANSPARENT_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
 
 function escapeHtml(value: string): string {
@@ -116,6 +118,11 @@ export class RouteMap {
   public readonly pinClicked = output<string>();
   /** After every pan or zoom: what the map shows (e.g. to save it as an offline area). */
   public readonly viewChanged = output<MapView>();
+  /**
+   * A tile of the selected Google layer failed to load (e.g. the session expired, design §1): at most once per 60 s per
+   * map type, so the caller can renew the session once instead of on every broken tile.
+   */
+  public readonly googleTileError = output<'roadmap' | 'satellite'>();
 
   private readonly el = inject(ElementRef<HTMLElement>);
   private readonly actionSheetController = inject(ActionSheetController);
@@ -151,6 +158,7 @@ export class RouteMap {
   private snapHandle?: number;
   private lastSnap = '';
   private destroyed = false;
+  private readonly lastGoogleTileError: Record<'roadmap' | 'satellite', number> = { roadmap: 0, satellite: 0 };
 
   public constructor() {
     afterNextRender(() => void this.init());
@@ -258,15 +266,18 @@ export class RouteMap {
     if (tilesKey !== this.lastTilesKey && (!needsVector || this.vectorLib)) {
       this.lastTilesKey = tilesKey;
       for (const layer of this.tileLayers) layer.remove();
+      const googleType = this.selectedBase()?.googleType;
       this.tileLayers = sources.map((t) => {
         const bounds = t.bounds ? Lf.latLngBounds([t.bounds[1], t.bounds[0]], [t.bounds[3], t.bounds[2]]) : undefined;
         if (t.kind === 'vector' && this.vectorLib) return this.vectorLayer(this.vectorLib, t, bounds).addTo(map);
-        return Lf.tileLayer(t.urlTemplate, {
+        const layer = Lf.tileLayer(t.urlTemplate, {
           maxNativeZoom: t.maxNativeZoom, maxZoom, attribution: t.attribution, errorTileUrl: TRANSPARENT_PNG,
           ...(t.minZoom !== undefined ? { minZoom: t.minZoom } : {}),
           ...(t.minNativeZoom !== undefined ? { minNativeZoom: t.minNativeZoom } : {}),
           ...(bounds ? { bounds } : {}),
-        }).addTo(map);
+        });
+        if (googleType) layer.on('tileerror', () => this.onGoogleTileError(googleType));
+        return layer.addTo(map);
       });
     }
 
@@ -346,6 +357,13 @@ export class RouteMap {
     const { data } = await sheet.onDidDismiss<{ action?: string }>();
     const id = data?.action?.replace(/^baselayer\./, '');
     if (id && id !== current && layers.some((l) => l.id === id)) this.selectedBaseId.set(id);
+  }
+
+  private onGoogleTileError(type: 'roadmap' | 'satellite'): void {
+    const now = Date.now();
+    if (now - this.lastGoogleTileError[type] < GOOGLE_TILE_ERROR_MS) return;
+    this.lastGoogleTileError[type] = now;
+    this.googleTileError.emit(type);
   }
 
   /** Place labels only from PLACE_LABEL_ZOOM on (a class on the container, so no re-render on zoom). */

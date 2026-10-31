@@ -13,6 +13,7 @@ import {
   FootprintFormModel, flyoverInputOf, flyoverTimeline, footprintChips, journalMapData, journalOverviewMenu, JournalWriteSlow, newFootprintFormModel, routeLengthKm,
 } from '@okr/travel-journal-util';
 
+import { googleAttributionOf, routeBaseLayers } from './journal-base-layers';
 import { JournalFileUrlService } from './journal-file-url.service';
 import { continueWhenSlow, showJournalError } from './journal-errors';
 import { openJournalFlyover } from './journal-flyover-open';
@@ -71,8 +72,10 @@ const WIDE_QUERY = '(min-width: 992px)';
     <ion-content [scrollY]="!wide()">
       <div class="layout" [class.wide]="wide()">
         <div class="map">
-          <okr-route-map [route]="map().route" [pins]="pins()" [selectedKey]="selectedKey()" [tiles]="mapLayers()"
-            [places]="places()" (pinClicked)="openFootprint($event)" (viewChanged)="view.set($event)" />
+          <okr-route-map [route]="map().route" [pins]="pins()" [selectedKey]="selectedKey()" [places]="places()"
+            [baseLayers]="baseLayers()" [selectedBaseId]="selectedBaseId()" (selectedBaseIdChange)="selectBaseLayer($event)"
+            [layerSwitchLabel]="store.i18n.layer_switch()" [googleAttribution]="googleAttribution()"
+            (pinClicked)="openFootprint($event)" (viewChanged)="view.set($event)" (googleTileError)="store.renewGoogle($event)" />
         </div>
         <div class="side">
           <div class="stats">
@@ -113,7 +116,15 @@ export class JournalOverviewPage {
 
   protected readonly selectedKey = signal<string | undefined>(undefined);
   protected readonly view = signal<MapView | undefined>(undefined);
+  /** The flyover keeps the phase 3 layers (its layer choice is out of scope, phase 4 design §2). */
   protected readonly mapLayers = computed(() => this.store.mapLayersFor(this.journalKey()));
+  // the base-layer switch (phase 4 design §2): offered options in the current view, the effective choice, Google copyright
+  private readonly baseLayerOptions = computed(() => this.store.baseLayerOptionsFor(this.journalKey(), this.view()?.bounds));
+  protected readonly baseLayers = computed(() => routeBaseLayers(this.baseLayerOptions(), this.store.i18n));
+  protected readonly selectedBaseId = computed(() => this.store.selectedBaseLayerFor(this.journalKey(), this.view()?.bounds));
+  private readonly selectedGoogleType = computed(() => this.baseLayerOptions().find((o) => o.id === this.selectedBaseId())?.googleType);
+  protected readonly googleAttribution = googleAttributionOf(this.selectedGoogleType, this.view,
+    (bbox, zoom, type) => this.store.googleAttribution(bbox, zoom, type));
   protected readonly places = computed(() => this.store.mapPlacesFor(this.journalKey()));
   protected readonly wide = signal(typeof window !== 'undefined' && window.matchMedia(WIDE_QUERY).matches);
 
@@ -163,6 +174,10 @@ export class JournalOverviewPage {
       query.addEventListener('change', listener);
       inject(DestroyRef).onDestroy(() => query.removeEventListener('change', listener));
     }
+  }
+
+  protected selectBaseLayer(id: string | undefined): void {
+    if (id) this.store.selectBaseLayer(id);
   }
 
   protected info(): Promise<void> {

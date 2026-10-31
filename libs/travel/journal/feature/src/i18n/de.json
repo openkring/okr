@@ -178,7 +178,15 @@
     "remove": "Entfernen",
     "remove_confirm": "«{name}» aus der Offline-Karte entfernen?",
     "free": "Offline-Karte von diesem iPad löschen",
-    "free_confirm": "Die Kartenteile dieses Reisetagebuchs werden gelöscht, ausser andere Reisetagebücher brauchen sie. Die Gebiete bleiben – mit «Laden» kommt die Karte wieder."
+    "free_confirm": "Die Kartenteile dieses Reisetagebuchs werden gelöscht, ausser andere Reisetagebücher brauchen sie. Die Gebiete bleiben – mit «Laden» kommt die Karte wieder.",
+    "layer_google_roadmap": "Google Strassenkarte",
+    "layer_google_satellite": "Google Satellit",
+    "layer_swisstopo_live": "swisstopo",
+    "layer_offline_osm": "OpenStreetMap (offline)",
+    "layer_offline_satellite": "Satellit (offline)",
+    "layer_offline_swisstopo": "swisstopo (offline)",
+    "layer_world": "Weltkarte",
+    "layer_switch": "Karte wählen"
   },
   "reactions": {
     "like": "Gefällt mir",

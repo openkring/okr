@@ -178,7 +178,15 @@
     "remove": "Remove",
     "remove_confirm": "Remove «{name}» from the offline map?",
     "free": "Delete the offline map from this iPad",
-    "free_confirm": "This journal’s map tiles are deleted unless other journals need them. The areas stay – «Load» brings the map back."
+    "free_confirm": "This journal’s map tiles are deleted unless other journals need them. The areas stay – «Load» brings the map back.",
+    "layer_google_roadmap": "Google road map",
+    "layer_google_satellite": "Google satellite",
+    "layer_swisstopo_live": "swisstopo",
+    "layer_offline_osm": "OpenStreetMap (offline)",
+    "layer_offline_satellite": "Satellite (offline)",
+    "layer_offline_swisstopo": "swisstopo (offline)",
+    "layer_world": "World map",
+    "layer_switch": "Choose map"
   },
   "reactions": {
     "like": "Like",

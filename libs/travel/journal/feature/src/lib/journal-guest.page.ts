@@ -4,23 +4,33 @@ import {
   ActionSheetController, AlertController, IonContent, IonHeader, IonSpinner, ModalController, ToastController,
 } from '@ionic/angular';
 
+import { GoogleMapType, GoogleTiles } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
-import { RouteMap, RoutePin } from '@okr/shared-ui';
+import { MapView, RouteMap, RoutePin } from '@okr/shared-ui';
 import { okrPrompt } from '@okr/shared-util-angular';
 import { fill } from '@okr/shared-util-core';
 import { GuestFootprintView, GuestJournalView, guestErrorOf, JournalGuestService } from '@okr/travel-journal-data-access';
 import { JournalReactions, ReactionComment } from '@okr/travel-journal-ui';
 import {
-  FlyPoint, FlyStop, flyoverTimeline, GIBS_BLUE_MARBLE, JOURNAL_I18N_KEYS, JournalI18n, stopTime, weatherLine, weatherOf,
+  baseLayerOptions, FlyPoint, FlyStop, flyoverTimeline, GIBS_BLUE_MARBLE, JOURNAL_I18N_KEYS, JournalI18n, pickBaseLayer, stopTime,
+  weatherLine, weatherOf,
 } from '@okr/travel-journal-util';
 
+import { googleAttributionOf, routeBaseLayers } from './journal-base-layers';
 import { openJournalFlyover } from './journal-flyover-open';
+
+const GOOGLE_TYPES: GoogleMapType[] = ['roadmap', 'satellite'];
+const GOOGLE_RENEW_MIN_MS = 5 * 60 * 1000; // a session is re-created at most once per 5 minutes per type (loop guard)
 
 /**
  * The journal for a guest (spec 1.113 §7, plan 7): opened with the personal link, no sign-in. Everything comes
  * from the `journalGuest` callable with the link code — published footprints, photos, likes and comments —
  * and the guest likes, comments and chooses their notifications. `?mute=1` (the link in every message)
  * switches notifications off on opening.
+ *
+ * The map offers the online base layers (phase 4 design §2: Google when a Map Tiles session exists, swisstopo in
+ * Switzerland, the world map). Guests download nothing, so the options come from the pure `baseLayerOptions` without
+ * areas, and the Google sessions are requested here — the guest page does not use the author's JournalStore.
  *
  * Looks like the tenant's website, not like the app (spec 1.126 §2.1): fonts, colours and a plain header from the
  * app's `--okr-site-*` tokens (apps/<app>/src/theme/site-tokens.scss), each with the app theme as fallback.
@@ -107,7 +117,10 @@ import { openJournalFlyover } from './journal-flyover-open';
           (likeToggled)="toggleLike(fp)" (writeClicked)="writeComment(fp)" (deleteClicked)="deleteComment($event)" />
       } @else {
         <div class="map">
-          <okr-route-map [route]="route()" [pins]="pins()" [tiles]="tiles" (pinClicked)="open($event)" />
+          <okr-route-map [route]="route()" [pins]="pins()" [baseLayers]="baseLayers()"
+            [selectedBaseId]="selectedBaseId()" (selectedBaseIdChange)="chosenBaseId.set($event)"
+            [layerSwitchLabel]="i18n.layer_switch()" [googleAttribution]="googleAttribution()"
+            (pinClicked)="open($event)" (viewChanged)="mapView.set($event)" (googleTileError)="renewGoogle($event)" />
         </div>
         <div class="wrap">
           <p class="hello">{{ hello() }}</p>
@@ -135,12 +148,32 @@ export class JournalGuestPage {
   private readonly alertController = inject(AlertController);
   private readonly toastController = inject(ToastController);
   private readonly modalController = inject(ModalController);
+  private readonly googleTiles = inject(GoogleTiles);
+  private readonly i18nService = inject(I18nService);
   protected readonly i18n = inject(I18nService).translateAll(JOURNAL_I18N_KEYS) as JournalI18n;
 
   public readonly journalKey = input.required<string>();
   public readonly code = input.required<string>();
 
-  protected readonly tiles = GIBS_BLUE_MARBLE;
+  // the base-layer switch: online options only (no downloads), the choice lasts while the page is open
+  private readonly google = signal<{ roadmap?: string; satellite?: string }>({});
+  private sessions: Partial<Record<GoogleMapType, string>> = {};
+  private readonly lastRenew: Record<GoogleMapType, number> = { roadmap: 0, satellite: 0 };
+  protected readonly mapView = signal<MapView | undefined>(undefined);
+  protected readonly chosenBaseId = signal<string | undefined>(undefined); // the guest's pick in the layer sheet
+  private readonly baseLayerOptions = computed(() => baseLayerOptions({
+    online: true, // everything on this page comes from the network; Google is offered only once a session exists
+    google: this.google(), areas: [], usable: new Set(), view: this.mapView()?.bounds, tilesBaseUrl: '',
+  }));
+  protected readonly baseLayers = computed(() => routeBaseLayers(this.baseLayerOptions(), this.i18n));
+  /** The effective choice: the guest's pick when offered, else the default (first Google, else the world map). */
+  protected readonly selectedBaseId = computed(() => pickBaseLayer(this.baseLayerOptions(), this.chosenBaseId()));
+  private readonly selectedGoogleType = computed(() => this.baseLayerOptions().find((o) => o.id === this.selectedBaseId())?.googleType);
+  protected readonly googleAttribution = googleAttributionOf(this.selectedGoogleType, this.mapView, (bbox, zoom, type) => {
+    const session = this.sessions[type];
+    const [west, south, east, north] = bbox;
+    return session ? this.googleTiles.attribution(session, { west, south, east, north }, zoom) : Promise.resolve('');
+  });
   protected readonly view = signal<GuestJournalView | undefined>(undefined);
   protected readonly error = signal('');
   protected readonly selectedKey = signal<string | undefined>(undefined);
@@ -174,6 +207,32 @@ export class JournalGuestPage {
       const code = this.code();
       untracked(() => void this.start(journalKey, code));
     });
+    for (const type of GOOGLE_TYPES) void this.loadGoogle(type);
+  }
+
+  private googleLanguage(): string {
+    return this.i18nService.getActiveLang() || 'de';
+  }
+
+  /** A Map Tiles session (cached by GoogleTiles) and its tile template; without one the Google option is not offered. */
+  private async loadGoogle(type: GoogleMapType): Promise<void> {
+    const session = await this.googleTiles.session(type, this.googleLanguage());
+    this.sessions = { ...this.sessions, [type]: session };
+    this.google.update((google) => {
+      const next = { ...google };
+      if (session) next[type] = this.googleTiles.tileUrl(session);
+      else delete next[type];
+      return next;
+    });
+  }
+
+  /** Google refused tiles (expired session, design §1): one new session, at most every 5 minutes per type. */
+  protected renewGoogle(type: GoogleMapType): void {
+    const now = Date.now();
+    if (now - this.lastRenew[type] < GOOGLE_RENEW_MIN_MS) return;
+    this.lastRenew[type] = now;
+    this.googleTiles.invalidate(type, this.googleLanguage());
+    void this.loadGoogle(type);
   }
 
   private async start(journalKey: string, code: string): Promise<void> {
