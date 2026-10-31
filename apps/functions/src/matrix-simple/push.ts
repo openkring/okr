@@ -34,9 +34,15 @@ import {
   OKR_MUTE_EVENT,
 } from './shared';
 import { decideAdmission, type RoomFacts } from './room-admission';
-import { androidDisplay, appNameFor, collectTokens, withAppName } from '../srv/push';
+import { fcmTokenDocId } from '@okr/shared-util-core';
+import { addChatBadge } from '../badge/ledger';
+import {
+  appNameFor, buildTokenMessage, collectTokens, platformOf, readBadgeSumsOrNone, withAppName, type TokenEntry,
+} from '../srv/push';
 
 const chatPageCache = new BoundedTtlCache<boolean>(2_000, 5 * 60_000);
+/** FCM allows 500 messages per `sendEach`. */
+const CALL_SEND_CHUNK = 500;
 const CHAT_PAGE_FAILURE_TTL_MS = 10_000;
 
 /**
@@ -126,58 +132,51 @@ export const sendCallNotification = onCall(
 
     const appName = await appNameFor(tenantId);
     const title = withAppName(appName, `📹 Video-Anruf von ${callerName}`);
-    const tokens = tokenEntries.map(e => e.token);
-    // Data-only message (no notification field): ensures the service worker's
-    // onBackgroundMessage handler is always called on web. When notification is
-    // present, some browsers auto-display it and skip the SW handler entirely.
-    const response = await getMessaging().sendEachForMulticast({
-      tokens,
-      data: {
-        type: 'video-call',
-        tenantId,
-        title,
-        body: roomName ? `In ${roomName}` : 'Eingehender Video-Anruf',
-        roomId,
-        roomName: roomName ?? '',
-        callerName: callerName ?? '',
-        url: chatUrl,
-        // No badge field: a call is not a pending item. The service worker re-applies its
-        // ledger total (spec 1.93) — the old `badgeCount: '1'` overwrote it.
-      },
-      android: androidDisplay(title, roomName ? `In ${roomName}` : 'Eingehender Video-Anruf', 'high', `call.${roomId}`),
-      apns: {
-        // 'alert' push type is required for iOS to show a banner when the app is closed.
-        // 'background' would deliver silently and never show a banner.
-        headers: { 'apns-priority': '10', 'apns-push-type': 'alert' },
-        payload: {
-          aps: {
-            alert: {
-              title,
-              body: roomName ? `In ${roomName}` : 'Eingehender Video-Anruf',
-            },
-            badge: 1,
-            sound: 'default',
-            'content-available': 1,
-          },
-        },
-      },
-    });
+    // Data-only for the web (no notification field): ensures the service worker's
+    // onBackgroundMessage handler is always called. When notification is present, some
+    // browsers auto-display it and skip the SW handler entirely.
+    const data: Record<string, string> = {
+      type: 'video-call',
+      tenantId,
+      title,
+      body: roomName ? `In ${roomName}` : 'Eingehender Video-Anruf',
+      roomId,
+      roomName: roomName ?? '',
+      callerName: callerName ?? '',
+      url: chatUrl,
+      // No badge field: a call is not a pending item. The service worker re-applies its
+      // ledger total (spec 1.93) — the old `badgeCount: '1'` overwrote it.
+    };
+    // Native (N5, spec 1.127): a visible alert per token, no `content-available` (undefined next
+    // to an alert per Apple), and the account's server ledger sum instead of a constant 1 — a
+    // call does not change the ledger, it only must not overwrite the badge with a wrong value.
+    const sums = await readBadgeSumsOrNone(tokenEntries.map((e) => e.uid), 'sendCallNotification');
+    const messages = tokenEntries.map((entry) =>
+      buildTokenMessage(entry, data, sums.get(entry.uid), { priority: 'high', tag: `call.${roomId}` }));
 
+    let successCount = 0;
+    let failureCount = 0;
     // Remove tokens that are no longer registered to avoid future failures
     const staleTokenDeletions: Promise<unknown>[] = [];
-    response.responses.forEach((r, i) => {
-      if (!r.success && r.error?.code === 'messaging/registration-token-not-registered') {
-        const { uid, docId } = tokenEntries[i];
-        staleTokenDeletions.push(
-          getFirestore().collection('users').doc(uid).collection('fcmTokens').doc(docId).delete()
-            .catch(err => console.warn('sendCallNotification: Failed to delete stale token:', err))
-        );
-      }
-    });
+    for (let start = 0; start < messages.length; start += CALL_SEND_CHUNK) {
+      const chunkEntries = tokenEntries.slice(start, start + CALL_SEND_CHUNK);
+      const response = await getMessaging().sendEach(messages.slice(start, start + CALL_SEND_CHUNK));
+      successCount += response.successCount;
+      failureCount += response.failureCount;
+      response.responses.forEach((r, i) => {
+        if (!r.success && r.error?.code === 'messaging/registration-token-not-registered') {
+          const { uid, docId } = chunkEntries[i];
+          staleTokenDeletions.push(
+            getFirestore().collection('users').doc(uid).collection('fcmTokens').doc(docId).delete()
+              .catch(err => console.warn('sendCallNotification: Failed to delete stale token:', err))
+          );
+        }
+      });
+    }
     await Promise.all(staleTokenDeletions);
 
-    console.log(`sendCallNotification: sent=${response.successCount} failed=${response.failureCount} room=${roomId}`);
-    return { sent: response.successCount };
+    console.log(`sendCallNotification: sent=${successCount} failed=${failureCount} room=${roomId}`);
+    return { sent: successCount };
   }
 );
 
@@ -567,6 +566,42 @@ interface MatrixPushPayload {
   };
 }
 
+/**
+ * The account whose server badge ledger this pusher feeds: `data.uid`, set server-side by
+ * `registerMatrixPusher` (never by the client). A pusher belongs to one app and so to one uid,
+ * while its Matrix account is shared by all tenant apps of the person (Review Focus 2).
+ * `undefined` for an older pusher without uid, or for anything that is no plausible uid.
+ */
+export function ledgerTargetOf(device: Pick<MatrixPushDevice, 'data'>): string | undefined {
+  const uid: unknown = device.data?.['uid'];
+  return typeof uid === 'string' && uid.length > 0 && uid.length <= 128 ? uid : undefined;
+}
+
+/** Counts the chat event in the account's ledger; a failed write costs the badge, not the push. */
+async function chatBadgeFor(uid: string, eventId: string): Promise<number | undefined> {
+  try {
+    return await addChatBadge(uid, eventId);
+  } catch (err) {
+    console.warn('matrixPushGateway: badge ledger write failed, sending without badge:', err);
+    return undefined;
+  }
+}
+
+/** The token doc's `platform` (older builds: none); a failed read reads as unknown. */
+async function tokenPlatformOf(uid: string, token: string): Promise<TokenEntry['platform']> {
+  try {
+    const snap = await getFirestore().collection('users').doc(uid).collection('fcmTokens').doc(fcmTokenDocId(token)).get();
+    return snap.exists ? platformOf(snap.data()?.['platform']) : undefined;
+  } catch (err) {
+    console.warn('matrixPushGateway: token platform read failed, using the default channel:', err);
+    return undefined;
+  }
+}
+
+function withPlatform(platform: TokenEntry['platform']): Pick<TokenEntry, 'platform'> {
+  return platform ? { platform } : {};
+}
+
 export const matrixPushGateway = onRequest(
   { cors: false, region: 'europe-west6', secrets: [pushGatewaySecret, matrixAdminToken] },
   async (req, res) => {
@@ -611,7 +646,6 @@ export const matrixPushGateway = onRequest(
 
       const senderName = notification.sender_display_name ?? notification.sender ?? 'Unbekannt';
       const roomName   = notification.room_name ?? notification.room_alias ?? '';
-      const unread     = notification.counts?.unread ?? 1;
       const title      = (roomName ? `${senderName} in ${roomName}` : senderName).substring(0, 200);
       // Cap the body so a malformed/abusive payload can't push an oversized notification.
       const msgBody    = ((notification.content?.['body'] as string | undefined) ?? 'Neue Nachricht').substring(0, 500);
@@ -678,45 +712,40 @@ export const matrixPushGateway = onRequest(
         }
 
         try {
-          await getMessaging().send({
-            token,
-            data: {
-              type: 'chat',
-              // The pusher's own tenant: the tenant of the app that registered this FCM token
-              // (registerMatrixPusher validates the client's value against the account). Pushers of
-              // older clients carry the account's first tenant instead, which is the same app for a
-              // single-tenant account. With it, the service worker's tenant-mismatch drop (it
-              // compares this to the app's okrTenantId) does not fire for a chat push; it lets the
-              // worker and the tap handler know which app the push belongs to. Omitted for
-              // pre-tenant pushers.
-              ...(pusherTenant ? { tenantId: pusherTenant } : {}),
-              title,
-              body: msgBody,
-              roomId,
-              // Spec 1.127 2.3: open the room, not just the app.
-              ...(chatUrl ? { url: chatUrl } : {}),
-              // One new chat message (spec 1.93). Never Synapse's `counts.unread`: it spans every
-              // tenant's rooms and the badge's other parts are unknown here.
-              badgeAdd: 'chat',
-              badgeId: notification.event_id,
-            },
-            android: androidDisplay(title, msgBody, 'high', `chat.${roomId}`),
-            apns: {
-              headers: { 'apns-priority': '10', 'apns-push-type': 'alert' },
-              payload: {
-                aps: {
-                  alert: { title, body: msgBody },
-                  badge: Math.max(1, unread),
-                  sound: 'default',
-                  // NOTE: intentionally NO 'content-available': 1 here. Combining a
-                  // user-facing `alert` with the background/silent `content-available`
-                  // flag is undefined per Apple and on some iOS versions causes the push
-                  // to be delivered twice (OS banner + background wake) — the "notified
-                  // twice" complaint. Chat pushes only need the visible banner.
-                },
-              },
-            },
-          });
+          // The badge (spec 1.127 §3.7 B1): this message counted once in the ledger of the
+          // ACCOUNT behind this pusher (`data.uid`), not of the Matrix account — one Matrix
+          // account serves every tenant app of a person, each app has its own uid and ledger.
+          // An older pusher without uid gets no ledger write and no badge (never a guess).
+          const uid = ledgerTargetOf(device);
+          const badge = uid ? await chatBadgeFor(uid, notification.event_id) : undefined;
+          const entry: TokenEntry = {
+            token, uid: uid ?? '', docId: fcmTokenDocId(token),
+            ...(uid ? withPlatform(await tokenPlatformOf(uid, token)) : {}),
+          };
+          const data: Record<string, string> = {
+            type: 'chat',
+            // The pusher's own tenant: the tenant of the app that registered this FCM token
+            // (registerMatrixPusher validates the client's value against the account). Pushers of
+            // older clients carry the account's first tenant instead, which is the same app for a
+            // single-tenant account. With it, the service worker's tenant-mismatch drop (it
+            // compares this to the app's okrTenantId) does not fire for a chat push; it lets the
+            // worker and the tap handler know which app the push belongs to. Omitted for
+            // pre-tenant pushers.
+            ...(pusherTenant ? { tenantId: pusherTenant } : {}),
+            title,
+            body: msgBody,
+            roomId,
+            // Spec 1.127 2.3: open the room, not just the app.
+            ...(chatUrl ? { url: chatUrl } : {}),
+            // One new chat message for the web device ledger (spec 1.93). Never Synapse's
+            // `counts.unread`: it spans every tenant's rooms and the badge's other parts are unknown.
+            badgeAdd: 'chat',
+            badgeId: notification.event_id,
+          };
+          // A visible alert, intentionally NO 'content-available': combining a user-facing
+          // `alert` with the background flag is undefined per Apple and on some iOS versions
+          // delivers the push twice (OS banner + background wake) — the "notified twice" complaint.
+          await getMessaging().send(buildTokenMessage(entry, data, badge, { priority: 'high', tag: `chat.${roomId}` }));
         } catch (err: unknown) {
           const code = (err as { code?: string })?.code ?? '';
           if (

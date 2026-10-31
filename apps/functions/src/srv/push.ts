@@ -19,10 +19,16 @@
 // app's banner about an event they cannot open there.
 //
 // ⚠️ NO SENDER KNOWS THE BADGE TOTAL (chat over this tenant's rooms + open tasks + open
-// invitations), and `setAppBadge` is absolute. So a push names only ITS part (spec 1.93):
-// `badgeTasks` (absolute open-task count) or `badgeAdd` + `badgeId` (one new item, de-duplicated
-// by id). The service worker keeps the other parts in a ledger the open app writes and shows
-// the sum. Never send a total — the old `badgeCount` clobbered the parts it did not know.
+// invitations), and `setAppBadge` is absolute. Two paths, two rules:
+//
+// - WEB (the `data` map): a push names only ITS part (spec 1.93) — `badgeTasks` (absolute
+//   open-task count) or `badgeAdd` + `badgeId` (one new item, de-duplicated by id). The service
+//   worker keeps the other parts in its device ledger and shows the sum. Never a total in the
+//   data — the old `badgeCount` clobbered the parts it did not know.
+// - NATIVE (`aps.badge`, Android `notificationCount`): the server ledger sum
+//   `users/{uid}/badge/counts` (spec 1.127 §3.7 B1), per account and read AFTER the sender
+//   updated its own part. The open app writes all parts (`fromApp`); until it has, the sum is
+//   unknown and the badge is left out of the message (never a guess).
 
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -116,13 +122,6 @@ export interface UserAccount {
 }
 
 /**
- * The accounts of one person that belong to `tenantId` — normally one, never a foreign one.
- *
- * No `limit(1)` and no fallback: a person without an account in the tenant has no app in
- * which the notification could be opened. Same rule `deliveryChannelsFor` in
- * `workflow/firestore-deps.ts` already applies to delivery preferences.
- */
-/**
  * The `android` block of a push. The data-only shape above exists for the WEB service worker,
  * which builds the notification itself; the native Android app (Capacitor) has no service
  * worker and shows NOTHING for a data-only message (spec 1.10 Phase 1). FCM applies this block
@@ -180,6 +179,27 @@ export function buildTokenMessage(
   };
 }
 
+/**
+ * The badge part an account gets: the count only with the role `registered` (spec 1.127 M5) —
+ * the dashboard cards need it, and the badge must not count what they hide (same gate as
+ * `AppStore.openTaskCount` / `openInvitationCount`).
+ */
+export function badgePartFor(account: UserAccount, count: number): number {
+  return account.roles?.['registered'] === true ? count : 0;
+}
+
+/** A token doc's `platform`, `undefined` for a missing or unknown value (older builds). */
+export function platformOf(raw: unknown): PushTokenPlatform | undefined {
+  return typeof raw === 'string' && PLATFORMS.includes(raw) ? (raw as PushTokenPlatform) : undefined;
+}
+
+/**
+ * The accounts of one person that belong to `tenantId` — normally one, never a foreign one.
+ *
+ * No `limit(1)` and no fallback: a person without an account in the tenant has no app in
+ * which the notification could be opened. Same rule `deliveryChannelsFor` in
+ * `workflow/firestore-deps.ts` already applies to delivery preferences.
+ */
 export function selectUserDocs(accounts: UserAccount[], tenantId: string): UserAccount[] {
   return accounts.filter((account) => account.isArchived !== true && (account.tenants ?? []).includes(tenantId));
 }
@@ -206,9 +226,8 @@ export async function appNameFor(tenantId: string): Promise<string> {
 }
 
 /**
- * Every registered device of every given person's account IN THIS TENANT (see file head).
- * Persons without such an account drop out. Exported for `sendCallNotification`, which
- * builds its own message but must pick accounts by the same rule.
+ * The accounts of the given persons IN THIS TENANT (see file head, `selectUserDocs`), with their
+ * roles — the badge ledger writers need the uid and the `registered` gate (`badgePartFor`).
  */
 export async function accountsInTenant(personKeys: string[], tenantId: string): Promise<UserAccount[]> {
   const db = getFirestore();
@@ -225,6 +244,11 @@ export async function accountsInTenant(personKeys: string[], tenantId: string): 
   return perPerson.flat();
 }
 
+/**
+ * Every registered device of every given person's account IN THIS TENANT (see file head).
+ * Persons without such an account drop out. Exported for `sendCallNotification`, which
+ * builds its own message but must pick accounts by the same rule.
+ */
 export async function collectTokens(personKeys: string[], tenantId: string): Promise<TokenEntry[]> {
   const db = getFirestore();
   const entries: TokenEntry[] = [];
@@ -234,17 +258,27 @@ export async function collectTokens(personKeys: string[], tenantId: string): Pro
     const tokensSnap = await db.collection('users').doc(account.uid).collection('fcmTokens').get();
     for (const doc of tokensSnap.docs) {
       const token = doc.data()['token'] as string | undefined;
-      const platform = doc.data()['platform'] as string | undefined;
+      const platform = platformOf(doc.data()['platform']);
       if (token) {
-        entries.push({
-          token, uid: account.uid, docId: doc.id,
-          ...(platform && PLATFORMS.includes(platform) ? { platform: platform as PushTokenPlatform } : {}),
-        });
+        entries.push({ token, uid: account.uid, docId: doc.id, ...(platform ? { platform } : {}) });
       }
     }
   }));
 
   return entries;
+}
+
+/**
+ * `readBadgeSums`, but a failed read only costs the badge (logged), never the push.
+ * Exported for `sendCallNotification`.
+ */
+export async function readBadgeSumsOrNone(uids: string[], context: string): Promise<Map<string, number | undefined>> {
+  try {
+    return await readBadgeSums(uids);
+  } catch (err) {
+    logger.warn(`${context}: badge ledger read failed, sending without badge:`, err);
+    return new Map<string, number | undefined>();
+  }
 }
 
 /**
@@ -267,7 +301,7 @@ export async function pushToPersons(
 
   const data = buildPushData({ ...payload, title: withAppName(await appNameFor(payload.tenantId), payload.title) });
   // The badge per account from the server ledger; unknown (old builds) stays out of the message.
-  const sums = await readBadgeSums(entries.map((entry) => entry.uid)).catch(() => new Map<string, number | undefined>());
+  const sums = await readBadgeSumsOrNone(entries.map((entry) => entry.uid), context);
   const messages = entries.map((entry) => buildTokenMessage(entry, data, sums.get(entry.uid), { priority: 'normal', tag: data['channelId'] }));
 
   let successCount = 0;

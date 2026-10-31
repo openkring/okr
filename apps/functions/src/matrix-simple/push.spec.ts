@@ -25,7 +25,7 @@ vi.mock('firebase-admin/firestore', async (importOriginal) => ({
   }),
 }));
 
-import { hasGroupChatPage, pusherTenantFor, stalePushersToPrune, type ListedPusher } from './push';
+import { hasGroupChatPage, ledgerTargetOf, pusherTenantFor, stalePushersToPrune, type ListedPusher } from './push';
 
 describe('hasGroupChatPage', () => {
   beforeEach(() => {
@@ -110,5 +110,27 @@ describe('stalePushersToPrune', () => {
 
   it('keeps another device or app_id', () => {
     expect(stalePushersToPrune([listed({ device_display_name: 'Other' }), listed({ app_id: 'x' })], me, ['scs'])).toEqual([]);
+  });
+});
+
+describe('ledgerTargetOf (1.127 B1, Review Focus 2)', () => {
+  it("uses the pusher's uid, not the Matrix account", () => {
+    // Two tenant apps of one person on one phone: one Matrix account, two pushers, two accounts.
+    const d1 = { app_id: 'a', pushkey: 'k1', data: { matrixUserId: '@p:hs', uid: 'u1', tenantId: 'scs' } };
+    const d2 = { app_id: 'a', pushkey: 'k2', data: { matrixUserId: '@p:hs', uid: 'u2', tenantId: 'kring' } };
+    expect(ledgerTargetOf(d1)).toBe('u1');
+    expect(ledgerTargetOf(d2)).toBe('u2');
+  });
+
+  it('is undefined for an older pusher without uid', () => {
+    expect(ledgerTargetOf({ app_id: 'a', pushkey: 'k', data: { matrixUserId: '@p:hs' } })).toBeUndefined();
+    expect(ledgerTargetOf({ app_id: 'a', pushkey: 'k' })).toBeUndefined();
+  });
+
+  it('rejects an empty, overlong or non-string uid', () => {
+    expect(ledgerTargetOf({ app_id: 'a', pushkey: 'k', data: { uid: '' } })).toBeUndefined();
+    expect(ledgerTargetOf({ app_id: 'a', pushkey: 'k', data: { uid: 'x'.repeat(129) } })).toBeUndefined();
+    expect(ledgerTargetOf({ app_id: 'a', pushkey: 'k', data: { uid: 42 as unknown as string } })).toBeUndefined();
+    expect(ledgerTargetOf({ app_id: 'a', pushkey: 'k', data: { uid: 'x'.repeat(128) } })).toBe('x'.repeat(128));
   });
 });

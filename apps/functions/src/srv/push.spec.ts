@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { androidDisplay, appleDisplay, buildPushData, buildTokenMessage, nativeChannelFor, selectUserDocs, withAppName } from './push';
+import { androidDisplay, appleDisplay, badgePartFor, buildPushData, buildTokenMessage, nativeChannelFor, platformOf, selectUserDocs, withAppName } from './push';
 
 describe('buildPushData', () => {
   const base = { type: 'calevent', title: 'Training', body: 'Faellt aus', url: '/calevent/e1', tenantId: 'scs' };
@@ -158,5 +158,45 @@ describe('buildTokenMessage / nativeChannelFor (1.127 B1)', () => {
     expect(nativeChannelFor('file-transfer')).toBe('okr_default');
     expect(nativeChannelFor('trackRequest')).toBe('okr_default');
     expect(nativeChannelFor('whatever')).toBe('okr_default');
+  });
+});
+
+describe('badgePartFor (1.127 B1, M5)', () => {
+  it('badgePartFor is 0 without registered', () => {
+    expect(badgePartFor({ uid: 'u' }, 3)).toBe(0);
+    expect(badgePartFor({ uid: 'u', roles: { registered: false, admin: true } }, 3)).toBe(0);
+  });
+  it('passes the count through for a registered account', () => {
+    expect(badgePartFor({ uid: 'u', roles: { registered: true } }, 3)).toBe(3);
+  });
+});
+
+describe('platformOf', () => {
+  it('accepts the three known platforms only', () => {
+    expect(platformOf('ios')).toBe('ios');
+    expect(platformOf('android')).toBe('android');
+    expect(platformOf('web')).toBe('web');
+    expect(platformOf('windows')).toBeUndefined();
+    expect(platformOf(undefined)).toBeUndefined();
+    expect(platformOf(7)).toBeUndefined();
+  });
+});
+
+describe('video call message (N5)', () => {
+  const data = { type: 'video-call', tenantId: 'scs', title: 'Anruf', body: 'In Raum', url: '/chat', roomId: 'r' };
+
+  it('carries the ledger sum and is no background push', () => {
+    const m = buildTokenMessage({ token: 't', uid: 'u', docId: 'd', platform: 'ios' }, data, 2, { priority: 'high', tag: 'call.r' });
+    const aps = m.apns?.payload?.aps as Record<string, unknown>;
+    expect(aps).not.toHaveProperty('content-available');
+    expect(aps['badge']).toBe(2);
+    expect(m.apns?.headers?.['apns-push-type']).toBe('alert');
+  });
+
+  it('rings on okr_call for an android token', () => {
+    const m = buildTokenMessage({ token: 't', uid: 'u', docId: 'd', platform: 'android' }, data, 2, { priority: 'high', tag: 'call.r' });
+    expect(m.android?.notification?.channelId).toBe('okr_call');
+    expect(m.android?.priority).toBe('high');
+    expect(m.android?.notification?.tag).toBe('call.r');
   });
 });

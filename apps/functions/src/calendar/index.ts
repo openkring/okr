@@ -6,7 +6,7 @@ import { isCalendarPublic } from '@okr/shared-util-core';
 export { getPublicCalEvents } from './public-calevents';
 export { ensureCalendarFeedToken, calendarFeed } from './feed';
 export { onCalEventCommentCreated, onCalEventDocumentCreated } from './activity';
-export { onInvitationCreated } from './invitation';
+export { onInvitationCreated, onInvitationWritten } from './invitation';
 export { invitationAnswer } from './answer';
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -3,8 +3,9 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 
+import { setBadgePartForPerson } from '../badge/person-part';
 import { pushToPersons } from '../srv/push';
-import { decideDiaryTransition, decideTaskPush, openTaskCountFilters, TASK_LIST_URL, type TaskDocLike } from './task-decisions';
+import { assigneesToRecompute, decideDiaryTransition, decideTaskPush, openTaskCountFilters, TASK_LIST_URL, type TaskDocLike } from './task-decisions';
 import { applyTaskToDiary } from './task-diary';
 import type { TaskWrittenEvent } from './task-written-event';
 
@@ -23,6 +24,9 @@ const TASK_COLLECTION = 'tasks';
  * Badge count mirrors the app's open-task count (app.store.ts `openTasksResource`, built on
  * `getSystemQuery`): isArchived==false, tenants array-contains-any [tenantId, 'system'],
  * completionDate=='', assignee.key == personKey. See `openTaskCountFilters`.
+ *
+ * The same count is the task part of the server badge ledger (spec 1.127 §3.7 B1), recomputed for
+ * every assignee the write affects (`assigneesToRecompute`), pushed or not.
  */
 export const handleTaskWritten = async (event: TaskWrittenEvent): Promise<void> => {
     const before = event.data?.before?.data() as TaskDocLike | undefined;
@@ -55,19 +59,42 @@ export const handleTaskWritten = async (event: TaskWrittenEvent): Promise<void> 
       logger.error(`onTaskWritten: diary sync failed task=${event.params['taskId']}`, error);
     }
 
+    // Open-task count per assignee, queried at most once per write — the ledger and the push
+    // data below share it.
+    const counts = new Map<string, Promise<number>>();
+    const openTaskCount = (tenantId: string, assigneeKey: string): Promise<number> => {
+      const cacheKey = `${tenantId}\u0000${assigneeKey}`;
+      let count = counts.get(cacheKey);
+      if (!count) {
+        let openQuery: FirebaseFirestore.Query = db.collection(TASK_COLLECTION);
+        for (const [field, op, value] of openTaskCountFilters(tenantId, assigneeKey)) {
+          openQuery = openQuery.where(field, op, value);
+        }
+        count = openQuery.count().get().then((snap) => snap.data().count);
+        counts.set(cacheKey, count);
+      }
+      return count;
+    };
+
+    // The task part of the server badge ledger (spec 1.127 §3.7 B1), for every assignee whose
+    // count this write changed — also on complete, archive, delete and re-assignment AWAY, which
+    // send no push. Written BEFORE the push: `pushToPersons` reads the sum for `aps.badge`.
+    const ledgerTenant = (after ?? before)?.tenants?.[0];
+    if (ledgerTenant) {
+      for (const key of assigneesToRecompute(before, after)) {
+        await setBadgePartForPerson(key, ledgerTenant, 'tasks', () => openTaskCount(ledgerTenant, key), 'onTaskWritten');
+      }
+    }
+
     if (!decideTaskPush(before, after)) return;
 
     const assigneeKey = after?.assignee?.key ?? '';
     const tenantId = after?.tenants?.[0];
     if (!tenantId) return;
 
-    // Count open tasks for the assignee — same tenant set as the app (incl. 'system')
-    let openQuery: FirebaseFirestore.Query = db.collection(TASK_COLLECTION);
-    for (const [field, op, value] of openTaskCountFilters(tenantId, assigneeKey)) {
-      openQuery = openQuery.where(field, op, value);
-    }
-    const openSnap = await openQuery.count().get();
-    const badgeCount = openSnap.data().count;
+    // Recipient-independent: the web data carries the plain count; the `registered` gate is
+    // applied per account in the ledger (`badgePartFor`), which is what native badges show.
+    const badgeCount = await openTaskCount(tenantId, assigneeKey);
 
     const title = after?.name || 'Neue Aufgabe';
     const body = after?.dueDate

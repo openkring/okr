@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { invitationPushBody, shouldNotifyInvitation } from './invitation';
+import { invitationPushBody, inviteesToRecompute, shouldNotifyInvitation, shouldRecomputeInvitations } from './invitation';
 
 const inv = { tenants: ['scs'], inviteeKey: 'p', caleventKey: 'e', state: 'pending' };
 const event = { name: 'test2', startDate: '20261001', startTime: '11:00' };
@@ -46,4 +46,25 @@ describe('shouldNotifyInvitation', () => {
 describe('invitationPushBody', () => {
   it('names inviter and time', () => expect(invitationPushBody('Bruno Kaiser', '01.10.2026, 11:00')).toBe('Bruno Kaiser lädt dich ein: 01.10.2026, 11:00'));
   it('works without a time', () => expect(invitationPushBody('Bruno Kaiser', '')).toBe('Bruno Kaiser lädt dich ein'));
+});
+
+describe('shouldRecomputeInvitations (1.127 B1)', () => {
+  const pending = { tenants: ['scs'], inviteeKey: 'p', caleventKey: 'e', state: 'pending', notes: '' };
+
+  it('is false on create (onInvitationCreated recomputes)', () => expect(shouldRecomputeInvitations(undefined, pending)).toBe(false));
+  it('is true on delete', () => expect(shouldRecomputeInvitations(pending, undefined)).toBe(true));
+  it('is true when the invitation is answered', () => expect(shouldRecomputeInvitations(pending, { ...pending, state: 'accepted' })).toBe(true));
+  it('is true when it is archived or locked', () => {
+    expect(shouldRecomputeInvitations(pending, { ...pending, isArchived: true })).toBe(true);
+    expect(shouldRecomputeInvitations(pending, { ...pending, isLocked: true })).toBe(true);
+  });
+  it('is true when the invitee changes', () => expect(shouldRecomputeInvitations(pending, { ...pending, inviteeKey: 'q' })).toBe(true));
+  it('is false on an unrelated field change', () => expect(shouldRecomputeInvitations(pending, { ...pending, notes: 'bis gleich' })).toBe(false));
+  it('is false when nothing exists', () => expect(shouldRecomputeInvitations(undefined, undefined)).toBe(false));
+
+  it('inviteesToRecompute names the old and the new invitee once', () => {
+    expect(inviteesToRecompute(pending, { ...pending, inviteeKey: 'q' })).toEqual(['p', 'q']);
+    expect(inviteesToRecompute(pending, { ...pending, state: 'declined' })).toEqual(['p']);
+    expect(inviteesToRecompute(pending, undefined)).toEqual(['p']);
+  });
 });

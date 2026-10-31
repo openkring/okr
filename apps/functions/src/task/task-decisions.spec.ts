@@ -1,6 +1,6 @@
 // apps/functions/src/task/task-decisions.spec.ts
 import { describe, expect, it } from 'vitest';
-import { decideDiaryTransition, decideTaskPush, getArchiveCutoff, resolveTaskArchiveDays } from './task-decisions';
+import { assigneesToRecompute, decideDiaryTransition, decideTaskPush, getArchiveCutoff, resolveTaskArchiveDays } from './task-decisions';
 
 const open = { name: 'x', state: 'planned', isArchived: false, completionDate: '', assignee: { key: 'pA' }, author: { key: 'pB' }, tenants: ['scs'] };
 
@@ -45,4 +45,31 @@ describe('decideDiaryTransition', () => {
   it('ignores a plain edit', () => expect(decideDiaryTransition(base, { ...base, name: 'y' })).toBe('none'));
   it('needs an assignee', () => expect(decideDiaryTransition(base, { ...base, completionDate: '20260930', assignee: undefined })).toBe('none'));
   it('ignores a delete', () => expect(decideDiaryTransition({ ...base, completionDate: '20260930' }, undefined)).toBe('none'));
+});
+
+describe('assigneesToRecompute (1.127 B1)', () => {
+  const open = { assignee: { key: 'A' }, completionDate: '', isArchived: false, tenants: ['scs'], name: 'x' };
+
+  it('returns the new assignee on create', () => expect(assigneesToRecompute(undefined, open)).toEqual(['A']));
+  it('returns the old assignee on delete', () => expect(assigneesToRecompute(open, undefined)).toEqual(['A']));
+  it('returns both on a reassignment', () => {
+    expect(assigneesToRecompute(open, { ...open, assignee: { key: 'B' } })).toEqual(['A', 'B']);
+  });
+  it('returns the assignee on complete, reopen and archive', () => {
+    const done = { ...open, completionDate: '20261031' };
+    expect(assigneesToRecompute(open, done)).toEqual(['A']);
+    expect(assigneesToRecompute(done, open)).toEqual(['A']);
+    expect(assigneesToRecompute(open, { ...open, isArchived: true })).toEqual(['A']);
+  });
+  it('returns nothing for an unrelated field change', () => {
+    expect(assigneesToRecompute(open, { ...open, name: 'renamed', dueDate: '20261101' })).toEqual([]);
+  });
+  it('returns nothing when the task is not counted on either side', () => {
+    const done = { ...open, completionDate: '20261031' };
+    expect(assigneesToRecompute(done, { ...done, isArchived: true })).toEqual([]);
+  });
+  it('drops empty assignees', () => {
+    expect(assigneesToRecompute({ ...open, assignee: undefined }, open)).toEqual(['A']);
+    expect(assigneesToRecompute(undefined, { ...open, assignee: { key: '' } })).toEqual([]);
+  });
 });

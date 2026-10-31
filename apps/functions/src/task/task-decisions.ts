@@ -89,3 +89,26 @@ export const openTaskCountFilters = (tenantId: string, assigneeKey: string): Ope
   ['completionDate', '==', ''],
   ['assignee.key', '==', assigneeKey],
 ];
+
+/** Whether the open-task badge count (`openTaskCountFilters`) can include this task version. */
+function countsAsOpen(doc: TaskDocLike | undefined): boolean {
+  return !!doc && !!doc.assignee?.key && doc.isArchived !== true && (doc.completionDate ?? '') === '';
+}
+
+/**
+ * The assignees whose open-task count this write can change (spec 1.127 §3.7 B1): the previous
+ * and the new assignee whenever the task enters, leaves or moves within the count — create,
+ * delete, complete, reopen, archive, re-assignment, a tenant change. Empty when the task is not
+ * counted on either side or only an unrelated field changed (name, due date, notes). Errs on
+ * recomputing: the count itself is queried, so an extra recompute is harmless.
+ */
+export function assigneesToRecompute(before: TaskDocLike | undefined, after: TaskDocLike | undefined): string[] {
+  const wasOpen = countsAsOpen(before);
+  const isOpen = countsAsOpen(after);
+  if (!wasOpen && !isOpen) return [];
+  const beforeKey = before?.assignee?.key ?? '';
+  const afterKey = after?.assignee?.key ?? '';
+  const sameTenants = (before?.tenants ?? []).join('\u0000') === (after?.tenants ?? []).join('\u0000');
+  if (wasOpen && isOpen && beforeKey === afterKey && sameTenants) return [];
+  return [...new Set([beforeKey, afterKey].filter((key) => key.length > 0))];
+}
