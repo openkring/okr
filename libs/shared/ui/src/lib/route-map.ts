@@ -1,6 +1,13 @@
-import { afterNextRender, Component, DestroyRef, effect, ElementRef, inject, input, output, ViewEncapsulation } from '@angular/core';
+import { afterNextRender, Component, computed, DestroyRef, effect, ElementRef, inject, input, model, output, ViewEncapsulation } from '@angular/core';
+import { ActionSheetController, IonIcon } from '@ionic/angular';
 import type * as L from 'leaflet';
 import type * as ProtomapsLeaflet from 'protomaps-leaflet';
+
+import { ENV } from '@okr/shared-config';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
+
+import { googleMapsLogoUrl } from './google-maps-logo';
 
 /**
  * A map with a dashed route line and round photo pins (travel journal overview, spec 1.113 §9.1).
@@ -9,6 +16,11 @@ import type * as ProtomapsLeaflet from 'protomaps-leaflet';
  * Layers can be raster tiles or OpenStreetMap vector tiles (`kind: 'vector'`, drawn by protomaps-leaflet,
  * which is loaded only when such a layer is on the map); `bounds` limits a layer to its area.
  * `places` are named points (e.g. landing sites): small dots, labelled from PLACE_LABEL_ZOOM on, never refitted to.
+ *
+ * Base layers (spec 1.126 phase 4, design §2): with `baseLayers`, the map draws only the selected option's sources
+ * and offers a round layer button that opens an ActionSheet. While a Google option is selected it shows the official
+ * Google Maps logo (bottom left) and `googleAttribution` as the attribution prefix. Without `baseLayers`, `tiles` is
+ * drawn as before. The OpenStreetMap sea is transparent (design §6), so satellite or background tiles show through.
  */
 export interface RoutePin { key: string; lat: number; lng: number; thumbnailUrl?: string; label: string }
 export interface RoutePlace { name: string; lat: number; lng: number }
@@ -23,10 +35,17 @@ export interface TileSource {
 }
 /** The visible map: bounds as [west, south, east, north] and the zoom. */
 export interface MapView { bounds: [number, number, number, number]; zoom: number }
+/** One selectable base layer: the shared-ui mirror of the journal's `BaseLayerOption`, plus its label. */
+export interface RouteBaseLayer { id: string; label: string; sources: TileSource[]; googleType?: 'roadmap' | 'satellite' }
 
 const FIT_PADDING: L.PointExpression = [40, 40];
 const SINGLE_POINT_ZOOM = 10;
 const PLACE_LABEL_ZOOM = 7; // below, the labels of a whole island group would overlap
+/** Raster and offline layers stop here (unchanged); Google layers follow their native levels up to GOOGLE_MAX_ZOOM. */
+const DEFAULT_MAX_ZOOM = 16;
+const GOOGLE_MAX_ZOOM = 20;
+/** A missing or zero-byte raster tile (empty-tile marker, design §5) draws nothing instead of a broken image. */
+const TRANSPARENT_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
 
 function escapeHtml(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -52,8 +71,32 @@ function escapeHtml(value: string): string {
       font-size: 12px; font-weight: 600; color: #fff; text-shadow: 0 0 3px #000, 0 0 2px #000; }
     .leaflet-tooltip.okr-route-place-label::before { display: none; }
     .okr-route-map-far .okr-route-place-label { display: none; }
+    /* Google guidelines: 16–19 px high, clear space 10 px left/right/top and 5 px below, never covered */
+    okr-route-map .okr-route-map-google-logo { position: absolute; left: 10px; bottom: 5px; z-index: 1000;
+      height: 18px; width: calc(18px * 105 / 22); pointer-events: none; }
+    /* the attribution (bottom right) may wrap but never runs under the Google logo */
+    okr-route-map.okr-route-map-google .leaflet-bottom.leaflet-right { max-width: calc(100% - 116px); }
+    /* top right: above Leaflet's attribution, away from the Google logo and the zoom control (top left) */
+    okr-route-map .okr-route-map-layers { position: absolute; right: 10px; top: 10px; z-index: 1000;
+      width: 36px; height: 36px; padding: 0; border: none; border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      background: #fff; color: #333; box-shadow: 0 1px 5px rgba(0,0,0,.4); }
+    okr-route-map .okr-route-map-layers ion-icon { font-size: 20px; }
   `],
-  template: `<div class="okr-route-map-canvas"></div>`,
+  host: { '[class.okr-route-map-google]': 'googleLogo() !== undefined' },
+  imports: [IonIcon, SvgIconPipe],
+  template: `
+    <div class="okr-route-map-canvas"></div>
+    @if (googleLogo(); as logo) {
+      <img class="okr-route-map-google-logo" [src]="logo" alt="Google Maps" />
+    }
+    @if (baseLayers().length > 1) {
+      <button type="button" class="okr-route-map-layers" [attr.aria-label]="layerSwitchLabel()" [title]="layerSwitchLabel()"
+        (click)="chooseBaseLayer()">
+        <ion-icon src="{{ 'map' | svgIcon }}" />
+      </button>
+    }
+  `,
 })
 export class RouteMap {
   public readonly route = input<[number, number][]>([]);
@@ -62,11 +105,38 @@ export class RouteMap {
   /** One source or several stacked layers (e.g. an offline overview plus detail tiles from a higher zoom on). */
   public readonly tiles = input<TileSource | TileSource[] | undefined>(undefined);
   public readonly places = input<RoutePlace[]>([]);
+  /** The base layers to choose from; when empty, `tiles` is drawn (other users of the map). */
+  public readonly baseLayers = input<RouteBaseLayer[]>([]);
+  /** The chosen base layer; an unknown or missing id draws the first option. */
+  public readonly selectedBaseId = model<string | undefined>(undefined);
+  /** The header of the layer ActionSheet (i18n from the caller). */
+  public readonly layerSwitchLabel = input('');
+  /** The viewport copyright of the Google layer (fetched by the caller), shown while a Google option is selected. */
+  public readonly googleAttribution = input('');
   public readonly pinClicked = output<string>();
   /** After every pan or zoom: what the map shows (e.g. to save it as an offline area). */
   public readonly viewChanged = output<MapView>();
 
   private readonly el = inject(ElementRef<HTMLElement>);
+  private readonly actionSheetController = inject(ActionSheetController);
+  private readonly env = inject(ENV);
+
+  protected readonly selectedBase = computed(() => {
+    const layers = this.baseLayers();
+    const id = this.selectedBaseId();
+    return layers.find((l) => l.id === id) ?? layers[0];
+  });
+  /** What the map draws: the selected base layer, else `tiles`. */
+  private readonly activeSources = computed<TileSource[]>(() => {
+    if (this.baseLayers().length > 0) return this.selectedBase()?.sources ?? [];
+    const tiles = this.tiles();
+    return tiles === undefined ? [] : Array.isArray(tiles) ? tiles : [tiles];
+  });
+  protected readonly googleLogo = computed(() => {
+    const type = this.selectedBase()?.googleType;
+    return type ? googleMapsLogoUrl(type) : undefined;
+  });
+  private defaultPrefix: string | false = false;
   private leaflet?: typeof L;
   private vectorLib?: typeof ProtomapsLeaflet;
   private vectorLoading = false;
@@ -86,8 +156,13 @@ export class RouteMap {
     afterNextRender(() => void this.init());
     effect(() => {
       // re-render whenever an input changes (read all of them here so the effect tracks them)
-      const state = { route: this.route(), pins: this.pins(), selected: this.selectedKey(), tiles: this.tiles(), places: this.places() };
+      const state = { route: this.route(), pins: this.pins(), selected: this.selectedKey(), tiles: this.activeSources(), places: this.places() };
       if (this.map) this.render(state.route, state.pins, state.selected, state.tiles, state.places);
+    });
+    effect(() => {
+      const google = this.selectedBase()?.googleType !== undefined;
+      const copyright = this.googleAttribution();
+      if (this.map) this.updateAttribution(google, copyright);
     });
     inject(DestroyRef).onDestroy(() => {
       this.destroyed = true; // an init still waiting for Leaflet must not create a map afterwards
@@ -111,7 +186,10 @@ export class RouteMap {
     this.map.on('moveend', () => this.emitView());
     this.map.on('zoomend', () => this.markFar());
     this.overlay = this.leaflet.layerGroup().addTo(this.map);
-    this.render(this.route(), this.pins(), this.selectedKey(), this.tiles(), this.places());
+    const prefix = this.map.attributionControl?.options.prefix;
+    this.defaultPrefix = typeof prefix === 'string' ? prefix : false;
+    this.updateAttribution(this.selectedBase()?.googleType !== undefined, this.googleAttribution());
+    this.render(this.route(), this.pins(), this.selectedKey(), this.activeSources(), this.places());
     this.settleSnap(container);
     // the container may still be animating or change with the layout (A/B): keep Leaflet's size in sync
     // Ionic hides a page that stays in the stack (size 0) and shows it again on «back»: refit then,
@@ -163,15 +241,18 @@ export class RouteMap {
   }
 
   private render(
-    route: [number, number][], pins: RoutePin[], selected: string | undefined, tiles: TileSource | TileSource[] | undefined, places: RoutePlace[],
+    route: [number, number][], pins: RoutePin[], selected: string | undefined, sources: TileSource[], places: RoutePlace[],
   ): void {
     const Lf = this.leaflet;
     const map = this.map;
     if (!Lf || !map || !this.overlay) return;
 
     // rebuild the tile layer only when the source changes — not on every data change (no flicker)
-    const sources = tiles === undefined ? [] : Array.isArray(tiles) ? tiles : [tiles];
-    const tilesKey = sources.map((t) => `${t.kind ?? 'raster'}|${t.urlTemplate}|${t.minZoom ?? ''}|${t.minNativeZoom ?? ''}|${t.maxNativeZoom}|${t.bounds?.join(',') ?? ''}`).join(';');
+    // Google follows its native levels (beyond z16); every other source keeps the fixed limit
+    const maxZoom = this.selectedBase()?.googleType
+      ? Math.min(GOOGLE_MAX_ZOOM, Math.max(DEFAULT_MAX_ZOOM, ...sources.map((t) => t.maxNativeZoom)))
+      : DEFAULT_MAX_ZOOM;
+    const tilesKey = `${maxZoom}#` + sources.map((t) => `${t.kind ?? 'raster'}|${t.urlTemplate}|${t.minZoom ?? ''}|${t.minNativeZoom ?? ''}|${t.maxNativeZoom}|${t.bounds?.join(',') ?? ''}`).join(';');
     const needsVector = sources.some((t) => t.kind === 'vector');
     if (needsVector && !this.vectorLib) void this.loadVector(); // renders again once loaded
     if (tilesKey !== this.lastTilesKey && (!needsVector || this.vectorLib)) {
@@ -179,15 +260,9 @@ export class RouteMap {
       for (const layer of this.tileLayers) layer.remove();
       this.tileLayers = sources.map((t) => {
         const bounds = t.bounds ? Lf.latLngBounds([t.bounds[1], t.bounds[0]], [t.bounds[3], t.bounds[2]]) : undefined;
-        if (t.kind === 'vector' && this.vectorLib) {
-          const layer = this.vectorLib.leafletLayer({
-            url: t.urlTemplate, flavor: 'light', lang: 'de', maxDataZoom: t.maxNativeZoom, attribution: t.attribution,
-            ...(bounds ? { bounds } : {}),
-          }) as unknown as L.TileLayer;
-          return layer.addTo(map);
-        }
+        if (t.kind === 'vector' && this.vectorLib) return this.vectorLayer(this.vectorLib, t, bounds).addTo(map);
         return Lf.tileLayer(t.urlTemplate, {
-          maxNativeZoom: t.maxNativeZoom, maxZoom: 16, attribution: t.attribution,
+          maxNativeZoom: t.maxNativeZoom, maxZoom, attribution: t.attribution, errorTileUrl: TRANSPARENT_PNG,
           ...(t.minZoom !== undefined ? { minZoom: t.minZoom } : {}),
           ...(t.minNativeZoom !== undefined ? { minNativeZoom: t.minNativeZoom } : {}),
           ...(bounds ? { bounds } : {}),
@@ -232,6 +307,47 @@ export class RouteMap {
     }
   }
 
+  /**
+   * An OpenStreetMap vector layer with a transparent sea (design §6): the light flavour without its water polygons
+   * and without a background fill, so the satellite or background tiles below show through. The rules are filtered on
+   * the built layer because `paintRules(flavor)` needs the flavour object of `@protomaps/basemaps`, which is not a
+   * dependency of ours. A zero-byte `.mvt` (empty-tile marker, design §5) decodes as a tile without layers: it draws
+   * nothing and throws nothing (checked against protomaps-leaflet 5.1.0, `parseTile` on an empty buffer).
+   */
+  private vectorLayer(lib: typeof ProtomapsLeaflet, t: TileSource, bounds: L.LatLngBounds | undefined): L.TileLayer {
+    const layer = lib.leafletLayer({
+      url: t.urlTemplate, flavor: 'light', lang: 'de', maxDataZoom: t.maxNativeZoom, attribution: t.attribution,
+      ...(bounds ? { bounds } : {}),
+    }) as unknown as L.TileLayer & { paintRules: ProtomapsLeaflet.PaintRule[]; backgroundColor?: string };
+    layer.paintRules = layer.paintRules.filter((r) => !(r.dataLayer === 'water' && r.symbolizer instanceof lib.PolygonSymbolizer));
+    layer.backgroundColor = undefined;
+    return layer;
+  }
+
+  /** While a Google layer is shown, its viewport copyright replaces Leaflet's prefix; otherwise the prefix is restored. */
+  private updateAttribution(google: boolean, copyright: string): void {
+    const control = this.map?.attributionControl;
+    if (!control) return;
+    control.setPrefix(google ? escapeHtml(copyright) : this.defaultPrefix);
+  }
+
+  /** The ActionSheet with the base layers, the current one checked; the choice goes to `selectedBaseId`. */
+  protected async chooseBaseLayer(): Promise<void> {
+    const layers = this.baseLayers();
+    const current = this.selectedBase()?.id;
+    const imgixBaseUrl = this.env.services.imgixBaseUrl;
+    const options = createActionSheetOptions(this.layerSwitchLabel());
+    for (const layer of layers) {
+      options.buttons.push(createActionSheetButton(`baselayer.${layer.id}`, layer.label, imgixBaseUrl,
+        layer.id === current ? 'checkbox-circle' : 'radio-button-off'));
+    }
+    const sheet = await this.actionSheetController.create(options);
+    await sheet.present();
+    const { data } = await sheet.onDidDismiss<{ action?: string }>();
+    const id = data?.action?.replace(/^baselayer\./, '');
+    if (id && id !== current && layers.some((l) => l.id === id)) this.selectedBaseId.set(id);
+  }
+
   /** Place labels only from PLACE_LABEL_ZOOM on (a class on the container, so no re-render on zoom). */
   private markFar(): void {
     if (!this.map) return;
@@ -252,7 +368,7 @@ export class RouteMap {
     try {
       (globalThis as { L?: unknown }).L ??= this.leaflet;
       this.vectorLib = await import('protomaps-leaflet');
-      this.render(this.route(), this.pins(), this.selectedKey(), this.tiles(), this.places());
+      this.render(this.route(), this.pins(), this.selectedKey(), this.activeSources(), this.places());
     } finally {
       this.vectorLoading = false;
     }
