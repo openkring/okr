@@ -189,14 +189,14 @@ export class BankImportList {
   /**
    * The quick action runs long after the user's tap (navigation, lazy load), and Safari/iOS refuse a file
    * dialog outside a gesture. So ask once: the button's tap is a fresh gesture, and its handler calls
-   * importFile() synchronously (pickFile() opens the dialog before the first await).
+   * importFiles() synchronously (pickMultipleFiles() opens the dialog before the first await).
    */
   private async offerImport(): Promise<void> {
     const alert = await this.alertController.create({
       header: this.store.i18n.import_file(),
       buttons: [
         { text: this.store.i18n.cancel(), role: 'cancel' },
-        { text: this.store.i18n.import_choose(), handler: () => { void this.store.importFile(); } },
+        { text: this.store.i18n.import_choose(), handler: () => { void this.store.importFiles(); } },
       ],
     });
     await alert.present();
@@ -207,7 +207,7 @@ export class BankImportList {
     const selectedMethod = $event.detail.data;
     if (!selectedMethod) return; // dismissed without choosing (backdrop/escape) — not an error
     switch (selectedMethod) {
-      case 'import': await this.store.importFile(); break;
+      case 'import': await this.store.importFiles(); break;
       case 'applyRules': await this.store.applyRulesToOpenRows(); break;
       case 'post': await this.store.post(); break;
       default: this.alertService.error(`BankImportList.onPopoverDismiss: unknown method ${selectedMethod}`);

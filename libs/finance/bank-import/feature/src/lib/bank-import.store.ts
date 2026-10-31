@@ -135,12 +135,10 @@ export const BankImportStore = signalStore(
   })),
   withMethods(store => ({
     /**
-     * §6.2. The file dialog must open inside the user gesture — no await before pickFile().
-     * Returns the number of new rows (0 when cancelled, failed or all duplicates).
+     * One statement file → its import rows, one bank profile per IBAN and currency (created on the fly).
+     * `error` = user-facing reason the file was skipped (unreadable, or the profile dialog was cancelled).
      */
-    async importFile(): Promise<number> {
-      const file = await store.uploadService.pickFile(BANK_IMPORT_MIMETYPES);
-      if (!file) return 0;
+    async rowsFromFile(file: File): Promise<{ rows: BankImportRowModel[]; parsed: number; warnings: ParsedWarning[]; error?: string }> {
       const accountingTenantId = store.accountingTenantId();
       const tenantId = store.appStore.tenantId();
       let statement;
@@ -150,8 +148,7 @@ export const BankImportStore = signalStore(
       } catch (e) {
         const code = e instanceof BankImportError ? e.code : 'unknown-format';
         const detail = e instanceof BankImportError ? e.detail : '';
-        await store.alertService.confirm(`${store.errorText(code)} ${detail}`.trim());
-        return 0;
+        return { rows: [], parsed: 0, warnings: [], error: `${store.errorText(code)} ${detail}`.trim() };
       }
 
       // One profile per currency: a CSV carries one currency, a Swissquote PDF one section per currency
@@ -173,7 +170,7 @@ export const BankImportStore = signalStore(
           proposal.bankName = statement.bankName;
           proposal.currency = currency;
           profile = await store.profileStore.openEdit(proposal, false);
-          if (!profile?.okey) { await store.alertService.confirm(store.i18n.import_cancelled()); return 0; }
+          if (!profile?.okey) return { rows: [], parsed: 0, warnings: [], error: store.i18n.import_cancelled() };
         }
         const iban = statement.iban || profile.iban;
         const keys = await computeImportKeys(rows.map(r => ({ iban, date: r.date, amount: r.amount, bankReference: r.bankReference, rawText: r.rawText })));
@@ -181,11 +178,45 @@ export const BankImportStore = signalStore(
           importedBy: store.currentUser()?.okey ?? '', importedAt: getTodayStr(DateFormat.StoreDateTime) };
         all.push(...toImportRows({ ...statement, rows }, keys, ctx));
       }
+      return { rows: all, parsed: statement.rows.length, warnings: statement.warnings };
+    },
 
-      // rules, duplicates
-      const keys = all.map(r => r.importKey);
-      const existing = await store.rowService.existingKeys(accountingTenantId, keys);
-      const fresh = all.filter(r => !existing.has(r.importKey));
+    /**
+     * §6.2. The file dialog must open inside the user gesture — no await before pickMultipleFiles().
+     * Several statement files at once: a file that cannot be read is skipped and named in the summary,
+     * the others are imported. Returns the number of new rows (0 when cancelled, failed or all duplicates).
+     */
+    async importFiles(): Promise<number> {
+      const files = await store.uploadService.pickMultipleFiles(BANK_IMPORT_MIMETYPES);
+      if (files.length === 0) return 0;
+      const accountingTenantId = store.accountingTenantId();
+      const all: BankImportRowModel[] = [];
+      const failures: string[] = [];
+      const fileWarnings: string[] = [];
+      let parsed = 0;
+      for (const file of files) {
+        const result = await this.rowsFromFile(file);
+        if (result.error) { failures.push(`${file.name}: ${result.error}`); continue; }
+        parsed += result.parsed;
+        all.push(...result.rows);
+        const prefix = files.length > 1 ? `${file.name} ` : '';
+        fileWarnings.push(...result.warnings.map(w => prefix + store.warningText(w)));
+      }
+      if (failures.length === files.length) {
+        await store.alertService.confirm(failures.join('\n'));
+        return 0;
+      }
+
+      // rules, duplicates — overlapping statements (or a file picked twice) carry the same rows, so the
+      // batch is deduplicated by its own keys too, not only against the stored rows
+      const batchKeys = new Set<string>();
+      const unique = all.filter(r => {
+        if (batchKeys.has(r.importKey)) return false;
+        batchKeys.add(r.importKey);
+        return true;
+      });
+      const existing = await store.rowService.existingKeys(accountingTenantId, [...batchKeys]);
+      const fresh = unique.filter(r => !existing.has(r.importKey));
       const rules = await store.ruleService.listOnce(accountingTenantId);
       const { rows: ruled, invalidRuleKeys } = applyRules(fresh, rules);
       // credits that quote an open invoice's QR reference are linked after the rules, so the link wins.
@@ -198,7 +229,7 @@ export const BankImportStore = signalStore(
           invoices = await store.invoiceService.listPayableWithReference(accountingTenantId);
         } catch (ex) {
           // the import must not die over the optional matching: proceed without it and say so in the summary
-          console.error('BankImportStore.importFile -> invoices unreadable:', ex);
+          console.error('BankImportStore.importFiles -> invoices unreadable:', ex);
           invoicesFailed = true;
         }
       }
@@ -220,16 +251,17 @@ export const BankImportStore = signalStore(
       }
       store.rowsResource.reload();
 
-      const warnings = [...statement.warnings, ...invalidRuleKeys.map(k => ({ code: 'rule-regex-invalid' as const, lineNo: 0, detail: k }))];
+      const warnings = [...fileWarnings, ...invalidRuleKeys.map(k => store.warningText({ code: 'rule-regex-invalid', lineNo: 0, detail: k }))];
       const summary = [
-        `${store.i18n.import_summary_parsed()}: ${statement.rows.length}`,
+        ...failures,
+        `${store.i18n.import_summary_parsed()}: ${parsed}`,
         `${store.i18n.import_summary_new()}: ${mapped.length}`,
         `${store.i18n.import_summary_duplicates()}: ${all.length - fresh.length}`,
         `${store.i18n.import_summary_mapped()}: ${mapped.filter(r => r.status === 'mapped').length}`,
         `${store.i18n.import_summary_unmapped()}: ${mapped.filter(r => r.status === 'unmapped').length}`,
         invoicesFailed ? store.i18n.import_summary_invoices_failed() : `${store.i18n.import_summary_invoices()}: ${matched}`,
         ...(store.payablesAccountKey() ? [billsFailed ? store.i18n.import_summary_bills_failed() : `${store.i18n.import_summary_bills()}: ${billsMatched}`] : []),
-        ...(warnings.length ? [`${store.i18n.import_summary_warnings()}:`, ...warnings.map(w => store.warningText(w))] : []),
+        ...(warnings.length ? [`${store.i18n.import_summary_warnings()}:`, ...warnings] : []),
       ].join('\n');
       await store.alertService.confirm(`${store.i18n.import_summary_title()}\n${summary}`);
       return mapped.length;
@@ -242,7 +274,7 @@ export const BankImportStore = signalStore(
         const open = store.rows().filter(r => r.status === 'unmapped' || r.status === 'mapped');
         const { rows: ruled } = applyRules(open, rules);
         // invoices issued after the import still get linked here; the matcher's output is what is persisted.
-        // Only with a known receivables account (see importFile).
+        // Only with a known receivables account (see importFiles).
         const receivablesAccountKey = store.receivablesAccountKey();
         let invoices: InvoiceModel[] = [];
         let invoicesFailed = false;

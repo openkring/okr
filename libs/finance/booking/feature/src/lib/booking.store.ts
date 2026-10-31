@@ -489,7 +489,7 @@ export const BookingStore = signalStore(
       const { BANK_IMPORT_PROVIDERS, BankImportStore } = await import('@okr/finance-bank-import-feature');
       const injector = Injector.create({ providers: BANK_IMPORT_PROVIDERS, parent: store.injector });
       try {
-        const created = await injector.get(BankImportStore).importFile();
+        const created = await injector.get(BankImportStore).importFiles();
         if (created > 0) await store.router.navigate(['/accounting-bank-import', store.accountingTenantId(), 'bank-import-context']);
       } finally {
         injector.destroy();
