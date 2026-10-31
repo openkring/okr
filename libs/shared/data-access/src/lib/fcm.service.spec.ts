@@ -218,10 +218,25 @@ describe('FcmService native registration', () => {
     await untilRegistered();
     emit('registration', { value: 't1' });
     await done;
+    await svc.ensureMatrixPusher();
+    expect(m.registerCallable).toHaveBeenCalledWith(expect.objectContaining({ pushkey: 't1' }));
     emit('registration', { value: 't2' });
     await vi.waitFor(() => expect(m.registerCallable).toHaveBeenCalledWith(expect.objectContaining({ pushkey: 't2' })));
     expect(m.setDoc).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ token: 't2', platform: 'ios' }), { merge: true });
     expect(svc.currentToken).toBe('t2');
+  });
+
+  it('a refresh without an earlier pusher only saves the token', async () => {
+    const svc = makeFresh();
+    const done = svc.registerAndSave('A');
+    await untilRegistered();
+    emit('registration', { value: 't1' });
+    await done;
+    emit('registration', { value: 't2' });
+    await vi.waitFor(() => expect(svc.currentToken).toBe('t2'));
+    await new Promise(r => setTimeout(r, 0));
+    expect(m.setDoc).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ token: 't2', platform: 'ios' }), { merge: true });
+    expect(m.registerCallable).not.toHaveBeenCalled();
   });
 
   it('a refresh after logout is ignored', async () => {

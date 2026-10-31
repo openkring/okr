@@ -355,7 +355,8 @@ export class FcmService {
   /**
    * A native token event. With a registration waiting, it is that registration's answer.
    * Otherwise it is a refresh (N6, e.g. the iOS AppDelegate posting a rotated FCM token): saved
-   * for the last registering session and followed by the Matrix pusher. Both saves drop a
+   * for the last registering session, and the Matrix pusher follows only if the previous token
+   * had one. Both saves drop a
    * token of a session that ended (saveTokenUnlessLoggedOut).
    */
   private async onNativeRegistration(token: string): Promise<void> {
@@ -376,10 +377,14 @@ export class FcmService {
     }
     const session = this.nativeSession;
     if (!session) return;
+    // Only move a pusher this session already had: a member without chat (no Matrix account,
+    // chat blocked, 1.107) must not get one here. Otherwise initializeMatrix registers it for
+    // the new token once chat is open.
+    const hadPusher = this.pusherToken !== undefined;
     try {
       if (!(await this.saveTokenUnlessLoggedOut(session.uid, token, session.generation))) return;
       console.log('FcmService: refreshed native push token saved');
-      await this.ensureMatrixPusher();
+      if (hadPusher) await this.ensureMatrixPusher();
     } catch (e) {
       console.warn('FcmService: Failed to save refreshed native token', e);
     }
