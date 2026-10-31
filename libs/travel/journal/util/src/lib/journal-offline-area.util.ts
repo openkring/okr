@@ -1,4 +1,4 @@
-import { MapArea, MapLayerKind, tilesToFree } from './journal-map-area.util';
+import { MapArea, MapLayerKind, phase3LayerKinds, tilesToFree } from './journal-map-area.util';
 import { TileJob } from './journal-tiles.util';
 
 /** Download state of one area layer of one journal (design §4); `empty` tiles are known blanks and count as done. */
@@ -38,7 +38,10 @@ export function isUsable(s: OfflineLayerStatus): boolean {
   return s.state === 'ready' || (s.state === 'partial' && s.failed <= s.total * 0.1);
 }
 
-/** One-time migration of the old per-journal record: every area in its areaIds, each derived layer. */
+/**
+ * One-time migration of the old per-journal record: every area in its areaIds, but only the layers the old download
+ * fetched (`phase3LayerKinds`). A layer a phase 4 iPad added later stays `none`.
+ */
 export function migrateOfflineMap(
   old: { state: string; at: string; areaIds: string[]; total: number; failed: number },
   areas: MapArea[],
@@ -47,7 +50,9 @@ export function migrateOfflineMap(
   const state = old.state === 'ready' ? 'ready' : 'partial';
   for (const area of areas) {
     if (!old.areaIds.includes(area.id)) continue;
+    const fetched = phase3LayerKinds(area);
     for (const layer of area.layers) {
+      if (!fetched.includes(layer.kind)) continue;
       out[`${area.id}:${layer.kind}`] = { ...NO_OFFLINE_LAYER, state, total: old.total, done: Math.max(0, old.total - old.failed), failed: old.failed, at: old.at };
     }
   }

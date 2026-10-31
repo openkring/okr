@@ -140,6 +140,11 @@ export function layerDetailLevels(kind: MapLayerKind, bbox: Bbox): { key: Detail
 /** The layer kind that draws a phase 3 source. */
 const KIND_OF_SOURCE: Record<MapSource, MapLayerKind> = { antarctica: 'satellite', swisstopo: 'swisstopo', osm: 'osm' };
 
+/** The layer kinds a phase 3 download of the area fetched: its `source`'s kind, plus satellite (GIBS) for the subantarctic preset. */
+export function phase3LayerKinds(area: { source: MapSource; preset?: MapPreset }): MapLayerKind[] {
+  return area.preset === 'subantarctic-islands' ? ['satellite', 'osm'] : [KIND_OF_SOURCE[area.source]];
+}
+
 /** The layers of an area written before phase 4, from its `source` (the subantarctic preset downloads GIBS + OSM). */
 function derivedLayers(area: { source: MapSource; maxZoom: number; preset?: MapPreset }): AreaLayer[] {
   if (area.preset === 'subantarctic-islands') return [{ kind: 'satellite', maxZoom: GIBS_MAX_ZOOM }, { kind: 'osm', maxZoom: area.maxZoom }];

@@ -5,7 +5,7 @@ import { TileJob } from './journal-tiles.util';
 
 const job = (path: string): TileJob => ({ source: 'osm', z: 1, x: 0, y: 0, url: '', path });
 const ISLANDS: MapArea = {
-  id: 'subantarctic-islands', name: 'Islands', source: 'gibs', bbox: [-70, -55, -30, -50], maxZoom: 8,
+  id: 'subantarctic-islands', name: 'Islands', source: 'osm', bbox: [-70, -55, -30, -50], maxZoom: 8, preset: 'subantarctic-islands',
   layers: [{ kind: 'satellite', maxZoom: 8 }, { kind: 'osm', maxZoom: 8 }],
 };
 
@@ -21,6 +21,24 @@ describe('offline area state', () => {
     expect(m['subantarctic-islands:osm'].state).toBe('ready');
     const p = migrateOfflineMap({ state: 'partial', at: 't', areaIds: ['subantarctic-islands'], total: 10, failed: 1 }, [ISLANDS]);
     expect(p['subantarctic-islands:osm'].state).toBe('partial');
+    const swiss: MapArea = { id: 'zh', name: 'Zürich', source: 'swisstopo', bbox: [8.4, 47.3, 8.6, 47.4], maxZoom: 14, layers: [{ kind: 'swisstopo', maxZoom: 14 }] };
+    expect(migrateOfflineMap({ state: 'ready', at: 't', areaIds: ['zh'], total: 5, failed: 0 }, [swiss])['zh:swisstopo'].state).toBe('ready');
+  });
+
+  it('migration ignores layers the old download did not fetch', () => {
+    const area: MapArea = {
+      id: 'oslo', name: 'Oslo', source: 'osm', bbox: [10.6, 59.8, 10.9, 60], maxZoom: 14,
+      layers: [{ kind: 'osm', maxZoom: 14 }, { kind: 'satellite', maxZoom: 8 }], // satellite added by a phase 4 iPad
+    };
+    const m = migrateOfflineMap({ state: 'ready', at: 't', areaIds: ['oslo'], total: 10, failed: 0 }, [area]);
+    expect(m['oslo:osm'].state).toBe('ready');
+    expect(m['oslo:satellite']).toBeUndefined();
+    const antarctic: MapArea = {
+      id: 'a', name: 'A', source: 'antarctica', bbox: [-70, -70, -60, -62], maxZoom: 10,
+      layers: [{ kind: 'satellite', maxZoom: 10 }, { kind: 'osm', maxZoom: 10 }],
+    };
+    const n = migrateOfflineMap({ state: 'ready', at: 't', areaIds: ['a'], total: 10, failed: 0 }, [antarctic]);
+    expect(Object.keys(n)).toEqual(['a:satellite']);
   });
 
   it('empty tiles count toward ready', () => {
