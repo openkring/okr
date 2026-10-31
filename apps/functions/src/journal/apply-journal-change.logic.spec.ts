@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { JournalChange } from '@okr/shared-models';
 import { conflictCopyKey, formatHlc } from '@okr/travel-journal-util';
 
-import { isBookMapFileName, isJournalFileName, journalObjectPath, mayOverwrite, planEntityWrite, planFootprintSections, planSectionWrites, StoredRecord } from './apply-journal-change.logic';
+import { isBookMapFileName, isJournalFileName, journalObjectPath, uploadHeadersFor, mayOverwrite, planEntityWrite, planFootprintSections, planSectionWrites, StoredRecord } from './apply-journal-change.logic';
 
 let n = 0;
 function rec(p: Pick<JournalChange, 'entity' | 'entityKey' | 'op'> & Partial<JournalChange>, deviceId = 'dev-a', authorKey = 'bruno'): StoredRecord {
@@ -179,6 +179,9 @@ describe('applyJournalChange logic', () => {
     expect(isJournalFileName('../other/a.jpg')).toBe(false);
     expect(isJournalFileName('journals/j1/a.jpg')).toBe(false);
     expect(isJournalFileName('a.png')).toBe(false);
+    expect(isJournalFileName('ab-video.mp4')).toBe(true);
+    expect(isJournalFileName('ab.mp4')).toBe(false);
+    expect(isJournalFileName('../x-video.mp4')).toBe(false);
     expect(journalObjectPath('bkg', 'j1', 'a-400.jpg')).toBe('tenant/bkg/journal/j1/a-400.jpg');
   });
 });
@@ -196,5 +199,12 @@ describe('book map overwrite (ruling R9)', () => {
     expect(mayOverwrite('book-map-overview.jpg', undefined)).toBe(false);
     expect(mayOverwrite('book-map-overview.jpg', 'true')).toBe(false);
     expect(mayOverwrite('a1b2-2048.jpg', true)).toBe(false);
+  });
+});
+
+describe('uploadHeadersFor', () => {
+  it('binds a photo to image/jpeg and a clip to video/mp4', () => {
+    expect(uploadHeadersFor('a-2048.jpg')).toEqual({ 'Content-Type': 'image/jpeg', 'x-goog-content-length-range': '0,15728640' });
+    expect(uploadHeadersFor('ab-video.mp4')).toEqual({ 'Content-Type': 'video/mp4', 'x-goog-content-length-range': '0,9000000' });
   });
 });

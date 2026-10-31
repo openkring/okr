@@ -87,6 +87,23 @@ describe('journal server util', () => {
     expect(section?.properties.images.map((i) => i.label)).toEqual(['i1', 'i2']);
   });
 
+  it('a video block keeps its caption and lists its clips', () => {
+    const state = materialize([
+      rec({ entity: 'section', entityKey: 's3', op: 'create', fields: { footprintKey: 'f1', kind: 'video', html: '<p>Pinguine</p>', imageKeys: ['i1', 'i2'], order: 'H' } }),
+    ]);
+    const section = sectionDocOf(state, 's3', 'j1', ['bkg']);
+    expect(section?.blockKind).toBe('video');
+    expect(section?.content.htmlContent).toBe('<p>Pinguine</p>');
+    expect(section?.properties.images.map((i) => i.label)).toEqual(['i1', 'i2']);
+  });
+
+  it('a photo block has no blockKind key', () => {
+    const state = materialize([
+      rec({ entity: 'section', entityKey: 's2', op: 'create', fields: { footprintKey: 'f1', kind: 'photos', imageKeys: ['i1'], order: 'G' } }),
+    ]);
+    expect(sectionDocOf(state, 's2', 'j1', ['bkg'])).not.toHaveProperty('blockKind');
+  });
+
   it('imageDocOf stores bucket paths', () => {
     const state = materialize([
       rec({ entity: 'image', entityKey: 'i1', op: 'create', fields: { journalKey: 'j1', width: 2048, height: 1536, path2048: 'journals/j1/a-2048.jpg', path400: 'journals/j1/a-400.jpg', localIdentifier: 'L1' } }),

@@ -95,9 +95,21 @@ export function isJournalKey(key: unknown): key is string {
   return typeof key === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(key);
 }
 
-/** A photo file name as the device writes it (`<uuid>-2048.jpg`): no path, no traversal. */
+/** A journal file name as the device writes it (`<uuid>-2048.jpg`, `<uuid>-video.mp4`): no path, no traversal. */
 export function isJournalFileName(name: unknown): name is string {
-  return typeof name === 'string' && /^[A-Za-z0-9_-]{1,100}\.jpg$/.test(name);
+  return typeof name === 'string' && (/^[A-Za-z0-9_-]{1,100}\.jpg$/.test(name) || /^[A-Za-z0-9_-]{1,94}-video\.mp4$/.test(name));
+}
+
+const MAX_PHOTO_BYTES = 15 * 1024 * 1024;
+const MAX_VIDEO_UPLOAD_BYTES = 9_000_000;
+
+/** The headers a signed upload binds a file to: a clip is video/mp4 up to 9 MB, everything else image/jpeg up to 15 MB. */
+export function uploadHeadersFor(file: string): { 'Content-Type': string; 'x-goog-content-length-range': string } {
+  const video = file.endsWith('-video.mp4');
+  return {
+    'Content-Type': video ? 'video/mp4' : 'image/jpeg',
+    'x-goog-content-length-range': `0,${video ? MAX_VIDEO_UPLOAD_BYTES : MAX_PHOTO_BYTES}`,
+  };
 }
 
 /** A book map rendered in the browser (`book-map-<name>.jpg`): the only files an upload may overwrite (ruling R9). */

@@ -11,12 +11,11 @@ import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functi
 import { originalOfCopy, withCheckedBases } from '@okr/travel-journal-util';
 
 import { privateBucket } from '../_storage/private-bucket';
-import { isJournalFileName, journalObjectPath, planEntityWrite, planFootprintSections, planSectionWrites, StoredRecord, mayOverwrite } from './apply-journal-change.logic';
+import { isJournalFileName, journalObjectPath, uploadHeadersFor, planEntityWrite, planFootprintSections, planSectionWrites, StoredRecord, mayOverwrite } from './apply-journal-change.logic';
 import { requireJournalAuthor } from './journal-auth';
 
 const REGION = 'europe-west6';
 const URL_WINDOW_MS = 15 * 60 * 1000;
-const MAX_PHOTO_BYTES = 15 * 1024 * 1024;
 const MAX_FILES_PER_CALL = 50;
 
 /**
@@ -89,7 +88,7 @@ async function writeFootprintSections(journalKey: string, footprintKey: string, 
 function fileNames(data: unknown): string[] {
   const files = (data as { files?: unknown } | undefined)?.files;
   if (!Array.isArray(files) || files.length > MAX_FILES_PER_CALL || !files.every(isJournalFileName)) {
-    throw new HttpsError('invalid-argument', `files: up to ${MAX_FILES_PER_CALL} photo file names.`);
+    throw new HttpsError('invalid-argument', `files: up to ${MAX_FILES_PER_CALL} journal file names (photos and video clips).`);
   }
   return [...new Set(files)];
 }
@@ -97,8 +96,8 @@ function fileNames(data: unknown): string[] {
 export interface JournalPhotoUpload { file: string; done: boolean; url?: string; headers?: Record<string, string> }
 
 /**
- * Signed v4 PUT URLs for a journal author's photo files in the private bucket (plan 4): image/jpeg,
- * at most 15 MB, bound by the headers the device must send verbatim. A file already in the bucket
+ * Signed v4 PUT URLs for a journal author's photo files in the private bucket (plan 4): image/jpeg (photos, at most 15 MB) or video/mp4 (clips, at most 9 MB),
+ * bound by the headers the device must send verbatim. A file already in the bucket
  * comes back `done` (a retry after a lost response).
  */
 export const prepareJournalPhotoUploads = onCall(
@@ -108,13 +107,13 @@ export const prepareJournalPhotoUploads = onCall(
     checkAuthentication(request as never, 'prepareJournalPhotoUploads');
     const caller = await requireJournalAuthor(getFirestore(), request.auth?.uid ?? '', (request.data as { journalKey?: unknown })?.journalKey);
     const bucket = privateBucket();
-    const headers = { 'Content-Type': 'image/jpeg', 'x-goog-content-length-range': `0,${MAX_PHOTO_BYTES}` };
     // `overwrite: true` re-uploads book maps (drawn again on every export, ruling R9); every other file is written once
     const overwrite = (request.data as { overwrite?: unknown } | undefined)?.overwrite;
     const uploads = await Promise.all(fileNames(request.data).map(async (file): Promise<JournalPhotoUpload> => {
       const object = bucket.file(journalObjectPath(caller.tenantId, caller.journalKey, file));
       const [exists] = await object.exists();
       if (exists && !mayOverwrite(file, overwrite)) return { file, done: true };
+      const headers = uploadHeadersFor(file);
       const [url] = await object.getSignedUrl({
         version: 'v4', action: 'write', expires: Date.now() + URL_WINDOW_MS, contentType: headers['Content-Type'],
         extensionHeaders: { 'x-goog-content-length-range': headers['x-goog-content-length-range'] },

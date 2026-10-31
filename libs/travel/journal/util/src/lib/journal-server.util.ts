@@ -14,6 +14,7 @@ import { BlockView, transportOf, weatherOf } from './journal-view.util';
  * A text block becomes an article section with its html; a photo block an article section whose
  * `properties.images[]` name the journal images (`label` = image key, `url` stays empty — the file is
  * in the private bucket and is read through signed URLs). The web story turns those into a collage.
+ * A video block keeps its caption as html and lists its clips like photos, marked `blockKind: 'video'`.
  */
 export const MAX_FUTURE_MS = 24 * 60 * 60 * 1000;
 
@@ -72,7 +73,7 @@ export function footprintPageOf(state: JournalState, footprintKey: string, tenan
  * A section doc; a conflict copy additionally names the block it was split from and whether the conflict
  * is open — `conflict: false` once the original is deleted: the copy is then a normal block (spec 1.126 §6.3).
  */
-export type SectionDoc = ArticleSection & { conflictOf?: string; conflict?: boolean };
+export type SectionDoc = ArticleSection & { conflictOf?: string; conflict?: boolean; blockKind?: 'video' };
 
 interface SectionParts {
   footprintKey: string; authorKey: string; order: string; kind: string; html: string; imageKeys: string[]; conflictOf?: string; conflict?: boolean;
@@ -80,13 +81,15 @@ interface SectionParts {
 
 function sectionDocFrom(sectionKey: string, journalKey: string, tenants: string[], p: SectionParts): SectionDoc {
   const isPhotos = p.kind === 'photos';
+  const isVideo = p.kind === 'video';
   return defined({
     ...ARTICLE_SECTION_SHAPE, okey: sectionKey, name: sectionKey, title: '', subTitle: '', tenants, isArchived: false,
     journalKey, footprintKey: p.footprintKey, authorKey: p.authorKey, order: p.order, conflictOf: p.conflictOf, conflict: p.conflict,
+    blockKind: isVideo ? 'video' as const : undefined,
     content: { ...ARTICLE_SECTION_SHAPE.content, htmlContent: isPhotos ? '' : p.html },
     properties: {
       ...ARTICLE_SECTION_SHAPE.properties,
-      images: isPhotos ? p.imageKeys.map((key) => ({ ...IMAGE_CONFIG_SHAPE, label: key, url: '', altText: '' })) : [],
+      images: isPhotos || isVideo ? p.imageKeys.map((key) => ({ ...IMAGE_CONFIG_SHAPE, label: key, url: '', altText: '' })) : [],
     },
   });
 }
