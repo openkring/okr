@@ -77,6 +77,7 @@ const browserOnline = (): boolean => typeof navigator === 'undefined' || navigat
     .story .facts { color: var(--site-ink-soft); font-size: 0.9rem; margin-bottom: 16px; }
     .block { margin: 16px 0; }
     .block .by { font-size: 0.8rem; color: var(--site-ink-soft); }
+    .clip { display: block; width: 100%; max-height: 70vh; margin: 6px 0; border-radius: 6px; background: #000; }
     .photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px; }
     .photos img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 6px; cursor: zoom-in; }
   `],
@@ -105,6 +106,13 @@ const browserOnline = (): boolean => typeof navigator === 'undefined' || navigat
               <div class="by">{{ block.authorName }}</div>
               @if (block.kind === 'text') {
                 <div [innerHTML]="block.html"></div>
+              } @else if (block.kind === 'video') {
+                @if (block.html) {
+                  <div [innerHTML]="block.html"></div>
+                }
+                @for (clip of block.videos; track clip.key) {
+                  <video class="clip" controls playsinline preload="none" [poster]="clip.poster" [src]="clip.url"></video>
+                }
               } @else {
                 <div class="photos">
                   @for (photo of block.photos; track photo.key) {

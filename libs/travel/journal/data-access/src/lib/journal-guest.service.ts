@@ -19,7 +19,8 @@ export interface NoticePreview {
 }
 
 export interface GuestPhotoView { key: string; width: number; height: number; latitude?: number; longitude?: number; takenAt?: string; url: string; thumb: string }
-export interface GuestBlockView { key: string; kind: 'text' | 'photos'; authorName: string; html: string; photos: GuestPhotoView[] }
+export interface GuestVideoView { key: string; width: number; height: number; durationSec: number; poster: string; url: string }
+export interface GuestBlockView { key: string; kind: 'text' | 'photos' | 'video'; authorName: string; html: string; photos: GuestPhotoView[]; videos: GuestVideoView[] }
 export interface GuestCommentView { key: string; authorName: string; text: string; createdAt: string; mine: boolean }
 export interface GuestFootprintView {
   key: string; title: string; placeName: string; date: string; time: string; latitude?: number; longitude?: number;

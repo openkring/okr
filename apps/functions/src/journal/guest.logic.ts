@@ -114,3 +114,9 @@ export function deliveryFor(channel: GuestChannel): string[] {
 export function isGuestVisibleSection(section: Record<string, unknown>): boolean {
   return section['isArchived'] !== true && (section['conflictOf'] === undefined || section['conflict'] === false);
 }
+
+/** How a block is shown to a guest: video blocks are marked by the author's device, the rest is guessed from content. */
+export function guestBlockKind(section: Record<string, unknown>, imageKeys: string[], html: string): 'text' | 'photos' | 'video' {
+  if (section['blockKind'] === 'video') return 'video';
+  return imageKeys.length > 0 && html === '' ? 'photos' : 'text';
+}

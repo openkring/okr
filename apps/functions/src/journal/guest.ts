@@ -10,13 +10,14 @@ import {
   JournalSectionCollection, PersonCollection,
 } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
-import { findGuestLink, guestChangeRecord, guestLinkState, likeKey } from '@okr/travel-journal-util';
+import { findGuestLink, guestChangeRecord, guestLinkState, likeKey, photoFileName } from '@okr/travel-journal-util';
 
 import { IMGIX_PRIVATE_HOST, signImgixUrl } from '../_storage/imgix-sign';
+import { privateBucket } from '../_storage/private-bucket';
 import { tenantLinks } from '../calendar/deliver';
 import { windowExpiry } from '../video/video-sign.util';
-import { applyManage, deliveryFor, GuestRequest, GuestRequestError, isGuestVisibleSection, ManageAction, memberName, newLinkCode, parseGuestRequest } from './guest.logic';
-import { isJournalKey } from './apply-journal-change.logic';
+import { applyManage, deliveryFor, guestBlockKind, GuestRequest, GuestRequestError, isGuestVisibleSection, ManageAction, memberName, newLinkCode, parseGuestRequest } from './guest.logic';
+import { isJournalKey, journalObjectPath } from './apply-journal-change.logic';
 import { requireJournalAuthor } from './journal-auth';
 import { checkNotice } from './notify.logic';
 import { NoticeTooSoon, previewNotice, sendNotice } from './notify';
@@ -95,13 +96,13 @@ async function guestView(db: Firestore, jk: string, ctx: GuestContext): Promise<
   const name = (personKey: string) => memberName(personKey, ctx.authors, ctx.guests) || (personKey === ctx.link.personKey ? ctx.name : '');
   const pk = ctx.link.personKey;
 
-  const result = live(footprints.docs).map((f) => {
+  const unsorted = await Promise.all(live(footprints.docs).map(async (f) => {
     const fp = f.data();
     const parentKey = `page.${f.id}`;
     const order = (fp['sections'] as string[] | undefined) ?? [];
-    const blocks = live(sections.docs).filter((s) => isGuestVisibleSection(s.data()) && s.data()['footprintKey'] === f.id)
+    const blocksOf = live(sections.docs).filter((s) => isGuestVisibleSection(s.data()) && s.data()['footprintKey'] === f.id)
       .sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id))
-      .map((s) => {
+      .map(async (s) => {
         const section = s.data();
         const imageKeys = ((section['properties'] as Data | undefined)?.['images'] as { label?: string }[] | undefined ?? []).map((i) => i.label ?? '');
         const html = String((section['content'] as Data | undefined)?.['htmlContent'] ?? '');
@@ -111,8 +112,24 @@ async function guestView(db: Firestore, jk: string, ctx: GuestContext): Promise<
             url: signImgixUrl(IMGIX_PRIVATE_HOST, token, String(image?.['path2048']), { w: 1600, auto: 'format', expires }),
             thumb: signImgixUrl(IMGIX_PRIVATE_HOST, token, String(image?.['path400']), { w: 400, auto: 'format', expires }),
           }));
-        return { key: s.id, kind: imageKeys.length > 0 && html === '' ? 'photos' : 'text', authorName: name(String(section['authorKey'] ?? '')), html, photos };
+        const kind = guestBlockKind(section, imageKeys, html);
+        const authorName = name(String(section['authorKey'] ?? ''));
+        if (kind === 'video') {
+          const clips = imageKeys.map((key) => ({ key, image: imageById.get(key) })).filter((x) => x.image && x.image['videoPath']);
+          const videos = await Promise.all(clips.map(async ({ key, image }) => {
+            const [url] = await privateBucket().file(journalObjectPath(ctx.tenants[0] ?? '', jk, photoFileName(String(image?.['videoPath']))))
+              .getSignedUrl({ version: 'v4', action: 'read', expires: expires * 1000 });
+            return {
+              key, width: image?.['width'], height: image?.['height'], durationSec: image?.['durationSec'],
+              poster: image?.['path2048'] ? signImgixUrl(IMGIX_PRIVATE_HOST, token, String(image['path2048']), { w: 1600, auto: 'format', expires }) : '',
+              url,
+            };
+          }));
+          return { key: s.id, kind, authorName, html, photos: [], videos };
+        }
+        return { key: s.id, kind, authorName, html, photos, videos: [] };
       });
+    const blocks = await Promise.all(blocksOf);
     const likes = live(reactions.docs).filter((r) => r.data()['parentKey'] === parentKey).map((r) => String(r.data()['personKey']));
     const footprintComments = live(comments.docs).filter((c) => c.data()['parentKey'] === parentKey)
       .map((c) => ({
@@ -124,7 +141,8 @@ async function guestView(db: Firestore, jk: string, ctx: GuestContext): Promise<
       key: f.id, title: fp['title'] ?? '', placeName: fp['placeName'] ?? '', date: fp['date'] ?? '', time: fp['time'] ?? '',
       latitude: fp['latitude'], longitude: fp['longitude'], weather: fp['weather'], transport: fp['transport'], blocks, likes: likes.length, liked: likes.includes(pk), comments: footprintComments,
     };
-  }).sort((a, b) => (`${a.date}${a.time}` < `${b.date}${b.time}` ? -1 : 1));
+  }));
+  const result = unsorted.sort((a, b) => (`${a.date}${a.time}` < `${b.date}${b.time}` ? -1 : 1));
 
   const delivery = (person.data()?.['newsDelivery'] as unknown[] | undefined) ?? undefined;
   const channel = Array.isArray(delivery) ? (delivery.includes('signal') ? 'signal' : delivery.includes('email') ? 'email' : 'none') : 'email';

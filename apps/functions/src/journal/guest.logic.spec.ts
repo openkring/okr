@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { applyManage, deliveryFor, GuestRequestError, isGuestVisibleSection, memberName, parseGuestRequest } from './guest.logic';
+import { applyManage, deliveryFor, GuestRequestError, guestBlockKind, isGuestVisibleSection, memberName, parseGuestRequest } from './guest.logic';
 
 const CODE = '0123456789abcdef0123456789abcdef';
 const avatar = (key: string, name1: string, name2: string) => ({ key, name1, name2, modelType: 'person' as const, type: '', subType: '', label: '' });
@@ -69,4 +69,10 @@ describe('journal guest logic', () => {
   it('a copy that outlived its original is a normal block for guests', () => {
     expect(isGuestVisibleSection({ footprintKey: 'f1', conflictOf: 's1', conflict: false })).toBe(true);
   });
+});
+
+describe('guestBlockKind', () => {
+  it('video block', () => expect(guestBlockKind({ blockKind: 'video' }, ['i1'], '<p>x</p>')).toBe('video'));
+  it('photos only', () => expect(guestBlockKind({}, ['i1'], '')).toBe('photos'));
+  it('text', () => expect(guestBlockKind({}, [], '<p>x</p>')).toBe('text'));
 });
