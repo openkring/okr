@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   askRoomAliasLocalpart,
@@ -9,6 +9,7 @@ import {
   groupKeyFromRoomAlias,
   groupRoomAliasLocalpart,
   isProtectedRoomAlias,
+  loadRoomFacts,
   markerFromRoomState,
   mayPinForAll,
   muteBlocksPush,
@@ -371,5 +372,32 @@ describe('needsScopeRefresh', () => {
   it('is false for a room that is not a DM, or without facts', () => {
     expect(needsScopeRefresh({ roomId: '!g:hs', canonicalAlias: '#group_x:hs' }, scope, 240_000)).toBe(false);
     expect(needsScopeRefresh(undefined, scope, 240_000)).toBe(false);
+  });
+});
+
+describe('loadRoomFacts in-flight dedupe (1.127 M6)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('two concurrent cold reads of the same room share one fetch', async () => {
+    const fetchMock = vi.fn(async (url: string) => {
+      await new Promise((r) => setTimeout(r, 10));
+      if (String(url).includes('/members')) return { ok: true, json: async () => ({ members: [] }) };
+      return { ok: true, json: async () => ({ name: 'n', canonical_alias: '#group_a:hs', creator: '@c:hs' }) };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const [a, b] = await Promise.all([loadRoomFacts('!dedupe:hs', 't'), loadRoomFacts('!dedupe:hs', 't')]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(a).toEqual(b);
+    expect(a?.canonicalAlias).toBe('#group_a:hs');
+  });
+
+  it('a failed in-flight read is not kept: the next call after its TTL retries', async () => {
+    const fetchMock = vi.fn(async () => { throw new Error('down'); });
+    vi.stubGlobal('fetch', fetchMock);
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const [a, b] = await Promise.all([loadRoomFacts('!fail:hs', 't'), loadRoomFacts('!fail:hs', 't')]);
+    expect(a).toBeUndefined();
+    expect(b).toBeUndefined();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

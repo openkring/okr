@@ -1508,6 +1508,19 @@ const GATEWAY_CACHE_TTL_MS = 5 * 60_000;
 const GATEWAY_FAILURE_TTL_MS = 10_000;
 const SYNAPSE_READ_TIMEOUT_MS = 3_000;
 
+/**
+ * Runs `load` once per key while one is in flight: concurrent cold callers share the promise
+ * (spec 1.127 M6). The entry is dropped when it settles — success lives on in the TTL cache, a
+ * failure must let the next call retry.
+ */
+export function dedupeInFlight<T>(inFlight: Map<string, Promise<T>>, key: string, load: () => Promise<T>): Promise<T> {
+  const running = inFlight.get(key);
+  if (running) return running;
+  const promise = load().finally(() => { inFlight.delete(key); });
+  inFlight.set(key, promise);
+  return promise;
+}
+
 export type CachedTenantScope = TenantRoomScope & { loadedAt: number };
 
 const scopeCache = new BoundedTtlCache<CachedTenantScope | undefined>(200, GATEWAY_CACHE_TTL_MS);
@@ -1535,6 +1548,12 @@ export async function loadTenantRoomScope(
   if (hit && !(hit.value && options.refreshIfOlderThan !== undefined && now - hit.value.loadedAt > options.refreshIfOlderThan)) {
     return hit.value;
   }
+  return dedupeInFlight(scopeInFlight, tenantId, () => readTenantRoomScope(tenantId, now));
+}
+
+const scopeInFlight = new Map<string, Promise<CachedTenantScope | undefined>>();
+
+async function readTenantRoomScope(tenantId: string, now: number): Promise<CachedTenantScope | undefined> {
   try {
     const db = getFirestore();
     // getSystemQuery(tenantId); the client's orderBy is kept so the read uses the same indexes.
@@ -1576,6 +1595,12 @@ export async function loadRoomFacts(roomId: string, adminToken: string): Promise
   const now = Date.now();
   const hit = roomFactsCache.get(roomId, now);
   if (hit) return hit.value;
+  return dedupeInFlight(roomFactsInFlight, roomId, () => readRoomFacts(roomId, adminToken, now));
+}
+
+const roomFactsInFlight = new Map<string, Promise<CachedRoomFacts | undefined>>();
+
+async function readRoomFacts(roomId: string, adminToken: string, now: number): Promise<CachedRoomFacts | undefined> {
   const fail = (why: unknown): undefined => {
     console.warn(`loadRoomFacts(${roomId}) failed, delivering:`, why);
     roomFactsCache.set(roomId, undefined, now, GATEWAY_FAILURE_TTL_MS);

@@ -19,6 +19,7 @@ import {
   getUserTenants,
   getRoomTenantMarker,
   chatDeepLink,
+  dedupeInFlight,
   groupKeyFromRoomAlias,
   directCounterpartOf,
   needsScopeRefresh,
@@ -451,6 +452,12 @@ async function cachedRoomTenantMarker(roomId: string, adminToken: string): Promi
   const now = Date.now();
   const hit = markerCache.get(roomId, now);
   if (hit) return hit.value;
+  return dedupeInFlight(markerInFlight, roomId, () => readRoomTenantMarker(roomId, adminToken, now));
+}
+
+const markerInFlight = new Map<string, Promise<{ marker: string[] | undefined; failed: boolean }>>();
+
+async function readRoomTenantMarker(roomId: string, adminToken: string, now: number): Promise<{ marker: string[] | undefined; failed: boolean }> {
   try {
     const read = { marker: await getRoomTenantMarker(roomId, adminToken, { strict: true }), failed: false };
     markerCache.set(roomId, read, now);
@@ -594,13 +601,32 @@ export function chatLedgerPlan(
   return platform ? { countBadge: true, platform } : { countBadge: true };
 }
 
-/** Counts the chat event in the account's ledger; a failed write costs the badge, not the push. */
-async function chatBadgeFor(uid: string, eventId: string): Promise<number | undefined> {
+const BADGE_LEDGER_TIMEOUT_MS = 2_000;
+
+/**
+ * Counts the chat event in the account's ledger; a failed or slow (2 s) write costs the badge,
+ * not the push. The late write may still land, it just no longer holds the push back.
+ */
+export async function chatBadgeWithin(
+  uid: string,
+  eventId: string,
+  add: (uid: string, eventId: string) => Promise<number> = addChatBadge,
+  timeoutMs = BADGE_LEDGER_TIMEOUT_MS,
+): Promise<number | undefined> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<undefined>((resolve) => {
+    timer = setTimeout(() => {
+      console.warn('matrixPushGateway: badge ledger write timed out, sending without badge');
+      resolve(undefined);
+    }, timeoutMs);
+  });
   try {
-    return await addChatBadge(uid, eventId);
+    return await Promise.race([add(uid, eventId), timeout]);
   } catch (err) {
     console.warn('matrixPushGateway: badge ledger write failed, sending without badge:', err);
     return undefined;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -673,12 +699,14 @@ export const matrixPushGateway = onRequest(
       // the apps of the room's tenants (spec 1.93 §3). Skipped devices are NOT `rejected` —
       // that would make Synapse delete a healthy pusher.
       const adminToken = matrixAdminToken.value();
-      const markerRead = roomId ? await cachedRoomTenantMarker(roomId, adminToken) : { marker: undefined, failed: false };
+      // Marker and facts are independent Synapse reads: run them side by side (1.127 M6).
+      const [markerRead, roomFacts] = roomId
+        ? await Promise.all([cachedRoomTenantMarker(roomId, adminToken), loadRoomFacts(roomId, adminToken)])
+        : [{ marker: undefined, failed: false }, undefined];
       const roomMarker = markerRead.marker;
       // Spec 1.127 2.1: the room's facts (alias, creator, the 2 members of a DM) — read once per
       // notification, cached per room. `undefined` = Synapse failed or was slow (3 s bound): the
       // push is then delivered as before (Review Focus 2) and the room counts as protected.
-      const roomFacts = roomId ? await loadRoomFacts(roomId, adminToken) : undefined;
       const aliasLocalpart = aliasLocalpartOf(roomFacts);
       // A failed marker read must not look «unmarked» to the admission rule: without facts it delivers.
       const admissionFacts = markerRead.failed ? undefined : roomFacts;
@@ -735,8 +763,10 @@ export const matrixPushGateway = onRequest(
           // An older pusher without uid gets no ledger write and no badge (never a guess).
           const uid = ledgerTargetOf(device);
           // Only when the pushkey is a token of that very account (a forged uid counts nothing).
+          // The token doc is read first (a forged uid must count nothing), then the ledger write
+          // is bounded to 2 s: a slow ledger costs the badge, never the push.
           const plan = chatLedgerPlan(uid, uid ? await tokenDocOf(uid, token) : { exists: false });
-          const badge = uid && plan.countBadge ? await chatBadgeFor(uid, notification.event_id) : undefined;
+          const badge = uid && plan.countBadge ? await chatBadgeWithin(uid, notification.event_id) : undefined;
           const entry: TokenEntry = {
             token, uid: plan.countBadge && uid ? uid : '', docId: fcmTokenDocId(token),
             ...withPlatform(plan.platform),

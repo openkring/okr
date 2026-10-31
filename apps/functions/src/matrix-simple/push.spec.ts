@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Final review of 1.127 phase 2: I2 (the chat deep link needs the CMS page) and M1 (the pusher
 // carries the registering app's tenant).
@@ -25,7 +25,7 @@ vi.mock('firebase-admin/firestore', async (importOriginal) => ({
   }),
 }));
 
-import { chatLedgerPlan, hasGroupChatPage, ledgerTargetOf, pusherTenantFor, stalePushersToPrune, type ListedPusher } from './push';
+import { chatBadgeWithin, chatLedgerPlan, hasGroupChatPage, ledgerTargetOf, pusherTenantFor, stalePushersToPrune, type ListedPusher } from './push';
 
 describe('hasGroupChatPage', () => {
   beforeEach(() => {
@@ -157,5 +157,31 @@ describe('chatLedgerPlan (1.127 security)', () => {
     expect(chatLedgerPlan('u1', { exists: true, platform: 'ios' })).toEqual({ countBadge: true, platform: 'ios' });
     expect(chatLedgerPlan('u1', { exists: true })).toEqual({ countBadge: true });
     expect(chatLedgerPlan('u1', { exists: true, platform: 'bogus' })).toEqual({ countBadge: true });
+  });
+});
+
+describe('chatBadgeWithin (1.127 T2)', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it('gives up after 2 s and answers undefined, so the push goes out without a badge', async () => {
+    const never = vi.fn(() => new Promise<number>(() => undefined));
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const result = chatBadgeWithin('u1', 'e1', never);
+    await vi.advanceTimersByTimeAsync(1_999);
+    let settled = false;
+    void result.then(() => { settled = true; });
+    await Promise.resolve();
+    expect(settled).toBe(false);
+    await vi.advanceTimersByTimeAsync(2);
+    expect(await result).toBeUndefined();
+    warn.mockRestore();
+  });
+
+  it('answers the badge when the ledger is quick, undefined when it throws', async () => {
+    expect(await chatBadgeWithin('u1', 'e1', async () => 7)).toBe(7);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    expect(await chatBadgeWithin('u1', 'e1', async () => { throw new Error('x'); })).toBeUndefined();
+    warn.mockRestore();
   });
 });
