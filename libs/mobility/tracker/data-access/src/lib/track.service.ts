@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
 
 import { ENV, getBkStorage } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
-import { AvatarInfo, TRACKER_TRIP_TYPE, TrackPhoto, TransportMode, TripCollection, TripModel, TripTrack } from '@okr/shared-models';
+import { AvatarInfo, TRACKER_TRIP_TYPE, TrackPhoto, TrackSection, TransportMode, TripCollection, TripModel, TripTrack } from '@okr/shared-models';
 import { convertDateFormatToString, DateFormat, getDeletePatch, getSystemQuery } from '@okr/shared-util-core';
 import { crewTrackDeadline } from '@okr/trip-util';
 import {
@@ -255,6 +255,18 @@ export class TrackService {
       transitRouteKey: route.key,
       transitRoute: encodeTrack(route.points.map((p) => ({ ...p, t: 0 }))),
       transitLine: route.line,
+    });
+  }
+
+  /**
+   * Writes corrected section distances and the trip distance (km, one decimal) of an uploaded Strecke — a train/bus/ship
+   * section measured along its timetable line (spec 1.129 §4.2). Owner only (rules). Resolves on the server's ack.
+   */
+  public async setDistances(tripKey: string, sections: TrackSection[]): Promise<void> {
+    const totalM = sections.reduce((m, s) => m + s.distanceM, 0);
+    await updateDoc(doc(this.firestoreService.firestore, `${TripCollection}/${tripKey}`), {
+      'track.sections': sections,
+      distance: Math.round(totalM / 100) / 10,
     });
   }
 

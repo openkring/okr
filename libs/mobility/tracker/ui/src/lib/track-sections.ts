@@ -8,6 +8,7 @@ export interface TrackSectionRow {
   mode: TransportMode; distanceM: number; durationS: number; detected: boolean;
   steps?: number; splitAvgS?: number; splitBestS?: number; // activity figures (spec 1.122)
   strokes?: number; strokeRateAvg?: number; strokeRateMax?: number; distancePerStrokeM?: number; // row (spec 1.122 2c)
+  line?: string; // train/bus/ship: the line from the timetable, e.g. «R45» (spec 1.129 §4.2)
 }
 export interface TrackModeChange { index: number; mode: TransportMode }
 
@@ -68,14 +69,14 @@ export class TrackSections {
     return this.i18n()[`mode_${mode}`]();
   }
 
-  /** distance · duration, then the section's activity figures (steps, splits) when it has any */
+  /** the timetable line (if any) · distance · duration, then the section's activity figures (steps, splits) when it has any */
   protected line(section: TrackSectionRow): string {
     const i18n = this.i18n();
     const figures = figureTexts(section, {
       steps: i18n.figure_steps(), splitAvg: i18n.figure_split_avg(), splitBest: i18n.figure_split_best(),
       strokes: i18n.figure_strokes(), rateAvg: i18n.figure_rate_avg(), rateMax: i18n.figure_rate_max(), perStroke: i18n.figure_per_stroke(),
     });
-    return [formatKm(section.distanceM), formatDuration(section.durationS), ...figures].join(' · ');
+    return [...(section.line ? [section.line] : []), formatKm(section.distanceM), formatDuration(section.durationS), ...figures].join(' · ');
   }
 
   protected onMode(index: number, mode: TransportMode): void {

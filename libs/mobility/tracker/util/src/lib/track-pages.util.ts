@@ -96,13 +96,31 @@ export function localFromTrip(trip: TripModel, pointsBySection: TrackPoint[][], 
   return { track, sections: toLocalSections(track, pointsBySection, strokesBySection) };
 }
 
-/** Rows for okr-track-sections. */
-export function sectionRows(sections: LocalSection[]): {
+/** A section's line from the timetable (spec 1.129 §4.2): its geometry and name. */
+export interface SectionRoute { points: { lat: number; lng: number }[]; line: string }
+
+/** Length of a timetable line in metres; undefined when it has fewer than two points. */
+export function routeDistanceM(route: SectionRoute | undefined): number | undefined {
+  if (!route || route.points.length < 2) return undefined;
+  return summarize(route.points.map((p) => ({ ...p, t: 0 }))).distanceM;
+}
+
+/**
+ * Rows for okr-track-sections. A section with a timetable line (`routes`, same order) takes its distance from the
+ * line, not from the few recorded points, and shows the line's name (spec 1.129 §4.2).
+ */
+export function sectionRows(sections: LocalSection[], routes: (SectionRoute | undefined)[] = []): {
   mode: TransportMode; distanceM: number; durationS: number; detected: boolean; steps?: number; splitAvgS?: number; splitBestS?: number;
-  strokes?: number; strokeRateAvg?: number; strokeRateMax?: number; distancePerStrokeM?: number;
+  strokes?: number; strokeRateAvg?: number; strokeRateMax?: number; distancePerStrokeM?: number; line?: string;
 }[] {
-  return sections.map((s) => {
-    const row = { mode: s.mode, detected: s.detected, ...summarize(s.points), ...sectionFigures(s) };
+  return sections.map((s, i) => {
+    const route = routes[i];
+    const routeM = routeDistanceM(route);
+    const row = {
+      mode: s.mode, detected: s.detected, ...summarize(s.points), ...sectionFigures(s),
+      ...(routeM === undefined ? {} : { distanceM: routeM }),
+      ...(routeM !== undefined && route?.line ? { line: route.line } : {}),
+    };
     return row.strokes ? { ...row, distancePerStrokeM: Math.round((row.distanceM / row.strokes) * 10) / 10 } : row;
   });
 }

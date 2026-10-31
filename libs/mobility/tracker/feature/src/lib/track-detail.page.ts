@@ -19,7 +19,7 @@ import { fill } from '@okr/shared-util-core';
 import {
   alignSections, buildGpx, ElevationPoint, elevationProfile, hasRelief, needsTerrain, sectionsWithHeights, terrainAltitudes, terrainSamples, logbuchTripLabel, correctedTrack, fromLocalSections, gpxFileName, isShareCancel, LocalSection, LocalTrack, localFromTrip, mergeWithNext,
   localStoreDate, middlePointIndex, sectionRows, setSectionMode, splitSection, toLocalSections, trackTenants, wantsPhotoReattach, withoutPhoto,
-  withPhotoHidden, withQueriedSteps, transitRouteKey, transitRouteReq, distanceAlong, formatKm, photosOnTrack, removePoints, spikeRunAround, withoutSpikes,
+  withPhotoHidden, withQueriedSteps, routeDistanceM, transitRouteKey, transitRouteReq, distanceAlong, formatKm, photosOnTrack, removePoints, spikeRunAround, withoutSpikes,
 } from '@okr/mobility-tracker-util';
 
 import { TrackerStore } from './tracker.store';
@@ -232,7 +232,10 @@ export class TrackDetailPage {
     const routes = this.transit();
     return this.sections().map((s) => ({ mode: s.mode, points: s.points, route: routes.get(transitRouteKey(s))?.points }));
   });
-  protected readonly rows = computed(() => sectionRows(this.sections()));
+  protected readonly rows = computed(() => {
+    const routes = this.transit();
+    return sectionRows(this.sections(), this.sections().map((s) => routes.get(transitRouteKey(s))));
+  });
   protected readonly pointCounts = computed(() => this.sections().map((s) => s.points.length));
   protected readonly photoAccess = this.store.photoAccess;
   /** The track's photos: the local list for a track on this device, else the uploaded trip's. */
@@ -670,6 +673,7 @@ export class TrackDetailPage {
         if (stored.length > 0) this.transit.set(new Map(stored.map((t) => [t.key, t])));
         this.track.set(track);
         this.sections.set(sections);
+        if (stored.length > 0) this.syncDistances(key); // a line stored before its distance reached the trip
         // terrain heights looked up on an earlier view (spec 1.128): no second lookup
         if (read.every((r) => r.terrain)) {
           this.terrain.set({ sections, alts: read.map((r) => r.terrain ?? []), provider: read.find((r) => r.terrainProvider)?.terrainProvider ?? '' });
@@ -735,11 +739,34 @@ export class TrackDetailPage {
       if (same && trip?.okey === key && (!this.isLocal() || this.track()?.uploaded)) {
         void this.trackService.saveTransitRoute(key, n, route)
           .catch((error: unknown) => console.warn('TrackDetailPage.saveTransitRoute', error));
+        this.syncDistances(key);
       }
     } catch (error) {
       console.warn('TrackDetailPage.ensureTransit', error);
       this.transitRequested.delete(routeKey);
     }
+  }
+
+  /**
+   * The uploaded trip's section distances follow the timetable lines (spec 1.129 §4.2), so the Strecken list shows
+   * the same km as this page. Only while the shown sections are the uploaded ones; detached, a failure only logs.
+   */
+  private syncDistances(key: string): void {
+    const trip = this.trip();
+    const stored = trip?.track?.sections;
+    const sections = this.sections();
+    if (!trip || trip.okey !== key || !stored || stored.length !== sections.length || (this.isLocal() && !this.track()?.uploaded)) return;
+    const routes = this.transit();
+    let changed = false;
+    const next = stored.map((s, n) => {
+      const routeM = routeDistanceM(routes.get(transitRouteKey(sections[n])));
+      if (routeM === undefined || Math.abs(routeM - s.distanceM) < 1) return s;
+      changed = true;
+      return { ...s, distanceM: routeM };
+    });
+    if (!changed) return;
+    this.trip.set({ ...trip, track: { ...trip.track, sections: next } as typeof trip.track });
+    void this.trackService.setDistances(key, next).catch((error: unknown) => console.warn('TrackDetailPage.setDistances', error));
   }
 
   /** The local 400 px file when the track and the file are on this device, else the uploaded thumbnail (if any). */

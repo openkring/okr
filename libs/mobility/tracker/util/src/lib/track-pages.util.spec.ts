@@ -3,7 +3,7 @@ import type { TripModel } from '@okr/shared-models';
 import type { LocalTrack } from './track-local.model';
 import type { LocalSection } from './track-sections.util';
 import {
-  tripSections, buildGpx, correctedTrack, elapsedSeconds, isShareCancel, sameTrackContent, fromLocalSections, gpxFileName, localFromTrip, mergeTrackLists, middlePointIndex, sectionRows, toLocalSections,
+  tripSections, buildGpx, correctedTrack, elapsedSeconds, isShareCancel, sameTrackContent, fromLocalSections, gpxFileName, localFromTrip, mergeTrackLists, middlePointIndex, routeDistanceM, sectionRows, toLocalSections,
 } from './track-pages.util';
 
 function local(key: string, startedAt: number, extra: Partial<LocalTrack> = {}): LocalTrack {
@@ -302,5 +302,25 @@ describe('stroke times in the local model (spec 1.122 2c)', () => {
     (t.track as NonNullable<TripModel['track']>).sections[1].mode = 'row'; // only row sections carry stroke times
     const { sections } = localFromTrip(t, [[P(1, 1, 1)], [P(2, 2, 2)]], [[], [5, 6]]);
     expect(sections[1].strokeTimes).toEqual([5, 6]);
+  });
+});
+
+describe('sectionRows with a timetable line', () => {
+  const train: LocalSection = { mode: 'train', detected: false, points: [P(47, 8, 0), P(47.01, 8, 300_000)] };
+  const route = { points: [{ lat: 47, lng: 8 }, { lat: 47.005, lng: 8.005 }, { lat: 47.01, lng: 8 }], line: 'R45' };
+
+  it('takes distance and line name from the line', () => {
+    const [row] = sectionRows([train], [route]);
+    expect(row.distanceM).toBeCloseTo(routeDistanceM(route) as number);
+    expect(row.distanceM).toBeGreaterThan(1150);
+    expect(row.line).toBe('R45');
+  });
+
+  it('keeps the recorded distance without a line or for «none found»', () => {
+    const [plain] = sectionRows([train]);
+    const [none] = sectionRows([train], [{ points: [], line: '' }]);
+    expect(none.distanceM).toBe(plain.distanceM);
+    expect(none.line).toBeUndefined();
+    expect(routeDistanceM(undefined)).toBeUndefined();
   });
 });
