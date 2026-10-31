@@ -7,6 +7,15 @@ import { HttpsError } from 'firebase-functions/v2/https';
  */
 export const MAX_CHAT_HEIC_BYTES = 7 * 1024 * 1024;
 
+/**
+ * Largest image the converter decodes, in pixels. The byte cap above bounds the *compressed*
+ * size only: a few KB of HEIC can declare a 30000×30000 grid, and decoding allocates ~4 bytes
+ * per pixel, so without this a single request could take the 1 GiB instance down. A 12 MP phone
+ * photo peaks at ~345 MB; 40 MP covers the 12/24 MP modes, while 50/200 MP modes fall back to
+ * the original on the client.
+ */
+export const MAX_CHAT_HEIC_PIXELS = 40_000_000;
+
 /** JPEG quality for the converted photo — the same 0.85 the Safari path in chat-util uses. */
 export const CHAT_JPEG_QUALITY = 0.85;
 
@@ -33,6 +42,23 @@ export function isHeifBuffer(bytes: Uint8Array): boolean {
   return ['heic', 'heix', 'heim', 'heis', 'hevc', 'hevx', 'mif1', 'msf1'].includes(ascii(8, 12));
 }
 
+/**
+ * The largest width × height declared by any `ispe` (image spatial extents) property in the
+ * file, or 0 when there is none. HEIF requires an `ispe` on every image item, and the grid item
+ * that phones write carries the full output size, so the maximum is the decoded size. Layout:
+ * size(4) 'ispe'(4) version+flags(4) width(4) height(4), big-endian.
+ */
+export function maxDeclaredPixels(bytes: Uint8Array): number {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  let max = 0;
+  for (let i = 4; i + 16 <= bytes.length; i++) {
+    if (bytes[i] !== 0x69 || bytes[i + 1] !== 0x73 || bytes[i + 2] !== 0x70 || bytes[i + 3] !== 0x65) continue; // 'ispe'
+    if (view.getUint32(i - 4) < 20) continue;
+    max = Math.max(max, view.getUint32(i + 8) * view.getUint32(i + 12));
+  }
+  return max;
+}
+
 /** `IMG_1234.HEIC` → `IMG_1234.jpg`; a name without a HEIC/HEIF extension just gains `.jpg`. */
 export function jpegFileName(fileName: string): string {
   return /\.(heic|heif)$/i.test(fileName) ? fileName.replace(/\.(heic|heif)$/i, '.jpg') : `${fileName}.jpg`;
@@ -51,5 +77,8 @@ export function validateChatHeicRequest(data: unknown): ChatHeicRequest {
   const bytes = Buffer.from(base64, 'base64');
   if (bytes.length === 0 || bytes.length > MAX_CHAT_HEIC_BYTES) fail('Image too large.');
   if (!isHeifBuffer(bytes)) fail('Not a HEIC/HEIF image.');
+  const pixels = maxDeclaredPixels(bytes);
+  if (pixels === 0) fail('Image dimensions missing.');
+  if (pixels > MAX_CHAT_HEIC_PIXELS) fail('Image too large.');
   return { fileName, bytes };
 }

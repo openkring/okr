@@ -4,9 +4,12 @@ import convert from 'heic-convert';
 
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
+import { checkRateLimit } from '../matrix-simple/shared';
 import { CHAT_JPEG_QUALITY, jpegFileName, validateChatHeicRequest } from './chat-image.util';
 
 const CF_NAME = 'convertChatHeic';
+/** Burst brake per user and instance: room for a batch of photos, not for a decode loop. */
+const MAX_CONVERSIONS_PER_MINUTE = 30;
 
 export interface ChatHeicConversion {
   fileName: string;
@@ -30,6 +33,7 @@ export const convertChatHeic = onCall(
   async (request: CallableRequest<unknown>): Promise<ChatHeicConversion> => {
     checkAppCheckToken(request as never, CF_NAME);
     checkAuthentication(request as never, CF_NAME);
+    checkRateLimit(request.auth?.uid ?? '', CF_NAME, MAX_CONVERSIONS_PER_MINUTE);
     const req = validateChatHeicRequest(request.data);
 
     let jpeg: Uint8Array;
