@@ -29,7 +29,16 @@ export interface TrackPointsDoc {
   terrainAltitudes?: string;
   /** who the terrain heights come from (attribution under the chart), e.g. 'swisstopo' */
   terrainProvider?: string;
+  /** train/bus/ship: the line from the timetable (spec 1.129 §4.2), encoded like `encoded` without times; '' = none found */
+  transitRoute?: string;
+  /** the section the route was looked up for (`transitRouteKey`): a stale one is looked up again */
+  transitRouteKey?: string;
+  /** the line, e.g. «IR 35» */
+  transitLine?: string;
 }
+
+/** A section's line from the timetable as stored; `points` empty = looked up, none found. */
+export interface StoredTransitRoute { key: string; points: { lat: number; lng: number }[]; line: string }
 
 /** One section as read from Firestore: terrain heights only when they were looked up once (spec 1.128). */
 export interface SectionRead {
@@ -37,6 +46,7 @@ export interface SectionRead {
   strokeTimes: number[];
   terrain?: (number | undefined)[];
   terrainProvider?: string;
+  transit?: StoredTransitRoute;
   /** GPS spikes left out of `points` (and `terrain`) on reading, spec 1.129 §3.2; 0 for a Strecke uploaded clean */
   spikes: number;
 }
@@ -210,6 +220,9 @@ export class TrackService {
     const out: SectionRead = {
       points, strokeTimes: decodeStrokeTimes(data.strokeTimes, strokeTimesBase(points)), spikes: raw.length - keep.length,
     };
+    if (data.transitRouteKey !== undefined) {
+      out.transit = { key: data.transitRouteKey, points: data.transitRoute ? decodeTrack(data.transitRoute) : [], line: data.transitLine ?? '' };
+    }
     if (data.terrainAltitudes) {
       out.terrain = pickIndices(decodeAltitudes(data.terrainAltitudes, raw.length), keep);
       out.terrainProvider = data.terrainProvider ?? '';
@@ -231,6 +244,18 @@ export class TrackService {
       writes++;
     });
     if (writes > 0) await batch.commit();
+  }
+
+  /**
+   * Stores the timetable line of one section of an uploaded Strecke (spec 1.129 §4.2), also «none found», so the
+   * lookup runs once. Owner only (rules). Resolves on the server's ack: run it detached.
+   */
+  public async saveTransitRoute(tripKey: string, n: number, route: StoredTransitRoute): Promise<void> {
+    await updateDoc(doc(this.firestoreService.firestore, `${TripCollection}/${tripKey}/${TRACK_POINTS}/${n}`), {
+      transitRouteKey: route.key,
+      transitRoute: encodeTrack(route.points.map((p) => ({ ...p, t: 0 }))),
+      transitLine: route.line,
+    });
   }
 
   /** The decoded points of one section; [] when the doc is missing. */

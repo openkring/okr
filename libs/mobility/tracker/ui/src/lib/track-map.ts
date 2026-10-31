@@ -1,9 +1,10 @@
 import { afterNextRender, Component, DestroyRef, effect, ElementRef, inject, input, output, untracked, ViewEncapsulation } from '@angular/core';
 import type * as L from 'leaflet';
 import type { TransportMode } from '@okr/shared-models';
-import { fanOutOffsets, TRACK_MODE_COLOR, type TrackPoint } from '@okr/mobility-tracker-util';
+import { fanOutOffsets, isTransitMode, TRACK_MODE_COLOR, type TrackPoint } from '@okr/mobility-tracker-util';
 
-export interface TrackMapSection { mode: TransportMode; points: TrackPoint[] }
+/** `route`: the line from the timetable (spec 1.129 §4.2), drawn instead of the recorded points when it has two or more */
+export interface TrackMapSection { mode: TransportMode; points: TrackPoint[]; route?: { lat: number; lng: number }[] }
 /** A photo pin: `src` is a displayable URL (local file or data URL); without one a small camera dot is drawn. */
 export interface TrackMapPhoto { lat: number; lng: number; src?: string; hidden: boolean }
 /** A point of the track: index into `sections` and into that section's points. */
@@ -39,7 +40,7 @@ type MapFit = { bounds: L.LatLngBounds } | { center: L.LatLngTuple };
 
 /**
  * The recorded track on a swisstopo map: one polyline per section in the colour of its transport mode
- * (plane dashed), a start and an end dot, and a round thumbnail pin per visible photo (hidden photos are not drawn;
+ * (plane dashed; train, bus and ship dashed until their line from the timetable is known — then that line), a start and an end dot, and a round thumbnail pin per visible photo (hidden photos are not drawn;
  * photos live in their own layer, so a new thumbnail never redraws or refits the track). Fits to the data on first data and whenever the number of
  * sections changes; with `live` the map follows the last point without touching the zoom.
  * Leaflet is loaded lazily on first render (its stylesheet is global in the apps).
@@ -207,10 +208,14 @@ export class TrackMap {
     for (const section of sections) {
       const latlngs = section.points.map((p) => [p.lat, p.lng] as L.LatLngTuple);
       all.push(...latlngs);
-      if (latlngs.length > 1) {
-        Lf.polyline(latlngs, {
+      const route = section.route && section.route.length > 1 ? section.route.map((p) => [p.lat, p.lng] as L.LatLngTuple) : undefined;
+      // straight lines between a few fixes: dashed reads as «approximately», not as the way taken
+      const dashed = section.mode === 'plane' || (!route && isTransitMode(section.mode));
+      const line = route ?? latlngs;
+      if (line.length > 1) {
+        Lf.polyline(line, {
           color: TRACK_MODE_COLOR[section.mode], weight: 5, opacity: 0.9,
-          ...(section.mode === 'plane' ? { dashArray: '8 8' } : {}),
+          ...(dashed ? { dashArray: '8 8' } : {}),
         }).addTo(this.overlay);
       }
     }

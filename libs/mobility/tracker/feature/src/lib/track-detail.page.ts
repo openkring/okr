@@ -11,7 +11,7 @@ import { AppStore } from '@okr/shared-feature';
 import { TRANSPORT_MODES, TrackPhoto, TransportMode, TripModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { confirm, downloadFile, okrPrompt } from '@okr/shared-util-angular';
-import { queryPedometerSteps, TerrainElevationService, TrackDb, TrackService } from '@okr/mobility-tracker-data-access';
+import { queryPedometerSteps, StoredTransitRoute, TerrainElevationService, TrackDb, TrackService, TransitRouteService } from '@okr/mobility-tracker-data-access';
 import {
   TrackElevation, TrackMap, TrackMapPhoto, TrackMapPoint, TrackMapSection, TrackModeChange, TrackPhotoItem, TrackPhotos, TrackPhotoToggle, TrackPointBar, TrackSections,
 } from '@okr/mobility-tracker-ui';
@@ -19,7 +19,7 @@ import { fill } from '@okr/shared-util-core';
 import {
   alignSections, buildGpx, ElevationPoint, elevationProfile, hasRelief, needsTerrain, sectionsWithHeights, terrainAltitudes, terrainSamples, logbuchTripLabel, correctedTrack, fromLocalSections, gpxFileName, isShareCancel, LocalSection, LocalTrack, localFromTrip, mergeWithNext,
   localStoreDate, middlePointIndex, sectionRows, setSectionMode, splitSection, toLocalSections, trackTenants, wantsPhotoReattach, withoutPhoto,
-  withPhotoHidden, withQueriedSteps, distanceAlong, formatKm, photosOnTrack, removePoints, spikeRunAround, withoutSpikes,
+  withPhotoHidden, withQueriedSteps, transitRouteKey, transitRouteReq, distanceAlong, formatKm, photosOnTrack, removePoints, spikeRunAround, withoutSpikes,
 } from '@okr/mobility-tracker-util';
 
 import { TrackerStore } from './tracker.store';
@@ -139,6 +139,7 @@ export class TrackDetailPage {
   private readonly alertController = inject(AlertController);
   private readonly toastController = inject(ToastController);
   private readonly terrainService = inject(TerrainElevationService);
+  private readonly transitService = inject(TransitRouteService);
   private readonly content = viewChild(IonContent);
 
   protected readonly loading = signal(true);
@@ -223,7 +224,14 @@ export class TrackDetailPage {
   protected readonly mapMark = computed(() => this.highlight() ?? this.selected()?.point);
 
   protected readonly editable = computed(() => this.track()?.state === 'done' && !this.busy());
-  protected readonly mapSections = computed<TrackMapSection[]>(() => this.sections().map((s) => ({ mode: s.mode, points: s.points })));
+  /** timetable lines of train/bus/ship sections (spec 1.129 §4.2) by `transitRouteKey`; empty points = none found */
+  private readonly transit = signal<ReadonlyMap<string, StoredTransitRoute>>(new Map());
+  /** keys looked up (or being looked up) in this page's life: one call per section */
+  private readonly transitRequested = new Set<string>();
+  protected readonly mapSections = computed<TrackMapSection[]>(() => {
+    const routes = this.transit();
+    return this.sections().map((s) => ({ mode: s.mode, points: s.points, route: routes.get(transitRouteKey(s))?.points }));
+  });
   protected readonly rows = computed(() => sectionRows(this.sections()));
   protected readonly pointCounts = computed(() => this.sections().map((s) => s.points.length));
   protected readonly photoAccess = this.store.photoAccess;
@@ -256,6 +264,14 @@ export class TrackDetailPage {
       const loading = this.loading();
       untracked(() => {
         if (!loading) void this.ensureTerrain(this.key(), sections);
+      });
+    });
+    // the line of each train/bus/ship section from the timetable, once per section
+    effect(() => {
+      const sections = this.sections();
+      const loading = this.loading();
+      untracked(() => {
+        if (!loading) sections.forEach((s, n) => void this.ensureTransit(this.key(), n, s));
       });
     });
     effect(() => {
@@ -621,6 +637,8 @@ export class TrackDetailPage {
       this.cursor.set(undefined);
       this.splitHint.set(false);
       this.readSpikes = false;
+      this.transit.set(new Map());
+      this.transitRequested.clear();
       this.photoSrcs.set(new Map());
       this.resolving.clear();
       const local = (await this.db.list()).find((t) => t.key === key);
@@ -648,6 +666,8 @@ export class TrackDetailPage {
         const { track, sections } = localFromTrip(trip, read.map((r) => r.points), read.map((r) => r.strokeTimes));
         this.isLocal.set(false);
         this.readSpikes = read.some((r) => r.spikes > 0); // left out by readSection (spec 1.129 §3.2)
+        const stored = read.flatMap((r) => (r.transit ? [r.transit] : []));
+        if (stored.length > 0) this.transit.set(new Map(stored.map((t) => [t.key, t])));
         this.track.set(track);
         this.sections.set(sections);
         // terrain heights looked up on an earlier view (spec 1.128): no second lookup
@@ -691,6 +711,34 @@ export class TrackDetailPage {
     } catch (error) {
       console.warn('TrackDetailPage.ensureTerrain', error);
       if (this.terrainRequested === sections) this.terrainRequested = undefined; // a later view may try again
+    }
+  }
+
+  /**
+   * Looks up the timetable line of a train/bus/ship section (spec 1.129 §4.2) unless it is known, and stores it — also
+   * «none found» — on the section's points doc of an uploaded Strecke (detached). Offline or failed: the dashed line
+   * stays, a later view tries again.
+   */
+  private async ensureTransit(key: string, n: number, section: LocalSection): Promise<void> {
+    const req = transitRouteReq(section);
+    const routeKey = transitRouteKey(section);
+    if (!req || this.transit().has(routeKey) || this.transitRequested.has(routeKey)) return;
+    this.transitRequested.add(routeKey);
+    try {
+      const res = await this.transitService.route(req);
+      if (this.key() !== key) return;
+      const route: StoredTransitRoute = { key: routeKey, points: res.points, line: res.line };
+      this.transit.update((m) => new Map(m).set(routeKey, route));
+      // the points doc n holds exactly this section only while the shown sections are the uploaded ones
+      const trip = this.trip();
+      const same = transitRouteKey(this.sections()[n] ?? { mode: section.mode, points: [] }) === routeKey;
+      if (same && trip?.okey === key && (!this.isLocal() || this.track()?.uploaded)) {
+        void this.trackService.saveTransitRoute(key, n, route)
+          .catch((error: unknown) => console.warn('TrackDetailPage.saveTransitRoute', error));
+      }
+    } catch (error) {
+      console.warn('TrackDetailPage.ensureTransit', error);
+      this.transitRequested.delete(routeKey);
     }
   }
 

@@ -400,6 +400,8 @@ export { recordDiaryLine } from './diary/record-diary-line';
 export { getLogbuchTrack } from './trip/get-logbuch-track';
 // tracker Höhenprofil (spec 1.128): terrain heights for Strecken without GPS altitude
 export { getTerrainElevations } from './elevation';
+// tracker (spec 1.129 §4.2): the line of a train/bus/ship section from the Swiss timetable (OJP 2.0)
+export { getTransitRoute } from './transit';
 export { listMyDiaryTenants } from './diary/list-my-diary-tenants';
 
 // re-derive the dob/dod replicas from the live vault (the dateOfDeath migration ran and was retired 2026-10-24, spec 1.118 D3)
