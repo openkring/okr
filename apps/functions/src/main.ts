@@ -540,6 +540,10 @@ export const ensureJournalPeerSecret = Journal.ensureJournalPeerSecret;
 export const journalGuest = Journal.journalGuest;
 export const manageJournalGuest = Journal.manageJournalGuest;
 export const notifyJournalGuests = Journal.notifyJournalGuests;
+// browser video upload: signed source URL, ffmpeg conversion to the web version + posters, daily sweep of abandoned originals (phase 5)
+export const prepareJournalVideoUpload = Journal.prepareJournalVideoUpload;
+export const convertJournalVideo = Journal.convertJournalVideo;
+export const sweepJournalVideoSources = Journal.sweepJournalVideoSources;
 // exportJournalBook: the travel book as print PDF/X-4 or screen PDF, streamed into the private bucket (spec 1.113 phase 2)
 export const exportJournalBook = Journal.exportJournalBook;
 // deleteLearningItem: learning rooms, a curator removes an item — detach from the room folder or archive (spec 1.115)

@@ -166,3 +166,4 @@ export const ensureJournalPeerSecret = onCall(
 export { exportJournalBook } from './book';
 export { journalGuest, manageJournalGuest } from './guest';
 export { notifyJournalGuests } from './notify';
+export { convertJournalVideo, prepareJournalVideoUpload, sweepJournalVideoSources } from './journal-video';
