@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {
   ActionSheetController, AlertController, IonContent, IonHeader, IonSpinner, ModalController, ToastController,
@@ -18,9 +18,9 @@ import {
 
 import { googleAttributionOf, routeBaseLayers } from './journal-base-layers';
 import { openJournalFlyover } from './journal-flyover-open';
+import { GoogleTemplates, JournalGoogleSessions } from './journal-google-sessions';
 
-const GOOGLE_TYPES: GoogleMapType[] = ['roadmap', 'satellite'];
-const GOOGLE_RENEW_MIN_MS = 5 * 60 * 1000; // a session is re-created at most once per 5 minutes per type (loop guard)
+const browserOnline = (): boolean => typeof navigator === 'undefined' || navigator.onLine !== false;
 
 /**
  * The journal for a guest (spec 1.113 §7, plan 7): opened with the personal link, no sign-in. Everything comes
@@ -30,7 +30,9 @@ const GOOGLE_RENEW_MIN_MS = 5 * 60 * 1000; // a session is re-created at most on
  *
  * The map offers the online base layers (phase 4 design §2: Google when a Map Tiles session exists, swisstopo in
  * Switzerland, the world map). Guests download nothing, so the options come from the pure `baseLayerOptions` without
- * areas, and the Google sessions are requested here — the guest page does not use the author's JournalStore.
+ * areas, and the Google sessions come from the same JournalGoogleSessions as in the author's JournalStore (which the
+ * guest page does not use): offered after a successful Google request, dropped offline, proven again when the browser
+ * is back online or the page visible again.
  *
  * Looks like the tenant's website, not like the app (spec 1.126 §2.1): fonts, colours and a plain header from the
  * app's `--okr-site-*` tokens (apps/<app>/src/theme/site-tokens.scss), each with the app theme as fallback.
@@ -150,15 +152,17 @@ export class JournalGuestPage {
   private readonly modalController = inject(ModalController);
   private readonly googleTiles = inject(GoogleTiles);
   private readonly i18nService = inject(I18nService);
+  private readonly destroyRef = inject(DestroyRef);
   protected readonly i18n = inject(I18nService).translateAll(JOURNAL_I18N_KEYS) as JournalI18n;
 
   public readonly journalKey = input.required<string>();
   public readonly code = input.required<string>();
 
   // the base-layer switch: online options only (no downloads), the choice lasts while the page is open
-  private readonly google = signal<{ roadmap?: string; satellite?: string }>({});
-  private sessions: Partial<Record<GoogleMapType, string>> = {};
-  private readonly lastRenew: Record<GoogleMapType, number> = { roadmap: 0, satellite: 0 };
+  private readonly google = signal<GoogleTemplates>({});
+  private readonly googleSessions = new JournalGoogleSessions(
+    this.googleTiles, () => this.i18nService.getActiveLang() || 'de', browserOnline, (google) => this.google.set(google),
+  );
   protected readonly mapView = signal<MapView | undefined>(undefined);
   protected readonly chosenBaseId = signal<string | undefined>(undefined); // the guest's pick in the layer sheet
   private readonly baseLayerOptions = computed(() => baseLayerOptions({
@@ -170,7 +174,7 @@ export class JournalGuestPage {
   protected readonly selectedBaseId = computed(() => pickBaseLayer(this.baseLayerOptions(), this.chosenBaseId()));
   private readonly selectedGoogleType = computed(() => this.baseLayerOptions().find((o) => o.id === this.selectedBaseId())?.googleType);
   protected readonly googleAttribution = googleAttributionOf(this.selectedGoogleType, this.mapView, (bbox, zoom, type) => {
-    const session = this.sessions[type];
+    const session = this.googleSessions.session(type);
     const [west, south, east, north] = bbox;
     return session ? this.googleTiles.attribution(session, { west, south, east, north }, zoom) : Promise.resolve('');
   });
@@ -207,32 +211,29 @@ export class JournalGuestPage {
       const code = this.code();
       untracked(() => void this.start(journalKey, code));
     });
-    for (const type of GOOGLE_TYPES) void this.loadGoogle(type);
+    this.watchGoogle();
   }
 
-  private googleLanguage(): string {
-    return this.i18nService.getActiveLang() || 'de';
-  }
-
-  /** A Map Tiles session (cached by GoogleTiles) and its tile template; without one the Google option is not offered. */
-  private async loadGoogle(type: GoogleMapType): Promise<void> {
-    const session = await this.googleTiles.session(type, this.googleLanguage());
-    this.sessions = { ...this.sessions, [type]: session };
-    this.google.update((google) => {
-      const next = { ...google };
-      if (session) next[type] = this.googleTiles.tileUrl(session);
-      else delete next[type];
-      return next;
+  /** The first Google proof, then: dropped offline, proven again when the browser is back online or the page visible. */
+  private watchGoogle(): void {
+    this.googleSessions.refresh();
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    const online = (): void => this.googleSessions.refresh(true);
+    const offline = (): void => this.googleSessions.drop();
+    const visible = (): void => { if (document.visibilityState === 'visible') this.googleSessions.refresh(true); };
+    window.addEventListener('online', online);
+    window.addEventListener('offline', offline);
+    document.addEventListener('visibilitychange', visible);
+    this.destroyRef.onDestroy(() => {
+      window.removeEventListener('online', online);
+      window.removeEventListener('offline', offline);
+      document.removeEventListener('visibilitychange', visible);
     });
   }
 
   /** Google refused tiles (expired session, design §1): one new session, at most every 5 minutes per type. */
   protected renewGoogle(type: GoogleMapType): void {
-    const now = Date.now();
-    if (now - this.lastRenew[type] < GOOGLE_RENEW_MIN_MS) return;
-    this.lastRenew[type] = now;
-    this.googleTiles.invalidate(type, this.googleLanguage());
-    void this.loadGoogle(type);
+    this.googleSessions.renew(type);
   }
 
   private async start(journalKey: string, code: string): Promise<void> {

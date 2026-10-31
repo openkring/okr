@@ -27,6 +27,7 @@ import {
 
 import { BookExportStatus, JournalBookExporter, NO_BOOK_EXPORT } from './journal-book-export.service';
 import { JournalFileUrlService } from './journal-file-url.service';
+import { JournalGoogleSessions } from './journal-google-sessions';
 import { JournalWebPhotos, WebPhoto } from './journal-web-photos.service';
 
 const SYNC_INTERVAL_MS = 2 * 60 * 1000;
@@ -562,52 +563,32 @@ export const JournalStore = signalStore(
       });
     }
 
-    // Google Map Tiles sessions (phase 4 design §1): requested in the background online, dropped offline. A cached session
-    // is returned by GoogleTiles until less than a day is left, so the periodic / on-resume refreshes are cheap.
-    const GOOGLE_TYPES: GoogleMapType[] = ['roadmap', 'satellite'];
-    const GOOGLE_CHECK_MS = 60 * 60 * 1000; // hourly while online: renews a session before it expires
-    const GOOGLE_RENEW_MIN_MS = 5 * 60 * 1000; // renewGoogle at most once per 5 minutes per type (tile-error loop guard)
-    let sessions: Partial<Record<GoogleMapType, string>> = {};
-    const googleRuns: Record<GoogleMapType, number> = { roadmap: 0, satellite: 0 };
-    const lastRenew: Record<GoogleMapType, number> = { roadmap: 0, satellite: 0 };
-    const googleLanguage = (): string => store.i18nService.getActiveLang() || 'de';
+    // Google Map Tiles sessions (phase 4 design §1): requested in the background online, dropped offline, offered only after
+    // one successful Google request (JournalGoogleSessions: a Wi-Fi without internet reports «connected»).
+    const GOOGLE_CHECK_MS = 60 * 60 * 1000; // hourly while online: renews a session before it expires, re-proves after a drop
+    const googleSessions = new JournalGoogleSessions(
+      store.googleTiles, () => store.i18nService.getActiveLang() || 'de', () => store.online(), (google) => patchState(store, { google }),
+    );
 
-    async function refreshGoogleType(type: GoogleMapType): Promise<void> {
-      const run = ++googleRuns[type];
-      const session = await store.googleTiles.session(type, googleLanguage());
-      if (run !== googleRuns[type] || !store.online()) return; // went offline (or a newer request) meanwhile
-      sessions = { ...sessions, [type]: session };
-      const google = { ...store.google() };
-      if (session) google[type] = store.googleTiles.tileUrl(session);
-      else delete google[type];
-      if (google[type] !== store.google()[type]) patchState(store, { google });
+    /** A Google layer's tiles were refused (expired session): a new session, at most every 5 min; never awaited. */
+    function renewGoogle(mapType: GoogleMapType): void {
+      googleSessions.renew(mapType);
     }
 
-    /** Both map types, in the background; never awaited on the init path. */
-    function refreshGoogle(): void {
-      if (!store.online()) return;
-      for (const type of GOOGLE_TYPES) void refreshGoogleType(type);
-    }
-
-    /** A Google layer's tiles were refused (expired session): forget the session and create a new one, at most every 5 min. */
-    async function renewGoogle(mapType: GoogleMapType): Promise<void> {
-      const now = Date.now();
-      if (!store.online() || now - lastRenew[mapType] < GOOGLE_RENEW_MIN_MS) return;
-      lastRenew[mapType] = now;
-      store.googleTiles.invalidate(mapType, googleLanguage());
-      await refreshGoogleType(mapType);
-    }
-
-    function setOnline(connected: boolean): void {
+    /** `checked`: start or resume, so the Google types are proven (again) even when the online state did not change. */
+    function setOnline(connected: boolean, checked = false): void {
       const was = store.online();
       patchState(store, { online: connected });
-      if (!connected) {
-        for (const type of GOOGLE_TYPES) googleRuns[type]++; // a request still running must not bring the templates back
-        sessions = {};
-        patchState(store, { google: {} });
-      } else if (!was) {
-        refreshGoogle(); // offline → online only, not on every event while Google is unavailable
-      }
+      if (!connected) googleSessions.drop();
+      else if (!was || checked) googleSessions.refresh(checked); // offline → online, start or resume; not on every event
+    }
+
+    /**
+     * Start and resume: the network status first (iOS does not reliably report it on resume), then the Google proof.
+     * Never awaited: an offline start must not wait for the network.
+     */
+    function checkNetwork(): void {
+      void Network.getStatus().then((status) => setOnline(status.connected, true), () => setOnline(!isOffline(), true));
     }
 
     let networkWatch = false;
@@ -620,22 +601,13 @@ export const JournalStore = signalStore(
       if (networkWatch) return;
       networkWatch = true;
       void Network.addListener('networkStatusChange', (status) => setOnline(status.connected)).catch(() => undefined);
-      void Network.getStatus().then(
-        (status) => {
-          setOnline(status.connected);
-          refreshGoogle(); // the first sessions (setOnline requests them only on offline → online)
-        },
-        () => {
-          setOnline(!isOffline());
-          refreshGoogle();
-        },
-      );
+      checkNetwork();
       if (store.native()) {
-        void App.addListener('appStateChange', ({ isActive }) => { if (isActive) refreshGoogle(); }).catch(() => undefined);
+        void App.addListener('appStateChange', ({ isActive }) => { if (isActive) checkNetwork(); }).catch(() => undefined);
       } else if (typeof document !== 'undefined') {
-        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshGoogle(); });
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkNetwork(); });
       }
-      setInterval(() => refreshGoogle(), GOOGLE_CHECK_MS);
+      setInterval(() => googleSessions.refresh(), GOOGLE_CHECK_MS);
     }
 
     // One offline download at a time (design §4); «Pause» stops it, «Fortsetzen» resumes through the present-tile skip.
@@ -1005,7 +977,7 @@ export const JournalStore = signalStore(
        */
       async googleAttribution(view: Bbox, zoom: number, mapType?: GoogleMapType): Promise<string> {
         const type = mapType ?? (store.baseLayerId() === 'google-satellite' && store.google().satellite ? 'satellite' : 'roadmap');
-        const session = sessions[type];
+        const session = googleSessions.session(type);
         if (!store.online() || !session) return '';
         const [west, south, east, north] = view;
         return store.googleTiles.attribution(session, { west, south, east, north }, zoom);
