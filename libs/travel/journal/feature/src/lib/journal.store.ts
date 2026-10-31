@@ -562,44 +562,80 @@ export const JournalStore = signalStore(
       });
     }
 
-    // Google Map Tiles sessions (phase 4 design §1): requested in the background online, dropped offline.
+    // Google Map Tiles sessions (phase 4 design §1): requested in the background online, dropped offline. A cached session
+    // is returned by GoogleTiles until less than a day is left, so the periodic / on-resume refreshes are cheap.
+    const GOOGLE_TYPES: GoogleMapType[] = ['roadmap', 'satellite'];
+    const GOOGLE_CHECK_MS = 60 * 60 * 1000; // hourly while online: renews a session before it expires
+    const GOOGLE_RENEW_MIN_MS = 5 * 60 * 1000; // renewGoogle at most once per 5 minutes per type (tile-error loop guard)
     let sessions: Partial<Record<GoogleMapType, string>> = {};
-    let googleRun = 0;
-    async function refreshGoogle(): Promise<void> {
-      const run = ++googleRun;
-      const language = store.i18nService.getActiveLang() || 'de';
-      const [roadmap, satellite] = await Promise.all([
-        store.googleTiles.session('roadmap', language), store.googleTiles.session('satellite', language),
-      ]);
-      if (run !== googleRun || !store.online()) return; // went offline (or a newer request) meanwhile
-      sessions = { roadmap, satellite };
-      patchState(store, {
-        google: {
-          ...(roadmap ? { roadmap: store.googleTiles.tileUrl(roadmap) } : {}),
-          ...(satellite ? { satellite: store.googleTiles.tileUrl(satellite) } : {}),
-        },
-      });
+    const googleRuns: Record<GoogleMapType, number> = { roadmap: 0, satellite: 0 };
+    const lastRenew: Record<GoogleMapType, number> = { roadmap: 0, satellite: 0 };
+    const googleLanguage = (): string => store.i18nService.getActiveLang() || 'de';
+
+    async function refreshGoogleType(type: GoogleMapType): Promise<void> {
+      const run = ++googleRuns[type];
+      const session = await store.googleTiles.session(type, googleLanguage());
+      if (run !== googleRuns[type] || !store.online()) return; // went offline (or a newer request) meanwhile
+      sessions = { ...sessions, [type]: session };
+      const google = { ...store.google() };
+      if (session) google[type] = store.googleTiles.tileUrl(session);
+      else delete google[type];
+      if (google[type] !== store.google()[type]) patchState(store, { google });
+    }
+
+    /** Both map types, in the background; never awaited on the init path. */
+    function refreshGoogle(): void {
+      if (!store.online()) return;
+      for (const type of GOOGLE_TYPES) void refreshGoogleType(type);
+    }
+
+    /** A Google layer's tiles were refused (expired session): forget the session and create a new one, at most every 5 min. */
+    async function renewGoogle(mapType: GoogleMapType): Promise<void> {
+      const now = Date.now();
+      if (!store.online() || now - lastRenew[mapType] < GOOGLE_RENEW_MIN_MS) return;
+      lastRenew[mapType] = now;
+      store.googleTiles.invalidate(mapType, googleLanguage());
+      await refreshGoogleType(mapType);
     }
 
     function setOnline(connected: boolean): void {
       const was = store.online();
       patchState(store, { online: connected });
       if (!connected) {
-        googleRun++; // a request still running must not bring the templates back
+        for (const type of GOOGLE_TYPES) googleRuns[type]++; // a request still running must not bring the templates back
         sessions = {};
         patchState(store, { google: {} });
-      } else if (!was || !store.google().roadmap || !store.google().satellite) {
-        void refreshGoogle();
+      } else if (!was) {
+        refreshGoogle(); // offline → online only, not on every event while Google is unavailable
       }
     }
 
     let networkWatch = false;
-    /** Online state for every platform (never awaited: an offline start must not wait for the network). */
+    /**
+     * Online state and Google sessions for every platform: the network status, a refresh when the app returns to the
+     * foreground (native appStateChange, browser visibilitychange — iOS resume does not reliably report the network) and
+     * an hourly check. Nothing here is awaited: an offline start must not wait for the network.
+     */
     function startNetworkWatch(): void {
       if (networkWatch) return;
       networkWatch = true;
       void Network.addListener('networkStatusChange', (status) => setOnline(status.connected)).catch(() => undefined);
-      void Network.getStatus().then((status) => setOnline(status.connected), () => setOnline(!isOffline()));
+      void Network.getStatus().then(
+        (status) => {
+          setOnline(status.connected);
+          refreshGoogle(); // the first sessions (setOnline requests them only on offline → online)
+        },
+        () => {
+          setOnline(!isOffline());
+          refreshGoogle();
+        },
+      );
+      if (store.native()) {
+        void App.addListener('appStateChange', ({ isActive }) => { if (isActive) refreshGoogle(); }).catch(() => undefined);
+      } else if (typeof document !== 'undefined') {
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshGoogle(); });
+      }
+      setInterval(() => refreshGoogle(), GOOGLE_CHECK_MS);
     }
 
     // One offline download at a time (design §4); «Pause» stops it, «Fortsetzen» resumes through the present-tile skip.
@@ -1039,6 +1075,7 @@ export const JournalStore = signalStore(
 
       refreshTileStats,
       startNetworkWatch,
+      renewGoogle,
 
       /**
        * «Fotos fürs Buch hochladen» (book export): exports this author's photos of the book from the iPad's own Photos
