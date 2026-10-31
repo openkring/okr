@@ -40,7 +40,8 @@
     "published": "Pubblicato",
     "footprint_menu": "Tappa",
     "footprint_delete": "Elimina tappa",
-    "footprint_delete_confirm": "Eliminare questa tappa con tutti i suoi blocchi?"
+    "footprint_delete_confirm": "Eliminare questa tappa con tutti i suoi blocchi?",
+    "add_video": "Video"
   },
   "block": {
     "actions": "Blocco",
@@ -52,7 +53,8 @@
     "delete_action": "Elimina blocco",
     "locked": "{name} sta modificando adesso",
     "conflict": "Due versioni – elimina una delle due.",
-    "photos_label": "{count} foto"
+    "photos_label": "{count} foto",
+    "add_videos": "Aggiungi video"
   },
   "photos": {
     "added": "{count} foto aggiunte",
@@ -103,7 +105,8 @@
     "running": "Sincronizzazione …",
     "pending": "{records} modifiche e {photos} foto in attesa di trasferimento",
     "offline": "Offline – le tue voci sono salvate sull’iPad.",
-    "error": "La sincronizzazione non è riuscita. Verrà ripetuta più tardi."
+    "error": "La sincronizzazione non è riuscita. Verrà ripetuta più tardi.",
+    "pending_videos": "Video: {count} in attesa di caricamento ({mb} MB)"
   },
   "photo_mode": {
     "label": "Foto: {mode}",
@@ -440,5 +443,12 @@
   },
   "sort": {
     "title": "Ordina i blocchi"
+  },
+  "video": {
+    "preparing": "Preparazione del video…",
+    "skipped_too_long": "Il video dura più di 60 secondi. Accorcialo nell’app Foto.",
+    "skipped_too_large": "Il video è diventato troppo grande e non è stato aggiunto.",
+    "limit": "Un blocco video può contenere 5 video.",
+    "native_only": "Puoi aggiungere video solo sull’iPad."
   }
 }

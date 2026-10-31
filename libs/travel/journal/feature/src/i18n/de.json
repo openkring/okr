@@ -40,7 +40,8 @@
     "published": "Veröffentlicht",
     "footprint_menu": "Footprint",
     "footprint_delete": "Footprint löschen",
-    "footprint_delete_confirm": "Diesen Footprint mit allen Blöcken löschen?"
+    "footprint_delete_confirm": "Diesen Footprint mit allen Blöcken löschen?",
+    "add_video": "Video"
   },
   "block": {
     "actions": "Block",
@@ -52,7 +53,8 @@
     "delete_action": "Block löschen",
     "locked": "{name} bearbeitet gerade",
     "conflict": "Zwei Fassungen – bitte lösch eine davon.",
-    "photos_label": "{count} Fotos"
+    "photos_label": "{count} Fotos",
+    "add_videos": "Videos hinzufügen"
   },
   "photos": {
     "added": "{count} Foto(s) hinzugefügt",
@@ -103,7 +105,8 @@
     "running": "Wird synchronisiert …",
     "pending": "{records} Änderungen und {photos} Fotos warten auf die Übertragung",
     "offline": "Offline – deine Einträge sind auf dem iPad gespeichert.",
-    "error": "Die Synchronisation hat nicht geklappt. Sie wird später wiederholt."
+    "error": "Die Synchronisation hat nicht geklappt. Sie wird später wiederholt.",
+    "pending_videos": "Videos: {count} warten auf den Upload ({mb} MB)"
   },
   "photo_mode": {
     "label": "Fotos: {mode}",
@@ -440,5 +443,12 @@
   },
   "sort": {
     "title": "Blöcke sortieren"
+  },
+  "video": {
+    "preparing": "Video wird vorbereitet…",
+    "skipped_too_long": "Das Video ist länger als 60 Sekunden. Kürze es in der Fotos-App.",
+    "skipped_too_large": "Das Video ist zu gross geworden und wurde nicht übernommen.",
+    "limit": "Ein Videoblock hat Platz für 5 Videos.",
+    "native_only": "Videos kannst du nur auf dem iPad hinzufügen."
   }
 }

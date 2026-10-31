@@ -40,7 +40,8 @@
     "published": "Publicado",
     "footprint_menu": "Etapa",
     "footprint_delete": "Eliminar etapa",
-    "footprint_delete_confirm": "¿Eliminar esta etapa con todos sus bloques?"
+    "footprint_delete_confirm": "¿Eliminar esta etapa con todos sus bloques?",
+    "add_video": "Vídeo"
   },
   "block": {
     "actions": "Bloque",
@@ -52,7 +53,8 @@
     "delete_action": "Eliminar bloque",
     "locked": "{name} está editando ahora",
     "conflict": "Dos versiones – elimina una de ellas.",
-    "photos_label": "{count} fotos"
+    "photos_label": "{count} fotos",
+    "add_videos": "Añadir vídeos"
   },
   "photos": {
     "added": "{count} foto(s) añadida(s)",
@@ -103,7 +105,8 @@
     "running": "Sincronizando …",
     "pending": "{records} cambios y {photos} fotos esperan la transferencia",
     "offline": "Sin conexión – tus entradas están guardadas en el iPad.",
-    "error": "La sincronización no funcionó. Se repetirá más tarde."
+    "error": "La sincronización no funcionó. Se repetirá más tarde.",
+    "pending_videos": "Vídeos: {count} esperando para subirse ({mb} MB)"
   },
   "photo_mode": {
     "label": "Fotos: {mode}",
@@ -440,5 +443,12 @@
   },
   "sort": {
     "title": "Ordenar bloques"
+  },
+  "video": {
+    "preparing": "Preparando el vídeo…",
+    "skipped_too_long": "El vídeo dura más de 60 segundos. Acórtalo en la app Fotos.",
+    "skipped_too_large": "El vídeo ha quedado demasiado grande y no se ha añadido.",
+    "limit": "Un bloque de vídeo admite 5 vídeos.",
+    "native_only": "Solo puedes añadir vídeos en el iPad."
   }
 }

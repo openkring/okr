@@ -83,6 +83,9 @@ export function peerStatusText(i18n: JournalI18n, peer: JournalPeerStatus | unde
         <ion-card-header><ion-card-title>{{ i18n.photo_sync_state_title() }}</ion-card-title></ion-card-header>
         <ion-card-content>
           <p>{{ statusText() }}</p>
+          @if (videoText(); as videoText) {
+            <p>{{ videoText }}</p>
+          }
           @if (peerText(); as peerText) {
             <ion-note class="peer" [class.connected]="store.peerStatus()?.state === 'connected'">{{ peerText }}</ion-note>
           }
@@ -99,6 +102,12 @@ export class JournalPhotoSyncModal {
 
   protected readonly headerI18n = computed<HeaderI18n>(() => ({ title: this.i18n.photo_sync_title() }));
   protected readonly statusText = computed(() => syncStatusText(this.i18n, this.store.syncStatus()));
+  protected readonly videoText = computed(() => {
+    const status = this.store.syncStatus();
+    return status.pendingVideos > 0
+      ? fill(this.i18n.sync_pending_videos(), { count: status.pendingVideos, mb: (status.pendingVideoBytes / 1_000_000).toFixed(1) })
+      : '';
+  });
   protected readonly peerText = computed(() => peerStatusText(this.i18n, this.store.peerStatus()));
 
   protected label(mode: JournalPhotoMode): string {

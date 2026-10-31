@@ -14,12 +14,12 @@ import { AppVersionConfig, compareAppVersions, CURRENT_APP_VERSION } from '@okr/
 import { I18nService } from '@okr/shared-i18n';
 import { convertDateFormatToString, DateFormat, getTodayStr } from '@okr/shared-util-core';
 import {
-  ChangeDraft, JournalBookService, JournalDb, JournalIdentityService, JournalLockService, JournalPeerService, JournalPhotos, JournalSyncService, JournalWebWriter, OsmExtract, PickedPhoto, SkippedPhoto,
+  ChangeDraft, JournalBookService, JournalDb, JournalIdentityService, JournalLockService, JournalPeerService, JournalPhotos, JournalSyncService, JournalWebWriter, OsmExtract, PickedPhoto, PickedVideo, SkippedPhoto, VideoSkipReason,
   toBase64,
 } from '@okr/travel-journal-data-access';
 import {
   BOOK_I18N_KEYS, BOOK_LABEL_MAX, bookLabelsOf, JournalBookI18n, bookPrintCandidates, entityStateKey, hasOthersBlocks, pagesOf, PRINT_FILL_LONG_PX, PRINT_FILL_SHORT_PX, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
-  allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, MapPlace, mapPlaces, parseMapAreas, parsePhotoMode, TileJob, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, reorderedOrders, CONFLICT_FIELDS, dismissedField, isConflictCopyKey, originalOfCopy, BlockView, publishedPhotoFiles, viewOf,
+  allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, MapPlace, mapPlaces, parseMapAreas, parsePhotoMode, TileJob, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, reorderedOrders, CONFLICT_FIELDS, dismissedField, isConflictCopyKey, originalOfCopy, BlockView, publishedPhotoFiles, viewOf, MAX_VIDEOS_PER_BLOCK,
   JournalLock, LOCK_HEARTBEAT_MS, LOCK_TTL_MS, lockedBy, mergeLocks, BoundAuthor, JournalWriteSlow, mergePending,
   AreaLayer, areaForWrite, areaLayerTilePlan, BaseLayerOption, baseLayerOptions, Bbox, finishRun, isUsable, layerDetailLevels, layerKindsFor,
   layerTilesToFree, MapLayerKind, MapSource, migrateOfflineMap, NO_OFFLINE_LAYER, offlineAreaKey, OfflineLayerStatus, parseOfflineLayer, pickBaseLayer,
@@ -120,6 +120,8 @@ const initialState: JournalStoreState = {
   webLoaded: false, bookExport: NO_BOOK_EXPORT, locks: {}, writeMinVersion: '', lockClock: 0, webUpload: undefined,
 };
 const LOCK_CLOCK_MS = 15_000;
+type VideoSkip = { localIdentifier: string; reason: VideoSkipReason };
+
 const isWebPhoto = (photo: PickedPhoto): photo is WebPhoto => 'imageKey' in photo && 'printSize' in photo;
 
 export const JournalStore = signalStore(
@@ -246,6 +248,48 @@ export const JournalStore = signalStore(
         });
       }
       return { drafts, imageKeys, photos, skipped };
+    }
+
+    /** Picks clips (iPad only: the plugin converts each to the web version) and builds one image record per clip. */
+    async function pickVideoImages(journalKey: string, limit: number, files?: File[] | Promise<File[]>): Promise<{ drafts: ChangeDraft[]; imageKeys: string[]; videos: PickedVideo[]; skipped: VideoSkip[] }> {
+      if (!store.author()) throw new JournalWriteRefused('noAuthor'); // before the picker opens
+      if (!store.native()) {
+        void files; // the browser branch arrives with store.webVideos (task 9)
+        throw new JournalWriteRefused('nativeOnly');
+      }
+      const { videos, skipped } = await JournalPhotos.pickVideos({ journalKey, limit });
+      const drafts: ChangeDraft[] = [];
+      const imageKeys: string[] = [];
+      for (const video of videos) {
+        const key = crypto.randomUUID();
+        imageKeys.push(key);
+        drafts.push({
+          journalKey, entity: 'image', entityKey: key, op: 'create',
+          fields: {
+            journalKey, takenAt: video.takenAt, latitude: video.latitude, longitude: video.longitude,
+            width: video.width, height: video.height, path2048: video.path2048, path400: video.path400,
+            localIdentifier: video.localIdentifier, videoPath: video.videoPath, durationSec: video.durationSec,
+          },
+        });
+      }
+      return { drafts, imageKeys, videos, skipped };
+    }
+
+    /** A footprint without date or position takes them from its first photos or clips (ship time); undefined when nothing is missing. */
+    function footprintFillDraft(journalKey: string, fp: FootprintView, photos: PickedPhoto[]): ChangeDraft | undefined {
+      const fill: Record<string, unknown> = {};
+      const position = footprintPosition(photos);
+      if (fp.latitude === undefined && position) Object.assign(fill, position);
+      // only well-formed capture times count: one malformed value must not hide the valid ones
+      const earliest = photos.map((p) => p.takenAt).filter((t): t is string => !!t && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(t)).sort()[0];
+      if (!fp.date && earliest) {
+        const date = convertDateFormatToString(earliest, DateFormat.IsoDateTime, DateFormat.StoreDate, false);
+        const time = convertDateFormatToString(earliest, DateFormat.IsoDateTime, DateFormat.Time, false);
+        if (date) fill['date'] = date;
+        if (time) fill['time'] = time;
+      }
+      if (Object.keys(fill).length === 0) return undefined;
+      return { journalKey, entity: 'footprint', entityKey: fp.key, op: 'set', fields: fill, bases: basesOf(fp.hlcs, fill, CONFLICT_FIELDS['footprint'] ?? []) };
     }
 
     /**
@@ -1350,22 +1394,42 @@ export const JournalStore = signalStore(
           fields: { footprintKey, kind: 'photos', imageKeys, order: orderBetween(lastBlockOrder(fp), undefined) },
         });
 
-        const fill: Record<string, unknown> = {};
-        const position = footprintPosition(photos);
-        if (fp.latitude === undefined && position) Object.assign(fill, position);
-        // only well-formed capture times count: one malformed value must not hide the valid ones
-        const earliest = photos.map((p) => p.takenAt).filter((t): t is string => !!t && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(t)).sort()[0];
-        if (!fp.date && earliest) {
-          const date = convertDateFormatToString(earliest, DateFormat.IsoDateTime, DateFormat.StoreDate, false);
-          const time = convertDateFormatToString(earliest, DateFormat.IsoDateTime, DateFormat.Time, false);
-          if (date) fill['date'] = date;
-          if (time) fill['time'] = time;
-        }
-        if (Object.keys(fill).length > 0) {
-          drafts.push({ journalKey, entity: 'footprint', entityKey: footprintKey, op: 'set', fields: fill, bases: basesOf(fp.hlcs, fill, CONFLICT_FIELDS['footprint'] ?? []) });
-        }
+        const fillDraft = footprintFillDraft(journalKey, fp, photos);
+        if (fillDraft) drafts.push(fillDraft);
         await writePhotos(journalKey, drafts, photos);
         return { added: photos.length, skipped };
+      },
+
+      /**
+       * Adds clips to an existing video block (any author's), at most 5 in all. Writes only `imageKeys`: the caption
+       * (`html`) is edited on its own, so a conflict copy never mixes the two.
+       */
+      async addVideosToBlock(blockKey: string, seen?: Record<string, string>, files?: File[] | Promise<File[]>): Promise<{ added: number; skipped: VideoSkip[] }> {
+        const { journalKey, block } = blockOf(blockKey);
+        const limit = MAX_VIDEOS_PER_BLOCK - (block.imageKeys ?? []).length;
+        if (limit <= 0) throw new JournalWriteRefused('videoLimit');
+        const { drafts, imageKeys, videos, skipped } = await pickVideoImages(journalKey, limit, files);
+        if (videos.length === 0) return { added: 0, skipped };
+        const fields = { imageKeys: [...(block.imageKeys ?? []), ...imageKeys] };
+        drafts.push({ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields, bases: basesOf(seen ?? block.hlcs, fields, CONFLICT_FIELDS['section'] ?? []) });
+        await writePhotos(journalKey, drafts, videos);
+        return { added: videos.length, skipped };
+      },
+
+      /** Picks clips and stores one image record per clip plus one video block in one transaction; the footprint fills as for photos. */
+      async addVideoBlock(journalKey: string, footprintKey: string, files?: File[] | Promise<File[]>): Promise<{ added: number; skipped: VideoSkip[] }> {
+        const fp = footprint(footprintKey);
+        if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
+        const { drafts, imageKeys, videos, skipped } = await pickVideoImages(journalKey, MAX_VIDEOS_PER_BLOCK, files);
+        if (videos.length === 0) return { added: 0, skipped };
+        drafts.push({
+          journalKey, entity: 'section', entityKey: crypto.randomUUID(), op: 'create',
+          fields: { footprintKey, kind: 'video', html: '', imageKeys, order: orderBetween(lastBlockOrder(fp), undefined) },
+        });
+        const fillDraft = footprintFillDraft(journalKey, fp, videos);
+        if (fillDraft) drafts.push(fillDraft);
+        await writePhotos(journalKey, drafts, videos);
+        return { added: videos.length, skipped };
       },
     };
   }),

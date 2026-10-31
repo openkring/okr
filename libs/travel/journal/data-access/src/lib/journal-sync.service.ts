@@ -9,7 +9,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { FIRESTORE, ensureAppCheckToken } from '@okr/shared-config';
 import { DiaryWeather, JournalChange, JournalChangeCollection, JournalCollection } from '@okr/shared-models';
 import {
-  acceptRecord, advanceCursor, remoteChangeOf, withCheckedBases, classifyUploadError, DOWNLOAD_PAGE, downloadStart, JournalPhotoMode, pagesOf, UPLOAD_PAGE,
+  acceptRecord, advanceCursor, remoteChangeOf, withCheckedBases, classifyUploadError, DOWNLOAD_PAGE, downloadStart, JournalPhotoMode, pagesOf, pendingVideoStats, uploadOrder, UPLOAD_PAGE,
 } from '@okr/travel-journal-util';
 
 import { JournalDb, RemoteChange } from './journal-db';
@@ -41,6 +41,9 @@ export interface JournalSyncStatus {
   state: JournalSyncState;
   pendingRecords: number;
   pendingPhotos: number;
+  /** Clips (-video.mp4) waiting for upload and their known total size; 0 when sizes could not be read. */
+  pendingVideos: number;
+  pendingVideoBytes: number;
   lastSyncAt?: number;
   error: string;
 }
@@ -75,7 +78,7 @@ export class JournalSyncService {
   private readonly db = inject(JournalDb);
   private readonly identity = inject(JournalIdentityService);
   private readonly firestore = inject(FIRESTORE);
-  private readonly statusSignal = signal<JournalSyncStatus>({ state: 'idle', pendingRecords: 0, pendingPhotos: 0, error: '' });
+  private readonly statusSignal = signal<JournalSyncStatus>({ state: 'idle', pendingRecords: 0, pendingPhotos: 0, pendingVideos: 0, pendingVideoBytes: 0, error: '' });
   private running?: Promise<void>;
 
   public readonly status = this.statusSignal.asReadonly();
@@ -101,7 +104,7 @@ export class JournalSyncService {
       if (stored > 0) await ctx.onRecordsStored();
       for (const journalKey of journalKeys) await this.ensurePeerSecret(journalKey);
       const pendingPhotos = await this.photoPhase(ctx, journalKeys);
-      this.patch({ state: 'idle', lastSyncAt: Date.now(), pendingRecords: await this.db.countPendingUploads(), pendingPhotos });
+      this.patch({ state: 'idle', lastSyncAt: Date.now(), pendingRecords: await this.db.countPendingUploads(), pendingPhotos, ...await this.pendingVideos(ctx, journalKeys) });
     } catch (error) {
       this.patch({
         state: isOffline(error) ? 'offline' : 'error',
@@ -251,6 +254,33 @@ export class JournalSyncService {
     return n;
   }
 
+  /** The clips still to upload and their size (native file sizes; unknown sizes count 0). Never throws. */
+  private async pendingVideos(ctx: JournalSyncContext, journalKeys: string[]): Promise<{ pendingVideos: number; pendingVideoBytes: number }> {
+    let pendingVideos = 0;
+    let pendingVideoBytes = 0;
+    try {
+      for (const journalKey of journalKeys) {
+        const published = new Set(ctx.photoFiles(journalKey).published);
+        const rows = await this.db.photoFiles(journalKey);
+        const count = pendingVideoStats(rows, published, {});
+        if (count.count === 0) continue;
+        const files = rows.filter((r) => published.has(r.file) && r.present && !r.uploaded && /-video\.mp4$/.test(r.file)).map((r) => r.file);
+        let sizes: Record<string, number> = {};
+        try {
+          sizes = (await JournalPhotos.fileSizes({ journalKey, files })).sizes;
+        } catch {
+          // older plugin: sizes unknown
+        }
+        const stats = pendingVideoStats(rows, published, sizes);
+        pendingVideos += stats.count;
+        pendingVideoBytes += stats.bytes;
+      }
+    } catch {
+      // status only
+    }
+    return { pendingVideos, pendingVideoBytes };
+  }
+
   /**
    * Uploads published photos this device holds and, with `download`, fetches the missing ones; returns
    * what is still waiting for upload.
@@ -270,7 +300,7 @@ export class JournalSyncService {
       const rows = await this.db.photoFiles(journalKey);
       const publishedSet = new Set(published);
       const toUpload = rows.filter((f) => publishedSet.has(f.file) && f.present && !f.uploaded).map((f) => f.file);
-      for (const chunk of pagesOf(toUpload, PHOTO_CHUNK)) {
+      for (const chunk of pagesOf(uploadOrder(toUpload), PHOTO_CHUNK)) {
         const { uploads } = await this.call<{ uploads: { file: string; done: boolean; url?: string; headers?: Record<string, string> }[] }>(
           'prepareJournalPhotoUploads', { journalKey, files: chunk });
         for (const upload of uploads) {
