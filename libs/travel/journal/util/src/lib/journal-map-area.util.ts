@@ -14,6 +14,15 @@ export type DetailLevel = 'overview' | 'detail' | 'hiking';
 export type MapPreset = 'antarctica-expedition' | 'subantarctic-islands';
 const PRESETS: MapPreset[] = ['antarctica-expedition', 'subantarctic-islands'];
 
+/** A map layer an area can be downloaded for (phase 4, design §3); each layer has its own detail level. */
+export type MapLayerKind = 'osm' | 'satellite' | 'swisstopo';
+export interface AreaLayer { kind: MapLayerKind; maxZoom: number }
+const LAYER_KINDS: MapLayerKind[] = ['satellite', 'osm', 'swisstopo'];
+
+/**
+ * `source` and `maxZoom` are what a phase 3 build reads; phase 4 reads `layers` (always filled after
+ * `parseMapAreas`, derived from `source` for areas written before phase 4).
+ */
 export interface MapArea {
   id: string;
   name: string;
@@ -21,6 +30,7 @@ export interface MapArea {
   bbox: Bbox;
   maxZoom: number;
   preset?: MapPreset;
+  layers: AreaLayer[];
 }
 
 /** A named point on the map (a landing site), drawn small and without a photo. */
@@ -43,12 +53,13 @@ export const TILE_CAP = 20_000;
 /** Plan 6 as an area: route, peninsula and landing sites (plus the journal's footprints). */
 export const ANTARCTICA_PRESET: MapArea = {
   id: 'antarctica-expedition', name: 'Antarktis-Expedition', source: 'antarctica', bbox: ROUTE_BBOX, maxZoom: 12, preset: 'antarctica-expedition',
+  layers: [{ kind: 'satellite', maxZoom: 12 }],
 };
 
 /** Falklands, South Georgia and the South Sandwich Islands: Blue Marble for the sea, OpenStreetMap per island group. */
 export const SUBANTARCTIC_PRESET: MapArea = {
   id: 'subantarctic-islands', name: 'Falkland, Südgeorgien, Süd-Sandwich', source: 'osm', bbox: SUBANTARCTIC_BBOX, maxZoom: 13,
-  preset: 'subantarctic-islands',
+  preset: 'subantarctic-islands', layers: [{ kind: 'satellite', maxZoom: 8 }, { kind: 'osm', maxZoom: 13 }],
 };
 
 const SWITZERLAND: Bbox = [5.9, 45.8, 10.5, 47.85];
@@ -97,6 +108,69 @@ export function detailLevels(source: MapSource, bbox: Bbox): { key: DetailLevel;
     .filter((level) => level.tiles <= TILE_CAP);
 }
 
+/** LIMA (the satellite detail beyond GIBS z8) covers Antarctica only: the same region rule as `sourceFor`. */
+const isAntarctic = (bbox: Bbox): boolean => sourceFor(bbox) === 'antarctica';
+const GIBS_MAX_ZOOM = 8;
+const LIMA_MAX_ZOOM = 12;
+
+/** Layers valid for a bbox: satellite and osm everywhere, swisstopo only when the bbox lies in Switzerland. */
+export function layerKindsFor(bbox: Bbox): MapLayerKind[] {
+  return LAYER_KINDS.filter((kind) => kind !== 'swisstopo' || inside(centre(bbox), SWITZERLAND));
+}
+
+/** The levels of a layer kind regardless of the tile cap; satellite is GIBS up to z8, with LIMA z10/z12 in Antarctica. */
+function layerLevels(kind: MapLayerKind, bbox: Bbox): { key: DetailLevel; maxZoom: number }[] {
+  if (kind === 'satellite') return isAntarctic(bbox) ? LEVELS.antarctica : [{ key: 'overview', maxZoom: GIBS_MAX_ZOOM }];
+  return LEVELS[kind];
+}
+
+function layerMinZoom(kind: MapLayerKind): number {
+  return kind === 'satellite' ? minZoomOf('antarctica') : minZoomOf(kind);
+}
+
+/** Detail levels of one layer kind for a bbox (like detailLevels, per kind; satellite = GIBS ≤ 8, LIMA 10/12 south of 60° S). */
+export function layerDetailLevels(kind: MapLayerKind, bbox: Bbox): { key: DetailLevel; maxZoom: number; tiles: number }[] {
+  if (!layerKindsFor(bbox).includes(kind)) return [];
+  return layerLevels(kind, bbox)
+    .map((level) => ({ ...level, tiles: countTiles(bbox, layerMinZoom(kind), level.maxZoom) }))
+    .filter((level) => level.tiles <= TILE_CAP);
+}
+
+/** The layer kind that draws a phase 3 source. */
+const KIND_OF_SOURCE: Record<MapSource, MapLayerKind> = { antarctica: 'satellite', swisstopo: 'swisstopo', osm: 'osm' };
+
+/** The layers of an area written before phase 4, from its `source` (the subantarctic preset downloads GIBS + OSM). */
+function derivedLayers(area: { source: MapSource; maxZoom: number; preset?: MapPreset }): AreaLayer[] {
+  if (area.preset === 'subantarctic-islands') return [{ kind: 'satellite', maxZoom: GIBS_MAX_ZOOM }, { kind: 'osm', maxZoom: area.maxZoom }];
+  return [{ kind: KIND_OF_SOURCE[area.source], maxZoom: area.maxZoom }];
+}
+
+/**
+ * The phase 3 `maxZoom` of an area without a layer of its region's source: the source's lowest level, lowered until the
+ * phase 3 tile cap holds (a satellite area may be far larger than an OpenStreetMap overview allows).
+ */
+function fallbackMaxZoom(source: MapSource, bbox: Bbox): number {
+  let z = LEVELS[source][0].maxZoom;
+  while (z > 0 && countTiles(bbox, minZoomOf(source), z) > TILE_CAP) z--;
+  return z;
+}
+
+/**
+ * The record stored in `mapAreas`: layers plus a phase-3-valid `source`/`maxZoom` (source = sourceFor(bbox); maxZoom = that
+ * source's layer maxZoom, else the source's lowest level, lowered to the tile cap). A preset keeps its own source, which its
+ * fixed phase 3 plan and layers depend on (the Antarctica route box is centred north of 60° S).
+ */
+export function areaForWrite(area: MapArea): Record<string, unknown> {
+  const source = area.preset !== undefined ? area.source : sourceFor(area.bbox);
+  const own = area.layers.find((l) => l.kind === KIND_OF_SOURCE[source]);
+  const record: Record<string, unknown> = {
+    id: area.id, name: area.name, source, bbox: area.bbox, maxZoom: own?.maxZoom ?? fallbackMaxZoom(source, area.bbox),
+    layers: area.layers.map((l) => ({ kind: l.kind, maxZoom: l.maxZoom })),
+  };
+  if (area.preset !== undefined) record['preset'] = area.preset;
+  return record;
+}
+
 function jobsFor(source: TileJob['source'], bbox: Bbox, zMin: number, zMax: number): TileJob[] {
   const jobs: TileJob[] = [];
   for (let z = zMin; z <= zMax; z++) {
@@ -125,20 +199,31 @@ function jobsFor(source: TileJob['source'], bbox: Bbox, zMin: number, zMax: numb
   return jobs;
 }
 
-export function areaTilePlan(area: MapArea, footprints: { lat: number; lng: number }[]): TileJob[] {
-  if (area.preset === 'antarctica-expedition') return offlineTilePlan(footprints);
+const unique = (jobs: TileJob[]): TileJob[] => [...new Map(jobs.map((j) => [j.path, j])).values()];
+
+/** Tile jobs of ONE layer of an area (the per-journal footprints feed the Antarctica satellite detail as today). */
+export function areaLayerTilePlan(area: MapArea, layer: AreaLayer, footprints: { lat: number; lng: number }[]): TileJob[] {
+  if (area.preset === 'antarctica-expedition' && layer.kind === 'satellite') return offlineTilePlan(footprints);
   if (area.preset === 'subantarctic-islands') {
-    const jobs = [...jobsFor('gibs', SUBANTARCTIC_BBOX, 3, 8), ...SUBANTARCTIC_ISLANDS.flatMap((i) => jobsFor('osm', i.bbox, 0, i.maxZoom))];
-    return [...new Map(jobs.map((j) => [j.path, j])).values()]; // the island groups share their low-zoom tiles
+    if (layer.kind === 'satellite') return jobsFor('gibs', SUBANTARCTIC_BBOX, 3, Math.min(GIBS_MAX_ZOOM, layer.maxZoom));
+    if (layer.kind === 'osm') return unique(SUBANTARCTIC_ISLANDS.flatMap((i) => jobsFor('osm', i.bbox, 0, i.maxZoom))); // shared low-zoom tiles
   }
-  switch (area.source) {
-    case 'antarctica':
-      return [...jobsFor('gibs', area.bbox, 3, Math.min(8, area.maxZoom)), ...jobsFor('lima', area.bbox, 9, Math.min(12, area.maxZoom))];
+  switch (layer.kind) {
+    case 'satellite':
+      return [
+        ...jobsFor('gibs', area.bbox, 3, Math.min(GIBS_MAX_ZOOM, layer.maxZoom)),
+        ...(isAntarctic(area.bbox) ? jobsFor('lima', area.bbox, 9, Math.min(LIMA_MAX_ZOOM, layer.maxZoom)) : []),
+      ];
     case 'swisstopo':
-      return jobsFor('swisstopo', area.bbox, SWISSTOPO_MIN_ZOOM, area.maxZoom);
+      return jobsFor('swisstopo', area.bbox, SWISSTOPO_MIN_ZOOM, layer.maxZoom);
     case 'osm':
-      return jobsFor('osm', area.bbox, 0, area.maxZoom);
+      return jobsFor('osm', area.bbox, 0, layer.maxZoom);
   }
+}
+
+/** Every tile of an area: the union of its layers' plans, each path once. */
+export function areaTilePlan(area: MapArea, footprints: { lat: number; lng: number }[]): TileJob[] {
+  return unique(area.layers.flatMap((layer) => areaLayerTilePlan(area, layer, footprints)));
 }
 
 /** Every tile of the journal's areas plus the world background (GIBS z0–4), each once. */
@@ -190,9 +275,43 @@ function withinLimits(area: MapArea): boolean {
   return countTiles(area.bbox, minZoomOf(area.source), area.maxZoom) <= TILE_CAP;
 }
 
+/**
+ * A layer as stored: a known kind offered for the bbox, an integer maxZoom up to the kind's finest level, at most
+ * TILE_CAP tiles. A preset has its own fixed plan, so only kind and zoom range are checked there.
+ */
+function validLayer(value: unknown, bbox: Bbox, preset: MapPreset | undefined): value is AreaLayer {
+  if (typeof value !== 'object' || value === null) return false;
+  const l = value as Record<string, unknown>;
+  const kind = l['kind'] as MapLayerKind;
+  const maxZoom = l['maxZoom'];
+  if (!LAYER_KINDS.includes(kind) || typeof maxZoom !== 'number' || !Number.isInteger(maxZoom) || maxZoom < 0 || maxZoom > 18) return false;
+  if (preset !== undefined) return true;
+  if (!layerKindsFor(bbox).includes(kind)) return false;
+  if (maxZoom > Math.max(...layerLevels(kind, bbox).map((level) => level.maxZoom))) return false;
+  return countTiles(bbox, layerMinZoom(kind), maxZoom) <= TILE_CAP;
+}
+
+/**
+ * The area with its layers: derived from `source` when the record has none (written before phase 4), otherwise the
+ * valid layers, each kind once; `undefined` when no layer is left. The phase 3 limits on `source`/`maxZoom` hold for
+ * every area, so both builds keep the same areas (`areaForWrite` writes within them).
+ */
+function withLayers(area: MapArea): MapArea | undefined {
+  if (!withinLimits(area)) return undefined;
+  const stored = (area as { layers?: unknown }).layers;
+  if (stored === undefined) return { ...area, layers: derivedLayers(area) };
+  if (!Array.isArray(stored)) return undefined;
+  const layers: AreaLayer[] = [];
+  for (const l of stored) {
+    if (validLayer(l, area.bbox, area.preset) && !layers.some((x) => x.kind === l.kind)) layers.push({ kind: l.kind, maxZoom: l.maxZoom });
+  }
+  return layers.length > 0 ? { ...area, layers } : undefined;
+}
+
 /** The journal field `mapAreas` as stored in the change log; anything malformed or oversized is dropped. */
 export function parseMapAreas(value: unknown): MapArea[] {
-  return Array.isArray(value) ? value.filter(isArea).filter(withinLimits) : [];
+  if (!Array.isArray(value)) return [];
+  return value.filter(isArea).map(withLayers).filter((a): a is MapArea => a !== undefined);
 }
 
 /**

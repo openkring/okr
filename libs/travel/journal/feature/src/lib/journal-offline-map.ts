@@ -161,7 +161,10 @@ export class JournalOfflineMap {
       header: this.i18n.map_level_title(),
       buttons: [
         ...levels.map((level) => {
-          const draft: MapArea = { id: crypto.randomUUID(), name: '', source, bbox, maxZoom: level.maxZoom };
+          const draft: MapArea = {
+            id: crypto.randomUUID(), name: '', source, bbox, maxZoom: level.maxZoom,
+            layers: [{ kind: source === 'antarctica' ? 'satellite' : source, maxZoom: level.maxZoom }],
+          };
           const mb = Math.max(1, Math.round(estimateBytes(areaTilePlan(draft, [])) / MB));
           return { text: fill(labels[level.key](), { mb }), handler: () => void this.nameAndAdd(journalKey, draft) };
         }),
