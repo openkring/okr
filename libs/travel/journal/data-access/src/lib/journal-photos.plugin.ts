@@ -27,14 +27,34 @@ export interface SkippedPhoto {
   reason: PhotoSkipReason;
 }
 
+/**
+ * Phase 5: a clip of at most 60 s converted to the web version `videoPath` ('journals/<journalKey>/<uuid>-video.mp4':
+ * H.264 + AAC mono, long side ≤ 960 px, at most 7 800 000 bytes); `path2048` / `path400` are its poster (frame at 1.0 s),
+ * `width` / `height` the upright size of the web version. `takenAt` / position come from the clip's own metadata.
+ */
+export interface PickedVideo extends PickedPhoto {
+  videoPath: string;
+  durationSec: number;
+}
+
+/** tooLong: longer than 60 s (never cut); tooLarge: still over 7 800 000 bytes after the retry at 630 kbit/s. */
+export type VideoSkipReason = PhotoSkipReason | 'tooLong' | 'tooLarge';
+
 export interface JournalPhotosPlugin {
   pick(options: { journalKey: string; limit?: number }): Promise<{ photos: PickedPhoto[]; skipped: SkippedPhoto[] }>;
+  /** Phase 5: picks clips and converts them one at a time; clips that could not be imported come back in `skipped`. */
+  pickVideos(options: {
+    journalKey: string;
+    limit: number;
+  }): Promise<{ videos: PickedVideo[]; skipped: { localIdentifier: string; reason: VideoSkipReason }[] }>;
   /** Plan 4: PUT of Documents/journals/<journalKey>/<file> to a signed URL (URLSession, not the WebView). */
   uploadFile(options: { journalKey: string; file: string; url: string; headers: Record<string, string> }): Promise<{ status: number }>;
   /** Plan 4: GET from a signed URL into Documents/journals/<journalKey>/<file>. */
   downloadFile(options: { journalKey: string; file: string; url: string }): Promise<{ status: number }>;
   /** Plan 4: the named files that exist in Documents/journals/<journalKey>/. */
   presentFiles(options: { journalKey: string; files: string[] }): Promise<{ files: string[] }>;
+  /** Phase 5: byte size of each named file in Documents/journals/<journalKey>/; missing files are absent. Older plugins reject. */
+  fileSizes(options: { journalKey: string; files: string[] }): Promise<{ sizes: Record<string, number> }>;
   /**
    * Plan 6: one offline map tile into Documents/<path> (`tiles/gibs/z/x/y.jpg`, `tiles/lima/z/x/y.png`,
    * `tiles/swisstopo/z/x/y.jpeg`); existing tiles (and markers) are skipped. Phase 4 §5: a source answering 404 or 204
