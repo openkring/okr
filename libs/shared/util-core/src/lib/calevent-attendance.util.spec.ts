@@ -47,3 +47,11 @@ describe('isCaleventAttendanceClosed', () => {
     expect(isCaleventAttendanceClosed(legacy)).toBe(false);
   });
 });
+
+describe('isCaleventAttendanceClosed with an explicit today', () => {
+  it('measures "over" against the given day', () => {
+    expect(isCaleventAttendanceClosed(event({ startDate: '20261031' }), '20261101')).toBe(true);
+    expect(isCaleventAttendanceClosed(event({ startDate: '20261031' }), '20261031')).toBe(false);
+    expect(isCaleventAttendanceClosed(event({ startDate: '20261028', endDate: '20261101' }), '20261101')).toBe(false);
+  });
+});

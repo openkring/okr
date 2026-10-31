@@ -7,7 +7,7 @@ import {
     compareDate,
     addDuration,
     convertDateFormat, convertDateFormatToString, copyDate,
-    DateFormat,
+    DateFormat, isPastDate,
     DatePart,
     extractFromDate,
     formatDateToken,
@@ -728,5 +728,13 @@ describe('isInRollingWindow', () => {
 
   it('lets invalid start dates pass', () => {
     expect(isInRollingWindow('', undefined, today)).toBe(true);
+  });
+});
+
+describe('isPastDate with an explicit today', () => {
+  it('compares against the given StoreDate, not the local clock', () => {
+    expect(isPastDate('20261031', DateFormat.StoreDate, '20261101')).toBe(true);
+    expect(isPastDate('20261101', DateFormat.StoreDate, '20261101')).toBe(false);
+    expect(isPastDate('20261031', DateFormat.StoreDate, '20261031')).toBe(false);
   });
 });

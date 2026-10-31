@@ -1,6 +1,6 @@
 import { CalEventModel } from '@okr/shared-models';
 
-import { isPastDate } from './date.util';
+import { DateFormat, getTodayStr, isPastDate } from './date.util';
 
 /**
  * Whether An-/Abmeldung is closed on this event, regardless of who asks: it is over (its last day,
@@ -14,7 +14,12 @@ import { isPastDate } from './date.util';
  *
  * Firestore reads skip model defaults: `isLocked`/`state` may be undefined on legacy docs, which
  * reads as "not locked" / "not cancelled".
+ *
+ * `today` (StoreDate) defaults to the local clock; the Cloud Functions pass their Europe/Zurich day.
  */
-export function isCaleventAttendanceClosed(event: Pick<CalEventModel, 'startDate' | 'endDate' | 'isLocked' | 'state'>): boolean {
-  return isPastDate(event.endDate || event.startDate) || !!event.isLocked || event.state === 'cancelled';
+export function isCaleventAttendanceClosed(
+  event: Pick<CalEventModel, 'startDate' | 'endDate' | 'isLocked' | 'state'>,
+  today: string = getTodayStr(DateFormat.StoreDate),
+): boolean {
+  return isPastDate(event.endDate || event.startDate, DateFormat.StoreDate, today) || !!event.isLocked || event.state === 'cancelled';
 }

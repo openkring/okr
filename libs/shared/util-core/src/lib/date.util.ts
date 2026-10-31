@@ -599,11 +599,13 @@ export function getDayDiff(fromDate: string, toDate: string): number {
  * An empty or unparsable date is not considered past.
  * @param date a date in StoreDate format (i.e. yyyymmdd)
  * @param dateFormat the format of the date (default is StoreDate)
+ * @param today today as a StoreDate (default: the local clock). The Cloud Functions run in UTC and
+ *   pass their Europe/Zurich day, so they cut off where the app does.
  */
-export function isPastDate(date: string, dateFormat = DateFormat.StoreDate): boolean {
+export function isPastDate(date: string, dateFormat = DateFormat.StoreDate, today: string = getTodayStr(DateFormat.StoreDate)): boolean {
     if (!date || date === END_FUTURE_DATE_STR) return false;
     const parsedDate = parseDate(date, dateFormat, false);
-    return !!parsedDate && format(parsedDate, 'yyyyMMdd') < getTodayStr(DateFormat.StoreDate);
+    return !!parsedDate && format(parsedDate, 'yyyyMMdd') < today;
 }
 
 /**

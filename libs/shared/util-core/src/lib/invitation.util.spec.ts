@@ -142,3 +142,28 @@ describe('countableInvitationsOf', () => {
     expect(countableInvitationsOf([], ME, new Map())).toEqual([]);
   });
 });
+
+// The server runs in UTC and passes its Europe/Zurich "today" (spec 1.127 B1, Task 7 fix round 1).
+describe('explicit today (server badge ledger)', () => {
+  const today = '20261101';
+  const yesterday = '20261031';
+
+  it('isOpenInvitation measures "past" against the given day', () => {
+    expect(isOpenInvitation(invitation({ date: yesterday }), ME, today)).toBe(false);
+    expect(isOpenInvitation(invitation({ date: today }), ME, today)).toBe(true);
+    expect(isOpenInvitation(invitation({ date: yesterday }), ME, yesterday)).toBe(true);
+  });
+
+  it('isCountableInvitation passes the day on to the event check', () => {
+    const ev = Object.assign(new CalEventModel('scs'), { startDate: yesterday, endDate: '' });
+    expect(isCountableInvitation(invitation({ date: today }), ME, ev, today)).toBe(false);
+    expect(isCountableInvitation(invitation({ date: yesterday }), ME, ev, yesterday)).toBe(true);
+  });
+
+  it('countableInvitationsOf passes the day on', () => {
+    const ev = Object.assign(new CalEventModel('scs'), { startDate: yesterday, endDate: '' });
+    const events = new Map<string, CalEventModel | null>([['event-1', ev]]);
+    expect(countableInvitationsOf([invitation({ date: yesterday })], ME, events, today)).toHaveLength(0);
+    expect(countableInvitationsOf([invitation({ date: yesterday })], ME, events, yesterday)).toHaveLength(1);
+  });
+});

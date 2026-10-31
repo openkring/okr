@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // The server's invitation part of the badge (spec 1.127 §3.7 B1) must count exactly what
 // AppStore.openInvitationCount counts: the same query (getSystemQuery + inviteeKey) and the
@@ -93,5 +93,40 @@ describe('tenantEventOrNull (mirrors readTenantModel)', () => {
     expect(tenantEventOrNull(undefined, 'scs')).toBeNull();
     expect(tenantEventOrNull(event({ isArchived: true }), 'scs')).toBeNull();
     expect(tenantEventOrNull(event({ tenants: ['kring'] }), 'scs')).toBeNull();
+  });
+});
+
+// Cloud Functions run in UTC; the app counts in Europe/Zurich. At 23:30 UTC on 31 Oct 2026 it is
+// already 1 Nov 00:30 in Zurich (CET, UTC+1): an invitation dated 31 Oct is past for the app and
+// must not be counted by the server either (Task 7 review, fix round 1).
+describe('countOpenInvitations counts "today" in Zurich', () => {
+  const tz = process.env['TZ'];
+  beforeEach(() => {
+    fs.invitations = [];
+    fs.events.clear();
+    process.env['TZ'] = 'UTC';
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-31T23:30:00Z'));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    if (tz === undefined) delete process.env['TZ'];
+    else process.env['TZ'] = tz;
+  });
+
+  it('does not count an invitation dated yesterday in Zurich at 23:30 UTC', async () => {
+    fs.invitations = [inv({ date: '20261031', caleventKey: '' })];
+    expect(await countOpenInvitations('p', 'scs')).toBe(0);
+  });
+
+  it('does not count an invitation to an event that ended yesterday in Zurich', async () => {
+    fs.events.set('e1', event({ startDate: '20261031' }));
+    fs.invitations = [inv({ date: '20261101' })];
+    expect(await countOpenInvitations('p', 'scs')).toBe(0);
+  });
+
+  it("still counts today's invitation", async () => {
+    fs.invitations = [inv({ date: '20261101', caleventKey: '' })];
+    expect(await countOpenInvitations('p', 'scs')).toBe(1);
   });
 });

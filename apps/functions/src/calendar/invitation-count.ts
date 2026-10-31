@@ -6,12 +6,17 @@
 // its query (`getSystemQuery` + `inviteeKey`) and its rule (`countableInvitationsOf`), and reads
 // the events the way `FirestoreService.readTenantModel` does. Keep the three in sync.
 //
+// "Today" is the Europe/Zurich day (`todayStoreDate`), as on the members' clocks — never the
+// container's UTC day.
+//
 // Known gap kept as is (spec 1.127 phase 2): a day-2 invitation of a multi-day event is not
 // counted (`inv.date` is past), although `shouldNotifyInvitation` still pushes it.
 
 import { getFirestore } from 'firebase-admin/firestore';
 import type { CalEventModel, InvitationModel } from '@okr/shared-models';
 import { countableInvitationsOf, getSystemQuery, SYSTEM_TENANT } from '@okr/shared-util-core';
+
+import { todayStoreDate } from './recipients';
 
 /**
  * The event as the app's `readTenantModel` hands it to the badge: the doc when it exists, is not
@@ -44,5 +49,7 @@ export async function countOpenInvitations(personKey: string, tenantId: string):
       events.set(keys[i], tenantEventOrNull(eventSnap.exists ? eventSnap.data() : undefined, tenantId));
     });
   }
-  return countableInvitationsOf(invitations, personKey, events).length;
+  // The Zurich day, not the container's UTC one: from 00:00 to 01:00/02:00 Zurich time the UTC
+  // clock is still on yesterday and would count yesterday's invitations and events.
+  return countableInvitationsOf(invitations, personKey, events, todayStoreDate()).length;
 }
