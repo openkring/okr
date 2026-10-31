@@ -67,13 +67,12 @@ const APPLICATION_RECORD = { months: 24, legalBasis: 'Nachweis über das Aufnahm
 const LOG_12M = { months: 12, legalBasis: 'Betriebssicherheit und Missbrauchserkennung — 12 Monate' } as const;
 const LOG_24M = { months: 24, legalBasis: 'Nachvollziehbarkeit von Datenänderungen — 24 Monate' } as const;
 /**
- * Device push tokens (spec 1.127 phase 2, `pruneStalePushTokens`): deleted 60 days after the last
- * refresh once FCM reports the device as gone, at the latest after 270 days (FCM's own inactivity
- * expiry) — 9 months is that hard upper bound, rounded up.
+ * Device push tokens (spec 1.127, `pruneStalePushTokens`): deleted 60 days after the last refresh
+ * (every app start refreshes it) — 2 months, rounded up from 60 days.
  */
-const PUSH_TOKEN_270D = {
-  months: 9,
-  legalBasis: 'Zustellung von Push-Mitteilungen — nach 60 Tagen gelöscht, wenn das Gerät abgemeldet ist, spätestens nach 270 Tagen',
+const PUSH_TOKEN_60D = {
+  months: 2,
+  legalBasis: 'Zustellung von Push-Mitteilungen — 60 Tage nach der letzten Nutzung der App gelöscht',
 } as const;
 
 /**
@@ -238,7 +237,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     tenantScope: 'none',          // path is already pinned to the subject's uid
     onExport: 'none',             // a push token is a device credential, not useful to the member
     onErasure: 'delete',
-    retention: PUSH_TOKEN_270D,
+    retention: PUSH_TOKEN_60D,
   },
   {
     // `SeenCollection`: the subcollection `users/{uid}/seen/{parentKey}` (SeenModel) — "I have

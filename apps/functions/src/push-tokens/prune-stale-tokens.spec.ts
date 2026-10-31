@@ -6,12 +6,9 @@ vi.mock('../matrix-simple/shared', async (importOriginal) => ({
 }));
 
 import {
-  classifySendError,
   groupByUid,
-  needsValidation,
   pruneDecision,
   tokenAgeDays,
-  PUSH_TOKEN_HARD_MAX_AGE_DAYS,
   PUSH_TOKEN_MAX_AGE_DAYS,
 } from './prune-stale-tokens';
 import { removeMatrixPushers } from '../matrix-simple/push';
@@ -20,9 +17,8 @@ const DAY = 24 * 60 * 60 * 1000;
 const NOW = Date.UTC(2026, 9, 30, 6, 0);
 
 describe('prune limits', () => {
-  it('uses 60 days soft, 270 days hard (FCM inactivity expiry)', () => {
+  it('deletes after 60 days without a refresh', () => {
     expect(PUSH_TOKEN_MAX_AGE_DAYS).toBe(60);
-    expect(PUSH_TOKEN_HARD_MAX_AGE_DAYS).toBe(270);
   });
 });
 
@@ -34,52 +30,17 @@ describe('tokenAgeDays', () => {
   });
 });
 
-describe('needsValidation', () => {
-  it('only between 60 and 270 days', () => {
-    expect(needsValidation(59)).toBe(false);
-    expect(needsValidation(60)).toBe(true);
-    expect(needsValidation(269)).toBe(true);
-    expect(needsValidation(270)).toBe(false);
-    expect(needsValidation(Number.POSITIVE_INFINITY)).toBe(false);
-  });
-});
-
 describe('pruneDecision', () => {
-  it('keeps a token younger than 60 days, whatever FCM says', () => {
-    expect(pruneDecision(59, 'invalid')).toBe('keep');
+  it('keeps a token younger than 60 days', () => {
+    expect(pruneDecision(59)).toBe('keep');
     expect(pruneDecision(0)).toBe('keep');
   });
 
-  // I1: a native start may not refresh updatedAt (N4), so age alone never deletes before 270 days.
-  it('deletes a 61-day-old token only when FCM reports it dead', () => {
-    expect(pruneDecision(61, 'invalid')).toBe('delete');
-    expect(pruneDecision(61, 'valid')).toBe('keep');
-    expect(pruneDecision(61)).toBe('keep');
-  });
-
-  it('keeps it when the check failed (network, quota)', () => {
-    expect(pruneDecision(200, 'error')).toBe('keep');
-  });
-
-  it('deletes at 270 days regardless, also without updatedAt', () => {
-    expect(pruneDecision(270, 'valid')).toBe('delete');
-    expect(pruneDecision(270)).toBe('delete');
+  // Strict 60 days since phase 3 (N4: every native start refreshes updatedAt), decided 2026-10-31.
+  it('deletes at 60 days and older, also without updatedAt', () => {
+    expect(pruneDecision(60)).toBe('delete');
+    expect(pruneDecision(300)).toBe('delete');
     expect(pruneDecision(Number.POSITIVE_INFINITY)).toBe('delete');
-  });
-});
-
-describe('classifySendError', () => {
-  it('unregistered, invalid and malformed tokens are invalid', () => {
-    expect(classifySendError({ code: 'messaging/registration-token-not-registered' })).toBe('invalid');
-    expect(classifySendError({ code: 'messaging/invalid-registration-token' })).toBe('invalid');
-    expect(classifySendError({ code: 'messaging/invalid-argument' })).toBe('invalid');
-  });
-
-  it('anything else is no verdict', () => {
-    expect(classifySendError({ code: 'messaging/quota-exceeded' })).toBe('error');
-    expect(classifySendError({ code: 'messaging/server-unavailable' })).toBe('error');
-    expect(classifySendError(new Error('ECONNRESET'))).toBe('error');
-    expect(classifySendError(undefined)).toBe('error');
   });
 });
 
