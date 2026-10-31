@@ -34,7 +34,7 @@
         "declaration": false,
         "format": ["cjs"],
         "platform": "node",
-        "external": ["firebase-admin", "firebase-functions", "h5wasm", "@google-cloud/*", "pdfkit", "swissqrbill", "puppeteer-core", "@sparticuz/chromium", "@neplex/vectorizer", "ffmpeg-static", "handlebars", "html-to-docx", "sanitize-html", "cors"],
+        "external": ["firebase-admin", "firebase-functions", "h5wasm", "@google-cloud/*", "pdfkit", "swissqrbill", "puppeteer-core", "@sparticuz/chromium", "@neplex/vectorizer", "ffmpeg-static", "handlebars", "html-to-docx", "sanitize-html", "cors", "heic-convert"],
         "esbuildOptions": {
           "logLevel": "info",
           "keepNames": true

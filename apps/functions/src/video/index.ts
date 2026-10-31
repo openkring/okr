@@ -23,6 +23,7 @@ import {
 export { handleAlbumSourceDeleted } from './reap-renderings';
 export { signVideoUrls } from './sign-video-urls';
 export { prepareChatVideoUpload } from './prepare-chat-video-upload';
+export { convertChatHeic } from './convert-chat-heic';
 
 const REGION = 'europe-west6';
 const DOCS_COLLECTION = 'docs';

@@ -4,8 +4,9 @@ import { videoMimeTypeForName } from './video.util';
  * Supported image MIME types for chat upload and preview.
  *
  * Conversion behaviour:
- *   HEIC / HEIF  — converted to JPEG via native createImageBitmap (Safari). Browsers
- *                  without native HEIC support upload the file unconverted.
+ *   HEIC / HEIF  — converted to JPEG via native createImageBitmap (Safari). Everywhere
+ *                  else MatrixChatService.sendFile converts it through the `convertChatHeic`
+ *                  Cloud Function instead.
  *   AVIF         — converted to JPEG via createImageBitmap (all modern browsers).
  *   SVG          — previewed and uploaded as-is; rendered natively by all browsers.
  *   All others   — uploaded as-is; the browser renders them natively.
@@ -103,13 +104,14 @@ export function isAvifFile(file: File): boolean {
 /**
  * Convert a HEIC/HEIF/AVIF file to JPEG via createImageBitmap() — natively supported for
  * AVIF in all modern browsers, and for HEIC/HEIF in Safari. Where the browser cannot decode
- * the format (HEIC on Chrome/Firefox) the original file is returned unchanged and uploaded
- * as-is; the recipient's browser may then be unable to preview it.
+ * the format (HEIC on Chrome/Firefox/Android) the original file is returned unchanged, and
+ * MatrixChatService.sendFile hands it to the `convertChatHeic` Cloud Function, which decodes
+ * it with libheif on the server. Uploading it unconverted renders blank for every recipient
+ * not on Safari (Samsung cameras save HEIC too — it is not an iPhone-only slice).
  *
- * There used to be a libheif-js (WASM) fallback covering exactly that gap. It was dropped
- * deliberately: 1.4 MB of lazily-loaded WebAssembly and the only LGPL-3.0 dependency in the
- * bundle, for a narrow slice of uploads that already degrade gracefully without it. Do not
- * reintroduce a WASM decoder without weighing both costs again.
+ * The decoder stays on the server on purpose: an in-app libheif-js (WASM) fallback was dropped
+ * for its 1.4 MB of WebAssembly and the only LGPL-3.0 dependency in the bundle. Do not
+ * reintroduce a WASM decoder in the client without weighing both costs again.
  *
  * Files that are not HEIC/HEIF/AVIF are returned immediately without any processing.
  */

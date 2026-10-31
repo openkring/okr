@@ -450,6 +450,8 @@ export const signFinanceDocuments = FinanceDocument.signFinanceDocuments;
 export const signVideoUrls = Video.signVideoUrls;
 // prepareChatVideoUpload: chat video → room album in the private bucket, signed upload URL (spec 1.82 §8)
 export const prepareChatVideoUpload = Video.prepareChatVideoUpload;
+// convertChatHeic: HEIC → JPEG for chat photos from browsers that cannot decode HEIC (Chrome, Firefox, Android)
+export const convertChatHeic = Video.convertChatHeic;
 export const exportMyData = Privacy.exportMyData;
 
 // privacy 1.19 Phase 5B: tenant-scoped right to erasure (D-P5-2/D-P5-6, D-L2) —

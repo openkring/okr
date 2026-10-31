@@ -1,5 +1,6 @@
 import { computed, effect, inject, Injectable } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
+import { captureMessage } from '@sentry/angular';
 import { createClient, IndexedDBStore, MatrixClient, MatrixEvent, Room, RoomMember, EventType, EventTimeline, MsgType, RelationType, IContent, ISendEventResponse, MatrixError, RoomStateEvent, RoomEvent, ClientEvent, ICreateRoomOpts, Visibility, Preset, User, ReceiptType, type MatrixCall, type Store, type IRoomTimelineData } from 'matrix-js-sdk';
 import { BehaviorSubject, combineLatest, Observable, Subject, timer } from 'rxjs';
 import { distinctUntilChanged, map } from 'rxjs/operators';
@@ -12,7 +13,7 @@ import { AppStore } from '@okr/shared-feature';
 import { ChatStatusService } from '@okr/shared-data-access';
 import { checkVideoLimits, debugData, debugMessage, MAX_CHAT_VIDEO_BYTES } from '@okr/shared-util-core';
 import { OKR_VIDEO_FIELD, videoLink } from '@okr/content-document-util';
-import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError, VideoUploadError, buildPollContent, PollAnswerDef, POLL_START_EVENT, PinboardInput, AvailablePinboard, UNREAD_FROM_EVENT, MARKED_UNREAD_EVENT, flaggedUnreadFrom, countUnmutedUnread, filterRoomsOfTenant, serverNameOf, indexBookmarkEntries, bookmarkedMessageIds, PinPreview, pinPreviewOf } from '@okr/chat-util';
+import { convertHeicToJpeg, isHeicFile, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError, VideoUploadError, buildPollContent, PollAnswerDef, POLL_START_EVENT, PinboardInput, AvailablePinboard, UNREAD_FROM_EVENT, MARKED_UNREAD_EVENT, flaggedUnreadFrom, countUnmutedUnread, filterRoomsOfTenant, serverNameOf, indexBookmarkEntries, bookmarkedMessageIds, PinPreview, pinPreviewOf } from '@okr/chat-util';
 
 import { mediaMimeHint, mxcAvatarHttpUrl } from './matrix-helpers';
 import { MatrixMediaService } from './matrix-media.service';
@@ -38,6 +39,11 @@ const MEDIA_AUTH_RECOVERY_COOLDOWN_MS = 5 * 60 * 1000;
 
 type PrepareChatVideoUploadReq = { roomId: string; roomName: string; fileName: string; size: number; mimeType: string };
 type PrepareChatVideoUploadRes = { docKey: string; uploadUrl: string; contentType: string; maxBytes: number };
+type ConvertChatHeicReq = { fileName: string; data: string };
+type ConvertChatHeicRes = { fileName: string; data: string };
+
+/** Mirrors `MAX_CHAT_HEIC_BYTES` in the `convertChatHeic` function (callable 10 MB cap, base64). */
+const MAX_CHAT_HEIC_BYTES = 7 * 1024 * 1024;
 
 export interface MatrixPollData {
   question: string;
@@ -1042,12 +1048,42 @@ export class MatrixChatService {
   }
 
   /**
+   * HEIC → JPEG through the `convertChatHeic` callable, for browsers that cannot decode HEIC
+   * themselves. Any failure (too large, offline, undecodable) returns the original unchanged —
+   * a HEIC that only Safari can show still beats losing the photo — and is reported to Sentry,
+   * because that fallback is exactly the blank-image bug this conversion exists to prevent.
+   */
+  private async convertHeicOnServer(file: File): Promise<File> {
+    try {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      if (bytes.length === 0 || bytes.length > MAX_CHAT_HEIC_BYTES) throw new Error(`size ${bytes.length}`);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+      const fn = httpsCallable<ConvertChatHeicReq, ConvertChatHeicRes>(getFunctions(getApp(), 'europe-west6'), 'convertChatHeic', { timeout: 70_000 });
+      const { data } = await fn({ fileName: file.name, data: btoa(binary) });
+      const jpeg = Uint8Array.from(atob(data.data), c => c.charCodeAt(0));
+      return new File([jpeg], data.fileName, { type: 'image/jpeg' });
+    } catch (error) {
+      console.warn('MatrixChatService.convertHeicOnServer: sending the original HEIC:', error);
+      captureMessage('MatrixChatService: HEIC conversion failed, original sent', {
+        level: 'warning',
+        tags: { chatUpload: 'heic-fallback' },
+        extra: { size: file.size, reason: error instanceof Error ? error.message : String(error) },
+      });
+      return file;
+    }
+  }
+
+  /**
    * Send a file/image to a room
    */
   async sendFile(roomId: string, file: File, threadId?: string): Promise<ISendEventResponse> {
     if (!this.client) throw new Error('Client not initialized');
 
     file = await convertHeicToJpeg(file);
+    // Only Safari decodes HEIC; everywhere else it is still HEIC here and would render blank
+    // for every recipient not on Safari (Samsung/Android cameras save HEIC too).
+    if (isHeicFile(file)) file = await this.convertHeicOnServer(file);
 
     await this.assertWithinUploadLimit(file);
 

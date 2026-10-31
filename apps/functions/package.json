@@ -24,6 +24,7 @@
     "firebase-functions": "^7.4.0",
     "h5wasm": "0.10.3",
     "handlebars": "4.7.9",
+    "heic-convert": "2.1.0",
     "html-to-docx": "1.8.0",
     "i18n-iso-countries": "7.14.0",
     "jpeg-js": "0.4.4",
@@ -46,6 +47,7 @@
     "vest": "5.4.6"
   },
   "devDependencies": {
+    "@types/heic-convert": "^2.1.1",
     "@types/nodemailer": "7.0.11",
     "@types/pngjs": "^6.0.5"
   }
