@@ -35,9 +35,16 @@ export interface JournalPhotosPlugin {
   downloadFile(options: { journalKey: string; file: string; url: string }): Promise<{ status: number }>;
   /** Plan 4: the named files that exist in Documents/journals/<journalKey>/. */
   presentFiles(options: { journalKey: string; files: string[] }): Promise<{ files: string[] }>;
-  /** Plan 6: one offline map tile into Documents/<path> (`tiles/gibs/z/x/y.jpg`, `tiles/lima/z/x/y.png`); existing tiles are skipped. */
-  downloadTile(options: { url: string; path: string }): Promise<{ skipped: boolean }>;
-  /** Plan 6b: stores an OpenStreetMap vector tile (`tiles/osm/z/x/y.mvt`, base64). */
+  /**
+   * Plan 6: one offline map tile into Documents/<path> (`tiles/gibs/z/x/y.jpg`, `tiles/lima/z/x/y.png`,
+   * `tiles/swisstopo/z/x/y.jpeg`); existing tiles (and markers) are skipped. Phase 4 §5: a source answering 404 or 204
+   * gets a zero-byte marker and resolves `{ empty: true }`; every other failure rejects. Older plugins never set `empty`.
+   */
+  downloadTile(options: { url: string; path: string }): Promise<{ skipped: boolean; empty?: true }>;
+  /**
+   * Plan 6b: stores an OpenStreetMap vector tile (`tiles/osm/z/x/y.mvt`, base64, at most 2 MB). Phase 4 §5: `data: ''`
+   * writes a zero-byte marker and is accepted for every tile pattern (older plugins reject it for raster paths).
+   */
   writeTile(options: { path: string; data: string }): Promise<void>;
   /** Plan 6b: one HTTP range of the Protomaps build (or its build list), base64 — those hosts send no CORS headers. */
   fetchRange(options: { url: string; offset: number; length: number }): Promise<{ data: string }>;
@@ -54,6 +61,12 @@ export interface JournalPhotosPlugin {
   deleteFile(options: { journalKey: string; file: string }): Promise<void>;
   /** Plan 8: deletes the named tiles («Speicher freigeben»). */
   deleteTiles(options: { paths: string[] }): Promise<{ deleted: number }>;
+  /**
+   * Phase 4 §5: how many of the named tiles are stored and their total size in bytes. At most 500 paths per call (the
+   * caller chunks); paths outside the tile patterns are ignored; a zero-byte marker counts as present with 0 bytes.
+   * Missing on older plugins (the call rejects as unimplemented → «unknown size»).
+   */
+  tileStats(options: { paths: string[] }): Promise<{ present: number; bytes: number }>;
 }
 
 export const JournalPhotos = registerPlugin<JournalPhotosPlugin>('JournalPhotos');
