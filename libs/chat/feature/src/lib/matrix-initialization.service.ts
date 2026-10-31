@@ -11,7 +11,7 @@ import { AppStore } from '@okr/shared-feature';
 import { MatrixChatService } from '@okr/chat-data-access';
 import { ChatStatusService, FcmService, FirestoreService, writeBadgeLedgerFromPage, writeServerBadgeLedger } from '@okr/shared-data-access';
 import { BADGE_COUNTS_DOC_ID, BadgeCollection, ChatBlockedError, UserCollection } from '@okr/shared-models';
-import { allPartsReady, BadgeParts, BadgePartsReady, chatBlockedAlertMessage, correctionAllowed, countedDeliveredNotifications, ledgerPartsToWrite, ServerBadgeLedger, isKioskOnly, isRegistrationStale, PUSH_PROMPT_SNOOZE_MS, readyBadgeParts, shouldAskForPush } from '@okr/shared-util-core';
+import { allPartsReady, BadgeParts, BadgePartsReady, chatBlockedAlertMessage, correctionAllowed, countedDeliveredNotifications, LEDGER_CORRECTION_WINDOW_MS, ledgerPartsToWrite, nextCorrectionAt, ServerBadgeLedger, isKioskOnly, isRegistrationStale, PUSH_PROMPT_SNOOZE_MS, readyBadgeParts, shouldAskForPush } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { CHAT_BLOCKED_ALERT_I18N_KEYS, ChatBlockedAlertI18n, PUSH_PROMPT_I18N_KEYS, PushPromptI18n } from '@okr/chat-util';
 import { AlertController } from '@ionic/angular';
@@ -288,10 +288,12 @@ export class MatrixInitializationService {
    * equals the app's parts, so it does not loop.
    * A logout inside the debounce replaces the pending value with «nobody», and the subscriber
    * drops a write whose uid is no longer the signed-in one, so nothing is written for the old uid.
-   * Damping (final review I1): two open devices whose ready parts differ would overwrite each
-   * other forever. A write while no local ready part changed since this app's last write is a
-   * correction; after 3 within 60 s (correctionAllowed) the app stops correcting until a local
-   * ready part changes or the app resumes. The history is per session and uid.
+   * Damping (final review I1, re-review): two open devices whose ready parts differ would
+   * overwrite each other forever. A write while no local ready part changed since this app's last
+   * write is a correction; at most 3 corrections in any 60 s (correctionAllowed, a pure rolling
+   * window). A damped correction is retried once the oldest one leaves the window
+   * (nextCorrectionAt), so the gateway's phantom chat count is still corrected on an always-open
+   * app. The history is per session and uid.
    */
   private startServerBadgeLedger(uid: Signal<string | undefined>, badgeParts: Signal<BadgeParts>, partsReady: Signal<BadgePartsReady>): void {
     const readyParts = computed(() => readyBadgeParts(badgeParts(), partsReady()), { equal: sameBadgeParts });
@@ -299,19 +301,9 @@ export class MatrixInitializationService {
     let lastWriteAt: number | undefined;
     let corrections: number[] = [];
     let historyUid: string | undefined;
-    // A resume re-enables correcting and re-checks the server doc against the app's parts.
-    const resume$ = new BehaviorSubject<number>(0);
-    const onResume = () => {
-      localChangedAt = Date.now();
-      resume$.next(localChangedAt);
-    };
-    if (Capacitor.isNativePlatform()) {
-      void App.addListener('appStateChange', ({ isActive }) => { if (isActive) onResume(); });
-    } else {
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') onResume();
-      });
-    }
+    // Re-runs the comparison when a damped correction may be retried.
+    const retry$ = new BehaviorSubject<number>(0);
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
     runInInjectionContext(this.injector, () => {
       const serverLedger$ = toObservable(uid).pipe(
         switchMap(current => current
@@ -320,7 +312,7 @@ export class MatrixInitializationService {
           : of(undefined)),
       );
       const readyParts$ = toObservable(readyParts).pipe(tap(() => { localChangedAt = Date.now(); }));
-      combineLatest([serverLedger$, readyParts$, resume$]).pipe(
+      combineLatest([serverLedger$, readyParts$, retry$]).pipe(
         map(([ledger, ready]) => ledger ? { uid: ledger.uid, parts: ledgerPartsToWrite(ledger.server, ready) } : undefined),
         debounceTime(SERVER_BADGE_LEDGER_DEBOUNCE_MS),
       ).subscribe(w => {
@@ -334,8 +326,15 @@ export class MatrixInitializationService {
         const now = Date.now();
         const isCorrection = lastWriteAt !== undefined && lastWriteAt > localChangedAt;
         if (isCorrection) {
-          if (!correctionAllowed(corrections, now, localChangedAt)) return; // damped: another device disagrees
-          corrections = [...corrections.filter(t => t > localChangedAt), now];
+          if (!correctionAllowed(corrections, now)) {
+            // damped (another device disagrees, or a burst of chat): retry when the window frees
+            const at = nextCorrectionAt(corrections, now);
+            if (at !== undefined && retryTimer === undefined) {
+              retryTimer = setTimeout(() => { retryTimer = undefined; retry$.next(Date.now()); }, at - now);
+            }
+            return;
+          }
+          corrections = [...corrections.filter(t => t > now - LEDGER_CORRECTION_WINDOW_MS), now];
         }
         lastWriteAt = now;
         void writeServerBadgeLedger(w.uid, w.parts);

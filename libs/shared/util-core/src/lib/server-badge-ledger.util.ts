@@ -134,23 +134,31 @@ export const LEDGER_CORRECTION_WINDOW_MS = 60_000;
 export const LEDGER_CORRECTION_LIMIT = 3;
 
 /**
- * Damping for the open app's ledger corrections (1.127 final review I1). Two open devices of one
- * member whose ready parts differ would otherwise overwrite each other forever: each sees the
- * other's write as a difference and corrects it. After {@link LEDGER_CORRECTION_LIMIT} corrections
- * within {@link LEDGER_CORRECTION_WINDOW_MS} while no local ready part changed, the app stops
- * correcting until a local part changes or the app resumes (both set `localChangedAt`).
+ * Damping for the open app's ledger corrections (1.127 final review I1, re-review). Two open
+ * devices of one member whose ready parts differ would otherwise overwrite each other forever:
+ * each sees the other's write as a difference and corrects it. A pure rolling window: a correction
+ * is allowed while fewer than {@link LEDGER_CORRECTION_LIMIT} corrections happened in the last
+ * {@link LEDGER_CORRECTION_WINDOW_MS}. No hold until a local change: the gateway's phantom chat
+ * count (+1 per message while the member reads in the open app) needs a correction on an
+ * always-open app that never resumes, so the budget must refill with time alone.
  *
- * @param history       times of this session's corrections for the signed-in uid (a write that
- *                      follows a local change is not a correction and is not in it)
- * @param now           the time of the correction about to be written
- * @param localChangedAt the last local ready-part change or app resume
+ * @param history times of this session's corrections for the signed-in uid (a write that follows
+ *                a local ready-part change is not a correction and is not in it)
+ * @param now     the time of the correction about to be written
  */
-export function correctionAllowed(history: number[], now: number, localChangedAt: number): boolean {
-  const since = history.filter((t) => t > localChangedAt && t <= now).sort((a, b) => a - b);
-  for (let i = 0; i + LEDGER_CORRECTION_LIMIT - 1 < since.length; i++) {
-    if (since[i + LEDGER_CORRECTION_LIMIT - 1] - since[i] <= LEDGER_CORRECTION_WINDOW_MS) return false;
-  }
-  return true;
+export function correctionAllowed(history: number[], now: number): boolean {
+  const recent = history.filter((t) => t > now - LEDGER_CORRECTION_WINDOW_MS && t <= now);
+  return recent.length < LEDGER_CORRECTION_LIMIT;
+}
+
+/**
+ * When a damped correction may be retried: just after the oldest correction in the window leaves
+ * it. Undefined when nothing in `history` is in the window.
+ */
+export function nextCorrectionAt(history: number[], now: number): number | undefined {
+  const recent = history.filter((t) => t > now - LEDGER_CORRECTION_WINDOW_MS && t <= now);
+  if (recent.length === 0) return undefined;
+  return Math.min(...recent) + LEDGER_CORRECTION_WINDOW_MS + 1;
 }
 
 /** The metadata of a badge source query (FirestoreService.searchDataWithMeta). */
