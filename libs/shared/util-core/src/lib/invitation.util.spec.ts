@@ -167,3 +167,11 @@ describe('explicit today (server badge ledger)', () => {
     expect(countableInvitationsOf([invitation({ date: yesterday })], ME, events, yesterday)).toHaveLength(1);
   });
 });
+
+describe('openInvitationsOf today', () => {
+  it('uses the given day, not the local clock', () => {
+    const inv = { inviteeKey: 'p', state: 'pending', isArchived: false, date: '20261031' } as unknown as InvitationModel;
+    expect(openInvitationsOf([inv], 'p', '20261031')).toHaveLength(1);
+    expect(openInvitationsOf([inv], 'p', '20261101')).toHaveLength(0);
+  });
+});

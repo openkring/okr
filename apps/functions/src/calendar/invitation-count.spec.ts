@@ -9,6 +9,7 @@ const fs = vi.hoisted(() => ({
   events: new Map<string, Record<string, unknown>>(),
   filters: [] as unknown[][],
   orderBy: [] as unknown[][],
+  getAllIds: [] as string[],
 }));
 
 vi.mock('firebase-admin/firestore', () => {
@@ -22,8 +23,10 @@ vi.mock('firebase-admin/firestore', () => {
       ...query,
       doc: (id: string) => ({ path: `${name}/${id}`, id }),
     }),
-    getAll: async (...refs: { id: string }[]) =>
-      refs.map((r) => ({ exists: fs.events.has(r.id), data: () => fs.events.get(r.id) })),
+    getAll: async (...refs: { id: string }[]) => {
+      fs.getAllIds.push(...refs.map((r) => r.id));
+      return refs.map((r) => ({ exists: fs.events.has(r.id), data: () => fs.events.get(r.id) }));
+    },
   };
   return { getFirestore: () => db };
 });
@@ -41,6 +44,7 @@ describe('countOpenInvitations', () => {
     fs.events.clear();
     fs.filters = [];
     fs.orderBy = [];
+    fs.getAllIds = [];
   });
 
   it("queries the app's invitations of the person", async () => {
@@ -75,6 +79,25 @@ describe('countOpenInvitations', () => {
     fs.events.set('e2', event({ isArchived: true }));
     fs.invitations = [inv(), inv({ caleventKey: 'e2' })];
     expect(await countOpenInvitations('p', 'scs')).toBe(0);
+  });
+
+  // Every invitation the person ever got used to load its event (final review I3).
+  it('loads events only for open invitations', async () => {
+    fs.events.set('e1', event());
+    fs.invitations = [
+      inv(),
+      inv({ caleventKey: 'answered', state: 'accepted' }),
+      inv({ caleventKey: 'past', date: '20000101' }),
+      inv({ caleventKey: 'archived', isArchived: true }),
+    ];
+    expect(await countOpenInvitations('p', 'scs')).toBe(1);
+    expect(fs.getAllIds).toEqual(['e1']);
+  });
+
+  it('does not call getAll when no invitation is open', async () => {
+    fs.invitations = [inv({ state: 'declined' })];
+    expect(await countOpenInvitations('p', 'scs')).toBe(0);
+    expect(fs.getAllIds).toEqual([]);
   });
 
   it('is 0 without person or tenant', async () => {

@@ -24,9 +24,9 @@ export function isOpenInvitation(invitation: InvitationModel, personKey: string,
     && !isPastDate(invitation.date, DateFormat.StoreDate, today);
 }
 
-/** The subset of {@link invitations} that is open for the given person. */
-export function openInvitationsOf(invitations: InvitationModel[], personKey: string): InvitationModel[] {
-  return invitations.filter(inv => isOpenInvitation(inv, personKey));
+/** The subset of {@link invitations} that is open for the given person on `today`. */
+export function openInvitationsOf(invitations: InvitationModel[], personKey: string, today: string = getTodayStr(DateFormat.StoreDate)): InvitationModel[] {
+  return invitations.filter(inv => isOpenInvitation(inv, personKey, today));
 }
 
 /**

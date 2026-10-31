@@ -14,7 +14,7 @@
 
 import { getFirestore } from 'firebase-admin/firestore';
 import type { CalEventModel, InvitationModel } from '@okr/shared-models';
-import { countableInvitationsOf, getSystemQuery, SYSTEM_TENANT } from '@okr/shared-util-core';
+import { countableInvitationsOf, getSystemQuery, openInvitationsOf, SYSTEM_TENANT } from '@okr/shared-util-core';
 
 import { todayStoreDate } from './recipients';
 
@@ -39,7 +39,13 @@ export async function countOpenInvitations(personKey: string, tenantId: string):
   // ordered like the app's query (`searchData(…, 'date', 'asc')`), so it runs on the same index
   query = query.where('inviteeKey', '==', personKey).orderBy('date', 'asc');
   const snap = await query.get();
-  const invitations = snap.docs.map((doc) => ({ ...doc.data(), okey: doc.id }) as unknown as InvitationModel);
+  // The Zurich day, not the container's UTC one: from 00:00 to 01:00/02:00 Zurich time the UTC
+  // clock is still on yesterday and would count yesterday's invitations and events.
+  const today = todayStoreDate();
+  // Only the open ones (pending, not archived, not past): the query returns every invitation the
+  // person ever got, and their events must not all be read on every invitation write.
+  const invitations = openInvitationsOf(
+    snap.docs.map((doc) => ({ ...doc.data(), okey: doc.id }) as unknown as InvitationModel), personKey, today);
 
   const keys = [...new Set(invitations.map((inv) => inv.caleventKey).filter((key): key is string => !!key))];
   const events = new Map<string, CalEventModel | null>();
@@ -49,7 +55,5 @@ export async function countOpenInvitations(personKey: string, tenantId: string):
       events.set(keys[i], tenantEventOrNull(eventSnap.exists ? eventSnap.data() : undefined, tenantId));
     });
   }
-  // The Zurich day, not the container's UTC one: from 00:00 to 01:00/02:00 Zurich time the UTC
-  // clock is still on yesterday and would count yesterday's invitations and events.
-  return countableInvitationsOf(invitations, personKey, events, todayStoreDate()).length;
+  return countableInvitationsOf(invitations, personKey, events, today).length;
 }
