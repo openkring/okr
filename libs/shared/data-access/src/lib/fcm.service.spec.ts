@@ -19,12 +19,15 @@ const m = vi.hoisted(() => ({
   checkPermissions: vi.fn(async () => ({ receive: 'granted' })),
   messagingSupported: vi.fn(async () => false),
   getToken: vi.fn(async () => null as string | null),
+  badgeClear: vi.fn(async () => undefined),
+  removeAllDelivered: vi.fn(async () => undefined),
 }));
 
 vi.mock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: m.isNative, getPlatform: m.getPlatform } }));
 vi.mock('@capacitor/push-notifications', () => ({
-  PushNotifications: { unregister: m.pnUnregister, createChannel: vi.fn(), addListener: m.addListener, register: m.register, requestPermissions: vi.fn(), checkPermissions: m.checkPermissions },
+  PushNotifications: { unregister: m.pnUnregister, createChannel: vi.fn(), addListener: m.addListener, register: m.register, requestPermissions: vi.fn(), checkPermissions: m.checkPermissions, removeAllDeliveredNotifications: m.removeAllDelivered },
 }));
+vi.mock('@capawesome/capacitor-badge', () => ({ Badge: { clear: m.badgeClear } }));
 vi.mock('firebase/app', () => ({ getApp: () => ({}) }));
 vi.mock('firebase/auth', () => ({ getAuth: () => m.auth }));
 vi.mock('firebase/firestore', () => ({
@@ -111,6 +114,28 @@ describe('FcmService.disablePush', () => {
     expect(m.unregisterCallable).not.toHaveBeenCalled();
     expect(m.deleteDoc).not.toHaveBeenCalled();
     expect(m.pnUnregister).not.toHaveBeenCalled();
+  });
+
+  it('clears the native badge and tray on logout, even without a token or a session', async () => {
+    m.isNative.mockReturnValue(true);
+    m.badgeClear.mockClear();
+    m.removeAllDelivered.mockClear();
+    const svc = make();
+    (svc as unknown as Priv)._currentToken = null;
+    m.auth.currentUser = null;
+    m.badgeClear.mockRejectedValueOnce(new Error('plugin missing'));
+    await expect(svc.disablePush('A')).resolves.toBeUndefined();
+    expect(m.badgeClear).toHaveBeenCalledTimes(1);
+    expect(m.removeAllDelivered).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves badge and tray alone on the web', async () => {
+    m.badgeClear.mockClear();
+    m.removeAllDelivered.mockClear();
+    const svc = make();
+    await svc.disablePush('A');
+    expect(m.badgeClear).not.toHaveBeenCalled();
+    expect(m.removeAllDelivered).not.toHaveBeenCalled();
   });
 });
 

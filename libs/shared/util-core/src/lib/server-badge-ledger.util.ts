@@ -109,3 +109,34 @@ export function readyBadgeParts(parts: BadgeParts, ready: BadgePartsReady): Part
 export function allPartsReady(ready: BadgePartsReady): boolean {
   return ready.chat && ready.tasks && ready.invitations;
 }
+
+/**
+ * What the open app must write to the server ledger (1.127 N1): all ready parts (clamped like the
+ * write) when the server's value of ANY ready part differs, else undefined. Compared against the
+ * server doc, not the app's last write: the gateway adds chat events while the member reads them
+ * in the open app, and without this the ledger keeps those as phantom unread. A missing doc or
+ * one the app never wrote (fromApp false) gets every ready part. A part that is not ready (absent)
+ * is never included.
+ */
+export function ledgerPartsToWrite(server: Partial<ServerBadgeLedger> | undefined, ready: Partial<BadgeParts>): Partial<BadgeParts> | undefined {
+  const want = ledgerPartsFromApp(ready);
+  const keys = (['chat', 'tasks', 'invitations'] as const).filter((k) => want[k] !== undefined);
+  if (keys.length === 0) return undefined;
+  const out: Partial<BadgeParts> = {};
+  for (const k of keys) out[k] = want[k];
+  if (server?.fromApp !== true) return out;
+  return keys.some((k) => server[k] !== want[k]) ? out : undefined;
+}
+
+/**
+ * The delivered notifications the badge counts: chat (`type: 'chat'`), tasks (`type: 'task'`) and
+ * invitations (`badgeAdd: 'invitation'`). Only these are removed at a badge total of 0; other
+ * banners (calendar activity, tracker, file transfer, calls) stay in the tray.
+ */
+export function countedDeliveredNotifications<T extends { data?: unknown }>(list: T[]): T[] {
+  return list.filter((n) => {
+    const data = n.data as { type?: unknown; badgeAdd?: unknown } | null | undefined;
+    if (!data || typeof data !== 'object') return false;
+    return data.type === 'chat' || data.type === 'task' || data.badgeAdd === 'invitation';
+  });
+}

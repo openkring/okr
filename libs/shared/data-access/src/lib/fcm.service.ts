@@ -1,6 +1,7 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
+import { Badge } from '@capawesome/capacitor-badge';
 import { getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getMessaging, getToken, onMessage, isSupported as isMessagingSupported, Messaging } from 'firebase/messaging';
@@ -15,6 +16,14 @@ import { ensureNativePushChannel } from './native-push-channel';
 
 /** Where the Firebase Messaging SDK registers firebase-messaging-sw.js (its DEFAULT_SW_SCOPE). */
 const FCM_SW_SCOPE = '/firebase-cloud-messaging-push-scope';
+
+/** Logout on native (1.127 M1): clear the icon badge and every delivered notification. */
+async function clearNativeBadgeAndTray(): Promise<void> {
+  const results = await Promise.allSettled([Badge.clear(), PushNotifications.removeAllDeliveredNotifications()]);
+  for (const r of results) {
+    if (r.status === 'rejected') console.warn('FcmService.disablePush: clearing badge/tray failed (ignored):', r.reason);
+  }
+}
 
 /**
  * How long a native registration waits for the `registration` event (N4). iOS does not always
@@ -193,38 +202,42 @@ export class FcmService {
     // Only the save phase is tracked, not the whole registration: a native registration that
     // never gets its event (N4) must not hold up the logout of an existing token.
     await Promise.all([...this.savesInFlight].map(p => p.catch(() => false)));
-    if (!token) return;
-    try {
-      const unregister = httpsCallable<{ pushkey: string }, { removed: boolean }>(
-        getFunctions(getApp(), 'europe-west6'), 'unregisterMatrixPusher');
-      // A step may run late (after the awaited in-flight registration, or after the logout timeout
-      // let signOut happen). Another member may be signed in by then, and the web token is the same
-      // for every user of one browser: such a step would delete THEIR pusher / registration.
-      let skippedLogged = false;
-      const stillThisLogout = (): boolean => {
-        const ok = this.loggedOut && this.generation === gen && getAuth(getApp()).currentUser?.uid === uid;
-        if (!ok && !skippedLogged) {
-          skippedLogged = true;
-          console.log('FcmService.disablePush: logout step skipped, another session began');
+    if (token) {
+      try {
+        const unregister = httpsCallable<{ pushkey: string }, { removed: boolean }>(
+          getFunctions(getApp(), 'europe-west6'), 'unregisterMatrixPusher');
+        // A step may run late (after the awaited in-flight registration, or after the logout timeout
+        // let signOut happen). Another member may be signed in by then, and the web token is the same
+        // for every user of one browser: such a step would delete THEIR pusher / registration.
+        let skippedLogged = false;
+        const stillThisLogout = (): boolean => {
+          const ok = this.loggedOut && this.generation === gen && getAuth(getApp()).currentUser?.uid === uid;
+          if (!ok && !skippedLogged) {
+            skippedLogged = true;
+            console.log('FcmService.disablePush: logout step skipped, another session began');
+          }
+          return ok;
+        };
+        const unregisterPusher = async () => {
+          await inFlight?.catch(() => undefined);
+          if (!stillThisLogout()) return;
+          return unregister({ pushkey: token });
+        };
+        const results = await Promise.allSettled([
+          stillThisLogout() ? this.removeToken(uid, token) : Promise.resolve(),
+          unregisterPusher(),
+          Capacitor.isNativePlatform() && stillThisLogout() ? PushNotifications.unregister() : Promise.resolve(),
+        ]);
+        for (const r of results) {
+          if (r.status === 'rejected') console.warn('FcmService.disablePush: step failed (ignored):', r.reason);
         }
-        return ok;
-      };
-      const unregisterPusher = async () => {
-        await inFlight?.catch(() => undefined);
-        if (!stillThisLogout()) return;
-        return unregister({ pushkey: token });
-      };
-      const results = await Promise.allSettled([
-        stillThisLogout() ? this.removeToken(uid, token) : Promise.resolve(),
-        unregisterPusher(),
-        Capacitor.isNativePlatform() && stillThisLogout() ? PushNotifications.unregister() : Promise.resolve(),
-      ]);
-      for (const r of results) {
-        if (r.status === 'rejected') console.warn('FcmService.disablePush: step failed (ignored):', r.reason);
+      } catch (err) {
+        console.warn('FcmService.disablePush: failed (ignored):', err);
       }
-    } catch (err) {
-      console.warn('FcmService.disablePush: failed (ignored):', err);
     }
+    // On native, the signed-out member's badge and banners (chat previews) must not stay on a
+    // shared device. Safe at any time, so no stillThisLogout guard; best effort, never throws.
+    if (Capacitor.isNativePlatform()) await clearNativeBadgeAndTray();
   }
 
   /**

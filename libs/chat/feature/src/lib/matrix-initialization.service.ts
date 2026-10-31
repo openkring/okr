@@ -5,13 +5,13 @@ import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { Badge } from '@capawesome/capacitor-badge';
-import { debounceTime, distinctUntilChanged, filter } from 'rxjs';
+import { combineLatest, debounceTime, map, of, switchMap } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
 import { MatrixChatService } from '@okr/chat-data-access';
-import { ChatStatusService, FcmService, writeBadgeLedgerFromPage, writeServerBadgeLedger } from '@okr/shared-data-access';
-import { ChatBlockedError } from '@okr/shared-models';
-import { allPartsReady, BadgeParts, BadgePartsReady, chatBlockedAlertMessage, isKioskOnly, isRegistrationStale, PUSH_PROMPT_SNOOZE_MS, readyBadgeParts, shouldAskForPush } from '@okr/shared-util-core';
+import { ChatStatusService, FcmService, FirestoreService, writeBadgeLedgerFromPage, writeServerBadgeLedger } from '@okr/shared-data-access';
+import { BADGE_COUNTS_DOC_ID, BadgeCollection, ChatBlockedError, UserCollection } from '@okr/shared-models';
+import { allPartsReady, BadgeParts, BadgePartsReady, chatBlockedAlertMessage, countedDeliveredNotifications, ledgerPartsToWrite, ServerBadgeLedger, isKioskOnly, isRegistrationStale, PUSH_PROMPT_SNOOZE_MS, readyBadgeParts, shouldAskForPush } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { CHAT_BLOCKED_ALERT_I18N_KEYS, ChatBlockedAlertI18n, PUSH_PROMPT_I18N_KEYS, PushPromptI18n } from '@okr/chat-util';
 import { AlertController } from '@ionic/angular';
@@ -21,6 +21,9 @@ import { MatrixChatStore } from './matrix-chat.store';
 
 /** Quiet time before the open app writes its badge parts to the server ledger (1.127 N1). */
 const SERVER_BADGE_LEDGER_DEBOUNCE_MS = 2000;
+
+/** Delay after a foreground native push before the app re-applies its own badge total. */
+const NATIVE_BADGE_REAPPLY_DELAY_MS = 1000;
 
 /** Same parts, including which ones are present (undefined = not loaded, never written). */
 function sameBadgeParts(a: Partial<BadgeParts>, b: Partial<BadgeParts>): boolean {
@@ -43,6 +46,7 @@ export class MatrixInitializationService {
   private readonly matrixService = inject(MatrixChatService);
   private readonly matrixChatStore = inject(MatrixChatStore);
   private readonly fcmService = inject(FcmService);
+  private readonly firestoreService = inject(FirestoreService);
   private readonly alertController = inject(AlertController);
   private readonly pushPromptI18n = inject(I18nService).translateAll(PUSH_PROMPT_I18N_KEYS) as PushPromptI18n;
   private readonly blockedAlertI18n = inject(I18nService).translateAll(CHAT_BLOCKED_ALERT_I18N_KEYS) as ChatBlockedAlertI18n;
@@ -207,12 +211,13 @@ export class MatrixInitializationService {
    * - Native (iOS / Android): Badge.set / Badge.clear (@capawesome/capacitor-badge), and at 0 the
    *   delivered notifications are removed. Only for a signed-in member and only once EVERY part
    *   has loaded (allPartsReady): a 0 that only means «not loaded yet» must not clear the badge or
-   *   the tray. Reconciled on appStateChange (isActive). The iOS badge permission comes with the
-   *   push permission, so Badge.requestPermissions is never called.
+   *   the tray. At 0 only the counted banners (chat, tasks, invitations) leave the tray.
+   *   Reconciled on every appStateChange and after a foreground push. The iOS badge permission
+   *   comes with the push permission, so Badge.requestPermissions is never called.
    * - Server ledger `users/{uid}/badge/counts` (web and native): only the parts that have loaded
-   *   (readyBadgeParts), debounced, de-duplicated per uid. A lower sum makes the server send a
-   *   badge-only push to the member's other iOS devices, so a part that has not loaded is
-   *   never written.
+   *   (readyBadgeParts), debounced, written whenever the server doc differs from them. A lower
+   *   sum makes the server send a badge-only push to the member's other iOS devices, so a part
+   *   that has not loaded is never written.
    */
   private startBadgeSync(): void {
     const isNative = Capacitor.isNativePlatform();
@@ -275,31 +280,41 @@ export class MatrixInitializationService {
   }
 
   /**
-   * The app's writes to the server badge ledger (1.127 N1): the loaded parts of the signed-in
-   * member, 2 s after the last change, and only when they differ from the last write for that uid.
-   * A logout inside the debounce replaces the pending value with «nobody», so nothing is written
-   * for the old uid; a write is also dropped if the uid changed in the meantime.
+   * The app's writes to the server badge ledger (1.127 N1). While signed in, the app listens to
+   * `users/{uid}/badge/counts` and, 2 s after the last change, writes its ready parts whenever the
+   * server's value of any of them differs (ledgerPartsToWrite). Compared against the server doc,
+   * not the last write: the push gateway adds +1 per chat message even while the member reads it
+   * here, and only this correction removes those phantom unread. The write's own snapshot then
+   * equals the app's parts, so it does not loop.
+   * A logout inside the debounce replaces the pending value with «nobody», and the subscriber
+   * drops a write whose uid is no longer the signed-in one, so nothing is written for the old uid.
    */
   private startServerBadgeLedger(uid: Signal<string | undefined>, badgeParts: Signal<BadgeParts>, partsReady: Signal<BadgePartsReady>): void {
-    const ledgerWrite = computed(() => {
-      const current = uid();
-      return current ? { uid: current, parts: readyBadgeParts(badgeParts(), partsReady()) } : undefined;
-    });
-    runInInjectionContext(this.injector, () =>
-      toObservable(ledgerWrite).pipe(
+    const readyParts = computed(() => readyBadgeParts(badgeParts(), partsReady()), { equal: sameBadgeParts });
+    runInInjectionContext(this.injector, () => {
+      const serverLedger$ = toObservable(uid).pipe(
+        switchMap(current => current
+          ? this.firestoreService.readObject<Partial<ServerBadgeLedger>>(`${UserCollection}/${current}/${BadgeCollection}`, BADGE_COUNTS_DOC_ID)
+              .pipe(map(server => ({ uid: current, server })))
+          : of(undefined)),
+      );
+      combineLatest([serverLedger$, toObservable(readyParts)]).pipe(
+        map(([ledger, ready]) => ledger ? { uid: ledger.uid, parts: ledgerPartsToWrite(ledger.server, ready) } : undefined),
         debounceTime(SERVER_BADGE_LEDGER_DEBOUNCE_MS),
-        filter((w): w is { uid: string; parts: Partial<BadgeParts> } => !!w && Object.keys(w.parts).length > 0),
-        distinctUntilChanged((a, b) => a.uid === b.uid && sameBadgeParts(a.parts, b.parts)),
       ).subscribe(w => {
+        if (!w?.parts) return; // signed out, or the server already holds the app's parts
         if (w.uid !== untracked(uid)) return; // signed out or switched while debouncing
         void writeServerBadgeLedger(w.uid, w.parts);
-      })
-    );
+      });
+    });
   }
 
   /**
    * Native app-icon badge (1.127 N1): the absolute total, written only for a signed-in member once
-   * every part has loaded. At 0 the delivered notifications go too (read here or elsewhere).
+   * every part has loaded. At 0 the delivered notifications the badge counts go too (chat, tasks,
+   * invitations — countedDeliveredNotifications); other banners stay in the tray.
+   * Re-applied on every app state change and after a push arrives in the foreground: the OS sets
+   * the push's aps.badge (the server's sum) on presentation, which may differ from the app's.
    * Best effort: a plugin failure is logged, never thrown.
    */
   private startNativeBadge(uid: Signal<string | undefined>, badgeTotal: Signal<number>, partsReady: Signal<BadgePartsReady>): void {
@@ -310,17 +325,31 @@ export class MatrixInitializationService {
         Badge.set({ count }).catch(err => console.warn('MatrixInitializationService: Badge.set failed:', err));
       } else {
         Badge.clear().catch(err => console.warn('MatrixInitializationService: Badge.clear failed:', err));
-        PushNotifications.removeAllDeliveredNotifications()
-          .catch(err => console.warn('MatrixInitializationService: removing delivered notifications failed:', err));
+        void this.removeCountedDeliveredNotifications();
       }
     };
+    const reapply = () => applyNativeBadge(untracked(knownTotal));
     runInInjectionContext(this.injector, () =>
       toObservable(knownTotal).subscribe(applyNativeBadge)
     );
-    // Reconcile on resume: a push received in the background set the badge from the server's view.
-    void App.addListener('appStateChange', state => {
-      if (state.isActive) applyNativeBadge(untracked(knownTotal));
+    // Every state change (not only resume): a push received in the background set the badge from
+    // the server's view.
+    void App.addListener('appStateChange', () => reapply());
+    // A foreground push: its badge is applied when iOS presents it, so correct it just after.
+    void PushNotifications.addListener('pushNotificationReceived', () => {
+      setTimeout(reapply, NATIVE_BADGE_REAPPLY_DELAY_MS);
     });
+  }
+
+  /** Remove the delivered chat / task / invitation notifications (badge total 0); best effort. */
+  private async removeCountedDeliveredNotifications(): Promise<void> {
+    try {
+      const { notifications } = await PushNotifications.getDeliveredNotifications();
+      const counted = countedDeliveredNotifications(notifications);
+      if (counted.length > 0) await PushNotifications.removeDeliveredNotifications({ notifications: counted });
+    } catch (err) {
+      console.warn('MatrixInitializationService: removing delivered notifications failed:', err);
+    }
   }
 
   /**

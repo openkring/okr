@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SERVER_BADGE_MAX, SERVER_BADGE_SEEN_MAX, addChatToLedger, allPartsReady, badgeSumDropped, ledgerPartsFromApp, readyBadgeParts, serverBadgeSum, setLedgerPart } from './server-badge-ledger.util';
+import { SERVER_BADGE_MAX, SERVER_BADGE_SEEN_MAX, addChatToLedger, allPartsReady, badgeSumDropped, countedDeliveredNotifications, ledgerPartsFromApp, ledgerPartsToWrite, readyBadgeParts, serverBadgeSum, setLedgerPart } from './server-badge-ledger.util';
 
 describe('server badge ledger', () => {
   it('addChatToLedger counts an event once', () => {
@@ -100,5 +100,47 @@ describe('badge part readiness', () => {
     const ready = { chat: false, tasks: false, invitations: false };
     expect(readyBadgeParts({ chat: 0, tasks: 0, invitations: 0 }, ready)).toEqual({});
     expect(allPartsReady(ready)).toBe(false);
+  });
+});
+
+describe('ledgerPartsToWrite', () => {
+  const server = (chat: number, tasks = 0, invitations = 0, fromApp = true) => ({ chat, tasks, invitations, seen: [], fromApp });
+
+  it('writes when the server chat part is higher than the app\'s', () => {
+    expect(ledgerPartsToWrite(server(4), { chat: 0, tasks: 0, invitations: 0 })).toEqual({ chat: 0, tasks: 0, invitations: 0 });
+  });
+
+  it('writes nothing when equal', () => {
+    expect(ledgerPartsToWrite(server(2, 1, 0), { chat: 2, tasks: 1, invitations: 0 })).toBeUndefined();
+    expect(ledgerPartsToWrite(server(2, 1, 0), { chat: 2 })).toBeUndefined();
+  });
+
+  it('writes all ready parts when the server doc is missing', () => {
+    expect(ledgerPartsToWrite(undefined, { chat: 1, tasks: 2 })).toEqual({ chat: 1, tasks: 2 });
+    expect(ledgerPartsToWrite(server(1, 2, 0, false), { chat: 1, tasks: 2 })).toEqual({ chat: 1, tasks: 2 });
+  });
+
+  it('never includes a part that is not ready', () => {
+    expect(ledgerPartsToWrite(server(5, 5, 5), { tasks: 1 })).toEqual({ tasks: 1 });
+    expect(ledgerPartsToWrite(undefined, {})).toBeUndefined();
+  });
+
+  it('compares the clamped value, so an over-max count does not rewrite forever', () => {
+    expect(ledgerPartsToWrite(server(SERVER_BADGE_MAX), { chat: SERVER_BADGE_MAX + 5 })).toBeUndefined();
+  });
+});
+
+describe('countedDeliveredNotifications', () => {
+  it('keeps only chat, task and invitation notifications', () => {
+    const list = [
+      { id: '1', data: { type: 'chat' } },
+      { id: '2', data: { type: 'task' } },
+      { id: '3', data: { badgeAdd: 'invitation' } },
+      { id: '4', data: { type: 'calevent' } },
+      { id: '5', data: { type: 'video-call' } },
+      { id: '6' },
+      { id: '7', data: null },
+    ];
+    expect(countedDeliveredNotifications(list).map((n) => n.id)).toEqual(['1', '2', '3']);
   });
 });
