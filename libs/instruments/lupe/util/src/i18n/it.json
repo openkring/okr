@@ -1,0 +1,12 @@
+{
+  "title": "Lente",
+  "torch": { "on": "Accendi la torcia", "off": "Spegni la torcia" },
+  "zoom": { "label": "Ingrandimento", "in": "Ingrandisci", "out": "Riduci" },
+  "error": {
+    "denied": "La lente ha bisogno della fotocamera. Consenti l'accesso nelle impostazioni del tuo browser o dispositivo e riprova.",
+    "noCamera": "Su questo dispositivo non è stata trovata nessuna fotocamera.",
+    "unsupported": "Questo browser non può mostrare la fotocamera.",
+    "failed": "Non è stato possibile avviare la fotocamera."
+  },
+  "retry": "Riprova"
+}

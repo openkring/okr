@@ -1,0 +1,12 @@
+{
+  "title": "Magnifier",
+  "torch": { "on": "Turn on the flashlight", "off": "Turn off the flashlight" },
+  "zoom": { "label": "Magnification", "in": "Zoom in", "out": "Zoom out" },
+  "error": {
+    "denied": "The magnifier needs the camera. Allow access in your browser or device settings and try again.",
+    "noCamera": "No camera was found on this device.",
+    "unsupported": "This browser cannot show the camera.",
+    "failed": "The camera could not be started."
+  },
+  "retry": "Try again"
+}

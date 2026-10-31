@@ -1204,6 +1204,7 @@ const task: BlockRoutes = {
  * block in `feature-blocks.ts`.
  *
  * `calculator` (`libs/instruments/calculator`, spec 1.81) is the third path; no menu doc yet.
+ * `lupe` (`libs/instruments/lupe`, idea 2.125) is the fourth — same shape as `calculator`.
  */
 const instruments: BlockRoutes = {
   id: 'instruments',
@@ -1229,6 +1230,11 @@ const instruments: BlockRoutes = {
       canActivate: [isAuthenticatedGuard],
       loadComponent: () => import('@okr/instruments-calculator-feature').then(m => m.CalculatorPage),
       data: { color: 'secondary' },
+    },
+    {
+      path: 'lupe',
+      canActivate: [isAuthenticatedGuard],
+      loadComponent: () => import('@okr/instruments-lupe-feature').then(m => m.LupePage),
     },
   ],
 };

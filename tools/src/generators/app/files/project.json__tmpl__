@@ -572,6 +572,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/instruments/lupe/util/src/i18n",
+            "output": "./assets/i18n/instruments/lupe/util"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/instruments/data-access/src/i18n",
             "output": "./assets/i18n/instruments/data-access"
           },

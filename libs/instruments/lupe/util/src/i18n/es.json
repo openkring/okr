@@ -1,0 +1,12 @@
+{
+  "title": "Lupa",
+  "torch": { "on": "Encender la linterna", "off": "Apagar la linterna" },
+  "zoom": { "label": "Aumento", "in": "Acercar", "out": "Alejar" },
+  "error": {
+    "denied": "La lupa necesita la cámara. Permite el acceso en los ajustes de tu navegador o dispositivo y vuelve a intentarlo.",
+    "noCamera": "No se ha encontrado ninguna cámara en este dispositivo.",
+    "unsupported": "Este navegador no puede mostrar la cámara.",
+    "failed": "No se ha podido iniciar la cámara."
+  },
+  "retry": "Reintentar"
+}

@@ -1,0 +1,12 @@
+{
+  "title": "Lupe",
+  "torch": { "on": "Taschenlampe einschalten", "off": "Taschenlampe ausschalten" },
+  "zoom": { "label": "Vergrösserung", "in": "Mehr vergrössern", "out": "Weniger vergrössern" },
+  "error": {
+    "denied": "Die Lupe braucht die Kamera. Erlaube den Zugriff in den Einstellungen deines Browsers oder Geräts und versuche es nochmals.",
+    "noCamera": "Auf diesem Gerät wurde keine Kamera gefunden.",
+    "unsupported": "Dieser Browser kann die Kamera nicht anzeigen.",
+    "failed": "Die Kamera konnte nicht gestartet werden."
+  },
+  "retry": "Nochmals versuchen"
+}
