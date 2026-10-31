@@ -1,4 +1,5 @@
 import type { TransportMode } from '@okr/shared-models';
+import { isVideoImage } from './journal-video.util';
 import type { FootprintView, ImageView } from './journal-view.util';
 
 /**
@@ -65,14 +66,14 @@ export function flyoverInputOf(footprints: FootprintView[], images: Map<string, 
   const stops = footprints
     .filter((f) => f.latitude !== undefined && f.longitude !== undefined)
     .map((f): FlyStop => {
-      const first = f.blocks.flatMap((b) => b.imageKeys ?? []).map((k) => images.get(k)).find((i) => i !== undefined);
+      const first = f.blocks.flatMap((b) => b.imageKeys ?? []).map((k) => images.get(k)).find((i) => i !== undefined && !isVideoImage(i));
       return {
         key: f.key, lat: f.latitude as number, lng: f.longitude as number, at: stopTime(f.date, f.time), title: f.title,
         transport: f.transport, thumb: thumbUrl(first?.path400) || undefined,
       };
     });
   const points = [...images.values()]
-    .filter((i) => i.latitude !== undefined && i.longitude !== undefined && !(i.latitude === 0 && i.longitude === 0))
+    .filter((i) => !isVideoImage(i) && i.latitude !== undefined && i.longitude !== undefined && !(i.latitude === 0 && i.longitude === 0))
     .map((i): FlyPoint => ({ lat: i.latitude as number, lng: i.longitude as number, at: i.takenAt ?? '' }));
   return { stops, points };
 }

@@ -11,6 +11,7 @@ import { MapView, RouteMap, RoutePin } from '@okr/shared-ui';
 import { FootprintEditModal } from '@okr/travel-journal-ui';
 import {
   FootprintFormModel, flyoverInputOf, flyoverTimeline, footprintChips, journalMapData, journalOverviewMenu, JournalWriteSlow, newFootprintFormModel, routeLengthKm,
+  isVideoImage,
 } from '@okr/travel-journal-util';
 
 import { googleAttributionOf, routeBaseLayers } from './journal-base-layers';
@@ -82,7 +83,7 @@ const WIDE_QUERY = '(min-width: 992px)';
             <div class="stat"><b>{{ days() }}</b><span>{{ store.i18n.stats_days() }}</span></div>
             <div class="stat"><b>{{ km() }}</b><span>{{ store.i18n.stats_km() }}</span></div>
             <div class="stat"><b>{{ footprints().length }}</b><span>{{ store.i18n.stats_footprints() }}</span></div>
-            <div class="stat"><b>{{ images().size }}</b><span>{{ store.i18n.stats_photos() }}</span></div>
+            <div class="stat"><b>{{ photoCount() }}</b><span>{{ store.i18n.stats_photos() }}</span></div>
           </div>
           @for (card of cards(); track card.key) {
             <ion-card class="card" [class.selected]="card.key === selectedKey()" (click)="openFootprint(card.key)">
@@ -131,6 +132,7 @@ export class JournalOverviewPage {
   protected readonly journal = computed(() => this.store.journals().find((j) => j.key === this.journalKey()));
   protected readonly footprints = computed(() => this.store.footprints(this.journalKey()));
   protected readonly images = computed(() => this.store.images(this.journalKey()));
+  protected readonly photoCount = computed(() => [...this.images().values()].filter((i) => !isVideoImage(i)).length);
   protected readonly map = computed(() => journalMapData(this.footprints(), this.images()));
   protected readonly pins = computed<RoutePin[]>(() =>
     this.map().pins.map((p) => ({ key: p.key, lat: p.lat, lng: p.lng, label: p.label, thumbnailUrl: this.fileUrl.url(p.imagePath) })));

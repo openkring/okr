@@ -91,10 +91,10 @@ import { JournalStore } from './journal.store';
             <p class="note">{{ fillName(name) }}</p>
           }
           <div class="block" [class.editable]="editMode() && canEdit()" (click)="tapBlock(item)">
-            @if (asArticle(item); as article) {
-              <okr-article-section [section]="article" [editMode]="editMode()" />
-            } @else if (item.clips; as clips) {
+            @if (item.clips; as clips) {
               <okr-journal-video-block [clips]="clips" [caption]="item.block.html ?? ''" [i18n]="{ notLoaded: store.i18n.video_not_loaded() }" />
+            } @else if (asArticle(item); as article) {
+              <okr-article-section [section]="article" [editMode]="editMode()" />
             } @else if (asAlbum(item); as album) {
               <okr-album-section [section]="album" [explicitImages]="item.images" [showStyleSelect]="false" [editMode]="editMode()"
                 [emitImageClicks]="canEdit() && !editMode()" (imageSelected)="photoActions(item, $event)" />

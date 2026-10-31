@@ -70,4 +70,15 @@ describe('journal flyover timeline', () => {
     expect(stops.map((s) => [s.key, s.thumb, s.at, s.transport])).toEqual([['a', 'url:p/i1-400.jpg', '2027-01-14T09:00', 'ship'], ['b', undefined, '2027-01-14T09:00', 'ship']]);
     expect(points).toEqual([{ lat: -60.5, lng: -60.5, at: '2027-01-14T08:00:00' }]);
   });
+
+  it('video clips are neither points nor thumbnails', () => {
+    const fp: FootprintView = {
+      key: 'a', journalKey: 'j1', title: 'a', placeName: '', date: '20270114', time: '09:00', latitude: -60, longitude: -60, publishState: 'published',
+      transport: 'ship', hlcs: {}, lostValues: [], blocks: [{ key: 'b', kind: 'video', authorKey: 'bruno', order: 'V', imageKeys: ['v1'], hlcs: {}, conflict: false }],
+    };
+    const clip: ImageView = { key: 'v1', authorKey: 'bruno', takenAt: '2027-01-14T08:00:00', latitude: -60.5, longitude: -60.5, width: 1, height: 1, path2048: 'p/v1-2048.jpg', path400: 'p/v1-400.jpg', localIdentifier: '', videoPath: 'p/v1-video.mp4' };
+    const { stops, points } = flyoverInputOf([fp], new Map([['v1', clip]]), (p) => (p ? `url:${p}` : ''));
+    expect(stops[0].thumb).toBeUndefined();
+    expect(points).toEqual([]);
+  });
 });

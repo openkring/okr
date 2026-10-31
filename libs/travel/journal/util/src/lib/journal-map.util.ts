@@ -1,4 +1,5 @@
 import { routePoints } from './journal-position.util';
+import { isVideoImage } from './journal-video.util';
 import { FootprintView, ImageView } from './journal-view.util';
 
 /**
@@ -32,7 +33,7 @@ export function journalMapData(footprints: FootprintView[], images: Map<string, 
     const firstImage = firstPhotoBlock?.imageKeys?.map((k) => images.get(k)).find((i) => i !== undefined);
     pins.push({ key: fp.key, lat: fp.latitude, lng: fp.longitude, imagePath: firstImage?.path400, label: fp.title });
   }
-  const photos = [...images.values()].map((i) => ({ takenAt: i.takenAt ?? '', latitude: i.latitude, longitude: i.longitude }));
+  const photos = [...images.values()].filter((i) => !isVideoImage(i)).map((i) => ({ takenAt: i.takenAt ?? '', latitude: i.latitude, longitude: i.longitude }));
   return { route: routePoints(photos), pins };
 }
 
