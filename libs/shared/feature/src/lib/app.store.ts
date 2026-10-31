@@ -10,7 +10,7 @@ import { App } from '@capacitor/app';
 import { AUTH, ENV, FIRESTORE, usesLocalStorageOnlySession } from '@okr/shared-config';
 import { AppConfigService, FirestoreService } from '@okr/shared-data-access';
 import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, getAddressDirectoryKey, AvailableLanguages, CalEventCollection, CalEventModel, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, InvitationCollection, InvitationModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, TaskCollection, TaskModel, UserCollection, UserModel } from '@okr/shared-models';
-import { appLinkOrigins, countableInvitationsOf, die, getSystemQuery, hasRole, indexBy, openInvitationsOf, pickForTenant, publicAppOrigin, replacePlaceholders, resolveAppOrigin, sortPersons, withOfflineSnapshot } from '@okr/shared-util-core';
+import { appLinkOrigins, countableInvitationsOf, die, getSystemQuery, hasRole, isBadgeSourceLoaded, indexBy, openInvitationsOf, pickForTenant, publicAppOrigin, replacePlaceholders, resolveAppOrigin, sortPersons, withOfflineSnapshot } from '@okr/shared-util-core';
 import { AppNavigationService, armStartupStallCheck, HelperVisibility, installScrollDiagnostics, isBrowser, markStartup, probeStoredSession, probeStoredSessionIdb, reportStartupTiming, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
 
 import { authPhase, isDegradedBoot, openBootGate, type BootState } from './boot-readiness.util';
@@ -236,11 +236,12 @@ export const AppStore = signalStore(
         tenantId: store.tenantId()
       })),
       stream: ({params}) => {
-        if (!params.personKey || !params.tenantId) return of([]);
+        if (!params.personKey || !params.tenantId) return of({ items: [] as TaskModel[], fromCache: false, failed: false });
         const taskQuery = getSystemQuery(params.tenantId);
         taskQuery.push({ key: 'completionDate', operator: '==', value: '' });
         taskQuery.push({ key: 'assignee.key', operator: '==', value: params.personKey });
-        return store.firestoreService.searchData<TaskModel>(TaskCollection, taskQuery, 'dueDate', 'asc');
+        // with metadata: a failed listener or a cache-only result is not the badge's count (I2)
+        return store.firestoreService.searchDataWithMeta<TaskModel>(TaskCollection, taskQuery, 'dueDate', 'asc');
       }
     }),
     // Open invitations addressed to the signed-in user — the invitation half of every
@@ -253,10 +254,10 @@ export const AppStore = signalStore(
         tenantId: store.tenantId()
       })),
       stream: ({params}) => {
-        if (!params.personKey || !params.tenantId) return of([]);
+        if (!params.personKey || !params.tenantId) return of({ items: [] as InvitationModel[], fromCache: false, failed: false });
         const invitationQuery = getSystemQuery(params.tenantId);
         invitationQuery.push({ key: 'inviteeKey', operator: '==', value: params.personKey });
-        return store.firestoreService.searchData<InvitationModel>(InvitationCollection, invitationQuery, 'date', 'asc');
+        return store.firestoreService.searchDataWithMeta<InvitationModel>(InvitationCollection, invitationQuery, 'date', 'asc');
       }
     }),
   })),
@@ -273,7 +274,7 @@ export const AppStore = signalStore(
     openInvitationEventsResource: rxResource({
       params: resourceParams(() => {
         const personKey = store.currentUserResource.value()?.personKey ?? '';
-        const keys = openInvitationsOf(store.openInvitationsResource.value() ?? [], personKey)
+        const keys = openInvitationsOf(store.openInvitationsResource.value()?.items ?? [], personKey)
           .map(inv => inv.caleventKey)
           .filter((key): key is string => !!key);
         return { keys: [...new Set(keys)].sort(), tenantId: store.tenantId() };
@@ -379,7 +380,7 @@ export const AppStore = signalStore(
       openTaskCount: computed(() => {
         // the dashboard cards need 'registered'; the badge must not count what they hide
         if (!hasRole('registered', state.currentUserResource.value())) return 0;
-        return (state.openTasksResource.value() ?? []).length;
+        return (state.openTasksResource.value()?.items ?? []).length;
       }),
       /**
        * Number of invitations the signed-in person can still answer — the invitation half of every
@@ -393,17 +394,19 @@ export const AppStore = signalStore(
         if (!hasRole('registered', currentUser)) return 0;
         const personKey = currentUser?.personKey;
         if (!personKey) return 0;
-        return countableInvitationsOf(state.openInvitationsResource.value() ?? [], personKey, state.openInvitationEvents()).length;
+        return countableInvitationsOf(state.openInvitationsResource.value()?.items ?? [], personKey, state.openInvitationEvents()).length;
       }),
       /**
        * True once openTaskCount is the real count, not a 0 that only means «not loaded yet»
        * (spec 1.127 N1: the server ledger and the native badge take a part only once loaded).
        * Explicit status, not `value !== undefined`. Without role 'registered' the count is 0 by
-       * design, so it counts as loaded. An error stays not loaded: never write a maybe-too-low part.
+       * design, so it counts as loaded. A failed listener (FirestoreService settles it on an empty
+       * result) and a from-cache-only snapshot (offline cold start) are NOT loaded
+       * (isBadgeSourceLoaded): never write a maybe-too-low part.
        */
       openTaskCountLoaded: computed(() => {
         if (!hasRole('registered', state.currentUserResource.value())) return true;
-        return isLoadedStatus(state.openTasksResource.status());
+        return isBadgeSourceLoaded(state.openTasksResource.status(), state.openTasksResource.value());
       }),
       /**
        * True once openInvitationCount is the real count: the invitations AND the events behind
@@ -413,7 +416,7 @@ export const AppStore = signalStore(
       openInvitationCountLoaded: computed(() => {
         const currentUser = state.currentUserResource.value();
         if (!hasRole('registered', currentUser) || !currentUser?.personKey) return true;
-        return isLoadedStatus(state.openInvitationsResource.status())
+        return isBadgeSourceLoaded(state.openInvitationsResource.status(), state.openInvitationsResource.value())
           && isLoadedStatus(state.openInvitationEventsResource.status());
       }),
       appConfig: computed(() => {

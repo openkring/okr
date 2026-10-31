@@ -25,12 +25,12 @@ import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { ToastController } from '@ionic/angular';
 import { captureMessage } from '@sentry/angular';
 import { arrayRemove, collection, deleteDoc, doc, getCountFromServer, getDoc, getDocs, query, runTransaction, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
-import { collectionData, docData } from 'rxfire/firestore';
+import { collectionData, docData, fromRef } from 'rxfire/firestore';
 import { catchError, concat, defer, delay, firstValueFrom, from, map, MonoTypeOperatorFunction, Observable, of, ReplaySubject, retry, share, switchMap, tap, timer } from 'rxjs';
 
 import { attestAppCheck, AUTH, ENV, FIRESTORE, isAttested, isFirestoreInitializedCheck, type AppCheckOutcome } from '@okr/shared-config';
 import { OkrModel, CommentCollection, CommentModel, DbQuery, PersonCollection, PersonModel, UserModel } from "@okr/shared-models";
-import { debugData, debugMessage, generateRandomString, getDeletePatch, getFullName, getQuery, isBrowser, removeKeyFromOkrModel, removeUndefinedFields, SYSTEM_TENANT } from '@okr/shared-util-core';
+import { type BadgeSourceMeta, debugData, debugMessage, generateRandomString, getDeletePatch, getFullName, getQuery, isBrowser, removeKeyFromOkrModel, removeUndefinedFields, SYSTEM_TENANT } from '@okr/shared-util-core';
 import { TOAST_LENGTH } from '@okr/shared-constants';
 import { I18nService } from "@okr/shared-i18n";
 
@@ -982,6 +982,56 @@ export class FirestoreService {
     } catch (err) {
       console.error('FirestoreService.searchData error:', err);
       return of([]);
+    }
+  }
+
+  /**
+   * searchData with the snapshot's metadata, for the two badge sources (open tasks, open
+   * invitations — 1.127 final review I2). searchData cannot tell «no items» from «listener failed»
+   * (it settles a failure on []) or from «offline cold start, empty cache»; the badge must, because
+   * writing such a 0 to the server ledger lowers the member's badge on every other device.
+   * `fromCache` comes from snapshot metadata (listened with includeMetadataChanges, so the switch
+   * from the cache replay to the server result is emitted even when the documents are equal);
+   * `failed` is true on the fallback after an error. Same token-denial recovery, settle and
+   * 30 s cache grace as searchData; other searchData callers are not affected.
+   */
+  public searchDataWithMeta<T>(
+    collectionName: string,
+    dbQuery: DbQuery[],
+    orderByParam = 'name',
+    sortOrderParam = 'asc'
+  ): Observable<{ items: T[] } & BadgeSourceMeta> {
+    type Result = { items: T[] } & BadgeSourceMeta;
+    const failed: Result = { items: [], fromCache: false, failed: true };
+    if (!isBrowser(this.platformId) || !isFirestoreInitializedCheck()) return of(failed);
+
+    const cacheKey = JSON.stringify({ meta: true, collectionName, dbQuery, orderByParam, sortOrderParam });
+    if (this.queryCache.has(cacheKey)) {
+      return this.queryCache.get(cacheKey)! as Observable<Result>;
+    }
+    try {
+      const queries = orderByParam === 'none' ? getQuery(dbQuery, 'none') : getQuery(dbQuery, orderByParam, sortOrderParam);
+      const queryRef = query(collection(this.firestore, collectionName), ...queries);
+      const shared$ = fromRef(queryRef, { includeMetadataChanges: true }).pipe(
+        map((snap): Result => ({
+          items: snap.docs.map(d => ({ ...d.data(), okey: d.id }) as T),
+          fromCache: snap.metadata.fromCache,
+          failed: false,
+        })),
+        this.recoverFromTokenDenial<Result>(`searchDataWithMeta(${collectionName})`),
+        this.settleFailedListener<Result>(`searchDataWithMeta(${collectionName})`, failed, () => {
+          this.queryCache.delete(cacheKey);
+        }),
+        share({
+          connector: () => new ReplaySubject<Result>(1),
+          resetOnRefCountZero: () => timer(30_000),
+        })
+      );
+      this.queryCache.set(cacheKey, shared$);
+      return shared$;
+    } catch (err) {
+      console.error('FirestoreService.searchDataWithMeta error:', err);
+      return of(failed);
     }
   }
 

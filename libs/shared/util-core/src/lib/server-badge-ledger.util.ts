@@ -128,6 +128,50 @@ export function ledgerPartsToWrite(server: Partial<ServerBadgeLedger> | undefine
   return keys.some((k) => server[k] !== want[k]) ? out : undefined;
 }
 
+/** Corrections in this window (with no local change) count towards the damping limit. */
+export const LEDGER_CORRECTION_WINDOW_MS = 60_000;
+/** Corrections allowed within the window before the app stops correcting. */
+export const LEDGER_CORRECTION_LIMIT = 3;
+
+/**
+ * Damping for the open app's ledger corrections (1.127 final review I1). Two open devices of one
+ * member whose ready parts differ would otherwise overwrite each other forever: each sees the
+ * other's write as a difference and corrects it. After {@link LEDGER_CORRECTION_LIMIT} corrections
+ * within {@link LEDGER_CORRECTION_WINDOW_MS} while no local ready part changed, the app stops
+ * correcting until a local part changes or the app resumes (both set `localChangedAt`).
+ *
+ * @param history       times of this session's corrections for the signed-in uid (a write that
+ *                      follows a local change is not a correction and is not in it)
+ * @param now           the time of the correction about to be written
+ * @param localChangedAt the last local ready-part change or app resume
+ */
+export function correctionAllowed(history: number[], now: number, localChangedAt: number): boolean {
+  const since = history.filter((t) => t > localChangedAt && t <= now).sort((a, b) => a - b);
+  for (let i = 0; i + LEDGER_CORRECTION_LIMIT - 1 < since.length; i++) {
+    if (since[i + LEDGER_CORRECTION_LIMIT - 1] - since[i] <= LEDGER_CORRECTION_WINDOW_MS) return false;
+  }
+  return true;
+}
+
+/** The metadata of a badge source query (FirestoreService.searchDataWithMeta). */
+export interface BadgeSourceMeta {
+  /** The snapshot came from the local cache only (offline, or the cold-start cache replay). */
+  fromCache: boolean;
+  /** The listener failed and settled on an empty list. */
+  failed: boolean;
+}
+
+/**
+ * True once a badge part's query holds the member's real count (1.127 final review I2): the
+ * resource has a current value (resolved, reloading or local) AND that value is a server snapshot
+ * of a live listener. A failed listener (settled on []) and a from-cache-only result are NOT
+ * loaded: writing their 0 would lower the badge on the member's other devices.
+ */
+export function isBadgeSourceLoaded(status: string, meta: BadgeSourceMeta | undefined): boolean {
+  if (status !== 'resolved' && status !== 'reloading' && status !== 'local') return false;
+  return !!meta && !meta.failed && !meta.fromCache;
+}
+
 /**
  * The delivered notifications the badge counts: chat (`type: 'chat'`), tasks (`type: 'task'`) and
  * invitations (`badgeAdd: 'invitation'`). Only these are removed at a badge total of 0; other

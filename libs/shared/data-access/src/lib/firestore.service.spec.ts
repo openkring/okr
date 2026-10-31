@@ -13,10 +13,12 @@ import { ToastController } from '@ionic/angular';
 // (e.g. an async PERMISSION_DENIED during token refresh — the SCS-13 crash).
 const collectionDataMock = vi.fn<() => Observable<unknown[]>>();
 const docDataMock = vi.fn<() => Observable<unknown>>(() => of(undefined));
+const fromRefMock = vi.fn<() => Observable<unknown>>();
 
 vi.mock('rxfire/firestore', () => ({
   collectionData: () => collectionDataMock(),
   docData: () => docDataMock(),
+  fromRef: () => fromRefMock(),
 }));
 
 // Whether the document `createModel` is about to write already exists. Drives the transaction
@@ -108,6 +110,40 @@ function failsThenEmits<T>(failures: number, value: T): Observable<T> {
   let attempt = 0;
   return defer(() => (attempt++ < failures ? throwError(() => permissionDenied()) : of(value)));
 }
+
+/** A query snapshot as fromRef emits it. */
+function snapshot(ids: string[], fromCache: boolean): unknown {
+  return { docs: ids.map(id => ({ id, data: () => ({ name: id }) })), metadata: { fromCache } };
+}
+
+// The badge sources (open tasks, open invitations) must tell «no items» from «listener failed» and
+// from «cache only» (1.127 final review I2); searchData cannot.
+describe('FirestoreService.searchDataWithMeta', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    TestBed.resetTestingModule();
+  });
+
+  it('passes the items and the fromCache flag through', async () => {
+    fromRefMock.mockReturnValue(of(snapshot(['t1'], true), snapshot(['t1', 't2'], false)));
+    const svc = makeService();
+    const values: unknown[] = [];
+    await new Promise<void>(resolve => svc.searchDataWithMeta('tasks', QUERY, 'dueDate', 'asc').subscribe({
+      next: v => values.push(v), complete: resolve,
+    }));
+    expect(values).toEqual([
+      { items: [{ name: 't1', okey: 't1' }], fromCache: true, failed: false },
+      { items: [{ name: 't1', okey: 't1' }, { name: 't2', okey: 't2' }], fromCache: false, failed: false },
+    ]);
+  });
+
+  it('settles a failed listener on failed: true, not on a plain empty result', async () => {
+    fromRefMock.mockReturnValue(throwError(() => new Error('boom')));
+    const svc = makeService();
+    const value = await firstValueFrom(svc.searchDataWithMeta('tasks', QUERY, 'dueDate', 'asc'));
+    expect(value).toEqual({ items: [], fromCache: false, failed: true });
+  });
+});
 
 describe('FirestoreService.searchData', () => {
   beforeEach(() => {

@@ -5,13 +5,13 @@ import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { Badge } from '@capawesome/capacitor-badge';
-import { combineLatest, debounceTime, map, of, switchMap } from 'rxjs';
+import { BehaviorSubject, combineLatest, debounceTime, map, of, switchMap, tap } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
 import { MatrixChatService } from '@okr/chat-data-access';
 import { ChatStatusService, FcmService, FirestoreService, writeBadgeLedgerFromPage, writeServerBadgeLedger } from '@okr/shared-data-access';
 import { BADGE_COUNTS_DOC_ID, BadgeCollection, ChatBlockedError, UserCollection } from '@okr/shared-models';
-import { allPartsReady, BadgeParts, BadgePartsReady, chatBlockedAlertMessage, countedDeliveredNotifications, ledgerPartsToWrite, ServerBadgeLedger, isKioskOnly, isRegistrationStale, PUSH_PROMPT_SNOOZE_MS, readyBadgeParts, shouldAskForPush } from '@okr/shared-util-core';
+import { allPartsReady, BadgeParts, BadgePartsReady, chatBlockedAlertMessage, correctionAllowed, countedDeliveredNotifications, ledgerPartsToWrite, ServerBadgeLedger, isKioskOnly, isRegistrationStale, PUSH_PROMPT_SNOOZE_MS, readyBadgeParts, shouldAskForPush } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { CHAT_BLOCKED_ALERT_I18N_KEYS, ChatBlockedAlertI18n, PUSH_PROMPT_I18N_KEYS, PushPromptI18n } from '@okr/chat-util';
 import { AlertController } from '@ionic/angular';
@@ -288,9 +288,30 @@ export class MatrixInitializationService {
    * equals the app's parts, so it does not loop.
    * A logout inside the debounce replaces the pending value with «nobody», and the subscriber
    * drops a write whose uid is no longer the signed-in one, so nothing is written for the old uid.
+   * Damping (final review I1): two open devices whose ready parts differ would overwrite each
+   * other forever. A write while no local ready part changed since this app's last write is a
+   * correction; after 3 within 60 s (correctionAllowed) the app stops correcting until a local
+   * ready part changes or the app resumes. The history is per session and uid.
    */
   private startServerBadgeLedger(uid: Signal<string | undefined>, badgeParts: Signal<BadgeParts>, partsReady: Signal<BadgePartsReady>): void {
     const readyParts = computed(() => readyBadgeParts(badgeParts(), partsReady()), { equal: sameBadgeParts });
+    let localChangedAt = Date.now();
+    let lastWriteAt: number | undefined;
+    let corrections: number[] = [];
+    let historyUid: string | undefined;
+    // A resume re-enables correcting and re-checks the server doc against the app's parts.
+    const resume$ = new BehaviorSubject<number>(0);
+    const onResume = () => {
+      localChangedAt = Date.now();
+      resume$.next(localChangedAt);
+    };
+    if (Capacitor.isNativePlatform()) {
+      void App.addListener('appStateChange', ({ isActive }) => { if (isActive) onResume(); });
+    } else {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') onResume();
+      });
+    }
     runInInjectionContext(this.injector, () => {
       const serverLedger$ = toObservable(uid).pipe(
         switchMap(current => current
@@ -298,12 +319,25 @@ export class MatrixInitializationService {
               .pipe(map(server => ({ uid: current, server })))
           : of(undefined)),
       );
-      combineLatest([serverLedger$, toObservable(readyParts)]).pipe(
+      const readyParts$ = toObservable(readyParts).pipe(tap(() => { localChangedAt = Date.now(); }));
+      combineLatest([serverLedger$, readyParts$, resume$]).pipe(
         map(([ledger, ready]) => ledger ? { uid: ledger.uid, parts: ledgerPartsToWrite(ledger.server, ready) } : undefined),
         debounceTime(SERVER_BADGE_LEDGER_DEBOUNCE_MS),
       ).subscribe(w => {
         if (!w?.parts) return; // signed out, or the server already holds the app's parts
         if (w.uid !== untracked(uid)) return; // signed out or switched while debouncing
+        if (w.uid !== historyUid) {
+          historyUid = w.uid;
+          corrections = [];
+          lastWriteAt = undefined;
+        }
+        const now = Date.now();
+        const isCorrection = lastWriteAt !== undefined && lastWriteAt > localChangedAt;
+        if (isCorrection) {
+          if (!correctionAllowed(corrections, now, localChangedAt)) return; // damped: another device disagrees
+          corrections = [...corrections.filter(t => t > localChangedAt), now];
+        }
+        lastWriteAt = now;
         void writeServerBadgeLedger(w.uid, w.parts);
       });
     });
@@ -319,6 +353,19 @@ export class MatrixInitializationService {
    */
   private startNativeBadge(uid: Signal<string | undefined>, badgeTotal: Signal<number>, partsReady: Signal<BadgePartsReady>): void {
     const knownTotal = computed(() => uid() && allPartsReady(partsReady()) ? badgeTotal() : undefined);
+    // Signed out (final review, deferred item 5): clear the badge the last member left. Without
+    // this a badge re-set after the logout clear (a late write, a push) stays on the icon. Only on
+    // the step from a uid to none: at cold start the uid is undefined until the user loads, and
+    // clearing then would drop the badge a background push just set.
+    let signedInUid: string | undefined;
+    runInInjectionContext(this.injector, () =>
+      toObservable(uid).subscribe(current => {
+        if (signedInUid !== undefined && current === undefined) {
+          Badge.clear().catch(err => console.warn('MatrixInitializationService: Badge.clear failed:', err));
+        }
+        signedInUid = current;
+      })
+    );
     const applyNativeBadge = (count: number | undefined) => {
       if (count === undefined) return;
       if (count > 0) {
@@ -360,7 +407,8 @@ export class MatrixInitializationService {
   private startPushSession(): void {
     if (Capacitor.isNativePlatform()) {
       // Native iOS/Android: PushNotifications fires when app is open (foreground).
-      // The OS suppresses the notification banner on native foreground — navigate directly.
+      // The OS presents the banner in the foreground too (presentationOptions), but an incoming
+      // call must not wait for a tap: navigate to it directly.
       PushNotifications.addListener('pushNotificationReceived', notification => {
         const data = notification.data as Record<string, string> | undefined;
         if (data?.['type'] !== 'video-call') return;

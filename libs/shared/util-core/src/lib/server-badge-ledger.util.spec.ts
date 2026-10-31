@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SERVER_BADGE_MAX, SERVER_BADGE_SEEN_MAX, addChatToLedger, allPartsReady, badgeSumDropped, countedDeliveredNotifications, ledgerPartsFromApp, ledgerPartsToWrite, readyBadgeParts, serverBadgeSum, setLedgerPart } from './server-badge-ledger.util';
+import { SERVER_BADGE_MAX, SERVER_BADGE_SEEN_MAX, addChatToLedger, allPartsReady, badgeSumDropped, correctionAllowed, countedDeliveredNotifications, isBadgeSourceLoaded, ledgerPartsFromApp, ledgerPartsToWrite, readyBadgeParts, serverBadgeSum, setLedgerPart } from './server-badge-ledger.util';
 
 describe('server badge ledger', () => {
   it('addChatToLedger counts an event once', () => {
@@ -142,5 +142,54 @@ describe('countedDeliveredNotifications', () => {
       { id: '7', data: null },
     ];
     expect(countedDeliveredNotifications(list).map((n) => n.id)).toEqual(['1', '2', '3']);
+  });
+});
+
+// Two open devices of one member whose ready parts differ (e.g. one has not seen a read yet) used to
+// overwrite each other's ledger write forever (1.127 final review I1).
+describe('correctionAllowed (ledger write damping)', () => {
+  const s = 1000;
+  it('allows up to 3 corrections in 60 s', () => {
+    expect(correctionAllowed([], 0, 0)).toBe(true);
+    expect(correctionAllowed([1 * s], 2 * s, 0)).toBe(true);
+    expect(correctionAllowed([1 * s, 2 * s], 3 * s, 0)).toBe(true);
+  });
+
+  it('blocks the 4th until a local change', () => {
+    const history = [1 * s, 10 * s, 20 * s];
+    expect(correctionAllowed(history, 30 * s, 0)).toBe(false);
+    // still blocked long after the 60 s window: the fight would only start again
+    expect(correctionAllowed(history, 600 * s, 0)).toBe(false);
+  });
+
+  it('a resume or local change re-enables', () => {
+    const history = [1 * s, 10 * s, 20 * s];
+    expect(correctionAllowed(history, 31 * s, 25 * s)).toBe(true);
+    // a change between corrections: only the later ones count again
+    expect(correctionAllowed(history, 31 * s, 5 * s)).toBe(true);
+  });
+
+  it('keeps allowing corrections spread over more than 60 s', () => {
+    expect(correctionAllowed([0, 61 * s, 122 * s, 183 * s], 244 * s, -1)).toBe(true);
+  });
+});
+
+// A failed listener settles on [] and an offline cold start can deliver an empty from-cache
+// snapshot: neither is the member's real count (1.127 final review I2).
+describe('isBadgeSourceLoaded', () => {
+  it('is loaded for a server result of a resolved resource', () => {
+    expect(isBadgeSourceLoaded('resolved', { fromCache: false, failed: false })).toBe(true);
+    expect(isBadgeSourceLoaded('reloading', { fromCache: false, failed: false })).toBe(true);
+  });
+  it('is not loaded while loading or idle or on error', () => {
+    expect(isBadgeSourceLoaded('loading', undefined)).toBe(false);
+    expect(isBadgeSourceLoaded('idle', undefined)).toBe(false);
+    expect(isBadgeSourceLoaded('error', undefined)).toBe(false);
+  });
+  it('a failed listener is not loaded', () => {
+    expect(isBadgeSourceLoaded('resolved', { fromCache: false, failed: true })).toBe(false);
+  });
+  it('a from-cache-only result is not loaded', () => {
+    expect(isBadgeSourceLoaded('resolved', { fromCache: true, failed: false })).toBe(false);
   });
 });
