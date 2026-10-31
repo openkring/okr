@@ -54,17 +54,19 @@ export function migrateOfflineMap(
   return out;
 }
 
-/** Result of a finished run: ready when failed === 0 and done === total (empty markers count as done). */
+/**
+ * Result of a finished run: ready when failed === 0 and done === total (empty markers count as done).
+ * `tiles` = present files including empty markers (= `run.done`); `bytes` is the size on disk the caller measured
+ * (native tileStats) when given, else the previous value stays.
+ */
 export function finishRun(
   prev: OfflineLayerStatus,
-  run: { total: number; done: number; failed: number; empty: number; added: number },
+  run: { total: number; done: number; failed: number; empty: number; added: number; bytes?: number },
   at: string,
 ): OfflineLayerStatus {
   const ready = run.failed === 0 && run.done === run.total;
-  return {
-    ...prev, ...run, state: ready ? 'ready' : 'partial', at,
-    tiles: Math.max(0, run.done - run.empty),
-  };
+  const { bytes, ...counts } = run;
+  return { ...prev, ...counts, state: ready ? 'ready' : 'partial', at, tiles: run.done, bytes: bytes ?? prev.bytes };
 }
 
 /** Paths of one journal's area layer that no other (journal, area, layer) plan still needs. */

@@ -29,6 +29,18 @@ describe('offline area state', () => {
     expect(finishRun(NO_OFFLINE_LAYER, { total: 100, done: 99, failed: 1, empty: 0, added: 99 }, 't').state).toBe('partial');
   });
 
+  it('tiles counts empty markers', () => {
+    const s = finishRun(NO_OFFLINE_LAYER, { total: 100, done: 100, failed: 0, empty: 30, added: 70 }, 't');
+    expect(s.tiles).toBe(100);
+  });
+
+  it('bytes comes from the run when given, else stays', () => {
+    const prev = { ...NO_OFFLINE_LAYER, bytes: 500 };
+    const run = { total: 1, done: 1, failed: 0, empty: 0, added: 1 };
+    expect(finishRun(prev, { ...run, bytes: 900 }, 't').bytes).toBe(900);
+    expect(finishRun(prev, run, 't').bytes).toBe(500);
+  });
+
   it('partial over 10 % failed is not usable', () => {
     const base: OfflineLayerStatus = { ...NO_OFFLINE_LAYER, state: 'partial', total: 100 };
     expect(isUsable({ ...base, failed: 10 })).toBe(true);
