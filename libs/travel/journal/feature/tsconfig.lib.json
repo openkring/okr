@@ -31,6 +31,7 @@
     { "path": "../../../avatar/ui/tsconfig.lib.json" },
     { "path": "../../../cms/section/feature/tsconfig.lib.json" },
     { "path": "../../../shared/config/tsconfig.lib.json" },
+    { "path": "../../../shared/data-access/tsconfig.lib.json" },
     { "path": "../../../shared/feature/tsconfig.lib.json" },
     { "path": "../../../shared/i18n/tsconfig.lib.json" },
     { "path": "../../../shared/models/tsconfig.lib.json" },

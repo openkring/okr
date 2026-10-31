@@ -9,6 +9,7 @@ import { patchState, signalStore, withComputed, withHooks, withMethods, withProp
 import { AvatarInfo, JournalBookModel, JournalChange, TRANSPORT_MODES, TransportMode } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { FIRESTORE } from '@okr/shared-config';
+import { GoogleMapType, GoogleTiles } from '@okr/shared-data-access';
 import { AppVersionConfig, compareAppVersions, CURRENT_APP_VERSION } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 import { convertDateFormatToString, DateFormat, getTodayStr } from '@okr/shared-util-core';
@@ -18,8 +19,10 @@ import {
 } from '@okr/travel-journal-data-access';
 import {
   BOOK_I18N_KEYS, BOOK_LABEL_MAX, bookLabelsOf, JournalBookI18n, bookPrintCandidates, entityStateKey, hasOthersBlocks, pagesOf, PRINT_FILL_LONG_PX, PRINT_FILL_SHORT_PX, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
-  allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, MapPlace, mapPlaces, parseMapAreas, parsePhotoMode, TileJob, tilesToFree, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, reorderedOrders, CONFLICT_FIELDS, dismissedField, isConflictCopyKey, originalOfCopy, BlockView, publishedPhotoFiles, viewOf,
+  allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, MapPlace, mapPlaces, parseMapAreas, parsePhotoMode, TileJob, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, reorderedOrders, CONFLICT_FIELDS, dismissedField, isConflictCopyKey, originalOfCopy, BlockView, publishedPhotoFiles, viewOf,
   JournalLock, LOCK_HEARTBEAT_MS, LOCK_TTL_MS, lockedBy, mergeLocks, BoundAuthor, JournalWriteSlow, mergePending,
+  AreaLayer, areaForWrite, areaLayerTilePlan, BaseLayerOption, baseLayerOptions, Bbox, finishRun, isUsable, layerDetailLevels, layerKindsFor,
+  layerTilesToFree, MapLayerKind, MapSource, migrateOfflineMap, NO_OFFLINE_LAYER, offlineAreaKey, OfflineLayerStatus, parseOfflineLayer, pickBaseLayer,
 } from '@okr/travel-journal-util';
 
 import { BookExportStatus, JournalBookExporter, NO_BOOK_EXPORT } from './journal-book-export.service';
@@ -28,7 +31,9 @@ import { JournalWebPhotos, WebPhoto } from './journal-web-photos.service';
 
 const SYNC_INTERVAL_MS = 2 * 60 * 1000;
 const META_PHOTO_MODE = 'photoMode';
-const META_OFFLINE_MAP = 'offlineMap:'; // + journalKey
+const META_OFFLINE_MAP = 'offlineMap:'; // + journalKey: the phase 3 per-journal state, migrated once (phase 4 design §4)
+const BASE_LAYER_KEY = 'okr.journal.baseLayer'; // the chosen base layer, per device (phase 4 design §2)
+const STATS_CHUNK = 500; // tileStats / deleteTiles take at most 500 paths per call
 const MAP_WORKERS = 4; // parallel tile requests: polite to GIBS, the USGS WMS, swisstopo and Protomaps
 const PRESENT_CHUNK = 200;
 const META_ACTIVE_JOURNAL = 'activeJournal'; // the journal last opened: the one P2P runs for
@@ -51,7 +56,10 @@ interface JournalStoreState {
   changes: JournalChange[];
   photoMode: JournalPhotoMode;
   activeJournalKey: string;
-  offlineMaps: Record<string, OfflineMapStatus>; // per journal
+  offlineLayers: Record<string, OfflineLayerStatus>; // this iPad's downloads, keyed `${journalKey}:${areaId}:${kind}` (phase 4 §4)
+  online: boolean; // Capacitor Network status (web and native)
+  google: { roadmap?: string; satellite?: string }; // Map Tiles URL templates; only while online and a session exists
+  baseLayerId: string; // the stored choice ('' = none); the effective one is pickBaseLayer over the offered options
   bookPrints: BookPrintStatus;
   webLoaded: boolean; // web view: the authored journals have been loaded (or failed to)
   bookExport: BookExportStatus;
@@ -61,25 +69,32 @@ interface JournalStoreState {
   webUpload: { done: number; total: number } | undefined; // browser photo upload in progress (spec 1.126 phase 3 §3)
 }
 
-/**
- * A journal's offline map (plans 6, 6b): none yet, downloading, complete, or finished with failed tiles.
- * `areaIds` are the areas the last download covered — an area added later is not offline yet.
- */
-export interface OfflineMapStatus {
-  state: 'none' | 'loading' | 'ready' | 'partial'; done: number; total: number; failed: number; at: string; areaIds: string[];
-}
-export const NO_OFFLINE_MAP: OfflineMapStatus = { state: 'none', done: 0, total: 0, failed: 0, at: '', areaIds: [] };
-
-function parseOfflineMap(raw: string | undefined): OfflineMapStatus {
+/** The phase 3 per-journal offline map record (`offlineMap:<journalKey>`), read only for the one-time migration. */
+function parseLegacyOfflineMap(raw: string | undefined): { state: string; at: string; areaIds: string[]; total: number; failed: number } | undefined {
   try {
-    const value = raw ? (JSON.parse(raw) as Partial<OfflineMapStatus>) : undefined;
-    if (value?.state === 'ready' || value?.state === 'partial') {
-      return { ...NO_OFFLINE_MAP, ...value, areaIds: Array.isArray(value.areaIds) ? value.areaIds.filter((a) => typeof a === 'string') : [] };
-    }
+    const value = raw ? (JSON.parse(raw) as Record<string, unknown>) : undefined;
+    if (value?.['state'] !== 'ready' && value?.['state'] !== 'partial') return undefined;
+    const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
+    return {
+      state: value['state'], at: typeof value['at'] === 'string' ? value['at'] : '', total: num(value['total']), failed: num(value['failed']),
+      areaIds: Array.isArray(value['areaIds']) ? value['areaIds'].filter((a): a is string => typeof a === 'string') : [],
+    };
   } catch {
-    // a damaged entry counts as no map
+    return undefined; // a damaged entry counts as no map
   }
-  return NO_OFFLINE_MAP;
+}
+
+/** The layer kind that draws an area's phase 3 `source` (book and flyover still read `mapLayers` by source). */
+const KIND_OF_SOURCE: Record<MapSource, MapLayerKind> = { antarctica: 'satellite', swisstopo: 'swisstopo', osm: 'osm' };
+const layerKey = (journalKey: string, areaId: string, kind: MapLayerKind): string => `${journalKey}:${areaId}:${kind}`;
+const uniqueJobs = (jobs: TileJob[]): TileJob[] => [...new Map(jobs.map((j) => [j.path, j])).values()];
+
+function readStoredBaseLayer(): string {
+  try {
+    return localStorage.getItem(BASE_LAYER_KEY) ?? '';
+  } catch {
+    return '';
+  }
 }
 
 /**
@@ -100,7 +115,7 @@ const PRINT_CHUNK = 50; // prepareJournalPhotoUploads takes at most 50 files per
 const printFileOf = (imageKey: string): string => `${imageKey}-print.jpg`;
 
 const initialState: JournalStoreState = {
-  ready: false, native: Capacitor.isNativePlatform(), error: '', changes: [], photoMode: 'all', activeJournalKey: '', offlineMaps: {}, bookPrints: NO_BOOK_PRINTS,
+  ready: false, native: Capacitor.isNativePlatform(), error: '', changes: [], photoMode: 'all', activeJournalKey: '', offlineLayers: {}, online: !isOffline(), google: {}, baseLayerId: '', bookPrints: NO_BOOK_PRINTS,
   webLoaded: false, bookExport: NO_BOOK_EXPORT, locks: {}, writeMinVersion: '', lockClock: 0, webUpload: undefined,
 };
 const LOCK_CLOCK_MS = 15_000;
@@ -122,6 +137,8 @@ export const JournalStore = signalStore(
     webWriter: inject(JournalWebWriter),
     webPhotos: inject(JournalWebPhotos),
     firestore: inject(FIRESTORE),
+    googleTiles: inject(GoogleTiles),
+    i18nService: inject(I18nService),
   })),
   withProps(() => ({
     i18n: inject(I18nService).translateAll(JOURNAL_I18N_KEYS) as JournalI18n,
@@ -462,18 +479,273 @@ export const JournalStore = signalStore(
       void syncNow();
     }
 
-    /** The overview's map layers: downloaded areas from local files, the rest live where allowed. */
+    function areasOf(journalKey: string): MapArea[] {
+      return parseMapAreas(viewOf(store.journalState()[entityStateKey('journal', journalKey)])?.['mapAreas']);
+    }
+
+    function positionsOf(journalKey: string): { lat: number; lng: number }[] {
+      return footprintsOf(store.journalState(), journalKey)
+        .filter((f) => f.latitude !== undefined && f.longitude !== undefined)
+        .map((f) => ({ lat: f.latitude as number, lng: f.longitude as number }));
+    }
+
+    /** `${areaId}:${kind}` of the journal's layers usable on this iPad (ready, or partial with ≤ 10 % failed). */
+    function usableLayers(journalKey: string): Set<string> {
+      const prefix = `${journalKey}:`;
+      const usable = new Set<string>();
+      for (const [key, status] of Object.entries(store.offlineLayers())) {
+        if (key.startsWith(prefix) && isUsable(status)) usable.add(key.slice(prefix.length));
+      }
+      return usable;
+    }
+
+    let worldBackground: TileJob[] | undefined;
+    /**
+     * Tiles of one area layer: its own plan plus the shared world background (GIBS z0–4), which every offline option
+     * draws underneath — so one downloaded layer is enough for a working offline map. Freeing keeps the background while
+     * any other plan needs it.
+     */
+    function layerPlan(journalKey: string, area: MapArea, layer: AreaLayer): TileJob[] {
+      worldBackground ??= journalTilePlan([], []);
+      return uniqueJobs([...worldBackground, ...areaLayerTilePlan(area, layer, positionsOf(journalKey))]);
+    }
+
+    /** Every (journal, area, layer) plan on this iPad except the excluded keys: the tiles a removal must keep. */
+    function otherPlans(excluded: Set<string>): TileJob[] {
+      return journalsOf(store.journalState()).flatMap((j) => areasOf(j.key).flatMap((area) => area.layers
+        .filter((layer) => !excluded.has(layerKey(j.key, area.id, layer.kind)))
+        .flatMap((layer) => layerPlan(j.key, area, layer))));
+    }
+
+    /** Older plugins have no tileStats: `undefined` = unknown size (never throws). */
+    async function tileStats(paths: string[]): Promise<{ present: number; bytes: number } | undefined> {
+      try {
+        let present = 0;
+        let bytes = 0;
+        for (let i = 0; i < paths.length; i += STATS_CHUNK) {
+          const r = await JournalPhotos.tileStats({ paths: paths.slice(i, i + STATS_CHUNK) });
+          present += r.present;
+          bytes += r.bytes;
+        }
+        return { present, bytes };
+      } catch {
+        return undefined;
+      }
+    }
+
+    function setLayer(key: string, status: OfflineLayerStatus): void {
+      patchState(store, { offlineLayers: { ...store.offlineLayers(), [key]: status } });
+    }
+
+    /**
+     * The book's and the flyover's map layers (phase 3 `mapLayers`, by `source`): an area counts as downloaded when the
+     * layer of its source is usable here — a satellite-only area outside Antarctica (source 'osm') never advertises
+     * OpenStreetMap tiles it does not have. Areas written before phase 4 with every layer usable give the same output.
+     */
     function mapLayersFor(journalKey: string): JournalTileSource[] {
-      const map = store.offlineMaps()[journalKey] ?? NO_OFFLINE_MAP;
-      // a download stopped early must not swap the map for mostly missing tiles
-      const usable = map.state === 'ready' || (map.state === 'partial' && map.failed <= map.total * 0.1);
-      const areas = parseMapAreas(viewOf(store.journalState()[entityStateKey('journal', journalKey)])?.['mapAreas']);
-      return mapLayers(areas, new Set(usable ? map.areaIds : []), store.fileUrl.dirUrl('tiles'));
+      const usable = usableLayers(journalKey);
+      const downloaded = new Set<string>();
+      const areas = areasOf(journalKey).map((area) => {
+        const layer = area.layers.find((l) => l.kind === KIND_OF_SOURCE[area.source]);
+        if (!layer || !usable.has(`${area.id}:${layer.kind}`)) return area;
+        downloaded.add(area.id);
+        return { ...area, maxZoom: layer.maxZoom };
+      });
+      return mapLayers(areas, downloaded, store.native() ? store.fileUrl.dirUrl('tiles') : '');
+    }
+
+    /** The base layers offered for a journal's map in a view (phase 4 design §2); reactive in a computed. */
+    function baseLayerOptionsFor(journalKey: string, view: Bbox | undefined): BaseLayerOption[] {
+      return baseLayerOptions({
+        online: store.online(), google: store.google(), areas: areasOf(journalKey), usable: usableLayers(journalKey), view,
+        tilesBaseUrl: store.native() ? store.fileUrl.dirUrl('tiles') : '',
+      });
+    }
+
+    // Google Map Tiles sessions (phase 4 design §1): requested in the background online, dropped offline.
+    let sessions: Partial<Record<GoogleMapType, string>> = {};
+    let googleRun = 0;
+    async function refreshGoogle(): Promise<void> {
+      const run = ++googleRun;
+      const language = store.i18nService.getActiveLang() || 'de';
+      const [roadmap, satellite] = await Promise.all([
+        store.googleTiles.session('roadmap', language), store.googleTiles.session('satellite', language),
+      ]);
+      if (run !== googleRun || !store.online()) return; // went offline (or a newer request) meanwhile
+      sessions = { roadmap, satellite };
+      patchState(store, {
+        google: {
+          ...(roadmap ? { roadmap: store.googleTiles.tileUrl(roadmap) } : {}),
+          ...(satellite ? { satellite: store.googleTiles.tileUrl(satellite) } : {}),
+        },
+      });
+    }
+
+    function setOnline(connected: boolean): void {
+      const was = store.online();
+      patchState(store, { online: connected });
+      if (!connected) {
+        googleRun++; // a request still running must not bring the templates back
+        sessions = {};
+        patchState(store, { google: {} });
+      } else if (!was || !store.google().roadmap || !store.google().satellite) {
+        void refreshGoogle();
+      }
+    }
+
+    let networkWatch = false;
+    /** Online state for every platform (never awaited: an offline start must not wait for the network). */
+    function startNetworkWatch(): void {
+      if (networkWatch) return;
+      networkWatch = true;
+      void Network.addListener('networkStatusChange', (status) => setOnline(status.connected)).catch(() => undefined);
+      void Network.getStatus().then((status) => setOnline(status.connected), () => setOnline(!isOffline()));
+    }
+
+    // One offline download at a time (design §4); «Pause» stops it, «Fortsetzen» resumes through the present-tile skip.
+    let running: { key: string; done: Promise<void> } | undefined;
+
+    async function runLayerDownload(journalKey: string, area: MapArea, layer: AreaLayer): Promise<void> {
+      const key = layerKey(journalKey, area.id, layer.kind);
+      const prev = store.offlineLayers()[key] ?? NO_OFFLINE_LAYER;
+      const jobs = layerPlan(journalKey, area, layer);
+      const total = jobs.length;
+      let done = 0; // present, written or marked empty
+      let failed = 0;
+      let empty = 0;
+      const written: string[] = [];
+      const progress = () => setLayer(key, { ...prev, state: 'loading', total, done, failed, empty });
+      progress();
+      try {
+        // tiles already on the iPad (markers included) count as done without a request
+        const todo: TileJob[] = [];
+        for (let i = 0; i < jobs.length && !cancelMap; i += PRESENT_CHUNK) {
+          const chunk = jobs.slice(i, i + PRESENT_CHUNK);
+          const present = new Set((await JournalPhotos.presentTiles({ paths: chunk.map((j) => j.path) })).paths);
+          for (const job of chunk) if (present.has(job.path)) done += 1; else todo.push(job);
+          progress();
+        }
+
+        let osm: Promise<OsmExtract> | undefined;
+        let next = 0;
+        const worker = async (): Promise<void> => {
+          while (!cancelMap && next < todo.length) {
+            const job = todo[next++];
+            try {
+              if (job.source === 'osm') {
+                osm ??= OsmExtract.open();
+                const tile = await (await osm).tile(job.z, job.x, job.y);
+                if (tile) {
+                  await JournalPhotos.writeTile({ path: job.path, data: toBase64(tile) });
+                  written.push(job.path);
+                } else {
+                  // no tile in the build (open sea): a zero-byte marker, so «Fortsetzen» skips it. An older plugin
+                  // refuses the empty write for this path: that counts as failed, as before phase 4.
+                  await JournalPhotos.writeTile({ path: job.path, data: '' });
+                  empty += 1;
+                }
+              } else {
+                const result = await JournalPhotos.downloadTile({ url: job.url, path: job.path });
+                if (result.empty) empty += 1;
+                else if (!result.skipped) written.push(job.path);
+              }
+              done += 1;
+            } catch {
+              failed += 1; // a timeout, a server error: retried on «Fortsetzen» / «Aktualisieren»
+            }
+            progress();
+          }
+        };
+        await Promise.all(Array.from({ length: MAP_WORKERS }, () => worker()));
+      } catch (error) {
+        console.error('journal: offline layer download stopped', key, error);
+      }
+      failed = total - done; // tiles not reached (pause, error) are missing too
+      const added = await tileStats(written);
+      const all = await tileStats(jobs.map((j) => j.path));
+      const result = finishRun(prev, { total, done, failed, empty, added: added?.bytes ?? prev.added, bytes: all?.bytes }, new Date().toISOString());
+      setLayer(key, result);
+      await store.db.setMeta(offlineAreaKey(journalKey, area.id, layer.kind), JSON.stringify(result));
+    }
+
+    /** Frees the tiles of the given layers that no other plan needs and forgets their state. */
+    async function freeLayers(journalKey: string, area: MapArea, layers: AreaLayer[]): Promise<number> {
+      if (!store.native() || layers.length === 0) return 0;
+      const keys = layers.map((l) => layerKey(journalKey, area.id, l.kind));
+      if (running && keys.includes(running.key)) {
+        cancelMap = true;
+        await running.done.catch(() => undefined); // its state is replaced below either way
+      }
+      const own = uniqueJobs(layers.flatMap((l) => layerPlan(journalKey, area, l)));
+      const paths = layerTilesToFree(own, otherPlans(new Set(keys)));
+      let deleted = 0;
+      for (let i = 0; i < paths.length; i += STATS_CHUNK) {
+        deleted += (await JournalPhotos.deleteTiles({ paths: paths.slice(i, i + STATS_CHUNK) })).deleted;
+      }
+      for (const layer of layers) {
+        setLayer(layerKey(journalKey, area.id, layer.kind), NO_OFFLINE_LAYER);
+        await store.db.setMeta(offlineAreaKey(journalKey, area.id, layer.kind), JSON.stringify(NO_OFFLINE_LAYER));
+      }
+      return deleted;
+    }
+
+    /** Tile count and size on disk of the journal's downloaded layers (native tileStats; unknown on older plugins). */
+    async function refreshTileStats(journalKey: string): Promise<void> {
+      if (!store.native()) return;
+      for (const area of areasOf(journalKey)) {
+        for (const layer of area.layers) {
+          const key = layerKey(journalKey, area.id, layer.kind);
+          const status = store.offlineLayers()[key];
+          if (!status || status.state === 'none' || status.state === 'loading') continue;
+          const stats = await tileStats(layerPlan(journalKey, area, layer).map((j) => j.path));
+          if (!stats) return; // no tileStats in this plugin: sizes stay unknown
+          const current = store.offlineLayers()[key];
+          if (!current || current.state === 'none' || current.state === 'loading') continue; // changed meanwhile
+          const updated = { ...current, tiles: stats.present, bytes: stats.bytes };
+          setLayer(key, updated);
+          await store.db.setMeta(offlineAreaKey(journalKey, area.id, layer.kind), JSON.stringify(updated));
+        }
+      }
+    }
+
+    /**
+     * Native init: this iPad's per-layer download state from SQLite, migrating the phase 3 per-journal record once.
+     * Returns the journals that were migrated (their tile counts are filled by a background tileStats run).
+     */
+    async function loadOfflineLayers(): Promise<string[]> {
+      const offlineLayers: Record<string, OfflineLayerStatus> = {};
+      const migrated: string[] = [];
+      for (const journal of journalsOf(store.journalState())) {
+        const areas = areasOf(journal.key);
+        let found = false;
+        for (const area of areas) {
+          for (const layer of area.layers) {
+            const raw = await store.db.getMeta(offlineAreaKey(journal.key, area.id, layer.kind));
+            if (raw === undefined) continue;
+            found = true;
+            const status = parseOfflineLayer(raw);
+            // a run the app was closed during resumes as incomplete
+            offlineLayers[layerKey(journal.key, area.id, layer.kind)] = status.state === 'loading' ? { ...status, state: 'partial' } : status;
+          }
+        }
+        if (found) continue;
+        const legacy = parseLegacyOfflineMap(await store.db.getMeta(META_OFFLINE_MAP + journal.key));
+        if (!legacy) continue;
+        for (const [areaLayer, status] of Object.entries(migrateOfflineMap(legacy, areas))) {
+          const [areaId, kind] = [areaLayer.slice(0, areaLayer.lastIndexOf(':')), areaLayer.slice(areaLayer.lastIndexOf(':') + 1) as MapLayerKind];
+          offlineLayers[layerKey(journal.key, areaId, kind)] = status;
+          await store.db.setMeta(offlineAreaKey(journal.key, areaId, kind), JSON.stringify(status));
+        }
+        await store.db.setMeta(META_OFFLINE_MAP + journal.key, JSON.stringify({ state: 'none', migrated: true }));
+        migrated.push(journal.key);
+      }
+      patchState(store, { offlineLayers });
+      return migrated;
     }
 
     /** Landing sites of the journal's map presets, as named points on the map. */
     function mapPlacesFor(journalKey: string): MapPlace[] {
-      return mapPlaces(parseMapAreas(viewOf(store.journalState()[entityStateKey('journal', journalKey)])?.['mapAreas']));
+      return mapPlaces(areasOf(journalKey));
     }
 
     /** Online: reads the minimum app version for writes and caches it. Offline the cached value stays. Never throws. */
@@ -529,11 +801,8 @@ export const JournalStore = signalStore(
               writeMinVersion: (await store.db.getMeta(META_WRITE_MIN_VERSION)) ?? '',
 
             });
-            const offlineMaps: Record<string, OfflineMapStatus> = {};
-            for (const journal of journalsOf(store.journalState())) {
-              offlineMaps[journal.key] = parseOfflineMap(await store.db.getMeta(META_OFFLINE_MAP + journal.key));
-            }
-            patchState(store, { offlineMaps });
+            const migrated = await loadOfflineLayers(); // SQLite only
+            for (const journalKey of migrated) void refreshTileStats(journalKey); // background: sizes of migrated layers
             startAutoSync();
             void refreshWriteMinVersion(); // fire and forget: never blocks startup
             if (store.activeJournalKey()) void startLockWatch(store.activeJournalKey());
@@ -667,112 +936,109 @@ export const JournalStore = signalStore(
 
       /** The journal's map areas (plan 6b), from the journal field `mapAreas`. */
       mapAreas(journalKey: string): MapArea[] {
-        return parseMapAreas(viewOf(store.journalState()[entityStateKey('journal', journalKey)])?.['mapAreas']);
+        return areasOf(journalKey);
       },
 
-      offlineMap(journalKey: string): OfflineMapStatus {
-        return store.offlineMaps()[journalKey] ?? NO_OFFLINE_MAP;
+      /** This iPad's download state of one area layer. */
+      offlineLayer(journalKey: string, areaId: string, kind: MapLayerKind): OfflineLayerStatus {
+        return store.offlineLayers()[layerKey(journalKey, areaId, kind)] ?? NO_OFFLINE_LAYER;
       },
 
       mapLayersFor,
       mapPlacesFor,
+      baseLayerOptionsFor,
 
+      /** The effective base layer for a journal's map in a view: the stored choice when offered, else the default. */
+      selectedBaseLayerFor(journalKey: string, view: Bbox | undefined): BaseLayerOption['id'] {
+        return pickBaseLayer(baseLayerOptionsFor(journalKey, view), store.baseLayerId() || undefined);
+      },
+
+      /** Stores the chosen base layer on this device. */
+      selectBaseLayer(id: string): void {
+        patchState(store, { baseLayerId: id });
+        try {
+          localStorage.setItem(BASE_LAYER_KEY, id);
+        } catch {
+          // storage unavailable (private mode): the choice lasts for this session
+        }
+      },
+
+      /**
+       * The viewport copyright of the Google layer (attribution, design §1): of `mapType`, else the stored Google choice.
+       * '' offline or without a session. The caller debounces.
+       */
+      async googleAttribution(view: Bbox, zoom: number, mapType?: GoogleMapType): Promise<string> {
+        const type = mapType ?? (store.baseLayerId() === 'google-satellite' && store.google().satellite ? 'satellite' : 'roadmap');
+        const session = sessions[type];
+        if (!store.online() || !session) return '';
+        const [west, south, east, north] = view;
+        return store.googleTiles.attribution(session, { west, south, east, north }, zoom);
+      },
+
+      /** Writes the whole area list in the shape both builds read (`areaForWrite`); refuses a layer outside its region. */
       async addMapArea(journalKey: string, area: MapArea): Promise<void> {
-        const areas = parseMapAreas(viewOf(store.journalState()[entityStateKey('journal', journalKey)])?.['mapAreas']);
+        const areas = areasOf(journalKey);
         if (areas.some((a) => a.id === area.id)) return;
-        await write([{ journalKey, entity: 'journal', entityKey: journalKey, op: 'set', fields: { mapAreas: [...areas, area] } }]);
+        if (area.preset === undefined && area.layers.some((l) => !layerKindsFor(area.bbox).includes(l.kind))) {
+          throw new Error(`journal: a layer of area ${area.id} is not offered for its region`);
+        }
+        await write([{ journalKey, entity: 'journal', entityKey: journalKey, op: 'set', fields: { mapAreas: [...areas, area].map(areaForWrite) } }]);
       },
 
       async removeMapArea(journalKey: string, areaId: string): Promise<void> {
-        const areas = parseMapAreas(viewOf(store.journalState()[entityStateKey('journal', journalKey)])?.['mapAreas']);
-        await write([{ journalKey, entity: 'journal', entityKey: journalKey, op: 'set', fields: { mapAreas: areas.filter((a) => a.id !== areaId) } }]);
+        const areas = areasOf(journalKey);
+        await write([{ journalKey, entity: 'journal', entityKey: journalKey, op: 'set', fields: { mapAreas: areas.filter((a) => a.id !== areaId).map(areaForWrite) } }]);
+      },
+
+      /** «Ebene hinzufügen»: a new layer on a synced area (the other iPad sees it as not downloaded). */
+      async addAreaLayer(journalKey: string, areaId: string, layer: AreaLayer): Promise<void> {
+        const areas = areasOf(journalKey);
+        const area = areas.find((a) => a.id === areaId);
+        if (!area || area.layers.some((l) => l.kind === layer.kind)) return;
+        if (area.preset !== undefined || !layerDetailLevels(layer.kind, area.bbox).some((level) => level.maxZoom === layer.maxZoom)) {
+          throw new Error(`journal: layer ${layer.kind}/${layer.maxZoom} is not offered for area ${areaId}`);
+        }
+        const updated = areas.map((a) => (a.id === areaId ? { ...a, layers: [...a.layers, { kind: layer.kind, maxZoom: layer.maxZoom }] } : a));
+        await write([{ journalKey, entity: 'journal', entityKey: journalKey, op: 'set', fields: { mapAreas: updated.map(areaForWrite) } }]);
+      },
+
+      /** «Gebiet löschen»: removes the area from the synced journal (both iPads), then frees its tiles on this iPad. */
+      async deleteArea(journalKey: string, areaId: string): Promise<void> {
+        const area = areasOf(journalKey).find((a) => a.id === areaId);
+        if (!area) return;
+        await write([{ journalKey, entity: 'journal', entityKey: journalKey, op: 'set',
+          fields: { mapAreas: areasOf(journalKey).filter((a) => a.id !== areaId).map(areaForWrite) } }]);
+        await freeLayers(journalKey, area, area.layers);
       },
 
       /**
-       * Downloads a journal's offline map (plans 6, 6b): its areas, the world background and — for the
-       * Antarctica preset — detail around the journal's footprints. Raster tiles come natively, OpenStreetMap
-       * tiles from the Protomaps build; tiles already on the iPad are skipped, so it resumes after a stop.
+       * Downloads one area layer (design §4; «Laden», «Fortsetzen», «Aktualisieren»): raster tiles natively, OpenStreetMap
+       * tiles from the Protomaps build; present tiles are skipped. One download at a time.
        */
-      async downloadOfflineMap(journalKey: string): Promise<void> {
-        const current = store.offlineMaps()[journalKey] ?? NO_OFFLINE_MAP;
-        if (!store.native() || current.state === 'loading' || Object.values(store.offlineMaps()).some((m) => m.state === 'loading')) return;
-        const areas = parseMapAreas(viewOf(store.journalState()[entityStateKey('journal', journalKey)])?.['mapAreas']);
-        if (areas.length === 0) return;
-        const positions = footprintsOf(store.journalState(), journalKey)
-          .filter((f) => f.latitude !== undefined && f.longitude !== undefined)
-          .map((f) => ({ lat: f.latitude as number, lng: f.longitude as number }));
-        const setStatus = (status: OfflineMapStatus) => patchState(store, { offlineMaps: { ...store.offlineMaps(), [journalKey]: status } });
-        const jobs = journalTilePlan(areas, positions);
+      async downloadAreaLayer(journalKey: string, areaId: string, kind: MapLayerKind): Promise<void> {
+        if (!store.native() || running) return;
+        const area = areasOf(journalKey).find((a) => a.id === areaId);
+        const layer = area?.layers.find((l) => l.kind === kind);
+        if (!area || !layer) return;
         cancelMap = false;
-        let done = 0;
-        let failed = 0;
-        setStatus({ ...current, state: 'loading', done: 0, total: jobs.length, failed: 0 });
-
-        // tiles already on the iPad count as done without a request
-        const todo: TileJob[] = [];
-        for (let i = 0; i < jobs.length && !cancelMap; i += PRESENT_CHUNK) {
-          const chunk = jobs.slice(i, i + PRESENT_CHUNK);
-          const present = new Set((await JournalPhotos.presentTiles({ paths: chunk.map((j) => j.path) })).paths);
-          for (const job of chunk) if (present.has(job.path)) done += 1; else todo.push(job);
-          setStatus({ ...current, state: 'loading', done, total: jobs.length, failed });
-        }
-
-        let osm: Promise<OsmExtract> | undefined;
-        let next = 0;
-        const worker = async (): Promise<void> => {
-          while (!cancelMap && next < todo.length) {
-            const job = todo[next++];
-            try {
-              if (job.source === 'osm') {
-                osm ??= OsmExtract.open();
-                const tile = await (await osm).tile(job.z, job.x, job.y);
-                if (tile) await JournalPhotos.writeTile({ path: job.path, data: toBase64(tile) });
-              } else {
-                await JournalPhotos.downloadTile({ url: job.url, path: job.path });
-              }
-            } catch {
-              failed += 1; // open sea outside the LIMA mosaic, a timeout: retried on «Fortsetzen»
-            }
-            done += 1;
-            setStatus({ ...current, state: 'loading', done, total: jobs.length, failed });
-          }
-        };
-        await Promise.all(Array.from({ length: MAP_WORKERS }, () => worker()));
-        const result: OfflineMapStatus = {
-          state: failed === 0 && done === jobs.length ? 'ready' : 'partial', done, total: jobs.length, failed: failed + (jobs.length - done),
-          at: new Date().toISOString(), areaIds: areas.map((a) => a.id),
-        };
-        setStatus(result);
-        await store.db.setMeta(META_OFFLINE_MAP + journalKey, JSON.stringify(result));
+        const done = runLayerDownload(journalKey, area, layer).finally(() => { running = undefined; });
+        running = { key: layerKey(journalKey, areaId, kind), done };
+        await done;
       },
 
-      /**
-       * «Offline-Karte löschen» (plan 8): deletes this journal's tiles that no other journal on this iPad needs
-       * and forgets its download state; the areas stay, so «Laden» brings the map back.
-       */
-      async freeOfflineMap(journalKey: string): Promise<number> {
-        if (!store.native()) return 0;
-        const plan = (key: string) => {
-          const areas = parseMapAreas(viewOf(store.journalState()[entityStateKey('journal', key)])?.['mapAreas']);
-          const positions = footprintsOf(store.journalState(), key)
-            .filter((f) => f.latitude !== undefined && f.longitude !== undefined)
-            .map((f) => ({ lat: f.latitude as number, lng: f.longitude as number }));
-          return areas.length > 0 ? journalTilePlan(areas, positions) : [];
-        };
-        const others = journalsOf(store.journalState()).filter((j) => j.key !== journalKey).flatMap((j) => plan(j.key));
-        const paths = tilesToFree(plan(journalKey), others);
-        let deleted = 0;
-        for (let i = 0; i < paths.length; i += 500) {
-          deleted += (await JournalPhotos.deleteTiles({ paths: paths.slice(i, i + 500) })).deleted;
-        }
-        patchState(store, { offlineMaps: { ...store.offlineMaps(), [journalKey]: NO_OFFLINE_MAP } });
-        await store.db.setMeta(META_OFFLINE_MAP + journalKey, JSON.stringify(NO_OFFLINE_MAP));
-        return deleted;
-      },
-
-      cancelOfflineMap(): void {
+      pauseDownload(): void {
         cancelMap = true;
       },
+
+      /** «Entfernen»: frees this layer's tiles on this iPad only; the area and its layer stay in the journal. */
+      async freeAreaLayer(journalKey: string, areaId: string, kind: MapLayerKind): Promise<number> {
+        const area = areasOf(journalKey).find((a) => a.id === areaId);
+        const layer = area?.layers.find((l) => l.kind === kind);
+        return area && layer ? freeLayers(journalKey, area, [layer]) : 0;
+      },
+
+      refreshTileStats,
+      startNetworkWatch,
 
       /**
        * «Fotos fürs Buch hochladen» (book export): exports this author's photos of the book from the iPad's own Photos
@@ -1096,6 +1362,9 @@ export const JournalStore = signalStore(
   }),
   withHooks((store) => ({
     onInit(): void {
+      // Base-layer choice and online state for every platform (phase 4 design §2); nothing here waits for the network.
+      patchState(store, { baseLayerId: readStoredBaseLayer() });
+      store.startNetworkWatch();
       // Bind the author whenever a signed-in user with a person is known (online). Offline the binding
       // stored in SQLite is used — AppStore has no user after an offline cold start on iOS.
       effect(() => {
