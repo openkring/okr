@@ -85,3 +85,27 @@ export function badgeSumDropped(before: Partial<ServerBadgeLedger> | undefined, 
   if (b === undefined || a === undefined) return undefined;
   return a < b ? a : undefined;
 }
+
+/** Which badge parts the open app has really loaded (spec 1.127 N1). */
+export interface BadgePartsReady {
+  chat: boolean;
+  tasks: boolean;
+  invitations: boolean;
+}
+
+/**
+ * Only the parts whose source has loaded. Before that a part reads 0, and writing that 0 to the
+ * server ledger would lower the badge on the member's other iOS devices (B2 push).
+ */
+export function readyBadgeParts(parts: BadgeParts, ready: BadgePartsReady): Partial<BadgeParts> {
+  const out: Partial<BadgeParts> = {};
+  if (ready.chat) out.chat = parts.chat;
+  if (ready.tasks) out.tasks = parts.tasks;
+  if (ready.invitations) out.invitations = parts.invitations;
+  return out;
+}
+
+/** True once every part has loaded: only then does the app know the full (absolute) badge total. */
+export function allPartsReady(ready: BadgePartsReady): boolean {
+  return ready.chat && ready.tasks && ready.invitations;
+}

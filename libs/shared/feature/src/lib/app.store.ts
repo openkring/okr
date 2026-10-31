@@ -60,6 +60,11 @@ export type AppState = {
  */
 export const READINESS_TIMEOUT_MS = 10_000;
 
+/** A resource whose value is the answer to its current params (not idle, loading or failed). */
+function isLoadedStatus(status: string): boolean {
+  return status === 'resolved' || status === 'reloading' || status === 'local';
+}
+
 const initialState: AppState = {
   tenantId: '',
   production: false,
@@ -389,6 +394,27 @@ export const AppStore = signalStore(
         const personKey = currentUser?.personKey;
         if (!personKey) return 0;
         return countableInvitationsOf(state.openInvitationsResource.value() ?? [], personKey, state.openInvitationEvents()).length;
+      }),
+      /**
+       * True once openTaskCount is the real count, not a 0 that only means «not loaded yet»
+       * (spec 1.127 N1: the server ledger and the native badge take a part only once loaded).
+       * Explicit status, not `value !== undefined`. Without role 'registered' the count is 0 by
+       * design, so it counts as loaded. An error stays not loaded: never write a maybe-too-low part.
+       */
+      openTaskCountLoaded: computed(() => {
+        if (!hasRole('registered', state.currentUserResource.value())) return true;
+        return isLoadedStatus(state.openTasksResource.status());
+      }),
+      /**
+       * True once openInvitationCount is the real count: the invitations AND the events behind
+       * them have loaded (while the events load, a keyed invitation counts 0, which is too low).
+       * Same rules as openTaskCountLoaded.
+       */
+      openInvitationCountLoaded: computed(() => {
+        const currentUser = state.currentUserResource.value();
+        if (!hasRole('registered', currentUser) || !currentUser?.personKey) return true;
+        return isLoadedStatus(state.openInvitationsResource.status())
+          && isLoadedStatus(state.openInvitationEventsResource.status());
       }),
       appConfig: computed(() => {
         const loaded = state.appConfigResource.value();

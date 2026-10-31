@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SERVER_BADGE_MAX, SERVER_BADGE_SEEN_MAX, addChatToLedger, badgeSumDropped, ledgerPartsFromApp, serverBadgeSum, setLedgerPart } from './server-badge-ledger.util';
+import { SERVER_BADGE_MAX, SERVER_BADGE_SEEN_MAX, addChatToLedger, allPartsReady, badgeSumDropped, ledgerPartsFromApp, readyBadgeParts, serverBadgeSum, setLedgerPart } from './server-badge-ledger.util';
 
 describe('server badge ledger', () => {
   it('addChatToLedger counts an event once', () => {
@@ -80,5 +80,25 @@ describe('server badge ledger', () => {
   it('a malformed seen or part is treated as empty / 0 in the ledger helpers', () => {
     const r = addChatToLedger({ chat: 'x' as unknown as number, seen: 'abc' as unknown as string[], fromApp: true }, 'e1');
     expect(r.next).toEqual({ chat: 1, tasks: 0, invitations: 0, seen: ['e1'], fromApp: true });
+  });
+});
+
+describe('badge part readiness', () => {
+  it('skips a part until its source has loaded', () => {
+    const ready = { chat: true, tasks: false, invitations: true };
+    expect(readyBadgeParts({ chat: 3, tasks: 0, invitations: 0 }, ready)).toEqual({ chat: 3, invitations: 0 });
+    expect(allPartsReady(ready)).toBe(false);
+  });
+
+  it('returns every part once all sources have loaded', () => {
+    const ready = { chat: true, tasks: true, invitations: true };
+    expect(readyBadgeParts({ chat: 1, tasks: 2, invitations: 0 }, ready)).toEqual({ chat: 1, tasks: 2, invitations: 0 });
+    expect(allPartsReady(ready)).toBe(true);
+  });
+
+  it('returns no part while nothing has loaded', () => {
+    const ready = { chat: false, tasks: false, invitations: false };
+    expect(readyBadgeParts({ chat: 0, tasks: 0, invitations: 0 }, ready)).toEqual({});
+    expect(allPartsReady(ready)).toBe(false);
   });
 });

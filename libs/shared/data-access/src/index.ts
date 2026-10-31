@@ -5,5 +5,6 @@ export * from './lib/app-config.service';
 export * from './lib/i18n-override.service';
 export * from './lib/external-data.service';
 export * from './lib/badge-ledger';
+export * from './lib/server-badge-ledger';
 export * from './lib/chat-status.service';
 export * from './lib/google-tiles.service';
