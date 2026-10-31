@@ -50,13 +50,13 @@
       "path": "../../../relationship/membership/feature/tsconfig.lib.json"
     },
     {
-      "path": "../../../subject/application/data-access/tsconfig.lib.json"
+      "path": "../data-access/tsconfig.lib.json"
     },
     {
-      "path": "../../../subject/application/ui/tsconfig.lib.json"
+      "path": "../ui/tsconfig.lib.json"
     },
     {
-      "path": "../../../subject/application/util/tsconfig.lib.json"
+      "path": "../util/tsconfig.lib.json"
     }
   ]
 }

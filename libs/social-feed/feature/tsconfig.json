@@ -23,10 +23,10 @@
       "path": "../../shared/models/tsconfig.lib.json"
     },
     {
-      "path": "../../social-feed/data-access/tsconfig.lib.json"
+      "path": "../data-access/tsconfig.lib.json"
     },
     {
-      "path": "../../social-feed/ui/tsconfig.lib.json"
+      "path": "../ui/tsconfig.lib.json"
     }
   ]
 }

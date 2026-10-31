@@ -35,7 +35,7 @@
       "path": "../../../shared/util-core/tsconfig.lib.json"
     },
     {
-      "path": "../../../relationship/personal-rel/util/tsconfig.lib.json"
+      "path": "../util/tsconfig.lib.json"
     }
   ]
 }

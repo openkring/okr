@@ -23,7 +23,7 @@ import { FolderService } from '@okr/content-folder-data-access';
 import { MembershipList } from '@okr/relationship-membership-feature';
 import { TaskList } from '@okr/project-task-feature';
 import { DocumentList } from '@okr/content-document-feature';
-import type { CalEventList } from '@okr/calevent-feature';
+import type { CalEventList } from '@okr/calendar-calevent-feature';
 
 import { GroupStore } from './group.store';
 
@@ -470,7 +470,7 @@ export class GroupViewPage implements ViewWillEnter {
       this.creatingCalevent.set(true);
       void (async () => {
         try {
-          const { CalEventList } = await import('@okr/calevent-feature');
+          const { CalEventList } = await import('@okr/calendar-calevent-feature');
           // The host may have left the DOM while the chunk was in flight: a component created in
           // a detached container would never be visible, yet the ref would block a remount.
           if (untracked(() => this.caleventHost()) !== host) return;

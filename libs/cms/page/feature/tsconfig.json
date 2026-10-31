@@ -47,34 +47,34 @@
       "path": "../../../shared/util-core/tsconfig.lib.json"
     },
     {
-      "path": "../../../cms/menu/data-access/tsconfig.lib.json"
+      "path": "../../menu/data-access/tsconfig.lib.json"
     },
     {
-      "path": "../../../cms/menu/feature/tsconfig.lib.json"
+      "path": "../../menu/feature/tsconfig.lib.json"
     },
     {
-      "path": "../../../cms/menu/util/tsconfig.lib.json"
+      "path": "../../menu/util/tsconfig.lib.json"
     },
     {
       "path": "../../../shared/util-angular/tsconfig.lib.json"
     },
     {
-      "path": "../../../cms/page/data-access/tsconfig.lib.json"
+      "path": "../data-access/tsconfig.lib.json"
     },
     {
-      "path": "../../../cms/page/ui/tsconfig.lib.json"
+      "path": "../ui/tsconfig.lib.json"
     },
     {
-      "path": "../../../cms/page/util/tsconfig.lib.json"
+      "path": "../util/tsconfig.lib.json"
     },
     {
-      "path": "../../../cms/section/feature/tsconfig.lib.json"
+      "path": "../../section/feature/tsconfig.lib.json"
     },
     {
-      "path": "../../../cms/section/data-access/tsconfig.lib.json"
+      "path": "../../section/data-access/tsconfig.lib.json"
     },
     {
-      "path": "../../../cms/section/util/tsconfig.lib.json"
+      "path": "../../section/util/tsconfig.lib.json"
     },
     {
       "path": "../../../content/pdf-template/data-access/tsconfig.lib.json"

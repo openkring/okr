@@ -65,7 +65,7 @@
       "path": "../../auth/data-access/tsconfig.lib.json"
     },
     {
-      "path": "../../aoc/util/tsconfig.lib.json"
+      "path": "../util/tsconfig.lib.json"
     },
     {
       "path": "../../chat/util/tsconfig.lib.json"
@@ -74,7 +74,7 @@
       "path": "../../chat/data-access/tsconfig.lib.json"
     },
     {
-      "path": "../../calevent/util/tsconfig.lib.json"
+      "path": "../../calendar/calevent/util/tsconfig.lib.json"
     },
     {
       "path": "../../geo/location/util/tsconfig.lib.json"

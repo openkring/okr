@@ -29,7 +29,7 @@
       "path": "../../../shared/util-core/tsconfig.lib.json"
     },
     {
-      "path": "../../document/util/tsconfig.lib.json"
+      "path": "../util/tsconfig.lib.json"
     }
   ]
 }

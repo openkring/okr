@@ -17,7 +17,7 @@ import { ResponsibilityService } from '@okr/relationship-responsibility-data-acc
 import { ReservationService } from '@okr/relationship-reservation-data-access';
 import { findActiveReservationForResource, newDamageRecord, newLockReservation } from '@okr/relationship-reservation-util';
 import { LocationService } from '@okr/location-data-access';
-import { CalEventService } from '@okr/calevent-data-access';
+import { CalEventService } from '@okr/calendar-calevent-data-access';
 
 import { TripService } from '@okr/trip-data-access';
 import { copyTrip as buildTripCopy, findOpenTripForBoat, findTrainingCrews, getTripLabel, groupTripsByDay, matchesStateFilter, newTrip, TRIP_I18N_KEYS, TripReport } from '@okr/trip-util';

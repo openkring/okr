@@ -21,7 +21,7 @@
     { "path": "../ui/tsconfig.lib.json" },
     { "path": "../util/tsconfig.lib.json" },
     { "path": "../../avatar/ui/tsconfig.lib.json" },
-    { "path": "../../calevent/util/tsconfig.lib.json" },
+    { "path": "../../calendar/calevent/util/tsconfig.lib.json" },
     { "path": "../../category/util/tsconfig.lib.json" },
     { "path": "../../cms/icon/util/tsconfig.lib.json" },
     { "path": "../../cms/menu/util/tsconfig.lib.json" },

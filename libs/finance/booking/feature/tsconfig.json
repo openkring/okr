@@ -59,13 +59,13 @@
       "path": "../ui/tsconfig.lib.json"
     },
     {
-      "path": "../../../finance/vat-code/data-access/tsconfig.lib.json"
+      "path": "../../vat-code/data-access/tsconfig.lib.json"
     },
     {
-      "path": "../../../finance/exchange-rate/data-access/tsconfig.lib.json"
+      "path": "../../exchange-rate/data-access/tsconfig.lib.json"
     },
     {
-      "path": "../../../finance/exchange-rate/util/tsconfig.lib.json"
+      "path": "../../exchange-rate/util/tsconfig.lib.json"
     },
     {
       "path": "../../account/data-access/tsconfig.lib.json"

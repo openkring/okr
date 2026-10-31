@@ -50,25 +50,25 @@
       "path": "../../../shared/util-core/tsconfig.lib.json"
     },
     {
-      "path": "../../../cms/section/data-access/tsconfig.lib.json"
+      "path": "../data-access/tsconfig.lib.json"
     },
     {
-      "path": "../../../cms/section/util/tsconfig.lib.json"
+      "path": "../util/tsconfig.lib.json"
     },
     {
-      "path": "../../../cms/section/ui/tsconfig.lib.json"
+      "path": "../ui/tsconfig.lib.json"
     },
     {
-      "path": "../../../cms/section/data-access/tsconfig.lib.json"
+      "path": "../data-access/tsconfig.lib.json"
     },
     {
-      "path": "../../../cms/section/util/tsconfig.lib.json"
+      "path": "../util/tsconfig.lib.json"
     },
     {
-      "path": "../../../cms/section/ui/tsconfig.lib.json"
+      "path": "../ui/tsconfig.lib.json"
     },
     {
-      "path": "../../../cms/section/data-access/tsconfig.lib.json"
+      "path": "../data-access/tsconfig.lib.json"
     },
     {
       "path": "../../../content/document/feature/tsconfig.lib.json"
@@ -80,10 +80,10 @@
       "path": "../../../content/document/util/tsconfig.lib.json"
     },
     {
-      "path": "../../../calevent/data-access/tsconfig.lib.json"
+      "path": "../../../calendar/calevent/data-access/tsconfig.lib.json"
     },
     {
-      "path": "../../../calevent/util/tsconfig.lib.json"
+      "path": "../../../calendar/calevent/util/tsconfig.lib.json"
     },
     {
       "path": "../../../relationship/membership/data-access/tsconfig.lib.json"

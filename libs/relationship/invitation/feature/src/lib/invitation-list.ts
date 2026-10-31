@@ -11,8 +11,8 @@ import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 
-import { CALEVENT_I18N_KEYS } from '@okr/calevent-util';
-import { showCalEventInfo } from '@okr/calevent-ui';
+import { CALEVENT_I18N_KEYS } from '@okr/calendar-calevent-util';
+import { showCalEventInfo } from '@okr/calendar-calevent-ui';
 
 import { createPersonAvatar } from '@okr/relationship-invitation-util';
 import { InvitationStore } from './invitation.store';

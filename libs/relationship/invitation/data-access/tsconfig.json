@@ -32,13 +32,13 @@
       "path": "../../../shared/util-core/tsconfig.lib.json"
     },
     {
-      "path": "../../../relationship/invitation/util/tsconfig.lib.json"
+      "path": "../util/tsconfig.lib.json"
     },
     {
       "path": "../../../shared/i18n/tsconfig.lib.json"
     },
     {
-      "path": "../../../calevent/util/tsconfig.lib.json"
+      "path": "../../../calendar/calevent/util/tsconfig.lib.json"
     },
     {
       "path": "../../../comment/util/tsconfig.lib.json"

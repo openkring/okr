@@ -15,5 +15,5 @@
   },
   "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
   "exclude": ["dist/**/*"],
-  "references": [{ "path": "../../../shared/models/tsconfig.lib.json" }, { "path": "../../../shared/constants/tsconfig.lib.json" }, { "path": "../../../shared/util-core/tsconfig.lib.json" }, { "path": "../../../subject/address/util/tsconfig.lib.json" }]
+  "references": [{ "path": "../../../shared/models/tsconfig.lib.json" }, { "path": "../../../shared/constants/tsconfig.lib.json" }, { "path": "../../../shared/util-core/tsconfig.lib.json" }, { "path": "../../address/util/tsconfig.lib.json" }]
 }

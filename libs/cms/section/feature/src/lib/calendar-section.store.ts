@@ -10,8 +10,8 @@ import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEve
 import { getAttendanceStates, getAttendee, getAvatarInfoForCurrentUser, getInvitationStates, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate } from '@okr/shared-util-core';
 import { notify, resourceParams } from '@okr/shared-util-angular';
 
-import { CalEventService } from '@okr/calevent-data-access';
-import { isAttendanceClosed, seenKeyFor, toSeenCounts, unseenActivityFor } from '@okr/calevent-util';
+import { CalEventService } from '@okr/calendar-calevent-data-access';
+import { isAttendanceClosed, seenKeyFor, toSeenCounts, unseenActivityFor } from '@okr/calendar-calevent-util';
 import { SeenService } from '@okr/user-data-access';
 import { getVisibleGroupKeys } from '@okr/subject-group-util';
 
@@ -270,8 +270,8 @@ export const CalendarStore = signalStore(
 
       async edit(calevent: CalEventModel, isNew = false, readOnly = true, initialDirty = false): Promise<boolean> {
         if (!isNew) this.markSeen(calevent);
-        // dynamic import: keeps @okr/calevent-feature (and FullCalendar) out of the eager graph
-        const { CalEventEditModal } = await import('@okr/calevent-feature');
+        // dynamic import: keeps @okr/calendar-calevent-feature (and FullCalendar) out of the eager graph
+        const { CalEventEditModal } = await import('@okr/calendar-calevent-feature');
         const modal = await store.modalController.create({
           component: CalEventEditModal,
           componentProps: {
@@ -300,8 +300,8 @@ export const CalendarStore = signalStore(
 
       async view(calevent: CalEventModel): Promise<void> {
         this.markSeen(calevent);
-        // dynamic import: keeps @okr/calevent-feature (and FullCalendar) out of the eager graph
-        const { CalEventViewModal } = await import('@okr/calevent-feature');
+        // dynamic import: keeps @okr/calendar-calevent-feature (and FullCalendar) out of the eager graph
+        const { CalEventViewModal } = await import('@okr/calendar-calevent-feature');
         const modal = await store.modalController.create({
           component: CalEventViewModal,
           componentProps: {

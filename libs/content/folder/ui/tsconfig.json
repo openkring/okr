@@ -32,10 +32,10 @@
       "path": "../../../shared/util-core/tsconfig.lib.json"
     },
     {
-      "path": "../../folder/data-access/tsconfig.lib.json"
+      "path": "../data-access/tsconfig.lib.json"
     },
     {
-      "path": "../../folder/util/tsconfig.lib.json"
+      "path": "../util/tsconfig.lib.json"
     },
     {
       "path": "../../../shared/util-angular/tsconfig.lib.json"

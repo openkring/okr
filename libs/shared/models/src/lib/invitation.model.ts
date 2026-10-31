@@ -8,7 +8,7 @@ import { OkrModel, NamedModel, SearchableModel, TaggedModel } from './base.model
  * poll all cycle pending -> accepted -> declined, and only the admin edit form could set it.
  *
  * Legacy documents may still carry 'maybe'. They are read as unanswered (`toAttendeeState` in
- * calevent-util folds every non-answer into 'invited'), and the comment key
+ * calendar-calevent-util folds every non-answer into 'invited'), and the comment key
  * `@relationship/invitation/feature.comment.maybe` stays in the i18n bundles so that old answer
  * comments keep rendering.
  *

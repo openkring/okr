@@ -47,7 +47,7 @@ Angular 20 / Ionic 8 multi-tenant community platform on Firebase, organized as a
 | Feature | Purpose |
 |---|---|
 | **Task** (`libs/task`) | Task lists with quick-entry triggers (`@` for people, `//` for shortcuts). |
-| **Calendar Events** (`libs/calevent`) | Event scheduling and calendar views. |
+| **Calendar Events** (`libs/calendar/calevent`) | Event scheduling and calendar views. |
 | **Activity / AoC** (`libs/activity`, `libs/aoc`) | Activity tracking and Articles of Constitution / organizational records. |
 | **Finance** (`libs/finance`) | Financial records and accounting data. |
 | **Quiz** (`libs/quiz`) | Quizzes and interactive assessments. |

@@ -35,7 +35,7 @@
       "path": "../../shared/util-core/tsconfig.lib.json"
     },
     {
-      "path": "../../chat/util/tsconfig.lib.json"
+      "path": "../util/tsconfig.lib.json"
     },
     {
       "path": "../../avatar/data-access/tsconfig.lib.json"

@@ -62,10 +62,10 @@
       "path": "../../avatar/util/tsconfig.lib.json"
     },
     {
-      "path": "../../profile/ui/tsconfig.lib.json"
+      "path": "../ui/tsconfig.lib.json"
     },
     {
-      "path": "../../profile/util/tsconfig.lib.json"
+      "path": "../util/tsconfig.lib.json"
     }
   ]
 }

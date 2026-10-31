@@ -8,8 +8,8 @@ import { getAttendanceColor, getAttendanceIcon, hasRole, isPastDate } from '@okr
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, isBrowser } from '@okr/shared-util-angular';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { I18nService } from '@okr/shared-i18n';
-import { CALEVENT_I18N_KEYS } from '@okr/calevent-util';
-import { showCalEventInfo } from '@okr/calevent-ui';
+import { CALEVENT_I18N_KEYS } from '@okr/calendar-calevent-util';
+import { showCalEventInfo } from '@okr/calendar-calevent-ui';
 import { InvitationSectionStore } from './invitations-section.store';
 import { reservedListHeight } from './list-reservation';
 

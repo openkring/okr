@@ -32,7 +32,7 @@
       "path": "../../shared/data-access/tsconfig.lib.json"
     },
     {
-      "path": "../../category/util/tsconfig.lib.json"
+      "path": "../util/tsconfig.lib.json"
     }
   ]
 }

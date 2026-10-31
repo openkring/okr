@@ -7,9 +7,9 @@ import { DateFormat, getTodayStr, isPastDate } from './date.util';
  * `endDate || startDate`, lies before today), locked by the organiser, or called off
  * (state 'cancelled').
  *
- * Lives here (not in `@okr/calevent-util`) so that the invitation rule in `invitation.util.ts` —
+ * Lives here (not in `@okr/calendar-calevent-util`) so that the invitation rule in `invitation.util.ts` —
  * used by the app badge and the dashboard invitations card — can share it.
- * `isAttendanceClosed` in `@okr/calevent-util` delegates to it; the push gate in
+ * `isAttendanceClosed` in `@okr/calendar-calevent-util` delegates to it; the push gate in
  * `apps/functions/src/calendar/invitation.ts` (`shouldNotifyInvitation`) mirrors it.
  *
  * Firestore reads skip model defaults: `isLocked`/`state` may be undefined on legacy docs, which

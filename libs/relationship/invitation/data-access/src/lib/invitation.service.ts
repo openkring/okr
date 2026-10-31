@@ -8,7 +8,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { AvatarInfo, CalEventCollection, CalEventModel, CommentCollection, InvitationCollection, InvitationModel, InvitationModelName, InvitationState, PersonModelName, UserModel } from '@okr/shared-models';
 import { DateFormat, getFullName, getSystemQuery, getTodayStr, removeKeyFromOkrModel } from '@okr/shared-util-core';
 
-import { applyInvitationAnswer, removeInvitedAttendee } from '@okr/calevent-util';
+import { applyInvitationAnswer, removeInvitedAttendee } from '@okr/calendar-calevent-util';
 import { createComment } from '@okr/comment-util';
 import { getInvitationIndex, getLockCommentKey, getResponseComment, normaliseInvitation } from '@okr/relationship-invitation-util';
 

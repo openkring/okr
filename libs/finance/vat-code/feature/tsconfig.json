@@ -38,7 +38,7 @@
       "path": "../../../shared/feature/tsconfig.lib.json"
     },
     {
-      "path": "../../../finance/accounting/feature/tsconfig.lib.json"
+      "path": "../../accounting/feature/tsconfig.lib.json"
     },
     {
       "path": "../data-access/tsconfig.lib.json"

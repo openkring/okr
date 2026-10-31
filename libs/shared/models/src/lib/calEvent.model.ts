@@ -52,7 +52,7 @@ export class CalEventModel implements OkrModel, NamedModel, SearchableModel, Tag
    * Cap on how many people may take part; 0 = unrestricted (the default).
    *
    * Nothing is stored per attendee: the first `maxAttendees` entries with state 'accepted' are
-   * confirmed, everyone after them is on the waiting list (see `splitAttendees` in calevent-util).
+   * confirmed, everyone after them is on the waiting list (see `splitAttendees` in calendar-calevent-util).
    * That keeps the list self-healing — when a confirmed person unsubscribes, the next one moves up
    * with no extra write.
    *

@@ -1,0 +1,24 @@
+{
+  "name": "calendar-meeting-ui",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/calendar/meeting/ui/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:content", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/calendar/meeting/ui",
+        "main": "libs/calendar/meeting/ui/src/index.ts",
+        "tsConfig": "libs/calendar/meeting/ui/tsconfig.lib.json",
+        "assets": ["libs/calendar/meeting/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

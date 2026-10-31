@@ -23,7 +23,7 @@ import { AOC_AREAS, AOC_HUB_I18N_KEYS, AocCardContext, formatValidationErrors, i
 
 import { addressValidations, getAddressIndex } from '@okr/subject-address-util';
 import { commentValidations, getCommentIndex } from '@okr/comment-util';
-import { calEventValidations, getCaleventIndex } from '@okr/calevent-util';
+import { calEventValidations, getCaleventIndex } from '@okr/calendar-calevent-util';
 import { documentValidations, getDocumentIndex } from '@okr/content-document-util';
 import { getLocationIndex, locationValidations } from '@okr/location-util';
 import { getMembershipIndex, membershipValidations } from '@okr/relationship-membership-util';

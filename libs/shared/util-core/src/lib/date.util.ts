@@ -347,13 +347,13 @@ export function getWeekdayI18nKey(storeDate: string, shortWeekday = true): strin
   const sub = shortWeekday ? 'weekday.abbreviation' : 'weekday.name';
   if (!date) return '';
   switch(getWeekday(date)) {
-    case 1: return `@calevent/feature.${sub}.monday`;
-    case 2: return `@calevent/feature.${sub}.tuesday`;
-    case 3: return `@calevent/feature.${sub}.wednesday`;
-    case 4: return `@calevent/feature.${sub}.thursday`;
-    case 5: return `@calevent/feature.${sub}.friday`;
-    case 6: return `@calevent/feature.${sub}.saturday`;
-    case 7: return `@calevent/feature.${sub}.sunday`;
+    case 1: return `@calendar/calevent/feature.${sub}.monday`;
+    case 2: return `@calendar/calevent/feature.${sub}.tuesday`;
+    case 3: return `@calendar/calevent/feature.${sub}.wednesday`;
+    case 4: return `@calendar/calevent/feature.${sub}.thursday`;
+    case 5: return `@calendar/calevent/feature.${sub}.friday`;
+    case 6: return `@calendar/calevent/feature.${sub}.saturday`;
+    case 7: return `@calendar/calevent/feature.${sub}.sunday`;
     default:
       warn('date.util/getWeekdayI18nKey: invalid weekday: ' + storeDate);
       return '';

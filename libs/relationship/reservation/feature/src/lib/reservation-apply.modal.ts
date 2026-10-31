@@ -5,8 +5,8 @@ import { AvatarInfo, CalEventModel, PersonModelName, ReservationApplyModel, Reso
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { fill, getAvatarName, hasRole } from '@okr/shared-util-core';
 
-import { CalEventEditModal } from '@okr/calevent-feature';
-import { isCalEvent } from '@okr/calevent-util';
+import { CalEventEditModal } from '@okr/calendar-calevent-feature';
+import { isCalEvent } from '@okr/calendar-calevent-util';
 
 import { ReservationApplyForm } from '@okr/relationship-reservation-ui';
 import { RelationshipToolbar } from '@okr/avatar-ui';

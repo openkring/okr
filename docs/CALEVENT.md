@@ -37,7 +37,7 @@ Add `'public'` to the event's `calendars` array when creating or editing it.
 
 ### How the store calls it
 
-`CalEventStore.caleventsResource` (`libs/calevent/feature/src/lib/calevent.store.ts`):
+`CalEventStore.caleventsResource` (`libs/calendar/calevent/feature/src/lib/calevent.store.ts`):
 
 - If the user is authenticated → standard Firestore query (unchanged).
 - If unauthenticated and `calendarName === 'public'` → fetches from `getPublicCalEvents` CF.

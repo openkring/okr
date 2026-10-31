@@ -20,22 +20,22 @@
   "exclude": ["dist/**/*"],
   "references": [
     {
-      "path": "../../shared/models/tsconfig.lib.json"
+      "path": "../models/tsconfig.lib.json"
     },
     {
-      "path": "../../shared/constants/tsconfig.lib.json"
+      "path": "../constants/tsconfig.lib.json"
     },
     {
-      "path": "../../shared/util-core/tsconfig.lib.json"
+      "path": "../util-core/tsconfig.lib.json"
     },
     {
-      "path": "../../shared/categories/tsconfig.lib.json"
+      "path": "../categories/tsconfig.lib.json"
     },
     {
-      "path": "../../shared/config/tsconfig.lib.json"
+      "path": "../config/tsconfig.lib.json"
     },
     {
-      "path": "../../shared/i18n/tsconfig.lib.json"
+      "path": "../i18n/tsconfig.lib.json"
     }
   ]
 }

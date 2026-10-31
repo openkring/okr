@@ -37,7 +37,7 @@ const calevent: BlockRoutes = {
         // No privileged guard: every authenticated member must reach the event list.
         // CalEventList gates create/edit/delete itself via canChange().
         path: ':listId/:contextMenuName',
-        loadComponent: () => import('@okr/calevent-feature').then(m => m.CalEventList),
+        loadComponent: () => import('@okr/calendar-calevent-feature').then(m => m.CalEventList),
         // No `view` here: route `data` outranks query params in Angular's input binder
         // ({...queryParams, ...params, ...data}), so a `data.view` would make menu urls
         // like `/calevent/all/c-calevents?view=list` impossible. 'grid' is the input default.
@@ -48,18 +48,18 @@ const calevent: BlockRoutes = {
     // fragment used to live verbatim inside the always-on `cms` block, which meant a
     // tenant with `calevent` switched off would still ship `/public/calendar` rendering
     // `CalEventList` once Task 19 drives the real route table from this catalogue — the
-    // enablement gate bypassed through a core block, and calevent-feature never actually
+    // enablement gate bypassed through a core block, and calendar-calevent-feature never actually
     // droppable from the bundle. Same precedent as `profile` owning only its own child of
     // the shared 'person' path.
     {
       path: 'public',
       children: [{
         path: 'calendar',
-        loadComponent: () => import('@okr/calevent-feature').then(m => m.CalEventList),
+        loadComponent: () => import('@okr/calendar-calevent-feature').then(m => m.CalEventList),
         data: { listId: 'public', view: 'list', showMenu: false },
       }],
     },
-    // Added (task 14 reconciliation): app.routes.ts's third `calevent-feature` route, missed
+    // Added (task 14 reconciliation): app.routes.ts's third `calendar-calevent-feature` route, missed
     // when this block was first catalogued (task 5 copied only the list route). Same
     // `calevents` collection as `CalEventList` — no new collection.
     {
@@ -73,7 +73,7 @@ const calevent: BlockRoutes = {
       // menu itself (`readOnly`, `addActionSheetButtons`), and the collection is the same
       // `calevents` every member may already read via `CalEventList`. Each menu doc's
       // `roleNeeded` decides who sees the row; the parent's `isAuthenticatedGuard` stays.
-      children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/calevent-feature').then(m => m.YearlyEvents) }],
+      children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/calendar-calevent-feature').then(m => m.YearlyEvents) }],
     },
   ],
 };
@@ -1558,7 +1558,7 @@ const meeting: BlockRoutes = {
   routes: (): Route[] => [{
     path: 'meeting',
     canActivate: [isAuthenticatedGuard],
-    children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/content-meeting-feature').then(m => m.MeetingList), data: { color: 'secondary' } }],
+    children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/calendar-meeting-feature').then(m => m.MeetingList), data: { color: 'secondary' } }],
   }],
 };
 

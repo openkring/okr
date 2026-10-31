@@ -9,9 +9,9 @@ import { createActionSheetButton, createActionSheetDivider, createActionSheetOpt
 import { SvgIconPipe, WeekdayPipe } from '@okr/shared-pipes';
 import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 
-import { CALEVENT_I18N_KEYS, isAttendanceClosed } from '@okr/calevent-util';
-import { showCalEventInfo } from '@okr/calevent-ui';
-import { CalendarFeedService } from '@okr/calevent-data-access';
+import { CALEVENT_I18N_KEYS, isAttendanceClosed } from '@okr/calendar-calevent-util';
+import { showCalEventInfo } from '@okr/calendar-calevent-ui';
+import { CalendarFeedService } from '@okr/calendar-calevent-data-access';
 import { isAdminMember } from '@okr/subject-group-util';
 
 import { CalendarStore } from './calendar-section.store';

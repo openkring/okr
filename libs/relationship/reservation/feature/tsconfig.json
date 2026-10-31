@@ -53,13 +53,13 @@
       "path": "../../../shared/util-core/tsconfig.lib.json"
     },
     {
-      "path": "../../../relationship/reservation/ui/tsconfig.lib.json"
+      "path": "../ui/tsconfig.lib.json"
     },
     {
-      "path": "../../../relationship/reservation/util/tsconfig.lib.json"
+      "path": "../util/tsconfig.lib.json"
     },
     {
-      "path": "../../../relationship/reservation/data-access/tsconfig.lib.json"
+      "path": "../data-access/tsconfig.lib.json"
     },
     {
       "path": "../../../comment/feature/tsconfig.lib.json"

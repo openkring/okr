@@ -147,7 +147,7 @@ const calevent: FeatureBlock = {
   // in for the one edge that was briefly drawn (fix round 1).
   dependsOn: ['subject', 'document'],
   collections: ['calevents'],
-  // Task 14: reconciled against every `calevent-feature` route in app.routes.ts. Only
+  // Task 14: reconciled against every `calendar-calevent-feature` route in app.routes.ts. Only
   // `/yearlyevents` (`YearlyEvents`, same `calevents` collection, isPrivilegedGuard) was
   // missing from the route fragment in `@okr/tenant-routes` — added there.
   //
@@ -3001,7 +3001,7 @@ const business: FeatureBlock = {
 };
 
 /**
- * `libs/content/meeting/{data-access,feature,ui,util}` — agenda, attendance and minutes of a
+ * `libs/calendar/meeting/{data-access,feature,ui,util}` — agenda, attendance and minutes of a
  * board or commission meeting (spec 2.7, roadmap A4). Owns one collection, `meetings`; the
  * agenda is an embedded array on the document, not a subcollection.
  *
@@ -3022,7 +3022,7 @@ const meeting: FeatureBlock = {
   dependsOn: ['subject', 'relationship', 'task'],
   collections: ['meetings'],
   menu: [
-    { key: 'meeting-all', name: 'meeting-all', url: '/meeting/all/meeting-context', action: 'navigate', roleNeeded: 'registered', icon: 'meeting', label: '@content/meeting/feature.plural' },
+    { key: 'meeting-all', name: 'meeting-all', url: '/meeting/all/meeting-context', action: 'navigate', roleNeeded: 'registered', icon: 'meeting', label: '@calendar/meeting/feature.plural' },
   ],
 };
 

@@ -20,19 +20,19 @@
   "exclude": ["dist/**/*"],
   "references": [
     {
-      "path": "../../shared/pipes/tsconfig.lib.json"
+      "path": "../pipes/tsconfig.lib.json"
     },
     {
-      "path": "../../shared/i18n/tsconfig.lib.json"
+      "path": "../i18n/tsconfig.lib.json"
     },
     {
-      "path": "../../shared/util-core/tsconfig.lib.json"
+      "path": "../util-core/tsconfig.lib.json"
     },
     {
-      "path": "../../shared/util-angular/tsconfig.lib.json"
+      "path": "../util-angular/tsconfig.lib.json"
     },
     {
-      "path": "../../shared/ui/tsconfig.lib.json"
+      "path": "../ui/tsconfig.lib.json"
     }
   ]
 }

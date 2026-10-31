@@ -142,13 +142,13 @@
           },
           {
             "glob": "*.json",
-            "input": "libs/calevent/data-access/src/i18n",
-            "output": "./assets/i18n/calevent/data-access"
+            "input": "libs/calendar/calevent/data-access/src/i18n",
+            "output": "./assets/i18n/calendar/calevent/data-access"
           },
           {
             "glob": "*.json",
-            "input": "libs/calevent/feature/src/i18n",
-            "output": "./assets/i18n/calevent/feature"
+            "input": "libs/calendar/calevent/feature/src/i18n",
+            "output": "./assets/i18n/calendar/calevent/feature"
           },
           {
             "glob": "*.json",
@@ -272,13 +272,13 @@
           },
           {
             "glob": "*.json",
-            "input": "libs/content/meeting/data-access/src/i18n",
-            "output": "./assets/i18n/content/meeting/data-access"
+            "input": "libs/calendar/meeting/data-access/src/i18n",
+            "output": "./assets/i18n/calendar/meeting/data-access"
           },
           {
             "glob": "*.json",
-            "input": "libs/content/meeting/feature/src/i18n",
-            "output": "./assets/i18n/content/meeting/feature"
+            "input": "libs/calendar/meeting/feature/src/i18n",
+            "output": "./assets/i18n/calendar/meeting/feature"
           },
           {
             "glob": "*.json",

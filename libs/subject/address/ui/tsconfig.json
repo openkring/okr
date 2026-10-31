@@ -35,10 +35,10 @@
       "path": "../../../shared/util-core/tsconfig.lib.json"
     },
     {
-      "path": "../../../subject/address/util/tsconfig.lib.json"
+      "path": "../util/tsconfig.lib.json"
     },
     {
-      "path": "../../../subject/swisscities/ui/tsconfig.lib.json"
+      "path": "../../swisscities/ui/tsconfig.lib.json"
     }
   ]
 }

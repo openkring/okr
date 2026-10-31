@@ -8,5 +8,5 @@
   },
   "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
   "exclude": ["dist/**/*"],
-  "references": [{ "path": "../../shared/models/tsconfig.lib.json" }, { "path": "../../shared/constants/tsconfig.lib.json" }]
+  "references": [{ "path": "../models/tsconfig.lib.json" }, { "path": "../constants/tsconfig.lib.json" }]
 }

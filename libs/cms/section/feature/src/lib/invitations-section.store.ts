@@ -11,9 +11,9 @@ import { chipMatches, countableInvitationsOf, DateFormat, getSystemQuery, getTod
 import { notify, resourceParams } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
-import { CalEventService } from '@okr/calevent-data-access';
-import { CalEventViewModal } from '@okr/calevent-feature';
-import { isAttendanceClosed } from '@okr/calevent-util';
+import { CalEventService } from '@okr/calendar-calevent-data-access';
+import { CalEventViewModal } from '@okr/calendar-calevent-feature';
+import { isAttendanceClosed } from '@okr/calendar-calevent-util';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 import { InvitationService } from '@okr/relationship-invitation-data-access';
 

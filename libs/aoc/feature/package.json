@@ -25,7 +25,7 @@
     "@okr/cms-icon-util": "*",
     "@okr/aoc-ui": "*",
     "@okr/avatar-ui": "*",
-    "@okr/calevent-util": "*",
+    "@okr/calendar-calevent-util": "*",
     "@okr/category-util": "*",
     "@okr/cms-menu-util": "*",
     "@okr/cms-page-util": "*",

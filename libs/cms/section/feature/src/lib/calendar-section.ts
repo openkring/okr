@@ -9,8 +9,8 @@ import { Spinner } from '@okr/shared-ui';
 import { DateFormat, debugData, debugMessage, parseDate } from '@okr/shared-util-core';
 import { isBrowser } from '@okr/shared-util-angular';
 
-import { convertCalEventToFullCalendar } from '@okr/calevent-util';
-import { CalEventStore } from '@okr/calevent-feature';
+import { convertCalEventToFullCalendar } from '@okr/calendar-calevent-util';
+import { CalEventStore } from '@okr/calendar-calevent-feature';
 
 import { CalendarStore } from './calendar-section.store';
 import type { CalendarView } from './calendar-view';

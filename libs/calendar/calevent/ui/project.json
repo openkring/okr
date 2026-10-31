@@ -1,0 +1,24 @@
+{
+  "name": "calendar-calevent-ui",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/calendar/calevent/ui/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:calevent", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/calendar/calevent/ui",
+        "main": "libs/calendar/calevent/ui/src/index.ts",
+        "tsConfig": "libs/calendar/calevent/ui/tsconfig.lib.json",
+        "assets": ["libs/calendar/calevent/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

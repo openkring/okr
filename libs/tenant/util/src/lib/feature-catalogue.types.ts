@@ -74,7 +74,7 @@ export interface SeedSpec {
  * into the Node runtime if the two are kept together. See
  * `libs/tenant/routes/src/lib/feature-catalogue.sync.spec.ts` for the test that keeps the
  * two halves from drifting apart. (`@okr/tenant-routes` was split out of `@okr/tenant-feature`
- * in a later round specifically because blocks importing `aoc-feature`/`calevent-feature`
+ * in a later round specifically because blocks importing `aoc-feature`/`calendar-calevent-feature`
  * for their route fragments created circular library dependencies back through
  * `cms-menu-feature`, which those libs use for their own admin screens — see
  * `feature.store.ts`'s doc comment.)

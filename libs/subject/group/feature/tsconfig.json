@@ -77,13 +77,13 @@
       "path": "../../../relationship/membership/data-access/tsconfig.lib.json"
     },
     {
-      "path": "../../../subject/group/ui/tsconfig.lib.json"
+      "path": "../ui/tsconfig.lib.json"
     },
     {
-      "path": "../../../subject/group/util/tsconfig.lib.json"
+      "path": "../util/tsconfig.lib.json"
     },
     {
-      "path": "../../../subject/group/data-access/tsconfig.lib.json"
+      "path": "../data-access/tsconfig.lib.json"
     },
     {
       "path": "../../../cms/menu/feature/tsconfig.lib.json"

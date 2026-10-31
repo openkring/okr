@@ -20,7 +20,7 @@
   "exclude": ["dist/**/*"],
   "references": [
     {
-      "path": "../../avatar/data-access/tsconfig.lib.json"
+      "path": "../data-access/tsconfig.lib.json"
     },
     {
       "path": "../../shared/util-angular/tsconfig.lib.json"

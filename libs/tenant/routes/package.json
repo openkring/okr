@@ -13,7 +13,7 @@
     "@okr/shared-feature": "*",
     "@okr/auth-feature": "*",
     "@okr/aoc-feature": "*",
-    "@okr/calevent-feature": "*",
+    "@okr/calendar-calevent-feature": "*",
     "@okr/cms-page-feature": "*",
     "@okr/cms-section-feature": "*",
     "@okr/cms-menu-feature": "*",

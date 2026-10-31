@@ -18,8 +18,8 @@ import { getReservationExportColumns, getReservationExportFileName, isDamageRese
 import { PersonService } from '@okr/subject-person-data-access';
 import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
 
-import { CalEventEditModal } from '@okr/calevent-feature';
-import { isCalEvent } from '@okr/calevent-util';
+import { CalEventEditModal } from '@okr/calendar-calevent-feature';
+import { isCalEvent } from '@okr/calendar-calevent-util';
 import { browseUrl } from '@okr/subject-address-util';
 import { ActivityService } from '@okr/activity-data-access';
 import { Router } from '@angular/router';
