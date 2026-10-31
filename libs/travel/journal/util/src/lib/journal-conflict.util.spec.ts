@@ -184,4 +184,16 @@ describe('journal conflict copies', () => {
     expect(copy.imageKeys).toEqual(['i0', 'i1']);
     expect(copy.html).toBe('<p>Cap</p>');
   });
+
+  it('concurrent caption edits on a video block keep the losing caption as a video copy', () => {
+    const V = rec({ entity: 'section', entityKey: 'v1', op: 'create', fields: { footprintKey: 'f1', kind: 'video', html: '<p>Cap</p>', imageKeys: ['i0'], order: 'V' }, bases: {} }, 100);
+    const A = rec({ entity: 'section', entityKey: 'v1', op: 'set', fields: { html: '<p>Anna</p>' }, bases: { html: V.hlc } }, 200, 'anna');
+    const B = rec({ entity: 'section', entityKey: 'v1', op: 'set', fields: { html: '<p>Bruno</p>' }, bases: { html: V.hlc } }, 300);
+    const [fp] = footprintsOf(materialize([FP, V, A, B]), 'j1');
+    expect(fp.blocks.map((b) => b.html)).toEqual(['<p>Bruno</p>', '<p>Anna</p>']);
+    const copy = fp.blocks[1];
+    expect(copy.conflictOf).toBe('v1');
+    expect(copy.kind).toBe('video');
+    expect(copy.imageKeys).toEqual(['i0']);
+  });
 });

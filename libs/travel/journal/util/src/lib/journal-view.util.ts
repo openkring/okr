@@ -120,21 +120,24 @@ const imageKeysOf = (v: unknown): string[] => (Array.isArray(v) ? (v as unknown[
  * (`set` and `archive` only) are laid over it.
  */
 function copiesOf(state: JournalState, original: BlockView, history: EntityState['history'], originalLive: boolean): BlockView[] {
-  const field = original.kind === 'text' ? 'html' : 'imageKeys' /* photos and video: the clips */;
+  // text: the text; photos: the pictures; video: the caption and the clips
+  const fields = original.kind === 'text' ? ['html'] : original.kind === 'photos' ? ['imageKeys'] : ['html', 'imageKeys'];
   const copies: BlockView[] = [];
-  for (const lost of lostValues(history?.[field])) {
-    const key = conflictCopyKey(original.key, lost.hlc);
-    const own = state[entityStateKey('section', key)];
-    const overlay = own ? viewOf({ ...own, created: true }) : {};
-    if (!overlay) continue; // the copy was archived
-    const copy: BlockView = {
-      ...original, key, authorKey: lost.authorKey, conflictOf: original.key, conflict: originalLive,
-      hlcs: { ...original.hlcs, [field]: lost.hlc, ...(own ? winningHlcs(own) : {}) },
-    };
-    if (field === 'html') copy.html = str('html' in overlay ? overlay['html'] : lost.value);
-    else copy.imageKeys = imageKeysOf('imageKeys' in overlay ? overlay['imageKeys'] : lost.value);
-    if ('order' in overlay) copy.order = str(overlay['order']);
-    copies.push(copy);
+  for (const field of fields) {
+    for (const lost of lostValues(history?.[field])) {
+      const key = conflictCopyKey(original.key, lost.hlc);
+      const own = state[entityStateKey('section', key)];
+      const overlay = own ? viewOf({ ...own, created: true }) : {};
+      if (!overlay) continue; // the copy was archived
+      const copy: BlockView = {
+        ...original, key, authorKey: lost.authorKey, conflictOf: original.key, conflict: originalLive,
+        hlcs: { ...original.hlcs, [field]: lost.hlc, ...(own ? winningHlcs(own) : {}) },
+      };
+      if (field === 'html') copy.html = str('html' in overlay ? overlay['html'] : lost.value);
+      else copy.imageKeys = imageKeysOf('imageKeys' in overlay ? overlay['imageKeys'] : lost.value);
+      if ('order' in overlay) copy.order = str(overlay['order']);
+      copies.push(copy);
+    }
   }
   return copies;
 }
