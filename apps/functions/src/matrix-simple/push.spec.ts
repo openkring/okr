@@ -25,7 +25,7 @@ vi.mock('firebase-admin/firestore', async (importOriginal) => ({
   }),
 }));
 
-import { hasGroupChatPage, ledgerTargetOf, pusherTenantFor, stalePushersToPrune, type ListedPusher } from './push';
+import { chatLedgerPlan, hasGroupChatPage, ledgerTargetOf, pusherTenantFor, stalePushersToPrune, type ListedPusher } from './push';
 
 describe('hasGroupChatPage', () => {
   beforeEach(() => {
@@ -132,5 +132,30 @@ describe('ledgerTargetOf (1.127 B1, Review Focus 2)', () => {
     expect(ledgerTargetOf({ app_id: 'a', pushkey: 'k', data: { uid: 'x'.repeat(129) } })).toBeUndefined();
     expect(ledgerTargetOf({ app_id: 'a', pushkey: 'k', data: { uid: 42 as unknown as string } })).toBeUndefined();
     expect(ledgerTargetOf({ app_id: 'a', pushkey: 'k', data: { uid: 'x'.repeat(128) } })).toBe('x'.repeat(128));
+  });
+});
+
+describe('ledgerTargetOf uid alphabet (1.127 security)', () => {
+  it('rejects a uid with a slash', () => {
+    expect(ledgerTargetOf({ data: { uid: 'a/b' } })).toBeUndefined();
+    expect(ledgerTargetOf({ data: { uid: '../x' } })).toBeUndefined();
+  });
+
+  it('rejects an empty or too long uid', () => {
+    expect(ledgerTargetOf({ data: { uid: '' } })).toBeUndefined();
+    expect(ledgerTargetOf({ data: { uid: 'x'.repeat(129) } })).toBeUndefined();
+  });
+});
+
+describe('chatLedgerPlan (1.127 security)', () => {
+  it('forged uid without that token doc does not count', () => {
+    expect(chatLedgerPlan('victim', { exists: false })).toEqual({ countBadge: false });
+    expect(chatLedgerPlan(undefined, { exists: true, platform: 'ios' })).toEqual({ countBadge: false });
+  });
+
+  it('own token doc counts and gives its platform', () => {
+    expect(chatLedgerPlan('u1', { exists: true, platform: 'ios' })).toEqual({ countBadge: true, platform: 'ios' });
+    expect(chatLedgerPlan('u1', { exists: true })).toEqual({ countBadge: true });
+    expect(chatLedgerPlan('u1', { exists: true, platform: 'bogus' })).toEqual({ countBadge: true });
   });
 });

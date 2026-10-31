@@ -312,7 +312,15 @@ export async function pushToPersons(
   const deletions: Promise<unknown>[] = [];
   for (let start = 0; start < messages.length; start += SEND_CHUNK) {
     const chunkEntries = entries.slice(start, start + SEND_CHUNK);
-    const response = await getMessaging().sendEach(messages.slice(start, start + SEND_CHUNK));
+    let response;
+    try {
+      response = await getMessaging().sendEach(messages.slice(start, start + SEND_CHUNK));
+    } catch (err) {
+      // One rejected chunk (e.g. a malformed message) must not stop the remaining chunks.
+      logger.warn(`${context}: sendEach failed for a chunk of ${chunkEntries.length} devices:`, err);
+      failureCount += chunkEntries.length;
+      continue;
+    }
     successCount += response.successCount;
     failureCount += response.failureCount;
     response.responses.forEach((result, index) => {

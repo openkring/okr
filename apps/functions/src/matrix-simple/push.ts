@@ -574,7 +574,24 @@ interface MatrixPushPayload {
  */
 export function ledgerTargetOf(device: Pick<MatrixPushDevice, 'data'>): string | undefined {
   const uid: unknown = device.data?.['uid'];
-  return typeof uid === 'string' && uid.length > 0 && uid.length <= 128 ? uid : undefined;
+  // Firebase Auth uid alphabet. The pusher's data is client-registrable, so it is never trusted
+  // as a document path segment (no slash, no dots).
+  return typeof uid === 'string' && /^[A-Za-z0-9]{1,128}$/.test(uid) ? uid : undefined;
+}
+
+/**
+ * Whether this chat push may count in the ledger of `uid`: only when the pushkey is a token of
+ * THAT account (`users/{uid}/fcmTokens/{id}` exists). A Matrix user can read the gateway URL from
+ * their own pusher and register one with a forged `uid`; without this check they could inflate
+ * another account's badge. Returns the token doc's platform for the channel choice.
+ */
+export function chatLedgerPlan(
+  uid: string | undefined,
+  tokenDoc: { exists: boolean; platform?: unknown },
+): { countBadge: boolean; platform?: TokenEntry['platform'] } {
+  if (!uid || !tokenDoc.exists) return { countBadge: false };
+  const platform = platformOf(tokenDoc.platform);
+  return platform ? { countBadge: true, platform } : { countBadge: true };
 }
 
 /** Counts the chat event in the account's ledger; a failed write costs the badge, not the push. */
@@ -587,14 +604,14 @@ async function chatBadgeFor(uid: string, eventId: string): Promise<number | unde
   }
 }
 
-/** The token doc's `platform` (older builds: none); a failed read reads as unknown. */
-async function tokenPlatformOf(uid: string, token: string): Promise<TokenEntry['platform']> {
+/** The token doc of this pusher's account; a failed read reads as missing (no badge, default channel). */
+async function tokenDocOf(uid: string, token: string): Promise<{ exists: boolean; platform?: unknown }> {
   try {
     const snap = await getFirestore().collection('users').doc(uid).collection('fcmTokens').doc(fcmTokenDocId(token)).get();
-    return snap.exists ? platformOf(snap.data()?.['platform']) : undefined;
+    return snap.exists ? { exists: true, platform: snap.data()?.['platform'] } : { exists: false };
   } catch (err) {
-    console.warn('matrixPushGateway: token platform read failed, using the default channel:', err);
-    return undefined;
+    console.warn('matrixPushGateway: token doc read failed, sending without badge:', err);
+    return { exists: false };
   }
 }
 
@@ -717,10 +734,12 @@ export const matrixPushGateway = onRequest(
           // account serves every tenant app of a person, each app has its own uid and ledger.
           // An older pusher without uid gets no ledger write and no badge (never a guess).
           const uid = ledgerTargetOf(device);
-          const badge = uid ? await chatBadgeFor(uid, notification.event_id) : undefined;
+          // Only when the pushkey is a token of that very account (a forged uid counts nothing).
+          const plan = chatLedgerPlan(uid, uid ? await tokenDocOf(uid, token) : { exists: false });
+          const badge = uid && plan.countBadge ? await chatBadgeFor(uid, notification.event_id) : undefined;
           const entry: TokenEntry = {
-            token, uid: uid ?? '', docId: fcmTokenDocId(token),
-            ...(uid ? withPlatform(await tokenPlatformOf(uid, token)) : {}),
+            token, uid: plan.countBadge && uid ? uid : '', docId: fcmTokenDocId(token),
+            ...withPlatform(plan.platform),
           };
           const data: Record<string, string> = {
             type: 'chat',

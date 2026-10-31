@@ -15,13 +15,31 @@ export interface ServerBadgeLedger {
 /** How many counted chat event ids `seen` keeps for de-duplication. */
 export const SERVER_BADGE_SEEN_MAX = 200;
 
+/** The largest value a ledger part or the badge sum can take (also enforced by firestore.rules). */
+export const SERVER_BADGE_MAX = 9999;
+
+/** A part is valid when it is a finite integer; the ledger is owner-writable, so never trust it. */
+function isFiniteInt(n: unknown): n is number {
+  return typeof n === 'number' && Number.isInteger(n);
+}
+
+function part(n: unknown): number {
+  return isFiniteInt(n) ? Math.min(Math.max(n, 0), SERVER_BADGE_MAX) : 0;
+}
+
+/** Floors and clamps an app-supplied count to `0..SERVER_BADGE_MAX` (NaN becomes 0). */
+function clampCount(n: number): number {
+  return Number.isFinite(n) ? Math.min(Math.max(Math.floor(n), 0), SERVER_BADGE_MAX) : 0;
+}
+
 function normalize(prev: Partial<ServerBadgeLedger> | undefined): ServerBadgeLedger {
+  const seen: unknown = prev?.seen;
   return {
-    chat: prev?.chat ?? 0,
-    tasks: prev?.tasks ?? 0,
-    invitations: prev?.invitations ?? 0,
-    seen: prev?.seen ? [...prev.seen] : [],
-    fromApp: prev?.fromApp ?? false,
+    chat: part(prev?.chat),
+    tasks: part(prev?.tasks),
+    invitations: part(prev?.invitations),
+    seen: Array.isArray(seen) ? seen.filter((e): e is string => typeof e === 'string') : [],
+    fromApp: prev?.fromApp === true,
   };
 }
 
@@ -29,32 +47,35 @@ function normalize(prev: Partial<ServerBadgeLedger> | undefined): ServerBadgeLed
 export function addChatToLedger(prev: Partial<ServerBadgeLedger> | undefined, eventId: string): { next: ServerBadgeLedger; changed: boolean } {
   const next = normalize(prev);
   if (next.seen.includes(eventId)) return { next, changed: false };
-  next.chat += 1;
+  next.chat = Math.min(next.chat + 1, SERVER_BADGE_MAX);
   next.seen.push(eventId);
   if (next.seen.length > SERVER_BADGE_SEEN_MAX) next.seen = next.seen.slice(next.seen.length - SERVER_BADGE_SEEN_MAX);
   return { next, changed: true };
 }
 
 /** Sets one absolute part (tasks or invitations); keeps everything else. */
-export function setLedgerPart(prev: Partial<ServerBadgeLedger> | undefined, part: 'tasks' | 'invitations', n: number): ServerBadgeLedger {
+export function setLedgerPart(prev: Partial<ServerBadgeLedger> | undefined, which: 'tasks' | 'invitations', n: number): ServerBadgeLedger {
   const next = normalize(prev);
-  next[part] = Math.max(0, n);
+  next[which] = clampCount(n);
   return next;
 }
 
 /** The ledger fields for a write from the app: only the given parts, plus `fromApp: true`. */
 export function ledgerPartsFromApp(parts: Partial<BadgeParts>): Partial<ServerBadgeLedger> & { fromApp: true } {
   const out: Partial<ServerBadgeLedger> & { fromApp: true } = { fromApp: true };
-  if (parts.chat !== undefined) out.chat = Math.max(0, parts.chat);
-  if (parts.tasks !== undefined) out.tasks = Math.max(0, parts.tasks);
-  if (parts.invitations !== undefined) out.invitations = Math.max(0, parts.invitations);
+  if (parts.chat !== undefined) out.chat = clampCount(parts.chat);
+  if (parts.tasks !== undefined) out.tasks = clampCount(parts.tasks);
+  if (parts.invitations !== undefined) out.invitations = clampCount(parts.invitations);
   return out;
 }
 
 /** The badge total, or undefined until the app has written the parts. */
 export function serverBadgeSum(l: Partial<ServerBadgeLedger> | undefined): number | undefined {
-  if (!l?.fromApp) return undefined;
-  return (l.chat ?? 0) + (l.tasks ?? 0) + (l.invitations ?? 0);
+  if (l?.fromApp !== true) return undefined;
+  const parts: unknown[] = [l.chat, l.tasks, l.invitations];
+  if (parts.some((p) => p !== undefined && !isFiniteInt(p))) return undefined;
+  const sum = parts.reduce<number>((acc, p) => acc + (p === undefined ? 0 : (p as number)), 0);
+  return Math.min(Math.max(sum, 0), SERVER_BADGE_MAX);
 }
 
 /** The new sum when both sums are known and it is lower than before, else undefined. */
