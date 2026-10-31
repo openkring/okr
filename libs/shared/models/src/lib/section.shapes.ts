@@ -8,7 +8,7 @@ import type {
   ChartSection, ChatConfig, ChatSection, ContextDiagramConfig, ContextDiagramSection, EditorConfig, EventsConfig, EventsSection,
   FormSection, FormSectionConfig,
   HeroConfig, HeroSection, IconConfig, IframeConfig,
-  IframeSection, InvitationsConfig, InvitationsSection, MapConfig, WeatherConfig, WeatherSection, ConnectionsConfig, ConnectionsSection, MapSection, MemberAgeConfig, MemberAgeSection, MemberCatConfig, MemberCatSection, OrgchartConfig, OrgchartSection, PeopleConfig,
+  IframeSection, InvitationsConfig, InvitationsSection, MapConfig, WeatherConfig, WeatherSection, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, MapSection, MemberAgeConfig, MemberAgeSection, MemberCatConfig, MemberCatSection, OrgchartConfig, OrgchartSection, PeopleConfig,
   PeopleSection, RagConfig, RagSection, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, AdventConfig, AdventSection, NewsConfig, NewsSection, TasksConfig, TasksSection, ActivitiesConfig, ActivitiesSection, MessagesConfig, MessagesSection, TripStatsConfig, TripStatsSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
   TrackerConfig, TrackerSection, VideoConfig, VideoSection
 } from "./section.model";
@@ -315,6 +315,21 @@ export const CONNECTIONS_SECTION_SHAPE = {
   type: 'connections',
   properties: CONNECTIONS_CONFIG_SHAPE
 } as ConnectionsSection;
+
+// --------------------------------------- DEPARTURES ----------------------------------------
+export const DEPARTURES_CONFIG_SHAPE = {
+  locationKey: '',
+  stopRef: '',
+  stopName: '',
+  limit: 8,
+  walkMinutes: -1
+} as DeparturesConfig;
+
+export const DEPARTURES_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'departures',
+  properties: DEPARTURES_CONFIG_SHAPE
+} as DeparturesSection;
 
 export const PEOPLE_SECTION_SHAPE = {
   ...BASE_SECTION_SHAPE,

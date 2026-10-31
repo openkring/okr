@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validPlan, validRoute } from './index';
+import { validDepartures, validPlan, validRoute, validStops } from './index';
 
 const ok = { mode: 'train', from: { lat: 46.700001, lng: 8.79 }, to: { lat: 46.68, lng: 8.75 }, startedAt: '2026-10-30T15:32:58.500Z', endedAt: '2026-10-30T15:37:17.993Z' };
 
@@ -35,5 +35,38 @@ describe('validPlan', () => {
     expect(() => validPlan({ ...plan, at: '2026-10-31T10:30:00Z' }, now)).toThrow();
     expect(() => validPlan({ ...plan, at: '2027-01-15T10:00:00Z' }, now)).toThrow();
     expect(() => validPlan({ ...plan, at: 'soon' }, now)).toThrow();
+  });
+});
+
+describe('validStops', () => {
+  it('rounds the point to 4 decimals, defaults and caps the radius', () => {
+    expect(validStops({ near: { lat: 47.244364, lng: 8.710580 } })).toEqual({ near: { lat: 47.2444, lng: 8.7106, radiusM: 1000 }, limit: 10 });
+    expect(validStops({ near: { lat: 47.2, lng: 8.7, radiusM: 9000 }, limit: 3 }).near?.radiusM).toBe(2000);
+  });
+
+  it('takes a trimmed, capped name query', () => {
+    expect(validStops({ query: '  Stäfa  ' })).toEqual({ query: 'Stäfa', limit: 10 });
+    expect(validStops({ query: 'x'.repeat(200) }).query).toHaveLength(80);
+  });
+
+  it('rejects no input, a too short query, a bad radius or limit', () => {
+    expect(() => validStops({})).toThrow();
+    expect(() => validStops({ query: 'a' })).toThrow();
+    expect(() => validStops({ near: { lat: 47, lng: 8, radiusM: -1 } })).toThrow();
+    expect(() => validStops({ near: { lat: 47, lng: 8 }, limit: 21 })).toThrow();
+  });
+});
+
+describe('validDepartures', () => {
+  it('accepts sloid and DiDok stop ids and defaults the limit', () => {
+    expect(validDepartures({ stopRef: 'ch:1:sloid:88139' })).toEqual({ stopRef: 'ch:1:sloid:88139', limit: 10 });
+    expect(validDepartures({ stopRef: 'ch:1:sloid:3000:7:12', limit: 20 }).limit).toBe(20);
+    expect(validDepartures({ stopRef: ' 8503000 ' }).stopRef).toBe('8503000');
+  });
+
+  it('rejects anything else', () => {
+    expect(() => validDepartures({ stopRef: '<x/>' })).toThrow();
+    expect(() => validDepartures({ stopRef: 'de:08111:6115' })).toThrow();
+    expect(() => validDepartures({ stopRef: '8503000', limit: 0 })).toThrow();
   });
 });

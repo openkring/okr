@@ -44,3 +44,32 @@ export const TRANSIT_I18N_KEYS = {
 } satisfies Record<string, string>;
 
 export type TransitI18n = { [K in keyof typeof TRANSIT_I18N_KEYS]: Signal<string> };
+
+/** Translation keys of the departure board (spec 1.130), in the same scope under `departures.`. */
+export const DEPARTURES_I18N_KEYS = {
+  title: PFX + 'departures.title',
+  in_minutes: PFX + 'departures.inMinutes',
+  now: PFX + 'departures.now',
+  delay: PFX + 'departures.delay',
+  cancelled: PFX + 'departures.cancelled',
+  quay_train: PFX + 'departures.quay.train',
+  quay_other: PFX + 'departures.quay.other',
+  distance: PFX + 'departures.distance',
+  as_of: PFX + 'departures.asOf',
+  stale: PFX + 'departures.stale',
+  disruption: PFX + 'departures.disruption',
+  upcoming_show: PFX + 'departures.upcoming.show',
+  upcoming_hide: PFX + 'departures.upcoming.hide',
+  announced: PFX + 'departures.announced',
+  affected: PFX + 'departures.affected',
+  empty: PFX + 'departures.empty',
+  no_stop: PFX + 'departures.noStop',
+  error: PFX + 'departures.error',
+  offline: PFX + 'departures.offline',
+  no_coordinates: PFX + 'departures.noCoordinates',
+  abroad: PFX + 'departures.abroad',
+  source: PFX + 'source',
+  back: PFX + 'departures.back',
+} satisfies Record<string, string>;
+
+export type DeparturesI18n = { [K in keyof typeof DEPARTURES_I18N_KEYS]: Signal<string> };

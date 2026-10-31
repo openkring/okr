@@ -1418,5 +1418,27 @@
       "label": "Départ",
       "helper": "Laisse vide pour partir de la position de la personne qui consulte la page"
     }
+  },
+  "departures": {
+    "title": "Départs",
+    "label": "Départs",
+    "edit": "Modifier la configuration des départs",
+    "description": "Les prochains départs à l’arrêt près d’un lieu, avec les avis de perturbation",
+    "location": {
+      "label": "Lieu",
+      "helper": "Laisse vide pour reprendre le lieu de la page"
+    },
+    "stop": {
+      "label": "Arrêt",
+      "nearest": "Arrêt le plus proche",
+      "helper": "Choisis-en un autre si le plus proche n’est pas le bon"
+    },
+    "limit": {
+      "label": "Nombre de départs"
+    },
+    "walk": {
+      "label": "Trajet à pied en minutes",
+      "helper": "Laisse vide pour le calculer à partir de la distance"
+    }
   }
 }

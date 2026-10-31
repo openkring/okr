@@ -1418,5 +1418,27 @@
       "label": "Start",
       "helper": "Leer lassen, dann startet die Suche beim Standort der Person, die die Seite ansieht"
     }
+  },
+  "departures": {
+    "title": "Abfahrten",
+    "label": "Abfahrten",
+    "edit": "Abfahrten-Konfiguration ändern",
+    "description": "Die nächsten Abfahrten an der Haltestelle bei einem Ort, mit Störungsmeldungen",
+    "location": {
+      "label": "Ort",
+      "helper": "Leer lassen, um den Ort der Seite zu übernehmen"
+    },
+    "stop": {
+      "label": "Haltestelle",
+      "nearest": "Nächste Haltestelle",
+      "helper": "Wähle eine andere, wenn die nächste nicht die richtige ist"
+    },
+    "limit": {
+      "label": "Anzahl Abfahrten"
+    },
+    "walk": {
+      "label": "Fussweg in Minuten",
+      "helper": "Leer lassen, dann rechnen wir ihn aus der Entfernung"
+    }
   }
 }

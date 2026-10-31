@@ -30,8 +30,8 @@ export function placeRefXml(q: LatLng): string {
   return `<PlaceRef><GeoPosition><siri:Longitude>${q.lng}</siri:Longitude><siri:Latitude>${q.lat}</siri:Latitude></GeoPosition></PlaceRef>`;
 }
 
-/** The OJP envelope around one `OJPTripRequest` body (origin, destination, params). */
-export function tripRequestEnvelope(body: string, now = new Date()): string {
+/** The OJP envelope around one request body; `request` names the element, e.g. `OJPStopEventRequest`. */
+export function ojpEnvelope(request: string, idPrefix: string, body: string, now = new Date()): string {
   const ts = ojpTime(now.getTime());
   return `<?xml version="1.0" encoding="UTF-8"?>
 <OJP xmlns="http://www.vdv.de/ojp" xmlns:siri="http://www.siri.org.uk/siri" version="2.0">
@@ -39,14 +39,28 @@ export function tripRequestEnvelope(body: string, now = new Date()): string {
     <siri:ServiceRequest>
       <siri:RequestTimestamp>${ts}</siri:RequestTimestamp>
       <siri:RequestorRef>${xmlEscape(REQUESTOR_REF)}</siri:RequestorRef>
-      <OJPTripRequest>
+      <${request}>
         <siri:RequestTimestamp>${ts}</siri:RequestTimestamp>
-        <siri:MessageIdentifier>TR-${now.getTime()}</siri:MessageIdentifier>
+        <siri:MessageIdentifier>${idPrefix}-${now.getTime()}</siri:MessageIdentifier>
         ${body}
-      </OJPTripRequest>
+      </${request}>
     </siri:ServiceRequest>
   </OJPRequest>
 </OJP>`;
+}
+
+/** The OJP envelope around one `OJPTripRequest` body (origin, destination, params). */
+export function tripRequestEnvelope(body: string, now = new Date()): string {
+  return ojpEnvelope('OJPTripRequest', 'TR', body, now);
+}
+
+/** Great-circle distance in metres. */
+export function distanceM(a: LatLng, b: LatLng): number {
+  const rad = Math.PI / 180;
+  const dLat = (b.lat - a.lat) * rad;
+  const dLng = (b.lng - a.lng) * rad;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLng / 2) ** 2;
+  return Math.round(2 * 6_371_000 * Math.asin(Math.sqrt(h)));
 }
 
 const parser = new XMLParser({ ignoreAttributes: true, removeNSPrefix: true, trimValues: true, parseTagValue: false });

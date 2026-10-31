@@ -29,6 +29,8 @@
     { "path": "../util/tsconfig.lib.json" },
     { "path": "../../../mobility/tracker/ui/tsconfig.lib.json" },
     { "path": "../../../mobility/tracker/util/tsconfig.lib.json" },
+    { "path": "../../../mobility/transit/feature/tsconfig.lib.json" },
+    { "path": "../../../mobility/transit/util/tsconfig.lib.json" },
     { "path": "../../../project/task/data-access/tsconfig.lib.json" },
     { "path": "../../../relationship/reservation/data-access/tsconfig.lib.json" },
     { "path": "../../../relationship/reservation/util/tsconfig.lib.json" },

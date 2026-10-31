@@ -35,6 +35,8 @@
     "@okr/user-data-access": "*",
     "@okr/chat-data-access": "*",
     "@okr/mobility-tracker-util": "*",
-    "@okr/mobility-tracker-ui": "*"
+    "@okr/mobility-tracker-ui": "*",
+    "@okr/mobility-transit-feature": "*",
+    "@okr/mobility-transit-util": "*"
   }
 }

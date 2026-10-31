@@ -485,6 +485,8 @@ const trip: BlockRoutes = {
         { path: 'maintenance', canActivate: [isTripAdminGuard()], loadComponent: () => import('@okr/trip-feature').then(m => m.TripMaintenance) },
         // Kiosk devices (moved from AOC, spec 1.101 phase 2). Admin: `kiosk-status` is writable by admins only.
         { path: 'kiosk', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/trip-feature').then(m => m.TripKiosk) },
+        // The departure board of the club's own place (spec 1.130): under /trips, the only tree the kiosk lock lets through.
+        { path: 'departures', loadComponent: () => import('@okr/trip-feature').then(m => m.TripDepartures) },
         { path: ':listId/:contextMenuName', loadComponent: () => import('@okr/trip-feature').then(m => m.TripList) },
       ],
     },

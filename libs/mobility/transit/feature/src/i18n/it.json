@@ -49,5 +49,33 @@
   "offline": "Puoi cercare collegamenti solo con una connessione Internet.",
   "positionUnavailable": "La tua posizione non è disponibile. Scegli con «modifica» da dove parti.",
   "noCoordinates": "Questo luogo non ha una posizione esatta, quindi non possiamo cercare collegamenti.",
-  "abroad": "I collegamenti sono disponibili solo per luoghi in Svizzera."
+  "abroad": "I collegamenti sono disponibili solo per luoghi in Svizzera.",
+  "departures": {
+    "title": "Partenze",
+    "inMinutes": "tra {minutes}'",
+    "now": "ora",
+    "delay": "+{minutes}'",
+    "cancelled": "soppresso",
+    "quay": {
+      "train": "Bin. {quay}",
+      "other": "Fermata {quay}"
+    },
+    "distance": "{distance} m",
+    "asOf": "Stato {time}",
+    "stale": "Gli orari di partenza non sono aggiornati.",
+    "disruption": "Perturbazione",
+    "upcoming": {
+      "show": "Mostra {count} avvisi annunciati",
+      "hide": "Nascondi gli avvisi annunciati"
+    },
+    "announced": "annunciato",
+    "affected": "interessato da una perturbazione",
+    "empty": "Per ora da qui non parte più nulla.",
+    "noStop": "Non c’è nessuna fermata vicino a questo luogo.",
+    "error": "Non è stato possibile caricare le partenze. Riproviamo tra poco.",
+    "offline": "Vedi le partenze solo con una connessione a internet.",
+    "noCoordinates": "Per questo luogo non è registrata una posizione esatta, quindi non possiamo mostrare partenze.",
+    "abroad": "Le partenze sono disponibili solo per luoghi in Svizzera.",
+    "back": "Torna al giornale di bordo"
+  }
 }

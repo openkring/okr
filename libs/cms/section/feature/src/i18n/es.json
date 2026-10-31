@@ -1418,5 +1418,27 @@
       "label": "Salida",
       "helper": "Déjalo vacío para salir de la ubicación de quien ve la página"
     }
+  },
+  "departures": {
+    "title": "Salidas",
+    "label": "Salidas",
+    "edit": "Cambiar la configuración de salidas",
+    "description": "Las próximas salidas en la parada cerca de un lugar, con avisos de incidencias",
+    "location": {
+      "label": "Lugar",
+      "helper": "Déjalo vacío para usar el lugar de la página"
+    },
+    "stop": {
+      "label": "Parada",
+      "nearest": "Parada más cercana",
+      "helper": "Elige otra si la más cercana no es la correcta"
+    },
+    "limit": {
+      "label": "Número de salidas"
+    },
+    "walk": {
+      "label": "Trayecto a pie en minutos",
+      "helper": "Déjalo vacío para calcularlo a partir de la distancia"
+    }
   }
 }

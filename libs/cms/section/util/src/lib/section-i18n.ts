@@ -331,6 +331,17 @@ export const SECTION_I18N_KEYS = {
   connections_source_label:                 PFX + 'connections.source.label',
   connections_source_helper:                PFX + 'connections.source.helper',
 
+  // departures (spec 1.130)
+  departures_title:                         PFX + 'departures.title',
+  departures_location_label:                PFX + 'departures.location.label',
+  departures_location_helper:               PFX + 'departures.location.helper',
+  departures_stop_label:                    PFX + 'departures.stop.label',
+  departures_stop_nearest:                  PFX + 'departures.stop.nearest',
+  departures_stop_helper:                   PFX + 'departures.stop.helper',
+  departures_limit_label:                   PFX + 'departures.limit.label',
+  departures_walk_label:                    PFX + 'departures.walk.label',
+  departures_walk_helper:                   PFX + 'departures.walk.helper',
+
   // image upload / advanced toggle
   form_advanced_label:                      PFX + 'form.advanced.label',
   image_upload_action:                      PFX + 'image.upload.action',

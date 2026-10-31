@@ -49,5 +49,33 @@
   "offline": "You can only search connections with an internet connection.",
   "positionUnavailable": "Your location is not available. Use «change» to choose where you start.",
   "noCoordinates": "This place has no exact position, so we cannot search connections.",
-  "abroad": "Connections are only available for places in Switzerland."
+  "abroad": "Connections are only available for places in Switzerland.",
+  "departures": {
+    "title": "Departures",
+    "inMinutes": "in {minutes}'",
+    "now": "now",
+    "delay": "+{minutes}'",
+    "cancelled": "cancelled",
+    "quay": {
+      "train": "Pl. {quay}",
+      "other": "Stand {quay}"
+    },
+    "distance": "{distance} m",
+    "asOf": "As of {time}",
+    "stale": "The departure times are not up to date.",
+    "disruption": "Disruption",
+    "upcoming": {
+      "show": "Show {count} announced notices",
+      "hide": "Hide announced notices"
+    },
+    "announced": "announced",
+    "affected": "affected by a disruption",
+    "empty": "Nothing leaves from here in the near future.",
+    "noStop": "There is no stop near this place.",
+    "error": "The departures could not be loaded. We will try again shortly.",
+    "offline": "You can only see departures with an internet connection.",
+    "noCoordinates": "This place has no exact position on record, so we cannot show departures.",
+    "abroad": "Departures are only available for places in Switzerland.",
+    "back": "Back to the logbook"
+  }
 }

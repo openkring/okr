@@ -17,6 +17,7 @@ import { trackerSectionValidations } from './tracker-section.validations';
 import { videoSectionValidations } from './video-section.validations';
 import { weatherSectionValidations } from './weather-section.validations';
 import { adventSectionValidations } from './advent-section.validations';
+import { departuresSectionValidations } from './departures-section.validations';
 
 /** A section vest suite: takes the section model and returns the run result. */
 export type SectionSuite = (model: SectionModel) => ReturnType<typeof baseSectionValidations>;
@@ -42,7 +43,8 @@ export const SECTION_VALIDATION_SUITES: Partial<Record<SectionType, SectionSuite
   tracker: trackerSectionValidations as SectionSuite,
   video: videoSectionValidations as SectionSuite,
   weather: weatherSectionValidations as SectionSuite,
-  advent: adventSectionValidations as SectionSuite
+  advent: adventSectionValidations as SectionSuite,
+  departures: departuresSectionValidations as SectionSuite
 };
 
 /** Returns the suite for a section type, falling back to base-section validation. */

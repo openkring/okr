@@ -1,5 +1,6 @@
 import { Component, computed, DestroyRef, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
 import { switchMap } from 'rxjs/operators';
 import { ActionSheetController, IonButton, IonButtons, IonContent, IonFab, IonFabButton, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonPopover, IonRefresher, IonRefresherContent, IonTitle, IonToolbar } from '@ionic/angular';
 
@@ -22,7 +23,7 @@ import { AvatarDisplay } from '@okr/avatar-ui';
   selector: 'okr-trip-list',
   standalone: true,
   imports: [
-    SvgIconPipe, PrettyDatePipe, TranslatePipe, AsyncPipe,
+    SvgIconPipe, PrettyDatePipe, TranslatePipe, AsyncPipe, RouterLink,
     Spinner, EmptyList, ListFilter, AvatarDisplay, Menu, ConnectionStatusButton,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonMenuButton,
     IonIcon, IonContent, IonList, IonItem, IonLabel, IonItemDivider, IonPopover,
@@ -46,6 +47,12 @@ import { AvatarDisplay } from '@okr/avatar-ui';
           }
           <ion-title>{{ store.i18n.list_title() }}</ion-title>
           <ion-buttons slot="end">
+            @if(isKiosk()) {
+              <!-- «when does the next bus go?» — the departure board of the club's own place (spec 1.130) -->
+              <ion-button routerLink="/trips/departures">
+                <ion-icon slot="icon-only" src="{{'bus' | svgIcon}}" />
+              </ion-button>
+            }
             <ion-button (click)="store.showInfo()">
               <ion-icon slot="icon-only" src="{{'info-circle' | svgIcon}}" />
             </ion-button>

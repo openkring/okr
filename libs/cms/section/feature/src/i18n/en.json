@@ -1418,5 +1418,27 @@
       "label": "Start",
       "helper": "Leave empty to start from the viewer's current location"
     }
+  },
+  "departures": {
+    "title": "Departures",
+    "label": "Departures",
+    "edit": "Change departures settings",
+    "description": "The next departures at the stop near a place, with disruption notices",
+    "location": {
+      "label": "Place",
+      "helper": "Leave empty to use the page's location"
+    },
+    "stop": {
+      "label": "Stop",
+      "nearest": "Nearest stop",
+      "helper": "Pick another one if the nearest is not the right one"
+    },
+    "limit": {
+      "label": "Number of departures"
+    },
+    "walk": {
+      "label": "Walk in minutes",
+      "helper": "Leave empty to work it out from the distance"
+    }
   }
 }

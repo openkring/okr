@@ -1,12 +1,14 @@
 import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 
 import type { TransitRouteReq, TransitRouteRes } from '@okr/mobility-tracker-util';
-import type { PlanTripReq, PlanTripRes } from '@okr/mobility-transit-util';
+import type { DeparturesReq, DeparturesRes, PlanTripReq, PlanTripRes, SearchStopsReq, SearchStopsRes } from '@okr/mobility-transit-util';
 import { runGateway } from '../_gateway/gateway';
 import type { GatewayContext } from '../_gateway/provider';
 import { inSwitzerland } from '../_gateway/adapters/elevation';
 import { ojpTripAdapter, OjpRouteParams } from '../_gateway/adapters/ojp';
 import { transitTripsAdapter, TransitTripsParams } from '../_gateway/adapters/transit-trips';
+import { transitDeparturesAdapter, TransitDeparturesParams } from '../_gateway/adapters/transit-departures';
+import { transitStopsAdapter, TransitStopsParams } from '../_gateway/adapters/transit-stops';
 
 const MODES = ['train', 'bus', 'ship'] as const;
 /** a section longer than this is no single ride worth a timetable lookup */
@@ -16,6 +18,15 @@ const PLAN_PAST_MS = 60 * 60_000;
 const PLAN_FUTURE_MS = 60 * 24 * 60 * 60_000;
 const PLAN_DEFAULT_LIMIT = 3;
 const PLAN_MAX_LIMIT = 5;
+const STOPS_DEFAULT_RADIUS_M = 1000;
+const STOPS_MAX_RADIUS_M = 2000;
+const STOPS_DEFAULT_LIMIT = 10;
+const STOPS_MAX_LIMIT = 20;
+const STOPS_QUERY_MAX = 80;
+const DEPARTURES_DEFAULT_LIMIT = 10;
+const DEPARTURES_MAX_LIMIT = 20;
+/** a Swiss stop id: `ch:1:sloid:88139` (optionally with quay parts) or the 7-digit DiDok code `8503000` */
+const STOP_REF = /^(ch:1:sloid:\d+(:[0-9A-Za-z]+)*|\d{7})$/;
 
 function point(v: unknown, name: string): { lat: number; lng: number } {
   const { lat, lng } = (v ?? {}) as { lat?: unknown; lng?: unknown };
@@ -105,5 +116,89 @@ export const planTrip = onCall(
     if (!inSwitzerland(params.from) || !inSwitzerland(params.to)) return { connections: [], attribution };
     const res = await runGateway(transitTripsAdapter, params, ctx);
     return { connections: res.data, attribution };
+  },
+);
+
+/** The tenant-free context of a shared adapter: the cache key never holds the tenant, so it is not resolved. */
+function sharedContext(request: CallableRequest<unknown>): GatewayContext {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'User must be authenticated');
+  const token = request.auth.token as Record<string, unknown> | undefined;
+  return { tenantId: '', uid: request.auth.uid, isAdmin: token?.['admin'] === true || token?.['contentAdmin'] === true };
+}
+
+function intIn(v: unknown, fallback: number, max: number, name: string): number {
+  const n = v === undefined ? fallback : Number(v);
+  if (!Number.isInteger(n) || n < 1 || n > max) throw new HttpsError('invalid-argument', `${name}: 1..${max} expected`);
+  return n;
+}
+
+/**
+ * The `searchStops` request checked: either `near` (rounded to 4 decimals, about 10 m, so the boards of one place
+ * share a cache entry; radius capped) or a trimmed, length-capped `query`.
+ */
+export function validStops(data: unknown): TransitStopsParams {
+  const d = (data ?? {}) as Partial<SearchStopsReq>;
+  const limit = intIn(d.limit, STOPS_DEFAULT_LIMIT, STOPS_MAX_LIMIT, 'limit');
+  if (d.near !== undefined) {
+    const p = point(d.near, 'near');
+    const radius = d.near.radiusM === undefined ? STOPS_DEFAULT_RADIUS_M : Number(d.near.radiusM);
+    if (!Number.isFinite(radius) || radius <= 0) throw new HttpsError('invalid-argument', 'near.radiusM: a positive number expected');
+    return {
+      near: { lat: Math.round(p.lat * 1e4) / 1e4, lng: Math.round(p.lng * 1e4) / 1e4, radiusM: Math.min(Math.round(radius), STOPS_MAX_RADIUS_M) },
+      limit,
+    };
+  }
+  const query = typeof d.query === 'string' ? d.query.trim().slice(0, STOPS_QUERY_MAX) : '';
+  if (query.length < 2) throw new HttpsError('invalid-argument', 'near or a query of at least 2 characters expected');
+  return { query, limit };
+}
+
+/**
+ * Public-transport stops near a point or by name (spec 1.130 §5.2), from the Swiss timetable (OJP 2.0). A point
+ * outside Switzerland finds nothing. Shared cache (30 days), quota, retry and timeout come from `runGateway`.
+ */
+export const searchStops = onCall(
+  { region: 'europe-west6', enforceAppCheck: true, secrets: transitStopsAdapter.secrets },
+  async (request: CallableRequest<SearchStopsReq>): Promise<SearchStopsRes> => {
+    const ctx = sharedContext(request);
+    const params = validStops(request.data);
+    const attribution = { provider: transitStopsAdapter.attribution.provider, url: transitStopsAdapter.attribution.url };
+    if (params.near && !inSwitzerland(params.near)) return { stops: [], attribution };
+    const res = await runGateway(transitStopsAdapter, params, ctx);
+    return { stops: res.data, attribution };
+  },
+);
+
+/** The `getDepartures` request checked: a Swiss stop id and the number of departures the caller wants. */
+export function validDepartures(data: unknown): TransitDeparturesParams & { limit: number } {
+  const d = (data ?? {}) as Partial<DeparturesReq>;
+  const stopRef = typeof d.stopRef === 'string' ? d.stopRef.trim() : '';
+  if (!STOP_REF.test(stopRef)) throw new HttpsError('invalid-argument', 'stopRef: a Swiss stop id expected');
+  return { stopRef, limit: intIn(d.limit, DEPARTURES_DEFAULT_LIMIT, DEPARTURES_MAX_LIMIT, 'limit') };
+}
+
+/**
+ * The next departures at a stop with realtime data and the disruption messages that concern it (spec 1.130 §5.2):
+ * OJP 2.0 StopEventRequest. The adapter always fetches the same number of departures, so the cache entry is per
+ * stop and shared by every viewer; the limit is applied here, after the cache.
+ */
+export const getDepartures = onCall(
+  { region: 'europe-west6', enforceAppCheck: true, secrets: transitDeparturesAdapter.secrets },
+  async (request: CallableRequest<DeparturesReq>): Promise<DeparturesRes> => {
+    const ctx = sharedContext(request);
+    const { stopRef, limit } = validDepartures(request.data);
+    const res = await runGateway(transitDeparturesAdapter, { stopRef }, ctx);
+    const departures = res.data.departures.slice(0, limit);
+    // only the situations still referenced, plus those of the stop itself (referenced by no departure at all)
+    const referenced = new Set(res.data.departures.flatMap((d) => d.situationIds));
+    const kept = new Set(departures.flatMap((d) => d.situationIds));
+    const situations = res.data.situations.filter((s) => kept.has(s.id) || !referenced.has(s.id));
+    return {
+      stopName: res.data.stopName,
+      departures,
+      situations,
+      fetchedAt: res.data.fetchedAt,
+      attribution: { provider: transitDeparturesAdapter.attribution.provider, url: transitDeparturesAdapter.attribution.url },
+    };
   },
 );

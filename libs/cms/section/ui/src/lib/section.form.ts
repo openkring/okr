@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
 
-import { ConnectionsConfig, ConnectionsSection, AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
+import { ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
 import { Chips, ErrorNote, ImageConfigEdit, NotesInput, NotesInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole, sanitizeFileName } from '@okr/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@okr/shared-constants';
@@ -17,6 +17,7 @@ import { AlbumConfiguration } from './album-configuration';
 import { IframeConfiguration } from './iframe-configuration';
 import { WeatherConfiguration, WeatherLocationOption } from './weather-configuration';
 import { ConnectionsConfiguration } from './connections-configuration';
+import { DeparturesConfiguration } from './departures-configuration';
 import { ContractOption } from './button-action-configuration';
 import { PeopleConfiguration } from './people-configuration';
 import { ResponsibilityConfiguration } from './responsibility-configuration';
@@ -52,7 +53,7 @@ import { AdventConfiguration } from './advent-configuration';
     IonItem, IonToggle,
     Chips, ImageConfigEdit, NotesInput, ErrorNote,
     SectionConfiguration, EditorConfiguration, ImageStyleConfiguration, AlbumConfiguration,
-    IframeConfiguration, WeatherConfiguration, ConnectionsConfiguration, PeopleConfiguration, ResponsibilityConfiguration, VideoConfiguration,
+    IframeConfiguration, WeatherConfiguration, ConnectionsConfiguration, DeparturesConfiguration, PeopleConfiguration, ResponsibilityConfiguration, VideoConfiguration,
     ButtonStyleConfiguration, ButtonActionConfiguration, IconConfiguration, ChatConfiguration,
     MapConfiguration, TrackerConfiguration, TableGridConfiguration,  TableStyleConfiguration, TableHeader,
     TableBody, EventsConfiguration, InvitationsConfiguration, ImagesConfiguration, CalendarConfiguration, ChartConfiguration,
@@ -260,6 +261,16 @@ import { AdventConfiguration } from './advent-configuration';
           @if(connectionsConfig(); as connectionsConfig) {
             <okr-connections-config
               [formData]="connectionsConfig" (formDataChange)="onConnectionsConfigChange($event)"
+              [readOnly]="isReadOnly()"
+              [locations]="weatherLocations()"
+              [i18n]="i18n()"
+            />
+          }
+        }
+        @case('departures') {
+          @if(departuresConfig(); as departuresConfig) {
+            <okr-departures-config
+              [formData]="departuresConfig" (formDataChange)="onDeparturesConfigChange($event)"
               [readOnly]="isReadOnly()"
               [locations]="weatherLocations()"
               [i18n]="i18n()"
@@ -606,6 +617,7 @@ export class SectionForm {
   protected iframeConfig = computed(() => this.getIframeConfig());
   protected weatherConfig = computed(() => this.getWeatherConfig());
   protected connectionsConfig = computed(() => this.getConnectionsConfig());
+  protected departuresConfig = computed(() => this.getDeparturesConfig());
   protected mapConfig = computed(() => this.getMapConfig());
   protected peopleConfig = computed(() => this.getPeopleConfig());
   protected responsibilityConfig = computed(() => this.getResponsibilityConfig());
@@ -790,6 +802,13 @@ export class SectionForm {
     if (this.formData().type === 'iframe') {
       return ((this.formData() as IframeSection).properties as IframeConfig);
     }
+  }
+
+  private getDeparturesConfig(): DeparturesConfig | undefined {
+    if (this.formData().type === 'departures') {
+      return (this.formData() as DeparturesSection).properties;
+    }
+    return undefined;
   }
 
   private getConnectionsConfig(): ConnectionsConfig | undefined {
@@ -1115,6 +1134,13 @@ export class SectionForm {
         ...section,
         properties: config
       } as InvitationsSection);
+    }
+  }
+
+  protected onDeparturesConfigChange(config: DeparturesConfig): void {
+    const section = this.formData();
+    if (section.type === 'departures') {
+      this.formData.set({ ...section, properties: config } as DeparturesSection);
     }
   }
 

@@ -23,7 +23,7 @@ export const SECTION_TYPES = [
     'album', 'article', 'button', 'cal', 'chart', 'chat', 'emergency', 'hero', 'iframe', 'map',
     'people', 'responsibility', 'slider', 'table', 'tracker', 'video', 'accordion', 'events', 'invitations', 'tasks',
     'news', 'activities', 'messages', 'rag', 'orgchart', 'context', 'member-age', 'member-cat', 'trip-stats', 'form',
-    'sankey', 'spider', 'toc', 'testimonial', 'timeline', 'weather', 'learning', 'advent', 'connections',
+    'sankey', 'spider', 'toc', 'testimonial', 'timeline', 'weather', 'learning', 'advent', 'connections', 'departures',
 ] as const;
 
 export type SectionType = (typeof SECTION_TYPES)[number];
@@ -33,7 +33,7 @@ export type SectionModel =
     AlbumSection | ArticleSection | ButtonSection | CalendarSection | ChartSection | ChatSection |
     HeroSection | IframeSection | MapSection | PeopleSection | ResponsibilitySection | SliderSection |
     TableSection | TrackerSection | VideoSection | AccordionSection | EventsSection | InvitationsSection | TasksSection |
-    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection | SpiderSection | TocSection | TestimonialSection | TimelineSection | WeatherSection | LearningSection | AdventSection | ConnectionsSection;
+    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection | SpiderSection | TocSection | TestimonialSection | TimelineSection | WeatherSection | LearningSection | AdventSection | ConnectionsSection | DeparturesSection;
 
 // --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
 // --------------------------------------- ORGCHART ----------------------------------------
@@ -250,7 +250,7 @@ export interface BaseSection {
   content: EditorConfig; // content from rich text editor
   properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | HeroConfig |
   IframeConfig | MapConfig | OrgchartConfig | ContextDiagramConfig | PeopleConfig | ResponsibilityConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig |
-  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig | SpiderConfig | TocConfig | TestimonialConfig | TimelineConfig | WeatherConfig | LearningConfig | AdventConfig | ConnectionsConfig;
+  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig | SpiderConfig | TocConfig | TestimonialConfig | TimelineConfig | WeatherConfig | LearningConfig | AdventConfig | ConnectionsConfig | DeparturesConfig;
   notes: string;
   tags: string;
   tenants: string[]; // list of tenant ids
@@ -768,6 +768,32 @@ export interface ConnectionsConfig {
   destinationKey: string;
   /** Empty ⇒ the viewer's current position. */
   sourceKey: string;
+}
+
+// --------------------------------------- DEPARTURES ----------------------------------------
+/**
+ * Live departures at the stop next to a place, with disruption messages (spec 1.130 §6.4). The
+ * location is a `LocationModel` okey; the stop is the nearest one unless a `stopRef` is pinned.
+ */
+export interface DeparturesSection extends BaseSection {
+  type: 'departures';
+  properties: DeparturesConfig;
+}
+
+export interface DeparturesConfig {
+  /** Empty ⇒ inherit the page's `locationKey`. */
+  locationKey: string;
+  /** Swiss stop id (`ch:1:sloid:…`); empty ⇒ the stop nearest to the location. */
+  stopRef: string;
+  /** Name of the pinned stop, so the header renders before the first answer. */
+  stopName: string;
+  /** Departures shown, 1–20, default 8. */
+  limit: number;
+  /**
+   * Minutes on foot to the stop; -1 ⇒ derived from the walking distance. A number rather than an
+   * optional field: section saves merge, so a removed key would never leave the stored document.
+   */
+  walkMinutes: number;
 }
 
 // --------------------------------------- LEARNING ----------------------------------------

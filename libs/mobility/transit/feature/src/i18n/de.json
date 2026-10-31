@@ -49,5 +49,33 @@
   "offline": "Verbindungen kannst du nur mit Internetverbindung suchen.",
   "positionUnavailable": "Dein Standort ist nicht verfügbar. Wähle mit «ändern», von wo du losfährst.",
   "noCoordinates": "Für diesen Ort ist keine genaue Lage hinterlegt, darum können wir keine Verbindungen suchen.",
-  "abroad": "Verbindungen gibt es nur für Orte in der Schweiz."
+  "abroad": "Verbindungen gibt es nur für Orte in der Schweiz.",
+  "departures": {
+    "title": "Abfahrten",
+    "inMinutes": "in {minutes}'",
+    "now": "jetzt",
+    "delay": "+{minutes}'",
+    "cancelled": "fällt aus",
+    "quay": {
+      "train": "Gl. {quay}",
+      "other": "Kante {quay}"
+    },
+    "distance": "{distance} m",
+    "asOf": "Stand {time}",
+    "stale": "Die Abfahrtszeiten sind nicht aktuell.",
+    "disruption": "Störung",
+    "upcoming": {
+      "show": "{count} angekündigte Hinweise anzeigen",
+      "hide": "angekündigte Hinweise ausblenden"
+    },
+    "announced": "angekündigt",
+    "affected": "betroffen von einer Störung",
+    "empty": "In der nächsten Zeit fährt hier nichts mehr ab.",
+    "noStop": "In der Nähe dieses Orts gibt es keine Haltestelle.",
+    "error": "Die Abfahrten konnten nicht geladen werden. Wir versuchen es gleich nochmals.",
+    "offline": "Abfahrten siehst du nur mit Internetverbindung.",
+    "noCoordinates": "Für diesen Ort ist keine genaue Lage hinterlegt, darum können wir keine Abfahrten zeigen.",
+    "abroad": "Abfahrten gibt es nur für Orte in der Schweiz.",
+    "back": "Zurück zum Logbuch"
+  }
 }

@@ -1418,5 +1418,27 @@
       "label": "Partenza",
       "helper": "Lascia vuoto per partire dalla posizione di chi guarda la pagina"
     }
+  },
+  "departures": {
+    "title": "Partenze",
+    "label": "Partenze",
+    "edit": "Modifica la configurazione delle partenze",
+    "description": "Le prossime partenze alla fermata vicino a un luogo, con gli avvisi di perturbazione",
+    "location": {
+      "label": "Luogo",
+      "helper": "Lascia vuoto per usare il luogo della pagina"
+    },
+    "stop": {
+      "label": "Fermata",
+      "nearest": "Fermata più vicina",
+      "helper": "Scegline un’altra se la più vicina non è quella giusta"
+    },
+    "limit": {
+      "label": "Numero di partenze"
+    },
+    "walk": {
+      "label": "Tragitto a piedi in minuti",
+      "helper": "Lascia vuoto per calcolarlo dalla distanza"
+    }
   }
 }

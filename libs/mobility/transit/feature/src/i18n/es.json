@@ -49,5 +49,33 @@
   "offline": "Solo puedes buscar conexiones con conexión a Internet.",
   "positionUnavailable": "Tu ubicación no está disponible. Elige con «cambiar» desde dónde sales.",
   "noCoordinates": "Este lugar no tiene una posición exacta, así que no podemos buscar conexiones.",
-  "abroad": "Solo hay conexiones para lugares en Suiza."
+  "abroad": "Solo hay conexiones para lugares en Suiza.",
+  "departures": {
+    "title": "Salidas",
+    "inMinutes": "en {minutes}'",
+    "now": "ahora",
+    "delay": "+{minutes}'",
+    "cancelled": "cancelado",
+    "quay": {
+      "train": "Vía {quay}",
+      "other": "Andén {quay}"
+    },
+    "distance": "{distance} m",
+    "asOf": "A las {time}",
+    "stale": "Los horarios de salida no están actualizados.",
+    "disruption": "Incidencia",
+    "upcoming": {
+      "show": "Mostrar {count} avisos anunciados",
+      "hide": "Ocultar los avisos anunciados"
+    },
+    "announced": "anunciado",
+    "affected": "afectado por una incidencia",
+    "empty": "De momento no sale nada más desde aquí.",
+    "noStop": "No hay ninguna parada cerca de este lugar.",
+    "error": "No se pudieron cargar las salidas. Lo volvemos a intentar enseguida.",
+    "offline": "Solo ves las salidas con conexión a internet.",
+    "noCoordinates": "Este lugar no tiene una posición exacta guardada, por eso no podemos mostrar salidas.",
+    "abroad": "Las salidas solo están disponibles para lugares en Suiza.",
+    "back": "Volver al diario de a bordo"
+  }
 }

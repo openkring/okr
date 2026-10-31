@@ -49,5 +49,33 @@
   "offline": "Tu ne peux chercher des correspondances qu’avec une connexion Internet.",
   "positionUnavailable": "Ta position n’est pas disponible. Choisis avec « modifier » d’où tu pars.",
   "noCoordinates": "Ce lieu n’a pas de position exacte, nous ne pouvons donc pas chercher de correspondances.",
-  "abroad": "Les correspondances ne sont disponibles que pour des lieux en Suisse."
+  "abroad": "Les correspondances ne sont disponibles que pour des lieux en Suisse.",
+  "departures": {
+    "title": "Départs",
+    "inMinutes": "dans {minutes}'",
+    "now": "maintenant",
+    "delay": "+{minutes}'",
+    "cancelled": "supprimé",
+    "quay": {
+      "train": "Voie {quay}",
+      "other": "Quai {quay}"
+    },
+    "distance": "{distance} m",
+    "asOf": "État {time}",
+    "stale": "Les heures de départ ne sont pas à jour.",
+    "disruption": "Perturbation",
+    "upcoming": {
+      "show": "Afficher {count} avis annoncés",
+      "hide": "Masquer les avis annoncés"
+    },
+    "announced": "annoncé",
+    "affected": "touché par une perturbation",
+    "empty": "Plus aucun départ d’ici dans les prochains temps.",
+    "noStop": "Il n’y a pas d’arrêt près de ce lieu.",
+    "error": "Les départs n’ont pas pu être chargés. Nous réessayons dans un instant.",
+    "offline": "Tu ne vois les départs qu’avec une connexion Internet.",
+    "noCoordinates": "Aucune position précise n’est enregistrée pour ce lieu, nous ne pouvons donc pas afficher de départs.",
+    "abroad": "Les départs ne sont disponibles que pour des lieux en Suisse.",
+    "back": "Retour au journal de bord"
+  }
 }

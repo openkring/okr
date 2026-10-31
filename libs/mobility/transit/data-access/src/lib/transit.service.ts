@@ -3,11 +3,12 @@ import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 
 import { ENV } from '@okr/shared-config';
-import type { PlanTripReq, PlanTripRes } from '@okr/mobility-transit-util';
+import type { DeparturesReq, DeparturesRes, PlanTripReq, PlanTripRes, SearchStopsReq, SearchStopsRes } from '@okr/mobility-transit-util';
 
 /**
- * Wraps the `planTrip` callable (spec 1.131 §5.2): public-transport connections between two points from the Swiss
- * timetable (OJP 2.0). No connections in the answer = none found. Needs the network.
+ * Wraps the Swiss-timetable callables (OJP 2.0): `planTrip` (spec 1.131 §5.2, connections between two points),
+ * `searchStops` and `getDepartures` (spec 1.130 §5.2, the departure board). Empty lists in an answer = nothing
+ * found. All need the network.
  */
 @Injectable({ providedIn: 'root' })
 export class TransitService {
@@ -23,6 +24,16 @@ export class TransitService {
 
   public async planTrip(req: PlanTripReq): Promise<PlanTripRes> {
     const callable = httpsCallable<PlanTripReq, PlanTripRes>(this.functions, 'planTrip');
+    return (await callable(req)).data;
+  }
+
+  public async searchStops(req: SearchStopsReq): Promise<SearchStopsRes> {
+    const callable = httpsCallable<SearchStopsReq, SearchStopsRes>(this.functions, 'searchStops');
+    return (await callable(req)).data;
+  }
+
+  public async departures(req: DeparturesReq): Promise<DeparturesRes> {
+    const callable = httpsCallable<DeparturesReq, DeparturesRes>(this.functions, 'getDepartures');
     return (await callable(req)).data;
   }
 }
