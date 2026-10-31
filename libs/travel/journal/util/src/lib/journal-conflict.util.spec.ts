@@ -171,4 +171,17 @@ describe('journal conflict copies', () => {
       expect(footprintsOf(materialize(shuffled(records, seed)), 'j1')).toEqual(expected);
     }
   });
+
+  it('keeps kind video on a conflict copy', () => {
+    const V = rec({ entity: 'section', entityKey: 'v1', op: 'create', fields: { footprintKey: 'f1', kind: 'video', html: '<p>Cap</p>', imageKeys: ['i0'], order: 'V' }, bases: {} }, 100);
+    const A = rec({ entity: 'section', entityKey: 'v1', op: 'set', fields: { imageKeys: ['i0', 'i1'] }, bases: { imageKeys: V.hlc } }, 200, 'anna');
+    const B = rec({ entity: 'section', entityKey: 'v1', op: 'set', fields: { imageKeys: ['i0', 'i2'] }, bases: { imageKeys: V.hlc } }, 300);
+    const [fp] = footprintsOf(materialize([FP, V, A, B]), 'j1');
+    expect(fp.blocks).toHaveLength(2);
+    const copy = fp.blocks[1];
+    expect(copy.conflictOf).toBe('v1');
+    expect(copy.kind).toBe('video');
+    expect(copy.imageKeys).toEqual(['i0', 'i1']);
+    expect(copy.html).toBe('<p>Cap</p>');
+  });
 });

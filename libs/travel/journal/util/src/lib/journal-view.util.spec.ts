@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { JournalChange } from '@okr/shared-models';
 import { formatHlc } from './journal-hlc.util';
 import { materialize } from './journal-merge.util';
-import { footprintsOf, imagesOf, journalsOf, lastBlockOrder, transportOf, weatherLine, weatherOf } from './journal-view.util';
+import { blocksOf, footprintsOf, imagesOf, journalsOf, lastBlockOrder, transportOf, weatherLine, weatherOf } from './journal-view.util';
 
 let n = 0;
 function rec(p: Pick<JournalChange, 'entity' | 'entityKey' | 'op'> & Partial<JournalChange>): JournalChange {
@@ -115,5 +115,23 @@ describe('footprint transport', () => {
     ]);
     expect(footprintsOf(state, 'j1').map((f) => f.transport)).toEqual(['ship', undefined]);
     expect(transportOf('')).toBeUndefined();
+  });
+
+  it('reads a video block with caption and clips', () => {
+    const state = materialize([
+      rec({ entity: 'section', entityKey: 'b1', op: 'create', fields: { footprintKey: 'f1', kind: 'video', html: '<p>Pinguine</p>', imageKeys: ['i1'], order: 'a' } }),
+    ]);
+    expect(blocksOf(state, 'f1')[0]).toMatchObject({ kind: 'video', html: '<p>Pinguine</p>', imageKeys: ['i1'] });
+  });
+
+  it('imagesOf carries videoPath and durationSec', () => {
+    const state = materialize([
+      rec({ entity: 'image', entityKey: 'i1', op: 'create', fields: { journalKey: 'j1', width: 1, height: 1, path2048: 'journals/j1/n-2048.jpg', path400: 'journals/j1/n-400.jpg', videoPath: 'journals/j1/n-video.mp4', durationSec: 12.3 } }),
+      rec({ entity: 'image', entityKey: 'i2', op: 'create', fields: { journalKey: 'j1', width: 1, height: 1, path2048: 'a', path400: 'b' } }),
+    ]);
+    const images = imagesOf(state, 'j1');
+    expect(images.get('i1')).toMatchObject({ videoPath: 'journals/j1/n-video.mp4', durationSec: 12.3 });
+    expect(images.get('i2')?.videoPath).toBeUndefined();
+    expect(images.get('i2')?.durationSec).toBeUndefined();
   });
 });

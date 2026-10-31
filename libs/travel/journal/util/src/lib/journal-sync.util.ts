@@ -73,7 +73,7 @@ export function publishedPhotoFiles(footprints: FootprintView[], images: Map<str
       for (const key of block.imageKeys ?? []) {
         const image = images.get(key);
         if (!image) continue;
-        for (const path of [image.path2048, image.path400]) {
+        for (const path of [image.path2048, image.path400, image.videoPath ?? '']) {
           const file = photoFileName(path);
           if (file !== '') files.add(file);
         }
@@ -87,7 +87,7 @@ export function publishedPhotoFiles(footprints: FootprintView[], images: Map<str
 export function allPhotoFiles(images: Map<string, ImageView>): string[] {
   const files = new Set<string>();
   for (const image of images.values()) {
-    for (const path of [image.path2048, image.path400]) {
+    for (const path of [image.path2048, image.path400, image.videoPath ?? '']) {
       const file = photoFileName(path);
       if (file !== '') files.add(file);
     }

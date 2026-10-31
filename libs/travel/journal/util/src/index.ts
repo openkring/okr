@@ -13,6 +13,7 @@ export * from './lib/journal-story.util';
 export * from './lib/journal-forms.util';
 export * from './lib/journal-i18n';
 export * from './lib/journal-menu.util';
+export * from './lib/journal-video.util';
 export * from './lib/journal-server.util';
 export * from './lib/journal-sync.util';
 export * from './lib/journal-peer.util';

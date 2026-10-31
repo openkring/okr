@@ -1,4 +1,5 @@
 import { JOURNAL_I18N_KEYS } from './journal-i18n';
+import { BlockKind } from './journal-view.util';
 
 /**
  * The context menus of the journal pages (spec 1.126 §3–§5). Code-defined, not `menuItems` rows: the
@@ -10,7 +11,7 @@ export type JournalMenuAction =
   | 'flyover' | 'newFootprint' | 'recordTrack' | 'offlineMaps' | 'photoBook'
   | 'toggleEditMode' | 'addBlock' | 'sortBlocks' | 'editFootprint' | 'deleteFootprint';
 
-export type JournalBlockAction = 'block.edit' | 'block.addphotos' | 'block.delete';
+export type JournalBlockAction = 'block.edit' | 'block.addphotos' | 'block.addvideos' | 'block.delete';
 
 export type JournalMenuItem =
   | { action: JournalMenuAction; label: keyof typeof JOURNAL_I18N_KEYS; icon: string; destructive?: boolean }
@@ -64,7 +65,8 @@ export function footprintMenu(ctx: { native: boolean; canWrite: boolean; editMod
 }
 
 /** The block ActionSheet's actions; every author may edit every block (phase 2), `editable` = `canWrite`. */
-export function blockActions(ctx: { kind: 'text' | 'photos'; editable: boolean }): JournalBlockAction[] {
+export function blockActions(ctx: { kind: BlockKind; editable: boolean }): JournalBlockAction[] {
   if (!ctx.editable) return [];
+  if (ctx.kind === 'video') return ['block.edit', 'block.addvideos', 'block.delete']; // block.edit edits the caption
   return [ctx.kind === 'text' ? 'block.edit' : 'block.addphotos', 'block.delete'];
 }

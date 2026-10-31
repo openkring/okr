@@ -76,6 +76,8 @@ export interface JournalImageModel {
   height: number;
   path2048: string;
   path400: string;
+  videoPath?: string; // a video clip: the mp4 in the private bucket (path2048/path400 are its poster frame)
+  durationSec?: number; // a video clip: length in seconds
 }
 
 export const JournalCollection = 'journals';

@@ -105,4 +105,11 @@ describe('remoteChangeOf', () => {
     expect(remoteChangeOf(data(1000, { bases: { title: 7 } }), 2000)).not.toHaveProperty('bases');
     expect(remoteChangeOf(data(1000, { bases: 'h1' }), 2000)).not.toHaveProperty('bases');
   });
+
+  it('publishedPhotoFiles and allPhotoFiles include the mp4', () => {
+    const video: ImageView = { ...image('n'), videoPath: 'journals/j1/n-video.mp4', durationSec: 12 };
+    const images = new Map([['n', video]]);
+    expect(allPhotoFiles(images)).toEqual(expect.arrayContaining(['n-2048.jpg', 'n-400.jpg', 'n-video.mp4']));
+    expect(publishedPhotoFiles([footprint('f1', 'published', ['n'])], images)).toEqual(expect.arrayContaining(['n-2048.jpg', 'n-400.jpg', 'n-video.mp4']));
+  });
 });

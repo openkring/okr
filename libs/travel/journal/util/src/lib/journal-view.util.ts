@@ -12,15 +12,15 @@ import { sortByOrder } from './journal-order.util';
  */
 export interface JournalView { key: string; title: string; subTitle: string; startDate: string; endDate: string }
 
-export type BlockKind = 'text' | 'photos';
+export type BlockKind = 'text' | 'photos' | 'video';
 
 export interface BlockView {
   key: string;
   kind: BlockKind;
   authorKey: string;
   order: string;
-  html?: string; // kind 'text'
-  imageKeys?: string[]; // kind 'photos', in pick order — may name images not (yet) received; look them up in imagesOf
+  html?: string; // kind 'text'; the caption of kind 'video'
+  imageKeys?: string[]; // kind 'photos' and 'video' (the clips), in pick order — may name images not (yet) received; look them up in imagesOf
   hlcs: Record<string, string>; // conflict field → hlc of the value shown (the `bases` of the next edit)
   conflictOf?: string; // a conflict copy: the key of the block it was split from (spec 1.126 §6.3)
   conflict: boolean; // a live copy and its live original both carry the flag
@@ -40,6 +40,8 @@ export interface ImageView {
   path2048: string; // relative to the app's Documents directory
   path400: string;
   localIdentifier: string;
+  videoPath?: string; // a video clip: the mp4, relative to the Documents directory; path2048/path400 are its poster frame
+  durationSec?: number; // a video clip: length in seconds
 }
 
 export interface FootprintView {
@@ -118,7 +120,7 @@ const imageKeysOf = (v: unknown): string[] => (Array.isArray(v) ? (v as unknown[
  * (`set` and `archive` only) are laid over it.
  */
 function copiesOf(state: JournalState, original: BlockView, history: EntityState['history'], originalLive: boolean): BlockView[] {
-  const field = original.kind === 'text' ? 'html' : 'imageKeys';
+  const field = original.kind === 'text' ? 'html' : 'imageKeys' /* photos and video: the clips */;
   const copies: BlockView[] = [];
   for (const lost of lostValues(history?.[field])) {
     const key = conflictCopyKey(original.key, lost.hlc);
@@ -144,10 +146,10 @@ export function blocksOf(state: JournalState, footprintKey: string): BlockView[]
     if (section.entity !== 'section' || isConflictCopyKey(section.entityKey)) continue;
     const view = viewOf(unarchived(section));
     if (!view || view['footprintKey'] !== footprintKey) continue;
-    const kind: BlockKind = view['kind'] === 'photos' ? 'photos' : 'text';
+    const kind: BlockKind = view['kind'] === 'photos' || view['kind'] === 'video' ? view['kind'] : 'text';
     const block: BlockView = { key: section.entityKey, kind, authorKey: section.ownerKey ?? '', order: str(view['order']), hlcs: winningHlcs(section), conflict: false };
-    if (kind === 'text') block.html = str(view['html']);
-    else block.imageKeys = imageKeysOf(view['imageKeys']);
+    if (kind === 'text' || kind === 'video') block.html = str(view['html']);
+    if (kind !== 'text') block.imageKeys = imageKeysOf(view['imageKeys']);
     const live = viewOf(section) !== undefined;
     const copies = copiesOf(state, block, section.history, live);
     if (live) blocks.push({ ...block, conflict: copies.length > 0 });
@@ -216,6 +218,8 @@ export function imagesOf(state: JournalState, journalKey: string): Map<string, I
       path2048: str(view['path2048']),
       path400: str(view['path400']),
       localIdentifier: str(view['localIdentifier']),
+      videoPath: str(view['videoPath']) || undefined,
+      durationSec: num(view['durationSec']),
     });
   }
   return images;

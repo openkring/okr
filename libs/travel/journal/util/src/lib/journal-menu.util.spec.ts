@@ -56,5 +56,6 @@ describe('journal menus (spec 1.126 phase 3: write entries follow canWrite)', ()
     expect(blockActions({ kind: 'text', editable: true })).toEqual(['block.edit', 'block.delete']);
     expect(blockActions({ kind: 'photos', editable: true })).toEqual(['block.addphotos', 'block.delete']);
     expect(blockActions({ kind: 'text', editable: false })).toEqual([]);
+    expect(blockActions({ kind: 'video', editable: true })).toEqual(['block.edit', 'block.addvideos', 'block.delete']);
   });
 });
