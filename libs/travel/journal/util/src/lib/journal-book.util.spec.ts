@@ -5,7 +5,7 @@ import { materialize } from './journal-merge.util';
 import { footprintsOf } from './journal-view.util';
 import { routeLengthKm } from './journal-map.util';
 import { templateBoxes } from './journal-book-layout.util';
-import { bookBlockHtml, BookFrame, BookInput, BookLabels, BookPage, bookPrintCandidates, coverImageKeyOf, COVER_PAGE_INDEX, layoutBook, PaginateText, stripEmoji, stripUndefined } from './journal-book.util';
+import { bookBlockHtml, BookFrame, BookInput, BookLabels, BookPage, bookPrintCandidates, coverImageKeyOf, COVER_PAGE_INDEX, layoutBook, playSymbolOf, PaginateText, stripEmoji, stripUndefined } from './journal-book.util';
 import { localViewDateTime } from './journal-book-i18n';
 import { coverLayout } from './journal-book-cover.util';
 
@@ -45,6 +45,11 @@ const photos = (key: string, footprintKey: string, order: string, imageKeys: str
   rec('section', key, { footprintKey, kind: 'photos', imageKeys, order });
 const img = (key: string, width = 4000, height = 3000) =>
   rec('image', key, { journalKey: 'j1', width, height, path2048: `${key}.jpg`, path400: `${key}-400.jpg`, localIdentifier: key });
+
+const clip = (key: string) =>
+  rec('image', key, { journalKey: 'j1', width: 1920, height: 1080, path2048: `${key}.jpg`, path400: `${key}-400.jpg`, videoPath: `${key}.mp4`, durationSec: 5, localIdentifier: key });
+const video = (key: string, footprintKey: string, order: string, imageKeys: string[], html = '') =>
+  rec('section', key, { footprintKey, kind: 'video', imageKeys, html, order });
 
 const LABELS: BookLabels = {
   day: 'Tag', stretch: 'Etappe', cumulative: 'Gesamt', km: 'km', photo: 'Foto', photos: 'Fotos', weather: 'Wetter',
@@ -335,6 +340,52 @@ describe('layoutBook', () => {
       { pageIndex: heroIndex('f3'), imageKey: 'i3', level: 'veryPoor', dpi: 168 },
       { pageIndex: heroIndex('f4'), imageKey: 'i4', level: 'missing', dpi: 172 },
     ]);
+  });
+});
+
+describe('video blocks', () => {
+  const photoFrames = (pages: BookPage[]) => pages.flatMap((p) => p.frames).flatMap((f) => (f.kind === 'photo' ? [f] : []));
+
+  it('lays out the posters as photo frames with video: true, the caption as a text frame before them', () => {
+    const { pages } = layoutBook(input([
+      journal(), fp('f1', '20270102'), img('i1'), clip('v1'), clip('v2'),
+      photos('p1', 'f1', 'a', ['i1']), video('vb', 'f1', 'b', ['v1', 'v2'], '<p>Pinguine</p>'),
+    ]));
+    const own = ofFootprint(pages, 'f1');
+    const textIdx = own.findIndex((p) => texts(p, 'body').includes('Pinguine'));
+    const firstVideoIdx = own.findIndex((p) => photoFrames([p]).some((f) => f.video));
+    expect(textIdx).toBeGreaterThan(0);
+    expect(textIdx).toBeLessThan(firstVideoIdx);
+    const frames = photoFrames(own).filter((f) => f.video);
+    expect(frames.map((f) => f.imageKey)).toEqual(['v1', 'v2']);
+    expect(frames.every((f) => f.video === true)).toBe(true);
+    expect(photoFrames(own).filter((f) => f.imageKey === 'i1').every((f) => f.video === undefined)).toBe(true);
+  });
+
+  it('leaves a hidden clip out', () => {
+    const { pages } = layoutBook(input([
+      journal(), fp('f1', '20270102'), clip('v1'), clip('v2'), video('vb', 'f1', 'a', ['v1', 'v2']),
+    ], { hiddenImageKeys: ['v2'] }));
+    expect(photoKeys(ofFootprint(pages, 'f1'))).toEqual(['v1']);
+  });
+
+  it('is no cover or hero candidate, but its posters are print candidates', () => {
+    const state = materialize([journal(), fp('f1', '20270102'), clip('v1'), video('vb', 'f1', 'a', ['v1'])]);
+    const book = new JournalBookModel();
+    expect(coverImageKeyOf(state, 'j1', book)).toBeUndefined();
+    expect(bookPrintCandidates(state, 'j1', book, 'bruno').map((i) => i.key)).toEqual(['v1']);
+    const { pages } = layoutBook(input([journal(), fp('f1', '20270102'), clip('v1'), video('vb', 'f1', 'a', ['v1'])]));
+    expect(ofFootprint(pages, 'f1').some((p) => p.role === 'hero')).toBe(false);
+  });
+});
+
+describe('playSymbolOf', () => {
+  it('is a 12 mm circle 4 mm inside the bottom-left of the trimmed page, also for a bleed frame', () => {
+    const s = playSymbolOf({ x: -3, y: -3, w: 303, h: 216 });
+    expect([s.cx, s.cy, s.r]).toEqual([10, 200, 6]);
+    const t = playSymbolOf({ x: 20, y: 30, w: 100, h: 80 });
+    expect([t.cx, t.cy]).toEqual([30, 100]);
+    expect(t.triangle).toHaveLength(3);
   });
 });
 

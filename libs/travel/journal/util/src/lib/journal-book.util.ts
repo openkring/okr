@@ -1,6 +1,7 @@
 import { BookPageOverride, BookTemplate, JournalBookModel, TRANSPORT_MODES, TransportMode } from '@okr/shared-models';
 import { convertDateFormatToString, DateFormat, getDayDiff } from '@okr/shared-util-core';
 import { albumPages, autoLayout, Box, coverGeometry, DPI_OK, DPI_POOR, effectiveDpi, GAP, MARGIN, PAGE_H, PAGE_W, templateBoxes } from './journal-book-layout.util';
+import { isVideoImage } from './journal-video.util';
 import { flyoverInputOf, flyoverTimeline } from './journal-flyover.util';
 import { commentsOf, likesOf } from './journal-guest.util';
 import { routeLengthKm } from './journal-map.util';
@@ -35,7 +36,7 @@ export function stripUndefined<T>(value: T): T {
 
 export type TextStyle = 'title' | 'facts' | 'body' | 'author' | 'comment' | 'stats';
 export type BookFrame =
-  | { kind: 'photo'; box: Box; imageKey: string; fit: 'fill' | 'whole' }
+  | { kind: 'photo'; box: Box; imageKey: string; fit: 'fill' | 'whole'; video?: true } // video: the poster of a clip, drawn with a play symbol
   | { kind: 'text'; box: Box; html: string; style: TextStyle; rotate?: 90 } // rotate: spine title only (cover)
   | { kind: 'map'; box: Box; file: string }; // 'book-map-<name>.jpg'
 export type PageRole = 'title' | 'overview' | 'opening' | 'hero' | 'text' | 'photos' | 'comments' | 'stats' | 'blank';
@@ -226,8 +227,21 @@ interface Ctx {
   bleed: number;
 }
 
-const photoFrame = (ctx: Ctx, box: Box, imageKey: string): BookFrame =>
-  ({ kind: 'photo', box, imageKey, fit: ctx.whole.has(imageKey) ? 'whole' : 'fill' });
+const photoFrame = (ctx: Ctx, box: Box, imageKey: string): BookFrame => {
+  const image = ctx.images.get(imageKey);
+  return { kind: 'photo', box, imageKey, fit: ctx.whole.has(imageKey) ? 'whole' : 'fill', ...(image && isVideoImage(image) ? { video: true as const } : {}) };
+};
+
+/** The play symbol of a video poster frame (mm): a 12 mm circle, 4 mm in from the bottom-left corner of the trimmed page. */
+export const PLAY_SYMBOL_MM = 12;
+export const PLAY_SYMBOL_INSET_MM = 4;
+export function playSymbolOf(box: Box): { cx: number; cy: number; r: number; triangle: [number, number][] } {
+  const r = PLAY_SYMBOL_MM / 2;
+  const cx = Math.max(box.x, 0) + PLAY_SYMBOL_INSET_MM + r;
+  const cy = Math.min(box.y + box.h, PAGE_H) - PLAY_SYMBOL_INSET_MM - r;
+  const t = r * 0.45; // the triangle's half height; its centroid sits on the circle's centre
+  return { cx, cy, r, triangle: [[cx - t * 0.6, cy - t], [cx - t * 0.6, cy + t], [cx + t * 1.2, cy]] };
+}
 
 function photoPage(ctx: Ctx, fpKey: string, blockKey: string, template: BookTemplate, keys: string[]): BookPage {
   const boxes = templateBoxes(template, ctx.bleed);
@@ -289,7 +303,7 @@ export function bookPrintCandidates(state: JournalState, journalKey: string, boo
   const wanted: string[] = [];
   if (cover) wanted.push(cover);
   for (const fp of publishedFootprintsOf(state, journalKey)) {
-    for (const b of fp.blocks) if (b.kind === 'photos') for (const key of b.imageKeys ?? []) if (!hidden.has(key)) wanted.push(key);
+    for (const b of fp.blocks) if (b.kind === 'photos' || b.kind === 'video') for (const key of b.imageKeys ?? []) if (!hidden.has(key)) wanted.push(key);
   }
   const seen = new Set<string>();
   const result: ImageView[] = [];
@@ -313,7 +327,7 @@ function runHtml(ctx: Ctx, run: BlockView[]): string {
   return html;
 }
 
-/** Blocks grouped into runs: consecutive text blocks together, each photo block alone; empty texts dropped. */
+/** Blocks grouped into runs: consecutive text blocks together, each photo block alone, a video block as its caption (text) and its posters (photos); empty texts dropped. */
 function runsOf(blocks: BlockView[]): { kind: 'text' | 'photos'; blocks: BlockView[] }[] {
   const runs: { kind: 'text' | 'photos'; blocks: BlockView[] }[] = [];
   for (const b of blocks) {
@@ -322,7 +336,15 @@ function runsOf(blocks: BlockView[]): { kind: 'text' | 'photos'; blocks: BlockVi
       const last = runs[runs.length - 1];
       if (last?.kind === 'text') last.blocks.push(b);
       else runs.push({ kind: 'text', blocks: [b] });
-    } else runs.push({ kind: 'photos', blocks: [b] });
+    } else {
+      // a video block: its caption is a text before its posters, which are laid out like an album
+      if (b.kind === 'video' && bookBlockHtml(b.html ?? '')) {
+        const last = runs[runs.length - 1];
+        if (last?.kind === 'text') last.blocks.push(b);
+        else runs.push({ kind: 'text', blocks: [b] });
+      }
+      runs.push({ kind: 'photos', blocks: [b] });
+    }
   }
   return runs;
 }

@@ -5,7 +5,7 @@ import type { Readable } from 'node:stream';
 
 import PDFDocument from 'pdfkit';
 
-import { BOOK_FONT_FILES, BOOK_GREY, BOOK_HEADING_SCALE, BOOK_LIST_INDENT_EM, BOOK_SMALL_SCALE, BOOK_TEXT_STYLES } from '@okr/travel-journal-util';
+import { BOOK_FONT_FILES, BOOK_GREY, BOOK_HEADING_SCALE, BOOK_LIST_INDENT_EM, BOOK_SMALL_SCALE, BOOK_TEXT_STYLES, playSymbolOf } from '@okr/travel-journal-util';
 import type { BookFont, BookFrame, BookPage, BookTextStyle, Box, PaginateText, TextStyle } from '@okr/travel-journal-util';
 
 import { htmlToRuns, runsToHtml, TextRun } from './book-html';
@@ -407,6 +407,17 @@ export async function relieve(stream: Readable, high = RELIEVE_HIGH, pollMs = 20
 
 const streamOf = (doc: PDFKit.PDFDocument) => doc as unknown as Readable;
 
+/** The white ▶ in a 40 % black circle on a video poster (same geometry as the preview: playSymbolOf). */
+export function drawPlaySymbol(doc: PDFKit.PDFDocument, box: Box, ox: number, oy: number): void {
+  const s = playSymbolOf(box);
+  doc.save();
+  doc.fillColor('#000000').fillOpacity(0.4).circle(mmToPt(s.cx) + ox, mmToPt(s.cy) + oy, mmToPt(s.r)).fill();
+  doc.fillColor('#ffffff').fillOpacity(1);
+  const [a, b, c] = s.triangle.map(([x, y]) => [mmToPt(x) + ox, mmToPt(y) + oy] as const);
+  doc.moveTo(a[0], a[1]).lineTo(b[0], b[1]).lineTo(c[0], c[1]).closePath().fill();
+  doc.restore();
+}
+
 async function drawFrames(doc: PDFKit.PDFDocument, frames: BookFrame[], ox: number, oy: number, ctx: BookPdfContext, m: Measurer): Promise<void> {
   const srgb = ctx.x4 ? X4.get(doc)?.srgb : undefined;
   if (ctx.x4 && !srgb) throw new Error('writeBookPdf: x4 needs applyPdfX4 first');
@@ -416,6 +427,7 @@ async function drawFrames(doc: PDFKit.PDFDocument, frames: BookFrame[], ox: numb
     const box = { x: mmToPt(f.box.x) + ox, y: mmToPt(f.box.y) + oy, w: mmToPt(f.box.w), h: mmToPt(f.box.h) };
     const data = f.kind === 'photo' ? await ctx.image(f.imageKey) : await ctx.mapImage(f.file);
     if (data) drawImage(doc, data, box, f.kind === 'photo' ? f.fit : 'fill', srgb);
+    if (data && f.kind === 'photo' && f.video) drawPlaySymbol(doc, f.box, ox, oy);
   }
   for (const f of frames) if (f.kind === 'text') drawTextFrame(doc, f, ox, oy, m);
 }

@@ -2,7 +2,7 @@ import { afterRenderEffect, Component, computed, ElementRef, input, output, sign
 import { IonIcon } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { BookFrame, BookPage, JournalBookI18n, PAGE_H, PAGE_W, TextStyle } from '@okr/travel-journal-util';
+import { BookFrame, BookPage, JournalBookI18n, PAGE_H, PAGE_W, PLAY_SYMBOL_INSET_MM, PLAY_SYMBOL_MM, TextStyle } from '@okr/travel-journal-util';
 
 import { bookTextClass, ensureBookStyles } from './journal-book-styles';
 
@@ -32,6 +32,8 @@ type MapFrame = Extract<BookFrame, { kind: 'map' }>;
     .photo { background: #1b1b1b; }
     .photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .photo img.whole { object-fit: contain; }
+    .play { position: absolute; border-radius: 50%; background: rgba(0, 0, 0, 0.4); }
+    .play::after { content: ''; position: absolute; left: 4.38mm; top: 3.3mm; border-style: solid; border-width: 2.7mm 0 2.7mm 4.86mm; /* = playSymbolOf */ border-color: transparent transparent transparent #fff; }
     .photo.active { outline: 6px solid var(--ion-color-tertiary); outline-offset: -6px; }
     .map { background: #10253d; color: #9fb3c8; display: flex; align-items: center; justify-content: center; font: 600 14pt sans-serif; }
     .number { position: absolute; bottom: 2px; right: 6px; font-size: 0.7rem; color: #8a8a8a; }
@@ -47,6 +49,9 @@ type MapFrame = Extract<BookFrame, { kind: 'map' }>;
             <div class="frame photo" [class.active]="p.imageKey === selectedImageKey()" [style.left.mm]="p.box.x" [style.top.mm]="p.box.y"
               [style.width.mm]="p.box.w" [style.height.mm]="p.box.h" (click)="photoClicked.emit(p.imageKey)">
               @if (imageUrls()[p.imageKey]; as url) { <img [src]="url" [class.whole]="p.fit === 'whole'" loading="lazy" alt="" /> }
+              @if (p.video) {
+                <span class="play" [style.left.mm]="playLeft(p)" [style.top.mm]="playTop(p)" [style.width.mm]="playSize" [style.height.mm]="playSize"></span>
+              }
             </div>
           }
           @if (textOf(f); as t) {
@@ -102,6 +107,14 @@ export class JournalBookPreview {
     });
   }
 
+  protected readonly playSize = PLAY_SYMBOL_MM;
+  // relative to the frame, which is clipped to the page's bleed: the symbol sits inside the trimmed page (as the PDF)
+  protected playLeft(p: PhotoFrame): number {
+    return Math.max(p.box.x, 0) - p.box.x + PLAY_SYMBOL_INSET_MM;
+  }
+  protected playTop(p: PhotoFrame): number {
+    return Math.min(p.box.y + p.box.h, PAGE_H) - p.box.y - PLAY_SYMBOL_INSET_MM - PLAY_SYMBOL_MM;
+  }
   protected photoOf(f: BookFrame): PhotoFrame | undefined {
     return f.kind === 'photo' ? f : undefined;
   }

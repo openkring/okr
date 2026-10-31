@@ -313,7 +313,7 @@ export class JournalBookPage {
     if (!this.bookLoaded()) return;
     const images = this.images();
     const seen = new Set<string>();
-    const covers = this.footprints().flatMap((f) => f.blocks).flatMap((b) => b.imageKeys ?? [])
+    const covers = this.footprints().flatMap((f) => f.blocks).filter((b) => b.kind !== 'video').flatMap((b) => b.imageKeys ?? []) // a video poster is no cover
       .filter((k) => images.has(k) && !seen.has(k) && seen.add(k))
       .map((key) => ({ key, url: this.fileUrl.url(images.get(key)?.path400) }));
     const modal = await this.modalController.create({
