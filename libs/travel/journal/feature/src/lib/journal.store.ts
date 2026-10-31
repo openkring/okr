@@ -29,6 +29,7 @@ import { BookExportStatus, JournalBookExporter, NO_BOOK_EXPORT } from './journal
 import { JournalFileUrlService } from './journal-file-url.service';
 import { JournalGoogleSessions } from './journal-google-sessions';
 import { JournalWebPhotos, WebPhoto } from './journal-web-photos.service';
+import { JournalWebVideos } from './journal-web-videos.service';
 
 const SYNC_INTERVAL_MS = 2 * 60 * 1000;
 const META_PHOTO_MODE = 'photoMode';
@@ -139,6 +140,7 @@ export const JournalStore = signalStore(
     lockService: inject(JournalLockService),
     webWriter: inject(JournalWebWriter),
     webPhotos: inject(JournalWebPhotos),
+    webVideos: inject(JournalWebVideos),
     firestore: inject(FIRESTORE),
     googleTiles: inject(GoogleTiles),
     i18nService: inject(I18nService),
@@ -250,14 +252,33 @@ export const JournalStore = signalStore(
       return { drafts, imageKeys, photos, skipped };
     }
 
-    /** Picks clips (iPad only: the plugin converts each to the web version) and builds one image record per clip. */
+    /**
+     * Browser (spec 1.126 phase 5): picks clips, uploads each original and has the function convert it FIRST; only
+     * converted clips get an image record (phase-3 rule). More files than the block has room for are cut off.
+     */
+    async function pickWebVideos(journalKey: string, limit: number, picked?: File[] | Promise<File[]>): Promise<{ videos: PickedVideo[]; skipped: VideoSkip[] }> {
+      if (isOffline()) throw new JournalWriteRefused('offline');
+      const files = (await (picked ?? store.webVideos.pickFiles())).slice(0, limit);
+      if (files.length === 0) return { videos: [], skipped: [] };
+      if (isOffline()) throw new JournalWriteRefused('offline'); // went offline while the dialog was open
+      patchState(store, { webUpload: { done: 0, total: files.length } });
+      try {
+        return await store.webVideos.upload(journalKey, files, (done, total) => patchState(store, { webUpload: { done, total } }));
+      } finally {
+        patchState(store, { webUpload: undefined });
+      }
+    }
+
+    /** Picks clips (iPad: the plugin converts each to the web version; browser: the converter function) and builds one image record per clip. */
     async function pickVideoImages(journalKey: string, limit: number, files?: File[] | Promise<File[]>): Promise<{ drafts: ChangeDraft[]; imageKeys: string[]; videos: PickedVideo[]; skipped: VideoSkip[] }> {
       if (!store.author()) throw new JournalWriteRefused('noAuthor'); // before the picker opens
-      if (!store.native()) {
-        void files; // the browser branch arrives with store.webVideos (task 9)
-        throw new JournalWriteRefused('nativeOnly');
+      let videos: PickedVideo[];
+      let skipped: VideoSkip[];
+      if (store.native()) {
+        ({ videos, skipped } = await JournalPhotos.pickVideos({ journalKey, limit }));
+      } else {
+        ({ videos, skipped } = await pickWebVideos(journalKey, limit, files));
       }
-      const { videos, skipped } = await JournalPhotos.pickVideos({ journalKey, limit });
       const drafts: ChangeDraft[] = [];
       const imageKeys: string[] = [];
       for (const video of videos) {

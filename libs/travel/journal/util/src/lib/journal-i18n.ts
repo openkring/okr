@@ -46,7 +46,6 @@ export const JOURNAL_I18N_KEYS = {
   video_skipped_too_long: PFX + 'video.skipped_too_long',
   video_skipped_too_large: PFX + 'video.skipped_too_large',
   video_limit: PFX + 'video.limit',
-  video_native_only: PFX + 'video.native_only',
   video_not_loaded: PFX + 'video.not_loaded',
   photos_added: PFX + 'photos.added',
   photos_skipped: PFX + 'photos.skipped',

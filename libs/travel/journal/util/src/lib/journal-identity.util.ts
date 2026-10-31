@@ -9,7 +9,7 @@ import { ChangeStamp } from './journal-change.util';
 export interface BoundAuthor { personKey: string; name: string }
 
 /** Why a write was refused; the UI shows a message per reason. */
-export type JournalWriteRefusal = 'noAuthor' | 'notOwner' | 'othersContent' | 'outdated' | 'offline' | 'videoLimit' | 'nativeOnly';
+export type JournalWriteRefusal = 'noAuthor' | 'notOwner' | 'othersContent' | 'outdated' | 'offline' | 'videoLimit';
 
 export class JournalWriteRefused extends Error {
   public constructor(public readonly reason: JournalWriteRefusal) {

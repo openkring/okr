@@ -55,7 +55,7 @@ export class JournalFileUrlService {
     if (!relativePath) return '';
     const url = this.signed()[relativePath];
     if (url !== undefined) return url;
-    const match = /^journals\/([A-Za-z0-9_-]+)\/([A-Za-z0-9_-]+\.jpg)$/.exec(relativePath);
+    const match = /^journals\/([A-Za-z0-9_-]+)\/([A-Za-z0-9_-]+(?:\.jpg|-video\.mp4))$/.exec(relativePath);
     if (match && !this.requested.has(relativePath)) {
       this.requested.add(relativePath);
       const files = this.pending.get(match[1]) ?? new Set<string>();

@@ -18,6 +18,7 @@ import { blockActions, footprintMenu, FootprintFormModel, htmlToPlainText, lostV
 import type { VideoSkipReason } from '@okr/travel-journal-data-access';
 import { JournalFileUrlService } from './journal-file-url.service';
 import { JournalWebPhotos } from './journal-web-photos.service';
+import { JournalWebVideos } from './journal-web-videos.service';
 import { showJournalError } from './journal-errors';
 import { openJournalMenu } from './journal-menu-open';
 import { JOURNAL_ICONS } from './journal-icons';
@@ -123,6 +124,7 @@ export class JournalStoryPage {
   private readonly appStore = inject(AppStore);
   private readonly fileUrl = inject(JournalFileUrlService);
   private readonly webPhotos = inject(JournalWebPhotos);
+  private readonly webVideos = inject(JournalWebVideos);
   private readonly router = inject(Router);
   private readonly modalController = inject(ModalController);
   private readonly actionSheetController = inject(ActionSheetController);
@@ -295,9 +297,9 @@ export class JournalStoryPage {
     const options = createActionSheetOptions(i18n.add_block_title());
     let files: Promise<File[]> | undefined;
     const photos = createActionSheetButton('block.photos', i18n.story_add_photos(), imgix, 'images');
-    if (!this.store.native()) photos.handler = () => { files = this.pickWebFiles(); };
+    if (!this.store.native()) photos.handler = () => { files = this.pickWebFiles(this.webPhotos); };
     const video = createActionSheetButton('block.video', i18n.story_add_video(), imgix, 'video');
-    if (!this.store.native()) video.handler = () => { files = this.pickWebFiles(); };
+    if (!this.store.native()) video.handler = () => { files = this.pickWebFiles(this.webVideos); };
     options.buttons.push(
       createActionSheetButton('block.text', i18n.story_add_text(), imgix, 'text'),
       photos,
@@ -318,9 +320,9 @@ export class JournalStoryPage {
    * Undefined on native (the store opens the Photos library itself), offline or without an author: the store
    * then refuses with its own message before any dialog.
    */
-  private pickWebFiles(): Promise<File[]> | undefined {
+  private pickWebFiles(picker: { pickFiles(): Promise<File[]> }): Promise<File[]> | undefined {
     if (this.store.native() || !navigator.onLine || !this.store.author()) return undefined;
-    return this.webPhotos.pickFiles();
+    return picker.pickFiles();
   }
 
   /** In edit mode a tap on a block opens its ActionSheet (unless somebody else is editing it); outside edit mode a tap does nothing. */
@@ -367,7 +369,7 @@ export class JournalStoryPage {
     let files: Promise<File[]> | undefined;
     const button = (a: string) => {
       const b = createActionSheetButton(a, texts[a][0], imgix, texts[a][1]);
-      if ((a === 'block.addphotos' || a === 'block.addvideos') && !this.store.native()) b.handler = () => { files = this.pickWebFiles(); };
+      if ((a === 'block.addphotos' || a === 'block.addvideos') && !this.store.native()) b.handler = () => { files = this.pickWebFiles(a === 'block.addvideos' ? this.webVideos : this.webPhotos); };
       return b;
     };
     options.buttons.push(

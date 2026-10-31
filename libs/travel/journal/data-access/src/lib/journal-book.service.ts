@@ -15,10 +15,15 @@ export interface JournalFileUpload { file: string; done: boolean; url?: string; 
 const REGION = 'europe-west6';
 /** The export runs up to an hour in the function (timeoutSeconds 3600); the SDK default of 70 s would abort the call. */
 const EXPORT_TIMEOUT_MS = 3_600_000;
+/** The function runs at most 300 s; the SDK default of 70 s would abort a call it still finishes. */
+const CONVERT_TIMEOUT_MS = 330_000;
 const UPLOAD_CHUNK = 50; // prepareJournalPhotoUploads takes at most 50 files per call
 const LINKS_TRIES = 3;
 const LINKS_BACKOFF_MS = 2000;
 const PUT_TIMEOUT_MS = 120_000; // a stalled signed-URL upload throws like any failed one
+
+/** Response of convertJournalVideo: size and length of the web version, plus what the clip's metadata knew. */
+export interface JournalVideoConverted { width: number; height: number; durationSec: number; takenAt?: string; latitude?: number; longitude?: number }
 
 /**
  * The travel book document of a journal (spec 1.113 phase 2 §6), `journal-books/{journalKey}`. Authors only
@@ -113,10 +118,29 @@ export class JournalBookService {
     return retryWithBackoff(async () => (await fn({ op: 'links', journalKey })).data, LINKS_TRIES, LINKS_BACKOFF_MS);
   }
 
-  /** PUTs a file to its signed URL from the browser (the iPad uses the native plugin instead); a stalled upload aborts after 2 min. */
-  public async putFile(upload: JournalFileUpload, data: Blob): Promise<void> {
+  /**
+   * PUTs a file to its signed URL from the browser (the iPad uses the native plugin instead); a stalled upload aborts
+   * after `timeoutMs` (default 2 min; browser video originals take 10 min).
+   */
+  public async putFile(upload: JournalFileUpload, data: Blob, timeoutMs = PUT_TIMEOUT_MS): Promise<void> {
     if (!upload.url) return;
-    const response = await fetch(upload.url, { method: 'PUT', headers: upload.headers ?? {}, body: data, signal: AbortSignal.timeout(PUT_TIMEOUT_MS) });
+    const response = await fetch(upload.url, { method: 'PUT', headers: upload.headers ?? {}, body: data, signal: AbortSignal.timeout(timeoutMs) });
     if (!response.ok) throw new Error(`upload of ${upload.file} failed: ${response.status}`);
+  }
+
+  /** Signed PUT URL for the original of a browser video (`<name>-source`, at most 500 MB). */
+  public async prepareVideoUpload(journalKey: string, name: string, contentType: string): Promise<JournalFileUpload> {
+    const fn = httpsCallable<unknown, { url: string; headers?: Record<string, string> }>(getFunctions(getApp(), REGION), 'prepareJournalVideoUpload');
+    const { url, headers } = (await fn({ journalKey, name, contentType })).data;
+    return { file: `${name}-source`, done: false, url, headers };
+  }
+
+  /**
+   * Converts the uploaded original to the web version and poster (ffmpeg in the function, a minute or more for a long
+   * clip). A refusal is an HttpsError whose message is `tooLong`, `tooLarge` or `unreadable`.
+   */
+  public async convertVideo(journalKey: string, name: string): Promise<JournalVideoConverted> {
+    const fn = httpsCallable<unknown, JournalVideoConverted>(getFunctions(getApp(), REGION), 'convertJournalVideo', { timeout: CONVERT_TIMEOUT_MS });
+    return (await fn({ journalKey, name })).data;
   }
 }
