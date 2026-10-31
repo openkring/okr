@@ -199,14 +199,21 @@ function jobsFor(source: TileJob['source'], bbox: Bbox, zMin: number, zMax: numb
   return jobs;
 }
 
+/** The layer kinds a preset's fixed plan has; any other kind on a preset is dropped and plans nothing. */
+const PRESET_KINDS: Record<MapPreset, MapLayerKind[]> = {
+  'antarctica-expedition': ['satellite'],
+  'subantarctic-islands': ['satellite', 'osm'],
+};
+
 const unique = (jobs: TileJob[]): TileJob[] => [...new Map(jobs.map((j) => [j.path, j])).values()];
 
 /** Tile jobs of ONE layer of an area (the per-journal footprints feed the Antarctica satellite detail as today). */
 export function areaLayerTilePlan(area: MapArea, layer: AreaLayer, footprints: { lat: number; lng: number }[]): TileJob[] {
-  if (area.preset === 'antarctica-expedition' && layer.kind === 'satellite') return offlineTilePlan(footprints);
+  if (area.preset === 'antarctica-expedition') return layer.kind === 'satellite' ? offlineTilePlan(footprints) : [];
   if (area.preset === 'subantarctic-islands') {
     if (layer.kind === 'satellite') return jobsFor('gibs', SUBANTARCTIC_BBOX, 3, Math.min(GIBS_MAX_ZOOM, layer.maxZoom));
     if (layer.kind === 'osm') return unique(SUBANTARCTIC_ISLANDS.flatMap((i) => jobsFor('osm', i.bbox, 0, i.maxZoom))); // shared low-zoom tiles
+    return []; // a preset never falls through to a plan over its (large) box
   }
   switch (layer.kind) {
     case 'satellite':
@@ -277,7 +284,7 @@ function withinLimits(area: MapArea): boolean {
 
 /**
  * A layer as stored: a known kind offered for the bbox, an integer maxZoom up to the kind's finest level, at most
- * TILE_CAP tiles. A preset has its own fixed plan, so only kind and zoom range are checked there.
+ * TILE_CAP tiles. A preset has its own fixed plan: only the kinds of that plan are kept, and the zoom range is checked.
  */
 function validLayer(value: unknown, bbox: Bbox, preset: MapPreset | undefined): value is AreaLayer {
   if (typeof value !== 'object' || value === null) return false;
@@ -285,7 +292,7 @@ function validLayer(value: unknown, bbox: Bbox, preset: MapPreset | undefined): 
   const kind = l['kind'] as MapLayerKind;
   const maxZoom = l['maxZoom'];
   if (!LAYER_KINDS.includes(kind) || typeof maxZoom !== 'number' || !Number.isInteger(maxZoom) || maxZoom < 0 || maxZoom > 18) return false;
-  if (preset !== undefined) return true;
+  if (preset !== undefined) return PRESET_KINDS[preset].includes(kind);
   if (!layerKindsFor(bbox).includes(kind)) return false;
   if (maxZoom > Math.max(...layerLevels(kind, bbox).map((level) => level.maxZoom))) return false;
   return countTiles(bbox, layerMinZoom(kind), maxZoom) <= TILE_CAP;

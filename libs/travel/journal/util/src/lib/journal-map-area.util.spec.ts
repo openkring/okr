@@ -231,6 +231,16 @@ describe('journal map areas', () => {
       expect(parseMapAreas([{ ...OSLO, bbox: [4.5, 57.9, 31.2, 71.2], layers: [{ kind: 'osm', maxZoom: 15 }] }])).toEqual([]);
     });
 
+    it('a preset keeps only the layer kinds of its fixed plan', () => {
+      expect(parseMapAreas([{ ...ANTARCTICA_PRESET, layers: [{ kind: 'satellite', maxZoom: 12 }, { kind: 'osm', maxZoom: 18 }] }])[0].layers)
+        .toEqual([{ kind: 'satellite', maxZoom: 12 }]);
+      expect(parseMapAreas([{ ...SUBANTARCTIC_PRESET, layers: [{ kind: 'swisstopo', maxZoom: 18 }, ...SUBANTARCTIC_PRESET.layers] }])[0].layers)
+        .toEqual(SUBANTARCTIC_PRESET.layers);
+      expect(parseMapAreas([{ ...ANTARCTICA_PRESET, layers: [{ kind: 'osm', maxZoom: 18 }] }])).toEqual([]);
+      expect(areaLayerTilePlan(ANTARCTICA_PRESET, { kind: 'osm', maxZoom: 18 }, [])).toEqual([]);
+      expect(areaLayerTilePlan(SUBANTARCTIC_PRESET, { kind: 'swisstopo', maxZoom: 18 }, [])).toEqual([]);
+    });
+
     it('swisstopo outside Switzerland is not offered', () => {
       expect(layerKindsFor([-10, 40, 0, 45])).toEqual(['satellite', 'osm']);
       expect(layerKindsFor(BERN.bbox)).toEqual(['satellite', 'osm', 'swisstopo']);
