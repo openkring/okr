@@ -38,7 +38,7 @@ export function planEntityWrite(records: StoredRecord[], journalKey: string, ent
     case 'section':
       return { path: journalPath(journalKey, JournalSectionCollection, entityKey), data: { ...(sectionDocOf(state, entityKey, journalKey, tenants) ?? ARCHIVED) } };
     case 'image':
-      return { path: journalPath(journalKey, JournalImageCollection, entityKey), data: { ...(imageDocOf(state, entityKey, tenants) ?? ARCHIVED) } };
+      return { path: journalPath(journalKey, JournalImageCollection, entityKey), data: { ...(imageDocOf(state, entityKey, journalKey, tenants) ?? ARCHIVED) } };
     case 'comment':
       return { path: journalPath(journalKey, JournalCommentCollection, entityKey), data: commentDocOf(state, entityKey, tenants) ?? ARCHIVED };
     case 'reaction':

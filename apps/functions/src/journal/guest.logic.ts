@@ -121,14 +121,14 @@ export function guestBlockKind(section: Record<string, unknown>, imageKeys: stri
   return imageKeys.length > 0 && html === '' ? 'photos' : 'text';
 }
 
-/** The playable clips of a video block, in pick order: images without a `videoPath` (or unknown keys) are left out. */
-export function guestVideoClips(imageKeys: string[], imageById: Map<string, Record<string, unknown>>): {
+/** The playable clips of a video block, in pick order: unknown keys and clips whose `videoPath` is not a `-video.mp4` of this journal are left out. */
+export function guestVideoClips(imageKeys: string[], imageById: Map<string, Record<string, unknown>>, tenant: string, journalKey: string): {
   key: string; width?: unknown; height?: unknown; durationSec?: unknown; objectPath: string; posterPath: string;
 }[] {
   return imageKeys.flatMap((key) => {
     const image = imageById.get(key);
     const objectPath = typeof image?.['videoPath'] === 'string' ? image['videoPath'] : '';
-    if (!image || objectPath === '') return [];
+    if (!image || !objectPath.startsWith(`tenant/${tenant}/journal/${journalKey}/`) || !objectPath.endsWith('-video.mp4') || objectPath.includes('..')) return [];
     return [{ key, width: image['width'], height: image['height'], durationSec: image['durationSec'], objectPath, posterPath: typeof image['path2048'] === 'string' ? image['path2048'] : '' }];
   });
 }

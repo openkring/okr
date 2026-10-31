@@ -115,7 +115,7 @@ async function guestView(db: Firestore, jk: string, ctx: GuestContext): Promise<
         const kind = guestBlockKind(section, imageKeys, html);
         const authorName = name(String(section['authorKey'] ?? ''));
         if (kind === 'video') {
-          const clips = guestVideoClips(imageKeys, imageById);
+          const clips = guestVideoClips(imageKeys, imageById, ctx.tenants[0] ?? '', jk);
           const signed = await Promise.all(clips.map(async (clip) => {
             try {
               const [url] = await privateBucket().file(clip.objectPath).getSignedUrl({ version: 'v4', action: 'read', expires: expires * 1000 });

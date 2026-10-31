@@ -78,13 +78,22 @@ describe('guestBlockKind', () => {
 });
 
 describe('guestVideoClips', () => {
+  it('skips a clip whose path is another journal, tenant or not a video file', () => {
+    const other = new Map<string, Record<string, unknown>>([
+      ['a', { videoPath: 'tenant/t/journal/other/a-video.mp4' }],
+      ['b', { videoPath: 'tenant/x/journal/j/b-video.mp4' }],
+      ['c', { videoPath: 'tenant/t/journal/j/c.pdf' }],
+      ['d', { videoPath: 'tenant/t/journal/j/d-video.mp4' }],
+    ]);
+    expect(guestVideoClips(['a', 'b', 'c', 'd'], other, 't', 'j').map((c) => c.key)).toEqual(['d']);
+  });
   const images = new Map<string, Record<string, unknown>>([
     ['a', { width: 1920, height: 1080, durationSec: 5, videoPath: 'tenant/t/journal/j/a-video.mp4', path2048: 'tenant/t/journal/j/a-2048.jpg' }],
     ['b', { width: 10, height: 10, path2048: 'tenant/t/journal/j/b-2048.jpg' }],
     ['c', { width: 640, height: 360, durationSec: 2, videoPath: 'tenant/t/journal/j/c-video.mp4' }],
   ]);
   it('keeps pick order and skips unknown images and photos without videoPath', () => {
-    expect(guestVideoClips(['c', 'x', 'b', 'a'], images)).toEqual([
+    expect(guestVideoClips(['c', 'x', 'b', 'a'], images, 't', 'j')).toEqual([
       { key: 'c', width: 640, height: 360, durationSec: 2, objectPath: 'tenant/t/journal/j/c-video.mp4', posterPath: '' },
       { key: 'a', width: 1920, height: 1080, durationSec: 5, objectPath: 'tenant/t/journal/j/a-video.mp4', posterPath: 'tenant/t/journal/j/a-2048.jpg' },
     ]);

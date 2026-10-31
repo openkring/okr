@@ -108,7 +108,7 @@ describe('journal server util', () => {
     const state = materialize([
       rec({ entity: 'image', entityKey: 'i1', op: 'create', fields: { journalKey: 'j1', width: 2048, height: 1536, path2048: 'journals/j1/a-2048.jpg', path400: 'journals/j1/a-400.jpg', localIdentifier: 'L1' } }),
     ]);
-    expect(imageDocOf(state, 'i1', ['bkg'])).toEqual({
+    expect(imageDocOf(state, 'i1', 'j1', ['bkg'])).toEqual({
       okey: 'i1', tenants: ['bkg'], isArchived: false, journalKey: 'j1', authorKey: 'bruno', width: 2048, height: 1536,
       path2048: 'tenant/bkg/journal/j1/a-2048.jpg', path400: 'tenant/bkg/journal/j1/a-400.jpg',
     });
@@ -119,11 +119,31 @@ describe('journal server util', () => {
       rec({ entity: 'image', entityKey: 'v1', op: 'create', fields: { journalKey: 'j1', path2048: 'journals/j1/n-2048.jpg', path400: 'journals/j1/n-400.jpg', videoPath: 'journals/j1/n-video.mp4', durationSec: 12.3 } }),
       rec({ entity: 'image', entityKey: 'p1', op: 'create', fields: { journalKey: 'j1', path2048: 'journals/j1/a-2048.jpg', path400: 'journals/j1/a-400.jpg' } }),
     ]);
-    const doc = imageDocOf(clip, 'v1', ['bkg']);
+    const doc = imageDocOf(clip, 'v1', 'j1', ['bkg']);
     expect(doc?.videoPath).toBe('tenant/bkg/journal/j1/n-video.mp4');
     expect(doc?.durationSec).toBe(12.3);
-    expect(imageDocOf(clip, 'p1', ['bkg'])).not.toHaveProperty('videoPath');
-    expect(imageDocOf(clip, 'p1', ['bkg'])).not.toHaveProperty('durationSec');
+    expect(imageDocOf(clip, 'p1', 'j1', ['bkg'])).not.toHaveProperty('videoPath');
+    expect(imageDocOf(clip, 'p1', 'j1', ['bkg'])).not.toHaveProperty('durationSec');
+  });
+
+  it('imageDocOf builds paths from the trusted journal key, not the record field', () => {
+    const state = materialize([
+      rec({ entity: 'image', entityKey: 'v1', op: 'create', fields: { journalKey: 'other', path2048: 'journals/other/n-2048.jpg', path400: 'journals/other/n-400.jpg', videoPath: 'journals/other/n-video.mp4' } }),
+    ]);
+    const doc = imageDocOf(state, 'v1', 'j1', ['bkg']);
+    expect(doc?.journalKey).toBe('j1');
+    expect(doc?.path2048).toBe('tenant/bkg/journal/j1/n-2048.jpg');
+    expect(doc?.videoPath).toBe('tenant/bkg/journal/j1/n-video.mp4');
+  });
+
+  it('imageDocOf omits a videoPath that is not an mp4 clip file name', () => {
+    const state = materialize([
+      rec({ entity: 'image', entityKey: 'e1', op: 'create', fields: { journalKey: 'j1', videoPath: 'journals/j1/evil.pdf' } }),
+      rec({ entity: 'image', entityKey: 'e2', op: 'create', fields: { journalKey: 'j1', videoPath: 'journals/j1/../x-video.mp4' } }),
+    ]);
+    expect(imageDocOf(state, 'e1', 'j1', ['bkg'])).not.toHaveProperty('videoPath');
+    // only the file name is kept, so a traversal prefix cannot leave the journal's folder
+    expect(imageDocOf(state, 'e2', 'j1', ['bkg'])?.videoPath).toBe('tenant/bkg/journal/j1/x-video.mp4');
   });
 
   it("storagePath strips the device's journals/<jk>/ prefix", () => {

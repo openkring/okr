@@ -111,11 +111,14 @@ export function conflictCopyDocOf(block: BlockView, footprintKey: string, journa
   });
 }
 
-export function imageDocOf(state: JournalState, imageKey: string, tenants: string[]): JournalImageModel | undefined {
+const VIDEO_FILE = /^[A-Za-z0-9_-]{1,94}-video\.mp4$/;
+
+/** Stored image fields are author-controlled: every path is built under the trusted `journalKey` argument. */
+export function imageDocOf(state: JournalState, imageKey: string, journalKey: string, tenants: string[]): JournalImageModel | undefined {
   const { entityState, view: v } = view(state, 'image', imageKey);
   if (!v) return undefined;
-  const journalKey = str(v['journalKey']);
   const tenant = tenants[0] ?? '';
+  const videoFile = (str(v['videoPath']).split('/').pop() ?? '');
   return defined({
     okey: imageKey, tenants, isArchived: false, journalKey, authorKey: entityState?.ownerKey ?? '',
     takenAt: typeof v['takenAt'] === 'string' ? v['takenAt'] : undefined,
@@ -123,7 +126,7 @@ export function imageDocOf(state: JournalState, imageKey: string, tenants: strin
     width: num(v['width']) ?? 0, height: num(v['height']) ?? 0,
     path2048: storagePath(tenant, journalKey, str(v['path2048'])),
     path400: storagePath(tenant, journalKey, str(v['path400'])),
-    videoPath: str(v['videoPath']) === '' ? undefined : storagePath(tenant, journalKey, str(v['videoPath'])),
+    videoPath: VIDEO_FILE.test(videoFile) ? storagePath(tenant, journalKey, videoFile) : undefined,
     durationSec: num(v['durationSec']),
   });
 }
