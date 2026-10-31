@@ -39,7 +39,8 @@ export function iosTokensOf(docs: BadgeTokenDoc[]): BadgeTokenDoc[] {
 }
 
 export const onBadgeCountsWritten = onDocumentWritten(
-  { document: 'users/{uid}/badge/{docId}', region: REGION },
+  // explicit cap (europe-west6 CPU quota is full, see init.ts)
+  { document: 'users/{uid}/badge/{docId}', region: REGION, maxInstances: 5 },
   async (trigger) => {
     if (trigger.params.docId !== BADGE_COUNTS_DOC_ID) return;
     const before = trigger.data?.before?.exists ? (trigger.data.before.data() as Partial<ServerBadgeLedger>) : undefined;

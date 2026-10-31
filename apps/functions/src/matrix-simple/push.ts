@@ -161,7 +161,15 @@ export const sendCallNotification = onCall(
     const staleTokenDeletions: Promise<unknown>[] = [];
     for (let start = 0; start < messages.length; start += CALL_SEND_CHUNK) {
       const chunkEntries = tokenEntries.slice(start, start + CALL_SEND_CHUNK);
-      const response = await getMessaging().sendEach(messages.slice(start, start + CALL_SEND_CHUNK));
+      let response;
+      try {
+        response = await getMessaging().sendEach(messages.slice(start, start + CALL_SEND_CHUNK));
+      } catch (err) {
+        // One rejected chunk must not stop the remaining ones (same rule as pushToPersons).
+        console.warn(`sendCallNotification: sendEach failed for a chunk of ${chunkEntries.length} devices:`, err);
+        failureCount += chunkEntries.length;
+        continue;
+      }
       successCount += response.successCount;
       failureCount += response.failureCount;
       response.responses.forEach((r, i) => {

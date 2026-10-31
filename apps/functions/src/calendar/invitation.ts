@@ -151,7 +151,8 @@ export const onInvitationCreated = onDocumentCreated(
  * new tenant; the account of the old one is corrected when its app opens.
  */
 export const onInvitationWritten = onDocumentWritten(
-  { document: 'invitations/{invitationId}', region: REGION },
+  // explicit cap (europe-west6 CPU quota is full, see init.ts)
+  { document: 'invitations/{invitationId}', region: REGION, maxInstances: 5 },
   async (trigger) => {
     const before = trigger.data?.before?.exists ? (trigger.data.before.data() as InvitationDoc) : undefined;
     const after = trigger.data?.after?.exists ? (trigger.data.after.data() as InvitationDoc) : undefined;
