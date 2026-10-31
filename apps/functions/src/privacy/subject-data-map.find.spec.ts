@@ -280,6 +280,7 @@ describe('find() query shapes', () => {
     const exceptions: Record<string, string> = {
       'users/fcmTokens': 'users',
       seen: 'users',
+      badge: 'users',
       stats_members: 'stats_members',
       'trips/tracker': 'trips',
       esignAudit: 'deletions',

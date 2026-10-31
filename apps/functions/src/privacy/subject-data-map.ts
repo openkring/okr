@@ -255,6 +255,20 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     retention: LOG_12M,
   },
   {
+    // `BadgeCollection`: the subcollection `users/{uid}/badge/counts` (BadgeCountsModel, spec
+    // 1.127 §3.7) — derived badge counts. Same shape and fate as `seen`: pinned to the uid, no
+    // tenant dimension, and it would outlive a deleted users doc without this row.
+    collection: 'badge',
+    dataClass: 'log',
+    tier: 'T1',
+    onTenantExit: 'retain',
+    find: (c: SubjectCtx) => db().collection('users').doc(c.uid).collection('badge'),
+    tenantScope: 'none',
+    onExport: 'none',             // derived counters, not a record about the member
+    onErasure: 'delete',
+    retention: LOG_12M,
+  },
+  {
     collection: 'avatars',
     dataClass: 'identity',
     tier: 'T2',   // a picture is voluntary (spec §3) — erasable while the membership runs

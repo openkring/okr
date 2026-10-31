@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { androidDisplay, appleDisplay, buildPushData, selectUserDocs, withAppName } from './push';
+import { androidDisplay, appleDisplay, buildPushData, buildTokenMessage, nativeChannelFor, selectUserDocs, withAppName } from './push';
 
 describe('buildPushData', () => {
   const base = { type: 'calevent', title: 'Training', body: 'Faellt aus', url: '/calevent/e1', tenantId: 'scs' };
@@ -122,5 +122,41 @@ describe('appleDisplay', () => {
   // An alert combined with content-available is undefined per Apple (see the chat push).
   it('never marks the alert as a background push', () => {
     expect(appleDisplay('t', 'b', 1).payload?.aps).not.toHaveProperty('content-available');
+  });
+});
+
+describe('buildTokenMessage / nativeChannelFor (1.127 B1)', () => {
+  const data = { type: 'chat', tenantId: 'scs', title: 'T', body: 'B', url: '/x' };
+  const entry = { token: 'tok', uid: 'u', docId: 'd' };
+
+  it('buildTokenMessage gives an android token its kind channel', () => {
+    const m = buildTokenMessage({ ...entry, platform: 'android' }, data, 4, { priority: 'normal' });
+    expect(m.android?.notification?.channelId).toBe('okr_chat');
+    expect(m.android?.notification?.notificationCount).toBe(4);
+    expect(m.token).toBe('tok');
+  });
+
+  it('old token keeps okr_default and no badge-only push', () => {
+    const m = buildTokenMessage(entry, data, undefined, { priority: 'normal' });
+    expect(m.android?.notification?.channelId).toBe('okr_default');
+    expect(m.data).toEqual(data);
+  });
+
+  it('badge undefined leaves aps.badge and notification_count out; 0 sets aps.badge 0', () => {
+    const none = buildTokenMessage({ ...entry, platform: 'ios' }, data, undefined, { priority: 'normal' });
+    expect((none.apns?.payload?.aps as Record<string, unknown>)['badge']).toBeUndefined();
+    expect(none.android?.notification && 'notificationCount' in none.android.notification).toBe(false);
+    const zero = buildTokenMessage({ ...entry, platform: 'ios' }, data, 0, { priority: 'normal' });
+    expect((zero.apns?.payload?.aps as Record<string, unknown>)['badge']).toBe(0);
+  });
+
+  it('nativeChannelFor maps sender types', () => {
+    expect(nativeChannelFor('chat')).toBe('okr_chat');
+    expect(nativeChannelFor('video-call')).toBe('okr_call');
+    expect(nativeChannelFor('task')).toBe('okr_tasks');
+    expect(nativeChannelFor('calevent')).toBe('okr_events');
+    expect(nativeChannelFor('file-transfer')).toBe('okr_default');
+    expect(nativeChannelFor('trackRequest')).toBe('okr_default');
+    expect(nativeChannelFor('whatever')).toBe('okr_default');
   });
 });

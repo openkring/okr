@@ -26,8 +26,10 @@
 
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
-import { getMessaging, type AndroidConfig, type ApnsConfig } from 'firebase-admin/messaging';
-import { NATIVE_PUSH_CHANNEL_ID } from '@okr/shared-constants';
+import { getMessaging, type AndroidConfig, type ApnsConfig, type TokenMessage } from 'firebase-admin/messaging';
+import { NATIVE_PUSH_CHANNEL_ID, type NativePushChannelId } from '@okr/shared-constants';
+import type { PushTokenPlatform } from '@okr/shared-util-core';
+import { readBadgeSums } from '../badge/ledger';
 
 export interface PushPayload {
   /** Routing discriminator read by the service worker and the in-app handler. */
@@ -61,6 +63,27 @@ export interface TokenEntry {
   token: string;
   uid: string;
   docId: string;
+  /** Written by new builds only; old token docs have none and count as unknown. */
+  platform?: PushTokenPlatform;
+}
+
+const PLATFORMS: readonly string[] = ['ios', 'android', 'web'];
+
+/** FCM allows 500 messages per `sendEach`. */
+const SEND_CHUNK = 500;
+
+/**
+ * The native Android channel for a push `type` (the discriminator the senders pass). Anything
+ * unlisted — file transfers, track requests — stays on the catch-all `okr_default`.
+ */
+export function nativeChannelFor(type: string): NativePushChannelId {
+  switch (type) {
+    case 'chat': return 'okr_chat';
+    case 'video-call': return 'okr_call';
+    case 'task': return 'okr_tasks';
+    case 'calevent': return 'okr_events';
+    default: return NATIVE_PUSH_CHANNEL_ID;
+  }
 }
 
 /**
@@ -89,6 +112,7 @@ export interface UserAccount {
   uid: string;
   tenants?: string[];
   isArchived?: boolean;
+  roles?: Record<string, boolean>;
 }
 
 /**
@@ -121,8 +145,39 @@ export function appleDisplay(title: string, body: string, badge?: number): ApnsC
   };
 }
 
-export function androidDisplay(title: string, body: string, priority: 'high' | 'normal', tag?: string): AndroidConfig {
-  return { priority, notification: { title, body, channelId: NATIVE_PUSH_CHANNEL_ID, ...(tag ? { tag } : {}) } };
+export function androidDisplay(
+  title: string,
+  body: string,
+  priority: 'high' | 'normal',
+  tag?: string,
+  channelId: string = NATIVE_PUSH_CHANNEL_ID,
+  badge?: number,
+): AndroidConfig {
+  return {
+    priority,
+    notification: { title, body, channelId, ...(tag ? { tag } : {}), ...(badge === undefined ? {} : { notificationCount: badge }) },
+  };
+}
+
+/**
+ * One device's message: the shared data map plus the native blocks. A per-kind channel goes only
+ * to `platform: 'android'` tokens — only builds that write `platform` also create the channels;
+ * an older build would get a channel it never made and Android would drop the banner. The badge
+ * is the server ledger sum, left out entirely while unknown (never a guess).
+ */
+export function buildTokenMessage(
+  entry: TokenEntry,
+  data: Record<string, string>,
+  badge: number | undefined,
+  kind: { priority: 'high' | 'normal'; tag?: string },
+): TokenMessage {
+  const channelId = entry.platform === 'android' ? nativeChannelFor(data['type']) : NATIVE_PUSH_CHANNEL_ID;
+  return {
+    token: entry.token,
+    data,
+    android: androidDisplay(data['title'], data['body'], kind.priority, kind.tag, channelId, badge),
+    apns: appleDisplay(data['title'], data['body'], badge),
+  };
 }
 
 export function selectUserDocs(accounts: UserAccount[], tenantId: string): UserAccount[] {
@@ -155,23 +210,36 @@ export async function appNameFor(tenantId: string): Promise<string> {
  * Persons without such an account drop out. Exported for `sendCallNotification`, which
  * builds its own message but must pick accounts by the same rule.
  */
-export async function collectTokens(personKeys: string[], tenantId: string): Promise<TokenEntry[]> {
+export async function accountsInTenant(personKeys: string[], tenantId: string): Promise<UserAccount[]> {
   const db = getFirestore();
   const unique = [...new Set(personKeys.filter((key) => key.length > 0))];
-  const entries: TokenEntry[] = [];
-
-  await Promise.all(unique.map(async (personKey) => {
+  const perPerson = await Promise.all(unique.map(async (personKey) => {
     const usersSnap = await db.collection('users').where('personKey', '==', personKey).get();
-    const accounts = usersSnap.docs.map((doc) => ({
+    return selectUserDocs(usersSnap.docs.map((doc) => ({
       uid: doc.id,
       tenants: doc.data()['tenants'] as string[] | undefined,
       isArchived: doc.data()['isArchived'] as boolean | undefined,
-    }));
-    for (const account of selectUserDocs(accounts, tenantId)) {
-      const tokensSnap = await db.collection('users').doc(account.uid).collection('fcmTokens').get();
-      for (const doc of tokensSnap.docs) {
-        const token = doc.data()['token'] as string | undefined;
-        if (token) entries.push({ token, uid: account.uid, docId: doc.id });
+      roles: doc.data()['roles'] as Record<string, boolean> | undefined,
+    })), tenantId);
+  }));
+  return perPerson.flat();
+}
+
+export async function collectTokens(personKeys: string[], tenantId: string): Promise<TokenEntry[]> {
+  const db = getFirestore();
+  const entries: TokenEntry[] = [];
+  const accounts = await accountsInTenant(personKeys, tenantId);
+
+  await Promise.all(accounts.map(async (account) => {
+    const tokensSnap = await db.collection('users').doc(account.uid).collection('fcmTokens').get();
+    for (const doc of tokensSnap.docs) {
+      const token = doc.data()['token'] as string | undefined;
+      const platform = doc.data()['platform'] as string | undefined;
+      if (token) {
+        entries.push({
+          token, uid: account.uid, docId: doc.id,
+          ...(platform && PLATFORMS.includes(platform) ? { platform: platform as PushTokenPlatform } : {}),
+        });
       }
     }
   }));
@@ -198,30 +266,34 @@ export async function pushToPersons(
   if (entries.length === 0) return { recipients: 0, sent: 0, failed: 0 };
 
   const data = buildPushData({ ...payload, title: withAppName(await appNameFor(payload.tenantId), payload.title) });
-  const response = await getMessaging().sendEachForMulticast({
-    tokens: entries.map((entry) => entry.token),
-    data,
-    android: androidDisplay(data['title'], data['body'], 'normal', data['channelId']),
-    // native (Capacitor) badge: unchanged by spec 1.93, still the task count alone
-    apns: appleDisplay(data['title'], data['body'], payload.badgeTasks),
-  });
+  // The badge per account from the server ledger; unknown (old builds) stays out of the message.
+  const sums = await readBadgeSums(entries.map((entry) => entry.uid)).catch(() => new Map<string, number | undefined>());
+  const messages = entries.map((entry) => buildTokenMessage(entry, data, sums.get(entry.uid), { priority: 'normal', tag: data['channelId'] }));
 
+  let successCount = 0;
+  let failureCount = 0;
   // A token Firebase reports as unregistered is dead for good — dropping it keeps the next
-  // send from failing on the same device again.
+  // send from failing on the same device again. The index maps back into the chunk's entries.
   const db = getFirestore();
   const deletions: Promise<unknown>[] = [];
-  response.responses.forEach((result, index) => {
-    if (!result.success && result.error?.code === 'messaging/registration-token-not-registered') {
-      const entry = entries[index];
-      deletions.push(
-        db.collection('users').doc(entry.uid).collection('fcmTokens').doc(entry.docId).delete()
-          .catch((err) => logger.warn(`${context}: failed to delete stale token:`, err)),
-      );
-    }
-  });
+  for (let start = 0; start < messages.length; start += SEND_CHUNK) {
+    const chunkEntries = entries.slice(start, start + SEND_CHUNK);
+    const response = await getMessaging().sendEach(messages.slice(start, start + SEND_CHUNK));
+    successCount += response.successCount;
+    failureCount += response.failureCount;
+    response.responses.forEach((result, index) => {
+      if (!result.success && result.error?.code === 'messaging/registration-token-not-registered') {
+        const entry = chunkEntries[index];
+        deletions.push(
+          db.collection('users').doc(entry.uid).collection('fcmTokens').doc(entry.docId).delete()
+            .catch((err) => logger.warn(`${context}: failed to delete stale token:`, err)),
+        );
+      }
+    });
+  }
   await Promise.all(deletions);
 
   // Device count, never a person's identity — same rule as the outbox's send log.
-  logger.info(`${context}: pushed to ${entries.length} device(s), sent=${response.successCount} failed=${response.failureCount}`);
-  return { recipients: entries.length, sent: response.successCount, failed: response.failureCount };
+  logger.info(`${context}: pushed to ${entries.length} device(s), sent=${successCount} failed=${failureCount}`);
+  return { recipients: entries.length, sent: successCount, failed: failureCount };
 }
