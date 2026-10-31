@@ -12,7 +12,7 @@ import { filter, map } from 'rxjs/operators';
 import { ENV } from '@okr/shared-config';
 import { fcmTokenDocId, isBrowser, type PushPermissionState, type PushTokenPlatform } from '@okr/shared-util-core';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { ensureNativePushChannel } from './native-push-channel';
+import { ensureNativePushChannels } from './native-push-channel';
 
 /** Where the Firebase Messaging SDK registers firebase-messaging-sw.js (its DEFAULT_SW_SCOPE). */
 const FCM_SW_SCOPE = '/firebase-cloud-messaging-push-scope';
@@ -302,9 +302,9 @@ export class FcmService {
         return null;
       }
 
-      // Android: our HIGH-importance, lock-screen-private channel (see ensureNativePushChannel).
+      // Android: our HIGH-importance, lock-screen-private channel (see ensureNativePushChannels).
       // Never throws, so a device without channels (API < 26) still registers its token.
-      await ensureNativePushChannel();
+      await ensureNativePushChannels();
 
       // The listeners must be in place before register(): iOS does not retain the event.
       await this.ensureNativeListeners();
