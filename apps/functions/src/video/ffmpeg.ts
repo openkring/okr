@@ -20,12 +20,12 @@ export async function runFfmpeg(binary: string, args: string[]): Promise<void> {
 }
 
 /**
- * Run `ffmpeg -i <input>` and return what it prints about the file. ffmpeg exits non-zero here
+ * Run `ffmpeg` with probe arguments (`-i <input>`) and return what it prints about the file. ffmpeg exits non-zero here
  * ("at least one output file must be specified"), which is expected: only stderr matters.
  */
-export async function probeFfmpeg(binary: string, input: string): Promise<string> {
+export async function probeFfmpeg(binary: string, args: string[]): Promise<string> {
   return await new Promise<string>((resolve, reject) => {
-    const child = spawn(binary, ['-hide_banner', '-i', input], { stdio: ['ignore', 'ignore', 'pipe'] });
+    const child = spawn(binary, args, { stdio: ['ignore', 'ignore', 'pipe'] });
     let stderr = '';
     child.stderr.on('data', (chunk) => { stderr = (stderr + chunk.toString()).slice(-20000); });
     child.on('error', reject);

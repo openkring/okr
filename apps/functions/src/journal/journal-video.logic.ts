@@ -9,11 +9,24 @@ function scaleFilter(side: number): string {
   return `scale=w='if(gt(iw,ih),min(${side},iw),-2)':h='if(gt(iw,ih),-2,min(${side},ih))'`;
 }
 
-export function buildJournalTranscodeArgs(input: string, output: string, videoKbps: 900 | 630): string[] {
+/** HLG / PQ (iPhone HDR) to BT.709 SDR; without it the clip comes out washed out. */
+const TONE_MAP = 'zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv,format=yuv420p';
+
+function videoFilter(side: number, hdr: boolean): string {
+  return hdr ? `${TONE_MAP},${scaleFilter(side)}` : scaleFilter(side);
+}
+
+/** Only local files: the input is untrusted, a playlist or concat file must not make ffmpeg open anything else. */
+const FILE_ONLY = ['-protocol_whitelist', 'file'];
+
+export function buildJournalTranscodeArgs(input: string, output: string, videoKbps: 900 | 630, hdr = false): string[] {
   return [
-    '-i', input,
-    '-vf', scaleFilter(960),
+    ...FILE_ONLY, '-i', input,
+    // never more than the clip limit, whatever the file claims about its own length
+    '-t', String(JOURNAL_VIDEO_MAX_SECONDS),
+    '-vf', videoFilter(960, hdr),
     '-c:v', 'libx264', '-pix_fmt', 'yuv420p',
+    '-color_primaries', 'bt709', '-color_trc', 'bt709', '-colorspace', 'bt709',
     '-b:v', `${videoKbps}k`, '-maxrate', `${videoKbps}k`, '-bufsize', `${videoKbps * 2}k`,
     '-c:a', 'aac', '-b:a', '64k', '-ac', '1',
     '-movflags', '+faststart',
@@ -21,12 +34,35 @@ export function buildJournalTranscodeArgs(input: string, output: string, videoKb
   ];
 }
 
-export function buildJournalPosterArgs(input: string, out2048: string, out400: string, atSecond: number): string[] {
+export function buildJournalPosterArgs(input: string, out2048: string, out400: string, atSecond: number, hdr = false): string[] {
   return [
-    '-ss', String(atSecond), '-i', input,
-    '-frames:v', '1', '-vf', scaleFilter(2048), '-q:v', '3', '-y', out2048,
-    '-frames:v', '1', '-vf', scaleFilter(400), '-q:v', '3', '-y', out400,
+    '-ss', String(atSecond), ...FILE_ONLY, '-i', input,
+    '-frames:v', '1', '-vf', videoFilter(2048, hdr), '-q:v', '3', '-y', out2048,
+    '-frames:v', '1', '-vf', videoFilter(400, hdr), '-q:v', '3', '-y', out400,
   ];
+}
+
+/** Arguments of the probe run (`ffmpeg -i`), local files only. */
+export function buildJournalProbeArgs(input: string): string[] {
+  return ['-hide_banner', ...FILE_ONLY, '-i', input];
+}
+
+/** Container demuxers a journal clip may come in: MP4/MOV (phones, Safari) and Matroska/WebM (Chrome, Firefox). */
+export function isAcceptedContainer(stderr: string): boolean {
+  const line = /^Input #0, ([^ ]+), from /m.exec(stderr);
+  if (!line) return false;
+  return line[1].split(',').some((f) => ['mov', 'mp4', 'matroska', 'webm'].includes(f));
+}
+
+const STALE_SOURCE = /^tenant\/[^/]+\/journal\/[^/]+\/[^/]+-source$/;
+const SOURCE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+/** A browser original older than 24 h. A missing or invalid creation time never counts as stale. */
+export function isStaleSource(name: string, timeCreated: unknown, nowMs: number): boolean {
+  if (!STALE_SOURCE.test(name) || typeof timeCreated !== 'string') return false;
+  const createdMs = new Date(timeCreated).getTime();
+  if (!Number.isFinite(createdMs) || createdMs <= 0) return false;
+  return nowMs - createdMs > SOURCE_MAX_AGE_MS;
 }
 
 export interface FfmpegInfo {
@@ -37,15 +73,17 @@ export interface FfmpegInfo {
   creationTime?: string;
   latitude?: number;
   longitude?: number;
+  hdr?: boolean;
 }
 
 /** Reads the report `ffmpeg -i <file>` prints to stderr. Width/height come back upright (swapped for ±90°). */
 export function parseFfmpegInfo(stderr: string): FfmpegInfo {
   const info: FfmpegInfo = {};
-  const dur = /Duration:\s*(\d+):(\d{2}):(\d{2}(?:\.\d+)?)/.exec(stderr);
+  const dur = /^ {2}Duration:\s*(\d+):(\d{2}):(\d{2}(?:\.\d+)?)/m.exec(stderr);
   if (dur) info.durationSec = Number(dur[1]) * 3600 + Number(dur[2]) * 60 + Number(dur[3]);
 
   const videoLine = stderr.split('\n').find((l) => /Stream #\d+:\d+.*Video:/.test(l));
+  info.hdr = videoLine !== undefined && /arib-std-b67|smpte2084/.test(videoLine);
   const size = videoLine ? /\b(\d{2,5})x(\d{2,5})\b/.exec(videoLine) : null;
   const rot = /^\s*rotate\s*:\s*(-?\d+)/m.exec(stderr) ?? /rotation of (-?\d+(?:\.\d+)?) degrees/.exec(stderr);
   if (rot) info.rotation = Math.round(Number(rot[1]));
