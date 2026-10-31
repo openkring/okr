@@ -2,6 +2,7 @@ import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { getApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
 import { getMessaging, getToken, onMessage, isSupported as isMessagingSupported, Messaging } from 'firebase/messaging';
 import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp, collection, query, where, documentId, getDocs, writeBatch } from 'firebase/firestore';
 import { EMPTY, Observable, fromEvent } from 'rxjs';
@@ -145,6 +146,7 @@ export class FcmService {
     // set _currentToken yet, and must see the logout when it resumes. The latch stops the ones
     // that start from now on, until the next sign-in (beginSession).
     this.generation++;
+    const gen = this.generation;
     this.loggedOut = true;
     // Read synchronously right after the bump: from now on no registration can adopt a token
     // (the adopting check and assignment are one synchronous step), so this is complete.
@@ -167,14 +169,27 @@ export class FcmService {
     try {
       const unregister = httpsCallable<{ pushkey: string }, { removed: boolean }>(
         getFunctions(getApp(), 'europe-west6'), 'unregisterMatrixPusher');
+      // A step may run late (after the awaited in-flight registration, or after the logout timeout
+      // let signOut happen). Another member may be signed in by then, and the web token is the same
+      // for every user of one browser: such a step would delete THEIR pusher / registration.
+      let skippedLogged = false;
+      const stillThisLogout = (): boolean => {
+        const ok = this.loggedOut && this.generation === gen && getAuth(getApp()).currentUser?.uid === uid;
+        if (!ok && !skippedLogged) {
+          skippedLogged = true;
+          console.log('FcmService.disablePush: logout step skipped, another session began');
+        }
+        return ok;
+      };
       const unregisterPusher = async () => {
         await inFlight?.catch(() => undefined);
+        if (!stillThisLogout()) return;
         return unregister({ pushkey: token });
       };
       const results = await Promise.allSettled([
-        this.removeToken(uid, token),
+        stillThisLogout() ? this.removeToken(uid, token) : Promise.resolve(),
         unregisterPusher(),
-        Capacitor.isNativePlatform() ? PushNotifications.unregister() : Promise.resolve(),
+        Capacitor.isNativePlatform() && stillThisLogout() ? PushNotifications.unregister() : Promise.resolve(),
       ]);
       for (const r of results) {
         if (r.status === 'rejected') console.warn('FcmService.disablePush: step failed (ignored):', r.reason);
