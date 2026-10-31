@@ -18,10 +18,16 @@ interface CachedSession {
 
 const BASE = 'https://tile.googleapis.com';
 const RENEW_BEFORE_S = 86400;
+/** Every Map Tiles request gives up after this: a Wi-Fi without an uplink must not hang a request for minutes. */
+const FETCH_TIMEOUT_MS = 8000;
+
+/** Result of `probe`: the token works, Google refused it (4xx), or Google could not be reached (timeout, 5xx, offline). */
+export type GoogleProbe = 'ok' | 'refused' | 'failed';
 
 /**
  * Google Map Tiles API sessions (roadmap / satellite) for the Leaflet layers.
  * Never throws: no key, offline or any error resolves `undefined` / ''. A failure is logged once per map type.
+ * A cached token is no proof the network works (a Wi-Fi without internet): callers prove reachability with `probe`.
  */
 @Injectable({ providedIn: 'root' })
 export class GoogleTiles {
@@ -36,9 +42,33 @@ export class GoogleTiles {
     if (cached) return Promise.resolve(cached);
     const running = this.pending.get(key);
     if (running) return running;
-    const p = this.create(mapType, language, key).finally(() => this.pending.delete(key));
-    this.pending.set(key, p);
-    return p;
+    return this.track(key, this.create(mapType, language, key));
+  }
+
+  /** The cached token without any request, if it is still valid for more than a day. */
+  public cached(mapType: GoogleMapType, language: string): string | undefined {
+    return this.readCache(this.cacheKey(mapType, language));
+  }
+
+  /**
+   * A new session (Google refused the tiles of the cached one). The cache is replaced only when the new session exists:
+   * a failed or timed-out create keeps the cached token, which may still be valid.
+   */
+  public renew(mapType: GoogleMapType, language: string): Promise<string | undefined> {
+    const key = this.cacheKey(mapType, language);
+    return this.pending.get(key) ?? this.track(key, this.create(mapType, language, key)); // a running create is new too
+  }
+
+  /** Proves the network reaches Google with this token: one cheap viewport request at zoom 0 for the whole world. */
+  public async probe(session: string): Promise<GoogleProbe> {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return 'failed';
+    try {
+      const res = await fetch(this.viewportUrl(session, { west: -180, south: -85, east: 180, north: 85 }, 0), { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+      if (res.ok) return 'ok';
+      return res.status >= 400 && res.status < 500 ? 'refused' : 'failed';
+    } catch {
+      return 'failed';
+    }
   }
 
   /** Leaflet URL template for a session. */
@@ -49,10 +79,7 @@ export class GoogleTiles {
   /** Viewport copyright for the visible area; '' on error. Caller debounces. */
   public async attribution(session: string, view: GoogleTilesView, zoom: number): Promise<string> {
     try {
-      const url =
-        `${BASE}/tile/v1/viewport?session=${session}&key=${this.apiKey()}&zoom=${Math.round(zoom)}` +
-        `&north=${view.north}&south=${view.south}&east=${view.east}&west=${view.west}`;
-      const res = await fetch(url);
+      const res = await fetch(this.viewportUrl(session, view, zoom), { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
       if (!res.ok) return '';
       const body = (await res.json()) as { copyright?: string };
       return body.copyright ?? '';
@@ -61,13 +88,16 @@ export class GoogleTiles {
     }
   }
 
-  /** Forget the cached session (a tile 4xx after acceptance): next session() creates a new one. */
-  public invalidate(mapType: GoogleMapType, language: string): void {
-    try {
-      localStorage.removeItem(this.cacheKey(mapType, language));
-    } catch {
-      /* storage unavailable */
-    }
+  private viewportUrl(session: string, view: GoogleTilesView, zoom: number): string {
+    return `${BASE}/tile/v1/viewport?session=${session}&key=${this.apiKey()}&zoom=${Math.round(zoom)}` +
+      `&north=${view.north}&south=${view.south}&east=${view.east}&west=${view.west}`;
+  }
+
+  /** One create per cache key at a time: a second caller shares the running request. */
+  private track(key: string, create: Promise<string | undefined>): Promise<string | undefined> {
+    const p = create.finally(() => this.pending.delete(key));
+    this.pending.set(key, p);
+    return p;
   }
 
   private apiKey(): string {
@@ -99,6 +129,7 @@ export class GoogleTiles {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mapType, language: `${language}-CH`, region: 'CH' }),
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       });
       if (!res.ok) throw new Error(`createSession ${res.status}`);
       const body = (await res.json()) as { session?: string; expiry?: string };
