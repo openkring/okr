@@ -3,7 +3,7 @@ import {
   IonButton, IonButtons, IonContent, IonHeader,
   IonIcon, IonTitle, IonToolbar, ModalController
 } from '@ionic/angular';
-import { dismissOverlay, downloadToBrowser } from '@okr/shared-util-angular';
+import { dismissOverlay, downloadFile } from '@okr/shared-util-angular';
 import { SvgIconPipe } from '@okr/shared-pipes';
 
 export interface LightboxImage {
@@ -154,9 +154,20 @@ export class ImageLightboxModal {
     }
   }
 
+  /**
+   * The url is usually a `blob:` (chat media), which Browser.open cannot show on iOS/Android
+   * native — the tap did nothing there. downloadFile picks the share sheet on native and mobile
+   * web and a real file save on desktop.
+   */
   protected async download(): Promise<void> {
-    const url = await this.loadFull(this.currentIndex());
-    if (url) await downloadToBrowser(url);
+    const index = this.currentIndex();
+    const url = await this.loadFull(index);
+    if (!url) return;
+    try {
+      await downloadFile(url, this.images()[index]?.filename);
+    } catch (error) {
+      console.error('ImageLightboxModal: download failed', error);
+    }
   }
 
   protected async close(): Promise<void> {
