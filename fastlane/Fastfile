@@ -37,12 +37,14 @@ platform :android do
     package = package_name(app)
     version_code = next_version_code(package)
     UI.message("#{app} (#{package}) → versionCode #{version_code}")
+    load_sentry_env!(app)
 
     begin
       # --skip-nx-cache: environment.ts is generated and git-ignored, so it is NOT in the Nx cache
       # hash — a cached "production" build once shipped the DEV bundle (versionCode 1).
       sh_root("pnpm nx build #{app} --configuration production --skip-nx-cache")
       gate_production!(Dir[File.join(ROOT, "dist/apps/#{app}/browser/main-*.js")].max_by { |f| File.mtime(f) }, 'dist')
+      upload_and_strip_source_maps!(app)
       sh_root("cd apps/#{app} && pnpm exec cap sync android")
       sh_root("cd apps/#{app}/android && ./gradlew bundleRelease -PversionCode=#{version_code} --console=plain -q")
 
@@ -134,10 +136,12 @@ platform :ios do
     build_number = latest_testflight_build_number(app_identifier: bundle_id, api_key_path: ASC_API_KEY, initial_build_number: 0) + 1
     version = JSON.parse(File.read(File.join(ROOT, 'package.json')))['version']
     UI.message("#{app} (#{bundle_id}) → #{version} (#{build_number})")
+    load_sentry_env!(app)
 
     begin
       sh_root("pnpm nx build #{app} --configuration production --skip-nx-cache")
       gate_production!(Dir[File.join(ROOT, "dist/apps/#{app}/browser/main-*.js")].max_by { |f| File.mtime(f) }, 'dist')
+      upload_and_strip_source_maps!(app)
       # Homebrew's fastlane wrapper exports its own GEM_HOME/GEM_PATH; CocoaPods (run by cap sync)
       # then resolves its gems there and dies with "Could not find 'drb'". Run it without them.
       sh_root("cd apps/#{app} && env -u GEM_HOME -u GEM_PATH pnpm exec cap sync ios")
@@ -307,6 +311,30 @@ def gate_production!(path, where)
   flags = js.scan(/production:!([01])/).flatten.uniq
   UI.user_error!("Gate (#{where}): bundle is not production (found #{flags.inspect}) — refusing to ship") unless flags == ['0']
   UI.success("Gate (#{where}): production:!0")
+end
+
+# The Sentry credentials come from the app's git-ignored .env (only the SENTRY_* lines), checked up
+# front so a missing token fails before the ~4-minute build, not after it.
+def load_sentry_env!(app)
+  env_file = File.join(ROOT, "apps/#{app}/.env")
+  if File.exist?(env_file)
+    File.readlines(env_file).each do |line|
+      key, value = line.strip.split('=', 2)
+      ENV[key] ||= value.to_s.sub(/\A(['"])(.*)\1\z/, '\\2') if key&.start_with?('SENTRY_') # .env quotes with '…'
+    end
+  end
+  missing = %w[SENTRY_AUTH_TOKEN SENTRY_ORG SENTRY_PROJECT].reject { |k| ENV[k].to_s != '' }
+  UI.user_error!("Missing #{missing.join(', ')} (apps/#{app}/.env) — native source maps cannot reach Sentry") unless missing.empty?
+end
+
+# The production build emits hidden source maps (~16 MB compressed, ~45 % of the install size) that
+# only Sentry needs. The native build is its own build, so upload ITS maps to the same release
+# (debug-id injection, scripts/sentry-sourcemaps.mjs), then drop them before cap sync copies dist.
+def upload_and_strip_source_maps!(app)
+  sh_root("node scripts/sentry-sourcemaps.mjs #{app.shellescape}")
+  maps = Dir[File.join(ROOT, "dist/apps/#{app}/browser/**/*.map")]
+  maps.each { |f| File.delete(f) }
+  UI.success("Uploaded and removed #{maps.size} source maps")
 end
 
 def sh_root(cmd, log: true)
