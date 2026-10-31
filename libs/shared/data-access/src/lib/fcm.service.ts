@@ -9,12 +9,27 @@ import { EMPTY, Observable, fromEvent } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 
 import { ENV } from '@okr/shared-config';
-import { fcmTokenDocId, isBrowser, type PushPermissionState } from '@okr/shared-util-core';
+import { fcmTokenDocId, isBrowser, type PushPermissionState, type PushTokenPlatform } from '@okr/shared-util-core';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { ensureNativePushChannel } from './native-push-channel';
 
 /** Where the Firebase Messaging SDK registers firebase-messaging-sw.js (its DEFAULT_SW_SCOPE). */
 const FCM_SW_SCOPE = '/firebase-cloud-messaging-push-scope';
+
+/**
+ * How long a native registration waits for the `registration` event (N4). iOS does not always
+ * answer (simulator, no APNs): the caller then gets null and a later call simply tries again.
+ */
+export const NATIVE_REGISTRATION_TIMEOUT_MS = 15_000;
+
+/** The native registration currently waiting for its `registration` event. */
+interface PendingNativeRegistration {
+  uid: string;
+  generation: number;
+  promise: Promise<string | null>;
+  resolve(token: string | null): void;
+  timer: ReturnType<typeof setTimeout>;
+}
 
 /**
  * Service for Firebase Cloud Messaging (FCM) push notifications.
@@ -57,6 +72,19 @@ export class FcmService {
    * rules deny that delete and the doc would survive on a shared device.
    */
   private readonly savesInFlight = new Set<Promise<boolean>>();
+  /**
+   * The permanent native `registration` / `registrationError` listener pair, installed once before
+   * the first register() (N4). iOS does not retain the event, so a listener added after register()
+   * can miss it; one pair per call piled up listeners that were never removed.
+   */
+  private nativeListeners?: Promise<void>;
+  /** The native registration waiting for its event; an event without one is a token refresh (N6). */
+  private pendingNative?: PendingNativeRegistration;
+  /**
+   * uid and generation of the last native registration. A refresh is saved for them, and is
+   * dropped once that session ended (logout or a new session: saveTokenUnlessLoggedOut).
+   */
+  private nativeSession?: { uid: string; generation: number };
 
   /** The FCM/APNs token most recently registered on this device, or null if not yet registered. */
   get currentToken(): string | null { return this._currentToken; }
@@ -265,33 +293,102 @@ export class FcmService {
       // Never throws, so a device without channels (API < 26) still registers its token.
       await ensureNativePushChannel();
 
-      // register() triggers the 'registration' event with the native FCM/APNs token
-      await PushNotifications.register();
+      // The listeners must be in place before register(): iOS does not retain the event.
+      await this.ensureNativeListeners();
 
-      return new Promise<string | null>((resolve) => {
-        PushNotifications.addListener('registration', async tokenData => {
-          try {
-            // Also drops the events an earlier session's listener still receives (N4).
-            if (!(await this.saveTokenUnlessLoggedOut(uid, tokenData.value, generation))) {
-              resolve(null);
-              return;
-            }
-            console.log('FcmService: Native push token registered and saved');
-            resolve(tokenData.value);
-          } catch (e) {
-            console.warn('FcmService: Failed to save native token', e);
-            resolve(null);
-          }
-        });
-        PushNotifications.addListener('registrationError', err => {
-          console.warn('FcmService: Native push registration error', err);
-          resolve(null);
-        });
-      });
+      // Overlapping calls of the same session share the registration in flight.
+      const pending = this.pendingNative;
+      if (pending && pending.uid === uid && pending.generation === generation) return pending.promise;
+      // A registration of an earlier session is still waiting: it ends now, without a token.
+      if (pending) this.settlePendingNative(pending, null);
+
+      const next = this.startPendingNative(uid, generation);
+      this.nativeSession = { uid, generation };
+      try {
+        // register() triggers the 'registration' event with the native FCM/APNs token
+        await PushNotifications.register();
+      } catch (error) {
+        console.warn('FcmService.registerNativeAndSave: register() failed:', error);
+        this.settlePendingNative(next, null);
+      }
+      return next.promise;
     } catch (error) {
       console.warn('FcmService.registerNativeAndSave: Failed:', error);
       return null;
     }
+  }
+
+  /** Install the permanent native listener pair once; a failed install is retried by the next call. */
+  private ensureNativeListeners(): Promise<void> {
+    this.nativeListeners ??= Promise.all([
+      PushNotifications.addListener('registration', tokenData => this.onNativeRegistration(tokenData.value)),
+      PushNotifications.addListener('registrationError', err => this.onNativeRegistrationError(err)),
+    ]).then(() => undefined, (error: unknown) => {
+      this.nativeListeners = undefined;
+      throw error;
+    });
+    return this.nativeListeners;
+  }
+
+  private startPendingNative(uid: string, generation: number): PendingNativeRegistration {
+    let resolve!: (token: string | null) => void;
+    const promise = new Promise<string | null>(r => { resolve = r; });
+    const pending: PendingNativeRegistration = {
+      uid, generation, promise, resolve,
+      timer: setTimeout(() => {
+        if (this.pendingNative !== pending) return;
+        console.warn('FcmService: no native push token within the timeout; giving up for now');
+        this.settlePendingNative(pending, null);
+      }, NATIVE_REGISTRATION_TIMEOUT_MS),
+    };
+    this.pendingNative = pending;
+    return pending;
+  }
+
+  /** End a pending registration: clear it (if still current) and resolve its callers. */
+  private settlePendingNative(pending: PendingNativeRegistration, token: string | null): void {
+    clearTimeout(pending.timer);
+    if (this.pendingNative === pending) this.pendingNative = undefined;
+    pending.resolve(token);
+  }
+
+  /**
+   * A native token event. With a registration waiting, it is that registration's answer.
+   * Otherwise it is a refresh (N6, e.g. the iOS AppDelegate posting a rotated FCM token): saved
+   * for the last registering session and followed by the Matrix pusher. Both saves drop a
+   * token of a session that ended (saveTokenUnlessLoggedOut).
+   */
+  private async onNativeRegistration(token: string): Promise<void> {
+    const pending = this.pendingNative;
+    if (pending) {
+      // Cleared at once, so a second event during the save is treated as a refresh.
+      clearTimeout(pending.timer);
+      this.pendingNative = undefined;
+      let saved = false;
+      try {
+        saved = await this.saveTokenUnlessLoggedOut(pending.uid, token, pending.generation);
+        if (saved) console.log('FcmService: Native push token registered and saved');
+      } catch (e) {
+        console.warn('FcmService: Failed to save native token', e);
+      }
+      this.settlePendingNative(pending, saved ? token : null);
+      return;
+    }
+    const session = this.nativeSession;
+    if (!session) return;
+    try {
+      if (!(await this.saveTokenUnlessLoggedOut(session.uid, token, session.generation))) return;
+      console.log('FcmService: refreshed native push token saved');
+      await this.ensureMatrixPusher();
+    } catch (e) {
+      console.warn('FcmService: Failed to save refreshed native token', e);
+    }
+  }
+
+  private onNativeRegistrationError(err: unknown): void {
+    console.warn('FcmService: Native push registration error', err);
+    const pending = this.pendingNative;
+    if (pending) this.settlePendingNative(pending, null);
   }
 
   /** Web / PWA — uses Firebase Messaging + VAPID key + service worker. */
@@ -437,7 +534,7 @@ export class FcmService {
     const tokenDocId = fcmTokenDocId(token);
     await setDoc(
       doc(db, 'users', uid, 'fcmTokens', tokenDocId),
-      { token, updatedAt: serverTimestamp() },
+      { token, updatedAt: serverTimestamp(), platform: pushTokenPlatform() },
       { merge: true }
     );
     await this.removeSupersededTokens(db, uid, token, tokenDocId);
@@ -473,4 +570,10 @@ export class FcmService {
       console.warn('FcmService.removeSupersededTokens: failed (ignored):', error);
     }
   }
+}
+
+/** The platform written on a token doc: the native platform, else 'web' (PWA and browsers). */
+function pushTokenPlatform(): PushTokenPlatform {
+  const platform = Capacitor.getPlatform();
+  return platform === 'ios' || platform === 'android' ? platform : 'web';
 }
