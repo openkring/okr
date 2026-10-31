@@ -218,6 +218,9 @@ export const onInvitationCreated = Calendar.onInvitationCreated;
 export const onInvitationWritten = Calendar.onInvitationWritten;
 export const invitationAnswer = Calendar.invitationAnswer;
 
+// badge
+export { onBadgeCountsWritten } from './badge/on-badge-counts-written';
+
 // email webhooks
 export const mailtrapWebhook = Email.mailtrapWebhook;
 export const onMailJob = Email.onMailJob;
