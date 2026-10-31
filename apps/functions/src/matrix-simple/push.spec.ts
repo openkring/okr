@@ -25,7 +25,7 @@ vi.mock('firebase-admin/firestore', async (importOriginal) => ({
   }),
 }));
 
-import { hasGroupChatPage, pusherTenantFor } from './push';
+import { hasGroupChatPage, pusherTenantFor, stalePushersToPrune, type ListedPusher } from './push';
 
 describe('hasGroupChatPage', () => {
   beforeEach(() => {
@@ -80,5 +80,35 @@ describe('pusherTenantFor', () => {
 
   it("is empty for an account without tenants", () => {
     expect(pusherTenantFor('scs', [], 'u1')).toBe('');
+  });
+});
+
+describe('stalePushersToPrune', () => {
+  const me = { appId: 'app', deviceName: 'UA', pushkey: 'new', tenantId: 'scs' };
+  const listed = (over: Partial<ListedPusher> = {}): ListedPusher => ({
+    app_id: 'app', pushkey: 'old', device_display_name: 'UA', data: { tenantId: 'scs' }, ...over,
+  });
+
+  it('prunes same app, device and tenant with another pushkey', () => {
+    const p = listed();
+    expect(stalePushersToPrune([p], me, ['scs', 'bkg'])).toEqual([p]);
+  });
+
+  it("keeps the other tenant's pusher", () => {
+    expect(stalePushersToPrune([listed({ data: { tenantId: 'bkg' } })], me, ['scs', 'bkg'])).toEqual([]);
+  });
+
+  it('keeps its own pushkey', () => {
+    expect(stalePushersToPrune([listed({ pushkey: 'new' })], me, ['scs', 'bkg'])).toEqual([]);
+  });
+
+  it('prunes a tenant-less legacy pusher only for a single-tenant account', () => {
+    const p = listed({ data: {} });
+    expect(stalePushersToPrune([p], me, ['scs'])).toEqual([p]);
+    expect(stalePushersToPrune([p], me, ['scs', 'bkg'])).toEqual([]);
+  });
+
+  it('keeps another device or app_id', () => {
+    expect(stalePushersToPrune([listed({ device_display_name: 'Other' }), listed({ app_id: 'x' })], me, ['scs'])).toEqual([]);
   });
 });

@@ -230,6 +230,33 @@ export function pusherTenantFor(requested: unknown, accountTenants: string[], ui
   return accountTenants[0] ?? '';
 }
 
+/** A pusher as listed by Synapse's GET /pushers; `data` is what registerMatrixPusher stored. */
+export interface ListedPusher {
+  app_id: string;
+  pushkey: string;
+  device_display_name?: string;
+  data?: Record<string, unknown>;
+}
+
+/**
+ * The pushers a new registration replaces. A pusher's identity is app_id + device + tenant: one
+ * person's tenant apps share one Matrix account and one user agent, so without the tenant each app
+ * would delete the other's chat pusher. A pusher without a stored tenant (registered before tenants
+ * were recorded) is only treated as this app's when the account has a single tenant.
+ */
+export function stalePushersToPrune(
+  pushers: ListedPusher[],
+  me: { appId: string; deviceName: string; pushkey: string; tenantId: string },
+  accountTenants: string[]
+): ListedPusher[] {
+  return pushers.filter((p) => {
+    if (p.app_id !== me.appId || p.device_display_name !== me.deviceName || p.pushkey === me.pushkey) return false;
+    const stored = p.data?.['tenantId'];
+    if (typeof stored === 'string' && stored) return stored === me.tenantId;
+    return accountTenants.length <= 1;
+  });
+}
+
 /**
  * Register an HTTP pusher with Synapse on behalf of the calling user (S3 + SEC-2).
  *
@@ -264,7 +291,8 @@ export const registerMatrixPusher = onCall(
     // room's messages only to the apps of the room's tenants (spec 1.93 §3). The tenant of the
     // APP that registers this token — named by the client, accepted only if it is one of the
     // account's tenants; older clients (or a foreign value) fall back to the account's first.
-    const pusherTenantId = pusherTenantFor(tenantId, await getUserTenants(uid), uid);
+    const accountTenants = await getUserTenants(uid);
+    const pusherTenantId = pusherTenantFor(tenantId, accountTenants, uid);
     const deviceName = (deviceDisplayName || 'Unknown').substring(0, 100);
 
     // Prune stale pushers for THIS device before registering the new one. The FCM token
@@ -273,18 +301,21 @@ export const registerMatrixPusher = onCall(
     // behind — Synapse's append:false only replaces an *identical* pushkey+app_id. The
     // orphans accumulate, so one chat message fans out to every stale pushkey and the user
     // is notified multiple times (the "notified twice" complaint). We delete pushers with
-    // the same app_id + device_display_name but a different pushkey, converging each
-    // physical device to a single active pusher while preserving genuine multi-device use.
+    // the same app_id + device_display_name + tenant but a different pushkey, converging each
+    // physical device's app to a single active pusher while preserving genuine multi-device use
+    // and the other tenant apps on the same device (they share the Matrix account and user agent).
     try {
       const listResp = await fetch(`${MATRIX_HOMESERVER}/_matrix/client/v3/pushers`, {
         headers: { Authorization: `Bearer ${access_token}` },
       });
       if (listResp.ok) {
         const { pushers } = (await listResp.json()) as {
-          pushers?: Array<{ app_id: string; pushkey: string; device_display_name?: string }>;
+          pushers?: ListedPusher[];
         };
-        const stale = (pushers ?? []).filter(
-          (p) => p.app_id === appIdToUse && p.device_display_name === deviceName && p.pushkey !== pushkey
+        const stale = stalePushersToPrune(
+          pushers ?? [],
+          { appId: appIdToUse, deviceName, pushkey, tenantId: pusherTenantId },
+          accountTenants
         );
         await Promise.all(
           stale.map((p) =>
@@ -320,7 +351,9 @@ export const registerMatrixPusher = onCall(
           pushkey,
           lang: lang || 'de',
           // matrixUserId lets matrixPushGateway read this user's `org.okr.mute` (spec 1.109 §9).
-          data: { url, matrixUserId, ...(pusherTenantId ? { tenantId: pusherTenantId } : {}) },
+          // uid is the Firebase user of THIS app (the Matrix account is shared across tenants), so
+          // the gateway finds users/{uid}/badge/counts. Set here, never by the client.
+          data: { url, matrixUserId, uid, ...(pusherTenantId ? { tenantId: pusherTenantId } : {}) },
           append: false,
         }),
       }
