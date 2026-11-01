@@ -119,12 +119,13 @@ export const TranslatorStore = signalStore(
       },
       /** Swaps the pair; the translation becomes the new input, as in other translators. */
       swap: (): void => {
-        const pair = swapLanguages({ source: store.source(), target: store.target() }, store.detectedSource());
+        const pair = swapLanguages({ source: store.source(), target: store.target(), torch: store.torch() }, store.detectedSource());
         if (pair.source === store.source() && pair.target === store.target()) return;
         const text = store.translatedText() || store.text();
         patchState(store, { ...pair, text });
         schedule(0);
       },
+      setTorch: (torch: boolean): void => patchState(store, { torch }),
       retry: (): void => schedule(0),
       loadLanguages: async (): Promise<void> => {
         const display = store.i18nService.getActiveLang();
@@ -144,7 +145,7 @@ export const TranslatorStore = signalStore(
   withHooks({
     onInit(store) {
       patchState(store, restoreTranslator(readStorage()));
-      effect(() => writeStorage(serializeTranslator({ source: store.source(), target: store.target() })));
+      effect(() => writeStorage(serializeTranslator({ source: store.source(), target: store.target(), torch: store.torch() })));
       store.loadLanguages();
     },
     onDestroy(store) {

@@ -13,17 +13,17 @@ describe('isLangCode', () => {
 
 describe('swapLanguages', () => {
   it('swaps a fixed pair', () => {
-    expect(swapLanguages({ source: 'de', target: 'en' }, null)).toEqual({ source: 'en', target: 'de' });
+    expect(swapLanguages({ source: 'de', target: 'en', torch: false }, null)).toEqual({ source: 'en', target: 'de', torch: false });
   });
   it('uses the detected language for «Sprache erkennen»', () => {
-    expect(swapLanguages({ source: AUTO_DETECT, target: 'en' }, 'fr')).toEqual({ source: 'en', target: 'fr' });
+    expect(swapLanguages({ source: AUTO_DETECT, target: 'en', torch: false }, 'fr')).toEqual({ source: 'en', target: 'fr', torch: false });
   });
   it('keeps the pair without a detection', () => {
-    const s = { source: AUTO_DETECT, target: 'en' };
+    const s = { source: AUTO_DETECT, target: 'en', torch: false };
     expect(swapLanguages(s, null)).toBe(s);
   });
   it('keeps the pair when the detection equals the target', () => {
-    const s = { source: AUTO_DETECT, target: 'en' };
+    const s = { source: AUTO_DETECT, target: 'en', torch: false };
     expect(swapLanguages(s, 'en')).toBe(s);
   });
 });

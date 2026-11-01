@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 vi.mock('../_gateway/gateway', () => ({ runGateway: vi.fn() }));
 vi.mock('firebase-admin/app', () => ({ applicationDefault: vi.fn() }));
 import { runGateway } from '../_gateway/gateway';
-import { TRANSLATOR_OPS, validLanguagesParams, validTranslateParams } from './index';
+import { TRANSLATOR_OPS, validLanguagesParams, validTranslateManyParams, validTranslateParams } from './index';
 
 const auth = { uid: 'u', token: {} };
 
@@ -18,6 +18,19 @@ describe('validTranslateParams', () => {
   it('rejects bad language codes', () => {
     expect(() => validTranslateParams({ text: 'a', source: 'x y', target: 'en' })).toThrow(/source/);
     expect(() => validTranslateParams({ text: 'a', target: undefined })).toThrow(/target/);
+  });
+});
+
+describe('validTranslateManyParams', () => {
+  it('trims the texts and checks the pair', () => {
+    expect(validTranslateManyParams({ texts: [' Ausgang ', 'Kasse'], source: 'de', target: 'en' }))
+      .toEqual({ texts: ['Ausgang', 'Kasse'], source: 'de', target: 'en' });
+  });
+  it('rejects empty, too many and too long batches', () => {
+    expect(() => validTranslateManyParams({ texts: [], target: 'en' })).toThrow(/texts/);
+    expect(() => validTranslateManyParams({ texts: ['a', ' '], target: 'en' })).toThrow(/texts/);
+    expect(() => validTranslateManyParams({ texts: Array(21).fill('a'), target: 'en' })).toThrow(/texts/);
+    expect(() => validTranslateManyParams({ texts: ['x'.repeat(1500), 'y'.repeat(600)], target: 'en' })).toThrow(/texts/);
   });
 });
 

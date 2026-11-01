@@ -28,5 +28,14 @@
     "busy": "In questo momento si traduce molto. Aspetta un attimo e poi riprova.",
     "languages": "Non è stato possibile caricare l'elenco delle lingue."
   },
-  "retry": "Riprova"
+  "retry": "Riprova",
+  "live": {
+    "open": "Vista dal vivo",
+    "close": "Torna al testo",
+    "loading": "Caricamento del riconoscimento del testo.",
+    "noModel": "La fotocamera non riesce a leggere il testo in questa lingua. Scegli un'altra lingua di partenza.",
+    "modelFailed": "Non è stato possibile caricare il riconoscimento del testo. Controlla la connessione e riprova.",
+    "hint": "Tieni ferma la fotocamera su un testo.",
+    "privacy": "Il testo viene riconosciuto sul tuo dispositivo. Solo il testo riconosciuto viene inviato a Google per la traduzione, mai l'immagine."
+  }
 }

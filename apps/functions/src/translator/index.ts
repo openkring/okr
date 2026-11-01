@@ -1,13 +1,13 @@
 import { HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 
 import {
-  AUTO_DETECT, isLangCode, LanguagesRes, TRANSLATOR_MAX_TEXT, TranslateRes,
+  AUTO_DETECT, isLangCode, LanguagesRes, LIVE_MAX_BLOCKS, LIVE_MAX_CHARS, TRANSLATOR_MAX_TEXT, TranslateManyRes, TranslateRes,
 } from '@okr/instruments-translator-util';
 import { makeOpRouter, type OpHandler } from '../_router';
 import { runGateway } from '../_gateway/gateway';
 import type { GatewayContext } from '../_gateway/provider';
 import {
-  googleLanguagesAdapter, googleTranslateAdapter, LanguagesParams, TranslateParams,
+  googleLanguagesAdapter, googleTranslateAdapter, googleTranslateManyAdapter, LanguagesParams, TranslateManyParams, TranslateParams,
 } from '../_gateway/adapters/google-translate';
 
 /** Shared adapters: the tenant is never part of a cache key, so it is not resolved (saves a read). */
@@ -28,11 +28,29 @@ export function validTranslateParams(data: unknown): TranslateParams {
   if (text.length === 0 || text.length > TRANSLATOR_MAX_TEXT) {
     throw new HttpsError('invalid-argument', `text: 1–${TRANSLATOR_MAX_TEXT} characters expected`);
   }
+  return { text, ...validPair(d) };
+}
+
+function validPair(d: Record<string, unknown>): { source: string; target: string } {
   const source = d['source'] ?? AUTO_DETECT;
   if (source !== AUTO_DETECT && !isLangCode(source)) throw new HttpsError('invalid-argument', 'source: language code expected');
   const target = d['target'];
   if (!isLangCode(target)) throw new HttpsError('invalid-argument', 'target: language code expected');
-  return { text, source: source as string, target };
+  return { source: source as string, target };
+}
+
+/** The checked batch params: 1–LIVE_MAX_BLOCKS non-empty texts, LIVE_MAX_CHARS in total. */
+export function validTranslateManyParams(data: unknown): TranslateManyParams {
+  const d = (data ?? {}) as Record<string, unknown>;
+  const raw = d['texts'];
+  if (!Array.isArray(raw) || raw.length === 0 || raw.length > LIVE_MAX_BLOCKS) {
+    throw new HttpsError('invalid-argument', `texts: 1–${LIVE_MAX_BLOCKS} expected`);
+  }
+  const texts = raw.map(t => (typeof t === 'string' ? t.trim() : ''));
+  if (texts.some(t => t.length === 0) || texts.reduce((n, t) => n + t.length, 0) > LIVE_MAX_CHARS) {
+    throw new HttpsError('invalid-argument', `texts: non-empty, ${LIVE_MAX_CHARS} characters in total`);
+  }
+  return { texts, ...validPair(d) };
 }
 
 export function validLanguagesParams(data: unknown): LanguagesParams {
@@ -56,6 +74,19 @@ export const TRANSLATOR_OPS: Record<string, OpHandler> = {
       attribution: { provider: res.attribution.provider, url: res.attribution.url },
     };
   },
+  translateMany: async (request): Promise<TranslateManyRes> => {
+    const ctx = contextOf(request);
+    const params = validTranslateManyParams(request.data);
+    if (params.source === params.target) {
+      return { translations: params.texts, detectedSource: null, attribution: { ...googleTranslateManyAdapter.attribution } };
+    }
+    const res = await runGateway(googleTranslateManyAdapter, params, ctx);
+    return {
+      translations: res.data.translations,
+      detectedSource: params.source === AUTO_DETECT ? res.data.detectedSource : null,
+      attribution: { provider: res.attribution.provider, url: res.attribution.url },
+    };
+  },
   languages: async (request): Promise<LanguagesRes> => {
     const ctx = contextOf(request);
     const res = await runGateway(googleLanguagesAdapter, validLanguagesParams(request.data), ctx);
@@ -64,7 +95,7 @@ export const TRANSLATOR_OPS: Record<string, OpHandler> = {
 };
 
 /**
- * The Übersetzer (idea 2.126): one callable, ops `translate` and `languages`, both over Google Cloud
+ * The Übersetzer (idea 2.126): one callable, ops `translate`, `translateMany` (live view) and `languages`, all over Google Cloud
  * Translation through the gateway (cache, per-user window, monthly cap, retry, timeout). No secret —
  * the service account authenticates. The text is never logged.
  */

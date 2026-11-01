@@ -28,5 +28,14 @@
     "busy": "Gerade wird sehr viel übersetzt. Warte einen Moment und versuche es dann nochmals.",
     "languages": "Die Liste der Sprachen konnte nicht geladen werden."
   },
-  "retry": "Nochmals versuchen"
+  "retry": "Nochmals versuchen",
+  "live": {
+    "open": "Live-Ansicht",
+    "close": "Zurück zum Text",
+    "loading": "Die Texterkennung wird geladen.",
+    "noModel": "Text in dieser Sprache kann die Kamera nicht lesen. Wähle eine andere Ausgangssprache.",
+    "modelFailed": "Die Texterkennung konnte nicht geladen werden. Prüfe deine Verbindung und versuche es nochmals.",
+    "hint": "Halte die Kamera ruhig auf einen Text.",
+    "privacy": "Der Text wird auf deinem Gerät erkannt. Nur der erkannte Text geht zum Übersetzen an Google, nie das Bild."
+  }
 }

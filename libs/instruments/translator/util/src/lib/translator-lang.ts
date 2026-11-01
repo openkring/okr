@@ -14,7 +14,7 @@ export function isLangCode(code: unknown): code is string {
 export function swapLanguages(settings: TranslatorSettings, detected: string | null): TranslatorSettings {
   const source = settings.source === AUTO_DETECT ? detected : settings.source;
   if (!source || source === settings.target) return settings;
-  return { source: settings.target, target: source };
+  return { ...settings, source: settings.target, target: source };
 }
 
 /** Sorts by name in the given locale; drops entries without a valid code and duplicates. */

@@ -80,6 +80,57 @@ export const googleTranslateAdapter: ProviderAdapter<TranslateParams, TranslateR
   sourceTimestamp: () => null,
 };
 
+export interface TranslateManyParams {
+  texts: string[];
+  /** '' = detect. */
+  source: string;
+  target: string;
+}
+
+export interface TranslateManyRaw {
+  translations: string[];
+  detectedSource: string | null;
+}
+
+/** Pure: all translations of a v2 batch response, in request order; throws on a count mismatch. */
+export function parseTranslateManyResponse(body: V2TranslateBody, count: number): TranslateManyRaw {
+  const list = body.data?.translations ?? [];
+  if (list.length !== count || list.some(t => typeof t.translatedText !== 'string')) {
+    throw new Error('google-translate: batch response does not match the request');
+  }
+  return { translations: list.map(t => t.translatedText as string), detectedSource: list[0]?.detectedSourceLanguage ?? null };
+}
+
+/**
+ * The live view (idea 2.126 phase 2): the new text blocks of one camera frame in one request. Same
+ * scope and TTL as the single translation; the cache entry is the whole batch, the client keeps a
+ * memo per block so a block is not sent again while it stays in view.
+ */
+export const googleTranslateManyAdapter: ProviderAdapter<TranslateManyParams, TranslateManyRaw, TranslateManyRaw> = {
+  id: 'translate-google-batch',
+  baseUrl: BASE_URL,
+  secrets: [],
+  scope: 'shared',
+  ttlSeconds: DAY,
+  requiresAuth: true,
+  // about one call per recognised frame while the camera moves over new text
+  windowLimit: { limit: 40, windowMs: 60_000 },
+  // ≤ 2000 characters per call → at most 10M characters (≈ USD 200) a month across all tenants
+  monthlyCap: 5_000,
+  attribution: GOOGLE_TRANSLATE_ATTRIBUTION,
+  async fetch(params) {
+    const res = await gatewayFetch<V2TranslateBody>(BASE_URL, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${await accessToken()}` },
+      data: { q: params.texts, target: params.target, format: 'text', ...(params.source ? { source: params.source } : {}) },
+      maxBytes: 512 * 1024,
+    });
+    return parseTranslateManyResponse(res.data, params.texts.length);
+  },
+  map: (raw) => raw,
+  sourceTimestamp: () => null,
+};
+
 export interface LanguagesParams {
   display: string;
 }

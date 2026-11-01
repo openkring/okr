@@ -581,6 +581,16 @@
             "output": "./assets/i18n/instruments/translator/util"
           },
           {
+            "glob": "worker.min.js",
+            "input": "node_modules/tesseract.js/dist",
+            "output": "./assets/tesseract"
+          },
+          {
+            "glob": "tesseract-core*-lstm.wasm.js",
+            "input": "node_modules/tesseract.js-core",
+            "output": "./assets/tesseract"
+          },
+          {
             "glob": "*.json",
             "input": "libs/instruments/data-access/src/i18n",
             "output": "./assets/i18n/instruments/data-access"

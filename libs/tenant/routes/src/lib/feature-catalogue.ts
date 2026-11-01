@@ -1242,6 +1242,11 @@ const instruments: BlockRoutes = {
       canActivate: [isAuthenticatedGuard],
       loadComponent: () => import('@okr/instruments-translator-feature').then(m => m.TranslatorPage),
     },
+    {
+      path: 'translator/live',
+      canActivate: [isAuthenticatedGuard],
+      loadComponent: () => import('@okr/instruments-translator-feature').then(m => m.TranslatorLivePage),
+    },
   ],
 };
 

@@ -28,5 +28,14 @@
     "busy": "A lot is being translated right now. Wait a moment and then try again.",
     "languages": "The list of languages could not be loaded."
   },
-  "retry": "Try again"
+  "retry": "Try again",
+  "live": {
+    "open": "Live view",
+    "close": "Back to text",
+    "loading": "Loading text recognition.",
+    "noModel": "The camera cannot read text in this language. Choose another source language.",
+    "modelFailed": "Text recognition could not be loaded. Check your connection and try again.",
+    "hint": "Hold the camera steady over some text.",
+    "privacy": "Text is recognised on your device. Only the recognised text is sent to Google for translation, never the image."
+  }
 }

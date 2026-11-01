@@ -6,7 +6,9 @@ vi.mock('firebase-admin/app', () => ({
   applicationDefault: () => ({ getAccessToken: async () => ({ access_token: 'tok', expires_in: 3600 }) }),
 }));
 import { gatewayFetch } from '../http';
-import { googleLanguagesAdapter, googleTranslateAdapter, parseLanguagesResponse, parseTranslateResponse } from './google-translate';
+import {
+  googleLanguagesAdapter, googleTranslateAdapter, googleTranslateManyAdapter, parseLanguagesResponse, parseTranslateManyResponse, parseTranslateResponse,
+} from './google-translate';
 
 const CTX = { tenantId: '', uid: 'u', isAdmin: false };
 
@@ -61,5 +63,22 @@ describe('googleLanguagesAdapter', () => {
 
   it('falls back to the code when a name is missing', () => {
     expect(parseLanguagesResponse({ data: { languages: [{ language: 'haw' }, { name: 'no code' }] } })).toEqual([{ code: 'haw', name: 'haw' }]);
+  });
+});
+
+describe('googleTranslateManyAdapter', () => {
+  beforeEach(() => vi.mocked(gatewayFetch).mockReset());
+
+  it('sends all texts in one request and keeps their order', async () => {
+    vi.mocked(gatewayFetch).mockResolvedValue({ data: { data: { translations: [
+      { translatedText: 'Exit', detectedSourceLanguage: 'de' }, { translatedText: 'Checkout', detectedSourceLanguage: 'de' },
+    ] } } } as never);
+    const raw = await googleTranslateManyAdapter.fetch({ texts: ['Ausgang', 'Kasse'], source: '', target: 'en' }, CTX);
+    expect(raw).toEqual({ translations: ['Exit', 'Checkout'], detectedSource: 'de' });
+    expect(vi.mocked(gatewayFetch).mock.calls[0][1]?.data).toEqual({ q: ['Ausgang', 'Kasse'], target: 'en', format: 'text' });
+  });
+
+  it('throws when the answer does not match the request', () => {
+    expect(() => parseTranslateManyResponse({ data: { translations: [{ translatedText: 'x' }] } }, 2)).toThrow(/does not match/);
   });
 });

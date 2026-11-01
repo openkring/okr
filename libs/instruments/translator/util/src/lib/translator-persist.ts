@@ -4,7 +4,7 @@ import { AUTO_DETECT, DEFAULT_TRANSLATOR_SETTINGS, TranslatorSettings } from './
 export const TRANSLATOR_STORAGE_KEY = 'okr.translator.v1';
 
 export function serializeTranslator(settings: TranslatorSettings): string {
-  return JSON.stringify({ source: settings.source, target: settings.target });
+  return JSON.stringify({ source: settings.source, target: settings.target, torch: settings.torch });
 }
 
 /** Restores the stored pair; anything missing or invalid falls back to its default, field by field. */
@@ -22,5 +22,6 @@ export function restoreTranslator(json: string | null): TranslatorSettings {
   return {
     source: source === AUTO_DETECT || isLangCode(source) ? source : DEFAULT_TRANSLATOR_SETTINGS.source,
     target: isLangCode(target) ? target : DEFAULT_TRANSLATOR_SETTINGS.target,
+    torch: typeof o['torch'] === 'boolean' ? o['torch'] : DEFAULT_TRANSLATOR_SETTINGS.torch,
   };
 }

@@ -28,5 +28,14 @@
     "busy": "Beaucoup de traductions sont en cours. Attends un instant, puis réessaie.",
     "languages": "La liste des langues n'a pas pu être chargée."
   },
-  "retry": "Réessayer"
+  "retry": "Réessayer",
+  "live": {
+    "open": "Vue en direct",
+    "close": "Retour au texte",
+    "loading": "Chargement de la reconnaissance de texte.",
+    "noModel": "La caméra ne peut pas lire le texte dans cette langue. Choisis une autre langue source.",
+    "modelFailed": "La reconnaissance de texte n'a pas pu être chargée. Vérifie ta connexion et réessaie.",
+    "hint": "Tiens la caméra immobile au-dessus d'un texte.",
+    "privacy": "Le texte est reconnu sur ton appareil. Seul le texte reconnu est envoyé à Google pour la traduction, jamais l'image."
+  }
 }

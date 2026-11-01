@@ -18,5 +18,5 @@
   },
   "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
   "exclude": ["dist/**/*"],
-  "references": [{ "path": "../data-access/tsconfig.lib.json" }, { "path": "../util/tsconfig.lib.json" }, { "path": "../../../shared/i18n/tsconfig.lib.json" }, { "path": "../../../shared/pipes/tsconfig.lib.json" }, { "path": "../../../shared/util-angular/tsconfig.lib.json" }]
+  "references": [{ "path": "../data-access/tsconfig.lib.json" }, { "path": "../util/tsconfig.lib.json" }, { "path": "../../lupe/feature/tsconfig.lib.json" }, { "path": "../../lupe/util/tsconfig.lib.json" }, { "path": "../../../shared/config/tsconfig.lib.json" }, { "path": "../../../shared/i18n/tsconfig.lib.json" }, { "path": "../../../shared/pipes/tsconfig.lib.json" }, { "path": "../../../shared/util-angular/tsconfig.lib.json" }]
 }

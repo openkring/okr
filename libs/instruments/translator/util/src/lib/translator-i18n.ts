@@ -25,6 +25,13 @@ export const TRANSLATOR_I18N_KEYS = {
   error_busy:      PFX + 'error.busy',
   error_languages: PFX + 'error.languages',
   retry:           PFX + 'retry',
+  live_open:       PFX + 'live.open',
+  live_close:      PFX + 'live.close',
+  live_loading:    PFX + 'live.loading',
+  live_noModel:    PFX + 'live.noModel',
+  live_modelFailed: PFX + 'live.modelFailed',
+  live_hint:       PFX + 'live.hint',
+  live_privacy:    PFX + 'live.privacy',
 } satisfies Record<string, string>;
 
 export type TranslatorI18n = { [K in keyof typeof TRANSLATOR_I18N_KEYS]: Signal<string> };

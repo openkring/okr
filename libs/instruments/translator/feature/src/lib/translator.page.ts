@@ -1,10 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import {
   IonButton, IonButtons, IonCard, IonCardContent, IonContent, IonHeader, IonIcon, IonMenuButton, IonNote, IonSelect,
   IonSelectOption, IonSpinner, IonTextarea, IonTitle, IonToolbar, ToastController, ViewWillLeave,
 } from '@ionic/angular';
 
+import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { LUPE_I18N_KEYS, LupeI18n } from '@okr/instruments-lupe-util';
 import { copyToClipboard, showToast } from '@okr/shared-util-angular';
 import { AUTO_DETECT, TRANSLATOR_I18N_KEYS, TRANSLATOR_MAX_TEXT, TranslatorLanguage } from '@okr/instruments-translator-util';
 
@@ -22,8 +25,8 @@ function displayName(code: string, locale: string): string {
 
 /**
  * The Übersetzer (idea 2.126), text view: language pair with swap, a growing text field with dictation,
- * and the translation below with copy and read-aloud. Phase 1 — the live camera view and the flashlight
- * toggle follow with on-device text recognition.
+ * and the translation below with copy and read-aloud. «Live-Ansicht» opens the camera view
+ * (`TranslatorLivePage`); the flashlight toggle here applies there.
  */
 @Component({
   selector: 'okr-translator-page',
@@ -43,6 +46,7 @@ function displayName(code: string, locale: string): string {
     .actions { display: flex; justify-content: flex-end; align-items: center; gap: 0.25rem; min-height: 2.5rem; }
     .actions .grow { flex: 1 1 auto; }
     .translation { font-size: 1.25rem; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ion-text-color); min-height: 2rem; }
+    .torch-on { --background: var(--ion-color-warning); --color: var(--ion-color-warning-contrast); --border-radius: 50%; }
     .listening { --background: var(--ion-color-danger); --color: var(--ion-color-danger-contrast); --border-radius: 50%; }
     .hint { display: block; padding: 0 1rem; }
     .error { color: var(--ion-color-danger); }
@@ -99,6 +103,13 @@ function displayName(code: string, locale: string): string {
                   {{ store.i18n.detected() }}: {{ store.detectedName() }}
                 }
               </ion-note>
+              <ion-button fill="clear" [title]="store.i18n.live_open()" (click)="openLive()">
+                <ion-icon slot="icon-only" src="{{ 'video' | svgIcon }}" />
+              </ion-button>
+              <ion-button fill="clear" [class.torch-on]="store.torch()" [attr.aria-pressed]="store.torch()"
+                [title]="store.torch() ? lupeI18n.torch_off() : lupeI18n.torch_on()" (click)="store.setTorch(!store.torch())">
+                <ion-icon slot="icon-only" src="{{ 'bulb' | svgIcon }}" />
+              </ion-button>
               @if (dictation.supported) {
                 <ion-button fill="clear" [class.listening]="listening()" [attr.aria-pressed]="listening()"
                   [title]="listening() ? store.i18n.mic_stop() : store.i18n.mic_start()" (click)="toggleDictation()">
@@ -157,6 +168,8 @@ function displayName(code: string, locale: string): string {
 export class TranslatorPage implements ViewWillLeave {
   protected readonly store = inject(TranslatorStore);
   private readonly toastController = inject(ToastController);
+  private readonly router = inject(Router);
+  protected readonly lupeI18n = inject(I18nService).translateAll(LUPE_I18N_KEYS) as LupeI18n;
 
   protected readonly auto = AUTO_DETECT;
   protected readonly maxText = TRANSLATOR_MAX_TEXT;
@@ -196,6 +209,11 @@ export class TranslatorPage implements ViewWillLeave {
   protected swap(): void {
     this.stopSpeech();
     this.store.swap();
+  }
+
+  protected openLive(): void {
+    this.stopSpeech();
+    void this.router.navigateByUrl('/translator/live');
   }
 
   protected toggleDictation(): void {
