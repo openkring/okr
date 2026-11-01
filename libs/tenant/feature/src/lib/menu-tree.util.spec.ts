@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { MenuItemModel } from '@okr/shared-models';
 import type { FeatureBlock, MenuStructureDrift } from '@okr/tenant-util';
-import { buildMenuTree, filterMenuRows } from './menu-tree.util';
+import { buildMenuTree, filterMenuRows, foldMenuRows, foldableMenuRows } from './menu-tree.util';
+import type { MenuTreeRow } from './menu-tree.util';
 
 const doc = (okey: string, menuItems: string[] = []): MenuItemModel => ({
   okey, name: okey, tenants: ['scs'], menuItems, isArchived: false,
@@ -416,5 +417,22 @@ describe('buildMenuTree — detached', () => {
     const existing = new Map([['main_scs', doc('main_scs', [])]]);
     const rows = base(existing);
     expect(rows.every(r => r.state === 'absent' && !r.detached)).toBe(true);
+  });
+});
+
+describe('foldMenuRows / foldableMenuRows', () => {
+  const r = (name: string, depth: number): MenuTreeRow => ({
+    name, depth, docId: name, state: 'equal', roleNeededLive: '', roleNeededCatalogue: '', otherDrift: [],
+    blockId: '', forked: false, hidden: false, detached: false, action: 'navigate', groupKeys: [],
+  });
+  const rows = [r('a', 0), r('a1', 1), r('a11', 2), r('b', 0), r('c', 0), r('c1', 1)];
+
+  it('only top-level rows with a subtree are foldable', () => {
+    expect([...foldableMenuRows(rows)]).toEqual(['a', 'c']);
+  });
+
+  it('keeps every top-level row and only the subtrees of expanded ones', () => {
+    expect(foldMenuRows(rows, new Set()).map(row => row.name)).toEqual(['a', 'b', 'c']);
+    expect(foldMenuRows(rows, new Set(['a'])).map(row => row.name)).toEqual(['a', 'a1', 'a11', 'b', 'c']);
   });
 });

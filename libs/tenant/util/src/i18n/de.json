@@ -21,6 +21,9 @@
     "games": {
       "label": "Spiele"
     },
+    "instruments": {
+      "label": "Instrumente"
+    },
     "special": {
       "label": "Spezial"
     }
@@ -117,7 +120,7 @@
       "label": "Aufgaben"
     },
     "instruments": {
-      "label": "Strategie-Instrumente & Whiteboards"
+      "label": "Tools"
     },
     "games": {
       "label": "Spiele"
@@ -248,6 +251,7 @@
     "rows_unhide_button": "Einblenden",
     "rows_state_hidden": "ausgeblendet",
     "rows_filter_empty": "Keine Menüzeile passt zu deiner Suche.",
+    "rows_toggle": "Unterzeilen ein- oder ausklappen",
     "rows_apply_toast": "Katalog-Wert übernommen",
     "rows_pin_toast": "Wert fixiert",
     "rows_unpin_toast": "Fixierung gelöst",

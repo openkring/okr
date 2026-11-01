@@ -318,3 +318,31 @@ export function filterMenuRows(rows: MenuTreeRow[], searchTerm: string, action: 
   });
   return rows.filter((_row, i) => keep.has(i));
 }
+
+/**
+ * Top-level names (depth 0) that have at least one row below them — the rows that get a
+ * fold toggle in segment 2. A top-level row with nothing under it has nothing to fold.
+ */
+export function foldableMenuRows(rows: MenuTreeRow[]): Set<string> {
+  const foldable = new Set<string>();
+  rows.forEach((row, i) => {
+    if (row.depth === 0 && (rows[i + 1]?.depth ?? 0) > 0) foldable.add(row.name);
+  });
+  return foldable;
+}
+
+/**
+ * Hides the subtree of every top-level row not in `expanded` — the accordion of segment 2.
+ * Top-level rows always stay, so a folded table still lists every first-level menu entry.
+ * Relies on the flat list being in tree order, as `buildMenuTree` emits it.
+ */
+export function foldMenuRows(rows: MenuTreeRow[], expanded: ReadonlySet<string>): MenuTreeRow[] {
+  let open = true;
+  return rows.filter(row => {
+    if (row.depth === 0) {
+      open = expanded.has(row.name);
+      return true;
+    }
+    return open;
+  });
+}

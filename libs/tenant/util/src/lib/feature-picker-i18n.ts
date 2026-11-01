@@ -126,6 +126,7 @@ export const FEATURE_PICKER_I18N_KEYS = {
   /** The filter toolbar found nothing — distinct from `segment_rows_placeholder`, which
    *  means "no block is on yet". */
   rows_filter_empty: PFX + 'picker.rows_filter_empty',
+  rows_toggle: PFX + 'picker.rows_toggle',
   rows_apply_toast: PFX + 'picker.rows_apply_toast',
   rows_pin_toast: PFX + 'picker.rows_pin_toast',
   rows_unpin_toast: PFX + 'picker.rows_unpin_toast',

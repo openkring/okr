@@ -21,6 +21,9 @@
     "games": {
       "label": "Giochi"
     },
+    "instruments": {
+      "label": "Strumenti"
+    },
     "special": {
       "label": "Speciale"
     }
@@ -117,7 +120,7 @@
       "label": "Da fare"
     },
     "instruments": {
-      "label": "Strumenti strategici e lavagne"
+      "label": "Utilità"
     },
     "games": {
       "label": "Giochi"
@@ -248,6 +251,7 @@
     "rows_unhide_button": "Mostra",
     "rows_state_hidden": "nascosta",
     "rows_filter_empty": "Nessuna riga di menu corrisponde alla tua ricerca.",
+    "rows_toggle": "Espandi o comprimi le sottorighe",
     "rows_apply_toast": "Valore del catalogo applicato",
     "rows_pin_toast": "Valore fissato",
     "rows_unpin_toast": "Fissaggio rimosso",

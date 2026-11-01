@@ -20,6 +20,7 @@ export const FEATURE_BUNDLES: { id: BundleId; label: string; icon: string }[] = 
   { id: 'documents',     label: '@tenant/util.bundle.documents.label',     icon: 'documents' },
   { id: 'communication', label: '@tenant/util.bundle.communication.label', icon: 'chatbubbles' },
   { id: 'games',         label: '@tenant/util.bundle.games.label',         icon: 'play' },
+  { id: 'instruments',   label: '@tenant/util.bundle.instruments.label',   icon: 'calculator' },
   { id: 'special',       label: '@tenant/util.bundle.special.label',       icon: 'star' },
 ];
 
@@ -2378,7 +2379,7 @@ const task: FeatureBlock = {
  */
 const instruments: FeatureBlock = {
   id: 'instruments',
-  bundle: 'special',
+  bundle: 'instruments',
   label: '@tenant/util.feature.instruments.label',
   icon: 'target',
   defaultAvailability: 'ga',
@@ -2410,6 +2411,10 @@ const instruments: FeatureBlock = {
   // wrapper and no data, so its row is catalogued — every tenant with `instruments` enabled
   // gets it on the next picker save (after a functions deploy, FEATURE_BLOCKS is baked into
   // `applyFeatureSelection`). Any logged-in member may use it, matching `isAuthenticatedGuard`.
+  //
+  // The Lupe (idea `2026-10-31-lupe-idea.md`, entry `instruments/lupe`) belongs here too, by
+  // owner ruling 2026-11-01: Rechner and Lupe stay INSIDE this block rather than becoming
+  // blocks of their own. Its route and menu row arrive with its lib.
   menu: [
     {
       key: 'calculator', name: 'calculator', url: '/calculator',

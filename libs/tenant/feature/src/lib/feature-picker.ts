@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
-  IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonItemDivider,
+  IonAccordion, IonAccordionGroup, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonItemDivider,
   IonItemGroup, IonLabel, IonList, IonMenuButton, IonNote, IonRow, IonSegment, IonSegmentButton,
   IonTitle, IonToolbar, ModalController,
 } from '@ionic/angular';
@@ -28,7 +28,7 @@ import { MenuService } from '@okr/cms-menu-data-access';
 import type { BlockEnableResult } from '@okr/tenant-ui';
 import { BlockEnableModal, MenuCompareModal, PickerHelpModal } from '@okr/tenant-ui';
 
-import { buildMenuTree, filterMenuRows } from './menu-tree.util';
+import { buildMenuTree, filterMenuRows, foldMenuRows, foldableMenuRows } from './menu-tree.util';
 import type { MenuTreeRow } from './menu-tree.util';
 import { actionableFieldsOf, patchNoteFor } from './menu-row-actions.util';
 
@@ -72,7 +72,7 @@ type PickerSegment = 'blocks' | 'rows';
     SvgIconPipe, ListFilter,
     IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonButton, IonIcon,
     IonContent, IonList, IonItemGroup, IonItemDivider, IonItem, IonLabel, IonNote,
-    IonSegment, IonSegmentButton, IonGrid, IonRow, IonCol,
+    IonSegment, IonSegmentButton, IonGrid, IonRow, IonCol, IonAccordionGroup, IonAccordion,
   ],
   template: `
     <ion-header>
@@ -130,14 +130,18 @@ type PickerSegment = 'blocks' | 'rows';
               </ion-item>
             }
           </ion-item-group>
+        </ion-list>
 
+        <ion-accordion-group [multiple]="true" [value]="openBundles()" (ionChange)="onBundlesChange($event)">
           @for (group of bundleGroups; track group.bundle.id) {
             @if (group.blocks.length > 0) {
-              <ion-item-group>
-                <ion-item-divider>
+              <ion-accordion [value]="group.bundle.id">
+                <ion-item slot="header">
                   <ion-icon slot="start" src="{{ group.bundle.icon | svgIcon }}" />
                   <ion-label>{{ bundleLabels[group.bundle.id]?.() || group.bundle.id }}</ion-label>
-                </ion-item-divider>
+                  <ion-note slot="end">{{ liveCountOf(group.blocks) }} / {{ group.blocks.length }}</ion-note>
+                </ion-item>
+                <div slot="content">
                 @for (block of group.blocks; track block.id) {
                   <ion-item [class.highlighted]="isHighlighted(block)">
                     <ion-icon slot="start" src="{{ block.icon | svgIcon }}" />
@@ -186,10 +190,11 @@ type PickerSegment = 'blocks' | 'rows';
                     }
                   </ion-item>
                 }
-              </ion-item-group>
+                </div>
+              </ion-accordion>
             }
           }
-        </ion-list>
+        </ion-accordion-group>
       } @else {
         @if (rows().length === 0) {
           <ion-list>
@@ -210,9 +215,18 @@ type PickerSegment = 'blocks' | 'rows';
               <ion-col size-md="3"><strong>{{ i18n.rows_col_role() }}</strong></ion-col>
               <ion-col size-md="3"><strong>{{ i18n.rows_col_action() }}</strong></ion-col>
             </ion-row>
-            @for (row of filteredRows(); track row.name) {
-              <ion-row class="data-row" [style.opacity]="isRowDimmed(row) ? 0.6 : 1">
+            @for (row of visibleRows(); track row.name) {
+              <ion-row class="data-row" [class.top-row]="row.depth === 0" [style.opacity]="isRowDimmed(row) ? 0.6 : 1">
                 <ion-col size="12" size-md="6" class="col-name" [style.padding-inline-start.rem]="row.depth * 1.5">
+                  @if (row.depth === 0) {
+                    @if (foldableRows().has(row.name) && !isFiltering()) {
+                      <ion-button fill="clear" size="small" title="{{ i18n.rows_toggle() }}" (click)="onToggleRow(row)">
+                        <ion-icon slot="icon-only" src="{{ (expandedRows().has(row.name) ? 'chevron-down' : 'chevron-forward') | svgIcon }}" />
+                      </ion-button>
+                    } @else {
+                      <span class="fold-spacer"></span>
+                    }
+                  }
                   @if (row.state !== 'absent') {
                     <ion-button fill="clear" size="small" (click)="onCompare(row)">
                       <ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" />
@@ -336,6 +350,9 @@ type PickerSegment = 'blocks' | 'rows';
       border-bottom: 1px solid var(--ion-color-light-shade);
     }
     .col-name { display: flex; align-items: center; gap: 4px; }
+    .top-row .col-name { font-weight: 500; }
+    /* Keeps top-level names aligned whether or not their row has a fold chevron. */
+    .fold-spacer { display: inline-block; width: 36px; }
     .col-role { color: var(--ion-color-medium-shade); }
     .stacked-label { display: none; }
     /* A row with nothing to do says so in a word instead of offering a button that can only
@@ -436,6 +453,9 @@ export class FeaturePicker {
 
   protected readonly segment = signal<PickerSegment>('blocks');
 
+  /** Bundles whose accordion is open — all closed at first, the catalogue is long. */
+  protected readonly openBundles = signal<string[]>([]);
+
   // ── Segment 2 filters ─────────────────────────────────────────────────────────────────
   // Same two filters the ordinary menu list offers (`MenuList`): a free-text search over the
   // menu NAME — the only identifier this table shows and the one an admin arrives with from
@@ -497,6 +517,17 @@ export class FeaturePicker {
   protected readonly filteredRows = computed<MenuTreeRow[]>(() =>
     filterMenuRows(this.rows(), this.searchTerm(), this.selectedAction()));
 
+  // ── Segment 2 folding ─────────────────────────────────────────────────────────────────
+  // Each top-level row folds its subtree, all folded at first. A search or type filter
+  // unfolds everything: a hit hidden inside a folded subtree would read as no hit at all.
+  protected readonly expandedRows = signal<ReadonlySet<string>>(new Set());
+  protected readonly foldableRows = computed(() => foldableMenuRows(this.rows()));
+  protected readonly isFiltering = computed(() =>
+    this.searchTerm().trim().length > 0 || (this.selectedAction() !== 'all' && this.selectedAction() !== ''));
+  protected readonly visibleRows = computed<MenuTreeRow[]>(() => this.isFiltering()
+    ? this.filteredRows()
+    : foldMenuRows(this.filteredRows(), this.expandedRows()));
+
   /**
    * Which blocks a profile would add — proposal 6, rebuilt for the additive model. It used to
    * tick checkboxes toward a global Save; there is no save any more, so this only HIGHLIGHTS
@@ -522,6 +553,31 @@ export class FeaturePicker {
 
   protected onApplyProfile(profile: FeatureProfile): void {
     this.activeProfile.set(this.isActiveProfile(profile) ? undefined : profile.id);
+    // A highlight inside a closed accordion is invisible — open every bundle it touches.
+    const touched = this.bundleGroups
+      .filter(group => group.blocks.some(block => this.highlighted().has(block.id)))
+      .map(group => group.bundle.id);
+    this.openBundles.update(open => [...new Set([...open, ...touched])]);
+  }
+
+  protected onBundlesChange(event: CustomEvent): void {
+    // ionChange bubbles; only the accordion group's own event carries the open bundles.
+    if (event.target !== event.currentTarget) return;
+    const value = event.detail.value as string[] | string | undefined;
+    this.openBundles.set(Array.isArray(value) ? value : value ? [value] : []);
+  }
+
+  protected liveCountOf(blocks: FeatureBlock[]): number {
+    return blocks.filter(block => this.liveBlocks().has(block.id)).length;
+  }
+
+  protected onToggleRow(row: MenuTreeRow): void {
+    this.expandedRows.update(expanded => {
+      const next = new Set(expanded);
+      if (next.has(row.name)) next.delete(row.name);
+      else next.add(row.name);
+      return next;
+    });
   }
 
   protected isHighlighted(block: FeatureBlock): boolean {

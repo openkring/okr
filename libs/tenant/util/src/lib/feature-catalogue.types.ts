@@ -5,7 +5,7 @@ export type Availability = 'ga' | 'beta' | 'internal' | 'disabled';
 
 export type BundleId =
   | 'core' | 'members' | 'events' | 'finance'
-  | 'documents' | 'communication' | 'games' | 'special';
+  | 'documents' | 'communication' | 'games' | 'instruments' | 'special';
 
 /**
  * One node of a block's default menu subtree.

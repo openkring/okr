@@ -21,6 +21,9 @@
     "games": {
       "label": "Games"
     },
+    "instruments": {
+      "label": "Instruments"
+    },
     "special": {
       "label": "Special"
     }
@@ -117,7 +120,7 @@
       "label": "Tasks"
     },
     "instruments": {
-      "label": "Strategy instruments & whiteboards"
+      "label": "Tools"
     },
     "games": {
       "label": "Games"
@@ -248,6 +251,7 @@
     "rows_unhide_button": "Show",
     "rows_state_hidden": "hidden",
     "rows_filter_empty": "No menu row matches your search.",
+    "rows_toggle": "Expand or collapse sub-rows",
     "rows_apply_toast": "Catalogue value applied",
     "rows_pin_toast": "Value pinned",
     "rows_unpin_toast": "Pin removed",
