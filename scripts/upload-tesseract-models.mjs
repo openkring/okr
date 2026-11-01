@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 // Upload the Tesseract language models for the Übersetzer's live view (idea 2.126 phase 2) into the
-// default Storage bucket, where imgix serves them to tesseract.js:
+// default Storage bucket as public-read objects, which tesseract.js fetches directly from GCS:
 //   gs://bkaiser-org.appspot.com/tesseract/4.0.0_best_int/<model>.traineddata.gz
-//   → https://bkaiser.imgix.net/tesseract/4.0.0_best_int/<model>.traineddata.gz
+//   → https://storage.googleapis.com/bkaiser-org.appspot.com/tesseract/4.0.0_best_int/<model>.traineddata.gz
+// Only these objects are public (per-object ACL; the bucket has no uniform access); the bucket's CORS
+// already allows GET from any origin. Not via imgix: it would only pass the files through and bill
+// the bandwidth.
 //
 // Source: the `@tesseract.js-data/<model>` npm packages on jsDelivr (Apache-2.0, from tessdata_best,
 // integer-quantised — about 1–5 MB each). The model list is read from TESSERACT_MODELS in
@@ -61,6 +64,7 @@ for (const model of models) {
     contentType: 'application/octet-stream',
     metadata: { cacheControl: 'public, max-age=31536000, immutable' },
     resumable: false,
+    predefinedAcl: 'publicRead',
   });
   uploaded++;
   console.log(`✓ ${model} (${(data.length / 1e6).toFixed(1)} MB)`);

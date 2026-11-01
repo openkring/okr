@@ -4,7 +4,6 @@ import { IonButton, IonContent, IonIcon, IonSpinner, ViewDidEnter, ViewWillLeave
 import { Capacitor } from '@capacitor/core';
 import { CameraPreview } from '@capgo/camera-preview';
 
-import { ENV } from '@okr/shared-config';
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { LupeCamera, LupeCameraError, LupeError, NativeLupeCamera, WebLupeCamera } from '@okr/instruments-lupe-feature';
@@ -156,7 +155,6 @@ const MEMO_LIMIT = 500;
 export class TranslatorLivePage implements ViewDidEnter, ViewWillLeave {
   protected readonly store = inject(TranslatorStore);
   private readonly router = inject(Router);
-  private readonly env = inject(ENV);
   protected readonly lupeI18n = inject(I18nService).translateAll(LUPE_I18N_KEYS) as LupeI18n;
   private readonly video = viewChild<ElementRef<HTMLVideoElement>>('video');
   private readonly stage = viewChild<ElementRef<HTMLDivElement>>('stage');
@@ -184,7 +182,7 @@ export class TranslatorLivePage implements ViewDidEnter, ViewWillLeave {
 
   private readonly webCamera = new WebLupeCamera(() => this.video()?.nativeElement);
   private readonly nativeCamera = new NativeLupeCamera();
-  private readonly ocr = new LiveOcr(this.env.services.imgixBaseUrl);
+  private readonly ocr = new LiveOcr();
   private readonly canvas = document.createElement('canvas');
   /** recognised text → translation, for this visit and this language pair */
   private readonly memo = new Map<string, string>();

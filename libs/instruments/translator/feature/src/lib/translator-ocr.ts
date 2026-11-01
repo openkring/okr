@@ -13,16 +13,18 @@ export interface OcrBlock {
 /**
  * On-device text recognition for the live view (idea 2.126 phase 2): tesseract.js in a web worker,
  * loaded on first use only (dynamic import — the library is not in the eager bundle). The worker and
- * the WASM core are served from the app's `assets/tesseract/`, the language models from Storage
- * through imgix (`tesseract/4.0.0_best_int/<model>.traineddata.gz`, uploaded by
- * `scripts/upload-tesseract-models.mjs`); tesseract.js keeps a loaded model in IndexedDB. The camera
- * image never leaves the device.
+ * the WASM core are served from the app's `assets/tesseract/`, the language models straight from the
+ * default Storage bucket (public-read objects under `tesseract/4.0.0_best_int/`, uploaded by
+ * `scripts/upload-tesseract-models.mjs`) — not through imgix, which would only pass them through and
+ * bill the bandwidth. tesseract.js keeps a loaded model in IndexedDB. The camera image never leaves
+ * the device.
  */
+/** Public GCS URL of the models; tesseract.js appends `/<model>.traineddata.gz`. */
+export const TESSERACT_LANG_PATH = 'https://storage.googleapis.com/bkaiser-org.appspot.com/tesseract/4.0.0_best_int';
+
 export class LiveOcr {
   private worker: Worker | undefined;
   private models = '';
-
-  constructor(private readonly imgixBaseUrl: string) {}
 
   /** Loads (or switches to) the given `+`-joined models, e.g. `deu+eng`. */
   public async load(models: string): Promise<void> {
@@ -32,7 +34,7 @@ export class LiveOcr {
       this.worker = await createWorker(models, OEM.LSTM_ONLY, {
         workerPath: assets + 'worker.min.js',
         corePath: assets,
-        langPath: `${this.imgixBaseUrl}/tesseract/4.0.0_best_int`,
+        langPath: TESSERACT_LANG_PATH,
         workerBlobURL: false,
         gzip: true,
       });

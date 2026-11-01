@@ -12,7 +12,6 @@
     "@okr/shared-util-angular": "*",
     "@okr/instruments-translator-data-access": "*",
     "@okr/instruments-translator-util": "*",
-    "@okr/shared-config": "*",
     "@okr/instruments-lupe-feature": "*",
     "@okr/instruments-lupe-util": "*"
   }
