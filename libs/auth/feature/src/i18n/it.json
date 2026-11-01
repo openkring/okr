@@ -134,6 +134,11 @@
     "error": "Non ha funzionato. Riprova, per favore.",
     "modal": {
       "title": "Passkey di {name}"
+    },
+    "prompt": {
+      "message": "Vuoi accedere più velocemente la prossima volta? Configura ora una passkey.",
+      "setup": "Configura",
+      "later": "Più tardi"
     }
   }
 }

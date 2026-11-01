@@ -74,6 +74,14 @@ const PUSH_TOKEN_60D = {
   months: 2,
   legalBasis: 'Zustellung von Push-Mitteilungen — 60 Tage nach der letzten Nutzung der App gelöscht',
 } as const;
+/**
+ * Passkeys (spec 1.120): kept until the member removes one in their profile, an admin revokes it
+ * (lost device), or the login is deleted.
+ */
+const PASSKEY_UNTIL_REMOVED = {
+  months: 'indefinite',
+  legalBasis: 'Anmeldung mit Passkey — bis du den Passkey entfernst oder dein Konto gelöscht wird',
+} as const;
 
 /**
  * Reads a (possibly dotted) `AvatarInfo[]` field and tells whether the subject is in it.
@@ -266,6 +274,22 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     onExport: 'none',             // derived counters, not a record about the member
     onErasure: 'delete',
     retention: LOG_12M,
+  },
+  {
+    // `PasskeyCollection` (spec 1.120): one WebAuthn credential per device — uid, rpId, the PUBLIC
+    // key, counter, aaguid, a device label, created/last-used. No biometrics ever reach us.
+    // Server-only (rules deny all client access); the `passkey` callable writes `tenants: [tenantId]`
+    // of the app the passkey was made in, and its rpId is that app's host, so it is useless outside
+    // that tenancy.
+    collection: 'passkeys',
+    dataClass: 'identity',
+    tier: 'T1',
+    onTenantExit: 'delete',   // bound to the tenant app's host — no other tenancy can use it
+    find: (c: SubjectCtx) => db().collection('passkeys').where('uid', '==', c.uid),
+    tenantScope: 'tenantsArray',
+    onExport: 'full',             // public key + label + timestamps: nothing secret, and the member's own record
+    onErasure: 'delete',
+    retention: PASSKEY_UNTIL_REMOVED,
   },
   {
     collection: 'avatars',
@@ -1569,12 +1593,6 @@ export async function resolveArrayItemDocs(entry: SubjectDataEntry, ctx: Subject
 //   directly, never through `eraseMyData`. Turning it into a row would require SubjectCtx to
 //   carry an identity that does not exist in this system. Retention and the direct-request path
 //   are C3 §9's open item.
-// gap: passkeys — one WebAuthn credential per device (spec 1.120): uid, tenants, rpId, the
-//   public key, counter, aaguid, a device label and created/last-used timestamps. Personal data
-//   (linked by uid), no biometrics. Server-only (rules deny all client access; the `passkey`
-//   callable is the only reader/writer). Deleted with the login by deleteFirebaseAuthUser; NOT yet
-//   in exportMyData / eraseMyData — after an erasure the docs are useless (loginVerify requires
-//   the Auth account and users/{uid}) but remain until an admin deletes them. Row: 1.120 follow-up.
 // gap: webauthn-challenges — a single-use WebAuthn challenge (spec 1.120): purpose, challenge,
 //   rpId, origin, tenantId and, for a registration, the uid. Deleted on first use and by a
 //   Firestore TTL policy on `expireAt` within 5 minutes otherwise; never exported (nothing about

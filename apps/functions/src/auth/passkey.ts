@@ -33,7 +33,7 @@ import { getAppEmailConfig } from './email-templates';
 import { DEFAULT_EMAIL_PROVIDER, isValidProvider, sendEmailViaProvider } from './email-transport';
 import { tenantAppDomain } from './login-id';
 import {
-  byCreatedAtDesc, ChallengePurpose, CHALLENGE_TTL_MS, checkLoginTarget, defaultPasskeyLabel, expectedOrigin,
+  byCreatedAtDesc, ChallengePurpose, CHALLENGE_TTL_MS, checkLoginTarget, defaultPasskeyLabel, expectedOrigin, verifyOrigins,
   isChallengeUsable, isCredentialId, mayManagePasskey, registrationBlock, normalizePasskeyLabel, passkeyAddedMail,
   PASSKEY_LABEL_MAX, resolveRpId, StoredChallenge, toPasskeyItem,
 } from './passkey.decide';
@@ -231,7 +231,7 @@ async function registerVerify(request: CallableRequest, data: PasskeyRequest): P
     verification = await verifyRegistrationResponse({
       response,
       expectedChallenge: stored.challenge,
-      expectedOrigin: stored.origin,
+      expectedOrigin: verifyOrigins(stored.origin, stored.rpId, stored.tenantId),
       expectedRPID: stored.rpId,
       requireUserVerification: true,
     });
@@ -346,7 +346,7 @@ async function attemptLogin(tenantId: string, challengeId: string, response: Aut
     verification = await verifyAuthenticationResponse({
       response,
       expectedChallenge: stored.challenge,
-      expectedOrigin: stored.origin,
+      expectedOrigin: verifyOrigins(stored.origin, stored.rpId, stored.tenantId),
       expectedRPID: stored.rpId,
       credential: {
         id: okey,
@@ -413,10 +413,13 @@ async function list(request: CallableRequest, data: PasskeyRequest): Promise<{ i
       throw new HttpsError('permission-denied', 'Du darfst diese Passkeys nicht ansehen.');
     }
   }
+  // optional: only the passkeys bound to one host (the post-login prompt asks "one for THIS app?")
+  const rpId = typeof data.rpId === 'string' && data.rpId ? data.rpId : undefined;
   const snap = await passkeys().where('uid', '==', uid).get();
   const items = snap.docs
     // an admin sees only the passkeys of the tenants they administer
     .filter((d) => mayManagePasskey(caller, { uid: String(d.data()['uid'] ?? ''), tenants: tenantsOf(d.data()) }))
+    .filter((d) => !rpId || d.data()['rpId'] === rpId)
     .map((d) => toPasskeyItem(d.id, d.data()))
     .sort(byCreatedAtDesc);
   return { items };

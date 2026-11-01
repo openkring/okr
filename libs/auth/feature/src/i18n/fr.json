@@ -134,6 +134,11 @@
     "error": "Cela n’a pas fonctionné. Réessaie, s’il te plaît.",
     "modal": {
       "title": "Passkeys de {name}"
+    },
+    "prompt": {
+      "message": "Te connecter plus vite la prochaine fois ? Configure une clé d’accès maintenant.",
+      "setup": "Configurer",
+      "later": "Plus tard"
     }
   }
 }

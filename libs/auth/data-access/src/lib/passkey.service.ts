@@ -2,13 +2,21 @@ import { Injectable, inject } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { browserSupportsWebAuthn, platformAuthenticatorIsAvailable, startAuthentication, startRegistration } from '@simplewebauthn/browser';
+import { WebAuthnAbortService, browserSupportsWebAuthn, browserSupportsWebAuthnAutofill, platformAuthenticatorIsAvailable, startAuthentication, startRegistration } from '@simplewebauthn/browser';
 import type { PublicKeyCredentialCreationOptionsJSON, PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser';
 
 import { ENV } from '@okr/shared-config';
 import { PasskeyItem } from '@okr/shared-models';
 
 type OptionsResult<T> = { challengeId: string; options: T };
+
+/**
+ * Registration options fetched ahead of the user's tap (see PasskeyService.prepareRegistration).
+ * The challenge behind it expires after 5 minutes.
+ */
+export type PreparedRegistration = OptionsResult<PublicKeyCredentialCreationOptionsJSON>;
+/** Sign-in options fetched ahead of the ceremony (see PasskeyService.prepareLogin). */
+export type PreparedLogin = OptionsResult<PublicKeyCredentialRequestOptionsJSON>;
 
 /**
  * Client side of the `passkey` callable (spec 1.120 phase 1). Passkeys are hidden on the native
@@ -33,24 +41,58 @@ export class PasskeyService {
     }
   }
 
-  /** Run the assertion ceremony and return a Firebase custom token for signInWithCustomToken. */
-  public async getLoginToken(): Promise<string> {
-    const { challengeId, options } = await this.call<OptionsResult<PublicKeyCredentialRequestOptionsJSON>>('loginOptions', this.rp());
-    const response = await startAuthentication({ optionsJSON: options });
+  /** Can this browser offer passkeys in the username field's autofill (conditional mediation)? */
+  public async canAutofill(): Promise<boolean> {
+    if (!this.canSignIn()) return false;
+    try {
+      return await browserSupportsWebAuthnAutofill();
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Run the assertion ceremony and return a Firebase custom token for signInWithCustomToken.
+   * `prepared`: options from prepareLogin(); fetched here when absent.
+   * `autofill`: a conditional request that waits until the user picks a passkey from the autofill
+   * of an `autocomplete="… webauthn"` field — it never shows a dialog of its own.
+   */
+  public async getLoginToken(prepared?: PreparedLogin, autofill = false): Promise<string> {
+    const { challengeId, options } = prepared ?? await this.prepareLogin();
+    const response = await startAuthentication({ optionsJSON: options, useBrowserAutofill: autofill });
     const { token } = await this.call<{ token: string }>('loginVerify', { tenantId: this.env.tenantId, challengeId, response });
     return token;
   }
 
+  /** Fetch the sign-in options (a fresh challenge, valid 5 minutes) without starting the ceremony. */
+  public async prepareLogin(): Promise<PreparedLogin> {
+    return this.call<PreparedLogin>('loginOptions', this.rp());
+  }
+
+  /** Abort a pending ceremony, e.g. the autofill request when the login page is left. */
+  public cancelCeremony(): void {
+    WebAuthnAbortService.cancelCeremony();
+  }
+
+  /**
+   * Fetch the registration options before the user taps. Safari wants the WebAuthn call close to
+   * the tap; a callable round trip in between can use up that window.
+   */
+  public async prepareRegistration(): Promise<PreparedRegistration> {
+    return this.call<PreparedRegistration>('registerOptions', this.rp());
+  }
+
   /** Create a passkey for the signed-in user on this device. */
-  public async register(): Promise<PasskeyItem> {
-    const { challengeId, options } = await this.call<OptionsResult<PublicKeyCredentialCreationOptionsJSON>>('registerOptions', this.rp());
+  public async register(prepared?: PreparedRegistration): Promise<PasskeyItem> {
+    const { challengeId, options } = prepared ?? await this.prepareRegistration();
     const response = await startRegistration({ optionsJSON: options });
     const { item } = await this.call<{ item: PasskeyItem }>('registerVerify', { tenantId: this.env.tenantId, challengeId, response });
     return item;
   }
 
-  public async list(uid: string): Promise<PasskeyItem[]> {
-    return (await this.call<{ items: PasskeyItem[] }>('list', { uid })).items;
+  /** `thisHost`: only the passkeys bound to this app's host (rpId). */
+  public async list(uid: string, thisHost = false): Promise<PasskeyItem[]> {
+    return (await this.call<{ items: PasskeyItem[] }>('list', thisHost ? { uid, rpId: location.hostname } : { uid })).items;
   }
 
   public async rename(okey: string, label: string): Promise<PasskeyItem> {

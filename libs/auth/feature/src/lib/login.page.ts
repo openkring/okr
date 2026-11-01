@@ -1,6 +1,6 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { IonButton, IonCol, IonContent, IonGrid, IonLabel, IonRow, IonSpinner } from '@ionic/angular';
+import { IonButton, IonCol, IonContent, IonGrid, IonLabel, IonRow, IonSpinner, ViewDidEnter, ViewWillLeave } from '@ionic/angular';
 
 import { AuthCredentials } from '@okr/shared-models';
 import { Header, ImgDirective } from '@okr/shared-ui';
@@ -12,6 +12,14 @@ import { LoginForm, PwdResetSent } from '@okr/auth-ui';
 import { emailValidations } from '@okr/auth-util';
 
 import { AuthStore } from './auth.store';
+
+/**
+ * A conditional (autofill) request holds a challenge that the server forgets after 5 minutes;
+ * renew it a little earlier so a passkey picked from the autofill is never a stale one.
+ */
+const AUTOFILL_RENEW_MS = 4 * 60 * 1000;
+/** Stop renewing after this many rounds (~1 h) — a login page left open overnight costs nothing. */
+const AUTOFILL_MAX_ROUNDS = 15;
 
 @Component({
   selector: 'okr-login-page',
@@ -125,7 +133,7 @@ import { AuthStore } from './auth.store';
     </ion-content>
   `,
 })
-export class LoginPage {
+export class LoginPage implements ViewDidEnter, ViewWillLeave {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   protected readonly authService = inject(AuthService);
@@ -135,6 +143,27 @@ export class LoginPage {
   /** Read once: browser support does not change while the page is open. */
   protected readonly passkeyAvailable = this.passkeyService.canSignIn();
   protected readonly passkeyRunning = signal(false);
+
+  /** Autofill (spec 1.120 phase 3): whether this browser offers passkeys in the login field. */
+  private autofillSupported: Promise<boolean> | undefined;
+  private autofillTimer: ReturnType<typeof setTimeout> | undefined;
+  private autofillRounds = 0;
+  private onPage = false;
+
+  constructor() {
+    inject(DestroyRef).onDestroy(() => this.stopAutofill());
+  }
+
+  public ionViewDidEnter(): void {
+    this.onPage = true;
+    this.autofillRounds = 0;
+    void this.startAutofill();
+  }
+
+  public ionViewWillLeave(): void {
+    this.onPage = false;
+    this.stopAutofill();
+  }
 
   // computed
   public logoUrl = computed(() => `${this.store.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.store.config().logoUrl)}`);
@@ -193,11 +222,15 @@ export class LoginPage {
     );
   }
 
-  /** Sign in with a passkey; AuthService handles cancel, errors and navigation. */
+  /**
+   * Sign in with a passkey; AuthService handles cancel, errors and navigation. Starting the
+   * ceremony aborts a pending autofill request, so that one is started again afterwards.
+   */
   protected async loginWithPasskey(): Promise<void> {
     if (this.passkeyRunning()) return;
     const returnUrl = getSafeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'));
     this.passkeyRunning.set(true);
+    this.stopAutofill();
     try {
       await this.authService.loginWithPasskey(
         returnUrl ?? this.store.config().rootUrl,
@@ -205,7 +238,35 @@ export class LoginPage {
       );
     } finally {
       this.passkeyRunning.set(false);
+      void this.startAutofill();
     }
+  }
+
+  /**
+   * Starts a conditional request that offers this app's passkeys in the login field's autofill
+   * (`autocomplete="username webauthn"`). It shows nothing by itself; the user picking a passkey
+   * signs them in exactly like the button. Renewed before its challenge expires.
+   */
+  private async startAutofill(): Promise<void> {
+    this.autofillSupported ??= this.passkeyService.canAutofill();
+    if (!this.onPage || this.passkeyRunning() || !(await this.autofillSupported)) return;
+    // the "link sent" state has no login field for the browser to attach the autofill to
+    if (!this.onPage || this.passkeyRunning() || this.linkSent() || this.autofillRounds >= AUTOFILL_MAX_ROUNDS) return;
+    this.autofillRounds++;
+    clearTimeout(this.autofillTimer);
+    this.autofillTimer = setTimeout(() => void this.startAutofill(), AUTOFILL_RENEW_MS);
+    const returnUrl = getSafeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'));
+    // a new ceremony aborts the previous one (WebAuthnAbortService), so no explicit cancel here
+    await this.authService.loginWithPasskeyAutofill(
+      returnUrl ?? this.store.config().rootUrl,
+      this.retryUrl(returnUrl),
+    );
+  }
+
+  private stopAutofill(): void {
+    clearTimeout(this.autofillTimer);
+    this.autofillTimer = undefined;
+    if (this.autofillSupported) this.passkeyService.cancelCeremony();
   }
 
   /** The login URL to return to after a failed attempt, carrying the returnUrl along. */

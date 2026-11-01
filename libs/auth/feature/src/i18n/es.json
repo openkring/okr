@@ -134,6 +134,11 @@
     "error": "No ha funcionado. Inténtalo de nuevo, por favor.",
     "modal": {
       "title": "Passkeys de {name}"
+    },
+    "prompt": {
+      "message": "¿Quieres iniciar sesión más rápido la próxima vez? Configura ahora una passkey.",
+      "setup": "Configurar",
+      "later": "Más tarde"
     }
   }
 }

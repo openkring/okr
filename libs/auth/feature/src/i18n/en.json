@@ -134,6 +134,11 @@
     "error": "That did not work. Please try again.",
     "modal": {
       "title": "Passkeys of {name}"
+    },
+    "prompt": {
+      "message": "Sign in faster next time? Set up a passkey now.",
+      "setup": "Set up",
+      "later": "Later"
     }
   }
 }

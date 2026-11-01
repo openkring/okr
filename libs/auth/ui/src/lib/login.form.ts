@@ -47,7 +47,7 @@ import { authCredentialsValidations, AuthI18n } from '@okr/auth-util';
                   [clearInput]="true"
                   [readOnly]="false"
                   type="text"
-                  autocomplete="username"
+                  [autocomplete]="context === 'login' ? 'username webauthn' : 'username'"
                 />
                 <okr-error-note [errors]="emailErrors()" />
               </ion-col>

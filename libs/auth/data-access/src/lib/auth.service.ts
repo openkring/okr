@@ -1,12 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { AlertController } from '@ionic/angular';
 import { browserLocalPersistence, confirmPasswordReset, EmailAuthProvider, reauthenticateWithCredential, setPersistence, signInWithCustomToken, signInWithEmailAndPassword, signOut, verifyPasswordResetCode } from 'firebase/auth';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { AUTH, ENV } from '@okr/shared-config';
 import { AuthCredentials, UserModel } from '@okr/shared-models';
-import { AlertService, navigateByUrl } from '@okr/shared-util-angular';
+import { AlertService, confirm, navigateByUrl } from '@okr/shared-util-angular';
 import { clearOfflineSnapshots, die, warn } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { ActivityService } from '@okr/activity-data-access';
@@ -15,10 +16,12 @@ import { isLoginIdInput, normalizeLoginIdInput } from '@okr/user-util';
 import { LoginFailure, PwdResetFailure, PwdResetResult, passkeyErrorKind, toLoginFailure, toPwdResetFailure } from '@okr/auth-util';
 
 import { PFX } from './scope';
-import { PasskeyService } from './passkey.service';
+import { PasskeyService, PreparedLogin } from './passkey.service';
 
 /** How long logout waits for its audit entry before signing out anyway (offline, see logout()). */
 const LOGOUT_AUDIT_TIMEOUT_MS = 2000;
+/** Per device (spec 1.120 D5): the post-login passkey offer is shown once, then never again. */
+const PASSKEY_OFFERED_KEY = 'okr.passkeyOffered';
 
 /**
  * This provider centralizes the authentication functions
@@ -42,6 +45,7 @@ export class AuthService {
   private readonly env = inject(ENV);
   private readonly router = inject(Router);
   private readonly alertService = inject(AlertService);
+  private readonly alertController = inject(AlertController);
   private readonly activityService = inject(ActivityService);
   private readonly passkeyService = inject(PasskeyService);
   private readonly fcmService = inject(FcmService);
@@ -59,6 +63,10 @@ export class AuthService {
     logout_error:   PFX + 'logout.error',
     logout_confirm: PFX + 'logout.confirm',
     passkey_login_error: '@auth/feature.passkey.login.error',
+    passkey_prompt_message: '@auth/feature.passkey.prompt.message',
+    passkey_prompt_setup:   '@auth/feature.passkey.prompt.setup',
+    passkey_prompt_later:   '@auth/feature.passkey.prompt.later',
+    passkey_added:          '@auth/feature.passkey.added',
   });
 
   /*-------------------------- login / logout / password reset --------------------------------*/
@@ -88,6 +96,7 @@ export class AuthService {
       void this.activityService.logAuth('login', `${credentials.loginEmail}: SUCCESS`);
       await this.alertService.showToast(this.i18n.login_conf());
       await navigateByUrl(this.router, rootUrl);
+      void this.offerPasskey();
     } catch (ex) {
       const reason = toLoginFailure(ex);
       void this.activityService.logAuth('login', `${credentials.loginEmail}: ERROR (${reason}): ${ex}`);
@@ -125,20 +134,71 @@ export class AuthService {
    * A cancelled ceremony is silent; every other failure shows one generic sentence.
    */
   public async loginWithPasskey(rootUrl: string, loginUrl: string): Promise<void> {
+    await this.completePasskeyLogin(undefined, false, rootUrl, loginUrl);
+  }
+
+  /**
+   * The same sign-in as a conditional request (spec 1.120 phase 3): it waits until the user picks a
+   * passkey from the login field's autofill and resolves without doing anything when the page
+   * aborts it. If the options cannot be fetched (offline), autofill just stays without passkeys.
+   */
+  public async loginWithPasskeyAutofill(rootUrl: string, loginUrl: string): Promise<void> {
+    let prepared: PreparedLogin;
+    try {
+      prepared = await this.passkeyService.prepareLogin();
+    } catch (ex) {
+      console.warn('AuthService.loginWithPasskeyAutofill: no options', ex);
+      return;
+    }
+    await this.completePasskeyLogin(prepared, true, rootUrl, loginUrl);
+  }
+
+  private async completePasskeyLogin(prepared: PreparedLogin | undefined, autofill: boolean, rootUrl: string, loginUrl: string): Promise<void> {
     try {
       await setPersistence(this.auth, browserLocalPersistence);
-      const token = await this.passkeyService.getLoginToken();
+      const token = await this.passkeyService.getLoginToken(prepared, autofill);
       await signInWithCustomToken(this.auth, token);
-      void this.activityService.logAuth('login', 'passkey: SUCCESS');
+      void this.activityService.logAuth('login', `passkey${autofill ? ' (autofill)' : ''}: SUCCESS`);
       await this.alertService.showToast(this.i18n.login_conf());
       await navigateByUrl(this.router, rootUrl);
     } catch (ex) {
       const kind = passkeyErrorKind(ex);
+      // An autofill request that never got as far as the server is the page restarting or leaving
+      // it (abort) or the browser refusing to attach it — not a sign-in attempt the user made.
+      if (autofill && !isServerError(ex)) {
+        if (kind !== 'cancelled') console.warn('AuthService.loginWithPasskeyAutofill: ', ex);
+        return;
+      }
       void this.activityService.logAuth('login', `passkey: ERROR (${kind})`);
       if (kind === 'cancelled') return;
       console.error('AuthService.loginWithPasskey: error: ', ex);
       await this.alertService.showToast(this.i18n.passkey_login_error());
       await navigateByUrl(this.router, loginUrl);
+    }
+  }
+
+  /**
+   * After a password sign-in (spec 1.120 D5): offer once per device to set up a passkey, when the
+   * device can create one and the user has none for this app yet. The options are fetched before
+   * the alert so the tap on «Einrichten» starts the OS dialog directly (Safari wants the WebAuthn
+   * call close to the tap). Best effort — any failure ends the offer silently.
+   */
+  private async offerPasskey(): Promise<void> {
+    try {
+      if (readLocal(PASSKEY_OFFERED_KEY)) return;
+      const uid = this.auth.currentUser?.uid;
+      if (!uid || !(await this.passkeyService.canRegister())) return;
+      if ((await this.passkeyService.list(uid, true)).length > 0) return;
+      const prepared = await this.passkeyService.prepareRegistration();
+      writeLocal(PASSKEY_OFFERED_KEY, new Date().toISOString());
+      const setup = await confirm(this.alertController, this.i18n.passkey_prompt_message(),
+        this.i18n.passkey_prompt_setup(), this.i18n.passkey_prompt_later(), true);
+      if (!setup) return;
+      await this.passkeyService.register(prepared);
+      await this.alertService.showToast(this.i18n.passkey_added());
+    } catch (ex) {
+      if (passkeyErrorKind(ex) === 'cancelled') return;
+      console.warn('AuthService.offerPasskey: ', ex);
     }
   }
 
@@ -376,5 +436,28 @@ export class AuthService {
       warn(`AuthService.getFirebaseUid: error: ${ex}`);
       return undefined;
     }
+  }
+}
+
+/** A Cloud Functions or Firebase Auth error: the ceremony itself succeeded and the sign-in failed after it. */
+function isServerError(ex: unknown): boolean {
+  const code = (ex as { code?: unknown } | null)?.code;
+  return typeof code === 'string' && (code.startsWith('functions/') || code.startsWith('auth/'));
+}
+
+/** localStorage can throw (private mode, blocked site data): treat that as "nothing stored". */
+function readLocal(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeLocal(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    /* not remembered: the offer may come again, which is harmless */
   }
 }

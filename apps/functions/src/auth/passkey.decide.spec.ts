@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
-  byCreatedAtDesc, checkLoginTarget, defaultPasskeyLabel, expectedOrigin, isChallengeUsable, isCredentialId, isRecentSignIn, mayManagePasskey, registrationBlock,
+  ANDROID_SIGNING_SHA256, apkKeyHashOrigin, byCreatedAtDesc, checkLoginTarget, defaultPasskeyLabel, expectedOrigin, isChallengeUsable, isCredentialId, isRecentSignIn, mayManagePasskey, registrationBlock,
   normalizePasskeyLabel, toPasskeyItem,
-  passkeyAddedMail, resolveRpId, StoredChallenge,
+  passkeyAddedMail, resolveRpId, StoredChallenge, verifyOrigins,
 } from './passkey.decide';
 
 describe('resolveRpId', () => {
@@ -19,6 +19,28 @@ describe('expectedOrigin', () => {
     expect(expectedOrigin('app.seeclub.org', 'https://evil.example')).toBe('https://app.seeclub.org');
     expect(expectedOrigin('localhost', 'http://localhost:4200')).toBe('http://localhost:4200');
     expect(expectedOrigin('localhost', 'https://app.seeclub.org')).toBeUndefined();
+  });
+});
+
+describe('apkKeyHashOrigin', () => {
+  it('encodes the certificate SHA-256 as unpadded base64url', () => {
+    expect(apkKeyHashOrigin('38:C8:57:66:E6:1F:8A:4C:AF:7C:F4:CA:17:12:65:1A:A4:1E:3C:94:E4:CD:56:8C:33:EF:B4:26:B0:02:35:25'))
+      .toBe('android:apk-key-hash:OMhXZuYfikyvfPTKFxJlGqQePJTkzVaMM--0JrACNSU');
+  });
+});
+
+describe('verifyOrigins', () => {
+  it('adds the tenant Android app origins to the web origin', () => {
+    const origins = verifyOrigins('https://app.seeclub.org', 'app.seeclub.org', 'scs');
+    expect(origins[0]).toBe('https://app.seeclub.org');
+    expect(origins).toContain('android:apk-key-hash:OMhXZuYfikyvfPTKFxJlGqQePJTkzVaMM--0JrACNSU');
+    expect(origins).toHaveLength(1 + ANDROID_SIGNING_SHA256['scs'].length);
+  });
+
+  it('keeps only the web origin for a tenant without an Android app, localhost or no tenant', () => {
+    expect(verifyOrigins('https://app.bkaiser.com', 'app.bkaiser.com', 'bkg')).toEqual(['https://app.bkaiser.com']);
+    expect(verifyOrigins('http://localhost:4200', 'localhost', 'scs')).toEqual(['http://localhost:4200']);
+    expect(verifyOrigins('https://app.seeclub.org', 'app.seeclub.org', undefined)).toEqual(['https://app.seeclub.org']);
   });
 });
 

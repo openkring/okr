@@ -37,6 +37,35 @@ export function expectedOrigin(rpId: string, clientOrigin: string): string | und
   }
 }
 
+/**
+ * SHA-256 fingerprints of the certificates a tenant's Android app is signed with (spec 1.120 §7,
+ * phase 2): the Play app signing key (every Play install) and the upload key (local release
+ * builds). Public values — the same ones `/.well-known/assetlinks.json` publishes. Add a tenant
+ * here when its Android app is released; see the `android-release` skill for where to read them.
+ */
+export const ANDROID_SIGNING_SHA256: Readonly<Record<string, readonly string[]>> = {
+  scs: [
+    '38:C8:57:66:E6:1F:8A:4C:AF:7C:F4:CA:17:12:65:1A:A4:1E:3C:94:E4:CD:56:8C:33:EF:B4:26:B0:02:35:25', // Play app signing
+    'C8:6B:14:71:A4:4D:28:27:8A:2B:31:41:39:6A:20:F7:CB:9A:6C:2F:E4:2E:64:B8:37:5F:C3:53:4B:1E:80:A4', // upload key
+  ],
+};
+
+/** `android:apk-key-hash:<base64url sha256>` — the origin Credential Manager reports for a native Android app. */
+export function apkKeyHashOrigin(sha256Fingerprint: string): string {
+  const hex = sha256Fingerprint.replace(/:/g, '');
+  return `android:apk-key-hash:${Buffer.from(hex, 'hex').toString('base64url')}`;
+}
+
+/**
+ * Every origin a WebAuthn response for this challenge may carry: the web origin it was issued for
+ * plus, for a real app host, the tenant's native Android app. iOS needs no entry — AuthenticationServices
+ * reports `https://<rpId>`, the web origin. Android signs with the app's certificate hash instead.
+ */
+export function verifyOrigins(origin: string, rpId: string, tenantId: string | undefined): string[] {
+  if (rpId === 'localhost' || !tenantId) return [origin];
+  return [origin, ...(ANDROID_SIGNING_SHA256[tenantId] ?? []).map(apkKeyHashOrigin)];
+}
+
 export function isChallengeUsable(c: StoredChallenge | undefined, purpose: ChallengePurpose, nowMs: number): boolean {
   return !!c && c.purpose === purpose && nowMs <= c.expiresAt;
 }

@@ -70,6 +70,7 @@ export const COLLECTION_LABELS: Record<string, string> = {
   // — identity / membership —
   persons: 'Personendaten',
   users: 'Benutzerkonto',
+  passkeys: 'Passkeys', // libs/auth/util auth-i18n: the profile accordion title
   avatars: 'Avatare', // libs/avatar/ui/src/i18n/de.json: avatars.title
   addresses: 'Adressen', // libs/subject/address/feature/src/i18n/de.json: addresses
   memberships: 'Mitgliedschaften',
