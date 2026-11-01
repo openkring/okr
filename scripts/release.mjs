@@ -107,7 +107,10 @@ async function preflight() {
   const branch = capture('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
   if (branch !== 'main' && !(await confirm(`Not on main (on '${branch}'). Continue?`, false)))
     abort('Aborted: not on main.');
-  const dirty = capture('git', ['status', '--porcelain']).split('\n').filter(Boolean);
+  // `planning` is excluded: parallel sessions edit specs there all the time, and nothing in a
+  // release builds from it. Every release commit below stages its own explicit path only.
+  const dirty = capture('git', ['status', '--porcelain', '--', '.', ':(exclude)planning'])
+    .split('\n').filter(Boolean);
   if (dirty.length) {
     console.log('Working tree has uncommitted changes:\n' + dirty.join('\n'));
     if (!(await confirm('Continue anyway?', false))) abort('Aborted: dirty working tree.');
@@ -154,7 +157,7 @@ function releaseSubmodule(app, version, push) {
   // The pointer bump stays its own commit, never folded into the release commit.
   if (capture('git', ['status', '--porcelain', '--', `apps/${app}`])) {
     run('git', ['add', `apps/${app}`]);
-    run('git', ['commit', '-m', `chore(submodules): Pointer -- ${app} ngsw-Stempel v${version}`]);
+    run('git', ['commit', '-o', `apps/${app}`, '-m', `chore(submodules): Pointer -- ${app} ngsw-Stempel v${version}`]);
     if (push) run('git', ['push', 'origin', 'main']);
   }
 
@@ -385,7 +388,7 @@ async function releaseApp(app) {
     push = isApp ? await confirm(`Push the ${app} ngsw commit, its tag v${next}, and the pointer bump?`, true) : false;
   } else {
     run('git', ['add', 'package.json']);
-    run('git', ['commit', '-m', `release: v${next}`]);
+    run('git', ['commit', '-o', 'package.json', '-m', `release: v${next}`]);
     run('git', ['tag', '-a', `v${next}`, '-m', `release v${next}`]);
     if (await confirm(`Push commit + tag v${next} to origin/main?`, true)) {
       run('git', ['push', 'origin', 'main', '--follow-tags']);

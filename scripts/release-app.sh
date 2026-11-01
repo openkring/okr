@@ -14,9 +14,10 @@ set -a; source "./apps/$app/.env"; set +a
 
 # A dirty tree (often another session's WIP) would make the dirty-tree gate the first prompt and
 # eat the drift answer; refuse up front instead of aborting after a full test run.
-if [ -n "$(git status --porcelain)" ]; then
+# `planning` is exempt: parallel sessions edit specs there constantly, and a release never ships it.
+if [ -n "$(git status --porcelain -- . ':(exclude)planning')" ]; then
   echo "✖ release-app: working tree is dirty — commit or wait, then re-run:" >&2
-  git status --short >&2
+  git status --short -- . ':(exclude)planning' >&2
   exit 3
 fi
 
