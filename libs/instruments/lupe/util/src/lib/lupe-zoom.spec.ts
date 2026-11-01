@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { DIGITAL_ZOOM_RANGE } from './lupe.model';
-import { clampZoom, formatZoom, hardwareZoomRange, hasTorch, stepZoom, zoomRangeFor } from './lupe-zoom';
+import { clampZoom, formatZoom, hardwareZoomRange, hasTorch, nativeZoomRange, stepZoom, zoomRangeFor } from './lupe-zoom';
 
 describe('hardwareZoomRange', () => {
   it('reads the range the camera reports', () => {
@@ -18,6 +18,19 @@ describe('hardwareZoomRange', () => {
     expect(hardwareZoomRange({ zoom: { min: 1, max: 1 } })).toBeUndefined();
     expect(hardwareZoomRange({ zoom: { min: 0, max: 4 } })).toBeUndefined();
     expect(hardwareZoomRange({ zoom: { min: 1, max: Number.NaN } })).toBeUndefined();
+  });
+});
+
+describe('nativeZoomRange', () => {
+  it('starts at 1x and caps the top', () => {
+    expect(nativeZoomRange(0.5, 100)).toEqual({ min: 1, max: 15, step: 0.1 });
+    expect(nativeZoomRange(1, 8)).toEqual({ min: 1, max: 8, step: 0.1 });
+  });
+
+  it('is undefined when nothing above 1x is left or the values are nonsense', () => {
+    expect(nativeZoomRange(0.5, 1)).toBeUndefined();
+    expect(nativeZoomRange(undefined, 10)).toBeUndefined();
+    expect(nativeZoomRange(1, Number.NaN)).toBeUndefined();
   });
 });
 

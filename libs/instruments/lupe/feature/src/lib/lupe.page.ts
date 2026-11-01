@@ -1,29 +1,22 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { IonButton, IonContent, IonIcon, IonMenuButton, ViewDidEnter, ViewWillLeave } from '@ionic/angular';
+import { Capacitor } from '@capacitor/core';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
-import {
-  CameraCapabilities, clampZoom, DIGITAL_ZOOM_RANGE, formatZoom, hardwareZoomRange, hasTorch, ImageCaptureConstraintSet, stepZoom, ZoomRange,
-} from '@okr/instruments-lupe-util';
+import { clampZoom, DIGITAL_ZOOM_RANGE, formatZoom, stepZoom, ZoomRange } from '@okr/instruments-lupe-util';
 
+import { LupeCamera, LupeCameraError, LupeError, NativeLupeCamera, WebLupeCamera } from './lupe-camera';
 import { LupeStore } from './lupe.store';
 
-type LupeError = 'denied' | 'noCamera' | 'unsupported' | 'failed';
 type LupeStatus = 'idle' | 'starting' | 'live' | 'error';
-
-function errorKindOf(error: unknown): LupeError {
-  const name = (error as { name?: string } | null)?.name;
-  if (name === 'NotAllowedError' || name === 'SecurityError') return 'denied';
-  if (name === 'NotFoundError' || name === 'OverconstrainedError') return 'noCamera';
-  return 'failed';
-}
 
 /**
  * The Lupe (idea 2.125): the rear camera fills the screen, one dark panel at the bottom carries the
  * flashlight toggle and the zoom slider; in landscape the panel moves to the right edge and the
- * slider turns vertical. Hardware zoom and torch where the camera offers them (Chrome on Android),
- * digital zoom (CSS scale) and no flashlight otherwise (iOS Safari/PWA). Nothing is recorded; the
- * stream stops when the page is left or the app goes to the background.
+ * slider turns vertical. In the native app the camera-preview plugin gives real lens zoom and the
+ * flashlight on iOS and Android; in the browser hardware zoom and torch where the camera offers them
+ * (Chrome on Android), digital zoom (CSS scale) and no flashlight otherwise (iOS Safari/PWA).
+ * Nothing is recorded; the camera stops when the page is left or the app goes to the background.
  */
 @Component({
   selector: 'okr-lupe-page',
@@ -33,9 +26,14 @@ function errorKindOf(error: unknown): LupeError {
   imports: [IonContent, IonButton, IonIcon, IonMenuButton, SvgIconPipe],
   host: {
     '(document:visibilitychange)': 'onVisibilityChange()',
+    // Capacitor fires `pause`/`resume` on the document when the native app goes to/returns from the background
+    '(document:pause)': 'onPause()',
+    '(document:resume)': 'onResume()',
   },
   styles: [`
     ion-content { --background: #000; }
+    ion-content.native { --background: transparent; }
+    ion-content.native .stage { background: transparent; }
     .stage { position: absolute; inset: 0; overflow: hidden; background: #000; }
     video { width: 100%; height: 100%; object-fit: cover; transform-origin: center; display: block; }
     video.hidden { visibility: hidden; }
@@ -69,10 +67,12 @@ function errorKindOf(error: unknown): LupeError {
     }
   `],
   template: `
-    <ion-content [fullscreen]="true" [scrollY]="false">
+    <ion-content [fullscreen]="true" [scrollY]="false" [class.native]="nativePreview() && status() === 'live'">
       <div class="stage">
-        <video #video autoplay playsinline muted [class.hidden]="status() !== 'live'"
-          [style.transform]="'scale(' + digitalScale() + ')'"></video>
+        @if (!nativePreview()) {
+          <video #video autoplay playsinline muted [class.hidden]="status() !== 'live'"
+            [style.transform]="'scale(' + digitalScale() + ')'"></video>
+        }
         <ion-menu-button class="menu" />
 
         @if (status() === 'error') {
@@ -93,7 +93,7 @@ function errorKindOf(error: unknown): LupeError {
             <ion-button fill="clear" [title]="store.i18n.zoom_out()" [disabled]="store.zoom() <= range().min" (click)="step(-1)">
               <ion-icon slot="icon-only" src="{{ 'remove' | svgIcon }}" />
             </ion-button>
-            <input type="range" [min]="range().min" [max]="range().max" [step]="range().step" [value]="store.zoom()"
+            <input type="range" [disabled]="range().max <= range().min" [min]="range().min" [max]="range().max" [step]="range().step" [value]="store.zoom()"
               [attr.aria-label]="store.i18n.zoom()" [attr.aria-valuetext]="zoomLabel()" (input)="onSlider($event)" />
             <ion-button fill="clear" [title]="store.i18n.zoom_in()" [disabled]="store.zoom() >= range().max" (click)="step(1)">
               <ion-icon slot="icon-only" src="{{ 'add' | svgIcon }}" />
@@ -112,27 +112,35 @@ export class LupePage implements ViewDidEnter, ViewWillLeave {
   protected readonly status = signal<LupeStatus>('idle');
   protected readonly error = signal<LupeError>('failed');
   protected readonly range = signal<ZoomRange>(DIGITAL_ZOOM_RANGE);
-  protected readonly hardwareZoom = signal(false);
+  protected readonly digitalZoom = signal(true);
   protected readonly torchAvailable = signal(false);
+  /** Native app with the camera-preview plugin; false in the browser and in app builds without it. */
+  protected readonly nativePreview = signal(Capacitor.isNativePlatform());
 
-  protected readonly digitalScale = computed(() => (this.hardwareZoom() ? 1 : this.store.zoom()));
+  protected readonly digitalScale = computed(() => (this.digitalZoom() ? this.store.zoom() : 1));
   protected readonly zoomLabel = computed(() => formatZoom(this.store.zoom()));
   protected readonly errorText = computed(() => {
     const i18n = this.store.i18n;
     const texts: Record<LupeError, () => string> = {
-      denied: i18n.error_denied, noCamera: i18n.error_noCamera, unsupported: i18n.error_unsupported, failed: i18n.error_failed,
+      denied: i18n.error_denied, noCamera: i18n.error_noCamera, unsupported: i18n.error_unsupported,
+      failed: i18n.error_failed, unimplemented: i18n.error_failed,
     };
     return texts[this.error()]();
   });
 
+  private readonly webCamera = new WebLupeCamera(() => this.video()?.nativeElement);
+  private readonly nativeCamera = new NativeLupeCamera();
   private active = false;
-  private stream: MediaStream | undefined;
-  private track: MediaStreamTrack | undefined;
-  /** Bumped on every start/stop, so a getUserMedia that resolves after leaving is discarded. */
+  private running = false;
+  /** Bumped on every start/stop, so a camera that comes up after leaving is shut down again. */
   private generation = 0;
 
   constructor() {
     inject(DestroyRef).onDestroy(() => this.stop());
+  }
+
+  private get camera(): LupeCamera {
+    return this.nativePreview() ? this.nativeCamera : this.webCamera;
   }
 
   public ionViewDidEnter(): void {
@@ -146,53 +154,49 @@ export class LupePage implements ViewDidEnter, ViewWillLeave {
   }
 
   protected onVisibilityChange(): void {
-    if (document.visibilityState === 'hidden') this.stop();
-    else if (this.active && !this.stream) void this.start();
+    if (document.visibilityState === 'hidden') this.onPause();
+    else this.onResume();
+  }
+
+  protected onPause(): void {
+    this.stop();
+  }
+
+  protected onResume(): void {
+    if (this.active && !this.running) void this.start();
   }
 
   protected async start(): Promise<void> {
     this.stop();
-    if (!navigator.mediaDevices?.getUserMedia) {
-      this.fail('unsupported');
-      return;
-    }
     const generation = this.generation;
+    const camera = this.camera;
     this.status.set('starting');
-    let stream: MediaStream;
     try {
-      stream = await navigator.mediaDevices.getUserMedia({
-        // `zoom: true` asks Chrome to expose the zoom capability; browsers that do not know it ignore it
-        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 }, zoom: true } as ImageCaptureConstraintSet,
-        audio: false,
-      });
+      const info = await camera.start();
+      if (generation !== this.generation || !this.active) {
+        camera.stop();
+        return;
+      }
+      this.running = true;
+      this.range.set(info.range);
+      this.digitalZoom.set(info.digital);
+      this.torchAvailable.set(info.torch);
+      this.status.set('live');
     } catch (error) {
-      if (generation === this.generation) this.fail(errorKindOf(error));
+      if (generation !== this.generation) return;
+      const kind = error instanceof LupeCameraError ? error.kind : 'failed';
+      if (kind === 'unimplemented') {
+        // app build without the plugin: the WebView's own camera still works, with fewer features
+        this.nativePreview.set(false);
+        void this.start();
+        return;
+      }
+      this.fail(kind);
       return;
     }
-    if (generation !== this.generation || !this.active) {
-      stream.getTracks().forEach(t => t.stop());
-      return;
-    }
-    const video = this.video()?.nativeElement;
-    if (!video) {
-      stream.getTracks().forEach(t => t.stop());
-      return;
-    }
-    this.stream = stream;
-    this.track = stream.getVideoTracks()[0];
-    video.srcObject = stream;
-    await video.play().catch(() => undefined);
-
-    const capabilities = (this.track?.getCapabilities?.() ?? {}) as CameraCapabilities;
-    const hardware = hardwareZoomRange(capabilities);
-    this.range.set(hardware ?? DIGITAL_ZOOM_RANGE);
-    this.hardwareZoom.set(!!hardware);
-    this.torchAvailable.set(hasTorch(capabilities));
-    this.status.set('live');
-
     this.store.setZoom(clampZoom(this.store.zoom(), this.range()));
-    this.applyZoom();
-    if (this.store.torch() && this.torchAvailable()) this.applyTorch(true);
+    camera.setZoom(this.store.zoom());
+    if (this.store.torch() && this.torchAvailable()) void this.applyTorch(true);
   }
 
   protected onSlider(event: Event): void {
@@ -206,35 +210,24 @@ export class LupePage implements ViewDidEnter, ViewWillLeave {
   protected toggleTorch(): void {
     const torch = !this.store.torch();
     this.store.setTorch(torch);
-    this.applyTorch(torch);
+    void this.applyTorch(torch);
   }
 
   private setZoom(value: number): void {
     this.store.setZoom(clampZoom(value, this.range()));
-    this.applyZoom();
+    if (this.running) this.camera.setZoom(this.store.zoom());
   }
 
-  /** Hardware zoom goes to the track; digital zoom is the `digitalScale` CSS transform. */
-  private applyZoom(): void {
-    if (!this.hardwareZoom() || !this.track) return;
-    const zoom: ImageCaptureConstraintSet = { zoom: this.store.zoom() };
-    this.track.applyConstraints({ advanced: [zoom] }).catch(() => undefined);
+  private async applyTorch(on: boolean): Promise<void> {
+    if (!this.running) return;
+    if (!(await this.camera.setTorch(on))) this.torchAvailable.set(false);
   }
 
-  private applyTorch(torch: boolean): void {
-    if (!this.track) return;
-    const constraint: ImageCaptureConstraintSet = { torch };
-    this.track.applyConstraints({ advanced: [constraint] }).catch(() => this.torchAvailable.set(false));
-  }
-
-  /** Stopping the track also switches the flashlight off; the stored torch setting stays for next time. */
+  /** Stopping the camera also switches the flashlight off; the stored torch setting stays for next time. */
   private stop(): void {
     this.generation++;
-    this.stream?.getTracks().forEach(t => t.stop());
-    this.stream = undefined;
-    this.track = undefined;
-    const video = this.video()?.nativeElement;
-    if (video) video.srcObject = null;
+    this.running = false;
+    this.camera.stop();
     if (this.status() !== 'error') this.status.set('idle');
   }
 

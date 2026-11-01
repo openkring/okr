@@ -27,6 +27,12 @@ export interface LupeSettings {
 /** Digital zoom (CSS scale on the video) where the camera has no hardware zoom. */
 export const DIGITAL_ZOOM_RANGE: ZoomRange = { min: 1, max: 8, step: 0.1 };
 
+/**
+ * Upper cap on the native zoom (camera-preview plugin): an iPhone reports up to 100× digital zoom,
+ * which turns the slider into a few useful millimetres; the iOS Magnifier stops around 15×.
+ */
+export const NATIVE_ZOOM_MAX = 15;
+
 /** The `–`/`+` buttons move the slider by one tenth of its range. */
 export const ZOOM_NOTCHES = 10;
 

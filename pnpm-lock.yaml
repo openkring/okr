@@ -277,6 +277,9 @@ importers:
       '@capawesome/capacitor-file-picker':
         specifier: ^8.1.0
         version: 8.1.0(@capacitor/core@8.5.3)
+      '@capgo/camera-preview':
+        specifier: 8.14.2
+        version: 8.14.2(@capacitor/core@8.5.3)
       '@capgo/nativegeocoder':
         specifier: ^7.3.18
         version: 7.3.18(@capacitor/core@8.5.3)
@@ -1890,6 +1893,11 @@ packages:
 
   '@capawesome/capacitor-file-picker@8.1.0':
     resolution: {integrity: sha512-vBWB9VWwW/Yf1EewXZ2Ng2COZwSbbJplJ5vcNVEIgCWqr9OfQI0tZdRx3i2F661mrDWftAGLG4zmYZ75MLUmJg==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
+
+  '@capgo/camera-preview@8.14.2':
+    resolution: {integrity: sha512-2YmkpIVz8h/2SrB3UOoM83tUWJ0Xy7TzFzp1FFuLj85PwxrQwmJ8K8600M8aF8RmetjYbn4X4qGwxzwwYzXrxQ==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
@@ -14292,6 +14300,10 @@ snapshots:
       '@capacitor/core': 8.5.3
 
   '@capawesome/capacitor-file-picker@8.1.0(@capacitor/core@8.5.3)':
+    dependencies:
+      '@capacitor/core': 8.5.3
+
+  '@capgo/camera-preview@8.14.2(@capacitor/core@8.5.3)':
     dependencies:
       '@capacitor/core': 8.5.3
 

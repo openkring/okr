@@ -1,4 +1,4 @@
-import { CameraCapabilities, DIGITAL_ZOOM_RANGE, ZOOM_NOTCHES, ZoomRange } from './lupe.model';
+import { CameraCapabilities, DIGITAL_ZOOM_RANGE, NATIVE_ZOOM_MAX, ZOOM_NOTCHES, ZoomRange } from './lupe.model';
 
 function isFinitePositive(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value > 0;
@@ -13,6 +13,18 @@ export function hardwareZoomRange(capabilities: CameraCapabilities | undefined):
   if (!zoom || !isFinitePositive(zoom.min) || !isFinitePositive(zoom.max) || zoom.max <= zoom.min) return undefined;
   const step = isFinitePositive(zoom.step) ? zoom.step : 0.1;
   return { min: zoom.min, max: zoom.max, step };
+}
+
+/**
+ * The slider range for the native camera-preview plugin (`getZoom()` min/max). Starts at 1× even
+ * when an ultra-wide lens reports 0.5× (a magnifier never zooms out) and stops at `NATIVE_ZOOM_MAX`.
+ * `undefined` when nothing above 1× is left.
+ */
+export function nativeZoomRange(min: number | undefined, max: number | undefined): ZoomRange | undefined {
+  if (!isFinitePositive(min) || !isFinitePositive(max)) return undefined;
+  const lower = Math.max(1, min);
+  const upper = Math.min(NATIVE_ZOOM_MAX, max);
+  return upper > lower ? { min: lower, max: upper, step: 0.1 } : undefined;
 }
 
 export function hasTorch(capabilities: CameraCapabilities | undefined): boolean {
