@@ -280,6 +280,9 @@ importers:
       '@capgo/camera-preview':
         specifier: 8.14.2
         version: 8.14.2(@capacitor/core@8.5.3)
+      '@capgo/capacitor-passkey':
+        specifier: 8.5.8
+        version: 8.5.8(@capacitor/core@8.5.3)
       '@capgo/nativegeocoder':
         specifier: ^7.3.18
         version: 7.3.18(@capacitor/core@8.5.3)
@@ -1898,6 +1901,11 @@ packages:
 
   '@capgo/camera-preview@8.14.2':
     resolution: {integrity: sha512-2YmkpIVz8h/2SrB3UOoM83tUWJ0Xy7TzFzp1FFuLj85PwxrQwmJ8K8600M8aF8RmetjYbn4X4qGwxzwwYzXrxQ==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
+
+  '@capgo/capacitor-passkey@8.5.8':
+    resolution: {integrity: sha512-ypbbPo0lEeuICbaZMnTeKKEgcXqiJ4tOKyb7gdj7Bkq1dNuhvSjndM/Ol0kj4RKnpBm+ZldfXrBtln98Ce8wpw==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
@@ -14304,6 +14312,10 @@ snapshots:
       '@capacitor/core': 8.5.3
 
   '@capgo/camera-preview@8.14.2(@capacitor/core@8.5.3)':
+    dependencies:
+      '@capacitor/core': 8.5.3
+
+  '@capgo/capacitor-passkey@8.5.8(@capacitor/core@8.5.3)':
     dependencies:
       '@capacitor/core': 8.5.3
 

@@ -118,7 +118,7 @@ const AUTOFILL_MAX_ROUNDS = 15;
                     </ion-button>
                   </ion-col>
                 </ion-row>
-                @if (passkeyAvailable) {
+                @if (passkeyAvailable()) {
                   <ion-row>
                     <ion-col>
                       <ion-button fill="outline" [disabled]="passkeyRunning()" (click)="loginWithPasskey()">{{ store.i18n.passkey_login() }}</ion-button>
@@ -140,8 +140,8 @@ export class LoginPage implements ViewDidEnter, ViewWillLeave {
   protected readonly store = inject(AuthStore);
   private readonly passkeyService = inject(PasskeyService);
 
-  /** Read once: browser support does not change while the page is open. */
-  protected readonly passkeyAvailable = this.passkeyService.canSignIn();
+  /** Read once: device support does not change while the page is open (async: native asks the plugin). */
+  protected readonly passkeyAvailable = signal(false);
   protected readonly passkeyRunning = signal(false);
 
   /** Autofill (spec 1.120 phase 3): whether this browser offers passkeys in the login field. */
@@ -152,6 +152,7 @@ export class LoginPage implements ViewDidEnter, ViewWillLeave {
 
   constructor() {
     inject(DestroyRef).onDestroy(() => this.stopAutofill());
+    void this.passkeyService.canSignIn().then((ok) => this.passkeyAvailable.set(ok));
   }
 
   public ionViewDidEnter(): void {

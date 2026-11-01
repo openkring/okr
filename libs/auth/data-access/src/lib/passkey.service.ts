@@ -19,21 +19,29 @@ export type PreparedRegistration = OptionsResult<PublicKeyCredentialCreationOpti
 export type PreparedLogin = OptionsResult<PublicKeyCredentialRequestOptionsJSON>;
 
 /**
- * Client side of the `passkey` callable (spec 1.120 phase 1). Passkeys are hidden on the native
- * shells for now: the WebView has no stable rpId/origin for them.
+ * Client side of the `passkey` callable (spec 1.120).
+ *
+ * Native apps (phase 2): the WebView runs on `capacitor://localhost` / `https://localhost`, which can
+ * never be the rpId. `@capgo/capacitor-passkey` patches `navigator.credentials` to forward to the
+ * platform APIs (AuthenticationServices, Credential Manager), which sign for the app host set as
+ * `plugins.CapacitorPasskey.origin` in the app's capacitor.config — so the @simplewebauthn calls below
+ * run unchanged. An app without that config, or a native build without the plugin, keeps passkeys hidden.
  */
 @Injectable({ providedIn: 'root' })
 export class PasskeyService {
   private readonly env = inject(ENV);
+  /** Native only: the app host the plugin signs for, once its shim is installed; undefined = no passkeys. */
+  private nativeHost: Promise<string | undefined> | undefined;
 
-  /** Can this browser offer "sign in with passkey"? */
-  public canSignIn(): boolean {
-    return !Capacitor.isNativePlatform() && browserSupportsWebAuthn();
+  /** Can this device offer "sign in with passkey"? */
+  public async canSignIn(): Promise<boolean> {
+    if (Capacitor.isNativePlatform()) return (await this.getNativeHost()) !== undefined;
+    return browserSupportsWebAuthn();
   }
 
   /** Can this device create a passkey (a platform authenticator is present)? */
   public async canRegister(): Promise<boolean> {
-    if (Capacitor.isNativePlatform()) return false;
+    if (!(await this.canSignIn())) return false;
     try {
       return await platformAuthenticatorIsAvailable();
     } catch {
@@ -41,9 +49,9 @@ export class PasskeyService {
     }
   }
 
-  /** Can this browser offer passkeys in the username field's autofill (conditional mediation)? */
+  /** Can this browser offer passkeys in the username field's autofill (conditional mediation)? Never on native. */
   public async canAutofill(): Promise<boolean> {
-    if (!this.canSignIn()) return false;
+    if (Capacitor.isNativePlatform() || !(await this.canSignIn())) return false;
     try {
       return await browserSupportsWebAuthnAutofill();
     } catch {
@@ -66,7 +74,7 @@ export class PasskeyService {
 
   /** Fetch the sign-in options (a fresh challenge, valid 5 minutes) without starting the ceremony. */
   public async prepareLogin(): Promise<PreparedLogin> {
-    return this.call<PreparedLogin>('loginOptions', this.rp());
+    return this.call<PreparedLogin>('loginOptions', await this.rp());
   }
 
   /** Abort a pending ceremony, e.g. the autofill request when the login page is left. */
@@ -79,7 +87,7 @@ export class PasskeyService {
    * the tap; a callable round trip in between can use up that window.
    */
   public async prepareRegistration(): Promise<PreparedRegistration> {
-    return this.call<PreparedRegistration>('registerOptions', this.rp());
+    return this.call<PreparedRegistration>('registerOptions', await this.rp());
   }
 
   /** Create a passkey for the signed-in user on this device. */
@@ -92,7 +100,8 @@ export class PasskeyService {
 
   /** `thisHost`: only the passkeys bound to this app's host (rpId). */
   public async list(uid: string, thisHost = false): Promise<PasskeyItem[]> {
-    return (await this.call<{ items: PasskeyItem[] }>('list', thisHost ? { uid, rpId: location.hostname } : { uid })).items;
+    const data = thisHost ? { uid, rpId: (await this.rp()).rpId } : { uid };
+    return (await this.call<{ items: PasskeyItem[] }>('list', data)).items;
   }
 
   public async rename(okey: string, label: string): Promise<PasskeyItem> {
@@ -103,8 +112,32 @@ export class PasskeyService {
     await this.call<{ ok: true }>('delete', { okey });
   }
 
-  private rp(): { tenantId: string; rpId: string; origin: string } {
+  /** The relying party: the page's host on the web, the configured app host on native. */
+  private async rp(): Promise<{ tenantId: string; rpId: string; origin: string }> {
+    if (Capacitor.isNativePlatform()) {
+      const host = await this.getNativeHost();
+      if (!host) throw new DOMException('Passkeys are not configured for this app', 'NotSupportedError');
+      return { tenantId: this.env.tenantId, rpId: host, origin: `https://${host}` };
+    }
     return { tenantId: this.env.tenantId, rpId: location.hostname, origin: location.origin };
+  }
+
+  /** Installs the plugin's WebAuthn shim once and resolves to the host it signs for. */
+  private getNativeHost(): Promise<string | undefined> {
+    this.nativeHost ??= (async () => {
+      try {
+        // dynamic: the web bundle never loads the plugin
+        const { CapacitorPasskey } = await import('@capgo/capacitor-passkey');
+        if (!(await CapacitorPasskey.isSupported()).available) return undefined;
+        const { origin } = await CapacitorPasskey.autoShimWebAuthn();
+        return origin ? new URL(origin).hostname : undefined;
+      } catch (err) {
+        // a native build without the plugin, or no CapacitorPasskey config
+        console.warn('PasskeyService: native passkeys unavailable', err);
+        return undefined;
+      }
+    })();
+    return this.nativeHost;
   }
 
   private async call<R>(op: string, data: Record<string, unknown>): Promise<R> {
