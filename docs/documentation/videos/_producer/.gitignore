@@ -1,0 +1,7 @@
+node_modules/
+out/
+public/
+build/
+.env
+# src/generated-props.ts is committed as a stub but rewritten on every
+# prepare/render run — `git checkout` it to discard local churn.

@@ -1,0 +1,26 @@
+{
+  "name": "bk2-video-producer",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Renders the help/tutorial videos (storyboard + Sprechertext + screenshots) to MP4 with Remotion and Azure Swiss-German TTS.",
+  "scripts": {
+    "prepare-video": "tsx preview.ts",
+    "render": "tsx render.ts",
+    "studio": "remotion studio src/index.ts"
+  },
+  "dependencies": {
+    "@remotion/bundler": "4.0.290",
+    "@remotion/cli": "4.0.290",
+    "@remotion/renderer": "4.0.290",
+    "microsoft-cognitiveservices-speech-sdk": "^1.41.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "4.0.290"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^18.3.12",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
