@@ -19,7 +19,8 @@ export const PEER_RECORD_PAGE = 200;
 
 const ENTITIES: JournalEntity[] = ['journal', 'footprint', 'section', 'image', 'comment', 'reaction'];
 const OPS: JournalChangeOp[] = ['create', 'set', 'archive'];
-const FILE_NAME = /^[A-Za-z0-9_-]{1,100}\.jpg$/;
+/** Photo files and the web version of a video clip (`<name>-video.mp4`, same rule as the sync lists). */
+const FILE_NAME = /^[A-Za-z0-9_-]{1,100}\.jpg$|^[A-Za-z0-9_-]{1,94}-video\.mp4$/;
 
 /**
  * Per device the highest seq up to which this iPad holds EVERY record (the contiguous prefix). Records that

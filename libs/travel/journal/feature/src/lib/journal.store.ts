@@ -19,7 +19,7 @@ import {
 } from '@okr/travel-journal-data-access';
 import {
   BOOK_I18N_KEYS, BOOK_LABEL_MAX, bookLabelsOf, JournalBookI18n, bookPrintCandidates, entityStateKey, hasOthersBlocks, pagesOf, PRINT_FILL_LONG_PX, PRINT_FILL_SHORT_PX, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
-  allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, MapPlace, mapPlaces, parseMapAreas, parsePhotoMode, TileJob, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, reorderedOrders, CONFLICT_FIELDS, dismissedField, isConflictCopyKey, originalOfCopy, BlockView, publishedPhotoFiles, viewOf, MAX_VIDEOS_PER_BLOCK,
+  allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, MapPlace, mapPlaces, parseMapAreas, parsePhotoMode, TileJob, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, reorderedOrders, CONFLICT_FIELDS, dismissedField, isConflictCopyKey, originalOfCopy, BlockView, publishedPhotoFiles, viewOf, MAX_VIDEOS_PER_BLOCK, isVideoFile,
   JournalLock, LOCK_HEARTBEAT_MS, LOCK_TTL_MS, lockedBy, mergeLocks, BoundAuthor, JournalWriteSlow, mergePending,
   AreaLayer, areaForWrite, areaLayerTilePlan, BaseLayerOption, baseLayerOptions, Bbox, finishRun, isUsable, layerDetailLevels, layerKindsFor,
   layerTilesToFree, MapLayerKind, MapSource, migrateOfflineMap, NO_OFFLINE_LAYER, offlineAreaKey, OfflineLayerStatus, parseOfflineLayer, pickBaseLayer,
@@ -69,6 +69,8 @@ interface JournalStoreState {
   writeMinVersion: string; // '' = no minimum known; below it the app may read but not write (spec 1.126 §6.4)
   lockClock: number; // Date.now(), refreshed every LOCK_CLOCK_MS, so lockOf re-evaluates expiry
   webUpload: { done: number; total: number } | undefined; // browser photo upload in progress (spec 1.126 phase 3 §3)
+  videoPreparing: boolean; // a video pick is converting (iPad plugin) or uploading/converting (browser); one at a time (phase 5)
+  presentVideos: Record<string, true>; // iPad: the `-video.mp4` files of the active journal that are on this device (phase 5)
 }
 
 /** The phase 3 per-journal offline map record (`offlineMap:<journalKey>`), read only for the one-time migration. */
@@ -119,6 +121,7 @@ const printFileOf = (imageKey: string): string => `${imageKey}-print.jpg`;
 const initialState: JournalStoreState = {
   ready: false, native: Capacitor.isNativePlatform(), error: '', changes: [], photoMode: 'all', activeJournalKey: '', offlineLayers: {}, online: !isOffline(), google: {}, baseLayerId: '', bookPrints: NO_BOOK_PRINTS,
   webLoaded: false, bookExport: NO_BOOK_EXPORT, locks: {}, writeMinVersion: '', lockClock: 0, webUpload: undefined,
+  videoPreparing: false, presentVideos: {},
 };
 const LOCK_CLOCK_MS = 15_000;
 type VideoSkip = { localIdentifier: string; reason: VideoSkipReason };
@@ -272,12 +275,19 @@ export const JournalStore = signalStore(
     /** Picks clips (iPad: the plugin converts each to the web version; browser: the converter function) and builds one image record per clip. */
     async function pickVideoImages(journalKey: string, limit: number, files?: File[] | Promise<File[]>): Promise<{ drafts: ChangeDraft[]; imageKeys: string[]; videos: PickedVideo[]; skipped: VideoSkip[] }> {
       if (!store.author()) throw new JournalWriteRefused('noAuthor'); // before the picker opens
+      // one video pick at a time: two conversions in parallel would compete for the same encoder and upload
+      if (store.videoPreparing()) throw new JournalWriteRefused('videoBusy');
       let videos: PickedVideo[];
       let skipped: VideoSkip[];
-      if (store.native()) {
-        ({ videos, skipped } = await JournalPhotos.pickVideos({ journalKey, limit }));
-      } else {
-        ({ videos, skipped } = await pickWebVideos(journalKey, limit, files));
+      patchState(store, { videoPreparing: true });
+      try {
+        if (store.native()) {
+          ({ videos, skipped } = await JournalPhotos.pickVideos({ journalKey, limit }));
+        } else {
+          ({ videos, skipped } = await pickWebVideos(journalKey, limit, files));
+        }
+      } finally {
+        patchState(store, { videoPreparing: false });
       }
       const drafts: ChangeDraft[] = [];
       const imageKeys: string[] = [];
@@ -415,6 +425,27 @@ export const JournalStore = signalStore(
       patchState(store, { changes: [...stored, ...store.changes().filter((c) => !ids.has(c.id))] });
     }
 
+    /**
+     * iPad: which clips of the active journal are on this device. `fileUrl.url` builds a file URL whether the file
+     * exists or not, so the story page asks this set and shows the poster with «Video noch nicht geladen» until the
+     * mp4 arrives (Firebase download or P2P). Refreshed when the journal opens, after records or files were stored,
+     * and after an own pick.
+     */
+    async function refreshPresentVideos(): Promise<void> {
+      const journalKey = store.activeJournalKey();
+      if (!store.native() || !journalKey) return;
+      const wanted = allPhotoFiles(imagesOf(store.journalState(), journalKey)).filter(isVideoFile);
+      const present: Record<string, true> = {};
+      try {
+        for (const chunk of pagesOf(wanted, PRINT_CHUNK)) {
+          for (const file of (await JournalPhotos.presentFiles({ journalKey, files: chunk })).files) present[file] = true;
+        }
+      } catch {
+        return; // keep the last known set; the next trigger asks again
+      }
+      if (store.activeJournalKey() === journalKey) patchState(store, { presentVideos: present });
+    }
+
     async function syncNow(): Promise<void> {
       const author = store.author();
       const tenantId = store.appStore.tenantId();
@@ -428,8 +459,14 @@ export const JournalStore = signalStore(
           const images = imagesOf(store.journalState(), journalKey);
           return { published: publishedPhotoFiles(footprintsOf(store.journalState(), journalKey), images), all: allPhotoFiles(images) };
         },
-        onRecordsStored: reload,
-        onPhotosStored: () => store.fileUrl.refresh(),
+        onRecordsStored: async () => {
+          await reload();
+          void refreshPresentVideos();
+        },
+        onPhotosStored: () => {
+          store.fileUrl.refresh();
+          void refreshPresentVideos();
+        },
       });
       // the peer secret arrives with the first sync of a journal: P2P can start now
       if (store.peerService.status().state === 'noSecret') void startPeers();
@@ -517,8 +554,14 @@ export const JournalStore = signalStore(
         displayName: store.author()?.name || 'iPad',
         changes: () => store.changes(),
         photoFiles: () => allPhotoFiles(imagesOf(store.journalState(), journalKey)),
-        onRecordsStored: reload,
-        onPhotosStored: () => store.fileUrl.refresh(),
+        onRecordsStored: async () => {
+          await reload();
+          void refreshPresentVideos();
+        },
+        onPhotosStored: () => {
+          store.fileUrl.refresh();
+          void refreshPresentVideos();
+        },
         onLock: receiveLock,
       }).catch(() => undefined);
     }
@@ -1182,10 +1225,12 @@ export const JournalStore = signalStore(
           return;
         }
         if (store.activeJournalKey() === journalKey) {
+          void refreshPresentVideos();
           await startLockWatch(journalKey); // restored at startup, or opened offline before
           return;
         }
-        patchState(store, { activeJournalKey: journalKey });
+        patchState(store, { activeJournalKey: journalKey, presentVideos: {} });
+        void refreshPresentVideos();
         await store.db.setMeta(META_ACTIVE_JOURNAL, journalKey);
         await startPeers();
         await startLockWatch(journalKey);
@@ -1434,6 +1479,7 @@ export const JournalStore = signalStore(
         const fields = { imageKeys: [...(block.imageKeys ?? []), ...imageKeys] };
         drafts.push({ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields, bases: basesOf(seen ?? block.hlcs, fields, CONFLICT_FIELDS['section'] ?? []) });
         await writePhotos(journalKey, drafts, videos);
+        void refreshPresentVideos();
         return { added: videos.length, skipped };
       },
 
@@ -1450,6 +1496,7 @@ export const JournalStore = signalStore(
         const fillDraft = footprintFillDraft(journalKey, fp, videos);
         if (fillDraft) drafts.push(fillDraft);
         await writePhotos(journalKey, drafts, videos);
+        void refreshPresentVideos();
         return { added: videos.length, skipped };
       },
     };

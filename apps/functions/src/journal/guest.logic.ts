@@ -132,3 +132,20 @@ export function guestVideoClips(imageKeys: string[], imageById: Map<string, Reco
     return [{ key, width: image['width'], height: image['height'], durationSec: image['durationSec'], objectPath, posterPath: typeof image['path2048'] === 'string' ? image['path2048'] : '' }];
   });
 }
+
+/** The Storage object of a clip, as far as signing its read URL needs it (a fake in the tests). */
+export interface ClipObject {
+  exists(): Promise<[boolean]>;
+  getSignedUrl(options: { version: 'v4'; action: 'read'; expires: number }): Promise<[string]>;
+}
+
+/**
+ * The guest's read URL of a clip, or '' while its mp4 is not uploaded yet (clips go up last, after records and
+ * posters). The guest page shows the poster with «Video noch nicht geladen» for '', never a player that 404s.
+ */
+export async function clipReadUrl(file: ClipObject, expiresMs: number): Promise<string> {
+  const [exists] = await file.exists();
+  if (!exists) return '';
+  const [url] = await file.getSignedUrl({ version: 'v4', action: 'read', expires: expiresMs });
+  return url;
+}

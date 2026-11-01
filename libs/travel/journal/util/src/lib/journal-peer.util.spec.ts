@@ -31,6 +31,8 @@ describe('journal peer util', () => {
     expect(parsePeerMessage(JSON.stringify({ t: 'vv', journalKey: 'j1', vv: { a: 3, b: 'x' } }), 'j1')).toEqual({ t: 'vv', journalKey: 'j1', vv: { a: 3 } });
     expect(parsePeerMessage(JSON.stringify({ t: 'photoReq', journalKey: 'j1', files: ['a-400.jpg', '../x.jpg'] }), 'j1'))
       .toEqual({ t: 'photoReq', journalKey: 'j1', files: ['a-400.jpg'] });
+    expect(parsePeerMessage(JSON.stringify({ t: 'photoReq', journalKey: 'j1', files: ['ab-video.mp4', '../x-video.mp4', 'ab.mp4', 'ab-2048.jpg'] }), 'j1'))
+      .toEqual({ t: 'photoReq', journalKey: 'j1', files: ['ab-video.mp4', 'ab-2048.jpg'] });
     expect(parsePeerMessage('not json', 'j1')).toBeUndefined();
     expect(parsePeerMessage(JSON.stringify({ t: 'other', journalKey: 'j1' }), 'j1')).toBeUndefined();
   });

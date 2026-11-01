@@ -13,7 +13,7 @@ import { createActionSheetButton, createActionSheetOptions, okrPrompt } from '@o
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { AlbumSection, ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig } from '@okr/shared-models';
 import { openImageGallery } from '@okr/shared-ui';
-import { blockActions, footprintMenu, FootprintFormModel, htmlToPlainText, lostValueText, StoryBlock, toStorySections } from '@okr/travel-journal-util';
+import { blockActions, footprintMenu, FootprintFormModel, htmlToPlainText, lostValueText, photoFileName, StoryBlock, toStorySections } from '@okr/travel-journal-util';
 
 import type { VideoSkipReason } from '@okr/travel-journal-data-access';
 import { JournalFileUrlService } from './journal-file-url.service';
@@ -64,7 +64,9 @@ import { JournalStore } from './journal.store';
       </ion-toolbar>
     </ion-header>
     <ion-content>
-      @if (store.webUpload(); as upload) {
+      @if (store.videoPreparing()) {
+        <p class="note">{{ store.i18n.video_preparing() }}@if (store.webUpload(); as upload) { {{ upload.done }}/{{ upload.total }} }</p>
+      } @else if (store.webUpload(); as upload) {
         <p class="note">{{ uploading(upload.done, upload.total) }}</p>
       }
       @if (story(); as story) {
@@ -170,13 +172,18 @@ export class JournalStoryPage {
     const story = toStorySections(fp, images, (p) => this.fileUrl.url(p), this.appStore.tenantId());
     const native = this.store.native();
     const isMissing = (key: string | undefined) => !native && !!key && this.fileUrl.isMissing(images.get(key)?.path2048);
+    // iPad: a file URL is built whether the mp4 is here or not, so presence comes from the store (another author's clip
+    // in «Nur hochladen», download pending); browser: the signed value '' marks a clip not uploaded yet
+    const present = this.store.presentVideos();
+    const clipMissing = (videoPath: string | undefined) =>
+      native ? !present[photoFileName(videoPath ?? '')] : this.fileUrl.isMissing(videoPath);
     return {
       ...story,
       blocks: story.blocks.map((item) => ({
         ...item,
         images: item.images?.filter((image) => !isMissing(image.label)),
         clips: item.clips?.map((clip) => ({
-          ...clip, src: clip.src === '' || (!native && this.fileUrl.isMissing(clip.videoPath)) ? '' : clip.src,
+          ...clip, src: clip.src === '' || clipMissing(clip.videoPath) ? '' : clip.src,
         })),
         missing: item.clips ? 0 : (item.block.imageKeys ?? []).filter((key) => isMissing(key)).length,
       })),

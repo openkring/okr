@@ -16,7 +16,7 @@ import { IMGIX_PRIVATE_HOST, signImgixUrl } from '../_storage/imgix-sign';
 import { privateBucket } from '../_storage/private-bucket';
 import { tenantLinks } from '../calendar/deliver';
 import { windowExpiry } from '../video/video-sign.util';
-import { applyManage, deliveryFor, guestBlockKind, guestVideoClips, GuestRequest, GuestRequestError, isGuestVisibleSection, ManageAction, memberName, newLinkCode, parseGuestRequest } from './guest.logic';
+import { applyManage, clipReadUrl, deliveryFor, guestBlockKind, guestVideoClips, GuestRequest, GuestRequestError, isGuestVisibleSection, ManageAction, memberName, newLinkCode, parseGuestRequest } from './guest.logic';
 import { isJournalKey } from './apply-journal-change.logic';
 import { requireJournalAuthor } from './journal-auth';
 import { checkNotice } from './notify.logic';
@@ -118,7 +118,7 @@ async function guestView(db: Firestore, jk: string, ctx: GuestContext): Promise<
           const clips = guestVideoClips(imageKeys, imageById, ctx.tenants[0] ?? '', jk);
           const signed = await Promise.all(clips.map(async (clip) => {
             try {
-              const [url] = await privateBucket().file(clip.objectPath).getSignedUrl({ version: 'v4', action: 'read', expires: expires * 1000 });
+              const url = await clipReadUrl(privateBucket().file(clip.objectPath), expires * 1000);
               return {
                 key: clip.key, width: clip.width, height: clip.height, durationSec: clip.durationSec,
                 poster: clip.posterPath ? signImgixUrl(IMGIX_PRIVATE_HOST, token, clip.posterPath, { w: 1600, auto: 'format', expires }) : '',

@@ -293,7 +293,9 @@ export function coverImageKeyOf(state: JournalState, journalKey: string, book: J
 /**
  * The photos this person still has to export from their own Photos library for the book (design §5.6): images of
  * published footprints, not hidden — except the cover, which is always printed — taken by `personKey`, with a
- * Photos identifier, whose print file is not in `book.prints` yet. In footprint order, each image once.
+ * Photos identifier, whose print file is not in `book.prints` yet. In footprint order, each image once. Video clips are
+ * left out: the export re-reads the original asset as an image, which a video does not give; the PDF prints the clip's
+ * 2048 px poster instead.
  */
 export function bookPrintCandidates(state: JournalState, journalKey: string, book: JournalBookModel, personKey: string): ImageView[] {
   const images = imagesOf(state, journalKey);
@@ -311,7 +313,7 @@ export function bookPrintCandidates(state: JournalState, journalKey: string, boo
     if (seen.has(key)) continue;
     seen.add(key);
     const image = images.get(key);
-    if (image && image.authorKey === personKey && image.localIdentifier && !prints[key]) result.push(image);
+    if (image && !isVideoImage(image) && image.authorKey === personKey && image.localIdentifier && !prints[key]) result.push(image);
   }
   return result;
 }

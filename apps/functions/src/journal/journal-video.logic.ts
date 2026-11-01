@@ -9,11 +9,14 @@ function scaleFilter(side: number): string {
   return `scale=w='if(gt(iw,ih),min(${side},iw),-2)':h='if(gt(iw,ih),-2,min(${side},ih))'`;
 }
 
-/** HLG / PQ (iPhone HDR) to BT.709 SDR; without it the clip comes out washed out. */
+/**
+ * HLG / PQ (iPhone HDR) to BT.709 SDR; without it the clip comes out washed out. Runs AFTER the scale: the float32
+ * planes of a 4K frame are ~100 MB, at 960 px a sixteenth of that (a 60 s 4K HLG clip must convert well inside 300 s).
+ */
 const TONE_MAP = 'zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv,format=yuv420p';
 
 function videoFilter(side: number, hdr: boolean): string {
-  return hdr ? `${TONE_MAP},${scaleFilter(side)}` : scaleFilter(side);
+  return hdr ? `${scaleFilter(side)},${TONE_MAP}` : scaleFilter(side);
 }
 
 /** Only local files: the input is untrusted, a playlist or concat file must not make ffmpeg open anything else. */

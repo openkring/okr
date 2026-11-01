@@ -369,11 +369,11 @@ describe('video blocks', () => {
     expect(photoKeys(ofFootprint(pages, 'f1'))).toEqual(['v1']);
   });
 
-  it('is no cover or hero candidate, but its posters are print candidates', () => {
+  it('is no cover, hero or print candidate (the PDF prints its 2048 poster)', () => {
     const state = materialize([journal(), fp('f1', '20270102'), clip('v1'), video('vb', 'f1', 'a', ['v1'])]);
     const book = new JournalBookModel();
     expect(coverImageKeyOf(state, 'j1', book)).toBeUndefined();
-    expect(bookPrintCandidates(state, 'j1', book, 'bruno').map((i) => i.key)).toEqual(['v1']);
+    expect(bookPrintCandidates(state, 'j1', book, 'bruno')).toEqual([]);
     const { pages } = layoutBook(input([journal(), fp('f1', '20270102'), clip('v1'), video('vb', 'f1', 'a', ['v1'])]));
     expect(ofFootprint(pages, 'f1').some((p) => p.role === 'hero')).toBe(false);
   });

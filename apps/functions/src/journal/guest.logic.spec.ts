@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { applyManage, deliveryFor, GuestRequestError, guestBlockKind, guestVideoClips, isGuestVisibleSection, memberName, parseGuestRequest } from './guest.logic';
+import { applyManage, clipReadUrl, deliveryFor, GuestRequestError, guestBlockKind, guestVideoClips, isGuestVisibleSection, memberName, parseGuestRequest } from './guest.logic';
 
 const CODE = '0123456789abcdef0123456789abcdef';
 const avatar = (key: string, name1: string, name2: string) => ({ key, name1, name2, modelType: 'person' as const, type: '', subType: '', label: '' });
@@ -97,5 +97,26 @@ describe('guestVideoClips', () => {
       { key: 'c', width: 640, height: 360, durationSec: 2, objectPath: 'tenant/t/journal/j/c-video.mp4', posterPath: '' },
       { key: 'a', width: 1920, height: 1080, durationSec: 5, objectPath: 'tenant/t/journal/j/a-video.mp4', posterPath: 'tenant/t/journal/j/a-2048.jpg' },
     ]);
+  });
+});
+
+describe('clipReadUrl', () => {
+  const file = (exists: boolean) => {
+    const signed: number[] = [];
+    return {
+      signed,
+      exists: async (): Promise<[boolean]> => [exists],
+      getSignedUrl: async (o: { expires: number }): Promise<[string]> => { signed.push(o.expires); return ['https://signed/clip']; },
+    };
+  };
+  it('signs an uploaded clip', async () => {
+    const f = file(true);
+    expect(await clipReadUrl(f, 42)).toBe('https://signed/clip');
+    expect(f.signed).toEqual([42]);
+  });
+  it('returns an empty url and signs nothing while the mp4 is not uploaded', async () => {
+    const f = file(false);
+    expect(await clipReadUrl(f, 42)).toBe('');
+    expect(f.signed).toEqual([]);
   });
 });

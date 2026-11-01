@@ -120,10 +120,13 @@ describe('HDR', () => {
     expect(parseFfmpegInfo(PQ).hdr).toBe(true);
     expect(parseFfmpegInfo(LANDSCAPE).hdr).toBe(false);
   });
-  it('tone maps before scaling and always tags BT.709', () => {
+  it('scales first, then tone maps to yuv420p, and always tags BT.709', () => {
     const hdr = buildJournalTranscodeArgs('i', 'o', 900, true).join(' ');
     expect(hdr).toContain('tonemap=tonemap=hable');
-    expect(hdr.indexOf('tonemap')).toBeLessThan(hdr.indexOf('scale=w='));
+    expect(hdr.indexOf('scale=w=')).toBeLessThan(hdr.indexOf('zscale=t=linear'));
+    expect(hdr.indexOf('tonemap')).toBeLessThan(hdr.indexOf('format=yuv420p'));
+    const poster = buildJournalPosterArgs('i', 'a', 'b', 1, true).join(' ');
+    expect(poster.indexOf("min(2048,iw)")).toBeLessThan(poster.indexOf('zscale=t=linear'));
     expect(hdr).toContain('-color_primaries bt709 -color_trc bt709 -colorspace bt709');
     const sdr = buildJournalTranscodeArgs('i', 'o', 900).join(' ');
     expect(sdr).not.toContain('tonemap');

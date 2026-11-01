@@ -32,6 +32,7 @@ export async function showJournalError(toastController: ToastController, i18n: J
     : error.reason === 'outdated' ? i18n.error_outdated()
     : error.reason === 'offline' ? i18n.error_offline()
     : error.reason === 'videoLimit' ? i18n.video_limit()
+    : error.reason === 'videoBusy' ? i18n.video_preparing() // a second pick while the first clip is still being prepared
     : i18n.error_not_owner();
   const toast = await toastController.create({ message, duration: 4000, position: 'bottom', color: 'warning' });
   await toast.present();
