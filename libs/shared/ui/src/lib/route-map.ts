@@ -21,6 +21,10 @@ import { googleMapsLogoUrl } from './google-maps-logo';
  * and offers a round layer button that opens an ActionSheet. While a Google option is selected it shows the official
  * Google Maps logo (bottom left) and `googleAttribution` as the attribution prefix. Without `baseLayers`, `tiles` is
  * drawn as before. The OpenStreetMap sea is transparent (design §6), so satellite or background tiles show through.
+ *
+ * Overlays (spec 2.122, e.g. «Eisberge»): switchable marker layers on top of the base layer, offered as toggles in the
+ * same ActionSheet. The map only reports a toggle (`overlayToggled`); the caller owns the `on` state and the markers.
+ * Overlay markers never refit the map and carry their source's attribution while shown.
  */
 export interface RoutePin { key: string; lat: number; lng: number; thumbnailUrl?: string; label: string }
 export interface RoutePlace { name: string; lat: number; lng: number }
@@ -37,10 +41,15 @@ export interface TileSource {
 export interface MapView { bounds: [number, number, number, number]; zoom: number }
 /** One selectable base layer: the shared-ui mirror of the journal's `BaseLayerOption`, plus its label. */
 export interface RouteBaseLayer { id: string; label: string; sources: TileSource[]; googleType?: 'roadmap' | 'satellite' }
+/** A point of an overlay: `label` next to it (from MARKER_LABEL_ZOOM on), `detail` in its popup. */
+export interface RouteMarker { lat: number; lng: number; label: string; detail?: string }
+/** One switchable overlay; drawn only while `on`. */
+export interface RouteOverlay { id: string; label: string; on: boolean; markers: RouteMarker[]; attribution?: { provider: string; url: string } }
 
 const FIT_PADDING: L.PointExpression = [40, 40];
 const SINGLE_POINT_ZOOM = 10;
 const PLACE_LABEL_ZOOM = 7; // below, the labels of a whole island group would overlap
+const MARKER_LABEL_ZOOM = 4; // overlay markers are sparse (icebergs around a continent): labels from the continent view on
 /** Raster and offline layers stop here (unchanged); Google layers follow their native levels up to GOOGLE_MAX_ZOOM. */
 const DEFAULT_MAX_ZOOM = 16;
 const GOOGLE_MAX_ZOOM = 20;
@@ -73,6 +82,12 @@ function escapeHtml(value: string): string {
       font-size: 12px; font-weight: 600; color: #fff; text-shadow: 0 0 3px #000, 0 0 2px #000; }
     .leaflet-tooltip.okr-route-place-label::before { display: none; }
     .okr-route-map-far .okr-route-place-label { display: none; }
+    .okr-route-marker { width: 12px; height: 12px; transform: rotate(45deg); border: 2px solid #1d4e89; box-sizing: border-box;
+      background: #fff; box-shadow: 0 0 3px rgba(0,0,0,.6); cursor: pointer; }
+    .leaflet-tooltip.okr-route-marker-label { background: transparent; border: none; box-shadow: none; padding: 0 0 0 4px;
+      font-size: 11px; font-weight: 600; color: #fff; text-shadow: 0 0 3px #1d4e89, 0 0 2px #000; }
+    .leaflet-tooltip.okr-route-marker-label::before { display: none; }
+    .okr-route-map-world .okr-route-marker-label { display: none; }
     /* Google guidelines: 16–19 px high, clear space 10 px left/right/top and 5 px below, never covered */
     okr-route-map .okr-route-map-google-logo { position: absolute; left: 10px; bottom: 5px; z-index: 1000;
       height: 18px; width: calc(18px * 105 / 22); pointer-events: none; }
@@ -92,7 +107,7 @@ function escapeHtml(value: string): string {
     @if (googleLogo(); as logo) {
       <img class="okr-route-map-google-logo" [src]="logo" alt="Google Maps" />
     }
-    @if (baseLayers().length > 1) {
+    @if (baseLayers().length > 1 || overlays().length > 0) {
       <button type="button" class="okr-route-map-layers" [attr.aria-label]="layerSwitchLabel()" [title]="layerSwitchLabel()"
         (click)="chooseBaseLayer()">
         <ion-icon src="{{ 'map' | svgIcon }}" />
@@ -115,6 +130,10 @@ export class RouteMap {
   public readonly layerSwitchLabel = input('');
   /** The viewport copyright of the Google layer (fetched by the caller), shown while a Google option is selected. */
   public readonly googleAttribution = input('');
+  /** Switchable marker layers above the base layer (spec 2.122). */
+  public readonly overlays = input<RouteOverlay[]>([]);
+  /** The user switched an overlay in the layer ActionSheet (its id); the caller flips `on`. */
+  public readonly overlayToggled = output<string>();
   public readonly pinClicked = output<string>();
   /** After every pan or zoom: what the map shows (e.g. to save it as an offline area). */
   public readonly viewChanged = output<MapView>();
@@ -150,6 +169,8 @@ export class RouteMap {
   private map?: L.Map;
   private tileLayers: L.TileLayer[] = [];
   private overlay?: L.LayerGroup;
+  private markerLayer?: L.LayerGroup;
+  private overlayAttributions: string[] = [];
   private resizeObserver?: ResizeObserver;
   private lastPoints: L.LatLngExpression[] = [];
   private lastPointsKey = '';
@@ -171,6 +192,10 @@ export class RouteMap {
       const google = this.selectedBase()?.googleType !== undefined;
       const copyright = this.googleAttribution();
       if (this.map) this.updateAttribution(google, copyright);
+    });
+    effect(() => {
+      const overlays = this.overlays();
+      if (this.map) this.renderOverlays(overlays);
     });
     inject(DestroyRef).onDestroy(() => {
       this.destroyed = true; // an init still waiting for Leaflet must not create a map afterwards
@@ -194,10 +219,12 @@ export class RouteMap {
     this.map.on('moveend', () => this.emitView());
     this.map.on('zoomend', () => this.markFar());
     this.overlay = this.leaflet.layerGroup().addTo(this.map);
+    this.markerLayer = this.leaflet.layerGroup().addTo(this.map);
     const prefix = this.map.attributionControl?.options.prefix;
     this.defaultPrefix = typeof prefix === 'string' ? prefix : false;
     this.updateAttribution(this.selectedBase()?.googleType !== undefined, this.googleAttribution());
     this.render(this.route(), this.pins(), this.selectedKey(), this.activeSources(), this.places());
+    this.renderOverlays(this.overlays());
     this.settleSnap(container);
     // the container may still be animating or change with the layout (A/B): keep Leaflet's size in sync
     // Ionic hides a page that stays in the stack (size 0) and shows it again on «back»: refit then,
@@ -318,6 +345,31 @@ export class RouteMap {
     }
   }
 
+  /** The markers of the overlays that are on, and their attributions; the route, pins and view stay as they are. */
+  private renderOverlays(overlays: RouteOverlay[]): void {
+    const Lf = this.leaflet;
+    const map = this.map;
+    if (!Lf || !map || !this.markerLayer) return;
+    this.markerLayer.clearLayers();
+    const icon = Lf.divIcon({ className: 'okr-route-pin-icon', html: '<div class="okr-route-marker"></div>', iconSize: [12, 12], iconAnchor: [6, 6] });
+    const shown = overlays.filter((o) => o.on);
+    for (const overlay of shown) {
+      for (const m of overlay.markers) {
+        const popup = `<strong>${escapeHtml(m.label)}</strong>${m.detail ? `<br>${escapeHtml(m.detail)}` : ''}`;
+        Lf.marker([m.lat, m.lng], { icon, keyboard: false, zIndexOffset: -500, title: m.label })
+          .bindTooltip(escapeHtml(m.label), { permanent: true, direction: 'right', offset: [6, 0], className: 'okr-route-marker-label' })
+          .bindPopup(popup)
+          .addTo(this.markerLayer);
+      }
+    }
+    const control = map.attributionControl;
+    if (!control) return;
+    for (const text of this.overlayAttributions) control.removeAttribution(text);
+    this.overlayAttributions = shown.flatMap((o) => o.attribution
+      ? [`<a href="${escapeHtml(o.attribution.url)}" target="_blank" rel="noopener">${escapeHtml(o.attribution.provider)}</a>`] : []);
+    for (const text of this.overlayAttributions) control.addAttribution(text);
+  }
+
   /**
    * An OpenStreetMap vector layer with a transparent sea (design §6): the light flavour without its water polygons
    * and without a background fill, so the satellite or background tiles below show through. The rules are filtered on
@@ -342,7 +394,10 @@ export class RouteMap {
     control.setPrefix(google ? escapeHtml(copyright) : this.defaultPrefix);
   }
 
-  /** The ActionSheet with the base layers, the current one checked; the choice goes to `selectedBaseId`. */
+  /**
+   * The ActionSheet with the base layers, the current one checked, and the overlays as toggles; a base choice goes to
+   * `selectedBaseId`, an overlay to `overlayToggled`.
+   */
   protected async chooseBaseLayer(): Promise<void> {
     const layers = this.baseLayers();
     const current = this.selectedBase()?.id;
@@ -352,10 +407,20 @@ export class RouteMap {
       options.buttons.push(createActionSheetButton(`baselayer.${layer.id}`, layer.label, imgixBaseUrl,
         layer.id === current ? 'checkbox-circle' : 'radio-button-off'));
     }
+    const overlays = this.overlays();
+    for (const overlay of overlays) {
+      options.buttons.push(createActionSheetButton(`overlay.${overlay.id}`, overlay.label, imgixBaseUrl, overlay.on ? 'checkbox' : 'square'));
+    }
     const sheet = await this.actionSheetController.create(options);
     await sheet.present();
     const { data } = await sheet.onDidDismiss<{ action?: string }>();
-    const id = data?.action?.replace(/^baselayer\./, '');
+    const action = data?.action ?? '';
+    if (action.startsWith('overlay.')) {
+      const overlayId = action.slice('overlay.'.length);
+      if (overlays.some((o) => o.id === overlayId)) this.overlayToggled.emit(overlayId);
+      return;
+    }
+    const id = action.replace(/^baselayer\./, '');
     if (id && id !== current && layers.some((l) => l.id === id)) this.selectedBaseId.set(id);
   }
 
@@ -366,10 +431,12 @@ export class RouteMap {
     this.googleTileError.emit(type);
   }
 
-  /** Place labels only from PLACE_LABEL_ZOOM on (a class on the container, so no re-render on zoom). */
+  /** Place labels only from PLACE_LABEL_ZOOM on, marker labels from MARKER_LABEL_ZOOM (classes on the container, no re-render). */
   private markFar(): void {
     if (!this.map) return;
-    this.map.getContainer().classList.toggle('okr-route-map-far', this.map.getZoom() < PLACE_LABEL_ZOOM);
+    const zoom = this.map.getZoom();
+    this.map.getContainer().classList.toggle('okr-route-map-far', zoom < PLACE_LABEL_ZOOM);
+    this.map.getContainer().classList.toggle('okr-route-map-world', zoom < MARKER_LABEL_ZOOM);
   }
 
   private emitView(): void {

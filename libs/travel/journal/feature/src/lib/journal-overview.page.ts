@@ -7,11 +7,11 @@ import {
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 
-import { MapView, RouteMap, RoutePin } from '@okr/shared-ui';
+import { MapView, RouteMap, RouteOverlay, RoutePin } from '@okr/shared-ui';
 import { FootprintEditModal } from '@okr/travel-journal-ui';
 import {
   FootprintFormModel, flyoverInputOf, flyoverTimeline, footprintChips, journalMapData, journalOverviewMenu, JournalWriteSlow, newFootprintFormModel, routeLengthKm,
-  isVideoImage,
+  isVideoImage, BYU_ICEBERGS_ATTRIBUTION,
 } from '@okr/travel-journal-util';
 
 import { googleAttributionOf, routeBaseLayers } from './journal-base-layers';
@@ -23,7 +23,7 @@ import { openJournalMenu } from './journal-menu-open';
 import { openOfflineMapsModal } from './journal-offline-maps.modal';
 import { openPhotoBookModal } from './journal-photo-book.modal';
 import { openPhotoSyncModal } from './journal-photo-sync.modal';
-import { registerBundledIcons } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, fill, registerBundledIcons } from '@okr/shared-util-core';
 import { JOURNAL_ICONS } from './journal-icons';
 import { JournalStore } from './journal.store';
 
@@ -76,6 +76,7 @@ const WIDE_QUERY = '(min-width: 992px)';
           <okr-route-map [route]="map().route" [pins]="pins()" [selectedKey]="selectedKey()" [places]="places()"
             [baseLayers]="baseLayers()" [selectedBaseId]="selectedBaseId()" (selectedBaseIdChange)="selectBaseLayer($event)"
             [layerSwitchLabel]="store.i18n.layer_switch()" [googleAttribution]="googleAttribution()"
+            [overlays]="overlays()" (overlayToggled)="store.toggleIcebergs()"
             (pinClicked)="openFootprint($event)" (viewChanged)="view.set($event)" (googleTileError)="store.renewGoogle($event)" />
         </div>
         <div class="side">
@@ -127,6 +128,17 @@ export class JournalOverviewPage {
   protected readonly googleAttribution = googleAttributionOf(this.selectedGoogleType, this.view,
     (bbox, zoom, type) => this.store.googleAttribution(bbox, zoom, type));
   protected readonly places = computed(() => this.store.mapPlacesFor(this.journalKey()));
+  /** «Eisberge» (spec 2.122): BYU's current positions, each labelled with the day it was last observed. */
+  protected readonly overlays = computed<RouteOverlay[]>(() => {
+    const seen = this.store.i18n.iceberg_seen();
+    return [{
+      id: 'icebergs', label: this.store.i18n.layer_icebergs(), on: this.store.icebergsOn(), attribution: BYU_ICEBERGS_ATTRIBUTION,
+      markers: (this.store.icebergs()?.icebergs ?? []).map((i) => ({
+        lat: i.lat, lng: i.lng, label: i.name,
+        detail: fill(seen, { date: convertDateFormatToString(i.seenAt, DateFormat.StoreDate, DateFormat.ViewDate, false) }),
+      })),
+    }];
+  });
   protected readonly wide = signal(typeof window !== 'undefined' && window.matchMedia(WIDE_QUERY).matches);
 
   protected readonly journal = computed(() => this.store.journals().find((j) => j.key === this.journalKey()));

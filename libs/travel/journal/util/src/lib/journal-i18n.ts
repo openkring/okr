@@ -141,6 +141,8 @@ export const JOURNAL_I18N_KEYS = {
   layer_offline_swisstopo: PFX + 'map.layer_offline_swisstopo',
   layer_world: PFX + 'map.layer_world',
   layer_switch: PFX + 'map.layer_switch',
+  layer_icebergs: PFX + 'map.layer_icebergs',
+  iceberg_seen: PFX + 'map.iceberg_seen',
   like: PFX + 'reactions.like',
   likes_count: PFX + 'reactions.likes_count',
   comments_title: PFX + 'reactions.comments_title',

@@ -189,7 +189,9 @@
     "layer_offline_satellite": "Satellite (offline)",
     "layer_offline_swisstopo": "swisstopo (offline)",
     "layer_world": "World map",
-    "layer_switch": "Choose map"
+    "layer_switch": "Choose map",
+    "layer_icebergs": "Icebergs",
+    "iceberg_seen": "last seen on {date}"
   },
   "reactions": {
     "like": "Like",

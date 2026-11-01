@@ -404,6 +404,8 @@ export { recordDiaryLine } from './diary/record-diary-line';
 export { getLogbuchTrack } from './trip/get-logbuch-track';
 // tracker Höhenprofil (spec 1.128): terrain heights for Strecken without GPS altitude
 export { getTerrainElevations } from './elevation';
+// travel journal «Eisberge» layer (spec 2.122): current Antarctic iceberg positions, BYU via the gateway
+export { getIcebergs } from './iceberg';
 // Swiss timetable (OJP 2.0): tracker lines (1.129 §4.2), connections (1.131), stops + departure board (1.130)
 export { getTransitRoute, planTrip, searchStops, getDepartures } from './transit';
 export { listMyDiaryTenants } from './diary/list-my-diary-tenants';

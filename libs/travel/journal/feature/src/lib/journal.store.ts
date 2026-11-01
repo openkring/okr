@@ -14,7 +14,7 @@ import { AppVersionConfig, compareAppVersions, CURRENT_APP_VERSION } from '@okr/
 import { I18nService } from '@okr/shared-i18n';
 import { convertDateFormatToString, DateFormat, getTodayStr } from '@okr/shared-util-core';
 import {
-  ChangeDraft, JournalBookService, JournalDb, JournalIdentityService, JournalLockService, JournalPeerService, JournalPhotos, JournalSyncService, JournalWebWriter, OsmExtract, PickedPhoto, PickedVideo, SkippedPhoto, VideoSkipReason,
+  ChangeDraft, JournalBookService, JournalDb, JournalIcebergService, JournalIdentityService, JournalLockService, JournalPeerService, JournalPhotos, JournalSyncService, JournalWebWriter, OsmExtract, PickedPhoto, PickedVideo, SkippedPhoto, VideoSkipReason,
   toBase64,
 } from '@okr/travel-journal-data-access';
 import {
@@ -24,6 +24,7 @@ import {
   AreaLayer, areaForWrite, areaLayerTilePlan, BaseLayerOption, baseLayerOptions, Bbox, finishRun, isUsable, layerDetailLevels, layerKindsFor,
   layerTilesToFree, MapLayerKind, MapSource, migrateOfflineMap, NO_OFFLINE_LAYER, offlineAreaKey, OfflineLayerStatus, parseOfflineLayer, pickBaseLayer,
 } from '@okr/travel-journal-util';
+import type { IcebergSnapshot } from '@okr/travel-journal-util';
 
 import { BookExportStatus, JournalBookExporter, NO_BOOK_EXPORT } from './journal-book-export.service';
 import { JournalFileUrlService } from './journal-file-url.service';
@@ -71,6 +72,8 @@ interface JournalStoreState {
   webUpload: { done: number; total: number } | undefined; // browser photo upload in progress (spec 1.126 phase 3 §3)
   videoPreparing: boolean; // a video pick is converting (iPad plugin) or uploading/converting (browser); one at a time (phase 5)
   presentVideos: Record<string, true>; // iPad: the `-video.mp4` files of the active journal that are on this device (phase 5)
+  icebergsOn: boolean; // the «Eisberge» map overlay, per device (spec 2.122)
+  icebergs: IcebergSnapshot | undefined; // the last snapshot: from getIcebergs, else the one this device stored
 }
 
 /** The phase 3 per-journal offline map record (`offlineMap:<journalKey>`), read only for the one-time migration. */
@@ -121,7 +124,7 @@ const printFileOf = (imageKey: string): string => `${imageKey}-print.jpg`;
 const initialState: JournalStoreState = {
   ready: false, native: Capacitor.isNativePlatform(), error: '', changes: [], photoMode: 'all', activeJournalKey: '', offlineLayers: {}, online: !isOffline(), google: {}, baseLayerId: '', bookPrints: NO_BOOK_PRINTS,
   webLoaded: false, bookExport: NO_BOOK_EXPORT, locks: {}, writeMinVersion: '', lockClock: 0, webUpload: undefined,
-  videoPreparing: false, presentVideos: {},
+  videoPreparing: false, presentVideos: {}, icebergsOn: false, icebergs: undefined,
 };
 const LOCK_CLOCK_MS = 15_000;
 type VideoSkip = { localIdentifier: string; reason: VideoSkipReason };
@@ -147,6 +150,7 @@ export const JournalStore = signalStore(
     firestore: inject(FIRESTORE),
     googleTiles: inject(GoogleTiles),
     i18nService: inject(I18nService),
+    icebergService: inject(JournalIcebergService),
   })),
   withProps(() => ({
     i18n: inject(I18nService).translateAll(JOURNAL_I18N_KEYS) as JournalI18n,
@@ -176,6 +180,20 @@ export const JournalStore = signalStore(
     let webRefresh: ReturnType<typeof setInterval> | undefined;
     let webPersonKey = '';
     let pending: JournalChange[] = []; // browser: records written here that no snapshot has confirmed yet
+    /**
+     * The current iceberg positions from `getIcebergs` (shared 30-day cache, spec 2.122). Offline or on failure the
+     * snapshot this device stored last stays — the layer shows it with its observation dates, or nothing without one.
+     */
+    async function loadIcebergs(): Promise<void> {
+      if (!store.online()) return;
+      try {
+        const res = await store.icebergService.fetch();
+        patchState(store, { icebergs: { revisedAt: res.revisedAt, icebergs: res.icebergs } });
+      } catch (err: unknown) {
+        console.warn('JournalStore.loadIcebergs: keeping the stored snapshot', err);
+      }
+    }
+
     function stopWebView(): void {
       stopWeb?.();
       stopWeb = undefined;
@@ -1079,6 +1097,16 @@ export const JournalStore = signalStore(
         }
       },
 
+      /** Switches the «Eisberge» overlay on this device; switching it on loads the current positions (spec 2.122). */
+      toggleIcebergs(): void {
+        const on = !store.icebergsOn();
+        patchState(store, { icebergsOn: on });
+        store.icebergService.setOn(on);
+        if (on) void loadIcebergs();
+      },
+
+      loadIcebergs,
+
       /**
        * The viewport copyright of the Google layer (attribution, design §1): of `mapType`, else the stored Google choice.
        * '' offline or without a session. The caller debounces.
@@ -1505,6 +1533,9 @@ export const JournalStore = signalStore(
     onInit(): void {
       // Base-layer choice and online state for every platform (phase 4 design §2); nothing here waits for the network.
       patchState(store, { baseLayerId: readStoredBaseLayer() });
+      // «Eisberge» (spec 2.122): the stored switch and snapshot at once, the current positions only when the layer is on
+      patchState(store, { icebergsOn: store.icebergService.isOn(), icebergs: store.icebergService.stored() });
+      if (store.icebergsOn()) void store.loadIcebergs();
       store.startNetworkWatch();
       // Bind the author whenever a signed-in user with a person is known (online). Offline the binding
       // stored in SQLite is used — AppStore has no user after an offline cold start on iOS.

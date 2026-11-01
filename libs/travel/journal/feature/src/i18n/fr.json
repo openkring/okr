@@ -189,7 +189,9 @@
     "layer_offline_satellite": "Satellite (hors ligne)",
     "layer_offline_swisstopo": "swisstopo (hors ligne)",
     "layer_world": "Carte du monde",
-    "layer_switch": "Choisir la carte"
+    "layer_switch": "Choisir la carte",
+    "layer_icebergs": "Icebergs",
+    "iceberg_seen": "vu pour la dernière fois le {date}"
   },
   "reactions": {
     "like": "J’aime",

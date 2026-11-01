@@ -9,3 +9,4 @@ export * from './lib/journal-guest.service';
 export * from './lib/journal-book.service';
 export * from './lib/journal-lock.service';
 export * from './lib/journal-web-writer.service';
+export * from './lib/journal-iceberg.service';
