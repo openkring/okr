@@ -1,0 +1,31 @@
+{
+  "name": "instruments-translator-util",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/instruments/translator/util/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:util", "scope:instruments", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/instruments/translator/util",
+        "main": "libs/instruments/translator/util/src/index.ts",
+        "tsConfig": "libs/instruments/translator/util/tsconfig.lib.json",
+        "assets": ["libs/instruments/translator/util/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "configFile": "libs/instruments/translator/util/vite.config.ts"
+      }
+    }
+  }
+}

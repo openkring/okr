@@ -1,0 +1,32 @@
+{
+  "title": "Translator",
+  "source": "Source language",
+  "target": "Target language",
+  "auto": "Detect language",
+  "detected": "Detected",
+  "swap": "Swap languages",
+  "input": {
+    "placeholder": "Enter text",
+    "clear": "Clear text",
+    "tooLong": "The text is too long. Up to 1000 characters can be translated."
+  },
+  "mic": {
+    "start": "Dictate text",
+    "stop": "Stop dictation"
+  },
+  "copy": "Copy",
+  "copied": "The translation has been copied.",
+  "copyFailed": "Copying did not work.",
+  "speak": {
+    "start": "Read aloud",
+    "stop": "Stop reading"
+  },
+  "attribution": "Translated by",
+  "privacy": "What you type or dictate is sent to Google for translation.",
+  "error": {
+    "failed": "The translation did not work. Check your connection and try again.",
+    "busy": "A lot is being translated right now. Wait a moment and then try again.",
+    "languages": "The list of languages could not be loaded."
+  },
+  "retry": "Try again"
+}

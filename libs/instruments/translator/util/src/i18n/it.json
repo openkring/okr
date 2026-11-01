@@ -1,0 +1,32 @@
+{
+  "title": "Traduttore",
+  "source": "Lingua di partenza",
+  "target": "Lingua di arrivo",
+  "auto": "Rileva lingua",
+  "detected": "Rilevata",
+  "swap": "Inverti le lingue",
+  "input": {
+    "placeholder": "Inserisci un testo",
+    "clear": "Cancella il testo",
+    "tooLong": "Il testo è troppo lungo. Si possono tradurre al massimo 1000 caratteri."
+  },
+  "mic": {
+    "start": "Detta il testo",
+    "stop": "Termina la dettatura"
+  },
+  "copy": "Copia",
+  "copied": "La traduzione è stata copiata.",
+  "copyFailed": "La copia non è riuscita.",
+  "speak": {
+    "start": "Leggi ad alta voce",
+    "stop": "Interrompi la lettura"
+  },
+  "attribution": "Tradotto da",
+  "privacy": "Quello che scrivi o detti viene inviato a Google per la traduzione.",
+  "error": {
+    "failed": "La traduzione non è riuscita. Controlla la connessione e riprova.",
+    "busy": "In questo momento si traduce molto. Aspetta un attimo e poi riprova.",
+    "languages": "Non è stato possibile caricare l'elenco delle lingue."
+  },
+  "retry": "Riprova"
+}

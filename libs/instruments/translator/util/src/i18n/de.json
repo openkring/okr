@@ -1,0 +1,32 @@
+{
+  "title": "Übersetzer",
+  "source": "Ausgangssprache",
+  "target": "Zielsprache",
+  "auto": "Sprache erkennen",
+  "detected": "Erkannt",
+  "swap": "Sprachen tauschen",
+  "input": {
+    "placeholder": "Text eingeben",
+    "clear": "Text löschen",
+    "tooLong": "Der Text ist zu lang. Übersetzt werden höchstens 1000 Zeichen."
+  },
+  "mic": {
+    "start": "Text diktieren",
+    "stop": "Diktat beenden"
+  },
+  "copy": "Kopieren",
+  "copied": "Die Übersetzung ist kopiert.",
+  "copyFailed": "Das Kopieren hat nicht geklappt.",
+  "speak": {
+    "start": "Vorlesen",
+    "stop": "Vorlesen beenden"
+  },
+  "attribution": "Übersetzt von",
+  "privacy": "Was du eingibst oder diktierst, wird zum Übersetzen an Google gesendet.",
+  "error": {
+    "failed": "Die Übersetzung hat nicht geklappt. Prüfe deine Verbindung und versuche es nochmals.",
+    "busy": "Gerade wird sehr viel übersetzt. Warte einen Moment und versuche es dann nochmals.",
+    "languages": "Die Liste der Sprachen konnte nicht geladen werden."
+  },
+  "retry": "Nochmals versuchen"
+}

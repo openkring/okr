@@ -2424,6 +2424,10 @@ const instruments: FeatureBlock = {
       key: 'lupe', name: 'lupe', url: '/lupe',
       action: 'navigate', roleNeeded: 'registered', icon: 'search', label: '@item.lupe',
     },
+    {
+      key: 'translator', name: 'translator', url: '/translator',
+      action: 'navigate', roleNeeded: 'registered', icon: 'globe', label: '@item.translator',
+    },
   ],
 };
 

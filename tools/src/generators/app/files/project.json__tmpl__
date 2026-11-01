@@ -577,6 +577,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/instruments/translator/util/src/i18n",
+            "output": "./assets/i18n/instruments/translator/util"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/instruments/data-access/src/i18n",
             "output": "./assets/i18n/instruments/data-access"
           },

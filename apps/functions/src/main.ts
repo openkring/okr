@@ -406,6 +406,8 @@ export { getLogbuchTrack } from './trip/get-logbuch-track';
 export { getTerrainElevations } from './elevation';
 // travel journal «Eisberge» layer (spec 2.122): current Antarctic iceberg positions, BYU via the gateway
 export { getIcebergs } from './iceberg';
+// Übersetzer (idea 2.126): text translation + language list, Google Cloud Translation via the gateway
+export { translator } from './translator';
 // Swiss timetable (OJP 2.0): tracker lines (1.129 §4.2), connections (1.131), stops + departure board (1.130)
 export { getTransitRoute, planTrip, searchStops, getDepartures } from './transit';
 export { listMyDiaryTenants } from './diary/list-my-diary-tenants';

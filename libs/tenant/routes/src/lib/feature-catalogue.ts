@@ -1205,6 +1205,7 @@ const task: BlockRoutes = {
  *
  * `calculator` (`libs/instruments/calculator`, spec 1.81) is the third path; no menu doc yet.
  * `lupe` (`libs/instruments/lupe`, idea 2.125) is the fourth — same shape as `calculator`.
+ * `translator` (`libs/instruments/translator`, idea 2.126) is the fifth — same shape again.
  */
 const instruments: BlockRoutes = {
   id: 'instruments',
@@ -1235,6 +1236,11 @@ const instruments: BlockRoutes = {
       path: 'lupe',
       canActivate: [isAuthenticatedGuard],
       loadComponent: () => import('@okr/instruments-lupe-feature').then(m => m.LupePage),
+    },
+    {
+      path: 'translator',
+      canActivate: [isAuthenticatedGuard],
+      loadComponent: () => import('@okr/instruments-translator-feature').then(m => m.TranslatorPage),
     },
   ],
 };
