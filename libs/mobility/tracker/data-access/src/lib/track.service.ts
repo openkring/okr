@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { Filesystem } from '@capacitor/filesystem';
-import { collection, deleteField, doc, getDoc, getDocs, query, runTransaction, updateDoc, where } from 'firebase/firestore';
+import { collection, deleteField, doc, getDoc, getDocFromServer, getDocs, query, runTransaction, updateDoc, where } from 'firebase/firestore';
 import { deleteObject, getBlob, ref, uploadBytes } from 'firebase/storage';
 import { Observable } from 'rxjs';
 
@@ -290,6 +290,11 @@ export class TrackService {
   }
 
   /** One Logbuch trip (the push «Strecke aufzeichnen?» names it); undefined when it is missing or not a Logbuch trip. */
+  /** Whether the trip is still on the server (never the cache): false only for a missing doc; throws offline. */
+  public async existsOnServer(tripKey: string): Promise<boolean> {
+    return (await getDocFromServer(doc(this.firestoreService.firestore, `${TripCollection}/${tripKey}`))).exists();
+  }
+
   public async readLogbuch(logbuchKey: string): Promise<TripModel | undefined> {
     const snap = await getDoc(doc(this.firestoreService.firestore, `${TripCollection}/${logbuchKey}`));
     if (!snap.exists()) return undefined;

@@ -73,7 +73,8 @@
     "sections": "Sections",
     "not_found": "Ce parcours est introuvable.",
     "save_error": "La modification n’a pas pu être enregistrée. Réessaie, s’il te plaît.",
-    "share_error": "Le fichier GPX n’a pas pu être partagé."
+    "share_error": "Le fichier GPX n’a pas pu être partagé.",
+    "delete_date": "Ce parcours sera supprimé après le {date}. Si tu veux le garder, télécharge-le avant comme fichier GPX."
   },
   "photos": {
     "title": "Photos",
@@ -137,7 +138,9 @@
     "offline": "Cela nécessite une connexion internet. Réessaie plus tard.",
     "pending": "Sera relié au journal de bord dès que tu seras en ligne.",
     "taken_track": "« {track} » : {name} enregistre déjà cette sortie. Ton parcours reste sans journal de bord.",
-    "unavailable_track": "« {track} » : cette sortie du journal de bord ne peut plus être reliée. Ton parcours reste sans journal de bord."
+    "unavailable_track": "« {track} » : cette sortie du journal de bord ne peut plus être reliée. Ton parcours reste sans journal de bord.",
+    "delete_date": "Ton équipage voit ce parcours jusqu’au {date}. Ensuite, il sera supprimé. Si tu veux le garder, télécharge-le avant comme fichier GPX.",
+    "delete_open": "Ton équipage voit ce parcours jusqu’à 7 jours après la fin de la sortie. Ensuite, il sera supprimé. Si tu veux le garder, télécharge-le avant comme fichier GPX."
   },
   "elevation": {
     "title": "Profil altimétrique",

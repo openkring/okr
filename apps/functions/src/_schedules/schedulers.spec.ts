@@ -9,8 +9,8 @@ import { matrixAdminToken } from '../matrix-simple/shared';
 const names = (jobs: { name: string }[]) => jobs.map((j) => j.name);
 
 describe('time-slot schedulers', () => {
-  it('nightly runs its seven jobs in order', () => {
-    expect(names(NIGHTLY_JOBS)).toEqual(['tripStatsReconcile', 'crewTrackCleanup', 'roomPostPolicySweep', 'expiredMembershipSweep', 'pinboardSweep', 'billScanReap', 'privacyExportReap']);
+  it('nightly runs its eight jobs in order', () => {
+    expect(names(NIGHTLY_JOBS)).toEqual(['tripStatsReconcile', 'crewTrackCleanup', 'trackerExpiry', 'roomPostPolicySweep', 'expiredMembershipSweep', 'pinboardSweep', 'billScanReap', 'privacyExportReap']);
   });
 
   it('morning runs its five jobs in order', () => {

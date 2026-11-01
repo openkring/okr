@@ -15,9 +15,9 @@ import { queryPedometerSteps, StoredTransitRoute, TerrainElevationService, Track
 import {
   TrackElevation, TrackMap, TrackMapPhoto, TrackMapPoint, TrackMapSection, TrackModeChange, TrackPhotoItem, TrackPhotos, TrackPhotoToggle, TrackPointBar, TrackSections,
 } from '@okr/mobility-tracker-ui';
-import { fill } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, fill } from '@okr/shared-util-core';
 import {
-  alignSections, buildGpx, ElevationPoint, elevationProfile, hasRelief, needsTerrain, sectionsWithHeights, terrainAltitudes, terrainSamples, logbuchTripLabel, correctedTrack, fromLocalSections, gpxFileName, isShareCancel, LocalSection, LocalTrack, localFromTrip, mergeWithNext,
+  isExpiringApp, isKeptRecording, recordingDeleteDate, alignSections, buildGpx, ElevationPoint, elevationProfile, hasRelief, needsTerrain, sectionsWithHeights, terrainAltitudes, terrainSamples, logbuchTripLabel, correctedTrack, fromLocalSections, gpxFileName, isShareCancel, LocalSection, LocalTrack, localFromTrip, mergeWithNext,
   localStoreDate, middlePointIndex, sectionRows, setSectionMode, splitSection, toLocalSections, trackTenants, wantsPhotoReattach, withoutPhoto,
   withPhotoHidden, withQueriedSteps, routeDistanceM, transitRouteKey, transitRouteReq, distanceAlong, formatKm, photosOnTrack, removePoints, spikeRunAround, withoutSpikes,
 } from '@okr/mobility-tracker-util';
@@ -99,6 +99,9 @@ import { TrackerStore } from './tracker.store';
             <ion-icon slot="start" src="{{ 'link' | svgIcon }}" />{{ i18n.link_connect() }}
           </ion-button>
         }
+        @if (deleteNote(); as note) {
+          <ion-note class="note">{{ note }}</ion-note>
+        }
         @if (photoItems().length > 0) {
           <ion-list-header><ion-label>{{ i18n.photos_title() }}</ion-label></ion-list-header>
           <okr-track-photos [photos]="photoItems()" [i18n]="i18n" [removable]="!isLocal()" [disabled]="searching()"
@@ -176,6 +179,21 @@ export class TrackDetailPage {
   protected readonly linkedText = computed(() => {
     const lb = this.linkedTrip();
     return lb ? fill(this.i18n.link_linked(), { trip: this.tripLabel(lb) }) : this.i18n.link_linked_unknown();
+  });
+  /**
+   * «… wird am … gelöscht»: in a club app every finished recording nobody kept is deleted after day 7 (spec 1.123
+   * §7/§7a); a linked one names the crew. No date while the linked Logbuch trip is open or not loaded yet; nothing in a
+   * diary or journal app, nor once a diary or journal holds the recording, nor for a crew copy.
+   */
+  protected readonly deleteNote = computed(() => {
+    const t = this.track();
+    if (!t || t.state !== 'done' || this.trip()?.track?.copyOf) return '';
+    if (!isExpiringApp(this.appStore.appConfig()?.enabledFeatures) || isKeptRecording(this.trip(), this.appStore.tenantId())) return '';
+    const linked = this.isLinked();
+    const date = recordingDeleteDate(this.linkedTrip(), t.endedAt, linked);
+    if (!date) return linked ? this.i18n.link_delete_open() : '';
+    const view = convertDateFormatToString(date, DateFormat.StoreDate, DateFormat.ViewDate, false);
+    return fill(linked ? this.i18n.link_delete_date() : this.i18n.detail_delete_date(), { date: view });
   });
 
   /**

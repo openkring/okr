@@ -523,7 +523,7 @@ export function crewCleanupDecision(
 }
 
 /** Deletes a recording: its track-points, the photo thumbnails in the private bucket (missing files are fine), then the trip doc. */
-async function deleteRecording(db: Firestore, rec: TripModel): Promise<void> {
+export async function deleteRecording(db: Firestore, rec: TripModel): Promise<void> {
   const ref = db.collection(TripCollection).doc(rec.okey);
   const points = await ref.collection('track-points').listDocuments();
   for (let i = 0; i < points.length; i += 400) {

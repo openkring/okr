@@ -73,7 +73,8 @@
     "sections": "Tramos",
     "not_found": "No se encontró este recorrido.",
     "save_error": "No se pudo guardar el cambio. Inténtalo de nuevo, por favor.",
-    "share_error": "No se pudo compartir el archivo GPX."
+    "share_error": "No se pudo compartir el archivo GPX.",
+    "delete_date": "Este recorrido se eliminará después del {date}. Si quieres conservarlo, descárgalo antes como archivo GPX."
   },
   "photos": {
     "title": "Fotos",
@@ -137,7 +138,9 @@
     "offline": "Esto necesita conexión a internet. Inténtalo de nuevo más tarde.",
     "pending": "Se vinculará al cuaderno de bitácora en cuanto tengas conexión.",
     "taken_track": "«{track}»: {name} ya está grabando esta salida. Tu recorrido queda sin cuaderno de bitácora.",
-    "unavailable_track": "«{track}»: esta salida del cuaderno de bitácora ya no se puede vincular. Tu recorrido queda sin cuaderno de bitácora."
+    "unavailable_track": "«{track}»: esta salida del cuaderno de bitácora ya no se puede vincular. Tu recorrido queda sin cuaderno de bitácora.",
+    "delete_date": "Tu tripulación ve este recorrido hasta el {date}. Después se eliminará. Si quieres conservarlo, descárgalo antes como archivo GPX.",
+    "delete_open": "Tu tripulación ve este recorrido hasta 7 días después del final de la salida. Después se eliminará. Si quieres conservarlo, descárgalo antes como archivo GPX."
   },
   "elevation": {
     "title": "Perfil de altitud",

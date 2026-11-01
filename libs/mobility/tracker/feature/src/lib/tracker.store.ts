@@ -16,7 +16,7 @@ import {
   accumulateDistance, allThumbsUploaded, alignSections, correctedTrack, DetectionInput, hasNoPoints, LocalSection, sameTrackContent, DetectState, initialDetectState, LocalTrack,
   mergePhotos, MotionActivity, needsThumbUpload, needsUpload, nextThumbNumber, photoWindowEnd, placePhotos, nextSectionStartPoint, nextSections, pendingUploadOwner, resumeDecision, sectionsAfterPause, sessionDetectStep, StartWarning, localStoreDate, trackTenants,
   startWarning, summarize, toTrackPoint, TRACK_PROFILES, TRACKER_I18N_KEYS, TrackerI18n, TrackPoint, withPhotoHidden, withThumbPaths,
-  LIVE_SPLIT_WINDOW_MS, liveSplitS, sectionMeta, toLocalSections, withQueriedSteps, hasPendingLogbuchLink, isTransientLinkError, withoutLogbuchLink,
+  LIVE_SPLIT_WINDOW_MS, liveSplitS, sectionMeta, toLocalSections, withQueriedSteps, hasPendingLogbuchLink, isTransientLinkError, withoutLogbuchLink, isExpiringApp, recordingDeleteDate,
 } from '@okr/mobility-tracker-util';
 
 /**
@@ -609,6 +609,7 @@ export const TrackerStore = signalStore(
         for (const t of tracks.filter((x) => x.state === 'done' && x.uploaded && hasPendingLogbuchLink(x))) {
           void linkTrack(t.key).then((linked) => (linked && needsUpload(linked) ? uploadTrack(linked, true) : undefined));
         }
+        void dropExpired(tracks);
         const pending = tracks.filter(needsUpload);
         for (const t of tracks.filter(needsThumbUpload)) void uploadThumbs(t.key);
         const results = await Promise.all(pending.map((t) => uploadTrack(t, true)));
@@ -616,6 +617,26 @@ export const TrackerStore = signalStore(
         if (results.every(Boolean)) patchState(store, { uploadError: undefined });
       } catch (error) {
         console.error('TrackerStore.uploadPending', error);
+      }
+    }
+
+    /**
+     * Drops the local copy of an uploaded recording the nightly cleanup deleted (spec 1.123 §7a): only in a club app,
+     * only past its own date, and only when the server says the trip is gone. Offline or on any error it stays, so a
+     * failed read never wipes a track; a copy a diary or journal kept still exists on the server and stays too.
+     */
+    async function dropExpired(tracks: LocalTrack[]): Promise<void> {
+      if (!isExpiringApp(store.appStore.appConfig()?.enabledFeatures)) return;
+      const today = localStoreDate(Date.now());
+      for (const t of tracks) {
+        if (t.state !== 'done' || !t.uploaded) continue;
+        const date = recordingDeleteDate(undefined, t.endedAt ?? t.startedAt, false);
+        if (date === '' || today <= date) continue;
+        try {
+          if (!(await store.trackService.existsOnServer(t.key))) await enqueue(() => store.db.remove(t.key));
+        } catch (error) {
+          console.warn('TrackerStore.dropExpired: kept', t.key, error);
+        }
       }
     }
 

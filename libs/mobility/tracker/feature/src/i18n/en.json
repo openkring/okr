@@ -73,7 +73,8 @@
     "sections": "Sections",
     "not_found": "This track could not be found.",
     "save_error": "The change could not be saved. Please try again.",
-    "share_error": "The GPX file could not be shared."
+    "share_error": "The GPX file could not be shared.",
+    "delete_date": "This track will be deleted after {date}. If you want to keep it, download it as a GPX file before then."
   },
   "photos": {
     "title": "Photos",
@@ -137,7 +138,9 @@
     "offline": "This needs an internet connection. Please try again later.",
     "pending": "Will be linked to the logbook as soon as you are online.",
     "taken_track": "“{track}”: {name} is already recording this outing. Your track stays without the logbook.",
-    "unavailable_track": "“{track}”: this logbook outing can no longer be linked. Your track stays without the logbook."
+    "unavailable_track": "“{track}”: this logbook outing can no longer be linked. Your track stays without the logbook.",
+    "delete_date": "Your crew can see this track until {date}. After that it will be deleted. If you want to keep it, download it as a GPX file before then.",
+    "delete_open": "Your crew can see this track until 7 days after the outing ends. After that it will be deleted. If you want to keep it, download it as a GPX file before then."
   },
   "elevation": {
     "title": "Elevation profile",

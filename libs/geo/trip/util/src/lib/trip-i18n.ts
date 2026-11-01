@@ -126,6 +126,7 @@ export const TRIP_I18N_KEYS = {
   track_request_label:      PFX + 'track.request.label',
   track_carrier_label:      PFX + 'track.carrier.label',
   track_carrier_helper:     PFX + 'track.carrier.helper',
+  track_solo_hint:          PFX + 'track.solo.hint',
   // the crew route in the view modal (spec 1.123 §5.2); deadline_date carries a single-brace {date}
   track_route_title:        PFX + 'track.route.title',
   track_gpx_download:       PFX + 'track.gpx.download',

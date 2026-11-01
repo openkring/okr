@@ -329,6 +329,9 @@
         "title": "Wofür kannst du sie brauchen?",
         "text": "Viele Sport- und Karten-Apps können GPX-Dateien öffnen oder importieren, zum Beispiel Strava, Garmin Connect, Komoot, die swisstopo-App oder Google Earth. So siehst du die Ausfahrt in deiner gewohnten App oder bewahrst sie auf."
       }
+    },
+    "solo": {
+      "hint": "Nimm dein iPhone mit der App mit. Du findest die Strecke danach im Menü «Strecke aufzeichnen»."
     }
   }
 }

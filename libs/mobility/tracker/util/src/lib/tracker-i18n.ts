@@ -123,6 +123,9 @@ export const TRACKER_I18N_KEYS = {
   link_pending: PFX + 'link.pending',
   link_taken_track: PFX + 'link.taken_track', // single braces: {track}, {name}
   link_unavailable_track: PFX + 'link.unavailable_track', // single braces: {track}
+  link_delete_date: PFX + 'link.delete_date', // single braces: {date}
+  link_delete_open: PFX + 'link.delete_open',
+  detail_delete_date: PFX + 'detail.delete_date', // single braces: {date}
   common_save: PFX + 'common.save',
   common_cancel: PFX + 'common.cancel',
 } satisfies Record<string, string>;

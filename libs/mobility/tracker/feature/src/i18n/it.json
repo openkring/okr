@@ -73,7 +73,8 @@
     "sections": "Tratti",
     "not_found": "Questo percorso non è stato trovato.",
     "save_error": "Non è stato possibile salvare la modifica. Riprova, per favore.",
-    "share_error": "Non è stato possibile condividere il file GPX."
+    "share_error": "Non è stato possibile condividere il file GPX.",
+    "delete_date": "Questo percorso verrà eliminato dopo il {date}. Se vuoi conservarlo, scaricalo prima come file GPX."
   },
   "photos": {
     "title": "Foto",
@@ -137,7 +138,9 @@
     "offline": "Serve una connessione internet. Riprova più tardi.",
     "pending": "Verrà collegato al giornale di bordo appena sarai online.",
     "taken_track": "«{track}»: {name} sta già registrando questa uscita. Il tuo percorso resta senza giornale di bordo.",
-    "unavailable_track": "«{track}»: quest’uscita del giornale di bordo non può più essere collegata. Il tuo percorso resta senza giornale di bordo."
+    "unavailable_track": "«{track}»: quest’uscita del giornale di bordo non può più essere collegata. Il tuo percorso resta senza giornale di bordo.",
+    "delete_date": "Il tuo equipaggio vede questo percorso fino al {date}. Dopo verrà eliminato. Se vuoi conservarlo, scaricalo prima come file GPX.",
+    "delete_open": "Il tuo equipaggio vede questo percorso fino a 7 giorni dopo la fine dell’uscita. Dopo verrà eliminato. Se vuoi conservarlo, scaricalo prima come file GPX."
   },
   "elevation": {
     "title": "Profilo altimetrico",

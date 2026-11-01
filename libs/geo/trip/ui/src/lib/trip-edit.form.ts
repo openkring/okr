@@ -1,6 +1,6 @@
-import { Component, computed, effect, input, model, output } from '@angular/core';
+import { Component, computed, effect, input, model, output, untracked } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow } from '@ionic/angular';
+import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular';
 
 import { AvatarInfo, CategoryItemModel, CategoryListModel, LocationModel, ResourceModel, RoleName, TripModel, UserModel } from '@okr/shared-models';
 import { Checkbox, CheckboxI18n, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TimeInput, TimeInputI18n } from '@okr/shared-ui';
@@ -18,7 +18,7 @@ import { formatTripTime, isTrainingCrewBoat, MAX_TRIP_DISTANCE_KM, TripI18n, tri
   standalone: true,
   imports: [
     SvgIconPipe,
-    IonItem, IonLabel, IonGrid, IonRow, IonCol, IonIcon, IonCard, IonCardContent, IonButton,
+    IonItem, IonLabel, IonNote, IonGrid, IonRow, IonCol, IonIcon, IonCard, IonCardContent, IonButton,
     NotesInput, Avatars, NumberInput, DateInput, TimeInput, ErrorNote, Checkbox, StringSelect
   ],
   styles: [`
@@ -173,7 +173,10 @@ import { formatTripTime, isTrainingCrewBoat, MAX_TRIP_DISTANCE_KM, TripI18n, tri
           <ion-card-content class="ion-no-padding">
             <okr-checkbox [i18n]="trackRequestI18n()" [checked]="trackRequested()" (checkedChange)="onTrackRequestToggle($event)"
               [readOnly]="false" [toggle]="true" />
-            @if(trackRequested()) {
+            @if(trackRequested() && soloCarrier()) {
+              <ion-item lines="none"><ion-note>{{ i18n().track_solo_hint() }}</ion-note></ion-item>
+              <okr-error-note [errors]="trackRequestErrors()" />
+            } @else if(trackRequested()) {
               <okr-string-select [i18n]="trackCarrierI18n()" [stringList]="carrierKeys()" [labels]="carrierLabels()"
                 [selectedString]="carrierKey()" (selectedStringChange)="onCarrierChange($event)" [readOnly]="false" />
               <okr-error-note [errors]="trackRequestErrors()" />
@@ -215,6 +218,14 @@ export class TripEditForm {
 
   constructor() {
     effect(() => this.valid.emit(this.tripForm().valid()));
+    // a single scull: its rower is the carrier, set whenever the request is on and the rower changes
+    effect(() => {
+      const solo = this.soloCarrier();
+      if (!solo || !this.trackRequested()) return;
+      untracked(() => {
+        if (this.carrierKey() !== solo) this.formData.update((vm) => ({ ...vm, trackRequest: { personKey: solo } }));
+      });
+    });
   }
 
   // date/time fields — only rendered for an admin, but computed unconditionally (cheap)
@@ -244,6 +255,15 @@ export class TripEditForm {
   private readonly carriers = computed(() => this.participants().filter((p) => p.key !== ''));
   protected carrierKeys = computed(() => this.carriers().map((p) => p.key));
   protected carrierLabels = computed(() => this.carriers().map((p) => `${p.name1} ${p.name2}`.trim()));
+  /**
+   * A single scull (one seat) with its one rower: the rower carries the phone, so nobody is asked; '' otherwise.
+   */
+  protected soloCarrier = computed(() => {
+    const boatKey = this.formData().resource?.key;
+    const seats = boatKey ? this.boats().find(b => b.okey === boatKey)?.seats ?? 0 : 0;
+    const carriers = this.carrierKeys();
+    return seats === 1 && carriers.length === 1 ? carriers[0] : '';
+  });
   protected trackRequestI18n = computed(() => ({ name: 'trackRequest', label: this.i18n().track_request_label(), helper: '' } as CheckboxI18n));
   protected trackCarrierI18n = computed(() => ({ name: 'trackCarrier', label: this.i18n().track_carrier_label(), helper: this.i18n().track_carrier_helper() } as StringSelectI18n));
 

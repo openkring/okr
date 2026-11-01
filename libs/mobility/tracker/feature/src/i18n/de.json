@@ -73,7 +73,8 @@
     "sections": "Abschnitte",
     "not_found": "Diese Strecke wurde nicht gefunden.",
     "save_error": "Die Änderung konnte nicht gespeichert werden. Versuch es bitte noch einmal.",
-    "share_error": "Die GPX-Datei konnte nicht geteilt werden."
+    "share_error": "Die GPX-Datei konnte nicht geteilt werden.",
+    "delete_date": "Diese Strecke wird nach dem {date} gelöscht. Wenn du sie behalten möchtest, lade sie vorher als GPX-Datei herunter."
   },
   "photos": {
     "title": "Fotos",
@@ -137,7 +138,9 @@
     "offline": "Das geht nur mit Internetverbindung. Versuch es bitte später noch einmal.",
     "pending": "Wird mit dem Logbuch verbunden, sobald du online bist.",
     "taken_track": "«{track}»: Diese Ausfahrt wird bereits von {name} aufgezeichnet. Deine Strecke bleibt ohne Logbuch.",
-    "unavailable_track": "«{track}»: Diese Logbuch-Ausfahrt kann nicht mehr verbunden werden. Deine Strecke bleibt ohne Logbuch."
+    "unavailable_track": "«{track}»: Diese Logbuch-Ausfahrt kann nicht mehr verbunden werden. Deine Strecke bleibt ohne Logbuch.",
+    "delete_date": "Deine Crew sieht diese Strecke bis {date}. Danach wird sie gelöscht. Wenn du sie behalten möchtest, lade sie vorher als GPX-Datei herunter.",
+    "delete_open": "Deine Crew sieht diese Strecke bis 7 Tage nach dem Ende der Ausfahrt. Danach wird sie gelöscht. Wenn du sie behalten möchtest, lade sie vorher als GPX-Datei herunter."
   },
   "elevation": {
     "title": "Höhenprofil",
