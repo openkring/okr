@@ -406,12 +406,27 @@ export async function releaseAll(opts) {
   const failedApps = shipped.filter((r) => !r.ok).map((r) => ({ app: r.item, reason: r.error?.message ?? String(r.error) }));
 
   // 2. app-version: deployed.<app> only for verified apps, latestVersion only if the prod app
-  //    verified; minVersion / forceUpdate only when given at the start. Never throws.
+  //    verified; minVersion / forceUpdate only when given at the start AND every app shipped
+  //    (spec §6: never raise minVersion before every app is on the new version — it would
+  //    force-prompt the clients of a failed app toward a build that is not live for them).
+  //    Never throws.
+  const withheld = {};
+  if (failedApps.length) {
+    if (o.minVersion) withheld.minVersion = o.minVersion;
+    if (o.forceUpdate === true) withheld.forceUpdate = true;
+  }
   const patch = appVersionPatch({
     version: next, verifiedApps, prodApp: PROD_APP,
-    minVersion: o.minVersion ?? undefined, forceUpdate: o.forceUpdate === true,
+    minVersion: failedApps.length ? undefined : (o.minVersion ?? undefined),
+    forceUpdate: failedApps.length ? false : o.forceUpdate === true,
   });
   console.log('\napp-version');
+  if (Object.keys(withheld).length) {
+    console.log(`  ⚠ ${Object.keys(withheld).join(' and ')} WITHHELD: ${failedApps.map((f) => f.app).join(', ')} did not ship, and minVersion/forceUpdate may only change once every app is on v${next}.`);
+    console.log(`    Follow-up: after \`pnpm release <app> none\` has succeeded for ${failedApps.map((f) => f.app).join(', ')}, set in Firestore app-version/app-version`
+      + ' (Firebase console, the Firebase MCP firestore_update_document tool, or firebase-admin):');
+    for (const [k, v] of Object.entries(withheld)) console.log(`        ${k}: ${JSON.stringify(v)}`);
+  }
   let appVersionWritten = true;
   try {
     await step('app-version', '', async () => {
