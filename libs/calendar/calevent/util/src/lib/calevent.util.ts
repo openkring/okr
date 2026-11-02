@@ -248,8 +248,10 @@ export function withoutAttendance<T extends CalEventModel>(calevent: T): T {
 }
 
 /** Attendance values for a freshly created or copied event: nobody recorded, not confirmed. */
-export function resetAttendance(): Pick<CalEventModel, 'attendance' | 'attendanceConfirmedAt'> {
-  return { attendance: {}, attendanceConfirmedAt: '' };
+export function resetAttendance(): Pick<CalEventModel, 'attendance' | 'attendanceConfirmedBy' | 'attendanceConfirmedAt'> {
+  // undefined, not absent: spread over a confirmed source it must overwrite the trainer's avatar; the
+  // write paths strip undefined (updateModel removeUndefinedFields, Firestore ignoreUndefinedProperties)
+  return { attendance: {}, attendanceConfirmedBy: undefined, attendanceConfirmedAt: '' };
 }
 
 /** The occurrences whose attendance has been confirmed by a trainer. */

@@ -426,7 +426,8 @@ describe('series reconcile', () => {
 
 describe('attendance write helpers', () => {
   const base: CalEventModel = { ...new CalEventModel('t1'), okey: 's100', name: 'Training', startDate: '20261101' };
-  const entry = { state: 'present' } as unknown as AttendanceEntry;
+  const avatar: AvatarInfo = { key: 'p1', name1: 'A', name2: 'B', modelType: 'person', type: '', subType: '', label: '' };
+  const entry: AttendanceEntry = { person: avatar, presence: 'present', function: 'participant', by: 'p9', at: '20261101120000' };
 
   it('getSeriesUpdateFields propagates courseKey but no attendance', () => {
     const e = { ...base, courseKey: 'c1', attendance: { p1: entry }, attendanceConfirmedAt: '20261101120000' };
@@ -447,6 +448,13 @@ describe('attendance write helpers', () => {
   });
   it('resetAttendance is an empty, unconfirmed record', () => {
     expect(resetAttendance()).toEqual({ attendance: {}, attendanceConfirmedAt: '' });
+  });
+  it('a spread of a confirmed event with resetAttendance carries no confirmation', () => {
+    const confirmed = { ...base, attendance: { p1: entry }, attendanceConfirmedBy: avatar, attendanceConfirmedAt: '20261101120000' };
+    const copy = { ...confirmed, ...resetAttendance() };
+    expect(copy.attendanceConfirmedBy).toBeUndefined();
+    expect(copy.attendanceConfirmedAt).toBe('');
+    expect(copy.attendance).toEqual({});
   });
   it('confirmedOccurrences keeps only confirmed events', () => {
     const a = { ...base, okey: 'a' };

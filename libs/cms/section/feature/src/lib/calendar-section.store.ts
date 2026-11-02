@@ -1,6 +1,6 @@
 import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { AlertController, ModalController } from '@ionic/angular';
+import { AlertController, ModalController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { map, of } from 'rxjs';
 
@@ -8,10 +8,10 @@ import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CategoryListModel, GroupCollection, GroupModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
 import { getAttendanceStates, getAttendee, getAvatarInfoForCurrentUser, getInvitationStates, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate } from '@okr/shared-util-core';
-import { notify, resourceParams } from '@okr/shared-util-angular';
+import { notify, resourceParams, showToast } from '@okr/shared-util-angular';
 
 import { CalEventService } from '@okr/calendar-calevent-data-access';
-import { isAttendanceClosed, seenKeyFor, toSeenCounts, unseenActivityFor, withoutAttendance } from '@okr/calendar-calevent-util';
+import { isAttendanceClosed, seenKeyFor, toSeenCounts, unseenActivityFor } from '@okr/calendar-calevent-util';
 import { SeenService } from '@okr/user-data-access';
 import { getVisibleGroupKeys } from '@okr/subject-group-util';
 
@@ -42,6 +42,7 @@ export const CalendarStore = signalStore(
     calEventService: inject(CalEventService),
     invitationService: inject(InvitationService),
     alertController: inject(AlertController),
+    toastController: inject(ToastController),
     seenService: inject(SeenService),
     i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS),
   })),
@@ -352,7 +353,9 @@ export const CalendarStore = signalStore(
           };
           calEvent.attendees.push(newAttendee);
         }
-        await store.appStore.firestoreService.updateModel<CalEventModel>(CalEventCollection, withoutAttendance(calEvent), false, store.i18n.calevent_update_conf(), store.i18n.calevent_update_error(), currentUser);
+        // sign-up writes only `attendees`; the whole model would resend attendance fields (trainer-only)
+        const key = await store.appStore.firestoreService.updateFields(CalEventCollection, calEvent.okey, { attendees: calEvent.attendees }, store.i18n.calevent_update_error());
+        if (key) await showToast(store.toastController, store.i18n.calevent_update_conf());
       },
 
       /**
