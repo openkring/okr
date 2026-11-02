@@ -4,7 +4,7 @@ import { AttendanceEntry, AvatarInfo, CalEventModel, CourseFinanceModel, CourseM
 
 import { computeCompensation } from './course-compensation.util';
 import { buildGenericCsvRows, buildJsAwkRows, DEFAULT_JS_TYPE_MAPPING, JS_AWK_HEADER } from './course-export.util';
-import { allowedJsDurations } from './js-durations';
+import { allowedJsDurations, isCompleteJsSettings } from './js-durations';
 import { buildCourseTable } from './course-table.util';
 
 const settings: JsReportSettings = { courseNumber: '123', userGroup: '1', mainSportCategory: 'abs1' };
@@ -200,14 +200,56 @@ describe('buildJsAwkRows', () => {
     expect(rows).toEqual([JS_AWK_HEADER]);
   });
 
-  it('incomplete settings cannot be checked → badDuration instead of unchecked rows', () => {
+  it('incomplete settings → one incompleteSettings finding without caleventKey, no rows', () => {
     const { rows, findings } = buildJsAwkRows(
       course({ reportSettings: { courseNumber: '123' } }),
+      [
+        training('e1', '20261105', '18:30', 90, 'B@k1', [present('pA', 'participant')]),
+        training('e2', '20261112', '18:30', 90, 'B@k1', [present('pA', 'participant')]),
+      ],
+      persons,
+    );
+    expect(findings).toEqual([{ code: 'incompleteSettings' }]);
+    expect(rows).toEqual([JS_AWK_HEADER]);
+  });
+
+  it.each([
+    ['1', 'abs2'],
+    ['2', 'abs1'],
+  ] as const)('undefined pair NG %s / %s is incomplete, never a guessed row', (userGroup, mainSportCategory) => {
+    const { rows, findings } = buildJsAwkRows(
+      course({ reportSettings: { ...settings, userGroup, mainSportCategory } }),
       [training('e1', '20261105', '18:30', 90, 'B@k1', [present('pA', 'participant')])],
       persons,
     );
-    expect(findings).toEqual([{ caleventKey: 'e1', code: 'badDuration' }]);
+    expect(findings).toEqual([{ code: 'incompleteSettings' }]);
     expect(rows).toEqual([JS_AWK_HEADER]);
+  });
+
+  it('other findings still appear next to incompleteSettings', () => {
+    const { findings } = buildJsAwkRows(
+      course({ reportSettings: {} }),
+      [training('e1', '20261105', '18:30', 90, '', [present('pA', 'participant')])],
+      persons,
+    );
+    expect(findings).toEqual([{ code: 'incompleteSettings' }, { caleventKey: 'e1', code: 'missingLocation' }]);
+  });
+
+  it('header row is a copy, the constant cannot be mutated through the result', () => {
+    const { rows } = buildJsAwkRows(course(), [], persons);
+    expect(rows[0]).not.toBe(JS_AWK_HEADER);
+    rows[0][0] = 'X';
+    expect(JS_AWK_HEADER[0]).toBe('PERSONENNUMMER');
+  });
+
+  it('neutralises formula injection in ORT and PERSONENNUMMER, leaves normal values and dates alone', () => {
+    const odd = [{ key: 'pA', externalIds: { js: '=1+1' } }, { key: 'pT', externalIds: { js: '222222222' } }];
+    const a = buildJsAwkRows(course(), [training('e1', '20261105', '18:30', 90, '@foo@k1', [present('pT', 'leader')])], odd);
+    expect(a.rows[1]).toEqual(['222222222', 'Leiter/in', '05.11.2026', 'Training', '18:30', '90', "'@foo"]);
+    const b = buildJsAwkRows(course(), [training('e1', '20261105', '18:30', 90, 'Halle@k1', [present('pA', 'participant')])], odd);
+    expect(b.rows[1][0]).toBe("'=1+1");
+    expect(b.rows[1][2]).toBe('05.11.2026');
+    expect(b.rows[1][6]).toBe('Halle');
   });
 
   it('coalesces missing attendance, typeMapping, reportSettings and externalIds on raw documents', () => {
@@ -226,6 +268,18 @@ describe('allowedJsDurations', () => {
     const s: JsReportSettings = { ...settings, userGroup: '2', mainSportCategory: 'abs2' };
     expect(allowedJsDurations(s, 'Training')).toEqual([60, 90, 120, 150, 180, 210, 240, 270, 300]);
     expect(allowedJsDurations(s, 'Wettkampf')).toEqual([60, 90, 120, 150, 180, 210, 240, 270, 300]);
+  });
+  it('throws for a pair the table does not define', () => {
+    expect(() => allowedJsDurations({ ...settings, userGroup: '1', mainSportCategory: 'abs2' }, 'Training')).toThrow();
+    expect(() => allowedJsDurations({ ...settings, userGroup: '2', mainSportCategory: 'abs1' }, 'Training')).toThrow();
+  });
+  it('isCompleteJsSettings accepts exactly the defined pairs', () => {
+    const ok = [['1', 'abs1'], ['2', 'abs2'], ['4', 'abs1'], ['4', 'abs2'], ['5', 'abs1'], ['5', 'abs2']] as const;
+    for (const [g, c] of ok) expect(isCompleteJsSettings({ userGroup: g, mainSportCategory: c })).toBe(true);
+    expect(isCompleteJsSettings({ userGroup: '1', mainSportCategory: 'abs2' })).toBe(false);
+    expect(isCompleteJsSettings({ userGroup: '2', mainSportCategory: 'abs1' })).toBe(false);
+    expect(isCompleteJsSettings({ userGroup: '1' })).toBe(false);
+    expect(isCompleteJsSettings({})).toBe(false);
   });
   it('Trainingstag, Wettkampf and Lagertag', () => {
     expect(allowedJsDurations(settings, 'Trainingstag')).toEqual([240, 300]);
@@ -275,10 +329,25 @@ describe('buildGenericCsvRows', () => {
   it('compensation columns only when passed', () => {
     const finance = Object.assign(new CourseFinanceModel(), { defaultRate: new MoneyModel(5000), eligible: [{ person: avatar('pT') }] });
     const lines = computeCompensation([e1, e2, e3], finance);
-    const rows = buildGenericCsvRows(table, labels, lines);
-    expect(rows[0].slice(7)).toEqual(['ledCount', 'rate', 'amount']);
+    const rows = buildGenericCsvRows(table, labels, { lines, labels: { ledCount: 'Geleitet', rate: 'Ansatz', amount: 'Betrag' } });
+    expect(rows[0].slice(7)).toEqual(['Geleitet', 'Ansatz', 'Betrag']);
     expect(rows[1].slice(7)).toEqual(['3', '50.00', '150.00']);
     expect(rows[2].slice(7)).toEqual(['', '', '']);
     expect(buildGenericCsvRows(table, labels)[0]).toHaveLength(7);
+  });
+
+  it('neutralises formula injection in names, leaves normal names and dates alone', () => {
+    const evil = training('e1', '20261105', '18:30', 90, 'B@k1', [
+      ['pE', { ...entry('pE', 'present', 'participant'), person: avatar('pE', '+cmd', '=HYPERLINK("http://x","y")') }],
+      present('pA', 'participant', 'Meier'),
+    ]);
+    const t = buildCourseTable(c, [evil], [], [], '20261101');
+    const rows = buildGenericCsvRows(t, labels);
+    const evilRow = rows.find(r => r[1].includes('cmd'));
+    expect(evilRow?.[0]).toBe(`'=HYPERLINK("http://x","y")`);
+    expect(evilRow?.[1]).toBe("'+cmd");
+    const normal = rows.find(r => r[0] === 'Meier');
+    expect(normal?.slice(0, 2)).toEqual(['Meier', 'VorpA']);
+    expect(rows[0][3]).toBe('05.11.2026 18:30');
   });
 });

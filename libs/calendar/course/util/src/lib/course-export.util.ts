@@ -3,7 +3,7 @@ import { convertDateFormatToString, DateFormat, getExternalId } from '@okr/share
 
 import { CompensationLine } from './course-compensation.util';
 import { CourseTable, courseEvents } from './course-table.util';
-import { allowedJsDurations, JsActivityType } from './js-durations';
+import { allowedJsDurations, isCompleteJsSettings, JsActivityType } from './js-durations';
 
 /** Header line of the J+S attendance import (AWK); the columns must neither be removed nor reordered (spec 1.132 §9.2). */
 export const JS_AWK_HEADER = ['PERSONENNUMMER', 'FUNKTION', 'DATUM', 'AKTIVITAETSTYP', 'ZEIT', 'DAUER', 'ORT'];
@@ -17,7 +17,7 @@ const JS_ACTIVITY_TYPES: string[] = ['Training', 'Wettkampf', 'Trainingstag', 'L
 export type ExportFinding = {
   caleventKey?: string;
   personKey?: string;
-  code: 'missingNumber' | 'unmappedType' | 'unconfirmed' | 'badDuration' | 'missingLocation' | 'fullDayTraining' | 'notAllowed';
+  code: 'incompleteSettings' | 'missingNumber' | 'unmappedType' | 'unconfirmed' | 'badDuration' | 'missingLocation' | 'fullDayTraining' | 'notAllowed';
 };
 
 const JS_FUNCTION: Record<AttendanceEntry['function'], string> = { leader: 'Leiter/in', participant: 'Teilnehmer/in' };
@@ -26,13 +26,20 @@ function isJsActivityType(value: string | undefined): value is JsActivityType {
   return value !== undefined && JS_ACTIVITY_TYPES.indexOf(value) >= 0;
 }
 
-function isCompleteSettings(s: Partial<JsReportSettings>): s is JsReportSettings {
-  return ['1', '2', '4', '5'].indexOf(s.userGroup ?? '') >= 0 && (s.mainSportCategory === 'abs1' || s.mainSportCategory === 'abs2');
+/**
+ * Neutralises a free-text cell against CSV/formula injection: Excel runs a cell that starts with `=`, `+`, `-`, `@`,
+ * tab or carriage return as a formula, so such a cell gets a leading `'`. Only for free text (names, places,
+ * external ids), never for dates, times, counts or fixed protocol values.
+ */
+function csvText(value: string): string {
+  return /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
 }
 
-/** The location name of a `name@key` location key; '' when there is none. */
+/** The location name of a `name@key` location key (the key is the part after the last `@`); '' when there is none. */
 function locationName(locationKey: string | undefined): string {
-  return (locationKey ?? '').split('@')[0];
+  const value = locationKey ?? '';
+  const at = value.lastIndexOf('@');
+  return at < 0 ? value : value.slice(0, at);
 }
 
 function byLeaderThenName(a: AttendanceEntry, b: AttendanceEntry): number {
@@ -45,14 +52,14 @@ function byLeaderThenName(a: AttendanceEntry, b: AttendanceEntry): number {
 
 /**
  * Checks one event against the J+S rules and returns its findings plus the `DAUER` to write. An event with findings
- * is left out as a whole. Settings that are not complete cannot be checked and count as `badDuration`
- * (fail safe: no unchecked rows leave the app).
+ * is left out as a whole. With incomplete settings (reported once by the caller) the duration cannot be checked, so
+ * `duration` is `undefined` and the event is left out as well: no unchecked rows leave the app.
  */
 function checkJsEvent(
   event: CalEventModel,
   activityType: JsActivityType | undefined,
   settings: Partial<JsReportSettings>,
-): { findings: ExportFinding['code'][]; duration: string } {
+): { findings: ExportFinding['code'][]; duration: string | undefined } {
   const findings: ExportFinding['code'][] = [];
   if (!activityType) return { findings: ['unmappedType'], duration: '' };
 
@@ -63,8 +70,8 @@ function checkJsEvent(
   }
 
   if (!(activityType === 'Training' && findings.indexOf('fullDayTraining') >= 0)) {
-    if (!isCompleteSettings(settings)) {
-      findings.push('badDuration');
+    if (!isCompleteJsSettings(settings)) {
+      return { findings, duration: undefined };
     } else {
       const allowed = allowedJsDurations(settings, activityType);
       if (allowed === 'none') findings.push('notAllowed');
@@ -88,10 +95,11 @@ export function buildJsAwkRows(
   events: CalEventModel[],
   persons: { key: string; externalIds?: Record<string, string> }[],
 ): { rows: string[][]; findings: ExportFinding[] } {
-  const rows: string[][] = [JS_AWK_HEADER];
+  const rows: string[][] = [[...JS_AWK_HEADER]];
   const findings: ExportFinding[] = [];
   const typeMapping = course.typeMapping ?? {};
   const settings = course.reportSettings ?? {};
+  if (!isCompleteJsSettings(settings)) findings.push({ code: 'incompleteSettings' });
   const personByKey = new Map(persons.map(p => [p.key, p] as const));
 
   for (const event of courseEvents(events)) {
@@ -111,6 +119,7 @@ export function buildJsAwkRows(
       for (const code of check.findings) findings.push({ caleventKey: event.okey, code });
       continue;
     }
+    if (check.duration === undefined) continue; // incomplete settings, already reported
 
     const isTraining = activityType === 'Training';
     const date = convertDateFormatToString(event.startDate, DateFormat.StoreDate, DateFormat.ViewDate, false);
@@ -121,20 +130,20 @@ export function buildJsAwkRows(
         continue;
       }
       rows.push([
-        number,
+        csvText(number),
         JS_FUNCTION[entry.function],
         date,
         activityType,
         isTraining ? event.startTime : '',
         check.duration,
-        isTraining ? locationName(event.locationKey) : '',
+        isTraining ? csvText(locationName(event.locationKey)) : '',
       ]);
     }
   }
   return { rows, findings };
 }
 
-/** Column titles of the generic CSV in the user's language; the compensation titles are only used when compensation is passed. */
+/** Column titles of the generic CSV in the user's language. */
 export type GenericCsvLabels = {
   name: string;
   firstName: string;
@@ -145,10 +154,10 @@ export type GenericCsvLabels = {
   excused: string;
   leader: string;
   participant: string;
-  ledCount?: string;
-  rate?: string;
-  amount?: string;
 };
+
+/** Compensation columns (§9.1): the lines and the translated column titles; required together. */
+export type GenericCsvCompensation = { lines: CompensationLine[]; labels: { ledCount: string; rate: string; amount: string } };
 
 function eventTitle(event: CalEventModel): string {
   const date = convertDateFormatToString(event.startDate, DateFormat.StoreDate, DateFormat.ViewDate, false);
@@ -170,13 +179,13 @@ function predominantFunction(entries: AttendanceEntry[], isTrainer: boolean): At
 /**
  * The generic CSV (§9.1) as rows, header first: one row per person of the table, one column per event, the number of
  * `present` at the end. Only stored attendance is written, never the prefill. With `compensation` three columns
- * (led trainings, rate, amount in CHF-style decimals) are appended; persons without a line get empty cells.
+ * (led trainings, rate, amount as decimals) are appended; persons without a line get empty cells.
  */
-export function buildGenericCsvRows(table: CourseTable, labels: GenericCsvLabels, compensation?: CompensationLine[]): string[][] {
+export function buildGenericCsvRows(table: CourseTable, labels: GenericCsvLabels, compensation?: GenericCsvCompensation): string[][] {
   const presenceLabel: Record<AttendanceEntry['presence'], string> = { present: labels.present, absent: labels.absent, excused: labels.excused };
   const header = [labels.name, labels.firstName, labels.function, ...table.columns.map(eventTitle), labels.total];
-  if (compensation) header.push(labels.ledCount ?? 'ledCount', labels.rate ?? 'rate', labels.amount ?? 'amount');
-  const lineByKey = new Map((compensation ?? []).map(l => [l.person.key, l] as const));
+  if (compensation) header.push(compensation.labels.ledCount, compensation.labels.rate, compensation.labels.amount);
+  const lineByKey = new Map((compensation?.lines ?? []).map(l => [l.person.key, l] as const));
 
   const rows = table.rows.map(row => {
     const entries = table.columns
@@ -187,7 +196,7 @@ export function buildGenericCsvRows(table: CourseTable, labels: GenericCsvLabels
       const entry = table.cells[row.key]?.[event.okey]?.entry;
       return entry ? presenceLabel[entry.presence] : '';
     });
-    const out = [row.name2, row.name1, fn === 'leader' ? labels.leader : labels.participant, ...cells, String(entries.filter(e => e.presence === 'present').length)];
+    const out = [csvText(row.name2), csvText(row.name1), fn === 'leader' ? labels.leader : labels.participant, ...cells, String(entries.filter(e => e.presence === 'present').length)];
     if (compensation) {
       const line = lineByKey.get(row.key);
       out.push(...(line ? [String(line.ledCount), formatMinor(line.rate.amount), formatMinor(line.amount)] : ['', '', '']));

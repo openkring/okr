@@ -24,8 +24,8 @@ const TRAINING_DAY = [240, 300];
  * Source: BASPO «Import der Anwesenheitskontrolle (AWK)», 11.09.2023, as read in spec 1.132 §9.3 (the author's reading
  * of the PDF; to be checked against the original). Lagertag: no entry allowed in any group.
  *
- * The spec lists only the pairs NG 1 / Abs. 1, NG 2 / Abs. 2, NG 4 and NG 5 with both categories; the pairs
- * NG 1 / Abs. 2 and NG 2 / Abs. 1 are not in the table and resolve to the row of the same category (see `allowedJsDurations`).
+ * The spec lists only the pairs NG 1 / Abs. 1, NG 2 / Abs. 2, NG 4 and NG 5 with both categories. NG 1 / Abs. 2 and
+ * NG 2 / Abs. 1 are not defined and count as incomplete settings (`isCompleteJsSettings`), never as a guessed row.
  */
 export const JS_DURATIONS: Record<string, Record<JsActivityType, JsDurationRule>> = {
   '1-abs1': { Training: [60, 75, 90], Trainingstag: TRAINING_DAY, Wettkampf: 'optional', Lagertag: 'forbidden' },
@@ -36,11 +36,17 @@ export const JS_DURATIONS: Record<string, Record<JsActivityType, JsDurationRule>
   '5-abs2': { Training: [45, 60, ...steps(90, 300, 30)], Trainingstag: TRAINING_DAY, Wettkampf: 'none', Lagertag: 'forbidden' },
 };
 
-/** Pairs missing from the table resolve to the row of the same category: Abs. 1 → NG 1, Abs. 2 → NG 2. */
-const FALLBACK_ROW: Record<JsReportSettings['mainSportCategory'], string> = { abs1: '1-abs1', abs2: '2-abs2' };
+/** Whether the settings name a defined pair of user group and main sport category (§9.3); only then durations can be checked. */
+export function isCompleteJsSettings(s: Partial<JsReportSettings>): s is JsReportSettings {
+  return JS_DURATIONS[`${s.userGroup}-${s.mainSportCategory}`] !== undefined;
+}
 
-/** The `DAUER` rule for an activity type under the report settings of the course (spec 1.132 §9.3). */
+/**
+ * The `DAUER` rule for an activity type under the report settings of the course (spec 1.132 §9.3).
+ * Throws for a pair that is not defined: guard with `isCompleteJsSettings`.
+ */
 export function allowedJsDurations(settings: JsReportSettings, type: JsActivityType): JsDurationRule {
-  const row = JS_DURATIONS[`${settings.userGroup}-${settings.mainSportCategory}`] ?? JS_DURATIONS[FALLBACK_ROW[settings.mainSportCategory]];
+  const row = JS_DURATIONS[`${settings.userGroup}-${settings.mainSportCategory}`];
+  if (!row) throw new Error(`js-durations: no rule for user group ${settings.userGroup} / ${settings.mainSportCategory}`);
   return row[type];
 }
