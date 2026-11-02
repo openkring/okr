@@ -18,6 +18,7 @@ export * from './lib/swiss-qr-bill.util';
 export * from './lib/export.util';
 export * from './lib/fcm-token.util';
 export * from './lib/file.util';
+export * from './lib/form-visibility.util';
 export * from './lib/icon.util';
 export * from './lib/img.util';
 export * from './lib/zoom.util';
