@@ -194,7 +194,7 @@ export class VisibilityRuleInput {
         ops,
         opLabels: ops.map(op => labels[op] ?? op),
         kind: conditionValueKind(controller, cond.op),
-        choices: conditionChoices(controller, this.categories()),
+        choices: conditionChoices(controller, this.categories(), this.i18n().field_other_option()),
       };
     });
   });

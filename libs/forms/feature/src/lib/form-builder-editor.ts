@@ -346,7 +346,7 @@ export class FormBuilderEditor {
     const texts = new Map<string, string>();
     for (const field of fields) {
       if (!field.visibleIf) continue;
-      const text = describeRule(field.visibleIf, fields, opLabels, connectors);
+      const text = describeRule(field.visibleIf, fields, opLabels, connectors, this.i18n.field_other_option());
       if (text) texts.set(field.id, text);
     }
     return texts;

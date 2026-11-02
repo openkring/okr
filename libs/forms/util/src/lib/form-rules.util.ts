@@ -1,5 +1,5 @@
 import {
-  CategoryListModel, ConditionOp, DerivedValue, Field, FieldCondition, FieldOption, FormDefinitionModel, FormMapping, VisibilityRule,
+  CategoryListModel, ConditionOp, DerivedValue, Field, FieldCondition, FieldOption, FormDefinitionModel, FormMapping, OTHER_OPTION_VALUE, VisibilityRule,
 } from '@okr/shared-models';
 import { computeDerivedValues, getVisibleFieldIds, isSsnField } from '@okr/shared-util-core';
 
@@ -21,11 +21,20 @@ const DATE_OPS: ConditionOp[] = ['lt', 'gt', 'between', 'ageGte', 'ageLt'];
 const TEXT_OPS: ConditionOp[] = ['equals', 'notEquals', 'isFilled', 'isEmpty'];
 const FILLED_OPS: ConditionOp[] = ['isFilled', 'isEmpty'];
 
-/** The values the stored answer of an option-based controller can take; `undefined` for fields without a closed option list. */
-function optionsOf(field: Field): { label: string; value: string }[] | undefined {
-  if (field.type === 'dropdown' || field.type === 'radio') return field.options ?? [];
-  if (field.type === 'checkbox' && Array.isArray(field.options) && field.options.length > 0) return field.options;
-  return undefined;
+/** The label of the reserved «Andere» choice when the caller passes none (the German text of `field_other_option`). */
+const DEFAULT_OTHER_LABEL = 'Andere …';
+
+/**
+ * The values the stored answer of an option-based controller can take; `undefined` for fields without a closed option list.
+ * A field with `allowOther` also takes the reserved value `other` (spec §9), so a rule can test for it like any option.
+ */
+function optionsOf(field: Field, otherLabel: string = DEFAULT_OTHER_LABEL): { label: string; value: string }[] | undefined {
+  let options: { label: string; value: string }[] | undefined;
+  if (field.type === 'dropdown' || field.type === 'radio') options = field.options ?? [];
+  else if (field.type === 'checkbox' && Array.isArray(field.options) && field.options.length > 0) options = field.options;
+  if (!options) return undefined;
+  const allowsOther = (field.type === 'dropdown' || field.type === 'radio' || field.type === 'checkbox') && field.allowOther === true;
+  return allowsOther && options.length > 0 ? [...options, { label: otherLabel, value: OTHER_OPTION_VALUE }] : options;
 }
 
 /** The operators the editor offers for a controlling field (spec §5); `[]` for display elements, which cannot control. */
@@ -67,10 +76,10 @@ export function controllingFieldCandidates(fields: Field[], target: Field): Fiel
     .sort((a, b) => a.order - b.order);
 }
 
-function describeValue(cond: FieldCondition, controller: Field | undefined): string {
+function describeValue(cond: FieldCondition, controller: Field | undefined, otherLabel?: string): string {
   const { value } = cond;
   if (value === undefined || value === null) return '';
-  const options = controller ? optionsOf(controller) : undefined;
+  const options = controller ? optionsOf(controller, otherLabel) : undefined;
   const show = (v: unknown): string => {
     const raw = String(v);
     return options?.find(o => o.value === raw)?.label ?? raw;
@@ -83,17 +92,19 @@ function describeValue(cond: FieldCondition, controller: Field | undefined): str
 
 /**
  * The builder's one-line reading of a rule, e.g. «wenn Geburtsdatum Alter unter 20 und Ich bin schon gerudert ist angekreuzt».
- * `opLabels` are the translated operator names; `connectors` the words «wenn / und / oder» (German by default).
+ * `opLabels` are the translated operator names; `connectors` the words «wenn / und / oder» (German by default);
+ * `otherLabel` the translated «Andere» choice.
  */
 export function describeRule(
   rule: VisibilityRule,
   fields: Field[],
   opLabels: Record<ConditionOp, string>,
   connectors: RuleConnectors = DEFAULT_CONNECTORS,
+  otherLabel?: string,
 ): string {
   const parts = (rule.conditions ?? []).map(cond => {
     const controller = fields.find(f => f.id === cond.fieldId);
-    return [controller?.label || '?', opLabels[cond.op] ?? cond.op, describeValue(cond, controller)].filter(s => s !== '').join(' ');
+    return [controller?.label || '?', opLabels[cond.op] ?? cond.op, describeValue(cond, controller, otherLabel)].filter(s => s !== '').join(' ');
   });
   if (parts.length === 0) return '';
   return `${connectors.if} ${parts.join(` ${rule.match === 'any' ? connectors.or : connectors.and} `)}`;
@@ -268,14 +279,18 @@ export function conditionValueKind(controller: Field | undefined, op: ConditionO
   return 'text';
 }
 
-/** The answers a choice controller can give, for the value input: its options, or the items of its category list. */
-export function conditionChoices(controller: Field | undefined, categories: CategoryListModel[] = []): FieldOption[] {
+/** The answers a choice controller can give, for the value input: its options (plus «Andere» when allowed), or the items of its category list. */
+export function conditionChoices(
+  controller: Field | undefined,
+  categories: CategoryListModel[] = [],
+  otherLabel?: string,
+): FieldOption[] {
   if (!controller) return [];
   if (controller.type === 'category') {
     const list = categories.find(c => c.name === controller.categoryName);
     return (list?.items ?? []).map(item => ({ label: item.name, value: item.name }));
   }
-  return optionsOf(controller) ?? [];
+  return optionsOf(controller, otherLabel) ?? [];
 }
 
 /** The errors under `prefix` (e.g. `visibleIf.`), re-keyed relative to it — what a sub-form such as the rule editor reads. */

@@ -127,6 +127,19 @@ describe('findRuleIssues', () => {
     expect(findRuleIssues(fields)).toEqual([]);
   });
 
+  it('knows «Andere»: no staleValue for `other` with allowOther, a staleValue once allowOther is off', () => {
+    const options = [{ label: 'Etwas', value: 'etwas' }, { label: 'Viel', value: 'viel' }];
+    const withOther = [
+      f('a', 'dropdown', 0, { options, allowOther: true }),
+      f('b', 'text', 1, rule('a', 'in', ['etwas', 'viel', 'other'])),
+    ];
+    expect(findRuleIssues(withOther)).toEqual([]);
+    const without = [f('a', 'dropdown', 0, { options }), f('b', 'text', 1, rule('a', 'in', ['etwas', 'viel', 'other']))];
+    expect(findRuleIssues(without)).toEqual([{ fieldId: 'b', reason: 'staleValue' }]);
+    const switchedOff = [f('a', 'dropdown', 0, { options, allowOther: false }), f('b', 'text', 1, rule('a', 'equals', 'other'))];
+    expect(findRuleIssues(switchedOff)).toEqual([{ fieldId: 'b', reason: 'staleValue' }]);
+  });
+
   it('reports a missing controller, and a display-only controller', () => {
     const fields = [f('lbl', 'label', 0), f('a', 'text', 1, rule('gone')), f('b', 'text', 2, rule('lbl'))];
     expect(findRuleIssues(fields)).toEqual([
@@ -286,6 +299,15 @@ describe('conditionChoices', () => {
     expect(conditionChoices(f('a', 'text', 0))).toEqual([]);
     expect(conditionChoices(undefined)).toEqual([]);
   });
+  it('adds the reserved «Andere» choice when the field allows it (spec §9)', () => {
+    const options = [{ label: 'Etwas', value: 'etwas' }];
+    expect(conditionChoices(f('a', 'dropdown', 0, { options, allowOther: true }), [], 'Andere')).toEqual([
+      ...options, { label: 'Andere', value: 'other' },
+    ]);
+    expect(conditionChoices(f('a', 'checkbox', 0, { options, allowOther: true }))).toHaveLength(2);
+    expect(conditionChoices(f('a', 'radio', 0, { options }))).toEqual(options);
+    expect(conditionChoices(f('a', 'dropdown', 0, { options: [], allowOther: true }))).toEqual([]);
+  });
   it('returns the items of the category list of a category field', () => {
     const list = { name: 'mcat', items: [{ name: 'active' }, { name: 'junior' }] } as unknown as CategoryListModel;
     expect(conditionChoices(f('a', 'category', 0, { categoryName: 'mcat' }), [list]).map(o => o.value)).toEqual(['active', 'junior']);
@@ -414,6 +436,15 @@ describe('derived values referencing a deleted or retyped field', () => {
       { index: 1, key: 'byRadio', reason: 'staleValue' },
       { index: 2, key: 'byMissing', reason: 'missing' },
     ]);
+  });
+
+  it('findDerivedRuleIssues knows «Andere» of a choice controller', () => {
+    const options = [{ label: 'Ja', value: 'yes' }];
+    const derived: DerivedValue = {
+      key: 'x', cases: [{ when: { match: 'all', conditions: [{ fieldId: 'c', op: 'equals', value: 'other' }] }, value: 'v' }],
+    };
+    expect(findDerivedRuleIssues([derived], [f('c', 'radio', 0, { options, allowOther: true })])).toEqual([]);
+    expect(findDerivedRuleIssues([derived], [f('c', 'radio', 0, { options })])).toHaveLength(1);
   });
 
   it('findDerivedRuleIssues is quiet for sound cases and for rows not filled in yet', () => {
