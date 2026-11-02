@@ -41,6 +41,9 @@
     "is_indented": "Rientrato",
     "is_small": "Carattere piccolo"
   },
+  "fields": {
+    "duplicate_key": "Due domande hanno la stessa chiave. Assegna a ogni domanda la sua."
+  },
   "canvas_empty": "Trascina qui i campi dalla libreria.",
   "library": "Libreria di campi",
   "key": "Nome del campo",

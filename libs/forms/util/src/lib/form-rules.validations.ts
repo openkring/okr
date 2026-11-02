@@ -1,0 +1,134 @@
+import { enforce, omitWhen, staticSuite, test } from 'vest';
+
+import { DerivedValue, Field, FieldCondition, VisibilityRule } from '@okr/shared-models';
+import { stringValidations } from '@okr/shared-util-core';
+import { NAME_LENGTH } from '@okr/shared-constants';
+
+import { FIELD_KEY_PATTERN } from './field-config.validations';
+import { isInputField } from './field-kind';
+
+/** Operators that compare against a single value. */
+const SINGLE_VALUE_OPS = ['equals', 'notEquals', 'lt', 'lte', 'gt', 'gte'];
+/** Operators that compare against a list of values. */
+const LIST_VALUE_OPS = ['in', 'notIn', 'contains', 'notContains'];
+const AGE_OPS = ['ageGte', 'ageLt'];
+
+export const MAX_CONDITION_AGE = 120;
+
+function isBlank(v: unknown): boolean {
+  return v === undefined || v === null || (typeof v === 'string' && v.trim() === '');
+}
+
+/** Numeric comparison when both bounds are numbers (`10 > 9`), text comparison otherwise (StoreDates sort as text). */
+function isRangeInOrder(from: string, to: string): boolean {
+  const a = Number(from);
+  const b = Number(to);
+  if (Number.isFinite(a) && Number.isFinite(b)) return a <= b;
+  return from <= to;
+}
+
+function conditionTests(prefix: string, cond: FieldCondition): void {
+  test(`${prefix}.fieldId`, 'required', () => {
+    enforce(cond?.fieldId).isString().isNotBlank();
+  });
+  test(`${prefix}.op`, 'required', () => {
+    enforce(cond?.op).isString().isNotBlank();
+  });
+
+  const op = cond?.op as string;
+  const value = cond?.value;
+
+  omitWhen(!SINGLE_VALUE_OPS.includes(op), () => {
+    test(`${prefix}.value`, 'required', () => {
+      enforce(isBlank(value) || Array.isArray(value)).isFalsy();
+    });
+  });
+
+  omitWhen(!LIST_VALUE_OPS.includes(op), () => {
+    test(`${prefix}.value`, 'required', () => {
+      const list = Array.isArray(value) ? value : isBlank(value) ? [] : [value];
+      enforce(list.length > 0 && list.every(v => !isBlank(v))).isTruthy();
+    });
+  });
+
+  omitWhen(op !== 'between', () => {
+    test(`${prefix}.value`, 'required', () => {
+      enforce(Array.isArray(value) && value.length === 2 && value.every(v => !isBlank(v))).isTruthy();
+    });
+    test(`${prefix}.value`, 'rangeOrder', () => {
+      if (Array.isArray(value) && value.length === 2 && value.every(v => !isBlank(v))) {
+        enforce(isRangeInOrder(String(value[0]), String(value[1]))).isTruthy();
+      }
+    });
+  });
+
+  omitWhen(!AGE_OPS.includes(op), () => {
+    test(`${prefix}.value`, 'required', () => {
+      enforce(!isBlank(value) && !Array.isArray(value) && Number.isFinite(Number(value))).isTruthy();
+    });
+    test(`${prefix}.value`, 'invalidAge', () => {
+      if (!isBlank(value) && !Array.isArray(value) && Number.isFinite(Number(value))) {
+        const n = Number(value);
+        enforce(Number.isInteger(n) && n >= 0 && n <= MAX_CONDITION_AGE).isTruthy();
+      }
+    });
+  });
+}
+
+/** Registers the tests for one rule under `prefix` (`conditions.<i>.…` when empty). Shared by both suites. */
+export function ruleTests(prefix: string, rule: VisibilityRule | undefined): void {
+  const at = (name: string) => (prefix ? `${prefix}.${name}` : name);
+  test(at('conditions'), 'required', () => {
+    enforce(Array.isArray(rule?.conditions) && rule.conditions.length > 0).isTruthy();
+  });
+  (rule?.conditions ?? []).forEach((cond, i) => conditionTests(at(`conditions.${i}`), cond));
+}
+
+/**
+ * Validates one visibility rule (the «Nur anzeigen, wenn …» card): field and operator per row,
+ * a value where the operator needs one, `between` from ≤ to, age 0–120. Whether the referenced
+ * field still exists, comes earlier or offers the value is `findRuleIssues`' job.
+ */
+export const visibilityRuleValidations = staticSuite((rule: VisibilityRule) => {
+  ruleTests('', rule);
+});
+
+export interface DerivedValuesModel {
+  derivedValues: DerivedValue[];
+  fields: Field[];
+}
+
+/**
+ * Validates the «Berechnete Werte» card: per derived value a camelCase key that is neither the
+ * key of an input field nor used twice, a type when stored as a property, and valid case rules.
+ */
+export const derivedValuesValidations = staticSuite((model: DerivedValuesModel) => {
+  // Always runs, so an empty list still yields a result that `isValid()` accepts (Vest reports a suite without tests as invalid).
+  test('derivedValues', 'notArray', () => {
+    enforce(model.derivedValues === undefined || Array.isArray(model.derivedValues)).isTruthy();
+  });
+  const derived = Array.isArray(model.derivedValues) ? model.derivedValues : [];
+  const inputKeys = new Set((model.fields ?? []).filter(isInputField).map(f => f.key).filter(k => !!k));
+
+  derived.forEach((d, i) => {
+    const at = `derivedValues.${i}`;
+    stringValidations(`${at}.key`, d.key ?? '', NAME_LENGTH, 0, true);
+    omitWhen(!d.key, () => {
+      test(`${at}.key`, '@forms/feature.field.key_invalid', () => {
+        enforce(d.key).matches(FIELD_KEY_PATTERN);
+      });
+      test(`${at}.key`, 'keyIsFieldKey', () => {
+        enforce(inputKeys.has(d.key)).isFalsy();
+      });
+      test(`${at}.key`, 'keyTaken', () => {
+        enforce(derived.findIndex(x => x.key === d.key) === i).isTruthy();
+      });
+    });
+    omitWhen(d.asProperty !== true, () => {
+      test(`${at}.type`, 'required', () => {
+        enforce(d.type).isString().isNotBlank();
+      });
+    });
+    (d.cases ?? []).forEach((c, j) => ruleTests(`${at}.cases.${j}.when`, c.when));
+  });
+});

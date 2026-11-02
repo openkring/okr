@@ -41,6 +41,9 @@
     "is_indented": "Eingerückt",
     "is_small": "Kleine Schrift"
   },
+  "fields": {
+    "duplicate_key": "Zwei Fragen haben denselben Schlüssel. Bitte gib jeder Frage einen eigenen."
+  },
   "canvas_empty": "Ziehe Felder aus der Bibliothek hierher.",
   "library": "Feldbibliothek",
   "key": "Feldname",

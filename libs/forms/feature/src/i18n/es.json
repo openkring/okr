@@ -41,6 +41,9 @@
     "is_indented": "Con sangría",
     "is_small": "Letra pequeña"
   },
+  "fields": {
+    "duplicate_key": "Dos preguntas tienen la misma clave. Dale a cada pregunta la suya."
+  },
   "canvas_empty": "Arrastre aquí los campos desde la biblioteca.",
   "library": "Biblioteca de campos",
   "key": "Nombre del campo",

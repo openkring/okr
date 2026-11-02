@@ -41,6 +41,9 @@
     "is_indented": "En retrait",
     "is_small": "Petits caractères"
   },
+  "fields": {
+    "duplicate_key": "Deux questions ont la même clé. Donne à chaque question la sienne."
+  },
   "canvas_empty": "Faites glisser les champs de la bibliothèque ici.",
   "library": "Bibliothèque de champs",
   "key": "Nom du champ",

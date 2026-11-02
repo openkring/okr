@@ -41,6 +41,9 @@
     "is_indented": "Indented",
     "is_small": "Small print"
   },
+  "fields": {
+    "duplicate_key": "Two questions have the same key. Please give each question its own."
+  },
   "canvas_empty": "Drag fields here from the library.",
   "library": "Field library",
   "key": "Field name",

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH } from '@okr/shared-constants';
-import { FormDefinitionModel } from '@okr/shared-models';
+import { Field, FormDefinitionModel } from '@okr/shared-models';
 
 import { formDefinitionValidations } from './form-definition.validations';
 
@@ -48,5 +48,37 @@ describe('formDefinitionValidations', () => {
   it('does not require a mapping for a URL target', () => {
     const fd = newDefinition({ target: { kind: 'url', url: 'https://example.com/hook' } });
     expect(formDefinitionValidations(fd).hasErrors('target.mappingKey')).toBe(false);
+  });
+
+  describe('unique field keys (spec 7.3)', () => {
+    const field = (id: string, type: string, key: string, order: number) => ({ id, key, type, label: id, required: false, width: 'full', order }) as Field;
+
+    it('rejects two input fields with the same key', () => {
+      const fd = newDefinition({ fields: [field('a', 'radio', 'field_11', 0), field('b', 'checkbox', 'field_11', 1)] });
+      const result = formDefinitionValidations(fd);
+      expect(result.hasErrors('fields')).toBe(true);
+      expect(result.getErrors('fields')).toContain('@forms/feature.fields.duplicate_key');
+    });
+
+    it('accepts distinct keys', () => {
+      const fd = newDefinition({ fields: [field('a', 'text', 'firstName', 0), field('b', 'text', 'lastName', 1)] });
+      expect(formDefinitionValidations(fd).isValid()).toBe(true);
+    });
+
+    it('accepts duplicate empty keys on dividers and other display elements', () => {
+      const fd = newDefinition({ fields: [field('a', 'divider', '', 0), field('b', 'divider', '', 1), field('c', 'label', '', 2), field('d', 'text', 'x', 3)] });
+      expect(formDefinitionValidations(fd).isValid()).toBe(true);
+    });
+
+    it('does not report fields with an empty key as duplicates of each other', () => {
+      const fd = newDefinition({ fields: [field('a', 'text', '', 0), field('b', 'text', '', 1)] });
+      expect(formDefinitionValidations(fd).hasErrors('fields')).toBe(false);
+    });
+
+    it('survives a legacy definition without a field list', () => {
+      const fd = newDefinition();
+      (fd as { fields?: Field[] }).fields = undefined;
+      expect(formDefinitionValidations(fd).isValid()).toBe(true);
+    });
   });
 });
