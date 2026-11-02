@@ -10,6 +10,7 @@ import {
   getMismatches,
   getSekretariatCases,
   getSrvChanges,
+  isSrvLinked,
   mailtoUrl,
   normalizePhone,
   phonesMatch,
@@ -203,8 +204,63 @@ describe('getMismatches', () => {
   });
 });
 
+describe('isSrvLinked', () => {
+  it('links by SRV number: memberId equals rServiceId', () => {
+    expect(isSrvLinked(srvIndex({ memberId: '555', rServiceId: '555', dateOfBirth: '19900101', firstName: 'Anni' }))).toBe(true);
+  });
+
+  it('links by the same name and the same full birth date', () => {
+    expect(isSrvLinked(srvIndex({ memberId: '', rServiceId: '' }))).toBe(true);
+  });
+
+  it('compares names without case and surplus spaces', () => {
+    expect(isSrvLinked(srvIndex({ firstName: 'anna ', lastName: ' MUSTER', memberId: '' }))).toBe(true);
+  });
+
+  it('does not link a same-named record with another full birth date', () => {
+    expect(isSrvLinked(srvIndex({ memberId: '', rDateOfBirth: '19900101' }))).toBe(false);
+  });
+
+  it('does not link by name when the club birth date is partial or missing', () => {
+    expect(isSrvLinked(srvIndex({ memberId: '', dateOfBirth: '19850000', rDateOfBirth: '19850000' }))).toBe(false);
+    expect(isSrvLinked(srvIndex({ memberId: '', dateOfBirth: '', rDateOfBirth: '' }))).toBe(false);
+  });
+
+  it('a different SRV number still links by name and full birth date (ruling: OR), but not alone', () => {
+    expect(isSrvLinked(srvIndex({ memberId: '111', rServiceId: '222' }))).toBe(true);
+    expect(isSrvLinked(srvIndex({ memberId: '111', rServiceId: '222', rDateOfBirth: '19900101' }))).toBe(false);
+  });
+
+  it('never links an entry without a club membership or without a Regasoft record', () => {
+    expect(isSrvLinked(srvIndex({ mKey: '' }))).toBe(false);
+    expect(isSrvLinked(srvIndex({ rid: '' }))).toBe(false);
+  });
+});
+
+describe('getSrvChanges for entries that are not linked (C1)', () => {
+  it('a Regasoft-only passive record gets no change set', () => {
+    // buildIndexEntry(undefined, undefined, r): no club membership, empty category → «active» expected
+    const srvOnly = srvIndex({ mKey: '', personKey: '', mCategory: '', mDateOfExit: '', rInactiveDate: '20250101' });
+    expect(getMismatches(srvOnly, TODAY).some(m => m.kind === 'fix')).toBe(true); // shown, but never written
+    expect(getSrvChanges(srvOnly, TODAY)).toEqual({});
+  });
+
+  it('same name, another full birth date, no SRV number → no change set', () => {
+    expect(getSrvChanges(srvIndex({ memberId: '', rDateOfBirth: '19900101', mEmail: 'neu@muster.ch' }), TODAY)).toEqual({});
+  });
+
+  it('linked by SRV number → the changes as before', () => {
+    expect(getSrvChanges(srvIndex({ memberId: '5', rServiceId: '5', mEmail: 'neu@muster.ch' }), TODAY)).toEqual({ email: 'neu@muster.ch' });
+  });
+
+  it('linked by name and full birth date → the changes', () => {
+    expect(getSrvChanges(srvIndex({ memberId: '', mEmail: 'neu@muster.ch' }), TODAY)).toEqual({ email: 'neu@muster.ch' });
+  });
+});
+
 describe('getSrvChanges', () => {
-  const changes = (o: Partial<SrvIndex>) => getSrvChanges(srvIndex(o), TODAY);
+  // Linked by SRV number, so a test may change the name or the birth date.
+  const changes = (o: Partial<SrvIndex>) => getSrvChanges(srvIndex({ memberId: '5', rServiceId: '5', ...o }), TODAY);
 
   it('matching item → empty change set', () => {
     expect(changes({})).toEqual({});

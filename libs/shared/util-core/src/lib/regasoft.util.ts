@@ -193,9 +193,34 @@ export function getMismatches(item: SrvIndex, today: string): SrvMismatch[] {
   return result;
 }
 
-/** The change set for Regasoft: only the `fix` differences, under Regasoft's field names. */
+const normalisedName = (first: string, last: string): string =>
+  `${first ?? ''} ${last ?? ''}`.trim().replace(/\s+/g, ' ').toLowerCase();
+
+/**
+ * Whether an index entry is safe to WRITE to Regasoft: it holds one of our members (`mKey`) and a
+ * Regasoft record (`rid`), and the two are the same person — either by SRV number (`memberId` =
+ * `rServiceId`) or by the same name AND the same full birth date. A name match alone is not enough:
+ * Regasoft's PUT replaces the whole record and a record can never be deleted, so a wrong link
+ * would write one person's data onto another's record. Regasoft-only and parent-only entries are
+ * never linked (they carry no club status to write).
+ */
+export function isSrvLinked(item: SrvIndex): boolean {
+  if (!item.mKey || !item.rid) return false;
+  if (!!item.memberId && item.memberId === item.rServiceId) return true;
+  return (
+    normalisedName(item.firstName, item.lastName) === normalisedName(item.rFirstName, item.rLastName) &&
+    classifyStoreDate(item.dateOfBirth) === 'full' &&
+    item.dateOfBirth === item.rDateOfBirth
+  );
+}
+
+/**
+ * The change set for Regasoft: only the `fix` differences, under Regasoft's field names.
+ * Empty for an entry that is not `isSrvLinked` — its differences are shown, never written.
+ */
 export function getSrvChanges(item: SrvIndex, today: string): SrvChanges {
   const changes: SrvChanges = {};
+  if (!isSrvLinked(item)) return changes;
   for (const m of getMismatches(item, today)) {
     if (m.kind !== 'fix') continue;
     switch (m.field) {

@@ -3,7 +3,7 @@ import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCa
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ListFilter } from '@okr/shared-ui';
-import { convertDateFormatToString, DateFormat, getAge as getAgeFn, getTodayStr } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, getAge as getAgeFn, getTodayStr, isSrvLinked } from '@okr/shared-util-core';
 import { ColorIonic, SrvIndex } from '@okr/shared-models';
 
 import { AvatarLabel } from '@okr/avatar-ui';
@@ -11,6 +11,13 @@ import { AvatarLabel } from '@okr/avatar-ui';
 import { MembershipSrvStore, getMismatches } from './membership-srv.store';
 import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
 import { fill } from '@okr/shared-util-core';
+
+/**
+ * The «Regasoft aktualisieren» action stays hidden until the update has been tested against
+ * PortalTest (plan 1.133, Task 9 flips this to `true`; the server switch `SRV_UPDATE_ENABLED`
+ * goes on at the same time). Even then it is offered only for an entry that `isSrvLinked`.
+ */
+const REGASOFT_UPDATE_VISIBLE = false;
 
 @Component({
   selector: 'okr-membership-srv',
@@ -430,8 +437,12 @@ protected async buildIndex(): Promise<void> {
       actionSheetOptions.buttons.push(createActionSheetDivider());
       actionSheetOptions.buttons.push(createActionSheetButton('regasoft.copy', this.store.i18n.srv_regasoft_copy(), this.imgixBaseUrl, 'copy'));
       actionSheetOptions.buttons.push(createActionSheetButton('regasoft.view', this.store.i18n.srv_regasoft_view(), this.imgixBaseUrl, 'eye-on'));
-      // 'regasoft.add' / 'regasoft.update' are hidden until spec 1.133 ships: the current
-      // update erases Regasoft fields (PUT replaces the record). The function rejects both too.
+      // 'regasoft.add' stays hidden (POST unprobed, Q7; the function rejects it too).
+      // 'regasoft.update' only for an entry linked to one of our members by SRV number or by name
+      // + full birth date (C1): a wrong link would overwrite another person's Regasoft record.
+      if (REGASOFT_UPDATE_VISIBLE && isSrvLinked(item)) {
+        actionSheetOptions.buttons.push(createActionSheetButton('regasoft.update', this.store.i18n.srv_regasoft_update(), this.imgixBaseUrl, 'sync'));
+      }
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
       await this.executeActions(actionSheetOptions, item);
   }
