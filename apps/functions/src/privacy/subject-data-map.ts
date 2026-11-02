@@ -1687,6 +1687,8 @@ export async function resolveArrayItemDocs(entry: SubjectDataEntry, ctx: Subject
 // not personal data: commissionEntries — a ledger line (C3 §7): partnerKey, tenantId, band,
 //   amounts. No natural person appears on it; the contact-of-record stays on the metering
 //   record it was derived from.
+// not personal data: formStats — response counters per form / form×section (1.125 B), no answers
+//   and no person: a count and the form/section id only.
 // gap: external-reports — marks that a case (e.g. a membership change) was reported to an external
 //   organisation (spec 1.133): externalOrg, caseKey/caseType, externalRef, reportedAt and `subjectKey`
 //   ('person.<okey>'). No name or contact detail is stored, but `subjectKey` links the marker to a

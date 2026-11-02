@@ -2,7 +2,6 @@ import type { ConfirmationVariant, Field, FormSectionConfig } from '@okr/shared-
 import { isSsnField } from './ahv.util';
 import { evaluateVisibilityRule } from './form-visibility.util';
 import { coerceToPropertyType, propertyTypeOf, ssnPresenceLabel } from './form-values.util';
-import { fill } from './text.util';
 
 /**
  * When a form accepts answers, how many places are left, and the thank-you text (1.125 phase B,
@@ -73,11 +72,13 @@ export function effectiveAcceptance(
  */
 export function computeFormAvailability(settings: AcceptanceSettings, responseCount: number, today: string): FormAvailability {
   const hasPlaces = settings.maxResponses > 0;
+  // a malformed date counts as no date (a StoreDate is exactly 8 digits)
+  const hasDate = STORE_DATE.test(settings.closesAt);
   const count = Number.isFinite(responseCount) && responseCount > 0 ? responseCount : 0;
   const remaining = hasPlaces ? Math.max(0, settings.maxResponses - count) : null;
   let reason: FormAvailability['reason'] = '';
   if (!settings.isOpen) reason = 'closed';
-  else if (settings.closesAt !== '' && today > settings.closesAt) reason = 'date';
+  else if (hasDate && today > settings.closesAt) reason = 'date';
   else if (hasPlaces && remaining === 0) reason = 'full';
   return {
     isOpen: reason === '',
@@ -85,7 +86,7 @@ export function computeFormAvailability(settings: AcceptanceSettings, responseCo
     remaining,
     showRemaining: settings.showRemaining,
     closedMessage: settings.closedMessage,
-    hasLimit: hasPlaces || settings.closesAt !== '',
+    hasLimit: hasPlaces || hasDate,
   };
 }
 
@@ -106,12 +107,13 @@ export function formatAnswer(field: Field | undefined, value: unknown): string {
 }
 
 const DISPLAY_TYPES: ReadonlySet<string> = new Set(['label', 'paragraph', 'divider']);
-const LEFTOVER_PLACEHOLDER = /\{[a-zA-Z][a-zA-Z0-9]*\}/g;
+const PLACEHOLDER = /\{([a-zA-Z][a-zA-Z0-9_]*)\}/g;
+const STORE_DATE = /^\d{8}$/;
 
 /**
  * The author's thank-you text for one submission (spec §10): the first variant whose rule holds,
  * else `message`; `{key}` takes the filler's own answer. '' means «use the default text».
- * A placeholder of a hidden field, an unknown key, a display element or an AHV field becomes ''
+ * Placeholders are replaced in a single pass. A placeholder of a hidden field, an unknown key, a display element or an AHV field becomes ''
  * (the number is never echoed); an `implicit` field shows its value (the course id).
  * A matching variant with a blank text is skipped.
  */
@@ -135,10 +137,12 @@ export function buildConfirmationMessage(
   }
   if (template.trim() === '') return '';
 
-  const params: Record<string, string> = {};
+  const params: Record<string, string> = Object.create(null) as Record<string, string>;
   for (const field of all) {
     if (typeof field.key !== 'string' || field.key === '' || DISPLAY_TYPES.has(field.type)) continue;
     params[field.key] = isSsnField(field) || !visible.has(field.id) ? '' : formatAnswer(field, answers[field.key]);
   }
-  return fill(template, params).replace(LEFTOVER_PLACEHOLDER, '');
+  // ONE pass: a substituted answer is never rescanned, so an answer like «{age}» stays inert text and
+  // cannot pull in another answer or an implicit value. Own-property lookup only (no `{constructor}`).
+  return template.replace(PLACEHOLDER, (_m, k: string) => (Object.prototype.hasOwnProperty.call(params, k) ? params[k] : ''));
 }

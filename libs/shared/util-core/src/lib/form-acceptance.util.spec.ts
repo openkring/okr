@@ -62,7 +62,33 @@ describe('effectiveAcceptance', () => {
   });
 });
 
+describe('effectiveAcceptance (inheritance details)', () => {
+  it('inherits closedMessage from the form when the section has none', () => {
+    expect(effectiveAcceptance({ okey: 'f1', closedMessage: 'Vorbei' }, { maxResponses: 8 }, 's1').closedMessage).toBe('Vorbei');
+  });
+
+  it('a section showRemaining of false overrides the form true', () => {
+    expect(effectiveAcceptance({ okey: 'f1', showRemaining: true }, { showRemaining: false }, 's1').showRemaining).toBe(false);
+  });
+});
+
 describe('computeFormAvailability', () => {
+  it('closed beats date and full', () => {
+    const s = settings({ isOpen: false, closesAt: '20261101', maxResponses: 1 });
+    expect(computeFormAvailability(s, 5, '20261201').reason).toBe('closed');
+  });
+
+  it('date beats full', () => {
+    expect(computeFormAvailability(settings({ closesAt: '20261101', maxResponses: 1 }), 5, '20261201').reason).toBe('date');
+  });
+
+  it('ignores a closing date that is not a StoreDate', () => {
+    for (const bad of ['2026-11-30', '30.11.2026', 'garbage', '2026113']) {
+      const a = computeFormAvailability(settings({ closesAt: bad }), 0, '20261231');
+      expect(a).toMatchObject({ isOpen: true, reason: '', hasLimit: false });
+    }
+  });
+
   it('is open on the closing day and closed from the next day', () => {
     const s = settings({ closesAt: '20261130' });
     expect(computeFormAvailability(s, 0, '20261130').isOpen).toBe(true);
@@ -150,6 +176,27 @@ describe('buildConfirmationMessage', () => {
 
   it('shows a single checkbox as ja', () => {
     expect(run('AGB: {terms}', undefined, { terms: true })).toBe('AGB: ja');
+  });
+
+  it('skips a matching variant with a blank message', () => {
+    const any: VisibilityRule = { match: 'all', conditions: [{ fieldId: 'age', op: 'gte', value: 0 }] };
+    const variants: ConfirmationVariant[] = [
+      { when: any, message: '  ' },
+      { when: any, message: 'Zweite' },
+    ];
+    expect(run('Standard', variants, { age: 5 })).toBe('Zweite');
+    expect(run('Standard', [{ when: any, message: '' }], { age: 5 })).toBe('Standard');
+  });
+
+  it('never rescans a substituted answer (no pulling in other answers, implicit values or AHV)', () => {
+    expect(run('Hallo {firstName}', undefined, { firstName: '{age}', age: 30 })).toBe('Hallo {age}');
+    expect(run('Hallo {firstName}', undefined, { firstName: '{course}', course: 'c42' })).toBe('Hallo {course}');
+    expect(run('Hallo {firstName}', undefined, { firstName: '{ssnId}', ssnId: '7561234567897' })).toBe('Hallo {ssnId}');
+    expect(run('{age} {firstName}', undefined, { firstName: '{age}', age: 30 })).toBe('30 {age}');
+  });
+
+  it('does not look up prototype members', () => {
+    expect(run('[{constructor}] [{toString}]', undefined, { firstName: 'Anna' })).toBe('[] []');
   });
 
   it('the first matching variant wins over the message', () => {
