@@ -97,6 +97,7 @@ export interface SrvContactData {
   telefon?: string | null;
   dateOfDeath?: string | null;   // StoreDate YYYYMMDD
   leavingDate?: string | null;   // StoreDate YYYYMMDD
+  inactiveDate?: string | null;  // StoreDate YYYYMMDD (passive member on create)
 }
 
 /** Shape returned by the getSrvMemberDetail CF. */

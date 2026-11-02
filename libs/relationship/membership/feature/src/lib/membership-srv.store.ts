@@ -624,8 +624,12 @@ export const MembershipSrvStore = signalStore(
 
       // Only what Regasoft accepts on a POST (server: buildSrvCreatePayload). Not sent: fullname,
       // membershipType, nationIOC, language, hasNewsletter, hasLicense, countryName, streetAdditional.
+      // A new member is neither exited nor deceased, so only the passive status is derived.
       const phoneClass = item.mPhone ? classifyPhone(item.mPhone) : null;
       const countryId = countryIdOf(item.mCountryCode);
+      const { inactiveDate } = expectedSrvStatus({
+        dateOfDeath: '', dateOfExit: '', category: item.mCategory, passiveSince: item.mPassiveSince, today: getTodayStr(DateFormat.StoreDate),
+      });
       try {
         const result = await fn({
           op:          'createSrvContact',
@@ -640,6 +644,7 @@ export const MembershipSrvStore = signalStore(
           postcode:    item.mZipCode || null,
           city:        item.mCity || null,
           countryId:   countryId === null ? null : String(countryId),
+          inactiveDate: inactiveDate || null,
         });
         const srvId = String(result.data.id);
         const index = store.index().map(i => i.key === item.key

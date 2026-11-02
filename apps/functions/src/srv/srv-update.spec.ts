@@ -354,6 +354,17 @@ describe('buildSrvCreatePayload', () => {
     });
   });
 
+  it('sends inactiveDate for a passive member', () => {
+    expect(buildSrvCreatePayload({ ...DATA, inactiveDate: '20260101' }, false)['inactiveDate']).toBe('2026-01-01T00:00:00');
+  });
+
+  it('sets no inactiveDate without one, or for a non-full or placeholder value', () => {
+    expect(buildSrvCreatePayload(DATA, false)).not.toHaveProperty('inactiveDate');
+    expect(buildSrvCreatePayload({ ...DATA, inactiveDate: '' }, false)).not.toHaveProperty('inactiveDate');
+    expect(buildSrvCreatePayload({ ...DATA, inactiveDate: '20260000' }, false)).not.toHaveProperty('inactiveDate');
+    expect(buildSrvCreatePayload({ ...DATA, inactiveDate: '99991231' }, false)).not.toHaveProperty('inactiveDate');
+  });
+
   it('appends the test x to the email in the test system', () => {
     expect(buildSrvCreatePayload(DATA, true)['email']).toBe('anna@example.chx');
   });

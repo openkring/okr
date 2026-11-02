@@ -205,7 +205,7 @@ export async function runSrvUpdate(
 /**
  * The `POST` body for a new member: only writable fields plus `id: 0`. Not sent: `hasNewsletter`
  * (no consent, not writable), `hasLicense`, `membershipType` (derived), `nationIOC`, `language`,
- * `fullname`, `countryName`. A new email is a changed email, so it gets the test `x` (D11).
+ * `fullname`, `countryName`. A passive member carries `inactiveDate` (full StoreDates only, else omitted). A new email is a changed email, so it gets the test `x` (D11).
  */
 export function buildSrvCreatePayload(data: SrvContactData, testSystem: boolean): SrvRecord {
   const payload: SrvRecord = {
@@ -223,6 +223,8 @@ export function buildSrvCreatePayload(data: SrvContactData, testSystem: boolean)
     countryId: data.countryId ? Number(data.countryId) || null : null,
     telefon: data.telefon ?? null,
   };
+  const inactiveDate = storeDateToRegasoftDate(data.inactiveDate ?? undefined);
+  if (inactiveDate) payload['inactiveDate'] = inactiveDate;
   assertRequired(payload);
   return payload;
 }
