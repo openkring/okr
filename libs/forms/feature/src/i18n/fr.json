@@ -44,6 +44,14 @@
   "fields": {
     "duplicate_key": "Deux questions ont la même clé. Donne à chaque question la sienne."
   },
+  "rule": {
+    "range_order": "La première valeur doit être inférieure à la seconde.",
+    "invalid_age": "Saisis un âge entre 0 et 120."
+  },
+  "derived": {
+    "key_is_field_key": "Ce nom est déjà utilisé par une question. Choisis-en un autre.",
+    "key_taken": "Ce nom existe déjà. Choisis-en un autre."
+  },
   "canvas_empty": "Faites glisser les champs de la bibliothèque ici.",
   "library": "Bibliothèque de champs",
   "key": "Nom du champ",

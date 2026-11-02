@@ -55,7 +55,7 @@ function conditionTests(prefix: string, cond: FieldCondition): void {
     test(`${prefix}.value`, 'required', () => {
       enforce(Array.isArray(value) && value.length === 2 && value.every(v => !isBlank(v))).isTruthy();
     });
-    test(`${prefix}.value`, 'rangeOrder', () => {
+    test(`${prefix}.value`, '@forms/feature.rule.range_order', () => {
       if (Array.isArray(value) && value.length === 2 && value.every(v => !isBlank(v))) {
         enforce(isRangeInOrder(String(value[0]), String(value[1]))).isTruthy();
       }
@@ -66,7 +66,7 @@ function conditionTests(prefix: string, cond: FieldCondition): void {
     test(`${prefix}.value`, 'required', () => {
       enforce(!isBlank(value) && !Array.isArray(value) && Number.isFinite(Number(value))).isTruthy();
     });
-    test(`${prefix}.value`, 'invalidAge', () => {
+    test(`${prefix}.value`, '@forms/feature.rule.invalid_age', () => {
       if (!isBlank(value) && !Array.isArray(value) && Number.isFinite(Number(value))) {
         const n = Number(value);
         enforce(Number.isInteger(n) && n >= 0 && n <= MAX_CONDITION_AGE).isTruthy();
@@ -117,10 +117,10 @@ export const derivedValuesValidations = staticSuite((model: DerivedValuesModel) 
       test(`${at}.key`, '@forms/feature.field.key_invalid', () => {
         enforce(d.key).matches(FIELD_KEY_PATTERN);
       });
-      test(`${at}.key`, 'keyIsFieldKey', () => {
+      test(`${at}.key`, '@forms/feature.derived.key_is_field_key', () => {
         enforce(inputKeys.has(d.key)).isFalsy();
       });
-      test(`${at}.key`, 'keyTaken', () => {
+      test(`${at}.key`, '@forms/feature.derived.key_taken', () => {
         enforce(derived.findIndex(x => x.key === d.key) === i).isTruthy();
       });
     });

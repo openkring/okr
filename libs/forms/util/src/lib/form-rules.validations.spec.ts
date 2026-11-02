@@ -71,6 +71,17 @@ describe('visibilityRuleValidations', () => {
   });
 });
 
+describe('rule and derived-value message keys', () => {
+  it('uses forms i18n keys, not global validation codes', () => {
+    expect(visibilityRuleValidations(rule({ fieldId: 'a', op: 'between', value: ['7', '3'] })).getErrors('conditions.0.value')).toEqual(['@forms/feature.rule.range_order']);
+    expect(visibilityRuleValidations(rule({ fieldId: 'a', op: 'ageGte', value: 121 })).getErrors('conditions.0.value')).toEqual(['@forms/feature.rule.invalid_age']);
+    const fields = [{ id: 'x', key: 'taken', type: 'text', label: 'x', required: false, width: 'full', order: 0 }] as Field[];
+    const d = (key: string): DerivedValue => ({ key, cases: [] });
+    expect(derivedValuesValidations({ derivedValues: [d('taken')], fields }).getErrors('derivedValues.0.key')).toEqual(['@forms/feature.derived.key_is_field_key']);
+    expect(derivedValuesValidations({ derivedValues: [d('same'), d('same')], fields }).getErrors('derivedValues.1.key')).toEqual(['@forms/feature.derived.key_taken']);
+  });
+});
+
 describe('derivedValuesValidations', () => {
   const fields = [{ id: 'dob', key: 'dateOfBirth', type: 'date', label: 'DOB', required: false, width: 'full', order: 0 }] as Field[];
   const derived = (over: Partial<DerivedValue> = {}): DerivedValue => ({

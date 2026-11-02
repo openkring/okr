@@ -44,6 +44,14 @@
   "fields": {
     "duplicate_key": "Zwei Fragen haben denselben Schlüssel. Bitte gib jeder Frage einen eigenen."
   },
+  "rule": {
+    "range_order": "Der erste Wert muss kleiner sein als der zweite.",
+    "invalid_age": "Gib ein Alter zwischen 0 und 120 ein."
+  },
+  "derived": {
+    "key_is_field_key": "Dieser Name gehört schon zu einer Frage. Wähle einen anderen.",
+    "key_taken": "Diesen Namen gibt es schon. Wähle einen anderen."
+  },
   "canvas_empty": "Ziehe Felder aus der Bibliothek hierher.",
   "library": "Feldbibliothek",
   "key": "Feldname",

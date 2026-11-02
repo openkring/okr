@@ -44,6 +44,14 @@
   "fields": {
     "duplicate_key": "Due domande hanno la stessa chiave. Assegna a ogni domanda la sua."
   },
+  "rule": {
+    "range_order": "Il primo valore deve essere minore del secondo.",
+    "invalid_age": "Inserisci un’età tra 0 e 120."
+  },
+  "derived": {
+    "key_is_field_key": "Questo nome appartiene già a una domanda. Scegline un altro.",
+    "key_taken": "Questo nome esiste già. Scegline un altro."
+  },
   "canvas_empty": "Trascina qui i campi dalla libreria.",
   "library": "Libreria di campi",
   "key": "Nome del campo",
