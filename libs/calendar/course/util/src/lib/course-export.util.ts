@@ -11,7 +11,8 @@ export const JS_AWK_HEADER = ['PERSONENNUMMER', 'FUNKTION', 'DATUM', 'AKTIVITAET
 /** `calevent.type` → J+S activity type that every course starts with; tenant types are added in the course form. */
 export const DEFAULT_JS_TYPE_MAPPING: Record<string, JsActivityType> = { training: 'Training' };
 
-const JS_ACTIVITY_TYPES: string[] = ['Training', 'Wettkampf', 'Trainingstag', 'Lagertag'];
+/** The activity types the AWK knows, in the order the course form offers them. */
+export const JS_ACTIVITY_TYPES: string[] = ['Training', 'Wettkampf', 'Trainingstag', 'Lagertag'];
 
 /** A problem that keeps rows out of the export; the rest still exports (spec 1.132 §9.3). */
 export type ExportFinding = {

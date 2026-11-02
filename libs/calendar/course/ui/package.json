@@ -7,7 +7,16 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
+    "@okr/avatar-ui": "*",
     "@okr/calendar-course-util": "*",
-    "@okr/shared-models": "*"
+    "@okr/finance-account-ui": "*",
+    "@okr/finance-cost-center-ui": "*",
+    "@okr/shared-constants": "*",
+    "@okr/shared-i18n": "*",
+    "@okr/shared-models": "*",
+    "@okr/shared-pipes": "*",
+    "@okr/shared-ui": "*",
+    "@okr/shared-util-angular": "*",
+    "@okr/shared-util-core": "*"
   }
 }

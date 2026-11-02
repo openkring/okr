@@ -1,0 +1,101 @@
+import { enforce, omitWhen, staticSuite, test } from 'vest';
+
+import { NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { CourseFinanceModel, CourseModel, MoneyModel } from '@okr/shared-models';
+import { dateValidations, stringValidations } from '@okr/shared-util-core';
+
+import { isCompleteJsSettings } from './js-durations';
+
+const PFX = '@calendar/course/feature.validation.';
+
+/** J+S course number («Angebotsnummer»): typed by hand, kept in step with the form's `[maxLength]`. */
+export const COURSE_NUMBER_LENGTH = WORD_LENGTH;
+
+/**
+ * The course itself (spec 1.132 §5.1). `trainerKeys` / `responsibleKeys` are server-maintained and never judged here.
+ * Document fields may be absent on legacy documents: every read coalesces.
+ */
+export const courseValidations = staticSuite((model: CourseModel) => {
+  stringValidations('name', model.name, NAME_LENGTH, 1, true);
+  // the group is preset by the caller and shown read-only; a foreign key, so no length cap
+  stringValidations('groupKey', model.groupKey, undefined, 0, true);
+
+  stringValidations('startDate', model.startDate, undefined, 0, true);
+  dateValidations('startDate', model.startDate);
+  stringValidations('endDate', model.endDate, undefined, 0, true);
+  dateValidations('endDate', model.endDate);
+  // StoreDate (yyyyMMdd) sorts as text; the end day is inclusive, so the same day is a one-day course
+  omitWhen(!model.startDate || !model.endDate, () => {
+    test('endDate', PFX + 'endBeforeStart', () => {
+      enforce(model.endDate >= model.startDate).isTruthy();
+    });
+  });
+
+  test('responsiblePersons', PFX + 'responsibleRequired', () => {
+    enforce((model.responsiblePersons ?? []).length).greaterThan(0);
+  });
+
+  omitWhen(model.reportProfile !== 'js', () => {
+    const settings = model.reportSettings ?? {};
+    stringValidations('reportSettings.courseNumber', settings.courseNumber ?? '', COURSE_NUMBER_LENGTH);
+    stringValidations('reportSettings.userGroup', settings.userGroup ?? '', undefined, 0, true);
+    stringValidations('reportSettings.mainSportCategory', settings.mainSportCategory ?? '', undefined, 0, true);
+    // both set, but not a pair the J+S rules define (NG 1 with Abs. 2, NG 2 with Abs. 1, an unknown group)
+    omitWhen(!settings.userGroup || !settings.mainSportCategory, () => {
+      test('reportSettings.mainSportCategory', PFX + 'jsPairInvalid', () => {
+        enforce(isCompleteJsSettings(settings)).isTruthy();
+      });
+    });
+  });
+});
+
+/** A rate is whole minor units (Rappen), not negative — the same test the callable applies. */
+function isValidAmount(money: Partial<MoneyModel> | null | undefined): boolean {
+  const amount = money?.amount;
+  return typeof amount === 'number' && Number.isSafeInteger(amount) && amount >= 0;
+}
+
+/**
+ * The protected finance document of a course (spec 1.132 §5.2).
+ *
+ * @param bookKeys the books (`accountingTenantId`) the tenant may use; when given, the chosen books must be one of them
+ */
+export const courseFinanceValidations = staticSuite((model: CourseFinanceModel, bookKeys?: string[]) => {
+  const eligible = model.eligible ?? [];
+  const rateSet = (model.defaultRate?.amount ?? 0) > 0;
+
+  // as soon as there is something to pay, the books must be named — never derived from the app tenant
+  omitWhen(!rateSet && eligible.length === 0, () => {
+    test('accountingTenantId', PFX + 'booksRequired', () => {
+      enforce(model.accountingTenantId ?? '').isNotBlank();
+    });
+  });
+  omitWhen(!model.accountingTenantId || !bookKeys, () => {
+    test('accountingTenantId', PFX + 'booksUnknown', () => {
+      enforce((bookKeys ?? []).includes(model.accountingTenantId)).isTruthy();
+    });
+  });
+
+  // a missing default rate counts as 0 (the server coalesces it); one that is there must be sound
+  omitWhen(model.defaultRate == null, () => {
+    test('defaultRate', PFX + 'rateInvalid', () => {
+      enforce(isValidAmount(model.defaultRate)).isTruthy();
+    });
+  });
+
+  test('eligible', PFX + 'personRequired', () => {
+    enforce(eligible.every(e => !!e.person?.key)).isTruthy();
+  });
+  test('eligible', PFX + 'duplicatePerson', () => {
+    const keys = eligible.map(e => e.person?.key).filter(k => !!k);
+    enforce(new Set(keys).size === keys.length).isTruthy();
+  });
+  // an absent or null rate means «use the default rate»; 0 is a rate
+  eligible.forEach((e, index) => {
+    omitWhen(e.rate == null, () => {
+      test(`eligible[${index}].rate`, PFX + 'rateInvalid', () => {
+        enforce(isValidAmount(e.rate)).isTruthy();
+      });
+    });
+  });
+});

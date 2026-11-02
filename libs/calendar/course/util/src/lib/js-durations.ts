@@ -1,4 +1,4 @@
-import { JsReportSettings } from '@okr/shared-models';
+import { JsReportSettings, JsUserGroup } from '@okr/shared-models';
 
 /** The activity types of the J+S attendance import (AWK). */
 export type JsActivityType = 'Training' | 'Wettkampf' | 'Trainingstag' | 'Lagertag';
@@ -49,4 +49,17 @@ export function allowedJsDurations(settings: JsReportSettings, type: JsActivityT
   const row = JS_DURATIONS[`${settings.userGroup}-${settings.mainSportCategory}`];
   if (!row) throw new Error(`js-durations: no rule for user group ${settings.userGroup} / ${settings.mainSportCategory}`);
   return row[type];
+}
+
+/** The user groups (NG) the course form offers. */
+export const JS_USER_GROUPS: readonly JsUserGroup[] = ['1', '2', '4', '5'];
+
+/**
+ * The main sport categories that form a defined pair with the user group (`isCompleteJsSettings`), in form order.
+ * Empty for an unknown or missing user group. The course form offers only these, so a pair the rules do not
+ * define cannot be picked.
+ */
+export function jsMainSportCategories(userGroup: string | undefined): JsReportSettings['mainSportCategory'][] {
+  const categories: JsReportSettings['mainSportCategory'][] = ['abs1', 'abs2'];
+  return categories.filter(c => JS_DURATIONS[`${userGroup}-${c}`] !== undefined);
 }

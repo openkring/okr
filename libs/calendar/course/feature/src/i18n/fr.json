@@ -1,5 +1,119 @@
 {
   "course": "Cours",
   "courses": "Cours",
-  "empty": "Aucun cours n'a encore été saisi. Crée-en un avec le bouton +."
+  "empty": "Aucun cours n'a encore été saisi. Crée-en un avec le bouton +.",
+  "edit": {
+    "create": "Saisir un cours",
+    "update": "Modifier le cours",
+    "view": "Cours"
+  },
+  "changeConfirmation": {
+    "cancel": "Annuler",
+    "ok": "Enregistrer"
+  },
+  "form": {
+    "attributes": "Cours",
+    "name": {
+      "label": "Nom",
+      "placeholder": "p. ex. Gymnastique artistique U14 automne",
+      "helper": "Le cours apparaît sous ce nom dans la liste."
+    },
+    "group": {
+      "label": "Groupe",
+      "helper": "Le cours appartient à ce groupe d'entraînement. Tu ne pourras plus le changer ensuite."
+    },
+    "startDate": {
+      "label": "Premier jour",
+      "placeholder": "JJ.MM.AAAA"
+    },
+    "endDate": {
+      "label": "Dernier jour",
+      "placeholder": "JJ.MM.AAAA"
+    },
+    "responsible": {
+      "title": "Responsables",
+      "description": "Ces personnes voient les montants et demandent l'indemnité. La première reçoit à la fin du cours la tâche de le clôturer."
+    },
+    "trainers": {
+      "title": "Entraîneurs",
+      "description": "Ces personnes confirment qui était présent à chaque séance."
+    },
+    "person": {
+      "add": "Ajouter une personne"
+    },
+    "report": {
+      "title": "Annonce"
+    },
+    "profile": {
+      "label": "Profil d'annonce",
+      "helper": "Détermine sous quelle forme la présence est annoncée à la fin du cours."
+    },
+    "courseNumber": {
+      "label": "Numéro d'offre J+S",
+      "placeholder": "p. ex. 123456",
+      "helper": "Sert uniquement à l'affichage et au nom du fichier d'annonce."
+    },
+    "userGroup": {
+      "label": "Groupe d'utilisateurs (NG)",
+      "helper": "Le groupe d'utilisateurs de ton offre J+S."
+    },
+    "category": {
+      "label": "Sport principal",
+      "helper": "Art. 1, al. 1 ou 2 de l'ordonnance J+S de l'OFSPO. Seules les combinaisons connues de J+S sont proposées."
+    },
+    "typeMapping": {
+      "title": "Types de séance",
+      "description": "Attribue à chaque type de séance l'activité J+S correspondante. Les séances sans attribution ne sont pas annoncées.",
+      "none": "Ne pas annoncer"
+    }
+  },
+  "profile": {
+    "none": "Pas d'annonce",
+    "generic": "Tableau général (CSV)",
+    "js": "Jeunesse+Sport (J+S)"
+  },
+  "category": {
+    "abs1": "Art. 1, al. 1",
+    "abs2": "Art. 1, al. 2"
+  },
+  "finance": {
+    "title": "Indemnité des entraîneurs",
+    "intro": "Seuls les responsables, la direction du groupe et la trésorerie voient ces données.",
+    "books": {
+      "label": "Comptabilité",
+      "helper": "L'indemnité est comptabilisée dans cette comptabilité.",
+      "none": "Aucune comptabilité n'est disponible. Demande à la trésorerie."
+    },
+    "account": {
+      "label": "Compte de charges",
+      "helper": "Laisse vide pour utiliser le compte défini dans les paramètres de la comptabilité."
+    },
+    "costCenter": {
+      "label": "Centre de coûts",
+      "helper": "Laisse vide pour utiliser la valeur par défaut du compte ou de la comptabilité."
+    },
+    "defaultRate": {
+      "label": "Tarif par séance ({currency})",
+      "helper": "Valable pour toutes les personnes ayant droit sans tarif propre."
+    },
+    "eligible": {
+      "title": "Ayants droit",
+      "description": "Ces personnes reçoivent une indemnité pour les séances qu'elles ont dirigées."
+    },
+    "ownRate": {
+      "label": "Tarif propre",
+      "helper": "Sans tarif propre, le tarif par séance ci-dessus s'applique.",
+      "amount": "Tarif par séance ({currency})"
+    }
+  },
+  "validation": {
+    "endBeforeStart": "Le dernier jour est avant le premier.",
+    "responsibleRequired": "Choisis au moins une personne responsable.",
+    "jsPairInvalid": "J+S ne connaît pas cette combinaison de groupe d'utilisateurs et de sport principal.",
+    "booksRequired": "Choisis la comptabilité dans laquelle l'indemnité est comptabilisée.",
+    "booksUnknown": "Tu ne peux pas utiliser cette comptabilité. Choisis-en une autre.",
+    "rateInvalid": "Saisis un montant de 0 ou plus.",
+    "duplicatePerson": "Chaque personne ne peut figurer qu'une seule fois.",
+    "personRequired": "Choisis la personne dans la liste des personnes."
+  }
 }

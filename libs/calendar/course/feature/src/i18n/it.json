@@ -1,5 +1,119 @@
 {
   "course": "Corso",
   "courses": "Corsi",
-  "empty": "Non è ancora stato inserito nessun corso. Creane uno con il pulsante +."
+  "empty": "Non è ancora stato inserito nessun corso. Creane uno con il pulsante +.",
+  "edit": {
+    "create": "Inserisci corso",
+    "update": "Modifica corso",
+    "view": "Corso"
+  },
+  "changeConfirmation": {
+    "cancel": "Annulla",
+    "ok": "Salva"
+  },
+  "form": {
+    "attributes": "Corso",
+    "name": {
+      "label": "Nome",
+      "placeholder": "ad es. Ginnastica artistica U14 autunno",
+      "helper": "Il corso appare con questo nome nell'elenco."
+    },
+    "group": {
+      "label": "Gruppo",
+      "helper": "Il corso appartiene a questo gruppo di allenamento. In seguito non potrai più cambiarlo."
+    },
+    "startDate": {
+      "label": "Primo giorno",
+      "placeholder": "GG.MM.AAAA"
+    },
+    "endDate": {
+      "label": "Ultimo giorno",
+      "placeholder": "GG.MM.AAAA"
+    },
+    "responsible": {
+      "title": "Responsabili",
+      "description": "Vedono gli importi e richiedono l'indennità. La prima persona riceve alla fine del corso il compito di chiuderlo."
+    },
+    "trainers": {
+      "title": "Allenatori",
+      "description": "Confermano chi era presente a ogni incontro."
+    },
+    "person": {
+      "add": "Aggiungi persona"
+    },
+    "report": {
+      "title": "Annuncio"
+    },
+    "profile": {
+      "label": "Profilo di annuncio",
+      "helper": "Stabilisce in quale forma la presenza viene annunciata alla fine del corso."
+    },
+    "courseNumber": {
+      "label": "Numero dell'offerta G+S",
+      "placeholder": "ad es. 123456",
+      "helper": "Serve solo per la visualizzazione e per il nome del file di annuncio."
+    },
+    "userGroup": {
+      "label": "Gruppo di utenti (NG)",
+      "helper": "Il gruppo di utenti della tua offerta G+S."
+    },
+    "category": {
+      "label": "Sport principale",
+      "helper": "Art. 1 cpv. 1 o 2 dell'ordinanza G+S dell'UFSPO. Vengono proposte solo le combinazioni note a G+S."
+    },
+    "typeMapping": {
+      "title": "Tipi di incontro",
+      "description": "Assegna a ogni tipo di incontro l'attività G+S corrispondente. Gli incontri senza assegnazione non vengono annunciati.",
+      "none": "Non annunciare"
+    }
+  },
+  "profile": {
+    "none": "Nessun annuncio",
+    "generic": "Tabella generale (CSV)",
+    "js": "Gioventù+Sport (G+S)"
+  },
+  "category": {
+    "abs1": "Art. 1 cpv. 1",
+    "abs2": "Art. 1 cpv. 2"
+  },
+  "finance": {
+    "title": "Indennità degli allenatori",
+    "intro": "Solo i responsabili, la direzione del gruppo e la cassa vedono questi dati.",
+    "books": {
+      "label": "Contabilità",
+      "helper": "L'indennità viene registrata in questa contabilità.",
+      "none": "Non è disponibile nessuna contabilità. Chiedi alla cassa."
+    },
+    "account": {
+      "label": "Conto di spesa",
+      "helper": "Lascia vuoto per usare il conto indicato nelle impostazioni della contabilità."
+    },
+    "costCenter": {
+      "label": "Centro di costo",
+      "helper": "Lascia vuoto per usare il valore predefinito del conto o della contabilità."
+    },
+    "defaultRate": {
+      "label": "Tariffa per incontro ({currency})",
+      "helper": "Vale per tutti gli aventi diritto senza una tariffa propria."
+    },
+    "eligible": {
+      "title": "Aventi diritto",
+      "description": "Queste persone ricevono un'indennità per gli incontri che hanno diretto."
+    },
+    "ownRate": {
+      "label": "Tariffa propria",
+      "helper": "Senza tariffa propria vale la tariffa per incontro indicata sopra.",
+      "amount": "Tariffa per incontro ({currency})"
+    }
+  },
+  "validation": {
+    "endBeforeStart": "L'ultimo giorno precede il primo.",
+    "responsibleRequired": "Scegli almeno una persona responsabile.",
+    "jsPairInvalid": "G+S non conosce questa combinazione di gruppo di utenti e sport principale.",
+    "booksRequired": "Scegli la contabilità in cui viene registrata l'indennità.",
+    "booksUnknown": "Non puoi usare questa contabilità. Scegline un'altra.",
+    "rateInvalid": "Inserisci un importo di 0 o più.",
+    "duplicatePerson": "Ogni persona può comparire una sola volta.",
+    "personRequired": "Scegli la persona dall'elenco delle persone."
+  }
 }

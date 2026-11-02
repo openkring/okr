@@ -1,5 +1,119 @@
 {
   "course": "Kurs",
   "courses": "Kurse",
-  "empty": "Es sind noch keine Kurse erfasst. Erstelle einen mit dem + Button."
+  "empty": "Es sind noch keine Kurse erfasst. Erstelle einen mit dem + Button.",
+  "edit": {
+    "create": "Kurs erfassen",
+    "update": "Kurs bearbeiten",
+    "view": "Kurs"
+  },
+  "changeConfirmation": {
+    "cancel": "Abbrechen",
+    "ok": "Speichern"
+  },
+  "form": {
+    "attributes": "Kurs",
+    "name": {
+      "label": "Name",
+      "placeholder": "z. B. Kunstturnen U14 Herbst",
+      "helper": "Unter diesem Namen erscheint der Kurs in der Liste."
+    },
+    "group": {
+      "label": "Gruppe",
+      "helper": "Der Kurs gehört zu dieser Trainingsgruppe. Sie lässt sich nachträglich nicht ändern."
+    },
+    "startDate": {
+      "label": "Erster Kurstag",
+      "placeholder": "TT.MM.JJJJ"
+    },
+    "endDate": {
+      "label": "Letzter Kurstag",
+      "placeholder": "TT.MM.JJJJ"
+    },
+    "responsible": {
+      "title": "Verantwortliche",
+      "description": "Sie sehen die Beträge und beantragen die Entschädigung. Die erste Person erhält am Kursende die Aufgabe zum Abschluss."
+    },
+    "trainers": {
+      "title": "Trainerinnen und Trainer",
+      "description": "Sie bestätigen die Anwesenheit bei den Terminen."
+    },
+    "person": {
+      "add": "Person hinzufügen"
+    },
+    "report": {
+      "title": "Meldung"
+    },
+    "profile": {
+      "label": "Meldeprofil",
+      "helper": "Legt fest, in welcher Form die Anwesenheit am Kursende gemeldet wird."
+    },
+    "courseNumber": {
+      "label": "J+S-Angebotsnummer",
+      "placeholder": "z. B. 123456",
+      "helper": "Wird nur angezeigt und im Dateinamen der Meldung verwendet."
+    },
+    "userGroup": {
+      "label": "Nutzergruppe (NG)",
+      "helper": "Die Nutzergruppe deines J+S-Angebots."
+    },
+    "category": {
+      "label": "Hauptsportart",
+      "helper": "Art. 1 Abs. 1 oder 2 der J+S-Verordnung des BASPO. Es werden nur Kombinationen angeboten, die J+S kennt."
+    },
+    "typeMapping": {
+      "title": "Terminarten",
+      "description": "Ordne jeder Terminart die passende J+S-Aktivität zu. Termine ohne Zuordnung werden nicht gemeldet.",
+      "none": "Nicht melden"
+    }
+  },
+  "profile": {
+    "none": "Keine Meldung",
+    "generic": "Allgemeine Tabelle (CSV)",
+    "js": "Jugend+Sport (J+S)"
+  },
+  "category": {
+    "abs1": "Art. 1 Abs. 1",
+    "abs2": "Art. 1 Abs. 2"
+  },
+  "finance": {
+    "title": "Entschädigung der Trainer",
+    "intro": "Diese Angaben sehen nur die Verantwortlichen, die Gruppenleitung und die Kassenführung.",
+    "books": {
+      "label": "Buchhaltung",
+      "helper": "In dieser Buchhaltung wird die Entschädigung verbucht.",
+      "none": "Es steht keine Buchhaltung zur Verfügung. Frag die Kassenführung."
+    },
+    "account": {
+      "label": "Aufwandkonto",
+      "helper": "Leer lassen, um das Konto aus den Einstellungen der Buchhaltung zu verwenden."
+    },
+    "costCenter": {
+      "label": "Kostenstelle",
+      "helper": "Leer lassen, um die Vorgabe des Kontos oder der Buchhaltung zu verwenden."
+    },
+    "defaultRate": {
+      "label": "Ansatz pro Termin ({currency})",
+      "helper": "Gilt für alle Berechtigten ohne eigenen Ansatz."
+    },
+    "eligible": {
+      "title": "Berechtigte",
+      "description": "Diese Personen erhalten eine Entschädigung für die Termine, die sie geleitet haben."
+    },
+    "ownRate": {
+      "label": "Eigener Ansatz",
+      "helper": "Ohne eigenen Ansatz gilt der Ansatz pro Termin von oben.",
+      "amount": "Ansatz pro Termin ({currency})"
+    }
+  },
+  "validation": {
+    "endBeforeStart": "Der letzte Kurstag liegt vor dem ersten.",
+    "responsibleRequired": "Wähle mindestens eine verantwortliche Person.",
+    "jsPairInvalid": "Diese Kombination aus Nutzergruppe und Hauptsportart kennt J+S nicht.",
+    "booksRequired": "Wähle die Buchhaltung, in der die Entschädigung verbucht wird.",
+    "booksUnknown": "Diese Buchhaltung steht dir nicht zur Verfügung. Wähle eine andere.",
+    "rateInvalid": "Gib einen Betrag von 0 oder mehr ein.",
+    "duplicatePerson": "Jede Person kann nur einmal aufgeführt werden.",
+    "personRequired": "Wähle die Person aus der Personenliste aus."
+  }
 }

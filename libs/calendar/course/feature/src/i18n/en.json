@@ -1,5 +1,119 @@
 {
   "course": "Course",
   "courses": "Courses",
-  "empty": "No courses have been added yet. Create one with the + button."
+  "empty": "No courses have been added yet. Create one with the + button.",
+  "edit": {
+    "create": "Add course",
+    "update": "Edit course",
+    "view": "Course"
+  },
+  "changeConfirmation": {
+    "cancel": "Cancel",
+    "ok": "Save"
+  },
+  "form": {
+    "attributes": "Course",
+    "name": {
+      "label": "Name",
+      "placeholder": "e.g. Artistic gymnastics U14 autumn",
+      "helper": "The course appears under this name in the list."
+    },
+    "group": {
+      "label": "Group",
+      "helper": "The course belongs to this training group. You cannot change it later."
+    },
+    "startDate": {
+      "label": "First day",
+      "placeholder": "DD.MM.YYYY"
+    },
+    "endDate": {
+      "label": "Last day",
+      "placeholder": "DD.MM.YYYY"
+    },
+    "responsible": {
+      "title": "Responsible persons",
+      "description": "They see the amounts and request the compensation. The first person gets the task to close the course when it ends."
+    },
+    "trainers": {
+      "title": "Trainers",
+      "description": "They confirm who was present at each session."
+    },
+    "person": {
+      "add": "Add person"
+    },
+    "report": {
+      "title": "Reporting"
+    },
+    "profile": {
+      "label": "Reporting profile",
+      "helper": "Sets the form in which attendance is reported when the course ends."
+    },
+    "courseNumber": {
+      "label": "J+S offer number",
+      "placeholder": "e.g. 123456",
+      "helper": "Only shown, and used in the file name of the report."
+    },
+    "userGroup": {
+      "label": "User group (NG)",
+      "helper": "The user group of your J+S offer."
+    },
+    "category": {
+      "label": "Main sport category",
+      "helper": "Art. 1 para. 1 or 2 of the J+S ordinance of the BASPO. Only combinations that J+S knows are offered."
+    },
+    "typeMapping": {
+      "title": "Session types",
+      "description": "Assign the matching J+S activity to each session type. Sessions without an assignment are not reported.",
+      "none": "Do not report"
+    }
+  },
+  "profile": {
+    "none": "No reporting",
+    "generic": "General table (CSV)",
+    "js": "Youth+Sport (J+S)"
+  },
+  "category": {
+    "abs1": "Art. 1 para. 1",
+    "abs2": "Art. 1 para. 2"
+  },
+  "finance": {
+    "title": "Trainer compensation",
+    "intro": "Only the responsible persons, the group leaders and the treasurers see these details.",
+    "books": {
+      "label": "Books",
+      "helper": "The compensation is booked in these books.",
+      "none": "No books are available. Ask your treasurer."
+    },
+    "account": {
+      "label": "Expense account",
+      "helper": "Leave empty to use the account from the settings of the books."
+    },
+    "costCenter": {
+      "label": "Cost center",
+      "helper": "Leave empty to use the default of the account or of the books."
+    },
+    "defaultRate": {
+      "label": "Rate per session ({currency})",
+      "helper": "Applies to everyone entitled who has no rate of their own."
+    },
+    "eligible": {
+      "title": "Entitled persons",
+      "description": "These persons receive compensation for the sessions they led."
+    },
+    "ownRate": {
+      "label": "Own rate",
+      "helper": "Without an own rate, the rate per session from above applies.",
+      "amount": "Rate per session ({currency})"
+    }
+  },
+  "validation": {
+    "endBeforeStart": "The last day is before the first day.",
+    "responsibleRequired": "Choose at least one responsible person.",
+    "jsPairInvalid": "J+S does not know this combination of user group and main sport category.",
+    "booksRequired": "Choose the books in which the compensation is booked.",
+    "booksUnknown": "You cannot use these books. Choose another.",
+    "rateInvalid": "Enter an amount of 0 or more.",
+    "duplicatePerson": "Each person can be listed only once.",
+    "personRequired": "Choose the person from the list of persons."
+  }
 }

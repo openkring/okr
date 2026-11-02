@@ -1,5 +1,119 @@
 {
   "course": "Curso",
   "courses": "Cursos",
-  "empty": "Todavía no hay cursos. Crea uno con el botón +."
+  "empty": "Todavía no hay cursos. Crea uno con el botón +.",
+  "edit": {
+    "create": "Crear curso",
+    "update": "Editar curso",
+    "view": "Curso"
+  },
+  "changeConfirmation": {
+    "cancel": "Cancelar",
+    "ok": "Guardar"
+  },
+  "form": {
+    "attributes": "Curso",
+    "name": {
+      "label": "Nombre",
+      "placeholder": "p. ej. Gimnasia artística U14 otoño",
+      "helper": "El curso aparece con este nombre en la lista."
+    },
+    "group": {
+      "label": "Grupo",
+      "helper": "El curso pertenece a este grupo de entrenamiento. Después no podrás cambiarlo."
+    },
+    "startDate": {
+      "label": "Primer día",
+      "placeholder": "DD.MM.AAAA"
+    },
+    "endDate": {
+      "label": "Último día",
+      "placeholder": "DD.MM.AAAA"
+    },
+    "responsible": {
+      "title": "Responsables",
+      "description": "Ven los importes y solicitan la compensación. La primera persona recibe al final del curso la tarea de cerrarlo."
+    },
+    "trainers": {
+      "title": "Entrenadores",
+      "description": "Confirman quién estuvo presente en cada sesión."
+    },
+    "person": {
+      "add": "Añadir persona"
+    },
+    "report": {
+      "title": "Informe"
+    },
+    "profile": {
+      "label": "Perfil de informe",
+      "helper": "Define en qué forma se informa de la asistencia al final del curso."
+    },
+    "courseNumber": {
+      "label": "Número de oferta J+S",
+      "placeholder": "p. ej. 123456",
+      "helper": "Solo se muestra y se usa en el nombre del archivo del informe."
+    },
+    "userGroup": {
+      "label": "Grupo de usuarios (NG)",
+      "helper": "El grupo de usuarios de tu oferta J+S."
+    },
+    "category": {
+      "label": "Deporte principal",
+      "helper": "Art. 1 apdo. 1 o 2 de la ordenanza J+S de la OFDEP. Solo se ofrecen las combinaciones que J+S conoce."
+    },
+    "typeMapping": {
+      "title": "Tipos de sesión",
+      "description": "Asigna a cada tipo de sesión la actividad J+S correspondiente. Las sesiones sin asignación no se informan.",
+      "none": "No informar"
+    }
+  },
+  "profile": {
+    "none": "Sin informe",
+    "generic": "Tabla general (CSV)",
+    "js": "Juventud+Deporte (J+S)"
+  },
+  "category": {
+    "abs1": "Art. 1 apdo. 1",
+    "abs2": "Art. 1 apdo. 2"
+  },
+  "finance": {
+    "title": "Compensación de los entrenadores",
+    "intro": "Solo los responsables, la dirección del grupo y la tesorería ven estos datos.",
+    "books": {
+      "label": "Contabilidad",
+      "helper": "La compensación se contabiliza en esta contabilidad.",
+      "none": "No hay ninguna contabilidad disponible. Pregunta a la tesorería."
+    },
+    "account": {
+      "label": "Cuenta de gastos",
+      "helper": "Déjalo vacío para usar la cuenta de los ajustes de la contabilidad."
+    },
+    "costCenter": {
+      "label": "Centro de costes",
+      "helper": "Déjalo vacío para usar el valor predeterminado de la cuenta o de la contabilidad."
+    },
+    "defaultRate": {
+      "label": "Tarifa por sesión ({currency})",
+      "helper": "Vale para todas las personas con derecho que no tienen tarifa propia."
+    },
+    "eligible": {
+      "title": "Personas con derecho",
+      "description": "Estas personas reciben una compensación por las sesiones que han dirigido."
+    },
+    "ownRate": {
+      "label": "Tarifa propia",
+      "helper": "Sin tarifa propia vale la tarifa por sesión de arriba.",
+      "amount": "Tarifa por sesión ({currency})"
+    }
+  },
+  "validation": {
+    "endBeforeStart": "El último día es anterior al primero.",
+    "responsibleRequired": "Elige al menos una persona responsable.",
+    "jsPairInvalid": "J+S no conoce esta combinación de grupo de usuarios y deporte principal.",
+    "booksRequired": "Elige la contabilidad en la que se contabiliza la compensación.",
+    "booksUnknown": "No puedes usar esta contabilidad. Elige otra.",
+    "rateInvalid": "Introduce un importe de 0 o más.",
+    "duplicatePerson": "Cada persona solo puede aparecer una vez.",
+    "personRequired": "Elige la persona de la lista de personas."
+  }
 }
