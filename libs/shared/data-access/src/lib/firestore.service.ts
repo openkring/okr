@@ -25,6 +25,7 @@ import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { ToastController } from '@ionic/angular';
 import { captureMessage } from '@sentry/angular';
 import { arrayRemove, collection, deleteDoc, doc, getCountFromServer, getDoc, getDocs, query, runTransaction, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
+import type { FieldPath } from 'firebase/firestore';
 import { collectionData, docData, fromRef } from 'rxfire/firestore';
 import { catchError, concat, defer, delay, firstValueFrom, from, map, MonoTypeOperatorFunction, Observable, of, ReplaySubject, retry, share, switchMap, tap, timer } from 'rxjs';
 
@@ -605,6 +606,36 @@ export class FirestoreService {
   }
 
   /**
+   * Read ONE plain document that most signed-in users are NOT allowed to read (e.g. the protected
+   * `courses/{key}/finance/settings`). A denial is the expected answer there, not a fault: it emits
+   * `undefined`, logs at debug level, shows NO toast and never throws. The listener is not cached and
+   * not re-attached (the slow re-attempts of {@link settleFailedListener} would be three wasted
+   * round trips for a user who will never gain access); only the App Check recovery runs first, so a
+   * resume-time token expiry is not mistaken for «no access».
+   * @param path the full document path, `collection/key/sub/doc`
+   * @returns the document data (no `okey`), or undefined when missing, denied or unreadable
+   */
+  public readObjectQuiet<T>(path: string): Observable<T | undefined> {
+    if (!isBrowser(this.platformId) || !isFirestoreInitializedCheck() || !path) return of(undefined);
+    try {
+      return (docData(doc(this.firestore, path)) as Observable<T | undefined>).pipe(
+        this.recoverFromTokenDenial<T | undefined>(`readObjectQuiet(${path})`),
+        catchError((err: unknown) => {
+          if ((err as { code?: string } | null)?.code === 'permission-denied') {
+            console.debug(`FirestoreService.readObjectQuiet(${path}): not readable for this user.`);
+          } else {
+            console.error(`FirestoreService.readObjectQuiet(${path}) error:`, err);
+          }
+          return of(undefined);
+        }),
+      );
+    } catch (err) {
+      console.error(`FirestoreService.readObjectQuiet(${path}) error:`, err);
+      return of(undefined);
+    }
+  }
+
+  /**
    * Lookup a model in the Firestore database and return it as an Observable.
    * @param collectionName the name of the Firestore collection (this can be a path)
    * @param key the key of the document in the database
@@ -777,6 +808,42 @@ export class FirestoreService {
     }
     catch (ex) {
       console.error(`FirestoreService.updateFields(${collectionName}/${key}) -> ERROR: `, ex);
+      return this.okrError(this.toastController, errorMessage ?? `Could not update ${collectionName}/${key} in the database.`);
+    }
+  }
+
+  /**
+   * Partial update by FIELD PATH: writes ONLY the given `[path, value]` pairs in ONE `updateDoc`.
+   * Where {@link updateFields} takes a map (a dotted key such as `attendance.p1` is split on the dot,
+   * so a key that itself contains a dot would write a different field), this takes `FieldPath`
+   * objects, whose segments are never re-split. Use it for one entry of a map field
+   * (`new FieldPath('attendance', personKey)`), so neighbouring entries written by someone else at the
+   * same time are not touched. Same App Check recovery and error toast as updateFields.
+   * @param pairs at least one `[path, value]`; a string path is split on dots, as Firestore does
+   * @param errorMessage an already RESOLVED message (never an i18n key)
+   * @returns the key, or undefined if the write failed
+   */
+  public async updateFieldPaths(
+    collectionName: string,
+    key: string,
+    pairs: ReadonlyArray<readonly [string | FieldPath, unknown]>,
+    errorMessage?: string,
+  ): Promise<string | undefined> {
+    if (!isBrowser(this.platformId)) {
+      return this.okrError(undefined, 'FirestoreService.updateFieldPaths: This method can only be called in the browser context.', true);
+    }
+    if (!collectionName || !key || pairs.length === 0) {
+      return this.okrError(undefined, 'FirestoreService.updateFieldPaths: collectionName, key and at least one field are mandatory.', true);
+    }
+    try {
+      const [first, ...rest] = pairs;
+      const moreFieldsAndValues = rest.flatMap(([path, value]) => [path, value]);
+      await this.writeWithTokenDenialRetry(`updateFieldPaths(${collectionName}/${key})`, () =>
+        updateDoc(doc(this.firestore, `${collectionName}/${key}`), first[0], first[1], ...moreFieldsAndValues));
+      return key;
+    }
+    catch (ex) {
+      console.error(`FirestoreService.updateFieldPaths(${collectionName}/${key}) -> ERROR: `, ex);
       return this.okrError(this.toastController, errorMessage ?? `Could not update ${collectionName}/${key} in the database.`);
     }
   }

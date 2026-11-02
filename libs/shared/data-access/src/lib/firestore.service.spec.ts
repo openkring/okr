@@ -827,3 +827,66 @@ describe('FirestoreService.updateObjectStrict', () => {
     expect(attestAppCheckMock).not.toHaveBeenCalled();
   });
 });
+
+
+// Spec 1.132: attendance entries are written by field path, in ONE updateDoc, never as a whole map.
+describe('FirestoreService.updateFieldPaths', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    TestBed.resetTestingModule();
+    attestAppCheckMock.mockResolvedValue('refreshed');
+    docMock.mockReturnValue({ id: 'e1' } as never);
+    updateDocMock.mockResolvedValue(undefined);
+  });
+
+  it('passes every [path, value] pair to ONE updateDoc call', async () => {
+    const svc = makeService();
+    const p1 = { segments: ['attendance', 'p1'] };
+    await expect(svc.updateFieldPaths('calevents', 'e1', [[p1 as never, { presence: 'present' }], ['attendanceConfirmedAt', '20260901190000']])).resolves.toBe('e1');
+    expect(updateDocMock).toHaveBeenCalledTimes(1);
+    expect(updateDocMock.mock.calls[0].slice(1)).toEqual([p1, { presence: 'present' }, 'attendanceConfirmedAt', '20260901190000']);
+  });
+
+  it('refuses an empty field list without writing', async () => {
+    const svc = makeService();
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    await svc.updateFieldPaths('calevents', 'e1', []);
+    expect(updateDocMock).not.toHaveBeenCalled();
+  });
+});
+
+// Spec 1.132: the finance sub-document is unreadable for most users; a denial must be a quiet `undefined`.
+describe('FirestoreService.readObjectQuiet', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    TestBed.resetTestingModule();
+    attestAppCheckMock.mockResolvedValue('refreshed');
+    docMock.mockReturnValue({ id: 'settings' } as never);
+  });
+
+  it('emits the document data', async () => {
+    docDataMock.mockReturnValue(of({ defaultRate: 1 }));
+    const svc = makeService();
+    expect(await firstValueFrom(svc.readObjectQuiet('courses/c1/finance/settings'))).toEqual({ defaultRate: 1 });
+  });
+
+  it('turns a permission denial into undefined: no throw, no error log, no slow re-attach', async () => {
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    docDataMock.mockReturnValue(throwError(() => permissionDenied()));
+    const svc = makeService();
+    expect(await firstValueFrom(svc.readObjectQuiet('courses/c1/finance/settings'))).toBeUndefined();
+    expect(error).not.toHaveBeenCalled();
+    debug.mockRestore();
+    error.mockRestore();
+  });
+
+  it('survives a stale App Check token: re-attests, then reads', async () => {
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+    docDataMock.mockReturnValue(failsThenEmits(1, { defaultRate: 2 }));
+    const svc = makeService();
+    expect(await firstValueFrom(svc.readObjectQuiet('courses/c1/finance/settings'))).toEqual({ defaultRate: 2 });
+    expect(attestAppCheckMock).toHaveBeenCalledWith(undefined, true);
+    debug.mockRestore();
+  });
+});

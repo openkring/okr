@@ -1,0 +1,17 @@
+{
+  "create": {
+    "conf": "Der Kurs wurde hinzugefügt.",
+    "error": "Der Kurs konnte nicht hinzugefügt werden."
+  },
+  "update": {
+    "conf": "Der Kurs wurde geändert.",
+    "error": "Die Änderung konnte nicht gespeichert werden."
+  },
+  "delete": {
+    "conf": "Der Kurs wurde entfernt.",
+    "error": "Der Kurs konnte nicht entfernt werden."
+  },
+  "finance": {
+    "conf": "Die Entschädigung wurde gespeichert."
+  }
+}

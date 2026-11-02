@@ -1,0 +1,17 @@
+{
+  "create": {
+    "conf": "Le cours a été ajouté.",
+    "error": "Le cours n'a pas pu être ajouté."
+  },
+  "update": {
+    "conf": "Le cours a été modifié.",
+    "error": "La modification n'a pas pu être enregistrée."
+  },
+  "delete": {
+    "conf": "Le cours a été supprimé.",
+    "error": "Le cours n'a pas pu être supprimé."
+  },
+  "finance": {
+    "conf": "L'indemnité a été enregistrée."
+  }
+}

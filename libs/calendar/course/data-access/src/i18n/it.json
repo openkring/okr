@@ -1,0 +1,17 @@
+{
+  "create": {
+    "conf": "Il corso è stato aggiunto.",
+    "error": "Il corso non ha potuto essere aggiunto."
+  },
+  "update": {
+    "conf": "Il corso è stato modificato.",
+    "error": "La modifica non ha potuto essere salvata."
+  },
+  "delete": {
+    "conf": "Il corso è stato rimosso.",
+    "error": "Il corso non ha potuto essere rimosso."
+  },
+  "finance": {
+    "conf": "L'indennità è stata salvata."
+  }
+}

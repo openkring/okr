@@ -1,0 +1,17 @@
+{
+  "create": {
+    "conf": "The course has been added.",
+    "error": "The course could not be added."
+  },
+  "update": {
+    "conf": "The course has been changed.",
+    "error": "The change could not be saved."
+  },
+  "delete": {
+    "conf": "The course has been removed.",
+    "error": "The course could not be removed."
+  },
+  "finance": {
+    "conf": "The compensation has been saved."
+  }
+}

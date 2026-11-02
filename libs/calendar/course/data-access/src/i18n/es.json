@@ -1,0 +1,17 @@
+{
+  "create": {
+    "conf": "El curso se ha añadido.",
+    "error": "No se ha podido añadir el curso."
+  },
+  "update": {
+    "conf": "El curso se ha modificado.",
+    "error": "No se ha podido guardar el cambio."
+  },
+  "delete": {
+    "conf": "El curso se ha eliminado.",
+    "error": "No se ha podido eliminar el curso."
+  },
+  "finance": {
+    "conf": "La compensación se ha guardado."
+  }
+}
