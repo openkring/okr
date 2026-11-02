@@ -48,9 +48,14 @@ export async function persistWithSlot(
   const ref = db.collection(FormStatsCollection).doc(settings.statsId);
   await db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
-    const slot = decideSlot(snap.exists ? countOf(snap.data()) : undefined, settings.maxResponses);
+    const data = snap.exists ? snap.data() : undefined;
+    const slot = decideSlot(data === undefined ? undefined : countOf(data), settings.maxResponses);
     if (!slot.accept) throw new HttpsError('failed-precondition', 'form-full');
-    tx.set(ref, { tenants: [tenantId], responseCount: slot.next }, { merge: true });
+    // never overwrite `tenants`: a form shared by several tenants keeps all of them (union, read in this transaction)
+    const tenants = Array.isArray(data?.['tenants']) ? (data?.['tenants'] as unknown[]).filter((t): t is string => typeof t === 'string') : [];
+    const patch: Record<string, unknown> = { responseCount: slot.next };
+    if (!tenants.includes(tenantId)) patch['tenants'] = [...tenants, tenantId];
+    tx.set(ref, patch, { merge: true });
   });
 
   try {
@@ -59,7 +64,9 @@ export async function persistWithSlot(
     try {
       await db.runTransaction(async (tx) => {
         const snap = await tx.get(ref);
-        tx.set(ref, { responseCount: Math.max(0, countOf(snap.exists ? snap.data() : undefined) - 1) }, { merge: true });
+        // a counter removed meanwhile is not re-created (it would lack `tenants` and be unreadable for authors)
+        if (!snap.exists) return;
+        tx.update(ref, { responseCount: Math.max(0, countOf(snap.data()) - 1) });
       });
     } catch (giveBackError) {
       // the place stays taken (one too many counted) — the author can raise the limit

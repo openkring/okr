@@ -13,7 +13,8 @@ export const DEFAULT_FILLER_CONFIRMATION = 'Vielen Dank, deine Antwort ist einge
 /** One plain address: no list, no spaces, one `@` with something on both sides. */
 const ADDRESS = /^[^\s@,;<>"]+@[^\s@,;<>"]+\.[^\s@,;<>"]+$/;
 
-function escapeHtml(text: string): string {
+/** HTML-escapes text for the form mails (this one and the board notification in `index.ts`). */
+export function escapeHtml(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
@@ -47,4 +48,18 @@ export function buildFillerMail(
   if (to === undefined) return undefined;
   const text = typeof confirmation === 'string' && confirmation.trim() !== '' ? confirmation : DEFAULT_FILLER_CONFIRMATION;
   return { to, subject: `${formName} – Bestätigung`, html: buildFillerConfirmationHtml(formName, text) };
+}
+
+/**
+ * A short, value-free code for a failed send, for the log: the HTTP status of a provider error
+ * («Mailtrap API error 400: <body>» → '400'), else the error's `code`, else 'unknown'. Never the
+ * provider's response body, which can echo the recipient or the text.
+ */
+export function mailErrorCode(e: unknown): string {
+  const message = e instanceof Error ? e.message : '';
+  const status = /\berror (\d{3})\b/i.exec(message)?.[1];
+  if (status !== undefined) return status;
+  const code = (e as { code?: unknown } | null | undefined)?.code;
+  if ((typeof code === 'string' && /^[A-Za-z0-9_.-]{1,40}$/.test(code)) || typeof code === 'number') return String(code);
+  return 'unknown';
 }

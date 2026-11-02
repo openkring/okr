@@ -10,7 +10,6 @@ import {
   buildConfirmationMessage,
   computeFormAvailability,
   DateFormat,
-  effectiveAcceptance,
   getTodayStr,
   omitSsnValues,
   resolveImplicitValues,
@@ -23,9 +22,9 @@ import { createBoathouseReservation } from './reservation-target';
 import { emitEvent } from '../workflow/emit';
 import { buildSubmissionTaskNotes, prepareSubmission, type SubmissionRow, type ValueNames } from './submission-pipeline';
 import { projectPublicFormDefinition } from './public-definition';
-import { isDocumentId, readVerifiedSection, type FormSectionProperties } from './form-section-config';
+import { acceptanceForSection, isDocumentId, readVerifiedSection, type FormSectionProperties } from './form-section-config';
 import { persistWithSlot, readResponseCount } from './form-stats';
-import { buildFillerMail } from './filler-confirmation';
+import { buildFillerMail, escapeHtml, mailErrorCode } from './filler-confirmation';
 
 const REGION = 'europe-west6';
 const formsHmacSecret = defineSecret('FORMS_HMAC_SECRET');
@@ -285,7 +284,8 @@ export const getFormDefinition = onCall(
       throw new HttpsError('not-found', `Form '${formKey}' not found`);
     }
     const doc = snap.docs[0];
-    const formDef = { okey: doc.id, ...doc.data() } as FormDefinition;
+    // the document id last: a stored `okey` field must never redirect the formStats id
+    const formDef = { ...doc.data(), okey: doc.id } as FormDefinition;
     // 1.125 B — open / closed / places left for THIS page: the section's overrides count only when it
     // really is a form section of this form in this tenant (an old app sends no sectionId: form-wide rules).
     const section = await readVerifiedSection(db, request.data?.sectionId, formKey, tenantId);
@@ -305,7 +305,8 @@ async function availabilityOf(
   formDef: FormDefinition,
   section: { id: string; props: FormSectionProperties } | undefined,
 ) {
-  const settings = effectiveAcceptance(formDef, section?.props, section?.id);
+  // a form whose implicit value can only come from a page is closed without a verified section
+  const settings = acceptanceForSection(formDef, section);
   // the counter is read only when there is a limit to compare it with
   const count = settings.maxResponses > 0 ? await readResponseCount(db, settings.statsId) : 0;
   return { settings, availability: computeFormAvailability(settings, count, todayStoreDate()) };
@@ -314,10 +315,6 @@ async function availabilityOf(
 // ──────────────────────────────────────────
 // Phase 5 helpers
 // ──────────────────────────────────────────
-
-function escapeHtml(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
 
 function buildSubmissionEmailHtml(
   formDef: FormDefinition,
@@ -459,7 +456,8 @@ async function sendFillerConfirmation(
     await sendEmailViaProvider('mailtrap_api', { from, to: [mail.to], subject: mail.subject, html: mail.html });
     logger.info(`${cfName}: filler confirmation sent submissionId=${submissionId}`);
   } catch (e) {
-    logger.error(`${cfName}: failed to send filler confirmation submissionId=${submissionId}: ${e instanceof Error ? e.message : String(e)}`);
+    // a status / short code only: the provider's response body can echo the address or the text
+    logger.error(`${cfName}: failed to send filler confirmation submissionId=${submissionId} code=${mailErrorCode(e)}`);
   }
 }
 
@@ -492,7 +490,8 @@ export const submitForm = onCall(
       throw new HttpsError('not-found', `Form '${payload.formKey}' not found`);
     }
 
-    const formDef = { okey: formSnap.docs[0].id, ...formSnap.docs[0].data() } as FormDefinition;
+    // the document id last: a stored `okey` field must never redirect the formStats id
+    const formDef = { ...formSnap.docs[0].data(), okey: formSnap.docs[0].id } as FormDefinition;
 
     const sectionConfig = formSnap.docs[0].data()?.['rateLimit'] as
       { limit?: number; periodMinutes?: number } | undefined;
@@ -587,7 +586,8 @@ export const submitForm = onCall(
     const fields = formDef.fields ?? [];
     const section = await readVerifiedSection(db, payload.sectionConfigRef, payload.formKey, payload.tenantId);
     if (payload.sectionConfigRef && section === undefined) {
-      logger.warn(`${CF_NAME}: section ${payload.sectionConfigRef} is no form section of formKey=${payload.formKey} in this tenant — ignored`);
+      const ref = isDocumentId(payload.sectionConfigRef) ? payload.sectionConfigRef : 'invalid';
+      logger.warn(`${CF_NAME}: section ${ref} is no form section of formKey=${payload.formKey} in this tenant — ignored`);
     }
     const { settings: acceptance, availability } = await availabilityOf(db, formDef, section);
     if (!availability.isOpen) {

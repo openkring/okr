@@ -20,6 +20,12 @@ function fakeDb(initial: Record<string, Record<string, unknown>> = {}) {
         set: (r: { path: string }, data: Record<string, unknown>, opts?: { merge?: boolean }) => {
           writes.push(() => { store[r.path] = opts?.merge ? { ...(store[r.path] ?? {}), ...data } : { ...data }; });
         },
+        update: (r: { path: string }, data: Record<string, unknown>) => {
+          writes.push(() => {
+            if (!(r.path in store)) throw new Error('NOT_FOUND'); // like Firestore: update never creates
+            store[r.path] = { ...store[r.path], ...data };
+          });
+        },
       };
       const result = await fn(tx);
       writes.forEach((w) => w());
@@ -101,6 +107,24 @@ describe('persistWithSlot', () => {
     };
     await expect(persistWithSlot(db, settings('f1', 0), 'scs', false, failing)).rejects.toThrow('x');
     expect(store['formStats/f1']['responseCount']).toBe(0);
+  });
+
+  it('never overwrites tenants: a shared form keeps every tenant, a new one is added', async () => {
+    const { db, store } = fakeDb({ 'formStats/f1': { tenants: ['scs', 'kring'], responseCount: 1 } });
+    await persistWithSlot(db, settings('f1', 0), 'kring', false, async () => 'id');
+    expect(store['formStats/f1']).toEqual({ tenants: ['scs', 'kring'], responseCount: 2 });
+    await persistWithSlot(db, settings('f1', 0), 'p13', false, async () => 'id');
+    expect(store['formStats/f1']['tenants']).toEqual(['scs', 'kring', 'p13']);
+  });
+
+  it('giving back does not re-create a counter removed meanwhile', async () => {
+    const { db, store } = fakeDb();
+    const failing = async () => {
+      delete store['formStats/f1'];
+      throw new Error('x');
+    };
+    await expect(persistWithSlot(db, settings('f1', 2), 'scs', false, failing)).rejects.toThrow('x');
+    expect('formStats/f1' in store).toBe(false);
   });
 
   it('section counted separately', async () => {

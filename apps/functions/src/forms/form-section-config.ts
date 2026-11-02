@@ -1,5 +1,6 @@
 import type { Firestore } from 'firebase-admin/firestore';
-import type { BaseType } from '@okr/shared-models';
+import type { BaseType, Field } from '@okr/shared-models';
+import { effectiveAcceptance, type AcceptanceSettings } from '@okr/shared-util-core';
 
 /**
  * The form section a submission names (`sectionConfigRef`) is a client claim (1.125 B, review focus 1).
@@ -62,4 +63,30 @@ export async function readVerifiedSection(
   const snap = await db.collection('sections').doc(sectionId).get();
   const props = verifySectionForForm(sectionId, snap.exists ? snap.data() : undefined, formKey, tenantId);
   return props === undefined ? undefined : { id: sectionId, props };
+}
+
+/**
+ * A form needs a verified section when one of its implicit fields can get a value ONLY from the page:
+ * no `defaultValue` and no `fromLink`. Without the section the value (the course) would be missing and
+ * the page's own limits and closed state could be dodged by omitting `sectionConfigRef`.
+ */
+export function requiresSection(fields: Field[] | undefined): boolean {
+  return (Array.isArray(fields) ? fields : []).some((f) => {
+    if (f?.type !== 'implicit') return false;
+    const d = f.defaultValue;
+    return (d === undefined || d === null || d === '') && f.fromLink !== true;
+  });
+}
+
+/**
+ * The acceptance rules for one submission or render: the form's with the verified section's overrides
+ * on top (`effectiveAcceptance`). A form that `requiresSection` but has no verified section is closed —
+ * `submitForm` refuses it with `form-closed`, `getFormDefinition` reports it closed.
+ */
+export function acceptanceForSection(
+  def: Parameters<typeof effectiveAcceptance>[0] & { fields?: Field[] },
+  section: { id: string; props: FormSectionProperties } | undefined,
+): AcceptanceSettings {
+  const settings = effectiveAcceptance(def, section?.props, section?.id);
+  return section === undefined && requiresSection(def.fields) ? { ...settings, isOpen: false } : settings;
 }

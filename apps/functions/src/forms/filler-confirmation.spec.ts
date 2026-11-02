@@ -6,7 +6,9 @@ import {
   buildFillerConfirmationHtml,
   buildFillerMail,
   DEFAULT_FILLER_CONFIRMATION,
+  escapeHtml,
   firstVisibleEmail,
+  mailErrorCode,
 } from './filler-confirmation';
 
 const f = (id: string, key: string, type: string, order: number): Field =>
@@ -85,5 +87,25 @@ describe('buildFillerMail', () => {
     expect(mail?.html).toContain('Danke Ada.');
     expect(mail?.html).not.toContain('7561234567897');
     expect(mail?.html).not.toMatch(/756[.\d]/);
+  });
+});
+
+describe('mailErrorCode', () => {
+  it('keeps only the HTTP status of a provider error, never its body', () => {
+    const code = mailErrorCode(new Error('Mailtrap API error 400: {"errors":["ada@x.ch is invalid"]}'));
+    expect(code).toBe('400');
+  });
+
+  it('falls back to a short error code, else unknown', () => {
+    expect(mailErrorCode(Object.assign(new Error('connect refused ada@x.ch'), { code: 'ECONNREFUSED' }))).toBe('ECONNREFUSED');
+    expect(mailErrorCode(new Error('ada@x.ch rejected'))).toBe('unknown');
+    expect(mailErrorCode({ code: 'ada@x.ch is bad' })).toBe('unknown');
+    expect(mailErrorCode(undefined)).toBe('unknown');
+  });
+});
+
+describe('escapeHtml', () => {
+  it('escapes the four HTML characters', () => {
+    expect(escapeHtml('<a href="x">&</a>')).toBe('&lt;a href=&quot;x&quot;&gt;&amp;&lt;/a&gt;');
   });
 });
