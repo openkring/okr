@@ -4,7 +4,10 @@ import {
   coerceToPropertyType,
   computeDerivedValues,
   getVisibleFieldIds,
+  normalizeAhv,
+  omitSsnValues,
   propertyTypeOf,
+  ssnPresenceLabel,
 } from '@okr/shared-util-core';
 
 /**
@@ -14,6 +17,10 @@ import {
  * Hidden means absent: a hidden field is not required, not validated and not stored. Keys that
  * are not an input field of the definition (honeypot, `_jsToken`, `personKey`, `reviewer`, …)
  * are dropped. Derived values overwrite whatever the client sent for the same key.
+ *
+ * AHV numbers (`ssn` fields) are vault data (privacy 1.19): checked here (EAN-13), stored in the
+ * electronic 13-digit format in the target record, and never copied anywhere else — the e-mail
+ * rows show «angegeben», the task note and every other side effect get `omitSsnValues`.
  */
 
 export interface PreparedSubmission {
@@ -22,6 +29,8 @@ export interface PreparedSubmission {
   missingRequired: string[];
   /** Keys of visible `asProperty` fields whose answer does not coerce to the property type. */
   invalidProperties: string[];
+  /** Keys of visible AHV (`ssn`) fields whose answer is not a valid AHV number. */
+  invalidSsn: string[];
   /** Keys of derived `asProperty` values that do not coerce to their type (admin-authored: logged, not rejected). */
   droppedDerivedProperties: string[];
   /** What the notification e-mail shows: visible answers in field order, then derived values. */
@@ -55,14 +64,17 @@ function formatRowValue(field: Field | undefined, value: unknown): string {
 /**
  * The rows of the notification e-mail (pure): visible input fields in field order with their
  * answer (booleans as ja/nein), then every derived value labelled by its key. Hidden and display
- * fields are not shown.
+ * fields are not shown. An AHV (`ssn`) answer shows as «angegeben» / «–», never as the number.
  */
 export function buildSubmissionRows(
   sortedVisibleInputs: Field[],
   answers: Record<string, unknown>,
   derivedValues: Record<string, string>,
 ): SubmissionRow[] {
-  const rows: SubmissionRow[] = sortedVisibleInputs.map((f) => ({ label: f.label, value: formatRowValue(f, answers[f.key]) }));
+  const rows: SubmissionRow[] = sortedVisibleInputs.map((f) => ({
+    label: f.label,
+    value: f.type === 'ssn' ? ssnPresenceLabel(answers[f.key]) : formatRowValue(f, answers[f.key]),
+  }));
   for (const [key, value] of Object.entries(derivedValues)) rows.push({ label: key, value: formatRowValue(undefined, value) });
   return rows;
 }
@@ -82,12 +94,22 @@ export function prepareSubmission(
 
   const missingRequired: string[] = [];
   const invalidProperties: string[] = [];
+  const invalidSsn: string[] = [];
   const droppedDerivedProperties: string[] = [];
   const answers: Record<string, unknown> = {};
 
   for (const field of sorted) {
     if (!visible.has(field.id)) continue;
-    const value = input[field.key];
+    let value = input[field.key];
+    if (field.type === 'ssn' && value !== undefined) {
+      // '' for no number (also the bare mask '756.'), the 13 digits for a valid one
+      const ssn = normalizeAhv(value);
+      if (ssn === undefined) {
+        invalidSsn.push(field.key);
+        continue;
+      }
+      value = ssn;
+    }
     if (field.required && isEmpty(value)) missingRequired.push(field.key);
     if (value !== undefined) {
       answers[field.key] = value;
@@ -135,5 +157,20 @@ export function prepareSubmission(
   }
 
   const rows = buildSubmissionRows(sorted.filter((f) => visible.has(f.id)), answers, derivedValues);
-  return { values, missingRequired, invalidProperties, droppedDerivedProperties, rows };
+  return { values, missingRequired, invalidProperties, invalidSsn, droppedDerivedProperties, rows };
+}
+
+/**
+ * The note of the approval task a submission opens (pure). The answers go in WITHOUT the AHV
+ * numbers: `tasks` is read by the assignee and outlives the application, and the subject-data
+ * map finds a task by its author/assignee only — an AHV number copied there would survive the
+ * applicant's erasure.
+ */
+export function buildSubmissionTaskNotes(
+  fields: Field[] | undefined,
+  submissionId: string,
+  formKey: string,
+  values: Record<string, unknown>,
+): string {
+  return JSON.stringify({ submissionId, formKey, values: omitSsnValues(fields, values) });
 }

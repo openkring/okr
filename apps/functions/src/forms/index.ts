@@ -5,13 +5,13 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { createHmac, createHash } from 'node:crypto';
 
 import type { DerivedValue, Field } from '@okr/shared-models';
-import { getTodayStr, DateFormat } from '@okr/shared-util-core';
+import { getTodayStr, DateFormat, omitSsnValues } from '@okr/shared-util-core';
 import { sendEmailViaProvider } from '../auth/email-transport';
 import { getAppEmailConfig } from '../auth/email-templates';
 import { createProspect } from '../business/prospect';
 import { createBoathouseReservation } from './reservation-target';
 import { emitEvent } from '../workflow/emit';
-import { prepareSubmission, type SubmissionRow } from './submission-pipeline';
+import { buildSubmissionTaskNotes, prepareSubmission, type SubmissionRow } from './submission-pipeline';
 import { projectPublicFormDefinition } from './public-definition';
 
 const REGION = 'europe-west6';
@@ -335,7 +335,8 @@ async function runSideEffects(
           priority: 1,
           importance: 1,
           assignee,
-          notes: JSON.stringify({ submissionId, formKey: formDef.formKey, values }),
+          // without the AHV numbers: they stay in the target record (privacy 1.19)
+          notes: buildSubmissionTaskNotes(formDef.fields, submissionId, formDef.formKey, values),
           tags: ['form.submission'],
           index: `c:form a:submission s:${submissionId}`,
           createdAt: FieldValue.serverTimestamp(),
@@ -510,6 +511,13 @@ export const submitForm = onCall(
         `Invalid values for fields: ${prepared.invalidProperties.join(', ')}`
       );
     }
+    if (prepared.invalidSsn.length > 0) {
+      // names the key only — never the number
+      throw new HttpsError(
+        'invalid-argument',
+        `Invalid AHV numbers for fields: ${prepared.invalidSsn.join(', ')}`
+      );
+    }
 
     if (prepared.droppedDerivedProperties.length > 0) {
       // Admin-authored derived values: a misconfigured type is a definition bug, not the filler's fault.
@@ -522,6 +530,9 @@ export const submitForm = onCall(
     let targetUrl: string | undefined;
 
     const cleanValues = prepared.values;
+    // An AHV number (`ssn` field) is stored in the target record and nowhere else (privacy 1.19):
+    // everything below that is not the generic collection write gets the answers without it.
+    const shareableValues = omitSsnValues(formDef.fields, cleanValues);
 
     if (target.kind === 'collection') {
       const mapping = getFormMapping(target.mappingKey);
@@ -543,7 +554,7 @@ export const submitForm = onCall(
           submissionId = await createBoathouseReservation(db, {
             tenantId: payload.tenantId,
             uid: request.auth?.uid,
-            values: cleanValues,
+            values: shareableValues,
             defaults: mapping.defaults,
           });
         }
@@ -557,7 +568,7 @@ export const submitForm = onCall(
         if (isSpam) {
           submissionId = crypto.randomUUID();
         } else {
-          submissionId = await createProspect({ ...cleanValues, ...(mapping.defaults ?? {}) });
+          submissionId = await createProspect({ ...shareableValues, ...(mapping.defaults ?? {}) });
         }
       } else {
         const record: Record<string, unknown> = {
@@ -577,7 +588,8 @@ export const submitForm = onCall(
     } else {
       if (!isSpam) {
         const body = new URLSearchParams();
-        for (const [k, v] of Object.entries(cleanValues)) body.set(k, String(v ?? ''));
+        // an external URL is a third party: it never receives an AHV number
+        for (const [k, v] of Object.entries(shareableValues)) body.set(k, String(v ?? ''));
         const response = await fetch(target.url, {
           method: 'POST',
           body: body.toString(),
@@ -620,7 +632,7 @@ export const submitForm = onCall(
     if (!isSpam && payload.sectionConfigRef) {
       await runSideEffects(
         db, payload.sectionConfigRef, payload.tenantId,
-        formDef, cleanValues, prepared.rows, submissionId, payload.meta.submittedAt,
+        formDef, shareableValues, prepared.rows, submissionId, payload.meta.submittedAt,
         CF_NAME,
       );
     }
@@ -631,7 +643,7 @@ export const submitForm = onCall(
     // submitter is not a person yet), so the person-scoped probes correctly find nothing.
     if (!isSpam) {
       await emitEvent('form.submitted', payload.tenantId, `formSubmission.${submissionId}`, {
-        subjectName: String(cleanValues['lastName'] ?? cleanValues['name'] ?? cleanValues['email'] ?? ''),
+        subjectName: String(shareableValues['lastName'] ?? shareableValues['name'] ?? shareableValues['email'] ?? ''),
         params: { formKey: payload.formKey, formName: formDef.name ?? '', collectionName: collectionName ?? '' },
       });
     }

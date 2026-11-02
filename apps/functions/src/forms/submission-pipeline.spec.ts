@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { DerivedValue, Field, VisibilityRule } from '@okr/shared-models';
 
-import { prepareSubmission } from './submission-pipeline';
+import { buildSubmissionRows, buildSubmissionTaskNotes, prepareSubmission } from './submission-pipeline';
 
 const TODAY = '20261102';
 
@@ -218,5 +218,81 @@ describe('prepareSubmission rows (notification e-mail)', () => {
     const fields = [f('boats', 'checkbox', 0, { options: [{ label: 'A', value: 'a' }, { label: 'B', value: 'b' }] })];
     const r = prepareSubmission(fields, undefined, undefined, { boats: ['a', 'b'] }, TODAY);
     expect(r.rows).toEqual([{ label: 'L-boats', value: 'a, b' }]);
+  });
+});
+
+describe('AHV numbers (ssn fields) — privacy 1.19', () => {
+  const AHV = '756.1234.5678.97';
+  const AHV_DIGITS = '7561234567897';
+  const scsLike = () => [
+    f('lastName', 'text', 0, { required: true }),
+    f('dateOfBirth', 'date', 1, { required: true }),
+    f('ssnId', 'ssn', 2, { required: true, visibleIf: rule('dateOfBirth', 'ageLt', 20) }),
+  ];
+
+  it('stores a valid number in the electronic 13-digit format', () => {
+    const r = prepareSubmission(scsLike(), undefined, undefined, { lastName: 'Muster', dateOfBirth: '20150101', ssnId: AHV }, TODAY);
+    expect(r.invalidSsn).toEqual([]);
+    expect(r.missingRequired).toEqual([]);
+    expect(r.values['ssnId']).toBe(AHV_DIGITS);
+  });
+
+  it('rejects a number with a wrong check digit, naming the key only', () => {
+    const r = prepareSubmission(scsLike(), undefined, undefined, { lastName: 'Muster', dateOfBirth: '20150101', ssnId: '756.1234.5678.98' }, TODAY);
+    expect(r.invalidSsn).toEqual(['ssnId']);
+    expect('ssnId' in r.values).toBe(false);
+  });
+
+  it('rejects a value that is not text', () => {
+    const r = prepareSubmission(scsLike(), undefined, undefined, { lastName: 'M', dateOfBirth: '20150101', ssnId: { n: AHV } }, TODAY);
+    expect(r.invalidSsn).toEqual(['ssnId']);
+  });
+
+  it('reads the bare mask scaffolding as empty: required and visible -> missing', () => {
+    const r = prepareSubmission(scsLike(), undefined, undefined, { lastName: 'M', dateOfBirth: '20150101', ssnId: '756.' }, TODAY);
+    expect(r.invalidSsn).toEqual([]);
+    expect(r.missingRequired).toEqual(['ssnId']);
+  });
+
+  it('hidden means absent: a hidden ssn field is neither required, nor validated, nor stored', () => {
+    const r = prepareSubmission(scsLike(), undefined, undefined, { lastName: 'M', dateOfBirth: '19800101', ssnId: 'garbage' }, TODAY);
+    expect(r.invalidSsn).toEqual([]);
+    expect(r.missingRequired).toEqual([]);
+    expect('ssnId' in r.values).toBe(false);
+  });
+
+  it('never becomes a typed property, even when the definition says asProperty', () => {
+    const fields = [f('ssnId', 'ssn', 0, { asProperty: true })];
+    const r = prepareSubmission(fields, undefined, 'properties', { ssnId: AHV }, TODAY);
+    expect(r.values['ssnId']).toBe(AHV_DIGITS);
+    expect(r.values['properties']).toEqual([]);
+  });
+
+  it('the e-mail rows show «angegeben» / «–», never the number', () => {
+    const r = prepareSubmission(scsLike(), undefined, undefined, { lastName: 'Muster', dateOfBirth: '20150101', ssnId: AHV }, TODAY);
+    expect(r.rows).toEqual([
+      { label: 'L-lastName', value: 'Muster' },
+      { label: 'L-dateOfBirth', value: '20150101' },
+      { label: 'L-ssnId', value: 'angegeben' },
+    ]);
+    expect(JSON.stringify(r.rows)).not.toContain('5678');
+
+    const optional = [f('ssnId', 'ssn', 0)];
+    expect(buildSubmissionRows(optional, { ssnId: '' }, {})).toEqual([{ label: 'L-ssnId', value: '–' }]);
+    expect(buildSubmissionRows(optional, {}, {})).toEqual([{ label: 'L-ssnId', value: '–' }]);
+    expect(buildSubmissionRows(optional, { ssnId: AHV_DIGITS }, {})).toEqual([{ label: 'L-ssnId', value: 'angegeben' }]);
+  });
+
+  it('the approval task note carries the answers without the AHV number', () => {
+    const notes = buildSubmissionTaskNotes(scsLike(), 'sub1', 'mitgliedschaft-beantragen', { lastName: 'Muster', ssnId: AHV_DIGITS, applicationAs: 'youth' });
+    expect(JSON.parse(notes)).toEqual({
+      submissionId: 'sub1', formKey: 'mitgliedschaft-beantragen', values: { lastName: 'Muster', applicationAs: 'youth' },
+    });
+    expect(notes).not.toContain(AHV_DIGITS);
+  });
+
+  it('the task note is unchanged for a form without an ssn field', () => {
+    const notes = buildSubmissionTaskNotes([f('lastName', 'text', 0)], 's', 'k', { lastName: 'Muster' });
+    expect(JSON.parse(notes)).toEqual({ submissionId: 's', formKey: 'k', values: { lastName: 'Muster' } });
   });
 });
