@@ -62,6 +62,12 @@ export const APPLICATION_I18N_KEYS = {
   section_address:         PFX + 'section.address',
   section_parent:          PFX + 'section.parent',
   section_application:     PFX + 'section.application',
+  section_properties:      PFX + 'section.properties',
+
+  proposal_label:          PFX + 'proposal.label',
+  proposal_junior:         PFX + 'proposal.junior',
+  proposal_active:         PFX + 'proposal.active',
+  proposal_candidate:      PFX + 'proposal.candidate',
 
   kind_youth:              PFX + 'kind.youth',
   kind_adult:              PFX + 'kind.adult',

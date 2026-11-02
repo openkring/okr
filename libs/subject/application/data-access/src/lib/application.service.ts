@@ -24,7 +24,7 @@ import { createFavoriteAddress } from '@okr/subject-address-util';
 import { PersonService } from '@okr/subject-person-data-access';
 import { TaskService } from '@okr/project-task-data-access';
 import {
-  getApplicationIndex, newParentPerson, toPersonModel
+  getApplicationIndex, isMembershipApplication, newParentPerson, toPersonModel
 } from '@okr/application-util';
 import { PFX } from './scope';
 
@@ -134,7 +134,13 @@ export class ApplicationService {
       `${application.okey}: ${application.lastName}/${application.firstName}`);
   }
 
+  /**
+   * Runs the membership flow: person, addresses and (for youth) parents. A course registration
+   * (`applicationFor: 'course'`, spec 1.125 §13.2) must never create a member — it is left
+   * untouched until the course feature decides what accepting it means.
+   */
   public async accept(application: ApplicationModel, currentUser?: UserModel): Promise<string | undefined> {
+    if (!isMembershipApplication(application)) return undefined;
     if (application.state !== 'reviewing') return undefined;
 
     const tenantId = this.env.tenantId;

@@ -49,6 +49,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
               [allTags]="allTags()"
               [readOnly]="isReadOnly()"
               [priv]="priv()"
+              [proposalNote]="proposalNote()"
               [i18n]="i18n"
               (dirty)="manualDirty.set($event)"
               (valid)="formValid.set($event)"
@@ -85,6 +86,8 @@ export class MembershipEditModal {
   public mcat = input<CategoryListModel | undefined>(); // undefined for groups / tenants without a shared mcat
   public isNew = input.required<boolean>();
   public readOnly = input<boolean>(true);
+  /** «Vorschlag aus dem Antrag: …» — shown above the preselected category of a new membership (spec 1.125 §13.1) */
+  public proposalNote = input('');
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   // signals

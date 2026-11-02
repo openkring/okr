@@ -1,5 +1,5 @@
 import { DEFAULT_ADDRESS_USAGE, DEFAULT_CITY, DEFAULT_COUNTRY, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MCAT, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_PHONE, DEFAULT_STREETNAME, DEFAULT_STREETNUMBER, DEFAULT_TAGS, DEFAULT_URL, DEFAULT_ZIP, END_FUTURE_DATE_STR } from '@okr/shared-constants';
-import { AddressModel, AvatarInfo, CategoryItemModel, GroupModel, GroupModelName, MembershipModel, MoneyModel, OrgModel, OrgModelName, PersonModel, PersonModelName } from '@okr/shared-models';
+import { AddressModel, AvatarInfo, CategoryItemModel, CategoryListModel, GroupModel, GroupModelName, MembershipModel, MoneyModel, OrgModel, OrgModelName, PersonModel, PersonModelName } from '@okr/shared-models';
 import { addIndexElement, convertDateFormatToString, DateFormat, die, getBirthYear, getStoreDateYear, getTodayStr } from '@okr/shared-util-core';
 import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
 
@@ -133,6 +133,17 @@ export function convertMemberAndOrgToMembership(
   membership.dateOfExit = END_FUTURE_DATE_STR;
   membership.category = DEFAULT_MCAT;
   return membership;
+}
+
+/**
+ * The item of an org's member-category list that matches a proposed category name (spec 1.125
+ * §13.1: an application proposes 'junior' | 'active' | 'candidate'). Membership categories are
+ * stored by item `name`, so a proposal only counts when the list really has an item of that name;
+ * otherwise undefined — a category is never invented.
+ */
+export function matchCategoryItem(categories: CategoryListModel | undefined, proposed: string | undefined): string | undefined {
+  if (!categories || !proposed) return undefined;
+  return (categories.items ?? []).some(item => item.name === proposed) ? proposed : undefined;
 }
 
 // Firestore reads return the raw doc: a field added to the model after the doc was written

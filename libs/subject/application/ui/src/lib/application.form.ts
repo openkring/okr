@@ -1,18 +1,21 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular';
 
 import { ChSsnMask } from '@okr/shared-config';
 import { SSN_LENGTH } from '@okr/shared-constants';
-import { APPLICATION_KIND_VALUES, ApplicationModel } from '@okr/shared-models';
+import { APPLICATION_KIND_VALUES, ApplicationModel, BaseType } from '@okr/shared-models';
 import {
-  CountrySelect, CountrySelectI18n, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote,
-  PhoneInput, PhoneInputI18n, RadioGroup, RadioGroupI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n
+  Checkbox, CheckboxI18n, CountrySelect, CountrySelectI18n, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote,
+  NumberInput, NumberInputI18n, PhoneInput, PhoneInputI18n, RadioGroup, RadioGroupI18n, StringSelect, StringSelectI18n,
+  TextInput, TextInputI18n
 } from '@okr/shared-ui';
 import { AhvFormat, formatAhv, validateVestTree, vestErrors } from '@okr/shared-util-angular';
-import { coerceBoolean } from '@okr/shared-util-core';
-import { ApplicationI18n, applicationValidations, needsSsn } from '@okr/application-util';
+import { coerceBoolean, fill, getAge } from '@okr/shared-util-core';
+import {
+  ApplicationI18n, applicationValidations, isMembershipApplication, needsSsn, proposeMembershipCategory, setPropertyValue
+} from '@okr/application-util';
 
 /** A membership application. The parent modal drives saving through the change-confirmation. */
 @Component({
@@ -20,8 +23,8 @@ import { ApplicationI18n, applicationValidations, needsSsn } from '@okr/applicat
   standalone: true,
   imports: [
     DatePipe,
-    TextInput, EmailInput, PhoneInput, DateInput, CountrySelect, RadioGroup, StringSelect, ErrorNote,
-    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonLabel
+    TextInput, EmailInput, PhoneInput, DateInput, CountrySelect, RadioGroup, StringSelect, ErrorNote, Checkbox, NumberInput,
+    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonNote
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -191,10 +194,49 @@ import { ApplicationI18n, applicationValidations, needsSsn } from '@okr/applicat
                     [selectedString]="applicationAs()" (selectedStringChange)="onFieldChange('applicationAs', $event)" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="applicationAsErrors()" />
                 </ion-col>
+                @if (proposal(); as proposal) {
+                  <ion-col size="12" size-md="6">
+                    <ion-item lines="none">
+                      <ion-note>{{ proposal }}</ion-note>
+                    </ion-item>
+                  </ion-col>
+                }
               </ion-row>
             </ion-grid>
           </ion-card-content>
         </ion-card>
+
+        <!-- answers the form builder stored as typed properties (spec 1.125 §4.4): only the value may be corrected -->
+        @if (propertyRows().length > 0) {
+          <ion-card>
+            <ion-card-header><ion-card-title>{{ i18n().section_properties() }}</ion-card-title></ion-card-header>
+            <ion-card-content class="ion-no-padding">
+              <ion-grid>
+                <ion-row>
+                  @for (row of propertyRows(); track row.key) {
+                    <ion-col size="12" size-md="6">
+                      @switch (row.type) {
+                        @case ('boolean') {
+                          <okr-checkbox [i18n]="row.checkboxI18n" [checked]="row.value === true"
+                            (checkedChange)="onPropertyChange(row.key, $event)" [readOnly]="isReadOnly()" />
+                        }
+                        @case ('number') {
+                          <okr-number-input [i18n]="row.numberI18n" [value]="row.numberValue"
+                            (valueChange)="onPropertyChange(row.key, $event)" [readOnly]="isReadOnly()" />
+                        }
+                        @default {
+                          <okr-text-input [i18n]="row.textI18n" [value]="row.textValue"
+                            (valueChange)="onPropertyChange(row.key, $event)" [readOnly]="isReadOnly()" />
+                        }
+                      }
+                      <okr-error-note [errors]="row.errors" />
+                    </ion-col>
+                  }
+                </ion-row>
+              </ion-grid>
+            </ion-card-content>
+          </ion-card>
+        }
       </form>
     }
   `
@@ -228,6 +270,17 @@ export class ApplicationForm {
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected readonly isYouth = computed(() => this.formData().applicationAs === 'youth');
   protected readonly showSsn = computed(() => needsSsn(this.formData()));
+  /** the member category the application suggests — shown only, never written (spec 1.125 §13.1) */
+  protected readonly proposal = computed(() => {
+    const app = this.formData();
+    if (!isMembershipApplication(app) || getAge(app.dateOfBirth ?? '') < 0) return '';
+    const labels = {
+      junior: this.i18n().proposal_junior(),
+      active: this.i18n().proposal_active(),
+      candidate: this.i18n().proposal_candidate(),
+    };
+    return fill(this.i18n().proposal_label(), { category: labels[proposeMembershipCategory(app)] });
+  });
 
   // fields
   protected readonly firstName = computed(() => this.formData().firstName ?? '');
@@ -267,6 +320,19 @@ export class ApplicationForm {
   protected readonly parentEmailErrors = computed(() => this.validationResult().getErrors('parentEmail'));
   protected readonly applicationAsErrors = computed(() => this.validationResult().getErrors('applicationAs'));
 
+  // typed properties — legacy applications have none (Firestore reads skip the model initialiser)
+  protected readonly propertyRows = computed(() => (this.formData().properties ?? []).map((p, index) => ({
+    key: p.key,
+    type: p.type,
+    value: p.value,
+    numberValue: p.value as number,
+    textValue: p.value === undefined || p.value === null ? '' : String(p.value),
+    checkboxI18n: { name: p.key, label: p.label, helper: '' } as CheckboxI18n,
+    numberI18n: { name: p.key, label: p.label, placeholder: '', helper: '' } as NumberInputI18n,
+    textI18n: this.textI18n(p.key, p.label),
+    errors: this.validationResult().getErrors(`properties[${index}].value`),
+  })));
+
   // i18n — adapted at the shared/ui boundary
   protected readonly firstNameI18n = computed(() => this.textI18n('firstName', this.i18n().firstname()));
   protected readonly lastNameI18n = computed(() => this.textI18n('lastName', this.i18n().lastname()));
@@ -291,6 +357,11 @@ export class ApplicationForm {
   protected onFieldChange(fieldName: keyof ApplicationModel, fieldValue: string): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+  }
+
+  protected onPropertyChange(key: string, value: BaseType | null): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({ ...vm, properties: setPropertyValue(vm.properties, key, value) }));
   }
 
   private textI18n(name: string, label: string): TextInputI18n {

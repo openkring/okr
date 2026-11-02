@@ -727,5 +727,8 @@
       "mark_error": "Non è stato possibile registrare i casi come segnalati. Riprova più tardi.",
       "clipboard_error": "Non è stato possibile copiare il testo negli appunti. Riprova più tardi."
     }
+  },
+  "proposal": {
+    "note": "Proposta dalla domanda: {category} — controllala, per favore"
   }
 }

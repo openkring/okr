@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { ApplicationModel } from '@okr/shared-models';
+import { ApplicationModel, TypedProperty } from '@okr/shared-models';
 
 vi.mock('@okr/shared-util-core', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@okr/shared-util-core')>();
@@ -14,6 +14,8 @@ import {
   matchesStateFilter,
   stateColor,
   proposeMembershipCategory,
+  isMembershipApplication,
+  setPropertyValue,
 } from './application.util';
 
 describe('newApplication', () => {
@@ -146,5 +148,61 @@ describe('proposeMembershipCategory', () => {
     app.applicationAs = 'adult';
     app.dateOfBirth = '19900101';
     expect(proposeMembershipCategory(app)).toBe('candidate');
+  });
+});
+
+describe('isMembershipApplication', () => {
+  it("returns true for applicationFor 'membership'", () => {
+    const app = newApplication('t');
+    app.applicationFor = 'membership';
+    expect(isMembershipApplication(app)).toBe(true);
+  });
+
+  it("returns false for applicationFor 'course'", () => {
+    const app = newApplication('t');
+    app.applicationFor = 'course';
+    expect(isMembershipApplication(app)).toBe(false);
+  });
+
+  it('applicationFor undefined counts as membership', () => {
+    // a legacy Firestore document has no applicationFor — reads skip the model initialisers
+    const legacy = { ...newApplication('t'), applicationFor: undefined } as unknown as ApplicationModel;
+    expect(isMembershipApplication(legacy)).toBe(true);
+  });
+});
+
+describe('setPropertyValue', () => {
+  const props: TypedProperty[] = [
+    { key: 'rowingExperience', type: 'boolean', value: false, label: 'Ich bin schon gerudert' },
+    { key: 'age',              type: 'number',  value: 3,     label: 'Jahre' },
+    { key: 'previousClub',     type: 'text',    value: 'SCZ', label: 'Bisheriger Club' },
+  ];
+
+  it('replaces only the value of the given key and keeps key, type and label', () => {
+    const result = setPropertyValue(props, 'previousClub', 'RCZ');
+    expect(result[2]).toEqual({ key: 'previousClub', type: 'text', value: 'RCZ', label: 'Bisheriger Club' });
+    expect(result[0]).toBe(props[0]);
+    expect(props[2].value).toBe('SCZ');   // the input list is not mutated
+  });
+
+  it('stores numbers as numbers', () => {
+    expect(setPropertyValue(props, 'age', '7')[1].value).toBe(7);
+    expect(setPropertyValue(props, 'age', 4)[1].value).toBe(4);
+  });
+
+  it('turns an empty number into NaN so validation can reject it', () => {
+    expect(setPropertyValue(props, 'age', null)[1].value).toBeNaN();
+    expect(setPropertyValue(props, 'age', '')[1].value).toBeNaN();
+  });
+
+  it('stores booleans as booleans', () => {
+    expect(setPropertyValue(props, 'rowingExperience', true)[0].value).toBe(true);
+    expect(setPropertyValue(props, 'rowingExperience', 'true')[0].value).toBe(true);
+    expect(setPropertyValue(props, 'rowingExperience', false)[0].value).toBe(false);
+  });
+
+  it('leaves the list unchanged for an unknown key and tolerates a legacy undefined list', () => {
+    expect(setPropertyValue(props, 'unknown', 'x')).toEqual(props);
+    expect(setPropertyValue(undefined, 'age', 1)).toEqual([]);
   });
 });

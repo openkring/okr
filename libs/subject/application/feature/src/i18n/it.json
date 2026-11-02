@@ -78,14 +78,16 @@
     "required": "Compila questo campo.",
     "choice": "Scegli una delle opzioni.",
     "date_of_birth": "Inserisci la data di nascita completa (giorno, mese e anno).",
-    "email_invalid": "Inserisci un indirizzo e-mail valido."
+    "email_invalid": "Inserisci un indirizzo e-mail valido.",
+    "number": "Inserisci un numero, per favore."
   },
   "section": {
     "person": "Persona",
     "contact": "Contatto",
     "address": "Indirizzo",
     "parent": "Genitori (obbligatorio per i minori)",
-    "application": "Richiesta"
+    "application": "Richiesta",
+    "properties": "Altre informazioni"
   },
   "kind": {
     "youth": "Giovane",
@@ -102,5 +104,11 @@
   "mail": {
     "subject_accepted": "La sua richiesta è stata accettata",
     "subject_rejected": "La sua richiesta non è stata accettata"
+  },
+  "proposal": {
+    "label": "Categoria di socio proposta: {category}",
+    "junior": "Junior",
+    "active": "Attivo/a",
+    "candidate": "Candidato/a"
   }
 }

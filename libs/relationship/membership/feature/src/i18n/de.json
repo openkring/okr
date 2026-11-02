@@ -727,5 +727,8 @@
       "mark_error": "Die Fälle konnten nicht als gemeldet vermerkt werden. Bitte versuche es später noch einmal.",
       "clipboard_error": "Der Text konnte nicht in die Zwischenablage kopiert werden. Bitte versuche es später noch einmal."
     }
+  },
+  "proposal": {
+    "note": "Vorschlag aus dem Antrag: {category} — bitte prüfen"
   }
 }

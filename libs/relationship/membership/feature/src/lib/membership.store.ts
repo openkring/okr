@@ -11,7 +11,7 @@ import { ExportFormats, memberTypeMatches, yearMatches } from '@okr/shared-categ
 import { FirestoreService, ChatStatusService } from '@okr/shared-data-access';
 import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { AddressCollection, AddressModel, CategoryListModel, ExportFormat, GroupModel, GroupModelName, MembershipCollection, MembershipModel, OrgModel, OrgModelName, OwnershipCollection, OwnershipModel, PersonModel, PersonModelName } from '@okr/shared-models';
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, generateRandomString, getAvatarInfo, getBirthYear, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, getYear, hasRole, isAfterDate, isAfterOrEqualDate, isChatOnlyMembership, isMembership, isOngoing, isPerson, nameMatches, warn, chatBlockedAlertMessage, isChatBlockedError, ReportFinding } from '@okr/shared-util-core';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, fill, generateRandomString, getAvatarInfo, getBirthYear, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, getYear, hasRole, isAfterDate, isAfterOrEqualDate, isChatOnlyMembership, isMembership, isOngoing, isPerson, nameMatches, warn, chatBlockedAlertMessage, isChatBlockedError, ReportFinding } from '@okr/shared-util-core';
 import { confirm, copyToClipboardWithConfirmation, exportCsv, getCcEmailAddresses, getMainEmailAddresses, lazyService, navigateByUrl, showToast, notify } from '@okr/shared-util-angular';
 import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
@@ -20,7 +20,7 @@ import { openBulkEmailFlow } from '@okr/content-pdf-template-feature';
 
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
-import { convertFormToNewPerson, convertMemberAndOrgToMembership, convertNewMemberFormToEmailAddress, convertNewMemberFormToMembership, convertNewMemberFormToPhoneAddress, convertNewMemberFormToPostalAddress, convertNewMemberFormToWebAddress, convertToAddressDataRow, convertToClubdeskImportRow, categoryChangeFindings, convertToSrvDataRow, exitYears, getGroupsOfMember, oldJuniorFindings, getRelLogEntry, MemberContact, MemberNewFormModel, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
+import { convertFormToNewPerson, convertMemberAndOrgToMembership, convertNewMemberFormToEmailAddress, convertNewMemberFormToMembership, convertNewMemberFormToPhoneAddress, convertNewMemberFormToPostalAddress, convertNewMemberFormToWebAddress, convertToAddressDataRow, convertToClubdeskImportRow, categoryChangeFindings, convertToSrvDataRow, exitYears, getGroupsOfMember, oldJuniorFindings, getRelLogEntry, matchCategoryItem, MemberContact, MemberNewFormModel, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
 import { AddressService } from '@okr/subject-address-data-access';
 import { PersonService } from '@okr/subject-person-data-access';
 import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
@@ -509,8 +509,11 @@ export const _MembershipStore = signalStore(
        * and its addresses, so only the membership document is missing. The category and the
        * rebate stay a human decision, hence the prefilled edit modal instead of a silent write.
        * Opening the user account and the follow-up rules are server-side (spec 1.35 / 4.60).
+       * @param proposedCategory a category item name proposed by the application (spec 1.125 §13.1).
+       * It only preselects the category, with a note, when the org's category list has an item of
+       * that name; nothing is written before the memberAdmin saves, and cancelling leaves no membership.
        */
-      async addExistingPersonToOrg(person: PersonModel, org: OrgModel): Promise<void> {
+      async addExistingPersonToOrg(person: PersonModel, org: OrgModel, proposedCategory?: string): Promise<void> {
         const memberAvatar = getAvatarInfo(person, 'person');
         const orgAvatar = getAvatarInfo(org, 'org');
         if (memberAvatar && orgAvatar && await store.membershipService.isMemberOf(memberAvatar, orgAvatar)) {
@@ -518,7 +521,16 @@ export const _MembershipStore = signalStore(
           return;
         }
         const membership = convertMemberAndOrgToMembership(person, PersonModelName, org, OrgModelName, store.tenantId());
-        await this.edit(membership, false, true);
+        let proposalNote = '';
+        // the same list the edit modal offers for this org (its currentMcat)
+        const categories = store.appStore.tryGetCategory(org.membershipCategoryKey ?? 'mcat') ?? store.membershipCategory();
+        const proposed = matchCategoryItem(categories, proposedCategory);
+        if (proposed) {
+          membership.category = proposed;
+          const categoryLabel = (await store.i18nService.createLabelResolver(categories))(proposed);
+          proposalNote = fill(store.i18n.proposal_note(), { category: categoryLabel });
+        }
+        await this.edit(membership, false, true, proposalNote);
       },
 
       /**
@@ -667,7 +679,7 @@ export const _MembershipStore = signalStore(
        * Show a modal to edit an existing membership.
        * @param membership the membership to edit
        */
-      async edit(membership?: MembershipModel, readOnly = true, isNew = false): Promise<void> {
+      async edit(membership?: MembershipModel, readOnly = true, isNew = false, proposalNote = ''): Promise<void> {
         if (!membership) return;
 
         const modal = await store.modalController.create({
@@ -680,7 +692,8 @@ export const _MembershipStore = signalStore(
             isNew,
             priv: store.privacySettings(),
             mcat: store.membershipCategory(),
-            readOnly
+            readOnly,
+            proposalNote
           }
         });
         modal.present();

@@ -46,6 +46,7 @@ export const MEMBERSHIP_I18N_KEYS = {
   category_change_label:          PFX + 'category.change.label',
   category_change_helper:         PFX + 'category.change.helper',
   category_change_helper_date:    PFX + 'category.change.helperDate',
+  proposal_note:                  PFX + 'proposal.note',
 
   invoice_create_label:           PFX + 'invoice.create.label',
   invoice_create_conf:            PFX + 'invoice.create.conf',

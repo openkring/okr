@@ -78,14 +78,16 @@
     "required": "Merci de remplir ce champ.",
     "choice": "Choisis une des options.",
     "date_of_birth": "Indique la date de naissance complète (jour, mois et année).",
-    "email_invalid": "Indique une adresse e-mail valide."
+    "email_invalid": "Indique une adresse e-mail valide.",
+    "number": "Saisis un nombre, s’il te plaît."
   },
   "section": {
     "person": "Personne",
     "contact": "Contact",
     "address": "Adresse",
     "parent": "Parents (obligatoire pour les mineurs)",
-    "application": "Demande"
+    "application": "Demande",
+    "properties": "Autres informations"
   },
   "kind": {
     "youth": "Jeune",
@@ -102,5 +104,11 @@
   "mail": {
     "subject_accepted": "Votre demande a été acceptée",
     "subject_rejected": "Votre demande n’a pas été acceptée"
+  },
+  "proposal": {
+    "label": "Catégorie de membre proposée : {category}",
+    "junior": "Junior",
+    "active": "Actif/active",
+    "candidate": "Candidat/e"
   }
 }

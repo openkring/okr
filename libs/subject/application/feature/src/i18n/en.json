@@ -78,14 +78,16 @@
     "required": "Please fill in this field.",
     "choice": "Please choose one of the options.",
     "date_of_birth": "Please enter the full date of birth (day, month and year).",
-    "email_invalid": "Please enter a valid email address."
+    "email_invalid": "Please enter a valid email address.",
+    "number": "Please enter a number."
   },
   "section": {
     "person": "Person",
     "contact": "Contact",
     "address": "Address",
     "parent": "Parents (mandatory for minors)",
-    "application": "Application"
+    "application": "Application",
+    "properties": "Further details"
   },
   "kind": {
     "youth": "Youth",
@@ -102,5 +104,11 @@
   "mail": {
     "subject_accepted": "Your application was accepted",
     "subject_rejected": "Your application was not accepted"
+  },
+  "proposal": {
+    "label": "Suggested member category: {category}",
+    "junior": "Junior",
+    "active": "Active",
+    "candidate": "Candidate"
   }
 }

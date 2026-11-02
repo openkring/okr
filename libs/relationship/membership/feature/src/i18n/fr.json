@@ -727,5 +727,8 @@
       "mark_error": "Les cas n'ont pas pu être notés comme annoncés. Réessaie plus tard.",
       "clipboard_error": "Le texte n'a pas pu être copié dans le presse-papiers. Réessaie plus tard."
     }
+  },
+  "proposal": {
+    "note": "Proposition issue de la demande : {category} — à vérifier"
   }
 }

@@ -75,6 +75,11 @@ import { AvatarPipe } from '@okr/avatar-ui';
                   <ion-row>
                     @if(membershipCategories(); as categories) {
                       <ion-col size="12">
+                        @if(proposalNote()) {
+                          <ion-item lines="none">
+                            <ion-note color="primary">{{ proposalNote() }}</ion-note>
+                          </ion-item>
+                        }
                         <okr-cat-select [category]="categories" [selectedItemName]="currentMembershipCategoryItem()" (selectedItemNameChange)="onFieldChange('category', $event)" [readOnly]="isReadOnly()" />
                       </ion-col>
                     }
@@ -233,6 +238,8 @@ export class MembershipForm {
   public membershipCategories = input<CategoryListModel | undefined>();
   public readonly allTags = input.required<string>();
   public readonly priv = input.required<PrivacySettings>();
+  /** an already translated hint above the category picker, e.g. the category proposed by an application */
+  public readonly proposalNote = input('');
   public readOnly = input<boolean>(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 

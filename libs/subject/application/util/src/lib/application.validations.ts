@@ -9,6 +9,7 @@ const REQUIRED      = PFX + 'required';
 const CHOICE        = PFX + 'choice';
 const DATE_OF_BIRTH = PFX + 'date_of_birth';
 const EMAIL_INVALID = PFX + 'email_invalid';
+const NUMBER        = PFX + 'number';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -28,6 +29,14 @@ export const applicationValidations = staticSuite((app: ApplicationModel) => {
   omitWhen(!needsSsn(app), () => {
     test('ssnId', REQUIRED, () => { enforce(app.ssnId).isNotBlank(); });
     ssnValidations('ssnId', app.ssnId);
+  });
+
+  // typed properties (spec 1.125 §4.4): a corrected number must still be a number.
+  // Filed under the value's own path, so the error note sits under that input.
+  (app.properties ?? []).forEach((property, index) => {
+    omitWhen(property.type !== 'number', () => {
+      test(`properties[${index}].value`, NUMBER, () => { enforce(Number.isFinite(property.value)).isTruthy(); });
+    });
   });
 
   omitWhen(!app.email,       () => { test('email',       EMAIL_INVALID, () => { enforce(app.email).matches(EMAIL_RE); }); });

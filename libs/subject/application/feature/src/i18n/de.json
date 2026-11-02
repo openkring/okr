@@ -78,14 +78,16 @@
     "required": "Bitte füll dieses Feld aus.",
     "choice": "Bitte wähl eine der Möglichkeiten aus.",
     "date_of_birth": "Bitte gib das Geburtsdatum vollständig ein (Tag, Monat und Jahr).",
-    "email_invalid": "Bitte gib eine gültige E-Mail-Adresse ein."
+    "email_invalid": "Bitte gib eine gültige E-Mail-Adresse ein.",
+    "number": "Bitte gib eine Zahl ein."
   },
   "section": {
     "person": "Person",
     "contact": "Kontakt",
     "address": "Adresse",
     "parent": "Eltern (Pflicht für Jugendliche)",
-    "application": "Antrag"
+    "application": "Antrag",
+    "properties": "Weitere Angaben"
   },
   "kind": {
     "youth": "Jugendliche/r",
@@ -102,5 +104,11 @@
   "mail": {
     "subject_accepted": "Ihr Antrag wurde angenommen",
     "subject_rejected": "Ihr Antrag wurde nicht angenommen"
+  },
+  "proposal": {
+    "label": "Vorschlag Mitgliederkategorie: {category}",
+    "junior": "Junior/in",
+    "active": "Aktiv",
+    "candidate": "Kandidat/in"
   }
 }

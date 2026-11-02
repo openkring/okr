@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MembershipModel } from '@okr/shared-models';
+import { CategoryItemModel, CategoryListModel, MembershipModel } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
-import { getMembershipIndex, getMembershipIndexInfo } from './membership.util';
+import { getMembershipIndex, getMembershipIndexInfo, matchCategoryItem } from './membership.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -57,5 +57,27 @@ describe('Membership Utils', () => {
     it('describes the index structure', () => {
       expect(getMembershipIndexInfo()).toBe('mn:memberName mk:memberKey ok:orgKey on:orgName [nn:nickName]');
     });
+  });
+});
+
+describe('matchCategoryItem', () => {
+  const mcat = new CategoryListModel('scs');
+  mcat.name = 'mcat_scs';
+  mcat.items = ['active', 'junior', 'candidate'].map(name => new CategoryItemModel(name, ''));
+
+  it('returns the item name when the org category list has it', () => {
+    expect(matchCategoryItem(mcat, 'candidate')).toBe('candidate');
+  });
+
+  it('returns undefined when the list has no such item — a category is never invented', () => {
+    const generic = new CategoryListModel('test');
+    generic.items = ['active', 'passive', 'junior'].map(name => new CategoryItemModel(name, ''));
+    expect(matchCategoryItem(generic, 'candidate')).toBeUndefined();
+  });
+
+  it('returns undefined without a list or a proposal', () => {
+    expect(matchCategoryItem(undefined, 'junior')).toBeUndefined();
+    expect(matchCategoryItem(mcat, undefined)).toBeUndefined();
+    expect(matchCategoryItem(mcat, '')).toBeUndefined();
   });
 });

@@ -13,7 +13,9 @@ import { AlertService } from '@okr/shared-util-angular';
 import { MembershipStore } from '@okr/relationship-membership-feature';
 
 import { ApplicationService } from '@okr/application-data-access';
-import { APPLICATION_I18N_KEYS, matchesStateFilter, stateColor } from '@okr/application-util';
+import {
+  APPLICATION_I18N_KEYS, isMembershipApplication, matchesStateFilter, proposeMembershipCategory, stateColor
+} from '@okr/application-util';
 import { ApplicationEditModal } from '@okr/application-ui';
 
 
@@ -136,8 +138,11 @@ export const ApplicationStore = signalStore(
      * the person and its addresses, so this only adds the missing membership in the default org —
      * `MemberNewModal` would have created a SECOND person. Saving the membership is what opens
      * the Firebase account and emits `membership.created` (server-side, spec 1.35 / 4.60).
+     * The member category is only PROPOSED (spec 1.125 §13.1): the modal opens with it preselected
+     * and a note; nothing is written unless the memberAdmin saves.
      */
     async addMembership(app: ApplicationModel): Promise<void> {
+      if (!isMembershipApplication(app)) return;
       if (!app.personKey) {
         console.warn(store.i18n.list_no_person());
         return;
@@ -145,7 +150,7 @@ export const ApplicationStore = signalStore(
       const person = store.appStore.allPersons().find(p => p.okey === app.personKey);
       const defaultOrg = store.appStore.defaultOrg();
       if (!person || !defaultOrg) return;
-      await store.membershipStore.addExistingPersonToOrg(person, defaultOrg);
+      await store.membershipStore.addExistingPersonToOrg(person, defaultOrg, proposeMembershipCategory(app));
     },
 
     async addToGroup(_app: ApplicationModel): Promise<void> {

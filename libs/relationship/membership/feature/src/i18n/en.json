@@ -727,5 +727,8 @@
       "mark_error": "The cases could not be marked as reported. Please try again later.",
       "clipboard_error": "The text could not be copied to the clipboard. Please try again later."
     }
+  },
+  "proposal": {
+    "note": "Suggested by the application: {category} — please check"
   }
 }

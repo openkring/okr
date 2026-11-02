@@ -727,5 +727,8 @@
       "mark_error": "No se pudieron marcar los casos como avisados. Inténtalo de nuevo más tarde.",
       "clipboard_error": "No se pudo copiar el texto al portapapeles. Inténtalo de nuevo más tarde."
     }
+  },
+  "proposal": {
+    "note": "Propuesta de la solicitud: {category} — revísala, por favor"
   }
 }

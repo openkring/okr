@@ -1,5 +1,5 @@
 import { DEFAULT_COUNTRY } from '@okr/shared-constants';
-import { ApplicationModel, ApplicationState, PersonModel } from '@okr/shared-models';
+import { ApplicationModel, ApplicationState, BaseType, PersonModel, TypedProperty } from '@okr/shared-models';
 import { addIndexElement, getAge } from '@okr/shared-util-core';
 
 export function newApplication(tenantId: string): ApplicationModel {
@@ -71,4 +71,31 @@ export function proposeMembershipCategory(app: ApplicationModel): 'junior' | 'ac
   if (age < 20)                         return 'junior';
   if (app.applicationAs === 'transfer') return 'active';
   return 'candidate';
+}
+
+/**
+ * Whether an application asks for a membership (as opposed to a course registration, spec 1.125 §13.2).
+ * Legacy documents carry no `applicationFor` (Firestore reads skip the model initialisers) — they
+ * all predate courses and count as membership applications.
+ */
+export function isMembershipApplication(app: ApplicationModel): boolean {
+  return (app.applicationFor ?? 'membership') === 'membership';
+}
+
+/**
+ * Returns a copy of `properties` with the value of `key` replaced, coerced to the property's type
+ * (spec 1.125 §4.4: key, type and label stay fixed, only the value may be corrected).
+ * A number that cannot be read becomes NaN, which the application suite rejects.
+ * An unknown key leaves the list unchanged.
+ */
+export function setPropertyValue(properties: TypedProperty[] | undefined, key: string, value: BaseType | null | undefined): TypedProperty[] {
+  return (properties ?? []).map(p => p.key === key ? { ...p, value: coercePropertyValue(p.type, value) } : p);
+}
+
+function coercePropertyValue(type: TypedProperty['type'], value: BaseType | null | undefined): BaseType {
+  switch (type) {
+    case 'boolean': return value === true || value === 'true';
+    case 'number':  return (value === null || value === undefined || value === '') ? Number.NaN : Number(value);
+    default:        return value === null || value === undefined ? '' : String(value);
+  }
 }

@@ -56,4 +56,21 @@ describe('applicationValidations', () => {
     });
     expect(applicationValidations(youth).hasErrors('ssnId')).toBe(true);
   });
+
+  it('rejects a number property that is not a number, filed under its value', () => {
+    const app = validAdult({ properties: [
+      { key: 'canSwim300m', type: 'boolean', value: true, label: 'Ich kann 300m schwimmen' },
+      { key: 'years',       type: 'number',  value: Number.NaN, label: 'Jahre' },
+    ] });
+    const result = applicationValidations(app);
+    expect(result.hasErrors('properties[1].value')).toBe(true);
+    expect(result.hasErrors('properties[0].value')).toBe(false);
+  });
+
+  it('accepts valid properties and a legacy application without properties', () => {
+    const withProps = validAdult({ properties: [{ key: 'years', type: 'number', value: 2, label: 'Jahre' }] });
+    expect(applicationValidations(withProps).isValid()).toBe(true);
+    const legacy = { ...validAdult(), properties: undefined } as unknown as ApplicationModel;
+    expect(applicationValidations(legacy).isValid()).toBe(true);
+  });
 });
