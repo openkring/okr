@@ -88,6 +88,36 @@ describe('parsePrefillValue', () => {
     expect(parsePrefillValue(f('implicit', { valueType: 'number', fromLink: false }), '3')).toBeUndefined();
   });
 
+  it('rating: 1 to scale (default 5), whole stars unless allowHalf', () => {
+    const r = f('rating');
+    expect(parsePrefillValue(r, '3')).toBe(3);
+    expect(parsePrefillValue(r, '5')).toBe(5);
+    expect(parsePrefillValue(r, '6')).toBeUndefined();
+    expect(parsePrefillValue(r, '0')).toBeUndefined();
+    expect(parsePrefillValue(r, '2.5')).toBeUndefined();
+    expect(parsePrefillValue(f('rating', { scale: 10 }), '6')).toBe(6);
+    const half = f('rating', { allowHalf: true });
+    expect(parsePrefillValue(half, '2.5')).toBe(2.5);
+    expect(parsePrefillValue(half, '2.3')).toBeUndefined();
+    expect(parsePrefillValue(half, '0')).toBeUndefined();
+  });
+
+  it('time: HH:mm within min / max', () => {
+    expect(parsePrefillValue(f('time'), '14:30')).toBe('14:30');
+    expect(parsePrefillValue(f('time'), '25:00')).toBeUndefined();
+    expect(parsePrefillValue(f('time'), '14:60')).toBeUndefined();
+    expect(parsePrefillValue(f('time'), '1430')).toBeUndefined();
+    const bounded = f('time', { min: '08:00', max: '18:00' });
+    expect(parsePrefillValue(bounded, '07:59')).toBeUndefined();
+    expect(parsePrefillValue(bounded, '18:01')).toBeUndefined();
+    expect(parsePrefillValue(bounded, '12:00')).toBe('12:00');
+  });
+
+  it('category: any non-empty string', () => {
+    expect(parsePrefillValue(f('category', { categoryName: 'levels' }), 'Anfänger')).toBe('Anfänger');
+    expect(parsePrefillValue(f('category', { categoryName: 'levels' }), '')).toBeUndefined();
+  });
+
   it('a malformed value never throws', () => {
     expect(parsePrefillValue(f('text'), undefined as unknown as string)).toBeUndefined();
     expect(parsePrefillValue({ type: 'bogus' } as unknown as Field, 'x')).toBeUndefined();
@@ -153,6 +183,26 @@ describe('resolveImplicitValues', () => {
     expect(resolveImplicitValues([level], { level: 'abc' }, { level: '4' })).toEqual({ level: 4 });
     const withDefault = f('implicit', { key: 'level', valueType: 'number', defaultValue: 2 });
     expect(resolveImplicitValues([withDefault], { level: 'abc' }, {})).toEqual({ level: 2 });
+  });
+
+  it('R1: an AHV-keyed implicit field never takes the client value, even with fromLink', () => {
+    const ssn = f('implicit', { key: 'ssnId', valueType: 'text', fromLink: true });
+    expect(resolveImplicitValues([ssn], undefined, { ssnId: '7561234567897' })).toEqual({});
+    expect(resolveImplicitValues([{ ...ssn, defaultValue: 'd' } as Field], { ssnId: 's' }, { ssnId: '7561234567897' })).toEqual({ ssnId: 's' });
+  });
+
+  it('a client boolean accepts the link spellings 1 / 0 / true / false', () => {
+    const flag = f('implicit', { key: 'flag', valueType: 'boolean', fromLink: true });
+    expect(resolveImplicitValues([flag], undefined, { flag: '1' })).toEqual({ flag: true });
+    expect(resolveImplicitValues([flag], undefined, { flag: '0' })).toEqual({ flag: false });
+    expect(resolveImplicitValues([flag], undefined, { flag: 'true' })).toEqual({ flag: true });
+    expect(resolveImplicitValues([flag], undefined, { flag: true })).toEqual({ flag: true });
+    expect(resolveImplicitValues([flag], undefined, { flag: 'yes' })).toEqual({});
+  });
+
+  it('an empty section value counts as no value and falls through', () => {
+    expect(resolveImplicitValues([course], { courseId: '' }, { courseId: 'cli' })).toEqual({ courseId: 'cli' });
+    expect(resolveImplicitValues([course], { courseId: '' }, {})).toEqual({ courseId: 'dflt' });
   });
 
   it('ignores non-implicit fields and garbage', () => {

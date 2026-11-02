@@ -1,4 +1,4 @@
-import type { BaseType, Field } from '@okr/shared-models';
+import type { BaseType, Field, PropertyType } from '@okr/shared-models';
 import { OTHER_OPTION_VALUE } from '@okr/shared-models';
 import { isSsnField } from './ahv.util';
 import { classifyStoreDate, convertDateFormatToString, DateFormat, isValidPartialStoreDate } from './date.util';
@@ -50,6 +50,11 @@ function parseDateValue(raw: string): string | undefined {
   return store;
 }
 
+/** A client value for an implicit field: the booleans of a link (`1`/`0`) too, otherwise the plain coercion. */
+function coerceClient(value: unknown, type: PropertyType): BaseType | undefined {
+  return type === 'boolean' && typeof value === 'string' ? parseBool(value) : coerceToPropertyType(value, type);
+}
+
 function parseNumberValue(raw: string, min?: number, max?: number, integer?: boolean): number | undefined {
   const n = coerceToPropertyType(raw, 'number');
   if (typeof n !== 'number') return undefined;
@@ -70,8 +75,7 @@ export function parsePrefillValue(field: Field, raw: string): unknown | undefine
   switch (field.type) {
     case 'implicit': {
       if (field.fromLink !== true) return undefined;
-      if (field.valueType === 'boolean') return parseBool(raw);
-      return coerceToPropertyType(raw, field.valueType);
+      return coerceClient(raw, field.valueType);
     }
     case 'dropdown':
     case 'radio': {
@@ -92,11 +96,19 @@ export function parsePrefillValue(field: Field, raw: string): unknown | undefine
     case 'number':
       return parseNumberValue(raw, field.min, field.max, field.integer);
     case 'rating': {
+      // stars start at 1 (0.5 with half stars) and run up to `scale` (default 5)
       const max = typeof field.scale === 'number' && field.scale > 0 ? field.scale : 5;
-      return parseNumberValue(raw, 0, max);
+      const n = parseNumberValue(raw, field.allowHalf === true ? 0.5 : 1, max);
+      if (n === undefined) return undefined;
+      return Number.isInteger(n) || (field.allowHalf === true && Number.isInteger(n * 2)) ? n : undefined;
     }
-    case 'time':
-      return TIME.test(raw.trim()) ? raw.trim() : undefined;
+    case 'time': {
+      const t = raw.trim();
+      if (!TIME.test(t)) return undefined;
+      if (typeof field.min === 'string' && TIME.test(field.min) && t < field.min) return undefined;
+      if (typeof field.max === 'string' && TIME.test(field.max) && t > field.max) return undefined;
+      return t;
+    }
     case 'text':
       return typeof field.maxLength === 'number' && raw.length > field.maxLength ? undefined : raw;
     case 'email':
@@ -156,9 +168,11 @@ export function resolveImplicitValues(
     if (field?.type !== 'implicit' || typeof field.key !== 'string') continue;
     const type = field.valueType;
 
-    const fromSection = sectionValues && hasOwn(sectionValues, field.key) ? coerceToPropertyType(sectionValues[field.key], type) : undefined;
-    const clientRaw = field.fromLink === true && clientValues && hasOwn(clientValues, field.key) ? clientValues[field.key] : undefined;
-    const fromClient = clientRaw === '' ? undefined : coerceToPropertyType(clientRaw, type);
+    const sectionRaw = sectionValues && hasOwn(sectionValues, field.key) ? sectionValues[field.key] : undefined;
+    const fromSection = sectionRaw === '' ? undefined : coerceToPropertyType(sectionRaw, type);
+    // never from the client for an AHV field (R1), even with fromLink
+    const clientRaw = field.fromLink === true && !isSsnField(field) && clientValues && hasOwn(clientValues, field.key) ? clientValues[field.key] : undefined;
+    const fromClient = clientRaw === '' ? undefined : coerceClient(clientRaw, type);
     const fromDefault = coerceToPropertyType(field.defaultValue, type);
 
     const value = fromSection ?? fromClient ?? fromDefault;

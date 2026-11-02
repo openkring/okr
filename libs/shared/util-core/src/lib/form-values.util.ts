@@ -86,6 +86,9 @@ export function coerceToPropertyType(value: unknown, type: PropertyType): BaseTy
   }
 }
 
+/** Longest «Andere» text a submission may carry; a longer one is omitted here and refused by the server. */
+export const FORM_OTHER_TEXT_MAX = 500;
+
 /** The answer picks «Andere»: the reserved value, or a list holding it (checkbox group). */
 function isOtherAnswer(field: Field, raw: unknown): boolean {
   if (!('allowOther' in field) || field.allowOther !== true) return false;
@@ -120,9 +123,17 @@ export function buildTypedProperties(
     list.push({ key: field.key, type, value, label: field.label });
 
     // «Andere»: the free text goes next to the answer as `<key>Other` (spec §9)
-    const otherText = values?.[`${field.key}Other`];
-    if (isOtherAnswer(field, raw) && typeof otherText === 'string' && otherText.trim() !== '') {
-      list.push({ key: `${field.key}Other`, type: 'text', value: otherText, label: `${field.label} (Andere)` });
+    // never when a real field of the form owns that key (its answer is not an «Andere» text), never when too long
+    const otherKey = `${field.key}Other`;
+    const otherText = values?.[otherKey];
+    if (
+      isOtherAnswer(field, raw) &&
+      !sorted.some((x) => x.key === otherKey) &&
+      typeof otherText === 'string' &&
+      otherText.trim() !== '' &&
+      otherText.length <= FORM_OTHER_TEXT_MAX
+    ) {
+      list.push({ key: otherKey, type: 'text', value: otherText, label: `${field.label} (Andere)` });
     }
   }
 

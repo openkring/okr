@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { DerivedValue, Field, FieldCondition, PropertyType, VisibilityRule } from '@okr/shared-models';
 import {
-  buildTypedProperties, coerceToPropertyType, computeDerivedValues, omitSsnValues, propertyTypeOf, ssnFieldKeys, ssnPresenceLabel,
+  buildTypedProperties, coerceToPropertyType, FORM_OTHER_TEXT_MAX, computeDerivedValues, omitSsnValues, propertyTypeOf, ssnFieldKeys, ssnPresenceLabel,
 } from './form-values.util';
 import { getVisibleFieldIds } from './form-visibility.util';
 
@@ -241,6 +241,18 @@ describe('buildTypedProperties: «Andere» (<key>Other)', () => {
     expect(build(other(), { prio: 'a', prioOther: 'Kanu' }).map((p) => p.key)).toEqual(['prio']);
     expect(build(other(), { prio: 'other', prioOther: '  ' }).map((p) => p.key)).toEqual(['prio']);
     expect(build(other({ allowOther: false }), { prio: 'other', prioOther: 'Kanu' }).map((p) => p.key)).toEqual(['prio']);
+  });
+
+  it('adds nothing when a real field of the form owns the key <key>Other (its answer is not an «Andere» text)', () => {
+    const fields = [...other(), f('pw', 2, 'password', { key: 'prioOther' })];
+    expect(build(fields, { prio: 'other', prioOther: 'geheim' }).map((p) => p.key)).toEqual(['prio']);
+  });
+
+  it('omits (never truncates) an «Andere» text longer than FORM_OTHER_TEXT_MAX', () => {
+    expect(FORM_OTHER_TEXT_MAX).toBe(500);
+    const keep = build(other(), { prio: 'other', prioOther: 'x'.repeat(500) });
+    expect(keep.map((p) => p.key)).toEqual(['prio', 'prioOther']);
+    expect(build(other(), { prio: 'other', prioOther: 'x'.repeat(501) }).map((p) => p.key)).toEqual(['prio']);
   });
 
   it('adds nothing for a hidden field', () => {
