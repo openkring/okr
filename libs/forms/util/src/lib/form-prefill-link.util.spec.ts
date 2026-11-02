@@ -46,6 +46,11 @@ describe('buildPrefillQuery', () => {
     expect(hasPersonalData).toBe(false);
   });
 
+  it('R1: never includes an implicit AHV field, even with fromLink', () => {
+    const fields = [f('implicit', 'ssnId', { valueType: 'text', fromLink: true })];
+    expect(buildPrefillQuery(fields, { ssnId: '7561234567897' }).query).toBe('');
+  });
+
   it('includes an implicit field only when it may be set by a link', () => {
     const fields = [f('implicit', 'courseId', { valueType: 'text' }), f('implicit', 'level', { valueType: 'text', fromLink: true })];
     expect(buildPrefillQuery(fields, { courseId: 'c1', level: 'l1' }).query).toBe('level=l1');

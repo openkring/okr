@@ -60,7 +60,8 @@
     "duplicate_keys": "Mehrere Fragen haben denselben Schlüssel: {keys}. Bitte gib jeder Frage einen eigenen, sonst lässt sich das Formular nicht speichern.",
     "ssn_placement": "Die AHV-Nummer kann nur in einem Antrag und unter dem Schlüssel ssnId gespeichert werden.",
     "other_key_clash": "Diese Frage heisst gleich wie das Textfeld von «Andere …» bei einer anderen Frage. Gib ihr einen anderen Namen.",
-    "other_not_allowed": "«Andere …» ist bei einer Frage nicht möglich, deren Antwort in einem Feld mit festen Werten gespeichert wird."
+    "other_not_allowed": "«Andere …» ist bei einer Frage nicht möglich, deren Antwort in einem Feld mit festen Werten gespeichert wird.",
+    "implicit_ssn": "Die AHV-Nummer kann kein unsichtbares Feld sein."
   },
   "rule": {
     "range_order": "Der erste Wert muss kleiner sein als der zweite.",
@@ -288,6 +289,7 @@
     "closed_text": "Text, wenn geschlossen",
     "count": "{count} von {max} Antworten",
     "closed_default": "Dieses Formular nimmt keine Antworten mehr an.",
-    "remaining": "Noch {count} Plätze frei"
+    "remaining": "Noch {count} Plätze frei",
+    "remaining_one": "Noch 1 Platz frei"
   }
 }

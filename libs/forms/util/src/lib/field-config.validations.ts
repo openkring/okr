@@ -2,7 +2,7 @@ import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
 import { Field } from '@okr/shared-models';
-import { coerceToPropertyType, stringValidations } from '@okr/shared-util-core';
+import { coerceToPropertyType, isSsnField, stringValidations } from '@okr/shared-util-core';
 
 import { FIELD_KEY_PATTERN, isDisplayField } from './field-kind';
 import { canAllowOther } from './form-prefill-link.util';
@@ -13,13 +13,13 @@ export function fieldLabelLength(field: Pick<Field, 'type'>): number {
   return field.type === 'label' || field.type === 'paragraph' ? DESCRIPTION_LENGTH : LONG_NAME_LENGTH;
 }
 
+const VALUE_TYPES = ['boolean', 'number', 'text'];
+
 /**
  * Validates one form-builder field as configured in the field-config modal.
  * Display elements (label, divider) carry no key; a divider carries no label either.
  * A «Nur anzeigen, wenn …» rule, when set, is validated under `visibleIf.conditions.<i>.…`.
  */
-const VALUE_TYPES = ['boolean', 'number', 'text'];
-
 /**
  * `mappingKey` (optional) is the form's collection mapping: «Andere …» is refused on a typed choice key of it
  * (`gender`); `formDefinitionValidations` checks the same against the whole form.
@@ -42,6 +42,10 @@ export const fieldConfigValidations = staticSuite((model: Field, mappingKey?: st
 
   // an unsichtbares Feld (spec §8.1): the type of its value, and a default that fits it
   omitWhen(model.type !== 'implicit', () => {
+    // an AHV number must never become a value in the definition or a section (R1)
+    test('key', '@forms/feature.fields.implicit_ssn', () => {
+      enforce(isSsnField(model)).isFalsy();
+    });
     const { valueType, defaultValue } = model as { valueType?: string; defaultValue?: unknown };
     test('valueType', 'required', () => {
       enforce(VALUE_TYPES.includes(valueType as string)).isTruthy();

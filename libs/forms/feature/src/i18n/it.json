@@ -60,7 +60,8 @@
     "duplicate_keys": "Più domande hanno la stessa chiave: {keys}. Assegna a ogni domanda la sua, altrimenti il modulo non si può salvare.",
     "ssn_placement": "Il numero AVS si può salvare solo in una domanda, con la chiave ssnId.",
     "other_key_clash": "Questa domanda ha lo stesso nome del campo di testo di «Altro …» di un'altra domanda. Dalle un altro nome.",
-    "other_not_allowed": "«Altro …» non è possibile per una domanda la cui risposta viene salvata in un campo con valori fissi."
+    "other_not_allowed": "«Altro …» non è possibile per una domanda la cui risposta viene salvata in un campo con valori fissi.",
+    "implicit_ssn": "Il numero AVS non può essere un campo invisibile."
   },
   "rule": {
     "range_order": "Il primo valore deve essere minore del secondo.",
@@ -288,6 +289,7 @@
     "closed_text": "Testo quando è chiuso",
     "count": "{count} su {max} risposte",
     "closed_default": "Questo modulo non accetta più risposte.",
-    "remaining": "Ancora {count} posti liberi"
+    "remaining": "Ancora {count} posti liberi",
+    "remaining_one": "Ancora 1 posto libero"
   }
 }

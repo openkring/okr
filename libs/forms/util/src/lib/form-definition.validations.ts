@@ -2,12 +2,12 @@ import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, URL_LENGTH } from '@okr/shared-constants';
 import { FormDefinitionModel } from '@okr/shared-models';
-import { classifyStoreDate, isValidPartialStoreDate, stringValidations } from '@okr/shared-util-core';
+import { classifyStoreDate, isSsnField, isValidPartialStoreDate, stringValidations } from '@okr/shared-util-core';
 
-import { findDuplicateKeys, misplacedSsnFields } from './field-kind';
+import { findDuplicateKeys, isInputField, misplacedSsnFields } from './field-kind';
 import { getFormMapping } from './form-mappings';
 import { canAllowOther, FORM_MESSAGE_MAX_LENGTH, firstEmailField } from './form-prefill-link.util';
-import { ruleTests } from './form-rules.validations';
+import { controllerTests, ruleTests } from './form-rules.validations';
 
 export const MAX_RESPONSES_LIMIT = 10000;
 
@@ -45,10 +45,16 @@ export const formDefinitionValidations = staticSuite((model: FormDefinitionModel
     enforce(misplacedSsnFields(model.fields, mapping).length).equals(0);
   });
 
-  // «Andere …» stores its text under `<key>Other`: no other question may use that key (it would overwrite or be overwritten)
+  // an AHV number is never an implicit value: it would sit in clear text in the definition (R1; pasted JSON too)
+  test('fields', '@forms/feature.fields.implicit_ssn', () => {
+    enforce((Array.isArray(model.fields) ? model.fields : []).some(f => f?.type === 'implicit' && isSsnField(f))).isFalsy();
+  });
+
+  // «Andere …» stores its text under `<key>Other`: no other question or derived value may use that key (it would overwrite or be overwritten)
   test('fields', '@forms/feature.fields.other_key_clash', () => {
     const fields = Array.isArray(model.fields) ? model.fields : [];
-    const keys = new Set(fields.filter(f => !!f?.key).map(f => f.key));
+    const derived = Array.isArray(model.derivedValues) ? model.derivedValues : [];
+    const keys = new Set([...fields.map(f => f?.key), ...derived.map(d => d?.key)].filter((k): k is string => !!k));
     const clash = fields.some(f => (f as { allowOther?: boolean }).allowOther === true && !!f.key && keys.has(`${f.key}Other`));
     enforce(clash).isFalsy();
   });
@@ -62,9 +68,12 @@ export const formDefinitionValidations = staticSuite((model: FormDefinitionModel
 
   // Nach dem Absenden (spec §10)
   stringValidations('confirmationMessage', model.confirmationMessage ?? '', FORM_MESSAGE_MAX_LENGTH);
+  const inputFields = (Array.isArray(model.fields) ? model.fields : []).filter(isInputField);
   (Array.isArray(model.confirmationVariants) ? model.confirmationVariants : []).forEach((variant, i) => {
     const at = `confirmationVariants.${i}`;
     ruleTests(`${at}.when`, variant?.when);
+    // the controller must still exist and still offer the operator (a deleted or retyped field would count as true)
+    (variant?.when?.conditions ?? []).forEach((cond, k) => controllerTests(`${at}.when.conditions.${k}`, cond, inputFields));
     stringValidations(`${at}.message`, variant?.message ?? '', FORM_MESSAGE_MAX_LENGTH, 0, true);
   });
   omitWhen(model.sendFillerConfirmation !== true, () => {
@@ -74,7 +83,7 @@ export const formDefinitionValidations = staticSuite((model: FormDefinitionModel
   });
 
   // Annahme (spec §11): a missing value is a legacy definition and means «open, no date, unlimited»
-  omitWhen(model.maxResponses === undefined, () => {
+  omitWhen(model.maxResponses === undefined || model.maxResponses === null, () => {
     test('maxResponses', '@forms/feature.accept.max_invalid', () => {
       enforce(typeof model.maxResponses === 'number' && Number.isInteger(model.maxResponses) && model.maxResponses >= 0 && model.maxResponses <= MAX_RESPONSES_LIMIT).isTruthy();
     });

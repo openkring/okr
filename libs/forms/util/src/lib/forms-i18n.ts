@@ -142,6 +142,7 @@ export const FORM_I18N_KEYS = {
   fieldtype_implicit_desc:    PFX + 'fieldtype.implicit_desc',
   fields_other_key_clash:     PFX + 'fields.other_key_clash',
   fields_other_not_allowed:   PFX + 'fields.other_not_allowed',
+  fields_implicit_ssn:        PFX + 'fields.implicit_ssn',
 
   // «Nach dem Absenden» card (spec §10)
   after_title:                PFX + 'after.title',
@@ -170,6 +171,7 @@ export const FORM_I18N_KEYS = {
   accept_count:               PFX + 'accept.count',
   closed_default:             PFX + 'accept.closed_default',
   remaining:                  PFX + 'accept.remaining',
+  remaining_one:              PFX + 'accept.remaining_one',
 
   // pre-filled link in the builder preview (spec §8)
   preview_link:               PFX + 'builder.preview_link',

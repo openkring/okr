@@ -78,11 +78,10 @@ function parseNumberValue(raw: string, min?: number, max?: number, integer?: boo
  * …) or the field is never pre-fillable. A link never selects «Andere».
  */
 export function parsePrefillValue(field: Field, raw: string): unknown | undefined {
-  if (typeof raw !== 'string' || raw === '' || isPrefillExcluded(field)) return undefined;
+  if (typeof raw !== 'string' || raw === '' || !isPrefillable(field)) return undefined;
 
   switch (field.type) {
     case 'implicit': {
-      if (field.fromLink !== true) return undefined;
       return coerceClient(raw, field.valueType);
     }
     case 'dropdown':
@@ -165,6 +164,7 @@ export function parsePrefillParams(
  * the field's `valueType` wins: the section's `implicitValues`, then the client value (only when
  * `fromLink`; a raw string or an already parsed value), then `defaultValue`. No source → the key
  * is absent. A value of the wrong type falls through to the next source.
+ * An AHV field (`isSsnField`, e.g. an implicit field keyed `ssnId`) resolves to no value from any source (R1).
  */
 export function resolveImplicitValues(
   fields: Field[],
@@ -174,12 +174,13 @@ export function resolveImplicitValues(
   const result: Record<string, BaseType> = {};
   for (const field of Array.isArray(fields) ? fields : []) {
     if (field?.type !== 'implicit' || typeof field.key !== 'string') continue;
+    // an AHV number is never an implicit value (R1): it would sit in clear text in the definition or section
+    if (isSsnField(field)) continue;
     const type = field.valueType;
 
     const sectionRaw = sectionValues && hasOwn(sectionValues, field.key) ? sectionValues[field.key] : undefined;
     const fromSection = sectionRaw === '' ? undefined : coerceToPropertyType(sectionRaw, type);
-    // never from the client for an AHV field (R1), even with fromLink
-    const clientRaw = field.fromLink === true && !isSsnField(field) && clientValues && hasOwn(clientValues, field.key) ? clientValues[field.key] : undefined;
+    const clientRaw = field.fromLink === true && clientValues && hasOwn(clientValues, field.key) ? clientValues[field.key] : undefined;
     const fromClient = clientRaw === '' ? undefined : coerceClient(clientRaw, type);
     const fromDefault = coerceToPropertyType(field.defaultValue, type);
 

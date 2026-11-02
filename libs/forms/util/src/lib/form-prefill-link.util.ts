@@ -37,7 +37,7 @@ export function buildPrefillQuery(fields: Field[], values: Record<string, unknow
 
   for (const field of fields) {
     const key = field?.key;
-    if (typeof key !== 'string' || key === '' || params.has(key) || isSsnField(field) || !isPrefillable(field)) continue;
+    if (typeof key !== 'string' || key === '' || params.has(key) || !isPrefillable(field)) continue;
     if (!Object.prototype.hasOwnProperty.call(values, key)) continue;
     const raw = serialize(values[key]);
     if (raw === undefined || parsePrefillValue(field, raw) === undefined) continue;

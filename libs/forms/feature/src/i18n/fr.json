@@ -60,7 +60,8 @@
     "duplicate_keys": "Plusieurs questions ont la même clé : {keys}. Donne à chaque question la sienne, sinon le formulaire ne peut pas être enregistré.",
     "ssn_placement": "Le numéro AVS ne peut être enregistré que dans une demande, sous la clé ssnId.",
     "other_key_clash": "Cette question porte le même nom que le champ de texte de « Autre … » d'une autre question. Donne-lui un autre nom.",
-    "other_not_allowed": "« Autre … » n'est pas possible pour une question dont la réponse est enregistrée dans un champ aux valeurs fixes."
+    "other_not_allowed": "« Autre … » n'est pas possible pour une question dont la réponse est enregistrée dans un champ aux valeurs fixes.",
+    "implicit_ssn": "Le numéro AVS ne peut pas être un champ invisible."
   },
   "rule": {
     "range_order": "La première valeur doit être inférieure à la seconde.",
@@ -288,6 +289,7 @@
     "closed_text": "Texte quand c'est fermé",
     "count": "{count} sur {max} réponses",
     "closed_default": "Ce formulaire n'accepte plus de réponses.",
-    "remaining": "Encore {count} places libres"
+    "remaining": "Encore {count} places libres",
+    "remaining_one": "Encore 1 place libre"
   }
 }

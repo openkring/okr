@@ -185,10 +185,13 @@ describe('resolveImplicitValues', () => {
     expect(resolveImplicitValues([withDefault], { level: 'abc' }, {})).toEqual({ level: 2 });
   });
 
-  it('R1: an AHV-keyed implicit field never takes the client value, even with fromLink', () => {
-    const ssn = f('implicit', { key: 'ssnId', valueType: 'text', fromLink: true });
+  it('R1: an AHV-keyed implicit field resolves to no value from any source', () => {
+    const ssn = f('implicit', { key: 'ssnId', valueType: 'text', fromLink: true, defaultValue: '7561234567897' });
     expect(resolveImplicitValues([ssn], undefined, { ssnId: '7561234567897' })).toEqual({});
-    expect(resolveImplicitValues([{ ...ssn, defaultValue: 'd' } as Field], { ssnId: 's' }, { ssnId: '7561234567897' })).toEqual({ ssnId: 's' });
+    expect(resolveImplicitValues([ssn], { ssnId: '7561234567897' }, { ssnId: '7561234567897' })).toEqual({});
+    expect(resolveImplicitValues([ssn], {}, {})).toEqual({});
+    // the same key on a type 'ssn' field is not implicit at all
+    expect(resolveImplicitValues([f('ssn', { key: 'ssnId' })], { ssnId: 'x' }, {})).toEqual({});
   });
 
   it('a client boolean accepts the link spellings 1 / 0 / true / false', () => {

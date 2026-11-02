@@ -60,7 +60,8 @@
     "duplicate_keys": "Several questions share the same key: {keys}. Please give each question its own, otherwise the form cannot be saved.",
     "ssn_placement": "The AHV number can only be saved in an application, under the key ssnId.",
     "other_key_clash": "This question has the same name as the text field of \"Other …\" on another question. Give it a different name.",
-    "other_not_allowed": "\"Other …\" is not possible for a question whose answer is saved in a field with fixed values."
+    "other_not_allowed": "\"Other …\" is not possible for a question whose answer is saved in a field with fixed values.",
+    "implicit_ssn": "The AHV number cannot be a hidden field."
   },
   "rule": {
     "range_order": "The first value must be smaller than the second.",
@@ -288,6 +289,7 @@
     "closed_text": "Text when closed",
     "count": "{count} of {max} responses",
     "closed_default": "This form is no longer accepting responses.",
-    "remaining": "{count} places left"
+    "remaining": "{count} places left",
+    "remaining_one": "1 place left"
   }
 }

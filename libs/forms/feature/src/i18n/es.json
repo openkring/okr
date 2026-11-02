@@ -60,7 +60,8 @@
     "duplicate_keys": "Varias preguntas tienen la misma clave: {keys}. Dale a cada pregunta la suya; si no, el formulario no se puede guardar.",
     "ssn_placement": "El número AVS solo se puede guardar en una solicitud, con la clave ssnId.",
     "other_key_clash": "Esta pregunta se llama igual que el campo de texto de «Otro …» de otra pregunta. Ponle otro nombre.",
-    "other_not_allowed": "«Otro …» no es posible en una pregunta cuya respuesta se guarda en un campo con valores fijos."
+    "other_not_allowed": "«Otro …» no es posible en una pregunta cuya respuesta se guarda en un campo con valores fijos.",
+    "implicit_ssn": "El número AVS no puede ser un campo invisible."
   },
   "rule": {
     "range_order": "El primer valor debe ser menor que el segundo.",
@@ -288,6 +289,7 @@
     "closed_text": "Texto cuando está cerrado",
     "count": "{count} de {max} respuestas",
     "closed_default": "Este formulario ya no acepta respuestas.",
-    "remaining": "Quedan {count} plazas libres"
+    "remaining": "Quedan {count} plazas libres",
+    "remaining_one": "Queda 1 plaza libre"
   }
 }

@@ -89,6 +89,12 @@ describe('fieldConfigValidations', () => {
       expect(fieldConfigValidations(implicit({ valueType: 'number', defaultValue: '' })).isValid()).toBe(true);
     });
 
+    it('R1: rejects an implicit field that is an AHV field (key ssnId)', () => {
+      const result = fieldConfigValidations(implicit({ key: 'ssnId', defaultValue: '7561234567897' }));
+      expect(result.getErrors('key')).toContain('@forms/feature.fields.implicit_ssn');
+      expect(fieldConfigValidations(implicit({ key: 'courseId' })).hasErrors('key')).toBe(false);
+    });
+
     it('checks no value type on other fields', () => {
       expect(fieldConfigValidations({ ...base, type: 'text' } as Field).hasErrors('valueType')).toBe(false);
     });

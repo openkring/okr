@@ -131,6 +131,14 @@ describe('formDefinitionValidations', () => {
       expect(formDefinitionValidations(newDefinition({ fields: [radio('kurs'), text('kursOther')] })).isValid()).toBe(true);
     });
 
+    it('also covers the keys of derived values', () => {
+      const derived = [{ key: 'kursOther', cases: [{ when: { match: 'all', conditions: [{ fieldId: 'r_kurs', op: 'isFilled' }] }, value: 'x' }] }];
+      const result = formDefinitionValidations(newDefinition({ fields: [radio('kurs', { allowOther: true })], derivedValues: derived as FormDefinitionModel['derivedValues'] }));
+      expect(result.getErrors('fields')).toContain(MSG);
+      const unrelated = [{ ...derived[0], key: 'kursLevel' }];
+      expect(formDefinitionValidations(newDefinition({ fields: [radio('kurs', { allowOther: true })], derivedValues: unrelated as FormDefinitionModel['derivedValues'] })).getErrors('fields')).not.toContain(MSG);
+    });
+
     it('accepts an allowOther field with unrelated keys', () => {
       expect(formDefinitionValidations(newDefinition({ fields: [radio('kurs', { allowOther: true }), text('kursName')] })).isValid()).toBe(true);
     });
@@ -151,6 +159,19 @@ describe('formDefinitionValidations', () => {
     });
   });
 
+  describe('R1: an AHV field is never an implicit field', () => {
+    const MSG = '@forms/feature.fields.implicit_ssn';
+    const implicit = (key: string) => ({ id: `i_${key}`, key, label: key, required: false, width: 'full', order: 0, type: 'implicit', valueType: 'text', defaultValue: '7561234567897' }) as Field;
+
+    it('rejects an implicit field keyed ssnId (pasted JSON too)', () => {
+      expect(formDefinitionValidations(newDefinition({ fields: [implicit('ssnId')] })).getErrors('fields')).toContain(MSG);
+    });
+
+    it('accepts any other implicit field', () => {
+      expect(formDefinitionValidations(newDefinition({ fields: [implicit('courseId')] })).getErrors('fields')).not.toContain(MSG);
+    });
+  });
+
   describe('acceptance (spec §11)', () => {
     it('accepts the defaults and a legacy definition without the fields', () => {
       expect(formDefinitionValidations(newDefinition()).isValid()).toBe(true);
@@ -167,6 +188,10 @@ describe('formDefinitionValidations', () => {
       for (const n of [-1, 1.5, 10001, Number.NaN, '5' as unknown as number]) {
         expect(formDefinitionValidations(newDefinition({ maxResponses: n })).hasErrors('maxResponses')).toBe(true);
       }
+    });
+
+    it('treats maxResponses null like a missing value (legacy)', () => {
+      expect(formDefinitionValidations(newDefinition({ maxResponses: null as unknown as number })).hasErrors('maxResponses')).toBe(false);
     });
 
     it('accepts closesAt empty or a valid StoreDate', () => {
@@ -210,6 +235,19 @@ describe('formDefinitionValidations', () => {
     it('validates the condition rows of a variant', () => {
       const noValue = variant({ when: { match: 'all', conditions: [{ fieldId: 'c', op: 'equals' }] } });
       expect(formDefinitionValidations(newDefinition({ fields: [color], confirmationVariants: [noValue] })).hasErrors('confirmationVariants.0.when.conditions.0.value')).toBe(true);
+    });
+
+    it('flags a variant whose controlling field was deleted', () => {
+      const gone = variant({ when: { match: 'all', conditions: [{ fieldId: 'deleted', op: 'equals', value: 'a' }] } });
+      const result = formDefinitionValidations(newDefinition({ fields: [color], confirmationVariants: [gone] }));
+      expect(result.getErrors('confirmationVariants.0.when.conditions.0.fieldId')).toContain('@forms/feature.derived.unknown_field');
+    });
+
+    it('flags a variant whose controlling field no longer offers the operator', () => {
+      const retyped = { ...color, type: 'text', options: undefined } as unknown as Field;   // a text field offers no `in`
+      const v = variant({ when: { match: 'all', conditions: [{ fieldId: 'c', op: 'in', value: ['a'] }] } });
+      const result = formDefinitionValidations(newDefinition({ fields: [retyped], confirmationVariants: [v] }));
+      expect(result.getErrors('confirmationVariants.0.when.conditions.0.op')).toContain('@forms/feature.derived.op_not_offered');
     });
 
     it('requires a message and caps it', () => {
