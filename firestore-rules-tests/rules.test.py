@@ -1792,5 +1792,108 @@ for label, expect, run in takeover_cases:
     passed += ok; failed += not ok
     print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
 
+# ---------------------------------------------------------- PDF templates ----
+# templates (2026-11-02): create/update used to check only the role, so a privileged user of ANY
+# tenant could rewrite any tenant's template. Now the caller's tenant must be on the stored doc
+# (update) or the new one (create). Version docs carry no tenants[]: they are checked against
+# the parent template via get(). B is admin of t2, C contentAdmin of t1, P privileged of t1.
+def tpl(tenant, name="Tpl", archived=False):
+    return {"tenants": [tenant], "isArchived": archived, "name": name, "status": "draft",
+            "currentVersion": 1, "category": "invoice"}
+def tpl_version(n, status="draft"):
+    return {"version": n, "html": "<p>v</p>", "css": "", "status": status, "changelog": ""}
+seed("templates/tplA",            tpl("t1", "Rechnung t1"))
+seed("templates/tplA/versions/1", tpl_version(1, "published"))
+seed("templates/tplA/versions/2", tpl_version(2))
+seed("templates/tplA/versions/3", tpl_version(3))
+seed("templates/tplB",            tpl("t2", "Rechnung t2"))
+seed("templates/tplB/versions/1", tpl_version(1))
+seed("templates/tplArch",         tpl("t1", "Stub"))
+seed("templates/tplDel",          tpl("t1", "Weg"))
+
+def versions_query(template_key, token):
+    """listVersions(): the versions subcollection of one template, ordered by version."""
+    sq = {"from": [{"collectionId": "versions"}],
+          "orderBy": [{"field": {"fieldPath": "version"}, "direction": "DESCENDING"}]}
+    r = urllib.request.Request(f"{BASE}/templates/{template_key}:runQuery",
+                               data=json.dumps({"structuredQuery": sq}).encode(),
+                               headers={"Content-Type": "application/json", "Authorization": f"Bearer {token}"},
+                               method="POST")
+    try:
+        return urllib.request.urlopen(r).status
+    except urllib.error.HTTPError as e:
+        return e.code
+
+V = "templates/tplA/versions"
+template_cases = [
+    # takeover: admin of t2 against a t1 template
+    ("userB(admin t2) GET templates/tplA -> DENY", False, lambda: req(GET, "templates/tplA", token=B)),
+    ("userB(admin t2) PATCH templates/tplA name -> DENY (takeover)", False,
+     lambda: req(PATCH, "templates/tplA", token=B, data=body({"name": "x"}), mask=["name"])),
+    ("userB(admin t2) PATCH templates/tplA tenants=[t2] -> DENY (takeover)", False,
+     lambda: req(PATCH, "templates/tplA", token=B, data=body({"tenants": ["t2"]}), mask=["tenants"])),
+    ("userB(admin t2) PATCH templates/tplA name + tenants=[t2] -> DENY (takeover)", False,
+     lambda: req(PATCH, "templates/tplA", token=B, data=body({"name": "x", "tenants": ["t2"]}),
+                 mask=["name", "tenants"])),
+    ("userB(admin t2) CREATE templates/tplPlant tenants=[t1] -> DENY", False,
+     lambda: req(POST, "templates?documentId=tplPlant", token=B, data=body(tpl("t1")))),
+    ("userB(admin t2) DELETE templates/tplDel -> DENY", False, lambda: req(DELETE, "templates/tplDel", token=B)),
+    ("userB(admin t2) GET tplA/versions/1 -> DENY", False, lambda: req(GET, f"{V}/1", token=B)),
+    ("userB(admin t2) LIST tplA/versions -> DENY", False, lambda: versions_query("tplA", B)),
+    ("userB(admin t2) CREATE tplA/versions/9 -> DENY (takeover)", False,
+     lambda: req(POST, f"{V}?documentId=9", token=B, data=body(tpl_version(9)))),
+    ("userB(admin t2) PATCH tplA/versions/2 (draft) html -> DENY (takeover)", False,
+     lambda: req(PATCH, f"{V}/2", token=B, data=body({"html": "<p>pwned</p>"}), mask=["html"])),
+    ("userB(admin t2) DELETE tplA/versions/3 (draft) -> DENY", False, lambda: req(DELETE, f"{V}/3", token=B)),
+    ("userB(admin t2) CREATE versions under a missing template -> DENY", False,
+     lambda: req(POST, "templates/tplNone/versions?documentId=1", token=B, data=body(tpl_version(1)))),
+    # controls: admin of t2 in its own tenant
+    ("userB(admin t2) PATCH templates/tplB name -> ALLOW", True,
+     lambda: req(PATCH, "templates/tplB", token=B, data=body({"name": "Neu"}), mask=["name"])),
+    ("userB(admin t2) CREATE tplB/versions/2 -> ALLOW", True,
+     lambda: req(POST, "templates/tplB/versions?documentId=2", token=B, data=body(tpl_version(2)))),
+    ("userB(admin t2) LIST tplB/versions -> ALLOW", True, lambda: versions_query("tplB", B)),
+    # controls: the t1 editors
+    ("userC(contentAdmin t1) PATCH templates/tplA name -> ALLOW", True,
+     lambda: req(PATCH, "templates/tplA", token=C, data=body({"name": "Rechnung"}), mask=["name"])),
+    ("userP(privileged t1) PATCH templates/tplA publish pointer -> ALLOW", True,
+     lambda: req(PATCH, "templates/tplA", token=P, data=body({"status": "published", "currentVersion": 1,
+                                                                "draftVersion": None}),
+                 mask=["status", "currentVersion", "draftVersion"])),
+    ("userC(contentAdmin t1) PATCH templates/tplA tenants=[t2] -> DENY (gives it away)", False,
+     lambda: req(PATCH, "templates/tplA", token=C, data=body({"tenants": ["t2"]}), mask=["tenants"])),
+    ("userC(contentAdmin t1) CREATE templates/tplNewC tenants=[t1] -> ALLOW", True,
+     lambda: req(POST, "templates?documentId=tplNewC", token=C, data=body(tpl("t1")))),
+    ("userC(contentAdmin t1) CREATE templates/tplNewT2 tenants=[t2] -> DENY", False,
+     lambda: req(POST, "templates?documentId=tplNewT2", token=C, data=body(tpl("t2")))),
+    ("userC(contentAdmin t1) archive templates/tplArch (discardUnsaved) -> ALLOW", True,
+     lambda: req(PATCH, "templates/tplArch", token=C, data=body({"isArchived": True}), mask=["isArchived"])),
+    ("userA(member t1) PATCH templates/tplA -> DENY (no editor role)", False,
+     lambda: req(PATCH, "templates/tplA", token=A, data=body({"name": "x"}), mask=["name"])),
+    ("userC(contentAdmin t1) GET tplA/versions/1 -> ALLOW", True, lambda: req(GET, f"{V}/1", token=C)),
+    ("userA(member t1) LIST tplA/versions -> ALLOW", True, lambda: versions_query("tplA", A)),
+    ("userC(contentAdmin t1) CREATE tplA/versions/4 -> ALLOW", True,
+     lambda: req(POST, f"{V}?documentId=4", token=C, data=body(tpl_version(4)))),
+    ("userC(contentAdmin t1) CREATE versions under a missing template -> DENY", False,
+     lambda: req(POST, "templates/tplNone/versions?documentId=1", token=C, data=body(tpl_version(1)))),
+    ("userC(contentAdmin t1) PATCH tplA/versions/2 (draft) -> ALLOW", True,
+     lambda: req(PATCH, f"{V}/2", token=C, data=body({"html": "<p>neu</p>"}), mask=["html"])),
+    ("userC(contentAdmin t1) PATCH tplA/versions/1 (published) -> DENY (history)", False,
+     lambda: req(PATCH, f"{V}/1", token=C, data=body({"html": "<p>neu</p>"}), mask=["html"])),
+    ("userA(member t1) PATCH tplA/versions/2 -> DENY (no editor role)", False,
+     lambda: req(PATCH, f"{V}/2", token=A, data=body({"html": "x"}), mask=["html"])),
+    ("userC(contentAdmin t1) DELETE tplA/versions/3 (draft) -> ALLOW", True, lambda: req(DELETE, f"{V}/3", token=C)),
+    ("userC(contentAdmin t1) DELETE tplA/versions/1 (published) -> DENY (history)", False,
+     lambda: req(DELETE, f"{V}/1", token=C)),
+    ("userC(contentAdmin t1) DELETE templates/tplDel -> DENY (admin only)", False,
+     lambda: req(DELETE, "templates/tplDel", token=C)),
+    ("userD(admin t1) DELETE templates/tplDel -> ALLOW", True, lambda: req(DELETE, "templates/tplDel", token=D)),
+]
+for label, expect, run in template_cases:
+    code = run()
+    ok = (code in (200, 201)) == expect
+    passed += ok; failed += not ok
+    print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
+
 print(f"\n{passed} passed, {failed} failed")
 raise SystemExit(1 if failed else 0)

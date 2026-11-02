@@ -1403,20 +1403,39 @@ service cloud.firestore {
     //  Templates (PDF) — role-gated; converted from dead claim checks to get()-roles.
     // ============================================================================
 
+    // Until 2026-11-02 create/update checked only the role, neither the stored nor the new
+    // `tenants`, so a privileged user of any tenant could rewrite any tenant's template (and its
+    // versions). Create and update are split rather than tenantCreateOrDetach(): the update must
+    // require the caller's tenant on the STORED doc (tenantUpdate), not only on the new one.
     match /templates/{templateId} {
-      allow read:          if userExists() && (resource == null || belongsToTenant(resource.data));
-      allow create, update: if isPrivileged() || hasRole('contentAdmin');
-      allow delete:        if isAdmin();
+      // Version docs carry no tenants[] — they belong to whichever tenant owns the parent.
+      function parentTemplateExists() {
+        return exists(/databases/$(database)/documents/templates/$(templateId));
+      }
+      function parentTemplate() {
+        return get(/databases/$(database)/documents/templates/$(templateId)).data;
+      }
+      function isTemplateEditor() {
+        return isPrivileged() || hasRole('contentAdmin');
+      }
+      function canEditParentTemplate() {
+        return isTemplateEditor() && parentTemplateExists() && canWriteTenant(parentTemplate());
+      }
+
+      allow read:   if userExists() && (resource == null || belongsToTenant(resource.data));
+      allow create: if isTemplateEditor() && tenantCreate();
+      allow update: if isTemplateEditor() && tenantUpdate();
+      allow delete: if isAdmin() && tenantDelete();
 
       match /versions/{versionId} {
-        allow read:   if signedIn();
-        allow create: if isPrivileged() || hasRole('contentAdmin');
-        allow update: if (isPrivileged() || hasRole('contentAdmin')) && resource.data.status == 'draft';
+        allow read:   if userExists() && parentTemplateExists() && belongsToTenant(parentTemplate());
+        allow create: if canEditParentTemplate();
+        allow update: if canEditParentTemplate() && resource.data.status == 'draft';
         // Einen unveröffentlichten Entwurf verwerfen gehört zum Editor ('Auf letzte Version
         // zurücksetzen' → TemplateService.discardDraft). Mit `if false` schlug dieser Löschvorgang
         // immer fehl, der Entwurf blieb liegen. Veröffentlichte Versionen bleiben unantastbar —
         // sie sind die Historie.
-        allow delete: if (isPrivileged() || hasRole('contentAdmin')) && resource.data.status == 'draft';
+        allow delete: if canEditParentTemplate() && resource.data.status == 'draft';
       }
     }
 
