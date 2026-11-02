@@ -102,18 +102,30 @@ function elementIdentifies(element: unknown, personKey: string): boolean {
 const ELEMENT_AVATAR_PATH = /^(.+)\[\]\.([^.[\]]+)$/;
 
 /**
- * `'attendance{}'` — a MAP keyed by personKey whose values carry an `AvatarInfo` in `person`
- * (`CalEventModel.attendance`). Erasure drops the subject's entry, like a plain array field drops
- * the subject's element: the presence of a person at a training is the person's data, the event
- * (date, title, who else was there) stays. The map is rewritten whole because the key is dynamic.
+ * `'attendance{}'` — a MAP keyed by personKey whose values carry an `AvatarInfo` in `person` and the
+ * writer's personKey in `by` (`CalEventModel.attendance`). Erasure
+ *  - deletes the subject's own entry (`attendance.<key>` = FieldValue.delete(); an entry keyed
+ *    differently but whose `person.key` is the subject goes the same way), and
+ *  - clears `by` on OTHER people's entries the subject wrote (`attendance.<otherKey>.by` = '').
+ * Both are field-path updates, never a rewrite of the map: a trainer confirming another child at
+ * the same moment must not be lost (spec 1.132 §5.3 designed the map for exactly that). The event
+ * (date, title, who else was there) stays. Keys containing a dot cannot be addressed by a field-path
+ * string and are skipped (person keys are generated ids and never contain one).
  */
 const MAP_BY_PERSON_PATH = /^([^.[\]{}]+)\{\}$/;
 
-function withoutPersonEntry(value: unknown, personKey: string): Record<string, unknown> | undefined {
-  if (!personKey || value === null || typeof value !== 'object' || Array.isArray(value)) return undefined;
-  const map = value as Record<string, unknown>;
-  const kept = Object.entries(map).filter(([key, entry]) => key !== personKey && !elementIdentifies(entry, personKey));
-  return kept.length === Object.keys(map).length ? undefined : Object.fromEntries(kept);
+function attendancePatch(field: string, value: unknown, personKey: string): Record<string, unknown> {
+  const patch: Record<string, unknown> = {};
+  if (!personKey || value === null || typeof value !== 'object' || Array.isArray(value)) return patch;
+  for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
+    if (key.includes('.')) continue;
+    if (key === personKey || elementIdentifies(entry, personKey)) {
+      patch[`${field}.${key}`] = FieldValue.delete();
+    } else if ((entry as Record<string, unknown> | null)?.['by'] === personKey) {
+      patch[`${field}.${key}.by`] = '';
+    }
+  }
+  return patch;
 }
 
 function pseudonymiseElementAvatars(
@@ -167,8 +179,7 @@ export function anonymizePatch(
 
     const mapField = MAP_BY_PERSON_PATH.exec(field);
     if (mapField) {
-      const next = withoutPersonEntry(doc.get(mapField[1]), ctx.personKey);
-      if (next) patch[mapField[1]] = next;
+      Object.assign(patch, attendancePatch(mapField[1], doc.get(mapField[1]), ctx.personKey));
       continue;
     }
 
@@ -249,7 +260,9 @@ function applyPatch(data: Record<string, unknown>, patch: Record<string, unknown
       const next = node[seg];
       node = (node[seg] = next !== null && typeof next === 'object' && !Array.isArray(next) ? next : {}) as Record<string, unknown>;
     }
-    node[segments[segments.length - 1]] = value;
+    const last = segments[segments.length - 1];
+    if (value === FieldValue.delete()) delete node[last];
+    else node[last] = value;
   }
   return out;
 }

@@ -1,8 +1,9 @@
 import { FieldPath, Filter, getFirestore } from 'firebase-admin/firestore';
 import type { DocumentSnapshot, QueryDocumentSnapshot } from 'firebase-admin/firestore';
-import { ContractModel, CourseFinanceSubcollection, LegacyMemberFeeCollection, MemberFeeCollection, PROSPECT_PARENT_PREFIX } from '@okr/shared-models';
+import { ContractModel, CourseFinanceSubcollection, CourseModel, LegacyMemberFeeCollection, MemberFeeCollection, PROSPECT_PARENT_PREFIX } from '@okr/shared-models';
 import type { AvatarInfo } from '@okr/shared-models';
 import { getContractIndex } from '@okr/business-contract-util';
+import { getCourseIndex } from '@okr/calendar-course-util';
 import type { Blocker, SubjectCtx, SubjectDataEntry } from './types';
 
 /**
@@ -114,16 +115,29 @@ function nestedAvatarArrayHolds(doc: DocumentSnapshot, field: string, prop: stri
 }
 
 /**
+ * Every identity field of a SINGLE embedded `AvatarInfo` (`requestedBy`, `lockedBy`,
+ * `attendanceConfirmedBy`) as dotted anonymize paths: `key`, both names, `label` (often the display
+ * name) and the type tags — the same set `pseudonymiseElementAvatars` clears for array elements.
+ * `name2` takes the pseudonym; the executor only touches the group when its `.key` is the subject's.
+ */
+function avatarPaths(field: string): string[] {
+  return ['key', 'name1', 'name2', 'label', 'type', 'subType'].map((p) => `${field}.${p}`);
+}
+
+/**
  * Whether the subject has an entry in `CalEventModel.attendance`, a map keyed by personKey whose
  * values carry the `AvatarInfo` in `person`. The key is the contract; the embedded avatar is checked
- * as well so a differently keyed legacy entry is not missed.
+ * as well so a differently keyed legacy entry is not missed. An entry the subject merely WROTE
+ * (`by` = their personKey, on somebody else's entry) counts too: it is their identifier.
  */
 function attendanceHolds(doc: DocumentSnapshot, personKey: string): boolean {
   if (!personKey) return false;
   const map = doc.get('attendance') as Record<string, { person?: AvatarInfo } | undefined> | undefined;
   if (map === null || typeof map !== 'object') return false;
   return map[personKey] !== undefined
-    || Object.values(map).some((e) => e?.person?.key === personKey && (e.person.modelType ?? 'person') === 'person');
+    || Object.values(map).some((e) => (e?.person?.key === personKey && (e.person.modelType ?? 'person') === 'person')
+      // the writer of somebody else's entry (`AttendanceEntry.by`, a raw personKey)
+      || (e as { by?: string } | undefined)?.by === personKey);
 }
 
 /**
@@ -526,14 +540,18 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     find: (c: SubjectCtx) => db().collection('courses').where('tenants', 'array-contains', c.tenantId),
     tenantScope: 'inQuery',
     matches: (doc, c) => avatarArrayHolds(doc, 'trainers', c.personKey)
-      || avatarArrayHolds(doc, 'responsiblePersons', c.personKey),
+      || avatarArrayHolds(doc, 'responsiblePersons', c.personKey)
+      || (!!c.personKey && doc.get('lockedBy.key') === c.personKey),   // who froze the course
     // 'index', not 'full' (cf. `calevents`): the document names the other trainers as well.
     onExport: 'index',
     indexFields: { title: 'name', date: 'startDate', route: '/course' },
     onErasure: 'anonymize',
     // The mirrors are cleared in the same write, so the rules stop honouring the subject at once
     // instead of waiting for the trigger. Plain string arrays: the element is dropped when it equals the key.
-    anonymizeFields: ['trainers', 'responsiblePersons', 'trainerKeys', 'responsibleKeys'],
+    anonymizeFields: ['trainers', 'responsiblePersons', 'trainerKeys', 'responsibleKeys', ...avatarPaths('lockedBy')],
+    // `index` ('… t:<trainer name2,…>') copies the trainers' family names: rebuilt from the
+    // remaining trainers with the builder the client uses on save, so the erased name does not survive in it.
+    recomputeDerived: (d) => ({ index: getCourseIndex({ ...new CourseModel(''), ...d } as CourseModel) }),
     retention: CLUB_RECORD,
   },
   {
@@ -549,7 +567,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     // the element and its rate stay, the avatar is pseudonymised (see `ELEMENT_AVATAR_PATH`), the
     // same fate as `bookings.counterparty`.
     collection: 'courses/finance',
-    dataClass: 'content',
+    dataClass: 'financial',
     tier: 'T3',
     onTenantExit: 'anonymize',
     // `find` is only the narrow, tenant-bounded shape (cf. `prospects`); `resolve` is the access path.
@@ -564,7 +582,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
       || doc.get('requestedBy.key') === c.personKey,
     onExport: 'none',
     onErasure: 'anonymize',
-    anonymizeFields: ['eligible[].person', 'requestedBy.key', 'requestedBy.name1', 'requestedBy.name2'],
+    anonymizeFields: ['eligible[].person', ...avatarPaths('requestedBy')],
     retention: RETAIN_10Y,
   },
   {
@@ -980,8 +998,10 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     // responsiblePersons[] and attendees[].person are embedded arrays — not queryable.
     // Course attendance (spec 1.132 §13) is a MAP keyed by personKey (`attendance[<key>].person`) and
     // `attendanceConfirmedBy` is the trainer who confirmed it; a person who appears only there is
-    // matched too. A training is a club record (T4): erasure drops the person's attendance entry
-    // (`attendance{}`, see erasure-execute) and clears a confirmer's identity, the event stays.
+    // matched too, and so is the writer of somebody else's entry (`attendance[*].by`). A training is a
+    // club record (T4): erasure deletes the person's attendance entry and clears their `by` on others'
+    // entries (`attendance{}`, field-path updates, see erasure-execute) and clears a confirmer's
+    // identity; the event stays.
     find: (c: SubjectCtx) => db().collection('calevents').where('tenants', 'array-contains', c.tenantId),
     tenantScope: 'inQuery',
     matches: (doc, c) => avatarArrayHolds(doc, 'responsiblePersons', c.personKey)
@@ -992,10 +1012,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     onExport: 'index',
     indexFields: { title: 'name', date: 'startDate', route: '/calevent' },
     onErasure: 'anonymize',
-    anonymizeFields: [
-      'responsiblePersons', 'attendees', 'attendance{}',
-      'attendanceConfirmedBy.key', 'attendanceConfirmedBy.name1', 'attendanceConfirmedBy.name2',
-    ],
+    anonymizeFields: ['responsiblePersons', 'attendees', 'attendance{}', ...avatarPaths('attendanceConfirmedBy')],
     retention: CLUB_RECORD,
   },
   {

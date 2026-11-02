@@ -39,7 +39,9 @@ describe('SUBJECT_DATA_MAP', () => {
 
   it('never exports a financial row as index-only (they are full records)', () => {
     for (const e of SUBJECT_DATA_MAP.filter((x) => x.dataClass === 'financial')) {
-      expect(e.onExport).toBe('full');
+      // 'none' is allowed only for `courses/finance`, which lists everybody's rate (its own pay is exported via bookings)
+      expect(e.onExport).not.toBe('index');
+      if (e.collection !== 'courses/finance') expect(e.onExport).toBe('full');
     }
   });
 
@@ -492,6 +494,9 @@ describe('SUBJECT_DATA_MAP — matches() post-filters', () => {
     expect(m?.(snap({ attendance: { legacy: { person: { key: 'p1' } } } }), ctx)).toBe(true);
     expect(m?.(snap({ attendance: { p9: { person: { key: 'p9' } } } }), ctx)).toBe(false);
     expect(m?.(snap({ attendance: {} }), ctx)).toBe(false);
+    // the writer of somebody else's entry (AttendanceEntry.by)
+    expect(m?.(snap({ attendance: { p2: { person: { key: 'p2' }, by: 'p1' } } }), ctx)).toBe(true);
+    expect(m?.(snap({ attendance: { p2: { person: { key: 'p2' }, by: 'p9' } } }), ctx)).toBe(false);
     expect(m?.(snap({ attendanceConfirmedBy: { key: 'p1' } }), ctx)).toBe(true);
     expect(m?.(snap({ attendanceConfirmedBy: { key: 'p9' } }), ctx)).toBe(false);
     // an empty ctx.personKey must not sweep up every event
@@ -503,6 +508,9 @@ describe('SUBJECT_DATA_MAP — matches() post-filters', () => {
     expect(e.matches?.(snap({ trainers: [{ key: 'p1' }] }), ctx)).toBe(true);
     expect(e.matches?.(snap({ responsiblePersons: [{ key: 'p1' }] }), ctx)).toBe(true);
     expect(e.matches?.(snap({ trainers: [{ key: 'p9' }], responsiblePersons: [{ key: 'p8' }] }), ctx)).toBe(false);
+    // the person who froze the course
+    expect(e.matches?.(snap({ lockedBy: { key: 'p1' } }), ctx)).toBe(true);
+    expect(e.matches?.(snap({ lockedBy: { key: 'p9' } }), ctx)).toBe(false);
     // the mirrors alone never identify: they lag until the trigger has run
     expect(e.matches?.(snap({ trainerKeys: ['p1'], responsibleKeys: ['p1'] }), ctx)).toBe(false);
     // legacy doc without the arrays
@@ -520,6 +528,7 @@ describe('SUBJECT_DATA_MAP — matches() post-filters', () => {
     expect(e.matches?.(snap({}), ctx)).toBe(false);
     // the document lists everybody's rate: the subject's own pay is exported through bookings
     expect(e.onExport).toBe('none');
+    expect(e.dataClass).toBe('financial');
     expect(e.tier).toBe('T3');
     expect(e.onErasure).toBe('anonymize');
     expect(e.retention.months).toBe(120);
