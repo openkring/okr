@@ -18,6 +18,7 @@ import { decodeQrBill } from './qr-bill-decode';
 import { qrFieldsOf, pickVatCodeKey, type VatCodeLite } from './bill-scan.util';
 import { sanitizeCreditor } from './creditor.util';
 import { costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
+import { resolveTreasurer } from './resolve-treasurer';
 import { emitEvent } from '../workflow/emit';
 import { getTodayStr, DateFormat } from '@okr/shared-util-core';
 
@@ -83,35 +84,6 @@ async function accountKeyById(accountingTenantId: string, accountId: string): Pr
     .where('id', '==', accountId)
     .limit(1).get();
   return snap.empty ? '' : snap.docs[0].id;
-}
-
-/** Find the treasurer person key + name to assign the review task to. */
-async function resolveTreasurer(tenantId: string, reviewAssigneePersonKey: string):
-  Promise<{ key: string; name1: string; name2: string } | null> {
-  const db = getFirestore();
-  if (reviewAssigneePersonKey) {
-    const snap = await db.collection(USERS_COLLECTION).where('personKey', '==', reviewAssigneePersonKey).limit(1).get();
-    if (!snap.empty) {
-      const u = snap.docs[0].data();
-      return { key: reviewAssigneePersonKey, name1: u['firstName'] ?? '', name2: u['lastName'] ?? '' };
-    }
-  }
-  const treasurerSnap = await db.collection(USERS_COLLECTION)
-    .where('tenants', 'array-contains', tenantId)
-    .where('roles.treasurer', '==', true)
-    .limit(1).get();
-  if (!treasurerSnap.empty) {
-    const u = treasurerSnap.docs[0].data();
-    return { key: u['personKey'] ?? '', name1: u['firstName'] ?? '', name2: u['lastName'] ?? '' };
-  }
-  // Fallback: no dedicated treasurer configured — assign to the first tenant admin.
-  const adminSnap = await db.collection(USERS_COLLECTION)
-    .where('tenants', 'array-contains', tenantId)
-    .where('roles.admin', '==', true)
-    .limit(1).get();
-  if (adminSnap.empty) return null;
-  const u = adminSnap.docs[0].data();
-  return { key: u['personKey'] ?? '', name1: u['firstName'] ?? '', name2: u['lastName'] ?? '' };
 }
 
 /** Build a compact "id name" chart-of-accounts list of leaf accounts for the LLM account hint. */

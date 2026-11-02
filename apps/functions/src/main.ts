@@ -156,6 +156,8 @@ export const setChatPins = MatrixSimple.setChatPins;
 export const onGroupDocWritten = Group.onGroupDocWritten;
 // onCourseDocWritten: courses/{courseId}, mirrors trainers[]/responsiblePersons[] into trainerKeys/responsibleKeys for firestore.rules (spec 1.132 §6.1)
 export const onCourseDocWritten = Course.onCourseDocWritten;
+// requestCourseCompensation: a responsible person asks for the trainers' compensation of a locked course → forReview bookings + treasurer task (spec 1.132 §7.6)
+export const requestCourseCompensation = Course.requestCourseCompensation;
 // onMembershipDocWritten: memberships/{membershipId}, one trigger fanning out to the four former membership triggers (matrixSync, pinboardSource, accountSync, exitSettlement; 1.118 A4)
 export const onMembershipDocWritten = Membership.onMembershipDocWritten;
 export const resolveNotesRoom = MatrixSimple.resolveNotesRoom;
