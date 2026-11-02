@@ -32,6 +32,8 @@
     "@okr/system-workflow-ui": "*",
     "@okr/system-workflow-util": "*",
     "@okr/project-project-data-access": "*",
-    "@okr/finance-expense-feature": "*"
+    "@okr/finance-expense-feature": "*",
+    "@okr/calendar-course-ui": "*",
+    "@okr/calendar-course-util": "*"
   }
 }

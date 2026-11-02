@@ -7,10 +7,10 @@ import { combineLatest, map, of, switchMap } from 'rxjs';
 
 import { isCourseOver } from '@okr/calendar-calevent-util';
 import { CourseService } from '@okr/calendar-course-data-access';
-import { CourseAttendanceModal } from '@okr/calendar-course-ui';
+import { CourseAttendanceModal, openCourseHelp } from '@okr/calendar-course-ui';
 import {
   AttendanceRow, attendanceEntriesToWrite, attendanceRowsForEvent, buildCourseTable, buildGenericCsvRows, buildJsAwkRows, compensationErrorKey,
-  compensationSummary, computeCompensation, COURSE_I18N_KEYS, CourseAccess, courseEventLabel, courseEventStarted, courseFileBase, CourseI18n,
+  compensationSummary, computeCompensation, COURSE_I18N_KEYS, CourseAccess, courseEventLabel, courseHelpRoleFor, courseEventStarted, courseFileBase, CourseI18n,
   CourseTable, ExportFinding, formatCourseAmount, htmlLines, escapeHtml, mayEditCourseAttendance, mayExportCourse, mayManageCourse,
   mayReadCourseFinance, mayViewCourseTable, unconfirmedPastEvents, unlistedLeaders, visibleFindings, VisibleFindings
 } from '@okr/calendar-course-util';
@@ -131,6 +131,11 @@ export const CourseTableStore = signalStore(
       /** may read the amounts: only then is the finance document queried at all (D7) */
       canReadFinance: has(mayReadCourseFinance),
       trainerKeys: computed(() => (course()?.trainers ?? []).map(t => t.key)),
+      /** whose help the (i) opens: the viewer's strongest role in this course (§10) */
+      helpRole: computed(() => {
+        const c = course();
+        return c ? courseHelpRoleFor(c, access()) : 'participant' as const;
+      }),
     };
   }),
   withProps((store) => ({
@@ -338,6 +343,11 @@ export const CourseTableStore = signalStore(
       const lockedBy = getAvatarInfo(store.currentUser(), 'user-person');
       if (!lockedBy) return;
       await store.courseService.updateCourseState(course.okey, { isLocked: true, lockedBy, lockedAt: getTodayStr(DateFormat.StoreDateTime) });
+    },
+
+    /** The (i): the help for the viewer's role. */
+    async showHelp(): Promise<void> {
+      await openCourseHelp(store.modalController, store.helpRole());
     },
 
     /** Reopens a frozen course, after a warning that a new J+S import overwrites the reported attendance. */

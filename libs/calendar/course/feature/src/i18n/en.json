@@ -271,5 +271,113 @@
     "intro": "The proposal comes from the sign-up. Check it and save to confirm the attendance.",
     "confirmedBy": "Confirmed by {name} on {date}",
     "leader": "leads"
+  },
+  "help": {
+    "title": "Course guide",
+    "open": "Guide",
+    "trainer": {
+      "role": "For trainers",
+      "intro": "You lead sessions of the course. This is what you can do in the course table. You do not see the compensation amounts; they are reserved for the responsible persons and the treasurer.",
+      "confirm": {
+        "title": "Confirm attendance",
+        "text": "From the start of an event, tap its column in the course table and choose \"Record attendance\". The list is pre-filled from the sign-ups. Check it, adjust it and save. Attendance only counts as confirmed once you save, and all rows are saved together.\nYou can correct it at any time later, as long as the course is not frozen."
+      },
+      "function": {
+        "title": "Function per event and substitutes",
+        "text": "For each event and person you set whether they were present, absent or excused, and whether they led the session (\"leads\"). The function applies to that one event only. If somebody stood in, set \"leads\" for that person.\nCompensation counts the events somebody led. Anybody who is not on the list of eligible persons receives no compensation; the responsible persons see a note about it."
+      },
+      "series": {
+        "title": "Add series to the course",
+        "text": "With \"Add series\" at the top of the course table you create a regular training. It belongs to the course right away. A course can bundle several series, for example one per half year."
+      },
+      "assign": {
+        "title": "Assign events of the group",
+        "text": "Events that are already in the group calendar are assigned to the course in the list \"Group events without a course\". From an event's column you can take it out of the course again; the recorded attendance stays saved on the event.\nWhile the course is frozen, neither is possible."
+      },
+      "export": {
+        "title": "Download the table",
+        "text": "In the menu at the top right (three dots) you download the course table as a CSV file, for example for your own evaluation."
+      }
+    },
+    "responsible": {
+      "role": "For responsible persons",
+      "intro": "You are responsible for the course. You confirm attendance like the trainers and see the course through to reporting and compensation. Besides you, only the group admins, authorised persons and the treasurer see the amounts.",
+      "setup": {
+        "title": "Set up the course",
+        "text": "New courses are created in the course list by the group admins or authorised persons. With \"Edit course\" you maintain the period, responsible persons and trainers, as well as the details for the J+S report and the compensation: accounting, rate per event and the list of eligible persons."
+      },
+      "running": {
+        "title": "During the course",
+        "text": "You confirm the attendance of the events like the trainers (tap an event's column), add series and assign events of the group. You see the state of the course in the course table."
+      },
+      "lock": {
+        "title": "Freeze the course",
+        "text": "After the course ends you freeze it in the menu (three dots). This only works once the attendance of all past events is confirmed; the app shows you what is still missing. Afterwards attendance and events can no longer be changed.\nIf you still need a correction, reopen the course. Note: if you have already imported the J+S file into the NDS, a new import overwrites the attendance already reported."
+      },
+      "js": {
+        "title": "Prepare the J+S file",
+        "text": "Choose \"Download J+S file\" in the menu. The app first shows you the notes on the report. They list what would be missing from the file, for example attendance that is not confirmed, an event type without a J+S activity or a missing location. Fix these before you download the file."
+      },
+      "nds": {
+        "title": "Import into the NDS",
+        "text": "Import the file only after the course has ended. The people and the activities must already exist in the NDS. The import overwrites attendance that is already there. Mark camp days under 4 hours in the NDS afterwards."
+      },
+      "numbers": {
+        "title": "Missing J+S numbers",
+        "text": "If a person has no J+S person number yet, the notes show \"Add number\". Enter the 9 digits there. The number is saved with the person."
+      },
+      "request": {
+        "title": "Request compensation",
+        "text": "The course must be frozen. With \"Request compensation\" you send the settlement to the treasurer.\nIf the accounting is kept in the app, a booking is prepared as a draft \"for review\" for every eligible person, and the treasurer receives a task. If it is kept outside the app, the treasurer only receives the task with the settlement. The payment itself happens outside the app."
+      },
+      "reported": {
+        "title": "Mark as reported",
+        "text": "Once you have completed the report, mark the course as reported in the menu. The course list and the course table then show \"reported\"."
+      }
+    },
+    "treasurer": {
+      "role": "For the treasurer",
+      "intro": "The responsible persons of a course request the trainers' compensation and you check it. You see the amounts in every course.",
+      "task": {
+        "title": "Open the task",
+        "text": "As soon as a request is made, you receive a task. It names the course. The link in the task takes you to the course table, where you see the events led and the amounts per person."
+      },
+      "review": {
+        "title": "Check the draft in the journal",
+        "text": "If the accounting is kept in the app, the journal holds one booking per person \"for review\". Check the person, amount and account. If you approve a booking, it is posted. If you reject it, you give a reason and the booking is cancelled."
+      },
+      "external": {
+        "title": "Accounting outside the app",
+        "text": "If the accounting is kept outside the app, for example in bexio, there are no bookings in the app. The task contains the settlement and you book it there yourself."
+      },
+      "payment": {
+        "title": "Payment",
+        "text": "The payment to the trainers happens outside the app. Approving a booking does not trigger a payment."
+      },
+      "again": {
+        "title": "When the request is repeated",
+        "text": "If the responsible persons request the compensation again, for example after a correction, rejected bookings stay rejected. Bookings that are already approved keep their amount. The app shows the differences to the responsible persons."
+      },
+      "yearly": {
+        "title": "Yearly totals",
+        "text": "In the course overview, the card \"Compensation per year\" shows for each person the total of the approved compensation across all courses. The booking date decides which year counts."
+      }
+    },
+    "participant": {
+      "role": "For participants",
+      "intro": "You train in the course. This explains what signing up and attendance mean.",
+      "signup": {
+        "title": "Signing up",
+        "text": "You sign up for or decline an event in the calendar as before. Signing up tells the trainers who is coming. It does not count as attendance yet."
+      },
+      "attendance": {
+        "title": "Attendance",
+        "text": "After the training the trainers confirm who was present, absent or excused. Until then the table shows a suggestion from the sign-ups, marked as not confirmed."
+      },
+      "table": {
+        "title": "Course table",
+        "text": "The table shows the events as columns and the people as rows, with the total per person. Everybody who belongs to the course sees the same table. You do not see the compensation amounts."
+      }
+    }
   }
 }

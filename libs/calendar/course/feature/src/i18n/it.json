@@ -271,5 +271,113 @@
     "intro": "La proposta viene dall'iscrizione. Controllala e salva per confermare le presenze.",
     "confirmedBy": "Confermato da {name} il {date}",
     "leader": "dirige"
+  },
+  "help": {
+    "title": "Guida al corso",
+    "open": "Guida",
+    "trainer": {
+      "role": "Per gli allenatori",
+      "intro": "Dirigi allenamenti del corso. Qui trovi cosa puoi fare nella tabella del corso. Gli importi dell'indennità non li vedi: sono riservati ai responsabili e alla tesoreria.",
+      "confirm": {
+        "title": "Confermare la presenza",
+        "text": "Dall'inizio di un appuntamento, tocca la sua colonna nella tabella del corso e scegli «Registra la presenza». L'elenco è precompilato con le iscrizioni. Controllalo, adattalo e salva. La presenza vale come confermata solo dopo il salvataggio, e tutte le righe vengono salvate insieme.\nPuoi correggerla in qualsiasi momento, finché il corso non è congelato."
+      },
+      "function": {
+        "title": "Funzione per appuntamento e sostituzioni",
+        "text": "Per ogni appuntamento e persona indichi se era presente, assente o giustificata e se ha diretto l'allenamento («dirige»). La funzione vale solo per quell'appuntamento. Se qualcuno ha sostituito, imposta «dirige» per quella persona.\nPer l'indennità contano gli appuntamenti diretti. Chi non è nell'elenco degli aventi diritto non riceve indennità; i responsabili vedono un avviso."
+      },
+      "series": {
+        "title": "Aggiungere serie al corso",
+        "text": "Con «Aggiungi una serie», in alto nella tabella del corso, crei un allenamento regolare. Fa subito parte del corso. Un corso può riunire più serie, per esempio una per semestre."
+      },
+      "assign": {
+        "title": "Assegnare appuntamenti del gruppo",
+        "text": "Gli appuntamenti già presenti nel calendario del gruppo si assegnano al corso nell'elenco «Appuntamenti del gruppo senza corso». Dalla colonna di un appuntamento puoi toglierlo di nuovo dal corso; la presenza registrata resta salvata sull'appuntamento.\nFinché il corso è congelato, non è possibile fare né l'una né l'altra cosa."
+      },
+      "export": {
+        "title": "Scaricare la tabella",
+        "text": "Nel menu in alto a destra (tre puntini) scarichi la tabella del corso come file CSV, per esempio per una tua valutazione."
+      }
+    },
+    "responsible": {
+      "role": "Per i responsabili",
+      "intro": "Sei responsabile del corso. Confermi la presenza come gli allenatori e accompagni il corso fino alla notifica e all'indennità. Oltre a te, vedono gli importi solo la direzione del gruppo, le persone autorizzate e la tesoreria.",
+      "setup": {
+        "title": "Impostare il corso",
+        "text": "I nuovi corsi vengono creati nell'elenco dei corsi dalla direzione del gruppo o da persone autorizzate. Con «Modifica corso» gestisci il periodo, i responsabili e gli allenatori, oltre ai dati per la notifica G+S e l'indennità: contabilità, importo per appuntamento ed elenco degli aventi diritto."
+      },
+      "running": {
+        "title": "Durante il corso",
+        "text": "Confermi la presenza degli appuntamenti come gli allenatori (tocca la colonna di un appuntamento), aggiungi serie e assegni appuntamenti del gruppo. Lo stato del corso lo vedi nella tabella del corso."
+      },
+      "lock": {
+        "title": "Congelare il corso",
+        "text": "Dopo la fine del corso lo congeli dal menu (tre puntini). È possibile solo quando la presenza di tutti gli appuntamenti passati è confermata; l'app ti mostra cosa manca ancora. Poi presenze e appuntamenti non si possono più modificare.\nSe ti serve comunque una correzione, riapri il corso. Attenzione: se hai già importato il file G+S nella BDNS, una nuova importazione sovrascrive le presenze già notificate."
+      },
+      "js": {
+        "title": "Preparare il file G+S",
+        "text": "Scegli «Scarica file G+S» nel menu. L'app ti mostra prima gli avvisi sulla notifica. Indicano cosa mancherebbe nel file, per esempio una presenza non confermata, un tipo di appuntamento senza attività G+S o un luogo mancante. Risolvi questi punti prima di scaricare il file."
+      },
+      "nds": {
+        "title": "Importare nella BDNS",
+        "text": "Importa il file solo dopo la fine del corso. Persone e attività devono già essere registrate nella BDNS. L'importazione sovrascrive le presenze già registrate lì. Dopo segna nella BDNS i giorni di campo sotto le 4 ore."
+      },
+      "numbers": {
+        "title": "Numeri G+S mancanti",
+        "text": "Se una persona non ha ancora il numero di persona G+S, gli avvisi mostrano «Aggiungi il numero». Lì inserisci le 9 cifre. Il numero viene salvato presso la persona."
+      },
+      "request": {
+        "title": "Richiedere l'indennità",
+        "text": "Il corso deve essere congelato. Con «Richiedi l'indennità» invii il conteggio alla tesoreria.\nSe la contabilità è tenuta nell'app, per ogni persona avente diritto viene preparata una registrazione come bozza «da controllare», e la tesoreria riceve un compito. Se è tenuta fuori dall'app, la tesoreria riceve solo il compito con il conteggio. Il pagamento avviene fuori dall'app."
+      },
+      "reported": {
+        "title": "Segnare come notificato",
+        "text": "Quando hai concluso la notifica, segna il corso come notificato nel menu. L'elenco dei corsi e la tabella del corso mostrano poi «notificato»."
+      }
+    },
+    "treasurer": {
+      "role": "Per la tesoreria",
+      "intro": "I responsabili di un corso richiedono l'indennità degli allenatori e tu la controlli. Gli importi li vedi in ogni corso.",
+      "task": {
+        "title": "Aprire il compito",
+        "text": "Appena viene fatta una richiesta, ricevi un compito. Indica il corso. Il link nel compito ti porta alla tabella del corso, dove vedi gli appuntamenti diretti e gli importi per persona."
+      },
+      "review": {
+        "title": "Controllare la bozza nel giornale",
+        "text": "Se la contabilità è tenuta nell'app, il giornale contiene una registrazione «da controllare» per persona. Controlla persona, importo e conto. Se approvi una registrazione, viene contabilizzata. Se la rifiuti, indichi un motivo e la registrazione viene annullata."
+      },
+      "external": {
+        "title": "Contabilità fuori dall'app",
+        "text": "Se la contabilità è tenuta fuori dall'app, per esempio in bexio, nell'app non ci sono registrazioni. Il compito contiene il conteggio e lo registri tu direttamente lì."
+      },
+      "payment": {
+        "title": "Pagamento",
+        "text": "Il pagamento agli allenatori avviene fuori dall'app. L'approvazione di una registrazione non avvia alcun pagamento."
+      },
+      "again": {
+        "title": "Quando la richiesta viene ripetuta",
+        "text": "Se i responsabili richiedono di nuovo l'indennità, per esempio dopo una correzione, le registrazioni rifiutate restano rifiutate. Quelle già approvate mantengono il loro importo. L'app mostra le differenze ai responsabili."
+      },
+      "yearly": {
+        "title": "Totali annuali",
+        "text": "Nella panoramica dei corsi, la scheda «Indennità per anno» mostra per ogni persona il totale delle indennità approvate su tutti i corsi. L'anno dipende dalla data della registrazione."
+      }
+    },
+    "participant": {
+      "role": "Per i partecipanti",
+      "intro": "Ti alleni nel corso. Qui trovi cosa significano iscrizione e presenza.",
+      "signup": {
+        "title": "Iscrizione",
+        "text": "Ti iscrivi a un appuntamento o ti cancelli nel calendario, come prima. L'iscrizione mostra agli allenatori chi viene. Non vale ancora come presenza."
+      },
+      "attendance": {
+        "title": "Presenza",
+        "text": "Dopo l'allenamento gli allenatori confermano chi era presente, assente o giustificato. Fino ad allora la tabella mostra una proposta tratta dalle iscrizioni, contrassegnata come non confermata."
+      },
+      "table": {
+        "title": "Tabella del corso",
+        "text": "La tabella mostra gli appuntamenti come colonne e le persone come righe, con il totale per persona. Tutte le persone del corso vedono la stessa tabella. Gli importi dell'indennità non li vedi."
+      }
+    }
   }
 }

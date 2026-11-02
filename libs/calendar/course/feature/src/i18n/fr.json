@@ -271,5 +271,113 @@
     "intro": "La proposition vient de l'inscription. Vérifie-la et enregistre pour confirmer les présences.",
     "confirmedBy": "Confirmé par {name} le {date}",
     "leader": "dirige"
+  },
+  "help": {
+    "title": "Guide du cours",
+    "open": "Guide",
+    "trainer": {
+      "role": "Pour les entraîneurs",
+      "intro": "Tu diriges des entraînements du cours. Voici ce que tu peux faire dans le tableau du cours. Tu ne vois pas les montants de l'indemnité : ils sont réservés aux responsables et à la trésorerie.",
+      "confirm": {
+        "title": "Confirmer la présence",
+        "text": "Dès le début d'une date, touche sa colonne dans le tableau du cours et choisis « Saisir la présence ». La liste est préremplie avec les inscriptions. Vérifie-la, adapte-la et enregistre. La présence ne compte comme confirmée qu'une fois enregistrée, et toutes les lignes sont enregistrées ensemble.\nTu peux la corriger plus tard à tout moment, tant que le cours n'est pas gelé."
+      },
+      "function": {
+        "title": "Fonction par date et remplacement",
+        "text": "Pour chaque date et chaque personne, tu indiques si elle était présente, absente ou excusée, et si elle a dirigé l'entraînement (« dirige »). La fonction ne vaut que pour cette date. Si quelqu'un a remplacé, mets « dirige » pour cette personne.\nPour l'indemnité, ce sont les dates dirigées qui comptent. Qui ne figure pas sur la liste des ayants droit ne reçoit pas d'indemnité ; les responsables voient une remarque à ce sujet."
+      },
+      "series": {
+        "title": "Ajouter des séries au cours",
+        "text": "Avec « Ajouter une série », en haut du tableau du cours, tu crées un entraînement régulier. Il fait tout de suite partie du cours. Un cours peut regrouper plusieurs séries, par exemple une par semestre."
+      },
+      "assign": {
+        "title": "Attribuer des dates du groupe",
+        "text": "Les dates déjà présentes dans le calendrier du groupe sont attribuées au cours dans la liste « Dates du groupe sans cours ». Depuis la colonne d'une date, tu peux la retirer du cours ; la présence saisie reste enregistrée sur la date.\nTant que le cours est gelé, ni l'un ni l'autre n'est possible."
+      },
+      "export": {
+        "title": "Télécharger le tableau",
+        "text": "Dans le menu en haut à droite (trois points), tu télécharges le tableau du cours au format CSV, par exemple pour ta propre évaluation."
+      }
+    },
+    "responsible": {
+      "role": "Pour les responsables",
+      "intro": "Tu es responsable du cours. Tu confirmes la présence comme les entraîneurs et tu accompagnes le cours jusqu'à l'annonce et à l'indemnité. À part toi, seuls la direction du groupe, les personnes autorisées et la trésorerie voient les montants.",
+      "setup": {
+        "title": "Configurer le cours",
+        "text": "Les nouveaux cours sont créés dans la liste des cours par la direction du groupe ou des personnes autorisées. Avec « Modifier le cours », tu gères la période, les responsables et les entraîneurs, ainsi que les informations pour l'annonce J+S et l'indemnité : comptabilité, taux par date et liste des ayants droit."
+      },
+      "running": {
+        "title": "Pendant le cours",
+        "text": "Tu confirmes la présence des dates comme les entraîneurs (touche la colonne d'une date), tu ajoutes des séries et tu attribues des dates du groupe. Tu vois l'état du cours dans le tableau du cours."
+      },
+      "lock": {
+        "title": "Geler le cours",
+        "text": "Après la fin du cours, tu le geles dans le menu (trois points). Cela n'est possible que lorsque la présence de toutes les dates passées est confirmée ; l'app t'indique ce qui manque encore. Ensuite, la présence et les dates ne peuvent plus être modifiées.\nSi une correction reste nécessaire, rouvre le cours. Attention : si tu as déjà importé le fichier J+S dans la BDNS, un nouvel import écrase les présences déjà annoncées."
+      },
+      "js": {
+        "title": "Préparer le fichier J+S",
+        "text": "Choisis « Télécharger le fichier J+S » dans le menu. L'app te montre d'abord les remarques sur l'annonce. Elles indiquent ce qui manquerait dans le fichier, par exemple une présence non confirmée, un type de date sans activité J+S ou un lieu manquant. Corrige ces points avant de télécharger le fichier."
+      },
+      "nds": {
+        "title": "Importer dans la BDNS",
+        "text": "N'importe le fichier qu'après la fin du cours. Les personnes et les activités doivent déjà être saisies dans la BDNS. L'import écrase les présences qui s'y trouvent déjà. Marque ensuite dans la BDNS les jours de camp de moins de 4 heures."
+      },
+      "numbers": {
+        "title": "Numéros J+S manquants",
+        "text": "Si une personne n'a pas encore de numéro de personne J+S, les remarques affichent « Ajouter le numéro ». Tu y saisis les 9 chiffres. Le numéro est enregistré avec la personne."
+      },
+      "request": {
+        "title": "Demander l'indemnité",
+        "text": "Le cours doit être gelé. Avec « Demander l'indemnité », tu envoies le décompte à la trésorerie.\nSi la comptabilité est tenue dans l'app, une écriture est préparée comme brouillon « à vérifier » pour chaque personne ayant droit, et la trésorerie reçoit une tâche. Si elle est tenue en dehors de l'app, la trésorerie reçoit seulement la tâche avec le décompte. Le paiement lui-même se fait en dehors de l'app."
+      },
+      "reported": {
+        "title": "Marquer comme annoncé",
+        "text": "Quand tu as terminé l'annonce, marque le cours comme annoncé dans le menu. La liste des cours et le tableau du cours affichent alors « annoncé »."
+      }
+    },
+    "treasurer": {
+      "role": "Pour la trésorerie",
+      "intro": "Les responsables d'un cours demandent l'indemnité des entraîneurs, et tu la vérifies. Tu vois les montants dans chaque cours.",
+      "task": {
+        "title": "Ouvrir la tâche",
+        "text": "Dès qu'une demande est faite, tu reçois une tâche. Elle nomme le cours. Le lien dans la tâche te mène au tableau du cours, où tu vois les dates dirigées et les montants par personne."
+      },
+      "review": {
+        "title": "Vérifier le brouillon dans le journal",
+        "text": "Si la comptabilité est tenue dans l'app, le journal contient une écriture « à vérifier » par personne. Vérifie la personne, le montant et le compte. Si tu valides une écriture, elle est comptabilisée. Si tu la refuses, tu indiques un motif et l'écriture est annulée."
+      },
+      "external": {
+        "title": "Comptabilité en dehors de l'app",
+        "text": "Si la comptabilité est tenue en dehors de l'app, par exemple dans bexio, il n'y a pas d'écritures dans l'app. La tâche contient le décompte, et tu le comptabilises toi-même là-bas."
+      },
+      "payment": {
+        "title": "Paiement",
+        "text": "Le paiement aux entraîneurs se fait en dehors de l'app. La validation d'une écriture ne déclenche aucun paiement."
+      },
+      "again": {
+        "title": "Quand la demande est répétée",
+        "text": "Si les responsables demandent à nouveau l'indemnité, par exemple après une correction, les écritures refusées restent refusées. Les écritures déjà validées gardent leur montant. L'app montre les différences aux responsables."
+      },
+      "yearly": {
+        "title": "Totaux annuels",
+        "text": "Dans l'aperçu des cours, la carte « Indemnités par année » montre pour chaque personne le total des indemnités validées sur tous les cours. La date de l'écriture détermine l'année."
+      }
+    },
+    "participant": {
+      "role": "Pour les participants",
+      "intro": "Tu t'entraînes dans le cours. Voici ce que signifient l'inscription et la présence.",
+      "signup": {
+        "title": "Inscription",
+        "text": "Tu t'inscris ou te désinscris d'une date dans le calendrier, comme avant. L'inscription indique aux entraîneurs qui vient. Elle ne compte pas encore comme présence."
+      },
+      "attendance": {
+        "title": "Présence",
+        "text": "Après l'entraînement, les entraîneurs confirment qui était présent, absent ou excusé. Jusque-là, le tableau affiche une proposition issue des inscriptions, marquée comme non confirmée."
+      },
+      "table": {
+        "title": "Tableau du cours",
+        "text": "Le tableau montre les dates en colonnes et les personnes en lignes, avec le total par personne. Toutes les personnes du cours voient le même tableau. Tu ne vois pas les montants de l'indemnité."
+      }
+    }
   }
 }

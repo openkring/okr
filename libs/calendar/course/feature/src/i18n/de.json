@@ -271,5 +271,113 @@
     "intro": "Der Vorschlag kommt aus der Anmeldung. Prüfe ihn und speichere, um die Anwesenheit zu bestätigen.",
     "confirmedBy": "Bestätigt von {name} am {date}",
     "leader": "leitet"
+  },
+  "help": {
+    "title": "Anleitung zum Kurs",
+    "open": "Anleitung",
+    "trainer": {
+      "role": "Für Trainerinnen und Trainer",
+      "intro": "Du leitest Trainings des Kurses. Hier steht, was du in der Kurstabelle tun kannst. Die Beträge der Entschädigung siehst du nicht, sie sind den Verantwortlichen und der Kassenführung vorbehalten.",
+      "confirm": {
+        "title": "Anwesenheit bestätigen",
+        "text": "Ab dem Beginn eines Termins tippst du in der Kurstabelle auf seine Spalte und wählst «Anwesenheit erfassen». Die Liste ist mit den Anmeldungen vorbefüllt. Prüfe sie, passe sie an und speichere. Erst mit dem Speichern gilt die Anwesenheit als bestätigt, und es werden alle Zeilen gespeichert.\nKorrekturen sind später jederzeit möglich, solange der Kurs nicht eingefroren ist."
+      },
+      "function": {
+        "title": "Funktion pro Termin und Vertretung",
+        "text": "Pro Termin und Person legst du fest, ob sie anwesend, abwesend oder entschuldigt war und ob sie das Training geleitet hat («leitet»). Die Funktion gilt nur für diesen einen Termin. Hat jemand vertreten, setzt du bei dieser Person «leitet».\nFür die Entschädigung zählen die Termine, die jemand geleitet hat. Wer nicht auf der Liste der Berechtigten steht, erhält keine Entschädigung. Die Verantwortlichen sehen dazu einen Hinweis."
+      },
+      "series": {
+        "title": "Serien zum Kurs hinzufügen",
+        "text": "Mit «Serie hinzufügen» oben in der Kurstabelle legst du ein regelmässiges Training an. Es gehört gleich zum Kurs. Ein Kurs kann mehrere Serien bündeln, zum Beispiel eine pro Halbjahr."
+      },
+      "assign": {
+        "title": "Termine der Gruppe zuordnen",
+        "text": "Termine, die schon im Kalender der Gruppe stehen, ordnest du in der Liste «Termine der Gruppe ohne Kurs» dem Kurs zu. Über die Spalte eines Termins nimmst du ihn wieder aus dem Kurs. Die erfasste Anwesenheit bleibt dabei am Termin gespeichert.\nIst der Kurs eingefroren, geht beides nicht mehr."
+      },
+      "export": {
+        "title": "Tabelle herunterladen",
+        "text": "Im Menü oben rechts (drei Punkte) lädst du die Kurstabelle als CSV-Datei herunter, zum Beispiel für eine eigene Auswertung."
+      }
+    },
+    "responsible": {
+      "role": "Für Verantwortliche",
+      "intro": "Du verantwortest den Kurs. Du bestätigst die Anwesenheit wie die Trainerinnen und Trainer und führst den Kurs bis zur Meldung und zur Entschädigung. Die Beträge sehen ausser dir nur die Gruppenleitung, Berechtigte und die Kassenführung.",
+      "setup": {
+        "title": "Kurs einrichten",
+        "text": "Neue Kurse legen die Gruppenleitung oder Berechtigte in der Kursliste an. Mit «Kurs bearbeiten» pflegst du Zeitraum, Verantwortliche und Trainer sowie die Angaben für die J+S-Meldung und die Entschädigung: Buchhaltung, Ansatz pro Termin und die Liste der Berechtigten."
+      },
+      "running": {
+        "title": "Während des Kurses",
+        "text": "Du bestätigst die Anwesenheit der Termine wie die Trainer (Tipp auf die Spalte eines Termins), fügst Serien hinzu und ordnest Termine der Gruppe zu. Den Stand des Kurses siehst du in der Kurstabelle."
+      },
+      "lock": {
+        "title": "Kurs einfrieren",
+        "text": "Nach dem Kursende frierst du den Kurs im Menü (drei Punkte) ein. Das geht erst, wenn die Anwesenheit aller vergangenen Termine bestätigt ist. Was noch fehlt, zeigt dir die App. Danach lassen sich Anwesenheit und Termine nicht mehr ändern.\nBrauchst du doch eine Korrektur, öffnest du den Kurs wieder. Achtung: Hast du die J+S-Datei schon in der NDS importiert, überschreibt ein neuer Import die bereits gemeldeten Anwesenheiten."
+      },
+      "js": {
+        "title": "J+S-Datei vorbereiten",
+        "text": "Wähle im Menü «J+S-Datei herunterladen». Die App zeigt dir zuerst die Hinweise zur Meldung. Dort steht, was in der Datei fehlen würde, zum Beispiel eine nicht bestätigte Anwesenheit, eine Terminart ohne J+S-Aktivität oder ein fehlender Ort. Behebe die Punkte, bevor du die Datei herunterlädst."
+      },
+      "nds": {
+        "title": "In der NDS importieren",
+        "text": "Importiere die Datei erst nach dem Kursende. Die Personen und die Aktivitäten müssen in der NDS schon erfasst sein. Der Import überschreibt Anwesenheiten, die dort schon stehen. Lagertage unter 4 Stunden markierst du danach in der NDS."
+      },
+      "numbers": {
+        "title": "Fehlende J+S-Nummern",
+        "text": "Hat eine Person noch keine J+S-Personennummer, zeigen dir die Hinweise «Nummer nachtragen». Dort trägst du die 9 Ziffern ein. Die Nummer wird bei der Person gespeichert."
+      },
+      "request": {
+        "title": "Entschädigung beantragen",
+        "text": "Der Kurs muss eingefroren sein. Mit «Entschädigung beantragen» schickst du die Abrechnung an die Kassenführung.\nWird die Buchhaltung in der App geführt, entsteht für jede berechtigte Person eine Buchung als Entwurf «zur Prüfung», und die Kassenführung erhält eine Aufgabe. Wird sie ausserhalb der App geführt, erhält die Kassenführung nur die Aufgabe mit der Abrechnung. Die Zahlung selbst erfolgt ausserhalb der App."
+      },
+      "reported": {
+        "title": "Als gemeldet markieren",
+        "text": "Hast du die Meldung abgeschlossen, markierst du den Kurs im Menü als gemeldet. In der Kursliste und in der Kurstabelle steht dann «gemeldet»."
+      }
+    },
+    "treasurer": {
+      "role": "Für die Kassenführung",
+      "intro": "Die Verantwortlichen eines Kurses beantragen die Entschädigung der Trainerinnen und Trainer, du prüfst sie. Die Beträge siehst du in jedem Kurs.",
+      "task": {
+        "title": "Aufgabe öffnen",
+        "text": "Sobald ein Antrag gestellt ist, erhältst du eine Aufgabe. Sie nennt den Kurs. Über den Link in der Aufgabe kommst du zur Kurstabelle, in der du die geleiteten Termine und die Beträge pro Person siehst."
+      },
+      "review": {
+        "title": "Entwurf im Journal prüfen",
+        "text": "Wird die Buchhaltung in der App geführt, stehen im Journal pro Person Buchungen «zur Prüfung». Prüfe Person, Betrag und Konto. Gibst du eine Buchung frei, ist sie gebucht. Lehnst du sie ab, gibst du eine Begründung an, und die Buchung wird storniert."
+      },
+      "external": {
+        "title": "Buchhaltung ausserhalb der App",
+        "text": "Wird die Buchhaltung ausserhalb der App geführt, zum Beispiel in bexio, gibt es in der App keine Buchungen. Die Aufgabe enthält die Abrechnung, und du verbuchst sie dort selbst."
+      },
+      "payment": {
+        "title": "Zahlung",
+        "text": "Die Zahlung an die Trainerinnen und Trainer erfolgt ausserhalb der App. Die Freigabe einer Buchung löst keine Zahlung aus."
+      },
+      "again": {
+        "title": "Wenn der Antrag wiederholt wird",
+        "text": "Beantragen die Verantwortlichen die Entschädigung nochmals, etwa nach einer Korrektur, bleiben abgelehnte Buchungen abgelehnt. Schon freigegebene Buchungen behalten ihren Betrag. Unterschiede zeigt die App den Verantwortlichen an."
+      },
+      "yearly": {
+        "title": "Jahressummen",
+        "text": "In der Kursübersicht zeigt die Karte «Entschädigungen pro Jahr» für jede Person die Summe der freigegebenen Entschädigungen über alle Kurse. Massgebend ist das Buchungsdatum."
+      }
+    },
+    "participant": {
+      "role": "Für Teilnehmende",
+      "intro": "Du trainierst im Kurs mit. Hier steht, was Anmeldung und Anwesenheit bedeuten.",
+      "signup": {
+        "title": "Anmeldung",
+        "text": "Du meldest dich wie bisher am Termin im Kalender an oder ab. Die Anmeldung zeigt den Trainerinnen und Trainern, wer kommt. Sie zählt noch nicht als Anwesenheit."
+      },
+      "attendance": {
+        "title": "Anwesenheit",
+        "text": "Nach dem Training bestätigen die Trainerinnen und Trainer, wer anwesend, abwesend oder entschuldigt war. Bis dahin steht in der Tabelle ein Vorschlag aus der Anmeldung, der als nicht bestätigt markiert ist."
+      },
+      "table": {
+        "title": "Kurstabelle",
+        "text": "Die Tabelle zeigt die Termine als Spalten und die Personen als Zeilen, mit dem Total pro Person. Alle, die zum Kurs gehören, sehen dieselbe Tabelle. Die Beträge der Entschädigung siehst du nicht."
+      }
+    }
   }
 }

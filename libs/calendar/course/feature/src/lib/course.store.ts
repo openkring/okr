@@ -7,7 +7,7 @@ import { from, of } from 'rxjs';
 
 import { CourseService } from '@okr/calendar-course-data-access';
 import {
-  ALL_COURSES_KEY, buildCourseListRows, COURSE_I18N_KEYS, CourseAccess, CourseI18n, loadFinanceForEdit, mayCreateCourse,
+  ALL_COURSES_KEY, buildCourseListRows, COURSE_I18N_KEYS, CourseAccess, courseListHelpRole, CourseI18n, loadFinanceForEdit, mayCreateCourse,
   mayManageCourse, mayOpenCourseMenu, mayReadCourseFinance, yearlyTotalRows
 } from '@okr/calendar-course-util';
 import { AppStore } from '@okr/shared-feature';
@@ -112,6 +112,8 @@ export const CourseStore = signalStore(
         courses().some(c => mayManageCourse(c, accessFor(c))),
       )),
       canSeeYearlyTotals,
+      /** whose help the (i) opens: the strongest role of the viewer over the listed courses (§10) */
+      helpRole: computed(() => courseListHelpRole(courses(), accessFor, state.access())),
     };
   }),
   withProps((state) => ({
@@ -156,6 +158,12 @@ export const CourseStore = signalStore(
     },
 
     /******************************** actions ******************************************* */
+    /** The (i): the help for the viewer's role. The ui lib is imported on demand, like the edit modal. */
+    async showHelp(): Promise<void> {
+      const { openCourseHelp } = await import('@okr/calendar-course-ui');
+      await openCourseHelp(store.modalController, store.helpRole());
+    },
+
     async add(): Promise<void> {
       if (!store.canAdd()) return;
       const course = new CourseModel(store.tenantId());

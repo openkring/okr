@@ -42,8 +42,11 @@ import { CourseStore } from './course.store';
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ filteredCount() }}/{{ count() }} {{ store.i18n.courses() }}</ion-title>
-        @if (store.canOpenMenu() && menuItemsStore.canOpen(contextMenuName())) {
-          <ion-buttons slot="end">
+        <ion-buttons slot="end">
+          <ion-button (click)="store.showHelp()" [title]="store.i18n.help_open()" [attr.aria-label]="store.i18n.help_open()">
+            <ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" />
+          </ion-button>
+          @if (store.canOpenMenu() && menuItemsStore.canOpen(contextMenuName())) {
             <ion-button id="{{ popupId }}">
               <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
@@ -55,8 +58,8 @@ import { CourseStore } from './course.store';
                 </ion-content>
               </ng-template>
             </ion-popover>
-          </ion-buttons>
-        }
+          }
+        </ion-buttons>
       </ion-toolbar>
       <okr-list-filter (searchTermChanged)="store.setSearchTerm($event)" />
     </ion-header>

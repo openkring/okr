@@ -84,6 +84,12 @@
     },
     {
       "path": "../../../finance/expense/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../calendar/course/ui/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../calendar/course/util/tsconfig.lib.json"
     }
   ]
 }

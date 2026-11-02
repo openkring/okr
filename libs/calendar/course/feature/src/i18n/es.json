@@ -271,5 +271,113 @@
     "intro": "La propuesta viene de la inscripción. Revísala y guarda para confirmar la asistencia.",
     "confirmedBy": "Confirmado por {name} el {date}",
     "leader": "dirige"
+  },
+  "help": {
+    "title": "Guía del curso",
+    "open": "Guía",
+    "trainer": {
+      "role": "Para entrenadores",
+      "intro": "Diriges entrenamientos del curso. Aquí está lo que puedes hacer en la tabla del curso. No ves los importes de la compensación: están reservados a los responsables y a la tesorería.",
+      "confirm": {
+        "title": "Confirmar la asistencia",
+        "text": "Desde el comienzo de una cita, toca su columna en la tabla del curso y elige «Registrar asistencia». La lista viene rellenada con las inscripciones. Revísala, ajústala y guarda. La asistencia solo cuenta como confirmada al guardar, y se guardan todas las filas juntas.\nPuedes corregirla más tarde en cualquier momento, mientras el curso no esté congelado."
+      },
+      "function": {
+        "title": "Función por cita y sustituciones",
+        "text": "Para cada cita y persona indicas si estuvo presente, ausente o excusada y si dirigió el entrenamiento («dirige»). La función vale solo para esa cita. Si alguien sustituyó, marca «dirige» en esa persona.\nPara la compensación cuentan las citas dirigidas. Quien no figura en la lista de personas con derecho no recibe compensación; los responsables ven un aviso."
+      },
+      "series": {
+        "title": "Añadir series al curso",
+        "text": "Con «Añadir una serie», arriba en la tabla del curso, creas un entrenamiento regular. Pertenece enseguida al curso. Un curso puede reunir varias series, por ejemplo una por semestre."
+      },
+      "assign": {
+        "title": "Asignar citas del grupo",
+        "text": "Las citas que ya están en el calendario del grupo se asignan al curso en la lista «Citas del grupo sin curso». Desde la columna de una cita puedes sacarla del curso de nuevo; la asistencia registrada sigue guardada en la cita.\nMientras el curso está congelado, no se puede hacer ni lo uno ni lo otro."
+      },
+      "export": {
+        "title": "Descargar la tabla",
+        "text": "En el menú de arriba a la derecha (tres puntos) descargas la tabla del curso como archivo CSV, por ejemplo para tu propia evaluación."
+      }
+    },
+    "responsible": {
+      "role": "Para responsables",
+      "intro": "Eres responsable del curso. Confirmas la asistencia como los entrenadores y acompañas el curso hasta la notificación y la compensación. Aparte de ti, solo ven los importes la dirección del grupo, las personas autorizadas y la tesorería.",
+      "setup": {
+        "title": "Configurar el curso",
+        "text": "Los cursos nuevos los crean en la lista de cursos la dirección del grupo o personas autorizadas. Con «Editar curso» gestionas el periodo, los responsables y los entrenadores, además de los datos para la notificación J+S y la compensación: contabilidad, importe por cita y lista de personas con derecho."
+      },
+      "running": {
+        "title": "Durante el curso",
+        "text": "Confirmas la asistencia de las citas como los entrenadores (toca la columna de una cita), añades series y asignas citas del grupo. El estado del curso lo ves en la tabla del curso."
+      },
+      "lock": {
+        "title": "Congelar el curso",
+        "text": "Cuando termina el curso, lo congelas en el menú (tres puntos). Solo es posible cuando la asistencia de todas las citas pasadas está confirmada; la app te muestra lo que aún falta. Después ya no se pueden cambiar la asistencia ni las citas.\nSi aun así necesitas una corrección, reabre el curso. Atención: si ya has importado el archivo J+S en la NDS, una nueva importación sobrescribe la asistencia ya notificada."
+      },
+      "js": {
+        "title": "Preparar el archivo J+S",
+        "text": "Elige «Descargar archivo J+S» en el menú. La app te muestra primero los avisos sobre la notificación. Indican lo que faltaría en el archivo, por ejemplo una asistencia sin confirmar, un tipo de cita sin actividad J+S o un lugar que falta. Corrige estos puntos antes de descargar el archivo."
+      },
+      "nds": {
+        "title": "Importar en la NDS",
+        "text": "Importa el archivo solo después de terminar el curso. Las personas y las actividades ya deben estar registradas en la NDS. La importación sobrescribe la asistencia que ya está allí. Después marca en la NDS los días de campamento de menos de 4 horas."
+      },
+      "numbers": {
+        "title": "Números J+S que faltan",
+        "text": "Si una persona aún no tiene número de persona J+S, los avisos muestran «Añadir número». Allí introduces las 9 cifras. El número se guarda en la persona."
+      },
+      "request": {
+        "title": "Solicitar la compensación",
+        "text": "El curso debe estar congelado. Con «Solicitar compensación» envías la liquidación a la tesorería.\nSi la contabilidad se lleva en la app, se prepara un asiento como borrador «para revisar» para cada persona con derecho, y la tesorería recibe una tarea. Si se lleva fuera de la app, la tesorería solo recibe la tarea con la liquidación. El pago en sí se hace fuera de la app."
+      },
+      "reported": {
+        "title": "Marcar como notificado",
+        "text": "Cuando hayas terminado la notificación, marca el curso como notificado en el menú. La lista de cursos y la tabla del curso muestran entonces «notificado»."
+      }
+    },
+    "treasurer": {
+      "role": "Para la tesorería",
+      "intro": "Los responsables de un curso solicitan la compensación de los entrenadores y tú la revisas. Los importes los ves en cada curso.",
+      "task": {
+        "title": "Abrir la tarea",
+        "text": "En cuanto se hace una solicitud, recibes una tarea. Nombra el curso. El enlace de la tarea te lleva a la tabla del curso, donde ves las citas dirigidas y los importes por persona."
+      },
+      "review": {
+        "title": "Revisar el borrador en el diario",
+        "text": "Si la contabilidad se lleva en la app, el diario contiene un asiento «para revisar» por persona. Revisa la persona, el importe y la cuenta. Si apruebas un asiento, queda contabilizado. Si lo rechazas, indicas un motivo y el asiento se anula."
+      },
+      "external": {
+        "title": "Contabilidad fuera de la app",
+        "text": "Si la contabilidad se lleva fuera de la app, por ejemplo en bexio, en la app no hay asientos. La tarea contiene la liquidación y la contabilizas tú allí."
+      },
+      "payment": {
+        "title": "Pago",
+        "text": "El pago a los entrenadores se hace fuera de la app. Aprobar un asiento no desencadena ningún pago."
+      },
+      "again": {
+        "title": "Cuando se repite la solicitud",
+        "text": "Si los responsables vuelven a solicitar la compensación, por ejemplo tras una corrección, los asientos rechazados siguen rechazados. Los ya aprobados conservan su importe. La app muestra las diferencias a los responsables."
+      },
+      "yearly": {
+        "title": "Totales anuales",
+        "text": "En el resumen de cursos, la tarjeta «Compensaciones por año» muestra para cada persona el total de las compensaciones aprobadas en todos los cursos. La fecha del asiento decide el año."
+      }
+    },
+    "participant": {
+      "role": "Para participantes",
+      "intro": "Entrenas en el curso. Aquí está lo que significan la inscripción y la asistencia.",
+      "signup": {
+        "title": "Inscripción",
+        "text": "Te inscribes en una cita o te das de baja en el calendario, como antes. La inscripción muestra a los entrenadores quién viene. Todavía no cuenta como asistencia."
+      },
+      "attendance": {
+        "title": "Asistencia",
+        "text": "Después del entrenamiento, los entrenadores confirman quién estuvo presente, ausente o excusado. Hasta entonces, la tabla muestra una propuesta a partir de las inscripciones, marcada como no confirmada."
+      },
+      "table": {
+        "title": "Tabla del curso",
+        "text": "La tabla muestra las citas como columnas y las personas como filas, con el total por persona. Todas las personas del curso ven la misma tabla. No ves los importes de la compensación."
+      }
+    }
   }
 }

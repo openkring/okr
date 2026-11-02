@@ -40,21 +40,22 @@ const CLOCK_INTERVAL_MS = 60_000;
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-back-button [defaultHref]="backHref()" /></ion-buttons>
         <ion-title>{{ title() }}</ion-title>
-        @if (store.canAddSeries() || hasActions()) {
-          <ion-buttons slot="end">
-            @if (store.canAddSeries()) {
-              <ion-button (click)="store.addSeries()">
-                <ion-icon slot="start" src="{{ 'add-circle' | svgIcon }}" />
-                {{ store.i18n.action_addSeries() }}
-              </ion-button>
-            }
-            @if (hasActions()) {
-              <ion-button (click)="showCourseActions()">
-                <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
-              </ion-button>
-            }
-          </ion-buttons>
-        }
+        <ion-buttons slot="end">
+          <ion-button (click)="store.showHelp()" [title]="store.i18n.help_open()" [attr.aria-label]="store.i18n.help_open()">
+            <ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" />
+          </ion-button>
+          @if (store.canAddSeries()) {
+            <ion-button (click)="store.addSeries()">
+              <ion-icon slot="start" src="{{ 'add-circle' | svgIcon }}" />
+              {{ store.i18n.action_addSeries() }}
+            </ion-button>
+          }
+          @if (hasActions()) {
+            <ion-button (click)="showCourseActions()">
+              <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
+            </ion-button>
+          }
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 

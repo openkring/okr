@@ -2,9 +2,10 @@ import { Component, computed, inject, input, linkedSignal, resource, signal } fr
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { catchError, of, switchMap } from 'rxjs';
-import { IonAccordionGroup, IonButton, IonContent, IonItem, IonLabel, ModalController } from '@ionic/angular';
+import { IonAccordionGroup, IonButton, IonButtons, IonContent, IonIcon, IonItem, IonLabel, ModalController } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
+import { SvgIconPipe } from '@okr/shared-pipes';
 import { ApprovalModelName, CategoryListModel, ProjectModel, TaskModel, TaskModelName, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { coerceBoolean, hasRole, newAvatarInfo, safeStructuredClone, warn } from '@okr/shared-util-core';
@@ -26,20 +27,33 @@ import {
 import { TaskStore } from './task.store';
 import { AppStore } from '@okr/shared-feature';
 
+/** `linkKey` prefix of the course tasks (`isCourseLinkKey` in @okr/calendar-course-util; not imported, to keep that lib lazy) */
+const COURSE_LINK_PREFIX = 'course.';
+const COURSE_HELP_OPEN_KEY = '@calendar/course/feature.help.open';
+
 @Component({
   selector: 'okr-task-edit-modal',
   standalone: true,
   imports: [
     Header, ChangeConfirmation, TaskForm, CommentsAccordion,
-    AvatarSelect, ApprovalDecisionCard, ExitSettlementCard,
-    IonContent, IonAccordionGroup, IonButton, IonItem, IonLabel
+    AvatarSelect, ApprovalDecisionCard, ExitSettlementCard, SvgIconPipe,
+    IonContent, IonAccordionGroup, IonButton, IonButtons, IonIcon, IonItem, IonLabel
   ],
   providers: [TaskStore],
   template: `
     <!-- the advanced-settings toggle lives in the toolbar, left of the close button -->
     <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true"
       actionIcon="toggle" [actionTitle]="store.i18n.form_advanced_label()"
-      (actionClicked)="showAdvanced.set(!showAdvanced())" />
+      (actionClicked)="showAdvanced.set(!showAdvanced())">
+      @if (isCourseTask()) {
+        <!-- left of the advanced-settings toggle: the course help (spec 1.132 §10) -->
+        <ion-buttons okrHeaderEnd slot="end">
+          <ion-button (click)="showCourseHelp()" [title]="courseHelpLabel()" [attr.aria-label]="courseHelpLabel()">
+            <ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" />
+          </ion-button>
+        </ion-buttons>
+      }
+    </okr-header>
     @if(showConfirmation()) {
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
@@ -129,6 +143,7 @@ export class TaskEditModal {
   private readonly approvalService = inject(ApprovalService);
   private readonly alertService = inject(AlertService);
   private readonly membershipService = inject(MembershipService);
+  private readonly i18nService = inject(I18nService);
   protected readonly exitI18n = inject(I18nService).translateAll(EXIT_SETTLEMENT_I18N_KEYS) as ExitSettlementI18n;
   protected readonly workflowI18n = inject(I18nService).translateAll(WORKFLOW_I18N_KEYS) as WorkflowI18n;
 
@@ -203,6 +218,13 @@ export class TaskEditModal {
       }
     },
   }).value;
+  /** spec 1.132 §10 — the end task and the treasurer's review task of a course link to it with `course.<key>` */
+  protected readonly isCourseTask = computed(() => (this.task().linkKey ?? '').startsWith(COURSE_LINK_PREFIX));
+  // the course bundle is only fetched for a course task: the label is the only reason this modal would load it
+  protected readonly courseHelpLabel = toSignal(
+    toObservable(this.isCourseTask).pipe(switchMap((isCourse) => (isCourse ? this.i18nService.translate(COURSE_HELP_OPEN_KEY) : of('')))),
+    { initialValue: '' },
+  );
   private readonly myPersonKey = computed(() => this.currentUser()?.personKey ?? '');
   private readonly isAdmin = computed(() => hasRole('admin', this.currentUser()));
   protected readonly canDecide = computed(() => {
@@ -217,6 +239,15 @@ export class TaskEditModal {
  /******************************* actions *************************************** */
   public async save(): Promise<void> {
     await dismissOverlay(this.modalController, this.formData(), 'confirm');  
+  }
+
+  /**
+   * The (i) of a course task. The course libs stay out of the task bundle: they load on the first click (the
+   * same lazy edge the course list uses for its edit modal).
+   */
+  protected async showCourseHelp(): Promise<void> {
+    const [{ openCourseHelp }, { courseTaskHelpRole }] = await Promise.all([import('@okr/calendar-course-ui'), import('@okr/calendar-course-util')]);
+    await openCourseHelp(this.modalController, courseTaskHelpRole(this.task()));
   }
 
   /** Leave the modal for the record this task was opened for (its `relatedKey` back-link). */
