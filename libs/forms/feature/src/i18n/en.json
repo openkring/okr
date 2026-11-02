@@ -212,5 +212,22 @@
     "template_boolean": "Custom detail (yes/no)",
     "template_number": "Custom detail (number)",
     "template_desc": "A question whose answer is saved as a custom detail."
+  },
+  "info": {
+    "open": "Help",
+    "editor_title": "How the form builder works",
+    "editor_fields": "Drag questions from the list on the left into the form. Use the gear to adjust the label, the width and whether an answer is required. Drag questions to change their order.",
+    "editor_conditions": "A question can appear only under a condition. Open its settings and switch on \"Only show if …\". Then choose an earlier question and the answer that should make it appear – for example \"age under 20\" or \"I have rowed before is checked\".",
+    "editor_several": "You combine several conditions with \"all met\" (every one must apply) or \"at least one met\".",
+    "editor_blocks": "If a whole section should appear or disappear, put the condition on the divider in front of it. It applies to all questions up to the next divider.",
+    "editor_hidden": "Whatever is hidden does not count: it does not have to be filled in and it is not saved.",
+    "editor_order": "A condition can only refer to a question further up. If you move questions so that this is no longer true, the form shows you a note.",
+    "editor_derived": "Under \"Calculated values\" you define what the form works out from the answers by itself – for example the type of registration from age and rowing experience. The person does not see this question.",
+    "editor_properties": "Questions that only exist in your club are saved as a \"custom detail\". They appear in the application under the further details, with the question as the label. Yes/no, numbers and text are possible.",
+    "editor_preview": "In the preview you try out the form just like the person who will fill it in later.",
+    "filler_title": "Notes on this form",
+    "filler_required": "Fields with a star must be filled in. As long as something is missing, you cannot submit the form.",
+    "filler_conditions": "Some questions only appear once you have answered something particular further up. If you change an answer, questions can disappear again – whatever you entered there is then not saved.",
+    "filler_privacy": "Your details go only to the people who look after this form."
   }
 }

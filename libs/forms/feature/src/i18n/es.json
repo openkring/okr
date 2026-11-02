@@ -212,5 +212,22 @@
     "template_boolean": "Dato propio (sí/no)",
     "template_number": "Dato propio (número)",
     "template_desc": "Una pregunta cuya respuesta se guarda como dato propio."
+  },
+  "info": {
+    "open": "Ayuda",
+    "editor_title": "Cómo funciona el constructor de formularios",
+    "editor_fields": "Arrastra las preguntas de la lista de la izquierda al formulario. Con la rueda dentada ajustas la etiqueta, el ancho y si es obligatoria. El orden lo cambias arrastrando.",
+    "editor_conditions": "Una pregunta puede aparecer solo bajo una condición. Abre sus ajustes y activa «Mostrar solo si …». Luego elige una pregunta anterior y la respuesta con la que debe aparecer, por ejemplo «edad menor de 20» o «He remado antes está marcada».",
+    "editor_several": "Varias condiciones se combinan con «se cumplen todas» (cada una debe cumplirse) o «se cumple al menos una».",
+    "editor_blocks": "Si una sección entera debe aparecer o desaparecer, pon la condición en el separador que la precede. Vale para todas las preguntas hasta el siguiente separador.",
+    "editor_hidden": "Lo que está oculto no cuenta: no hace falta rellenarlo y no se guarda.",
+    "editor_order": "Una condición solo puede referirse a una pregunta situada más arriba. Si mueves preguntas de modo que ya no sea así, el formulario te muestra un aviso.",
+    "editor_derived": "En «Valores calculados» defines lo que el formulario deduce por sí mismo de las respuestas, por ejemplo el tipo de inscripción a partir de la edad y la experiencia de remo. La persona no ve esta pregunta.",
+    "editor_properties": "Las preguntas que solo existen en vuestro caso las guardas como «dato propio». Aparecen en la solicitud bajo los demás datos, con la pregunta como etiqueta. Los tipos posibles son sí/no, números y texto.",
+    "editor_preview": "En la vista previa pruebas el formulario como lo hará la persona que lo rellene más adelante.",
+    "filler_title": "Indicaciones sobre el formulario",
+    "filler_required": "Los campos con asterisco son obligatorios. Mientras falte algo, no puedes enviar el formulario.",
+    "filler_conditions": "Algunas preguntas solo aparecen cuando has respondido algo concreto más arriba. Si cambias una respuesta, las preguntas también pueden volver a desaparecer: lo que escribiste en ellas entonces no se guarda.",
+    "filler_privacy": "Tus datos solo llegan a las personas que se ocupan de este formulario."
   }
 }

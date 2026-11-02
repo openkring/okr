@@ -1,13 +1,16 @@
 import { Component, computed, effect, inject, input, signal, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { AlertController, IonContent, IonNote, ModalController } from '@ionic/angular';
+import { AlertController, IonButton, IonButtons, IonContent, IonIcon, IonNote, ModalController } from '@ionic/angular';
 import { from, of } from 'rxjs';
 
 import { CategoryListModel } from '@okr/shared-models';
+import { I18nService } from '@okr/shared-i18n';
+import { SvgIconPipe } from '@okr/shared-pipes';
 import { Header, Spinner } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { FormCategoryService, FormSubmitService } from '@okr/forms-data-access';
+import { FORM_I18N_KEYS, FormI18n, hasVisibilityRules } from '@okr/forms-util';
 import { FormRenderer } from './form-renderer';
 
 /** The strings the modal needs. `SectionI18n` is a superset, so a section store's resolved
@@ -52,10 +55,19 @@ export interface FormModalI18n {
 @Component({
   selector: 'okr-form-modal',
   standalone: true,
-  imports: [Header, Spinner, FormRenderer, IonContent, IonNote],
+  imports: [Header, Spinner, FormRenderer, SvgIconPipe, IonButton, IonButtons, IonContent, IonIcon, IonNote],
   styles: [`ion-note { display: block; padding: 16px; }`],
   template: `
-    <okr-header [i18n]="{ title: title() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: title() }" [isModal]="true">
+      @if (helpAvailable()) {
+        <!-- the filler's (i), left of the close button -->
+        <ion-buttons okrHeaderEnd slot="end">
+          <ion-button (click)="onHelp()" [title]="helpI18n.help_open()" [attr.aria-label]="helpI18n.help_open()">
+            <ion-icon slot="icon-only" src="{{ 'information-circle' | svgIcon }}" />
+          </ion-button>
+        </ion-buttons>
+      }
+    </okr-header>
     <ion-content>
       @if (definitionResource.isLoading()) {
         <okr-spinner />
@@ -87,6 +99,8 @@ export class FormModal {
   private readonly alertController = inject(AlertController);
   private readonly formSubmitService = inject(FormSubmitService);
   private readonly formCategoryService = inject(FormCategoryService);
+  /** the forms keys, for the (i) help — `i18n` below only carries the submit-path strings */
+  protected readonly helpI18n = inject(I18nService).translateAll(FORM_I18N_KEYS) as FormI18n;
 
   // inputs — set as componentProps by whatever opens the modal
   public readonly formKey = input.required<string>();
@@ -128,6 +142,28 @@ export class FormModal {
       const def = this.definition();
       if (def?.formKey) this.jsToken.set(await this.formSubmitService.fetchJsToken(def.formKey));
     });
+  }
+
+  /** the (i) is offered once there is a live form to explain, not for a missing or archived one */
+  protected readonly helpAvailable = computed(() => {
+    const def = this.definition();
+    return !!def && !def.isArchived && !this.submitted();
+  });
+
+  /** the (i) in the header — help for the person filling in the form; no sign-in needed */
+  protected async onHelp(): Promise<void> {
+    const def = this.definition();
+    if (!def) return;
+    const { FormFillerHelpModal } = await import('./form-filler-help.modal');
+    const modal = await this.modalController.create({
+      component: FormFillerHelpModal,
+      componentProps: {
+        i18n: this.helpI18n,
+        hasRules: hasVisibilityRules(def.fields),
+        fillerHelpText: def.fillerHelpText ?? '',
+      },
+    });
+    await modal.present();
   }
 
   protected async onSubmit(values: Record<string, unknown>): Promise<void> {

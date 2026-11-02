@@ -236,6 +236,15 @@ export function conditionalBlockMembers(fields: Field[]): Set<string> {
   return members;
 }
 
+/**
+ * Whether any field of the form (a divider included) carries a rule — what decides if the filler's
+ * help explains that questions can appear and disappear. Legacy definitions have no `fields`, so
+ * the argument may be missing. A rule without conditions shows everything and does not count.
+ */
+export function hasVisibilityRules(fields: Field[] | undefined): boolean {
+  return (fields ?? []).some(field => (field.visibleIf?.conditions?.length ?? 0) > 0);
+}
+
 /** Which value input the rule editor shows for a condition row. */
 export type ConditionValueKind = 'none' | 'option' | 'options' | 'number' | 'numberRange' | 'date' | 'dateRange' | 'age' | 'text';
 

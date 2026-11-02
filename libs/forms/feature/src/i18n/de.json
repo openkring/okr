@@ -212,5 +212,22 @@
     "template_boolean": "Eigene Angabe (ja/nein)",
     "template_number": "Eigene Angabe (Zahl)",
     "template_desc": "Eine Frage, deren Antwort als eigene Angabe gespeichert wird."
+  },
+  "info": {
+    "open": "Hilfe",
+    "editor_title": "So funktioniert der Formular-Builder",
+    "editor_fields": "Zieh Fragen aus der Liste links ins Formular. Mit dem Zahnrad passt du Beschriftung, Breite und Pflichtfeld an. Die Reihenfolge änderst du per Ziehen.",
+    "editor_conditions": "Eine Frage kann nur unter einer Bedingung erscheinen. Öffne ihre Einstellungen und schalte «Nur anzeigen, wenn …» ein. Dann wählst du eine frühere Frage und die Antwort, bei der sie erscheinen soll – zum Beispiel «Alter unter 20» oder «Ich bin schon gerudert ist angekreuzt».",
+    "editor_several": "Mehrere Bedingungen kombinierst du mit «alle erfüllt» (jede muss zutreffen) oder «mindestens eine erfüllt».",
+    "editor_blocks": "Soll ein ganzer Abschnitt erscheinen oder verschwinden, setz die Bedingung auf die Trennlinie davor. Sie gilt für alle Fragen bis zur nächsten Trennlinie.",
+    "editor_hidden": "Was ausgeblendet ist, zählt nicht: Es muss nicht ausgefüllt werden und wird nicht gespeichert.",
+    "editor_order": "Eine Bedingung kann sich nur auf eine Frage weiter oben beziehen. Verschiebst du Fragen so, dass das nicht mehr stimmt, zeigt dir das Formular einen Hinweis.",
+    "editor_derived": "Unter «Berechnete Werte» legst du fest, was das Formular aus den Antworten selbst ableitet – zum Beispiel die Art der Anmeldung aus Alter und Rudererfahrung. Die Person sieht diese Frage nicht.",
+    "editor_properties": "Fragen, die es nur bei euch gibt, speicherst du als «eigene Angabe». Sie erscheinen beim Antrag unter den weiteren Angaben, mit der Frage als Beschriftung. Möglich sind ja/nein, Zahlen und Text.",
+    "editor_preview": "In der Vorschau probierst du das Formular aus wie die Person, die es später ausfüllt.",
+    "filler_title": "Hinweise zum Formular",
+    "filler_required": "Felder mit Stern musst du ausfüllen. Solange etwas fehlt, kannst du das Formular nicht absenden.",
+    "filler_conditions": "Manche Fragen erscheinen erst, wenn du weiter oben etwas Bestimmtes antwortest. Änderst du eine Antwort, können Fragen auch wieder verschwinden – was du dort eingetragen hast, wird dann nicht gespeichert.",
+    "filler_privacy": "Deine Angaben gehen nur an die Personen, die dieses Formular betreuen."
   }
 }

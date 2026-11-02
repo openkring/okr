@@ -182,6 +182,23 @@ export const FORM_I18N_KEYS = {
   property_template_number:   PFX + 'property.template_number',
   property_template_desc:     PFX + 'property.template_desc',
 
+  // (i) help for form authors and form fillers (1.125, spec §17)
+  help_open:                  PFX + 'info.open',
+  help_editor_title:          PFX + 'info.editor_title',
+  help_editor_fields:         PFX + 'info.editor_fields',
+  help_editor_conditions:     PFX + 'info.editor_conditions',
+  help_editor_several:        PFX + 'info.editor_several',
+  help_editor_blocks:         PFX + 'info.editor_blocks',
+  help_editor_hidden:         PFX + 'info.editor_hidden',
+  help_editor_order:          PFX + 'info.editor_order',
+  help_editor_derived:        PFX + 'info.editor_derived',
+  help_editor_properties:     PFX + 'info.editor_properties',
+  help_editor_preview:        PFX + 'info.editor_preview',
+  help_filler_title:          PFX + 'info.filler_title',
+  help_filler_required:       PFX + 'info.filler_required',
+  help_filler_conditions:     PFX + 'info.filler_conditions',
+  help_filler_privacy:        PFX + 'info.filler_privacy',
+
   // decrypt-files modal
   decrypt_title:              PFX + 'decrypt.title',
   decrypt_hint:               PFX + 'decrypt.hint',

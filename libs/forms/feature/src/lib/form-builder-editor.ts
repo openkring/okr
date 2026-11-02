@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { CdkDragDrop, CdkDropList, CdkDropListGroup, CdkDrag, moveItemInArray } from '@angular/cdk/drag-drop';
 import {
-  AlertController, IonButton, IonChip, IonContent, IonIcon, IonItem, IonLabel, IonNote, IonSegment, IonSegmentButton, IonToolbar, ModalController,
+  AlertController, IonButton, IonButtons, IonChip, IonContent, IonIcon, IonItem, IonLabel, IonNote, IonSegment, IonSegmentButton, IonToolbar, ModalController,
 } from '@ionic/angular';
 
 import { AppStore } from '@okr/shared-feature';
@@ -48,7 +48,7 @@ function newField(def: FieldTypeDef, order: number): Field {
   imports: [
     SvgIconPipe, Header, ChangeConfirmation,
     CdkDropList, CdkDropListGroup, CdkDrag, FieldTypeLibrary, FormRenderer,
-    IonToolbar, IonButton, IonContent, IonItem, IonLabel, IonIcon, IonNote, IonChip,
+    IonToolbar, IonButton, IonButtons, IonContent, IonItem, IonLabel, IonIcon, IonNote, IonChip,
     IonSegment, IonSegmentButton,
   ],
   styles: [`
@@ -91,6 +91,11 @@ function newField(def: FieldTypeDef, order: number): Field {
               <ion-segment-button value="preview"><ion-label>Vorschau</ion-label></ion-segment-button>
               <ion-segment-button value="source"><ion-label>Quellcode</ion-label></ion-segment-button>
             </ion-segment>
+            <ion-buttons slot="end">
+              <ion-button fill="clear" (click)="onHelp()" [attr.aria-label]="i18n.help_open()" [title]="i18n.help_open()">
+                <ion-icon src="{{ 'information-circle' | svgIcon }}" slot="icon-only" />
+              </ion-button>
+            </ion-buttons>
           </ion-toolbar>
 
           @if (viewMode() === 'editor') {
@@ -320,6 +325,16 @@ export class FormBuilderEditor {
       case 'staleOp': return this.i18n.rule_issue_stale_op();
       default: return this.i18n.rule_issue_stale();
     }
+  }
+
+  /** the (i) in the canvas toolbar — read-only help for the form author */
+  protected async onHelp(): Promise<void> {
+    const { FormBuilderHelpModal } = await import('@okr/forms-ui');
+    const modal = await this.modalController.create({
+      component: FormBuilderHelpModal,
+      componentProps: { i18n: this.i18n },
+    });
+    await modal.present();
   }
 
   protected async editField(field: Field): Promise<void> {

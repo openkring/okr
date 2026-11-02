@@ -212,5 +212,22 @@
     "template_boolean": "Information propre (oui/non)",
     "template_number": "Information propre (nombre)",
     "template_desc": "Une question dont la réponse est enregistrée comme information propre."
+  },
+  "info": {
+    "open": "Aide",
+    "editor_title": "Comment fonctionne le générateur de formulaires",
+    "editor_fields": "Fais glisser les questions de la liste de gauche dans le formulaire. Avec la roue dentée, tu adaptes l'intitulé, la largeur et le caractère obligatoire. Tu changes l'ordre en faisant glisser.",
+    "editor_conditions": "Une question peut n'apparaître que sous une condition. Ouvre ses réglages et active « Afficher seulement si … ». Choisis ensuite une question précédente et la réponse qui doit la faire apparaître – par exemple « âge inférieur à 20 » ou « J'ai déjà ramé est cochée ».",
+    "editor_several": "Tu combines plusieurs conditions avec « toutes remplies » (chacune doit s'appliquer) ou « au moins une remplie ».",
+    "editor_blocks": "Pour qu'une section entière apparaisse ou disparaisse, place la condition sur le séparateur qui la précède. Elle vaut pour toutes les questions jusqu'au séparateur suivant.",
+    "editor_hidden": "Ce qui est masqué ne compte pas : il n'est pas nécessaire de le remplir et rien n'est enregistré.",
+    "editor_order": "Une condition ne peut porter que sur une question située plus haut. Si tu déplaces des questions de sorte que ce ne soit plus le cas, le formulaire t'affiche une remarque.",
+    "editor_derived": "Sous « Valeurs calculées », tu définis ce que le formulaire déduit lui-même des réponses – par exemple le type d'inscription à partir de l'âge et de l'expérience d'aviron. La personne ne voit pas cette question.",
+    "editor_properties": "Les questions qui n'existent que chez vous, tu les enregistres comme « information propre ». Elles apparaissent dans la demande sous les autres informations, avec la question comme intitulé. Les types possibles sont oui/non, nombre et texte.",
+    "editor_preview": "Dans l'aperçu, tu essaies le formulaire comme la personne qui le remplira plus tard.",
+    "filler_title": "Remarques sur le formulaire",
+    "filler_required": "Les champs marqués d'une étoile sont obligatoires. Tant qu'il manque quelque chose, tu ne peux pas envoyer le formulaire.",
+    "filler_conditions": "Certaines questions n'apparaissent que lorsque tu as répondu quelque chose de précis plus haut. Si tu modifies une réponse, des questions peuvent aussi disparaître – ce que tu y avais saisi n'est alors pas enregistré.",
+    "filler_privacy": "Tes indications ne vont qu'aux personnes qui s'occupent de ce formulaire."
   }
 }

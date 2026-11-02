@@ -9,3 +9,5 @@ export * from './lib/form-definition.form';
 export * from './lib/form-definition-edit.modal';
 export * from './lib/visibility-rule.input';
 export * from './lib/derived-values.input';
+export * from './lib/form-builder-help.modal';
+export * from './lib/form-filler-help.modal';

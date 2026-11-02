@@ -212,5 +212,22 @@
     "template_boolean": "Dato proprio (sì/no)",
     "template_number": "Dato proprio (numero)",
     "template_desc": "Una domanda la cui risposta viene salvata come dato proprio."
+  },
+  "info": {
+    "open": "Aiuto",
+    "editor_title": "Come funziona il costruttore di moduli",
+    "editor_fields": "Trascina le domande dall'elenco a sinistra nel modulo. Con l'ingranaggio adatti etichetta, larghezza e obbligatorietà. L'ordine lo cambi trascinando.",
+    "editor_conditions": "Una domanda può comparire solo a una condizione. Apri le sue impostazioni e attiva «Mostra solo se …». Poi scegli una domanda precedente e la risposta con cui deve comparire, per esempio «età sotto 20» o «Ho già remato è spuntata».",
+    "editor_several": "Più condizioni si combinano con «tutte soddisfatte» (ognuna deve valere) o «almeno una soddisfatta».",
+    "editor_blocks": "Se un'intera sezione deve comparire o sparire, metti la condizione sul separatore che la precede. Vale per tutte le domande fino al separatore successivo.",
+    "editor_hidden": "Quello che è nascosto non conta: non va compilato e non viene salvato.",
+    "editor_order": "Una condizione può riferirsi solo a una domanda più in alto. Se sposti le domande in modo che non sia più così, il modulo ti mostra un avviso.",
+    "editor_derived": "Sotto «Valori calcolati» stabilisci che cosa il modulo ricava da solo dalle risposte, per esempio il tipo di iscrizione da età ed esperienza di canottaggio. La persona non vede questa domanda.",
+    "editor_properties": "Le domande che esistono solo da voi le salvi come «dato proprio». Compaiono nella richiesta sotto gli altri dati, con la domanda come etichetta. Sono possibili sì/no, numeri e testo.",
+    "editor_preview": "Nell'anteprima provi il modulo come la persona che lo compilerà più tardi.",
+    "filler_title": "Indicazioni sul modulo",
+    "filler_required": "I campi con l'asterisco vanno compilati. Finché manca qualcosa, non puoi inviare il modulo.",
+    "filler_conditions": "Alcune domande compaiono solo quando hai risposto qualcosa di preciso più in alto. Se cambi una risposta, le domande possono anche sparire di nuovo: quello che avevi inserito lì non viene salvato.",
+    "filler_privacy": "I tuoi dati vanno solo alle persone che si occupano di questo modulo."
   }
 }

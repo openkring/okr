@@ -4,7 +4,7 @@ import { CategoryListModel, ConditionOp, DerivedValue, Field, FieldType, FormMap
 
 import {
   conditionalBlockMembers, conditionChoices, conditionOpsFor, conditionValueKind, controllingFieldCandidates, describeRule,
-  derivedKeysSetByMapping, derivedValuesReferencing, errorsUnder, fieldsReferencing, findDerivedRuleIssues, findRuleIssues,
+  derivedKeysSetByMapping, derivedValuesReferencing, errorsUnder, fieldsReferencing, findDerivedRuleIssues, findRuleIssues, hasVisibilityRules,
   previewDerivedValues, removeDerivedReferencesTo, removeReferencesTo,
 } from './form-rules.util';
 
@@ -402,5 +402,21 @@ describe('derived values referencing a deleted or retyped field', () => {
     const incomplete: DerivedValue = { key: 'x', cases: [{ when: { match: 'all', conditions: [{ fieldId: '', op: '' as ConditionOp }] }, value: '' }] };
     expect(findDerivedRuleIssues([applicationAs, other, incomplete], fields)).toEqual([]);
     expect(findDerivedRuleIssues(undefined, fields)).toEqual([]);
+  });
+});
+
+describe('hasVisibilityRules (filler help)', () => {
+  const rule: VisibilityRule = { match: 'all', conditions: [{ fieldId: 'a', op: 'isChecked' }] };
+
+  it('is true when any field, a divider included, has a rule', () => {
+    expect(hasVisibilityRules([f('a', 'checkbox', 0), f('b', 'text', 1, { visibleIf: rule })])).toBe(true);
+    expect(hasVisibilityRules([f('a', 'checkbox', 0), f('d', 'divider', 1, { visibleIf: rule })])).toBe(true);
+  });
+
+  it('is false without rules, with an empty rule, and for legacy definitions without fields', () => {
+    expect(hasVisibilityRules([f('a', 'checkbox', 0), f('b', 'text', 1)])).toBe(false);
+    expect(hasVisibilityRules([f('b', 'text', 1, { visibleIf: { match: 'all', conditions: [] } })])).toBe(false);
+    expect(hasVisibilityRules(undefined)).toBe(false);
+    expect(hasVisibilityRules([])).toBe(false);
   });
 });
