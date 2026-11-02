@@ -8,11 +8,11 @@ import {
   Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n,
   StringSelect, StringSelectI18n, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
-import { coerceBoolean, coerceToPropertyType, fill, isPrefillable, isSsnField, propertyTypeOf } from '@okr/shared-util-core';
+import { coerceBoolean, fill, isPrefillable, isSsnField, propertyTypeOf } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import {
-  canAllowOther, canonicalNumber, errorsUnder, fieldConfigValidations, fieldLabelLength, FormI18n, isDisplayField, propertyTypeLabel,
+  canAllowOther, defaultFromText, errorsUnder, fieldConfigValidations, fieldLabelLength, FormI18n, isDisplayField, propertyTypeLabel,
 } from '@okr/forms-util';
 
 import { VisibilityRuleInput } from './visibility-rule.input';
@@ -296,12 +296,17 @@ export class FieldConfigForm {
     return fd.type === 'implicit' ? fd.defaultValue : undefined;
   });
   /**
-   * The text in the default input, as the author typed it. Re-seeded from the stored default only when the field or
-   * its value type changes: the source is a string (compared by value) and the default is read untracked, so a write
-   * to `formData` never rewrites the text under the cursor («linkedSignal wipes forms» — «0.» must stay «0.»).
+   * The key that re-seeds the default input: field id + value type. A memoized `computed`, not an inline source —
+   * linkedSignal has no source-equality check, so an inline function reading `formData()` would re-run the
+   * computation on every write; the computed only notifies when the key string really changes.
+   */
+  private readonly defaultTextKey = computed(() => `${this.formData().id}|${this.valueType()}`);
+  /**
+   * The text in the default input, as the author typed it. Re-seeded from the stored default (read untracked) only
+   * when the key changes, so a write to `formData` never rewrites the text under the cursor («0.» stays «0.»).
    */
   protected readonly defaultText = linkedSignal<string, string>({
-    source: () => `${this.formData().id}|${this.valueType()}`,
+    source: this.defaultTextKey,
     computation: () => untracked(() => {
       const value = this.defaultValue();
       return value === undefined || value === null ? '' : String(value);
@@ -402,23 +407,21 @@ export class FieldConfigForm {
   }
 
   /**
-   * The default of an unsichtbares Feld, by its type: a boolean from the switch; for a number, the number once the
-   * text is written exactly as one (`canonicalNumber`), nothing new while it is still being typed («1.», «1.50»), and
-   * the text itself when it is no number at all (the suite says it does not fit); a blank text removes the default.
-   * The input keeps showing what was typed either way.
+   * The default of an unsichtbares Feld: a boolean from the switch, otherwise what `defaultFromText` makes of the
+   * typed text (keep / remove / set). The input keeps showing what was typed in every case.
    */
   protected onDefaultChange(value: string | boolean): void {
     const fd = this.formData();
     if (fd.type !== 'implicit') return;
-    if (typeof value === 'string') this.defaultText.set(value);
     let next: BaseType | undefined;
-    if (typeof value === 'boolean') next = value;
-    else if (value.trim() === '') next = undefined;
-    else if (fd.valueType === 'number') {
-      const n = canonicalNumber(value);
-      if (n === undefined && coerceToPropertyType(value, 'number') !== undefined) return;   // still typing a number
-      next = n ?? value;
-    } else next = value;
+    if (typeof value === 'boolean') {
+      next = value;
+    } else {
+      this.defaultText.set(value);
+      const change = defaultFromText(fd.valueType, value, fd.defaultValue);
+      if (change.action === 'keep') return;
+      next = change.action === 'set' ? change.value : undefined;
+    }
     if (next === fd.defaultValue) return;
     const { defaultValue: _old, ...rest } = fd;
     this.dirty.emit(true);

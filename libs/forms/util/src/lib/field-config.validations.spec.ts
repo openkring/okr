@@ -1,21 +1,37 @@
 import { describe, expect, it } from 'vitest';
 import { LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { Field } from '@okr/shared-models';
-import { canonicalNumber, fieldConfigValidations, fieldLabelLength } from './field-config.validations';
+import { defaultFromText, fieldConfigValidations, fieldLabelLength } from './field-config.validations';
 
 const base = { id: 'f1', key: 'firstName', label: 'Vorname', required: false, width: 'full' as const, order: 0 };
 
-describe('canonicalNumber', () => {
-  it('reads a text written exactly as a number', () => {
-    expect(canonicalNumber('1.05')).toBe(1.05);
-    expect(canonicalNumber(' -3 ')).toBe(-3);
-    expect(canonicalNumber('0')).toBe(0);
+describe('defaultFromText', () => {
+  it('keeps the stored number while the text still means it', () => {
+    expect(defaultFromText('number', '1.', 1)).toEqual({ action: 'keep' });
+    expect(defaultFromText('number', '1.50', 1.5)).toEqual({ action: 'keep' });
   });
 
-  it('leaves a number still being typed, or written another way, alone', () => {
-    for (const text of ['1.', '0.', '1.50', '1e3', '01', '-', '', '   ', 'abc', 'Infinity']) {
-      expect(canonicalNumber(text)).toBeUndefined();
-    }
+  it('stores the number as soon as the text coerces to another one', () => {
+    expect(defaultFromText('number', '01', 0)).toEqual({ action: 'set', value: 1 });
+    expect(defaultFromText('number', '1e3', undefined)).toEqual({ action: 'set', value: 1000 });
+    expect(defaultFromText('number', '.5', undefined)).toEqual({ action: 'set', value: 0.5 });
+    expect(defaultFromText('number', '1.05', 1)).toEqual({ action: 'set', value: 1.05 });
+  });
+
+  it('stores a text that is no number as typed, so the suite flags it', () => {
+    expect(defaultFromText('number', '-', undefined)).toEqual({ action: 'set', value: '-' });
+    expect(defaultFromText('number', 'abc', 3)).toEqual({ action: 'set', value: 'abc' });
+  });
+
+  it('removes the default on a blank text', () => {
+    expect(defaultFromText('number', '   ', 3)).toEqual({ action: 'remove' });
+    expect(defaultFromText('text', '', 'skiff-1')).toEqual({ action: 'remove' });
+  });
+
+  it('stores a text default as typed, and a boolean text as a boolean', () => {
+    expect(defaultFromText('text', 'skiff-1', undefined)).toEqual({ action: 'set', value: 'skiff-1' });
+    expect(defaultFromText('text', 'skiff-1', 'skiff-1')).toEqual({ action: 'keep' });
+    expect(defaultFromText('boolean', 'true', undefined)).toEqual({ action: 'set', value: true });
   });
 });
 
