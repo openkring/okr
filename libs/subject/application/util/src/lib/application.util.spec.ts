@@ -16,6 +16,8 @@ import {
   stateColor,
   proposeMembershipCategory,
   isMembershipApplication,
+  matchesApplicationForFilter,
+  applicationCourseKey,
   setPropertyValue,
 } from './application.util';
 
@@ -235,5 +237,56 @@ describe('setPropertyValue', () => {
   it('leaves the list unchanged for an unknown key and tolerates a legacy undefined list', () => {
     expect(setPropertyValue(props, 'unknown', 'x')).toEqual(props);
     expect(setPropertyValue(undefined, 'age', 1)).toEqual([]);
+  });
+});
+
+describe('matchesApplicationForFilter', () => {
+  const membership = newApplication('t');
+  const course = newApplication('t');
+  course.applicationFor = 'course';
+  const legacy = { ...newApplication('t'), applicationFor: undefined } as unknown as ApplicationModel;
+
+  it("'all' matches everything", () => {
+    expect(matchesApplicationForFilter(membership, 'all')).toBe(true);
+    expect(matchesApplicationForFilter(course, 'all')).toBe(true);
+    expect(matchesApplicationForFilter(legacy, 'all')).toBe(true);
+  });
+
+  it("'membership' matches membership and legacy applications only", () => {
+    expect(matchesApplicationForFilter(membership, 'membership')).toBe(true);
+    expect(matchesApplicationForFilter(legacy, 'membership')).toBe(true);
+    expect(matchesApplicationForFilter(course, 'membership')).toBe(false);
+  });
+
+  it("'course' matches course applications only", () => {
+    expect(matchesApplicationForFilter(course, 'course')).toBe(true);
+    expect(matchesApplicationForFilter(membership, 'course')).toBe(false);
+    expect(matchesApplicationForFilter(legacy, 'course')).toBe(false);
+  });
+});
+
+describe('applicationCourseKey', () => {
+  const prop = (key: string, value: string): TypedProperty => ({ key, type: 'text', value, label: key });
+
+  it('reads the courseId property', () => {
+    const app = newApplication('t');
+    app.properties = [prop('level', 'A'), prop('courseId', 'abc123')];
+    expect(applicationCourseKey(app)).toBe('abc123');
+  });
+
+  it('is empty without the property, with an empty list, or on a legacy document', () => {
+    const app = newApplication('t');
+    app.properties = [prop('level', 'A')];
+    expect(applicationCourseKey(app)).toBe('');
+    app.properties = [];
+    expect(applicationCourseKey(app)).toBe('');
+    const legacy = { ...newApplication('t'), properties: undefined } as unknown as ApplicationModel;
+    expect(applicationCourseKey(legacy)).toBe('');
+  });
+
+  it('is empty when the value is not a string', () => {
+    const app = newApplication('t');
+    app.properties = [{ key: 'courseId', type: 'number', value: 5, label: 'x' }];
+    expect(applicationCourseKey(app)).toBe('');
   });
 });

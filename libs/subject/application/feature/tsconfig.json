@@ -47,6 +47,9 @@
       "path": "../../../shared/util-core/tsconfig.lib.json"
     },
     {
+      "path": "../../../calendar/course/data-access/tsconfig.lib.json"
+    },
+    {
       "path": "../../../relationship/membership/feature/tsconfig.lib.json"
     },
     {

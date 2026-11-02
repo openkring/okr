@@ -30,6 +30,7 @@ import { ApplicationForm } from './application.form';
           (formDataChange)="onFormDataChange($event)"
           [i18n]="i18n()"
           [readOnly]="isTerminal()"
+          [courseName]="courseName()"
           [showForm]="showForm()"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
@@ -44,6 +45,8 @@ export class ApplicationEditModal {
   public readonly application = input.required<ApplicationModel>();
   public readonly currentUser = input<UserModel>();
   public readonly i18n        = input.required<ApplicationI18n>();
+  /** name of the course of a course registration (the store resolves it from the course key) */
+  public readonly courseName  = input('');
 
   protected formDirty = signal(false);
   protected formValid = signal(false);

@@ -6,6 +6,10 @@ export const APPLICATION_I18N_KEYS = {
   list_title:               PFX + 'list.title',
   list_empty:               PFX + 'list.empty',
   list_no_person:           PFX + 'list.no_person',
+  list_filter_label:        PFX + 'list.filter.label',
+  list_filter_all:          PFX + 'list.filter.all',
+  list_filter_membership:   PFX + 'list.filter.membership',
+  list_filter_course:       PFX + 'list.filter.course',
 
   add_group:                PFX + 'add.group.label',
   add_group_conf:           PFX + 'add.group.conf',

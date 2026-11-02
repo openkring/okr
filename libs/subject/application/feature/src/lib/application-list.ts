@@ -7,6 +7,7 @@ import {
 } from '@ionic/angular';
 
 import { ApplicationModel } from '@okr/shared-models';
+import { ApplicationForFilter, isMembershipApplication } from '@okr/application-util';
 import { hasRole } from '@okr/shared-util-core';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter } from '@okr/shared-ui';
@@ -32,6 +33,11 @@ import { ApplicationStore } from './application.store';
     </ion-toolbar>
     <okr-list-filter
       (searchTermChanged)="store.setSearchTerm($event)"
+      [strings]="forLabels()"
+      [stringsName]="'applicationFor'"
+      [stringsLabel]="store.i18n.list_filter_label()"
+      [selectedString]="forLabel()"
+      (stringsChanged)="onForFilterChange($event)"
     />
   </ion-header>
 
@@ -45,6 +51,9 @@ import { ApplicationStore } from './application.store';
             <ion-label>
               <h2>{{ app.lastName }}, {{ app.firstName }}</h2>
               <p>{{ app.zipCode }} {{ app.city }}</p>
+              @if(store.courseName(app); as courseName) {
+                <p>{{ courseName }}</p>
+              }
               <p>{{ app.submittedAt | date:'dd.MM.yyyy HH:mm' }}</p>
             </ion-label>
             <ion-chip slot="end" [color]="store.stateColor(app.state)">
@@ -68,6 +77,19 @@ export class ApplicationList {
 
   protected isAdmin = computed(() => hasRole('admin', this.store.currentUser()));
 
+  // the strings filter lists plain strings: the translated labels are the options, mapped back to the filter value
+  private readonly forOptions = computed<{ value: ApplicationForFilter; label: string }[]>(() => [
+    { value: 'all',        label: this.store.i18n.list_filter_all() },
+    { value: 'membership', label: this.store.i18n.list_filter_membership() },
+    { value: 'course',     label: this.store.i18n.list_filter_course() },
+  ]);
+  protected readonly forLabels = computed(() => this.forOptions().map(o => o.label));
+  protected readonly forLabel = computed(() => this.forOptions().find(o => o.value === this.store.forFilter())?.label ?? '');
+
+  protected onForFilterChange(label: string): void {
+    this.store.setForFilter(this.forOptions().find(o => o.label === label)?.value ?? 'all');
+  }
+
   protected stateLabel(app: ApplicationModel): string {
     const key = ('state_' + app.state.replace('.', '_')) as keyof typeof this.store.i18n;
     const sig = this.store.i18n[key];
@@ -81,11 +103,13 @@ export class ApplicationList {
     const isOpen = app.state === 'applied' || app.state === 'reviewing';
 
     opts.buttons.push(createActionSheetDivider());
+    // a course registration creates no member: «Annehmen» and «Mitgliedschaft hinzufügen» are for memberships only
+    const isMembership = isMembershipApplication(app);
     if (isOpen) {
-      opts.buttons.push(createActionSheetButton('accept',     this.store.i18n.accept(), imgix, 'check'));
+      if (isMembership) opts.buttons.push(createActionSheetButton('accept', this.store.i18n.accept(), imgix, 'check'));
       opts.buttons.push(createActionSheetButton('deny',       this.store.i18n.deny(),   imgix, 'trash'));
     }
-    if (app.personKey) {
+    if (isMembership && app.personKey) {
       opts.buttons.push(createActionSheetButton('membership', this.store.i18n.add_membership(), imgix, 'person-add'));
     }
     opts.buttons.push(createActionSheetDivider());

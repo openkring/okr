@@ -2,7 +2,13 @@
   "list": {
     "title": "Anträge",
     "empty": "Keine Anträge gefunden.",
-    "no_person": "Person noch nicht erstellt — Antrag zuerst annehmen."
+    "no_person": "Person noch nicht erstellt — Antrag zuerst annehmen.",
+    "filter": {
+      "label": "Art",
+      "all": "Alle",
+      "membership": "Mitgliedschaft",
+      "course": "Kurse"
+    }
   },
   "add": {
     "group": {

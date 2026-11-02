@@ -93,6 +93,25 @@ export function isMembershipApplication(app: ApplicationModel): boolean {
   return (app.applicationFor ?? 'membership') === 'membership';
 }
 
+/** The kind-of-application filter of the back-office list: everything, memberships only, or course registrations only. */
+export type ApplicationForFilter = 'all' | 'membership' | 'course';
+
+/** Whether an application passes the kind filter. Legacy documents without `applicationFor` count as membership. */
+export function matchesApplicationForFilter(app: ApplicationModel, filter: ApplicationForFilter): boolean {
+  if (filter === 'all') return true;
+  if (filter === 'membership') return isMembershipApplication(app);
+  return (app.applicationFor ?? 'membership') === filter;
+}
+
+/** Key of the typed property that carries the course of a course registration (value = `CourseModel.okey`). */
+export const APPLICATION_COURSE_PROPERTY = 'courseId';
+
+/** The course a course registration is for (the `courseId` property value); '' when there is none. */
+export function applicationCourseKey(app: ApplicationModel): string {
+  const value = (app.properties ?? []).find(p => p.key === APPLICATION_COURSE_PROPERTY)?.value;
+  return typeof value === 'string' ? value : '';
+}
+
 /**
  * Returns a copy of `properties` with the value of `key` replaced, coerced to the property's type
  * (spec 1.125 §4.4: key, type and label stay fixed, only the value may be corrected).
