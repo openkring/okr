@@ -1,7 +1,9 @@
-import { Component, computed, input, OnInit, output } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, input, OnInit, output, signal, untracked } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { IonButton } from '@ionic/angular';
 import { CategoryListModel, Field, FormDefinitionModel } from '@okr/shared-models';
+import { getTodayStr, getVisibleFieldIds } from '@okr/shared-util-core';
 import { validatorsFor, defaultFor, isInputField } from '@okr/forms-util';
 import { FieldRenderer } from './field-renderer';
 
@@ -42,8 +44,10 @@ import { FieldRenderer } from './field-renderer';
 
       <div class="fields">
         @for (field of sortedFields(); track field.id) {
-          <okr-field-renderer [class]="'width-' + field.width" [field]="field" [control]="getControl(field)"
-            [category]="categoryOf(field)" />
+          @if (visibleIds().has(field.id)) {
+            <okr-field-renderer [class]="'width-' + field.width" [field]="field" [control]="getControl(field)"
+              [category]="categoryOf(field)" />
+          }
         }
       </div>
       @if (showSubmit()) {
@@ -77,9 +81,36 @@ export class FormRenderer implements OnInit {
     this.definition().honeypotKey || 'website'
   );
 
+  private readonly destroyRef = inject(DestroyRef);
+
   private _form: FormGroup = new FormGroup({});
 
   protected form = computed(() => this._form);
+
+  /** ids of the fields (and dividers) a visibility rule currently shows; recomputed on every answer */
+  protected readonly visibleIds = signal<ReadonlySet<string>>(new Set());
+
+  public constructor() {
+    // Hidden means absent: a hidden input is emptied and disabled, so it drops out of form.value
+    // and form.invalid. All writes use emitEvent:false, so this cannot feed back into valueChanges.
+    effect(() => {
+      const visible = this.visibleIds();
+      const fields = this.definition().fields;
+      untracked(() => {
+        for (const field of fields) {
+          if (!isInputField(field)) continue;
+          const control = this._form.get(field.key);
+          if (!control) continue;
+          if (visible.has(field.id)) {
+            if (control.disabled) control.enable({ emitEvent: false });
+          } else if (control.enabled) {
+            control.reset(defaultFor(field), { emitEvent: false });
+            control.disable({ emitEvent: false });
+          }
+        }
+      });
+    });
+  }
 
   public ngOnInit(): void {
     const controls: Record<string, FormControl> = {};
@@ -93,6 +124,21 @@ export class FormRenderer implements OnInit {
     // JS token — populated reactively by effect in parent
     controls['_jsToken'] = new FormControl(this.jsToken());
     this._form = new FormGroup(controls);
+
+    this.updateVisibility();
+    this._form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.updateVisibility());
+  }
+
+  private updateVisibility(): void {
+    // getRawValue(): disabled (hidden) controls still contribute their reset value
+    const next = getVisibleFieldIds(
+      this.definition().fields,
+      this._form.getRawValue() as Record<string, unknown>,
+      getTodayStr()
+    );
+    const current = this.visibleIds();
+    if (next.size === current.size && [...next].every(id => current.has(id))) return;
+    this.visibleIds.set(next);
   }
 
   public updateJsToken(token: string): void {
