@@ -348,6 +348,27 @@ seed("calevents/evFree3",  {"tenants": ["t1"], "isArchived": False, "name": "Fre
 seed("calevents/evFree4",  {"tenants": ["t1"], "isArchived": False, "name": "Frei", "courseKey": ""})
 seed("calevents/evLegacy", {"tenants": ["t1"], "isArchived": False, "name": "Alt"})  # pre-1.132: no courseKey field
 seed("calevents/evT2",     {"tenants": ["t2"], "isArchived": False, "name": "Fremd", "courseKey": ""})
+# fix round 1: uidGA (t1, person pGA) admins gOther (t1) and gT2Only — a group that exists ONLY in t2.
+seed("users/uidGA", {"tenants": ["t1"], "roles": {}, "firstName": "GA", "personKey": "pGA"})
+seed("groups/gOther",  {"tenants": ["t1"], "name": "Andere", "admins": [{"key": "pGA"}], "adminKeys": ["pGA"]})
+seed("groups/gT2Only", {"tenants": ["t2"], "name": "Nur t2", "admins": [{"key": "pGA"}], "adminKeys": ["pGA"]})
+seed("groups/gCourse2", {"tenants": ["t1"], "name": "Kursgruppe 2", "admins": [{"key": "pE"}], "adminKeys": ["pE"]})
+seed("courses/cCross", course(group="gT2Only", trainers=(), responsibles=()))  # t1 course on a t2-only group
+seed("courses/cCross/finance/settings", {"accountingTenantId": "t1", "accountKey": "", "eligible": []})
+seed("courses/c3",     course(group="gCourse2", trainers=(), responsibles=()))  # another course pE admins
+seed("courses/cMove",  course())  # the course the group-move ALLOW mutates
+seed("calevents/evC4",       {"tenants": ["t1"], "isArchived": False, "name": "Training", "courseKey": "c1"})
+seed("calevents/evCross",    {"tenants": ["t1"], "isArchived": False, "name": "Training", "courseKey": "cCross"})
+seed("calevents/evDel1",     {"tenants": ["t1"], "isArchived": False, "name": "Training", "courseKey": "c1"})
+seed("calevents/evDel2",     {"tenants": ["t1"], "isArchived": False, "name": "Training", "courseKey": "c1"})
+seed("calevents/evArch1",    {"tenants": ["t1"], "isArchived": False, "name": "Training", "courseKey": "c1"})
+seed("calevents/evArch2",    {"tenants": ["t1"], "isArchived": False, "name": "Training", "courseKey": "c1"})
+seed("calevents/evFreeDel",  {"tenants": ["t1"], "isArchived": False, "name": "Frei", "courseKey": ""})
+seed("calevents/evFreeArch", {"tenants": ["t1"], "isArchived": False, "name": "Frei", "courseKey": ""})
+seed("calevents/evLegacyArch", {"tenants": ["t1"], "isArchived": False, "name": "Alt"})
+seed("calevents/evLegacyDel",  {"tenants": ["t1"], "isArchived": False, "name": "Alt"})
+for i in range(12):
+    seed(f"calevents/evBatch{i:02d}", {"tenants": ["t1"], "isArchived": False, "name": "Serie", "courseKey": ""})
 for key, okey in [("gOpen", "tkOpen"), ("gClosed", "tkClosed"), ("meeting.m1", "tkMeet"), ("gNone", "tkNone")]:
     seed(f"tasks/{okey}", {"tenants": ["t1"], "isArchived": False, "shareKey": key, "name": okey,
                            "author": {"key": "pE", "name1": "E"}, "assignee": {"key": "pZ", "name1": "Z"},
@@ -388,6 +409,7 @@ O, O2, O3 = jwt("uidO"), jwt("uidO2"), jwt("uidO3")
 NODOC = jwt("uidNoDoc")  # signed in, but no users/{uid} doc
 N, N2 = jwt("uidN"), jwt("uidN2")  # no personKey / empty personKey, no role
 T2, R, EA = jwt("uidCT"), jwt("uidR"), jwt("uidEA")  # course trainer pT2, course responsible pR, eventAdmin
+GA = jwt("uidGA")  # admin of gOther (t1) and of gT2Only (exists only in t2)
 GET, PATCH, POST, DELETE = "GET", "PATCH", "POST", "DELETE"
 
 
@@ -972,6 +994,47 @@ single_cases = [
      body({"accountingTenantId": "t1", "accountKey": ""}), None),
     ("privileged reads finance of a missing course -> DENY", False, GET, "courses/cMissing/finance/settings", P,
      None, None),
+    # fix round 1 — group admin only for a group of the caller's own tenant (persons span tenants)
+    ("t1 user admin of a t2-only group creates course on it -> DENY", False, POST, "courses?documentId=cNew7", GA,
+     body({"tenants": ["t1"], "isArchived": False, "name": "Neu", "groupKey": "gT2Only"}), None),
+    ("t1 user admin of a t2-only group reads that course's finance -> DENY", False, GET,
+     "courses/cCross/finance/settings", GA, None, None),
+    ("t1 user admin of a t2-only group PATCHes that course -> DENY", False, PATCH, "courses/cCross", GA,
+     body({"name": "X"}), ["name"]),
+    ("t1 user admin of a t2-only group PATCHes attendance of its event -> DENY", False, PATCH,
+     "calevents/evCross", GA, body({"attendanceConfirmedAt": "20261101120000"}), ["attendanceConfirmedAt"]),
+    ("t1 user admin of a t2-only group assigns an event to that course -> DENY", False, PATCH,
+     "calevents/evFree3", GA, body({"courseKey": "cCross"}), ["courseKey"]),
+    ("admin of an unrelated group PATCHes courses/c1 -> DENY", False, PATCH, "courses/c1", GA,
+     body({"name": "X"}), ["name"]),
+    ("admin of own t1 group creates course on it -> ALLOW", True, POST, "courses?documentId=cNew8", GA,
+     body({"tenants": ["t1"], "isArchived": False, "name": "Neu", "groupKey": "gOther"}), None),
+    ("group admin moves a course to another group they admin -> ALLOW", True, PATCH, "courses/cMove", E,
+     body({"groupKey": "gCourse2"}), ["groupKey"]),
+    # fix round 1 — malformed courseKey values never reach get()
+    ("trainer sets courseKey 'c1/finance/settings' -> DENY", False, PATCH, "calevents/evFree3", T2,
+     body({"courseKey": "c1/finance/settings"}), ["courseKey"]),
+    ("privileged sets courseKey null -> DENY (non-string key)", False, PATCH, "calevents/evFree3", P,
+     {"fields": {"courseKey": {"nullValue": None}}}, ["courseKey"]),
+    ("group admin moves event from c1 to c3 (both groups admined) -> ALLOW", True, PATCH, "calevents/evC4", E,
+     body({"courseKey": "c3"}), ["courseKey"]),
+    # fix round 1 — archive / delete of a course event is assignment: course editor, unlocked course
+    ("member DELETE course event -> DENY", False, DELETE, "calevents/evDel1", A, None, None),
+    ("trainer DELETE course event -> ALLOW", True, DELETE, "calevents/evDel2", T2, None, None),
+    ("member archives course event -> DENY", False, PATCH, "calevents/evArch1", A,
+     body({"isArchived": True}), ["isArchived"]),
+    ("trainer archives course event -> ALLOW", True, PATCH, "calevents/evArch2", T2,
+     body({"isArchived": True}), ["isArchived"]),
+    ("trainer archives event of a locked course -> DENY", False, PATCH, "calevents/evL", T2,
+     body({"isArchived": True}), ["isArchived"]),
+    ("privileged DELETE event of a locked course -> DENY", False, DELETE, "calevents/evL", P, None, None),
+    ("member DELETE event without course -> ALLOW (unchanged)", True, DELETE, "calevents/evFreeDel", A, None, None),
+    ("member archives event without course -> ALLOW (unchanged)", True, PATCH, "calevents/evFreeArch", A,
+     body({"isArchived": True}), ["isArchived"]),
+    ("member archives legacy event without courseKey field -> ALLOW (unchanged)", True, PATCH,
+     "calevents/evLegacyArch", A, body({"isArchived": True}), ["isArchived"]),
+    ("member DELETE legacy event without courseKey field -> ALLOW (unchanged)", True, DELETE,
+     "calevents/evLegacyDel", A, None, None),
     # privacy 1.19 D-P4-10: a person's avatar is a picture OF that person — only they,
     # memberAdmin or privileged may write it. Non-person avatars stay tenant content.
     # the doc id is tenant-scoped (`t1.person.pA`); a bare id (`person.pA`) is the shared
@@ -1419,6 +1482,19 @@ track_cases = [
     ("owner delete-only of points on an existing trip -> ALLOW", True,
      lambda: commit_batch([("trips/tkSeed/track-points/0", None)], TA)),
 ]
+# fix round 1 — rules access budget: one WriteBatch (like the series reconcile, calevent.store.ts) of 12
+# courseKey assignments by a group admin. Each write needs users/uidE, courses/c1 and groups/gCourse.
+course_batch_cases = [
+    ("group admin assigns 12 events to c1 in ONE batch -> ALLOW (access budget)", True,
+     lambda: commit_batch([(f"calevents/evBatch{i:02d}", {"tenants": ["t1"], "isArchived": False, "name": "Serie",
+                                                          "courseKey": "c1"}) for i in range(12)], E)),
+]
+for label, expect, run in course_batch_cases:
+    code = run()
+    ok = (code in (200, 201)) == expect
+    passed += ok; failed += not ok
+    print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
+
 for label, expect, run in track_cases:
     code = run()
     ok = (code in (200, 201)) == expect
