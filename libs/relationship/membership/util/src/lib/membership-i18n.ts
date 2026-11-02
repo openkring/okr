@@ -294,6 +294,14 @@ export const MEMBERSHIP_I18N_KEYS = {
   srv_mismatch_no:                          PFX + 'srv.mismatch.no',
   srv_license_create:                       PFX + 'srv.license.create.label',
   srv_license_download:                     PFX + 'srv.license.download.label',
+  srv_preview_title:                        PFX + 'srv.preview.title',
+  srv_preview_before:                       PFX + 'srv.preview.before',
+  srv_preview_after:                        PFX + 'srv.preview.after',
+  srv_preview_confirm:                      PFX + 'srv.preview.confirm',
+  srv_preview_nothing:                      PFX + 'srv.preview.nothing',
+  srv_update_done:                          PFX + 'srv.update.done',
+  srv_update_ignored:                       PFX + 'srv.update.ignored',
+  srv_update_error:                         PFX + 'srv.update.error',
 } satisfies Record<string, string>;
 
 export type MembershipI18n = { [K in keyof typeof MEMBERSHIP_I18N_KEYS]: Signal<string> };

@@ -6,3 +6,4 @@ export * from './lib/member-fee-upload.form';
 export * from './lib/member-fee-upload.modal';
 export * from './lib/exit-settlement.card';
 export * from './lib/membership-srv-mismatch.modal';
+export * from './lib/membership-srv-preview.modal';

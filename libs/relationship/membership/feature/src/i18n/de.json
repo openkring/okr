@@ -687,6 +687,18 @@
       "srv": "Nur in SRV",
       "both": "Beide"
     },
+    "preview": {
+      "title": "Änderung an Regasoft prüfen",
+      "before": "Regasoft jetzt",
+      "after": "Danach",
+      "confirm": "In Regasoft übernehmen",
+      "nothing": "Regasoft ist bereits auf dem gleichen Stand. Es gibt nichts zu ändern."
+    },
+    "update": {
+      "done": "Regasoft ist aktualisiert. Geänderte Felder: {count}",
+      "ignored": "Regasoft hat diese Felder nicht übernommen: {fields}",
+      "error": "Der Regasoft-Eintrag konnte nicht aktualisiert werden. Bitte versuche es später noch einmal."
+    },
     "mismatch": {
       "yes": "ja",
       "no": "nein"

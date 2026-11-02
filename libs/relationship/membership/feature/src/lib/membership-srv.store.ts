@@ -10,8 +10,8 @@ import { isFirestoreInitializedCheck } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { AddressCollection, AddressModel, MembershipCollection, MembershipModel, OwnershipModel, PersonModel, SrvContact, SrvIndex, SrvMemberLicenseDetail } from '@okr/shared-models';
-import { DateFormat, debugListLoaded, getBirthYear, getFullName, getMismatches, getSystemQuery, getTodayStr, getYear, isAfterOrEqualDate, isMembership, isPerson } from '@okr/shared-util-core';
+import { AddressCollection, AddressModel, MembershipCollection, MembershipModel, OwnershipModel, PersonModel, SrvChanges, SrvContact, SrvIndex, SrvMemberLicenseDetail, SrvPreview, SrvUpdateResult } from '@okr/shared-models';
+import { DateFormat, debugListLoaded, fill, getBirthYear, getFullName, getMismatches, getSrvChanges, getSystemQuery, getTodayStr, getYear, isAfterOrEqualDate, isMembership, isPerson } from '@okr/shared-util-core';
 
 import { showToast } from '@okr/shared-util-angular';
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
@@ -19,7 +19,7 @@ import { MembershipService } from '@okr/relationship-membership-data-access';
 import { PersonService } from '@okr/subject-person-data-access';
 import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
 import { MEMBERSHIP_I18N_KEYS, newMembershipForPerson } from '@okr/relationship-membership-util';
-import { MembershipSrvMismatchModal } from '@okr/relationship-membership-ui';
+import { MembershipSrvMismatchModal, MembershipSrvPreviewModal } from '@okr/relationship-membership-ui';
 
 import { MembershipEditModal } from './membership-edit.modal';
 
@@ -57,7 +57,6 @@ function buildIndexEntry(
   p: MembershipModel | undefined,
   r: SrvContact | undefined,
   person: PersonModel | undefined,
-  isProdEnv: boolean,
   postal?: AddressModel,
   dob = '',                                       // full dob from the vault (spec 1.19 Phase 4)
   contact?: { email: string; phone: string }      // from the address-directory projection
@@ -98,7 +97,7 @@ function buildIndexEntry(
     rServiceId:       r?.serviceId != null ? String(r.serviceId) : '',
     rFirstName:       r?.firstName ?? '',
     rLastName:        r?.lastName ?? '',
-    rEmail:           getEmail(r, isProdEnv),
+    rEmail:           r?.email ?? '',
     rGender:          '',
     rMobile:          r?.mobile ?? '',
     rTelefon:         r?.telefon ?? '',
@@ -127,14 +126,6 @@ function buildIndexEntry(
 
 function storageKey(tenantId: string): string {
   return `okr-aoc-srv-index-${tenantId}`;
-}
-
-// in the test system, Regasoft adds a 'x' after the email address, we need to remove this to make it comparable
-function getEmail(r?: SrvContact, isProdEnv = true): string {
-  const email = r?.email;
-  if (!email ) return '';
-  if (!isProdEnv && r.email?.endsWith('x'))  return email.substring(0, email.length-1);
-  return email;
 }
 
 function stripForStorage(entry: SrvIndex): Omit<SrvIndex, 'licenseImage' | 'licenseImageName' | 'licenseImageMimeType'> & { licenseImage: null; licenseImageName: null; licenseImageMimeType: null } {
@@ -293,7 +284,6 @@ export const MembershipSrvStore = signalStore(
       const processedParentKeys    = new Set<string>();
       const processedRegasoftIds   = new Set<number>();
       const index: SrvIndex[] = [];
-      const isProdEnv = store.appStore.env.production;
 
       // Batch-load all favorite postal addresses once for the whole index build
       const postalQuery = getSystemQuery(store.tenantId());
@@ -337,7 +327,7 @@ export const MembershipSrvStore = signalStore(
         const dob = dobByPersonKey.get(m.memberKey) ?? '';
         const directory = store.appStore.getDirectoryEntry(`person.${m.memberKey}`);
         const contact = { email: directory?.favEmail ?? '', phone: directory?.favPhone ?? '' };
-        index.push(buildIndexEntry(m, p, r, person, isProdEnv, postal, dob, contact));
+        index.push(buildIndexEntry(m, p, r, person, postal, dob, contact));
       }
 
       // ── Orphan parent memberships (no matching main) ─────────────────────
@@ -352,13 +342,13 @@ export const MembershipSrvStore = signalStore(
         }
         if (r) processedRegasoftIds.add(r.srvId);
 
-        index.push(buildIndexEntry(undefined, p, r, undefined, isProdEnv));
+        index.push(buildIndexEntry(undefined, p, r, undefined));
       }
 
       // ── Orphan Regasoft contacts (no matching main or parent) ────────────
       for (const r of regasoftContacts) {
         if (processedRegasoftIds.has(r.srvId)) continue;
-        index.push(buildIndexEntry(undefined, undefined, r, undefined, isProdEnv));
+        index.push(buildIndexEntry(undefined, undefined, r, undefined));
       }
 
       index.sort((a, b) => {
@@ -585,59 +575,49 @@ export const MembershipSrvStore = signalStore(
       });
     },
 
+    /**
+     * Update a Regasoft member from our data (spec 1.133): change set → server preview →
+     * confirmation → update. Nothing is sent without the user's confirmation.
+     */
     async updateRegasoft(item: SrvIndex): Promise<void> {
       if (!item.rid) return;
+      const changes = getSrvChanges(item, getTodayStr(DateFormat.StoreDate));
+      if (Object.keys(changes).length === 0) {
+        await showToast(store.toastController, store.i18n.srv_preview_nothing());
+        return;
+      }
+
       const functions = getFunctions(getApp(), 'europe-west6');
       if (store.appStore.env.useEmulators) {
         connectFunctionsEmulator(functions, 'localhost', 5001);
       }
-      const fn = httpsCallable<{ op: string } & Record<string, unknown>, { id: string }>(functions, 'srv');
-      const changed = new Set(getMismatches(item, getTodayStr(DateFormat.StoreDate)).map(m => m.field));
-      // dateOfDeath lives in the addresses vault (spec 1.19 'dod' channel), not on the
-      // person document — the AOC console runs privileged, so this is a raw vault read.
-      const sensitive = await store.personService.loadSensitive(item.personKey, store.currentUser());
-      const catToMembershipType: Record<string, string> = { A: 'Active', P: 'Passive', J: 'Junior', D: 'Double', C: 'Candidate' };
+      const input = { srvId: Number(item.rid), changes };
 
       try {
-        await fn({
-          srvId:          Number(item.rid),
-          firstName:      changed.has('firstName')   ? item.firstName         : item.rFirstName,
-          lastName:       changed.has('lastName')    ? item.lastName          : item.rLastName,
-          email:          changed.has('email')       ? item.mEmail  || null   : item.rEmail  || null,
-          mobile:         changed.has('phone')       ? item.mPhone  || null   : (item.rMobile || item.rTelefon) || null,
-          dateOfBirth:    changed.has('dateOfBirth') ? item.dateOfBirth       : item.rDateOfBirth,
-          gender:         item.gender === 'female' ? 2 : 1,
-          membershipType: catToMembershipType[item.mCategory] ?? undefined,
-          street:         changed.has('street')      ? item.mStreet || null   : item.rStreet || null,
-          postcode:       changed.has('zipCode')     ? item.mZipCode || null  : item.rZipCode || null,
-          city:           changed.has('city')        ? item.mCity   || null   : item.rCity   || null,
-          leavingDate:    item.mDateOfExit || null,
-          dateOfDeath:    sensitive.dod || null,
-          op:             'updateSrvContact',
-        });
-      } catch (e) {
-        console.error('MembershipSrvStore.updateRegasoft: updateSrvContact failed', e);
-        throw e;
-      }
+        const previewFn = httpsCallable<{ op: string; srvId: number; changes: SrvChanges }, SrvPreview>(functions, 'srv');
+        const preview = (await previewFn({ op: 'previewSrvUpdate', ...input })).data;
 
-      patchState(store, {
-        index: store.index().map(i => {
-          if (i.key !== item.key) return i;
-          return {
-            ...i,
-            rFirstName:   changed.has('firstName')   ? item.firstName    : i.rFirstName,
-            rLastName:    changed.has('lastName')    ? item.lastName     : i.rLastName,
-            rEmail:       changed.has('email')       ? item.mEmail       : i.rEmail,
-            rMobile:      changed.has('phone')       ? item.mPhone       : i.rMobile,
-            rDateOfBirth: changed.has('dateOfBirth') ? item.dateOfBirth  : i.rDateOfBirth,
-            rStreet:      changed.has('street')      ? item.mStreet      : i.rStreet,
-            rZipCode:     changed.has('zipCode')     ? item.mZipCode     : i.rZipCode,
-            rCity:        changed.has('city')        ? item.mCity        : i.rCity,
-            rCategory:    catToMembershipType[item.mCategory] ? item.mCategory : i.rCategory,
-            rDateOfExit:  item.mDateOfExit || i.rDateOfExit,
-          };
-        }),
-      });
+        const modal = await store.modalController.create({
+          component: MembershipSrvPreviewModal,
+          cssClass: 'wide-modal',
+          componentProps: { preview, i18n: store.i18n },
+        });
+        await modal.present();
+        const { role } = await modal.onDidDismiss();
+        if (role !== 'confirm') return;
+
+        const updateFn = httpsCallable<{ op: string; srvId: number; changes: SrvChanges }, SrvUpdateResult>(functions, 'srv');
+        const { written, ignored } = (await updateFn({ op: 'updateSrvContact', ...input })).data;
+
+        await showToast(store.toastController, fill(store.i18n.srv_update_done(), { count: written.length }));
+        if (ignored.length > 0) {
+          await showToast(store.toastController, fill(store.i18n.srv_update_ignored(), { fields: ignored.join(', ') }));
+        }
+      } catch (e) {
+        // e.g. failed-precondition while the server still blocks Regasoft writes
+        console.error('MembershipSrvStore.updateRegasoft failed', e);
+        await showToast(store.toastController, store.i18n.srv_update_error());
+      }
     }
   }))
 );

@@ -687,6 +687,18 @@
       "srv": "Solo en SRV",
       "both": "Ambos"
     },
+    "preview": {
+      "title": "Revisa el cambio en Regasoft",
+      "before": "Regasoft ahora",
+      "after": "Después",
+      "confirm": "Aplicar en Regasoft",
+      "nothing": "Regasoft ya está al día. No hay nada que cambiar."
+    },
+    "update": {
+      "done": "Regasoft está actualizado. Campos modificados: {count}",
+      "ignored": "Regasoft no aceptó estos campos: {fields}",
+      "error": "No se pudo actualizar la entrada de Regasoft. Inténtalo de nuevo más tarde."
+    },
     "mismatch": {
       "yes": "sí",
       "no": "no"
