@@ -181,6 +181,70 @@ export function pickSrvMemberships<T extends SrvMembershipLike>(memberships: T[]
   return picks;
 }
 
+/** The fields of a Regasoft record the SRV index matches on (`SrvContact` has them). */
+export interface SrvMatchRecord {
+  srvId: number;
+  serviceId?: number;
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string;   // StoreDate
+}
+
+/** One of our memberships looking for its Regasoft record. */
+export interface SrvMatchQuery {
+  /** SRV number stored on our SRV membership, '' / undefined when none */
+  memberId?: string;
+  firstName: string;
+  lastName: string;
+  /** full birth date from the vault, '' when unknown */
+  dateOfBirth?: string;
+  /** the membership ended before today */
+  ended: boolean;
+}
+
+const nameKeyOf = (first: string, last: string): string => `${first ?? ''} ${last ?? ''}`.trim().toLowerCase();
+
+/**
+ * Finds the Regasoft record of one of our memberships (spec 1.133 C1). By SRV number first, then by
+ * name. A current membership may match a current record or one of a member who left (re-join, D7);
+ * an ended membership only a current one, so long-gone members do not fill the index (I1).
+ * A record of a member who left is matched by name only together with the same full birth date, and
+ * never when its SRV number differs from ours: a namesake who died years ago must not be taken for
+ * a new member (who could then never be created). Among current records the first namesake wins, as
+ * before; `isSrvLinked` still guards every write.
+ */
+export function makeSrvMatcher<T extends SrvMatchRecord>(current: readonly T[], left: readonly T[]): (q: SrvMatchQuery) => T | undefined {
+  const index = (records: readonly T[]) => {
+    const byServiceId = new Map<string, T>();
+    const byName = new Map<string, T[]>();
+    for (const r of records) {
+      if (r.serviceId != null) byServiceId.set(String(r.serviceId), r);
+      const key = nameKeyOf(r.firstName, r.lastName);
+      const list = byName.get(key);
+      if (list) list.push(r);
+      else byName.set(key, [r]);
+    }
+    return { byServiceId, byName };
+  };
+  const cur = index(current);
+  const gone = index(left);
+
+  return (q: SrvMatchQuery): T | undefined => {
+    const memberId = q.memberId ?? '';
+    if (memberId) {
+      const bySrv = cur.byServiceId.get(memberId) ?? (q.ended ? undefined : gone.byServiceId.get(memberId));
+      if (bySrv) return bySrv;
+    }
+    const key = nameKeyOf(q.firstName, q.lastName);
+    const byName = cur.byName.get(key)?.[0];
+    if (byName || q.ended) return byName;
+    const dob = q.dateOfBirth ?? '';
+    if (classifyStoreDate(dob) !== 'full') return undefined;
+    return gone.byName.get(key)?.find(r =>
+      r.dateOfBirth === dob && !(memberId && r.serviceId != null && String(r.serviceId) !== memberId));
+  };
+}
+
 /**
  * Why a member must not be created in Regasoft (a record there can never be deleted again):
  * `hasSrvNumber` = our parent membership already holds a SRV number but nothing links to a Regasoft

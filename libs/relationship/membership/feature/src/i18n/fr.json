@@ -694,7 +694,8 @@
       "confirm": "Appliquer dans Regasoft",
       "nothing": "Regasoft est déjà à jour. Il n’y a rien à modifier.",
       "modified": "Dernière modification dans le portail Regasoft : {date}. Vérifie si le secrétariat a modifié quelque chose depuis, que tu écraserais maintenant.",
-      "modified_unknown": "On ne sait pas quand cette entrée a été modifiée pour la dernière fois dans le portail Regasoft."
+      "modified_unknown": "On ne sait pas quand cette entrée a été modifiée pour la dernière fois dans le portail Regasoft.",
+      "parent_category_unknown": "Le type de membre dans le portail Regasoft ne correspond à aucune catégorie SRV. L’affiliation SRV n’a donc pas été créée."
     },
     "update": {
       "done": "Regasoft est à jour. Champs modifiés : {count}",

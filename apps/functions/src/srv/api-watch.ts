@@ -66,6 +66,15 @@ export const PROBE_ERROR = Symbol('probe-error');
 /** Marks a large probe whose response exceeded the size cap. */
 export const PARAM_OVERSIZE = Symbol('param-oversize');
 
+/**
+ * A large probe that got an answer other than 200 (a moved or removed endpoint, a 401): a stable
+ * fingerprint value `status:<code>`, reported like any change — never a transient marker.
+ */
+export interface ProbeStatus { probeStatus: number }
+
+const isProbeStatus = (v: unknown): v is ProbeStatus =>
+  !!v && typeof v === 'object' && typeof (v as ProbeStatus).probeStatus === 'number';
+
 export interface ApiProbe {
   listStatus: number;
   list: unknown;
@@ -74,7 +83,8 @@ export interface ApiProbe {
   /**
    * The endpoints shipped 2026-11-02 (spec 1.133 C4): `GET /api/club/members/all`, the same with
    * `?inactive=true`, the list with `?inactive=true`, and `GET /api/nationIoc`. undefined when the
-   * probe could not be completed; PARAM_OVERSIZE over the size cap.
+   * request threw (timeout, reset); PARAM_OVERSIZE over the size cap; a ProbeStatus for any answer
+   * other than 200.
    */
   all: unknown;
   allInactive: unknown;
@@ -125,13 +135,25 @@ const recordOf = (raw: unknown): Record<string, unknown>[] => {
 };
 
 /**
- * A value of one of the C4 probes: `unavailable` = the probe failed (transient); `oversize` = the
- * response was over the size cap (a stable value, reported like any change); else `describe(raw)`.
+ * A value of one of the C4 probes: `unavailable` = the request threw (transient); `oversize` = the
+ * response was over the size cap; `status:<code>` = an answer other than 200 (both stable values,
+ * reported like any change); else `describe(raw)`.
  */
 function probed(raw: unknown, describe: (raw: unknown) => string): string {
   if (raw === undefined) return 'unavailable';
   if (raw === PARAM_OVERSIZE) return 'oversize';
+  if (isProbeStatus(raw)) return `status:${raw.probeStatus}`;
   return describe(raw);
+}
+
+/**
+ * Field names only, sorted. For the member-list probes: their value types depend on the data — one
+ * current member with a future exit date turns `leavingDate:null` into `string|null` — which would
+ * raise a task without any API change.
+ */
+function describeNames(records: Record<string, unknown>[]): string {
+  if (records.length === 0) return 'none';
+  return [...new Set(records.flatMap(r => Object.keys(r)))].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)).join(',');
 }
 
 const clubsOf = (records: Record<string, unknown>[]): Record<string, unknown>[] =>
@@ -161,11 +183,11 @@ export function buildFingerprint(probe: ApiProbe, system: 'test' | 'production' 
     'detail.fields': failed(probe.detail) ? 'error' : describeFields(detail),
     'detail.personClubs': failed(probe.detail) ? 'error' : describeFields(clubs),
     'all.envelope': probed(probe.all, envelopeOf),
-    'all.fields': probed(probe.all, raw => describeFields(listOf(raw))),
-    'all.personClubs': probed(probe.all, raw => describeFields(clubsOf(listOf(raw)))),
+    'all.fields': probed(probe.all, raw => describeNames(listOf(raw))),
+    'all.personClubs': probed(probe.all, raw => describeNames(clubsOf(listOf(raw)))),
     'all.personClubs.personId': probed(probe.all, raw => personIdState(clubsOf(listOf(raw)))),
-    'allInactive.fields': probed(probe.allInactive, raw => describeFields(listOf(raw))),
-    'list.inactive.fields': probed(probe.listInactive, raw => describeFields(listOf(raw))),
+    'allInactive.fields': probed(probe.allInactive, raw => describeNames(listOf(raw))),
+    'list.inactive.fields': probed(probe.listInactive, raw => describeNames(listOf(raw))),
     'countries.envelope': probed(probe.countries, envelopeOf),
     'countries.fields': probed(probe.countries, raw => describeFields(listOf(raw))),
     'error.401': failed(probe.err401) ? 'error' : envelopeOf(probe.err401),
@@ -341,7 +363,7 @@ export async function probeRegasoft(): Promise<ProbeResult> {
   const optional = async (path: string): Promise<unknown> => {
     try {
       const r = await get(`${base}${path}`, headers, { maxBytes: PARAM_MAX_BYTES, maxRetries: 0 });
-      return r.status === 200 ? r.data : undefined;
+      return r.status === 200 ? r.data : ({ probeStatus: r.status } satisfies ProbeStatus);
     } catch (e: unknown) {
       if (isOversize(e)) return PARAM_OVERSIZE;
       logger.warn(`regasoftApiWatch: side probe ${path} failed`, { error: e instanceof Error ? e.message : String(e) });

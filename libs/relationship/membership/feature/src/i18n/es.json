@@ -694,7 +694,8 @@
       "confirm": "Aplicar en Regasoft",
       "nothing": "Regasoft ya está al día. No hay nada que cambiar.",
       "modified": "Último cambio en el portal Regasoft: {date}. Comprueba si la secretaría ha cambiado algo desde entonces que ahora sobrescribirías.",
-      "modified_unknown": "No se sabe cuándo se cambió esta entrada por última vez en el portal Regasoft."
+      "modified_unknown": "No se sabe cuándo se cambió esta entrada por última vez en el portal Regasoft.",
+      "parent_category_unknown": "El tipo de socio en el portal Regasoft no corresponde a ninguna categoría SRV. Por eso no se ha creado la afiliación SRV."
     },
     "update": {
       "done": "Regasoft está actualizado. Campos modificados: {count}",

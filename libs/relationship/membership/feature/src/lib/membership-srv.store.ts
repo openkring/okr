@@ -11,7 +11,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AddressCollection, AddressModel, MembershipCollection, MembershipModel, OwnershipModel, PersonModel, SrvChanges, SrvContact, SrvCountry, SrvIndex, SrvMemberLicenseDetail, SrvMembersAllResult, SrvPreview, SrvUpdateResult } from '@okr/shared-models';
-import { classifyPhone, composeSekretariatMail, countryIdOf, DateFormat, debugListLoaded, expectedSrvStatus, fill, getBirthYear, getFullName, getMismatches, getSekretariatCases, getSrvChanges, getSystemQuery, getTodayStr, getYear, isMembership, isPerson, mailtoUrl, pickSrvMemberships, regasoftDateToStoreDate, srvCategoryOf, srvCreateBlocker, SrvMembershipPick } from '@okr/shared-util-core';
+import { classifyPhone, composeSekretariatMail, countryIdOf, DateFormat, debugListLoaded, expectedSrvStatus, fill, getBirthYear, getFullName, getMismatches, getSekretariatCases, getSrvChanges, getSystemQuery, getTodayStr, getYear, isMembership, isPerson, mailtoUrl, makeSrvMatcher, pickSrvMemberships, regasoftDateToStoreDate, srvCategoryOf, srvCreateBlocker, SrvMembershipPick } from '@okr/shared-util-core';
 
 import { copyToClipboardDeferred, showToast } from '@okr/shared-util-angular';
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
@@ -394,30 +394,8 @@ export const MembershipSrvStore = signalStore(
       patchState(store, { regasoftItems: regasoftContacts.length, countries });
       console.log(`MembershipSrvStore.buildIndex: ${regasoftContacts.length} current and ${leftContacts.length} former Regasoft members, ${countries.length} countries`);
 
-      const lookup = (contacts: SrvContact[]) => {
-        const byServiceId = new Map<string, SrvContact>();
-        const byName      = new Map<string, SrvContact>();
-        for (const r of contacts) {
-          if (r.serviceId != null) byServiceId.set(String(r.serviceId), r);
-          const nameKey = getFullName(r.firstName, r.lastName).trim().toLowerCase();
-          if (!byName.has(nameKey)) byName.set(nameKey, r);
-        }
-        return { byServiceId, byName };
-      };
-      const current = lookup(regasoftContacts);
-      const left    = lookup(leftContacts);
-      /**
-       * The Regasoft record of one of our memberships: by SRV number first, then by name. A current
-       * membership may match a member who left (re-joined: the update clears the exit date, D7); an
-       * ended membership only a current one, so the index does not fill up with long-gone members (I1).
-       */
-      const findRegasoft = (memberId: string | undefined, first: string, last: string, ended: boolean): SrvContact | undefined => {
-        const nameKey = getFullName(first, last).trim().toLowerCase();
-        const sources = ended ? [current] : [current, left];
-        for (const src of sources) if (memberId && src.byServiceId.has(memberId)) return src.byServiceId.get(memberId);
-        for (const src of sources) if (src.byName.has(nameKey)) return src.byName.get(nameKey);
-        return undefined;
-      };
+      // Matching rules (re-join, ended members, birth date for members who left): makeSrvMatcher.
+      const findRegasoft = makeSrvMatcher(regasoftContacts, leftContacts);
 
       const processedParentKeys    = new Set<string>();
       const processedRegasoftIds   = new Set<number>();
@@ -465,7 +443,10 @@ export const MembershipSrvStore = signalStore(
         // parent membership, which still holds the SRV number that links the Regasoft record.
         const p = parentPick && (!parentPick.ended || ended) ? parentPick.membership : undefined;
 
-        const r = findRegasoft(p?.memberId, m.memberName1, m.memberName2, ended);
+        const r = findRegasoft({
+          memberId: p?.memberId, firstName: m.memberName1, lastName: m.memberName2,
+          dateOfBirth: dobByPersonKey.get(m.memberKey) ?? '', ended,
+        });
         // An ended membership stays in the index only while Regasoft still lists the member as
         // current, so its exit and death dates reach Regasoft (spec 1.133 I1); otherwise it is gone.
         if (ended && !r) continue;
@@ -485,7 +466,7 @@ export const MembershipSrvStore = signalStore(
       for (const { membership: p, ended } of parentPicks) {
         if (p.okey && processedParentKeys.has(p.okey)) continue;
 
-        const r = findRegasoft(p.memberId, p.memberName1, p.memberName2, ended);
+        const r = findRegasoft({ memberId: p.memberId, firstName: p.memberName1, lastName: p.memberName2, ended });
         if (ended && !r) continue;
         if (r) processedRegasoftIds.add(r.srvId);
 
@@ -643,12 +624,15 @@ export const MembershipSrvStore = signalStore(
       const org = store.appStore.getOrg(PARENT_ORG);
       if (person && org) {
         const cat = store.appStore.getCategoryItemByAbbreviation('mcat_' + org.okey, item.rCategory);
-        if (cat) {
-          const defaultDateOfEntry = getYear() + '0101'; // first day of the current year
-          const membership = newMembershipForPerson(person, org.okey, org.name, cat, defaultDateOfEntry, getBirthYear(item.dateOfBirth));
-          membership.memberId = item.rServiceId;
-          store.membershipService.create(membership, store.currentUser());
+        if (!cat) {
+          // An unknown Regasoft membership type gives no category (srvCategoryOf): say so instead of doing nothing.
+          await showToast(store.toastController, store.i18n.srv_parent_category_unknown());
+          return;
         }
+        const defaultDateOfEntry = getYear() + '0101'; // first day of the current year
+        const membership = newMembershipForPerson(person, org.okey, org.name, cat, defaultDateOfEntry, getBirthYear(item.dateOfBirth));
+        membership.memberId = item.rServiceId;
+        store.membershipService.create(membership, store.currentUser());
         store.parentMembershipsResource.reload();
       }
     },
@@ -660,6 +644,12 @@ export const MembershipSrvStore = signalStore(
      * duplicate by name + birth date, then an explicit confirmation of the main-club effect.
      */
     async addToRegasoft(item: SrvIndex): Promise<void> {
+      // Only from an index built in this session: a stored one lacks the members who left (the
+      // duplicate guard below) and the country list, and a record in Regasoft can never be deleted.
+      if (!store.builtThisSession()) {
+        await showToast(store.toastController, store.i18n.srv_update_stale());
+        return;
+      }
       // Members who left count as duplicates too (D8); they are only known after an index build.
       const blocker = srvCreateBlocker(item, [...store.index(), ...store.inactiveIndex()]);
       if (blocker === 'hasSrvNumber') {

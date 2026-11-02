@@ -314,6 +314,7 @@ export const MEMBERSHIP_I18N_KEYS = {
   srv_preview_nothing:                      PFX + 'srv.preview.nothing',
   srv_preview_modified:                     PFX + 'srv.preview.modified',
   srv_preview_modified_unknown:             PFX + 'srv.preview.modified_unknown',
+  srv_parent_category_unknown:              PFX + 'srv.preview.parent_category_unknown',
   srv_update_done:                          PFX + 'srv.update.done',
   srv_update_ignored:                       PFX + 'srv.update.ignored',
   srv_update_error:                         PFX + 'srv.update.error',

@@ -67,10 +67,10 @@ describe('buildFingerprint', () => {
   it('fingerprints the endpoints shipped 2026-11-02: /all, /all?inactive, list?inactive, nationIoc (C4)', () => {
     const fp = buildFingerprint(probe());
     expect(fp['all.envelope']).toBe('data,message,success');
-    expect(fp['all.fields']).toBe('email:string,firstName:string,id:number,lastName:string,mobile:null,personClubs:array,street:string');
-    expect(fp['all.personClubs']).toBe('clubId:number,clubName:string,mainClub:boolean,personId:number');
-    expect(fp['allInactive.fields']).toContain('leavingDate:string');
-    expect(fp['list.inactive.fields']).toBe('email:string,firstName:string,id:number,lastName:string,mobile:null');
+    expect(fp['all.fields']).toBe('email,firstName,id,lastName,mobile,personClubs,street');
+    expect(fp['all.personClubs']).toBe('clubId,clubName,mainClub,personId');
+    expect(fp['allInactive.fields']).toContain('leavingDate');
+    expect(fp['list.inactive.fields']).toBe('email,firstName,id,lastName,mobile');
     expect(fp['countries.envelope']).toBe('data,message,success');
     expect(fp['countries.fields']).toBe('countryCode:string,id:number,ioc:string');
     expect(Object.keys(fp).some(k => k.startsWith('param.'))).toBe(false);
@@ -99,7 +99,22 @@ describe('buildFingerprint', () => {
     const withModified = { data: [{ ...record, modified: '2026-11-02T17:04:04.54' }], success: true, message: null };
     const diff = diffFingerprint(buildFingerprint(base), buildFingerprint(probe({ all: withModified })));
     expect(diff.map(d => d.key)).toEqual(['all.fields']);
-    expect(diff[0].after).toContain('modified:string');
+    expect(diff[0].after).toContain('modified');
+  });
+
+  it('a value turning from null to a date in /all is no change (field names only)', () => {
+    const base = probe();
+    const record = (base.all as { data: Record<string, unknown>[] }).data[0];
+    const nulls = { data: [{ ...record, leavingDate: null, mobile: null }], success: true, message: null };
+    const dates = { data: [{ ...record, leavingDate: '2027-01-31T00:00:00', mobile: '079' }, { ...record, leavingDate: null }], success: true, message: null };
+    expect(diffFingerprint(buildFingerprint(probe({ all: nulls, allInactive: nulls })), buildFingerprint(probe({ all: dates, allInactive: dates })))).toEqual([]);
+  });
+
+  it('a large probe answering other than 200 is a stable status value, not a transient marker', () => {
+    const fp = buildFingerprint(probe({ all: { probeStatus: 404 }, countries: { probeStatus: 401 } }));
+    expect(fp['all.fields']).toBe('status:404');
+    expect(fp['all.personClubs.personId']).toBe('status:404');
+    expect(fp['countries.fields']).toBe('status:401');
   });
 
   it('marks a large probe over the size cap as oversize (I7)', () => {
@@ -109,7 +124,7 @@ describe('buildFingerprint', () => {
     expect(fp['allInactive.fields']).toContain('leavingDate');
   });
 
-  it('marks a large probe that failed as unavailable', () => {
+  it('marks a large probe that threw as unavailable', () => {
     const fp = buildFingerprint(probe({ countries: undefined, allInactive: undefined }));
     expect(fp['countries.fields']).toBe('unavailable');
     expect(fp['allInactive.fields']).toBe('unavailable');
@@ -546,7 +561,7 @@ describe('probeRegasoft', () => {
       expect(opts).toMatchObject({ maxBytes: 2 * 1024 * 1024, maxRetries: 0 });
     }
     expect(r.reachable && r.fingerprint['countries.fields']).toBe('countryCode:string,id:number,ioc:string');
-    expect(r.reachable && r.fingerprint['all.fields']).toContain('id:number');
+    expect(r.reachable && r.fingerprint['all.fields']).toBe('firstName,id');
   });
 
   it('a large probe over the cap is reported as oversize, not as a transient failure (I7)', async () => {
@@ -564,6 +579,23 @@ describe('probeRegasoft', () => {
     const state: WatchState = { accepted, pending: null, taskKey: '', lastRunMonth: '202610', failures: 0 };
     const d = decideWatch(state, r, 'none', NOW);
     expect(d.task?.diff).toEqual([{ key: 'allInactive.fields', before: 'id:number', after: 'oversize' }]);
+  });
+
+  it('a removed endpoint (404) is reported as a change, not swallowed as unavailable', async () => {
+    route([]);
+    const healthy = fetchMock.getMockImplementation();
+    fetchMock.mockImplementation(async (url: string, opts?: Record<string, unknown>) => {
+      if (url.endsWith('/api/club/members/all')) return ok('', 404) as never;
+      return healthy?.(url, opts as never) as never;
+    });
+    const r = await probeRegasoft();
+    expect(r.reachable).toBe(true);
+    if (!r.reachable) return;
+    expect(r.fingerprint['all.fields']).toBe('status:404');
+    const accepted = { ...r.fingerprint, 'all.fields': 'id', 'all.envelope': 'data,message,success', 'all.personClubs': 'none', 'all.personClubs.personId': 'none' };
+    const state: WatchState = { accepted, pending: null, taskKey: '', lastRunMonth: '202610', failures: 0 };
+    const d = decideWatch(state, r, 'none', NOW);
+    expect(d.task?.diff.map(x => x.key)).toEqual(['all.envelope', 'all.fields', 'all.personClubs', 'all.personClubs.personId']);
   });
 
   it('the country list failing is unavailable and still reachable', async () => {

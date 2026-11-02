@@ -13,6 +13,7 @@ import {
   getSrvChanges,
   isSrvLinked,
   mailtoUrl,
+  makeSrvMatcher,
   normalizePhone,
   phonesMatch,
   pickSrvMemberships,
@@ -631,6 +632,68 @@ describe('pickSrvMemberships', () => {
     const b = m('p1', '20200101', '99991231');
     const c = m('p2', '20100101', '20191231', { relIsLast: false });
     expect(pickSrvMemberships([a, b, c], TODAY).map(p => p.membership)).toEqual([a, b]);
+  });
+});
+
+describe('makeSrvMatcher (C1)', () => {
+  const rec = (srvId: number, serviceId: number | undefined, first: string, last: string, dob = '') =>
+    ({ srvId, serviceId, firstName: first, lastName: last, dateOfBirth: dob });
+  const q = (over: Partial<Parameters<ReturnType<typeof makeSrvMatcher>>[0]> = {}) =>
+    ({ memberId: '', firstName: 'Hans', lastName: 'Muster', dateOfBirth: '19800201', ended: false, ...over });
+
+  it('current record by SRV number before name', () => {
+    const find = makeSrvMatcher([rec(1, 500, 'Hans', 'Muster'), rec(2, 600, 'Other', 'Person')], []);
+    expect(find(q({ memberId: '600' }))?.srvId).toBe(2);
+    expect(find(q())?.srvId).toBe(1);
+  });
+
+  it('a current membership re-joins a member who left, by SRV number', () => {
+    const find = makeSrvMatcher([], [rec(3, 700, 'Hans', 'Muster', '19800201')]);
+    expect(find(q({ memberId: '700', dateOfBirth: '' }))?.srvId).toBe(3);
+  });
+
+  it('a current membership re-joins by name only with the same full birth date', () => {
+    const find = makeSrvMatcher([], [rec(3, 700, 'Hans', 'Muster', '19800201')]);
+    expect(find(q())?.srvId).toBe(3);
+    expect(find(q({ dateOfBirth: '19800202' }))).toBeUndefined();
+    expect(find(q({ dateOfBirth: '' }))).toBeUndefined();
+    expect(find(q({ dateOfBirth: '1980' }))).toBeUndefined();
+  });
+
+  it('a namesake who left years ago with another birth date is not taken (the son stays creatable)', () => {
+    const find = makeSrvMatcher([], [rec(3, 700, 'Hans', 'Muster', '19501010')]);
+    expect(find(q({ dateOfBirth: '19851212' }))).toBeUndefined();
+  });
+
+  it('among several namesakes who left, the one with the same birth date', () => {
+    const find = makeSrvMatcher([], [rec(3, 700, 'Hans', 'Muster', '19501010'), rec(4, 701, 'Hans', 'Muster', '19800201')]);
+    expect(find(q())?.srvId).toBe(4);
+  });
+
+  it('a departed record with a different SRV number is never matched by name', () => {
+    const find = makeSrvMatcher([], [rec(3, 700, 'Hans', 'Muster', '19800201')]);
+    expect(find(q({ memberId: '999' }))).toBeUndefined();
+  });
+
+  it('an ended membership matches only current records', () => {
+    const find = makeSrvMatcher([rec(1, 500, 'Anna', 'Muster')], [rec(3, 700, 'Hans', 'Muster', '19800201')]);
+    expect(find(q({ ended: true }))).toBeUndefined();
+    expect(find(q({ ended: true, memberId: '700' }))).toBeUndefined();
+    expect(find(q({ ended: true, firstName: 'Anna' }))?.srvId).toBe(1);
+  });
+
+  it('a current record wins over a departed one of the same name', () => {
+    const find = makeSrvMatcher([rec(1, 500, 'Hans', 'Muster')], [rec(3, 700, 'Hans', 'Muster', '19800201')]);
+    expect(find(q())?.srvId).toBe(1);
+  });
+
+  it('names compare without case and outer blanks; the first current namesake wins', () => {
+    const find = makeSrvMatcher([rec(1, 500, 'Hans', 'Muster'), rec(2, 501, 'hans', 'muster')], []);
+    expect(find(q({ firstName: ' HANS', lastName: 'Muster ' }))?.srvId).toBe(1);
+  });
+
+  it('nothing found → undefined', () => {
+    expect(makeSrvMatcher([], [])(q())).toBeUndefined();
   });
 });
 

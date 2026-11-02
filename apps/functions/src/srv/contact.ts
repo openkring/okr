@@ -77,13 +77,18 @@ async function readRawSrvMember(rid: number, ctx: GatewayContext): Promise<Recor
   return unwrapRawMember(await srvMemberDetailAdapter.fetch({ rid }, ctx));
 }
 
+/** The `modified` read only informs the preview: no retry, a short timeout, so a slow Regasoft never holds it up. */
+const SRV_MODIFIED_TIMEOUT_MS = 5_000;
+
 /**
  * When Regasoft last changed a member (C5): the `modified` field exists only in the member list, so
  * the current list is read live, then the list of members who left. null when neither has the rid.
  */
 async function readSrvModified(rid: number): Promise<string | null> {
   for (const query of ['', '?inactive=true']) {
-    const res = await gatewayFetch(`${regasoftBaseUrl()}/api/club/members${query}`, { method: 'GET', headers: gatewayRegasoftHeaders() });
+    const res = await gatewayFetch(`${regasoftBaseUrl()}/api/club/members${query}`, {
+      method: 'GET', headers: gatewayRegasoftHeaders(), maxRetries: 0, timeoutMs: SRV_MODIFIED_TIMEOUT_MS,
+    });
     const m = unwrapMembers(res.data).find((x) => x.id === rid);
     if (m) return typeof m.modified === 'string' ? m.modified : null;
   }
@@ -281,12 +286,13 @@ export async function handleGetSrvMembersAll(request: CallableRequest): Promise<
   const members: SrvMemberAll[] = [];
   const seen = new Set<number>();
   let dropped = 0;
+  let duplicates = 0;
   for (const [list, isActive] of [[active.data, true], [inactive.data, false]] as const) {
     for (const raw of list) {
       const m = mapSrvMemberAll(raw, ownClubId, isActive, testSystem);
       if (!m) { dropped++; continue; }
       if (seen.has(m.contact.srvId)) {
-        logger.warn(`${CF_NAME}: member ${m.contact.srvId} is current and inactive at once, kept as current`);
+        duplicates++;
         continue;
       }
       seen.add(m.contact.srvId);
@@ -296,6 +302,7 @@ export async function handleGetSrvMembersAll(request: CallableRequest): Promise<
   logger.info(`${CF_NAME}: ${active.data.length} current, ${inactive.data.length} left, ${countries.length} countries`, {
     cached: { active: active.cached, inactive: inactive.cached }, dropped,
   });
+  if (duplicates > 0) logger.warn(`${CF_NAME}: ${duplicates} members are current and inactive at once, kept as current`);
   return { members, countries };
 }
 

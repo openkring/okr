@@ -93,6 +93,8 @@ describe('handlePreviewSrvUpdate: modified (C5)', () => {
     gatewayFetch.mockImplementation(answer({ [LIST]: { data: [{ id: 1, modified: 'x' }, { id: 26183, modified: '2026-10-30T14:12:05' }] } }));
     const res = await handlePreviewSrvUpdate(req({ srvId: 26183, changes: { city: 'Uster' } }));
     expect(res.modified).toBe('2026-10-30T14:12:05');
+    // it only informs: no retry, short timeout
+    expect(gatewayFetch).toHaveBeenCalledWith(LIST, expect.objectContaining({ maxRetries: 0, timeoutMs: 5000 }));
     expect(gatewayFetch).not.toHaveBeenCalledWith(`${LIST}?inactive=true`, expect.anything());
   });
 

@@ -694,7 +694,8 @@
       "confirm": "Apply to Regasoft",
       "nothing": "Regasoft is already up to date. There is nothing to change.",
       "modified": "Last changed in the Regasoft portal: {date}. Check whether the office has changed something since then that you would now overwrite.",
-      "modified_unknown": "It is not known when this entry was last changed in the Regasoft portal."
+      "modified_unknown": "It is not known when this entry was last changed in the Regasoft portal.",
+      "parent_category_unknown": "The membership type in the Regasoft portal matches no SRV category, so the SRV membership was not created."
     },
     "update": {
       "done": "Regasoft is updated. Fields changed: {count}",
