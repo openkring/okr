@@ -150,7 +150,10 @@ export class ApplicationService {
 
     await this.createApplicantAddresses(application, kidsKey, currentUser);
 
-    if (application.applicationAs === 'youth') {
+    // Defensive: a youth application without any guardian name (e.g. an old form that hid the guardian block
+    // for 18/19-year-olds) must not create a nameless parent person — the memberAdmin adds the parent by hand.
+    const hasParentName = !!application.parentFirstName?.trim() || !!application.parentLastName?.trim();
+    if (application.applicationAs === 'youth' && hasParentName) {
       await this.provisionYouthExtras(application, kidsKey, kid, tenantId, currentUser);
     }
 

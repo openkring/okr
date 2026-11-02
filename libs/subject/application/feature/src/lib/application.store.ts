@@ -7,7 +7,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { ApplicationModel, ApplicationState } from '@okr/shared-models';
-import { getAvatarInfoForCurrentUser } from '@okr/shared-util-core';
+import { getAge, getAvatarInfoForCurrentUser } from '@okr/shared-util-core';
 import { AlertService } from '@okr/shared-util-angular';
 
 import { MembershipStore } from '@okr/relationship-membership-feature';
@@ -150,7 +150,9 @@ export const ApplicationStore = signalStore(
       const person = store.appStore.allPersons().find(p => p.okey === app.personKey);
       const defaultOrg = store.appStore.defaultOrg();
       if (!person || !defaultOrg) return;
-      await store.membershipStore.addExistingPersonToOrg(person, defaultOrg, proposeMembershipCategory(app));
+      // an unreadable birth date gives no age, so no proposal (as in the application form)
+      const proposal = getAge(app.dateOfBirth ?? '') < 0 ? undefined : proposeMembershipCategory(app);
+      await store.membershipStore.addExistingPersonToOrg(person, defaultOrg, proposal);
     },
 
     async addToGroup(_app: ApplicationModel): Promise<void> {
