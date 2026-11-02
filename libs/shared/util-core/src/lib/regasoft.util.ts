@@ -94,7 +94,8 @@ const same = (a: string, b: string) => a === b;
  * `fix` = we hold a value and can write it to Regasoft; `info` = Sekretariat-only, reported;
  * `bk` = our own data is missing or inconsistent. An empty BK value never produces a `fix`
  * (Regasoft data is never cleared from an empty club field) — it is reported as `bk` instead.
- * The status dates follow `expectedSrvStatus` and may therefore clear a Regasoft value.
+ * The status dates follow `expectedSrvStatus`; `leavingDate` / `inactiveDate` may therefore clear a
+ * Regasoft value (re-join, active again), but a death date never does (`bk` when only Regasoft has one).
  * `today` is a StoreDate and keeps a future exit date out of Regasoft.
  */
 export function getMismatches(item: SrvIndex, today: string): SrvMismatch[] {
@@ -145,7 +146,10 @@ export function getMismatches(item: SrvIndex, today: string): SrvMismatch[] {
     ['inactiveDate', v(item.rInactiveDate)],
   ];
   for (const [field, r] of status) {
-    if (expected[field] !== r) result.push({ field, okrValue: expected[field], rValue: r, kind: 'fix' });
+    if (expected[field] === r) continue;
+    // A death date is never cleared from an empty club field: ask the club to complete its data.
+    const kind = field === 'dateOfDeath' && !expected[field] ? 'bk' : 'fix';
+    result.push({ field, okrValue: expected[field], rValue: r, kind });
   }
 
   // Info: Sekretariat-only data, reported only when Regasoft has something to say.

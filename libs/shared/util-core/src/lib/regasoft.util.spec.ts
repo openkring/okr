@@ -260,6 +260,21 @@ describe('getSrvChanges', () => {
   it('death date → dateOfDeath', () => {
     expect(changes({ mDateOfDeath: '20261015' })).toEqual({ dateOfDeath: '20261015' });
   });
+
+  it('never clears a Regasoft death date from an empty club field', () => {
+    const o = { mDateOfDeath: '', rDateOfDeath: '20250101' };
+    expect(mismatchOf(o, 'dateOfDeath')?.kind).toBe('bk');
+    expect(changes(o)).not.toHaveProperty('dateOfDeath');
+    expect(changes(o)).toEqual({});
+  });
+
+  it('sets a club death date that Regasoft lacks', () => {
+    expect(changes({ mDateOfDeath: '20250101', rDateOfDeath: '' })).toEqual({ dateOfDeath: '20250101' });
+  });
+
+  it('overwrites a differing Regasoft death date with the club one', () => {
+    expect(changes({ mDateOfDeath: '20250101', rDateOfDeath: '20240101' })).toEqual({ dateOfDeath: '20250101' });
+  });
 });
 
 describe('normalizePhone / classifyPhone', () => {
