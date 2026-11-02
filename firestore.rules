@@ -573,7 +573,85 @@ service cloud.firestore {
     // Bootseinteilung target counts — document id IS the tenantId (like app-config).
     match /boat-targets/{id}       { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     match /calendars/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
-    match /calevents/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    // ── training courses on calevents (spec 1.132 §6.1) ─────────────────────────────
+    // calevents stay tenant-wide (tenantCreateOrDetach) for everything but the course fields:
+    // the attendance record (attendance, attendanceConfirmedBy, attendanceConfirmedAt) and the
+    // course assignment (courseKey) are written only by a course editor of a course that is not
+    // locked. A frozen course (`isLocked`) blocks both for everybody, privileged included, until a
+    // responsible unlocks it. An empty key is never handed to get()/exists(), and a key containing
+    // '/' is refused before it can address another document.
+    function coursePath(courseKey) {
+      return /databases/$(database)/documents/courses/$(courseKey);
+    }
+    function isDocKey(key) {
+      return key is string && key.matches('[^/]+');
+    }
+    // Group admin = the caller's person key in the STORED, server-maintained groups/{key}.adminKeys
+    // (the mirror the groups block reads; a client never writes it).
+    function isAdminOfGroup(groupKey) {
+      return isDocKey(groupKey) && callerPersonKey() != ''
+        && exists(/databases/$(database)/documents/groups/$(groupKey))
+        && callerPersonKey() in get(/databases/$(database)/documents/groups/$(groupKey)).data.get('adminKeys', []);
+    }
+    // responsibleKeys / trainerKeys are server-maintained mirrors of responsiblePersons[] / trainers[]
+    // (course trigger), so a client cannot make itself responsible or trainer by editing the arrays.
+    function isCourseResponsible(course) {
+      return callerPersonKey() != '' && callerPersonKey() in course.get('responsibleKeys', []);
+    }
+    // Course editor (attendance + assigning events, spec §6 table): privileged, eventAdmin, a trainer
+    // or a responsible of the course, or an admin of the course's group. Requires an existing course.
+    function isCourseEditor(courseKey) {
+      return isPrivileged() || hasRole('eventAdmin')
+        || (callerPersonKey() != '' && callerPersonKey() in get(coursePath(courseKey)).data.get('trainerKeys', []))
+        || isCourseResponsible(get(coursePath(courseKey)).data)
+        || isAdminOfGroup(get(coursePath(courseKey)).data.get('groupKey', ''));
+    }
+    // A course write on a calevent: the course exists, belongs to the caller's tenant, is not locked,
+    // and the caller is a course editor.
+    function courseEventWriteOk(courseKey) {
+      return isDocKey(courseKey)
+        && exists(coursePath(courseKey))
+        && get(coursePath(courseKey)).data.tenants.hasAny(callerTenants())
+        && get(coursePath(courseKey)).data.get('isLocked', false) != true
+        && isCourseEditor(courseKey);
+    }
+    // An absent courseKey (legacy event) equals '': a series edit writing courseKey '' to a legacy
+    // sibling is no course change and needs no course rights.
+    function caleventCourseKey(data) {
+      return data.get('courseKey', '');
+    }
+    function courseAttendanceChange() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasAny(['attendance', 'attendanceConfirmedBy', 'attendanceConfirmedAt']);
+    }
+    function courseKeyChange() {
+      return caleventCourseKey(request.resource.data) != caleventCourseKey(resource.data);
+    }
+    // update: attendance needs the STORED course; a courseKey change needs the old (if any) AND the
+    // new (if any) course.
+    function caleventCourseUpdateOk() {
+      return (!courseAttendanceChange() || courseEventWriteOk(caleventCourseKey(resource.data)))
+        && (!courseKeyChange()
+            || ((caleventCourseKey(resource.data) == '' || courseEventWriteOk(caleventCourseKey(resource.data)))
+                && (caleventCourseKey(request.resource.data) == ''
+                    || courseEventWriteOk(caleventCourseKey(request.resource.data)))));
+    }
+    // create: resetAttendance() sends attendance {} and attendanceConfirmedAt '' (attendanceConfirmedBy
+    // undefined = absent) — always fine. Attendance is never created pre-filled; a non-empty courseKey
+    // (a trainer adding a series to the course) needs a course editor of an unlocked course.
+    function caleventCourseCreateOk() {
+      return request.resource.data.get('attendance', {}) == {}
+        && request.resource.data.get('attendanceConfirmedBy', null) == null
+        && request.resource.data.get('attendanceConfirmedAt', '') == ''
+        && (caleventCourseKey(request.resource.data) == ''
+            || courseEventWriteOk(caleventCourseKey(request.resource.data)));
+    }
+    match /calevents/{id} {
+      allow read: if tenantRead();
+      allow create: if tenantCreate() && caleventCourseCreateOk();
+      allow update: if tenantCreateOrDetach() && caleventCourseUpdateOk();
+      allow delete: if tenantDelete();
+    }
     match /comments/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     // diaries + diaryImports (diary-import feature, 2026-08): a diary entry/run is authored by
     // exactly ONE person, identified by their Firebase Auth uid on `authorKey` — NOT their
@@ -841,6 +919,37 @@ service cloud.firestore {
     // A group admin who removes itself from admins[] still passes (stored adminKeys) and loses
     // the right once the trigger has rewritten adminKeys. Client writers strip adminKeys
     // (stripAdminKeys, @okr/subject-group-util) so an updateDoc never touches the field.
+    // courses (spec 1.132 §6.1): read tenant-wide; created and changed by privileged, a responsible
+    // (STORED responsibleKeys) or an admin of the course group. On create the mirrors are empty, so a
+    // creator is privileged or group admin. trainerKeys/responsibleKeys are written only by the course
+    // trigger (Admin SDK); CourseService strips them. Moving a course to another group needs admin of
+    // the target group (or privileged). Courses are archived, never deleted.
+    match /courses/{id} {
+      function isCourseManager(course) {
+        return isPrivileged() || isCourseResponsible(course) || isAdminOfGroup(course.get('groupKey', ''));
+      }
+      allow read: if tenantRead();
+      allow create: if tenantCreate()
+        && isCourseManager(request.resource.data)
+        && request.resource.data.get('trainerKeys', []) == []
+        && request.resource.data.get('responsibleKeys', []) == [];
+      allow update: if tenantUpdate()
+        && isCourseManager(resource.data)
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['trainerKeys', 'responsibleKeys'])
+        && (request.resource.data.get('groupKey', '') == resource.data.get('groupKey', '')
+            || isPrivileged() || isAdminOfGroup(request.resource.data.get('groupKey', '')));
+      allow delete: if false;
+      // courses/{id}/finance/settings: the amounts — Firestore cannot hide fields, hence a subdoc.
+      // Responsible, group admin, treasurer, privileged; tenant taken from the parent course.
+      match /finance/{doc} {
+        allow read, write: if userExists()
+          && exists(coursePath(id))
+          && get(coursePath(id)).data.tenants.hasAny(callerTenants())
+          && (isPrivileged() || hasRole('treasurer')
+              || isCourseResponsible(get(coursePath(id)).data)
+              || isAdminOfGroup(get(coursePath(id)).data.get('groupKey', '')));
+      }
+    }
     match /groups/{id} {
       function isGroupManager() {
         return isPrivileged() || hasRole('memberAdmin')

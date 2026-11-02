@@ -323,6 +323,31 @@ seed("groups/gShared", {"tenants": ["t1", "t2"], "name": "Shared", "admins": [{"
 seed("groups/gBlank",  {"tenants": ["t1"], "name": "Blank", "admins": [{"key": ""}], "adminKeys": [""]})
 seed("users/uidN",  {"tenants": ["t1"], "roles": {}, "firstName": "N"})
 seed("users/uidN2", {"tenants": ["t1"], "roles": {}, "firstName": "N2", "personKey": ""})
+# training courses (spec 1.132 §6.1): pE is admin of the course group gCourse; pT2 trains c1, pR is
+# responsible for c1. trainerKeys/responsibleKeys are the server-maintained mirrors (Task 8 trigger).
+# uidCT, not uidT2: that uid is the tracker-trip user further down.
+seed("users/uidCT", {"tenants": ["t1"], "roles": {}, "firstName": "CT", "personKey": "pT2"})
+seed("users/uidR",  {"tenants": ["t1"], "roles": {}, "firstName": "R", "personKey": "pR"})
+seed("users/uidEA", {"tenants": ["t1"], "roles": {"eventAdmin": True}, "firstName": "EA", "personKey": "pEA"})
+seed("groups/gCourse", {"tenants": ["t1"], "name": "Kursgruppe", "admins": [{"key": "pE"}], "adminKeys": ["pE"]})
+def course(locked=False, group="gCourse", trainers=("pT2",), responsibles=("pR",)):
+    return {"tenants": ["t1"], "isArchived": False, "name": "Kurs", "groupKey": group,
+            "trainerKeys": list(trainers), "responsibleKeys": list(responsibles), "isLocked": locked}
+seed("courses/c1",      course())
+seed("courses/cLocked", course(locked=True))
+seed("courses/c2",      course(group="gNone", trainers=("pX2",), responsibles=("pR2",)))  # foreign course, missing group
+seed("courses/cMut",    course())  # the course the ALLOW-ing course writes mutate
+seed("courses/c1/finance/settings", {"accountingTenantId": "t1", "accountKey": "", "eligible": []})
+seed("calevents/evC",      {"tenants": ["t1"], "isArchived": False, "name": "Training", "courseKey": "c1", "attendees": []})
+seed("calevents/evC2",     {"tenants": ["t1"], "isArchived": False, "name": "Training", "courseKey": "c1", "attendees": []})
+seed("calevents/evC3",     {"tenants": ["t1"], "isArchived": False, "name": "Training", "courseKey": "c1", "attendees": []})
+seed("calevents/evL",      {"tenants": ["t1"], "isArchived": False, "name": "Training", "courseKey": "cLocked", "attendees": []})
+seed("calevents/evFree",   {"tenants": ["t1"], "isArchived": False, "name": "Frei", "courseKey": ""})
+seed("calevents/evFree2",  {"tenants": ["t1"], "isArchived": False, "name": "Frei", "courseKey": ""})
+seed("calevents/evFree3",  {"tenants": ["t1"], "isArchived": False, "name": "Frei", "courseKey": ""})
+seed("calevents/evFree4",  {"tenants": ["t1"], "isArchived": False, "name": "Frei", "courseKey": ""})
+seed("calevents/evLegacy", {"tenants": ["t1"], "isArchived": False, "name": "Alt"})  # pre-1.132: no courseKey field
+seed("calevents/evT2",     {"tenants": ["t2"], "isArchived": False, "name": "Fremd", "courseKey": ""})
 for key, okey in [("gOpen", "tkOpen"), ("gClosed", "tkClosed"), ("meeting.m1", "tkMeet"), ("gNone", "tkNone")]:
     seed(f"tasks/{okey}", {"tenants": ["t1"], "isArchived": False, "shareKey": key, "name": okey,
                            "author": {"key": "pE", "name1": "E"}, "assignee": {"key": "pZ", "name1": "Z"},
@@ -362,6 +387,7 @@ seed("users/uidO3", {"tenants": ["bka", "t1"], "roles": {"admin": True}, "firstN
 O, O2, O3 = jwt("uidO"), jwt("uidO2"), jwt("uidO3")
 NODOC = jwt("uidNoDoc")  # signed in, but no users/{uid} doc
 N, N2 = jwt("uidN"), jwt("uidN2")  # no personKey / empty personKey, no role
+T2, R, EA = jwt("uidCT"), jwt("uidR"), jwt("uidEA")  # course trainer pT2, course responsible pR, eventAdmin
 GET, PATCH, POST, DELETE = "GET", "PATCH", "POST", "DELETE"
 
 
@@ -802,6 +828,150 @@ single_cases = [
     ("userE(adminKeys) removes self from admins[] -> ALLOW (stored adminKeys)", True, PATCH, "groups/gAdm", E,
      body({"admins": [{"key": "pA"}]}), ["admins"]),
     ("userE(adminKeys) DELETE group -> ALLOW", True, DELETE, "groups/gAdm", E, None, None),
+    # ── training courses (spec 1.132 §6.1) ────────────────────────────────────────
+    # calevents: attendance / confirmation fields and courseKey are course-editor territory
+    # (trainerKeys, responsibleKeys, admin of the course group, eventAdmin, privileged) on a
+    # course that is not locked. Everything else on calevents stays tenant-wide, as before.
+    ("member PATCH attendees only on course event -> ALLOW", True, PATCH, "calevents/evC", A,
+     body({"attendees": [{"person": {"key": "pA"}, "state": "accepted"}]}), ["attendees"]),
+    ("member PATCH name of course event -> ALLOW (unchanged behaviour)", True, PATCH, "calevents/evC", A,
+     body({"name": "Training 2"}), ["name"]),
+    ("member PATCH attendance -> DENY", False, PATCH, "calevents/evC", A,
+     body({"attendance": {"pA": {"presence": "present"}}}), ["attendance"]),
+    ("member PATCH attendance.pA (field path) -> DENY", False, PATCH, "calevents/evC", A,
+     body({"attendance": {"pA": {"presence": "present"}}}), ["attendance.pA"]),
+    ("member PATCH attendanceConfirmedBy -> DENY", False, PATCH, "calevents/evC", A,
+     body({"attendanceConfirmedBy": {"key": "pA", "name1": "A"}}), ["attendanceConfirmedBy"]),
+    ("trainer PATCH attendance -> ALLOW", True, PATCH, "calevents/evC", T2,
+     body({"attendance": {"pA": {"presence": "present"}}}), ["attendance"]),
+    ("trainer PATCH attendance.pA + confirmation in one update -> ALLOW", True, PATCH, "calevents/evC", T2,
+     body({"attendance": {"pA": {"presence": "absent"}}, "attendanceConfirmedBy": {"key": "pT2", "name1": "T2"},
+           "attendanceConfirmedAt": "20261101120000"}),
+     ["attendance.pA", "attendanceConfirmedBy", "attendanceConfirmedAt"]),
+    ("trainer PATCH attendance on event without course -> DENY", False, PATCH, "calevents/evFree", T2,
+     body({"attendance": {}}), ["attendance"]),
+    ("trainer PATCH attendance on legacy event without courseKey field -> DENY", False, PATCH,
+     "calevents/evLegacy", T2, body({"attendance": {"pA": {"presence": "present"}}}), ["attendance"]),
+    ("group admin PATCH attendance -> ALLOW", True, PATCH, "calevents/evC", E,
+     body({"attendanceConfirmedAt": "20261101120000"}), ["attendanceConfirmedAt"]),
+    ("responsible PATCH attendance -> ALLOW", True, PATCH, "calevents/evC", R,
+     body({"attendanceConfirmedAt": "20261101130000"}), ["attendanceConfirmedAt"]),
+    ("eventAdmin PATCH attendance -> ALLOW", True, PATCH, "calevents/evC", EA,
+     body({"attendance": {"pA": {"presence": "excused"}}}), ["attendance.pA"]),
+    ("privileged PATCH attendance -> ALLOW", True, PATCH, "calevents/evC", P,
+     body({"attendance": {"pA": {"presence": "present"}}}), ["attendance.pA"]),
+    ("admin t2 PATCH attendance on t1 course event -> DENY (cross-tenant)", False, PATCH, "calevents/evC", B,
+     body({"attendance": {}}), ["attendance"]),
+    ("trainer attendance on locked course -> DENY", False, PATCH, "calevents/evL", T2,
+     body({"attendance": {}}), ["attendance"]),
+    ("privileged attendance on locked course -> DENY (lock is for everyone)", False, PATCH, "calevents/evL", P,
+     body({"attendanceConfirmedAt": "20261101120000"}), ["attendanceConfirmedAt"]),
+    ("member sets courseKey -> DENY", False, PATCH, "calevents/evFree", A,
+     body({"courseKey": "c1"}), ["courseKey"]),
+    ("member PATCH courseKey '' on legacy event without the field -> ALLOW (absent == '')", True, PATCH,
+     "calevents/evLegacy", A, body({"courseKey": ""}), ["courseKey"]),
+    ("member PATCH unchanged courseKey on course event -> ALLOW", True, PATCH, "calevents/evC", A,
+     body({"courseKey": "c1", "name": "Training 3"}), ["courseKey", "name"]),
+    ("member takes event out of course -> DENY", False, PATCH, "calevents/evC2", A,
+     body({"courseKey": ""}), ["courseKey"]),
+    ("trainer sets courseKey -> ALLOW", True, PATCH, "calevents/evFree2", T2,
+     body({"courseKey": "c1"}), ["courseKey"]),
+    ("trainer takes event out of own course -> ALLOW", True, PATCH, "calevents/evC2", T2,
+     body({"courseKey": ""}), ["courseKey"]),
+    ("trainer of c1 moves event to foreign course c2 -> DENY", False, PATCH, "calevents/evC3", T2,
+     body({"courseKey": "c2"}), ["courseKey"]),
+    ("trainer sets courseKey of a locked course -> DENY", False, PATCH, "calevents/evFree3", T2,
+     body({"courseKey": "cLocked"}), ["courseKey"]),
+    ("trainer takes event out of a locked course -> DENY", False, PATCH, "calevents/evL", T2,
+     body({"courseKey": ""}), ["courseKey"]),
+    ("privileged sets courseKey of a missing course -> DENY", False, PATCH, "calevents/evFree3", P,
+     body({"courseKey": "cMissing"}), ["courseKey"]),
+    ("eventAdmin sets courseKey -> ALLOW", True, PATCH, "calevents/evFree4", EA,
+     body({"courseKey": "c1"}), ["courseKey"]),
+    ("admin t2 links a t2 event to a t1 course -> DENY (course tenant)", False, PATCH, "calevents/evT2", B,
+     body({"courseKey": "c1"}), ["courseKey"]),
+    # calevent create: resetAttendance() sends attendance {} + attendanceConfirmedAt '' — always fine;
+    # a non-empty courseKey needs a course editor, a non-empty attendance is never created.
+    ("member creates calevent with empty attendance/courseKey -> ALLOW", True, POST, "calevents?documentId=evNew1", A,
+     body({"tenants": ["t1"], "isArchived": False, "name": "Neu", "courseKey": "", "attendees": [],
+           "attendance": {}, "attendanceConfirmedAt": ""}), None),
+    ("member creates legacy-shaped calevent (no course fields) -> ALLOW", True, POST, "calevents?documentId=evNew2", A,
+     body({"tenants": ["t1"], "isArchived": False, "name": "Neu"}), None),
+    ("member creates calevent in a course -> DENY", False, POST, "calevents?documentId=evNew3", A,
+     body({"tenants": ["t1"], "isArchived": False, "name": "Neu", "courseKey": "c1", "attendance": {},
+           "attendanceConfirmedAt": ""}), None),
+    ("trainer creates calevent in own course -> ALLOW", True, POST, "calevents?documentId=evNew4", T2,
+     body({"tenants": ["t1"], "isArchived": False, "name": "Neu", "courseKey": "c1", "attendance": {},
+           "attendanceConfirmedAt": ""}), None),
+    ("trainer creates calevent in a locked course -> DENY", False, POST, "calevents?documentId=evNew5", T2,
+     body({"tenants": ["t1"], "isArchived": False, "name": "Neu", "courseKey": "cLocked", "attendance": {},
+           "attendanceConfirmedAt": ""}), None),
+    ("member creates calevent with attendance -> DENY", False, POST, "calevents?documentId=evNew6", A,
+     body({"tenants": ["t1"], "isArchived": False, "name": "Neu", "courseKey": "",
+           "attendance": {"pA": {"presence": "present"}}}), None),
+    ("trainer creates course calevent with attendance -> DENY", False, POST, "calevents?documentId=evNew7", T2,
+     body({"tenants": ["t1"], "isArchived": False, "name": "Neu", "courseKey": "c1",
+           "attendance": {"pA": {"presence": "present"}}}), None),
+    ("member creates calevent already confirmed -> DENY", False, POST, "calevents?documentId=evNew8", A,
+     body({"tenants": ["t1"], "isArchived": False, "name": "Neu", "attendance": {},
+           "attendanceConfirmedAt": "20261101120000"}), None),
+    ("member creates calevent with attendanceConfirmedBy -> DENY", False, POST, "calevents?documentId=evNew9", A,
+     body({"tenants": ["t1"], "isArchived": False, "name": "Neu",
+           "attendanceConfirmedBy": {"key": "pA", "name1": "A"}}), None),
+    # courses: tenant read; written by privileged, stored responsibleKeys or admin of the course group;
+    # trainerKeys/responsibleKeys are server-maintained; archive instead of delete.
+    ("member GET course -> ALLOW", True, GET, "courses/c1", A, None, None),
+    ("admin t2 GET t1 course -> DENY (cross-tenant)", False, GET, "courses/c1", B, None, None),
+    ("member PATCH course name -> DENY", False, PATCH, "courses/cMut", A, body({"name": "X"}), ["name"]),
+    ("trainer PATCH course name -> DENY", False, PATCH, "courses/cMut", T2, body({"name": "X"}), ["name"]),
+    ("eventAdmin PATCH course name -> DENY", False, PATCH, "courses/cMut", EA, body({"name": "X"}), ["name"]),
+    ("responsible PATCH course name -> ALLOW", True, PATCH, "courses/cMut", R, body({"name": "K2"}), ["name"]),
+    ("group admin locks course -> ALLOW", True, PATCH, "courses/cMut", E, body({"isLocked": True}), ["isLocked"]),
+    ("privileged unlocks course -> ALLOW", True, PATCH, "courses/cMut", P, body({"isLocked": False}), ["isLocked"]),
+    ("admin t2 PATCH t1 course -> DENY (cross-tenant)", False, PATCH, "courses/cMut", B,
+     body({"name": "X"}), ["name"]),
+    ("responsible changes trainerKeys -> DENY", False, PATCH, "courses/c1", R,
+     body({"trainerKeys": ["pR"]}), ["trainerKeys"]),
+    ("privileged changes responsibleKeys -> DENY", False, PATCH, "courses/c1", P,
+     body({"responsibleKeys": ["pP"]}), ["responsibleKeys"]),
+    ("responsible PATCH unchanged trainerKeys -> ALLOW", True, PATCH, "courses/cMut", R,
+     body({"trainerKeys": ["pT2"], "name": "K3"}), ["trainerKeys", "name"]),
+    ("responsible moves course to a group they do not admin -> DENY", False, PATCH, "courses/cMut", R,
+     body({"groupKey": "gShared"}), ["groupKey"]),
+    ("member DELETE course -> DENY", False, DELETE, "courses/c1", A, None, None),
+    ("privileged DELETE course -> DENY (archive only)", False, DELETE, "courses/c1", P, None, None),
+    ("group admin creates course in own group -> ALLOW", True, POST, "courses?documentId=cNew1", E,
+     body({"tenants": ["t1"], "isArchived": False, "name": "Neu", "groupKey": "gCourse", "isLocked": False}), None),
+    ("privileged creates course with empty key mirrors -> ALLOW", True, POST, "courses?documentId=cNew2", P,
+     body({"tenants": ["t1"], "isArchived": False, "name": "Neu", "groupKey": "gNone",
+           "trainerKeys": [], "responsibleKeys": []}), None),
+    ("member creates course -> DENY", False, POST, "courses?documentId=cNew3", A,
+     body({"tenants": ["t1"], "isArchived": False, "name": "Neu", "groupKey": "gCourse"}), None),
+    ("group admin creates course with trainerKeys -> DENY", False, POST, "courses?documentId=cNew4", E,
+     body({"tenants": ["t1"], "isArchived": False, "name": "Neu", "groupKey": "gCourse", "trainerKeys": ["pE"]}), None),
+    ("privileged creates course with responsibleKeys -> DENY", False, POST, "courses?documentId=cNew5", P,
+     body({"tenants": ["t1"], "isArchived": False, "name": "Neu", "groupKey": "gCourse",
+           "responsibleKeys": ["pP"]}), None),
+    ("admin t2 creates course in t1 -> DENY (cross-tenant)", False, POST, "courses?documentId=cNew6", B,
+     body({"tenants": ["t1"], "isArchived": False, "name": "Neu", "groupKey": "gCourse"}), None),
+    # courses/{key}/finance: amounts — responsible, group admin, treasurer, privileged only.
+    ("trainer reads finance -> DENY", False, GET, "courses/c1/finance/settings", T2, None, None),
+    ("member reads finance -> DENY", False, GET, "courses/c1/finance/settings", A, None, None),
+    ("eventAdmin reads finance -> DENY", False, GET, "courses/c1/finance/settings", EA, None, None),
+    ("responsible reads finance -> ALLOW", True, GET, "courses/c1/finance/settings", R, None, None),
+    ("treasurer reads finance -> ALLOW", True, GET, "courses/c1/finance/settings", T, None, None),
+    ("group admin reads finance -> ALLOW", True, GET, "courses/c1/finance/settings", E, None, None),
+    ("privileged reads finance -> ALLOW", True, GET, "courses/c1/finance/settings", P, None, None),
+    ("admin t2 reads t1 course finance -> DENY (cross-tenant)", False, GET, "courses/c1/finance/settings", B,
+     None, None),
+    ("responsible writes finance -> ALLOW", True, PATCH, "courses/c1/finance/settings", R,
+     body({"accountKey": "6000"}), ["accountKey"]),
+    ("trainer writes finance -> DENY", False, PATCH, "courses/c1/finance/settings", T2,
+     body({"accountKey": "6001"}), ["accountKey"]),
+    ("treasurer creates finance of another course -> ALLOW", True, POST, "courses/cMut/finance?documentId=settings", T,
+     body({"accountingTenantId": "t1", "accountKey": ""}), None),
+    ("privileged reads finance of a missing course -> DENY", False, GET, "courses/cMissing/finance/settings", P,
+     None, None),
     # privacy 1.19 D-P4-10: a person's avatar is a picture OF that person — only they,
     # memberAdmin or privileged may write it. Non-person avatars stay tenant content.
     # the doc id is tenant-scoped (`t1.person.pA`); a bare id (`person.pA`) is the shared
@@ -1009,6 +1179,8 @@ list_cases = [
     ("userB(admin t2) LIST persons array-contains t1 -> DENY", False, "persons", "t1", B),
     ("anon LIST persons array-contains t1 -> DENY (C-2)", False, "persons", "t1", None),
     ("userA LIST memberships array-contains t1 -> ALLOW", True, "memberships", "t1", A),
+    ("userA LIST courses array-contains t1 -> ALLOW", True, "courses", "t1", A),
+    ("userA LIST courses NO tenant filter -> DENY", False, "courses", None, A),
     ("anon LIST pages array-contains t1 -> ALLOW (public)", True, "pages", "t1", None),
     # privacy 1.19 Phase 4: address-directory bulk stream (AppStore) — tenant-scoped
     ("userA LIST address-directory array-contains t1 -> ALLOW", True, "address-directory", "t1", A),
