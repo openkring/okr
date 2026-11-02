@@ -440,7 +440,7 @@ protected async buildIndex(): Promise<void> {
       // 'regasoft.add' stays hidden (POST unprobed, Q7; the function rejects it too).
       // 'regasoft.update' only for an entry linked to one of our members by SRV number or by name
       // + full birth date (C1): a wrong link would overwrite another person's Regasoft record.
-      if (REGASOFT_UPDATE_VISIBLE && isSrvLinked(item)) {
+      if (REGASOFT_UPDATE_VISIBLE && isSrvLinked(item, this.store.index())) {
         actionSheetOptions.buttons.push(createActionSheetButton('regasoft.update', this.store.i18n.srv_regasoft_update(), this.imgixBaseUrl, 'sync'));
       }
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));

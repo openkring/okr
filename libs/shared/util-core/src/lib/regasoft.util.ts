@@ -205,15 +205,12 @@ export interface SrvMatchQuery {
 const nameKeyOf = (first: string, last: string): string => `${first ?? ''} ${last ?? ''}`.trim().toLowerCase();
 
 /**
- * Finds the Regasoft record of one of our memberships (spec 1.133 C1). By SRV number first, then by
- * name. A current membership may match a current record or one of a member who left (re-join, D7);
- * an ended membership only a current one, so long-gone members do not fill the index (I1).
- * A record of a member who left is matched by name only together with the same full birth date, and
- * never when its SRV number differs from ours: a namesake who died years ago must not be taken for
- * a new member (who could then never be created). Among current records the first namesake wins, as
- * before; `isSrvLinked` still guards every write.
+ * How sure a match is: by SRV number (3), by name and the same full birth date (2), by name only (1).
+ * A stronger match is paired first, so a name-only match never takes a record from its real owner.
  */
-export function makeSrvMatcher<T extends SrvMatchRecord>(current: readonly T[], left: readonly T[]): (q: SrvMatchQuery) => T | undefined {
+export type SrvMatchStrength = 1 | 2 | 3;
+
+function srvMatchIndex<T extends SrvMatchRecord>(current: readonly T[], left: readonly T[]) {
   const index = (records: readonly T[]) => {
     const byServiceId = new Map<string, T>();
     const byName = new Map<string, T[]>();
@@ -229,19 +226,82 @@ export function makeSrvMatcher<T extends SrvMatchRecord>(current: readonly T[], 
   const cur = index(current);
   const gone = index(left);
 
-  return (q: SrvMatchQuery): T | undefined => {
+  return (q: SrvMatchQuery): { record: T; strength: SrvMatchStrength } | undefined => {
     const memberId = q.memberId ?? '';
     if (memberId) {
       const bySrv = cur.byServiceId.get(memberId) ?? (q.ended ? undefined : gone.byServiceId.get(memberId));
-      if (bySrv) return bySrv;
+      if (bySrv) return { record: bySrv, strength: 3 };
     }
-    const key = nameKeyOf(q.firstName, q.lastName);
-    const byName = cur.byName.get(key)?.[0];
-    if (byName || q.ended) return byName;
+    // A record whose SRV number differs from ours belongs to someone else (0b): never by name.
+    const fits = (r: T) => !(memberId && r.serviceId != null && String(r.serviceId) !== memberId);
     const dob = q.dateOfBirth ?? '';
-    if (classifyStoreDate(dob) !== 'full') return undefined;
-    return gone.byName.get(key)?.find(r =>
-      r.dateOfBirth === dob && !(memberId && r.serviceId != null && String(r.serviceId) !== memberId));
+    const fullDob = classifyStoreDate(dob) === 'full';
+    const key = nameKeyOf(q.firstName, q.lastName);
+    const namesakes = (cur.byName.get(key) ?? []).filter(fits);
+    const sameDob = fullDob ? namesakes.find(r => r.dateOfBirth === dob) : undefined;
+    if (sameDob) return { record: sameDob, strength: 2 };
+    if (namesakes.length > 0) return { record: namesakes[0], strength: 1 };
+    if (q.ended || !fullDob) return undefined;
+    const departed = gone.byName.get(key)?.find(r => r.dateOfBirth === dob && fits(r));
+    return departed ? { record: departed, strength: 2 } : undefined;
+  };
+}
+
+/**
+ * Finds the Regasoft record of one of our memberships (spec 1.133 C1). By SRV number first, then by
+ * name. A current membership may match a current record or one of a member who left (re-join, D7);
+ * an ended membership only a current one, so long-gone members do not fill the index (I1).
+ * A record whose SRV number differs from ours is never matched by name (0b). Among current
+ * namesakes the one with the same full birth date wins, else the first; a record of a member who
+ * left is matched by name only together with the same full birth date, so a namesake who died
+ * years ago is not taken for a new member (who could then never be created). `isSrvLinked` still
+ * guards every write.
+ */
+export function makeSrvMatcher<T extends SrvMatchRecord>(current: readonly T[], left: readonly T[]): (q: SrvMatchQuery) => T | undefined {
+  const match = srvMatchIndex(current, left);
+  return (q) => match(q)?.record;
+}
+
+/** One pairing result: the record, or none; `taken` = a record matched but another entry got it. */
+export interface SrvPairResult<T> {
+  record: T | undefined;
+  taken: boolean;
+}
+
+/**
+ * Pairs our memberships with Regasoft records so that one record never backs two index entries
+ * (Task 9 0a): two entries on one record would write opposite change sets. Matching follows
+ * `makeSrvMatcher`. Within one `pair` call the current memberships go first, then the ended ones,
+ * and within each the stronger matches first (`SrvMatchStrength`), otherwise in the given order;
+ * across calls the earlier call wins (main memberships before orphan SRV memberships). A record
+ * already taken is given to no one else: an ended membership then gets none (and leaves the
+ * index), a current one stays without a record.
+ */
+export function makeSrvPairer<T extends SrvMatchRecord>(current: readonly T[], left: readonly T[]) {
+  const match = srvMatchIndex(current, left);
+  const taken = new Set<number>();
+  return {
+    /** One result per query, in query order. */
+    pair(queries: readonly SrvMatchQuery[]): SrvPairResult<T>[] {
+      const matches = queries.map(q => match(q));
+      const out: SrvPairResult<T>[] = queries.map(() => ({ record: undefined, taken: false }));
+      const order = [...queries.keys()].sort((a, b) =>
+        Number(queries[a].ended) - Number(queries[b].ended) || (matches[b]?.strength ?? 0) - (matches[a]?.strength ?? 0));
+      for (const i of order) {
+        const r = matches[i]?.record;
+        if (!r) continue;
+        if (taken.has(r.srvId)) out[i] = { record: undefined, taken: true };
+        else {
+          taken.add(r.srvId);
+          out[i] = { record: r, taken: false };
+        }
+      }
+      return out;
+    },
+    /** The records nobody took so far: current ones are listed alone, departed ones feed the duplicate guard. */
+    unpaired(): { current: T[]; left: T[] } {
+      return { current: current.filter(r => !taken.has(r.srvId)), left: left.filter(r => !taken.has(r.srvId)) };
+    },
   };
 }
 
@@ -372,9 +432,16 @@ const normalisedName = (first: string, last: string): string =>
  * Regasoft's PUT replaces the whole record and a record can never be deleted, so a wrong link
  * would write one person's data onto another's record. Regasoft-only and parent-only entries are
  * never linked (they carry no club status to write).
+ *
+ * Never linked (Task 9 0a/0b): an entry whose SRV number differs from the record's — the two
+ * numbers point to a duplicate in Regasoft, which only the Sekretariat can resolve — and, when the
+ * `index` is given, an entry whose `rid` another club entry holds too: two entries on one record
+ * would write opposite change sets.
  */
-export function isSrvLinked(item: SrvIndex): boolean {
+export function isSrvLinked(item: SrvIndex, index?: readonly SrvIndex[]): boolean {
   if (!item.mKey || !item.rid) return false;
+  if (item.memberId && item.rServiceId && item.memberId !== item.rServiceId) return false;
+  if (index?.some(other => !!other.mKey && other.mKey !== item.mKey && other.rid === item.rid)) return false;
   if (!!item.memberId && item.memberId === item.rServiceId) return true;
   return (
     normalisedName(item.firstName, item.lastName) === normalisedName(item.rFirstName, item.rLastName) &&
@@ -385,11 +452,12 @@ export function isSrvLinked(item: SrvIndex): boolean {
 
 /**
  * The change set for Regasoft: only the `fix` differences, under Regasoft's field names.
- * Empty for an entry that is not `isSrvLinked` — its differences are shown, never written.
+ * Empty for an entry that is not `isSrvLinked` (against `index` when given) — its differences are
+ * shown, never written.
  */
-export function getSrvChanges(item: SrvIndex, today: string): SrvChanges {
+export function getSrvChanges(item: SrvIndex, today: string, index?: readonly SrvIndex[]): SrvChanges {
   const changes: SrvChanges = {};
-  if (!isSrvLinked(item)) return changes;
+  if (!isSrvLinked(item, index)) return changes;
   for (const m of getMismatches(item, today)) {
     if (m.kind !== 'fix') continue;
     switch (m.field) {

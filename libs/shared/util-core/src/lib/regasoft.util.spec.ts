@@ -14,6 +14,7 @@ import {
   isSrvLinked,
   mailtoUrl,
   makeSrvMatcher,
+  makeSrvPairer,
   normalizePhone,
   phonesMatch,
   pickSrvMemberships,
@@ -246,9 +247,28 @@ describe('isSrvLinked', () => {
     expect(isSrvLinked(srvIndex({ memberId: '', dateOfBirth: '', rDateOfBirth: '' }))).toBe(false);
   });
 
-  it('a different SRV number still links by name and full birth date (ruling: OR), but not alone', () => {
-    expect(isSrvLinked(srvIndex({ memberId: '111', rServiceId: '222' }))).toBe(true);
+  it('a different SRV number never links, even with the same name and birth date (Task 9 0b)', () => {
+    expect(isSrvLinked(srvIndex({ memberId: '111', rServiceId: '222' }))).toBe(false);
     expect(isSrvLinked(srvIndex({ memberId: '111', rServiceId: '222', rDateOfBirth: '19900101' }))).toBe(false);
+    expect(getSrvChanges(srvIndex({ memberId: '111', rServiceId: '222', mCity: 'Bern' }), TODAY)).toEqual({});
+  });
+
+  it('a missing SRV number on either side still links by name and full birth date', () => {
+    expect(isSrvLinked(srvIndex({ memberId: '', rServiceId: '222' }))).toBe(true);
+    expect(isSrvLinked(srvIndex({ memberId: '111', rServiceId: '' }))).toBe(true);
+  });
+
+  it('a record another club entry also holds is never linked (Task 9 0a)', () => {
+    const a = srvIndex({ mKey: 'm1', rid: '7' });
+    const b = srvIndex({ mKey: 'm2', rid: '7' });
+    const regasoftOnly = srvIndex({ mKey: '', rid: '7' });
+    const other = srvIndex({ mKey: 'm3', rid: '8' });
+    expect(isSrvLinked(a, [a, b])).toBe(false);
+    expect(isSrvLinked(b, [a, b])).toBe(false);
+    expect(isSrvLinked(a, [a, regasoftOnly, other])).toBe(true);
+    expect(isSrvLinked(a)).toBe(true);
+    expect(isSrvLinked({ ...a }, [a, other])).toBe(true);   // a copy of the entry is not its own duplicate
+    expect(getSrvChanges({ ...a, mCity: 'Bern' }, TODAY, [{ ...a, mCity: 'Bern' }, b])).toEqual({});
   });
 
   it('never links an entry without a club membership or without a Regasoft record', () => {
@@ -670,6 +690,18 @@ describe('makeSrvMatcher (C1)', () => {
     expect(find(q())?.srvId).toBe(4);
   });
 
+  it('a current record with a different SRV number is skipped by name; another namesake may fit', () => {
+    const find = makeSrvMatcher([rec(1, 222, 'Hans', 'Muster'), rec(2, undefined, 'Hans', 'Muster')], []);
+    expect(find(q({ memberId: '111' }))?.srvId).toBe(2);
+    expect(makeSrvMatcher([rec(1, 222, 'Hans', 'Muster')], [])(q({ memberId: '111' }))).toBeUndefined();
+  });
+
+  it('among current namesakes the one with the same full birth date wins', () => {
+    const find = makeSrvMatcher([rec(1, 500, 'Hans', 'Muster', '19500101'), rec(2, 501, 'Hans', 'Muster', '19800201')], []);
+    expect(find(q())?.srvId).toBe(2);
+    expect(find(q({ dateOfBirth: '' }))?.srvId).toBe(1);
+  });
+
   it('a departed record with a different SRV number is never matched by name', () => {
     const find = makeSrvMatcher([], [rec(3, 700, 'Hans', 'Muster', '19800201')]);
     expect(find(q({ memberId: '999' }))).toBeUndefined();
@@ -694,6 +726,74 @@ describe('makeSrvMatcher (C1)', () => {
 
   it('nothing found → undefined', () => {
     expect(makeSrvMatcher([], [])(q())).toBeUndefined();
+  });
+});
+
+describe('makeSrvPairer (Task 9 0a)', () => {
+  const rec = (srvId: number, serviceId: number | undefined, first: string, last: string, dob = '') =>
+    ({ srvId, serviceId, firstName: first, lastName: last, dateOfBirth: dob });
+  const q = (over: Partial<Parameters<ReturnType<typeof makeSrvMatcher>>[0]> = {}) =>
+    ({ memberId: '', firstName: 'Hans', lastName: 'Muster', dateOfBirth: '19800201', ended: false, ...over });
+  const ids = (rs: { record: { srvId: number } | undefined }[]) => rs.map(r => r.record?.srvId);
+
+  it('re-joined under a new person: the current membership gets the record, the ended one none', () => {
+    const pairer = makeSrvPairer([rec(1, 500, 'Hans', 'Muster')], []);
+    // ended first in the input: order of the list must not decide
+    expect(ids(pairer.pair([q({ ended: true, memberId: '500' }), q({ memberId: '500' })]))).toEqual([undefined, 1]);
+  });
+
+  it('two current memberships with equally strong matches: the first keeps the record, the second is marked taken', () => {
+    const pairer = makeSrvPairer([rec(1, 500, 'Hans', 'Muster')], []);
+    const res = pairer.pair([q({ memberId: '500' }), q({ memberId: '500' })]);
+    expect(ids(res)).toEqual([1, undefined]);
+    expect(res.map(r => r.taken)).toEqual([false, true]);
+  });
+
+  it('a name-only match never takes the record from the member holding its SRV number — either order', () => {
+    const records = [rec(1, 500, 'Hans', 'Muster', '19800201')];
+    const nameOnly = q({ dateOfBirth: '19500101' });   // namesake, other birth date, no SRV number
+    const owner = q({ memberId: '500' });
+    expect(ids(makeSrvPairer(records, []).pair([nameOnly, owner]))).toEqual([undefined, 1]);
+    expect(ids(makeSrvPairer(records, []).pair([owner, nameOnly]))).toEqual([1, undefined]);
+  });
+
+  it('name and birth date beat name only', () => {
+    const records = [rec(1, 500, 'Hans', 'Muster', '19800201')];
+    const nameOnly = q({ dateOfBirth: '19500101' });
+    const nameAndDob = q({ dateOfBirth: '19800201' });
+    expect(ids(makeSrvPairer(records, []).pair([nameOnly, nameAndDob]))).toEqual([undefined, 1]);
+  });
+
+  it('a membership with a different SRV number cannot take a record by name (0b)', () => {
+    const pairer = makeSrvPairer([rec(1, 222, 'Hans', 'Muster', '19800201')], []);
+    expect(ids(pairer.pair([q({ memberId: '111' })]))).toEqual([undefined]);
+    expect(ids(pairer.pair([q({ memberId: '222', firstName: 'Other' })]))).toEqual([1]);
+  });
+
+  it('equal strength and status keep the given order (two ended memberships)', () => {
+    const pairer = makeSrvPairer([rec(1, 500, 'Hans', 'Muster')], []);
+    expect(ids(pairer.pair([q({ ended: true, memberId: '500' }), q({ ended: true, memberId: '500' })]))).toEqual([1, undefined]);
+  });
+
+  it('a later call cannot take a record an earlier call took (main before orphan SRV memberships)', () => {
+    const pairer = makeSrvPairer([rec(1, 500, 'Hans', 'Muster'), rec(2, 600, 'Eva', 'Meier')], []);
+    expect(ids(pairer.pair([q()]))).toEqual([1]);
+    expect(ids(pairer.pair([q({ memberId: '500' }), q({ firstName: 'Eva', lastName: 'Meier' })]))).toEqual([undefined, 2]);
+  });
+
+  it('every record is given at most once, whatever the queries', () => {
+    const current = [rec(1, 500, 'Hans', 'Muster'), rec(2, 600, 'Eva', 'Meier')];
+    const pairer = makeSrvPairer(current, [rec(3, 700, 'Hans', 'Muster', '19800201')]);
+    const got = ids(pairer.pair([q(), q({ memberId: '500' }), q({ memberId: '700' }), q({ ended: true }), q({ firstName: 'Eva', lastName: 'Meier' })]))
+      .filter((x): x is number => x !== undefined);
+    expect(new Set(got).size).toBe(got.length);
+  });
+
+  it('unpaired lists the records nobody took, current and departed apart', () => {
+    const pairer = makeSrvPairer([rec(1, 500, 'Hans', 'Muster'), rec(2, 600, 'Eva', 'Meier')], [rec(3, 700, 'Otto', 'Alt', '19400101'), rec(4, 701, 'Hans', 'Muster', '19800201')]);
+    pairer.pair([q(), q({ memberId: '701' })]);
+    expect(pairer.unpaired().current.map(r => r.srvId)).toEqual([2]);
+    expect(pairer.unpaired().left.map(r => r.srvId)).toEqual([3]);
   });
 });
 

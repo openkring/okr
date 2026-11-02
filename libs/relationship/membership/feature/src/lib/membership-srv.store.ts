@@ -11,7 +11,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AddressCollection, AddressModel, MembershipCollection, MembershipModel, OwnershipModel, PersonModel, SrvChanges, SrvContact, SrvCountry, SrvIndex, SrvMemberLicenseDetail, SrvMembersAllResult, SrvPreview, SrvUpdateResult } from '@okr/shared-models';
-import { classifyPhone, composeSekretariatMail, countryIdOf, DateFormat, debugListLoaded, expectedSrvStatus, fill, getBirthYear, getFullName, getMismatches, getSekretariatCases, getSrvChanges, getSystemQuery, getTodayStr, getYear, isMembership, isPerson, mailtoUrl, makeSrvMatcher, pickSrvMemberships, regasoftDateToStoreDate, srvCategoryOf, srvCreateBlocker, SrvMembershipPick } from '@okr/shared-util-core';
+import { classifyPhone, composeSekretariatMail, countryIdOf, DateFormat, debugListLoaded, expectedSrvStatus, fill, getBirthYear, getFullName, getMismatches, getSekretariatCases, getSrvChanges, getSystemQuery, getTodayStr, getYear, isMembership, isPerson, mailtoUrl, makeSrvPairer, pickSrvMemberships, regasoftDateToStoreDate, srvCategoryOf, srvCreateBlocker, SrvMembershipPick } from '@okr/shared-util-core';
 
 import { copyToClipboardDeferred, showToast } from '@okr/shared-util-angular';
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
@@ -394,11 +394,11 @@ export const MembershipSrvStore = signalStore(
       patchState(store, { regasoftItems: regasoftContacts.length, countries });
       console.log(`MembershipSrvStore.buildIndex: ${regasoftContacts.length} current and ${leftContacts.length} former Regasoft members, ${countries.length} countries`);
 
-      // Matching rules (re-join, ended members, birth date for members who left): makeSrvMatcher.
-      const findRegasoft = makeSrvMatcher(regasoftContacts, leftContacts);
+      // Matching (re-join, ended members, birth date for members who left): makeSrvMatcher. The
+      // pairer gives every Regasoft record to at most one entry, current memberships first (Task 9 0a).
+      const pairer = makeSrvPairer(regasoftContacts, leftContacts);
 
       const processedParentKeys    = new Set<string>();
-      const processedRegasoftIds   = new Set<number>();
       const index: SrvIndex[] = [];
 
       // Batch-load all favorite postal addresses once for the whole index build
@@ -437,21 +437,26 @@ export const MembershipSrvStore = signalStore(
       }
 
       // ── Process main memberships ─────────────────────────────────────────
-      for (const { membership: m, ended } of mainPicks) {
+      // A current member takes only a current parent membership; an ended one also an ended
+      // parent membership, which still holds the SRV number that links the Regasoft record.
+      const mainRows = mainPicks.map(({ membership: m, ended }) => {
         const parentPick = parentByMemberKey.get(m.memberKey);
-        // A current member takes only a current parent membership; an ended one also an ended
-        // parent membership, which still holds the SRV number that links the Regasoft record.
         const p = parentPick && (!parentPick.ended || ended) ? parentPick.membership : undefined;
-
-        const r = findRegasoft({
-          memberId: p?.memberId, firstName: m.memberName1, lastName: m.memberName2,
-          dateOfBirth: dobByPersonKey.get(m.memberKey) ?? '', ended,
-        });
+        return { m, ended, parentPick, p };
+      });
+      const mainRecords = pairer.pair(mainRows.map(({ m, ended, p }) => ({
+        memberId: p?.memberId, firstName: m.memberName1, lastName: m.memberName2,
+        dateOfBirth: dobByPersonKey.get(m.memberKey) ?? '', ended,
+      })));
+      for (const [i, { m, ended, parentPick, p }] of mainRows.entries()) {
+        const { record: r, taken } = mainRecords[i];
+        // An ended membership whose record went to a current one (re-joined under a new person):
+        // its SRV membership belongs to that row too, so it must not show up as an orphan row.
+        if (taken && parentPick?.membership.okey) processedParentKeys.add(parentPick.membership.okey);
         // An ended membership stays in the index only while Regasoft still lists the member as
         // current, so its exit and death dates reach Regasoft (spec 1.133 I1); otherwise it is gone.
         if (ended && !r) continue;
         if (parentPick?.membership.okey) processedParentKeys.add(parentPick.membership.okey);
-        if (r) processedRegasoftIds.add(r.srvId);
 
         const person = store.appStore.getPerson(m.memberKey);
         const postal = postalByPersonKey.get(m.memberKey);
@@ -463,25 +468,22 @@ export const MembershipSrvStore = signalStore(
       }
 
       // ── Orphan parent memberships (no matching main) ─────────────────────
-      for (const { membership: p, ended } of parentPicks) {
-        if (p.okey && processedParentKeys.has(p.okey)) continue;
-
-        const r = findRegasoft({ memberId: p.memberId, firstName: p.memberName1, lastName: p.memberName2, ended });
+      const orphanParents = parentPicks.filter(({ membership: p }) => !(p.okey && processedParentKeys.has(p.okey)));
+      const parentRecords = pairer.pair(orphanParents.map(({ membership: p, ended }) =>
+        ({ memberId: p.memberId, firstName: p.memberName1, lastName: p.memberName2, ended })));
+      for (const [i, { membership: p, ended }] of orphanParents.entries()) {
+        const r = parentRecords[i].record;
         if (ended && !r) continue;
-        if (r) processedRegasoftIds.add(r.srvId);
-
         index.push(buildIndexEntry(undefined, p, r, undefined));
       }
 
       // ── Orphan Regasoft contacts (no matching main or parent) ────────────
-      for (const r of regasoftContacts) {
-        if (processedRegasoftIds.has(r.srvId)) continue;
+      const unpaired = pairer.unpaired();
+      for (const r of unpaired.current) {
         index.push(buildIndexEntry(undefined, undefined, r, undefined));
       }
       // Members who left and match none of ours: not listed, only kept for the duplicate guard (D8).
-      const inactiveIndex = leftContacts
-        .filter(r => !processedRegasoftIds.has(r.srvId))
-        .map(r => buildIndexEntry(undefined, undefined, r, undefined));
+      const inactiveIndex = unpaired.left.map(r => buildIndexEntry(undefined, undefined, r, undefined));
 
       index.sort((a, b) => {
         const nameA = a.lastName || a.rLastName;
@@ -704,7 +706,8 @@ export const MembershipSrvStore = signalStore(
           inactiveDate: inactiveDate || null,
         });
         const srvId = String(result.data.id);
-        const index = store.index().map(i => i.key === item.key
+        // By mKey, not by name: a namesake must not get the new record too.
+        const index = store.index().map(i => i === item || (!!item.mKey && i.mKey === item.mKey)
           ? { ...i, memberId: srvId, rid: srvId, rServiceId: srvId, rFirstName: item.firstName, rLastName: item.lastName }
           : i
         );
@@ -730,7 +733,8 @@ export const MembershipSrvStore = signalStore(
         await showToast(store.toastController, store.i18n.srv_update_stale());
         return;
       }
-      const changes = getSrvChanges(item, getTodayStr(DateFormat.StoreDate));
+      // Against the whole index: an entry whose record another entry also holds is never written (0a).
+      const changes = getSrvChanges(item, getTodayStr(DateFormat.StoreDate), store.index());
       if (Object.keys(changes).length === 0) {
         await showToast(store.toastController, store.i18n.srv_preview_nothing());
         return;
