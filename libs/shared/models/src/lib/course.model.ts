@@ -110,7 +110,7 @@ export class CourseFinanceModel {
   public accountingTenantId = ''; // THE BOOKS — never derived from tenantId (accounting skill)
   public accountKey = ''; // expense account; '' → AccountingConfigModel.defaultCompensationAccountKey
   public costCenterKey = ''; // optional; '' → account default, then book default
-  public defaultRate = new MoneyModel(0); // rate per event (Rappen), periodicity = per event
+  public defaultRate = new MoneyModel(0); // rate per led training (Rappen); `periodicity` of the MoneyModel is never read
   public eligible: CourseEligible[] = []; // persons entitled to compensation, optionally with an own rate
   public requestedAt = DEFAULT_DATETIME; // StoreDateTime of the last request
   public requestedBy?: AvatarInfo; // who made the last request

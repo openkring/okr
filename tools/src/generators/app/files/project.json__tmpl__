@@ -81,6 +81,16 @@
             "output": "./assets/cities"
           },
           {
+            "glob": "worker.min.js",
+            "input": "node_modules/tesseract.js/dist",
+            "output": "./assets/tesseract"
+          },
+          {
+            "glob": "tesseract-core*-lstm.wasm.js",
+            "input": "node_modules/tesseract.js-core",
+            "output": "./assets/tesseract"
+          },
+          {
             "glob": "*.json",
             "input": "libs/activity/data-access/src/i18n",
             "output": "./assets/i18n/activity/data-access"
@@ -149,6 +159,26 @@
             "glob": "*.json",
             "input": "libs/calendar/calevent/feature/src/i18n",
             "output": "./assets/i18n/calendar/calevent/feature"
+          },
+          {
+            "glob": "*.json",
+            "input": "libs/calendar/course/data-access/src/i18n",
+            "output": "./assets/i18n/calendar/course/data-access"
+          },
+          {
+            "glob": "*.json",
+            "input": "libs/calendar/course/feature/src/i18n",
+            "output": "./assets/i18n/calendar/course/feature"
+          },
+          {
+            "glob": "*.json",
+            "input": "libs/calendar/meeting/data-access/src/i18n",
+            "output": "./assets/i18n/calendar/meeting/data-access"
+          },
+          {
+            "glob": "*.json",
+            "input": "libs/calendar/meeting/feature/src/i18n",
+            "output": "./assets/i18n/calendar/meeting/feature"
           },
           {
             "glob": "*.json",
@@ -269,16 +299,6 @@
             "glob": "*.json",
             "input": "libs/content/learning/util/src/i18n",
             "output": "./assets/i18n/content/learning/util"
-          },
-          {
-            "glob": "*.json",
-            "input": "libs/calendar/meeting/data-access/src/i18n",
-            "output": "./assets/i18n/calendar/meeting/data-access"
-          },
-          {
-            "glob": "*.json",
-            "input": "libs/calendar/meeting/feature/src/i18n",
-            "output": "./assets/i18n/calendar/meeting/feature"
           },
           {
             "glob": "*.json",
@@ -572,26 +592,6 @@
           },
           {
             "glob": "*.json",
-            "input": "libs/instruments/lupe/util/src/i18n",
-            "output": "./assets/i18n/instruments/lupe/util"
-          },
-          {
-            "glob": "*.json",
-            "input": "libs/instruments/translator/util/src/i18n",
-            "output": "./assets/i18n/instruments/translator/util"
-          },
-          {
-            "glob": "worker.min.js",
-            "input": "node_modules/tesseract.js/dist",
-            "output": "./assets/tesseract"
-          },
-          {
-            "glob": "tesseract-core*-lstm.wasm.js",
-            "input": "node_modules/tesseract.js-core",
-            "output": "./assets/tesseract"
-          },
-          {
-            "glob": "*.json",
             "input": "libs/instruments/data-access/src/i18n",
             "output": "./assets/i18n/instruments/data-access"
           },
@@ -599,6 +599,16 @@
             "glob": "*.json",
             "input": "libs/instruments/feature/src/i18n",
             "output": "./assets/i18n/instruments/feature"
+          },
+          {
+            "glob": "*.json",
+            "input": "libs/instruments/lupe/util/src/i18n",
+            "output": "./assets/i18n/instruments/lupe/util"
+          },
+          {
+            "glob": "*.json",
+            "input": "libs/instruments/translator/util/src/i18n",
+            "output": "./assets/i18n/instruments/translator/util"
           },
           {
             "glob": "*.json",

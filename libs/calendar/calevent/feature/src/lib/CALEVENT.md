@@ -39,6 +39,9 @@ Collection name: `calevents`
 | `url` | string | External link (album, website, document) |
 | `responsiblePersons` | AvatarInfo[] | Persons responsible for the event |
 | `attendees` | Attendee[] | List of `{ person: AvatarInfo, state: 'invited' \| 'accepted' \| 'declined' }` |
+| `courseKey` | string | Course the event belongs to (`''` = none, spec 1.132). A series field, but written to siblings only when the edit changed it. Absent on older documents — read as `?? ''`. |
+| `attendance` | Record<personKey, AttendanceEntry> | What actually happened: `{ person, presence: present\|absent\|excused, function: leader\|participant, by, at }`. Per occurrence, never propagated or copied. Not the same as `attendees`. |
+| `attendanceConfirmedBy` / `attendanceConfirmedAt` | AvatarInfo / StoreDateTime | Which trainer confirmed this occurrence, and when (first confirmation only). Per occurrence, never propagated or copied. |
 | `maxAttendees` | number | Participant cap for an open event; `0` (the default) = unrestricted. Undefined on documents written before the field existed — always read it as `?? 0`. |
 
 ## Participant cap and waiting list
@@ -65,6 +68,32 @@ Two consequences are load-bearing:
 Only `'accepted'` competes for a slot, so declining frees one immediately and the next person is
 promoted by the next render — no second write. The organiser's manual `+` in the accordion is
 deliberately unrestricted; anyone added past the cap simply appears below the line.
+
+## Course attendance (spec 1.132)
+
+An event may belong to a training course (`courseKey`; the course itself is in `@okr/calendar-course-*`). A trainer
+records the **actual** presence of each person in `attendance`, a map keyed by `personKey`. It is separate from the
+sign-up in `attendees[]`: the sign-up decides the participant cap and the waiting list, `attendance` feeds the
+course table, the J+S/AWK export and the trainer compensation. Nothing derives one from the other.
+
+Rules that every writer of a calevent must respect:
+
+- **The Firestore rules guard the three attendance fields.** An update that changes `attendance`,
+  `attendanceConfirmedBy` or `attendanceConfirmedAt` is allowed only for an editor of the event's stored course
+  (trainer, responsible person, group admin, `eventAdmin`, `privileged`) and only while the course is not locked.
+- **So no whole-model write may carry them.** `CalEventService.update` and the attendees accordion pass the event
+  through `withoutAttendance`; the edit modal, series updates and copies do the same or use `resetAttendance()`.
+  Sign-up (`changeAttendanceState`) and lock (`toggleCaleventLock`) are field writes (`updateFields`).
+- **Attendance is written per field path** (`attendance.<personKey>`), so two trainers never erase each other.
+- **`courseKey` in a series edit** goes to the siblings only when the edit changed it (`courseKeyChanged`); a copy
+  keeps it only for an editor of an unlocked course, otherwise it is cleared.
+- **Locked course = no write.** Edit, delete, shorten, extend and add-series on events of a locked course are
+  refused before the first write (`refuseLockedCourse`); delete and archive of a course event are gated by the
+  rules like a `courseKey` change.
+- **`canChange`** has a course-trainer branch ahead of the group-admin return: a trainer may change events of the
+  course they train, in group-calendar views only. A «Kurse» chip in the group calendar opens the course list.
+
+The `calendar` and `group` skills carry the longer explanation.
 
 ## Recurring Series Logic
 
