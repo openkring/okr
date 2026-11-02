@@ -204,11 +204,12 @@ export function convertFullCalendarToCalEvent(event: EventInput, tenantId: strin
  * isArchived).
  * @param edited the edited occurrence, carrying the new values
  * @param startDate the date of the target occurrence (its own, possibly shifted, date)
+ * @param withCourseKey whether `courseKey` is propagated too; false unless the edit changed it (`courseKeyChanged`)
  * @returns a plain object ready for a Firestore update()
  */
-export function getSeriesUpdateFields(edited: CalEventModel, startDate: string): Record<string, unknown> {
+export function getSeriesUpdateFields(edited: CalEventModel, startDate: string, withCourseKey = true): Record<string, unknown> {
   const target = { ...edited, startDate };
-  return {
+  const fields: Record<string, unknown> = {
     name: target.name,
     description: target.description,
     type: target.type,
@@ -221,7 +222,6 @@ export function getSeriesUpdateFields(edited: CalEventModel, startDate: string):
     periodicity: target.periodicity,
     repeatUntilDate: target.repeatUntilDate,
     seriesId: target.seriesId,
-    courseKey: target.courseKey ?? '',
     locationKey: target.locationKey,
     calendars: target.calendars,
     url: target.url,
@@ -231,6 +231,9 @@ export function getSeriesUpdateFields(edited: CalEventModel, startDate: string):
     cancelMessage: target.cancelMessage ?? '',
     index: getCaleventIndex(target)
   };
+  // the course is shared only when this edit changed it (`courseKeyChanged`): a sibling of a mixed series keeps its own
+  if (withCourseKey) fields['courseKey'] = target.courseKey ?? '';
+  return fields;
 }
 
 /*-------------------------- ATTENDANCE (write paths) --------------------------------*/

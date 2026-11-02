@@ -26,7 +26,7 @@ import { LocationService } from '@okr/location-data-access';
 import { CalEventService } from '@okr/calendar-calevent-data-access';
 import { AliasMintService } from '@okr/system-alias-data-access';
 import { SeenService } from '@okr/user-data-access';
-import { addInvitedAttendee, applyInvitationAnswer, courseKeysOf, eventsOfLockedCourses, toAttendeeState, CALEVENT_I18N_KEYS, resetActivity, resetAttendance, confirmedOccurrences, seenKeyFor, toSeenCounts, unseenActivityFor, findConflictingCalEvents, duplicateEventFindings, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, isAttendanceClosed, getSeriesUpdateFields, isCalEvent, isCaleventFull, isCaleventInView, isPersonalCalendarName, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calendar-calevent-util';
+import { addInvitedAttendee, applyInvitationAnswer, courseKeyChanged, courseKeysOf, lockedCoursesOf, seriesPlanCourseKeys, toAttendeeState, CALEVENT_I18N_KEYS, resetActivity, resetAttendance, confirmedOccurrences, seenKeyFor, toSeenCounts, unseenActivityFor, findConflictingCalEvents, duplicateEventFindings, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, isAttendanceClosed, getSeriesUpdateFields, isCalEvent, isCaleventFull, isCaleventInView, isPersonalCalendarName, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calendar-calevent-util';
 import { RegressionSelectionModal, showCalEventInfo } from '@okr/calendar-calevent-ui';
 import { createComment } from '@okr/comment-util';
 import { openReport } from '@okr/shared-ui';
@@ -463,23 +463,29 @@ export const CalEventStore = signalStore(
 
       /******************************* course lock (spec 1.132) *************************************** */
       /**
-       * True — after telling the user why — when one of the events belongs to a LOCKED course and the operation
-       * would archive or delete it (the rules deny that on a locked course: a failing batch with no explanation).
-       * The courses are read fresh by key; a lookup that fails does not block anything, the rules stay the backstop.
+       * True — after telling the user why — when one of the courses is LOCKED. The rules deny archiving or deleting an
+       * event of a locked course and creating one with its key; checked BEFORE the first write, because a denial
+       * after a committed batch leaves a half-written series. The courses are read fresh by key; a lookup that fails
+       * does not block anything, the rules stay the backstop.
+       * @param kind 'remove' = events would be archived/deleted, 'add' = events would be created
        */
-      async refuseLockedCourseRemoval(events: CalEventModel[]): Promise<boolean> {
-        const keys = courseKeysOf(events);
-        if (keys.length === 0) return false;
+      async refuseLockedCourse(courseKeys: string[], kind: 'remove' | 'add'): Promise<boolean> {
+        if (courseKeys.length === 0) return false;
         try {
           const service = await store.courseService();
-          const courses: (CourseModel | undefined)[] = await Promise.all(keys.map(key => firstValueFrom(service.read(key))));
-          if (eventsOfLockedCourses(events, courses).length === 0) return false;
+          const courses: (CourseModel | undefined)[] = await Promise.all(courseKeys.map(key => firstValueFrom(service.read(key))));
+          if (lockedCoursesOf(courses).length === 0) return false;
         } catch (ex) {
-          warn(`CalEventStore.refuseLockedCourseRemoval: course lookup failed, the rules decide: ${ex}`);
+          warn(`CalEventStore.refuseLockedCourse: course lookup failed, the rules decide: ${ex}`);
           return false;
         }
-        await confirm(store.alertController, store.i18n.courses_locked_remove(), store.i18n.ok(), '');
+        await confirm(store.alertController, kind === 'remove' ? store.i18n.courses_locked_remove() : store.i18n.courses_locked_add(), store.i18n.ok(), '');
         return true;
+      },
+
+      /** Removal of these events (see `refuseLockedCourse`). */
+      refuseLockedCourseRemoval(events: CalEventModel[]): Promise<boolean> {
+        return this.refuseLockedCourse(courseKeysOf(events), 'remove');
       },
 
       /******************************* CRUD on single event  *************************************** */
@@ -1101,6 +1107,7 @@ export const CalEventStore = signalStore(
       async createNewEventSeries(calevent: CalEventModel): Promise<void> {
         const dates = this.getSeriesDates(calevent.startDate, calevent.repeatUntilDate, calevent.periodicity);
         if (!dates) return;
+        if (await this.refuseLockedCourse(courseKeysOf([calevent]), 'add')) return;
         calevent.seriesId = generateRandomString(18); // all members of the series will get this seriesId plus an index as their okey
         let index = 0;
         for (const date of dates) {
@@ -1122,6 +1129,7 @@ export const CalEventStore = signalStore(
       async convertEventToSeries(calevent: CalEventModel): Promise<void> {
         const dates = this.getSeriesDates(calevent.startDate, calevent.repeatUntilDate, calevent.periodicity);
         if (!dates) return;
+        if (await this.refuseLockedCourse(courseKeysOf([calevent]), 'add')) return;
         calevent.seriesId = generateRandomString(18);
         await store.calEventService.update(calevent, store.currentUser());
         let index = 1;
@@ -1165,8 +1173,12 @@ export const CalEventStore = signalStore(
         const plan = planSeriesReconcile(affected, dates);
 
         // shortening archives occurrences; on a locked course the rules deny that (spec 1.132 §6.1). Changes that
-        // only update the occurrences stay allowed, so only the archives are checked.
-        if (plan.archives.length > 0 && await this.refuseLockedCourseRemoval(plan.archives)) return;
+        // only update the occurrences stay allowed, so only archives and creates are checked.
+        // Creating occurrences carries the edited event's courseKey, which the rules deny on a locked course as well —
+        // and the update batch below commits first, so check both before any write.
+        const touched = seriesPlanCourseKeys(plan, calevent.courseKey);
+        if (await this.refuseLockedCourse(touched.removal, 'remove')) return;
+        if (await this.refuseLockedCourse(touched.addition, 'add')) return;
 
         // shortening archives occurrences; one with confirmed attendance has already been reported
         const confirmedDropped = confirmedOccurrences(plan.archives);
@@ -1179,10 +1191,12 @@ export const CalEventStore = signalStore(
 
         // ponytail: one batch, so a series reconcile is capped at Firestore's 500 writes
         // (~100 occurrences + their invitations). Chunk the commits if that ceiling is ever hit.
+        // courseKey goes to the siblings only when THIS edit changed it: a mixed series keeps each occurrence's own
+        const withCourseKey = courseKeyChanged(calevent, original);
         const batch = store.firestoreService.getBatch();
         for (const { event, startDate } of plan.updates) {
           const ref = doc(store.firestoreService.firestore, `${CalEventCollection}/${event.okey}`);
-          batch.update(ref, getSeriesUpdateFields(calevent, startDate));
+          batch.update(ref, getSeriesUpdateFields(calevent, startDate, withCourseKey));
         }
         for (const dropped of plan.archives) {
           const ref = doc(store.firestoreService.firestore, `${CalEventCollection}/${dropped.okey}`);

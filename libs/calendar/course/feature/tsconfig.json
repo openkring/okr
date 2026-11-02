@@ -35,6 +35,9 @@
       "path": "../../../avatar/ui/tsconfig.lib.json"
     },
     {
+      "path": "../../calevent/util/tsconfig.lib.json"
+    },
+    {
       "path": "../data-access/tsconfig.lib.json"
     },
     {

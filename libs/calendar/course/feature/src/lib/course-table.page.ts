@@ -40,9 +40,9 @@ const CLOCK_INTERVAL_MS = 60_000;
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-back-button [defaultHref]="backHref()" /></ion-buttons>
         <ion-title>{{ title() }}</ion-title>
-        @if (store.canEdit() || hasActions()) {
+        @if (store.canAddSeries() || hasActions()) {
           <ion-buttons slot="end">
-            @if (store.canEdit()) {
+            @if (store.canAddSeries()) {
               <ion-button (click)="store.addSeries()">
                 <ion-icon slot="start" src="{{ 'add-circle' | svgIcon }}" />
                 {{ store.i18n.action_addSeries() }}

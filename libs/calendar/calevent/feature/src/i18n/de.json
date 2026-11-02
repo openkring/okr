@@ -601,7 +601,8 @@
   "courses": {
     "entry": "Kurse",
     "lockedRemove": "Dieser Kurs ist abgeschlossen. Entsperre ihn in der Kurstabelle, bevor du Termine entfernst.",
-    "lockedAdd": "Dieser Kurs ist abgeschlossen. Entsperre ihn in der Kurstabelle, bevor du neue Termine hinzufügst."
+    "lockedAdd": "Dieser Kurs ist abgeschlossen. Entsperre ihn in der Kurstabelle, bevor du neue Termine hinzufügst.",
+    "over": "Dieser Kurs ist schon zu Ende. Neue Termine lägen ausserhalb des Kurszeitraums."
   },
   "sync": {
     "title": "Kalender synchronisieren",

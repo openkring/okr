@@ -19,7 +19,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 import { isAdminMember } from '@okr/subject-group-util';
 
-import { CalEventDurationPipe, canAttendCalevent, courseOfKey, courseSeriesPatch, isCourseTrainerFor, countPollAcceptances, countPollResponses, formatDateTimeLabel, getCalEventCssClass, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, mayJoinOpenCalevent, resetActivity, resetAttendance, resolveCalendars, upcomingOccurrences } from '@okr/calendar-calevent-util';
+import { CalEventDurationPipe, canAttendCalevent, courseOfKey, courseSeriesPatch, isCourseOver, isCourseTrainerFor, countPollAcceptances, countPollResponses, formatDateTimeLabel, getCalEventCssClass, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, mayJoinOpenCalevent, resetActivity, resetAttendance, resolveCalendars, upcomingOccurrences } from '@okr/calendar-calevent-util';
 import { OrganiserContactModal, showCalendarSync } from '@okr/calendar-calevent-ui';
 import { CalendarFeedService } from '@okr/calendar-calevent-data-access';
 import type { OrganiserContactAction, OrganiserContactResult } from '@okr/calendar-calevent-ui';
@@ -830,7 +830,10 @@ export class CalEventList implements OnInit {
     // Waits for the group's courses — they load once the calendar (and with it the group) is known.
     effect(() => {
       const courseKey = this.addCourse();
-      if (!courseKey || this.courseAddOpened) return;
+      // Ionic keeps this instance when the course table is left and entered again (views are keyed without query
+      // params): the stripped param re-arms the link for the next «Serie hinzufügen»
+      if (!courseKey) { this.courseAddOpened = false; return; }
+      if (this.courseAddOpened) return;
       if (!this.store.groupCalendarId()) return;
       const courses = this.coursesResource.value();
       if (!courses) return;
@@ -1622,15 +1625,22 @@ export class CalEventList implements OnInit {
 
   /** A new series of the course, as the course table's «Serie hinzufügen» asks for it. */
   private async addCourseSeries(course: CourseModel | undefined): Promise<void> {
-    if (course?.isLocked) {
+    // a key that names no course of this group (stale link, other group): nothing to add to
+    if (!course) return;
+    if (course.isLocked) {
       await confirm(this.alertController, this.store.i18n.courses_locked_add(), this.store.i18n.ok(), '');
+      return;
+    }
+    // a series outside the course period would belong to no session of it
+    if (isCourseOver(course, getTodayStr())) {
+      await confirm(this.alertController, this.store.i18n.courses_over(), this.store.i18n.ok(), '');
       return;
     }
     // readOnly = no course editor: the store explains that the user may not create events here
     const readOnly = !this.isCourseEditor(course);
     const isGrid = !this.isListView();
     const viewType = this.currentViewType();
-    const created = await this.store.add(readOnly, undefined, undefined, isGrid, course ? courseSeriesPatch(course, getTodayStr()) : undefined);
+    const created = await this.store.add(readOnly, undefined, undefined, isGrid, courseSeriesPatch(course, getTodayStr()));
     if (isGrid && created) this.navigateCalendarTo(created.startDate, viewType);
   }
 

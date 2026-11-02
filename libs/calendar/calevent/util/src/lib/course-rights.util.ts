@@ -66,3 +66,33 @@ export function courseSeriesPatch(course: CourseModel, today: string): Partial<C
   if (course.endDate === startDate || isAfterDate(course.endDate, startDate)) patch.repeatUntilDate = course.endDate;
   return patch;
 }
+
+/** Whether the course has ended: its last day lies before `today` (StoreDates). A course without a valid end is never over. */
+export function isCourseOver(course: Pick<CourseModel, 'endDate'>, today: string): boolean {
+  return isAfterDate(today, course.endDate);
+}
+
+/**
+ * The courses a series reconcile touches, to be checked for a lock BEFORE the first write: the rules deny archiving
+ * an event of a locked course and creating one with its key, and the update batch commits before the creates, so a
+ * late denial would leave a half-written series.
+ *
+ * @param plan the reconcile plan: occurrences to archive and dates to create
+ * @param editedCourseKey the `courseKey` of the edited event, which every newly created occurrence carries
+ */
+export function seriesPlanCourseKeys(plan: { archives: CourseKeyed[]; creates: unknown[] }, editedCourseKey: string | undefined): { removal: string[]; addition: string[] } {
+  return {
+    removal: courseKeysOf(plan.archives),
+    addition: plan.creates.length > 0 && editedCourseKey ? [editedCourseKey] : [],
+  };
+}
+
+/**
+ * Whether the edit changed the event's `courseKey` (edited value vs. the stored value of the same occurrence).
+ * A series update writes `courseKey` to the siblings only then; otherwise a sibling of a mixed series (one assigned,
+ * one not) would be silently reassigned, or the whole batch denied by the rules.
+ */
+export function courseKeyChanged(edited: CourseKeyed, stored: CourseKeyed | undefined): boolean {
+  if (!stored) return false;
+  return (edited.courseKey ?? '') !== (stored.courseKey ?? '');
+}

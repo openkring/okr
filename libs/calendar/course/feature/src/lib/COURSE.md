@@ -106,7 +106,7 @@ the pure helpers (`attendanceRowsForEvent`, `attendanceEntriesToWrite`, `visible
 - A trainer (or responsible person) may create, change and delete the group-calendar events that carry THIS course's
   `courseKey` — never events without or with a foreign one. `CalEventList.canChange` has the course branch before the
   group-admin return (`isCourseTrainerFor`, `@okr/calendar-calevent-util`); the rules decide for real.
-- **«Serie hinzufügen»** (toolbar, shown for `canEdit`: never on a locked course) navigates to
+- **«Serie hinzufügen»** (toolbar, shown for `canAddSeries`: `canEdit` — never on a locked course — and the course not yet over) navigates to
   `/calevent/<groupKey>/c-calevents?addCourse=<courseKey>`. `CalEventList` opens the normal edit modal there with
   `courseKey`, the course name, a weekly rhythm and the course period preset (`courseSeriesPatch`). The course table
   does not import the calevent store.
@@ -114,7 +114,10 @@ the pure helpers (`attendanceRowsForEvent`, `attendanceEntriesToWrite`, `visible
   is a plain group event (the rules would deny the create).
 - On a **locked** course, deleting or archiving events (single delete, series delete, a series edit that shortens the
   range) is refused client-side with a message (`CalEventStore.refuseLockedCourseRemoval`) instead of a failing batch.
-  Plain edits that do not archive stay allowed, as in the rules.
+  Plain edits that do not archive stay allowed, as in the rules. Creating occurrences (a series extended on a locked
+  course, a single event turned into a series) is refused the same way, BEFORE the first write.
+- A series edit writes `courseKey` to the sibling occurrences only when the edit changed it (`courseKeyChanged`), so a
+  mixed series is never silently reassigned.
 
 ## Menus
 

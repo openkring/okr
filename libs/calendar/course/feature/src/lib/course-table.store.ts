@@ -5,6 +5,7 @@ import { ModalController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { combineLatest, map, of, switchMap } from 'rxjs';
 
+import { isCourseOver } from '@okr/calendar-calevent-util';
 import { CourseService } from '@okr/calendar-course-data-access';
 import { CourseAttendanceModal } from '@okr/calendar-course-ui';
 import {
@@ -188,6 +189,11 @@ export const CourseTableStore = signalStore(
       table,
       finance,
       isJs,
+      /** «Serie hinzufügen»: who edits the course (never a locked one), and only while the course is not over */
+      canAddSeries: computed(() => {
+        const course = state.course();
+        return !!course && state.canEdit() && !!state.today() && !isCourseOver(course, state.today());
+      }),
       jsResult,
       /** currency of the amounts: the rates carry the books' functional currency (the finance form restamps it) */
       currency: computed(() => finance()?.defaultRate?.currency || 'CHF'),
@@ -312,7 +318,7 @@ export const CourseTableStore = signalStore(
      */
     async addSeries(): Promise<void> {
       const course = store.course();
-      if (!course || !store.canEdit()) return;
+      if (!course || !store.canAddSeries()) return;
       await store.router.navigate(['/calevent', course.groupKey, 'c-calevents'], { queryParams: { addCourse: course.okey } });
     },
 

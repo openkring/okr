@@ -8,6 +8,7 @@
   "dependencies": {
     "tslib": "^2.8.1",
     "@okr/avatar-ui": "*",
+    "@okr/calendar-calevent-util": "*",
     "@okr/calendar-course-data-access": "*",
     "@okr/calendar-course-ui": "*",
     "@okr/calendar-course-util": "*",

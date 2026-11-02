@@ -601,7 +601,8 @@
   "courses": {
     "entry": "Cursos",
     "lockedRemove": "Este curso está cerrado. Desbloquéalo en la tabla del curso antes de quitar fechas.",
-    "lockedAdd": "Este curso está cerrado. Desbloquéalo en la tabla del curso antes de añadir nuevas fechas."
+    "lockedAdd": "Este curso está cerrado. Desbloquéalo en la tabla del curso antes de añadir nuevas fechas.",
+    "over": "Este curso ya ha terminado. Las nuevas fechas quedarían fuera del periodo del curso."
   },
   "sync": {
     "title": "Sincronizar calendario",

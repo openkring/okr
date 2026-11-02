@@ -1,7 +1,7 @@
 import { CalEventModel, CourseModel } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
 
-import { courseKeysOf, courseSeriesPatch, courseOfKey, eventsOfLockedCourses, isCourseTrainerFor, lockedCoursesOf } from './course-rights.util';
+import { courseKeyChanged, courseKeysOf, courseSeriesPatch, isCourseOver, seriesPlanCourseKeys, courseOfKey, eventsOfLockedCourses, isCourseTrainerFor, lockedCoursesOf } from './course-rights.util';
 
 function course(okey: string, patch: Partial<CourseModel> = {}): CourseModel {
   return Object.assign(new CourseModel('scs'), { okey, trainerKeys: [], ...patch });
@@ -123,5 +123,49 @@ describe('courseSeriesPatch', () => {
     const patch = courseSeriesPatch(course('c1', { startDate: '', endDate: '' }), '20260415');
     expect(patch).toMatchObject({ courseKey: 'c1', startDate: '20260415' });
     expect(patch).not.toHaveProperty('repeatUntilDate');
+  });
+});
+
+describe('isCourseOver', () => {
+  it('is true only after the last day', () => {
+    const c = course('c1', { endDate: '20260630' });
+    expect(isCourseOver(c, '20260701')).toBe(true);
+    expect(isCourseOver(c, '20260630')).toBe(false);
+    expect(isCourseOver(c, '20260101')).toBe(false);
+  });
+
+  it('is false for a course without a valid end', () => {
+    expect(isCourseOver(course('c1', { endDate: '' }), '20260701')).toBe(false);
+  });
+});
+
+describe('seriesPlanCourseKeys', () => {
+  it('lists the courses of the archived occurrences and the edited course when occurrences are created', () => {
+    const plan = { archives: [event('c1', 'a'), event('', 'b'), event('c1', 'c')], creates: ['20260801'] };
+    expect(seriesPlanCourseKeys(plan, 'c2')).toEqual({ removal: ['c1'], addition: ['c2'] });
+  });
+
+  it('asks nothing for a plan that only updates', () => {
+    expect(seriesPlanCourseKeys({ archives: [], creates: [] }, 'c1')).toEqual({ removal: [], addition: [] });
+  });
+
+  it('has no addition for an event without a course', () => {
+    expect(seriesPlanCourseKeys({ archives: [], creates: ['20260801'] }, '')).toEqual({ removal: [], addition: [] });
+    expect(seriesPlanCourseKeys({ archives: [], creates: ['20260801'] }, undefined)).toEqual({ removal: [], addition: [] });
+  });
+});
+
+describe('courseKeyChanged', () => {
+  it('is true only when the edited value differs from the stored one', () => {
+    expect(courseKeyChanged({ courseKey: 'c2' }, event('c1'))).toBe(true);
+    expect(courseKeyChanged({ courseKey: '' }, event('c1'))).toBe(true);
+    expect(courseKeyChanged({ courseKey: 'c1' }, event('c1'))).toBe(false);
+  });
+
+  it('treats a missing key as empty and an unknown stored occurrence as unchanged', () => {
+    const legacy = event('');
+    delete (legacy as { courseKey?: string }).courseKey;
+    expect(courseKeyChanged({ courseKey: '' }, legacy)).toBe(false);
+    expect(courseKeyChanged({ courseKey: 'c1' }, undefined)).toBe(false);
   });
 });

@@ -435,6 +435,11 @@ describe('attendance write helpers', () => {
     expect(f['courseKey']).toBe('c1');
     for (const k of ATTENDANCE_FIELDS) expect(k in f).toBe(false);
   });
+  it('getSeriesUpdateFields leaves courseKey out when asked to', () => {
+    const f = getSeriesUpdateFields({ ...base, courseKey: 'c1' }, '20261108', false);
+    expect('courseKey' in f).toBe(false);
+    expect(f['name']).toBe(base.name);
+  });
   it('withoutAttendance drops the three fields and keeps the rest', () => {
     const out = withoutAttendance({ ...base, attendance: { p1: entry }, attendanceConfirmedAt: 'x' });
     for (const k of ATTENDANCE_FIELDS) expect(k in out).toBe(false);
