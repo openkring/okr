@@ -167,6 +167,14 @@ export function invalidEligibleKeys(eligible: Pick<CourseEligible, 'person'>[]):
 }
 
 /**
+ * `eligible` without the entries of erased persons: a privacy erasure blanks `person.key`, and such an entry names
+ * nobody to pay. Skipped, not refused — otherwise one erasure would block the whole course's compensation.
+ */
+export function withoutErasedEligible<T extends Pick<CourseEligible, 'person'>>(eligible: T[]): T[] {
+  return eligible.filter(e => (e?.person?.key ?? '').trim() !== '');
+}
+
+/**
  * The finance doc as read off Firestore, with every field a legacy or partial doc lacks filled in. A missing
  * `defaultRate` becomes 0 in the books' currency.
  */
@@ -352,7 +360,8 @@ async function readAndCheckCourse(db: Firestore, tx: Transaction, ids: { courseK
   if (!asStrings(config['tenants']).includes(tenantId)) fail('permission-denied', 'the books belong to another tenant', 'books-other-tenant');
 
   const currency = (config['functionalCurrency'] as string | undefined) || 'CHF';   // legacy configs lack it
-  const finance = coalesceFinance(rawFinance, currency);
+  const coalesced = coalesceFinance(rawFinance, currency);
+  const finance = { ...coalesced, eligible: withoutErasedEligible(coalesced.eligible) };
   const badKeys = invalidEligibleKeys(finance.eligible);
   if (badKeys.length > 0) fail('invalid-argument', `not a valid person key in eligible: ${badKeys.join(', ')}`, 'invalid-person-key', { keys: badKeys });
   const duplicates = duplicateEligibleKeys(finance.eligible);

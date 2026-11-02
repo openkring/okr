@@ -11,6 +11,7 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { addDuration, DateFormat, getTodayStr, isAfterDate, publicAppOrigin } from '@okr/shared-util-core';
 import type { AvatarInfo, CourseModel } from '@okr/shared-models';
+import { SYSTEM_AUTHOR } from '../workflow/activity';
 
 const COURSE_COLLECTION = 'courses';
 const TASK_COLLECTION = 'tasks';
@@ -76,7 +77,9 @@ export function buildCourseEndTask(
       index: '',
       tags: '',
       notes: endTaskNotes(course, appUrl),
-      author: null,
+      // the system avatar (key ''), like the workflow/daily tasks — never null: the tasks rule compares
+      // author.key on every update, and on a null author that check errors, so the assignee could not work the task
+      author: SYSTEM_AUTHOR,
       assignee: assignee ?? null,
       state: 'initial',
       dueDate: addDuration(today, { days: DUE_DAYS }),

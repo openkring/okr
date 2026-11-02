@@ -20,6 +20,7 @@ import {
   isSettled,
   planCompensationBookings,
   requestCompensation,
+  withoutErasedEligible,
   type ExistingBooking,
 } from './request-compensation';
 
@@ -445,8 +446,22 @@ describe('requestCompensation', () => {
     }
   });
 
+  it('withoutErasedEligible drops entries whose person key was blanked by an erasure', () => {
+    expect(withoutErasedEligible([{ person: person('p1') }, { person: person('') }, { person: person('  ') }]).map(e => e.person.key)).toEqual(['p1']);
+  });
+
+  it('skips an erased eligible person (blank key) instead of refusing the request', async () => {
+    const w = world();
+    const fin = w['courses/c1/finance/settings'] as { eligible: unknown[] };
+    w['courses/c1/finance/settings'] = { ...fin, eligible: [...fin.eligible, { person: person('') }] };
+    const { db, store } = fakeDb(w);
+    const result = await call(db);
+    expect(result.written).toBe(2);
+    expect(store.has('bookings/course-c1-')).toBe(false);
+  });
+
   it('refuses a person key that is not a plain doc id', async () => {
-    for (const key of ['p-1', 'a/b', '']) {
+    for (const key of ['p-1', 'a/b']) {
       const w = world();
       w['courses/c1/finance/settings'] = { ...w['courses/c1/finance/settings'], eligible: [{ person: person(key) }] };
       const err = await rejection(call(fakeDb(w).db));

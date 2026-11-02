@@ -54,6 +54,13 @@ describe('buildCourseEndTask', () => {
     expect(t.doc['notes']).toContain('https://app.example/course/table/k1');
   });
 
+  it('writes the system avatar as author, never null (the tasks rule reads author.key on every update)', () => {
+    const author = buildCourseEndTask(c(), 'https://a', '20261101').doc['author'] as AvatarInfo;
+    expect(author).not.toBeNull();
+    expect(author.key).toBe('');
+    expect(author.label).toBe('System');
+  });
+
   it('uses the given assignee when there is no responsible person', () => {
     const t = buildCourseEndTask(c({ responsiblePersons: [] }), 'https://app.example', '20261101', pA);
     expect((t.doc['assignee'] as AvatarInfo).key).toBe('pA');
