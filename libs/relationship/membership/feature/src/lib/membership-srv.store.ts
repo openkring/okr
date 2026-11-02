@@ -11,7 +11,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AddressCollection, AddressModel, MembershipCollection, MembershipModel, OwnershipModel, PersonModel, SrvChanges, SrvContact, SrvIndex, SrvMemberLicenseDetail, SrvPreview, SrvUpdateResult } from '@okr/shared-models';
-import { DateFormat, debugListLoaded, fill, getBirthYear, getFullName, getMismatches, getSrvChanges, getSystemQuery, getTodayStr, getYear, isAfterOrEqualDate, isMembership, isPerson } from '@okr/shared-util-core';
+import { DateFormat, debugListLoaded, fill, getBirthYear, getFullName, getMismatches, getSrvChanges, getSystemQuery, getTodayStr, getYear, isAfterOrEqualDate, isMembership, isPerson, regasoftDateToStoreDate } from '@okr/shared-util-core';
 
 import { showToast } from '@okr/shared-util-angular';
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
@@ -52,6 +52,52 @@ function memberCatAbbr(category: string): string {
   return map[category] ?? '';
 }
 
+/** Regasoft gender code → index value (1 male, 2 female, anything else unknown). */
+function genderOf(code: number | null | undefined): string {
+  return code === 1 ? 'male' : code === 2 ? 'female' : '';
+}
+
+/** The Regasoft-side status/contact fields of an index entry, from a (mapped) member detail. */
+type SrvRegasoftFields = Pick<SrvMemberLicenseDetail,
+  'gender' | 'mobile' | 'telefon' | 'countryId' | 'entryDate' | 'inactiveDate' | 'dateOfDeath' | 'leavingDate'>;
+
+function regasoftFieldsOf(d: SrvRegasoftFields): Partial<SrvIndex> {
+  return {
+    rGender:       genderOf(d.gender),
+    rMobile:       d.mobile ?? '',
+    rTelefon:      d.telefon ?? '',
+    rCountryId:    String(d.countryId ?? ''),
+    rLeavingDate:  d.leavingDate ?? '',
+    rDateOfDeath:  d.dateOfDeath ?? '',
+    rInactiveDate: d.inactiveDate ?? '',
+    rEntryDate:    d.entryDate ?? '',
+    rDateOfExit:   d.leavingDate || d.dateOfDeath || '',   // passive (inactiveDate) is not an exit
+  };
+}
+
+/**
+ * The index fields a raw Regasoft record (as `updateSrvContact` returns it in `after`) changes:
+ * same mapping as the detail enrichment, with the ISO datetimes converted to StoreDates.
+ */
+function indexPatchFromRaw(rec: Record<string, unknown>): Partial<SrvIndex> {
+  const str = (k: string) => (typeof rec[k] === 'string' ? (rec[k] as string) : '');
+  const num = (k: string) => (typeof rec[k] === 'number' ? (rec[k] as number) : null);
+  const date = (k: string) => regasoftDateToStoreDate(str(k));
+  return {
+    ...regasoftFieldsOf({
+      gender: num('gender') ?? 0, mobile: str('mobile'), telefon: str('telefon'), countryId: num('countryId'),
+      entryDate: date('entryDate'), inactiveDate: date('inactiveDate'), dateOfDeath: date('dateOfDeath'), leavingDate: date('leavingDate'),
+    }),
+    rFirstName:   str('firstName'),
+    rLastName:    str('lastName'),
+    rEmail:       str('email'),
+    rStreet:      str('street'),
+    rZipCode:     str('postcode'),
+    rCity:        str('city'),
+    rDateOfBirth: date('birthday'),
+  };
+}
+
 function buildIndexEntry(
   m: MembershipModel | undefined,
   p: MembershipModel | undefined,
@@ -59,8 +105,10 @@ function buildIndexEntry(
   person: PersonModel | undefined,
   postal?: AddressModel,
   dob = '',                                       // full dob from the vault (spec 1.19 Phase 4)
+  dod = '',                                       // full dod from the vault
   contact?: { email: string; phone: string }      // from the address-directory projection
 ): SrvIndex {
+  const mPassiveSince = m && m.category === 'passive' ? (m.dateOfEntry ?? '') : '';
   const firstName = m?.memberName1 ?? r?.firstName ?? p?.memberName1 ?? '';
   const lastName  = m?.memberName2 ?? r?.lastName  ?? p?.memberName2 ?? '';
   const serviceIdPart = (r?.serviceId != null ? String(r.serviceId) : '') || (p?.memberId ?? '');
@@ -83,9 +131,9 @@ function buildIndexEntry(
     mStreet:     postal ? `${postal.streetName} ${postal.streetNumber}`.trim() : '',
     mZipCode:    postal?.zipCode ?? person?.favZipCode ?? '',
     mCity:       postal?.city ?? '',
-    mCountryCode:  '',
-    mDateOfDeath:  '',
-    mPassiveSince: '',
+    mCountryCode:  postal?.countryCode ?? '',
+    mDateOfDeath:  dod,
+    mPassiveSince,
 
     pKey:        p?.okey ?? '',
     memberId:    p?.memberId ?? '',
@@ -98,7 +146,7 @@ function buildIndexEntry(
     rFirstName:       r?.firstName ?? '',
     rLastName:        r?.lastName ?? '',
     rEmail:           r?.email ?? '',
-    rGender:          '',
+    rGender:          genderOf(r?.gender),
     rMobile:          r?.mobile ?? '',
     rTelefon:         r?.telefon ?? '',
     rStreet:          r?.street ?? '',
@@ -108,8 +156,8 @@ function buildIndexEntry(
     rDateOfBirth:     r?.dateOfBirth ?? '',
     rCategory:        r?.membershipType ? r.membershipType.charAt(0).toUpperCase() : '',
     rDateOfExit:      r?.leavingDate || r?.dateOfDeath || '',
-    rLeavingDate:     '',
-    rDateOfDeath:     '',
+    rLeavingDate:     r?.leavingDate ?? '',
+    rDateOfDeath:     r?.dateOfDeath ?? '',
     rInactiveDate:    '',
     rEntryDate:       '',
     nationIOC:        r?.nationIOC ?? '',
@@ -125,7 +173,7 @@ function buildIndexEntry(
 }
 
 function storageKey(tenantId: string): string {
-  return `okr-aoc-srv-index-${tenantId}`;
+  return `okr-aoc-srv-index-v2-${tenantId}`;   // v2: entries carry the status, phone and country fields (spec 1.133)
 }
 
 function stripForStorage(entry: SrvIndex): Omit<SrvIndex, 'licenseImage' | 'licenseImageName' | 'licenseImageMimeType'> & { licenseImage: null; licenseImageName: null; licenseImageMimeType: null } {
@@ -142,6 +190,7 @@ function saveIndex(tenantId: string, index: SrvIndex[]): void {
 
 function loadIndex(tenantId: string): SrvIndex[] {
   try {
+    localStorage.removeItem(`okr-aoc-srv-index-${tenantId}`);   // v1 cache lacks the 1.133 fields
     const raw = localStorage.getItem(storageKey(tenantId));
     return raw ? (JSON.parse(raw) as SrvIndex[]) : [];
   } catch { return []; }
@@ -309,6 +358,17 @@ export const MembershipSrvStore = signalStore(
         }
       }
 
+      // Batch-load all dod vault addresses once, exactly like dob
+      const dodQuery = getSystemQuery(store.tenantId());
+      dodQuery.push({ key: 'addressChannel', operator: '==', value: 'dod' });
+      const allDodAddresses = await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, dodQuery, 'none');
+      const dodByPersonKey = new Map<string, string>();
+      for (const a of allDodAddresses) {
+        if (a.parentKey?.startsWith('person.')) {
+          dodByPersonKey.set(a.parentKey.substring('person.'.length), a.dod ?? '');
+        }
+      }
+
       // ── Process main memberships ─────────────────────────────────────────
       for (const m of mainMemberships) {
         const p = parentByMemberKey.get(m.memberKey);
@@ -325,9 +385,10 @@ export const MembershipSrvStore = signalStore(
         const person = store.appStore.getPerson(m.memberKey);
         const postal = postalByPersonKey.get(m.memberKey);
         const dob = dobByPersonKey.get(m.memberKey) ?? '';
+        const dod = dodByPersonKey.get(m.memberKey) ?? '';
         const directory = store.appStore.getDirectoryEntry(`person.${m.memberKey}`);
         const contact = { email: directory?.favEmail ?? '', phone: directory?.favPhone ?? '' };
-        index.push(buildIndexEntry(m, p, r, person, postal, dob, contact));
+        index.push(buildIndexEntry(m, p, r, person, postal, dob, dod, contact));
       }
 
       // ── Orphan parent memberships (no matching main) ─────────────────────
@@ -376,7 +437,7 @@ export const MembershipSrvStore = signalStore(
               entry.licenseImage       = detail.licenseImage;
               entry.licenseImageName   = detail.licenseImageName;
               entry.licenseImageMimeType = detail.licenseImageMimeType;
-              entry.rDateOfExit        = detail.inactiveDate || detail.leavingDate || detail.dateOfDeath;
+              Object.assign(entry, regasoftFieldsOf(detail));
               entry.clubs              = detail.clubs.map(c => c.mainClub ? '!' + c.clubName : c.clubName);
             }
           }
@@ -607,12 +668,20 @@ export const MembershipSrvStore = signalStore(
         if (role !== 'confirm') return;
 
         const updateFn = httpsCallable<{ op: string; srvId: number; changes: SrvChanges }, SrvUpdateResult>(functions, 'srv');
-        const { written, ignored } = (await updateFn({ op: 'updateSrvContact', ...input })).data;
+        const { after, written, ignored } = (await updateFn({ op: 'updateSrvContact', ...input })).data;
 
-        await showToast(store.toastController, fill(store.i18n.srv_update_done(), { count: written.length }));
+        // Show the new Regasoft values in the row without rebuilding the index.
+        const patch = indexPatchFromRaw(after);
+        const index = store.index().map(i => i.rid === item.rid ? { ...i, ...patch } : i);
+        patchState(store, { index });
+        saveIndex(store.tenantId(), index);
+
+        // One message: what was written, plus the fields Regasoft did not take over.
+        let message = fill(store.i18n.srv_update_done(), { count: written.length });
         if (ignored.length > 0) {
-          await showToast(store.toastController, fill(store.i18n.srv_update_ignored(), { fields: ignored.join(', ') }));
+          message += ' ' + fill(store.i18n.srv_update_ignored(), { fields: ignored.join(', ') });
         }
+        await showToast(store.toastController, message);
       } catch (e) {
         // e.g. failed-precondition while the server still blocks Regasoft writes
         console.error('MembershipSrvStore.updateRegasoft failed', e);

@@ -664,7 +664,6 @@
       "service_id": "ID SRV",
       "nation": "Nazione",
       "membership_type": "Tipo di affiliazione",
-      "license": "Licenza",
       "license_until": "Licenza valida fino al",
       "other_clubs": "Altre società",
       "attribute": "Attributo",
@@ -692,7 +691,7 @@
       "before": "Regasoft ora",
       "after": "Dopo",
       "confirm": "Applica in Regasoft",
-      "nothing": "Regasoft è già aggiornato. Non c'è nulla da modificare."
+      "nothing": "Regasoft è già aggiornato. Non c’è nulla da modificare."
     },
     "update": {
       "done": "Regasoft è aggiornato. Campi modificati: {count}",
@@ -701,7 +700,9 @@
     },
     "mismatch": {
       "yes": "sì",
-      "no": "no"
+      "no": "no",
+      "info": "modificabile solo dalla segreteria",
+      "bk": "da correggere nei nostri dati"
     }
   }
 }

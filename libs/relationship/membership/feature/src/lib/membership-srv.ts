@@ -378,7 +378,8 @@ export class MembershipSrv implements OnInit {
   }
 
   protected getColor(item: SrvIndex): ColorIonic {
-    return getMismatches(item, getTodayStr(DateFormat.StoreDate)).length > 0 ? ColorIonic.Danger : ColorIonic.Light;
+    // Only fixable and BK-side differences are problems; Sekretariat-only (info) ones are not.
+    return getMismatches(item, getTodayStr(DateFormat.StoreDate)).some(m => m.kind !== 'info') ? ColorIonic.Danger : ColorIonic.Light;
   }
 
   protected displayName(item: SrvIndex): string {

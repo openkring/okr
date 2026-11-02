@@ -664,7 +664,6 @@
       "service_id": "ID SRV",
       "nation": "Nación",
       "membership_type": "Tipo de afiliación",
-      "license": "Licencia",
       "license_until": "Licencia válida hasta",
       "other_clubs": "Otros clubes",
       "attribute": "Atributo",
@@ -701,7 +700,9 @@
     },
     "mismatch": {
       "yes": "sí",
-      "no": "no"
+      "no": "no",
+      "info": "solo la secretaría puede cambiarlo",
+      "bk": "corrígelo en nuestros datos"
     }
   }
 }

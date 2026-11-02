@@ -1,8 +1,8 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonRow, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
 
-import { SrvIndex } from '@okr/shared-models';
-import { DateFormat, getMismatches, getTodayStr } from '@okr/shared-util-core';
+import { SrvIndex, SrvMismatchKind } from '@okr/shared-models';
+import { DateFormat, expectedSrvStatus, getMismatches, getTodayStr } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { MEMBERSHIP_I18N_KEYS, MembershipI18n } from '@okr/relationship-membership-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
@@ -12,7 +12,7 @@ interface SrvDisplayRow {
   person:    string;
   member:    string;
   regasoft:  string;
-  mismatch:  boolean;
+  kind:      SrvMismatchKind | null;   // null = no difference
 }
 
 @Component({
@@ -24,6 +24,8 @@ interface SrvDisplayRow {
   ],
   styles: [`
     .mismatch { color: var(--ion-color-danger); font-weight: 500; }
+    .mismatch-info { color: var(--ion-color-medium); }
+    .kind-label { display: block; font-size: 0.8em; font-weight: 400; }
     ion-row { border-bottom: 1px solid var(--ion-color-light); }
   `],
   template: `
@@ -44,8 +46,12 @@ interface SrvDisplayRow {
           <ion-col size="3"><strong>{{ i18n.srv_col_regasoft() }}</strong></ion-col>
         </ion-row>
         @for(row of rows(); track row.attr) {
-          <ion-row [class.mismatch]="row.mismatch">
-            <ion-col size="3">{{ row.attr }}</ion-col>
+          <ion-row [class.mismatch]="row.kind === 'fix' || row.kind === 'bk'" [class.mismatch-info]="row.kind === 'info'">
+            <ion-col size="3">
+              {{ row.attr }}
+              @if (row.kind === 'info') { <span class="kind-label">{{ i18n.srv_mismatch_info() }}</span> }
+              @if (row.kind === 'bk') { <span class="kind-label">{{ i18n.srv_mismatch_bk() }}</span> }
+            </ion-col>
             <ion-col size="3">{{ row.person || '—' }}</ion-col>
             <ion-col size="3">{{ row.member || '—' }}</ion-col>
             <ion-col size="3">{{ row.regasoft || '—' }}</ion-col>
@@ -65,29 +71,38 @@ export class MembershipSrvMismatchModal {
 
   protected rows = computed<SrvDisplayRow[]>(() => {
     const i = this.item();
-    const mismatches = new Set(getMismatches(i, getTodayStr(DateFormat.StoreDate)).map(m => m.field));
-    const has = (field: string) => mismatches.has(field);
+    const today = getTodayStr(DateFormat.StoreDate);
+    const kinds = new Map(getMismatches(i, today).map(m => [m.field, m.kind]));
+    const kind = (field: string): SrvMismatchKind | null => kinds.get(field) ?? null;
+    const expected = expectedSrvStatus({
+      dateOfDeath: i.mDateOfDeath, dateOfExit: i.mDateOfExit, category: i.mCategory, passiveSince: i.mPassiveSince, today,
+    });
 
     const memberKey = [i.mKey, i.pKey].filter(Boolean).join(' / ') || '';
     const mainClubMember = i.pKey ? (i.pCategory !== 'D' ? 'ja' : 'nein') : '';
 
     return [
-      { attr: 'firstName',     person: i.firstName,   member: '',             regasoft: i.rFirstName,   mismatch: has('firstName') },
-      { attr: 'lastName',      person: i.lastName,    member: '',             regasoft: i.rLastName,    mismatch: has('lastName') },
-      { attr: 'key',           person: i.personKey,   member: memberKey,      regasoft: i.rid,          mismatch: false },
-      { attr: 'srvId',         person: '',            member: i.memberId,     regasoft: i.rServiceId,   mismatch: has('memberId') },
-      { attr: 'dateOfBirth',   person: i.dateOfBirth, member: '',             regasoft: i.rDateOfBirth, mismatch: has('dateOfBirth') },
-      { attr: 'dateOfExit',    person: i.mDateOfExit, member: i.pDateOfExit,  regasoft: i.rDateOfExit,  mismatch: has('dateOfExit') },
-      { attr: 'category',      person: i.mCategory,   member: i.pCategory,    regasoft: i.rCategory,    mismatch: has('pCategory') },
-      { attr: 'email',         person: i.mEmail,      member: '',             regasoft: i.rEmail,       mismatch: has('email') },
-      { attr: 'phone',         person: i.mPhone,      member: '',             regasoft: i.rMobile || i.rTelefon, mismatch: has('phone') },
-      { attr: 'street',        person: i.mStreet,     member: '',             regasoft: i.rStreet,      mismatch: has('street') },
-      { attr: 'zipCode',       person: i.mZipCode,    member: '',             regasoft: i.rZipCode,     mismatch: has('zipCode') },
-      { attr: 'city',          person: i.mCity,       member: '',             regasoft: i.rCity,        mismatch: has('city') },
-      { attr: 'nation',        person: '',            member: '',             regasoft: i.nationIOC,    mismatch: false },
-      { attr: 'hasNewsletter', person: '',            member: '',             regasoft: i.hasNewsletter ? this.i18n.srv_mismatch_yes() : this.i18n.srv_mismatch_no(), mismatch: false },
-      { attr: 'mainClub',      person: '',            member: mainClubMember, regasoft: i.mainClub ? this.i18n.srv_mismatch_yes() : this.i18n.srv_mismatch_no(),     mismatch: false },
-      { attr: 'licenseId',     person: '',            member: '',             regasoft: i.licenseId,    mismatch: false },
+      { attr: 'firstName',     person: i.firstName,   member: '',             regasoft: i.rFirstName,   kind: kind('firstName') },
+      { attr: 'lastName',      person: i.lastName,    member: '',             regasoft: i.rLastName,    kind: kind('lastName') },
+      { attr: 'gender',        person: i.gender,      member: '',             regasoft: i.rGender,      kind: kind('gender') },
+      { attr: 'key',           person: i.personKey,   member: memberKey,      regasoft: i.rid,          kind: null },
+      { attr: 'srvId',         person: '',            member: i.memberId,     regasoft: i.rServiceId,   kind: kind('memberId') },
+      { attr: 'dateOfBirth',   person: i.dateOfBirth, member: '',             regasoft: i.rDateOfBirth, kind: kind('dateOfBirth') },
+      { attr: 'dateOfExit',    person: i.mDateOfExit, member: i.pDateOfExit,  regasoft: i.rDateOfExit,  kind: kind('leavingDate') },
+      { attr: 'dateOfDeath',   person: expected.dateOfDeath,   member: '',    regasoft: i.rDateOfDeath,  kind: kind('dateOfDeath') },
+      { attr: 'inactiveDate',  person: expected.inactiveDate,  member: '',    regasoft: i.rInactiveDate, kind: kind('inactiveDate') },
+      { attr: 'entryDate',     person: '',            member: '',             regasoft: i.rEntryDate,   kind: null },
+      { attr: 'category',      person: i.mCategory,   member: i.pCategory,    regasoft: i.rCategory,    kind: kind('pCategory') },
+      { attr: 'email',         person: i.mEmail,      member: '',             regasoft: i.rEmail,       kind: kind('email') },
+      { attr: 'phone',         person: i.mPhone,      member: '',             regasoft: i.rMobile || i.rTelefon, kind: kind('phone') },
+      { attr: 'street',        person: i.mStreet,     member: '',             regasoft: i.rStreet,      kind: kind('street') },
+      { attr: 'zipCode',       person: i.mZipCode,    member: '',             regasoft: i.rZipCode,     kind: kind('zipCode') },
+      { attr: 'city',          person: i.mCity,       member: '',             regasoft: i.rCity,        kind: kind('city') },
+      { attr: 'country',       person: i.mCountryCode, member: '',            regasoft: i.rCountryId,   kind: kind('country') },
+      { attr: 'nation',        person: '',            member: '',             regasoft: i.nationIOC,    kind: null },
+      { attr: 'hasNewsletter', person: '',            member: '',             regasoft: i.hasNewsletter ? this.i18n.srv_mismatch_yes() : this.i18n.srv_mismatch_no(), kind: kind('hasNewsletter') },
+      { attr: 'mainClub',      person: '',            member: mainClubMember, regasoft: i.mainClub ? this.i18n.srv_mismatch_yes() : this.i18n.srv_mismatch_no(),     kind: kind('mainClub') },
+      { attr: 'licenseId',     person: '',            member: '',             regasoft: i.licenseId,    kind: null },
     ];
   });
 
