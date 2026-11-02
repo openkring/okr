@@ -12,6 +12,7 @@
 //   --min-version=x.y.z --force-update. A new version of an app always goes through `all`.
 // Deterministic spine; confirmations are interactive. `all` and a repair write the app-version
 // Firestore doc themselves (firebase-admin, ADC); a website release still prints the value to apply.
+import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -222,6 +223,28 @@ async function releaseRules() {
   console.log('\n✔ Rules deployed. Commit any pending rules-file changes separately.');
 }
 
+// ---- repair: code must equal the release tag --------------------------------
+// `git diff --quiet` exits 1 on a difference; anything else (bad ref, git error) is not "equal".
+const sameAsTag = (cwd, tag, pathspec = []) =>
+  spawnSync('git', ['diff', '--quiet', tag, 'HEAD', ...(pathspec.length ? ['--', ...pathspec] : [])], { cwd }).status === 0;
+
+/**
+ * True when the code a repair would build is what the tag shipped. Superproject: everything but
+ * `planning` and `apps` (the pointer-bump commit after the tag moves only gitlinks under apps/).
+ * The app's submodule: HEAD against its own tag; a submodule without that tag is skipped.
+ */
+function repairMatchesTag(app, version) {
+  const tag = `v${version}`;
+  if (!sameAsTag(repoRoot, tag, ['.', ':(exclude)planning', ':(exclude)apps'])) return false;
+  const sub = join(repoRoot, 'apps', app);
+  const hasSubTag = spawnSync('git', ['-C', sub, 'tag', '-l', tag], { encoding: 'utf8' }).stdout?.trim();
+  if (!hasSubTag) {
+    console.log(`  (apps/${app} has no tag ${tag} — submodule code not compared with the tag.)`);
+    return true;
+  }
+  return sameAsTag(sub, tag);
+}
+
 // ---- entry ---------------------------------------------------------------
 const USAGE = `Usage:
   node scripts/release.mjs all <patch|minor|major> [--native] [--yes] [--accept-drift] [--accept-menu-labels]
@@ -249,7 +272,9 @@ async function main() {
     if (!opts.kind) console.log(`No bump given — treating it as 'none': a single app is only repaired (re-deployed at the current tagged version).`);
     const kind = opts.kind ?? 'none';
     const tagExists = !!capture('git', ['tag', '-l', `v${readVersion()}`]);
-    const problem = repairKindProblem({ app: target, kind, tagExists });
+    const version = readVersion();
+    const matchesTag = !tagExists || repairMatchesTag(target, version);
+    const problem = repairKindProblem({ app: target, kind, tagExists, matchesTag, tag: `v${version}` });
     if (problem) abort(problem);
   }
 

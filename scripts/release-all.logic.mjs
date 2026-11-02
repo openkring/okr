@@ -39,12 +39,14 @@ export function parseReleaseArgs(argv) {
 // ---- single-app repair -----------------------------------------------------
 // A single app is only ever re-deployed at the version `all` already cut and tagged ("repair");
 // a new version always goes through `all`. Websites keep their own bump flow. null = fine.
-export function repairKindProblem({ app, kind, tagExists }) {
+export function repairKindProblem({ app, kind, tagExists, matchesTag = true, tag = 'v<version>' }) {
   if (!app.endsWith('-app')) return null;
   if (kind !== 'none')
     return `A new version goes through \`all\`: node scripts/release.mjs all <patch|minor|major>. A single app is only re-deployed at the current version: node scripts/release.mjs ${app} none.`;
   if (!tagExists)
     return 'Repair re-deploys the version `all` already cut, but the current version has no tag. Release through `all` first.';
+  if (!matchesTag)
+    return `The working tree does not match the release tag ${tag}: a repair must build exactly what the tag shipped. Check out ${tag} (e.g. in a clean worktree: git worktree add ../repair ${tag}) or release through \`all\`.`;
   return null;
 }
 

@@ -142,3 +142,9 @@ test('repair: apps may only redeploy the tagged current version', () => {
   assert.match(repairKindProblem({ app: 'kwa-app', kind: 'none', tagExists: false }), /tag/);
   assert.equal(repairKindProblem({ app: 'okr-website', kind: 'patch', tagExists: false }), null);
 });
+
+test('repair: refuses when the code does not match the release tag', () => {
+  assert.equal(repairKindProblem({ app: 'kwa-app', kind: 'none', tagExists: true, matchesTag: true }), null);
+  assert.match(repairKindProblem({ app: 'kwa-app', kind: 'none', tagExists: true, matchesTag: false }), /tag/);
+  assert.equal(repairKindProblem({ app: 'okr-website', kind: 'patch', tagExists: false, matchesTag: false }), null);
+});
