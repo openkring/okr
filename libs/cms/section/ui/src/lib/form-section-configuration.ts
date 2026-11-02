@@ -14,6 +14,8 @@ export interface FormOption {
   formKey: string;
   name: string;
   implicitFields: ImplicitField[];
+  /** the form-wide «Freie Plätze anzeigen»: what a section without an override of its own shows; absent = off */
+  showRemaining?: boolean;
 }
 
 /** A course a registration page can be for (D-W4: the stored value is the `CourseModel.okey`). */
@@ -163,6 +165,7 @@ interface FixedRow {
       </ion-card-header>
       <ion-card-content class="ion-no-padding">
         <okr-acceptance-settings-input [settings]="acceptance()" (settingsChange)="onAcceptanceChange($event)" [inherit]="true"
+          [inheritedShowRemaining]="formShowRemaining()"
           [i18n]="formI18n()" [errors]="errors()" [readOnly]="isReadOnly()" />
       </ion-card-content>
     </ion-card>
@@ -262,6 +265,9 @@ export class FormSectionConfiguration {
   /** `implicitValues.<key>` errors of entries no row shows */
   protected readonly strayKeys = computed(() => getUnrenderedFixedKeys(this.errors(), this.rows().map((r) => r.key)));
 
+  /** the chosen form's «Freie Plätze anzeigen»: what this page shows until it sets its own */
+  protected readonly formShowRemaining = computed(() => this.chosenForm()?.showRemaining === true);
+
   /** only the overrides this page really carries — an absent one is not shown as a value of its own */
   protected readonly acceptance = computed<Partial<AcceptanceFields>>(() => {
     const fd = this.formData();
@@ -344,13 +350,14 @@ export class FormSectionConfiguration {
   /**
    * Writes only what the author set. An empty date or text, a limit of 0 and «open» are the same as no
    * override (inherit): the key is removed instead of storing the form's values or defaults in the section.
+   * «Freie Plätze anzeigen» is the same as no override when it equals the form's value, whichever way that points.
    */
   protected onAcceptanceChange(settings: Partial<AcceptanceFields>): void {
     this.formData.update((vm) => {
       const next: Record<string, unknown> = { ...vm };
       for (const key of ACCEPTANCE_KEYS) {
         const value = settings[key];
-        const inherit = value === undefined || value === null || value === '' || (key === 'maxResponses' && value === 0) || (key === 'isOpen' && value === true);
+        const inherit = value === undefined || value === null || value === '' || (key === 'maxResponses' && value === 0) || (key === 'isOpen' && value === true) || (key === 'showRemaining' && value === this.formShowRemaining());
         if (inherit) delete next[key];
         else next[key] = value;
       }

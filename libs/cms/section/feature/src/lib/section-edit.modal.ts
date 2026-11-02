@@ -125,6 +125,7 @@ export class SectionEditModal {
         formKey: def.formKey,
         name: def.name || def.formKey,
         implicitFields: (def.fields ?? []).flatMap((field) => (field.type === 'implicit' ? [field] : [])),
+        showRemaining: def.showRemaining === true,
       }))),
   ), { initialValue: [] as FormOption[] });
   protected courses = toSignal(toObservable(this.isFormSection).pipe(

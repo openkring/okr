@@ -71,6 +71,8 @@ export class AcceptanceSettingsInput {
   public readonly settings = model<Partial<AcceptanceFields>>({});
   /** a form section: empty values inherit the form's */
   public readonly inherit = input(false);
+  /** a form section: the form-wide «Freie Plätze anzeigen», shown until the section sets its own */
+  public readonly inheritedShowRemaining = input(false);
   /** accepted responses so far (`formStats`); null = unknown, nothing shown */
   public readonly count = input<number | null>(null);
   public readonly i18n = input.required<FormI18n>();
@@ -81,7 +83,11 @@ export class AcceptanceSettingsInput {
   // derived — a legacy definition lacks every field: open, no date, unlimited (reads skip model defaults)
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected readonly isOpen = computed(() => this.settings()?.isOpen !== false);
-  protected readonly showRemaining = computed(() => this.settings()?.showRemaining === true);
+  protected readonly showRemaining = computed(() => {
+    const own = this.settings()?.showRemaining;
+    if (typeof own === 'boolean') return own;
+    return this.inherit() && this.inheritedShowRemaining();
+  });
   protected readonly closesAt = computed(() => this.settings()?.closesAt ?? '');
   protected readonly maxResponses = computed(() => this.settings()?.maxResponses ?? 0);
   protected readonly closedMessage = computed(() => this.settings()?.closedMessage ?? '');
