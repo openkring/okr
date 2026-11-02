@@ -17,7 +17,7 @@ import {
   removeReferencesTo, ruleConnectors, RuleIssue,
 } from '@okr/forms-util';
 import { I18nService } from '@okr/shared-i18n';
-import { FieldConfigModal, FieldTypeDef, FieldTypeLibrary, FormRenderer } from '@okr/forms-ui';
+import { FieldConfigModal, FieldTypeDef, FieldTypeLibrary, FormBuilderHelpModal, FormRenderer } from '@okr/forms-ui';
 import { confirm, dismissOverlay } from '@okr/shared-util-angular';
 
 /** A new field from a library card; an «Eigene Angaben» card starts it with `asProperty` on. */
@@ -339,7 +339,6 @@ export class FormBuilderEditor {
 
   /** the (i) in the canvas toolbar — read-only help for the form author */
   protected async onHelp(): Promise<void> {
-    const { FormBuilderHelpModal } = await import('@okr/forms-ui');
     const modal = await this.modalController.create({
       component: FormBuilderHelpModal,
       componentProps: { i18n: this.i18n },

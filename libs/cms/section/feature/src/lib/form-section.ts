@@ -12,7 +12,7 @@ import { FormSection } from '@okr/shared-models';
 
 import { FormCategoryService, FormSubmitService } from '@okr/forms-data-access';
 import { FORM_I18N_KEYS, FormI18n, hasVisibilityRules } from '@okr/forms-util';
-import { FormRenderer } from '@okr/forms-ui';
+import { FormFillerHelpModal, FormRenderer } from '@okr/forms-ui';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 
@@ -137,7 +137,6 @@ export class FormSectionComponent {
   protected async onHelp(): Promise<void> {
     const def = this.definition();
     if (!def) return;
-    const { FormFillerHelpModal } = await import('@okr/forms-ui');
     const modal = await this.modalController.create({
       component: FormFillerHelpModal,
       componentProps: {
