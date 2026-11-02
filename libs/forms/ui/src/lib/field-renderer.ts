@@ -126,6 +126,9 @@ const SSN_PLACEHOLDER = '756.1234.5678.97';
       @case ('divider') {
         <hr class="field-divider" />
       }
+      @case ('implicit') {
+        <!-- never rendered: the value comes from the section or the link (1.125 B) -->
+      }
       @default {
         <ion-item lines="none">
           <ion-label color="medium">{{ field().label }} ({{ field().type }})</ion-label>

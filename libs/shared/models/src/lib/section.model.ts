@@ -7,6 +7,7 @@ import { GalleryEffect } from './enums/gallery-effect.enum';
 import { ViewPosition } from './enums/view-position.enum';
 import { NameDisplay } from './enums/name-display.enum';
 import { RoleName } from './menu-item.model';
+import type { BaseType } from './base.model';
 import { AvatarInfo } from './avatar-info';
 import { ImageStyle, ImageConfig, Slot } from './image.model';
 import type { I18nString } from './i18n.model';
@@ -722,6 +723,14 @@ export interface FormSectionConfig {
   showCaptcha: boolean;
   encryptFileUpload: boolean;
   rateLimit: { limit: number; periodMinutes: number };
+  /** §8.1 — values for the form's `implicit` fields, keyed by field `key`; wins over the field's `defaultValue`. */
+  implicitValues?: Record<string, BaseType>;
+  // §11 — per-section overrides of the form's acceptance rules; absent = inherit from the form definition.
+  isOpen?: boolean;
+  closesAt?: string;
+  maxResponses?: number;
+  showRemaining?: boolean;
+  closedMessage?: string;
 }
 
 // --------------------------------------- WEATHER ----------------------------------------

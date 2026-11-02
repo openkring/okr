@@ -571,6 +571,7 @@ export const FORM_SECTION_CONFIG_SHAPE: FormSectionConfig = {
   showCaptcha: false,
   encryptFileUpload: false,
   rateLimit: { limit: 10, periodMinutes: 5 },
+  implicitValues: {},
 };
 export const FORM_SECTION_SHAPE = {
   ...BASE_SECTION_SHAPE,

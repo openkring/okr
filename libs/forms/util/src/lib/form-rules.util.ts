@@ -49,6 +49,8 @@ export function conditionOpsFor(field: Field): ConditionOp[] {
     case 'email':
     case 'phone':
       return [...TEXT_OPS];
+    case 'implicit':
+      return field.valueType === 'boolean' ? ['isChecked', 'isNotChecked'] : field.valueType === 'number' ? [...NUMBER_OPS] : [...TEXT_OPS];
     case 'label':
     case 'paragraph':
     case 'divider':

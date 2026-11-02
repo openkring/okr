@@ -40,6 +40,8 @@ export function propertyTypeOf(field: Field): PropertyType | undefined {
   // an AHV number maps to the model field `ssnId`, never to a typed property — also a text field keyed ssnId
   if (isSsnField(field)) return undefined;
   switch (field.type) {
+    case 'implicit':
+      return field.valueType;
     case 'checkbox':
       return Array.isArray(field.options) && field.options.length > 0 ? undefined : 'boolean';
     case 'number':
