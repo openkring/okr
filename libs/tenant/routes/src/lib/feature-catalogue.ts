@@ -75,6 +75,20 @@ const calevent: BlockRoutes = {
       // `roleNeeded` decides who sees the row; the parent's `isAuthenticatedGuard` stays.
       children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/calendar-calevent-feature').then(m => m.YearlyEvents) }],
     },
+    // Training courses (spec 1.132). Inside the `calevent` block on purpose — no feature block of its own: a course
+    // is a group-calendar concept, reached from `c-calevents` (row `calevent-courses`, group calendars only). A
+    // separate block would hide that row's menu with it (memory «feature block hides menu»).
+    // Any authenticated member may open the list: courses are readable tenant-wide (firestore.rules), and the list
+    // gates create / edit / archive / the yearly totals itself (`course-access.util`, `CourseStore`).
+    // `course/table/:courseKey` (the course table page) is added with that page.
+    {
+      path: 'course',
+      canActivate: [isAuthenticatedGuard],
+      children: [{
+        path: ':groupKey/:listId/:contextMenuName',
+        loadComponent: () => import('@okr/calendar-course-feature').then(m => m.CourseList),
+      }],
+    },
   ],
 };
 

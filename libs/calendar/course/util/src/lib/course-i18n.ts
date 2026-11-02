@@ -7,6 +7,30 @@ export const COURSE_I18N_KEYS = {
   courses: PFX + 'courses',
   empty:   PFX + 'empty',
 
+  // list
+  list_open:           PFX + 'list.open',
+  list_edit:           PFX + 'list.edit',
+  list_view:           PFX + 'list.view',
+  list_archive:        PFX + 'list.archive',
+  list_cancel:         PFX + 'list.cancel',
+  list_archiveConfirm: PFX + 'list.archiveConfirm',
+  list_noGroup:        PFX + 'list.noGroup',
+  list_csvFile:        PFX + 'list.csvFile',
+  list_col_name:        PFX + 'list.col.name',
+  list_col_period:      PFX + 'list.col.period',
+  list_col_responsible: PFX + 'list.col.responsible',
+  list_col_trainers:    PFX + 'list.col.trainers',
+  list_col_status:      PFX + 'list.col.status',
+  list_status_locked:   PFX + 'list.status.locked',
+  list_status_reported: PFX + 'list.status.reported',
+
+  // yearly overview (spec 1.132 §7.7)
+  yearly_title: PFX + 'yearly.title',
+  yearly_intro: PFX + 'yearly.intro',
+  yearly_empty: PFX + 'yearly.empty',
+  yearly_error: PFX + 'yearly.error',
+  yearly_sum:   PFX + 'yearly.sum',
+
   // edit modal
   edit_create: PFX + 'edit.create',
   edit_update: PFX + 'edit.update',

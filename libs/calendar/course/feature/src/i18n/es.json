@@ -115,5 +115,33 @@
     "rateInvalid": "Introduce un importe de 0 o más.",
     "duplicatePerson": "Cada persona solo puede aparecer una vez.",
     "personRequired": "Elige la persona de la lista de personas."
+  },
+  "list": {
+    "open": "Abrir la tabla del curso",
+    "edit": "Editar curso",
+    "view": "Ver curso",
+    "archive": "Archivar curso",
+    "cancel": "Cancelar",
+    "archiveConfirm": "¿Quieres archivar este curso? Sus citas se conservan.",
+    "noGroup": "Esta lista de cursos no tiene grupo. Ábrela desde el calendario de un grupo.",
+    "col": {
+      "name": "Curso",
+      "period": "Periodo",
+      "responsible": "Responsables",
+      "trainers": "Entrenadores",
+      "status": "Estado"
+    },
+    "status": {
+      "locked": "Congelado",
+      "reported": "Notificado"
+    },
+    "csvFile": "cursos"
+  },
+  "yearly": {
+    "title": "Compensaciones por año",
+    "intro": "Suma de las compensaciones aprobadas por persona y año natural, de todos los cursos. Cuenta la fecha del asiento.",
+    "empty": "Todavía no hay compensaciones aprobadas.",
+    "error": "No se pudieron cargar los totales anuales.",
+    "sum": "Total"
   }
 }

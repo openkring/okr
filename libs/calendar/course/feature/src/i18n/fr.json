@@ -115,5 +115,33 @@
     "rateInvalid": "Saisis un montant de 0 ou plus.",
     "duplicatePerson": "Chaque personne ne peut figurer qu'une seule fois.",
     "personRequired": "Choisis la personne dans la liste des personnes."
+  },
+  "list": {
+    "open": "Ouvrir le tableau du cours",
+    "edit": "Modifier le cours",
+    "view": "Afficher le cours",
+    "archive": "Archiver le cours",
+    "cancel": "Annuler",
+    "archiveConfirm": "Veux-tu archiver ce cours ? Ses rendez-vous sont conservés.",
+    "noGroup": "Cette liste de cours n'a pas de groupe. Ouvre-la depuis le calendrier d'un groupe.",
+    "col": {
+      "name": "Cours",
+      "period": "Période",
+      "responsible": "Responsables",
+      "trainers": "Entraîneurs",
+      "status": "Statut"
+    },
+    "status": {
+      "locked": "Figé",
+      "reported": "Annoncé"
+    },
+    "csvFile": "cours"
+  },
+  "yearly": {
+    "title": "Indemnités par année",
+    "intro": "Somme des indemnités validées par personne et par année civile, pour tous les cours. La date de comptabilisation fait foi.",
+    "empty": "Aucune indemnité validée pour le moment.",
+    "error": "Les totaux annuels n'ont pas pu être chargés.",
+    "sum": "Total"
   }
 }

@@ -544,7 +544,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
       || (!!c.personKey && doc.get('lockedBy.key') === c.personKey),   // who froze the course
     // 'index', not 'full' (cf. `calevents`): the document names the other trainers as well.
     onExport: 'index',
-    indexFields: { title: 'name', date: 'startDate', route: '/course' },
+    indexFields: { title: 'name', date: 'startDate', route: '/course/table' },   // + '/<okey>' = the course table page
     onErasure: 'anonymize',
     // The mirrors are cleared in the same write, so the rules stop honouring the subject at once
     // instead of waiting for the trigger. Plain string arrays: the element is dropped when it equals the key.

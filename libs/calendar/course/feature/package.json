@@ -7,18 +7,23 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
+    "@okr/avatar-ui": "*",
     "@okr/calendar-course-data-access": "*",
     "@okr/calendar-course-ui": "*",
     "@okr/calendar-course-util": "*",
+    "@okr/cms-menu-feature": "*",
     "@okr/finance-account-data-access": "*",
     "@okr/finance-account-util": "*",
     "@okr/finance-accounting-data-access": "*",
+    "@okr/finance-booking-util": "*",
     "@okr/finance-cost-center-data-access": "*",
     "@okr/shared-feature": "*",
     "@okr/shared-i18n": "*",
     "@okr/shared-models": "*",
+    "@okr/shared-pipes": "*",
     "@okr/shared-ui": "*",
     "@okr/shared-util-angular": "*",
-    "@okr/shared-util-core": "*"
+    "@okr/shared-util-core": "*",
+    "@okr/subject-group-util": "*"
   }
 }

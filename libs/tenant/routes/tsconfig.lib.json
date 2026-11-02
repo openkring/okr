@@ -25,6 +25,7 @@
     { "path": "../../business/prospect/feature/tsconfig.lib.json" },
     { "path": "../../business/ticket/feature/tsconfig.lib.json" },
     { "path": "../../calendar/calevent/feature/tsconfig.lib.json" },
+    { "path": "../../calendar/course/feature/tsconfig.lib.json" },
     { "path": "../../calendar/meeting/feature/tsconfig.lib.json" },
     { "path": "../../category/feature/tsconfig.lib.json" },
     { "path": "../../chat/feature/tsconfig.lib.json" },

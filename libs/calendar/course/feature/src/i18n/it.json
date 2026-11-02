@@ -115,5 +115,33 @@
     "rateInvalid": "Inserisci un importo di 0 o più.",
     "duplicatePerson": "Ogni persona può comparire una sola volta.",
     "personRequired": "Scegli la persona dall'elenco delle persone."
+  },
+  "list": {
+    "open": "Apri la tabella del corso",
+    "edit": "Modifica corso",
+    "view": "Mostra corso",
+    "archive": "Archivia corso",
+    "cancel": "Annulla",
+    "archiveConfirm": "Vuoi archiviare questo corso? I suoi appuntamenti restano.",
+    "noGroup": "Questo elenco di corsi non ha un gruppo. Aprilo dal calendario di un gruppo.",
+    "col": {
+      "name": "Corso",
+      "period": "Periodo",
+      "responsible": "Responsabili",
+      "trainers": "Allenatori",
+      "status": "Stato"
+    },
+    "status": {
+      "locked": "Bloccato",
+      "reported": "Annunciato"
+    },
+    "csvFile": "corsi"
+  },
+  "yearly": {
+    "title": "Indennità per anno",
+    "intro": "Somma delle indennità approvate per persona e anno civile, per tutti i corsi. Conta la data di registrazione.",
+    "empty": "Non ci sono ancora indennità approvate.",
+    "error": "Non è stato possibile caricare i totali annuali.",
+    "sum": "Totale"
   }
 }

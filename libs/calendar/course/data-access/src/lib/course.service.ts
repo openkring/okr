@@ -4,16 +4,23 @@ import { Observable } from 'rxjs';
 
 import { ActivityService } from '@okr/activity-data-access';
 import { getCourseIndex } from '@okr/calendar-course-util';
+import { BookingLineService } from '@okr/finance-booking-data-access';
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import {
-  AttendanceEntry, AvatarInfo, CalEventCollection, CalEventModel, CourseCollection, CourseFinanceDocId, CourseFinanceModel,
+  AttendanceEntry, AvatarInfo, BookingCollection, BookingModel, CalEventCollection, CalEventModel, CourseCollection, CourseFinanceDocId, CourseFinanceModel,
   CourseFinanceSubcollection, CourseModel, PersonCollection, UserModel
 } from '@okr/shared-models';
 import { die, getSystemQuery, isValidExternalId, removeUndefinedFields } from '@okr/shared-util-core';
 
 import { PFX } from './scope';
+
+/** Compensation bookings are written by `requestCourseCompensation` under the okey `course-<courseKey>-<personKey>`. */
+const COMPENSATION_BOOKING_PREFIX = 'course-';
+
+/** One released (`posted`) compensation booking: who, the booking date (StoreDate) and the amount in minor units. */
+export type PostedCompensation = { date: string; personKey: string; name: string; amount: number };
 
 /**
  * Fields the server maintains (a trigger mirrors them from `trainers` / `responsiblePersons`) and the
@@ -36,6 +43,7 @@ export class CourseService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
   private readonly activityService = inject(ActivityService);
+  private readonly bookingLineService = inject(BookingLineService);
   private readonly i18nService = inject(I18nService);
   private readonly i18n = this.i18nService.translateAll({
     create_conf:  PFX + 'create.conf',
@@ -131,6 +139,41 @@ export class CourseService {
     if (!courseKey) die('CourseService.saveFinance: courseKey is mandatory.');
     const data = removeUndefinedFields(structuredClone(finance));
     await this.firestoreService.updateObject(`${CourseCollection}/${courseKey}/${CourseFinanceSubcollection}`, CourseFinanceDocId, data, true, this.i18n.finance_conf());
+  }
+
+  /*-------------------------- COMPENSATION BOOKINGS (read-only) --------------------------------*/
+  /**
+   * The released compensation bookings of one set of books, across all courses (spec 1.132 §7.7): the yearly
+   * total per trainer is summed from them. Only `posted` bookings count; their date is the booking date.
+   *
+   * Only the treasurer, privileged and admin may read `bookings`: call this for them and nobody else. The query is
+   * tenant AND books scoped (`accountingTenantId` is the books, never the app tenant) and narrowed to the
+   * `course-` okey prefix server-side, so it does not read the whole journal. The amount is the debit line (the
+   * expense), a booking without a counterparty is skipped. Rejects when the read fails, so the caller can tell
+   * «no compensation» from «not readable».
+   *
+   * Needs the index `bookings: tenants, accountingTenantId, isArchived, status, __name__`.
+   */
+  public async listPostedCompensation(accountingTenantId: string): Promise<PostedCompensation[]> {
+    if (!accountingTenantId) die('CourseService.listPostedCompensation: accountingTenantId (the books) is mandatory.');
+    const bookings = await this.firestoreService.getDataOnceStrict<BookingModel>(BookingCollection, [
+      ...getSystemQuery(this.env.tenantId),
+      { key: 'accountingTenantId', operator: '==', value: accountingTenantId },
+      { key: 'status', operator: '==', value: 'posted' },
+      { key: '__name__', operator: '>=', value: COMPENSATION_BOOKING_PREFIX },
+      { key: '__name__', operator: '<', value: COMPENSATION_BOOKING_PREFIX + '\uf8ff' },
+    ]);
+    const owed = bookings.filter(b => !!b.counterparty?.key);
+    if (owed.length === 0) return [];
+    const lines = await this.bookingLineService.listForBookings(accountingTenantId, owed.map(b => b.okey));
+    const amountOf = new Map<string, number>();
+    for (const line of lines) amountOf.set(line.bookingKey, (amountOf.get(line.bookingKey) ?? 0) + (line.debitAmount?.amount ?? 0));
+    return owed.map(b => ({
+      date: b.date,
+      personKey: b.counterparty?.key ?? '',
+      name: `${b.counterparty?.name1 ?? ''} ${b.counterparty?.name2 ?? ''}`.trim(),
+      amount: amountOf.get(b.okey) ?? 0,
+    }));
   }
 
   /*-------------------------- CALEVENT / PERSON FIELD WRITES --------------------------------*/

@@ -10,10 +10,11 @@ vi.mock('@angular/core', async (importOriginal) => {
 import { inject } from '@angular/core';
 
 import { ActivityService } from '@okr/activity-data-access';
+import { BookingLineService } from '@okr/finance-booking-data-access';
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
-import { AttendanceEntry, AvatarInfo, CalEventCollection, CourseCollection, CourseFinanceModel, CourseModel, PersonCollection } from '@okr/shared-models';
+import { AttendanceEntry, AvatarInfo, BookingCollection, CalEventCollection, CourseCollection, CourseFinanceModel, CourseModel, PersonCollection } from '@okr/shared-models';
 
 import { CourseService } from './course.service';
 
@@ -29,7 +30,9 @@ const firestore = {
   updateObject: vi.fn<AnyFn<Promise<string>>>(async () => 'settings'),
   updateFields: vi.fn<AnyFn<Promise<string>>>(async () => 'k'),
   updateFieldPaths: vi.fn<AnyFn<Promise<string>>>(async () => 'k'),
+  getDataOnceStrict: vi.fn<AnyFn<Promise<unknown[]>>>(async () => []),
 };
+const bookingLines = { listForBookings: vi.fn<AnyFn<Promise<unknown[]>>>(async () => []) };
 const activity = { log: vi.fn<AnyFn<Promise<undefined>>>(async () => undefined) };
 const i18nService = {
   translateAll: (keys: Record<string, string>) => Object.fromEntries(Object.keys(keys).map(k => [k, () => keys[k]])),
@@ -40,6 +43,7 @@ function makeService(): CourseService {
     if (token === ENV) return { tenantId: 'scs' };
     if (token === FirestoreService) return firestore;
     if (token === ActivityService) return activity;
+    if (token === BookingLineService) return bookingLines;
     if (token === I18nService) return i18nService;
     throw new Error('unexpected inject');
   }) as typeof inject);
@@ -185,6 +189,56 @@ describe('CourseService', () => {
       await expect(service.setExternalId('p1', 'js', '12')).rejects.toThrow();
       await expect(service.setExternalId('p1', 'a.b', '1')).rejects.toThrow();
       expect(firestore.updateFields).not.toHaveBeenCalled();
+    });
+  });
+  describe('listPostedCompensation', () => {
+    const booking = (okey: string, personKey: string, date = '20261015') => ({
+      okey, date, status: 'posted', counterparty: personKey ? { ...avatar(personKey), name1: 'Anna', name2: 'Muster' } : undefined,
+    });
+    const line = (bookingKey: string, amount: number, side: 'debit' | 'credit' = 'debit') =>
+      ({ bookingKey, [side === 'debit' ? 'debitAmount' : 'creditAmount']: { amount } });
+
+    it('queries posted bookings of the books with the course- okey prefix, tenant and books scoped', async () => {
+      await service.listPostedCompensation('scs-books');
+      const [collection, query] = firestore.getDataOnceStrict.mock.calls[0] as [string, { key: string; operator: string; value: unknown }[]];
+      expect(collection).toBe(BookingCollection);
+      const tenants = query.find(q => q.key === 'tenants');
+      expect(tenants?.value).toContain('scs');
+      expect(query).toContainEqual({ key: 'accountingTenantId', operator: '==', value: 'scs-books' });
+      expect(query).toContainEqual({ key: 'status', operator: '==', value: 'posted' });
+      expect(query).toContainEqual({ key: '__name__', operator: '>=', value: 'course-' });
+      expect(query.find(q => q.operator === '<')?.value).toMatch(/^course-/);
+    });
+
+    it('refuses without books instead of falling back to the app tenant', async () => {
+      await expect(service.listPostedCompensation('')).rejects.toThrow();
+      expect(firestore.getDataOnceStrict).not.toHaveBeenCalled();
+    });
+
+    it('returns nothing and reads no lines when there is no booking', async () => {
+      expect(await service.listPostedCompensation('b')).toEqual([]);
+      expect(bookingLines.listForBookings).not.toHaveBeenCalled();
+    });
+
+    it('takes the amount from the debit lines and the person from the counterparty', async () => {
+      firestore.getDataOnceStrict.mockResolvedValueOnce([booking('course-c1-p1', 'p1'), booking('course-c1-p2', 'p2', '20270102')]);
+      bookingLines.listForBookings.mockResolvedValueOnce([
+        line('course-c1-p1', 4000), line('course-c1-p1', 4000, 'credit'), line('course-c1-p2', 2500), line('course-c1-p2', 2500, 'credit'),
+      ]);
+      const result = await service.listPostedCompensation('b');
+      expect(bookingLines.listForBookings).toHaveBeenCalledWith('b', ['course-c1-p1', 'course-c1-p2']);
+      expect(result).toEqual([
+        { date: '20261015', personKey: 'p1', name: 'Anna Muster', amount: 4000 },
+        { date: '20270102', personKey: 'p2', name: 'Anna Muster', amount: 2500 },
+      ]);
+    });
+
+    it('skips a booking without a counterparty (anonymized)', async () => {
+      firestore.getDataOnceStrict.mockResolvedValueOnce([booking('course-c1-p1', ''), booking('course-c1-p2', 'p2')]);
+      bookingLines.listForBookings.mockResolvedValueOnce([line('course-c1-p2', 100)]);
+      const result = await service.listPostedCompensation('b');
+      expect(result.map(r => r.personKey)).toEqual(['p2']);
+      expect(bookingLines.listForBookings).toHaveBeenCalledWith('b', ['course-c1-p2']);
     });
   });
 });

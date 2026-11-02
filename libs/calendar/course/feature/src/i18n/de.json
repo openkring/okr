@@ -115,5 +115,33 @@
     "rateInvalid": "Gib einen Betrag von 0 oder mehr ein.",
     "duplicatePerson": "Jede Person kann nur einmal aufgeführt werden.",
     "personRequired": "Wähle die Person aus der Personenliste aus."
+  },
+  "list": {
+    "open": "Kurstabelle öffnen",
+    "edit": "Kurs bearbeiten",
+    "view": "Kurs ansehen",
+    "archive": "Kurs archivieren",
+    "cancel": "Abbrechen",
+    "archiveConfirm": "Möchtest du diesen Kurs archivieren? Seine Termine bleiben erhalten.",
+    "noGroup": "Für diese Kursliste fehlt die Gruppe. Öffne sie über den Kalender einer Gruppe.",
+    "col": {
+      "name": "Kurs",
+      "period": "Zeitraum",
+      "responsible": "Verantwortliche",
+      "trainers": "Trainer",
+      "status": "Status"
+    },
+    "status": {
+      "locked": "Eingefroren",
+      "reported": "Gemeldet"
+    },
+    "csvFile": "kurse"
+  },
+  "yearly": {
+    "title": "Entschädigungen pro Jahr",
+    "intro": "Summe der freigegebenen Entschädigungen pro Person und Kalenderjahr, über alle Kurse. Massgebend ist das Buchungsdatum.",
+    "empty": "Es gibt noch keine freigegebenen Entschädigungen.",
+    "error": "Die Jahressummen konnten nicht geladen werden.",
+    "sum": "Total"
   }
 }

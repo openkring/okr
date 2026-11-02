@@ -32,7 +32,7 @@ function isJsActivityType(value: string | undefined): value is JsActivityType {
  * tab or carriage return as a formula, so such a cell gets a leading `'`. Only for free text (names, places,
  * external ids), never for dates, times, counts or fixed protocol values.
  */
-function csvText(value: string): string {
+export function csvText(value: string): string {
   return /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
 }
 

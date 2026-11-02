@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { AttendanceEntry, AvatarInfo, CalEventModel, CourseFinanceModel, MoneyModel } from '@okr/shared-models';
 
-import { computeCompensation, countLedTrainings, unlistedLeaders, yearlyTotals } from './course-compensation.util';
+import { computeCompensation, countLedTrainings, unlistedLeaders, yearlyTotalRows, yearlyTotals } from './course-compensation.util';
 
 function avatar(key: string): AvatarInfo {
   return { key, name1: key, name2: key, modelType: 'person', type: '', subType: '', label: '' };
@@ -98,5 +98,36 @@ describe('yearlyTotals', () => {
         { date: '20261101', personKey: 'p2', amount: 7 },
       ]),
     ).toEqual({ '2026': { p1: 150, p2: 7 } });
+  });
+});
+
+describe('yearlyTotalRows', () => {
+  const posted = [
+    { date: '20261015', personKey: 'p1', name: 'Anna Muster', amount: 4000 },
+    { date: '20261220', personKey: 'p2', name: 'Beat Beispiel', amount: 9000 },
+    { date: '20261221', personKey: 'p1', name: '', amount: 3000 },
+    { date: '20270105', personKey: 'p1', name: 'Anna Muster', amount: 1000 },
+  ];
+
+  it('lists the newest year first, with the largest amount first inside a year and the year sum', () => {
+    const rows = yearlyTotalRows(posted);
+    expect(rows.map(r => r.year)).toEqual(['2027', '2026']);
+    expect(rows[1].persons.map(p => p.personKey)).toEqual(['p2', 'p1']);
+    expect(rows[1].persons[1].amount).toBe(7000);
+    expect(rows[1].sum).toBe(16000);
+  });
+
+  it('uses the first non-empty name of a person, and the key when no booking has one', () => {
+    expect(yearlyTotalRows(posted)[1].persons.find(p => p.personKey === 'p1')?.name).toBe('Anna Muster');
+    expect(yearlyTotalRows([{ date: '20261015', personKey: 'p7', amount: 100 }])[0].persons[0].name).toBe('p7');
+  });
+
+  it('breaks a tie by name, and is empty without bookings', () => {
+    const tie = yearlyTotalRows([
+      { date: '20261001', personKey: 'b', name: 'Zora', amount: 100 },
+      { date: '20261001', personKey: 'a', name: 'Alma', amount: 100 },
+    ]);
+    expect(tie[0].persons.map(p => p.name)).toEqual(['Alma', 'Zora']);
+    expect(yearlyTotalRows([])).toEqual([]);
   });
 });

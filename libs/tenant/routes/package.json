@@ -14,6 +14,7 @@
     "@okr/auth-feature": "*",
     "@okr/aoc-feature": "*",
     "@okr/calendar-calevent-feature": "*",
+    "@okr/calendar-course-feature": "*",
     "@okr/cms-page-feature": "*",
     "@okr/cms-section-feature": "*",
     "@okr/cms-menu-feature": "*",

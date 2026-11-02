@@ -115,5 +115,33 @@
     "rateInvalid": "Enter an amount of 0 or more.",
     "duplicatePerson": "Each person can be listed only once.",
     "personRequired": "Choose the person from the list of persons."
+  },
+  "list": {
+    "open": "Open course table",
+    "edit": "Edit course",
+    "view": "View course",
+    "archive": "Archive course",
+    "cancel": "Cancel",
+    "archiveConfirm": "Do you want to archive this course? Its events are kept.",
+    "noGroup": "This course list has no group. Open it from a group calendar.",
+    "col": {
+      "name": "Course",
+      "period": "Period",
+      "responsible": "Responsible",
+      "trainers": "Trainers",
+      "status": "Status"
+    },
+    "status": {
+      "locked": "Frozen",
+      "reported": "Reported"
+    },
+    "csvFile": "courses"
+  },
+  "yearly": {
+    "title": "Compensation per year",
+    "intro": "Sum of the released compensation per person and calendar year, across all courses. The booking date decides.",
+    "empty": "There is no released compensation yet.",
+    "error": "The yearly totals could not be loaded.",
+    "sum": "Total"
   }
 }

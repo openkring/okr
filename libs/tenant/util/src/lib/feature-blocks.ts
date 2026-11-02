@@ -200,6 +200,9 @@ const calevent: FeatureBlock = {
       { key: 'calevent-exportics', name: 'calevent-exportics', url: 'exportIcs', action: 'call', roleNeeded: 'registered', icon: 'calendar', label: '@item.calevent-exportics' },
       { key: 'calevent-sync', name: 'calevent-sync', url: 'sync', action: 'call', roleNeeded: 'registered', icon: 'calendar-number', label: '@item.calevent-sync' },
       { key: 'calevent-schedule', name: 'calevent-schedule', url: 'schedule', action: 'call', roleNeeded: 'privileged', icon: 'calendar-number', label: '@main.schedule' },
+      // Training courses (spec 1.132): opens `/course/<groupKey>/all/c-courses`. Group calendars only —
+      // `CalEventList.excludedMenuNames` hides the row everywhere else. `registered`: courses are readable tenant-wide.
+      { key: 'calevent-courses', name: 'calevent-courses', url: 'courses', action: 'call', roleNeeded: 'registered', icon: 'school', label: '@item.calevent-courses' },
       // Live-data quirk: TWO `menuItems` docs share `name: 'filter-toggle'` — an
       // `isArchived: true` one (`action: call`, `url: toggleFilter`, `roleNeeded:
       // registered`, icon `search`) and a live, non-archived one (autoid doc, `action:
@@ -228,6 +231,13 @@ const calevent: FeatureBlock = {
     { key: 'c-yearlyevents', name: 'c-yearlyevents', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'yearlyevent-add', name: 'yearlyevent-add', url: 'add', action: 'call', roleNeeded: 'eventAdmin', icon: 'add-circle', label: '@item.yearlyevent-add' },
       { key: 'yearlyevent-export', name: 'yearlyevent-export', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: '@item.yearlyevent-export' },
+    ] },
+    // The course list's context menu (spec 1.132): route `/course/:groupKey/:listId/c-courses`. The wrapper and the
+    // rows are `registered`; WHO sees the «…» button and the `add` row is decided in code (`CourseStore.canManage`,
+    // `canAdd`: group admin / privileged / responsible), because that depends on the group, not on a role.
+    { key: 'c-courses', name: 'c-courses', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
+      { key: 'course-add', name: 'course-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: '@item.course-add' },
+      { key: 'course-export-generic', name: 'course-export-generic', url: 'exportGeneric', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.course-export-generic' },
     ] },
   ],
 };

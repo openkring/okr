@@ -32,10 +32,19 @@
   ],
   "references": [
     {
+      "path": "../../../avatar/ui/tsconfig.lib.json"
+    },
+    {
+      "path": "../data-access/tsconfig.lib.json"
+    },
+    {
       "path": "../ui/tsconfig.lib.json"
     },
     {
       "path": "../util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../cms/menu/feature/tsconfig.lib.json"
     },
     {
       "path": "../../../finance/account/data-access/tsconfig.lib.json"
@@ -45,6 +54,9 @@
     },
     {
       "path": "../../../finance/accounting/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../finance/booking/util/tsconfig.lib.json"
     },
     {
       "path": "../../../finance/cost-center/data-access/tsconfig.lib.json"
@@ -59,6 +71,9 @@
       "path": "../../../shared/models/tsconfig.lib.json"
     },
     {
+      "path": "../../../shared/pipes/tsconfig.lib.json"
+    },
+    {
       "path": "../../../shared/ui/tsconfig.lib.json"
     },
     {
@@ -66,6 +81,9 @@
     },
     {
       "path": "../../../shared/util-core/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../subject/group/util/tsconfig.lib.json"
     }
   ]
 }

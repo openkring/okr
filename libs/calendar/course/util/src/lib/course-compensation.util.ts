@@ -54,3 +54,27 @@ export function yearlyTotals(postedBookings: { date: string; personKey: string; 
   }
   return totals;
 }
+
+/** One person's year total in the yearly overview. */
+export type YearlyTotalPerson = { personKey: string; name: string; amount: number };
+/** One calendar year of the overview: the persons (largest amount first) and their sum. */
+export type YearlyTotalRow = { year: string; persons: YearlyTotalPerson[]; sum: number };
+
+/**
+ * The yearly overview for display (§7.7): `yearlyTotals` of the posted bookings, newest year first, the largest
+ * amount first within a year (the treasurer looks for the person who nears a limit), ties by name. The name is the
+ * first non-empty one found on that person's bookings (the key stands in when there is none).
+ */
+export function yearlyTotalRows(posted: { date: string; personKey: string; name?: string; amount: number }[]): YearlyTotalRow[] {
+  const names = new Map<string, string>();
+  for (const b of posted) if (b.name && !names.has(b.personKey)) names.set(b.personKey, b.name);
+  const totals = yearlyTotals(posted);
+  return Object.keys(totals)
+    .sort((a, b) => b.localeCompare(a))
+    .map(year => {
+      const persons = Object.entries(totals[year])
+        .map(([personKey, amount]) => ({ personKey, name: names.get(personKey) ?? personKey, amount }))
+        .sort((a, b) => b.amount - a.amount || a.name.localeCompare(b.name));
+      return { year, persons, sum: persons.reduce((s, p) => s + p.amount, 0) };
+    });
+}

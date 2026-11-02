@@ -9,6 +9,7 @@
     "tslib": "^2.8.1",
     "@okr/activity-data-access": "*",
     "@okr/calendar-course-util": "*",
+    "@okr/finance-booking-data-access": "*",
     "@okr/shared-config": "*",
     "@okr/shared-data-access": "*",
     "@okr/shared-i18n": "*",

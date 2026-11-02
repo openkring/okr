@@ -5,3 +5,5 @@ export * from './lib/course-compensation.util';
 export * from './lib/js-durations';
 export * from './lib/course-export.util';
 export * from './lib/course.validations';
+export * from './lib/course-access.util';
+export * from './lib/course-list.util';

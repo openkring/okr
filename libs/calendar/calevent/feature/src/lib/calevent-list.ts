@@ -477,9 +477,12 @@ export class CalEventList implements OnInit {
       .filter(c => mine.includes(c.okey) || isCalendarPublic(c))
       .map(c => ({ key: c.okey, title: c.title || c.name }));
   });
-  /** Schedule polls only exist in group calendars — hide the entry everywhere else (e.g. /calevent/all). */
+  /**
+   * Schedule polls and the course list only exist for group calendars — hide the entries everywhere else
+   * (e.g. /calevent/all).
+   */
   public readonly excludedMenuNames = computed(() => {
-    const names = this.store.isGroupCalendar() ? [] : ['calevent-schedule'];
+    const names = this.store.isGroupCalendar() ? [] : ['calevent-schedule', 'calevent-courses'];
     // the maintenance rows are admin-only; a group admin (forceVisible) must not see them
     return this.hasRole('admin') ? names : [...names, 'maint-divider', 'calevent-check-duplicates'];
   });
@@ -954,6 +957,12 @@ export class CalEventList implements OnInit {
       case 'schedule':
         if (this.store.schedule()) await this.openSchedulePoll('');   // schedule() = the group-calendar guard
         break;
+      case 'courses': {
+        // the training courses of this group calendar (spec 1.132); the entry is hidden for every other calendar
+        const groupKey = this.store.groupCalendarId();
+        if (groupKey) await navigateByUrl(this.router, `/course/${groupKey}/all/c-courses`);
+        break;
+      }
       case 'checkDuplicates': await this.store.checkDuplicates(); break;
       case 'toggleFilter': this.showFilter.update(v => !v); break;
       case 'toggleArchived': this.store.toggleShowArchived(); break;
