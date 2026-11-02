@@ -3,12 +3,12 @@ import {
   buildTypedProperties,
   coerceToPropertyType,
   computeDerivedValues,
+  formatAnswer,
   getVisibleFieldIds,
   isSsnField,
   normalizeAhv,
   omitSsnValues,
   propertyTypeOf,
-  ssnPresenceLabel,
 } from '@okr/shared-util-core';
 
 /**
@@ -50,18 +50,6 @@ function isSingleCheckbox(field: Field): boolean {
   return field.type === 'checkbox' && !(Array.isArray(field.options) && field.options.length > 0);
 }
 
-/** «ja»/«nein» for booleans, a comma list for arrays, «–» for nothing. */
-function formatRowValue(field: Field | undefined, value: unknown): string {
-  if (value === undefined || value === null || value === '') return '–';
-  if (field !== undefined && propertyTypeOf(field) === 'boolean') {
-    const b = coerceToPropertyType(value, 'boolean');
-    if (b !== undefined) return b ? 'ja' : 'nein';
-  }
-  if (typeof value === 'boolean') return value ? 'ja' : 'nein';
-  if (Array.isArray(value)) return value.map((v) => String(v)).join(', ');
-  return String(value);
-}
-
 /**
  * The rows of the notification e-mail (pure): visible input fields in field order with their
  * answer (booleans as ja/nein), then every derived value labelled by its key. Hidden and display
@@ -74,9 +62,9 @@ export function buildSubmissionRows(
 ): SubmissionRow[] {
   const rows: SubmissionRow[] = sortedVisibleInputs.map((f) => ({
     label: f.label,
-    value: isSsnField(f) ? ssnPresenceLabel(answers[f.key]) : formatRowValue(f, answers[f.key]),
+    value: formatAnswer(f, answers[f.key]),
   }));
-  for (const [key, value] of Object.entries(derivedValues)) rows.push({ label: key, value: formatRowValue(undefined, value) });
+  for (const [key, value] of Object.entries(derivedValues)) rows.push({ label: key, value: formatAnswer(undefined, value) });
   return rows;
 }
 
