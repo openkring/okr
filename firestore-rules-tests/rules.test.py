@@ -388,6 +388,15 @@ for key, okey in [("gOpen", "tkOpen"), ("gClosed", "tkClosed"), ("meeting.m1", "
     seed(f"tasks/{okey}", {"tenants": ["t1"], "isArchived": False, "shareKey": key, "name": okey,
                            "author": {"key": "pE", "name1": "E"}, "assignee": {"key": "pZ", "name1": "Z"},
                            "state": "planned", "completionDate": ""})
+# function-written OCR review task (createReviewTask): assignee is the treasurer pT (not privileged).
+# tkOcrNull carries the author shape written until 2026-11-02 (null), tkOcrSys the system avatar now written.
+seed("tasks/tkOcrNull", {"tenants": ["t1"], "isArchived": False, "shareKey": "", "name": "OCR: Beleg prüfen",
+                         "author": None, "assignee": {"key": "pT", "name1": "T", "modelType": "person"},
+                         "state": "initial", "completionDate": ""})
+seed("tasks/tkOcrSys",  {"tenants": ["t1"], "isArchived": False, "shareKey": "", "name": "OCR: Beleg prüfen",
+                         "author": {"key": "", "name1": "System", "name2": "", "label": "System", "modelType": "user"},
+                         "assignee": {"key": "pT", "name1": "T", "modelType": "person"},
+                         "state": "initial", "completionDate": ""})
 
 # expenses: carry the payee's IBAN — treasurer/admin, author (userId) and payee (payeeKey) only.
 seed("expenses/exOwnA",    {"tenants": ["t1"], "isArchived": False, "userId": "uidA", "payeeKey": "", "iban": "CH00"})
@@ -1259,6 +1268,17 @@ single_cases = [
      body({"state": "started"}), ["state"]),
     ("author E create tasks/abc -> ALLOW (normal id)", True, POST, "tasks?documentId=abc", E,
      body({"tenants": ["t1"], "isArchived": False, "shareKey": "", "name": "N", "author": {"key": "pE", "name1": "E"}, "state": "planned", "completionDate": ""}), None),
+    # function-written tasks: taskAuthorKept() reads author.key, which errors on a present null author
+    # (get('author', {}) only defaults a MISSING field) — so the writers stamp the system avatar instead.
+    # The null case documents live docs until scripts/repair-null-task-authors.mjs has run.
+    ("treasurer T PATCH state of OCR task with author null -> DENY (null author, see note)", False, PATCH,
+     "tasks/tkOcrNull", T, body({"state": "started"}), ["state"]),
+    ("treasurer T PATCH state of OCR task with system author -> ALLOW", True, PATCH,
+     "tasks/tkOcrSys", T, body({"state": "started"}), ["state"]),
+    ("privileged P PATCH state of OCR task with author null -> ALLOW (skips the author check)", True, PATCH,
+     "tasks/tkOcrNull", P, body({"state": "planned"}), ["state"]),
+    ("treasurer T PATCH OCR task author -> self -> DENY (takeover)", False, PATCH,
+     "tasks/tkOcrSys", T, body({"author": {"key": "pT", "name1": "T"}}), ["author"]),
     # contracts / contract-documents (spec 1.5 §5.1)
     ("userA GET contracts/cLoanA (own party) -> ALLOW", True, GET, "contracts/cLoanA", A, None, None),
     ("userB GET contracts/cLoanA (stranger) -> DENY", False, GET, "contracts/cLoanA", B, None, None),

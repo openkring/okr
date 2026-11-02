@@ -20,6 +20,7 @@ import { sanitizeCreditor } from './creditor.util';
 import { costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
 import { resolveTreasurer } from './resolve-treasurer';
 import { emitEvent } from '../workflow/emit';
+import { SYSTEM_AUTHOR } from '../workflow/activity';
 import { getTodayStr, DateFormat } from '@okr/shared-util-core';
 
 const REGION = 'europe-west6';
@@ -651,7 +652,9 @@ async function createReviewTask(
     tenants: [tenantId], isArchived: false,
     name: name.slice(0, 200), index: '', tags: '',
     notes: `OCR-Beleg: ${result.storagePath}`,
-    author: null,
+    // never null: the tasks rule reads author.key on every update and errors on null, which
+    // would lock a non-privileged treasurer out of their own review task
+    author: SYSTEM_AUTHOR,
     assignee: { key: treasurer.key, name1: treasurer.name1, name2: treasurer.name2, modelType: 'person', type: '', subType: '', label: `${treasurer.name1} ${treasurer.name2}`.trim() },
     state: 'initial',
     dueDate: '', completionDate: '',
