@@ -22,7 +22,7 @@ import { createBoathouseReservation } from './reservation-target';
 import { emitEvent } from '../workflow/emit';
 import { buildSubmissionTaskNotes, prepareSubmission, type SubmissionRow, type ValueNames } from './submission-pipeline';
 import { projectPublicFormDefinition } from './public-definition';
-import { acceptanceForSection, isDocumentId, readVerifiedSection, type FormSectionProperties } from './form-section-config';
+import { acceptanceForSection, isDocumentId, missingSectionOnlyValues, readVerifiedSection, type FormSectionProperties } from './form-section-config';
 import { persistWithSlot, readResponseCount } from './form-stats';
 import { buildFillerMail, escapeHtml, mailErrorCode } from './filler-confirmation';
 
@@ -607,6 +607,16 @@ export const submitForm = onCall(
       throw new HttpsError('failed-precondition', `Unknown mapping: ${target.mappingKey}`);
     }
     const implicit = resolveImplicitValues(fields, section?.props.implicitValues, payload.values ?? {});
+    // A section saved before the implicit field existed passes the check above but carries no value for it:
+    // the registration would be stored without its course. Refused like a closed form — before a place is taken.
+    const missingImplicit = missingSectionOnlyValues(fields, implicit);
+    if (missingImplicit.length > 0) {
+      logger.warn(
+        `${CF_NAME}: section ${section?.id ?? 'none'} of formKey=${payload.formKey} (form ${formDef.okey}) has no value for `
+        + `${missingImplicit.join(', ')} — refused`,
+      );
+      throw new HttpsError('failed-precondition', 'form-closed');
+    }
     // the board e-mail shows the course by name; only read for a submission that can mail anybody
     const names = isSpam ? {} : await readCourseNames(db, fields, implicit, payload.tenantId, CF_NAME);
     const prepared = prepareSubmission(

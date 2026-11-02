@@ -1,6 +1,6 @@
 import type { Firestore } from 'firebase-admin/firestore';
 import type { BaseType, Field } from '@okr/shared-models';
-import { effectiveAcceptance, requiresSection, type AcceptanceSettings } from '@okr/shared-util-core';
+import { effectiveAcceptance, isSectionOnlyImplicit, requiresSection, type AcceptanceSettings } from '@okr/shared-util-core';
 
 /**
  * The form section a submission names (`sectionConfigRef`) is a client claim (1.125 B, review focus 1).
@@ -79,4 +79,16 @@ export function acceptanceForSection(
 ): AcceptanceSettings {
   const settings = effectiveAcceptance(def, section?.props, section?.id);
   return section === undefined && requiresSection(def.fields) ? { ...settings, isOpen: false } : settings;
+}
+
+/**
+ * The keys of the section-only implicit fields (e.g. the course) that resolved to no value. A section saved
+ * before the field existed passes the section check but carries no value for it; storing the registration
+ * then would leave it without a course. Keys only, so the result can be logged.
+ */
+export function missingSectionOnlyValues(fields: Field[] | undefined, implicit: Record<string, unknown>): string[] {
+  return (Array.isArray(fields) ? fields : [])
+    .filter(isSectionOnlyImplicit)
+    .map((f) => f.key)
+    .filter((key) => implicit[key] === undefined);
 }

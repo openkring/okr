@@ -4,7 +4,7 @@ import type { Firestore } from 'firebase-admin/firestore';
 import type { Field } from '@okr/shared-models';
 import { computeFormAvailability } from '@okr/shared-util-core';
 
-import { acceptanceForSection, readVerifiedSection, requiresSection, verifySectionForForm } from './form-section-config';
+import { acceptanceForSection, missingSectionOnlyValues, readVerifiedSection, requiresSection, verifySectionForForm } from './form-section-config';
 
 const SECTION = {
   type: 'form',
@@ -77,6 +77,23 @@ describe('readVerifiedSection', () => {
 const implicit = (extra: Record<string, unknown> = {}): Field =>
   ({ id: 'c', key: 'courseId', type: 'implicit', label: 'Kurs', valueType: 'text', required: false, width: 'full', order: 0, ...extra }) as Field;
 const text = { id: 'n', key: 'firstName', type: 'text', label: 'Vorname', required: false, width: 'full', order: 1 } as Field;
+
+describe('missingSectionOnlyValues', () => {
+  it('names a section-only implicit field the section gave no value for (an older section)', () => {
+    expect(missingSectionOnlyValues([implicit(), text], {})).toEqual(['courseId']);
+  });
+
+  it('is empty when the section supplied the value', () => {
+    expect(missingSectionOnlyValues([implicit(), text], { courseId: 'c1' })).toEqual([]);
+  });
+
+  it('ignores implicit fields a default or a link can supply, and forms without implicit fields', () => {
+    expect(missingSectionOnlyValues([implicit({ defaultValue: 'c1' })], {})).toEqual([]);
+    expect(missingSectionOnlyValues([implicit({ fromLink: true })], {})).toEqual([]);
+    expect(missingSectionOnlyValues([text], {})).toEqual([]);
+    expect(missingSectionOnlyValues(undefined, {})).toEqual([]);
+  });
+});
 
 describe('requiresSection', () => {
   it('an implicit field without default and without fromLink needs the page', () => {
