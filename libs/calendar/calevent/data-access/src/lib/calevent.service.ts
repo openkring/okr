@@ -6,9 +6,9 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { CalEventCollection, CalEventModel, UserModel } from '@okr/shared-models';
-import { addTime, die, getSystemQuery } from '@okr/shared-util-core';
+import { addTime, die, getDeletePatch, getSystemQuery } from '@okr/shared-util-core';
 
-import { getCaleventIndex, withoutAttendance } from '@okr/calendar-calevent-util';
+import { getCaleventIndex, withoutCourseFields } from '@okr/calendar-calevent-util';
 import { ActivityService } from '@okr/activity-data-access';
 import { PFX } from './scope';
 
@@ -61,7 +61,9 @@ export class CalEventService {
    */
   public async update(calEvent: CalEventModel, currentUser?: UserModel): Promise<string | undefined> {
     calEvent.index = getCaleventIndex(calEvent);
-    const key = await this.firestoreService.updateModel<CalEventModel>(CalEventCollection, withoutAttendance(calEvent), false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
+    // never resends courseKey or the attendance record: no caller of update() changes them (course assignment goes
+    // through CourseService.setCourseKey, attendance through field paths), and a stale copy would revert them
+    const key = await this.firestoreService.updateModel<CalEventModel>(CalEventCollection, withoutCourseFields(calEvent), false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
     const payload = `${calEvent.startDate} ${calEvent.startTime}: ${calEvent.name}`;
     void this.activityService.log('calevent', 'update', currentUser, payload);
     return key;
@@ -75,7 +77,11 @@ export class CalEventService {
    */
   public async delete(calEvent: CalEventModel, currentUser?: UserModel): Promise<void> {
     const payload = `${calEvent.startDate} ${calEvent.startTime}: ${calEvent.name}`;
-    await this.firestoreService.deleteModel<CalEventModel>(CalEventCollection, calEvent, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
+    // a narrow patch (isArchived, or the tenants detach — getDeletePatch), not deleteModel's whole-model write: that
+    // would resend a cached courseKey/attendance, which the rules treat as a course change on a course event
+    const patch = getDeletePatch(calEvent.tenants, this.env.tenantId);
+    const key = await this.firestoreService.updateFields(CalEventCollection, calEvent.okey, patch, this.i18n.delete_error(), this.i18n.delete_conf());
+    if (key) Object.assign(calEvent, patch);
     void this.activityService.log('calevent', 'delete', currentUser, payload);
   }
 

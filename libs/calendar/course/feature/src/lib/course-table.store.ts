@@ -108,8 +108,13 @@ export const CourseTableStore = signalStore(
       const c = course();
       return !!c && mayViewCourseTable(c, access(), ownMemberships(), events());
     });
-    /** the gate can only say «no» once the course, its events and the viewer's memberships are in */
-    const viewDecided = computed(() => !state.courseResource.isLoading() && !state.eventsResource.isLoading() && !state.ownMembershipsResource.isLoading());
+    /**
+     * The gate can only say «no» once the viewer is known (the current user loads after the route — without it every
+     * role check is false and the page would flash «not found») and the course, its events and the viewer's
+     * memberships are in.
+     */
+    const viewDecided = computed(() => !!currentUser()
+      && !state.courseResource.isLoading() && !state.eventsResource.isLoading() && !state.ownMembershipsResource.isLoading());
     return {
       course,
       currentUser,

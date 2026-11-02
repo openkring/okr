@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { AvatarInfo, CourseEligible, CourseFinanceModel, CourseModel, MoneyModel } from '@okr/shared-models';
 
-import { COURSE_NUMBER_LENGTH, courseFinanceValidations, courseValidations } from './course.validations';
+import { COURSE_NUMBER_LENGTH, courseFinanceValidations, courseValidations, withoutErasedEligible } from './course.validations';
 
 const PFX = '@calendar/course/feature.validation.';
 
@@ -177,9 +177,23 @@ describe('courseFinanceValidations', () => {
       expect(courseFinanceValidations(f).getErrors('eligible')).toContain(PFX + 'duplicatePerson');
     });
 
-    it('rejects a person without a key (a free-text entry cannot be paid)', () => {
-      const f = finance({ ...base, eligible: [eligible('')] });
+    it('rejects a malformed entry without a person', () => {
+      const f = finance({ ...base, eligible: [{ person: undefined as never }] });
       expect(courseFinanceValidations(f).getErrors('eligible')).toContain(PFX + 'personRequired');
+    });
+
+    it('ignores an erased entry (blank person key) — no error, course-only saves are not blocked', () => {
+      const f = finance({ ...base, eligible: [eligible(''), eligible('pA'), eligible('  ', new MoneyModel(-5))] });
+      expect(courseFinanceValidations(f).isValid()).toBe(true);
+    });
+
+    it('withoutErasedEligible drops blank-key entries and keeps the input unchanged', () => {
+      const f = finance({ ...base, eligible: [eligible(''), eligible('pA')] });
+      const cleaned = withoutErasedEligible(f);
+      expect(cleaned.eligible.map(e => e.person.key)).toEqual(['pA']);
+      expect(f.eligible.length).toBe(2);
+      const clean = finance({ ...base, eligible: [eligible('pA')] });
+      expect(withoutErasedEligible(clean)).toBe(clean);
     });
 
     it('a legacy document without eligible is valid', () => {

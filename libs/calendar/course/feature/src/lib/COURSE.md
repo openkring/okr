@@ -33,7 +33,8 @@ The rules in `firestore.rules` are the guard; the UI mirrors them in `course-acc
 | Read a course | everybody in the tenant |
 | Create a course | `privileged` or admin of the group |
 | Edit, archive | `privileged`, a responsible person of the course, admin of the group |
-| Read and write the finance document | the same, plus the treasurer |
+| Read the finance document | the same, plus the treasurer |
+| Write the finance document | `privileged`, a responsible person of the course, admin of the group — never the treasurer alone (spec §6) |
 | See the yearly totals | treasurer, `privileged`, `admin` — enforced by the UI only (see below) |
 
 ## Store

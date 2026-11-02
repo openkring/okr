@@ -13,7 +13,7 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { InvitationService } from '@okr/relationship-invitation-data-access';
-import { CALEVENT_I18N_KEYS, CaleventI18n, isAttendanceClosed, splitAttendees, withoutAttendance } from '@okr/calendar-calevent-util';
+import { CALEVENT_I18N_KEYS, CaleventI18n, isAttendanceClosed, splitAttendees, withoutCourseFields } from '@okr/calendar-calevent-util';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 
@@ -343,7 +343,7 @@ export class AttendeesAccordion {
     const calevent = this.calevent();
     calevent.attendees = attendees;
     this.attendees.set(attendees);
-    await this.firestoreService.updateModel<CalEventModel>('calevents', withoutAttendance(calevent), false, this.i18n.update_conf(), this.i18n.update_error(), this.currentUser());
+    await this.firestoreService.updateModel<CalEventModel>('calevents', withoutCourseFields(calevent), false, this.i18n.update_conf(), this.i18n.update_error(), this.currentUser());
   }
 
   protected getAttendanceIcon(state: string): string {

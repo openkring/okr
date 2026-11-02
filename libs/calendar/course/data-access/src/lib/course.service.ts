@@ -12,7 +12,7 @@ import {
   AttendanceEntry, AvatarInfo, BookingCollection, BookingModel, CalEventCollection, CalEventModel, CourseCollection, CourseFinanceDocId, CourseFinanceModel,
   CourseFinanceSubcollection, CourseModel, PersonCollection, UserModel
 } from '@okr/shared-models';
-import { die, getSystemQuery, isValidExternalId, removeUndefinedFields } from '@okr/shared-util-core';
+import { die, getDeletePatch, getSystemQuery, isValidExternalId, removeUndefinedFields } from '@okr/shared-util-core';
 
 import { PFX } from './scope';
 
@@ -44,6 +44,20 @@ const SERVER_MAINTAINED_FIELDS = ['trainerKeys', 'responsibleKeys'] as const;
 function withoutServerKeys(course: CourseModel): CourseModel {
   const copy: Partial<CourseModel> = { ...course };
   for (const field of SERVER_MAINTAINED_FIELDS) delete copy[field];
+  return copy as CourseModel;
+}
+
+/**
+ * Fields other write paths own: the lock and the «reported» note (`updateCourseState`, course table) and the end
+ * task (`endTaskKey`, nightly job). The edit dialog never changes them, so `update()` never resends them — a course
+ * opened before a lock would otherwise unlock it again, or clear the end task and get a second one.
+ */
+const STATE_FIELDS = ['isLocked', 'lockedBy', 'lockedAt', 'reportedAt', 'endTaskKey'] as const;
+
+/** The payload of `update()`: without the server-maintained keys and without the state fields. */
+export function courseUpdatePayload(course: CourseModel): CourseModel {
+  const copy: Partial<CourseModel> = withoutServerKeys(course);
+  for (const field of STATE_FIELDS) delete copy[field];
   return copy as CourseModel;
 }
 
@@ -89,10 +103,11 @@ export class CourseService {
   /**
    * Update a course. `trainerKeys` / `responsibleKeys` are stripped from the payload: updateModel merges,
    * so the server's values stay untouched and the rules (which deny a client write of them) never see them.
+   * The lock / «reported» / end-task fields are stripped too (`courseUpdatePayload`): other paths own them.
    * @returns the key of the updated course or undefined if the operation failed
    */
   public async update(course: CourseModel, currentUser?: UserModel): Promise<string | undefined> {
-    const payload = withoutServerKeys(course);
+    const payload = courseUpdatePayload(course);
     payload.index = getCourseIndex(course);
     const key = await this.firestoreService.updateModel<CourseModel>(CourseCollection, payload, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
     void this.activityService.log('course', 'update', currentUser, this.activityPayload(course));
@@ -115,11 +130,16 @@ export class CourseService {
   }
 
   /**
-   * A course is never deleted: it is archived (deleting-models skill; `FirestoreService.deleteModel`
-   * applies `getDeletePatch`). Its calevents keep their `courseKey`.
+   * A course is never deleted: it is archived (deleting-models skill: `getDeletePatch`, archive or detach). Written
+   * as that narrow patch only, not through `deleteModel`'s whole-model write: a cached copy would resend the
+   * server-maintained `trainerKeys` / `responsibleKeys` (the rules deny any change of them) and the lock fields.
+   * Its calevents keep their `courseKey`.
    */
   public async archive(course: CourseModel, currentUser?: UserModel): Promise<void> {
-    await this.firestoreService.deleteModel<CourseModel>(CourseCollection, course, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
+    if (!course.okey) die('CourseService.archive: course.okey is mandatory.');
+    const patch = getDeletePatch(course.tenants, this.env.tenantId);
+    const key = await this.firestoreService.updateFields(CourseCollection, course.okey, patch, this.i18n.delete_error(), this.i18n.delete_conf());
+    if (key) Object.assign(course, patch);
     void this.activityService.log('course', 'delete', currentUser, this.activityPayload(course));
   }
 

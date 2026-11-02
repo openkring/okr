@@ -4,7 +4,7 @@ import { AvatarInfo, CalEventModel, CourseFinanceModel, CourseModel, MembershipM
 
 import {
   CourseAccess, isCourseResponsible, isCourseTrainer, loadFinanceForEdit, mayCreateCourse, mayEditCourseAttendance, mayExportCourse, mayManageCourse,
-  mayOpenCourseMenu, mayReadCourseFinance, mayViewCourseTable
+  mayOpenCourseMenu, mayReadCourseFinance, mayViewCourseTable, mayWriteCourseFinance
 } from './course-access.util';
 
 function avatar(key: string): AvatarInfo {
@@ -51,6 +51,12 @@ describe('mayManageCourse', () => {
 });
 
 describe('mayReadCourseFinance', () => {
+  it('lets only who manages the course write the finance — the treasurer reads, never writes (spec §6)', () => {
+    expect(mayWriteCourseFinance(course(), { ...nobody, isTreasurer: true })).toBe(false);
+    expect(mayWriteCourseFinance(course(), { ...nobody, isPrivileged: true })).toBe(true);
+    expect(mayWriteCourseFinance(course(), { ...nobody, isGroupAdmin: true })).toBe(true);
+  });
+
   it('adds the treasurer to the people who manage the course', () => {
     expect(mayReadCourseFinance(course(), { ...nobody, isTreasurer: true })).toBe(true);
     expect(mayReadCourseFinance(course(['p9']), nobody)).toBe(true);

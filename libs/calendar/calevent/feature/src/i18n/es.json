@@ -602,6 +602,7 @@
     "entry": "Cursos",
     "lockedRemove": "Este curso está cerrado. Desbloquéalo en la tabla del curso antes de quitar fechas.",
     "lockedAdd": "Este curso está cerrado. Desbloquéalo en la tabla del curso antes de añadir nuevas fechas.",
+    "lockedCancel": "Este curso está cerrado. Desbloquéalo en la tabla del curso antes de cancelar una fecha o restablecerla.",
     "over": "Este curso ya ha terminado. Las nuevas fechas quedarían fuera del periodo del curso."
   },
   "sync": {

@@ -107,11 +107,41 @@ describe('CourseService', () => {
     });
   });
 
-  describe('archive', () => {
-    it('goes through deleteModel (archive/detach), never a hard delete', async () => {
+  describe('state fields', () => {
+    it('update() never resends the lock, «reported» or end-task fields', async () => {
       const course = serverMaintained();
+      course.isLocked = true;
+      course.lockedBy = avatar('p9');
+      course.lockedAt = '20261101120000';
+      course.reportedAt = '20261102120000';
+      course.endTaskKey = 'course-c1-end';
+      await service.update(course);
+      const sent = firestore.updateModel.mock.calls[0][1] as unknown as Record<string, unknown>;
+      for (const field of ['isLocked', 'lockedBy', 'lockedAt', 'reportedAt', 'endTaskKey', 'trainerKeys', 'responsibleKeys']) {
+        expect(field in sent).toBe(false);
+      }
+      expect(sent['name']).toBe('Herbstkurs');
+      expect(course.isLocked).toBe(true);
+      expect(course.endTaskKey).toBe('course-c1-end');
+    });
+  });
+
+  describe('archive', () => {
+    it('writes only the archive patch — no server keys, no lock fields, never a hard delete', async () => {
+      const course = serverMaintained();
+      course.isLocked = true;
       await service.archive(course);
-      expect(firestore.deleteModel).toHaveBeenCalledWith(CourseCollection, course, expect.any(String), expect.any(String), undefined);
+      expect(firestore.deleteModel).not.toHaveBeenCalled();
+      expect(firestore.updateModel).not.toHaveBeenCalled();
+      expect(firestore.updateFields).toHaveBeenCalledWith(CourseCollection, 'c1', { isArchived: true }, expect.any(String), expect.any(String));
+      expect(course.isArchived).toBe(true);
+    });
+
+    it('detaches a course shared with another tenant instead of archiving it', async () => {
+      const course = serverMaintained();
+      course.tenants = ['scs', 'kring'];
+      await service.archive(course);
+      expect(firestore.updateFields).toHaveBeenCalledWith(CourseCollection, 'c1', { tenants: ['kring'] }, expect.any(String), expect.any(String));
     });
   });
 

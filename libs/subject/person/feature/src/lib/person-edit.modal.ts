@@ -19,7 +19,7 @@ import { WorkrelAccordion } from '@okr/relationship-workrel-feature';
 
 import { AddressesAccordion } from '@okr/subject-address-feature';
 import { PersonForm } from '@okr/subject-person-ui';
-import { PersonFormModel } from '@okr/subject-person-util';
+import { PersonFormModel, withoutUnchangedExternalIds } from '@okr/subject-person-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { PersonStore } from './person.store';
@@ -157,7 +157,10 @@ export class PersonEditModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await dismissOverlay(this.modalController, this.formData(), 'confirm');
+    // externalIds only when the user changed them: an id set meanwhile elsewhere (J+S number from the course table)
+    // must survive a dialog opened before it — the openers save with a merge, so an absent field stays as stored
+    const data = this.formData();
+    await dismissOverlay(this.modalController, data ? withoutUnchangedExternalIds(data, this.person()) : data, 'confirm');
   }
 
   public async cancel(): Promise<void> {

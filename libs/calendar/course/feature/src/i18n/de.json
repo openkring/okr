@@ -78,7 +78,7 @@
   },
   "finance": {
     "title": "Entschädigung der Trainer",
-    "intro": "Diese Angaben sehen nur die Verantwortlichen, die Gruppenleitung und die Kassenführung.",
+    "intro": "Diese Angaben sehen nur die Verantwortlichen, die Gruppenleitung, privilegierte Personen (zum Beispiel der Vorstand) und die Kassenführung.",
     "books": {
       "label": "Buchhaltung",
       "helper": "In dieser Buchhaltung wird die Entschädigung verbucht.",

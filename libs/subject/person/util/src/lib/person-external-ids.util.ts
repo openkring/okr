@@ -76,3 +76,25 @@ export function externalIdErrorKey(key: string): string {
   const known = EXTERNAL_ID_KINDS.some((def) => def.kind === kind);
   return '@subject/person/feature.validation.' + (known ? `externalId_${kind}` : 'externalId_unknown');
 }
+
+/** Same map, whatever the key order; an absent map equals an empty one. */
+function sameExternalIds(a: Record<string, string> | undefined, b: Record<string, string> | undefined): boolean {
+  const left = Object.entries(a ?? {}).sort(([x], [y]) => x.localeCompare(y));
+  const right = Object.entries(b ?? {}).sort(([x], [y]) => x.localeCompare(y));
+  return left.length === right.length && left.every(([key, value], i) => key === right[i][0] && value === right[i][1]);
+}
+
+/**
+ * The person edit dialog's save payload: `externalIds` is left out when the user did not change it against the
+ * snapshot the dialog opened with. The save is a merge (`updateModel`), so the stored map then stays as it is — an
+ * id written meanwhile elsewhere (the J+S number from the course table, `setExternalId`) is not erased by a dialog
+ * that was opened before. A changed map is sent whole, as before. Pure; the input is not changed.
+ */
+export function withoutUnchangedExternalIds<T extends { externalIds?: Record<string, string> }>(
+  edited: T,
+  opened: { externalIds?: Record<string, string> } | undefined,
+): T {
+  if (!sameExternalIds(edited.externalIds, opened?.externalIds)) return edited;
+  const { externalIds: _unchanged, ...rest } = edited;   // eslint-disable-line @typescript-eslint/no-unused-vars
+  return rest as T;
+}

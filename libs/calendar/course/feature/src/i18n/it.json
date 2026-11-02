@@ -78,7 +78,7 @@
   },
   "finance": {
     "title": "Indennità degli allenatori",
-    "intro": "Solo i responsabili, la direzione del gruppo e la cassa vedono questi dati.",
+    "intro": "Solo i responsabili, la direzione del gruppo, le persone privilegiate (per esempio il comitato) e la cassa vedono questi dati.",
     "books": {
       "label": "Contabilità",
       "helper": "L'indennità viene registrata in questa contabilità.",

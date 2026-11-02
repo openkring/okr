@@ -1,7 +1,7 @@
 import { AttendanceEntry, Attendee, AvatarInfo, CalEventModel, InvitationState } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ATTENDANCE_FIELDS, confirmedOccurrences, resetAttendance, withoutAttendance, addInvitedAttendee, removeInvitedAttendee, bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getSeriesUpdateFields, isCaleventInView, isCalEvent, isFullDayEvent, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isCaleventFull, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, splitAttendees, toInvitationState } from './calevent.util';
+import { ATTENDANCE_FIELDS, confirmedOccurrences, resetAttendance, withoutAttendance, withoutCourseFields, addInvitedAttendee, removeInvitedAttendee, bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getSeriesUpdateFields, isCaleventInView, isCalEvent, isFullDayEvent, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isCaleventFull, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, splitAttendees, toInvitationState } from './calevent.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -413,7 +413,7 @@ describe('series reconcile', () => {
   it('propagates shared fields but never okey, attendees or isArchived', () => {
     const edited: CalEventModel = { ...new CalEventModel('t1'), okey: 's100', name: 'Training', startDate: '20260601',
       attendees: [{ person: { key: 'p1', name1: 'A', name2: 'B', modelType: 'person', type: '', subType: '', label: '' }, state: 'accepted' }] };
-    const fields = getSeriesUpdateFields(edited, '20260608');
+    const fields = getSeriesUpdateFields(edited, '20260608', false);
     expect(fields['name']).toBe('Training');
     expect(fields['startDate']).toBe('20260608');
     expect(fields['index']).toContain('20260608');   // index carries the target occurrence's date
@@ -429,9 +429,9 @@ describe('attendance write helpers', () => {
   const avatar: AvatarInfo = { key: 'p1', name1: 'A', name2: 'B', modelType: 'person', type: '', subType: '', label: '' };
   const entry: AttendanceEntry = { person: avatar, presence: 'present', function: 'participant', by: 'p9', at: '20261101120000' };
 
-  it('getSeriesUpdateFields propagates courseKey but no attendance', () => {
+  it('getSeriesUpdateFields propagates courseKey when asked to, but no attendance', () => {
     const e = { ...base, courseKey: 'c1', attendance: { p1: entry }, attendanceConfirmedAt: '20261101120000' };
-    const f = getSeriesUpdateFields(e, '20261108');
+    const f = getSeriesUpdateFields(e, '20261108', true);
     expect(f['courseKey']).toBe('c1');
     for (const k of ATTENDANCE_FIELDS) expect(k in f).toBe(false);
   });
@@ -450,6 +450,15 @@ describe('attendance write helpers', () => {
     withoutAttendance(input);
     expect(input.attendance).toEqual({ p1: entry });
     expect(input.attendanceConfirmedAt).toBe('x');
+  });
+  it('withoutCourseFields drops courseKey and the attendance fields, keeps the rest, does not mutate', () => {
+    const input = { ...base, courseKey: 'c1', attendance: { p1: entry }, attendanceConfirmedAt: 'x' };
+    const out = withoutCourseFields(input);
+    expect('courseKey' in out).toBe(false);
+    for (const k of ATTENDANCE_FIELDS) expect(k in out).toBe(false);
+    expect(out.name).toBe(base.name);
+    expect(input.courseKey).toBe('c1');
+    expect(input.attendance).toEqual({ p1: entry });
   });
   it('resetAttendance is an empty, unconfirmed record', () => {
     expect(resetAttendance()).toEqual({ attendance: {}, attendanceConfirmedAt: '' });

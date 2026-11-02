@@ -787,6 +787,7 @@ export class FirestoreService {
    * would revert them (and a rule that whitelists the changed keys would deny the write).
    * Same App Check recovery and error toast as updateModel.
    * @param errorMessage an already RESOLVED message (never an i18n key)
+   * @param confirmMessage an optional, already resolved confirmation shown as a toast after the write
    * @returns the key, or undefined if the write failed
    */
   public async updateFields(
@@ -794,6 +795,7 @@ export class FirestoreService {
     key: string,
     fields: Record<string, unknown>,
     errorMessage?: string,
+    confirmMessage?: string,
   ): Promise<string | undefined> {
     if (!isBrowser(this.platformId)) {
       return this.okrError(undefined, 'FirestoreService.updateFields: This method can only be called in the browser context.', true);
@@ -804,6 +806,7 @@ export class FirestoreService {
     try {
       await this.writeWithTokenDenialRetry(`updateFields(${collectionName}/${key})`, () =>
         updateDoc(doc(this.firestore, `${collectionName}/${key}`), { ...fields }));
+      if (confirmMessage) await this.okrShowToast(this.toastController, confirmMessage);
       return key;
     }
     catch (ex) {

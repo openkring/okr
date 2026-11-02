@@ -202,8 +202,13 @@ export const CalEventStore = signalStore(
         if (!calName || calName.length === 0) return of([]);
         if (!store.appStore.fbUser()) {
           if (calName !== 'public') return of([]);
-          const url = `${PUBLIC_CALEVENTS_CF_URL}?tenantId=${encodeURIComponent(store.appStore.tenantId())}`;
-          return from(fetch(url).then(r => r.ok ? r.json() as Promise<CalEventModel[]> : []));
+          const tenantId = store.appStore.tenantId();
+          const url = `${PUBLIC_CALEVENTS_CF_URL}?tenantId=${encodeURIComponent(tenantId)}`;
+          // the endpoint returns an allow-list projection (no attendees, attendance, organisers): fill the rest
+          // with the model defaults so the list code sees complete events
+          return from(fetch(url)
+            .then(r => r.ok ? r.json() as Promise<Partial<CalEventModel>[]> : [])
+            .then(list => list.map(e => ({ ...new CalEventModel(tenantId), ...e }) as CalEventModel)));
         }
         // 'Archivierte anzeigen' drops the isArchived filter from the QUERY, not from a
         // client-side predicate: an archived event is never fetched otherwise.
@@ -467,9 +472,10 @@ export const CalEventStore = signalStore(
        * event of a locked course and creating one with its key; checked BEFORE the first write, because a denial
        * after a committed batch leaves a half-written series. The courses are read fresh by key; a lookup that fails
        * does not block anything, the rules stay the backstop.
-       * @param kind 'remove' = events would be archived/deleted, 'add' = events would be created
+       * @param kind 'remove' = events would be archived/deleted, 'add' = events would be created,
+       *        'cancel' = an event would be cancelled or reinstated (the rules treat that like archiving)
        */
-      async refuseLockedCourse(courseKeys: string[], kind: 'remove' | 'add'): Promise<boolean> {
+      async refuseLockedCourse(courseKeys: string[], kind: 'remove' | 'add' | 'cancel'): Promise<boolean> {
         if (courseKeys.length === 0) return false;
         try {
           const service = await store.courseService();
@@ -479,7 +485,9 @@ export const CalEventStore = signalStore(
           warn(`CalEventStore.refuseLockedCourse: course lookup failed, the rules decide: ${ex}`);
           return false;
         }
-        await confirm(store.alertController, kind === 'remove' ? store.i18n.courses_locked_remove() : store.i18n.courses_locked_add(), store.i18n.ok(), '');
+        const message = kind === 'remove' ? store.i18n.courses_locked_remove()
+          : kind === 'cancel' ? store.i18n.courses_locked_cancel() : store.i18n.courses_locked_add();
+        await confirm(store.alertController, message, store.i18n.ok(), '');
         return true;
       },
 

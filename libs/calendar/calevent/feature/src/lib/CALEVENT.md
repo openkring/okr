@@ -82,14 +82,16 @@ Rules that every writer of a calevent must respect:
   `attendanceConfirmedBy` or `attendanceConfirmedAt` is allowed only for an editor of the event's stored course
   (trainer, responsible person, group admin, `eventAdmin`, `privileged`) and only while the course is not locked.
 - **So no whole-model write may carry them.** `CalEventService.update` and the attendees accordion pass the event
-  through `withoutAttendance`; the edit modal, series updates and copies do the same or use `resetAttendance()`.
+  through `withoutCourseFields` (attendance AND `courseKey`: assignment goes through `CourseService.setCourseKey`);
+  series updates and copies use `getSeriesUpdateFields` or `resetAttendance()`. `CalEventService.delete` writes the
+  archive patch only (`getDeletePatch` via `updateFields`), never the cached model.
   Sign-up (`changeAttendanceState`) and lock (`toggleCaleventLock`) are field writes (`updateFields`).
 - **Attendance is written per field path** (`attendance.<personKey>`), so two trainers never erase each other.
 - **`courseKey` in a series edit** goes to the siblings only when the edit changed it (`courseKeyChanged`); a copy
   keeps it only for an editor of an unlocked course, otherwise it is cleared.
-- **Locked course = no write.** Edit, delete, shorten, extend and add-series on events of a locked course are
-  refused before the first write (`refuseLockedCourse`); delete and archive of a course event are gated by the
-  rules like a `courseKey` change.
+- **Locked course = no write.** Edit, delete, cancel, shorten, extend and add-series on events of a locked course
+  are refused before the first write (`refuseLockedCourse`); delete, archive and cancel (`state` to or from
+  `'cancelled'`) of a course event are gated by the rules like a `courseKey` change.
 - **`canChange`** has a course-trainer branch ahead of the group-admin return: a trainer may change events of the
   course they train, in group-calendar views only. A «Kurse» chip in the group calendar opens the course list.
 

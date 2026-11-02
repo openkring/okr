@@ -602,6 +602,7 @@
     "entry": "Cours",
     "lockedRemove": "Ce cours est clôturé. Déverrouille-le dans le tableau du cours avant de supprimer des dates.",
     "lockedAdd": "Ce cours est clôturé. Déverrouille-le dans le tableau du cours avant d'ajouter de nouvelles dates.",
+    "lockedCancel": "Ce cours est clôturé. Déverrouille-le dans le tableau du cours avant d'annuler une date ou de la rétablir.",
     "over": "Ce cours est déjà terminé. De nouvelles dates seraient en dehors de la période du cours."
   },
   "sync": {

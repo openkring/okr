@@ -204,10 +204,11 @@ export function convertFullCalendarToCalEvent(event: EventInput, tenantId: strin
  * isArchived).
  * @param edited the edited occurrence, carrying the new values
  * @param startDate the date of the target occurrence (its own, possibly shifted, date)
- * @param withCourseKey whether `courseKey` is propagated too; false unless the edit changed it (`courseKeyChanged`)
+ * @param withCourseKey whether `courseKey` is propagated too — required, no default (spec 1.132 §16): pass
+ *        `courseKeyChanged(edited, stored)`, true only when the edit changed it
  * @returns a plain object ready for a Firestore update()
  */
-export function getSeriesUpdateFields(edited: CalEventModel, startDate: string, withCourseKey = true): Record<string, unknown> {
+export function getSeriesUpdateFields(edited: CalEventModel, startDate: string, withCourseKey: boolean): Record<string, unknown> {
   const target = { ...edited, startDate };
   const fields: Record<string, unknown> = {
     name: target.name,
@@ -247,6 +248,18 @@ export const ATTENDANCE_FIELDS = ['attendance', 'attendanceConfirmedBy', 'attend
 export function withoutAttendance<T extends CalEventModel>(calevent: T): T {
   const copy = { ...calevent } as Record<string, unknown>;
   for (const key of ATTENDANCE_FIELDS) delete copy[key];
+  return copy as T;
+}
+
+/**
+ * Shallow copy without the attendance fields AND without `courseKey` — the payload of every whole-model calevent
+ * update (edit dialog, drag/resize, cancel, series conversion/decoupling, attendee list). None of these paths changes
+ * the course assignment (that goes through `CourseService.setCourseKey`), so resending a cached `courseKey` could only
+ * revert an assignment made meanwhile in the course table — and the rules would deny it as a course change.
+ */
+export function withoutCourseFields<T extends CalEventModel>(calevent: T): T {
+  const copy = withoutAttendance(calevent) as Record<string, unknown>;
+  delete copy['courseKey'];
   return copy as T;
 }
 

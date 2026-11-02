@@ -35,12 +35,20 @@ export function mayManageCourse(course: CourseModel, access: CourseAccess): bool
 }
 
 /**
- * Who may read (and write) the protected finance document `courses/{key}/finance/settings`: everybody who manages
- * the course, plus the treasurer. Mirrors `courseFinanceOk` in firestore.rules. A trainer who is not responsible
- * must not even trigger the read.
+ * Who may read the protected finance document `courses/{key}/finance/settings`: everybody who manages the course,
+ * plus the treasurer. Mirrors `courseFinanceOk` in firestore.rules. A trainer who is not responsible must not even
+ * trigger the read.
  */
 export function mayReadCourseFinance(course: CourseModel, access: CourseAccess): boolean {
   return mayManageCourse(course, access) || access.isTreasurer;
+}
+
+/**
+ * Who may WRITE the finance document: only who manages the course (privileged, group admin, responsible). The
+ * treasurer reads the rates but does not set them (spec §6); mirrors `courseFinanceWriteOk` in firestore.rules.
+ */
+export function mayWriteCourseFinance(course: CourseModel, access: CourseAccess): boolean {
+  return mayManageCourse(course, access);
 }
 
 /**

@@ -8,7 +8,7 @@ import { from, of } from 'rxjs';
 import { CourseService } from '@okr/calendar-course-data-access';
 import {
   ALL_COURSES_KEY, buildCourseListRows, COURSE_I18N_KEYS, CourseAccess, courseListHelpRole, CourseI18n, loadFinanceForEdit, mayCreateCourse,
-  mayManageCourse, mayOpenCourseMenu, mayReadCourseFinance, yearlyTotalRows
+  mayManageCourse, mayOpenCourseMenu, mayReadCourseFinance, mayWriteCourseFinance, yearlyTotalRows
 } from '@okr/calendar-course-util';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
@@ -190,10 +190,12 @@ export const CourseStore = signalStore(
         () => store.courseService.readFinanceStrict(course.okey),
       );
       if (unavailable) void store.alertService.showToast(store.i18n.list_financeUnavailable());
+      // a treasurer who does not manage the course sees the rates read-only (the whole dialog is read-only for them)
+      // and never writes them — the rules allow finance writes to the course managers only (spec §6)
       const result = await this.openEditModal(course, finance, !mayEdit);
       if (!result || !mayEdit) return;
       if (!deepEqual(result.course, course)) await store.courseService.update(result.course, store.currentUser());
-      if (result.finance) await store.courseService.saveFinance(course.okey, result.finance);
+      if (result.finance && mayWriteCourseFinance(course, access)) await store.courseService.saveFinance(course.okey, result.finance);
       store.coursesResource.reload();
     },
 

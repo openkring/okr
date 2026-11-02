@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { externalIdErrorKey, externalIdKeyOptions, fromProperties, toProperties } from './person-external-ids.util';
+import { externalIdErrorKey, externalIdKeyOptions, fromProperties, toProperties, withoutUnchangedExternalIds } from './person-external-ids.util';
 
 describe('toProperties / fromProperties', () => {
   it('round-trips a valid map', () => {
@@ -88,5 +88,29 @@ describe('externalIdErrorKey', () => {
     expect(externalIdErrorKey('js')).toBe('@subject/person/feature.validation.externalId_js');
     expect(externalIdErrorKey('bexio_gss')).toBe('@subject/person/feature.validation.externalId_bexio');
     expect(externalIdErrorKey('ahv')).toBe('@subject/person/feature.validation.externalId_unknown');
+  });
+});
+
+describe('withoutUnchangedExternalIds', () => {
+  const opened = { externalIds: { js: '123456789', bexio_gss: '4711' } };
+
+  it('leaves externalIds out when unchanged (key order does not matter), so a merge keeps the stored map', () => {
+    const edited = { firstName: 'A', externalIds: { bexio_gss: '4711', js: '123456789' } };
+    const payload = withoutUnchangedExternalIds(edited, opened);
+    expect('externalIds' in payload).toBe(false);
+    expect(payload.firstName).toBe('A');
+    expect(edited.externalIds).toEqual({ bexio_gss: '4711', js: '123456789' });
+  });
+
+  it('treats an absent and an empty map as unchanged', () => {
+    expect('externalIds' in withoutUnchangedExternalIds({ externalIds: {} }, {})).toBe(false);
+    expect('externalIds' in withoutUnchangedExternalIds({}, { externalIds: {} })).toBe(false);
+    expect('externalIds' in withoutUnchangedExternalIds({ externalIds: {} }, undefined)).toBe(false);
+  });
+
+  it('sends the whole map when the user changed, added or removed an id', () => {
+    expect(withoutUnchangedExternalIds({ externalIds: { js: '987654321', bexio_gss: '4711' } }, opened).externalIds).toEqual({ js: '987654321', bexio_gss: '4711' });
+    expect(withoutUnchangedExternalIds({ externalIds: { js: '123456789' } }, opened).externalIds).toEqual({ js: '123456789' });
+    expect(withoutUnchangedExternalIds({ externalIds: { ...opened.externalIds, bexio_scs: '1' } }, opened).externalIds).toEqual({ ...opened.externalIds, bexio_scs: '1' });
   });
 });

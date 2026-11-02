@@ -80,9 +80,10 @@ const calevent: BlockRoutes = {
     // separate block would hide that row's menu with it (memory «feature block hides menu»).
     // Any authenticated member may open the list: courses are readable tenant-wide (firestore.rules), and the list
     // gates create / edit / archive / the yearly totals itself (`course-access.util`, `CourseStore`).
-    // `course/table/:courseKey` is the course table page (attendance, lock, exports, request): readable by every member
-    // (D7, no amounts); `CourseTableStore` gates every action and the finance read itself. Two segments, so it never
-    // collides with the three-segment list route.
+    // `course/table/:courseKey` is the course table page (attendance, lock, exports, request). The route only needs a
+    // login; the TABLE is gated per spec §13 (`mayViewCourseTable`: course staff, group admin, treasurer, privileged,
+    // members of the course group, the attendees — everybody else gets «not found»), and `CourseTableStore` gates every
+    // action and the finance read itself. Two segments, so it never collides with the three-segment list route.
     {
       path: 'course',
       canActivate: [isAuthenticatedGuard],

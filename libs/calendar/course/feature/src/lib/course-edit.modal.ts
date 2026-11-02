@@ -7,7 +7,7 @@ import { AccountingConfigService } from '@okr/finance-accounting-data-access';
 import { AccountService } from '@okr/finance-account-data-access';
 import { CostCenterService } from '@okr/finance-cost-center-data-access';
 import { getAccountKind } from '@okr/finance-account-util';
-import { COURSE_I18N_KEYS, CourseI18n } from '@okr/calendar-course-util';
+import { COURSE_I18N_KEYS, CourseI18n, withoutErasedEligible } from '@okr/calendar-course-util';
 import { CourseFinanceForm, CourseForm } from '@okr/calendar-course-ui';
 import { I18nService } from '@okr/shared-i18n';
 import { AccountingConfigModel, CategoryListModel, CourseFinanceModel, CourseModel, UserModel } from '@okr/shared-models';
@@ -107,7 +107,8 @@ export class CourseEditModal {
   protected readonly financeValid = signal(false);
   protected readonly showForm = signal(true);
   protected readonly formData = linkedSignal(() => safeStructuredClone(this.course()));
-  protected readonly financeData = linkedSignal(() => safeStructuredClone(this.finance()));
+  // erased eligible persons (blank key after a privacy erasure) are dropped: they block nothing, and a save removes them
+  protected readonly financeData = linkedSignal(() => this.editableFinance());
 
   // The banner needs every form that is on screen to be valid, and any of them to be dirty.
   protected readonly showConfirmation = computed(() => {
@@ -160,9 +161,14 @@ export class CourseEditModal {
     this.courseDirty.set(false);
     this.financeDirty.set(false);
     this.formData.set(safeStructuredClone(this.course()));
-    this.financeData.set(safeStructuredClone(this.finance()));
+    this.financeData.set(this.editableFinance());
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);   // fresh forms → clears stale Vest state
+  }
+
+  private editableFinance(): CourseFinanceModel | undefined {
+    const finance = safeStructuredClone(this.finance());
+    return finance ? withoutErasedEligible(finance) : finance;
   }
 
   protected onFormDataChange(formData: CourseModel): void {

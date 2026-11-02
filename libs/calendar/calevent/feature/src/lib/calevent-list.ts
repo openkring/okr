@@ -19,7 +19,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 import { isAdminMember } from '@okr/subject-group-util';
 
-import { CalEventDurationPipe, canAttendCalevent, courseOfKey, courseSeriesPatch, isCourseOver, isCourseTrainerFor, countPollAcceptances, countPollResponses, formatDateTimeLabel, getCalEventCssClass, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, mayJoinOpenCalevent, resetActivity, resetAttendance, resolveCalendars, upcomingOccurrences } from '@okr/calendar-calevent-util';
+import { CalEventDurationPipe, canAttendCalevent, courseKeysOf, courseOfKey, courseSeriesPatch, isCourseOver, isCourseTrainerFor, countPollAcceptances, countPollResponses, formatDateTimeLabel, getCalEventCssClass, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, mayJoinOpenCalevent, resetActivity, resetAttendance, resolveCalendars, upcomingOccurrences } from '@okr/calendar-calevent-util';
 import { OrganiserContactModal, showCalendarSync } from '@okr/calendar-calevent-ui';
 import { CalendarFeedService } from '@okr/calendar-calevent-data-access';
 import type { OrganiserContactAction, OrganiserContactResult } from '@okr/calendar-calevent-ui';
@@ -1239,6 +1239,8 @@ export class CalEventList implements OnInit {
   }
 
   private async cancelEvent(calevent: CalEventModel): Promise<void> {
+    // cancelling (or reinstating) an event of a locked course is denied by the rules like archiving it: say so first
+    if (await this.store.refuseLockedCourse(courseKeysOf([calevent]), 'cancel')) return;
     const message = await okrPrompt(this.alertController, this.store.i18n.cancel_event(),
       this.store.i18n.cancel_event_placeholder(), this.store.i18n.ok(), this.store.i18n.cancel(), calevent.cancelMessage);
     if (message === undefined) return;

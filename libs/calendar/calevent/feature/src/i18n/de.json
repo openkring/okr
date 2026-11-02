@@ -602,6 +602,7 @@
     "entry": "Kurse",
     "lockedRemove": "Dieser Kurs ist abgeschlossen. Entsperre ihn in der Kurstabelle, bevor du Termine entfernst.",
     "lockedAdd": "Dieser Kurs ist abgeschlossen. Entsperre ihn in der Kurstabelle, bevor du neue Termine hinzufügst.",
+    "lockedCancel": "Dieser Kurs ist abgeschlossen. Entsperre ihn in der Kurstabelle, bevor du einen Termin absagst oder wieder ansetzt.",
     "over": "Dieser Kurs ist schon zu Ende. Neue Termine lägen ausserhalb des Kurszeitraums."
   },
   "sync": {

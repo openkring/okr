@@ -1,7 +1,7 @@
 import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
-import { CourseFinanceModel, CourseModel, MoneyModel } from '@okr/shared-models';
+import { CourseEligible, CourseFinanceModel, CourseModel, MoneyModel } from '@okr/shared-models';
 import { dateValidations, stringValidations } from '@okr/shared-util-core';
 
 import { AttendanceFormModel } from './course-table-view.util';
@@ -57,12 +57,28 @@ function isValidAmount(money: Partial<MoneyModel> | null | undefined): boolean {
 }
 
 /**
+ * An eligible entry whose person was erased (privacy erasure blanks `person.key`) names nobody: it is never paid and
+ * never judged. Dropping it keeps a course-only save possible after an erasure (spec 1.132 §13).
+ */
+export function isErasedEligible(entry: Pick<CourseEligible, 'person'>): boolean {
+  return !(entry.person?.key ?? '').trim();
+}
+
+/** The finance document without erased eligible entries (see `isErasedEligible`); the input is not changed. */
+export function withoutErasedEligible<T extends Pick<CourseFinanceModel, 'eligible'>>(finance: T): T {
+  if (!finance.eligible?.some(isErasedEligible)) return finance;
+  return { ...finance, eligible: finance.eligible.filter(e => !isErasedEligible(e)) };
+}
+
+/**
  * The protected finance document of a course (spec 1.132 §5.2).
  *
  * @param bookKeys the books (`accountingTenantId`) the tenant may use; when given, the chosen books must be one of them
  */
 export const courseFinanceValidations = staticSuite((model: CourseFinanceModel, bookKeys?: string[]) => {
-  const eligible = model.eligible ?? [];
+  const all = model.eligible ?? [];
+  // erased entries (blank person key) are dropped, never a personRequired error
+  const eligible = all.filter(e => e.person != null && !isErasedEligible(e));
   const rateSet = (model.defaultRate?.amount ?? 0) > 0;
 
   // as soon as there is something to pay, the books must be named — never derived from the app tenant
@@ -84,16 +100,18 @@ export const courseFinanceValidations = staticSuite((model: CourseFinanceModel, 
     });
   });
 
+  // a malformed entry without any person object (the picker always sets one)
   test('eligible', PFX + 'personRequired', () => {
-    enforce(eligible.every(e => !!e.person?.key)).isTruthy();
+    enforce(all.every(e => e.person != null)).isTruthy();
   });
   test('eligible', PFX + 'duplicatePerson', () => {
     const keys = eligible.map(e => e.person?.key).filter(k => !!k);
     enforce(new Set(keys).size === keys.length).isTruthy();
   });
   // an absent or null rate means «use the default rate»; 0 is a rate
-  eligible.forEach((e, index) => {
-    omitWhen(e.rate == null, () => {
+  // indices of the full list: the form's rows (the modal drops erased entries before it shows them)
+  all.forEach((e, index) => {
+    omitWhen(e.rate == null || e.person == null || isErasedEligible(e), () => {
       test(`eligible[${index}].rate`, PFX + 'rateInvalid', () => {
         enforce(isValidAmount(e.rate)).isTruthy();
       });

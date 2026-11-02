@@ -78,7 +78,7 @@
   },
   "finance": {
     "title": "Compensación de los entrenadores",
-    "intro": "Solo los responsables, la dirección del grupo y la tesorería ven estos datos.",
+    "intro": "Solo los responsables, la dirección del grupo, las personas con privilegios (por ejemplo, la junta directiva) y la tesorería ven estos datos.",
     "books": {
       "label": "Contabilidad",
       "helper": "La compensación se contabiliza en esta contabilidad.",

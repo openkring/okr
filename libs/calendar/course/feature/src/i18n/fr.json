@@ -78,7 +78,7 @@
   },
   "finance": {
     "title": "Indemnité des entraîneurs",
-    "intro": "Seuls les responsables, la direction du groupe et la trésorerie voient ces données.",
+    "intro": "Seuls les responsables, la direction du groupe, les personnes privilégiées (par exemple le comité) et la trésorerie voient ces données.",
     "books": {
       "label": "Comptabilité",
       "helper": "L'indemnité est comptabilisée dans cette comptabilité.",

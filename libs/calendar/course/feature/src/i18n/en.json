@@ -78,7 +78,7 @@
   },
   "finance": {
     "title": "Trainer compensation",
-    "intro": "Only the responsible persons, the group leaders and the treasurers see these details.",
+    "intro": "Only the responsible persons, the group leaders, privileged users (for example the board) and the treasurers see these details.",
     "books": {
       "label": "Books",
       "helper": "The compensation is booked in these books.",

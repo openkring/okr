@@ -602,6 +602,7 @@
     "entry": "Courses",
     "lockedRemove": "This course is closed. Unlock it in the course table before you remove dates.",
     "lockedAdd": "This course is closed. Unlock it in the course table before you add new dates.",
+    "lockedCancel": "This course is closed. Unlock it in the course table before you cancel a date or reinstate it.",
     "over": "This course has already ended. New dates would fall outside the course period."
   },
   "sync": {
