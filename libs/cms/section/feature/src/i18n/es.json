@@ -425,9 +425,6 @@
       "captcha_helper": "Las personas demuestran brevemente que no son un robot antes de enviar.",
       "encrypt": "Cifrar archivos",
       "encrypt_helper": "Al enviar se pide una contraseña. Los archivos subidos se cifran con ella.",
-      "rate_limit": "Envíos por persona",
-      "rate_period": "En (minutos)",
-      "rate_helper": "Protege contra el relleno automático: quien envía más a menudo tiene que esperar.",
       "fixed_title": "Valores fijos",
       "fixed_subtitle": "Aquí defines qué vale en esta página para los campos invisibles del formulario, por ejemplo para qué curso es la inscripción.",
       "fixed_pick_form": "Elige primero un formulario.",
@@ -438,7 +435,8 @@
       "fixed_no": "No",
       "fixed_required": "Necesita un valor; si no, el campo queda vacío en las respuestas.",
       "accept_title": "Aceptación en esta página",
-      "accept_subtitle": "Tus propias reglas para esta página, por ejemplo sus propias plazas y su propio plazo para un curso."
+      "accept_subtitle": "Tus propias reglas para esta página, por ejemplo sus propias plazas y su propio plazo para un curso.",
+      "fixed_remove": "Quitar"
     }
   },
   "hero": {
@@ -1386,8 +1384,7 @@
     "formEmailInvalid": "Al menos una dirección de correo no es válida. Revisa cómo está escrita.",
     "formImplicitInvalid": "Este valor no encaja con el campo.",
     "formImplicitRequired": "Indica aquí un valor; si no, el campo queda vacío en las respuestas.",
-    "formImplicitSsn": "El número AVS no se puede fijar de antemano.",
-    "formRateInvalid": "Introduce un número entero a partir de 1."
+    "formImplicitSsn": "El número AVS no se puede fijar de antemano."
   },
   "advent": {
     "label": "Calendario de Adviento",

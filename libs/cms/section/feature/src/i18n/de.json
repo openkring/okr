@@ -425,9 +425,6 @@
       "captcha_helper": "Die Person muss kurz beweisen, dass sie kein Roboter ist, bevor sie abschicken kann.",
       "encrypt": "Dateien verschlüsseln",
       "encrypt_helper": "Beim Abschicken wird nach einem Passwort gefragt. Hochgeladene Dateien werden damit verschlüsselt.",
-      "rate_limit": "Absendungen pro Person",
-      "rate_period": "Innerhalb von (Minuten)",
-      "rate_helper": "Schützt vor automatischem Ausfüllen: Wer öfter abschickt, muss warten.",
       "fixed_title": "Feste Werte",
       "fixed_subtitle": "Hier legst du fest, was auf dieser Seite für die unsichtbaren Felder des Formulars gilt, zum Beispiel für welchen Kurs die Anmeldung ist.",
       "fixed_pick_form": "Wähle zuerst ein Formular.",
@@ -438,7 +435,8 @@
       "fixed_no": "Nein",
       "fixed_required": "Braucht einen Wert, sonst bleibt das Feld in den Antworten leer.",
       "accept_title": "Annahme auf dieser Seite",
-      "accept_subtitle": "Eigene Regeln für diese Seite, zum Beispiel eigene Plätze und eine eigene Frist für einen Kurs."
+      "accept_subtitle": "Eigene Regeln für diese Seite, zum Beispiel eigene Plätze und eine eigene Frist für einen Kurs.",
+      "fixed_remove": "Entfernen"
     }
   },
   "hero": {
@@ -1386,8 +1384,7 @@
     "formEmailInvalid": "Mindestens eine E-Mail-Adresse ist ungültig. Prüfe die Schreibweise.",
     "formImplicitInvalid": "Dieser Wert passt nicht zum Feld.",
     "formImplicitRequired": "Gib hier einen Wert an, sonst bleibt das Feld in den Antworten leer.",
-    "formImplicitSsn": "Die AHV-Nummer kann nicht fest vorgegeben werden.",
-    "formRateInvalid": "Gib eine ganze Zahl ab 1 ein."
+    "formImplicitSsn": "Die AHV-Nummer kann nicht fest vorgegeben werden."
   },
   "advent": {
     "label": "Adventskalender",

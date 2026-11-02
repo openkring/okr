@@ -7,7 +7,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { coerceBoolean, isSectionOnlyImplicit, isSsnField, parseEmailList } from '@okr/shared-util-core';
 import { AcceptanceFields, FormI18n } from '@okr/forms-util';
 import { AcceptanceSettingsInput } from '@okr/forms-ui';
-import { FORM_EMAILS_MAX_LENGTH, getFieldErrors, SectionErrors, SectionI18n } from '@okr/cms-section-util';
+import { FORM_EMAILS_MAX_LENGTH, getFieldErrors, getUnrenderedFixedKeys, SectionErrors, SectionI18n } from '@okr/cms-section-util';
 
 /** A form the section can point at, with the implicit fields whose values this page fixes. */
 export interface FormOption {
@@ -98,16 +98,6 @@ interface FixedRow {
               <okr-checkbox [i18n]="encryptI18n()" [checked]="encryptFileUpload()" (checkedChange)="onFieldChange('encryptFileUpload', $event)"
                 [showHelper]="true" [readOnly]="isReadOnly()" />
             </ion-col>
-            <ion-col size="12" size-md="6">
-              <okr-number-input [i18n]="rateLimitI18n()" [value]="rateLimitValue()" (valueChange)="onRateChange('limit', $event)"
-                [min]="1" [integer]="true" [showHelper]="true" [readOnly]="isReadOnly()" />
-              <okr-error-note [errors]="errorsFor('rateLimit.limit')" />
-            </ion-col>
-            <ion-col size="12" size-md="6">
-              <okr-number-input [i18n]="ratePeriodI18n()" [value]="ratePeriodValue()" (valueChange)="onRateChange('periodMinutes', $event)"
-                [min]="1" [integer]="true" [readOnly]="isReadOnly()" />
-              <okr-error-note [errors]="errorsFor('rateLimit.periodMinutes')" />
-            </ion-col>
           </ion-row>
         </ion-grid>
       </ion-card-content>
@@ -126,6 +116,13 @@ interface FixedRow {
               <ion-col size="12"><ion-note>{{ i18n().form_cfg_fixed_pick_form() }}</ion-note></ion-col>
             } @else if (rows().length === 0) {
               <ion-col size="12"><ion-note>{{ i18n().form_cfg_fixed_none() }}</ion-note></ion-col>
+            }
+            @for (key of strayKeys(); track key) {
+              <!-- an entry no row shows (an AHV key from pasted or legacy data): its error, and a way to remove it -->
+              <ion-col size="12">
+                <okr-error-note [errors]="errorsFor('implicitValues.' + key)" />
+                <ion-button fill="clear" [disabled]="isReadOnly()" (click)="onStrayRemove(key)">{{ i18n().form_cfg_fixed_remove() }}</ion-button>
+              </ion-col>
             }
             @for (row of rows(); track row.key) {
               <ion-col size="12" size-md="6">
@@ -199,8 +196,6 @@ export class FormSectionConfiguration {
   protected readonly responsibilityKey = computed(() => this.formData().responsibilityKey ?? '');
   protected readonly showCaptcha = computed(() => this.formData().showCaptcha === true);
   protected readonly encryptFileUpload = computed(() => this.formData().encryptFileUpload === true);
-  protected readonly rateLimitValue = computed(() => this.formData().rateLimit?.limit ?? 10);
-  protected readonly ratePeriodValue = computed(() => this.formData().rateLimit?.periodMinutes ?? 5);
 
   /**
    * The addresses as typed. Rebuilt from the model only when the model no longer matches the text: a
@@ -264,6 +259,9 @@ export class FormSectionConfiguration {
       });
   });
 
+  /** `implicitValues.<key>` errors of entries no row shows */
+  protected readonly strayKeys = computed(() => getUnrenderedFixedKeys(this.errors(), this.rows().map((r) => r.key)));
+
   /** only the overrides this page really carries — an absent one is not shown as a value of its own */
   protected readonly acceptance = computed<Partial<AcceptanceFields>>(() => {
     const fd = this.formData();
@@ -287,13 +285,6 @@ export class FormSectionConfiguration {
   protected readonly encryptI18n = computed<CheckboxI18n>(() => ({
     name: 'encryptFileUpload', label: this.i18n().form_cfg_encrypt(), helper: this.i18n().form_cfg_encrypt_helper(),
   }));
-  protected readonly rateLimitI18n = computed<NumberInputI18n>(() => ({
-    name: 'rateLimit', label: this.i18n().form_cfg_rate_limit(), placeholder: '', helper: this.i18n().form_cfg_rate_helper(),
-  }));
-  protected readonly ratePeriodI18n = computed<NumberInputI18n>(() => ({
-    name: 'ratePeriod', label: this.i18n().form_cfg_rate_period(), placeholder: '', helper: '',
-  }));
-
   protected errorsFor(field: string): string[] {
     return getFieldErrors(this.errors(), field);
   }
@@ -324,12 +315,8 @@ export class FormSectionConfiguration {
     });
   }
 
-  /** a cleared or non-numeric field is stored as 0, which the suite refuses with its own note */
-  protected onRateChange(name: 'limit' | 'periodMinutes', value: number | null | undefined): void {
-    const n = typeof value === 'number' && Number.isFinite(value) ? Math.trunc(value) : 0;
-    const current = this.formData().rateLimit ?? { limit: this.rateLimitValue(), periodMinutes: this.ratePeriodValue() };
-    if (current[name] === n && this.formData().rateLimit !== undefined) return;   // echo
-    this.formData.update((vm) => ({ ...vm, rateLimit: { ...current, [name]: n } }));
+  protected onStrayRemove(key: string): void {
+    this.setFixed(key, undefined);
   }
 
   /** A value (text, course okey); empty removes the entry, so «not set» never reads as an empty answer. */

@@ -84,15 +84,4 @@ export const formSectionValidations = staticSuite((model: FormSection, implicitF
     enforce(isStoreDateOrEmpty(props?.closesAt)).isTruthy();
   });
   stringValidations('closedMessage', props?.closedMessage ?? '', FORM_MESSAGE_MAX_LENGTH);
-
-  omitWhen(props?.rateLimit === undefined || props?.rateLimit === null, () => {
-    test('rateLimit.limit', PFX + 'formRateInvalid', () => {
-      const n = props?.rateLimit?.limit;
-      enforce(typeof n === 'number' && Number.isInteger(n) && n >= 1).isTruthy();
-    });
-    test('rateLimit.periodMinutes', PFX + 'formRateInvalid', () => {
-      const n = props?.rateLimit?.periodMinutes;
-      enforce(typeof n === 'number' && Number.isInteger(n) && n >= 1).isTruthy();
-    });
-  });
 });

@@ -425,9 +425,6 @@
       "captcha_helper": "People briefly prove they are not a robot before they can submit.",
       "encrypt": "Encrypt files",
       "encrypt_helper": "When submitting, a password is asked for. Uploaded files are encrypted with it.",
-      "rate_limit": "Submissions per person",
-      "rate_period": "Within (minutes)",
-      "rate_helper": "Protects against automatic filling: whoever submits more often has to wait.",
       "fixed_title": "Fixed values",
       "fixed_subtitle": "Here you set what applies on this page for the form's hidden fields, for example which course the registration is for.",
       "fixed_pick_form": "Choose a form first.",
@@ -438,7 +435,8 @@
       "fixed_no": "No",
       "fixed_required": "Needs a value, otherwise the field stays empty in the answers.",
       "accept_title": "Acceptance on this page",
-      "accept_subtitle": "Your own rules for this page, for example its own places and deadline for a course."
+      "accept_subtitle": "Your own rules for this page, for example its own places and deadline for a course.",
+      "fixed_remove": "Remove"
     }
   },
   "hero": {
@@ -1386,8 +1384,7 @@
     "formEmailInvalid": "At least one email address is not valid. Check the spelling.",
     "formImplicitInvalid": "This value does not fit the field.",
     "formImplicitRequired": "Enter a value here, otherwise the field stays empty in the answers.",
-    "formImplicitSsn": "The AHV number cannot be preset.",
-    "formRateInvalid": "Enter a whole number from 1."
+    "formImplicitSsn": "The AHV number cannot be preset."
   },
   "advent": {
     "label": "Advent calendar",

@@ -425,9 +425,6 @@
       "captcha_helper": "Le persone dimostrano brevemente di non essere un robot prima di inviare.",
       "encrypt": "Cifra i file",
       "encrypt_helper": "All'invio viene chiesta una password. I file caricati vengono cifrati con essa.",
-      "rate_limit": "Invii per persona",
-      "rate_period": "Entro (minuti)",
-      "rate_helper": "Protegge dalla compilazione automatica: chi invia più spesso deve aspettare.",
       "fixed_title": "Valori fissi",
       "fixed_subtitle": "Qui stabilisci cosa vale in questa pagina per i campi invisibili del modulo, ad esempio per quale corso è l'iscrizione.",
       "fixed_pick_form": "Scegli prima un modulo.",
@@ -438,7 +435,8 @@
       "fixed_no": "No",
       "fixed_required": "Serve un valore, altrimenti il campo resta vuoto nelle risposte.",
       "accept_title": "Accettazione in questa pagina",
-      "accept_subtitle": "Le tue regole per questa pagina, ad esempio posti e scadenza propri per un corso."
+      "accept_subtitle": "Le tue regole per questa pagina, ad esempio posti e scadenza propri per un corso.",
+      "fixed_remove": "Rimuovi"
     }
   },
   "hero": {
@@ -1386,8 +1384,7 @@
     "formEmailInvalid": "Almeno un indirizzo e-mail non è valido. Controlla come è scritto.",
     "formImplicitInvalid": "Questo valore non si adatta al campo.",
     "formImplicitRequired": "Indica qui un valore, altrimenti il campo resta vuoto nelle risposte.",
-    "formImplicitSsn": "Il numero AVS non può essere preimpostato.",
-    "formRateInvalid": "Inserisci un numero intero a partire da 1."
+    "formImplicitSsn": "Il numero AVS non può essere preimpostato."
   },
   "advent": {
     "label": "Calendario dell'Avvento",

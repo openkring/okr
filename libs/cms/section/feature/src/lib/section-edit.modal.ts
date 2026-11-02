@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, Injector, input, linkedSignal, runInInjectionContext, signal } from '@angular/core';
+import { Component, computed, effect, inject, Injector, input, linkedSignal, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { catchError, from, map, of, switchMap } from 'rxjs';
 import { IonContent, ModalController } from '@ionic/angular';
@@ -53,7 +53,7 @@ import { AppStore } from '@okr/shared-feature';
             [contracts]="contracts()"
             [forms]="forms()"
             [courses]="courses()"
-            [formI18n]="formI18n()"
+            [formI18n]="formI18n"
             [allTags]="allTags()"
             [tenantId]="tenantId()"
             [linkOrigins]="store.appStore.appLinkOrigins()"
@@ -107,7 +107,7 @@ export class SectionEditModal {
 
   /**
    * What a form section offers (spec 1.125 B): the forms with their implicit fields, the courses for «Feste Werte»
-   * and the forms' texts for the acceptance card. Loaded for a form section only; every other type gets [] / undefined.
+   * and (below) the forms' texts for the acceptance card. Forms and courses are loaded for a form section only; every other type gets [].
    * The course data-access is imported lazily: it drags the finance booking service and has no business in this chunk's
    * static graph (same reasoning as the calevent store, spec 1.132).
    */
@@ -134,7 +134,8 @@ export class SectionEditModal {
       .map((course) => ({ okey: course.okey, name: course.name || course.okey }))
       .sort((a, b) => a.name.localeCompare(b.name))),
   ), { initialValue: [] as CourseOption[] });
-  protected formI18n = signal<FormI18n | undefined>(undefined);
+  /** the forms' texts for the acceptance card; a field initializer, because translateAll calls toSignal (no reactive context) */
+  protected readonly formI18n = this.i18nService.translateAll(FORM_I18N_KEYS) as FormI18n;
 
   // signals
   protected initialData = signal<SectionModel | undefined>(undefined);
@@ -152,12 +153,6 @@ export class SectionEditModal {
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   constructor() {
-    effect(() => {
-      // the forms' texts are resolved once, and only when a form section is edited
-      if (this.isFormSection() && !this.formI18n()) {
-        this.formI18n.set(runInInjectionContext(this.injector, () => this.i18nService.translateAll(FORM_I18N_KEYS)) as FormI18n);
-      }
-    });
     effect(() => {
       const orig = this.section();
       this.initialData.set(safeStructuredClone(orig));

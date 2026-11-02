@@ -58,7 +58,7 @@ export function getInlineErrorFields(type: SectionType, showAdvanced = false): s
       fields.push('adventYear');
       break;
     case 'form':
-      fields.push('formKey', 'emailAddresses', IMPLICIT_VALUES_PREFIX, 'closesAt', 'maxResponses', 'closedMessage', 'rateLimit.limit', 'rateLimit.periodMinutes');
+      fields.push('formKey', 'emailAddresses', IMPLICIT_VALUES_PREFIX, 'closesAt', 'maxResponses', 'closedMessage');
       break;
     case 'hero':
       if (showAdvanced) fields.push(...IMAGE_STYLE_FIELDS);
@@ -111,4 +111,16 @@ export function getImageErrors(errors: SectionErrors | undefined): string[] {
   return Object.entries(errors)
     .filter(([field]) => field.startsWith(IMAGES_PREFIX))
     .flatMap(([, messages]) => messages);
+}
+
+/**
+ * The `implicitValues.<key>` errors whose entry has no row in «Feste Werte» (an AHV key from pasted or legacy
+ * data, R1): the card shows them with a button to remove the entry, otherwise nothing would explain why the
+ * section cannot be saved.
+ */
+export function getUnrenderedFixedKeys(errors: SectionErrors | undefined, renderedKeys: string[]): string[] {
+  return Object.keys(errors ?? {})
+    .filter((field) => field.startsWith(IMPLICIT_VALUES_PREFIX))
+    .map((field) => field.slice(IMPLICIT_VALUES_PREFIX.length))
+    .filter((key) => key !== '' && !renderedKeys.includes(key));
 }
