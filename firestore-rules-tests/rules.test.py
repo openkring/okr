@@ -1493,6 +1493,65 @@ for label, expect, run in journal_cases:
     passed += ok; failed += not ok
     print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
 
+# ------------------------------------------------ ledger: bookings + booking-lines (1.132 §16) ---
+# Treasurer/admin and privileged read the ledger; a plain member reads ONLY the booking of their own expense
+# (author or payee). An expense booking's id is the expense id (OCR pipeline); its lines carry bookingKey.
+seed("expenses/exBk1", {"tenants": ["t1"], "isArchived": False, "userId": "uidA", "payeeKey": "pE",
+                        "transferTo": "member", "bookingKey": "exBk1"})
+seed("bookings/exBk1", {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "status": "posted"})
+seed("booking-lines/blEx1", {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "bookingKey": "exBk1",
+                             "debitAmount": {"amount": 4500, "currency": "CHF"}})
+# compensation booking of trainer p1 for course c1 (spec 1.132 §7.7): never a member's own expense
+seed("bookings/course-c1-p1", {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "status": "posted",
+                               "counterparty": {"key": "p1", "name1": "Trainer"}})
+seed("booking-lines/blC1", {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1",
+                            "bookingKey": "course-c1-p1", "debitAmount": {"amount": 80000, "currency": "CHF"}})
+BOOKS = SYSQ + [("accountingTenantId", "EQUAL", "t1")]
+LINES_OF = lambda bk: SYSQ + [("bookingKey", "EQUAL", bk)]
+ledger_cases = [
+    ("author A GET bookings/exBk1 (own expense) -> ALLOW", True, lambda: req("GET", "bookings/exBk1", token=A)),
+    ("payee E GET bookings/exBk1 (expense paid to E) -> ALLOW", True, lambda: req("GET", "bookings/exBk1", token=E)),
+    ("other member M(memberAdmin) GET bookings/exBk1 -> DENY", False, lambda: req("GET", "bookings/exBk1", token=M)),
+    ("other member C(contentAdmin) GET bookings/exBk1 -> DENY", False, lambda: req("GET", "bookings/exBk1", token=C)),
+    ("admin B of t2 GET bookings/exBk1 (cross-tenant) -> DENY", False, lambda: req("GET", "bookings/exBk1", token=B)),
+    ("author A GET bookings/course-c1-p1 (compensation) -> DENY", False,
+     lambda: req("GET", "bookings/course-c1-p1", token=A)),
+    ("member A GET a missing booking -> ALLOW (404, resource == null)", True,
+     lambda: req("GET", "bookings/bkMissing", token=A)),
+    ("author A GET booking-lines/blEx1 (own expense) -> ALLOW", True, lambda: req("GET", "booking-lines/blEx1", token=A)),
+    ("author A GET booking-lines/blC1 (compensation) -> DENY", False, lambda: req("GET", "booking-lines/blC1", token=A)),
+    ("member A LIST bookings SYS + books -> DENY", False, lambda: field_query("bookings", BOOKS, token=A)),
+    ("member A LIST booking-lines SYS (no bookingKey) -> DENY", False, lambda: field_query("booking-lines", SYSQ, token=A)),
+    ("author A LIST booking-lines bookingKey == own expense -> ALLOW", True,
+     lambda: field_query("booking-lines", LINES_OF("exBk1"), token=A)),
+    ("payee E LIST booking-lines bookingKey == expense paid to E -> ALLOW", True,
+     lambda: field_query("booking-lines", LINES_OF("exBk1"), token=E)),
+    ("other member M LIST booking-lines bookingKey == exBk1 -> DENY", False,
+     lambda: field_query("booking-lines", LINES_OF("exBk1"), token=M)),
+    ("member A LIST booking-lines bookingKey == course-c1-p1 -> DENY", False,
+     lambda: field_query("booking-lines", LINES_OF("course-c1-p1"), token=A)),
+    ("auditor U LIST bookings SYS + books -> DENY (no ledger access for auditors)", False,
+     lambda: field_query("bookings", BOOKS, token=U)),
+    ("treasurer T LIST bookings SYS + books -> ALLOW", True, lambda: field_query("bookings", BOOKS, token=T)),
+    ("privileged P LIST bookings SYS + books -> ALLOW", True, lambda: field_query("bookings", BOOKS, token=P)),
+    ("admin D LIST bookings SYS + books -> ALLOW", True, lambda: field_query("bookings", BOOKS, token=D)),
+    ("treasurer T LIST posted bookings (yearly totals shape) -> ALLOW", True,
+     lambda: field_query("bookings", BOOKS + [("status", "EQUAL", "posted")], token=T)),
+    ("privileged P LIST booking-lines SYS + books (project result) -> ALLOW", True,
+     lambda: field_query("booking-lines", BOOKS, token=P)),
+    ("treasurer T LIST booking-lines bookingKey == course-c1-p1 -> ALLOW", True,
+     lambda: field_query("booking-lines", LINES_OF("course-c1-p1"), token=T)),
+    ("treasurer T GET bookings/course-c1-p1 -> ALLOW", True, lambda: req("GET", "bookings/course-c1-p1", token=T)),
+    ("privileged P GET booking-lines/blC1 -> ALLOW", True, lambda: req("GET", "booking-lines/blC1", token=P)),
+    ("treasurer T PATCH bookings/exBk1 -> DENY (server-written)", False,
+     lambda: req("PATCH", "bookings/exBk1", token=T, data=body({"status": "draft"}), mask=["status"])),
+]
+for label, expect, run in ledger_cases:
+    code = run()
+    ok = (code in (200, 201, 404)) == expect  # 404 = GET allowed, doc absent (a denial is 403)
+    passed += ok; failed += not ok
+    print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
+
 # ------------------------------------------------ tracker track-points (plan 2) ---
 def commit_batch(writes, token):
     """REST batch commit of plain document writes (d None = delete); returns the HTTP status."""

@@ -1181,8 +1181,25 @@ service cloud.firestore {
         && request.resource.data.isArchived == false;
       allow update, delete: if false;
     }
-    match /booking-lines/{id}      { allow read: if tenantRead(); allow write: if false; }
-    match /bookings/{id}          { allow read: if tenantRead(); allow write: if false; }
+    // The ledger (spec 1.132 §16, 2026-11-02): bookings and their lines carry every amount of the books,
+    // trainer compensation included — not tenant-wide reading material. Readers: treasurer/admin (the books)
+    // and privileged (the project result sums every line, spec 1.65 D26). A plain member reads ONLY the booking
+    // of their own expense (author or payee, mirrors the `expenses` rule below): an expense booking's id is the
+    // expense id (OCR pipeline), so the rule looks the expense up by the booking id resp. the line's bookingKey.
+    // The role check comes first, so staff list queries never pay for the get(). A member's line query must pin
+    // bookingKey (ExpenseService.listBookingLines), otherwise it cannot be proven and is denied.
+    function isLedgerReader() { return isTreasurerOrAdmin() || isPrivileged(); }
+    function expenseOfCaller(e) {
+      return e.tenants.hasAny(callerTenants())
+        && (e.get('userId', '') == request.auth.uid
+            || (callerPersonKey() != '' && e.get('payeeKey', '') == callerPersonKey()));
+    }
+    function isOwnExpense(expenseKey) {
+      return exists(/databases/$(database)/documents/expenses/$(expenseKey))
+        && expenseOfCaller(get(/databases/$(database)/documents/expenses/$(expenseKey)).data);
+    }
+    match /booking-lines/{id}      { allow read: if tenantRead() && (isLedgerReader() || isOwnExpense(resource.data.bookingKey)); allow write: if false; }
+    match /bookings/{id}          { allow read: if tenantRead() && (isLedgerReader() || resource == null || isOwnExpense(id)); allow write: if false; }
     match /exchange-rates/{id}    { allow read: if tenantRead(); allow write: if false; }
     match /expense-documents/{id} { allow read: if tenantRead(); allow write: if false; }
     // An expense carries the payee's IBAN (for 'an Mitglied' copied from that member's profile by

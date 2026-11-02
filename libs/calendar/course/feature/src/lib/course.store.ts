@@ -82,10 +82,10 @@ export const CourseStore = signalStore(
   })),
   withComputed((state) => {
     /**
-     * The yearly totals are for the treasurer, privileged and admin. NOTE: `bookings` are readable tenant-wide
-     * (`tenantRead()` in firestore.rules), so the rules do not protect the amounts — this gate does: nobody else gets
-     * a query at all and the card is not rendered. Needs the books (`defaultAccountingTenantId`, never the app tenant);
-     * without them nothing is shown.
+     * The yearly totals are for the treasurer, privileged and admin — the same readers firestore.rules allows on
+     * `bookings` / `booking-lines` (a plain member reads only the booking of their own expense). This gate mirrors
+     * the rules: nobody else gets a query at all (it would be denied) and the card is not rendered. Needs the books
+     * (`defaultAccountingTenantId`, never the app tenant); without them nothing is shown.
      */
     const canSeeYearlyTotals = computed(() => (state.access().isTreasurer || state.access().isPrivileged) && state.books() !== '');
     const courses = computed(() => state.coursesResource.value() ?? []);

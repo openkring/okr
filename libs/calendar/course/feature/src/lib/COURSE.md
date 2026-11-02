@@ -53,9 +53,9 @@ The rules in `firestore.rules` are the guard; the UI mirrors them in `course-acc
   tenant's default books (`appConfig.defaultAccountingTenantId`, never the app tenant). Without default books, or for
   anybody but the treasurer / privileged / admin, nothing is queried and the card stays hidden. The booking date
   decides the year.
-- Mind: `bookings` and `booking-lines` are readable tenant-wide (`tenantRead()` in `firestore.rules`). The rules do not
-  protect the compensation amounts; the UI gate above does, and it is the only guard. Any signed-in member could read
-  the bookings with their own query.
+- The rules protect the compensation amounts: `bookings` and `booking-lines` are read by treasurer, admin and
+  privileged only (`isLedgerReader()` in `firestore.rules`); a plain member reads nothing but the booking of their own
+  expense (author or payee). The UI gate above mirrors that, so nobody else sends a query that would be denied.
 - With `groupKey = all` the list reads every course of the tenant (`CourseService.listAll`); the group admin flag is
   then evaluated per course, `add` is not offered, and each row shows its group.
 

@@ -250,9 +250,9 @@ export class CourseService {
    * The released compensation bookings of one set of books, across all courses (spec 1.132 §7.7): the yearly
    * total per trainer is summed from them. Only `posted` bookings count; their date is the booking date.
    *
-   * `bookings` are readable tenant-wide (`tenantRead()` in firestore.rules): the rules do NOT protect the compensation
-   * amounts, only the caller's discipline does. Call this for the treasurer, privileged and admin and nobody else
-   * (the UI gate in `CourseStore` is the only guard). The query is
+   * The ledger is restricted in firestore.rules: `bookings` and `booking-lines` are read by treasurer, admin and
+   * privileged only; a plain member reads nothing but the booking of their own expense. So call this for the
+   * treasurer, privileged and admin only (the gate in `CourseStore`); for anybody else the query is denied. The query is
    * tenant AND books scoped (`accountingTenantId` is the books, never the app tenant) and narrowed to the
    * `course-` okey prefix server-side, so it does not read the whole journal. The amount is the debit line (the
    * expense), a booking without a counterparty is skipped. Rejects when the read fails, so the caller can tell
