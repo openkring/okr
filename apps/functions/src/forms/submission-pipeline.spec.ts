@@ -128,4 +128,95 @@ describe('prepareSubmission', () => {
     expect(r.values).toEqual({ firstName: 'A', email: 'a@b.ch' });
     expect(r.missingRequired).toEqual([]);
   });
+
+  it('stores a number property as a number', () => {
+    const fields = [f('years', 'number', 0, { asProperty: true })];
+    const r = prepareSubmission(fields, undefined, 'properties', { years: '20' }, TODAY);
+    expect(r.values['properties']).toEqual([{ key: 'years', type: 'number', value: 20, label: 'L-years' }]);
+  });
+
+  it('puts a derived asProperty value into properties, not at the top level', () => {
+    const fields = [f('dob', 'date', 0)];
+    const derived: DerivedValue[] = [
+      { key: 'ageGroup', cases: [{ when: rule('dob', 'ageLt', 18), value: 'youth' }], otherwise: 'adult', asProperty: true, type: 'text' },
+    ];
+    const r = prepareSubmission(fields, derived, 'properties', { dob: '20110301' }, TODAY);
+    expect(r.values['ageGroup']).toBeUndefined();
+    expect(r.values['properties']).toEqual([{ key: 'ageGroup', type: 'text', value: 'youth', label: 'ageGroup' }]);
+  });
+
+  it('treats a derived asProperty value without a type as text, never top-level', () => {
+    const derived: DerivedValue[] = [{ key: 'flag', cases: [], otherwise: 'x', asProperty: true }];
+    const r = prepareSubmission([], derived, 'properties', {}, TODAY);
+    expect(r.values['flag']).toBeUndefined();
+    expect(r.values['properties']).toEqual([{ key: 'flag', type: 'text', value: 'x', label: 'flag' }]);
+  });
+
+  it('keeps a derived asProperty value top-level when the mapping has no properties list', () => {
+    const derived: DerivedValue[] = [{ key: 'flag', cases: [], otherwise: 'x', asProperty: true, type: 'text' }];
+    const r = prepareSubmission([], derived, undefined, {}, TODAY);
+    expect(r.values).toEqual({ flag: 'x' });
+  });
+
+  it('reports a derived property that does not coerce, without rejecting', () => {
+    const derived: DerivedValue[] = [{ key: 'n', cases: [], otherwise: 'abc', asProperty: true, type: 'number' }];
+    const r = prepareSubmission([], derived, 'properties', {}, TODAY);
+    expect(r.droppedDerivedProperties).toEqual(['n']);
+    expect(r.invalidProperties).toEqual([]);
+    expect(r.values['properties']).toEqual([]);
+  });
+
+  it('lets a hidden controller feed derived values as empty', () => {
+    const fields = [
+      f('wantsMore', 'checkbox', 0),
+      f('detail', 'text', 1, { visibleIf: rule('wantsMore', 'isChecked') }),
+    ];
+    const derived: DerivedValue[] = [
+      { key: 'level', cases: [{ when: rule('detail', 'equals', 'pro'), value: 'pro' }], otherwise: 'basic' },
+    ];
+    const hidden = prepareSubmission(fields, derived, undefined, { wantsMore: false, detail: 'pro' }, TODAY);
+    expect(hidden.values['level']).toBe('basic');
+    const shown = prepareSubmission(fields, derived, undefined, { wantsMore: true, detail: 'pro' }, TODAY);
+    expect(shown.values['level']).toBe('pro');
+  });
+});
+
+describe('prepareSubmission rows (notification e-mail)', () => {
+  it('shows property answers, booleans as ja/nein, and derived values labelled by key', () => {
+    const fields = [
+      f('firstName', 'text', 0),
+      f('rowingExperience', 'checkbox', 1, { asProperty: true }),
+      f('canSwim', 'checkbox', 2, { asProperty: true }),
+      f('years', 'number', 3, { asProperty: true }),
+    ];
+    const derived: DerivedValue[] = [{ key: 'applicationAs', cases: [], otherwise: 'youth' }];
+    const r = prepareSubmission(fields, derived, 'properties', { firstName: 'A', rowingExperience: 'true', years: '5' }, TODAY);
+    expect(r.rows).toEqual([
+      { label: 'L-firstName', value: 'A' },
+      { label: 'L-rowingExperience', value: 'ja' },
+      { label: 'L-canSwim', value: 'nein' },
+      { label: 'L-years', value: '5' },
+      { label: 'applicationAs', value: 'youth' },
+    ]);
+  });
+
+  it('omits hidden and display fields, shows a dash for an empty visible answer', () => {
+    const fields = [
+      f('intro', 'paragraph', 0),
+      f('wantsMore', 'checkbox', 1),
+      f('detail', 'text', 2, { visibleIf: rule('wantsMore', 'isChecked') }),
+      f('nickname', 'text', 3),
+    ];
+    const r = prepareSubmission(fields, undefined, undefined, { wantsMore: false, detail: 'x' }, TODAY);
+    expect(r.rows).toEqual([
+      { label: 'L-wantsMore', value: 'nein' },
+      { label: 'L-nickname', value: '–' },
+    ]);
+  });
+
+  it('joins multi-select answers', () => {
+    const fields = [f('boats', 'checkbox', 0, { options: [{ label: 'A', value: 'a' }, { label: 'B', value: 'b' }] })];
+    const r = prepareSubmission(fields, undefined, undefined, { boats: ['a', 'b'] }, TODAY);
+    expect(r.rows).toEqual([{ label: 'L-boats', value: 'a, b' }]);
+  });
 });

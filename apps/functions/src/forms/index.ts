@@ -11,7 +11,7 @@ import { getAppEmailConfig } from '../auth/email-templates';
 import { createProspect } from '../business/prospect';
 import { createBoathouseReservation } from './reservation-target';
 import { emitEvent } from '../workflow/emit';
-import { prepareSubmission } from './submission-pipeline';
+import { prepareSubmission, type SubmissionRow } from './submission-pipeline';
 
 const REGION = 'europe-west6';
 const formsHmacSecret = defineSecret('FORMS_HMAC_SECRET');
@@ -280,28 +280,27 @@ export const getFormDefinition = onCall(
 // Phase 5 helpers
 // ──────────────────────────────────────────
 
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 function buildSubmissionEmailHtml(
   formDef: FormDefinition,
-  values: Record<string, unknown>,
+  rows: SubmissionRow[],
   submissionId: string,
   submittedAt: string,
 ): string {
-  const rows = [...(formDef.fields ?? [])]
-    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-    .map(f => {
-      const val = values[f.key];
-      const display = (val === undefined || val === null || val === '') ? '–' : String(val);
-      return `<tr>
-        <th style="text-align:left;padding:4px 12px 4px 0;font-weight:600;">${f.label}</th>
-        <td style="padding:4px 0;">${display}</td>
-      </tr>`;
-    })
+  const rowsHtml = rows
+    .map(r => `<tr>
+        <th style="text-align:left;padding:4px 12px 4px 0;font-weight:600;">${escapeHtml(r.label)}</th>
+        <td style="padding:4px 0;">${escapeHtml(r.value)}</td>
+      </tr>`)
     .join('');
 
   return `
     <h2 style="margin:0 0 16px;">${formDef.name} – neue Einreichung</h2>
     <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-      ${rows}
+      ${rowsHtml}
     </table>
     <p style="color:#888;font-size:12px;margin-top:20px;">
       Eingereicht: ${submittedAt} &middot; ID: ${submissionId}
@@ -315,6 +314,7 @@ async function runSideEffects(
   tenantId: string,
   formDef: FormDefinition,
   values: Record<string, unknown>,
+  rows: SubmissionRow[],
   submissionId: string,
   submittedAt: string,
   cfName: string,
@@ -369,7 +369,7 @@ async function runSideEffects(
       // Use the app's verified sender address (mailtrap_api only accepts authorized domains).
       const from = (await getAppEmailConfig(tenantId)).from;
       const subject = `${formDef.name} – neue Einreichung`;
-      const html = buildSubmissionEmailHtml(formDef, values, submissionId, submittedAt);
+      const html = buildSubmissionEmailHtml(formDef, rows, submissionId, submittedAt);
 
       await sendEmailViaProvider('mailtrap_api', { from, to: emailAddresses, subject, html });
       logger.info(`${cfName}: notification email sent to ${emailAddresses.join(', ')}`);
@@ -525,6 +525,11 @@ export const submitForm = onCall(
       );
     }
 
+    if (prepared.droppedDerivedProperties.length > 0) {
+      // Admin-authored derived values: a misconfigured type is a definition bug, not the filler's fault.
+      logger.warn(`${CF_NAME}: derived properties dropped (value does not coerce) formKey=${payload.formKey} keys=${prepared.droppedDerivedProperties.join(', ')}`);
+    }
+
     // ── 5. Persist ────────────────────────────────
     let submissionId: string;
     let collectionName: string | undefined;
@@ -629,7 +634,7 @@ export const submitForm = onCall(
     if (!isSpam && payload.sectionConfigRef) {
       await runSideEffects(
         db, payload.sectionConfigRef, payload.tenantId,
-        formDef, cleanValues, submissionId, payload.meta.submittedAt,
+        formDef, cleanValues, prepared.rows, submissionId, payload.meta.submittedAt,
         CF_NAME,
       );
     }

@@ -22,7 +22,13 @@ export interface PreparedSubmission {
   missingRequired: string[];
   /** Keys of visible `asProperty` fields whose answer does not coerce to the property type. */
   invalidProperties: string[];
+  /** Keys of derived `asProperty` values that do not coerce to their type (admin-authored: logged, not rejected). */
+  droppedDerivedProperties: string[];
+  /** What the notification e-mail shows: visible answers in field order, then derived values. */
+  rows: SubmissionRow[];
 }
+
+export interface SubmissionRow { label: string; value: string; }
 
 const DISPLAY_TYPES: ReadonlySet<string> = new Set(['label', 'paragraph', 'divider']);
 
@@ -32,6 +38,33 @@ function isEmpty(value: unknown): boolean {
 
 function isSingleCheckbox(field: Field): boolean {
   return field.type === 'checkbox' && !(Array.isArray(field.options) && field.options.length > 0);
+}
+
+/** «ja»/«nein» for booleans, a comma list for arrays, «–» for nothing. */
+function formatRowValue(field: Field | undefined, value: unknown): string {
+  if (value === undefined || value === null || value === '') return '–';
+  if (field !== undefined && propertyTypeOf(field) === 'boolean') {
+    const b = coerceToPropertyType(value, 'boolean');
+    if (b !== undefined) return b ? 'ja' : 'nein';
+  }
+  if (typeof value === 'boolean') return value ? 'ja' : 'nein';
+  if (Array.isArray(value)) return value.map((v) => String(v)).join(', ');
+  return String(value);
+}
+
+/**
+ * The rows of the notification e-mail (pure): visible input fields in field order with their
+ * answer (booleans as ja/nein), then every derived value labelled by its key. Hidden and display
+ * fields are not shown.
+ */
+export function buildSubmissionRows(
+  sortedVisibleInputs: Field[],
+  answers: Record<string, unknown>,
+  derivedValues: Record<string, string>,
+): SubmissionRow[] {
+  const rows: SubmissionRow[] = sortedVisibleInputs.map((f) => ({ label: f.label, value: formatRowValue(f, answers[f.key]) }));
+  for (const [key, value] of Object.entries(derivedValues)) rows.push({ label: key, value: formatRowValue(undefined, value) });
+  return rows;
 }
 
 export function prepareSubmission(
@@ -49,6 +82,7 @@ export function prepareSubmission(
 
   const missingRequired: string[] = [];
   const invalidProperties: string[] = [];
+  const droppedDerivedProperties: string[] = [];
   const answers: Record<string, unknown> = {};
 
   for (const field of sorted) {
@@ -63,7 +97,11 @@ export function prepareSubmission(
     }
   }
 
-  const derivedValues = computeDerivedValues(derived, all, input, visible, today);
+  // A derived property without a type is text: it must never fall back to a top-level key.
+  const derivedList: DerivedValue[] = (Array.isArray(derived) ? derived : []).map((d) =>
+    d?.asProperty === true && d.type === undefined ? { ...d, type: 'text' } : d,
+  );
+  const derivedValues = computeDerivedValues(derivedList, all, input, visible, today);
   const propsKey = typeof propertiesField === 'string' && propertiesField !== '' ? propertiesField : undefined;
 
   const values: Record<string, unknown> = {};
@@ -81,15 +119,21 @@ export function prepareSubmission(
     values[field.key] = answers[field.key];
   }
 
-  for (const d of Array.isArray(derived) ? derived : []) {
+  for (const d of derivedList) {
     if (typeof d?.key !== 'string' || !(d.key in derivedValues)) continue;
-    if (propsKey !== undefined && d.asProperty === true && d.type !== undefined) continue;
+    if (propsKey !== undefined && d.asProperty === true) {
+      if (d.type !== undefined && coerceToPropertyType(derivedValues[d.key], d.type) === undefined) {
+        droppedDerivedProperties.push(d.key);
+      }
+      continue;
+    }
     values[d.key] = derivedValues[d.key];
   }
 
   if (propsKey !== undefined) {
-    values[propsKey] = buildTypedProperties(all, answers, visible, derived, derivedValues);
+    values[propsKey] = buildTypedProperties(all, answers, visible, derivedList, derivedValues);
   }
 
-  return { values, missingRequired, invalidProperties };
+  const rows = buildSubmissionRows(sorted.filter((f) => visible.has(f.id)), answers, derivedValues);
+  return { values, missingRequired, invalidProperties, droppedDerivedProperties, rows };
 }
