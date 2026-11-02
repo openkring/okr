@@ -649,13 +649,18 @@ service cloud.firestore {
     function storedCourseEventWriteOk() {
       return caleventCourseKey(resource.data) == '' || courseEventWriteOk(caleventCourseKey(resource.data));
     }
-    // update: attendance needs a non-empty STORED course; attendance, archive and a courseKey change
-    // need course rights on the stored course (if any); a courseKey change also on the new one (if any).
+    // Cancelling a course event (state to 'cancelled') or taking the cancellation back drops / restores a
+    // training like archiving does, so it counts as an archive change.
+    function caleventCancelChange() {
+      return (request.resource.data.get('state', '') == 'cancelled') != (resource.data.get('state', '') == 'cancelled');
+    }
+    // update: attendance needs a non-empty STORED course; attendance, archive (incl. cancel) and a courseKey
+    // change need course rights on the stored course (if any); a courseKey change also on the new one (if any).
     // Each course is checked at most once.
     function caleventCourseUpdateOk() {
       return caleventCourseUpdateOkFor(caleventCourseKey(resource.data), caleventCourseKey(request.resource.data),
         courseAttendanceChange(), courseKeyChange(),
-        request.resource.data.diff(resource.data).affectedKeys().hasAny(['isArchived']));
+        request.resource.data.diff(resource.data).affectedKeys().hasAny(['isArchived']) || caleventCancelChange());
     }
     function caleventCourseUpdateOkFor(oldKey, newKey, attendanceChange, keyChange, archiveChange) {
       return (!attendanceChange || oldKey != '')
@@ -946,6 +951,9 @@ service cloud.firestore {
         return course.tenants.hasAny(callerTenants())
           && (isPrivileged() || hasRole('treasurer') || isCourseManager(course));
       }
+      function courseFinanceWriteOk(course) {
+        return course.tenants.hasAny(callerTenants()) && isCourseManager(course);
+      }
       function isCourseManager(course) {
         return isPrivileged() || isCourseResponsible(course) || isAdminOfGroup(course.get('groupKey', ''));
       }
@@ -961,9 +969,11 @@ service cloud.firestore {
             || isPrivileged() || isAdminOfGroup(request.resource.data.get('groupKey', '')));
       allow delete: if false;
       // courses/{id}/finance/settings: the amounts — Firestore cannot hide fields, hence a subdoc.
-      // Responsible, group admin, treasurer, privileged; tenant taken from the parent course.
+      // Read: responsible, group admin, treasurer, privileged. Write: responsible, group admin, privileged —
+      // the treasurer sees the rates but does not set them (spec §6). Tenant taken from the parent course.
       match /finance/{doc} {
-        allow read, write: if userExists() && exists(coursePath(id)) && courseFinanceOk(get(coursePath(id)).data);
+        allow read: if userExists() && exists(coursePath(id)) && courseFinanceOk(get(coursePath(id)).data);
+        allow write: if userExists() && exists(coursePath(id)) && courseFinanceWriteOk(get(coursePath(id)).data);
       }
     }
     // groups (spec 1.115 §7.2): created by privileged/memberAdmin only; changed, archived, detached
@@ -1083,7 +1093,10 @@ service cloud.firestore {
         || taskStaff() || taskMember(resource.data) || taskShareOpen(resource.data));
       // only privileged may create a task in someone else's name (spec §2)
       // spec 1.105: no client may create an exit-* id (predictable settlement task id exit-<tenantId>-<membershipKey>); Admin SDK only
-      allow create: if tenantCreate() && !id.matches('exit-.*') && (isPrivileged() || taskAuthor(request.resource.data));
+      // spec 1.132: the same for the course tasks course-<courseKey>-end / course-<courseKey>-compensation
+      allow create: if tenantCreate() && !id.matches('exit-.*')
+        && !id.matches('course-.*-end') && !id.matches('course-.*-compensation')
+        && (isPrivileged() || taskAuthor(request.resource.data));
       // tenantUpdate(): the caller's tenant must be on the stored doc, not just on the new one
       allow update: if tenantUpdate() && (isPrivileged() || taskAuthorKept()) && (
         (taskArchiving() || selfDetach())

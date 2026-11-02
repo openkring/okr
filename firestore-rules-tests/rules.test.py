@@ -41,6 +41,7 @@ def jwt(uid, email="u@test.ch"):
     return f"{header}.{payload}.fakesig"
 
 def _val(v):
+    if v is None:            return {"nullValue": None}
     if isinstance(v, bool):  return {"booleanValue": v}
     # bool is a subclass of int — this branch must stay BELOW the bool one.
     if isinstance(v, int):   return {"integerValue": str(v)}
@@ -367,6 +368,20 @@ seed("calevents/evFreeDel",  {"tenants": ["t1"], "isArchived": False, "name": "F
 seed("calevents/evFreeArch", {"tenants": ["t1"], "isArchived": False, "name": "Frei", "courseKey": ""})
 seed("calevents/evLegacyArch", {"tenants": ["t1"], "isArchived": False, "name": "Alt"})
 seed("calevents/evLegacyDel",  {"tenants": ["t1"], "isArchived": False, "name": "Alt"})
+# final fix wave (spec 1.132): cancelling a course event is like archiving it
+seed("calevents/evCancel1",   {"tenants": ["t1"], "isArchived": False, "name": "Training", "courseKey": "c1", "state": "definitive"})
+seed("calevents/evCancel2",   {"tenants": ["t1"], "isArchived": False, "name": "Training", "courseKey": "c1", "state": "definitive"})
+seed("calevents/evCancelOff", {"tenants": ["t1"], "isArchived": False, "name": "Training", "courseKey": "c1", "state": "cancelled"})
+seed("calevents/evCancelL",   {"tenants": ["t1"], "isArchived": False, "name": "Training", "courseKey": "cLocked", "state": "definitive"})
+seed("calevents/evCancelFree", {"tenants": ["t1"], "isArchived": False, "name": "Frei", "courseKey": "", "state": "definitive"})
+# function-written course tasks (spec 1.132 §7.5): the responsible pR is the assignee; tkCourseNull carries the
+# author shape the first implementation wrote (null), tkCourseSys the system avatar of the other function tasks.
+seed("tasks/tkCourseNull", {"tenants": ["t1"], "isArchived": False, "shareKey": "", "name": "Kurs abschliessen",
+                            "author": None, "assignee": {"key": "pR", "name1": "R"},
+                            "state": "initial", "completionDate": ""})
+seed("tasks/tkCourseSys",  {"tenants": ["t1"], "isArchived": False, "shareKey": "", "name": "Kurs abschliessen",
+                            "author": {"key": "", "name1": "System", "label": "System", "modelType": "user"},
+                            "assignee": {"key": "pR", "name1": "R"}, "state": "initial", "completionDate": ""})
 for i in range(12):
     seed(f"calevents/evBatch{i:02d}", {"tenants": ["t1"], "isArchived": False, "name": "Serie", "courseKey": ""})
 for key, okey in [("gOpen", "tkOpen"), ("gClosed", "tkClosed"), ("meeting.m1", "tkMeet"), ("gNone", "tkNone")]:
@@ -990,7 +1005,13 @@ single_cases = [
      body({"accountKey": "6000"}), ["accountKey"]),
     ("trainer writes finance -> DENY", False, PATCH, "courses/c1/finance/settings", T2,
      body({"accountKey": "6001"}), ["accountKey"]),
-    ("treasurer creates finance of another course -> ALLOW", True, POST, "courses/cMut/finance?documentId=settings", T,
+    ("treasurer creates finance of another course -> DENY (reads rates, does not set them, spec §6)", False, POST,
+     "courses/cMut/finance?documentId=settings", T, body({"accountingTenantId": "t1", "accountKey": ""}), None),
+    ("treasurer writes finance -> DENY (spec §6)", False, PATCH, "courses/c1/finance/settings", T,
+     body({"accountKey": "6002"}), ["accountKey"]),
+    ("group admin writes finance -> ALLOW", True, PATCH, "courses/c1/finance/settings", E,
+     body({"accountKey": "6003"}), ["accountKey"]),
+    ("privileged creates finance of another course -> ALLOW", True, POST, "courses/cMut/finance?documentId=settings", P,
      body({"accountingTenantId": "t1", "accountKey": ""}), None),
     ("privileged reads finance of a missing course -> DENY", False, GET, "courses/cMissing/finance/settings", P,
      None, None),
@@ -1035,6 +1056,21 @@ single_cases = [
      "calevents/evLegacyArch", A, body({"isArchived": True}), ["isArchived"]),
     ("member DELETE legacy event without courseKey field -> ALLOW (unchanged)", True, DELETE,
      "calevents/evLegacyDel", A, None, None),
+    # final fix wave — cancelling (state to/from 'cancelled') a course event is an archive change
+    ("member cancels course event -> DENY", False, PATCH, "calevents/evCancel1", A,
+     body({"state": "cancelled", "cancelMessage": "Regen"}), ["state", "cancelMessage"]),
+    ("member takes back the cancellation of a course event -> DENY", False, PATCH, "calevents/evCancelOff", A,
+     body({"state": "definitive", "cancelMessage": ""}), ["state", "cancelMessage"]),
+    ("member edits cancelMessage of a cancelled course event, state kept -> ALLOW", True, PATCH,
+     "calevents/evCancelOff", A, body({"state": "cancelled", "cancelMessage": "Sturm"}), ["state", "cancelMessage"]),
+    ("trainer cancels course event (unlocked) -> ALLOW", True, PATCH, "calevents/evCancel2", T2,
+     body({"state": "cancelled", "cancelMessage": "Regen"}), ["state", "cancelMessage"]),
+    ("trainer cancels event of a locked course -> DENY", False, PATCH, "calevents/evCancelL", T2,
+     body({"state": "cancelled", "cancelMessage": "Regen"}), ["state", "cancelMessage"]),
+    ("privileged cancels event of a locked course -> DENY (lock is for everyone)", False, PATCH, "calevents/evCancelL", P,
+     body({"state": "cancelled", "cancelMessage": "Regen"}), ["state", "cancelMessage"]),
+    ("member cancels event without course -> ALLOW (unchanged)", True, PATCH, "calevents/evCancelFree", A,
+     body({"state": "cancelled", "cancelMessage": "Regen"}), ["state", "cancelMessage"]),
     # privacy 1.19 D-P4-10: a person's avatar is a picture OF that person — only they,
     # memberAdmin or privileged may write it. Non-person avatars stay tenant content.
     # the doc id is tenant-scoped (`t1.person.pA`); a bare id (`person.pA`) is the shared
@@ -1204,6 +1240,23 @@ single_cases = [
      body({"tenants": ["t1"], "isArchived": False, "shareKey": "", "name": "N", "author": {"key": "pE", "name1": "E"}, "state": "planned", "completionDate": ""}), None),
     ("privileged P create tasks/exit-t1-m1 -> DENY (server-only id)", False, POST, "tasks?documentId=exit-t1-m1", P,
      body({"tenants": ["t1"], "isArchived": False, "shareKey": "", "name": "N", "author": {"key": "pE", "name1": "E"}, "state": "planned", "completionDate": ""}), None),
+    # course task ids (spec 1.132): course-<key>-end / course-<key>-compensation are server-only, too
+    ("author E create tasks/course-c1-end -> DENY (server-only id)", False, POST, "tasks?documentId=course-c1-end", E,
+     body({"tenants": ["t1"], "isArchived": False, "shareKey": "", "name": "N", "author": {"key": "pE", "name1": "E"}, "state": "planned", "completionDate": ""}), None),
+    ("privileged P create tasks/course-c1-end -> DENY (server-only id)", False, POST, "tasks?documentId=course-c1-end", P,
+     body({"tenants": ["t1"], "isArchived": False, "shareKey": "", "name": "N", "author": {"key": "pE", "name1": "E"}, "state": "planned", "completionDate": ""}), None),
+    ("author E create tasks/course-c1-compensation -> DENY (server-only id)", False, POST,
+     "tasks?documentId=course-c1-compensation", E,
+     body({"tenants": ["t1"], "isArchived": False, "shareKey": "", "name": "N", "author": {"key": "pE", "name1": "E"}, "state": "planned", "completionDate": ""}), None),
+    ("author E create tasks/course-notes -> ALLOW (other course-* id)", True, POST, "tasks?documentId=course-notes", E,
+     body({"tenants": ["t1"], "isArchived": False, "shareKey": "", "name": "N", "author": {"key": "pE", "name1": "E"}, "state": "planned", "completionDate": ""}), None),
+    # course end task (spec 1.132 §7.5): the assignee — a non-privileged responsible — works the task
+    # author null: taskAuthorKept() calls .get('key') on null and errors -> denied for every non-privileged
+    # assignee. Hence the course end task carries the system avatar (key ''); OCR/vcard tasks still write null.
+    ("assignee R PATCH state of a task with author null -> DENY (null author, see note)", False, PATCH, "tasks/tkCourseNull", R,
+     body({"state": "started"}), ["state"]),
+    ("assignee R PATCH state of a task with the system author -> ALLOW", True, PATCH, "tasks/tkCourseSys", R,
+     body({"state": "started"}), ["state"]),
     ("author E create tasks/abc -> ALLOW (normal id)", True, POST, "tasks?documentId=abc", E,
      body({"tenants": ["t1"], "isArchived": False, "shareKey": "", "name": "N", "author": {"key": "pE", "name1": "E"}, "state": "planned", "completionDate": ""}), None),
     # contracts / contract-documents (spec 1.5 §5.1)
