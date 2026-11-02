@@ -3,10 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 vi.mock('firebase-admin/firestore', () => ({ getFirestore: vi.fn() }));
 vi.mock('firebase-admin/auth', () => ({ getAuth: vi.fn() }));
 vi.mock('firebase-admin', () => ({ firestore: vi.fn() }));
-vi.mock('firebase-functions/params', () => ({
-  defineSecret: (n: string) => ({ name: n, value: () => 'x' }),
-  defineString: (n: string) => ({ name: n, value: () => '' }),
-}));
+vi.mock('firebase-functions/params', () => ({ defineSecret: (n: string) => ({ name: n, value: () => 'x' }) }));
 
 import { SRV_OPS, SRV_OPTIONS, srv } from './srv-router';
 import * as contact from './contact';

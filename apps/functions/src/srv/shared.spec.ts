@@ -1,40 +1,24 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import { isRegasoftTestSystem, REGASOFT_HOST, regasoftBaseUrl } from './shared';
-
-const saved = process.env['REGASOFT_BASE'];
-afterEach(() => {
-  if (saved === undefined) delete process.env['REGASOFT_BASE'];
-  else process.env['REGASOFT_BASE'] = saved;
-});
+import {
+  isRegasoftTestSystem,
+  REGASOFT_HOST,
+  REGASOFT_PRODUCTION_BASE,
+  REGASOFT_SYSTEM,
+  REGASOFT_TEST_BASE,
+  regasoftBaseUrl,
+} from './shared';
 
 describe('Regasoft system setting', () => {
-  it('falls back to the test system when the setting is empty', () => {
-    delete process.env['REGASOFT_BASE'];
-    expect(regasoftBaseUrl()).toBe('https://regasoft.swissrowing.ch/PortalTest');
+  it('talks to the test system until the production cutover', () => {
+    expect(REGASOFT_SYSTEM).toBe('test');
     expect(isRegasoftTestSystem()).toBe(true);
-  });
-
-  it('reads the setting at call time', () => {
-    process.env['REGASOFT_BASE'] = 'https://regasoft.swissrowing.ch/Portal';
-    expect(regasoftBaseUrl()).toBe('https://regasoft.swissrowing.ch/Portal');
-    expect(isRegasoftTestSystem()).toBe(false);
-  });
-
-  it('ignores a trailing slash', () => {
-    process.env['REGASOFT_BASE'] = 'https://regasoft.swissrowing.ch/PortalTest/';
     expect(regasoftBaseUrl()).toBe('https://regasoft.swissrowing.ch/PortalTest');
-    expect(isRegasoftTestSystem()).toBe(true);
   });
 
-  it('never sends the credentials to another host', () => {
-    process.env['REGASOFT_BASE'] = 'https://evil.example.com/PortalTest';
-    expect(() => regasoftBaseUrl()).toThrow();
-    process.env['REGASOFT_BASE'] = 'https://regasoft.swissrowing.ch.evil.example.com/Portal';
-    expect(() => regasoftBaseUrl()).toThrow();
-  });
-
-  it('names the host for the adapters', () => {
+  it('names both systems on the Regasoft host', () => {
     expect(REGASOFT_HOST).toBe('https://regasoft.swissrowing.ch');
+    expect(REGASOFT_TEST_BASE).toBe('https://regasoft.swissrowing.ch/PortalTest');
+    expect(REGASOFT_PRODUCTION_BASE).toBe('https://regasoft.swissrowing.ch/Portal');
   });
 });

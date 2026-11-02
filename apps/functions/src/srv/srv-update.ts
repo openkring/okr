@@ -131,6 +131,16 @@ export function ignoredFields(sent: SrvRecord, after: SrvRecord, fields: SrvWrit
   return fields.filter((f) => !sameSrvValue(f, sent[f], after[f]));
 }
 
+/**
+ * A record for display: in the test system the email without its `x` (D11). Only the returned
+ * `before` / `after` are display copies; the PUT body and the preview's `payload` stay raw.
+ */
+function displayCopy(record: SrvRecord, testSystem: boolean): SrvRecord {
+  const copy: SrvRecord = { ...record };
+  if (typeof copy['email'] === 'string') copy['email'] = stripTestEmail(copy['email'], testSystem);
+  return copy;
+}
+
 async function readExisting(rid: number, read: SrvRead): Promise<SrvRecord> {
   const record = await read(rid);
   if (!record) throw new HttpsError('not-found', `Regasoft has no member ${rid}`);
@@ -147,18 +157,26 @@ interface SrvMergeArgs {
   read: SrvRead;
 }
 
-/** Dry run (D12): the record before, the record after and the exact payload. Sends nothing. */
+/**
+ * Dry run (D12): the record before and after (display copies) and the exact payload (raw, as it
+ * would be sent). Sends nothing.
+ */
 export async function runSrvPreview(args: SrvMergeArgs): Promise<SrvPreview> {
   const before = await readExisting(args.rid, args.read);
   const payload = mergeSrvRecord(before, args.changes, { testSystem: args.testSystem });
-  return { before, after: { ...payload }, payload };
+  return {
+    before: displayCopy(before, args.testSystem),
+    after: displayCopy(payload, args.testSystem),
+    payload,
+  };
 }
 
 /**
  * Read-modify-write. The record is read HERE, at update time — never taken from a preview —
  * so a change made in Regasoft between preview and confirm is kept. Nothing is sent when the
  * merge changes no writable field. `onWritten` runs right after the `PUT` (cache invalidation),
- * before the read-back, so it also runs when the read-back fails.
+ * before the read-back, so it also runs when the read-back fails. Fields are compared on the raw
+ * records; only the returned `before` / `after` are display copies.
  */
 export async function runSrvUpdate(
   args: SrvMergeArgs & { write: SrvWrite; onWritten?: () => Promise<void> },
@@ -166,14 +184,22 @@ export async function runSrvUpdate(
   const before = await readExisting(args.rid, args.read);
   const payload = mergeSrvRecord(before, args.changes, { testSystem: args.testSystem });
   const fields = changedFields(before, payload);
-  if (fields.length === 0) return { before, after: before, written: [], ignored: [] };
+  if (fields.length === 0) {
+    const shown = displayCopy(before, args.testSystem);
+    return { before: shown, after: { ...shown }, written: [], ignored: [] };
+  }
 
   await args.write(args.rid, payload);
   await args.onWritten?.();
 
   const after = await readExisting(args.rid, args.read);
   const ignored = ignoredFields(payload, after, fields);
-  return { before, after, written: fields.filter((f) => !ignored.includes(f)), ignored };
+  return {
+    before: displayCopy(before, args.testSystem),
+    after: displayCopy(after, args.testSystem),
+    written: fields.filter((f) => !ignored.includes(f)),
+    ignored,
+  };
 }
 
 /**

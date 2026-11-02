@@ -47,7 +47,6 @@ const req = (data: unknown, auth: unknown = { uid: 'u1', token: {} }) => ({ auth
 
 beforeEach(() => {
   vi.clearAllMocks();
-  delete process.env['REGASOFT_BASE'];
   gatewayFetch.mockResolvedValue({ data: { data: RAW, success: true, message: null } });
 });
 
@@ -61,18 +60,13 @@ describe('handlePreviewSrvUpdate', () => {
       'https://regasoft.swissrowing.ch/PortalTest/api/club/members/26183',
       expect.objectContaining({ method: 'GET' }),
     );
-    expect(res.before).toEqual(RAW);
-    // PortalTest: a changed email gets the x, every other key round-trips.
+    // PortalTest: before/after are display copies without the x …
+    expect(res.before).toEqual({ ...RAW, email: 'bruno@example.ch' });
+    expect(res.after).toEqual({ ...RAW, city: 'Uster', email: 'a@b.ch' });
+    // … while the payload is exactly what would be sent: the changed email gets the x, every key round-trips.
     expect(res.payload).toEqual({ ...RAW, city: 'Uster', email: 'a@b.chx' });
     expect(axiosPut).not.toHaveBeenCalled();
     expect(invalidateProvider).not.toHaveBeenCalled();
-  });
-
-  it('writes no x in production', async () => {
-    process.env['REGASOFT_BASE'] = 'https://regasoft.swissrowing.ch/Portal';
-    const res = await handlePreviewSrvUpdate(req({ srvId: 26183, changes: { email: 'a@b.ch' } }));
-    expect(gatewayFetch.mock.calls[0][0]).toBe('https://regasoft.swissrowing.ch/Portal/api/club/members/26183');
-    expect(res.payload['email']).toBe('a@b.ch');
   });
 
   it('requires authentication', async () => {

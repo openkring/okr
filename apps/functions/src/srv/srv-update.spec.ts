@@ -227,6 +227,27 @@ describe('runSrvUpdate', () => {
     expect(res.ignored).toEqual(['telefon']);
   });
 
+  it('test system: PUT body stays raw, before and after come back without the x', async () => {
+    const after = { ...RAW, email: 'a@b.chx' };
+    const read = fakeRead([RAW, after]);
+    const write = vi.fn(async () => undefined);
+
+    const res = await runSrvUpdate({ rid: 26183, changes: { email: 'a@b.ch' }, testSystem: true, read, write });
+
+    expect(write).toHaveBeenCalledWith(26183, { ...RAW, email: 'a@b.chx' });
+    expect(res.before['email']).toBe('bruno@example.ch');
+    expect(res.after['email']).toBe('a@b.ch');
+    // The comparison runs on the raw values: Regasoft took the email.
+    expect(res.written).toEqual(['email']);
+    expect(res.ignored).toEqual([]);
+  });
+
+  it('test system: nothing to send still returns display copies', async () => {
+    const res = await runSrvUpdate({ rid: 26183, changes: { city: 'Stäfa' }, testSystem: true, read: fakeRead([RAW]), write: vi.fn() });
+    expect(res.before['email']).toBe('bruno@example.ch');
+    expect(res.after['email']).toBe('bruno@example.ch');
+  });
+
   it('sends nothing when the changes do not change the record', async () => {
     const read = fakeRead([RAW]);
     const write = vi.fn(async () => undefined);
@@ -272,10 +293,23 @@ describe('runSrvUpdate', () => {
 
 describe('runSrvPreview', () => {
   it('returns before, after and the exact payload, and writes nothing', async () => {
-    const res = await runSrvPreview({ rid: 26183, changes: { email: 'a@b.ch' }, testSystem: true, read: async () => RAW });
+    const res = await runSrvPreview({ rid: 26183, changes: { city: 'Uster' }, testSystem: false, read: async () => RAW });
     expect(res.before).toEqual(RAW);
-    expect(res.payload).toEqual({ ...RAW, email: 'a@b.chx' });
+    expect(res.payload).toEqual({ ...RAW, city: 'Uster' });
     expect(res.after).toEqual(res.payload);
+  });
+
+  it('test system: before and after are display copies without the x, the payload stays raw', async () => {
+    const res = await runSrvPreview({ rid: 26183, changes: { email: 'a@b.ch' }, testSystem: true, read: async () => RAW });
+    expect(res.before).toEqual({ ...RAW, email: 'bruno@example.ch' });
+    expect(res.payload).toEqual({ ...RAW, email: 'a@b.chx' });
+    expect(res.after).toEqual({ ...RAW, email: 'a@b.ch' });
+  });
+
+  it('test system: an unchanged email keeps its x in the payload', async () => {
+    const res = await runSrvPreview({ rid: 26183, changes: { city: 'Uster' }, testSystem: true, read: async () => RAW });
+    expect(res.before['email']).toBe('bruno@example.ch');
+    expect(res.payload['email']).toBe('bruno@example.chx');
   });
 });
 
