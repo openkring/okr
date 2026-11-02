@@ -28,6 +28,7 @@ import * as Video from './video';
 import * as FileTransfer from './file-transfer';
 import * as Learning from './learning';
 import * as Group from './group';
+import * as Course from './course';
 import * as Storage from './storage';
 import * as Membership from './membership';
 import * as Expense from './expense';
@@ -153,6 +154,8 @@ export const removeAdhocChatMember = MatrixSimple.removeAdhocChatMember;
 export const setChatPins = MatrixSimple.setChatPins;
 // onGroupDocWritten: groups/{groupId}, one trigger fanning out to the seven former group triggers (replication, adminKeys, name, postPolicy, chatMode, chatCleanup, pinboard; 1.118 A3)
 export const onGroupDocWritten = Group.onGroupDocWritten;
+// onCourseDocWritten: courses/{courseId}, mirrors trainers[]/responsiblePersons[] into trainerKeys/responsibleKeys for firestore.rules (spec 1.132 §6.1)
+export const onCourseDocWritten = Course.onCourseDocWritten;
 // onMembershipDocWritten: memberships/{membershipId}, one trigger fanning out to the four former membership triggers (matrixSync, pinboardSource, accountSync, exitSettlement; 1.118 A4)
 export const onMembershipDocWritten = Membership.onMembershipDocWritten;
 export const resolveNotesRoom = MatrixSimple.resolveNotesRoom;
