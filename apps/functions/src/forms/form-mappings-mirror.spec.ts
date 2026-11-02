@@ -29,4 +29,11 @@ describe('FORM_MAPPINGS mirror', () => {
       expect(inlined?.defaults ?? {}, `defaults of ${shared.mappingKey}`).toEqual(shared.defaults ?? {});
     }
   });
+
+  it('agrees on the typed-properties list name (1.125), which the server reads to build `properties`', () => {
+    for (const shared of SHARED) {
+      const inlined = INLINED.find(m => m.mappingKey === shared.mappingKey);
+      expect(inlined?.propertiesField, `propertiesField of ${shared.mappingKey}`).toBe(shared.propertiesField);
+    }
+  });
 });

@@ -6,14 +6,16 @@ export const FORM_MAPPINGS: FormMapping[] = [
     label: 'Applications',
     modelType: 'ApplicationModel',
     collectionName: 'applications',
-    defaults: { state: 'applied', source: 'form' },
+    defaults: { state: 'applied', source: 'form', applicationFor: 'membership' },
+    propertiesField: 'properties',
   },
   {
     mappingKey: 'applications.junior',
     label: 'Applications (Junioren)',
     modelType: 'ApplicationModel',
     collectionName: 'applications',
-    defaults: { state: 'applied', source: 'form', applicationAs: 'youth' },
+    defaults: { state: 'applied', source: 'form', applicationAs: 'youth', applicationFor: 'membership' },
+    propertiesField: 'properties',
   },
   {
     // C5 §2 — the kring.ch lead form. The only mapping whose target is not a single document:

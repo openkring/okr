@@ -4,12 +4,14 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { createHmac, createHash } from 'node:crypto';
 
+import type { DerivedValue, Field } from '@okr/shared-models';
 import { getTodayStr, DateFormat } from '@okr/shared-util-core';
 import { sendEmailViaProvider } from '../auth/email-transport';
 import { getAppEmailConfig } from '../auth/email-templates';
 import { createProspect } from '../business/prospect';
 import { createBoathouseReservation } from './reservation-target';
 import { emitEvent } from '../workflow/emit';
+import { prepareSubmission } from './submission-pipeline';
 
 const REGION = 'europe-west6';
 const formsHmacSecret = defineSecret('FORMS_HMAC_SECRET');
@@ -39,14 +41,8 @@ interface FormMapping {
   modelType: string;
   collectionName: string;
   defaults?: Record<string, unknown>;
-}
-
-interface FieldDef {
-  key: string;
-  label: string;
-  type: string;
-  required: boolean;
-  order: number;
+  /** Name of the typed-properties list on the target model (1.125). */
+  propertiesField?: string;
 }
 
 interface AvatarInfoInline {
@@ -78,7 +74,9 @@ interface FormDefinition {
   isArchived: boolean;
   tenants: string[];
   target: SubmissionTarget;
-  fields: FieldDef[];
+  /** Legacy documents may lack `fields`/`derivedValues` — coalesced where they are read. */
+  fields?: Field[];
+  derivedValues?: DerivedValue[];
 }
 
 interface SubmitFormPayload {
@@ -108,14 +106,16 @@ export const FORM_MAPPINGS: FormMapping[] = [
     label: 'Applications',
     modelType: 'ApplicationModel',
     collectionName: 'applications',
-    defaults: { state: 'applied', source: 'form' },
+    defaults: { state: 'applied', source: 'form', applicationFor: 'membership' },
+    propertiesField: 'properties',
   },
   {
     mappingKey: 'applications.junior',
     label: 'Applications (Junioren)',
     modelType: 'ApplicationModel',
     collectionName: 'applications',
-    defaults: { state: 'applied', source: 'form', applicationAs: 'youth' },
+    defaults: { state: 'applied', source: 'form', applicationAs: 'youth', applicationFor: 'membership' },
+    propertiesField: 'properties',
   },
   {
     // C5 §2 — the kring.ch lead form. NOT written by the generic collection path below: a prospect
@@ -286,7 +286,7 @@ function buildSubmissionEmailHtml(
   submissionId: string,
   submittedAt: string,
 ): string {
-  const rows = [...formDef.fields]
+  const rows = [...(formDef.fields ?? [])]
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
     .map(f => {
       const val = values[f.key];
@@ -495,31 +495,42 @@ export const submitForm = onCall(
 
     const isSpam = spamReasons.length > 0;
 
-    // ── 4. Server-side validation ─────────────────
-    const missingRequired = formDef.fields
-      .filter(f => f.required)
-      .filter(f => {
-        const val = payload.values[f.key];
-        return val === undefined || val === null || val === '';
-      });
+    // ── 4. Server-side validation + clean values (1.125, spec §7.2) ──
+    // The definition — not the client — decides what is stored: hidden fields are absent (not
+    // required, not stored), keys that are no input field (honeypot, `_jsToken`, anything
+    // invented) are dropped, derived values overwrite the client's, and `asProperty` answers
+    // become the typed `properties` list when the mapping has one.
+    const target = formDef.target;
+    const propertiesField = target.kind === 'collection'
+      ? getFormMapping(target.mappingKey)?.propertiesField
+      : undefined;
+    const prepared = prepareSubmission(
+      formDef.fields ?? [],
+      formDef.derivedValues,
+      propertiesField,
+      payload.values ?? {},
+      getTodayStr(DateFormat.StoreDate),
+    );
 
-    if (missingRequired.length > 0) {
+    if (prepared.missingRequired.length > 0) {
       throw new HttpsError(
         'invalid-argument',
-        `Missing required fields: ${missingRequired.map(f => f.key).join(', ')}`
+        `Missing required fields: ${prepared.missingRequired.join(', ')}`
+      );
+    }
+    if (prepared.invalidProperties.length > 0) {
+      throw new HttpsError(
+        'invalid-argument',
+        `Invalid values for fields: ${prepared.invalidProperties.join(', ')}`
       );
     }
 
     // ── 5. Persist ────────────────────────────────
-    const target = formDef.target;
     let submissionId: string;
     let collectionName: string | undefined;
     let targetUrl: string | undefined;
 
-    // Strip honeypot key from submitted values before persisting
-    const cleanValues = { ...payload.values };
-    delete cleanValues[honeypotKey];
-    delete cleanValues['_jsToken'];
+    const cleanValues = prepared.values;
 
     if (target.kind === 'collection') {
       const mapping = getFormMapping(target.mappingKey);
