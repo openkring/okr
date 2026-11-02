@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import { Field } from '@okr/shared-models';
 
-import { buildPrefillQuery, canAllowOther, firstEmailField, FORM_MESSAGE_MAX_LENGTH, isTypedChoiceKey } from './form-prefill-link.util';
+import {
+  buildPrefillQuery, canAllowOther, fieldsBlockingOther, firstEmailField, FORM_MESSAGE_MAX_LENGTH, implicitSsnFields, isTypedChoiceKey,
+  otherKeyClashes,
+} from './form-prefill-link.util';
 
 let n = 0;
 const f = (type: Field['type'], key: string, extra: Record<string, unknown> = {}): Field =>
@@ -137,6 +140,35 @@ describe('canAllowOther', () => {
   it('is false for a field mapped onto a typed model field', () => {
     expect(canAllowOther(f('radio', 'gender', { options: opts }), 'applications.default')).toBe(false);
     expect(canAllowOther(f('radio', 'gender', { options: opts }), undefined)).toBe(true);
+  });
+});
+
+describe('builder save gate helpers', () => {
+  const f = (extra: Record<string, unknown>) => ({ id: String(extra['key']), label: 'x', required: false, width: 'full', order: 0, ...extra }) as unknown as Field;
+  const options = [{ label: 'A', value: 'a' }];
+
+  it('fieldsBlockingOther: a typed choice key, an AHV field and a single checkbox block «Andere …»', () => {
+    const fields = [
+      f({ key: 'gender', type: 'radio', options, allowOther: true }),
+      f({ key: 'level', type: 'radio', options, allowOther: true }),
+      f({ key: 'agree', type: 'checkbox', allowOther: true }),
+      f({ key: 'ssnId', type: 'dropdown', options, allowOther: true }),
+      f({ key: 'colour', type: 'dropdown', options }),
+    ];
+    expect(fieldsBlockingOther(fields, 'applications.default').map(x => x.key)).toEqual(['gender', 'agree', 'ssnId']);
+    expect(fieldsBlockingOther(undefined as unknown as Field[], undefined)).toEqual([]);
+  });
+
+  it('otherKeyClashes: `<key>Other` taken by a question or a derived value', () => {
+    const fields = [f({ key: 'level', type: 'radio', options, allowOther: true }), f({ key: 'levelOther', type: 'text' })];
+    expect(otherKeyClashes(fields, []).map(x => x.key)).toEqual(['level']);
+    expect(otherKeyClashes([fields[0]], [{ key: 'levelOther', cases: [] }]).map(x => x.key)).toEqual(['level']);
+    expect(otherKeyClashes([fields[0]], undefined)).toEqual([]);
+  });
+
+  it('implicitSsnFields: R1 — an implicit field keyed ssnId', () => {
+    const fields = [f({ key: 'ssnId', type: 'implicit', valueType: 'text' }), f({ key: 'courseId', type: 'implicit', valueType: 'text' }), f({ key: 'ssnId', type: 'ssn' })];
+    expect(implicitSsnFields(fields).map(x => x.type)).toEqual(['implicit']);
   });
 });
 

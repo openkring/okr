@@ -36,8 +36,11 @@ export const fieldConfigValidations = staticSuite((model: Field, mappingKey?: st
         enforce(model.key).matches(FIELD_KEY_PATTERN);
       });
     });
-    stringValidations('helpText', model.helpText ?? '', LONG_NAME_LENGTH);
-    stringValidations('placeholder', model.placeholder ?? '', NAME_LENGTH);
+    // an unsichtbares Feld shows neither (the builder hides both), so a pasted value cannot block saving unseen
+    omitWhen(model.type === 'implicit', () => {
+      stringValidations('helpText', model.helpText ?? '', LONG_NAME_LENGTH);
+      stringValidations('placeholder', model.placeholder ?? '', NAME_LENGTH);
+    });
   });
 
   // an unsichtbares Feld (spec §8.1): the type of its value, and a default that fits it
@@ -55,6 +58,10 @@ export const fieldConfigValidations = staticSuite((model: Field, mappingKey?: st
         enforce(coerceToPropertyType(defaultValue, valueType as 'boolean' | 'number' | 'text') !== undefined).isTruthy();
       });
     });
+    // a text default is typed by the author: the same cap as the builder's input
+    omitWhen(valueType !== 'text' || typeof defaultValue !== 'string', () => {
+      stringValidations('defaultValue', defaultValue as string, LONG_NAME_LENGTH);
+    });
   });
 
   // «Andere …» (spec §9) only where a closed list of options can take it
@@ -68,7 +75,8 @@ export const fieldConfigValidations = staticSuite((model: Field, mappingKey?: st
     stringValidations('categoryName', (model as { categoryName?: string }).categoryName ?? '', undefined, 0, true);
   });
 
-  omitWhen(!model.visibleIf, () => {
+  // an unsichtbares Feld is never shown, so the builder hides its rule editor and the rule is not checked
+  omitWhen(!model.visibleIf || model.type === 'implicit', () => {
     ruleTests('visibleIf', model.visibleIf);
   });
 });

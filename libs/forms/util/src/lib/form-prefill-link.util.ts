@@ -1,4 +1,4 @@
-import { Field } from '@okr/shared-models';
+import { DerivedValue, Field } from '@okr/shared-models';
 import { isPrefillable, isSsnField, parsePrefillValue } from '@okr/shared-util-core';
 
 import { templateChoiceKeys } from './form-field-templates';
@@ -63,6 +63,34 @@ export function canAllowOther(field: Field, mappingKey: string | undefined): boo
   if (!field || isSsnField(field)) return false;
   const hasOptions = field.type === 'dropdown' || field.type === 'radio' || (field.type === 'checkbox' && (field.options?.length ?? 0) > 0);
   return hasOptions && !isTypedChoiceKey(mappingKey, field.key);
+}
+
+/**
+ * Fields with «Andere …» switched on where it is not allowed (spec §9): not a choice field with options, an AHV field,
+ * or a typed choice key of the mapping (`gender`). Shared by `formDefinitionValidations` and the builder's save gate.
+ */
+export function fieldsBlockingOther(fields: Field[], mappingKey: string | undefined): Field[] {
+  return (Array.isArray(fields) ? fields : [])
+    .filter(f => (f as { allowOther?: boolean } | undefined)?.allowOther === true && !canAllowOther(f, mappingKey));
+}
+
+/**
+ * Fields with «Andere …» whose text key `<key>Other` is already the key of another question or a derived value:
+ * the two answers would overwrite each other. Shared by `formDefinitionValidations` and the builder's save gate.
+ */
+export function otherKeyClashes(fields: Field[], derivedValues: DerivedValue[] | undefined): Field[] {
+  const list = Array.isArray(fields) ? fields : [];
+  const derived = Array.isArray(derivedValues) ? derivedValues : [];
+  const keys = new Set([...list.map(f => f?.key), ...derived.map(d => d?.key)].filter((k): k is string => !!k));
+  return list.filter(f => (f as { allowOther?: boolean } | undefined)?.allowOther === true && !!f.key && keys.has(`${f.key}Other`));
+}
+
+/**
+ * Implicit fields that are AHV fields (R1): their value would sit in clear text in the definition or a section.
+ * Shared by `formDefinitionValidations` and the builder's save gate.
+ */
+export function implicitSsnFields(fields: Field[]): Field[] {
+  return (Array.isArray(fields) ? fields : []).filter(f => f?.type === 'implicit' && isSsnField(f));
 }
 
 /** The first e-mail field in form order, the one «Bestätigung per E-Mail senden» writes to (never an AHV field). */

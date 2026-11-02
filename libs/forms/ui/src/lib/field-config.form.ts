@@ -1,4 +1,4 @@
-import { Component, computed, effect, input, model, output } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonNote, IonRow } from '@ionic/angular';
 
@@ -8,7 +8,7 @@ import {
   Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n,
   StringSelect, StringSelectI18n, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
-import { coerceBoolean, fill, isPrefillable, isSsnField, propertyTypeOf } from '@okr/shared-util-core';
+import { coerceBoolean, coerceToPropertyType, fill, isPrefillable, isSsnField, propertyTypeOf } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import {
@@ -92,7 +92,7 @@ const VALUE_TYPES: PropertyType[] = ['boolean', 'number', 'text'];
                       <okr-checkbox [i18n]="defaultBooleanI18n()" [checked]="defaultValue() === true" (checkedChange)="onDefaultChange($event)"
                         [toggle]="true" justify="space-between" labelPlacement="start" [readOnly]="isReadOnly()" />
                     } @else {
-                      <!-- a course id is generated, so no cap of its own: the suite checks only that it fits the type -->
+                      <!-- the cap is the one the suite enforces on a text default (LONG_NAME_LENGTH) -->
                       <okr-text-input [i18n]="defaultValueI18n()" [value]="defaultText()" (valueChange)="onDefaultChange($event)"
                         [inputMode]="valueType() === 'number' ? 'decimal' : 'text'" [maxLength]="longNameLength" [readOnly]="isReadOnly()" />
                     }
@@ -295,9 +295,16 @@ export class FieldConfigForm {
     const fd = this.formData();
     return fd.type === 'implicit' ? fd.defaultValue : undefined;
   });
-  protected readonly defaultText = computed(() => {
-    const value = this.defaultValue();
-    return value === undefined || value === null ? '' : String(value);
+  /**
+   * The text in the default input: the stored default when the field or its value type changes, otherwise what the
+   * author typed — a number default is stored as a number as soon as it is one, without rewriting «1.» under the cursor.
+   */
+  protected readonly defaultText = linkedSignal<unknown, string>({
+    source: () => [this.formData().id, this.valueType()],
+    computation: () => {
+      const value = this.defaultValue();
+      return value === undefined || value === null ? '' : String(value);
+    },
   });
   protected readonly fromLink = computed(() => {
     const fd = this.formData();
@@ -394,17 +401,18 @@ export class FieldConfigForm {
   }
 
   /**
-   * The default of an unsichtbares Feld, by its type: a boolean from the switch, a number from its text (a text that
-   * is no number stays text, so the suite says when it does not fit), and an empty text removes the default.
+   * The default of an unsichtbares Feld, by its type: a boolean from the switch, a number whenever the text is one
+   * (`coerceToPropertyType`; a text that is no number stays text, so the suite says it does not fit), and an empty
+   * text removes the default.
    */
   protected onDefaultChange(value: string | boolean): void {
     const fd = this.formData();
     if (fd.type !== 'implicit') return;
+    if (typeof value === 'string') this.defaultText.set(value);
     let next: BaseType | undefined;
     if (typeof value === 'boolean') next = value;
     else if (value.trim() === '') next = undefined;
-    // only a number written as such is stored as one: «1.» while typing stays text, so the field is not rewritten under the cursor
-    else if (fd.valueType === 'number') next = Number.isFinite(Number(value)) && String(Number(value)) === value.trim() ? Number(value) : value;
+    else if (fd.valueType === 'number') next = coerceToPropertyType(value, 'number') ?? value;
     else next = value;
     if (next === fd.defaultValue) return;
     const { defaultValue: _old, ...rest } = fd;

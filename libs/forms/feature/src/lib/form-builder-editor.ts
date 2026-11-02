@@ -18,12 +18,16 @@ import { SectionService } from '@okr/cms-section-data-access';
 import { FormDefinitionService } from '@okr/forms-data-access';
 import {
   buildPrefillQuery, conditionalBlockMembers, conditionOpLabels, DerivedRuleIssue, derivedValuesReferencing, describeRule, fieldsReferencing,
-  findDerivedRuleIssues, findDuplicateKeys, findRuleIssues, FORM_I18N_KEYS, FormI18n, getFormMapping, misplacedSsnFields, previewDerivedValues, removeDerivedReferencesTo,
+  fieldsBlockingOther, findDerivedRuleIssues, findDuplicateKeys, findRuleIssues, FORM_I18N_KEYS, FormI18n, getFormMapping, implicitSsnFields,
+  misplacedSsnFields, otherKeyClashes, previewDerivedValues, removeDerivedReferencesTo,
   removeReferencesTo, ruleConnectors, RuleIssue,
 } from '@okr/forms-util';
 import { I18nService } from '@okr/shared-i18n';
 import { FieldConfigModal, FieldTypeDef, FieldTypeLibrary, FormBuilderHelpModal, FormRenderer } from '@okr/forms-ui';
 import { confirm, copyToClipboardDeferred, dismissOverlay, showToast } from '@okr/shared-util-angular';
+
+/** The rejection reason of a cancelled page pick: nothing to copy, no error toast. */
+const LINK_CANCELLED = 'link-cancelled';
 
 /**
  * The pages that show this form (spec §8, plan decision 2): pages whose section list holds a form section with
@@ -130,6 +134,18 @@ function newField(def: FieldTypeDef, order: number): Field {
           @if (misplacedSsn().length > 0) {
             <!-- same check as the settings suite: an AHV field outside an application's ssnId blocks saving -->
             <ion-note color="danger" class="duplicate-keys">{{ i18n.fields_ssn_placement() }}</ion-note>
+          }
+          @if (implicitSsn().length > 0) {
+            <!-- same check as the settings suite (R1): an AHV number never sits in clear text in the definition -->
+            <ion-note color="danger" class="duplicate-keys">{{ i18n.fields_implicit_ssn() }}</ion-note>
+          }
+          @if (otherBlocked().length > 0) {
+            <!-- same check as the settings suite: «Andere …» on a typed choice key, an AHV field or a field without options -->
+            <ion-note color="danger" class="duplicate-keys">{{ i18n.fields_other_not_allowed() }}</ion-note>
+          }
+          @if (otherClash().length > 0) {
+            <!-- same check as the settings suite: the «Andere …» text key is taken by another question or a derived value -->
+            <ion-note color="danger" class="duplicate-keys">{{ i18n.fields_other_key_clash() }}</ion-note>
           }
           @if (viewMode() === 'editor') {
             <!-- derived values live in the form settings; their broken conditions are flagged here, where fields change -->
@@ -354,7 +370,13 @@ export class FormBuilderEditor {
     fill(this.i18n.fields_duplicate_keys(), { keys: this.duplicateKeys().map(k => `«${k}»`).join(', ') }));
   /** AHV fields under another key than ssnId or on a non-application target — block saving, as in the settings. */
   protected readonly misplacedSsn = computed(() => misplacedSsnFields(this.fields(), this.mapping()));
-  protected readonly hasKeyIssues = computed(() => this.duplicateKeys().length > 0 || this.misplacedSsn().length > 0);
+  /** Implicit AHV fields (R1), «Andere …» where it is not allowed, and `<key>Other` clashes — pasted JSON can carry all three. */
+  protected readonly implicitSsn = computed(() => implicitSsnFields(this.fields()));
+  protected readonly otherBlocked = computed(() => fieldsBlockingOther(this.fields(), this.mapping()?.mappingKey));
+  protected readonly otherClash = computed(() => otherKeyClashes(this.fields(), this.formData().derivedValues));
+  /** Everything the settings suite rejects across fields blocks saving here too, so a saved definition never fails there. */
+  protected readonly hasKeyIssues = computed(() => this.duplicateKeys().length > 0 || this.misplacedSsn().length > 0
+    || this.implicitSsn().length > 0 || this.otherBlocked().length > 0 || this.otherClash().length > 0);
 
   /** Fields inside a divider block with a rule — indented on the canvas. */
   protected readonly blockMembers = computed(() => conditionalBlockMembers(this.fields()));
@@ -408,24 +430,31 @@ export class FormBuilderEditor {
   }
 
   /**
-   * Copies `<origin>/public/<page>?<answers>` (spec §8). The origin is the tenant's public one (`appOrigin`, never a
-   * bare `location.origin`, which is localhost in dev); several pages showing the form → the author picks one.
-   * The clipboard write starts inside the click (or the alert's OK), so it never hangs on a lost gesture.
+   * Copies `<origin>/public/<page>?<answers>` (spec §8); several pages showing the form → the author picks one.
+   * The origin is `AppStore.appOrigin()`: the page's own origin on the web (so `localhost` while developing),
+   * the tenant's `publicAppOrigin` only in a native build.
+   * The clipboard write starts synchronously inside the click with the URL as a promise, so picking a page in the
+   * alert never costs the user gesture (`copyToClipboardDeferred`). A cancelled pick copies nothing and says nothing.
    */
   protected async createLink(): Promise<void> {
     const pages = this.formPages();
-    const page = pages.length === 1 ? pages[0] : await this.pickPage(pages);
-    if (!page) return;
+    if (pages.length === 0) return;
+    const url = (pages.length === 1 ? Promise.resolve(pages[0]) : this.pickPage(pages))
+      .then(page => (page ? this.linkFor(page) : Promise.reject(new Error(LINK_CANCELLED))));
+    // shown either way, so it can be copied by hand if the clipboard refuses
+    url.then(link => this.copiedLink.set(link), () => undefined);
+    try {
+      await copyToClipboardDeferred(url);
+      await showToast(this.toastController, this.i18n.preview_link_copied());
+    } catch (err) {
+      if ((err as Error | undefined)?.message !== LINK_CANCELLED) await showToast(this.toastController, this.i18n.source_copy_failed());
+    }
+  }
+
+  private linkFor(page: PageModel): string {
     const { query } = this.prefillLink();
     const origin = this.appStore.appOrigin().replace(/\/+$/, '');
-    const url = `${origin}/public/${encodeURIComponent(page.okey)}${query ? `?${query}` : ''}`;
-    this.copiedLink.set(url);   // shown either way, so it can be copied by hand if the clipboard refuses
-    try {
-      await copyToClipboardDeferred(Promise.resolve(url));
-      await showToast(this.toastController, this.i18n.preview_link_copied());
-    } catch {
-      await showToast(this.toastController, this.i18n.source_copy_failed());
-    }
+    return `${origin}/public/${encodeURIComponent(page.okey)}${query ? `?${query}` : ''}`;
   }
 
   /** A radio list of the pages that show the form; undefined when cancelled. */

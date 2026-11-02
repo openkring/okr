@@ -2,11 +2,13 @@ import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, URL_LENGTH } from '@okr/shared-constants';
 import { FormDefinitionModel } from '@okr/shared-models';
-import { classifyStoreDate, isSsnField, isValidPartialStoreDate, stringValidations } from '@okr/shared-util-core';
+import { classifyStoreDate, isValidPartialStoreDate, stringValidations } from '@okr/shared-util-core';
 
 import { findDuplicateKeys, isInputField, misplacedSsnFields } from './field-kind';
 import { getFormMapping } from './form-mappings';
-import { canAllowOther, FORM_MESSAGE_MAX_LENGTH, firstEmailField } from './form-prefill-link.util';
+import {
+  fieldsBlockingOther, FORM_MESSAGE_MAX_LENGTH, firstEmailField, implicitSsnFields, otherKeyClashes,
+} from './form-prefill-link.util';
 import { controllerTests, ruleTests } from './form-rules.validations';
 
 export const MAX_RESPONSES_LIMIT = 10000;
@@ -53,23 +55,18 @@ export const formDefinitionValidations = staticSuite((model: FormDefinitionModel
 
   // an AHV number is never an implicit value: it would sit in clear text in the definition (R1; pasted JSON too)
   test('fields', '@forms/feature.fields.implicit_ssn', () => {
-    enforce((Array.isArray(model.fields) ? model.fields : []).some(f => f?.type === 'implicit' && isSsnField(f))).isFalsy();
+    enforce(implicitSsnFields(model.fields).length).equals(0);
   });
 
   // «Andere …» stores its text under `<key>Other`: no other question or derived value may use that key (it would overwrite or be overwritten)
   test('fields', '@forms/feature.fields.other_key_clash', () => {
-    const fields = Array.isArray(model.fields) ? model.fields : [];
-    const derived = Array.isArray(model.derivedValues) ? model.derivedValues : [];
-    const keys = new Set([...fields.map(f => f?.key), ...derived.map(d => d?.key)].filter((k): k is string => !!k));
-    const clash = fields.some(f => (f as { allowOther?: boolean }).allowOther === true && !!f.key && keys.has(`${f.key}Other`));
-    enforce(clash).isFalsy();
+    enforce(otherKeyClashes(model.fields, model.derivedValues).length).equals(0);
   });
 
   // …and not on a question stored in a typed model field (`gender`): `other` would write a value the model does not allow
   test('fields', '@forms/feature.fields.other_not_allowed', () => {
     const mappingKey = model.target?.kind === 'collection' ? model.target.mappingKey : undefined;
-    const bad = (Array.isArray(model.fields) ? model.fields : []).some(f => (f as { allowOther?: boolean }).allowOther === true && !canAllowOther(f, mappingKey));
-    enforce(bad).isFalsy();
+    enforce(fieldsBlockingOther(model.fields, mappingKey).length).equals(0);
   });
 
   // Nach dem Absenden (spec §10)

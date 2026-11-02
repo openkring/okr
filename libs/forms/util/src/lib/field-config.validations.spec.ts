@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { Field } from '@okr/shared-models';
 import { fieldConfigValidations, fieldLabelLength } from './field-config.validations';
 
@@ -93,6 +94,24 @@ describe('fieldConfigValidations', () => {
       const result = fieldConfigValidations(implicit({ key: 'ssnId', defaultValue: '7561234567897' }));
       expect(result.getErrors('key')).toContain('@forms/feature.fields.implicit_ssn');
       expect(fieldConfigValidations(implicit({ key: 'courseId' })).hasErrors('key')).toBe(false);
+    });
+
+    it('caps a text default at LONG_NAME_LENGTH, as the builder input does', () => {
+      expect(fieldConfigValidations(implicit({ defaultValue: 'x'.repeat(LONG_NAME_LENGTH) })).isValid()).toBe(true);
+      expect(fieldConfigValidations(implicit({ defaultValue: 'x'.repeat(LONG_NAME_LENGTH + 1) })).hasErrors('defaultValue')).toBe(true);
+      expect(fieldConfigValidations(implicit({ valueType: 'number', defaultValue: 12345 })).isValid()).toBe(true);
+    });
+
+    it('ignores help text, placeholder and a rule it never shows', () => {
+      const hidden = implicit({
+        helpText: 'x'.repeat(LONG_NAME_LENGTH + 1), placeholder: 'x'.repeat(200),
+        visibleIf: { match: 'all', conditions: [{ fieldId: '', op: '' }] },
+      });
+      expect(fieldConfigValidations(hidden).isValid()).toBe(true);
+      // a visible field still gets all three checked
+      const text = { ...base, type: 'text', helpText: 'x'.repeat(LONG_NAME_LENGTH + 1), visibleIf: { match: 'all', conditions: [{ fieldId: '', op: '' }] } } as unknown as Field;
+      expect(fieldConfigValidations(text).hasErrors('helpText')).toBe(true);
+      expect(fieldConfigValidations(text).isValid()).toBe(false);
     });
 
     it('checks no value type on other fields', () => {
