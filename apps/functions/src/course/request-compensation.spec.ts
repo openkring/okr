@@ -13,11 +13,14 @@ import {
   compensationBookingKey,
   compensationBookingTitle,
   duplicateEligibleKeys,
+  finalBookingsInOtherBooks,
   foreignBookingReason,
   invalidEligibleKeys,
   invalidRates,
+  isSettled,
   planCompensationBookings,
   requestCompensation,
+  type ExistingBooking,
 } from './request-compensation';
 
 const person = (key: string): AvatarInfo => ({ key, name1: `F${key}`, name2: `L${key}`, modelType: 'person', type: '', subType: '', label: `F${key} L${key}` });
@@ -108,13 +111,41 @@ describe('helpers', () => {
     expect(invalidRates(ok, 'EUR')).toEqual(['defaultRate', 'b']);
   });
 
-  it('foreignBookingReason accepts only this tenant, these books and that person', () => {
-    const exp = { tenantId: 'scs', accountingTenantId: 'scs', personKey: 'p1' };
+  it('foreignBookingReason accepts only this tenant and that person; other books do not matter for an open draft', () => {
+    const exp = { tenantId: 'scs', personKey: 'p1' };
     const b = { tenants: ['scs'], accountingTenantId: 'scs', counterparty: person('p1') };
     expect(foreignBookingReason(b, exp)).toBe('');
+    expect(foreignBookingReason({ ...b, accountingTenantId: 'gss' }, exp)).toBe('');
     expect(foreignBookingReason({ ...b, tenants: ['other'] }, exp)).toBe('other-tenant');
-    expect(foreignBookingReason({ ...b, accountingTenantId: 'gss' }, exp)).toBe('other-books');
     expect(foreignBookingReason({ ...b, counterparty: person('p9') }, exp)).toBe('other-person');
+  });
+
+  it('invalidRates reads a null own rate as "use the default", like computeCompensation', () => {
+    const chf = { amount: 5000, currency: 'CHF', periodicity: 'one-time' } as MoneyModel;
+    expect(invalidRates({ defaultRate: chf, eligible: [{ person: person('a'), rate: null as unknown as MoneyModel }] }, 'CHF')).toEqual([]);
+  });
+
+  it('finalBookingsInOtherBooks finds posted/cancelled bookings of other books, never open drafts', () => {
+    const ex: Record<string, ExistingBooking> = {
+      'course-c1-p1': { okey: 'course-c1-p1', status: 'posted', amount: 1, accountingTenantId: 'gss' },
+      'course-c1-p2': { okey: 'course-c1-p2', status: 'cancelled', amount: 1, accountingTenantId: 'gss' },
+      'course-c1-p3': { okey: 'course-c1-p3', status: 'forReview', amount: 1, accountingTenantId: 'gss' },
+      'course-c1-p4': { okey: 'course-c1-p4', status: 'posted', amount: 1, accountingTenantId: 'scs' },
+      'course-c1-gone': { okey: 'course-c1-gone', status: 'cancelled', amount: 1, accountingTenantId: 'gss' },   // left eligible: ignored
+      'course-c1-paid': { okey: 'course-c1-paid', status: 'posted', amount: 1, accountingTenantId: 'gss' },     // left eligible: still reported
+    };
+    const lines = ['p1', 'p2', 'p3', 'p4'].map(k => line(k, 1000));
+    expect(finalBookingsInOtherBooks(lines, ex, 'c1', 'scs').map(b => b.okey)).toEqual(['course-c1-p1', 'course-c1-p2', 'course-c1-paid']);
+  });
+
+  it('isSettled: nothing to write or remove and every decided amount equals the computed one', () => {
+    const l = line('p1', 1000);
+    const empty = { write: [], keep: [], cancelled: [], skipped: [], retire: [], strayPosted: [] };
+    expect(isSettled({ ...empty, keep: [{ line: l, posted: 1000 }] })).toBe(true);
+    expect(isSettled({ ...empty, keep: [{ line: l, posted: 900 }] })).toBe(false);
+    expect(isSettled({ ...empty, cancelled: [{ line: l, amount: 1000 }] })).toBe(true);
+    expect(isSettled({ ...empty, write: [l] })).toBe(false);
+    expect(isSettled({ ...empty, retire: ['x'] })).toBe(false);
   });
 
   it('coalesceFinance fills fields a legacy or partial doc lacks', () => {
@@ -307,7 +338,7 @@ describe('requestCompensation', () => {
 
   it('keeps a posted booking, reports posted vs computed, and does not touch it', async () => {
     const { db, store } = fakeDb(world({
-      'bookings/course-c1-p1': { tenants: ['scs'], status: 'posted', bookingNo: 7, counterparty: person('p1') },
+      'bookings/course-c1-p1': { tenants: ['scs'], accountingTenantId: 'scs', status: 'posted', bookingNo: 7, counterparty: person('p1') },
       'booking-lines/x-d': { bookingKey: 'course-c1-p1', debitAmount: { amount: 9000 } },
       'booking-lines/x-c': { bookingKey: 'course-c1-p1', creditAmount: { amount: 9000 } },
     }));
@@ -366,9 +397,8 @@ describe('requestCompensation', () => {
     expect(store.get('tasks/course-c1-compensation')!['notes']).toContain('Abgelehnt');
   });
 
-  it('refuses to overwrite a booking at the okey that belongs to other books, another tenant or another person', async () => {
+  it('refuses to overwrite a booking at the okey that belongs to another tenant or another person', async () => {
     for (const foreign of [
-      { tenants: ['scs'], accountingTenantId: 'gss', status: 'forReview', counterparty: person('p1') },
       { tenants: ['other'], accountingTenantId: 'scs', status: 'forReview', counterparty: person('p1') },
       { tenants: ['scs'], accountingTenantId: 'scs', status: 'forReview', counterparty: person('p9') },
     ]) {
@@ -378,6 +408,40 @@ describe('requestCompensation', () => {
       expect(err.details?.['reason']).toBe('foreign-booking');
       expect(store.get('bookings/course-c1-p1')).toEqual(foreign);
       expect(store.has('bookings/course-c1-p2')).toBe(false);   // nothing of the transaction was written
+    }
+  });
+
+  it('books corrected A → B: an open draft in A is replaced by the booking in B, an unowed one deleted', async () => {
+    const { db, store } = fakeDb(world({
+      'bookings/course-c1-p1': { tenants: ['scs'], accountingTenantId: 'gss', status: 'forReview', counterparty: person('p1') },
+      'booking-lines/course-c1-p1-d': { bookingKey: 'course-c1-p1', accountingTenantId: 'gss', accountKey: 'gss-5000', debitAmount: { amount: 1 } },
+      'booking-lines/gss-extra': { bookingKey: 'course-c1-p1', accountingTenantId: 'gss', creditAmount: { amount: 1 } },
+      'bookings/course-c1-p3': { tenants: ['scs'], accountingTenantId: 'gss', status: 'draft', counterparty: person('p3') },
+      'booking-lines/course-c1-p3-d': { bookingKey: 'course-c1-p3', debitAmount: { amount: 1 } },
+    }));
+    const result = await call(db);
+    expect(result.written).toBe(2);
+    expect(store.get('bookings/course-c1-p1')).toMatchObject({ accountingTenantId: 'scs', status: 'forReview' });
+    expect(store.get('booking-lines/course-c1-p1-d')).toMatchObject({ accountingTenantId: 'scs', accountKey: 'acc-5000', debitAmount: { amount: 10000 } });
+    expect(store.has('booking-lines/gss-extra')).toBe(false);
+    expect(store.has('bookings/course-c1-p3')).toBe(false);
+    expect(store.has('booking-lines/course-c1-p3-d')).toBe(false);
+  });
+
+  it('books corrected A → B: a posted or rejected booking in A refuses the request with a clear message', async () => {
+    for (const status of ['posted', 'cancelled']) {
+      const old = { tenants: ['scs'], accountingTenantId: 'gss', status, counterparty: person('p1') };
+      const { db, store } = fakeDb(world({ 'bookings/course-c1-p1': old }));
+      const err = await rejection(call(db)) as { code: string; message?: string; details?: Data };
+      expect(err.code).toBe('failed-precondition');
+      expect(err.details).toMatchObject({ reason: 'other-books-final', bookingKeys: ['course-c1-p1'], books: ['gss'] });
+      expect(err.message).toContain(status === 'posted' ? 'gebuchte' : 'abgelehnte');
+      expect(err.message).toContain('Fp1 Lp1');
+      expect(err.message).toContain('Der Kassier muss sie dort zuerst löschen');
+      expect(err.message).toContain('«scs» neu beantragen');
+      expect(store.get('bookings/course-c1-p1')).toEqual(old);
+      expect(store.has('bookings/course-c1-p2')).toBe(false);
+      expect(store.get('courses/c1/finance/settings')!['requestedAt']).toBeUndefined();
     }
   });
 
@@ -465,6 +529,28 @@ describe('requestCompensation', () => {
     await call(db);
     expect(store.get('tasks/course-c1-compensation')!['state']).toBe('initial');
     expect(store.get('booking-lines/course-c1-p2-d')).toMatchObject({ debitAmount: { amount: 16000 } });
+  });
+
+  it('after the treasurer approved everything and closed the task, an unchanged re-request leaves the task alone', async () => {
+    const { db, store } = fakeDb(world());
+    await call(db);
+    const notesBefore = store.get('tasks/course-c1-compensation')!['notes'];
+    for (const okey of ['course-c1-p1', 'course-c1-p2']) {          // reviewBooking approve
+      store.set(`bookings/${okey}`, { ...store.get(`bookings/${okey}`)!, status: 'posted', bookingNo: 1 });
+    }
+    store.set('tasks/course-c1-compensation', { ...store.get('tasks/course-c1-compensation')!, state: 'done' });
+    const result = await call(db);
+    expect(result.written).toBe(0);
+    expect(result.kept).toEqual([{ personKey: 'p1', posted: 10000, computed: 10000 }, { personKey: 'p2', posted: 8000, computed: 8000 }]);
+    expect(store.get('tasks/course-c1-compensation')).toMatchObject({ state: 'done', notes: notesBefore });
+  });
+
+  it('accepts eligible[].rate null as the default rate', async () => {
+    const w = world();
+    w['courses/c1/finance/settings'] = { ...w['courses/c1/finance/settings'], eligible: [{ person: person('p1'), rate: null }] };
+    const { db, store } = fakeDb(w);
+    await call(db);
+    expect(store.get('booking-lines/course-c1-p1-d')).toMatchObject({ debitAmount: { amount: 10000 } });
   });
 
   it('names a posted booking of a person no longer eligible in the books currency', async () => {

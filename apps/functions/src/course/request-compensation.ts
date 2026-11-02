@@ -22,6 +22,11 @@
 //   setting it `cancelled` would pass it off as a treasurer's rejection and block the trainer on every later
 //   request. The same applies to the open booking of a person who left `eligible`.
 //
+// Books changed between two requests (the finance doc moved from books A to B): an open draft in A is ours to
+// replace — it is overwritten (or deleted) like any open draft, so the new booking lands in B. A `posted` or
+// `cancelled` booking in A is a treasurer's decision in other books: the request is refused (`other-books-final`)
+// until the treasurer deletes it there, instead of reporting it as booked/rejected in B (the okey carries no books).
+//
 // Every read that decides the outcome (course lock/rights/archive, finance doc, books, events, existing bookings)
 // happens inside the transaction, so a concurrent unlock, edit or `reviewBooking` approval retries the request.
 //
@@ -62,7 +67,7 @@ const PLAIN_KEY = /^[A-Za-z0-9_]+$/;
 // ---------------------------------------------------------------------------------------------------------------
 
 /** A compensation booking already in the ledger: its status, its debit total (minor units) and its trainer. */
-export type ExistingBooking = { okey: string; status: BookingStatus; amount: number; personKey?: string };
+export type ExistingBooking = { okey: string; status: BookingStatus; amount: number; personKey?: string; accountingTenantId?: string };
 
 export type CompensationPlan = {
   /** lines that get a fresh `forReview` booking (new, or replacing a draft/forReview one) */
@@ -121,6 +126,29 @@ export function planCompensationBookings(lines: CompensationLine[], existing: Re
   return plan;
 }
 
+/**
+ * Posted or cancelled bookings of this course that live in other books than the requested ones and would otherwise
+ * be reported as booked/rejected here: those at a current line's okey, and posted ones of persons who left
+ * `eligible`. (A rejected booking of a person who left is ignored whatever its books.) Open drafts never count —
+ * they are replaced.
+ */
+export function finalBookingsInOtherBooks(lines: CompensationLine[], existing: Record<string, ExistingBooking>, courseKey: string, accountingTenantId: string): ExistingBooking[] {
+  const lineKeys = new Set(lines.map(l => compensationBookingKey(courseKey, l.person.key)));
+  return Object.values(existing).filter(b =>
+    (b.status === 'posted' || (b.status === 'cancelled' && lineKeys.has(b.okey)))
+    && b.accountingTenantId !== accountingTenantId);
+}
+
+/**
+ * True when the plan changes nothing and every decided booking matches its computed amount — e.g. a re-request after
+ * the treasurer approved everything. Such a request leaves the review task alone (its state stays, e.g. done).
+ */
+export function isSettled(plan: CompensationPlan): boolean {
+  return plan.write.length === 0 && plan.retire.length === 0 && plan.strayPosted.length === 0
+    && plan.keep.every(k => k.posted === k.line.amount)
+    && plan.cancelled.every(c => c.amount === c.line.amount);
+}
+
 /** Person keys that appear more than once in `eligible`. */
 export function duplicateEligibleKeys(eligible: Pick<CourseEligible, 'person'>[]): string[] {
   const seen = new Set<string>();
@@ -167,18 +195,19 @@ export function invalidRates(finance: Pick<CourseFinanceModel, 'defaultRate' | '
   const bad: string[] = [];
   if (!isValidRate(finance.defaultRate, currency)) bad.push('defaultRate');
   for (const e of finance.eligible) {
-    if (e.rate !== undefined && !isValidRate(e.rate, currency)) bad.push(e.person?.key ?? '');
+    // null/undefined = "use the default rate", exactly as computeCompensation reads it
+    if (e.rate != null && !isValidRate(e.rate, currency)) bad.push(e.person?.key ?? '');
   }
   return bad;
 }
 
 /**
- * Why an existing booking at `course-<c>-<p>` must not be overwritten or removed by this request, or '' when it may:
- * it must belong to the caller's tenant, to the requested books and to that very person.
+ * Why an existing open booking at `course-<c>-<p>` must not be overwritten or removed by this request, or '' when
+ * it may: it must belong to the caller's tenant and to that very person. Its books do not matter — an open draft
+ * in other books (the course's books were corrected) is replaced by the booking in the requested books.
  */
-export function foreignBookingReason(booking: Record<string, unknown>, expected: { tenantId: string; accountingTenantId: string; personKey: string }): string {
+export function foreignBookingReason(booking: Record<string, unknown>, expected: { tenantId: string; personKey: string }): string {
   if (!((booking['tenants'] as string[] | undefined) ?? []).includes(expected.tenantId)) return 'other-tenant';
-  if (booking['accountingTenantId'] !== expected.accountingTenantId) return 'other-books';
   if ((booking['counterparty'] as AvatarInfo | undefined)?.key !== expected.personKey) return 'other-person';
   return '';
 }
@@ -418,7 +447,18 @@ export async function requestCompensation(db: Firestore, uid: string, data: Requ
           okey, status: (b['status'] as BookingStatus | undefined) ?? 'draft',
           amount: debitTotal(lineSnap.docs.map(d => d.data())),
           personKey: (b['counterparty'] as AvatarInfo | undefined)?.key,
+          accountingTenantId: b['accountingTenantId'] as string | undefined,
         };
+      }
+      const otherBooks = finalBookingsInOtherBooks(lines, existing, courseKey, accountingTenantId);
+      if (otherBooks.length > 0) {
+        const b = otherBooks[0];
+        const who = personLabel(lines.find(l => l.person.key === b.personKey)?.person) || b.personKey || b.okey;
+        fail('failed-precondition',
+          `Für ${who} gibt es in den Büchern «${b.accountingTenantId || '?'}» schon eine ${b.status === 'posted' ? 'gebuchte' : 'abgelehnte'} `
+          + `Trainerentschädigung. Der Kassier muss sie dort zuerst löschen; danach kannst du die Entschädigung in den Büchern `
+          + `«${accountingTenantId}» neu beantragen.`,
+          'other-books-final', { bookingKeys: otherBooks.map(x => x.okey), books: otherBooks.map(x => x.accountingTenantId ?? '') });
       }
       plan = planCompensationBookings(lines, existing, courseKey);
 
@@ -432,7 +472,7 @@ export async function requestCompensation(db: Firestore, uid: string, data: Requ
       ];
       for (const t of touched) {
         const doc = bookingDocs.get(t.okey);
-        const reason = doc ? foreignBookingReason(doc, { tenantId, accountingTenantId, personKey: t.personKey }) : '';
+        const reason = doc ? foreignBookingReason(doc, { tenantId, personKey: t.personKey }) : '';
         if (reason) fail('failed-precondition', `booking ${t.okey} exists but does not belong to this request (${reason})`, 'foreign-booking', { bookingKey: t.okey, mismatch: reason });
       }
       if (plan.write.length > 0) accounts = await resolveAccounts(db, tenantId, accountingTenantId, finance, config);
@@ -491,8 +531,11 @@ export async function requestCompensation(db: Firestore, uid: string, data: Requ
     let taskKey = '';
     if (treasurer?.key) {
       taskKey = taskRef.id;
-      // Only a changed settlement (re)opens the task; an unchanged re-request keeps its state (e.g. done).
-      if (!oldTask || oldTask['notes'] !== notes || oldTask['isArchived'] === true) {
+      // Only a changed settlement (re)opens the task. Unchanged: same text, or — on native books — a settled plan
+      // (nothing to write or remove, every posted/rejected amount equals the computed one, e.g. after the treasurer
+      // approved all drafts). Then the task keeps its state (e.g. done).
+      const unchanged = oldTask && oldTask['isArchived'] !== true && (oldTask['notes'] === notes || (plan !== undefined && isSettled(plan)));
+      if (!unchanged) {
         tx.set(taskRef, {
           tenants: [tenantId], isArchived: false,
           name: `Trainerentschädigung prüfen: ${courseName}`.slice(0, 200), index: '', tags: '',
