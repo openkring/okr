@@ -147,7 +147,11 @@ service cloud.firestore {
     // (admin of exactly ['bka'], see isOperator) from the bka app. Mirrored client-side by
     // canWriteTenant() in `query.util.ts`.
     function canWriteTenant(data) {
-      return data.tenants.hasAny(callerTenants())
+      return canWriteTenantFor(data, callerTenants());
+    }
+    // `ts` = callerTenants(), passed in so a caller checking two docs evaluates it once.
+    function canWriteTenantFor(data, ts) {
+      return data.tenants.hasAny(ts)
              || (data.tenants.hasAny(['system']) && isOperator());
     }
     // A get() on a NON-EXISTENT document evaluates rules with resource == null.
@@ -178,9 +182,13 @@ service cloud.firestore {
              && request.resource.data.tenants == resource.data.tenants.removeAll(callerTenants())
              && request.resource.data.tenants.size() > 0;
     }
+    // callerTenants() is bound once: every call re-evaluates signedIn/exists/get, and a
+    // calevent course move (1.132) already sits near the 1000-expression limit of one
+    // evaluation. No leading userExists(): without a user `ts` is [] and isOperator() fails.
     function tenantUpdate() {
-      return userExists() && canWriteTenant(resource.data)
-             && (canWriteTenant(request.resource.data) || selfDetach());
+      let ts = callerTenants();
+      return canWriteTenantFor(resource.data, ts)
+             && (canWriteTenantFor(request.resource.data, ts) || selfDetach());
     }
     // For the `allow create, update: if tenantCreateOrDetach()` one-liners: a create
     // (resource == null) is tenantCreate(), an update is the full tenantUpdate() — the
@@ -189,7 +197,7 @@ service cloud.firestore {
     // request.resource.data, so an admin of t2 could PATCH a t1 doc to tenants: ['t2'] and
     // take it over; the stored-tenant check is not redundant.
     function tenantCreateOrDetach() {
-      return (resource == null && tenantCreate()) || (resource != null && tenantUpdate());
+      return resource == null ? tenantCreate() : tenantUpdate();
     }
     function tenantDelete() {
       return userExists() && canWriteTenant(resource.data);
