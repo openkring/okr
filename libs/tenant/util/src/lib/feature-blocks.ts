@@ -2430,18 +2430,31 @@ const instruments: FeatureBlock = {
   // The Lupe (idea `2026-10-31-lupe-idea.md`, entry `instruments/lupe`) belongs here too, by
   // owner ruling 2026-11-01: Rechner and Lupe stay INSIDE this block rather than becoming
   // blocks of their own. Same shape as the Rechner: `/lupe`, no data, no context wrapper.
+  //
+  // ONE `tools-menu` SUBMENU, NOT FLAT ROWS (owner ruling 2026-11-02). Every instrument row
+  // hangs under the «Tools» accordion so the main menu gains one row, not one per tool;
+  // `rootNavKeys` attaches only the top-level `tools-menu` to `main_<tenantId>`. A new
+  // instrument is one more child here. The planner never REMOVES root rows, so tenants that
+  // already carried the old flat rows (bka, bkg, okr on 2026-11-02) need those keys trimmed
+  // from their root by hand after the first picker save that creates `tools-menu`.
   menu: [
     {
-      key: 'calculator', name: 'calculator', url: '/calculator',
-      action: 'navigate', roleNeeded: 'registered', icon: 'calculator', label: '@item.calculator',
-    },
-    {
-      key: 'lupe', name: 'lupe', url: '/lupe',
-      action: 'navigate', roleNeeded: 'registered', icon: 'search', label: '@item.lupe',
-    },
-    {
-      key: 'translator', name: 'translator', url: '/translator',
-      action: 'navigate', roleNeeded: 'registered', icon: 'globe', label: '@item.translator',
+      key: 'tools-menu', name: 'tools-menu', url: '', action: 'sub',
+      roleNeeded: 'registered', icon: 'hammer', label: '@item.tools-menu',
+      children: [
+        {
+          key: 'calculator', name: 'calculator', url: '/calculator',
+          action: 'navigate', roleNeeded: 'registered', icon: 'calculator', label: '@item.calculator',
+        },
+        {
+          key: 'lupe', name: 'lupe', url: '/lupe',
+          action: 'navigate', roleNeeded: 'registered', icon: 'search', label: '@item.lupe',
+        },
+        {
+          key: 'translator', name: 'translator', url: '/translator',
+          action: 'navigate', roleNeeded: 'registered', icon: 'globe', label: '@item.translator',
+        },
+      ],
     },
   ],
 };
