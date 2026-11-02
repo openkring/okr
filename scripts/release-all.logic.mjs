@@ -36,6 +36,18 @@ export function parseReleaseArgs(argv) {
   return out;
 }
 
+// ---- single-app repair -----------------------------------------------------
+// A single app is only ever re-deployed at the version `all` already cut and tagged ("repair");
+// a new version always goes through `all`. Websites keep their own bump flow. null = fine.
+export function repairKindProblem({ app, kind, tagExists }) {
+  if (!app.endsWith('-app')) return null;
+  if (kind !== 'none')
+    return `A new version goes through \`all\`: node scripts/release.mjs all <patch|minor|major>. A single app is only re-deployed at the current version: node scripts/release.mjs ${app} none.`;
+  if (!tagExists)
+    return 'Repair re-deploys the version `all` already cut, but the current version has no tag. Release through `all` first.';
+  return null;
+}
+
 // ---- concurrency ---------------------------------------------------------
 // Runs worker(item) for every item with at most `limit` in flight. Never rejects: a throwing
 // (or synchronously throwing) worker becomes { ok: false, error }. Results are in input order.

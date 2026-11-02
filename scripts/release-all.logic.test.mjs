@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { bump, APPS } from './release-shared.mjs';
 import { parseReleaseArgs, runPool, missingSentryVars, appEnvKeys, firebaseAppId,
-  bundleConfigProblem, appVersionPatch, nativeTargets, formatSummary } from './release-all.logic.mjs';
+  bundleConfigProblem, appVersionPatch, nativeTargets, formatSummary, repairKindProblem } from './release-all.logic.mjs';
 
 test('bump keeps today\'s semantics', () => {
   assert.equal(bump('7.56.2', 'patch'), '7.56.3');
@@ -134,4 +134,11 @@ test('formatSummary: total is wall-clock (sequential rows add, parallel app rows
   ]);
   assert.match(s, /total\s+1:40/i);
   assert.match(s, /ok/);
+});
+
+test('repair: apps may only redeploy the tagged current version', () => {
+  assert.equal(repairKindProblem({ app: 'kwa-app', kind: 'none', tagExists: true }), null);
+  assert.match(repairKindProblem({ app: 'kwa-app', kind: 'patch', tagExists: true }), /all/);
+  assert.match(repairKindProblem({ app: 'kwa-app', kind: 'none', tagExists: false }), /tag/);
+  assert.equal(repairKindProblem({ app: 'okr-website', kind: 'patch', tagExists: false }), null);
 });

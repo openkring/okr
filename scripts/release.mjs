@@ -1,23 +1,33 @@
 #!/usr/bin/env node
 // Guided release runbook: version bump + prod build + test gate + Firebase deploy + tag/push.
 // Usage:
-//   node scripts/release.mjs                 # interactive target picker
-//   node scripts/release.mjs scs-app         # release one app (or: all)
-//   node scripts/release.mjs functions       # deploy Cloud Functions (all, or prompted subset)
-//   node scripts/release.mjs rules           # deploy firestore + storage rules
-// Deterministic spine; confirmations are interactive. The app-version Firestore doc is NOT
-// written here — the script prints the exact value to apply (console / MCP / firebase-admin).
+//   node scripts/release.mjs                          # interactive target picker
+//   node scripts/release.mjs all <patch|minor|major> [flags]   # release all eight apps (release-all.mjs)
+//   node scripts/release.mjs <app> none               # repair: re-deploy ONE app at the current,
+//                                                     #   already tagged version (no bump/commit/tag)
+//   node scripts/release.mjs <website> [kind]         # release one website (gates, bump, deploy)
+//   node scripts/release.mjs functions               # deploy Cloud Functions (all, or prompted subset)
+//   node scripts/release.mjs rules                   # deploy firestore + storage rules
+// `all` flags: --native --yes --accept-drift --accept-menu-labels --dry-run --concurrency=N
+//   --min-version=x.y.z --force-update. A new version of an app always goes through `all`.
+// Deterministic spine; confirmations are interactive. `all` and a repair write the app-version
+// Firestore doc themselves (firebase-admin, ADC); a website release still prints the value to apply.
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { stampNgswVersion } from './stamp-ngsw-version.mjs';
+import { parseReleaseArgs, repairKindProblem, appVersionPatch } from './release-all.logic.mjs';
+import { releaseAll, writeAppVersion } from './release-all.mjs';
 import {
-  repoRoot, SITES, PROD_APP, run, ask, confirm, closePrompts, abort, bump, readVersion, writeVersion,
+  repoRoot, SITES, PROD_APP, run, capture, ask, confirm, closePrompts, abort, bump, readVersion, writeVersion,
   preflight, runGates, verifyLive, commitSubmoduleStamp, commitPointers,
 } from './release-shared.mjs';
 
 // ---- app release ---------------------------------------------------------
-async function releaseApp(app) {
+// A `*-app` is only ever released here as a repair (kind 'none', checked by main()): same version,
+// no gates, no bump/commit/tag. A website runs the full flow (gates, bump prompt, deploy).
+// `kindArg` pre-answers the bump prompt for a website.
+async function releaseApp(app, kindArg = null) {
   const site = SITES[app];
   if (!site) abort(`Unknown app '${app}'. Known: ${Object.keys(SITES).join(', ')}`);
   if (!existsSync(join(repoRoot, `apps/${app}/.env`)))
@@ -25,15 +35,21 @@ async function releaseApp(app) {
 
   console.log(`\n=== Releasing ${app} (site ${site}) ===`);
 
-  // 1. every pre-bump gate (tests, forms, popovers, i18n, menu labels, catalogue drift)
-  await runGates({ nonInteractive: false });
+  const isApp = app.endsWith('-app');
+
+  // 1. every pre-bump gate (tests, forms, popovers, i18n, menu labels, catalogue drift).
+  //    A repair re-deploys an already released version, so it skips them.
+  if (isApp) console.log('\n[1/6] Repair — pre-bump gates skipped (re-deploying an already released version).');
+  else await runGates({ nonInteractive: false });
 
   // 2. version bump (confirm) — bump BEFORE build so the nx config cache busts
   const current = readVersion();
   // 'none' ships a SECOND app at the version the first app of this release just cut, so both
   // apps land on one number and one tag. It skips the bump, the release commit and the tag
   // (they already exist) — everything else, including the live-version verify, still runs.
-  const kindAns = (await ask(`\n[2/6] Bump version from ${current} — patch/minor/major/none? [patch] `)).toLowerCase() || 'patch';
+  const kindAns = isApp ? 'none'
+    : kindArg ? kindArg
+      : (await ask(`\n[2/6] Bump version from ${current} — patch/minor/major/none? [patch] `)).toLowerCase() || 'patch';
   const kind = ['patch', 'minor', 'major', 'none'].includes(kindAns) ? kindAns : 'patch';
   const next = kind === 'none' ? current : bump(current, kind);
   if (kind === 'none') {
@@ -47,7 +63,6 @@ async function releaseApp(app) {
   // 2b. stamp the version into the service worker's manifest, so clients running the OLD build
   //     read the incoming version off ngsw.json instead of the hand-updated Firestore doc.
   //     Lives in the app submodule — reverted below if the build/deploy fails.
-  const isApp = app.endsWith('-app');
   const stamped = isApp && stampNgswVersion(app, next);
 
   try {
@@ -132,7 +147,8 @@ async function releaseApp(app) {
     abort(`Build/deploy failed — reverted version bump. ${e.message ?? ''}`);
   }
 
-  // 6. app-version doc — ask each release (default yes only for the prod app)
+  // 6. app-version doc. A repair (apps) writes it itself — only this app, only after the live
+  //    verify above. A website still asks and prints the value to apply by hand.
   //    `deployed.<appId>` is what this release actually put live; `latestVersion` is the fleet-wide
   //    fallback for installations that don't maintain the map. `minVersion` is global — raising it
   //    to a version only one app has would force every other app's clients toward a build that was
@@ -140,7 +156,10 @@ async function releaseApp(app) {
   const appKey = app.replace(/-(app|website)$/, '');
   console.log('\n[6/7] app-version update');
   let appVersionPending = false;
-  if (await confirm(`Update app-version.deployed.${appKey} to ${next}? (names the version this app's update prompt shows)`, app === PROD_APP)) {
+  if (isApp) {
+    const patch = appVersionPatch({ version: next, verifiedApps: [app], prodApp: PROD_APP });
+    appVersionPending = !(await writeAppVersion(patch));
+  } else if (await confirm(`Update app-version.deployed.${appKey} to ${next}? (names the version this app's update prompt shows)`, app === PROD_APP)) {
     const minAns = await ask('  minVersion — leave blank to keep unchanged; only raise it once ALL apps are on this version: ');
     appVersionPending = true;
     console.log('\n  ⚠ ACTION REQUIRED — this script does NOT write Firestore. YOU must apply this manually:');
@@ -204,21 +223,43 @@ async function releaseRules() {
 }
 
 // ---- entry ---------------------------------------------------------------
+const USAGE = `Usage:
+  node scripts/release.mjs all <patch|minor|major> [--native] [--yes] [--accept-drift] [--accept-menu-labels]
+                           [--dry-run] [--concurrency=N] [--min-version=x.y.z] [--force-update]
+  node scripts/release.mjs <app> none        # repair: re-deploy one app at the current tagged version
+  node scripts/release.mjs <website> [kind]
+  node scripts/release.mjs functions | rules`;
+
 async function main() {
-  await preflight();
-  let target = process.argv[2];
+  let opts;
+  try { opts = parseReleaseArgs(process.argv.slice(2)); }
+  catch (e) { abort(`${e.message}\n\n${USAGE}`); }
+
+  let { target } = opts;
   if (!target) {
     console.log('\nRelease target:');
+    console.log('  all        (eight apps)');
     Object.keys(SITES).forEach((a) => console.log(`  ${a}`));
-    console.log('  all        (every app)\n  functions  (Cloud Functions)\n  rules      (firestore + storage rules)');
+    console.log('  functions  (Cloud Functions)\n  rules      (firestore + storage rules)');
     target = await ask('\nChoose target: ');
   }
 
-  if (target === 'all') { for (const a of Object.keys(SITES)) await releaseApp(a); }
-  else if (target === 'functions') await releaseFunctions();
+  // The kind/tag check runs before anything else — before preflight's questions, any write or build.
+  if (SITES[target] && target.endsWith('-app')) {
+    if (!opts.kind) console.log(`No bump given — treating it as 'none': a single app is only repaired (re-deployed at the current tagged version).`);
+    const kind = opts.kind ?? 'none';
+    const tagExists = !!capture('git', ['tag', '-l', `v${readVersion()}`]);
+    const problem = repairKindProblem({ app: target, kind, tagExists });
+    if (problem) abort(problem);
+  }
+
+  if (target === 'all') { await releaseAll({ ...opts, target }); return; }
+
+  await preflight();
+  if (target === 'functions') await releaseFunctions();
   else if (target === 'rules') await releaseRules();
-  else if (SITES[target]) await releaseApp(target);
-  else abort(`Unknown target '${target}'.`);
+  else if (SITES[target]) await releaseApp(target, ['patch', 'minor', 'major', 'none'].includes(opts.kind) ? opts.kind : null);
+  else abort(`Unknown target '${target}'.\n\n${USAGE}`);
 }
 
 main().then(closePrompts).catch((e) => abort(e.message ?? String(e)));
