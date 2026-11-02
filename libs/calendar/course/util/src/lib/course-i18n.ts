@@ -16,6 +16,7 @@ export const COURSE_I18N_KEYS = {
   list_archiveConfirm: PFX + 'list.archiveConfirm',
   list_noGroup:        PFX + 'list.noGroup',
   list_csvFile:        PFX + 'list.csvFile',
+  list_financeUnavailable: PFX + 'list.financeUnavailable',
   list_col_name:        PFX + 'list.col.name',
   list_col_period:      PFX + 'list.col.period',
   list_col_responsible: PFX + 'list.col.responsible',

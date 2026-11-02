@@ -31,6 +31,7 @@ const firestore = {
   updateFields: vi.fn<AnyFn<Promise<string>>>(async () => 'k'),
   updateFieldPaths: vi.fn<AnyFn<Promise<string>>>(async () => 'k'),
   getDataOnceStrict: vi.fn<AnyFn<Promise<unknown[]>>>(async () => []),
+  readObjectStrict: vi.fn<AnyFn<Promise<unknown>>>(async () => null),
 };
 const bookingLines = { listForBookings: vi.fn<AnyFn<Promise<unknown[]>>>(async () => []) };
 const activity = { log: vi.fn<AnyFn<Promise<undefined>>>(async () => undefined) };
@@ -239,6 +240,35 @@ describe('CourseService', () => {
       const result = await service.listPostedCompensation('b');
       expect(result.map(r => r.personKey)).toEqual(['p2']);
       expect(bookingLines.listForBookings).toHaveBeenCalledWith('b', ['course-c1-p2']);
+    });
+  });
+  describe('listAll', () => {
+    it('queries the tenant\'s courses without a group, newest first', () => {
+      service.listAll();
+      const [collection, query, orderBy, direction] = firestore.searchData.mock.calls[0] as [string, { key: string; value: unknown }[], string, string];
+      expect(collection).toBe(CourseCollection);
+      expect(query.some(q => q.key === 'groupKey')).toBe(false);
+      expect(query.find(q => q.key === 'tenants')?.value).toContain('scs');
+      expect([orderBy, direction]).toEqual(['startDate', 'desc']);
+    });
+  });
+
+  describe('readFinanceStrict', () => {
+    it('reads the finance document by path, from the server', async () => {
+      const stored = new CourseFinanceModel();
+      firestore.readObjectStrict.mockResolvedValueOnce(stored);
+      expect(await service.readFinanceStrict('c1')).toBe(stored);
+      expect(firestore.readObjectStrict).toHaveBeenCalledWith(`${CourseCollection}/c1/finance/settings`);
+    });
+
+    it('answers null when the server confirmed that there is no document', async () => {
+      firestore.readObjectStrict.mockResolvedValueOnce(null);
+      expect(await service.readFinanceStrict('c1')).toBeNull();
+    });
+
+    it('rejects when the read failed, instead of looking like a missing document', async () => {
+      firestore.readObjectStrict.mockRejectedValueOnce(new Error('client is offline'));
+      await expect(service.readFinanceStrict('c1')).rejects.toThrow('offline');
     });
   });
 });

@@ -598,6 +598,9 @@
     "note": "Missing a calendar, or do you need a new group? Only privileged users (the board) can create groups — contact a board member or support.",
     "open": "Show explanation"
   },
+  "courses": {
+    "entry": "Courses"
+  },
   "sync": {
     "title": "Sync calendar",
     "intro": "Use this link to subscribe to the calendar in Apple Calendar, Outlook, or Google. New and changed events appear automatically.",

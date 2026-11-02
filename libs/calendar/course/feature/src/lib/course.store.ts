@@ -3,12 +3,12 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { ModalController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { firstValueFrom, from, of } from 'rxjs';
+import { from, of } from 'rxjs';
 
 import { CourseService } from '@okr/calendar-course-data-access';
 import {
-  buildCourseListRows, COURSE_I18N_KEYS, CourseAccess, CourseI18n, isCourseResponsible, mayCreateCourse, mayManageCourse,
-  mayReadCourseFinance, yearlyTotalRows
+  ALL_COURSES_KEY, buildCourseListRows, COURSE_I18N_KEYS, CourseAccess, CourseI18n, loadFinanceForEdit, mayCreateCourse,
+  mayManageCourse, mayReadCourseFinance, yearlyTotalRows
 } from '@okr/calendar-course-util';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
@@ -20,7 +20,7 @@ import { isAdminMember } from '@okr/subject-group-util';
 import type { CourseEditResult } from './course-edit.modal';
 
 export type CourseState = {
-  /** the group whose courses are listed (route param) */
+  /** the group whose courses are listed (route param); `ALL_COURSES_KEY` = every course of the tenant */
   groupKey: string;
   searchTerm: string;
 };
@@ -50,16 +50,22 @@ export const CourseStore = signalStore(
   })),
   withComputed((state) => {
     const currentUser = computed(() => state.appStore.currentUser());
-    const group = computed(() => state.appStore.getGroup(state.groupKey()));
+    const isAll = computed(() => state.groupKey() === ALL_COURSES_KEY);
+    const group = computed(() => isAll() ? undefined : state.appStore.getGroup(state.groupKey()));
+    const personKey = computed(() => currentUser()?.personKey ?? '');
     return {
       currentUser,
       tenantId: computed(() => state.appStore.tenantId()),
+      isAll,
       group,
       groupName: computed(() => group()?.name ?? ''),
-      /** What the user is, as far as the course rules are concerned (see `course-access.util`). */
+      /**
+       * What the user is as far as the rules go, for the listed group (create) — the group admin flag is per GROUP,
+       * so for a single course use `accessFor(course)`.
+       */
       access: computed<CourseAccess>(() => ({
-        personKey: currentUser()?.personKey ?? '',
-        isGroupAdmin: isAdminMember(group(), currentUser()?.personKey),
+        personKey: personKey(),
+        isGroupAdmin: isAdminMember(group(), personKey()),
         isPrivileged: hasRole('privileged', currentUser()),
         isTreasurer: hasRole('treasurer', currentUser()),
       })),
@@ -70,25 +76,35 @@ export const CourseStore = signalStore(
   withProps((state) => ({
     coursesResource: rxResource({
       params: resourceParams(() => state.groupKey()),
-      stream: ({ params: groupKey }) => groupKey ? state.courseService.list(groupKey) : of([] as CourseModel[]),
+      stream: ({ params: groupKey }) => !groupKey ? of([] as CourseModel[])
+        : groupKey === ALL_COURSES_KEY ? state.courseService.listAll() : state.courseService.list(groupKey),
     }),
   })),
   withComputed((state) => {
     /**
-     * Only the treasurer, privileged and admin may read `bookings`, so nobody else gets a query at all.
-     * Needs the books (`defaultAccountingTenantId`, never the app tenant); without them nothing is shown.
+     * The yearly totals are for the treasurer, privileged and admin. NOTE: `bookings` are readable tenant-wide
+     * (`tenantRead()` in firestore.rules), so the rules do not protect the amounts — this gate does: nobody else gets
+     * a query at all and the card is not rendered. Needs the books (`defaultAccountingTenantId`, never the app tenant);
+     * without them nothing is shown.
      */
     const canSeeYearlyTotals = computed(() => (state.access().isTreasurer || state.access().isPrivileged) && state.books() !== '');
     const courses = computed(() => state.coursesResource.value() ?? []);
+    /** the group admin flag belongs to the course's own group, which differs per row in the overview */
+    const accessFor = (course: CourseModel): CourseAccess => ({
+      ...state.access(),
+      isGroupAdmin: isAdminMember(state.appStore.getGroup(course.groupKey), state.access().personKey),
+    });
     return {
       courses,
       coursesCount: computed(() => courses().length),
       filteredCourses: computed(() => courses().filter(c => nameMatches(c.index, state.searchTerm()))),
       isLoading: computed(() => state.coursesResource.isLoading()),
-      /** may create a course in this group (the rules: privileged or admin of the group) */
-      canAdd: computed(() => mayCreateCourse(state.access()) && state.groupKey() !== ''),
-      /** responsible for at least one listed course, group admin, or privileged: the list's toolbar menu is theirs */
-      canManage: computed(() => mayCreateCourse(state.access()) || courses().some(c => isCourseResponsible(c, state.access().personKey))),
+      /** may create a course in the listed group (the rules: privileged or admin of the group); never in the overview */
+      canAdd: computed(() => mayCreateCourse(state.access()) && state.groupKey() !== '' && !state.isAll()),
+      /** responsible for a listed course, admin of its group, or privileged */
+      canManage: computed(() => state.access().isPrivileged || courses().some(c => mayManageCourse(c, accessFor(c)))),
+      /** the toolbar menu (export, add): those who manage, and the treasurer for the overview's export */
+      canOpenMenu: computed(() => state.access().isPrivileged || state.access().isTreasurer || courses().some(c => mayManageCourse(c, accessFor(c)))),
       canSeeYearlyTotals,
     };
   }),
@@ -119,8 +135,18 @@ export const CourseStore = signalStore(
     },
 
     /******************************** per course ******************************************* */
+    accessFor(course: CourseModel): CourseAccess {
+      return {
+        ...store.access(),
+        isGroupAdmin: isAdminMember(store.appStore.getGroup(course.groupKey), store.access().personKey),
+      };
+    },
     mayManage(course: CourseModel): boolean {
-      return mayManageCourse(course, store.access());
+      return mayManageCourse(course, this.accessFor(course));
+    },
+    /** name of the course's group, for the overview rows */
+    groupNameOf(course: CourseModel): string {
+      return store.appStore.getGroup(course.groupKey)?.name ?? '';
     },
 
     /******************************** actions ******************************************* */
@@ -129,7 +155,8 @@ export const CourseStore = signalStore(
       const course = new CourseModel(store.tenantId());
       course.groupKey = store.groupKey();
       // Creating needs privileged or group admin, and both may read the finance document: show its form,
-      // empty. It comes back only when it was changed (CourseEditResult.finance).
+      // empty (a new course has no finance document yet, so there is nothing a save could overwrite). It comes
+      // back only when it was changed (CourseEditResult.finance).
       const result = await this.openEditModal(course, new CourseFinanceModel(), false);
       if (!result) return;
       const key = await store.courseService.create(result.course, store.currentUser());
@@ -138,14 +165,17 @@ export const CourseStore = signalStore(
     },
 
     async edit(course: CourseModel, readOnly = false): Promise<void> {
-      const mayEdit = !readOnly && mayManageCourse(course, store.access());
-      // Only people who may read the amounts get the finance form, and only they trigger the read; for everybody
-      // else the modal opens without it. `undefined` from `readFinance` means «not set up yet» (or unreadable):
-      // the form then starts empty, and is saved only if it is changed.
-      let finance: CourseFinanceModel | undefined;
-      if (mayReadCourseFinance(course, store.access())) {
-        finance = (await firstValueFrom(store.courseService.readFinance(course.okey))) ?? new CourseFinanceModel();
-      }
+      const access = this.accessFor(course);
+      const mayEdit = !readOnly && mayManageCourse(course, access);
+      // Only people who may read the amounts get the finance form, and only they trigger the read. The read is
+      // STRICT (server, confirmed-missing vs. failed): `saveFinance` overwrites the whole document, so a blank form
+      // is offered only when the server said «no document». If the read failed the dialog opens WITHOUT the
+      // finance part (nothing saveable) and the user is told.
+      const { finance, unavailable } = await loadFinanceForEdit(
+        mayReadCourseFinance(course, access),
+        () => store.courseService.readFinanceStrict(course.okey),
+      );
+      if (unavailable) void store.alertService.showToast(store.i18n.list_financeUnavailable());
       const result = await this.openEditModal(course, finance, !mayEdit);
       if (!result || !mayEdit) return;
       if (!deepEqual(result.course, course)) await store.courseService.update(result.course, store.currentUser());
@@ -154,7 +184,7 @@ export const CourseStore = signalStore(
     },
 
     async archive(course: CourseModel): Promise<void> {
-      if (!mayManageCourse(course, store.access())) return;
+      if (!this.mayManage(course)) return;
       const confirmed = await store.alertService.confirm(store.i18n.list_archiveConfirm(), true);
       if (!confirmed) return;
       await store.courseService.archive(course, store.currentUser());
@@ -189,7 +219,7 @@ export const CourseStore = signalStore(
           course,
           finance,
           currentUser: store.currentUser(),
-          groupName: store.groupName(),
+          groupName: this.groupNameOf(course),
           calEventTypes: store.appStore.getCategory('calevent_type'),
           readOnly,
         },

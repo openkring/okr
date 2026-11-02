@@ -10,13 +10,19 @@ the list, its store and the edit modal. The spec is `planning/specs/2026-11-01-t
 
 | Route | Component | Guard |
 |---|---|---|
-| `/course/:groupKey/:listId/:contextMenuName` | `CourseList` | `isAuthenticatedGuard` |
+| `/course/:groupKey/:listId/:contextMenuName` | `CourseList` (`groupKey = all`: every course of the tenant) | `isAuthenticatedGuard` |
 | `/course/table/:courseKey` | course table page (added with that page) | `isAuthenticatedGuard` |
 
 Both routes belong to the `calevent` feature block (`libs/tenant/routes/src/lib/feature-catalogue.ts`); the course has
-no block of its own. The list is opened from the context menu of a group's calendar: row `calevent-courses` of
-`c-calevents` makes `CalEventList` navigate to `/course/<groupKey>/all/c-courses`. The row is hidden for every
-calendar that is not a group calendar.
+no block of its own. There are three ways in:
+
+- The «Kurse» chip at the top of a group calendar (`CalEventList`, also inside the group view), shown to everybody who
+  sees the calendar once the group has at least one non-archived course. It navigates to
+  `/course/<groupKey>/all/c-courses`. `CourseService` is loaded lazily for it (no static import of the course libs).
+- The row `calevent-courses` of `c-calevents` (context menu, calendar editors; this is where they reach `add`).
+  Hidden for every calendar that is not a group calendar.
+- The treasurer's row `courses-all` in `accounting-menu`: `/course/all/all/c-courses`, every course of the tenant
+  with the group name on each row, plus the yearly totals.
 
 ## Who may do what
 
@@ -28,7 +34,7 @@ The rules in `firestore.rules` are the guard; the UI mirrors them in `course-acc
 | Create a course | `privileged` or admin of the group |
 | Edit, archive | `privileged`, a responsible person of the course, admin of the group |
 | Read and write the finance document | the same, plus the treasurer |
-| See the yearly totals | treasurer, `privileged`, `admin` (only they can read `bookings`) |
+| See the yearly totals | treasurer, `privileged`, `admin` — enforced by the UI only (see below) |
 
 ## Store
 
@@ -39,19 +45,28 @@ The rules in `firestore.rules` are the guard; the UI mirrors them in `course-acc
 - `edit()` reads the finance document only for people who may read it (`mayReadCourseFinance`), passes it to the modal,
   and calls `saveFinance` only when the modal returns `finance` (the finance form was shown and changed). The course
   is written only if it differs from the one passed in.
+- The finance read is strict (`CourseService.readFinanceStrict`, a server read): `null` means the server confirmed that
+  there is no document (the form starts fresh), a rejection means «unknown». In that case the dialog opens WITHOUT the
+  finance part, so nothing can be saved over the real document, and a toast says so (`loadFinanceForEdit`).
 - The yearly totals (`yearlyTotals`) are summed from the posted compensation bookings (okey prefix `course-`) of the
   tenant's default books (`appConfig.defaultAccountingTenantId`, never the app tenant). Without default books, or for
   anybody but the treasurer / privileged / admin, nothing is queried and the card stays hidden. The booking date
   decides the year.
+- Mind: `bookings` and `booking-lines` are readable tenant-wide (`tenantRead()` in `firestore.rules`). The rules do not
+  protect the compensation amounts; the UI gate above does, and it is the only guard. Any signed-in member could read
+  the bookings with their own query.
+- With `groupKey = all` the list reads every course of the tenant (`CourseService.listAll`); the group admin flag is
+  then evaluated per course, `add` is not offered, and each row shows its group.
 
 ## Menus
 
-Menu documents are catalogue-owned (`FEATURE_BLOCKS`, block `calevent`): the row `calevent-courses` (child of
+Menu documents are catalogue-owned (`FEATURE_BLOCKS`): in block `calevent` the row `calevent-courses` (child of
 `c-calevents`) and the context menu `c-courses` with `course-add` (`add`) and `course-export-generic`
-(`exportGeneric`). Labels are `@item.*` keys in `libs/cms/menu/feature/src/i18n`.
+(`exportGeneric`); in block `finance` the treasurer's row `courses-all` (child of `accounting-menu`). Labels are `@item.*` keys in `libs/cms/menu/feature/src/i18n`.
 
 ## Firestore indexes
 
-- `courses`: `tenants, isArchived, groupKey, startDate desc` (the list).
+- `courses`: `tenants, isArchived, groupKey, startDate desc` (the list of one group, also the «Kurse» chip) and
+  `tenants, isArchived, startDate desc` (the overview of all groups).
 - `bookings`: `tenants, accountingTenantId, isArchived, status, __name__` (the yearly totals read the `course-` okey
   prefix of posted bookings).

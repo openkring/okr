@@ -598,6 +598,9 @@
     "note": "Ti manca un calendario o hai bisogno di un nuovo gruppo? Solo gli utenti privilegiati (il comitato) possono creare gruppi: rivolgiti a un membro del comitato o al supporto.",
     "open": "Mostra la spiegazione"
   },
+  "courses": {
+    "entry": "Corsi"
+  },
   "sync": {
     "title": "Sincronizza calendario",
     "intro": "Usa questo link per abbonarti al calendario in Apple Calendario, Outlook o Google. I nuovi eventi e le modifiche appaiono automaticamente.",

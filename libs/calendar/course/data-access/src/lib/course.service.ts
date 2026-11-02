@@ -112,6 +112,14 @@ export class CourseService {
   }
 
   /**
+   * All courses of the tenant (the treasurer's overview, group key `all`), newest first.
+   * Needs the index `courses: tenants, isArchived, startDate desc`.
+   */
+  public listAll(): Observable<CourseModel[]> {
+    return this.firestoreService.searchData<CourseModel>(CourseCollection, getSystemQuery(this.env.tenantId), 'startDate', 'desc');
+  }
+
+  /**
    * The calevents that belong to a course, oldest first.
    * Needs the index `calevents: tenants, isArchived, courseKey, startDate`.
    */
@@ -134,6 +142,20 @@ export class CourseService {
     return this.firestoreService.readObjectQuiet<CourseFinanceModel>(this.financePath(courseKey));
   }
 
+  /**
+   * Strict read of the finance document, for the one caller that writes it back (the edit dialog; `saveFinance`
+   * overwrites the whole document). Unlike {@link readFinance} it tells the three cases apart:
+   * - the document → edit it,
+   * - `null` → the server confirmed that it does not exist: starting fresh is correct,
+   * - rejects → unknown (offline, denied, App Check, timeout): the caller must NOT offer a blank form that a
+   *   save would put over the real document.
+   * Reads from the server, never from the local cache.
+   */
+  public readFinanceStrict(courseKey: string): Promise<CourseFinanceModel | null> {
+    if (!courseKey) die('CourseService.readFinanceStrict: courseKey is mandatory.');
+    return this.firestoreService.readObjectStrict<CourseFinanceModel>(this.financePath(courseKey));
+  }
+
   /** Overwrite the finance settings of a course (the document is created on first save). */
   public async saveFinance(courseKey: string, finance: CourseFinanceModel): Promise<void> {
     if (!courseKey) die('CourseService.saveFinance: courseKey is mandatory.');
@@ -146,7 +168,9 @@ export class CourseService {
    * The released compensation bookings of one set of books, across all courses (spec 1.132 §7.7): the yearly
    * total per trainer is summed from them. Only `posted` bookings count; their date is the booking date.
    *
-   * Only the treasurer, privileged and admin may read `bookings`: call this for them and nobody else. The query is
+   * `bookings` are readable tenant-wide (`tenantRead()` in firestore.rules): the rules do NOT protect the compensation
+   * amounts, only the caller's discipline does. Call this for the treasurer, privileged and admin and nobody else
+   * (the UI gate in `CourseStore` is the only guard). The query is
    * tenant AND books scoped (`accountingTenantId` is the books, never the app tenant) and narrowed to the
    * `course-` okey prefix server-side, so it does not read the whole journal. The amount is the debit line (the
    * expense), a booking without a counterparty is skipped. Rejects when the read fails, so the caller can tell

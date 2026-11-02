@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { AvatarInfo, CourseModel } from '@okr/shared-models';
+import { AvatarInfo, CourseFinanceModel, CourseModel, MoneyModel } from '@okr/shared-models';
 
-import { CourseAccess, isCourseResponsible, mayCreateCourse, mayManageCourse, mayReadCourseFinance } from './course-access.util';
+import { CourseAccess, isCourseResponsible, loadFinanceForEdit, mayCreateCourse, mayManageCourse, mayReadCourseFinance } from './course-access.util';
 
 function avatar(key: string): AvatarInfo {
   return { key, name1: key, name2: key, modelType: 'person', type: '', subType: '', label: '' };
@@ -64,5 +64,32 @@ describe('mayCreateCourse', () => {
     expect(mayCreateCourse({ isGroupAdmin: true, isPrivileged: false })).toBe(true);
     expect(mayCreateCourse({ isGroupAdmin: false, isPrivileged: true })).toBe(true);
     expect(mayCreateCourse({ isGroupAdmin: false, isPrivileged: false })).toBe(false);
+  });
+});
+
+describe('loadFinanceForEdit', () => {
+  const stored = Object.assign(new CourseFinanceModel(), { accountingTenantId: 'scs', defaultRate: new MoneyModel(5000) });
+
+  it('makes no read for somebody who may not read the amounts, and offers no finance part', async () => {
+    const read = vi.fn(async () => stored);
+    expect(await loadFinanceForEdit(false, read)).toEqual({ finance: undefined, unavailable: false });
+    expect(read).not.toHaveBeenCalled();
+  });
+
+  it('hands over the stored document', async () => {
+    const result = await loadFinanceForEdit(true, async () => stored);
+    expect(result.finance).toBe(stored);
+    expect(result.unavailable).toBe(false);
+  });
+
+  it('starts fresh only when the server confirmed that there is no document', async () => {
+    const result = await loadFinanceForEdit(true, async () => null);
+    expect(result.finance).toEqual(new CourseFinanceModel());
+    expect(result.unavailable).toBe(false);
+  });
+
+  it('offers NO finance part when the read failed, so nothing blank can overwrite the real document', async () => {
+    const result = await loadFinanceForEdit(true, async () => { throw new Error('client is offline'); });
+    expect(result).toEqual({ finance: undefined, unavailable: true });
   });
 });

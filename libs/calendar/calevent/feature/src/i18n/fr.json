@@ -598,6 +598,9 @@
     "note": "Il vous manque un calendrier ou vous avez besoin d'un nouveau groupe ? Seuls les utilisateurs privilégiés (le comité) peuvent créer des groupes — contactez un membre du comité ou le support.",
     "open": "Afficher l'explication"
   },
+  "courses": {
+    "entry": "Cours"
+  },
   "sync": {
     "title": "Synchroniser le calendrier",
     "intro": "Utilise ce lien pour t'abonner au calendrier dans Apple Calendrier, Outlook ou Google. Les événements nouveaux ou modifiés apparaissent automatiquement.",

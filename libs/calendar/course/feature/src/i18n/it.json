@@ -135,7 +135,8 @@
       "locked": "Bloccato",
       "reported": "Annunciato"
     },
-    "csvFile": "corsi"
+    "csvFile": "corsi",
+    "financeUnavailable": "Non è stato possibile caricare le indennità. Il corso si apre senza di esse. Riprova più tardi."
   },
   "yearly": {
     "title": "Indennità per anno",

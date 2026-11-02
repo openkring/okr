@@ -135,7 +135,8 @@
       "locked": "Eingefroren",
       "reported": "Gemeldet"
     },
-    "csvFile": "kurse"
+    "csvFile": "kurse",
+    "financeUnavailable": "Die Entschädigungsangaben konnten nicht geladen werden. Der Kurs öffnet sich ohne sie. Versuche es später noch einmal."
   },
   "yearly": {
     "title": "Entschädigungen pro Jahr",

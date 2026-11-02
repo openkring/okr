@@ -1,16 +1,18 @@
 import { Component, ComponentRef, computed, CUSTOM_ELEMENTS_SCHEMA, DestroyRef, effect, ElementRef, inject, Injector, input, linkedSignal, OnInit, PLATFORM_ID, signal, untracked, viewChild, ViewContainerRef } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, AlertController, createGesture, Gesture, IonBadge, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTextarea, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
+import { ActionSheetController, ActionSheetOptions, AlertController, createGesture, Gesture, IonBadge, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTextarea, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { format } from 'date-fns';
+import { from, of, switchMap } from 'rxjs';
 
 import type { DateSelectArg, DatesSetArg, EventInput } from '@fullcalendar/core';
 import type { CaleventFullcalendarView } from './calevent-fullcalendar-view';
 import { DEFAULT_DATE } from '@okr/shared-constants';
-import { AvatarInfo, CalendarSmallScreenView, CalEventModel, LocationModel, PersonModel, RoleName } from '@okr/shared-models';
+import { AvatarInfo, CalendarSmallScreenView, CalEventModel, CourseModel, LocationModel, PersonModel, RoleName } from '@okr/shared-models';
 import { ModelSelectService } from '@okr/shared-feature';
 import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { DateTimeSelectModal, EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
-import { AppNavigationService, confirm, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, keepDefaultTrue, lazyService, navigateByUrl, okrPrompt, QuickEntryService } from '@okr/shared-util-angular';
+import { AppNavigationService, confirm, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, keepDefaultTrue, lazyService, navigateByUrl, okrPrompt, QuickEntryService, resourceParams } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, addTime, debugData, extractFirstPartOfOptionalTupel, getAttendanceColor, getAttendanceIcon, getAttendanceState, getAvatarInfo, getIsoDateTime, isCalendarPublic, fill, getYear, getYearList, hasRole, parseEventString, warn, YEAR_ROLLING_WINDOW, isChatBlockedError, contextMenuId } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
@@ -48,12 +50,13 @@ type CalEventSortField = 'date' | 'topic' | 'location' | 'organiser';
     imports: [
       CalEventDurationPipe, SvgIconPipe, PartPipe,
       Spinner, EmptyList, AvatarDisplay, Menu, ListFilter,
-      IonHeader, IonToolbar, IonButtons, IonBadge, IonButton, IonTitle, IonMenuButton, IonIcon, IonTextarea,
+      IonHeader, IonToolbar, IonButtons, IonBadge, IonChip, IonButton, IonTitle, IonMenuButton, IonIcon, IonTextarea,
       IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonList, IonPopover
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
     styles: [`
       .clickable { cursor: pointer; user-select: none; }
+      .course-entry { padding: 4px 8px 0; }
       /* only visible while 'Archivierte anzeigen' is on: debris must never look like a live event */
       ion-item.archived { opacity: 0.55; font-style: italic; }
       ion-card-content { padding: 0px;}
@@ -275,6 +278,16 @@ type CalEventSortField = 'date' | 'topic' | 'location' | 'organiser';
 
   <!-- list data -->
   <ion-content #content>
+    <!-- «Kurse» (spec 1.132): visible to everybody who sees a group calendar whose group has courses. Lives in the
+         body, not in the toolbar, because the group view suppresses the toolbar of this list. -->
+    @if(courseEntryVisible()) {
+      <div class="course-entry">
+        <ion-chip color="primary" (click)="openCourses()">
+          <ion-icon src="{{ 'school' | svgIcon }}" />
+          <ion-label>{{ store.i18n.courses_entry() }} ({{ courseCount() }})</ion-label>
+        </ion-chip>
+      </div>
+    }
     @if(isLoading()) {
       <okr-spinner />
     } @else {
@@ -486,6 +499,21 @@ export class CalEventList implements OnInit {
     // the maintenance rows are admin-only; a group admin (forceVisible) must not see them
     return this.hasRole('admin') ? names : [...names, 'maint-divider', 'calevent-check-duplicates'];
   });
+  // Courses of the group (spec 1.132): lazy, so that the course data-access lib (and the finance booking service it
+  // needs) is never part of this chunk's static import graph. Only a group calendar asks; the list is the realtime
+  // `courses` query of the group (index tenants, isArchived, groupKey, startDate), archived courses excluded.
+  private readonly courseService = lazyService(this.injector, () =>
+    import('@okr/calendar-course-data-access').then(m => m.CourseService));
+  private readonly coursesResource = rxResource({
+    params: resourceParams(() => this.store.groupCalendarId()),
+    stream: ({ params: groupKey }) => groupKey
+      ? from(this.courseService()).pipe(switchMap(service => service.list(groupKey)))
+      : of([] as CourseModel[]),
+  });
+  protected readonly courseCount = computed(() => this.coursesResource.value()?.length ?? 0);
+  /** a group calendar whose group has at least one course; everybody who sees the calendar sees the entry */
+  protected readonly courseEntryVisible = computed(() => this.store.isGroupCalendar() && this.courseCount() > 0);
+
   private readonly firstFutureIndex = computed(() => {
     const today = format(new Date(), 'yyyyMMdd');
     return this.sortedCalEvents().findIndex(e => e.startDate >= today);
@@ -926,6 +954,12 @@ export class CalEventList implements OnInit {
     }
   }
 
+  /** The training courses of this group calendar (spec 1.132); nothing for any other calendar. */
+  protected async openCourses(): Promise<void> {
+    const groupKey = this.store.groupCalendarId();
+    if (groupKey) await navigateByUrl(this.router, `/course/${groupKey}/all/c-courses`);
+  }
+
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error
@@ -957,12 +991,7 @@ export class CalEventList implements OnInit {
       case 'schedule':
         if (this.store.schedule()) await this.openSchedulePoll('');   // schedule() = the group-calendar guard
         break;
-      case 'courses': {
-        // the training courses of this group calendar (spec 1.132); the entry is hidden for every other calendar
-        const groupKey = this.store.groupCalendarId();
-        if (groupKey) await navigateByUrl(this.router, `/course/${groupKey}/all/c-courses`);
-        break;
-      }
+      case 'courses': await this.openCourses(); break;   // the entry is hidden for every other calendar
       case 'checkDuplicates': await this.store.checkDuplicates(); break;
       case 'toggleFilter': this.showFilter.update(v => !v); break;
       case 'toggleArchived': this.store.toggleShowArchived(); break;

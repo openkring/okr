@@ -24,7 +24,7 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { ToastController } from '@ionic/angular';
 import { captureMessage } from '@sentry/angular';
-import { arrayRemove, collection, deleteDoc, doc, getCountFromServer, getDoc, getDocs, query, runTransaction, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
+import { arrayRemove, collection, deleteDoc, doc, getCountFromServer, getDoc, getDocFromServer, getDocs, query, runTransaction, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
 import type { FieldPath } from 'firebase/firestore';
 import { collectionData, docData, fromRef } from 'rxfire/firestore';
 import { catchError, concat, defer, delay, firstValueFrom, from, map, MonoTypeOperatorFunction, Observable, of, ReplaySubject, retry, share, switchMap, tap, timer } from 'rxjs';
@@ -1170,6 +1170,23 @@ export class FirestoreService {
       console.error(`FirestoreService.readModelOnce(${collectionName}/${key}) error:`, err);
       return undefined;
     }
+  }
+
+  /**
+   * One strict SERVER read of a single document by path (`collection/key/sub/doc`), for a caller that WRITES the
+   * result back: it must tell «does not exist» from «could not be read».
+   * - `null`      the server answered and the document does not exist,
+   * - the data    the document (no `okey`),
+   * - rejects     anything else: offline, denied, App Check, timeout. Never answers from the local cache
+   *               (an uncached document looks identical to a missing one there), and never shows a toast.
+   * `readObjectQuiet` is the opposite on purpose (a denial is its normal answer) and unfit for this.
+   */
+  public async readObjectStrict<T>(path: string): Promise<T | null> {
+    if (!isBrowser(this.platformId) || !isFirestoreInitializedCheck() || !path) {
+      throw new Error(`FirestoreService.readObjectStrict(${path}): Firestore is not available.`);
+    }
+    const snapshot = await getDocFromServer(doc(this.firestore, path));
+    return snapshot.exists() ? (snapshot.data() as T) : null;
   }
 
   /**

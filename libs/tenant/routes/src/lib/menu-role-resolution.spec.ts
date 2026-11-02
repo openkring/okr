@@ -220,6 +220,11 @@ const KNOWN_WEAKER_THAN_MENU: readonly string[] = [
   'calevent-all', 'invitation-all',
   // treasurer
   'expenses-all',
+  // `courses-all`: the treasurer's overview of every course (`/course/all/all/c-courses`, spec 1.132, controller
+  // ruling of fix round 1). The route is the member-reachable course list on purpose — courses are
+  // `allow read: if tenantRead()` — so `roleNeeded: treasurer` only decides who SEES the menu row. The yearly
+  // compensation card is gated in the UI (treasurer / privileged / admin); `bookings` themselves are tenant-readable.
+  'courses-all',
   // contentAdmin on the row, member-reachable route — BY DESIGN, and the same reasoning R-7
   // recorded for `document-all`: `roleNeeded` here is a MENU-VISIBILITY choice, not a security
   // boundary. Both point at screens whose data is tenant-readable anyway (`pages` and

@@ -135,7 +135,8 @@
       "locked": "Congelado",
       "reported": "Notificado"
     },
-    "csvFile": "cursos"
+    "csvFile": "cursos",
+    "financeUnavailable": "No se pudieron cargar las compensaciones. El curso se abre sin ellas. Inténtalo de nuevo más tarde."
   },
   "yearly": {
     "title": "Compensaciones por año",

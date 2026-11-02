@@ -10,6 +10,7 @@
     "@okr/calendar-calevent-data-access": "*",
     "@okr/calendar-calevent-ui": "*",
     "@okr/calendar-calevent-util": "*",
+    "@okr/calendar-course-data-access": "*",
     "@okr/chat-data-access": "*",
     "@okr/cms-menu-feature": "*",
     "@okr/comment-util": "*",

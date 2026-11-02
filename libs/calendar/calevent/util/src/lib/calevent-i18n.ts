@@ -171,6 +171,8 @@ export const CALEVENT_I18N_KEYS = {
 
   info_open:                      PFX + 'info.open',
 
+  courses_entry:                  PFX + 'courses.entry',
+
   quick_entry_label:          PFX + 'quickEntry.label',
   quick_entry_placeholder:    PFX + 'quickEntry.placeholder',
 

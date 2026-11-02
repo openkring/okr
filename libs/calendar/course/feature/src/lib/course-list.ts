@@ -18,7 +18,8 @@ import { CourseStore } from './course.store';
 
 /**
  * The courses of one group (spec 1.132 §7.1, §8): `/course/:groupKey/:listId/:contextMenuName`, reached from the
- * context menu of the group's calendar. Everybody who sees the group may open a course; creating, editing and
+ * «Kurse» entry in the group calendar (everybody) or its context menu (editors). With `groupKey = 'all'` it is the
+ * tenant-wide overview (every group's courses; the treasurer's entry). Everybody who sees the group may open a course; creating, editing and
  * archiving is for the people the rules name (see `course-access.util`). The treasurer / privileged / admin also get
  * the yearly compensation totals per person (§7.7).
  */
@@ -41,7 +42,7 @@ import { CourseStore } from './course.store';
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ filteredCount() }}/{{ count() }} {{ store.i18n.courses() }}</ion-title>
-        @if (store.canManage() && menuItemsStore.canOpen(contextMenuName())) {
+        @if (store.canOpenMenu() && menuItemsStore.canOpen(contextMenuName())) {
           <ion-buttons slot="end">
             <ion-button id="{{ popupId }}">
               <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
@@ -73,7 +74,7 @@ import { CourseStore } from './course.store';
             <ion-item button [detail]="false" (click)="showActions(course)">
               <ion-label>
                 <h2>{{ course.name }}</h2>
-                <p>{{ period(course) }}</p>
+                <p>{{ period(course) }}@if (store.isAll() && store.groupNameOf(course); as group) { · {{ group }}}</p>
               </ion-label>
               <div slot="end" class="ion-hide-sm-down">
                 <okr-avatar-display [avatars]="course.responsiblePersons" [showName]="false" />

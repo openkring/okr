@@ -598,6 +598,9 @@
     "note": "Fehlt dir ein Kalender oder brauchst du eine neue Gruppe? Gruppen können nur privilegierte Benutzer (Vorstand) anlegen — wende dich an ein Vorstandsmitglied oder an den Support.",
     "open": "Erklärung anzeigen"
   },
+  "courses": {
+    "entry": "Kurse"
+  },
   "sync": {
     "title": "Kalender synchronisieren",
     "intro": "Mit diesem Link abonnierst du den Kalender in Apple Kalender, Outlook oder Google. Neue und geänderte Termine erscheinen automatisch.",

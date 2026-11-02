@@ -135,7 +135,8 @@
       "locked": "Frozen",
       "reported": "Reported"
     },
-    "csvFile": "courses"
+    "csvFile": "courses",
+    "financeUnavailable": "The compensation details could not be loaded. The course opens without them. Please try again later."
   },
   "yearly": {
     "title": "Compensation per year",

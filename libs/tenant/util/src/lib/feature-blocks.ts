@@ -1562,6 +1562,11 @@ const finance: FeatureBlock = {
       { key: 'accounting-reports', name: 'accounting-reports', url: '/accounting/@BOOKS@/balance/c-report', action: 'navigate', roleNeeded: 'treasurer', icon: 'chart', label: '@item.accounting-reports' },
       { key: 'accounting-closing', name: 'accounting-closing', url: '/accounting/@BOOKS@/periods/c-period', action: 'navigate', roleNeeded: 'treasurer', icon: 'calendar', label: '@item.accounting-closing' },
       { key: 'accounting-master-data', name: 'accounting-master-data', url: '/accounting/@BOOKS@/account/c-account', action: 'navigate', roleNeeded: 'treasurer', icon: 'settings', label: '@item.accounting-master-data' },
+      // Training courses of ALL groups plus the yearly compensation totals (spec 1.132 §7.7): the treasurer's entry,
+      // `groupKey = all` of the course list. The ROUTE belongs to the `calevent` block (no block of its own for
+      // courses); the row sits here because the overview is a treasurer's view and `calevent` has no treasurer menu.
+      // A tenant with `finance` but without `calevent` would get a dead row: enabling `calevent` is the fix.
+      { key: 'courses-all', name: 'courses-all', url: '/course/all/all/c-courses', action: 'navigate', roleNeeded: 'treasurer', icon: 'school', label: '@item.courses-all' },
     ]),
   ],
 };

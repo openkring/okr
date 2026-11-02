@@ -21,6 +21,8 @@ vi.mock('rxfire/firestore', () => ({
   fromRef: () => fromRefMock(),
 }));
 
+const getDocFromServerMock = vi.hoisted(() => vi.fn());
+
 // Whether the document `createModel` is about to write already exists. Drives the transaction
 // mock below; `false` (a free id) is the ordinary case, so the existing tests are unaffected.
 const docExists = vi.hoisted(() => ({ value: false }));
@@ -32,6 +34,7 @@ vi.mock('firebase/firestore', () => ({
   where: vi.fn(() => ({})),
   orderBy: vi.fn(() => ({})),
   getDocs: vi.fn(),
+  getDocFromServer: (...args: unknown[]) => getDocFromServerMock(...args),
   setDoc: vi.fn(),
   updateDoc: vi.fn(),
   deleteDoc: vi.fn(),
@@ -888,5 +891,33 @@ describe('FirestoreService.readObjectQuiet', () => {
     expect(await firstValueFrom(svc.readObjectQuiet('courses/c1/finance/settings'))).toEqual({ defaultRate: 2 });
     expect(attestAppCheckMock).toHaveBeenCalledWith(undefined, true);
     debug.mockRestore();
+  });
+});
+
+// Spec 1.132 (fix round 1): the strict read tells «confirmed missing» from «could not be read» — the caller writes
+// the result back over the whole document.
+describe('FirestoreService.readObjectStrict', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    TestBed.resetTestingModule();
+    docMock.mockReturnValue({ id: 'settings' } as never);
+  });
+
+  it('returns the document data', async () => {
+    getDocFromServerMock.mockResolvedValue({ exists: () => true, data: () => ({ defaultRate: 1 }) });
+    expect(await makeService().readObjectStrict('courses/c1/finance/settings')).toEqual({ defaultRate: 1 });
+  });
+
+  it('returns null when the server confirms that the document does not exist', async () => {
+    getDocFromServerMock.mockResolvedValue({ exists: () => false, data: () => undefined });
+    expect(await makeService().readObjectStrict('courses/c1/finance/settings')).toBeNull();
+  });
+
+  it('rejects when the server cannot be reached or denies, so «unknown» never looks like «missing»', async () => {
+    const svc = makeService();
+    getDocFromServerMock.mockRejectedValue(Object.assign(new Error('Failed to get document because the client is offline.'), { code: 'unavailable' }));
+    await expect(svc.readObjectStrict('courses/c1/finance/settings')).rejects.toThrow('offline');
+    getDocFromServerMock.mockRejectedValue(permissionDenied());
+    await expect(svc.readObjectStrict('courses/c1/finance/settings')).rejects.toBeDefined();
   });
 });

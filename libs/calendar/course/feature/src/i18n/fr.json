@@ -135,7 +135,8 @@
       "locked": "Figé",
       "reported": "Annoncé"
     },
-    "csvFile": "cours"
+    "csvFile": "cours",
+    "financeUnavailable": "Les indemnités n'ont pas pu être chargées. Le cours s'ouvre sans elles. Réessaie plus tard."
   },
   "yearly": {
     "title": "Indemnités par année",

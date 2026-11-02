@@ -1,4 +1,7 @@
-import { CourseModel } from '@okr/shared-models';
+import { CourseFinanceModel, CourseModel } from '@okr/shared-models';
+
+/** Route value of `groupKey` for the tenant-wide overview (all courses of all groups, the treasurer's entry). */
+export const ALL_COURSES_KEY = 'all';
 
 /**
  * What the current user is, as far as the course rules are concerned. The caller derives it from the app state
@@ -39,4 +42,30 @@ export function mayReadCourseFinance(course: CourseModel, access: CourseAccess):
 /** Who may create a course in a group: privileged or an admin of that group (the rules require it on create). */
 export function mayCreateCourse(access: Pick<CourseAccess, 'isGroupAdmin' | 'isPrivileged'>): boolean {
   return access.isPrivileged || access.isGroupAdmin;
+}
+
+/** What the edit dialog gets for the finance part, see {@link loadFinanceForEdit}. */
+export type FinanceForEdit = {
+  /** the document to edit, a deliberately new one, or `undefined` = no finance part at all */
+  finance: CourseFinanceModel | undefined;
+  /** the user may read the amounts, but the read failed: the dialog opens without them and says so */
+  unavailable: boolean;
+};
+
+/**
+ * Decides what the edit dialog gets for the finance part. `saveFinance` overwrites the whole document, so a blank
+ * form must only ever be offered when the server CONFIRMED that there is no document:
+ * - not allowed to read → no finance part, and no read is attempted;
+ * - the read returns the document → edit it;
+ * - the read returns `null` (confirmed missing) → a new document, «set up compensation»;
+ * - the read rejects (unknown: offline, denied, timeout) → NO finance part (nothing saveable) and `unavailable`.
+ */
+export async function loadFinanceForEdit(mayRead: boolean, read: () => Promise<CourseFinanceModel | null>): Promise<FinanceForEdit> {
+  if (!mayRead) return { finance: undefined, unavailable: false };
+  try {
+    const stored = await read();
+    return { finance: stored ?? new CourseFinanceModel(), unavailable: false };
+  } catch {
+    return { finance: undefined, unavailable: true };
+  }
 }
