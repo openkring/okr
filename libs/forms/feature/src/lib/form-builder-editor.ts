@@ -13,7 +13,7 @@ import { Field, FormDefinitionModel, FormMapping } from '@okr/shared-models';
 import { FormDefinitionService } from '@okr/forms-data-access';
 import {
   conditionalBlockMembers, conditionOpLabels, DerivedRuleIssue, derivedValuesReferencing, describeRule, fieldsReferencing,
-  findDerivedRuleIssues, findRuleIssues, FORM_I18N_KEYS, FormI18n, getFormMapping, previewDerivedValues, removeDerivedReferencesTo,
+  findDerivedRuleIssues, findDuplicateKeys, findRuleIssues, FORM_I18N_KEYS, FormI18n, getFormMapping, previewDerivedValues, removeDerivedReferencesTo,
   removeReferencesTo, ruleConnectors, RuleIssue,
 } from '@okr/forms-util';
 import { I18nService } from '@okr/shared-i18n';
@@ -63,6 +63,7 @@ function newField(def: FieldTypeDef, order: number): Field {
     .rule-line ion-chip { margin: 2px 0; height: 22px; font-size: 11px; }
     .rule-text     { white-space: normal; }
     .derived-issues { padding: 4px 0; }
+    .duplicate-keys { display: block; padding: 8px 4px; }
     .cdk-drag-preview    { opacity: 0.8; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
     .cdk-drag-placeholder { opacity: 0.3; }
     .cdk-drop-list-dragging .field-row:not(.cdk-drag-placeholder) { transition: transform 250ms cubic-bezier(0,0,0.2,1); }
@@ -73,7 +74,7 @@ function newField(def: FieldTypeDef, order: number): Field {
   template: `
     <okr-header [i18n]="{ title: i18n.title() + ': ' + formData().name }" [isModal]="true" />
     @if (isDirty()) {
-      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (saveClicked)="save()" (cancelClicked)="cancel()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" [saveDisabled]="duplicateKeys().length > 0" (saveClicked)="save()" (cancelClicked)="cancel()" />
     }
     <ion-content>
       <div class="editor-layout" cdkDropListGroup>
@@ -98,6 +99,10 @@ function newField(def: FieldTypeDef, order: number): Field {
             </ion-buttons>
           </ion-toolbar>
 
+          @if (duplicateKeys().length > 0) {
+            <!-- same check as the settings suite: a repeated input key blocks saving in both places -->
+            <ion-note color="danger" class="duplicate-keys">{{ duplicateKeysText() }}</ion-note>
+          }
           @if (viewMode() === 'editor') {
             <!-- derived values live in the form settings; their broken conditions are flagged here, where fields change -->
             @if (derivedIssues().length > 0) {
@@ -276,6 +281,11 @@ export class FormBuilderEditor {
   /** Derived-value cases whose controller was deleted or retyped, or whose compared answer no longer exists. */
   protected readonly derivedIssues = computed(() => findDerivedRuleIssues(this.formData().derivedValues ?? [], this.fields()));
 
+  /** Keys used by more than one input field — shown above the canvas and block saving, as in the settings (spec 7.3). */
+  protected readonly duplicateKeys = computed(() => findDuplicateKeys(this.fields()));
+  protected readonly duplicateKeysText = computed(() =>
+    fill(this.i18n.fields_duplicate_keys(), { keys: this.duplicateKeys().map(k => `«${k}»`).join(', ') }));
+
   /** Fields inside a divider block with a rule — indented on the canvas. */
   protected readonly blockMembers = computed(() => conditionalBlockMembers(this.fields()));
 
@@ -372,6 +382,7 @@ export class FormBuilderEditor {
   }
 
   public async save(): Promise<void> {
+    if (this.duplicateKeys().length > 0) return;   // the save button is disabled too; the warning above the canvas says why
     const fd = { ...this.formData(), fields: this.fields() };
     await this.formDefinitionService.update(fd, this.appStore.currentUser());
     await dismissOverlay(this.modalController, null, 'confirm');

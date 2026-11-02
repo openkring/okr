@@ -46,7 +46,8 @@
     "as_property_helper": "La risposta viene salvata come {type}."
   },
   "fields": {
-    "duplicate_key": "Due domande hanno la stessa chiave. Assegna a ogni domanda la sua."
+    "duplicate_key": "Due domande hanno la stessa chiave. Assegna a ogni domanda la sua.",
+    "duplicate_keys": "Più domande hanno la stessa chiave: {keys}. Assegna a ogni domanda la sua, altrimenti il modulo non si può salvare."
   },
   "rule": {
     "range_order": "Il primo valore deve essere minore del secondo.",

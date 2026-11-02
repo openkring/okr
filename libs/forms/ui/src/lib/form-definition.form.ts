@@ -40,6 +40,14 @@ const TARGET_KINDS: SubmissionTarget['kind'][] = ['collection', 'url'];
         <ion-card>
           <ion-card-content class="ion-no-padding">
             <ion-grid>
+              @if (fieldsErrors().length > 0) {
+                <!-- the fields are edited in the form builder; a repeated key blocks saving here too, so say why up front -->
+                <ion-row>
+                  <ion-col size="12">
+                    <okr-error-note [errors]="fieldsErrors()" />
+                  </ion-col>
+                </ion-row>
+              }
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)"
@@ -172,6 +180,8 @@ export class FormDefinitionForm {
   protected mappingKeyErrors = computed(() => this.validationResult().getErrors('target.mappingKey'));
   protected urlErrors = computed(() => this.validationResult().getErrors('target.url'));
   protected fillerHelpTextErrors = computed(() => this.validationResult().getErrors('fillerHelpText'));
+  /** spans all fields: two input fields with the same key (edited in the form builder) */
+  protected fieldsErrors = computed(() => this.validationResult().getErrors('fields'));
   /** the derived values' errors, keyed relative to the list — the card shows them under each of its controls */
   protected derivedErrors = computed(() => errorsUnder(this.validationResult().getErrors(), 'derivedValues.'));
 

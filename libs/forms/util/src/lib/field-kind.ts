@@ -21,3 +21,22 @@ export function categoryNamesOf(fields: readonly Field[]): string[] {
   const names = fields.flatMap(f => (f.type === 'category' && f.categoryName ? [f.categoryName] : []));
   return [...new Set(names)];
 }
+
+/**
+ * The keys used by more than one input field, in the order they first repeat. Display elements and
+ * empty keys never count: the renderer builds one control per input key, so a repeated key would let
+ * two questions share one answer. Shared by the settings suite and the form builder (spec 7.3).
+ */
+export function findDuplicateKeys(fields: readonly Field[] | undefined): string[] {
+  const seen = new Set<string>();
+  const duplicates: string[] = [];
+  for (const field of fields ?? []) {
+    if (!isInputField(field) || !field.key) continue;
+    if (seen.has(field.key)) {
+      if (!duplicates.includes(field.key)) duplicates.push(field.key);
+    } else {
+      seen.add(field.key);
+    }
+  }
+  return duplicates;
+}

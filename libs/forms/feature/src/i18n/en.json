@@ -46,7 +46,8 @@
     "as_property_helper": "The answer is saved as {type}."
   },
   "fields": {
-    "duplicate_key": "Two questions have the same key. Please give each question its own."
+    "duplicate_key": "Two questions have the same key. Please give each question its own.",
+    "duplicate_keys": "Several questions share the same key: {keys}. Please give each question its own, otherwise the form cannot be saved."
   },
   "rule": {
     "range_order": "The first value must be smaller than the second.",

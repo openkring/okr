@@ -4,7 +4,7 @@ import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, URL_LENGTH } from '@okr/shared-co
 import { FormDefinitionModel } from '@okr/shared-models';
 import { stringValidations } from '@okr/shared-util-core';
 
-import { isInputField } from './field-kind';
+import { findDuplicateKeys } from './field-kind';
 
 /**
  * Validates the settings of a form definition (form-definition edit modal):
@@ -25,7 +25,6 @@ export const formDefinitionValidations = staticSuite((model: FormDefinitionModel
   });
 
   test('fields', '@forms/feature.fields.duplicate_key', () => {
-    const keys = (model.fields ?? []).filter(isInputField).map(f => f.key).filter(k => !!k);
-    enforce(new Set(keys).size).equals(keys.length);
+    enforce(findDuplicateKeys(model.fields).length).equals(0);
   });
 });

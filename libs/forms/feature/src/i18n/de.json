@@ -46,7 +46,8 @@
     "as_property_helper": "Die Antwort wird als {type} gespeichert."
   },
   "fields": {
-    "duplicate_key": "Zwei Fragen haben denselben Schlüssel. Bitte gib jeder Frage einen eigenen."
+    "duplicate_key": "Zwei Fragen haben denselben Schlüssel. Bitte gib jeder Frage einen eigenen.",
+    "duplicate_keys": "Mehrere Fragen haben denselben Schlüssel: {keys}. Bitte gib jeder Frage einen eigenen, sonst lässt sich das Formular nicht speichern."
   },
   "rule": {
     "range_order": "Der erste Wert muss kleiner sein als der zweite.",

@@ -46,7 +46,8 @@
     "as_property_helper": "La réponse est enregistrée comme {type}."
   },
   "fields": {
-    "duplicate_key": "Deux questions ont la même clé. Donne à chaque question la sienne."
+    "duplicate_key": "Deux questions ont la même clé. Donne à chaque question la sienne.",
+    "duplicate_keys": "Plusieurs questions ont la même clé : {keys}. Donne à chaque question la sienne, sinon le formulaire ne peut pas être enregistré."
   },
   "rule": {
     "range_order": "La première valeur doit être inférieure à la seconde.",
