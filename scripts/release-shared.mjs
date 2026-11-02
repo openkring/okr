@@ -249,7 +249,7 @@ export function verifyLive(site, version) {
  */
 export function commitSubmoduleStamp(app, version, push) {
   const sub = ['-C', `apps/${app}`];
-  console.log(`\n[8/8] ${app} submodule — ngsw commit, tag v${version}, pointer bump`);
+  console.log(`\n[8/8] ${app} submodule — ngsw commit, tag v${version}`);
 
   if (capture('git', [...sub, 'status', '--porcelain', '--', 'ngsw-config.json'])) {
     run('git', [...sub, 'add', 'ngsw-config.json']);
@@ -271,7 +271,7 @@ export function commitSubmoduleStamp(app, version, push) {
   }
 
   if (!push)
-    console.log(`  Not pushed. Later:  git -C apps/${app} push origin HEAD:main && git -C apps/${app} push origin v${version} && git push origin main`);
+    console.log(`  Not pushed. Later:  git -C apps/${app} push origin HEAD:main && git -C apps/${app} push origin v${version}`);
 }
 
 /**
@@ -285,6 +285,7 @@ export function commitPointers(apps, version, push) {
   if (!changed.length) return;
   const paths = changed.map((a) => `apps/${a}`);
   run('git', ['add', ...paths]);
-  run('git', ['commit', '-o', ...paths, '-m', `chore(submodules): Pointer -- ngsw-Stempel v${version} (${changed.length} apps)`]);
+  run('git', ['commit', '-o', ...paths, '-m', `chore(submodules): Pointer -- ngsw-Stempel v${version} (${changed.length} ${changed.length === 1 ? 'app' : 'apps'})`]);
   if (push) run('git', ['push', 'origin', 'main']);
+  else console.log('  Pointer bump not pushed. Later:  git push origin main');
 }
