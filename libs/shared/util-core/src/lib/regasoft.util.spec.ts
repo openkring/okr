@@ -500,11 +500,35 @@ describe('getSekretariatCases', () => {
     expect(getSekretariatCases([srvIndex({ mainClub: false, mKey: '', personKey: '' })])).toEqual([]);
   });
 
-  it('reports a Regasoft record that lists more than one club', () => {
-    const cases = getSekretariatCases([srvIndex({ clubs: ['!Seeclub', 'RC Andere'] })]);
+  it('reports a double member of ours that Regasoft lists in one club only', () => {
+    const cases = getSekretariatCases([srvIndex({ pCategory: 'D', clubs: ['!Seeclub'] })]);
     expect(cases).toHaveLength(1);
     expect(cases[0]).toMatchObject({ caseKey: 'doubleMembership-1', caseType: 'doubleMembership' });
-    expect(cases[0].line).toContain('Mitglied in mehreren Clubs');
+    expect(cases[0].line).toContain('Doppelmitgliedschaft bei uns erfasst, in Regasoft nicht');
+  });
+
+  it('reports a double member by mCategory D as well, also with no club listed', () => {
+    expect(getSekretariatCases([srvIndex({ mCategory: 'D', clubs: [] })]).map(c => c.caseKey)).toEqual(['doubleMembership-1']);
+  });
+
+  it('does not report a member with two clubs and no D category (known to the Sekretariat)', () => {
+    expect(getSekretariatCases([srvIndex({ clubs: ['!Seeclub', 'RC Andere'] })])).toEqual([]);
+  });
+
+  it('does not report a D member that Regasoft already lists in several clubs', () => {
+    expect(getSekretariatCases([srvIndex({ pCategory: 'D', clubs: ['!Seeclub', 'RC Andere'] })])).toEqual([]);
+  });
+
+  it('never reports a record the index matched to one of our members, even with the higher rid', () => {
+    const matched = srvIndex({ rid: '9' });                       // mKey set, no serviceId link
+    const other = twin({ rid: '3' });
+    expect(getSekretariatCases([matched, other]).map(c => c.caseKey)).toEqual(['duplicate-3']);
+  });
+
+  it('reports no duplicate when two records of a group are linked (our data is ambiguous)', () => {
+    const a = srvIndex({ rid: '1', rServiceId: '555', memberId: '555' });
+    const b = srvIndex({ rid: '2', mKey: 'm2', personKey: 'p2' });
+    expect(getSekretariatCases([a, b])).toEqual([]);
   });
 
   it('does not report newsletter or club cases for a record that is deleted anyway', () => {

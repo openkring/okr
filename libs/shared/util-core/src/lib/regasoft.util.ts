@@ -249,7 +249,7 @@ const WHAT: Record<'duplicate' | 'newsletter' | 'mainClub' | 'doubleMembership',
   duplicate: rid => `doppelter Eintrag (ID ${rid}), bitte löschen`,
   newsletter: () => 'Newsletter abonniert?',
   mainClub: () => 'Hauptclub prüfen',
-  doubleMembership: () => 'Mitglied in mehreren Clubs',
+  doubleMembership: () => 'Doppelmitgliedschaft bei uns erfasst, in Regasoft nicht',
 };
 
 function sekretariatCase(item: SrvIndex, caseType: keyof typeof WHAT): SrvCase {
@@ -266,8 +266,9 @@ function sekretariatCase(item: SrvIndex, caseType: keyof typeof WHAT): SrvCase {
 /**
  * The Regasoft records that are a second entry of the same person (same name, same full Regasoft
  * birth date — a missing or partial date never groups). Per group the surplus ones are returned:
- * every record not linked to our membership (`memberId` = `rServiceId`); when none is linked, every
- * record except the lowest rid.
+ * a record is linked when `memberId` = `rServiceId` or the index matched it to one of our members
+ * (`mKey`); a linked record is never surplus (two or more linked ones: our data is ambiguous, none of
+ * them is reported). Without any linked record, every record except the lowest rid is surplus.
  */
 function surplusRecords(index: SrvIndex[]): Set<SrvIndex> {
   const groups = new Map<string, SrvIndex[]>();
@@ -280,7 +281,7 @@ function surplusRecords(index: SrvIndex[]): Set<SrvIndex> {
   const surplus = new Set<SrvIndex>();
   for (const group of groups.values()) {
     if (group.length < 2) continue;
-    const linked = group.filter(i => !!i.memberId && i.memberId === i.rServiceId);
+    const linked = group.filter(i => (!!i.memberId && i.memberId === i.rServiceId) || !!i.mKey);
     if (linked.length > 0) {
       for (const i of group) if (!linked.includes(i)) surplus.add(i);
     } else {
@@ -293,7 +294,7 @@ function surplusRecords(index: SrvIndex[]): Set<SrvIndex> {
 
 /**
  * Everything the Sekretariat has to do in Regasoft for us: second entries to delete, a missing
- * newsletter subscription, a main club that is not ours, a member listed in several clubs.
+ * newsletter subscription, a main club that is not ours, a double member of ours that Regasoft lists in one club.
  * A record reported for deletion carries no further cases (it is going away). Index order.
  */
 export function getSekretariatCases(index: SrvIndex[]): SrvCase[] {
@@ -307,7 +308,11 @@ export function getSekretariatCases(index: SrvIndex[]): SrvCase[] {
     }
     if (item.hasNewsletter === false) cases.push(sekretariatCase(item, 'newsletter'));
     if (item.mainClub === false && !!item.mKey) cases.push(sekretariatCase(item, 'mainClub'));
-    if ((item.clubs?.length ?? 0) > 1) cases.push(sekretariatCase(item, 'doubleMembership'));
+    // Our data says «double member», Regasoft lists at most one club. Members that Regasoft already
+    // lists in several clubs are known to the Sekretariat.
+    if ((item.mCategory === 'D' || item.pCategory === 'D') && (item.clubs?.length ?? 0) <= 1) {
+      cases.push(sekretariatCase(item, 'doubleMembership'));
+    }
   }
   return cases;
 }
