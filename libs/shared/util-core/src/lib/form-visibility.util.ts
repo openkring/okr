@@ -107,6 +107,12 @@ function checkAge(op: 'ageGte' | 'ageLt', actual: unknown, expected: unknown, to
   return op === 'ageGte' ? age >= threshold : age < threshold;
 }
 
+/** The type the operators compare by: an implicit controller behaves like the field type of its `valueType`. */
+function controllerKind(controller: Field): string {
+  if (controller.type !== 'implicit') return controller.type;
+  return controller.valueType === 'boolean' ? 'checkbox' : controller.valueType === 'number' ? 'number' : 'text';
+}
+
 function evaluateFor(
   cond: FieldCondition,
   ownerOrder: number,
@@ -121,7 +127,7 @@ function evaluateFor(
 
   // Hidden propagates: a controller that is not visible reads as empty.
   const actual = visible.has(controller.id) ? values?.[controller.key] : undefined;
-  const type = controller.type;
+  const type = controllerKind(controller);
   // An AHV field that holds only the mask scaffolding ('756.') holds no number: it reads as empty.
   const empty = isEmptyValue(actual) || (isSsnField(controller) && typeof actual === 'string' && isBlankAhv(actual));
 

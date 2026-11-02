@@ -327,6 +327,34 @@ describe('getVisibleFieldIds', () => {
   });
 });
 
+describe('implicit controllers (§8.1)', () => {
+  const dependent = (op: ConditionOp, value: FieldCondition['value'] | undefined, implicit: Field, answer: unknown): boolean => {
+    const fields = [implicit, f('b', 2, 'text', { visibleIf: rule([{ fieldId: 'a', op, value }]) })];
+    return getVisibleFieldIds(fields, { k_a: answer }, TODAY).has('b');
+  };
+  const text = f('a', 1, 'implicit', { valueType: 'text' });
+  const bool = f('a', 1, 'implicit', { valueType: 'boolean' });
+  const num = f('a', 1, 'implicit', { valueType: 'number' });
+
+  it('an implicit text controller supports equals', () => {
+    expect(dependent('equals', 'c1', text, 'c1')).toBe(true);
+    expect(dependent('equals', 'c1', text, 'c2')).toBe(false);
+    expect(dependent('equals', 'c1', text, undefined)).toBe(false);
+  });
+
+  it('an implicit boolean controller supports isChecked / isNotChecked', () => {
+    expect(dependent('isChecked', undefined, bool, true)).toBe(true);
+    expect(dependent('isChecked', undefined, bool, false)).toBe(false);
+    expect(dependent('isNotChecked', undefined, bool, false)).toBe(true);
+  });
+
+  it('an implicit number controller compares numerically', () => {
+    expect(dependent('gte', 5, num, 7)).toBe(true);
+    expect(dependent('gte', 5, num, 3)).toBe(false);
+    expect(dependent('equals', 3, num, '3')).toBe(true);
+  });
+});
+
 describe('evaluateCondition', () => {
   const fields = [f('a', 1, 'dropdown'), f('l', 2, 'label')];
   it('reads the controller value via its key and counts a hidden controller as empty', () => {

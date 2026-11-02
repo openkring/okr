@@ -1,3 +1,4 @@
+import { OTHER_OPTION_VALUE } from '@okr/shared-models';
 import type { BaseType, DerivedValue, Field, PropertyType, TypedProperty } from '@okr/shared-models';
 import { isBlankAhv, isSsnField, SSN_FIELD_KEY } from './ahv.util';
 import { evaluateVisibilityRule } from './form-visibility.util';
@@ -85,6 +86,12 @@ export function coerceToPropertyType(value: unknown, type: PropertyType): BaseTy
   }
 }
 
+/** The answer picks «Andere»: the reserved value, or a list holding it (checkbox group). */
+function isOtherAnswer(field: Field, raw: unknown): boolean {
+  if (!('allowOther' in field) || field.allowOther !== true) return false;
+  return Array.isArray(raw) ? raw.includes(OTHER_OPTION_VALUE) : raw === OTHER_OPTION_VALUE;
+}
+
 /**
  * Builds the typed `properties` list: the visible `asProperty` fields in field `order` (label = the
  * field's label, value coerced to the field's type), followed by the derived values flagged
@@ -111,6 +118,12 @@ export function buildTypedProperties(
     const value = coerceToPropertyType(raw, type);
     if (value === undefined) continue;
     list.push({ key: field.key, type, value, label: field.label });
+
+    // «Andere»: the free text goes next to the answer as `<key>Other` (spec §9)
+    const otherText = values?.[`${field.key}Other`];
+    if (isOtherAnswer(field, raw) && typeof otherText === 'string' && otherText.trim() !== '') {
+      list.push({ key: `${field.key}Other`, type: 'text', value: otherText, label: `${field.label} (Andere)` });
+    }
   }
 
   for (const d of Array.isArray(derived) ? derived : []) {
