@@ -149,7 +149,8 @@
     "saveError": "Deine An-/Abmeldungen konnten nicht gespeichert werden.",
     "preview": "Ergibt {count} Termine: {first} bis {last}.",
     "preview_empty": "In diesem Zeitraum liegt kein einziger Termin. Prüfe Startdatum und Enddatum.",
-    "preview_max": "Das ergibt {count} Termine — mehr als {max}. Wähle ein früheres Enddatum."
+    "preview_max": "Das ergibt {count} Termine — mehr als {max}. Wähle ein früheres Enddatum.",
+    "archiveConfirmedWarning": "Diese Termine der Serie haben eine bestätigte Anwesenheit und werden archiviert: {dates}. Möchtest du die Serie trotzdem kürzen?"
   },
   "update": {
     "label": "Termin ändern",

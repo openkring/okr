@@ -149,7 +149,8 @@
     "saveError": "Your responses could not be saved.",
     "preview": "Creates {count} events: {first} to {last}.",
     "preview_empty": "There is not a single date in this range. Check the start and end date.",
-    "preview_max": "That would be {count} events — more than {max}. Choose an earlier end date."
+    "preview_max": "That would be {count} events — more than {max}. Choose an earlier end date.",
+    "archiveConfirmedWarning": "These dates of the series have confirmed attendance and will be archived: {dates}. Do you still want to shorten the series?"
   },
   "update": {
     "label": "Edit event",

@@ -222,6 +222,8 @@ export const CALEVENT_I18N_KEYS = {
   series_unsubscribe_all:     PFX + 'series.unsubscribeAll',
   series_not_found:           PFX + 'series.notFound',
   series_save_error:          PFX + 'series.saveError',
+  // confirm before shortening a series drops occurrences whose attendance a trainer has confirmed; {dates}
+  series_archive_confirmed_warning: PFX + 'series.archiveConfirmedWarning',
 
   update:                     PFX + 'update.label',
   update_conf:                PFX + 'update.conf',

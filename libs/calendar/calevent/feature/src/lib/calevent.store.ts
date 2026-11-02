@@ -26,7 +26,7 @@ import { LocationService } from '@okr/location-data-access';
 import { CalEventService } from '@okr/calendar-calevent-data-access';
 import { AliasMintService } from '@okr/system-alias-data-access';
 import { SeenService } from '@okr/user-data-access';
-import { addInvitedAttendee, applyInvitationAnswer, toAttendeeState, CALEVENT_I18N_KEYS, resetActivity, seenKeyFor, toSeenCounts, unseenActivityFor, findConflictingCalEvents, duplicateEventFindings, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, isAttendanceClosed, getSeriesUpdateFields, isCalEvent, isCaleventFull, isCaleventInView, isPersonalCalendarName, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calendar-calevent-util';
+import { addInvitedAttendee, applyInvitationAnswer, toAttendeeState, CALEVENT_I18N_KEYS, resetActivity, resetAttendance, confirmedOccurrences, seenKeyFor, toSeenCounts, unseenActivityFor, findConflictingCalEvents, duplicateEventFindings, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, isAttendanceClosed, getSeriesUpdateFields, isCalEvent, isCaleventFull, isCaleventInView, isPersonalCalendarName, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calendar-calevent-util';
 import { RegressionSelectionModal, showCalEventInfo } from '@okr/calendar-calevent-ui';
 import { createComment } from '@okr/comment-util';
 import { openReport } from '@okr/shared-ui';
@@ -1074,7 +1074,7 @@ export const CalEventStore = signalStore(
         let index = 0;
         for (const date of dates) {
           const okey = calevent.seriesId + pad(index, 2);
-          const inst = { ...structuredClone(calevent), startDate: date, okey, attendees: [], ...resetActivity() };
+          const inst = { ...structuredClone(calevent), startDate: date, okey, attendees: [], ...resetActivity(), ...resetAttendance() };
           await store.calEventService.create(inst, store.currentUser());
           index++;
         }
@@ -1096,7 +1096,7 @@ export const CalEventStore = signalStore(
         let index = 1;
         for (const date of dates.slice(1)) { // dates[0] is the original event's own date
           const okey = calevent.seriesId + pad(index, 2);
-          await store.calEventService.create({ ...structuredClone(calevent), startDate: date, okey, attendees: [], ...resetActivity() }, store.currentUser());
+          await store.calEventService.create({ ...structuredClone(calevent), startDate: date, okey, attendees: [], ...resetActivity(), ...resetAttendance() }, store.currentUser());
           index++;
         }
         store.calEventService.logSeriesActivity('series-create',
@@ -1133,6 +1133,15 @@ export const CalEventStore = signalStore(
         if (!dates) return;
         const plan = planSeriesReconcile(affected, dates);
 
+        // shortening archives occurrences; one with confirmed attendance has already been reported
+        const confirmedDropped = confirmedOccurrences(plan.archives);
+        if (confirmedDropped.length > 0) {
+          const proceed = await confirm(store.alertController,
+            fill(store.i18n.series_archive_confirmed_warning(), { dates: confirmedDropped.map(e => prettyFormatDate(e.startDate)).join(', ') }),
+            store.i18n.ok(), store.i18n.cancel(), true);
+          if (!proceed) return;
+        }
+
         // ponytail: one batch, so a series reconcile is capped at Firestore's 500 writes
         // (~100 occurrences + their invitations). Chunk the commits if that ceiling is ever hit.
         const batch = store.firestoreService.getBatch();
@@ -1160,7 +1169,7 @@ export const CalEventStore = signalStore(
           while (taken.has(calevent.seriesId + pad(index, 2))) index++;
           const okey = calevent.seriesId + pad(index, 2);
           taken.add(okey);
-          await store.calEventService.create({ ...structuredClone(calevent), startDate: date, okey, attendees: [], ...resetActivity(), isArchived: false }, store.currentUser());
+          await store.calEventService.create({ ...structuredClone(calevent), startDate: date, okey, attendees: [], ...resetActivity(), ...resetAttendance(), isArchived: false }, store.currentUser());
         }
       },
 
@@ -1347,7 +1356,10 @@ export const CalEventStore = signalStore(
           };
           calEvent.attendees.push(newAttendee);
         }
-        await store.appStore.firestoreService.updateModel<CalEventModel>(CalEventCollection, calEvent, false, store.i18n.update_conf(), store.i18n.update_error(), currentUser);
+        // a field write, not the whole model: attendance fields must never ride along (only trainers may write them)
+        const key = await store.appStore.firestoreService.updateFields(CalEventCollection, calEvent.okey, { attendees: calEvent.attendees }, store.i18n.update_error());
+        if (!key) return;
+        await showToast(store.toastController, store.i18n.update_conf());
         if (waitlisted) await showToast(store.toastController, store.i18n.attendance_waitlist_hint());
       },
 
@@ -1382,9 +1394,8 @@ export const CalEventStore = signalStore(
           isLocked ? store.i18n.lock_confirm() : store.i18n.unlock_confirm(),
           store.i18n.ok(), store.i18n.cancel(), true);
         if (!confirmed) return;
-        await store.appStore.firestoreService.updateModel<CalEventModel>(
-          CalEventCollection, { ...calevent, isLocked }, false,
-          isLocked ? store.i18n.lock_conf() : store.i18n.unlock_conf(), store.i18n.update_error(), store.currentUser());
+        const key = await store.appStore.firestoreService.updateFields(CalEventCollection, calevent.okey, { isLocked }, store.i18n.update_error());
+        if (key) await showToast(store.toastController, isLocked ? store.i18n.lock_conf() : store.i18n.unlock_conf());
       },
 
       /*------------------------- invitation lock ---------------------------------*/

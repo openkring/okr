@@ -17,7 +17,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 import { isAdminMember } from '@okr/subject-group-util';
 
-import { CalEventDurationPipe, canAttendCalevent, countPollAcceptances, countPollResponses, formatDateTimeLabel, getCalEventCssClass, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, mayJoinOpenCalevent, resetActivity, resolveCalendars, upcomingOccurrences } from '@okr/calendar-calevent-util';
+import { CalEventDurationPipe, canAttendCalevent, countPollAcceptances, countPollResponses, formatDateTimeLabel, getCalEventCssClass, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, mayJoinOpenCalevent, resetActivity, resetAttendance, resolveCalendars, upcomingOccurrences } from '@okr/calendar-calevent-util';
 import { OrganiserContactModal, showCalendarSync } from '@okr/calendar-calevent-ui';
 import { CalendarFeedService } from '@okr/calendar-calevent-data-access';
 import type { OrganiserContactAction, OrganiserContactResult } from '@okr/calendar-calevent-ui';
@@ -1119,7 +1119,7 @@ export class CalEventList implements OnInit {
           // series (or, with a repeat-until date already passed, create nothing at all).
           // The user can still turn the copy into a series in the modal.
           // The edit modal deep-clones its input, so a shallow copy is enough here.
-          const copy: CalEventModel = { ...calEvent, okey: '', seriesId: '', attendees: [], periodicity: 'once', repeatUntilDate: DEFAULT_DATE, ...resetActivity() };
+          const copy: CalEventModel = { ...calEvent, okey: '', seriesId: '', attendees: [], periodicity: 'once', repeatUntilDate: DEFAULT_DATE, ...resetActivity(), ...resetAttendance() };
           const created = await this.store.edit(copy, true, false, true, isGrid);
           if (isGrid && created) this.navigateCalendarTo(created.startDate, viewType);
           break;

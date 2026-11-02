@@ -11,7 +11,7 @@ import { getAttendanceStates, getAttendee, getAvatarInfoForCurrentUser, getInvit
 import { notify, resourceParams } from '@okr/shared-util-angular';
 
 import { CalEventService } from '@okr/calendar-calevent-data-access';
-import { isAttendanceClosed, seenKeyFor, toSeenCounts, unseenActivityFor } from '@okr/calendar-calevent-util';
+import { isAttendanceClosed, seenKeyFor, toSeenCounts, unseenActivityFor, withoutAttendance } from '@okr/calendar-calevent-util';
 import { SeenService } from '@okr/user-data-access';
 import { getVisibleGroupKeys } from '@okr/subject-group-util';
 
@@ -352,7 +352,7 @@ export const CalendarStore = signalStore(
           };
           calEvent.attendees.push(newAttendee);
         }
-        await store.appStore.firestoreService.updateModel<CalEventModel>(CalEventCollection, calEvent, false, store.i18n.calevent_update_conf(), store.i18n.calevent_update_error(), currentUser);
+        await store.appStore.firestoreService.updateModel<CalEventModel>(CalEventCollection, withoutAttendance(calEvent), false, store.i18n.calevent_update_conf(), store.i18n.calevent_update_error(), currentUser);
       },
 
       /**

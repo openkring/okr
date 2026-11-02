@@ -149,7 +149,8 @@
     "saveError": "Tes réponses n’ont pas pu être enregistrées.",
     "preview": "Donne {count} rendez-vous : du {first} au {last}.",
     "preview_empty": "Aucune date ne tombe dans cette période. Vérifie la date de début et de fin.",
-    "preview_max": "Cela ferait {count} rendez-vous — plus que {max}. Choisis une date de fin plus proche."
+    "preview_max": "Cela ferait {count} rendez-vous — plus que {max}. Choisis une date de fin plus proche.",
+    "archiveConfirmedWarning": "Ces dates de la série ont une présence confirmée et seront archivées : {dates}. Veux-tu quand même raccourcir la série ?"
   },
   "update": {
     "label": "Modifier l'événement",

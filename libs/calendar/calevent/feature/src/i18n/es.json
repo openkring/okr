@@ -149,7 +149,8 @@
     "saveError": "No se han podido guardar tus respuestas.",
     "preview": "Resulta en {count} citas: del {first} al {last}.",
     "preview_empty": "No hay ninguna fecha en este periodo. Revisa la fecha de inicio y de fin.",
-    "preview_max": "Serían {count} citas, más que {max}. Elige una fecha de fin anterior."
+    "preview_max": "Serían {count} citas, más que {max}. Elige una fecha de fin anterior.",
+    "archiveConfirmedWarning": "Estas fechas de la serie tienen la asistencia confirmada y se archivarán: {dates}. ¿Quieres acortar la serie de todos modos?"
   },
   "update": {
     "label": "Modificar evento",

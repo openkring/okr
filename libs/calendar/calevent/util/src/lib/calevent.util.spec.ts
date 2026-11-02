@@ -1,7 +1,7 @@
-import { Attendee, AvatarInfo, CalEventModel, InvitationState } from '@okr/shared-models';
+import { AttendanceEntry, Attendee, AvatarInfo, CalEventModel, InvitationState } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { addInvitedAttendee, removeInvitedAttendee, bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getSeriesUpdateFields, isCaleventInView, isCalEvent, isFullDayEvent, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isCaleventFull, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, splitAttendees, toInvitationState } from './calevent.util';
+import { ATTENDANCE_FIELDS, confirmedOccurrences, resetAttendance, withoutAttendance, addInvitedAttendee, removeInvitedAttendee, bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getSeriesUpdateFields, isCaleventInView, isCalEvent, isFullDayEvent, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isCaleventFull, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, splitAttendees, toInvitationState } from './calevent.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -421,6 +421,37 @@ describe('series reconcile', () => {
     expect(fields).not.toHaveProperty('attendees');
     expect(fields).not.toHaveProperty('isArchived');
     expect(fields).not.toHaveProperty('tenants');
+  });
+});
+
+describe('attendance write helpers', () => {
+  const base: CalEventModel = { ...new CalEventModel('t1'), okey: 's100', name: 'Training', startDate: '20261101' };
+  const entry = { state: 'present' } as unknown as AttendanceEntry;
+
+  it('getSeriesUpdateFields propagates courseKey but no attendance', () => {
+    const e = { ...base, courseKey: 'c1', attendance: { p1: entry }, attendanceConfirmedAt: '20261101120000' };
+    const f = getSeriesUpdateFields(e, '20261108');
+    expect(f['courseKey']).toBe('c1');
+    for (const k of ATTENDANCE_FIELDS) expect(k in f).toBe(false);
+  });
+  it('withoutAttendance drops the three fields and keeps the rest', () => {
+    const out = withoutAttendance({ ...base, attendance: { p1: entry }, attendanceConfirmedAt: 'x' });
+    for (const k of ATTENDANCE_FIELDS) expect(k in out).toBe(false);
+    expect(out.name).toBe(base.name);
+  });
+  it('withoutAttendance does not mutate its input', () => {
+    const input = { ...base, attendance: { p1: entry }, attendanceConfirmedAt: 'x' };
+    withoutAttendance(input);
+    expect(input.attendance).toEqual({ p1: entry });
+    expect(input.attendanceConfirmedAt).toBe('x');
+  });
+  it('resetAttendance is an empty, unconfirmed record', () => {
+    expect(resetAttendance()).toEqual({ attendance: {}, attendanceConfirmedAt: '' });
+  });
+  it('confirmedOccurrences keeps only confirmed events', () => {
+    const a = { ...base, okey: 'a' };
+    const b = { ...base, okey: 'b', attendanceConfirmedAt: 'x' };
+    expect(confirmedOccurrences([a, b])).toEqual([b]);
   });
 });
 

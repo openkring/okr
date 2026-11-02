@@ -8,7 +8,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { CalEventCollection, CalEventModel, UserModel } from '@okr/shared-models';
 import { addTime, die, getSystemQuery } from '@okr/shared-util-core';
 
-import { getCaleventIndex } from '@okr/calendar-calevent-util';
+import { getCaleventIndex, withoutAttendance } from '@okr/calendar-calevent-util';
 import { ActivityService } from '@okr/activity-data-access';
 import { PFX } from './scope';
 
@@ -61,7 +61,7 @@ export class CalEventService {
    */
   public async update(calEvent: CalEventModel, currentUser?: UserModel): Promise<string | undefined> {
     calEvent.index = getCaleventIndex(calEvent);
-    const key = await this.firestoreService.updateModel<CalEventModel>(CalEventCollection, calEvent, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
+    const key = await this.firestoreService.updateModel<CalEventModel>(CalEventCollection, withoutAttendance(calEvent), false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
     const payload = `${calEvent.startDate} ${calEvent.startTime}: ${calEvent.name}`;
     void this.activityService.log('calevent', 'update', currentUser, payload);
     return key;

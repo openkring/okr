@@ -149,7 +149,8 @@
     "saveError": "Le tue risposte non sono state salvate.",
     "preview": "Genera {count} appuntamenti: dal {first} al {last}.",
     "preview_empty": "In questo periodo non cade nessuna data. Controlla la data di inizio e di fine.",
-    "preview_max": "Sarebbero {count} appuntamenti, più di {max}. Scegli una data di fine anteriore."
+    "preview_max": "Sarebbero {count} appuntamenti, più di {max}. Scegli una data di fine anteriore.",
+    "archiveConfirmedWarning": "Questi appuntamenti della serie hanno la presenza confermata e verranno archiviati: {dates}. Vuoi comunque accorciare la serie?"
   },
   "update": {
     "label": "Modificare l'evento",

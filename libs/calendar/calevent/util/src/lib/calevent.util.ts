@@ -221,6 +221,7 @@ export function getSeriesUpdateFields(edited: CalEventModel, startDate: string):
     periodicity: target.periodicity,
     repeatUntilDate: target.repeatUntilDate,
     seriesId: target.seriesId,
+    courseKey: target.courseKey ?? '',
     locationKey: target.locationKey,
     calendars: target.calendars,
     url: target.url,
@@ -230,6 +231,30 @@ export function getSeriesUpdateFields(edited: CalEventModel, startDate: string):
     cancelMessage: target.cancelMessage ?? '',
     index: getCaleventIndex(target)
   };
+}
+
+/*-------------------------- ATTENDANCE (write paths) --------------------------------*/
+/**
+ * Fields that only a course trainer may write (Firestore rules deny a calevent update whose changed
+ * keys include one of them). Every whole-model calevent write therefore strips them.
+ */
+export const ATTENDANCE_FIELDS = ['attendance', 'attendanceConfirmedBy', 'attendanceConfirmedAt'] as const;
+
+/** Shallow copy of the calevent without the attendance fields; safe to pass to a whole-model update. */
+export function withoutAttendance<T extends CalEventModel>(calevent: T): T {
+  const copy = { ...calevent } as Record<string, unknown>;
+  for (const key of ATTENDANCE_FIELDS) delete copy[key];
+  return copy as T;
+}
+
+/** Attendance values for a freshly created or copied event: nobody recorded, not confirmed. */
+export function resetAttendance(): Pick<CalEventModel, 'attendance' | 'attendanceConfirmedAt'> {
+  return { attendance: {}, attendanceConfirmedAt: '' };
+}
+
+/** The occurrences whose attendance has been confirmed by a trainer. */
+export function confirmedOccurrences(events: CalEventModel[]): CalEventModel[] {
+  return events.filter(e => !!e.attendanceConfirmedAt);
 }
 
 export type SeriesPlan = {
