@@ -36,6 +36,8 @@ export const FIELD_TYPE_DEFS: FieldTypeDef[] = [
   { type: 'rating',    label: 'Rating',    icon: 'star',         description: 'Star rating (1–5 by default)' },
   { type: 'avatar',    label: 'Avatar',    icon: 'person',       description: 'Select person/org/resource (auth only)' },
   { type: 'category',  label: 'Kategorie', icon: 'list',         description: 'Single-select from a category list' },
+  { type: 'implicit',  label: 'Unsichtbares Feld', icon: 'eye-off', description: 'Never shown — the value comes from the page or the link',
+    labelKey: 'fieldtype_implicit', descriptionKey: 'fieldtype_implicit_desc' },
   { type: 'label',     label: 'Label',     icon: 'info-circle', description: 'Static text — no input, not submitted' },
   { type: 'paragraph', label: 'Text',      icon: 'document',     description: 'Paragraph of text, optionally indented and small — not submitted' },
   { type: 'divider',   label: 'Divider',   icon: 'remove',       description: 'Visual separator line' },

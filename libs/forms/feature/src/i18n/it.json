@@ -53,7 +53,8 @@
     "from_link": "può essere impostato tramite link",
     "from_link_helper": "Senza questa spunta, il modulo ignora un valore proveniente dal link. Così nessuno può iscriversi a un altro corso cambiando l'indirizzo.",
     "other_option": "Altro …",
-    "other_placeholder": "La tua risposta"
+    "other_placeholder": "La tua risposta",
+    "invisible": "invisibile"
   },
   "fields": {
     "duplicate_key": "Due domande hanno la stessa chiave. Assegna a ogni domanda la sua.",
@@ -290,6 +291,7 @@
     "count": "{count} su {max} risposte",
     "closed_default": "Questo modulo non accetta più risposte.",
     "remaining": "Ancora {count} posti liberi",
-    "remaining_one": "Ancora 1 posto libero"
+    "remaining_one": "Ancora 1 posto libero",
+    "inherit": "Vuoto o 0 significa: come nel modulo."
   }
 }

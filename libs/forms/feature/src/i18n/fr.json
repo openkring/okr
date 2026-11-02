@@ -53,7 +53,8 @@
     "from_link": "peut être défini par un lien",
     "from_link_helper": "Sans cette case cochée, le formulaire ignore une valeur venant du lien. Ainsi, personne ne peut se placer dans un autre cours en modifiant l'adresse.",
     "other_option": "Autre …",
-    "other_placeholder": "Ta réponse"
+    "other_placeholder": "Ta réponse",
+    "invisible": "invisible"
   },
   "fields": {
     "duplicate_key": "Deux questions ont la même clé. Donne à chaque question la sienne.",
@@ -290,6 +291,7 @@
     "count": "{count} sur {max} réponses",
     "closed_default": "Ce formulaire n'accepte plus de réponses.",
     "remaining": "Encore {count} places libres",
-    "remaining_one": "Encore 1 place libre"
+    "remaining_one": "Encore 1 place libre",
+    "inherit": "Vide ou 0 signifie : comme dans le formulaire."
   }
 }

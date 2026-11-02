@@ -8,7 +8,8 @@ import type { FormI18n } from '@okr/forms-util';
  * The (i) in the form builder's canvas toolbar — what a form author needs to know to build a
  * form, one paragraph per feature (spec 1.125 §17.1). Phase A covers fields, conditions and
  * blocks, hidden-means-absent, the ordering rule, calculated values, custom details and the
- * preview; paragraphs for later phases are added with that phase.
+ * preview; phase B adds unsichtbare Felder, «Andere …», «Nach dem Absenden», «Annahme» and the
+ * pre-filled link. Paragraphs for later phases are added with that phase.
  *
  * Purely informational — read-only, nothing is entered or saved here. It is not a form, so it
  * carries no `okr-change-confirmation`; the header's own close button dismisses it
@@ -31,7 +32,12 @@ import type { FormI18n } from '@okr/forms-util';
         <ion-item lines="none"><ion-label class="ion-text-wrap">{{ i18n().help_editor_order() }}</ion-label></ion-item>
         <ion-item lines="none"><ion-label class="ion-text-wrap">{{ i18n().help_editor_derived() }}</ion-label></ion-item>
         <ion-item lines="none"><ion-label class="ion-text-wrap">{{ i18n().help_editor_properties() }}</ion-label></ion-item>
+        <ion-item lines="none"><ion-label class="ion-text-wrap">{{ i18n().help_editor_implicit() }}</ion-label></ion-item>
+        <ion-item lines="none"><ion-label class="ion-text-wrap">{{ i18n().help_editor_other() }}</ion-label></ion-item>
+        <ion-item lines="none"><ion-label class="ion-text-wrap">{{ i18n().help_editor_after() }}</ion-label></ion-item>
+        <ion-item lines="none"><ion-label class="ion-text-wrap">{{ i18n().help_editor_limit() }}</ion-label></ion-item>
         <ion-item lines="none"><ion-label class="ion-text-wrap">{{ i18n().help_editor_preview() }}</ion-label></ion-item>
+        <ion-item lines="none"><ion-label class="ion-text-wrap">{{ i18n().help_editor_prefill() }}</ion-label></ion-item>
       </ion-list>
     </ion-content>
   `,

@@ -89,7 +89,11 @@ export const FormDefinitionStore = signalStore(
       const modal = await store.modalController.create({
         component: FormDefinitionEditModal,
         cssClass: 'full-screen-modal',
-        componentProps: { form, mode: 'edit', categories: store.appStore.allCategories() },
+        componentProps: {
+          form, mode: 'edit', categories: store.appStore.allCategories(),
+          // «7 von 8 Antworten» next to the limit (formStats/{okey}; a missing doc counts 0)
+          responseCount$: form.okey ? store.formDefinitionService.readResponseCount(form.okey) : undefined,
+        },
       });
       await modal.present();
       const { data, role } = await modal.onDidDismiss<FormDefinitionModel>();

@@ -1,5 +1,7 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { IonContent, ModalController } from '@ionic/angular';
+import { Observable } from 'rxjs';
 
 import { I18nService } from '@okr/shared-i18n';
 import { CategoryListModel, FormDefinitionModel } from '@okr/shared-models';
@@ -31,6 +33,7 @@ import { FormDefinitionForm } from './form-definition.form';
           [i18n]="i18n"
           [mode]="mode()"
           [categories]="categories()"
+          [responseCount]="responseCount()"
           [readOnly]="false"
           [showForm]="showForm()"
           (dirty)="formDirty.set($event)"
@@ -50,12 +53,21 @@ export class FormDefinitionEditModal {
   public readonly mode = input.required<'create' | 'edit'>();
   /** the tenant's category lists, for conditions on a category field in the «Berechnete Werte» */
   public readonly categories = input<CategoryListModel[]>([]);
+  /** the live count of accepted responses (`FormDefinitionService.readResponseCount`), for «7 von 8 Antworten»; edit only */
+  public readonly responseCount$ = input<Observable<number> | undefined>();
 
   // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
   public formData = linkedSignal(() => this.cloneForm());
   protected showForm = signal(true);
+
+  // the count follows the form while the modal is open; unknown (null) until the first value, or without a source
+  private readonly countResource = rxResource({
+    params: () => this.responseCount$(),
+    stream: ({ params }) => params,
+  });
+  protected readonly responseCount = computed(() => (this.countResource.hasValue() ? this.countResource.value() : null));
 
   // derived
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());

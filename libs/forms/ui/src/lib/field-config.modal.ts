@@ -79,6 +79,8 @@ export class FieldConfigModal {
     const clone = safeStructuredClone(this.field()) ?? this.field();
     if (clone.type === 'category') return { ...clone, categoryName: clone.categoryName ?? '' };
     if (clone.type === 'paragraph') return { ...clone, isIndented: clone.isIndented ?? true, isSmall: clone.isSmall ?? true };
+    // an unsichtbares Feld pasted without a value type starts as text, like one from the library
+    if (clone.type === 'implicit') return { ...clone, valueType: clone.valueType ?? 'text' };
     return clone;
   }
 }

@@ -11,6 +11,12 @@ import { controllerTests, ruleTests } from './form-rules.validations';
 
 export const MAX_RESPONSES_LIMIT = 10000;
 
+/**
+ * The «Annahme» settings (spec §11): on a form definition, and — as overrides — on a form section, where an
+ * empty value means «wie im Formular». Edited by `AcceptanceSettingsInput`.
+ */
+export type AcceptanceFields = Pick<FormDefinitionModel, 'isOpen' | 'closesAt' | 'maxResponses' | 'showRemaining' | 'closedMessage'>;
+
 /** `''` (no date) or a real calendar day as `yyyymmdd`. */
 function isStoreDateOrEmpty(value: unknown): boolean {
   if (value === undefined || value === null || value === '') return true;

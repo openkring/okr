@@ -53,7 +53,8 @@
     "from_link": "darf per Link gesetzt werden",
     "from_link_helper": "Ohne diesen Haken ignoriert das Formular einen Wert aus dem Link. So kann sich niemand selbst in einen anderen Kurs setzen, indem er die Adresse ändert.",
     "other_option": "Andere …",
-    "other_placeholder": "Deine Antwort"
+    "other_placeholder": "Deine Antwort",
+    "invisible": "unsichtbar"
   },
   "fields": {
     "duplicate_key": "Zwei Fragen haben denselben Schlüssel. Bitte gib jeder Frage einen eigenen.",
@@ -290,6 +291,7 @@
     "count": "{count} von {max} Antworten",
     "closed_default": "Dieses Formular nimmt keine Antworten mehr an.",
     "remaining": "Noch {count} Plätze frei",
-    "remaining_one": "Noch 1 Platz frei"
+    "remaining_one": "Noch 1 Platz frei",
+    "inherit": "Leer oder 0 heisst: wie im Formular."
   }
 }

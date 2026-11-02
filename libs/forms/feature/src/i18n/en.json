@@ -53,7 +53,8 @@
     "from_link": "may be set by a link",
     "from_link_helper": "Without this tick, the form ignores a value from the link. That way nobody can move themselves into another course by changing the address.",
     "other_option": "Other …",
-    "other_placeholder": "Your answer"
+    "other_placeholder": "Your answer",
+    "invisible": "invisible"
   },
   "fields": {
     "duplicate_key": "Two questions have the same key. Please give each question its own.",
@@ -290,6 +291,7 @@
     "count": "{count} of {max} responses",
     "closed_default": "This form is no longer accepting responses.",
     "remaining": "{count} places left",
-    "remaining_one": "1 place left"
+    "remaining_one": "1 place left",
+    "inherit": "Empty or 0 means: as set in the form."
   }
 }
