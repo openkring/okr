@@ -599,7 +599,9 @@
     "open": "Erklärung anzeigen"
   },
   "courses": {
-    "entry": "Kurse"
+    "entry": "Kurse",
+    "lockedRemove": "Dieser Kurs ist abgeschlossen. Entsperre ihn in der Kurstabelle, bevor du Termine entfernst.",
+    "lockedAdd": "Dieser Kurs ist abgeschlossen. Entsperre ihn in der Kurstabelle, bevor du neue Termine hinzufügst."
   },
   "sync": {
     "title": "Kalender synchronisieren",

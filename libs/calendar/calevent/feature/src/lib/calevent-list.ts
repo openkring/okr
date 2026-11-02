@@ -13,13 +13,13 @@ import { ModelSelectService } from '@okr/shared-feature';
 import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { DateTimeSelectModal, EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { AppNavigationService, confirm, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, keepDefaultTrue, lazyService, navigateByUrl, okrPrompt, QuickEntryService, resourceParams } from '@okr/shared-util-angular';
-import { convertDateFormatToString, DateFormat, addTime, debugData, extractFirstPartOfOptionalTupel, getAttendanceColor, getAttendanceIcon, getAttendanceState, getAvatarInfo, getIsoDateTime, isCalendarPublic, fill, getYear, getYearList, hasRole, parseEventString, warn, YEAR_ROLLING_WINDOW, isChatBlockedError, contextMenuId } from '@okr/shared-util-core';
+import { convertDateFormatToString, getTodayStr, DateFormat, addTime, debugData, extractFirstPartOfOptionalTupel, getAttendanceColor, getAttendanceIcon, getAttendanceState, getAvatarInfo, getIsoDateTime, isCalendarPublic, fill, getYear, getYearList, hasRole, parseEventString, warn, YEAR_ROLLING_WINDOW, isChatBlockedError, contextMenuId } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 import { isAdminMember } from '@okr/subject-group-util';
 
-import { CalEventDurationPipe, canAttendCalevent, countPollAcceptances, countPollResponses, formatDateTimeLabel, getCalEventCssClass, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, mayJoinOpenCalevent, resetActivity, resetAttendance, resolveCalendars, upcomingOccurrences } from '@okr/calendar-calevent-util';
+import { CalEventDurationPipe, canAttendCalevent, courseOfKey, courseSeriesPatch, isCourseTrainerFor, countPollAcceptances, countPollResponses, formatDateTimeLabel, getCalEventCssClass, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, mayJoinOpenCalevent, resetActivity, resetAttendance, resolveCalendars, upcomingOccurrences } from '@okr/calendar-calevent-util';
 import { OrganiserContactModal, showCalendarSync } from '@okr/calendar-calevent-ui';
 import { CalendarFeedService } from '@okr/calendar-calevent-data-access';
 import type { OrganiserContactAction, OrganiserContactResult } from '@okr/calendar-calevent-ui';
@@ -396,6 +396,13 @@ export class CalEventList implements OnInit {
    * Same undefined-default reasoning as `poll` above.
    */
   public readonly event = input<string | undefined>(undefined);
+  /**
+   * Deep link of the course table's «Serie hinzufügen» (spec 1.132 §6): `/calevent/<groupKey>/c-calevents?addCourse=<courseKey>`
+   * opens the edit modal for a new series of that course. The calendar page is the one place that has the group calendar
+   * and its store, so the course table (a different lib, a different store) only navigates here.
+   * Same undefined-default reasoning as `poll` above.
+   */
+  public readonly addCourse = input<string | undefined>(undefined);
 
   // filters
   protected searchTerm = linkedSignal(() => this.store.searchTerm());
@@ -652,6 +659,7 @@ export class CalEventList implements OnInit {
   // whether the `poll` deep link has already opened its modal this session
   private pollOpened = false;
   private eventOpened = false;
+  private courseAddOpened = false;
 
   // double-click tracking
   private lastClickDateStr: string | null = null;
@@ -816,6 +824,19 @@ export class CalEventList implements OnInit {
       this.eventOpened = true;
       untracked(() => this.store.viewByKey(okey).then(() =>
         this.router.navigate([], { queryParams: { event: null }, queryParamsHandling: 'merge', replaceUrl: true })));
+    });
+
+    // Deep link of the course table's «Serie hinzufügen»: open a new series of the course once, then strip the param.
+    // Waits for the group's courses — they load once the calendar (and with it the group) is known.
+    effect(() => {
+      const courseKey = this.addCourse();
+      if (!courseKey || this.courseAddOpened) return;
+      if (!this.store.groupCalendarId()) return;
+      const courses = this.coursesResource.value();
+      if (!courses) return;
+      this.courseAddOpened = true;
+      untracked(() => this.addCourseSeries(courseOfKey(courseKey, courses)).finally(() =>
+        this.router.navigate([], { queryParams: { addCourse: null }, queryParamsHandling: 'merge', replaceUrl: true })));
     });
   }
 
@@ -1157,7 +1178,12 @@ export class CalEventList implements OnInit {
           // series (or, with a repeat-until date already passed, create nothing at all).
           // The user can still turn the copy into a series in the modal.
           // The edit modal deep-clones its input, so a shallow copy is enough here.
-          const copy: CalEventModel = { ...calEvent, okey: '', seriesId: '', attendees: [], periodicity: 'once', repeatUntilDate: DEFAULT_DATE, ...resetActivity(), ...resetAttendance() };
+          // A copy keeps the `courseKey` only for somebody who may create events of that course (the rules deny the
+          // create otherwise) and only while the course is open (a locked one takes no new events, as in «Serie
+          // hinzufügen»). For everybody else it is a plain group event.
+          const course = courseOfKey(calEvent.courseKey, this.coursesResource.value() ?? []);
+          const courseKey = course && !course.isLocked && this.isCourseEditor(course) ? course.okey : '';
+          const copy: CalEventModel = { ...calEvent, okey: '', seriesId: '', attendees: [], periodicity: 'once', repeatUntilDate: DEFAULT_DATE, courseKey, ...resetActivity(), ...resetAttendance() };
           const created = await this.store.edit(copy, true, false, true, isGrid);
           if (isGrid && created) this.navigateCalendarTo(created.startDate, viewType);
           break;
@@ -1582,7 +1608,36 @@ export class CalEventList implements OnInit {
   protected getAttendanceColor = getAttendanceColor;
 
   /**
+   * Whether the user is an editor of this course in the sense of the rules (spec 1.132 §6.1): trainer or responsible
+   * person of it, admin of its group, eventAdmin or privileged. Mirrors `courseEditor()` in firestore.rules.
+   */
+  private isCourseEditor(course: CourseModel | undefined): boolean {
+    if (!course) return false;
+    if (this.hasRole('eventAdmin') || this.hasRole('privileged')) return true;
+    const personKey = this.currentUser()?.personKey;
+    if (!personKey) return false;
+    return isAdminMember(this.store.appStore.getGroup(course.groupKey), personKey)
+      || isCourseTrainerFor({ courseKey: course.okey }, [course], personKey);
+  }
+
+  /** A new series of the course, as the course table's «Serie hinzufügen» asks for it. */
+  private async addCourseSeries(course: CourseModel | undefined): Promise<void> {
+    if (course?.isLocked) {
+      await confirm(this.alertController, this.store.i18n.courses_locked_add(), this.store.i18n.ok(), '');
+      return;
+    }
+    // readOnly = no course editor: the store explains that the user may not create events here
+    const readOnly = !this.isCourseEditor(course);
+    const isGrid = !this.isListView();
+    const viewType = this.currentViewType();
+    const created = await this.store.add(readOnly, undefined, undefined, isGrid, course ? courseSeriesPatch(course, getTodayStr()) : undefined);
+    if (isGrid && created) this.navigateCalendarTo(created.startDate, viewType);
+  }
+
+  /**
    * CalendarEvents may be created, changed or deleted by the following users:
+   * - a trainer of the course the calevent belongs to (spec 1.132 §6), for events of THAT course only
+   *   (a new event is created through the course table, which presets the `courseKey`)
    * - user has role eventAdmin or privileged
    * - user is responsiblePerson of the calevent
    * - if calevent is part of a group calendar: user is admin of that group
@@ -1600,6 +1655,11 @@ export class CalEventList implements OnInit {
 
     const personKey = this.currentUser()?.personKey;
     if (!personKey) return false;
+
+    // 1b) course trainer: events of a course the person trains. Before the group-admin return below, which would
+    //     otherwise end the check for every event of a group calendar. An event without or with a foreign
+    //     `courseKey` is not covered and falls through to the unchanged rules.
+    if (calevent && isCourseTrainerFor(calevent, this.coursesResource.value() ?? [], personKey)) return true;
 
     // 2) group calendar: check if currentUser is admin of the owning group
     if (calevent) {

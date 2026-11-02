@@ -186,6 +186,7 @@
     "unassignConfirm": "Togliere questo appuntamento dal corso? Le presenze registrate restano salvate nell'appuntamento, ma non contano più per il corso."
   },
   "action": {
+    "addSeries": "Aggiungi una serie",
     "exportGeneric": "Scarica tabella (CSV)",
     "exportJs": "Scarica file G+S",
     "lock": "Congela corso",

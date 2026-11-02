@@ -186,6 +186,7 @@
     "unassignConfirm": "Diesen Termin aus dem Kurs nehmen? Die erfasste Anwesenheit bleibt am Termin gespeichert, zählt aber nicht mehr für den Kurs."
   },
   "action": {
+    "addSeries": "Serie hinzufügen",
     "exportGeneric": "Tabelle herunterladen (CSV)",
     "exportJs": "J+S-Datei herunterladen",
     "lock": "Kurs einfrieren",

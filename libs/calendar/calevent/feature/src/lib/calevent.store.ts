@@ -11,7 +11,7 @@ import { from, firstValueFrom, map, of } from 'rxjs';
 
 import { FirestoreService, ChatStatusService } from '@okr/shared-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
-import { Attendee, AvatarInfo, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CalEventModelName, CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
+import { Attendee, AvatarInfo, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CalEventModelName, CategoryListModel, CourseModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
 import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getArchiveInclusiveQuery, getFullName, getSystemQuery, getTodayStr, fill, isCalendarPublic, isAfterDate, isAfterOrEqualDate, isInRollingWindow, nameMatches, pad, prettyFormatDate, publicAppOrigin, removeKeyFromOkrModel, warn, YEAR_ROLLING_WINDOW, chatBlockedAlertMessage, isChatBlockedError, hasRole } from '@okr/shared-util-core';
 import { confirm, copyToClipboardDeferred, error, lazyService, navigateByUrl, notify, okrPrompt, showToast } from '@okr/shared-util-angular';
 import { InvitationService } from '@okr/relationship-invitation-data-access';
@@ -26,7 +26,7 @@ import { LocationService } from '@okr/location-data-access';
 import { CalEventService } from '@okr/calendar-calevent-data-access';
 import { AliasMintService } from '@okr/system-alias-data-access';
 import { SeenService } from '@okr/user-data-access';
-import { addInvitedAttendee, applyInvitationAnswer, toAttendeeState, CALEVENT_I18N_KEYS, resetActivity, resetAttendance, confirmedOccurrences, seenKeyFor, toSeenCounts, unseenActivityFor, findConflictingCalEvents, duplicateEventFindings, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, isAttendanceClosed, getSeriesUpdateFields, isCalEvent, isCaleventFull, isCaleventInView, isPersonalCalendarName, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calendar-calevent-util';
+import { addInvitedAttendee, applyInvitationAnswer, courseKeysOf, eventsOfLockedCourses, toAttendeeState, CALEVENT_I18N_KEYS, resetActivity, resetAttendance, confirmedOccurrences, seenKeyFor, toSeenCounts, unseenActivityFor, findConflictingCalEvents, duplicateEventFindings, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, isAttendanceClosed, getSeriesUpdateFields, isCalEvent, isCaleventFull, isCaleventInView, isPersonalCalendarName, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calendar-calevent-util';
 import { RegressionSelectionModal, showCalEventInfo } from '@okr/calendar-calevent-ui';
 import { createComment } from '@okr/comment-util';
 import { openReport } from '@okr/shared-ui';
@@ -94,6 +94,10 @@ export const CalEventStore = signalStore(
     // Lazy: a static import here would drag matrix-js-sdk before the LCP (spec 1.49, F1).
     matrixChatService: lazyService(inject(Injector), () =>
       import('@okr/chat-data-access').then(m => m.MatrixChatService)),
+    // Lazy for the same reason (spec 1.132): the course data-access lib and the finance booking service it needs
+    // stay out of this chunk's static import graph. Only the lock check of an event that belongs to a course asks.
+    courseService: lazyService(inject(Injector), () =>
+      import('@okr/calendar-course-data-access').then(m => m.CourseService)),
     invitationService: inject(InvitationService),
     aliasMintService: inject(AliasMintService),
     seenService: inject(SeenService)
@@ -457,9 +461,32 @@ export const CalEventStore = signalStore(
         return store.appStore.appConfig().locale;
       },
 
+      /******************************* course lock (spec 1.132) *************************************** */
+      /**
+       * True — after telling the user why — when one of the events belongs to a LOCKED course and the operation
+       * would archive or delete it (the rules deny that on a locked course: a failing batch with no explanation).
+       * The courses are read fresh by key; a lookup that fails does not block anything, the rules stay the backstop.
+       */
+      async refuseLockedCourseRemoval(events: CalEventModel[]): Promise<boolean> {
+        const keys = courseKeysOf(events);
+        if (keys.length === 0) return false;
+        try {
+          const service = await store.courseService();
+          const courses: (CourseModel | undefined)[] = await Promise.all(keys.map(key => firstValueFrom(service.read(key))));
+          if (eventsOfLockedCourses(events, courses).length === 0) return false;
+        } catch (ex) {
+          warn(`CalEventStore.refuseLockedCourseRemoval: course lookup failed, the rules decide: ${ex}`);
+          return false;
+        }
+        await confirm(store.alertController, store.i18n.courses_locked_remove(), store.i18n.ok(), '');
+        return true;
+      },
+
       /******************************* CRUD on single event  *************************************** */
       /** `patch` prefills fields the caller already knows — a drag-selected duration or a
-       *  multi-day full-day span. Applied after the defaults, so it always wins. */
+       *  multi-day full-day span. Applied after the defaults, so it always wins. A course's «Serie hinzufügen»
+       *  (spec 1.132 §6) presets `courseKey` (and the course's period) here; the event then belongs to the course
+       *  from its first save, which is what lets a trainer create it (the rules ask for a course editor). */
       async add(readOnly = true, startDate?: string, startTime?: string, skipReload = false, patch?: Partial<CalEventModel>): Promise<CalEventModel | undefined> {
         const cal = store.calendarName();
         const personal = isPersonalCalendarName(cal);
@@ -961,6 +988,9 @@ export const CalEventStore = signalStore(
 
      async delete(calevent: CalEventModel, readOnly = true): Promise<void> {
         if (readOnly) return;
+        // an event of a locked course cannot be archived (spec 1.132 §6.1): say so before asking to confirm. A series
+        // is checked again over the occurrences it would remove (deleteEventSeries) — the scope decides which.
+        if (calevent.periodicity === 'once' && await this.refuseLockedCourseRemoval([calevent])) return;
         const result = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (result === true) {
           if (calevent.periodicity === 'once') {
@@ -970,6 +1000,7 @@ export const CalEventStore = signalStore(
             const regressionType = await this.askForRegressionType('delete');
             if (!regressionType) return;
             if (regressionType === 'current') {
+              if (await this.refuseLockedCourseRemoval([calevent])) return;
               await store.calEventService.delete(calevent,  store.currentUser());
               await this.archiveInvitationsOf([calevent.okey]);
             } else { // future or all
@@ -1133,6 +1164,10 @@ export const CalEventStore = signalStore(
         if (!dates) return;
         const plan = planSeriesReconcile(affected, dates);
 
+        // shortening archives occurrences; on a locked course the rules deny that (spec 1.132 §6.1). Changes that
+        // only update the occurrences stay allowed, so only the archives are checked.
+        if (plan.archives.length > 0 && await this.refuseLockedCourseRemoval(plan.archives)) return;
+
         // shortening archives occurrences; one with confirmed attendance has already been reported
         const confirmedDropped = confirmedOccurrences(plan.archives);
         if (confirmedDropped.length > 0) {
@@ -1206,6 +1241,7 @@ export const CalEventStore = signalStore(
         if (series.length === 0) return;
         const doomed = scope === 'all' ? series : series.filter(e => isAfterOrEqualDate(e.startDate, calevent.startDate));
         if (doomed.length === 0) return;
+        if (await this.refuseLockedCourseRemoval(doomed)) return;
         const batch = store.firestoreService.getBatch();
         for (const inst of doomed) {
           const ref = doc(store.firestoreService.firestore, `${CalEventCollection}/${inst.okey}`);

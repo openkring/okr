@@ -130,6 +130,7 @@ export const COURSE_I18N_KEYS = {
   event_unassignConfirm: PFX + 'event.unassignConfirm',
 
   // course actions (toolbar)
+  action_addSeries:     PFX + 'action.addSeries',
   action_exportGeneric: PFX + 'action.exportGeneric',
   action_exportJs:      PFX + 'action.exportJs',
   action_lock:          PFX + 'action.lock',

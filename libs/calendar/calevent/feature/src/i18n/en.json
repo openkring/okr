@@ -599,7 +599,9 @@
     "open": "Show explanation"
   },
   "courses": {
-    "entry": "Courses"
+    "entry": "Courses",
+    "lockedRemove": "This course is closed. Unlock it in the course table before you remove dates.",
+    "lockedAdd": "This course is closed. Unlock it in the course table before you add new dates."
   },
   "sync": {
     "title": "Sync calendar",

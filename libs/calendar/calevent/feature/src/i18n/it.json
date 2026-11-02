@@ -599,7 +599,9 @@
     "open": "Mostra la spiegazione"
   },
   "courses": {
-    "entry": "Corsi"
+    "entry": "Corsi",
+    "lockedRemove": "Questo corso è chiuso. Sbloccalo nella tabella del corso prima di rimuovere delle date.",
+    "lockedAdd": "Questo corso è chiuso. Sbloccalo nella tabella del corso prima di aggiungere nuove date."
   },
   "sync": {
     "title": "Sincronizza calendario",

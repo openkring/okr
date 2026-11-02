@@ -186,6 +186,7 @@
     "unassignConfirm": "Retirer cette date du cours ? Les présences saisies restent enregistrées, mais ne comptent plus pour le cours."
   },
   "action": {
+    "addSeries": "Ajouter une série",
     "exportGeneric": "Télécharger le tableau (CSV)",
     "exportJs": "Télécharger le fichier J+S",
     "lock": "Geler le cours",

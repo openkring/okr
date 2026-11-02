@@ -599,7 +599,9 @@
     "open": "Afficher l'explication"
   },
   "courses": {
-    "entry": "Cours"
+    "entry": "Cours",
+    "lockedRemove": "Ce cours est clôturé. Déverrouille-le dans le tableau du cours avant de supprimer des dates.",
+    "lockedAdd": "Ce cours est clôturé. Déverrouille-le dans le tableau du cours avant d'ajouter de nouvelles dates."
   },
   "sync": {
     "title": "Synchroniser le calendrier",

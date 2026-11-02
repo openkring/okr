@@ -101,6 +101,21 @@ the pure helpers (`attendanceRowsForEvent`, `attendanceEntriesToWrite`, `visible
 - **Offline**: every read is a Firestore listener held while the page is open; persons come from the AppStore. The
   request is a callable and needs the network.
 
+## Course events in the group calendar (spec §6)
+
+- A trainer (or responsible person) may create, change and delete the group-calendar events that carry THIS course's
+  `courseKey` — never events without or with a foreign one. `CalEventList.canChange` has the course branch before the
+  group-admin return (`isCourseTrainerFor`, `@okr/calendar-calevent-util`); the rules decide for real.
+- **«Serie hinzufügen»** (toolbar, shown for `canEdit`: never on a locked course) navigates to
+  `/calevent/<groupKey>/c-calevents?addCourse=<courseKey>`. `CalEventList` opens the normal edit modal there with
+  `courseKey`, the course name, a weekly rhythm and the course period preset (`courseSeriesPatch`). The course table
+  does not import the calevent store.
+- A **copy** of a course event keeps the `courseKey` only for a course editor and only on an open course; otherwise it
+  is a plain group event (the rules would deny the create).
+- On a **locked** course, deleting or archiving events (single delete, series delete, a series edit that shortens the
+  range) is refused client-side with a message (`CalEventStore.refuseLockedCourseRemoval`) instead of a failing batch.
+  Plain edits that do not archive stay allowed, as in the rules.
+
 ## Menus
 
 Menu documents are catalogue-owned (`FEATURE_BLOCKS`): in block `calevent` the row `calevent-courses` (child of

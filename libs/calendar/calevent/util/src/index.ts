@@ -10,3 +10,4 @@ export * from './lib/calevent.validations';
 export * from './lib/calevent-activity.util';
 export * from './lib/calevent-export.util';
 export * from './lib/calevent-report.util';
+export * from './lib/course-rights.util';

@@ -186,6 +186,7 @@
     "unassignConfirm": "¿Quitar esta cita del curso? La asistencia registrada se queda guardada en la cita, pero ya no cuenta para el curso."
   },
   "action": {
+    "addSeries": "Añadir una serie",
     "exportGeneric": "Descargar tabla (CSV)",
     "exportJs": "Descargar archivo J+S",
     "lock": "Congelar curso",

@@ -40,11 +40,19 @@ const CLOCK_INTERVAL_MS = 60_000;
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-back-button [defaultHref]="backHref()" /></ion-buttons>
         <ion-title>{{ title() }}</ion-title>
-        @if (hasActions()) {
+        @if (store.canEdit() || hasActions()) {
           <ion-buttons slot="end">
-            <ion-button (click)="showCourseActions()">
-              <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
-            </ion-button>
+            @if (store.canEdit()) {
+              <ion-button (click)="store.addSeries()">
+                <ion-icon slot="start" src="{{ 'add-circle' | svgIcon }}" />
+                {{ store.i18n.action_addSeries() }}
+              </ion-button>
+            }
+            @if (hasActions()) {
+              <ion-button (click)="showCourseActions()">
+                <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
+              </ion-button>
+            }
           </ion-buttons>
         }
       </ion-toolbar>

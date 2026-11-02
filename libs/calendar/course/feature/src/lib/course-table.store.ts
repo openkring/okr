@@ -1,5 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { rxResource, toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import { ModalController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { combineLatest, map, of, switchMap } from 'rxjs';
@@ -61,6 +62,7 @@ export const CourseTableStore = signalStore(
   withState(initialCourseTableState),
   withProps(() => ({
     courseService: inject(CourseService),
+    router: inject(Router),
     membershipService: inject(MembershipService),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
@@ -300,6 +302,18 @@ export const CourseTableStore = signalStore(
       if (!store.canEdit()) return;
       if (!await store.alertService.confirm(store.i18n.event_unassignConfirm(), true)) return;
       await store.courseService.setCourseKey(event.okey, '');
+    },
+
+    /**
+     * «Serie hinzufügen» (spec 1.132 §6): a new series in the group calendar, belonging to this course from its first
+     * save. The calendar page owns the group calendar and its store, so this only navigates there with the course as
+     * a query param; the page presets `courseKey` and the course's period and opens the edit modal. Never on a locked
+     * course, and only for those who edit the course (`canEdit`).
+     */
+    async addSeries(): Promise<void> {
+      const course = store.course();
+      if (!course || !store.canEdit()) return;
+      await store.router.navigate(['/calevent', course.groupKey, 'c-calevents'], { queryParams: { addCourse: course.okey } });
     },
 
     /******************************** lock / unlock / reported (§7.8) ******************************************* */

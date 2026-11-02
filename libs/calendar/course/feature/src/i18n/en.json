@@ -186,6 +186,7 @@
     "unassignConfirm": "Remove this event from the course? The recorded attendance stays with the event but no longer counts for the course."
   },
   "action": {
+    "addSeries": "Add series",
     "exportGeneric": "Download table (CSV)",
     "exportJs": "Download J+S file",
     "lock": "Freeze course",
