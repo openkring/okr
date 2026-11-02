@@ -229,6 +229,19 @@ describe('AHV answers (ssn fields)', () => {
     expect(values.ssnId).toBe('7560803581661'); // the input is not mutated
   });
 
+  it('a legacy text field keyed ssnId counts as an AHV field', () => {
+    const legacy = [f('a', 1, 'text', { key: 'ssnId' }), f('b', 2, 'text', { key: 'lastName' })];
+    expect([...ssnFieldKeys(legacy)]).toEqual(['ssnId']);
+    expect(propertyTypeOf(legacy[0])).toBeUndefined();
+    expect(propertyTypeOf(legacy[1])).toBe('text');
+  });
+
+  it('always drops ssnId, even when no field of the form asks for it (a whole stored record)', () => {
+    const record = { okey: 'a1', lastName: 'Muster', ssnId: '7560803581661', state: 'applied' };
+    expect(omitSsnValues([f('a', 1, 'text', { key: 'lastName' })], record)).toEqual({ okey: 'a1', lastName: 'Muster', state: 'applied' });
+    expect(omitSsnValues(undefined, record)).not.toHaveProperty('ssnId');
+  });
+
   it('returns a copy when the form has no ssn field', () => {
     const values = { lastName: 'Muster' };
     const result = omitSsnValues([f('a', 1, 'text', { key: 'lastName' })], values);

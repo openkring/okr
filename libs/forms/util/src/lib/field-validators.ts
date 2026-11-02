@@ -1,24 +1,24 @@
 import { AbstractControl, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { parsePhoneNumber } from 'libphonenumber-js';
 import { Field } from '@okr/shared-models';
-import { isBlankAhv, normalizeAhv } from '@okr/shared-util-core';
+import { isBlankAhv, isSsnField, normalizeAhv } from '@okr/shared-util-core';
 import { isDisplayField } from './field-kind';
 
 export function validatorsFor(field: Field): ValidatorFn[] {
   const fns: ValidatorFn[] = [];
   if (isDisplayField(field.type)) return fns;
+  // an AHV number — an `ssn` field, or a legacy text field keyed ssnId — is checked like the server does
+  if (isSsnField(field)) {
+    if (field.required) fns.push(ssnRequiredValidator);
+    fns.push(ssnValidator);
+    return fns;
+  }
   // A single checkbox needs `requiredTrue`: Angular's `required` treats `false` as a present value
   // (it only rejects null/undefined/empty string/empty array), so an unticked required consent box
   // would pass client validation and only be refused server-side. Option lists keep `required` —
   // there the value is an array and "at least one" is the right rule.
-  // An AHV field's mask leaves '756.' behind when it is cleared: `required` would count that as
-  // an answer, so an ssn field has its own required check (the server reads '756.' as empty too).
   if (field.required) {
-    fns.push(
-      field.type === 'checkbox' && !field.options?.length ? Validators.requiredTrue
-        : field.type === 'ssn' ? ssnRequiredValidator
-          : Validators.required,
-    );
+    fns.push(field.type === 'checkbox' && !field.options?.length ? Validators.requiredTrue : Validators.required);
   }
 
   switch (field.type) {
@@ -39,9 +39,6 @@ export function validatorsFor(field: Field): ValidatorFn[] {
       break;
     case 'iban':
       fns.push(ibanValidator(field.countryWhitelist));
-      break;
-    case 'ssn':
-      fns.push(ssnValidator);
       break;
     case 'password':
       if (field.minLength) fns.push(Validators.minLength(field.minLength));
@@ -106,6 +103,7 @@ function ssnValidator(ctrl: AbstractControl): ValidationErrors | null {
   return normalizeAhv(ctrl.value) === undefined ? { ssn: true } : null;
 }
 
+/** An AHV field's mask leaves '756.' behind when it is cleared: `required` would count that as an answer. */
 function ssnRequiredValidator(ctrl: AbstractControl): ValidationErrors | null {
   const value = ctrl.value;
   const blank = value === undefined || value === null || ((typeof value === 'string' || typeof value === 'number') && isBlankAhv(value));

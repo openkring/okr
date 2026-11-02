@@ -87,4 +87,30 @@ describe('formDefinitionValidations', () => {
       expect(formDefinitionValidations(fd).isValid()).toBe(true);
     });
   });
+
+  describe('AHV field placement (privacy 1.19)', () => {
+    const ssn = (key: string) => ({ id: 's', key, type: 'ssn', label: 'AHV-Nummer', required: false, width: 'full', order: 0 }) as Field;
+    const app = (mappingKey: string, fields: Field[]) => newDefinition({
+      target: { kind: 'collection', mappingKey, modelType: 'ApplicationModel', collectionName: 'applications' }, fields,
+    });
+    const MSG = '@forms/feature.fields.ssn_placement';
+
+    it('accepts an ssn field keyed ssnId on an application mapping', () => {
+      expect(formDefinitionValidations(app('applications.default', [ssn('ssnId')])).isValid()).toBe(true);
+      expect(formDefinitionValidations(app('applications.junior', [ssn('ssnId')])).isValid()).toBe(true);
+    });
+
+    it('rejects an ssn field under another key', () => {
+      expect(formDefinitionValidations(app('applications.default', [ssn('ahv')])).getErrors('fields')).toContain(MSG);
+    });
+
+    it('rejects an ssn field on a prospect, reservation or URL target', () => {
+      const prospect = newDefinition({ target: { kind: 'collection', mappingKey: 'prospects.default', modelType: 'ProspectModel', collectionName: 'prospects' }, fields: [ssn('ssnId')] });
+      expect(formDefinitionValidations(prospect).getErrors('fields')).toContain(MSG);
+      const reservation = newDefinition({ target: { kind: 'collection', mappingKey: 'reservations.boathouse', modelType: 'ReservationModel', collectionName: 'reservations' }, fields: [ssn('ssnId')] });
+      expect(formDefinitionValidations(reservation).getErrors('fields')).toContain(MSG);
+      const url = newDefinition({ target: { kind: 'url', url: 'https://example.com/hook' }, fields: [ssn('ssnId')] });
+      expect(formDefinitionValidations(url).getErrors('fields')).toContain(MSG);
+    });
+  });
 });

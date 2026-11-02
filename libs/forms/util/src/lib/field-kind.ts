@@ -1,4 +1,5 @@
-import { Field, FieldType } from '@okr/shared-models';
+import { Field, FieldType, FormMapping } from '@okr/shared-models';
+import { SSN_FIELD_KEY } from '@okr/shared-util-core';
 
 /** A field key becomes a property name of the submitted document: camelCase — a lower-case letter, then letters and digits (e.g. firstName). */
 export const FIELD_KEY_PATTERN = /^[a-z][a-zA-Z0-9]*$/;
@@ -39,4 +40,19 @@ export function findDuplicateKeys(fields: readonly Field[] | undefined): string[
     }
   }
   return duplicates;
+}
+
+/** The only model an AHV (`ssn`) field may be stored in: an application (`ApplicationModel.ssnId`). */
+export const SSN_MODEL_TYPE = 'ApplicationModel';
+
+/**
+ * The keys of AHV (`ssn`) fields placed where an AHV number may not be stored: under any key but
+ * `ssnId`, or on a form whose target is not an application mapping (a URL, a prospect, a
+ * reservation). Shared by the settings suite and the form builder (privacy 1.19).
+ */
+export function misplacedSsnFields(fields: readonly Field[] | undefined, mapping: FormMapping | undefined): string[] {
+  const allowedTarget = mapping?.modelType === SSN_MODEL_TYPE;
+  return (fields ?? [])
+    .filter(f => f.type === 'ssn' && (!allowedTarget || f.key !== SSN_FIELD_KEY))
+    .map(f => f.key);
 }

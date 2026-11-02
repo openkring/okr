@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Field } from '@okr/shared-models';
-import { categoryNamesOf, findDuplicateKeys, isDisplayField } from './field-kind';
+import { categoryNamesOf, findDuplicateKeys, isDisplayField, misplacedSsnFields } from './field-kind';
+import { getFormMapping } from './form-mappings';
 
 const f = (type: string, extra: object = {}) => ({ id: type, key: type, label: type, required: false, width: 'full', order: 0, type, ...extra }) as Field;
 
@@ -38,5 +39,24 @@ describe('findDuplicateKeys', () => {
 
   it('ignores display elements and empty keys', () => {
     expect(findDuplicateKeys([k('divider', 'x'), k('divider', 'x'), k('label', ''), k('text', ''), k('text', '')])).toEqual([]);
+  });
+});
+
+describe('misplacedSsnFields', () => {
+  const ssn = (key: string) => f('ssn', { key });
+
+  it('accepts an ssn field keyed ssnId on an application mapping', () => {
+    expect(misplacedSsnFields([ssn('ssnId'), f('text')], getFormMapping('applications.default'))).toEqual([]);
+  });
+
+  it('reports another key, a non-application mapping and a URL target (no mapping)', () => {
+    expect(misplacedSsnFields([ssn('ahv')], getFormMapping('applications.default'))).toEqual(['ahv']);
+    expect(misplacedSsnFields([ssn('ssnId')], getFormMapping('prospects.default'))).toEqual(['ssnId']);
+    expect(misplacedSsnFields([ssn('ssnId')], undefined)).toEqual(['ssnId']);
+  });
+
+  it('ignores a legacy text field keyed ssnId and a definition without fields', () => {
+    expect(misplacedSsnFields([f('text', { key: 'ssnId' })], undefined)).toEqual([]);
+    expect(misplacedSsnFields(undefined, undefined)).toEqual([]);
   });
 });

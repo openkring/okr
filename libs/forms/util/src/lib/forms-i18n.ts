@@ -153,6 +153,7 @@ export const FORM_I18N_KEYS = {
   rule_issue_stale:           PFX + 'rule.issue_stale',
   rule_issue_stale_op:        PFX + 'rule.issue_stale_op',
   fields_duplicate_keys:      PFX + 'fields.duplicate_keys',
+  fields_ssn_placement:       PFX + 'fields.ssn_placement',
 
   // condition operators (spec §5)
   op_equals:                  PFX + 'op.equals',

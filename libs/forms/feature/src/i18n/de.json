@@ -47,7 +47,8 @@
   },
   "fields": {
     "duplicate_key": "Zwei Fragen haben denselben Schlüssel. Bitte gib jeder Frage einen eigenen.",
-    "duplicate_keys": "Mehrere Fragen haben denselben Schlüssel: {keys}. Bitte gib jeder Frage einen eigenen, sonst lässt sich das Formular nicht speichern."
+    "duplicate_keys": "Mehrere Fragen haben denselben Schlüssel: {keys}. Bitte gib jeder Frage einen eigenen, sonst lässt sich das Formular nicht speichern.",
+    "ssn_placement": "Die AHV-Nummer kann nur in einem Antrag und unter dem Schlüssel ssnId gespeichert werden."
   },
   "rule": {
     "range_order": "Der erste Wert muss kleiner sein als der zweite.",

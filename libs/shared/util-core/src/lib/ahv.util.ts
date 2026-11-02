@@ -6,6 +6,18 @@
  * its `AhvMaskPipe` for existing importers.
  */
 
+/** The model field an AHV number is stored under (`ApplicationModel.ssnId`, `PersonFormModel.ssnId`). */
+export const SSN_FIELD_KEY = 'ssnId';
+
+/**
+ * Whether a form field holds an AHV number: an `ssn` field, or ANY field keyed `ssnId` — older
+ * form definitions ask for it with a plain `text` field (the former junior template), and that
+ * answer is the same vault datum (privacy 1.19).
+ */
+export function isSsnField(field: { type?: string; key?: string } | undefined | null): boolean {
+  return !!field && (field.type === 'ssn' || field.key === SSN_FIELD_KEY);
+}
+
 export enum AhvFormat {
   Electronic, // no special chars, only 13 digits: 7561234123412
   Friendly, // 756.1234.1234.12

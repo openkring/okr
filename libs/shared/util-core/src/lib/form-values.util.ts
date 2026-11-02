@@ -1,5 +1,5 @@
 import type { BaseType, DerivedValue, Field, PropertyType, TypedProperty } from '@okr/shared-models';
-import { isBlankAhv } from './ahv.util';
+import { isBlankAhv, isSsnField, SSN_FIELD_KEY } from './ahv.util';
 import { evaluateVisibilityRule } from './form-visibility.util';
 
 /**
@@ -37,6 +37,8 @@ export function computeDerivedValues(
 
 /** The property type a field's answer is stored as, or `undefined` when the field cannot be a property. */
 export function propertyTypeOf(field: Field): PropertyType | undefined {
+  // an AHV number maps to the model field `ssnId`, never to a typed property — also a text field keyed ssnId
+  if (isSsnField(field)) return undefined;
   switch (field.type) {
     case 'checkbox':
       return Array.isArray(field.options) && field.options.length > 0 ? undefined : 'boolean';
@@ -51,8 +53,6 @@ export function propertyTypeOf(field: Field): PropertyType | undefined {
     case 'email':
     case 'phone':
       return 'text';
-    case 'ssn':
-      return undefined; // an AHV number maps to the model field `ssnId`, never to a typed property
     default:
       return undefined;
   }
@@ -126,9 +126,9 @@ export function buildTypedProperties(
 // AHV answers (`ssn` fields) — they never leave the target record (privacy 1.19)
 // ──────────────────────────────────────────
 
-/** The keys of a form's AHV (`ssn`) fields. */
+/** The keys of a form's AHV fields (`isSsnField`: type `ssn`, or any field keyed `ssnId`). */
 export function ssnFieldKeys(fields: readonly Field[] | undefined): Set<string> {
-  return new Set((Array.isArray(fields) ? fields : []).filter((f) => f?.type === 'ssn' && typeof f.key === 'string').map((f) => f.key));
+  return new Set((Array.isArray(fields) ? fields : []).filter((f) => isSsnField(f) && typeof f.key === 'string').map((f) => f.key));
 }
 
 /**
@@ -137,8 +137,9 @@ export function ssnFieldKeys(fields: readonly Field[] | undefined): Set<string> 
  * reservation built from named keys. An AHV number is vault data and may not be copied there.
  */
 export function omitSsnValues(fields: readonly Field[] | undefined, values: Record<string, unknown>): Record<string, unknown> {
-  const keys = ssnFieldKeys(fields);
-  if (keys.size === 0) return { ...values };
+  // `ssnId` always goes, whatever the form asks: a whole stored record (e.g. an application whose
+  // AHV number an admin typed) may carry it although no field of this form does
+  const keys = ssnFieldKeys(fields).add(SSN_FIELD_KEY);
   return Object.fromEntries(Object.entries(values ?? {}).filter(([key]) => !keys.has(key)));
 }
 

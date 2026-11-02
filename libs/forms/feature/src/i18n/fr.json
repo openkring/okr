@@ -47,7 +47,8 @@
   },
   "fields": {
     "duplicate_key": "Deux questions ont la même clé. Donne à chaque question la sienne.",
-    "duplicate_keys": "Plusieurs questions ont la même clé : {keys}. Donne à chaque question la sienne, sinon le formulaire ne peut pas être enregistré."
+    "duplicate_keys": "Plusieurs questions ont la même clé : {keys}. Donne à chaque question la sienne, sinon le formulaire ne peut pas être enregistré.",
+    "ssn_placement": "Le numéro AVS ne peut être enregistré que dans une demande, sous la clé ssnId."
   },
   "rule": {
     "range_order": "La première valeur doit être inférieure à la seconde.",

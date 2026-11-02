@@ -4,7 +4,8 @@ import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, URL_LENGTH } from '@okr/shared-co
 import { FormDefinitionModel } from '@okr/shared-models';
 import { stringValidations } from '@okr/shared-util-core';
 
-import { findDuplicateKeys } from './field-kind';
+import { findDuplicateKeys, misplacedSsnFields } from './field-kind';
+import { getFormMapping } from './form-mappings';
 
 /**
  * Validates the settings of a form definition (form-definition edit modal):
@@ -26,5 +27,11 @@ export const formDefinitionValidations = staticSuite((model: FormDefinitionModel
 
   test('fields', '@forms/feature.fields.duplicate_key', () => {
     enforce(findDuplicateKeys(model.fields).length).equals(0);
+  });
+
+  // An AHV number is stored only as `ssnId` of an application (privacy 1.19).
+  test('fields', '@forms/feature.fields.ssn_placement', () => {
+    const mapping = model.target?.kind === 'collection' ? getFormMapping(model.target.mappingKey) : undefined;
+    enforce(misplacedSsnFields(model.fields, mapping).length).equals(0);
   });
 });

@@ -47,7 +47,8 @@
   },
   "fields": {
     "duplicate_key": "Two questions have the same key. Please give each question its own.",
-    "duplicate_keys": "Several questions share the same key: {keys}. Please give each question its own, otherwise the form cannot be saved."
+    "duplicate_keys": "Several questions share the same key: {keys}. Please give each question its own, otherwise the form cannot be saved.",
+    "ssn_placement": "The AHV number can only be saved in an application, under the key ssnId."
   },
   "rule": {
     "range_order": "The first value must be smaller than the second.",

@@ -1,5 +1,5 @@
 import type { Field, FieldCondition, VisibilityRule } from '@okr/shared-models';
-import { isBlankAhv } from './ahv.util';
+import { isBlankAhv, isSsnField } from './ahv.util';
 import { getAge } from './date.util';
 
 /**
@@ -123,7 +123,7 @@ function evaluateFor(
   const actual = visible.has(controller.id) ? values?.[controller.key] : undefined;
   const type = controller.type;
   // An AHV field that holds only the mask scaffolding ('756.') holds no number: it reads as empty.
-  const empty = isEmptyValue(actual) || (type === 'ssn' && typeof actual === 'string' && isBlankAhv(actual));
+  const empty = isEmptyValue(actual) || (isSsnField(controller) && typeof actual === 'string' && isBlankAhv(actual));
 
   switch (cond.op) {
     case 'isEmpty': return empty;

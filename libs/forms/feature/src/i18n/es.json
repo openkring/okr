@@ -47,7 +47,8 @@
   },
   "fields": {
     "duplicate_key": "Dos preguntas tienen la misma clave. Dale a cada pregunta la suya.",
-    "duplicate_keys": "Varias preguntas tienen la misma clave: {keys}. Dale a cada pregunta la suya; si no, el formulario no se puede guardar."
+    "duplicate_keys": "Varias preguntas tienen la misma clave: {keys}. Dale a cada pregunta la suya; si no, el formulario no se puede guardar.",
+    "ssn_placement": "El número AVS solo se puede guardar en una solicitud, con la clave ssnId."
   },
   "rule": {
     "range_order": "El primer valor debe ser menor que el segundo.",

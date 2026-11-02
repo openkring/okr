@@ -295,4 +295,36 @@ describe('AHV numbers (ssn fields) — privacy 1.19', () => {
     const notes = buildSubmissionTaskNotes([f('lastName', 'text', 0)], 's', 'k', { lastName: 'Muster' });
     expect(JSON.parse(notes)).toEqual({ submissionId: 's', formKey: 'k', values: { lastName: 'Muster' } });
   });
+
+  describe('a legacy text field keyed ssnId (old junior template)', () => {
+    const legacy = () => [f('lastName', 'text', 0), f('ssnId', 'text', 1, { label: 'AHV Nr.' })];
+
+    it('is checked and stored as 13 digits like an ssn field', () => {
+      const ok = prepareSubmission(legacy(), undefined, undefined, { lastName: 'M', ssnId: AHV }, TODAY);
+      expect(ok.values['ssnId']).toBe(AHV_DIGITS);
+      const bad = prepareSubmission(legacy(), undefined, undefined, { lastName: 'M', ssnId: '756.1234.5678.98' }, TODAY);
+      expect(bad.invalidSsn).toEqual(['ssnId']);
+    });
+
+    it('never becomes a property, even with asProperty', () => {
+      const fields = [f('ssnId', 'text', 0, { asProperty: true })];
+      const r = prepareSubmission(fields, undefined, 'properties', { ssnId: AHV }, TODAY);
+      expect(r.values['ssnId']).toBe(AHV_DIGITS);
+      expect(r.values['properties']).toEqual([]);
+    });
+
+    it('shows «angegeben» in the e-mail rows and is left out of the task note', () => {
+      const r = prepareSubmission(legacy(), undefined, undefined, { lastName: 'M', ssnId: AHV }, TODAY);
+      expect(r.rows).toEqual([{ label: 'L-lastName', value: 'M' }, { label: 'AHV Nr.', value: 'angegeben' }]);
+      const notes = buildSubmissionTaskNotes(legacy(), 's', 'k', r.values);
+      expect(notes).not.toContain(AHV_DIGITS);
+      expect(JSON.parse(notes).values).toEqual({ lastName: 'M' });
+    });
+
+    it('the task note drops ssnId even when the form has no such field', () => {
+      const notes = buildSubmissionTaskNotes([f('lastName', 'text', 0)], 's', 'k', { lastName: 'M', ssnId: AHV_DIGITS });
+      expect(JSON.parse(notes).values).toEqual({ lastName: 'M' });
+    });
+  });
 });
+

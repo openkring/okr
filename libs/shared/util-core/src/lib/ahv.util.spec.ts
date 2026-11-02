@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ahvn2string, AhvFormat, checkAhv, computeAhvn13checkDigit, formatAhv, isBlankAhv, maskAhv, normalizeAhv } from './ahv.util';
+import { ahvn2string, AhvFormat, checkAhv, computeAhvn13checkDigit, formatAhv, isBlankAhv, isSsnField, maskAhv, normalizeAhv } from './ahv.util';
 
 describe('ahv.util', () => {
 
@@ -182,5 +182,15 @@ describe('normalizeAhv', () => {
         expect(normalizeAhv({ ssn: '7560803581661' })).toBeUndefined();
         expect(normalizeAhv(['7560803581661'])).toBeUndefined();
         expect(normalizeAhv(true)).toBeUndefined();
+    });
+});
+
+describe('isSsnField', () => {
+
+    it('is an ssn field, or any field keyed ssnId (a legacy text field)', () => {
+        expect(isSsnField({ type: 'ssn', key: 'ahv' })).toBe(true);
+        expect(isSsnField({ type: 'text', key: 'ssnId' })).toBe(true);
+        expect(isSsnField({ type: 'text', key: 'lastName' })).toBe(false);
+        expect(isSsnField(undefined)).toBe(false);
     });
 });

@@ -4,6 +4,7 @@ import {
   coerceToPropertyType,
   computeDerivedValues,
   getVisibleFieldIds,
+  isSsnField,
   normalizeAhv,
   omitSsnValues,
   propertyTypeOf,
@@ -18,7 +19,7 @@ import {
  * are not an input field of the definition (honeypot, `_jsToken`, `personKey`, `reviewer`, …)
  * are dropped. Derived values overwrite whatever the client sent for the same key.
  *
- * AHV numbers (`ssn` fields) are vault data (privacy 1.19): checked here (EAN-13), stored in the
+ * AHV numbers (`ssn` fields, and any field keyed `ssnId`) are vault data (privacy 1.19): checked here (EAN-13), stored in the
  * electronic 13-digit format in the target record, and never copied anywhere else — the e-mail
  * rows show «angegeben», the task note and every other side effect get `omitSsnValues`.
  */
@@ -73,7 +74,7 @@ export function buildSubmissionRows(
 ): SubmissionRow[] {
   const rows: SubmissionRow[] = sortedVisibleInputs.map((f) => ({
     label: f.label,
-    value: f.type === 'ssn' ? ssnPresenceLabel(answers[f.key]) : formatRowValue(f, answers[f.key]),
+    value: isSsnField(f) ? ssnPresenceLabel(answers[f.key]) : formatRowValue(f, answers[f.key]),
   }));
   for (const [key, value] of Object.entries(derivedValues)) rows.push({ label: key, value: formatRowValue(undefined, value) });
   return rows;
@@ -101,7 +102,8 @@ export function prepareSubmission(
   for (const field of sorted) {
     if (!visible.has(field.id)) continue;
     let value = input[field.key];
-    if (field.type === 'ssn' && value !== undefined) {
+    // also a legacy `text` field keyed ssnId: the same number, checked and stored the same way
+    if (isSsnField(field) && value !== undefined) {
       // '' for no number (also the bare mask '756.'), the 13 digits for a valid one
       const ssn = normalizeAhv(value);
       if (ssn === undefined) {

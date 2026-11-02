@@ -169,6 +169,11 @@ describe('getVisibleFieldIds', () => {
     it('the scaffolding stays a value for a text controller', () => {
       expect(shown('text', { op: 'isFilled' }, '756.')).toBe(true);
     });
+    it('a legacy text controller keyed ssnId reads the scaffolding as empty too', () => {
+      const fields = [f('a', 1, 'text', { key: 'ssnId' }), f('b', 2, 'text', { visibleIf: rule([cond('a', 'isFilled')]) })];
+      expect(getVisibleFieldIds(fields, { ssnId: '756.' }, TODAY).has('b')).toBe(false);
+      expect(getVisibleFieldIds(fields, { ssnId: '756.0803.5816.61' }, TODAY).has('b')).toBe(true);
+    });
   });
 
   describe('dates', () => {

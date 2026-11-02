@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FormControl } from '@angular/forms';
-import { CheckboxField, Field, SsnField } from '@okr/shared-models';
+import { CheckboxField, Field, SsnField, TextField } from '@okr/shared-models';
 import { validatorsFor } from './field-validators';
 
 const base = { id: '1', key: 'consent', label: 'Einwilligung', required: true, width: 'full' as const, order: 1 };
@@ -60,5 +60,16 @@ describe('validatorsFor — AHV number (ssn)', () => {
     expect(validate(optional, '')).toBe(true);
     expect(validate(optional, '756.')).toBe(true);
     expect(validate(optional, '756.1234')).toBe(false);
+  });
+});
+
+describe('validatorsFor — legacy text field keyed ssnId', () => {
+  const legacy: TextField = { ...base, key: 'ssnId', label: 'AHV Nr.', type: 'text' };
+
+  it('is checked like an ssn field', () => {
+    expect(validate(legacy, '756.1234.5678.97')).toBe(true);
+    expect(validate(legacy, '756.1234.5678.98')).toBe(false);
+    expect(validate(legacy, '756.')).toBe(false);
+    expect(validate({ ...legacy, required: false }, '')).toBe(true);
   });
 });

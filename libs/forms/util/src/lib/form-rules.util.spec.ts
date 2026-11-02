@@ -54,6 +54,10 @@ describe('conditionOpsFor (spec §5)', () => {
     }
   });
 
+  it('offers only filled/empty for a legacy text field keyed ssnId', () => {
+    expect(conditionOpsFor({ ...f('a', 'text', 0), key: 'ssnId' })).toEqual(['isFilled', 'isEmpty']);
+  });
+
   it('offers nothing for display elements', () => {
     for (const t of ['label', 'paragraph', 'divider'] as const) {
       expect(conditionOpsFor(f('a', t, 0))).toEqual([]);

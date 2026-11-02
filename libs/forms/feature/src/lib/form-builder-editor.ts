@@ -7,13 +7,13 @@ import {
 import { AppStore } from '@okr/shared-feature';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { fill, getTodayStr, safeStructuredClone } from '@okr/shared-util-core';
+import { fill, getTodayStr, safeStructuredClone, SSN_FIELD_KEY } from '@okr/shared-util-core';
 import { Field, FormDefinitionModel, FormMapping } from '@okr/shared-models';
 
 import { FormDefinitionService } from '@okr/forms-data-access';
 import {
   conditionalBlockMembers, conditionOpLabels, DerivedRuleIssue, derivedValuesReferencing, describeRule, fieldsReferencing,
-  findDerivedRuleIssues, findDuplicateKeys, findRuleIssues, FORM_I18N_KEYS, FormI18n, getFormMapping, previewDerivedValues, removeDerivedReferencesTo,
+  findDerivedRuleIssues, findDuplicateKeys, findRuleIssues, FORM_I18N_KEYS, FormI18n, getFormMapping, misplacedSsnFields, previewDerivedValues, removeDerivedReferencesTo,
   removeReferencesTo, ruleConnectors, RuleIssue,
 } from '@okr/forms-util';
 import { I18nService } from '@okr/shared-i18n';
@@ -25,7 +25,8 @@ function newField(def: FieldTypeDef, order: number): Field {
   const type = def.type;
   const base = {
     id: crypto.randomUUID(),
-    key: `field${order}`,
+    // an AHV number may only be stored as an application's `ssnId` (privacy 1.19)
+    key: type === 'ssn' ? SSN_FIELD_KEY : `field${order}`,
     label: def.label ?? type,
     required: false,
     width: 'full' as const,
@@ -74,7 +75,7 @@ function newField(def: FieldTypeDef, order: number): Field {
   template: `
     <okr-header [i18n]="{ title: i18n.title() + ': ' + formData().name }" [isModal]="true" />
     @if (isDirty()) {
-      <okr-change-confirmation [i18n]="changeConfirmationI18n()" [saveDisabled]="duplicateKeys().length > 0" (saveClicked)="save()" (cancelClicked)="cancel()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" [saveDisabled]="hasKeyIssues()" (saveClicked)="save()" (cancelClicked)="cancel()" />
     }
     <ion-content>
       <div class="editor-layout" cdkDropListGroup>
@@ -102,6 +103,10 @@ function newField(def: FieldTypeDef, order: number): Field {
           @if (duplicateKeys().length > 0) {
             <!-- same check as the settings suite: a repeated input key blocks saving in both places -->
             <ion-note color="danger" class="duplicate-keys">{{ duplicateKeysText() }}</ion-note>
+          }
+          @if (misplacedSsn().length > 0) {
+            <!-- same check as the settings suite: an AHV field outside an application's ssnId blocks saving -->
+            <ion-note color="danger" class="duplicate-keys">{{ i18n.fields_ssn_placement() }}</ion-note>
           }
           @if (viewMode() === 'editor') {
             <!-- derived values live in the form settings; their broken conditions are flagged here, where fields change -->
@@ -285,6 +290,9 @@ export class FormBuilderEditor {
   protected readonly duplicateKeys = computed(() => findDuplicateKeys(this.fields()));
   protected readonly duplicateKeysText = computed(() =>
     fill(this.i18n.fields_duplicate_keys(), { keys: this.duplicateKeys().map(k => `«${k}»`).join(', ') }));
+  /** AHV fields under another key than ssnId or on a non-application target — block saving, as in the settings. */
+  protected readonly misplacedSsn = computed(() => misplacedSsnFields(this.fields(), this.mapping()));
+  protected readonly hasKeyIssues = computed(() => this.duplicateKeys().length > 0 || this.misplacedSsn().length > 0);
 
   /** Fields inside a divider block with a rule — indented on the canvas. */
   protected readonly blockMembers = computed(() => conditionalBlockMembers(this.fields()));
@@ -381,7 +389,7 @@ export class FormBuilderEditor {
   }
 
   public async save(): Promise<void> {
-    if (this.duplicateKeys().length > 0) return;   // the save button is disabled too; the warning above the canvas says why
+    if (this.hasKeyIssues()) return;   // the save button is disabled too; the warning above the canvas says why
     const fd = { ...this.formData(), fields: this.fields() };
     await this.formDefinitionService.update(fd, this.appStore.currentUser());
     await dismissOverlay(this.modalController, null, 'confirm');

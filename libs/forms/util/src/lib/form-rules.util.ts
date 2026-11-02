@@ -1,7 +1,7 @@
 import {
   CategoryListModel, ConditionOp, DerivedValue, Field, FieldCondition, FieldOption, FormDefinitionModel, FormMapping, VisibilityRule,
 } from '@okr/shared-models';
-import { computeDerivedValues, getVisibleFieldIds } from '@okr/shared-util-core';
+import { computeDerivedValues, getVisibleFieldIds, isSsnField } from '@okr/shared-util-core';
 
 import { isDisplayField } from './field-kind';
 
@@ -30,6 +30,9 @@ function optionsOf(field: Field): { label: string; value: string }[] | undefined
 
 /** The operators the editor offers for a controlling field (spec §5); `[]` for display elements, which cannot control. */
 export function conditionOpsFor(field: Field): ConditionOp[] {
+  // an AHV number is never compared to a value: a rule would copy the number into the definition
+  // (also a legacy text field keyed ssnId)
+  if (isSsnField(field)) return [...FILLED_OPS];
   switch (field.type) {
     case 'dropdown':
     case 'radio':
@@ -46,9 +49,6 @@ export function conditionOpsFor(field: Field): ConditionOp[] {
     case 'email':
     case 'phone':
       return [...TEXT_OPS];
-    case 'ssn':
-      // an AHV number is never compared to a value: a rule would copy the number into the definition
-      return [...FILLED_OPS];
     case 'label':
     case 'paragraph':
     case 'divider':
