@@ -2,11 +2,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Firestore } from 'firebase-admin/firestore';
 
 vi.mock('./sentry', () => ({ reportToSentry: vi.fn().mockResolvedValue(undefined) }));
+vi.mock('../_gateway/http', () => ({ gatewayFetch: vi.fn() }));
+vi.mock('../_gateway/adapters/srv', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../_gateway/adapters/srv')>()),
+  regasoftHeaders: () => ({ ApiKey: 'k', ClubId: 'c' }),
+}));
 
 import { reportToSentry } from './sentry';
+import { gatewayFetch } from '../_gateway/http';
 import { SRV_DETAIL_FIELDS, SRV_LIST_FIELDS } from '../_gateway/adapters/srv';
 import {
-  ApiFingerprint, WatchState, buildFingerprint, checkShape, decideWatch, diffFingerprint, resetShapeCheck, runRegasoftApiWatch,
+  ApiFingerprint, WatchState, buildFingerprint, checkShape, decideWatch, diffFingerprint, probeRegasoft, resetShapeCheck, runRegasoftApiWatch,
 } from './api-watch';
 
 const NOW = new Date('2026-11-03T06:00:00Z'); // 07:00 in Zurich
@@ -322,5 +328,73 @@ describe('runRegasoftApiWatch', () => {
     await runRegasoftApiWatch(NOW, { db, probe: probeFn });
     expect((store.get('integration-health/regasoft') as Doc)['accepted']).toEqual(pending);
     expect(probeFn).not.toHaveBeenCalled(); // month already done: no Regasoft call
+  });
+});
+
+describe('probeRegasoft', () => {
+  const fetchMock = vi.mocked(gatewayFetch);
+  const ok = (data: unknown, status = 200) => ({ status, data });
+  /** routes by url: `fail` URL fragments reject, everything else answers like a healthy API */
+  function route(fail: string[]) {
+    fetchMock.mockReset();
+    fetchMock.mockImplementation(async (url: string, opts?: { headers?: Record<string, string> }) => {
+      if (fail.some(f => url.endsWith(f))) throw new Error('timeout');
+      if (url.endsWith('/api/club/members/26183')) return ok({ data: { id: 1, firstName: 'A' } }) as never;
+      if (url.endsWith('/api/club/members/schema')) return ok({ errors: {}, type: 't', title: 'x', status: 400 }, 400) as never;
+      if (url.includes('/api/club/members')) {
+        return (opts?.headers?.['ApiKey'] === 'invalid' ? ok({ data: null, success: false, message: 'no' }, 401) : ok({ data: [{ id: 1, firstName: 'A' }], success: true, message: null })) as never;
+      }
+      return ok('', 404) as never;
+    });
+  }
+
+  it('a doc path that throws is recorded as error and the run stays reachable', async () => {
+    route(['/swagger']);
+    const r = await probeRegasoft();
+    expect(r.reachable).toBe(true);
+    if (!r.reachable) return;
+    expect(r.fingerprint['docs./swagger']).toBe('error');
+    expect(r.fingerprint['docs./docs']).toBe('404');
+    expect(r.fingerprint['auth.test']).toBe('200');
+  });
+
+  it('a list that throws is unreachable', async () => {
+    route(['/api/club/members']);
+    expect((await probeRegasoft()).reachable).toBe(false);
+  });
+
+  it('a list answering 5xx is unreachable', async () => {
+    route([]);
+    fetchMock.mockResolvedValueOnce(ok('down', 503) as never);
+    expect((await probeRegasoft()).reachable).toBe(false);
+  });
+
+  it('a detail probe that throws gives detail.* = error, still reachable', async () => {
+    route(['/api/club/members/26183']);
+    const r = await probeRegasoft();
+    expect(r.reachable).toBe(true);
+    if (!r.reachable) return;
+    expect(r.fingerprint['detail.fields']).toBe('error');
+    expect(r.fingerprint['detail.envelope']).toBe('error');
+    expect(r.fingerprint['list.fields']).toContain('id:number');
+  });
+
+  it('an error-shape probe that throws gives error.40x = error, still reachable', async () => {
+    route(['/api/club/members/schema']);
+    const r = await probeRegasoft();
+    expect(r.reachable).toBe(true);
+    if (!r.reachable) return;
+    expect(r.fingerprint['error.400']).toBe('error');
+    expect(r.fingerprint['error.401']).toBe('data,message,success');
+  });
+
+  it('a failed side probe never counts as a failure in the run', async () => {
+    route(['/swagger']);
+    const fp = { 'auth.test': '200' };
+    const written: Record<string, unknown> = {};
+    const db = { collection: () => ({ doc: (id: string) => ({ id, get: async () => ({ exists: false, data: () => undefined }), set: async (d: unknown) => { written[id] = d; } }) }) } as unknown as Firestore;
+    await runRegasoftApiWatch(NOW, { db, probe: probeRegasoft });
+    expect((written['regasoft'] as { failures: number }).failures).toBe(0);
+    void fp;
   });
 });

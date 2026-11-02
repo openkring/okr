@@ -50,9 +50,13 @@ export type ApiFingerprint = Record<string, string>;
 
 export interface FingerprintDiff { key: string; before: string; after: string }
 
+/** Marks a side probe that threw (timeout, reset): a stable fingerprint value, not a failed run. */
+export const PROBE_ERROR = Symbol('probe-error');
+
 export interface ApiProbe {
   listStatus: number;
   list: unknown;
+  /** PROBE_ERROR when the request failed */
   detail: unknown;
   /** undefined when the parameter probe could not be completed */
   listAll: unknown;
@@ -61,7 +65,8 @@ export interface ApiProbe {
   err400: unknown;
   err401Status?: number;
   err400Status?: number;
-  docs: Record<string, number>;
+  /** status per doc path; 'error' when the request failed */
+  docs: Record<string, number | 'error'>;
 }
 
 // --- fingerprint (pure) ---------------------------------------------------------------------
@@ -110,19 +115,20 @@ function paramEffect(plain: unknown, withParam: unknown): string {
 
 /** Names, types and status codes only — never a value. `system` names the auth key (`auth.test`). */
 export function buildFingerprint(probe: ApiProbe, system: 'test' | 'production' = 'test'): ApiFingerprint {
-  const detail = recordOf(probe.detail);
+  const failed = (v: unknown): boolean => v === PROBE_ERROR;
+  const detail = failed(probe.detail) ? [] : recordOf(probe.detail);
   const clubs = detail.flatMap(d => (Array.isArray(d['personClubs']) ? (d['personClubs'] as unknown[]).filter(isRecord) : []));
   const fp: ApiFingerprint = {
     [`auth.${system}`]: String(probe.listStatus),
     'list.envelope': envelopeOf(probe.list),
     'list.fields': describeFields(listOf(probe.list)),
-    'detail.envelope': envelopeOf(probe.detail),
-    'detail.fields': describeFields(detail),
-    'detail.personClubs': describeFields(clubs),
+    'detail.envelope': failed(probe.detail) ? 'error' : envelopeOf(probe.detail),
+    'detail.fields': failed(probe.detail) ? 'error' : describeFields(detail),
+    'detail.personClubs': failed(probe.detail) ? 'error' : describeFields(clubs),
     'param.all': paramEffect(probe.list, probe.listAll),
     'param.inactive': paramEffect(probe.list, probe.listInactive),
-    'error.401': envelopeOf(probe.err401),
-    'error.400': envelopeOf(probe.err400),
+    'error.401': failed(probe.err401) ? 'error' : envelopeOf(probe.err401),
+    'error.400': failed(probe.err400) ? 'error' : envelopeOf(probe.err400),
   };
   if (probe.err401Status !== undefined) fp['error.401.status'] = String(probe.err401Status);
   if (probe.err400Status !== undefined) fp['error.400.status'] = String(probe.err400Status);
@@ -236,39 +242,56 @@ const system = (): 'test' | 'production' => (REGASOFT_SYSTEM === 'test' ? 'test'
 const get = (url: string, headers: Record<string, string>, maxBytes?: number) =>
   gatewayFetch(url, { method: 'GET', headers, validateStatus: () => true, timeoutMs: 15_000, maxRetries: 1, ...(maxBytes ? { maxBytes } : {}) });
 
-/** Run all probes against the configured Regasoft system. Throws when it cannot be reached. */
+/** A side probe: a request that throws is recorded as PROBE_ERROR, it never fails the run. */
+async function side(url: string, headers: Record<string, string>, maxBytes?: number): Promise<{ status: number; data: unknown } | typeof PROBE_ERROR> {
+  try {
+    const r = await get(url, headers, maxBytes);
+    return { status: r.status, data: r.data };
+  } catch {
+    return PROBE_ERROR;
+  }
+}
+
+/**
+ * Run all probes against the configured Regasoft system. Only the member list decides whether
+ * Regasoft is reachable (a throw or a 5xx); every side probe (detail, error shapes, doc paths,
+ * parameters) is caught on its own and shows up in the fingerprint as 'error' / 'unavailable'.
+ */
 export async function probeRegasoft(): Promise<ProbeResult> {
   const base = regasoftBaseUrl();
   const headers = regasoftHeaders();
+  let list: { status: number; data: unknown };
   try {
-    const list = await get(`${base}/api/club/members`, headers);
-    if (list.status >= 500) return { reachable: false };
-    const optional = async (query: string): Promise<unknown> => {
-      try {
-        const r = await get(`${base}/api/club/members${query}`, headers, PARAM_MAX_BYTES);
-        return r.status === 200 ? r.data : undefined;
-      } catch {
-        return undefined;
-      }
-    };
-    const [detail, listAll, listInactive, err401, err400, docs] = await Promise.all([
-      get(`${base}/api/club/members/${PROBE_RID}`, headers),
-      optional('?all=true'),
-      optional('?inactive=true'),
-      get(`${base}/api/club/members`, { ...headers, ApiKey: 'invalid' }),
-      get(`${base}/api/club/members/schema`, headers),
-      Promise.all(DOC_PATHS.map(async p => [p, (await get(`${base}${p}`, {})).status] as const)),
-    ]);
-    const probe: ApiProbe = {
-      listStatus: list.status, list: list.data, detail: detail.data, listAll, listInactive,
-      err401: err401.data, err401Status: err401.status, err400: err400.data, err400Status: err400.status,
-      docs: Object.fromEntries(docs),
-    };
-    return { reachable: true, fingerprint: buildFingerprint(probe, system()) };
+    list = await get(`${base}/api/club/members`, headers);
   } catch (e: unknown) {
     logger.warn('regasoftApiWatch: Regasoft not reachable', { error: e instanceof Error ? e.message : String(e) });
     return { reachable: false };
   }
+  if (list.status >= 500) return { reachable: false };
+  const optional = async (query: string): Promise<unknown> => {
+    const r = await side(`${base}/api/club/members${query}`, headers, PARAM_MAX_BYTES);
+    return r !== PROBE_ERROR && r.status === 200 ? r.data : undefined;
+  };
+  const [detail, listAll, listInactive, err401, err400, docs] = await Promise.all([
+    side(`${base}/api/club/members/${PROBE_RID}`, headers),
+    optional('?all=true'),
+    optional('?inactive=true'),
+    side(`${base}/api/club/members`, { ...headers, ApiKey: 'invalid' }),
+    side(`${base}/api/club/members/schema`, headers),
+    Promise.all(DOC_PATHS.map(async p => {
+      const r = await side(`${base}${p}`, {});
+      return [p, r === PROBE_ERROR ? 'error' : r.status] as const;
+    })),
+  ]);
+  const probe: ApiProbe = {
+    listStatus: list.status, list: list.data, listAll, listInactive, docs: Object.fromEntries(docs),
+    detail: detail === PROBE_ERROR ? PROBE_ERROR : detail.data,
+    err401: err401 === PROBE_ERROR ? PROBE_ERROR : err401.data,
+    err400: err400 === PROBE_ERROR ? PROBE_ERROR : err400.data,
+    ...(err401 !== PROBE_ERROR ? { err401Status: err401.status } : {}),
+    ...(err400 !== PROBE_ERROR ? { err400Status: err400.status } : {}),
+  };
+  return { reachable: true, fingerprint: buildFingerprint(probe, system()) };
 }
 
 const liveIo = (): WatchIo => ({ db: getFirestore(), probe: probeRegasoft });
