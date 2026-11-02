@@ -47,8 +47,9 @@ import { AvatarDisplay } from '@okr/avatar-ui';
           }
           <ion-title>{{ store.i18n.list_title() }}</ion-title>
           <ion-buttons slot="end">
-            @if(isKiosk()) {
-              <!-- «when does the next bus go?» — the departure board of the club's own place (spec 1.130) -->
+            @if(isKiosk() || isAdmin()) {
+              <!-- «when does the next bus go?» — the departure board of the club's own place (spec 1.130);
+                   admins see it too, so the kiosk board can be checked away from the boathouse -->
               <ion-button routerLink="/trips/departures">
                 <ion-icon slot="icon-only" src="{{'bus' | svgIcon}}" />
               </ion-button>
@@ -223,6 +224,7 @@ export class TripList {
   // (connection dot instead of hamburger, giant FAB) into the normal app list.
   protected readonly isKiosk = computed(() => isKioskOnly(this.currentUser()));
   protected readonly isPrivileged = computed(() => hasRole('privileged', this.currentUser()));
+  protected readonly isAdmin = computed(() => hasRole('admin', this.currentUser()));
   protected states = computed(() => this.store.appStore.tryGetCategory('trip_state'));
   protected readonly years = computed(() => getYearList(getYear(), 5));
 
