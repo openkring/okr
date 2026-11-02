@@ -204,6 +204,10 @@
     "isFilled": "is filled in",
     "isEmpty": "is empty"
   },
+  "fieldtype": {
+    "ssn": "AHV number",
+    "ssn_desc": "Swiss social security number (AHV), checked for validity"
+  },
   "property": {
     "boolean": "yes/no",
     "number": "number",

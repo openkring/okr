@@ -204,6 +204,10 @@
     "isFilled": "ist ausgefüllt",
     "isEmpty": "ist leer"
   },
+  "fieldtype": {
+    "ssn": "AHV-Nummer",
+    "ssn_desc": "Schweizer AHV-Nummer, wird auf Gültigkeit geprüft"
+  },
   "property": {
     "boolean": "ja/nein",
     "number": "Zahl",

@@ -6,7 +6,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { FormDefinitionModel } from '@okr/shared-models';
-import { hasRole } from '@okr/shared-util-core';
+import { hasRole, omitSsnValues, ssnPresenceLabel } from '@okr/shared-util-core';
 
 import { FormDefinitionService } from '@okr/forms-data-access';
 import { FORM_I18N_KEYS, FormI18n, FORM_MAPPINGS, getPrefillFields, isInputField } from '@okr/forms-util';
@@ -170,9 +170,10 @@ export const FormDefinitionStore = signalStore(
 
       if (submissionId && form.pdfTemplateId) {
         // Template mode — single submission
+        // an AHV number (`ssn` field) never leaves the target record (privacy 1.19)
         const result = await fn({
           templateId: form.pdfTemplateId,
-          payload: docsData[0],
+          payload: omitSsnValues(form.fields, docsData[0]),
           options: { outputFormat: 'pdf', storageMode: 'ephemeral', filename: `${form.formKey}-${submissionId}.pdf` },
         });
         window.open(result.data.url, '_blank');
@@ -181,7 +182,8 @@ export const FormDefinitionStore = signalStore(
         const buildPage = (data: SubmissionDoc): string => {
           const rows = fields.map(f => {
             const v = data[f.key];
-            const display = (v === undefined || v === null || v === '') ? '–' : String(v);
+            const display = f.type === 'ssn' ? ssnPresenceLabel(v)   // never the AHV number itself
+              : (v === undefined || v === null || v === '') ? '–' : String(v);
             return `<tr><th style="text-align:left;padding:4px 12px 4px 0;font-weight:600;">${f.label}</th><td style="padding:4px 0;">${display}</td></tr>`;
           }).join('');
           return `<div class="page">
@@ -236,7 +238,8 @@ export const FormDefinitionStore = signalStore(
         const data = doc.data();
         const values = fields.map(f => {
           const v = data[f.key];
-          const cell = v === undefined || v === null ? '' : String(v);
+          const cell = f.type === 'ssn' ? ssnPresenceLabel(v)   // never the AHV number itself
+            : v === undefined || v === null ? '' : String(v);
           return `"${cell.replace(/"/g, '""')}"`;
         });
         values.push(`"${data['isSpam'] ? 'ja' : 'nein'}"`);

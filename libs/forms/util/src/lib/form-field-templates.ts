@@ -27,6 +27,8 @@ const FORM_FIELD_TEMPLATES: Record<string, FieldTemplate[]> = {
     { key: 'gender',        type: 'radio', label: 'Geschlecht',    required: true,
       options: [{ label: 'Männlich', value: 'male' }, { label: 'Weiblich', value: 'female' }] },
     { key: 'dateOfBirth',   type: 'date',  label: 'Geburtsdatum',  required: true },
+    // an AHV number is a `ssn` field: checked, stored as 13 digits, never copied out of the application
+    { key: 'ssnId',         type: 'ssn',   label: 'AHV-Nummer' },
     { key: 'email',         type: 'email', label: 'E-Mail',        required: true },
     { key: 'phone',         type: 'phone', label: 'Telefon' },
     { key: 'streetName',    type: 'text',  label: 'Strasse' },
@@ -50,7 +52,7 @@ const FORM_FIELD_TEMPLATES: Record<string, FieldTemplate[]> = {
     { key: 'zipCode',       type: 'text',  label: 'PLZ' },
     { key: 'city',          type: 'text',  label: 'Ort' },
     { key: 'countryCode',   type: 'text',  label: 'Land' },
-    { key: 'ssnId',         type: 'text',  label: 'AHV Nr.' },
+    { key: 'ssnId',         type: 'ssn',   label: 'AHV-Nummer' },
   ],
 };
 

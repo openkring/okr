@@ -2,6 +2,7 @@ import { Component, input, output } from '@angular/core';
 import { IonCard, IonCardContent, IonIcon, IonLabel } from '@ionic/angular';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { FieldType } from '@okr/shared-models';
+import type { FormI18n } from '@okr/forms-util';
 
 export interface FieldTypeDef {
   type: FieldType;
@@ -10,6 +11,9 @@ export interface FieldTypeDef {
   description: string;
   /** an «Eigene Angaben» template: the new field starts with `asProperty` on */
   asProperty?: boolean;
+  /** translated name and description; the library resolves them into `label`/`description` */
+  labelKey?: keyof FormI18n;
+  descriptionKey?: keyof FormI18n;
 }
 
 export const FIELD_TYPE_DEFS: FieldTypeDef[] = [
@@ -18,6 +22,8 @@ export const FIELD_TYPE_DEFS: FieldTypeDef[] = [
   { type: 'number',    label: 'Number',    icon: 'calendar-number',   description: 'Numeric input with min/max/step' },
   { type: 'phone',     label: 'Phone',     icon: 'tel',         description: 'International phone number (E.164)' },
   { type: 'iban',      label: 'IBAN',      icon: 'account',         description: 'Bank account number (ISO 13616)' },
+  { type: 'ssn',       label: 'AHV-Nummer', icon: 'id-card',     description: 'Swiss social security number (AHV)',
+    labelKey: 'fieldtype_ssn', descriptionKey: 'fieldtype_ssn_desc' },
   { type: 'password',  label: 'Password',  icon: 'lock-closed',  description: 'Masked input — stored as hash only' },
   { type: 'dropdown',  label: 'Dropdown',  icon: 'chevron-down', description: 'Single-select from a list of options' },
   { type: 'checkbox',  label: 'Checkbox',  icon: 'checkbox',     description: 'Boolean or multi-select checkboxes' },

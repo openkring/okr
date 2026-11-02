@@ -6,7 +6,10 @@ import {
   IbanInput, IbanInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, PasswordInput, PasswordInputI18n,
   PhoneInput, PhoneInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n,
 } from '@okr/shared-ui';
+import { ChSsnMask } from '@okr/shared-config';
+import { SSN_LENGTH } from '@okr/shared-constants';
 import { CategoryListModel, Field } from '@okr/shared-models';
+import { AhvFormat, formatAhv } from '@okr/shared-util-core';
 
 /** Angular validator error → `validation.*` key of the main i18n bundle (resolved by okr-error-note). */
 const ERROR_KEYS: [string, string][] = [
@@ -17,11 +20,15 @@ const ERROR_KEYS: [string, string][] = [
   ['phone', 'addressInvalidPhoneFormat'],
   ['iban', 'validIban'],
   ['ibanCountry', 'validIban'],
+  ['ssn', 'validSSN'],
   ['min', 'minWrong'],
   ['max', 'maxWrong'],
   ['minDate', 'minWrong'],
   ['maxDate', 'maxWrong'],
 ];
+
+/** The usual Swiss example number, shown while an AHV field is empty. */
+const SSN_PLACEHOLDER = '756.1234.5678.97';
 
 /**
  * Renders one form-builder field. The width (full/half/third) is applied by the parent
@@ -58,6 +65,10 @@ const ERROR_KEYS: [string, string][] = [
       }
       @case ('iban') {
         <okr-iban [i18n]="ibanI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="false" [copyable]="false" />
+      }
+      @case ('ssn') {
+        <okr-text-input [i18n]="ssnI18n()" [value]="ssnValue()" (valueChange)="setValue($event)"
+          [maxLength]="ssnLength" [mask]="ssnMask" [readOnly]="false" />
       }
       @case ('phone') {
         <okr-phone [i18n]="phoneI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="false" [copyable]="false" />
@@ -159,6 +170,12 @@ export class FieldRenderer {
   protected readonly ibanI18n = computed<IbanInputI18n>(() => ({
     name: this.field().key, label: this.fieldLabel(), placeholder: this.field().placeholder ?? '',
   }));
+  protected readonly ssnI18n = computed<TextInputI18n>(() => ({
+    name: this.field().key, label: this.fieldLabel(), placeholder: this.field().placeholder || SSN_PLACEHOLDER, helper: '',
+  }));
+  /** the AHV mask and the length cap the person form uses for the same number */
+  protected readonly ssnMask = ChSsnMask;
+  protected readonly ssnLength = SSN_LENGTH;
   protected readonly phoneI18n = computed<PhoneInputI18n>(() => ({
     name: this.field().key, label: this.fieldLabel(), placeholder: this.field().placeholder ?? '',
   }));
@@ -201,6 +218,8 @@ export class FieldRenderer {
 
   // bridge: primitives emit (value/checked)Change → write back into the FormControl
   protected strValue(): string { return (this.control().value ?? '') as string; }
+  /** a complete number shows as 756.1234.5678.97; a half-typed one is handed back unchanged (formatAhv) */
+  protected ssnValue(): string { return formatAhv(this.strValue(), AhvFormat.Friendly); }
   protected boolValue(): boolean { return !!this.control().value; }
   protected arrValue(): string[] { return Array.isArray(this.control().value) ? this.control().value as string[] : []; }
   protected setValue(value: string | string[] | boolean | number | File | File[] | null): void {

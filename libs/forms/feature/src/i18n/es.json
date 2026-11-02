@@ -204,6 +204,10 @@
     "isFilled": "está rellenada",
     "isEmpty": "está vacía"
   },
+  "fieldtype": {
+    "ssn": "Número AVS",
+    "ssn_desc": "Número AVS suizo, se comprueba su validez"
+  },
   "property": {
     "boolean": "sí/no",
     "number": "número",

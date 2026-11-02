@@ -46,6 +46,9 @@ export function conditionOpsFor(field: Field): ConditionOp[] {
     case 'email':
     case 'phone':
       return [...TEXT_OPS];
+    case 'ssn':
+      // an AHV number is never compared to a value: a rule would copy the number into the definition
+      return [...FILLED_OPS];
     case 'label':
     case 'paragraph':
     case 'divider':

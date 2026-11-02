@@ -1,6 +1,7 @@
 import { AbstractControl, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { parsePhoneNumber } from 'libphonenumber-js';
 import { Field } from '@okr/shared-models';
+import { isBlankAhv, normalizeAhv } from '@okr/shared-util-core';
 import { isDisplayField } from './field-kind';
 
 export function validatorsFor(field: Field): ValidatorFn[] {
@@ -10,8 +11,14 @@ export function validatorsFor(field: Field): ValidatorFn[] {
   // (it only rejects null/undefined/empty string/empty array), so an unticked required consent box
   // would pass client validation and only be refused server-side. Option lists keep `required` —
   // there the value is an array and "at least one" is the right rule.
+  // An AHV field's mask leaves '756.' behind when it is cleared: `required` would count that as
+  // an answer, so an ssn field has its own required check (the server reads '756.' as empty too).
   if (field.required) {
-    fns.push(field.type === 'checkbox' && !field.options?.length ? Validators.requiredTrue : Validators.required);
+    fns.push(
+      field.type === 'checkbox' && !field.options?.length ? Validators.requiredTrue
+        : field.type === 'ssn' ? ssnRequiredValidator
+          : Validators.required,
+    );
   }
 
   switch (field.type) {
@@ -32,6 +39,9 @@ export function validatorsFor(field: Field): ValidatorFn[] {
       break;
     case 'iban':
       fns.push(ibanValidator(field.countryWhitelist));
+      break;
+    case 'ssn':
+      fns.push(ssnValidator);
       break;
     case 'password':
       if (field.minLength) fns.push(Validators.minLength(field.minLength));
@@ -89,6 +99,17 @@ function isValidIban(iban: string): boolean {
     remainder = (remainder * 10 + parseInt(ch, 10)) % 97;
   }
   return remainder === 1;
+}
+
+/** A Swiss AHV number: 756, 13 digits, EAN-13 check digit — the same check as the person form (checkAhv). */
+function ssnValidator(ctrl: AbstractControl): ValidationErrors | null {
+  return normalizeAhv(ctrl.value) === undefined ? { ssn: true } : null;
+}
+
+function ssnRequiredValidator(ctrl: AbstractControl): ValidationErrors | null {
+  const value = ctrl.value;
+  const blank = value === undefined || value === null || ((typeof value === 'string' || typeof value === 'number') && isBlankAhv(value));
+  return blank ? { required: true } : null;
 }
 
 function passwordComplexityValidator(field: { requireUppercase?: boolean; requireNumber?: boolean; requireSymbol?: boolean }): ValidatorFn {

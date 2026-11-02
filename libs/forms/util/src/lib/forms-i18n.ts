@@ -173,6 +173,10 @@ export const FORM_I18N_KEYS = {
   op_isFilled:                PFX + 'op.isFilled',
   op_isEmpty:                 PFX + 'op.isEmpty',
 
+  // field types of the builder library that carry a translated name
+  fieldtype_ssn:              PFX + 'fieldtype.ssn',
+  fieldtype_ssn_desc:         PFX + 'fieldtype.ssn_desc',
+
   // typed properties (spec §4.4)
   property_boolean:           PFX + 'property.boolean',
   property_number:            PFX + 'property.number',

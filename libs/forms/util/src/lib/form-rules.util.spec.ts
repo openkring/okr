@@ -49,7 +49,7 @@ describe('conditionOpsFor (spec §5)', () => {
   });
 
   it('offers only filled/empty for value-less inputs', () => {
-    for (const t of ['file', 'images', 'signature', 'avatar', 'time', 'iban', 'password'] as const) {
+    for (const t of ['file', 'images', 'signature', 'avatar', 'time', 'iban', 'ssn', 'password'] as const) {
       expect(conditionOpsFor(f('a', t, 0))).toEqual(['isFilled', 'isEmpty']);
     }
   });

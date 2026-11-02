@@ -42,7 +42,7 @@ import { FieldTypeCard, FieldTypeDef, FIELD_TYPE_DEFS } from './field-type-card'
   `,
 })
 export class FieldTypeLibrary {
-  /** needed for the «Eigene Angaben» group only */
+  /** the «Eigene Angaben» group and the translated names of the basic types (e.g. «AHV-Nummer») */
   public readonly i18n = input<FormI18n>();
   /** true when the form's mapping has a `propertiesField`: lists the «Eigene Angaben» templates */
   public readonly showProperties = input(false);
@@ -52,7 +52,15 @@ export class FieldTypeLibrary {
   protected readonly preventDrop = (): boolean => false;
 
   protected readonly searchTerm = signal('');
-  protected readonly visibleDefs = computed(() => this.filter(FIELD_TYPE_DEFS));
+  protected readonly visibleDefs = computed(() => {
+    const i18n = this.i18n();
+    const defs = FIELD_TYPE_DEFS.map(d => (i18n ? {
+      ...d,
+      label: d.labelKey ? i18n[d.labelKey]() : d.label,
+      description: d.descriptionKey ? i18n[d.descriptionKey]() : d.description,
+    } : d));
+    return this.filter(defs);
+  });
 
   protected readonly propertyDefs = computed<FieldTypeDef[]>(() => {
     const i18n = this.i18n();

@@ -9,9 +9,18 @@ describe('getPrefillFields', () => {
     expect(fields.length).toBeGreaterThan(0);
     const keys = fields.map(f => f.key);
     expect(keys).toEqual([
-      'firstName', 'lastName', 'gender', 'dateOfBirth', 'email', 'phone',
+      'firstName', 'lastName', 'gender', 'dateOfBirth', 'ssnId', 'email', 'phone',
       'streetName', 'streetNumber', 'zipCode', 'city', 'countryCode', 'applicationAs',
     ]);
+  });
+
+  it('asks for the AHV number with an ssn field in both application mappings', () => {
+    for (const mappingKey of ['applications.default', 'applications.junior']) {
+      const ssn = getPrefillFields(mappingKey).find(f => f.key === 'ssnId');
+      expect(ssn?.type).toBe('ssn');
+      expect(ssn?.label).toBe('AHV-Nummer');
+      expect(ssn?.asProperty).toBeUndefined();
+    }
   });
 
   it('assigns sequential order and full width to every field', () => {
@@ -57,7 +66,7 @@ describe('getPrefillFields', () => {
     const model = { fields: getPrefillFields('applications.default') };
     const afterModalClone = structuredClone(model);
     const afterFirestoreClone = structuredClone(afterModalClone);
-    expect(afterFirestoreClone.fields).toHaveLength(12);
+    expect(afterFirestoreClone.fields).toHaveLength(13);
     expect(afterFirestoreClone.fields[0].key).toBe('firstName');
   });
 });
