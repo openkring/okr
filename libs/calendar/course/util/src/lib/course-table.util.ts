@@ -132,7 +132,7 @@ export function buildCourseTable(
   const unassigned = groupEvents
     .filter(e => isCounted(e) && !(e.courseKey ?? '') && e.startDate >= course.startDate && e.startDate <= course.endDate)
     .sort(byStart)
-    .map(event => ({ event, suggested: Object.hasOwn(typeMapping, event.type) }));
+    .map(event => ({ event, suggested: Object.prototype.hasOwnProperty.call(typeMapping, event.type) }));
 
   return { columns, rows, cells, unassigned };
 }
