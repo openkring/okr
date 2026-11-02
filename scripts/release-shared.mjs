@@ -224,10 +224,10 @@ export async function runGates({ nonInteractive = false, acceptDrift = false, ac
  */
 export function verifyLive(site, version) {
   const base = `https://${site}.web.app`;
-  const html = capture('curl', ['-fsS', `${base}/index.html?_cb=${version}`]);
+  const html = capture('curl', ['-fsS', '--max-time', '60', `${base}/index.html?_cb=${version}`]);
   const mainJs = (html.match(/main-[A-Z0-9]+\.js/i) || [])[0];
   if (!mainJs) throw new Error('could not find main-*.js in index.html');
-  const bundle = capture('curl', ['-fsS', `${base}/${mainJs}?_cb=${version}`]);
+  const bundle = capture('curl', ['-fsS', '--max-time', '60', `${base}/${mainJs}?_cb=${version}`]);
   if (!bundle.includes(version))
     throw new Error(`live bundle ${mainJs} does NOT contain "${version}" — a stale build was deployed`);
   console.log(`     ✓ ${mainJs} contains v${version}.`);
@@ -279,13 +279,17 @@ export function commitSubmoduleStamp(app, version, push) {
  * Stages only the `apps/<app>` paths that actually changed (`git commit -o`, never the whole
  * index), and does nothing when none did. Stays its own commit, never folded into the release
  * commit.
+ *
+ * With `push`, pushes exactly `HEAD:main` — never the local `main` branch, which from a worktree,
+ * a work branch or a detached HEAD is not the commit just made. A caller that pushes itself right
+ * afterwards (the all-apps git phase) passes `callerPushes` to silence the "not pushed" hint.
  */
-export function commitPointers(apps, version, push) {
+export function commitPointers(apps, version, push, { callerPushes = false } = {}) {
   const changed = apps.filter((a) => capture('git', ['status', '--porcelain', '--', `apps/${a}`]));
   if (!changed.length) return;
   const paths = changed.map((a) => `apps/${a}`);
   run('git', ['add', ...paths]);
   run('git', ['commit', '-o', ...paths, '-m', `chore(submodules): Pointer -- ngsw-Stempel v${version} (${changed.length} ${changed.length === 1 ? 'app' : 'apps'})`]);
-  if (push) run('git', ['push', 'origin', 'main']);
-  else console.log('  Pointer bump not pushed. Later:  git push origin main');
+  if (push) run('git', ['push', 'origin', 'HEAD:main']);
+  else if (!callerPushes) console.log('  Pointer bump not pushed. Later:  git push origin HEAD:main');
 }

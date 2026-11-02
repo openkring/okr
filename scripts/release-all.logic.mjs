@@ -46,7 +46,7 @@ export function repairKindProblem({ app, kind, tagExists, matchesTag = true, tag
   if (!tagExists)
     return 'Repair re-deploys the version `all` already cut, but the current version has no tag. Release through `all` first.';
   if (!matchesTag)
-    return `The working tree does not match the release tag ${tag}: a repair must build exactly what the tag shipped. Check out ${tag} (e.g. in a clean worktree: git worktree add ../repair ${tag}) or release through \`all\`.`;
+    return `The working tree does not match the release tag ${tag}: a repair must build exactly what the tag shipped. Either release through \`all\`, or check out the tag state in a full checkout (git checkout ${tag} --recurse-submodules, with the app submodules initialised and the app .env files present) and run  pnpm release ${app} none  there, answering y at "Not on main".`;
   return null;
 }
 
@@ -156,7 +156,9 @@ export function firebaseAppId(envText) {
 // ---- built bundle check --------------------------------------------------
 export function bundleConfigProblem(bundleText, ownAppId, otherAppIds) {
   if (!ownAppId) return 'cannot check the bundle: this app has no appId in its FIREBASE_WEBAPP_CONFIG';
+  // Same rule as fastlane's gate_production!: every production flag must be !0, none may be !1.
   if (!bundleText.includes('production:!0')) return 'bundle is a development build (production:!0 not found)';
+  if (bundleText.includes('production:!1')) return 'bundle is not a pure production build (production:!1 found as well)';
   const foreign = otherAppIds.find((id) => id && bundleText.includes(id));
   if (foreign) return `bundle contains another app's id (${foreign})`;
   if (!bundleText.includes(ownAppId)) return `bundle does not contain its own appId (${ownAppId})`;
@@ -193,13 +195,13 @@ const mmss = (ms) => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 };
 
+// Rows without an app are phases that ran one after another (or one wall-clock timer around a
+// pooled / parallel phase) and ADD UP to the total. Rows with an app are the per-app detail inside
+// such a phase: they overlap each other, so they are displayed but never summed. Every pooled or
+// parallel phase therefore contributes exactly one app-less row measuring its real wall-clock.
+// Human waits (the go/no-go answer) are not rows, so they are not in the total either.
 export function formatSummary(rows) {
-  // wall-clock: rows without an app run alone and add up; rows of one step across apps run in
-  // parallel, so that step contributes only its slowest app.
-  const solo = rows.filter((r) => !r.app).reduce((n, r) => n + r.ms, 0);
-  const perStep = new Map();
-  for (const r of rows) if (r.app) perStep.set(r.step, Math.max(perStep.get(r.step) ?? 0, r.ms));
-  const total = solo + [...perStep.values()].reduce((n, ms) => n + ms, 0);
+  const total = rows.filter((r) => !r.app).reduce((n, r) => n + r.ms, 0);
 
   const w = (key, min) => Math.max(min, ...rows.map((r) => r[key].length));
   const wStep = w('step', 4);
@@ -210,5 +212,6 @@ export function formatSummary(rows) {
     line('step', 'app', 'time', 'result'),
     ...rows.map((r) => line(r.step, r.app, mmss(r.ms), r.ok ? 'ok' : 'FAIL')),
     `${'total'.padEnd(wStep)}  ${''.padEnd(wApp)}  ${mmss(total).padStart(6)}`,
+    ...(rows.some((r) => r.app) ? ['(total = rows without an app; per-app rows overlap within their phase)'] : []),
   ].join('\n');
 }

@@ -168,8 +168,10 @@ async function releaseApp(app, kindArg = null) {
   const appKey = app.replace(/-(app|website)$/, '');
   console.log('\n[6/7] app-version update');
   let appVersionPending = false;
+  let appVersionTried = false;
   if (isApp) {
     const patch = appVersionPatch({ version: next, verifiedApps: [app], prodApp: PROD_APP });
+    appVersionTried = true;
     appVersionPending = !(await writeAppVersion(patch));
   } else if (await confirm(`Update app-version.deployed.${appKey} to ${next}? (names the version this app's update prompt shows)`, app === PROD_APP)) {
     const minAns = await ask('  minVersion — leave blank to keep unchanged; only raise it once ALL apps are on this version: ');
@@ -199,10 +201,10 @@ async function releaseApp(app, kindArg = null) {
     run('git', ['commit', '-o', 'package.json', '-m', `release: v${next}`]);
     run('git', ['tag', '-a', `v${next}`, '-m', `release v${next}`]);
     if (await confirm(`Push commit + tag v${next} to origin/main?`, true)) {
-      run('git', ['push', 'origin', 'main', '--follow-tags']);
+      run('git', ['push', '--atomic', 'origin', 'HEAD:main', `v${next}`]);
       push = true;
     } else {
-      console.log(`  Not pushed. Push later with:  git push origin main --follow-tags`);
+      console.log(`  Not pushed. Push later with:  git push --atomic origin HEAD:main v${next}`);
     }
   }
 
@@ -212,8 +214,16 @@ async function releaseApp(app, kindArg = null) {
   }
 
   console.log(`\n✔ ${app} released as v${next}.`);
-  if (appVersionPending)
-    console.log(`  ⚠ REMINDER: you still need to set app-version/app-version → deployed.${appKey} "${next}" in Firestore yourself (not done by this script).`);
+  if (appVersionPending) {
+    if (appVersionTried) {
+      // The write was attempted and failed (instructions printed above): the deploy is live but its
+      // clients will not see the update prompt, so this must not look like a clean run.
+      console.log(`  ✖ app-version/app-version was NOT written — set deployed.${appKey} "${next}" in Firestore by hand (instructions above).`);
+      process.exitCode = 1;
+    } else {
+      console.log(`  ⚠ REMINDER: you still need to set app-version/app-version → deployed.${appKey} "${next}" in Firestore yourself (this script does not write it for websites).`);
+    }
+  }
 }
 
 // ---- functions -----------------------------------------------------------
@@ -235,14 +245,17 @@ async function releaseRules() {
 }
 
 // ---- repair: code must equal the release tag --------------------------------
-// `git diff --quiet` exits 1 on a difference; anything else (bad ref, git error) is not "equal".
+// Compares the TAG with the WORKING TREE (tracked files, index included), not with HEAD: a repair
+// builds what is on disk, so an uncommitted edit must count as a difference. `git diff --quiet`
+// exits 1 on a difference; anything else (bad ref, git error) is not "equal".
 const sameAsTag = (cwd, tag, pathspec = []) =>
-  spawnSync('git', ['diff', '--quiet', tag, 'HEAD', ...(pathspec.length ? ['--', ...pathspec] : [])], { cwd }).status === 0;
+  spawnSync('git', ['diff', '--quiet', tag, ...(pathspec.length ? ['--', ...pathspec] : [])], { cwd }).status === 0;
 
 /**
- * True when the code a repair would build is what the tag shipped. Superproject: everything but
- * `planning` and `apps` (the pointer-bump commit after the tag moves only gitlinks under apps/).
- * The app's submodule: HEAD against its own tag; a submodule without that tag is skipped.
+ * True when the code a repair would build is what the tag shipped: the tag against the working
+ * tree. Superproject: everything but `planning` and `apps` (the pointer-bump commit after the tag
+ * moves only gitlinks under apps/). The app's submodule: its working tree against its own tag; a
+ * submodule without that tag is skipped.
  */
 function repairMatchesTag(app, version) {
   const tag = `v${version}`;

@@ -81,7 +81,8 @@ platform :android do
     ensure
       # Give local `nx serve` its development environment back (production: false). Not under
       # web:reuse: the next native lane (scs-app: iOS after Android) reuses the same production
-      # dist, and a dev build here would fail its dist gate. release-all restores dev at the end.
+      # dist, and a dev build here would fail its dist gate. So under web:reuse the dist is left as
+      # the production build; `nx serve` / `nx build` regenerate the dev environment themselves.
       sh_root("pnpm nx build #{app} --skip-nx-cache", log: false) unless reuse_web
     end
   end

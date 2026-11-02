@@ -29,11 +29,11 @@ let ctx = null;
 
 // ---- step timer ----------------------------------------------------------
 // Runs fn, prints one line when it starts and one when it ends, and records { step, app, ms, ok }
-// for formatSummary. `app` is '' for a step that runs once, alone (formatSummary adds those up).
-// Rows that share a step name and carry an app count only their slowest, because formatSummary
-// treats them as parallel — so steps that run side by side (build libs / build apps, the per-app
-// work) are recorded as one step name with different `app` values, and steps that run one after
-// another (the native lanes) get a step name of their own and an empty app.
+// for formatSummary. The summary total is the sum of the rows with an EMPTY `app`, so every phase
+// contributes exactly one such row measuring its real wall-clock: a phase that runs once, alone, is
+// timed directly (`step('gates', '', …)`); a phase that fans out over apps (logo, postbuild, ship)
+// or runs two things side by side (build libs / build apps) is wrapped in one app-less step around
+// the whole pool, and the per-app rows inside it (`step('ship', app, …)`) are display-only detail.
 // Rethrows, so callers decide.
 export async function step(name, app, fn) {
   const label = app ? `${name} ${app}` : name;
@@ -124,10 +124,11 @@ const onExit = () => {
   process.exitCode = 1;
 };
 
-const onSigint = () => {
+const SIGNALS = ['SIGINT', 'SIGTERM', 'SIGHUP'];
+const onSignal = (signal) => {
   for (const child of ctx.children) child.kill('SIGTERM');
   revertBuildPhase();
-  abort('Interrupted — build phase reverted.');
+  abort(`Interrupted (${signal}) — build phase reverted.`);
 };
 
 // ---- build helpers -------------------------------------------------------
@@ -219,10 +220,16 @@ export async function writeAppVersion(patch, { dryRun = false } = {}) {
     return true;
   }
   try {
-    const { getApps, initializeApp } = await import('firebase-admin/app');
+    const { getApps, initializeApp, deleteApp } = await import('firebase-admin/app');
     const { getFirestore } = await import('firebase-admin/firestore');
-    if (!getApps().length) initializeApp({ projectId: 'bkaiser-org' });
-    await getFirestore().doc('app-version/app-version').update(patch);
+    const app = getApps().length ? getApps()[0] : initializeApp({ projectId: 'bkaiser-org' });
+    // Delete the admin app in a finally: its gRPC channel would otherwise keep the process alive
+    // after the summary, on success and on failure alike. Cleanup errors never change the outcome.
+    try {
+      await getFirestore(app).doc('app-version/app-version').update(patch);
+    } finally {
+      try { await deleteApp(app); } catch { /* never throws */ }
+    }
     console.log('  app-version/app-version updated:');
     for (const [k, v] of Object.entries(patch)) console.log(`        ${k}: ${JSON.stringify(v)}`);
     return true;
@@ -236,7 +243,7 @@ export async function writeAppVersion(patch, { dryRun = false } = {}) {
 // One app, in order: Sentry source maps (before the deploy — they inject debug IDs into the
 // built JS), hosting deploy, live-version check. Any failure fails THIS app only (a failed Sentry
 // upload means it is not deployed, as in the single-app release when the upload command fails).
-// The three steps keep one step name each across apps, so the summary counts their slowest.
+// Its rows are per-app detail inside the app-less `ship` row, which carries the pool's wall-clock.
 async function shipApp(app) {
   const { opts, version } = ctx;
   const site = SITES[app];
@@ -255,22 +262,41 @@ async function shipApp(app) {
 // Release commit + tag, every app's submodule stamp and tag, ONE pointer commit, ONE push.
 // The submodules push first (HEAD:main + tag), so the superproject pointer never names a commit
 // the remote does not have. Mirrors releaseApp step 7 (same commit message, same annotated tag).
+// The final push sends exactly the release — `HEAD:main` plus the tag, atomically — never the local
+// `main` branch: from a worktree, a work branch or a detached HEAD a bare `push origin main` would
+// leave the release commit and tag behind while reporting success, and on a shared `main` it would
+// carry other sessions' commits along. `--atomic` makes it all-or-nothing, and a non-fast-forward
+// (origin moved) is rejected up front instead of half-applied.
+// Progress is recorded in ctx.gitDone / ctx.gitCurrent so a failure can say what already happened.
 function gitPhase(version) {
-  const { dryRun } = ctx.opts;
-  const g = (args) => {
-    if (dryRun) console.log(`    (dry run) would: git ${args.join(' ')}`);
-    else run('git', args);
+  const { dryRun, failAt } = ctx.opts;
+  const tag = `v${version}`;
+  const done = (what) => { ctx.gitDone.push(what); ctx.gitCurrent = ''; };
+  // `--fail-at=git:<label>` stands in for a failing git step in a dry run (labels: commit, tag, push)
+  const g = (label, args) => {
+    ctx.gitCurrent = label;
+    if (dryRun) {
+      console.log(`    (dry run) would: git ${args.join(' ')}`);
+      if (failAt === `git:${label}`) throw new Error(`git ${label} failed (simulated by --fail-at)`);
+    } else run('git', args);
   };
-  g(['add', 'package.json']);
-  g(['commit', '-o', 'package.json', '-m', `release: v${version}`]);
-  g(['tag', '-a', `v${version}`, '-m', `release v${version}`]);
+  g('release commit', ['add', 'package.json']);
+  g('release commit', ['commit', '-o', 'package.json', '-m', `release: v${version}`]);
+  done('release commit');
+  g('tag', ['tag', '-a', tag, '-m', `release v${version}`]);
+  done(`tag ${tag}`);
   for (const app of APPS) {
-    if (dryRun) console.log(`    (dry run) would: commitSubmoduleStamp(${app}, v${version}, push) — ngsw commit, tag, push HEAD:main + tag in apps/${app}`);
+    ctx.gitCurrent = `${app} submodule`;
+    if (dryRun) console.log(`    (dry run) would: commitSubmoduleStamp(${app}, ${tag}, push) — ngsw commit, tag, push HEAD:main + tag in apps/${app}`);
     else commitSubmoduleStamp(app, version, true);
+    done(`${app} submodule pushed`);
   }
-  if (dryRun) console.log(`    (dry run) would: commitPointers(${APPS.length} apps, v${version}, no push) — one pointer commit`);
-  else commitPointers(APPS, version, false);
-  g(['push', 'origin', 'main', '--follow-tags']);
+  ctx.gitCurrent = 'pointer commit';
+  if (dryRun) console.log(`    (dry run) would: commitPointers(${APPS.length} apps, ${tag}, no push) — one pointer commit`);
+  else commitPointers(APPS, version, false, { callerPushes: true });
+  done('pointer commit');
+  g('push', ['push', '--atomic', 'origin', 'HEAD:main', tag]);
+  done(`push HEAD:main + ${tag}`);
 }
 
 // fastlane needs a UTF-8 locale or it dies on US-ASCII; web:reuse makes the lane take the web
@@ -293,7 +319,7 @@ export async function releaseAll(opts) {
   if (o.kind && !KINDS.includes(o.kind)) abort(`Unknown bump '${o.kind}' — expected patch, minor or major.`);
 
   ctx = { opts: o, rows: [], children: new Set(), stamped: [], bumped: false, reverted: false,
-          env: process.env, logDir: '', version: '', appIds: {}, armed: false };
+          env: process.env, logDir: '', version: '', appIds: {}, armed: false, gitDone: [], gitCurrent: '' };
 
   // 1. preflight, and the bump kind
   await step('preflight', '', async () => {
@@ -334,7 +360,7 @@ export async function releaseAll(opts) {
   ctx.logDir = join(repoRoot, 'dist/release-logs', `v${next}`);
   if (!o.dryRun) mkdirSync(ctx.logDir, { recursive: true });
   console.log(`\nVersion ${current} -> ${next} (${o.kind}) for ${APPS.length} apps${o.dryRun ? '  [dry run]' : ''}`);
-  process.once('SIGINT', onSigint);
+  for (const sig of SIGNALS) process.once(sig, onSignal);
   process.once('exit', onExit);
   try {
     await step('bump', '', async () => {
@@ -349,24 +375,27 @@ export async function releaseAll(opts) {
 
     // 5. logo assets — before the build, so the rewritten manifest/icons are bundled. Non-fatal,
     //    as in the single-app release: the committed icons are still valid.
-    await runPool(APPS, o.concurrency, (app) => step('logo', app, async () => {
+    await step('logo', '', () => runPool(APPS, o.concurrency, (app) => step('logo', app, async () => {
       try { await sh(app, `node scripts/gen-logo-assets.mjs ${app}`, `logo:${app}`); }
       catch (e) { console.log(`    ⚠ Logo generation failed for ${app} — continuing with the committed icons. ${e.message}`); }
-    }));
+    })));
 
     // 6. lib gate and app builds side by side; both must succeed. allSettled, not all: reverting
-    //    while the other nx run is still writing would race it. Recorded as one step `build` with
-    //    app `libs` / `apps` so the summary counts the slower of the two, not their sum.
+    //    while the other nx run is still writing would race it. One app-less `build` row times the
+    //    two together (their real wall-clock); the `libs` / `apps` rows are display-only detail.
+    //    The load peak is concurrency + 2: the lib gate's --parallel=2 runs beside the app builds.
     const gate = `pnpm nx run-many -t build --exclude='*-app,*-website,functions,okr' --skip-nx-cache --parallel=2`;
-    const built = await Promise.allSettled([
-      step('build', 'libs', () => sh(null, gate, 'build:libs')),
-      step('build', 'apps', buildApps),
-    ]);
-    const failed = built.filter((r) => r.status === 'rejected');
-    if (failed.length) throw new Error(failed.map((r) => r.reason.message).join('\n'));
+    await step('build', '', async () => {
+      const built = await Promise.allSettled([
+        step('build', 'libs', () => sh(null, gate, 'build:libs')),
+        step('build', 'apps', buildApps),
+      ]);
+      const failed = built.filter((r) => r.status === 'rejected');
+      if (failed.length) throw new Error(failed.map((r) => r.reason.message).join('\n'));
+    });
 
     // 7. per-app checks and stamps on the fresh bundles
-    const post = await runPool(APPS, o.concurrency, (app) => step('postbuild', app, () => postBuild(app)));
+    const post = await step('postbuild', '', () => runPool(APPS, o.concurrency, (app) => step('postbuild', app, () => postBuild(app))));
     const bad = post.filter((r) => !r.ok);
     if (bad.length) throw new Error(bad.map((r) => `${r.item}: ${r.error.message}`).join('\n'));
   } catch (e) {
@@ -386,7 +415,7 @@ export async function releaseAll(opts) {
     const ans = (await ask(`Ship v${next} to ${APPS.length} apps (Sentry upload, hosting deploy, live check, commit/tag/push)? [y/N] `, { onInterrupt: 'n' })).toLowerCase();
     go = ans === 'y' || ans === 'yes';
   }
-  process.removeListener('SIGINT', onSigint);
+  for (const sig of SIGNALS) process.removeListener(sig, onSignal);
   if (!go) {
     revertBuildPhase();
     abort('Aborted at go/no-go — version bump and ngsw stamps reverted.');
@@ -401,7 +430,8 @@ export async function releaseAll(opts) {
   console.log(`\n=== Shipping v${next}${tag} ===`);
 
   // 1. Sentry + deploy + verify per app. A failed app is recorded, never aborts the others.
-  const shipped = await runPool(APPS, o.concurrency, shipApp);
+  //    The app-less `ship` row times the whole pool; sentry / deploy / verify rows are per-app detail.
+  const shipped = await step('ship', '', () => runPool(APPS, o.concurrency, shipApp));
   const verifiedApps = shipped.filter((r) => r.ok).map((r) => r.item);
   const failedApps = shipped.filter((r) => !r.ok).map((r) => ({ app: r.item, reason: r.error?.message ?? String(r.error) }));
 
@@ -468,7 +498,13 @@ export async function releaseAll(opts) {
     console.log(`\n✖ ${failedApps.length} of ${APPS.length} sites are NOT on v${next}:`);
     for (const f of failedApps) console.log(`    ${f.app}: ${f.reason}\n      repair:  pnpm release ${f.app} none`);
   }
-  if (gitError) console.log(`\n✖ git phase failed: ${gitError.message ?? gitError}\n    The release commit/tag/push may be incomplete — check \`git status\` and \`git log\`, then finish by hand.`);
+  if (gitError) {
+    console.log(`\n✖ git phase failed${ctx.gitCurrent ? ` at: ${ctx.gitCurrent}` : ''} — ${gitError.message ?? gitError}`);
+    console.log(`    completed: ${ctx.gitDone.length ? ctx.gitDone.join(', ') : 'nothing'}`);
+    console.log('    Check `git status` and `git log`, then finish the remaining steps by hand. If origin moved,');
+    console.log(`    merge origin/main, do not rebase — the tag v${next} points at the release commit. Then push with:`);
+    console.log(`        git push --atomic origin HEAD:main v${next}`);
+  }
   if (!appVersionWritten) console.log('\n✖ app-version was not written — see the instructions above.');
   for (const f of failedNative) console.log(`\n✖ ${f.name}: ${f.reason}`);
   if (problems) process.exitCode = 1;

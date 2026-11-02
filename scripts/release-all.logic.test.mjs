@@ -97,6 +97,8 @@ test('bundleConfigProblem', () => {
   assert.match(bundleConfigProblem('x={production:!1,appId:"1:2:web:own"}', '1:2:web:own', []), /development/);
   assert.match(bundleConfigProblem(ok.replace('own', 'other'), '1:2:web:own', ['1:2:web:other']), /other/);
   assert.match(bundleConfigProblem('x={production:!0}', '1:2:web:own', []), /own/);
+  // fastlane gate_production! rule: !0 AND no !1 anywhere
+  assert.match(bundleConfigProblem('a={production:!0};b={production:!1,appId:"1:2:web:own"}', '1:2:web:own', []), /production:!1/);
   assert.ok(bundleConfigProblem(ok, '', []));
   assert.ok(bundleConfigProblem(ok, null, []));
 });
@@ -126,14 +128,20 @@ test('formatSummary lists every row and a total', () => {
   assert.match(s, /gates/); assert.match(s, /kwa-app/); assert.match(s, /FAIL/); assert.match(s, /total/i);
 });
 
-test('formatSummary: total is wall-clock (sequential rows add, parallel app rows overlap)', () => {
+test('formatSummary: total sums the app-less phase rows; per-app rows are shown but not summed', () => {
   const s = formatSummary([
     { step: 'gates', app: '', ms: 60000, ok: true },
-    { step: 'build', app: 'a-app', ms: 30000, ok: true },
-    { step: 'build', app: 'b-app', ms: 40000, ok: true },
+    { step: 'build', app: 'libs', ms: 50000, ok: true },
+    { step: 'build', app: 'apps', ms: 90000, ok: true },
+    { step: 'build', app: '', ms: 95000, ok: true }, // wall-clock of the two parallel nx runs
+    { step: 'ship', app: 'a-app', ms: 70000, ok: true },
+    { step: 'ship', app: 'b-app', ms: 80000, ok: true },
+    { step: 'ship', app: '', ms: 150000, ok: true }, // pool of 2 apps at concurrency 1: the real wall-clock
   ]);
-  assert.match(s, /total\s+1:40/i);
-  assert.match(s, /ok/);
+  assert.match(s, /total\s+5:05/i); // 60 + 95 + 150 s, nothing from the per-app rows
+  for (const needle of ['libs', 'apps', 'a-app', 'b-app']) assert.match(s, new RegExp(needle));
+  assert.match(s, /per-app rows overlap/);
+  assert.doesNotMatch(formatSummary([{ step: 'gates', app: '', ms: 1000, ok: true }]), /overlap/);
 });
 
 test('repair: apps may only redeploy the tagged current version', () => {
@@ -145,7 +153,11 @@ test('repair: apps may only redeploy the tagged current version', () => {
 
 test('repair: refuses when the code does not match the release tag', () => {
   assert.equal(repairKindProblem({ app: 'kwa-app', kind: 'none', tagExists: true, matchesTag: true }), null);
-  assert.match(repairKindProblem({ app: 'kwa-app', kind: 'none', tagExists: true, matchesTag: false }), /tag/);
+  const refusal = repairKindProblem({ app: 'kwa-app', kind: 'none', tagExists: true, matchesTag: false, tag: 'v7.57.0' });
+  assert.match(refusal, /v7\.57\.0/);
+  assert.match(refusal, /release through `all`/);
+  assert.match(refusal, /Not on main/);
+  assert.doesNotMatch(refusal, /git worktree add/);
   assert.equal(repairKindProblem({ app: 'okr-website', kind: 'patch', tagExists: false, matchesTag: false }), null);
 });
 
