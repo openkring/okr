@@ -684,7 +684,8 @@
       "all": "Tutti",
       "bk": "Solo in BK",
       "srv": "Solo in SRV",
-      "both": "Entrambi"
+      "both": "Entrambi",
+      "sekretariat": "Per la segreteria"
     },
     "preview": {
       "title": "Controlla la modifica in Regasoft",
@@ -710,6 +711,18 @@
       "no": "no",
       "info": "modificabile solo dalla segreteria",
       "bk": "da correggere nei nostri dati"
+    },
+    "sekretariat": {
+      "action": "Segnalazione alla segreteria",
+      "none": "Non ci sono nuovi casi per la segreteria.",
+      "clipboard": "La segnalazione è troppo lunga per una bozza di e-mail. Il testo è negli appunti. Incollalo nell'e-mail.",
+      "sent": "Hai inviato la segnalazione?",
+      "yes": "Sì, inviata",
+      "no": "No",
+      "marked": "I casi sono registrati come segnalati. La prossima volta compariranno solo quelli nuovi.",
+      "error": "Non è stato possibile leggere le segnalazioni precedenti. Riprova più tardi.",
+      "mark_error": "Non è stato possibile registrare i casi come segnalati. Riprova più tardi.",
+      "clipboard_error": "Non è stato possibile copiare il testo negli appunti. Riprova più tardi."
     }
   }
 }

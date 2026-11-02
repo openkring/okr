@@ -684,7 +684,8 @@
       "all": "All",
       "bk": "Only in BK",
       "srv": "Only in SRV",
-      "both": "Both"
+      "both": "Both",
+      "sekretariat": "For the secretariat"
     },
     "preview": {
       "title": "Review the change to Regasoft",
@@ -710,6 +711,18 @@
       "no": "no",
       "info": "can only be changed by the secretariat",
       "bk": "correct this in our data"
+    },
+    "sekretariat": {
+      "action": "Report to the secretariat",
+      "none": "There are no new cases for the secretariat.",
+      "clipboard": "The report is too long for a mail draft. The text is in your clipboard. Paste it into the mail.",
+      "sent": "Did you send the report?",
+      "yes": "Yes, sent",
+      "no": "No",
+      "marked": "The cases are marked as reported. Next time only new ones will appear.",
+      "error": "The earlier reports could not be read. Please try again later.",
+      "mark_error": "The cases could not be marked as reported. Please try again later.",
+      "clipboard_error": "The text could not be copied to the clipboard. Please try again later."
     }
   }
 }

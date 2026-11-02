@@ -684,7 +684,8 @@
       "all": "Alle",
       "bk": "Nur in BK",
       "srv": "Nur in SRV",
-      "both": "Beide"
+      "both": "Beide",
+      "sekretariat": "Fürs Sekretariat"
     },
     "preview": {
       "title": "Änderung an Regasoft prüfen",
@@ -710,6 +711,18 @@
       "no": "nein",
       "info": "nur durch das Sekretariat änderbar",
       "bk": "in unseren Daten korrigieren"
+    },
+    "sekretariat": {
+      "action": "Meldung ans Sekretariat",
+      "none": "Es gibt keine neuen Fälle für das Sekretariat.",
+      "clipboard": "Die Meldung ist zu lang für einen Mailentwurf. Der Text liegt in der Zwischenablage. Füge ihn in die Mail ein.",
+      "sent": "Hast du die Meldung gesendet?",
+      "yes": "Ja, gesendet",
+      "no": "Nein",
+      "marked": "Die Fälle sind als gemeldet vermerkt. Beim nächsten Mal erscheinen nur neue.",
+      "error": "Die bisherigen Meldungen konnten nicht gelesen werden. Bitte versuche es später noch einmal.",
+      "mark_error": "Die Fälle konnten nicht als gemeldet vermerkt werden. Bitte versuche es später noch einmal.",
+      "clipboard_error": "Der Text konnte nicht in die Zwischenablage kopiert werden. Bitte versuche es später noch einmal."
     }
   }
 }

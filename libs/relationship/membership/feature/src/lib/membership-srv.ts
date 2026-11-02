@@ -29,6 +29,12 @@ import { fill } from '@okr/shared-util-core';
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button></ion-menu-button></ion-buttons>
         <ion-title>{{ store.i18n.srv_title() }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button [disabled]="index().length === 0" (click)="store.reportToSekretariat()">
+            <ion-icon slot="start" src="{{ 'mail' | svgIcon }}" />
+            {{ store.i18n.srv_sekretariat_action() }}
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content>
@@ -321,10 +327,11 @@ export class MembershipSrv implements OnInit {
   protected regasoftItems = computed(() => this.store.regasoftItems());
 
   // filters — the list-filter works on display strings, so the stable key is derived by position.
-  private readonly filterKeys = ['all', 'bk', 'srv', 'both'] as const;
+  private readonly filterKeys = ['all', 'bk', 'srv', 'both', 'sekretariat'] as const;
   protected filters = computed(() => [
     this.store.i18n.srv_filter_all(), this.store.i18n.srv_filter_bk(),
     this.store.i18n.srv_filter_srv(), this.store.i18n.srv_filter_both(),
+    this.store.i18n.srv_filter_sekretariat(),
   ]);
   protected filter = linkedSignal(() => this.filters()[0]);
   private readonly filterKey = computed(() =>
@@ -364,12 +371,14 @@ export class MembershipSrv implements OnInit {
       case 'bk':   items = items.filter(i => !!i.mKey && !i.rid); break;
       case 'srv':  items = items.filter(i => !i.mKey && !!i.rid); break;
       case 'both': items = items.filter(i => !!i.mKey && !!i.rid); break;
+      case 'sekretariat': items = items.filter(i => !!i.rid && this.store.sekretariatRids().has(i.rid)); break;
     }
     return term ? items.filter(i => i.indexField?.includes(term)) : items;
   });
 
   ngOnInit(): void {
     this.store.loadIndexFromStorage();
+    void this.store.refreshReported();
   }
 
 
@@ -401,6 +410,7 @@ protected async buildIndex(): Promise<void> {
     this.isBusy.set(true);
     try {
       await this.store.buildIndex();
+      void this.store.refreshReported();
     } finally {
       this.isBusy.set(false);
     }

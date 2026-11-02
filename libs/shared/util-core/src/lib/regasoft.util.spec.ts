@@ -4,10 +4,13 @@ import { SrvIndex } from '@okr/shared-models';
 
 import {
   classifyPhone,
+  composeSekretariatMail,
   countryIdOf,
   expectedSrvStatus,
   getMismatches,
+  getSekretariatCases,
   getSrvChanges,
+  mailtoUrl,
   normalizePhone,
   phonesMatch,
   REGASOFT_COUNTRY_IDS,
@@ -420,5 +423,145 @@ describe('srvCreateBlocker', () => {
   it('reports hasSrvNumber before duplicate', () => {
     const item = candidate({ memberId: '12345' });
     expect(srvCreateBlocker(item, [item, inRegasoft()])).toBe('hasSrvNumber');
+  });
+});
+
+describe('getSekretariatCases', () => {
+  // A second Regasoft record of the same person: no BK link, own rid.
+  const twin = (o: Partial<SrvIndex> = {}) =>
+    srvIndex({ mKey: '', personKey: '', memberId: '', rServiceId: '', rid: '9', ...o });
+
+  it('reports nothing when everything is in order', () => {
+    expect(getSekretariatCases([srvIndex()])).toEqual([]);
+  });
+
+  it('reports the unlinked record of a pair as duplicate, keyed by its rid', () => {
+    const linked = srvIndex({ rid: '1', rServiceId: '555', memberId: '555' });
+    const extra = twin({ rid: '9', rServiceId: '777' });
+    const cases = getSekretariatCases([linked, extra]);
+    expect(cases).toHaveLength(1);
+    expect(cases[0]).toMatchObject({
+      caseKey: 'duplicate-9',
+      caseType: 'duplicate',
+      externalRef: '9',
+      subjectKey: '',
+      line: '«Anna Muster, SRV-Nr. 777: doppelter Eintrag (ID 9), bitte löschen»',
+    });
+  });
+
+  it('reports one case per surplus record of a triple', () => {
+    const linked = srvIndex({ rid: '5', rServiceId: '555', memberId: '555' });
+    const cases = getSekretariatCases([linked, twin({ rid: '6' }), twin({ rid: '7' })]);
+    expect(cases.map(c => c.caseKey)).toEqual(['duplicate-6', 'duplicate-7']);
+  });
+
+  it('without any link keeps the lowest rid and reports the others', () => {
+    const a = srvIndex({ mKey: '', personKey: '', rid: '12' });
+    const b = srvIndex({ mKey: '', personKey: '', rid: '4' });
+    const cases = getSekretariatCases([a, b]);
+    expect(cases.map(c => c.caseKey)).toEqual(['duplicate-12']);
+  });
+
+  it('does not group people with the same name but another birth date', () => {
+    const a = srvIndex({ rid: '1' });
+    const b = twin({ rid: '2', rDateOfBirth: '19900101' });
+    expect(getSekretariatCases([a, b])).toEqual([]);
+  });
+
+  it('does not group same-named records without a full birth date', () => {
+    const a = srvIndex({ rid: '1', rDateOfBirth: '' });
+    const b = twin({ rid: '2', rDateOfBirth: '' });
+    expect(getSekretariatCases([a, b])).toEqual([]);
+  });
+
+  it('keeps a BK-only entry (no rid) out of the groups', () => {
+    const bkOnly = srvIndex({ rid: '', rServiceId: '' });
+    expect(getSekretariatCases([bkOnly, srvIndex({ rid: '3' })])).toEqual([]);
+  });
+
+  it('reports a missing newsletter subscription', () => {
+    const cases = getSekretariatCases([srvIndex({ hasNewsletter: false, rServiceId: '321' })]);
+    expect(cases).toHaveLength(1);
+    expect(cases[0]).toMatchObject({
+      caseKey: 'newsletter-1',
+      caseType: 'newsletter',
+      subjectKey: 'person.p1',
+      line: '«Anna Muster, SRV-Nr. 321: Newsletter abonniert?»',
+    });
+  });
+
+  it('shows a dash when the record has no SRV number', () => {
+    const [c] = getSekretariatCases([srvIndex({ hasNewsletter: false, rServiceId: '' })]);
+    expect(c.line).toBe('«Anna Muster, SRV-Nr. –: Newsletter abonniert?»');
+  });
+
+  it('reports the main club only for a member of our club', () => {
+    expect(getSekretariatCases([srvIndex({ mainClub: false })]).map(c => c.caseKey)).toEqual(['mainClub-1']);
+    expect(getSekretariatCases([srvIndex({ mainClub: false, mKey: '', personKey: '' })])).toEqual([]);
+  });
+
+  it('reports a Regasoft record that lists more than one club', () => {
+    const cases = getSekretariatCases([srvIndex({ clubs: ['!Seeclub', 'RC Andere'] })]);
+    expect(cases).toHaveLength(1);
+    expect(cases[0]).toMatchObject({ caseKey: 'doubleMembership-1', caseType: 'doubleMembership' });
+    expect(cases[0].line).toContain('Mitglied in mehreren Clubs');
+  });
+
+  it('does not report newsletter or club cases for a record that is deleted anyway', () => {
+    const linked = srvIndex({ rid: '1', rServiceId: '555', memberId: '555' });
+    const extra = twin({ rid: '9', hasNewsletter: false, mainClub: false, clubs: ['a', 'b'] });
+    expect(getSekretariatCases([linked, extra]).map(c => c.caseKey)).toEqual(['duplicate-9']);
+  });
+
+  it('keeps the case key stable across calls', () => {
+    const idx = [srvIndex({ hasNewsletter: false })];
+    expect(getSekretariatCases(idx)[0].caseKey).toBe(getSekretariatCases(idx)[0].caseKey);
+  });
+});
+
+describe('composeSekretariatMail', () => {
+  const cases = getSekretariatCases([
+    srvIndex({ hasNewsletter: false, rServiceId: '321' }),
+    srvIndex({ rid: '2', firstName: 'Ben', rFirstName: 'Ben', personKey: 'p2', mainClub: false, rServiceId: '' , key: 'ben muster', rDateOfBirth: '19700101'}),
+  ]);
+
+  it('uses the club name in the subject', () => {
+    expect(composeSekretariatMail(cases, 'Seeclub Stäfa').subject).toBe('Mitgliedermutationen Seeclub Stäfa');
+  });
+
+  it('contains every line as a list item between greeting and closing', () => {
+    const { body } = composeSekretariatMail(cases, 'Seeclub Stäfa');
+    expect(cases).toHaveLength(2);
+    for (const c of cases) expect(body).toContain(`- ${c.line}`);
+    expect(body.startsWith('Hallo zusammen\n\n')).toBe(true);
+    expect(body.endsWith('\n\nVielen Dank und freundliche Grüsse')).toBe(true);
+  });
+
+  it('puts one line per case, in order', () => {
+    const lines = composeSekretariatMail(cases, 'X').body.split('\n').filter(l => l.startsWith('- '));
+    expect(lines).toEqual(cases.map(c => `- ${c.line}`));
+  });
+});
+
+describe('mailtoUrl', () => {
+  it('encodes subject and body without a recipient', () => {
+    const url = mailtoUrl({ subject: 'A & B', body: 'Grüsse\nZeile 2' });
+    expect(url).toBe('mailto:?subject=A%20%26%20B&body=Gr%C3%BCsse%0AZeile%202');
+  });
+
+  it('returns null above 1800 characters', () => {
+    expect(mailtoUrl({ subject: 'S', body: 'x'.repeat(1900) })).toBeNull();
+  });
+
+  it('accepts a URL of exactly 1800 characters', () => {
+    const base = 'mailto:?subject=S&body='.length;
+    const url = mailtoUrl({ subject: 'S', body: 'x'.repeat(1800 - base) });
+    expect(url).not.toBeNull();
+    expect(url?.length).toBe(1800);
+  });
+
+  it('counts the encoded length, not the raw length', () => {
+    // 700 umlauts are 700 characters raw but 4200 encoded.
+    expect(mailtoUrl({ subject: 'S', body: 'ü'.repeat(700) })).toBeNull();
   });
 });

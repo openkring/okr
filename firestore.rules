@@ -1218,6 +1218,15 @@ service cloud.firestore {
       allow create: if (isPrivileged() || hasRole('memberAdmin')) && tenantCreate();
       allow update, delete: if false;
     }
+    // external-reports (spec 1.133 §8): marks that a case was reported to an external organisation
+    // (SRV Sekretariat), so the next report only holds new cases. No names, only keys. Privileged or
+    // memberAdmin of the tenant; the doc is written to the caller's own tenant only. No delete: a mark
+    // is history (a wrong one is archived via isArchived, never removed).
+    match /external-reports/{id}   {
+      allow read:   if (isPrivileged() || hasRole('memberAdmin')) && tenantRead();
+      allow create: if (isPrivileged() || hasRole('memberAdmin')) && tenantCreate();
+      allow update: if (isPrivileged() || hasRole('memberAdmin')) && tenantUpdate();
+    }
 
     // ============================================================================
     //  Templates (PDF) — role-gated; converted from dead claim checks to get()-roles.

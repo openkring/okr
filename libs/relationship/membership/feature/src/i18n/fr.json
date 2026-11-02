@@ -684,7 +684,8 @@
       "all": "Tous",
       "bk": "Uniquement dans BK",
       "srv": "Uniquement dans SRV",
-      "both": "Les deux"
+      "both": "Les deux",
+      "sekretariat": "Pour le secrétariat"
     },
     "preview": {
       "title": "Vérifier la modification dans Regasoft",
@@ -710,6 +711,18 @@
       "no": "non",
       "info": "modifiable uniquement par le secrétariat",
       "bk": "à corriger dans nos données"
+    },
+    "sekretariat": {
+      "action": "Annonce au secrétariat",
+      "none": "Il n'y a aucun nouveau cas pour le secrétariat.",
+      "clipboard": "L'annonce est trop longue pour un brouillon de mail. Le texte se trouve dans le presse-papiers. Colle-le dans le mail.",
+      "sent": "As-tu envoyé l'annonce ?",
+      "yes": "Oui, envoyée",
+      "no": "Non",
+      "marked": "Les cas sont notés comme annoncés. La prochaine fois, seuls les nouveaux apparaîtront.",
+      "error": "Les annonces précédentes n'ont pas pu être lues. Réessaie plus tard.",
+      "mark_error": "Les cas n'ont pas pu être notés comme annoncés. Réessaie plus tard.",
+      "clipboard_error": "Le texte n'a pas pu être copié dans le presse-papiers. Réessaie plus tard."
     }
   }
 }

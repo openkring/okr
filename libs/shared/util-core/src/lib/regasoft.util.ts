@@ -218,3 +218,111 @@ export function getSrvChanges(item: SrvIndex, today: string): SrvChanges {
   }
   return changes;
 }
+
+// ─── Sekretariat report (spec 1.133 §8) ──────────────────────────────────────
+
+/**
+ * What the Regasoft API cannot do, the Sekretariat does by hand. `licence` and `delete` are part of
+ * the union for later: there is no reliable source for them yet, so `getSekretariatCases` never
+ * produces them today.
+ */
+export type SrvCaseType = 'duplicate' | 'newsletter' | 'licence' | 'mainClub' | 'doubleMembership' | 'delete';
+
+export interface SrvCase {
+  /** Stable per case: `${caseType}-${rid}`. Also the id suffix of the `external-reports` mark. */
+  caseKey: string;
+  caseType: SrvCaseType;
+  /** `person.<personKey>` or '' when the Regasoft record has no BK person. */
+  subjectKey: string;
+  /** The Regasoft record id the case is about. */
+  externalRef: string;
+  /** One German line for the mail (name, SRV number, what). Built at compose time, never stored. */
+  line: string;
+}
+
+const SEKRETARIAT_MAIL_INTRO = 'Bitte schaut euch folgende Mitglieder im Regasoft an:';
+const SEKRETARIAT_MAIL_CLOSING = 'Vielen Dank und freundliche Grüsse';
+/** Longest `mailto:` URL we hand to a mail program; longer ones are cut or refused by some of them. */
+const MAILTO_MAX_LENGTH = 1800;
+
+const WHAT: Record<'duplicate' | 'newsletter' | 'mainClub' | 'doubleMembership', (rid: string) => string> = {
+  duplicate: rid => `doppelter Eintrag (ID ${rid}), bitte löschen`,
+  newsletter: () => 'Newsletter abonniert?',
+  mainClub: () => 'Hauptclub prüfen',
+  doubleMembership: () => 'Mitglied in mehreren Clubs',
+};
+
+function sekretariatCase(item: SrvIndex, caseType: keyof typeof WHAT): SrvCase {
+  const name = `${item.firstName || item.rFirstName} ${item.lastName || item.rLastName}`.trim();
+  return {
+    caseKey: `${caseType}-${item.rid}`,
+    caseType,
+    subjectKey: item.personKey ? `person.${item.personKey}` : '',
+    externalRef: item.rid,
+    line: `«${name}, SRV-Nr. ${item.rServiceId || '–'}: ${WHAT[caseType](item.rid)}»`,
+  };
+}
+
+/**
+ * The Regasoft records that are a second entry of the same person (same name, same full Regasoft
+ * birth date — a missing or partial date never groups). Per group the surplus ones are returned:
+ * every record not linked to our membership (`memberId` = `rServiceId`); when none is linked, every
+ * record except the lowest rid.
+ */
+function surplusRecords(index: SrvIndex[]): Set<SrvIndex> {
+  const groups = new Map<string, SrvIndex[]>();
+  for (const item of index) {
+    if (!item.rid || classifyStoreDate(item.rDateOfBirth) !== 'full') continue;
+    const name = `${item.rFirstName} ${item.rLastName}`.trim().toLowerCase();
+    const key = `${name}|${item.rDateOfBirth}`;
+    groups.set(key, [...(groups.get(key) ?? []), item]);
+  }
+  const surplus = new Set<SrvIndex>();
+  for (const group of groups.values()) {
+    if (group.length < 2) continue;
+    const linked = group.filter(i => !!i.memberId && i.memberId === i.rServiceId);
+    if (linked.length > 0) {
+      for (const i of group) if (!linked.includes(i)) surplus.add(i);
+    } else {
+      const keep = group.reduce((a, b) => (Number(b.rid) < Number(a.rid) ? b : a));
+      for (const i of group) if (i !== keep) surplus.add(i);
+    }
+  }
+  return surplus;
+}
+
+/**
+ * Everything the Sekretariat has to do in Regasoft for us: second entries to delete, a missing
+ * newsletter subscription, a main club that is not ours, a member listed in several clubs.
+ * A record reported for deletion carries no further cases (it is going away). Index order.
+ */
+export function getSekretariatCases(index: SrvIndex[]): SrvCase[] {
+  const surplus = surplusRecords(index);
+  const cases: SrvCase[] = [];
+  for (const item of index) {
+    if (!item.rid) continue;
+    if (surplus.has(item)) {
+      cases.push(sekretariatCase(item, 'duplicate'));
+      continue;
+    }
+    if (item.hasNewsletter === false) cases.push(sekretariatCase(item, 'newsletter'));
+    if (item.mainClub === false && !!item.mKey) cases.push(sekretariatCase(item, 'mainClub'));
+    if ((item.clubs?.length ?? 0) > 1) cases.push(sekretariatCase(item, 'doubleMembership'));
+  }
+  return cases;
+}
+
+/** The mail to the Sekretariat: fixed German copy, one list line per case, no sender name. */
+export function composeSekretariatMail(cases: SrvCase[], clubName: string): { subject: string; body: string } {
+  const lines = cases.map(c => `- ${c.line}`);
+  return {
+    subject: `Mitgliedermutationen ${clubName}`,
+    body: ['Hallo zusammen', '', SEKRETARIAT_MAIL_INTRO, ...lines, '', SEKRETARIAT_MAIL_CLOSING].join('\n'),
+  };
+}
+
+/** `mailto:` draft without a recipient; `null` when the encoded URL is longer than 1'800 characters. */
+export function mailtoUrl(mail: { subject: string; body: string }): string | null {
+  const url = `mailto:?subject=${encodeURIComponent(mail.subject)}&body=${encodeURIComponent(mail.body)}`;
+  return url.length > MAILTO_MAX_LENGTH ? null : url;
+}

@@ -11,11 +11,11 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AddressCollection, AddressModel, MembershipCollection, MembershipModel, OwnershipModel, PersonModel, SrvChanges, SrvContact, SrvIndex, SrvMemberLicenseDetail, SrvPreview, SrvUpdateResult } from '@okr/shared-models';
-import { classifyPhone, countryIdOf, DateFormat, debugListLoaded, expectedSrvStatus, fill, getBirthYear, getFullName, getMismatches, getSrvChanges, getSystemQuery, getTodayStr, getYear, isAfterOrEqualDate, isMembership, isPerson, regasoftDateToStoreDate, srvCreateBlocker } from '@okr/shared-util-core';
+import { classifyPhone, composeSekretariatMail, countryIdOf, DateFormat, debugListLoaded, expectedSrvStatus, fill, getBirthYear, getFullName, getMismatches, getSekretariatCases, getSrvChanges, getSystemQuery, getTodayStr, getYear, isAfterOrEqualDate, isMembership, isPerson, mailtoUrl, regasoftDateToStoreDate, srvCreateBlocker } from '@okr/shared-util-core';
 
-import { showToast } from '@okr/shared-util-angular';
+import { copyToClipboardDeferred, showToast } from '@okr/shared-util-angular';
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
-import { MembershipService } from '@okr/relationship-membership-data-access';
+import { ExternalReportService, MembershipService, SRV_EXTERNAL_ORG } from '@okr/relationship-membership-data-access';
 import { PersonService } from '@okr/subject-person-data-access';
 import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
 import { MEMBERSHIP_I18N_KEYS, newMembershipForPerson } from '@okr/relationship-membership-util';
@@ -34,13 +34,16 @@ export type MembershipSrvState = {
   searchTerm: string;
   selectedFilter: string;
   regasoftItems: number;
+  /** caseKeys already reported to the Sekretariat; null = not read yet (or the read failed). */
+  reportedKeys: string[] | null;
 };
 
 const initialState: MembershipSrvState = {
   index: [],
   searchTerm: '',
   selectedFilter: 'all',
-  regasoftItems: 0
+  regasoftItems: 0,
+  reportedKeys: null,
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -205,6 +208,7 @@ export const MembershipSrvStore = signalStore(
     firestoreService: inject(FirestoreService),
     personService: inject(PersonService),
     membershipService: inject(MembershipService),
+    externalReportService: inject(ExternalReportService),
     modalController: inject(ModalController),
     toastController: inject(ToastController),
     alertController: inject(AlertController),
@@ -274,8 +278,18 @@ export const MembershipSrvStore = signalStore(
     doubleMembers: computed(() =>
       state.index().filter(i => (i && i.clubs.length > 1))
     ),
+    /** Sekretariat cases (spec 1.133 §8) not yet marked in `external-reports`. Unknown marks count as «not reported». */
+    openSekretariatCases: computed(() => {
+      const reported = new Set(state.reportedKeys() ?? []);
+      return getSekretariatCases(state.index()).filter(c => !reported.has(c.caseKey));
+    }),
     mcat:    computed(() => state.appStore.allCategories()?.find(c => c.name === 'mcat_scs')),
     genders: computed(() => state.appStore.getCategory('gender')),
+  })),
+
+  withComputed(state => ({
+    /** Regasoft record ids with at least one open Sekretariat case: the entries of the `sekretariat` filter. */
+    sekretariatRids: computed(() => new Set(state.openSekretariatCases().map(c => c.externalRef))),
   })),
 
   withMethods(store => ({
@@ -713,5 +727,84 @@ export const MembershipSrvStore = signalStore(
         await showToast(store.toastController, store.i18n.srv_update_error());
       }
     }
+  })),
+
+  // Sekretariat report (spec 1.133 §8): what the Regasoft API cannot do goes to the SRV Sekretariat
+  // by mail; the sent cases are marked in `external-reports`. A second block, because it calls
+  // `refreshReported` (methods of one block cannot see each other).
+  withMethods(store => ({
+
+    /** Reads the already reported cases. A failed read leaves `reportedKeys` null and says so. */
+    async refreshReported(): Promise<boolean> {
+      try {
+        const marks = await store.externalReportService.listReported(store.tenantId(), SRV_EXTERNAL_ORG);
+        patchState(store, { reportedKeys: marks.map(m => m.caseKey) });
+        return true;
+      } catch (e) {
+        console.error('MembershipSrvStore.refreshReported failed', e);
+        patchState(store, { reportedKeys: null });
+        return false;
+      }
+    },
+  })),
+
+  withMethods(store => ({
+
+    /**
+     * Opens a mail draft with all cases not reported yet, then asks whether it was sent and only then
+     * marks the cases. Everything up to the draft runs synchronously inside the click (a clipboard write
+     * needs the user gesture), so the marks must already be loaded; otherwise they are read first.
+     */
+    async reportToSekretariat(): Promise<void> {
+      if (store.reportedKeys() === null && !(await store.refreshReported())) {
+        await showToast(store.toastController, store.i18n.srv_sekretariat_error());
+        return;
+      }
+      const cases = store.openSekretariatCases();
+      if (cases.length === 0) {
+        await showToast(store.toastController, store.i18n.srv_sekretariat_none());
+        return;
+      }
+
+      const mail = composeSekretariatMail(cases, store.appStore.appConfig().appName);
+      const url = mailtoUrl(mail);
+      if (url) {
+        window.location.href = url;
+      } else {
+        // Too long for a mailto: draft (the first report holds the backlog): the text goes to the
+        // clipboard, the draft carries the subject only. The write starts before anything is awaited.
+        const copied = copyToClipboardDeferred(Promise.resolve(mail.body));
+        window.location.href = `mailto:?subject=${encodeURIComponent(mail.subject)}`;
+        try {
+          await copied;
+        } catch (e) {
+          console.error('MembershipSrvStore.reportToSekretariat: clipboard failed', e);
+          await showToast(store.toastController, store.i18n.srv_sekretariat_clipboard_error());
+          return;
+        }
+        await showToast(store.toastController, store.i18n.srv_sekretariat_clipboard());
+      }
+
+      const alert = await store.alertController.create({
+        header: store.i18n.srv_sekretariat_action(),
+        message: store.i18n.srv_sekretariat_sent(),
+        buttons: [
+          { text: store.i18n.srv_sekretariat_no(), role: 'cancel' },
+          { text: store.i18n.srv_sekretariat_yes(), role: 'confirm' },
+        ],
+      });
+      await alert.present();
+      const { role } = await alert.onDidDismiss();
+      if (role !== 'confirm') return;
+
+      try {
+        await store.externalReportService.markReported(store.tenantId(), cases, getTodayStr(DateFormat.StoreDate));
+        await store.refreshReported();
+        await showToast(store.toastController, store.i18n.srv_sekretariat_marked());
+      } catch (e) {
+        console.error('MembershipSrvStore.reportToSekretariat: markReported failed', e);
+        await showToast(store.toastController, store.i18n.srv_sekretariat_mark_error());
+      }
+    },
   }))
 );

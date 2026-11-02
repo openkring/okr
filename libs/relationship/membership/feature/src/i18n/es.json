@@ -684,7 +684,8 @@
       "all": "Todos",
       "bk": "Solo en BK",
       "srv": "Solo en SRV",
-      "both": "Ambos"
+      "both": "Ambos",
+      "sekretariat": "Para la secretaría"
     },
     "preview": {
       "title": "Revisa el cambio en Regasoft",
@@ -710,6 +711,18 @@
       "no": "no",
       "info": "solo la secretaría puede cambiarlo",
       "bk": "corrígelo en nuestros datos"
+    },
+    "sekretariat": {
+      "action": "Aviso a la secretaría",
+      "none": "No hay casos nuevos para la secretaría.",
+      "clipboard": "El aviso es demasiado largo para un borrador de correo. El texto está en el portapapeles. Pégalo en el correo.",
+      "sent": "¿Has enviado el aviso?",
+      "yes": "Sí, enviado",
+      "no": "No",
+      "marked": "Los casos quedan marcados como avisados. La próxima vez solo aparecerán los nuevos.",
+      "error": "No se pudieron leer los avisos anteriores. Inténtalo de nuevo más tarde.",
+      "mark_error": "No se pudieron marcar los casos como avisados. Inténtalo de nuevo más tarde.",
+      "clipboard_error": "No se pudo copiar el texto al portapapeles. Inténtalo de nuevo más tarde."
     }
   }
 }
