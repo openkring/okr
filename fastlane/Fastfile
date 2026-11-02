@@ -38,11 +38,14 @@ platform :android do
     version_code = next_version_code(package)
     UI.message("#{app} (#{package}) → versionCode #{version_code}")
     load_sentry_env!(app)
+    reuse_web = reuse_web?(options)
 
     begin
       # --skip-nx-cache: environment.ts is generated and git-ignored, so it is NOT in the Nx cache
       # hash — a cached "production" build once shipped the DEV bundle (versionCode 1).
-      sh_root("pnpm nx build #{app} --configuration production --skip-nx-cache")
+      # web:reuse (scripts/release-all.mjs --native): the release already built dist once; the gate
+      # below still checks that dist is production and fails "nothing to check" when it is missing.
+      sh_root("pnpm nx build #{app} --configuration production --skip-nx-cache") unless reuse_web
       gate_production!(Dir[File.join(ROOT, "dist/apps/#{app}/browser/main-*.js")].max_by { |f| File.mtime(f) }, 'dist')
       upload_and_strip_source_maps!(app)
       sh_root("cd apps/#{app} && pnpm exec cap sync android")
@@ -76,8 +79,10 @@ platform :android do
       )
       UI.success("#{package} versionCode #{version_code} is on Internal testing")
     ensure
-      # Give local `nx serve` its development environment back (production: false).
-      sh_root("pnpm nx build #{app} --skip-nx-cache", log: false)
+      # Give local `nx serve` its development environment back (production: false). Not under
+      # web:reuse: the next native lane (scs-app: iOS after Android) reuses the same production
+      # dist, and a dev build here would fail its dist gate. release-all restores dev at the end.
+      sh_root("pnpm nx build #{app} --skip-nx-cache", log: false) unless reuse_web
     end
   end
 
@@ -137,9 +142,11 @@ platform :ios do
     version = JSON.parse(File.read(File.join(ROOT, 'package.json')))['version']
     UI.message("#{app} (#{bundle_id}) → #{version} (#{build_number})")
     load_sentry_env!(app)
+    reuse_web = reuse_web?(options)
 
     begin
-      sh_root("pnpm nx build #{app} --configuration production --skip-nx-cache")
+      # web:reuse: see `android internal` — the dist gate below still guards the reused build.
+      sh_root("pnpm nx build #{app} --configuration production --skip-nx-cache") unless reuse_web
       gate_production!(Dir[File.join(ROOT, "dist/apps/#{app}/browser/main-*.js")].max_by { |f| File.mtime(f) }, 'dist')
       upload_and_strip_source_maps!(app)
       # Homebrew's fastlane wrapper exports its own GEM_HOME/GEM_PATH; CocoaPods (run by cap sync)
@@ -179,7 +186,8 @@ platform :ios do
                            changelog: notes)
       UI.success("#{bundle_id} #{version} (#{build_number}) is uploaded to TestFlight")
     ensure
-      sh_root("pnpm nx build #{app} --skip-nx-cache", log: false)
+      # Not under web:reuse (see `android internal`): no dev build over the shared production dist.
+      sh_root("pnpm nx build #{app} --skip-nx-cache", log: false) unless reuse_web
     end
   end
 end
@@ -295,6 +303,13 @@ def next_version_code(package)
   end
   UI.user_error!("No versionCode found on any track for #{package} — the first upload is manual") if codes.empty?
   codes.max + 1
+end
+
+# `web:reuse` — scripts/release-all.mjs builds every web app once and runs the native lanes on that
+# dist, so a lane must not rebuild it (nor restore a dev build over it). Without it a lane is
+# self-contained: it builds production itself and restores the dev build afterwards.
+def reuse_web?(options)
+  options[:web].to_s == 'reuse'
 end
 
 # Release gate: the bundled environment must be production (`production:!0` after minification).
