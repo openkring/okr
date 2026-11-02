@@ -12,6 +12,7 @@ import { createProspect } from '../business/prospect';
 import { createBoathouseReservation } from './reservation-target';
 import { emitEvent } from '../workflow/emit';
 import { prepareSubmission, type SubmissionRow } from './submission-pipeline';
+import { projectPublicFormDefinition } from './public-definition';
 
 const REGION = 'europe-west6';
 const formsHmacSecret = defineSecret('FORMS_HMAC_SECRET');
@@ -256,23 +257,8 @@ export const getFormDefinition = onCall(
       throw new HttpsError('not-found', `Form '${formKey}' not found`);
     }
     const doc = snap.docs[0];
-    const data = doc.data();
-    // Public-safe projection — whitelist only. encryptionSalt is needed client-side
-    // for file encryption and is not secret; encryptionKeyHash is NEVER exposed.
-    return {
-      okey: doc.id,
-      tenants: data['tenants'] ?? [tenantId],
-      isArchived: data['isArchived'] ?? false,
-      name: data['name'] ?? '',
-      description: data['description'] ?? '',
-      formKey: data['formKey'] ?? formKey,
-      honeypotKey: data['honeypotKey'] ?? '',
-      encryptionSalt: data['encryptionSalt'] ?? '',
-      pdfTemplateId: data['pdfTemplateId'] ?? '',
-      target: data['target'] ?? { kind: 'collection', mappingKey: '', modelType: '', collectionName: '' },
-      fields: data['fields'] ?? [],
-      version: data['version'] ?? 1,
-    };
+    // Public-safe projection — whitelist only (see public-definition.ts).
+    return projectPublicFormDefinition(doc.id, doc.data(), formKey, tenantId);
   }
 );
 
@@ -298,7 +284,7 @@ function buildSubmissionEmailHtml(
     .join('');
 
   return `
-    <h2 style="margin:0 0 16px;">${formDef.name} – neue Einreichung</h2>
+    <h2 style="margin:0 0 16px;">${escapeHtml(formDef.name ?? '')} – neue Einreichung</h2>
     <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
       ${rowsHtml}
     </table>
