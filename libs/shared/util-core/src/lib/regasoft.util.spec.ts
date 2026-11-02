@@ -745,6 +745,16 @@ describe('getSekretariatCases', () => {
     expect(getSekretariatCases([linked, extra]).map(c => c.caseKey)).toEqual(['duplicate-9']);
   });
 
+  it('reports a case once when two index entries point to the same Regasoft record', () => {
+    // e.g. two members of ours with the same name, both matched to record 1 by name
+    const a = srvIndex({ mainClub: false, pCategory: 'D', clubs: [] });
+    const b = srvIndex({ mKey: 'm2', personKey: 'p2', mainClub: false, pCategory: 'D', clubs: [] });
+    expect(getSekretariatCases([a, b]).map(c => c.caseKey)).toEqual(['doubleMembership-1']);
+    const c = srvIndex({ mainClub: false });
+    const d = srvIndex({ mKey: 'm2', personKey: 'p2', mainClub: false });
+    expect(getSekretariatCases([c, d]).map(x => x.caseKey)).toEqual(['mainClub-1']);
+  });
+
   it('keeps the case key stable across calls', () => {
     const idx = [srvIndex({ mainClub: false })];
     expect(getSekretariatCases(idx)[0].caseKey).toBe(getSekretariatCases(idx)[0].caseKey);

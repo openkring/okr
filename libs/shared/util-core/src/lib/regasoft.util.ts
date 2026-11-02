@@ -398,24 +398,32 @@ function surplusRecords(index: SrvIndex[]): Set<SrvIndex> {
  * Everything the Sekretariat has to do in Regasoft for us: second entries to delete, a main club
  * that is not ours (not for a double member: their main club is the other one), a double member of
  * ours that Regasoft lists in one club. A record reported for deletion carries no further cases (it
- * is going away). Index order.
+ * is going away). Each `caseKey` once, index order.
  */
 export function getSekretariatCases(index: SrvIndex[]): SrvCase[] {
   const surplus = surplusRecords(index);
   const cases: SrvCase[] = [];
+  // Two index entries can point to the same Regasoft record (two members of ours matched by name):
+  // a case is about the record, so it is reported once (first entry wins).
+  const seen = new Set<string>();
+  const add = (c: SrvCase): void => {
+    if (seen.has(c.caseKey)) return;
+    seen.add(c.caseKey);
+    cases.push(c);
+  };
   for (const item of index) {
     // Without the member detail the newsletter, clubs and status are unknown: no case (spec 1.133 I2).
     if (!item.rid || item.rDetailLoaded !== true) continue;
     if (surplus.has(item)) {
-      cases.push(sekretariatCase(item, 'duplicate'));
+      add(sekretariatCase(item, 'duplicate'));
       continue;
     }
     const doubleMember = item.mCategory === 'D' || item.pCategory === 'D';
-    if (item.mainClub === false && !!item.mKey && !doubleMember) cases.push(sekretariatCase(item, 'mainClub'));
+    if (item.mainClub === false && !!item.mKey && !doubleMember) add(sekretariatCase(item, 'mainClub'));
     // Our data says «double member», Regasoft lists at most one club. Members that Regasoft already
     // lists in several clubs are known to the Sekretariat.
     if (doubleMember && (item.clubs?.length ?? 0) <= 1) {
-      cases.push(sekretariatCase(item, 'doubleMembership'));
+      add(sekretariatCase(item, 'doubleMembership'));
     }
   }
   return cases;
