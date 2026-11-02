@@ -86,6 +86,26 @@ export function expectedSrvStatus(s: {
   return none;
 }
 
+/**
+ * Why a member must not be created in Regasoft (a record there can never be deleted again):
+ * `hasSrvNumber` = our parent membership already holds a SRV number but nothing links to a Regasoft
+ * record (reactivate the member instead, D8); `duplicate` = another Regasoft entry has the same
+ * name and the same full birth date (partial dates never count as a match). `null` = free to create.
+ */
+export function srvCreateBlocker(item: SrvIndex, index: SrvIndex[]): 'hasSrvNumber' | 'duplicate' | null {
+  if (item.memberId && !item.rid) return 'hasSrvNumber';
+  if (classifyStoreDate(item.dateOfBirth) !== 'full') return null;
+  const duplicate = index.some(
+    (other) =>
+      other !== item &&
+      !!other.rid &&
+      other.key === item.key &&
+      classifyStoreDate(other.rDateOfBirth) === 'full' &&
+      other.rDateOfBirth === item.dateOfBirth
+  );
+  return duplicate ? 'duplicate' : null;
+}
+
 const lower = (s: string) => s.toLowerCase();
 const same = (a: string, b: string) => a === b;
 

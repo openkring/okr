@@ -698,6 +698,13 @@
       "ignored": "Regasoft no aceptó estos campos: {fields}",
       "error": "No se pudo actualizar la entrada de Regasoft. Inténtalo de nuevo más tarde."
     },
+    "create": {
+      "blocked_srvnumber": "Este miembro ya tiene un número SRV, pero no figura en la lista de Regasoft. Reactiva al miembro existente en lugar de crear uno nuevo.",
+      "blocked_duplicate": "En Regasoft ya hay un miembro con el mismo nombre y la misma fecha de nacimiento. Comprueba si es la misma persona antes de crear una entrada nueva.",
+      "mainclub_warning": "Si añades a este miembro a Regasoft, nuestro club pasa a ser su club principal. Si la persona es miembro principal de otro club, ponte en contacto con la secretaría. Una entrada en Regasoft ya no se puede eliminar. ¿Quieres continuar?",
+      "done": "El miembro se ha añadido a Regasoft.",
+      "error": "No se pudo añadir al miembro a Regasoft. Inténtalo de nuevo más tarde."
+    },
     "mismatch": {
       "yes": "sí",
       "no": "no",

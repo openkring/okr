@@ -698,6 +698,13 @@
       "ignored": "Regasoft hat diese Felder nicht übernommen: {fields}",
       "error": "Der Regasoft-Eintrag konnte nicht aktualisiert werden. Bitte versuche es später noch einmal."
     },
+    "create": {
+      "blocked_srvnumber": "Dieses Mitglied hat bereits eine SRV-Nummer, ist aber nicht in der Regasoft-Liste. Bitte aktiviere das bestehende Mitglied wieder, statt es neu anzulegen.",
+      "blocked_duplicate": "In Regasoft gibt es bereits ein Mitglied mit gleichem Namen und Geburtsdatum. Bitte prüfe, ob es dieselbe Person ist, bevor du sie neu anlegst.",
+      "mainclub_warning": "Wenn du dieses Mitglied in Regasoft anlegst, wird unser Verein sein Hauptverein. Ist die Person in einem anderen Verein Hauptmitglied, wende dich stattdessen ans Sekretariat. Ein Eintrag in Regasoft lässt sich nicht mehr löschen. Möchtest du fortfahren?",
+      "done": "Das Mitglied ist in Regasoft angelegt.",
+      "error": "Das Mitglied konnte nicht in Regasoft angelegt werden. Bitte versuche es später noch einmal."
+    },
     "mismatch": {
       "yes": "ja",
       "no": "nein",

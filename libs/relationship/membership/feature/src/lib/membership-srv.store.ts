@@ -1,7 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
-import { ModalController, ToastController } from '@ionic/angular';
+import { AlertController, ModalController, ToastController } from '@ionic/angular';
 import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { rxResource } from '@angular/core/rxjs-interop';
@@ -11,7 +11,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AddressCollection, AddressModel, MembershipCollection, MembershipModel, OwnershipModel, PersonModel, SrvChanges, SrvContact, SrvIndex, SrvMemberLicenseDetail, SrvPreview, SrvUpdateResult } from '@okr/shared-models';
-import { DateFormat, debugListLoaded, fill, getBirthYear, getFullName, getMismatches, getSrvChanges, getSystemQuery, getTodayStr, getYear, isAfterOrEqualDate, isMembership, isPerson, regasoftDateToStoreDate } from '@okr/shared-util-core';
+import { classifyPhone, countryIdOf, DateFormat, debugListLoaded, expectedSrvStatus, fill, getBirthYear, getFullName, getMismatches, getSrvChanges, getSystemQuery, getTodayStr, getYear, isAfterOrEqualDate, isMembership, isPerson, regasoftDateToStoreDate, srvCreateBlocker } from '@okr/shared-util-core';
 
 import { showToast } from '@okr/shared-util-angular';
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
@@ -207,6 +207,7 @@ export const MembershipSrvStore = signalStore(
     membershipService: inject(MembershipService),
     modalController: inject(ModalController),
     toastController: inject(ToastController),
+    alertController: inject(AlertController),
     router: inject(Router),
     ownershipService: inject(OwnershipService),
     i18nService: inject(I18nService),
@@ -586,54 +587,73 @@ export const MembershipSrvStore = signalStore(
       }
     },
 
+    /**
+     * Create the member in Regasoft (spec 1.133, D8/D9). Currently unreachable: the button is hidden
+     * and the `srv` function rejects creates until `POST` has been probed (Q7). A record in Regasoft
+     * can never be deleted, so the guard runs first: no SRV number without a Regasoft link, no
+     * duplicate by name + birth date, then an explicit confirmation of the main-club effect.
+     */
     async addToRegasoft(item: SrvIndex): Promise<void> {
+      const blocker = srvCreateBlocker(item, store.index());
+      if (blocker === 'hasSrvNumber') {
+        await showToast(store.toastController, store.i18n.srv_create_blocked_srvnumber());
+        return;
+      }
+      if (blocker === 'duplicate') {
+        await showToast(store.toastController, store.i18n.srv_create_blocked_duplicate());
+        return;
+      }
+
+      const alert = await store.alertController.create({
+        header: store.i18n.srv_regasoft_add(),
+        message: store.i18n.srv_create_mainclub_warning(),
+        buttons: [
+          { text: store.i18n.cancel(), role: 'cancel' },
+          { text: store.i18n.srv_regasoft_add(), role: 'confirm' },
+        ],
+      });
+      await alert.present();
+      const { role } = await alert.onDidDismiss();
+      if (role !== 'confirm') return;
+
       const functions = getFunctions(getApp(), 'europe-west6');
       if (store.appStore.env.useEmulators) {
         connectFunctionsEmulator(functions, 'localhost', 5001);
       }
       const fn = httpsCallable<{ op: string } & Record<string, unknown>, { id: string }>(functions, 'srv');
-      const srvPostalAddresses = await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, [
-        { key: 'parentKey', operator: '==', value: 'person.' + item.personKey },
-        { key: 'addressChannel', operator: '==', value: 'postal' },
-        { key: 'isFavorite', operator: '==', value: true }
-      ], 'none');
-      const srvPostal = srvPostalAddresses[0];
-      let srvId: string;
+
+      // Only what Regasoft accepts on a POST (server: buildSrvCreatePayload). Not sent: fullname,
+      // membershipType, nationIOC, language, hasNewsletter, hasLicense, countryName, streetAdditional.
+      const phoneClass = item.mPhone ? classifyPhone(item.mPhone) : null;
+      const countryId = countryIdOf(item.mCountryCode);
       try {
         const result = await fn({
-          firstName:      item.firstName,
-          lastName:       item.lastName,
-          fullname:       `${item.lastName} ${item.firstName}`.trim(),
-          dateOfBirth:    item.dateOfBirth,
-          gender:         item.gender === 'female' ? 2 : 1,
-          email:          store.appStore.getDirectoryEntry('person.' + item.personKey)?.favEmail || null,
-          mobile:         store.appStore.getDirectoryEntry('person.' + item.personKey)?.favPhone || null,
-          membershipType: item.state === 'passive' ? 'Passive' : 'Active',
-          nationIOC:      'SUI',
-          language:       0,
-          hasNewsletter:  true,
-          hasLicense:     false,
-          street:         srvPostal ? `${srvPostal.streetName} ${srvPostal.streetNumber}`.trim() || null : null,
-          streetAdditional: null,
-          postcode:       srvPostal?.zipCode || null,
-          city:           srvPostal?.city || null,
-          countryName:    srvPostal?.countryCode ? 'Schweiz' : null,
-          countryId:      srvPostal?.countryCode || null,
-          telefon:        null,
-          op:             'createSrvContact',
+          op:          'createSrvContact',
+          firstName:   item.firstName,
+          lastName:    item.lastName,
+          dateOfBirth: item.dateOfBirth,
+          gender:      item.gender === 'female' ? 2 : 1,
+          email:       item.mEmail || null,
+          mobile:      phoneClass === 'mobile' ? item.mPhone : null,
+          telefon:     phoneClass === 'telefon' ? item.mPhone : null,
+          street:      item.mStreet || null,
+          postcode:    item.mZipCode || null,
+          city:        item.mCity || null,
+          countryId:   countryId === null ? null : String(countryId),
         });
-        srvId = String(result.data.id);
-      } catch (e) {
-        console.error('MembershipSrvStore.addToRegasoft: createSrvContact failed', e);
-        throw e;
-      }
-
-      patchState(store, {
-        index: store.index().map(i => i.key === item.key
+        const srvId = String(result.data.id);
+        const index = store.index().map(i => i.key === item.key
           ? { ...i, memberId: srvId, rid: srvId, rServiceId: srvId, rFirstName: item.firstName, rLastName: item.lastName }
           : i
-        ),
-      });
+        );
+        patchState(store, { index });
+        saveIndex(store.tenantId(), index);
+        await showToast(store.toastController, store.i18n.srv_create_done());
+      } catch (e) {
+        // e.g. failed-precondition while the server still blocks Regasoft creates
+        console.error('MembershipSrvStore.addToRegasoft: createSrvContact failed', e);
+        await showToast(store.toastController, store.i18n.srv_create_error());
+      }
     },
 
     /**

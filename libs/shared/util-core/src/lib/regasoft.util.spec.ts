@@ -11,6 +11,7 @@ import {
   normalizePhone,
   phonesMatch,
   REGASOFT_COUNTRY_IDS,
+  srvCreateBlocker,
   storeDateToRegasoftDate,
 } from './regasoft.util';
 
@@ -362,5 +363,62 @@ describe('expectedSrvStatus', () => {
   it('passive → inactiveDate, falls back to today', () => {
     expect(expectedSrvStatus({ ...base, category: 'P', passiveSince: '20260101' }).inactiveDate).toBe('20260101');
     expect(expectedSrvStatus({ ...base, category: 'P' }).inactiveDate).toBe('20261102');
+  });
+});
+
+describe('srvCreateBlocker', () => {
+  // A BK-only member (not in Regasoft), and the Regasoft-side entries around it.
+  const candidate = (o: Partial<SrvIndex> = {}) => srvIndex({ rid: '', rDateOfBirth: '', memberId: '', ...o });
+  const inRegasoft = (o: Partial<SrvIndex> = {}) => srvIndex({ mKey: '', personKey: '', rid: '42', ...o });
+
+  it('blocks a member who already has a SRV number but no Regasoft link', () => {
+    const item = candidate({ memberId: '12345' });
+    expect(srvCreateBlocker(item, [item])).toBe('hasSrvNumber');
+  });
+
+  it('blocks when another Regasoft entry has the same name and full birth date', () => {
+    const item = candidate();
+    expect(srvCreateBlocker(item, [item, inRegasoft()])).toBe('duplicate');
+  });
+
+  it('lets the member through when the same name has another birth date', () => {
+    const item = candidate();
+    expect(srvCreateBlocker(item, [item, inRegasoft({ rDateOfBirth: '19900101' })])).toBeNull();
+  });
+
+  it('lets the member through when nobody else has the name', () => {
+    const item = candidate();
+    expect(srvCreateBlocker(item, [item, inRegasoft({ key: 'berta beispiel' })])).toBeNull();
+  });
+
+  it('ignores an index entry that is not in Regasoft', () => {
+    const item = candidate();
+    const other = candidate({ mKey: 'm2', rDateOfBirth: '19850415' });
+    expect(srvCreateBlocker(item, [item, other])).toBeNull();
+  });
+
+  it('does not match on a partial birth date', () => {
+    const item = candidate({ dateOfBirth: '19850000' });
+    expect(srvCreateBlocker(item, [item, inRegasoft({ rDateOfBirth: '19850000' })])).toBeNull();
+  });
+
+  it('does not match when the Regasoft entry has no birth date', () => {
+    const item = candidate({ dateOfBirth: '' });
+    expect(srvCreateBlocker(item, [item, inRegasoft({ rDateOfBirth: '' })])).toBeNull();
+  });
+
+  it('never counts the item itself', () => {
+    const item = srvIndex({ memberId: '', rid: '7' });
+    expect(srvCreateBlocker(item, [item])).toBeNull();
+  });
+
+  it('a SRV number with a Regasoft link is not blocked as hasSrvNumber', () => {
+    const item = srvIndex({ memberId: '12345', rid: '7' });
+    expect(srvCreateBlocker(item, [item])).toBeNull();
+  });
+
+  it('reports hasSrvNumber before duplicate', () => {
+    const item = candidate({ memberId: '12345' });
+    expect(srvCreateBlocker(item, [item, inRegasoft()])).toBe('hasSrvNumber');
   });
 });
