@@ -189,3 +189,23 @@ export function resolveImplicitValues(
   }
   return result;
 }
+
+/**
+ * An implicit field whose value can come ONLY from the page that shows the form: no `defaultValue` (or an
+ * empty one) and no `fromLink`. An AHV field (`isSsnField`) is never one: no source supplies it at all (R1),
+ * so no page could ever satisfy it.
+ */
+export function isSectionOnlyImplicit(field: Field | undefined | null): boolean {
+  if (field?.type !== 'implicit' || isSsnField(field)) return false;
+  const d = field.defaultValue;
+  return (d === undefined || d === null || d === '') && field.fromLink !== true;
+}
+
+/**
+ * A form needs a verified section when one of its implicit fields is {@link isSectionOnlyImplicit}.
+ * Without the section the value (the course) would be missing and the page's own limits and closed
+ * state could be dodged by omitting `sectionConfigRef`.
+ */
+export function requiresSection(fields: Field[] | undefined): boolean {
+  return (Array.isArray(fields) ? fields : []).some(isSectionOnlyImplicit);
+}

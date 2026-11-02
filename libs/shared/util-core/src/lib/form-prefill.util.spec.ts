@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { Field } from '@okr/shared-models';
-import { isPrefillable, parsePrefillParams, parsePrefillValue, PREFILL_EXCLUDED_TYPES, resolveImplicitValues } from './form-prefill.util';
+import {
+  isPrefillable, isSectionOnlyImplicit, parsePrefillParams, parsePrefillValue, PREFILL_EXCLUDED_TYPES, requiresSection, resolveImplicitValues,
+} from './form-prefill.util';
 
 const f = (type: Field['type'], extra: Record<string, unknown> = {}): Field =>
   ({ id: `id_${type}`, key: `k_${type}`, label: `L ${type}`, required: false, width: 'full', order: 1, type, ...extra }) as Field;
@@ -231,5 +233,41 @@ describe('isPrefillable', () => {
     expect(isPrefillable(f('implicit', { valueType: 'text', fromLink: false }))).toBe(false);
     expect(isPrefillable(f('implicit', { valueType: 'text', fromLink: true }))).toBe(true);
     expect(isPrefillable(f('implicit', { valueType: 'text', fromLink: true, key: 'ssnId' }))).toBe(false);
+  });
+});
+
+describe('isSectionOnlyImplicit', () => {
+  const implicit = (extra: Record<string, unknown> = {}): Field => f('implicit', { key: 'courseId', valueType: 'text', ...extra });
+
+  it('an implicit field without default and without fromLink gets its value only from the page', () => {
+    expect(isSectionOnlyImplicit(implicit())).toBe(true);
+    expect(isSectionOnlyImplicit(implicit({ defaultValue: '' }))).toBe(true);
+    expect(isSectionOnlyImplicit(implicit({ defaultValue: null }))).toBe(true);
+    expect(isSectionOnlyImplicit(implicit({ fromLink: false }))).toBe(true);
+  });
+
+  it('a default (also false and 0) or fromLink can supply the value', () => {
+    expect(isSectionOnlyImplicit(implicit({ defaultValue: 'c1' }))).toBe(false);
+    expect(isSectionOnlyImplicit(implicit({ valueType: 'boolean', defaultValue: false }))).toBe(false);
+    expect(isSectionOnlyImplicit(implicit({ valueType: 'number', defaultValue: 0 }))).toBe(false);
+    expect(isSectionOnlyImplicit(implicit({ fromLink: true }))).toBe(false);
+  });
+
+  it('is false for other field types, and for an AHV field (no source ever supplies it, R1)', () => {
+    expect(isSectionOnlyImplicit(f('text'))).toBe(false);
+    expect(isSectionOnlyImplicit(implicit({ key: 'ssnId' }))).toBe(false);
+    expect(isSectionOnlyImplicit(undefined as unknown as Field)).toBe(false);
+  });
+});
+
+describe('requiresSection', () => {
+  it('is true when one implicit field can only get its value from the page', () => {
+    expect(requiresSection([f('text'), f('implicit', { key: 'courseId', valueType: 'text' })])).toBe(true);
+  });
+
+  it('is false without such a field, and for a legacy form without fields', () => {
+    expect(requiresSection([f('text'), f('implicit', { key: 'courseId', valueType: 'text', defaultValue: 'c1' })])).toBe(false);
+    expect(requiresSection(undefined)).toBe(false);
+    expect(requiresSection([])).toBe(false);
   });
 });
