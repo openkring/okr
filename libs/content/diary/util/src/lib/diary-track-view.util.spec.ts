@@ -76,6 +76,13 @@ describe('toStretchTiles', () => {
     expect(car.speed).toBe('16,7 km/h');
   });
 
+  it('measures a section with a timetable line along the line (spec 1.129 §4.2)', () => {
+    // points 0.01° apart (≈1.1 km); the line detours to 0.02° and back (≈3.3 km), in one hour
+    const route = [{ lat: 47, lng: 8.7 }, { lat: 47.02, lng: 8.7 }, { lat: 47.01, lng: 8.7 }];
+    const [tile] = toStretchTiles(card({ sections: [{ mode: 'train', points: [pt(47, 10, 0), pt(47.01, 11, 0)], route, line: 'R45' }] }));
+    expect(tile).toMatchObject({ distance: '3.3 km', speed: '3.3 km/h', timeRange: '10:00–11:00' });
+  });
+
   it('keeps a section without points (no time, dash for the speed)', () => {
     const [tile] = toStretchTiles(card({ sections: [{ mode: 'ship', points: [] }] }));
     expect(tile).toMatchObject({ mode: 'ship', timeRange: '', speed: '–' });

@@ -9,7 +9,7 @@ import { TrackService } from '@okr/mobility-tracker-data-access';
 import { TrackPoint } from '@okr/mobility-tracker-util';
 import { DiaryAlbumService, DiaryMediaService, DiaryService, DiaryWeatherService } from '@okr/content-diary-data-access';
 import {
-  DIARY_FIRST_YEAR, DIARY_I18N_KEYS, DiaryTrackCard, toDiaryTrackCards, customLocationAvatar, locationAvatar, mainLocation, DiaryFilter, DiaryMediaResult, DiaryRange, DiaryStateFilter, albumKey, albumRefOf,
+  DIARY_FIRST_YEAR, DIARY_I18N_KEYS, DiarySectionRoute, DiaryTrackCard, toDiaryTrackCards, customLocationAvatar, locationAvatar, mainLocation, DiaryFilter, DiaryMediaResult, DiaryRange, DiaryStateFilter, albumKey, albumRefOf,
   buildDiaryRangeTree, decodeDiaryFilter, diaryFilterLabel, diaryListUrl, diaryRangeOfYear, diaryStateMatches, encodeDiaryFilter,
   diaryTrackModeLabel, formatDiaryDate, getDiaryIndex, groupDiariesByMonth, hasDiaryWeather, inDiaryDateRange, newDiary, trackFilterDates, trackFilterTitle,
 } from '@okr/content-diary-util';
@@ -404,13 +404,17 @@ export const DiaryStore = signalStore(
       const work = (async () => {
         const trips = await firstValueFrom(store.trackService.listOfDay(personKey, store.tenantId(), diary.date));
         const pointsByTrip: Record<string, TrackPoint[][]> = {};
+        const routesByTrip: Record<string, (DiarySectionRoute | undefined)[]> = {};
         await Promise.all(trips.filter(t => !!t.track).map(async t => {
-          pointsByTrip[t.okey] = await Promise.all((t.track?.sections ?? []).map((_, n) => store.trackService.readPoints(t.okey, n).catch(err => {
+          // readSection, not readPoints: it also brings the stored timetable line of a train/bus/ship (spec 1.129 §4.2)
+          const read = await Promise.all((t.track?.sections ?? []).map((_, n) => store.trackService.readSection(t.okey, n).catch(err => {
             console.warn(`DiaryStore: points of track ${t.okey}/${n} not loaded`, err);
-            return [];
+            return undefined;
           })));
+          pointsByTrip[t.okey] = read.map(r => r?.points ?? []);
+          routesByTrip[t.okey] = read.map(r => r?.transit);
         }));
-        return toDiaryTrackCards(trips, pointsByTrip);
+        return toDiaryTrackCards(trips, pointsByTrip, routesByTrip);
       })();
       let timer: ReturnType<typeof setTimeout> | undefined;
       const giveUp = new Promise<DiaryTrackCard[]>(resolve => {

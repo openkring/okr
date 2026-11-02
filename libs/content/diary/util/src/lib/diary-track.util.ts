@@ -1,5 +1,8 @@
 import type { TrackSection, TransportMode, TripModel } from '@okr/shared-models';
-import type { TrackPoint } from '@okr/mobility-tracker-util';
+import { transitRouteKey, type TrackPoint } from '@okr/mobility-tracker-util';
+
+/** A section's stored timetable line (spec 1.129 §4.2) as read from its track-points doc; no points = none found. */
+export interface DiarySectionRoute { key: string; points: { lat: number; lng: number }[]; line: string }
 
 /** One recorded track of a diary day, ready for the card and the read-only track view (spec 1.121 §7). */
 export interface DiaryTrackCard {
@@ -15,6 +18,10 @@ export interface DiaryTrackCard {
   sections: {
     mode: TransportMode; points: TrackPoint[]; steps?: number; splitAvgS?: number; splitBestS?: number;
     strokes?: number; strokeRateAvg?: number; strokeRateMax?: number;
+    /** spec 1.129 §4.2: the timetable line of a train/bus/ship section, drawn instead of the dashed points */
+    route?: { lat: number; lng: number }[];
+    /** the line's name, e.g. «R45»; only with `route` */
+    line?: string;
   }[];
   /** spec 1.122: steps of all foot sections (absent when none has any) */
   steps?: number;
@@ -30,15 +37,20 @@ export interface DiaryTrackCard {
 /**
  * The tracker trips of one day as diary cards, sorted by start time. `pointsByTrip` holds the decoded points per
  * trip key and section index (missing = no points yet). Trips without `track` are skipped; a missing photo list
- * (legacy or freshly uploaded trips) counts as none.
+ * (legacy or freshly uploaded trips) counts as none. `routesByTrip` holds the stored timetable lines in the same
+ * shape; a line is taken only while its key still names the section (a correction changes mode or ends) and it has
+ * at least two points («none found» keeps the dashed line).
  */
-export function toDiaryTrackCards(trips: TripModel[], pointsByTrip: Record<string, TrackPoint[][]>): DiaryTrackCard[] {
+export function toDiaryTrackCards(
+  trips: TripModel[], pointsByTrip: Record<string, TrackPoint[][]>, routesByTrip: Record<string, (DiarySectionRoute | undefined)[]> = {},
+): DiaryTrackCard[] {
   const cards: DiaryTrackCard[] = [];
   for (const trip of trips) {
     const track = trip.track;
     if (!track) continue;
     const sections = track.sections ?? [];
     const points = pointsByTrip[trip.okey] ?? [];
+    const routes = routesByTrip[trip.okey] ?? [];
     const modes: TransportMode[] = [];
     for (const s of sections) if (modes[modes.length - 1] !== s.mode) modes.push(s.mode);
     const card: DiaryTrackCard = {
@@ -57,6 +69,11 @@ export function toDiaryTrackCards(trips: TripModel[], pointsByTrip: Record<strin
         if (s.strokes !== undefined) out.strokes = s.strokes;
         if (s.strokeRateAvg !== undefined) out.strokeRateAvg = s.strokeRateAvg;
         if (s.strokeRateMax !== undefined) out.strokeRateMax = s.strokeRateMax;
+        const route = routes[i];
+        if (route && route.points.length > 1 && route.key === transitRouteKey(out)) {
+          out.route = route.points;
+          if (route.line) out.line = route.line;
+        }
         return out;
       }),
       photos: (track.photos ?? []).map(p => {

@@ -1,5 +1,5 @@
 import type { TransportMode } from '@okr/shared-models';
-import { formatKm, formatSteps, summarize, TRACK_MODE_COLOR, type TrackPoint } from '@okr/mobility-tracker-util';
+import { formatKm, formatSteps, routeDistanceM, summarize, TRACK_MODE_COLOR, type TrackPoint } from '@okr/mobility-tracker-util';
 
 import type { DiaryTrackCard } from './diary-track.util';
 
@@ -85,11 +85,16 @@ export function trackTotals(card: DiaryTrackCard, lang = 'de'): DiaryTrackTotals
   };
 }
 
-/** One tile per section, in track order; distance and speed from the section's own points; numbers in `lang`. */
+/**
+ * One tile per section, in track order; distance and speed from the section's own points — or, for a section with a
+ * timetable line, the distance along the line (spec 1.129 §4.2, as on the Strecke page); numbers in `lang`.
+ */
 export function toStretchTiles(card: DiaryTrackCard, lang = 'de'): DiaryStretchTile[] {
   const locale = trackLocale(lang);
   return card.sections.map(s => {
-    const { distanceM, durationS } = summarize(s.points);
+    const own = summarize(s.points);
+    const distanceM = (s.route && routeDistanceM({ points: s.route, line: s.line ?? '' })) ?? own.distanceM;
+    const durationS = own.durationS;
     const tile: DiaryStretchTile = {
       mode: s.mode,
       color: TRACK_MODE_COLOR[s.mode],

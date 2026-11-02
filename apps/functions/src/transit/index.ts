@@ -61,7 +61,8 @@ export function validRoute(data: unknown): OjpRouteParams {
  * `runGateway`. The points are never logged.
  */
 export const getTransitRoute = onCall(
-  { region: 'europe-west6', enforceAppCheck: true, secrets: ojpTripAdapter.secrets },
+  // 512MiB: a long multi-change trip's OJP answer (6 results with leg projection) went past 256MiB (2026-10-31, 11-02)
+  { region: 'europe-west6', enforceAppCheck: true, secrets: ojpTripAdapter.secrets, memory: '512MiB' },
   async (request: CallableRequest<TransitRouteReq>): Promise<TransitRouteRes> => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'User must be authenticated');
     const token = request.auth.token as Record<string, unknown> | undefined;

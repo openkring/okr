@@ -68,6 +68,32 @@ describe('toDiaryTrackCards', () => {
   });
 });
 
+describe('toDiaryTrackCards timetable lines (spec 1.129 §4.2)', () => {
+  const line = [{ lat: 1, lng: 8 }, { lat: 1.5, lng: 8.1 }, { lat: 2, lng: 8 }];
+  const t = () => trip('r', '13:00', { sections: [section('foot', 10), section('train', 30000)] });
+  const points = { r: [[P(0.5), P(0.9)], [P(1), P(2)]] };
+
+  it('takes a stored line whose key still names the section', () => {
+    const [card] = toDiaryTrackCards([t()], points, { r: [undefined, { key: 'train|1|2', points: line, line: 'R45' }] });
+    expect(card.sections[0]).toEqual({ mode: 'foot', points: [P(0.5), P(0.9)] });
+    expect(card.sections[1]).toEqual({ mode: 'train', points: [P(1), P(2)], route: line, line: 'R45' });
+  });
+
+  it('drops a line stored for other ends or another mode (a correction since)', () => {
+    const stale = toDiaryTrackCards([t()], points, { r: [undefined, { key: 'train|1|3', points: line, line: 'R45' }] });
+    const bus = toDiaryTrackCards([t()], points, { r: [undefined, { key: 'bus|1|2', points: line, line: 'R45' }] });
+    expect('route' in stale[0].sections[1]).toBe(false);
+    expect('route' in bus[0].sections[1]).toBe(false);
+  });
+
+  it('keeps the dashed points for «none found» and leaves out an empty line name', () => {
+    const none = toDiaryTrackCards([t()], points, { r: [undefined, { key: 'train|1|2', points: [], line: '' }] });
+    const unnamed = toDiaryTrackCards([t()], points, { r: [undefined, { key: 'train|1|2', points: line, line: '' }] });
+    expect('route' in none[0].sections[1]).toBe(false);
+    expect(unnamed[0].sections[1]).toEqual({ mode: 'train', points: [P(1), P(2)], route: line });
+  });
+});
+
 describe('toDiaryTrackCards figures (spec 1.122)', () => {
   it('sums foot steps, takes the split of the longest row section and keeps each section figure', () => {
     const t = trip('f', '09:00', {
