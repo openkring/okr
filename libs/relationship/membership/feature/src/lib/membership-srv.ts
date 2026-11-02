@@ -3,7 +3,7 @@ import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCa
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ListFilter } from '@okr/shared-ui';
-import { convertDateFormatToString, DateFormat, getAge as getAgeFn } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, getAge as getAgeFn, getTodayStr } from '@okr/shared-util-core';
 import { ColorIonic, SrvIndex } from '@okr/shared-models';
 
 import { AvatarLabel } from '@okr/avatar-ui';
@@ -372,14 +372,13 @@ export class MembershipSrv implements OnInit {
     this.store.loadIndexFromStorage();
   }
 
-  protected readonly getMismatches = getMismatches;
 
   protected getAge(dateOfBirth: string): string {
     return getAgeFn(dateOfBirth) + '';
   }
 
   protected getColor(item: SrvIndex): ColorIonic {
-    return getMismatches(item).length > 0 ? ColorIonic.Danger : ColorIonic.Light;
+    return getMismatches(item, getTodayStr(DateFormat.StoreDate)).length > 0 ? ColorIonic.Danger : ColorIonic.Light;
   }
 
   protected displayName(item: SrvIndex): string {

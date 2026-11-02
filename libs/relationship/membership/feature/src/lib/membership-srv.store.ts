@@ -11,7 +11,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AddressCollection, AddressModel, MembershipCollection, MembershipModel, OwnershipModel, PersonModel, SrvContact, SrvIndex, SrvMemberLicenseDetail } from '@okr/shared-models';
-import { debugListLoaded, getBirthYear, getFullName, getMismatches, getSystemQuery, getTodayStr, getYear, isAfterOrEqualDate, isMembership, isPerson } from '@okr/shared-util-core';
+import { DateFormat, debugListLoaded, getBirthYear, getFullName, getMismatches, getSystemQuery, getTodayStr, getYear, isAfterOrEqualDate, isMembership, isPerson } from '@okr/shared-util-core';
 
 import { showToast } from '@okr/shared-util-angular';
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
@@ -592,7 +592,7 @@ export const MembershipSrvStore = signalStore(
         connectFunctionsEmulator(functions, 'localhost', 5001);
       }
       const fn = httpsCallable<{ op: string } & Record<string, unknown>, { id: string }>(functions, 'srv');
-      const changed = new Set(getMismatches(item).map(m => m.field));
+      const changed = new Set(getMismatches(item, getTodayStr(DateFormat.StoreDate)).map(m => m.field));
       // dateOfDeath lives in the addresses vault (spec 1.19 'dod' channel), not on the
       // person document — the AOC console runs privileged, so this is a raw vault read.
       const sensitive = await store.personService.loadSensitive(item.personKey, store.currentUser());

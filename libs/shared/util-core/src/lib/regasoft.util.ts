@@ -1,6 +1,6 @@
 import { classifyStoreDate, convertDateFormatToString, DateFormat } from './date.util';
 import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
-import { SrvIndex, SrvMismatch } from '@okr/shared-models';
+import { SrvChanges, SrvIndex, SrvMismatch } from '@okr/shared-models';
 
 /**
  * Convert StoreDate "YYYYMMDD" → Regasoft ISO datetime "YYYY-MM-DDTHH:mm:ss". Returns null for
@@ -25,7 +25,8 @@ export function regasoftDateToStoreDate(isoDateTime: string | null | undefined):
 
 /**
  * Normalise a phone number for comparison: digits only, Swiss `+41` / `0041` → national `0`,
- * a `(0)` right after the country code dropped, any other `+CC` → `00CC`. Empty → ''.
+ * a trunk `0` right after the Swiss code dropped (`+41 (0)79…`, `+41 079…`), any other `+CC` → `00CC`.
+ * Empty → ''.
  */
 export function normalizePhone(n: string): string {
   const trimmed = (n ?? '').trim();
@@ -36,7 +37,10 @@ export function normalizePhone(n: string): string {
   const digits = withoutTrunk.replace(/\D/g, '');
   if (!digits) return '';
   const international = hasPlus ? `00${digits}` : digits;
-  return international.startsWith('0041') ? `0${international.substring(4)}` : international;
+  if (!international.startsWith('0041')) return international;
+  const rest = international.substring(4);
+  // A Swiss national number never starts with 0, so a leading 0 here is a written trunk zero.
+  return rest.startsWith('0') ? rest : `0${rest}`;
 }
 
 /** D4: a normalised number starting `07x` is a mobile, everything else a landline (`telefon`). */
@@ -82,39 +86,76 @@ export function expectedSrvStatus(s: {
   return none;
 }
 
-/** Return all BK ↔ Regasoft field mismatches for a single index entry. */
-export function getMismatches(item: SrvIndex): SrvMismatch[] {
+const lower = (s: string) => s.toLowerCase();
+const same = (a: string, b: string) => a === b;
+
+/**
+ * All BK ↔ Regasoft differences for one index entry, each with a `kind`:
+ * `fix` = we hold a value and can write it to Regasoft; `info` = Sekretariat-only, reported;
+ * `bk` = our own data is missing or inconsistent. An empty BK value never produces a `fix`
+ * (Regasoft data is never cleared from an empty club field) — it is reported as `bk` instead.
+ * The status dates follow `expectedSrvStatus` and may therefore clear a Regasoft value.
+ * `today` is a StoreDate and keeps a future exit date out of Regasoft.
+ */
+export function getMismatches(item: SrvIndex, today: string): SrvMismatch[] {
   if (!item.rid) return [];
 
   const result: SrvMismatch[] = [];
+  const v = (s: string | undefined | null) => s ?? '';
 
-  const chk = (field: string, bk: string, r: string, kind: SrvMismatch['kind'] = 'fix') => {
-    if (r && bk !== r) result.push({ field, okrValue: bk, rValue: r, kind });
-  };
-  const chkPhone = (field: string, bk: string, r: string) => {
-    const norm = (s: string) => s.replace(/\s/g, '');
-    if (r && norm(bk) !== norm(r)) result.push({ field, okrValue: bk, rValue: r, kind: 'fix' });
-  };
-  const chkCI = (field: string, bk: string, r: string) => {
-    if (r && bk.toLowerCase() !== r.toLowerCase()) result.push({ field, okrValue: bk, rValue: r, kind: 'fix' });
+  const cmp = (field: string, bk: string, r: string, eq: (a: string, b: string) => boolean = same) => {
+    if (!bk) {
+      if (r) result.push({ field, okrValue: bk, rValue: r, kind: 'bk' });
+    } else if (!eq(bk, r)) {
+      result.push({ field, okrValue: bk, rValue: r, kind: 'fix' });
+    }
   };
   // A partial date (year only, or a birthday without a year) cannot be compared to
   // Regasoft's full date. Reporting it would create a permanent, unresolvable mismatch.
-  const chkDate = (field: string, bk: string, r: string) => {
+  const cmpFullDate = (field: string, bk: string, r: string) => {
     if (classifyStoreDate(bk) !== 'full' || classifyStoreDate(r) !== 'full') return;
     if (bk !== r) result.push({ field, okrValue: bk, rValue: r, kind: 'fix' });
   };
 
-  chk('firstName',   item.firstName,   item.rFirstName);
-  chk('lastName',    item.lastName,    item.rLastName);
-  chk('memberId',    item.memberId,    item.rServiceId, 'bk');
-  chk('email',       item.mEmail,      item.rEmail);
-  chkPhone('phone',  item.mPhone,      item.rMobile || item.rTelefon);
-  chkCI('street',    item.mStreet,     item.rStreet);
-  chk('zipCode',     item.mZipCode,    item.rZipCode);
-  chkCI('city',      item.mCity,       item.rCity);
-  chkDate('dateOfBirth', item.dateOfBirth, item.rDateOfBirth);
+  cmp('firstName', v(item.firstName), v(item.rFirstName));
+  cmp('lastName', v(item.lastName), v(item.rLastName));
+  cmp('gender', v(item.gender), v(item.rGender));
+  cmpFullDate('dateOfBirth', v(item.dateOfBirth), v(item.rDateOfBirth));
+  cmp('email', v(item.mEmail), v(item.rEmail), (a, b) => lower(a) === lower(b));
+  cmp('phone', v(item.mPhone), v(item.rMobile) || v(item.rTelefon), (a) => phonesMatch(a, v(item.rMobile), v(item.rTelefon)));
+  cmp('street', v(item.mStreet), v(item.rStreet), (a, b) => lower(a) === lower(b));
+  cmp('zipCode', v(item.mZipCode), v(item.rZipCode));
+  cmp('city', v(item.mCity), v(item.rCity), (a, b) => lower(a) === lower(b));
 
+  const countryId = countryIdOf(v(item.mCountryCode));
+  if (countryId !== null && String(countryId) !== v(item.rCountryId)) {
+    result.push({ field: 'country', okrValue: item.mCountryCode, rValue: v(item.rCountryId), kind: 'fix' });
+  }
+
+  const expected = expectedSrvStatus({
+    dateOfDeath: v(item.mDateOfDeath),
+    dateOfExit: v(item.mDateOfExit),
+    category: v(item.mCategory),
+    passiveSince: v(item.mPassiveSince),
+    today,
+  });
+  const status: [keyof typeof expected, string][] = [
+    ['leavingDate', v(item.rLeavingDate)],
+    ['dateOfDeath', v(item.rDateOfDeath)],
+    ['inactiveDate', v(item.rInactiveDate)],
+  ];
+  for (const [field, r] of status) {
+    if (expected[field] !== r) result.push({ field, okrValue: expected[field], rValue: r, kind: 'fix' });
+  }
+
+  // Info: Sekretariat-only data, reported only when Regasoft has something to say.
+  if (item.hasNewsletter === false) result.push({ field: 'hasNewsletter', okrValue: '', rValue: 'false', kind: 'info' });
+  if (item.mainClub === false) result.push({ field: 'mainClub', okrValue: '', rValue: 'false', kind: 'info' });
+
+  // BK-side data.
+  if (item.rServiceId && v(item.memberId) !== item.rServiceId) {
+    result.push({ field: 'memberId', okrValue: v(item.memberId), rValue: item.rServiceId, kind: 'bk' });
+  }
   if (item.pKey) {
     const expectedCat = item.mainClub ? item.rCategory : 'D';
     if (expectedCat && item.pCategory !== expectedCat) {
@@ -123,4 +164,30 @@ export function getMismatches(item: SrvIndex): SrvMismatch[] {
   }
 
   return result;
+}
+
+/** The change set for Regasoft: only the `fix` differences, under Regasoft's field names. */
+export function getSrvChanges(item: SrvIndex, today: string): SrvChanges {
+  const changes: SrvChanges = {};
+  for (const m of getMismatches(item, today)) {
+    if (m.kind !== 'fix') continue;
+    switch (m.field) {
+      case 'gender': changes.gender = item.gender === 'female' ? 2 : 1; break;
+      case 'dateOfBirth': changes.birthday = m.okrValue; break;
+      case 'zipCode': changes.postcode = m.okrValue; break;
+      case 'phone': changes[classifyPhone(item.mPhone)] = m.okrValue; break;
+      case 'country': changes.countryId = countryIdOf(item.mCountryCode); break;
+      case 'firstName':
+      case 'lastName':
+      case 'email':
+      case 'street':
+      case 'city':
+      case 'leavingDate':
+      case 'dateOfDeath':
+      case 'inactiveDate':
+        changes[m.field] = m.okrValue;
+        break;
+    }
+  }
+  return changes;
 }

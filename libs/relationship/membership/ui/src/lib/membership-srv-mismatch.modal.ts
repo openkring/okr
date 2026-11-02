@@ -2,7 +2,7 @@ import { Component, computed, inject, input } from '@angular/core';
 import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonRow, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
 
 import { SrvIndex } from '@okr/shared-models';
-import { getMismatches } from '@okr/shared-util-core';
+import { DateFormat, getMismatches, getTodayStr } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { MEMBERSHIP_I18N_KEYS, MembershipI18n } from '@okr/relationship-membership-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
@@ -65,7 +65,7 @@ export class MembershipSrvMismatchModal {
 
   protected rows = computed<SrvDisplayRow[]>(() => {
     const i = this.item();
-    const mismatches = new Set(getMismatches(i).map(m => m.field));
+    const mismatches = new Set(getMismatches(i, getTodayStr(DateFormat.StoreDate)).map(m => m.field));
     const has = (field: string) => mismatches.has(field);
 
     const memberKey = [i.mKey, i.pKey].filter(Boolean).join(' / ') || '';
