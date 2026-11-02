@@ -666,25 +666,34 @@ describe('getSekretariatCases', () => {
     expect(getSekretariatCases([bkOnly, srvIndex({ rid: '3' })])).toEqual([]);
   });
 
-  it('reports a missing newsletter subscription', () => {
-    const cases = getSekretariatCases([srvIndex({ hasNewsletter: false, rServiceId: '321' })]);
+  it('never reports the newsletter: we hold no consent to subscribe anyone (I3)', () => {
+    expect(getSekretariatCases([srvIndex({ hasNewsletter: false, rServiceId: '321' })])).toEqual([]);
+  });
+
+  it('reports the main club with name, SRV number and subject', () => {
+    const cases = getSekretariatCases([srvIndex({ mainClub: false, rServiceId: '321' })]);
     expect(cases).toHaveLength(1);
     expect(cases[0]).toMatchObject({
-      caseKey: 'newsletter-1',
-      caseType: 'newsletter',
+      caseKey: 'mainClub-1',
+      caseType: 'mainClub',
       subjectKey: 'person.p1',
-      line: '«Anna Muster, SRV-Nr. 321: Newsletter abonniert?»',
+      line: '«Anna Muster, SRV-Nr. 321: Hauptclub prüfen»',
     });
   });
 
   it('shows a dash when the record has no SRV number', () => {
-    const [c] = getSekretariatCases([srvIndex({ hasNewsletter: false, rServiceId: '' })]);
-    expect(c.line).toBe('«Anna Muster, SRV-Nr. –: Newsletter abonniert?»');
+    const [c] = getSekretariatCases([srvIndex({ mainClub: false, rServiceId: '' })]);
+    expect(c.line).toBe('«Anna Muster, SRV-Nr. –: Hauptclub prüfen»');
   });
 
   it('reports the main club only for a member of our club', () => {
     expect(getSekretariatCases([srvIndex({ mainClub: false })]).map(c => c.caseKey)).toEqual(['mainClub-1']);
     expect(getSekretariatCases([srvIndex({ mainClub: false, mKey: '', personKey: '' })])).toEqual([]);
+  });
+
+  it('does not report the main club of a double member: another club is their main club (I3)', () => {
+    expect(getSekretariatCases([srvIndex({ mainClub: false, mCategory: 'D', clubs: ['Seeclub', '!RC Andere'] })])).toEqual([]);
+    expect(getSekretariatCases([srvIndex({ mainClub: false, pCategory: 'D', clubs: ['Seeclub', '!RC Andere'] })])).toEqual([]);
   });
 
   it('reports a double member of ours that Regasoft lists in one club only', () => {
@@ -725,14 +734,14 @@ describe('getSekretariatCases', () => {
   });
 
   it('keeps the case key stable across calls', () => {
-    const idx = [srvIndex({ hasNewsletter: false })];
+    const idx = [srvIndex({ mainClub: false })];
     expect(getSekretariatCases(idx)[0].caseKey).toBe(getSekretariatCases(idx)[0].caseKey);
   });
 });
 
 describe('composeSekretariatMail', () => {
   const cases = getSekretariatCases([
-    srvIndex({ hasNewsletter: false, rServiceId: '321' }),
+    srvIndex({ mainClub: false, rServiceId: '321' }),
     srvIndex({ rid: '2', firstName: 'Ben', rFirstName: 'Ben', personKey: 'p2', mainClub: false, rServiceId: '' , key: 'ben muster', rDateOfBirth: '19700101'}),
   ]);
 

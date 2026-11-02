@@ -322,7 +322,9 @@ export function getSrvChanges(item: SrvIndex, today: string): SrvChanges {
 /**
  * What the Regasoft API cannot do, the Sekretariat does by hand. `licence` and `delete` are part of
  * the union for later: there is no reliable source for them yet, so `getSekretariatCases` never
- * produces them today.
+ * produces them today. `newsletter` is never produced either: there is no club consent source,
+ * so we cannot ask the Sekretariat to subscribe anyone (spec 1.133 I3); it stays in the union for
+ * marks already written.
  */
 export type SrvCaseType = 'duplicate' | 'newsletter' | 'licence' | 'mainClub' | 'doubleMembership' | 'delete';
 
@@ -343,9 +345,8 @@ const SEKRETARIAT_MAIL_CLOSING = 'Vielen Dank und freundliche Grüsse';
 /** Longest `mailto:` URL we hand to a mail program; longer ones are cut or refused by some of them. */
 const MAILTO_MAX_LENGTH = 1800;
 
-const WHAT: Record<'duplicate' | 'newsletter' | 'mainClub' | 'doubleMembership', (rid: string) => string> = {
+const WHAT: Record<'duplicate' | 'mainClub' | 'doubleMembership', (rid: string) => string> = {
   duplicate: rid => `doppelter Eintrag (ID ${rid}), bitte löschen`,
-  newsletter: () => 'Newsletter abonniert?',
   mainClub: () => 'Hauptclub prüfen',
   doubleMembership: () => 'Doppelmitgliedschaft bei uns erfasst, in Regasoft nicht',
 };
@@ -391,9 +392,10 @@ function surplusRecords(index: SrvIndex[]): Set<SrvIndex> {
 }
 
 /**
- * Everything the Sekretariat has to do in Regasoft for us: second entries to delete, a missing
- * newsletter subscription, a main club that is not ours, a double member of ours that Regasoft lists in one club.
- * A record reported for deletion carries no further cases (it is going away). Index order.
+ * Everything the Sekretariat has to do in Regasoft for us: second entries to delete, a main club
+ * that is not ours (not for a double member: their main club is the other one), a double member of
+ * ours that Regasoft lists in one club. A record reported for deletion carries no further cases (it
+ * is going away). Index order.
  */
 export function getSekretariatCases(index: SrvIndex[]): SrvCase[] {
   const surplus = surplusRecords(index);
@@ -405,11 +407,11 @@ export function getSekretariatCases(index: SrvIndex[]): SrvCase[] {
       cases.push(sekretariatCase(item, 'duplicate'));
       continue;
     }
-    if (item.hasNewsletter === false) cases.push(sekretariatCase(item, 'newsletter'));
-    if (item.mainClub === false && !!item.mKey) cases.push(sekretariatCase(item, 'mainClub'));
+    const doubleMember = item.mCategory === 'D' || item.pCategory === 'D';
+    if (item.mainClub === false && !!item.mKey && !doubleMember) cases.push(sekretariatCase(item, 'mainClub'));
     // Our data says «double member», Regasoft lists at most one club. Members that Regasoft already
     // lists in several clubs are known to the Sekretariat.
-    if ((item.mCategory === 'D' || item.pCategory === 'D') && (item.clubs?.length ?? 0) <= 1) {
+    if (doubleMember && (item.clubs?.length ?? 0) <= 1) {
       cases.push(sekretariatCase(item, 'doubleMembership'));
     }
   }
