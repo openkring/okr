@@ -65,6 +65,7 @@ export * from './lib/ticket.model';
 export * from './lib/firebase-user.model';
 export * from './lib/folder.model';
 export * from './lib/geoposition.model';
+export * from './lib/course.model';
 export * from './lib/group.model';
 export * from './lib/hearing-quiz.model';
 export * from './lib/icon.model';

@@ -1,6 +1,7 @@
 import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_DATETIME, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TIME, DEFAULT_URL } from '@okr/shared-constants';
 import { AvatarInfo } from './avatar-info';
 import { OkrModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
+import { AttendanceEntry } from './course.model';
 
 export type Attendee = {
   person: AvatarInfo;
@@ -48,6 +49,25 @@ export class CalEventModel implements OkrModel, NamedModel, SearchableModel, Tag
    * entscheidet die Reichweite seines Kalenders.
    */
   public attendees: Attendee[] = []; // list of attendees with their status
+  /**
+   * Trainings-Kurs (spec 1.132): okey des `CourseModel`, zu dem dieser Termin gehoert; '' = keiner.
+   * Gehoert zu den GETEILTEN Serienfeldern (`getSeriesUpdateFields`) und wird beim Verlaengern einer
+   * Serie vererbt. Eine Kopie des Termins behaelt ihn.
+   *
+   * Optional on read: every event written before this field existed lacks it — always `?? ''`.
+   */
+  public courseKey = '';
+  /**
+   * Tatsaechliche Anwesenheit, Schluessel = personKey (spec 1.132 §5.3). Eine Map statt einer
+   * Erweiterung von `attendees[]`: ein Eintrag ist per Feldpfad einzeln schreibbar, und die
+   * Teilnehmerobergrenze (Reihenfolge von `attendees[]`) bleibt unberuehrt.
+   * PRO TERMIN: nie an Serien-Geschwister weitergegeben, auf einer Kopie zurueckgesetzt.
+   *
+   * Optional on read: every event written before this field existed lacks it — always `?? {}`.
+   */
+  public attendance: Record<string, AttendanceEntry> = {};
+  public attendanceConfirmedBy?: AvatarInfo; // who confirmed the attendance of this event; pro Termin
+  public attendanceConfirmedAt = DEFAULT_DATETIME; // StoreDateTime of the confirmation, '' = not confirmed. Optional on read
   /**
    * Cap on how many people may take part; 0 = unrestricted (the default).
    *

@@ -58,6 +58,17 @@ export class PersonModel implements OkrModel, AddressableModel, SearchableModel,
    */
   public newsDelivery?: DeliveryChannel[];
   public bexioId = DEFAULT_ID;
+  /**
+   * Externe Kennungen (spec 1.132 §5.4): die J+S-Personennummer und kuenftige Fremdsystem-Kennungen,
+   * z. B. `{ js: '123456789', bexio_gss: '4711' }`. Feste Schluessel aus `EXTERNAL_ID_KINDS`
+   * (`@okr/shared-util-core`), je Schluessel eine Pruefung; ein Schluessel mit Geltungsbereich ist
+   * `<kind>_<accountingTenantId>`. Nie fuer heikle Kennungen — die AHV-Nummer bleibt im `addresses`-Tresor.
+   * Einzeln per Feldpfad schreibbar (`externalIds.js`), abfragbar (`where('externalIds.js', '==', nr)`).
+   * `bexioId` wird nicht migriert.
+   *
+   * Optional on read: every person written before this field existed lacks it — always `?? {}`.
+   */
+  public externalIds?: Record<string, string>;
 
   // privacy preferences: how the person wants their sensitive attributes shared.
   // Read source for AppStore.getPersonPrivacySettings (persons are tenant-readable,
