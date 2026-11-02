@@ -109,22 +109,46 @@ const ELEMENT_AVATAR_PATH = /^(.+)\[\]\.([^.[\]]+)$/;
  *  - clears `by` on OTHER people's entries the subject wrote (`attendance.<otherKey>.by` = '').
  * Both are field-path updates, never a rewrite of the map: a trainer confirming another child at
  * the same moment must not be lost (spec 1.132 §5.3 designed the map for exactly that). The event
- * (date, title, who else was there) stays. Keys containing a dot cannot be addressed by a field-path
- * string and are skipped (person keys are generated ids and never contain one).
+ * (date, title, who else was there) stays. If a touched key is not a plain id, the whole map is
+ * rewritten instead (see `attendancePatch`); nothing is ever skipped.
  */
+/** A map key that a dotted field-path string addresses unambiguously. */
+const PLAIN_MAP_KEY = /^[A-Za-z0-9_-]+$/;
 const MAP_BY_PERSON_PATH = /^([^.[\]{}]+)\{\}$/;
 
 function attendancePatch(field: string, value: unknown, personKey: string): Record<string, unknown> {
   const patch: Record<string, unknown> = {};
   if (!personKey || value === null || typeof value !== 'object' || Array.isArray(value)) return patch;
-  for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
-    if (key.includes('.')) continue;
-    if (key === personKey || elementIdentifies(entry, personKey)) {
-      patch[`${field}.${key}`] = FieldValue.delete();
-    } else if ((entry as Record<string, unknown> | null)?.['by'] === personKey) {
-      patch[`${field}.${key}.by`] = '';
-    }
+  const map = value as Record<string, unknown>;
+
+  // 1 — what has to change: delete the subject's own entry, clear `by` on the others'.
+  const drop = new Set<string>();
+  const clearBy = new Set<string>();
+  for (const [key, entry] of Object.entries(map)) {
+    if (key === personKey || elementIdentifies(entry, personKey)) drop.add(key);
+    else if ((entry as Record<string, unknown> | null)?.['by'] === personKey) clearBy.add(key);
   }
+  if (drop.size === 0 && clearBy.size === 0) return patch;
+
+  // 2 — per-entry field paths, ONLY when every touched key is a plain id. Clients write attendance
+  //     keys through FieldPath, so a key can hold a dot, a backtick, a slash, brackets, a space...,
+  //     none of which a dotted path string addresses correctly. Skipping such an entry would leave the
+  //     subject's data behind (erasure failing open), so in that rare case the WHOLE map is rewritten
+  //     without the subject and with `by` cleared. That rewrite can lose a concurrent confirmation of
+  //     another child; accepted for this case only, the alternative is an incomplete erasure.
+  const touched = [...drop, ...clearBy];
+  if (!touched.every((key) => PLAIN_MAP_KEY.test(key))) {
+    const rebuilt: Record<string, unknown> = {};
+    for (const [key, entry] of Object.entries(map)) {
+      if (drop.has(key)) continue;
+      rebuilt[key] = clearBy.has(key) ? { ...(entry as Record<string, unknown>), by: '' } : entry;
+    }
+    patch[field] = rebuilt;
+    return patch;
+  }
+
+  for (const key of drop) patch[`${field}.${key}`] = FieldValue.delete();
+  for (const key of clearBy) patch[`${field}.${key}.by`] = '';
   return patch;
 }
 

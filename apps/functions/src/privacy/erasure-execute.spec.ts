@@ -73,6 +73,46 @@ describe('anonymizePatch — course rows (spec 1.132)', () => {
     expect(Object.keys(p).filter((k) => k.startsWith('attendance'))).toEqual(['attendance.p1']);
   });
 
+  it('calevents falls back to the whole map when the subject entry sits under a non-plain key', () => {
+    const doc = snap('c1', {
+      attendance: {
+        'a.b': { person: { key: 'p1' }, presence: 'present' },
+        p2: { person: { key: 'p2' }, presence: 'absent', by: 'p2' },
+        'x y': { person: { key: 'p3' }, presence: 'present', by: 'p3' },
+      },
+    });
+    const p = anonymizePatch(mapRow('calevents'), doc, ctx, pseudo, '20260729');
+    expect(p['attendance']).toEqual({
+      p2: { person: { key: 'p2' }, presence: 'absent', by: 'p2' },
+      'x y': { person: { key: 'p3' }, presence: 'present', by: 'p3' },
+    });
+    // never a mix of the whole map and field paths under it
+    expect(Object.keys(p).filter((k) => k.startsWith('attendance.'))).toEqual([]);
+  });
+
+  it('calevents clears `by` on another entry under a non-plain key (whole map, other fields kept)', () => {
+    const doc = snap('c1', {
+      attendance: {
+        'q`z': { person: { key: 'p2' }, presence: 'present', by: 'p1' },
+        p3: { person: { key: 'p3' }, presence: 'absent', by: 'p9' },
+      },
+    });
+    const p = anonymizePatch(mapRow('calevents'), doc, ctx, pseudo, '20260729');
+    expect(p['attendance']).toEqual({
+      'q`z': { person: { key: 'p2' }, presence: 'present', by: '' },
+      p3: { person: { key: 'p3' }, presence: 'absent', by: 'p9' },
+    });
+  });
+
+  it('calevents keeps per-entry patches when only UNTOUCHED entries have odd keys', () => {
+    const doc = snap('c1', {
+      attendance: { p1: { person: { key: 'p1' } }, 'a.b': { person: { key: 'p4' }, by: 'p4' } },
+    });
+    const p = anonymizePatch(mapRow('calevents'), doc, ctx, pseudo, '20260729');
+    expect(p['attendance.p1']).toBe(FieldValue.delete());
+    expect(p['attendance']).toBeUndefined();
+  });
+
   it('calevents also deletes a legacy entry keyed differently whose person is the subject', () => {
     const doc = snap('c1', { attendance: { legacy: { person: { key: 'p1' } }, p2: { person: { key: 'p2' } } } });
     const p = anonymizePatch(mapRow('calevents'), doc, ctx, pseudo, '20260729');
