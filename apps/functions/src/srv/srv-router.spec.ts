@@ -3,19 +3,30 @@ import { describe, expect, it, vi } from 'vitest';
 vi.mock('firebase-admin/firestore', () => ({ getFirestore: vi.fn() }));
 vi.mock('firebase-admin/auth', () => ({ getAuth: vi.fn() }));
 vi.mock('firebase-admin', () => ({ firestore: vi.fn() }));
-vi.mock('firebase-functions/params', () => ({ defineSecret: (n: string) => ({ name: n, value: () => 'x' }) }));
+vi.mock('firebase-functions/params', () => ({
+  defineSecret: (n: string) => ({ name: n, value: () => 'x' }),
+  defineString: (n: string) => ({ name: n, value: () => '' }),
+}));
 
 import { SRV_OPS, SRV_OPTIONS, srv } from './srv-router';
 import * as contact from './contact';
 
-const NAMES = ['getSrvContacts', 'getSrvMemberDetail', 'createSrvContact', 'updateSrvContact'];
+/** The four ops that also exist as stand-alone callables (aliases, 3.41 A8). */
+const ALIASED = ['getSrvContacts', 'getSrvMemberDetail', 'createSrvContact', 'updateSrvContact'];
+/** Every op; `previewSrvUpdate` (1.133) is router-only, so it adds no new deployed function. */
+const NAMES = [...ALIASED, 'previewSrvUpdate'];
 
 describe('srv op table', () => {
-  it('has exactly the 4 op names as keys', () => {
+  it('has exactly the 5 op names as keys', () => {
     expect(Object.keys(SRV_OPS).sort()).toEqual([...NAMES].sort());
   });
 
-  for (const name of NAMES) {
+  it('previewSrvUpdate runs the preview handler and has no alias', () => {
+    expect(SRV_OPS['previewSrvUpdate']).toBe(contact.handlePreviewSrvUpdate);
+    expect((contact as Record<string, unknown>)['previewSrvUpdate']).toBeUndefined();
+  });
+
+  for (const name of ALIASED) {
     it(`${name}: the op is the handler its alias wraps`, () => {
       const handler = 'handle' + name[0].toUpperCase() + name.slice(1);
       const mod = contact as Record<string, unknown>;

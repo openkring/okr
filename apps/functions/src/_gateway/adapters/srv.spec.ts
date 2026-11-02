@@ -3,6 +3,7 @@ import { describe, it, expect } from 'vitest';
 import {
   unwrapMembers,
   unwrapMember,
+  unwrapRawMember,
   mapSrvContact,
   mapSrvLicensed,
   selectLicensed,
@@ -49,11 +50,32 @@ describe('unwrapMembers / unwrapMember', () => {
     expect(unwrapMember({})).toBeNull();
     expect(unwrapMember(null)).toBeNull();
   });
+  it('unwraps the raw record with every key, including ones our model does not know', () => {
+    const raw = { id: 7, entryDate: '2013-03-12T00:00:00', futureField: 42 };
+    expect(unwrapRawMember({ data: raw })).toBe(raw);
+    expect(unwrapRawMember(raw)).toBe(raw);
+    expect(unwrapRawMember({ data: null })).toBeNull();
+    expect(unwrapRawMember('nope')).toBeNull();
+  });
+});
+
+describe('test-system emails', () => {
+  const TEST_MEMBER = { ...(MEMBER as object), email: 'hans@example.chx' } as never;
+
+  it('strips the trailing x when reading the test system', () => {
+    expect(mapSrvContact(TEST_MEMBER, true).email).toBe('hans@example.ch');
+    expect(mapSrvDetail(TEST_MEMBER, true)?.email).toBe('hans@example.ch');
+  });
+
+  it('keeps the email as it is in production', () => {
+    expect(mapSrvContact(TEST_MEMBER, false).email).toBe('hans@example.chx');
+    expect(mapSrvDetail(TEST_MEMBER, false)?.email).toBe('hans@example.chx');
+  });
 });
 
 describe('projections', () => {
   it('maps the contact shape the client has always received', () => {
-    const c = mapSrvContact(MEMBER);
+    const c = mapSrvContact(MEMBER, false);
     expect(c.srvId).toBe(42);
     expect(c.firstName).toBe('Hans');
     expect(c.hasLicense).toBe(true);
@@ -64,7 +86,7 @@ describe('projections', () => {
   it('keeps the licence image OUT of the contact shape', () => {
     // The contact list is fetched far more often than the licensed list; pulling
     // a base64 image into it would bloat every response and the cache entry.
-    expect(mapSrvContact(MEMBER)).not.toHaveProperty('licenseImage');
+    expect(mapSrvContact(MEMBER, false)).not.toHaveProperty('licenseImage');
   });
 
   it('puts the licence image IN the licensed shape', () => {
@@ -83,14 +105,25 @@ describe('projections', () => {
   });
 
   it('maps a detail record, stringifying licenseId', () => {
-    const d = mapSrvDetail(MEMBER);
+    const d = mapSrvDetail(MEMBER, false);
     expect(d?.rid).toBe(42);
     expect(d?.licenseId).toBe('987');
   });
 
+  it('fills the detail fields the comparison needs', () => {
+    const d = mapSrvDetail({
+      ...(MEMBER as object), gender: 2, salutation: 'Frau', streetAdditional: 'c/o X', countryId: 3,
+      telefon: '044 111 22 33', mobile: '079 123 45 67', entryDate: '2013-03-12T00:00:00',
+    }, false);
+    expect(d).toMatchObject({
+      gender: 2, salutation: 'Frau', streetAdditional: 'c/o X', countryId: 3,
+      telefon: '044 111 22 33', mobile: '079 123 45 67', email: 'hans@example.ch', entryDate: '20130312',
+    });
+  });
+
   it('returns null when the detail payload has no member', () => {
-    expect(mapSrvDetail({})).toBeNull();
-    expect(mapSrvDetail(undefined)).toBeNull();
+    expect(mapSrvDetail({}, false)).toBeNull();
+    expect(mapSrvDetail(undefined, false)).toBeNull();
   });
 });
 

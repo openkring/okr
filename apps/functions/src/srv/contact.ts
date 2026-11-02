@@ -2,8 +2,7 @@ import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https
 import { checkRoles } from '@okr/shared-util-functions';
 import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
-import { storeDateToRegasoftDate } from '@okr/shared-util-core';
-import { RegasoftMember, SrvContactData, SrvMemberLicenseDetail } from '@okr/shared-models';
+import { RegasoftMember, SrvChanges, SrvContactData, SrvMemberLicenseDetail, SrvPreview, SrvUpdateResult } from '@okr/shared-models';
 
 import { runGateway, resolveTenantId } from '../_gateway/gateway';
 import { invalidateProvider } from '../_gateway/cache';
@@ -14,23 +13,30 @@ import {
   srvMembersAdapter,
   srvMemberDetailAdapter,
   mapSrvContact,
+  unwrapRawMember,
 } from '../_gateway/adapters/srv';
 
-import { regasoftApiKey, regasoftClubId, REGASOFT_BASE } from './shared';
+import { isRegasoftTestSystem, regasoftApiKey, regasoftBaseUrl, regasoftClubId } from './shared';
+import { buildSrvCreatePayload, runSrvPreview, runSrvUpdate } from './srv-update';
 
 /**
- * Writes to Regasoft are switched off until spec 1.133 (Regasoft integration v2) ships.
- * Regasoft's PUT replaces the whole record, and the payloads below send only part of it, so
- * every update erased salutation, streetAdditional, countryId, telefon, entryDate and
- * inactiveDate (probe 2026-11-02, planning/reference/REGASOFT.md). Blocking here, not only in
- * the client, also stops app versions that still offer the actions.
+ * Writes to Regasoft stay switched off until they have been tested against PortalTest (plan
+ * 1.133, Task 9). Regasoft's PUT replaces the whole record and a record can never be deleted:
+ * the old payloads sent only part of it, so every update erased salutation, streetAdditional,
+ * countryId, telefon, entryDate and inactiveDate (probe 2026-11-02,
+ * planning/reference/REGASOFT.md). The read-modify-write in ./srv-update.ts fixes that, but it
+ * is turned on only after the test. Blocking here, not only in the client, also stops app
+ * versions that still offer the actions. The preview (`previewSrvUpdate`) sends nothing and is
+ * never blocked.
  */
-const SRV_WRITES_ENABLED = false;
+const SRV_UPDATE_ENABLED = false;
+/** Create stays off longer: a new Regasoft record can never be deleted again, and POST is unprobed (Q7). */
+const SRV_CREATE_ENABLED = false;
 
-function assertSrvWritesEnabled(cfName: string): void {
-  if (SRV_WRITES_ENABLED) return;
-  logger.warn(`${cfName}: rejected, Regasoft writes are disabled until spec 1.133`);
-  throw new HttpsError('failed-precondition', 'Regasoft writes are disabled until the safe update (spec 1.133) ships');
+function assertEnabled(enabled: boolean, cfName: string): void {
+  if (enabled) return;
+  logger.warn(`${cfName}: rejected, Regasoft writes are disabled (spec 1.133)`);
+  throw new HttpsError('failed-precondition', 'Regasoft writes are disabled until the safe update (spec 1.133) is tested');
 }
 
 function regasoftHeaders(apiKey: string, clubId: string) {
@@ -39,6 +45,52 @@ function regasoftHeaders(apiKey: string, clubId: string) {
     'ApiKey': apiKey,
     'ClubId': clubId,
   };
+}
+
+/**
+ * A Regasoft failure as the client sees it. An `HttpsError` (our own checks) passes through;
+ * a Regasoft HTTP error keeps its status and body.
+ */
+function toRegasoftError(cfName: string, error: unknown, fallback: string): HttpsError {
+  if (error instanceof HttpsError) return error;
+  if (axios.isAxiosError(error)) {
+    const status = error.response?.status;
+    const body = JSON.stringify(error.response?.data);
+    logger.error(`${cfName}: Regasoft API error ${status}: ${body}`);
+    return new HttpsError('internal', `Regasoft API error ${status}: ${body}`);
+  }
+  logger.error(`${cfName}: unexpected error`, error);
+  return new HttpsError('internal', fallback);
+}
+
+/**
+ * One member's record exactly as Regasoft returns it (every key), read live — never through the
+ * gateway cache, because a write must be merged into the current record (spec 1.133 D1).
+ */
+async function readRawSrvMember(rid: number, ctx: GatewayContext): Promise<Record<string, unknown> | null> {
+  return unwrapRawMember(await srvMemberDetailAdapter.fetch({ rid }, ctx));
+}
+
+/** `PUT` the complete record. Plain axios, no retry: the outcome is checked by reading back. */
+async function putSrvMember(rid: number, payload: Record<string, unknown>): Promise<void> {
+  await axios.put(
+    `${regasoftBaseUrl()}/api/club/members/${rid}`,
+    payload,
+    { headers: regasoftHeaders(regasoftApiKey.value(), regasoftClubId.value()) }
+  );
+}
+
+/** `{ srvId, changes }` from the client, validated before anything is read. */
+function parseSrvWrite(data: unknown): { rid: number; changes: SrvChanges } {
+  const { srvId, changes } = (data ?? {}) as { srvId?: unknown; changes?: unknown };
+  const rid = Number(srvId);
+  if (srvId === null || srvId === undefined || srvId === '' || !Number.isInteger(rid) || rid <= 0) {
+    throw new HttpsError('invalid-argument', 'srvId must be a positive integer');
+  }
+  if (!changes || typeof changes !== 'object' || Array.isArray(changes)) {
+    throw new HttpsError('invalid-argument', 'changes must be an object');
+  }
+  return { rid, changes: changes as SrvChanges };
 }
 
 /**
@@ -88,7 +140,8 @@ export async function handleGetSrvContacts(request: CallableRequest) {
   const ctx = await srvContext(request);
   const res = await runGateway(srvMembersAdapter, {}, ctx);
   logger.info(`${CF_NAME}: ${res.data.length} members`, { cached: res.cached });
-  return res.data.map(mapSrvContact);
+  const testSystem = isRegasoftTestSystem();
+  return res.data.map((m) => mapSrvContact(m, testSystem));
 }
 
 export const getSrvContacts = onCall(
@@ -171,43 +224,19 @@ export async function handleCreateSrvContact(request: CallableRequest<SrvContact
   }
   // SRV member data is person PII — memberAdmin/admin only (privacy inventory §7.2).
   await checkRoles(request, CF_NAME, ['memberAdmin']);
-  assertSrvWritesEnabled(CF_NAME);
+  assertEnabled(SRV_CREATE_ENABLED, CF_NAME);
 
-  const { firstName, lastName, email, mobile, dateOfBirth, gender } = request.data;
+  const { firstName, lastName } = request.data;
   if (!firstName || !lastName) {
     throw new HttpsError('invalid-argument', 'firstName and lastName are required');
   }
 
-  logger.info(`${CF_NAME}: creating SRV member "${firstName} ${lastName}"`);
-
-  const { fullname, membershipType, nationIOC, language, hasNewsletter, hasLicense,
-          street, streetAdditional, postcode, city, countryName, countryId, telefon } = request.data;
-  const payload: Partial<RegasoftMember> = {
-    id: 0,
-    firstName,
-    lastName,
-    fullname,
-    email: email ?? null,
-    mobile: mobile ?? null,
-    birthday: storeDateToRegasoftDate(dateOfBirth),
-    gender,
-    membershipType,
-    nationIOC,
-    language,
-    hasNewsletter,
-    hasLicense,
-    street: street ?? null,
-    streetAdditional: streetAdditional ?? null,
-    postcode: postcode ?? null,
-    city: city ?? null,
-    countryName: countryName ?? null,
-    countryId: countryId ? Number(countryId) || null : null,
-    telefon: telefon ?? null,
-  };
+  logger.info(`${CF_NAME}: creating SRV member`);
+  const payload = buildSrvCreatePayload(request.data, isRegasoftTestSystem());
 
   try {
     const response = await axios.post<RegasoftMember>(
-      `${REGASOFT_BASE}/api/club/members`,
+      `${regasoftBaseUrl()}/api/club/members`,
       payload,
       { headers: regasoftHeaders(regasoftApiKey.value(), regasoftClubId.value()) }
     );
@@ -216,14 +245,7 @@ export async function handleCreateSrvContact(request: CallableRequest<SrvContact
     await invalidateSrvCaches(await srvContext(request));
     return { id: String(response.data.id) };
   } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      const status = error.response?.status;
-      const body = JSON.stringify(error.response?.data);
-      logger.error(`${CF_NAME}: Regasoft API error ${status}: ${body}`);
-      throw new HttpsError('internal', `Regasoft API error ${status}: ${body}`);
-    }
-    logger.error(`${CF_NAME}: unexpected error`, error);
-    throw new HttpsError('internal', 'Regasoft member creation failed');
+    throw toRegasoftError(CF_NAME, error, 'Regasoft member creation failed');
   }
 }
 
@@ -237,9 +259,13 @@ export const createSrvContact = onCall(
 );
 
 /**
- * Update an existing member in the Regasoft SRV API.
+ * Update an existing member in the Regasoft SRV API (spec 1.133 §4.1): read the record live,
+ * lay `changes` over it, `PUT` the complete record, read it back. Returns the record before and
+ * after and which changed fields Regasoft took (`written`) or silently ignored (`ignored`).
  */
-export async function handleUpdateSrvContact(request: CallableRequest<SrvContactData & { srvId: number }>) {
+export async function handleUpdateSrvContact(
+  request: CallableRequest<{ srvId: number; changes: SrvChanges }>
+): Promise<SrvUpdateResult> {
   const CF_NAME = 'updateSrvContact';
 
   if (!request.auth) {
@@ -247,51 +273,25 @@ export async function handleUpdateSrvContact(request: CallableRequest<SrvContact
   }
   // SRV member data is person PII — memberAdmin/admin only (privacy inventory §7.2).
   await checkRoles(request, CF_NAME, ['memberAdmin']);
-  assertSrvWritesEnabled(CF_NAME);
+  assertEnabled(SRV_UPDATE_ENABLED, CF_NAME);
 
-  const { srvId, firstName, lastName, email, mobile, dateOfBirth, gender,
-          membershipType, street, postcode, city, dateOfDeath, leavingDate } = request.data;
-  if (!srvId || !firstName || !lastName) {
-    throw new HttpsError('invalid-argument', 'srvId, firstName and lastName are required');
-  }
-
-  logger.info(`${CF_NAME}: updating SRV member ${srvId} "${firstName} ${lastName}"`);
-
-  const payload: Partial<RegasoftMember> = {
-    id: srvId,
-    firstName,
-    lastName,
-    email: email ?? null,
-    mobile: mobile ?? null,
-    birthday: storeDateToRegasoftDate(dateOfBirth),
-    gender,
-    membershipType,
-    street: street ?? null,
-    postcode: postcode ?? null,
-    city: city ?? null,
-    dateOfDeath: storeDateToRegasoftDate(dateOfDeath ?? undefined),
-    leavingDate: storeDateToRegasoftDate(leavingDate ?? undefined),
-  };
+  const { rid, changes } = parseSrvWrite(request.data);
+  const ctx = await srvContext(request);
+  logger.info(`${CF_NAME}: updating SRV member ${rid}`, { fields: Object.keys(changes) });
 
   try {
-    await axios.put<RegasoftMember>(
-      `${REGASOFT_BASE}/api/club/members/${srvId}`,
-      payload,
-      { headers: regasoftHeaders(regasoftApiKey.value(), regasoftClubId.value()) }
-    );
-
-    logger.info(`${CF_NAME}: updated SRV member ${srvId}`);
-    await invalidateSrvCaches(await srvContext(request));
-    return { id: String(srvId) };
+    const result = await runSrvUpdate({
+      rid,
+      changes,
+      testSystem: isRegasoftTestSystem(),
+      read: (id) => readRawSrvMember(id, ctx),
+      write: putSrvMember,
+      onWritten: () => invalidateSrvCaches(ctx),
+    });
+    logger.info(`${CF_NAME}: updated SRV member ${rid}`, { written: result.written, ignored: result.ignored });
+    return result;
   } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      const status = error.response?.status;
-      const body = JSON.stringify(error.response?.data);
-      logger.error(`${CF_NAME}: Regasoft API error ${status}: ${body}`);
-      throw new HttpsError('internal', `Regasoft API error ${status}: ${body}`);
-    }
-    logger.error(`${CF_NAME}: unexpected error`, error);
-    throw new HttpsError('internal', 'Regasoft member update failed');
+    throw toRegasoftError(CF_NAME, error, 'Regasoft member update failed');
   }
 }
 
@@ -303,3 +303,33 @@ export const updateSrvContact = onCall(
   },
   handleUpdateSrvContact
 );
+
+/**
+ * Dry run of `updateSrvContact` (spec 1.133 D12): the same live read and merge, no `PUT`.
+ * Never blocked by the write switches. Router op only (`srv` / `previewSrvUpdate`).
+ */
+export async function handlePreviewSrvUpdate(
+  request: CallableRequest<{ srvId: number; changes: SrvChanges }>
+): Promise<SrvPreview> {
+  const CF_NAME = 'previewSrvUpdate';
+
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Authentication required');
+  }
+  // SRV member data is person PII — memberAdmin/admin only (privacy inventory §7.2).
+  await checkRoles(request, CF_NAME, ['memberAdmin']);
+
+  const { rid, changes } = parseSrvWrite(request.data);
+  const ctx = await srvContext(request);
+
+  try {
+    return await runSrvPreview({
+      rid,
+      changes,
+      testSystem: isRegasoftTestSystem(),
+      read: (id) => readRawSrvMember(id, ctx),
+    });
+  } catch (error: unknown) {
+    throw toRegasoftError(CF_NAME, error, 'Regasoft member preview failed');
+  }
+}

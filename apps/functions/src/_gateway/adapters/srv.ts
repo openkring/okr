@@ -39,7 +39,8 @@ import { Club, RegasoftMember, SrvMemberLicenseDetail } from '@okr/shared-models
 import type { ProviderAdapter, GatewayContext } from '../provider';
 import { gatewayFetch } from '../http';
 
-import { regasoftApiKey, regasoftClubId, REGASOFT_BASE } from '../../srv/shared';
+import { isRegasoftTestSystem, regasoftApiKey, regasoftBaseUrl, regasoftClubId, REGASOFT_HOST } from '../../srv/shared';
+import { stripTestEmail } from '../../srv/srv-update';
 
 /**
  * 30 minutes, uniform across both adapters.
@@ -80,24 +81,34 @@ export function unwrapMembers(raw: unknown): RegasoftMember[] {
   return Array.isArray(wrapped) ? (wrapped as RegasoftMember[]) : [];
 }
 
-/** …and either a bare member or `{ data: {...} }` for a single record. */
-export function unwrapMember(raw: unknown): RegasoftMember | null {
+/**
+ * …and either a bare member or `{ data: {...} }` for a single record. Returns the object exactly
+ * as Regasoft sent it — every key, including ones our model does not know — never a copy. The
+ * write path sends this record back (spec 1.133 D1), so dropping a key here would erase it.
+ */
+export function unwrapRawMember(raw: unknown): Record<string, unknown> | null {
   if (!raw || typeof raw !== 'object') return null;
   const inner = (raw as { data?: unknown }).data;
-  const m = (inner && typeof inner === 'object' ? inner : raw) as RegasoftMember;
-  return m && m.id != null ? m : null;
+  const m = (inner && typeof inner === 'object' && !Array.isArray(inner) ? inner : raw) as Record<string, unknown>;
+  return m['id'] != null ? m : null;
+}
+
+/** The same record, typed for the read projections. */
+export function unwrapMember(raw: unknown): RegasoftMember | null {
+  return unwrapRawMember(raw) as RegasoftMember | null;
 }
 
 // --- projections: kept verbatim from the pre-gateway callables so the retrofit
 //     is invisible to the client. Pure, so they are unit-testable on their own.
 
-export function mapSrvContact(m: RegasoftMember) {
+/** `testSystem`: strip the test `x` from the email (D11), see `isRegasoftTestSystem`. */
+export function mapSrvContact(m: RegasoftMember, testSystem: boolean) {
   return {
     srvId: m.id,
     serviceId: m.serviceId,
     firstName: m.firstName,
     lastName: m.lastName,
-    email: m.email ?? null,
+    email: stripTestEmail(m.email ?? null, testSystem),
     mobile: m.mobile ?? null,
     telefon: m.telefon ?? null,
     dateOfBirth: regasoftDateToStoreDate(m.birthday),
@@ -135,7 +146,7 @@ export function selectLicensed(members: RegasoftMember[]): RegasoftMember[] {
   return members.filter((m) => m.hasLicense === true);
 }
 
-export function mapSrvDetail(raw: unknown): SrvMemberLicenseDetail | null {
+export function mapSrvDetail(raw: unknown, testSystem: boolean): SrvMemberLicenseDetail | null {
   const m = unwrapMember(raw);
   if (!m) return null;
   return {
@@ -150,7 +161,7 @@ export function mapSrvDetail(raw: unknown): SrvMemberLicenseDetail | null {
     countryId: m.countryId ?? null,
     telefon: m.telefon ?? '',
     mobile: m.mobile ?? '',
-    email: m.email ?? '',
+    email: stripTestEmail(m.email ?? null, testSystem) ?? '',
     licenseId: m.licenseId != null ? String(m.licenseId) : '',
     licenseValidUntil: regasoftDateToStoreDate(m.licenseValidUntil),
     licenseImage: m.licenseImage ?? null,
@@ -172,14 +183,14 @@ export function mapSrvDetail(raw: unknown): SrvMemberLicenseDetail | null {
  */
 export const srvMembersAdapter: ProviderAdapter<Record<string, never>, unknown, RegasoftMember[]> = {
   id: 'srv-members',
-  baseUrl: REGASOFT_BASE,
+  baseUrl: REGASOFT_HOST,
   secrets: SRV_SECRETS,
   scope: 'tenant',
   ttlSeconds: SRV_TTL,
   requiresAuth: true,
   attribution: ATTRIBUTION,
   async fetch(_params, _ctx: GatewayContext) {
-    const res = await gatewayFetch(`${REGASOFT_BASE}/api/club/members`, {
+    const res = await gatewayFetch(`${regasoftBaseUrl()}/api/club/members`, {
       method: 'GET',
       headers: regasoftHeaders(),
     });
@@ -192,7 +203,7 @@ export const srvMembersAdapter: ProviderAdapter<Record<string, never>, unknown, 
 /** ONE member's detail record — see the per-rid note in the file header. */
 export const srvMemberDetailAdapter: ProviderAdapter<{ rid: number }, unknown, SrvMemberLicenseDetail | null> = {
   id: 'srv-member-detail',
-  baseUrl: REGASOFT_BASE,
+  baseUrl: REGASOFT_HOST,
   secrets: SRV_SECRETS,
   scope: 'tenant',
   ttlSeconds: SRV_TTL,
@@ -203,11 +214,12 @@ export const srvMemberDetailAdapter: ProviderAdapter<{ rid: number }, unknown, S
       throw new HttpsError('invalid-argument', 'rid must be a positive number');
     }
     const res = await gatewayFetch(
-      `${REGASOFT_BASE}/api/club/members/${encodeURIComponent(String(params.rid))}`,
+      `${regasoftBaseUrl()}/api/club/members/${encodeURIComponent(String(params.rid))}`,
       { method: 'GET', headers: regasoftHeaders() },
     );
     return res.data;
   },
-  map: mapSrvDetail,
+  // The test-system setting is read at map time; the cache holds the raw record.
+  map: (raw) => mapSrvDetail(raw, isRegasoftTestSystem()),
   sourceTimestamp: () => null,
 };
