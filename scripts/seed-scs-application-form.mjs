@@ -53,38 +53,47 @@ const rule = (match, ...conditions) => ({ match, conditions });
 const when = (fieldId, op, value) => (value === undefined ? { fieldId, op } : { fieldId, op, value });
 
 // A divider's rule is the block rule: it governs the divider and every field up to the next divider.
+// Required flags mirror `applicationValidations` (libs/subject/application/util), so a submitted application
+// can always be saved in the edit modal. `phone` is required for everyone: the suite needs it for adults and
+// transfers, and for youth it accepts the own phone or the guardian's — always asking for the own phone is the
+// one setting that never leaves an application unsaveable (a required flag cannot depend on the age).
 const FIELDS = [
   field(0, 'firstName', 'text', 'Vorname', { required: true, width: 'half' }),
   field(1, 'lastName', 'text', 'Nachname', { required: true, width: 'half' }),
   field(2, 'gender', 'category', 'Geschlecht', { required: true, categoryName: 'gender' }),
   field(3, 'dateOfBirth', 'date', 'Geburtsdatum', { required: true }),
   field(4, 'email', 'email', 'E-Mail', { required: true, width: 'half' }),
-  field(5, 'phone', 'phone', 'Telefon', { width: 'half', region: 'CH' }),
-  field(6, 'streetName', 'text', 'Strasse', { width: 'half' }),
-  field(7, 'zipCode', 'text', 'PLZ', { width: 'third' }),
-  field(8, 'city', 'text', 'Ort', { width: 'half' }),
+  field(5, 'phone', 'phone', 'Telefon', { required: true, width: 'half', region: 'CH' }),
+  // address rows tile: street + number (½ + ½), then zip + city + country (⅓ each)
+  field(6, 'streetName', 'text', 'Strasse', { required: true, width: 'half' }),
+  field(7, 'streetNumber', 'text', 'Nr.', { required: true, width: 'half' }),
+  field(8, 'zipCode', 'text', 'PLZ', { required: true, width: 'third' }),
+  field(9, 'city', 'text', 'Ort', { required: true, width: 'third' }),
+  field(10, 'countryCode', 'text', 'Land', { required: true, width: 'third' }),
 
-  field(9, 'rowingExperience', 'checkbox', 'Ich bin schon gerudert', {
+  field(11, 'rowingExperience', 'checkbox', 'Ich bin schon gerudert', {
     asProperty: true,
     visibleIf: rule('all', when('dateOfBirth', 'ageGte', 20)),
   }),
 
-  field(10, 'rowingBlock', 'divider', 'Rudererfahrung', {
+  field(12, 'rowingBlock', 'divider', 'Rudererfahrung', {
     visibleIf: rule('all', when('rowingExperience', 'isChecked')),
   }),
-  field(11, 'previousClub', 'text', 'Bisheriger Club', { asProperty: true }),
+  field(13, 'previousClub', 'text', 'Bisheriger Club', { asProperty: true }),
 
-  field(12, 'guardianBlock', 'divider', 'Erziehungsberechtigte Person', {
-    visibleIf: rule('all', when('dateOfBirth', 'ageLt', 18)),
+  // Same age limit as `applicationAs = youth` below: every youth application needs a guardian
+  // (applicationValidations requires the parent's names for youth).
+  field(14, 'guardianBlock', 'divider', 'Erziehungsberechtigte Person', {
+    visibleIf: rule('all', when('dateOfBirth', 'ageLt', 20)),
   }),
-  field(13, 'parentFirstName', 'text', 'Vorname', { required: true, width: 'half' }),
-  field(14, 'parentLastName', 'text', 'Nachname', { required: true, width: 'half' }),
-  field(15, 'parentEmail', 'email', 'E-Mail', { required: true, width: 'half' }),
-  field(16, 'parentPhone', 'phone', 'Telefon', { width: 'half', region: 'CH' }),
+  field(15, 'parentFirstName', 'text', 'Vorname', { required: true, width: 'half' }),
+  field(16, 'parentLastName', 'text', 'Nachname', { required: true, width: 'half' }),
+  field(17, 'parentEmail', 'email', 'E-Mail', { required: true, width: 'half' }),
+  field(18, 'parentPhone', 'phone', 'Telefon', { width: 'half', region: 'CH' }),
 
   // No rule on this divider: it ends the guardian block so the field below is governed by its own rule.
-  field(17, 'swimBlock', 'divider', ''),
-  field(18, 'canSwim300m', 'checkbox', 'Ich kann 300m schwimmen', {
+  field(19, 'swimBlock', 'divider', ''),
+  field(20, 'canSwim300m', 'checkbox', 'Ich kann 300m schwimmen', {
     required: true,
     asProperty: true,
     visibleIf: rule('all', when('dateOfBirth', 'ageLt', 20)),
