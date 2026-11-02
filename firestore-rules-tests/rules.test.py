@@ -1506,6 +1506,17 @@ seed("bookings/course-c1-p1", {"tenants": ["t1"], "isArchived": False, "accounti
                                "counterparty": {"key": "p1", "name1": "Trainer"}})
 seed("booking-lines/blC1", {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1",
                             "bookingKey": "course-c1-p1", "debitAmount": {"amount": 80000, "currency": "CHF"}})
+# own expense without a booking yet (the member's GET must answer 404, not 403)
+seed("expenses/exNoBk", {"tenants": ["t1"], "isArchived": False, "userId": "uidA", "payeeKey": ""})
+# expense of another tenant authored by uidA: the tenant check of the expense must deny
+seed("expenses/exT2", {"tenants": ["t2"], "isArchived": False, "userId": "uidA", "payeeKey": ""})
+seed("bookings/exT2", {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "status": "posted"})
+seed("booking-lines/blExT2", {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "bookingKey": "exT2"})
+# expense without payeeKey: a caller with personKey '' must not match '' == ''
+seed("expenses/exNoPayee", {"tenants": ["t1"], "isArchived": False, "userId": "uidC"})
+seed("bookings/exNoPayee", {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "status": "posted"})
+seed("booking-lines/blNoPayee", {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1",
+                                 "bookingKey": "exNoPayee"})
 BOOKS = SYSQ + [("accountingTenantId", "EQUAL", "t1")]
 LINES_OF = lambda bk: SYSQ + [("bookingKey", "EQUAL", bk)]
 ledger_cases = [
@@ -1516,8 +1527,22 @@ ledger_cases = [
     ("admin B of t2 GET bookings/exBk1 (cross-tenant) -> DENY", False, lambda: req("GET", "bookings/exBk1", token=B)),
     ("author A GET bookings/course-c1-p1 (compensation) -> DENY", False,
      lambda: req("GET", "bookings/course-c1-p1", token=A)),
-    ("member A GET a missing booking -> ALLOW (404, resource == null)", True,
+    ("member A GET a missing booking -> DENY (no existence probe of course-* ids)", False,
      lambda: req("GET", "bookings/bkMissing", token=A)),
+    ("member A GET missing compensation booking course-c1-pX -> DENY", False,
+     lambda: req("GET", "bookings/course-c1-pX", token=A)),
+    ("author A GET bookings/exNoBk (own expense, no booking yet) -> ALLOW (404)", True,
+     lambda: req("GET", "bookings/exNoBk", token=A)),
+    ("author A GET bookings/exT2 (own userId, expense in t2) -> DENY", False,
+     lambda: req("GET", "bookings/exT2", token=A)),
+    ("author A LIST booking-lines bookingKey == exT2 (expense in t2) -> DENY", False,
+     lambda: field_query("booking-lines", LINES_OF("exT2"), token=A)),
+    ("N2 (personKey '') GET bookings/exNoPayee (no payeeKey) -> DENY", False,
+     lambda: req("GET", "bookings/exNoPayee", token=N2)),
+    ("N2 (personKey '') LIST booking-lines bookingKey == exNoPayee -> DENY", False,
+     lambda: field_query("booking-lines", LINES_OF("exNoPayee"), token=N2)),
+    ("N (no personKey) GET bookings/exNoPayee -> DENY", False,
+     lambda: req("GET", "bookings/exNoPayee", token=N)),
     ("author A GET booking-lines/blEx1 (own expense) -> ALLOW", True, lambda: req("GET", "booking-lines/blEx1", token=A)),
     ("author A GET booking-lines/blC1 (compensation) -> DENY", False, lambda: req("GET", "booking-lines/blC1", token=A)),
     ("member A LIST bookings SYS + books -> DENY", False, lambda: field_query("bookings", BOOKS, token=A)),

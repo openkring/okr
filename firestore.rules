@@ -1188,6 +1188,9 @@ service cloud.firestore {
     // expense id (OCR pipeline), so the rule looks the expense up by the booking id resp. the line's bookingKey.
     // The role check comes first, so staff list queries never pay for the get(). A member's line query must pin
     // bookingKey (ExpenseService.listBookingLines), otherwise it cannot be proven and is denied.
+    // No `resource == null` leg: compensation ids are deterministic (course-<courseKey>-<personKey>), and a
+    // 404-vs-403 answer would let members probe which trainers have a booking. A member GET of a missing
+    // booking is therefore denied — except for their own expense, whose booking may not exist yet (404).
     function isLedgerReader() { return isTreasurerOrAdmin() || isPrivileged(); }
     function expenseOfCaller(e) {
       return e.tenants.hasAny(callerTenants())
@@ -1199,7 +1202,7 @@ service cloud.firestore {
         && expenseOfCaller(get(/databases/$(database)/documents/expenses/$(expenseKey)).data);
     }
     match /booking-lines/{id}      { allow read: if tenantRead() && (isLedgerReader() || isOwnExpense(resource.data.bookingKey)); allow write: if false; }
-    match /bookings/{id}          { allow read: if tenantRead() && (isLedgerReader() || resource == null || isOwnExpense(id)); allow write: if false; }
+    match /bookings/{id}          { allow read: if tenantRead() && (isLedgerReader() || isOwnExpense(id)); allow write: if false; }
     match /exchange-rates/{id}    { allow read: if tenantRead(); allow write: if false; }
     match /expense-documents/{id} { allow read: if tenantRead(); allow write: if false; }
     // An expense carries the payee's IBAN (for 'an Mitglied' copied from that member's profile by
