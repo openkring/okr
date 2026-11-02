@@ -114,7 +114,8 @@
     "booksUnknown": "No puedes usar esta contabilidad. Elige otra.",
     "rateInvalid": "Introduce un importe de 0 o más.",
     "duplicatePerson": "Cada persona solo puede aparecer una vez.",
-    "personRequired": "Elige la persona de la lista de personas."
+    "personRequired": "Elige la persona de la lista de personas.",
+    "attendanceInvalid": "Cada persona necesita una asistencia y una función."
   },
   "list": {
     "open": "Abrir la tabla del curso",
@@ -144,5 +145,129 @@
     "empty": "Todavía no hay compensaciones aprobadas.",
     "error": "No se pudieron cargar los totales anuales.",
     "sum": "Total"
+  },
+  "table": {
+    "title": "Tabla del curso",
+    "notFound": "Este curso no existe o ya no existe.",
+    "empty": "Todavía no hay ninguna cita asignada a este curso.",
+    "person": "Persona",
+    "total": "Total",
+    "present": "presente",
+    "absent": "ausente",
+    "excused": "excusado/a",
+    "leader": "dirige",
+    "prefill": "Propuesta según la inscripción, aún sin confirmar",
+    "signUp": {
+      "accepted": "inscrito/a",
+      "declined": "dado/a de baja",
+      "invited": "sin respuesta"
+    },
+    "confirmed": "Asistencia confirmada",
+    "unconfirmed": "Asistencia aún sin confirmar",
+    "locked": "Este curso está congelado. La asistencia y las citas ya no se pueden cambiar.",
+    "reported": "notificado",
+    "compensation": {
+      "led": "dirigidos",
+      "rate": "Tarifa",
+      "amount": "Importe",
+      "unlisted": "ha dirigido, pero no está en la lista de personas con derecho a compensación"
+    }
+  },
+  "unassigned": {
+    "title": "Citas del grupo sin curso",
+    "intro": "Estas citas del grupo caen en el periodo del curso. ¿Pertenece alguna al curso?",
+    "suggested": "encaja con el curso",
+    "assign": "pertenece"
+  },
+  "event": {
+    "attendance": "Registrar asistencia",
+    "unassign": "Quitar del curso",
+    "unassignConfirm": "¿Quitar esta cita del curso? La asistencia registrada se queda guardada en la cita, pero ya no cuenta para el curso."
+  },
+  "action": {
+    "exportGeneric": "Descargar tabla (CSV)",
+    "exportJs": "Descargar archivo J+S",
+    "lock": "Congelar curso",
+    "unlock": "Reabrir curso",
+    "request": "Solicitar compensación",
+    "reported": "Marcar como notificado"
+  },
+  "lock": {
+    "confirm": "¿Congelar el curso? Después nadie podrá cambiar la asistencia ni las citas hasta que se reabra el curso.",
+    "refusedTitle": "Aún sin confirmar",
+    "refused": "Antes de congelar el curso, la asistencia de todas las citas pasadas debe estar confirmada. Todavía faltan:",
+    "unlockConfirm": "¿Reabrir el curso? Atención: si después vuelves a importar el archivo J+S, sobrescribe la asistencia ya notificada.",
+    "reportedConfirm": "¿Marcar el curso como notificado?"
+  },
+  "findings": {
+    "title": "Avisos para la notificación",
+    "incompleteSettings": "Los datos J+S del curso están incompletos. Completa el grupo de usuarios y el deporte principal en los ajustes del curso; si no, no se puede notificar nada.",
+    "unconfirmed": "Asistencia aún sin confirmar",
+    "unmappedType": "Este tipo de cita no tiene ninguna actividad J+S asignada",
+    "badDuration": "J+S no admite esta duración",
+    "missingLocation": "Al entrenamiento le falta el lugar",
+    "fullDayTraining": "Un entrenamiento necesita una hora de inicio",
+    "notAllowed": "Esta actividad no existe para el grupo de usuarios",
+    "missingNumber": "Falta el número de persona J+S",
+    "addNumber": "Añadir número"
+  },
+  "number": {
+    "title": "Número de persona J+S de {name}",
+    "placeholder": "9 cifras",
+    "invalid": "El número de persona J+S tiene exactamente 9 cifras.",
+    "saved": "El número se ha guardado."
+  },
+  "export": {
+    "jsTitle": "Archivo J+S",
+    "jsHints": "Antes de importar: las personas y las actividades ya deben estar registradas en la NDS. La importación sobrescribe allí la asistencia ya registrada. Importa el archivo solo después de terminar el curso. Después marca en la NDS los días de campamento de menos de 4 horas.",
+    "jsFindings": "Estas entradas faltan en el archivo:",
+    "jsContinue": "¿Descargar el archivo ahora?",
+    "jsNone": "Todavía no hay nada que notificar: ninguna cita confirmada con personas presentes."
+  },
+  "csv": {
+    "name": "Apellido",
+    "firstName": "Nombre",
+    "function": "Función",
+    "total": "Total presente",
+    "leader": "Monitor/a",
+    "participant": "Participante"
+  },
+  "request": {
+    "confirm": "¿Solicitar la compensación? Se prepara un asiento para cada persona con derecho, que revisa la tesorería.",
+    "notLocked": "Congela primero el curso para que las cifras sean definitivas.",
+    "noFinance": "Todavía no se ha configurado la compensación de este curso. Elige la contabilidad y las tarifas en los ajustes del curso.",
+    "done": {
+      "title": "Solicitud enviada",
+      "written": "Se han preparado {count} asientos. La tesorería ha recibido una tarea para revisarlos.",
+      "external": "Esta contabilidad se lleva fuera de la app. La tesorería ha recibido una tarea con la liquidación.",
+      "kept": "Ya pagado con otro importe (antes → ahora):",
+      "cancelled": "Rechazado por la tesorería, se queda así (antes → ahora):",
+      "unlisted": "Han dirigido, pero no están en la lista de personas con derecho:"
+    },
+    "error": {
+      "title": "Solicitud no posible",
+      "notLocked": "Congela primero el curso para que las cifras sean definitivas.",
+      "archived": "Este curso está archivado.",
+      "rate": "Una tarifa no es válida. Revisa los importes en los ajustes del curso.",
+      "eligible": "La lista de personas con derecho contiene una persona repetida o desconocida. Revísala en los ajustes del curso.",
+      "account": "La cuenta de la compensación no corresponde a esta contabilidad. Revísala en los ajustes del curso.",
+      "missingAccount": "En la contabilidad falta una cuenta para las compensaciones de entrenadores. Pide a la tesorería que la cree.",
+      "costCenter": "El centro de coste no corresponde a esta contabilidad. Revísalo en los ajustes del curso.",
+      "foreignBooking": "Ya existe un asiento que pertenece a otra solicitud. Pide a la tesorería que lo revise.",
+      "otherBooks": "Para una persona ya existe una compensación cerrada en otra contabilidad. La tesorería debe eliminarla allí primero.",
+      "noFinance": "Todavía no se ha configurado la compensación de este curso.",
+      "books": "Falta la contabilidad del curso o ha cambiado. Revísala en los ajustes del curso.",
+      "booksConfig": "Esta contabilidad no está a tu disposición. Elige otra en los ajustes del curso.",
+      "permission": "Solo los responsables del curso, la dirección del grupo o las personas autorizadas pueden solicitar la compensación.",
+      "notFound": "Este curso no existe o ya no existe.",
+      "network": "Sin conexión. Vuelve a intentarlo más tarde.",
+      "generic": "No ha funcionado. Vuelve a intentarlo más tarde."
+    }
+  },
+  "attendance": {
+    "title": "Asistencia",
+    "intro": "La propuesta viene de la inscripción. Revísala y guarda para confirmar la asistencia.",
+    "confirmedBy": "Confirmado por {name} el {date}",
+    "leader": "dirige"
   }
 }

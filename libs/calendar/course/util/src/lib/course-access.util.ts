@@ -14,6 +14,8 @@ export type CourseAccess = {
   isGroupAdmin: boolean;
   isPrivileged: boolean;
   isTreasurer: boolean;
+  /** `roles.eventAdmin` (via `hasRole`, which includes `admin`); absent = false */
+  isEventAdmin?: boolean;
 };
 
 /** Is the person one of the course's responsible persons? Reads the arrays, not the server-maintained mirror (which lags). */
@@ -37,6 +39,34 @@ export function mayManageCourse(course: CourseModel, access: CourseAccess): bool
  */
 export function mayReadCourseFinance(course: CourseModel, access: CourseAccess): boolean {
   return mayManageCourse(course, access) || access.isTreasurer;
+}
+
+/**
+ * Is the person one of the course's trainers or responsible persons? This is what the rules' `trainerKeys` mirror
+ * holds (trainers + responsible persons); the arrays are read because the server-maintained mirror lags.
+ */
+export function isCourseTrainer(course: CourseModel, personKey: string | undefined): boolean {
+  if (!personKey) return false;
+  return isCourseResponsible(course, personKey) || (course.trainers ?? []).some(p => p.key === personKey);
+}
+
+/**
+ * Who may confirm the attendance of a course event and assign events to the course or take them out (§6, §7.2, §7.3):
+ * a trainer or responsible person, an admin of the course's group, `eventAdmin` or privileged — and only while the
+ * course is not locked (a locked course freezes attendance and assignment for everybody). Mirrors the calevent rules
+ * (spec 1.132 §6.1); the rules are the guard, this hides the controls.
+ */
+export function mayEditCourseAttendance(course: CourseModel, access: CourseAccess): boolean {
+  if (course.isLocked === true) return false;
+  return access.isPrivileged || access.isGroupAdmin || access.isEventAdmin === true || isCourseTrainer(course, access.personKey);
+}
+
+/**
+ * Who may export the course table (§6: generic CSV, J+S file) and see the export findings: everybody who may edit
+ * the attendance (locked or not), plus the treasurer. Plain members see the table but get no export (D7).
+ */
+export function mayExportCourse(course: CourseModel, access: CourseAccess): boolean {
+  return mayEditCourseAttendance({ ...course, isLocked: false }, access) || access.isTreasurer;
 }
 
 /** Who may create a course in a group: privileged or an admin of that group (the rules require it on create). */

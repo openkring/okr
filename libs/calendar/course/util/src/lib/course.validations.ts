@@ -4,6 +4,7 @@ import { NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { CourseFinanceModel, CourseModel, MoneyModel } from '@okr/shared-models';
 import { dateValidations, stringValidations } from '@okr/shared-util-core';
 
+import { AttendanceFormModel } from './course-table-view.util';
 import { isCompleteJsSettings } from './js-durations';
 
 const PFX = '@calendar/course/feature.validation.';
@@ -97,5 +98,18 @@ export const courseFinanceValidations = staticSuite((model: CourseFinanceModel, 
         enforce(isValidAmount(e.rate)).isTruthy();
       });
     });
+  });
+});
+
+const PRESENCES = ['present', 'absent', 'excused'];
+const FUNCTIONS = ['leader', 'participant'];
+
+/**
+ * The attendance of one event (spec 1.132 §7.3): every row has a person, a presence and a function. The values are
+ * chosen in the dialog, so a failure means a broken row (a legacy entry with an unknown value), shown under the list.
+ */
+export const courseAttendanceValidations = staticSuite((model: AttendanceFormModel) => {
+  test('rows', PFX + 'attendanceInvalid', () => {
+    enforce((model.rows ?? []).every(r => !!r.person?.key && PRESENCES.includes(r.presence) && FUNCTIONS.includes(r.function))).isTruthy();
   });
 });

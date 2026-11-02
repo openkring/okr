@@ -80,14 +80,22 @@ const calevent: BlockRoutes = {
     // separate block would hide that row's menu with it (memory «feature block hides menu»).
     // Any authenticated member may open the list: courses are readable tenant-wide (firestore.rules), and the list
     // gates create / edit / archive / the yearly totals itself (`course-access.util`, `CourseStore`).
-    // `course/table/:courseKey` (the course table page) is added with that page.
+    // `course/table/:courseKey` is the course table page (attendance, lock, exports, request): readable by every member
+    // (D7, no amounts); `CourseTableStore` gates every action and the finance read itself. Two segments, so it never
+    // collides with the three-segment list route.
     {
       path: 'course',
       canActivate: [isAuthenticatedGuard],
-      children: [{
-        path: ':groupKey/:listId/:contextMenuName',
-        loadComponent: () => import('@okr/calendar-course-feature').then(m => m.CourseList),
-      }],
+      children: [
+        {
+          path: 'table/:courseKey',
+          loadComponent: () => import('@okr/calendar-course-feature').then(m => m.CourseTablePage),
+        },
+        {
+          path: ':groupKey/:listId/:contextMenuName',
+          loadComponent: () => import('@okr/calendar-course-feature').then(m => m.CourseList),
+        },
+      ],
     },
   ],
 };

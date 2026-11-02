@@ -62,6 +62,9 @@
       "path": "../../../finance/cost-center/data-access/tsconfig.lib.json"
     },
     {
+      "path": "../../../relationship/membership/data-access/tsconfig.lib.json"
+    },
+    {
       "path": "../../../shared/feature/tsconfig.lib.json"
     },
     {

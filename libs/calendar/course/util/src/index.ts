@@ -7,3 +7,5 @@ export * from './lib/course-export.util';
 export * from './lib/course.validations';
 export * from './lib/course-access.util';
 export * from './lib/course-list.util';
+export * from './lib/course-table-view.util';
+export * from './lib/course-request.util';

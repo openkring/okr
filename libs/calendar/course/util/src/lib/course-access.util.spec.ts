@@ -2,7 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { AvatarInfo, CourseFinanceModel, CourseModel, MoneyModel } from '@okr/shared-models';
 
-import { CourseAccess, isCourseResponsible, loadFinanceForEdit, mayCreateCourse, mayManageCourse, mayOpenCourseMenu, mayReadCourseFinance } from './course-access.util';
+import {
+  CourseAccess, isCourseResponsible, isCourseTrainer, loadFinanceForEdit, mayCreateCourse, mayEditCourseAttendance, mayExportCourse, mayManageCourse,
+  mayOpenCourseMenu, mayReadCourseFinance
+} from './course-access.util';
 
 function avatar(key: string): AvatarInfo {
   return { key, name1: key, name2: key, modelType: 'person', type: '', subType: '', label: '' };
@@ -116,5 +119,40 @@ describe('mayOpenCourseMenu', () => {
 
   it('stays closed for a plain member, and for somebody who may not add and manages nothing', () => {
     expect(mayOpenCourseMenu(plain, false, false)).toBe(false);
+  });
+});
+
+describe('isCourseTrainer / mayEditCourseAttendance / mayExportCourse', () => {
+  it('a trainer or responsible person is a course trainer, a member is not', () => {
+    expect(isCourseTrainer(course([], ['p1']), 'p1')).toBe(true);
+    expect(isCourseTrainer(course(['p2']), 'p2')).toBe(true);
+    expect(isCourseTrainer(course(['p2'], ['p1']), 'p3')).toBe(false);
+    expect(isCourseTrainer(course([], ['p1']), '')).toBe(false);
+  });
+
+  it('trainer, responsible, group admin, eventAdmin and privileged edit the attendance of an unlocked course', () => {
+    const c = course(['pR'], ['pT']);
+    expect(mayEditCourseAttendance(c, { ...nobody, personKey: 'pT' })).toBe(true);
+    expect(mayEditCourseAttendance(c, { ...nobody, personKey: 'pR' })).toBe(true);
+    expect(mayEditCourseAttendance(c, { ...nobody, isGroupAdmin: true })).toBe(true);
+    expect(mayEditCourseAttendance(c, { ...nobody, isEventAdmin: true })).toBe(true);
+    expect(mayEditCourseAttendance(c, { ...nobody, isPrivileged: true })).toBe(true);
+    expect(mayEditCourseAttendance(c, nobody)).toBe(false);
+    expect(mayEditCourseAttendance(c, { ...nobody, isTreasurer: true })).toBe(false);
+  });
+
+  it('nobody edits the attendance of a locked course', () => {
+    const c = Object.assign(course(['pR'], ['pT']), { isLocked: true });
+    expect(mayEditCourseAttendance(c, { ...nobody, personKey: 'pT' })).toBe(false);
+    expect(mayEditCourseAttendance(c, { ...nobody, isPrivileged: true })).toBe(false);
+  });
+
+  it('exports: the attendance editors (locked or not) and the treasurer, never a plain member', () => {
+    const locked = Object.assign(course(['pR'], ['pT']), { isLocked: true });
+    expect(mayExportCourse(locked, { ...nobody, personKey: 'pT' })).toBe(true);
+    expect(mayExportCourse(locked, { ...nobody, isTreasurer: true })).toBe(true);
+    expect(mayExportCourse(locked, { ...nobody, isEventAdmin: true })).toBe(true);
+    expect(mayExportCourse(locked, nobody)).toBe(false);
+    expect(locked.isLocked).toBe(true);   // the check does not touch the course
   });
 });

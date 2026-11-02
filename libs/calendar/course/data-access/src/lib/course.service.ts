@@ -1,9 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { FieldPath } from 'firebase/firestore';
-import { Observable } from 'rxjs';
+import { map, Observable, of } from 'rxjs';
 
 import { ActivityService } from '@okr/activity-data-access';
-import { getCourseIndex } from '@okr/calendar-course-util';
+import { CourseCompensationResult, getCourseIndex } from '@okr/calendar-course-util';
 import { BookingLineService } from '@okr/finance-booking-data-access';
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
@@ -132,6 +132,27 @@ export class CourseService {
     );
   }
 
+  /**
+   * The events of a group's calendar in a period (both ends inclusive, StoreDate), oldest first — the course table
+   * offers the unassigned ones («gehört dazu?», spec 1.132 §7.2). The calendar of a group has the group's okey (group
+   * skill), so an event belongs to it when its `calendars` contain the group key. Firestore allows one
+   * `array-contains` per query and `tenants` takes it, so the calendar is filtered on the client.
+   * Uses the existing index `calevents: tenants, isArchived, startDate`.
+   */
+  public listGroupEventsInPeriod(groupKey: string, startDate: string, endDate: string): Observable<CalEventModel[]> {
+    if (!groupKey || !startDate || !endDate) return of([]);
+    return this.firestoreService.searchData<CalEventModel>(
+      CalEventCollection,
+      [
+        ...getSystemQuery(this.env.tenantId),
+        { key: 'startDate', operator: '>=', value: startDate },
+        { key: 'startDate', operator: '<=', value: endDate },
+      ],
+      'startDate',
+      'asc',
+    ).pipe(map(events => events.filter(e => (e.calendars ?? []).includes(groupKey))));
+  }
+
   /*-------------------------- FINANCE (protected sub-document) --------------------------------*/
   /**
    * The amounts of a course (`courses/{key}/finance/settings`). Most users may not read them: a denial
@@ -161,6 +182,21 @@ export class CourseService {
     if (!courseKey) die('CourseService.saveFinance: courseKey is mandatory.');
     const data = removeUndefinedFields(structuredClone(finance));
     await this.firestoreService.updateObject(`${CourseCollection}/${courseKey}/${CourseFinanceSubcollection}`, CourseFinanceDocId, data, true, this.i18n.finance_conf());
+  }
+
+  /**
+   * Request the trainer compensation of a locked course (callable `requestCourseCompensation`, spec 1.132 §7.6).
+   * `accountingTenantId` is the books from the course's finance document — never the app tenant. Errors are not
+   * caught: the caller maps `details.reason` to a message (`compensationErrorKey`). The `firebase/functions` import
+   * is dynamic (as in `CalendarFeedService`): safe during SSR and out of the eager bundle.
+   */
+  public async requestCompensation(courseKey: string, accountingTenantId: string): Promise<CourseCompensationResult> {
+    if (!courseKey) die('CourseService.requestCompensation: courseKey is mandatory.');
+    if (!accountingTenantId) die('CourseService.requestCompensation: accountingTenantId (the books) is mandatory.');
+    const { getFunctions, httpsCallable } = await import('firebase/functions');
+    const fn = httpsCallable<{ courseKey: string; accountingTenantId: string }, CourseCompensationResult>(
+      getFunctions(undefined, 'europe-west6'), 'requestCourseCompensation');
+    return (await fn({ courseKey, accountingTenantId })).data;
   }
 
   /*-------------------------- COMPENSATION BOOKINGS (read-only) --------------------------------*/

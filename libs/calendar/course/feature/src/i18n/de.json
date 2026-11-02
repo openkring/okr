@@ -114,7 +114,8 @@
     "booksUnknown": "Diese Buchhaltung steht dir nicht zur Verfügung. Wähle eine andere.",
     "rateInvalid": "Gib einen Betrag von 0 oder mehr ein.",
     "duplicatePerson": "Jede Person kann nur einmal aufgeführt werden.",
-    "personRequired": "Wähle die Person aus der Personenliste aus."
+    "personRequired": "Wähle die Person aus der Personenliste aus.",
+    "attendanceInvalid": "Jede Person braucht eine Anwesenheit und eine Funktion."
   },
   "list": {
     "open": "Kurstabelle öffnen",
@@ -144,5 +145,129 @@
     "empty": "Es gibt noch keine freigegebenen Entschädigungen.",
     "error": "Die Jahressummen konnten nicht geladen werden.",
     "sum": "Total"
+  },
+  "table": {
+    "title": "Kurstabelle",
+    "notFound": "Diesen Kurs gibt es nicht oder nicht mehr.",
+    "empty": "Diesem Kurs ist noch kein Termin zugeordnet.",
+    "person": "Person",
+    "total": "Total",
+    "present": "anwesend",
+    "absent": "abwesend",
+    "excused": "entschuldigt",
+    "leader": "leitet",
+    "prefill": "Vorschlag aus der Anmeldung, noch nicht bestätigt",
+    "signUp": {
+      "accepted": "angemeldet",
+      "declined": "abgemeldet",
+      "invited": "keine Antwort"
+    },
+    "confirmed": "Anwesenheit bestätigt",
+    "unconfirmed": "Anwesenheit noch nicht bestätigt",
+    "locked": "Dieser Kurs ist eingefroren. Anwesenheit und Termine lassen sich nicht mehr ändern.",
+    "reported": "gemeldet",
+    "compensation": {
+      "led": "geleitet",
+      "rate": "Ansatz",
+      "amount": "Betrag",
+      "unlisted": "hat geleitet, steht aber nicht auf der Liste der Entschädigungsberechtigten"
+    }
+  },
+  "unassigned": {
+    "title": "Termine der Gruppe ohne Kurs",
+    "intro": "Diese Termine der Gruppe liegen im Kurszeitraum. Gehört einer davon zum Kurs?",
+    "suggested": "passt zum Kurs",
+    "assign": "gehört dazu"
+  },
+  "event": {
+    "attendance": "Anwesenheit erfassen",
+    "unassign": "Aus dem Kurs nehmen",
+    "unassignConfirm": "Diesen Termin aus dem Kurs nehmen? Die erfasste Anwesenheit bleibt am Termin gespeichert, zählt aber nicht mehr für den Kurs."
+  },
+  "action": {
+    "exportGeneric": "Tabelle herunterladen (CSV)",
+    "exportJs": "J+S-Datei herunterladen",
+    "lock": "Kurs einfrieren",
+    "unlock": "Kurs wieder öffnen",
+    "request": "Entschädigung beantragen",
+    "reported": "Als gemeldet markieren"
+  },
+  "lock": {
+    "confirm": "Kurs einfrieren? Danach kann niemand mehr Anwesenheiten oder Termine ändern, bis der Kurs wieder geöffnet wird.",
+    "refusedTitle": "Noch nicht bestätigt",
+    "refused": "Bevor du den Kurs einfrierst, muss die Anwesenheit aller vergangenen Termine bestätigt sein. Es fehlen noch:",
+    "unlockConfirm": "Kurs wieder öffnen? Achtung: Wenn du danach die J+S-Datei nochmals importierst, überschreibt sie die bereits gemeldeten Anwesenheiten.",
+    "reportedConfirm": "Kurs als gemeldet markieren?"
+  },
+  "findings": {
+    "title": "Hinweise zur Meldung",
+    "incompleteSettings": "Die J+S-Angaben des Kurses sind unvollständig. Ergänze in den Kurseinstellungen Nutzergruppe und Hauptsportart, sonst kann nichts gemeldet werden.",
+    "unconfirmed": "Anwesenheit noch nicht bestätigt",
+    "unmappedType": "Dieser Terminart ist keine J+S-Aktivität zugeordnet",
+    "badDuration": "Diese Dauer lässt J+S nicht zu",
+    "missingLocation": "Beim Training fehlt der Ort",
+    "fullDayTraining": "Ein Training braucht eine Startzeit",
+    "notAllowed": "Diese Aktivität gibt es für die Nutzergruppe nicht",
+    "missingNumber": "J+S-Personennummer fehlt",
+    "addNumber": "Nummer nachtragen"
+  },
+  "number": {
+    "title": "J+S-Personennummer von {name}",
+    "placeholder": "9 Ziffern",
+    "invalid": "Die J+S-Personennummer hat genau 9 Ziffern.",
+    "saved": "Die Nummer ist gespeichert."
+  },
+  "export": {
+    "jsTitle": "J+S-Datei",
+    "jsHints": "Vor dem Import: Personen und Aktivitäten müssen in der NDS schon erfasst sein. Der Import überschreibt dort bereits erfasste Anwesenheiten. Importiere die Datei erst nach Kursende. Lagertage unter 4 Stunden markierst du danach in der NDS.",
+    "jsFindings": "Diese Einträge fehlen in der Datei:",
+    "jsContinue": "Datei jetzt herunterladen?",
+    "jsNone": "Es gibt noch nichts zu melden: kein bestätigter Termin mit anwesenden Personen."
+  },
+  "csv": {
+    "name": "Name",
+    "firstName": "Vorname",
+    "function": "Funktion",
+    "total": "Total anwesend",
+    "leader": "Leiter/in",
+    "participant": "Teilnehmer/in"
+  },
+  "request": {
+    "confirm": "Entschädigung beantragen? Für jede berechtigte Person wird eine Buchung vorbereitet, die die Kassenführung prüft.",
+    "notLocked": "Friere den Kurs zuerst ein, damit die Zahlen feststehen.",
+    "noFinance": "Für diesen Kurs ist noch keine Entschädigung eingerichtet. Wähle in den Kurseinstellungen die Buchhaltung und die Ansätze.",
+    "done": {
+      "title": "Antrag gestellt",
+      "written": "{count} Buchungen sind vorbereitet. Die Kassenführung hat eine Aufgabe zum Prüfen erhalten.",
+      "external": "Diese Buchhaltung wird ausserhalb der App geführt. Die Kassenführung hat eine Aufgabe mit der Abrechnung erhalten.",
+      "kept": "Schon ausbezahlt, mit einem anderen Betrag (bisher → neu):",
+      "cancelled": "Von der Kassenführung abgelehnt, bleibt so (bisher → neu):",
+      "unlisted": "Haben geleitet, stehen aber nicht auf der Liste der Berechtigten:"
+    },
+    "error": {
+      "title": "Antrag nicht möglich",
+      "notLocked": "Friere den Kurs zuerst ein, damit die Zahlen feststehen.",
+      "archived": "Dieser Kurs ist archiviert.",
+      "rate": "Ein Ansatz ist ungültig. Prüfe die Beträge in den Kurseinstellungen.",
+      "eligible": "Die Liste der Berechtigten enthält eine Person doppelt oder eine unbekannte Person. Prüfe sie in den Kurseinstellungen.",
+      "account": "Das Konto für die Entschädigung passt nicht zu dieser Buchhaltung. Prüfe es in den Kurseinstellungen.",
+      "missingAccount": "In der Buchhaltung fehlt ein Konto für Trainerentschädigungen. Bitte die Kassenführung, es einzurichten.",
+      "costCenter": "Die Kostenstelle passt nicht zu dieser Buchhaltung. Prüfe sie in den Kurseinstellungen.",
+      "foreignBooking": "Es gibt schon eine Buchung, die zu einem anderen Antrag gehört. Bitte die Kassenführung, sie zu prüfen.",
+      "otherBooks": "Für eine Person gibt es in einer anderen Buchhaltung schon eine abgeschlossene Entschädigung. Die Kassenführung muss sie dort zuerst entfernen.",
+      "noFinance": "Für diesen Kurs ist noch keine Entschädigung eingerichtet.",
+      "books": "Die Buchhaltung des Kurses fehlt oder hat sich geändert. Prüfe sie in den Kurseinstellungen.",
+      "booksConfig": "Diese Buchhaltung steht dir nicht zur Verfügung. Wähle in den Kurseinstellungen eine andere.",
+      "permission": "Die Entschädigung können nur Verantwortliche des Kurses, die Gruppenleitung oder Berechtigte beantragen.",
+      "notFound": "Diesen Kurs gibt es nicht oder nicht mehr.",
+      "network": "Keine Verbindung. Versuche es später noch einmal.",
+      "generic": "Das hat nicht geklappt. Versuche es später noch einmal."
+    }
+  },
+  "attendance": {
+    "title": "Anwesenheit",
+    "intro": "Der Vorschlag kommt aus der Anmeldung. Prüfe ihn und speichere, um die Anwesenheit zu bestätigen.",
+    "confirmedBy": "Bestätigt von {name} am {date}",
+    "leader": "leitet"
   }
 }

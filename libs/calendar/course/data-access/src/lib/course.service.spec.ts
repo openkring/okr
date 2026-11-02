@@ -7,6 +7,15 @@ vi.mock('@angular/core', async (importOriginal) => {
   return { ...actual, inject: vi.fn() };
 });
 
+const fns = vi.hoisted(() => ({
+  callable: vi.fn(async (_data: unknown) => ({ data: { written: 2 } as unknown })),
+  httpsCallable: vi.fn(),
+}));
+vi.mock('firebase/functions', () => ({
+  getFunctions: vi.fn(() => 'functions'),
+  httpsCallable: fns.httpsCallable,
+}));
+
 import { inject } from '@angular/core';
 
 import { ActivityService } from '@okr/activity-data-access';
@@ -14,7 +23,7 @@ import { BookingLineService } from '@okr/finance-booking-data-access';
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
-import { AttendanceEntry, AvatarInfo, BookingCollection, CalEventCollection, CourseCollection, CourseFinanceModel, CourseModel, PersonCollection } from '@okr/shared-models';
+import { AttendanceEntry, AvatarInfo, BookingCollection, CalEventCollection, CalEventModel, CourseCollection, CourseFinanceModel, CourseModel, PersonCollection } from '@okr/shared-models';
 
 import { CourseService } from './course.service';
 
@@ -124,6 +133,40 @@ describe('CourseService', () => {
       expect(query).toContainEqual({ key: 'courseKey', operator: '==', value: 'c1' });
       expect(query.some(q => q.key === 'tenants')).toBe(true);
       expect([orderBy, order]).toEqual(['startDate', 'asc']);
+    });
+
+    it('listGroupEventsInPeriod() queries the period and keeps the events of the group calendar', async () => {
+      const ev = (okey: string, calendars: string[] | undefined) => ({ okey, calendars }) as unknown as CalEventModel;
+      firestore.searchData.mockReturnValueOnce(of([ev('a', ['g1']), ev('b', ['other']), ev('c', undefined), ev('d', ['x', 'g1'])]));
+      const events = await firstValueFrom(service.listGroupEventsInPeriod('g1', '20261001', '20261231'));
+      expect(events.map(e => e.okey)).toEqual(['a', 'd']);
+      const [coll, query, orderBy, order] = firestore.searchData.mock.calls[0] as unknown as [string, { key: string; operator: string; value: unknown }[], string, string];
+      expect(coll).toBe(CalEventCollection);
+      expect(query).toContainEqual({ key: 'startDate', operator: '>=', value: '20261001' });
+      expect(query).toContainEqual({ key: 'startDate', operator: '<=', value: '20261231' });
+      expect(query.some(q => q.key === 'tenants')).toBe(true);
+      expect([orderBy, order]).toEqual(['startDate', 'asc']);
+    });
+
+    it('listGroupEventsInPeriod() without a group or period reads nothing', async () => {
+      expect(await firstValueFrom(service.listGroupEventsInPeriod('', '20261001', '20261231'))).toEqual([]);
+      expect(await firstValueFrom(service.listGroupEventsInPeriod('g1', '', '20261231'))).toEqual([]);
+      expect(firestore.searchData).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('requestCompensation', () => {
+    it('calls requestCourseCompensation with the course and the books, and returns its data', async () => {
+      fns.httpsCallable.mockReturnValue(fns.callable);
+      const result = await service.requestCompensation('c1', 'gss');
+      expect(fns.httpsCallable).toHaveBeenCalledWith('functions', 'requestCourseCompensation');
+      expect(fns.callable).toHaveBeenCalledWith({ courseKey: 'c1', accountingTenantId: 'gss' });
+      expect(result).toEqual({ written: 2 });
+    });
+
+    it('refuses without books (never defaulted from the app tenant)', async () => {
+      await expect(service.requestCompensation('c1', '')).rejects.toThrow();
+      expect(fns.callable).not.toHaveBeenCalled();
     });
   });
 

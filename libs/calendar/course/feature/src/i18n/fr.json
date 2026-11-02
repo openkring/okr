@@ -114,7 +114,8 @@
     "booksUnknown": "Tu ne peux pas utiliser cette comptabilité. Choisis-en une autre.",
     "rateInvalid": "Saisis un montant de 0 ou plus.",
     "duplicatePerson": "Chaque personne ne peut figurer qu'une seule fois.",
-    "personRequired": "Choisis la personne dans la liste des personnes."
+    "personRequired": "Choisis la personne dans la liste des personnes.",
+    "attendanceInvalid": "Chaque personne a besoin d'une présence et d'une fonction."
   },
   "list": {
     "open": "Ouvrir le tableau du cours",
@@ -144,5 +145,129 @@
     "empty": "Aucune indemnité validée pour le moment.",
     "error": "Les totaux annuels n'ont pas pu être chargés.",
     "sum": "Total"
+  },
+  "table": {
+    "title": "Tableau du cours",
+    "notFound": "Ce cours n'existe pas ou plus.",
+    "empty": "Aucune date n'est encore attribuée à ce cours.",
+    "person": "Personne",
+    "total": "Total",
+    "present": "présent·e",
+    "absent": "absent·e",
+    "excused": "excusé·e",
+    "leader": "dirige",
+    "prefill": "Proposition tirée de l'inscription, pas encore confirmée",
+    "signUp": {
+      "accepted": "inscrit·e",
+      "declined": "désinscrit·e",
+      "invited": "pas de réponse"
+    },
+    "confirmed": "Présence confirmée",
+    "unconfirmed": "Présence pas encore confirmée",
+    "locked": "Ce cours est gelé. Les présences et les dates ne peuvent plus être modifiées.",
+    "reported": "annoncé",
+    "compensation": {
+      "led": "dirigés",
+      "rate": "Tarif",
+      "amount": "Montant",
+      "unlisted": "a dirigé, mais ne figure pas sur la liste des personnes ayant droit à l'indemnité"
+    }
+  },
+  "unassigned": {
+    "title": "Dates du groupe sans cours",
+    "intro": "Ces dates du groupe tombent dans la période du cours. L'une d'elles fait-elle partie du cours ?",
+    "suggested": "correspond au cours",
+    "assign": "en fait partie"
+  },
+  "event": {
+    "attendance": "Saisir les présences",
+    "unassign": "Retirer du cours",
+    "unassignConfirm": "Retirer cette date du cours ? Les présences saisies restent enregistrées, mais ne comptent plus pour le cours."
+  },
+  "action": {
+    "exportGeneric": "Télécharger le tableau (CSV)",
+    "exportJs": "Télécharger le fichier J+S",
+    "lock": "Geler le cours",
+    "unlock": "Rouvrir le cours",
+    "request": "Demander l'indemnité",
+    "reported": "Marquer comme annoncé"
+  },
+  "lock": {
+    "confirm": "Geler le cours ? Ensuite, personne ne peut plus modifier les présences ou les dates jusqu'à ce que le cours soit rouvert.",
+    "refusedTitle": "Pas encore confirmé",
+    "refused": "Avant de geler le cours, les présences de toutes les dates passées doivent être confirmées. Il manque encore :",
+    "unlockConfirm": "Rouvrir le cours ? Attention : si tu importes à nouveau le fichier J+S ensuite, il écrase les présences déjà annoncées.",
+    "reportedConfirm": "Marquer le cours comme annoncé ?"
+  },
+  "findings": {
+    "title": "Remarques pour l'annonce",
+    "incompleteSettings": "Les données J+S du cours sont incomplètes. Complète le groupe d'utilisateurs et le sport principal dans les réglages du cours, sinon rien ne peut être annoncé.",
+    "unconfirmed": "Présence pas encore confirmée",
+    "unmappedType": "Aucune activité J+S n'est attribuée à ce type de date",
+    "badDuration": "J+S n'admet pas cette durée",
+    "missingLocation": "Le lieu de l'entraînement manque",
+    "fullDayTraining": "Un entraînement a besoin d'une heure de début",
+    "notAllowed": "Cette activité n'existe pas pour ce groupe d'utilisateurs",
+    "missingNumber": "Numéro de personne J+S manquant",
+    "addNumber": "Ajouter le numéro"
+  },
+  "number": {
+    "title": "Numéro de personne J+S de {name}",
+    "placeholder": "9 chiffres",
+    "invalid": "Le numéro de personne J+S compte exactement 9 chiffres.",
+    "saved": "Le numéro est enregistré."
+  },
+  "export": {
+    "jsTitle": "Fichier J+S",
+    "jsHints": "Avant l'import : les personnes et les activités doivent déjà être saisies dans la BDNS. L'import y écrase les présences déjà saisies. N'importe le fichier qu'après la fin du cours. Marque ensuite dans la BDNS les jours de camp de moins de 4 heures.",
+    "jsFindings": "Ces entrées manquent dans le fichier :",
+    "jsContinue": "Télécharger le fichier maintenant ?",
+    "jsNone": "Il n'y a encore rien à annoncer : aucune date confirmée avec des personnes présentes."
+  },
+  "csv": {
+    "name": "Nom",
+    "firstName": "Prénom",
+    "function": "Fonction",
+    "total": "Total présences",
+    "leader": "Moniteur/trice",
+    "participant": "Participant·e"
+  },
+  "request": {
+    "confirm": "Demander l'indemnité ? Une écriture est préparée pour chaque personne ayant droit, puis vérifiée par la trésorerie.",
+    "notLocked": "Gèle d'abord le cours pour que les chiffres soient définitifs.",
+    "noFinance": "L'indemnité n'est pas encore configurée pour ce cours. Choisis la comptabilité et les tarifs dans les réglages du cours.",
+    "done": {
+      "title": "Demande envoyée",
+      "written": "{count} écritures sont préparées. La trésorerie a reçu une tâche pour les vérifier.",
+      "external": "Cette comptabilité est tenue en dehors de l'app. La trésorerie a reçu une tâche avec le décompte.",
+      "kept": "Déjà versé, avec un autre montant (avant → maintenant) :",
+      "cancelled": "Refusé par la trésorerie, reste ainsi (avant → maintenant) :",
+      "unlisted": "Ont dirigé, mais ne figurent pas sur la liste des ayants droit :"
+    },
+    "error": {
+      "title": "Demande impossible",
+      "notLocked": "Gèle d'abord le cours pour que les chiffres soient définitifs.",
+      "archived": "Ce cours est archivé.",
+      "rate": "Un tarif n'est pas valable. Vérifie les montants dans les réglages du cours.",
+      "eligible": "La liste des ayants droit contient une personne en double ou inconnue. Vérifie-la dans les réglages du cours.",
+      "account": "Le compte de l'indemnité ne correspond pas à cette comptabilité. Vérifie-le dans les réglages du cours.",
+      "missingAccount": "Il manque dans la comptabilité un compte pour les indemnités des entraîneurs. Demande à la trésorerie de le créer.",
+      "costCenter": "Le centre de coûts ne correspond pas à cette comptabilité. Vérifie-le dans les réglages du cours.",
+      "foreignBooking": "Il existe déjà une écriture qui appartient à une autre demande. Demande à la trésorerie de la vérifier.",
+      "otherBooks": "Une indemnité clôturée existe déjà pour une personne dans une autre comptabilité. La trésorerie doit d'abord la supprimer.",
+      "noFinance": "L'indemnité n'est pas encore configurée pour ce cours.",
+      "books": "La comptabilité du cours manque ou a changé. Vérifie-la dans les réglages du cours.",
+      "booksConfig": "Cette comptabilité n'est pas à ta disposition. Choisis-en une autre dans les réglages du cours.",
+      "permission": "Seuls les responsables du cours, la direction du groupe ou les personnes autorisées peuvent demander l'indemnité.",
+      "notFound": "Ce cours n'existe pas ou plus.",
+      "network": "Pas de connexion. Réessaie plus tard.",
+      "generic": "Cela n'a pas fonctionné. Réessaie plus tard."
+    }
+  },
+  "attendance": {
+    "title": "Présences",
+    "intro": "La proposition vient de l'inscription. Vérifie-la et enregistre pour confirmer les présences.",
+    "confirmedBy": "Confirmé par {name} le {date}",
+    "leader": "dirige"
   }
 }

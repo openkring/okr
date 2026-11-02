@@ -114,7 +114,8 @@
     "booksUnknown": "You cannot use these books. Choose another.",
     "rateInvalid": "Enter an amount of 0 or more.",
     "duplicatePerson": "Each person can be listed only once.",
-    "personRequired": "Choose the person from the list of persons."
+    "personRequired": "Choose the person from the list of persons.",
+    "attendanceInvalid": "Every person needs an attendance and a function."
   },
   "list": {
     "open": "Open course table",
@@ -144,5 +145,129 @@
     "empty": "There is no released compensation yet.",
     "error": "The yearly totals could not be loaded.",
     "sum": "Total"
+  },
+  "table": {
+    "title": "Course table",
+    "notFound": "This course does not exist (any more).",
+    "empty": "No event has been assigned to this course yet.",
+    "person": "Person",
+    "total": "Total",
+    "present": "present",
+    "absent": "absent",
+    "excused": "excused",
+    "leader": "leads",
+    "prefill": "Proposal from the sign-up, not confirmed yet",
+    "signUp": {
+      "accepted": "signed up",
+      "declined": "signed off",
+      "invited": "no answer"
+    },
+    "confirmed": "Attendance confirmed",
+    "unconfirmed": "Attendance not confirmed yet",
+    "locked": "This course is frozen. Attendance and events can no longer be changed.",
+    "reported": "reported",
+    "compensation": {
+      "led": "led",
+      "rate": "Rate",
+      "amount": "Amount",
+      "unlisted": "led a training but is not on the list of people entitled to compensation"
+    }
+  },
+  "unassigned": {
+    "title": "Group events without a course",
+    "intro": "These group events fall within the course period. Does one of them belong to the course?",
+    "suggested": "fits the course",
+    "assign": "belongs to it"
+  },
+  "event": {
+    "attendance": "Record attendance",
+    "unassign": "Remove from the course",
+    "unassignConfirm": "Remove this event from the course? The recorded attendance stays with the event but no longer counts for the course."
+  },
+  "action": {
+    "exportGeneric": "Download table (CSV)",
+    "exportJs": "Download J+S file",
+    "lock": "Freeze course",
+    "unlock": "Reopen course",
+    "request": "Request compensation",
+    "reported": "Mark as reported"
+  },
+  "lock": {
+    "confirm": "Freeze the course? Afterwards nobody can change attendance or events until the course is reopened.",
+    "refusedTitle": "Not confirmed yet",
+    "refused": "Before you freeze the course, the attendance of every past event must be confirmed. Still missing:",
+    "unlockConfirm": "Reopen the course? Note: if you import the J+S file again afterwards, it overwrites the attendance already reported.",
+    "reportedConfirm": "Mark the course as reported?"
+  },
+  "findings": {
+    "title": "Notes on the report",
+    "incompleteSettings": "The J+S details of the course are incomplete. Add the user group and main sport category in the course settings, otherwise nothing can be reported.",
+    "unconfirmed": "Attendance not confirmed yet",
+    "unmappedType": "No J+S activity is assigned to this event type",
+    "badDuration": "J+S does not allow this duration",
+    "missingLocation": "The training has no location",
+    "fullDayTraining": "A training needs a start time",
+    "notAllowed": "This activity does not exist for the user group",
+    "missingNumber": "J+S person number missing",
+    "addNumber": "Add number"
+  },
+  "number": {
+    "title": "J+S person number of {name}",
+    "placeholder": "9 digits",
+    "invalid": "The J+S person number has exactly 9 digits.",
+    "saved": "The number has been saved."
+  },
+  "export": {
+    "jsTitle": "J+S file",
+    "jsHints": "Before importing: people and activities must already exist in the NDS. The import overwrites attendance already recorded there. Import the file only after the course has ended. Mark camp days under 4 hours in the NDS afterwards.",
+    "jsFindings": "These entries are missing from the file:",
+    "jsContinue": "Download the file now?",
+    "jsNone": "There is nothing to report yet: no confirmed event with people present."
+  },
+  "csv": {
+    "name": "Last name",
+    "firstName": "First name",
+    "function": "Function",
+    "total": "Total present",
+    "leader": "Leader",
+    "participant": "Participant"
+  },
+  "request": {
+    "confirm": "Request compensation? A booking is prepared for every eligible person, and the treasurer checks it.",
+    "notLocked": "Freeze the course first so the numbers are final.",
+    "noFinance": "Compensation has not been set up for this course yet. Choose the accounting and the rates in the course settings.",
+    "done": {
+      "title": "Request submitted",
+      "written": "{count} bookings have been prepared. The treasurer has received a task to check them.",
+      "external": "This accounting is kept outside the app. The treasurer has received a task with the settlement.",
+      "kept": "Already paid out with a different amount (before → now):",
+      "cancelled": "Rejected by the treasurer, stays that way (before → now):",
+      "unlisted": "Led a training but are not on the list of eligible people:"
+    },
+    "error": {
+      "title": "Request not possible",
+      "notLocked": "Freeze the course first so the numbers are final.",
+      "archived": "This course is archived.",
+      "rate": "A rate is not valid. Check the amounts in the course settings.",
+      "eligible": "The list of eligible people contains a person twice or an unknown person. Check it in the course settings.",
+      "account": "The compensation account does not belong to this accounting. Check it in the course settings.",
+      "missingAccount": "The accounting has no account for trainer compensation. Ask the treasurer to set one up.",
+      "costCenter": "The cost centre does not belong to this accounting. Check it in the course settings.",
+      "foreignBooking": "A booking already exists that belongs to another request. Ask the treasurer to check it.",
+      "otherBooks": "A completed compensation for one person already exists in another accounting. The treasurer must remove it there first.",
+      "noFinance": "Compensation has not been set up for this course yet.",
+      "books": "The course accounting is missing or has changed. Check it in the course settings.",
+      "booksConfig": "This accounting is not available to you. Choose another one in the course settings.",
+      "permission": "Only the people responsible for the course, the group admins or authorised users can request the compensation.",
+      "notFound": "This course does not exist (any more).",
+      "network": "No connection. Please try again later.",
+      "generic": "That did not work. Please try again later."
+    }
+  },
+  "attendance": {
+    "title": "Attendance",
+    "intro": "The proposal comes from the sign-up. Check it and save to confirm the attendance.",
+    "confirmedBy": "Confirmed by {name} on {date}",
+    "leader": "leads"
   }
 }

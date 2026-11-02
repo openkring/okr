@@ -4,14 +4,14 @@
 
 A course (`CourseModel`) bundles the events of a group's training series (`CalEventModel.courseKey`), keeps the
 attendance, produces the report (generic CSV or J+S) and the trainers' compensation. This lib holds the smart parts:
-the list, its store and the edit modal. The spec is `planning/specs/2026-11-01-training-course-spec.md`.
+the list, its store and the edit modal, and the course table page with its own store. The spec is `planning/specs/2026-11-01-training-course-spec.md`.
 
 ## Entry and routes
 
 | Route | Component | Guard |
 |---|---|---|
 | `/course/:groupKey/:listId/:contextMenuName` | `CourseList` (`groupKey = all`: every course of the tenant) | `isAuthenticatedGuard` |
-| `/course/table/:courseKey` | course table page (added with that page) | `isAuthenticatedGuard` |
+| `/course/table/:courseKey` | `CourseTablePage` (attendance, lock, exports, request) | `isAuthenticatedGuard` |
 
 Both routes belong to the `calevent` feature block (`libs/tenant/routes/src/lib/feature-catalogue.ts`); the course has
 no block of its own. There are three ways in:
@@ -57,6 +57,42 @@ The rules in `firestore.rules` are the guard; the UI mirrors them in `course-acc
   the bookings with their own query.
 - With `groupKey = all` the list reads every course of the tenant (`CourseService.listAll`); the group admin flag is
   then evaluated per course, `add` is not offered, and each row shows its group.
+
+## Course table
+
+`CourseTablePage` (`/course/table/:courseKey`) with its own `CourseTableStore` (not `CourseStore`: the list's
+resources, among them the posted bookings of the yearly totals, must not query on this page). The dumb grid
+`okr-course-table` and the attendance dialog (`CourseAttendanceModal` + `CourseAttendanceForm`) live in the `ui` lib;
+the pure helpers (`attendanceRowsForEvent`, `attendanceEntriesToWrite`, `visibleFindings`, `presentCounts`,
+`compensationErrorKey`, `compensationSummary`) in the util lib.
+
+| Who | Sees | Does |
+|---|---|---|
+| Everybody who may read the course | the whole table: sign-up (small), attendance (large), leader star, sums | — (no amounts, no findings, no export; D7) |
+| Trainer, responsible, group admin, `eventAdmin`, privileged | + findings | confirm attendance per event (from its start on), assign / take out events — only while the course is not locked; exports |
+| Responsible, group admin, privileged | + compensation columns (when the finance document was read) | lock / unlock, request compensation, «reported», fill in missing J+S numbers |
+| Treasurer | + findings, compensation columns | exports |
+
+- **Attendance.** Tapping a column opens an ActionSheet (record attendance, take out of the course). The dialog
+  starts from the stored entries, else from the prefill; a not yet confirmed event opens dirty, so saving the unchanged
+  prefill IS the confirmation. The first confirmation writes every row, later saves only the corrections (each entry
+  keeps its own `by`/`at`). Rows whose person key is empty or not plain (`[A-Za-z0-9_]+`) are dropped, a person is
+  written once. One `updateDoc` with field paths (`CourseService.writeAttendance`), so a member signing up at the same
+  time (`attendees[]`) never collides.
+- **Lock** refuses with the list of past, unconfirmed events (§7.8). **Unlock** warns that a new J+S import overwrites
+  the reported attendance.
+- **Exports.** Generic CSV (`<course name>.csv`, labels from i18n, compensation columns only for finance readers);
+  J+S file (`<courseNumber>_awk.csv`) after a dialog with the BASPO hints and the findings (rows with findings are left
+  out, the rest exports).
+- **Compensation request** calls `requestCourseCompensation` through `CourseService.requestCompensation` (dynamic
+  `firebase/functions` import) with the books of the finance document — never the app tenant. Success shows the
+  prepared bookings, posted bookings with a different amount, rejected ones and unlisted leaders; a refusal shows a plain
+  message per `details.reason` (`compensationErrorKey`).
+- **Unassigned group events** (`CourseService.listGroupEventsInPeriod`: tenant + period query, calendar filtered on
+  the client because `tenants` already takes the one `array-contains`) are only loaded for those who may assign.
+- **Phone width** (< 768px): the grid becomes one list per event.
+- **Offline**: every read is a Firestore listener held while the page is open; persons come from the AppStore. The
+  request is a callable and needs the network.
 
 ## Menus
 
