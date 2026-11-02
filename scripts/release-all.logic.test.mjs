@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { bump, APPS } from './release-shared.mjs';
-import { parseReleaseArgs, runPool, missingSentryVars, appEnvKeys, firebaseAppId,
+import { parseReleaseArgs, runPool, missingSentryVars, appEnvKeys, firebaseAppId, envValue, fillMissingEnv,
   bundleConfigProblem, appVersionPatch, nativeTargets, formatSummary, repairKindProblem } from './release-all.logic.mjs';
 
 test('bump keeps today\'s semantics', () => {
@@ -147,4 +147,26 @@ test('repair: refuses when the code does not match the release tag', () => {
   assert.equal(repairKindProblem({ app: 'kwa-app', kind: 'none', tagExists: true, matchesTag: true }), null);
   assert.match(repairKindProblem({ app: 'kwa-app', kind: 'none', tagExists: true, matchesTag: false }), /tag/);
   assert.equal(repairKindProblem({ app: 'okr-website', kind: 'patch', tagExists: false, matchesTag: false }), null);
+});
+
+test('envValue: plain, export, quoted, commented, multi-line, empty and absent', () => {
+  assert.equal(envValue('SENTRY_ORG=acme\n', 'SENTRY_ORG'), 'acme');
+  assert.equal(envValue('export SENTRY_ORG="acme"', 'SENTRY_ORG'), 'acme');
+  assert.equal(envValue("SENTRY_ORG='a b'", 'SENTRY_ORG'), 'a b');
+  assert.equal(envValue('SENTRY_ORG=acme # the org\nX=1', 'SENTRY_ORG'), 'acme');
+  assert.equal(envValue('# SENTRY_ORG=nope\nSENTRY_PROJECT=p', 'SENTRY_ORG'), null);
+  assert.equal(envValue('SENTRY_ORG=\n', 'SENTRY_ORG'), null);
+  assert.equal(envValue('SENTRY_ORG=""', 'SENTRY_ORG'), null);
+  assert.equal(envValue('', 'SENTRY_ORG'), null);
+  const env = `FIREBASE_WEBAPP_CONFIG='{\n  "appId": "1:2:web:x"\n}'\nSENTRY_AUTH_TOKEN=tok\n`;
+  assert.equal(envValue(env, 'SENTRY_AUTH_TOKEN'), 'tok');
+  assert.equal(envValue(env, 'FIREBASE_WEBAPP_CONFIG'), '{\n  "appId": "1:2:web:x"\n}');
+});
+
+test('fillMissingEnv fills only missing keys and returns names, not values', () => {
+  const text = 'SENTRY_AUTH_TOKEN=fromfile\nSENTRY_ORG=fileorg\nSENTRY_PROJECT=\n';
+  const env = { SENTRY_ORG: 'already' };
+  const filled = fillMissingEnv(text, ['SENTRY_AUTH_TOKEN', 'SENTRY_ORG', 'SENTRY_PROJECT'], env);
+  assert.deepEqual(filled, ['SENTRY_AUTH_TOKEN']);
+  assert.deepEqual(env, { SENTRY_ORG: 'already', SENTRY_AUTH_TOKEN: 'fromfile' });
 });

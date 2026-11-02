@@ -5,9 +5,11 @@
 #                                                              already tagged version (no bump/commit/tag)
 # `all` passes --yes (the single go/no-go) and, only when the feature catalogue drifts, --accept-drift.
 # Nothing is piped in: stdin is /dev/null, so every remaining prompt takes its default.
-# This wrapper does NOT source any app .env for `all`: the orchestrator hands each child its own
-# scrubbed environment, and a sourced .env would leak one tenant's Firebase config into every app's
-# build. (A repair is a single app, so it sources just that app's .env — see below.)
+# This wrapper never sources an app .env. The orchestrator reads each app's own .env and hands
+# every child its own scrubbed environment, so a sourced .env would be scrubbed anyway (defense in
+# depth, not a live leak) and is not needed. A repair (`<app> none`) loads that app's SENTRY_*
+# settings from its .env itself (scripts/release.mjs), so the printed `pnpm release <app> none`
+# works the same by hand.
 set -euo pipefail
 
 usage() {
@@ -57,11 +59,8 @@ if [ "$target" = all ]; then
   exec node scripts/release.mjs "${args[@]}" </dev/null
 fi
 
-# Repair: one app, so its own .env (SENTRY_* for the source-map upload, FIREBASE_WEBAPP_CONFIG)
-# is sourced here, scoped to this single run. Prompts left (all on their default, stdin is
-# /dev/null): "Not on main — continue?" (default no: aborts off main), deploy to hosting
-# (default yes), the push of the ngsw commit / tag / pointer bump (default yes). A failed
-# live-version check aborts (default no).
-[ -f "apps/$target/.env" ] || { echo "✖ release-app: apps/$target/.env is missing" >&2; exit 2; }
-set -a; source "./apps/$target/.env"; set +a
+# Repair: one app. Prompts left (all on their default, stdin is /dev/null): "Not on main —
+# continue?" (default No: aborts off main — a repair from a tag checkout needs a human to answer y),
+# deploy to hosting (default yes), the push of the ngsw commit / tag / pointer bump (default yes).
+# A failed live-version check aborts (default No).
 exec node scripts/release.mjs "$target" none </dev/null

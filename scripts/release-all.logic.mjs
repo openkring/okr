@@ -87,6 +87,38 @@ export function missingSentryVars(envText) {
   return SENTRY_KEYS.filter((k) => !set.has(k));
 }
 
+// Value of KEY in a .env text, or null when absent/empty. Same line grammar as ASSIGN: optional
+// `export`, a quoted value may run over several lines (closing quote of the same kind), an unquoted
+// one ends at the line end (a trailing ` # comment` is dropped, as bash `source` would).
+export function envValue(envText, key) {
+  const re = new RegExp(`^\\s*(?:export\\s+)?${key}=(['"]?)`, 'm');
+  const m = re.exec(envText);
+  if (!m) return null;
+  const start = m.index + m[0].length;
+  let raw;
+  if (m[1]) {
+    const end = envText.indexOf(m[1], start);
+    raw = envText.slice(start, end === -1 ? undefined : end);
+  } else {
+    const eol = envText.indexOf('\n', start);
+    raw = envText.slice(start, eol === -1 ? undefined : eol).replace(/\s+#.*$/, '');
+  }
+  raw = raw.trim();
+  return raw === '' ? null : raw;
+}
+
+// Copies each of `keys` from envText into `env` (a process.env-like object) when `env` has no
+// non-empty value for it. Returns the names it filled — never the values, so callers can log it.
+export function fillMissingEnv(envText, keys, env) {
+  const filled = [];
+  for (const key of keys) {
+    if (env[key]) continue;
+    const v = envValue(envText, key);
+    if (v !== null) { env[key] = v; filled.push(key); }
+  }
+  return filled;
+}
+
 export function appEnvKeys(envTexts) {
   const keys = new Set();
   for (const text of envTexts) {

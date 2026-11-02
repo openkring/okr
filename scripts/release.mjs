@@ -13,11 +13,11 @@
 // Deterministic spine; confirmations are interactive. `all` and a repair write the app-version
 // Firestore doc themselves (firebase-admin, ADC); a website release still prints the value to apply.
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { stampNgswVersion } from './stamp-ngsw-version.mjs';
-import { parseReleaseArgs, repairKindProblem, appVersionPatch } from './release-all.logic.mjs';
+import { parseReleaseArgs, repairKindProblem, appVersionPatch, fillMissingEnv } from './release-all.logic.mjs';
 import { releaseAll, writeAppVersion } from './release-all.mjs';
 import {
   repoRoot, SITES, PROD_APP, run, capture, ask, confirm, closePrompts, abort, bump, readVersion, writeVersion,
@@ -37,6 +37,17 @@ async function releaseApp(app, kindArg = null) {
   console.log(`\n=== Releasing ${app} (site ${site}) ===`);
 
   const isApp = app.endsWith('-app');
+
+  // A repair is started by hand (`pnpm release <app> none`, the command release-all prints), with no
+  // .env sourced. Load this app's own Sentry settings from apps/<app>/.env for the source-map step
+  // below, where the shell did not already provide them. Names only are logged, never values.
+  // Websites keep their behaviour (SENTRY_* from the shell).
+  if (isApp) {
+    const loaded = fillMissingEnv(
+      readFileSync(join(repoRoot, `apps/${app}/.env`), 'utf8'),
+      ['SENTRY_AUTH_TOKEN', 'SENTRY_ORG', 'SENTRY_PROJECT'], process.env);
+    if (loaded.length) console.log(`  Loaded from apps/${app}/.env: ${loaded.join(', ')}`);
+  }
 
   // 1. every pre-bump gate (tests, forms, popovers, i18n, menu labels, catalogue drift).
   //    A repair re-deploys an already released version, so it skips them.
