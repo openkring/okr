@@ -2,8 +2,9 @@ import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { BEXIO_ID_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { PrivacyUsage } from '@okr/shared-models';
-import { baseValidations, categoryValidations, isStoreDateOrderValid, partialDateValidations, stringValidations } from '@okr/shared-util-core';
+import { baseValidations, categoryValidations, isStoreDateOrderValid, isValidExternalId, partialDateValidations, stringValidations } from '@okr/shared-util-core';
 
+import { externalIdErrorKey } from './person-external-ids.util';
 import { PersonFormModel } from './person-form.model';
 import { ssnValidations } from './ssn.validations';
 
@@ -25,6 +26,15 @@ export const personValidations = staticSuite((model: PersonFormModel, tenants: s
   stringValidations('bexioId', model.bexioId, BEXIO_ID_LENGTH);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
   //tagValidations('tags', model.tags);
+
+  // external ids (spec 1.132 D15): every stored entry must satisfy the rule of its key. An invalid
+  // entry is reported, never silently dropped on save; the `key` argument keeps the per-entry tests
+  // apart in the loop (Vest identifies a test by field + position otherwise).
+  for (const [key, value] of Object.entries(model.externalIds ?? {})) {
+    test('externalIds', externalIdErrorKey(key), () => {
+      enforce(isValidExternalId(key, value)).isTruthy();
+    }, key);
+  }
 
   // privacy preferences (usage*)
   categoryValidations('usageImages', model.usageImages, PrivacyUsage);

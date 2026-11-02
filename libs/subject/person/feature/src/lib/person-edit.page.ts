@@ -56,6 +56,7 @@ import { PersonStore } from './person.store';
           [currentUser]="currentUser()"
           [priv]="priv()"
           [genders]="genders()"
+          [accountingTenantIds]="accountingTenantIds()"
           [allTags]="tags()"
           [tenantId]="tenantId()"
           [readOnly]="isReadOnly()"
@@ -122,6 +123,7 @@ export class PersonEditPage implements ViewWillEnter   {
   protected defaultResource = computed(() => this.store.defaultResource());
   protected tags = computed(() => this.store.getTags());
   protected tenantId = computed(() => this.store.tenantId());
+  protected accountingTenantIds = computed(() => this.store.accountingTenantIds());
   protected genders = computed(() => this.store.appStore.getCategory('gender'));
   protected listId = computed(() => 'p_' + this.store.person()?.okey);
   protected hideAddButton = computed(() => {

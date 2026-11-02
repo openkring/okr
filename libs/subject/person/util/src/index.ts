@@ -13,3 +13,4 @@ export * from './lib/person-field-diff.util';
 export * from './lib/person-directory.model';
 export * from './lib/fav-address-check.util';
 export * from './lib/person-bexio.model';
+export * from './lib/person-external-ids.util';

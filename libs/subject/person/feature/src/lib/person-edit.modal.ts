@@ -58,6 +58,7 @@ import { AppStore } from '@okr/shared-feature';
                 [currentUser]="currentUser()"
                 [priv]="priv()"
                 [genders]="genders()"
+                [accountingTenantIds]="accountingTenantIds()"
                 [showForm]="showForm()"
                 [allTags]="allTags()"
                 [tenantId]="tenantId()"
@@ -122,6 +123,7 @@ export class PersonEditModal {
   protected path = computed(() => getDocumentStoragePath(this.tenantId(), 'person', this.person()?.okey));
   protected listId = computed(() => 'p_' + this.personKey());
   protected priv = computed(() => this.store.privacySettings());
+  protected accountingTenantIds = computed(() => this.store.accountingTenantIds());
   protected defaultResource = computed(() => this.store.defaultResource());
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));

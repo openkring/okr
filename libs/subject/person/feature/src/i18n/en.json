@@ -30,6 +30,17 @@
     "placeholder": "nnnnn",
     "helper": "The ID of the person's Bexio contact."
   },
+  "externalIds": {
+    "title": "External identifiers",
+    "empty": "No external identifiers recorded.",
+    "key": "Type",
+    "value": "Number",
+    "add": "Add"
+  },
+  "externalId": {
+    "js": "J+S person number",
+    "bexio": "bexio contact ({books})"
+  },
   "email": {
     "label": "Email",
     "placeholder": "Enter email address"
@@ -239,7 +250,10 @@
   },
   "validation": {
     "lastNameRequired": "Entering a last name is mandatory.",
-    "validSSN": "Please enter a valid AHV number."
+    "validSSN": "Please enter a valid AHV number.",
+    "externalId_js": "The J+S person number has exactly 9 digits.",
+    "externalId_bexio": "The bexio number consists of digits only.",
+    "externalId_unknown": "This identifier is not known. Please remove it."
   },
   "chat": {
     "blocked": {

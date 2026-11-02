@@ -30,6 +30,17 @@
     "placeholder": "nnnnn",
     "helper": "Die ID des Bexio Kontaktes der Person."
   },
+  "externalIds": {
+    "title": "Externe Kennungen",
+    "empty": "Keine externen Kennungen erfasst.",
+    "key": "Art",
+    "value": "Nummer",
+    "add": "Hinzufügen"
+  },
+  "externalId": {
+    "js": "J+S-Personennummer",
+    "bexio": "bexio-Kontakt ({books})"
+  },
   "email": {
     "label": "E-Mail",
     "placeholder": "E-Mail Adresse eingeben"
@@ -239,7 +250,10 @@
   },
   "validation": {
     "lastNameRequired": "Die Eingabe eines Nachnamens ist obligatorisch.",
-    "validSSN": "Bitte eine gültige AHV-Nummer eingeben."
+    "validSSN": "Bitte eine gültige AHV-Nummer eingeben.",
+    "externalId_js": "Die J+S-Personennummer besteht aus genau 9 Ziffern.",
+    "externalId_bexio": "Die bexio-Nummer besteht nur aus Ziffern.",
+    "externalId_unknown": "Diese Kennung ist nicht bekannt. Bitte entferne sie."
   },
   "chat": {
     "blocked": {

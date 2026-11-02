@@ -3,10 +3,10 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { BexioIdMask, ChSsnMask } from '@okr/shared-config';
-import { CategoryListModel, PrivacyAccessor, PrivacySettings, RoleName, UserModel } from '@okr/shared-models';
-import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
+import { BaseProperty, CategoryListModel, PrivacyAccessor, PrivacySettings, RoleName, UserModel } from '@okr/shared-models';
+import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, PropertyList, PropertyListI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
 import { areNotesVisible, areTagsVisible, coerceBoolean, hasRole, isVaultFieldVisible, isVisibleToUser } from '@okr/shared-util-core';
-import { PersonFormModel, personValidations, PersonI18n } from '@okr/subject-person-util';
+import { externalIdKeyOptions, fromProperties, PersonFormModel, personValidations, PersonI18n, toProperties } from '@okr/subject-person-util';
 import { BEXIO_ID_LENGTH, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AhvFormat, formatAhv, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
@@ -15,7 +15,7 @@ import { AhvFormat, formatAhv, validateVestTree, vestErrors } from '@okr/shared-
   standalone: true,
   imports: [
     ErrorNote,
-    TextInput, DateInput, CategorySelect, Chips, NotesInput,
+    TextInput, DateInput, CategorySelect, Chips, NotesInput, PropertyList,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -88,6 +88,17 @@ import { AhvFormat, formatAhv, validateVestTree, vestErrors } from '@okr/shared-
         </ion-card-content>
       </ion-card>
 
+      @if(areExternalIdsVisible()) {
+        <okr-property-list
+          [properties]="externalIdProperties()"
+          (propertiesChange)="onExternalIdsChange($event)"
+          [i18n]="externalIdsI18n()"
+          [keyOptions]="externalIdKeys()"
+          [readOnly]="isReadOnly()"
+          [reorderable]="false" />
+        <okr-error-note [errors]="externalIdsErrors()" />
+      }
+
       @if(areTagsVisible()) {
         <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       }
@@ -124,6 +135,8 @@ export class PersonForm {
   public readonly tenantId = input.required<string>();
   public readonly priv = input.required<PrivacySettings>();
   public readonly genders = input.required<CategoryListModel>();
+  /** the books (accountingTenantIds) a scoped external id, e.g. a bexio contact, can belong to */
+  public readonly accountingTenantIds = input<string[]>([]);
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   
@@ -150,6 +163,7 @@ export class PersonForm {
   protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
   protected ssnIdErrors = computed(() => this.validationResult().getErrors('ssnId'));
   protected lastNameErrors = computed(() => this.validationResult().getErrors('lastName'));
+  protected externalIdsErrors = computed(() => this.validationResult().getErrors('externalIds'));
 
   // fields
   protected readonly firstName = computed(() => this.formData().firstName ?? DEFAULT_NAME);
@@ -164,14 +178,50 @@ export class PersonForm {
   protected okey = computed(() => this.formData().okey ?? '');
   protected areNotesVisible = computed(() => areNotesVisible(this.currentUser(), this.priv(), this.notes(), this.isReadOnly()));
 
+  // external ids (spec 1.132 D15): the map is edited as a key/value list; the keys are picked, not typed
+  protected externalIdProperties = computed(() => toProperties(this.formData().externalIds));
+  protected externalIdsI18n = computed(() => ({
+    title: this.i18n().externalIds_title(),
+    empty: this.i18n().externalIds_empty(),
+    keyLabel: this.i18n().externalIds_key(),
+    valueLabel: this.i18n().externalIds_value(),
+    add: this.i18n().externalIds_add()
+  } as PropertyListI18n));
+  protected externalIdKeys = computed(() => externalIdKeyOptions(
+    { js: this.i18n().externalId_js(), bexio: this.i18n().externalId_bexio() },
+    this.accountingTenantIds(),
+    Object.keys(this.formData().externalIds ?? {})));
+
   // passing constants to template
   protected bexioMask = BexioIdMask;
   protected ssnMask = ChSsnMask;
 
   /******************************* actions *************************************** */
-  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {
+  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | Record<string, string>): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+  }
+
+  /**
+   * Invalid entries are kept (`keepInvalid`) so the Vest suite reports them instead of them vanishing on save.
+   * Skips the write when nothing changed, so opening a person never marks the form dirty.
+   */
+  protected onExternalIdsChange(properties: BaseProperty[]): void {
+    const next = fromProperties(properties, true);
+    const current = this.formData().externalIds ?? {};
+    const sameKeys = Object.keys(next).length === Object.keys(current).length && Object.entries(next).every(([k, v]) => current[k] === v);
+    if (sameKeys) return;
+    this.onFieldChange('externalIds', next);
+  }
+
+  /**
+   * The J+S number is an identifier, often of minors. The person document is tenant-readable, so this is a
+   * display gate, not access control — it follows `bexioId`, the comparable identifier, and so shows it to
+   * no wider an audience. A read-only view hides an empty list; editing follows the form's `readOnly`.
+   */
+  protected areExternalIdsVisible(): boolean {
+    if (!this.isVisibleToUser('bexioId', this.priv().showBexioId)) return false;
+    return !this.isReadOnly() || this.externalIdProperties().length > 0;
   }
 
   protected isVisibleToUser(_field: string, privacyAccessor: PrivacyAccessor): boolean {

@@ -30,6 +30,17 @@
     "placeholder": "nnnnn",
     "helper": "El identificador del contacto de Bexio de la persona."
   },
+  "externalIds": {
+    "title": "Identificadores externos",
+    "empty": "No hay identificadores externos registrados.",
+    "key": "Tipo",
+    "value": "Número",
+    "add": "Añadir"
+  },
+  "externalId": {
+    "js": "Número de persona J+S",
+    "bexio": "Contacto de bexio ({books})"
+  },
   "email": {
     "label": "Correo electrónico",
     "placeholder": "Introducir dirección de correo electrónico"
@@ -239,7 +250,10 @@
   },
   "validation": {
     "lastNameRequired": "La introducción de un apellido es obligatoria.",
-    "validSSN": "Introduzca un número AVS válido."
+    "validSSN": "Introduzca un número AVS válido.",
+    "externalId_js": "El número de persona J+S tiene exactamente 9 dígitos.",
+    "externalId_bexio": "El número de bexio solo contiene dígitos.",
+    "externalId_unknown": "Este identificador no es conocido. Por favor, elimínalo."
   },
   "chat": {
     "blocked": {

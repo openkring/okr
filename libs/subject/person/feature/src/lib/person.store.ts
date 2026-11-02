@@ -8,7 +8,7 @@ import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { FirestoreService, ChatStatusService } from '@okr/shared-data-access';
-import { AppStore } from '@okr/shared-feature';
+import { AppStore, SelectedBooks } from '@okr/shared-feature';
 import { AddressCollection, AddressModel, CategoryListModel, DefaultLanguage, MembershipCollection, MembershipModel, OrgModel, PersonCollection, PersonModel, PersonModelName, ResourceModel } from '@okr/shared-models';
 import { AlertService, copyToClipboardWithConfirmation, getCcEmailAddresses, getMainEmailAddresses, lazyService, navigateByUrl, showToast } from '@okr/shared-util-angular';
 import { chipMatches, debugItemLoaded, getSystemQuery, hasRole, isPerson, nameMatches, PHOTO_USAGE_ALL, photoUsageMatches, chatBlockedAlertMessage, isChatBlockedError } from '@okr/shared-util-core';
@@ -57,6 +57,7 @@ export const PersonStore = signalStore(
     avatarService: inject(AvatarService),
     router: inject(Router),
     appStore: inject(AppStore),
+    selectedBooks: inject(SelectedBooks),
     firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
     alertService: inject(AlertService),
@@ -75,6 +76,9 @@ export const PersonStore = signalStore(
   withComputed((state) => {
     return {
       persons: computed(() => state.appStore.allPersons()),
+      // the books a scoped external id (bexio contact) can name: the ones this user can see (treasurers) plus the
+      // app's default books. Never the app tenant — the books are not the deployment (accountingTenantId ≠ tenantId).
+      accountingTenantIds: computed(() => [...new Set([...state.selectedBooks.available(), state.appStore.appConfig().defaultAccountingTenantId ?? ''])].filter((id) => id !== '')),
       // the date of death itself lives in the addresses vault ('dod' channel, spec 1.19);
       // persons carry only the isDeceased marker, which is what a list may filter on.
       deceased: computed(() => state.appStore.allPersons().filter((person: PersonModel) => person.isDeceased === true) ?? []),

@@ -138,3 +138,30 @@ describe('personValidations date fields', () => {
     expect(errorsFor(model, 'dateOfDeath')).toHaveLength(0);
   });
 });
+
+describe('personValidations: externalIds', () => {
+  it('is valid when the person has none, or valid ones', () => {
+    expect(personValidations(formModel(), tenantId, tags).getErrors('externalIds')).toEqual([]);
+    expect(personValidations(formModel({ externalIds: {} }), tenantId, tags).isValid()).toBe(true);
+    expect(personValidations(formModel({ externalIds: { js: '123456789', bexio_gss: '4711' } }), tenantId, tags).isValid()).toBe(true);
+  });
+
+  it('reports a J+S number that is not nine digits, with the message of its kind', () => {
+    const result = personValidations(formModel({ externalIds: { js: '12345' } }), tenantId, tags);
+    expect(result.isValid()).toBe(false);
+    expect(result.getErrors('externalIds')).toEqual(['@subject/person/feature.validation.externalId_js']);
+  });
+
+  it('reports an unknown kind and a scoped kind without scope', () => {
+    const unknown = personValidations(formModel({ externalIds: { ahv: '7561234567890' } }), tenantId, tags);
+    expect(unknown.getErrors('externalIds')).toEqual(['@subject/person/feature.validation.externalId_unknown']);
+    const unscoped = personValidations(formModel({ externalIds: { bexio: '4711' } }), tenantId, tags);
+    expect(unscoped.isValid()).toBe(false);
+  });
+
+  it('stays invalid while any entry is invalid (Vest reports one message per field at a time)', () => {
+    const result = personValidations(formModel({ externalIds: { js: '123456789', bexio_gss: 'abc' } }), tenantId, tags);
+    expect(result.isValid()).toBe(false);
+    expect(result.getErrors('externalIds')).toEqual(['@subject/person/feature.validation.externalId_bexio']);
+  });
+});

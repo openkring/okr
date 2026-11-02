@@ -30,6 +30,15 @@ export const PERSON_I18N_KEYS = {
     bexioId_placeholder:        PFX + 'bexioId.placeholder',
     bexioId_helper:             PFX + 'bexioId.helper',
 
+    // external ids (spec 1.132 D15); the kind labels are looked up per kind, scoped kinds carry a {books} placeholder
+    externalIds_title:          PFX + 'externalIds.title',
+    externalIds_empty:          PFX + 'externalIds.empty',
+    externalIds_key:            PFX + 'externalIds.key',
+    externalIds_value:          PFX + 'externalIds.value',
+    externalIds_add:            PFX + 'externalIds.add',
+    externalId_js:              PFX + 'externalId.js',
+    externalId_bexio:           PFX + 'externalId.bexio',
+
     email_label:                PFX + 'email.label',
     email_placeholder:          PFX + 'email.placeholder',
 
