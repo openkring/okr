@@ -609,7 +609,9 @@
       "building": "Building the index...",
       "none": "No index yet. Build the index.",
       "summary": "{shown} of {total} entries: {scs} SCS, {srv} SRV, {regasoft} Regasoft",
-      "error": "The contacts from the Regasoft portal could not be loaded. Please try again later."
+      "error": "The contacts from the Regasoft portal could not be loaded. Please try again later.",
+      "detail_partial": "The details from the Regasoft portal could not be loaded for {count} entries. For them, only name, gender, date of birth and email are compared.",
+      "detail_error": "The details from the Regasoft portal could not be loaded. The list stays as it was. Please try again later."
     },
     "person": {
       "update": {

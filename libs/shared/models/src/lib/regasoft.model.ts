@@ -190,6 +190,12 @@ export interface SrvIndex {
   licenseImage: string | null;
   licenseImageName: string | null;
   licenseImageMimeType: string | null;
+  /**
+   * true only when the member detail (`getSrvMemberDetail`) arrived for this record. The list
+   * carries no address, telefon, country, status dates, newsletter or clubs; without the detail
+   * those fields are empty, so nothing is compared or written from them (spec 1.133 I2).
+   */
+  rDetailLoaded: boolean;
 }
 
 /**

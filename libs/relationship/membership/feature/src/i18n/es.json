@@ -609,7 +609,9 @@
       "building": "Construyendo el índice...",
       "none": "Todavía no hay índice. Constrúyalo.",
       "summary": "{shown} de {total} entradas: {scs} SCS, {srv} SRV, {regasoft} Regasoft",
-      "error": "No se pudieron cargar los contactos del portal Regasoft. Inténtalo de nuevo más tarde."
+      "error": "No se pudieron cargar los contactos del portal Regasoft. Inténtalo de nuevo más tarde.",
+      "detail_partial": "No se pudieron cargar los detalles del portal Regasoft para {count} entradas. Para ellas solo se comparan el nombre, el sexo, la fecha de nacimiento y el correo electrónico.",
+      "detail_error": "No se pudieron cargar los detalles del portal Regasoft. La lista se queda como estaba. Inténtalo de nuevo más tarde."
     },
     "person": {
       "update": {

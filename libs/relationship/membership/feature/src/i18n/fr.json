@@ -609,7 +609,9 @@
       "building": "Construction de l’index...",
       "none": "Pas encore d’index. Construisez-le.",
       "summary": "{shown} sur {total} entrées : {scs} SCS, {srv} SRV, {regasoft} Regasoft",
-      "error": "Les contacts du portail Regasoft n’ont pas pu être chargés. Réessaie plus tard."
+      "error": "Les contacts du portail Regasoft n’ont pas pu être chargés. Réessaie plus tard.",
+      "detail_partial": "Les détails du portail Regasoft n’ont pas pu être chargés pour {count} entrées. Pour elles, seuls le nom, le sexe, la date de naissance et l’e-mail sont comparés.",
+      "detail_error": "Les détails du portail Regasoft n’ont pas pu être chargés. La liste reste telle quelle. Réessaie plus tard."
     },
     "person": {
       "update": {

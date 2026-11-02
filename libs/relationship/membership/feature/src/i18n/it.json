@@ -609,7 +609,9 @@
       "building": "Costruzione dell’indice...",
       "none": "Nessun indice. Costruire l’indice.",
       "summary": "{shown} di {total} voci: {scs} SCS, {srv} SRV, {regasoft} Regasoft",
-      "error": "Non è stato possibile caricare i contatti dal portale Regasoft. Riprova più tardi."
+      "error": "Non è stato possibile caricare i contatti dal portale Regasoft. Riprova più tardi.",
+      "detail_partial": "Non è stato possibile caricare i dettagli dal portale Regasoft per {count} voci. Per queste vengono confrontati solo nome, sesso, data di nascita ed e-mail.",
+      "detail_error": "Non è stato possibile caricare i dettagli dal portale Regasoft. L’elenco resta com’era. Riprova più tardi."
     },
     "person": {
       "update": {

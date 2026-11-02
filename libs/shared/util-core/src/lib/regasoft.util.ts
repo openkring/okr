@@ -204,19 +204,26 @@ export function getMismatches(item: SrvIndex, today: string): SrvMismatch[] {
     if (bk !== r) result.push({ field, okrValue: bk, rValue: r, kind: 'fix' });
   };
 
+  // From the member list: always comparable.
   cmp('firstName', v(item.firstName), v(item.rFirstName));
   cmp('lastName', v(item.lastName), v(item.rLastName));
   cmp('gender', v(item.gender), v(item.rGender));
   cmpFullDate('dateOfBirth', v(item.dateOfBirth), v(item.rDateOfBirth));
   cmp('email', v(item.mEmail), v(item.rEmail), (a, b) => lower(a) === lower(b));
-  cmp('phone', v(item.mPhone), v(item.rMobile) || v(item.rTelefon), (a) => phonesMatch(a, v(item.rMobile), v(item.rTelefon)));
-  cmp('street', v(item.mStreet), v(item.rStreet), (a, b) => lower(a) === lower(b));
-  cmp('zipCode', v(item.mZipCode), v(item.rZipCode));
-  cmp('city', v(item.mCity), v(item.rCity), (a, b) => lower(a) === lower(b));
 
-  const countryId = countryIdOf(v(item.mCountryCode));
-  if (countryId !== null && String(countryId) !== v(item.rCountryId)) {
-    result.push({ field: 'country', okrValue: item.mCountryCode, rValue: v(item.rCountryId), kind: 'fix' });
+  // Everything below comes only with the member detail: without it the Regasoft side is empty, not
+  // known to be empty, so a comparison would report (and write) a false difference (spec 1.133 I2).
+  const detail = item.rDetailLoaded === true;
+  if (detail) {
+    cmp('phone', v(item.mPhone), v(item.rMobile) || v(item.rTelefon), (a) => phonesMatch(a, v(item.rMobile), v(item.rTelefon)));
+    cmp('street', v(item.mStreet), v(item.rStreet), (a, b) => lower(a) === lower(b));
+    cmp('zipCode', v(item.mZipCode), v(item.rZipCode));
+    cmp('city', v(item.mCity), v(item.rCity), (a, b) => lower(a) === lower(b));
+
+    const countryId = countryIdOf(v(item.mCountryCode));
+    if (countryId !== null && String(countryId) !== v(item.rCountryId)) {
+      result.push({ field: 'country', okrValue: item.mCountryCode, rValue: v(item.rCountryId), kind: 'fix' });
+    }
   }
 
   const expected = expectedSrvStatus({
@@ -226,11 +233,11 @@ export function getMismatches(item: SrvIndex, today: string): SrvMismatch[] {
     passiveSince: v(item.mPassiveSince),
     today,
   });
-  const status: [keyof typeof expected, string][] = [
+  const status: [keyof typeof expected, string][] = detail ? [
     ['leavingDate', v(item.rLeavingDate)],
     ['dateOfDeath', v(item.rDateOfDeath)],
     ['inactiveDate', v(item.rInactiveDate)],
-  ];
+  ] : [];
   for (const [field, r] of status) {
     if (expected[field] === r) continue;
     // Passive without a usable passiveSince (empty, partial): the expected date is «today», which drifts
@@ -242,8 +249,8 @@ export function getMismatches(item: SrvIndex, today: string): SrvMismatch[] {
   }
 
   // Info: Sekretariat-only data, reported only when Regasoft has something to say.
-  if (item.hasNewsletter === false) result.push({ field: 'hasNewsletter', okrValue: '', rValue: 'false', kind: 'info' });
-  if (item.mainClub === false) result.push({ field: 'mainClub', okrValue: '', rValue: 'false', kind: 'info' });
+  if (detail && item.hasNewsletter === false) result.push({ field: 'hasNewsletter', okrValue: '', rValue: 'false', kind: 'info' });
+  if (detail && item.mainClub === false) result.push({ field: 'mainClub', okrValue: '', rValue: 'false', kind: 'info' });
 
   // BK-side data.
   if (item.rServiceId && v(item.memberId) !== item.rServiceId) {
@@ -392,7 +399,8 @@ export function getSekretariatCases(index: SrvIndex[]): SrvCase[] {
   const surplus = surplusRecords(index);
   const cases: SrvCase[] = [];
   for (const item of index) {
-    if (!item.rid) continue;
+    // Without the member detail the newsletter, clubs and status are unknown: no case (spec 1.133 I2).
+    if (!item.rid || item.rDetailLoaded !== true) continue;
     if (surplus.has(item)) {
       cases.push(sekretariatCase(item, 'duplicate'));
       continue;

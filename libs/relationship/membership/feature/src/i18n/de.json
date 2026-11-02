@@ -609,7 +609,9 @@
       "building": "Index wird aufgebaut...",
       "none": "Noch kein Index. Index aufbauen.",
       "summary": "{shown} von {total} Einträgen: {scs} SCS, {srv} SRV, {regasoft} Regasoft",
-      "error": "Die Kontakte aus dem Regasoft-Portal konnten nicht geladen werden. Bitte versuche es später noch einmal."
+      "error": "Die Kontakte aus dem Regasoft-Portal konnten nicht geladen werden. Bitte versuche es später noch einmal.",
+      "detail_partial": "Für {count} Einträge konnten die Details aus dem Regasoft-Portal nicht geladen werden. Bei ihnen werden nur Name, Geschlecht, Geburtsdatum und E-Mail verglichen.",
+      "detail_error": "Die Details aus dem Regasoft-Portal konnten nicht geladen werden. Die Liste bleibt, wie sie war. Bitte versuche es später noch einmal."
     },
     "person": {
       "update": {

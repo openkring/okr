@@ -98,6 +98,7 @@ function indexPatchFromRaw(rec: Record<string, unknown>): Partial<SrvIndex> {
     rZipCode:     str('postcode'),
     rCity:        str('city'),
     rDateOfBirth: date('birthday'),
+    rDetailLoaded: true,   // the record read back is the complete detail record
   };
 }
 
@@ -172,11 +173,12 @@ function buildIndexEntry(
     licenseImage:         null,
     licenseImageName:     null,
     licenseImageMimeType: null,
+    rDetailLoaded:        false,   // set by the detail enrichment in buildIndex
   };
 }
 
 function storageKey(tenantId: string): string {
-  return `okr-aoc-srv-index-v2-${tenantId}`;   // v2: entries carry the status, phone and country fields (spec 1.133)
+  return `okr-aoc-srv-index-v3-${tenantId}`;   // v3: entries carry rDetailLoaded (spec 1.133 I2)
 }
 
 function stripForStorage(entry: SrvIndex): Omit<SrvIndex, 'licenseImage' | 'licenseImageName' | 'licenseImageMimeType'> & { licenseImage: null; licenseImageName: null; licenseImageMimeType: null } {
@@ -193,7 +195,8 @@ function saveIndex(tenantId: string, index: SrvIndex[]): void {
 
 function loadIndex(tenantId: string): SrvIndex[] {
   try {
-    localStorage.removeItem(`okr-aoc-srv-index-${tenantId}`);   // v1 cache lacks the 1.133 fields
+    localStorage.removeItem(`okr-aoc-srv-index-${tenantId}`);      // v1 cache lacks the 1.133 fields
+    localStorage.removeItem(`okr-aoc-srv-index-v2-${tenantId}`);   // v2 cache lacks rDetailLoaded
     const raw = localStorage.getItem(storageKey(tenantId));
     return raw ? (JSON.parse(raw) as SrvIndex[]) : [];
   } catch { return []; }
@@ -467,13 +470,24 @@ export const MembershipSrvStore = signalStore(
               entry.licenseImageMimeType = detail.licenseImageMimeType;
               Object.assign(entry, regasoftFieldsOf(detail));
               entry.clubs              = detail.clubs.map(c => c.mainClub ? '!' + c.clubName : c.clubName);
+              entry.rDetailLoaded      = true;
             }
           }
           const withClubs = index.filter(i => i.clubs.length > 0).length;
           const multiClubs = index.filter(i => i.clubs.length > 1).length;
           console.log(`MembershipSrvStore.buildIndex: enriched ${detailResult.data.length} member details, ${withClubs} with clubs, ${multiClubs} with >1 club`);
         } catch (e) {
+          // Without any detail, every comparison of address, phone and status would be wrong: say so
+          // and keep the index as it was (spec 1.133 I2).
           console.error('MembershipSrvStore.buildIndex: getSrvMemberDetail failed', e);
+          await showToast(store.toastController, store.i18n.srv_index_detail_error());
+          return;
+        }
+        // The function skips records it could not read: those entries are compared only partly.
+        const missing = index.filter(i => !!i.rid && !i.rDetailLoaded).length;
+        if (missing > 0) {
+          console.warn(`MembershipSrvStore.buildIndex: ${missing} member details missing`);
+          await showToast(store.toastController, fill(store.i18n.srv_index_detail_partial(), { count: missing }));
         }
       }
 

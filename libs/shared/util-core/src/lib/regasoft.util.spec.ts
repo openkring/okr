@@ -99,6 +99,7 @@ function srvIndex(overrides: Partial<SrvIndex> = {}): SrvIndex {
     licenseImage: null,
     licenseImageName: null,
     licenseImageMimeType: null,
+    rDetailLoaded: true,
     ...overrides,
   };
 }
@@ -436,6 +437,36 @@ describe('expectedSrvStatus', () => {
   });
   it('the no-exit sentinel as passiveSince counts as missing → today', () => {
     expect(expectedSrvStatus({ ...base, category: 'P', passiveSince: '99991231' }).inactiveDate).toBe('20261102');
+  });
+});
+
+describe('entries without the Regasoft detail (I2)', () => {
+  // The list carries no address, telefon, country, status dates, newsletter or clubs.
+  const noDetail = (o: Partial<SrvIndex> = {}) => srvIndex({
+    rDetailLoaded: false, rStreet: '', rZipCode: '', rCity: '', rTelefon: '', rCountryId: '',
+    rLeavingDate: '', rDateOfDeath: '', rInactiveDate: '', hasNewsletter: false, clubs: [], ...o,
+  });
+
+  it('compares only what the list carries', () => {
+    expect(getMismatches(noDetail({ mDateOfExit: '20261031', mCategory: 'A', mainClub: false, mPhone: '044 111 22 33', rMobile: '' }), TODAY)).toEqual([]);
+  });
+
+  it('still compares name, email, gender and birth date', () => {
+    const fields = getMismatches(noDetail({ firstName: 'Anni', mEmail: 'neu@muster.ch', gender: 'male', dateOfBirth: '19850416' }), TODAY).map(m => m.field);
+    expect(fields).toEqual(['firstName', 'gender', 'dateOfBirth', 'email']);
+  });
+
+  it('the change set holds no address, phone, country or status field', () => {
+    const item = noDetail({ memberId: '5', rServiceId: '5', mEmail: 'neu@muster.ch', mCategory: 'P', mDateOfDeath: '20261015' });
+    expect(getSrvChanges(item, TODAY)).toEqual({ email: 'neu@muster.ch' });
+  });
+
+  it('raises no Sekretariat case', () => {
+    const linked = srvIndex({ rid: '1', rServiceId: '555', memberId: '555' });
+    const extra = noDetail({ mKey: '', personKey: '', memberId: '', rServiceId: '', rid: '9' });
+    expect(getSekretariatCases([linked, extra])).toEqual([]);
+    expect(getSekretariatCases([noDetail({ pCategory: 'D' })])).toEqual([]);
+    expect(getSekretariatCases([noDetail({ mainClub: false })])).toEqual([]);
   });
 });
 
