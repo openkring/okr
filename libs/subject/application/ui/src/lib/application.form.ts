@@ -184,6 +184,8 @@ import {
           </ion-card>
         }
 
+        <!-- the kind of membership: a course registration has none -->
+        @if (isMembership()) {
         <ion-card>
           <ion-card-header><ion-card-title>{{ i18n().section_application() }}</ion-card-title></ion-card-header>
           <ion-card-content class="ion-no-padding">
@@ -205,6 +207,7 @@ import {
             </ion-grid>
           </ion-card-content>
         </ion-card>
+        }
 
         <!-- answers the form builder stored as typed properties (spec 1.125 §4.4): only the value may be corrected -->
         @if (propertyRows().length > 0) {
@@ -273,7 +276,9 @@ export class ApplicationForm {
   // a youth application, or an applicant under 18 whatever the kind: the guardian's names are
   // required under 18 (needsGuardian), so the card must show whenever the suite asks for them
   protected readonly showGuardian = computed(() => this.formData().applicationAs === 'youth' || needsGuardian(this.formData()));
-  protected readonly showSsn = computed(() => needsSsn(this.formData()));
+  // a course registration asks for no AHV number and no membership kind (data minimisation)
+  protected readonly isMembership = computed(() => isMembershipApplication(this.formData()));
+  protected readonly showSsn = computed(() => this.isMembership() && needsSsn(this.formData()));
   /** the member category the application suggests — shown only, never written (spec 1.125 §13.1) */
   protected readonly proposal = computed(() => {
     const app = this.formData();

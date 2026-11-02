@@ -1,7 +1,7 @@
 import { enforce, omitWhen, staticSuite, test } from 'vest';
 import { ApplicationModel } from '@okr/shared-models';
 import { ssnValidations } from '@okr/subject-person-util';
-import { needsGuardian, needsSsn } from './application.util';
+import { isMembershipApplication, needsGuardian, needsSsn } from './application.util';
 
 // Vest messages are i18n keys: okr-error-note resolves any message starting with '@'.
 const PFX = '@subject/application/feature.validation.';
@@ -15,18 +15,24 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** Validates an application (membership request) in the edit modal. */
 export const applicationValidations = staticSuite((app: ApplicationModel) => {
+  // a course registration (spec 1.125 §13.2) is no membership request: the course form asks for no
+  // address, no kind (`applicationAs`) and no AHV number, so those are required for memberships only
+  const membership = isMembershipApplication(app);
+
   test('firstName',     REQUIRED,      () => { enforce(app.firstName).isNotBlank(); });
   test('lastName',      REQUIRED,      () => { enforce(app.lastName).isNotBlank(); });
   test('gender',        CHOICE,        () => { enforce(app.gender).inside(['male', 'female']); });
   test('dateOfBirth',   DATE_OF_BIRTH, () => { enforce(app.dateOfBirth).matches(/^\d{8}$/); });
-  test('streetName',    REQUIRED,      () => { enforce(app.streetName).isNotBlank(); });
-  test('streetNumber',  REQUIRED,      () => { enforce(app.streetNumber).isNotBlank(); });
-  test('zipCode',       REQUIRED,      () => { enforce(app.zipCode).isNotBlank(); });
-  test('city',          REQUIRED,      () => { enforce(app.city).isNotBlank(); });
-  test('countryCode',   REQUIRED,      () => { enforce(app.countryCode).isNotBlank(); });
-  test('applicationAs', CHOICE,        () => { enforce(app.applicationAs).inside(['youth', 'adult', 'transfer']); });
+  omitWhen(!membership, () => {
+    test('streetName',    REQUIRED,      () => { enforce(app.streetName).isNotBlank(); });
+    test('streetNumber',  REQUIRED,      () => { enforce(app.streetNumber).isNotBlank(); });
+    test('zipCode',       REQUIRED,      () => { enforce(app.zipCode).isNotBlank(); });
+    test('city',          REQUIRED,      () => { enforce(app.city).isNotBlank(); });
+    test('countryCode',   REQUIRED,      () => { enforce(app.countryCode).isNotBlank(); });
+    test('applicationAs', CHOICE,        () => { enforce(app.applicationAs).inside(['youth', 'adult', 'transfer']); });
+  });
 
-  omitWhen(!needsSsn(app), () => {
+  omitWhen(!membership || !needsSsn(app), () => {
     test('ssnId', REQUIRED, () => { enforce(app.ssnId).isNotBlank(); });
     ssnValidations('ssnId', app.ssnId);
   });
@@ -51,7 +57,12 @@ export const applicationValidations = staticSuite((app: ApplicationModel) => {
   });
 
   // A youth application or a minor may give the guardian's e-mail/phone instead of their own.
-  if (app.applicationAs !== 'youth' && !needsGuardian(app)) {
+  // A course registration asks for the e-mail only (its phone is optional): own or guardian's.
+  if (!membership) {
+    test('email', PFX + 'email_required', () => {
+      enforce(!!app.email || !!app.parentEmail).isTruthy();
+    });
+  } else if (app.applicationAs !== 'youth' && !needsGuardian(app)) {
     test('email', REQUIRED, () => { enforce(app.email).isNotBlank(); });
     test('phone', REQUIRED, () => { enforce(app.phone).isNotBlank(); });
   } else {
