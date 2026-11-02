@@ -12,7 +12,7 @@ import { join } from 'node:path';
 
 import { stampNgswVersion } from './stamp-ngsw-version.mjs';
 import {
-  repoRoot, SITES, APPS, run, ask, confirm, closePrompts, abort, bump, readVersion, writeVersion,
+  repoRoot, SITES, APPS, run, ask, closePrompts, abort, bump, readVersion, writeVersion,
   preflight, runGates,
 } from './release-shared.mjs';
 import {
@@ -106,6 +106,17 @@ function revertBuildPhase() {
   for (const app of ctx.stamped) attempt(['-C', `apps/${app}`, 'checkout', '--', 'ngsw-config.json']);
 }
 
+// Safety net for every exit path between the bump and the go/no-go answer. A TTY Ctrl-C at a
+// prompt, a closed stdin or a drained event loop all end the process WITHOUT passing through the
+// catch below, leaving package.json and the ngsw stamps modified — and, if nothing else sets it,
+// exit code 0. Synchronous git is allowed in an 'exit' handler, and so is setting exitCode.
+const onExit = () => {
+  if (!ctx.armed || ctx.reverted) return;
+  console.log('\nexiting before the go/no-go was answered');
+  revertBuildPhase();
+  process.exitCode = 1;
+};
+
 const onSigint = () => {
   for (const child of ctx.children) child.kill('SIGTERM');
   revertBuildPhase();
@@ -186,7 +197,7 @@ export async function releaseAll(opts) {
   if (o.kind && !KINDS.includes(o.kind)) abort(`Unknown bump '${o.kind}' — expected patch, minor or major.`);
 
   ctx = { opts: o, rows: [], children: new Set(), stamped: [], bumped: false, reverted: false,
-          env: process.env, logDir: '', version: '', appIds: {} };
+          env: process.env, logDir: '', version: '', appIds: {}, armed: false };
 
   // 1. preflight, and the bump kind
   await step('preflight', '', async () => {
@@ -228,9 +239,10 @@ export async function releaseAll(opts) {
   if (!o.dryRun) mkdirSync(ctx.logDir, { recursive: true });
   console.log(`\nVersion ${current} -> ${next} (${o.kind}) for ${APPS.length} apps${o.dryRun ? '  [dry run]' : ''}`);
   process.once('SIGINT', onSigint);
+  process.once('exit', onExit);
   try {
     await step('bump', '', async () => {
-      ctx.bumped = true; // before the write: a half-done bump is reverted too
+      ctx.bumped = ctx.armed = true; // before the write: a half-done bump is reverted too
       if (o.dryRun) console.log(`    (dry run) would write package.json ${current} -> ${next}`);
       else writeVersion(current, next);
       for (const app of APPS) {
@@ -271,12 +283,19 @@ export async function releaseAll(opts) {
   for (const app of APPS) console.log(`  ${app.padEnd(12)} -> ${SITES[app]}`);
   if (o.native) console.log(`  native: ${native.length ? native.map((t) => `${t.app}/${t.platform}`).join(', ') : 'no android/ios platforms found'}`);
   console.log(`\n${formatSummary(ctx.rows)}\n`);
-  const go = o.yes || await confirm(`Ship v${next} to ${APPS.length} apps (Sentry upload, hosting deploy, live check, commit/tag/push)?`, false);
+  // Ctrl-C at this prompt is a "No" (see ask()); the exit guard covers whatever else ends the run.
+  let go = o.yes;
+  if (!go) {
+    const ans = (await ask(`Ship v${next} to ${APPS.length} apps (Sentry upload, hosting deploy, live check, commit/tag/push)? [y/N] `, { onInterrupt: 'n' })).toLowerCase();
+    go = ans === 'y' || ans === 'yes';
+  }
   process.removeListener('SIGINT', onSigint);
   if (!go) {
     revertBuildPhase();
     abort('Aborted at go/no-go — version bump and ngsw stamps reverted.');
   }
+  process.removeListener('exit', onExit);
+  ctx.armed = false;
   if (o.yes) closePrompts();
 
   // ship phase: Task 4 (Sentry, deploy, verify, app-version, git, native) continues here.

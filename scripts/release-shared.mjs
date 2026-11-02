@@ -71,10 +71,17 @@ function initPipedPrompts() {
   rl.on('close', () => { stdinEnded = true; if (waiting) { const res = waiting; waiting = null; res(''); } });
 }
 
-export function ask(q) {
+// `onInterrupt` (optional, TTY only): the answer Ctrl-C gives. On a TTY readline owns stdin in raw
+// mode, so Ctrl-C arrives as a keystroke, not as a process SIGINT; without a 'SIGINT' listener on
+// the interface readline just closes it and the question never settles (the process then exits 0
+// with the event loop drained). Callers whose prompt guards uncommitted work pass the safe answer.
+export function ask(q, { onInterrupt } = {}) {
   if (!piped) {
     const once = createInterface({ input: process.stdin, output: process.stdout });
-    return new Promise((res) => once.question(q, (a) => { once.close(); res(a.trim()); }));
+    return new Promise((res) => {
+      if (onInterrupt !== undefined) once.on('SIGINT', () => { once.close(); process.stdout.write('\n'); res(onInterrupt); });
+      once.question(q, (a) => { once.close(); res(a.trim()); });
+    });
   }
   initPipedPrompts();
   process.stdout.write(q);
