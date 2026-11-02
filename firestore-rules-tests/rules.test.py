@@ -1737,5 +1737,60 @@ for label, expect, run in tracker_cases:
     passed += ok; failed += not ok
     print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
 
+# -------------------------------------------- cross-tenant takeover (2026-11-02) ---
+# tenantCreateOrDetach() used to be `tenantCreate() || selfDetach()`, which on an UPDATE checked
+# only the NEW tenants: admin B of t2 could PATCH a t1 doc to tenants=['t2'] and own it. Every
+# collection on that one-liner (plus activities and non-person avatars, which called
+# tenantCreate() for updates) gets the takeover case and a same-tenant control, so a DENY is
+# proven to come from the stored-tenant check and not from a role gate. B is admin, so every
+# role gate on these collections (content manager, privileged, treasurer, admin) passes.
+TAKEOVER_COLLECTIONS = [
+    "pages", "sections", "categories", "tags", "resources", "accounting-configs", "accounts",
+    "cost-centers", "boat-targets", "calendars", "calevents", "comments", "hearingQuizNodes",
+    "crosswordTopics", "i18nTenantOverride", "icons", "invitations", "locations", "memberships",
+    "ownerships", "personal-rels", "meetings", "reservations", "member-fees", "scs-memberfees",
+    "projects", "transfers", "websiteContent", "workrels", "ocr-rules", "bank-profiles",
+    "bank-rules", "assets", "asset-categories", "competition-levels", "formDefinitions", "periods",
+    "responsibilities", "vat-codes", "workflow-rules", "aliasSpaces", "activities",
+]
+takeover_cases = []
+for coll in TAKEOVER_COLLECTIONS:
+    seed(f"{coll}/tko1", {"tenants": ["t1"], "isArchived": False, "name": "x"})
+    # Control first: a successful takeover would otherwise make the control fail for the wrong reason.
+    takeover_cases += [
+        (f"userD(admin t1) PATCH {coll}/<t1 doc> name -> ALLOW (control)", True,
+         lambda c=coll: req("PATCH", f"{c}/tko1", token=D, data=body({"name": "y"}), mask=["name"])),
+        (f"userB(admin t2) PATCH {coll}/<t1 doc> tenants=[t2] -> DENY (takeover)", False,
+         lambda c=coll: req("PATCH", f"{c}/tko1", token=B, data=body({"tenants": ["t2"]}), mask=["tenants"])),
+    ]
+# Non-person avatars are ordinary tenant content (person avatars follow the person, by design).
+seed("avatars/t1.org.oTko", {"tenants": ["t1"], "isArchived": False, "storagePath": "tenant/t1/org/oTko/avatar/a.jpg"})
+seed("calevents/tkoJoin", {"tenants": ["t1"], "isArchived": False, "name": "x"})
+seed("calevents/tkoShared", {"tenants": ["t1", "t2"], "isArchived": False, "name": "shared"})
+seed("calevents/tkoShared2", {"tenants": ["t1", "t2"], "isArchived": False, "name": "shared"})
+takeover_cases += [
+    ("userD(admin t1) PATCH avatars/t1.org.oTko storagePath -> ALLOW (control)", True,
+     lambda: req("PATCH", "avatars/t1.org.oTko", token=D, data=body({"storagePath": "tenant/t1/org/oTko/avatar/b.jpg"}), mask=["storagePath"])),
+    ("userB(admin t2) PATCH avatars/t1.org.oTko tenants=[t2] -> DENY (takeover)", False,
+     lambda: req("PATCH", "avatars/t1.org.oTko", token=B, data=body({"tenants": ["t2"]}), mask=["tenants"])),
+    ("userB(admin t2) PATCH calevents/<t1 doc> tenants=[t1,t2] -> DENY (joins a foreign doc)", False,
+     lambda: req("PATCH", "calevents/tkoJoin", token=B, data=body({"tenants": ["t1", "t2"]}), mask=["tenants"])),
+    ("userB(admin t2) PATCH calevents/<t1 doc> name, tenants untouched -> DENY", False,
+     lambda: req("PATCH", "calevents/tkoJoin", token=B, data=body({"name": "hijack"}), mask=["name"])),
+    ("userD(admin t1) CREATE calevents tenants=[t1] -> ALLOW (create unchanged)", True,
+     lambda: req("POST", "calevents?documentId=tkoNew", token=D, data=body({"tenants": ["t1"], "isArchived": False, "name": "n"}))),
+    ("userB(admin t2) CREATE calevents tenants=[t1] -> DENY (create unchanged)", False,
+     lambda: req("POST", "calevents?documentId=tkoNew2", token=B, data=body({"tenants": ["t1"], "isArchived": False, "name": "n"}))),
+    ("userD(admin t1) detaches t1 AND edits name in one write -> DENY", False,
+     lambda: req("PATCH", "calevents/tkoShared2", token=D, data=body({"tenants": ["t2"], "name": "z"}), mask=["tenants", "name"])),
+    ("userD(admin t1) self-detach shared calevent tenants=[t2] -> ALLOW", True,
+     lambda: req("PATCH", "calevents/tkoShared", token=D, data=body({"tenants": ["t2"]}), mask=["tenants"])),
+]
+for label, expect, run in takeover_cases:
+    code = run()
+    ok = (code in (200, 201)) == expect
+    passed += ok; failed += not ok
+    print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
+
 print(f"\n{passed} passed, {failed} failed")
 raise SystemExit(1 if failed else 0)

@@ -182,11 +182,14 @@ service cloud.firestore {
       return userExists() && canWriteTenant(resource.data)
              && (canWriteTenant(request.resource.data) || selfDetach());
     }
-    // For the `allow create, update: if tenantCreateOrDetach()` one-liners: on a create,
-    // tenantCreate() decides and || short-circuits before selfDetach() dereferences the
-    // (null) resource; on an update it is tenantUpdate() minus the redundant recheck.
+    // For the `allow create, update: if tenantCreateOrDetach()` one-liners: a create
+    // (resource == null) is tenantCreate(), an update is the full tenantUpdate() — the
+    // caller's tenant must be on the STORED doc, not only on the new one. Until 2026-11-02
+    // this was `tenantCreate() || selfDetach()`, which on an update checked only
+    // request.resource.data, so an admin of t2 could PATCH a t1 doc to tenants: ['t2'] and
+    // take it over; the stored-tenant check is not redundant.
     function tenantCreateOrDetach() {
-      return tenantCreate() || selfDetach();
+      return (resource == null && tenantCreate()) || (resource != null && tenantUpdate());
     }
     function tenantDelete() {
       return userExists() && canWriteTenant(resource.data);
@@ -536,7 +539,7 @@ service cloud.firestore {
                      || (request.resource.data.scope == 'auth'
                           && request.resource.data.author.key == ''
                           && request.resource.data.tenants.size() == 1);
-      allow update: if tenantCreate();
+      allow update: if tenantUpdate();
       allow delete: if tenantDelete();
     }
     // addresses = PII vault (spec 1.19 Phase 4 lock): raw read only for the owner,
@@ -569,7 +572,7 @@ service cloud.firestore {
     // the whole stream, so every avatar in every app fell back to the default icon.
     // A plain `userExists()` read is the same exposure the person case already accepted:
     // the doc carries only a storagePath and the bytes are served unsigned from imgix.
-    match /avatars/{id}            { allow read: if userExists(); allow create, update: if (isPersonAvatar(id) ? userExists() : tenantCreate()) && canWriteAvatar(id); allow delete: if (isPersonAvatar(id) ? userExists() : tenantDelete()) && canWriteAvatar(id); }
+    match /avatars/{id}            { allow read: if userExists(); allow create, update: if (isPersonAvatar(id) ? userExists() : tenantCreateOrDetach()) && canWriteAvatar(id); allow delete: if (isPersonAvatar(id) ? userExists() : tenantDelete()) && canWriteAvatar(id); }
     // Bootseinteilung target counts — document id IS the tenantId (like app-config).
     match /boat-targets/{id}       { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     match /calendars/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
