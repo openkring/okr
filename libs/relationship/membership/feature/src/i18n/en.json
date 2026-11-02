@@ -699,7 +699,8 @@
     "update": {
       "done": "Regasoft is updated. Fields changed: {count}",
       "ignored": "Regasoft did not accept these fields: {fields}",
-      "error": "The Regasoft entry could not be updated. Please try again later."
+      "error": "The Regasoft entry could not be updated. Please try again later.",
+      "stale": "Please sync the list again first."
     },
     "create": {
       "blocked_srvnumber": "This member already has a SRV number but is not in the Regasoft list. Please reactivate the existing member instead of creating a new one.",

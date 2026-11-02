@@ -699,7 +699,8 @@
     "update": {
       "done": "Regasoft ist aktualisiert. Geänderte Felder: {count}",
       "ignored": "Regasoft hat diese Felder nicht übernommen: {fields}",
-      "error": "Der Regasoft-Eintrag konnte nicht aktualisiert werden. Bitte versuche es später noch einmal."
+      "error": "Der Regasoft-Eintrag konnte nicht aktualisiert werden. Bitte versuche es später noch einmal.",
+      "stale": "Bitte gleiche die Liste zuerst neu ab."
     },
     "create": {
       "blocked_srvnumber": "Dieses Mitglied hat bereits eine SRV-Nummer, ist aber nicht in der Regasoft-Liste. Bitte aktiviere das bestehende Mitglied wieder, statt es neu anzulegen.",

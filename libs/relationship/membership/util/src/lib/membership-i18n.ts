@@ -316,6 +316,7 @@ export const MEMBERSHIP_I18N_KEYS = {
   srv_update_done:                          PFX + 'srv.update.done',
   srv_update_ignored:                       PFX + 'srv.update.ignored',
   srv_update_error:                         PFX + 'srv.update.error',
+  srv_update_stale:                         PFX + 'srv.update.stale',
   srv_create_blocked_srvnumber:             PFX + 'srv.create.blocked_srvnumber',
   srv_create_blocked_duplicate:             PFX + 'srv.create.blocked_duplicate',
   srv_create_mainclub_warning:              PFX + 'srv.create.mainclub_warning',

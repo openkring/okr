@@ -36,6 +36,11 @@ export type MembershipSrvState = {
   regasoftItems: number;
   /** caseKeys already reported to the Sekretariat; null = not read yet (or the read failed). */
   reportedKeys: string[] | null;
+  /**
+   * true once `buildIndex` completed in this app session. An index loaded from localStorage may be
+   * days old; a change set from it could write stale data to Regasoft (spec 1.133 I6).
+   */
+  builtThisSession: boolean;
 };
 
 const initialState: MembershipSrvState = {
@@ -44,6 +49,7 @@ const initialState: MembershipSrvState = {
   selectedFilter: 'all',
   regasoftItems: 0,
   reportedKeys: null,
+  builtThisSession: false,
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -305,7 +311,7 @@ export const MembershipSrvStore = signalStore(
     setSearchTerm(searchTerm: string) { patchState(store, { searchTerm }); },
     setFilter(selectedFilter: string) { patchState(store, { selectedFilter }); },
     resetIndex() {
-      patchState(store, { index: [] });
+      patchState(store, { index: [], builtThisSession: false });
       try { localStorage.removeItem(storageKey(store.tenantId())); } catch { /* SSR */ }
     },
     loadIndexFromStorage() {
@@ -492,7 +498,7 @@ export const MembershipSrvStore = signalStore(
       }
 
       console.log(`MembershipSrvStore.buildIndex: index built with ${index.length} entries`);
-      patchState(store, { index });
+      patchState(store, { index, builtThisSession: true });
       saveIndex(store.tenantId(), index);
     },
 
@@ -704,10 +710,16 @@ export const MembershipSrvStore = signalStore(
 
     /**
      * Update a Regasoft member from our data (spec 1.133): change set → server preview →
-     * confirmation → update. Nothing is sent without the user's confirmation.
+     * confirmation → update. Nothing is sent without the user's confirmation, nor from an index
+     * that was not built in this app session.
      */
     async updateRegasoft(item: SrvIndex): Promise<void> {
       if (!item.rid) return;
+      // Only from an index built in this session: a cached one may hold outdated club data (I6).
+      if (!store.builtThisSession()) {
+        await showToast(store.toastController, store.i18n.srv_update_stale());
+        return;
+      }
       const changes = getSrvChanges(item, getTodayStr(DateFormat.StoreDate));
       if (Object.keys(changes).length === 0) {
         await showToast(store.toastController, store.i18n.srv_preview_nothing());

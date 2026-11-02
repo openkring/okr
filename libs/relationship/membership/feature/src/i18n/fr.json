@@ -699,7 +699,8 @@
     "update": {
       "done": "Regasoft est à jour. Champs modifiés : {count}",
       "ignored": "Regasoft n’a pas repris ces champs : {fields}",
-      "error": "L’entrée Regasoft n’a pas pu être mise à jour. Réessaie plus tard."
+      "error": "L’entrée Regasoft n’a pas pu être mise à jour. Réessaie plus tard.",
+      "stale": "Synchronise d’abord la liste à nouveau."
     },
     "create": {
       "blocked_srvnumber": "Ce membre a déjà un numéro SRV, mais ne figure pas dans la liste Regasoft. Réactive le membre existant au lieu d’en créer un nouveau.",
