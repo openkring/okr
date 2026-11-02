@@ -1,9 +1,23 @@
 import { describe, expect, it } from 'vitest';
 import { LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { Field } from '@okr/shared-models';
-import { fieldConfigValidations, fieldLabelLength } from './field-config.validations';
+import { canonicalNumber, fieldConfigValidations, fieldLabelLength } from './field-config.validations';
 
 const base = { id: 'f1', key: 'firstName', label: 'Vorname', required: false, width: 'full' as const, order: 0 };
+
+describe('canonicalNumber', () => {
+  it('reads a text written exactly as a number', () => {
+    expect(canonicalNumber('1.05')).toBe(1.05);
+    expect(canonicalNumber(' -3 ')).toBe(-3);
+    expect(canonicalNumber('0')).toBe(0);
+  });
+
+  it('leaves a number still being typed, or written another way, alone', () => {
+    for (const text of ['1.', '0.', '1.50', '1e3', '01', '-', '', '   ', 'abc', 'Infinity']) {
+      expect(canonicalNumber(text)).toBeUndefined();
+    }
+  });
+});
 
 describe('fieldConfigValidations', () => {
   it('accepts a complete text field', () => {

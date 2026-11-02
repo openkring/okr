@@ -1,4 +1,4 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output, untracked } from '@angular/core';
 import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonNote, IonRow } from '@ionic/angular';
 
@@ -12,7 +12,7 @@ import { coerceBoolean, coerceToPropertyType, fill, isPrefillable, isSsnField, p
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import {
-  canAllowOther, errorsUnder, fieldConfigValidations, fieldLabelLength, FormI18n, isDisplayField, propertyTypeLabel,
+  canAllowOther, canonicalNumber, errorsUnder, fieldConfigValidations, fieldLabelLength, FormI18n, isDisplayField, propertyTypeLabel,
 } from '@okr/forms-util';
 
 import { VisibilityRuleInput } from './visibility-rule.input';
@@ -296,15 +296,16 @@ export class FieldConfigForm {
     return fd.type === 'implicit' ? fd.defaultValue : undefined;
   });
   /**
-   * The text in the default input: the stored default when the field or its value type changes, otherwise what the
-   * author typed — a number default is stored as a number as soon as it is one, without rewriting «1.» under the cursor.
+   * The text in the default input, as the author typed it. Re-seeded from the stored default only when the field or
+   * its value type changes: the source is a string (compared by value) and the default is read untracked, so a write
+   * to `formData` never rewrites the text under the cursor («linkedSignal wipes forms» — «0.» must stay «0.»).
    */
-  protected readonly defaultText = linkedSignal<unknown, string>({
-    source: () => [this.formData().id, this.valueType()],
-    computation: () => {
+  protected readonly defaultText = linkedSignal<string, string>({
+    source: () => `${this.formData().id}|${this.valueType()}`,
+    computation: () => untracked(() => {
       const value = this.defaultValue();
       return value === undefined || value === null ? '' : String(value);
-    },
+    }),
   });
   protected readonly fromLink = computed(() => {
     const fd = this.formData();
@@ -401,9 +402,10 @@ export class FieldConfigForm {
   }
 
   /**
-   * The default of an unsichtbares Feld, by its type: a boolean from the switch, a number whenever the text is one
-   * (`coerceToPropertyType`; a text that is no number stays text, so the suite says it does not fit), and an empty
-   * text removes the default.
+   * The default of an unsichtbares Feld, by its type: a boolean from the switch; for a number, the number once the
+   * text is written exactly as one (`canonicalNumber`), nothing new while it is still being typed («1.», «1.50»), and
+   * the text itself when it is no number at all (the suite says it does not fit); a blank text removes the default.
+   * The input keeps showing what was typed either way.
    */
   protected onDefaultChange(value: string | boolean): void {
     const fd = this.formData();
@@ -412,8 +414,11 @@ export class FieldConfigForm {
     let next: BaseType | undefined;
     if (typeof value === 'boolean') next = value;
     else if (value.trim() === '') next = undefined;
-    else if (fd.valueType === 'number') next = coerceToPropertyType(value, 'number') ?? value;
-    else next = value;
+    else if (fd.valueType === 'number') {
+      const n = canonicalNumber(value);
+      if (n === undefined && coerceToPropertyType(value, 'number') !== undefined) return;   // still typing a number
+      next = n ?? value;
+    } else next = value;
     if (next === fd.defaultValue) return;
     const { defaultValue: _old, ...rest } = fd;
     this.dirty.emit(true);
