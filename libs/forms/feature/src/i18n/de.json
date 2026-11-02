@@ -39,14 +39,41 @@
     "category": "Kategorie *",
     "category_helper": "Aus dieser Liste wählt die ausfüllende Person einen Eintrag.",
     "is_indented": "Eingerückt",
-    "is_small": "Kleine Schrift"
+    "is_small": "Kleine Schrift",
+    "remove": "Löschen",
+    "remove_confirm": "Diese Frage steuert die Bedingungen von: {fields}. Wenn du sie löschst, werden diese Bedingungen entfernt.",
+    "as_property": "Als eigene Angabe speichern",
+    "as_property_helper": "Die Antwort wird als {type} gespeichert."
   },
   "fields": {
     "duplicate_key": "Zwei Fragen haben denselben Schlüssel. Bitte gib jeder Frage einen eigenen."
   },
   "rule": {
     "range_order": "Der erste Wert muss kleiner sein als der zweite.",
-    "invalid_age": "Gib ein Alter zwischen 0 und 120 ein."
+    "invalid_age": "Gib ein Alter zwischen 0 und 120 ein.",
+    "toggle": "Nur anzeigen, wenn …",
+    "toggle_block": "Diesen Abschnitt nur anzeigen, wenn …",
+    "block_hint": "Die Bedingung gilt für diese Trennlinie und alle Fragen bis zur nächsten Trennlinie.",
+    "no_candidates": "Davor gibt es noch keine Frage, auf die sich eine Bedingung beziehen kann.",
+    "match_all": "alle erfüllt",
+    "match_any": "mindestens eine erfüllt",
+    "field": "Frage",
+    "op": "Vergleich",
+    "value": "Wert",
+    "values": "Werte",
+    "from": "von",
+    "to": "bis",
+    "years": "Jahre",
+    "add": "+ Bedingung",
+    "remove": "Bedingung entfernen",
+    "unknown_field": "Diese Frage steht nicht mehr vor dieser Stelle. Wähle eine frühere Frage.",
+    "if": "wenn",
+    "and": "und",
+    "or": "oder",
+    "conditional": "bedingt",
+    "issue_later": "Bedingung zeigt auf eine spätere Frage",
+    "issue_missing": "Bedingung zeigt auf eine gelöschte Frage",
+    "issue_stale": "Bedingung nutzt eine Antwort, die es nicht mehr gibt"
   },
   "derived": {
     "key_is_field_key": "Dieser Name gehört schon zu einer Frage. Wähle einen anderen.",
@@ -135,5 +162,34 @@
     "confirm": "Ich habe das Passwort sicher gespeichert und verstehe, dass ein Verlust den unwiederbringlichen Verlust aller verschlüsselten Dateien bedeutet.",
     "saving": "Wird gespeichert…",
     "activate": "Aktivieren"
+  },
+  "op": {
+    "equals": "ist",
+    "notEquals": "ist nicht",
+    "in": "ist eine von",
+    "notIn": "ist keine von",
+    "isChecked": "ist angekreuzt",
+    "isNotChecked": "ist nicht angekreuzt",
+    "contains": "enthält",
+    "notContains": "enthält nicht",
+    "lt": "kleiner als",
+    "lte": "höchstens",
+    "gt": "grösser als",
+    "gte": "mindestens",
+    "between": "zwischen",
+    "ageGte": "Alter mindestens",
+    "ageLt": "Alter unter",
+    "isFilled": "ist ausgefüllt",
+    "isEmpty": "ist leer"
+  },
+  "property": {
+    "boolean": "ja/nein",
+    "number": "Zahl",
+    "text": "Text",
+    "group": "Eigene Angaben",
+    "template_text": "Eigene Angabe (Text)",
+    "template_boolean": "Eigene Angabe (ja/nein)",
+    "template_number": "Eigene Angabe (Zahl)",
+    "template_desc": "Eine Frage, deren Antwort als eigene Angabe gespeichert wird."
   }
 }

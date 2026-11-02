@@ -1,7 +1,9 @@
-import { Component, computed, output, signal } from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
 import { CdkDrag, CdkDropList } from '@angular/cdk/drag-drop';
 import { IonSearchbar } from '@ionic/angular';
-import { FieldType } from '@okr/shared-models';
+
+import { FormI18n, PROPERTY_FIELD_TEMPLATES } from '@okr/forms-util';
+
 import { FieldTypeCard, FieldTypeDef, FIELD_TYPE_DEFS } from './field-type-card';
 
 @Component({
@@ -11,6 +13,7 @@ import { FieldTypeCard, FieldTypeDef, FIELD_TYPE_DEFS } from './field-type-card'
   styles: [`
     :host { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
     .list { overflow-y: auto; flex: 1; }
+    .group-title { padding: 12px 8px 4px; font-size: 12px; font-weight: 600; color: var(--ion-color-medium); }
   `],
   template: `
     <ion-searchbar
@@ -18,27 +21,51 @@ import { FieldTypeCard, FieldTypeDef, FIELD_TYPE_DEFS } from './field-type-card'
       [debounce]="200"
       (ionInput)="searchTerm.set($any($event).detail.value ?? '')"
     />
-    <!-- Palette: a connected drop list whose items COPY into the canvas. Sorting is
-         disabled and nothing may be dropped back in, so cards stay put and are reusable. -->
-    <div class="list" cdkDropList [cdkDropListData]="visibleDefs()" [cdkDropListSortingDisabled]="true" [cdkDropListEnterPredicate]="preventDrop">
-      @for (def of visibleDefs(); track def.type) {
-        <okr-field-type-card cdkDrag [cdkDragData]="def" [def]="def" (add)="fieldAdded.emit($event.type)" />
+    <div class="list">
+      <!-- «Eigene Angaben» (spec §4.4): only for mappings that store typed properties -->
+      @if (propertyDefs().length > 0) {
+        <div class="group-title">{{ i18n()?.property_group() }}</div>
+        <div cdkDropList [cdkDropListData]="propertyDefs()" [cdkDropListSortingDisabled]="true" [cdkDropListEnterPredicate]="preventDrop">
+          @for (def of propertyDefs(); track def.type) {
+            <okr-field-type-card cdkDrag [cdkDragData]="def" [def]="def" (add)="fieldAdded.emit($event)" />
+          }
+        </div>
       }
+      <!-- Palette: a connected drop list whose items COPY into the canvas. Sorting is
+           disabled and nothing may be dropped back in, so cards stay put and are reusable. -->
+      <div cdkDropList [cdkDropListData]="visibleDefs()" [cdkDropListSortingDisabled]="true" [cdkDropListEnterPredicate]="preventDrop">
+        @for (def of visibleDefs(); track def.type) {
+          <okr-field-type-card cdkDrag [cdkDragData]="def" [def]="def" (add)="fieldAdded.emit($event)" />
+        }
+      </div>
     </div>
   `,
 })
 export class FieldTypeLibrary {
-  public readonly fieldAdded = output<FieldType>();
+  /** needed for the «Eigene Angaben» group only */
+  public readonly i18n = input<FormI18n>();
+  /** true when the form's mapping has a `propertiesField`: lists the «Eigene Angaben» templates */
+  public readonly showProperties = input(false);
+  public readonly fieldAdded = output<FieldTypeDef>();
 
   // the palette never accepts drops — items only copy out of it
   protected readonly preventDrop = (): boolean => false;
 
   protected readonly searchTerm = signal('');
-  protected readonly visibleDefs = computed(() => {
-    const term = this.searchTerm().toLowerCase();
-    if (!term) return FIELD_TYPE_DEFS;
-    return FIELD_TYPE_DEFS.filter(d =>
-      d.label.toLowerCase().includes(term) || d.description.toLowerCase().includes(term)
-    );
+  protected readonly visibleDefs = computed(() => this.filter(FIELD_TYPE_DEFS));
+
+  protected readonly propertyDefs = computed<FieldTypeDef[]>(() => {
+    const i18n = this.i18n();
+    if (!this.showProperties() || !i18n) return [];
+    const defs = PROPERTY_FIELD_TEMPLATES.map(t => ({
+      type: t.type, icon: t.icon, label: i18n[t.labelKey](), description: i18n.property_template_desc(), asProperty: true,
+    }));
+    return this.filter(defs);
   });
+
+  private filter(defs: FieldTypeDef[]): FieldTypeDef[] {
+    const term = this.searchTerm().toLowerCase();
+    if (!term) return defs;
+    return defs.filter(d => d.label.toLowerCase().includes(term) || d.description.toLowerCase().includes(term));
+  }
 }

@@ -7,3 +7,4 @@ export * from './lib/field-config.form';
 export * from './lib/field-config.modal';
 export * from './lib/form-definition.form';
 export * from './lib/form-definition-edit.modal';
+export * from './lib/visibility-rule.input';

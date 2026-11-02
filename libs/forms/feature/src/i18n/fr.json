@@ -39,14 +39,41 @@
     "category": "Catégorie *",
     "category_helper": "La personne qui remplit le formulaire choisit une entrée de cette liste.",
     "is_indented": "En retrait",
-    "is_small": "Petits caractères"
+    "is_small": "Petits caractères",
+    "remove": "Supprimer",
+    "remove_confirm": "Cette question pilote les conditions de : {fields}. Si tu la supprimes, ces conditions seront retirées.",
+    "as_property": "Enregistrer comme information propre",
+    "as_property_helper": "La réponse est enregistrée comme {type}."
   },
   "fields": {
     "duplicate_key": "Deux questions ont la même clé. Donne à chaque question la sienne."
   },
   "rule": {
     "range_order": "La première valeur doit être inférieure à la seconde.",
-    "invalid_age": "Saisis un âge entre 0 et 120."
+    "invalid_age": "Saisis un âge entre 0 et 120.",
+    "toggle": "Afficher seulement si …",
+    "toggle_block": "Afficher cette section seulement si …",
+    "block_hint": "La condition s'applique à ce séparateur et à toutes les questions jusqu'au séparateur suivant.",
+    "no_candidates": "Il n'y a pas encore de question précédente à laquelle une condition pourrait se rapporter.",
+    "match_all": "toutes remplies",
+    "match_any": "au moins une remplie",
+    "field": "Question",
+    "op": "Comparaison",
+    "value": "Valeur",
+    "values": "Valeurs",
+    "from": "de",
+    "to": "à",
+    "years": "Ans",
+    "add": "+ Condition",
+    "remove": "Retirer la condition",
+    "unknown_field": "Cette question ne se trouve plus avant cet endroit. Choisis une question précédente.",
+    "if": "si",
+    "and": "et",
+    "or": "ou",
+    "conditional": "conditionnel",
+    "issue_later": "La condition renvoie à une question suivante",
+    "issue_missing": "La condition renvoie à une question supprimée",
+    "issue_stale": "La condition utilise une réponse qui n'existe plus"
   },
   "derived": {
     "key_is_field_key": "Ce nom est déjà utilisé par une question. Choisis-en un autre.",
@@ -135,5 +162,34 @@
     "confirm": "J’ai enregistré le mot de passe en lieu sûr et je comprends que sa perte entraîne la perte irrécupérable de tous les fichiers chiffrés.",
     "saving": "Enregistrement…",
     "activate": "Activer"
+  },
+  "op": {
+    "equals": "est",
+    "notEquals": "n'est pas",
+    "in": "est l'une de",
+    "notIn": "n'est aucune de",
+    "isChecked": "est cochée",
+    "isNotChecked": "n'est pas cochée",
+    "contains": "contient",
+    "notContains": "ne contient pas",
+    "lt": "inférieur à",
+    "lte": "au plus",
+    "gt": "supérieur à",
+    "gte": "au moins",
+    "between": "entre",
+    "ageGte": "âge au moins",
+    "ageLt": "âge inférieur à",
+    "isFilled": "est remplie",
+    "isEmpty": "est vide"
+  },
+  "property": {
+    "boolean": "oui/non",
+    "number": "nombre",
+    "text": "texte",
+    "group": "Informations propres",
+    "template_text": "Information propre (texte)",
+    "template_boolean": "Information propre (oui/non)",
+    "template_number": "Information propre (nombre)",
+    "template_desc": "Une question dont la réponse est enregistrée comme information propre."
   }
 }

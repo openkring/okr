@@ -1,5 +1,8 @@
 import { Field, FieldType } from '@okr/shared-models';
 
+/** A field key becomes a property name of the submitted document: camelCase — a lower-case letter, then letters and digits (e.g. firstName). */
+export const FIELD_KEY_PATTERN = /^[a-z][a-zA-Z0-9]*$/;
+
 /** Element types that only display content — they hold no value and are never submitted. */
 export const DISPLAY_FIELD_TYPES: readonly FieldType[] = ['label', 'paragraph', 'divider'];
 

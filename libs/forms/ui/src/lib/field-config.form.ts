@@ -3,24 +3,29 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { LONG_NAME_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
-import { Field } from '@okr/shared-models';
+import { CategoryListModel, Field, FormMapping, VisibilityRule } from '@okr/shared-models';
 import {
   Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n,
   StringSelect, StringSelectI18n, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
-import { coerceBoolean } from '@okr/shared-util-core';
+import { coerceBoolean, fill, propertyTypeOf } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
-import { fieldConfigValidations, fieldLabelLength, FormI18n, isDisplayField } from '@okr/forms-util';
+import { errorsUnder, fieldConfigValidations, fieldLabelLength, FormI18n, isDisplayField, propertyTypeLabel } from '@okr/forms-util';
+
+import { VisibilityRuleInput } from './visibility-rule.input';
 
 const FIELD_WIDTHS: Field['width'][] = ['full', 'half', 'third'];
 
-/** Configures one form-builder field: label/text, key, width, required, category, paragraph style, help and placeholder. */
+/**
+ * Configures one form-builder field: label/text, key, width, required, category, paragraph style, help and placeholder,
+ * «Als eigene Angabe speichern» (on mappings with properties) and the «Nur anzeigen, wenn …» rule.
+ */
 @Component({
   selector: 'okr-field-config-form',
   standalone: true,
   imports: [
-    ErrorNote, TextInput, NotesInput, StringSelect, Checkbox,
+    ErrorNote, TextInput, NotesInput, StringSelect, Checkbox, VisibilityRuleInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -101,7 +106,24 @@ const FIELD_WIDTHS: Field['width'][] = ['full', 'half', 'third'];
                   </ion-col>
                 </ion-row>
               }
+              @if (propertyType()) {
+                <ion-row>
+                  <ion-col size="12">
+                    <okr-checkbox [i18n]="asPropertyI18n()" [checked]="asProperty()" (checkedChange)="onFieldChange('asProperty', $event)"
+                      [toggle]="true" justify="space-between" labelPlacement="start" [showHelper]="true" [readOnly]="isReadOnly()" />
+                  </ion-col>
+                </ion-row>
+              }
             </ion-grid>
+          </ion-card-content>
+        </ion-card>
+
+        <!-- «Nur anzeigen, wenn …» — collapsed until switched on -->
+        <ion-card>
+          <ion-card-content class="ion-no-padding">
+            <okr-visibility-rule-input [rule]="visibleIf()" (ruleChange)="onRuleChange($event)"
+              [candidates]="candidates()" [categories]="categories()" [i18n]="i18n()"
+              [isBlock]="formData().type === 'divider'" [errors]="ruleErrors()" [readOnly]="isReadOnly()" />
           </ion-card-content>
         </ion-card>
       </form>
@@ -119,6 +141,12 @@ export class FieldConfigForm {
   public formData = model.required<Field>();
   /** names of the selectable category lists (`categories` collection), for a 'category' field */
   public readonly categoryNames = input<string[]>([]);
+  /** the category lists, for the values of a condition on a category field */
+  public readonly categories = input<CategoryListModel[]>([]);
+  /** the fields a «Nur anzeigen, wenn …» condition may reference (the earlier input fields) */
+  public readonly candidates = input<Field[]>([]);
+  /** the form's collection mapping; only one with a `propertiesField` offers «Als eigene Angabe speichern» */
+  public readonly mapping = input<FormMapping | undefined>();
   public readonly readOnly = input(false);
   public readonly showForm = input(true);
 
@@ -138,6 +166,8 @@ export class FieldConfigForm {
   protected categoryNameErrors = computed(() => this.validationResult().getErrors('categoryName'));
   protected helpTextErrors = computed(() => this.validationResult().getErrors('helpText'));
   protected placeholderErrors = computed(() => this.validationResult().getErrors('placeholder'));
+  /** the rule's errors, keyed relative to it — the rule editor shows them under each of its controls */
+  protected ruleErrors = computed(() => errorsUnder(this.validationResult().getErrors(), 'visibleIf.'));
 
   constructor() {
     effect(() => this.valid.emit(this.fieldConfigForm().valid()));
@@ -164,6 +194,10 @@ export class FieldConfigForm {
   protected readonly required = computed(() => this.formData().required === true);
   protected readonly helpText = computed(() => this.formData().helpText ?? '');
   protected readonly placeholder = computed(() => this.formData().placeholder ?? '');
+  protected readonly visibleIf = computed(() => this.formData().visibleIf);
+  protected readonly asProperty = computed(() => this.formData().asProperty === true);
+  /** the property type the answer would be stored as; undefined hides the switch (no properties on this mapping, or a type that cannot be one) */
+  protected readonly propertyType = computed(() => (this.mapping()?.propertiesField ? propertyTypeOf(this.formData()) : undefined));
   protected readonly categoryName = computed(() => {
     const fd = this.formData();
     return fd.type === 'category' ? fd.categoryName ?? '' : '';
@@ -202,6 +236,23 @@ export class FieldConfigForm {
   protected readonly placeholderI18n = computed<TextInputI18n>(() => ({
     name: 'placeholder', label: this.i18n().field_placeholder(), placeholder: '', helper: '',
   }));
+
+  protected readonly asPropertyI18n = computed<CheckboxI18n>(() => {
+    const type = this.propertyType();
+    return {
+      name: 'asProperty', label: this.i18n().field_as_property(),
+      helper: type ? fill(this.i18n().field_as_property_helper(), { type: propertyTypeLabel(this.i18n(), type) }) : '',
+    };
+  });
+
+  /** A rule switched off removes the key — the stored field carries no empty `visibleIf`. */
+  protected onRuleChange(rule: VisibilityRule | undefined): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => {
+      const { visibleIf: _old, ...rest } = vm;
+      return (rule ? { ...rest, visibleIf: rule } : rest) as Field;
+    });
+  }
 
   protected onFieldChange(fieldName: string, fieldValue: string | boolean): void {
     this.dirty.emit(true);

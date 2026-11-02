@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { ConditionOp, Field, FieldType, VisibilityRule } from '@okr/shared-models';
+import { CategoryListModel, ConditionOp, Field, FieldType, VisibilityRule } from '@okr/shared-models';
 
-import { conditionOpsFor, controllingFieldCandidates, describeRule, findRuleIssues, removeReferencesTo } from './form-rules.util';
+import {
+  conditionalBlockMembers, conditionChoices, conditionOpsFor, conditionValueKind, controllingFieldCandidates, describeRule,
+  errorsUnder, fieldsReferencing, findRuleIssues, removeReferencesTo,
+} from './form-rules.util';
 
 function f(id: string, type: FieldType, order: number, extra: Record<string, unknown> = {}): Field {
   return { id, key: type === 'divider' ? '' : `key${id}`, label: `Label ${id}`, required: false, width: 'full', order, type, ...extra } as Field;
@@ -205,5 +208,74 @@ describe('removeReferencesTo', () => {
   it('cleans divider rules as well', () => {
     const fields = [f('a', 'text', 0), f('d', 'divider', 1, { visibleIf: { match: 'all', conditions: [{ fieldId: 'a', op: 'isFilled' }] } })];
     expect('visibleIf' in removeReferencesTo(fields, 'a')[1]).toBe(false);
+  });
+});
+
+describe('fieldsReferencing', () => {
+  it('lists the fields whose rule points at the given field, in form order', () => {
+    const rule = (id: string): VisibilityRule => ({ match: 'all', conditions: [{ fieldId: id, op: 'isFilled' }] });
+    const fields = [f('c', 'text', 2, { visibleIf: rule('a') }), f('a', 'text', 0), f('b', 'text', 1, { visibleIf: rule('a') }), f('d', 'text', 3, { visibleIf: rule('b') })];
+    expect(fieldsReferencing(fields, 'a').map(x => x.id)).toEqual(['b', 'c']);
+    expect(fieldsReferencing(fields, 'd')).toEqual([]);
+  });
+});
+
+describe('conditionalBlockMembers', () => {
+  it('collects the fields after a divider with a rule, up to the next divider', () => {
+    const rule: VisibilityRule = { match: 'all', conditions: [{ fieldId: 'a', op: 'isFilled' }] };
+    const fields = [
+      f('a', 'text', 0), f('d1', 'divider', 1, { visibleIf: rule }), f('b', 'text', 2), f('c', 'paragraph', 3),
+      f('d2', 'divider', 4), f('e', 'text', 5),
+    ];
+    expect([...conditionalBlockMembers(fields)]).toEqual(['b', 'c']);
+  });
+
+  it('ignores a divider whose rule has no condition', () => {
+    const fields = [f('d1', 'divider', 0, { visibleIf: { match: 'all', conditions: [] } }), f('b', 'text', 1)];
+    expect(conditionalBlockMembers(fields).size).toBe(0);
+  });
+});
+
+describe('conditionValueKind', () => {
+  const opts = { options: [{ label: 'A', value: 'a' }] };
+  it('needs no value for checked, filled and empty, or without a controller', () => {
+    expect(conditionValueKind(f('a', 'checkbox', 0), 'isChecked')).toBe('none');
+    expect(conditionValueKind(f('a', 'text', 0), 'isFilled')).toBe('none');
+    expect(conditionValueKind(undefined, 'equals')).toBe('none');
+    expect(conditionValueKind(f('a', 'text', 0), '')).toBe('none');
+  });
+  it('offers one or several options for choice fields', () => {
+    expect(conditionValueKind(f('a', 'radio', 0, opts), 'equals')).toBe('option');
+    expect(conditionValueKind(f('a', 'dropdown', 0, opts), 'in')).toBe('options');
+    expect(conditionValueKind(f('a', 'category', 0, { categoryName: 'x' }), 'notIn')).toBe('options');
+    expect(conditionValueKind(f('a', 'checkbox', 0, opts), 'contains')).toBe('option');
+  });
+  it('offers numbers, dates, ranges and years', () => {
+    expect(conditionValueKind(f('a', 'number', 0), 'gte')).toBe('number');
+    expect(conditionValueKind(f('a', 'rating', 0), 'between')).toBe('numberRange');
+    expect(conditionValueKind(f('a', 'date', 0), 'lt')).toBe('date');
+    expect(conditionValueKind(f('a', 'date', 0), 'between')).toBe('dateRange');
+    expect(conditionValueKind(f('a', 'date', 0), 'ageLt')).toBe('age');
+    expect(conditionValueKind(f('a', 'email', 0), 'equals')).toBe('text');
+  });
+});
+
+describe('conditionChoices', () => {
+  it('returns the options of a choice field', () => {
+    expect(conditionChoices(f('a', 'radio', 0, { options: [{ label: 'Ja', value: 'yes' }] }))).toEqual([{ label: 'Ja', value: 'yes' }]);
+    expect(conditionChoices(f('a', 'text', 0))).toEqual([]);
+    expect(conditionChoices(undefined)).toEqual([]);
+  });
+  it('returns the items of the category list of a category field', () => {
+    const list = { name: 'mcat', items: [{ name: 'active' }, { name: 'junior' }] } as unknown as CategoryListModel;
+    expect(conditionChoices(f('a', 'category', 0, { categoryName: 'mcat' }), [list]).map(o => o.value)).toEqual(['active', 'junior']);
+    expect(conditionChoices(f('a', 'category', 0, { categoryName: 'other' }), [list])).toEqual([]);
+  });
+});
+
+describe('errorsUnder', () => {
+  it('keeps the errors under the prefix, keyed relative to it', () => {
+    const errors = { label: ['required'], 'visibleIf.conditions': ['required'], 'visibleIf.conditions.0.op': ['required'] };
+    expect(errorsUnder(errors, 'visibleIf.')).toEqual({ conditions: ['required'], 'conditions.0.op': ['required'] });
   });
 });

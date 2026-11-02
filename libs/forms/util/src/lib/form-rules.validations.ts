@@ -4,8 +4,7 @@ import { DerivedValue, Field, FieldCondition, VisibilityRule } from '@okr/shared
 import { stringValidations } from '@okr/shared-util-core';
 import { NAME_LENGTH } from '@okr/shared-constants';
 
-import { FIELD_KEY_PATTERN } from './field-config.validations';
-import { isInputField } from './field-kind';
+import { FIELD_KEY_PATTERN, isInputField } from './field-kind';
 
 /** Operators that compare against a single value. */
 const SINGLE_VALUE_OPS = ['equals', 'notEquals', 'lt', 'lte', 'gt', 'gte'];

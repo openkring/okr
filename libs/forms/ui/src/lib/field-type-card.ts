@@ -8,6 +8,8 @@ export interface FieldTypeDef {
   label: string;
   icon: string;
   description: string;
+  /** an «Eigene Angaben» template: the new field starts with `asProperty` on */
+  asProperty?: boolean;
 }
 
 export const FIELD_TYPE_DEFS: FieldTypeDef[] = [

@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { getPrefillFields } from './form-field-templates';
+import { propertyTypeOf } from '@okr/shared-util-core';
+import { Field } from '@okr/shared-models';
+import { getPrefillFields, PROPERTY_FIELD_TEMPLATES } from './form-field-templates';
 
 describe('getPrefillFields', () => {
   it('returns the curated field set for applications.default', () => {
@@ -57,5 +59,16 @@ describe('getPrefillFields', () => {
     const afterFirestoreClone = structuredClone(afterModalClone);
     expect(afterFirestoreClone.fields).toHaveLength(12);
     expect(afterFirestoreClone.fields[0].key).toBe('firstName');
+  });
+});
+
+describe('PROPERTY_FIELD_TEMPLATES', () => {
+  it('offers a text, a yes/no and a number question', () => {
+    const types = PROPERTY_FIELD_TEMPLATES.map(t => ({ type: t.type, property: propertyTypeOf({ type: t.type } as Field) }));
+    expect(types).toEqual([
+      { type: 'text', property: 'text' },
+      { type: 'checkbox', property: 'boolean' },
+      { type: 'number', property: 'number' },
+    ]);
   });
 });

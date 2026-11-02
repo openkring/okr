@@ -1,5 +1,7 @@
 import { Field, FieldOption, FieldType } from '@okr/shared-models';
 
+import type { FormI18n } from './forms-i18n';
+
 /**
  * Compact description of a prefill field. The `key` MUST match the target
  * model's property name so submissions map back onto the collection document.
@@ -84,3 +86,23 @@ export function getPrefillFields(mappingKey: string): Field[] {
   const templates = FORM_FIELD_TEMPLATES[mappingKey] ?? [];
   return templates.map((template, order) => buildField(template, order));
 }
+
+/** A field of the builder library's «Eigene Angaben» group: it starts with `asProperty` on (spec §4.4). */
+export interface PropertyFieldTemplate {
+  /** a field type that can be a property: text → text, checkbox (single) → boolean, number → number */
+  type: Extract<FieldType, 'text' | 'checkbox' | 'number'>;
+  icon: string;
+  /** the FormI18n key of the template's name, which also becomes the new field's label */
+  labelKey: Extract<keyof FormI18n, `property_template_${string}`>;
+}
+
+/**
+ * The «Eigene Angaben» group of the builder's field library: a text, a yes/no and a number
+ * question that store their answer in the target's typed `properties` list. Offered only when
+ * the form's mapping has a `propertiesField`.
+ */
+export const PROPERTY_FIELD_TEMPLATES: PropertyFieldTemplate[] = [
+  { type: 'text',     icon: 'text',            labelKey: 'property_template_text' },
+  { type: 'checkbox', icon: 'checkbox',        labelKey: 'property_template_boolean' },
+  { type: 'number',   icon: 'calendar-number', labelKey: 'property_template_number' },
+];

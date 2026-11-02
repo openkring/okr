@@ -39,14 +39,41 @@
     "category": "Categoría *",
     "category_helper": "Quien rellena el formulario elige una entrada de esta lista.",
     "is_indented": "Con sangría",
-    "is_small": "Letra pequeña"
+    "is_small": "Letra pequeña",
+    "remove": "Eliminar",
+    "remove_confirm": "Esta pregunta controla las condiciones de: {fields}. Si la eliminas, se quitarán estas condiciones.",
+    "as_property": "Guardar como dato propio",
+    "as_property_helper": "La respuesta se guarda como {type}."
   },
   "fields": {
     "duplicate_key": "Dos preguntas tienen la misma clave. Dale a cada pregunta la suya."
   },
   "rule": {
     "range_order": "El primer valor debe ser menor que el segundo.",
-    "invalid_age": "Introduce una edad entre 0 y 120."
+    "invalid_age": "Introduce una edad entre 0 y 120.",
+    "toggle": "Mostrar solo si …",
+    "toggle_block": "Mostrar esta sección solo si …",
+    "block_hint": "La condición se aplica a este separador y a todas las preguntas hasta el siguiente separador.",
+    "no_candidates": "Todavía no hay ninguna pregunta anterior a la que pueda referirse una condición.",
+    "match_all": "se cumplen todas",
+    "match_any": "se cumple al menos una",
+    "field": "Pregunta",
+    "op": "Comparación",
+    "value": "Valor",
+    "values": "Valores",
+    "from": "de",
+    "to": "a",
+    "years": "Años",
+    "add": "+ Condición",
+    "remove": "Quitar condición",
+    "unknown_field": "Esta pregunta ya no está antes de este punto. Elige una pregunta anterior.",
+    "if": "si",
+    "and": "y",
+    "or": "o",
+    "conditional": "condicional",
+    "issue_later": "La condición apunta a una pregunta posterior",
+    "issue_missing": "La condición apunta a una pregunta eliminada",
+    "issue_stale": "La condición usa una respuesta que ya no existe"
   },
   "derived": {
     "key_is_field_key": "Este nombre ya pertenece a una pregunta. Elige otro.",
@@ -135,5 +162,34 @@
     "confirm": "He guardado la contraseña de forma segura y entiendo que perderla significa la pérdida irrecuperable de todos los archivos cifrados.",
     "saving": "Guardando…",
     "activate": "Activar"
+  },
+  "op": {
+    "equals": "es",
+    "notEquals": "no es",
+    "in": "es una de",
+    "notIn": "no es ninguna de",
+    "isChecked": "está marcada",
+    "isNotChecked": "no está marcada",
+    "contains": "contiene",
+    "notContains": "no contiene",
+    "lt": "menor que",
+    "lte": "como máximo",
+    "gt": "mayor que",
+    "gte": "como mínimo",
+    "between": "entre",
+    "ageGte": "edad como mínimo",
+    "ageLt": "edad menor de",
+    "isFilled": "está rellenada",
+    "isEmpty": "está vacía"
+  },
+  "property": {
+    "boolean": "sí/no",
+    "number": "número",
+    "text": "texto",
+    "group": "Datos propios",
+    "template_text": "Dato propio (texto)",
+    "template_boolean": "Dato propio (sí/no)",
+    "template_number": "Dato propio (número)",
+    "template_desc": "Una pregunta cuya respuesta se guarda como dato propio."
   }
 }

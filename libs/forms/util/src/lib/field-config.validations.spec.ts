@@ -44,4 +44,23 @@ describe('fieldConfigValidations', () => {
     expect(fieldLabelLength({ type: 'label' })).toBeGreaterThan(fieldLabelLength({ type: 'text' }));
     expect(fieldLabelLength({ type: 'paragraph' })).toBe(fieldLabelLength({ type: 'label' }));
   });
+
+  it('validates a «Nur anzeigen, wenn …» rule under visibleIf', () => {
+    const ok = { ...base, type: 'text', visibleIf: { match: 'all', conditions: [{ fieldId: 'f0', op: 'equals', value: 'x' }] } } as Field;
+    expect(fieldConfigValidations(ok).isValid()).toBe(true);
+
+    const noValue = { ...base, type: 'text', visibleIf: { match: 'all', conditions: [{ fieldId: 'f0', op: 'equals' }] } } as Field;
+    expect(fieldConfigValidations(noValue).hasErrors('visibleIf.conditions.0.value')).toBe(true);
+
+    const noField = { ...base, type: 'divider', key: '', label: '', visibleIf: { match: 'any', conditions: [{ fieldId: '', op: 'isFilled' }] } } as Field;
+    expect(fieldConfigValidations(noField).hasErrors('visibleIf.conditions.0.fieldId')).toBe(true);
+
+    const empty = { ...base, type: 'text', visibleIf: { match: 'all', conditions: [] } } as unknown as Field;
+    expect(fieldConfigValidations(empty).hasErrors('visibleIf.conditions')).toBe(true);
+  });
+
+  it('checks no rule when none is set', () => {
+    const result = fieldConfigValidations({ ...base, type: 'text' } as Field);
+    expect(Object.keys(result.getErrors()).some(k => k.startsWith('visibleIf'))).toBe(false);
+  });
 });

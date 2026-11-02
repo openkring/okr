@@ -39,14 +39,41 @@
     "category": "Category *",
     "category_helper": "The person filling in the form picks one entry from this list.",
     "is_indented": "Indented",
-    "is_small": "Small print"
+    "is_small": "Small print",
+    "remove": "Delete",
+    "remove_confirm": "This question controls the conditions of: {fields}. If you delete it, these conditions are removed.",
+    "as_property": "Save as a custom detail",
+    "as_property_helper": "The answer is saved as {type}."
   },
   "fields": {
     "duplicate_key": "Two questions have the same key. Please give each question its own."
   },
   "rule": {
     "range_order": "The first value must be smaller than the second.",
-    "invalid_age": "Enter an age between 0 and 120."
+    "invalid_age": "Enter an age between 0 and 120.",
+    "toggle": "Only show if …",
+    "toggle_block": "Only show this section if …",
+    "block_hint": "The condition applies to this divider and every question up to the next divider.",
+    "no_candidates": "There is no earlier question yet that a condition could refer to.",
+    "match_all": "all met",
+    "match_any": "at least one met",
+    "field": "Question",
+    "op": "Comparison",
+    "value": "Value",
+    "values": "Values",
+    "from": "from",
+    "to": "to",
+    "years": "Years",
+    "add": "+ Condition",
+    "remove": "Remove condition",
+    "unknown_field": "This question no longer comes before this point. Choose an earlier question.",
+    "if": "if",
+    "and": "and",
+    "or": "or",
+    "conditional": "conditional",
+    "issue_later": "Condition points to a later question",
+    "issue_missing": "Condition points to a deleted question",
+    "issue_stale": "Condition uses an answer that no longer exists"
   },
   "derived": {
     "key_is_field_key": "This name already belongs to a question. Choose a different one.",
@@ -135,5 +162,34 @@
     "confirm": "I have stored the password safely and understand that losing it means the irrecoverable loss of all encrypted files.",
     "saving": "Saving…",
     "activate": "Activate"
+  },
+  "op": {
+    "equals": "is",
+    "notEquals": "is not",
+    "in": "is one of",
+    "notIn": "is none of",
+    "isChecked": "is checked",
+    "isNotChecked": "is not checked",
+    "contains": "contains",
+    "notContains": "does not contain",
+    "lt": "less than",
+    "lte": "at most",
+    "gt": "greater than",
+    "gte": "at least",
+    "between": "between",
+    "ageGte": "age at least",
+    "ageLt": "age under",
+    "isFilled": "is filled in",
+    "isEmpty": "is empty"
+  },
+  "property": {
+    "boolean": "yes/no",
+    "number": "number",
+    "text": "text",
+    "group": "Custom details",
+    "template_text": "Custom detail (text)",
+    "template_boolean": "Custom detail (yes/no)",
+    "template_number": "Custom detail (number)",
+    "template_desc": "A question whose answer is saved as a custom detail."
   }
 }

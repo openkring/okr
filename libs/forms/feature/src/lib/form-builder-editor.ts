@@ -1,27 +1,35 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { CdkDragDrop, CdkDropList, CdkDropListGroup, CdkDrag, moveItemInArray } from '@angular/cdk/drag-drop';
-import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonNote, IonSegment, IonSegmentButton, IonToolbar, ModalController } from '@ionic/angular';
+import {
+  AlertController, IonButton, IonChip, IonContent, IonIcon, IonItem, IonLabel, IonNote, IonSegment, IonSegmentButton, IonToolbar, ModalController,
+} from '@ionic/angular';
 
 import { AppStore } from '@okr/shared-feature';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { fill, safeStructuredClone } from '@okr/shared-util-core';
-import { Field, FieldType, FormDefinitionModel } from '@okr/shared-models';
+import { Field, FormDefinitionModel, FormMapping } from '@okr/shared-models';
 
 import { FormDefinitionService } from '@okr/forms-data-access';
-import { FORM_I18N_KEYS, FormI18n } from '@okr/forms-util';
+import {
+  conditionalBlockMembers, conditionOpLabels, describeRule, fieldsReferencing, findRuleIssues, FORM_I18N_KEYS, FormI18n,
+  getFormMapping, removeReferencesTo, ruleConnectors, RuleIssue,
+} from '@okr/forms-util';
 import { I18nService } from '@okr/shared-i18n';
-import { FIELD_TYPE_DEFS, FieldConfigModal, FieldTypeDef, FieldTypeLibrary, FormRenderer } from '@okr/forms-ui';
-import { dismissOverlay } from '@okr/shared-util-angular';
+import { FieldConfigModal, FieldTypeDef, FieldTypeLibrary, FormRenderer } from '@okr/forms-ui';
+import { confirm, dismissOverlay } from '@okr/shared-util-angular';
 
-function newField(type: FieldType, order: number): Field {
+/** A new field from a library card; an «Eigene Angaben» card starts it with `asProperty` on. */
+function newField(def: FieldTypeDef, order: number): Field {
+  const type = def.type;
   const base = {
     id: crypto.randomUUID(),
     key: `field${order}`,
-    label: FIELD_TYPE_DEFS.find((d: FieldTypeDef) => d.type === type)?.label ?? type,
+    label: def.label ?? type,
     required: false,
     width: 'full' as const,
     order,
+    ...(def.asProperty ? { asProperty: true } : {}),
   };
   switch (type) {
     case 'dropdown': case 'radio': return { ...base, type, options: [] };
@@ -39,7 +47,7 @@ function newField(type: FieldType, order: number): Field {
   imports: [
     SvgIconPipe, Header, ChangeConfirmation,
     CdkDropList, CdkDropListGroup, CdkDrag, FieldTypeLibrary, FormRenderer,
-    IonToolbar, IonButton, IonContent, IonItem, IonLabel, IonIcon, IonNote,
+    IonToolbar, IonButton, IonContent, IonItem, IonLabel, IonIcon, IonNote, IonChip,
     IonSegment, IonSegmentButton,
   ],
   styles: [`
@@ -49,6 +57,10 @@ function newField(type: FieldType, order: number): Field {
     .canvas-drop   { min-height: 200px; border: 2px dashed var(--ion-color-light-shade); border-radius: 8px; padding: 8px; }
     .canvas-empty  { display: flex; align-items: center; justify-content: center; height: 120px; color: var(--ion-color-medium); }
     .field-row     { display: flex; align-items: center; background: var(--ion-item-background); border-radius: 6px; margin: 4px 0; cursor: grab; }
+    .field-row.in-block { margin-left: 24px; border-left: 3px solid var(--ion-color-light-shade); }
+    .rule-line     { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+    .rule-line ion-chip { margin: 2px 0; height: 22px; font-size: 11px; }
+    .rule-text     { white-space: normal; }
     .cdk-drag-preview    { opacity: 0.8; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
     .cdk-drag-placeholder { opacity: 0.3; }
     .cdk-drop-list-dragging .field-row:not(.cdk-drag-placeholder) { transition: transform 250ms cubic-bezier(0,0,0.2,1); }
@@ -65,7 +77,7 @@ function newField(type: FieldType, order: number): Field {
 
         <!-- left: field-type library -->
         <div class="library-panel">
-          <okr-field-type-library (fieldAdded)="addField($event)" />
+          <okr-field-type-library [i18n]="i18n" [showProperties]="hasProperties()" (fieldAdded)="addField($event)" />
         </div>
 
         <!-- right: canvas -->
@@ -89,12 +101,28 @@ function newField(type: FieldType, order: number): Field {
                 <div class="canvas-empty">{{ i18n.canvas_empty() }}</div>
               }
               @for (field of fields(); track field.id) {
-                <div class="field-row" cdkDrag [cdkDragData]="field">
+                <div class="field-row" [class.in-block]="blockMembers().has(field.id)" cdkDrag [cdkDragData]="field">
                   <ion-item lines="none" style="flex:1">
                     <ion-icon src="{{ 'reorder-four' | svgIcon }}" slot="start" cdkDragHandle />
                     <ion-label>
                       <strong>{{ field.label }}</strong>
                       <p>{{ field.key }} · {{ field.type }} · {{ field.width }}</p>
+                      @if (ruleTexts().get(field.id); as ruleText) {
+                        <div class="rule-line">
+                          <ion-chip color="tertiary" [outline]="true">{{ i18n.rule_conditional() }}</ion-chip>
+                          <span class="rule-text">{{ ruleText }}</span>
+                        </div>
+                      }
+                      @if (issuesByField().get(field.id); as issues) {
+                        <div class="rule-line">
+                          @for (issue of issues; track issue) {
+                            <ion-chip color="warning">
+                              <ion-icon src="{{ 'warning' | svgIcon }}" />
+                              <ion-label>{{ issueLabel(issue) }}</ion-label>
+                            </ion-chip>
+                          }
+                        </div>
+                      }
                     </ion-label>
                     @if (field.required) {
                       <ion-icon src="{{ 'alert-circle' | svgIcon }}" slot="end" color="danger" />
@@ -139,6 +167,7 @@ function newField(type: FieldType, order: number): Field {
 })
 export class FormBuilderEditor {
   private readonly modalController = inject(ModalController);
+  private readonly alertController = inject(AlertController);
   private readonly formDefinitionService = inject(FormDefinitionService);
   protected readonly appStore = inject(AppStore);
 
@@ -169,6 +198,39 @@ export class FormBuilderEditor {
   protected readonly sourceMessage = signal('');
   protected readonly sourceError = signal(false);
 
+  /** The form's collection mapping (undefined for a URL target); one with a `propertiesField` offers «Eigene Angaben». */
+  protected readonly mapping = computed<FormMapping | undefined>(() => {
+    const target = this.formData().target;
+    return target?.kind === 'collection' ? getFormMapping(target.mappingKey) : undefined;
+  });
+  protected readonly hasProperties = computed(() => !!this.mapping()?.propertiesField);
+
+  /** The «wenn … » line under every field with a rule. */
+  protected readonly ruleTexts = computed(() => {
+    const fields = this.fields();
+    const opLabels = conditionOpLabels(this.i18n);
+    const connectors = ruleConnectors(this.i18n);
+    const texts = new Map<string, string>();
+    for (const field of fields) {
+      if (!field.visibleIf) continue;
+      const text = describeRule(field.visibleIf, fields, opLabels, connectors);
+      if (text) texts.set(field.id, text);
+    }
+    return texts;
+  });
+
+  /** The rule problems per owning field (a controller deleted, moved below, or an answer that no longer exists). */
+  protected readonly issuesByField = computed(() => {
+    const byField = new Map<string, RuleIssue['reason'][]>();
+    for (const issue of findRuleIssues(this.fields())) {
+      byField.set(issue.fieldId, [...(byField.get(issue.fieldId) ?? []), issue.reason]);
+    }
+    return byField;
+  });
+
+  /** Fields inside a divider block with a rule — indented on the canvas. */
+  protected readonly blockMembers = computed(() => conditionalBlockMembers(this.fields()));
+
   /** True once the field set differs from what was loaded — drives the save/discard banner. */
   protected isDirty = computed(() => JSON.stringify(this.previewDefinition().fields) !== this.originalFieldsJson());
 
@@ -180,13 +242,32 @@ export class FormBuilderEditor {
     this.originalFieldsJson.set(JSON.stringify(sortedFields));
   }
 
-  protected addField(type: FieldType): void {
-    const field = newField(type, this.fields().length);
+  protected addField(def: FieldTypeDef): void {
+    const field = newField(def, this.fields().length);
     this.fields.update(fs => [...fs, field]);
   }
 
-  protected removeField(id: string): void {
-    this.fields.update(fs => fs.filter(f => f.id !== id).map((f, i) => ({ ...f, order: i })));
+  /**
+   * Deletes a field. When other fields' rules reference it, asks first (naming them) and then drops
+   * those conditions — a rule left without conditions is removed.
+   */
+  protected async removeField(id: string): Promise<void> {
+    const dependents = fieldsReferencing(this.fields(), id);
+    if (dependents.length > 0) {
+      const names = dependents.map(f => f.label || f.key).join(', ');
+      const ok = await confirm(this.alertController, fill(this.i18n.field_remove_confirm(), { fields: names }),
+        this.i18n.field_remove(), this.i18n.cancel(), true);
+      if (!ok) return;
+    }
+    this.fields.update(fs => removeReferencesTo(fs.filter(f => f.id !== id), id).map((f, i) => ({ ...f, order: i })));
+  }
+
+  protected issueLabel(reason: RuleIssue['reason']): string {
+    switch (reason) {
+      case 'later': return this.i18n.rule_issue_later();
+      case 'missing': return this.i18n.rule_issue_missing();
+      default: return this.i18n.rule_issue_stale();
+    }
   }
 
   protected async editField(field: Field): Promise<void> {
@@ -198,6 +279,9 @@ export class FormBuilderEditor {
         field,
         i18n: this.i18n,
         categoryNames: this.appStore.allCategories().map(c => c.name),
+        categories: this.appStore.allCategories(),
+        fields: this.fields(),
+        mapping: this.mapping(),
       },
     });
     await modal.present();
@@ -215,7 +299,7 @@ export class FormBuilderEditor {
     } else {
       // dropped from the palette — COPY a new field, never mutate the palette
       const def = event.item.data as FieldTypeDef;
-      arr.splice(event.currentIndex, 0, newField(def.type, event.currentIndex));
+      arr.splice(event.currentIndex, 0, newField(def, event.currentIndex));
     }
     this.fields.set(arr.map((f, i) => ({ ...f, order: i })));
   }

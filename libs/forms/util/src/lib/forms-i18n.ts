@@ -1,5 +1,9 @@
 import { Signal } from '@angular/core';
 
+import { ConditionOp, PropertyType } from '@okr/shared-models';
+
+import type { RuleConnectors } from './form-rules.util';
+
 const PFX = '@forms/feature.';
 
 // ---------------------------------------------------------------------------
@@ -99,6 +103,64 @@ export const FORM_I18N_KEYS = {
   field_width_third:          PFX + 'field.width_third',
   field_placeholder:          PFX + 'field.placeholder',
   field_apply:                PFX + 'field.apply',
+  field_remove:               PFX + 'field.remove',
+  field_remove_confirm:       PFX + 'field.remove_confirm',
+  field_as_property:          PFX + 'field.as_property',
+  field_as_property_helper:   PFX + 'field.as_property_helper',
+
+  // «Nur anzeigen, wenn …» rule editor and canvas (1.125)
+  rule_toggle:                PFX + 'rule.toggle',
+  rule_toggle_block:          PFX + 'rule.toggle_block',
+  rule_block_hint:            PFX + 'rule.block_hint',
+  rule_no_candidates:         PFX + 'rule.no_candidates',
+  rule_match_all:             PFX + 'rule.match_all',
+  rule_match_any:             PFX + 'rule.match_any',
+  rule_field:                 PFX + 'rule.field',
+  rule_op:                    PFX + 'rule.op',
+  rule_value:                 PFX + 'rule.value',
+  rule_values:                PFX + 'rule.values',
+  rule_from:                  PFX + 'rule.from',
+  rule_to:                    PFX + 'rule.to',
+  rule_years:                 PFX + 'rule.years',
+  rule_add:                   PFX + 'rule.add',
+  rule_remove:                PFX + 'rule.remove',
+  rule_unknown_field:         PFX + 'rule.unknown_field',
+  rule_if:                    PFX + 'rule.if',
+  rule_and:                   PFX + 'rule.and',
+  rule_or:                    PFX + 'rule.or',
+  rule_conditional:           PFX + 'rule.conditional',
+  rule_issue_later:           PFX + 'rule.issue_later',
+  rule_issue_missing:         PFX + 'rule.issue_missing',
+  rule_issue_stale:           PFX + 'rule.issue_stale',
+
+  // condition operators (spec §5)
+  op_equals:                  PFX + 'op.equals',
+  op_notEquals:               PFX + 'op.notEquals',
+  op_in:                      PFX + 'op.in',
+  op_notIn:                   PFX + 'op.notIn',
+  op_isChecked:               PFX + 'op.isChecked',
+  op_isNotChecked:            PFX + 'op.isNotChecked',
+  op_contains:                PFX + 'op.contains',
+  op_notContains:             PFX + 'op.notContains',
+  op_lt:                      PFX + 'op.lt',
+  op_lte:                     PFX + 'op.lte',
+  op_gt:                      PFX + 'op.gt',
+  op_gte:                     PFX + 'op.gte',
+  op_between:                 PFX + 'op.between',
+  op_ageGte:                  PFX + 'op.ageGte',
+  op_ageLt:                   PFX + 'op.ageLt',
+  op_isFilled:                PFX + 'op.isFilled',
+  op_isEmpty:                 PFX + 'op.isEmpty',
+
+  // typed properties (spec §4.4)
+  property_boolean:           PFX + 'property.boolean',
+  property_number:            PFX + 'property.number',
+  property_text:              PFX + 'property.text',
+  property_group:             PFX + 'property.group',
+  property_template_text:     PFX + 'property.template_text',
+  property_template_boolean:  PFX + 'property.template_boolean',
+  property_template_number:   PFX + 'property.template_number',
+  property_template_desc:     PFX + 'property.template_desc',
 
   // decrypt-files modal
   decrypt_title:              PFX + 'decrypt.title',
@@ -128,3 +190,23 @@ export const FORM_I18N_KEYS = {
 } satisfies Record<string, string>;
 
 export type FormI18n = { [K in keyof typeof FORM_I18N_KEYS]: Signal<string> };
+
+const CONDITION_OPS: ConditionOp[] = [
+  'equals', 'notEquals', 'in', 'notIn', 'isChecked', 'isNotChecked', 'contains', 'notContains',
+  'lt', 'lte', 'gt', 'gte', 'between', 'ageGte', 'ageLt', 'isFilled', 'isEmpty',
+];
+
+/** The translated operator names («ist», «ist eine von», «Alter mindestens» …), for the rule editor and `describeRule`. */
+export function conditionOpLabels(i18n: FormI18n): Record<ConditionOp, string> {
+  return Object.fromEntries(CONDITION_OPS.map(op => [op, i18n[`op_${op}`]()])) as Record<ConditionOp, string>;
+}
+
+/** The translated «wenn / und / oder» of `describeRule`. */
+export function ruleConnectors(i18n: FormI18n): RuleConnectors {
+  return { if: i18n.rule_if(), and: i18n.rule_and(), or: i18n.rule_or() };
+}
+
+/** The translated name of a property type («ja/nein», «Zahl», «Text»). */
+export function propertyTypeLabel(i18n: FormI18n, type: PropertyType): string {
+  return type === 'boolean' ? i18n.property_boolean() : type === 'number' ? i18n.property_number() : i18n.property_text();
+}

@@ -1,11 +1,11 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular';
 
-import { Field } from '@okr/shared-models';
+import { CategoryListModel, Field, FormMapping } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { safeStructuredClone } from '@okr/shared-util-core';
 import { dismissOverlay } from '@okr/shared-util-angular';
-import { FormI18n } from '@okr/forms-util';
+import { controllingFieldCandidates, FormI18n } from '@okr/forms-util';
 
 import { FieldConfigForm } from './field-config.form';
 
@@ -25,6 +25,9 @@ import { FieldConfigForm } from './field-config.form';
         (formDataChange)="formData.set($event)"
         [i18n]="i18n()"
         [categoryNames]="categoryNames()"
+        [categories]="categories()"
+        [candidates]="candidates()"
+        [mapping]="mapping()"
         [readOnly]="false"
         [showForm]="showForm()"
         (dirty)="formDirty.set($event)"
@@ -40,6 +43,11 @@ export class FieldConfigModal {
   public readonly field = input.required<Field>();
   public readonly i18n = input.required<FormI18n>();
   public readonly categoryNames = input<string[]>([]);
+  public readonly categories = input<CategoryListModel[]>([]);
+  /** all fields of the form — a rule may reference the input fields before this one */
+  public readonly fields = input<Field[]>([]);
+  /** the form's collection mapping (undefined for a URL target) */
+  public readonly mapping = input<FormMapping | undefined>();
 
   // signals
   protected formDirty = signal(false);
@@ -48,6 +56,7 @@ export class FieldConfigModal {
   protected showForm = signal(true);
 
   // derived
+  protected readonly candidates = computed(() => controllingFieldCandidates(this.fields(), this.field()));
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed<ChangeConfirmationI18n>(() => ({
     cancel: this.i18n().discard(), save: this.i18n().field_apply(),

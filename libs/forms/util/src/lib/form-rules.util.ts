@@ -1,4 +1,4 @@
-import { ConditionOp, Field, FieldCondition, VisibilityRule } from '@okr/shared-models';
+import { CategoryListModel, ConditionOp, Field, FieldCondition, FieldOption, VisibilityRule } from '@okr/shared-models';
 
 import { isDisplayField } from './field-kind';
 
@@ -141,4 +141,65 @@ export function removeReferencesTo(fields: Field[], removedId: string): Field[] 
     const { visibleIf: _dropped, ...rest } = field;
     return (conditions.length > 0 ? { ...rest, visibleIf: { ...rule, conditions } } : rest) as Field;
   });
+}
+
+/** The fields whose rule references `fieldId` — the ones that lose a condition when it is deleted. In form order. */
+export function fieldsReferencing(fields: Field[], fieldId: string): Field[] {
+  return fields
+    .filter(f => f.id !== fieldId && (f.visibleIf?.conditions ?? []).some(c => c?.fieldId === fieldId))
+    .sort((a, b) => a.order - b.order);
+}
+
+/**
+ * The ids of the fields inside a conditional block: every field after a divider with a rule, up to
+ * the next divider (spec §5 block rule). The divider itself is not included. The builder indents them.
+ */
+export function conditionalBlockMembers(fields: Field[]): Set<string> {
+  const members = new Set<string>();
+  let inBlock = false;
+  for (const field of [...fields].sort((a, b) => a.order - b.order)) {
+    if (field.type === 'divider') {
+      inBlock = (field.visibleIf?.conditions?.length ?? 0) > 0;
+    } else if (inBlock) {
+      members.add(field.id);
+    }
+  }
+  return members;
+}
+
+/** Which value input the rule editor shows for a condition row. */
+export type ConditionValueKind = 'none' | 'option' | 'options' | 'number' | 'numberRange' | 'date' | 'dateRange' | 'age' | 'text';
+
+const NO_VALUE_OPS: ConditionOp[] = ['isChecked', 'isNotChecked', 'isFilled', 'isEmpty'];
+
+/** The value input for `op` on `controller` (spec §5): options, numbers, dates, years for age, or text; 'none' when no value is compared. */
+export function conditionValueKind(controller: Field | undefined, op: ConditionOp | '' | undefined): ConditionValueKind {
+  if (!controller || !op || NO_VALUE_OPS.includes(op)) return 'none';
+  if (op === 'ageGte' || op === 'ageLt') return 'age';
+  if (op === 'between') return controller.type === 'date' ? 'dateRange' : 'numberRange';
+  if (controller.type === 'category' || optionsOf(controller)) {
+    return op === 'in' || op === 'notIn' ? 'options' : 'option';
+  }
+  if (controller.type === 'number' || controller.type === 'rating') return 'number';
+  if (controller.type === 'date') return 'date';
+  return 'text';
+}
+
+/** The answers a choice controller can give, for the value input: its options, or the items of its category list. */
+export function conditionChoices(controller: Field | undefined, categories: CategoryListModel[] = []): FieldOption[] {
+  if (!controller) return [];
+  if (controller.type === 'category') {
+    const list = categories.find(c => c.name === controller.categoryName);
+    return (list?.items ?? []).map(item => ({ label: item.name, value: item.name }));
+  }
+  return optionsOf(controller) ?? [];
+}
+
+/** The errors under `prefix` (e.g. `visibleIf.`), re-keyed relative to it — what a sub-form such as the rule editor reads. */
+export function errorsUnder(errors: Record<string, string[]>, prefix: string): Record<string, string[]> {
+  const result: Record<string, string[]> = {};
+  for (const [key, messages] of Object.entries(errors ?? {})) {
+    if (key.startsWith(prefix)) result[key.slice(prefix.length)] = messages;
+  }
+  return result;
 }
