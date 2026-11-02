@@ -243,6 +243,26 @@ describe('getSrvChanges', () => {
     expect(changes({ mCategory: 'P', mPassiveSince: '20260101', rInactiveDate: '' })).toEqual({ inactiveDate: '20260101' });
   });
 
+  it('passive without passiveSince: any full Regasoft inactiveDate is in sync', () => {
+    const o = { mCategory: 'P', mPassiveSince: '', rInactiveDate: '20250101' };
+    expect(mismatchOf(o, 'inactiveDate')).toBeUndefined();
+    expect(changes(o)).toEqual({});
+  });
+
+  it('passive without passiveSince and empty Regasoft inactiveDate → today', () => {
+    expect(changes({ mCategory: 'P', mPassiveSince: '', rInactiveDate: '' })).toEqual({ inactiveDate: TODAY });
+  });
+
+  it('active again (not passive): a Regasoft inactiveDate is still cleared', () => {
+    expect(changes({ mCategory: 'A', mPassiveSince: '', rInactiveDate: '20250101' })).toEqual({ inactiveDate: '' });
+  });
+
+  it('passive with passiveSince: exact comparison', () => {
+    const o = { mCategory: 'P', mPassiveSince: '20260101', rInactiveDate: '20250101' };
+    expect(mismatchOf(o, 'inactiveDate')?.kind).toBe('fix');
+    expect(changes(o)).toEqual({ inactiveDate: '20260101' });
+  });
+
   it('passive + future exit → inactiveDate set, leavingDate empty', () => {
     const r = changes({ mCategory: 'P', mPassiveSince: '20260101', mDateOfExit: '20261231' });
     expect(r).toEqual({ inactiveDate: '20260101' });

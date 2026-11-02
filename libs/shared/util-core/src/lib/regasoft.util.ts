@@ -147,6 +147,9 @@ export function getMismatches(item: SrvIndex, today: string): SrvMismatch[] {
   ];
   for (const [field, r] of status) {
     if (expected[field] === r) continue;
+    // Passive without a passiveSince: the expected date is «today», which drifts daily. Any full
+    // Regasoft inactiveDate counts as in sync, otherwise the member would stay red and be rewritten every day.
+    if (field === 'inactiveDate' && expected.inactiveDate && v(item.mCategory) === 'P' && !v(item.mPassiveSince) && classifyStoreDate(r) === 'full') continue;
     // A death date is never cleared from an empty club field: ask the club to complete its data.
     const kind = field === 'dateOfDeath' && !expected[field] ? 'bk' : 'fix';
     result.push({ field, okrValue: expected[field], rValue: r, kind });
