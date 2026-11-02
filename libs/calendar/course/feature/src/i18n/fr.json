@@ -171,7 +171,8 @@
       "rate": "Tarif",
       "amount": "Montant",
       "unlisted": "a dirigé, mais ne figure pas sur la liste des personnes ayant droit à l'indemnité"
-    }
+    },
+    "upcoming": "La date n'a pas encore commencé"
   },
   "unassigned": {
     "title": "Dates du groupe sans cours",
@@ -233,14 +234,14 @@
     "participant": "Participant·e"
   },
   "request": {
-    "confirm": "Demander l'indemnité ? Une écriture est préparée pour chaque personne ayant droit, puis vérifiée par la trésorerie.",
+    "confirm": "Demander l'indemnité ? La trésorerie reçoit le décompte pour vérification. Si la comptabilité est tenue dans l'app, une écriture est préparée pour chaque personne ayant droit.",
     "notLocked": "Gèle d'abord le cours pour que les chiffres soient définitifs.",
     "noFinance": "L'indemnité n'est pas encore configurée pour ce cours. Choisis la comptabilité et les tarifs dans les réglages du cours.",
     "done": {
       "title": "Demande envoyée",
       "written": "{count} écritures sont préparées. La trésorerie a reçu une tâche pour les vérifier.",
       "external": "Cette comptabilité est tenue en dehors de l'app. La trésorerie a reçu une tâche avec le décompte.",
-      "kept": "Déjà versé, avec un autre montant (avant → maintenant) :",
+      "kept": "Déjà validé dans la comptabilité, avec un autre montant (avant → maintenant) :",
       "cancelled": "Refusé par la trésorerie, reste ainsi (avant → maintenant) :",
       "unlisted": "Ont dirigé, mais ne figurent pas sur la liste des ayants droit :"
     },

@@ -155,6 +155,26 @@ describe('CourseService', () => {
     });
   });
 
+  describe('updateCourseState', () => {
+    it('writes only the given fields, deletes lockedBy on null, never the server keys', async () => {
+      await service.updateCourseState('c1', { isLocked: false, lockedBy: null, lockedAt: '' });
+      const [coll, key, data] = firestore.updateFields.mock.calls[0] as unknown as [string, string, Record<string, unknown>];
+      expect([coll, key]).toEqual([CourseCollection, 'c1']);
+      expect(Object.keys(data).sort()).toEqual(['isLocked', 'lockedAt', 'lockedBy']);
+      expect(data['isLocked']).toBe(false);
+      expect(data['lockedBy']).not.toBeNull();   // a deleteField() sentinel
+      expect(typeof data['lockedBy']).toBe('object');
+    });
+
+    it('locks with the avatar and the time, and writes nothing for an empty change', async () => {
+      await service.updateCourseState('c1', { isLocked: true, lockedBy: avatar('p1'), lockedAt: '20261102120000' });
+      const data = firestore.updateFields.mock.calls[0][2] as unknown as Record<string, unknown>;
+      expect(data).toEqual({ isLocked: true, lockedBy: avatar('p1'), lockedAt: '20261102120000' });
+      await service.updateCourseState('c1', {});
+      expect(firestore.updateFields).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('requestCompensation', () => {
     it('calls requestCourseCompensation with the course and the books, and returns its data', async () => {
       fns.httpsCallable.mockReturnValue(fns.callable);

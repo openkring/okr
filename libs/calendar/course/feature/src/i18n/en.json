@@ -171,7 +171,8 @@
       "rate": "Rate",
       "amount": "Amount",
       "unlisted": "led a training but is not on the list of people entitled to compensation"
-    }
+    },
+    "upcoming": "The event has not started yet"
   },
   "unassigned": {
     "title": "Group events without a course",
@@ -233,14 +234,14 @@
     "participant": "Participant"
   },
   "request": {
-    "confirm": "Request compensation? A booking is prepared for every eligible person, and the treasurer checks it.",
+    "confirm": "Request compensation? The treasurer receives the settlement to check. If the accounting is kept in the app, a booking is prepared for every eligible person.",
     "notLocked": "Freeze the course first so the numbers are final.",
     "noFinance": "Compensation has not been set up for this course yet. Choose the accounting and the rates in the course settings.",
     "done": {
       "title": "Request submitted",
       "written": "{count} bookings have been prepared. The treasurer has received a task to check them.",
       "external": "This accounting is kept outside the app. The treasurer has received a task with the settlement.",
-      "kept": "Already paid out with a different amount (before → now):",
+      "kept": "Already approved in the accounting with a different amount (before → now):",
       "cancelled": "Rejected by the treasurer, stays that way (before → now):",
       "unlisted": "Led a training but are not on the list of eligible people:"
     },

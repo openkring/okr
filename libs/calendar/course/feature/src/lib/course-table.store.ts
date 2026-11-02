@@ -9,16 +9,15 @@ import { CourseAttendanceModal } from '@okr/calendar-course-ui';
 import {
   AttendanceRow, attendanceEntriesToWrite, attendanceRowsForEvent, buildCourseTable, buildGenericCsvRows, buildJsAwkRows, compensationErrorKey,
   compensationSummary, computeCompensation, COURSE_I18N_KEYS, CourseAccess, courseEventLabel, courseEventStarted, courseFileBase, CourseI18n,
-  CourseTable, ExportFinding, htmlLines, escapeHtml, mayEditCourseAttendance, mayExportCourse, mayManageCourse, mayReadCourseFinance,
-  unconfirmedPastEvents, unlistedLeaders, visibleFindings, VisibleFindings
+  CourseTable, ExportFinding, formatCourseAmount, htmlLines, escapeHtml, mayEditCourseAttendance, mayExportCourse, mayManageCourse,
+  mayReadCourseFinance, mayViewCourseTable, unconfirmedPastEvents, unlistedLeaders, visibleFindings, VisibleFindings
 } from '@okr/calendar-course-util';
-import { formatChf } from '@okr/finance-booking-util';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { CalEventModel, CourseFinanceModel, CourseModel, MembershipModel } from '@okr/shared-models';
+import { CalEventModel, CourseFinanceModel, CourseModel, MembershipModel, NameDisplay } from '@okr/shared-models';
 import { AlertService, exportCsv, resourceParams } from '@okr/shared-util-angular';
-import { DateFormat, fill, getAvatarInfo, getCurrentTime, getItemLabel, getTodayStr, hasRole, isValidExternalId } from '@okr/shared-util-core';
+import { DateFormat, fill, getAvatarInfo, getCurrentTime, getFullName, getItemLabel, getTodayStr, hasRole, isValidExternalId } from '@okr/shared-util-core';
 import { isAdminMember } from '@okr/subject-group-util';
 
 export type CourseTableState = {
@@ -48,9 +47,15 @@ type JsPerson = { key: string; externalIds?: Record<string, string> };
  * Kept apart from `CourseStore` (the list) on purpose: that store's resources (the course list, the posted
  * compensation bookings for the yearly totals) have nothing to do on this page and must not query here.
  *
+ * View gate (§8, §13 — the table shows the attendance of minors): only `canView` (`mayViewCourseTable`: a role in the
+ * course, a member of its group, or a person in the table) gets the table; everybody else gets the not-found state.
+ * The course, its events and the viewer's own group memberships are read to decide that; the group's members, the
+ * unassigned group events and the finance document are read only after the gate.
+ *
  * Data paths (offline skill): every read is a Firestore listener held while the page is shown (`read`,
- * `listCourseEvents`, `listMembersOfOrg`, `listGroupEventsInPeriod`, `readFinance`); persons come from the AppStore.
- * The finance document is read only by people who may read it (`mayReadCourseFinance`) — never for others.
+ * `listCourseEvents`, `listMembershipsOfMember`, `listMembersOfOrg`, `listGroupEventsInPeriod`, `readFinance`);
+ * persons come from the AppStore. The finance document is read only by people who may read it
+ * (`mayReadCourseFinance`) — never for others.
  */
 export const CourseTableStore = signalStore(
   withState(initialCourseTableState),
@@ -72,6 +77,12 @@ export const CourseTableStore = signalStore(
       params: resourceParams(() => store.courseKey()),
       stream: ({ params: key }) => key ? store.courseService.listCourseEvents(key) : of([] as CalEventModel[]),
     }),
+    /** the viewer's own group memberships (server query by member): decides «member of the course's group» */
+    ownMembershipsResource: rxResource({
+      params: resourceParams(() => store.appStore.currentUser()?.personKey ?? ''),
+      stream: ({ params: personKey }) => personKey
+        ? store.membershipService.listMembershipsOfMember(personKey, 'person', 'group') : of([] as MembershipModel[]),
+    }),
   })),
   withComputed((state) => {
     const course = computed(() => state.courseResource.hasValue() ? state.courseResource.value() : undefined);
@@ -88,14 +99,25 @@ export const CourseTableStore = signalStore(
       const c = course();
       return !!c && fn(c, access());
     });
+    const events = computed(() => state.eventsResource.hasValue() ? state.eventsResource.value() ?? [] : []);
+    const ownMemberships = computed(() => state.ownMembershipsResource.hasValue() ? state.ownMembershipsResource.value() ?? [] : []);
+    const canView = computed(() => {
+      const c = course();
+      return !!c && mayViewCourseTable(c, access(), ownMemberships(), events());
+    });
+    /** the gate can only say «no» once the course, its events and the viewer's memberships are in */
+    const viewDecided = computed(() => !state.courseResource.isLoading() && !state.eventsResource.isLoading() && !state.ownMembershipsResource.isLoading());
     return {
       course,
       currentUser,
       access,
-      events: computed(() => state.eventsResource.hasValue() ? state.eventsResource.value() ?? [] : []),
-      isLoading: computed(() => state.courseResource.isLoading()),
-      /** the read finished and there is no (non-archived) course of this tenant with that key */
-      notFound: computed(() => !!state.courseKey() && !state.courseResource.isLoading() && !course()),
+      events,
+      canView,
+      /** the person display order of the viewer (first-last or last-first), used everywhere on the page */
+      nameDisplay: computed(() => currentUser()?.nameDisplay ?? NameDisplay.FirstLast),
+      isLoading: computed(() => state.courseResource.isLoading() || (!!course() && !viewDecided())),
+      /** no (non-archived) course of this tenant with that key — or one this viewer may not see (same answer, §13) */
+      notFound: computed(() => !!state.courseKey() && !state.courseResource.isLoading() && (!course() || (viewDecided() && !canView()))),
       isLocked: computed(() => course()?.isLocked === true),
       /** responsible, group admin, privileged: lock/unlock, request, «reported», missing numbers */
       canManage: has(mayManageCourse),
@@ -110,7 +132,7 @@ export const CourseTableStore = signalStore(
   }),
   withProps((store) => ({
     membersResource: rxResource({
-      params: resourceParams(() => store.course()?.groupKey ?? ''),
+      params: resourceParams(() => store.canView() ? store.course()?.groupKey ?? '' : ''),
       stream: ({ params: groupKey }) => groupKey ? store.membershipService.listMembersOfOrg(groupKey, 'group') : of([] as MembershipModel[]),
     }),
     /** only the people who may assign get the unassigned group events («gehört dazu?») */
@@ -147,7 +169,7 @@ export const CourseTableStore = signalStore(
       state.canReadFinance() && state.financeResource.hasValue() ? state.financeResource.value() ?? undefined : undefined);
     const table = computed<CourseTable | undefined>(() => {
       const course = state.course();
-      if (!course || !state.today()) return undefined;
+      if (!course || !state.today() || !state.canView()) return undefined;
       return buildCourseTable(course, state.events(), groupEvents(), members(), state.today(), state.nowTime() || undefined);
     });
     /** the persons of the table with their external ids (AppStore memory: no query of its own) */
@@ -165,6 +187,8 @@ export const CourseTableStore = signalStore(
       finance,
       isJs,
       jsResult,
+      /** currency of the amounts: the rates carry the books' functional currency (the finance form restamps it) */
+      currency: computed(() => finance()?.defaultRate?.currency || 'CHF'),
       /** compensation columns: never for members, never without the finance document (D7) */
       compensation: computed(() => {
         const f = finance();
@@ -208,13 +232,14 @@ export const CourseTableStore = signalStore(
 
     personName(personKey: string): string {
       const row = store.table()?.rows.find(r => r.key === personKey);
-      if (row) return `${row.name1} ${row.name2}`.trim();
+      if (row) return getFullName(row.name1, row.name2, store.nameDisplay());
       const person = store.appStore.getPerson(personKey);
-      return person ? `${person.firstName} ${person.lastName}`.trim() : personKey;
+      return person ? getFullName(person.firstName, person.lastName, store.nameDisplay()) : personKey;
     },
 
-    money(minor: number): string {
-      return formatChf(minor);
+    /** «CHF 120.00»: the amount with the currency of the course's rates */
+    money(minor: number, currency?: string): string {
+      return formatCourseAmount(minor, currency || store.currency());
     },
 
     /******************************** attendance (§7.3) ******************************************* */
@@ -228,7 +253,7 @@ export const CourseTableStore = signalStore(
       const confirmed = !!confirmedAt;
       const intro = confirmed
         ? fill(store.i18n.attendance_confirmedBy(), {
-          name: `${event.attendanceConfirmedBy?.name1 ?? ''} ${event.attendanceConfirmedBy?.name2 ?? ''}`.trim(),
+          name: getFullName(event.attendanceConfirmedBy?.name1, event.attendanceConfirmedBy?.name2, store.nameDisplay()),
           date: courseEventLabel({
             startDate: confirmedAt.slice(0, 8), startTime: `${confirmedAt.slice(8, 10)}:${confirmedAt.slice(10, 12)}`, fullDay: confirmedAt.length < 12,
           }),
@@ -236,7 +261,7 @@ export const CourseTableStore = signalStore(
         : store.i18n.attendance_intro();
       const modal = await store.modalController.create({
         component: CourseAttendanceModal,
-        componentProps: { rows, eventTitle: courseEventLabel(event), confirmed, intro, readOnly: false },
+        componentProps: { rows, eventTitle: courseEventLabel(event), confirmed, intro, nameDisplay: store.nameDisplay(), readOnly: false },
       });
       await modal.present();
       const { data, role } = await modal.onDidDismiss<AttendanceRow[]>();
@@ -244,9 +269,11 @@ export const CourseTableStore = signalStore(
     },
 
     /**
-     * Writes the attendance of one event (§7.3): every row on the first confirmation (the unchanged prefill included),
-     * only the corrections afterwards; each entry carries `by` (current person) and `at` (now), and the event gets
-     * `attendanceConfirmedBy/At`. Rows without a plain person key are dropped, a person listed twice is written once.
+     * Writes the attendance of one event (§7.3), merged against the LIVE event (somebody may have confirmed or
+     * corrected while the dialog was open): persons without a stored entry are written, rows the user changed are
+     * written, rows equal to what is stored or left alone by the user are not (`attendanceEntriesToWrite`). Each
+     * written entry carries `by` (current person) and `at` (now). The confirmation stamp `attendanceConfirmedBy/At`
+     * is written only by the FIRST confirmation; a correction carries its `by`/`at` per entry only.
      */
     async confirmAttendance(event: CalEventModel, rows: AttendanceRow[]): Promise<void> {
       if (!store.canEdit()) return;
@@ -254,10 +281,11 @@ export const CourseTableStore = signalStore(
       const confirmedBy = getAvatarInfo(store.currentUser(), 'user-person');
       if (!by || !confirmedBy) return;
       const at = getTodayStr(DateFormat.StoreDateTime);
-      // the live copy: somebody may have confirmed while the dialog was open (then only the corrections are written)
       const current = store.events().find(e => e.okey === event.okey) ?? event;
-      const entries = attendanceEntriesToWrite(rows, by, at, !!current.attendanceConfirmedAt);
-      await store.courseService.writeAttendance(event.okey, entries, confirmedBy, at);
+      const firstConfirmation = !current.attendanceConfirmedAt;
+      const entries = attendanceEntriesToWrite(rows, by, at, current.attendance ?? {});
+      if (entries.length === 0 && !firstConfirmation) return;
+      await store.courseService.writeAttendance(event.okey, entries, firstConfirmation ? confirmedBy : undefined, firstConfirmation ? at : undefined);
     },
 
     /******************************** assignment (§7.2) ******************************************* */
@@ -287,12 +315,9 @@ export const CourseTableStore = signalStore(
         return;
       }
       if (!await store.alertService.confirm(store.i18n.lock_confirm(), true)) return;
-      await store.courseService.update({
-        ...course,
-        isLocked: true,
-        lockedBy: getAvatarInfo(store.currentUser(), 'user-person'),
-        lockedAt: getTodayStr(DateFormat.StoreDateTime),
-      }, store.currentUser());
+      const lockedBy = getAvatarInfo(store.currentUser(), 'user-person');
+      if (!lockedBy) return;
+      await store.courseService.updateCourseState(course.okey, { isLocked: true, lockedBy, lockedAt: getTodayStr(DateFormat.StoreDateTime) });
     },
 
     /** Reopens a frozen course, after a warning that a new J+S import overwrites the reported attendance. */
@@ -300,7 +325,7 @@ export const CourseTableStore = signalStore(
       const course = store.course();
       if (!course || !store.canManage() || !course.isLocked) return;
       if (!await store.alertService.confirm(store.i18n.unlock_confirm(), true)) return;
-      await store.courseService.update({ ...course, isLocked: false, lockedAt: '' }, store.currentUser());
+      await store.courseService.updateCourseState(course.okey, { isLocked: false, lockedBy: null, lockedAt: '' });
     },
 
     /** The optional «reported» note (`reportedAt` = now). */
@@ -308,7 +333,7 @@ export const CourseTableStore = signalStore(
       const course = store.course();
       if (!course || !store.canManage()) return;
       if (!await store.alertService.confirm(store.i18n.reported_confirm(), true)) return;
-      await store.courseService.update({ ...course, reportedAt: getTodayStr(DateFormat.StoreDateTime) }, store.currentUser());
+      await store.courseService.updateCourseState(course.okey, { reportedAt: getTodayStr(DateFormat.StoreDateTime) });
     },
 
     /******************************** exports (§9) ******************************************* */
@@ -325,7 +350,12 @@ export const CourseTableStore = signalStore(
         leader: i18n.csv_leader(), participant: i18n.csv_participant(),
       }, lines ? {
         lines,
-        labels: { ledCount: i18n.table_compensation_led(), rate: i18n.table_compensation_rate(), amount: i18n.table_compensation_amount() },
+        // the CSV cells are plain decimals: the currency goes into the column titles
+        labels: {
+          ledCount: i18n.table_compensation_led(),
+          rate: `${i18n.table_compensation_rate()} (${store.currency()})`,
+          amount: `${i18n.table_compensation_amount()} (${store.currency()})`,
+        },
       } : undefined);
       await exportCsv(rows, `${courseFileBase(course.name, 'kurs')}.csv`);
     },
@@ -389,7 +419,7 @@ export const CourseTableStore = signalStore(
       if (!await store.alertService.confirm(i18n.request_confirm(), true)) return;
       try {
         const result = await store.courseService.requestCompensation(course.okey, books);
-        const message = compensationSummary(result, key => this.personName(key), minor => formatChf(minor), {
+        const message = compensationSummary(result, key => this.personName(key), minor => this.money(minor), {
           written: i18n.request_done_written(), external: i18n.request_done_external(), kept: i18n.request_done_kept(),
           cancelled: i18n.request_done_cancelled(), unlisted: i18n.request_done_unlisted(),
         });

@@ -1,4 +1,6 @@
-import { CourseFinanceModel, CourseModel } from '@okr/shared-models';
+import { CalEventModel, CourseFinanceModel, CourseModel, MembershipModel } from '@okr/shared-models';
+
+import { courseEvents } from './course-table.util';
 
 /** Route value of `groupKey` for the tenant-wide overview (all courses of all groups, the treasurer's entry). */
 export const ALL_COURSES_KEY = 'all';
@@ -67,6 +69,29 @@ export function mayEditCourseAttendance(course: CourseModel, access: CourseAcces
  */
 export function mayExportCourse(course: CourseModel, access: CourseAccess): boolean {
   return mayEditCourseAttendance({ ...course, isLocked: false }, access) || access.isTreasurer;
+}
+
+/**
+ * Who may open the course table (spec 1.132 §8, §13: it shows the attendance of minors). Everybody with a role in
+ * the course (export, finance, manage, trainer — see the functions above), a member of the course's group
+ * (`ownGroupMemberships` = the current person's memberships with `orgModelType: 'group'`; an `org` membership never
+ * counts), or a person who appears in the table through a counted event (`attendees` or `attendance`: guests,
+ * substitutes). Anybody else of the tenant gets the not-found state.
+ */
+export function mayViewCourseTable(
+  course: CourseModel,
+  access: CourseAccess,
+  ownGroupMemberships: MembershipModel[],
+  events: CalEventModel[],
+): boolean {
+  if (mayExportCourse(course, access) || mayReadCourseFinance(course, access) || isCourseTrainer(course, access.personKey)) return true;
+  const personKey = access.personKey;
+  if (!personKey) return false;
+  const isGroupMember = ownGroupMemberships.some(m =>
+    !m.isArchived && m.orgModelType === 'group' && m.memberModelType === 'person' && m.orgKey === course.groupKey && m.memberKey === personKey);
+  if (isGroupMember) return true;
+  return courseEvents(events).some(e =>
+    (e.attendees ?? []).some(a => a.person?.key === personKey) || Object.prototype.hasOwnProperty.call(e.attendance ?? {}, personKey));
 }
 
 /** Who may create a course in a group: privileged or an admin of that group (the rules require it on create). */

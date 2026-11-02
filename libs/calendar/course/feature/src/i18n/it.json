@@ -171,7 +171,8 @@
       "rate": "Tariffa",
       "amount": "Importo",
       "unlisted": "ha diretto, ma non è nell'elenco delle persone con diritto all'indennità"
-    }
+    },
+    "upcoming": "L'appuntamento non è ancora iniziato"
   },
   "unassigned": {
     "title": "Appuntamenti del gruppo senza corso",
@@ -233,14 +234,14 @@
     "participant": "Partecipante"
   },
   "request": {
-    "confirm": "Richiedere l'indennità? Per ogni persona avente diritto viene preparata una registrazione, che la tesoreria controlla.",
+    "confirm": "Richiedere l'indennità? La tesoreria riceve il conteggio da controllare. Se la contabilità è tenuta nell'app, per ogni persona avente diritto viene preparata una registrazione.",
     "notLocked": "Congela prima il corso, così le cifre sono definitive.",
     "noFinance": "L'indennità per questo corso non è ancora configurata. Scegli la contabilità e le tariffe nelle impostazioni del corso.",
     "done": {
       "title": "Richiesta inviata",
       "written": "Sono state preparate {count} registrazioni. La tesoreria ha ricevuto un compito per controllarle.",
       "external": "Questa contabilità è tenuta fuori dall'app. La tesoreria ha ricevuto un compito con il conteggio.",
-      "kept": "Già pagato con un altro importo (prima → ora):",
+      "kept": "Già approvato nella contabilità con un altro importo (prima → ora):",
       "cancelled": "Rifiutato dalla tesoreria, resta così (prima → ora):",
       "unlisted": "Hanno diretto, ma non sono nell'elenco degli aventi diritto:"
     },

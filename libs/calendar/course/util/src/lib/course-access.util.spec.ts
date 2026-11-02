@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { AvatarInfo, CourseFinanceModel, CourseModel, MoneyModel } from '@okr/shared-models';
+import { AvatarInfo, CalEventModel, CourseFinanceModel, CourseModel, MembershipModel, MoneyModel } from '@okr/shared-models';
 
 import {
   CourseAccess, isCourseResponsible, isCourseTrainer, loadFinanceForEdit, mayCreateCourse, mayEditCourseAttendance, mayExportCourse, mayManageCourse,
-  mayOpenCourseMenu, mayReadCourseFinance
+  mayOpenCourseMenu, mayReadCourseFinance, mayViewCourseTable
 } from './course-access.util';
 
 function avatar(key: string): AvatarInfo {
@@ -154,5 +154,50 @@ describe('isCourseTrainer / mayEditCourseAttendance / mayExportCourse', () => {
     expect(mayExportCourse(locked, { ...nobody, isEventAdmin: true })).toBe(true);
     expect(mayExportCourse(locked, nobody)).toBe(false);
     expect(locked.isLocked).toBe(true);   // the check does not touch the course
+  });
+});
+
+describe('mayViewCourseTable', () => {
+  function membership(memberKey: string, orgKey: string, orgModelType: 'group' | 'org' = 'group', isArchived = false): MembershipModel {
+    const m = new MembershipModel('scs');
+    Object.assign(m, { memberKey, memberModelType: 'person', orgKey, orgModelType, isArchived });
+    return m;
+  }
+  function event(over: Partial<CalEventModel>): CalEventModel {
+    const e = new CalEventModel('scs');
+    e.okey = 'e1';
+    e.startDate = '20261015';
+    return Object.assign(e, over);
+  }
+  const c = (): CourseModel => Object.assign(course(['pR'], ['pT']), { groupKey: 'g1' });
+
+  it('anybody with a role in the course may view', () => {
+    expect(mayViewCourseTable(c(), { ...nobody, personKey: 'pT' }, [], [])).toBe(true);
+    expect(mayViewCourseTable(c(), { ...nobody, personKey: 'pR' }, [], [])).toBe(true);
+    expect(mayViewCourseTable(c(), { ...nobody, isTreasurer: true }, [], [])).toBe(true);
+    expect(mayViewCourseTable(c(), { ...nobody, isEventAdmin: true }, [], [])).toBe(true);
+    expect(mayViewCourseTable(c(), { ...nobody, isGroupAdmin: true }, [], [])).toBe(true);
+    expect(mayViewCourseTable(Object.assign(c(), { isLocked: true }), { ...nobody, personKey: 'pT' }, [], [])).toBe(true);
+  });
+
+  it('a member of the course group may view; another group, an org membership or an archived one does not count', () => {
+    expect(mayViewCourseTable(c(), nobody, [membership('p9', 'g1')], [])).toBe(true);
+    expect(mayViewCourseTable(c(), nobody, [membership('p9', 'g2')], [])).toBe(false);
+    expect(mayViewCourseTable(c(), nobody, [membership('p9', 'g1', 'org')], [])).toBe(false);
+    expect(mayViewCourseTable(c(), nobody, [membership('p9', 'g1', 'group', true)], [])).toBe(false);
+    expect(mayViewCourseTable(c(), nobody, [membership('other', 'g1')], [])).toBe(false);
+  });
+
+  it('a guest or substitute on a counted course event may view', () => {
+    const attendee = event({ attendees: [{ person: avatar('p9'), state: 'accepted' }] });
+    const substitute = event({ attendance: { p9: { person: avatar('p9'), presence: 'present', function: 'leader', by: 'pT', at: 'x' } } });
+    expect(mayViewCourseTable(c(), nobody, [], [attendee])).toBe(true);
+    expect(mayViewCourseTable(c(), nobody, [], [substitute])).toBe(true);
+    expect(mayViewCourseTable(c(), nobody, [], [Object.assign(attendee, { state: 'cancelled' })])).toBe(false);
+  });
+
+  it('anybody else of the tenant may not, nor somebody without a person key', () => {
+    expect(mayViewCourseTable(c(), nobody, [], [event({})])).toBe(false);
+    expect(mayViewCourseTable(c(), { ...nobody, personKey: '' }, [membership('', 'g1')], [])).toBe(false);
   });
 });

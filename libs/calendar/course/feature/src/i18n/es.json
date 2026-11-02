@@ -171,7 +171,8 @@
       "rate": "Tarifa",
       "amount": "Importe",
       "unlisted": "ha dirigido, pero no está en la lista de personas con derecho a compensación"
-    }
+    },
+    "upcoming": "La cita todavía no ha empezado"
   },
   "unassigned": {
     "title": "Citas del grupo sin curso",
@@ -233,14 +234,14 @@
     "participant": "Participante"
   },
   "request": {
-    "confirm": "¿Solicitar la compensación? Se prepara un asiento para cada persona con derecho, que revisa la tesorería.",
+    "confirm": "¿Solicitar la compensación? La tesorería recibe la liquidación para revisarla. Si la contabilidad se lleva en la app, se prepara un asiento para cada persona con derecho.",
     "notLocked": "Congela primero el curso para que las cifras sean definitivas.",
     "noFinance": "Todavía no se ha configurado la compensación de este curso. Elige la contabilidad y las tarifas en los ajustes del curso.",
     "done": {
       "title": "Solicitud enviada",
       "written": "Se han preparado {count} asientos. La tesorería ha recibido una tarea para revisarlos.",
       "external": "Esta contabilidad se lleva fuera de la app. La tesorería ha recibido una tarea con la liquidación.",
-      "kept": "Ya pagado con otro importe (antes → ahora):",
+      "kept": "Ya aprobado en la contabilidad con otro importe (antes → ahora):",
       "cancelled": "Rechazado por la tesorería, se queda así (antes → ahora):",
       "unlisted": "Han dirigido, pero no están en la lista de personas con derecho:"
     },

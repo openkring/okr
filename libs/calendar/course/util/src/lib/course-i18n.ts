@@ -110,6 +110,7 @@ export const COURSE_I18N_KEYS = {
   table_signUp_invited:  PFX + 'table.signUp.invited',
   table_confirmed:    PFX + 'table.confirmed',
   table_unconfirmed:  PFX + 'table.unconfirmed',
+  table_upcoming:     PFX + 'table.upcoming',
   table_locked:       PFX + 'table.locked',
   table_reported:     PFX + 'table.reported',
   table_compensation_led:      PFX + 'table.compensation.led',

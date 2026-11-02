@@ -3,11 +3,11 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonLabel, IonNote, IonRow, IonSegment, IonSegmentButton } from '@ionic/angular';
 
 import { AttendanceFormModel, AttendanceRow, CourseI18n, courseAttendanceValidations } from '@okr/calendar-course-util';
-import { AttendanceEntry } from '@okr/shared-models';
+import { AttendanceEntry, NameDisplay } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Checkbox, CheckboxI18n, ErrorNote } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
-import { coerceBoolean } from '@okr/shared-util-core';
+import { coerceBoolean, getFullName } from '@okr/shared-util-core';
 
 /**
  * The attendance of one course event (spec 1.132 §7.3): one row per person of the course table with the sign-up
@@ -42,7 +42,7 @@ import { coerceBoolean } from '@okr/shared-util-core';
                       @if (row.isTrainer) {
                         <ion-icon class="trainer" src="{{ 'star' | svgIcon }}" [title]="i18n().table_leader()" />
                       }
-                      <ion-label [class.changed]="isChanged(row)">{{ row.person.name1 }} {{ row.person.name2 }}</ion-label>
+                      <ion-label [class.changed]="isChanged(row)">{{ personName(row) }}</ion-label>
                       @if (signUpLabel(row); as signUp) {
                         <span class="sign-up">({{ signUp }})</span>
                       }
@@ -75,6 +75,8 @@ export class CourseAttendanceForm {
   public readonly i18n = input.required<CourseI18n>();
   /** a line above the rows (e.g. who confirmed when); '' = none */
   public readonly intro = input('');
+  /** the viewer's person display order, as on the course table */
+  public readonly nameDisplay = input<NameDisplay>(NameDisplay.FirstLast);
   public readonly readOnly = input(true);
   public readonly showForm = input(true);   // toggled by the parent to reset the Vest state on cancel
 
@@ -94,6 +96,10 @@ export class CourseAttendanceForm {
 
   constructor() {
     effect(() => this.valid.emit(this.attendanceForm().valid()));
+  }
+
+  protected personName(row: AttendanceRow): string {
+    return getFullName(row.person.name1, row.person.name2, this.nameDisplay());
   }
 
   protected signUpLabel(row: AttendanceRow): string {

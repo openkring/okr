@@ -27,6 +27,8 @@ export type AttendanceRow = {
   function: AttendanceEntry['function'];
   /** what is stored for this person; `undefined` = nothing stored, the row shows the prefill */
   stored?: Pick<AttendanceEntry, 'presence' | 'function'>;
+  /** what the dialog opened with (stored entry or prefill): tells a change the user made from one made elsewhere */
+  initial?: Pick<AttendanceEntry, 'presence' | 'function'>;
 };
 
 /** The model of the attendance form: the rows of one event. */
@@ -51,6 +53,7 @@ export function attendanceRowsForEvent(table: CourseTable, event: CalEventModel,
       isTrainer: row.isTrainer,
       presence: proposal.presence,
       function: proposal.function,
+      initial: { presence: proposal.presence, function: proposal.function },
     };
     if (cell.signUp) result.signUp = cell.signUp;
     if (entry) result.stored = { presence: entry.presence, function: entry.function };
@@ -58,21 +61,42 @@ export function attendanceRowsForEvent(table: CourseTable, event: CalEventModel,
   });
 }
 
+type PresenceAndFunction = Pick<AttendanceEntry, 'presence' | 'function'>;
+
+function same(a: PresenceAndFunction | undefined, b: PresenceAndFunction | undefined): boolean {
+  return !!a && !!b && a.presence === b.presence && a.function === b.function;
+}
+
 /**
- * The attendance entries to write for one event (§7.3). Rows with an empty or non-plain person key are dropped (they
- * cannot be a field path), a person listed twice is written once (the first row wins). With `onlyChanged` (the event
- * was confirmed before) only rows that differ from what is stored, or have nothing stored, are written: a later
- * correction must not restamp `by`/`at` of the untouched entries. The first confirmation writes every row, the
- * unchanged prefill included.
+ * The attendance entries to write for one event (§7.3), merged against the LIVE attendance of the event (what is
+ * stored now, not what the dialog saw when it opened):
+ * - a person without a live entry is written (the first confirmation therefore writes every row, the unchanged
+ *   prefill included);
+ * - a row equal to its live entry is not written (its `by`/`at` stay);
+ * - a row that differs from its live entry is written only when the user changed it in the dialog (it differs from
+ *   `initial`). A row the user left alone keeps what somebody else stored meanwhile — a confirmation or correction made
+ *   while the dialog was open is never overwritten with a stale value and a later writer's `by`/`at`.
+ * Rows with an empty or non-plain person key are dropped (they cannot be a field path), a person listed twice is
+ * written once (the first row wins).
  */
-export function attendanceEntriesToWrite(rows: AttendanceRow[], by: string, at: string, onlyChanged: boolean): AttendanceEntry[] {
+export function attendanceEntriesToWrite(
+  rows: AttendanceRow[],
+  by: string,
+  at: string,
+  live: Record<string, PresenceAndFunction> | undefined,
+): AttendanceEntry[] {
   const seen = new Set<string>();
   const entries: AttendanceEntry[] = [];
   for (const row of rows) {
     const key = row.person?.key;
     if (!isPlainPersonKey(key) || seen.has(key)) continue;
     seen.add(key);
-    if (onlyChanged && row.stored && row.stored.presence === row.presence && row.stored.function === row.function) continue;
+    const current = live?.[key];
+    if (current) {
+      if (same(row, current)) continue;
+      const changedByUser = !row.initial || !same(row, row.initial);
+      if (!changedByUser) continue;
+    }
     entries.push({ person: { ...row.person }, presence: row.presence, function: row.function, by, at });
   }
   return entries;

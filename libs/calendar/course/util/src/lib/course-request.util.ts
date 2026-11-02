@@ -112,3 +112,12 @@ export function compensationSummary(
   }
   return parts.join('<br><br>');
 }
+
+/**
+ * An amount in minor units with its currency, «CHF 1'200.00» (Swiss grouping, as `formatChf`). The currency is the
+ * rate's (the finance form restamps it with the books' functional currency); without one, CHF.
+ */
+export function formatCourseAmount(minor: number, currency?: string): string {
+  const amount = new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format((minor ?? 0) / 100);
+  return `${currency || 'CHF'} ${amount}`;
+}

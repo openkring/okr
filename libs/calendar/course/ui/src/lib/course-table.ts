@@ -5,11 +5,12 @@ import {
 } from '@ionic/angular';
 
 import {
-  CompensationLine, CourseCell, CourseI18n, CourseRowPerson, CourseTable as CourseTableData, ExportFinding, missingNumberKeys, presentCounts,
-  VisibleFindings
+  CompensationLine, CourseCell, courseEventStarted, CourseI18n, CourseRowPerson, CourseTable as CourseTableData, ExportFinding, formatCourseAmount,
+  missingNumberKeys, presentCounts, VisibleFindings
 } from '@okr/calendar-course-util';
-import { AttendanceEntry, Attendee, CalEventModel } from '@okr/shared-models';
+import { AttendanceEntry, Attendee, CalEventModel, NameDisplay } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { getFullName } from '@okr/shared-util-core';
 
 /** Below this width the table tips over into one list per event (spec 1.132 §8). */
 const WIDE_MEDIA_QUERY = '(min-width: 768px)';
@@ -112,9 +113,7 @@ const SIGN_UP_ICON: Record<Attendee['state'], string> = { accepted: 'checkmark',
                     <div class="date">{{ shortDate(event) }}</div>
                     <div class="meta">{{ event.startTime }}</div>
                     <div class="meta">{{ typeLabel(event) }}</div>
-                    <ion-icon class="sign-up" [color]="isConfirmed(event) ? 'success' : 'medium'"
-                      src="{{ (isConfirmed(event) ? 'checkbox-circle' : 'alert-circle') | svgIcon }}"
-                      [title]="isConfirmed(event) ? i18n().table_confirmed() : i18n().table_unconfirmed()" />
+                    <ion-icon class="sign-up" [color]="markerColor(event)" src="{{ markerIcon(event) | svgIcon }}" [title]="markerText(event)" />
                   </th>
                 }
                 <th>{{ i18n().table_total() }}</th>
@@ -130,7 +129,7 @@ const SIGN_UP_ICON: Record<Attendee['state'], string> = { accepted: 'checkmark',
                 <tr>
                   <td class="person">
                     @if (row.isTrainer) { <ion-icon class="leader" src="{{ 'star' | svgIcon }}" [title]="i18n().table_leader()" /> }
-                    {{ row.name2 }} {{ row.name1 }}
+                    {{ rowName(row) }}
                   </td>
                   @for (event of table().columns; track event.okey) {
                     @let cell = cellOf(row, event);
@@ -156,8 +155,8 @@ const SIGN_UP_ICON: Record<Attendee['state'], string> = { accepted: 'checkmark',
                         <ion-icon class="sign-up" color="warning" src="{{ 'alert-circle' | svgIcon }}" [title]="i18n().table_compensation_unlisted()" />
                       }
                     </td>
-                    <td class="money">{{ line ? money(line.rate.amount) : '' }}</td>
-                    <td class="money">{{ line ? money(line.amount) : '' }}</td>
+                    <td class="money">{{ line ? money(line.rate.amount, line.rate.currency) : '' }}</td>
+                    <td class="money">{{ line ? money(line.amount, line.rate.currency) : '' }}</td>
                   }
                 </tr>
               }
@@ -171,7 +170,7 @@ const SIGN_UP_ICON: Record<Attendee['state'], string> = { accepted: 'checkmark',
                 <td></td>
                 @if (compensation()) {
                   <td></td><td></td>
-                  <td class="money">{{ money(compensationTotal()) }}</td>
+                  <td class="money">{{ money(compensationTotal(), compensationCurrency()) }}</td>
                 }
               </tr>
             </tfoot>
@@ -184,14 +183,13 @@ const SIGN_UP_ICON: Record<Attendee['state'], string> = { accepted: 'checkmark',
               <ion-label>
                 {{ shortDate(event) }} {{ event.startTime }} · {{ typeLabel(event) }} · {{ counts().perEvent[event.okey] ?? 0 }} {{ i18n().table_present() }}
               </ion-label>
-              <ion-icon [color]="isConfirmed(event) ? 'success' : 'medium'" src="{{ (isConfirmed(event) ? 'checkbox-circle' : 'alert-circle') | svgIcon }}"
-                [title]="isConfirmed(event) ? i18n().table_confirmed() : i18n().table_unconfirmed()" />
+              <ion-icon [color]="markerColor(event)" src="{{ markerIcon(event) | svgIcon }}" [title]="markerText(event)" />
             </ion-list-header>
             @for (row of table().rows; track row.key) {
               @let cell = cellOf(row, event);
               <ion-item>
                 <ion-label>
-                  {{ row.name1 }} {{ row.name2 }}
+                  {{ rowName(row) }}
                   @if (cell.signUp) { <p>{{ signUpText(cell.signUp) }}</p> }
                 </ion-label>
                 @if (cell.entry; as entry) {
@@ -209,8 +207,8 @@ const SIGN_UP_ICON: Record<Attendee['state'], string> = { accepted: 'checkmark',
             <ion-list-header><ion-label>{{ i18n().table_compensation_amount() }}</ion-label></ion-list-header>
             @for (line of lines; track line.person.key) {
               <ion-item>
-                <ion-label>{{ line.person.name1 }} {{ line.person.name2 }} <p>{{ line.ledCount }} × {{ money(line.rate.amount) }}</p></ion-label>
-                <ion-note slot="end" class="money">{{ money(line.amount) }}</ion-note>
+                <ion-label>{{ fullName(line.person.name1, line.person.name2) }} <p>{{ line.ledCount }} × {{ money(line.rate.amount, line.rate.currency) }}</p></ion-label>
+                <ion-note slot="end" class="money">{{ money(line.amount, line.rate.currency) }}</ion-note>
               </ion-item>
             }
           </ion-list>
@@ -260,8 +258,13 @@ export class CourseTable {
   public readonly unlistedKeys = input<string[]>([]);
   /** `calevent.type` → translated label */
   public readonly typeLabels = input<Record<string, string>>({});
-  /** formats minor units (Rappen) */
-  public readonly formatMoney = input<(minor: number) => string>((minor: number) => (minor / 100).toFixed(2));
+  /** formats minor units (Rappen) with the currency, «CHF 120.00» */
+  public readonly formatMoney = input<(minor: number, currency?: string) => string>(formatCourseAmount);
+  /** the viewer's person display order (first-last / last-first), the same everywhere on the page */
+  public readonly nameDisplay = input<NameDisplay>(NameDisplay.FirstLast);
+  /** «now» (StoreDate / 'HH:mm'): an event that has not begun gets a neutral marker, not «unconfirmed» */
+  public readonly today = input('');
+  public readonly nowTime = input('');
 
   // outputs
   /** a column (event) was tapped: the page offers the per-event actions */
@@ -275,6 +278,7 @@ export class CourseTable {
   private readonly rowsByKey = computed(() => new Map(this.table().rows.map(r => [r.key, r] as const)));
   private readonly linesByKey = computed(() => new Map((this.compensation() ?? []).map(l => [l.person.key, l] as const)));
   protected readonly compensationTotal = computed(() => (this.compensation() ?? []).reduce((sum, l) => sum + l.amount, 0));
+  protected readonly compensationCurrency = computed(() => (this.compensation() ?? [])[0]?.rate?.currency);
   protected readonly eventFindings = computed(() => (this.findings()?.findings ?? []).filter(f => f.code !== 'missingNumber'));
   protected readonly missingNumbers = computed(() => missingNumberKeys(this.findings()?.findings ?? []));
 
@@ -304,6 +308,35 @@ export class CourseTable {
     return !!event.attendanceConfirmedAt;
   }
 
+  /** without «now» every event counts as begun (the table is never shown without it) */
+  private hasStarted(event: CalEventModel): boolean {
+    return !this.today() || courseEventStarted(event, this.today(), this.nowTime() || undefined);
+  }
+
+  /** confirmed → check; begun but unconfirmed → alert; not begun yet → neutral clock */
+  protected markerIcon(event: CalEventModel): string {
+    if (this.isConfirmed(event)) return 'checkbox-circle';
+    return this.hasStarted(event) ? 'alert-circle' : 'time';
+  }
+
+  protected markerColor(event: CalEventModel): string {
+    if (this.isConfirmed(event)) return 'success';
+    return this.hasStarted(event) ? 'warning' : 'medium';
+  }
+
+  protected markerText(event: CalEventModel): string {
+    if (this.isConfirmed(event)) return this.i18n().table_confirmed();
+    return this.hasStarted(event) ? this.i18n().table_unconfirmed() : this.i18n().table_upcoming();
+  }
+
+  protected rowName(row: CourseRowPerson): string {
+    return this.fullName(row.name1, row.name2);
+  }
+
+  protected fullName(name1: string | undefined, name2: string | undefined): string {
+    return getFullName(name1, name2, this.nameDisplay());
+  }
+
   /** «03.11.26» without a Date: StoreDate is a wall-clock value (calendar skill), slicing keeps it so */
   protected shortDate(event: CalEventModel): string {
     const d = event.startDate ?? '';
@@ -321,7 +354,7 @@ export class CourseTable {
 
   protected personName(personKey: string): string {
     const row = this.rowsByKey().get(personKey);
-    return row ? `${row.name1} ${row.name2}`.trim() : personKey;
+    return row ? this.rowName(row) : personKey;
   }
 
   protected presenceIcon(presence: AttendanceEntry['presence']): string {
@@ -365,8 +398,8 @@ export class CourseTable {
     }
   }
 
-  protected money(minor: number): string {
-    return this.formatMoney()(minor);
+  protected money(minor: number, currency?: string): string {
+    return this.formatMoney()(minor, currency);
   }
 
   protected onEventClick(event: CalEventModel): void {

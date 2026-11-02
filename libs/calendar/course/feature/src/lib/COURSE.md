@@ -68,19 +68,26 @@ the pure helpers (`attendanceRowsForEvent`, `attendanceEntriesToWrite`, `visible
 
 | Who | Sees | Does |
 |---|---|---|
-| Everybody who may read the course | the whole table: sign-up (small), attendance (large), leader star, sums | — (no amounts, no findings, no export; D7) |
+| A member of the course's group, or a person on a course event (guest, substitute) | the whole table: sign-up (small), attendance (large), leader star, sums | — (no amounts, no findings, no export; D7) |
+| Anybody else of the tenant | the not-found state (§13: the table shows the attendance of minors) | — |
 | Trainer, responsible, group admin, `eventAdmin`, privileged | + findings | confirm attendance per event (from its start on), assign / take out events — only while the course is not locked; exports |
 | Responsible, group admin, privileged | + compensation columns (when the finance document was read) | lock / unlock, request compensation, «reported», fill in missing J+S numbers |
 | Treasurer | + findings, compensation columns | exports |
 
+- **View gate** (`mayViewCourseTable`): the course, its events and the viewer's own group memberships
+  (`listMembershipsOfMember(personKey, 'person', 'group')`) are read to decide; the group's members, the unassigned
+  events and the finance document only after it.
 - **Attendance.** Tapping a column opens an ActionSheet (record attendance, take out of the course). The dialog
   starts from the stored entries, else from the prefill; a not yet confirmed event opens dirty, so saving the unchanged
-  prefill IS the confirmation. The first confirmation writes every row, later saves only the corrections (each entry
-  keeps its own `by`/`at`). Rows whose person key is empty or not plain (`[A-Za-z0-9_]+`) are dropped, a person is
+  prefill IS the confirmation. Saving merges against the LIVE event: persons without a stored entry and rows the user
+  changed are written, everything else keeps what is stored (also what another trainer stored while the dialog was
+  open). Only the first confirmation writes `attendanceConfirmedBy/At`; corrections carry `by`/`at` per entry. Rows whose person key is empty or not plain (`[A-Za-z0-9_]+`) are dropped, a person is
   written once. One `updateDoc` with field paths (`CourseService.writeAttendance`), so a member signing up at the same
   time (`attendees[]`) never collides.
 - **Lock** refuses with the list of past, unconfirmed events (§7.8). **Unlock** warns that a new J+S import overwrites
-  the reported attendance.
+  the reported attendance and removes `lockedBy` / `lockedAt`. Lock, unlock and «reported» write only those fields
+  (`CourseService.updateCourseState`), never the whole loaded course.
+- **Names** follow the viewer's `nameDisplay` everywhere on the page; **amounts** show their currency (the rates').
 - **Exports.** Generic CSV (`<course name>.csv`, labels from i18n, compensation columns only for finance readers);
   J+S file (`<courseNumber>_awk.csv`) after a dialog with the BASPO hints and the findings (rows with findings are left
   out, the rest exports).

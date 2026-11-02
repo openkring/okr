@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { COURSE_I18N_KEYS } from './course-i18n';
-import { compensationErrorKey, compensationSummary, CourseCompensationResult, escapeHtml, htmlLines } from './course-request.util';
+import { compensationErrorKey, compensationSummary, CourseCompensationResult, escapeHtml, formatCourseAmount, htmlLines } from './course-request.util';
 
 const REASONS = [
   'course-not-locked', 'course-archived', 'invalid-rate', 'invalid-person-key', 'duplicate-eligible', 'invalid-account', 'missing-account',
@@ -68,5 +68,13 @@ describe('compensationSummary', () => {
   it('says the books are kept outside when they are not native, and leaves out empty sections', () => {
     const result: CourseCompensationResult = { nativeBooks: false, written: 0, taskKey: 't', kept: [], cancelled: [], unlistedKeys: [] };
     expect(compensationSummary(result, nameOf, money, labels)).toBe('Outside.');
+  });
+});
+
+describe('formatCourseAmount', () => {
+  it('shows the currency and Swiss grouping, CHF without one', () => {
+    expect(formatCourseAmount(120000, 'EUR')).toMatch(/^EUR 1.200\.00$/);
+    expect(formatCourseAmount(5)).toBe('CHF 0.05');
+    expect(formatCourseAmount(0, '')).toBe('CHF 0.00');
   });
 });

@@ -59,7 +59,7 @@ describe('attendanceRowsForEvent', () => {
     const table = buildCourseTable(course(), [past], [], [], TODAY);
     const rows = attendanceRowsForEvent(table, past, ['pT']);
     expect(rows.map(r => r.person.key)).toEqual(['pT', 'pA', 'pB']);
-    expect(rows[0]).toMatchObject({ presence: 'absent', function: 'leader', isTrainer: true });
+    expect(rows[0]).toMatchObject({ presence: 'absent', function: 'leader', isTrainer: true, initial: { presence: 'absent', function: 'leader' } });
     expect(rows[0].stored).toBeUndefined();
     expect(rows[1]).toMatchObject({ presence: 'present', function: 'participant', signUp: 'accepted' });
     expect(rows[2]).toMatchObject({ presence: 'present', function: 'leader', signUp: 'declined', stored: { presence: 'present', function: 'leader' } });
@@ -74,31 +74,59 @@ describe('attendanceRowsForEvent', () => {
 });
 
 describe('attendanceEntriesToWrite', () => {
-  it('writes every row on the first confirmation, with by/at', () => {
-    const entries = attendanceEntriesToWrite([row('pA', 'present'), row('pB', 'absent', 'participant', { presence: 'absent', function: 'participant' })], 'pT', '20261101190000', false);
+  type PF = Pick<AttendanceEntry, 'presence' | 'function'>;
+  const opened = (r: AttendanceRow, initial: PF): AttendanceRow => ({ ...r, initial });
+
+  it('writes every row when nothing is stored yet (first confirmation), with by/at', () => {
+    const entries = attendanceEntriesToWrite([row('pA', 'present'), row('pB', 'absent')], 'pT', '20261101190000', {});
     expect(entries.map(e => e.person.key)).toEqual(['pA', 'pB']);
     expect(entries[0]).toMatchObject({ presence: 'present', function: 'participant', by: 'pT', at: '20261101190000' });
+    expect(attendanceEntriesToWrite([row('pA', 'present')], 'pT', 'now', undefined)).toHaveLength(1);
   });
 
   it('drops empty and non-plain keys and writes a person only once (first wins)', () => {
     const rows = [row('pA', 'present'), row('', 'present'), row('a.b', 'present'), row('x/y', 'absent'), row('pA', 'absent')];
-    const entries = attendanceEntriesToWrite(rows, 'pT', 'now', false);
+    const entries = attendanceEntriesToWrite(rows, 'pT', 'now', {});
     expect(entries.map(e => [e.person.key, e.presence])).toEqual([['pA', 'present']]);
   });
 
-  it('after a confirmation writes only the corrections and the rows without a stored entry', () => {
+  it('against the live entries: skips equal rows, writes user changes and persons without an entry', () => {
+    const live: Record<string, PF> = {
+      pA: { presence: 'present', function: 'participant' },
+      pB: { presence: 'absent', function: 'participant' },
+      pC: { presence: 'present', function: 'participant' },
+    };
     const rows = [
-      row('pA', 'present', 'participant', { presence: 'present', function: 'participant' }),   // unchanged
-      row('pB', 'excused', 'participant', { presence: 'absent', function: 'participant' }),    // presence corrected
-      row('pC', 'present', 'leader', { presence: 'present', function: 'participant' }),        // function corrected
-      row('pD', 'absent'),                                                                      // new person
+      opened(row('pA', 'present'), live['pA']),               // unchanged
+      opened(row('pB', 'excused'), live['pB']),               // presence corrected by the user
+      opened(row('pC', 'present', 'leader'), live['pC']),     // function corrected by the user
+      opened(row('pD', 'absent'), { presence: 'absent', function: 'participant' }),   // no live entry
     ];
-    expect(attendanceEntriesToWrite(rows, 'pT', 'now', true).map(e => e.person.key)).toEqual(['pB', 'pC', 'pD']);
+    expect(attendanceEntriesToWrite(rows, 'pT', 'now', live).map(e => e.person.key)).toEqual(['pB', 'pC', 'pD']);
+  });
+
+  it('keeps what somebody else stored while the dialog was open, unless the user changed that row', () => {
+    // the dialog opened on the prefill (nothing stored); meanwhile another trainer confirmed pA excused, pB present
+    const live: Record<string, PF> = {
+      pA: { presence: 'excused', function: 'participant' },
+      pB: { presence: 'present', function: 'participant' },
+    };
+    const rows = [
+      opened(row('pA', 'present'), { presence: 'present', function: 'participant' }),   // left alone → theirs stays
+      opened(row('pB', 'absent'), { presence: 'present', function: 'participant' }),    // changed by the user → written
+    ];
+    const entries = attendanceEntriesToWrite(rows, 'pT', 'now', live);
+    expect(entries.map(e => [e.person.key, e.presence])).toEqual([['pB', 'absent']]);
+  });
+
+  it('a row without `initial` that differs from the live entry counts as a change', () => {
+    const live: Record<string, PF> = { pA: { presence: 'absent', function: 'participant' } };
+    expect(attendanceEntriesToWrite([row('pA', 'present')], 'pT', 'now', live)).toHaveLength(1);
   });
 
   it('copies the person, so the written entry does not share the row object', () => {
     const r = row('pA', 'present');
-    const [written] = attendanceEntriesToWrite([r], 'pT', 'now', false);
+    const [written] = attendanceEntriesToWrite([r], 'pT', 'now', {});
     expect(written.person).toEqual(r.person);
     expect(written.person).not.toBe(r.person);
   });

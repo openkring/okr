@@ -171,7 +171,8 @@
       "rate": "Ansatz",
       "amount": "Betrag",
       "unlisted": "hat geleitet, steht aber nicht auf der Liste der Entschädigungsberechtigten"
-    }
+    },
+    "upcoming": "Termin hat noch nicht begonnen"
   },
   "unassigned": {
     "title": "Termine der Gruppe ohne Kurs",
@@ -233,14 +234,14 @@
     "participant": "Teilnehmer/in"
   },
   "request": {
-    "confirm": "Entschädigung beantragen? Für jede berechtigte Person wird eine Buchung vorbereitet, die die Kassenführung prüft.",
+    "confirm": "Entschädigung beantragen? Die Kassenführung erhält die Abrechnung zum Prüfen. Wird die Buchhaltung in der App geführt, wird für jede berechtigte Person eine Buchung vorbereitet.",
     "notLocked": "Friere den Kurs zuerst ein, damit die Zahlen feststehen.",
     "noFinance": "Für diesen Kurs ist noch keine Entschädigung eingerichtet. Wähle in den Kurseinstellungen die Buchhaltung und die Ansätze.",
     "done": {
       "title": "Antrag gestellt",
       "written": "{count} Buchungen sind vorbereitet. Die Kassenführung hat eine Aufgabe zum Prüfen erhalten.",
       "external": "Diese Buchhaltung wird ausserhalb der App geführt. Die Kassenführung hat eine Aufgabe mit der Abrechnung erhalten.",
-      "kept": "Schon ausbezahlt, mit einem anderen Betrag (bisher → neu):",
+      "kept": "In der Buchhaltung schon freigegeben, mit einem anderen Betrag (bisher → neu):",
       "cancelled": "Von der Kassenführung abgelehnt, bleibt so (bisher → neu):",
       "unlisted": "Haben geleitet, stehen aber nicht auf der Liste der Berechtigten:"
     },

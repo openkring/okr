@@ -16,8 +16,9 @@ import { CourseTableStore } from './course-table.store';
 const CLOCK_INTERVAL_MS = 60_000;
 
 /**
- * The course table (spec 1.132 §8): `/course/table/:courseKey`. Everybody who may read the course sees the whole
- * table with sign-ups and attendance (D7) — the amounts only those who may read the finance document. Trainers,
+ * The course table (spec 1.132 §8): `/course/table/:courseKey`. Whoever has a role in the course, is a member of its
+ * group or appears in the table sees the whole table with sign-ups and attendance (D7) — the amounts only those who
+ * may read the finance document; everybody else gets the not-found state (§13, `mayViewCourseTable`). Trainers,
  * responsible persons, group admins, eventAdmin and privileged confirm the attendance per event (tap a column) and
  * assign group events while the course is not locked; the toolbar menu holds the exports, lock / unlock, the
  * compensation request and the «reported» note, each for the people §6 names.
@@ -50,9 +51,7 @@ const CLOCK_INTERVAL_MS = 60_000;
     </ion-header>
 
     <ion-content>
-      @if (store.isLoading() && !store.course()) {
-        <okr-spinner />
-      } @else if (store.notFound()) {
+      @if (store.notFound()) {
         <okr-empty-list [message]="store.i18n.table_notFound()" />
       } @else if (store.table(); as table) {
         @if (store.isLocked() || store.course()?.reportedAt) {
@@ -77,6 +76,9 @@ const CLOCK_INTERVAL_MS = 60_000;
           [unlistedKeys]="store.unlistedKeys()"
           [typeLabels]="store.typeLabels()"
           [formatMoney]="formatMoney"
+          [nameDisplay]="store.nameDisplay()"
+          [today]="store.today()"
+          [nowTime]="store.nowTime()"
           (eventClicked)="showEventActions($event)"
           (assignClicked)="store.assign($event)"
           (addNumberClicked)="store.promptMissingNumber($event)"
@@ -102,7 +104,7 @@ export class CourseTablePage {
   });
   /** the toolbar menu: anybody who may export or manage; plain members have nothing to do here */
   protected readonly hasActions = computed(() => this.store.canExport() || this.store.canManage());
-  protected readonly formatMoney = (minor: number): string => this.store.money(minor);
+  protected readonly formatMoney = (minor: number, currency?: string): string => this.store.money(minor, currency);
 
   constructor() {
     effect(() => this.store.loadTable(this.courseKey()));

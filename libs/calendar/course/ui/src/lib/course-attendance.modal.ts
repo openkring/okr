@@ -3,6 +3,7 @@ import { IonContent, ModalController } from '@ionic/angular';
 
 import { AttendanceFormModel, AttendanceRow, COURSE_I18N_KEYS, CourseI18n } from '@okr/calendar-course-util';
 import { I18nService } from '@okr/shared-i18n';
+import { NameDisplay } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
@@ -31,6 +32,7 @@ import { CourseAttendanceForm } from './course-attendance.form';
           [formData]="formData" (formDataChange)="onFormDataChange($event)"
           [i18n]="i18n"
           [intro]="intro()"
+          [nameDisplay]="nameDisplay()"
           [showForm]="showForm()"
           [readOnly]="isReadOnly()"
           (dirty)="formDirty.set($event)"
@@ -53,6 +55,8 @@ export class CourseAttendanceModal {
   public readonly confirmed = input(false);
   /** «Bestätigt von … am …», or the intro for a first confirmation */
   public readonly intro = input('');
+  /** the viewer's person display order, as on the course table */
+  public readonly nameDisplay = input<NameDisplay>(NameDisplay.FirstLast);
   public readonly readOnly = input(false);
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 

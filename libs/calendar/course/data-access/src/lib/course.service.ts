@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { FieldPath } from 'firebase/firestore';
+import { deleteField, FieldPath } from 'firebase/firestore';
 import { map, Observable, of } from 'rxjs';
 
 import { ActivityService } from '@okr/activity-data-access';
@@ -18,6 +18,17 @@ import { PFX } from './scope';
 
 /** Compensation bookings are written by `requestCourseCompensation` under the okey `course-<courseKey>-<personKey>`. */
 const COMPENSATION_BOOKING_PREFIX = 'course-';
+
+/**
+ * The course fields the table page changes (lock, unlock, «reported»). `lockedBy: null` removes the field.
+ * Deliberately narrow: never the whole model, never the server-maintained `trainerKeys` / `responsibleKeys`.
+ */
+export type CourseStateFields = {
+  isLocked?: boolean;
+  lockedBy?: AvatarInfo | null;
+  lockedAt?: string;
+  reportedAt?: string;
+};
 
 /** One released (`posted`) compensation booking: who, the booking date (StoreDate) and the amount in minor units. */
 export type PostedCompensation = { date: string; personKey: string; name: string; amount: number };
@@ -86,6 +97,21 @@ export class CourseService {
     const key = await this.firestoreService.updateModel<CourseModel>(CourseCollection, payload, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
     void this.activityService.log('course', 'update', currentUser, this.activityPayload(course));
     return key;
+  }
+
+  /**
+   * Write only the lock state / «reported» note of a course (one `updateDoc` with exactly these fields), so a stale
+   * copy of the rest of the course is never written back. `lockedBy: null` deletes the field.
+   */
+  public async updateCourseState(courseKey: string, fields: CourseStateFields): Promise<void> {
+    if (!courseKey) die('CourseService.updateCourseState: courseKey is mandatory.');
+    const data: Record<string, unknown> = {};
+    if (fields.isLocked !== undefined) data['isLocked'] = fields.isLocked;
+    if (fields.lockedBy !== undefined) data['lockedBy'] = fields.lockedBy === null ? deleteField() : { ...fields.lockedBy };
+    if (fields.lockedAt !== undefined) data['lockedAt'] = fields.lockedAt;
+    if (fields.reportedAt !== undefined) data['reportedAt'] = fields.reportedAt;
+    if (Object.keys(data).length === 0) return;
+    await this.firestoreService.updateFields(CourseCollection, courseKey, data, this.i18n.update_error());
   }
 
   /**
