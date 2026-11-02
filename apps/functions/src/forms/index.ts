@@ -119,6 +119,18 @@ export const FORM_MAPPINGS: FormMapping[] = [
     propertiesField: 'properties',
   },
   {
+    // 1.125 B / D-W4 — the course registration: an application FOR a course. `applicationFor: 'course'`
+    // keeps `accept()` from creating a member; the course itself is the typed property `courseId`
+    // (an implicit field, resolved server-side from the section). Mirrors
+    // FORM_MAPPINGS in forms-util — edit BOTH copies.
+    mappingKey: 'applications.course',
+    label: 'Applications (Kurse)',
+    modelType: 'ApplicationModel',
+    collectionName: 'applications',
+    defaults: { state: 'applied', source: 'form', applicationFor: 'course' },
+    propertiesField: 'properties',
+  },
+  {
     // C5 §2 — the kring.ch lead form. NOT written by the generic collection path below: a prospect
     // is two documents (the record + its contact details in the address vault), so this mapping is
     // dispatched to `createProspect`. See the doc comment there.

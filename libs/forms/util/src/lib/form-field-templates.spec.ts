@@ -14,6 +14,20 @@ describe('getPrefillFields', () => {
     ]);
   });
 
+  it('returns the course set for applications.course with an implicit courseId', () => {
+    const fields = getPrefillFields('applications.course');
+    expect(fields.map(f => f.key)).toEqual([
+      'firstName', 'lastName', 'gender', 'dateOfBirth', 'email', 'phone',
+      'streetName', 'streetNumber', 'zipCode', 'city', 'courseId',
+    ]);
+    const course = fields.find(f => f.key === 'courseId');
+    expect(course?.type).toBe('implicit');
+    expect(course?.label).toBe('Kurs');
+    expect(course?.asProperty).toBe(true);
+    expect(course && 'valueType' in course ? course.valueType : undefined).toBe('text');
+    expect(fields.some(f => f.type === 'ssn')).toBe(false);
+  });
+
   it('asks for the AHV number with an ssn field in both application mappings', () => {
     for (const mappingKey of ['applications.default', 'applications.junior']) {
       const ssn = getPrefillFields(mappingKey).find(f => f.key === 'ssnId');

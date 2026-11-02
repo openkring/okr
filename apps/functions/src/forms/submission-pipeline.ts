@@ -1,8 +1,10 @@
-import type { DerivedValue, Field } from '@okr/shared-models';
+import { OTHER_OPTION_VALUE } from '@okr/shared-models';
+import type { BaseType, DerivedValue, Field } from '@okr/shared-models';
 import {
   buildTypedProperties,
   coerceToPropertyType,
   computeDerivedValues,
+  FORM_OTHER_TEXT_MAX,
   formatAnswer,
   getVisibleFieldIds,
   isSsnField,
@@ -19,6 +21,12 @@ import {
  * are not an input field of the definition (honeypot, `_jsToken`, `personKey`, `reviewer`, …)
  * are dropped. Derived values overwrite whatever the client sent for the same key.
  *
+ * Implicit values (spec §8.1) come from `submitForm` (section config, then an allowed link value, then the
+ * field default): every client value for an implicit field is dropped first, the `implicit` argument is merged
+ * over the rest, and an implicit field is never required. An «Andere» text (`<key>Other`, spec §9) is kept only
+ * for a visible `allowOther` field whose answer picks «Andere», only when no real field owns that key, and is
+ * required then; one over `FORM_OTHER_TEXT_MAX` is reported in `invalidProperties`.
+ *
  * AHV numbers (`ssn` fields, and any field keyed `ssnId`) are vault data (privacy 1.19): checked here (EAN-13), stored in the
  * electronic 13-digit format in the target record, and never copied anywhere else — the e-mail
  * rows show «angegeben», the task note and every other side effect get `omitSsnValues`.
@@ -34,6 +42,10 @@ export interface PreparedSubmission {
   invalidSsn: string[];
   /** Keys of derived `asProperty` values that do not coerce to their type (admin-authored: logged, not rejected). */
   droppedDerivedProperties: string[];
+  /** Ids of the fields visible for the merged input (client values plus the implicit ones). */
+  visible: Set<string>;
+  /** Visible input answers by key — implicit values and valid «Andere» texts included, before `asProperty` fields move into `properties`. */
+  answers: Record<string, unknown>;
   /** What the notification e-mail shows: visible answers in field order, then derived values. */
   rows: SubmissionRow[];
 }
@@ -68,16 +80,57 @@ export function buildSubmissionRows(
   return rows;
 }
 
+function otherTextKey(field: Field): string {
+  return `${field.key}Other`;
+}
+
+/** The answer picks «Andere»: the reserved value, or a list holding it (checkbox group). */
+function picksOther(field: Field, value: unknown): boolean {
+  if (!('allowOther' in field) || field.allowOther !== true) return false;
+  return Array.isArray(value) ? value.includes(OTHER_OPTION_VALUE) : value === OTHER_OPTION_VALUE;
+}
+
+/**
+ * The «Andere» text of one visible field (spec §9): required when «Andere» is picked, kept in `answers` under
+ * `<key>Other` when valid. Skipped when a real field of the form owns that key (its value is that field's own
+ * answer); too long -> `invalidProperties`. Anything else stays out of `answers`, i.e. is stripped.
+ */
+function collectOtherText(
+  field: Field,
+  value: unknown,
+  input: Record<string, unknown>,
+  defs: Field[],
+  answers: Record<string, unknown>,
+  missingRequired: string[],
+  invalidProperties: string[],
+): void {
+  const otherKey = otherTextKey(field);
+  if (!picksOther(field, value) || defs.some((x) => x.key === otherKey)) return;
+  const text = input[otherKey];
+  if (typeof text !== 'string' || text.trim() === '') {
+    missingRequired.push(otherKey);
+  } else if (text.length > FORM_OTHER_TEXT_MAX) {
+    invalidProperties.push(otherKey);
+  } else {
+    answers[otherKey] = text;
+  }
+}
+
 export function prepareSubmission(
   fields: Field[],
   derived: DerivedValue[] | undefined,
   propertiesField: string | undefined,
   raw: Record<string, unknown>,
   today: string,
+  implicit: Record<string, BaseType> = {},
 ): PreparedSubmission {
   const defs = (Array.isArray(fields) ? fields : []).filter((f) => !DISPLAY_TYPES.has(f.type));
   const all = Array.isArray(fields) ? fields : [];
-  const input = raw ?? {};
+  const implicitKeys = new Set(defs.filter((f) => f.type === 'implicit').map((f) => f.key));
+  const input: Record<string, unknown> = {};
+  // the client never sets an implicit value; the server's resolution (only implicit keys) is merged over the rest
+  for (const [key, value] of Object.entries(raw ?? {})) if (!implicitKeys.has(key)) input[key] = value;
+  for (const [key, value] of Object.entries(implicit ?? {})) if (implicitKeys.has(key)) input[key] = value;
   const visible = getVisibleFieldIds(all, input, today);
   const sorted = [...defs].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
@@ -100,13 +153,14 @@ export function prepareSubmission(
       }
       value = ssn;
     }
-    if (field.required && isEmpty(value)) missingRequired.push(field.key);
+    if (field.required && field.type !== 'implicit' && isEmpty(value)) missingRequired.push(field.key);
     if (value !== undefined) {
       answers[field.key] = value;
     } else if (isSingleCheckbox(field)) {
       // An unticked single checkbox may arrive as nothing at all: store the «nein», not a gap.
       answers[field.key] = false;
     }
+    collectOtherText(field, value, input, defs, answers, missingRequired, invalidProperties);
   }
 
   // A derived property without a type is text: it must never fall back to a top-level key.
@@ -129,6 +183,8 @@ export function prepareSubmission(
       continue;
     }
     values[field.key] = answers[field.key];
+    const otherKey = otherTextKey(field);
+    if (otherKey in answers) values[otherKey] = answers[otherKey];
   }
 
   for (const d of derivedList) {
@@ -147,7 +203,7 @@ export function prepareSubmission(
   }
 
   const rows = buildSubmissionRows(sorted.filter((f) => visible.has(f.id)), answers, derivedValues);
-  return { values, missingRequired, invalidProperties, invalidSsn, droppedDerivedProperties, rows };
+  return { values, missingRequired, invalidProperties, invalidSsn, droppedDerivedProperties, visible, answers, rows };
 }
 
 /**

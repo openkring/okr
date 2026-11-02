@@ -1,4 +1,4 @@
-import { Field, FieldOption, FieldType } from '@okr/shared-models';
+import { Field, FieldOption, FieldType, PropertyType } from '@okr/shared-models';
 
 import type { FormI18n } from './forms-i18n';
 
@@ -12,6 +12,9 @@ interface FieldTemplate {
   label: string;
   required?: boolean;
   options?: FieldOption[];
+  /** `implicit` only: the type of the stored value */
+  valueType?: PropertyType;
+  asProperty?: boolean;
 }
 
 /**
@@ -54,6 +57,21 @@ const FORM_FIELD_TEMPLATES: Record<string, FieldTemplate[]> = {
     { key: 'countryCode',   type: 'text',  label: 'Land' },
     { key: 'ssnId',         type: 'ssn',   label: 'AHV-Nummer' },
   ],
+  'applications.course': [
+    { key: 'firstName',     type: 'text',  label: 'Vorname',       required: true },
+    { key: 'lastName',      type: 'text',  label: 'Nachname',      required: true },
+    { key: 'gender',        type: 'radio', label: 'Geschlecht',    required: true,
+      options: [{ label: 'Männlich', value: 'male' }, { label: 'Weiblich', value: 'female' }] },
+    { key: 'dateOfBirth',   type: 'date',  label: 'Geburtsdatum',  required: true },
+    { key: 'email',         type: 'email', label: 'E-Mail',        required: true },
+    { key: 'phone',         type: 'phone', label: 'Telefon' },
+    { key: 'streetName',    type: 'text',  label: 'Strasse' },
+    { key: 'streetNumber',  type: 'text',  label: 'Nr.' },
+    { key: 'zipCode',       type: 'text',  label: 'PLZ' },
+    { key: 'city',          type: 'text',  label: 'Ort' },
+    // the course (CourseModel.okey): never shown, set by the embedding section's `implicitValues` (D-W4)
+    { key: 'courseId',      type: 'implicit', label: 'Kurs', valueType: 'text', asProperty: true },
+  ],
 };
 
 function buildField(template: FieldTemplate, order: number): Field {
@@ -75,6 +93,8 @@ function buildField(template: FieldTemplate, order: number): Field {
       return { ...base, type: template.type, avatarType: 'person' };
     case 'category':
       return { ...base, type: template.type, categoryName: '' };
+    case 'implicit':
+      return { ...base, type: 'implicit', valueType: template.valueType ?? 'text', asProperty: template.asProperty };
     default:
       return { ...base, type: template.type } as Field;
   }
