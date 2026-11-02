@@ -62,38 +62,46 @@ const FIELDS = [
   field(1, 'lastName', 'text', 'Nachname', { required: true, width: 'half' }),
   field(2, 'gender', 'category', 'Geschlecht', { required: true, categoryName: 'gender' }),
   field(3, 'dateOfBirth', 'date', 'Geburtsdatum', { required: true }),
-  field(4, 'email', 'email', 'E-Mail', { required: true, width: 'half' }),
-  field(5, 'phone', 'phone', 'Telefon', { required: true, width: 'half', region: 'CH' }),
+  // Same age limit as `needsSsn` (youth or under 20). An `ssn` field: the server checks the number
+  // (EAN-13), stores it as 13 digits in the application only and shows it as «angegeben» in the
+  // notification e-mail — it never reaches a task note, a workflow event or an export.
+  field(4, 'ssnId', 'ssn', 'AHV-Nummer', {
+    required: true,
+    visibleIf: rule('all', when('dateOfBirth', 'ageLt', 20)),
+  }),
+  field(5, 'email', 'email', 'E-Mail', { required: true, width: 'half' }),
+  field(6, 'phone', 'phone', 'Telefon', { required: true, width: 'half', region: 'CH' }),
   // address rows tile: street + number (½ + ½), then zip + city + country (⅓ each)
-  field(6, 'streetName', 'text', 'Strasse', { required: true, width: 'half' }),
-  field(7, 'streetNumber', 'text', 'Nr.', { required: true, width: 'half' }),
-  field(8, 'zipCode', 'text', 'PLZ', { required: true, width: 'third' }),
-  field(9, 'city', 'text', 'Ort', { required: true, width: 'third' }),
-  field(10, 'countryCode', 'text', 'Land', { required: true, width: 'third' }),
+  field(7, 'streetName', 'text', 'Strasse', { required: true, width: 'half' }),
+  field(8, 'streetNumber', 'text', 'Nr.', { required: true, width: 'half' }),
+  field(9, 'zipCode', 'text', 'PLZ', { required: true, width: 'third' }),
+  field(10, 'city', 'text', 'Ort', { required: true, width: 'third' }),
+  field(11, 'countryCode', 'text', 'Land', { required: true, width: 'third' }),
 
-  field(11, 'rowingExperience', 'checkbox', 'Ich bin schon gerudert', {
+  field(12, 'rowingExperience', 'checkbox', 'Ich bin schon gerudert', {
     asProperty: true,
     visibleIf: rule('all', when('dateOfBirth', 'ageGte', 20)),
   }),
 
-  field(12, 'rowingBlock', 'divider', 'Rudererfahrung', {
+  field(13, 'rowingBlock', 'divider', 'Rudererfahrung', {
     visibleIf: rule('all', when('rowingExperience', 'isChecked')),
   }),
-  field(13, 'previousClub', 'text', 'Bisheriger Club', { asProperty: true }),
+  field(14, 'previousClub', 'text', 'Bisheriger Club', { asProperty: true }),
 
-  // Same age limit as `applicationAs = youth` below: every youth application needs a guardian
-  // (applicationValidations requires the parent's names for youth).
-  field(14, 'guardianBlock', 'divider', 'Erziehungsberechtigte Person', {
-    visibleIf: rule('all', when('dateOfBirth', 'ageLt', 20)),
+  // Under 18 (by year of birth), the age at which applicationValidations requires the guardian's
+  // names (`needsGuardian`). An 18- or 19-year-old is still a youth applicant (applicationAs below)
+  // but applies without a guardian.
+  field(15, 'guardianBlock', 'divider', 'Erziehungsberechtigte Person', {
+    visibleIf: rule('all', when('dateOfBirth', 'ageLt', 18)),
   }),
-  field(15, 'parentFirstName', 'text', 'Vorname', { required: true, width: 'half' }),
-  field(16, 'parentLastName', 'text', 'Nachname', { required: true, width: 'half' }),
-  field(17, 'parentEmail', 'email', 'E-Mail', { required: true, width: 'half' }),
-  field(18, 'parentPhone', 'phone', 'Telefon', { width: 'half', region: 'CH' }),
+  field(16, 'parentFirstName', 'text', 'Vorname', { required: true, width: 'half' }),
+  field(17, 'parentLastName', 'text', 'Nachname', { required: true, width: 'half' }),
+  field(18, 'parentEmail', 'email', 'E-Mail', { required: true, width: 'half' }),
+  field(19, 'parentPhone', 'phone', 'Telefon', { width: 'half', region: 'CH' }),
 
   // No rule on this divider: it ends the guardian block so the field below is governed by its own rule.
-  field(19, 'swimBlock', 'divider', ''),
-  field(20, 'canSwim300m', 'checkbox', 'Ich kann 300m schwimmen', {
+  field(20, 'swimBlock', 'divider', ''),
+  field(21, 'canSwim300m', 'checkbox', 'Ich kann 300m schwimmen', {
     required: true,
     asProperty: true,
     visibleIf: rule('all', when('dateOfBirth', 'ageLt', 20)),

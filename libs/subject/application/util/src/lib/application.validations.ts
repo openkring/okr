@@ -1,7 +1,7 @@
 import { enforce, omitWhen, staticSuite, test } from 'vest';
 import { ApplicationModel } from '@okr/shared-models';
 import { ssnValidations } from '@okr/subject-person-util';
-import { needsSsn } from './application.util';
+import { needsGuardian, needsSsn } from './application.util';
 
 // Vest messages are i18n keys: okr-error-note resolves any message starting with '@'.
 const PFX = '@subject/application/feature.validation.';
@@ -42,13 +42,19 @@ export const applicationValidations = staticSuite((app: ApplicationModel) => {
   omitWhen(!app.email,       () => { test('email',       EMAIL_INVALID, () => { enforce(app.email).matches(EMAIL_RE); }); });
   omitWhen(!app.parentEmail, () => { test('parentEmail', EMAIL_INVALID, () => { enforce(app.parentEmail).matches(EMAIL_RE); }); });
 
-  if (app.applicationAs !== 'youth') {
+  // The guardian's names are required under 18 (by year of birth) — the age at which the SCS
+  // application form shows its guardian block — not for every youth application: an 18- or
+  // 19-year-old junior applies without one, and must still be saveable here.
+  omitWhen(!needsGuardian(app), () => {
+    test('parentFirstName', REQUIRED, () => { enforce(app.parentFirstName).isNotBlank(); });
+    test('parentLastName',  REQUIRED, () => { enforce(app.parentLastName).isNotBlank(); });
+  });
+
+  // A youth application or a minor may give the guardian's e-mail/phone instead of their own.
+  if (app.applicationAs !== 'youth' && !needsGuardian(app)) {
     test('email', REQUIRED, () => { enforce(app.email).isNotBlank(); });
     test('phone', REQUIRED, () => { enforce(app.phone).isNotBlank(); });
   } else {
-    test('parentFirstName', REQUIRED, () => { enforce(app.parentFirstName).isNotBlank(); });
-    test('parentLastName',  REQUIRED, () => { enforce(app.parentLastName).isNotBlank(); });
-
     test('email', PFX + 'email_required', () => {
       enforce(!!app.email || !!app.parentEmail).isTruthy();
     });

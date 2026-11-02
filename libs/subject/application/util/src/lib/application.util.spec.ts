@@ -9,6 +9,7 @@ vi.mock('@okr/shared-util-core', async (importOriginal) => {
 import {
   newApplication,
   getApplicationIndex,
+  needsGuardian,
   needsSsn,
   toPersonModel,
   matchesStateFilter,
@@ -43,6 +44,36 @@ describe('getApplicationIndex', () => {
     expect(idx).toContain('Zürich');
     expect(idx).toContain('youth');
     expect(idx).toContain('applied');
+  });
+});
+
+describe('needsGuardian', () => {
+  const year = new Date().getFullYear();
+  const born = (age: number) => `${year - age}0101`;
+
+  it('is true under 18, counted by year of birth, whatever the kind of application', () => {
+    const app = newApplication('t');
+    app.applicationAs = 'adult';
+    app.dateOfBirth = born(17);
+    expect(needsGuardian(app)).toBe(true);
+    app.dateOfBirth = `${year - 17}1231`; // the year counts, not the birthday
+    expect(needsGuardian(app)).toBe(true);
+  });
+
+  it('is false from 18 on, also for a youth application', () => {
+    const app = newApplication('t');
+    app.applicationAs = 'youth';
+    app.dateOfBirth = born(18);
+    expect(needsGuardian(app)).toBe(false);
+    app.dateOfBirth = born(19);
+    expect(needsGuardian(app)).toBe(false);
+  });
+
+  it('is false without a valid date of birth', () => {
+    const app = newApplication('t');
+    app.applicationAs = 'youth';
+    app.dateOfBirth = '';
+    expect(needsGuardian(app)).toBe(false);
   });
 });
 

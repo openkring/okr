@@ -14,7 +14,7 @@ import {
 import { AhvFormat, formatAhv, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, fill, getAge } from '@okr/shared-util-core';
 import {
-  ApplicationI18n, applicationValidations, isMembershipApplication, needsSsn, proposeMembershipCategory, setPropertyValue
+  ApplicationI18n, applicationValidations, isMembershipApplication, needsGuardian, needsSsn, proposeMembershipCategory, setPropertyValue
 } from '@okr/application-util';
 
 /** A membership application. The parent modal drives saving through the change-confirmation. */
@@ -151,7 +151,7 @@ import {
           </ion-card-content>
         </ion-card>
 
-        @if (isYouth()) {
+        @if (showGuardian()) {
           <ion-card>
             <ion-card-header><ion-card-title>{{ i18n().section_parent() }}</ion-card-title></ion-card-header>
             <ion-card-content class="ion-no-padding">
@@ -268,7 +268,9 @@ export class ApplicationForm {
 
   // state
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
-  protected readonly isYouth = computed(() => this.formData().applicationAs === 'youth');
+  // a youth application, or an applicant under 18 whatever the kind: the guardian's names are
+  // required under 18 (needsGuardian), so the card must show whenever the suite asks for them
+  protected readonly showGuardian = computed(() => this.formData().applicationAs === 'youth' || needsGuardian(this.formData()));
   protected readonly showSsn = computed(() => needsSsn(this.formData()));
   /** the member category the application suggests — shown only, never written (spec 1.125 §13.1) */
   protected readonly proposal = computed(() => {

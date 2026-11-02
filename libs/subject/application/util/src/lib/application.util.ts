@@ -26,6 +26,17 @@ export function needsSsn(app: ApplicationModel): boolean {
   return age >= 0 && age < 20;
 }
 
+/**
+ * Whether the application needs a guardian («Erziehungsberechtigte Person»): the applicant is
+ * under 18, counted by year of birth (getAge) — the age at which the SCS application form shows
+ * its guardian block. Unlike `needsSsn` (youth or under 20) it does not follow `applicationAs`:
+ * an 18- or 19-year-old junior applies on their own.
+ */
+export function needsGuardian(app: ApplicationModel): boolean {
+  const age = getAge(app.dateOfBirth);
+  return age >= 0 && age < 18;
+}
+
 export function toPersonModel(app: ApplicationModel, tenantId: string): PersonModel {
   // ssn/dob ride along as form-model fields only — PersonService strips them from
   // the person write and syncs them into the addresses vault (spec 1.19 Phase 4).

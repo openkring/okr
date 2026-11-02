@@ -49,6 +49,43 @@ describe('applicationValidations', () => {
     expect(result.hasErrors('parentFirstName')).toBe(true);
   });
 
+  describe('guardian (under 18, by year of birth)', () => {
+    const year = new Date().getFullYear();
+    const born = (age: number) => `${year - age}0101`;
+    const youth = (age: number, patch: Partial<ApplicationModel> = {}) => validAdult({
+      applicationAs: 'youth', dateOfBirth: born(age), ssnId: '756.1234.5678.97',
+      parentFirstName: '', parentLastName: '', ...patch,
+    });
+
+    it('requires the guardian names under 18', () => {
+      const result = applicationValidations(youth(17));
+      expect(result.hasErrors('parentFirstName')).toBe(true);
+      expect(result.hasErrors('parentLastName')).toBe(true);
+    });
+
+    it('does not require them from 18 on, also for a youth application', () => {
+      for (const age of [18, 19]) {
+        const result = applicationValidations(youth(age));
+        expect(result.hasErrors('parentFirstName')).toBe(false);
+        expect(result.hasErrors('parentLastName')).toBe(false);
+        expect(result.isValid()).toBe(true);
+      }
+    });
+
+    it('requires them under 18 even when the application is not marked youth', () => {
+      const result = applicationValidations(validAdult({ applicationAs: 'adult', dateOfBirth: born(16), ssnId: '756.1234.5678.97' }));
+      expect(result.hasErrors('parentFirstName')).toBe(true);
+    });
+
+    it('accepts the guardian contact instead of the own one under 18', () => {
+      const result = applicationValidations(youth(15, {
+        email: '', phone: '', parentFirstName: 'Paul', parentLastName: 'Muster',
+        parentEmail: 'paul@example.com', parentPhone: '+41 79 000 00 00',
+      }));
+      expect(result.isValid()).toBe(true);
+    });
+  });
+
   it('requires the ssn for a youth application', () => {
     const youth = validAdult({
       applicationAs: 'youth', dateOfBirth: '20150101', ssnId: '',
