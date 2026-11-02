@@ -22,6 +22,7 @@ import { runFileTransferReap } from '../file-transfer/reap-file-transfers';
 import { runWeatherFetch } from '../weather/fetch-weather';
 import { runRegasoftApiWatch } from '../srv/api-watch';
 import { SRV_SECRETS } from '../_gateway/adapters/srv';
+import { runCourseEndTasks } from '../course/course-end-tasks';
 
 const REGION = 'europe-west6';
 const TIME_ZONE = 'Europe/Zurich';
@@ -35,6 +36,7 @@ export const NIGHTLY_JOBS: NamedJob[] = [
   { name: 'pinboardSweep', run: runPinboardSweep },
   { name: 'billScanReap', run: runBillScanReap },
   { name: 'privacyExportReap', run: runPrivacyExportReap },
+  { name: 'courseEndTasks', run: runCourseEndTasks },
 ];
 
 export const MORNING_JOBS: NamedJob[] = [
