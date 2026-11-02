@@ -93,6 +93,15 @@ describe('buildFingerprint', () => {
     expect(fixed).toEqual([{ key: 'all.personClubs.personId', before: 'zero', after: 'set' }]);
   });
 
+  it('reports whether the test system marks emails with x — a share, never an address', () => {
+    const allWith = (...emails: (string | null)[]) => ({ data: emails.map(email => ({ ...MEMBER, street: 's', email, personClubs: [] })), success: true, message: null });
+    expect(buildFingerprint(probe())['all.email.testMark']).toBe('none');
+    expect(buildFingerprint(probe({ all: allWith('a@b.chx', 'c@d.comx') }))['all.email.testMark']).toBe('all');
+    expect(buildFingerprint(probe({ all: allWith('a@b.chx', 'c@d.com') }))['all.email.testMark']).toBe('some');
+    expect(buildFingerprint(probe({ all: allWith(null, '') }))['all.email.testMark']).toBe('noEmail');
+    expect(JSON.stringify(buildFingerprint(probe({ all: allWith('secret@b.chx') })))).not.toContain('secret');
+  });
+
   it('a new field in /all is a difference of all.fields only', () => {
     const base = probe();
     const record = (base.all as { data: Record<string, unknown>[] }).data[0];

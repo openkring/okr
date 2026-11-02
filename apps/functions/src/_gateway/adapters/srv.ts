@@ -39,7 +39,7 @@ import { Club, RegasoftMember, SrvCountry, SrvMemberAll, SrvMemberLicenseDetail 
 import type { ProviderAdapter, GatewayContext } from '../provider';
 import { gatewayFetch } from '../http';
 
-import { isRegasoftTestSystem, regasoftApiKey, regasoftBaseUrl, regasoftClubId, REGASOFT_HOST } from '../../srv/shared';
+import { marksTestEmails, regasoftApiKey, regasoftBaseUrl, regasoftClubId, REGASOFT_HOST } from '../../srv/shared';
 import { stripTestEmail } from '../../srv/srv-update';
 import { checkShape } from '../../srv/shape-check';
 
@@ -128,7 +128,7 @@ export function unwrapMember(raw: unknown): RegasoftMember | null {
 // --- projections: kept verbatim from the pre-gateway callables so the retrofit
 //     is invisible to the client. Pure, so they are unit-testable on their own.
 
-/** `testSystem`: strip the test `x` from the email (D11), see `isRegasoftTestSystem`. */
+/** `testSystem`: strip the test `x` from the email (D11), see `marksTestEmails`. */
 export function mapSrvContact(m: RegasoftMember, testSystem: boolean) {
   return {
     srvId: m.id,
@@ -280,7 +280,7 @@ export const srvMemberDetailAdapter: ProviderAdapter<{ rid: number }, unknown, S
   // The test-system setting is read at map time; the cache holds the raw record.
   map: (raw) => {
     checkShape('detail', raw, SRV_DETAIL_FIELDS);
-    return mapSrvDetail(raw, isRegasoftTestSystem());
+    return mapSrvDetail(raw, marksTestEmails());
   },
   sourceTimestamp: () => null,
 };

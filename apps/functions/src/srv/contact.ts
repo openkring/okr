@@ -22,20 +22,20 @@ import {
   unwrapRawMember,
 } from '../_gateway/adapters/srv';
 
-import { isRegasoftTestSystem, regasoftApiKey, regasoftBaseUrl, regasoftClubId } from './shared';
+import { marksTestEmails, regasoftApiKey, regasoftBaseUrl, regasoftClubId } from './shared';
 import { buildSrvCreatePayload, runSrvPreview, runSrvUpdate } from './srv-update';
 
 /**
- * Writes to Regasoft stay switched off until they have been tested against PortalTest (plan
- * 1.133, Task 9). Regasoft's PUT replaces the whole record and a record can never be deleted:
- * the old payloads sent only part of it, so every update erased salutation, streetAdditional,
- * countryId, telefon, entryDate and inactiveDate (probe 2026-11-02,
- * planning/reference/REGASOFT.md). The read-modify-write in ./srv-update.ts fixes that, but it
- * is turned on only after the test. Blocking here, not only in the client, also stops app
- * versions that still offer the actions. The preview (`previewSrvUpdate`) sends nothing and is
- * never blocked.
+ * Regasoft's PUT replaces the whole record and a record can never be deleted: the old payloads
+ * sent only part of it, so every update erased salutation, streetAdditional, countryId, telefon,
+ * entryDate and inactiveDate (probe 2026-11-02, planning/reference/REGASOFT.md). The
+ * read-modify-write in ./srv-update.ts fixes that. Update switched on 2026-11-02 after the
+ * PortalTest gate (plan 1.133 Task 9: probe, then the update code itself on record 26183 — preview,
+ * city, country, passive, email, each changing only its fields, all restored). The app shows the
+ * action only after the in-app test (REGASOFT_UPDATE_VISIBLE). The preview (`previewSrvUpdate`)
+ * sends nothing and is never blocked.
  */
-const SRV_UPDATE_ENABLED = false;
+const SRV_UPDATE_ENABLED = true;
 /** Create stays off longer: a new Regasoft record can never be deleted again, and POST is unprobed (Q7). */
 const SRV_CREATE_ENABLED = false;
 
@@ -179,7 +179,7 @@ export async function handleGetSrvContacts(request: CallableRequest) {
   const ctx = await srvContext(request);
   const res = await runGateway(srvMembersAdapter, {}, ctx);
   logger.info(`${CF_NAME}: ${res.data.length} members`, { cached: res.cached });
-  const testSystem = isRegasoftTestSystem();
+  const testSystem = marksTestEmails();
   return res.data.map((m) => mapSrvContact(m, testSystem));
 }
 
@@ -282,7 +282,7 @@ export async function handleGetSrvMembersAll(request: CallableRequest): Promise<
   ]);
 
   const ownClubId = Number(regasoftClubId.value());
-  const testSystem = isRegasoftTestSystem();
+  const testSystem = marksTestEmails();
   const members: SrvMemberAll[] = [];
   const seen = new Set<number>();
   let dropped = 0;
@@ -326,7 +326,7 @@ export async function handleCreateSrvContact(request: CallableRequest<SrvContact
   }
 
   logger.info(`${CF_NAME}: creating SRV member`);
-  const payload = buildSrvCreatePayload(request.data, isRegasoftTestSystem());
+  const payload = buildSrvCreatePayload(request.data, marksTestEmails());
 
   try {
     const response = await axios.post<RegasoftMember>(
@@ -377,7 +377,7 @@ export async function handleUpdateSrvContact(
     const result = await runSrvUpdate({
       rid,
       changes,
-      testSystem: isRegasoftTestSystem(),
+      testSystem: marksTestEmails(),
       read: (id) => readRawSrvMember(id, ctx),
       write: putSrvMember,
       onWritten: () => invalidateSrvCaches(ctx),
@@ -420,7 +420,7 @@ export async function handlePreviewSrvUpdate(
     return await runSrvPreview({
       rid,
       changes,
-      testSystem: isRegasoftTestSystem(),
+      testSystem: marksTestEmails(),
       read: (id) => readRawSrvMember(id, ctx),
       readModified: readSrvModified,
     });

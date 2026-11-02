@@ -60,11 +60,11 @@ describe('handlePreviewSrvUpdate', () => {
       'https://regasoft.swissrowing.ch/PortalTest/api/club/members/26183',
       expect.objectContaining({ method: 'GET' }),
     );
-    // PortalTest: before/after are display copies without the x …
-    expect(res.before).toEqual({ ...RAW, email: 'bruno@example.ch' });
+    // PortalTest no longer marks emails (REGASOFT_TEST_EMAIL_MARK off): emails round-trip unchanged …
+    expect(res.before).toEqual(RAW);
     expect(res.after).toEqual({ ...RAW, city: 'Uster', email: 'a@b.ch' });
-    // … while the payload is exactly what would be sent: the changed email gets the x, every key round-trips.
-    expect(res.payload).toEqual({ ...RAW, city: 'Uster', email: 'a@b.chx' });
+    // … and the payload is exactly what would be sent, every key round-trips, no x appended.
+    expect(res.payload).toEqual({ ...RAW, city: 'Uster', email: 'a@b.ch' });
     expect(axiosPut).not.toHaveBeenCalled();
     expect(invalidateProvider).not.toHaveBeenCalled();
   });
@@ -147,7 +147,7 @@ describe('handleGetSrvMembersAll (C1, C3)', () => {
     expect(res.members.map(m => [m.contact.srvId, m.active])).toEqual([[1, true], [2, true], [3, false]]);
     expect(res.members[2].detail.leavingDate).toBe('20251231');
     expect(res.members[0].contact.mainClub).toBe(true);
-    expect(res.members[0].contact.email).toBe('bruno@example.ch');   // PortalTest: x stripped
+    expect(res.members[0].contact.email).toBe('bruno@example.chx');   // mark off: read unchanged
     expect(res.countries).toEqual([{ id: 3, countryCode: 'CH', ioc: 'SUI' }]);
   });
 
@@ -180,13 +180,37 @@ describe('handleGetSrvMembersAll (C1, C3)', () => {
   });
 });
 
-describe('writes stay switched off', () => {
-  it('update is rejected before anything is read or sent', async () => {
-    await expect(handleUpdateSrvContact(req({ srvId: 26183, changes: { city: 'Uster' } })))
-      .rejects.toMatchObject({ code: 'failed-precondition' });
-    expect(gatewayFetch).not.toHaveBeenCalled();
+describe('handleUpdateSrvContact (switched on after the Task 9 gate)', () => {
+  it('reads live, PUTs the complete record with the change, reads back, and drops the caches', async () => {
+    let stored: Record<string, unknown> = { ...RAW };
+    gatewayFetch.mockImplementation(async () => ({ data: { data: stored, success: true, message: null } }));
+    axiosPut.mockImplementation(async (_url: string, body: Record<string, unknown>) => { stored = body; return { data: { data: true } }; });
+
+    const res = await handleUpdateSrvContact(req({ srvId: 26183, changes: { city: 'Uster' } }));
+
+    expect(checkRoles).toHaveBeenCalledWith(expect.anything(), 'updateSrvContact', ['memberAdmin']);
+    expect(axiosPut).toHaveBeenCalledTimes(1);
+    expect(axiosPut.mock.calls[0][0]).toBe('https://regasoft.swissrowing.ch/PortalTest/api/club/members/26183');
+    expect(axiosPut.mock.calls[0][1]).toEqual({ ...RAW, city: 'Uster' });   // every key, incl. futureField and entryDate
+    expect(res.written).toEqual(['city']);
+    expect(res.ignored).toEqual([]);
+    expect(invalidateProvider).toHaveBeenCalled();
+  });
+
+  it('sends nothing when the change set changes nothing', async () => {
+    const res = await handleUpdateSrvContact(req({ srvId: 26183, changes: { city: 'Stäfa' } }));
+    expect(axiosPut).not.toHaveBeenCalled();
+    expect(res.written).toEqual([]);
+  });
+
+  it('still requires a valid srvId and accepts only writable fields', async () => {
+    await expect(handleUpdateSrvContact(req({ changes: { city: 'Uster' } }))).rejects.toMatchObject({ code: 'invalid-argument' });
+    await expect(handleUpdateSrvContact(req({ srvId: 26183, changes: { hasNewsletter: false } }))).rejects.toMatchObject({ code: 'invalid-argument' });
     expect(axiosPut).not.toHaveBeenCalled();
   });
+});
+
+describe('create stays switched off', () => {
 
   it('create is rejected before anything is sent', async () => {
     await expect(handleCreateSrvContact(req({ firstName: 'A', lastName: 'B', dateOfBirth: '19900102', gender: 2, email: null, mobile: null })))

@@ -147,6 +147,18 @@ function probed(raw: unknown, describe: (raw: unknown) => string): string {
 }
 
 /**
+ * Whether the test system marks emails with a trailing `x` (D11): 'all', 'none', 'some' of the
+ * non-empty emails in `/all`, or 'noEmail'. It stopped on 2026-11-02 ('none'); a change back to
+ * 'all' means `REGASOFT_TEST_EMAIL_MARK` must be switched on again. A share, never an address.
+ */
+function emailMarkState(records: Record<string, unknown>[]): string {
+  const emails = records.map(r => r['email']).filter((e): e is string => typeof e === 'string' && e !== '');
+  if (emails.length === 0) return 'noEmail';
+  const marked = emails.filter(e => e.endsWith('x')).length;
+  return marked === emails.length ? 'all' : marked === 0 ? 'none' : 'some';
+}
+
+/**
  * Field names only, sorted. For the member-list probes: their value types depend on the data — one
  * current member with a future exit date turns `leavingDate:null` into `string|null` — which would
  * raise a task without any API change.
@@ -186,6 +198,7 @@ export function buildFingerprint(probe: ApiProbe, system: 'test' | 'production' 
     'all.fields': probed(probe.all, raw => describeNames(listOf(raw))),
     'all.personClubs': probed(probe.all, raw => describeNames(clubsOf(listOf(raw)))),
     'all.personClubs.personId': probed(probe.all, raw => personIdState(clubsOf(listOf(raw)))),
+    'all.email.testMark': probed(probe.all, raw => emailMarkState(listOf(raw))),
     'allInactive.fields': probed(probe.allInactive, raw => describeNames(listOf(raw))),
     'list.inactive.fields': probed(probe.listInactive, raw => describeNames(listOf(raw))),
     'countries.envelope': probed(probe.countries, envelopeOf),
