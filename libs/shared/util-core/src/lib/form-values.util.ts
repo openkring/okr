@@ -1,4 +1,5 @@
 import type { BaseType, DerivedValue, Field, PropertyType, TypedProperty } from '@okr/shared-models';
+import { isBlankAhv } from './ahv.util';
 import { evaluateVisibilityRule } from './form-visibility.util';
 
 /**
@@ -50,6 +51,8 @@ export function propertyTypeOf(field: Field): PropertyType | undefined {
     case 'email':
     case 'phone':
       return 'text';
+    case 'ssn':
+      return undefined; // an AHV number maps to the model field `ssnId`, never to a typed property
     default:
       return undefined;
   }
@@ -117,4 +120,31 @@ export function buildTypedProperties(
     list.push({ key: d.key, type: d.type, value, label: d.key });
   }
   return list;
+}
+
+// ──────────────────────────────────────────
+// AHV answers (`ssn` fields) — they never leave the target record (privacy 1.19)
+// ──────────────────────────────────────────
+
+/** The keys of a form's AHV (`ssn`) fields. */
+export function ssnFieldKeys(fields: readonly Field[] | undefined): Set<string> {
+  return new Set((Array.isArray(fields) ? fields : []).filter((f) => f?.type === 'ssn' && typeof f.key === 'string').map((f) => f.key));
+}
+
+/**
+ * A copy of `values` without the answers of the form's AHV fields — for everything a submission
+ * feeds besides its target record: a task note, a workflow event, an external URL, a prospect or
+ * reservation built from named keys. An AHV number is vault data and may not be copied there.
+ */
+export function omitSsnValues(fields: readonly Field[] | undefined, values: Record<string, unknown>): Record<string, unknown> {
+  const keys = ssnFieldKeys(fields);
+  if (keys.size === 0) return { ...values };
+  return Object.fromEntries(Object.entries(values ?? {}).filter(([key]) => !keys.has(key)));
+}
+
+/** What an e-mail or an export shows instead of an AHV answer: «angegeben» or «–», never the number. */
+export function ssnPresenceLabel(value: unknown): string {
+  if (value === undefined || value === null) return '–';
+  if (typeof value === 'string' || typeof value === 'number') return isBlankAhv(value) ? '–' : 'angegeben';
+  return 'angegeben';
 }

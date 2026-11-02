@@ -6,7 +6,7 @@ import { OkrModel, NamedModel, TaggedModel, PropertyType } from './base.model';
 // ──────────────────────────────────────────
 
 export type FieldType =
-  | 'text' | 'email' | 'number' | 'phone' | 'iban' | 'password'
+  | 'text' | 'email' | 'number' | 'phone' | 'iban' | 'ssn' | 'password'
   | 'dropdown' | 'checkbox' | 'radio' | 'file' | 'images'
   | 'date' | 'time' | 'signature' | 'rating' | 'avatar' | 'category'
   | 'label' | 'paragraph' | 'divider';
@@ -59,6 +59,9 @@ export interface EmailField extends FieldBase { type: 'email'; }
 export interface NumberField extends FieldBase { type: 'number'; min?: number; max?: number; step?: number; integer?: boolean; }
 export interface PhoneField extends FieldBase { type: 'phone'; region?: string; }
 export interface IbanField extends FieldBase { type: 'iban'; countryWhitelist?: string[]; }
+// A Swiss AHV number (AHVN13), validated by its EAN-13 check digit and stored in the electronic
+// 13-digit format. Never a typed property, and never copied out of the target record (privacy 1.19).
+export interface SsnField extends FieldBase { type: 'ssn'; }
 export interface PasswordField extends FieldBase { type: 'password'; minLength?: number; requireUppercase?: boolean; requireNumber?: boolean; requireSymbol?: boolean; }
 export interface DropdownField extends FieldBase { type: 'dropdown'; options: FieldOption[]; }
 export interface CheckboxField extends FieldBase { type: 'checkbox'; options?: FieldOption[]; }
@@ -79,7 +82,7 @@ export interface ParagraphField extends FieldBase { type: 'paragraph'; isIndente
 export interface DividerField extends FieldBase { type: 'divider'; }
 
 export type Field =
-  | TextField | EmailField | NumberField | PhoneField | IbanField | PasswordField
+  | TextField | EmailField | NumberField | PhoneField | IbanField | SsnField | PasswordField
   | DropdownField | CheckboxField | RadioField | FileField | ImagesField
   | DateField | TimeField | SignatureField | RatingField | AvatarField | CategoryField
   | LabelField | ParagraphField | DividerField;

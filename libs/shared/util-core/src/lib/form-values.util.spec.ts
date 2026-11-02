@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { DerivedValue, Field, FieldCondition, PropertyType, VisibilityRule } from '@okr/shared-models';
-import { buildTypedProperties, coerceToPropertyType, computeDerivedValues, propertyTypeOf } from './form-values.util';
+import {
+  buildTypedProperties, coerceToPropertyType, computeDerivedValues, omitSsnValues, propertyTypeOf, ssnFieldKeys, ssnPresenceLabel,
+} from './form-values.util';
 import { getVisibleFieldIds } from './form-visibility.util';
 
 const TODAY = '20261028';
@@ -100,6 +102,7 @@ describe('propertyTypeOf', () => {
     ['avatar', undefined, undefined],
     ['password', undefined, undefined],
     ['iban', undefined, undefined],
+    ['ssn', undefined, undefined],
     ['time', undefined, undefined],
     ['label', undefined, undefined],
     ['divider', undefined, undefined],
@@ -209,5 +212,36 @@ describe('buildTypedProperties', () => {
     expect(buildTypedProperties(fields, { a: 'x' }, visible, undefined, undefined as unknown as Record<string, string>)).toEqual([
       { key: 'a', type: 'text', value: 'x', label: 'L a' },
     ]);
+  });
+});
+
+describe('AHV answers (ssn fields)', () => {
+  const fields = [f('a', 1, 'text', { key: 'lastName' }), f('b', 2, 'ssn', { key: 'ssnId' }), f('c', 3, 'divider')];
+
+  it('lists the keys of the ssn fields only', () => {
+    expect([...ssnFieldKeys(fields)]).toEqual(['ssnId']);
+    expect(ssnFieldKeys(undefined).size).toBe(0);
+  });
+
+  it('omits the ssn answers and keeps everything else', () => {
+    const values = { lastName: 'Muster', ssnId: '7560803581661', applicationAs: 'youth' };
+    expect(omitSsnValues(fields, values)).toEqual({ lastName: 'Muster', applicationAs: 'youth' });
+    expect(values.ssnId).toBe('7560803581661'); // the input is not mutated
+  });
+
+  it('returns a copy when the form has no ssn field', () => {
+    const values = { lastName: 'Muster' };
+    const result = omitSsnValues([f('a', 1, 'text', { key: 'lastName' })], values);
+    expect(result).toEqual(values);
+    expect(result).not.toBe(values);
+  });
+
+  it('shows «angegeben» or «–», never the number', () => {
+    expect(ssnPresenceLabel('7560803581661')).toBe('angegeben');
+    expect(ssnPresenceLabel('756.0803.5816.61')).toBe('angegeben');
+    expect(ssnPresenceLabel('')).toBe('–');
+    expect(ssnPresenceLabel('756.')).toBe('–');
+    expect(ssnPresenceLabel(undefined)).toBe('–');
+    expect(ssnPresenceLabel(null)).toBe('–');
   });
 });

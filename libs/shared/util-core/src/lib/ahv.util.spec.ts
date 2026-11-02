@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ahvn2string, AhvFormat, checkAhv, computeAhvn13checkDigit, formatAhv, isBlankAhv, maskAhv } from './ahv.util';
+import { ahvn2string, AhvFormat, checkAhv, computeAhvn13checkDigit, formatAhv, isBlankAhv, maskAhv, normalizeAhv } from './ahv.util';
 
 describe('ahv.util', () => {
 
@@ -147,5 +147,40 @@ describe('checkAhv', () => {
         expect(checkAhv('756292318310')).toBe(false);     // 12 digits
         expect(checkAhv('1234567890123')).toBe(false);    // not 756
         expect(checkAhv('7560803581662')).toBe(false);    // checksum off by one
+    });
+
+    // EAN-13: a crosssum that already is a multiple of 10 gives check digit 0, not 10
+    it('accepts a valid number whose check digit is 0', () => {
+        expect(computeAhvn13checkDigit('7560000000040')).toEqual(0);
+        expect(checkAhv('756.0000.0000.40')).toBe(true);
+        expect(checkAhv('756.0000.0000.41')).toBe(false);
+    });
+
+    it('accepts the placeholder the form builder shows', () => {
+        expect(checkAhv('756.1234.5678.97')).toBe(true);
+    });
+});
+
+describe('normalizeAhv', () => {
+
+    it('stores a valid number in the electronic format, whatever the notation', () => {
+        expect(normalizeAhv('756.0803.5816.61')).toEqual('7560803581661');
+        expect(normalizeAhv(' 7560803581661 ')).toEqual('7560803581661');
+        expect(normalizeAhv(7560803581661)).toEqual('7560803581661');
+    });
+
+    it('reads no number — empty, absent or the bare mask scaffolding — as empty', () => {
+        expect(normalizeAhv('')).toEqual('');
+        expect(normalizeAhv(undefined)).toEqual('');
+        expect(normalizeAhv(null)).toEqual('');
+        expect(normalizeAhv('756.')).toEqual('');
+    });
+
+    it('rejects an incomplete or wrong number and anything that is not text', () => {
+        expect(normalizeAhv('756.0803.5816.6')).toBeUndefined();
+        expect(normalizeAhv('756.0803.5816.62')).toBeUndefined();
+        expect(normalizeAhv({ ssn: '7560803581661' })).toBeUndefined();
+        expect(normalizeAhv(['7560803581661'])).toBeUndefined();
+        expect(normalizeAhv(true)).toBeUndefined();
     });
 });

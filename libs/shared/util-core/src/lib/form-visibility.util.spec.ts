@@ -159,6 +159,18 @@ describe('getVisibleFieldIds', () => {
     });
   });
 
+  describe('AHV numbers (ssn)', () => {
+    it('the bare mask scaffolding is empty, a typed number is filled', () => {
+      expect(shown('ssn', { op: 'isEmpty' }, '756.')).toBe(true);
+      expect(shown('ssn', { op: 'isFilled' }, '756.')).toBe(false);
+      expect(shown('ssn', { op: 'isFilled' }, '756.0803.5816.61')).toBe(true);
+      expect(shown('ssn', { op: 'isEmpty' }, '')).toBe(true);
+    });
+    it('the scaffolding stays a value for a text controller', () => {
+      expect(shown('text', { op: 'isFilled' }, '756.')).toBe(true);
+    });
+  });
+
   describe('dates', () => {
     it('refuse to compare garbage', () => {
       expect(shown('date', { op: 'lt', value: '20260101' }, 'abc')).toBe(false);
