@@ -23,8 +23,10 @@ const probe = (over: Record<string, unknown> = {}) => ({
   listStatus: 200,
   list: { data: [MEMBER], success: true, message: null },
   detail: { data: { id: 1, personClubs: [{ clubId: 1, clubName: 'X', mainClub: true }] }, success: true, message: null },
-  listAll: { data: [MEMBER], success: true, message: null },
+  all: { data: [{ ...MEMBER, street: 's', personClubs: [{ personId: 0, clubId: 1, clubName: 'X', mainClub: true }] }], success: true, message: null },
+  allInactive: { data: [{ ...MEMBER, street: 's', leavingDate: '2025-12-31T00:00:00' }], success: true, message: null },
   listInactive: { data: [MEMBER], success: true, message: null },
+  countries: { data: [{ id: 3, countryCode: 'CH', ioc: 'SUI' }], success: true, message: '' },
   err401: { data: null, success: false, message: 'Invalid client credentials' },
   err400: { errors: { id: ['bad'] }, type: 't', title: 'x', status: 400 },
   docs: { '/swagger': 404, '/docs': 404 },
@@ -35,7 +37,7 @@ describe('buildFingerprint', () => {
   it('is equal for two lists that differ only in values', () => {
     const a = buildFingerprint(probe());
     const same = { data: [{ ...MEMBER, firstName: 'Z', email: 'z@z.ch', id: 99 }], success: true, message: null };
-    const b = buildFingerprint(probe({ list: same, listAll: same, listInactive: same }));
+    const b = buildFingerprint(probe({ list: same, listInactive: same }));
     expect(diffFingerprint(a, b)).toEqual([]);
   });
 
@@ -55,32 +57,63 @@ describe('buildFingerprint', () => {
   it('reports an extra field as a list.fields difference', () => {
     const a = buildFingerprint(probe());
     const extra = { data: [{ ...MEMBER, newField: true }], success: true, message: null };
-    const b = buildFingerprint(probe({ list: extra, listAll: extra, listInactive: extra }));
+    const b = buildFingerprint(probe({ list: extra }));
     const diff = diffFingerprint(a, b);
     expect(diff.map(d => d.key)).toEqual(['list.fields']);
     expect(diff[0].after).toContain('newField:boolean');
     expect(diff[0].before).not.toContain('newField');
   });
 
-  it('flips param.all from ignored to changes when listAll has more fields', () => {
-    expect(buildFingerprint(probe())['param.all']).toBe('ignored');
-    const all = { data: [{ ...MEMBER, street: 's' }], success: true, message: null };
-    expect(buildFingerprint(probe({ listAll: all }))['param.all']).toBe('changes');
+  it('fingerprints the endpoints shipped 2026-11-02: /all, /all?inactive, list?inactive, nationIoc (C4)', () => {
+    const fp = buildFingerprint(probe());
+    expect(fp['all.envelope']).toBe('data,message,success');
+    expect(fp['all.fields']).toBe('email:string,firstName:string,id:number,lastName:string,mobile:null,personClubs:array,street:string');
+    expect(fp['all.personClubs']).toBe('clubId:number,clubName:string,mainClub:boolean,personId:number');
+    expect(fp['allInactive.fields']).toContain('leavingDate:string');
+    expect(fp['list.inactive.fields']).toBe('email:string,firstName:string,id:number,lastName:string,mobile:null');
+    expect(fp['countries.envelope']).toBe('data,message,success');
+    expect(fp['countries.fields']).toBe('countryCode:string,id:number,ioc:string');
+    expect(Object.keys(fp).some(k => k.startsWith('param.'))).toBe(false);
   });
 
-  it('flips param.inactive to changes when the count differs', () => {
-    const more = { data: [MEMBER, MEMBER], success: true, message: null };
-    expect(buildFingerprint(probe({ listInactive: more }))['param.inactive']).toBe('changes');
+  it('holds no value of the country list or of /all', () => {
+    const fp = JSON.stringify(buildFingerprint(probe()));
+    expect(fp).not.toContain('SUI');
+    expect(fp).not.toContain('2025-12-31');
   });
 
-  it('marks a parameter probe over the size cap as changes:oversize (I7)', () => {
-    const fp = buildFingerprint(probe({ listAll: PARAM_OVERSIZE }));
-    expect(fp['param.all']).toBe('changes:oversize');
-    expect(fp['param.inactive']).toBe('ignored');
+  it('reports when Regasoft fixes the personId 0 in /all personClubs', () => {
+    const club = (personId: number) => ({ personId, clubId: 1, clubName: 'X', mainClub: true });
+    const allWith = (...ids: number[]) => ({ data: [{ ...MEMBER, street: 's', personClubs: ids.map(club) }], success: true, message: null });
+    expect(buildFingerprint(probe())['all.personClubs.personId']).toBe('zero');
+    expect(buildFingerprint(probe({ all: allWith(26183) }))['all.personClubs.personId']).toBe('set');
+    expect(buildFingerprint(probe({ all: allWith(0, 26183) }))['all.personClubs.personId']).toBe('mixed');
+    expect(buildFingerprint(probe({ all: allWith() }))['all.personClubs.personId']).toBe('none');
+    const fixed = diffFingerprint(buildFingerprint(probe()), buildFingerprint(probe({ all: allWith(26183) })));
+    expect(fixed).toEqual([{ key: 'all.personClubs.personId', before: 'zero', after: 'set' }]);
   });
 
-  it('marks a parameter probe that failed as unavailable', () => {
-    expect(buildFingerprint(probe({ listAll: undefined }))['param.all']).toBe('unavailable');
+  it('a new field in /all is a difference of all.fields only', () => {
+    const base = probe();
+    const record = (base.all as { data: Record<string, unknown>[] }).data[0];
+    const withModified = { data: [{ ...record, modified: '2026-11-02T17:04:04.54' }], success: true, message: null };
+    const diff = diffFingerprint(buildFingerprint(base), buildFingerprint(probe({ all: withModified })));
+    expect(diff.map(d => d.key)).toEqual(['all.fields']);
+    expect(diff[0].after).toContain('modified:string');
+  });
+
+  it('marks a large probe over the size cap as oversize (I7)', () => {
+    const fp = buildFingerprint(probe({ all: PARAM_OVERSIZE }));
+    expect(fp['all.fields']).toBe('oversize');
+    expect(fp['all.envelope']).toBe('oversize');
+    expect(fp['allInactive.fields']).toContain('leavingDate');
+  });
+
+  it('marks a large probe that failed as unavailable', () => {
+    const fp = buildFingerprint(probe({ countries: undefined, allInactive: undefined }));
+    expect(fp['countries.fields']).toBe('unavailable');
+    expect(fp['allInactive.fields']).toBe('unavailable');
+    expect(fp['all.fields']).not.toBe('unavailable');
   });
 
   it('records the auth status under the system name, the error shapes and the doc statuses', () => {
@@ -208,7 +241,7 @@ describe('decideWatch', () => {
   });
 
   describe('transient markers', () => {
-    const base: ApiFingerprint = { 'auth.test': '200', 'list.fields': 'id:number', 'docs./swagger': '404', 'param.all': 'ignored', 'error.401': 'data,message,success', 'error.401.status': '401' };
+    const base: ApiFingerprint = { 'auth.test': '200', 'list.fields': 'id:number', 'docs./swagger': '404', 'all.fields': 'id:number', 'error.401': 'data,message,success', 'error.401.status': '401' };
 
     it('a doc path that timed out is no change; accepted stays as it was', () => {
       const d = decideWatch(state({ accepted: base }), ok({ ...base, 'docs./swagger': 'error' }), 'none', NOW);
@@ -218,8 +251,8 @@ describe('decideWatch', () => {
       expect(d.state.lastRunMonth).toBe('202611');
     });
 
-    it('param.all going unavailable is no change', () => {
-      const d = decideWatch(state({ accepted: base }), ok({ ...base, 'param.all': 'unavailable' }), 'none', NOW);
+    it('all.fields going unavailable is no change', () => {
+      const d = decideWatch(state({ accepted: base }), ok({ ...base, 'all.fields': 'unavailable' }), 'none', NOW);
       expect(d.task).toBeNull();
       expect(d.state.accepted).toEqual(base);
     });
@@ -234,7 +267,7 @@ describe('decideWatch', () => {
 
     it('one real change and one marker: the task lists only the change, pending carries the old value', () => {
       const d = decideWatch(state({ accepted: base }),
-        ok({ ...base, 'list.fields': 'id:number,x:string', 'docs./swagger': 'error', 'param.all': 'unavailable' }), 'none', NOW);
+        ok({ ...base, 'list.fields': 'id:number,x:string', 'docs./swagger': 'error', 'all.fields': 'unavailable' }), 'none', NOW);
       expect(d.task?.diff).toEqual([{ key: 'list.fields', before: 'id:number', after: 'id:number,x:string' }]);
       expect(d.state.pending).toEqual({ ...base, 'list.fields': 'id:number,x:string' });
       expect(JSON.stringify(d.state)).not.toContain('error"');
@@ -441,6 +474,7 @@ describe('probeRegasoft', () => {
       if (fail.some(f => url.endsWith(f))) throw new Error('timeout');
       if (url.endsWith('/api/club/members/26183')) return ok({ data: { id: 1, firstName: 'A' } }) as never;
       if (url.endsWith('/api/club/members/schema')) return ok({ errors: {}, type: 't', title: 'x', status: 400 }, 400) as never;
+      if (url.endsWith('/api/nationIoc')) return ok({ data: [{ id: 3, countryCode: 'CH', ioc: 'SUI' }], success: true, message: '' }) as never;
       if (url.includes('/api/club/members')) {
         return (opts?.headers?.['ApiKey'] === 'invalid' ? ok({ data: null, success: false, message: 'no' }, 401) : ok({ data: [{ id: 1, firstName: 'A' }], success: true, message: null })) as never;
       }
@@ -488,13 +522,14 @@ describe('probeRegasoft', () => {
     expect(r.fingerprint['error.401']).toBe('data,message,success');
   });
 
-  it('runs the two parameter probes one after the other, capped at 2 MiB, without retry (I7)', async () => {
+  it('runs the four large probes one after the other, capped at 2 MiB, without retry (C4, I7)', async () => {
     route([]);
     const healthy = fetchMock.getMockImplementation();
+    const isLarge = (url: string) => url.includes('/all') || url.includes('?') || url.endsWith('/api/nationIoc');
     let inFlight = 0;
     let maxInFlight = 0;
     fetchMock.mockImplementation(async (url: string, opts?: Record<string, unknown>) => {
-      if (!url.includes('?')) return healthy?.(url, opts as never) as never;
+      if (!isLarge(url)) return healthy?.(url, opts as never) as never;
       inFlight++;
       maxInFlight = Math.max(maxInFlight, inFlight);
       await new Promise(r => setTimeout(r, 5));
@@ -503,29 +538,40 @@ describe('probeRegasoft', () => {
     });
     const r = await probeRegasoft();
     expect(maxInFlight).toBe(1);
-    const paramCalls = fetchMock.mock.calls.filter(([url]) => String(url).includes('?'));
-    expect(paramCalls.map(([url]) => String(url).split('/').pop())).toEqual(['members?all=true', 'members?inactive=true']);
-    for (const [, opts] of paramCalls) {
+    const largeCalls = fetchMock.mock.calls.filter(([url]) => isLarge(String(url)));
+    expect(largeCalls.map(([url]) => String(url).replace(/^.*\/PortalTest/, ''))).toEqual([
+      '/api/club/members/all', '/api/club/members/all?inactive=true', '/api/club/members?inactive=true', '/api/nationIoc',
+    ]);
+    for (const [, opts] of largeCalls) {
       expect(opts).toMatchObject({ maxBytes: 2 * 1024 * 1024, maxRetries: 0 });
     }
-    expect(r.reachable && r.fingerprint['param.all']).toBe('ignored');
+    expect(r.reachable && r.fingerprint['countries.fields']).toBe('countryCode:string,id:number,ioc:string');
+    expect(r.reachable && r.fingerprint['all.fields']).toContain('id:number');
   });
 
-  it('a parameter probe over the cap is reported as changes:oversize, not as a transient failure (I7)', async () => {
+  it('a large probe over the cap is reported as oversize, not as a transient failure (I7)', async () => {
     route([]);
     const healthy = fetchMock.getMockImplementation();
     fetchMock.mockImplementation(async (url: string, opts?: Record<string, unknown>) => {
-      if (url.endsWith('?inactive=true')) throw new Error('maxContentLength size of 2097152 exceeded');
+      if (url.endsWith('/all?inactive=true')) throw new Error('maxContentLength size of 2097152 exceeded');
       return healthy?.(url, opts as never) as never;
     });
     const r = await probeRegasoft();
     expect(r.reachable).toBe(true);
     if (!r.reachable) return;
-    expect(r.fingerprint['param.inactive']).toBe('changes:oversize');
-    const accepted = { ...r.fingerprint, 'param.inactive': 'ignored' };
+    expect(r.fingerprint['allInactive.fields']).toBe('oversize');
+    const accepted = { ...r.fingerprint, 'allInactive.fields': 'id:number' };
     const state: WatchState = { accepted, pending: null, taskKey: '', lastRunMonth: '202610', failures: 0 };
     const d = decideWatch(state, r, 'none', NOW);
-    expect(d.task?.diff).toEqual([{ key: 'param.inactive', before: 'ignored', after: 'changes:oversize' }]);
+    expect(d.task?.diff).toEqual([{ key: 'allInactive.fields', before: 'id:number', after: 'oversize' }]);
+  });
+
+  it('the country list failing is unavailable and still reachable', async () => {
+    route(['/api/nationIoc']);
+    const r = await probeRegasoft();
+    expect(r.reachable).toBe(true);
+    if (!r.reachable) return;
+    expect(r.fingerprint['countries.fields']).toBe('unavailable');
   });
 
   it('a failed side probe never counts as a failure in the run', async () => {

@@ -609,9 +609,7 @@
       "building": "Costruzione dell’indice...",
       "none": "Nessun indice. Costruire l’indice.",
       "summary": "{shown} di {total} voci: {scs} SCS, {srv} SRV, {regasoft} Regasoft",
-      "error": "Non è stato possibile caricare i contatti dal portale Regasoft. Riprova più tardi.",
-      "detail_partial": "Non è stato possibile caricare i dettagli dal portale Regasoft per {count} voci. Per queste vengono confrontati solo nome, sesso, data di nascita ed e-mail.",
-      "detail_error": "Non è stato possibile caricare i dettagli dal portale Regasoft. L’elenco resta com’era. Riprova più tardi."
+      "error": "Non è stato possibile caricare i contatti dal portale Regasoft. Riprova più tardi."
     },
     "person": {
       "update": {
@@ -694,7 +692,9 @@
       "before": "Regasoft ora",
       "after": "Dopo",
       "confirm": "Applica in Regasoft",
-      "nothing": "Regasoft è già aggiornato. Non c’è nulla da modificare."
+      "nothing": "Regasoft è già aggiornato. Non c’è nulla da modificare.",
+      "modified": "Ultima modifica nel portale Regasoft: {date}. Verifica se nel frattempo la segreteria ha cambiato qualcosa che ora sovrascriveresti.",
+      "modified_unknown": "Non si sa quando questa voce è stata modificata l’ultima volta nel portale Regasoft."
     },
     "update": {
       "done": "Regasoft è aggiornato. Campi modificati: {count}",

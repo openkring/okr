@@ -11,12 +11,15 @@ export function resetShapeCheck(): void {
   reported.clear();
 }
 
+/** `list` and `all` are arrays of members, `detail` is one member. */
+export type ShapeKind = 'list' | 'all' | 'detail';
+
 const isRecord = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 
 /** The records inside a response: a bare array / object, or the `{ data }` envelope around one. */
-function recordsOf(kind: 'list' | 'detail', raw: unknown): Record<string, unknown>[] {
+function recordsOf(kind: ShapeKind, raw: unknown): Record<string, unknown>[] {
   const inner = isRecord(raw) && 'data' in raw ? raw['data'] : raw;
-  if (kind === 'list') return Array.isArray(inner) ? inner.filter(isRecord) : [];
+  if (kind !== 'detail') return Array.isArray(inner) ? inner.filter(isRecord) : [];
   return isRecord(inner) ? [inner] : [];
 }
 
@@ -25,7 +28,7 @@ function recordsOf(kind: 'list' | 'detail', raw: unknown): Record<string, unknow
  * expects, or an expected name that no record carries, is logged and reported to Sentry — once per
  * instance and kind, so a changed API does not flood Sentry on every sync. Never throws.
  */
-export function checkShape(kind: 'list' | 'detail', raw: unknown, expected: readonly string[]): void {
+export function checkShape(kind: ShapeKind, raw: unknown, expected: readonly string[]): void {
   try {
     const records = recordsOf(kind, raw);
     if (records.length === 0 || reported.has(kind)) return;

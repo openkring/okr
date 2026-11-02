@@ -4,7 +4,7 @@ import { IonCol, IonContent, IonGrid, IonRow, ModalController } from '@ionic/ang
 import { SrvPreview } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
-import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, fill, formatRegasoftModified } from '@okr/shared-util-core';
 import { MembershipI18n } from '@okr/relationship-membership-util';
 
 interface SrvPreviewRow {
@@ -40,11 +40,13 @@ function displayValue(value: unknown): string {
   styles: [`
     ion-row { border-bottom: 1px solid var(--ion-color-light); }
     .after { font-weight: 500; }
+    .modified { color: var(--ion-color-medium); }
   `],
   template: `
     <okr-header [i18n]="{ title: i18n().srv_preview_title() }" [isModal]="true" />
     <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="confirm()" />
     <ion-content class="ion-padding">
+      <p class="modified">{{ modifiedNote() }}</p>
       <ion-grid>
         <ion-row>
           <ion-col size="4"><strong>{{ i18n().srv_col_attribute() }}</strong></ion-col>
@@ -72,6 +74,12 @@ export class MembershipSrvPreviewModal {
     cancel: this.i18n().cancel(),
     save: this.i18n().srv_preview_confirm(),
   }));
+
+  /** When Regasoft last changed the record, so a recent change by the Sekretariat is seen first (C5). */
+  protected readonly modifiedNote = computed(() => {
+    const date = formatRegasoftModified(this.preview().modified);
+    return date ? fill(this.i18n().srv_preview_modified(), { date }) : this.i18n().srv_preview_modified_unknown();
+  });
 
   /** only the written fields whose value differs; the records are large (license image), so never list them whole */
   protected readonly rows = computed<SrvPreviewRow[]>(() => {

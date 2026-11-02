@@ -609,9 +609,7 @@
       "building": "Construyendo el índice...",
       "none": "Todavía no hay índice. Constrúyalo.",
       "summary": "{shown} de {total} entradas: {scs} SCS, {srv} SRV, {regasoft} Regasoft",
-      "error": "No se pudieron cargar los contactos del portal Regasoft. Inténtalo de nuevo más tarde.",
-      "detail_partial": "No se pudieron cargar los detalles del portal Regasoft para {count} entradas. Para ellas solo se comparan el nombre, el sexo, la fecha de nacimiento y el correo electrónico.",
-      "detail_error": "No se pudieron cargar los detalles del portal Regasoft. La lista se queda como estaba. Inténtalo de nuevo más tarde."
+      "error": "No se pudieron cargar los contactos del portal Regasoft. Inténtalo de nuevo más tarde."
     },
     "person": {
       "update": {
@@ -694,7 +692,9 @@
       "before": "Regasoft ahora",
       "after": "Después",
       "confirm": "Aplicar en Regasoft",
-      "nothing": "Regasoft ya está al día. No hay nada que cambiar."
+      "nothing": "Regasoft ya está al día. No hay nada que cambiar.",
+      "modified": "Último cambio en el portal Regasoft: {date}. Comprueba si la secretaría ha cambiado algo desde entonces que ahora sobrescribirías.",
+      "modified_unknown": "No se sabe cuándo se cambió esta entrada por última vez en el portal Regasoft."
     },
     "update": {
       "done": "Regasoft está actualizado. Campos modificados: {count}",

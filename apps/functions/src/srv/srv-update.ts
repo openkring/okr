@@ -167,15 +167,26 @@ interface SrvMergeArgs {
 
 /**
  * Dry run (D12): the record before and after (display copies) and the exact payload (raw, as it
- * would be sent). Sends nothing.
+ * would be sent). Sends nothing. `readModified` (C5) gives Regasoft's last-change time; it only
+ * informs, so a failed or missing read gives `modified: null` and never blocks the preview.
  */
-export async function runSrvPreview(args: SrvMergeArgs): Promise<SrvPreview> {
+export async function runSrvPreview(
+  args: SrvMergeArgs & { readModified?: (rid: number) => Promise<string | null> },
+): Promise<SrvPreview> {
   const before = await readExisting(args.rid, args.read);
   const payload = mergeSrvRecord(before, args.changes, { testSystem: args.testSystem });
+  let modified: string | null = null;
+  try {
+    const m = await args.readModified?.(args.rid);
+    modified = typeof m === 'string' && m !== '' ? m : null;
+  } catch {
+    modified = null;
+  }
   return {
     before: displayCopy(before, args.testSystem),
     after: displayCopy(payload, args.testSystem),
     payload,
+    modified,
   };
 }
 

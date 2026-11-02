@@ -2,17 +2,23 @@ import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https
 import { checkRoles } from '@okr/shared-util-functions';
 import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
-import { RegasoftMember, SrvChanges, SrvContactData, SrvMemberLicenseDetail, SrvPreview, SrvUpdateResult } from '@okr/shared-models';
+import { RegasoftMember, SrvChanges, SrvContactData, SrvCountry, SrvMemberAll, SrvMemberLicenseDetail, SrvMembersAllResult, SrvPreview, SrvUpdateResult } from '@okr/shared-models';
 
 import { runGateway, resolveTenantId } from '../_gateway/gateway';
 import { invalidateProvider } from '../_gateway/cache';
 import type { GatewayContext } from '../_gateway/provider';
+import { gatewayFetch } from '../_gateway/http';
 import {
   SRV_SECRETS,
   SRV_PROVIDER_IDS,
   srvMembersAdapter,
+  srvMembersAllAdapter,
   srvMemberDetailAdapter,
+  srvCountriesAdapter,
   mapSrvContact,
+  mapSrvMemberAll,
+  regasoftHeaders as gatewayRegasoftHeaders,
+  unwrapMembers,
   unwrapRawMember,
 } from '../_gateway/adapters/srv';
 
@@ -69,6 +75,19 @@ function toRegasoftError(cfName: string, error: unknown, fallback: string): Http
  */
 async function readRawSrvMember(rid: number, ctx: GatewayContext): Promise<Record<string, unknown> | null> {
   return unwrapRawMember(await srvMemberDetailAdapter.fetch({ rid }, ctx));
+}
+
+/**
+ * When Regasoft last changed a member (C5): the `modified` field exists only in the member list, so
+ * the current list is read live, then the list of members who left. null when neither has the rid.
+ */
+async function readSrvModified(rid: number): Promise<string | null> {
+  for (const query of ['', '?inactive=true']) {
+    const res = await gatewayFetch(`${regasoftBaseUrl()}/api/club/members${query}`, { method: 'GET', headers: gatewayRegasoftHeaders() });
+    const m = unwrapMembers(res.data).find((x) => x.id === rid);
+    if (m) return typeof m.modified === 'string' ? m.modified : null;
+  }
+  return null;
 }
 
 /** A `PUT` that has not answered by then is given up; whether it was applied is then unknown. */
@@ -228,6 +247,59 @@ export const getSrvMemberDetail = onCall(
 );
 
 /**
+ * Current members and members who left, both in the detail shape, plus Regasoft's country list
+ * (spec 1.133 C1, C3). Router op only (`srv` / `getSrvMembersAll`), so it adds no deployed
+ * function. Both member lists are required — without the members who left, a re-joining member
+ * could not be matched — so either failing fails the call. The country list is optional: empty
+ * when it cannot be read, and the client falls back to CH = 3. A record in both lists (should
+ * never happen) is kept once, as current, and logged.
+ */
+export async function handleGetSrvMembersAll(request: CallableRequest): Promise<SrvMembersAllResult> {
+  const CF_NAME = 'getSrvMembersAll';
+
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Authentication required');
+  }
+  // SRV member data is person PII — memberAdmin/admin only (privacy inventory §7.2).
+  await checkRoles(request, CF_NAME, ['memberAdmin']);
+
+  const ctx = await srvContext(request);
+  const [active, inactive, countries] = await Promise.all([
+    runGateway(srvMembersAllAdapter, { inactive: false }, ctx),
+    runGateway(srvMembersAllAdapter, { inactive: true }, ctx),
+    runGateway(srvCountriesAdapter, {}, ctx).then(
+      (r): SrvCountry[] => r.data,
+      (e: unknown): SrvCountry[] => {
+        logger.warn(`${CF_NAME}: country list unavailable`, { message: e instanceof Error ? e.message : String(e) });
+        return [];
+      },
+    ),
+  ]);
+
+  const ownClubId = Number(regasoftClubId.value());
+  const testSystem = isRegasoftTestSystem();
+  const members: SrvMemberAll[] = [];
+  const seen = new Set<number>();
+  let dropped = 0;
+  for (const [list, isActive] of [[active.data, true], [inactive.data, false]] as const) {
+    for (const raw of list) {
+      const m = mapSrvMemberAll(raw, ownClubId, isActive, testSystem);
+      if (!m) { dropped++; continue; }
+      if (seen.has(m.contact.srvId)) {
+        logger.warn(`${CF_NAME}: member ${m.contact.srvId} is current and inactive at once, kept as current`);
+        continue;
+      }
+      seen.add(m.contact.srvId);
+      members.push(m);
+    }
+  }
+  logger.info(`${CF_NAME}: ${active.data.length} current, ${inactive.data.length} left, ${countries.length} countries`, {
+    cached: { active: active.cached, inactive: inactive.cached }, dropped,
+  });
+  return { members, countries };
+}
+
+/**
  * Create a new member in the Regasoft SRV API.
  * Returns the newly assigned SRV member ID.
  */
@@ -343,6 +415,7 @@ export async function handlePreviewSrvUpdate(
       changes,
       testSystem: isRegasoftTestSystem(),
       read: (id) => readRawSrvMember(id, ctx),
+      readModified: readSrvModified,
     });
   } catch (error: unknown) {
     throw toRegasoftError(CF_NAME, error, 'Regasoft member preview failed');

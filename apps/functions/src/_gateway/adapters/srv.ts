@@ -35,7 +35,7 @@
 
 import { HttpsError } from 'firebase-functions/v2/https';
 import { regasoftDateToStoreDate } from '@okr/shared-util-core';
-import { Club, RegasoftMember, SrvMemberLicenseDetail } from '@okr/shared-models';
+import { Club, RegasoftMember, SrvCountry, SrvMemberAll, SrvMemberLicenseDetail } from '@okr/shared-models';
 import type { ProviderAdapter, GatewayContext } from '../provider';
 import { gatewayFetch } from '../http';
 
@@ -62,8 +62,11 @@ const ATTRIBUTION = {
   licence: 'Swiss Rowing / Regasoft',
 };
 
-/** Every provider id below, so a write can invalidate all of them at once. */
-export const SRV_PROVIDER_IDS = ['srv-members', 'srv-member-detail'] as const;
+/** Every member provider id below, so a write can invalidate all of them at once (not the countries). */
+export const SRV_PROVIDER_IDS = ['srv-members', 'srv-member-detail', 'srv-members-all'] as const;
+
+/** Regasoft's country list changes rarely; one day. */
+const SRV_COUNTRIES_TTL = 24 * 60 * 60;
 
 export const SRV_SECRETS = [regasoftApiKey, regasoftClubId];
 
@@ -83,6 +86,12 @@ export const SRV_DETAIL_FIELDS: readonly string[] = [
   'street', 'postcode', 'city', 'streetAdditional', 'countryName', 'countryId', 'telefon', 'mobile', 'email', 'entryDate',
   'inactive', 'inactiveDate', 'dateOfDeath', 'leavingDate', 'personClubs',
 ];
+
+/**
+ * `GET /api/club/members/all` carries exactly the detail fields (probe 2026-11-02,
+ * planning/reference/regasoft-all-check.mjs), so it is checked against the same list.
+ */
+export const SRV_ALL_FIELDS: readonly string[] = SRV_DETAIL_FIELDS;
 
 export function regasoftHeaders(): Record<string, string> {
   return {
@@ -157,6 +166,34 @@ export function mapSrvLicensed(m: RegasoftMember) {
     licenseImageName: m.licenseImageName ?? null,
     licenseImageMimeType: m.licenseImageMimeType ?? null,
   };
+}
+
+/**
+ * One `/all` record as list contact + detail (spec 1.133 C1). `/all` has no `mainClub`: it is the
+ * flag of our own club in `personClubs` (probe: equal to the list's `mainClub` on every record).
+ * `/all` sends `personId: 0` in every `personClubs` item (Regasoft defect, 2026-11-02), so the
+ * field is dropped rather than passed on wrong. Null for a record without a numeric id.
+ */
+export function mapSrvMemberAll(raw: unknown, ownClubId: number, active: boolean, testSystem: boolean): SrvMemberAll | null {
+  const m = unwrapMember(raw);
+  if (!m || typeof m.id !== 'number') return null;
+  const clubs: Club[] = (m.personClubs ?? []).map(({ clubId, clubName, mainClub, personFullname }) =>
+    ({ clubId, clubName, mainClub, ...(personFullname !== undefined ? { personFullname } : {}) }));
+  const mainClub = clubs.find((c) => c.clubId === ownClubId)?.mainClub === true;
+  const record: RegasoftMember = { ...m, mainClub, personClubs: clubs };
+  const detail = mapSrvDetail(record, testSystem);
+  if (!detail) return null;
+  return { contact: mapSrvContact(record, testSystem), detail, active };
+}
+
+/** `GET /api/nationIoc` entries with a numeric id and a country code; anything else is dropped. */
+export function mapSrvCountries(raw: unknown): SrvCountry[] {
+  const list = Array.isArray(raw) ? raw : (raw as { data?: unknown })?.data;
+  if (!Array.isArray(list)) return [];
+  return list
+    .filter((c): c is Record<string, unknown> => !!c && typeof c === 'object')
+    .filter((c) => typeof c['id'] === 'number' && typeof c['countryCode'] === 'string' && c['countryCode'] !== '')
+    .map((c) => ({ id: c['id'] as number, countryCode: c['countryCode'] as string, ioc: typeof c['ioc'] === 'string' ? c['ioc'] : '' }));
 }
 
 /** The `hasLicense === true` filter the (retired) licensed-members callable applied. */
@@ -245,5 +282,50 @@ export const srvMemberDetailAdapter: ProviderAdapter<{ rid: number }, unknown, S
     checkShape('detail', raw, SRV_DETAIL_FIELDS);
     return mapSrvDetail(raw, isRegasoftTestSystem());
   },
+  sourceTimestamp: () => null,
+};
+
+/**
+ * All members in the detail shape, in one request (spec 1.133 C1): `inactive: false` = the current
+ * members, `inactive: true` = only the members who left or died (`?inactive=true`). Two cache
+ * entries, one per flag. Like `srv-members`, the list is cached in one Firestore document (1 MiB);
+ * licence images would exceed it — the cache write then fails soft.
+ */
+export const srvMembersAllAdapter: ProviderAdapter<{ inactive: boolean }, unknown, RegasoftMember[]> = {
+  id: 'srv-members-all',
+  baseUrl: REGASOFT_HOST,
+  secrets: SRV_SECRETS,
+  scope: 'tenant',
+  ttlSeconds: SRV_TTL,
+  requiresAuth: true,
+  attribution: ATTRIBUTION,
+  async fetch(params, _ctx: GatewayContext) {
+    const res = await gatewayFetch(`${regasoftBaseUrl()}/api/club/members/all${params.inactive ? '?inactive=true' : ''}`, {
+      method: 'GET',
+      headers: regasoftHeaders(),
+    });
+    return res.data;
+  },
+  map: (raw) => {
+    checkShape('all', raw, SRV_ALL_FIELDS);
+    return unwrapMembers(raw);
+  },
+  sourceTimestamp: () => null,
+};
+
+/** Regasoft's country list (`GET /api/nationIoc`, spec 1.133 C3). */
+export const srvCountriesAdapter: ProviderAdapter<Record<string, never>, unknown, SrvCountry[]> = {
+  id: 'srv-countries',
+  baseUrl: REGASOFT_HOST,
+  secrets: SRV_SECRETS,
+  scope: 'tenant',
+  ttlSeconds: SRV_COUNTRIES_TTL,
+  requiresAuth: true,
+  attribution: ATTRIBUTION,
+  async fetch(_params, _ctx: GatewayContext) {
+    const res = await gatewayFetch(`${regasoftBaseUrl()}/api/nationIoc`, { method: 'GET', headers: regasoftHeaders() });
+    return res.data;
+  },
+  map: (raw) => mapSrvCountries(raw),
   sourceTimestamp: () => null,
 };

@@ -28,7 +28,7 @@ export interface RegasoftMember {
   licenseImageMimeType?: string | null;
   mainClub?: boolean;
   modified?: string | null;
-  membershipType?: string;
+  membershipType?: string;          // 'Junior' | 'Active' | 'Passive' | 'Honorary' (derived by Regasoft)
   nationIOC?: string | null;
   language?: number;
   salutation?: string | null;
@@ -83,7 +83,7 @@ export interface SrvContactData {
   mobile: string | null;
   dateOfBirth: string;       // StoreDate YYYYMMDD
   gender: number;            // 1=male, 2=female
-  membershipType?: string;   // 'Active' | 'Passive'
+  membershipType?: string;   // derived by Regasoft, never sent
   nationIOC?: string;
   language?: number;
   hasNewsletter?: boolean;
@@ -126,6 +126,28 @@ export interface SrvMemberLicenseDetail {
   clubs: Club[];
 }
 
+/** One entry of `GET /api/nationIoc`; `id` is the `countryId` of a member record. */
+export interface SrvCountry {
+  id: number;
+  countryCode: string;   // ISO code, e.g. 'CH'
+  ioc: string;           // e.g. 'SUI'
+}
+
+/** One member from `GET /api/club/members/all` (spec 1.133 C1): list and detail fields in one. */
+export interface SrvMemberAll {
+  contact: SrvContact;
+  detail: SrvMemberLicenseDetail;
+  /** false = the member left or died (`/all?inactive=true`) */
+  active: boolean;
+}
+
+/** Response of the `getSrvMembersAll` op. */
+export interface SrvMembersAllResult {
+  members: SrvMemberAll[];
+  /** Regasoft's country list; empty when it could not be read (callers fall back to CH = 3) */
+  countries: SrvCountry[];
+}
+
 // ─── AoC SRV index types ──────────────────────────────────────────────────────
 
 /** Merged BK + Regasoft index entry used by MembershipSrvStore. */
@@ -148,6 +170,7 @@ export interface SrvIndex {
   mZipCode: string;
   mCity: string;
   mCountryCode: string;   // ISO country code of the BK postal address
+  mCountryId: string;     // Regasoft countryId of mCountryCode ('' = unknown to Regasoft)
   mDateOfDeath: string;   // StoreDate
   mPassiveSince: string;  // StoreDate
 
@@ -175,7 +198,7 @@ export interface SrvIndex {
   rCity: string;
   rCountryId: string;
   rDateOfBirth: string;  // r.dateOfBirth (StoreDate)
-  rCategory: string;     // first uppercase char of membershipType
+  rCategory: string;     // mcat_srv abbreviation of membershipType (srvCategoryOf), '' = unknown type
   rDateOfExit: string;   // r.leavingDate || r.dateOfDeath (StoreDate) — display only
   rLeavingDate: string;  // StoreDate
   rDateOfDeath: string;  // StoreDate
@@ -191,7 +214,7 @@ export interface SrvIndex {
   licenseImageName: string | null;
   licenseImageMimeType: string | null;
   /**
-   * true only when the member detail (`getSrvMemberDetail`) arrived for this record. The list
+   * true only when the member detail arrived for this record (from `/all`, or after an update). The list
    * carries no address, telefon, country, status dates, newsletter or clubs; without the detail
    * those fields are empty, so nothing is compared or written from them (spec 1.133 I2).
    */
@@ -236,4 +259,9 @@ export interface SrvPreview {
   before: Record<string, unknown>;
   after: Record<string, unknown>;
   payload: Record<string, unknown>;
+  /**
+   * When Regasoft last changed the record (ISO datetime from the member list; the detail lacks it),
+   * null when unknown. Shown so a recent change by the Sekretariat is seen before it is overwritten (C5).
+   */
+  modified: string | null;
 }

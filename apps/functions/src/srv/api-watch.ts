@@ -42,9 +42,9 @@ const CLOSED_TASK_STATES: readonly string[] = ['done', 'cancelled'];
 /** Bruno's own record on the test system: the detail probe. */
 const PROBE_RID = 26183;
 /**
- * The announced parameter probes may return the detail shape for every member, licence images
- * included. They only have to tell «same as the plain list» from «different», so they are capped
- * low: a response over the cap is itself a change (`changes:oversize`), it is never retried.
+ * The large probes (`/all`, `/all?inactive=true`: the detail shape for every member, licence
+ * images included) are capped: a response over the cap is itself a stable fingerprint value
+ * (`oversize`, reported like any change), it is never retried.
  */
 const PARAM_MAX_BYTES = 2 * 1024 * 1024;
 const DOCS_REFERENCE = 'planning/reference/REGASOFT.md';
@@ -63,7 +63,7 @@ export interface FingerprintDiff { key: string; before: string; after: string }
 
 /** Marks a side probe that threw (timeout, reset): a stable fingerprint value, not a failed run. */
 export const PROBE_ERROR = Symbol('probe-error');
-/** Marks a parameter probe whose response exceeded the size cap: it surely differs from the plain list. */
+/** Marks a large probe whose response exceeded the size cap. */
 export const PARAM_OVERSIZE = Symbol('param-oversize');
 
 export interface ApiProbe {
@@ -71,9 +71,15 @@ export interface ApiProbe {
   list: unknown;
   /** PROBE_ERROR when the request failed */
   detail: unknown;
-  /** undefined when the parameter probe could not be completed; PARAM_OVERSIZE over the size cap */
-  listAll: unknown;
+  /**
+   * The endpoints shipped 2026-11-02 (spec 1.133 C4): `GET /api/club/members/all`, the same with
+   * `?inactive=true`, the list with `?inactive=true`, and `GET /api/nationIoc`. undefined when the
+   * probe could not be completed; PARAM_OVERSIZE over the size cap.
+   */
+  all: unknown;
+  allInactive: unknown;
   listInactive: unknown;
+  countries: unknown;
   err401: unknown;
   err400: unknown;
   err401Status?: number;
@@ -119,23 +125,34 @@ const recordOf = (raw: unknown): Record<string, unknown>[] => {
 };
 
 /**
- * 'ignored' = same fields and count as the plain list; 'changes' = it differs; 'changes:oversize' =
- * the response was over the size cap (a stable value, reported like any change); 'unavailable' =
- * the probe failed (transient).
+ * A value of one of the C4 probes: `unavailable` = the probe failed (transient); `oversize` = the
+ * response was over the size cap (a stable value, reported like any change); else `describe(raw)`.
  */
-function paramEffect(plain: unknown, withParam: unknown): string {
-  if (withParam === undefined) return 'unavailable';
-  if (withParam === PARAM_OVERSIZE) return 'changes:oversize';
-  const a = listOf(plain);
-  const b = listOf(withParam);
-  return a.length === b.length && describeFields(a) === describeFields(b) ? 'ignored' : 'changes';
+function probed(raw: unknown, describe: (raw: unknown) => string): string {
+  if (raw === undefined) return 'unavailable';
+  if (raw === PARAM_OVERSIZE) return 'oversize';
+  return describe(raw);
+}
+
+const clubsOf = (records: Record<string, unknown>[]): Record<string, unknown>[] =>
+  records.flatMap(d => (Array.isArray(d['personClubs']) ? (d['personClubs'] as unknown[]).filter(isRecord) : []));
+
+/**
+ * Whether `/all` still sends `personId: 0` in every `personClubs` item (Regasoft defect,
+ * 2026-11-02): 'zero', 'set' (all non-zero: fixed), 'mixed', or 'none' (no items). A count-free
+ * summary, so the watch reports the day Regasoft fixes it.
+ */
+function personIdState(clubs: Record<string, unknown>[]): string {
+  if (clubs.length === 0) return 'none';
+  const zero = clubs.filter(c => c['personId'] === 0).length;
+  return zero === clubs.length ? 'zero' : zero === 0 ? 'set' : 'mixed';
 }
 
 /** Names, types and status codes only — never a value. `system` names the auth key (`auth.test`). */
 export function buildFingerprint(probe: ApiProbe, system: 'test' | 'production' = 'test'): ApiFingerprint {
   const failed = (v: unknown): boolean => v === PROBE_ERROR;
   const detail = failed(probe.detail) ? [] : recordOf(probe.detail);
-  const clubs = detail.flatMap(d => (Array.isArray(d['personClubs']) ? (d['personClubs'] as unknown[]).filter(isRecord) : []));
+  const clubs = clubsOf(detail);
   const fp: ApiFingerprint = {
     [`auth.${system}`]: String(probe.listStatus),
     'list.envelope': envelopeOf(probe.list),
@@ -143,8 +160,14 @@ export function buildFingerprint(probe: ApiProbe, system: 'test' | 'production' 
     'detail.envelope': failed(probe.detail) ? 'error' : envelopeOf(probe.detail),
     'detail.fields': failed(probe.detail) ? 'error' : describeFields(detail),
     'detail.personClubs': failed(probe.detail) ? 'error' : describeFields(clubs),
-    'param.all': paramEffect(probe.list, probe.listAll),
-    'param.inactive': paramEffect(probe.list, probe.listInactive),
+    'all.envelope': probed(probe.all, envelopeOf),
+    'all.fields': probed(probe.all, raw => describeFields(listOf(raw))),
+    'all.personClubs': probed(probe.all, raw => describeFields(clubsOf(listOf(raw)))),
+    'all.personClubs.personId': probed(probe.all, raw => personIdState(clubsOf(listOf(raw)))),
+    'allInactive.fields': probed(probe.allInactive, raw => describeFields(listOf(raw))),
+    'list.inactive.fields': probed(probe.listInactive, raw => describeFields(listOf(raw))),
+    'countries.envelope': probed(probe.countries, envelopeOf),
+    'countries.fields': probed(probe.countries, raw => describeFields(listOf(raw))),
     'error.401': failed(probe.err401) ? 'error' : envelopeOf(probe.err401),
     'error.400': failed(probe.err400) ? 'error' : envelopeOf(probe.err400),
   };
@@ -301,7 +324,7 @@ async function side(name: string, url: string, headers: Record<string, string>):
 /**
  * Run all probes against the configured Regasoft system. Only the member list decides whether
  * Regasoft is reachable (a throw or a 5xx); every side probe (detail, error shapes, doc paths,
- * parameters) is caught on its own and shows up in the fingerprint as 'error' / 'unavailable'.
+ * large probes) is caught on its own and shows up in the fingerprint as 'error' / 'unavailable'.
  */
 export async function probeRegasoft(): Promise<ProbeResult> {
   const base = regasoftBaseUrl();
@@ -314,14 +337,14 @@ export async function probeRegasoft(): Promise<ProbeResult> {
     return { reachable: false };
   }
   if (list.status >= 500) return { reachable: false };
-  /** A parameter probe: its data, PARAM_OVERSIZE over the cap, undefined when it failed. No retry. */
-  const optional = async (query: string): Promise<unknown> => {
+  /** A large probe: its data, PARAM_OVERSIZE over the cap, undefined when it failed. No retry. */
+  const optional = async (path: string): Promise<unknown> => {
     try {
-      const r = await get(`${base}/api/club/members${query}`, headers, { maxBytes: PARAM_MAX_BYTES, maxRetries: 0 });
+      const r = await get(`${base}${path}`, headers, { maxBytes: PARAM_MAX_BYTES, maxRetries: 0 });
       return r.status === 200 ? r.data : undefined;
     } catch (e: unknown) {
       if (isOversize(e)) return PARAM_OVERSIZE;
-      logger.warn(`regasoftApiWatch: side probe param${query} failed`, { error: e instanceof Error ? e.message : String(e) });
+      logger.warn(`regasoftApiWatch: side probe ${path} failed`, { error: e instanceof Error ? e.message : String(e) });
       return undefined;
     }
   };
@@ -334,11 +357,13 @@ export async function probeRegasoft(): Promise<ProbeResult> {
       return [p, r === PROBE_ERROR ? 'error' : r.status] as const;
     })),
   ]);
-  // The two parameter probes may be large: one after the other, never alongside each other.
-  const listAll = await optional('?all=true');
-  const listInactive = await optional('?inactive=true');
+  // The large probes one after the other, never alongside each other.
+  const all = await optional('/api/club/members/all');
+  const allInactive = await optional('/api/club/members/all?inactive=true');
+  const listInactive = await optional('/api/club/members?inactive=true');
+  const countries = await optional('/api/nationIoc');
   const probe: ApiProbe = {
-    listStatus: list.status, list: list.data, listAll, listInactive, docs: Object.fromEntries(docs),
+    listStatus: list.status, list: list.data, all, allInactive, listInactive, countries, docs: Object.fromEntries(docs),
     detail: detail === PROBE_ERROR ? PROBE_ERROR : detail.data,
     err401: err401 === PROBE_ERROR ? PROBE_ERROR : err401.data,
     err400: err400 === PROBE_ERROR ? PROBE_ERROR : err400.data,

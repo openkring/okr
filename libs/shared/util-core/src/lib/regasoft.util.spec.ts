@@ -7,6 +7,7 @@ import {
   composeSekretariatMail,
   countryIdOf,
   expectedSrvStatus,
+  formatRegasoftModified,
   getMismatches,
   getSekretariatCases,
   getSrvChanges,
@@ -16,6 +17,7 @@ import {
   phonesMatch,
   pickSrvMemberships,
   REGASOFT_COUNTRY_IDS,
+  srvCategoryOf,
   srvCreateBlocker,
   storeDateToRegasoftDate,
 } from './regasoft.util';
@@ -63,6 +65,7 @@ function srvIndex(overrides: Partial<SrvIndex> = {}): SrvIndex {
     mZipCode: '8002',
     mCity: 'Zürich',
     mCountryCode: 'CH',
+    mCountryId: '3',
     mDateOfDeath: '',
     mPassiveSince: '',
     pKey: '',
@@ -179,10 +182,12 @@ describe('getMismatches', () => {
     expect(mismatchOf({ mZipCode: '3000' }, 'zipCode')?.kind).toBe('fix');
   });
 
-  it('country: mapped code vs different Regasoft id → fix; unmapped code → skipped', () => {
-    expect(mismatchOf({ mCountryCode: 'CH', rCountryId: '5' }, 'country')?.kind).toBe('fix');
-    expect(mismatchOf({ mCountryCode: 'XX', rCountryId: '5' }, 'country')).toBeUndefined();
-    expect(mismatchOf({ mCountryCode: '', rCountryId: '5' }, 'country')).toBeUndefined();
+  it('country: our countryId vs a different Regasoft id → fix; a country Regasoft does not know → skipped', () => {
+    expect(mismatchOf({ mCountryCode: 'CH', mCountryId: '3', rCountryId: '5' }, 'country')?.kind).toBe('fix');
+    expect(mismatchOf({ mCountryCode: 'DE', mCountryId: '2', rCountryId: '3' }, 'country')).toMatchObject({ okrValue: 'DE', rValue: '3', kind: 'fix' });
+    expect(mismatchOf({ mCountryCode: 'XX', mCountryId: '', rCountryId: '5' }, 'country')).toBeUndefined();
+    expect(mismatchOf({ mCountryCode: '', mCountryId: '', rCountryId: '5' }, 'country')).toBeUndefined();
+    expect(mismatchOf({ mCountryCode: 'CH', mCountryId: '3', rCountryId: '3' }, 'country')).toBeUndefined();
   });
 
   it('hasNewsletter false with rid → info', () => {
@@ -197,6 +202,11 @@ describe('getMismatches', () => {
   it('memberId and pCategory stay bk', () => {
     expect(mismatchOf({ memberId: '1', rServiceId: '2' }, 'memberId')?.kind).toBe('bk');
     expect(mismatchOf({ pKey: 'x', pCategory: 'P', rCategory: 'A' }, 'pCategory')?.kind).toBe('bk');
+  });
+
+  it('pCategory: an honorary member (E on both sides) is in sync; an unknown Regasoft type is not compared', () => {
+    expect(mismatchOf({ pKey: 'x', pCategory: 'E', rCategory: srvCategoryOf('Honorary') }, 'pCategory')).toBeUndefined();
+    expect(mismatchOf({ pKey: 'x', pCategory: 'A', rCategory: srvCategoryOf('Supporter') }, 'pCategory')).toBeUndefined();
   });
 
   it('exit sentinel 99991231 vs empty leavingDate → no mismatch', () => {
@@ -293,7 +303,8 @@ describe('getSrvChanges', () => {
   it('maps dateOfBirth→birthday, zipCode→postcode, country→countryId', () => {
     expect(changes({ dateOfBirth: '19850416' })).toEqual({ birthday: '19850416' });
     expect(changes({ mZipCode: '3000' })).toEqual({ postcode: '3000' });
-    expect(changes({ mCountryCode: 'CH', rCountryId: '5' })).toEqual({ countryId: 3 });
+    expect(changes({ mCountryCode: 'CH', mCountryId: '3', rCountryId: '5' })).toEqual({ countryId: 3 });
+    expect(changes({ mCountryCode: 'GB', mCountryId: '8', rCountryId: '3' })).toEqual({ countryId: 8 });
   });
 
   it('text fields are copied from BK', () => {
@@ -400,12 +411,67 @@ describe('normalizePhone / classifyPhone', () => {
 });
 
 describe('countryIdOf', () => {
-  it('maps CH to 3 and returns null for unknown or empty codes', () => {
+  // Shape of GET /api/nationIoc (probed 2026-11-02).
+  const countries = [
+    { id: 1, countryCode: 'AT', ioc: 'AUT' },
+    { id: 3, countryCode: 'CH', ioc: 'SUI' },
+    { id: 8, countryCode: 'GB', ioc: 'GBR' },
+  ];
+
+  it('without Regasoft\'s list: only the fallback CH = 3', () => {
     expect(REGASOFT_COUNTRY_IDS['CH']).toBe(3);
     expect(countryIdOf('CH')).toBe(3);
     expect(countryIdOf('ch')).toBe(3);
+    expect(countryIdOf('GB')).toBeNull();
     expect(countryIdOf('XX')).toBeNull();
     expect(countryIdOf('')).toBeNull();
+  });
+
+  it('with the list: any listed code, case and blanks ignored', () => {
+    expect(countryIdOf('GB', countries)).toBe(8);
+    expect(countryIdOf(' at ', countries)).toBe(1);
+    expect(countryIdOf('CH', countries)).toBe(3);
+  });
+
+  it('with the list: a code Regasoft does not list is null, not the fallback', () => {
+    expect(countryIdOf('XX', countries)).toBeNull();
+    expect(countryIdOf('CH', [{ id: 1, countryCode: 'AT', ioc: 'AUT' }])).toBeNull();
+    expect(countryIdOf('', countries)).toBeNull();
+  });
+});
+
+describe('formatRegasoftModified', () => {
+  it('formats every fraction length Regasoft sends (probed 2026-11-02)', () => {
+    expect(formatRegasoftModified('2026-11-02T17:04:04')).toBe('02.11.2026 17:04');
+    expect(formatRegasoftModified('2026-11-02T17:04:04.5')).toBe('02.11.2026 17:04');
+    expect(formatRegasoftModified('2026-11-02T17:04:04.54')).toBe('02.11.2026 17:04');
+    expect(formatRegasoftModified('2026-11-02T07:04:04.541')).toBe('02.11.2026 07:04');
+  });
+
+  it('anything else is empty', () => {
+    expect(formatRegasoftModified(null)).toBe('');
+    expect(formatRegasoftModified(undefined)).toBe('');
+    expect(formatRegasoftModified('')).toBe('');
+    expect(formatRegasoftModified('2026-11-02')).toBe('');
+    expect(formatRegasoftModified('02.11.2026 17:04')).toBe('');
+    expect(formatRegasoftModified('2026-11-02T17:04:04Z')).toBe('');
+  });
+});
+
+describe('srvCategoryOf', () => {
+  it('maps the four Regasoft membership types to mcat_srv abbreviations', () => {
+    expect(srvCategoryOf('Junior')).toBe('J');
+    expect(srvCategoryOf('Active')).toBe('A');
+    expect(srvCategoryOf('Passive')).toBe('P');
+    expect(srvCategoryOf('Honorary')).toBe('E');   // not 'H': mcat_srv calls honorary E
+  });
+
+  it('an unknown, empty or differently cased type gives no category', () => {
+    expect(srvCategoryOf('Supporter')).toBe('');
+    expect(srvCategoryOf('active')).toBe('');
+    expect(srvCategoryOf('')).toBe('');
+    expect(srvCategoryOf(null)).toBe('');
+    expect(srvCategoryOf(undefined)).toBe('');
   });
 });
 

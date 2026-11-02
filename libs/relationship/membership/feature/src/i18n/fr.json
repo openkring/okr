@@ -609,9 +609,7 @@
       "building": "Construction de l’index...",
       "none": "Pas encore d’index. Construisez-le.",
       "summary": "{shown} sur {total} entrées : {scs} SCS, {srv} SRV, {regasoft} Regasoft",
-      "error": "Les contacts du portail Regasoft n’ont pas pu être chargés. Réessaie plus tard.",
-      "detail_partial": "Les détails du portail Regasoft n’ont pas pu être chargés pour {count} entrées. Pour elles, seuls le nom, le sexe, la date de naissance et l’e-mail sont comparés.",
-      "detail_error": "Les détails du portail Regasoft n’ont pas pu être chargés. La liste reste telle quelle. Réessaie plus tard."
+      "error": "Les contacts du portail Regasoft n’ont pas pu être chargés. Réessaie plus tard."
     },
     "person": {
       "update": {
@@ -694,7 +692,9 @@
       "before": "Regasoft actuellement",
       "after": "Après",
       "confirm": "Appliquer dans Regasoft",
-      "nothing": "Regasoft est déjà à jour. Il n’y a rien à modifier."
+      "nothing": "Regasoft est déjà à jour. Il n’y a rien à modifier.",
+      "modified": "Dernière modification dans le portail Regasoft : {date}. Vérifie si le secrétariat a modifié quelque chose depuis, que tu écraserais maintenant.",
+      "modified_unknown": "On ne sait pas quand cette entrée a été modifiée pour la dernière fois dans le portail Regasoft."
     },
     "update": {
       "done": "Regasoft est à jour. Champs modifiés : {count}",

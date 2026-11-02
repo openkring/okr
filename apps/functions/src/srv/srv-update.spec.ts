@@ -340,6 +340,23 @@ describe('runSrvPreview', () => {
     expect(res.before['email']).toBe('bruno@example.ch');
     expect(res.payload['email']).toBe('bruno@example.chx');
   });
+
+  it('C5: carries Regasoft\'s modified time for the record', async () => {
+    const readModified = vi.fn(async () => '2026-10-30T14:12:05');
+    const res = await runSrvPreview({ rid: 26183, changes: { city: 'Uster' }, testSystem: false, read: async () => RAW, readModified });
+    expect(readModified).toHaveBeenCalledWith(26183);
+    expect(res.modified).toBe('2026-10-30T14:12:05');
+  });
+
+  it('C5: modified is null without a reader, for an empty or unknown value, and when the read fails', async () => {
+    const base = { rid: 26183, changes: { city: 'Uster' }, testSystem: false, read: async () => RAW };
+    expect((await runSrvPreview(base)).modified).toBeNull();
+    expect((await runSrvPreview({ ...base, readModified: async () => null })).modified).toBeNull();
+    expect((await runSrvPreview({ ...base, readModified: async () => '' })).modified).toBeNull();
+    const failing = await runSrvPreview({ ...base, readModified: async () => { throw new Error('timeout'); } });
+    expect(failing.modified).toBeNull();
+    expect(failing.payload).toEqual({ ...RAW, city: 'Uster' });
+  });
 });
 
 describe('buildSrvCreatePayload', () => {

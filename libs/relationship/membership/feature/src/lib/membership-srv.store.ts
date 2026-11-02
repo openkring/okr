@@ -10,8 +10,8 @@ import { isFirestoreInitializedCheck } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { AddressCollection, AddressModel, MembershipCollection, MembershipModel, OwnershipModel, PersonModel, SrvChanges, SrvContact, SrvIndex, SrvMemberLicenseDetail, SrvPreview, SrvUpdateResult } from '@okr/shared-models';
-import { classifyPhone, composeSekretariatMail, countryIdOf, DateFormat, debugListLoaded, expectedSrvStatus, fill, getBirthYear, getFullName, getMismatches, getSekretariatCases, getSrvChanges, getSystemQuery, getTodayStr, getYear, isMembership, isPerson, mailtoUrl, pickSrvMemberships, regasoftDateToStoreDate, srvCreateBlocker, SrvMembershipPick } from '@okr/shared-util-core';
+import { AddressCollection, AddressModel, MembershipCollection, MembershipModel, OwnershipModel, PersonModel, SrvChanges, SrvContact, SrvCountry, SrvIndex, SrvMemberLicenseDetail, SrvMembersAllResult, SrvPreview, SrvUpdateResult } from '@okr/shared-models';
+import { classifyPhone, composeSekretariatMail, countryIdOf, DateFormat, debugListLoaded, expectedSrvStatus, fill, getBirthYear, getFullName, getMismatches, getSekretariatCases, getSrvChanges, getSystemQuery, getTodayStr, getYear, isMembership, isPerson, mailtoUrl, pickSrvMemberships, regasoftDateToStoreDate, srvCategoryOf, srvCreateBlocker, SrvMembershipPick } from '@okr/shared-util-core';
 
 import { copyToClipboardDeferred, showToast } from '@okr/shared-util-angular';
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
@@ -41,10 +41,19 @@ export type MembershipSrvState = {
    * days old; a change set from it could write stale data to Regasoft (spec 1.133 I6).
    */
   builtThisSession: boolean;
+  /**
+   * Regasoft members who left or died and match none of our members: not shown, but checked by the
+   * duplicate guard before a member is created (D8). Filled by `buildIndex`, never stored.
+   */
+  inactiveIndex: SrvIndex[];
+  /** Regasoft's country list from the last index build; empty = unknown (fallback CH = 3). */
+  countries: SrvCountry[];
 };
 
 const initialState: MembershipSrvState = {
   index: [],
+  inactiveIndex: [],
+  countries: [],
   searchTerm: '',
   selectedFilter: 'all',
   regasoftItems: 0,
@@ -58,6 +67,15 @@ function memberCatAbbr(category: string): string {
   const map: Record<string, string> = {
     active: 'A', active2: 'A', active3: 'A', honorary: 'A', free: 'A', passive: 'P', junior: 'J', double: 'D', candidate: 'K',
   };
+  return map[category] ?? '';
+}
+
+/**
+ * Abbreviation of an SRV membership category (`mcat_srv`). Unlike the club's categories, honorary
+ * is its own SRV category `E`, the value `srvCategoryOf('Honorary')` compares with (spec 1.133 C2).
+ */
+function parentCatAbbr(category: string): string {
+  const map: Record<string, string> = { active: 'A', junior: 'J', double: 'D', honorary: 'E', passive: 'P' };
   return map[category] ?? '';
 }
 
@@ -116,7 +134,8 @@ function buildIndexEntry(
   postal?: AddressModel,
   dob = '',                                       // full dob from the vault (spec 1.19 Phase 4)
   dod = '',                                       // full dod from the vault
-  contact?: { email: string; phone: string }      // from the address-directory projection
+  contact?: { email: string; phone: string },     // from the address-directory projection
+  countries: readonly SrvCountry[] = []           // Regasoft's country list (spec 1.133 C3)
 ): SrvIndex {
   const mPassiveSince = m && m.category === 'passive' ? (m.dateOfEntry ?? '') : '';
   const firstName = m?.memberName1 ?? r?.firstName ?? p?.memberName1 ?? '';
@@ -142,6 +161,7 @@ function buildIndexEntry(
     mZipCode:    postal?.zipCode ?? person?.favZipCode ?? '',
     mCity:       postal?.city ?? '',
     mCountryCode:  postal?.countryCode ?? '',
+    mCountryId:    String(countryIdOf(postal?.countryCode ?? '', countries) ?? ''),
     mDateOfDeath:  dod,
     mPassiveSince,
 
@@ -149,7 +169,7 @@ function buildIndexEntry(
     memberId:    p?.memberId ?? '',
     pDateOfExit: p?.dateOfExit ?? '',
     pState:      p?.state ?? '',
-    pCategory:   memberCatAbbr(p?.category ?? ''),
+    pCategory:   parentCatAbbr(p?.category ?? ''),
 
     rid:              r ? String(r.srvId) : '',
     rServiceId:       r?.serviceId != null ? String(r.serviceId) : '',
@@ -164,7 +184,7 @@ function buildIndexEntry(
     rCity:            r?.city ?? '',
     rCountryId:       '',
     rDateOfBirth:     r?.dateOfBirth ?? '',
-    rCategory:        r?.membershipType ? r.membershipType.charAt(0).toUpperCase() : '',
+    rCategory:        srvCategoryOf(r?.membershipType),
     rDateOfExit:      r?.leavingDate || r?.dateOfDeath || '',
     rLeavingDate:     r?.leavingDate ?? '',
     rDateOfDeath:     r?.dateOfDeath ?? '',
@@ -183,8 +203,24 @@ function buildIndexEntry(
   };
 }
 
+/** Fill the Regasoft detail fields of an index entry (from `/all`, spec 1.133 C1). */
+function applyDetail(entry: SrvIndex, detail: SrvMemberLicenseDetail): void {
+  entry.hasNewsletter      = detail.hasNewsletter;
+  entry.rStreet            = detail.street;
+  entry.rZipCode           = detail.postcode;
+  entry.rCity              = detail.city;
+  entry.licenseId          = detail.licenseId;
+  entry.licenseValidUntil  = detail.licenseValidUntil;
+  entry.licenseImage       = detail.licenseImage;
+  entry.licenseImageName   = detail.licenseImageName;
+  entry.licenseImageMimeType = detail.licenseImageMimeType;
+  Object.assign(entry, regasoftFieldsOf(detail));
+  entry.clubs              = detail.clubs.map(c => c.mainClub ? '!' + c.clubName : c.clubName);
+  entry.rDetailLoaded      = true;
+}
+
 function storageKey(tenantId: string): string {
-  return `okr-aoc-srv-index-v3-${tenantId}`;   // v3: entries carry rDetailLoaded (spec 1.133 I2)
+  return `okr-aoc-srv-index-v4-${tenantId}`;   // v4: entries carry mCountryId and the C2 categories (spec 1.133)
 }
 
 function stripForStorage(entry: SrvIndex): Omit<SrvIndex, 'licenseImage' | 'licenseImageName' | 'licenseImageMimeType'> & { licenseImage: null; licenseImageName: null; licenseImageMimeType: null } {
@@ -203,6 +239,7 @@ function loadIndex(tenantId: string): SrvIndex[] {
   try {
     localStorage.removeItem(`okr-aoc-srv-index-${tenantId}`);      // v1 cache lacks the 1.133 fields
     localStorage.removeItem(`okr-aoc-srv-index-v2-${tenantId}`);   // v2 cache lacks rDetailLoaded
+    localStorage.removeItem(`okr-aoc-srv-index-v3-${tenantId}`);   // v3 cache lacks mCountryId, honorary is 'H'
     const raw = localStorage.getItem(storageKey(tenantId));
     return raw ? (JSON.parse(raw) as SrvIndex[]) : [];
   } catch { return []; }
@@ -311,7 +348,7 @@ export const MembershipSrvStore = signalStore(
     setSearchTerm(searchTerm: string) { patchState(store, { searchTerm }); },
     setFilter(selectedFilter: string) { patchState(store, { selectedFilter }); },
     resetIndex() {
-      patchState(store, { index: [], builtThisSession: false });
+      patchState(store, { index: [], inactiveIndex: [], builtThisSession: false });
       try { localStorage.removeItem(storageKey(store.tenantId())); } catch { /* SSR */ }
     },
     loadIndexFromStorage() {
@@ -338,27 +375,49 @@ export const MembershipSrvStore = signalStore(
       if (store.appStore.env.useEmulators) {
         connectFunctionsEmulator(functions, 'localhost', 5001);
       }
-      let regasoftContacts: SrvContact[] = [];
+      // One call: current members and members who left, both with the full detail, and the
+      // country list (spec 1.133 C1, C3). Replaces the member list plus one detail read per member.
+      let all: SrvMembersAllResult;
       try {
-        const fn = httpsCallable<{ op: string }, SrvContact[]>(functions, 'srv');
-        const result = await fn({ op: 'getSrvContacts' });
-        regasoftContacts = result.data;
-        patchState(store, { regasoftItems: regasoftContacts.length });
-        console.log(`MembershipSrvStore.buildIndex: ${regasoftContacts.length} Regasoft contacts loaded`);
+        const fn = httpsCallable<{ op: string }, SrvMembersAllResult>(functions, 'srv');
+        all = (await fn({ op: 'getSrvMembersAll' })).data;
       } catch (e) {
-        console.error('MembershipSrvStore.buildIndex: getSrvContacts failed', e);
+        console.error('MembershipSrvStore.buildIndex: getSrvMembersAll failed', e);
         // Without the Regasoft side every row would read «nur in BK»: say why and leave the index as it was.
         await showToast(store.toastController, store.i18n.srv_index_error());
         return;
       }
+      const countries = all.countries;
+      const regasoftContacts: SrvContact[] = all.members.filter(m => m.active).map(m => m.contact);
+      const leftContacts: SrvContact[]     = all.members.filter(m => !m.active).map(m => m.contact);
+      const detailByRid = new Map(all.members.map(m => [m.contact.srvId, m.detail]));
+      patchState(store, { regasoftItems: regasoftContacts.length, countries });
+      console.log(`MembershipSrvStore.buildIndex: ${regasoftContacts.length} current and ${leftContacts.length} former Regasoft members, ${countries.length} countries`);
 
-      const regasoftByServiceId = new Map<string, SrvContact>();
-      const regasoftByName      = new Map<string, SrvContact>();
-      for (const r of regasoftContacts) {
-        if (r.serviceId != null) regasoftByServiceId.set(String(r.serviceId), r);
-        const nameKey = getFullName(r.firstName, r.lastName).trim().toLowerCase();
-        if (!regasoftByName.has(nameKey)) regasoftByName.set(nameKey, r);
-      }
+      const lookup = (contacts: SrvContact[]) => {
+        const byServiceId = new Map<string, SrvContact>();
+        const byName      = new Map<string, SrvContact>();
+        for (const r of contacts) {
+          if (r.serviceId != null) byServiceId.set(String(r.serviceId), r);
+          const nameKey = getFullName(r.firstName, r.lastName).trim().toLowerCase();
+          if (!byName.has(nameKey)) byName.set(nameKey, r);
+        }
+        return { byServiceId, byName };
+      };
+      const current = lookup(regasoftContacts);
+      const left    = lookup(leftContacts);
+      /**
+       * The Regasoft record of one of our memberships: by SRV number first, then by name. A current
+       * membership may match a member who left (re-joined: the update clears the exit date, D7); an
+       * ended membership only a current one, so the index does not fill up with long-gone members (I1).
+       */
+      const findRegasoft = (memberId: string | undefined, first: string, last: string, ended: boolean): SrvContact | undefined => {
+        const nameKey = getFullName(first, last).trim().toLowerCase();
+        const sources = ended ? [current] : [current, left];
+        for (const src of sources) if (memberId && src.byServiceId.has(memberId)) return src.byServiceId.get(memberId);
+        for (const src of sources) if (src.byName.has(nameKey)) return src.byName.get(nameKey);
+        return undefined;
+      };
 
       const processedParentKeys    = new Set<string>();
       const processedRegasoftIds   = new Set<number>();
@@ -406,14 +465,9 @@ export const MembershipSrvStore = signalStore(
         // parent membership, which still holds the SRV number that links the Regasoft record.
         const p = parentPick && (!parentPick.ended || ended) ? parentPick.membership : undefined;
 
-        let r: SrvContact | undefined;
-        if (p?.memberId) r = regasoftByServiceId.get(p.memberId);
-        if (!r) {
-          const nameKey = getFullName(m.memberName1, m.memberName2).trim().toLowerCase();
-          r = regasoftByName.get(nameKey);
-        }
-        // An ended membership stays in the index only while Regasoft still lists the member, so its
-        // exit and death dates reach Regasoft (spec 1.133 I1); without a Regasoft record it is gone.
+        const r = findRegasoft(p?.memberId, m.memberName1, m.memberName2, ended);
+        // An ended membership stays in the index only while Regasoft still lists the member as
+        // current, so its exit and death dates reach Regasoft (spec 1.133 I1); otherwise it is gone.
         if (ended && !r) continue;
         if (parentPick?.membership.okey) processedParentKeys.add(parentPick.membership.okey);
         if (r) processedRegasoftIds.add(r.srvId);
@@ -424,19 +478,14 @@ export const MembershipSrvStore = signalStore(
         const dod = dodByPersonKey.get(m.memberKey) ?? '';
         const directory = store.appStore.getDirectoryEntry(`person.${m.memberKey}`);
         const contact = { email: directory?.favEmail ?? '', phone: directory?.favPhone ?? '' };
-        index.push(buildIndexEntry(m, p, r, person, postal, dob, dod, contact));
+        index.push(buildIndexEntry(m, p, r, person, postal, dob, dod, contact, countries));
       }
 
       // ── Orphan parent memberships (no matching main) ─────────────────────
       for (const { membership: p, ended } of parentPicks) {
         if (p.okey && processedParentKeys.has(p.okey)) continue;
 
-        let r: SrvContact | undefined;
-        if (p.memberId) r = regasoftByServiceId.get(p.memberId);
-        if (!r) {
-          const nameKey = getFullName(p.memberName1, p.memberName2).trim().toLowerCase();
-          r = regasoftByName.get(nameKey);
-        }
+        const r = findRegasoft(p.memberId, p.memberName1, p.memberName2, ended);
         if (ended && !r) continue;
         if (r) processedRegasoftIds.add(r.srvId);
 
@@ -448,6 +497,10 @@ export const MembershipSrvStore = signalStore(
         if (processedRegasoftIds.has(r.srvId)) continue;
         index.push(buildIndexEntry(undefined, undefined, r, undefined));
       }
+      // Members who left and match none of ours: not listed, only kept for the duplicate guard (D8).
+      const inactiveIndex = leftContacts
+        .filter(r => !processedRegasoftIds.has(r.srvId))
+        .map(r => buildIndexEntry(undefined, undefined, r, undefined));
 
       index.sort((a, b) => {
         const nameA = a.lastName || a.rLastName;
@@ -455,50 +508,16 @@ export const MembershipSrvStore = signalStore(
         return nameA.localeCompare(nameB);
       });
 
-      // ── Enrich all Regasoft members from detail endpoint ─────────────────
-      const allRids = index.map(i => Number(i.rid)).filter(n => n > 0);
-      if (allRids.length > 0) {
-        try {
-          const detailFn = httpsCallable<{ rids: number[]; op: string }, SrvMemberLicenseDetail[]>(functions, 'srv');
-          const detailResult = await detailFn({ rids: allRids, op: 'getSrvMemberDetail' });
-          const detailMap = new Map(detailResult.data.map(d => [d.rid, d]));
-          for (const entry of index) {
-            const detail = detailMap.get(Number(entry.rid));
-            if (detail) {
-              entry.hasNewsletter      = detail.hasNewsletter;
-              entry.rStreet            = detail.street;
-              entry.rZipCode           = detail.postcode;
-              entry.rCity              = detail.city;
-              entry.licenseId          = detail.licenseId;
-              entry.licenseValidUntil  = detail.licenseValidUntil;
-              entry.licenseImage       = detail.licenseImage;
-              entry.licenseImageName   = detail.licenseImageName;
-              entry.licenseImageMimeType = detail.licenseImageMimeType;
-              Object.assign(entry, regasoftFieldsOf(detail));
-              entry.clubs              = detail.clubs.map(c => c.mainClub ? '!' + c.clubName : c.clubName);
-              entry.rDetailLoaded      = true;
-            }
-          }
-          const withClubs = index.filter(i => i.clubs.length > 0).length;
-          const multiClubs = index.filter(i => i.clubs.length > 1).length;
-          console.log(`MembershipSrvStore.buildIndex: enriched ${detailResult.data.length} member details, ${withClubs} with clubs, ${multiClubs} with >1 club`);
-        } catch (e) {
-          // Without any detail, every comparison of address, phone and status would be wrong: say so
-          // and keep the index as it was (spec 1.133 I2).
-          console.error('MembershipSrvStore.buildIndex: getSrvMemberDetail failed', e);
-          await showToast(store.toastController, store.i18n.srv_index_detail_error());
-          return;
-        }
-        // The function skips records it could not read: those entries are compared only partly.
-        const missing = index.filter(i => !!i.rid && !i.rDetailLoaded).length;
-        if (missing > 0) {
-          console.warn(`MembershipSrvStore.buildIndex: ${missing} member details missing`);
-          await showToast(store.toastController, fill(store.i18n.srv_index_detail_partial(), { count: missing }));
-        }
+      // ── Regasoft detail: every record from /all carries it ──────────────
+      for (const entry of [...index, ...inactiveIndex]) {
+        const detail = entry.rid ? detailByRid.get(Number(entry.rid)) : undefined;
+        if (detail) applyDetail(entry, detail);
       }
+      const multiClubs = index.filter(i => i.clubs.length > 1).length;
+      console.log(`MembershipSrvStore.buildIndex: ${multiClubs} entries with more than one club`);
 
       console.log(`MembershipSrvStore.buildIndex: index built with ${index.length} entries`);
-      patchState(store, { index, builtThisSession: true });
+      patchState(store, { index, inactiveIndex, builtThisSession: true });
       saveIndex(store.tenantId(), index);
     },
 
@@ -641,7 +660,8 @@ export const MembershipSrvStore = signalStore(
      * duplicate by name + birth date, then an explicit confirmation of the main-club effect.
      */
     async addToRegasoft(item: SrvIndex): Promise<void> {
-      const blocker = srvCreateBlocker(item, store.index());
+      // Members who left count as duplicates too (D8); they are only known after an index build.
+      const blocker = srvCreateBlocker(item, [...store.index(), ...store.inactiveIndex()]);
       if (blocker === 'hasSrvNumber') {
         await showToast(store.toastController, store.i18n.srv_create_blocked_srvnumber());
         return;
@@ -673,7 +693,7 @@ export const MembershipSrvStore = signalStore(
       // membershipType, nationIOC, language, hasNewsletter, hasLicense, countryName, streetAdditional.
       // A new member is neither exited nor deceased, so only the passive status is derived.
       const phoneClass = item.mPhone ? classifyPhone(item.mPhone) : null;
-      const countryId = countryIdOf(item.mCountryCode);
+      const countryId = countryIdOf(item.mCountryCode, store.countries());
       const { inactiveDate } = expectedSrvStatus({
         dateOfDeath: '', dateOfExit: '', category: item.mCategory, passiveSince: item.mPassiveSince, today: getTodayStr(DateFormat.StoreDate),
       });

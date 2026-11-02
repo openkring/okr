@@ -1,6 +1,6 @@
 import { classifyStoreDate, convertDateFormatToString, DateFormat } from './date.util';
 import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
-import { SrvChanges, SrvIndex, SrvMismatch } from '@okr/shared-models';
+import { SrvChanges, SrvCountry, SrvIndex, SrvMismatch } from '@okr/shared-models';
 
 /**
  * Convert StoreDate "YYYYMMDD" → Regasoft ISO datetime "YYYY-MM-DDTHH:mm:ss". Returns null for
@@ -57,11 +57,40 @@ export function phonesMatch(bk: string, rMobile: string, rTelefon: string): bool
   return b === m || b === t;
 }
 
-/** BK country code → Regasoft country id. Extend from observed records; replace with Regasoft's list (Q3). */
+/** Fallback when Regasoft's country list (`GET /api/nationIoc`) could not be read. */
 export const REGASOFT_COUNTRY_IDS: Record<string, number> = { CH: 3 };
 
-export function countryIdOf(code: string): number | null {
-  return REGASOFT_COUNTRY_IDS[(code ?? '').trim().toUpperCase()] ?? null;
+/**
+ * BK country code → Regasoft `countryId`, from Regasoft's country list (spec 1.133 C3). An empty
+ * list means it could not be read: then only the fallback (CH = 3) is known. `null` = Regasoft does
+ * not know the country, or no code.
+ */
+export function countryIdOf(code: string, countries: readonly SrvCountry[] = []): number | null {
+  const c = (code ?? '').trim().toUpperCase();
+  if (!c) return null;
+  if (countries.length > 0) return countries.find(n => (n.countryCode ?? '').toUpperCase() === c)?.id ?? null;
+  return REGASOFT_COUNTRY_IDS[c] ?? null;
+}
+
+/**
+ * Regasoft's `modified` (`YYYY-MM-DDTHH:mm:ss` with 0–3 fraction digits, no time zone: shown as
+ * Regasoft sends it) as `DD.MM.YYYY HH:mm`. '' for anything else (C5).
+ */
+export function formatRegasoftModified(modified: string | null | undefined): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):\d{2}(\.\d{1,7})?$/.exec(modified ?? '');
+  return m ? `${m[3]}.${m[2]}.${m[1]} ${m[4]}:${m[5]}` : '';
+}
+
+/**
+ * Regasoft's `membershipType` → our `mcat_srv` abbreviation (spec 1.133 C2). Honorary is `E` there,
+ * not its first letter. An unknown type gives '' so nothing is compared or created from it.
+ */
+export const SRV_MEMBERSHIP_TYPE_CATEGORY: Record<string, string> = {
+  Junior: 'J', Active: 'A', Passive: 'P', Honorary: 'E',
+};
+
+export function srvCategoryOf(membershipType: string | null | undefined): string {
+  return SRV_MEMBERSHIP_TYPE_CATEGORY[membershipType ?? ''] ?? '';
 }
 
 /**
@@ -223,8 +252,8 @@ export function getMismatches(item: SrvIndex, today: string): SrvMismatch[] {
     cmp('zipCode', v(item.mZipCode), v(item.rZipCode));
     cmp('city', v(item.mCity), v(item.rCity), (a, b) => lower(a) === lower(b));
 
-    const countryId = countryIdOf(v(item.mCountryCode));
-    if (countryId !== null && String(countryId) !== v(item.rCountryId)) {
+    const countryId = v(item.mCountryId);
+    if (countryId && countryId !== v(item.rCountryId)) {
       result.push({ field: 'country', okrValue: item.mCountryCode, rValue: v(item.rCountryId), kind: 'fix' });
     }
   }
@@ -304,7 +333,7 @@ export function getSrvChanges(item: SrvIndex, today: string): SrvChanges {
       case 'dateOfBirth': changes.birthday = m.okrValue; break;
       case 'zipCode': changes.postcode = m.okrValue; break;
       case 'phone': changes[classifyPhone(item.mPhone)] = m.okrValue; break;
-      case 'country': changes.countryId = countryIdOf(item.mCountryCode); break;
+      case 'country': changes.countryId = Number(item.mCountryId); break;
       case 'firstName':
       case 'lastName':
       case 'email':

@@ -10,17 +10,22 @@ import * as contact from './contact';
 
 /** The four ops that also exist as stand-alone callables (aliases, 3.41 A8). */
 const ALIASED = ['getSrvContacts', 'getSrvMemberDetail', 'createSrvContact', 'updateSrvContact'];
-/** Every op; `previewSrvUpdate` (1.133) is router-only, so it adds no new deployed function. */
-const NAMES = [...ALIASED, 'previewSrvUpdate'];
+/** Every op; `previewSrvUpdate` and `getSrvMembersAll` (1.133) are router-only, so they add no deployed function. */
+const NAMES = [...ALIASED, 'previewSrvUpdate', 'getSrvMembersAll'];
 
 describe('srv op table', () => {
-  it('has exactly the 5 op names as keys', () => {
+  it('has exactly the 6 op names as keys', () => {
     expect(Object.keys(SRV_OPS).sort()).toEqual([...NAMES].sort());
   });
 
   it('previewSrvUpdate runs the preview handler and has no alias', () => {
     expect(SRV_OPS['previewSrvUpdate']).toBe(contact.handlePreviewSrvUpdate);
     expect((contact as Record<string, unknown>)['previewSrvUpdate']).toBeUndefined();
+  });
+
+  it('getSrvMembersAll runs its handler and has no alias', () => {
+    expect(SRV_OPS['getSrvMembersAll']).toBe(contact.handleGetSrvMembersAll);
+    expect((contact as Record<string, unknown>)['getSrvMembersAll']).toBeUndefined();
   });
 
   for (const name of ALIASED) {
