@@ -11,3 +11,4 @@ export * from './lib/visibility-rule.input';
 export * from './lib/derived-values.input';
 export * from './lib/form-builder-help.modal';
 export * from './lib/form-filler-help.modal';
+export * from './lib/acceptance-settings.input';

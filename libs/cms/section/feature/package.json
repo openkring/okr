@@ -21,6 +21,7 @@
     "@okr/cms-section-util": "*",
     "@okr/cms-section-ui": "*",
     "@okr/calendar-calevent-data-access": "*",
+    "@okr/calendar-course-data-access": "*",
     "@okr/calendar-calevent-util": "*",
     "@okr/subject-group-util": "*",
     "@okr/user-util": "*",

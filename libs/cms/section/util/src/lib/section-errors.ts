@@ -17,6 +17,8 @@ const IMAGE_STYLE_FIELDS = [
 
 /** Marks the `images[0].url`-style keys produced by imageConfigValidations. */
 const IMAGES_PREFIX = 'images[';
+/** Marks the `implicitValues.courseId`-style keys of a form section (one fixed value per implicit field). */
+const IMPLICIT_VALUES_PREFIX = 'implicitValues.';
 
 /**
  * Field names the configuration components of a given section type render an inline
@@ -55,6 +57,9 @@ export function getInlineErrorFields(type: SectionType, showAdvanced = false): s
     case 'advent':
       fields.push('adventYear');
       break;
+    case 'form':
+      fields.push('formKey', 'emailAddresses', IMPLICIT_VALUES_PREFIX, 'closesAt', 'maxResponses', 'closedMessage', 'rateLimit.limit', 'rateLimit.periodMinutes');
+      break;
     case 'hero':
       if (showAdvanced) fields.push(...IMAGE_STYLE_FIELDS);
       break;
@@ -81,7 +86,7 @@ export function getInlineErrorFields(type: SectionType, showAdvanced = false): s
 /** True when `field` is rendered inline by one of the configuration components. */
 export function isInlineErrorField(field: string, inlineFields: string[]): boolean {
   return inlineFields.some((inlineField) =>
-    inlineField === IMAGES_PREFIX ? field.startsWith(IMAGES_PREFIX) : inlineField === field);
+    inlineField === IMAGES_PREFIX || inlineField === IMPLICIT_VALUES_PREFIX ? field.startsWith(inlineField) : inlineField === field);
 }
 
 /**

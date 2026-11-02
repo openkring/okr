@@ -73,3 +73,14 @@ describe('getImageErrors', () => {
     expect(getImageErrors({})).toEqual([]);
   });
 });
+
+describe('form section error fields', () => {
+  it('shows the fixed values of every implicit field inline, so none lands in the fallback list', () => {
+    const inline = getInlineErrorFields('form');
+    expect(isInlineErrorField('implicitValues.courseId', inline)).toBe(true);
+    expect(isInlineErrorField('implicitValues.level', inline)).toBe(true);
+    expect(isInlineErrorField('formKey', inline)).toBe(true);
+    expect(isInlineErrorField('maxResponses', inline)).toBe(true);
+    expect(isInlineErrorField('okey', inline)).toBe(false);
+  });
+});

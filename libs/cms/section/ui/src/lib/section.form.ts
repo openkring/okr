@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
 
-import { ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
+import { ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
 import { Chips, ErrorNote, ImageConfigEdit, NotesInput, NotesInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole, sanitizeFileName } from '@okr/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@okr/shared-constants';
@@ -9,6 +9,7 @@ import { UploadService } from '@okr/avatar-data-access';
 import { confirm, MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { AlertController, IonItem, IonToggle } from '@ionic/angular';
 import { ChartOption, getInlineErrorFields, getRemainingErrors, SectionErrors, SectionI18n, validateSection } from '@okr/cms-section-util';
+import { FormI18n } from '@okr/forms-util';
 
 import { SectionConfiguration } from './section-configuration';
 import { EditorConfiguration } from './editor-configuration';
@@ -45,6 +46,7 @@ import { TocConfiguration } from './toc-configuration';
 import { TestimonialConfiguration } from './testimonial-configuration';
 import { TimelineConfiguration } from './timeline-configuration';
 import { AdventConfiguration } from './advent-configuration';
+import { CourseOption, FormOption, FormSectionConfiguration } from './form-section-configuration';
 
 @Component({
   selector: 'okr-section-form',
@@ -57,7 +59,7 @@ import { AdventConfiguration } from './advent-configuration';
     ButtonStyleConfiguration, ButtonActionConfiguration, IconConfiguration, ChatConfiguration,
     MapConfiguration, TrackerConfiguration, TableGridConfiguration,  TableStyleConfiguration, TableHeader,
     TableBody, EventsConfiguration, InvitationsConfiguration, ImagesConfiguration, CalendarConfiguration, ChartConfiguration,
-    MemberConfiguration, RagConfiguration, SankeyConfiguration, SpiderConfiguration, TocConfiguration, TestimonialConfiguration, TimelineConfiguration, AdventConfiguration
+    MemberConfiguration, RagConfiguration, FormSectionConfiguration, SankeyConfiguration, SpiderConfiguration, TocConfiguration, TestimonialConfiguration, TimelineConfiguration, AdventConfiguration
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -194,6 +196,22 @@ import { AdventConfiguration } from './advent-configuration';
               [i18n]="i18n()"
               [errors]="errors()"
             />
+          }
+        }
+        @case('form') {
+          @if(formConfig(); as formConfig) {
+            @if(formI18n(); as formI18n) {
+              <okr-form-section-config
+                [formData]="formConfig" (formDataChange)="onFormConfigChange($event)"
+                [forms]="forms()"
+                [courses]="courses()"
+                [readOnly]="isReadOnly()"
+                [i18n]="i18n()"
+                [formI18n]="formI18n"
+                [errors]="errors()"
+                (responsibilitySelectClicked)="selectFormResponsibility()"
+              />
+            }
           }
         }
         @case('events') {
@@ -578,11 +596,25 @@ export class SectionForm {
   public readonly weatherLocations = input<WeatherLocationOption[]>([]);
   /** contracts a ContractDocument button may point at (spec 1.97); loaded by the modal for contract staff only */
   public readonly contracts = input<ContractOption[]>([]);
+  /** Forms a form section may point at, with their implicit fields. Empty for every other section type. */
+  public readonly forms = input<FormOption[]>([]);
+  /** Courses a form section may fix for a course form (D-W4). Empty for every other section type. */
+  public readonly courses = input<CourseOption[]>([]);
+  /** The forms keys, for the acceptance card of a form section. Unset for every other section type. */
+  public readonly formI18n = input<FormI18n | undefined>(undefined);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   // The per-type suite is picked at runtime from formData().type (validateSection), so the
   // bridge calls the registry through a closure; validateSection takes no field argument.
-  private readonly suiteWithContext = (model: SectionModel) => validateSection(model);
+  // A form section needs the implicit fields of the form it points at: their values are required (see
+  // formSectionValidations). Read inside the closure, so the validation re-runs when the forms arrive.
+  private readonly chosenImplicitFields = computed(() => {
+    const model = this.formData();
+    const formKey = model.type === 'form' ? (model as FormSection).properties?.formKey : undefined;
+    return formKey ? this.forms().find((f) => f.formKey === formKey)?.implicitFields : undefined;
+  });
+  private readonly suiteWithContext = (model: SectionModel) =>
+    validateSection(model, { formImplicitFields: this.chosenImplicitFields() });
   protected readonly sectionForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
@@ -600,6 +632,7 @@ export class SectionForm {
   protected buttonStyle = computed(() => this.getButtonStyle());
   protected iconConfig = computed(() => this.getIconConfig());
   protected chatConfig = computed(() => this.getChatConfig());
+  protected formConfig = computed(() => this.getFormConfig());
   protected calendarConfig = computed(() => this.getCalendarConfig());
   protected chartConfig = computed(() => this.getChartConfig());
   protected sankeyConfig = computed(() => this.getSankeyConfig());
@@ -707,6 +740,12 @@ export class SectionForm {
   private getChatConfig(): ChatConfig | undefined {
     if (this.formData().type === 'chat') {
       return ((this.formData() as ChatSection).properties as ChatConfig);
+    }
+  }
+
+  private getFormConfig(): FormSectionConfig | undefined {
+    if (this.formData().type === 'form') {
+      return ((this.formData() as FormSection).properties ?? FORM_SECTION_CONFIG_SHAPE);
     }
   }
 
@@ -1137,6 +1176,13 @@ export class SectionForm {
     }
   }
 
+  protected onFormConfigChange(config: FormSectionConfig): void {
+    const section = this.formData();
+    if (section.type === 'form') {
+      this.formData.set({ ...section, properties: config } as FormSection);
+    }
+  }
+
   protected onDeparturesConfigChange(config: DeparturesConfig): void {
     const section = this.formData();
     if (section.type === 'departures') {
@@ -1280,6 +1326,15 @@ export class SectionForm {
     const group = await this.modelSelectService.selectGroup();
     if (group) {
       this.onPeopleConfigChange({ ...this.peopleConfig(), groupId: group.okey } as PeopleConfig);
+    }
+  }
+
+  /** the responsibility that gets a task for every answer to a form section */
+  public async selectFormResponsibility(): Promise<void> {
+    const responsibility = await this.modelSelectService.selectResponsibility();
+    const section = this.formData();
+    if (responsibility && section.type === 'form') {
+      this.formData.set({ ...section, properties: { ...(section as FormSection).properties, responsibilityKey: responsibility.okey } } as FormSection);
     }
   }
 

@@ -149,6 +149,9 @@
       "path": "../../../forms/data-access/tsconfig.lib.json"
     },
     {
+      "path": "../../../calendar/course/data-access/tsconfig.lib.json"
+    },
+    {
       "path": "../../../forms/ui/tsconfig.lib.json"
     },
     {

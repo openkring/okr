@@ -407,6 +407,38 @@
     "archived": "Das Forms Template ist archiviert.",
     "advanced": {
       "label": "Erweiterte Einstellungen anzeigen"
+    },
+    "config": {
+      "title": "Formular",
+      "subtitle": "Welches Formular diese Seite zeigt und was mit den Antworten passiert.",
+      "form": "Formular",
+      "form_none": "Formular wählen",
+      "form_helper": "Das Formular, das auf dieser Seite angezeigt wird.",
+      "emails": "E-Mail-Adressen für Benachrichtigungen",
+      "emails_ph": "name@beispiel.ch, name2@beispiel.ch",
+      "emails_helper": "Diese Adressen bekommen eine Nachricht, sobald jemand das Formular abschickt. Trenne mehrere Adressen mit einem Komma.",
+      "resp": "Zuständigkeit",
+      "resp_select": "Zuständigkeit wählen",
+      "resp_clear": "Entfernen",
+      "resp_helper": "Die zuständige Person bekommt für jede Antwort eine Aufgabe.",
+      "captcha": "Spam-Schutz (Captcha) anzeigen",
+      "captcha_helper": "Die Person muss kurz beweisen, dass sie kein Roboter ist, bevor sie abschicken kann.",
+      "encrypt": "Dateien verschlüsseln",
+      "encrypt_helper": "Beim Abschicken wird nach einem Passwort gefragt. Hochgeladene Dateien werden damit verschlüsselt.",
+      "rate_limit": "Absendungen pro Person",
+      "rate_period": "Innerhalb von (Minuten)",
+      "rate_helper": "Schützt vor automatischem Ausfüllen: Wer öfter abschickt, muss warten.",
+      "fixed_title": "Feste Werte",
+      "fixed_subtitle": "Hier legst du fest, was auf dieser Seite für die unsichtbaren Felder des Formulars gilt, zum Beispiel für welchen Kurs die Anmeldung ist.",
+      "fixed_pick_form": "Wähle zuerst ein Formular.",
+      "fixed_none": "Dieses Formular hat keine unsichtbaren Felder.",
+      "fixed_course_pick": "Kurs wählen",
+      "fixed_course_none": "Es gibt noch keinen Kurs. Erstelle zuerst einen.",
+      "fixed_yes": "Ja",
+      "fixed_no": "Nein",
+      "fixed_required": "Braucht einen Wert, sonst bleibt das Feld in den Antworten leer.",
+      "accept_title": "Annahme auf dieser Seite",
+      "accept_subtitle": "Eigene Regeln für diese Seite, zum Beispiel eigene Plätze und eine eigene Frist für einen Kurs."
     }
   },
   "hero": {
@@ -1350,7 +1382,12 @@
   "validation": {
     "documentKeyInvalid": "Wähle ein Video aus dem Album aus.",
     "adventYearRange": "Gib ein Jahr zwischen 2020 und 2100 ein.",
-    "adventDoorCount": "Der Kalender braucht genau 25 Türchen. Ordne die Türchen neu an."
+    "adventDoorCount": "Der Kalender braucht genau 25 Türchen. Ordne die Türchen neu an.",
+    "formEmailInvalid": "Mindestens eine E-Mail-Adresse ist ungültig. Prüfe die Schreibweise.",
+    "formImplicitInvalid": "Dieser Wert passt nicht zum Feld.",
+    "formImplicitRequired": "Gib hier einen Wert an, sonst bleibt das Feld in den Antworten leer.",
+    "formImplicitSsn": "Die AHV-Nummer kann nicht fest vorgegeben werden.",
+    "formRateInvalid": "Gib eine ganze Zahl ab 1 ein."
   },
   "advent": {
     "label": "Adventskalender",

@@ -34,3 +34,4 @@ export * from './lib/modal-registry';
 export * from './lib/list-reservation.util';
 export * from './lib/section-errors';
 export * from './lib/context-diagram-config.validations';
+export * from './lib/form-section.validations';

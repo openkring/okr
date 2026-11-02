@@ -21,6 +21,8 @@
     { "path": "../../../avatar/ui/tsconfig.lib.json" },
     { "path": "../util/tsconfig.lib.json" },
     { "path": "../../../content/document/util/tsconfig.lib.json" },
+    { "path": "../../../forms/ui/tsconfig.lib.json" },
+    { "path": "../../../forms/util/tsconfig.lib.json" },
     { "path": "../../../geo/location/data-access/tsconfig.lib.json" },
     { "path": "../../../mobility/transit/data-access/tsconfig.lib.json" },
     { "path": "../../../mobility/transit/util/tsconfig.lib.json" },

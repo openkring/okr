@@ -19,6 +19,8 @@
     "@okr/shared-util-core": "*",
     "@okr/shared-util-angular": "*",
     "@okr/cms-section-util": "*",
+    "@okr/forms-ui": "*",
+    "@okr/forms-util": "*",
     "@okr/content-document-util": "*",
     "@okr/location-data-access": "*",
     "@okr/mobility-transit-data-access": "*",

@@ -407,6 +407,38 @@
     "archived": "The form template is archived.",
     "advanced": {
       "label": "Show advanced settings"
+    },
+    "config": {
+      "title": "Form",
+      "subtitle": "Which form this page shows and what happens with the answers.",
+      "form": "Form",
+      "form_none": "Choose a form",
+      "form_helper": "The form shown on this page.",
+      "emails": "Email addresses for notifications",
+      "emails_ph": "name@example.com, name2@example.com",
+      "emails_helper": "These addresses get a message whenever someone submits the form. Separate several addresses with a comma.",
+      "resp": "Responsibility",
+      "resp_select": "Choose responsibility",
+      "resp_clear": "Remove",
+      "resp_helper": "The responsible person gets a task for every answer.",
+      "captcha": "Show spam protection (captcha)",
+      "captcha_helper": "People briefly prove they are not a robot before they can submit.",
+      "encrypt": "Encrypt files",
+      "encrypt_helper": "When submitting, a password is asked for. Uploaded files are encrypted with it.",
+      "rate_limit": "Submissions per person",
+      "rate_period": "Within (minutes)",
+      "rate_helper": "Protects against automatic filling: whoever submits more often has to wait.",
+      "fixed_title": "Fixed values",
+      "fixed_subtitle": "Here you set what applies on this page for the form's hidden fields, for example which course the registration is for.",
+      "fixed_pick_form": "Choose a form first.",
+      "fixed_none": "This form has no hidden fields.",
+      "fixed_course_pick": "Choose a course",
+      "fixed_course_none": "There is no course yet. Create one first.",
+      "fixed_yes": "Yes",
+      "fixed_no": "No",
+      "fixed_required": "Needs a value, otherwise the field stays empty in the answers.",
+      "accept_title": "Acceptance on this page",
+      "accept_subtitle": "Your own rules for this page, for example its own places and deadline for a course."
     }
   },
   "hero": {
@@ -1350,7 +1382,12 @@
   "validation": {
     "documentKeyInvalid": "Select a video from the album.",
     "adventYearRange": "Enter a year between 2020 and 2100.",
-    "adventDoorCount": "The calendar needs exactly 25 doors. Rearrange the doors."
+    "adventDoorCount": "The calendar needs exactly 25 doors. Rearrange the doors.",
+    "formEmailInvalid": "At least one email address is not valid. Check the spelling.",
+    "formImplicitInvalid": "This value does not fit the field.",
+    "formImplicitRequired": "Enter a value here, otherwise the field stays empty in the answers.",
+    "formImplicitSsn": "The AHV number cannot be preset.",
+    "formRateInvalid": "Enter a whole number from 1."
   },
   "advent": {
     "label": "Advent calendar",

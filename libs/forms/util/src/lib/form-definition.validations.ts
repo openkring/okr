@@ -20,7 +20,7 @@ export const MAX_RESPONSES_LIMIT = 10000;
 export type AcceptanceFields = Pick<FormDefinitionModel, 'isOpen' | 'closesAt' | 'maxResponses' | 'showRemaining' | 'closedMessage'>;
 
 /** `''` (no date) or a real calendar day as `yyyymmdd`. */
-function isStoreDateOrEmpty(value: unknown): boolean {
+export function isStoreDateOrEmpty(value: unknown): boolean {
   if (value === undefined || value === null || value === '') return true;
   return typeof value === 'string' && /^\d{8}$/.test(value) && classifyStoreDate(value) === 'full' && isValidPartialStoreDate(value);
 }

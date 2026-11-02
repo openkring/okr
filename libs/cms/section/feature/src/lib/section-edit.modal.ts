@@ -1,15 +1,18 @@
-import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, effect, inject, Injector, input, linkedSignal, runInInjectionContext, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { map, of, switchMap } from 'rxjs';
+import { catchError, from, map, of, switchMap } from 'rxjs';
 import { IonContent, ModalController } from '@ionic/angular';
 
 import { CategoryListModel, LocationModel, SectionModel, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, ErrorBanner, Header} from '@okr/shared-ui';
 import { coerceBoolean, deepEqual, hasRole, safeStructuredClone } from '@okr/shared-util-core';
-import { SectionForm } from '@okr/cms-section-ui';
+import { CourseOption, FormOption, SectionForm } from '@okr/cms-section-ui';
 import { LocationService } from '@okr/location-data-access';
 import { ContractService } from '@okr/business-contract-data-access';
-import { dismissOverlay } from '@okr/shared-util-angular';
+import { dismissOverlay, lazyService } from '@okr/shared-util-angular';
+import { I18nService } from '@okr/shared-i18n';
+import { FormDefinitionService } from '@okr/forms-data-access';
+import { FORM_I18N_KEYS, FormI18n } from '@okr/forms-util';
 
 import { SectionStore } from './section.store';
 import { AppStore } from '@okr/shared-feature';
@@ -48,6 +51,9 @@ import { AppStore } from '@okr/shared-feature';
             [albumStyles]="albumStyles()"
             [weatherLocations]="weatherLocations()"
             [contracts]="contracts()"
+            [forms]="forms()"
+            [courses]="courses()"
+            [formI18n]="formI18n()"
             [allTags]="allTags()"
             [tenantId]="tenantId()"
             [linkOrigins]="store.appStore.appLinkOrigins()"
@@ -99,6 +105,37 @@ export class SectionEditModal {
     map((list) => list.map((c) => ({ okey: c.okey, name: c.name || c.okey }))),
   ), { initialValue: [] as { okey: string; name: string }[] });
 
+  /**
+   * What a form section offers (spec 1.125 B): the forms with their implicit fields, the courses for «Feste Werte»
+   * and the forms' texts for the acceptance card. Loaded for a form section only; every other type gets [] / undefined.
+   * The course data-access is imported lazily: it drags the finance booking service and has no business in this chunk's
+   * static graph (same reasoning as the calevent store, spec 1.132).
+   */
+  private readonly isFormSection = computed(() => this.section().type === 'form');
+  private readonly injector = inject(Injector);
+  private readonly i18nService = inject(I18nService);
+  private readonly formDefinitionService = inject(FormDefinitionService);
+  private readonly courseService = lazyService(this.injector, () =>
+    import('@okr/calendar-course-data-access').then(m => m.CourseService));
+  protected forms = toSignal(toObservable(this.isFormSection).pipe(
+    switchMap((ok) => (ok ? this.formDefinitionService.list().pipe(catchError(() => of([]))) : of([]))),
+    map((list): FormOption[] => list
+      .filter((def) => !def.isArchived && !!def.formKey)
+      .map((def) => ({
+        formKey: def.formKey,
+        name: def.name || def.formKey,
+        implicitFields: (def.fields ?? []).flatMap((field) => (field.type === 'implicit' ? [field] : [])),
+      }))),
+  ), { initialValue: [] as FormOption[] });
+  protected courses = toSignal(toObservable(this.isFormSection).pipe(
+    switchMap((ok) => (ok ? from(this.courseService()).pipe(switchMap((service) => service.listAll()), catchError(() => of([]))) : of([]))),
+    map((list): CourseOption[] => list
+      .filter((course) => !course.isArchived)
+      .map((course) => ({ okey: course.okey, name: course.name || course.okey }))
+      .sort((a, b) => a.name.localeCompare(b.name))),
+  ), { initialValue: [] as CourseOption[] });
+  protected formI18n = signal<FormI18n | undefined>(undefined);
+
   // signals
   protected initialData = signal<SectionModel | undefined>(undefined);
   protected formDirty = linkedSignal(() => {
@@ -115,6 +152,12 @@ export class SectionEditModal {
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   constructor() {
+    effect(() => {
+      // the forms' texts are resolved once, and only when a form section is edited
+      if (this.isFormSection() && !this.formI18n()) {
+        this.formI18n.set(runInInjectionContext(this.injector, () => this.i18nService.translateAll(FORM_I18N_KEYS)) as FormI18n);
+      }
+    });
     effect(() => {
       const orig = this.section();
       this.initialData.set(safeStructuredClone(orig));

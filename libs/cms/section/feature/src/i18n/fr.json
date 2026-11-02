@@ -407,6 +407,38 @@
     "archived": "Le modèle de formulaire est archivé.",
     "advanced": {
       "label": "Afficher les paramètres avancés"
+    },
+    "config": {
+      "title": "Formulaire",
+      "subtitle": "Quel formulaire cette page affiche et ce qui arrive aux réponses.",
+      "form": "Formulaire",
+      "form_none": "Choisir un formulaire",
+      "form_helper": "Le formulaire affiché sur cette page.",
+      "emails": "Adresses e-mail pour les notifications",
+      "emails_ph": "nom@exemple.ch, nom2@exemple.ch",
+      "emails_helper": "Ces adresses reçoivent un message dès que quelqu'un envoie le formulaire. Sépare plusieurs adresses par une virgule.",
+      "resp": "Responsabilité",
+      "resp_select": "Choisir une responsabilité",
+      "resp_clear": "Retirer",
+      "resp_helper": "La personne responsable reçoit une tâche pour chaque réponse.",
+      "captcha": "Afficher la protection anti-spam (captcha)",
+      "captcha_helper": "Les personnes prouvent brièvement qu'elles ne sont pas un robot avant d'envoyer.",
+      "encrypt": "Chiffrer les fichiers",
+      "encrypt_helper": "Au moment de l'envoi, un mot de passe est demandé. Les fichiers téléversés sont chiffrés avec lui.",
+      "rate_limit": "Envois par personne",
+      "rate_period": "En (minutes)",
+      "rate_helper": "Protège contre le remplissage automatique : qui envoie plus souvent doit patienter.",
+      "fixed_title": "Valeurs fixes",
+      "fixed_subtitle": "Tu définis ici ce qui vaut sur cette page pour les champs invisibles du formulaire, par exemple pour quel cours est l'inscription.",
+      "fixed_pick_form": "Choisis d'abord un formulaire.",
+      "fixed_none": "Ce formulaire n'a pas de champs invisibles.",
+      "fixed_course_pick": "Choisir un cours",
+      "fixed_course_none": "Il n'y a pas encore de cours. Crée-en un d'abord.",
+      "fixed_yes": "Oui",
+      "fixed_no": "Non",
+      "fixed_required": "Une valeur est nécessaire, sinon le champ reste vide dans les réponses.",
+      "accept_title": "Acceptation sur cette page",
+      "accept_subtitle": "Tes propres règles pour cette page, par exemple ses propres places et son propre délai pour un cours."
     }
   },
   "hero": {
@@ -1350,7 +1382,12 @@
   "validation": {
     "documentKeyInvalid": "Choisis une vidéo de l'album.",
     "adventYearRange": "Saisis une année entre 2020 et 2100.",
-    "adventDoorCount": "Le calendrier a besoin d'exactement 25 fenêtres. Réorganise les fenêtres."
+    "adventDoorCount": "Le calendrier a besoin d'exactement 25 fenêtres. Réorganise les fenêtres.",
+    "formEmailInvalid": "Au moins une adresse e-mail n'est pas valide. Vérifie l'orthographe.",
+    "formImplicitInvalid": "Cette valeur ne convient pas au champ.",
+    "formImplicitRequired": "Indique une valeur ici, sinon le champ reste vide dans les réponses.",
+    "formImplicitSsn": "Le numéro AVS ne peut pas être prédéfini.",
+    "formRateInvalid": "Saisis un nombre entier à partir de 1."
   },
   "advent": {
     "label": "Calendrier de l'Avent",
