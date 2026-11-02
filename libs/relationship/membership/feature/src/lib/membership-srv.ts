@@ -13,11 +13,11 @@ import { copyToClipboardWithConfirmation, createActionSheetButton, createActionS
 import { fill } from '@okr/shared-util-core';
 
 /**
- * The «Regasoft aktualisieren» action stays hidden until the update has been tested against
- * PortalTest (plan 1.133, Task 9 flips this to `true`; the server switch `SRV_UPDATE_ENABLED`
- * goes on at the same time). Even then it is offered only for an entry that `isSrvLinked`.
+ * The «Regasoft aktualisieren» action, shown since the PortalTest gate (plan 1.133 Task 9,
+ * 2026-11-02: in-app updates of a real address difference and of a passive member who had left
+ * both changed exactly the previewed fields). Offered only for an entry that `isSrvLinked`.
  */
-const REGASOFT_UPDATE_VISIBLE = false;
+const REGASOFT_UPDATE_VISIBLE = true;
 
 @Component({
   selector: 'okr-membership-srv',
