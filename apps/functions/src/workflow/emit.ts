@@ -109,7 +109,9 @@ export const CREATED_EMITTERS: Record<string, CreatedEmitSpec> = {
     event: 'application.created',
     relatedPrefix: 'application',
     params: ['state'],
-    extraParams: (d) => ({ kind: str(d['applicationAs']) }),
+    // `applicationFor` (1.125 B): a rule can tell a course registration from a membership application.
+    // Documents from before the field existed are membership applications.
+    extraParams: (d) => ({ kind: str(d['applicationAs']), applicationFor: str(d['applicationFor']) || 'membership' }),
     // An applicant is not a person yet — the record carries the name, not a personKey, so the
     // person-scoped probes correctly find nothing.
     personKey: () => '',

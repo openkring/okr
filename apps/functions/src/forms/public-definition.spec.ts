@@ -35,6 +35,20 @@ describe('projectPublicFormDefinition', () => {
     expect(fields[1].asProperty).toBe(true);
   });
 
+  it('projects sendFillerConfirmation, default false (legacy documents)', () => {
+    expect(projectPublicFormDefinition('d1', { ...doc, sendFillerConfirmation: true }, 'f1', 'scs')['sendFillerConfirmation']).toBe(true);
+    expect(projectPublicFormDefinition('d1', doc, 'f1', 'scs')['sendFillerConfirmation']).toBe(false);
+    expect(projectPublicFormDefinition('d1', { ...doc, sendFillerConfirmation: 'yes' }, 'f1', 'scs')['sendFillerConfirmation']).toBe(false);
+  });
+
+  it('never exposes the thank-you texts: they may quote answers and are returned only after a submit', () => {
+    const out = projectPublicFormDefinition('d1', {
+      ...doc, confirmationMessage: 'Danke {firstName}', confirmationVariants: [{ when: { mode: 'all', conditions: [] }, message: 'x' }],
+    }, 'f1', 'scs');
+    expect(out).not.toHaveProperty('confirmationMessage');
+    expect(out).not.toHaveProperty('confirmationVariants');
+  });
+
   it('never exposes the key hash, audit data or derived values', () => {
     const out = projectPublicFormDefinition('d1', doc, 'f1', 'scs');
     expect(out).not.toHaveProperty('encryptionKeyHash');

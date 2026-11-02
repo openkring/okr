@@ -62,19 +62,41 @@ function isSingleCheckbox(field: Field): boolean {
   return field.type === 'checkbox' && !(Array.isArray(field.options) && field.options.length > 0);
 }
 
+/** Display names for raw answers, by field key then raw value — e.g. `{ courseId: { <okey>: <course name> } }`. */
+export type ValueNames = Record<string, Record<string, string>>;
+
+/** One row value: a known display name, else «Andere: <text>» for the «Andere» choice, else `formatAnswer`. */
+function rowValue(field: Field, answers: Record<string, unknown>, names: ValueNames): string {
+  const answer = answers[field.key];
+  if (isSsnField(field)) return formatAnswer(field, answer);
+  const named = names[field.key];
+  if (named !== undefined && typeof answer === 'string' && Object.prototype.hasOwnProperty.call(named, answer)) {
+    return named[answer];
+  }
+  if (picksOther(field, answer)) {
+    const text = answers[otherTextKey(field)];
+    const other = typeof text === 'string' && text.trim() !== '' ? `Andere: ${text}` : 'Andere';
+    if (!Array.isArray(answer)) return other;
+    return answer.map((v) => (v === OTHER_OPTION_VALUE ? other : String(v))).join(', ');
+  }
+  return formatAnswer(field, answer);
+}
+
 /**
  * The rows of the notification e-mail (pure): visible input fields in field order with their
- * answer (booleans as ja/nein), then every derived value labelled by its key. Hidden and display
+ * answer (booleans as ja/nein, «Andere» with its text, a raw value with a known display name — the
+ * course — as that name), then every derived value labelled by its key. Hidden and display
  * fields are not shown. An AHV (`ssn`) answer shows as «angegeben» / «–», never as the number.
  */
 export function buildSubmissionRows(
   sortedVisibleInputs: Field[],
   answers: Record<string, unknown>,
   derivedValues: Record<string, string>,
+  names: ValueNames = {},
 ): SubmissionRow[] {
   const rows: SubmissionRow[] = sortedVisibleInputs.map((f) => ({
     label: f.label,
-    value: formatAnswer(f, answers[f.key]),
+    value: rowValue(f, answers, names ?? {}),
   }));
   for (const [key, value] of Object.entries(derivedValues)) rows.push({ label: key, value: formatAnswer(undefined, value) });
   return rows;
@@ -123,6 +145,8 @@ export function prepareSubmission(
   raw: Record<string, unknown>,
   today: string,
   implicit: Record<string, BaseType> = {},
+  /** display names for the e-mail rows only (the course name for `courseId`); never stored */
+  names: ValueNames = {},
 ): PreparedSubmission {
   const defs = (Array.isArray(fields) ? fields : []).filter((f) => !DISPLAY_TYPES.has(f.type));
   const all = Array.isArray(fields) ? fields : [];
@@ -202,7 +226,7 @@ export function prepareSubmission(
     values[propsKey] = buildTypedProperties(all, answers, visible, derivedList, derivedValues);
   }
 
-  const rows = buildSubmissionRows(sorted.filter((f) => visible.has(f.id)), answers, derivedValues);
+  const rows = buildSubmissionRows(sorted.filter((f) => visible.has(f.id)), answers, derivedValues, names);
   return { values, missingRequired, invalidProperties, invalidSsn, droppedDerivedProperties, visible, answers, rows };
 }
 

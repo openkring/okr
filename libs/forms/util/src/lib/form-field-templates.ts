@@ -58,6 +58,9 @@ const FORM_FIELD_TEMPLATES: Record<string, FieldTemplate[]> = {
     { key: 'ssnId',         type: 'ssn',   label: 'AHV-Nummer' },
   ],
   'applications.course': [
+    // the course (CourseModel.okey): never shown, set by the embedding section's `implicitValues` (D-W4).
+    // First (order 0), so a rule of any later field can depend on the course.
+    { key: 'courseId',      type: 'implicit', label: 'Kurs', valueType: 'text', asProperty: true },
     { key: 'firstName',     type: 'text',  label: 'Vorname',       required: true },
     { key: 'lastName',      type: 'text',  label: 'Nachname',      required: true },
     { key: 'gender',        type: 'radio', label: 'Geschlecht',    required: true,
@@ -69,8 +72,6 @@ const FORM_FIELD_TEMPLATES: Record<string, FieldTemplate[]> = {
     { key: 'streetNumber',  type: 'text',  label: 'Nr.' },
     { key: 'zipCode',       type: 'text',  label: 'PLZ' },
     { key: 'city',          type: 'text',  label: 'Ort' },
-    // the course (CourseModel.okey): never shown, set by the embedding section's `implicitValues` (D-W4)
-    { key: 'courseId',      type: 'implicit', label: 'Kurs', valueType: 'text', asProperty: true },
   ],
 };
 

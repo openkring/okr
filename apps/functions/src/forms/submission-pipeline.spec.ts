@@ -352,6 +352,41 @@ describe('prepareSubmission rows (notification e-mail)', () => {
     const r = prepareSubmission(fields, undefined, undefined, { boats: ['a', 'b'] }, TODAY);
     expect(r.rows).toEqual([{ label: 'L-boats', value: 'a, b' }]);
   });
+
+  it('shows the «Andere» text of a single choice', () => {
+    const fields = [f('club', 'radio', 0, { allowOther: true, options: [{ label: 'A', value: 'a' }] })];
+    const r = prepareSubmission(fields, undefined, undefined, { club: 'other', clubOther: 'Seeclub Zug' }, TODAY);
+    expect(r.rows).toEqual([{ label: 'L-club', value: 'Andere: Seeclub Zug' }]);
+  });
+
+  it('shows the «Andere» text inside a checkbox group list', () => {
+    const fields = [f('boats', 'checkbox', 0, { allowOther: true, options: [{ label: 'A', value: 'a' }] })];
+    const r = prepareSubmission(fields, undefined, undefined, { boats: ['a', 'other'], boatsOther: 'Kajak' }, TODAY);
+    expect(r.rows).toEqual([{ label: 'L-boats', value: 'a, Andere: Kajak' }]);
+  });
+
+  it('shows the course name for an implicit courseId when one is known, else the raw value', () => {
+    const fields = [f('firstName', 'text', 0), f('courseId', 'implicit', 1, { valueType: 'text', asProperty: true })];
+    const named = prepareSubmission(fields, undefined, 'properties', { firstName: 'A' }, TODAY, { courseId: 'c1' },
+      { courseId: { c1: 'Ruderkurs Herbst' } });
+    expect(named.rows).toEqual([{ label: 'L-firstName', value: 'A' }, { label: 'L-courseId', value: 'Ruderkurs Herbst' }]);
+    const raw = prepareSubmission(fields, undefined, 'properties', { firstName: 'A' }, TODAY, { courseId: 'c2' },
+      { courseId: { c1: 'Ruderkurs Herbst' } });
+    expect(raw.rows[1]).toEqual({ label: 'L-courseId', value: 'c2' });
+  });
+});
+
+describe('buildSubmissionRows (pure)', () => {
+  it('never replaces an AHV answer by a display name', () => {
+    const ssn = f('ssnId', 'ssn', 0);
+    const rows = buildSubmissionRows([ssn], { ssnId: '7561234567897' }, {}, { ssnId: { '7561234567897': 'x' } });
+    expect(rows).toEqual([{ label: 'L-ssnId', value: 'angegeben' }]);
+  });
+
+  it('«Andere» without a text reads «Andere»', () => {
+    const club = f('club', 'radio', 0, { allowOther: true, options: [] });
+    expect(buildSubmissionRows([club], { club: 'other' }, {})).toEqual([{ label: 'L-club', value: 'Andere' }]);
+  });
 });
 
 describe('AHV numbers (ssn fields) — privacy 1.19', () => {

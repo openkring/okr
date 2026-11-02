@@ -45,6 +45,14 @@ describe('applications trigger', () => {
     expect(calls.runWorkflow.mock.calls[0][0]).toMatchObject({ event: 'application.created', relatedKey: 'application.a1' });
   });
 
+  it('application.created carries applicationFor (course), a legacy document reads as membership', async () => {
+    await handleApplicationCreated(ev(undefined, { ...app, tenants: ['scs'], applicationFor: 'course' }));
+    expect(calls.runWorkflow.mock.calls[0][0].params).toMatchObject({ applicationFor: 'course' });
+    calls.runWorkflow.mockClear();
+    await handleApplicationCreated(ev(undefined, { ...app, tenants: ['scs'] }));
+    expect(calls.runWorkflow.mock.calls[0][0].params).toMatchObject({ applicationFor: 'membership' });
+  });
+
   it('stateChanged emits on a state change and not on another update', async () => {
     await handleApplicationStateChanged(ev(app, { ...app, lastName: 'King' }));
     await handleApplicationStateChanged(ev(undefined, app));

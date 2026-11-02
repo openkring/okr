@@ -17,10 +17,12 @@ describe('getPrefillFields', () => {
   it('returns the course set for applications.course with an implicit courseId', () => {
     const fields = getPrefillFields('applications.course');
     expect(fields.map(f => f.key)).toEqual([
-      'firstName', 'lastName', 'gender', 'dateOfBirth', 'email', 'phone',
-      'streetName', 'streetNumber', 'zipCode', 'city', 'courseId',
+      'courseId', 'firstName', 'lastName', 'gender', 'dateOfBirth', 'email', 'phone',
+      'streetName', 'streetNumber', 'zipCode', 'city',
     ]);
     const course = fields.find(f => f.key === 'courseId');
+    // first, so a rule of any later field can depend on the course
+    expect(course?.order).toBe(0);
     expect(course?.type).toBe('implicit');
     expect(course?.label).toBe('Kurs');
     expect(course?.asProperty).toBe(true);
