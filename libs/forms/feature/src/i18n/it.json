@@ -43,12 +43,24 @@
     "remove": "Elimina",
     "remove_confirm": "Questa domanda controlla le condizioni di: {fields}. Se la elimini, queste condizioni vengono rimosse.",
     "as_property": "Salva come dato proprio",
-    "as_property_helper": "La risposta viene salvata come {type}."
+    "as_property_helper": "La risposta viene salvata come {type}.",
+    "allow_other": "Consenti «Altro …»",
+    "allow_other_blocked": "«Altro …» non è possibile per questa domanda: la risposta viene salvata in un campo con valori fissi.",
+    "lock_prefilled": "Bloccato se precompilato tramite link",
+    "value_type": "Tipo di valore",
+    "default_value": "Valore predefinito",
+    "default_invalid": "Il valore predefinito non corrisponde al tipo di valore scelto.",
+    "from_link": "può essere impostato tramite link",
+    "from_link_helper": "Senza questa spunta, il modulo ignora un valore proveniente dal link. Così nessuno può iscriversi a un altro corso cambiando l'indirizzo.",
+    "other_option": "Altro …",
+    "other_placeholder": "La tua risposta"
   },
   "fields": {
     "duplicate_key": "Due domande hanno la stessa chiave. Assegna a ogni domanda la sua.",
     "duplicate_keys": "Più domande hanno la stessa chiave: {keys}. Assegna a ogni domanda la sua, altrimenti il modulo non si può salvare.",
-    "ssn_placement": "Il numero AVS si può salvare solo in una domanda, con la chiave ssnId."
+    "ssn_placement": "Il numero AVS si può salvare solo in una domanda, con la chiave ssnId.",
+    "other_key_clash": "Questa domanda ha lo stesso nome del campo di testo di «Altro …» di un'altra domanda. Dalle un altro nome.",
+    "other_not_allowed": "«Altro …» non è possibile per una domanda la cui risposta viene salvata in un campo con valori fissi."
   },
   "rule": {
     "range_order": "Il primo valore deve essere minore del secondo.",
@@ -151,7 +163,11 @@
       "invalid_format": "Formato non valido: previsto un oggetto con un array \"fields\".",
       "applied": "{count} campi ripresi dagli appunti. Confermare per salvare."
     },
-    "preview_derived": "Verrà salvato come:"
+    "preview_derived": "Verrà salvato come:",
+    "preview_link": "Crea un link con queste risposte",
+    "preview_no_page": "Il modulo non è ancora su nessuna pagina",
+    "preview_link_copied": "Link copiato",
+    "preview_link_personal": "Questo link contiene dati personali. Invialo solo a quella persona."
   },
   "definition": {
     "create_title": "Nuovo modulo",
@@ -207,7 +223,9 @@
   },
   "fieldtype": {
     "ssn": "Numero AVS",
-    "ssn_desc": "Numero AVS svizzero, ne viene verificata la validità"
+    "ssn_desc": "Numero AVS svizzero, ne viene verificata la validità",
+    "implicit": "Campo invisibile",
+    "implicit_desc": "La persona non lo vede. Il valore viene dalla pagina o dal link."
   },
   "property": {
     "boolean": "sì/no",
@@ -234,6 +252,42 @@
     "filler_title": "Indicazioni sul modulo",
     "filler_required": "I campi con l'asterisco vanno compilati. Finché manca qualcosa, non puoi inviare il modulo.",
     "filler_conditions": "Alcune domande compaiono solo quando hai risposto qualcosa di preciso più in alto. Se cambi una risposta, le domande possono anche sparire di nuovo: quello che avevi inserito lì non viene salvato.",
-    "filler_privacy": "I tuoi dati vanno solo alle persone che si occupano di questo modulo."
+    "filler_privacy": "I tuoi dati vanno solo alle persone che si occupano di questo modulo.",
+    "editor_implicit": "Un «campo invisibile» non viene visto dalla persona. Ne stabilisci il valore nella pagina che mostra il modulo, per esempio per quale corso è l'iscrizione. Così basta un solo modulo per molti corsi.",
+    "editor_prefill": "Nell'anteprima puoi inserire delle risposte e creare un link con esse. Chi lo apre trova queste risposte già compilate – comodo per un link per corso.",
+    "editor_other": "Nelle domande a scelta puoi consentire «Altro …». La persona può allora scrivere una risposta propria.",
+    "editor_after": "Sotto «Dopo l'invio» scrivi il ringraziamento che la persona vede – se vuoi diverso a seconda della risposta e anche per e-mail.",
+    "editor_limit": "Sotto «Accettazione delle risposte» chiudi il modulo a mano, a una data o dopo un certo numero di risposte. Se più pagine mostrano lo stesso modulo, ogni pagina può avere il proprio numero di posti.",
+    "filler_prefilled": "Alcune risposte sono già compilate perché hai aperto un link personale. I campi bloccati non puoi modificarli.",
+    "filler_limit": "Questo modulo accetta solo un certo numero di risposte oppure si chiude a una data. Meglio presto che tardi.",
+    "filler_mail": "Riceverai una conferma all'indirizzo e-mail che indichi."
+  },
+  "after": {
+    "title": "Dopo l'invio",
+    "message": "Testo",
+    "message_helper": "Lascia vuoto per il testo standard. Con {firstName} inserisci una risposta, per esempio il nome.",
+    "variants": "A seconda della risposta",
+    "variant_add": "+ Variante",
+    "variant_remove": "Rimuovi la variante",
+    "variant_when": "Se …",
+    "variant_message": "allora questo testo",
+    "send_mail": "Invia la conferma per e-mail",
+    "send_mail_hint": "Non è possibile senza un campo e-mail",
+    "mail_needs_email": "Per inviare la conferma per e-mail, il modulo ha bisogno di un campo e-mail.",
+    "application_hint": "Per le richieste di questo modulo viene inviata solo questa conferma, non quella dell'amministrazione."
+  },
+  "accept": {
+    "title": "Accettazione delle risposte",
+    "open": "Il modulo è aperto",
+    "closes_at": "Si chiude il",
+    "max": "Al massimo … risposte",
+    "max_helper": "0 significa: nessun limite.",
+    "max_invalid": "Inserisci un numero intero da 0 a 10000.",
+    "closes_invalid": "Inserisci una data valida.",
+    "show_remaining": "Mostra i posti liberi",
+    "closed_text": "Testo quando è chiuso",
+    "count": "{count} su {max} risposte",
+    "closed_default": "Questo modulo non accetta più risposte.",
+    "remaining": "Ancora {count} posti liberi"
   }
 }

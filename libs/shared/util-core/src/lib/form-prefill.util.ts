@@ -22,6 +22,14 @@ function isPrefillExcluded(field: Field): boolean {
   return PREFILL_EXCLUDED_TYPES.includes(field.type) || isSsnField(field);
 }
 
+/**
+ * Whether a link can fill the field: not excluded (R1: never an AHV field), and an implicit field
+ * only when it opted in with `fromLink`. What the builder's «Link mit diesen Antworten erstellen» offers.
+ */
+export function isPrefillable(field: Field): boolean {
+  return !isPrefillExcluded(field) && (field.type !== 'implicit' || field.fromLink === true);
+}
+
 /** Own-property test (the lib target predates `Object.hasOwn`); keeps `constructor` & co. out. */
 function hasOwn(obj: object, key: string): boolean {
   return Object.prototype.hasOwnProperty.call(obj, key);

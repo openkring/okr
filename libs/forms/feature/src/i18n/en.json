@@ -43,12 +43,24 @@
     "remove": "Delete",
     "remove_confirm": "This question controls the conditions of: {fields}. If you delete it, these conditions are removed.",
     "as_property": "Save as a custom detail",
-    "as_property_helper": "The answer is saved as {type}."
+    "as_property_helper": "The answer is saved as {type}.",
+    "allow_other": "Allow \"Other …\"",
+    "allow_other_blocked": "\"Other …\" is not possible for this question: the answer is saved in a field with fixed values.",
+    "lock_prefilled": "Locked when pre-filled by a link",
+    "value_type": "Type of value",
+    "default_value": "Default value",
+    "default_invalid": "The default value does not match the chosen type of value.",
+    "from_link": "may be set by a link",
+    "from_link_helper": "Without this tick, the form ignores a value from the link. That way nobody can move themselves into another course by changing the address.",
+    "other_option": "Other …",
+    "other_placeholder": "Your answer"
   },
   "fields": {
     "duplicate_key": "Two questions have the same key. Please give each question its own.",
     "duplicate_keys": "Several questions share the same key: {keys}. Please give each question its own, otherwise the form cannot be saved.",
-    "ssn_placement": "The AHV number can only be saved in an application, under the key ssnId."
+    "ssn_placement": "The AHV number can only be saved in an application, under the key ssnId.",
+    "other_key_clash": "This question has the same name as the text field of \"Other …\" on another question. Give it a different name.",
+    "other_not_allowed": "\"Other …\" is not possible for a question whose answer is saved in a field with fixed values."
   },
   "rule": {
     "range_order": "The first value must be smaller than the second.",
@@ -151,7 +163,11 @@
       "invalid_format": "Invalid format: expected an object with a \"fields\" array.",
       "applied": "{count} fields taken from the clipboard. Confirm to save."
     },
-    "preview_derived": "Will be saved as:"
+    "preview_derived": "Will be saved as:",
+    "preview_link": "Create a link with these answers",
+    "preview_no_page": "The form is not on any page yet",
+    "preview_link_copied": "Link copied",
+    "preview_link_personal": "This link contains personal details. Send it only to that person."
   },
   "definition": {
     "create_title": "New form",
@@ -207,7 +223,9 @@
   },
   "fieldtype": {
     "ssn": "AHV number",
-    "ssn_desc": "Swiss social security number (AHV), checked for validity"
+    "ssn_desc": "Swiss social security number (AHV), checked for validity",
+    "implicit": "Hidden field",
+    "implicit_desc": "The person does not see it. The value comes from the page or from the link."
   },
   "property": {
     "boolean": "yes/no",
@@ -234,6 +252,42 @@
     "filler_title": "Notes on this form",
     "filler_required": "Fields with a star must be filled in. As long as something is missing, you cannot submit the form.",
     "filler_conditions": "Some questions only appear once you have answered something particular further up. If you change an answer, questions can disappear again – whatever you entered there is then not saved.",
-    "filler_privacy": "Your details go only to the people who look after this form."
+    "filler_privacy": "Your details go only to the people who look after this form.",
+    "editor_implicit": "A \"hidden field\" is not seen by the person. You set its value on the page that shows the form – for example which course the registration is for. That way one form is enough for many courses.",
+    "editor_prefill": "In the preview you can enter answers and create a link from them. Whoever opens it finds these answers already filled in – handy for one link per course.",
+    "editor_other": "For multiple-choice questions you can allow \"Other …\". The person can then write their own answer.",
+    "editor_after": "Under \"After submitting\" you write the thanks the person sees – if you like different depending on the answer, and also by e-mail.",
+    "editor_limit": "Under \"Accepting responses\" you close the form by hand, on a date or after a number of responses. If several pages show the same form, each page can have its own number of places.",
+    "filler_prefilled": "Some answers are already filled in because you came through a personal link. You cannot change locked fields.",
+    "filler_limit": "This form accepts only a certain number of responses or closes on a date. Better to respond sooner than later.",
+    "filler_mail": "You will receive a confirmation at the e-mail address you enter."
+  },
+  "after": {
+    "title": "After submitting",
+    "message": "Text",
+    "message_helper": "Leave empty for the default text. Use {firstName} to insert an answer, for example the first name.",
+    "variants": "Depending on the answer",
+    "variant_add": "+ Variant",
+    "variant_remove": "Remove variant",
+    "variant_when": "If …",
+    "variant_message": "then this text",
+    "send_mail": "Send confirmation by e-mail",
+    "send_mail_hint": "Not possible without an e-mail field",
+    "mail_needs_email": "To send a confirmation by e-mail, the form needs an e-mail field.",
+    "application_hint": "For applications from this form only this confirmation is sent, not the one from the administration."
+  },
+  "accept": {
+    "title": "Accepting responses",
+    "open": "Form is open",
+    "closes_at": "Closes on",
+    "max": "At most … responses",
+    "max_helper": "0 means: no limit.",
+    "max_invalid": "Enter a whole number from 0 to 10000.",
+    "closes_invalid": "Enter a valid date.",
+    "show_remaining": "Show free places",
+    "closed_text": "Text when closed",
+    "count": "{count} of {max} responses",
+    "closed_default": "This form is no longer accepting responses.",
+    "remaining": "{count} places left"
   }
 }

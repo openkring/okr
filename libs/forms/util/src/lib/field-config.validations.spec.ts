@@ -63,4 +63,61 @@ describe('fieldConfigValidations', () => {
     const result = fieldConfigValidations({ ...base, type: 'text' } as Field);
     expect(Object.keys(result.getErrors()).some(k => k.startsWith('visibleIf'))).toBe(false);
   });
+
+  describe('implicit field (spec §8.1)', () => {
+    const implicit = (extra: Record<string, unknown> = {}) => ({ ...base, key: 'courseId', type: 'implicit', valueType: 'text', ...extra }) as Field;
+
+    it('accepts a typed implicit field with and without a default value', () => {
+      expect(fieldConfigValidations(implicit()).isValid()).toBe(true);
+      expect(fieldConfigValidations(implicit({ defaultValue: 'skiff-1' })).isValid()).toBe(true);
+      expect(fieldConfigValidations(implicit({ valueType: 'number', defaultValue: 3 })).isValid()).toBe(true);
+      expect(fieldConfigValidations(implicit({ valueType: 'number', defaultValue: '3' })).isValid()).toBe(true);
+      expect(fieldConfigValidations(implicit({ valueType: 'boolean', defaultValue: true })).isValid()).toBe(true);
+    });
+
+    it('requires the type of the value', () => {
+      expect(fieldConfigValidations(implicit({ valueType: undefined })).hasErrors('valueType')).toBe(true);
+      expect(fieldConfigValidations(implicit({ valueType: 'date' })).hasErrors('valueType')).toBe(true);
+    });
+
+    it('rejects a default value that does not coerce to the type', () => {
+      expect(fieldConfigValidations(implicit({ valueType: 'number', defaultValue: 'abc' })).getErrors('defaultValue')).toContain('@forms/feature.field.default_invalid');
+      expect(fieldConfigValidations(implicit({ valueType: 'boolean', defaultValue: 'maybe' })).hasErrors('defaultValue')).toBe(true);
+    });
+
+    it('treats an empty default value as none', () => {
+      expect(fieldConfigValidations(implicit({ valueType: 'number', defaultValue: '' })).isValid()).toBe(true);
+    });
+
+    it('checks no value type on other fields', () => {
+      expect(fieldConfigValidations({ ...base, type: 'text' } as Field).hasErrors('valueType')).toBe(false);
+    });
+  });
+
+  describe('allowOther (spec §9)', () => {
+    const opts = [{ label: 'A', value: 'a' }];
+    const radio = (extra: Record<string, unknown> = {}) => ({ ...base, key: 'kurs', type: 'radio', options: opts, ...extra }) as Field;
+
+    it('accepts it on dropdown, radio and checkbox with options', () => {
+      expect(fieldConfigValidations(radio({ allowOther: true })).isValid()).toBe(true);
+      expect(fieldConfigValidations({ ...base, key: 'k', type: 'dropdown', options: opts, allowOther: true } as Field).isValid()).toBe(true);
+      expect(fieldConfigValidations({ ...base, key: 'k', type: 'checkbox', options: opts, allowOther: true } as Field).isValid()).toBe(true);
+    });
+
+    it('rejects it on a single checkbox', () => {
+      expect(fieldConfigValidations({ ...base, key: 'k', type: 'checkbox', allowOther: true } as Field).getErrors('allowOther'))
+        .toContain('@forms/feature.field.allow_other_blocked');
+    });
+
+    it('rejects it on a typed choice key of the mapping and on an AHV key', () => {
+      const gender = radio({ key: 'gender', allowOther: true });
+      expect(fieldConfigValidations(gender, 'applications.default').hasErrors('allowOther')).toBe(true);
+      expect(fieldConfigValidations(gender).hasErrors('allowOther')).toBe(false);
+      expect(fieldConfigValidations(radio({ key: 'ssnId', allowOther: true })).hasErrors('allowOther')).toBe(true);
+    });
+
+    it('does not check it when switched off', () => {
+      expect(fieldConfigValidations(radio({ key: 'gender', allowOther: false }), 'applications.default').hasErrors('allowOther')).toBe(false);
+    });
+  });
 });

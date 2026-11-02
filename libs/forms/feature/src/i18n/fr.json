@@ -43,12 +43,24 @@
     "remove": "Supprimer",
     "remove_confirm": "Cette question pilote les conditions de : {fields}. Si tu la supprimes, ces conditions seront retirées.",
     "as_property": "Enregistrer comme information propre",
-    "as_property_helper": "La réponse est enregistrée comme {type}."
+    "as_property_helper": "La réponse est enregistrée comme {type}.",
+    "allow_other": "Autoriser « Autre … »",
+    "allow_other_blocked": "« Autre … » n'est pas possible pour cette question : la réponse est enregistrée dans un champ aux valeurs fixes.",
+    "lock_prefilled": "Verrouillé quand il est prérempli par un lien",
+    "value_type": "Type de valeur",
+    "default_value": "Valeur par défaut",
+    "default_invalid": "La valeur par défaut ne correspond pas au type de valeur choisi.",
+    "from_link": "peut être défini par un lien",
+    "from_link_helper": "Sans cette case cochée, le formulaire ignore une valeur venant du lien. Ainsi, personne ne peut se placer dans un autre cours en modifiant l'adresse.",
+    "other_option": "Autre …",
+    "other_placeholder": "Ta réponse"
   },
   "fields": {
     "duplicate_key": "Deux questions ont la même clé. Donne à chaque question la sienne.",
     "duplicate_keys": "Plusieurs questions ont la même clé : {keys}. Donne à chaque question la sienne, sinon le formulaire ne peut pas être enregistré.",
-    "ssn_placement": "Le numéro AVS ne peut être enregistré que dans une demande, sous la clé ssnId."
+    "ssn_placement": "Le numéro AVS ne peut être enregistré que dans une demande, sous la clé ssnId.",
+    "other_key_clash": "Cette question porte le même nom que le champ de texte de « Autre … » d'une autre question. Donne-lui un autre nom.",
+    "other_not_allowed": "« Autre … » n'est pas possible pour une question dont la réponse est enregistrée dans un champ aux valeurs fixes."
   },
   "rule": {
     "range_order": "La première valeur doit être inférieure à la seconde.",
@@ -151,7 +163,11 @@
       "invalid_format": "Format invalide : un objet avec un tableau \"fields\" est attendu.",
       "applied": "{count} champs repris du presse-papiers. Confirmez pour enregistrer."
     },
-    "preview_derived": "Sera enregistré comme :"
+    "preview_derived": "Sera enregistré comme :",
+    "preview_link": "Créer un lien avec ces réponses",
+    "preview_no_page": "Le formulaire n'est encore sur aucune page",
+    "preview_link_copied": "Lien copié",
+    "preview_link_personal": "Ce lien contient des données personnelles. Envoie-le uniquement à cette personne."
   },
   "definition": {
     "create_title": "Nouveau formulaire",
@@ -207,7 +223,9 @@
   },
   "fieldtype": {
     "ssn": "Numéro AVS",
-    "ssn_desc": "Numéro AVS suisse, sa validité est vérifiée"
+    "ssn_desc": "Numéro AVS suisse, sa validité est vérifiée",
+    "implicit": "Champ invisible",
+    "implicit_desc": "La personne ne le voit pas. La valeur vient de la page ou du lien."
   },
   "property": {
     "boolean": "oui/non",
@@ -234,6 +252,42 @@
     "filler_title": "Remarques sur le formulaire",
     "filler_required": "Les champs marqués d'une étoile sont obligatoires. Tant qu'il manque quelque chose, tu ne peux pas envoyer le formulaire.",
     "filler_conditions": "Certaines questions n'apparaissent que lorsque tu as répondu quelque chose de précis plus haut. Si tu modifies une réponse, des questions peuvent aussi disparaître – ce que tu y avais saisi n'est alors pas enregistré.",
-    "filler_privacy": "Tes indications ne vont qu'aux personnes qui s'occupent de ce formulaire."
+    "filler_privacy": "Tes indications ne vont qu'aux personnes qui s'occupent de ce formulaire.",
+    "editor_implicit": "Un « champ invisible » n'est pas vu par la personne. Tu définis sa valeur sur la page qui affiche le formulaire – par exemple le cours auquel correspond l'inscription. Ainsi, un seul formulaire suffit pour de nombreux cours.",
+    "editor_prefill": "Dans l'aperçu, tu peux saisir des réponses et en faire un lien. Qui l'ouvre trouve ces réponses déjà remplies – pratique pour un lien par cours.",
+    "editor_other": "Pour les questions à choix, tu peux autoriser « Autre … ». La personne peut alors écrire sa propre réponse.",
+    "editor_after": "Sous « Après l'envoi », tu écris le remerciement que la personne voit – si tu le souhaites différent selon la réponse, et aussi par e-mail.",
+    "editor_limit": "Sous « Acceptation des réponses », tu fermes le formulaire à la main, à une date ou après un certain nombre de réponses. Si plusieurs pages affichent le même formulaire, chaque page peut avoir son propre nombre de places.",
+    "filler_prefilled": "Certaines réponses sont déjà remplies parce que tu as ouvert un lien personnel. Les champs verrouillés, tu ne peux pas les modifier.",
+    "filler_limit": "Ce formulaire n'accepte qu'un certain nombre de réponses ou se ferme à une date. Réponds plutôt tôt que tard.",
+    "filler_mail": "Tu recevras une confirmation à l'adresse e-mail que tu indiques."
+  },
+  "after": {
+    "title": "Après l'envoi",
+    "message": "Texte",
+    "message_helper": "Laisse vide pour le texte standard. Avec {firstName}, tu insères une réponse, par exemple le prénom.",
+    "variants": "Selon la réponse",
+    "variant_add": "+ Variante",
+    "variant_remove": "Supprimer la variante",
+    "variant_when": "Si …",
+    "variant_message": "alors ce texte",
+    "send_mail": "Envoyer la confirmation par e-mail",
+    "send_mail_hint": "Impossible sans champ e-mail",
+    "mail_needs_email": "Pour envoyer la confirmation par e-mail, le formulaire a besoin d'un champ e-mail.",
+    "application_hint": "Pour les demandes issues de ce formulaire, seule cette confirmation est envoyée, pas celle de l'administration."
+  },
+  "accept": {
+    "title": "Acceptation des réponses",
+    "open": "Le formulaire est ouvert",
+    "closes_at": "Se ferme le",
+    "max": "Au plus … réponses",
+    "max_helper": "0 signifie : pas de limite.",
+    "max_invalid": "Saisis un nombre entier de 0 à 10000.",
+    "closes_invalid": "Saisis une date valide.",
+    "show_remaining": "Afficher les places libres",
+    "closed_text": "Texte quand c'est fermé",
+    "count": "{count} sur {max} réponses",
+    "closed_default": "Ce formulaire n'accepte plus de réponses.",
+    "remaining": "Encore {count} places libres"
   }
 }

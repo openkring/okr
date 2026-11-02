@@ -259,11 +259,11 @@ const NO_VALUE_OPS: ConditionOp[] = ['isChecked', 'isNotChecked', 'isFilled', 'i
 export function conditionValueKind(controller: Field | undefined, op: ConditionOp | '' | undefined): ConditionValueKind {
   if (!controller || !op || NO_VALUE_OPS.includes(op)) return 'none';
   if (op === 'ageGte' || op === 'ageLt') return 'age';
-  if (op === 'between') return controller.type === 'date' ? 'dateRange' : 'numberRange';
+  if (op === 'between') return controller.type === 'date' ? 'dateRange' : 'numberRange';  // implicit `between` is a number op only
   if (controller.type === 'category' || optionsOf(controller)) {
     return op === 'in' || op === 'notIn' ? 'options' : 'option';
   }
-  if (controller.type === 'number' || controller.type === 'rating') return 'number';
+  if (controller.type === 'number' || controller.type === 'rating' || (controller.type === 'implicit' && controller.valueType === 'number')) return 'number';
   if (controller.type === 'date') return 'date';
   return 'text';
 }

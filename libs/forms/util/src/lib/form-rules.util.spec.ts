@@ -241,6 +241,21 @@ describe('conditionalBlockMembers', () => {
   });
 });
 
+describe('implicit fields as controllers (spec §8.1)', () => {
+  it('offers the operators of checkbox / number / text by valueType', () => {
+    expect(conditionOpsFor(f('a', 'implicit', 0, { valueType: 'boolean' }))).toEqual(['isChecked', 'isNotChecked']);
+    expect(conditionOpsFor(f('a', 'implicit', 0, { valueType: 'number' }))).toEqual(conditionOpsFor(f('b', 'number', 0)));
+    expect(conditionOpsFor(f('a', 'implicit', 0, { valueType: 'text' }))).toEqual(conditionOpsFor(f('b', 'text', 0)));
+  });
+
+  it('shows the value input of its valueType', () => {
+    expect(conditionValueKind(f('a', 'implicit', 0, { valueType: 'boolean' }), 'isChecked')).toBe('none');
+    expect(conditionValueKind(f('a', 'implicit', 0, { valueType: 'number' }), 'gte')).toBe('number');
+    expect(conditionValueKind(f('a', 'implicit', 0, { valueType: 'number' }), 'between')).toBe('numberRange');
+    expect(conditionValueKind(f('a', 'implicit', 0, { valueType: 'text' }), 'equals')).toBe('text');
+  });
+});
+
 describe('conditionValueKind', () => {
   const opts = { options: [{ label: 'A', value: 'a' }] };
   it('needs no value for checked, filled and empty, or without a controller', () => {

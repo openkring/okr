@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Field } from '@okr/shared-models';
-import { parsePrefillParams, parsePrefillValue, PREFILL_EXCLUDED_TYPES, resolveImplicitValues } from './form-prefill.util';
+import { isPrefillable, parsePrefillParams, parsePrefillValue, PREFILL_EXCLUDED_TYPES, resolveImplicitValues } from './form-prefill.util';
 
 const f = (type: Field['type'], extra: Record<string, unknown> = {}): Field =>
   ({ id: `id_${type}`, key: `k_${type}`, label: `L ${type}`, required: false, width: 'full', order: 1, type, ...extra }) as Field;
@@ -208,5 +208,25 @@ describe('resolveImplicitValues', () => {
   it('ignores non-implicit fields and garbage', () => {
     expect(resolveImplicitValues([f('text', { key: 'name' })], { name: 'x' }, { name: 'y' })).toEqual({});
     expect(resolveImplicitValues(undefined as unknown as Field[], undefined, {})).toEqual({});
+  });
+});
+
+describe('isPrefillable', () => {
+  it('is true for ordinary input fields', () => {
+    for (const type of ['text', 'email', 'phone', 'date', 'number', 'dropdown', 'radio', 'checkbox', 'category', 'time', 'rating'] as const) {
+      expect(isPrefillable(f(type))).toBe(true);
+    }
+  });
+
+  it('is false for excluded types, display elements and AHV fields (R1)', () => {
+    for (const type of PREFILL_EXCLUDED_TYPES) expect(isPrefillable(f(type as Field['type']))).toBe(false);
+    expect(isPrefillable(f('text', { key: 'ssnId' }))).toBe(false);
+  });
+
+  it('is true for an implicit field only with fromLink', () => {
+    expect(isPrefillable(f('implicit', { valueType: 'text' }))).toBe(false);
+    expect(isPrefillable(f('implicit', { valueType: 'text', fromLink: false }))).toBe(false);
+    expect(isPrefillable(f('implicit', { valueType: 'text', fromLink: true }))).toBe(true);
+    expect(isPrefillable(f('implicit', { valueType: 'text', fromLink: true, key: 'ssnId' }))).toBe(false);
   });
 });

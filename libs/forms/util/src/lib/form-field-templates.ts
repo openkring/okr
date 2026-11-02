@@ -110,6 +110,14 @@ export function getPrefillFields(mappingKey: string): Field[] {
   return templates.map((template, order) => buildField(template, order));
 }
 
+/**
+ * The keys of a mapping's template fields that offer a closed list of values (`gender`, `applicationAs`):
+ * they are written onto a typed model field, which does not allow any other value. `[]` for an unknown mapping.
+ */
+export function templateChoiceKeys(mappingKey: string | undefined): string[] {
+  return (mappingKey ? FORM_FIELD_TEMPLATES[mappingKey] ?? [] : []).filter(t => (t.options?.length ?? 0) > 0).map(t => t.key);
+}
+
 /** A field of the builder library's «Eigene Angaben» group: it starts with `asProperty` on (spec §4.4). */
 export interface PropertyFieldTemplate {
   /** a field type that can be a property: text → text, checkbox (single) → boolean, number → number */
