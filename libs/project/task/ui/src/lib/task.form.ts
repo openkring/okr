@@ -243,6 +243,7 @@ export class TaskForm {
       case 'trip':    return i18n.related_trip();
       case 'bill':    return i18n.related_bill();
       case 'billDigest': return i18n.related_billDigest();
+      case 'course':  return i18n.related_course();
       default:        return '';
     }
   });

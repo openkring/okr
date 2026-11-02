@@ -260,7 +260,7 @@
       "noFinance": "L'indennità per questo corso non è ancora configurata.",
       "books": "La contabilità del corso manca o è cambiata. Controllala nelle impostazioni del corso.",
       "booksConfig": "Questa contabilità non è a tua disposizione. Scegline un'altra nelle impostazioni del corso.",
-      "permission": "Solo i responsabili del corso, la direzione del gruppo o le persone autorizzate possono richiedere l'indennità.",
+      "permission": "Solo i responsabili del corso, la direzione del gruppo o le persone privilegiate possono richiedere l'indennità.",
       "notFound": "Questo corso non esiste o non esiste più.",
       "network": "Nessuna connessione. Riprova più tardi.",
       "generic": "Non ha funzionato. Riprova più tardi."
@@ -277,7 +277,7 @@
     "open": "Guida",
     "trainer": {
       "role": "Per gli allenatori",
-      "intro": "Dirigi allenamenti del corso. Qui trovi cosa puoi fare nella tabella del corso. Gli importi dell'indennità non li vedi: sono riservati ai responsabili e alla tesoreria.",
+      "intro": "Dirigi allenamenti del corso. Qui trovi cosa puoi fare nella tabella del corso. Gli importi dell'indennità non li vedi. Li vedono solo i responsabili del corso, la direzione del gruppo, le persone privilegiate (ad esempio il comitato) e la tesoreria.",
       "confirm": {
         "title": "Confermare la presenza",
         "text": "Dall'inizio di un appuntamento, tocca la sua colonna nella tabella del corso e scegli «Registra la presenza». L'elenco è precompilato con le iscrizioni. Controllalo, adattalo e salva. La presenza vale come confermata solo dopo il salvataggio, e tutte le righe vengono salvate insieme.\nPuoi correggerla in qualsiasi momento, finché il corso non è congelato."
@@ -296,15 +296,15 @@
       },
       "export": {
         "title": "Scaricare la tabella",
-        "text": "Nel menu in alto a destra (tre puntini) scarichi la tabella del corso come file CSV, per esempio per una tua valutazione."
+        "text": "Nel menu in alto a destra (tre puntini) scarichi la tabella del corso come file CSV, per esempio per una tua valutazione.\nSe il corso ha il profilo di notifica «Gioventù+Sport (G+S)», lì puoi scaricare anche il file G+S. L'app ti mostra prima gli avvisi sulla notifica."
       }
     },
     "responsible": {
       "role": "Per i responsabili",
-      "intro": "Sei responsabile del corso. Confermi la presenza come gli allenatori e accompagni il corso fino alla notifica e all'indennità. Oltre a te, vedono gli importi solo la direzione del gruppo, le persone autorizzate e la tesoreria.",
+      "intro": "Sei responsabile del corso. Confermi la presenza come gli allenatori e accompagni il corso fino alla notifica e all'indennità. Gli importi li vedono solo i responsabili, la direzione del gruppo, le persone privilegiate (ad esempio il comitato) e la tesoreria.",
       "setup": {
         "title": "Impostare il corso",
-        "text": "I nuovi corsi vengono creati nell'elenco dei corsi dalla direzione del gruppo o da persone autorizzate. Con «Modifica corso» gestisci il periodo, i responsabili e gli allenatori, oltre ai dati per la notifica G+S e l'indennità: contabilità, importo per appuntamento ed elenco degli aventi diritto."
+        "text": "I nuovi corsi vengono creati nell'elenco dei corsi dalla direzione del gruppo o da persone privilegiate. Con «Modifica corso» gestisci il periodo, i responsabili e gli allenatori, oltre ai dati per la notifica G+S e l'indennità: contabilità, importo per appuntamento ed elenco degli aventi diritto."
       },
       "running": {
         "title": "Durante il corso",
@@ -312,11 +312,11 @@
       },
       "lock": {
         "title": "Congelare il corso",
-        "text": "Dopo la fine del corso lo congeli dal menu (tre puntini). È possibile solo quando la presenza di tutti gli appuntamenti passati è confermata; l'app ti mostra cosa manca ancora. Poi presenze e appuntamenti non si possono più modificare.\nSe ti serve comunque una correzione, riapri il corso. Attenzione: se hai già importato il file G+S nella BDNS, una nuova importazione sovrascrive le presenze già notificate."
+        "text": "Conviene congelare il corso quando è finito e le presenze sono giuste. Trovi «Congela corso» nel menu (tre puntini). L'app lo permette solo quando la presenza di tutti gli appuntamenti passati è confermata, e ti mostra cosa manca ancora. Poi presenze e appuntamenti non si possono più modificare.\nSe ti serve comunque una correzione, riapri il corso. Attenzione: se hai già importato il file G+S nella BDNS, una nuova importazione sovrascrive le presenze già notificate."
       },
       "js": {
         "title": "Preparare il file G+S",
-        "text": "Scegli «Scarica file G+S» nel menu. L'app ti mostra prima gli avvisi sulla notifica. Indicano cosa mancherebbe nel file, per esempio una presenza non confermata, un tipo di appuntamento senza attività G+S o un luogo mancante. Risolvi questi punti prima di scaricare il file."
+        "text": "Se il corso ha il profilo di notifica «Gioventù+Sport (G+S)», scegli «Scarica file G+S» nel menu. Con altri profili questa voce non c'è. Il profilo lo imposti nelle impostazioni del corso. Anche gli allenatori possono scaricare il file.\nL'app ti mostra prima gli avvisi sulla notifica. Indicano cosa mancherebbe nel file, per esempio una presenza non confermata, un tipo di appuntamento senza attività G+S o un luogo mancante. Risolvi questi punti prima di scaricare il file."
       },
       "nds": {
         "title": "Importare nella BDNS",
@@ -328,7 +328,7 @@
       },
       "request": {
         "title": "Richiedere l'indennità",
-        "text": "Il corso deve essere congelato. Con «Richiedi l'indennità» invii il conteggio alla tesoreria.\nSe la contabilità è tenuta nell'app, per ogni persona avente diritto viene preparata una registrazione come bozza «da controllare», e la tesoreria riceve un compito. Se è tenuta fuori dall'app, la tesoreria riceve solo il compito con il conteggio. Il pagamento avviene fuori dall'app."
+        "text": "Il corso deve essere congelato. Con «Richiedi l'indennità» invii il conteggio alla tesoreria.\nSe la contabilità è tenuta nell'app, per ogni persona dell'elenco degli aventi diritto che ha diretto allenamenti viene preparata una registrazione come bozza «da controllare». Chi arriva a zero non ha nessuna registrazione. La tesoreria riceve un compito. Se la contabilità è tenuta fuori dall'app, la tesoreria riceve solo il compito con il conteggio. Il pagamento avviene fuori dall'app."
       },
       "reported": {
         "title": "Segnare come notificato",

@@ -151,7 +151,8 @@
     "meeting": "Meeting",
     "trip": "Trip",
     "bill": "Bill",
-    "billDigest": "Bills of the day"
+    "billDigest": "Bills of the day",
+    "course": "Course"
   },
   "settings": {
     "title": "Settings",

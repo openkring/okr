@@ -260,7 +260,7 @@
       "noFinance": "Compensation has not been set up for this course yet.",
       "books": "The course accounting is missing or has changed. Check it in the course settings.",
       "booksConfig": "This accounting is not available to you. Choose another one in the course settings.",
-      "permission": "Only the people responsible for the course, the group admins or authorised users can request the compensation.",
+      "permission": "Only the people responsible for the course, the group admins or privileged users can request the compensation.",
       "notFound": "This course does not exist (any more).",
       "network": "No connection. Please try again later.",
       "generic": "That did not work. Please try again later."
@@ -277,7 +277,7 @@
     "open": "Guide",
     "trainer": {
       "role": "For trainers",
-      "intro": "You lead sessions of the course. This is what you can do in the course table. You do not see the compensation amounts; they are reserved for the responsible persons and the treasurer.",
+      "intro": "You lead sessions of the course. This is what you can do in the course table. You do not see the compensation amounts. Only the responsible persons of the course, the group admins, privileged users (for example the board) and the treasurer see them.",
       "confirm": {
         "title": "Confirm attendance",
         "text": "From the start of an event, tap its column in the course table and choose \"Record attendance\". The list is pre-filled from the sign-ups. Check it, adjust it and save. Attendance only counts as confirmed once you save, and all rows are saved together.\nYou can correct it at any time later, as long as the course is not frozen."
@@ -296,15 +296,15 @@
       },
       "export": {
         "title": "Download the table",
-        "text": "In the menu at the top right (three dots) you download the course table as a CSV file, for example for your own evaluation."
+        "text": "In the menu at the top right (three dots) you download the course table as a CSV file, for example for your own evaluation.\nIf the course has the report profile \"Youth+Sport (J+S)\", you can also download the J+S file there. The app first shows you the notes on the report."
       }
     },
     "responsible": {
       "role": "For responsible persons",
-      "intro": "You are responsible for the course. You confirm attendance like the trainers and see the course through to reporting and compensation. Besides you, only the group admins, authorised persons and the treasurer see the amounts.",
+      "intro": "You are responsible for the course. You confirm attendance like the trainers and see the course through to reporting and compensation. Only the responsible persons, the group admins, privileged users (for example the board) and the treasurer see the amounts.",
       "setup": {
         "title": "Set up the course",
-        "text": "New courses are created in the course list by the group admins or authorised persons. With \"Edit course\" you maintain the period, responsible persons and trainers, as well as the details for the J+S report and the compensation: accounting, rate per event and the list of eligible persons."
+        "text": "New courses are created in the course list by the group admins or privileged users. With \"Edit course\" you maintain the period, responsible persons and trainers, as well as the details for the J+S report and the compensation: accounting, rate per event and the list of eligible persons."
       },
       "running": {
         "title": "During the course",
@@ -312,11 +312,11 @@
       },
       "lock": {
         "title": "Freeze the course",
-        "text": "After the course ends you freeze it in the menu (three dots). This only works once the attendance of all past events is confirmed; the app shows you what is still missing. Afterwards attendance and events can no longer be changed.\nIf you still need a correction, reopen the course. Note: if you have already imported the J+S file into the NDS, a new import overwrites the attendance already reported."
+        "text": "It is best to freeze the course once it has ended and the attendance is right. You find \"Freeze course\" in the menu (three dots). The app only allows it once the attendance of all past events is confirmed, and shows you what is still missing. Afterwards attendance and events can no longer be changed.\nIf you still need a correction, reopen the course. Note: if you have already imported the J+S file into the NDS, a new import overwrites the attendance already reported."
       },
       "js": {
         "title": "Prepare the J+S file",
-        "text": "Choose \"Download J+S file\" in the menu. The app first shows you the notes on the report. They list what would be missing from the file, for example attendance that is not confirmed, an event type without a J+S activity or a missing location. Fix these before you download the file."
+        "text": "If the course has the report profile \"Youth+Sport (J+S)\", choose \"Download J+S file\" in the menu. With other profiles this entry does not exist. You set the profile in the course settings. The trainers can download the file too.\nThe app first shows you the notes on the report. They list what would be missing from the file, for example attendance that is not confirmed, an event type without a J+S activity or a missing location. Fix these before you download the file."
       },
       "nds": {
         "title": "Import into the NDS",
@@ -328,7 +328,7 @@
       },
       "request": {
         "title": "Request compensation",
-        "text": "The course must be frozen. With \"Request compensation\" you send the settlement to the treasurer.\nIf the accounting is kept in the app, a booking is prepared as a draft \"for review\" for every eligible person, and the treasurer receives a task. If it is kept outside the app, the treasurer only receives the task with the settlement. The payment itself happens outside the app."
+        "text": "The course must be frozen. With \"Request compensation\" you send the settlement to the treasurer.\nIf the accounting is kept in the app, a booking is prepared as a draft \"for review\" for every person on the list of eligible persons who led sessions. Anybody who comes to zero gets no booking. The treasurer receives a task. If the accounting is kept outside the app, the treasurer only receives the task with the settlement. The payment itself happens outside the app."
       },
       "reported": {
         "title": "Mark as reported",

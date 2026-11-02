@@ -260,7 +260,7 @@
       "noFinance": "Für diesen Kurs ist noch keine Entschädigung eingerichtet.",
       "books": "Die Buchhaltung des Kurses fehlt oder hat sich geändert. Prüfe sie in den Kurseinstellungen.",
       "booksConfig": "Diese Buchhaltung steht dir nicht zur Verfügung. Wähle in den Kurseinstellungen eine andere.",
-      "permission": "Die Entschädigung können nur Verantwortliche des Kurses, die Gruppenleitung oder Berechtigte beantragen.",
+      "permission": "Die Entschädigung können nur Verantwortliche des Kurses, die Gruppenleitung oder privilegierte Personen beantragen.",
       "notFound": "Diesen Kurs gibt es nicht oder nicht mehr.",
       "network": "Keine Verbindung. Versuche es später noch einmal.",
       "generic": "Das hat nicht geklappt. Versuche es später noch einmal."
@@ -277,7 +277,7 @@
     "open": "Anleitung",
     "trainer": {
       "role": "Für Trainerinnen und Trainer",
-      "intro": "Du leitest Trainings des Kurses. Hier steht, was du in der Kurstabelle tun kannst. Die Beträge der Entschädigung siehst du nicht, sie sind den Verantwortlichen und der Kassenführung vorbehalten.",
+      "intro": "Du leitest Trainings des Kurses. Hier steht, was du in der Kurstabelle tun kannst. Die Beträge der Entschädigung siehst du nicht. Sie sehen nur die Verantwortlichen des Kurses, die Gruppenleitung, privilegierte Personen (zum Beispiel der Vorstand) und die Kassenführung.",
       "confirm": {
         "title": "Anwesenheit bestätigen",
         "text": "Ab dem Beginn eines Termins tippst du in der Kurstabelle auf seine Spalte und wählst «Anwesenheit erfassen». Die Liste ist mit den Anmeldungen vorbefüllt. Prüfe sie, passe sie an und speichere. Erst mit dem Speichern gilt die Anwesenheit als bestätigt, und es werden alle Zeilen gespeichert.\nKorrekturen sind später jederzeit möglich, solange der Kurs nicht eingefroren ist."
@@ -296,15 +296,15 @@
       },
       "export": {
         "title": "Tabelle herunterladen",
-        "text": "Im Menü oben rechts (drei Punkte) lädst du die Kurstabelle als CSV-Datei herunter, zum Beispiel für eine eigene Auswertung."
+        "text": "Im Menü oben rechts (drei Punkte) lädst du die Kurstabelle als CSV-Datei herunter, zum Beispiel für eine eigene Auswertung.\nHat der Kurs das Meldeprofil «Jugend+Sport (J+S)», kannst du dort auch die J+S-Datei herunterladen. Die App zeigt dir dabei zuerst die Hinweise zur Meldung."
       }
     },
     "responsible": {
       "role": "Für Verantwortliche",
-      "intro": "Du verantwortest den Kurs. Du bestätigst die Anwesenheit wie die Trainerinnen und Trainer und führst den Kurs bis zur Meldung und zur Entschädigung. Die Beträge sehen ausser dir nur die Gruppenleitung, Berechtigte und die Kassenführung.",
+      "intro": "Du verantwortest den Kurs. Du bestätigst die Anwesenheit wie die Trainerinnen und Trainer und führst den Kurs bis zur Meldung und zur Entschädigung. Die Beträge sehen nur die Verantwortlichen, die Gruppenleitung, privilegierte Personen (zum Beispiel der Vorstand) und die Kassenführung.",
       "setup": {
         "title": "Kurs einrichten",
-        "text": "Neue Kurse legen die Gruppenleitung oder Berechtigte in der Kursliste an. Mit «Kurs bearbeiten» pflegst du Zeitraum, Verantwortliche und Trainer sowie die Angaben für die J+S-Meldung und die Entschädigung: Buchhaltung, Ansatz pro Termin und die Liste der Berechtigten."
+        "text": "Neue Kurse legen die Gruppenleitung oder privilegierte Personen in der Kursliste an. Mit «Kurs bearbeiten» pflegst du Zeitraum, Verantwortliche und Trainer sowie die Angaben für die J+S-Meldung und die Entschädigung: Buchhaltung, Ansatz pro Termin und die Liste der Berechtigten."
       },
       "running": {
         "title": "Während des Kurses",
@@ -312,11 +312,11 @@
       },
       "lock": {
         "title": "Kurs einfrieren",
-        "text": "Nach dem Kursende frierst du den Kurs im Menü (drei Punkte) ein. Das geht erst, wenn die Anwesenheit aller vergangenen Termine bestätigt ist. Was noch fehlt, zeigt dir die App. Danach lassen sich Anwesenheit und Termine nicht mehr ändern.\nBrauchst du doch eine Korrektur, öffnest du den Kurs wieder. Achtung: Hast du die J+S-Datei schon in der NDS importiert, überschreibt ein neuer Import die bereits gemeldeten Anwesenheiten."
+        "text": "Am besten frierst du den Kurs ein, wenn er zu Ende ist und die Anwesenheit stimmt. Du findest «Kurs einfrieren» im Menü (drei Punkte). Die App lässt es nur zu, wenn die Anwesenheit aller vergangenen Termine bestätigt ist, und zeigt dir, was noch fehlt. Danach lassen sich Anwesenheit und Termine nicht mehr ändern.\nBrauchst du doch eine Korrektur, öffnest du den Kurs wieder. Achtung: Hast du die J+S-Datei schon in der NDS importiert, überschreibt ein neuer Import die bereits gemeldeten Anwesenheiten."
       },
       "js": {
         "title": "J+S-Datei vorbereiten",
-        "text": "Wähle im Menü «J+S-Datei herunterladen». Die App zeigt dir zuerst die Hinweise zur Meldung. Dort steht, was in der Datei fehlen würde, zum Beispiel eine nicht bestätigte Anwesenheit, eine Terminart ohne J+S-Aktivität oder ein fehlender Ort. Behebe die Punkte, bevor du die Datei herunterlädst."
+        "text": "Hat der Kurs das Meldeprofil «Jugend+Sport (J+S)», wählst du im Menü «J+S-Datei herunterladen». Bei anderen Profilen gibt es diesen Eintrag nicht. Das Profil stellst du in den Kurseinstellungen ein. Auch die Trainerinnen und Trainer können die Datei herunterladen.\nDie App zeigt dir zuerst die Hinweise zur Meldung. Dort steht, was in der Datei fehlen würde, zum Beispiel eine nicht bestätigte Anwesenheit, eine Terminart ohne J+S-Aktivität oder ein fehlender Ort. Behebe die Punkte, bevor du die Datei herunterlädst."
       },
       "nds": {
         "title": "In der NDS importieren",
@@ -328,7 +328,7 @@
       },
       "request": {
         "title": "Entschädigung beantragen",
-        "text": "Der Kurs muss eingefroren sein. Mit «Entschädigung beantragen» schickst du die Abrechnung an die Kassenführung.\nWird die Buchhaltung in der App geführt, entsteht für jede berechtigte Person eine Buchung als Entwurf «zur Prüfung», und die Kassenführung erhält eine Aufgabe. Wird sie ausserhalb der App geführt, erhält die Kassenführung nur die Aufgabe mit der Abrechnung. Die Zahlung selbst erfolgt ausserhalb der App."
+        "text": "Der Kurs muss eingefroren sein. Mit «Entschädigung beantragen» schickst du die Abrechnung an die Kassenführung.\nWird die Buchhaltung in der App geführt, entsteht für jede Person auf der Liste der Berechtigten, die Trainings geleitet hat, eine Buchung als Entwurf «zur Prüfung». Wer auf null kommt, erhält keine Buchung. Die Kassenführung erhält eine Aufgabe. Wird die Buchhaltung ausserhalb der App geführt, erhält die Kassenführung nur die Aufgabe mit der Abrechnung. Die Zahlung selbst erfolgt ausserhalb der App."
       },
       "reported": {
         "title": "Als gemeldet markieren",

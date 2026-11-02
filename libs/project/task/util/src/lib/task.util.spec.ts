@@ -101,6 +101,13 @@ describe('Task Utils', () => {
   });
 });
 
+describe('course tasks (spec 1.132)', () => {
+  it('links the linkKey course.<key> to the course table', () =>
+    expect(getRelatedRoute('course.k1')).toBe('/course/table/k1'));
+  it('has an icon for a course', () => expect(getRelatedIcon('course.k1')).toBe('school'));
+  it('gives no route without a course key', () => expect(getRelatedRoute('course')).toBe(''));
+});
+
 describe('bill routes (spec 1.94)', () => {
   it('maps a bill to its read-only approval view', () =>
     expect(getRelatedRoute('bill.abc')).toBe('/bill-approval/bill/abc'));

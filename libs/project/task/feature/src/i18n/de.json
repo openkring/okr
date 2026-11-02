@@ -151,7 +151,8 @@
     "meeting": "Sitzung",
     "trip": "Fahrt",
     "bill": "Kreditor",
-    "billDigest": "Tagesübersicht Kreditoren"
+    "billDigest": "Tagesübersicht Kreditoren",
+    "course": "Kurs"
   },
   "settings": {
     "title": "Einstellungen",

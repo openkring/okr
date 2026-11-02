@@ -260,7 +260,7 @@
       "noFinance": "Todavía no se ha configurado la compensación de este curso.",
       "books": "Falta la contabilidad del curso o ha cambiado. Revísala en los ajustes del curso.",
       "booksConfig": "Esta contabilidad no está a tu disposición. Elige otra en los ajustes del curso.",
-      "permission": "Solo los responsables del curso, la dirección del grupo o las personas autorizadas pueden solicitar la compensación.",
+      "permission": "Solo los responsables del curso, la dirección del grupo o las personas con privilegios pueden solicitar la compensación.",
       "notFound": "Este curso no existe o ya no existe.",
       "network": "Sin conexión. Vuelve a intentarlo más tarde.",
       "generic": "No ha funcionado. Vuelve a intentarlo más tarde."
@@ -277,7 +277,7 @@
     "open": "Guía",
     "trainer": {
       "role": "Para entrenadores",
-      "intro": "Diriges entrenamientos del curso. Aquí está lo que puedes hacer en la tabla del curso. No ves los importes de la compensación: están reservados a los responsables y a la tesorería.",
+      "intro": "Diriges entrenamientos del curso. Aquí está lo que puedes hacer en la tabla del curso. No ves los importes de la compensación. Solo los ven los responsables del curso, la dirección del grupo, las personas con privilegios (por ejemplo la junta) y la tesorería.",
       "confirm": {
         "title": "Confirmar la asistencia",
         "text": "Desde el comienzo de una cita, toca su columna en la tabla del curso y elige «Registrar asistencia». La lista viene rellenada con las inscripciones. Revísala, ajústala y guarda. La asistencia solo cuenta como confirmada al guardar, y se guardan todas las filas juntas.\nPuedes corregirla más tarde en cualquier momento, mientras el curso no esté congelado."
@@ -296,15 +296,15 @@
       },
       "export": {
         "title": "Descargar la tabla",
-        "text": "En el menú de arriba a la derecha (tres puntos) descargas la tabla del curso como archivo CSV, por ejemplo para tu propia evaluación."
+        "text": "En el menú de arriba a la derecha (tres puntos) descargas la tabla del curso como archivo CSV, por ejemplo para tu propia evaluación.\nSi el curso tiene el perfil de notificación «Juventud+Deporte (J+S)», allí también puedes descargar el archivo J+S. La app te muestra primero los avisos sobre la notificación."
       }
     },
     "responsible": {
       "role": "Para responsables",
-      "intro": "Eres responsable del curso. Confirmas la asistencia como los entrenadores y acompañas el curso hasta la notificación y la compensación. Aparte de ti, solo ven los importes la dirección del grupo, las personas autorizadas y la tesorería.",
+      "intro": "Eres responsable del curso. Confirmas la asistencia como los entrenadores y acompañas el curso hasta la notificación y la compensación. Los importes solo los ven los responsables, la dirección del grupo, las personas con privilegios (por ejemplo la junta) y la tesorería.",
       "setup": {
         "title": "Configurar el curso",
-        "text": "Los cursos nuevos los crean en la lista de cursos la dirección del grupo o personas autorizadas. Con «Editar curso» gestionas el periodo, los responsables y los entrenadores, además de los datos para la notificación J+S y la compensación: contabilidad, importe por cita y lista de personas con derecho."
+        "text": "Los cursos nuevos los crean en la lista de cursos la dirección del grupo o personas con privilegios. Con «Editar curso» gestionas el periodo, los responsables y los entrenadores, además de los datos para la notificación J+S y la compensación: contabilidad, importe por cita y lista de personas con derecho."
       },
       "running": {
         "title": "Durante el curso",
@@ -312,11 +312,11 @@
       },
       "lock": {
         "title": "Congelar el curso",
-        "text": "Cuando termina el curso, lo congelas en el menú (tres puntos). Solo es posible cuando la asistencia de todas las citas pasadas está confirmada; la app te muestra lo que aún falta. Después ya no se pueden cambiar la asistencia ni las citas.\nSi aun así necesitas una corrección, reabre el curso. Atención: si ya has importado el archivo J+S en la NDS, una nueva importación sobrescribe la asistencia ya notificada."
+        "text": "Lo mejor es congelar el curso cuando haya terminado y la asistencia sea correcta. Encuentras «Congelar curso» en el menú (tres puntos). La app solo lo permite cuando la asistencia de todas las citas pasadas está confirmada, y te muestra lo que aún falta. Después ya no se pueden cambiar la asistencia ni las citas.\nSi aun así necesitas una corrección, reabre el curso. Atención: si ya has importado el archivo J+S en la NDS, una nueva importación sobrescribe la asistencia ya notificada."
       },
       "js": {
         "title": "Preparar el archivo J+S",
-        "text": "Elige «Descargar archivo J+S» en el menú. La app te muestra primero los avisos sobre la notificación. Indican lo que faltaría en el archivo, por ejemplo una asistencia sin confirmar, un tipo de cita sin actividad J+S o un lugar que falta. Corrige estos puntos antes de descargar el archivo."
+        "text": "Si el curso tiene el perfil de notificación «Juventud+Deporte (J+S)», elige «Descargar archivo J+S» en el menú. Con otros perfiles esta opción no existe. El perfil lo ajustas en la configuración del curso. Los entrenadores también pueden descargar el archivo.\nLa app te muestra primero los avisos sobre la notificación. Indican lo que faltaría en el archivo, por ejemplo una asistencia sin confirmar, un tipo de cita sin actividad J+S o un lugar que falta. Corrige estos puntos antes de descargar el archivo."
       },
       "nds": {
         "title": "Importar en la NDS",
@@ -328,7 +328,7 @@
       },
       "request": {
         "title": "Solicitar la compensación",
-        "text": "El curso debe estar congelado. Con «Solicitar compensación» envías la liquidación a la tesorería.\nSi la contabilidad se lleva en la app, se prepara un asiento como borrador «para revisar» para cada persona con derecho, y la tesorería recibe una tarea. Si se lleva fuera de la app, la tesorería solo recibe la tarea con la liquidación. El pago en sí se hace fuera de la app."
+        "text": "El curso debe estar congelado. Con «Solicitar compensación» envías la liquidación a la tesorería.\nSi la contabilidad se lleva en la app, se prepara un asiento como borrador «para revisar» para cada persona de la lista de personas con derecho que haya dirigido entrenamientos. Quien llega a cero no recibe asiento. La tesorería recibe una tarea. Si se lleva fuera de la app, la tesorería solo recibe la tarea con la liquidación. El pago en sí se hace fuera de la app."
       },
       "reported": {
         "title": "Marcar como notificado",

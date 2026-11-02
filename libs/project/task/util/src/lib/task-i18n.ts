@@ -49,6 +49,7 @@ export const TASK_I18N_KEYS = {
   related_trip:                   PFX + 'related.trip',
   related_bill:                   PFX + 'related.bill',
   related_billDigest:             PFX + 'related.billDigest',
+  related_course:                 PFX + 'related.course',
 
   done:                           PFX + 'done',
   as_title:                       '@actionsheet.title',

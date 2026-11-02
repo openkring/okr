@@ -63,6 +63,7 @@ const RELATED_ROUTES: Record<string, (okey: string) => string> = {
   approval: () => '/approval/all',
   bill: (okey) => `/bill-approval/bill/${okey}`,
   billDigest: billDigestRoute,
+  course: (okey) => `/course/table/${okey}`,
 };
 
 /** The model type of a `relatedKey` ('meeting.abc' -> 'meeting'), or '' when it is not set. */
@@ -98,6 +99,7 @@ const RELATED_ICONS: Record<string, string> = {
   approval: 'checkbox-circle',
   bill: 'invoice',
   billDigest: 'invoice',
+  course: 'school',
 };
 
 /** The icon name for a task's `relatedKey`, or '' when its model type has none. */

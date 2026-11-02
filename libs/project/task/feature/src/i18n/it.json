@@ -151,7 +151,8 @@
     "meeting": "Riunione",
     "trip": "Uscita",
     "bill": "Fattura fornitore",
-    "billDigest": "Fatture del giorno"
+    "billDigest": "Fatture del giorno",
+    "course": "Corso"
   },
   "settings": {
     "title": "Impostazioni",

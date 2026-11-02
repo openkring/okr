@@ -151,7 +151,8 @@
     "meeting": "Séance",
     "trip": "Sortie",
     "bill": "Facture fournisseur",
-    "billDigest": "Factures du jour"
+    "billDigest": "Factures du jour",
+    "course": "Cours"
   },
   "settings": {
     "title": "Paramètres",
