@@ -2,7 +2,7 @@ import {
   DEFAULT_COUNTRY, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_INDEX,
   DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_TENANTS
 } from '@okr/shared-constants';
-import { OkrModel, SearchableModel, TaggedModel } from './base.model';
+import { OkrModel, SearchableModel, TaggedModel, TypedProperty } from './base.model';
 import { AvatarInfo } from './avatar-info';
 
 export class ApplicationModel implements OkrModel, SearchableModel, TaggedModel {
@@ -41,6 +41,10 @@ export class ApplicationModel implements OkrModel, SearchableModel, TaggedModel 
   // application
   public applicationAs: ApplicationKind = 'adult';
   public state: ApplicationState = 'applied';
+  public applicationFor: ApplicationFor = 'membership';
+
+  // form-builder answers that are not model fields (e.g. SCS rowingExperience); generic, no tenant-specific fields
+  public properties: TypedProperty[] = [];
 
   // workflow bookkeeping
   public submittedAt = '';
@@ -72,3 +76,6 @@ export const APPLICATION_STATE_VALUES: ApplicationState[] = [
 
 export type ApplicationKind = 'youth' | 'adult' | 'transfer';
 export const APPLICATION_KIND_VALUES: ApplicationKind[] = ['youth', 'adult', 'transfer'];
+
+export type ApplicationFor = 'membership' | 'course';
+export const APPLICATION_FOR_VALUES: ApplicationFor[] = ['membership', 'course'];

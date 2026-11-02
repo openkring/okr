@@ -1,5 +1,5 @@
 import { DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
-import { OkrModel, NamedModel, TaggedModel } from './base.model';
+import { OkrModel, NamedModel, TaggedModel, PropertyType } from './base.model';
 
 // ──────────────────────────────────────────
 // Field-type union
@@ -13,6 +13,32 @@ export type FieldType =
 
 export interface FieldOption { label: string; value: string; }
 
+// ──────────────────────────────────────────
+// Conditions (1.125) — a field is shown only when its VisibilityRule holds
+// ──────────────────────────────────────────
+
+export type ConditionOp =
+  | 'equals' | 'notEquals' | 'in' | 'notIn'          // choice fields, text, number
+  | 'isChecked' | 'isNotChecked'                      // single checkbox
+  | 'contains' | 'notContains'                        // checkbox with options
+  | 'lt' | 'lte' | 'gt' | 'gte' | 'between'           // number, date (StoreDate compare)
+  | 'ageGte' | 'ageLt'                                // date: age by year of birth (getAge)
+  | 'isFilled' | 'isEmpty';                           // any input field
+
+export interface FieldCondition {
+  /** The controlling field's `id` (stable), NOT its `key`. Only fields with a lower `order`. */
+  fieldId: string;
+  op: ConditionOp;
+  /** Absent for isChecked/isFilled/…; [from, to] for between. */
+  value?: string | number | string[];
+}
+
+export interface VisibilityRule {
+  match: 'all' | 'any';
+  /** At least one condition. */
+  conditions: FieldCondition[];
+}
+
 export interface FieldBase {
   id: string;
   key: string;
@@ -20,7 +46,10 @@ export interface FieldBase {
   helpText?: string;
   placeholder?: string;
   required: boolean;
-  visibleIf?: string;
+  /** Hidden means absent: not required, not validated, not stored (client and server). */
+  visibleIf?: VisibilityRule;
+  /** Store the answer in the target's typed `properties` list instead of a top-level key; `key` becomes the property key. */
+  asProperty?: boolean;
   width: 'full' | 'half' | 'third';
   order: number;
 }
@@ -74,6 +103,23 @@ export interface FormMapping {
   collectionName: string;
   includedFields?: string[];
   defaults?: Record<string, unknown>;
+  /** Name of the typed-properties list on the target model (`'properties'` for application mappings); only mappings with it offer properties. */
+  propertiesField?: string;
+}
+
+// ──────────────────────────────────────────
+// Derived values (1.125) — server-derived from earlier answers, first matching case wins
+// ──────────────────────────────────────────
+
+export interface DerivedValue {
+  /** Target key in the stored record. */
+  key: string;
+  cases: { when: VisibilityRule; value: string }[];
+  otherwise?: string;
+  /** Store in `properties` instead of at the top level. */
+  asProperty?: boolean;
+  /** Required when `asProperty`. */
+  type?: PropertyType;
 }
 
 // ──────────────────────────────────────────
@@ -99,10 +145,12 @@ export class FormDefinitionModel implements OkrModel, NamedModel, TaggedModel {
   public description = '';
   public target: SubmissionTarget = { kind: 'collection', mappingKey: '', modelType: '', collectionName: '' };
   public fields: Field[] = [];
+  public derivedValues: DerivedValue[] = [];
   public version = 1;
   public createdAt = '';
   public updatedAt = '';
   public createdBy = '';
+  public fillerHelpText = '';  // form-specific paragraph in the filler's (i) help
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

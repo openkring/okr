@@ -43,6 +43,18 @@ export interface AddressableModel {
 
 export type BaseType = string | number | boolean;
 export type BaseProperty = { key: string; value: BaseType };
+
+export type PropertyType = 'boolean' | 'number' | 'text';
+// Typed sibling of BaseProperty, used by `ApplicationModel.properties` (form-builder answers that are not model fields).
+export interface TypedProperty {
+  /** camelCase, unique within the list. */
+  key: string;
+  type: PropertyType;
+  /** boolean | number | string, matching `type`. */
+  value: BaseType;
+  /** The question's label at submit time — what a reviewer reads. */
+  label: string;
+}
 export type PropertyList = Map<string, BaseType>;
 // add a new property to the list:  params.set('key', 'value');
 // get a property from the list: params.get('key');
