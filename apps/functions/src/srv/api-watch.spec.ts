@@ -12,7 +12,8 @@ import { reportToSentry } from './sentry';
 import { gatewayFetch } from '../_gateway/http';
 import { SRV_DETAIL_FIELDS, SRV_LIST_FIELDS } from '../_gateway/adapters/srv';
 import {
-  ApiFingerprint, WatchState, buildFingerprint, checkShape, decideWatch, diffFingerprint, probeRegasoft, resetShapeCheck, runRegasoftApiWatch,
+  ApiFingerprint, PARAM_OVERSIZE, WatchState, buildFingerprint, checkShape, decideWatch, diffFingerprint, probeRegasoft, resetShapeCheck,
+  resolveCreateKey, runRegasoftApiWatch,
 } from './api-watch';
 
 const NOW = new Date('2026-11-03T06:00:00Z'); // 07:00 in Zurich
@@ -70,6 +71,12 @@ describe('buildFingerprint', () => {
   it('flips param.inactive to changes when the count differs', () => {
     const more = { data: [MEMBER, MEMBER], success: true, message: null };
     expect(buildFingerprint(probe({ listInactive: more }))['param.inactive']).toBe('changes');
+  });
+
+  it('marks a parameter probe over the size cap as changes:oversize (I7)', () => {
+    const fp = buildFingerprint(probe({ listAll: PARAM_OVERSIZE }));
+    expect(fp['param.all']).toBe('changes:oversize');
+    expect(fp['param.inactive']).toBe('ignored');
   });
 
   it('marks a parameter probe that failed as unavailable', () => {
@@ -311,6 +318,10 @@ describe('runRegasoftApiWatch', () => {
           id,
           get: async () => ({ exists: store.has(`${c}/${id}`), data: () => store.get(`${c}/${id}`) }),
           set: async (d: Doc) => { store.set(`${c}/${id}`, d); },
+          create: async (d: Doc) => {
+            if (store.has(`${c}/${id}`)) throw Object.assign(new Error('ALREADY_EXISTS'), { code: 6 });
+            store.set(`${c}/${id}`, d);
+          },
           update: async (d: Doc) => { store.set(`${c}/${id}`, { ...(store.get(`${c}/${id}`) ?? {}), ...d }); },
         }),
       }),
@@ -370,6 +381,54 @@ describe('runRegasoftApiWatch', () => {
     expect((store.get('integration-health/regasoft') as Doc)['accepted']).toEqual(pending);
     expect(probeFn).not.toHaveBeenCalled(); // month already done: no Regasoft call
   });
+
+  it('a cancelled task closes the review like a done one', async () => {
+    const pending = { ...fp, a: '1' };
+    const { db, store } = fakeDb({
+      'integration-health/regasoft': { accepted: fp, pending, taskKey: 'regasoft-api-watch-202610', lastRunMonth: '202611', failures: 0 },
+      'tasks/regasoft-api-watch-202610': { state: 'cancelled', completionDate: '', notes: '' },
+    });
+    await runRegasoftApiWatch(NOW, { db, probe: vi.fn() });
+    expect((store.get('integration-health/regasoft') as Doc)['accepted']).toEqual(pending);
+  });
+
+  it('a task parked as «later» stays open', async () => {
+    const pending = { ...fp, a: '1' };
+    const { db, store } = fakeDb({
+      'integration-health/regasoft': { accepted: fp, pending, taskKey: 'regasoft-api-watch-202610', lastRunMonth: '202611', failures: 0 },
+      'tasks/regasoft-api-watch-202610': { state: 'later', completionDate: '', notes: '' },
+    });
+    await runRegasoftApiWatch(NOW, { db, probe: vi.fn() });
+    expect((store.get('integration-health/regasoft') as Doc)['pending']).toEqual(pending);
+  });
+
+  it('never overwrites a closed task of the same month: the new one gets a suffixed key', async () => {
+    const closed = { state: 'done', completionDate: '20261102', notes: 'reviewed', name: 'Regasoft: nicht erreichbar', tenants: ['scs'] };
+    const { db, store } = fakeDb({
+      'integration-health/regasoft': { accepted: fp, pending: null, taskKey: '', lastRunMonth: '202610', failures: 0 },
+      'tasks/regasoft-api-watch-202611': closed,
+    });
+    await runRegasoftApiWatch(NOW, { db, probe: async () => ({ reachable: true, fingerprint: { ...fp, 'list.fields': 'id:number,x:string' } }) });
+    expect(store.get('tasks/regasoft-api-watch-202611')).toEqual(closed);
+    expect(String(store.get('tasks/regasoft-api-watch-202611-2')?.['notes'])).toContain('list.fields');
+    expect((store.get('integration-health/regasoft') as Doc)['taskKey']).toBe('regasoft-api-watch-202611-2');
+  });
+});
+
+describe('resolveCreateKey', () => {
+  const statusOf = (known: Record<string, 'open' | 'done'>) => async (key: string) => known[key] ?? 'none';
+
+  it('takes the key when no task has it', async () => {
+    expect(await resolveCreateKey('k', statusOf({}))).toEqual({ key: 'k', op: 'create' });
+  });
+
+  it('skips closed tasks to the next free suffix', async () => {
+    expect(await resolveCreateKey('k', statusOf({ k: 'done', 'k-2': 'done' }))).toEqual({ key: 'k-3', op: 'create' });
+  });
+
+  it('updates an open task with that key instead of creating over it', async () => {
+    expect(await resolveCreateKey('k', statusOf({ k: 'done', 'k-2': 'open' }))).toEqual({ key: 'k-2', op: 'update' });
+  });
 });
 
 describe('probeRegasoft', () => {
@@ -427,6 +486,46 @@ describe('probeRegasoft', () => {
     if (!r.reachable) return;
     expect(r.fingerprint['error.400']).toBe('error');
     expect(r.fingerprint['error.401']).toBe('data,message,success');
+  });
+
+  it('runs the two parameter probes one after the other, capped at 2 MiB, without retry (I7)', async () => {
+    route([]);
+    const healthy = fetchMock.getMockImplementation();
+    let inFlight = 0;
+    let maxInFlight = 0;
+    fetchMock.mockImplementation(async (url: string, opts?: Record<string, unknown>) => {
+      if (!url.includes('?')) return healthy?.(url, opts as never) as never;
+      inFlight++;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      await new Promise(r => setTimeout(r, 5));
+      inFlight--;
+      return healthy?.(url, opts as never) as never;
+    });
+    const r = await probeRegasoft();
+    expect(maxInFlight).toBe(1);
+    const paramCalls = fetchMock.mock.calls.filter(([url]) => String(url).includes('?'));
+    expect(paramCalls.map(([url]) => String(url).split('/').pop())).toEqual(['members?all=true', 'members?inactive=true']);
+    for (const [, opts] of paramCalls) {
+      expect(opts).toMatchObject({ maxBytes: 2 * 1024 * 1024, maxRetries: 0 });
+    }
+    expect(r.reachable && r.fingerprint['param.all']).toBe('ignored');
+  });
+
+  it('a parameter probe over the cap is reported as changes:oversize, not as a transient failure (I7)', async () => {
+    route([]);
+    const healthy = fetchMock.getMockImplementation();
+    fetchMock.mockImplementation(async (url: string, opts?: Record<string, unknown>) => {
+      if (url.endsWith('?inactive=true')) throw new Error('maxContentLength size of 2097152 exceeded');
+      return healthy?.(url, opts as never) as never;
+    });
+    const r = await probeRegasoft();
+    expect(r.reachable).toBe(true);
+    if (!r.reachable) return;
+    expect(r.fingerprint['param.inactive']).toBe('changes:oversize');
+    const accepted = { ...r.fingerprint, 'param.inactive': 'ignored' };
+    const state: WatchState = { accepted, pending: null, taskKey: '', lastRunMonth: '202610', failures: 0 };
+    const d = decideWatch(state, r, 'none', NOW);
+    expect(d.task?.diff).toEqual([{ key: 'param.inactive', before: 'ignored', after: 'changes:oversize' }]);
   });
 
   it('a failed side probe never counts as a failure in the run', async () => {

@@ -32,10 +32,21 @@ const TASK_TENANT = 'scs';
 const RESPONSIBILITY_KEY = 'scs-srv';
 const TASK_ID_PREFIX = 'regasoft-api-watch-';
 const DUE_IN_DAYS = 14;
+/** How many `-2`, `-3` … suffixes a month's task key may take before the run gives up. */
+const MAX_TASK_SUFFIX = 20;
+/**
+ * Task states that close a review. Not `TERMINAL_TASK_STATES` from @okr/project-task-util: that
+ * list also holds the parking state `later`, and parking a task must not accept a changed API.
+ */
+const CLOSED_TASK_STATES: readonly string[] = ['done', 'cancelled'];
 /** Bruno's own record on the test system: the detail probe. */
 const PROBE_RID = 26183;
-/** The announced parameter probes may return the detail shape for every member, licence images included. */
-const PARAM_MAX_BYTES = 20 * 1024 * 1024;
+/**
+ * The announced parameter probes may return the detail shape for every member, licence images
+ * included. They only have to tell «same as the plain list» from «different», so they are capped
+ * low: a response over the cap is itself a change (`changes:oversize`), it is never retried.
+ */
+const PARAM_MAX_BYTES = 2 * 1024 * 1024;
 const DOCS_REFERENCE = 'planning/reference/REGASOFT.md';
 
 /** The usual Swagger / OpenAPI paths (REGASOFT.md «Doc discovery»); an API doc appearing is a change. */
@@ -52,13 +63,15 @@ export interface FingerprintDiff { key: string; before: string; after: string }
 
 /** Marks a side probe that threw (timeout, reset): a stable fingerprint value, not a failed run. */
 export const PROBE_ERROR = Symbol('probe-error');
+/** Marks a parameter probe whose response exceeded the size cap: it surely differs from the plain list. */
+export const PARAM_OVERSIZE = Symbol('param-oversize');
 
 export interface ApiProbe {
   listStatus: number;
   list: unknown;
   /** PROBE_ERROR when the request failed */
   detail: unknown;
-  /** undefined when the parameter probe could not be completed */
+  /** undefined when the parameter probe could not be completed; PARAM_OVERSIZE over the size cap */
   listAll: unknown;
   listInactive: unknown;
   err401: unknown;
@@ -105,9 +118,14 @@ const recordOf = (raw: unknown): Record<string, unknown>[] => {
   return isRecord(d) ? [d] : [];
 };
 
-/** 'ignored' = same fields and count as the plain list; 'changes' = it differs; 'unavailable' = the probe failed. */
+/**
+ * 'ignored' = same fields and count as the plain list; 'changes' = it differs; 'changes:oversize' =
+ * the response was over the size cap (a stable value, reported like any change); 'unavailable' =
+ * the probe failed (transient).
+ */
 function paramEffect(plain: unknown, withParam: unknown): string {
   if (withParam === undefined) return 'unavailable';
+  if (withParam === PARAM_OVERSIZE) return 'changes:oversize';
   const a = listOf(plain);
   const b = listOf(withParam);
   return a.length === b.length && describeFields(a) === describeFields(b) ? 'ignored' : 'changes';
@@ -262,13 +280,16 @@ export function watchTaskNotes(action: Pick<TaskAction, 'reason' | 'diff'>, syst
 export interface WatchIo { db: Firestore; probe: () => Promise<ProbeResult> }
 
 const system = (): 'test' | 'production' => (REGASOFT_SYSTEM === 'test' ? 'test' : 'production');
-const get = (url: string, headers: Record<string, string>, maxBytes?: number) =>
-  gatewayFetch(url, { method: 'GET', headers, validateStatus: () => true, timeoutMs: 15_000, maxRetries: 1, ...(maxBytes ? { maxBytes } : {}) });
+const get = (url: string, headers: Record<string, string>, limits: { maxBytes?: number; maxRetries?: number } = {}) =>
+  gatewayFetch(url, { method: 'GET', headers, validateStatus: () => true, timeoutMs: 15_000, maxRetries: limits.maxRetries ?? 1, ...(limits.maxBytes ? { maxBytes: limits.maxBytes } : {}) });
+
+/** axios rejects a response over `maxContentLength` with this message (no status: it would be retried). */
+const isOversize = (e: unknown): boolean => e instanceof Error && /maxContentLength size of \d+ exceeded/.test(e.message);
 
 /** A side probe: a request that throws is recorded as PROBE_ERROR, it never fails the run. */
-async function side(name: string, url: string, headers: Record<string, string>, maxBytes?: number): Promise<{ status: number; data: unknown } | typeof PROBE_ERROR> {
+async function side(name: string, url: string, headers: Record<string, string>): Promise<{ status: number; data: unknown } | typeof PROBE_ERROR> {
   try {
-    const r = await get(url, headers, maxBytes);
+    const r = await get(url, headers);
     return { status: r.status, data: r.data };
   } catch (e: unknown) {
     // the probe's name only: no URL with ids, no response data
@@ -293,14 +314,19 @@ export async function probeRegasoft(): Promise<ProbeResult> {
     return { reachable: false };
   }
   if (list.status >= 500) return { reachable: false };
+  /** A parameter probe: its data, PARAM_OVERSIZE over the cap, undefined when it failed. No retry. */
   const optional = async (query: string): Promise<unknown> => {
-    const r = await side(`param${query}`, `${base}/api/club/members${query}`, headers, PARAM_MAX_BYTES);
-    return r !== PROBE_ERROR && r.status === 200 ? r.data : undefined;
+    try {
+      const r = await get(`${base}/api/club/members${query}`, headers, { maxBytes: PARAM_MAX_BYTES, maxRetries: 0 });
+      return r.status === 200 ? r.data : undefined;
+    } catch (e: unknown) {
+      if (isOversize(e)) return PARAM_OVERSIZE;
+      logger.warn(`regasoftApiWatch: side probe param${query} failed`, { error: e instanceof Error ? e.message : String(e) });
+      return undefined;
+    }
   };
-  const [detail, listAll, listInactive, err401, err400, docs] = await Promise.all([
+  const [detail, err401, err400, docs] = await Promise.all([
     side('detail', `${base}/api/club/members/${PROBE_RID}`, headers),
-    optional('?all=true'),
-    optional('?inactive=true'),
     side('err401', `${base}/api/club/members`, { ...headers, ApiKey: 'invalid' }),
     side('err400', `${base}/api/club/members/schema`, headers),
     Promise.all(DOC_PATHS.map(async p => {
@@ -308,6 +334,9 @@ export async function probeRegasoft(): Promise<ProbeResult> {
       return [p, r === PROBE_ERROR ? 'error' : r.status] as const;
     })),
   ]);
+  // The two parameter probes may be large: one after the other, never alongside each other.
+  const listAll = await optional('?all=true');
+  const listInactive = await optional('?inactive=true');
   const probe: ApiProbe = {
     listStatus: list.status, list: list.data, listAll, listInactive, docs: Object.fromEntries(docs),
     detail: detail === PROBE_ERROR ? PROBE_ERROR : detail.data,
@@ -323,19 +352,39 @@ const liveIo = (): WatchIo => ({ db: getFirestore(), probe: probeRegasoft });
 
 function taskStatusOf(data: DocumentData | undefined): TaskStatus {
   if (!data) return 'none';
-  const done = data['state'] === 'done' || data['isArchived'] === true || (typeof data['completionDate'] === 'string' && data['completionDate'] !== '');
-  return done ? 'done' : 'open';
+  const closed = CLOSED_TASK_STATES.includes(String(data['state'])) || data['isArchived'] === true
+    || (typeof data['completionDate'] === 'string' && data['completionDate'] !== '');
+  return closed ? 'done' : 'open';
 }
 
-async function writeTask(db: Firestore, action: TaskAction, today: string): Promise<void> {
-  const ref = db.collection(TaskCollection).doc(action.key);
+/**
+ * Where a new task goes without overwriting anything: the first of `key`, `key-2`, `key-3` … that
+ * no task has. A closed task is skipped (its history stays); an open one is updated in place.
+ */
+export async function resolveCreateKey(key: string, statusOf: (key: string) => Promise<TaskStatus>): Promise<{ key: string; op: TaskAction['op'] }> {
+  for (let n = 1; n <= MAX_TASK_SUFFIX; n++) {
+    const candidate = n === 1 ? key : `${key}-${n}`;
+    const status = await statusOf(candidate);
+    if (status === 'none') return { key: candidate, op: 'create' };
+    if (status === 'open') return { key: candidate, op: 'update' };
+  }
+  throw new Error(`regasoftApiWatch: no free task key up to ${key}-${MAX_TASK_SUFFIX}`);
+}
+
+/** Writes the task and returns the key it was written under (a create may move to a suffixed key). */
+async function writeTask(db: Firestore, action: TaskAction, today: string): Promise<string> {
+  const tasks = db.collection(TaskCollection);
+  const target = action.op === 'create'
+    ? await resolveCreateKey(action.key, async k => taskStatusOf((await tasks.doc(k).get()).data()))
+    : { key: action.key, op: action.op };
+  const ref = tasks.doc(target.key);
   const name = watchTaskName(action.reason);
   const generated = watchTaskNotes(action, isRegasoftTestSystem() ? 'Testsystem' : 'Produktion');
-  if (action.op === 'update') {
+  if (target.op === 'update') {
     const found = (await ref.get()).data();
     const notes = mergeTaskNotes(typeof found?.['notes'] === 'string' ? (found['notes'] as string) : undefined, generated);
     await ref.update({ name, notes, index: getTaskIndex({ ...(found as TaskModel), name, notes }) });
-    return;
+    return target.key;
   }
   const task = new TaskModel(TASK_TENANT);
   task.name = name;
@@ -346,7 +395,8 @@ async function writeTask(db: Firestore, action: TaskAction, today: string): Prom
   task.index = getTaskIndex(task);
   const { okey, ...doc } = task; // okey is the document id, never a field
   void okey;
-  await ref.set(withoutUndefined(doc));
+  await ref.create(withoutUndefined(doc));   // never overwrites: fails if the key was taken meanwhile
+  return target.key;
 }
 
 /**
@@ -367,7 +417,11 @@ export async function runRegasoftApiWatch(now: Date = new Date(), io: WatchIo = 
   const probe: ProbeResult = due ? await io.probe() : { reachable: false };
   const decision = due ? decideWatch(prev, probe, status, now) : promoted;
 
-  if (decision.task) await writeTask(db, decision.task, toStoreDate(now));
-  if (JSON.stringify(decision.state) !== JSON.stringify(prev ?? null)) await stateRef.set(decision.state);
+  let state = decision.state;
+  if (decision.task) {
+    const key = await writeTask(db, decision.task, toStoreDate(now));
+    if (key !== state.taskKey) state = { ...state, taskKey: key };
+  }
+  if (JSON.stringify(state) !== JSON.stringify(prev ?? null)) await stateRef.set(state);
   logger.info(`regasoftApiWatch: ${due ? (probe.reachable ? 'probed' : 'unreachable') : 'not due'}, task ${decision.task ? `${decision.task.op} ${decision.task.reason}` : 'none'}`);
 }
