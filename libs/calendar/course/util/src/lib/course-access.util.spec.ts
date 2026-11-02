@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { AvatarInfo, CourseFinanceModel, CourseModel, MoneyModel } from '@okr/shared-models';
 
-import { CourseAccess, isCourseResponsible, loadFinanceForEdit, mayCreateCourse, mayManageCourse, mayReadCourseFinance } from './course-access.util';
+import { CourseAccess, isCourseResponsible, loadFinanceForEdit, mayCreateCourse, mayManageCourse, mayOpenCourseMenu, mayReadCourseFinance } from './course-access.util';
 
 function avatar(key: string): AvatarInfo {
   return { key, name1: key, name2: key, modelType: 'person', type: '', subType: '', label: '' };
@@ -89,7 +89,32 @@ describe('loadFinanceForEdit', () => {
   });
 
   it('offers NO finance part when the read failed, so nothing blank can overwrite the real document', async () => {
-    const result = await loadFinanceForEdit(true, async () => { throw new Error('client is offline'); });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const failure = new Error('client is offline');
+    const result = await loadFinanceForEdit(true, async () => { throw failure; });
     expect(result).toEqual({ finance: undefined, unavailable: true });
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('could not be read'), failure);   // diagnosable
+    warn.mockRestore();
+  });
+});
+
+describe('mayOpenCourseMenu', () => {
+  const plain = { isPrivileged: false, isTreasurer: false };
+
+  it('opens for a group admin on an empty list: nothing to manage yet, but they may add the first course', () => {
+    const groupAdmin: CourseAccess = { ...nobody, isGroupAdmin: true };
+    const canAdd = mayCreateCourse(groupAdmin);
+    expect(canAdd).toBe(true);
+    expect(mayOpenCourseMenu(groupAdmin, canAdd, false)).toBe(true);
+  });
+
+  it('opens for privileged, the treasurer and somebody who manages a listed course', () => {
+    expect(mayOpenCourseMenu({ ...plain, isPrivileged: true }, false, false)).toBe(true);
+    expect(mayOpenCourseMenu({ ...plain, isTreasurer: true }, false, false)).toBe(true);
+    expect(mayOpenCourseMenu(plain, false, true)).toBe(true);
+  });
+
+  it('stays closed for a plain member, and for somebody who may not add and manages nothing', () => {
+    expect(mayOpenCourseMenu(plain, false, false)).toBe(false);
   });
 });

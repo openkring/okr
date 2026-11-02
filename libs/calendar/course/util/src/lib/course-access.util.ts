@@ -44,6 +44,16 @@ export function mayCreateCourse(access: Pick<CourseAccess, 'isGroupAdmin' | 'isP
   return access.isPrivileged || access.isGroupAdmin;
 }
 
+/**
+ * Whether the «…» menu of the course list opens at all. It must also open on an EMPTY list for somebody who may
+ * create (a group admin has no course to be «responsible» for yet, and `add` is the first thing they need).
+ * @param canAdd may create a course in the listed group (`mayCreateCourse`)
+ * @param managesListedCourse manages at least one listed course (responsible, admin of its group, privileged)
+ */
+export function mayOpenCourseMenu(access: Pick<CourseAccess, 'isPrivileged' | 'isTreasurer'>, canAdd: boolean, managesListedCourse: boolean): boolean {
+  return canAdd || access.isPrivileged || access.isTreasurer || managesListedCourse;
+}
+
 /** What the edit dialog gets for the finance part, see {@link loadFinanceForEdit}. */
 export type FinanceForEdit = {
   /** the document to edit, a deliberately new one, or `undefined` = no finance part at all */
@@ -65,7 +75,9 @@ export async function loadFinanceForEdit(mayRead: boolean, read: () => Promise<C
   try {
     const stored = await read();
     return { finance: stored ?? new CourseFinanceModel(), unavailable: false };
-  } catch {
+  } catch (err) {
+    // the user gets a generic toast; this is what makes a recurring «finance unavailable» diagnosable
+    console.warn('loadFinanceForEdit: the finance document could not be read, the dialog opens without it.', err);
     return { finance: undefined, unavailable: true };
   }
 }

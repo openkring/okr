@@ -8,7 +8,7 @@ import { from, of } from 'rxjs';
 import { CourseService } from '@okr/calendar-course-data-access';
 import {
   ALL_COURSES_KEY, buildCourseListRows, COURSE_I18N_KEYS, CourseAccess, CourseI18n, loadFinanceForEdit, mayCreateCourse,
-  mayManageCourse, mayReadCourseFinance, yearlyTotalRows
+  mayManageCourse, mayOpenCourseMenu, mayReadCourseFinance, yearlyTotalRows
 } from '@okr/calendar-course-util';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
@@ -89,6 +89,7 @@ export const CourseStore = signalStore(
      */
     const canSeeYearlyTotals = computed(() => (state.access().isTreasurer || state.access().isPrivileged) && state.books() !== '');
     const courses = computed(() => state.coursesResource.value() ?? []);
+    const canAdd = computed(() => mayCreateCourse(state.access()) && state.groupKey() !== '' && !state.isAll());
     /** the group admin flag belongs to the course's own group, which differs per row in the overview */
     const accessFor = (course: CourseModel): CourseAccess => ({
       ...state.access(),
@@ -100,11 +101,16 @@ export const CourseStore = signalStore(
       filteredCourses: computed(() => courses().filter(c => nameMatches(c.index, state.searchTerm()))),
       isLoading: computed(() => state.coursesResource.isLoading()),
       /** may create a course in the listed group (the rules: privileged or admin of the group); never in the overview */
-      canAdd: computed(() => mayCreateCourse(state.access()) && state.groupKey() !== '' && !state.isAll()),
-      /** responsible for a listed course, admin of its group, or privileged */
-      canManage: computed(() => state.access().isPrivileged || courses().some(c => mayManageCourse(c, accessFor(c)))),
-      /** the toolbar menu (export, add): those who manage, and the treasurer for the overview's export */
-      canOpenMenu: computed(() => state.access().isPrivileged || state.access().isTreasurer || courses().some(c => mayManageCourse(c, accessFor(c)))),
+      canAdd,
+      /**
+       * the toolbar menu (add, export): whoever may add (a group admin on an EMPTY list included), manages a listed
+       * course, or is privileged / treasurer (the overview's export)
+       */
+      canOpenMenu: computed(() => mayOpenCourseMenu(
+        state.access(),
+        canAdd(),
+        courses().some(c => mayManageCourse(c, accessFor(c))),
+      )),
       canSeeYearlyTotals,
     };
   }),

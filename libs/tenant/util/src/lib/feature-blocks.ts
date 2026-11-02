@@ -233,8 +233,8 @@ const calevent: FeatureBlock = {
       { key: 'yearlyevent-export', name: 'yearlyevent-export', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: '@item.yearlyevent-export' },
     ] },
     // The course list's context menu (spec 1.132): route `/course/:groupKey/:listId/c-courses`. The wrapper and the
-    // rows are `registered`; WHO sees the «…» button and the `add` row is decided in code (`CourseStore.canManage`,
-    // `canAdd`: group admin / privileged / responsible), because that depends on the group, not on a role.
+    // rows are `registered`; WHO sees the «…» button and the `add` row is decided in code (`CourseStore.canOpenMenu`,
+    // `canAdd`: group admin / privileged), because that depends on the group, not on a role.
     { key: 'c-courses', name: 'c-courses', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
       { key: 'course-add', name: 'course-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: '@item.course-add' },
       { key: 'course-export-generic', name: 'course-export-generic', url: 'exportGeneric', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.course-export-generic' },

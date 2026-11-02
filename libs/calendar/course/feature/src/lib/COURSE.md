@@ -38,7 +38,7 @@ The rules in `firestore.rules` are the guard; the UI mirrors them in `course-acc
 
 ## Store
 
-`CourseStore` (provided by `CourseList`): state `groupKey`, `searchTerm`; computed `courses`, `canAdd`, `canManage`,
+`CourseStore` (provided by `CourseList`): state `groupKey`, `searchTerm`; computed `courses`, `canAdd`, `canOpenMenu`,
 `yearlyTotals`; methods `add()`, `edit(course)`, `archive(course)`, `openTable(course)`, `exportGeneric()`.
 
 - The edit modal is imported on demand (`await import()`): it brings the accounting data-access services.
