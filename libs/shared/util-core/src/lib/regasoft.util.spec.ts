@@ -14,6 +14,7 @@ import {
   mailtoUrl,
   normalizePhone,
   phonesMatch,
+  pickSrvMemberships,
   REGASOFT_COUNTRY_IDS,
   srvCreateBlocker,
   storeDateToRegasoftDate,
@@ -422,6 +423,77 @@ describe('expectedSrvStatus', () => {
   it('passive → inactiveDate, falls back to today', () => {
     expect(expectedSrvStatus({ ...base, category: 'P', passiveSince: '20260101' }).inactiveDate).toBe('20260101');
     expect(expectedSrvStatus({ ...base, category: 'P' }).inactiveDate).toBe('20261102');
+  });
+  it('passiveSince today counts', () => {
+    expect(expectedSrvStatus({ ...base, category: 'P', passiveSince: '20261102' }).inactiveDate).toBe('20261102');
+  });
+  it('a future passiveSince is not passive yet (Regasoft would show Passive at once)', () => {
+    expect(expectedSrvStatus({ ...base, category: 'P', passiveSince: '20261201' }).inactiveDate).toBe('');
+  });
+  it('a partial passiveSince counts as missing → today, never a partial date', () => {
+    expect(expectedSrvStatus({ ...base, category: 'P', passiveSince: '20260000' }).inactiveDate).toBe('20261102');
+    expect(expectedSrvStatus({ ...base, category: 'P', passiveSince: '00000415' }).inactiveDate).toBe('20261102');
+  });
+  it('the no-exit sentinel as passiveSince counts as missing → today', () => {
+    expect(expectedSrvStatus({ ...base, category: 'P', passiveSince: '99991231' }).inactiveDate).toBe('20261102');
+  });
+});
+
+describe('passiveSince in getMismatches / getSrvChanges (C2, I5)', () => {
+  const changes = (o: Partial<SrvIndex>) => getSrvChanges(srvIndex(o), TODAY);
+
+  it('future passiveSince: a Regasoft inactiveDate is cleared, none is written', () => {
+    expect(changes({ mCategory: 'P', mPassiveSince: '20261201', rInactiveDate: '' })).toEqual({});
+    expect(changes({ mCategory: 'P', mPassiveSince: '20261201', rInactiveDate: '20261201' })).toEqual({ inactiveDate: '' });
+  });
+
+  it('partial passiveSince with an empty Regasoft inactiveDate → today (writable)', () => {
+    expect(changes({ mCategory: 'P', mPassiveSince: '20260000', rInactiveDate: '' })).toEqual({ inactiveDate: TODAY });
+  });
+
+  it('partial passiveSince: any full Regasoft inactiveDate is in sync (like a missing one)', () => {
+    const o = { mCategory: 'P', mPassiveSince: '20260000', rInactiveDate: '20250101' };
+    expect(mismatchOf(o, 'inactiveDate')).toBeUndefined();
+    expect(changes(o)).toEqual({});
+  });
+});
+
+describe('pickSrvMemberships', () => {
+  const m = (memberKey: string, dateOfEntry: string, dateOfExit: string, o: { relIsLast?: boolean; okey?: string } = {}) =>
+    ({ memberKey, dateOfEntry, dateOfExit, relIsLast: o.relIsLast ?? true, okey: o.okey ?? `${memberKey}-${dateOfEntry}` });
+
+  it('takes the membership in force today', () => {
+    const a = m('p1', '20200101', '99991231');
+    expect(pickSrvMemberships([a], TODAY)).toEqual([{ membership: a, ended: false }]);
+  });
+
+  it('a category change entered in advance: the old category is in force until the day before', () => {
+    const old = m('p1', '20200101', '20261130', { relIsLast: false });
+    const next = m('p1', '20261201', '99991231');
+    expect(pickSrvMemberships([next, old], TODAY)).toEqual([{ membership: old, ended: false }]);
+    expect(pickSrvMemberships([next, old], '20261201')).toEqual([{ membership: next, ended: false }]);
+  });
+
+  it('an exit today is still in force', () => {
+    const a = m('p1', '20200101', TODAY);
+    expect(pickSrvMemberships([a], TODAY)).toEqual([{ membership: a, ended: false }]);
+  });
+
+  it('an empty exit date is open', () => {
+    const a = m('p1', '20200101', '');
+    expect(pickSrvMemberships([a], TODAY)).toEqual([{ membership: a, ended: false }]);
+  });
+
+  it('none in force: a membership that starts later is taken, not ended', () => {
+    const a = m('p1', '20270101', '99991231');
+    expect(pickSrvMemberships([a], TODAY)).toEqual([{ membership: a, ended: false }]);
+  });
+
+  it('one pick per person, in the order of first appearance', () => {
+    const a = m('p2', '20200101', '99991231');
+    const b = m('p1', '20200101', '99991231');
+    const c = m('p2', '20100101', '20191231', { relIsLast: false });
+    expect(pickSrvMemberships([a, b, c], TODAY).map(p => p.membership)).toEqual([a, b]);
   });
 });
 

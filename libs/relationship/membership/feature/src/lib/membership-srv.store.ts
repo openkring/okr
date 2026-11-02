@@ -11,7 +11,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AddressCollection, AddressModel, MembershipCollection, MembershipModel, OwnershipModel, PersonModel, SrvChanges, SrvContact, SrvIndex, SrvMemberLicenseDetail, SrvPreview, SrvUpdateResult } from '@okr/shared-models';
-import { classifyPhone, composeSekretariatMail, countryIdOf, DateFormat, debugListLoaded, expectedSrvStatus, fill, getBirthYear, getFullName, getMismatches, getSekretariatCases, getSrvChanges, getSystemQuery, getTodayStr, getYear, isAfterOrEqualDate, isMembership, isPerson, mailtoUrl, regasoftDateToStoreDate, srvCreateBlocker } from '@okr/shared-util-core';
+import { classifyPhone, composeSekretariatMail, countryIdOf, DateFormat, debugListLoaded, expectedSrvStatus, fill, getBirthYear, getFullName, getMismatches, getSekretariatCases, getSrvChanges, getSystemQuery, getTodayStr, getYear, isMembership, isPerson, mailtoUrl, pickSrvMemberships, regasoftDateToStoreDate, srvCreateBlocker } from '@okr/shared-util-core';
 
 import { copyToClipboardDeferred, showToast } from '@okr/shared-util-angular';
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
@@ -260,15 +260,20 @@ export const MembershipSrvStore = signalStore(
 
 
   withComputed(state => ({
-    // Filter Firestore streams to currently active members
-    mainMemberships: computed(() =>
-      (state.mainMembershipsResource.value() ?? [])
-        .filter((m: MembershipModel) => isAfterOrEqualDate(m.dateOfExit, getTodayStr()))
+    // One membership per person: the one in force today (a category change entered in advance
+    // leaves two current ones; the future category must not reach Regasoft early, spec 1.133 C2).
+    mainPicks: computed(() =>
+      pickSrvMemberships(state.mainMembershipsResource.value() ?? [], getTodayStr(DateFormat.StoreDate))
     ),
-    parentMemberships: computed(() =>
-      (state.parentMembershipsResource.value() ?? [])
-        .filter((m: MembershipModel) => isAfterOrEqualDate(m.dateOfExit, getTodayStr()))
+    parentPicks: computed(() =>
+      pickSrvMemberships(state.parentMembershipsResource.value() ?? [], getTodayStr(DateFormat.StoreDate))
     ),
+  })),
+
+  withComputed(state => ({
+    // The current (not ended) members
+    mainMemberships: computed(() => state.mainPicks().filter(p => !p.ended).map(p => p.membership)),
+    parentMemberships: computed(() => state.parentPicks().filter(p => !p.ended).map(p => p.membership)),
     isLoading: computed(() =>
       state.mainMembershipsResource.isLoading() || state.parentMembershipsResource.isLoading()
     ),
@@ -535,7 +540,7 @@ export const MembershipSrvStore = signalStore(
     },
 
     async editMember(mKey: string): Promise<void> {
-      const membership = store.mainMemberships().find(m => m.okey === mKey);
+      const membership = (store.mainMembershipsResource.value() ?? []).find(m => m.okey === mKey);
       const mcat = store.mcat();
       if (!membership || !mcat) return;
       const modal = await store.modalController.create({
@@ -561,7 +566,7 @@ export const MembershipSrvStore = signalStore(
     },
 
     async editParentMember(pKey: string): Promise<void> {
-      const membership = store.parentMemberships().find(m => m.okey === pKey);
+      const membership = (store.parentMembershipsResource.value() ?? []).find(m => m.okey === pKey);
       const mcat = store.mcat();
       if (!membership || !mcat) return;
       const modal = await store.modalController.create({

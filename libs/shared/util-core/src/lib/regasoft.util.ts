@@ -65,10 +65,22 @@ export function countryIdOf(code: string): number | null {
 }
 
 /**
+ * `passiveSince` as the status rules read it: `set` = a full date not after `today`; `future` = a
+ * full date after `today` (not passive yet); `missing` = empty, partial (year only, no year) or the
+ * no-exit sentinel — Regasoft takes only full dates, so a partial one could never be written.
+ */
+function passiveSinceOf(passiveSince: string, today: string): { state: 'set'; date: string } | { state: 'future' | 'missing' } {
+  if (passiveSince === END_FUTURE_DATE_STR || classifyStoreDate(passiveSince) !== 'full') return { state: 'missing' };
+  return passiveSince <= today ? { state: 'set', date: passiveSince } : { state: 'future' };
+}
+
+/**
  * The Regasoft status dates a member should have (StoreDates, '' = empty). Death wins over
  * exit, exit over passive. An exit counts only as a full date that is not in the future
  * (an announced exit must not drop the member out of Regasoft early) and not the no-exit
- * sentinel. A passive member (category 'P') is inactive since `passiveSince`, else `today` (spec Q4).
+ * sentinel. A passive member (category 'P') is inactive since `passiveSince` when that is a full
+ * date not after `today`; a future one means «not passive yet» (Regasoft would show Passive at
+ * once); a partial or missing one falls back to `today` (spec Q4).
  */
 export function expectedSrvStatus(s: {
   dateOfDeath: string;
@@ -82,8 +94,62 @@ export function expectedSrvStatus(s: {
   if (s.dateOfExit !== END_FUTURE_DATE_STR && classifyStoreDate(s.dateOfExit) === 'full' && s.dateOfExit <= s.today) {
     return { ...none, leavingDate: s.dateOfExit };
   }
-  if (s.category === 'P') return { ...none, inactiveDate: s.passiveSince || s.today };
+  if (s.category === 'P') {
+    const since = passiveSinceOf(s.passiveSince, s.today);
+    if (since.state === 'future') return none;
+    return { ...none, inactiveDate: since.state === 'set' ? since.date : s.today };
+  }
   return none;
+}
+
+/** The fields of a membership that decide which one the SRV index takes for a person. */
+export interface SrvMembershipLike {
+  memberKey: string;
+  dateOfEntry: string;
+  dateOfExit: string;
+  /** false on a membership a category change has replaced (the chain goes on with a newer one) */
+  relIsLast?: boolean;
+}
+
+export interface SrvMembershipPick<T extends SrvMembershipLike> {
+  membership: T;
+  /** the picked membership ended before `today` (no membership of the person is in force) */
+  ended: boolean;
+}
+
+const entryOf = (m: SrvMembershipLike): string => (m.dateOfEntry ?? '').substring(0, 8);
+const exitOf = (m: SrvMembershipLike): string => (m.dateOfExit || END_FUTURE_DATE_STR).substring(0, 8);
+
+/**
+ * One membership per person (`memberKey`) for the SRV index, in the order of first appearance: the
+ * one in force today (`dateOfEntry <= today <= dateOfExit`, StoreDate string compare, an empty exit
+ * is open). A category change entered in advance leaves two memberships; only the one in force
+ * counts, so the future category never reaches Regasoft early. When none is in force, the latest
+ * end of a category chain (`relIsLast`) is taken: a membership that starts later, or the last one
+ * that ended (`ended: true`, so the exit and death dates can still reach Regasoft).
+ */
+export function pickSrvMemberships<T extends SrvMembershipLike>(memberships: T[], today: string): SrvMembershipPick<T>[] {
+  const byPerson = new Map<string, T[]>();
+  for (const m of memberships) {
+    const list = byPerson.get(m.memberKey);
+    if (list) list.push(m);
+    else byPerson.set(m.memberKey, [m]);
+  }
+  const latest = (list: T[]): T =>
+    list.reduce((a, b) => (entryOf(b) > entryOf(a) || (entryOf(b) === entryOf(a) && exitOf(b) > exitOf(a)) ? b : a));
+
+  const picks: SrvMembershipPick<T>[] = [];
+  for (const list of byPerson.values()) {
+    const inForce = list.filter(m => entryOf(m) <= today && today <= exitOf(m));
+    if (inForce.length > 0) {
+      picks.push({ membership: latest(inForce), ended: false });
+      continue;
+    }
+    const chainEnds = list.filter(m => m.relIsLast !== false);
+    const membership = latest(chainEnds.length > 0 ? chainEnds : list);
+    picks.push({ membership, ended: exitOf(membership) < today });
+  }
+  return picks;
 }
 
 /**
@@ -167,9 +233,9 @@ export function getMismatches(item: SrvIndex, today: string): SrvMismatch[] {
   ];
   for (const [field, r] of status) {
     if (expected[field] === r) continue;
-    // Passive without a passiveSince: the expected date is «today», which drifts daily. Any full
-    // Regasoft inactiveDate counts as in sync, otherwise the member would stay red and be rewritten every day.
-    if (field === 'inactiveDate' && expected.inactiveDate && v(item.mCategory) === 'P' && !v(item.mPassiveSince) && classifyStoreDate(r) === 'full') continue;
+    // Passive without a usable passiveSince (empty, partial): the expected date is «today», which drifts
+    // daily. Any full Regasoft inactiveDate counts as in sync, otherwise the member would stay red and be rewritten every day.
+    if (field === 'inactiveDate' && expected.inactiveDate && v(item.mCategory) === 'P' && passiveSinceOf(v(item.mPassiveSince), today).state === 'missing' && classifyStoreDate(r) === 'full') continue;
     // A death date is never cleared from an empty club field: ask the club to complete its data.
     const kind = field === 'dateOfDeath' && !expected[field] ? 'bk' : 'fix';
     result.push({ field, okrValue: expected[field], rValue: r, kind });
