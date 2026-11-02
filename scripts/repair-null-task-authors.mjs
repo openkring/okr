@@ -72,7 +72,7 @@ for (const doc of snap.docs) {
   if (isOpen(task)) stats.open++;
   const tenant = (task.tenants ?? []).join(',') || '(none)';
   byTenant[tenant] = (byTenant[tenant] ?? 0) + 1;
-  if (samples.length < 10) {
+  if (samples.length < 50) {
     samples.push({ id: doc.id, tenant, name: task.name, assignee: task.assignee?.key ?? '', open: isOpen(task) });
   }
   const patch = { author: SYSTEM_AUTHOR, index: buildTaskIndex({ ...task, author: SYSTEM_AUTHOR }) };
