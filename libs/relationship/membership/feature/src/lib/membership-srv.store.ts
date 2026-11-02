@@ -11,7 +11,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AddressCollection, AddressModel, MembershipCollection, MembershipModel, OwnershipModel, PersonModel, SrvChanges, SrvContact, SrvIndex, SrvMemberLicenseDetail, SrvPreview, SrvUpdateResult } from '@okr/shared-models';
-import { classifyPhone, composeSekretariatMail, countryIdOf, DateFormat, debugListLoaded, expectedSrvStatus, fill, getBirthYear, getFullName, getMismatches, getSekretariatCases, getSrvChanges, getSystemQuery, getTodayStr, getYear, isMembership, isPerson, mailtoUrl, pickSrvMemberships, regasoftDateToStoreDate, srvCreateBlocker } from '@okr/shared-util-core';
+import { classifyPhone, composeSekretariatMail, countryIdOf, DateFormat, debugListLoaded, expectedSrvStatus, fill, getBirthYear, getFullName, getMismatches, getSekretariatCases, getSrvChanges, getSystemQuery, getTodayStr, getYear, isMembership, isPerson, mailtoUrl, pickSrvMemberships, regasoftDateToStoreDate, srvCreateBlocker, SrvMembershipPick } from '@okr/shared-util-core';
 
 import { copyToClipboardDeferred, showToast } from '@okr/shared-util-angular';
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
@@ -316,12 +316,13 @@ export const MembershipSrvStore = signalStore(
     async buildIndex(): Promise<void> {
       if (!isFirestoreInitializedCheck()) return;
 
-      const mainMemberships   = store.mainMemberships();
-      const parentMemberships = store.parentMemberships();
+      // One pick per person: the membership in force today, else the last one (possibly ended).
+      const mainPicks   = store.mainPicks();
+      const parentPicks = store.parentPicks();
 
       // ── Lookup maps ──────────────────────────────────────────────────────
-      const parentByMemberKey = new Map<string, MembershipModel>();
-      for (const p of parentMemberships) parentByMemberKey.set(p.memberKey, p);
+      const parentByMemberKey = new Map<string, SrvMembershipPick<MembershipModel>>();
+      for (const pick of parentPicks) parentByMemberKey.set(pick.membership.memberKey, pick);
 
       // ── Fetch Regasoft contacts ──────────────────────────────────────────
       const functions = getFunctions(getApp(), 'europe-west6');
@@ -390,9 +391,11 @@ export const MembershipSrvStore = signalStore(
       }
 
       // ── Process main memberships ─────────────────────────────────────────
-      for (const m of mainMemberships) {
-        const p = parentByMemberKey.get(m.memberKey);
-        if (p?.okey) processedParentKeys.add(p.okey);
+      for (const { membership: m, ended } of mainPicks) {
+        const parentPick = parentByMemberKey.get(m.memberKey);
+        // A current member takes only a current parent membership; an ended one also an ended
+        // parent membership, which still holds the SRV number that links the Regasoft record.
+        const p = parentPick && (!parentPick.ended || ended) ? parentPick.membership : undefined;
 
         let r: SrvContact | undefined;
         if (p?.memberId) r = regasoftByServiceId.get(p.memberId);
@@ -400,6 +403,10 @@ export const MembershipSrvStore = signalStore(
           const nameKey = getFullName(m.memberName1, m.memberName2).trim().toLowerCase();
           r = regasoftByName.get(nameKey);
         }
+        // An ended membership stays in the index only while Regasoft still lists the member, so its
+        // exit and death dates reach Regasoft (spec 1.133 I1); without a Regasoft record it is gone.
+        if (ended && !r) continue;
+        if (parentPick?.membership.okey) processedParentKeys.add(parentPick.membership.okey);
         if (r) processedRegasoftIds.add(r.srvId);
 
         const person = store.appStore.getPerson(m.memberKey);
@@ -412,7 +419,7 @@ export const MembershipSrvStore = signalStore(
       }
 
       // ── Orphan parent memberships (no matching main) ─────────────────────
-      for (const p of parentMemberships) {
+      for (const { membership: p, ended } of parentPicks) {
         if (p.okey && processedParentKeys.has(p.okey)) continue;
 
         let r: SrvContact | undefined;
@@ -421,6 +428,7 @@ export const MembershipSrvStore = signalStore(
           const nameKey = getFullName(p.memberName1, p.memberName2).trim().toLowerCase();
           r = regasoftByName.get(nameKey);
         }
+        if (ended && !r) continue;
         if (r) processedRegasoftIds.add(r.srvId);
 
         index.push(buildIndexEntry(undefined, p, r, undefined));

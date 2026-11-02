@@ -439,6 +439,16 @@ describe('expectedSrvStatus', () => {
   });
 });
 
+describe('an ended membership still in Regasoft (I1)', () => {
+  it('the exit date reaches Regasoft after the exit day', () => {
+    expect(getSrvChanges(srvIndex({ mDateOfExit: '20261031', rLeavingDate: '' }), TODAY)).toEqual({ leavingDate: '20261031' });
+  });
+
+  it('a deceased member with an ended membership gets the death date', () => {
+    expect(getSrvChanges(srvIndex({ mDateOfExit: '20261015', mDateOfDeath: '20261015', rDateOfDeath: '' }), TODAY)).toEqual({ dateOfDeath: '20261015' });
+  });
+});
+
 describe('passiveSince in getMismatches / getSrvChanges (C2, I5)', () => {
   const changes = (o: Partial<SrvIndex>) => getSrvChanges(srvIndex(o), TODAY);
 
@@ -487,6 +497,24 @@ describe('pickSrvMemberships', () => {
   it('none in force: a membership that starts later is taken, not ended', () => {
     const a = m('p1', '20270101', '99991231');
     expect(pickSrvMemberships([a], TODAY)).toEqual([{ membership: a, ended: false }]);
+  });
+
+  it('all ended: the end of the category chain is taken and flagged ended (I1)', () => {
+    const junior = m('p1', '20100101', '20151231', { relIsLast: false });
+    const active = m('p1', '20160101', '20261031');
+    expect(pickSrvMemberships([active, junior], TODAY)).toEqual([{ membership: active, ended: true }]);
+  });
+
+  it('all ended: the chain end wins over a replaced membership with a later exit (inconsistent data)', () => {
+    const replaced = m('p1', '20160101', '20261031', { relIsLast: false });
+    const last = m('p1', '20100101', '20200101');
+    expect(pickSrvMemberships([replaced, last], TODAY)).toEqual([{ membership: last, ended: true }]);
+  });
+
+  it('a re-joined member: the current membership wins over the ended one', () => {
+    const left = m('p1', '20100101', '20151231');
+    const back = m('p1', '20240101', '99991231');
+    expect(pickSrvMemberships([left, back], TODAY)).toEqual([{ membership: back, ended: false }]);
   });
 
   it('one pick per person, in the order of first appearance', () => {
