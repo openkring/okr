@@ -119,6 +119,7 @@ const NEW_CASE = (): DerivedCase => ({ when: { match: 'all', conditions: [{ fiel
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="thenI18n()" [value]="c.value" (valueChange)="onCaseValueChange(row.index, c.index, $event)"
                     [maxLength]="nameLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="errorsAt(row.index, 'cases.' + c.index + '.value')" />
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -131,12 +132,14 @@ const NEW_CASE = (): DerivedCase => ({ when: { match: 'all', conditions: [{ fiel
               @if (!isReadOnly()) {
                 <ion-button fill="clear" size="small" [disabled]="!hasCandidates()" (click)="addCase(row.index)">{{ i18n().derived_add_case() }}</ion-button>
               }
+              <okr-error-note [errors]="errorsAt(row.index, 'cases')" />
             </ion-col>
           </ion-row>
           <ion-row>
             <ion-col size="12" size-md="6">
               <okr-text-input [i18n]="otherwiseI18n()" [value]="row.otherwise" (valueChange)="onOtherwiseChange(row.index, $event)"
                 [maxLength]="nameLength" [readOnly]="isReadOnly()" />
+              <okr-error-note [errors]="errorsAt(row.index, 'otherwise')" />
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -148,7 +151,7 @@ const NEW_CASE = (): DerivedCase => ({ when: { match: 'all', conditions: [{ fiel
   `,
 })
 export class DerivedValuesInput {
-  /** kept in step with the cap the Vest suite enforces on the key; also the cap of the stored values */
+  /** kept in step with the cap the Vest suite enforces on the key, the «dann» and the «sonst» values */
   protected readonly nameLength = NAME_LENGTH;
   protected readonly propertyTypes = PROPERTY_TYPES;
 

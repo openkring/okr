@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { NAME_LENGTH } from '@okr/shared-constants';
 import { DerivedValue, Field, VisibilityRule } from '@okr/shared-models';
 
 import { derivedValuesValidations, visibilityRuleValidations } from './form-rules.validations';
@@ -123,5 +124,35 @@ describe('derivedValuesValidations', () => {
   it('validates the rule of every case', () => {
     const bad = derived({ cases: [{ when: rule({ fieldId: '', op: 'isFilled' }), value: 'x' }] });
     expect(run([bad]).hasErrors('derivedValues.0.cases.0.when.conditions.0.fieldId')).toBe(true);
+  });
+
+  it('requires at least one case', () => {
+    expect(run([derived({ cases: [] })]).getErrors('derivedValues.0.cases')).toEqual(['@forms/feature.derived.no_cases']);
+    expect(run([derived()]).hasErrors('derivedValues.0.cases')).toBe(false);
+  });
+
+  it('rejects a condition on a field that no longer exists or is display-only', () => {
+    const gone = derived({ cases: [{ when: rule({ fieldId: 'deleted', op: 'isFilled' }), value: 'x' }] });
+    expect(run([gone]).getErrors('derivedValues.0.cases.0.when.conditions.0.fieldId')).toEqual(['@forms/feature.derived.unknown_field']);
+    const withDivider = [...fields, { id: 'div', key: '', type: 'divider', label: '', required: false, width: 'full', order: 1 } as Field];
+    const onDivider = derived({ cases: [{ when: rule({ fieldId: 'div', op: 'isFilled' }), value: 'x' }] });
+    expect(derivedValuesValidations({ derivedValues: [onDivider], fields: withDivider })
+      .getErrors('derivedValues.0.cases.0.when.conditions.0.fieldId')).toEqual(['@forms/feature.derived.unknown_field']);
+  });
+
+  it('rejects an operator the controller no longer offers (retyped field)', () => {
+    const retyped = [{ ...fields[0], type: 'text' } as Field];
+    const r = derivedValuesValidations({ derivedValues: [derived()], fields: retyped });
+    expect(r.getErrors('derivedValues.0.cases.0.when.conditions.0.op')).toEqual(['@forms/feature.derived.op_not_offered']);
+    expect(run([derived()]).hasErrors('derivedValues.0.cases.0.when.conditions.0.op')).toBe(false);
+  });
+
+  it('requires a «dann» value capped at NAME_LENGTH and caps «sonst»', () => {
+    const blank = derived({ cases: [{ when: rule({ fieldId: 'dob', op: 'ageLt', value: 20 }), value: '' }] });
+    expect(run([blank]).hasErrors('derivedValues.0.cases.0.value')).toBe(true);
+    const long = derived({ cases: [{ when: rule({ fieldId: 'dob', op: 'ageLt', value: 20 }), value: 'x'.repeat(NAME_LENGTH + 1) }] });
+    expect(run([long]).hasErrors('derivedValues.0.cases.0.value')).toBe(true);
+    expect(run([derived({ otherwise: 'x'.repeat(NAME_LENGTH + 1) })]).hasErrors('derivedValues.0.otherwise')).toBe(true);
+    expect(run([derived({ otherwise: undefined })]).isValid()).toBe(true);
   });
 });

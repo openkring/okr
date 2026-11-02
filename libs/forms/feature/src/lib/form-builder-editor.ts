@@ -12,8 +12,9 @@ import { Field, FormDefinitionModel, FormMapping } from '@okr/shared-models';
 
 import { FormDefinitionService } from '@okr/forms-data-access';
 import {
-  conditionalBlockMembers, conditionOpLabels, describeRule, fieldsReferencing, findRuleIssues, FORM_I18N_KEYS, FormI18n,
-  getFormMapping, previewDerivedValues, removeReferencesTo, ruleConnectors, RuleIssue,
+  conditionalBlockMembers, conditionOpLabels, DerivedRuleIssue, derivedValuesReferencing, describeRule, fieldsReferencing,
+  findDerivedRuleIssues, findRuleIssues, FORM_I18N_KEYS, FormI18n, getFormMapping, previewDerivedValues, removeDerivedReferencesTo,
+  removeReferencesTo, ruleConnectors, RuleIssue,
 } from '@okr/forms-util';
 import { I18nService } from '@okr/shared-i18n';
 import { FieldConfigModal, FieldTypeDef, FieldTypeLibrary, FormRenderer } from '@okr/forms-ui';
@@ -61,6 +62,7 @@ function newField(def: FieldTypeDef, order: number): Field {
     .rule-line     { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
     .rule-line ion-chip { margin: 2px 0; height: 22px; font-size: 11px; }
     .rule-text     { white-space: normal; }
+    .derived-issues { padding: 4px 0; }
     .cdk-drag-preview    { opacity: 0.8; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
     .cdk-drag-placeholder { opacity: 0.3; }
     .cdk-drop-list-dragging .field-row:not(.cdk-drag-placeholder) { transition: transform 250ms cubic-bezier(0,0,0.2,1); }
@@ -92,6 +94,17 @@ function newField(def: FieldTypeDef, order: number): Field {
           </ion-toolbar>
 
           @if (viewMode() === 'editor') {
+            <!-- derived values live in the form settings; their broken conditions are flagged here, where fields change -->
+            @if (derivedIssues().length > 0) {
+              <div class="rule-line derived-issues">
+                @for (issue of derivedIssues(); track issue.index + issue.reason) {
+                  <ion-chip color="warning">
+                    <ion-icon src="{{ 'warning' | svgIcon }}" />
+                    <ion-label>{{ i18n.derived_title() }} «{{ issue.key }}»: {{ issueLabel(issue.reason) }}</ion-label>
+                  </ion-chip>
+                }
+              </div>
+            }
             <div
               class="canvas-drop"
               cdkDropList
@@ -255,6 +268,9 @@ export class FormBuilderEditor {
     return byField;
   });
 
+  /** Derived-value cases whose controller was deleted or retyped, or whose compared answer no longer exists. */
+  protected readonly derivedIssues = computed(() => findDerivedRuleIssues(this.formData().derivedValues ?? [], this.fields()));
+
   /** Fields inside a divider block with a rule — indented on the canvas. */
   protected readonly blockMembers = computed(() => conditionalBlockMembers(this.fields()));
 
@@ -275,24 +291,33 @@ export class FormBuilderEditor {
   }
 
   /**
-   * Deletes a field. When other fields' rules reference it, asks first (naming them) and then drops
-   * those conditions — a rule left without conditions is removed.
+   * Deletes a field. When other fields' rules or derived values' cases reference it, asks first (naming them)
+   * and then drops those conditions — a field rule left without conditions is removed, a derived case left
+   * without conditions is dropped (an empty rule would hold for everyone). Saving writes the cleaned derived values.
    */
   protected async removeField(id: string): Promise<void> {
     const dependents = fieldsReferencing(this.fields(), id);
-    if (dependents.length > 0) {
-      const names = dependents.map(f => f.label || f.key).join(', ');
+    const derivedDependents = derivedValuesReferencing(this.formData().derivedValues ?? [], id);
+    if (dependents.length > 0 || derivedDependents.length > 0) {
+      const names = [
+        ...dependents.map(f => f.label || f.key),
+        ...derivedDependents.map(d => `${this.i18n.derived_title()} «${d.key}»`),
+      ].join(', ');
       const ok = await confirm(this.alertController, fill(this.i18n.field_remove_confirm(), { fields: names }),
         this.i18n.field_remove(), this.i18n.cancel(), true);
       if (!ok) return;
     }
     this.fields.update(fs => removeReferencesTo(fs.filter(f => f.id !== id), id).map((f, i) => ({ ...f, order: i })));
+    if (derivedDependents.length > 0) {
+      this.formData.update(fd => ({ ...fd, derivedValues: removeDerivedReferencesTo(fd.derivedValues ?? [], id) }));
+    }
   }
 
-  protected issueLabel(reason: RuleIssue['reason']): string {
+  protected issueLabel(reason: RuleIssue['reason'] | DerivedRuleIssue['reason']): string {
     switch (reason) {
       case 'later': return this.i18n.rule_issue_later();
       case 'missing': return this.i18n.rule_issue_missing();
+      case 'staleOp': return this.i18n.rule_issue_stale_op();
       default: return this.i18n.rule_issue_stale();
     }
   }
@@ -337,9 +362,10 @@ export class FormBuilderEditor {
     await dismissOverlay(this.modalController, null, 'confirm');
   }
 
-  /** Discard unsaved changes — revert to the originally loaded field set. */
+  /** Discard unsaved changes — revert to the originally loaded definition (a field deletion also cleaned its derived values). */
   public cancel(): void {
     const clone = safeStructuredClone(this.form());
+    this.formData.set(clone ?? this.form());
     const sortedFields = [...(clone?.fields ?? [])].sort((a, b) => a.order - b.order);
     this.fields.set(sortedFields);
     this.originalFieldsJson.set(JSON.stringify(sortedFields));

@@ -5,6 +5,7 @@ import { stringValidations } from '@okr/shared-util-core';
 import { NAME_LENGTH } from '@okr/shared-constants';
 
 import { FIELD_KEY_PATTERN, isInputField } from './field-kind';
+import { conditionOpsFor } from './form-rules.util';
 
 /** Operators that compare against a single value. */
 const SINGLE_VALUE_OPS = ['equals', 'notEquals', 'lt', 'lte', 'gt', 'gte'];
@@ -92,6 +93,25 @@ export const visibilityRuleValidations = staticSuite((rule: VisibilityRule) => {
   ruleTests('', rule);
 });
 
+/**
+ * A derived condition may reference any input field — but one that still exists, and with an operator
+ * that field still offers (a retyped controller leaves e.g. `ageLt` on a text field). A dangling
+ * condition would count as true on the server.
+ */
+function controllerTests(prefix: string, cond: FieldCondition, inputFields: Field[]): void {
+  const controller = cond?.fieldId ? inputFields.find(f => f.id === cond.fieldId) : undefined;
+  omitWhen(!cond?.fieldId, () => {
+    test(`${prefix}.fieldId`, '@forms/feature.derived.unknown_field', () => {
+      enforce(controller).isTruthy();
+    });
+  });
+  omitWhen(!controller || !cond?.op, () => {
+    test(`${prefix}.op`, '@forms/feature.derived.op_not_offered', () => {
+      enforce(!!controller && conditionOpsFor(controller).includes(cond.op)).isTruthy();
+    });
+  });
+}
+
 export interface DerivedValuesModel {
   derivedValues: DerivedValue[];
   fields: Field[];
@@ -99,7 +119,9 @@ export interface DerivedValuesModel {
 
 /**
  * Validates the «Berechnete Werte» card: per derived value a camelCase key that is neither the
- * key of an input field nor used twice, a type when stored as a property, and valid case rules.
+ * key of an input field nor used twice, a type when stored as a property, at least one case, valid
+ * case rules whose fields still exist and still offer the operator, a «dann» value per case and a
+ * capped «sonst».
  */
 export const derivedValuesValidations = staticSuite((model: DerivedValuesModel) => {
   // Always runs, so an empty list still yields a result that `isValid()` accepts (Vest reports a suite without tests as invalid).
@@ -107,7 +129,8 @@ export const derivedValuesValidations = staticSuite((model: DerivedValuesModel) 
     enforce(model.derivedValues === undefined || Array.isArray(model.derivedValues)).isTruthy();
   });
   const derived = Array.isArray(model.derivedValues) ? model.derivedValues : [];
-  const inputKeys = new Set((model.fields ?? []).filter(isInputField).map(f => f.key).filter(k => !!k));
+  const inputFields = (model.fields ?? []).filter(isInputField);
+  const inputKeys = new Set(inputFields.map(f => f.key).filter(k => !!k));
 
   derived.forEach((d, i) => {
     const at = `derivedValues.${i}`;
@@ -128,6 +151,15 @@ export const derivedValuesValidations = staticSuite((model: DerivedValuesModel) 
         enforce(d.type).isString().isNotBlank();
       });
     });
-    (d.cases ?? []).forEach((c, j) => ruleTests(`${at}.cases.${j}.when`, c.when));
+    test(`${at}.cases`, '@forms/feature.derived.no_cases', () => {
+      enforce(Array.isArray(d.cases) && d.cases.length > 0).isTruthy();
+    });
+    (d.cases ?? []).forEach((c, j) => {
+      const caseAt = `${at}.cases.${j}`;
+      ruleTests(`${caseAt}.when`, c.when);
+      (c.when?.conditions ?? []).forEach((cond, k) => controllerTests(`${caseAt}.when.conditions.${k}`, cond, inputFields));
+      stringValidations(`${caseAt}.value`, c.value ?? '', NAME_LENGTH, 0, true);
+    });
+    stringValidations(`${at}.otherwise`, d.otherwise ?? '', NAME_LENGTH);
   });
 });

@@ -153,6 +153,72 @@ export function fieldsReferencing(fields: Field[], fieldId: string): Field[] {
     .sort((a, b) => a.order - b.order);
 }
 
+/** The derived values with a case whose rule references `fieldId` — the ones that lose a condition when it is deleted. */
+export function derivedValuesReferencing(derived: DerivedValue[] | undefined, fieldId: string): DerivedValue[] {
+  return (Array.isArray(derived) ? derived : [])
+    .filter(d => (d?.cases ?? []).some(c => (c?.when?.conditions ?? []).some(cond => cond?.fieldId === fieldId)));
+}
+
+/**
+ * Drops every condition on `removedId` from the derived values' cases (call it when that field is deleted).
+ * A case left without conditions is dropped: an empty rule holds for everyone, so keeping it would turn
+ * «Alter unter 20 → youth» into «always youth». Untouched cases and values keep their identity; the input is not changed.
+ */
+export function removeDerivedReferencesTo(derived: DerivedValue[] | undefined, removedId: string): DerivedValue[] {
+  return (Array.isArray(derived) ? derived : []).map(d => {
+    const cases = Array.isArray(d?.cases) ? d.cases : [];
+    if (!cases.some(c => (c?.when?.conditions ?? []).some(cond => cond?.fieldId === removedId))) return d;
+    const kept: DerivedValue['cases'] = [];
+    for (const c of cases) {
+      const conditions = c?.when?.conditions ?? [];
+      if (!conditions.some(cond => cond?.fieldId === removedId)) {
+        kept.push(c);
+        continue;
+      }
+      const left = conditions.filter(cond => cond?.fieldId !== removedId);
+      if (left.length > 0) kept.push({ ...c, when: { ...c.when, conditions: left } });
+    }
+    return { ...d, cases: kept };
+  });
+}
+
+/** A problem in a derived value's cases; `index` is the derived value's position, `key` its key. */
+export type DerivedRuleIssue = { index: number; key: string; reason: 'missing' | 'staleOp' | 'staleValue' };
+
+/**
+ * What is wrong with the cases of the derived values. missing: the controller is gone or display-only;
+ * staleOp: the controller no longer offers the operator (its type changed); staleValue: a compared value is no
+ * longer among the controller's options. Incomplete rows (no field or operator chosen yet) are the suite's job.
+ * One entry per derived value and reason.
+ */
+export function findDerivedRuleIssues(derived: DerivedValue[] | undefined, fields: Field[]): DerivedRuleIssue[] {
+  const issues: DerivedRuleIssue[] = [];
+  (Array.isArray(derived) ? derived : []).forEach((d, index) => {
+    const add = (reason: DerivedRuleIssue['reason']) => {
+      if (!issues.some(i => i.index === index && i.reason === reason)) issues.push({ index, key: d?.key ?? '', reason });
+    };
+    for (const c of d?.cases ?? []) {
+      for (const cond of c?.when?.conditions ?? []) {
+        if (!cond?.fieldId) continue;
+        const controller = fields.find(f => f.id === cond.fieldId);
+        if (!controller || isDisplayField(controller.type)) {
+          add('missing');
+          continue;
+        }
+        if (cond.op && !conditionOpsFor(controller).includes(cond.op)) {
+          add('staleOp');
+          continue;
+        }
+        const options = optionsOf(controller);
+        if (options && OPTION_VALUE_OPS.includes(cond.op) && valuesOf(cond).some(v => !options.some(o => o.value === v))) {
+          add('staleValue');
+        }
+      }
+    }
+  });
+  return issues;
+}
+
 /**
  * The ids of the fields inside a conditional block: every field after a divider with a rule, up to
  * the next divider (spec §5 block rule). The divider itself is not included. The builder indents them.

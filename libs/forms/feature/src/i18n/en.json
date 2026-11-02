@@ -73,7 +73,8 @@
     "conditional": "conditional",
     "issue_later": "Condition points to a later question",
     "issue_missing": "Condition points to a deleted question",
-    "issue_stale": "Condition uses an answer that no longer exists"
+    "issue_stale": "Condition uses an answer that no longer exists",
+    "issue_stale_op": "Condition no longer fits the kind of question"
   },
   "derived": {
     "key_is_field_key": "This name already belongs to a question. Choose a different one.",
@@ -91,7 +92,10 @@
     "add_case": "+ Case",
     "remove_case": "Remove case",
     "set_by_mapping": "The chosen collection already sets this value. What you calculate here is therefore not saved.",
-    "no_fields": "The form has no questions yet from which a value could be calculated."
+    "no_fields": "The form has no questions yet from which a value could be calculated.",
+    "unknown_field": "This question no longer exists. Choose another one.",
+    "op_not_offered": "This comparison no longer fits this question. Choose another one.",
+    "no_cases": "Add at least one case."
   },
   "canvas_empty": "Drag fields here from the library.",
   "library": "Field library",

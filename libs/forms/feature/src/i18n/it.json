@@ -73,7 +73,8 @@
     "conditional": "condizionale",
     "issue_later": "La condizione rimanda a una domanda successiva",
     "issue_missing": "La condizione rimanda a una domanda eliminata",
-    "issue_stale": "La condizione usa una risposta che non esiste più"
+    "issue_stale": "La condizione usa una risposta che non esiste più",
+    "issue_stale_op": "La condizione non è più adatta al tipo di domanda"
   },
   "derived": {
     "key_is_field_key": "Questo nome appartiene già a una domanda. Scegline un altro.",
@@ -91,7 +92,10 @@
     "add_case": "+ Caso",
     "remove_case": "Rimuovi caso",
     "set_by_mapping": "La raccolta scelta fissa già questo valore. Quello che calcoli qui quindi non viene salvato.",
-    "no_fields": "Il modulo non ha ancora domande da cui calcolare un valore."
+    "no_fields": "Il modulo non ha ancora domande da cui calcolare un valore.",
+    "unknown_field": "Questa domanda non esiste più. Scegline un'altra.",
+    "op_not_offered": "Questo confronto non è più adatto a questa domanda. Scegline un altro.",
+    "no_cases": "Aggiungi almeno un caso."
   },
   "canvas_empty": "Trascina qui i campi dalla libreria.",
   "library": "Libreria di campi",

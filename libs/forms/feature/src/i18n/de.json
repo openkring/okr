@@ -73,7 +73,8 @@
     "conditional": "bedingt",
     "issue_later": "Bedingung zeigt auf eine spätere Frage",
     "issue_missing": "Bedingung zeigt auf eine gelöschte Frage",
-    "issue_stale": "Bedingung nutzt eine Antwort, die es nicht mehr gibt"
+    "issue_stale": "Bedingung nutzt eine Antwort, die es nicht mehr gibt",
+    "issue_stale_op": "Bedingung passt nicht mehr zur Art der Frage"
   },
   "derived": {
     "key_is_field_key": "Dieser Name gehört schon zu einer Frage. Wähle einen anderen.",
@@ -91,7 +92,10 @@
     "add_case": "+ Fall",
     "remove_case": "Fall entfernen",
     "set_by_mapping": "Diesen Wert legt die gewählte Sammlung schon fest. Was du hier berechnest, wird deshalb nicht gespeichert.",
-    "no_fields": "Das Formular hat noch keine Fragen, aus denen sich ein Wert berechnen lässt."
+    "no_fields": "Das Formular hat noch keine Fragen, aus denen sich ein Wert berechnen lässt.",
+    "unknown_field": "Diese Frage gibt es nicht mehr. Wähle eine andere.",
+    "op_not_offered": "Dieser Vergleich passt nicht mehr zu dieser Frage. Wähle einen anderen.",
+    "no_cases": "Lege mindestens einen Fall an."
   },
   "canvas_empty": "Ziehe Felder aus der Bibliothek hierher.",
   "library": "Feldbibliothek",

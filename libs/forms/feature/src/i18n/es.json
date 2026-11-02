@@ -73,7 +73,8 @@
     "conditional": "condicional",
     "issue_later": "La condición apunta a una pregunta posterior",
     "issue_missing": "La condición apunta a una pregunta eliminada",
-    "issue_stale": "La condición usa una respuesta que ya no existe"
+    "issue_stale": "La condición usa una respuesta que ya no existe",
+    "issue_stale_op": "La condición ya no encaja con el tipo de pregunta"
   },
   "derived": {
     "key_is_field_key": "Este nombre ya pertenece a una pregunta. Elige otro.",
@@ -91,7 +92,10 @@
     "add_case": "+ Caso",
     "remove_case": "Quitar caso",
     "set_by_mapping": "La colección elegida ya fija este valor. Por eso lo que calculas aquí no se guarda.",
-    "no_fields": "El formulario todavía no tiene preguntas a partir de las cuales calcular un valor."
+    "no_fields": "El formulario todavía no tiene preguntas a partir de las cuales calcular un valor.",
+    "unknown_field": "Esta pregunta ya no existe. Elige otra.",
+    "op_not_offered": "Esta comparación ya no encaja con esta pregunta. Elige otra.",
+    "no_cases": "Añade al menos un caso."
   },
   "canvas_empty": "Arrastre aquí los campos desde la biblioteca.",
   "library": "Biblioteca de campos",

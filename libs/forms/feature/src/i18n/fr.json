@@ -73,7 +73,8 @@
     "conditional": "conditionnel",
     "issue_later": "La condition renvoie à une question suivante",
     "issue_missing": "La condition renvoie à une question supprimée",
-    "issue_stale": "La condition utilise une réponse qui n'existe plus"
+    "issue_stale": "La condition utilise une réponse qui n'existe plus",
+    "issue_stale_op": "La condition ne correspond plus au type de question"
   },
   "derived": {
     "key_is_field_key": "Ce nom est déjà utilisé par une question. Choisis-en un autre.",
@@ -91,7 +92,10 @@
     "add_case": "+ Cas",
     "remove_case": "Retirer le cas",
     "set_by_mapping": "La collection choisie fixe déjà cette valeur. Ce que tu calcules ici ne sera donc pas enregistré.",
-    "no_fields": "Le formulaire n'a pas encore de questions à partir desquelles calculer une valeur."
+    "no_fields": "Le formulaire n'a pas encore de questions à partir desquelles calculer une valeur.",
+    "unknown_field": "Cette question n'existe plus. Choisis-en une autre.",
+    "op_not_offered": "Cette comparaison ne correspond plus à cette question. Choisis-en une autre.",
+    "no_cases": "Ajoute au moins un cas."
   },
   "canvas_empty": "Faites glisser les champs de la bibliothèque ici.",
   "library": "Bibliothèque de champs",

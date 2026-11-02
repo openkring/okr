@@ -4,7 +4,8 @@ import { CategoryListModel, ConditionOp, DerivedValue, Field, FieldType, FormMap
 
 import {
   conditionalBlockMembers, conditionChoices, conditionOpsFor, conditionValueKind, controllingFieldCandidates, describeRule,
-  derivedKeysSetByMapping, errorsUnder, fieldsReferencing, findRuleIssues, previewDerivedValues, removeReferencesTo,
+  derivedKeysSetByMapping, derivedValuesReferencing, errorsUnder, fieldsReferencing, findDerivedRuleIssues, findRuleIssues,
+  previewDerivedValues, removeDerivedReferencesTo, removeReferencesTo,
 } from './form-rules.util';
 
 function f(id: string, type: FieldType, order: number, extra: Record<string, unknown> = {}): Field {
@@ -345,5 +346,61 @@ describe('previewDerivedValues (spec §6 SCS rule)', () => {
     })];
     expect(previewDerivedValues({ fields: hiddenExp, derivedValues: [applicationAs] }, { dateOfBirth: '19900101', rowingExperience: true }, today))
       .toEqual(['applicationAs = adult']);
+  });
+});
+
+describe('derived values referencing a deleted or retyped field', () => {
+  const cond = (fieldId: string, op: ConditionOp, value?: unknown) => ({ fieldId, op, ...(value !== undefined ? { value } : {}) }) as VisibilityRule['conditions'][number];
+  const applicationAs: DerivedValue = {
+    key: 'applicationAs',
+    cases: [
+      { when: { match: 'all', conditions: [cond('dob', 'ageLt', 20)] }, value: 'youth' },
+      { when: { match: 'any', conditions: [cond('exp', 'isChecked'), cond('dob', 'ageGte', 60)] }, value: 'transfer' },
+    ],
+    otherwise: 'adult',
+  };
+  const other: DerivedValue = { key: 'group', cases: [{ when: { match: 'all', conditions: [cond('exp', 'isChecked')] }, value: 'a' }] };
+
+  it('derivedValuesReferencing finds the derived values with a case on the field', () => {
+    expect(derivedValuesReferencing([applicationAs, other], 'dob').map(d => d.key)).toEqual(['applicationAs']);
+    expect(derivedValuesReferencing([applicationAs, other], 'exp').map(d => d.key)).toEqual(['applicationAs', 'group']);
+    expect(derivedValuesReferencing(undefined, 'dob')).toEqual([]);
+  });
+
+  it('removeDerivedReferencesTo drops a case whose conditions all go, never leaving an empty rule', () => {
+    const [result, untouched] = removeDerivedReferencesTo([applicationAs, other], 'dob');
+    expect(result.cases).toEqual([{ when: { match: 'any', conditions: [cond('exp', 'isChecked')] }, value: 'transfer' }]);
+    expect(result.otherwise).toBe('adult');
+    expect(untouched).toBe(other);
+    expect(result.cases.every(c => c.when.conditions.length > 0)).toBe(true);
+  });
+
+  it('removeDerivedReferencesTo can leave a derived value without cases, and does not touch the input', () => {
+    const before = JSON.stringify(other);
+    expect(removeDerivedReferencesTo([other], 'exp')[0].cases).toEqual([]);
+    expect(JSON.stringify(other)).toBe(before);
+    expect(removeDerivedReferencesTo(undefined, 'exp')).toEqual([]);
+  });
+
+  it('findDerivedRuleIssues flags a missing controller, a retyped one and a stale option value', () => {
+    const fields: Field[] = [
+      f('dob', 'text', 0),
+      f('exp', 'checkbox', 1),
+      f('r', 'radio', 2, { options: [{ label: 'A', value: 'a' }] }),
+    ];
+    const byRadio: DerivedValue = { key: 'byRadio', cases: [{ when: { match: 'all', conditions: [cond('r', 'equals', 'gone')] }, value: 'x' }] };
+    const byMissing: DerivedValue = { key: 'byMissing', cases: [{ when: { match: 'all', conditions: [cond('nope', 'isFilled')] }, value: 'x' }] };
+    expect(findDerivedRuleIssues([applicationAs, byRadio, byMissing, other], fields)).toEqual([
+      { index: 0, key: 'applicationAs', reason: 'staleOp' },
+      { index: 1, key: 'byRadio', reason: 'staleValue' },
+      { index: 2, key: 'byMissing', reason: 'missing' },
+    ]);
+  });
+
+  it('findDerivedRuleIssues is quiet for sound cases and for rows not filled in yet', () => {
+    const fields: Field[] = [f('dob', 'date', 0), f('exp', 'checkbox', 1)];
+    const incomplete: DerivedValue = { key: 'x', cases: [{ when: { match: 'all', conditions: [{ fieldId: '', op: '' as ConditionOp }] }, value: '' }] };
+    expect(findDerivedRuleIssues([applicationAs, other, incomplete], fields)).toEqual([]);
+    expect(findDerivedRuleIssues(undefined, fields)).toEqual([]);
   });
 });

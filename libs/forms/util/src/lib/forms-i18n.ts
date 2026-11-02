@@ -151,6 +151,7 @@ export const FORM_I18N_KEYS = {
   rule_issue_later:           PFX + 'rule.issue_later',
   rule_issue_missing:         PFX + 'rule.issue_missing',
   rule_issue_stale:           PFX + 'rule.issue_stale',
+  rule_issue_stale_op:        PFX + 'rule.issue_stale_op',
 
   // condition operators (spec §5)
   op_equals:                  PFX + 'op.equals',
