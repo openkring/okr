@@ -175,6 +175,21 @@ function evaluateRule(
 }
 
 /**
+ * Does a whole rule hold (all/any over its conditions)? Used by derived values (spec §6), whose
+ * conditions may reference ANY input field — the earlier-only `order` check is not applied.
+ * A missing or empty rule holds (same as for visibility).
+ */
+export function evaluateVisibilityRule(
+  rule: VisibilityRule | undefined | null,
+  fields: Field[],
+  values: Record<string, unknown>,
+  visible: Set<string>,
+  today: string,
+): boolean {
+  return evaluateRule(rule, Number.POSITIVE_INFINITY, fields, values ?? {}, visible, today);
+}
+
+/**
  * The ids of the fields that are shown for the given answers. Walks the fields by `order`;
  * hidden fields are absent from the result (and so are not required, validated or stored).
  */
