@@ -84,6 +84,9 @@ function buildIndexEntry(
     mStreet:     postal ? `${postal.streetName} ${postal.streetNumber}`.trim() : '',
     mZipCode:    postal?.zipCode ?? person?.favZipCode ?? '',
     mCity:       postal?.city ?? '',
+    mCountryCode:  '',
+    mDateOfDeath:  '',
+    mPassiveSince: '',
 
     pKey:        p?.okey ?? '',
     memberId:    p?.memberId ?? '',
@@ -96,19 +99,25 @@ function buildIndexEntry(
     rFirstName:       r?.firstName ?? '',
     rLastName:        r?.lastName ?? '',
     rEmail:           getEmail(r, isProdEnv),
-    rPhone:           r?.mobile || r?.telefon || '',
+    rGender:          '',
+    rMobile:          r?.mobile ?? '',
+    rTelefon:         r?.telefon ?? '',
     rStreet:          r?.street ?? '',
     rZipCode:         r?.postcode ?? '',
     rCity:            r?.city ?? '',
+    rCountryId:       '',
     rDateOfBirth:     r?.dateOfBirth ?? '',
     rCategory:        r?.membershipType ? r.membershipType.charAt(0).toUpperCase() : '',
     rDateOfExit:      r?.leavingDate || r?.dateOfDeath || '',
+    rLeavingDate:     '',
+    rDateOfDeath:     '',
+    rInactiveDate:    '',
+    rEntryDate:       '',
     nationIOC:        r?.nationIOC ?? '',
     hasNewsletter:    r?.hasNewsletter ?? false,
     mainClub:         r?.mainClub ?? false,
     clubs:            r?.clubs?.map(c => c.clubName) ?? [],
     licenseId:            r?.licenseId != null ? String(r.licenseId) : '',
-    licenseDate:          r?.licenseDate ?? '',
     licenseValidUntil:    r?.licenseValidUntil ?? '',
     licenseImage:         null,
     licenseImageName:     null,
@@ -373,7 +382,6 @@ export const MembershipSrvStore = signalStore(
               entry.rZipCode           = detail.postcode;
               entry.rCity              = detail.city;
               entry.licenseId          = detail.licenseId;
-              entry.licenseDate        = detail.licenseDate;
               entry.licenseValidUntil  = detail.licenseValidUntil;
               entry.licenseImage       = detail.licenseImage;
               entry.licenseImageName   = detail.licenseImageName;
@@ -416,7 +424,6 @@ export const MembershipSrvStore = signalStore(
       ownership.resourceModelType = 'resource';
       ownership.resourceType   = 'legaldoc';
       ownership.resourceSubType = 'license';
-      ownership.validFrom      = item.licenseDate;
       ownership.validTo        = item.licenseValidUntil;
       await store.ownershipService.create(ownership, store.appStore.currentUser() ?? undefined);
     },
@@ -597,7 +604,7 @@ export const MembershipSrvStore = signalStore(
           firstName:      changed.has('firstName')   ? item.firstName         : item.rFirstName,
           lastName:       changed.has('lastName')    ? item.lastName          : item.rLastName,
           email:          changed.has('email')       ? item.mEmail  || null   : item.rEmail  || null,
-          mobile:         changed.has('phone')       ? item.mPhone  || null   : item.rPhone  || null,
+          mobile:         changed.has('phone')       ? item.mPhone  || null   : (item.rMobile || item.rTelefon) || null,
           dateOfBirth:    changed.has('dateOfBirth') ? item.dateOfBirth       : item.rDateOfBirth,
           gender:         item.gender === 'female' ? 2 : 1,
           membershipType: catToMembershipType[item.mCategory] ?? undefined,
@@ -621,7 +628,7 @@ export const MembershipSrvStore = signalStore(
             rFirstName:   changed.has('firstName')   ? item.firstName    : i.rFirstName,
             rLastName:    changed.has('lastName')    ? item.lastName     : i.rLastName,
             rEmail:       changed.has('email')       ? item.mEmail       : i.rEmail,
-            rPhone:       changed.has('phone')       ? item.mPhone       : i.rPhone,
+            rMobile:      changed.has('phone')       ? item.mPhone       : i.rMobile,
             rDateOfBirth: changed.has('dateOfBirth') ? item.dateOfBirth  : i.rDateOfBirth,
             rStreet:      changed.has('street')      ? item.mStreet      : i.rStreet,
             rZipCode:     changed.has('zipCode')     ? item.mZipCode     : i.rZipCode,

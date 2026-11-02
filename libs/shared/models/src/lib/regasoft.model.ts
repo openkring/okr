@@ -4,6 +4,8 @@ export interface Club {
   clubId: number;
   clubName: string;
   mainClub: boolean;
+  personId?: number;
+  personFullname?: string | null;
 }
 
 /** Raw member shape returned by the Regasoft REST API. */
@@ -19,7 +21,6 @@ export interface RegasoftMember {
   gender: number;                    // 1=male, 2=female
   hasNewsletter?: boolean;
   hasLicense?: boolean;
-  licenseDate?: string | null;
   licenseValidUntil?: string | null;
   licenseId?: number | null;
   licenseImage?: string | null;
@@ -38,10 +39,11 @@ export interface RegasoftMember {
   postcode?: string | null;
   city?: string | null;
   telefon?: string | null;
-  inactive?: boolean;
+  /** Set = passive member since this date. */
   inactiveDate?: string | null;
   dateOfDeath?: string | null;
   leavingDate?: string | null;
+  entryDate?: string | null;
   personClubs?: Club[];
 }
 
@@ -62,7 +64,6 @@ export interface SrvContact {
   mainClub: boolean;
   hasLicense: boolean;
   licenseId?: number | null;
-  licenseDate?: string;       // StoreDate YYYYMMDD
   licenseValidUntil?: string; // StoreDate YYYYMMDD
   leavingDate?: string;       // StoreDate YYYYMMDD
   dateOfDeath?: string;       // StoreDate YYYYMMDD
@@ -105,12 +106,19 @@ export interface SrvMemberLicenseDetail {
   street: string;
   postcode: string;
   city: string;
+  gender: number;                 // 1=male, 2=female
+  salutation: string;
+  streetAdditional: string;
+  countryId: number | null;
+  telefon: string;
+  mobile: string;
+  email: string;
   licenseId: string;
-  licenseDate: string;            // StoreDate YYYYMMDD
   licenseValidUntil: string;      // StoreDate YYYYMMDD
   licenseImage: string | null;
   licenseImageName: string | null;
   licenseImageMimeType: string | null;
+  entryDate: string;              // StoreDate YYYYMMDD
   inactiveDate: string;           // StoreDate YYYYMMDD
   dateOfDeath: string;            // StoreDate YYYYMMDD
   leavingDate: string;            // StoreDate YYYYMMDD
@@ -138,6 +146,9 @@ export interface SrvIndex {
   mStreet: string;
   mZipCode: string;
   mCity: string;
+  mCountryCode: string;   // ISO country code of the BK postal address
+  mDateOfDeath: string;   // StoreDate
+  mPassiveSince: string;  // StoreDate
 
   // Parent membership (p prefix) — orgKey = 'srv'
   pKey: string;        // p.okey
@@ -155,27 +166,67 @@ export interface SrvIndex {
   rFirstName: string;
   rLastName: string;
   rEmail: string;
-  rPhone: string;        // r.mobile || r.telefon
+  rGender: string;       // 'male' | 'female' | ''
+  rMobile: string;
+  rTelefon: string;
   rStreet: string;
   rZipCode: string;
   rCity: string;
+  rCountryId: string;
   rDateOfBirth: string;  // r.dateOfBirth (StoreDate)
   rCategory: string;     // first uppercase char of membershipType
-  rDateOfExit: string;   // r.leavingDate || r.dateOfDeath (StoreDate)
+  rDateOfExit: string;   // r.leavingDate || r.dateOfDeath (StoreDate) — display only
+  rLeavingDate: string;  // StoreDate
+  rDateOfDeath: string;  // StoreDate
+  rInactiveDate: string; // StoreDate
+  rEntryDate: string;    // StoreDate
   nationIOC: string;
   hasNewsletter: boolean;
   mainClub: boolean;
   clubs: string[];
   licenseId: string;
-  licenseDate: string;            // StoreDate
   licenseValidUntil: string;      // StoreDate
   licenseImage: string | null;
   licenseImageName: string | null;
   licenseImageMimeType: string | null;
 }
 
+/**
+ * fix  = writable to Regasoft;
+ * info = Sekretariat-only (reported, not writable);
+ * bk   = to be fixed in our own data (`memberId`, `pCategory`).
+ */
+export type SrvMismatchKind = 'fix' | 'info' | 'bk';
+
 export interface SrvMismatch {
   field: string;
   okrValue: string;
   rValue: string;
+  kind: SrvMismatchKind;
+}
+
+/** The 16 member fields Regasoft accepts on a PUT. */
+export const SRV_WRITABLE_FIELDS = [
+  'firstName', 'lastName', 'gender', 'birthday', 'salutation', 'email', 'countryId', 'city',
+  'postcode', 'street', 'streetAdditional', 'telefon', 'mobile', 'dateOfDeath', 'leavingDate', 'inactiveDate',
+] as const;
+
+export type SrvWritableField = (typeof SRV_WRITABLE_FIELDS)[number];
+
+/** Changes to write to Regasoft; dates as StoreDate, `''` / `null` = clear the field. */
+export type SrvChanges = Partial<Record<SrvWritableField, string | number | null>>;
+
+/** Result of an update: the record before and after, and which fields Regasoft took or ignored. */
+export interface SrvUpdateResult {
+  before: Record<string, unknown>;
+  after: Record<string, unknown>;
+  written: SrvWritableField[];
+  ignored: SrvWritableField[];
+}
+
+/** Dry-run of an update: nothing is sent. */
+export interface SrvPreview {
+  before: Record<string, unknown>;
+  after: Record<string, unknown>;
+  payload: Record<string, unknown>;
 }

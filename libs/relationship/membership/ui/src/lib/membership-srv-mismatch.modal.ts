@@ -80,7 +80,7 @@ export class MembershipSrvMismatchModal {
       { attr: 'dateOfExit',    person: i.mDateOfExit, member: i.pDateOfExit,  regasoft: i.rDateOfExit,  mismatch: has('dateOfExit') },
       { attr: 'category',      person: i.mCategory,   member: i.pCategory,    regasoft: i.rCategory,    mismatch: has('pCategory') },
       { attr: 'email',         person: i.mEmail,      member: '',             regasoft: i.rEmail,       mismatch: has('email') },
-      { attr: 'phone',         person: i.mPhone,      member: '',             regasoft: i.rPhone,       mismatch: has('phone') },
+      { attr: 'phone',         person: i.mPhone,      member: '',             regasoft: i.rMobile || i.rTelefon, mismatch: has('phone') },
       { attr: 'street',        person: i.mStreet,     member: '',             regasoft: i.rStreet,      mismatch: has('street') },
       { attr: 'zipCode',       person: i.mZipCode,    member: '',             regasoft: i.rZipCode,     mismatch: has('zipCode') },
       { attr: 'city',          person: i.mCity,       member: '',             regasoft: i.rCity,        mismatch: has('city') },

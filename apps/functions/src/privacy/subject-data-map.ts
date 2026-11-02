@@ -1585,6 +1585,11 @@ export async function resolveArrayItemDocs(entry: SubjectDataEntry, ctx: Subject
 // not personal data: commissionEntries — a ledger line (C3 §7): partnerKey, tenantId, band,
 //   amounts. No natural person appears on it; the contact-of-record stays on the metering
 //   record it was derived from.
+// gap: external-reports — marks that a case (e.g. a membership change) was reported to an external
+//   organisation (spec 1.133): externalOrg, caseKey/caseType, externalRef, reportedAt and `subjectKey`
+//   ('person.<okey>'). No name or contact detail is stored, but `subjectKey` links the marker to a
+//   natural person, so it is not classified as «not personal data». Not yet a row: erasure/export of
+//   these markers is still to be decided.
 // gap: meteringRecords — carries ONE business-role contact per reported tenant (C2 §7:
 //   `contact.name/role/email`, never member data). It is personal data of a natural person and
 //   bkaiser is its INDEPENDENT CONTROLLER, not a processor — so it is deliberately not reachable

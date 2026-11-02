@@ -220,13 +220,12 @@ import { fill } from '@okr/shared-util-core';
             </ion-row>
             @if(showLicenses() && licensedFromIndex().length > 0) {
               <ion-row>
-                <ion-col size="6"><strong>{{ store.i18n.srv_col_name() }}</strong></ion-col>
-                <ion-col size="3"><strong>{{ store.i18n.srv_col_license() }}</strong></ion-col>
+                <ion-col size="9"><strong>{{ store.i18n.srv_col_name() }}</strong></ion-col>
                 <ion-col size="3"><strong>{{ store.i18n.srv_col_license_until() }}</strong></ion-col>
               </ion-row>
               @for(item of licensedFromIndex(); track item.rid) {
                 <ion-row (click)="showLicenseActions(item)">
-                  <ion-col size="6">
+                  <ion-col size="9">
                     @if(item.personKey) {
                       <okr-avatar-label
                         [key]="getAvatarKey(item)"
@@ -239,9 +238,6 @@ import { fill } from '@okr/shared-util-core';
                         <ion-label color="medium">{{ displayName(item) }}</ion-label>
                       </ion-item>
                     }
-                  </ion-col>
-                  <ion-col size="3">
-                    <ion-item lines="none">{{ formatStoreDate(item.licenseDate) }}</ion-item>
                   </ion-col>
                   <ion-col size="3">
                     <ion-item lines="none">{{ formatStoreDate(item.licenseValidUntil) }}</ion-item>
@@ -358,7 +354,7 @@ export class MembershipSrv implements OnInit {
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   protected readonly licensedFromIndex = computed(() =>
-    this.index().filter(i => !!i.licenseDate)
+    this.index().filter(i => !!i.licenseValidUntil)
   );
 
   protected readonly filteredIndex = computed(() => {

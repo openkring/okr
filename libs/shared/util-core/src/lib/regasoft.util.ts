@@ -28,28 +28,28 @@ export function getMismatches(item: SrvIndex): SrvMismatch[] {
 
   const result: SrvMismatch[] = [];
 
-  const chk = (field: string, bk: string, r: string) => {
-    if (r && bk !== r) result.push({ field, okrValue: bk, rValue: r });
+  const chk = (field: string, bk: string, r: string, kind: SrvMismatch['kind'] = 'fix') => {
+    if (r && bk !== r) result.push({ field, okrValue: bk, rValue: r, kind });
   };
   const chkPhone = (field: string, bk: string, r: string) => {
     const norm = (s: string) => s.replace(/\s/g, '');
-    if (r && norm(bk) !== norm(r)) result.push({ field, okrValue: bk, rValue: r });
+    if (r && norm(bk) !== norm(r)) result.push({ field, okrValue: bk, rValue: r, kind: 'fix' });
   };
   const chkCI = (field: string, bk: string, r: string) => {
-    if (r && bk.toLowerCase() !== r.toLowerCase()) result.push({ field, okrValue: bk, rValue: r });
+    if (r && bk.toLowerCase() !== r.toLowerCase()) result.push({ field, okrValue: bk, rValue: r, kind: 'fix' });
   };
   // A partial date (year only, or a birthday without a year) cannot be compared to
   // Regasoft's full date. Reporting it would create a permanent, unresolvable mismatch.
   const chkDate = (field: string, bk: string, r: string) => {
     if (classifyStoreDate(bk) !== 'full' || classifyStoreDate(r) !== 'full') return;
-    if (bk !== r) result.push({ field, okrValue: bk, rValue: r });
+    if (bk !== r) result.push({ field, okrValue: bk, rValue: r, kind: 'fix' });
   };
 
   chk('firstName',   item.firstName,   item.rFirstName);
   chk('lastName',    item.lastName,    item.rLastName);
-  chk('memberId',    item.memberId,    item.rServiceId);
+  chk('memberId',    item.memberId,    item.rServiceId, 'bk');
   chk('email',       item.mEmail,      item.rEmail);
-  chkPhone('phone',  item.mPhone,      item.rPhone);
+  chkPhone('phone',  item.mPhone,      item.rMobile || item.rTelefon);
   chkCI('street',    item.mStreet,     item.rStreet);
   chk('zipCode',     item.mZipCode,    item.rZipCode);
   chkCI('city',      item.mCity,       item.rCity);
@@ -58,7 +58,7 @@ export function getMismatches(item: SrvIndex): SrvMismatch[] {
   if (item.pKey) {
     const expectedCat = item.mainClub ? item.rCategory : 'D';
     if (expectedCat && item.pCategory !== expectedCat) {
-      result.push({ field: 'pCategory', okrValue: item.pCategory, rValue: expectedCat });
+      result.push({ field: 'pCategory', okrValue: item.pCategory, rValue: expectedCat, kind: 'bk' });
     }
   }
 
