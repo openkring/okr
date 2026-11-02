@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { FormDefinitionModel } from '@okr/shared-models';
 
-import { FormSubmitService } from './form-submit.service';
+import { FormSubmitService, isFormClosedError } from './form-submit.service';
 
 // The service reaches Firebase only through two dynamic imports; stubbing them keeps the
 // anti-abuse contract — what is stripped, what is lifted into `meta` — testable without any
@@ -85,6 +85,11 @@ describe('FormSubmitService', () => {
       expect(calls[0].name).toBe('submitForm');
     });
 
+    it('returns the thank-you text the server sends with the submission id', async () => {
+      nextResult = { submissionId: 's2', confirmation: 'Danke Anna.\nWir melden uns.' };
+      await expect(service.submit(args)).resolves.toEqual({ submissionId: 's2', confirmation: 'Danke Anna.\nWir melden uns.' });
+    });
+
     it('propagates a failure — the host shows the error, the submit is NOT silently swallowed', async () => {
       shouldThrow = true;
       await expect(service.submit(args)).rejects.toThrow();
@@ -106,6 +111,41 @@ describe('FormSubmitService', () => {
       nextResult = definition;
       await service.fetchDefinition('f1', 'scs');
       expect(calls[0]).toEqual({ name: 'getFormDefinition', payload: { formKey: 'f1', tenantId: 'scs' } });
+    });
+
+    it('sends the section id when given — that page\'s own acceptance rules apply', async () => {
+      nextResult = definition;
+      await service.fetchDefinition('f1', 'scs', 'sec1');
+      expect(calls[0].payload).toEqual({ formKey: 'f1', tenantId: 'scs', sectionId: 'sec1' });
+    });
+
+    it('omits the section id when absent or empty — a modal has no section', async () => {
+      nextResult = definition;
+      await service.fetchDefinition('f1', 'scs', '');
+      expect(calls[0].payload).not.toHaveProperty('sectionId');
+    });
+
+    it('returns the availability and the mail flag next to the definition', async () => {
+      nextResult = { ...definition, availability: { isOpen: false, reason: 'full' }, sendFillerConfirmation: true };
+      const def = await service.fetchDefinition('f1', 'scs', 'sec1');
+      expect(def?.availability?.isOpen).toBe(false);
+      expect(def?.sendFillerConfirmation).toBe(true);
+    });
+  });
+
+  describe('isFormClosedError', () => {
+    it('is true for a failed-precondition saying form-closed or form-full, with or without the SDK prefix', () => {
+      expect(isFormClosedError({ code: 'functions/failed-precondition', message: 'form-closed' })).toBe(true);
+      expect(isFormClosedError({ code: 'functions/failed-precondition', message: 'form-full' })).toBe(true);
+      expect(isFormClosedError({ code: 'failed-precondition', message: 'form-full' })).toBe(true);
+    });
+
+    it('is false for any other failure — the host keeps its generic submit error', () => {
+      expect(isFormClosedError({ code: 'functions/failed-precondition', message: 'course-page-missing' })).toBe(false);
+      expect(isFormClosedError({ code: 'functions/invalid-argument', message: 'form-closed' })).toBe(false);
+      expect(isFormClosedError(new Error('form-closed'))).toBe(false);
+      expect(isFormClosedError(undefined)).toBe(false);
+      expect(isFormClosedError('form-closed')).toBe(false);
     });
   });
 

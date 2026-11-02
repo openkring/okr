@@ -8,8 +8,8 @@ import {
 } from '@okr/shared-ui';
 import { ChSsnMask } from '@okr/shared-config';
 import { SSN_LENGTH } from '@okr/shared-constants';
-import { CategoryListModel, Field } from '@okr/shared-models';
-import { AhvFormat, formatAhv } from '@okr/shared-util-core';
+import { CategoryListModel, Field, OTHER_OPTION_VALUE } from '@okr/shared-models';
+import { AhvFormat, FORM_OTHER_TEXT_MAX, formatAhv } from '@okr/shared-util-core';
 
 /** Angular validator error → `validation.*` key of the main i18n bundle (resolved by okr-error-note). */
 const ERROR_KEYS: [string, string][] = [
@@ -26,6 +26,17 @@ const ERROR_KEYS: [string, string][] = [
   ['minDate', 'minWrong'],
   ['maxDate', 'maxWrong'],
 ];
+
+/** The labels of the «Andere …» choice and its text (spec §9) — resolved by the host from `FORM_I18N_KEYS`. */
+export interface FieldOtherI18n {
+  /** the last option, e.g. «Andere …» */
+  option: string;
+  /** the placeholder of its text input, e.g. «Deine Antwort» */
+  placeholder: string;
+}
+
+/** The fallback for a host that passes no labels (the German texts of `field_other_option` / `field_other_placeholder`). */
+export const DEFAULT_FIELD_OTHER_I18N: FieldOtherI18n = { option: 'Andere …', placeholder: 'Deine Antwort' };
 
 /** The usual Swiss example number, shown while an AHV field is empty. */
 const SSN_PLACEHOLDER = '756.1234.5678.97';
@@ -55,67 +66,67 @@ const SSN_PLACEHOLDER = '756.1234.5678.97';
     @switch (field().type) {
       @case ('text') {
         @if ($any(field()).multiline) {
-          <okr-notes-input [i18n]="notesI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="false" />
+          <okr-notes-input [i18n]="notesI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="readOnly()" />
         } @else {
-          <okr-text-input [i18n]="textI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="false" />
+          <okr-text-input [i18n]="textI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="readOnly()" />
         }
       }
       @case ('email') {
-        <okr-email [i18n]="emailI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="false" [copyable]="false" />
+        <okr-email [i18n]="emailI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="readOnly()" [copyable]="false" />
       }
       @case ('iban') {
-        <okr-iban [i18n]="ibanI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="false" [copyable]="false" />
+        <okr-iban [i18n]="ibanI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="readOnly()" [copyable]="false" />
       }
       @case ('ssn') {
         <okr-text-input [i18n]="ssnI18n()" [value]="ssnValue()" (valueChange)="setValue($event)"
-          [maxLength]="ssnLength" [mask]="ssnMask" [readOnly]="false" />
+          [maxLength]="ssnLength" [mask]="ssnMask" [readOnly]="readOnly()" />
       }
       @case ('phone') {
-        <okr-phone [i18n]="phoneI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="false" [copyable]="false" />
+        <okr-phone [i18n]="phoneI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="readOnly()" [copyable]="false" />
       }
       @case ('password') {
         <okr-password-input [i18n]="passwordI18n()" [value]="strValue()" (valueChange)="setValue($event)" [copyable]="false" />
       }
       @case ('number') {
-        <okr-number-input [i18n]="numberI18n()" [value]="$any(control().value)" (valueChange)="setValue($event)" [readOnly]="false"
+        <okr-number-input [i18n]="numberI18n()" [value]="$any(control().value)" (valueChange)="setValue($event)" [readOnly]="readOnly()"
           [min]="$any(field()).min" [max]="$any(field()).max" [integer]="$any(field()).integer ?? false" />
       }
       @case ('date') {
-        <okr-date-input [i18n]="dateI18n()" [storeDate]="strValue()" (storeDateChange)="setValue($event)" [readOnly]="false" />
+        <okr-date-input [i18n]="dateI18n()" [storeDate]="strValue()" (storeDateChange)="setValue($event)" [readOnly]="readOnly()" />
       }
       @case ('time') {
-        <okr-time-input [i18n]="timeI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="false" locale="de-ch" />
+        <okr-time-input [i18n]="timeI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="readOnly()" locale="de-ch" />
       }
       @case ('dropdown') {
         <okr-string-select [i18n]="selectI18n()" [stringList]="optionValues()" [labels]="optionLabels()"
-          [selectedString]="strValue()" (selectedStringChange)="setValue($event)" [readOnly]="false" />
+          [selectedString]="strValue()" (selectedStringChange)="setValue($event)" [readOnly]="readOnly()" />
       }
       @case ('category') {
         @if (category(); as category) {
           <okr-cat-select [category]="category" [selectedItemName]="strValue()" (selectedItemNameChange)="setValue($event)"
-            [readOnly]="false" [fieldStyle]="true" [label]="fieldLabel()" />
+            [readOnly]="readOnly()" [fieldStyle]="true" [label]="fieldLabel()" />
         }
       }
 
       @case ('checkbox') {
         @if ($any(field()).options?.length) {
           <okr-checkbox-group [i18n]="groupI18n()" [stringList]="optionValues()" [labels]="optionLabels()"
-            [selectedStrings]="arrValue()" (selectedStringsChange)="setValue($event)" [readOnly]="false" />
+            [selectedStrings]="arrValue()" (selectedStringsChange)="setValue($event)" [readOnly]="readOnly()" />
         } @else {
-          <okr-checkbox [i18n]="checkboxI18n()" [checked]="boolValue()" (checkedChange)="setValue($event)" [readOnly]="false" />
+          <okr-checkbox [i18n]="checkboxI18n()" [checked]="boolValue()" (checkedChange)="setValue($event)" [readOnly]="readOnly()" />
         }
       }
       @case ('radio') {
         <okr-radio-group [i18n]="groupI18n()" [stringList]="optionValues()" [labels]="optionLabels()"
-          [selectedString]="strValue()" (selectedStringChange)="setValue($event)" [readOnly]="false" />
+          [selectedString]="strValue()" (selectedStringChange)="setValue($event)" [readOnly]="readOnly()" />
       }
       @case ('file') {
         <okr-file-input [i18n]="fileI18n()" [accept]="$any(field()).accept ?? '*/*'" [multiple]="maxCount() > 1"
-          (filesChange)="onFilesChange($event)" [readOnly]="false" />
+          (filesChange)="onFilesChange($event)" [readOnly]="readOnly()" />
       }
       @case ('images') {
         <okr-file-input [i18n]="fileI18n()" accept="image/*" [multiple]="maxCount() > 1"
-          (filesChange)="onFilesChange($event)" [readOnly]="false" />
+          (filesChange)="onFilesChange($event)" [readOnly]="readOnly()" />
       }
       @case ('label') {
         <div class="static-label">{{ field().label }}</div>
@@ -135,10 +146,20 @@ const SSN_PLACEHOLDER = '756.1234.5678.97';
         </ion-item>
       }
     }
-    @if (field().helpText) {
-      <div class="help-text">{{ field().helpText }}</div>
+    <!-- «Andere …» picked: its own required text, stored under <key>Other (spec §9) -->
+    @if (otherSelected()) {
+      @if (otherControl(); as other) {
+        <okr-text-input [i18n]="otherTextI18n()" [value]="otherValue()" (valueChange)="setOtherValue($event)"
+          [maxLength]="otherTextMax" [readOnly]="readOnly()" />
+        <okr-error-note [errors]="errorKeysOf(other)" />
+      }
     }
-    <okr-error-note [errors]="errorKeys()" />
+    @if (field().type !== 'implicit') {
+      @if (field().helpText) {
+        <div class="help-text">{{ field().helpText }}</div>
+      }
+      <okr-error-note [errors]="errorKeys()" />
+    }
   `,
 })
 export class FieldRenderer {
@@ -146,6 +167,11 @@ export class FieldRenderer {
   public readonly control = input.required<FormControl>();
   /** the category list of a 'category' field (looked up by the parent from field.categoryName) */
   public readonly category = input<CategoryListModel | undefined>();
+  /** shown but not changeable — a field a link pre-filled with `lockWhenPrefilled` (spec §8); its value still submits */
+  public readonly readOnly = input(false);
+  /** the `<key>Other` control of a field with `allowOther`; absent otherwise */
+  public readonly otherControl = input<FormControl | undefined>();
+  public readonly otherI18n = input<FieldOtherI18n>(DEFAULT_FIELD_OTHER_I18N);
 
   constructor() {
     // a category select always shows an item: store the first one until the user picks another
@@ -216,8 +242,23 @@ export class FieldRenderer {
     const f = this.field();
     return f.type === 'file' || f.type === 'images' ? f.maxCount ?? 1 : 1;
   });
-  protected readonly optionValues = computed(() => this.options().map(o => o.value));
-  protected readonly optionLabels = computed(() => this.options().map(o => o.label));
+  /** «Andere …» is offered: `allowOther` on a choice field with options, and the parent gave it a text control */
+  private readonly hasOther = computed(() => {
+    const f = this.field();
+    const allows = (f.type === 'dropdown' || f.type === 'radio' || f.type === 'checkbox') && f.allowOther === true;
+    return allows && this.options().length > 0 && !!this.otherControl();
+  });
+  protected readonly optionValues = computed(() =>
+    [...this.options().map(o => o.value), ...(this.hasOther() ? [OTHER_OPTION_VALUE] : [])]
+  );
+  protected readonly optionLabels = computed(() =>
+    [...this.options().map(o => o.label), ...(this.hasOther() ? [this.otherI18n().option] : [])]
+  );
+  protected readonly otherTextI18n = computed<TextInputI18n>(() => ({
+    name: this.field().key + 'Other', label: this.otherI18n().option + ' *', placeholder: this.otherI18n().placeholder, helper: '',
+  }));
+  /** the same cap the server enforces on an «Andere» text */
+  protected readonly otherTextMax = FORM_OTHER_TEXT_MAX;
 
   // bridge: primitives emit (value/checked)Change → write back into the FormControl
   protected strValue(): string { return (this.control().value ?? '') as string; }
@@ -231,9 +272,27 @@ export class FieldRenderer {
     this.control().markAsTouched();
   }
 
+  /** whether the answer is «Andere …» (the reserved value, or a list holding it) */
+  protected otherSelected(): boolean {
+    if (!this.hasOther()) return false;
+    const value = this.control().value;
+    return Array.isArray(value) ? value.includes(OTHER_OPTION_VALUE) : value === OTHER_OPTION_VALUE;
+  }
+  protected otherValue(): string { return (this.otherControl()?.value ?? '') as string; }
+  protected setOtherValue(value: string): void {
+    const other = this.otherControl();
+    if (!other) return;
+    other.setValue(value);
+    other.markAsDirty();
+    other.markAsTouched();
+  }
+
   /** The first validation error as a `validation.*` key; empty until the user has touched the field. */
   protected errorKeys(): string[] {
-    const control = this.control();
+    return this.errorKeysOf(this.control());
+  }
+
+  protected errorKeysOf(control: FormControl): string[] {
     if (!control.invalid || !control.touched || !control.errors) return [];
     const errors = control.errors;
     const match = ERROR_KEYS.find(([error]) => errors[error]);

@@ -1,11 +1,26 @@
 import { Component, computed, DestroyRef, effect, inject, input, OnInit, output, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { IonButton } from '@ionic/angular';
-import { CategoryListModel, Field, FormDefinitionModel } from '@okr/shared-models';
-import { getTodayStr, getVisibleFieldIds } from '@okr/shared-util-core';
+import { BaseType, CategoryListModel, Field, FormDefinitionModel, OTHER_OPTION_VALUE } from '@okr/shared-models';
+import { FORM_OTHER_TEXT_MAX, getTodayStr, getVisibleFieldIds, resolveImplicitValues } from '@okr/shared-util-core';
 import { validatorsFor, defaultFor, isInputField } from '@okr/forms-util';
-import { FieldRenderer } from './field-renderer';
+import { DEFAULT_FIELD_OTHER_I18N, FieldOtherI18n, FieldRenderer } from './field-renderer';
+
+/** The key of the «Andere» text of a field (spec §9). */
+function otherKeyOf(field: Field): string {
+  return field.key + 'Other';
+}
+
+/** Required, and blank (spaces only) counts as empty — the server drops a blank «Andere» text. */
+function requiredText(control: AbstractControl): ValidationErrors | null {
+  return typeof control.value === 'string' && control.value.trim() !== '' ? null : { required: true };
+}
+
+/** «Andere …» picked: the reserved value, or a list holding it (checkbox group). */
+function isOtherValue(value: unknown): boolean {
+  return Array.isArray(value) ? value.includes(OTHER_OPTION_VALUE) : value === OTHER_OPTION_VALUE;
+}
 
 @Component({
   selector: 'okr-form-renderer',
@@ -44,9 +59,11 @@ import { FieldRenderer } from './field-renderer';
 
       <div class="fields">
         @for (field of sortedFields(); track field.id) {
-          @if (visibleIds().has(field.id)) {
+          <!-- an implicit field only holds a control: never mounted, so no label, help text or error note -->
+          @if (field.type !== 'implicit' && visibleIds().has(field.id)) {
             <okr-field-renderer [class]="'width-' + field.width" [field]="field" [control]="getControl(field)"
-              [category]="categoryOf(field)" />
+              [category]="categoryOf(field)" [readOnly]="isLocked(field)" [otherControl]="otherControlOf(field)"
+              [otherI18n]="otherI18n()" />
           }
         }
       </div>
@@ -71,6 +88,14 @@ export class FormRenderer implements OnInit {
   public readonly jsToken = input('');
   /** the tenant's category lists — a 'category' field looks its list up here by name */
   public readonly categories = input<CategoryListModel[]>([]);
+  /** answers from the page link (`parsePrefillParams`), over the defaults; read once, when the controls are built */
+  public readonly prefill = input<Record<string, unknown>>({});
+  /** the pre-filled keys; a field with `lockWhenPrefilled` among them is shown read-only (spec §8) */
+  public readonly lockedKeys = input<string[]>([]);
+  /** the values of the implicit fields (`resolveImplicitValues`); a missing key falls back to the field's default */
+  public readonly implicitValues = input<Record<string, BaseType>>({});
+  /** the «Andere …» labels */
+  public readonly otherI18n = input<FieldOtherI18n>(DEFAULT_FIELD_OTHER_I18N);
   public readonly submitted = output<Record<string, unknown>>();
   /** every answer, hidden ones included (`getRawValue()`), after each change — for the builder preview */
   public readonly valueChange = output<Record<string, unknown>>();
@@ -92,6 +117,13 @@ export class FormRenderer implements OnInit {
   /** ids of the fields (and dividers) a visibility rule currently shows; recomputed on every answer */
   protected readonly visibleIds = signal<ReadonlySet<string>>(new Set());
 
+  /** the value a field starts with (link, implicit or default) — and gets back when a rule shows it again */
+  private initialValues: Record<string, unknown> = {};
+  /** keys shown read-only: pre-filled by the link AND flagged `lockWhenPrefilled` */
+  private lockedKeySet: ReadonlySet<string> = new Set();
+  /** the `<key>Other` controls, by the owning field's key */
+  private otherControls: Record<string, FormControl> = {};
+
   public constructor() {
     // Hidden means absent: a hidden input is emptied and disabled, so it drops out of form.value
     // and form.invalid. All writes use emitEvent:false, so this cannot feed back into valueChanges.
@@ -99,28 +131,67 @@ export class FormRenderer implements OnInit {
       const visible = this.visibleIds();
       const fields = this.definition().fields;
       untracked(() => {
+        let restored = false;
         for (const field of fields) {
           if (!isInputField(field)) continue;
           const control = this._form.get(field.key);
           if (!control) continue;
           if (visible.has(field.id)) {
-            if (control.disabled) control.enable({ emitEvent: false });
+            if (control.disabled) {
+              // a shown field starts from its initial value again: the link's, the implicit one, or the default
+              const initial = this.initialValues[field.key] ?? defaultFor(field);
+              control.setValue(Array.isArray(initial) ? [...initial] : initial, { emitEvent: false });
+              control.enable({ emitEvent: false });
+              restored = true;
+            }
           } else if (control.enabled) {
             control.reset(defaultFor(field), { emitEvent: false });
             control.disable({ emitEvent: false });
           }
         }
+        this.syncOtherControls();
+        // a restored value may itself show or hide a later field (converges: set only on change)
+        if (restored) this.updateVisibility();
       });
     });
   }
 
   public ngOnInit(): void {
+    const fields = this.definition().fields;
+    const prefill = this.prefill();
+    const prefilled = new Set(this.lockedKeys());
+    // the section's / link's values over the fields' own defaults (an AHV field never resolves — R1)
+    const implicit = { ...resolveImplicitValues(fields, undefined, {}), ...this.implicitValues() };
+    const inputKeys = new Set(fields.filter(f => isInputField(f)).map(f => f.key));
     const controls: Record<string, FormControl> = {};
-    for (const field of this.definition().fields) {
+    const locked = new Set<string>();
+    this.initialValues = {};
+    this.otherControls = {};
+    for (const field of fields) {
       // Display-only elements (label, divider) hold no value — no control, not submitted.
       if (!isInputField(field)) continue;
-      controls[field.key] = new FormControl(defaultFor(field), validatorsFor(field));
+      if (field.type === 'implicit') {
+        // never rendered, never required: a plain holder of the resolved value
+        const value = Object.prototype.hasOwnProperty.call(implicit, field.key) ? implicit[field.key] : defaultFor(field);
+        this.initialValues[field.key] = value;
+        controls[field.key] = new FormControl(value);
+        continue;
+      }
+      const value = Object.prototype.hasOwnProperty.call(prefill, field.key) ? prefill[field.key] : defaultFor(field);
+      this.initialValues[field.key] = value;
+      if (field.lockWhenPrefilled === true && prefilled.has(field.key) && Object.prototype.hasOwnProperty.call(prefill, field.key)) {
+        locked.add(field.key);
+      }
+      controls[field.key] = new FormControl(value, validatorsFor(field));
+      // «Andere …»: its text control, enabled only while «Andere» is picked; never over a real field's key
+      if (this.allowsOther(field) && !inputKeys.has(otherKeyOf(field))) {
+        const other = new FormControl('', [requiredText, Validators.maxLength(FORM_OTHER_TEXT_MAX)]);
+        other.disable({ emitEvent: false });
+        this.otherControls[field.key] = other;
+        controls[otherKeyOf(field)] = other;
+      }
     }
+    this.lockedKeySet = locked;
     // Honeypot — always empty, no validators
     controls[this.honeypotKey()] = new FormControl('');
     // JS token — populated reactively by effect in parent
@@ -128,10 +199,37 @@ export class FormRenderer implements OnInit {
     this._form = new FormGroup(controls);
 
     this.updateVisibility();
+    this.syncOtherControls();
     this._form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.updateVisibility();
+      this.syncOtherControls();
       this.valueChange.emit(this._form.getRawValue() as Record<string, unknown>);
     });
+  }
+
+  private allowsOther(field: Field): boolean {
+    return (field.type === 'dropdown' || field.type === 'radio' || field.type === 'checkbox')
+      && field.allowOther === true && (field.options?.length ?? 0) > 0;
+  }
+
+  /**
+   * An «Andere» text counts only while its field is shown and «Andere» is picked: then it is enabled
+   * (and required); otherwise it is emptied and disabled, so it drops out of form.value and
+   * form.invalid — the same «hidden means absent» as a hidden field. emitEvent:false, no feedback.
+   */
+  private syncOtherControls(): void {
+    for (const field of this.definition().fields) {
+      const other = this.otherControls[field.key];
+      if (!other) continue;
+      const owner = this._form.get(field.key);
+      const active = !!owner && owner.enabled && isOtherValue(owner.value);
+      if (active) {
+        if (other.disabled) other.enable({ emitEvent: false });
+      } else if (other.enabled) {
+        other.reset('', { emitEvent: false });
+        other.disable({ emitEvent: false });
+      }
+    }
   }
 
   private updateVisibility(): void {
@@ -152,6 +250,14 @@ export class FormRenderer implements OnInit {
 
   protected categoryOf(field: Field): CategoryListModel | undefined {
     return field.type === 'category' ? this.categories().find(c => c.name === field.categoryName) : undefined;
+  }
+
+  protected isLocked(field: Field): boolean {
+    return this.lockedKeySet.has(field.key);
+  }
+
+  protected otherControlOf(field: Field): FormControl | undefined {
+    return this.otherControls[field.key];
   }
 
   protected getControl(field: Field): FormControl {

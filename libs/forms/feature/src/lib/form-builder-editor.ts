@@ -174,6 +174,7 @@ function newField(def: FieldTypeDef, order: number): Field {
                 <!-- re-mounted per definition: the renderer builds its controls once, on init -->
                 @for (definition of previewDefinitions(); track definition) {
                   <okr-form-renderer [definition]="definition" [categories]="appStore.allCategories()" [showSubmit]="false"
+                    [otherI18n]="{ option: i18n.field_other_option(), placeholder: i18n.field_other_placeholder() }"
                     (valueChange)="previewValues.set($event)" />
                 }
                 @if (hasDerivedValues()) {
