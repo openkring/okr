@@ -18,6 +18,21 @@ import {
 
 import { regasoftApiKey, regasoftClubId, REGASOFT_BASE } from './shared';
 
+/**
+ * Writes to Regasoft are switched off until spec 1.133 (Regasoft integration v2) ships.
+ * Regasoft's PUT replaces the whole record, and the payloads below send only part of it, so
+ * every update erased salutation, streetAdditional, countryId, telefon, entryDate and
+ * inactiveDate (probe 2026-11-02, planning/reference/REGASOFT.md). Blocking here, not only in
+ * the client, also stops app versions that still offer the actions.
+ */
+const SRV_WRITES_ENABLED = false;
+
+function assertSrvWritesEnabled(cfName: string): void {
+  if (SRV_WRITES_ENABLED) return;
+  logger.warn(`${cfName}: rejected, Regasoft writes are disabled until spec 1.133`);
+  throw new HttpsError('failed-precondition', 'Regasoft writes are disabled until the safe update (spec 1.133) ships');
+}
+
 function regasoftHeaders(apiKey: string, clubId: string) {
   return {
     'Content-Type': 'application/json',
@@ -156,6 +171,7 @@ export async function handleCreateSrvContact(request: CallableRequest<SrvContact
   }
   // SRV member data is person PII — memberAdmin/admin only (privacy inventory §7.2).
   await checkRoles(request, CF_NAME, ['memberAdmin']);
+  assertSrvWritesEnabled(CF_NAME);
 
   const { firstName, lastName, email, mobile, dateOfBirth, gender } = request.data;
   if (!firstName || !lastName) {
@@ -231,6 +247,7 @@ export async function handleUpdateSrvContact(request: CallableRequest<SrvContact
   }
   // SRV member data is person PII — memberAdmin/admin only (privacy inventory §7.2).
   await checkRoles(request, CF_NAME, ['memberAdmin']);
+  assertSrvWritesEnabled(CF_NAME);
 
   const { srvId, firstName, lastName, email, mobile, dateOfBirth, gender,
           membershipType, street, postcode, city, dateOfDeath, leavingDate } = request.data;

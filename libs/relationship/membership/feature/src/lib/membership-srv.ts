@@ -424,8 +424,8 @@ protected async buildIndex(): Promise<void> {
       actionSheetOptions.buttons.push(createActionSheetDivider());
       actionSheetOptions.buttons.push(createActionSheetButton('regasoft.copy', this.store.i18n.srv_regasoft_copy(), this.imgixBaseUrl, 'copy'));
       actionSheetOptions.buttons.push(createActionSheetButton('regasoft.view', this.store.i18n.srv_regasoft_view(), this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('regasoft.add', this.store.i18n.srv_regasoft_add(), this.imgixBaseUrl, 'add'));
-      actionSheetOptions.buttons.push(createActionSheetButton('regasoft.update', this.store.i18n.srv_regasoft_update(), this.imgixBaseUrl, 'edit'));
+      // 'regasoft.add' / 'regasoft.update' are hidden until spec 1.133 ships: the current
+      // update erases Regasoft fields (PUT replaces the record). The function rejects both too.
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
       await this.executeActions(actionSheetOptions, item);
   }
