@@ -154,6 +154,13 @@ describe('getMismatches', () => {
     expect(mismatchOf({ gender: 'female', rGender: 'male' }, 'gender')?.kind).toBe('fix');
   });
 
+  it('a club gender other than male/female → bk, never fix (I4)', () => {
+    expect(mismatchOf({ gender: 'other', rGender: 'male' }, 'gender')).toEqual({ field: 'gender', okrValue: 'other', rValue: 'male', kind: 'bk' });
+    expect(mismatchOf({ gender: 'other', rGender: 'female' }, 'gender')?.kind).toBe('bk');
+    expect(mismatchOf({ gender: '', rGender: 'male' }, 'gender')?.kind).toBe('bk');
+    expect(mismatchOf({ gender: '', rGender: '' }, 'gender')).toBeUndefined();
+  });
+
   it('phone: BK number in Regasoft telefon → no mismatch', () => {
     expect(mismatchOf({ mPhone: '079 111 22 33', rMobile: '', rTelefon: '079 111 22 33' }, 'phone')).toBeUndefined();
   });
@@ -268,9 +275,14 @@ describe('getSrvChanges', () => {
     expect(changes({})).toEqual({});
   });
 
-  it('gender female → 2, anything else → 1', () => {
+  it('gender female → 2, male → 1', () => {
     expect(changes({ gender: 'female', rGender: 'male' })).toEqual({ gender: 2 });
     expect(changes({ gender: 'male', rGender: 'female' })).toEqual({ gender: 1 });
+  });
+
+  it('an unknown club gender is never written as male (I4)', () => {
+    expect(changes({ gender: 'other', rGender: 'female' })).toEqual({});
+    expect(changes({ gender: 'diverse', rGender: '' })).toEqual({});
   });
 
   it('landline goes to telefon, mobile to mobile', () => {

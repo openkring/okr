@@ -207,7 +207,10 @@ export function getMismatches(item: SrvIndex, today: string): SrvMismatch[] {
   // From the member list: always comparable.
   cmp('firstName', v(item.firstName), v(item.rFirstName));
   cmp('lastName', v(item.lastName), v(item.rLastName));
-  cmp('gender', v(item.gender), v(item.rGender));
+  // Regasoft knows only 1 = male and 2 = female: any other club gender is ours to fix, never written (I4).
+  const gender = v(item.gender);
+  if (gender === 'male' || gender === 'female') cmp('gender', gender, v(item.rGender));
+  else if (gender || v(item.rGender)) result.push({ field: 'gender', okrValue: gender, rValue: v(item.rGender), kind: 'bk' });
   cmpFullDate('dateOfBirth', v(item.dateOfBirth), v(item.rDateOfBirth));
   cmp('email', v(item.mEmail), v(item.rEmail), (a, b) => lower(a) === lower(b));
 
@@ -297,7 +300,7 @@ export function getSrvChanges(item: SrvIndex, today: string): SrvChanges {
   for (const m of getMismatches(item, today)) {
     if (m.kind !== 'fix') continue;
     switch (m.field) {
-      case 'gender': changes.gender = item.gender === 'female' ? 2 : 1; break;
+      case 'gender': changes.gender = item.gender === 'female' ? 2 : 1; break;   // a fix row exists only for male/female
       case 'dateOfBirth': changes.birthday = m.okrValue; break;
       case 'zipCode': changes.postcode = m.okrValue; break;
       case 'phone': changes[classifyPhone(item.mPhone)] = m.okrValue; break;
