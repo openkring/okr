@@ -77,7 +77,21 @@
   },
   "derived": {
     "key_is_field_key": "Dieser Name gehört schon zu einer Frage. Wähle einen anderen.",
-    "key_taken": "Diesen Namen gibt es schon. Wähle einen anderen."
+    "key_taken": "Diesen Namen gibt es schon. Wähle einen anderen.",
+    "title": "Berechnete Werte",
+    "intro": "Diese Werte füllt niemand aus. Sie ergeben sich aus den Antworten: Es gilt der erste Fall, der zutrifft, sonst der Wert unter «sonst».",
+    "key": "Gespeichert unter *",
+    "key_helper": "Unter diesem Namen wird der Wert gespeichert, in camelCase: klein beginnen, jedes weitere Wort gross (z.B. applicationAs).",
+    "type": "Gespeichert als",
+    "when": "Wenn …",
+    "then": "dann Wert",
+    "otherwise": "sonst Wert",
+    "add": "+ Berechneter Wert",
+    "remove": "Berechneten Wert entfernen",
+    "add_case": "+ Fall",
+    "remove_case": "Fall entfernen",
+    "set_by_mapping": "Diesen Wert legt die gewählte Sammlung schon fest. Was du hier berechnest, wird deshalb nicht gespeichert.",
+    "no_fields": "Das Formular hat noch keine Fragen, aus denen sich ein Wert berechnen lässt."
   },
   "canvas_empty": "Ziehe Felder aus der Bibliothek hierher.",
   "library": "Feldbibliothek",
@@ -130,7 +144,8 @@
       "invalid_json": "Ungültiges JSON in der Zwischenablage.",
       "invalid_format": "Ungültiges Format: erwartet ein Objekt mit einem \"fields\"-Array.",
       "applied": "{count} Felder aus der Zwischenablage übernommen. Zum Speichern bestätigen."
-    }
+    },
+    "preview_derived": "Wird gespeichert als:"
   },
   "definition": {
     "create_title": "Neues Formular",
@@ -143,7 +158,9 @@
     "select_placeholder": "Auswählen…",
     "pdf_template": "PDF-Template-ID (optional)",
     "pdf_template_placeholder": "Template-ID aus dem Dokument-Generator",
-    "fields": "Felder ({count}) – im Formular-Editor anpassbar"
+    "fields": "Felder ({count}) – im Formular-Editor anpassbar",
+    "filler_help": "Hilfetext für Ausfüllende",
+    "filler_help_placeholder": "Erscheint im Hinweisfenster (i) des Formulars, nach den allgemeinen Hinweisen."
   },
   "decrypt": {
     "title": "Dateien entschlüsseln",

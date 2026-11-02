@@ -77,7 +77,21 @@
   },
   "derived": {
     "key_is_field_key": "This name already belongs to a question. Choose a different one.",
-    "key_taken": "This name is already taken. Choose a different one."
+    "key_taken": "This name is already taken. Choose a different one.",
+    "title": "Calculated values",
+    "intro": "Nobody fills in these values. They follow from the answers: the first case that applies counts, otherwise the value under «otherwise».",
+    "key": "Saved as field *",
+    "key_helper": "The value is saved under this name, in camelCase: start lowercase, capitalise every further word (e.g. applicationAs).",
+    "type": "Saved as",
+    "when": "If …",
+    "then": "then value",
+    "otherwise": "otherwise value",
+    "add": "+ Calculated value",
+    "remove": "Remove calculated value",
+    "add_case": "+ Case",
+    "remove_case": "Remove case",
+    "set_by_mapping": "The chosen collection already sets this value. What you calculate here is therefore not saved.",
+    "no_fields": "The form has no questions yet from which a value could be calculated."
   },
   "canvas_empty": "Drag fields here from the library.",
   "library": "Field library",
@@ -130,7 +144,8 @@
       "invalid_json": "Invalid JSON in the clipboard.",
       "invalid_format": "Invalid format: expected an object with a \"fields\" array.",
       "applied": "{count} fields taken from the clipboard. Confirm to save."
-    }
+    },
+    "preview_derived": "Will be saved as:"
   },
   "definition": {
     "create_title": "New form",
@@ -143,7 +158,9 @@
     "select_placeholder": "Select…",
     "pdf_template": "PDF template ID (optional)",
     "pdf_template_placeholder": "Template ID from the document generator",
-    "fields": "Fields ({count}) – editable in the form editor"
+    "fields": "Fields ({count}) – editable in the form editor",
+    "filler_help": "Help text for people filling in the form",
+    "filler_help_placeholder": "Shown in the form's info window (i), after the general notes."
   },
   "decrypt": {
     "title": "Decrypt files",

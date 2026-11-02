@@ -77,7 +77,21 @@
   },
   "derived": {
     "key_is_field_key": "Questo nome appartiene già a una domanda. Scegline un altro.",
-    "key_taken": "Questo nome esiste già. Scegline un altro."
+    "key_taken": "Questo nome esiste già. Scegline un altro.",
+    "title": "Valori calcolati",
+    "intro": "Nessuno compila questi valori. Risultano dalle risposte: vale il primo caso che si verifica, altrimenti il valore sotto «altrimenti».",
+    "key": "Salvato come *",
+    "key_helper": "Il valore viene salvato con questo nome, in camelCase: inizia in minuscolo, ogni parola successiva con la maiuscola (p. es. applicationAs).",
+    "type": "Tipo di valore",
+    "when": "Se …",
+    "then": "allora valore",
+    "otherwise": "altrimenti valore",
+    "add": "+ Valore calcolato",
+    "remove": "Rimuovi valore calcolato",
+    "add_case": "+ Caso",
+    "remove_case": "Rimuovi caso",
+    "set_by_mapping": "La raccolta scelta fissa già questo valore. Quello che calcoli qui quindi non viene salvato.",
+    "no_fields": "Il modulo non ha ancora domande da cui calcolare un valore."
   },
   "canvas_empty": "Trascina qui i campi dalla libreria.",
   "library": "Libreria di campi",
@@ -130,7 +144,8 @@
       "invalid_json": "JSON non valido negli appunti.",
       "invalid_format": "Formato non valido: previsto un oggetto con un array \"fields\".",
       "applied": "{count} campi ripresi dagli appunti. Confermare per salvare."
-    }
+    },
+    "preview_derived": "Verrà salvato come:"
   },
   "definition": {
     "create_title": "Nuovo modulo",
@@ -143,7 +158,9 @@
     "select_placeholder": "Selezionare…",
     "pdf_template": "ID modello PDF (facoltativo)",
     "pdf_template_placeholder": "ID modello dal generatore di documenti",
-    "fields": "Campi ({count}) – modificabili nell’editor dei moduli"
+    "fields": "Campi ({count}) – modificabili nell’editor dei moduli",
+    "filler_help": "Testo di aiuto per chi compila",
+    "filler_help_placeholder": "Appare nella finestra informativa (i) del modulo, dopo le indicazioni generali."
   },
   "decrypt": {
     "title": "Decifrare i file",

@@ -1,4 +1,7 @@
-import { CategoryListModel, ConditionOp, Field, FieldCondition, FieldOption, VisibilityRule } from '@okr/shared-models';
+import {
+  CategoryListModel, ConditionOp, DerivedValue, Field, FieldCondition, FieldOption, FormDefinitionModel, FormMapping, VisibilityRule,
+} from '@okr/shared-models';
+import { computeDerivedValues, getVisibleFieldIds } from '@okr/shared-util-core';
 
 import { isDisplayField } from './field-kind';
 
@@ -202,4 +205,31 @@ export function errorsUnder(errors: Record<string, string[]>, prefix: string): R
     if (key.startsWith(prefix)) result[key.slice(prefix.length)] = messages;
   }
   return result;
+}
+
+/**
+ * The derived keys the mapping's `defaults` also set. Defaults win on the server, so such a derived
+ * value is never stored — the builder warns (spec §6), it does not block saving.
+ */
+export function derivedKeysSetByMapping(derived: DerivedValue[] | undefined, mapping: FormMapping | undefined): Set<string> {
+  const defaults = mapping?.defaults ?? {};
+  const keys = (Array.isArray(derived) ? derived : []).map(d => d?.key).filter((k): k is string => !!k);
+  return new Set(keys.filter(k => Object.prototype.hasOwnProperty.call(defaults, k)));
+}
+
+/**
+ * What a submission with these answers would store as derived values, as `key = value` lines
+ * (builder preview, spec §6/§16.4). Visibility is evaluated first, as on the server: a hidden
+ * controlling answer counts as absent. A derived value with no matching case and no «sonst» is left out.
+ */
+export function previewDerivedValues(
+  definition: Pick<FormDefinitionModel, 'fields' | 'derivedValues'>,
+  values: Record<string, unknown>,
+  today: string,
+): string[] {
+  const fields = definition.fields ?? [];
+  const answers = values ?? {};
+  const visible = getVisibleFieldIds(fields, answers, today);
+  const result = computeDerivedValues(definition.derivedValues ?? [], fields, answers, visible, today);
+  return Object.entries(result).map(([key, value]) => `${key} = ${value}`);
 }

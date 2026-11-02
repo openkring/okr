@@ -30,6 +30,12 @@ describe('formDefinitionValidations', () => {
     expect(formDefinitionValidations(newDefinition({ description: 'x'.repeat(DESCRIPTION_LENGTH + 1) })).hasErrors('description')).toBe(true);
   });
 
+  it('accepts an empty or missing filler help text but rejects one longer than DESCRIPTION_LENGTH', () => {
+    expect(formDefinitionValidations(newDefinition({ fillerHelpText: '' })).isValid()).toBe(true);
+    expect(formDefinitionValidations({ ...newDefinition(), fillerHelpText: undefined } as unknown as FormDefinitionModel).isValid()).toBe(true);
+    expect(formDefinitionValidations(newDefinition({ fillerHelpText: 'x'.repeat(DESCRIPTION_LENGTH + 1) })).hasErrors('fillerHelpText')).toBe(true);
+  });
+
   it('rejects a collection target without a mapping', () => {
     const fd = newDefinition({ target: { kind: 'collection', mappingKey: '', modelType: '', collectionName: '' } });
     expect(formDefinitionValidations(fd).hasErrors('target.mappingKey')).toBe(true);

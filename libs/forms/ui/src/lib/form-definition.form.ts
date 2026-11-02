@@ -1,9 +1,11 @@
 import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonList, IonNote, IonRow } from '@ionic/angular';
+import {
+  IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonList, IonNote, IonRow,
+} from '@ionic/angular';
 
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, URL_LENGTH } from '@okr/shared-constants';
-import { FormDefinitionModel, SubmissionTarget } from '@okr/shared-models';
+import { CategoryListModel, DerivedValue, FormDefinitionModel, FormMapping, SubmissionTarget } from '@okr/shared-models';
 import {
   ErrorNote, NotesInput, NotesInputI18n, RadioGroup, RadioGroupI18n,
   StringSelect, StringSelectI18n, TextInput, TextInputI18n,
@@ -11,17 +13,25 @@ import {
 import { coerceBoolean, fill } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
-import { FORM_MAPPINGS, FormI18n, formDefinitionValidations, getPrefillFields } from '@okr/forms-util';
+import {
+  derivedKeysSetByMapping, DerivedValuesModel, derivedValuesValidations, errorsUnder, FORM_MAPPINGS, FormI18n,
+  formDefinitionValidations, getFormMapping, getPrefillFields,
+} from '@okr/forms-util';
+
+import { DerivedValuesInput } from './derived-values.input';
 
 const TARGET_KINDS: SubmissionTarget['kind'][] = ['collection', 'url'];
 
-/** Settings of a form definition: name, description, key, submission target and PDF template. The parent modal drives saving. */
+/**
+ * Settings of a form definition: name, description, key, submission target, PDF template, the help text for
+ * the people filling it in, and the «Berechnete Werte». The parent modal drives saving.
+ */
 @Component({
   selector: 'okr-form-definition-form',
   standalone: true,
   imports: [
-    ErrorNote, TextInput, NotesInput, RadioGroup, StringSelect,
-    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonList, IonItem, IonLabel, IonNote,
+    ErrorNote, TextInput, NotesInput, RadioGroup, StringSelect, DerivedValuesInput,
+    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCardSubtitle, IonList, IonItem, IonLabel, IonNote,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -72,7 +82,26 @@ const TARGET_KINDS: SubmissionTarget['kind'][] = ['collection', 'url'];
                     [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
+              <ion-row>
+                <ion-col size="12">
+                  <okr-notes-input [i18n]="fillerHelpTextI18n()" [value]="fillerHelpText()" (valueChange)="onFieldChange('fillerHelpText', $event)"
+                    [maxLength]="descriptionLength" [encryptable]="false" [readOnly]="isReadOnly()" [errors]="fillerHelpTextErrors()" />
+                </ion-col>
+              </ion-row>
             </ion-grid>
+          </ion-card-content>
+        </ion-card>
+
+        <!-- «Berechnete Werte» (spec §6): set from the answers, never typed by the filler -->
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>{{ i18n().derived_title() }}</ion-card-title>
+            <ion-card-subtitle>{{ i18n().derived_intro() }}</ion-card-subtitle>
+          </ion-card-header>
+          <ion-card-content class="ion-no-padding">
+            <okr-derived-values-input [derived]="derivedValues()" (derivedChange)="onDerivedChange($event)"
+              [fields]="fields()" [categories]="categories()" [i18n]="i18n()" [errors]="derivedErrors()"
+              [showProperty]="hasProperties()" [keysSetByMapping]="keysSetByMapping()" [readOnly]="isReadOnly()" />
           </ion-card-content>
         </ion-card>
 
@@ -116,6 +145,8 @@ export class FormDefinitionForm {
   public formData = model.required<FormDefinitionModel>();
   /** create: picking a collection replaces the field preview with its template; edit: saved fields are kept */
   public readonly mode = input<'create' | 'edit'>('edit');
+  /** the category lists, for the items of a category field in a derived value's condition */
+  public readonly categories = input<CategoryListModel[]>([]);
   public readonly readOnly = input(false);
   public readonly showForm = input(true);
 
@@ -123,9 +154,16 @@ export class FormDefinitionForm {
   public readonly dirty = output<boolean>();
   public readonly valid = output<boolean>();
 
-  // signal form — wraps formData with Vest validation
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  protected readonly formDefinitionForm = form(this.formData, (path) => validateVestTree(path, formDefinitionValidations as any));
+  // signal form — wraps formData with Vest validation: the settings suite, and the «Berechnete Werte» suite,
+  // which needs the derived values together with the fields (legacy docs have no derivedValues: coalesce)
+  private readonly derivedSuite = (model: FormDefinitionModel) =>
+    derivedValuesValidations({ derivedValues: model.derivedValues ?? [], fields: model.fields ?? [] } satisfies DerivedValuesModel);
+  protected readonly formDefinitionForm = form(this.formData, (path) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, formDefinitionValidations as any);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.derivedSuite as any);
+  });
 
   // per-field Vest errors for the notes under each field
   private readonly validationResult = vestErrors(this.formDefinitionForm);
@@ -133,6 +171,9 @@ export class FormDefinitionForm {
   protected descriptionErrors = computed(() => this.validationResult().getErrors('description'));
   protected mappingKeyErrors = computed(() => this.validationResult().getErrors('target.mappingKey'));
   protected urlErrors = computed(() => this.validationResult().getErrors('target.url'));
+  protected fillerHelpTextErrors = computed(() => this.validationResult().getErrors('fillerHelpText'));
+  /** the derived values' errors, keyed relative to the list — the card shows them under each of its controls */
+  protected derivedErrors = computed(() => errorsUnder(this.validationResult().getErrors(), 'derivedValues.'));
 
   constructor() {
     effect(() => this.valid.emit(this.formDefinitionForm().valid()));
@@ -145,6 +186,16 @@ export class FormDefinitionForm {
   protected readonly formKey = computed(() => this.formData().formKey ?? '');
   protected readonly pdfTemplateId = computed(() => this.formData().pdfTemplateId ?? '');
   protected readonly fields = computed(() => this.formData().fields ?? []);
+  protected readonly fillerHelpText = computed(() => this.formData().fillerHelpText ?? '');
+  protected readonly derivedValues = computed(() => this.formData().derivedValues ?? []);
+  /** the chosen collection mapping (undefined for a URL target) */
+  private readonly mapping = computed<FormMapping | undefined>(() => {
+    const target = this.formData().target;
+    return target?.kind === 'collection' ? getFormMapping(target.mappingKey) : undefined;
+  });
+  /** only a mapping with typed properties offers «Als eigene Angabe speichern» */
+  protected readonly hasProperties = computed(() => !!this.mapping()?.propertiesField);
+  protected readonly keysSetByMapping = computed(() => derivedKeysSetByMapping(this.derivedValues(), this.mapping()));
   protected readonly targetKind = computed(() => this.formData().target.kind);
   protected readonly collectionMappingKey = computed(() => {
     const target = this.formData().target;
@@ -179,10 +230,18 @@ export class FormDefinitionForm {
   protected readonly pdfTemplateI18n = computed<TextInputI18n>(() => ({
     name: 'pdfTemplateId', label: this.i18n().def_pdf_template(), placeholder: this.i18n().def_pdf_template_ph(), helper: '',
   }));
+  protected readonly fillerHelpTextI18n = computed<NotesInputI18n>(() => ({
+    name: 'fillerHelpText', label: this.i18n().def_filler_help(), placeholder: this.i18n().def_filler_help_ph(),
+  }));
 
-  protected onFieldChange(fieldName: 'name' | 'description' | 'pdfTemplateId', fieldValue: string): void {
+  protected onFieldChange(fieldName: 'name' | 'description' | 'pdfTemplateId' | 'fillerHelpText', fieldValue: string): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+  }
+
+  protected onDerivedChange(derivedValues: DerivedValue[]): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({ ...vm, derivedValues }));
   }
 
   protected setTargetKind(kind: string): void {

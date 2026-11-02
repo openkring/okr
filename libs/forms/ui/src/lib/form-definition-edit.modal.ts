@@ -2,7 +2,7 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
-import { FormDefinitionModel } from '@okr/shared-models';
+import { CategoryListModel, FormDefinitionModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { safeStructuredClone } from '@okr/shared-util-core';
@@ -30,6 +30,7 @@ import { FormDefinitionForm } from './form-definition.form';
           (formDataChange)="onFormDataChange($event)"
           [i18n]="i18n"
           [mode]="mode()"
+          [categories]="categories()"
           [readOnly]="false"
           [showForm]="showForm()"
           (dirty)="formDirty.set($event)"
@@ -47,6 +48,8 @@ export class FormDefinitionEditModal {
   // inputs
   public readonly form = input.required<FormDefinitionModel>();
   public readonly mode = input.required<'create' | 'edit'>();
+  /** the tenant's category lists, for conditions on a category field in the «Berechnete Werte» */
+  public readonly categories = input<CategoryListModel[]>([]);
 
   // signals
   protected formDirty = signal(false);

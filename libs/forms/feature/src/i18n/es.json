@@ -77,7 +77,21 @@
   },
   "derived": {
     "key_is_field_key": "Este nombre ya pertenece a una pregunta. Elige otro.",
-    "key_taken": "Este nombre ya existe. Elige otro."
+    "key_taken": "Este nombre ya existe. Elige otro.",
+    "title": "Valores calculados",
+    "intro": "Nadie rellena estos valores. Resultan de las respuestas: vale el primer caso que se cumple, si no, el valor de «si no».",
+    "key": "Guardado como *",
+    "key_helper": "El valor se guarda con este nombre, en camelCase: empieza en minúscula y cada palabra siguiente con mayúscula (p. ej. applicationAs).",
+    "type": "Tipo de valor",
+    "when": "Si …",
+    "then": "entonces valor",
+    "otherwise": "si no, valor",
+    "add": "+ Valor calculado",
+    "remove": "Quitar valor calculado",
+    "add_case": "+ Caso",
+    "remove_case": "Quitar caso",
+    "set_by_mapping": "La colección elegida ya fija este valor. Por eso lo que calculas aquí no se guarda.",
+    "no_fields": "El formulario todavía no tiene preguntas a partir de las cuales calcular un valor."
   },
   "canvas_empty": "Arrastre aquí los campos desde la biblioteca.",
   "library": "Biblioteca de campos",
@@ -130,7 +144,8 @@
       "invalid_json": "JSON no válido en el portapapeles.",
       "invalid_format": "Formato no válido: se esperaba un objeto con un array \"fields\".",
       "applied": "{count} campos tomados del portapapeles. Confirme para guardar."
-    }
+    },
+    "preview_derived": "Se guardará como:"
   },
   "definition": {
     "create_title": "Nuevo formulario",
@@ -143,7 +158,9 @@
     "select_placeholder": "Seleccionar…",
     "pdf_template": "ID de plantilla PDF (opcional)",
     "pdf_template_placeholder": "ID de plantilla del generador de documentos",
-    "fields": "Campos ({count}) – editables en el editor de formularios"
+    "fields": "Campos ({count}) – editables en el editor de formularios",
+    "filler_help": "Texto de ayuda para quien rellena",
+    "filler_help_placeholder": "Aparece en la ventana de información (i) del formulario, después de las indicaciones generales."
   },
   "decrypt": {
     "title": "Descifrar archivos",

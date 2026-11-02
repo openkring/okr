@@ -73,7 +73,7 @@ export const FormDefinitionStore = signalStore(
       const modal = await store.modalController.create({
         component: FormDefinitionEditModal,
         cssClass: 'full-screen-modal',
-        componentProps: { form, mode: 'create' },
+        componentProps: { form, mode: 'create', categories: store.appStore.allCategories() },
       });
       await modal.present();
       const { data, role } = await modal.onDidDismiss<FormDefinitionModel>();
@@ -89,7 +89,7 @@ export const FormDefinitionStore = signalStore(
       const modal = await store.modalController.create({
         component: FormDefinitionEditModal,
         cssClass: 'full-screen-modal',
-        componentProps: { form, mode: 'edit' },
+        componentProps: { form, mode: 'edit', categories: store.appStore.allCategories() },
       });
       await modal.present();
       const { data, role } = await modal.onDidDismiss<FormDefinitionModel>();

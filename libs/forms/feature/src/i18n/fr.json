@@ -77,7 +77,21 @@
   },
   "derived": {
     "key_is_field_key": "Ce nom est déjà utilisé par une question. Choisis-en un autre.",
-    "key_taken": "Ce nom existe déjà. Choisis-en un autre."
+    "key_taken": "Ce nom existe déjà. Choisis-en un autre.",
+    "title": "Valeurs calculées",
+    "intro": "Personne ne remplit ces valeurs. Elles découlent des réponses : le premier cas qui s'applique compte, sinon la valeur sous «sinon».",
+    "key": "Enregistré sous *",
+    "key_helper": "La valeur est enregistrée sous ce nom, en camelCase : commence en minuscule, chaque mot suivant avec une majuscule (p. ex. applicationAs).",
+    "type": "Enregistré comme",
+    "when": "Si …",
+    "then": "alors valeur",
+    "otherwise": "sinon valeur",
+    "add": "+ Valeur calculée",
+    "remove": "Retirer la valeur calculée",
+    "add_case": "+ Cas",
+    "remove_case": "Retirer le cas",
+    "set_by_mapping": "La collection choisie fixe déjà cette valeur. Ce que tu calcules ici ne sera donc pas enregistré.",
+    "no_fields": "Le formulaire n'a pas encore de questions à partir desquelles calculer une valeur."
   },
   "canvas_empty": "Faites glisser les champs de la bibliothèque ici.",
   "library": "Bibliothèque de champs",
@@ -130,7 +144,8 @@
       "invalid_json": "JSON invalide dans le presse-papiers.",
       "invalid_format": "Format invalide : un objet avec un tableau \"fields\" est attendu.",
       "applied": "{count} champs repris du presse-papiers. Confirmez pour enregistrer."
-    }
+    },
+    "preview_derived": "Sera enregistré comme :"
   },
   "definition": {
     "create_title": "Nouveau formulaire",
@@ -143,7 +158,9 @@
     "select_placeholder": "Sélectionner…",
     "pdf_template": "ID du modèle PDF (facultatif)",
     "pdf_template_placeholder": "ID du modèle du générateur de documents",
-    "fields": "Champs ({count}) – modifiables dans l’éditeur de formulaire"
+    "fields": "Champs ({count}) – modifiables dans l’éditeur de formulaire",
+    "filler_help": "Texte d'aide pour les personnes qui remplissent",
+    "filler_help_placeholder": "Apparaît dans la fenêtre d'info (i) du formulaire, après les remarques générales."
   },
   "decrypt": {
     "title": "Déchiffrer les fichiers",

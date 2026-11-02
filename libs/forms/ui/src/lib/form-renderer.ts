@@ -72,6 +72,8 @@ export class FormRenderer implements OnInit {
   /** the tenant's category lists — a 'category' field looks its list up here by name */
   public readonly categories = input<CategoryListModel[]>([]);
   public readonly submitted = output<Record<string, unknown>>();
+  /** every answer, hidden ones included (`getRawValue()`), after each change — for the builder preview */
+  public readonly valueChange = output<Record<string, unknown>>();
 
   protected readonly sortedFields = computed(() =>
     [...this.definition().fields].sort((a, b) => a.order - b.order)
@@ -126,7 +128,10 @@ export class FormRenderer implements OnInit {
     this._form = new FormGroup(controls);
 
     this.updateVisibility();
-    this._form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.updateVisibility());
+    this._form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.updateVisibility();
+      this.valueChange.emit(this._form.getRawValue() as Record<string, unknown>);
+    });
   }
 
   private updateVisibility(): void {

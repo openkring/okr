@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { CdkDragDrop, CdkDropList, CdkDropListGroup, CdkDrag, moveItemInArray } from '@angular/cdk/drag-drop';
 import {
   AlertController, IonButton, IonChip, IonContent, IonIcon, IonItem, IonLabel, IonNote, IonSegment, IonSegmentButton, IonToolbar, ModalController,
@@ -7,13 +7,13 @@ import {
 import { AppStore } from '@okr/shared-feature';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { fill, safeStructuredClone } from '@okr/shared-util-core';
+import { fill, getTodayStr, safeStructuredClone } from '@okr/shared-util-core';
 import { Field, FormDefinitionModel, FormMapping } from '@okr/shared-models';
 
 import { FormDefinitionService } from '@okr/forms-data-access';
 import {
   conditionalBlockMembers, conditionOpLabels, describeRule, fieldsReferencing, findRuleIssues, FORM_I18N_KEYS, FormI18n,
-  getFormMapping, removeReferencesTo, ruleConnectors, RuleIssue,
+  getFormMapping, previewDerivedValues, removeReferencesTo, ruleConnectors, RuleIssue,
 } from '@okr/forms-util';
 import { I18nService } from '@okr/shared-i18n';
 import { FieldConfigModal, FieldTypeDef, FieldTypeLibrary, FormRenderer } from '@okr/forms-ui';
@@ -65,6 +65,7 @@ function newField(def: FieldTypeDef, order: number): Field {
     .cdk-drag-placeholder { opacity: 0.3; }
     .cdk-drop-list-dragging .field-row:not(.cdk-drag-placeholder) { transition: transform 250ms cubic-bezier(0,0,0.2,1); }
     .source-actions { display: flex; gap: 8px; padding: 8px 16px 0; }
+    .derived-preview { display: block; padding: 8px 0 0; }
     .source-view   { margin: 8px 16px; padding: 12px; background: var(--ion-color-light); border-radius: 6px; font-family: monospace; font-size: 12px; white-space: pre; overflow: auto; }
   `],
   template: `
@@ -142,7 +143,14 @@ function newField(def: FieldTypeDef, order: number): Field {
               <div class="canvas-empty">{{ i18n.preview_empty() }}</div>
             } @else {
               <div style="padding: 8px 16px 24px;">
-                <okr-form-renderer [definition]="previewDefinition()" [categories]="appStore.allCategories()" [showSubmit]="false" />
+                <!-- re-mounted per definition: the renderer builds its controls once, on init -->
+                @for (definition of previewDefinitions(); track definition) {
+                  <okr-form-renderer [definition]="definition" [categories]="appStore.allCategories()" [showSubmit]="false"
+                    (valueChange)="previewValues.set($event)" />
+                }
+                @if (hasDerivedValues()) {
+                  <ion-note class="derived-preview">{{ i18n.preview_derived() }} {{ derivedPreview() }}</ion-note>
+                }
               </div>
             }
           } @else {
@@ -190,6 +198,25 @@ export class FormBuilderEditor {
     ...this.formData(),
     fields: [...this.fields()].sort((a, b) => a.order - b.order),
   }));
+
+  /**
+   * The preview definition as a one-element list, so `@for … track` re-mounts the renderer whenever it changes:
+   * the renderer builds its controls (and their visibility) once, on init — a field added while the preview is
+   * open would otherwise have no control and stay hidden until the next answer.
+   */
+  protected readonly previewDefinitions = computed(() => [this.previewDefinition()]);
+
+  /**
+   * The preview's answers (hidden ones included), as the renderer reports them. Back to «nothing answered»
+   * whenever the definition changes or the preview is opened again, because the renderer then starts empty too.
+   */
+  protected readonly previewValues = linkedSignal<unknown, Record<string, unknown>>({
+    source: () => [this.previewDefinition(), this.viewMode()], computation: () => ({}),
+  });
+  protected readonly hasDerivedValues = computed(() => (this.formData().derivedValues ?? []).length > 0);
+  /** «applicationAs = youth, …» — what a submission with the preview's answers would store as derived values. */
+  protected readonly derivedPreview = computed(() =>
+    previewDerivedValues(this.previewDefinition(), this.previewValues(), getTodayStr()).join(', ') || '–');
 
   /** JSON source of the current form definition — editable externally via copy/paste. */
   protected sourceCode = computed(() => JSON.stringify(this.previewDefinition(), null, 2));

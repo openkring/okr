@@ -75,6 +75,7 @@ export const FORM_I18N_KEYS = {
   source_invalid_format:      PFX + 'builder.source.invalid_format',
   source_applied:             PFX + 'builder.source.applied',
   discard:                    PFX + 'builder.discard',
+  preview_derived:            PFX + 'builder.preview_derived',
 
   // definition-edit modal
   def_create_title:           PFX + 'definition.create_title',
@@ -88,6 +89,24 @@ export const FORM_I18N_KEYS = {
   def_pdf_template:           PFX + 'definition.pdf_template',
   def_pdf_template_ph:        PFX + 'definition.pdf_template_placeholder',
   def_fields:                 PFX + 'definition.fields',
+  def_filler_help:            PFX + 'definition.filler_help',
+  def_filler_help_ph:         PFX + 'definition.filler_help_placeholder',
+
+  // «Berechnete Werte» card (1.125, spec §6)
+  derived_title:              PFX + 'derived.title',
+  derived_intro:              PFX + 'derived.intro',
+  derived_key:                PFX + 'derived.key',
+  derived_key_helper:         PFX + 'derived.key_helper',
+  derived_type:               PFX + 'derived.type',
+  derived_when:               PFX + 'derived.when',
+  derived_then:               PFX + 'derived.then',
+  derived_otherwise:          PFX + 'derived.otherwise',
+  derived_add:                PFX + 'derived.add',
+  derived_remove:             PFX + 'derived.remove',
+  derived_add_case:           PFX + 'derived.add_case',
+  derived_remove_case:        PFX + 'derived.remove_case',
+  derived_set_by_mapping:     PFX + 'derived.set_by_mapping',
+  derived_no_fields:          PFX + 'derived.no_fields',
 
   // field-config modal
   field_text:                 PFX + 'field.text',

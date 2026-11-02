@@ -15,6 +15,7 @@ import { isInputField } from './field-kind';
 export const formDefinitionValidations = staticSuite((model: FormDefinitionModel) => {
   stringValidations('name', model.name, LONG_NAME_LENGTH, 0, true);
   stringValidations('description', model.description ?? '', DESCRIPTION_LENGTH);
+  stringValidations('fillerHelpText', model.fillerHelpText ?? '', DESCRIPTION_LENGTH);
 
   omitWhen(model.target?.kind !== 'collection', () => {
     stringValidations('target.mappingKey', (model.target as { mappingKey?: string }).mappingKey ?? '', undefined, 0, true);

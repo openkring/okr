@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { CategoryListModel, ConditionOp, Field, FieldType, VisibilityRule } from '@okr/shared-models';
+import { CategoryListModel, ConditionOp, DerivedValue, Field, FieldType, FormMapping, VisibilityRule } from '@okr/shared-models';
 
 import {
   conditionalBlockMembers, conditionChoices, conditionOpsFor, conditionValueKind, controllingFieldCandidates, describeRule,
-  errorsUnder, fieldsReferencing, findRuleIssues, removeReferencesTo,
+  derivedKeysSetByMapping, errorsUnder, fieldsReferencing, findRuleIssues, previewDerivedValues, removeReferencesTo,
 } from './form-rules.util';
 
 function f(id: string, type: FieldType, order: number, extra: Record<string, unknown> = {}): Field {
@@ -277,5 +277,73 @@ describe('errorsUnder', () => {
   it('keeps the errors under the prefix, keyed relative to it', () => {
     const errors = { label: ['required'], 'visibleIf.conditions': ['required'], 'visibleIf.conditions.0.op': ['required'] };
     expect(errorsUnder(errors, 'visibleIf.')).toEqual({ conditions: ['required'], 'conditions.0.op': ['required'] });
+  });
+});
+
+describe('derivedKeysSetByMapping', () => {
+  const mapping: FormMapping = {
+    mappingKey: 'applications.junior', label: 'Junioren', modelType: 'ApplicationModel', collectionName: 'applications',
+    defaults: { state: 'applied', applicationAs: 'youth' },
+  };
+  const derived = (key: string): DerivedValue => ({ key, cases: [] });
+
+  it('returns the derived keys that are also mapping defaults', () => {
+    expect([...derivedKeysSetByMapping([derived('applicationAs'), derived('ageGroup')], mapping)]).toEqual(['applicationAs']);
+  });
+
+  it('is empty without a mapping, without defaults or without derived values', () => {
+    expect(derivedKeysSetByMapping([derived('applicationAs')], undefined).size).toBe(0);
+    expect(derivedKeysSetByMapping([derived('applicationAs')], { ...mapping, defaults: undefined }).size).toBe(0);
+    expect(derivedKeysSetByMapping(undefined, mapping).size).toBe(0);
+  });
+
+  it('ignores blank keys', () => {
+    expect(derivedKeysSetByMapping([derived('')], { ...mapping, defaults: { '': 'x' } }).size).toBe(0);
+  });
+});
+
+describe('previewDerivedValues (spec §6 SCS rule)', () => {
+  const fields: Field[] = [
+    f('dob', 'date', 0, { key: 'dateOfBirth' }),
+    f('exp', 'checkbox', 1, { key: 'rowingExperience' }),
+  ];
+  const applicationAs: DerivedValue = {
+    key: 'applicationAs',
+    cases: [
+      { when: { match: 'all', conditions: [{ fieldId: 'dob', op: 'ageLt', value: 20 }] }, value: 'youth' },
+      { when: { match: 'all', conditions: [{ fieldId: 'exp', op: 'isChecked' }] }, value: 'transfer' },
+    ],
+    otherwise: 'adult',
+  };
+  const today = '20261102';
+  const preview = (values: Record<string, unknown>) => previewDerivedValues({ fields, derivedValues: [applicationAs] }, values, today);
+
+  it('born 2010 -> youth', () => {
+    expect(preview({ dateOfBirth: '20100315', rowingExperience: true })).toEqual(['applicationAs = youth']);
+  });
+
+  it('born 1990 with rowing experience -> transfer', () => {
+    expect(preview({ dateOfBirth: '19900101', rowingExperience: true })).toEqual(['applicationAs = transfer']);
+  });
+
+  it('born 1990 without rowing experience -> adult', () => {
+    expect(preview({ dateOfBirth: '19900101', rowingExperience: false })).toEqual(['applicationAs = adult']);
+  });
+
+  it('leaves out a derived value with no matching case and no otherwise', () => {
+    const noOtherwise = { ...applicationAs, otherwise: undefined };
+    expect(previewDerivedValues({ fields, derivedValues: [noOtherwise] }, { dateOfBirth: '19900101' }, today)).toEqual([]);
+  });
+
+  it('copes with a legacy definition without derived values', () => {
+    expect(previewDerivedValues({ fields } as { fields: Field[]; derivedValues: DerivedValue[] }, {}, today)).toEqual([]);
+  });
+
+  it('treats a hidden controlling answer as absent', () => {
+    const hiddenExp = [fields[0], f('exp', 'checkbox', 1, {
+      key: 'rowingExperience', visibleIf: { match: 'all', conditions: [{ fieldId: 'dob', op: 'ageGte', value: 60 }] },
+    })];
+    expect(previewDerivedValues({ fields: hiddenExp, derivedValues: [applicationAs] }, { dateOfBirth: '19900101', rowingExperience: true }, today))
+      .toEqual(['applicationAs = adult']);
   });
 });
