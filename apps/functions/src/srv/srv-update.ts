@@ -93,6 +93,14 @@ export function mergeSrvRecord(raw: SrvRecord, changes: SrvChanges, opts: { test
   if (rejected.length > 0) {
     throw new HttpsError('invalid-argument', `Not writable to Regasoft: ${rejected.join(', ')}`);
   }
+  // Only a string, a number or null (clear) is a value; an object or a boolean would reach
+  // Regasoft as '[object Object]' / 'true' (the client is untrusted).
+  const badValue = Object.entries(changes)
+    .filter(([, v]) => v !== undefined && v !== null && typeof v !== 'string' && typeof v !== 'number')
+    .map(([k]) => k);
+  if (badValue.length > 0) {
+    throw new HttpsError('invalid-argument', `Change values must be a string, a number or null: ${badValue.join(', ')}`);
+  }
 
   const merged: SrvRecord = { ...raw };
   for (const [key, value] of Object.entries(changes)) {
@@ -175,8 +183,9 @@ export async function runSrvPreview(args: SrvMergeArgs): Promise<SrvPreview> {
  * Read-modify-write. The record is read HERE, at update time — never taken from a preview —
  * so a change made in Regasoft between preview and confirm is kept. Nothing is sent when the
  * merge changes no writable field. `onWritten` runs right after the `PUT` (cache invalidation),
- * before the read-back, so it also runs when the read-back fails. Fields are compared on the raw
- * records; only the returned `before` / `after` are display copies.
+ * before the read-back, so it also runs when the read-back fails; that failure is an `unknown`
+ * error saying the record was sent but not confirmed. Fields are compared on the raw records;
+ * only the returned `before` / `after` are display copies.
  */
 export async function runSrvUpdate(
   args: SrvMergeArgs & { write: SrvWrite; onWritten?: () => Promise<void> },
@@ -192,7 +201,14 @@ export async function runSrvUpdate(
   await args.write(args.rid, payload);
   await args.onWritten?.();
 
-  const after = await readExisting(args.rid, args.read);
+  let after: SrvRecord;
+  try {
+    after = await readExisting(args.rid, args.read);
+  } catch (e: unknown) {
+    // The PUT went through, so this is not «failed»: the record may well be written.
+    const reason = e instanceof Error ? e.message : String(e);
+    throw new HttpsError('unknown', `Member ${args.rid} was sent to Regasoft but not confirmed: reading it back failed (${reason})`);
+  }
   const ignored = ignoredFields(payload, after, fields);
   return {
     before: displayCopy(before, args.testSystem),

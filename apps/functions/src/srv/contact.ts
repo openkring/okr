@@ -71,13 +71,28 @@ async function readRawSrvMember(rid: number, ctx: GatewayContext): Promise<Recor
   return unwrapRawMember(await srvMemberDetailAdapter.fetch({ rid }, ctx));
 }
 
-/** `PUT` the complete record. Plain axios, no retry: the outcome is checked by reading back. */
+/** A `PUT` that has not answered by then is given up; whether it was applied is then unknown. */
+const SRV_PUT_TIMEOUT_MS = 20_000;
+
+/**
+ * `PUT` the complete record. Plain axios, no retry: the outcome is checked by reading back. A PUT
+ * without any answer (timeout, connection lost) may still have been applied, so it is reported as
+ * not confirmed rather than as failed.
+ */
 async function putSrvMember(rid: number, payload: Record<string, unknown>): Promise<void> {
-  await axios.put(
-    `${regasoftBaseUrl()}/api/club/members/${rid}`,
-    payload,
-    { headers: regasoftHeaders(regasoftApiKey.value(), regasoftClubId.value()) }
-  );
+  try {
+    await axios.put(
+      `${regasoftBaseUrl()}/api/club/members/${rid}`,
+      payload,
+      { headers: regasoftHeaders(regasoftApiKey.value(), regasoftClubId.value()), timeout: SRV_PUT_TIMEOUT_MS }
+    );
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error) && !error.response) {
+      logger.error(`updateSrvContact: PUT of member ${rid} got no answer: ${error.code ?? error.message}`);
+      throw new HttpsError('unknown', `Member ${rid} was sent to Regasoft but not confirmed: no answer (${error.code ?? error.message})`);
+    }
+    throw error;
+  }
 }
 
 /** `{ srvId, changes }` from the client, validated before anything is read. */

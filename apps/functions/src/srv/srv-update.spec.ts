@@ -81,6 +81,14 @@ describe('mergeSrvRecord', () => {
     expect(codeOf(() => mergeSrvRecord(RAW, { id: 1 } as unknown as SrvChanges, PROD))).toBe('invalid-argument');
   });
 
+  it('rejects a change value that is not a string, a number or null', () => {
+    for (const bad of [true, {}, ['Uster'], { toString: () => 'Uster' }]) {
+      expect(codeOf(() => mergeSrvRecord(RAW, { city: bad } as unknown as SrvChanges, PROD))).toBe('invalid-argument');
+    }
+    expect(codeOf(() => mergeSrvRecord(RAW, { gender: false } as unknown as SrvChanges, PROD))).toBe('invalid-argument');
+    expect(codeOf(() => mergeSrvRecord(RAW, { leavingDate: {} } as unknown as SrvChanges, PROD))).toBe('invalid-argument');
+  });
+
   it('rejects changes that are not an object', () => {
     expect(codeOf(() => mergeSrvRecord(RAW, null as unknown as SrvChanges, PROD))).toBe('invalid-argument');
     expect(codeOf(() => mergeSrvRecord(RAW, [] as unknown as SrvChanges, PROD))).toBe('invalid-argument');
@@ -288,6 +296,27 @@ describe('runSrvUpdate', () => {
     await expect(runSrvUpdate({ rid: 26183, changes: { city: 'Uster' }, testSystem: false, read, write: async () => undefined, onWritten }))
       .rejects.toThrow('read-back failed');
     expect(onWritten).toHaveBeenCalledTimes(1);
+  });
+
+  it('says the record was sent but not confirmed when the read-back fails', async () => {
+    let i = 0;
+    const read: SrvRead = async () => {
+      if (i++ === 0) return RAW;
+      throw new Error('socket hang up');
+    };
+    const write = vi.fn(async () => undefined);
+    const err = await runSrvUpdate({ rid: 26183, changes: { city: 'Uster' }, testSystem: false, read, write }).catch((e: unknown) => e);
+    expect(write).toHaveBeenCalledTimes(1);
+    expect(err).toMatchObject({ code: 'unknown' });
+    expect((err as Error).message).toMatch(/sent to Regasoft but not confirmed/);
+    expect((err as Error).message).toContain('socket hang up');
+  });
+
+  it('a read failing BEFORE the PUT keeps its own error (nothing was sent)', async () => {
+    const read: SrvRead = async () => { throw new Error('first read failed'); };
+    const write = vi.fn(async () => undefined);
+    await expect(runSrvUpdate({ rid: 26183, changes: { city: 'Uster' }, testSystem: false, read, write })).rejects.toThrow('first read failed');
+    expect(write).not.toHaveBeenCalled();
   });
 });
 
