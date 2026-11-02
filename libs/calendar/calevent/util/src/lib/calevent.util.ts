@@ -302,6 +302,15 @@ export function getCaleventIndex(calevent: CalEventModel): string {
   return 'd:' + calevent.startDate + ' n:' + calevent.name + ' p:' + persons + ' l:' + calevent.locationKey + ' c:' + calevent.calendars.join(',');
 }
 
+/**
+ * The search index for the anonymous public calendar: the same parts as {@link getCaleventIndex} but WITHOUT the
+ * responsible persons' surnames, so the public endpoint can return it without leaking who organises the event.
+ * Computed on the fly (never read from the stored `index`, which contains the `p:` part).
+ */
+export function getPublicCaleventIndex(calevent: Pick<CalEventModel, 'startDate' | 'name' | 'locationKey' | 'calendars'>): string {
+  return 'd:' + calevent.startDate + ' n:' + calevent.name + ' l:' + calevent.locationKey + ' c:' + calevent.calendars.join(',');
+}
+
 export function getCaleventIndexInfo(): string {
   return 'd:ate n:ame p:ersons l:ocationKey c:alendars';
 }

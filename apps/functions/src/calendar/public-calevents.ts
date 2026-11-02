@@ -2,6 +2,7 @@ import { onRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 import corsLib from 'cors';
+import { getPublicCaleventIndex } from '@okr/calendar-calevent-util';
 
 const cors = corsLib({ origin: true });
 
@@ -9,7 +10,8 @@ const cors = corsLib({ origin: true });
  * What the public endpoint returns per event — an explicit allow-list. The endpoint is anonymous (no auth, CDN
  * cached), so personal data stored on the event never leaves: no `attendees`, no course `attendance` /
  * `attendanceConfirmedBy` (spec 1.132 — the attendance of minors), no `responsiblePersons`, no invitations.
- * Only scheduling and display fields.
+ * Only scheduling and display fields. `index` is the person-free search index (`getPublicCaleventIndex`) — the stored
+ * `index` contains the responsible persons' surnames and is never returned.
  */
 export interface PublicCalEventDoc {
   okey: string;
@@ -29,6 +31,9 @@ export interface PublicCalEventDoc {
   urlLabel: string;
   state: string;
   cancelMessage: string;
+  columnLabel: string;
+  tags: string;
+  index: string;
   isArchived: boolean;
   calendars: string[];
   tenants: string[];
@@ -39,12 +44,16 @@ const strArray = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x i
 
 /** Projects a stored calevent onto the public allow-list. Pure. */
 export function toPublicCalEvent(okey: string, data: Record<string, unknown>): PublicCalEventDoc {
+  const name = str(data['name']);
+  const startDate = str(data['startDate']);
+  const locationKey = str(data['locationKey']);
+  const calendars = strArray(data['calendars']);
   return {
     okey,
-    name: str(data['name']),
+    name,
     description: str(data['description']),
     type: str(data['type']),
-    startDate: str(data['startDate']),
+    startDate,
     startTime: str(data['startTime']),
     fullDay: data['fullDay'] === true,
     durationMinutes: typeof data['durationMinutes'] === 'number' ? data['durationMinutes'] : 60,
@@ -52,13 +61,16 @@ export function toPublicCalEvent(okey: string, data: Record<string, unknown>): P
     periodicity: str(data['periodicity'], 'once'),
     repeatUntilDate: str(data['repeatUntilDate']),
     seriesId: str(data['seriesId']),
-    locationKey: str(data['locationKey']),
+    locationKey,
     url: str(data['url']),
     urlLabel: str(data['urlLabel']),
     state: str(data['state'], 'definitive'),
     cancelMessage: str(data['cancelMessage']),
+    columnLabel: str(data['columnLabel']),
+    tags: str(data['tags']),
+    index: getPublicCaleventIndex({ name, startDate, locationKey, calendars }),
     isArchived: data['isArchived'] === true,
-    calendars: strArray(data['calendars']),
+    calendars,
     tenants: strArray(data['tenants']),
   };
 }

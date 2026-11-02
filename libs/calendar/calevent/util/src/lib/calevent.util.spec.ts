@@ -1,7 +1,7 @@
 import { AttendanceEntry, Attendee, AvatarInfo, CalEventModel, InvitationState } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ATTENDANCE_FIELDS, confirmedOccurrences, resetAttendance, withoutAttendance, withoutCourseFields, addInvitedAttendee, removeInvitedAttendee, bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getSeriesUpdateFields, isCaleventInView, isCalEvent, isFullDayEvent, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isCaleventFull, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, splitAttendees, toInvitationState } from './calevent.util';
+import { ATTENDANCE_FIELDS, confirmedOccurrences, resetAttendance, withoutAttendance, withoutCourseFields, addInvitedAttendee, removeInvitedAttendee, bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getCaleventIndex, getPublicCaleventIndex, getSeriesUpdateFields, isCaleventInView, isCalEvent, isFullDayEvent, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isCaleventFull, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, splitAttendees, toInvitationState } from './calevent.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -727,5 +727,22 @@ describe('isCaleventInView', () => {
     expect(isCaleventInView(personalEvent(), 'my', ctx({ isInvited: true }))).toBe(true);
     expect(isCaleventInView(personalEvent(), 'my', ctx())).toBe(false);
     expect(isCaleventInView(personalEvent(), 'machter', ctx({ isInvited: true }))).toBe(false);
+  });
+});
+
+describe('getPublicCaleventIndex', () => {
+  const event = Object.assign(new CalEventModel('scs'), {
+    name: 'Training U14', startDate: '20261105', locationKey: 'Halle@l1', calendars: ['public', 'kids'],
+    responsiblePersons: [{ key: 'pT', name1: 'Tina', name2: 'Trainerli' } as AvatarInfo],
+  });
+
+  it('has the date, name, location and calendars of the full index', () => {
+    expect(getPublicCaleventIndex(event)).toBe('d:20261105 n:Training U14 l:Halle@l1 c:public,kids');
+  });
+
+  it('never contains a responsible person, unlike the full index', () => {
+    expect(getCaleventIndex(event)).toContain('Trainerli');
+    expect(getPublicCaleventIndex(event)).not.toContain('Trainerli');
+    expect(getPublicCaleventIndex(event)).not.toContain('p:');
   });
 });

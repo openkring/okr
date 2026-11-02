@@ -15,6 +15,9 @@ describe('toPublicCalEvent', () => {
     attendanceConfirmedAt: '20261105190000',
     responsiblePersons: [{ key: 'pT', name1: 'Trainer' }],
     commentCount: 3,
+    tags: 'kids,u14',
+    columnLabel: 'Variante A',
+    index: 'd:20261105 n:Training U14 p:Trainer l:Halle@l1 c:public',
   };
 
   it('never returns personal data stored on the event (attendees, course attendance, organisers)', () => {
@@ -29,9 +32,20 @@ describe('toPublicCalEvent', () => {
       okey: 'e1', name: 'Training U14', description: 'Halle', type: 'training',
       startDate: '20261105', startTime: '18:00', fullDay: false, durationMinutes: 90, endDate: '',
       periodicity: 'weekly', repeatUntilDate: '20261231', seriesId: 's1', locationKey: 'Halle@l1',
-      url: '', urlLabel: '', state: 'definitive', cancelMessage: '', isArchived: false,
+      url: '', urlLabel: '', state: 'definitive', cancelMessage: '', columnLabel: 'Variante A', tags: 'kids,u14',
+      index: 'd:20261105 n:Training U14 l:Halle@l1 c:public', isArchived: false,
       calendars: ['public'], tenants: ['scs'],
     });
+  });
+
+  it('returns tags and columnLabel, and a search index that has the name but no responsible person', () => {
+    const result = toPublicCalEvent('e1', stored);
+    expect(result.tags).toBe('kids,u14');
+    expect(result.columnLabel).toBe('Variante A');
+    expect(result.index).toContain('n:Training U14');
+    expect(result.index).not.toContain('Trainer');
+    expect(result.index).not.toContain('p:');
+    expect(result.index).not.toBe(stored.index);
   });
 
   it('fills defaults for a legacy doc with missing fields', () => {
@@ -40,5 +54,8 @@ describe('toPublicCalEvent', () => {
     expect(result.periodicity).toBe('once');
     expect(result.state).toBe('definitive');
     expect(result.tenants).toEqual([]);
+    expect(result.tags).toBe('');
+    expect(result.columnLabel).toBe('');
+    expect(result.index).toBe('d: n:Alt l: c:public');
   });
 });
