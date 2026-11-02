@@ -261,7 +261,7 @@ export const FileTransferStore = signalStore(
     async showInfo(): Promise<void> {
       const modal = await store.modalController.create({
         component: FileTransferInfoModal,
-        componentProps: { limits: store.limits() },
+        componentProps: { limits: store.limits(), isAdmin: store.isAdmin() },
       });
       await modal.present();
       const { data, role } = await modal.onDidDismiss<FileTransferLimitRequest>();

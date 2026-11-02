@@ -1,15 +1,16 @@
 import { Component, DestroyRef, computed, inject } from '@angular/core';
 import {
   ActionSheetController, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList,
-  IonMenuButton, IonTitle, IonToolbar,
+  IonMenuButton, IonPopover, IonTitle, IonToolbar,
 } from '@ionic/angular';
 import type { ActionSheetOptions } from '@ionic/angular';
 
+import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { FileTransferModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
-import { fill } from '@okr/shared-util-core';
+import { contextMenuId, fill } from '@okr/shared-util-core';
 import { emptyFileTransferEventSummary, formatFileTransferExpiry, formatFileTransferSize } from '@okr/content-file-transfer-util';
 
 import { FileTransferStore } from './file-transfer.store';
@@ -18,18 +19,20 @@ import { fileTransferStateColor, fileTransferStateLabel, isFileTransferOpen } fr
 /**
  * «Meine Transfers» — `/private/file-transfer` (spec 1.115 §4.1–4.3): the signed-in person's own
  * transfers with state, size, recipients, expiry and how often they were opened and downloaded.
- * Header: «Transfer senden» and the (i) info modal. Per row: «Öffnen» and «Beenden».
+ * Header: «Transfer senden» and the (i) info modal for everybody; for admins a «…» context menu
+ * whose only row opens the Transfer-Überwachung. Per row: «Öffnen» and «Beenden».
  *
- * No `:listId/:contextMenuName` and no DB context menu: the two header actions are the same for
- * everybody who may send, so a menu document would only add a seeding step that can go missing.
+ * The context menu name is FIXED (`c-file-transfers`), not a `:contextMenuName` route segment:
+ * `/private/file-transfer/<segment>` is already the transfer view page. The menu document's
+ * `roleNeeded: 'admin'` decides whether the «…» shows (`menuItemsStore.canOpen`).
  */
 @Component({
   selector: 'okr-file-transfer-list',
   standalone: true,
   imports: [
-    SvgIconPipe, Spinner, EmptyList, ListFilter,
+    SvgIconPipe, Spinner, EmptyList, ListFilter, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
-    IonContent, IonList, IonItem, IonLabel, IonChip,
+    IonContent, IonList, IonItem, IonLabel, IonChip, IonPopover,
   ],
   template: `
     <ion-header>
@@ -43,6 +46,18 @@ import { fileTransferStateColor, fileTransferStateLabel, isFileTransferOpen } fr
           <ion-button (click)="store.openNew()" [attr.aria-label]="store.i18n.list_send()">
             <ion-icon slot="icon-only" src="{{ 'add-circle' | svgIcon }}" />
           </ion-button>
+          @if (menuItemsStore.canOpen(contextMenuName)) {
+            <ion-button id="{{ popupId }}">
+              <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
+            </ion-button>
+            <ion-popover trigger="{{ popupId }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true">
+              <ng-template>
+                <ion-content>
+                  <okr-menu [menuName]="contextMenuName" />
+                </ion-content>
+              </ng-template>
+            </ion-popover>
+          }
         </ion-buttons>
       </ion-toolbar>
       <okr-list-filter (searchTermChanged)="store.setSearchTerm($event)" />
@@ -72,6 +87,10 @@ import { fileTransferStateColor, fileTransferStateLabel, isFileTransferOpen } fr
 })
 export class FileTransferList {
   protected readonly store = inject(FileTransferStore);
+  protected readonly menuItemsStore = inject(MenuItemsStore);
+  /** its only row navigates (Transfer-Überwachung), so the popover needs no dismiss handler */
+  protected readonly contextMenuName = 'c-file-transfers';
+  protected readonly popupId = contextMenuId('c_file_transfers');
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 

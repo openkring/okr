@@ -8,6 +8,7 @@
   "dependencies": {
     "tslib": "^2.8.1",
     "@okr/chat-data-access": "*",
+    "@okr/cms-menu-feature": "*",
     "@okr/shared-data-access": "*",
     "@okr/shared-feature": "*",
     "@okr/shared-i18n": "*",

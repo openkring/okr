@@ -85,6 +85,36 @@ export interface FileTransferLimitRequest {
       </ion-card>
 
       <ion-card>
+        <ion-card-header><ion-card-title>{{ i18n.info_do_title() }}</ion-card-title></ion-card-header>
+        <ion-card-content class="ion-no-padding">
+          <ion-list lines="none">
+            @for (line of doLines(); track $index) {
+              <ion-item>
+                <ion-icon slot="start" src="{{ line.icon | svgIcon }}" />
+                <ion-label class="ion-text-wrap">{{ line.text }}</ion-label>
+              </ion-item>
+            }
+          </ion-list>
+        </ion-card-content>
+      </ion-card>
+
+      @if (isAdmin()) {
+        <ion-card>
+          <ion-card-header><ion-card-title>{{ i18n.info_admin_title() }}</ion-card-title></ion-card-header>
+          <ion-card-content class="ion-no-padding">
+            <ion-list lines="none">
+              @for (line of adminLines(); track $index) {
+                <ion-item>
+                  <ion-icon slot="start" src="{{ line.icon | svgIcon }}" />
+                  <ion-label class="ion-text-wrap">{{ line.text }}</ion-label>
+                </ion-item>
+              }
+            </ion-list>
+          </ion-card-content>
+        </ion-card>
+      }
+
+      <ion-card>
         <ion-card-header><ion-card-title>{{ i18n.info_consent_title() }}</ion-card-title></ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-item lines="none">
@@ -120,6 +150,8 @@ export class FileTransferInfoModal {
   // inputs
   /** the viewer's live limits (resolveFileTransferLimits of the tenant config and the viewer) */
   public readonly limits = input.required<ResolvedLimits>();
+  /** admins also get the card that explains the Transfer-Überwachung behind the list's «…» */
+  public readonly isAdmin = input(false);
 
   // outputs
   public readonly requestLimit = output<FileTransferLimitRequest>();
@@ -137,6 +169,19 @@ export class FileTransferInfoModal {
       { icon: 'time', text: fill(this.i18n.info_lifetime(), { days: l.defaultLifetimeDays, max: l.maxLifetimeDays }) },
     ];
   });
+
+  protected readonly doLines = computed(() => [
+    { icon: 'link', text: this.i18n.info_do_link() },
+    { icon: 'lock-closed', text: this.i18n.info_do_password() },
+    { icon: 'stop-circle', text: this.i18n.info_do_end() },
+    { icon: 'chatbubbles', text: this.i18n.info_do_chat() },
+  ]);
+
+  protected readonly adminLines = computed(() => [
+    { icon: 'shield', text: this.i18n.info_admin_where() },
+    { icon: 'warning', text: this.i18n.info_admin_flags() },
+    { icon: 'settings', text: this.i18n.info_admin_actions() },
+  ]);
 
   protected readonly reasonI18n = computed(() => ({
     name: 'reason',

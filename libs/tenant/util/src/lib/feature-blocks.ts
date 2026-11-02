@@ -101,6 +101,20 @@ function subjectsMenuParent(children: MenuSpec[]): MenuSpec {
  * `resource-menu` at all (verified task 14: it is a child of the scs-only tenant-bespoke
  * `clubareal-menu`) — see the exclusion note on the `resource` block below.
  */
+/**
+ * The «Tools» accordion (owner ruling 2026-11-02): one main-menu row for small helpers instead
+ * of one row each. Owned by `instruments` (Rechner, Lupe, Übersetzer) and `file-transfer`
+ * (Datei-Transfer) — same shared-parent pattern as `cmsMenuParent`: every owner re-declares it
+ * field-identically, it renders as soon as ANY owner is effective, and `rootNavKeys` attaches
+ * only the parent to `main_<tenantId>`.
+ */
+function toolsMenuParent(children: MenuSpec[]): MenuSpec {
+  return {
+    key: 'tools-menu', name: 'tools-menu', url: '', action: 'sub',
+    roleNeeded: 'registered', icon: 'hammer', label: '@item.tools-menu', children,
+  };
+}
+
 function resourceMenuParent(children: MenuSpec[]): MenuSpec {
   return {
     key: 'resource-menu', name: 'resource-menu', url: '', action: 'sub',
@@ -2438,24 +2452,20 @@ const instruments: FeatureBlock = {
   // already carried the old flat rows (bka, bkg, okr on 2026-11-02) need those keys trimmed
   // from their root by hand after the first picker save that creates `tools-menu`.
   menu: [
-    {
-      key: 'tools-menu', name: 'tools-menu', url: '', action: 'sub',
-      roleNeeded: 'registered', icon: 'hammer', label: '@item.tools-menu',
-      children: [
-        {
-          key: 'calculator', name: 'calculator', url: '/calculator',
-          action: 'navigate', roleNeeded: 'registered', icon: 'calculator', label: '@item.calculator',
-        },
-        {
-          key: 'lupe', name: 'lupe', url: '/lupe',
-          action: 'navigate', roleNeeded: 'registered', icon: 'search', label: '@item.lupe',
-        },
-        {
-          key: 'translator', name: 'translator', url: '/translator',
-          action: 'navigate', roleNeeded: 'registered', icon: 'globe', label: '@item.translator',
-        },
-      ],
-    },
+    toolsMenuParent([
+      {
+        key: 'calculator', name: 'calculator', url: '/calculator',
+        action: 'navigate', roleNeeded: 'registered', icon: 'calculator', label: '@item.calculator',
+      },
+      {
+        key: 'lupe', name: 'lupe', url: '/lupe',
+        action: 'navigate', roleNeeded: 'registered', icon: 'search', label: '@item.lupe',
+      },
+      {
+        key: 'translator', name: 'translator', url: '/translator',
+        action: 'navigate', roleNeeded: 'registered', icon: 'globe', label: '@item.translator',
+      },
+    ]),
   ],
 };
 
@@ -3246,9 +3256,12 @@ const contracts: FeatureBlock = {
  * monitor's «Absender kontaktieren» lazy-loads the chat service only when used (same reasoning
  * as `calevent` on `MatrixChatService`).
  *
- * Menu: «Transfer» for every registered member, «Transfer-Überwachung» for admins — both
- * top-level rows (same shape as `alias-all`/`alias-spaces`); no context menu, the list's two
- * header actions are buttons.
+ * Menu (owner ruling 2026-11-02): «Datei-Transfer» for every registered member, nested under the
+ * shared «Tools» accordion (`toolsMenuParent`). «Transfer-Überwachung» is no longer a main-menu
+ * row but the one entry of the list's admin-only «…» context menu `c-file-transfers`; the child
+ * keeps its `navigate` url, so the live `file-transfer-monitor` doc is reused unchanged. The
+ * planner never removes root rows: tenants that carried the old top-level `file-transfer` /
+ * `file-transfer-monitor` keys need them trimmed from `main_<tenantId>` by hand.
  */
 const fileTransfer: FeatureBlock = {
   id: 'file-transfer',
@@ -3259,8 +3272,12 @@ const fileTransfer: FeatureBlock = {
   dependsOn: ['subject'],
   collections: ['file-transfers', 'file-transfer-events'],
   menu: [
-    { key: 'file-transfer', name: 'file-transfer', url: '/private/file-transfer', action: 'navigate', roleNeeded: 'registered', icon: 'send', label: '@item.file-transfer' },
-    { key: 'file-transfer-monitor', name: 'file-transfer-monitor', url: '/private/file-transfer-monitor', action: 'navigate', roleNeeded: 'admin', icon: 'shield', label: '@item.file-transfer-monitor' },
+    toolsMenuParent([
+      { key: 'file-transfer', name: 'file-transfer', url: '/private/file-transfer', action: 'navigate', roleNeeded: 'registered', icon: 'send', label: '@item.file-transfer' },
+    ]),
+    { key: 'c-file-transfers', name: 'c-file-transfers', url: '', action: 'context', roleNeeded: 'admin', icon: 'help-circle', label: '', children: [
+      { key: 'file-transfer-monitor', name: 'file-transfer-monitor', url: '/private/file-transfer-monitor', action: 'navigate', roleNeeded: 'admin', icon: 'shield', label: '@item.file-transfer-monitor' },
+    ] },
   ],
 };
 
