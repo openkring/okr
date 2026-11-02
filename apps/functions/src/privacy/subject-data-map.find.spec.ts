@@ -283,6 +283,7 @@ describe('find() query shapes', () => {
       badge: 'users',
       stats_members: 'stats_members',
       'trips/tracker': 'trips',
+      'courses/finance': 'courses', // finance/settings is reached through the tenant's courses
       esignAudit: 'deletions',
     };
     for (const e of SUBJECT_DATA_MAP) {

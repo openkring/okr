@@ -53,6 +53,61 @@ describe('pseudonymFor', () => {
   });
 });
 
+describe('anonymizePatch — course rows (spec 1.132)', () => {
+  it('calevents drops only the subject from attendance and clears a confirmer identity', () => {
+    const e = mapRow('calevents');
+    const doc = snap('c1', {
+      attendance: { p1: { person: { key: 'p1' }, presence: 'present' }, p2: { person: { key: 'p2' }, presence: 'absent' } },
+      attendanceConfirmedBy: { key: 'p2', name1: 'Bea', name2: 'Muster' },
+    });
+    const p = anonymizePatch(e, doc, ctx, 'Gelöschtes Mitglied #x', '20260729');
+    expect(p['attendance']).toEqual({ p2: { person: { key: 'p2' }, presence: 'absent' } });
+    // the confirmer is somebody else: untouched
+    expect(Object.keys(p).some((k) => k.startsWith('attendanceConfirmedBy'))).toBe(false);
+  });
+
+  it('calevents clears the identity of the subject as confirmer', () => {
+    const e = mapRow('calevents');
+    const doc = snap('c1', { attendance: {}, attendanceConfirmedBy: { key: 'p1', name1: 'Ann', name2: 'Muster' } });
+    const p = anonymizePatch(e, doc, ctx, 'Gelöschtes Mitglied #x', '20260729');
+    expect(p['attendanceConfirmedBy.key']).toBe('');
+    expect(p['attendanceConfirmedBy.name1']).toBe('');
+    expect(p['attendanceConfirmedBy.name2']).toBe('Gelöschtes Mitglied #x');
+    expect(p['attendance']).toBeUndefined();
+  });
+
+  it('courses removes the subject from the arrays and the key mirrors, keeps the others', () => {
+    const e = mapRow('courses');
+    const doc = snap('k1', {
+      trainers: [{ key: 'p1' }, { key: 'p2' }],
+      responsiblePersons: [{ key: 'p1' }],
+      trainerKeys: ['p1', 'p2'],
+      responsibleKeys: ['p1'],
+    });
+    const p = anonymizePatch(e, doc, ctx, 'x', '20260729');
+    expect(p['trainers']).toEqual([{ key: 'p2' }]);
+    expect(p['responsiblePersons']).toEqual([]);
+    expect(p['trainerKeys']).toEqual(['p2']);
+    expect(p['responsibleKeys']).toEqual([]);
+  });
+
+  it('courses/finance keeps the rate and pseudonymises only the subject', () => {
+    const e = mapRow('courses/finance');
+    const doc = snap('settings', {
+      eligible: [
+        { person: { key: 'p1', modelType: 'person', name1: 'Ann', name2: 'Muster' }, rate: { amount: 500 } },
+        { person: { key: 'p2', modelType: 'person', name1: 'Bea', name2: 'Probst' }, rate: { amount: 700 } },
+      ],
+    });
+    const p = anonymizePatch(e, doc, ctx, 'Gelöschtes Mitglied #x', '20260729');
+    const eligible = p['eligible'] as { person: { key: string; name2: string }; rate: { amount: number } }[];
+    expect(eligible[0].person.key).toBe('');
+    expect(eligible[0].person.name2).toBe('Gelöschtes Mitglied #x');
+    expect(eligible[0].rate.amount).toBe(500);
+    expect(eligible[1].person.key).toBe('p2');
+  });
+});
+
 describe('anonymizePatch', () => {
   const pseudonym = 'Gelöschtes Mitglied #abc12345';
   const entry = (over: Partial<SubjectDataEntry>): SubjectDataEntry => ({

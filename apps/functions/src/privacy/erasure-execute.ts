@@ -101,6 +101,21 @@ function elementIdentifies(element: unknown, personKey: string): boolean {
  */
 const ELEMENT_AVATAR_PATH = /^(.+)\[\]\.([^.[\]]+)$/;
 
+/**
+ * `'attendance{}'` — a MAP keyed by personKey whose values carry an `AvatarInfo` in `person`
+ * (`CalEventModel.attendance`). Erasure drops the subject's entry, like a plain array field drops
+ * the subject's element: the presence of a person at a training is the person's data, the event
+ * (date, title, who else was there) stays. The map is rewritten whole because the key is dynamic.
+ */
+const MAP_BY_PERSON_PATH = /^([^.[\]{}]+)\{\}$/;
+
+function withoutPersonEntry(value: unknown, personKey: string): Record<string, unknown> | undefined {
+  if (!personKey || value === null || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const map = value as Record<string, unknown>;
+  const kept = Object.entries(map).filter(([key, entry]) => key !== personKey && !elementIdentifies(entry, personKey));
+  return kept.length === Object.keys(map).length ? undefined : Object.fromEntries(kept);
+}
+
 function pseudonymiseElementAvatars(
   value: unknown, prop: string, personKey: string, pseudonym: string,
 ): unknown[] | undefined {
@@ -126,7 +141,8 @@ function pseudonymiseElementAvatars(
  * assignee), and an array field loses only the matching element (a group keeps its other
  * admins). Dotted keys are Firestore field paths, so a patch never rewrites a whole map.
  * `'<array>[].<prop>'` keeps the element and pseudonymises its embedded avatar instead
- * (see `ELEMENT_AVATAR_PATH`).
+ * (see `ELEMENT_AVATAR_PATH`); `'<map>{}'` drops the subject's entry from a map keyed by person
+ * key (see `MAP_BY_PERSON_PATH`).
  *
  * Returns `{ anonymizedAt }` alone when the subject appears in none of the row's fields;
  * the executor treats that as "nothing to do" and does not write it.
@@ -146,6 +162,13 @@ export function anonymizePatch(
       const [, arrayField, prop] = elementAvatar;
       const next = pseudonymiseElementAvatars(doc.get(arrayField), prop, ctx.personKey, pseudonym);
       if (next) patch[arrayField] = next;
+      continue;
+    }
+
+    const mapField = MAP_BY_PERSON_PATH.exec(field);
+    if (mapField) {
+      const next = withoutPersonEntry(doc.get(mapField[1]), ctx.personKey);
+      if (next) patch[mapField[1]] = next;
       continue;
     }
 

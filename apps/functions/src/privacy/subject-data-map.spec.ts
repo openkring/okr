@@ -485,6 +485,52 @@ describe('SUBJECT_DATA_MAP — matches() post-filters', () => {
     expect(m?.(snap({ attendees: [{ person: { key: 'p9' } }] }), ctx)).toBe(false);
   });
 
+  // spec 1.132 §13: attendance is a map keyed by personKey — a person only there must be found
+  it('calevents matches a person who appears only in attendance or as its confirmer', () => {
+    const m = entry('calevents').matches;
+    expect(m?.(snap({ attendance: { p1: { person: { key: 'p1' }, presence: 'present' } } }), ctx)).toBe(true);
+    expect(m?.(snap({ attendance: { legacy: { person: { key: 'p1' } } } }), ctx)).toBe(true);
+    expect(m?.(snap({ attendance: { p9: { person: { key: 'p9' } } } }), ctx)).toBe(false);
+    expect(m?.(snap({ attendance: {} }), ctx)).toBe(false);
+    expect(m?.(snap({ attendanceConfirmedBy: { key: 'p1' } }), ctx)).toBe(true);
+    expect(m?.(snap({ attendanceConfirmedBy: { key: 'p9' } }), ctx)).toBe(false);
+    // an empty ctx.personKey must not sweep up every event
+    expect(m?.(snap({ attendance: { '': { person: { key: '' } } } }), { ...ctx, personKey: '' })).toBe(false);
+  });
+
+  it('courses matches a trainer or a responsible person, scans the tenant and keeps the course', () => {
+    const e = entry('courses');
+    expect(e.matches?.(snap({ trainers: [{ key: 'p1' }] }), ctx)).toBe(true);
+    expect(e.matches?.(snap({ responsiblePersons: [{ key: 'p1' }] }), ctx)).toBe(true);
+    expect(e.matches?.(snap({ trainers: [{ key: 'p9' }], responsiblePersons: [{ key: 'p8' }] }), ctx)).toBe(false);
+    // the mirrors alone never identify: they lag until the trigger has run
+    expect(e.matches?.(snap({ trainerKeys: ['p1'], responsibleKeys: ['p1'] }), ctx)).toBe(false);
+    // legacy doc without the arrays
+    expect(e.matches?.(snap({}), ctx)).toBe(false);
+    expect(e.tenantScope).toBe('inQuery');
+    expect(e.onErasure).toBe('anonymize');
+    expect(e.anonymizeFields).toEqual(expect.arrayContaining(['trainers', 'responsiblePersons', 'trainerKeys', 'responsibleKeys']));
+  });
+
+  it('courses/finance matches a person only in eligible[] or requestedBy, never exports verbatim', () => {
+    const e = entry('courses/finance');
+    expect(e.matches?.(snap({ eligible: [{ person: { key: 'p1' }, rate: { amount: 500 } }] }), ctx)).toBe(true);
+    expect(e.matches?.(snap({ eligible: [{ person: { key: 'p9' } }] }), ctx)).toBe(false);
+    expect(e.matches?.(snap({ eligible: [], requestedBy: { key: 'p1' } }), ctx)).toBe(true);
+    expect(e.matches?.(snap({}), ctx)).toBe(false);
+    // the document lists everybody's rate: the subject's own pay is exported through bookings
+    expect(e.onExport).toBe('none');
+    expect(e.tier).toBe('T3');
+    expect(e.onErasure).toBe('anonymize');
+    expect(e.retention.months).toBe(120);
+  });
+
+  it('persons keeps externalIds (J+S number) in the full export and deletes it with the document', () => {
+    const e = entry('persons');
+    expect(e.onExport).toBe('full');
+    expect(e.onErasure).toBe('delete');
+  });
+
   // I8 regression: an anonymously submitted application still has an empty personKey.
   it('applications matches by e-mail when personKey is still empty', () => {
     const m = entry('applications').matches;
@@ -665,6 +711,7 @@ describe('subject-data-map — collection names are constants, not literals', ()
   const NON_MODEL_COLLECTIONS = new Set([
     'users/fcmTokens', // subcollection path, not a top-level collection
     'stats_members', // derived stats, written by a scheduled function, no model
+    'courses/finance', // courses/{key}/finance/settings, the compensation settings subdocument (CourseFinanceModel)
     'trips/tracker', // the tracker-type half of TripCollection, keyed by track.personKey (own row, other fate)
   ]);
 

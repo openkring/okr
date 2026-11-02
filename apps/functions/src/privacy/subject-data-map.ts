@@ -1,6 +1,6 @@
 import { FieldPath, Filter, getFirestore } from 'firebase-admin/firestore';
 import type { DocumentSnapshot, QueryDocumentSnapshot } from 'firebase-admin/firestore';
-import { ContractModel, LegacyMemberFeeCollection, MemberFeeCollection, PROSPECT_PARENT_PREFIX } from '@okr/shared-models';
+import { ContractModel, CourseFinanceSubcollection, LegacyMemberFeeCollection, MemberFeeCollection, PROSPECT_PARENT_PREFIX } from '@okr/shared-models';
 import type { AvatarInfo } from '@okr/shared-models';
 import { getContractIndex } from '@okr/business-contract-util';
 import type { Blocker, SubjectCtx, SubjectDataEntry } from './types';
@@ -114,6 +114,19 @@ function nestedAvatarArrayHolds(doc: DocumentSnapshot, field: string, prop: stri
 }
 
 /**
+ * Whether the subject has an entry in `CalEventModel.attendance`, a map keyed by personKey whose
+ * values carry the `AvatarInfo` in `person`. The key is the contract; the embedded avatar is checked
+ * as well so a differently keyed legacy entry is not missed.
+ */
+function attendanceHolds(doc: DocumentSnapshot, personKey: string): boolean {
+  if (!personKey) return false;
+  const map = doc.get('attendance') as Record<string, { person?: AvatarInfo } | undefined> | undefined;
+  if (map === null || typeof map !== 'object') return false;
+  return map[personKey] !== undefined
+    || Object.values(map).some((e) => e?.person?.key === personKey && (e.person.modelType ?? 'person') === 'person');
+}
+
+/**
  * `blocksTiers: ['T1', 'T3']` — an unpaid record needs the debtor reachable (contract
  * tier) and the accounting record intact (retention tier). It says nothing about the
  * member's avatar or their voluntarily shared birthday, which stay erasable on demand.
@@ -216,6 +229,12 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     // so this must be a documentId() query, not `where('okey', '==', …)`.
     find: (c: SubjectCtx) => db().collection('persons').where(FieldPath.documentId(), '==', c.personKey),
     tenantScope: 'tenantsArray',
+    // `externalIds` (spec 1.132 §5.4/§13: the J+S-Personennummer `js`, scoped Fremdsystem-Kennungen
+    // like `bexio_<accountingTenantId>`) is a plain field of this document, so the row already
+    // covers it: `onExport: 'full'` hands the member their own identifiers verbatim and
+    // `onErasure: 'delete'` removes them with the document. There is deliberately no second row —
+    // the identifiers are not replicated anywhere else (the AWK export carries the number only
+    // transiently, never stored).
     onExport: 'full',
     onErasure: 'delete',          // only reached when tenants[] empties — see erasure executor
     retention: KEEP_WHILE_MEMBER,
@@ -490,6 +509,63 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
         blocksTiers: ['T1'],   // the role has to be handed over; the avatar is unrelated
       };
     },
+  },
+  {
+    // A training course (spec 1.132). The persons are the trainers and the responsible persons:
+    // embedded `AvatarInfo` arrays (not queryable) plus the server-maintained key mirrors
+    // `trainerKeys` (trainers + responsibles) and `responsibleKeys`. The mirrors are queryable with
+    // `array-contains`, but they lag until `onCourseDocWritten` has run and are empty on a legacy doc,
+    // so the row scans the tenant and matches on the arrays — the source of truth — like `groups`.
+    // Classified like `groups`, not like `calevents`: a trainer is an organizational role assigned by
+    // the club, never voluntary (T1), and the course itself (name, dates, group) is the club's record,
+    // so erasure removes the person and keeps the course.
+    collection: 'courses',
+    dataClass: 'membership',
+    tier: 'T1',
+    onTenantExit: 'anonymize',   // remove the subject from trainers[] / responsiblePersons[]; the course stays
+    find: (c: SubjectCtx) => db().collection('courses').where('tenants', 'array-contains', c.tenantId),
+    tenantScope: 'inQuery',
+    matches: (doc, c) => avatarArrayHolds(doc, 'trainers', c.personKey)
+      || avatarArrayHolds(doc, 'responsiblePersons', c.personKey),
+    // 'index', not 'full' (cf. `calevents`): the document names the other trainers as well.
+    onExport: 'index',
+    indexFields: { title: 'name', date: 'startDate', route: '/course' },
+    onErasure: 'anonymize',
+    // The mirrors are cleared in the same write, so the rules stop honouring the subject at once
+    // instead of waiting for the trigger. Plain string arrays: the element is dropped when it equals the key.
+    anonymizeFields: ['trainers', 'responsiblePersons', 'trainerKeys', 'responsibleKeys'],
+    retention: CLUB_RECORD,
+  },
+  {
+    // `courses/{key}/finance/settings` (CourseFinanceModel): `eligible[].person` with an optional own
+    // compensation rate — personal data with wage character (spec §13), readable only by the course's
+    // responsible persons. Reached through the tenant's courses (a subcollection does not cascade and
+    // carries no `tenants` of its own); `matches` finds a person who is ONLY in `eligible` or only
+    // `requestedBy`. The document also lists everybody else's rate, so it is never exported verbatim
+    // (`onExport: 'none'`): the subject's own compensation is exported through the `bookings` row
+    // (counterparty), which is where it is paid and retained.
+    // Tier T3 / `anonymize`: the amounts feed bookings under the 10-year duty (OR Art. 958f), and the
+    // settings are the audit trail for them, so the document is kept; only the person is cut loose —
+    // the element and its rate stay, the avatar is pseudonymised (see `ELEMENT_AVATAR_PATH`), the
+    // same fate as `bookings.counterparty`.
+    collection: 'courses/finance',
+    dataClass: 'content',
+    tier: 'T3',
+    onTenantExit: 'anonymize',
+    // `find` is only the narrow, tenant-bounded shape (cf. `prospects`); `resolve` is the access path.
+    find: (c: SubjectCtx) => db().collection('courses').where('tenants', 'array-contains', c.tenantId),
+    resolve: async (c: SubjectCtx) => {
+      const courses = await db().collection('courses').where('tenants', 'array-contains', c.tenantId).get();
+      const finance = await Promise.all(courses.docs.map((d) => d.ref.collection(CourseFinanceSubcollection).get()));
+      return finance.flatMap((q) => q.docs);
+    },
+    tenantScope: 'none',          // the tenant filter is the courses query in `resolve`
+    matches: (doc, c) => nestedAvatarArrayHolds(doc, 'eligible', 'person', c.personKey)
+      || doc.get('requestedBy.key') === c.personKey,
+    onExport: 'none',
+    onErasure: 'anonymize',
+    anonymizeFields: ['eligible[].person', 'requestedBy.key', 'requestedBy.name1', 'requestedBy.name2'],
+    retention: RETAIN_10Y,
   },
   {
     collection: 'competition-levels',
@@ -901,16 +977,25 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     dataClass: 'content',
     tier: 'T4',
     onTenantExit: 'anonymize',
-    // responsiblePersons[] and attendees[].person are embedded arrays — not queryable
+    // responsiblePersons[] and attendees[].person are embedded arrays — not queryable.
+    // Course attendance (spec 1.132 §13) is a MAP keyed by personKey (`attendance[<key>].person`) and
+    // `attendanceConfirmedBy` is the trainer who confirmed it; a person who appears only there is
+    // matched too. A training is a club record (T4): erasure drops the person's attendance entry
+    // (`attendance{}`, see erasure-execute) and clears a confirmer's identity, the event stays.
     find: (c: SubjectCtx) => db().collection('calevents').where('tenants', 'array-contains', c.tenantId),
     tenantScope: 'inQuery',
     matches: (doc, c) => avatarArrayHolds(doc, 'responsiblePersons', c.personKey)
       || (!!c.personKey && ((doc.get('attendees') as { person?: AvatarInfo }[] | undefined) ?? [])
-        .some((a) => a?.person?.key === c.personKey)),
+        .some((a) => a?.person?.key === c.personKey))
+      || attendanceHolds(doc, c.personKey)
+      || (!!c.personKey && doc.get('attendanceConfirmedBy.key') === c.personKey),
     onExport: 'index',
     indexFields: { title: 'name', date: 'startDate', route: '/calevent' },
     onErasure: 'anonymize',
-    anonymizeFields: ['responsiblePersons', 'attendees'],
+    anonymizeFields: [
+      'responsiblePersons', 'attendees', 'attendance{}',
+      'attendanceConfirmedBy.key', 'attendanceConfirmedBy.name1', 'attendanceConfirmedBy.name2',
+    ],
     retention: CLUB_RECORD,
   },
   {

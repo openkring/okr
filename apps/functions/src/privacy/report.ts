@@ -124,6 +124,7 @@ export const COLLECTION_LABELS: Record<string, string> = {
   docs: 'Dokumente',
   documents: 'Dokumente',
   calevents: 'Kalendereinträge',
+  courses: 'Kurse',
   trips: 'Fahrten', // libs/geo/trip/feature/src/i18n/de.json: trips (not "Ausfahrten")
   // recordings + crew copies (spec 1.121 / 1.123); the tracker's own word for a recording
   'trips/tracker': 'Aufgezeichnete Strecken',
