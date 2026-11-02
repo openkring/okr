@@ -200,6 +200,47 @@ describe('decideWatch', () => {
     expect(decideWatch(state({ failures: 1 }), ok(fp), 'none', NOW).state.failures).toBe(0);
   });
 
+  describe('transient markers', () => {
+    const base: ApiFingerprint = { 'auth.test': '200', 'list.fields': 'id:number', 'docs./swagger': '404', 'param.all': 'ignored', 'error.401': 'data,message,success', 'error.401.status': '401' };
+
+    it('a doc path that timed out is no change; accepted stays as it was', () => {
+      const d = decideWatch(state({ accepted: base }), ok({ ...base, 'docs./swagger': 'error' }), 'none', NOW);
+      expect(d.task).toBeNull();
+      expect(d.state.accepted).toEqual(base);
+      expect(d.state.pending).toBeNull();
+      expect(d.state.lastRunMonth).toBe('202611');
+    });
+
+    it('param.all going unavailable is no change', () => {
+      const d = decideWatch(state({ accepted: base }), ok({ ...base, 'param.all': 'unavailable' }), 'none', NOW);
+      expect(d.task).toBeNull();
+      expect(d.state.accepted).toEqual(base);
+    });
+
+    it('a failed error probe (marker plus omitted status key) is no change', () => {
+      const { 'error.401.status': _omitted, ...rest } = base;
+      void _omitted;
+      const d = decideWatch(state({ accepted: base }), ok({ ...rest, 'error.401': 'error' }), 'none', NOW);
+      expect(d.task).toBeNull();
+      expect(d.state.accepted).toEqual(base);
+    });
+
+    it('one real change and one marker: the task lists only the change, pending carries the old value', () => {
+      const d = decideWatch(state({ accepted: base }),
+        ok({ ...base, 'list.fields': 'id:number,x:string', 'docs./swagger': 'error', 'param.all': 'unavailable' }), 'none', NOW);
+      expect(d.task?.diff).toEqual([{ key: 'list.fields', before: 'id:number', after: 'id:number,x:string' }]);
+      expect(d.state.pending).toEqual({ ...base, 'list.fields': 'id:number,x:string' });
+      expect(JSON.stringify(d.state)).not.toContain('error"');
+    });
+
+    it('a marker with no accepted value is left out of the baseline and of pending', () => {
+      const first = decideWatch(undefined, ok({ 'auth.test': '200', 'detail.fields': 'error', 'docs./docs': 'error' }), 'none', NOW);
+      expect(first.state.accepted).toEqual({ 'auth.test': '200' });
+      const later = decideWatch(state({ accepted: { 'auth.test': '200' } }), ok({ 'auth.test': '200', 'detail.fields': 'unavailable', 'x': '1' }), 'none', NOW);
+      expect(later.state.pending).toEqual({ 'auth.test': '200', x: '1' });
+    });
+  });
+
   it('login rejected: a task at once, nothing accepted', () => {
     const bad: ApiFingerprint = { ...fp, 'auth.test': '401' };
     const d = decideWatch(state(), ok(bad), 'none', NOW);
@@ -390,11 +431,9 @@ describe('probeRegasoft', () => {
 
   it('a failed side probe never counts as a failure in the run', async () => {
     route(['/swagger']);
-    const fp = { 'auth.test': '200' };
     const written: Record<string, unknown> = {};
     const db = { collection: () => ({ doc: (id: string) => ({ id, get: async () => ({ exists: false, data: () => undefined }), set: async (d: unknown) => { written[id] = d; } }) }) } as unknown as Firestore;
     await runRegasoftApiWatch(NOW, { db, probe: probeRegasoft });
     expect((written['regasoft'] as { failures: number }).failures).toBe(0);
-    void fp;
   });
 });

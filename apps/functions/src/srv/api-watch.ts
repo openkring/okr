@@ -143,6 +143,29 @@ export function diffFingerprint(a: ApiFingerprint, b: ApiFingerprint): Fingerpri
     .map(key => ({ key, before: a[key] ?? '', after: b[key] ?? '' }));
 }
 
+/** Fingerprint values that mean «the probe failed this time», not «the API changed». */
+const TRANSIENT_MARKERS = new Set(['error', 'unavailable']);
+
+/**
+ * Replace what a failed probe could not measure with the accepted value, so a timeout never reads as
+ * an API change and a marker never reaches `pending` or `accepted`. A marker (or the status key of
+ * a failed error probe) with no accepted value is left out.
+ */
+export function carryForward(accepted: ApiFingerprint, fp: ApiFingerprint): ApiFingerprint {
+  const out: ApiFingerprint = {};
+  for (const [key, value] of Object.entries(fp)) {
+    const statusOfFailedProbe = /^error\.\d+\.status$/.test(key) && fp[key.replace(/\.status$/, '')] === 'error';
+    if (TRANSIENT_MARKERS.has(value) || statusOfFailedProbe) {
+      if (key in accepted) out[key] = accepted[key];
+    } else out[key] = value;
+  }
+  // a status key left out because its probe failed is carried too
+  for (const key of Object.keys(accepted)) {
+    if (/^error\.\d+\.status$/.test(key) && !(key in fp) && fp[key.replace(/\.status$/, '')] === 'error') out[key] = accepted[key];
+  }
+  return out;
+}
+
 // --- the state machine (pure) -----------------------------------------------------------------
 
 export interface WatchState {
@@ -195,7 +218,7 @@ export function decideWatch(prev: WatchState | undefined, probe: ProbeResult, ta
     return { state: { ...state, failures, taskKey: key }, task: { op, key, reason: 'unreachable', diff: [] } };
   }
 
-  const fp = probe.fingerprint;
+  const fp = carryForward(state.accepted, probe.fingerprint);
   const reached: WatchState = { ...state, failures: 0, lastRunMonth: month };
   if (authRejected(fp)) {
     // a failed login needs no comparison; the fingerprint of a rejected call is no baseline
@@ -243,11 +266,13 @@ const get = (url: string, headers: Record<string, string>, maxBytes?: number) =>
   gatewayFetch(url, { method: 'GET', headers, validateStatus: () => true, timeoutMs: 15_000, maxRetries: 1, ...(maxBytes ? { maxBytes } : {}) });
 
 /** A side probe: a request that throws is recorded as PROBE_ERROR, it never fails the run. */
-async function side(url: string, headers: Record<string, string>, maxBytes?: number): Promise<{ status: number; data: unknown } | typeof PROBE_ERROR> {
+async function side(name: string, url: string, headers: Record<string, string>, maxBytes?: number): Promise<{ status: number; data: unknown } | typeof PROBE_ERROR> {
   try {
     const r = await get(url, headers, maxBytes);
     return { status: r.status, data: r.data };
-  } catch {
+  } catch (e: unknown) {
+    // the probe's name only: no URL with ids, no response data
+    logger.warn(`regasoftApiWatch: side probe ${name} failed`, { error: e instanceof Error ? e.message : String(e) });
     return PROBE_ERROR;
   }
 }
@@ -269,17 +294,17 @@ export async function probeRegasoft(): Promise<ProbeResult> {
   }
   if (list.status >= 500) return { reachable: false };
   const optional = async (query: string): Promise<unknown> => {
-    const r = await side(`${base}/api/club/members${query}`, headers, PARAM_MAX_BYTES);
+    const r = await side(`param${query}`, `${base}/api/club/members${query}`, headers, PARAM_MAX_BYTES);
     return r !== PROBE_ERROR && r.status === 200 ? r.data : undefined;
   };
   const [detail, listAll, listInactive, err401, err400, docs] = await Promise.all([
-    side(`${base}/api/club/members/${PROBE_RID}`, headers),
+    side('detail', `${base}/api/club/members/${PROBE_RID}`, headers),
     optional('?all=true'),
     optional('?inactive=true'),
-    side(`${base}/api/club/members`, { ...headers, ApiKey: 'invalid' }),
-    side(`${base}/api/club/members/schema`, headers),
+    side('err401', `${base}/api/club/members`, { ...headers, ApiKey: 'invalid' }),
+    side('err400', `${base}/api/club/members/schema`, headers),
     Promise.all(DOC_PATHS.map(async p => {
-      const r = await side(`${base}${p}`, {});
+      const r = await side(`docs${p}`, `${base}${p}`, {});
       return [p, r === PROBE_ERROR ? 'error' : r.status] as const;
     })),
   ]);
