@@ -265,10 +265,15 @@ export async function loadExitContext(
   };
 }
 
-/** Who holds the tenant's treasurer responsibility today (delegate aware); undefined = unassigned. */
-export async function treasurerAssignee(db: Firestore, tenantId: string, today: string): Promise<AvatarInfo | undefined> {
-  const snap = await db.collection(ResponsibilityCollection).doc(treasurerResponsibilityKey(tenantId)).get();
+/** Who holds the responsibility `key` today (delegate aware); undefined = unassigned, missing or archived. */
+export async function responsibilityAssignee(db: Firestore, key: string, today: string): Promise<AvatarInfo | undefined> {
+  const snap = await db.collection(ResponsibilityCollection).doc(key).get();
   const r = snap.data();
   if (!snap.exists || !r || r['isArchived'] === true) return undefined;
   return toAvatarInfo(activeResponsible(r as ResponsibilityLike, today));
+}
+
+/** Who holds the tenant's treasurer responsibility today (delegate aware); undefined = unassigned. */
+export async function treasurerAssignee(db: Firestore, tenantId: string, today: string): Promise<AvatarInfo | undefined> {
+  return responsibilityAssignee(db, treasurerResponsibilityKey(tenantId), today);
 }

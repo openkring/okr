@@ -41,6 +41,7 @@ import { gatewayFetch } from '../http';
 
 import { isRegasoftTestSystem, regasoftApiKey, regasoftBaseUrl, regasoftClubId, REGASOFT_HOST } from '../../srv/shared';
 import { stripTestEmail } from '../../srv/srv-update';
+import { checkShape } from '../../srv/shape-check';
 
 /**
  * 30 minutes, uniform across both adapters.
@@ -66,7 +67,24 @@ export const SRV_PROVIDER_IDS = ['srv-members', 'srv-member-detail'] as const;
 
 export const SRV_SECRETS = [regasoftApiKey, regasoftClubId];
 
-function regasoftHeaders(): Record<string, string> {
+/**
+ * The field names Regasoft returns today (REGASOFT.md «List shape» / «Detail shape», verified
+ * 2026-11-02). `checkShape` compares every response with them (spec 1.133 §4.7); a name outside
+ * the list, or one that disappears, goes to Sentry. Update them together with REGASOFT.md.
+ */
+export const SRV_LIST_FIELDS: readonly string[] = [
+  'id', 'fullname', 'firstName', 'lastName', 'email', 'mobile', 'serviceId', 'birthday', 'gender', 'hasLicense',
+  'licenseValidUntil', 'mainClub', 'modified', 'membershipType', 'nationIOC', 'language',
+];
+
+export const SRV_DETAIL_FIELDS: readonly string[] = [
+  'id', 'serviceId', 'salutation', 'firstName', 'lastName', 'birthday', 'gender', 'nationIOC', 'language', 'membershipType',
+  'hasNewsletter', 'hasLicense', 'licenseId', 'licenseValidUntil', 'licenseImage', 'licenseImageName', 'licenseImageMimeType',
+  'street', 'postcode', 'city', 'streetAdditional', 'countryName', 'countryId', 'telefon', 'mobile', 'email', 'entryDate',
+  'inactive', 'inactiveDate', 'dateOfDeath', 'leavingDate', 'personClubs',
+];
+
+export function regasoftHeaders(): Record<string, string> {
   return {
     'Content-Type': 'application/json',
     ApiKey: regasoftApiKey.value(),
@@ -196,7 +214,10 @@ export const srvMembersAdapter: ProviderAdapter<Record<string, never>, unknown, 
     });
     return res.data;
   },
-  map: unwrapMembers,
+  map: (raw) => {
+    checkShape('list', raw, SRV_LIST_FIELDS);
+    return unwrapMembers(raw);
+  },
   sourceTimestamp: () => null,
 };
 
@@ -220,6 +241,9 @@ export const srvMemberDetailAdapter: ProviderAdapter<{ rid: number }, unknown, S
     return res.data;
   },
   // The test-system setting is read at map time; the cache holds the raw record.
-  map: (raw) => mapSrvDetail(raw, isRegasoftTestSystem()),
+  map: (raw) => {
+    checkShape('detail', raw, SRV_DETAIL_FIELDS);
+    return mapSrvDetail(raw, isRegasoftTestSystem());
+  },
   sourceTimestamp: () => null,
 };
