@@ -11,6 +11,7 @@ import {
   MAIL_ANSWER_MAX,
   mailErrorCode,
   mailSafeAnswer,
+  recipientLimitKey,
 } from './filler-confirmation';
 
 const f = (id: string, key: string, type: string, order: number): Field =>
@@ -115,15 +116,31 @@ describe('escapeHtml', () => {
 describe('mailSafeAnswer', () => {
   it('keeps an ordinary answer as typed', () => {
     expect(mailSafeAnswer('Ada Lovelace')).toBe('Ada Lovelace');
-    expect(mailSafeAnswer('St. Gallen, 1.5 Jahre')).toBe('St. Gallen, 1.5 Jahre');
+    expect(mailSafeAnswer('St. Gallen, 3 Jahre')).toBe('St. Gallen, 3 Jahre');
   });
 
-  it('removes links, bare domains and e-mail addresses', () => {
+  it('drops every word that could become a link, address or domain', () => {
     expect(mailSafeAnswer('Ada https://evil.example/login now')).toBe('Ada now');
     expect(mailSafeAnswer('go to www.evil.example')).toBe('go to');
     expect(mailSafeAnswer('see evil.example/reset or bit.ly/x')).toBe('see or');
     expect(mailSafeAnswer('write me at ada@evil.example')).toBe('write me at');
-    expect(mailSafeAnswer('data:text/html,x javascript://x')).toBe('data:text/html,x');
+    expect(mailSafeAnswer('open data:text/html,x or javascript:alert')).toBe('open or');
+    // the price of an allowlist: harmless dotted words go too
+    expect(mailSafeAnswer('St.Gallen 1.5 Jahre')).toBe('Jahre');
+  });
+
+  it('catches dot look-alikes and fullwidth forms', () => {
+    expect(mailSafeAnswer('go evil\u3002example')).toBe('go');
+    expect(mailSafeAnswer('go evil\uFF0Eexample')).toBe('go');
+    expect(mailSafeAnswer('go evil\uFF61example')).toBe('go');
+    expect(mailSafeAnswer('go evil\u2024example')).toBe('go');
+    expect(mailSafeAnswer('go evil\uFF0Fpath')).toBe('go');
+  });
+
+  it('removes invisible characters that could hide a link', () => {
+    expect(mailSafeAnswer('go evil.\u200Bexample')).toBe('go');
+    expect(mailSafeAnswer('go evil\u00AD.example')).toBe('go');
+    expect(mailSafeAnswer('A\u202Eda')).toBe('Ada');
   });
 
   it('puts the answer on one line', () => {
@@ -131,10 +148,29 @@ describe('mailSafeAnswer', () => {
   });
 
   it('cuts a long answer', () => {
-    const long = 'a'.repeat(200);
-    const out = mailSafeAnswer(long);
+    const out = mailSafeAnswer('a'.repeat(200));
     expect(out.length).toBe(MAIL_ANSWER_MAX);
     expect(out.endsWith('…')).toBe(true);
+  });
+});
+
+describe('recipientLimitKey', () => {
+  it('maps +tag, dot and case variants of one mailbox to one key', () => {
+    const key = recipientLimitKey('ada@example.ch');
+    expect(recipientLimitKey('Ada@Example.CH')).toBe(key);
+    expect(recipientLimitKey('ada+1@example.ch')).toBe(key);
+    expect(recipientLimitKey('a.d.a+promo@example.ch')).toBe(key);
+    expect(recipientLimitKey(' ada@example.ch ')).toBe(key);
+  });
+
+  it('keeps different mailboxes and domains apart', () => {
+    expect(recipientLimitKey('ada@example.ch')).not.toBe(recipientLimitKey('bob@example.ch'));
+    expect(recipientLimitKey('ada@example.ch')).not.toBe(recipientLimitKey('ada@example.org'));
+  });
+
+  it('leaves a value without a local part as it is', () => {
+    expect(recipientLimitKey('@example.ch')).toBe('@example.ch');
+    expect(recipientLimitKey('nobody')).toBe('nobody');
   });
 });
 

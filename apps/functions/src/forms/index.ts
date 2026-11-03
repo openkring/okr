@@ -38,6 +38,7 @@ import {
   FILLER_MAIL_PER_RECIPIENT,
   mailErrorCode,
   mailSafeAnswer,
+  recipientLimitKey,
 } from './filler-confirmation';
 import { checkRateLimit as checkBucketLimit } from '../publicApi/rateLimit';
 import { trustedClientIp } from './client-ip';
@@ -467,8 +468,8 @@ async function sendFillerConfirmation(
     return;
   }
   // Anyone can type a stranger's address: bound how often the club's sender writes to one address,
-  // and how many thank-you mails one form sends a day. The address is hashed in the bucket key.
-  const toAddress = await checkBucketLimit('formMailTo', `${tenantId}:${mail.to.toLowerCase()}`, FILLER_MAIL_PER_RECIPIENT);
+  // and how many thank-you mails one form sends a day. The address is normalized (+tag, dots) and hashed in the key.
+  const toAddress = await checkBucketLimit('formMailTo', `${tenantId}:${recipientLimitKey(mail.to)}`, FILLER_MAIL_PER_RECIPIENT);
   if (!toAddress.allowed) {
     logger.warn(`${cfName}: filler confirmation skipped (${toAddress.unavailable ? 'limit unavailable' : 'recipient limit'}) submissionId=${submissionId}`);
     return;

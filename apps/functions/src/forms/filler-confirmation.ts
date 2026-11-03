@@ -25,25 +25,44 @@ export const MAIL_ANSWER_MAX = 80;
 export const FILLER_MAIL_PER_RECIPIENT = { limit: 5, windowMs: 24 * 60 * 60 * 1000, failClosed: true as const };
 export const FILLER_MAIL_PER_FORM = { limit: 200, windowMs: 24 * 60 * 60 * 1000, failClosed: true as const };
 
-const MAIL_ADDRESS_TOKEN = /\S+@\S+/g;
-const URL_TOKEN = /(?:[a-z][a-z0-9+.-]*:\/\/|www\.)\S*/gi;
-/** a bare domain such as «evil.example» or «bit.ly/x» — letters in the last label, so «1.5» stays */
-const DOMAIN_TOKEN = /[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)*\.[\p{L}]{2,}(?:[/?#]\S*)?/giu;
+/** Invisible and direction-control characters: they can hide a link from the checks below. */
+const INVISIBLE = /[\u00AD\u200B-\u200F\u202A-\u202E\u2060-\u2069\uFEFF]/g;
+/**
+ * A word that could become a link in a mail client: a dot, slash, colon, at sign or backslash (or a
+ * dot look-alike that survives NFKC: ideographic full stop, one-dot leader, division slash, fraction
+ * slash) directly followed by a letter or digit. «evil.example», «a@b», «x/y», «1.5» all count.
+ */
+const LINKISH = /[./:@\\\u3002\u2024\u2215\u2044][\p{L}\p{N}]/u;
 
 /**
- * One answer as the filler mail repeats it in a placeholder: on one line, without links, domains or
- * e-mail addresses, at most {@link MAIL_ANSWER_MAX} characters. The mail goes out from the club's
- * address to whatever address was typed in, so a stranger's text must not turn it into a phishing
- * mail. The screen confirmation keeps the answer as typed.
+ * One answer as the filler mail repeats it in a placeholder: on one line, without any word that
+ * could be a link, an address or a domain, at most {@link MAIL_ANSWER_MAX} characters. The mail goes
+ * out from the club's address to whatever address was typed in, so a stranger's text must not turn
+ * it into a phishing mail. An allowlist by shape: a word is kept only when nothing in it could make
+ * a mail client draw a link — even «1.5» or «St.Gallen» is dropped. The screen confirmation keeps
+ * the answer as typed.
  */
 export function mailSafeAnswer(answer: string): string {
   const cleaned = String(answer ?? '')
-    .replace(MAIL_ADDRESS_TOKEN, ' ')
-    .replace(URL_TOKEN, ' ')
-    .replace(DOMAIN_TOKEN, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+    .normalize('NFKC')
+    .replace(INVISIBLE, '')
+    .split(/\s+/)
+    .filter((word) => word !== '' && !LINKISH.test(word))
+    .join(' ');
   return cleaned.length > MAIL_ANSWER_MAX ? `${cleaned.slice(0, MAIL_ANSWER_MAX - 1).trimEnd()}…` : cleaned;
+}
+
+/**
+ * The per-recipient limit key of an address: lower case, the `+tag` and the dots of the local part
+ * removed. Many providers deliver «a.d.a+1@…» to «ada@…»; without this every variant would get
+ * its own allowance. Only the KEY is normalized — the mail still goes to the address as typed.
+ */
+export function recipientLimitKey(address: string): string {
+  const lower = String(address ?? '').normalize('NFKC').trim().toLowerCase();
+  const at = lower.lastIndexOf('@');
+  if (at <= 0) return lower;
+  const local = lower.slice(0, at).split('+')[0].replace(/\./g, '');
+  return `${local}@${lower.slice(at + 1)}`;
 }
 
 /** HTML-escapes text for the form mails (this one and the board notification in `index.ts`). */
