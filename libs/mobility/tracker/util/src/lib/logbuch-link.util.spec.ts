@@ -103,9 +103,13 @@ describe('isTransientLinkError', () => {
 });
 
 describe('logbuchTripLabel', () => {
+  const boat = (name2: string, name1 = ''): AvatarInfo => ({ key: 'b', name1, name2, modelType: 'resource', type: 'rboat', subType: '', label: '' });
   it('boat and time, legacy HHmm normalised', () =>
-    expect(logbuchTripLabel({ resource: person('b', 'Alpha'), startTime: '0930' })).toBe('Alpha, 09:30'));
-  it('HH:mm kept', () => expect(logbuchTripLabel({ resource: person('b', 'Alpha'), startTime: '14:05' })).toBe('Alpha, 14:05'));
+    expect(logbuchTripLabel({ resource: boat('Alpha'), startTime: '0930' })).toBe('Alpha, 09:30'));
+  it('HH:mm kept', () => expect(logbuchTripLabel({ resource: boat('Alpha'), startTime: '14:05' })).toBe('Alpha, 14:05'));
+  it('the boat name is name2 (name1 is empty for boats)', () =>
+    expect(logbuchTripLabel({ resource: boat('Lady in Red'), startTime: '06:58' })).toBe('Lady in Red, 06:58'));
+  it('name1 when name2 is empty', () => expect(logbuchTripLabel({ resource: boat('', 'Alpha'), startTime: '06:58' })).toBe('Alpha, 06:58'));
   it('no boat: the time only', () => expect(logbuchTripLabel({ startTime: '09:30' })).toBe('09:30'));
   it('nothing known: empty', () => expect(logbuchTripLabel({ startTime: '' })).toBe(''));
 });

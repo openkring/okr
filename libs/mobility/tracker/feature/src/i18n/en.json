@@ -59,6 +59,10 @@
     "delete_confirm": "Delete this track?",
     "share_gpx": "Share GPX"
   },
+  "crew": {
+    "title": "Your crew's routes",
+    "recorded_by": "Recorded by {name}"
+  },
   "section": {
     "change_mode": "Change transport",
     "split": "Split",

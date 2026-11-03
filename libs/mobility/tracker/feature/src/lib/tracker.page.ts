@@ -3,7 +3,7 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import {
   IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel,
-  IonList, IonListHeader, IonNote, IonSelect, IonSelectOption, IonTitle, IonToggle, IonToolbar, AlertController,
+  IonList, IonListHeader, IonNote, IonSelect, IonSelectOption, IonTitle, IonToggle, IonToolbar, AlertController, ModalController,
 } from '@ionic/angular';
 import { Capacitor } from '@capacitor/core';
 import { of, switchMap } from 'rxjs';
@@ -14,10 +14,10 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { listCalibrationFiles, readCalibrationCsv, shareCalibration, TrackDb, TrackerLocation, TrackService } from '@okr/mobility-tracker-data-access';
 import { TrackerBanner, TrackMap, TrackMapSection } from '@okr/mobility-tracker-ui';
 import {
-  calibrationStartedAt, parseCalibrationCsv, StrokeDetector, elapsedSeconds, figureTexts, formatKm, isShareCancel, LocalTrack, localStoreDate, logbuchTripLabel, mergeTrackLists, pickLogbuchPreset,
+  calibrationStartedAt, crewRouteItems, crewRoutesFromDate, parseCalibrationCsv, StrokeDetector, elapsedSeconds, figureTexts, formatKm, isShareCancel, LocalTrack, localStoreDate, logbuchTripLabel, mergeTrackLists, pickLogbuchPreset,
   TrackPoint,
 } from '@okr/mobility-tracker-util';
-import { fill, hasRole } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, fill, hasRole, isKioskOnly } from '@okr/shared-util-core';
 import { okrPrompt } from '@okr/shared-util-angular';
 
 import { TrackerStore } from './tracker.store';
@@ -29,7 +29,8 @@ type ModeChoice = TransportMode | typeof AUTO;
 
 /**
  * The tracker (spec 1.121, plan 2 task 9): a start card (or the resume prompt), the banner and a live map while
- * recording, and «Meine Strecken» — local tracks still waiting for an upload first, then the uploaded ones.
+ * recording, and «Meine Strecken» — local tracks still waiting for an upload first, then the uploaded ones — followed
+ * by the routes somebody else on the person's Logbuch crew recorded.
  */
 @Component({
   selector: 'okr-tracker-page',
@@ -139,6 +140,23 @@ type ModeChoice = TransportMode | typeof AUTO;
           <ion-item lines="none"><ion-label color="medium">{{ i18n.list_empty() }}</ion-label></ion-item>
         }
       </ion-list>
+      @if (crewItems().length > 0) {
+        <ion-list>
+          <ion-list-header><ion-label>{{ i18n.crew_title() }}</ion-label></ion-list-header>
+          @for (item of crewItems(); track item.key) {
+            <ion-item button detail="true" (click)="openCrewRoute(item.key)">
+              <ion-icon slot="start" src="{{ 'boat' | svgIcon }}" />
+              <ion-label>
+                <h3>{{ item.label }}</h3>
+                <p>{{ storeDateText(item.startDate) }} · {{ item.distanceKm }} km</p>
+                @if (item.recorderName) {
+                  <p>{{ recordedBy(item.recorderName) }}</p>
+                }
+              </ion-label>
+            </ion-item>
+          }
+        </ion-list>
+      }
       @if (showCalibration()) {
         <ion-list>
           <ion-list-header><ion-label>{{ i18n.calibration_title() }}</ion-label></ion-list-header>
@@ -170,6 +188,7 @@ export class TrackerPage {
   private readonly appStore = inject(AppStore);
   private readonly router = inject(Router);
   private readonly alertController = inject(AlertController);
+  private readonly modalController = inject(ModalController);
 
   protected readonly modes = TRANSPORT_MODES;
   protected readonly auto = AUTO;
@@ -227,6 +246,18 @@ export class TrackerPage {
     return `${this.store.initialized()}|${active?.key}|${active?.state}|${this.store.resumable()?.key}|${this.store.uploadError() ?? ''}`;
   });
   protected readonly items = computed(() => mergeTrackLists(this.localTracks(), this.uploaded()));
+
+  // «Strecken deiner Crew» (spec 1.123 §5): recent Logbuch trips; crewRouteItems keeps those another crew member recorded
+  private readonly recentLogbuch = toSignal(
+    toObservable(this.personKey).pipe(switchMap((pk) => (pk && !isKioskOnly(this.appStore.currentUser())
+      ? this.trackService.listRecentLogbuch(crewRoutesFromDate(Date.now()))
+      : of([] as TripModel[])))),
+    { initialValue: [] as TripModel[] },
+  );
+  protected readonly crewItems = computed(() => {
+    const own = new Set([...this.uploaded().map((t) => t.okey ?? ''), ...this.localTracks().map((t) => t.key)]);
+    return crewRouteItems(this.recentLogbuch(), this.personKey() ?? '', own, localStoreDate(Date.now()));
+  });
 
   // Logbuch link before Start (spec 1.123 §4.1/§4.2): one trip → a removable chip, several → a select
   protected readonly presetTrips = signal<TripModel[]>([]);
@@ -458,6 +489,23 @@ export class TrackerPage {
 
   protected open(key: string): void {
     void this.router.navigate(['/tracker', key]);
+  }
+
+  /** The Logbuch view, exactly as «Ansehen» in the Logbuch: it asks getLogbuchTrack for the route, which decides. */
+  protected async openCrewRoute(key: string): Promise<void> {
+    const trip = this.recentLogbuch().find((t) => t.okey === key);
+    if (!trip) return;
+    const { TripViewModal } = await import('@okr/trip-feature');
+    const modal = await this.modalController.create({ component: TripViewModal, componentProps: { trip } });
+    await modal.present();
+  }
+
+  protected storeDateText(storeDate: string): string {
+    return convertDateFormatToString(storeDate, DateFormat.StoreDate, DateFormat.ViewDate, false);
+  }
+
+  protected recordedBy(name: string): string {
+    return fill(this.i18n.crew_recorded_by(), { name });
   }
 
   /** Only on the device (nothing is local on the web) and once init() has opened TrackDb. */

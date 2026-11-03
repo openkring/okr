@@ -59,6 +59,10 @@
     "delete_confirm": "Diese Strecke löschen?",
     "share_gpx": "GPX teilen"
   },
+  "crew": {
+    "title": "Strecken deiner Crew",
+    "recorded_by": "Aufgezeichnet von {name}"
+  },
   "section": {
     "change_mode": "Verkehrsmittel ändern",
     "split": "Teilen",

@@ -59,6 +59,10 @@
     "delete_confirm": "¿Eliminar este recorrido?",
     "share_gpx": "Compartir GPX"
   },
+  "crew": {
+    "title": "Recorridos de tu tripulación",
+    "recorded_by": "Grabado por {name}"
+  },
   "section": {
     "change_mode": "Cambiar medio de transporte",
     "split": "Dividir",

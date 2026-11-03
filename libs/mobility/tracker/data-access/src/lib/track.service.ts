@@ -189,6 +189,24 @@ export class TrackService {
   }
 
   /**
+   * The tenant's Logbuch trips that may still carry a crew route, newest first: started on or after `fromDate`
+   * (crewRoutesFromDate). `participants` cannot be queried, so the crew, the link and the deadline are filtered by
+   * crewRouteItems. Uses the isArchived/tenants/type/startDate index.
+   */
+  public listRecentLogbuch(fromDate: string): Observable<TripModel[]> {
+    return this.firestoreService.searchData<TripModel>(
+      TripCollection,
+      [
+        ...getSystemQuery(this.env.tenantId),
+        { key: 'type', operator: '==', value: LOGBUCH_TRIP_TYPE },
+        { key: 'startDate', operator: '>=', value: fromDate },
+      ],
+      'startDate',
+      'desc',
+    );
+  }
+
+  /**
    * Deletes an uploaded tracker trip the app way (deleting-models skill): getDeletePatch decides between detach
    * and archive (a tracker trip is single-person and single-tenant, so it is archived). Only that patch is
    * written. A trip that was never uploaded (not-found) counts as deleted. Resolves only on the server's ack:

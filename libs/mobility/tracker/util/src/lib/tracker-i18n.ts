@@ -21,6 +21,8 @@ export const TRACKER_I18N_KEYS = {
   warning_notNative: PFX + 'warning.notNative',
   warning_startFailed: PFX + 'warning.startFailed',
   upload_error: PFX + 'upload_error',
+  crew_title: PFX + 'crew.title',
+  crew_recorded_by: PFX + 'crew.recorded_by',
   start_title: PFX + 'start.title',
   start_detect: PFX + 'start.detect',
   start_mode: PFX + 'start.mode',

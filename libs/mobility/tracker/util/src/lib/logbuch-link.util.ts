@@ -85,11 +85,11 @@ export function isTransientLinkError(error: unknown): boolean {
   return TRANSIENT_CODES.includes(code.replace(/^firestore\//, ''));
 }
 
-/** «Alpha, 09:30»: the boat and the start time ('HHmm' or 'HH:mm') of a Logbuch trip. */
+/** «Alpha, 09:30»: the boat and the start time ('HHmm' or 'HH:mm') of a Logbuch trip. A boat's name is in `name2`. */
 export function logbuchTripLabel(trip: Pick<TripModel, 'resource' | 'startTime'>): string {
   const digits = (trip.startTime ?? '').replace(/\D/g, '');
   const time = digits === '' ? '' : `${digits.padStart(4, '0').slice(-4, -2)}:${digits.padStart(4, '0').slice(-2)}`;
-  return [trip.resource?.name1 ?? '', time].filter((x) => x !== '').join(', ');
+  return [trip.resource?.name2 || trip.resource?.name1 || '', time].filter((x) => x !== '').join(', ');
 }
 
 /** A recording waiting for its link transaction (offline at start): retried before the upload. */

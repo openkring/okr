@@ -23,6 +23,7 @@
     "@angular/router": "*",
     "@ionic/angular": "*",
     "rxjs": "*",
-    "@capacitor/push-notifications": "*"
+    "@capacitor/push-notifications": "*",
+    "@okr/trip-feature": "*"
   }
 }

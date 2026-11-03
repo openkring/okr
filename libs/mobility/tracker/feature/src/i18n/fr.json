@@ -59,6 +59,10 @@
     "delete_confirm": "Supprimer ce parcours ?",
     "share_gpx": "Partager le GPX"
   },
+  "crew": {
+    "title": "Parcours de ton équipage",
+    "recorded_by": "Enregistré par {name}"
+  },
   "section": {
     "change_mode": "Changer de moyen de transport",
     "split": "Diviser",
