@@ -170,6 +170,20 @@ describe('buildConfirmationMessage', () => {
     expect(run('Danke {firstName}', undefined, { firstName: 'Anna' })).toBe('Danke Anna');
   });
 
+  it('passes each filled-in answer, not the author text, through formatParam', () => {
+    const visible = getVisibleFieldIds(fields, { firstName: 'Anna', age: 20 }, TODAY);
+    const upper = (a: string) => a.toUpperCase();
+    expect(buildConfirmationMessage(fields, 'Danke {firstName}, {age}', undefined, { firstName: 'Anna', age: 20 }, visible, TODAY, upper))
+      .toBe('Danke ANNA, 20');
+  });
+
+  it('chooses the variant on the raw answers even with formatParam', () => {
+    const anna: VisibilityRule = { match: 'all', conditions: [{ fieldId: 'firstName', op: 'equals', value: 'Anna' }] };
+    const visible = getVisibleFieldIds(fields, { firstName: 'Anna' }, TODAY);
+    expect(buildConfirmationMessage(fields, 'Standard', [{ when: anna, message: 'Hallo {firstName}' }], { firstName: 'Anna' }, visible, TODAY, () => 'x'))
+      .toBe('Hallo x');
+  });
+
   it('keeps line breaks', () => {
     expect(run('Hallo {firstName}\n\nBis bald', undefined, { firstName: 'Anna' })).toBe('Hallo Anna\n\nBis bald');
   });

@@ -4,14 +4,47 @@ import { isSsnField } from '@okr/shared-util-core';
 /**
  * The thank-you mail to the filler (1.125 B, spec §10, `sendFillerConfirmation`). Pure.
  *
- * The body is the confirmation `submitForm` also returns — built by `buildConfirmationMessage`,
- * which never puts an AHV number into a placeholder (R1) — never the raw answers. Nothing is stored.
+ * The body is the confirmation text `submitForm` also returns — built by `buildConfirmationMessage`,
+ * which never puts an AHV number into a placeholder (R1) — with every filled-in answer passed through
+ * {@link mailSafeAnswer}; never the raw answers. Nothing is stored.
  */
 
 export const DEFAULT_FILLER_CONFIRMATION = 'Vielen Dank, deine Antwort ist eingegangen.';
 
 /** One plain address: no list, no spaces, one `@` with something on both sides. */
 const ADDRESS = /^[^\s@,;<>"]+@[^\s@,;<>"]+\.[^\s@,;<>"]+$/;
+
+/** The longest answer the mail repeats; longer ones are cut with «…». */
+export const MAIL_ANSWER_MAX = 80;
+
+/**
+ * Thank-you mails to one address per tenant per day, and per form per day (`_rateLimits`, fails
+ * closed: no mail when the counter cannot be read). Anyone can type a stranger's address into a
+ * public form; these bound how often the club's sender can be made to write to them.
+ */
+export const FILLER_MAIL_PER_RECIPIENT = { limit: 5, windowMs: 24 * 60 * 60 * 1000, failClosed: true as const };
+export const FILLER_MAIL_PER_FORM = { limit: 200, windowMs: 24 * 60 * 60 * 1000, failClosed: true as const };
+
+const MAIL_ADDRESS_TOKEN = /\S+@\S+/g;
+const URL_TOKEN = /(?:[a-z][a-z0-9+.-]*:\/\/|www\.)\S*/gi;
+/** a bare domain such as «evil.example» or «bit.ly/x» — letters in the last label, so «1.5» stays */
+const DOMAIN_TOKEN = /[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)*\.[\p{L}]{2,}(?:[/?#]\S*)?/giu;
+
+/**
+ * One answer as the filler mail repeats it in a placeholder: on one line, without links, domains or
+ * e-mail addresses, at most {@link MAIL_ANSWER_MAX} characters. The mail goes out from the club's
+ * address to whatever address was typed in, so a stranger's text must not turn it into a phishing
+ * mail. The screen confirmation keeps the answer as typed.
+ */
+export function mailSafeAnswer(answer: string): string {
+  const cleaned = String(answer ?? '')
+    .replace(MAIL_ADDRESS_TOKEN, ' ')
+    .replace(URL_TOKEN, ' ')
+    .replace(DOMAIN_TOKEN, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return cleaned.length > MAIL_ANSWER_MAX ? `${cleaned.slice(0, MAIL_ANSWER_MAX - 1).trimEnd()}…` : cleaned;
+}
 
 /** HTML-escapes text for the form mails (this one and the board notification in `index.ts`). */
 export function escapeHtml(text: string): string {

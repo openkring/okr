@@ -22,9 +22,25 @@ import { createBoathouseReservation } from './reservation-target';
 import { emitEvent } from '../workflow/emit';
 import { buildSubmissionTaskNotes, prepareSubmission, type SubmissionRow, type ValueNames } from './submission-pipeline';
 import { projectPublicFormDefinition } from './public-definition';
-import { acceptanceForSection, isDocumentId, missingSectionOnlyValues, readVerifiedSection, type FormSectionProperties } from './form-section-config';
+import {
+  acceptanceForSection,
+  captchaRequired,
+  isDocumentId,
+  missingSectionOnlyValues,
+  readVerifiedSection,
+  type FormSectionProperties,
+} from './form-section-config';
 import { persistWithSlot, readResponseCount } from './form-stats';
-import { buildFillerMail, escapeHtml, mailErrorCode } from './filler-confirmation';
+import {
+  buildFillerMail,
+  escapeHtml,
+  FILLER_MAIL_PER_FORM,
+  FILLER_MAIL_PER_RECIPIENT,
+  mailErrorCode,
+  mailSafeAnswer,
+} from './filler-confirmation';
+import { checkRateLimit as checkBucketLimit } from '../publicApi/rateLimit';
+import { trustedClientIp } from './client-ip';
 
 const REGION = 'europe-west6';
 const formsHmacSecret = defineSecret('FORMS_HMAC_SECRET');
@@ -450,6 +466,18 @@ async function sendFillerConfirmation(
     logger.info(`${cfName}: no filler confirmation (no visible e-mail answer) submissionId=${submissionId}`);
     return;
   }
+  // Anyone can type a stranger's address: bound how often the club's sender writes to one address,
+  // and how many thank-you mails one form sends a day. The address is hashed in the bucket key.
+  const toAddress = await checkBucketLimit('formMailTo', `${tenantId}:${mail.to.toLowerCase()}`, FILLER_MAIL_PER_RECIPIENT);
+  if (!toAddress.allowed) {
+    logger.warn(`${cfName}: filler confirmation skipped (${toAddress.unavailable ? 'limit unavailable' : 'recipient limit'}) submissionId=${submissionId}`);
+    return;
+  }
+  const perForm = await checkBucketLimit('formMailForm', `${tenantId}:${formDef.okey}`, FILLER_MAIL_PER_FORM);
+  if (!perForm.allowed) {
+    logger.warn(`${cfName}: filler confirmation skipped (${perForm.unavailable ? 'limit unavailable' : 'daily form limit'}) submissionId=${submissionId}`);
+    return;
+  }
   try {
     // the app's verified sender (mailtrap_api only accepts authorized domains)
     const from = (await getAppEmailConfig(tenantId)).from;
@@ -499,10 +527,8 @@ export const submitForm = onCall(
     const ratePeriod = sectionConfig?.periodMinutes ?? 5;
 
     // ── 2. Rate limit (§10.4) — respond 429, do NOT store ──
-    const rawIp =
-      (request.rawRequest.headers['x-forwarded-for'] as string | undefined)?.split(',')[0].trim()
-      ?? request.rawRequest.socket?.remoteAddress
-      ?? 'unknown';
+    // the rightmost public X-Forwarded-For hop: the leftmost is the caller's own choice
+    const rawIp = trustedClientIp(request.rawRequest.headers['x-forwarded-for'], request.rawRequest.socket?.remoteAddress);
     const rawUa = (request.rawRequest.headers['user-agent'] as string | undefined) ?? '';
     const ipHash = fingerprintIp(rawIp);
     const uaHash = fingerprintUa(rawUa);
@@ -527,6 +553,13 @@ export const submitForm = onCall(
     }
 
     // ── 3. Spam checks ────────────────────────────
+    // The section a submission names is a client claim: only a form section of THIS form in THIS
+    // tenant counts (step 3b). Read here because its captcha setting decides §10.5.
+    const section = await readVerifiedSection(db, payload.sectionConfigRef, payload.formKey, payload.tenantId);
+    if (payload.sectionConfigRef && section === undefined) {
+      const ref = isDocumentId(payload.sectionConfigRef) ? payload.sectionConfigRef : 'invalid';
+      logger.warn(`${CF_NAME}: section ${ref} is no form section of formKey=${payload.formKey} in this tenant — ignored`);
+    }
     const spamReasons: string[] = [];
 
     // §10.1 Honeypot field
@@ -548,8 +581,9 @@ export const submitForm = onCall(
       }
     }
 
-    // §10.5 Optional CAPTCHA — verify App Check token score
-    if (payload.meta.showCaptcha) {
+    // §10.5 Optional CAPTCHA — verify App Check token score. Required when the verified section asks
+    // for it, not only when the client says so: a bot sending `showCaptcha: false` must not skip it.
+    if (captchaRequired(section, payload.meta.showCaptcha)) {
       if (!request.app) {
         spamReasons.push('captcha_missing');
         logger.info(`${CF_NAME}: captcha_missing (no App Check token) formKey=${payload.formKey}`);
@@ -582,13 +616,9 @@ export const submitForm = onCall(
     // `sectionConfigRef` is the client's claim: its implicit values, overrides, task and board mail
     // count only for a form section of THIS form in THIS tenant (review focus 1). A closed or full
     // form refuses spam too — a bot gets the same answer as a person.
+    // (the section itself is read before the spam checks, which take its captcha setting)
     const today = todayStoreDate();
     const fields = formDef.fields ?? [];
-    const section = await readVerifiedSection(db, payload.sectionConfigRef, payload.formKey, payload.tenantId);
-    if (payload.sectionConfigRef && section === undefined) {
-      const ref = isDocumentId(payload.sectionConfigRef) ? payload.sectionConfigRef : 'invalid';
-      logger.warn(`${CF_NAME}: section ${ref} is no form section of formKey=${payload.formKey} in this tenant — ignored`);
-    }
     const { settings: acceptance, availability } = await availabilityOf(db, formDef, section);
     if (!availability.isOpen) {
       logger.info(`${CF_NAME}: refused formKey=${payload.formKey} reason=${availability.reason} isSpam=${isSpam}`);
@@ -769,8 +799,13 @@ export const submitForm = onCall(
     }
 
     // ── 7b. Thank-you mail to the filler (spec §10) — never for spam, never fails the submit ──
+    // The mail repeats answers only through mailSafeAnswer (no links, one line, short): it goes out from
+    // the club's address to whatever address was typed in. The screen keeps `confirmation` as is.
     if (!isSpam && formDef.sendFillerConfirmation === true) {
-      await sendFillerConfirmation(formDef, confirmation, prepared.answers, prepared.visible, payload.tenantId, submissionId, CF_NAME);
+      const mailConfirmation = buildConfirmationMessage(
+        fields, formDef.confirmationMessage, formDef.confirmationVariants, prepared.answers, prepared.visible, today, mailSafeAnswer,
+      );
+      await sendFillerConfirmation(formDef, mailConfirmation, prepared.answers, prepared.visible, payload.tenantId, submissionId, CF_NAME);
     }
 
     // ── 8. Workflow event ─────────────────────────

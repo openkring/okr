@@ -8,7 +8,9 @@ import {
   DEFAULT_FILLER_CONFIRMATION,
   escapeHtml,
   firstVisibleEmail,
+  MAIL_ANSWER_MAX,
   mailErrorCode,
+  mailSafeAnswer,
 } from './filler-confirmation';
 
 const f = (id: string, key: string, type: string, order: number): Field =>
@@ -107,5 +109,46 @@ describe('mailErrorCode', () => {
 describe('escapeHtml', () => {
   it('escapes the four HTML characters', () => {
     expect(escapeHtml('<a href="x">&</a>')).toBe('&lt;a href=&quot;x&quot;&gt;&amp;&lt;/a&gt;');
+  });
+});
+
+describe('mailSafeAnswer', () => {
+  it('keeps an ordinary answer as typed', () => {
+    expect(mailSafeAnswer('Ada Lovelace')).toBe('Ada Lovelace');
+    expect(mailSafeAnswer('St. Gallen, 1.5 Jahre')).toBe('St. Gallen, 1.5 Jahre');
+  });
+
+  it('removes links, bare domains and e-mail addresses', () => {
+    expect(mailSafeAnswer('Ada https://evil.example/login now')).toBe('Ada now');
+    expect(mailSafeAnswer('go to www.evil.example')).toBe('go to');
+    expect(mailSafeAnswer('see evil.example/reset or bit.ly/x')).toBe('see or');
+    expect(mailSafeAnswer('write me at ada@evil.example')).toBe('write me at');
+    expect(mailSafeAnswer('data:text/html,x javascript://x')).toBe('data:text/html,x');
+  });
+
+  it('puts the answer on one line', () => {
+    expect(mailSafeAnswer('Ada\n\nDear customer,\r\nyour account')).toBe('Ada Dear customer, your account');
+  });
+
+  it('cuts a long answer', () => {
+    const long = 'a'.repeat(200);
+    const out = mailSafeAnswer(long);
+    expect(out.length).toBe(MAIL_ANSWER_MAX);
+    expect(out.endsWith('…')).toBe(true);
+  });
+});
+
+describe('buildFillerMail with mail-safe answers', () => {
+  it('a stranger link in a placeholder never reaches the mail body', () => {
+    const fields = [
+      { id: 'n', key: 'firstName', type: 'text', order: 1 },
+      { id: 'e', key: 'email', type: 'email', order: 2 },
+    ] as Field[];
+    const answers = { firstName: 'Click https://evil.example', email: 'victim@example.ch' };
+    const visible = new Set(['n', 'e']);
+    const text = buildConfirmationMessage(fields, 'Danke {firstName}', undefined, answers, visible, '20261103', mailSafeAnswer);
+    const mail = buildFillerMail('Kurs', text, fields, answers, visible);
+    expect(mail?.html).toContain('Danke Click');
+    expect(mail?.html).not.toContain('evil');
   });
 });

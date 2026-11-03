@@ -116,6 +116,9 @@ const STORE_DATE = /^\d{8}$/;
  * Placeholders are replaced in a single pass. A placeholder of a hidden field, an unknown key, a display element or an AHV field becomes ''
  * (the number is never echoed); an `implicit` field shows its value (the course id).
  * A matching variant with a blank text is skipped.
+ * `formatParam` rewrites each filled-in answer (not the author's text) — the filler mail uses it to
+ * keep a stranger's links and line breaks out of a mail sent from the club's address. The variant
+ * is still chosen on the raw answers.
  */
 export function buildConfirmationMessage(
   fields: Field[],
@@ -124,6 +127,7 @@ export function buildConfirmationMessage(
   values: Record<string, unknown>,
   visible: Set<string>,
   today: string,
+  formatParam?: (answer: string) => string,
 ): string {
   const all = Array.isArray(fields) ? fields : [];
   const answers = values ?? {};
@@ -140,7 +144,8 @@ export function buildConfirmationMessage(
   const params: Record<string, string> = Object.create(null) as Record<string, string>;
   for (const field of all) {
     if (typeof field.key !== 'string' || field.key === '' || DISPLAY_TYPES.has(field.type)) continue;
-    params[field.key] = isSsnField(field) || !visible.has(field.id) ? '' : formatAnswer(field, answers[field.key]);
+    const answer = isSsnField(field) || !visible.has(field.id) ? '' : formatAnswer(field, answers[field.key]);
+    params[field.key] = formatParam !== undefined && answer !== '' ? formatParam(answer) : answer;
   }
   // ONE pass: a substituted answer is never rescanned, so an answer like «{age}» stays inert text and
   // cannot pull in another answer or an implicit value. Own-property lookup only (no `{constructor}`).

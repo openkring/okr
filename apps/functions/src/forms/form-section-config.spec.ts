@@ -4,7 +4,7 @@ import type { Firestore } from 'firebase-admin/firestore';
 import type { Field } from '@okr/shared-models';
 import { computeFormAvailability } from '@okr/shared-util-core';
 
-import { acceptanceForSection, missingSectionOnlyValues, readVerifiedSection, requiresSection, verifySectionForForm } from './form-section-config';
+import { acceptanceForSection, captchaRequired, missingSectionOnlyValues, readVerifiedSection, requiresSection, verifySectionForForm } from './form-section-config';
 
 const SECTION = {
   type: 'form',
@@ -133,5 +133,29 @@ describe('acceptanceForSection', () => {
   it('a form without such implicit fields still works without a section', () => {
     const settings = acceptanceForSection({ okey: 'd1', fields: [text, implicit({ defaultValue: 'c1' })] }, undefined);
     expect(computeFormAvailability(settings, 0, '20261102').isOpen).toBe(true);
+  });
+});
+
+describe('captchaRequired', () => {
+  const asking = { props: { formKey: 'f1', showCaptcha: true } };
+  const silent = { props: { formKey: 'f1' } };
+
+  it('is required when the verified section asks for it, whatever the client claims', () => {
+    expect(captchaRequired(asking, false)).toBe(true);
+    expect(captchaRequired(asking, undefined)).toBe(true);
+  });
+
+  it('the client claim can only make it stricter', () => {
+    expect(captchaRequired(silent, true)).toBe(true);
+    expect(captchaRequired(undefined, true)).toBe(true);
+  });
+
+  it('is not required when neither the section nor the client asks', () => {
+    expect(captchaRequired(silent, false)).toBe(false);
+    expect(captchaRequired(undefined, false)).toBe(false);
+  });
+
+  it('only a literal true counts', () => {
+    expect(captchaRequired({ props: { formKey: 'f1', showCaptcha: 'yes' as unknown as boolean } }, 'true')).toBe(false);
   });
 });
