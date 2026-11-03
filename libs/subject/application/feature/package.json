@@ -16,6 +16,7 @@
     "@okr/shared-pipes": "*",
     "@okr/shared-util-angular": "*",
     "@okr/shared-util-core": "*",
+    "@okr/calendar-course-data-access": "*",
     "@okr/relationship-membership-feature": "*",
     "@okr/application-data-access": "*",
     "@okr/application-ui": "*",

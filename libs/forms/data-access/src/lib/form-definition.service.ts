@@ -1,10 +1,10 @@
 import { inject, Injectable } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { map, Observable, of } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
-import { FormDefinitionCollection, FormDefinitionModel, UserModel } from '@okr/shared-models';
+import { FormDefinitionCollection, FormDefinitionModel, FormStatsCollection, FormStatsModel, UserModel } from '@okr/shared-models';
 import { getDeletePatch, getSystemQuery } from '@okr/shared-util-core';
 import { generateFormKey } from '@okr/forms-util';
 
@@ -45,6 +45,18 @@ export class FormDefinitionService {
     return this.firestoreService
       .searchData<FormDefinitionModel>(FormDefinitionCollection, query, 'name', 'asc')
       .pipe(map(results => results[0]));
+  }
+
+  /**
+   * The accepted responses counted in `formStats/{statsId}` (spec §11) — the form's okey, or `<formOkey>__<sectionOkey>`
+   * for a section with its own places. A missing document (nothing accepted yet) counts 0; so does a denied read
+   * (authors only, firestore.rules) — quietly, without a toast.
+   */
+  public readResponseCount(statsId: string): Observable<number> {
+    if (!statsId) return of(0);
+    return this.firestoreService
+      .readObjectQuiet<FormStatsModel>(`${FormStatsCollection}/${statsId}`)
+      .pipe(map(stats => (typeof stats?.responseCount === 'number' ? stats.responseCount : 0)));
   }
 
   public async create(form: FormDefinitionModel, currentUser?: UserModel): Promise<string | undefined> {

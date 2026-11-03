@@ -1347,6 +1347,9 @@ service cloud.firestore {
     // privileged-only (D-P4-3): only the AOC admin console consumes them.
     match /competition-levels/{id} { allow read: if isPrivileged() && tenantRead(); allow create, update: if isPrivileged() && tenantCreateOrDetach(); allow delete: if isPrivileged() && tenantDelete(); }
     match /formDefinitions/{id}    { allow read: if tenantRead(); allow create, update: if isContentManager() && tenantCreateOrDetach(); allow delete: if isContentManager() && tenantDelete(); }
+    // formStats (1.125 B, spec §11/§19): the response counter of a form (or of one section's own places).
+    // Written only by submitForm (Admin SDK); authors read it for «7 von 8 Antworten». No personal data.
+    match /formStats/{id}          { allow read: if isContentManager() && tenantRead(); allow write: if false; }
     match /periods/{id}            { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreateOrDetach(); allow delete: if isPrivileged() && tenantDelete(); }
     match /responsibilities/{id}   { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreateOrDetach(); allow delete: if isPrivileged() && tenantDelete(); }
     match /vat-codes/{id}          { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreateOrDetach(); allow delete: if isPrivileged() && tenantDelete(); }

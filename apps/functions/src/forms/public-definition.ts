@@ -7,7 +7,9 @@
  *
  * Deliberately NOT projected: `encryptionKeyHash` (never exposed), audit data, and `derivedValues` — derived
  * values are computed on the server at submission; the public renderer never reads them (only the builder
- * preview does, from the full document).
+ * preview does, from the full document). Nor the thank-you texts (`confirmationMessage`,
+ * `confirmationVariants`): `submitForm` returns the filled-in text after a submit (1.125 B). The acceptance
+ * settings travel as the computed `availability` that `getFormDefinition` adds, not as raw fields.
  */
 export function projectPublicFormDefinition(
   docId: string,
@@ -29,5 +31,7 @@ export function projectPublicFormDefinition(
     target: data['target'] ?? { kind: 'collection', mappingKey: '', modelType: '', collectionName: '' },
     fields: data['fields'] ?? [],
     version: data['version'] ?? 1,
+    // 1.125 B — the renderer only needs to know a thank-you mail goes out, never its text
+    sendFillerConfirmation: data['sendFillerConfirmation'] === true,
   };
 }

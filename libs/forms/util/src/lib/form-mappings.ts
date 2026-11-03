@@ -18,6 +18,18 @@ export const FORM_MAPPINGS: FormMapping[] = [
     propertiesField: 'properties',
   },
   {
+    // 1.125 B / D-W4 — the course registration: an application FOR a course. `applicationFor: 'course'`
+    // keeps `accept()` from creating a member; the course itself is the typed property `courseId`
+    // (an implicit field, resolved server-side from the section). Mirrored in
+    // the inlined whitelist in `apps/functions/src/forms/index.ts`.
+    mappingKey: 'applications.course',
+    label: 'Applications (Kurse)',
+    modelType: 'ApplicationModel',
+    collectionName: 'applications',
+    defaults: { state: 'applied', source: 'form', applicationFor: 'course' },
+    propertiesField: 'properties',
+  },
+  {
     // C5 §2 — the kring.ch lead form. The only mapping whose target is not a single document:
     // `submitForm` dispatches it to `createProspect`, which writes the prospect AND its contact
     // details into the address vault (`parentKey = 'prospect.<okey>'`). Never give a prospect a

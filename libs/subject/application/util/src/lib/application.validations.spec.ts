@@ -18,6 +18,51 @@ describe('applicationValidations', () => {
     expect(applicationValidations(validAdult()).isValid()).toBe(true);
   });
 
+  describe('course registration (applicationFor course, spec 1.125 §13.2)', () => {
+    const year = new Date().getFullYear();
+    // what the seeded course form delivers: no address, no applicationAs, no AHV number
+    const course = (patch: Partial<ApplicationModel> = {}) => ({
+      ...new ApplicationModel('scs'),
+      applicationFor: 'course' as const,
+      applicationAs: undefined, // reads skip the model defaults
+      firstName: 'Mia', lastName: 'Muster', gender: 'female' as const, dateOfBirth: `${year - 15}0101`,
+      email: 'mia@example.com', phone: '', parentFirstName: 'Eva', parentLastName: 'Muster',
+      ...patch,
+    }) as ApplicationModel;
+
+    it('is valid for a 15-year-old without address, kind and AHV number', () => {
+      const app = course();
+      expect(app.applicationAs).toBeUndefined();
+      expect(applicationValidations(app).isValid()).toBe(true);
+    });
+
+    it('a membership application with the same data still fails', () => {
+      const result = applicationValidations(course({ applicationFor: 'membership' }));
+      expect(result.isValid()).toBe(false);
+      for (const field of ['streetName', 'zipCode', 'city', 'applicationAs', 'ssnId']) expect(result.hasErrors(field)).toBe(true);
+    });
+
+    it('a legacy application without applicationFor is a membership application', () => {
+      const result = applicationValidations(course({ applicationFor: undefined }));
+      expect(result.hasErrors('streetName')).toBe(true);
+    });
+
+    it('still needs a name and an e-mail (own or the guardian\'s)', () => {
+      expect(applicationValidations(course({ firstName: '' })).hasErrors('firstName')).toBe(true);
+      expect(applicationValidations(course({ email: '' })).hasErrors('email')).toBe(true);
+      expect(applicationValidations(course({ email: '', parentEmail: 'eva@example.com' })).hasErrors('email')).toBe(false);
+    });
+
+    it('still needs the guardian\'s names under 18', () => {
+      expect(applicationValidations(course({ parentFirstName: '' })).hasErrors('parentFirstName')).toBe(true);
+    });
+
+    it('keeps checking the typed properties', () => {
+      const app = course({ properties: [{ key: 'level', type: 'number', value: Number.NaN }] as ApplicationModel['properties'] });
+      expect(applicationValidations(app).hasErrors('properties[0].value')).toBe(true);
+    });
+  });
+
   it('requires the first and last name', () => {
     const result = applicationValidations(validAdult({ firstName: ' ', lastName: '' }));
     expect(result.hasErrors('firstName')).toBe(true);

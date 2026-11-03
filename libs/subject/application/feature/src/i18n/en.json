@@ -2,7 +2,13 @@
   "list": {
     "title": "Applications",
     "empty": "No applications found.",
-    "no_person": "Person not yet created — accept the application first."
+    "no_person": "Person not yet created — accept the application first.",
+    "filter": {
+      "label": "Type",
+      "all": "All",
+      "membership": "Membership",
+      "course": "Courses"
+    }
   },
   "add": {
     "group": {

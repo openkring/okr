@@ -1,3 +1,4 @@
+import { OTHER_OPTION_VALUE } from '@okr/shared-models';
 import type { BaseType, DerivedValue, Field, PropertyType, TypedProperty } from '@okr/shared-models';
 import { isBlankAhv, isSsnField, SSN_FIELD_KEY } from './ahv.util';
 import { evaluateVisibilityRule } from './form-visibility.util';
@@ -40,6 +41,8 @@ export function propertyTypeOf(field: Field): PropertyType | undefined {
   // an AHV number maps to the model field `ssnId`, never to a typed property — also a text field keyed ssnId
   if (isSsnField(field)) return undefined;
   switch (field.type) {
+    case 'implicit':
+      return field.valueType;
     case 'checkbox':
       return Array.isArray(field.options) && field.options.length > 0 ? undefined : 'boolean';
     case 'number':
@@ -83,6 +86,15 @@ export function coerceToPropertyType(value: unknown, type: PropertyType): BaseTy
   }
 }
 
+/** Longest «Andere» text a submission may carry; a longer one is omitted here and refused by the server. */
+export const FORM_OTHER_TEXT_MAX = 500;
+
+/** The answer picks «Andere»: the reserved value, or a list holding it (checkbox group). */
+function isOtherAnswer(field: Field, raw: unknown): boolean {
+  if (!('allowOther' in field) || field.allowOther !== true) return false;
+  return Array.isArray(raw) ? raw.includes(OTHER_OPTION_VALUE) : raw === OTHER_OPTION_VALUE;
+}
+
 /**
  * Builds the typed `properties` list: the visible `asProperty` fields in field `order` (label = the
  * field's label, value coerced to the field's type), followed by the derived values flagged
@@ -109,6 +121,20 @@ export function buildTypedProperties(
     const value = coerceToPropertyType(raw, type);
     if (value === undefined) continue;
     list.push({ key: field.key, type, value, label: field.label });
+
+    // «Andere»: the free text goes next to the answer as `<key>Other` (spec §9)
+    // never when a real field of the form owns that key (its answer is not an «Andere» text), never when too long
+    const otherKey = `${field.key}Other`;
+    const otherText = values?.[otherKey];
+    if (
+      isOtherAnswer(field, raw) &&
+      !sorted.some((x) => x.key === otherKey) &&
+      typeof otherText === 'string' &&
+      otherText.trim() !== '' &&
+      otherText.length <= FORM_OTHER_TEXT_MAX
+    ) {
+      list.push({ key: otherKey, type: 'text', value: otherText, label: `${field.label} (Andere)` });
+    }
   }
 
   for (const d of Array.isArray(derived) ? derived : []) {

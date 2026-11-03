@@ -1,34 +1,43 @@
-import { Component, computed, effect, input, model, output } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output, untracked } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonNote, IonRow } from '@ionic/angular';
 
 import { LONG_NAME_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
-import { CategoryListModel, Field, FormMapping, VisibilityRule } from '@okr/shared-models';
+import { BaseType, CategoryListModel, Field, FormMapping, PropertyType, VisibilityRule } from '@okr/shared-models';
 import {
   Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n,
   StringSelect, StringSelectI18n, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
-import { coerceBoolean, fill, propertyTypeOf } from '@okr/shared-util-core';
+import { coerceBoolean, fill, isPrefillable, isSsnField, propertyTypeOf } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
-import { errorsUnder, fieldConfigValidations, fieldLabelLength, FormI18n, isDisplayField, propertyTypeLabel } from '@okr/forms-util';
+import {
+  canAllowOther, defaultFromText, errorsUnder, fieldConfigValidations, fieldLabelLength, FormI18n, isDisplayField, propertyTypeLabel,
+} from '@okr/forms-util';
 
 import { VisibilityRuleInput } from './visibility-rule.input';
 
 const FIELD_WIDTHS: Field['width'][] = ['full', 'half', 'third'];
+/** «Art des Werts» of an unsichtbares Feld, in the order the select offers them */
+const VALUE_TYPES: PropertyType[] = ['boolean', 'number', 'text'];
 
 /**
  * Configures one form-builder field: label/text, key, width, required, category, paragraph style, help and placeholder,
- * «Als eigene Angabe speichern» (on mappings with properties) and the «Nur anzeigen, wenn …» rule.
+ * «Andere … erlauben» (choice fields), «Gesperrt, wenn per Link vorausgefüllt» (pre-fillable fields), the value type,
+ * default and «darf per Link gesetzt werden» of an unsichtbares Feld, «Als eigene Angabe speichern» (on mappings with
+ * properties) and the «Nur anzeigen, wenn …» rule. An AHV field (R1) is never pre-fillable and never a property.
  */
 @Component({
   selector: 'okr-field-config-form',
   standalone: true,
   imports: [
     ErrorNote, TextInput, NotesInput, StringSelect, Checkbox, VisibilityRuleInput,
-    IonGrid, IonRow, IonCol, IonCard, IonCardContent,
+    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonNote,
   ],
-  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
+  styles: [`
+    @media (width <= 600px) { ion-card { margin: 5px;} }
+    ion-item.hint { --min-height: 0; }
+  `],
   template: `
     @if (showForm()) {
       <form novalidate>
@@ -69,6 +78,34 @@ const FIELD_WIDTHS: Field['width'][] = ['full', 'half', 'third'];
                   </ion-col>
                 </ion-row>
               }
+              @if (isImplicit()) {
+                <!-- unsichtbares Feld (spec §8.1): never shown to the filler; its value comes from the page, the link or this default -->
+                <ion-row>
+                  <ion-col size="12" size-md="6">
+                    <okr-string-select [i18n]="valueTypeI18n()" [stringList]="valueTypes" [labels]="valueTypeLabels()"
+                      [selectedString]="valueType()" (selectedStringChange)="onValueTypeChange($event)"
+                      [showHelper]="false" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="valueTypeErrors()" />
+                  </ion-col>
+                  <ion-col size="12" size-md="6">
+                    @if (valueType() === 'boolean') {
+                      <okr-checkbox [i18n]="defaultBooleanI18n()" [checked]="defaultValue() === true" (checkedChange)="onDefaultChange($event)"
+                        [toggle]="true" justify="space-between" labelPlacement="start" [readOnly]="isReadOnly()" />
+                    } @else {
+                      <!-- the cap is the one the suite enforces on a text default (LONG_NAME_LENGTH) -->
+                      <okr-text-input [i18n]="defaultValueI18n()" [value]="defaultText()" (valueChange)="onDefaultChange($event)"
+                        [inputMode]="valueType() === 'number' ? 'decimal' : 'text'" [maxLength]="longNameLength" [readOnly]="isReadOnly()" />
+                    }
+                    <okr-error-note [errors]="defaultValueErrors()" />
+                  </ion-col>
+                </ion-row>
+                <ion-row>
+                  <ion-col size="12">
+                    <okr-checkbox [i18n]="fromLinkI18n()" [checked]="fromLink()" (checkedChange)="onFieldChange('fromLink', $event)"
+                      [toggle]="true" justify="space-between" labelPlacement="start" [showHelper]="true" [readOnly]="isReadOnly()" />
+                  </ion-col>
+                </ion-row>
+              }
               @if (formData().type === 'category') {
                 <ion-row>
                   <ion-col size="12">
@@ -79,20 +116,23 @@ const FIELD_WIDTHS: Field['width'][] = ['full', 'half', 'third'];
                   </ion-col>
                 </ion-row>
               }
-              <ion-row>
-                <ion-col size="12" size-md="6">
-                  <okr-string-select [i18n]="widthI18n()" [stringList]="widths" [labels]="widthLabels()"
-                    [selectedString]="width()" (selectedStringChange)="onFieldChange('width', $event)"
-                    [readOnly]="isReadOnly()" />
-                </ion-col>
-                @if (!isDisplay()) {
+              @if (!isImplicit()) {
+                <!-- an unsichtbares Feld has no width, is never required, and shows no help or placeholder -->
+                <ion-row>
                   <ion-col size="12" size-md="6">
-                    <okr-checkbox [i18n]="requiredI18n()" [checked]="required()" (checkedChange)="onFieldChange('required', $event)"
-                      [toggle]="true" justify="space-between" labelPlacement="start" [readOnly]="isReadOnly()" />
+                    <okr-string-select [i18n]="widthI18n()" [stringList]="widths" [labels]="widthLabels()"
+                      [selectedString]="width()" (selectedStringChange)="onFieldChange('width', $event)"
+                      [readOnly]="isReadOnly()" />
                   </ion-col>
-                }
-              </ion-row>
-              @if (!isDisplay()) {
+                  @if (!isDisplay()) {
+                    <ion-col size="12" size-md="6">
+                      <okr-checkbox [i18n]="requiredI18n()" [checked]="required()" (checkedChange)="onFieldChange('required', $event)"
+                        [toggle]="true" justify="space-between" labelPlacement="start" [readOnly]="isReadOnly()" />
+                    </ion-col>
+                  }
+                </ion-row>
+              }
+              @if (!isDisplay() && !isImplicit()) {
                 <ion-row>
                   <ion-col size="12" size-md="6">
                     <okr-text-input [i18n]="helpI18n()" [value]="helpText()" (valueChange)="onFieldChange('helpText', $event)"
@@ -104,6 +144,27 @@ const FIELD_WIDTHS: Field['width'][] = ['full', 'half', 'third'];
                       [maxLength]="nameLength" [readOnly]="isReadOnly()" />
                     <okr-error-note [errors]="placeholderErrors()" />
                   </ion-col>
+                </ion-row>
+              }
+              @if (offersOther() || offersLock()) {
+                <ion-row>
+                  @if (offersOther()) {
+                    <ion-col size="12" size-md="6">
+                      <!-- blocked on a typed choice key (gender): «other» is not one of its values; switching off stays possible -->
+                      <okr-checkbox [i18n]="allowOtherI18n()" [checked]="allowOther()" (checkedChange)="onFieldChange('allowOther', $event)"
+                        [toggle]="true" justify="space-between" labelPlacement="start" [readOnly]="isReadOnly() || (!canOther() && !allowOther())" />
+                      <okr-error-note [errors]="allowOtherErrors()" />
+                      @if (!canOther()) {
+                        <ion-item lines="none" class="hint"><ion-note>{{ i18n().field_allow_other_blocked() }}</ion-note></ion-item>
+                      }
+                    </ion-col>
+                  }
+                  @if (offersLock()) {
+                    <ion-col size="12" size-md="6">
+                      <okr-checkbox [i18n]="lockI18n()" [checked]="lockWhenPrefilled()" (checkedChange)="onFieldChange('lockWhenPrefilled', $event)"
+                        [toggle]="true" justify="space-between" labelPlacement="start" [readOnly]="isReadOnly()" />
+                    </ion-col>
+                  }
                 </ion-row>
               }
               @if (propertyType()) {
@@ -118,14 +179,16 @@ const FIELD_WIDTHS: Field['width'][] = ['full', 'half', 'third'];
           </ion-card-content>
         </ion-card>
 
-        <!-- «Nur anzeigen, wenn …» — collapsed until switched on -->
-        <ion-card>
-          <ion-card-content class="ion-no-padding">
-            <okr-visibility-rule-input [rule]="visibleIf()" (ruleChange)="onRuleChange($event)"
-              [candidates]="candidates()" [categories]="categories()" [i18n]="i18n()"
-              [isBlock]="formData().type === 'divider'" [errors]="ruleErrors()" [readOnly]="isReadOnly()" />
-          </ion-card-content>
-        </ion-card>
+        <!-- «Nur anzeigen, wenn …» — collapsed until switched on; an unsichtbares Feld is never shown anyway -->
+        @if (!isImplicit()) {
+          <ion-card>
+            <ion-card-content class="ion-no-padding">
+              <okr-visibility-rule-input [rule]="visibleIf()" (ruleChange)="onRuleChange($event)"
+                [candidates]="candidates()" [categories]="categories()" [i18n]="i18n()"
+                [isBlock]="formData().type === 'divider'" [errors]="ruleErrors()" [readOnly]="isReadOnly()" />
+            </ion-card-content>
+          </ion-card>
+        }
       </form>
     }
   `,
@@ -135,6 +198,7 @@ export class FieldConfigForm {
   protected readonly nameLength = NAME_LENGTH;
   protected readonly longNameLength = LONG_NAME_LENGTH;
   protected readonly widths = FIELD_WIDTHS;
+  protected readonly valueTypes = VALUE_TYPES;
 
   // inputs
   public readonly i18n = input.required<FormI18n>();
@@ -154,9 +218,12 @@ export class FieldConfigForm {
   public readonly dirty = output<boolean>();
   public readonly valid = output<boolean>();
 
-  // signal form — wraps formData with Vest validation
+  // signal form — wraps formData with Vest validation. The suite needs the form's mapping key («Andere …» is
+  // refused on a typed choice key such as `gender`), which validateVestTree does not pass: a closure adds it.
+  private readonly suiteWithContext = (model: Field) => fieldConfigValidations(model, this.mapping()?.mappingKey);
   protected readonly fieldConfigForm = form(this.formData, (path) =>
-    validateVestTree(path, fieldConfigValidations as any),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    validateVestTree(path, this.suiteWithContext as any),
   );
 
   // per-field Vest errors for the notes under each field
@@ -166,6 +233,9 @@ export class FieldConfigForm {
   protected categoryNameErrors = computed(() => this.validationResult().getErrors('categoryName'));
   protected helpTextErrors = computed(() => this.validationResult().getErrors('helpText'));
   protected placeholderErrors = computed(() => this.validationResult().getErrors('placeholder'));
+  protected allowOtherErrors = computed(() => this.validationResult().getErrors('allowOther'));
+  protected valueTypeErrors = computed(() => this.validationResult().getErrors('valueType'));
+  protected defaultValueErrors = computed(() => this.validationResult().getErrors('defaultValue'));
   /** the rule's errors, keyed relative to it — the rule editor shows them under each of its controls */
   protected ruleErrors = computed(() => errorsUnder(this.validationResult().getErrors(), 'visibleIf.'));
 
@@ -196,8 +266,57 @@ export class FieldConfigForm {
   protected readonly placeholder = computed(() => this.formData().placeholder ?? '');
   protected readonly visibleIf = computed(() => this.formData().visibleIf);
   protected readonly asProperty = computed(() => this.formData().asProperty === true);
-  /** the property type the answer would be stored as; undefined hides the switch (no properties on this mapping, or a type that cannot be one) */
-  protected readonly propertyType = computed(() => (this.mapping()?.propertiesField ? propertyTypeOf(this.formData()) : undefined));
+  /** the property type the answer would be stored as; undefined hides the switch (no properties on this mapping, a type that cannot be one, or an AHV field — R1) */
+  protected readonly propertyType = computed(() => {
+    const fd = this.formData();
+    return this.mapping()?.propertiesField && !isSsnField(fd) ? propertyTypeOf(fd) : undefined;
+  });
+  protected readonly isImplicit = computed(() => this.formData().type === 'implicit');
+  /**
+   * «Andere … erlauben» belongs to a closed list of options: dropdown, radio, checkbox with options. A switch that is
+   * already on (pasted JSON) is shown anyway, so its error is visible and it can be switched off.
+   */
+  protected readonly offersOther = computed(() => {
+    const fd = this.formData();
+    const hasOptions = fd.type === 'dropdown' || fd.type === 'radio' || (fd.type === 'checkbox' && (fd.options?.length ?? 0) > 0);
+    return this.allowOther() || (!isSsnField(fd) && hasOptions);
+  });
+  protected readonly canOther = computed(() => canAllowOther(this.formData(), this.mapping()?.mappingKey));
+  protected readonly allowOther = computed(() => (this.formData() as { allowOther?: boolean }).allowOther === true);
+  /** a field a link can fill (never an AHV field, R1); an unsichtbares Feld is never shown, so it has nothing to lock */
+  protected readonly offersLock = computed(() => !this.isImplicit() && isPrefillable(this.formData()));
+  protected readonly lockWhenPrefilled = computed(() => this.formData().lockWhenPrefilled === true);
+  // unsichtbares Feld
+  protected readonly valueType = computed(() => {
+    const fd = this.formData();
+    return fd.type === 'implicit' ? fd.valueType ?? '' : '';
+  });
+  protected readonly defaultValue = computed(() => {
+    const fd = this.formData();
+    return fd.type === 'implicit' ? fd.defaultValue : undefined;
+  });
+  /**
+   * The key that re-seeds the default input: field id + value type. A memoized `computed`, not an inline source —
+   * linkedSignal has no source-equality check, so an inline function reading `formData()` would re-run the
+   * computation on every write; the computed only notifies when the key string really changes.
+   */
+  private readonly defaultTextKey = computed(() => `${this.formData().id}|${this.valueType()}`);
+  /**
+   * The text in the default input, as the author typed it. Re-seeded from the stored default (read untracked) only
+   * when the key changes, so a write to `formData` never rewrites the text under the cursor («0.» stays «0.»).
+   */
+  protected readonly defaultText = linkedSignal<string, string>({
+    source: this.defaultTextKey,
+    computation: () => untracked(() => {
+      const value = this.defaultValue();
+      return value === undefined || value === null ? '' : String(value);
+    }),
+  });
+  protected readonly fromLink = computed(() => {
+    const fd = this.formData();
+    return fd.type === 'implicit' && fd.fromLink === true;
+  });
+  protected readonly valueTypeLabels = computed(() => VALUE_TYPES.map(t => propertyTypeLabel(this.i18n(), t)));
   protected readonly categoryName = computed(() => {
     const fd = this.formData();
     return fd.type === 'category' ? fd.categoryName ?? '' : '';
@@ -237,6 +356,25 @@ export class FieldConfigForm {
     name: 'placeholder', label: this.i18n().field_placeholder(), placeholder: '', helper: '',
   }));
 
+  protected readonly allowOtherI18n = computed<CheckboxI18n>(() => ({
+    name: 'allowOther', label: this.i18n().field_allow_other(), helper: '',
+  }));
+  protected readonly lockI18n = computed<CheckboxI18n>(() => ({
+    name: 'lockWhenPrefilled', label: this.i18n().field_lock_prefilled(), helper: '',
+  }));
+  protected readonly valueTypeI18n = computed<StringSelectI18n>(() => ({
+    name: 'valueType', label: this.i18n().field_value_type(),
+  }));
+  protected readonly defaultValueI18n = computed<TextInputI18n>(() => ({
+    name: 'defaultValue', label: this.i18n().field_default_value(), placeholder: '', helper: '',
+  }));
+  protected readonly defaultBooleanI18n = computed<CheckboxI18n>(() => ({
+    name: 'defaultValue', label: this.i18n().field_default_value(), helper: '',
+  }));
+  protected readonly fromLinkI18n = computed<CheckboxI18n>(() => ({
+    name: 'fromLink', label: this.i18n().field_from_link(), helper: this.i18n().field_from_link_helper(),
+  }));
+
   protected readonly asPropertyI18n = computed<CheckboxI18n>(() => {
     const type = this.propertyType();
     return {
@@ -257,5 +395,36 @@ export class FieldConfigForm {
   protected onFieldChange(fieldName: string, fieldValue: string | boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }) as Field);
+  }
+
+  /** A new value type drops the default: one of the old type would no longer fit. */
+  protected onValueTypeChange(valueType: string): void {
+    const fd = this.formData();
+    if (fd.type !== 'implicit' || fd.valueType === valueType || !VALUE_TYPES.includes(valueType as PropertyType)) return;
+    const { defaultValue: _old, ...rest } = fd;
+    this.dirty.emit(true);
+    this.formData.set({ ...rest, valueType: valueType as PropertyType });
+  }
+
+  /**
+   * The default of an unsichtbares Feld: a boolean from the switch, otherwise what `defaultFromText` makes of the
+   * typed text (keep / remove / set). The input keeps showing what was typed in every case.
+   */
+  protected onDefaultChange(value: string | boolean): void {
+    const fd = this.formData();
+    if (fd.type !== 'implicit') return;
+    let next: BaseType | undefined;
+    if (typeof value === 'boolean') {
+      next = value;
+    } else {
+      this.defaultText.set(value);
+      const change = defaultFromText(fd.valueType, value, fd.defaultValue);
+      if (change.action === 'keep') return;
+      next = change.action === 'set' ? change.value : undefined;
+    }
+    if (next === fd.defaultValue) return;
+    const { defaultValue: _old, ...rest } = fd;
+    this.dirty.emit(true);
+    this.formData.set(next === undefined ? rest : { ...rest, defaultValue: next });
   }
 }

@@ -1,24 +1,46 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { CdkDragDrop, CdkDropList, CdkDropListGroup, CdkDrag, moveItemInArray } from '@angular/cdk/drag-drop';
 import {
   AlertController, IonButton, IonButtons, IonChip, IonContent, IonIcon, IonItem, IonLabel, IonNote, IonSegment, IonSegmentButton, IonToolbar, ModalController,
+  ToastController,
 } from '@ionic/angular';
+import { combineLatest, map } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { fill, getTodayStr, safeStructuredClone, SSN_FIELD_KEY } from '@okr/shared-util-core';
-import { Field, FormDefinitionModel, FormMapping } from '@okr/shared-models';
+import { fill, getTodayStr, replaceSubstring, safeStructuredClone, SSN_FIELD_KEY } from '@okr/shared-util-core';
+import { Field, FormDefinitionModel, FormMapping, FormSectionConfig, PageModel, SectionModel } from '@okr/shared-models';
+import { PageService } from '@okr/cms-page-data-access';
+import { SectionService } from '@okr/cms-section-data-access';
 
 import { FormDefinitionService } from '@okr/forms-data-access';
 import {
-  conditionalBlockMembers, conditionOpLabels, DerivedRuleIssue, derivedValuesReferencing, describeRule, fieldsReferencing,
-  findDerivedRuleIssues, findDuplicateKeys, findRuleIssues, FORM_I18N_KEYS, FormI18n, getFormMapping, misplacedSsnFields, previewDerivedValues, removeDerivedReferencesTo,
+  buildPrefillQuery, conditionalBlockMembers, conditionOpLabels, DerivedRuleIssue, derivedValuesReferencing, describeRule, fieldsReferencing,
+  fieldsBlockingOther, findDerivedRuleIssues, findDuplicateKeys, findRuleIssues, FORM_I18N_KEYS, FormI18n, getFormMapping, implicitSsnFields,
+  misplacedSsnFields, otherKeyClashes, previewDerivedValues, removeDerivedReferencesTo,
   removeReferencesTo, ruleConnectors, RuleIssue,
 } from '@okr/forms-util';
 import { I18nService } from '@okr/shared-i18n';
 import { FieldConfigModal, FieldTypeDef, FieldTypeLibrary, FormBuilderHelpModal, FormRenderer } from '@okr/forms-ui';
-import { confirm, dismissOverlay } from '@okr/shared-util-angular';
+import { confirm, copyToClipboardDeferred, dismissOverlay, showToast } from '@okr/shared-util-angular';
+
+/** The rejection reason of a cancelled page pick: nothing to copy, no error toast. */
+const LINK_CANCELLED = 'link-cancelled';
+
+/**
+ * The pages that show this form (spec §8, plan decision 2): pages whose section list holds a form section with
+ * this `formKey`. A page stores section keys with the `@TID@` placeholder resolved per tenant.
+ */
+function pagesShowingForm(pages: PageModel[], sections: SectionModel[], formKey: string, tenantId: string): PageModel[] {
+  if (!formKey) return [];
+  const formSectionKeys = new Set(sections
+    .filter(s => s.type === 'form' && (s.properties as Partial<FormSectionConfig> | undefined)?.formKey === formKey)
+    .map(s => s.okey));
+  if (formSectionKeys.size === 0) return [];
+  return pages.filter(p => (p.sections ?? []).some(key => formSectionKeys.has(replaceSubstring(key, '@TID@', tenantId))));
+}
 
 /** A new field from a library card; an «Eigene Angaben» card starts it with `asProperty` on. */
 function newField(def: FieldTypeDef, order: number): Field {
@@ -39,6 +61,8 @@ function newField(def: FieldTypeDef, order: number): Field {
     case 'avatar': return { ...base, type, avatarType: 'person' };
     case 'category': return { ...base, type, categoryName: '' };
     case 'paragraph': return { ...base, type, isIndented: true, isSmall: true };
+    // an unsichtbares Feld starts as text: a course id
+    case 'implicit': return { ...base, type, valueType: 'text' };
     default: return { ...base, type } as Field;
   }
 }
@@ -70,6 +94,9 @@ function newField(def: FieldTypeDef, order: number): Field {
     .cdk-drop-list-dragging .field-row:not(.cdk-drag-placeholder) { transition: transform 250ms cubic-bezier(0,0,0.2,1); }
     .source-actions { display: flex; gap: 8px; padding: 8px 16px 0; }
     .derived-preview { display: block; padding: 8px 0 0; }
+    .link-actions  { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 16px 0 0; }
+    .link-note     { display: block; padding: 4px 0 0; }
+    .link-text     { display: block; padding: 4px 0 0; word-break: break-all; }
     .source-view   { margin: 8px 16px; padding: 12px; background: var(--ion-color-light); border-radius: 6px; font-family: monospace; font-size: 12px; white-space: pre; overflow: auto; }
   `],
   template: `
@@ -108,6 +135,18 @@ function newField(def: FieldTypeDef, order: number): Field {
             <!-- same check as the settings suite: an AHV field outside an application's ssnId blocks saving -->
             <ion-note color="danger" class="duplicate-keys">{{ i18n.fields_ssn_placement() }}</ion-note>
           }
+          @if (implicitSsn().length > 0) {
+            <!-- same check as the settings suite (R1): an AHV number never sits in clear text in the definition -->
+            <ion-note color="danger" class="duplicate-keys">{{ i18n.fields_implicit_ssn() }}</ion-note>
+          }
+          @if (otherBlocked().length > 0) {
+            <!-- same check as the settings suite: «Andere …» on a typed choice key, an AHV field or a field without options -->
+            <ion-note color="danger" class="duplicate-keys">{{ i18n.fields_other_not_allowed() }}</ion-note>
+          }
+          @if (otherClash().length > 0) {
+            <!-- same check as the settings suite: the «Andere …» text key is taken by another question or a derived value -->
+            <ion-note color="danger" class="duplicate-keys">{{ i18n.fields_other_key_clash() }}</ion-note>
+          }
           @if (viewMode() === 'editor') {
             <!-- derived values live in the form settings; their broken conditions are flagged here, where fields change -->
             @if (derivedIssues().length > 0) {
@@ -136,6 +175,11 @@ function newField(def: FieldTypeDef, order: number): Field {
                     <ion-label>
                       <strong>{{ field.label }}</strong>
                       <p>{{ field.key }} · {{ field.type }} · {{ field.width }}</p>
+                      @if (field.type === 'implicit') {
+                        <div class="rule-line">
+                          <ion-chip color="medium" [outline]="true">{{ i18n.field_invisible() }}</ion-chip>
+                        </div>
+                      }
                       @if (ruleTexts().get(field.id); as ruleText) {
                         <div class="rule-line">
                           <ion-chip color="tertiary" [outline]="true">{{ i18n.rule_conditional() }}</ion-chip>
@@ -174,10 +218,27 @@ function newField(def: FieldTypeDef, order: number): Field {
                 <!-- re-mounted per definition: the renderer builds its controls once, on init -->
                 @for (definition of previewDefinitions(); track definition) {
                   <okr-form-renderer [definition]="definition" [categories]="appStore.allCategories()" [showSubmit]="false"
+                    [otherI18n]="{ option: i18n.field_other_option(), placeholder: i18n.field_other_placeholder() }"
                     (valueChange)="previewValues.set($event)" />
                 }
                 @if (hasDerivedValues()) {
                   <ion-note class="derived-preview">{{ i18n.preview_derived() }} {{ derivedPreview() }}</ion-note>
+                }
+                <!-- «Link mit diesen Antworten erstellen» (spec §8): the page that shows the form, with the answers above -->
+                <div class="link-actions">
+                  <ion-button size="small" fill="outline" [disabled]="formPages().length === 0" (click)="createLink()">
+                    <ion-icon src="{{ 'copy' | svgIcon }}" slot="start" />
+                    {{ i18n.preview_link() }}
+                  </ion-button>
+                </div>
+                @if (formPagesLoaded() && formPages().length === 0) {
+                  <ion-note class="link-note">{{ i18n.preview_no_page() }}</ion-note>
+                }
+                @if (prefillLink().hasPersonalData) {
+                  <ion-note color="warning" class="link-note">{{ i18n.preview_link_personal() }}</ion-note>
+                }
+                @if (copiedLink()) {
+                  <ion-note class="link-text">{{ copiedLink() }}</ion-note>
                 }
               </div>
             }
@@ -204,7 +265,10 @@ function newField(def: FieldTypeDef, order: number): Field {
 export class FormBuilderEditor {
   private readonly modalController = inject(ModalController);
   private readonly alertController = inject(AlertController);
+  private readonly toastController = inject(ToastController);
   private readonly formDefinitionService = inject(FormDefinitionService);
+  private readonly pageService = inject(PageService);
+  private readonly sectionService = inject(SectionService);
   protected readonly appStore = inject(AppStore);
 
   public readonly form = input.required<FormDefinitionModel>();
@@ -246,6 +310,20 @@ export class FormBuilderEditor {
   protected readonly derivedPreview = computed(() =>
     previewDerivedValues(this.previewDefinition(), this.previewValues(), getTodayStr()).join(', ') || '–');
 
+  /** The query of a pre-filled link with the preview's answers (never an AHV field, R1), and whether it carries personal data. */
+  protected readonly prefillLink = computed(() => buildPrefillQuery(this.previewDefinition().fields, this.previewValues()));
+  /** The last link copied — shown under the button; gone as soon as an answer changes. */
+  protected readonly copiedLink = linkedSignal<unknown, string>({ source: () => this.previewValues(), computation: () => '' });
+
+  /** The tenant's pages that show this form — loaded when the preview opens (plan decision 2). */
+  private readonly formPagesResource = rxResource({
+    params: () => (this.viewMode() === 'preview' ? this.formData().formKey ?? '' : undefined),
+    stream: ({ params: formKey }) => combineLatest([this.pageService.list(), this.sectionService.list()]).pipe(
+      map(([pages, sections]) => pagesShowingForm(pages, sections, formKey, this.appStore.tenantId()))),
+  });
+  protected readonly formPages = computed(() => (this.formPagesResource.hasValue() ? this.formPagesResource.value() : []));
+  protected readonly formPagesLoaded = computed(() => this.formPagesResource.hasValue());
+
   /** JSON source of the current form definition — editable externally via copy/paste. */
   protected sourceCode = computed(() => JSON.stringify(this.previewDefinition(), null, 2));
 
@@ -268,7 +346,7 @@ export class FormBuilderEditor {
     const texts = new Map<string, string>();
     for (const field of fields) {
       if (!field.visibleIf) continue;
-      const text = describeRule(field.visibleIf, fields, opLabels, connectors);
+      const text = describeRule(field.visibleIf, fields, opLabels, connectors, this.i18n.field_other_option());
       if (text) texts.set(field.id, text);
     }
     return texts;
@@ -292,7 +370,13 @@ export class FormBuilderEditor {
     fill(this.i18n.fields_duplicate_keys(), { keys: this.duplicateKeys().map(k => `«${k}»`).join(', ') }));
   /** AHV fields under another key than ssnId or on a non-application target — block saving, as in the settings. */
   protected readonly misplacedSsn = computed(() => misplacedSsnFields(this.fields(), this.mapping()));
-  protected readonly hasKeyIssues = computed(() => this.duplicateKeys().length > 0 || this.misplacedSsn().length > 0);
+  /** Implicit AHV fields (R1), «Andere …» where it is not allowed, and `<key>Other` clashes — pasted JSON can carry all three. */
+  protected readonly implicitSsn = computed(() => implicitSsnFields(this.fields()));
+  protected readonly otherBlocked = computed(() => fieldsBlockingOther(this.fields(), this.mapping()?.mappingKey));
+  protected readonly otherClash = computed(() => otherKeyClashes(this.fields(), this.formData().derivedValues));
+  /** Everything the settings suite rejects across fields blocks saving here too, so a saved definition never fails there. */
+  protected readonly hasKeyIssues = computed(() => this.duplicateKeys().length > 0 || this.misplacedSsn().length > 0
+    || this.implicitSsn().length > 0 || this.otherBlocked().length > 0 || this.otherClash().length > 0);
 
   /** Fields inside a divider block with a rule — indented on the canvas. */
   protected readonly blockMembers = computed(() => conditionalBlockMembers(this.fields()));
@@ -343,6 +427,51 @@ export class FormBuilderEditor {
       case 'staleOp': return this.i18n.rule_issue_stale_op();
       default: return this.i18n.rule_issue_stale();
     }
+  }
+
+  /**
+   * Copies `<origin>/public/<page>?<answers>` (spec §8); several pages showing the form → the author picks one.
+   * The origin is `AppStore.appOrigin()`: the page's own origin on the web (so `localhost` while developing),
+   * the tenant's `publicAppOrigin` only in a native build.
+   * The clipboard write starts synchronously inside the click with the URL as a promise, so picking a page in the
+   * alert never costs the user gesture (`copyToClipboardDeferred`). A cancelled pick copies nothing and says nothing.
+   */
+  protected async createLink(): Promise<void> {
+    const pages = this.formPages();
+    if (pages.length === 0) return;
+    const url = (pages.length === 1 ? Promise.resolve(pages[0]) : this.pickPage(pages))
+      .then(page => (page ? this.linkFor(page) : Promise.reject(new Error(LINK_CANCELLED))));
+    // shown either way, so it can be copied by hand if the clipboard refuses
+    url.then(link => this.copiedLink.set(link), () => undefined);
+    try {
+      await copyToClipboardDeferred(url);
+      await showToast(this.toastController, this.i18n.preview_link_copied());
+    } catch (err) {
+      if ((err as Error | undefined)?.message !== LINK_CANCELLED) await showToast(this.toastController, this.i18n.source_copy_failed());
+    }
+  }
+
+  private linkFor(page: PageModel): string {
+    const { query } = this.prefillLink();
+    const origin = this.appStore.appOrigin().replace(/\/+$/, '');
+    return `${origin}/public/${encodeURIComponent(page.okey)}${query ? `?${query}` : ''}`;
+  }
+
+  /** A radio list of the pages that show the form; undefined when cancelled. */
+  private async pickPage(pages: PageModel[]): Promise<PageModel | undefined> {
+    if (pages.length === 0) return undefined;
+    const alert = await this.alertController.create({
+      header: this.i18n.preview_link(),
+      inputs: pages.map((p, i) => ({ type: 'radio' as const, label: p.name || p.okey, value: p.okey, checked: i === 0 })),
+      buttons: [
+        { text: this.i18n.cancel(), role: 'cancel' },
+        { text: this.i18n.ok(), role: 'confirm' },
+      ],
+    });
+    await alert.present();
+    const { data, role } = await alert.onDidDismiss<{ values?: string }>();
+    if (role !== 'confirm') return undefined;
+    return pages.find(p => p.okey === data?.values);
   }
 
   /** the (i) in the canvas toolbar — read-only help for the form author */

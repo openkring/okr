@@ -407,6 +407,36 @@
     "archived": "La plantilla del formulario está archivada.",
     "advanced": {
       "label": "Mostrar los ajustes avanzados"
+    },
+    "config": {
+      "title": "Formulario",
+      "subtitle": "Qué formulario muestra esta página y qué pasa con las respuestas.",
+      "form": "Formulario",
+      "form_none": "Elegir un formulario",
+      "form_helper": "El formulario que se muestra en esta página.",
+      "emails": "Direcciones de correo para avisos",
+      "emails_ph": "nombre@ejemplo.ch, nombre2@ejemplo.ch",
+      "emails_helper": "Estas direcciones reciben un mensaje cuando alguien envía el formulario. Separa varias direcciones con una coma.",
+      "resp": "Responsabilidad",
+      "resp_select": "Elegir responsabilidad",
+      "resp_clear": "Quitar",
+      "resp_helper": "La persona responsable recibe una tarea por cada respuesta.",
+      "captcha": "Mostrar protección contra spam (captcha)",
+      "captcha_helper": "Las personas demuestran brevemente que no son un robot antes de enviar.",
+      "encrypt": "Cifrar archivos",
+      "encrypt_helper": "Al enviar se pide una contraseña. Los archivos subidos se cifran con ella.",
+      "fixed_title": "Valores fijos",
+      "fixed_subtitle": "Aquí defines qué vale en esta página para los campos invisibles del formulario, por ejemplo para qué curso es la inscripción.",
+      "fixed_pick_form": "Elige primero un formulario.",
+      "fixed_none": "Este formulario no tiene campos invisibles.",
+      "fixed_course_pick": "Elegir un curso",
+      "fixed_course_none": "Todavía no hay ningún curso. Crea uno primero.",
+      "fixed_yes": "Sí",
+      "fixed_no": "No",
+      "fixed_required": "Necesita un valor; si no, el campo queda vacío en las respuestas.",
+      "accept_title": "Aceptación en esta página",
+      "accept_subtitle": "Tus propias reglas para esta página, por ejemplo sus propias plazas y su propio plazo para un curso.",
+      "fixed_remove": "Quitar"
     }
   },
   "hero": {
@@ -1350,7 +1380,11 @@
   "validation": {
     "documentKeyInvalid": "Elige un vídeo del álbum.",
     "adventYearRange": "Introduce un año entre 2020 y 2100.",
-    "adventDoorCount": "El calendario necesita exactamente 25 ventanas. Reordena las ventanas."
+    "adventDoorCount": "El calendario necesita exactamente 25 ventanas. Reordena las ventanas.",
+    "formEmailInvalid": "Al menos una dirección de correo no es válida. Revisa cómo está escrita.",
+    "formImplicitInvalid": "Este valor no encaja con el campo.",
+    "formImplicitRequired": "Indica aquí un valor; si no, el campo queda vacío en las respuestas.",
+    "formImplicitSsn": "El número AVS no se puede fijar de antemano."
   },
   "advent": {
     "label": "Calendario de Adviento",

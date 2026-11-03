@@ -18,6 +18,8 @@
     "@okr/cms-menu-feature": "*",
     "@okr/forms-util": "*",
     "@okr/forms-data-access": "*",
-    "@okr/forms-ui": "*"
+    "@okr/forms-ui": "*",
+    "@okr/cms-page-data-access": "*",
+    "@okr/cms-section-data-access": "*"
   }
 }

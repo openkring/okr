@@ -17,6 +17,8 @@ const IMAGE_STYLE_FIELDS = [
 
 /** Marks the `images[0].url`-style keys produced by imageConfigValidations. */
 const IMAGES_PREFIX = 'images[';
+/** Marks the `implicitValues.courseId`-style keys of a form section (one fixed value per implicit field). */
+const IMPLICIT_VALUES_PREFIX = 'implicitValues.';
 
 /**
  * Field names the configuration components of a given section type render an inline
@@ -55,6 +57,9 @@ export function getInlineErrorFields(type: SectionType, showAdvanced = false): s
     case 'advent':
       fields.push('adventYear');
       break;
+    case 'form':
+      fields.push('formKey', 'emailAddresses', IMPLICIT_VALUES_PREFIX, 'closesAt', 'maxResponses', 'closedMessage');
+      break;
     case 'hero':
       if (showAdvanced) fields.push(...IMAGE_STYLE_FIELDS);
       break;
@@ -81,7 +86,7 @@ export function getInlineErrorFields(type: SectionType, showAdvanced = false): s
 /** True when `field` is rendered inline by one of the configuration components. */
 export function isInlineErrorField(field: string, inlineFields: string[]): boolean {
   return inlineFields.some((inlineField) =>
-    inlineField === IMAGES_PREFIX ? field.startsWith(IMAGES_PREFIX) : inlineField === field);
+    inlineField === IMAGES_PREFIX || inlineField === IMPLICIT_VALUES_PREFIX ? field.startsWith(inlineField) : inlineField === field);
 }
 
 /**
@@ -106,4 +111,16 @@ export function getImageErrors(errors: SectionErrors | undefined): string[] {
   return Object.entries(errors)
     .filter(([field]) => field.startsWith(IMAGES_PREFIX))
     .flatMap(([, messages]) => messages);
+}
+
+/**
+ * The `implicitValues.<key>` errors whose entry has no row in «Feste Werte» (an AHV key from pasted or legacy
+ * data, R1): the card shows them with a button to remove the entry, otherwise nothing would explain why the
+ * section cannot be saved.
+ */
+export function getUnrenderedFixedKeys(errors: SectionErrors | undefined, renderedKeys: string[]): string[] {
+  return Object.keys(errors ?? {})
+    .filter((field) => field.startsWith(IMPLICIT_VALUES_PREFIX))
+    .map((field) => field.slice(IMPLICIT_VALUES_PREFIX.length))
+    .filter((key) => key !== '' && !renderedKeys.includes(key));
 }

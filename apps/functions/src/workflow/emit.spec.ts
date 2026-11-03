@@ -48,7 +48,7 @@ describe('buildEmitArgs', () => {
     expect(args.relatedKey).toBe('application.a1');
     expect(args.personKey).toBe('');
     expect(args.subjectName).toBe('Anna Muster');
-    expect(args.params).toEqual({ state: 'applied', kind: 'youth' });
+    expect(args.params).toEqual({ state: 'applied', kind: 'youth', applicationFor: 'membership' });
   });
 
   it('keeps every emitted param matchable by paramIs', () => {

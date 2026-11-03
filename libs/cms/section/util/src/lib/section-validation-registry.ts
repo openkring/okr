@@ -1,4 +1,4 @@
-import { SectionModel, SectionType } from '@okr/shared-models';
+import { FormSection, ImplicitField, SectionModel, SectionType } from '@okr/shared-models';
 
 import { baseSectionValidations } from './base-section.validations';
 import { albumSectionValidations } from './album-section.validations';
@@ -18,9 +18,18 @@ import { videoSectionValidations } from './video-section.validations';
 import { weatherSectionValidations } from './weather-section.validations';
 import { adventSectionValidations } from './advent-section.validations';
 import { departuresSectionValidations } from './departures-section.validations';
+import { formSectionValidations } from './form-section.validations';
 
-/** A section vest suite: takes the section model and returns the run result. */
-export type SectionSuite = (model: SectionModel) => ReturnType<typeof baseSectionValidations>;
+/**
+ * What a suite may need besides the section itself. Most suites ignore it; the form section needs the
+ * implicit fields of the form it points at (which the section does not hold) to require their values.
+ */
+export interface SectionValidationContext {
+  formImplicitFields?: ImplicitField[];
+}
+
+/** A section vest suite: takes the section model (and the context) and returns the run result. */
+export type SectionSuite = (model: SectionModel, context?: SectionValidationContext) => ReturnType<typeof baseSectionValidations>;
 
 /**
  * Maps each section type to its vest suite. Types without a dedicated suite fall back to
@@ -44,7 +53,9 @@ export const SECTION_VALIDATION_SUITES: Partial<Record<SectionType, SectionSuite
   video: videoSectionValidations as SectionSuite,
   weather: weatherSectionValidations as SectionSuite,
   advent: adventSectionValidations as SectionSuite,
-  departures: departuresSectionValidations as SectionSuite
+  departures: departuresSectionValidations as SectionSuite,
+  form: ((model: SectionModel, context?: SectionValidationContext) =>
+    formSectionValidations(model as FormSection, context?.formImplicitFields)) as SectionSuite
 };
 
 /** Returns the suite for a section type, falling back to base-section validation. */
@@ -53,6 +64,6 @@ export function getSectionValidationSuite(type: SectionType): SectionSuite {
 }
 
 /** Runs the appropriate vest suite for the given section and returns the result. */
-export function validateSection(model: SectionModel): ReturnType<typeof baseSectionValidations> {
-  return getSectionValidationSuite(model.type)(model);
+export function validateSection(model: SectionModel, context?: SectionValidationContext): ReturnType<typeof baseSectionValidations> {
+  return getSectionValidationSuite(model.type)(model, context);
 }

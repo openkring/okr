@@ -43,12 +43,26 @@
     "remove": "Löschen",
     "remove_confirm": "Diese Frage steuert die Bedingungen von: {fields}. Wenn du sie löschst, werden diese Bedingungen entfernt.",
     "as_property": "Als eigene Angabe speichern",
-    "as_property_helper": "Die Antwort wird als {type} gespeichert."
+    "as_property_helper": "Die Antwort wird als {type} gespeichert.",
+    "allow_other": "Andere … erlauben",
+    "allow_other_blocked": "«Andere …» ist bei dieser Frage nicht möglich: Die Antwort wird in einem Feld mit festen Werten gespeichert.",
+    "lock_prefilled": "Gesperrt, wenn per Link vorausgefüllt",
+    "value_type": "Art des Werts",
+    "default_value": "Standardwert",
+    "default_invalid": "Der Standardwert passt nicht zur gewählten Art des Werts.",
+    "from_link": "darf per Link gesetzt werden",
+    "from_link_helper": "Ohne diesen Haken ignoriert das Formular einen Wert aus dem Link. So kann sich niemand selbst in einen anderen Kurs setzen, indem er die Adresse ändert.",
+    "other_option": "Andere …",
+    "other_placeholder": "Deine Antwort",
+    "invisible": "unsichtbar"
   },
   "fields": {
     "duplicate_key": "Zwei Fragen haben denselben Schlüssel. Bitte gib jeder Frage einen eigenen.",
     "duplicate_keys": "Mehrere Fragen haben denselben Schlüssel: {keys}. Bitte gib jeder Frage einen eigenen, sonst lässt sich das Formular nicht speichern.",
-    "ssn_placement": "Die AHV-Nummer kann nur in einem Antrag und unter dem Schlüssel ssnId gespeichert werden."
+    "ssn_placement": "Die AHV-Nummer kann nur in einem Antrag und unter dem Schlüssel ssnId gespeichert werden.",
+    "other_key_clash": "Diese Frage heisst gleich wie das Textfeld von «Andere …» bei einer anderen Frage. Gib ihr einen anderen Namen.",
+    "other_not_allowed": "«Andere …» ist bei einer Frage nicht möglich, deren Antwort in einem Feld mit festen Werten gespeichert wird.",
+    "implicit_ssn": "Die AHV-Nummer kann kein unsichtbares Feld sein."
   },
   "rule": {
     "range_order": "Der erste Wert muss kleiner sein als der zweite.",
@@ -151,7 +165,11 @@
       "invalid_format": "Ungültiges Format: erwartet ein Objekt mit einem \"fields\"-Array.",
       "applied": "{count} Felder aus der Zwischenablage übernommen. Zum Speichern bestätigen."
     },
-    "preview_derived": "Wird gespeichert als:"
+    "preview_derived": "Wird gespeichert als:",
+    "preview_link": "Link mit diesen Antworten erstellen",
+    "preview_no_page": "Das Formular steht noch auf keiner Seite",
+    "preview_link_copied": "Link kopiert",
+    "preview_link_personal": "Dieser Link enthält persönliche Angaben. Schick ihn nur an diese Person."
   },
   "definition": {
     "create_title": "Neues Formular",
@@ -207,7 +225,9 @@
   },
   "fieldtype": {
     "ssn": "AHV-Nummer",
-    "ssn_desc": "Schweizer AHV-Nummer, wird auf Gültigkeit geprüft"
+    "ssn_desc": "Schweizer AHV-Nummer, wird auf Gültigkeit geprüft",
+    "implicit": "Unsichtbares Feld",
+    "implicit_desc": "Die Person sieht es nicht. Der Wert kommt von der Seite oder aus dem Link."
   },
   "property": {
     "boolean": "ja/nein",
@@ -234,6 +254,44 @@
     "filler_title": "Hinweise zum Formular",
     "filler_required": "Felder mit Stern musst du ausfüllen. Solange etwas fehlt, kannst du das Formular nicht absenden.",
     "filler_conditions": "Manche Fragen erscheinen erst, wenn du weiter oben etwas Bestimmtes antwortest. Änderst du eine Antwort, können Fragen auch wieder verschwinden – was du dort eingetragen hast, wird dann nicht gespeichert.",
-    "filler_privacy": "Deine Angaben gehen nur an die Personen, die dieses Formular betreuen."
+    "filler_privacy": "Deine Angaben gehen nur an die Personen, die dieses Formular betreuen.",
+    "editor_implicit": "Ein «unsichtbares Feld» sieht die Person nicht. Seinen Wert legst du auf der Seite fest, die das Formular zeigt – zum Beispiel, für welchen Kurs die Anmeldung ist. So genügt ein Formular für viele Kurse.",
+    "editor_prefill": "In der Vorschau kannst du Antworten eintragen und daraus einen Link erstellen. Wer ihn öffnet, findet diese Antworten schon ausgefüllt – praktisch für einen Link pro Kurs.",
+    "editor_other": "Bei Auswahlfragen kannst du «Andere …» erlauben. Dann kann die Person eine eigene Antwort hinschreiben.",
+    "editor_after": "Unter «Nach dem Absenden» schreibst du den Dank, den die Person sieht, auf Wunsch je nach Antwort verschieden und zusätzlich per E-Mail.",
+    "editor_limit": "Unter «Annahme» schliesst du das Formular von Hand, an einem Datum oder nach einer Anzahl Antworten. Zeigen mehrere Seiten dasselbe Formular, kann jede Seite ihre eigene Anzahl Plätze haben.",
+    "filler_prefilled": "Einige Antworten sind schon eingetragen, weil du über einen persönlichen Link gekommen bist. Gesperrte Felder kannst du nicht ändern.",
+    "filler_limit": "Dieses Formular nimmt nur eine bestimmte Zahl Antworten an oder schliesst an einem Datum. Melde dich lieber früher als später.",
+    "filler_mail": "Du bekommst eine Bestätigung an die E-Mail-Adresse, die du angibst."
+  },
+  "after": {
+    "title": "Nach dem Absenden",
+    "message": "Text",
+    "message_helper": "Leer lassen für den Standardtext. Mit {firstName} setzt du eine Antwort ein, zum Beispiel den Vornamen.",
+    "variants": "Je nach Antwort",
+    "variant_add": "+ Variante",
+    "variant_remove": "Variante entfernen",
+    "variant_when": "Wenn …",
+    "variant_message": "dann dieser Text",
+    "send_mail": "Bestätigung per E-Mail senden",
+    "send_mail_hint": "Ohne E-Mail-Feld nicht möglich",
+    "mail_needs_email": "Für die Bestätigung per E-Mail braucht das Formular ein E-Mail-Feld.",
+    "application_hint": "Bei Anträgen aus diesem Formular geht nur diese Bestätigung raus, nicht die aus der Verwaltung."
+  },
+  "accept": {
+    "title": "Annahme",
+    "open": "Formular ist offen",
+    "closes_at": "Schliesst am",
+    "max": "Höchstens … Antworten",
+    "max_helper": "0 heisst: keine Begrenzung.",
+    "max_invalid": "Gib eine ganze Zahl von 0 bis 10000 ein.",
+    "closes_invalid": "Gib ein gültiges Datum ein.",
+    "show_remaining": "Freie Plätze anzeigen",
+    "closed_text": "Text, wenn geschlossen",
+    "count": "{count} von {max} Antworten",
+    "closed_default": "Dieses Formular nimmt keine Antworten mehr an.",
+    "remaining": "Noch {count} Plätze frei",
+    "remaining_one": "Noch 1 Platz frei",
+    "inherit": "Leer oder 0 heisst: wie im Formular."
   }
 }

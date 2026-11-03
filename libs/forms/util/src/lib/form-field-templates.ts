@@ -1,4 +1,4 @@
-import { Field, FieldOption, FieldType } from '@okr/shared-models';
+import { Field, FieldOption, FieldType, PropertyType } from '@okr/shared-models';
 
 import type { FormI18n } from './forms-i18n';
 
@@ -12,6 +12,9 @@ interface FieldTemplate {
   label: string;
   required?: boolean;
   options?: FieldOption[];
+  /** `implicit` only: the type of the stored value */
+  valueType?: PropertyType;
+  asProperty?: boolean;
 }
 
 /**
@@ -54,6 +57,22 @@ const FORM_FIELD_TEMPLATES: Record<string, FieldTemplate[]> = {
     { key: 'countryCode',   type: 'text',  label: 'Land' },
     { key: 'ssnId',         type: 'ssn',   label: 'AHV-Nummer' },
   ],
+  'applications.course': [
+    // the course (CourseModel.okey): never shown, set by the embedding section's `implicitValues` (D-W4).
+    // First (order 0), so a rule of any later field can depend on the course.
+    { key: 'courseId',      type: 'implicit', label: 'Kurs', valueType: 'text', asProperty: true },
+    { key: 'firstName',     type: 'text',  label: 'Vorname',       required: true },
+    { key: 'lastName',      type: 'text',  label: 'Nachname',      required: true },
+    { key: 'gender',        type: 'radio', label: 'Geschlecht',    required: true,
+      options: [{ label: 'Männlich', value: 'male' }, { label: 'Weiblich', value: 'female' }] },
+    { key: 'dateOfBirth',   type: 'date',  label: 'Geburtsdatum',  required: true },
+    { key: 'email',         type: 'email', label: 'E-Mail',        required: true },
+    { key: 'phone',         type: 'phone', label: 'Telefon' },
+    { key: 'streetName',    type: 'text',  label: 'Strasse' },
+    { key: 'streetNumber',  type: 'text',  label: 'Nr.' },
+    { key: 'zipCode',       type: 'text',  label: 'PLZ' },
+    { key: 'city',          type: 'text',  label: 'Ort' },
+  ],
 };
 
 function buildField(template: FieldTemplate, order: number): Field {
@@ -75,6 +94,8 @@ function buildField(template: FieldTemplate, order: number): Field {
       return { ...base, type: template.type, avatarType: 'person' };
     case 'category':
       return { ...base, type: template.type, categoryName: '' };
+    case 'implicit':
+      return { ...base, type: 'implicit', valueType: template.valueType ?? 'text', asProperty: template.asProperty };
     default:
       return { ...base, type: template.type } as Field;
   }
@@ -87,6 +108,14 @@ function buildField(template: FieldTemplate, order: number): Field {
 export function getPrefillFields(mappingKey: string): Field[] {
   const templates = FORM_FIELD_TEMPLATES[mappingKey] ?? [];
   return templates.map((template, order) => buildField(template, order));
+}
+
+/**
+ * The keys of a mapping's template fields that offer a closed list of values (`gender`, `applicationAs`):
+ * they are written onto a typed model field, which does not allow any other value. `[]` for an unknown mapping.
+ */
+export function templateChoiceKeys(mappingKey: string | undefined): string[] {
+  return (mappingKey ? FORM_FIELD_TEMPLATES[mappingKey] ?? [] : []).filter(t => (t.options?.length ?? 0) > 0).map(t => t.key);
 }
 
 /** A field of the builder library's «Eigene Angaben» group: it starts with `asProperty` on (spec §4.4). */

@@ -7,10 +7,11 @@ import { CategoryListModel } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Header, Spinner } from '@okr/shared-ui';
-import { dismissOverlay } from '@okr/shared-util-angular';
+import { fill, resolveImplicitValues } from '@okr/shared-util-core';
 
-import { FormCategoryService, FormSubmitService } from '@okr/forms-data-access';
+import { FormCategoryService, FormSubmitService, isFormClosedError, PublicFormDefinition } from '@okr/forms-data-access';
 import { FORM_I18N_KEYS, FormI18n, hasVisibilityRules } from '@okr/forms-util';
+import { FieldOtherI18n } from './field-renderer';
 import { FormRenderer } from './form-renderer';
 
 /** The strings the modal needs. `SectionI18n` is a superset, so a section store's resolved
@@ -48,6 +49,10 @@ export interface FormModalI18n {
  * uses, so the honeypot, the timing heuristic, the JS token, the rate limit and the optional
  * captcha are identical on both hosts (decision O5).
  *
+ * There is no page link here, so nothing is pre-filled and implicit fields take their defaults; a
+ * modal has no section either, so the form-wide acceptance rules apply (no `sectionId`). After a
+ * submit the thank-you text stays on screen until the filler closes the modal.
+ *
  * `pageLoadedAt` is stamped when the modal is constructed. The server's timing heuristic only
  * flags submissions that are too FAST, and a modal submit is merely later than an inline one,
  * so there is no regression.
@@ -56,13 +61,18 @@ export interface FormModalI18n {
   selector: 'okr-form-modal',
   standalone: true,
   imports: [Header, Spinner, FormRenderer, SvgIconPipe, IonButton, IonButtons, IonContent, IonIcon, IonNote],
-  styles: [`ion-note { display: block; padding: 16px; }`],
+  styles: [`
+    ion-note { display: block; padding: 16px; }
+    /* author-written texts (thank-you, closed) keep their line breaks; interpolated, never innerHTML */
+    .pre-line { white-space: pre-line; }
+    ion-note.remaining { padding-bottom: 0; }
+  `],
   template: `
     <okr-header [i18n]="{ title: title() }" [isModal]="true">
       @if (helpAvailable()) {
         <!-- the filler's (i), left of the close button -->
         <ion-buttons okrHeaderEnd slot="end">
-          <ion-button (click)="onHelp()" [title]="helpI18n.help_open()" [attr.aria-label]="helpI18n.help_open()">
+          <ion-button (click)="onHelp()" [title]="formI18n.help_open()" [attr.aria-label]="formI18n.help_open()">
             <ion-icon slot="icon-only" src="{{ 'information-circle' | svgIcon }}" />
           </ion-button>
         </ion-buttons>
@@ -72,19 +82,27 @@ export interface FormModalI18n {
       @if (definitionResource.isLoading()) {
         <okr-spinner />
       } @else if (submitted()) {
-        <ion-note color="success">{{ i18n().form_submit_conf() }}</ion-note>
+        <ion-note color="success" class="pre-line">{{ confirmationText() }}</ion-note>
       } @else if (errorMsg()) {
         <ion-note color="danger">{{ errorMsg() }}</ion-note>
       } @else if (definition(); as def) {
         @if (def.isArchived) {
           <ion-note color="warning">{{ i18n().form_archived() }}</ion-note>
+        } @else if (isClosed()) {
+          <!-- closed, past its date or full (spec §11): the text instead of the fields -->
+          <ion-note color="warning" class="pre-line">{{ closedText() }}</ion-note>
         } @else {
+          @if (remainingText()) {
+            <ion-note color="primary" class="remaining">{{ remainingText() }}</ion-note>
+          }
           <okr-form-renderer
             [definition]="def"
             [submitLabel]="i18n().form_submit()"
             [submitting]="submitting()"
             [jsToken]="jsToken()"
             [categories]="categoriesResource.value() ?? []"
+            [implicitValues]="implicitValues()"
+            [otherI18n]="otherI18n()"
             (submitted)="onSubmit($event)"
           />
         }
@@ -100,7 +118,7 @@ export class FormModal {
   private readonly formSubmitService = inject(FormSubmitService);
   private readonly formCategoryService = inject(FormCategoryService);
   /** the forms keys, for the (i) help — `i18n` below only carries the submit-path strings */
-  protected readonly helpI18n = inject(I18nService).translateAll(FORM_I18N_KEYS) as FormI18n;
+  protected readonly formI18n = inject(I18nService).translateAll(FORM_I18N_KEYS) as FormI18n;
 
   // inputs — set as componentProps by whatever opens the modal
   public readonly formKey = input.required<string>();
@@ -119,6 +137,10 @@ export class FormModal {
   protected readonly submitting = signal(false);
   protected readonly errorMsg = signal('');
   protected readonly jsToken = signal('');
+  /** the thank-you text `submitForm` returned; '' = the default text */
+  protected readonly confirmation = signal('');
+  /** `submitForm` refused because the form closed or filled up after the modal opened */
+  protected readonly closedByServer = signal(false);
 
   protected readonly definitionResource = rxResource({
     params: () => ({ formKey: this.formKey(), tenantId: this.tenantId() }),
@@ -126,10 +148,40 @@ export class FormModal {
       params.formKey ? from(this.formSubmitService.fetchDefinition(params.formKey, params.tenantId)) : of(undefined),
   });
 
-  protected readonly definition = computed(() => {
+  protected readonly definition = computed<PublicFormDefinition | undefined>(() => {
     const val = this.definitionResource.value();
     return Array.isArray(val) ? val[0] : val;
   });
+
+  /** no page link and no section: the implicit fields' own defaults */
+  protected readonly implicitValues = computed(() => resolveImplicitValues(this.definition()?.fields ?? [], undefined, {}));
+
+  /** absent from old functions: then the form counts as open and unlimited */
+  private readonly availability = computed(() => this.definition()?.availability);
+
+  protected readonly isClosed = computed(() => this.closedByServer() || this.availability()?.isOpen === false);
+
+  /** the author's closed text, else the default */
+  protected readonly closedText = computed(() => {
+    const message = this.availability()?.closedMessage ?? '';
+    return message.trim() ? message : this.formI18n.closed_default();
+  });
+
+  /** «Noch 3 Plätze frei» above the form, when the author switched it on and places are counted */
+  protected readonly remainingText = computed(() => {
+    const availability = this.availability();
+    if (!availability?.isOpen || !availability.showRemaining || typeof availability.remaining !== 'number') return '';
+    return availability.remaining === 1
+      ? this.formI18n.remaining_one()
+      : fill(this.formI18n.remaining(), { count: availability.remaining });
+  });
+
+  protected readonly confirmationText = computed(() => this.confirmation() || this.i18n().form_submit_conf());
+
+  protected readonly otherI18n = computed<FieldOtherI18n>(() => ({
+    option: this.formI18n.field_other_option(),
+    placeholder: this.formI18n.field_other_placeholder(),
+  }));
 
   /** the lists of the form's category fields — fetched for anonymous visitors, who have no AppStore categories */
   protected readonly categoriesResource = rxResource({
@@ -144,10 +196,10 @@ export class FormModal {
     });
   }
 
-  /** the (i) is offered once there is a live form to explain, not for a missing or archived one */
+  /** the (i) is offered once there is a live form to explain, not for a missing, archived or closed one */
   protected readonly helpAvailable = computed(() => {
     const def = this.definition();
-    return !!def && !def.isArchived && !this.submitted();
+    return !!def && !def.isArchived && !this.isClosed() && !this.submitted();
   });
 
   /** the (i) in the header — help for the person filling in the form; no sign-in needed */
@@ -158,9 +210,12 @@ export class FormModal {
     const modal = await this.modalController.create({
       component: FormFillerHelpModal,
       componentProps: {
-        i18n: this.helpI18n,
+        i18n: this.formI18n,
         hasRules: hasVisibilityRules(def.fields),
         fillerHelpText: def.fillerHelpText ?? '',
+        wasPrefilled: false,
+        hasLimit: def.availability?.hasLimit === true,
+        sendsMail: def.sendFillerConfirmation === true,
       },
     });
     await modal.present();
@@ -176,7 +231,7 @@ export class FormModal {
         encryptFileUpload: this.encryptFileUpload(),
         askPassword: () => this.promptEncryptionPassword(),
       });
-      const { submissionId } = await this.formSubmitService.submit({
+      const { confirmation } = await this.formSubmitService.submit({
         formKey: def.formKey,
         // A modal has no section document, so the section-configured side effects (tasks,
         // mail) are skipped server-side — `submitForm` guards them on a non-empty ref. The
@@ -188,12 +243,14 @@ export class FormModal {
         honeypotKey: def.honeypotKey || 'website',
         showCaptcha: this.showCaptcha(),
       });
+      this.confirmation.set(typeof confirmation === 'string' ? confirmation : '');
       this.submitted.set(true);
-      // Leave the confirmation on screen; the header's close button dismisses. The id travels
-      // so a caller can link to what was written, not so it can claim a submit happened.
-      await dismissOverlay(this.modalController, { submissionId }, 'confirm');
-    } catch {
-      this.errorMsg.set(this.i18n().form_submit_error());
+      // Leave the thank-you text on screen; the header's close button dismisses. No caller reads
+      // a result: the consequence of a submit is the WRITE's own workflow event (§6b).
+    } catch (err) {
+      // closed or full since the modal opened: the closed text; anything else: the generic error
+      if (isFormClosedError(err)) this.closedByServer.set(true);
+      else this.errorMsg.set(this.i18n().form_submit_error());
     } finally {
       this.submitting.set(false);
     }

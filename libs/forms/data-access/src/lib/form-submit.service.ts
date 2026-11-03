@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 
 import { FormDefinitionModel } from '@okr/shared-models';
-import { sanitizeFileName } from '@okr/shared-util-core';
+import { FormAvailability, sanitizeFileName } from '@okr/shared-util-core';
 
 /** What a submitted file becomes once it is in storage — plain, or encrypted at rest. */
 export interface UploadedFileRef {
@@ -25,6 +25,34 @@ export interface FormSubmitArgs {
   pageLoadedAt: string;
   honeypotKey: string;
   showCaptcha: boolean;
+}
+
+/** What `getFormDefinition` returns: the public projection plus, from 1.125 B, whether the form
+ *  accepts answers on this page and whether a thank-you mail goes out. Both are absent from old functions. */
+export type PublicFormDefinition = FormDefinitionModel & {
+  availability?: FormAvailability;
+  sendFillerConfirmation?: boolean;
+};
+
+/** What `submitForm` returns; `confirmation` (1.125 B) is the thank-you text, absent from old functions. */
+export interface FormSubmitResult {
+  submissionId: string;
+  confirmation?: string;
+}
+
+/** The two refusals of a form that takes no more answers (spec §11) — `HttpsError` messages of `submitForm`. */
+const FORM_CLOSED_MESSAGES = ['form-closed', 'form-full'];
+
+/**
+ * Whether `submitForm` refused because the form is closed or full: a `failed-precondition` whose
+ * message is `form-closed` or `form-full`. Any other failure is a generic submit error. The client
+ * SDK prefixes the code (`functions/failed-precondition`); both spellings are accepted.
+ */
+export function isFormClosedError(err: unknown): boolean {
+  if (typeof err !== 'object' || err === null) return false;
+  const { code, message } = err as { code?: unknown; message?: unknown };
+  const isPrecondition = code === 'failed-precondition' || code === 'functions/failed-precondition';
+  return isPrecondition && typeof message === 'string' && FORM_CLOSED_MESSAGES.includes(message);
 }
 
 export interface UploadOptions {
@@ -62,11 +90,13 @@ export class FormSubmitService {
   /**
    * Public, anonymous gateway — reads the form definition server-side so it works on public
    * pages where the `formDefinitions` collection is not client-readable.
+   * `sectionId` (the form section's okey) lets the server apply that page's own acceptance rules;
+   * a modal has no section and sends none (form-wide rules).
    */
-  public async fetchDefinition(formKey: string, tenantId: string): Promise<FormDefinitionModel | undefined> {
+  public async fetchDefinition(formKey: string, tenantId: string, sectionId?: string): Promise<PublicFormDefinition | undefined> {
     try {
-      const fn = await this.callable<{ formKey: string; tenantId: string }, FormDefinitionModel>('getFormDefinition');
-      const result = await fn({ formKey, tenantId });
+      const fn = await this.callable<{ formKey: string; tenantId: string; sectionId?: string }, PublicFormDefinition>('getFormDefinition');
+      const result = await fn(sectionId ? { formKey, tenantId, sectionId } : { formKey, tenantId });
       return result.data;
     } catch {
       return undefined;   // not found / unavailable → the host shows "form not found"
@@ -83,8 +113,9 @@ export class FormSubmitService {
     }
   }
 
-  public async submit(args: FormSubmitArgs): Promise<{ submissionId: string }> {
-    const fn = await this.callable<unknown, { submissionId: string }>('submitForm');
+  /** Rejects on any failure; `isFormClosedError` tells a closed or full form from the rest. */
+  public async submit(args: FormSubmitArgs): Promise<FormSubmitResult> {
+    const fn = await this.callable<unknown, FormSubmitResult>('submitForm');
     const ua = navigator.userAgent;
     const fingerprint = btoa(ua).substring(0, 32);
 

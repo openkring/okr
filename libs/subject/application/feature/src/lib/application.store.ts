@@ -2,6 +2,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { AlertController, ModalController, ToastController } from '@ionic/angular';
+import { catchError, of } from 'rxjs';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AppStore } from '@okr/shared-feature';
@@ -10,26 +11,35 @@ import { ApplicationModel, ApplicationState } from '@okr/shared-models';
 import { getAge, getAvatarInfoForCurrentUser } from '@okr/shared-util-core';
 import { AlertService } from '@okr/shared-util-angular';
 
+import { CourseService } from '@okr/calendar-course-data-access';
 import { MembershipStore } from '@okr/relationship-membership-feature';
 
 import { ApplicationService } from '@okr/application-data-access';
 import {
-  APPLICATION_I18N_KEYS, isMembershipApplication, matchesStateFilter, proposeMembershipCategory, stateColor
+  APPLICATION_I18N_KEYS, ApplicationForFilter, applicationCourseKey, isMembershipApplication, matchesApplicationForFilter,
+  matchesStateFilter, proposeMembershipCategory, stateColor
 } from '@okr/application-util';
 import { ApplicationEditModal } from '@okr/application-ui';
 
+/** the course name of a course registration; the key itself while the course is unknown (deleted, not yet loaded), '' for other applications */
+function courseNameOf(app: ApplicationModel, names: Record<string, string>): string {
+  const key = applicationCourseKey(app);
+  return key ? (names[key] ?? key) : '';
+}
 
 export const ApplicationStore = signalStore(
   withState({
     searchTerm:  '',
     stateFilter: 'open' as string,
     kindFilter:  'all' as string,
+    forFilter:   'all' as ApplicationForFilter,
   }),
 
   withProps(() => ({
     appStore:           inject(AppStore),
     membershipStore:    inject(MembershipStore),
     applicationService: inject(ApplicationService),
+    courseService:      inject(CourseService),
     modalController:    inject(ModalController),
     alertService:       inject(AlertService),
     alertController:    inject(AlertController),
@@ -44,6 +54,11 @@ export const ApplicationStore = signalStore(
       params: () => ({ tenantId: store.appStore.tenantId() }),
       stream: () => store.applicationService.list(),
     }),
+    // course registrations name their course by key; a failed read only costs the names, never the list
+    coursesResource: rxResource({
+      params: () => ({ tenantId: store.appStore.tenantId() }),
+      stream: () => store.courseService.listAll().pipe(catchError(() => of([]))),
+    }),
   })),
 
   withComputed((store) => ({
@@ -52,13 +67,19 @@ export const ApplicationStore = signalStore(
       const term = store.searchTerm().toLowerCase();
       const sf   = store.stateFilter();
       const kf   = store.kindFilter();
+      const ff   = store.forFilter();
       return all
         .filter(a => !a.isArchived)
         .filter(a => matchesStateFilter(a.state, sf))
         .filter(a => kf === 'all' || a.applicationAs === kf)
+        .filter(a => matchesApplicationForFilter(a, ff))
         .filter(a => !term || a.index.toLowerCase().includes(term))
         .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
     }),
+    /** course key (`CourseModel.okey`) → course name, for the course registrations */
+    courseNames: computed<Record<string, string>>(() => Object.fromEntries(
+      (store.coursesResource.value() ?? []).map(c => [c.okey, c.name])
+    )),
     currentUser: computed(() => store.appStore.currentUser()),
     tenantId:    computed(() => store.appStore.tenantId()),
     imgixBaseUrl: computed(() => store.appStore.services.imgixBaseUrl()),
@@ -73,6 +94,12 @@ export const ApplicationStore = signalStore(
     },
     setKindFilter(kind: string): void {
       patchState(store, { kindFilter: kind });
+    },
+    setForFilter(filter: ApplicationForFilter): void {
+      patchState(store, { forFilter: filter });
+    },
+    courseName(app: ApplicationModel): string {
+      return courseNameOf(app, store.courseNames());
     },
 
     stateColor(state: ApplicationState): 'warning' | 'primary' | 'success' | 'danger' | 'medium' {
@@ -89,7 +116,7 @@ export const ApplicationStore = signalStore(
       }
       const modal = await store.modalController.create({
         component: ApplicationEditModal,
-        componentProps: { application: app, currentUser: cu, i18n: store.i18n }
+        componentProps: { application: app, currentUser: cu, i18n: store.i18n, courseName: courseNameOf(app, store.courseNames()) }
       });
       await modal.present();
       const { data, role } = await modal.onWillDismiss<ApplicationModel>();

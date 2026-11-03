@@ -1,14 +1,16 @@
-import type { DerivedValue, Field } from '@okr/shared-models';
+import { OTHER_OPTION_VALUE } from '@okr/shared-models';
+import type { BaseType, DerivedValue, Field } from '@okr/shared-models';
 import {
   buildTypedProperties,
   coerceToPropertyType,
   computeDerivedValues,
+  FORM_OTHER_TEXT_MAX,
+  formatAnswer,
   getVisibleFieldIds,
   isSsnField,
   normalizeAhv,
   omitSsnValues,
   propertyTypeOf,
-  ssnPresenceLabel,
 } from '@okr/shared-util-core';
 
 /**
@@ -18,6 +20,12 @@ import {
  * Hidden means absent: a hidden field is not required, not validated and not stored. Keys that
  * are not an input field of the definition (honeypot, `_jsToken`, `personKey`, `reviewer`, …)
  * are dropped. Derived values overwrite whatever the client sent for the same key.
+ *
+ * Implicit values (spec §8.1) come from `submitForm` (section config, then an allowed link value, then the
+ * field default): every client value for an implicit field is dropped first, the `implicit` argument is merged
+ * over the rest, and an implicit field is never required. An «Andere» text (`<key>Other`, spec §9) is kept only
+ * for a visible `allowOther` field whose answer picks «Andere», only when no real field owns that key, and is
+ * required then; one over `FORM_OTHER_TEXT_MAX` is reported in `invalidProperties`.
  *
  * AHV numbers (`ssn` fields, and any field keyed `ssnId`) are vault data (privacy 1.19): checked here (EAN-13), stored in the
  * electronic 13-digit format in the target record, and never copied anywhere else — the e-mail
@@ -34,6 +42,10 @@ export interface PreparedSubmission {
   invalidSsn: string[];
   /** Keys of derived `asProperty` values that do not coerce to their type (admin-authored: logged, not rejected). */
   droppedDerivedProperties: string[];
+  /** Ids of the fields visible for the merged input (client values plus the implicit ones). */
+  visible: Set<string>;
+  /** Visible input answers by key — implicit values and valid «Andere» texts included, before `asProperty` fields move into `properties`. */
+  answers: Record<string, unknown>;
   /** What the notification e-mail shows: visible answers in field order, then derived values. */
   rows: SubmissionRow[];
 }
@@ -50,34 +62,80 @@ function isSingleCheckbox(field: Field): boolean {
   return field.type === 'checkbox' && !(Array.isArray(field.options) && field.options.length > 0);
 }
 
-/** «ja»/«nein» for booleans, a comma list for arrays, «–» for nothing. */
-function formatRowValue(field: Field | undefined, value: unknown): string {
-  if (value === undefined || value === null || value === '') return '–';
-  if (field !== undefined && propertyTypeOf(field) === 'boolean') {
-    const b = coerceToPropertyType(value, 'boolean');
-    if (b !== undefined) return b ? 'ja' : 'nein';
+/** Display names for raw answers, by field key then raw value — e.g. `{ courseId: { <okey>: <course name> } }`. */
+export type ValueNames = Record<string, Record<string, string>>;
+
+/** One row value: a known display name, else «Andere: <text>» for the «Andere» choice, else `formatAnswer`. */
+function rowValue(field: Field, answers: Record<string, unknown>, names: ValueNames): string {
+  const answer = answers[field.key];
+  if (isSsnField(field)) return formatAnswer(field, answer);
+  const named = names[field.key];
+  if (named !== undefined && typeof answer === 'string' && Object.prototype.hasOwnProperty.call(named, answer)) {
+    return named[answer];
   }
-  if (typeof value === 'boolean') return value ? 'ja' : 'nein';
-  if (Array.isArray(value)) return value.map((v) => String(v)).join(', ');
-  return String(value);
+  if (picksOther(field, answer)) {
+    const text = answers[otherTextKey(field)];
+    const other = typeof text === 'string' && text.trim() !== '' ? `Andere: ${text}` : 'Andere';
+    if (!Array.isArray(answer)) return other;
+    return answer.map((v) => (v === OTHER_OPTION_VALUE ? other : String(v))).join(', ');
+  }
+  return formatAnswer(field, answer);
 }
 
 /**
  * The rows of the notification e-mail (pure): visible input fields in field order with their
- * answer (booleans as ja/nein), then every derived value labelled by its key. Hidden and display
+ * answer (booleans as ja/nein, «Andere» with its text, a raw value with a known display name — the
+ * course — as that name), then every derived value labelled by its key. Hidden and display
  * fields are not shown. An AHV (`ssn`) answer shows as «angegeben» / «–», never as the number.
  */
 export function buildSubmissionRows(
   sortedVisibleInputs: Field[],
   answers: Record<string, unknown>,
   derivedValues: Record<string, string>,
+  names: ValueNames = {},
 ): SubmissionRow[] {
   const rows: SubmissionRow[] = sortedVisibleInputs.map((f) => ({
     label: f.label,
-    value: isSsnField(f) ? ssnPresenceLabel(answers[f.key]) : formatRowValue(f, answers[f.key]),
+    value: rowValue(f, answers, names ?? {}),
   }));
-  for (const [key, value] of Object.entries(derivedValues)) rows.push({ label: key, value: formatRowValue(undefined, value) });
+  for (const [key, value] of Object.entries(derivedValues)) rows.push({ label: key, value: formatAnswer(undefined, value) });
   return rows;
+}
+
+function otherTextKey(field: Field): string {
+  return `${field.key}Other`;
+}
+
+/** The answer picks «Andere»: the reserved value, or a list holding it (checkbox group). */
+function picksOther(field: Field, value: unknown): boolean {
+  if (!('allowOther' in field) || field.allowOther !== true) return false;
+  return Array.isArray(value) ? value.includes(OTHER_OPTION_VALUE) : value === OTHER_OPTION_VALUE;
+}
+
+/**
+ * The «Andere» text of one visible field (spec §9): required when «Andere» is picked, kept in `answers` under
+ * `<key>Other` when valid. Skipped when a real field of the form owns that key (its value is that field's own
+ * answer); too long -> `invalidProperties`. Anything else stays out of `answers`, i.e. is stripped.
+ */
+function collectOtherText(
+  field: Field,
+  value: unknown,
+  input: Record<string, unknown>,
+  defs: Field[],
+  answers: Record<string, unknown>,
+  missingRequired: string[],
+  invalidProperties: string[],
+): void {
+  const otherKey = otherTextKey(field);
+  if (!picksOther(field, value) || defs.some((x) => x.key === otherKey)) return;
+  const text = input[otherKey];
+  if (typeof text !== 'string' || text.trim() === '') {
+    missingRequired.push(otherKey);
+  } else if (text.length > FORM_OTHER_TEXT_MAX) {
+    invalidProperties.push(otherKey);
+  } else {
+    answers[otherKey] = text;
+  }
 }
 
 export function prepareSubmission(
@@ -86,10 +144,17 @@ export function prepareSubmission(
   propertiesField: string | undefined,
   raw: Record<string, unknown>,
   today: string,
+  implicit: Record<string, BaseType> = {},
+  /** display names for the e-mail rows only (the course name for `courseId`); never stored */
+  names: ValueNames = {},
 ): PreparedSubmission {
   const defs = (Array.isArray(fields) ? fields : []).filter((f) => !DISPLAY_TYPES.has(f.type));
   const all = Array.isArray(fields) ? fields : [];
-  const input = raw ?? {};
+  const implicitKeys = new Set(defs.filter((f) => f.type === 'implicit').map((f) => f.key));
+  const input: Record<string, unknown> = {};
+  // the client never sets an implicit value; the server's resolution (only implicit keys) is merged over the rest
+  for (const [key, value] of Object.entries(raw ?? {})) if (!implicitKeys.has(key)) input[key] = value;
+  for (const [key, value] of Object.entries(implicit ?? {})) if (implicitKeys.has(key)) input[key] = value;
   const visible = getVisibleFieldIds(all, input, today);
   const sorted = [...defs].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
@@ -112,13 +177,14 @@ export function prepareSubmission(
       }
       value = ssn;
     }
-    if (field.required && isEmpty(value)) missingRequired.push(field.key);
+    if (field.required && field.type !== 'implicit' && isEmpty(value)) missingRequired.push(field.key);
     if (value !== undefined) {
       answers[field.key] = value;
     } else if (isSingleCheckbox(field)) {
       // An unticked single checkbox may arrive as nothing at all: store the «nein», not a gap.
       answers[field.key] = false;
     }
+    collectOtherText(field, value, input, defs, answers, missingRequired, invalidProperties);
   }
 
   // A derived property without a type is text: it must never fall back to a top-level key.
@@ -141,6 +207,8 @@ export function prepareSubmission(
       continue;
     }
     values[field.key] = answers[field.key];
+    const otherKey = otherTextKey(field);
+    if (otherKey in answers) values[otherKey] = answers[otherKey];
   }
 
   for (const d of derivedList) {
@@ -158,8 +226,8 @@ export function prepareSubmission(
     values[propsKey] = buildTypedProperties(all, answers, visible, derivedList, derivedValues);
   }
 
-  const rows = buildSubmissionRows(sorted.filter((f) => visible.has(f.id)), answers, derivedValues);
-  return { values, missingRequired, invalidProperties, invalidSsn, droppedDerivedProperties, rows };
+  const rows = buildSubmissionRows(sorted.filter((f) => visible.has(f.id)), answers, derivedValues, names);
+  return { values, missingRequired, invalidProperties, invalidSsn, droppedDerivedProperties, visible, answers, rows };
 }
 
 /**

@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "scs-app",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["exec", "nx", "serve", "scs-app"],
+      "port": 4201
+    },
+    {
       "name": "kring-website",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["exec", "nx", "serve", "kring-website"],

@@ -1,8 +1,39 @@
 import { describe, expect, it } from 'vitest';
+import { LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { Field } from '@okr/shared-models';
-import { fieldConfigValidations, fieldLabelLength } from './field-config.validations';
+import { defaultFromText, fieldConfigValidations, fieldLabelLength } from './field-config.validations';
 
 const base = { id: 'f1', key: 'firstName', label: 'Vorname', required: false, width: 'full' as const, order: 0 };
+
+describe('defaultFromText', () => {
+  it('keeps the stored number while the text still means it', () => {
+    expect(defaultFromText('number', '1.', 1)).toEqual({ action: 'keep' });
+    expect(defaultFromText('number', '1.50', 1.5)).toEqual({ action: 'keep' });
+  });
+
+  it('stores the number as soon as the text coerces to another one', () => {
+    expect(defaultFromText('number', '01', 0)).toEqual({ action: 'set', value: 1 });
+    expect(defaultFromText('number', '1e3', undefined)).toEqual({ action: 'set', value: 1000 });
+    expect(defaultFromText('number', '.5', undefined)).toEqual({ action: 'set', value: 0.5 });
+    expect(defaultFromText('number', '1.05', 1)).toEqual({ action: 'set', value: 1.05 });
+  });
+
+  it('stores a text that is no number as typed, so the suite flags it', () => {
+    expect(defaultFromText('number', '-', undefined)).toEqual({ action: 'set', value: '-' });
+    expect(defaultFromText('number', 'abc', 3)).toEqual({ action: 'set', value: 'abc' });
+  });
+
+  it('removes the default on a blank text', () => {
+    expect(defaultFromText('number', '   ', 3)).toEqual({ action: 'remove' });
+    expect(defaultFromText('text', '', 'skiff-1')).toEqual({ action: 'remove' });
+  });
+
+  it('stores a text default as typed, and a boolean text as a boolean', () => {
+    expect(defaultFromText('text', 'skiff-1', undefined)).toEqual({ action: 'set', value: 'skiff-1' });
+    expect(defaultFromText('text', 'skiff-1', 'skiff-1')).toEqual({ action: 'keep' });
+    expect(defaultFromText('boolean', 'true', undefined)).toEqual({ action: 'set', value: true });
+  });
+});
 
 describe('fieldConfigValidations', () => {
   it('accepts a complete text field', () => {
@@ -62,5 +93,86 @@ describe('fieldConfigValidations', () => {
   it('checks no rule when none is set', () => {
     const result = fieldConfigValidations({ ...base, type: 'text' } as Field);
     expect(Object.keys(result.getErrors()).some(k => k.startsWith('visibleIf'))).toBe(false);
+  });
+
+  describe('implicit field (spec §8.1)', () => {
+    const implicit = (extra: Record<string, unknown> = {}) => ({ ...base, key: 'courseId', type: 'implicit', valueType: 'text', ...extra }) as Field;
+
+    it('accepts a typed implicit field with and without a default value', () => {
+      expect(fieldConfigValidations(implicit()).isValid()).toBe(true);
+      expect(fieldConfigValidations(implicit({ defaultValue: 'skiff-1' })).isValid()).toBe(true);
+      expect(fieldConfigValidations(implicit({ valueType: 'number', defaultValue: 3 })).isValid()).toBe(true);
+      expect(fieldConfigValidations(implicit({ valueType: 'number', defaultValue: '3' })).isValid()).toBe(true);
+      expect(fieldConfigValidations(implicit({ valueType: 'boolean', defaultValue: true })).isValid()).toBe(true);
+    });
+
+    it('requires the type of the value', () => {
+      expect(fieldConfigValidations(implicit({ valueType: undefined })).hasErrors('valueType')).toBe(true);
+      expect(fieldConfigValidations(implicit({ valueType: 'date' })).hasErrors('valueType')).toBe(true);
+    });
+
+    it('rejects a default value that does not coerce to the type', () => {
+      expect(fieldConfigValidations(implicit({ valueType: 'number', defaultValue: 'abc' })).getErrors('defaultValue')).toContain('@forms/feature.field.default_invalid');
+      expect(fieldConfigValidations(implicit({ valueType: 'boolean', defaultValue: 'maybe' })).hasErrors('defaultValue')).toBe(true);
+    });
+
+    it('treats an empty default value as none', () => {
+      expect(fieldConfigValidations(implicit({ valueType: 'number', defaultValue: '' })).isValid()).toBe(true);
+    });
+
+    it('R1: rejects an implicit field that is an AHV field (key ssnId)', () => {
+      const result = fieldConfigValidations(implicit({ key: 'ssnId', defaultValue: '7561234567897' }));
+      expect(result.getErrors('key')).toContain('@forms/feature.fields.implicit_ssn');
+      expect(fieldConfigValidations(implicit({ key: 'courseId' })).hasErrors('key')).toBe(false);
+    });
+
+    it('caps a text default at LONG_NAME_LENGTH, as the builder input does', () => {
+      expect(fieldConfigValidations(implicit({ defaultValue: 'x'.repeat(LONG_NAME_LENGTH) })).isValid()).toBe(true);
+      expect(fieldConfigValidations(implicit({ defaultValue: 'x'.repeat(LONG_NAME_LENGTH + 1) })).hasErrors('defaultValue')).toBe(true);
+      expect(fieldConfigValidations(implicit({ valueType: 'number', defaultValue: 12345 })).isValid()).toBe(true);
+    });
+
+    it('ignores help text, placeholder and a rule it never shows', () => {
+      const hidden = implicit({
+        helpText: 'x'.repeat(LONG_NAME_LENGTH + 1), placeholder: 'x'.repeat(200),
+        visibleIf: { match: 'all', conditions: [{ fieldId: '', op: '' }] },
+      });
+      expect(fieldConfigValidations(hidden).isValid()).toBe(true);
+      // a visible field still gets all three checked
+      const text = { ...base, type: 'text', helpText: 'x'.repeat(LONG_NAME_LENGTH + 1), visibleIf: { match: 'all', conditions: [{ fieldId: '', op: '' }] } } as unknown as Field;
+      expect(fieldConfigValidations(text).hasErrors('helpText')).toBe(true);
+      expect(fieldConfigValidations(text).isValid()).toBe(false);
+    });
+
+    it('checks no value type on other fields', () => {
+      expect(fieldConfigValidations({ ...base, type: 'text' } as Field).hasErrors('valueType')).toBe(false);
+    });
+  });
+
+  describe('allowOther (spec §9)', () => {
+    const opts = [{ label: 'A', value: 'a' }];
+    const radio = (extra: Record<string, unknown> = {}) => ({ ...base, key: 'kurs', type: 'radio', options: opts, ...extra }) as Field;
+
+    it('accepts it on dropdown, radio and checkbox with options', () => {
+      expect(fieldConfigValidations(radio({ allowOther: true })).isValid()).toBe(true);
+      expect(fieldConfigValidations({ ...base, key: 'k', type: 'dropdown', options: opts, allowOther: true } as Field).isValid()).toBe(true);
+      expect(fieldConfigValidations({ ...base, key: 'k', type: 'checkbox', options: opts, allowOther: true } as Field).isValid()).toBe(true);
+    });
+
+    it('rejects it on a single checkbox', () => {
+      expect(fieldConfigValidations({ ...base, key: 'k', type: 'checkbox', allowOther: true } as Field).getErrors('allowOther'))
+        .toContain('@forms/feature.field.allow_other_blocked');
+    });
+
+    it('rejects it on a typed choice key of the mapping and on an AHV key', () => {
+      const gender = radio({ key: 'gender', allowOther: true });
+      expect(fieldConfigValidations(gender, 'applications.default').hasErrors('allowOther')).toBe(true);
+      expect(fieldConfigValidations(gender).hasErrors('allowOther')).toBe(false);
+      expect(fieldConfigValidations(radio({ key: 'ssnId', allowOther: true })).hasErrors('allowOther')).toBe(true);
+    });
+
+    it('does not check it when switched off', () => {
+      expect(fieldConfigValidations(radio({ key: 'gender', allowOther: false }), 'applications.default').hasErrors('allowOther')).toBe(false);
+    });
   });
 });

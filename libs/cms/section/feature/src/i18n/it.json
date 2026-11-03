@@ -407,6 +407,36 @@
     "archived": "Il modello del modulo è archiviato.",
     "advanced": {
       "label": "Mostrare le impostazioni avanzate"
+    },
+    "config": {
+      "title": "Modulo",
+      "subtitle": "Quale modulo mostra questa pagina e cosa succede con le risposte.",
+      "form": "Modulo",
+      "form_none": "Scegli un modulo",
+      "form_helper": "Il modulo mostrato in questa pagina.",
+      "emails": "Indirizzi e-mail per le notifiche",
+      "emails_ph": "nome@esempio.ch, nome2@esempio.ch",
+      "emails_helper": "Questi indirizzi ricevono un messaggio quando qualcuno invia il modulo. Separa più indirizzi con una virgola.",
+      "resp": "Responsabilità",
+      "resp_select": "Scegli una responsabilità",
+      "resp_clear": "Rimuovi",
+      "resp_helper": "La persona responsabile riceve un compito per ogni risposta.",
+      "captcha": "Mostra la protezione antispam (captcha)",
+      "captcha_helper": "Le persone dimostrano brevemente di non essere un robot prima di inviare.",
+      "encrypt": "Cifra i file",
+      "encrypt_helper": "All'invio viene chiesta una password. I file caricati vengono cifrati con essa.",
+      "fixed_title": "Valori fissi",
+      "fixed_subtitle": "Qui stabilisci cosa vale in questa pagina per i campi invisibili del modulo, ad esempio per quale corso è l'iscrizione.",
+      "fixed_pick_form": "Scegli prima un modulo.",
+      "fixed_none": "Questo modulo non ha campi invisibili.",
+      "fixed_course_pick": "Scegli un corso",
+      "fixed_course_none": "Non c'è ancora nessun corso. Creane uno prima.",
+      "fixed_yes": "Sì",
+      "fixed_no": "No",
+      "fixed_required": "Serve un valore, altrimenti il campo resta vuoto nelle risposte.",
+      "accept_title": "Accettazione in questa pagina",
+      "accept_subtitle": "Le tue regole per questa pagina, ad esempio posti e scadenza propri per un corso.",
+      "fixed_remove": "Rimuovi"
     }
   },
   "hero": {
@@ -1350,7 +1380,11 @@
   "validation": {
     "documentKeyInvalid": "Scegli un video dall'album.",
     "adventYearRange": "Inserisci un anno tra il 2020 e il 2100.",
-    "adventDoorCount": "Il calendario ha bisogno di esattamente 25 finestrelle. Riordina le finestrelle."
+    "adventDoorCount": "Il calendario ha bisogno di esattamente 25 finestrelle. Riordina le finestrelle.",
+    "formEmailInvalid": "Almeno un indirizzo e-mail non è valido. Controlla come è scritto.",
+    "formImplicitInvalid": "Questo valore non si adatta al campo.",
+    "formImplicitRequired": "Indica qui un valore, altrimenti il campo resta vuoto nelle risposte.",
+    "formImplicitSsn": "Il numero AVS non può essere preimpostato."
   },
   "advent": {
     "label": "Calendario dell'Avvento",

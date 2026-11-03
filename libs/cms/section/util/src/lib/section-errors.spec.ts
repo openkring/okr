@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getFieldErrors, getImageErrors, getInlineErrorFields, getRemainingErrors, isInlineErrorField } from './section-errors';
+import { getFieldErrors, getImageErrors, getInlineErrorFields, getRemainingErrors, getUnrenderedFixedKeys, isInlineErrorField } from './section-errors';
 
 describe('getInlineErrorFields', () => {
   it('always offers the base fields of section-configuration', () => {
@@ -71,5 +71,29 @@ describe('getImageErrors', () => {
   it('returns an empty array without errors', () => {
     expect(getImageErrors(undefined)).toEqual([]);
     expect(getImageErrors({})).toEqual([]);
+  });
+});
+
+describe('form section error fields', () => {
+  it('shows the fixed values of every implicit field inline, so none lands in the fallback list', () => {
+    const inline = getInlineErrorFields('form');
+    expect(isInlineErrorField('implicitValues.courseId', inline)).toBe(true);
+    expect(isInlineErrorField('implicitValues.level', inline)).toBe(true);
+    expect(isInlineErrorField('formKey', inline)).toBe(true);
+    expect(isInlineErrorField('maxResponses', inline)).toBe(true);
+    expect(isInlineErrorField('okey', inline)).toBe(false);
+  });
+});
+
+describe('getUnrenderedFixedKeys', () => {
+  it('lists the fixed-value errors of entries that have no row', () => {
+    const errors = { 'implicitValues.ssnId': ['x'], 'implicitValues.courseId': ['y'], title: ['z'] };
+    expect(getUnrenderedFixedKeys(errors, ['courseId'])).toEqual(['ssnId']);
+    expect(getUnrenderedFixedKeys(errors, [])).toEqual(['ssnId', 'courseId']);
+  });
+
+  it('is empty without errors', () => {
+    expect(getUnrenderedFixedKeys(undefined, [])).toEqual([]);
+    expect(getUnrenderedFixedKeys({}, ['courseId'])).toEqual([]);
   });
 });

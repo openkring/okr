@@ -43,12 +43,26 @@
     "remove": "Eliminar",
     "remove_confirm": "Esta pregunta controla las condiciones de: {fields}. Si la eliminas, se quitarán estas condiciones.",
     "as_property": "Guardar como dato propio",
-    "as_property_helper": "La respuesta se guarda como {type}."
+    "as_property_helper": "La respuesta se guarda como {type}.",
+    "allow_other": "Permitir «Otro …»",
+    "allow_other_blocked": "«Otro …» no es posible en esta pregunta: la respuesta se guarda en un campo con valores fijos.",
+    "lock_prefilled": "Bloqueado si se rellena con un enlace",
+    "value_type": "Tipo de valor",
+    "default_value": "Valor predeterminado",
+    "default_invalid": "El valor predeterminado no coincide con el tipo de valor elegido.",
+    "from_link": "se puede fijar con un enlace",
+    "from_link_helper": "Sin esta marca, el formulario ignora un valor del enlace. Así nadie puede apuntarse a otro curso cambiando la dirección.",
+    "other_option": "Otro …",
+    "other_placeholder": "Tu respuesta",
+    "invisible": "invisible"
   },
   "fields": {
     "duplicate_key": "Dos preguntas tienen la misma clave. Dale a cada pregunta la suya.",
     "duplicate_keys": "Varias preguntas tienen la misma clave: {keys}. Dale a cada pregunta la suya; si no, el formulario no se puede guardar.",
-    "ssn_placement": "El número AVS solo se puede guardar en una solicitud, con la clave ssnId."
+    "ssn_placement": "El número AVS solo se puede guardar en una solicitud, con la clave ssnId.",
+    "other_key_clash": "Esta pregunta se llama igual que el campo de texto de «Otro …» de otra pregunta. Ponle otro nombre.",
+    "other_not_allowed": "«Otro …» no es posible en una pregunta cuya respuesta se guarda en un campo con valores fijos.",
+    "implicit_ssn": "El número AVS no puede ser un campo invisible."
   },
   "rule": {
     "range_order": "El primer valor debe ser menor que el segundo.",
@@ -151,7 +165,11 @@
       "invalid_format": "Formato no válido: se esperaba un objeto con un array \"fields\".",
       "applied": "{count} campos tomados del portapapeles. Confirme para guardar."
     },
-    "preview_derived": "Se guardará como:"
+    "preview_derived": "Se guardará como:",
+    "preview_link": "Crear un enlace con estas respuestas",
+    "preview_no_page": "El formulario todavía no está en ninguna página",
+    "preview_link_copied": "Enlace copiado",
+    "preview_link_personal": "Este enlace contiene datos personales. Envíalo solo a esa persona."
   },
   "definition": {
     "create_title": "Nuevo formulario",
@@ -207,7 +225,9 @@
   },
   "fieldtype": {
     "ssn": "Número AVS",
-    "ssn_desc": "Número AVS suizo, se comprueba su validez"
+    "ssn_desc": "Número AVS suizo, se comprueba su validez",
+    "implicit": "Campo invisible",
+    "implicit_desc": "La persona no lo ve. El valor viene de la página o del enlace."
   },
   "property": {
     "boolean": "sí/no",
@@ -234,6 +254,44 @@
     "filler_title": "Indicaciones sobre el formulario",
     "filler_required": "Los campos con asterisco son obligatorios. Mientras falte algo, no puedes enviar el formulario.",
     "filler_conditions": "Algunas preguntas solo aparecen cuando has respondido algo concreto más arriba. Si cambias una respuesta, las preguntas también pueden volver a desaparecer: lo que escribiste en ellas entonces no se guarda.",
-    "filler_privacy": "Tus datos solo llegan a las personas que se ocupan de este formulario."
+    "filler_privacy": "Tus datos solo llegan a las personas que se ocupan de este formulario.",
+    "editor_implicit": "Un «campo invisible» no lo ve la persona. Defines su valor en la página que muestra el formulario, por ejemplo para qué curso es la inscripción. Así basta un formulario para muchos cursos.",
+    "editor_prefill": "En la vista previa puedes escribir respuestas y crear un enlace con ellas. Quien lo abra encontrará esas respuestas ya rellenadas, algo práctico para un enlace por curso.",
+    "editor_other": "En las preguntas de elección puedes permitir «Otro …». Así la persona puede escribir su propia respuesta.",
+    "editor_after": "En «Después de enviar» escribes el agradecimiento que ve la persona, si quieres distinto según la respuesta y también por correo electrónico.",
+    "editor_limit": "En «Recepción de respuestas» cierras el formulario a mano, en una fecha o tras un número de respuestas. Si varias páginas muestran el mismo formulario, cada página puede tener su propio número de plazas.",
+    "filler_prefilled": "Algunas respuestas ya están rellenadas porque has llegado desde un enlace personal. Los campos bloqueados no se pueden cambiar.",
+    "filler_limit": "Este formulario solo acepta un número determinado de respuestas o se cierra en una fecha. Mejor pronto que tarde.",
+    "filler_mail": "Recibirás una confirmación en la dirección de correo electrónico que indiques."
+  },
+  "after": {
+    "title": "Después de enviar",
+    "message": "Texto",
+    "message_helper": "Déjalo vacío para el texto estándar. Con {firstName} insertas una respuesta, por ejemplo el nombre.",
+    "variants": "Según la respuesta",
+    "variant_add": "+ Variante",
+    "variant_remove": "Quitar la variante",
+    "variant_when": "Si …",
+    "variant_message": "entonces este texto",
+    "send_mail": "Enviar la confirmación por correo electrónico",
+    "send_mail_hint": "No es posible sin un campo de correo electrónico",
+    "mail_needs_email": "Para enviar la confirmación por correo electrónico, el formulario necesita un campo de correo electrónico.",
+    "application_hint": "En las solicitudes de este formulario solo se envía esta confirmación, no la de la administración."
+  },
+  "accept": {
+    "title": "Recepción de respuestas",
+    "open": "El formulario está abierto",
+    "closes_at": "Se cierra el",
+    "max": "Como máximo … respuestas",
+    "max_helper": "0 significa: sin límite.",
+    "max_invalid": "Introduce un número entero de 0 a 10000.",
+    "closes_invalid": "Introduce una fecha válida.",
+    "show_remaining": "Mostrar las plazas libres",
+    "closed_text": "Texto cuando está cerrado",
+    "count": "{count} de {max} respuestas",
+    "closed_default": "Este formulario ya no acepta respuestas.",
+    "remaining": "Quedan {count} plazas libres",
+    "remaining_one": "Queda 1 plaza libre",
+    "inherit": "Vacío o 0 significa: como en el formulario."
   }
 }

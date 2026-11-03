@@ -7,7 +7,7 @@ import type { FormI18n } from '@okr/forms-util';
 /**
  * The (i) next to a form's title, for the person filling it in — in the public form section and
  * in the form modal (spec 1.125 §17.2). It shows only the paragraphs that apply to THIS form:
- * the rules paragraph when the form has any, then the author's own `fillerHelpText`.
+ * the rules, pre-fill, limit and mail paragraphs when they apply, then the author's own `fillerHelpText`.
  *
  * Public pages are anonymous, so nothing here depends on a signed-in user. `fillerHelpText` is
  * author-written and rendered as plain text (interpolation, never innerHTML); line breaks are kept.
@@ -29,6 +29,15 @@ import type { FormI18n } from '@okr/forms-util';
         @if (hasRules()) {
           <ion-item lines="none"><ion-label class="ion-text-wrap">{{ i18n().help_filler_conditions() }}</ion-label></ion-item>
         }
+        @if (wasPrefilled()) {
+          <ion-item lines="none"><ion-label class="ion-text-wrap">{{ i18n().help_filler_prefilled() }}</ion-label></ion-item>
+        }
+        @if (hasLimit()) {
+          <ion-item lines="none"><ion-label class="ion-text-wrap">{{ i18n().help_filler_limit() }}</ion-label></ion-item>
+        }
+        @if (sendsMail()) {
+          <ion-item lines="none"><ion-label class="ion-text-wrap">{{ i18n().help_filler_mail() }}</ion-label></ion-item>
+        }
         <ion-item lines="none"><ion-label class="ion-text-wrap">{{ i18n().help_filler_privacy() }}</ion-label></ion-item>
         @if (fillerHelpText().trim()) {
           <ion-item lines="none"><ion-label class="ion-text-wrap author-text">{{ fillerHelpText() }}</ion-label></ion-item>
@@ -43,4 +52,10 @@ export class FormFillerHelpModal {
   public readonly hasRules = input(false);
   /** the form author's own paragraph; absent on legacy definitions */
   public readonly fillerHelpText = input('');
+  /** a link pre-filled some visible answers (spec §8) */
+  public readonly wasPrefilled = input(false);
+  /** the form takes a limited number of answers or closes on a date (`availability.hasLimit`, §11) */
+  public readonly hasLimit = input(false);
+  /** a thank-you mail goes to the filler's e-mail address (`sendFillerConfirmation`, §10) */
+  public readonly sendsMail = input(false);
 }

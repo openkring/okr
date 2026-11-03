@@ -2,10 +2,28 @@ import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, URL_LENGTH } from '@okr/shared-constants';
 import { FormDefinitionModel } from '@okr/shared-models';
-import { stringValidations } from '@okr/shared-util-core';
+import { classifyStoreDate, isValidPartialStoreDate, stringValidations } from '@okr/shared-util-core';
 
-import { findDuplicateKeys, misplacedSsnFields } from './field-kind';
+import { findDuplicateKeys, isInputField, misplacedSsnFields } from './field-kind';
 import { getFormMapping } from './form-mappings';
+import {
+  fieldsBlockingOther, FORM_MESSAGE_MAX_LENGTH, firstEmailField, implicitSsnFields, otherKeyClashes,
+} from './form-prefill-link.util';
+import { controllerTests, ruleTests } from './form-rules.validations';
+
+export const MAX_RESPONSES_LIMIT = 10000;
+
+/**
+ * The «Annahme» settings (spec §11): on a form definition, and — as overrides — on a form section, where an
+ * empty value means «wie im Formular». Edited by `AcceptanceSettingsInput`.
+ */
+export type AcceptanceFields = Pick<FormDefinitionModel, 'isOpen' | 'closesAt' | 'maxResponses' | 'showRemaining' | 'closedMessage'>;
+
+/** `''` (no date) or a real calendar day as `yyyymmdd`. */
+export function isStoreDateOrEmpty(value: unknown): boolean {
+  if (value === undefined || value === null || value === '') return true;
+  return typeof value === 'string' && /^\d{8}$/.test(value) && classifyStoreDate(value) === 'full' && isValidPartialStoreDate(value);
+}
 
 /**
  * Validates the settings of a form definition (form-definition edit modal):
@@ -34,4 +52,47 @@ export const formDefinitionValidations = staticSuite((model: FormDefinitionModel
     const mapping = model.target?.kind === 'collection' ? getFormMapping(model.target.mappingKey) : undefined;
     enforce(misplacedSsnFields(model.fields, mapping).length).equals(0);
   });
+
+  // an AHV number is never an implicit value: it would sit in clear text in the definition (R1; pasted JSON too)
+  test('fields', '@forms/feature.fields.implicit_ssn', () => {
+    enforce(implicitSsnFields(model.fields).length).equals(0);
+  });
+
+  // «Andere …» stores its text under `<key>Other`: no other question or derived value may use that key (it would overwrite or be overwritten)
+  test('fields', '@forms/feature.fields.other_key_clash', () => {
+    enforce(otherKeyClashes(model.fields, model.derivedValues).length).equals(0);
+  });
+
+  // …and not on a question stored in a typed model field (`gender`): `other` would write a value the model does not allow
+  test('fields', '@forms/feature.fields.other_not_allowed', () => {
+    const mappingKey = model.target?.kind === 'collection' ? model.target.mappingKey : undefined;
+    enforce(fieldsBlockingOther(model.fields, mappingKey).length).equals(0);
+  });
+
+  // Nach dem Absenden (spec §10)
+  stringValidations('confirmationMessage', model.confirmationMessage ?? '', FORM_MESSAGE_MAX_LENGTH);
+  const inputFields = (Array.isArray(model.fields) ? model.fields : []).filter(isInputField);
+  (Array.isArray(model.confirmationVariants) ? model.confirmationVariants : []).forEach((variant, i) => {
+    const at = `confirmationVariants.${i}`;
+    ruleTests(`${at}.when`, variant?.when);
+    // the controller must still exist and still offer the operator (a deleted or retyped field would count as true)
+    (variant?.when?.conditions ?? []).forEach((cond, k) => controllerTests(`${at}.when.conditions.${k}`, cond, inputFields));
+    stringValidations(`${at}.message`, variant?.message ?? '', FORM_MESSAGE_MAX_LENGTH, 0, true);
+  });
+  omitWhen(model.sendFillerConfirmation !== true, () => {
+    test('sendFillerConfirmation', '@forms/feature.after.mail_needs_email', () => {
+      enforce(firstEmailField(model.fields) !== undefined).isTruthy();
+    });
+  });
+
+  // Annahme (spec §11): a missing value is a legacy definition and means «open, no date, unlimited»
+  omitWhen(model.maxResponses === undefined || model.maxResponses === null, () => {
+    test('maxResponses', '@forms/feature.accept.max_invalid', () => {
+      enforce(typeof model.maxResponses === 'number' && Number.isInteger(model.maxResponses) && model.maxResponses >= 0 && model.maxResponses <= MAX_RESPONSES_LIMIT).isTruthy();
+    });
+  });
+  test('closesAt', '@forms/feature.accept.closes_invalid', () => {
+    enforce(isStoreDateOrEmpty(model.closesAt)).isTruthy();
+  });
+  stringValidations('closedMessage', model.closedMessage ?? '', FORM_MESSAGE_MAX_LENGTH);
 });

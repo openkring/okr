@@ -14,7 +14,7 @@ import {
 import { AhvFormat, formatAhv, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, fill, getAge } from '@okr/shared-util-core';
 import {
-  ApplicationI18n, applicationValidations, isMembershipApplication, needsGuardian, needsSsn, proposeMembershipCategory, setPropertyValue
+  APPLICATION_COURSE_PROPERTY, ApplicationI18n, applicationValidations, isMembershipApplication, needsGuardian, needsSsn, proposeMembershipCategory, setPropertyValue
 } from '@okr/application-util';
 
 /** A membership application. The parent modal drives saving through the change-confirmation. */
@@ -184,6 +184,8 @@ import {
           </ion-card>
         }
 
+        <!-- the kind of membership: a course registration has none -->
+        @if (isMembership()) {
         <ion-card>
           <ion-card-header><ion-card-title>{{ i18n().section_application() }}</ion-card-title></ion-card-header>
           <ion-card-content class="ion-no-padding">
@@ -205,6 +207,7 @@ import {
             </ion-grid>
           </ion-card-content>
         </ion-card>
+        }
 
         <!-- answers the form builder stored as typed properties (spec 1.125 §4.4): only the value may be corrected -->
         @if (propertyRows().length > 0) {
@@ -226,7 +229,7 @@ import {
                         }
                         @default {
                           <okr-text-input [i18n]="row.textI18n" [value]="row.textValue"
-                            (valueChange)="onPropertyChange(row.key, $event)" [readOnly]="isReadOnly()" />
+                            (valueChange)="onPropertyChange(row.key, $event)" [readOnly]="isReadOnly() || row.fixed" />
                         }
                       }
                       <okr-error-note [errors]="row.errors" />
@@ -246,6 +249,8 @@ export class ApplicationForm {
   public readonly i18n = input.required<ApplicationI18n>();
   public formData = model.required<ApplicationModel>();
   public readonly readOnly = input(false);
+  /** name of the course a course registration is for; shown read-only instead of the course key */
+  public readonly courseName = input('');
   public readonly showForm = input(true);   // toggled by the parent to reset Vest state on cancel
 
   // outputs
@@ -271,7 +276,9 @@ export class ApplicationForm {
   // a youth application, or an applicant under 18 whatever the kind: the guardian's names are
   // required under 18 (needsGuardian), so the card must show whenever the suite asks for them
   protected readonly showGuardian = computed(() => this.formData().applicationAs === 'youth' || needsGuardian(this.formData()));
-  protected readonly showSsn = computed(() => needsSsn(this.formData()));
+  // a course registration asks for no AHV number and no membership kind (data minimisation)
+  protected readonly isMembership = computed(() => isMembershipApplication(this.formData()));
+  protected readonly showSsn = computed(() => this.isMembership() && needsSsn(this.formData()));
   /** the member category the application suggests — shown only, never written (spec 1.125 §13.1) */
   protected readonly proposal = computed(() => {
     const app = this.formData();
@@ -328,7 +335,11 @@ export class ApplicationForm {
     type: p.type,
     value: p.value,
     numberValue: p.value as number,
-    textValue: p.value === undefined || p.value === null ? '' : String(p.value),
+    // the course property holds a key nobody can read: show the course's name, and leave it uncorrectable
+    fixed: p.key === APPLICATION_COURSE_PROPERTY,
+    textValue: p.key === APPLICATION_COURSE_PROPERTY && this.courseName()
+      ? this.courseName()
+      : (p.value === undefined || p.value === null ? '' : String(p.value)),
     checkboxI18n: { name: p.key, label: p.label, helper: '' } as CheckboxI18n,
     numberI18n: { name: p.key, label: p.label, placeholder: '', helper: '' } as NumberInputI18n,
     textI18n: this.textI18n(p.key, p.label),

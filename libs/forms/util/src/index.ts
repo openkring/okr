@@ -9,3 +9,4 @@ export * from './lib/field-config.validations';
 export * from './lib/form-definition.validations';
 export * from './lib/form-rules.util';
 export * from './lib/form-rules.validations';
+export * from './lib/form-prefill-link.util';

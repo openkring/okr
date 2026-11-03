@@ -56,6 +56,12 @@
       "path": "../util/tsconfig.lib.json"
     },
     {
+      "path": "../../../forms/ui/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../forms/util/tsconfig.lib.json"
+    },
+    {
       "path": "../../../avatar/ui/tsconfig.lib.json"
     },
     {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { DerivedValue, Field, FieldCondition, PropertyType, VisibilityRule } from '@okr/shared-models';
 import {
-  buildTypedProperties, coerceToPropertyType, computeDerivedValues, omitSsnValues, propertyTypeOf, ssnFieldKeys, ssnPresenceLabel,
+  buildTypedProperties, coerceToPropertyType, FORM_OTHER_TEXT_MAX, computeDerivedValues, omitSsnValues, propertyTypeOf, ssnFieldKeys, ssnPresenceLabel,
 } from './form-values.util';
 import { getVisibleFieldIds } from './form-visibility.util';
 
@@ -119,6 +119,14 @@ describe('propertyTypeOf', () => {
   });
 });
 
+describe('propertyTypeOf (implicit)', () => {
+  it('follows valueType', () => {
+    expect(propertyTypeOf(f('x', 1, 'implicit', { valueType: 'number' }))).toBe('number');
+    expect(propertyTypeOf(f('x', 1, 'implicit', { valueType: 'text' }))).toBe('text');
+    expect(propertyTypeOf(f('x', 1, 'implicit', { valueType: 'boolean' }))).toBe('boolean');
+  });
+});
+
 describe('coerceToPropertyType', () => {
   it.each<[unknown, PropertyType, string | number | boolean | undefined]>([
     ['true', 'boolean', true],
@@ -212,6 +220,44 @@ describe('buildTypedProperties', () => {
     expect(buildTypedProperties(fields, { a: 'x' }, visible, undefined, undefined as unknown as Record<string, string>)).toEqual([
       { key: 'a', type: 'text', value: 'x', label: 'L a' },
     ]);
+  });
+});
+
+describe('buildTypedProperties: «Andere» (<key>Other)', () => {
+  const other = (extra: Record<string, unknown> = {}): Field[] => [
+    f('p', 1, 'radio', { key: 'prio', label: 'Vorkenntnisse', asProperty: true, allowOther: true, options: [{ label: 'A', value: 'a' }], ...extra }),
+  ];
+  const build = (fields: Field[], values: Record<string, unknown>) =>
+    buildTypedProperties(fields, values, getVisibleFieldIds(fields, values, TODAY), undefined, {});
+
+  it('adds the text right after the property when the answer is «Andere»', () => {
+    expect(build(other(), { prio: 'other', prioOther: 'Kanu' })).toEqual([
+      { key: 'prio', type: 'text', value: 'other', label: 'Vorkenntnisse' },
+      { key: 'prioOther', type: 'text', value: 'Kanu', label: 'Vorkenntnisse (Andere)' },
+    ]);
+  });
+
+  it('adds nothing for another answer, an empty text, or without allowOther', () => {
+    expect(build(other(), { prio: 'a', prioOther: 'Kanu' }).map((p) => p.key)).toEqual(['prio']);
+    expect(build(other(), { prio: 'other', prioOther: '  ' }).map((p) => p.key)).toEqual(['prio']);
+    expect(build(other({ allowOther: false }), { prio: 'other', prioOther: 'Kanu' }).map((p) => p.key)).toEqual(['prio']);
+  });
+
+  it('adds nothing when a real field of the form owns the key <key>Other (its answer is not an «Andere» text)', () => {
+    const fields = [...other(), f('pw', 2, 'password', { key: 'prioOther' })];
+    expect(build(fields, { prio: 'other', prioOther: 'geheim' }).map((p) => p.key)).toEqual(['prio']);
+  });
+
+  it('omits (never truncates) an «Andere» text longer than FORM_OTHER_TEXT_MAX', () => {
+    expect(FORM_OTHER_TEXT_MAX).toBe(500);
+    const keep = build(other(), { prio: 'other', prioOther: 'x'.repeat(500) });
+    expect(keep.map((p) => p.key)).toEqual(['prio', 'prioOther']);
+    expect(build(other(), { prio: 'other', prioOther: 'x'.repeat(501) }).map((p) => p.key)).toEqual(['prio']);
+  });
+
+  it('adds nothing for a hidden field', () => {
+    const fields = [f('c', 1, 'checkbox'), ...other({ order: 2, visibleIf: rule([{ fieldId: 'c', op: 'isChecked' }]) })];
+    expect(build(fields, { k_c: false, prio: 'other', prioOther: 'Kanu' })).toEqual([]);
   });
 });
 

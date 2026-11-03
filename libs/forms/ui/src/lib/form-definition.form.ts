@@ -5,7 +5,7 @@ import {
 } from '@ionic/angular';
 
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, URL_LENGTH } from '@okr/shared-constants';
-import { CategoryListModel, DerivedValue, FormDefinitionModel, FormMapping, SubmissionTarget } from '@okr/shared-models';
+import { ApplicationCollection, CategoryListModel, ConfirmationVariant, DerivedValue, FormDefinitionModel, FormMapping, SubmissionTarget } from '@okr/shared-models';
 import {
   ErrorNote, NotesInput, NotesInputI18n, RadioGroup, RadioGroupI18n,
   StringSelect, StringSelectI18n, TextInput, TextInputI18n,
@@ -14,23 +14,25 @@ import { coerceBoolean, fill } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import {
-  derivedKeysSetByMapping, DerivedValuesModel, derivedValuesValidations, errorsUnder, FORM_MAPPINGS, FormI18n,
+  AcceptanceFields, derivedKeysSetByMapping, DerivedValuesModel, derivedValuesValidations, errorsUnder, firstEmailField, FORM_MAPPINGS, FormI18n,
   formDefinitionValidations, getFormMapping, getPrefillFields,
 } from '@okr/forms-util';
 
+import { AcceptanceSettingsInput } from './acceptance-settings.input';
+import { ConfirmationSettingsInput } from './confirmation-settings.input';
 import { DerivedValuesInput } from './derived-values.input';
 
 const TARGET_KINDS: SubmissionTarget['kind'][] = ['collection', 'url'];
 
 /**
  * Settings of a form definition: name, description, key, submission target, PDF template, the help text for
- * the people filling it in, and the «Berechnete Werte». The parent modal drives saving.
+ * the people filling it in, the «Berechnete Werte», «Nach dem Absenden» and «Annahme». The parent modal drives saving.
  */
 @Component({
   selector: 'okr-form-definition-form',
   standalone: true,
   imports: [
-    ErrorNote, TextInput, NotesInput, RadioGroup, StringSelect, DerivedValuesInput,
+    ErrorNote, TextInput, NotesInput, RadioGroup, StringSelect, DerivedValuesInput, ConfirmationSettingsInput, AcceptanceSettingsInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCardSubtitle, IonList, IonItem, IonLabel, IonNote,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -113,6 +115,32 @@ const TARGET_KINDS: SubmissionTarget['kind'][] = ['collection', 'url'];
           </ion-card-content>
         </ion-card>
 
+        <!-- «Nach dem Absenden» (spec §10): the thank-you text, per-answer variants, the mail to the filler -->
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>{{ i18n().after_title() }}</ion-card-title>
+          </ion-card-header>
+          <ion-card-content class="ion-no-padding">
+            <okr-confirmation-settings-input
+              [message]="confirmationMessage()" (messageChange)="onSettingChange('confirmationMessage', $event)"
+              [variants]="confirmationVariants()" (variantsChange)="onSettingChange('confirmationVariants', $event)"
+              [sendFillerConfirmation]="sendFillerConfirmation()" (sendFillerConfirmationChange)="onSettingChange('sendFillerConfirmation', $event)"
+              [fields]="fields()" [hasEmailField]="hasEmailField()" [isApplicationMapping]="isApplicationMapping()"
+              [categories]="categories()" [i18n]="i18n()" [errors]="allErrors()" [readOnly]="isReadOnly()" />
+          </ion-card-content>
+        </ion-card>
+
+        <!-- «Annahme» (spec §11): open by hand, closing date, limit with «7 von 8 Antworten», closed text -->
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>{{ i18n().accept_title() }}</ion-card-title>
+          </ion-card-header>
+          <ion-card-content class="ion-no-padding">
+            <okr-acceptance-settings-input [settings]="acceptance()" (settingsChange)="onAcceptanceChange($event)"
+              [count]="responseCount()" [i18n]="i18n()" [errors]="allErrors()" [readOnly]="isReadOnly()" />
+          </ion-card-content>
+        </ion-card>
+
         <!-- read-only preview of the fields (prefilled from the selected collection, edited in the form builder) -->
         @if (fields().length > 0) {
           <ion-card>
@@ -155,6 +183,8 @@ export class FormDefinitionForm {
   public readonly mode = input<'create' | 'edit'>('edit');
   /** the category lists, for the items of a category field in a derived value's condition */
   public readonly categories = input<CategoryListModel[]>([]);
+  /** accepted responses so far (`formStats/{okey}`), for «7 von 8 Antworten»; null = unknown (or a new form) */
+  public readonly responseCount = input<number | null>(null);
   public readonly readOnly = input(false);
   public readonly showForm = input(true);
 
@@ -184,6 +214,8 @@ export class FormDefinitionForm {
   protected fieldsErrors = computed(() => this.validationResult().getErrors('fields'));
   /** the derived values' errors, keyed relative to the list — the card shows them under each of its controls */
   protected derivedErrors = computed(() => errorsUnder(this.validationResult().getErrors(), 'derivedValues.'));
+  /** «Nach dem Absenden» and «Annahme» read their own keys (`confirmationMessage`, `maxResponses`, …) off the same run */
+  protected allErrors = computed(() => this.validationResult().getErrors());
 
   constructor() {
     effect(() => this.valid.emit(this.formDefinitionForm().valid()));
@@ -206,6 +238,21 @@ export class FormDefinitionForm {
   /** only a mapping with typed properties offers «Als eigene Angabe speichern» */
   protected readonly hasProperties = computed(() => !!this.mapping()?.propertiesField);
   protected readonly keysSetByMapping = computed(() => derivedKeysSetByMapping(this.derivedValues(), this.mapping()));
+  /** «Bestätigung per E-Mail senden» needs an e-mail field */
+  protected readonly hasEmailField = computed(() => firstEmailField(this.fields()) !== undefined);
+  /** an application form: the back office's own confirmation mail is not sent as well (hint) */
+  protected readonly isApplicationMapping = computed(() => this.mapping()?.collectionName === ApplicationCollection);
+  // «Nach dem Absenden» and «Annahme» — legacy docs lack them (reads skip model defaults): coalesce
+  protected readonly confirmationMessage = computed(() => this.formData().confirmationMessage ?? '');
+  protected readonly confirmationVariants = computed(() => this.formData().confirmationVariants ?? []);
+  protected readonly sendFillerConfirmation = computed(() => this.formData().sendFillerConfirmation === true);
+  protected readonly acceptance = computed<AcceptanceFields>(() => {
+    const fd = this.formData();
+    return {
+      isOpen: fd.isOpen !== false, closesAt: fd.closesAt ?? '', maxResponses: fd.maxResponses ?? 0,
+      showRemaining: fd.showRemaining === true, closedMessage: fd.closedMessage ?? '',
+    };
+  });
   protected readonly targetKind = computed(() => this.formData().target.kind);
   protected readonly collectionMappingKey = computed(() => {
     const target = this.formData().target;
@@ -247,6 +294,16 @@ export class FormDefinitionForm {
   protected onFieldChange(fieldName: 'name' | 'description' | 'pdfTemplateId' | 'fillerHelpText', fieldValue: string): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+  }
+
+  protected onSettingChange(name: 'confirmationMessage' | 'confirmationVariants' | 'sendFillerConfirmation', value: string | ConfirmationVariant[] | boolean): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({ ...vm, [name]: value }));
+  }
+
+  protected onAcceptanceChange(settings: Partial<AcceptanceFields>): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({ ...vm, ...settings }));
   }
 
   protected onDerivedChange(derivedValues: DerivedValue[]): void {

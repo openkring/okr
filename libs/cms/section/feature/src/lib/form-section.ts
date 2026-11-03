@@ -1,5 +1,6 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
 import { signalStore, withProps } from '@ngrx/signals';
 import { AlertController, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonNote, ModalController } from '@ionic/angular';
 import { from, of } from 'rxjs';
@@ -9,10 +10,11 @@ import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Spinner } from '@okr/shared-ui';
 import { FormSection } from '@okr/shared-models';
+import { fill, parsePrefillParams, resolveImplicitValues } from '@okr/shared-util-core';
 
-import { FormCategoryService, FormSubmitService } from '@okr/forms-data-access';
+import { FormCategoryService, FormSubmitService, isFormClosedError, PublicFormDefinition } from '@okr/forms-data-access';
 import { FORM_I18N_KEYS, FormI18n, hasVisibilityRules } from '@okr/forms-util';
-import { FormFillerHelpModal, FormRenderer } from '@okr/forms-ui';
+import { FieldOtherI18n, FormFillerHelpModal, FormRenderer } from '@okr/forms-ui';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 
@@ -37,7 +39,12 @@ const FormSectionStore = signalStore(
   standalone: true,
   imports: [Spinner, FormRenderer, SvgIconPipe, IonButton, IonButtons, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonIcon, IonNote],
   providers: [FormSectionStore],
-  styles: [`.title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }`],
+  styles: [`
+    .title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    /* author-written texts (thank-you, closed) keep their line breaks; interpolated, never innerHTML */
+    .pre-line { display: block; white-space: pre-line; }
+    .remaining { display: block; padding: 0 16px 8px; }
+  `],
   template: `
     <ion-card>
       @if (section().title || helpAvailable()) {
@@ -56,19 +63,29 @@ const FormSectionStore = signalStore(
         @if (definitionResource.isLoading()) {
           <okr-spinner />
         } @else if (submitted()) {
-          <ion-note color="success">{{ store.i18n.form_submit_conf() }}</ion-note>
+          <ion-note color="success" class="pre-line">{{ confirmationText() }}</ion-note>
         } @else if (errorMsg()) {
           <ion-note color="danger">{{ errorMsg() }}</ion-note>
         } @else if (definition(); as def) {
           @if (def.isArchived) {
             <ion-note color="warning">{{ store.i18n.form_archived() }}</ion-note>
+          } @else if (isClosed()) {
+            <!-- closed, past its date or full (spec §11): the text instead of the fields -->
+            <ion-note color="warning" class="pre-line">{{ closedText() }}</ion-note>
           } @else {
+            @if (remainingText()) {
+              <ion-note color="primary" class="remaining">{{ remainingText() }}</ion-note>
+            }
             <okr-form-renderer
               [definition]="def"
               [submitLabel]="store.i18n.form_submit()"
               [submitting]="submitting()"
               [jsToken]="jsToken()"
               [categories]="categoriesResource.value() ?? []"
+              [prefill]="prefill().values"
+              [lockedKeys]="prefill().keys"
+              [implicitValues]="implicitValues()"
+              [otherI18n]="otherI18n()"
               (submitted)="onSubmit($event)"
             />
           }
@@ -85,6 +102,7 @@ export class FormSectionComponent {
   private readonly modalController = inject(ModalController);
   private readonly formSubmitService = inject(FormSubmitService);
   private readonly formCategoryService = inject(FormCategoryService);
+  private readonly route = inject(ActivatedRoute, { optional: true });
 
   public readonly section = input.required<FormSection>();
   public readonly editMode = input(false);
@@ -95,19 +113,75 @@ export class FormSectionComponent {
   protected readonly submitting = signal(false);
   protected readonly errorMsg = signal('');
   protected readonly jsToken = signal('');
+  /** the thank-you text `submitForm` returned; '' = the default text */
+  protected readonly confirmation = signal('');
+  /** `submitForm` refused because the form closed or filled up after the page loaded */
+  protected readonly closedByServer = signal(false);
+
+  /**
+   * The page link's query parameters, read ONCE (spec §8). Never written back to the URL and never
+   * logged — a link may carry a name or a date of birth.
+   */
+  private readonly queryParams = this.readQueryParams();
 
   protected readonly definitionResource = rxResource({
-    params: () => ({ formKey: this.section().properties?.formKey }),
-    stream: ({ params }: { params: { formKey: string } }) =>
+    // the section id lets the server apply this page's own acceptance rules (spec §11, «Per section»)
+    params: () => ({ formKey: this.section().properties?.formKey, sectionId: this.section().okey ?? '' }),
+    stream: ({ params }: { params: { formKey: string; sectionId: string } }) =>
       params.formKey
-        ? from(this.formSubmitService.fetchDefinition(params.formKey, this.store.appStore.tenantId()))
+        ? from(this.formSubmitService.fetchDefinition(params.formKey, this.store.appStore.tenantId(), params.sectionId || undefined))
         : of(undefined),
   });
 
-  protected readonly definition = computed(() => {
+  protected readonly definition = computed<PublicFormDefinition | undefined>(() => {
     const val = this.definitionResource.value();
     return Array.isArray(val) ? val[0] : val;
   });
+
+  /** answers from the link — invalid, unknown and excluded parameters are already dropped (`parsePrefillParams`) */
+  protected readonly prefill = computed(() => {
+    const def = this.definition();
+    return def ? parsePrefillParams(def.fields ?? [], this.queryParams) : { values: {}, keys: [] as string[] };
+  });
+
+  /** the implicit fields' values: this section's, then the link's (only `fromLink`), then the default */
+  protected readonly implicitValues = computed(() => {
+    const def = this.definition();
+    return def ? resolveImplicitValues(def.fields ?? [], this.section().properties?.implicitValues, this.prefill().values) : {};
+  });
+
+  /** a visible answer came from the link — an implicit value is never shown, so it does not count */
+  private readonly wasPrefilled = computed(() => {
+    const implicitKeys = new Set((this.definition()?.fields ?? []).filter(f => f.type === 'implicit').map(f => f.key));
+    return this.prefill().keys.some(key => !implicitKeys.has(key));
+  });
+
+  /** absent from old functions: then the form counts as open and unlimited */
+  private readonly availability = computed(() => this.definition()?.availability);
+
+  protected readonly isClosed = computed(() => this.closedByServer() || this.availability()?.isOpen === false);
+
+  /** the author's closed text (the section's or the form's, picked by the server), else the default */
+  protected readonly closedText = computed(() => {
+    const message = this.availability()?.closedMessage ?? '';
+    return message.trim() ? message : this.store.formI18n.closed_default();
+  });
+
+  /** «Noch 3 Plätze frei» above the form, when the author switched it on and places are counted */
+  protected readonly remainingText = computed(() => {
+    const availability = this.availability();
+    if (!availability?.isOpen || !availability.showRemaining || typeof availability.remaining !== 'number') return '';
+    return availability.remaining === 1
+      ? this.store.formI18n.remaining_one()
+      : fill(this.store.formI18n.remaining(), { count: availability.remaining });
+  });
+
+  protected readonly confirmationText = computed(() => this.confirmation() || this.store.i18n.form_submit_conf());
+
+  protected readonly otherI18n = computed<FieldOtherI18n>(() => ({
+    option: this.store.formI18n.field_other_option(),
+    placeholder: this.store.formI18n.field_other_placeholder(),
+  }));
 
   /** the lists of the form's category fields — fetched for anonymous visitors, who have no AppStore categories */
   protected readonly categoriesResource = rxResource({
@@ -127,10 +201,10 @@ export class FormSectionComponent {
     });
   }
 
-  /** the (i) is offered once there is a live form to explain, not for a missing or archived one */
+  /** the (i) is offered once there is a live form to explain, not for a missing, archived or closed one */
   protected readonly helpAvailable = computed(() => {
     const def = this.definition();
-    return !!def && !def.isArchived && !this.submitted();
+    return !!def && !def.isArchived && !this.isClosed() && !this.submitted();
   });
 
   /** the (i) next to the title — help for the person filling in the form; no sign-in needed */
@@ -143,6 +217,9 @@ export class FormSectionComponent {
         i18n: this.store.formI18n,
         hasRules: hasVisibilityRules(def.fields),
         fillerHelpText: def.fillerHelpText ?? '',
+        wasPrefilled: this.wasPrefilled(),
+        hasLimit: def.availability?.hasLimit === true,
+        sendsMail: def.sendFillerConfirmation === true,
       },
     });
     await modal.present();
@@ -158,7 +235,7 @@ export class FormSectionComponent {
         encryptFileUpload: this.section().properties?.encryptFileUpload ?? false,
         askPassword: () => this.promptEncryptionPassword(),
       });
-      await this.formSubmitService.submit({
+      const { confirmation } = await this.formSubmitService.submit({
         formKey: def.formKey,
         sectionConfigRef: this.section().okey ?? '',
         tenantId: this.store.appStore.tenantId(),
@@ -167,12 +244,24 @@ export class FormSectionComponent {
         honeypotKey: def.honeypotKey || 'website',
         showCaptcha: this.section().properties?.showCaptcha ?? false,
       });
+      this.confirmation.set(typeof confirmation === 'string' ? confirmation : '');
       this.submitted.set(true);
-    } catch {
-      this.errorMsg.set(this.store.i18n.form_submit_error());
+    } catch (err) {
+      // closed or full since the page loaded: the closed text; anything else: the generic error
+      if (isFormClosedError(err)) this.closedByServer.set(true);
+      else this.errorMsg.set(this.store.i18n.form_submit_error());
     } finally {
       this.submitting.set(false);
     }
+  }
+
+  /** every query parameter, repeated ones as a list; nothing when the section is not under a route */
+  private readQueryParams(): Record<string, string[]> {
+    const map = this.route?.snapshot?.queryParamMap;
+    if (!map) return {};
+    const params: Record<string, string[]> = {};
+    for (const key of map.keys) params[key] = map.getAll(key);
+    return params;
   }
 
   private async promptEncryptionPassword(): Promise<string> {

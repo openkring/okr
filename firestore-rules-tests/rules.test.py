@@ -1895,5 +1895,31 @@ for label, expect, run in template_cases:
     passed += ok; failed += not ok
     print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
 
+# ---------------------------------------------------------------- formStats ----
+# 1.125 B (spec §11/§19): the response counter. Read: content managers of the tenant (the builder's
+# «7 von 8 Antworten»); write: nobody but submitForm (Admin SDK, bypasses rules).
+seed("formStats/fsT1", {"tenants": ["t1"], "responseCount": 3})
+FS_C, FS_D, FS_B, FS_A, FS_P = jwt("uidC"), jwt("uidD"), jwt("uidB"), jwt("uidA"), jwt("uidP")
+form_stats_cases = [
+    ("formStats: uidC (contentAdmin t1) READ -> ALLOW", True, lambda: req("GET", "formStats/fsT1", token=FS_C)),
+    ("formStats: uidD (admin t1) READ -> ALLOW", True, lambda: req("GET", "formStats/fsT1", token=FS_D)),
+    ("formStats: uidP (privileged t1) READ -> ALLOW", True, lambda: req("GET", "formStats/fsT1", token=FS_P)),
+    ("formStats: uidB (admin of another tenant) READ -> DENY", False, lambda: req("GET", "formStats/fsT1", token=FS_B)),
+    ("formStats: uidA (plain member t1) READ -> DENY", False, lambda: req("GET", "formStats/fsT1", token=FS_A)),
+    ("formStats: anonymous READ -> DENY", False, lambda: req("GET", "formStats/fsT1")),
+    ("formStats: uidC UPDATE count -> DENY", False,
+     lambda: req("PATCH", "formStats/fsT1", token=FS_C, data=body({"responseCount": 0}), mask=["responseCount"])),
+    ("formStats: uidD (admin) CREATE -> DENY", False,
+     lambda: req("POST", "formStats?documentId=fsNew", token=FS_D, data=body({"tenants": ["t1"], "responseCount": 0}))),
+    ("formStats: uidD (admin) DELETE -> DENY", False, lambda: req("DELETE", "formStats/fsT1", token=FS_D)),
+    ("formStats: anonymous CREATE -> DENY", False,
+     lambda: req("POST", "formStats?documentId=fsAnon", data=body({"tenants": ["t1"], "responseCount": 0}))),
+]
+for label, expect, run in form_stats_cases:
+    code = run()
+    ok = (code in (200, 201)) == expect
+    passed += ok; failed += not ok
+    print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
+
 print(f"\n{passed} passed, {failed} failed")
 raise SystemExit(1 if failed else 0)

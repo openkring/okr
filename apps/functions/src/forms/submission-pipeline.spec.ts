@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { DerivedValue, Field, VisibilityRule } from '@okr/shared-models';
+import { FORM_OTHER_TEXT_MAX, getVisibleFieldIds } from '@okr/shared-util-core';
 
 import { buildSubmissionRows, buildSubmissionTaskNotes, prepareSubmission } from './submission-pipeline';
 
@@ -181,6 +182,138 @@ describe('prepareSubmission', () => {
   });
 });
 
+describe('prepareSubmission — implicit values, «Andere», result shape (1.125 B)', () => {
+  const courseField = f('courseId', 'implicit', -1, { valueType: 'text', asProperty: true });
+  const raw = (extra: Record<string, unknown> = {}) => ({ ...extra });
+
+  it('implicit from section: a forged client value never wins', () => {
+    const r = prepareSubmission([courseField], undefined, 'properties', raw({ courseId: 'forged' }), TODAY, { courseId: 'c1' });
+    expect(r.values['properties']).toEqual([{ key: 'courseId', type: 'text', value: 'c1', label: 'L-courseId' }]);
+    expect(r.values['courseId']).toBeUndefined();
+  });
+
+  it('drops a client implicit value when the argument has none', () => {
+    const r = prepareSubmission([courseField], undefined, 'properties', raw({ courseId: 'forged' }), TODAY);
+    expect(r.values['properties']).toEqual([]);
+    expect(r.answers['courseId']).toBeUndefined();
+  });
+
+  it('never takes a value for a key that is not an implicit field from the implicit argument', () => {
+    const r = prepareSubmission([f('firstName', 'text', 0)], undefined, undefined, raw({ firstName: 'A' }), TODAY, { firstName: 'X', other: 'y' });
+    expect(r.values).toEqual({ firstName: 'A' });
+  });
+
+  it('an implicit field is never required', () => {
+    const r = prepareSubmission([{ ...courseField, required: true } as Field], undefined, 'properties', raw(), TODAY);
+    expect(r.missingRequired).toEqual([]);
+  });
+
+  it('an implicit value drives a rule', () => {
+    const fields = [courseField, f('extra', 'text', 1, { visibleIf: rule('courseId', 'equals', 'c1') })];
+    const shown = prepareSubmission(fields, undefined, 'properties', raw({ extra: 'x' }), TODAY, { courseId: 'c1' });
+    expect(shown.visible.has('extra')).toBe(true);
+    expect(shown.values['extra']).toBe('x');
+    const hidden = prepareSubmission(fields, undefined, 'properties', raw({ extra: 'x' }), TODAY, { courseId: 'c2' });
+    expect(hidden.visible.has('extra')).toBe(false);
+    expect(hidden.values['extra']).toBeUndefined();
+  });
+
+  it('an implicit field keyed ssnId takes no value from the client (R1)', () => {
+    const ssn = f('ssnId', 'implicit', 0, { valueType: 'text' });
+    const r = prepareSubmission([ssn], undefined, undefined, raw({ ssnId: '7561234567897' }), TODAY);
+    expect(r.answers['ssnId']).toBeUndefined();
+    expect(r.values['ssnId']).toBeUndefined();
+  });
+
+  describe('«Andere»', () => {
+    const radio = f('prio', 'radio', 0, { options: [{ label: 'A', value: 'a' }], allowOther: true });
+
+    it('keeps the text next to the reserved value', () => {
+      const r = prepareSubmission([radio], undefined, undefined, raw({ prio: 'other', prioOther: 'Kanu' }), TODAY);
+      expect(r.values).toEqual({ prio: 'other', prioOther: 'Kanu' });
+      expect(r.missingRequired).toEqual([]);
+    });
+
+    it('requires the text when «Andere» is chosen', () => {
+      for (const text of ['', '   ', undefined]) {
+        const r = prepareSubmission([radio], undefined, undefined, raw({ prio: 'other', prioOther: text }), TODAY);
+        expect(r.missingRequired).toEqual(['prioOther']);
+      }
+    });
+
+    it('does not require the text when «Andere» is not chosen', () => {
+      const r = prepareSubmission([radio], undefined, undefined, raw({ prio: 'a' }), TODAY);
+      expect(r.missingRequired).toEqual([]);
+    });
+
+    it('strips the text when another option is chosen', () => {
+      const r = prepareSubmission([radio], undefined, undefined, raw({ prio: 'a', prioOther: 'x' }), TODAY);
+      expect(r.values).toEqual({ prio: 'a' });
+      expect(r.answers['prioOther']).toBeUndefined();
+    });
+
+    it('strips the text of a field without allowOther', () => {
+      const plain = f('prio', 'radio', 0, { options: [{ label: 'A', value: 'a' }] });
+      const r = prepareSubmission([plain], undefined, undefined, raw({ prio: 'other', prioOther: 'x' }), TODAY);
+      expect(r.values).toEqual({ prio: 'other' });
+    });
+
+    it('strips both for a hidden field', () => {
+      const fields = [f('gate', 'checkbox', 0), { ...radio, order: 1, visibleIf: rule('gate', 'isChecked') } as Field];
+      const r = prepareSubmission(fields, undefined, undefined, raw({ gate: false, prio: 'other', prioOther: 'x' }), TODAY);
+      expect(r.values).toEqual({ gate: false });
+      expect(r.missingRequired).toEqual([]);
+    });
+
+    it('keeps the text of a checkbox group', () => {
+      const group = f('hobbies', 'checkbox', 0, { options: [{ label: 'A', value: 'a' }], allowOther: true });
+      const r = prepareSubmission([group], undefined, undefined, raw({ hobbies: ['a', 'other'], hobbiesOther: 'Kanu' }), TODAY);
+      expect(r.values).toEqual({ hobbies: ['a', 'other'], hobbiesOther: 'Kanu' });
+    });
+
+    it('stores the text of a property field inside properties', () => {
+      const prop = { ...radio, asProperty: true } as Field;
+      const r = prepareSubmission([prop], undefined, 'properties', raw({ prio: 'other', prioOther: 'Kanu' }), TODAY);
+      expect(r.values['prioOther']).toBeUndefined();
+      expect(r.values['properties']).toEqual([
+        { key: 'prio', type: 'text', value: 'other', label: 'L-prio' },
+        { key: 'prioOther', type: 'text', value: 'Kanu', label: 'L-prio (Andere)' },
+      ]);
+    });
+
+    it('is authoritative for the text: a real field owning the key is not overwritten, the text is not an «Andere» text', () => {
+      const owner = f('prioOther', 'text', 1);
+      const r = prepareSubmission([radio, owner], undefined, undefined, raw({ prio: 'other', prioOther: 'mine' }), TODAY);
+      expect(r.values).toEqual({ prio: 'other', prioOther: 'mine' });
+      expect(r.missingRequired).toEqual([]);
+      const none = prepareSubmission([radio, owner], undefined, undefined, raw({ prio: 'a', prioOther: 'mine' }), TODAY);
+      expect(none.values).toEqual({ prio: 'a', prioOther: 'mine' });
+    });
+
+    it('reports a text longer than FORM_OTHER_TEXT_MAX and does not store it', () => {
+      const long = 'x'.repeat(FORM_OTHER_TEXT_MAX + 1);
+      const r = prepareSubmission([radio], undefined, undefined, raw({ prio: 'other', prioOther: long }), TODAY);
+      expect(r.invalidProperties).toEqual(['prioOther']);
+      expect(r.values['prioOther']).toBeUndefined();
+      const prop = prepareSubmission([{ ...radio, asProperty: true } as Field], undefined, 'properties', raw({ prio: 'other', prioOther: long }), TODAY);
+      expect(prop.invalidProperties).toEqual(['prioOther']);
+      const ok = prepareSubmission([radio], undefined, undefined, raw({ prio: 'other', prioOther: 'x'.repeat(FORM_OTHER_TEXT_MAX) }), TODAY);
+      expect(ok.invalidProperties).toEqual([]);
+    });
+  });
+
+  it('exposes visible and answers', () => {
+    const fields = [courseField, f('name', 'text', 0), f('extra', 'text', 1, { visibleIf: rule('courseId', 'equals', 'c9') })];
+    const merged = { name: 'A', extra: 'x', courseId: 'c1' };
+    const r = prepareSubmission(fields, undefined, 'properties', { name: 'A', extra: 'x' }, TODAY, { courseId: 'c1' });
+    expect(r.visible).toEqual(getVisibleFieldIds(fields, merged, TODAY));
+    expect(r.answers['courseId']).toBe('c1');
+    expect(r.values['courseId']).toBeUndefined();
+    expect(r.answers['name']).toBe('A');
+    expect(r.answers['extra']).toBeUndefined();
+  });
+});
+
 describe('prepareSubmission rows (notification e-mail)', () => {
   it('shows property answers, booleans as ja/nein, and derived values labelled by key', () => {
     const fields = [
@@ -218,6 +351,41 @@ describe('prepareSubmission rows (notification e-mail)', () => {
     const fields = [f('boats', 'checkbox', 0, { options: [{ label: 'A', value: 'a' }, { label: 'B', value: 'b' }] })];
     const r = prepareSubmission(fields, undefined, undefined, { boats: ['a', 'b'] }, TODAY);
     expect(r.rows).toEqual([{ label: 'L-boats', value: 'a, b' }]);
+  });
+
+  it('shows the «Andere» text of a single choice', () => {
+    const fields = [f('club', 'radio', 0, { allowOther: true, options: [{ label: 'A', value: 'a' }] })];
+    const r = prepareSubmission(fields, undefined, undefined, { club: 'other', clubOther: 'Seeclub Zug' }, TODAY);
+    expect(r.rows).toEqual([{ label: 'L-club', value: 'Andere: Seeclub Zug' }]);
+  });
+
+  it('shows the «Andere» text inside a checkbox group list', () => {
+    const fields = [f('boats', 'checkbox', 0, { allowOther: true, options: [{ label: 'A', value: 'a' }] })];
+    const r = prepareSubmission(fields, undefined, undefined, { boats: ['a', 'other'], boatsOther: 'Kajak' }, TODAY);
+    expect(r.rows).toEqual([{ label: 'L-boats', value: 'a, Andere: Kajak' }]);
+  });
+
+  it('shows the course name for an implicit courseId when one is known, else the raw value', () => {
+    const fields = [f('firstName', 'text', 0), f('courseId', 'implicit', 1, { valueType: 'text', asProperty: true })];
+    const named = prepareSubmission(fields, undefined, 'properties', { firstName: 'A' }, TODAY, { courseId: 'c1' },
+      { courseId: { c1: 'Ruderkurs Herbst' } });
+    expect(named.rows).toEqual([{ label: 'L-firstName', value: 'A' }, { label: 'L-courseId', value: 'Ruderkurs Herbst' }]);
+    const raw = prepareSubmission(fields, undefined, 'properties', { firstName: 'A' }, TODAY, { courseId: 'c2' },
+      { courseId: { c1: 'Ruderkurs Herbst' } });
+    expect(raw.rows[1]).toEqual({ label: 'L-courseId', value: 'c2' });
+  });
+});
+
+describe('buildSubmissionRows (pure)', () => {
+  it('never replaces an AHV answer by a display name', () => {
+    const ssn = f('ssnId', 'ssn', 0);
+    const rows = buildSubmissionRows([ssn], { ssnId: '7561234567897' }, {}, { ssnId: { '7561234567897': 'x' } });
+    expect(rows).toEqual([{ label: 'L-ssnId', value: 'angegeben' }]);
+  });
+
+  it('«Andere» without a text reads «Andere»', () => {
+    const club = f('club', 'radio', 0, { allowOther: true, options: [] });
+    expect(buildSubmissionRows([club], { club: 'other' }, {})).toEqual([{ label: 'L-club', value: 'Andere' }]);
   });
 });
 

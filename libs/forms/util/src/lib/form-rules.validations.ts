@@ -94,11 +94,11 @@ export const visibilityRuleValidations = staticSuite((rule: VisibilityRule) => {
 });
 
 /**
- * A derived condition may reference any input field — but one that still exists, and with an operator
+ * A derived (or confirmation-variant) condition may reference any input field — but one that still exists, and with an operator
  * that field still offers (a retyped controller leaves e.g. `ageLt` on a text field). A dangling
  * condition would count as true on the server.
  */
-function controllerTests(prefix: string, cond: FieldCondition, inputFields: Field[]): void {
+export function controllerTests(prefix: string, cond: FieldCondition, inputFields: Field[]): void {
   const controller = cond?.fieldId ? inputFields.find(f => f.id === cond.fieldId) : undefined;
   omitWhen(!cond?.fieldId, () => {
     test(`${prefix}.fieldId`, '@forms/feature.derived.unknown_field', () => {

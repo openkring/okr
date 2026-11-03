@@ -2,7 +2,13 @@
   "list": {
     "title": "Richieste",
     "empty": "Nessuna richiesta trovata.",
-    "no_person": "Persona non ancora creata — accettare prima la richiesta."
+    "no_person": "Persona non ancora creata — accettare prima la richiesta.",
+    "filter": {
+      "label": "Tipo",
+      "all": "Tutte",
+      "membership": "Adesione",
+      "course": "Corsi"
+    }
   },
   "add": {
     "group": {
