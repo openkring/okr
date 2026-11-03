@@ -84,12 +84,13 @@ export const SRV_DETAIL_FIELDS: readonly string[] = [
   'id', 'serviceId', 'salutation', 'firstName', 'lastName', 'birthday', 'gender', 'nationIOC', 'language', 'membershipType',
   'hasNewsletter', 'hasLicense', 'licenseId', 'licenseValidUntil', 'licenseImage', 'licenseImageName', 'licenseImageMimeType',
   'street', 'postcode', 'city', 'streetAdditional', 'countryName', 'countryId', 'telefon', 'mobile', 'email', 'entryDate',
-  'inactive', 'inactiveDate', 'dateOfDeath', 'leavingDate', 'personClubs',
+  'inactive', 'inactiveDate', 'dateOfDeath', 'leavingDate', 'personClubs', 'fullname', 'modified',
 ];
 
 /**
  * `GET /api/club/members/all` carries exactly the detail fields (probe 2026-11-02,
- * planning/reference/regasoft-all-check.mjs), so it is checked against the same list.
+ * planning/reference/regasoft-all-check.mjs), so it is checked against the same list. Since
+ * 2026-11-03 both carry `fullname` and `modified`; `/all` sends the three `licenseImage*` keys as null.
  */
 export const SRV_ALL_FIELDS: readonly string[] = SRV_DETAIL_FIELDS;
 

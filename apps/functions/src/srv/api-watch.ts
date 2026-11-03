@@ -148,8 +148,8 @@ function probed(raw: unknown, describe: (raw: unknown) => string): string {
 
 /**
  * Whether the test system marks emails with a trailing `x` (D11): 'all', 'none', 'some' of the
- * non-empty emails in `/all`, or 'noEmail'. It stopped on 2026-11-02 ('none'); a change back to
- * 'all' means `REGASOFT_TEST_EMAIL_MARK` must be switched on again. A share, never an address.
+ * non-empty emails in `/all`, or 'noEmail'. It stopped on 2026-11-02 ('none') and came back on
+ * 2026-11-03 ('all'); a change means `REGASOFT_TEST_EMAIL_MARK` must follow it. A share, never an address.
  */
 function emailMarkState(records: Record<string, unknown>[]): string {
   const emails = records.map(r => r['email']).filter((e): e is string => typeof e === 'string' && e !== '');

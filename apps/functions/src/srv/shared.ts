@@ -32,12 +32,12 @@ export function isRegasoftTestSystem(): boolean {
 }
 
 /**
- * Whether the test system marks every email with a trailing `x` (D11). It did until 2026-11-02;
- * since that evening PortalTest returns the plain addresses (0 of 234 end in `x`). While it is
- * off, emails are read and written unchanged — appending an `x` would now write a wrong address.
- * The API watch reports when the mark comes back (`all.email.testMark`).
+ * Whether the test system marks every email with a trailing `x` (D11). PortalTest dropped the mark
+ * on the evening of 2026-11-02 and Regasoft put it back on 2026-11-03 (311 of 311 emails end in
+ * `x`). While it is on, emails are unmarked on read and a changed email is marked on write; off,
+ * they are read and written unchanged. The API watch reports a change (`all.email.testMark`).
  */
-export const REGASOFT_TEST_EMAIL_MARK = false;
+export const REGASOFT_TEST_EMAIL_MARK = true;
 
 /** True when emails have to be unmarked on read and marked on write: test system with the mark on. */
 export function marksTestEmails(): boolean {

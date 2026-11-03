@@ -142,9 +142,10 @@ const ALL_RECORD = {
   street: 'Seestrasse 1', postcode: '8712', city: 'Stäfa', streetAdditional: null, countryName: 'GB', countryId: 8,
   telefon: '044 111 22 33', mobile: '079 111 22 33', email: 'hans@example.chx', entryDate: '2001-01-01T00:00:00',
   inactive: false, inactiveDate: '2020-01-01T00:00:00', dateOfDeath: null, leavingDate: null,
-  // Regasoft defect: /all sends personId 0 in every item.
+  fullname: 'Hans Muster', modified: '2026-11-03T08:15:00.123',
+  // /all sent personId 0 until 2026-11-02 and the record id since 2026-11-03; the mapping reads neither.
   personClubs: [
-    { personId: 0, personFullname: 'Hans Muster', clubName: 'RC Andere', clubId: 99, mainClub: true },
+    { personId: 26183, personFullname: 'Hans Muster', clubName: 'RC Andere', clubId: 99, mainClub: true },
     { personId: 0, personFullname: 'Hans Muster', clubName: 'Seeclub Stäfa', clubId: 26, mainClub: false },
   ],
 };

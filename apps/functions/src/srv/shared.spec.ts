@@ -26,8 +26,8 @@ describe('Regasoft system setting', () => {
 });
 
 describe('test-system email mark (D11)', () => {
-  it('is off since PortalTest stopped marking emails on 2026-11-02', () => {
-    expect(REGASOFT_TEST_EMAIL_MARK).toBe(false);
-    expect(marksTestEmails()).toBe(false);
+  it('is on: PortalTest marks every email again since 2026-11-03', () => {
+    expect(REGASOFT_TEST_EMAIL_MARK).toBe(true);
+    expect(marksTestEmails()).toBe(true);
   });
 });

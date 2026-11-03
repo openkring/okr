@@ -60,11 +60,11 @@ describe('handlePreviewSrvUpdate', () => {
       'https://regasoft.swissrowing.ch/PortalTest/api/club/members/26183',
       expect.objectContaining({ method: 'GET' }),
     );
-    // PortalTest no longer marks emails (REGASOFT_TEST_EMAIL_MARK off): emails round-trip unchanged …
-    expect(res.before).toEqual(RAW);
+    // PortalTest marks emails (REGASOFT_TEST_EMAIL_MARK on): before/after are display copies without the x …
+    expect(res.before).toEqual({ ...RAW, email: 'bruno@example.ch' });
     expect(res.after).toEqual({ ...RAW, city: 'Uster', email: 'a@b.ch' });
-    // … and the payload is exactly what would be sent, every key round-trips, no x appended.
-    expect(res.payload).toEqual({ ...RAW, city: 'Uster', email: 'a@b.ch' });
+    // … while the payload is exactly what would be sent: the changed email gets the x, every key round-trips.
+    expect(res.payload).toEqual({ ...RAW, city: 'Uster', email: 'a@b.chx' });
     expect(axiosPut).not.toHaveBeenCalled();
     expect(invalidateProvider).not.toHaveBeenCalled();
   });
@@ -147,7 +147,7 @@ describe('handleGetSrvMembersAll (C1, C3)', () => {
     expect(res.members.map(m => [m.contact.srvId, m.active])).toEqual([[1, true], [2, true], [3, false]]);
     expect(res.members[2].detail.leavingDate).toBe('20251231');
     expect(res.members[0].contact.mainClub).toBe(true);
-    expect(res.members[0].contact.email).toBe('bruno@example.chx');   // mark off: read unchanged
+    expect(res.members[0].contact.email).toBe('bruno@example.ch');   // PortalTest: x stripped
     expect(res.countries).toEqual([{ id: 3, countryCode: 'CH', ioc: 'SUI' }]);
   });
 
