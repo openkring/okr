@@ -185,6 +185,7 @@ export class FormDefinitionModel implements OkrModel, NamedModel, TaggedModel {
   public maxResponses = 0;                            // §11 — 0 = unlimited
   public showRemaining = false;                       // §11 — «Noch 3 Plätze frei»
   public closedMessage = '';                          // §11 — '' = «Dieses Formular nimmt keine Antworten mehr an.»
+  public showCaptcha = false;                         // §10.5 — App Check required for every answer, with or without a page
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

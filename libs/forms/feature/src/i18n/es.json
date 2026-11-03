@@ -184,7 +184,9 @@
     "pdf_template_placeholder": "ID de plantilla del generador de documentos",
     "fields": "Campos ({count}) – editables en el editor de formularios",
     "filler_help": "Texto de ayuda para quien rellena",
-    "filler_help_placeholder": "Aparece en la ventana de información (i) del formulario, después de las indicaciones generales."
+    "filler_help_placeholder": "Aparece en la ventana de información (i) del formulario, después de las indicaciones generales.",
+    "captcha": "Protección contra spam (captcha) para cada respuesta",
+    "captcha_helper": "Se aplica a todas las páginas y botones que abren este formulario. Una página también puede activarla solo para sí misma."
   },
   "decrypt": {
     "title": "Descifrar archivos",

@@ -140,22 +140,28 @@ describe('captchaRequired', () => {
   const asking = { props: { formKey: 'f1', showCaptcha: true } };
   const silent = { props: { formKey: 'f1' } };
 
+  it('the form setting holds with or without a page, whatever the client claims', () => {
+    expect(captchaRequired(true, undefined, false)).toBe(true);
+    expect(captchaRequired(true, silent, false)).toBe(true);
+    expect(captchaRequired(true, undefined, undefined)).toBe(true);
+  });
+
   it('is required when the verified section asks for it, whatever the client claims', () => {
-    expect(captchaRequired(asking, false)).toBe(true);
-    expect(captchaRequired(asking, undefined)).toBe(true);
+    expect(captchaRequired(false, asking, false)).toBe(true);
+    expect(captchaRequired(undefined, asking, undefined)).toBe(true);
   });
 
   it('the client claim can only make it stricter', () => {
-    expect(captchaRequired(silent, true)).toBe(true);
-    expect(captchaRequired(undefined, true)).toBe(true);
+    expect(captchaRequired(false, silent, true)).toBe(true);
+    expect(captchaRequired(undefined, undefined, true)).toBe(true);
   });
 
-  it('is not required when neither the section nor the client asks', () => {
-    expect(captchaRequired(silent, false)).toBe(false);
-    expect(captchaRequired(undefined, false)).toBe(false);
+  it('is not required when neither the form, the section nor the client asks', () => {
+    expect(captchaRequired(false, silent, false)).toBe(false);
+    expect(captchaRequired(undefined, undefined, false)).toBe(false);
   });
 
   it('only a literal true counts', () => {
-    expect(captchaRequired({ props: { formKey: 'f1', showCaptcha: 'yes' as unknown as boolean } }, 'true')).toBe(false);
+    expect(captchaRequired('true', { props: { formKey: 'f1', showCaptcha: 'yes' as unknown as boolean } }, 'true')).toBe(false);
   });
 });

@@ -105,6 +105,8 @@ interface FormDefinition {
   confirmationMessage?: string;
   confirmationVariants?: ConfirmationVariant[];
   sendFillerConfirmation?: boolean;
+  /** §10.5 — App Check required for every submission, with or without a page */
+  showCaptcha?: boolean;
   isOpen?: boolean;
   closesAt?: string;
   maxResponses?: number;
@@ -582,9 +584,10 @@ export const submitForm = onCall(
       }
     }
 
-    // §10.5 Optional CAPTCHA — verify App Check token score. Required when the verified section asks
-    // for it, not only when the client says so: a bot sending `showCaptcha: false` must not skip it.
-    if (captchaRequired(section, payload.meta.showCaptcha)) {
+    // §10.5 Optional CAPTCHA — verify App Check token score. Required when the form or the verified
+    // section asks for it, not only when the client says so: a bot sending `showCaptcha: false`, or
+    // naming no page, must not skip a form that asks for it.
+    if (captchaRequired(formDef.showCaptcha, section, payload.meta.showCaptcha)) {
       if (!request.app) {
         spamReasons.push('captcha_missing');
         logger.info(`${CF_NAME}: captcha_missing (no App Check token) formKey=${payload.formKey}`);

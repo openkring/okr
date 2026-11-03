@@ -184,7 +184,9 @@
     "pdf_template_placeholder": "ID modello dal generatore di documenti",
     "fields": "Campi ({count}) – modificabili nell’editor dei moduli",
     "filler_help": "Testo di aiuto per chi compila",
-    "filler_help_placeholder": "Appare nella finestra informativa (i) del modulo, dopo le indicazioni generali."
+    "filler_help_placeholder": "Appare nella finestra informativa (i) del modulo, dopo le indicazioni generali.",
+    "captcha": "Protezione antispam (captcha) per ogni risposta",
+    "captcha_helper": "Vale per tutte le pagine e i pulsanti che aprono questo modulo. Una pagina può anche attivarla solo per sé."
   },
   "decrypt": {
     "title": "Decifrare i file",

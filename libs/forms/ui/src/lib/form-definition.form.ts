@@ -7,7 +7,7 @@ import {
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, URL_LENGTH } from '@okr/shared-constants';
 import { ApplicationCollection, CategoryListModel, ConfirmationVariant, DerivedValue, FormDefinitionModel, FormMapping, SubmissionTarget } from '@okr/shared-models';
 import {
-  ErrorNote, NotesInput, NotesInputI18n, RadioGroup, RadioGroupI18n,
+  Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n, RadioGroup, RadioGroupI18n,
   StringSelect, StringSelectI18n, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
 import { coerceBoolean, fill } from '@okr/shared-util-core';
@@ -26,13 +26,13 @@ const TARGET_KINDS: SubmissionTarget['kind'][] = ['collection', 'url'];
 
 /**
  * Settings of a form definition: name, description, key, submission target, PDF template, the help text for
- * the people filling it in, the «Berechnete Werte», «Nach dem Absenden» and «Annahme». The parent modal drives saving.
+ * the people filling it in, the spam protection, the «Berechnete Werte», «Nach dem Absenden» and «Annahme». The parent modal drives saving.
  */
 @Component({
   selector: 'okr-form-definition-form',
   standalone: true,
   imports: [
-    ErrorNote, TextInput, NotesInput, RadioGroup, StringSelect, DerivedValuesInput, ConfirmationSettingsInput, AcceptanceSettingsInput,
+    Checkbox, ErrorNote, TextInput, NotesInput, RadioGroup, StringSelect, DerivedValuesInput, ConfirmationSettingsInput, AcceptanceSettingsInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCardSubtitle, IonList, IonItem, IonLabel, IonNote,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -96,6 +96,13 @@ const TARGET_KINDS: SubmissionTarget['kind'][] = ['collection', 'url'];
                 <ion-col size="12">
                   <okr-notes-input [i18n]="fillerHelpTextI18n()" [value]="fillerHelpText()" (valueChange)="onFieldChange('fillerHelpText', $event)"
                     [maxLength]="descriptionLength" [encryptable]="false" [readOnly]="isReadOnly()" [errors]="fillerHelpTextErrors()" />
+                </ion-col>
+              </ion-row>
+              <ion-row>
+                <ion-col size="12">
+                  <!-- §10.5: holds for every page and button that opens the form; a page can only add it -->
+                  <okr-checkbox [i18n]="captchaI18n()" [checked]="showCaptcha()" (checkedChange)="onCaptchaChange($event)"
+                    [showHelper]="true" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -246,6 +253,7 @@ export class FormDefinitionForm {
   protected readonly confirmationMessage = computed(() => this.formData().confirmationMessage ?? '');
   protected readonly confirmationVariants = computed(() => this.formData().confirmationVariants ?? []);
   protected readonly sendFillerConfirmation = computed(() => this.formData().sendFillerConfirmation === true);
+  protected readonly showCaptcha = computed(() => this.formData().showCaptcha === true);
   protected readonly acceptance = computed<AcceptanceFields>(() => {
     const fd = this.formData();
     return {
@@ -290,6 +298,9 @@ export class FormDefinitionForm {
   protected readonly fillerHelpTextI18n = computed<NotesInputI18n>(() => ({
     name: 'fillerHelpText', label: this.i18n().def_filler_help(), placeholder: this.i18n().def_filler_help_ph(),
   }));
+  protected readonly captchaI18n = computed<CheckboxI18n>(() => ({
+    name: 'showCaptcha', label: this.i18n().def_captcha(), helper: this.i18n().def_captcha_helper(),
+  }));
 
   protected onFieldChange(fieldName: 'name' | 'description' | 'pdfTemplateId' | 'fillerHelpText', fieldValue: string): void {
     this.dirty.emit(true);
@@ -299,6 +310,13 @@ export class FormDefinitionForm {
   protected onSettingChange(name: 'confirmationMessage' | 'confirmationVariants' | 'sendFillerConfirmation', value: string | ConfirmationVariant[] | boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [name]: value }));
+  }
+
+  protected onCaptchaChange(on: boolean): void {
+    // ignore the echo of the current value so loading the form does not mark it dirty
+    if ((this.formData().showCaptcha === true) === on) return;
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({ ...vm, showCaptcha: on }));
   }
 
   protected onAcceptanceChange(settings: Partial<AcceptanceFields>): void {

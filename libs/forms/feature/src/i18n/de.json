@@ -184,7 +184,9 @@
     "pdf_template_placeholder": "Template-ID aus dem Dokument-Generator",
     "fields": "Felder ({count}) – im Formular-Editor anpassbar",
     "filler_help": "Hilfetext für Ausfüllende",
-    "filler_help_placeholder": "Erscheint im Hinweisfenster (i) des Formulars, nach den allgemeinen Hinweisen."
+    "filler_help_placeholder": "Erscheint im Hinweisfenster (i) des Formulars, nach den allgemeinen Hinweisen.",
+    "captcha": "Spam-Schutz (Captcha) für jede Antwort",
+    "captcha_helper": "Gilt für alle Seiten und Schaltflächen, die dieses Formular öffnen. Eine Seite kann den Schutz auch nur für sich einschalten."
   },
   "decrypt": {
     "title": "Dateien entschlüsseln",

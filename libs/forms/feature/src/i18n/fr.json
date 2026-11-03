@@ -184,7 +184,9 @@
     "pdf_template_placeholder": "ID du modèle du générateur de documents",
     "fields": "Champs ({count}) – modifiables dans l’éditeur de formulaire",
     "filler_help": "Texte d'aide pour les personnes qui remplissent",
-    "filler_help_placeholder": "Apparaît dans la fenêtre d'info (i) du formulaire, après les remarques générales."
+    "filler_help_placeholder": "Apparaît dans la fenêtre d'info (i) du formulaire, après les remarques générales.",
+    "captcha": "Protection anti-spam (captcha) pour chaque réponse",
+    "captcha_helper": "S'applique à toutes les pages et à tous les boutons qui ouvrent ce formulaire. Une page peut aussi l'activer seulement pour elle-même."
   },
   "decrypt": {
     "title": "Déchiffrer les fichiers",

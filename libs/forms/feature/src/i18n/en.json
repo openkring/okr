@@ -184,7 +184,9 @@
     "pdf_template_placeholder": "Template ID from the document generator",
     "fields": "Fields ({count}) – editable in the form editor",
     "filler_help": "Help text for people filling in the form",
-    "filler_help_placeholder": "Shown in the form's info window (i), after the general notes."
+    "filler_help_placeholder": "Shown in the form's info window (i), after the general notes.",
+    "captcha": "Spam protection (captcha) for every answer",
+    "captcha_helper": "Applies to every page and button that opens this form. A page can also switch it on just for itself."
   },
   "decrypt": {
     "title": "Decrypt files",

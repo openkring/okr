@@ -29,16 +29,17 @@ export interface FormSectionProperties {
 }
 
 /**
- * Whether `submitForm` requires an App Check token (§10.5): the verified section's setting OR the
- * client's claim. The claim can only make the check stricter — a bot sending `showCaptcha: false`
- * does not skip a page that asks for it. A submission without a verified section has no page
- * setting to read; the form-wide rules apply to it (and a form that `requiresSection` is closed).
+ * Whether `submitForm` requires an App Check token (§10.5): the form's own setting, OR the verified
+ * section's, OR the client's claim. Only the form's setting holds for a submission that names no page
+ * (a bot can always leave the page out); a page and the client can only make the check stricter —
+ * a bot sending `showCaptcha: false` skips neither.
  */
 export function captchaRequired(
+  formSetting: unknown,
   section: { props: FormSectionProperties } | undefined,
   clientClaim: unknown,
 ): boolean {
-  return section?.props.showCaptcha === true || clientClaim === true;
+  return formSetting === true || section?.props.showCaptcha === true || clientClaim === true;
 }
 
 /** A Firestore document id: non-empty, no path separator, not `.`/`..`, not the reserved `__…__` form. */

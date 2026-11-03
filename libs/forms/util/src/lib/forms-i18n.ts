@@ -91,6 +91,8 @@ export const FORM_I18N_KEYS = {
   def_fields:                 PFX + 'definition.fields',
   def_filler_help:            PFX + 'definition.filler_help',
   def_filler_help_ph:         PFX + 'definition.filler_help_placeholder',
+  def_captcha:                PFX + 'definition.captcha',
+  def_captcha_helper:         PFX + 'definition.captcha_helper',
 
   // «Berechnete Werte» card (1.125, spec §6)
   derived_title:              PFX + 'derived.title',
