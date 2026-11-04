@@ -38,8 +38,14 @@ describe('resolveDiaryTargets', () => {
 
 describe('offeredDiarySources', () => {
   it('offers only implemented sources whose block is effective', () => {
-    expect(offeredDiarySources(new Set(['task', 'jasstafel', 'trip']))).toEqual(['taskDone', 'jasstafel']);
+    expect(offeredDiarySources(new Set(['task', 'jasstafel']))).toEqual(['taskDone', 'jasstafel']);
     expect(offeredDiarySources(new Set(['cms']))).toEqual([]);
+  });
+
+  it('offers tracker with trip or journal', () => {
+    expect(offeredDiarySources(new Set(['journal']))).toEqual(['tracker']);
+    expect(offeredDiarySources(new Set(['trip']))).toEqual(['tracker']);
+    expect(offeredDiarySources(new Set(['diary']))).toEqual([]);
   });
 
   it('adds extra sources, deduplicated and in DIARY_SOURCES order', () => {

@@ -17,6 +17,35 @@ export interface DiaryTarget {
   to: string;
 }
 
+/** A diary app's collection of pull settings, one document per diary owner (spec 1.77 §12.3). */
+export const DiarySourcesCollection = 'diarySources';
+
+/** What one diary collects from one source app. */
+export interface DiaryPull {
+  tenantId: string;
+  sources: DiarySource[];
+}
+
+/**
+ * The pull settings of one diary owner, in the Tagebuch-App. Document id = the owner's uid. Owner-only by the rules:
+ * never a field on the `users` doc, which a tenant admin may edit (spec 1.77 §12.2, D-R1). `from`/`to` are StoreDates,
+ * inclusive; '' is an open bound.
+ */
+export interface DiarySourceModel {
+  okey: string;
+  tenants: string[];
+  authorKey: string;
+  from: string;
+  to: string;
+  pulls: DiaryPull[];
+}
+
+/** What a user allowed one diary to collect from this app. Written only by the callable `setDiaryConsent` (D-R10). */
+export interface DiaryConsent {
+  tenantId: string;
+  sources: DiarySource[];
+}
+
 /**
  * The diary tenants that receive `source` for an item dated `date` (StoreDate) — spec 1.77 §6.1.
  * A target matches when it ticks `source` and `from <= date <= to`; an empty bound is open. Bounds are inclusive.
