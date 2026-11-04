@@ -280,7 +280,7 @@
   },
   "diaryTransfer": {
     "title": "Diary transfer",
-    "description": "Choose what this app sends into which of your diaries. Nothing is sent without a tick. If from or to is left empty, there is no limit on that side.",
+    "description": "These diaries would like to collect something from this app. Nothing is sent until you allow it.",
     "from": "from",
     "to": "to",
     "source": {
@@ -290,7 +290,13 @@
     },
     "period": {
       "error": "The start date is after the end date."
-    }
+    },
+    "wants": "wants:",
+    "allowed": "allowed:",
+    "allow": "Allow",
+    "revoke": "Revoke",
+    "swept": "{count} tracks added to the diary",
+    "error": "That did not work. Please try again."
   },
   "diarySources": {
     "title": "Diary sources",

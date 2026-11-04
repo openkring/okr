@@ -280,7 +280,7 @@
   },
   "diaryTransfer": {
     "title": "Transfert vers le journal",
-    "description": "Choisis ce que cette app transfère dans lequel de tes journaux. Sans coche, rien n'est transféré. Si tu laisses vide le début ou la fin, il n'y a pas de limite de ce côté.",
+    "description": "Ces journaux aimeraient récupérer quelque chose de cette app. Rien n'est transféré tant que tu ne l'autorises pas.",
     "from": "du",
     "to": "au",
     "source": {
@@ -290,7 +290,13 @@
     },
     "period": {
       "error": "La date de début est après la date de fin."
-    }
+    },
+    "wants": "souhaite :",
+    "allowed": "autorisé :",
+    "allow": "Autoriser",
+    "revoke": "Révoquer",
+    "swept": "{count} parcours ajoutés au journal",
+    "error": "Cela n'a pas fonctionné. Réessaie, s'il te plaît."
   },
   "diarySources": {
     "title": "Sources du journal",

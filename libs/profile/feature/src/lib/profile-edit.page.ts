@@ -11,7 +11,7 @@ import { Languages } from '@okr/shared-categories';
 import { AddressesAccordion } from '@okr/subject-address-feature';
 import { AvatarToolbar } from '@okr/avatar-feature';
 import { PersonFormModel } from '@okr/subject-person-util';
-import { ProfileDataAccordion, ProfileDiarySourcesAccordion, ProfileDiaryTransferAccordion, ProfilePrivacyAccordion, ProfileSettingsAccordion } from '@okr/profile-ui';
+import { ProfileDataAccordion, ProfileDiaryRequestsAccordion, ProfileDiarySourcesAccordion, ProfileDiaryTransferAccordion, ProfilePrivacyAccordion, ProfileSettingsAccordion } from '@okr/profile-ui';
 import { ProfileStore } from './profile.store';
 import { EmailSignatureAccordion } from './email-signature.accordion';
 import { DataRightsAccordion } from './data-rights.accordion';
@@ -25,7 +25,7 @@ import { MaintenanceAccordion } from './maintenance.accordion';
     AsyncPipe,
     AvatarToolbar, Header, AddressesAccordion, ProfileDataAccordion,
     ChangeConfirmation, ProfileSettingsAccordion, ProfilePrivacyAccordion, EmailSignatureAccordion,
-    DataRightsAccordion, MaintenanceAccordion, PasskeysAccordion, ProfileDiaryTransferAccordion, ProfileDiarySourcesAccordion,
+    DataRightsAccordion, MaintenanceAccordion, PasskeysAccordion, ProfileDiaryTransferAccordion, ProfileDiarySourcesAccordion, ProfileDiaryRequestsAccordion,
     IonContent, IonItem, IonAccordionGroup, IonLabel, IonCard, IonCardContent
   ],
   providers: [ProfileStore],
@@ -94,6 +94,16 @@ import { MaintenanceAccordion } from './maintenance.accordion';
                 [i18n]="store.i18n"
                 (valid)="sourcesValid.set($event)"
                 (dirty)="onSourcesDirty($event)"
+              />
+            }
+            <!-- spec 1.77 §12.4, D-R5: in the profile only, and only when a diary asked -->
+            @if (store.diaryRequests().length > 0) {
+              <okr-profile-diary-requests-accordion
+                [requests]="store.diaryRequests()"
+                [busy]="store.diaryRequestBusy()"
+                [i18n]="store.i18n"
+                (allow)="store.answerDiaryRequest($event, true)"
+                (revoke)="store.answerDiaryRequest($event, false)"
               />
             }
             <!-- spec 1.77 §5: only when this app offers a transfer kind and the person has a diary app -->
@@ -192,6 +202,7 @@ export class ProfileEditPage {
   constructor() {
     void this.store.loadDiaryTenants();   // spec 1.77 §5.2 — once per page open, never at boot
     void this.store.loadDiarySources();   // spec 1.77 §12.4 — the same
+    void this.store.loadDiaryRequests();
     effect(() => {
       const sources = this.store.diarySources();
       if (sources && !untracked(this.sourcesFormData)) this.sourcesFormData.set(safeStructuredClone(sources));

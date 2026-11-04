@@ -280,7 +280,7 @@
   },
   "diaryTransfer": {
     "title": "Trasferimento al diario",
-    "description": "Scegli che cosa questa app trasferisce in quale dei tuoi diari. Senza spunta non viene trasferito nulla. Se lasci vuoto l'inizio o la fine, non c'è alcun limite da quel lato.",
+    "description": "Questi diari vorrebbero raccogliere qualcosa da questa app. Non viene trasferito nulla finché non lo permetti.",
     "from": "dal",
     "to": "al",
     "source": {
@@ -290,7 +290,13 @@
     },
     "period": {
       "error": "La data d'inizio è dopo la data di fine."
-    }
+    },
+    "wants": "vuole:",
+    "allowed": "permesso:",
+    "allow": "Permetti",
+    "revoke": "Revoca",
+    "swept": "{count} percorsi aggiunti al diario",
+    "error": "Non ha funzionato. Riprova, per favore."
   },
   "diarySources": {
     "title": "Fonti del diario",

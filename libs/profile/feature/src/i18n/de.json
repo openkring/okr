@@ -280,7 +280,7 @@
   },
   "diaryTransfer": {
     "title": "Tagebuch-Transfer",
-    "description": "Hier legst du fest, was diese App in welches deiner Tagebücher überträgt. Ohne Häkchen wird nichts übertragen. Bleibt von oder bis leer, gilt dort keine Grenze.",
+    "description": "Diese Tagebücher möchten etwas aus dieser App sammeln. Übertragen wird erst, wenn du es erlaubst.",
     "from": "von",
     "to": "bis",
     "source": {
@@ -290,7 +290,13 @@
     },
     "period": {
       "error": "Das Startdatum liegt nach dem Enddatum."
-    }
+    },
+    "wants": "möchte:",
+    "allowed": "erlaubt:",
+    "allow": "Erlauben",
+    "revoke": "Widerrufen",
+    "swept": "{count} Strecken ins Tagebuch übernommen",
+    "error": "Das hat nicht geklappt. Bitte versuche es nochmals."
   },
   "diarySources": {
     "title": "Tagebuch-Quellen",

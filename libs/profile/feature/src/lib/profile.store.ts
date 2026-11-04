@@ -7,8 +7,8 @@ import { from, of, take } from 'rxjs';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { DiarySource, DiarySourceModel, PersonCollection, PersonModel, PersonModelName, UserCollection, UserModel, withoutDiaryConsents } from '@okr/shared-models';
-import { AhvFormat, AppNavigationService, DIARY_EXTRA_SOURCES, formatAhv, isBlankAhv } from '@okr/shared-util-angular';
-import { debugItemLoaded } from '@okr/shared-util-core';
+import { AhvFormat, AlertService, AppNavigationService, DIARY_EXTRA_SOURCES, formatAhv, isBlankAhv } from '@okr/shared-util-angular';
+import { debugItemLoaded, fill } from '@okr/shared-util-core';
 import { FirestoreService } from '@okr/shared-data-access';
 
 import { AvatarService } from '@okr/avatar-data-access';
@@ -17,7 +17,7 @@ import { PersonService, SensitivePersonData } from '@okr/subject-person-data-acc
 import { PersonFormModel } from '@okr/subject-person-util';
 import { PROFILE_I18N_KEYS, ProfileI18n } from '@okr/profile-util';
 import { mergeDiarySources } from '@okr/content-diary-util';
-import { DiaryLineService, DiaryPullColumn, DiarySourcesService, DiaryTenantInfo } from '@okr/content-diary-data-access';
+import { DiaryLineService, DiaryPullColumn, DiaryRequest, DiarySourcesService, DiaryTenantInfo } from '@okr/content-diary-data-access';
 
 /**
  * the personEditPage is setting the personKey.
@@ -31,6 +31,9 @@ export type ProfileState = {
   /** spec 1.77 §12.4 — in a diary app: the columns of «Tagebuch-Quellen» and the owner's doc */
   diaryPullColumns: DiaryPullColumn[];
   diarySources: DiarySourceModel | undefined;
+  /** spec 1.77 §12.4 — in a source app: the diaries asking, and whether an answer is under way */
+  diaryRequests: DiaryRequest[];
+  diaryRequestBusy: boolean;
 };
 
 export const initialState: ProfileState = {
@@ -38,6 +41,8 @@ export const initialState: ProfileState = {
   diaryTenants: { diaries: [], sources: [] },
   diaryPullColumns: [],
   diarySources: undefined,
+  diaryRequests: [],
+  diaryRequestBusy: false,
 };
 
 export const ProfileStore = signalStore(
@@ -51,6 +56,7 @@ export const ProfileStore = signalStore(
     i18nService: inject(I18nService),
     diaryLineService: inject(DiaryLineService),
     diarySourcesService: inject(DiarySourcesService),
+    alertService: inject(AlertService),
     /** diary sources this app offers beyond its feature blocks (bkg-app: the tracker) */
     diaryExtraSources: inject(DIARY_EXTRA_SOURCES),
   })),
@@ -149,6 +155,32 @@ export const ProfileStore = signalStore(
           patchState(store, { diaryPullColumns: columns, diarySources: doc ?? { okey: uid, tenants, authorKey: uid, from: '', to: '', pulls: [] } });
         } catch (e) {
           console.warn('ProfileStore.loadDiarySources', e);
+        }
+      },
+
+      /** Spec 1.77 §12.4 — the diaries asking this app, once when the profile opens. A failed call shows no list. */
+      async loadDiaryRequests(): Promise<void> {
+        try {
+          patchState(store, { diaryRequests: await store.diaryLineService.listMyDiaryRequests() });
+        } catch (e) {
+          console.warn('ProfileStore.loadDiaryRequests', e);
+        }
+      },
+
+      /** Answers one diary: *Erlauben* with what it asks for, *Widerrufen* with nothing (`setDiaryConsent`). */
+      async answerDiaryRequest(tenantId: string, allow: boolean): Promise<void> {
+        const request = store.diaryRequests().find((r) => r.tenantId === tenantId);
+        if (!request) return;
+        patchState(store, { diaryRequestBusy: true });
+        try {
+          const { sources, swept } = await store.diaryLineService.setDiaryConsent(tenantId, allow ? request.requested : []);
+          patchState(store, { diaryRequests: store.diaryRequests().map((r) => r.tenantId === tenantId ? { ...r, consented: sources } : r) });
+          if (swept > 0) await store.alertService.showToast(fill(store.i18n.diaryTransfer_swept(), { count: String(swept) }));
+        } catch (e) {
+          console.warn('ProfileStore.answerDiaryRequest', e);
+          await store.alertService.showToast(store.i18n.diaryTransfer_error());
+        } finally {
+          patchState(store, { diaryRequestBusy: false });
         }
       },
 

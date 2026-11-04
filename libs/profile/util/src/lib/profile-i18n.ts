@@ -71,6 +71,12 @@ export const PROFILE_I18N_KEYS = {
   diaryTransfer_source_jasstafel:  PFX + 'diaryTransfer.source.jasstafel',
   diaryTransfer_source_tracker:    PFX + 'diaryTransfer.source.tracker',
   diaryTransfer_period_error:      PFX + 'diaryTransfer.period.error',
+  diaryTransfer_wants:             PFX + 'diaryTransfer.wants',
+  diaryTransfer_allowed:           PFX + 'diaryTransfer.allowed',
+  diaryTransfer_allow:             PFX + 'diaryTransfer.allow',
+  diaryTransfer_revoke:            PFX + 'diaryTransfer.revoke',
+  diaryTransfer_swept:             PFX + 'diaryTransfer.swept',
+  diaryTransfer_error:             PFX + 'diaryTransfer.error',
 
   // diary sources, the diary app's side (spec 1.77 §12.4)
   diarySources_title:              PFX + 'diarySources.title',
