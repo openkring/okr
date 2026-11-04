@@ -15,7 +15,7 @@ const TEXTS: Partial<Record<EnergyI18nKey, string>> = {
   header_operators: 'Netzbetreiber',
   tiles_households: 'davon {share} % Haushalte',
   tiles_tariffFallback: 'Tarif {year}, noch nicht veröffentlicht',
-  tiles_periodUntil: '12 Monate bis {date}',
+  tiles_periodRange: '{from} bis {until}',
   tiles_asOf: 'Stand {date}',
   tiles_unitMwh: 'MWh',
   tiles_unitKwp: 'kWp',
@@ -77,8 +77,8 @@ describe('energyTiles', () => {
   const months = [
     m('20260930', { electricCarCount: 600 }),
     m('20261031', {
-      elecConsumptionMwh: 72527, elecConsumptionHouseholdsMwh: 29010.8, elecPeriodUntil: '20260731',
-      renewableProductionMwh: 7819, productionPeriodUntil: '20251231', solarKwp: 8592,
+      elecConsumptionMwh: 72527, elecConsumptionHouseholdsMwh: 29010.8, elecPeriodFrom: '20250801', elecPeriodUntil: '20260731',
+      renewableProductionMwh: 7819, productionPeriodFrom: '20250101', productionPeriodUntil: '20251231', solarKwp: 8592,
       solarPotentialUsage: 0.078, renewableHeatingShare: 0.25, chargingSpotCount: 0
     })
   ];
@@ -86,23 +86,34 @@ describe('energyTiles', () => {
   it('gives consumption its period and the household share, not the snapshot date', () => {
     const found = tile(figures(months), 'tiles_consumption');
     expect(found?.value).toBe(`${count(72527)} MWh`);
-    expect(found?.note).toBe('12 Monate bis Juli 2026 · davon 40.0 % Haushalte');
+    expect(found?.note).toBe('August 2025 bis Juli 2026 · davon 40.0 % Haushalte');
   });
 
   it('gives production its own period', () => {
     const found = tile(figures(months), 'tiles_production');
     expect(found?.value).toBe(`${count(7819)} MWh`);
-    expect(found?.note).toBe('12 Monate bis Dezember 2025');
+    expect(found?.note).toBe('Januar 2025 bis Dezember 2025');
   });
 
   it('leaves the household share out when it is unknown', () => {
-    const f = figures([m('20261031', { elecConsumptionMwh: 100, elecPeriodUntil: '20260731' })]);
-    expect(tile(f, 'tiles_consumption')?.note).toBe('12 Monate bis Juli 2026');
+    const f = figures([m('20261031', { elecConsumptionMwh: 100, elecPeriodFrom: '20250801', elecPeriodUntil: '20260731' })]);
+    expect(tile(f, 'tiles_consumption')?.note).toBe('August 2025 bis Juli 2026');
+  });
+
+  it('writes the months of the period in the active language', () => {
+    const f = figures([m('20261031', { elecConsumptionMwh: 100, elecPeriodFrom: '20250801', elecPeriodUntil: '20260731' })]);
+    const found = energyTiles(f, i18n, 2026, 'fr').find((t) => t.label === 'tiles_consumption');
+    expect(found?.note).toBe('août 2025 bis juillet 2026');
   });
 
   it('falls back to the row date when a period is missing', () => {
     const f = figures([m('20261031', { elecConsumptionMwh: 100 })]);
     expect(tile(f, 'tiles_consumption')?.note).toBe('Stand 31.10.2026');
+  });
+
+  it('does not show half a period', () => {
+    const f = figures([m('20261031', { renewableProductionMwh: 100, productionPeriodUntil: '20251231' })]);
+    expect(tile(f, 'tiles_production')?.note).toBe('Stand 31.10.2026');
   });
 
   it('dates every other tile with its own row', () => {
@@ -255,19 +266,19 @@ describe('energyCompareRows', () => {
     const rows = energyCompareRows('Stäfa', main, [
       { name: 'Uster', figures: figures([m('20261031', { electricCarShare: 0.1 })]) },
       { name: 'Meilen', figures: undefined }
-    ], 'keine Daten', 2026);
+    ], 'Unbekannter Ort', 2026);
     expect(rows.map((r) => r.name)).toEqual(['Stäfa', 'Uster', 'Meilen']);
     expect(rows[0].electricCarShare).toBe(0.05);
     expect(rows[1].electricCarShare).toBe(0.1);
     expect(rows[2].electricCarShare).toBeUndefined();
   });
 
-  it('labels a location whose name is unknown with the no-data text', () => {
-    const rows = energyCompareRows('Stäfa', main, [{ name: undefined, figures: undefined }], 'keine Daten', 2026);
-    expect(rows[1].name).toBe('keine Daten');
+  it('gives a location that no longer exists its own text as the name', () => {
+    const rows = energyCompareRows('Stäfa', main, [{ name: undefined, figures: undefined }], 'Unbekannter Ort', 2026);
+    expect(rows[1].name).toBe('Unbekannter Ort');
   });
 
   it('has no table without comparison locations', () => {
-    expect(energyCompareRows('Stäfa', main, [], 'keine Daten', 2026)).toEqual([]);
+    expect(energyCompareRows('Stäfa', main, [], 'Unbekannter Ort', 2026)).toEqual([]);
   });
 });

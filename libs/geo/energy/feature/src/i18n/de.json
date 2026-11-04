@@ -23,7 +23,7 @@
     "chargingPoints": "Ladepunkte",
     "tariff": "Aktueller Stromtarif",
     "tariffFallback": "Tarif {year}, der Tarif für dieses Jahr ist noch nicht veröffentlicht",
-    "periodUntil": "12 Monate bis {date}",
+    "periodRange": "{from} bis {until}",
     "asOf": "Stand {date}",
     "unitMwh": "MWh",
     "unitKwp": "kWp",
@@ -59,6 +59,7 @@
     "electricityPerPerson": "Strom pro Person",
     "tariff": "Aktueller Tarif",
     "noData": "keine Daten",
+    "unknownLocation": "Unbekannter Ort",
     "note": "Verglichen werden nur Anteile und Werte pro Person. Absolute Zahlen würden nur zeigen, wie gross eine Gemeinde ist."
   },
   "gaps": {

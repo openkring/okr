@@ -102,7 +102,7 @@ export const EnergySectionStore = signalStore(
       const figures = store.figuresResource.value();
       if (!figures) return [];
       const name = store.locationResource.value()?.name || figures.municipality;
-      return energyCompareRows(name, figures, store.compareResource.value() ?? [], store.i18n.compare_noData(), store.calendarYear);
+      return energyCompareRows(name, figures, store.compareResource.value() ?? [], store.i18n.compare_unknownLocation(), store.calendarYear);
     }),
     compareLabels: computed(() => ({
       municipality: store.i18n.compare_municipality(),

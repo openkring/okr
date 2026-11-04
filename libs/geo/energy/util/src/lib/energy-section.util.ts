@@ -25,7 +25,7 @@ function viewDate(storeDate: string): string {
   return convertDateFormatToString(storeDate, DateFormat.StoreDate, DateFormat.ViewDate, false);
 }
 
-/** «Juli 2026»: the periods end on a month end, so the day adds nothing. Built from local parts: the month must not shift. */
+/** «Juli 2026»: a period runs from month start to month end, so the day adds nothing. Built from local parts: the month must not shift. */
 function monthAndYear(storeDate: string, lang: string): string {
   const date = new Date(Number(storeDate.slice(0, 4)), Number(storeDate.slice(4, 6)) - 1, Number(storeDate.slice(6, 8)));
   return new Intl.DateTimeFormat(lang, { month: 'long', year: 'numeric' }).format(date);
@@ -39,8 +39,11 @@ export function percentPoints(fraction: number | null | undefined): number | nul
   return typeof fraction === 'number' ? Math.round(fraction * 10000) / 100 : null;
 }
 
-function periodNote(until: string | null | undefined, date: string, i18n: EnergyI18n, lang: string): string {
-  return until ? fill(i18n.tiles_periodUntil(), { date: monthAndYear(until, lang) }) : fill(i18n.tiles_asOf(), { date: viewDate(date) });
+/** «August 2025 bis Juli 2026». A row without a complete period falls back to its own date. */
+function periodNote(from: string | null | undefined, until: string | null | undefined, date: string, i18n: EnergyI18n, lang: string): string {
+  return from && until
+    ? fill(i18n.tiles_periodRange(), { from: monthAndYear(from, lang), until: monthAndYear(until, lang) })
+    : fill(i18n.tiles_asOf(), { date: viewDate(date) });
 }
 
 /** The household share of the SAME row as the consumption it qualifies; empty when unknown. */
@@ -84,10 +87,10 @@ export function energyTiles(figures: EnergyFiguresModel, i18n: EnergyI18n, calen
 
   const tiles: (EnergyTile | undefined)[] = [
     period(i18n.tiles_consumption(), consumption, () =>
-      [periodNote(consumptionRow?.elecPeriodUntil, consumption?.date ?? '', i18n, lang), householdNote(consumptionRow, i18n)]
+      [periodNote(consumptionRow?.elecPeriodFrom, consumptionRow?.elecPeriodUntil, consumption?.date ?? '', i18n, lang), householdNote(consumptionRow, i18n)]
         .filter(Boolean).join(SEPARATOR)),
     period(i18n.tiles_production(), production, () =>
-      periodNote(productionRow?.productionPeriodUntil, production?.date ?? '', i18n, lang)),
+      periodNote(productionRow?.productionPeriodFrom, productionRow?.productionPeriodUntil, production?.date ?? '', i18n, lang)),
     dated(i18n.tiles_solarCapacity(), 'solarKwp', (value) => withUnit(formatCount(value), i18n.tiles_unitKwp())),
     dated(i18n.tiles_solarPotential(), 'solarPotentialUsage', formatShare),
     dated(i18n.tiles_renewableHeating(), 'renewableHeatingShare', formatShare),
@@ -180,12 +183,12 @@ export interface EnergyCompared { name: string | undefined; figures: EnergyFigur
 /**
  * The comparison table, main municipality first. Every comparison location keeps its row, so one
  * without data cannot hide the others. A location that no longer exists has no name to show, so
- * its row carries `noData`. Without comparison locations there is nothing to compare.
+ * its row carries `unknownName`. Without comparison locations there is nothing to compare.
  */
-export function energyCompareRows(mainName: string, main: EnergyFiguresModel, compared: EnergyCompared[], noData: string, calendarYear: number): EnergyCompareRow[] {
+export function energyCompareRows(mainName: string, main: EnergyFiguresModel, compared: EnergyCompared[], unknownName: string, calendarYear: number): EnergyCompareRow[] {
   if (compared.length === 0) return [];
   return [
     compareRow(mainName, main, calendarYear),
-    ...compared.map((entry) => compareRow(entry.name ?? noData, entry.figures, calendarYear))
+    ...compared.map((entry) => compareRow(entry.name ?? unknownName, entry.figures, calendarYear))
   ];
 }

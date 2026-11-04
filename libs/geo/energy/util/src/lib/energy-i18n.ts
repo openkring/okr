@@ -8,7 +8,7 @@ const PFX = '@geo/energy/feature.';
 /**
  * Keys with a `{param}` placeholder (single braces, filled by the caller: `translateAll`
  * strips `{{param}}`): `state_stale` {date}, `header_bfsNr` {n}, `header_asOf` {date},
- * `tiles_households` {share}, `tiles_tariffFallback` {year}, `tiles_periodUntil` {date},
+ * `tiles_households` {share}, `tiles_tariffFallback` {year}, `tiles_periodRange` {from} {until},
  * `tiles_asOf` {date}, `tariffs_operator` {name}.
  */
 export const ENERGY_I18N_KEYS = {
@@ -33,7 +33,7 @@ export const ENERGY_I18N_KEYS = {
   tiles_chargingPoints:         PFX + 'tiles.chargingPoints',
   tiles_tariff:                 PFX + 'tiles.tariff',
   tiles_tariffFallback:         PFX + 'tiles.tariffFallback',
-  tiles_periodUntil:            PFX + 'tiles.periodUntil',
+  tiles_periodRange:            PFX + 'tiles.periodRange',
   tiles_asOf:                   PFX + 'tiles.asOf',
   tiles_unitMwh:                PFX + 'tiles.unitMwh',
   tiles_unitKwp:                PFX + 'tiles.unitKwp',
@@ -66,6 +66,7 @@ export const ENERGY_I18N_KEYS = {
   compare_electricityPerPerson: PFX + 'compare.electricityPerPerson',
   compare_tariff:               PFX + 'compare.tariff',
   compare_noData:               PFX + 'compare.noData',
+  compare_unknownLocation:      PFX + 'compare.unknownLocation',
   compare_note:                 PFX + 'compare.note',
 
   gaps_title:                   PFX + 'gaps.title',

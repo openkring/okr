@@ -23,7 +23,7 @@
     "chargingPoints": "Punti di ricarica",
     "tariff": "Tariffa elettrica attuale",
     "tariffFallback": "Tariffa {year}, la tariffa di quest'anno non è ancora pubblicata",
-    "periodUntil": "12 mesi fino al {date}",
+    "periodRange": "{from} – {until}",
     "asOf": "Stato al {date}",
     "unitMwh": "MWh",
     "unitKwp": "kWp",
@@ -59,6 +59,7 @@
     "electricityPerPerson": "Elettricità per persona",
     "tariff": "Tariffa attuale",
     "noData": "nessun dato",
+    "unknownLocation": "Luogo sconosciuto",
     "note": "Si confrontano solo le quote e i valori per persona. Le cifre assolute mostrerebbero soltanto quanto è grande un comune."
   },
   "gaps": {

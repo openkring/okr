@@ -23,7 +23,7 @@
     "chargingPoints": "Charging points",
     "tariff": "Current electricity tariff",
     "tariffFallback": "Tariff {year}, the tariff for this year is not published yet",
-    "periodUntil": "12 months to {date}",
+    "periodRange": "{from} to {until}",
     "asOf": "As of {date}",
     "unitMwh": "MWh",
     "unitKwp": "kWp",
@@ -59,6 +59,7 @@
     "electricityPerPerson": "Electricity per person",
     "tariff": "Current tariff",
     "noData": "no data",
+    "unknownLocation": "Unknown place",
     "note": "Only shares and per-person values are compared. Absolute figures would only show how big a municipality is."
   },
   "gaps": {
