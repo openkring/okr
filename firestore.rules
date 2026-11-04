@@ -428,15 +428,17 @@ service cloud.firestore {
       // Update your own doc but NOT roles / tenants / personKey / loginId / loginEmail;
       // admins may update users of their own tenant only (both before and after the
       // write, so an admin cannot pull a foreign user into their tenant or push one out).
+      // spec 1.77 D-R6, D-R10: an admin cannot re-point a user at another person, and
+      // `diaryConsents` is written by the callable setDiaryConsent only.
       allow update: if signedIn() && loginIdentityUnchanged() && (
                        (request.auth.uid == userId
                           && !request.resource.data.diff(resource.data).affectedKeys()
-                                .hasAny(['roles', 'tenants', 'personKey']))
+                                .hasAny(['roles', 'tenants', 'personKey', 'diaryConsents']))
                        || (isAdmin() && canWriteTenant(resource.data)
                                      && callerTenants().hasAll(resource.data.tenants)
                                      && canWriteTenant(request.resource.data)
                                      && !request.resource.data.diff(resource.data).affectedKeys()
-                                           .hasAny(['tenants']))
+                                           .hasAny(['tenants', 'personKey', 'diaryConsents']))
                     );
 
       allow delete: if isAdmin() && canWriteTenant(resource.data)
@@ -782,6 +784,18 @@ service cloud.firestore {
                           || (resource.data.state == 'pending' && request.resource.data.dueAt is int))
                       && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['state']) || request.resource.data.state == 'cancelled');
       allow delete: if false;
+    }
+    // spec 1.77 §12.2: what one owner's diary collects from their other apps. Owner-only like `diaries`, never a
+    // field on `users`, which a tenant admin may edit (D-R1). Document id = the owner's uid; the functions read it
+    // with the Admin SDK.
+    match /diarySources/{uid} {
+      allow read: if userExists() && (resource == null || isDiaryOwner(resource.data));
+      allow create: if userExists() && uid == request.auth.uid
+                      && isDiaryOwner(request.resource.data) && canWriteTenant(request.resource.data);
+      allow update: if userExists() && uid == request.auth.uid
+                      && isDiaryOwner(resource.data) && isDiaryOwner(request.resource.data)
+                      && belongsToTenant(resource.data) && belongsToTenant(request.resource.data);
+      allow delete: if userExists() && isDiaryOwner(resource.data) && canWriteTenant(resource.data);
     }
     match /diaryImports/{id} {
       allow read: if userExists() && (resource == null || (isDiaryOwner(resource.data) && belongsToTenant(resource.data)));

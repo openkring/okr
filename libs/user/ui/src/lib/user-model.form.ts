@@ -34,7 +34,7 @@ import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-
                 <okr-error-note [errors]="okeyErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="personKeyI18n()" [value]="personKey()" (valueChange)="onFieldChange('personKey', $event)" [readOnly]="isReadOnly()" [copyable]=true />
+                <okr-text-input [i18n]="personKeyI18n()" [value]="personKey()" (valueChange)="onFieldChange('personKey', $event)" [readOnly]="isReadOnly() || !!okey()" [copyable]=true />
                 <okr-error-note [errors]="personKeyErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">

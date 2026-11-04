@@ -1921,5 +1921,50 @@ for label, expect, run in form_stats_cases:
     passed += ok; failed += not ok
     print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
 
+# ------------------------------------------------------------- diarySources ----
+# 1.77 §12: the pull settings are owner-only, document id = the owner's uid; `diaryConsents` is written by the
+# callable setDiaryConsent only (Admin SDK), `personKey` no longer by a tenant admin (D-R6, D-R10).
+seed("diarySources/uidE", {"tenants": ["t1"], "authorKey": "uidE", "from": "", "to": "", "pulls": []})
+DS_A, DS_D, DS_E = jwt("uidA"), jwt("uidD"), jwt("uidE")
+DS_DOC = {"tenants": ["t1"], "authorKey": "uidA", "from": "", "to": "", "pulls": []}
+diary_source_cases = [
+    ("diarySources: owner READ of a missing doc -> ALLOW (not found, not denied)", True,
+     lambda: 200 if req("GET", "diarySources/uidA", token=DS_A) == 404 else 403),
+    ("diarySources: owner READ -> ALLOW", True, lambda: req("GET", "diarySources/uidE", token=DS_E)),
+    ("diarySources: admin of the tenant READ -> DENY", False, lambda: req("GET", "diarySources/uidE", token=DS_D)),
+    ("diarySources: anonymous READ -> DENY", False, lambda: req("GET", "diarySources/uidE")),
+    ("diarySources: owner CREATE under their uid -> ALLOW", True,
+     lambda: req("POST", "diarySources?documentId=uidA", token=DS_A, data=body(DS_DOC))),
+    ("diarySources: CREATE under another id -> DENY", False,
+     lambda: req("POST", "diarySources?documentId=uidX", token=DS_A, data=body(DS_DOC))),
+    ("diarySources: CREATE naming another author -> DENY", False,
+     lambda: req("POST", "diarySources?documentId=uidD", token=DS_D, data=body(DS_DOC))),
+    ("diarySources: owner UPDATE -> ALLOW", True,
+     lambda: req("PATCH", "diarySources/uidE", token=DS_E, data=body({"from": "20261001"}), mask=["from"])),
+    ("diarySources: admin of the tenant UPDATE -> DENY", False,
+     lambda: req("PATCH", "diarySources/uidE", token=DS_D, data=body({"from": "20261001"}), mask=["from"])),
+    ("diarySources: owner cannot hand the doc over -> DENY", False,
+     lambda: req("PATCH", "diarySources/uidE", token=DS_E, data=body({"authorKey": "uidA"}), mask=["authorKey"])),
+    ("diarySources: admin DELETE -> DENY", False, lambda: req("DELETE", "diarySources/uidE", token=DS_D)),
+    ("diarySources: owner DELETE -> ALLOW", True, lambda: req("DELETE", "diarySources/uidE", token=DS_E)),
+    ("users: self WRITE diaryConsents -> DENY (callable only)", False,
+     lambda: req("PATCH", "users/uidA", token=DS_A, data=body({"diaryConsents": []}), mask=["diaryConsents"])),
+    ("users: admin WRITE diaryConsents -> DENY (D-R2)", False,
+     lambda: req("PATCH", "users/uidA", token=DS_D, data=body({"diaryConsents": []}), mask=["diaryConsents"])),
+    ("users: admin WRITE personKey -> DENY (D-R6)", False,
+     lambda: req("PATCH", "users/uidA", token=DS_D, data=body({"personKey": "pB"}), mask=["personKey"])),
+    ("users: self WRITE personKey -> DENY", False,
+     lambda: req("PATCH", "users/uidA", token=DS_A, data=body({"personKey": "pB"}), mask=["personKey"])),
+    ("users: self WRITE a normal field -> ALLOW", True,
+     lambda: req("PATCH", "users/uidA", token=DS_A, data=body({"firstName": "Aa"}), mask=["firstName"])),
+    ("users: admin WRITE a normal field -> ALLOW", True,
+     lambda: req("PATCH", "users/uidA", token=DS_D, data=body({"firstName": "Ab"}), mask=["firstName"])),
+]
+for label, expect, run in diary_source_cases:
+    code = run()
+    ok = (code in (200, 201)) == expect
+    passed += ok; failed += not ok
+    print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
+
 print(f"\n{passed} passed, {failed} failed")
 raise SystemExit(1 if failed else 0)
