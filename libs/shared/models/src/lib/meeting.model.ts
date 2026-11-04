@@ -43,7 +43,7 @@ export class MeetingModel implements OkrModel, NamedModel, SearchableModel, Tagg
   // denormalised from the calevent so the list can sort without a second read
   public meetingDate = DEFAULT_DATE;  // StoreDate, local wall clock
   public startTime = DEFAULT_TIME;    // StoreTime, local wall clock
-  public locationKey = DEFAULT_KEY;   // name@key, same convention as CalEventModel
+  public locations: AvatarInfo[] = []; // first entry = the location; key '' = free text, same as CalEventModel
 
   public chair: AvatarInfo | undefined;      // Vorsitz
   public secretary: AvatarInfo | undefined;  // Protokoll

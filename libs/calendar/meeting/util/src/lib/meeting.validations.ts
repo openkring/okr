@@ -10,7 +10,6 @@ export const meetingValidations = staticSuite((model: MeetingModel, tenants: str
   baseValidations(model, tenants, tags);
   stringValidations('name', model.name, LONG_NAME_LENGTH, 1, true);
   stringValidations('groupKey', model.groupKey);
-  stringValidations('locationKey', model.locationKey);
   stringsValidations('state', model.state, MEETING_STATES);
   dateValidations('meetingDate', model.meetingDate);
   timeValidations('startTime', model.startTime);

@@ -1,4 +1,5 @@
 import type { AgendaItem, MeetingAttendee, MeetingModel } from '@okr/shared-models';
+import { getEventLocationName } from '@okr/shared-util-core';
 import { escapeHtml } from '@okr/security-processing-util';
 
 /**
@@ -108,9 +109,10 @@ export function buildMinutesDocument(meeting: MeetingModel, options: MinutesDocu
     ? ''
     : agenda.map((item, i) => agendaBlock(item, i + 1, labels)).join('');
 
-  const location = (meeting.locationKey ?? '') === ''
+  const locationName = getEventLocationName(meeting);
+  const location = locationName === ''
     ? ''
-    : ` · ${escapeHtml(labels.location)}: ${escapeHtml(meeting.locationKey)}`;
+    : ` · ${escapeHtml(labels.location)}: ${escapeHtml(locationName)}`;
 
   return `<!doctype html>
 <html lang="de"><head><meta charset="utf-8" />

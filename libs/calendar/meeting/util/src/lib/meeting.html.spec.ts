@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { AvatarInfo, MeetingModel } from '@okr/shared-models';
+import { freeTextLocationAvatar, locationToAvatar } from '@okr/shared-util-core';
 
 import { buildMinutesDocument, MinutesDocumentOptions } from './meeting.html';
 import { newAgendaItem } from './meeting.util';
@@ -25,7 +26,7 @@ const meeting = (): MeetingModel => {
   const m = new MeetingModel('scs');
   m.name = 'Vorstandssitzung 3/2026';
   m.startTime = '19:00';
-  m.locationKey = 'Clubhaus';
+  m.locations = [freeTextLocationAvatar('Clubhaus')];
   m.attendees = [
     { person: avatar('Anna', 'Muster'), state: 'present' },
     { person: avatar('Beat', 'Beispiel'), state: 'excused' },
@@ -34,6 +35,17 @@ const meeting = (): MeetingModel => {
 };
 
 describe('buildMinutesDocument', () => {
+  it('prints the name of a linked location, never its key', () => {
+    const linked = { ...meeting(), locations: [locationToAvatar({ okey: 'loc1', name: 'Bootshaus', type: '' })] };
+    const html = buildMinutesDocument(linked, options);
+    expect(html).toContain('Ort: Bootshaus');
+    expect(html).not.toContain('loc1');
+  });
+
+  it('leaves the location out when there is none', () => {
+    expect(buildMinutesDocument({ ...meeting(), locations: [] }, options)).not.toContain('Ort:');
+  });
+
   it('renders the header, the meeting date and the location', () => {
     const html = buildMinutesDocument(meeting(), options);
     expect(html).toContain('Protokoll — Vorstandssitzung 3/2026');

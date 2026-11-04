@@ -1,6 +1,6 @@
 import { AvatarInfo, LocationModel } from '@okr/shared-models';
 
-/** What a reader needs of a calevent. `locations` is absent on documents older than the field. */
+/** What a reader needs of a calevent or a meeting. `locations` is absent on documents older than the field. */
 type HasLocations = { locations?: AvatarInfo[] };
 
 /** The avatar of a predefined location, keyed by its okey. */

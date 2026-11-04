@@ -341,7 +341,7 @@ function buildMeeting(parsed, previousMeetingKey) {
     calEventKey: '',
     meetingDate: parsed.meetingDate,
     startTime: startTimeOf(parsed.zeit),
-    locationKey: venue ? `${venue.name}@${venue.id}` : '',
+    locations: venue ? [{ key: venue.id, name1: venue.name, name2: '', label: venue.name, modelType: 'location', type: venue.type ?? '', subType: '' }] : [],
     chair: roleOf(parsed.present, 'vorsitz') ?? null,
     secretary: roleOf(parsed.present, 'protokoll') ?? null,
     state: 'approved',
@@ -443,7 +443,7 @@ console.log(`\n${tag}${meetings.length} meetings, ${tasks.length} tasks, ${venue
 for (const m of meetings) {
   const mismatch = parsed.find(p => p.meetingDate === m.id).file.replace('.csv', '') !== m.id ? '  <-- filename differs' : '';
   console.log(`  ${m.id}  ${String(m.data.agenda.length).padStart(2)} items  ${String(m.data.attendees.length).padStart(2)} attendees  ` +
-    `chair=${m.data.chair?.label ?? '—'}  prot=${m.data.secretary?.label ?? '—'}  loc=${m.data.locationKey || '—'}${mismatch}`);
+    `chair=${m.data.chair?.label ?? '—'}  prot=${m.data.secretary?.label ?? '—'}  loc=${m.data.locations[0]?.label || '—'}${mismatch}`);
 }
 
 if (unresolved.size) {

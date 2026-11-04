@@ -1,13 +1,13 @@
 /**
- * MIGRATE `calevents.locationKey` TO `calevents.locations` — dry run by default, idempotent.
+ * MIGRATE `locationKey` TO `locations` ON CALEVENTS AND MEETINGS — dry run by default, idempotent.
  *
  * ═══════════════════════════════════════════════════════════════════════════════════════
  * WHY
  * ═══════════════════════════════════════════════════════════════════════════════════════
  * `locationKey` was a string with three shapes (`name@okey`, `okey@name`, free text), and every
  * reader parsed it its own way. `locations: AvatarInfo[]` replaces it; no code reads the old field
- * any more, so an event that is not migrated shows no location at all. All tenants, archived
- * events included. See `parseLocationKey` for how the shapes are told apart.
+ * any more, so a document that is not migrated shows no location at all. Both collections, all
+ * tenants, archived documents included. See `parseLocationKey` for how the shapes are told apart.
  *
  * ═══════════════════════════════════════════════════════════════════════════════════════
  * ORDER
@@ -28,7 +28,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════════════
  *   Dry run is the DEFAULT. --write must be explicit.
  *   Idempotent: a migrated event is skipped.
- *   Every --write logs each event's old value to a file in the temp directory (printed at the
+ *   Every --write logs each document's old value to a file in the temp directory (printed at the
  *   end), which is the way back. It names places, so keep it out of the repository.
  *
  * Requires: gcloud auth application-default login (or GOOGLE_APPLICATION_CREDENTIALS).
@@ -47,6 +47,7 @@ import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 
 import { planEvent } from './migrate-calevent-locations.logic.mjs';
 
+const COLLECTIONS = ['calevents', 'meetings'];
 const WRITE = process.argv.includes('--write');
 const DROP_FIELD = process.argv.includes('--drop-field');
 /** The kinds a human should read before writing. */
@@ -57,43 +58,49 @@ if (!getApps().length) initializeApp({ projectId: 'bkaiser-org' });
 const db = getFirestore();
 
 async function main() {
-  console.log(`\nMigrate calevents.locationKey → locations${WRITE ? '' : '  (DRY RUN — nothing is written)'}\n`);
+  console.log(`\nMigrate locationKey → locations on ${COLLECTIONS.join(', ')}${WRITE ? '' : '  (DRY RUN — nothing is written)'}\n`);
 
   const locationDocs = await db.collection('locations').select('name', 'type').get();
   const knownLocations = new Map(locationDocs.docs.map((doc) => [doc.id, doc.data()]));
-  const events = await db.collection('calevents').select('locationKey', 'locations', 'index').get();
-  console.log(`  ${knownLocations.size} locations, ${events.size} calevents\n`);
+  console.log(`  ${knownLocations.size} locations\n`);
 
   const rollbackFile = join(tmpdir(), `calevent-locations-rollback-${Date.now()}.jsonl`);
   const writer = WRITE ? db.bulkWriter() : undefined;
-  const counts = {};
-  const samples = {};
 
-  for (const doc of events.docs) {
-    const data = doc.data();
-    const plan = planEvent(data, knownLocations, DROP_FIELD);
-    if (!plan) { counts.unchanged = (counts.unchanged ?? 0) + 1; continue; }
+  for (const collection of COLLECTIONS) {
+    const docs = await db.collection(collection).select('locationKey', 'locations', 'index').get();
+    const counts = {};
+    const samples = {};
 
-    counts[plan.kind] = (counts[plan.kind] ?? 0) + 1;
-    if (REVIEW_KINDS.has(plan.kind)) (samples[plan.kind] ??= []).push(`${doc.id}: ${data.locationKey}`);
+    for (const doc of docs.docs) {
+      const data = doc.data();
+      const plan = planEvent(data, knownLocations, DROP_FIELD);
+      if (!plan) { counts.unchanged = (counts.unchanged ?? 0) + 1; continue; }
 
-    if (writer) {
-      appendFileSync(rollbackFile, `${JSON.stringify({ okey: doc.id, locationKey: data.locationKey ?? null, index: data.index ?? null })}\n`);
-      writer.update(doc.ref, {
-        locationKey: plan.clearField === 'delete' ? FieldValue.delete() : '',
-        ...(plan.locations ? { locations: plan.locations } : {}),
-        ...(plan.index === undefined ? {} : { index: plan.index }),
-      });
+      counts[plan.kind] = (counts[plan.kind] ?? 0) + 1;
+      if (REVIEW_KINDS.has(plan.kind)) (samples[plan.kind] ??= []).push(`${doc.id}: ${data.locationKey}`);
+
+      if (writer) {
+        appendFileSync(rollbackFile, `${JSON.stringify({ collection, okey: doc.id, locationKey: data.locationKey ?? null, index: data.index ?? null })}\n`);
+        writer.update(doc.ref, {
+          locationKey: plan.clearField === 'delete' ? FieldValue.delete() : '',
+          ...(plan.locations ? { locations: plan.locations } : {}),
+          ...(plan.index === undefined ? {} : { index: plan.index }),
+        });
+      }
     }
+
+    console.log(`  ${collection}: ${docs.size} documents`);
+    for (const [kind, count] of Object.entries(counts).sort()) console.log(`    ${kind.padEnd(14)} ${count}`);
+    for (const [kind, list] of Object.entries(samples)) {
+      console.log(`\n    ${kind} (${list.length}):`);
+      list.slice(0, MAX_SAMPLES).forEach((line) => console.log(`      ${line}`));
+      if (list.length > MAX_SAMPLES) console.log(`      … and ${list.length - MAX_SAMPLES} more`);
+    }
+    console.log('');
   }
   await writer?.close();
 
-  for (const [kind, count] of Object.entries(counts).sort()) console.log(`  ${kind.padEnd(14)} ${count}`);
-  for (const [kind, list] of Object.entries(samples)) {
-    console.log(`\n  ${kind} (${list.length}):`);
-    list.slice(0, MAX_SAMPLES).forEach((line) => console.log(`    ${line}`));
-    if (list.length > MAX_SAMPLES) console.log(`    … and ${list.length - MAX_SAMPLES} more`);
-  }
   if (WRITE) console.log(`\n  old values: ${rollbackFile}`);
   console.log(WRITE ? '\nDone.\n' : '\nDry run. Nothing was written. Use --write to apply.\n');
 }

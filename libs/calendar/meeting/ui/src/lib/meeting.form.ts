@@ -3,10 +3,10 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { DEFAULT_NOTES, DEFAULT_TAGS, LONG_NAME_LENGTH } from '@okr/shared-constants';
-import { AgendaItem, MeetingModel, RoleName, UserModel } from '@okr/shared-models';
+import { AgendaItem, AvatarInfo, MeetingModel, RoleName, UserModel } from '@okr/shared-models';
 import { Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
-import { coerceBoolean, hasRole } from '@okr/shared-util-core';
+import { coerceBoolean, freeTextLocationAvatar, getEventLocationName, hasRole } from '@okr/shared-util-core';
 
 import { MeetingI18n, meetingValidations } from '@okr/calendar-meeting-util';
 import { AgendaList } from './agenda-list';
@@ -36,9 +36,8 @@ import { AttendeeList } from './attendee-list';
                   <okr-error-note [errors]="nameErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="locationKeyI18n()" [value]="locationKey()" (valueChange)="onFieldChange('locationKey', $event)"
+                  <okr-text-input [i18n]="locationKeyI18n()" [value]="location()" (valueChange)="onLocationInput($event)"
  [readOnly]="isReadOnly()" />
-                  <okr-error-note [errors]="locationKeyErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>
@@ -111,7 +110,6 @@ export class MeetingForm {
   private readonly validationResult = vestErrors(this.meetingForm);
   protected meetingDateErrors = computed(() => this.validationResult().getErrors('meetingDate'));
   protected startTimeErrors = computed(() => this.validationResult().getErrors('startTime'));
-  protected locationKeyErrors = computed(() => this.validationResult().getErrors('locationKey'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   constructor() {
     effect(() => this.valid.emit(this.meetingForm().valid()));
@@ -120,7 +118,7 @@ export class MeetingForm {
   // computed field accessors — Firestore reads skip model defaults, so coalesce everything
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected readonly name = computed(() => this.formData()?.name ?? '');
-  protected readonly locationKey = computed(() => this.formData()?.locationKey ?? '');
+  protected readonly location = computed(() => getEventLocationName(this.formData()));
   protected readonly meetingDate = computed(() => this.formData()?.meetingDate ?? '');
   protected readonly startTime = computed(() => this.formData()?.startTime ?? '');
   protected readonly notes = computed(() => this.formData()?.notes ?? DEFAULT_NOTES);
@@ -136,7 +134,7 @@ export class MeetingForm {
   } as TextInputI18n));
 
   protected locationKeyI18n = computed(() => ({
-    name: 'locationKey',
+    name: 'location',
     label: this.i18n().locationKey_label(),
     placeholder: this.i18n().locationKey_placeholder()
   } as TextInputI18n));
@@ -159,7 +157,11 @@ export class MeetingForm {
     placeholder: this.i18n().notes_placeholder()
   } as NotesInputI18n));
 
-  protected onFieldChange(fieldName: string, fieldValue: string | string[]): void {
+  protected onLocationInput(value: string): void {
+    this.onFieldChange('locations', value ? [freeTextLocationAvatar(value)] : []);
+  }
+
+  protected onFieldChange(fieldName: string, fieldValue: string | string[] | AvatarInfo[]): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
   }
