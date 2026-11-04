@@ -303,6 +303,7 @@ import { CourseOption, FormOption, FormSectionConfiguration } from './form-secti
               [readOnly]="isReadOnly()"
               [locations]="energyLocations()"
               [i18n]="i18n()"
+              [errors]="errors()"
             />
           }
         }

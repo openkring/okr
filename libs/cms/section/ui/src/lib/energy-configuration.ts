@@ -4,7 +4,9 @@ import {
   IonSelect, IonSelectOption
 } from '@ionic/angular';
 
+import { SectionErrors, getFieldErrors } from '@okr/cms-section-util';
 import { EnergyConfig } from '@okr/shared-models';
+import { ErrorNote } from '@okr/shared-ui';
 
 import { WeatherLocationOption } from './weather-configuration';
 
@@ -27,7 +29,7 @@ interface EnergyConfigI18n {
   standalone: true,
   imports: [
     IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonNote,
-    IonSelect, IonSelectOption
+    IonSelect, IonSelectOption, ErrorNote
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
@@ -57,6 +59,7 @@ interface EnergyConfigI18n {
                 }
               </ion-select>
               <ion-note>{{ i18n().energy_compare_helper() }}</ion-note>
+              <okr-error-note [errors]="errorsFor('compareKeys')" />
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -68,6 +71,8 @@ export class EnergyConfiguration {
   public formData = model.required<EnergyConfig>();
   public readonly readOnly = input(true);
   public readonly i18n = input.required<EnergyConfigI18n>();
+  /** vest field name -> messages of the running section suite (see section.form.ts): `energyCompareCount` shows beside the select. */
+  public readonly errors = input<SectionErrors>({});
   /** The municipalities the tenant may pick from (type `city`). Empty is allowed — the selects are then empty. */
   public readonly locations = input<WeatherLocationOption[]>([]);
 
@@ -94,5 +99,10 @@ export class EnergyConfiguration {
     const kept = (this.formData().compareKeys ?? []).filter((key) => key !== this.locationKey() && !this.locations().some((loc) => loc.okey === key));
     const picked = (value ?? []).filter((key) => offered.has(key));
     this.formData.update((vm) => ({ ...vm, compareKeys: [...picked, ...kept] }));
+  }
+
+  /** messages of a single field, for the inline <okr-error-note> */
+  protected errorsFor(field: string): string[] {
+    return getFieldErrors(this.errors(), field);
   }
 }
