@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
-import { UserCollection, UserModel } from '@okr/shared-models';
+import { UserCollection, UserModel, withoutDiaryConsents } from '@okr/shared-models';
 import { findAllByField, findByField, getFullName, getSystemQuery } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -87,7 +87,7 @@ export class UserService  {
    */
   public async update(user: UserModel, currentUser?: UserModel): Promise<string | undefined> {
     user.index = this.getIndex(user);
-    const key = await this.firestoreService.updateModel<UserModel>(UserCollection, user, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
+    const key = await this.firestoreService.updateModel<UserModel>(UserCollection, withoutDiaryConsents(user), false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
     const payload = `${key}: ${user.loginEmail}: ${getFullName(user.firstName, user.lastName)}`;
     void this.activityService.log('user', 'update', currentUser, payload);
     return key;

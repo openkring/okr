@@ -292,6 +292,21 @@
       "error": "La data d'inizio è dopo la data di fine."
     }
   },
+  "diarySources": {
+    "title": "Fonti del diario",
+    "description": "Scegli che cosa raccoglie questo diario dalle tue altre app. Poi lo confermi una volta nel profilo di quell'app. Se lasci vuoto l'inizio o la fine, non c'è alcun limite da quel lato.",
+    "from": "dal",
+    "to": "al",
+    "state": {
+      "none": "non richiesto",
+      "waiting": "in attesa di conferma",
+      "confirmed": "confermato",
+      "partial": "confermato in parte"
+    },
+    "period": {
+      "error": "La data d'inizio è dopo la data di fine."
+    }
+  },
   "calendar": {
     "smallScreen": {
       "label": "Visualizzazione del calendario su schermi piccoli",

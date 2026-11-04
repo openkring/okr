@@ -292,6 +292,21 @@
       "error": "Das Startdatum liegt nach dem Enddatum."
     }
   },
+  "diarySources": {
+    "title": "Tagebuch-Quellen",
+    "description": "Hier legst du fest, was dieses Tagebuch aus deinen anderen Apps sammelt. Danach bestätigst du es einmal im Profil der jeweiligen App. Bleibt von oder bis leer, gilt dort keine Grenze.",
+    "from": "von",
+    "to": "bis",
+    "state": {
+      "none": "nicht angefragt",
+      "waiting": "wartet auf Bestätigung",
+      "confirmed": "bestätigt",
+      "partial": "teilweise bestätigt"
+    },
+    "period": {
+      "error": "Das Startdatum liegt nach dem Enddatum."
+    }
+  },
   "calendar": {
     "smallScreen": {
       "label": "Kalenderdarstellung auf kleinen Bildschirmen",

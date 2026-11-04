@@ -8,6 +8,7 @@
   "dependencies": {
     "tslib": "^2.8.1",
     "@okr/shared-models": "*",
+    "@okr/content-diary-util": "*",
     "@okr/shared-categories": "*",
     "@okr/shared-config": "*",
     "@okr/shared-i18n": "*",

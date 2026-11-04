@@ -292,6 +292,21 @@
       "error": "La date de début est après la date de fin."
     }
   },
+  "diarySources": {
+    "title": "Sources du journal",
+    "description": "Choisis ce que ce journal récupère de tes autres apps. Tu le confirmes ensuite une fois dans le profil de l'app concernée. Si tu laisses vide le début ou la fin, il n'y a pas de limite de ce côté.",
+    "from": "du",
+    "to": "au",
+    "state": {
+      "none": "pas demandé",
+      "waiting": "en attente de confirmation",
+      "confirmed": "confirmé",
+      "partial": "confirmé en partie"
+    },
+    "period": {
+      "error": "La date de début est après la date de fin."
+    }
+  },
   "calendar": {
     "smallScreen": {
       "label": "Affichage du calendrier sur les petits écrans",

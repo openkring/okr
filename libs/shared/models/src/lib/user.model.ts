@@ -63,5 +63,15 @@ export class UserModel implements OkrModel, TaggedModel, SearchableModel {
   }
 }
 
+/**
+ * The user without `diaryConsents`, for a client write: only `setDiaryConsent` writes the field and the rules deny it
+ * (spec 1.77 D-R10). `updateModel` merges, so leaving it out keeps the stored value, whatever this copy holds.
+ */
+export function withoutDiaryConsents(user: UserModel): UserModel {
+  const copy = { ...user };
+  delete (copy as Partial<UserModel>).diaryConsents;
+  return copy;
+}
+
 export const UserCollection = 'users';
 export const UserModelName = 'user';

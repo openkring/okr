@@ -6,7 +6,7 @@ import { from, of, take } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { DiarySource, PersonCollection, PersonModel, PersonModelName, UserCollection, UserModel } from '@okr/shared-models';
+import { DiarySource, DiarySourceModel, PersonCollection, PersonModel, PersonModelName, UserCollection, UserModel, withoutDiaryConsents } from '@okr/shared-models';
 import { AhvFormat, AppNavigationService, DIARY_EXTRA_SOURCES, formatAhv, isBlankAhv } from '@okr/shared-util-angular';
 import { debugItemLoaded } from '@okr/shared-util-core';
 import { FirestoreService } from '@okr/shared-data-access';
@@ -17,7 +17,7 @@ import { PersonService, SensitivePersonData } from '@okr/subject-person-data-acc
 import { PersonFormModel } from '@okr/subject-person-util';
 import { PROFILE_I18N_KEYS, ProfileI18n } from '@okr/profile-util';
 import { mergeDiarySources } from '@okr/content-diary-util';
-import { DiaryLineService, DiaryTenantInfo } from '@okr/content-diary-data-access';
+import { DiaryLineService, DiaryPullColumn, DiarySourcesService, DiaryTenantInfo } from '@okr/content-diary-data-access';
 
 /**
  * the personEditPage is setting the personKey.
@@ -28,11 +28,16 @@ export type ProfileState = {
   personKey: string | undefined;
   /** spec 1.77 §5.2 — the caller's diary apps (columns) and the transfer kinds (rows) */
   diaryTenants: { diaries: DiaryTenantInfo[]; sources: DiarySource[] };
+  /** spec 1.77 §12.4 — in a diary app: the columns of «Tagebuch-Quellen» and the owner's doc */
+  diaryPullColumns: DiaryPullColumn[];
+  diarySources: DiarySourceModel | undefined;
 };
 
 export const initialState: ProfileState = {
   personKey: undefined,
   diaryTenants: { diaries: [], sources: [] },
+  diaryPullColumns: [],
+  diarySources: undefined,
 };
 
 export const ProfileStore = signalStore(
@@ -45,6 +50,7 @@ export const ProfileStore = signalStore(
     firestoreService: inject(FirestoreService),
     i18nService: inject(I18nService),
     diaryLineService: inject(DiaryLineService),
+    diarySourcesService: inject(DiarySourcesService),
     /** diary sources this app offers beyond its feature blocks (bkg-app: the tracker) */
     diaryExtraSources: inject(DIARY_EXTRA_SOURCES),
   })),
@@ -128,6 +134,29 @@ export const ProfileStore = signalStore(
         }
       },
 
+      /**
+       * Spec 1.77 §12.4 — «Tagebuch-Quellen», once when the profile page opens. No columns (an app without a diary, or
+       * a failed call) hides the accordion.
+       */
+      async loadDiarySources(): Promise<void> {
+        const uid = store.appStore.fbUser()?.uid;
+        if (!uid) return;
+        try {
+          const columns = await store.diaryLineService.listMyDiaryPullOptions();
+          if (columns.length === 0) return;
+          const doc = await store.diarySourcesService.read(uid);
+          const tenants = [store.appStore.tenantId()];
+          patchState(store, { diaryPullColumns: columns, diarySources: doc ?? { okey: uid, tenants, authorKey: uid, from: '', to: '', pulls: [] } });
+        } catch (e) {
+          console.warn('ProfileStore.loadDiarySources', e);
+        }
+      },
+
+      async saveDiarySources(model: DiarySourceModel): Promise<void> {
+        await store.diarySourcesService.save(model, store.i18n.update_error());
+        patchState(store, { diarySources: model });
+      },
+
     /**
      * Update the current user and the corresponding person with the changed profile data.
      * The method does two updates (person and user), saves two comments, and shows one confirmation toast.
@@ -155,7 +184,7 @@ export const ProfileStore = signalStore(
           store.appStore.reloadPersons();
         }
         if (user) {
-          await store.firestoreService.updateModel<UserModel>(UserCollection, user, false, store.i18n.update_conf(), store.i18n.update_error(), user);
+          await store.firestoreService.updateModel<UserModel>(UserCollection, withoutDiaryConsents(user), false, store.i18n.update_conf(), store.i18n.update_error(), user);
         }
       },
 

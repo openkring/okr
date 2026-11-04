@@ -292,6 +292,21 @@
       "error": "The start date is after the end date."
     }
   },
+  "diarySources": {
+    "title": "Diary sources",
+    "description": "Choose what this diary collects from your other apps. Then confirm it once in the profile of that app. If from or to is left empty, there is no limit on that side.",
+    "from": "from",
+    "to": "to",
+    "state": {
+      "none": "not requested",
+      "waiting": "waiting for confirmation",
+      "confirmed": "confirmed",
+      "partial": "partly confirmed"
+    },
+    "period": {
+      "error": "The start date is after the end date."
+    }
+  },
   "calendar": {
     "smallScreen": {
       "label": "Calendar view on small screens",

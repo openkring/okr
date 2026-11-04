@@ -25,6 +25,24 @@ export interface DiaryTenantInfo {
   logoUrl: string;
 }
 
+/** One column of «Tagebuch-Quellen», as listed by `listMyDiaryPullOptions`. */
+export interface DiaryPullColumn extends DiaryTenantInfo {
+  /** the rows that app offers */
+  sources: DiarySource[];
+  /** the rows the person allowed there */
+  consented: DiarySource[];
+  /** the diary app itself: no confirmation needed */
+  own: boolean;
+}
+
+/** One diary asking the current app, as listed by `listMyDiaryRequests`. */
+export interface DiaryRequest extends DiaryTenantInfo {
+  from: string;
+  to: string;
+  requested: DiarySource[];
+  consented: DiarySource[];
+}
+
 /**
  * Wraps the `recordDiaryLine` callable: appends a line to the `events` of the caller's diary entry
  * in every diary tenant the caller's own `diaryTargets` route this `source` to (spec 1.77).
@@ -52,5 +70,23 @@ export class DiaryLineService {
   public async listMyDiaryTenants(): Promise<{ diaries: DiaryTenantInfo[]; sources: DiarySource[] }> {
     const callable = httpsCallable<void, { diaries: DiaryTenantInfo[]; sources: DiarySource[] }>(this.functions, 'listMyDiaryTenants');
     return (await callable()).data;
+  }
+
+  /** What this diary can collect from the person's apps, with the consent state (spec 1.77 §12.4). Throws on failure. */
+  public async listMyDiaryPullOptions(): Promise<DiaryPullColumn[]> {
+    const callable = httpsCallable<void, { columns: DiaryPullColumn[] }>(this.functions, 'listMyDiaryPullOptions');
+    return (await callable()).data.columns ?? [];
+  }
+
+  /** The diaries asking this app (spec 1.77 §12.4). Throws on failure. */
+  public async listMyDiaryRequests(): Promise<DiaryRequest[]> {
+    const callable = httpsCallable<void, { requests: DiaryRequest[] }>(this.functions, 'listMyDiaryRequests');
+    return (await callable()).data.requests ?? [];
+  }
+
+  /** Allows these rows for a diary; [] revokes. `swept` = the recordings a new `tracker` consent added. Throws on failure. */
+  public async setDiaryConsent(diaryTenantId: string, sources: DiarySource[]): Promise<{ sources: DiarySource[]; swept: number }> {
+    const callable = httpsCallable<{ diaryTenantId: string; sources: DiarySource[] }, { sources: DiarySource[]; swept: number }>(this.functions, 'setDiaryConsent');
+    return (await callable({ diaryTenantId, sources })).data;
   }
 }

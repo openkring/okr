@@ -1,6 +1,6 @@
 import { enforce, staticSuite, test } from 'vest';
 
-import { DiaryTarget } from '@okr/shared-models';
+import { DiarySourceModel, DiaryTarget } from '@okr/shared-models';
 
 /** Spec 1.77 §5.3 — one rule per column: `von` must not be after `bis` (both optional). */
 export const diaryTransferValidations = staticSuite((targets: DiaryTarget[]) => {
@@ -14,6 +14,17 @@ export const diaryTransferValidations = staticSuite((targets: DiaryTarget[]) => 
       if (target.from && target.to) enforce(target.from <= target.to).isTruthy();
     });
   }
+});
+
+/** Spec 1.77 §12.4 — one period per diary: `von` must not be after `bis` (both optional). */
+export const diarySourcesValidations = staticSuite((model: DiarySourceModel) => {
+  // the suite's one always-present rule, see diaryTransferValidations
+  test('pulls', 'notArray', () => {
+    enforce(Array.isArray(model.pulls)).isTruthy();
+  });
+  test('period', '@profile/feature.diarySources.period.error', () => {
+    if (model.from && model.to) enforce(model.from <= model.to).isTruthy();
+  });
 });
 
 /**

@@ -72,6 +72,17 @@ export const PROFILE_I18N_KEYS = {
   diaryTransfer_source_tracker:    PFX + 'diaryTransfer.source.tracker',
   diaryTransfer_period_error:      PFX + 'diaryTransfer.period.error',
 
+  // diary sources, the diary app's side (spec 1.77 §12.4)
+  diarySources_title:              PFX + 'diarySources.title',
+  diarySources_description:        PFX + 'diarySources.description',
+  diarySources_from:               PFX + 'diarySources.from',
+  diarySources_to:                 PFX + 'diarySources.to',
+  diarySources_state_none:         PFX + 'diarySources.state.none',
+  diarySources_state_waiting:      PFX + 'diarySources.state.waiting',
+  diarySources_state_confirmed:    PFX + 'diarySources.state.confirmed',
+  diarySources_state_partial:      PFX + 'diarySources.state.partial',
+  diarySources_period_error:       PFX + 'diarySources.period.error',
+
   // email signature (spec 2026-06-16)
   sig_title:                       PFX + 'signature.title',
   sig_description:                 PFX + 'signature.description',
