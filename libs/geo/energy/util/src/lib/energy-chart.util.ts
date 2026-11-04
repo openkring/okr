@@ -56,7 +56,7 @@ export function tariffChartOption(tariffs: EnergyTariff[], labels: TariffLabels,
       type: 'category',
       data: years.map((year) => (year > calendarYear ? `${year} (${labels.future})` : String(year)))
     },
-    yAxis: { type: 'value', name: 'Rp./kWh' },
+    yAxis: { type: 'value', name: labels.unit },
     series: components.map((component) => ({
       name: component.name,
       type: 'bar' as const,

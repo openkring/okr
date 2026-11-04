@@ -9,8 +9,11 @@ export type EnergySectionState = 'noLocation' | 'preparing' | 'noData' | 'ready'
 /** The part of a LocationModel this lib needs; keeps the util free of the full model. */
 export type LocationLike = { properties?: BaseProperty[] };
 
-/** The four ElCom components of a tariff and the marker for a not yet valid year, already translated. */
-export interface TariffLabels { energy: string; gridUsage: string; charge: string; aidFee: string; future: string; }
+/**
+ * The four ElCom components of a tariff, the marker for a not yet valid year and the unit of the
+ * y-axis, already translated. The unit is a label because fr, es and it write «ct./kWh», not «Rp./kWh».
+ */
+export interface TariffLabels { energy: string; gridUsage: string; charge: string; aidFee: string; future: string; unit: string; }
 
 /** Energie Reporter is monthly: a snapshot older than this many days is shown with its age. */
 export const ENERGY_STALE_DAYS = 45;
@@ -105,6 +108,12 @@ export function isStale(sourceDate: string, now: Date, days = ENERGY_STALE_DAYS)
   return age >= 0 && age >= days;
 }
 
+/**
+ * The Energie Reporter site. CC BY 4.0 requires the attribution to link to it, so the sources block
+ * takes the address from here instead of from a translation that a tenant could override.
+ */
+export const ENERGY_REPORTER_URL = 'https://www.energiereporter.ch';
+
 /** The BFE solar-potential document of a municipality. */
 export function solarDocumentUrl(bfsNr: number): string {
   return `https://www.uvek-gis.admin.ch/BFE/storymaps/ECH_SolarpotGemeinden/pdf/${bfsNr}.pdf`;
@@ -139,4 +148,34 @@ export function compareRow(name: string, figures: EnergyFiguresModel | undefined
     elecPerCapitaMwh: latestValue(months, 'elecPerCapitaMwh')?.value,
     tariff: currentTariff(figures?.tariffs ?? [], calendarYear)
   };
+}
+
+// Swiss number format: decimal point, one decimal. Built once; Intl is expensive to construct.
+const ONE_DECIMAL = new Intl.NumberFormat('de-CH', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+/**
+ * A share as percent with one decimal («7.8 %»). Energie Reporter stores shares as fractions
+ * (0.078), so the value is multiplied by 100. A missing value gives `undefined`, never «0 %»:
+ * the caller shows its own «no data» text. Zero is a value.
+ */
+export function formatShare(fraction: number | null | undefined): string | undefined {
+  if (typeof fraction !== 'number' || !Number.isFinite(fraction)) return undefined;
+  return `${ONE_DECIMAL.format(fraction * 100)} %`;
+}
+
+/**
+ * A tariff range as "min–max" (en dash), or one value when min equals max. The unit is not part of
+ * it: the table's column header names it. No tariff gives `undefined`.
+ */
+export function formatTariffRange(range: TariffRange | undefined): string | undefined {
+  if (!range) return undefined;
+  const min = ONE_DECIMAL.format(range.min);
+  const max = ONE_DECIMAL.format(range.max);
+  return min === max ? min : `${min}\u2013${max}`;
+}
+
+/** A plain figure with one decimal («2.4»), for values that are not shares. Missing gives `undefined`. */
+export function formatDecimal(value: number | null | undefined): string | undefined {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return undefined;
+  return ONE_DECIMAL.format(value);
 }

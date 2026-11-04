@@ -4,8 +4,8 @@ import { EnergyFiguresModel, EnergyMonth, EnergyTariff } from '@okr/shared-model
 import { LOCATION_BFS_STATUS_NONE } from '@okr/shared-util-core';
 
 import {
-  compareRow, currentTariff, distinctPeriods, energySectionState, isStale, latestValue, operatorNames,
-  solarDocumentUrl, uniqueCompareKeys
+  compareRow, currentTariff, distinctPeriods, ENERGY_REPORTER_URL, energySectionState, formatDecimal, formatShare, formatTariffRange,
+  isStale, latestValue, operatorNames, solarDocumentUrl, uniqueCompareKeys
 } from './energy-figures.util';
 
 function loc(p: { bfsNr?: string; bfsStatus?: string }) {
@@ -139,5 +139,49 @@ describe('compareRow', () => {
     ), 2026);
     expect(row).toMatchObject({ name: 'Stäfa', bfsNr: 158, solarPotentialUsage: 13, elecPerCapitaMwh: 5 });
     expect(row.tariff).toMatchObject({ min: 27.38, isFallback: false });
+  });
+});
+
+describe('ENERGY_REPORTER_URL', () => {
+  it('is the Energie Reporter site the licence requires a link to', () => {
+    expect(ENERGY_REPORTER_URL).toBe('https://www.energiereporter.ch');
+  });
+});
+
+describe('formatShare', () => {
+  it('shows a fraction as percent with one decimal', () => {
+    expect(formatShare(0.077988)).toBe('7.8 %');
+    expect(formatShare(0.30811)).toBe('30.8 %');
+  });
+  it('shows zero as a value', () => {
+    expect(formatShare(0)).toBe('0.0 %');
+  });
+  it('gives undefined for a missing value, never 0 or a dash', () => {
+    expect(formatShare(undefined)).toBeUndefined();
+    expect(formatShare(null)).toBeUndefined();
+    expect(formatShare(Number.NaN)).toBeUndefined();
+  });
+});
+
+describe('formatTariffRange', () => {
+  it('shows min and max with an en dash', () => {
+    expect(formatTariffRange({ year: 2026, min: 24.1, max: 27.3, isFallback: false })).toBe('24.1\u201327.3');
+  });
+  it('shows one value when min equals max', () => {
+    expect(formatTariffRange({ year: 2026, min: 24.1, max: 24.1, isFallback: false })).toBe('24.1');
+  });
+  it('gives undefined without a tariff', () => {
+    expect(formatTariffRange(undefined)).toBeUndefined();
+  });
+});
+
+describe('formatDecimal', () => {
+  it('shows one decimal and keeps zero', () => {
+    expect(formatDecimal(2.43)).toBe('2.4');
+    expect(formatDecimal(0)).toBe('0.0');
+  });
+  it('gives undefined for a missing value', () => {
+    expect(formatDecimal(undefined)).toBeUndefined();
+    expect(formatDecimal(null)).toBeUndefined();
   });
 });

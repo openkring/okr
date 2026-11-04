@@ -6,7 +6,7 @@ import { tariffChartOption, trendChartOption } from './energy-chart.util';
 
 type Series = { name?: string; type?: string; stack?: string; connectNulls?: boolean; data: unknown[] };
 
-const LABELS = { energy: 'Energie', gridUsage: 'Netz', charge: 'Abgaben', aidFee: 'Förderabgabe', future: 'angekündigt' };
+const LABELS = { energy: 'Energie', gridUsage: 'Netz', charge: 'Abgaben', aidFee: 'Förderabgabe', future: 'angekündigt', unit: 'ct./kWh' };
 
 function tariff(year: number, operatorName: string): EnergyTariff {
   return { year, operatorName, total: 8, energy: 4, gridUsage: 2, charge: 1, aidFee: 1 };
@@ -34,6 +34,10 @@ describe('tariffChartOption', () => {
     expect(series.map((s) => s.name)).toEqual(['Energie', 'Netz', 'Abgaben', 'Förderabgabe']);
     expect(new Set(series.map((s) => s.stack)).size).toBe(1);
     expect((opt.xAxis as { data: string[] }).data).toEqual(['2025', '2026', '2027 (angekündigt)']);
+  });
+  it('takes the y-axis name from the label, not from a hard-coded unit', () => {
+    const opt = tariffChartOption(rows.filter((r) => r.operatorName === 'A'), LABELS, 2026);
+    expect((opt.yAxis as { name: string }).name).toBe('ct./kWh');
   });
   it('lightens a future year and names it', () => {
     const opt = tariffChartOption(rows.filter((r) => r.operatorName === 'A'), LABELS, 2026);
