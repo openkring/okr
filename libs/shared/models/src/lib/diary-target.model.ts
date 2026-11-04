@@ -40,9 +40,14 @@ export interface DiarySourceModel {
   pulls: DiaryPull[];
 }
 
-/** What a user allowed one diary to collect from this app. Written only by the callable `setDiaryConsent` (D-R10). */
+/**
+ * What a user allowed one diary to collect from this app. Written only by the callable `setDiaryConsent` (D-R10).
+ * `uid` is the diary's owner, not just the tenant: an admin of the diary app who replaces the person's account there
+ * gets no consent with it (spec 1.77 §12.2, D-R11).
+ */
 export interface DiaryConsent {
   tenantId: string;
+  uid: string;
   sources: DiarySource[];
 }
 

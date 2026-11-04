@@ -4,8 +4,9 @@ export type DiaryConsentState = 'none' | 'waiting' | 'confirmed' | 'partial';
 
 /**
  * One diary's view of one source app as a `DiaryTarget`, so `resolveDiaryTargets` stays the only date rule (spec 1.77
- * §12.5). Its sources are what the diary pulls and the source app allowed (`consents` of the source user); the diary
- * app collecting from itself needs no consent (D-R3). Undefined = this diary has no pull for that app. Pure.
+ * §12.5). Its sources are what the diary pulls and the source app allowed this owner (`consents` of the source user,
+ * D-R11); the diary app collecting from itself needs no consent (D-R3). Undefined = this diary has no pull for that
+ * app. Pure.
  */
 export function pullToTarget(
   doc: DiarySourceModel | undefined,
@@ -16,7 +17,7 @@ export function pullToTarget(
   const pull = (doc?.pulls ?? []).find((p) => p.tenantId === sourceTenant);
   if (!pull) return undefined;
   const pulled = pull.sources ?? [];
-  const allowed = (consents ?? []).find((c) => c.tenantId === diaryTenant)?.sources ?? [];
+  const allowed = (consents ?? []).find((c) => c.tenantId === diaryTenant && c.uid === doc?.authorKey)?.sources ?? [];
   return {
     tenantId: diaryTenant,
     sources: diaryTenant === sourceTenant ? pulled : pulled.filter((s) => allowed.includes(s)),
@@ -40,7 +41,7 @@ export function gainedSource(
   diaryTenant: string,
   source: DiarySource,
 ): boolean {
-  const has = (list: DiaryConsent[] | undefined) =>
-    (list ?? []).some((c) => c.tenantId === diaryTenant && (c.sources ?? []).includes(source));
-  return !has(before) && has(after);
+  const now = after.find((c) => c.tenantId === diaryTenant);
+  if (!now || !(now.sources ?? []).includes(source)) return false;
+  return !(before ?? []).some((c) => c.tenantId === diaryTenant && c.uid === now.uid && (c.sources ?? []).includes(source));
 }

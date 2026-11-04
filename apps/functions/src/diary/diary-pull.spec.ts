@@ -5,8 +5,8 @@ import { selectDiaryPulls, type PullUser } from './diary-pull';
 const src = (over: Partial<PullUser> = {}): PullUser => ({ id: 'uScs', tenants: ['scs'], ...over });
 const diary = (id: string, tenant: string, over: Partial<PullUser> = {}): PullUser => ({ id, tenants: [tenant], ...over });
 const target = (tenantId: string, sources: DiarySource[]): DiaryTarget => ({ tenantId, sources, from: '', to: '' });
-const pullDoc = (tenantId: string, sources: DiarySource[], from = '', to = ''): DiarySourceModel =>
-  ({ okey: 'x', tenants: ['bka'], authorKey: 'x', from, to, pulls: [{ tenantId, sources }] });
+const pullDoc = (tenantId: string, sources: DiarySource[], from = '', to = '', authorKey = 'uBka'): DiarySourceModel =>
+  ({ okey: authorKey, tenants: ['bka'], authorKey, from, to, pulls: [{ tenantId, sources }] });
 
 function select(over: { users: PullUser[]; docs?: Record<string, DiarySourceModel | undefined>; diaryTenants?: string[]; noLogin?: string[]; date?: string; sourceTenant?: string }) {
   return selectDiaryPulls({
@@ -21,7 +21,7 @@ function select(over: { users: PullUser[]; docs?: Record<string, DiarySourceMode
 }
 
 describe('selectDiaryPulls', () => {
-  const consented = { diaryConsents: [{ tenantId: 'bka', sources: ['taskDone' as const] }] };
+  const consented = { diaryConsents: [{ tenantId: 'bka', uid: 'uBka', sources: ['taskDone' as const] }] };
 
   it('sends when pull and consent both allow it', () => {
     expect(select({ users: [src(consented), diary('uBka', 'bka')], docs: { uBka: pullDoc('scs', ['taskDone']) } }))
@@ -35,6 +35,11 @@ describe('selectDiaryPulls', () => {
   it('reports a pull without consent', () => {
     expect(select({ users: [src(), diary('uBka', 'bka')], docs: { uBka: pullDoc('scs', ['taskDone']) } }))
       .toEqual([{ tenantId: 'bka', uid: 'uBka', status: 'skipped-no-consent' }]);
+  });
+  it('does not let a new account inherit the old account\'s consent', () => {
+    const users = [src(consented), diary('uNew', 'bka')];
+    expect(select({ users, docs: { uNew: pullDoc('scs', ['taskDone'], '', '', 'uNew') } }))
+      .toEqual([{ tenantId: 'bka', uid: 'uNew', status: 'skipped-no-consent' }]);
   });
   it('ignores a consent without a pull', () => {
     expect(select({ users: [src(consented), diary('uBka', 'bka')], docs: { uBka: pullDoc('p13', ['taskDone']) } })).toEqual([]);
@@ -54,9 +59,9 @@ describe('selectDiaryPulls', () => {
     expect(select({ users: [src({ ...consented, isArchived: true }), diary('uBka', 'bka')], docs })).toEqual([]);
   });
   it('keeps the live diary when the other is dead', () => {
-    const users = [src({ diaryConsents: [{ tenantId: 'bka', sources: ['taskDone'] }, { tenantId: 'jp', sources: ['taskDone'] }] }),
+    const users = [src({ diaryConsents: [{ tenantId: 'bka', uid: 'uBka', sources: ['taskDone'] }, { tenantId: 'jp', uid: 'uJp', sources: ['taskDone'] }] }),
       diary('uBka', 'bka', { isArchived: true }), diary('uJp', 'jp')];
-    expect(select({ users, docs: { uBka: pullDoc('scs', ['taskDone']), uJp: pullDoc('scs', ['taskDone']) }, diaryTenants: ['bka', 'jp'] }))
+    expect(select({ users, docs: { uBka: pullDoc('scs', ['taskDone']), uJp: pullDoc('scs', ['taskDone'], '', '', 'uJp') }, diaryTenants: ['bka', 'jp'] }))
       .toEqual([{ tenantId: 'jp', uid: 'uJp', status: 'ok' }]);
   });
   it('keeps the period', () => {

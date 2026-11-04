@@ -7,7 +7,7 @@ import { DIARY_SOURCES, DiaryConsent, DiaryPull, DiarySource, DiarySourceModel, 
 import { checkAppCheckToken } from '@okr/shared-util-functions';
 
 import { sweepRecordings } from '../trip/recording-diary';
-import { liveUsers, readPullUsers } from './diary-pull';
+import { liveUsers, readPullUsers, type PullUser } from './diary-pull';
 
 export interface SetDiaryConsentRequest {
   /** the Tagebuch-App that asked */
@@ -36,6 +36,17 @@ export function validateConsentRequest(data: Partial<SetDiaryConsentRequest> | u
 }
 
 /**
+ * Whose request a consent answers: the one live user in the diary tenant, when the caller is the one live user here.
+ * With two in either tenant nobody can tell, the same gate as `selectDiaryPulls`. Pure.
+ */
+export function consentDiaryUid(live: PullUser[], callerUid: string, ownTenant: string, diaryTenantId: string): string | undefined {
+  const inTenant = (tenantId: string) => live.filter((u) => (u.tenants ?? []).includes(tenantId));
+  const here = inTenant(ownTenant);
+  const there = inTenant(diaryTenantId);
+  return here.length === 1 && here[0].id === callerUid && there.length === 1 ? there[0].id : undefined;
+}
+
+/**
  * The consent after this call (spec 1.77 §12.4): only rows the diary asked for are stored, so a consent never gets ahead
  * of its request; [] removes the entry and always works, the diary may be gone. `sweep` = the consent newly gained
  * `tracker` (D-R8). Pure.
@@ -43,14 +54,15 @@ export function validateConsentRequest(data: Partial<SetDiaryConsentRequest> | u
 export function decideConsent(input: {
   current: DiaryConsent[] | undefined;
   diaryTenantId: string;
+  diaryUid: string;
   sources: DiarySource[];
   pull: DiaryPull | undefined;
 }): { next: DiaryConsent[]; sources: DiarySource[]; sweep: boolean } {
-  const { current, diaryTenantId, sources, pull } = input;
+  const { current, diaryTenantId, diaryUid, sources, pull } = input;
   if (sources.length > 0 && !pull) throw new HttpsError('failed-precondition', 'no request from that diary');
   const stored = (pull?.sources ?? []).filter((s) => sources.includes(s));
   const others = (current ?? []).filter((c) => c.tenantId !== diaryTenantId);
-  const next = stored.length > 0 ? [...others, { tenantId: diaryTenantId, sources: stored }] : others;
+  const next = stored.length > 0 ? [...others, { tenantId: diaryTenantId, uid: diaryUid, sources: stored }] : others;
   return { next, sources: stored, sweep: gainedSource(current, next, diaryTenantId, 'tracker') };
 }
 
@@ -76,12 +88,12 @@ export const setDiaryConsent = onCall<SetDiaryConsentRequest, Promise<SetDiaryCo
     if (!personKey || !ownTenant) throw new HttpsError('failed-precondition', 'no person');
     if (diaryTenantId === ownTenant) throw new HttpsError('invalid-argument', 'the diary app needs no confirmation');
 
-    // exactly one live user there, as in selectDiaryPulls: with two nobody can tell whose request this answers
-    const diaryUsers = (await liveUsers(await readPullUsers(db, personKey))).filter((u) => (u.tenants ?? []).includes(diaryTenantId));
-    const doc = diaryUsers.length === 1 ? (await db.collection(DiarySourcesCollection).doc(diaryUsers[0].id).get()).data() as DiarySourceModel | undefined : undefined;
+    // a revocation looks at nothing: it must work whatever state the diary and Auth are in
+    const diaryUid = sources.length > 0 ? consentDiaryUid(await liveUsers(await readPullUsers(db, personKey)), uid, ownTenant, diaryTenantId) : undefined;
+    const doc = diaryUid ? (await db.collection(DiarySourcesCollection).doc(diaryUid).get()).data() as DiarySourceModel | undefined : undefined;
     const decision = decideConsent({
       current: user['diaryConsents'] as DiaryConsent[] | undefined,
-      diaryTenantId, sources,
+      diaryTenantId, diaryUid: diaryUid ?? '', sources,
       pull: (doc?.pulls ?? []).find((p) => p.tenantId === ownTenant),
     });
     await userRef.update({ diaryConsents: decision.next });

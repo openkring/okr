@@ -4,7 +4,8 @@ import { buildDiaryPullOptions } from './list-my-diary-pull-options';
 
 const input = (over: Partial<Parameters<typeof buildDiaryPullOptions>[0]> = {}) => ({
   ownTenant: 'bka',
-  users: [{ id: 'uBka', tenants: ['bka'] }, { id: 'uScs', tenants: ['scs'], diaryConsents: [{ tenantId: 'bka', sources: ['tracker' as const] }] }, { id: 'uOkr', tenants: ['okr'] }],
+  uid: 'uBka',
+  users: [{ id: 'uBka', tenants: ['bka'] }, { id: 'uScs', tenants: ['scs'], diaryConsents: [{ tenantId: 'bka', uid: 'uBka', sources: ['tracker' as const] }] }, { id: 'uOkr', tenants: ['okr'] }],
   loginTenants: ['bka', 'okr', 'scs'],
   configs: {
     bka: { appName: 'Bruno', enabledFeatures: ['diary', 'task'] },
@@ -21,6 +22,9 @@ describe('buildDiaryPullOptions', () => {
       { tenantId: 'bka', title: 'Bruno', logoUrl: '', sources: ['taskDone'], consented: [], own: true },
       { tenantId: 'scs', title: 'Seeclub', logoUrl: 's.png', sources: ['taskDone', 'tracker'], consented: ['tracker'], own: false },
     ]);
+  });
+  it('does not show a consent given to another account as confirmed', () => {
+    expect(buildDiaryPullOptions(input({ uid: 'uNew' })).find((c) => c.tenantId === 'scs')?.consented).toEqual([]);
   });
   it('offers nothing in an app without a diary', () => expect(buildDiaryPullOptions(input({ ownTenant: 'scs' }))).toEqual([]));
   it('does not offer tracker from the diary app itself: its recordings are there already', () => {

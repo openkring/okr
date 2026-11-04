@@ -81,7 +81,7 @@ export function selectDiaryPulls(input: {
       if (resolveDiaryTargets(legacy, source, date).length > 0) out.push({ tenantId, uid, status: 'ok' });
       continue;
     }
-    if (!reaches(pullToTarget(doc, tenantId, sourceTenant, [{ tenantId, sources: [...DIARY_SOURCES] }]))) continue;
+    if (!reaches(pullToTarget(doc, tenantId, sourceTenant, [{ tenantId, uid: doc.authorKey, sources: [...DIARY_SOURCES] }]))) continue;
     out.push({ tenantId, uid, status: reaches(pullToTarget(doc, tenantId, sourceTenant, sourceUser.diaryConsents)) ? 'ok' : 'skipped-no-consent' });
   }
   return out;

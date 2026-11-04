@@ -30,13 +30,14 @@ const str = (v: unknown): string => (typeof v === 'string' ? v : '');
  */
 export function buildDiaryPullOptions(input: {
   ownTenant: string;
+  uid: string;
   users: PullUser[];
   loginTenants: string[];
   configs: Record<string, Record<string, unknown> | undefined>;
   rollouts: FeatureRollout[];
   catalogue?: FeatureBlock[];
 }): DiaryPullColumn[] {
-  const { ownTenant, users, loginTenants, configs, rollouts, catalogue } = input;
+  const { ownTenant, uid, users, loginTenants, configs, rollouts, catalogue } = input;
   if (!effectiveOf(configs, rollouts, ownTenant, catalogue).has('diary')) return [];
   const tenants = [ownTenant, ...loginTenants.filter((t) => t !== ownTenant)];
   return tenants.flatMap((tenantId) => {
@@ -45,7 +46,7 @@ export function buildDiaryPullOptions(input: {
     const sources = own ? offered.filter((s) => s !== 'tracker') : offered;
     if (sources.length === 0) return [];
     const user = users.find((u) => u.isArchived !== true && (u.tenants ?? []).includes(tenantId));
-    const consented = (user?.diaryConsents ?? []).find((c) => c.tenantId === ownTenant)?.sources ?? [];
+    const consented = (user?.diaryConsents ?? []).find((c) => c.tenantId === ownTenant && c.uid === uid)?.sources ?? [];
     const cfg = configs[tenantId] ?? {};
     return [{ tenantId, title: str(cfg['appName']) || tenantId, logoUrl: str(cfg['logoUrl']), sources, consented, own }];
   });
@@ -67,7 +68,7 @@ export const listMyDiaryPullOptions = onCall(
 
     const { configs, rollouts } = await readTenantFacts(db, [...new Set([...tenants, ownTenant])]);
     const users = await readPullUsers(db, personKey);
-    const columns = buildDiaryPullOptions({ ownTenant, users, loginTenants: tenants, configs, rollouts, catalogue: FEATURE_BLOCKS });
+    const columns = buildDiaryPullOptions({ ownTenant, uid, users, loginTenants: tenants, configs, rollouts, catalogue: FEATURE_BLOCKS });
     logger.info(`${CF_NAME}: uid=${uid} tenant=${ownTenant} columns=[${columns.map((c) => c.tenantId).join(', ')}]`);
     return { columns };
   },
