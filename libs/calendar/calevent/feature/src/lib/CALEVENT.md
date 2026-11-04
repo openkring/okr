@@ -34,7 +34,7 @@ Collection name: `calevents`
 | `periodicity` | string | Recurrence rule: `once`, `daily`, `weekly`, `biweekly`, `monthly`, etc. |
 | `repeatUntilDate` | string | Last date for generating series instances |
 | `seriesId` | string | Shared ID for all instances of a recurring series |
-| `locationKey` | string | `name@key` reference to a `LocationModel` |
+| `locations` | AvatarInfo[] | The first entry is the event's location. `key` = okey of a `LocationModel`, `key ''` = free text. Absent on documents not yet migrated: always read through `getEventLocationName`. |
 | `calendars` | string[] | List of calendar `okey` values this event belongs to |
 | `url` | string | External link (album, website, document) |
 | `responsiblePersons` | AvatarInfo[] | Persons responsible for the event |

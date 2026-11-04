@@ -1,7 +1,7 @@
 import { AttendanceEntry, Attendee, AvatarInfo, CalEventModel, InvitationState } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ATTENDANCE_FIELDS, confirmedOccurrences, resetAttendance, withoutAttendance, withoutCourseFields, addInvitedAttendee, removeInvitedAttendee, bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getCaleventIndex, getPublicCaleventIndex, getSeriesUpdateFields, isCaleventInView, isCalEvent, isFullDayEvent, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isCaleventFull, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, positionToLocationKey, splitAttendees, toInvitationState } from './calevent.util';
+import { ATTENDANCE_FIELDS, confirmedOccurrences, resetAttendance, withoutAttendance, withoutCourseFields, addInvitedAttendee, removeInvitedAttendee, bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getCaleventIndex, getPublicCaleventIndex, getSeriesUpdateFields, isCaleventInView, isCalEvent, isFullDayEvent, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isCaleventFull, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, splitAttendees, toInvitationState } from './calevent.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -503,15 +503,6 @@ describe('bestScheduleColumn', () => {
   });
 });
 
-describe('positionToLocationKey', () => {
-  it('keeps the name@key shape with the coordinates as the name', () => {
-    expect(positionToLocationKey(47.2309612, 8.7492145)).toBe('47.23096, 8.74921@');
-  });
-  it('splits back into the coordinates and an empty key', () => {
-    expect(positionToLocationKey(47.5, 8).split('@')).toEqual(['47.50000, 8.00000', '']);
-  });
-});
-
 describe('buildSchedulePollLink', () => {
   it('builds the deep link into the group calendar', () => {
     expect(buildSchedulePollLink('https://scs.app', 'cal1', 'abc'))
@@ -741,12 +732,12 @@ describe('isCaleventInView', () => {
 
 describe('getPublicCaleventIndex', () => {
   const event = Object.assign(new CalEventModel('scs'), {
-    name: 'Training U14', startDate: '20261105', locationKey: 'Halle@l1', calendars: ['public', 'kids'],
+    name: 'Training U14', startDate: '20261105', locations: [{ key: 'l1', name1: 'Halle', name2: '', label: 'Halle', modelType: 'location', type: '', subType: '' } as AvatarInfo], calendars: ['public', 'kids'],
     responsiblePersons: [{ key: 'pT', name1: 'Tina', name2: 'Trainerli' } as AvatarInfo],
   });
 
   it('has the date, name, location and calendars of the full index', () => {
-    expect(getPublicCaleventIndex(event)).toBe('d:20261105 n:Training U14 l:Halle@l1 c:public,kids');
+    expect(getPublicCaleventIndex(event)).toBe('d:20261105 n:Training U14 l:Halle c:public,kids');
   });
 
   it('never contains a responsible person, unlike the full index', () => {

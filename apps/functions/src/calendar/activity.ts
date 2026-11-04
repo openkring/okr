@@ -19,10 +19,10 @@
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
-import { DateFormat, getTodayStr } from '@okr/shared-util-core';
+import { DateFormat, getEventLocationName, getTodayStr } from '@okr/shared-util-core';
 
 import { pushToPersons } from '../srv/push';
-import { commentEmail, eventWhen, locationLabel } from './mail';
+import { commentEmail, eventWhen } from './mail';
 import { brandOf, eventUrl, notifyPersons, tenantLinks, TenantLinks } from './deliver';
 import {
   caleventDeepLink,
@@ -150,7 +150,7 @@ export const onCalEventCommentCreated = onDocumentCreated(
         ...brandOf(links),
         eventName: event.name ?? '',
         when: eventWhen(event.startDate, event.startTime),
-        location: locationLabel(event.locationKey),
+        location: getEventLocationName(event),
         authorName: author,
         comment: comment.description ?? '',
         eventUrl: eventUrl(links, caleventKey),

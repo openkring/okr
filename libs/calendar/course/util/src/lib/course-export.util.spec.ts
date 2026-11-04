@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import { AttendanceEntry, AvatarInfo, CalEventModel, CourseFinanceModel, CourseModel, JsReportSettings, MoneyModel } from '@okr/shared-models';
 
+import { freeTextLocationAvatar } from '@okr/shared-util-core';
+
 import { computeCompensation } from './course-compensation.util';
 import { buildGenericCsvRows, buildJsAwkRows, DEFAULT_JS_TYPE_MAPPING, JS_AWK_HEADER } from './course-export.util';
 import { allowedJsDurations, isCompleteJsSettings } from './js-durations';
@@ -35,7 +37,7 @@ function training(
   e.startDate = date;
   e.startTime = time;
   e.durationMinutes = minutes;
-  e.locationKey = location;
+  e.locations = location ? [freeTextLocationAvatar(location.replace(/@[^@]*$/, ''))] : [];
   e.attendance = Object.fromEntries(attendance);
   e.attendanceConfirmedAt = '20261105210000';
   return Object.assign(e, over);

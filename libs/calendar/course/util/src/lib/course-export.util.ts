@@ -1,5 +1,5 @@
 import { AttendanceEntry, CalEventModel, CourseModel, JsReportSettings } from '@okr/shared-models';
-import { convertDateFormatToString, DateFormat, getExternalId } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, getEventLocationName, getExternalId } from '@okr/shared-util-core';
 
 import { CompensationLine } from './course-compensation.util';
 import { CourseTable, courseEvents } from './course-table.util';
@@ -36,13 +36,6 @@ export function csvText(value: string): string {
   return /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
 }
 
-/** The location name of a `name@key` location key (the key is the part after the last `@`); '' when there is none. */
-function locationName(locationKey: string | undefined): string {
-  const value = locationKey ?? '';
-  const at = value.lastIndexOf('@');
-  return at < 0 ? value : value.slice(0, at);
-}
-
 function byLeaderThenName(a: AttendanceEntry, b: AttendanceEntry): number {
   return (
     Number(b.function === 'leader') - Number(a.function === 'leader') ||
@@ -67,7 +60,7 @@ function checkJsEvent(
   let duration = '';
   if (activityType === 'Training') {
     if (event.fullDay || !event.startTime) findings.push('fullDayTraining'); // ZEIT is required
-    if (!locationName(event.locationKey)) findings.push('missingLocation');
+    if (!getEventLocationName(event)) findings.push('missingLocation');
   }
 
   if (!(activityType === 'Training' && findings.indexOf('fullDayTraining') >= 0)) {
@@ -137,7 +130,7 @@ export function buildJsAwkRows(
         activityType,
         isTraining ? event.startTime : '',
         check.duration,
-        isTraining ? csvText(locationName(event.locationKey)) : '',
+        isTraining ? csvText(getEventLocationName(event)) : '',
       ]);
     }
   }

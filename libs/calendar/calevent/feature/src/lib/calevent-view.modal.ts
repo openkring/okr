@@ -5,8 +5,8 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, IonIcon, IonIte
 
 import { CalEventModel, CalEventModelName, CategoryListModel, LocationModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
-import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
-import { addTime, convertDateFormatToString, DateFormat, getWeekdayI18nKey, getSafeLinkUrl, hasRole } from '@okr/shared-util-core';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { addTime, convertDateFormatToString, DateFormat, getEventLocationKey, getEventLocationName, getWeekdayI18nKey, getSafeLinkUrl, hasRole } from '@okr/shared-util-core';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -31,7 +31,7 @@ function storeToView(d: string): string {
   selector: 'okr-calevent-view-modal',
   standalone: true,
   imports: [
-    PartPipe, SvgIconPipe,
+    SvgIconPipe,
     Header, AvatarDisplay, DocumentsAccordion, CommentsAccordion, AttendeesAccordion, TransitConnections,
     IonContent, IonCard, IonCardContent, IonAccordionGroup, IonItem, IonLabel, IonIcon,
   ],
@@ -94,12 +94,12 @@ function storeToView(d: string): string {
             }
 
             <!-- Location -->
-            @if(calevent().locationKey) {
+            @if(locationName()) {
                 <ion-item lines="none">
                 <ion-icon slot="start" src="{{'location' | svgIcon}}" />
                 <ion-label>
                     <p class="view-label">{{ i18n.location() }}</p>
-                    <p class="view-value">{{ calevent().locationKey | part:true }}</p>
+                    <p class="view-value">{{ locationName() }}</p>
                 </ion-label>
                 </ion-item>
             }
@@ -196,8 +196,9 @@ export class CalEventViewModal {
 
   private readonly locationService = inject(LocationService);
   protected readonly transitI18n = inject(I18nService).translateAll(TRANSIT_I18N_KEYS);
-  /** `locationKey` is `name@okey`; only the okey identifies the location */
-  private readonly locationOkey = computed(() => (this.calevent().locationKey ?? '').split('@').pop()?.trim() ?? '');
+  protected readonly locationName = computed(() => getEventLocationName(this.calevent()));
+  /** Empty for a free-text location: only a location document has coordinates for the connections. */
+  private readonly locationOkey = computed(() => getEventLocationKey(this.calevent()));
   private readonly location = toSignal(
     toObservable(this.locationOkey).pipe(
       switchMap((okey) => (okey ? this.locationService.read(okey) : of(undefined))),

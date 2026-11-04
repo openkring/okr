@@ -4,10 +4,10 @@ import { ActionSheetController } from '@ionic/angular/lazy';
 import { Router } from '@angular/router';
 
 import { CalEventModel, RoleName } from '@okr/shared-models';
-import { LabelPipe, SvgIconPipe } from '@okr/shared-pipes';
+import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error, navigateByUrl } from '@okr/shared-util-angular';
-import { extractSecondPartOfOptionalTupel, getAttendanceColor, getAttendanceIcon, getAttendanceState, getYearFromDate, hasRole, contextMenuId } from '@okr/shared-util-core';
+import { getAttendanceColor, getAttendanceIcon, getAttendanceState, getEventLocationName, getYearFromDate, hasRole, contextMenuId } from '@okr/shared-util-core';
 import { canAttendCalevent, isAttendanceClosed, mayJoinOpenCalevent } from '@okr/calendar-calevent-util';
 
 import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
@@ -29,7 +29,7 @@ type AttendanceFilter = AttendanceState | 'all';
     selector: 'okr-yearly-events',
     standalone: true,
     imports: [
-    SvgIconPipe, LabelPipe,
+    SvgIconPipe,
     Spinner, EmptyList, Menu, ListFilter, AvatarDisplay,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonList, IonPopover
@@ -125,7 +125,7 @@ type AttendanceFilter = AttendanceState | 'all';
               <ion-label>{{ getYearFromDate(event.startDate) }}</ion-label>
               <ion-label class="ion-hide-md-down"><okr-avatar-display [avatars]="event.responsiblePersons" [showName]="true" /></ion-label>
               <ion-label class="ion-hide-md-up"><okr-avatar-display [avatars]="event.responsiblePersons" [showName]="false" /></ion-label>
-              <ion-label>{{ event.locationKey | label }}</ion-label>
+              <ion-label>{{ locationLabel(event) }}</ion-label>
               <ion-label class="ion-hide-lg-down">{{ event.description }}</ion-label>
               <!-- a configured link opens in the same tab; the click must not open the ActionSheet.
                    The href stays on the anchor so hover/copy-link/middle-click keep working, but a
@@ -170,7 +170,7 @@ export class YearlyEvents {
   private readonly sortAsc = signal(true);
 
   /**
-   * `location` sorts by what the column shows (the `label` pipe part of `locationKey`),
+   * `location` sorts by what the column shows (`locationLabel`),
    * `responsible` by the last name of the first responsible person.
    */
   protected filteredCalEvents = computed(() => {
@@ -332,9 +332,9 @@ export class YearlyEvents {
     this.sortField.set(field);
   }
 
-  /** The location text shown in the column — identical to the `label` pipe on `locationKey`. */
-  private locationLabel(event: CalEventModel): string {
-    return extractSecondPartOfOptionalTupel(event.locationKey ?? '', '@');
+  /** The location text shown in the column. */
+  protected locationLabel(event: CalEventModel): string {
+    return getEventLocationName(event);
   }
 
   /** The last name of the first responsible person, i.e. what the column leads with. */

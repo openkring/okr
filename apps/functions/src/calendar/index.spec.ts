@@ -12,7 +12,7 @@ const event = {
   endDate: '',
   periodicity: 'once',
   repeatUntilDate: '',
-  locationKey: '',
+  locations: [],
   url: '',
   isArchived: false,
   calendars: [],

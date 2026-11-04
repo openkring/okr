@@ -3,11 +3,11 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote, IonRow } from '@ionic/angular';
 
 import { ChFutureDate, LowercaseWordMask } from '@okr/shared-config';
-import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TIME, DEFAULT_URL, MAX_DATES_PER_SERIES, NAME_LENGTH } from '@okr/shared-constants';
+import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TIME, DEFAULT_URL, MAX_DATES_PER_SERIES, NAME_LENGTH } from '@okr/shared-constants';
 import { AvatarInfo, CalEventModel, CategoryListModel, LocationModel, RoleName, UserModel } from '@okr/shared-models';
 import { AddChip, CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringList, TextInput, TextInputI18n, TimeInput, TimeInputI18n, UrlInput, UrlInputI18n } from '@okr/shared-ui';
 import { MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
-import { coerceBoolean, convertDateFormatToString, DateFormat, extractFirstPartOfOptionalTupel, fill, hasRole } from '@okr/shared-util-core';
+import { coerceBoolean, convertDateFormatToString, DateFormat, fill, freeTextLocationAvatar, getEventLocationName, hasRole, locationToAvatar } from '@okr/shared-util-core';
 import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { Avatars } from '@okr/avatar-ui';
@@ -202,10 +202,9 @@ const DEFAULT_RECURRING_PERIODICITY = 'weekly';
             @if(canExpert() && !isPersonal()) {
               <ion-row>
                 <ion-col size="12">
-                  <!-- typing filters the known locations; picking one stores 'name@okey',
+                  <!-- typing filters the known locations; picking one stores its avatar,
                        otherwise the typed text is kept as a free-text location -->
                   <okr-text-input [i18n]="locationKeyI18n()" [value]="locationLabel()" (valueChange)="onLocationInput($event)" [readOnly]="isReadOnly()" />
-                  <okr-error-note [errors]="locationKeyErrors()" />
                   @if(locationSuggestions().length > 0) {
                     <ion-list lines="inset">
                       @for(loc of locationSuggestions(); track loc.okey) {
@@ -368,7 +367,6 @@ export class CalEventForm {
   protected durationMinutesErrors = computed(() => this.validationResult().getErrors('durationMinutes'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected repeatUntilDateErrors = computed(() => this.validationResult().getErrors('repeatUntilDate'));
-  protected locationKeyErrors = computed(() => this.validationResult().getErrors('locationKey'));
   // stringArrayValidations files a bad tag under 'tags[0]', not 'tags' — collect both
   protected tagsErrors = computed(() => this.errorsFor('tags'));
   protected maxAttendeesErrors = computed(() => this.validationResult().getErrors('maxAttendees'));
@@ -380,7 +378,6 @@ export class CalEventForm {
   private readonly fieldsWithOwnErrorNote = computed(() => {
     const fields = ['name'];
     if (!this.isPersonal() && this.isRecurring()) fields.push('repeatUntilDate');
-    if (this.canExpert() && !this.isPersonal()) fields.push('locationKey');
     if (this.expertMode() && !this.isPersonal()) fields.push('tags');
     if (!this.isPersonal()) fields.push('maxAttendees');
     return fields;
@@ -483,9 +480,7 @@ export class CalEventForm {
   protected repeatUntilDate = computed(() => this.formData().repeatUntilDate ?? DEFAULT_DATE);
   protected url = computed(() => this.formData().url ?? DEFAULT_URL);
   protected urlLabel = computed(() => this.formData().urlLabel ?? DEFAULT_LABEL);
-  protected locationKey = computed(() => this.formData().locationKey ?? DEFAULT_KEY);
-  // the field shows the readable part of 'name@okey' (or the free text if no location was picked)
-  protected locationLabel = computed(() => extractFirstPartOfOptionalTupel(this.formData().locationKey ?? '', '@'));
+  protected locationLabel = computed(() => getEventLocationName(this.formData()));
   /** the url/urlLabel pair is revealed by the add-chip; a link that is already set shows anyway */
   private linkRequested = signal(false);
   protected showLinkFields = computed(() => this.linkRequested() || this.url().length > 0);
@@ -560,7 +555,7 @@ export class CalEventForm {
   } as TextInputI18n));
 
   protected locationKeyI18n = computed(() => ({
-    name: 'locationKey',
+    name: 'location',
     label: this.i18n().locationKey_label(),
     placeholder: this.i18n().locationKey_placeholder(),
     helper: this.i18n().locationKey_helper()
@@ -679,15 +674,15 @@ export class CalEventForm {
   }
 
   /** free text: kept as-is, so an unknown location stays a plain label */
-  // the label is a computed mirror of formData.locationKey: writing locationKey updates it
+  // the label is a computed mirror of formData.locations: writing locations updates it
   protected onLocationInput(value: string): void {
     this.locationSuggestOpen.set(true);
-    this.onFieldChange('locationKey', value);
+    this.onFieldChange('locations', value ? [freeTextLocationAvatar(value)] : []);
   }
 
   protected selectLocation(location: LocationModel): void {
     this.locationSuggestOpen.set(false);
-    this.onFieldChange('locationKey', `${location.name}@${location.okey}`);
+    this.onFieldChange('locations', [locationToAvatar(location)]);
   }
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean | AvatarInfo[]): void {

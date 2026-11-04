@@ -29,6 +29,7 @@ export * from './lib/zoom.util';
 export * from './lib/index-by';
 export * from './lib/calevent-attendance.util';
 export * from './lib/invitation.util';
+export * from './lib/location-avatar.util';
 export * from './lib/log.util';
 export * from './lib/popover.util';
 export * from './lib/membership.util';

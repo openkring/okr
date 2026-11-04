@@ -373,7 +373,7 @@ const caleventsData = Array.from({ length: 40 }, (_, i) => {
     periodicity: 'once',
     repeatUntilDate: '',
     seriesId: '',
-    locationKey: '',
+    locations: [],
     calendars: [],
     url: '',
     urlLabel: '',

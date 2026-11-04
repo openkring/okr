@@ -2,6 +2,7 @@ import { onRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 import corsLib from 'cors';
+import { AvatarInfo } from '@okr/shared-models';
 import { getPublicCaleventIndex } from '@okr/calendar-calevent-util';
 
 const cors = corsLib({ origin: true });
@@ -26,6 +27,8 @@ export interface PublicCalEventDoc {
   periodicity: string;
   repeatUntilDate: string;
   seriesId: string;
+  locations: AvatarInfo[];
+  /** Always ''. A client older than `locations` pipes this string and would crash on undefined. */
   locationKey: string;
   url: string;
   urlLabel: string;
@@ -42,11 +45,20 @@ export interface PublicCalEventDoc {
 const str = (v: unknown, fallback = ''): string => (typeof v === 'string' ? v : fallback);
 const strArray = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []);
 
+/** Allow-list again: only location avatars, and only the fields of an AvatarInfo. */
+function publicLocations(v: unknown): AvatarInfo[] {
+  if (!Array.isArray(v)) return [];
+  return (v as Record<string, unknown>[]).filter(a => a?.['modelType'] === 'location').map(a => ({
+    key: str(a['key']), name1: str(a['name1']), name2: str(a['name2']), label: str(a['label']),
+    modelType: 'location', type: str(a['type']), subType: str(a['subType']),
+  }));
+}
+
 /** Projects a stored calevent onto the public allow-list. Pure. */
 export function toPublicCalEvent(okey: string, data: Record<string, unknown>): PublicCalEventDoc {
   const name = str(data['name']);
   const startDate = str(data['startDate']);
-  const locationKey = str(data['locationKey']);
+  const locations = publicLocations(data['locations']);
   const calendars = strArray(data['calendars']);
   return {
     okey,
@@ -61,14 +73,15 @@ export function toPublicCalEvent(okey: string, data: Record<string, unknown>): P
     periodicity: str(data['periodicity'], 'once'),
     repeatUntilDate: str(data['repeatUntilDate']),
     seriesId: str(data['seriesId']),
-    locationKey,
+    locations,
+    locationKey: '',
     url: str(data['url']),
     urlLabel: str(data['urlLabel']),
     state: str(data['state'], 'definitive'),
     cancelMessage: str(data['cancelMessage']),
     columnLabel: str(data['columnLabel']),
     tags: str(data['tags']),
-    index: getPublicCaleventIndex({ name, startDate, locationKey, calendars }),
+    index: getPublicCaleventIndex({ name, startDate, locations, calendars }),
     isArchived: data['isArchived'] === true,
     calendars,
     tenants: strArray(data['tenants']),

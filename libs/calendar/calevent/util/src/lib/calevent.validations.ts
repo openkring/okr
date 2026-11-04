@@ -21,10 +21,6 @@ export const calEventValidations = staticSuite((model: CalEventModel, tenants: s
   numberValidations('durationMinutes', model.durationMinutes, true, 0, 1440);
   // 0 = unrestricted; the upper bound only keeps a typo (a pasted phone number) out of the field
   numberValidations('maxAttendees', model.maxAttendees ?? 0, true, 0, 100000);
-  // LONG_NAME_LENGTH: locationKey holds a 'name@okey' tuple (a 20-char autoid plus the place
-  // name) or free text. 63 live scs events already exceed the old 30-cap
-  // ('Bootshaus - Kafipause in OST Rapperswil'), and a tuple can pass 50 as well.
-  stringValidations('locationKey', model.locationKey);
   stringValidations('periodicity', model.periodicity);
   dateValidations('repeatUntilDate', model.repeatUntilDate);
   // tbd: responsiblePersons: AvatarInfo[] - not yet implemented
@@ -66,5 +62,4 @@ export const calEventValidations = staticSuite((model: CalEventModel, tenants: s
   stringValidations('seriesId', model.seriesId ?? '');
 });
 
-// tbd: cross the locationKey to reference into locations
 

@@ -1,7 +1,7 @@
 import type { EventInput } from '@fullcalendar/core';
 
 import { Attendee, AvatarInfo, CalEventModel, InvitationState } from '@okr/shared-models';
-import { addTime, applyInvitationAnswer, convertDateFormatToString, DateFormat, getIsoDateTime, isCaleventAttendanceClosed, isPastDate, isType, toAttendeeState } from '@okr/shared-util-core';
+import { addTime, applyInvitationAnswer, convertDateFormatToString, DateFormat, getEventLocationName, getIsoDateTime, isCaleventAttendanceClosed, isPastDate, isType, toAttendeeState } from '@okr/shared-util-core';
 
 export { applyInvitationAnswer, toAttendeeState };
 
@@ -223,7 +223,7 @@ export function getSeriesUpdateFields(edited: CalEventModel, startDate: string, 
     periodicity: target.periodicity,
     repeatUntilDate: target.repeatUntilDate,
     seriesId: target.seriesId,
-    locationKey: target.locationKey,
+    locations: target.locations ?? [],
     calendars: target.calendars,
     url: target.url,
     urlLabel: target.urlLabel,
@@ -299,7 +299,7 @@ export function planSeriesReconcile(affected: CalEventModel[], dates: string[]):
 /*-------------------------- SEARCH --------------------------------*/
 export function getCaleventIndex(calevent: CalEventModel): string {
   const persons = calevent.responsiblePersons.map(p => p.name2).join(',');
-  return 'd:' + calevent.startDate + ' n:' + calevent.name + ' p:' + persons + ' l:' + calevent.locationKey + ' c:' + calevent.calendars.join(',');
+  return 'd:' + calevent.startDate + ' n:' + calevent.name + ' p:' + persons + ' l:' + getEventLocationName(calevent) + ' c:' + calevent.calendars.join(',');
 }
 
 /**
@@ -307,8 +307,8 @@ export function getCaleventIndex(calevent: CalEventModel): string {
  * responsible persons' surnames, so the public endpoint can return it without leaking who organises the event.
  * Computed on the fly (never read from the stored `index`, which contains the `p:` part).
  */
-export function getPublicCaleventIndex(calevent: Pick<CalEventModel, 'startDate' | 'name' | 'locationKey' | 'calendars'>): string {
-  return 'd:' + calevent.startDate + ' n:' + calevent.name + ' l:' + calevent.locationKey + ' c:' + calevent.calendars.join(',');
+export function getPublicCaleventIndex(calevent: Pick<CalEventModel, 'startDate' | 'name' | 'locations' | 'calendars'>): string {
+  return 'd:' + calevent.startDate + ' n:' + calevent.name + ' l:' + getEventLocationName(calevent) + ' c:' + calevent.calendars.join(',');
 }
 
 export function getCaleventIndexInfo(): string {
@@ -367,16 +367,6 @@ export function bestScheduleColumn(counts: number[]): number {
 }
 
 /** Deep link that reopens the poll: the calevent list route plus a `poll` query param. */
-/**
- * The `locationKey` of a position: coordinates as the name part, with no location behind them.
- * The trailing '@' keeps the 'name@key' shape, because the mails read a value without '@' as a bare key.
- * Stored as coordinates and not as an address: reverse geocoding would send the member's position
- * to Google Maps, which is not on the processor register (see the `privacy-model` skill).
- */
-export function positionToLocationKey(latitude: number, longitude: number): string {
-  return `${latitude.toFixed(5)}, ${longitude.toFixed(5)}@`;
-}
-
 export function buildSchedulePollLink(origin: string, calendarKey: string, seriesId: string): string {
   return `${origin.replace(/\/$/, '')}/calevent/${calendarKey}/c-calevents?poll=${seriesId}`;
 }

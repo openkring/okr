@@ -1,7 +1,8 @@
 import { onRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
-import { isCalendarPublic } from '@okr/shared-util-core';
+import { AvatarInfo } from '@okr/shared-models';
+import { getEventLocationName, isCalendarPublic } from '@okr/shared-util-core';
 
 export { getPublicCalEvents } from './public-calevents';
 export { ensureCalendarFeedToken, calendarFeed } from './feed';
@@ -24,7 +25,7 @@ interface CalEventDoc {
   endDate: string;     // yyyyMMdd — only set for multi-day full-day events
   periodicity: string; // 'once' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly' | 'workdays' | 'hourly' | 'never' | 'other'
   repeatUntilDate: string; // yyyyMMdd
-  locationKey: string; // 'name@key'
+  locations?: AvatarInfo[];
   url: string;
   isArchived: boolean;
   calendars: string[];
@@ -187,13 +188,6 @@ function toRRule(periodicity: string, repeatUntilDate: string): string {
   return rule;
 }
 
-/** Extract the human-readable name from a 'name@key' locationKey. */
-function locationName(locationKey: string): string {
-  if (!locationKey) return '';
-  const atIdx = locationKey.lastIndexOf('@');
-  return atIdx > 0 ? locationKey.substring(0, atIdx) : locationKey;
-}
-
 export interface IcsOptions {
   appOrigin?: string;
   listIdFor?: (e: CalEventDoc) => string;
@@ -235,7 +229,7 @@ export function buildICS(calendarName: string, events: CalEventDoc[], opts: IcsO
     // Serienfelder als Beschreibung der SERIE, nicht dieses Termins. Ein RRULE würde
     // sie ein zweites Mal expandieren.
     const rrule = e.seriesId ? '' : toRRule(e.periodicity, e.repeatUntilDate);
-    const loc = locationName(e.locationKey);
+    const loc = getEventLocationName(e);
 
     lines.push('BEGIN:VEVENT');
     lines.push(foldLine(`UID:${uid}`));

@@ -42,14 +42,6 @@ export function eventWhen(startDate: string | undefined, startTime: string | und
   return startTime ? `${date}, ${startTime}` : date;
 }
 
-/** The readable place of a calevent: the name part of `locationKey` ('name@key'), '' when there is none. */
-export function locationLabel(locationKey: string | undefined): string {
-  if (!locationKey) return '';
-  const at = locationKey.indexOf('@');
-  if (at < 0) return '';
-  return locationKey.slice(0, at).trim();
-}
-
 export const DEFAULT_BRAND_COLOR = '#1f6feb';
 const HEX_COLOR = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { answerPage, answerResultPage, brandColorOf, commentEmail, DEFAULT_BRAND_COLOR, escapeHtml, eventWhen, invitationEmail, locationLabel, textColorOn } from './mail';
+import { answerPage, answerResultPage, brandColorOf, commentEmail, DEFAULT_BRAND_COLOR, escapeHtml, eventWhen, invitationEmail, textColorOn } from './mail';
 
 const EVIL = '<script>alert("x")</script> & co';
 const base = { appName: 'Seeclub', brandColor: '#009D53', logoUrl: 'https://img.x/logo.png?w=96&fm=png', eventName: EVIL, when: '01.10.2026, 11:00', location: EVIL };
@@ -15,14 +15,6 @@ describe('eventWhen', () => {
   it('joins date and time', () => expect(eventWhen('20261001', '11:00')).toBe('01.10.2026, 11:00'));
   it('omits a missing time', () => expect(eventWhen('20261001', '')).toBe('01.10.2026'));
   it('is empty without a date', () => expect(eventWhen('', '11:00')).toBe(''));
-});
-
-describe('locationLabel', () => {
-  it('returns the name part before the first @', () => expect(locationLabel('Bootshaus Stäfa@x7Yq2')).toBe('Bootshaus Stäfa'));
-  it('returns empty for a bare key without @', () => expect(locationLabel('x7Yq2')).toBe(''));
-  it('returns empty for an empty string', () => expect(locationLabel('')).toBe(''));
-  it('returns empty for undefined', () => expect(locationLabel(undefined)).toBe(''));
-  it('returns empty when the name part is empty', () => expect(locationLabel('@x7Yq2')).toBe(''));
 });
 
 describe('brandColorOf', () => {

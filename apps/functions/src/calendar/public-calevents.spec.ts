@@ -6,7 +6,7 @@ describe('toPublicCalEvent', () => {
   const stored = {
     tenants: ['scs'], isArchived: false, name: 'Training U14', description: 'Halle', type: 'training',
     startDate: '20261105', startTime: '18:00', fullDay: false, durationMinutes: 90, endDate: '',
-    periodicity: 'weekly', repeatUntilDate: '20261231', seriesId: 's1', locationKey: 'Halle@l1',
+    periodicity: 'weekly', repeatUntilDate: '20261231', seriesId: 's1', locations: [{ key: 'l1', name1: 'Halle', name2: '', label: 'Halle', modelType: 'location', type: '', subType: '' }],
     url: '', urlLabel: '', state: 'definitive', cancelMessage: '', calendars: ['public'],
     courseKey: 'c1',
     attendees: [{ person: { key: 'pA', name1: 'Anna' }, state: 'accepted' }],
@@ -17,7 +17,7 @@ describe('toPublicCalEvent', () => {
     commentCount: 3,
     tags: 'kids,u14',
     columnLabel: 'Variante A',
-    index: 'd:20261105 n:Training U14 p:Trainer l:Halle@l1 c:public',
+    index: 'd:20261105 n:Training U14 p:Trainer l:Halle c:public',
   };
 
   it('never returns personal data stored on the event (attendees, course attendance, organisers)', () => {
@@ -31,9 +31,9 @@ describe('toPublicCalEvent', () => {
     expect(toPublicCalEvent('e1', stored)).toEqual({
       okey: 'e1', name: 'Training U14', description: 'Halle', type: 'training',
       startDate: '20261105', startTime: '18:00', fullDay: false, durationMinutes: 90, endDate: '',
-      periodicity: 'weekly', repeatUntilDate: '20261231', seriesId: 's1', locationKey: 'Halle@l1',
+      periodicity: 'weekly', repeatUntilDate: '20261231', seriesId: 's1', locations: [{ key: 'l1', name1: 'Halle', name2: '', label: 'Halle', modelType: 'location', type: '', subType: '' }], locationKey: '',
       url: '', urlLabel: '', state: 'definitive', cancelMessage: '', columnLabel: 'Variante A', tags: 'kids,u14',
-      index: 'd:20261105 n:Training U14 l:Halle@l1 c:public', isArchived: false,
+      index: 'd:20261105 n:Training U14 l:Halle c:public', isArchived: false,
       calendars: ['public'], tenants: ['scs'],
     });
   });

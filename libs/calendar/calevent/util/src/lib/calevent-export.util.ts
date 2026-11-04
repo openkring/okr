@@ -1,4 +1,5 @@
 import { CalEventModel } from '@okr/shared-models';
+import { getEventLocationName } from '@okr/shared-util-core';
 
 // ponytail: same hardcoded zone as buildICS in apps/functions/src/calendar/index.ts.
 const TZID = 'Europe/Zurich';
@@ -44,7 +45,7 @@ export function buildGoogleCalendarUrl(calevent: CalEventModel): string | undefi
 
   const params = new URLSearchParams({ action: 'TEMPLATE', text: calevent.name ?? '', dates, ctz: TZID });
   if (calevent.description) params.set('details', calevent.description);
-  const location = (calevent.locationKey ?? '').split('@')[0];   // 'name@key'
+  const location = getEventLocationName(calevent);
   if (location) params.set('location', location);
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }

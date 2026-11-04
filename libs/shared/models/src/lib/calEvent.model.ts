@@ -34,7 +34,7 @@ export class CalEventModel implements OkrModel, NamedModel, SearchableModel, Tag
   public repeatUntilDate = DEFAULT_DATE; // date until the event repeats
   public seriesId = DEFAULT_ID; // ID of the series if the event is part of a recurring series
 
-  public locationKey = DEFAULT_KEY; // name@key, e.g. 'Bucharest@qwerlkjqrw869sdf'
+  public locations: AvatarInfo[] = []; // first entry = the event's location; key '' = free text, else location.okey
   public calendars: string[] = DEFAULT_CALENDARS; // list of calendar keys this event belongs to
   public url = DEFAULT_URL; // a link to a website or a document
   public urlLabel = DEFAULT_LABEL; // the text shown for the url link; falls back to the url itself when empty

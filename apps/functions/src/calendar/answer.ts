@@ -12,14 +12,14 @@ import { onRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { projectID } from 'firebase-functions/params';
 import { DocumentReference, getFirestore } from 'firebase-admin/firestore';
-import { applyInvitationAnswer } from '@okr/shared-util-core';
+import { applyInvitationAnswer, getEventLocationName } from '@okr/shared-util-core';
 import { AvatarInfo, Attendee } from '@okr/shared-models';
 import { splitAttendees } from '@okr/calendar-calevent-util';
 
 import { allowedAnswers, answerFunctionUrl, invitationLinkSecret, isAnswerChoice } from './answer-link';
 import { brandOf, eventUrl, NO_TENANT_LINKS, tenantLinks } from './deliver';
 import { AnswerableEvent, InvitationDoc } from './invitation';
-import { answerPage, answerResultPage, Brand, eventWhen, locationLabel } from './mail';
+import { answerPage, answerResultPage, Brand, eventWhen } from './mail';
 import { todayStoreDate } from './recipients';
 import { toStoreDateTime } from '../srv/zurich-time';
 
@@ -180,7 +180,7 @@ export const invitationAnswer = onRequest(
           ...brand,
           eventName: event?.name ?? '',
           when: eventWhen(event?.startDate, event?.startTime),
-          location: locationLabel(event?.locationKey),
+          location: getEventLocationName(event),
           answers, state: inv.state, postUrl: answerFunctionUrl(projectID.value()), invitationKey, signature,
         }));
         return;

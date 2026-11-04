@@ -10,16 +10,16 @@ import type { CaleventFullcalendarView } from './calevent-fullcalendar-view';
 import { DEFAULT_DATE } from '@okr/shared-constants';
 import { AvatarInfo, CalendarSmallScreenView, CalEventModel, CourseModel, PersonModel, RoleName } from '@okr/shared-models';
 import { ModelSelectService } from '@okr/shared-feature';
-import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
+import { SvgIconPipe } from '@okr/shared-pipes';
 import { DateTimeSelectModal, EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { AppNavigationService, confirm, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, keepDefaultTrue, lazyService, navigateByUrl, okrPrompt, QuickEntryService, resourceParams } from '@okr/shared-util-angular';
-import { convertDateFormatToString, getTodayStr, DateFormat, addTime, debugData, extractFirstPartOfOptionalTupel, getAttendanceColor, getAttendanceIcon, getAttendanceState, getAvatarInfo, getIsoDateTime, isCalendarPublic, fill, getYear, getYearList, hasRole, parseEventString, warn, YEAR_ROLLING_WINDOW, isChatBlockedError, contextMenuId } from '@okr/shared-util-core';
+import { convertDateFormatToString, getTodayStr, DateFormat, addTime, debugData, getAttendanceColor, getAttendanceIcon, getAttendanceState, getAvatarInfo, getEventLocationName, getIsoDateTime, isCalendarPublic, fill, getYear, getYearList, hasRole, locationToAvatar, parseEventString, positionToLocationAvatar, warn, YEAR_ROLLING_WINDOW, isChatBlockedError, contextMenuId } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 import { isAdminMember } from '@okr/subject-group-util';
 
-import { CalEventDurationPipe, canAttendCalevent, courseKeysOf, courseOfKey, courseSeriesPatch, isCourseOver, isCourseTrainerFor, countPollAcceptances, countPollResponses, formatDateTimeLabel, getCalEventCssClass, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, mayJoinOpenCalevent, positionToLocationKey, resetActivity, resetAttendance, resolveCalendars, upcomingOccurrences } from '@okr/calendar-calevent-util';
+import { CalEventDurationPipe, canAttendCalevent, courseKeysOf, courseOfKey, courseSeriesPatch, isCourseOver, isCourseTrainerFor, countPollAcceptances, countPollResponses, formatDateTimeLabel, getCalEventCssClass, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, mayJoinOpenCalevent, resetActivity, resetAttendance, resolveCalendars, upcomingOccurrences } from '@okr/calendar-calevent-util';
 import { OrganiserContactModal, showCalendarSync } from '@okr/calendar-calevent-ui';
 import { CalendarFeedService } from '@okr/calendar-calevent-data-access';
 import type { OrganiserContactAction, OrganiserContactResult } from '@okr/calendar-calevent-ui';
@@ -48,7 +48,7 @@ type CalEventSortField = 'date' | 'topic' | 'location' | 'organiser';
     selector: 'okr-calevent-list',
     standalone: true,
     imports: [
-      CalEventDurationPipe, SvgIconPipe, PartPipe,
+      CalEventDurationPipe, SvgIconPipe,
       Spinner, EmptyList, AvatarDisplay, Menu, ListFilter,
       IonHeader, IonToolbar, IonButtons, IonBadge, IonChip, IonButton, IonTitle, IonMenuButton, IonIcon, IonTextarea,
       IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonList, IonPopover
@@ -323,7 +323,7 @@ type CalEventSortField = 'date' | 'topic' | 'location' | 'organiser';
                 }
                 <ion-label>{{ event | calEventDuration }}</ion-label>
                 <ion-label>{{event.name}}</ion-label>
-                <ion-label class="ion-hide-md-down">{{ event.locationKey | part:true }}</ion-label>
+                <ion-label class="ion-hide-md-down">{{ locationName(event) }}</ion-label>
                 @if(showMenu()) {
                 <ion-label class="ion-hide-md-down"><okr-avatar-display [avatars]="event.responsiblePersons" /></ion-label>
                 }
@@ -351,7 +351,7 @@ export class CalEventList implements OnInit {
   private readonly calendarFeedService = inject(CalendarFeedService);
   private readonly modelSelectService = inject(ModelSelectService);
   private selectedQuickEntryPerson = signal<PersonModel | null>(null);
-  private selectedQuickEntryLocationKey = signal('');
+  private selectedQuickEntryLocation = signal<AvatarInfo | null>(null);
   protected quickEntryText = signal('');
   private isSettingQuickEntryValue = false;
   private readonly router = inject(Router);
@@ -448,9 +448,9 @@ export class CalEventList implements OnInit {
     ));
   });
 
-  /** The location name shown in the column — `locationKey` is a `name@key` tuple. */
-  private locationName(event: CalEventModel): string {
-    return extractFirstPartOfOptionalTupel(event.locationKey ?? '');
+  /** The location name shown in the column. */
+  protected locationName(event: CalEventModel): string {
+    return getEventLocationName(event);
   }
 
   /** The last name of the first responsible person, i.e. what the organiser column leads with. */
@@ -903,8 +903,9 @@ export class CalEventList implements OnInit {
       calevent.durationMinutes = 1440;  // full day event
     }
     calevent.name = parts.name || '';
-    calevent.locationKey = this.selectedQuickEntryLocationKey() || parts.location || '';
-    this.selectedQuickEntryLocationKey.set('');
+    const location = this.selectedQuickEntryLocation();
+    calevent.locations = location ? [location] : [];
+    this.selectedQuickEntryLocation.set(null);
     const person = this.selectedQuickEntryPerson();
     if (person) {
       const avatarInfo = getAvatarInfo(person, 'person');
@@ -923,7 +924,7 @@ export class CalEventList implements OnInit {
     okrQuickEntry.value = '';
     this.quickEntryText.set('');
     this.selectedQuickEntryPerson.set(null);
-    this.selectedQuickEntryLocationKey.set('');
+    this.selectedQuickEntryLocation.set(null);
   }
 
   protected async onQuickEntryInput(textarea: IonTextarea): Promise<void> {
@@ -962,9 +963,9 @@ export class CalEventList implements OnInit {
       } else if (trigger === 'location') {
         const result = await this.modelSelectService.selectLocation('', true, false, true);
         if (result?.kind === 'predefined' || result?.kind === 'current') {
-          this.selectedQuickEntryLocationKey.set(result.kind === 'predefined'
-            ? `${result.location.name}@${result.location.okey}`
-            : positionToLocationKey(result.latitude, result.longitude));
+          this.selectedQuickEntryLocation.set(result.kind === 'predefined'
+            ? locationToAvatar(result.location)
+            : positionToLocationAvatar(result.latitude, result.longitude));
           textarea.value = this.quickEntryService.replaceToken(value, '!!', '');
         } else {
           textarea.value = value.slice(0, -2); // remove stray '!!'

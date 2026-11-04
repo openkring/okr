@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import { getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
-import { setCacheHeaders, storeDateToIso, locationName, mapCategory } from '../utils';
+import { AvatarInfo } from '@okr/shared-models';
+import { getEventLocationName } from '@okr/shared-util-core';
+import { setCacheHeaders, storeDateToIso, mapCategory } from '../utils';
 
 interface CalEventDoc {
   okey: string;
@@ -10,7 +12,7 @@ interface CalEventDoc {
   startDate: string;
   startTime: string;
   type: string;
-  locationKey: string;
+  locations?: AvatarInfo[];
   url: string;
   isArchived: boolean;
   calendars: string[];
@@ -23,7 +25,7 @@ function docToApiEvent(doc: CalEventDoc) {
     date: storeDateToIso(doc.startDate),
     time: doc.startTime || undefined,
     topic: { de: doc.name },
-    location: locationName(doc.locationKey) || undefined,
+    location: getEventLocationName(doc) || undefined,
     category: mapCategory(doc.type),
     description: doc.description ? { de: doc.description } : undefined,
     url: doc.url || undefined,

@@ -12,11 +12,13 @@
 import { onDocumentCreated, onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { projectID } from 'firebase-functions/params';
 import { getFirestore } from 'firebase-admin/firestore';
+import { AvatarInfo } from '@okr/shared-models';
+import { getEventLocationName } from '@okr/shared-util-core';
 
 import { setBadgePartForPerson } from '../badge/person-part';
 import { answerFunctionUrl, invitationLinkSecret, respondUrl } from './answer-link';
 import { brandOf, notifyPersons, tenantLinks } from './deliver';
-import { eventWhen, invitationEmail, locationLabel } from './mail';
+import { eventWhen, invitationEmail } from './mail';
 import { countOpenInvitations } from './invitation-count';
 import { caleventDeepLink, todayStoreDate } from './recipients';
 
@@ -41,7 +43,7 @@ export interface AnswerableEvent {
   startDate?: string;
   endDate?: string;
   startTime?: string;
-  locationKey?: string;
+  locations?: AvatarInfo[];
   isArchived?: boolean;
   isLocked?: boolean;
   state?: string;
@@ -136,7 +138,7 @@ export const onInvitationCreated = onDocumentCreated(
         ...brandOf(links),
         eventName: event.name ?? '',
         when,
-        location: locationLabel(event.locationKey),
+        location: getEventLocationName(event),
         inviterName,
         note: inv.notes ?? '',
         respondUrl: respondUrl(base, invitationKey, inviteeKey, secret),

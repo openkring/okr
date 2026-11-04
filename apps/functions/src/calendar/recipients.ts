@@ -12,6 +12,7 @@
 // The pure functions carry the rules and are unit-tested; only the resolver touches Firestore.
 
 import { getFirestore } from 'firebase-admin/firestore';
+import { AvatarInfo } from '@okr/shared-models';
 
 import { toStoreDate } from '../srv/zurich-time';
 
@@ -29,7 +30,7 @@ export interface CalEventNotifyDoc {
   startDate?: string;
   startTime?: string;
   durationMinutes?: number;
-  locationKey?: string;
+  locations?: AvatarInfo[];
   seriesId?: string;
   isArchived?: boolean;
   state?: string;

@@ -1,9 +1,10 @@
 import { CalEventModel } from '@okr/shared-models';
+import { freeTextLocationAvatar } from '@okr/shared-util-core';
 import { describe, expect, it } from 'vitest';
 import { buildGoogleCalendarUrl } from './calevent-export.util';
 
 function event(patch: Partial<CalEventModel>): CalEventModel {
-  return Object.assign(new CalEventModel('scs'), { name: 'Regatta', description: '', locationKey: '' }, patch);
+  return Object.assign(new CalEventModel('scs'), { name: 'Regatta', description: '', locations: [] }, patch);
 }
 
 function params(url: string | undefined): URLSearchParams {
@@ -36,7 +37,7 @@ describe('buildGoogleCalendarUrl', () => {
   });
 
   it('takes the location name from name@key and passes the description', () => {
-    const p = params(buildGoogleCalendarUrl(event({ startDate: '20260813', startTime: '18:00', locationKey: 'Bootshaus@abc', description: 'Mitbringen: Schwimmweste' })));
+    const p = params(buildGoogleCalendarUrl(event({ startDate: '20260813', startTime: '18:00', locations: [freeTextLocationAvatar('Bootshaus')], description: 'Mitbringen: Schwimmweste' })));
     expect(p.get('location')).toBe('Bootshaus');
     expect(p.get('details')).toBe('Mitbringen: Schwimmweste');
   });
