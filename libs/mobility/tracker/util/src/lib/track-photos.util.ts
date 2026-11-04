@@ -1,4 +1,4 @@
-import { DiaryTarget, resolveDiaryTargets, TrackPhoto } from '@okr/shared-models';
+import { TrackPhoto } from '@okr/shared-models';
 import { TrackPoint } from './track-polyline.util';
 import { distanceM } from './track-summary.util';
 
@@ -182,15 +182,6 @@ export function nextThumbNumber(photos: readonly { thumbPath?: string }[] | unde
     if (n !== undefined && n >= next) next = n + 1;
   }
   return next;
-}
-
-/** The trip's own tenant first, then the diary targets that take `tracker` entries on that date. */
-export function trackTenants(own: string, targets: DiaryTarget[] | undefined, startDate: string): string[] {
-  const out = [own];
-  for (const id of resolveDiaryTargets(targets, 'tracker', startDate)) {
-    if (!out.includes(id)) out.push(id);
-  }
-  return out;
 }
 
 export function trackThumbPath(tenantId: string, tripKey: string, n: number): string {

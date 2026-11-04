@@ -14,8 +14,7 @@ import { DateFormat, fill, generateRandomString, getCurrentTime, getTodayStr } f
 import { LogbuchLinkResult, NativeLocation, PhotoAccess, queryPedometerSteps, ThumbSourceMissingError, TrackDb, TrackerLocation, TrackerPhotos, TrackService } from '@okr/mobility-tracker-data-access';
 import {
   accumulateDistance, allThumbsUploaded, alignSections, correctedTrack, DetectionInput, hasNoPoints, LocalSection, sameTrackContent, DetectState, initialDetectState, LocalTrack,
-  mergePhotos, MotionActivity, needsThumbUpload, needsUpload, nextThumbNumber, photoWindowEnd, placePhotos, nextSectionStartPoint, nextSections, pendingUploadOwner, resumeDecision, sectionsAfterPause, sessionDetectStep, StartWarning, localStoreDate, trackTenants,
-  startWarning, summarize, toTrackPoint, TRACK_PROFILES, TRACKER_I18N_KEYS, TrackerI18n, TrackPoint, withPhotoHidden, withThumbPaths,
+  mergePhotos, MotionActivity, needsThumbUpload, needsUpload, nextThumbNumber, photoWindowEnd, placePhotos, nextSectionStartPoint, nextSections, pendingUploadOwner, resumeDecision, sectionsAfterPause, sessionDetectStep, StartWarning, localStoreDate, startWarning, summarize, toTrackPoint, TRACK_PROFILES, TRACKER_I18N_KEYS, TrackerI18n, TrackPoint, withPhotoHidden, withThumbPaths,
   LIVE_SPLIT_WINDOW_MS, liveSplitS, sectionMeta, toLocalSections, withQueriedSteps, hasPendingLogbuchLink, isTransientLinkError, withoutLogbuchLink, isExpiringApp, recordingDeleteDate,
 } from '@okr/mobility-tracker-util';
 
@@ -329,7 +328,7 @@ export const TrackerStore = signalStore(
           if (!current || !needsUpload(current)) return { track: current, commit: undefined };
           const points = alignSections(await store.db.points(current.key), current.sections.length);
           const strokes = await store.db.strokes(current.key);
-          const commit = store.trackService.upload(current, points, { personKey, uid, tenants: trackTenants(store.appStore.tenantId(), store.appStore.currentUser()?.diaryTargets, localStoreDate(current.startedAt)) }, current.extraPointsUpTo, strokes);
+          const commit = store.trackService.upload(current, points, { personKey, uid, tenants: [store.appStore.tenantId()] }, current.extraPointsUpTo, strokes);
           commit.catch(() => undefined); // awaited below, outside the queue (offline it resolves only on reconnect)
           return { track: current, commit };
         });

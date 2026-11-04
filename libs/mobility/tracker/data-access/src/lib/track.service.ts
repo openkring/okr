@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { Filesystem } from '@capacitor/filesystem';
-import { collection, deleteField, doc, getDoc, getDocFromServer, getDocs, query, runTransaction, updateDoc, where } from 'firebase/firestore';
+import { arrayUnion, collection, deleteField, doc, getDoc, getDocFromServer, getDocs, query, runTransaction, updateDoc, where } from 'firebase/firestore';
 import { deleteObject, getBlob, ref, uploadBytes } from 'firebase/storage';
 import { Observable } from 'rxjs';
 
@@ -129,8 +129,9 @@ export class TrackService {
     // could take over track.personKey. Accepted for bkg/bka (no real users yet); closed by
     // work/tracker-rules, which checks the owner on both resource and request.
     // Plain object without `okey` (FirestoreService strips it on write as well).
+    // arrayUnion: the server adds the diary tenants (spec 1.77 §12.9), a re-upload must never take them away again
     const trip = {
-      tenants: owner.tenants,
+      tenants: arrayUnion(...owner.tenants),
       isArchived: false,
       name: local.name,
       type: TRACKER_TRIP_TYPE,
