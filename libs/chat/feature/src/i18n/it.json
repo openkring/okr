@@ -673,6 +673,8 @@
     "members": "Membri",
     "invite": "Invita persone",
     "removeConfirm": "Vuoi rimuovere {name} da questa chat?",
+    "assignApp": "Mostra solo in questa app",
+    "assignAppConfirm": "Questa chat apparirà solo in questa app, anche per l'altra persona.",
     "hide": "Nascondi",
     "unhide": "Mostra di nuovo",
     "archive": "Archivia chat",

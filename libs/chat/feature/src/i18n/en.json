@@ -673,6 +673,8 @@
     "members": "Members",
     "invite": "Invite people",
     "removeConfirm": "Do you want to remove {name} from this chat?",
+    "assignApp": "Show in this app only",
+    "assignAppConfirm": "This chat will then only appear in this app, for the other person too.",
     "hide": "Hide",
     "unhide": "Show again",
     "archive": "Archive chat",

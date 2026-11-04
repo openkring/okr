@@ -1650,6 +1650,16 @@ export class MatrixChatService {
   }
 
   /**
+   * Bind a DM to this app. Written with the participant's own power, never through
+   * `assignMatrixRoomTenants`: that would join the admin bot into a private conversation.
+   * Fails for a participant without the power to send state events.
+   */
+  async assignDirectRoomToApp(roomId: string): Promise<void> {
+    if (!this.client) throw new Error('Client not initialized');
+    await this.client.sendStateEvent(roomId, OKR_TENANT_EVENT as never, { tenants: [this.appStore.tenantId()] } as never, '');
+  }
+
+  /**
    * Set the tenant marker of a room (callable `assignMatrixRoomTenants`, admin only). `[]` takes
    * the room out of every app; «Chat archivieren» of an 'other' room removes only the current
    * tenant (spec 1.109 §10.2, ruling R12).

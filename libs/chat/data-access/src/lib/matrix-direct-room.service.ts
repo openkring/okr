@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { EventTimeline, MatrixClient, MatrixEvent, Room } from 'matrix-js-sdk';
 
 import { AppStore } from '@okr/shared-feature';
+import { isDirectRoomOfTenant, OKR_TENANT_EVENT } from '@okr/chat-util';
 import { debugMessage } from '@okr/shared-util-core';
 
 /**
@@ -74,7 +75,8 @@ export class MatrixDirectRoomService {
 
   /**
    * Find an existing direct message room with the given Matrix user ID.
-   * Checks the m.direct account data and returns the first joined/invited room.
+   * Checks the m.direct account data and returns the first joined/invited room of this app's
+   * tenant; a DM marked for another tenant is skipped (`isDirectRoomOfTenant`).
    */
   public findExistingDirectRoom(matrixUserId: string): string | undefined {
     if (!this.client) return undefined;
@@ -95,6 +97,8 @@ export class MatrixDirectRoomService {
         (m.membership === 'join' || m.membership === 'invite')
       );
       if (!otherPresent) continue;
+      const marker = room.getLiveTimeline().getState(EventTimeline.FORWARDS)?.getStateEvents(OKR_TENANT_EVENT, '');
+      if (!isDirectRoomOfTenant(marker?.getContent()?.['tenants'], this.appStore.tenantId())) continue;
       return roomIds[i];
     }
     return undefined;

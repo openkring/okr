@@ -137,6 +137,8 @@ export const MATRIX_CHAT_I18N_KEYS = {
   details_invite:            PFX + 'details.invite',
   details_remove_confirm:    PFX + 'details.removeConfirm',
   details_hide:              PFX + 'details.hide',
+  details_assign_app:        PFX + 'details.assignApp',
+  details_assign_app_confirm: PFX + 'details.assignAppConfirm',
   details_unhide:            PFX + 'details.unhide',
   details_archive:           PFX + 'details.archive',
   details_archive_confirm:   PFX + 'details.archiveConfirm',

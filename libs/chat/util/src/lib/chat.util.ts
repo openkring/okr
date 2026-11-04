@@ -311,9 +311,11 @@ export function groupKeyFromRoomAlias(alias: string | undefined): string | undef
  *     a group room, kept when it matches one of this tenant's groups — by the persisted
  *     `matrixRoomId`, or by the alias localpart derived from the group okey (same derivation as
  *     `groupRoomAliasLocalpart` in the Cloud Functions) for groups whose chat was never opened.
- *  3. a DM (`directUserId`): kept when the counterpart is a person of this tenant. DMs carry no
- *     marker by design — stamping one would mean force-joining the admin bot into a private
- *     two-person conversation — and they need none: a DM belongs where both people are.
+ *  3. an unmarked DM (`directUserId`): kept when the counterpart is a person of this tenant.
+ *     New DMs carry the marker of the app they were started in (rule 1); only older ones reach
+ *     this rule, and between people who share two tenants they show in both until a participant
+ *     assigns them («Nur in dieser App zeigen»). The admin bot never stamps a DM: that would
+ *     force-join it into a private two-person conversation.
  *     A bridged counterpart (`@signal_…` and friends) is not an okr person and can never match,
  *     so it is kept rather than hidden everywhere; DMs with a service/bot account never reach
  *     this rule at all, because MatrixChatService leaves `directUserId` unset for them.
@@ -374,6 +376,17 @@ export function filterRoomsOfTenant<T extends {
     if (isBridgedRoom(r.creator)) return false;
     return true;
   });
+}
+
+/**
+ * Whether an existing DM may be reused in this tenant's app. One pair of people can hold one DM
+ * per tenant, so find-or-create must not reopen a DM that this app's room list hides (rule 1/1b
+ * of `filterRoomsOfTenant`): messages would land in another tenant's conversation. An unmarked
+ * DM (`undefined`) predates the marker and stays reusable. No `tenantId` keeps every DM.
+ */
+export function isDirectRoomOfTenant(tenants: unknown, tenantId: string | undefined): boolean {
+  if (!tenantId || !Array.isArray(tenants)) return true;
+  return tenants.includes(tenantId);
 }
 
 /**

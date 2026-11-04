@@ -62,6 +62,7 @@ export function roomDetailsComputeds(s: RoomDetailsComputedDeps) {
       isCreator: kind === 'adhoc' && isGroupAdmin,
       isKiosk: isKioskOnly(user),
       activePinCount: s.currentPins().length,
+      isUnassigned: s.currentRoom()?.tenants === undefined,
     };
   });
 
@@ -202,6 +203,21 @@ export function roomDetailsMethods(store: RoomDetailsMethodDeps) {
       }
       store.exitRoomToList(roomId);
       return true;
+    },
+
+    /** «Nur in dieser App zeigen»: the DM stays open here and leaves the other tenants' apps. */
+    async assignCurrentRoomToApp(): Promise<boolean> {
+      const roomId = store.currentRoomId();
+      if (!roomId || !store.currentRoomDetails()?.assignToApp) return false;
+      if (!await store.alertService.confirm(store.i18n.details_assign_app_confirm(), true)) return false;
+      try {
+        await store.matrixService.assignDirectRoomToApp(roomId);
+        return true;
+      } catch (error) {
+        console.error('MatrixChatStore.assignCurrentRoomToApp: failed:', error);
+        await store.alertService.showToast(store.i18n.details_error());
+        return false;
+      }
     },
 
     /** «Chat archivieren» (spec 1.109 §10.2) per room kind; true when the room is gone. */

@@ -14,6 +14,8 @@ export interface RoomDetailsCtx {
   /** Kiosk-only user on a shared device: no membership or visibility changes, no mute (Ruling R10). */
   isKiosk: boolean;
   isOperatorView?: boolean;
+  /** The room carries no tenant marker at all (an empty marker is an assignment, see `filterRoomsOfTenant`). */
+  isUnassigned?: boolean;
   activePinCount: number;
 }
 
@@ -26,6 +28,8 @@ export interface RoomDetailsSections {
   canInvite: boolean;
   canRemoveMembers: boolean;
   hide: boolean;
+  /** Unmarked DM: a participant binds it to this app, so it leaves the other tenants' apps. */
+  assignToApp: boolean;
   archive: boolean;
   archiveViaGroup: boolean;
   leave: boolean;
@@ -65,6 +69,7 @@ export function getRoomDetailsSections(ctx: RoomDetailsCtx): RoomDetailsSections
       canInvite: false,
       canRemoveMembers: false,
       hide: false,
+      assignToApp: false,
       archive: false,
       archiveViaGroup: false,
       leave: false,
@@ -80,6 +85,7 @@ export function getRoomDetailsSections(ctx: RoomDetailsCtx): RoomDetailsSections
     hide: !protectedRoom,
     archive,
     archiveViaGroup: kind === 'group' && groupLevel,
+    assignToApp: kind === 'dm' && !!ctx.isUnassigned,
     leave: kind === 'dm' || adhoc || kind === 'pinboard' || kind === 'other',
     // 'other' is decided at write time by maySendStateEvent, not here.
     // DMs: the room right only. The client additionally gates DMs on the actual power to write

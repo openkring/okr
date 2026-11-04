@@ -216,3 +216,15 @@ describe('tenantsAfterArchive', () => {
     expect(tenantsAfterArchive(['scs', 3], 'scs')).toBeUndefined();
   });
 });
+
+describe('assignToApp', () => {
+  it('is offered on an unmarked DM only', () => {
+    expect(sections('dm', { isUnassigned: true }).assignToApp).toBe(true);
+    expect(sections('dm').assignToApp).toBe(false);
+    expect(sections('other', { isUnassigned: true }).assignToApp).toBe(false);
+  });
+
+  it('is not offered to a kiosk user', () => {
+    expect(sections('dm', { isUnassigned: true, isKiosk: true }).assignToApp).toBe(false);
+  });
+});
