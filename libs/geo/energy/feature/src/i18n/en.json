@@ -22,6 +22,7 @@
     "electricCars": "Electric cars",
     "chargingPoints": "Charging points",
     "tariff": "Current electricity tariff",
+    "tariffYear": "Tariff {year}",
     "tariffFallback": "Tariff {year}, the tariff for this year is not published yet",
     "periodRange": "{from} to {until}",
     "asOf": "As of {date}",

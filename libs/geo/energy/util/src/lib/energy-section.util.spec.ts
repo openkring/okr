@@ -14,6 +14,7 @@ const TEXTS: Partial<Record<EnergyI18nKey, string>> = {
   header_asOf: 'Stand {date}',
   header_operators: 'Netzbetreiber',
   tiles_households: 'davon {share} % Haushalte',
+  tiles_tariffYear: 'Tarif {year}',
   tiles_tariffFallback: 'Tarif {year}, noch nicht veröffentlicht',
   tiles_periodRange: '{from} bis {until}',
   tiles_asOf: 'Stand {date}',
@@ -137,7 +138,7 @@ describe('energyTiles', () => {
   it('shows the range of this calendar year for the current tariff', () => {
     const f = figures([], [tariff(2026, 'A', 24.1), tariff(2026, 'B', 27.3), tariff(2027, 'A', 40)]);
     expect(tile(f, 'tiles_tariff')).toEqual({
-      label: 'tiles_tariff', value: '24.1–27.3 Rp./kWh', note: ''
+      label: 'tiles_tariff', value: '24.1–27.3 Rp./kWh', note: 'Tarif 2026'
     });
   });
 

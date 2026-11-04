@@ -97,7 +97,7 @@ export function energyTiles(figures: EnergyFiguresModel, i18n: EnergyI18n, calen
     dated(i18n.tiles_electricCars(), 'electricCarCount', formatCount),
     dated(i18n.tiles_chargingPoints(), 'chargingSpotCount', formatCount),
     tariff && tariffValue !== undefined
-      ? { label: i18n.tiles_tariff(), value: tariffValue, note: tariff.isFallback ? fill(i18n.tiles_tariffFallback(), { year: tariff.year }) : '' }
+      ? { label: i18n.tiles_tariff(), value: tariffValue, note: fill(tariff.isFallback ? i18n.tiles_tariffFallback() : i18n.tiles_tariffYear(), { year: tariff.year }) }
       : undefined
   ];
   return tiles.filter((tile) => tile !== undefined);

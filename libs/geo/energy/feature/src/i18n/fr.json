@@ -22,6 +22,7 @@
     "electricCars": "Voitures électriques",
     "chargingPoints": "Points de recharge",
     "tariff": "Tarif d'électricité actuel",
+    "tariffYear": "Tarif {year}",
     "tariffFallback": "Tarif {year}, le tarif de cette année n'est pas encore publié",
     "periodRange": "{from} à {until}",
     "asOf": "État au {date}",

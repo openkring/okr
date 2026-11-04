@@ -8,8 +8,8 @@ const PFX = '@geo/energy/feature.';
 /**
  * Keys with a `{param}` placeholder (single braces, filled by the caller: `translateAll`
  * strips `{{param}}`): `state_stale` {date}, `header_bfsNr` {n}, `header_asOf` {date},
- * `tiles_households` {share}, `tiles_tariffFallback` {year}, `tiles_periodRange` {from} {until},
- * `tiles_asOf` {date}, `tariffs_operator` {name}.
+ * `tiles_households` {share}, `tiles_tariffYear` {year}, `tiles_tariffFallback` {year},
+ * `tiles_periodRange` {from} {until}, `tiles_asOf` {date}, `tariffs_operator` {name}.
  */
 export const ENERGY_I18N_KEYS = {
   state_noLocation:             PFX + 'state.noLocation',
@@ -32,6 +32,7 @@ export const ENERGY_I18N_KEYS = {
   tiles_electricCars:           PFX + 'tiles.electricCars',
   tiles_chargingPoints:         PFX + 'tiles.chargingPoints',
   tiles_tariff:                 PFX + 'tiles.tariff',
+  tiles_tariffYear:             PFX + 'tiles.tariffYear',
   tiles_tariffFallback:         PFX + 'tiles.tariffFallback',
   tiles_periodRange:            PFX + 'tiles.periodRange',
   tiles_asOf:                   PFX + 'tiles.asOf',
