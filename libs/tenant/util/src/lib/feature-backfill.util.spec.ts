@@ -236,7 +236,7 @@ describe('deriveEnabledFeatures — owner override (R-8)', () => {
       override: override(FEATURE_BLOCKS.map(b => b.id)),
     });
     expect(out.enabled).toEqual(expected);
-    expect(out.enabled).toHaveLength(51);   // +1: `murdoku` (ga game) 2026-10-30, +1: `mahjong` (ga game) 2026-10-30, +1: `learning` (spec 1.115 part 2) 2026-10-23, +1: `file-transfer` (spec 1.115) 2026-10-22, +1: `meeting` (spec 2.7) 2026-08-14, +1: `alias` (spec 3.21) 2026-08-22, +1: `trip` split out of core `geo` 2026-08-24, +1: `weather` (spec 1.45) 2026-08-29, +1: `member-fee` (member-fees-generic plan, task 17) 2026-09-17, +2: the per-game `games` split 2026-09-27 — the `games` umbrella flipped `disabled`→`ga` and `zip` is new, +2: `muehle` and `battleship` (ga games) 2026-09-29, +1: `jasstafel` (ga game) 2026-09-29, +1: `tetris` (ga game) 2026-09-29, +1: `mampf` (ga game) 2026-09-29, +1: `wordle` (ga game) 2026-09-29, +1: `bimaru` (ga game) 2026-09-29, +1: `chess` (spec 1.70) 2026-09-29, +1: `sudoku` (ga game) 2026-10-03, +1: `memory` (ga game) 2026-10-03, +1: `backgammon` (ga game) 2026-10-03, +1: `klondike` (ga game) 2026-10-03; `diary` (beta) and `quiz` (disabled) do not add to this count
+    expect(out.enabled).toHaveLength(52);   // +1: `energy` (spec 2026-11-04 municipal energy figures) 2026-11-04, +1: `murdoku` (ga game) 2026-10-30, +1: `mahjong` (ga game) 2026-10-30, +1: `learning` (spec 1.115 part 2) 2026-10-23, +1: `file-transfer` (spec 1.115) 2026-10-22, +1: `meeting` (spec 2.7) 2026-08-14, +1: `alias` (spec 3.21) 2026-08-22, +1: `trip` split out of core `geo` 2026-08-24, +1: `weather` (spec 1.45) 2026-08-29, +1: `member-fee` (member-fees-generic plan, task 17) 2026-09-17, +2: the per-game `games` split 2026-09-27 — the `games` umbrella flipped `disabled`→`ga` and `zip` is new, +2: `muehle` and `battleship` (ga games) 2026-09-29, +1: `jasstafel` (ga game) 2026-09-29, +1: `tetris` (ga game) 2026-09-29, +1: `mampf` (ga game) 2026-09-29, +1: `wordle` (ga game) 2026-09-29, +1: `bimaru` (ga game) 2026-09-29, +1: `chess` (spec 1.70) 2026-09-29, +1: `sudoku` (ga game) 2026-10-03, +1: `memory` (ga game) 2026-10-03, +1: `backgammon` (ga game) 2026-10-03, +1: `klondike` (ga game) 2026-10-03; `diary` (beta) and `quiz` (disabled) do not add to this count
     FEATURE_BLOCKS.filter(b => b.defaultAvailability === 'disabled')
       .forEach(b => expect(out.enabled).not.toContain(b.id));
   });
@@ -341,6 +341,8 @@ describe('deriveEnabledFeatures — against the real catalogue', () => {
     // the point: the block carries a third-party licence caveat (Open-Meteo excludes
     // commercial use), so a tenant must tick it deliberately rather than have
     // `deriveEnabledFeatures` switch it on from menu evidence.
+    // `energy` (2026-11-04) is here BY DESIGN too. Its figures render in a CMS section variant, so
+    // the block owns no menu row; being un-inferable is harmless — a tenant ticks it in the picker.
     // `games` (2026-09-27) is here BY DESIGN, like `weather`. It is the Spiele UMBRELLA: the
     // games it groups own the menu rows, and the shared `games-menu` parent they co-declare is
     // by definition not exclusive to any one of them. Declaring that parent on the umbrella too
@@ -352,6 +354,6 @@ describe('deriveEnabledFeatures — against the real catalogue', () => {
     // under `aoc-menu`; the AOC hub's «System-Aktivitäten» card now links /activity by URL, and a
     // top-level row would put an admin log in every sidebar. Un-inferable is harmless: the
     // backfill ran once (every tenant has `enabledFeatures`), and a tenant ticks it in the picker.
-    expect(withoutExclusive).toEqual(['activity', 'games', 'weather']);
+    expect(withoutExclusive).toEqual(['activity', 'games', 'weather', 'energy']);
   });
 });

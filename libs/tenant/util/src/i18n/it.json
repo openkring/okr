@@ -141,6 +141,9 @@
       "label": "Meteo",
       "remarks": "I dati meteo vengono da Open-Meteo. Sono gratuiti per le associazioni e per ogni uso non commerciale. Se li usi a scopo commerciale, ti serve una licenza tua direttamente da Open-Meteo."
     },
+    "energy": {
+      "label": "Situazione energetica"
+    },
     "quiz": {
       "label": "Quiz"
     },

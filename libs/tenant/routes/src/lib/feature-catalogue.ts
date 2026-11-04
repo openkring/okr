@@ -1676,6 +1676,17 @@ const weather: BlockRoutes = {
 };
 
 /**
+ * Energy owns NO routes. The figures are an `energy` CMS section rendered inside an ordinary
+ * page, so there is nothing to gate at the router. The entry exists because
+ * `feature-catalogue.sync.spec.ts` requires an id on both sides of the catalogue; an empty list
+ * is the honest shape, not an oversight.
+ */
+const energy: BlockRoutes = {
+  id: 'energy',
+  routes: (): Route[] => [],
+};
+
+/**
  * `contracts` (spec 1.5 §9). The staff list takes `isContractReaderGuard` (treasurer OR
  * privileged OR auditor — a union no single-role guard expresses). The member list and the
  * dossier page only need a login: WHICH contracts a member sees is the store's `my` query, and
@@ -1778,5 +1789,5 @@ export const FEATURE_ROUTES: BlockRoutes[] = [
   finance, memberFee, esign, pdfTemplate,
   documentBlock, contracts, meeting, diary, journal,
   chat, socialFeed, forms,
-  business, alias, weather,
+  business, alias, weather, energy,
 ];
