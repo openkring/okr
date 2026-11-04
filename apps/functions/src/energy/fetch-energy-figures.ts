@@ -11,7 +11,7 @@ import {
 
 import {
   CityLocation, ReporterRows, bfsNumbersToFetch, buildEnergyPatch, collectReporterRows, currentBfsFromLookup,
-  hasCoordinates, isBlockedByStatus, nextBfsStatus, tariffsFromSparql, tenantsPerBfs, tenantsToSync,
+  hasCoordinates, isBlockedByStatus, nextBfsStatus, tariffsFromSparql, tenantsPerBfs, tenantsToSync, writeDecision,
 } from './energy.util';
 
 const IDENTIFY_URL = 'https://api3.geo.admin.ch/rest/services/api/MapServer/identify';
@@ -253,7 +253,9 @@ export async function runEnergyFiguresFetch(): Promise<void> {
       logger.error(`energyFiguresFetch: ElCom failed for ${bfsNr}`, error);
     }
 
-    if (rows !== undefined || tariffs !== undefined) {
+    const decision = writeDecision({ reporterFailed: reporter === undefined || failure !== undefined, rows, tariffs });
+
+    if (decision.write) {
       try {
         const patch = buildEnergyPatch({ bfsNr, tenants: tenants.get(bfsNr) ?? [], now, reporter: rows, tariffs });
         await db.collection(EnergyFiguresCollection).doc(String(bfsNr)).set(patch, { merge: true });
@@ -264,23 +266,24 @@ export async function runEnergyFiguresFetch(): Promise<void> {
       }
     }
 
-    // Step 8: the status follows what Energie Reporter said. A failed source says nothing.
-    if (rows) {
-      for (const location of locations) {
-        if (getBfsNr(location) === bfsNr) await applyStatus(db, location, 'data');
-      }
-    } else if (reporter && !failure) {
-      await markNoRow(db, locations, bfsNr);
-      noRow++;
+    // Step 8: the status follows what Energie Reporter said. A failed source says nothing (`unknown`).
+    if (decision.outcome !== 'unknown') {
+      await applyStatusToNumber(db, locations, bfsNr, decision.outcome);
+      if (decision.outcome === 'noRow') noRow++;
     }
   }
 
   logger.info(`energyFiguresFetch: ${wantedList.length} wanted, ${written} written, ${complete} complete, ${noRow} without Energie Reporter row, ${tenantsSynced} tenant lists synced`);
 }
 
-/** Energie Reporter answered cleanly but has no row for this number: tell the admin through the locations' status. */
-async function markNoRow(db: admin.firestore.Firestore, locations: CityDoc[], bfsNr: number): Promise<void> {
+/** Applies the outcome to every location that carries this number: `noRow` tells the admin through the status, `data` clears it. */
+async function applyStatusToNumber(
+  db: admin.firestore.Firestore,
+  locations: CityDoc[],
+  bfsNr: number,
+  outcome: 'data' | 'noRow',
+): Promise<void> {
   for (const location of locations) {
-    if (getBfsNr(location) === bfsNr) await applyStatus(db, location, 'noRow');
+    if (getBfsNr(location) === bfsNr) await applyStatus(db, location, outcome);
   }
 }

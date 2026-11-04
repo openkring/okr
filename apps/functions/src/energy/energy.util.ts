@@ -248,6 +248,25 @@ export function nextBfsStatus(location: CityLocation, outcome: 'data' | 'noRow' 
   return bfsNr === undefined ? LOCATION_BFS_STATUS_NONE : String(bfsNr);
 }
 
+/**
+ * What a run does for one wanted number after both sources answered (spec §5.3, §6.3):
+ * - Energie Reporter has rows: write what there is, outcome `data`;
+ * - Energie Reporter answered cleanly without a row: write nothing, outcome `noRow`. A document made of tariffs
+ *   alone would count as «ready» and hide the hint to check the number (ElCom still answers for a defunct
+ *   merged-municipality number); a document that already exists is left as it is;
+ * - Energie Reporter failed (whole source or this row): its silence says nothing, outcome `unknown`, so the status
+ *   is left alone; the tariffs are still written when ElCom delivered some.
+ */
+export function writeDecision(input: {
+  reporterFailed: boolean;
+  rows: unknown | undefined;
+  tariffs: EnergyTariff[] | undefined;
+}): { write: boolean; outcome: 'data' | 'noRow' | 'unknown' } {
+  if (input.rows !== undefined) return { write: true, outcome: 'data' };
+  if (input.reporterFailed) return { write: input.tariffs !== undefined, outcome: 'unknown' };
+  return { write: false, outcome: 'noRow' };
+}
+
 /* ------------------------------ document patch ------------------------------ */
 
 /** What one source delivered for one municipality; a source that failed or had no data is simply absent. */

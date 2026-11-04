@@ -4,10 +4,11 @@ import JSZip from 'jszip';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { BaseProperty } from '@okr/shared-models';
+import type { EnergyTariff } from '@okr/shared-models';
 
 import {
   CityLocation, ENERGY_REPORTER_COLUMNS, assertEnergyReporterHeader, bfsNumbersToFetch, buildEnergyPatch, collectReporterRows, currentBfsFromLookup,
-  hasCoordinates, isBlockedByStatus, nextBfsStatus, parseCsvLine, parseHeader, rowToMonth, tariffsFromSparql, tenantsPerBfs, tenantsToSync,
+  hasCoordinates, isBlockedByStatus, nextBfsStatus, parseCsvLine, parseHeader, rowToMonth, tariffsFromSparql, tenantsPerBfs, tenantsToSync, writeDecision,
 } from './energy.util';
 import elcomFixture from './elcom.fixture.json';
 import lookupFixture from './bfs-lookup.fixture.json';
@@ -366,5 +367,34 @@ describe('collectReporterRows through a real ZIP', () => {
     expect(failed.size).toBe(0);
     expect(found.get(158)?.months.map((m) => m.date)).toEqual(['20210331', '20261031']);
     expect(found.get(155)?.municipality).toBe('Männedorf');
+  });
+});
+
+describe('writeDecision', () => {
+  const tariffs = [{} as EnergyTariff];
+  const rows = { municipality: 'Stäfa', canton: 'ZH', months: [] };
+
+  it('writes nothing on a clean no-row, even with tariffs: a tariff-only document would hide the wrong-number hint', () => {
+    expect(writeDecision({ reporterFailed: false, rows: undefined, tariffs })).toEqual({ write: false, outcome: 'noRow' });
+  });
+
+  it('writes nothing on a clean no-row without tariffs', () => {
+    expect(writeDecision({ reporterFailed: false, rows: undefined, tariffs: undefined })).toEqual({ write: false, outcome: 'noRow' });
+  });
+
+  it('writes when Energie Reporter has rows, with tariffs', () => {
+    expect(writeDecision({ reporterFailed: false, rows, tariffs })).toEqual({ write: true, outcome: 'data' });
+  });
+
+  it('writes when Energie Reporter has rows, without tariffs', () => {
+    expect(writeDecision({ reporterFailed: false, rows, tariffs: undefined })).toEqual({ write: true, outcome: 'data' });
+  });
+
+  it('writes the tariffs of a failed reporter but leaves the status alone', () => {
+    expect(writeDecision({ reporterFailed: true, rows: undefined, tariffs })).toEqual({ write: true, outcome: 'unknown' });
+  });
+
+  it('writes nothing and leaves the status alone when the reporter failed and ElCom has nothing', () => {
+    expect(writeDecision({ reporterFailed: true, rows: undefined, tariffs: undefined })).toEqual({ write: false, outcome: 'unknown' });
   });
 });
