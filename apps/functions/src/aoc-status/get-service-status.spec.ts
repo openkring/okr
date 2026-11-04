@@ -7,7 +7,9 @@ import { loadServiceStatus, StatusDeps } from './get-service-status';
 
 const NOW = 1_800_000_000_000;
 const FEEDS = AOC_STATUS_SERVICES.filter(s => s.feedUrl);
+const URLS = FEEDS.flatMap(s => [s.feedUrl, s.catalogUrl]).filter(Boolean);
 const GITHUB_FEED = 'https://www.githubstatus.com/api/v2/summary.json';
+const FIREBASE_PRODUCTS = 'https://status.firebase.google.com/products.json';
 
 const githubBody = { components: [{ name: 'Git Operations', status: 'operational' }, { name: 'Actions', status: 'operational' }] };
 
@@ -35,7 +37,7 @@ describe('loadServiceStatus', () => {
   it('refetches an expired row', async () => {
     deps.readCache.mockResolvedValue(row({ checkedAt: 'cached', services: {} }, NOW));
     const result = await run();
-    expect(deps.fetch).toHaveBeenCalledTimes(FEEDS.length);
+    expect(deps.fetch).toHaveBeenCalledTimes(URLS.length);
     expect(result.checkedAt).toBe(new Date(NOW).toISOString());
   });
 
@@ -62,6 +64,21 @@ describe('loadServiceStatus', () => {
     expect(deps.readCache).toHaveBeenCalledWith('serviceStatus:shared');
   });
 
+  it('reads a product gone from the list as unknown', async () => {
+    deps.fetch.mockImplementation(async (url: string) => (url === FIREBASE_PRODUCTS ? { products: [{ title: 'Hosting' }] } : []));
+    const { parts } = (await run()).services['firebase'];
+    expect(parts['Hosting']).toEqual({ level: 'ok' });
+    expect(parts['App Check']).toEqual({ level: 'unknown' });
+  });
+
+  it('does not grey a service when only its product list fails', async () => {
+    deps.fetch.mockImplementation(async (url: string) => {
+      if (url === FIREBASE_PRODUCTS) throw new Error('timeout');
+      return [];
+    });
+    expect((await run()).services['firebase'].parts['App Check']).toEqual({ level: 'ok' });
+  });
+
   it('does not cache when every feed failed', async () => {
     deps.fetch.mockRejectedValue(new Error('no network'));
     const result = await run();
@@ -71,7 +88,7 @@ describe('loadServiceStatus', () => {
 
   it('fetches each feed once and nothing for a link-only service', async () => {
     await run();
-    expect(deps.fetch.mock.calls.map(c => c[0]).sort()).toEqual(FEEDS.map(s => s.feedUrl).sort());
+    expect(deps.fetch.mock.calls.map(c => c[0]).sort()).toEqual([...URLS].sort());
     expect(Object.keys((await run()).services).sort()).toEqual(FEEDS.map(s => s.id).sort());
   });
 });

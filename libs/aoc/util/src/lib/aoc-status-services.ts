@@ -17,6 +17,8 @@ export interface StatusService {
   statusUrl: string;
   source: StatusSource;
   feedUrl?: string;
+  /** Google only: its product list. An incidents feed alone cannot tell that a label no longer exists. */
+  catalogUrl?: string;
   /** Shown when ANY of these is on. */
   featureBlocks: string[];
   parts: StatusPart[];
@@ -50,8 +52,13 @@ function live(
   feedUrl: string,
   featureBlocks: string[],
   parts: (string | StatusPart)[],
+  catalogUrl?: string,
 ): StatusService {
-  return { id, name, statusUrl, source, feedUrl, featureBlocks, parts: parts.map(p => (typeof p === 'string' ? { label: p } : p)) };
+  return {
+    id, name, statusUrl, source, feedUrl, featureBlocks,
+    ...(catalogUrl ? { catalogUrl } : {}),
+    parts: parts.map(p => (typeof p === 'string' ? { label: p } : p)),
+  };
 }
 
 function linkOnly(id: string, name: string, statusUrl: string, featureBlocks: string[]): StatusService {
@@ -80,7 +87,7 @@ export const AOC_STATUS_SERVICES: readonly StatusService[] = [
     'Cloud Messaging',
     'Cloud Storage',
     'App Check',
-  ]),
+  ], 'https://status.firebase.google.com/products.json'),
   live('googleCloud', 'Google Cloud', 'https://status.cloud.google.com', 'google', 'https://status.cloud.google.com/incidents.json', ['auth'], [
     'Cloud Firestore',
     'Google Cloud Functions',
@@ -88,7 +95,7 @@ export const AOC_STATUS_SERVICES: readonly StatusService[] = [
     'Google Cloud Scheduler',
     'Secret Manager',
     { label: 'Cloud Translation', featureBlocks: ['instruments'] },
-  ]),
+  ], 'https://status.cloud.google.com/products.json'),
   live('imgix', 'imgix', 'https://status.imgix.com', 'statuspage', 'https://status.imgix.com/api/v2/summary.json', ['auth'], [
     'Rendering Infrastructure',
     'Content Delivery Network',
@@ -108,7 +115,7 @@ export const AOC_STATUS_SERVICES: readonly StatusService[] = [
     'Maps Tile API',
     'Geocoding API',
     'Places API',
-  ]),
+  ], 'https://status.cloud.google.com/maps-platform/products.json'),
   linkOnly('mailtrap', 'Mailtrap', 'https://status.mailtrap.info', ['auth']),
   linkOnly('googleAnalytics', 'Google Analytics', '', ['consent']),
   linkOnly('gemini', 'Gemini', 'https://aistudio.google.com/status', ['cms', 'finance', 'contracts']),

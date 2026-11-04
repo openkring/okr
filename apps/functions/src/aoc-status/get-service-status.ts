@@ -37,13 +37,17 @@ export async function loadServiceStatus(deps: StatusDeps, nowMs: number): Promis
   if (cached && !isExpired(cached, nowMs)) return cached.raw;
 
   const services = AOC_STATUS_SERVICES.filter(s => s.feedUrl);
-  const feeds = await Promise.allSettled(services.map(s => deps.fetch(s.feedUrl as string)));
+  const [feeds, catalogs] = await Promise.all([
+    Promise.allSettled(services.map(s => deps.fetch(s.feedUrl as string))),
+    // best effort: the feed decides the status, the list only spots a retired label
+    Promise.all(services.map(s => (s.catalogUrl ? deps.fetch(s.catalogUrl).catch(() => undefined) : undefined))),
+  ]);
   const result: ServiceStatusResult = {
     checkedAt: new Date(nowMs).toISOString(),
     services: Object.fromEntries(services.map((service, i) => {
       const feed = feeds[i];
       if (feed.status === 'rejected') logger.warn(`${CF_NAME}: no answer from ${service.id}`);
-      return [service.id, parseFeed(service, feed.status === 'fulfilled' ? feed.value : undefined)];
+      return [service.id, parseFeed(service, feed.status === 'fulfilled' ? feed.value : undefined, catalogs[i])];
     })),
   };
 

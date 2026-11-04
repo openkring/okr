@@ -114,6 +114,26 @@ describe('google', () => {
     expect(levelOf('firebase', [incident(), incident({ status_impact: 'SERVICE_OUTAGE' }), incident()], 'Hosting')).toBe('down');
   });
 
+  describe('product list', () => {
+    const catalog = { products: [{ title: 'Authentication', id: 'a' }, { title: 'Hosting', id: 'b' }] };
+
+    it('reads a product missing from the list as unknown, not ok', () => {
+      expect(parseFeed(service('firebase'), [], catalog).parts['App Check']).toEqual({ level: 'unknown' });
+    });
+
+    it('keeps a listed product ok', () => {
+      expect(parseFeed(service('firebase'), [], catalog).parts['Hosting']).toEqual({ level: 'ok' });
+    });
+
+    it('still reports an incident on a listed product', () => {
+      expect(parseFeed(service('firebase'), [incident()], catalog).parts['Hosting']).toEqual({ level: 'degraded' });
+    });
+
+    it.each([['html', '<html>'], ['an empty object', {}], ['null', null]])('ignores %s instead of a list', (_name, unreadable) => {
+      expect(parseFeed(service('firebase'), [], unreadable).parts['App Check']).toEqual({ level: 'ok' });
+    });
+  });
+
   describe('Google Cloud region', () => {
     const cloud = (locations: string[]) => [incident({
       affected_products: [{ title: 'Cloud Run', id: 'y' }],

@@ -44,6 +44,11 @@ describe('AOC_STATUS_SERVICES', () => {
     }
   });
 
+  // an incidents feed never says a product is gone, so a retired label needs this list to show as unknown
+  it('gives every google source a product list', () => {
+    for (const s of AOC_STATUS_SERVICES.filter(x => x.source === 'google')) expect(s.catalogUrl, s.id).toMatch(/products\.json$/);
+  });
+
   it('keeps every status url https or empty', () => {
     for (const s of AOC_STATUS_SERVICES) expect(s.statusUrl, s.id).toMatch(/^(https:\/\/.+)?$/);
   });

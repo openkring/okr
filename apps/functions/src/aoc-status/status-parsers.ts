@@ -60,13 +60,20 @@ function touchesHome(incident: Json): boolean {
   return locations.length === 0 || locations.some(l => HOME_LOCATIONS.has(String(l['id'])));
 }
 
-/** An incidents feed only names what is broken, so a part it does not list is ok, not unknown. */
-function readGoogle(body: unknown, service: StatusService): PartReader | undefined {
+/**
+ * An incidents feed only names what is broken, so a part it does not list is ok. That would keep a
+ * retired product green forever, so with a readable product list a label missing from it is unknown.
+ * Without one the part stays ok: a failed list says nothing about the service.
+ */
+function readGoogle(body: unknown, service: StatusService, catalog: unknown): PartReader | undefined {
   if (!Array.isArray(body)) return undefined;
+  const products = (catalog as Json | null | undefined)?.['products'];
+  const known = Array.isArray(products) ? new Set(asRecords(products).map(p => p['title'])) : undefined;
   const open = asRecords(body)
     .filter(i => !i['end'] && i['status_impact'] !== 'SERVICE_INFORMATION')
     .filter(i => service.id !== 'googleCloud' || touchesHome(i));
   return label => {
+    if (known && !known.has(label)) return undefined;
     const touching = open.filter(i => asRecords(i['affected_products']).some(p => p['title'] === label));
     if (touching.some(i => i['status_impact'] === 'SERVICE_OUTAGE')) return { level: 'down' };
     return { level: touching.length ? 'degraded' : 'ok' };
@@ -97,7 +104,7 @@ function readGatus(body: unknown): PartReader | undefined {
   };
 }
 
-const READERS: Record<Exclude<StatusSource, 'none'>, (body: unknown, service: StatusService) => PartReader | undefined> = {
+const READERS: Record<Exclude<StatusSource, 'none'>, (body: unknown, service: StatusService, catalog: unknown) => PartReader | undefined> = {
   betterstack: readBetterStack,
   statuspage: readComponents,
   instatus: readComponents,
@@ -110,11 +117,11 @@ const READERS: Record<Exclude<StatusSource, 'none'>, (body: unknown, service: St
  * Reduces a feed to the catalogue's parts. Never throws: a feed we cannot read, or a part it does
  * not mention, is `unknown`, never `ok`.
  */
-export function parseFeed(service: StatusService, body: unknown): ServiceStatus {
+export function parseFeed(service: StatusService, body: unknown, catalog?: unknown): ServiceStatus {
   if (service.source === 'none') return { parts: {} };
   let read: PartReader | undefined;
   try {
-    read = READERS[service.source](body, service);
+    read = READERS[service.source](body, service, catalog);
   } catch {
     read = undefined;
   }
