@@ -1,0 +1,80 @@
+{
+  "state": {
+    "noLocation": "Todavía no se ha elegido ningún lugar para esta sección.",
+    "preparing": "Los datos se están preparando. Aparecerán después de la próxima actualización nocturna.",
+    "noData": "No hay datos municipales para este lugar. Comprueba en el lugar que el número BFS es correcto y que está registrado como municipio.",
+    "noBlock": "Todavía no hay cifras para esta parte.",
+    "stale": "Estas cifras son del {date}. El Energie Reporter se actualiza cada mes, así que son más antiguas de lo habitual."
+  },
+  "header": {
+    "bfsNr": "N.º BFS {n}",
+    "asOf": "Datos a {date}",
+    "operators": "Operadores de red"
+  },
+  "tiles": {
+    "title": "Cifras clave",
+    "consumption": "Consumo de electricidad",
+    "households": "de ellos, {share} % hogares",
+    "production": "Producción de electricidad renovable",
+    "solarCapacity": "Potencia solar",
+    "solarPotential": "Potencial solar aprovechado",
+    "renewableHeating": "Calefacciones renovables",
+    "electricCars": "Coches eléctricos",
+    "chargingPoints": "Puntos de carga",
+    "tariff": "Tarifa eléctrica actual",
+    "tariffFallback": "Tarifa {year}, la tarifa de este año todavía no está publicada",
+    "periodUntil": "12 meses hasta el {date}",
+    "asOf": "Datos a {date}",
+    "unitMwh": "MWh",
+    "unitKwp": "kWp",
+    "unitRpKwh": "cént./kWh"
+  },
+  "trends": {
+    "title": "Evolución",
+    "solarCapacity": "Potencia solar (kWp)",
+    "electricCars": "Coches eléctricos",
+    "renewableHeating": "Proporción de calefacciones renovables (%)",
+    "electricity": "Consumo y producción de electricidad (MWh)",
+    "consumption": "Consumo",
+    "production": "Producción",
+    "gapsNote": "Un hueco en la línea significa que no hay cifra para ese momento."
+  },
+  "tariffs": {
+    "title": "Tarifas eléctricas por año",
+    "operator": "Operador de red: {name}",
+    "energy": "Energía",
+    "gridUsage": "Uso de la red",
+    "charge": "Cargos a la administración pública",
+    "aidFee": "Cargo de fomento",
+    "future": "anunciado",
+    "futureNote": "La ElCom publica las tarifas del año siguiente con meses de antelación. Estos años se muestran más claros, porque todavía se paga la tarifa del año en curso.",
+    "unit": "cént./kWh"
+  },
+  "compare": {
+    "title": "Comparación",
+    "municipality": "Municipio",
+    "solarPotential": "Potencial solar aprovechado",
+    "renewableHeating": "Calefacciones renovables",
+    "electricCars": "Proporción de coches eléctricos",
+    "electricityPerPerson": "Electricidad por persona",
+    "tariff": "Tarifa actual",
+    "noData": "sin datos",
+    "note": "Solo se comparan proporciones y valores por persona. Las cifras absolutas solo mostrarían lo grande que es un municipio."
+  },
+  "gaps": {
+    "title": "Lo que no se sabe",
+    "intro": "Estos datos faltan en todos los municipios. Detrás de cada uno se indica quién podría saberlo.",
+    "gasHeat": "Consumo de gas y de calor: puede saberlo el proveedor de gas o el municipio.",
+    "storage": "Almacenamiento, por ejemplo baterías: puede saberlo el operador de red.",
+    "heatingAge": "Antigüedad de las calefacciones: puede saberlo el municipio.",
+    "outages": "Cortes de electricidad: puede saberlo el operador de red."
+  },
+  "sources": {
+    "title": "Fuentes",
+    "energyReporter": "Cifras sobre electricidad, energía solar, calefacciones y coches eléctricos: «Energie Reporter» de geoimpact y EnergieSchweiz, licencia CC BY 4.0.",
+    "energyReporterLink": "Ir al Energie Reporter",
+    "tariffs": "Tarifas eléctricas: ElCom, la Comisión Federal de Electricidad de Suiza.",
+    "solar": "Potencial solar: documento de la Oficina Federal de Energía (BFE).",
+    "solarLink": "Abrir el documento solar de la BFE"
+  }
+}

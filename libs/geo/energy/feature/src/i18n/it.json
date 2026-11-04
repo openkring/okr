@@ -1,0 +1,80 @@
+{
+  "state": {
+    "noLocation": "Per questa sezione non è ancora stato scelto nessun luogo.",
+    "preparing": "I dati sono in preparazione. Compariranno dopo il prossimo aggiornamento notturno.",
+    "noData": "Per questo luogo non ci sono dati comunali. Controlla nel luogo che il numero UST sia corretto e che sia registrato come comune.",
+    "noBlock": "Per questa parte non ci sono ancora cifre.",
+    "stale": "Queste cifre risalgono al {date}. L'Energie Reporter viene aggiornato ogni mese, quindi sono più vecchie del solito."
+  },
+  "header": {
+    "bfsNr": "N. UST {n}",
+    "asOf": "Stato al {date}",
+    "operators": "Gestori di rete"
+  },
+  "tiles": {
+    "title": "Cifre chiave",
+    "consumption": "Consumo di elettricità",
+    "households": "di cui {share} % economie domestiche",
+    "production": "Produzione di elettricità rinnovabile",
+    "solarCapacity": "Potenza solare",
+    "solarPotential": "Potenziale solare sfruttato",
+    "renewableHeating": "Riscaldamenti rinnovabili",
+    "electricCars": "Auto elettriche",
+    "chargingPoints": "Punti di ricarica",
+    "tariff": "Tariffa elettrica attuale",
+    "tariffFallback": "Tariffa {year}, la tariffa di quest'anno non è ancora pubblicata",
+    "periodUntil": "12 mesi fino al {date}",
+    "asOf": "Stato al {date}",
+    "unitMwh": "MWh",
+    "unitKwp": "kWp",
+    "unitRpKwh": "ct./kWh"
+  },
+  "trends": {
+    "title": "Andamento",
+    "solarCapacity": "Potenza solare (kWp)",
+    "electricCars": "Auto elettriche",
+    "renewableHeating": "Quota di riscaldamenti rinnovabili (%)",
+    "electricity": "Consumo e produzione di elettricità (MWh)",
+    "consumption": "Consumo",
+    "production": "Produzione",
+    "gapsNote": "Un'interruzione nella linea significa che per quel momento non c'è nessuna cifra."
+  },
+  "tariffs": {
+    "title": "Tariffe elettriche per anno",
+    "operator": "Gestore di rete: {name}",
+    "energy": "Energia",
+    "gridUsage": "Utilizzo della rete",
+    "charge": "Tributi agli enti pubblici",
+    "aidFee": "Contributo di sostegno",
+    "future": "annunciato",
+    "futureNote": "L'ElCom pubblica le tariffe dell'anno successivo con mesi di anticipo. Questi anni sono mostrati più chiari, perché si paga ancora la tariffa dell'anno in corso.",
+    "unit": "ct./kWh"
+  },
+  "compare": {
+    "title": "Confronto",
+    "municipality": "Comune",
+    "solarPotential": "Potenziale solare sfruttato",
+    "renewableHeating": "Riscaldamenti rinnovabili",
+    "electricCars": "Quota di auto elettriche",
+    "electricityPerPerson": "Elettricità per persona",
+    "tariff": "Tariffa attuale",
+    "noData": "nessun dato",
+    "note": "Si confrontano solo le quote e i valori per persona. Le cifre assolute mostrerebbero soltanto quanto è grande un comune."
+  },
+  "gaps": {
+    "title": "Cosa non si sa",
+    "intro": "Queste informazioni mancano per tutti i comuni. Dopo ognuna è indicato chi potrebbe conoscerla.",
+    "gasHeat": "Consumo di gas e di calore: può saperlo il fornitore di gas o il comune.",
+    "storage": "Accumulo, per esempio batterie: può saperlo il gestore di rete.",
+    "heatingAge": "Età dei riscaldamenti: può saperlo il comune.",
+    "outages": "Interruzioni di corrente: può saperlo il gestore di rete."
+  },
+  "sources": {
+    "title": "Fonti",
+    "energyReporter": "Cifre su elettricità, solare, riscaldamenti e auto elettriche: «Energie Reporter» di geoimpact e EnergieSchweiz, licenza CC BY 4.0.",
+    "energyReporterLink": "Vai all'Energie Reporter",
+    "tariffs": "Tariffe elettriche: ElCom, la Commissione federale dell'energia elettrica.",
+    "solar": "Potenziale solare: documento dell'Ufficio federale dell'energia (UFE, BFE).",
+    "solarLink": "Apri il documento solare del BFE"
+  }
+}
