@@ -148,6 +148,9 @@ seed("users/uidD", {"tenants": ["t1"], "roles": {"admin": True}, "firstName": "D
 seed("users/uidE", {"tenants": ["t1"], "roles": {}, "firstName": "E", "personKey": "pE"})
 seed("users/uidM", {"tenants": ["t1"], "roles": {"memberAdmin": True}, "firstName": "M", "personKey": "pM"})
 seed("users/uidP", {"tenants": ["t1"], "roles": {"privileged": True}, "firstName": "P"})
+
+# energy-figures (spec 1.136): municipal aggregates, tenantRead, CF-write-only
+seed("energy-figures/158", {"tenants": ["t1"], "isArchived": False, "bfsNr": 158, "municipality": "Stäfa"})
 seed("persons/pA", {"tenants": ["t1"], "isArchived": False, "lastName": "AA"})
 seed("persons/pB", {"tenants": ["t2"], "isArchived": False, "lastName": "BB"})
 seed("memberships/mA", {"tenants": ["t1"], "isArchived": False, "x": "1"})
@@ -1165,6 +1168,10 @@ single_cases = [
     ("treasurer T CREATE cost-allocations -> ALLOW", True, POST, "cost-allocations?documentId=allocY", T, body({"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "fiscalYear": 2026, "title": "Y"}), None),
     ("treasurer T PATCH cost-allocations/allocA.title -> ALLOW", True, PATCH, "cost-allocations/allocA", T, body({"title": "Y"}), ["title"]),
     ("treasurer T DELETE cost-allocations/allocA -> DENY", False, DELETE, "cost-allocations/allocA", T, None, None),
+    # energy-figures (spec 1.136): readable by the tenants on the document, never client-written
+    ("member A GET energy-figures/158 -> ALLOW (tenant t1)", True, GET, "energy-figures/158", A, None, None),
+    ("admin B (t2) GET energy-figures/158 -> DENY (other tenant)", False, GET, "energy-figures/158", B, None, None),
+    ("privileged P PATCH energy-figures/158 -> DENY (job-only)", False, PATCH, "energy-figures/158", P, body({"municipality": "X"}), ["municipality"]),
     ("treasurer T PATCH rowOpen.tenants -> ['t2'] -> DENY", False, PATCH, "bank-import-rows/rowOpen", T, body({"tenants": ["t2"]}), ["tenants"]),
     ("treasurer T PATCH rowPosted.title -> DENY", False, PATCH, "bank-import-rows/rowPosted", T, body({"title": "X"}), ["title"]),
     ("treasurer T DELETE rowPosted -> DENY", False, DELETE, "bank-import-rows/rowPosted", T, None, None),

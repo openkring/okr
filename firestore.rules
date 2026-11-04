@@ -1037,6 +1037,10 @@ service cloud.firestore {
     // paths of open government data, so it is readable without sign-in — the rain_radar widget
     // also renders on public pages, as it did with RainViewer.
     match /weather-radar/{id}      { allow read: if true; allow write: if false; }
+    // energy-figures: municipal energy figures and tariffs (spec 1.136), one document per BFS
+    // number, written ONLY by the scheduled job (Admin SDK). `tenants` is the union of the tenants
+    // with a city location for that municipality, so tenantRead() lets exactly those read it.
+    match /energy-figures/{id}     { allow read: if tenantRead(); allow write: if false; }
     match /memberships/{id}        { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     match /ownerships/{id}         { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     match /personal-rels/{id}      { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }

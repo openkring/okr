@@ -1738,6 +1738,7 @@ export async function resolveArrayItemDocs(entry: SubjectDataEntry, ctx: Subject
 // not personal data: weather-radar — the MeteoSwiss precipitation radar's frame list (spec 1.110):
 //   one shared document of image paths and timestamps for the whole country. Written by the
 //   scheduler, tied to no person, location of a member or tenant.
+// not personal data: energy-figures — public municipal aggregates and tariffs, one document per BFS number.
 // not personal data: hearingQuizNodes — the Hörtraining CONTENT tree (folders, questions, clips)
 //   authored by content admins. `parentKey` is the parent FOLDER's okey, never a person; nothing
 //   in a node records who wrote it or who answered it — answers live in `hearingQuizResults`.
