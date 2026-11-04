@@ -4,7 +4,7 @@ import { EnergyFiguresModel, EnergyMonth, EnergyTariff } from '@okr/shared-model
 
 import { ENERGY_I18N_KEYS, EnergyI18n, EnergyI18nKey } from './energy-i18n';
 import {
-  compareTarget, energyCompareRows, energyHeader, energyStaleNote, energyTariffCharts, energyTiles,
+  compareTarget, energyCompareRows, energyGapTiles, energyHeader, energyStaleNote, energyTariffCharts, energyTiles,
   energyTrendCharts, hasFutureTariff, percentPoints
 } from './energy-section.util';
 
@@ -18,6 +18,7 @@ const TEXTS: Partial<Record<EnergyI18nKey, string>> = {
   tiles_tariffFallback: 'Tarif {year}, noch nicht veröffentlicht',
   tiles_periodRange: '{from} bis {until}',
   tiles_asOf: 'Stand {date}',
+  tiles_estimate: 'Schätzwert',
   tiles_unitMwh: 'MWh',
   tiles_unitKwp: 'kWp',
   tiles_unitRpKwh: 'Rp./kWh',
@@ -87,40 +88,40 @@ describe('energyTiles', () => {
   it('gives consumption its period and the household share, not the snapshot date', () => {
     const found = tile(figures(months), 'tiles_consumption');
     expect(found?.value).toBe(`${count(72527)} MWh`);
-    expect(found?.note).toBe('August 2025 bis Juli 2026 · davon 40.0 % Haushalte');
+    expect(found?.note).toBe('August 2025 bis Juli 2026 · davon 40.0 % Haushalte · Schätzwert');
   });
 
   it('gives production its own period', () => {
     const found = tile(figures(months), 'tiles_production');
     expect(found?.value).toBe(`${count(7819)} MWh`);
-    expect(found?.note).toBe('Januar 2025 bis Dezember 2025');
+    expect(found?.note).toBe('Januar 2025 bis Dezember 2025 · Schätzwert');
   });
 
   it('leaves the household share out when it is unknown', () => {
     const f = figures([m('20261031', { elecConsumptionMwh: 100, elecPeriodFrom: '20250801', elecPeriodUntil: '20260731' })]);
-    expect(tile(f, 'tiles_consumption')?.note).toBe('August 2025 bis Juli 2026');
+    expect(tile(f, 'tiles_consumption')?.note).toBe('August 2025 bis Juli 2026 · Schätzwert');
   });
 
   it('writes the months of the period in the active language', () => {
     const f = figures([m('20261031', { elecConsumptionMwh: 100, elecPeriodFrom: '20250801', elecPeriodUntil: '20260731' })]);
     const found = energyTiles(f, i18n, 2026, 'fr').find((t) => t.label === 'tiles_consumption');
-    expect(found?.note).toBe('août 2025 bis juillet 2026');
+    expect(found?.note).toBe('août 2025 bis juillet 2026 · Schätzwert');
   });
 
   it('falls back to the row date when a period is missing', () => {
     const f = figures([m('20261031', { elecConsumptionMwh: 100 })]);
-    expect(tile(f, 'tiles_consumption')?.note).toBe('Stand 31.10.2026');
+    expect(tile(f, 'tiles_consumption')?.note).toBe('Stand 31.10.2026 · Schätzwert');
   });
 
   it('falls back to the row date instead of throwing when a stored period date is malformed', () => {
     const f = figures([m('20261031', { elecConsumptionMwh: 100, elecPeriodFrom: 'garbage', elecPeriodUntil: '20260731' })]);
     expect(() => energyTiles(f, i18n, 2026, 'de')).not.toThrow();
-    expect(tile(f, 'tiles_consumption')?.note).toBe('Stand 31.10.2026');
+    expect(tile(f, 'tiles_consumption')?.note).toBe('Stand 31.10.2026 · Schätzwert');
   });
 
   it('does not show half a period', () => {
     const f = figures([m('20261031', { renewableProductionMwh: 100, productionPeriodUntil: '20251231' })]);
-    expect(tile(f, 'tiles_production')?.note).toBe('Stand 31.10.2026');
+    expect(tile(f, 'tiles_production')?.note).toBe('Stand 31.10.2026 · Schätzwert');
   });
 
   it('dates every other tile with its own row', () => {
@@ -287,5 +288,16 @@ describe('energyCompareRows', () => {
 
   it('has no table without comparison locations', () => {
     expect(energyCompareRows('Stäfa', main, [], 'Unbekannter Ort', 2026)).toEqual([]);
+  });
+});
+
+describe('energyGapTiles', () => {
+  it('keeps every unknown figure on the page as a placeholder with a note', () => {
+    const tiles = energyGapTiles(i18n);
+    expect(tiles).toHaveLength(4);
+    expect(tiles.map((tile) => tile.value)).toEqual(Array(4).fill('gaps_placeholder'));
+    expect(tiles.map((tile) => tile.label)).toEqual(
+      ['gaps_gasHeat_label', 'gaps_storage_label', 'gaps_heatingAge_label', 'gaps_outages_label']);
+    expect(tiles.every((tile) => tile.note.length > 0)).toBe(true);
   });
 });

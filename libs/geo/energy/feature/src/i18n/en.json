@@ -28,7 +28,9 @@
     "asOf": "As of {date}",
     "unitMwh": "MWh",
     "unitKwp": "kWp",
-    "unitRpKwh": "Rp./kWh"
+    "unitRpKwh": "Rp./kWh",
+    "estimate": "estimate",
+    "modelNote": "Electricity consumption and production are estimates. Energie Reporter uses a model to divide values measured for all of Switzerland among the municipalities. For consumption the average deviation is about 21 percent, for production between 10 and 40 percent."
   },
   "trends": {
     "title": "Trends",
@@ -65,11 +67,24 @@
   },
   "gaps": {
     "title": "What is not known",
-    "intro": "These details are missing for every municipality. Behind each one it says who might know.",
-    "gasHeat": "Gas and heat consumption: the gas supplier or the municipality might know.",
-    "storage": "Storage, for example batteries: the network operator might know.",
-    "heatingAge": "Age of heating systems: the municipality might know.",
-    "outages": "Power outages: the network operator might know."
+    "intro": "These details are not public. Each one says who might know.",
+    "placeholder": "open",
+    "gasHeat": {
+      "label": "Gas and heat consumption",
+      "note": "The gas supplier or the municipality might know."
+    },
+    "storage": {
+      "label": "Storage, for example batteries",
+      "note": "The network operator might know."
+    },
+    "heatingAge": {
+      "label": "Age of heating systems",
+      "note": "The municipality might know."
+    },
+    "outages": {
+      "label": "Power outages",
+      "note": "The network operator might know."
+    }
   },
   "sources": {
     "title": "Sources",

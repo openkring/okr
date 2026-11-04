@@ -28,7 +28,9 @@
     "asOf": "Stato al {date}",
     "unitMwh": "MWh",
     "unitKwp": "kWp",
-    "unitRpKwh": "ct./kWh"
+    "unitRpKwh": "ct./kWh",
+    "estimate": "stima",
+    "modelNote": "Il consumo e la produzione di elettricità sono stime. Energie Reporter ripartisce tra i comuni, con un modello, valori misurati per tutta la Svizzera. Lo scarto medio è di circa il 21 per cento per il consumo e tra il 10 e il 40 per cento per la produzione."
   },
   "trends": {
     "title": "Andamento",
@@ -65,11 +67,24 @@
   },
   "gaps": {
     "title": "Cosa non si sa",
-    "intro": "Queste informazioni mancano per tutti i comuni. Dopo ognuna è indicato chi potrebbe conoscerla.",
-    "gasHeat": "Consumo di gas e di calore: può saperlo il fornitore di gas o il comune.",
-    "storage": "Accumulo, per esempio batterie: può saperlo il gestore di rete.",
-    "heatingAge": "Età dei riscaldamenti: può saperlo il comune.",
-    "outages": "Interruzioni di corrente: può saperlo il gestore di rete."
+    "intro": "Queste informazioni non sono pubbliche. Per ognuna è indicato chi potrebbe conoscerla.",
+    "placeholder": "aperto",
+    "gasHeat": {
+      "label": "Consumo di gas e di calore",
+      "note": "Può saperlo il fornitore di gas o il comune."
+    },
+    "storage": {
+      "label": "Accumulo, per esempio batterie",
+      "note": "Può saperlo il gestore di rete."
+    },
+    "heatingAge": {
+      "label": "Età dei riscaldamenti",
+      "note": "Può saperlo il comune."
+    },
+    "outages": {
+      "label": "Interruzioni di corrente",
+      "note": "Può saperlo il gestore di rete."
+    }
   },
   "sources": {
     "title": "Fonti",

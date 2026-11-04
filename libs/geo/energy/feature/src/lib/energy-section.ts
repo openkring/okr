@@ -51,6 +51,7 @@ import { EnergySectionStore } from './energy-section.store';
               <h3>{{ store.i18n.tiles_title() }}</h3>
               @if (store.tiles().length > 0) {
                 <okr-energy-key-figures [tiles]="store.tiles()" />
+                <p class="muted">{{ store.i18n.tiles_modelNote() }}</p>
               } @else {
                 <p class="muted">{{ store.i18n.state_noBlock() }}</p>
               }
@@ -86,12 +87,7 @@ import { EnergySectionStore } from './energy-section.store';
 
               <h3>{{ store.i18n.gaps_title() }}</h3>
               <p>{{ store.i18n.gaps_intro() }}</p>
-              <ul>
-                <li>{{ store.i18n.gaps_gasHeat() }}</li>
-                <li>{{ store.i18n.gaps_storage() }}</li>
-                <li>{{ store.i18n.gaps_heatingAge() }}</li>
-                <li>{{ store.i18n.gaps_outages() }}</li>
-              </ul>
+              <okr-energy-key-figures [tiles]="store.gapTiles()" />
 
               <okr-energy-sources [i18n]="store.sourcesI18n()" [solarUrl]="store.solarUrl()" />
             }

@@ -12,7 +12,7 @@ import { LocationService } from '@okr/location-data-access';
 import { EnergyFiguresService } from '@okr/energy-data-access';
 import {
   ENERGY_I18N_KEYS, EnergyCompared, compareTarget, energyCompareRows, energyHeader, energySectionState,
-  energyStaleNote, energyTariffCharts, energyTiles, energyTrendCharts, hasFutureTariff, solarDocumentUrl,
+  energyGapTiles, energyStaleNote, energyTariffCharts, energyTiles, energyTrendCharts, hasFutureTariff, solarDocumentUrl,
   uniqueCompareKeys
 } from '@okr/energy-util';
 
@@ -94,6 +94,7 @@ export const EnergySectionStore = signalStore(
       const figures = store.figuresResource.value();
       return figures ? energyTiles(figures, store.i18n, store.calendarYear, store.i18nService.getActiveLang() || 'de') : [];
     }),
+    gapTiles: computed(() => energyGapTiles(store.i18n)),
     trendCharts: computed(() => energyTrendCharts(store.figuresResource.value()?.months, store.i18n)),
     hasTrends: computed(() => energyTrendCharts(store.figuresResource.value()?.months, store.i18n).some((chart) => chart.options)),
     tariffCharts: computed(() => energyTariffCharts(store.figuresResource.value()?.tariffs, store.i18n, store.calendarYear)),

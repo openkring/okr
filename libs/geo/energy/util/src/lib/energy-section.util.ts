@@ -89,10 +89,11 @@ export function energyTiles(figures: EnergyFiguresModel, i18n: EnergyI18n, calen
 
   const tiles: (EnergyTile | undefined)[] = [
     period(i18n.tiles_consumption(), consumption, () =>
-      [periodNote(consumptionRow?.elecPeriodFrom, consumptionRow?.elecPeriodUntil, consumption?.date ?? '', i18n, lang), householdNote(consumptionRow, i18n)]
-        .filter(Boolean).join(SEPARATOR)),
+      [periodNote(consumptionRow?.elecPeriodFrom, consumptionRow?.elecPeriodUntil, consumption?.date ?? '', i18n, lang), householdNote(consumptionRow, i18n),
+        i18n.tiles_estimate()].filter(Boolean).join(SEPARATOR)),
     period(i18n.tiles_production(), production, () =>
-      periodNote(productionRow?.productionPeriodFrom, productionRow?.productionPeriodUntil, production?.date ?? '', i18n, lang)),
+      [periodNote(productionRow?.productionPeriodFrom, productionRow?.productionPeriodUntil, production?.date ?? '', i18n, lang),
+        i18n.tiles_estimate()].join(SEPARATOR)),
     dated(i18n.tiles_solarCapacity(), 'solarKwp', (value) => withUnit(formatCount(value), i18n.tiles_unitKwp())),
     dated(i18n.tiles_solarPotential(), 'solarPotentialUsage', formatShare),
     dated(i18n.tiles_renewableHeating(), 'renewableHeatingShare', formatShare),
@@ -103,6 +104,20 @@ export function energyTiles(figures: EnergyFiguresModel, i18n: EnergyI18n, calen
       : undefined
   ];
   return tiles.filter((tile) => tile !== undefined);
+}
+
+/**
+ * What no public source holds at municipal level (spec §6.4): the figure stays on the page as a
+ * placeholder with a note on who could know, rather than disappearing.
+ */
+export function energyGapTiles(i18n: EnergyI18n): EnergyTile[] {
+  const tile = (label: string, note: string): EnergyTile => ({ label, value: i18n.gaps_placeholder(), note });
+  return [
+    tile(i18n.gaps_gasHeat_label(), i18n.gaps_gasHeat_note()),
+    tile(i18n.gaps_storage_label(), i18n.gaps_storage_note()),
+    tile(i18n.gaps_heatingAge_label(), i18n.gaps_heatingAge_note()),
+    tile(i18n.gaps_outages_label(), i18n.gaps_outages_note())
+  ];
 }
 
 function trendBlock(title: string, series: TrendSeries[], unit: string): EnergyChartBlock {

@@ -28,7 +28,9 @@
     "asOf": "État au {date}",
     "unitMwh": "MWh",
     "unitKwp": "kWc",
-    "unitRpKwh": "ct./kWh"
+    "unitRpKwh": "ct./kWh",
+    "estimate": "estimation",
+    "modelNote": "La consommation et la production d'électricité sont des estimations. Energie Reporter répartit entre les communes, à l'aide d'un modèle, des valeurs mesurées pour toute la Suisse. L'écart moyen est d'environ 21 pour cent pour la consommation, et de 10 à 40 pour cent pour la production."
   },
   "trends": {
     "title": "Évolution",
@@ -65,11 +67,24 @@
   },
   "gaps": {
     "title": "Ce que nous ne savons pas",
-    "intro": "Ces informations manquent pour toutes les communes. Après chacune, tu vois qui pourrait les connaître.",
-    "gasHeat": "Consommation de gaz et de chaleur : le fournisseur de gaz ou la commune pourrait le savoir.",
-    "storage": "Stockage, par exemple des batteries : le gestionnaire de réseau pourrait le savoir.",
-    "heatingAge": "Âge des chauffages : la commune pourrait le savoir.",
-    "outages": "Pannes de courant : le gestionnaire de réseau pourrait le savoir."
+    "intro": "Ces informations ne sont pas publiques. Pour chacune, tu vois qui pourrait les connaître.",
+    "placeholder": "ouvert",
+    "gasHeat": {
+      "label": "Consommation de gaz et de chaleur",
+      "note": "Le fournisseur de gaz ou la commune pourrait le savoir."
+    },
+    "storage": {
+      "label": "Stockage, par exemple des batteries",
+      "note": "Le gestionnaire de réseau pourrait le savoir."
+    },
+    "heatingAge": {
+      "label": "Âge des chauffages",
+      "note": "La commune pourrait le savoir."
+    },
+    "outages": {
+      "label": "Pannes de courant",
+      "note": "Le gestionnaire de réseau pourrait le savoir."
+    }
   },
   "sources": {
     "title": "Sources",

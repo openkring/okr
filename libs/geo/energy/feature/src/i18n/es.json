@@ -28,7 +28,9 @@
     "asOf": "Datos a {date}",
     "unitMwh": "MWh",
     "unitKwp": "kWp",
-    "unitRpKwh": "cént./kWh"
+    "unitRpKwh": "cént./kWh",
+    "estimate": "estimación",
+    "modelNote": "El consumo y la producción de electricidad son estimaciones. Energie Reporter reparte entre los municipios, con un modelo, valores medidos para toda Suiza. La desviación media es de alrededor del 21 por ciento en el consumo y de entre el 10 y el 40 por ciento en la producción."
   },
   "trends": {
     "title": "Evolución",
@@ -65,11 +67,24 @@
   },
   "gaps": {
     "title": "Lo que no se sabe",
-    "intro": "Estos datos faltan en todos los municipios. Detrás de cada uno se indica quién podría saberlo.",
-    "gasHeat": "Consumo de gas y de calor: puede saberlo el proveedor de gas o el municipio.",
-    "storage": "Almacenamiento, por ejemplo baterías: puede saberlo el operador de red.",
-    "heatingAge": "Antigüedad de las calefacciones: puede saberlo el municipio.",
-    "outages": "Cortes de electricidad: puede saberlo el operador de red."
+    "intro": "Estos datos no son públicos. En cada uno se indica quién podría saberlo.",
+    "placeholder": "pendiente",
+    "gasHeat": {
+      "label": "Consumo de gas y de calor",
+      "note": "Puede saberlo el proveedor de gas o el municipio."
+    },
+    "storage": {
+      "label": "Almacenamiento, por ejemplo baterías",
+      "note": "Puede saberlo el operador de red."
+    },
+    "heatingAge": {
+      "label": "Antigüedad de las calefacciones",
+      "note": "Puede saberlo el municipio."
+    },
+    "outages": {
+      "label": "Cortes de electricidad",
+      "note": "Puede saberlo el operador de red."
+    }
   },
   "sources": {
     "title": "Fuentes",

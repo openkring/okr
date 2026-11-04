@@ -28,7 +28,9 @@
     "asOf": "Stand {date}",
     "unitMwh": "MWh",
     "unitKwp": "kWp",
-    "unitRpKwh": "Rp./kWh"
+    "unitRpKwh": "Rp./kWh",
+    "estimate": "Schätzwert",
+    "modelNote": "Stromverbrauch und Stromproduktion sind Schätzwerte. Der Energie Reporter verteilt gemessene Werte für die ganze Schweiz mit einem Modell auf die Gemeinden. Beim Verbrauch liegt die Abweichung im Mittel bei rund 21 Prozent, bei der Produktion zwischen 10 und 40 Prozent."
   },
   "trends": {
     "title": "Entwicklung",
@@ -65,11 +67,24 @@
   },
   "gaps": {
     "title": "Was nicht bekannt ist",
-    "intro": "Diese Angaben fehlen für alle Gemeinden. Dahinter steht, wer sie wissen könnte.",
-    "gasHeat": "Gas- und Wärmeverbrauch: Das kann der Gasversorger oder die Gemeinde wissen.",
-    "storage": "Speicher, zum Beispiel Batterien: Das kann der Netzbetreiber wissen.",
-    "heatingAge": "Alter der Heizungen: Das kann die Gemeinde wissen.",
-    "outages": "Stromausfälle: Das kann der Netzbetreiber wissen."
+    "intro": "Diese Angaben sind nicht öffentlich. Bei jeder steht, wer sie kennen könnte.",
+    "placeholder": "offen",
+    "gasHeat": {
+      "label": "Gas- und Wärmeverbrauch",
+      "note": "Das kann der Gasversorger oder die Gemeinde wissen."
+    },
+    "storage": {
+      "label": "Speicher, zum Beispiel Batterien",
+      "note": "Das kann der Netzbetreiber wissen."
+    },
+    "heatingAge": {
+      "label": "Alter der Heizungen",
+      "note": "Das kann die Gemeinde wissen."
+    },
+    "outages": {
+      "label": "Stromausfälle",
+      "note": "Das kann der Netzbetreiber wissen."
+    }
   },
   "sources": {
     "title": "Quellen",
