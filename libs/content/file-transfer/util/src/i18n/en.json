@@ -4,11 +4,12 @@
   "send": "Send",
   "remove": "Remove",
   "new": {
-    "title": "Send a transfer",
+    "title": "Create file transfer",
     "titleChat": "Send as transfer",
     "chatHint": "The group sees the transfer as a card in the chat."
   },
   "files": {
+    "title": "Upload the files to share",
     "label": "Files",
     "helper": "You can pick several files at once. Up to {max} in total.",
     "total": "{size} in total"
@@ -21,28 +22,45 @@
     "title": "People",
     "add": "Add person"
   },
+  "internal": {
+    "title": "Add internal recipients",
+    "text": "You can choose the members of groups and/or individual registered people as recipients. They get a notification and a link where they can download the file."
+  },
   "emails": {
-    "title": "Email addresses",
+    "title": "External recipients",
     "add": "Add email address",
-    "description": "For people outside the app. They get a personal link by email. Up to {max} addresses."
+    "description": "Here you can add recipients who have no access to the app. They get a personal link to download the files by email. At most {max} addresses.",
+    "placeholder": "sssss@domain.com"
   },
   "consent": {
     "hint": "Does the file show other people? Only share it if they agree."
   },
+  "settings": {
+    "title": "Transfer settings",
+    "text": "This is the message the invited people receive together with the download link.",
+    "variables": "When sending, we replace {lifetime} with the lifetime, {expiry} with the day the files are deleted, and {password} with a note that the files are password protected. We never send the password itself."
+  },
   "message": {
     "label": "Message",
     "placeholder": "A few words about the files",
-    "helper": "Optional. Everyone who receives the transfer sees this message."
+    "helper": "Every recipient gets this message with their link. You can change it freely.",
+    "default": "Hello\n\nI have sent you some files. You can download them for {lifetime}, until {expiry}. After that they are deleted automatically.\n\n{password}\n\nBest regards",
+    "varLifetime": "lifetime",
+    "varExpiry": "expiry",
+    "varPassword": "password",
+    "days": "{days} days",
+    "dayOne": "1 day",
+    "passwordNote": "The files are protected by a password. I will send you the password separately."
   },
   "lifetime": {
     "label": "Available for (days)",
     "placeholder": "Number of days",
-    "helper": "After that the files are deleted. Up to {max} days."
+    "helper": "The files can be downloaded for 1 to {max} days and are then deleted."
   },
   "password": {
     "label": "Password",
-    "placeholder": "Leave empty for no password",
-    "helper": "Optional. Pass the password on to the people outside the app yourself. Members do not need it."
+    "placeholder": "Optional",
+    "helper": "Optional. People outside the app need the password to open the files. It is not sent along: pass it on yourself, for example by phone. Members in the app do not need it."
   },
   "info": {
     "title": "How a transfer works",

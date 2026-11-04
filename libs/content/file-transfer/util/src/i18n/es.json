@@ -4,11 +4,12 @@
   "send": "Enviar",
   "remove": "Quitar",
   "new": {
-    "title": "Enviar una transferencia",
+    "title": "Crear transferencia de archivos",
     "titleChat": "Enviar como transferencia",
     "chatHint": "El grupo ve la transferencia como una tarjeta en el chat."
   },
   "files": {
+    "title": "Subir los archivos que quieres compartir",
     "label": "Archivos",
     "helper": "Puedes elegir varios archivos a la vez. Como máximo {max} en total.",
     "total": "{size} en total"
@@ -21,28 +22,45 @@
     "title": "Personas",
     "add": "Añadir persona"
   },
+  "internal": {
+    "title": "Añadir destinatarios internos",
+    "text": "Puedes elegir como destinatarios a los miembros de grupos y/o a personas registradas. Recibirán una notificación y un enlace para descargar el archivo."
+  },
   "emails": {
-    "title": "Direcciones de correo",
+    "title": "Destinatarios externos",
     "add": "Añadir dirección de correo",
-    "description": "Para personas fuera de la app. Reciben un enlace personal por correo. Como máximo {max} direcciones."
+    "description": "Aquí puedes añadir como destinatarios a personas sin acceso a la app. Recibirán por correo un enlace personal para descargar los archivos. Como máximo {max} direcciones.",
+    "placeholder": "sssss@domain.com"
   },
   "consent": {
     "hint": "¿El archivo muestra a otras personas? Compártelo solo si están de acuerdo."
   },
+  "settings": {
+    "title": "Ajustes de la transferencia",
+    "text": "Este es el mensaje que reciben las personas invitadas junto con el enlace de descarga.",
+    "variables": "Al enviar, sustituimos {duración} por la duración, {vencimiento} por el día en que se borran los archivos y {contraseña} por una nota de que los archivos están protegidos con contraseña. Nunca enviamos la contraseña."
+  },
   "message": {
     "label": "Mensaje",
     "placeholder": "Unas palabras sobre los archivos",
-    "helper": "Opcional. Todos los destinatarios ven este mensaje."
+    "helper": "Cada destinatario recibe este mensaje con su enlace. Puedes cambiarlo libremente.",
+    "default": "Hola\n\nTe he enviado unos archivos. Puedes descargarlos durante {duración}, hasta el {vencimiento}. Después se borrarán automáticamente.\n\n{contraseña}\n\nSaludos",
+    "varLifetime": "duración",
+    "varExpiry": "vencimiento",
+    "varPassword": "contraseña",
+    "days": "{days} días",
+    "dayOne": "1 día",
+    "passwordNote": "Los archivos están protegidos con una contraseña. Te enviaré la contraseña por separado."
   },
   "lifetime": {
     "label": "Duración en días",
     "placeholder": "Número de días",
-    "helper": "Después, los archivos se borran. Como máximo {max} días."
+    "helper": "Los archivos se pueden descargar durante 1 a {max} días y después se borran."
   },
   "password": {
     "label": "Contraseña",
-    "placeholder": "Déjalo vacío para no usar contraseña",
-    "helper": "Opcional. Pasa tú mismo la contraseña a las personas fuera de la app. Los miembros no la necesitan."
+    "placeholder": "Opcional",
+    "helper": "Opcional. Las personas de fuera de la app necesitan la contraseña para abrir los archivos. No se envía con el enlace: pásasela tú, por ejemplo por teléfono. Los miembros de la app no la necesitan."
   },
   "info": {
     "title": "Así funciona una transferencia",

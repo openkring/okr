@@ -77,7 +77,7 @@ import { PFX } from './scope';
                   type="text"
                   [counter]="true"
                   [maxlength]="maxLength()"
-                  placeholder="ssssss"
+                  [placeholder]="placeholder()"
                   [maskito]="mask()"
                   [maskitoElement]="maskPredicate"
                 />
@@ -127,6 +127,8 @@ export class StringList {
   public mask = input<MaskitoOptions>(LowercaseWordMask);
   public maxLength = input(NAME_LENGTH);
   public selectLabel = input<string>();
+  /** placeholder of the add-input, e.g. an example email address */
+  public placeholder = input('ssssss');
   /** Set to false to keep the entry as typed (default: entries are lowercased). */
   public lowercase = input(true);
   /**

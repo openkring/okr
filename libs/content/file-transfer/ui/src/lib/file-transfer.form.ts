@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote, IonRow } from '@ionic/angular';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote, IonRow } from '@ionic/angular';
 
 import { AnyCharMask } from '@okr/shared-config';
 import { COMMENT_LENGTH, LONG_NAME_LENGTH, PASSWORD_MAX_LENGTH } from '@okr/shared-constants';
@@ -56,7 +56,7 @@ type FileTransferField = keyof FileTransferFormData;
   imports: [
     ImgDirective, AvatarPipe, SvgIconPipe,
     FileInput, NumberInput, PasswordInput, TextareaInput, StringList, ErrorNote,
-    IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonButton, IonIcon, IonList, IonItem, IonAvatar, IonLabel, IonNote,
+    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonButton, IonIcon, IonList, IonItem, IonAvatar, IonLabel, IonNote,
   ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px;} }
@@ -64,13 +64,14 @@ type FileTransferField = keyof FileTransferFormData;
     .remove { cursor: pointer; }
     .select { padding: 8px 16px 0 16px; }
     .section-title { font-weight: 500; padding: 8px 16px 0 16px; }
-    .consent { white-space: normal; }
+    .card-text { padding: 0 16px 8px 16px; }
   `],
   template: `
     @if (showForm()) {
       <form novalidate>
         <!-- files -->
         <ion-card>
+          <ion-card-header><ion-card-title>{{ i18n().files_title() }}</ion-card-title></ion-card-header>
           <ion-card-content class="ion-no-padding">
             <okr-file-input [i18n]="filesI18n()" [files]="files()" (filesChange)="onFieldChange('files', $event)"
               [multiple]="true" [readOnly]="isReadOnly()" />
@@ -85,7 +86,9 @@ type FileTransferField = keyof FileTransferFormData;
 
         <!-- recipients: groups and persons -->
         <ion-card>
+          <ion-card-header><ion-card-title>{{ i18n().internal_title() }}</ion-card-title></ion-card-header>
           <ion-card-content class="ion-no-padding">
+            <div class="card-text">{{ i18n().internal_text() }}</div>
             <ion-grid>
               <ion-row>
                 <ion-col size="12" size-md="6">
@@ -147,23 +150,21 @@ type FileTransferField = keyof FileTransferFormData;
         <!-- recipients: outside email addresses (okr-strings brings its own card) -->
         <okr-strings [strings]="emails()" (stringsChange)="onFieldChange('emails', $event)"
           [title]="i18n().emails_title()" [add]="i18n().emails_add()" [description]="emailsDescription()"
+          [placeholder]="i18n().emails_placeholder()"
           [mask]="anyCharMask" [maxLength]="emailLength" [lowercase]="true" [readOnly]="isReadOnly()" />
         <okr-error-note [errors]="emailsErrors()" />
-        @if (emails().length > 0) {
-          <ion-item lines="none">
-            <ion-icon slot="start" color="warning" src="{{ 'warning' | svgIcon }}" />
-            <ion-label class="consent" color="warning">{{ i18n().consent_hint() }}</ion-label>
-          </ion-item>
-        }
 
         <!-- message, lifetime, password -->
         <ion-card>
+          <ion-card-header><ion-card-title>{{ i18n().settings_title() }}</ion-card-title></ion-card-header>
           <ion-card-content class="ion-no-padding">
+            <div class="card-text">{{ i18n().settings_text() }}</div>
+            <div class="card-text"><ion-note>{{ i18n().settings_variables() }}</ion-note></div>
             <ion-grid>
               <ion-row>
                 <ion-col size="12">
                   <okr-textarea-input [i18n]="messageI18n()" [value]="message()" (valueChange)="onFieldChange('message', $event)"
-                    [maxLength]="messageLength" [rows]="3" [showHelper]="true" [readOnly]="isReadOnly()" />
+                    [maxLength]="messageLength" [rows]="8" [showHelper]="true" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="messageErrors()" />
                 </ion-col>
               </ion-row>

@@ -14,8 +14,8 @@ import { chatBlockedAlertMessage, debugListLoaded, fill, hasRole, isChatBlockedE
 
 import { FileTransferDisposition, FileTransferError, FileTransferService } from '@okr/content-file-transfer-data-access';
 import {
-  DEFAULT_FILE_TRANSFER_LIMITS, FILE_TRANSFER_I18N_KEYS, FileTransferEventSummary, FileTransferI18n, FileTransferRejection,
-  isFileTransferRejection, resolveFileTransferLimits, summarizeFileTransferEvents, summarizeFileTransferEventsByTransfer,
+  DEFAULT_FILE_TRANSFER_LIMITS, expandFileTransferMessage, FILE_TRANSFER_I18N_KEYS, FileTransferEventSummary, FileTransferI18n,
+  fileTransferExpiryDate, FileTransferRejection, isFileTransferRejection, resolveFileTransferLimits, summarizeFileTransferEvents, summarizeFileTransferEventsByTransfer,
 } from '@okr/content-file-transfer-util';
 // Static on purpose: none of these ui modals injects this store (they resolve i18n through
 // I18nService), so there is no store ↔ modal cycle. A dynamic import() of the same lib next to the
@@ -244,7 +244,7 @@ export const FileTransferStore = signalStore(
           groupKeys: form.groupKeys,
           personKeys: form.personKeys,
           emails: form.emails,
-          message: form.message,
+          message: this.expandMessage(form),
           password: form.password,
           chatRoomId,
         });
@@ -255,6 +255,24 @@ export const FileTransferStore = signalStore(
         await this.toast(this.errorText(error));
         return false;
       }
+    },
+
+    /**
+     * Fills the message placeholders ({laufzeit}, {ablaufdatum}, {passwort} — the words come from
+     * i18n) right before sending. {passwort} becomes a hint that a password is needed, never the
+     * password itself: it reaches outside recipients out of band (spec 1.115 §4.2).
+     */
+    expandMessage(form: FileTransferFormData): string {
+      const days = form.lifetimeDays;
+      return expandFileTransferMessage(form.message, {
+        lifetime: store.i18n.message_var_lifetime(),
+        expiry: store.i18n.message_var_expiry(),
+        password: store.i18n.message_var_password(),
+      }, {
+        lifetime: days === 1 ? store.i18n.message_day_one() : fill(store.i18n.message_days(), { days }),
+        expiry: fileTransferExpiryDate(days),
+        password: form.password ? store.i18n.message_password_note() : '',
+      });
     },
 
     /*-------------------------- info + limits --------------------------------*/

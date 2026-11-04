@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, linkedSignal, signal, untracked } from '@angular/core';
 import { IonContent, IonItem, IonLabel, IonNote, ModalController } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
@@ -12,9 +12,10 @@ import {
 import { FileTransferForm, FileTransferFormData, newFileTransferFormData } from './file-transfer.form';
 
 /**
- * «Transfer senden»: collects files and recipients and dismisses with the filled-in
- * {@link FileTransferFormData} and role 'confirm'. Uploading and sending are the caller's job.
- * Started from a chat room (`chatRoomId`), the room's members come in through `preset`.
+ * «Datei-Transfer erstellen»: collects files and recipients and dismisses with the filled-in
+ * {@link FileTransferFormData} and role 'confirm'. Uploading and sending are the caller's job;
+ * the caller also fills the message placeholders. Started from a chat room (`chatRoomId`), the
+ * room's members come in through `preset`.
  */
 @Component({
   selector: 'okr-file-transfer-new-modal',
@@ -78,8 +79,25 @@ export class FileTransferNewModal {
     save: this.i18n.send(),
   } as ChangeConfirmationI18n));
 
+  constructor() {
+    // Seed the default message ONCE, as soon as its translation has loaded (translateAll starts
+    // at ''). Never through the linkedSignal: a late-loading text would re-seed and wipe what
+    // the sender already typed. A preset message or the sender's own change wins.
+    effect(() => {
+      const text = this.i18n.message_default();
+      if (!text) return;
+      untracked(() => {
+        if (this.formDirty() || this.preset()?.message || this.formData().message) return;
+        this.formData.update(data => ({ ...data, message: text }));
+      });
+    });
+  }
+
   private initialData(): FileTransferFormData {
-    return newFileTransferFormData(this.limits().defaultLifetimeDays, this.preset());
+    return newFileTransferFormData(this.limits().defaultLifetimeDays, {
+      message: untracked(() => this.i18n.message_default()),
+      ...(this.preset() ?? {}),
+    });
   }
 
   public async save(): Promise<void> {
