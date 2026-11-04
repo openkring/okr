@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { BaseProperty } from '@okr/shared-models';
 
 import {
-  CityLocation, ENERGY_REPORTER_COLUMNS, assertEnergyReporterHeader, bfsNumbersToFetch, currentBfsFromLookup,
+  CityLocation, ENERGY_REPORTER_COLUMNS, assertEnergyReporterHeader, bfsNumbersToFetch, buildEnergyPatch, collectReporterRows, currentBfsFromLookup,
   hasCoordinates, isBlockedByStatus, nextBfsStatus, parseCsvLine, parseHeader, rowToMonth, tariffsFromSparql, tenantsPerBfs,
 } from './energy.util';
 import elcomFixture from './elcom.fixture.json';
@@ -199,5 +199,88 @@ describe('bfsStatus', () => {
 
   it('clears the status once data arrives', () => {
     expect(nextBfsStatus(city('a', '158', [], '158'), 'data')).toBeUndefined();
+  });
+});
+
+describe('buildEnergyPatch', () => {
+  const now = new Date('2026-11-04T03:15:00.000Z');
+  const months = [rowToMonth(stafaRow('2026-10-31')), rowToMonth(stafaRow('2021-03-31'))]; // deliberately newest first
+  const reporter = { municipality: 'Stäfa', canton: 'ZH', months };
+  const tariffs = tariffsFromSparql(elcomFixture.stafa);
+
+  it('writes only the Energie Reporter fields when only that source succeeded', () => {
+    const patch = buildEnergyPatch({ bfsNr: 158, tenants: ['scs'], now, reporter });
+    expect(Object.keys(patch).sort()).toEqual(['bfsNr', 'canton', 'isArchived', 'months', 'municipality', 'sourceDate', 'tenants']);
+    expect(patch['isArchived']).toBe(false);
+    expect(patch['tenants']).toEqual(['scs']);
+    expect(patch['bfsNr']).toBe(158);
+    expect(patch['municipality']).toBe('Stäfa');
+    expect(patch['canton']).toBe('ZH');
+  });
+
+  it('writes only the tariffs when only ElCom succeeded', () => {
+    const patch = buildEnergyPatch({ bfsNr: 158, tenants: ['scs'], now, tariffs });
+    expect(Object.keys(patch).sort()).toEqual(['bfsNr', 'isArchived', 'tariffs', 'tenants']);
+    expect(patch['tariffs']).toEqual(tariffs);
+  });
+
+  it('writes everything, including fetchedAt, when both succeeded', () => {
+    const patch = buildEnergyPatch({ bfsNr: 158, tenants: ['kring', 'scs'], now, reporter, tariffs });
+    expect(Object.keys(patch).sort()).toEqual(['bfsNr', 'canton', 'fetchedAt', 'isArchived', 'months', 'municipality', 'sourceDate', 'tariffs', 'tenants']);
+    expect(patch['fetchedAt']).toBe('2026-11-04T03:15:00.000Z');
+  });
+
+  it('sorts the months oldest first and takes sourceDate from the newest', () => {
+    const patch = buildEnergyPatch({ bfsNr: 158, tenants: ['scs'], now, reporter });
+    expect((patch['months'] as { date: string }[]).map((m) => m.date)).toEqual(['20210331', '20261031']);
+    expect(patch['sourceDate']).toBe('20261031');
+    expect(months.map((m) => m.date)).toEqual(['20261031', '20210331']); // the input is not reordered
+  });
+
+  it('treats a reporter without months as no Energie Reporter source', () => {
+    const patch = buildEnergyPatch({ bfsNr: 158, tenants: ['scs'], now, reporter: { ...reporter, months: [] }, tariffs });
+    expect(Object.keys(patch).sort()).toEqual(['bfsNr', 'isArchived', 'tariffs', 'tenants']);
+  });
+});
+
+describe('collectReporterRows', () => {
+  async function* lines(all: string[]): AsyncGenerator<string> { for (const l of all) yield l; }
+
+  it('keeps only the wanted municipalities, with name, canton and every month', async () => {
+    const { found, failed } = await collectReporterRows(lines(csvLines), new Set([158]));
+    expect([...found.keys()]).toEqual([158]);
+    expect(failed.size).toBe(0);
+    const stafa = found.get(158);
+    expect(stafa?.municipality).toBe('Stäfa');
+    expect(stafa?.canton).toBe('ZH');
+    expect(stafa?.months.map((m) => m.date)).toEqual(['20210331', '20261031']);
+  });
+
+  it('leaves a wanted number without a row out of the result, so the caller can tell «no row»', async () => {
+    const { found, failed } = await collectReporterRows(lines(csvLines), new Set([158, 99999]));
+    expect(found.has(99999)).toBe(false);
+    expect(failed.has(99999)).toBe(false);
+  });
+
+  it('fails one municipality alone when its row is malformed', async () => {
+    const broken = csvLines.map((l) => (l.startsWith('158,') && l.includes(',2021-03-31,') ? l.replace(',2021-03-31,', ',not-a-date,') : l));
+    const { found, failed } = await collectReporterRows(lines(broken), new Set([155, 158]));
+    expect([...failed.keys()]).toEqual([158]);
+    expect(found.has(158)).toBe(false);
+    expect(found.get(155)?.municipality).toBe('Männedorf');
+  });
+
+  it('throws when the header lacks an expected column', async () => {
+    await expect(collectReporterRows(lines(['bfs_nr,municipality', '158,Stäfa']), new Set([158]))).rejects.toThrow(/missing column/);
+  });
+
+  it('throws on an empty file', async () => {
+    await expect(collectReporterRows(lines([]), new Set([158]))).rejects.toThrow(/empty/);
+  });
+
+  it('skips blank lines and reads a header with a byte order mark', async () => {
+    const withBom = ['﻿' + csvLines[0], '', ...csvLines.slice(1), ''];
+    const { found } = await collectReporterRows(lines(withBom), new Set([158]));
+    expect(found.get(158)?.months).toHaveLength(2);
   });
 });

@@ -225,3 +225,95 @@ export function nextBfsStatus(location: CityLocation, outcome: 'data' | 'noRow' 
   const bfsNr = getBfsNr(location);
   return bfsNr === undefined ? LOCATION_BFS_STATUS_NONE : String(bfsNr);
 }
+
+/* ------------------------------ document patch ------------------------------ */
+
+/** What one source delivered for one municipality; a source that failed or had no data is simply absent. */
+export interface EnergyPatchInput {
+  bfsNr: number;
+  tenants: string[];
+  now: Date;
+  /** Energie Reporter: present only when the source succeeded and returned at least one month. */
+  reporter?: { municipality: string; canton: string; months: EnergyMonth[] };
+  /** ElCom: present only when the source succeeded (an empty list is a valid answer). */
+  tariffs?: EnergyTariff[];
+}
+
+/**
+ * The fields to `set(..., { merge: true })` for one municipality (spec §5.3, «Failure»): only the fields of
+ * the sources that succeeded, so a failed source keeps its previous values. `fetchedAt` moves only when both
+ * succeeded, so the missing source is retried the next night. `months` is oldest first and `sourceDate` is
+ * the date of the newest month.
+ */
+export function buildEnergyPatch(input: EnergyPatchInput): Record<string, unknown> {
+  const patch: Record<string, unknown> = { bfsNr: input.bfsNr, tenants: input.tenants, isArchived: false };
+  const reporter = input.reporter && input.reporter.months.length > 0 ? input.reporter : undefined;
+  if (reporter) {
+    const months = [...reporter.months].sort((a, b) => a.date.localeCompare(b.date));
+    patch['municipality'] = reporter.municipality;
+    patch['canton'] = reporter.canton;
+    patch['months'] = months;
+    patch['sourceDate'] = months[months.length - 1].date;
+  }
+  if (input.tariffs) patch['tariffs'] = input.tariffs;
+  if (reporter && input.tariffs) patch['fetchedAt'] = input.now.toISOString();
+  return patch;
+}
+
+/* ------------------------------ streamed CSV ------------------------------ */
+
+/** The rows of one municipality out of the Energie Reporter CSV. */
+export interface ReporterRows { municipality: string; canton: string; months: EnergyMonth[] }
+
+/**
+ * Reads the Energie Reporter CSV line by line and keeps only the rows of `wanted` BFS numbers: the file
+ * unpacks to about 28 MB and the nightly instance is small, so nothing else is held. Columns are read by
+ * header name. Throws on a missing header or column (the whole source fails, and nothing is overwritten).
+ * A malformed row fails its municipality alone: it lands in `failed` and is left out of `found`.
+ * A wanted number that has no row is in neither map.
+ */
+export async function collectReporterRows(
+  lines: AsyncIterable<string>,
+  wanted: ReadonlySet<number>,
+): Promise<{ found: Map<number, ReporterRows>; failed: Map<number, Error> }> {
+  const found = new Map<number, ReporterRows>();
+  const failed = new Map<number, Error>();
+  const newest = new Map<number, string>();
+  let header: string[] | undefined;
+  let bfsColumn = -1;
+  for await (const raw of lines) {
+    const line = raw.endsWith('\r') ? raw.slice(0, -1) : raw;
+    if (header === undefined) {
+      header = parseHeader(line);
+      assertEnergyReporterHeader(header);
+      bfsColumn = header.indexOf('bfs_nr');
+      continue;
+    }
+    if (line === '') continue;
+    // Cheap filter before the full parse: most of the 200 000 lines belong to other municipalities.
+    if (bfsColumn === 0) {
+      const comma = line.indexOf(',');
+      if (!wanted.has(Number(line.slice(0, comma < 0 ? undefined : comma).replace(/"/g, '')))) continue;
+    }
+    const cells = parseCsvLine(line);
+    const bfsNr = Number(cells[bfsColumn]);
+    if (!wanted.has(bfsNr) || failed.has(bfsNr)) continue;
+    const row = Object.fromEntries(header.map((name, i) => [name, cells[i] ?? '']));
+    try {
+      const month = rowToMonth(row);
+      const entry = found.get(bfsNr) ?? { municipality: '', canton: '', months: [] };
+      entry.months.push(month);
+      if (newest.get(bfsNr) === undefined || month.date >= (newest.get(bfsNr) as string)) {
+        newest.set(bfsNr, month.date);
+        entry.municipality = row['municipality'].trim();
+        entry.canton = row['canton'].trim();
+      }
+      found.set(bfsNr, entry);
+    } catch (error) {
+      failed.set(bfsNr, error instanceof Error ? error : new Error(String(error)));
+      found.delete(bfsNr);
+    }
+  }
+  if (header === undefined) throw new Error('Energie Reporter CSV: file is empty');
+  return { found, failed };
+}
