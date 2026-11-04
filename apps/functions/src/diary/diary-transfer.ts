@@ -1,29 +1,20 @@
 //
-// Spec 1.77 — the server half of the diary transfer: which diaries receive an item (the shared
-// `resolveDiaryTargets` rule), who the author is in each (personKey → the user IN that tenant,
-// D6), and the writes themselves (`appendToDiary`, unchanged).
+// Spec 1.77 — the server half of the line transfers: the diaries come from `resolveDiaryPulls`, the
+// author in each is the person's user IN that tenant (D6), the writes are `appendToDiary`, unchanged.
 
 import type { Firestore } from 'firebase-admin/firestore';
 
-import { resolveDiaryTargets } from '@okr/content-diary-util';
-import { DiarySource, DiaryTarget, UserCollection } from '@okr/shared-models';
+import { DiarySource } from '@okr/shared-models';
 
 import { appendToDiary, type DiaryLineField, type DiaryLineMode, type DiaryLineResult } from './append-to-diary';
+import { resolveDiaryPulls } from './diary-pull';
 
-export type DiaryTargetResult = DiaryLineResult | 'skipped-no-user';
+export type DiaryTargetResult = DiaryLineResult | 'skipped-no-consent';
 export type DiarySummary = 'written' | 'skipped-final' | 'skipped-missing' | 'skipped-no-target';
-
-/** The person's active user doc in `diaryTenantId` — its id is the diary's `authorKey`. Pure. */
-export function pickDiaryAuthor(
-  users: { id: string; tenants?: string[]; isArchived?: boolean }[],
-  diaryTenantId: string,
-): string | undefined {
-  return users.find(u => u.isArchived !== true && (u.tenants ?? []).includes(diaryTenantId))?.id;
-}
 
 /** One status for a caller that wants a single answer (the Jasstafel toast). Pure. */
 export function summariseDiaryResults(results: Record<string, DiaryTargetResult>): DiarySummary {
-  const values = Object.values(results).filter(v => v !== 'skipped-no-user');
+  const values = Object.values(results).filter(v => v !== 'skipped-no-consent');
   if (values.length === 0) return 'skipped-no-target';
   if (values.includes('written')) return 'written';
   if (values.includes('skipped-final')) return 'skipped-final';
@@ -31,29 +22,20 @@ export function summariseDiaryResults(results: Record<string, DiaryTargetResult>
 }
 
 /**
- * Resolves the targets for one item and writes (or removes) its line in each matching diary.
- * Returns one status per diary tenant that matched; {} = nothing matched.
+ * Resolves the diaries for one item (`resolveDiaryPulls`) and writes (or removes) its line in each.
+ * Returns one status per diary tenant that asked for it; {} = none did.
  */
 export async function sendToDiaries(db: Firestore, args: {
-  personKey: string; targets: DiaryTarget[] | undefined; source: DiarySource; date: string;
+  personKey: string; sourceTenant: string; source: DiarySource; date: string;
   field: DiaryLineField; line: string; mode: DiaryLineMode;
 }): Promise<Record<string, DiaryTargetResult>> {
-  const ticked = (args.targets ?? []).filter(t => (t.sources ?? []).includes(args.source)).map(t => t.tenantId);
-  if (ticked.length === 0 || !args.personKey) return {};
-  const diaryTenants = resolveDiaryTargets(args.targets, args.source, args.date);
-  if (diaryTenants.length === 0) return {};
-
-  const usersSnap = await db.collection(UserCollection).where('personKey', '==', args.personKey).get();
-  const users = usersSnap.docs.map(d => ({
-    id: d.id, tenants: d.get('tenants') as string[] | undefined, isArchived: d.get('isArchived') as boolean | undefined,
-  }));
-
+  if (!args.personKey) return {};
+  const { personKey, sourceTenant, source, date } = args;
   const results: Record<string, DiaryTargetResult> = {};
-  for (const diaryTenantId of diaryTenants) {
-    const authorKey = pickDiaryAuthor(users, diaryTenantId);
-    results[diaryTenantId] = authorKey
-      ? await appendToDiary(db, diaryTenantId, authorKey, args.date, args.field, args.line, args.mode)
-      : 'skipped-no-user';
+  for (const pull of await resolveDiaryPulls(db, { personKey, sourceTenant, source, date })) {
+    results[pull.tenantId] = pull.status === 'ok'
+      ? await appendToDiary(db, pull.tenantId, pull.uid, date, args.field, args.line, args.mode)
+      : pull.status;
   }
   return results;
 }

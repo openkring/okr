@@ -27,7 +27,7 @@ import {
 } from '@okr/shared-models';
 import { crewTrackDeadline, formatTripTime } from '@okr/trip-util';
 
-import { pickDiaryAuthor } from '../diary/diary-transfer';
+import { pickDiaryAuthor } from '../diary/diary-pull';
 import { pushToPersons } from '../srv/push';
 import { TIME_FMT, toStoreDate } from '../srv/zurich-time';
 import { privateBucket } from '../_storage/private-bucket';

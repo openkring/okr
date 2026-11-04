@@ -3,7 +3,7 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
 import { isDiaryCalendarDay } from '@okr/content-diary-util';
-import { DIARY_SOURCES, DiarySource, DiaryTarget, UserCollection } from '@okr/shared-models';
+import { DIARY_SOURCES, DiarySource, UserCollection } from '@okr/shared-models';
 import { checkAppCheckToken } from '@okr/shared-util-functions';
 
 import { sendToDiaries, summariseDiaryResults, type DiarySummary } from './diary-transfer';
@@ -11,7 +11,7 @@ import { sendToDiaries, summariseDiaryResults, type DiarySummary } from './diary
 export const DIARY_LINE_MAX = 500;
 
 export interface DiaryLineRequest {
-  /** the tenant of the app the line comes from (logging; the routing is on the caller's user doc) */
+  /** the tenant of the app the line comes from (logging only; the routing uses the caller's own tenant) */
   tenantId: string;
   /** which kind of information this is; missing = 'jasstafel' (clients before spec 1.77) */
   source?: DiarySource;
@@ -48,10 +48,10 @@ export function rejectsForOldClient(hadSource: boolean, status: DiarySummary): b
 }
 
 /**
- * Appends one line to the `events` of the caller's day entry in every diary their user doc in
- * THIS app routes `source` to (`users/{uid}.diaryTargets`, spec 1.77 §6). The author in each diary
- * is the caller's person's user in that diary tenant — never `request.auth.uid` from another
- * tenant. No matching target is not an error: `{ status: 'skipped-no-target' }` — except for old
+ * Appends one line to the `events` of the caller's day entry in every diary that collects `source`
+ * from the caller's app (`resolveDiaryPulls`, spec 1.77 §12.5). The author in each diary is the
+ * caller's person's user in that diary tenant — never `request.auth.uid` from another tenant.
+ * No matching diary is not an error: `{ status: 'skipped-no-target' }` — except for old
  * clients without `source`, which get `failed-precondition` (see `rejectsForOldClient`).
  */
 export const recordDiaryLine = onCall<DiaryLineRequest, Promise<{ status: DiarySummary; written: string[] }>>(
@@ -67,7 +67,7 @@ export const recordDiaryLine = onCall<DiaryLineRequest, Promise<{ status: DiaryS
     const user = (await db.collection(UserCollection).doc(uid).get()).data() ?? {};
     const results = await sendToDiaries(db, {
       personKey: (user['personKey'] as string | undefined) ?? '',
-      targets: user['diaryTargets'] as DiaryTarget[] | undefined,
+      sourceTenant: (user['tenants'] as string[] | undefined)?.[0] ?? '',
       source, date, field: 'events', line, mode: 'add',
     });
     const status = summariseDiaryResults(results);
