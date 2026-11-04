@@ -1,7 +1,6 @@
 import { Component, input } from '@angular/core';
 
-/** One key figure: what it is, its value with unit (already formatted), and a line of context (may be empty). */
-export type EnergyTile = { label: string; value: string; note: string };
+import { EnergyTile } from '@okr/energy-util';
 
 /**
  * Responsive grid of key figure tiles. Presentational: every text arrives formatted and translated.
@@ -33,7 +32,7 @@ export type EnergyTile = { label: string; value: string; note: string };
   `],
   template: `
     <div class="tiles">
-      @for (tile of tiles(); track tile.label) {
+      @for (tile of tiles(); track $index) {
         <div class="tile">
           <span class="label">{{ tile.label }}</span>
           <span class="value">{{ tile.value }}</span>

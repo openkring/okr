@@ -84,3 +84,6 @@ export const ENERGY_I18N_KEYS = {
 } as const;
 
 export type EnergyI18nKey = keyof typeof ENERGY_I18N_KEYS;
+
+/** The resolved texts: `translateAll` gives signals, and a plain getter is all the util needs from them. */
+export type EnergyI18n = Record<EnergyI18nKey, () => string>;

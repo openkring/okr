@@ -12,6 +12,14 @@
     "@okr/energy-data-access": "*",
     "@okr/energy-ui": "*",
     "@okr/shared-i18n": "*",
-    "@angular/core": "*"
+    "@angular/core": "*",
+    "@okr/shared-feature": "*",
+    "@okr/shared-ui": "*",
+    "@okr/shared-util-core": "*",
+    "@okr/shared-util-angular": "*",
+    "@okr/location-data-access": "*",
+    "@ionic/angular": "*",
+    "@ngrx/signals": "*",
+    "rxjs": "*"
   }
 }

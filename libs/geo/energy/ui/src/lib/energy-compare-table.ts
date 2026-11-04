@@ -1,6 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 
-import { EnergyCompareRow, formatDecimal, formatShare, formatTariffRange } from '@okr/energy-util';
+import { EnergyCompareRow, formatCompareTariff, formatDecimal, formatShare } from '@okr/energy-util';
 
 /** Column headers, already translated. Put the unit into the header (e.g. «Aktueller Tarif (Rp./kWh)»). */
 export type EnergyCompareLabels = {
@@ -18,6 +18,7 @@ type DisplayRow = { name: string; cells: (string | undefined)[] };
  * Comparison of municipalities, relative figures only. The first row is the main municipality.
  * A missing value shows `noDataLabel`, never 0 or a dash. On a phone the table scrolls sideways and
  * the municipality column stays in place. Formatting is done by the util (Intl de-CH), not here.
+ * A tariff that stands in for a not yet published year carries that year in its cell.
  */
 @Component({
   selector: 'okr-energy-compare-table',
@@ -76,7 +77,7 @@ export class EnergyCompareTable {
         formatShare(row.renewableHeatingShare),
         formatShare(row.electricCarShare),
         formatDecimal(row.elecPerCapitaMwh),
-        formatTariffRange(row.tariff)
+        formatCompareTariff(row.tariff)
       ]
     }))
   );

@@ -4,8 +4,8 @@ import { EnergyFiguresModel, EnergyMonth, EnergyTariff } from '@okr/shared-model
 import { LOCATION_BFS_STATUS_NONE } from '@okr/shared-util-core';
 
 import {
-  compareRow, currentTariff, distinctPeriods, ENERGY_REPORTER_URL, energySectionState, formatDecimal, formatShare, formatTariffRange,
-  isStale, latestValue, operatorNames, solarDocumentUrl, uniqueCompareKeys
+  compareRow, currentTariff, distinctPeriods, ENERGY_REPORTER_URL, energySectionState, formatCompareTariff, formatCount, formatDecimal,
+  formatShare, formatTariffRange, isStale, latestValue, operatorNames, solarDocumentUrl, uniqueCompareKeys
 } from './energy-figures.util';
 
 function loc(p: { bfsNr?: string; bfsStatus?: string }) {
@@ -184,4 +184,23 @@ describe('formatDecimal', () => {
     expect(formatDecimal(undefined)).toBeUndefined();
     expect(formatDecimal(null)).toBeUndefined();
   });
+});
+
+describe('formatCount', () => {
+  it('groups thousands and drops decimals', () => expect(formatCount(72527.4)).toBe(new Intl.NumberFormat('de-CH').format(72527)));
+  it('keeps zero and rejects what is not a number', () => {
+    expect(formatCount(0)).toBe('0');
+    expect(formatCount(null)).toBeUndefined();
+    expect(formatCount(Number.NaN)).toBeUndefined();
+  });
+});
+
+describe('formatCompareTariff', () => {
+  it('shows the plain range for the current year', () => {
+    expect(formatCompareTariff({ year: 2026, min: 24.1, max: 27.3, isFallback: false })).toBe('24.1\u201327.3');
+  });
+  it('names the year of a fallback tariff', () => {
+    expect(formatCompareTariff({ year: 2025, min: 27, max: 27, isFallback: true })).toBe('27.0 (2025)');
+  });
+  it('has nothing to show without a tariff', () => expect(formatCompareTariff(undefined)).toBeUndefined());
 });

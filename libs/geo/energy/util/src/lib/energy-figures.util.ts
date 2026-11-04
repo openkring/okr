@@ -152,6 +152,7 @@ export function compareRow(name: string, figures: EnergyFiguresModel | undefined
 
 // Swiss number format: decimal point, one decimal. Built once; Intl is expensive to construct.
 const ONE_DECIMAL = new Intl.NumberFormat('de-CH', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const WHOLE_NUMBER = new Intl.NumberFormat('de-CH', { maximumFractionDigits: 0 });
 
 /**
  * A share as percent with one decimal («7.8 %»). Energie Reporter stores shares as fractions
@@ -172,6 +173,18 @@ export function formatTariffRange(range: TariffRange | undefined): string | unde
   const min = ONE_DECIMAL.format(range.min);
   const max = ONE_DECIMAL.format(range.max);
   return min === max ? min : `${min}\u2013${max}`;
+}
+
+/** A tariff cell of the comparison: the range, and the year when it stands in for the current one. */
+export function formatCompareTariff(range: TariffRange | undefined): string | undefined {
+  const text = formatTariffRange(range);
+  return text !== undefined && range?.isFallback ? `${text} (${range.year})` : text;
+}
+
+/** A whole number with thousands separators («72’527»), for counts and MWh. Missing gives `undefined`. */
+export function formatCount(value: number | null | undefined): string | undefined {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return undefined;
+  return WHOLE_NUMBER.format(value);
 }
 
 /** A plain figure with one decimal («2.4»), for values that are not shares. Missing gives `undefined`. */
