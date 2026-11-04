@@ -11,7 +11,7 @@ import {
   AppConfigCollection, DIARY_SOURCES, DiaryConsent, DiarySource, DiarySourceModel, DiarySourcesCollection, DiaryTarget,
   FeatureRolloutCollection, UserCollection,
 } from '@okr/shared-models';
-import { effectiveFeatures, FEATURE_BLOCKS, type FeatureRollout } from '@okr/tenant-util';
+import { effectiveFeatures, FEATURE_BLOCKS, type FeatureBlock, type FeatureRollout } from '@okr/tenant-util';
 
 export type PullStatus = 'ok' | 'skipped-no-consent';
 
@@ -95,16 +95,39 @@ async function canLogIn(uid: string): Promise<boolean> {
   }
 }
 
-/** The tenants among `tenantIds` whose effective features contain `diary`. */
-async function withDiaryBlock(db: Firestore, tenantIds: string[]): Promise<Set<string>> {
-  const [configs, rolloutSnap] = await Promise.all([
+/** The `app-config` docs of these tenants and all rollouts: what `effectiveOf` needs. */
+export async function readTenantFacts(db: Firestore, tenantIds: string[]): Promise<{
+  configs: Record<string, Record<string, unknown> | undefined>; rollouts: FeatureRollout[];
+}> {
+  const [snaps, rolloutSnap] = await Promise.all([
     Promise.all(tenantIds.map(id => db.collection(AppConfigCollection).doc(id).get())),
     db.collection(FeatureRolloutCollection).get(),
   ]);
-  const rollouts = rolloutSnap.docs.map(d => ({ okey: d.id, ...d.data() }) as FeatureRollout);
-  return new Set(tenantIds.filter((tenantId, i) => configs[i].exists && effectiveFeatures({
-    catalogue: FEATURE_BLOCKS, rollouts, tenantId, enabled: configs[i].get('enabledFeatures') as string[] | undefined,
-  }).has('diary')));
+  return {
+    configs: Object.fromEntries(snaps.map((s, i) => [tenantIds[i], s.data()])),
+    rollouts: rolloutSnap.docs.map(d => ({ okey: d.id, ...d.data() }) as FeatureRollout),
+  };
+}
+
+/** A tenant's effective feature blocks; empty without an `app-config`. Pure. */
+export function effectiveOf(
+  configs: Record<string, Record<string, unknown> | undefined>,
+  rollouts: FeatureRollout[],
+  tenantId: string,
+  catalogue: FeatureBlock[] = FEATURE_BLOCKS,
+): Set<string> {
+  const cfg = configs[tenantId];
+  if (!cfg) return new Set();
+  return effectiveFeatures({ catalogue, rollouts, tenantId, enabled: cfg['enabledFeatures'] as string[] | undefined });
+}
+
+/** The `diarySources` docs of these users that exist, by uid. */
+export async function readDiarySourceDocs(db: Firestore, users: PullUser[]): Promise<Record<string, DiarySourceModel | undefined>> {
+  if (users.length === 0) return {};
+  const snaps = await db.getAll(...users.map(u => db.collection(DiarySourcesCollection).doc(u.id)));
+  const docs: Record<string, DiarySourceModel | undefined> = {};
+  for (const snap of snaps) if (snap.exists) docs[snap.id] = { okey: snap.id, ...snap.data() } as DiarySourceModel;
+  return docs;
 }
 
 /** All of the person's `users` docs, in the shape the routing needs. */
@@ -128,14 +151,14 @@ export async function resolveDiaryPulls(db: Firestore, args: {
   const sourceUser = pickSourceUser(users, args.sourceTenant);
   if (!sourceUser) return [];
 
-  const snaps = await db.getAll(...users.map(u => db.collection(DiarySourcesCollection).doc(u.id)));
-  const docs: Record<string, DiarySourceModel | undefined> = {};
-  for (const snap of snaps) if (snap.exists) docs[snap.id] = { okey: snap.id, ...snap.data() } as DiarySourceModel;
+  const docs = await readDiarySourceDocs(db, users);
   const named = new Set((sourceUser.diaryTargets ?? []).map(t => t.tenantId));
   const candidates = users.filter(u => docs[u.id] || (u.tenants ?? []).some(t => named.has(t)));
   if (candidates.length === 0) return [];
 
-  const diaryTenants = await withDiaryBlock(db, [...new Set(candidates.flatMap(u => u.tenants ?? []))]);
+  const tenantIds = [...new Set(candidates.flatMap(u => u.tenants ?? []))];
+  const { configs, rollouts } = await readTenantFacts(db, tenantIds);
+  const diaryTenants = new Set(tenantIds.filter(t => effectiveOf(configs, rollouts, t).has('diary')));
   const uids = [...new Set([sourceUser.id, ...candidates.map(u => u.id)])];
   const logins = await Promise.all(uids.map(canLogIn));
   const loginUids = new Set(uids.filter((_, i) => logins[i]));

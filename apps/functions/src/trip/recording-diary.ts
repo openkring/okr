@@ -35,6 +35,32 @@ export async function addDiaryTenants(db: Firestore, tripId: string, tenants: st
   }
 }
 
+/** The person's recordings a new `tracker` consent reaches (spec 1.77 §12.9, D-R8). Pure. */
+export function sweepCandidates(recs: TripModel[], args: { sourceTenant: string; diaryTenant: string; from: string; to: string }): TripModel[] {
+  const { sourceTenant, diaryTenant, from, to } = args;
+  return recs.filter((r) => (r.tenants ?? [])[0] === sourceTenant && !(r.tenants ?? []).includes(diaryTenant)
+    && r.type === TRACKER_TRIP_TYPE && !r.isArchived && !r.deletedAt && !r.track?.copyOf
+    && (!from || r.startDate >= from) && (!to || r.startDate <= to));
+}
+
+/** The one sweep: every recording `sweepCandidates` finds goes into the diary. One failure does not stop the others. */
+export async function sweepRecordings(db: Firestore, args: {
+  personKey: string; sourceTenant: string; diaryTenant: string; from: string; to: string;
+}): Promise<number> {
+  const snap = await db.collection(TripCollection).where('type', '==', TRACKER_TRIP_TYPE).where('track.personKey', '==', args.personKey).get();
+  const recs = snap.docs.map((d) => ({ ...(d.data() as TripModel), okey: d.id }) as TripModel);
+  let swept = 0;
+  for (const rec of sweepCandidates(recs, args)) {
+    try {
+      await addDiaryTenants(db, rec.okey, [args.diaryTenant]);
+      swept++;
+    } catch (error) {
+      logger.error(`sweepRecordings: failed trip=${rec.okey}`, error);
+    }
+  }
+  return swept;
+}
+
 /**
  * The attach half of onTripWrite. Never throws: the stats work must not be affected. A failure is logged, not retried:
  * the recording stays in its own app (accepted limit, spec 1.77 §12.9).
