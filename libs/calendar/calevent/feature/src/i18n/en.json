@@ -84,7 +84,8 @@
   },
   "quickEntry": {
     "label": "Quick entry",
-    "placeholder": "Name[,Location] [//Date] [@Person]"
+    "placeholder": "Name[!!Location][//Date][@Person]",
+    "dateMissing": "Please enter a date. Type // to pick one."
   },
   "schedule": {
     "title": "Date poll",

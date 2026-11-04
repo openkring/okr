@@ -29,6 +29,8 @@
     "empty": "Keine Verantwortungen gefunden."
   },
   "location": {
+    "current": "Aktueller Standort",
+    "current_error": "Dein Standort konnte nicht ermittelt werden. Prüfe bitte, ob du den Zugriff erlaubt hast.",
     "select": "Ort wählen",
     "empty": "Keine Orte gefunden.",
     "custom_use": "als Ziel oder Strecke verwenden",

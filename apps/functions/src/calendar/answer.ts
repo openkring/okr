@@ -14,6 +14,7 @@ import { projectID } from 'firebase-functions/params';
 import { DocumentReference, getFirestore } from 'firebase-admin/firestore';
 import { applyInvitationAnswer } from '@okr/shared-util-core';
 import { AvatarInfo, Attendee } from '@okr/shared-models';
+import { splitAttendees } from '@okr/calendar-calevent-util';
 
 import { allowedAnswers, answerFunctionUrl, invitationLinkSecret, isAnswerChoice } from './answer-link';
 import { brandOf, eventUrl, NO_TENANT_LINKS, tenantLinks } from './deliver';
@@ -25,7 +26,7 @@ import { toStoreDateTime } from '../srv/zurich-time';
 const REGION = 'europe-west6';
 const CF_NAME = 'invitationAnswer';
 
-export type AnswerRefusal = 'invalid' | 'gone' | 'locked' | 'eventGone' | 'past';
+export type AnswerRefusal = 'invalid' | 'gone' | 'locked' | 'eventGone' | 'past' | 'cancelled';
 
 export const REFUSAL_TEXT: Record<AnswerRefusal, { title: string; message: string }> = {
   invalid:   { title: 'Link ungültig', message: 'Dieser Link ist nicht gültig. Öffne die Einladung bitte in der App.' },
@@ -33,15 +34,31 @@ export const REFUSAL_TEXT: Record<AnswerRefusal, { title: string; message: strin
   locked:    { title: 'Antworten geschlossen', message: 'Die Antworten zu diesem Anlass sind geschlossen. Wende dich bitte an die Organisation.' },
   eventGone: { title: 'Anlass nicht mehr vorhanden', message: 'Diesen Anlass gibt es nicht mehr.' },
   past:      { title: 'Anlass vorbei', message: 'Dieser Anlass hat bereits stattgefunden.' },
+  cancelled: { title: 'Anlass abgesagt', message: 'Dieser Anlass wurde abgesagt.' },
 };
 
-/** Whether the invitation may still be answered (undefined = yes). Signature checking is separate, see linkRefusal. */
+/**
+ * Whether the invitation may still be answered (undefined = yes). Signature checking is separate, see linkRefusal.
+ * keep in sync with libs/shared/util-core/src/lib/calevent-attendance.util.ts:isCaleventAttendanceClosed, the rule
+ * of the app; it is spelled out here because each case has its own text.
+ */
 export function decideAnswer(inv: InvitationDoc | undefined, event: AnswerableEvent | undefined, today: string): AnswerRefusal | undefined {
   if (!inv || inv.isArchived) return 'gone';
   if (inv.isLocked) return 'locked';
   if (!event || event.isArchived) return 'eventGone';
-  if ((event.startDate ?? '') < today) return 'past';
+  if ((event.endDate || event.startDate || '') < today) return 'past';
+  if (event.state === 'cancelled') return 'cancelled';
+  if (event.isLocked) return 'locked';
   return undefined;
+}
+
+/** What the invitee reads after answering. A yes past the cap is recorded, and lands on the waiting list. */
+export function answerResultText(state: 'accepted' | 'declined', waiting: boolean): { title: string; message: string } {
+  if (state === 'declined') return { title: 'Danke für deine Rückmeldung', message: 'Du hast für den Anlass abgesagt.' };
+  return {
+    title: 'Danke für deine Zusage',
+    message: waiting ? 'Die maximale Teilnehmerzahl ist erreicht, du bist auf der Warteliste.' : 'Du bist für den Anlass angemeldet.',
+  };
 }
 
 /**
@@ -72,9 +89,10 @@ function param(req: { method: string; query: Record<string, unknown>; body?: Rec
 /**
  * The write half of InvitationService.respond, in one transaction. Reads first (Firestore requires
  * it), and the lock/archive/past check runs again on the fresh documents: an organiser may have
- * locked the answers since the confirm page was shown. Returns the refusal when nothing was written.
+ * locked the answers since the confirm page was shown. Returns the refusal when nothing was written,
+ * otherwise whether the answer put the invitee on the waiting list.
  */
-async function recordAnswer(invRef: DocumentReference, eventRef: DocumentReference, invitationKey: string, inv: FullInvitation, state: 'accepted' | 'declined', tenantId: string): Promise<AnswerRefusal | undefined> {
+async function recordAnswer(invRef: DocumentReference, eventRef: DocumentReference, invitationKey: string, inv: FullInvitation, state: 'accepted' | 'declined', tenantId: string): Promise<{ refusal: AnswerRefusal } | { waiting: boolean }> {
   const db = getFirestore();
   const now = toStoreDateTime(new Date());
   const person: AvatarInfo = {
@@ -83,17 +101,17 @@ async function recordAnswer(invRef: DocumentReference, eventRef: DocumentReferen
   };
   const authorName = `${inv.inviteeFirstName ?? ''} ${inv.inviteeLastName ?? ''}`.trim();
 
-  return db.runTransaction(async (tx): Promise<AnswerRefusal | undefined> => {
+  return db.runTransaction(async (tx) => {
     const [freshInv, freshEvent] = await Promise.all([tx.get(invRef), tx.get(eventRef)]);
     const refusal = decideAnswer(
       freshInv.exists ? (freshInv.data() as InvitationDoc) : undefined,
       freshEvent.exists ? (freshEvent.data() as AnswerableEvent) : undefined,
       todayStoreDate(),
     );
-    if (refusal) return refusal;
-    const attendees = (freshEvent.data()?.['attendees'] as Attendee[] | undefined) ?? [];
+    if (refusal) return { refusal };
+    const attendees = applyInvitationAnswer(freshEvent.data()?.['attendees'] as Attendee[] | undefined, person, state);
     tx.update(invRef, { state, respondedAt: now });
-    tx.update(eventRef, { attendees: applyInvitationAnswer(attendees, person, state) });
+    tx.update(eventRef, { attendees });
     tx.set(db.collection('comments').doc(), {
       parentKey: `invitation.${invitationKey}`,
       isArchived: false,
@@ -106,7 +124,7 @@ async function recordAnswer(invRef: DocumentReference, eventRef: DocumentReferen
       index: `ak:${person.key}, d:${now}, pk:invitation.${invitationKey}`,
       authorName,
     });
-    return undefined;
+    return { waiting: splitAttendees(attendees, freshEvent.data()?.['maxAttendees'] as number | undefined).waiting.some((attendee) => attendee.person.key === person.key) };
   });
 }
 
@@ -170,14 +188,13 @@ export const invitationAnswer = onRequest(
       if (!isAnswerChoice(answer)) { refuse('invalid', 403); return; }   // narrowing only, see linkRefusal
 
       const state = answer === 'accept' ? 'accepted' : 'declined';
-      const lateRefusal = await recordAnswer(invRef, eventRef, invitationKey, inv, state, tenantId);
-      if (lateRefusal) { refuse(lateRefusal); return; }
+      const outcome = await recordAnswer(invRef, eventRef, invitationKey, inv, state, tenantId);
+      if ('refusal' in outcome) { refuse(outcome.refusal); return; }
       logger.info(`${CF_NAME}: recorded ${state} for one invitation (tenant ${tenantId})`);
 
       res.status(200).send(answerResultPage({
         ...brand,
-        title: state === 'accepted' ? 'Danke für deine Zusage' : 'Danke für deine Rückmeldung',
-        message: state === 'accepted' ? 'Du bist für den Anlass angemeldet.' : 'Du hast für den Anlass abgesagt.',
+        ...answerResultText(state, outcome.waiting),
         eventUrl: links.appUrl ? eventUrl(links, caleventKey) : undefined,
       }));
     } catch (err) {

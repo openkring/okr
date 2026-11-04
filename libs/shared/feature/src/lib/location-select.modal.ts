@@ -4,7 +4,7 @@ import type * as L from 'leaflet';
 
 import { EmptyList, Header, Spinner } from '@okr/shared-ui';
 import { LocationModel, UserModel } from '@okr/shared-models';
-import { copyToClipboardWithConfirmation, dismissOverlay } from '@okr/shared-util-angular';
+import { copyToClipboardWithConfirmation, dismissOverlay, getCurrentPosition, showToast } from '@okr/shared-util-angular';
 
 import { SvgIconPipe, getSvgIconUrl } from '@okr/shared-pipes';
 
@@ -12,7 +12,8 @@ import { FIT_PADDING, MAX_FIT_ZOOM, LocationSelectStore } from './location-selec
 
 export type LocationSelectResult =
   | { kind: 'predefined'; location: LocationModel }
-  | { kind: 'custom'; label: string };
+  | { kind: 'custom'; label: string }
+  | { kind: 'current'; latitude: number; longitude: number };
 
 @Component({
   selector: 'okr-location-select-modal',
@@ -56,6 +57,14 @@ export type LocationSelectResult =
         <okr-spinner />
       } @else {
         @if(store.viewMode() === 'list') {
+          @if(allowCurrent()) {
+            <ion-list lines="none">
+              <ion-item class="item" color="light" (click)="selectCurrent()">
+                <ion-icon src="{{ 'location' | svgIcon }}" slot="start" />
+                <ion-label>{{ store.i18n.location_current() }}</ion-label>
+              </ion-item>
+            </ion-list>
+          }
           @if(store.showCustomEntry()) {
             <ion-list lines="none">
               <ion-item class="item" color="light" (click)="selectCustom()">
@@ -100,6 +109,8 @@ export class LocationSelectModal implements OnDestroy {
   public type = input.required<string>();
   public currentUser = input.required<UserModel>();
   public allowCustom = input<boolean>(false);
+  /** Offers the device's position as a fixed first row. Only for callers that can store a position. */
+  public allowCurrent = input<boolean>(false);
   public showMap = input<boolean>(false);
   public mapTag = input<string | undefined>(undefined);
 
@@ -161,6 +172,17 @@ export class LocationSelectModal implements OnDestroy {
 
   public selectCustom(): Promise<boolean> {
     return dismissOverlay(this.modalController, { kind: 'custom', label: this.store.customLabel() } satisfies LocationSelectResult, 'confirm');
+  }
+
+  /** Runs inside the tap, so that the browser's permission prompt is allowed to appear. */
+  protected async selectCurrent(): Promise<void> {
+    try {
+      const { latitude, longitude } = await getCurrentPosition();
+      await dismissOverlay(this.modalController, { kind: 'current', latitude, longitude } satisfies LocationSelectResult, 'confirm');
+    } catch (err) {
+      console.warn('LocationSelectModal.selectCurrent:', err);
+      await showToast(this.toastController, this.store.i18n.location_current_error());
+    }
   }
 
   // ─── Leaflet ───────────────────────────────────────────────────────────────

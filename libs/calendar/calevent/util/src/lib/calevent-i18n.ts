@@ -179,6 +179,7 @@ export const CALEVENT_I18N_KEYS = {
 
   quick_entry_label:          PFX + 'quickEntry.label',
   quick_entry_placeholder:    PFX + 'quickEntry.placeholder',
+  quick_entry_date_missing:   PFX + 'quickEntry.dateMissing',
 
   schedule_title:             PFX + 'schedule.title',
   schedule_find:              PFX + 'schedule.find',

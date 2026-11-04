@@ -185,7 +185,7 @@ export class ModelSelectService implements ModelSelector {
   }
 
   /***************************  location  *************************** */
-  public async selectLocation(type = '', showMap = true, allowCustom = true): Promise<LocationSelectResult | undefined> {
+  public async selectLocation(type = '', showMap = true, allowCustom = true, allowCurrent = false): Promise<LocationSelectResult | undefined> {
     const modal = await this.modalController.create({
       component: LocationSelectModal,
       cssClass: 'map-modal',
@@ -194,6 +194,7 @@ export class ModelSelectService implements ModelSelector {
         showMap,
         currentUser: this.appStore.currentUser(),
         allowCustom,
+        allowCurrent,
       },
     });
     modal.present();

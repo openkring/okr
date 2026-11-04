@@ -29,6 +29,8 @@
     "empty": "No responsibilities found."
   },
   "location": {
+    "current": "Current location",
+    "current_error": "Your location could not be determined. Please check that you have allowed access.",
     "select": "Select location",
     "empty": "No locations found.",
     "custom_use": "use as destination or route",

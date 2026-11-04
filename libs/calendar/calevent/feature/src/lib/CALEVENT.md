@@ -92,7 +92,7 @@ Rules that every writer of a calevent must respect:
 - **Locked course = no write.** Edit, delete, cancel, shorten, extend and add-series on events of a locked course
   are refused before the first write (`refuseLockedCourse`); delete, archive and cancel (`state` to or from
   `'cancelled'`) of a course event are gated by the rules like a `courseKey` change.
-- **`canChange`** has a course-trainer branch ahead of the group-admin return: a trainer may change events of the
+- **`canChange`** has a course-trainer branch ahead of the group-admin check: a trainer may change events of the
   course they train, in group-calendar views only. A «Kurse» chip in the group calendar opens the course list.
 
 The `calendar` and `group` skills carry the longer explanation.

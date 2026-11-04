@@ -84,7 +84,8 @@
   },
   "quickEntry": {
     "label": "Saisie rapide",
-    "placeholder": "Nom[,Lieu] [//Date] [@Person]"
+    "placeholder": "Nom[!!Lieu][//Date][@Personne]",
+    "dateMissing": "Indique une date. Tape // pour la choisir."
   },
   "schedule": {
     "title": "Sondage de dates",

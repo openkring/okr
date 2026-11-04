@@ -205,7 +205,10 @@ export class ScheduleModal implements OnDestroy {
           handler: (data: { authorMessage?: string }) => {
             this.store.closeSchedule(winners, data.authorMessage)
               .then(() => dismissOverlay(this.modalController, null, 'confirm'))
-              .catch(err => console.warn('ScheduleModal.onColumnSelected: closeSchedule failed:', err));
+              .catch(err => {
+                console.warn('ScheduleModal.onColumnSelected: closeSchedule failed:', err);
+                error(this.toastController, this.store.i18n.schedule_save_error());
+              });
           },
         },
       ],

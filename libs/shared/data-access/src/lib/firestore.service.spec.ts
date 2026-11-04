@@ -76,7 +76,7 @@ vi.mock('@okr/shared-config', async (orig) => {
   return { ...actual, isFirestoreInitializedCheck: () => true, attestAppCheck: attestAppCheckMock };
 });
 
-import { doc, runTransaction, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, runTransaction, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
 
 import { FirestoreService } from './firestore.service';
 
@@ -702,6 +702,81 @@ describe('FirestoreService.createModel', () => {
 // tab suspended for ~22 h woke holding a cached App Check token the backend no longer accepted, and
 // the session heartbeat was denied outright — one silent Sentry warning and a session that stayed
 // open until the server-side orphan cleanup closed it.
+// A poll is written by batch or transaction, outside createModel. On iOS/iPadOS such a write hit an
+// expired App Check token after the app came back from the background, and failed for good.
+describe('FirestoreService.commitBatch', () => {
+  const writeBatchMock = vi.mocked(writeBatch);
+
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    vi.clearAllMocks();
+    vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+  });
+
+  it('commits what build added', async () => {
+    const batch = { commit: vi.fn().mockResolvedValue(undefined) };
+    writeBatchMock.mockReturnValue(batch as never);
+    const build = vi.fn();
+
+    await makeService().commitBatch('test', build);
+
+    expect(build).toHaveBeenCalledWith(batch);
+    expect(batch.commit).toHaveBeenCalledTimes(1);
+    expect(attestAppCheckMock).not.toHaveBeenCalled();
+  });
+
+  // A WriteBatch throws on a second commit(), so a retry on the same batch could never succeed.
+  it('retries a denied commit on a fresh batch after forcing a new token', async () => {
+    const denied = { commit: vi.fn().mockRejectedValue(permissionDenied()) };
+    const fresh = { commit: vi.fn().mockResolvedValue(undefined) };
+    writeBatchMock.mockReturnValueOnce(denied as never).mockReturnValueOnce(fresh as never);
+    const build = vi.fn();
+
+    await makeService().commitBatch('test', build);
+
+    expect(build).toHaveBeenCalledTimes(2);
+    expect(build).toHaveBeenLastCalledWith(fresh);
+    expect(fresh.commit).toHaveBeenCalledTimes(1);
+    expect(attestAppCheckMock).toHaveBeenCalledWith(undefined, true);
+  });
+
+  it('gives up after one retry', async () => {
+    const batch = { commit: vi.fn().mockRejectedValue(permissionDenied()) };
+    writeBatchMock.mockReturnValue(batch as never);
+
+    await expect(makeService().commitBatch('test', vi.fn())).rejects.toMatchObject({ code: 'permission-denied' });
+    expect(batch.commit).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not retry another failure', async () => {
+    const batch = { commit: vi.fn().mockRejectedValue(Object.assign(new Error('offline'), { code: 'unavailable' })) };
+    writeBatchMock.mockReturnValue(batch as never);
+
+    await expect(makeService().commitBatch('test', vi.fn())).rejects.toMatchObject({ code: 'unavailable' });
+    expect(batch.commit).toHaveBeenCalledTimes(1);
+    expect(attestAppCheckMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('FirestoreService.runTransactionWithRetry', () => {
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    vi.clearAllMocks();
+    vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+  });
+
+  it('runs the transaction again after a denial', async () => {
+    runTransactionMock.mockRejectedValueOnce(permissionDenied());
+    const update = vi.fn().mockResolvedValue(undefined);
+
+    await makeService().runTransactionWithRetry('test', update);
+
+    expect(runTransactionMock).toHaveBeenCalledTimes(2);
+    expect(update).toHaveBeenCalledTimes(1);   // the denied attempt never reached the callback
+    expect(attestAppCheckMock).toHaveBeenCalledWith(undefined, true);
+  });
+});
+
 describe('FirestoreService.updateModel', () => {
   const MODEL = { okey: 'a1', tenants: ['scs'] };
 

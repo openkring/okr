@@ -29,6 +29,8 @@ export const SHARED_FEATURE_I18N_KEYS = {
   location_select:        PFX + 'location.select',
   location_empty:         PFX + 'location.empty',
   location_custom_use:    PFX + 'location.custom_use',
+  location_current:       PFX + 'location.current',
+  location_current_error: PFX + 'location.current_error',
   location_segment_list:  PFX + 'location.segment.list',
   location_segment_map:   PFX + 'location.segment.map',
   location_map_select:    PFX + 'location.map.select',

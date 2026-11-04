@@ -8,7 +8,7 @@ import { from, of, switchMap } from 'rxjs';
 import type { DateSelectArg, DatesSetArg, EventInput } from '@fullcalendar/core';
 import type { CaleventFullcalendarView } from './calevent-fullcalendar-view';
 import { DEFAULT_DATE } from '@okr/shared-constants';
-import { AvatarInfo, CalendarSmallScreenView, CalEventModel, CourseModel, LocationModel, PersonModel, RoleName } from '@okr/shared-models';
+import { AvatarInfo, CalendarSmallScreenView, CalEventModel, CourseModel, PersonModel, RoleName } from '@okr/shared-models';
 import { ModelSelectService } from '@okr/shared-feature';
 import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { DateTimeSelectModal, EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
@@ -19,7 +19,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 import { isAdminMember } from '@okr/subject-group-util';
 
-import { CalEventDurationPipe, canAttendCalevent, courseKeysOf, courseOfKey, courseSeriesPatch, isCourseOver, isCourseTrainerFor, countPollAcceptances, countPollResponses, formatDateTimeLabel, getCalEventCssClass, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, mayJoinOpenCalevent, resetActivity, resetAttendance, resolveCalendars, upcomingOccurrences } from '@okr/calendar-calevent-util';
+import { CalEventDurationPipe, canAttendCalevent, courseKeysOf, courseOfKey, courseSeriesPatch, isCourseOver, isCourseTrainerFor, countPollAcceptances, countPollResponses, formatDateTimeLabel, getCalEventCssClass, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, mayJoinOpenCalevent, positionToLocationKey, resetActivity, resetAttendance, resolveCalendars, upcomingOccurrences } from '@okr/calendar-calevent-util';
 import { OrganiserContactModal, showCalendarSync } from '@okr/calendar-calevent-ui';
 import { CalendarFeedService } from '@okr/calendar-calevent-data-access';
 import type { OrganiserContactAction, OrganiserContactResult } from '@okr/calendar-calevent-ui';
@@ -351,7 +351,7 @@ export class CalEventList implements OnInit {
   private readonly calendarFeedService = inject(CalendarFeedService);
   private readonly modelSelectService = inject(ModelSelectService);
   private selectedQuickEntryPerson = signal<PersonModel | null>(null);
-  private selectedQuickEntryLocation = signal<LocationModel | null>(null);
+  private selectedQuickEntryLocationKey = signal('');
   protected quickEntryText = signal('');
   private isSettingQuickEntryValue = false;
   private readonly router = inject(Router);
@@ -889,7 +889,7 @@ export class CalEventList implements OnInit {
     calevent.calendars = resolveCalendars(calname, this.store.tenantId());
     const parts = parseEventString(okrQuickEntry.value?.trim() ?? '');
     if (!parts.startDate || parts.startDate === '') {
-      error(undefined, 'CalEventList.quickEntry: startDate is mandatory in quick entry');
+      error(this.store.toastController, this.store.i18n.quick_entry_date_missing());
       return;
     }
     calevent.startDate = parts.startDate;
@@ -903,13 +903,8 @@ export class CalEventList implements OnInit {
       calevent.durationMinutes = 1440;  // full day event
     }
     calevent.name = parts.name || '';
-    const pickedLocation = this.selectedQuickEntryLocation();
-    if (pickedLocation) {
-      calevent.locationKey = `${pickedLocation.okey}@${pickedLocation.name}`; // [locationKey]@[label] convention (PartPipe / LocationLabelPipe)
-      this.selectedQuickEntryLocation.set(null);
-    } else {
-      calevent.locationKey = parts.location || '';
-    }
+    calevent.locationKey = this.selectedQuickEntryLocationKey() || parts.location || '';
+    this.selectedQuickEntryLocationKey.set('');
     const person = this.selectedQuickEntryPerson();
     if (person) {
       const avatarInfo = getAvatarInfo(person, 'person');
@@ -928,7 +923,7 @@ export class CalEventList implements OnInit {
     okrQuickEntry.value = '';
     this.quickEntryText.set('');
     this.selectedQuickEntryPerson.set(null);
-    this.selectedQuickEntryLocation.set(null);
+    this.selectedQuickEntryLocationKey.set('');
   }
 
   protected async onQuickEntryInput(textarea: IonTextarea): Promise<void> {
@@ -965,9 +960,11 @@ export class CalEventList implements OnInit {
           textarea.value = value.slice(0, -2); // remove stray '//'
         }
       } else if (trigger === 'location') {
-        const result = await this.modelSelectService.selectLocation('', true, false);
-        if (result?.kind === 'predefined') {
-          this.selectedQuickEntryLocation.set(result.location);
+        const result = await this.modelSelectService.selectLocation('', true, false, true);
+        if (result?.kind === 'predefined' || result?.kind === 'current') {
+          this.selectedQuickEntryLocationKey.set(result.kind === 'predefined'
+            ? `${result.location.name}@${result.location.okey}`
+            : positionToLocationKey(result.latitude, result.longitude));
           textarea.value = this.quickEntryService.replaceToken(value, '!!', '');
         } else {
           textarea.value = value.slice(0, -2); // remove stray '!!'
@@ -1402,7 +1399,10 @@ export class CalEventList implements OnInit {
           text: this.store.i18n.schedule_close(),
           handler: (data: { authorMessage?: string }) => {
             this.store.closeSchedule([calevent], data.authorMessage)
-              .catch(err => console.warn('confirmCloseSchedule: closeSchedule failed:', err));
+              .catch(err => {
+                console.warn('confirmCloseSchedule: closeSchedule failed:', err);
+                error(this.store.toastController, this.store.i18n.schedule_save_error());
+              });
           },
         },
       ],
@@ -1668,9 +1668,8 @@ export class CalEventList implements OnInit {
     const personKey = this.currentUser()?.personKey;
     if (!personKey) return false;
 
-    // 1b) course trainer: events of a course the person trains. Before the group-admin return below, which would
-    //     otherwise end the check for every event of a group calendar. An event without or with a foreign
-    //     `courseKey` is not covered and falls through to the unchanged rules.
+    // 1b) course trainer: events of a course the person trains. An event without or with a foreign `courseKey` is
+    //     not covered and falls through to the unchanged rules.
     if (calevent && isCourseTrainerFor(calevent, this.coursesResource.value() ?? [], personKey)) return true;
 
     // 2) group calendar: check if currentUser is admin of the owning group
@@ -1678,9 +1677,7 @@ export class CalEventList implements OnInit {
       const allCalendars = this.store.calendarsResource.value() ?? [];
       for (const calKey of calevent.calendars) {
         const cal = allCalendars.find(c => c.okey === calKey);
-        if (cal?.owner?.startsWith('group.')) {
-          const group = this.store.appStore.getGroup(cal.owner.substring(6));
-          return isAdminMember(group, personKey);        }
+        if (cal?.owner?.startsWith('group.') && isAdminMember(this.store.appStore.getGroup(cal.owner.substring(6)), personKey)) return true;
       }
     }
 

@@ -271,9 +271,9 @@ export const DiaryStore = signalStore(
     /** Adapts `ModelSelectService.selectLocation`'s result to the modal's own `DiaryLocationPick`. */
     const pickLocation = async (): Promise<DiaryLocationPick | undefined> => {
       const result = await store.modelSelectService.selectLocation('', false, true);
-      if (!result) return undefined;
-      if (result.kind === 'predefined') return { location: locationAvatar(result.location) };
-      return { location: customLocationAvatar(result.label) };
+      if (result?.kind === 'predefined') return { location: locationAvatar(result.location) };
+      if (result?.kind === 'custom') return { location: customLocationAvatar(result.label) };
+      return undefined;
     };
 
     /** Albums point at real things only: a free-text location resolves to nothing. */

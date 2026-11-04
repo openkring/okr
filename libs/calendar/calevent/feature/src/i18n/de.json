@@ -84,7 +84,8 @@
   },
   "quickEntry": {
     "label": "Schnelleingabe",
-    "placeholder": "Name[,Ort] [//Datum] [@Person]"
+    "placeholder": "Name[!!Ort][//Datum][@Person]",
+    "dateMissing": "Gib bitte ein Datum an. Tippe dazu // ein."
   },
   "schedule": {
     "title": "Terminumfrage",

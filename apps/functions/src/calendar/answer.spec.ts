@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { REFUSAL_TEXT, decideAnswer, linkRefusal, responseCommentKey } from './answer';
+import { REFUSAL_TEXT, answerResultText, decideAnswer, linkRefusal, responseCommentKey } from './answer';
 
 const inv = { tenants: ['scs'], inviteeKey: 'p', caleventKey: 'e', state: 'pending' };
 const event = { name: 'test2', startDate: '20261001', startTime: '11:00' };
@@ -21,6 +21,18 @@ describe('decideAnswer', () => {
     expect(decideAnswer(inv, { ...event, isArchived: true }, '20260930')).toBe('eventGone');
   });
   it('refuses a past event', () => expect(decideAnswer(inv, event, '20261002')).toBe('past'));
+  it('allows answering while a multi-day event is running', () =>
+    expect(decideAnswer(inv, { ...event, endDate: '20261003' }, '20261002')).toBeUndefined());
+  it('refuses a multi-day event after its last day', () =>
+    expect(decideAnswer(inv, { ...event, endDate: '20261003' }, '20261004')).toBe('past'));
+  it('refuses a cancelled event', () => expect(decideAnswer(inv, { ...event, state: 'cancelled' }, '20260930')).toBe('cancelled'));
+  it('refuses a locked event', () => expect(decideAnswer(inv, { ...event, isLocked: true }, '20260930')).toBe('locked'));
+});
+
+describe('answerResultText', () => {
+  it('confirms a yes', () => expect(answerResultText('accepted', false).message).toBe('Du bist für den Anlass angemeldet.'));
+  it('names the waiting list for a yes past the cap', () => expect(answerResultText('accepted', true).message).toContain('Warteliste'));
+  it('confirms a no', () => expect(answerResultText('declined', false).message).toBe('Du hast für den Anlass abgesagt.'));
 });
 
 describe('linkRefusal', () => {
@@ -37,7 +49,7 @@ describe('linkRefusal', () => {
 
 describe('REFUSAL_TEXT', () => {
   it('has a title and a message for every reason', () => {
-    for (const reason of ['invalid', 'gone', 'locked', 'eventGone', 'past'] as const) {
+    for (const reason of ['invalid', 'gone', 'locked', 'eventGone', 'past', 'cancelled'] as const) {
       expect(REFUSAL_TEXT[reason].title.length).toBeGreaterThan(0);
       expect(REFUSAL_TEXT[reason].message.length).toBeGreaterThan(0);
     }

@@ -1,15 +1,16 @@
 import { AsyncPipe } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effect, inject, input, untracked } from '@angular/core';
+import { Router } from '@angular/router';
 import { ActionSheetController, ActionSheetOptions, IonBadge, IonCard, IonCardContent, IonLabel, ModalController } from '@ionic/angular';
 
 import { CalEventModel, EventsConfig, EventsSection } from '@okr/shared-models';
 import { MoreButton, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 import { convertDateFormatToString, DateFormat, debugMessage, getAttendanceColor, getAttendanceIcon, getAttendanceState, hasRole } from '@okr/shared-util-core';
-import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, isBrowser } from '@okr/shared-util-angular';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, isBrowser, navigateByUrl } from '@okr/shared-util-angular';
 import { SvgIconPipe, WeekdayPipe } from '@okr/shared-pipes';
 import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 
-import { CALEVENT_I18N_KEYS, isAttendanceClosed } from '@okr/calendar-calevent-util';
+import { CALEVENT_I18N_KEYS, canAttendCalevent, mayJoinOpenCalevent } from '@okr/calendar-calevent-util';
 import { showCalEventInfo } from '@okr/calendar-calevent-ui';
 import { CalendarFeedService } from '@okr/calendar-calevent-data-access';
 import { isAdminMember } from '@okr/subject-group-util';
@@ -102,9 +103,10 @@ export class EventsSectionComponent implements OnInit {
   private currentUser = computed(() => this.store.appStore.currentUser());
   private modalController = inject(ModalController);
   private readonly calendarFeedService = inject(CalendarFeedService);
+  private readonly router = inject(Router);
 
   /** Only the label of the info button — the explainer itself lives in the calevent domain. */
-  protected readonly caleventI18n = inject(I18nService).translateAll({ info_open: CALEVENT_I18N_KEYS.info_open, activity_unseen: CALEVENT_I18N_KEYS.activity_unseen });
+  protected readonly caleventI18n = inject(I18nService).translateAll({ info_open: CALEVENT_I18N_KEYS.info_open, activity_unseen: CALEVENT_I18N_KEYS.activity_unseen, schedule_view: CALEVENT_I18N_KEYS.schedule_view });
 
   /** Opens the shared 'Kalender & Einladungen' explainer. */
   protected async showInfo(): Promise<void> {
@@ -180,8 +182,13 @@ export class EventsSectionComponent implements OnInit {
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, calevent: CalEventModel): void {
     // eine Regel statt zweier Zweige: der Zustand steht in attendees, fuer Mitglieder wie fuer
     // Eingeladene. Das Dashboard-Widget bleibt bewusst schmal — die volle Bedienung ist in der Liste.
-    // Vergangene, gesperrte oder abgesagte Anlaesse nehmen keine An-/Abmeldung mehr entgegen.
-    if (!isAttendanceClosed(calevent)) {
+    // Vergangene, gesperrte oder abgesagte Anlaesse nehmen keine An-/Abmeldung mehr entgegen, und
+    // auf einem Gruppenkalender nur die Mitglieder der Gruppe. Ein Terminvorschlag wird in der
+    // Umfrage beantwortet, nicht einzeln.
+    if (calevent.state === 'proposed') {
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.viewSchedule', this.caleventI18n.schedule_view(), this.imgixBaseUrl, 'list'));
+      actionSheetOptions.buttons.push(createActionSheetDivider());
+    } else if (this.canAttend(calevent)) {
       const state = getAttendanceState(calevent, this.currentUser()?.personKey ?? '');
       if (state !== 'accepted') {
         actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.store.i18n.calevent_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
@@ -202,6 +209,13 @@ export class EventsSectionComponent implements OnInit {
     }
   }
 
+  /** The same rule as CalEventList: an invitation, or the reach of the event's calendar. */
+  private canAttend(calevent: CalEventModel): boolean {
+    const hasInvitation = this.store.invitations().some(invitation => invitation.caleventKey === calevent.okey);
+    const groupCalendarKeys = this.store.allCalendars().filter(cal => cal.owner?.startsWith('group.')).map(cal => cal.okey);
+    return canAttendCalevent(calevent, hasInvitation, mayJoinOpenCalevent(calevent.calendars, groupCalendarKeys, this.store.calendarsOfCurrentUser()));
+  }
+
   /**
    * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
    * @param actionSheetOptions 
@@ -220,6 +234,10 @@ export class EventsSectionComponent implements OnInit {
         }
         case 'calevent.view':
           await this.store.view(calEvent);
+          break;
+        case 'calevent.viewSchedule':
+          // the poll lives in the calendar list: the same deep link as the group chat announcement
+          await navigateByUrl(this.router, `/calevent/${calEvent.calendars[0]}/c-calevents`, { poll: calEvent.seriesId });
           break;
           /*
         case 'calevent.inviteGroup':
@@ -262,10 +280,7 @@ export class EventsSectionComponent implements OnInit {
       const allCalendars = this.store.allCalendars();
       for (const calKey of calevent.calendars) {
         const cal = allCalendars.find(c => c.okey === calKey);
-        if (cal?.owner?.startsWith('group.')) {
-          const group = this.store.appStore.getGroup(cal.owner.substring(6));
-          return isAdminMember(group, personKey);
-        }
+        if (cal?.owner?.startsWith('group.') && isAdminMember(this.store.appStore.getGroup(cal.owner.substring(6)), personKey)) return true;
       }
     }
 

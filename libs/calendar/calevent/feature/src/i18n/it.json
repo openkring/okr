@@ -84,7 +84,8 @@
   },
   "quickEntry": {
     "label": "Inserimento rapido",
-    "placeholder": "Nome[,Luogo] [//Data] [@Person]"
+    "placeholder": "Nome[!!Luogo][//Data][@Persona]",
+    "dateMissing": "Indica una data. Digita // per sceglierla."
   },
   "schedule": {
     "title": "Sondaggio date",

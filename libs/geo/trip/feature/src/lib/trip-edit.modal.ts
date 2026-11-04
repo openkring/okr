@@ -197,7 +197,7 @@ export class TripEditModal {
       this.onFieldChange('locations', locations);
       this.onFieldChange('distance', result.location.distance);
       this.onFieldChange('customLocationLabel', '');
-    } else {
+    } else if (result.kind === 'custom') {
       this.onFieldChange('customLocationLabel', result.label);
       this.onFieldChange('locations', []);
       this.onFieldChange('distance', DEFAULT_TRIP_DISTANCE_KM);

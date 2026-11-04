@@ -24,7 +24,7 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { ToastController } from '@ionic/angular';
 import { captureMessage } from '@sentry/angular';
-import { arrayRemove, collection, deleteDoc, doc, getCountFromServer, getDoc, getDocFromServer, getDocs, query, runTransaction, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
+import { arrayRemove, collection, deleteDoc, doc, getCountFromServer, getDoc, getDocFromServer, getDocs, query, runTransaction, setDoc, Transaction, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
 import type { FieldPath } from 'firebase/firestore';
 import { collectionData, docData, fromRef } from 'rxfire/firestore';
 import { catchError, concat, defer, delay, firstValueFrom, from, map, MonoTypeOperatorFunction, Observable, of, ReplaySubject, retry, share, switchMap, tap, timer } from 'rxjs';
@@ -1294,6 +1294,27 @@ export class FirestoreService {
       console.error(`FirestoreService.forkModel(${collectionName}/${source.okey}) -> ERROR:`, ex);
       return this.okrError(this.toastController, errorMessage ?? `Could not fork model ${collectionName}/${source.okey}.`);
     }
+  }
+
+  /**
+   * Commits a batch with the same recovery as `createModel`: a denied commit re-attests App Check
+   * and is retried once. Use it for every multi-document write outside this service, because
+   * iOS/iPadOS wakes a backgrounded app with an expired token.
+   *
+   * A WriteBatch can only be committed once, so the retry needs a new one: `build` runs again and
+   * must therefore do nothing but add writes to the batch it is given.
+   */
+  public async commitBatch(context: string, build: (batch: WriteBatch) => void | Promise<void>): Promise<void> {
+    await this.writeWithTokenDenialRetry(context, async () => {
+      const batch = this.getBatch();
+      await build(batch);
+      await batch.commit();
+    });
+  }
+
+  /** Runs a transaction with the App Check recovery of {@link commitBatch}. */
+  public async runTransactionWithRetry(context: string, update: (transaction: Transaction) => Promise<void>): Promise<void> {
+    await this.writeWithTokenDenialRetry(context, () => runTransaction(this.firestore, update));
   }
 
   /**

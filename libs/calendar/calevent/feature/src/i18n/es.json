@@ -84,7 +84,8 @@
   },
   "quickEntry": {
     "label": "Entrada rápida",
-    "placeholder": "Nombre[,Lugar] [//Fecha] [@Person]"
+    "placeholder": "Nombre[!!Lugar][//Fecha][@Persona]",
+    "dateMissing": "Indica una fecha. Escribe // para elegirla."
   },
   "schedule": {
     "title": "Encuesta de fechas",

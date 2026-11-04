@@ -29,6 +29,8 @@
     "empty": "No se encontraron responsabilidades."
   },
   "location": {
+    "current": "Ubicación actual",
+    "current_error": "No se ha podido determinar tu ubicación. Comprueba que has permitido el acceso.",
     "select": "Seleccionar lugar",
     "empty": "No se encontraron lugares.",
     "custom_use": "usar como destino o ruta",

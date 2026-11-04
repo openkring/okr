@@ -4,7 +4,7 @@ import { AlertController, ModalController, ToastController } from '@ionic/angula
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
 import { addMonths, format } from 'date-fns';
-import { doc, runTransaction, updateDoc, WriteBatch } from 'firebase/firestore';
+import { doc, updateDoc, WriteBatch } from 'firebase/firestore';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { from, firstValueFrom, map, of } from 'rxjs';
@@ -599,43 +599,43 @@ export const CalEventStore = signalStore(
         if (!currentUser || !groupId) throw new Error('CalEventStore.createSchedulePoll: no current user or no group calendar');
 
         const seriesId = generateRandomString(18);
-        const batch = store.firestoreService.getBatch();
         const myResponses = data.rows[0]?.responses ?? {};
         const myComment = data.rows[0]?.comment ?? '';
         const myAvatar = getAvatarInfoForCurrentUser(currentUser);
-        let eventIndex = 0;
 
-        for (const column of data.columns) {
-          const calevent = new CalEventModel(store.tenantId());
-          calevent.okey = seriesId + pad(eventIndex, 2);
-          calevent.seriesId = seriesId;
-          calevent.name = data.name;
-          calevent.description = data.description;
-          calevent.state = 'proposed';
-          calevent.startDate = column.startDate;
-          calevent.startTime = column.startTime;
-          calevent.columnLabel = column.columnLabel ?? '';
-          // frozen at creation: it decides how the poll is closed, and afterwards marks the
-          // winners as a poll-born (rule-less) series
-          calevent.pollMultiSelect = data.multiSelect;
-          calevent.fullDay = column.startTime.length === 0;
-          calevent.durationMinutes = calevent.fullDay ? 1440 : 120;
-          calevent.calendars = [store.calendarName()];
-          calevent.responsiblePersons = [{
-            key: currentUser.personKey, name1: currentUser.firstName, name2: currentUser.lastName,
-            modelType: 'person', type: '', subType: '', label: '',
-          }];
-          calevent.index = getCaleventIndex(calevent);
-          // the author's own draft answers — the only ones that exist at creation time. No
-          // transaction needed: the document is brand new and nobody else can be writing it yet.
-          calevent.attendees = myAvatar
-            ? mergeAttendee([], myAvatar, myResponses[column.id] ?? 'pending', myComment)
-            : [];
-          const eventRef = doc(store.firestoreService.firestore, `${CalEventCollection}/${calevent.okey}`);
-          batch.set(eventRef, removeKeyFromOkrModel(structuredClone(calevent)));
-          eventIndex++;
-        }
-        await batch.commit();
+        await store.firestoreService.commitBatch('createSchedulePoll', (batch) => {
+          let eventIndex = 0;
+          for (const column of data.columns) {
+            const calevent = new CalEventModel(store.tenantId());
+            calevent.okey = seriesId + pad(eventIndex, 2);
+            calevent.seriesId = seriesId;
+            calevent.name = data.name;
+            calevent.description = data.description;
+            calevent.state = 'proposed';
+            calevent.startDate = column.startDate;
+            calevent.startTime = column.startTime;
+            calevent.columnLabel = column.columnLabel ?? '';
+            // frozen at creation: it decides how the poll is closed, and afterwards marks the
+            // winners as a poll-born (rule-less) series
+            calevent.pollMultiSelect = data.multiSelect;
+            calevent.fullDay = column.startTime.length === 0;
+            calevent.durationMinutes = calevent.fullDay ? 1440 : 120;
+            calevent.calendars = [store.calendarName()];
+            calevent.responsiblePersons = [{
+              key: currentUser.personKey, name1: currentUser.firstName, name2: currentUser.lastName,
+              modelType: 'person', type: '', subType: '', label: '',
+            }];
+            calevent.index = getCaleventIndex(calevent);
+            // the author's own draft answers — the only ones that exist at creation time. No
+            // transaction needed: the document is brand new and nobody else can be writing it yet.
+            calevent.attendees = myAvatar
+              ? mergeAttendee([], myAvatar, myResponses[column.id] ?? 'pending', myComment)
+              : [];
+            const eventRef = doc(store.firestoreService.firestore, `${CalEventCollection}/${calevent.okey}`);
+            batch.set(eventRef, removeKeyFromOkrModel(structuredClone(calevent)));
+            eventIndex++;
+          }
+        });
 
         await this.publishSchedulePoll(data.name, seriesId);
       },
@@ -694,7 +694,7 @@ export const CalEventStore = signalStore(
         if (!myRow || !currentUser || !avatar || proposedEvents.length === 0) return;
         const comment = myRow.comment ?? '';
 
-        await runTransaction(store.firestoreService.firestore, async (transaction) => {
+        await store.firestoreService.runTransactionWithRetry('saveSchedulePollResponses', async (transaction) => {
           const refs = proposedEvents.map(event =>
             doc(store.firestoreService.firestore, `${CalEventCollection}/${event.okey}`));
           // every read must happen before the first write — a Firestore transaction rule, not a style choice
@@ -736,7 +736,7 @@ export const CalEventStore = signalStore(
         const personKey = currentUser?.personKey ?? '';
         if (!currentUser || !personKey || row.key !== personKey) return;
         const today = getTodayStr(DateFormat.StoreDateTime);
-        const batch = store.firestoreService.getBatch();
+        const writes: { path: string; fields: Record<string, unknown> }[] = [];
         let changed = 0;
 
         for (const calevent of seriesEvents) {
@@ -755,17 +755,19 @@ export const CalEventStore = signalStore(
 
           if (current !== desired) {
             // only the attendees field: a full model spread would carry okey into the document
-            batch.update(doc(store.firestoreService.firestore, `${CalEventCollection}/${calevent.okey}`),
-              { attendees: applyInvitationAnswer(calevent.attendees, avatar, newState) });
+            writes.push({ path: `${CalEventCollection}/${calevent.okey}`,
+              fields: { attendees: applyInvitationAnswer(calevent.attendees, avatar, newState) } });
           }
           if (invitationStale) {
-            batch.update(doc(store.firestoreService.firestore, `${InvitationCollection}/${invitation.okey}`),
-              { state: newState, respondedAt: today });
+            writes.push({ path: `${InvitationCollection}/${invitation.okey}`,
+              fields: { state: newState, respondedAt: today } });
           }
           changed++;
         }
         if (changed === 0) return;
-        await batch.commit();
+        await store.firestoreService.commitBatch('saveSeriesResponses', (batch) => {
+          for (const { path, fields } of writes) batch.update(doc(store.firestoreService.firestore, path), fields);
+        });
         // Who answered what, for a whole series, in one batch — the write that decides whether two
         // members end up on the same occurrence. It had no audit entry at all until now.
         store.calEventService.logSeriesActivity('series-attendance',
@@ -798,15 +800,7 @@ export const CalEventStore = signalStore(
         if (selectedEvents.length === 0) return;
         const seriesId = selectedEvents[0].seriesId;
         const keepSeries = selectedEvents.length > 1;
-        const batch = store.firestoreService.getBatch();
         const winnerKeys = selectedEvents.map(e => e.okey);
-
-        for (const winner of selectedEvents) {
-          batch.update(doc(store.firestoreService.firestore, `${CalEventCollection}/${winner.okey}`),
-            keepSeries
-              ? { state: 'definitive', periodicity: 'once' }
-              : { state: 'definitive', seriesId: '', pollMultiSelect: false });
-        }
 
         // NOT calEvents(): that list is narrowed by calendar/maxEvents/showPastEvents, so a proposal
         // older than ~30 days would survive as an orphan pointing at a series that no longer exists.
@@ -814,9 +808,6 @@ export const CalEventStore = signalStore(
         const losers = series.filter(
           e => !winnerKeys.includes(e.okey) && e.state === 'proposed');
         const loserKeys = losers.map(e => e.okey);
-        for (const loser of losers) {
-          batch.delete(doc(store.firestoreService.firestore, `${CalEventCollection}/${loser.okey}`));
-        }
         // Legacy only — a poll created under the current model has no invitations at all. One batch,
         // capped at Firestore's 500 writes; chunk into 400-write commits if a poll ever grows past it.
         const allInvitations = await store.firestoreService.getDataOnce<InvitationModel>(
@@ -824,10 +815,20 @@ export const CalEventStore = signalStore(
         const obsolete = allInvitations.filter(inv =>
           loserKeys.includes(inv.caleventKey) ||
           (winnerKeys.includes(inv.caleventKey) && inv.state === 'pending'));
-        for (const inv of obsolete) {
-          batch.delete(doc(store.firestoreService.firestore, `${InvitationCollection}/${inv.okey}`));
-        }
-        await batch.commit();
+        await store.firestoreService.commitBatch('closeSchedule', (batch) => {
+          for (const winner of selectedEvents) {
+            batch.update(doc(store.firestoreService.firestore, `${CalEventCollection}/${winner.okey}`),
+              keepSeries
+                ? { state: 'definitive', periodicity: 'once' }
+                : { state: 'definitive', seriesId: '', pollMultiSelect: false });
+          }
+          for (const loser of losers) {
+            batch.delete(doc(store.firestoreService.firestore, `${CalEventCollection}/${loser.okey}`));
+          }
+          for (const inv of obsolete) {
+            batch.delete(doc(store.firestoreService.firestore, `${InvitationCollection}/${inv.okey}`));
+          }
+        });
         store.calEventService.logSeriesActivity('poll-close',
           `${seriesId}: ${selectedEvents[0].name}, ${selectedEvents.length} bestaetigt (${selectedEvents.map(e => e.startDate).join(', ')}), ${losers.length} verworfen`,
           store.currentUser());
@@ -1088,11 +1089,13 @@ export const CalEventStore = signalStore(
         const all = await store.firestoreService.getDataOnce<InvitationModel>(InvitationCollection, getSystemQuery(store.tenantId()), 'none');
         const orphans = all.filter(inv => eventKeys.includes(inv.caleventKey));
         if (orphans.length === 0) return;
-        const target = batch ?? store.firestoreService.getBatch();
-        for (const inv of orphans) {
-          target.update(doc(store.firestoreService.firestore, `${InvitationCollection}/${inv.okey}`), { isArchived: true });
-        }
-        if (!batch) await target.commit();
+        const addWrites = (target: WriteBatch): void => {
+          for (const inv of orphans) {
+            target.update(doc(store.firestoreService.firestore, `${InvitationCollection}/${inv.okey}`), { isArchived: true });
+          }
+        };
+        if (batch) addWrites(batch);
+        else await store.firestoreService.commitBatch('archiveInvitationsOf', addWrites);
       },
 
       /**
@@ -1201,17 +1204,17 @@ export const CalEventStore = signalStore(
         // (~100 occurrences + their invitations). Chunk the commits if that ceiling is ever hit.
         // courseKey goes to the siblings only when THIS edit changed it: a mixed series keeps each occurrence's own
         const withCourseKey = courseKeyChanged(calevent, original);
-        const batch = store.firestoreService.getBatch();
-        for (const { event, startDate } of plan.updates) {
-          const ref = doc(store.firestoreService.firestore, `${CalEventCollection}/${event.okey}`);
-          batch.update(ref, getSeriesUpdateFields(calevent, startDate, withCourseKey));
-        }
-        for (const dropped of plan.archives) {
-          const ref = doc(store.firestoreService.firestore, `${CalEventCollection}/${dropped.okey}`);
-          batch.update(ref, { isArchived: true });
-        }
-        await this.archiveInvitationsOf(plan.archives.map(e => e.okey), batch);
-        await batch.commit();
+        await store.firestoreService.commitBatch('updateEventSeries', async (batch) => {
+          for (const { event, startDate } of plan.updates) {
+            const ref = doc(store.firestoreService.firestore, `${CalEventCollection}/${event.okey}`);
+            batch.update(ref, getSeriesUpdateFields(calevent, startDate, withCourseKey));
+          }
+          for (const dropped of plan.archives) {
+            const ref = doc(store.firestoreService.firestore, `${CalEventCollection}/${dropped.okey}`);
+            batch.update(ref, { isArchived: true });
+          }
+          await this.archiveInvitationsOf(plan.archives.map(e => e.okey), batch);
+        });
 
         // The reconcile itself leaves no trace otherwise — every write above is a batch update.
         // This is the entry that was missing when the '4X-Dienstag' series was silently rewritten.
@@ -1264,13 +1267,13 @@ export const CalEventStore = signalStore(
         const doomed = scope === 'all' ? series : series.filter(e => isAfterOrEqualDate(e.startDate, calevent.startDate));
         if (doomed.length === 0) return;
         if (await this.refuseLockedCourseRemoval(doomed)) return;
-        const batch = store.firestoreService.getBatch();
-        for (const inst of doomed) {
-          const ref = doc(store.firestoreService.firestore, `${CalEventCollection}/${inst.okey}`);
-          batch.update(ref, { isArchived: true }); // never spread the model back in — it carries okey, which must not be stored
-        }
-        await this.archiveInvitationsOf(doomed.map(e => e.okey), batch);
-        await batch.commit();
+        await store.firestoreService.commitBatch('deleteEventSeries', async (batch) => {
+          for (const inst of doomed) {
+            const ref = doc(store.firestoreService.firestore, `${CalEventCollection}/${inst.okey}`);
+            batch.update(ref, { isArchived: true }); // never spread the model back in — it carries okey, which must not be stored
+          }
+          await this.archiveInvitationsOf(doomed.map(e => e.okey), batch);
+        });
         store.calEventService.logSeriesActivity('series-delete',
           `${calevent.seriesId}: ${calevent.name}, scope=${scope}, ${doomed.length} archiviert ab ${doomed[0].startDate}`,
           store.currentUser());
@@ -1313,29 +1316,30 @@ export const CalEventStore = signalStore(
         if (role !== 'confirm' || !data || data.invitees.length === 0) return;
 
         try {
-          const batch = store.firestoreService.getBatch();
           const key = generateRandomString(18);
-          let attendees = calevent.attendees ?? [];
-          data.invitees.forEach((avatar, index) => {
-            const inv = new InvitationModel(store.tenantId());
-            inv.inviteeKey = extractSecondPartOfOptionalTupel(avatar.key);
-            inv.inviteeFirstName = avatar.name1;
-            inv.inviteeLastName = avatar.name2;
-            inv.notes = data.message;
-            inv.inviterKey = currentUser.personKey || '';
-            inv.inviterFirstName = currentUser.firstName || '';
-            inv.inviterLastName = currentUser.lastName || '';
-            inv.caleventKey = calevent.okey;
-            inv.name = calevent.name;
-            inv.date = calevent.startDate;
-            inv.sentAt = getTodayStr(DateFormat.StoreDateTime);   // the batch bypasses InvitationService.create()
-            inv.index = `ik:${inv.inviteeKey}, ck:${inv.caleventKey}, n:${inv.inviteeLastName}, d:${inv.date}`;
-            batch.set(doc(store.firestoreService.firestore, `${InvitationCollection}/${key + pad(index, 2)}`),
-              removeKeyFromOkrModel(structuredClone(inv)));
-            attendees = addInvitedAttendee(attendees, { ...avatar, key: inv.inviteeKey });
+          let attendees: Attendee[] = [];
+          await store.firestoreService.commitBatch('invitePersons', (batch) => {
+            attendees = calevent.attendees ?? [];
+            data.invitees.forEach((avatar, index) => {
+              const inv = new InvitationModel(store.tenantId());
+              inv.inviteeKey = extractSecondPartOfOptionalTupel(avatar.key);
+              inv.inviteeFirstName = avatar.name1;
+              inv.inviteeLastName = avatar.name2;
+              inv.notes = data.message;
+              inv.inviterKey = currentUser.personKey || '';
+              inv.inviterFirstName = currentUser.firstName || '';
+              inv.inviterLastName = currentUser.lastName || '';
+              inv.caleventKey = calevent.okey;
+              inv.name = calevent.name;
+              inv.date = calevent.startDate;
+              inv.sentAt = getTodayStr(DateFormat.StoreDateTime);   // the batch bypasses InvitationService.create()
+              inv.index = `ik:${inv.inviteeKey}, ck:${inv.caleventKey}, n:${inv.inviteeLastName}, d:${inv.date}`;
+              batch.set(doc(store.firestoreService.firestore, `${InvitationCollection}/${key + pad(index, 2)}`),
+                removeKeyFromOkrModel(structuredClone(inv)));
+              attendees = addInvitedAttendee(attendees, { ...avatar, key: inv.inviteeKey });
+            });
+            batch.update(doc(store.firestoreService.firestore, `${CalEventCollection}/${calevent.okey}`), { attendees });
           });
-          batch.update(doc(store.firestoreService.firestore, `${CalEventCollection}/${calevent.okey}`), { attendees });
-          await batch.commit();
           calevent.attendees = attendees;
           await showToast(store.toastController, fill(store.i18n.invite_persons_conf(), { count: data.invitees.length }));
         } catch (e) {
