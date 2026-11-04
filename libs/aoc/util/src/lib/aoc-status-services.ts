@@ -166,3 +166,24 @@ export function sortByProblem(services: readonly StatusService[], result: Servic
   };
   return [...services].sort((a, b) => rank(a) - rank(b));
 }
+
+/** How many of these services report a problem or an unknown state. Link-only services count for neither. */
+export function statusSummary(services: readonly StatusService[], result: ServiceStatusResult | undefined, isEnabled: IsEnabled): { problems: number; unknown: number } {
+  const levels = services.map(s => serviceLevel(s, result?.services[s.id], isEnabled));
+  return {
+    problems: levels.filter(level => PROBLEM_LEVELS.includes(level)).length,
+    unknown: levels.filter(level => level === 'unknown').length,
+  };
+}
+
+/** One bar of the Better Stack history. `recovered` is a day that had an outage, so it is not green. */
+export function dayLevel(status: string): StatusLevel {
+  switch (status) {
+    case 'operational': return 'ok';
+    case 'recovered':
+    case 'degraded': return 'degraded';
+    case 'downtime': return 'down';
+    case 'maintenance': return 'maintenance';
+    default: return 'unknown';
+  }
+}

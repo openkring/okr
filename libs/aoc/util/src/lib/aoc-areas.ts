@@ -75,6 +75,7 @@ export const AOC_AREAS: readonly AocCard[] = [
   card('privacyAudit', 'access', 'check', { route: '/security/privacy-audit' }, 'security'),
   card('iban', 'access', 'report', { operation: 'iban' }, 'aoc'),
   card('allocation', 'access', 'operation', { route: '/operator/allocation' }, 'aoc', { tenants: [OPERATOR_TENANT_ID] }),
+  card('status', 'ops', 'report', { route: '/aoc/status' }, 'aoc'),
   card('activity', 'ops', 'report', { route: '/activity' }, 'activity'),
   card('emailEvents', 'ops', 'report', { route: '/aoc/email' }, 'aoc', { tenants: [OPERATOR_TENANT_ID] }),
   card('chatMaintenance', 'ops', 'operation', { route: '/operator/chat' }, 'aoc', { tenants: [OPERATOR_TENANT_ID] }),

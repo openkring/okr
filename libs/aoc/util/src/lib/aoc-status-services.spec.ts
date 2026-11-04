@@ -6,8 +6,10 @@ import {
   ServiceStatusResult,
   StatusLevel,
   StatusService,
+  dayLevel,
   serviceLevel,
   sortByProblem,
+  statusSummary,
   visibleParts,
   visibleStatusServices,
 } from './aoc-status-services';
@@ -129,5 +131,48 @@ describe('sortByProblem', () => {
     result.services['github'] = levels({ 'Git Operations': 'ok', Actions: 'degraded' });
     result.services['imgix'] = levels({ 'Rendering Infrastructure': 'down', 'Content Delivery Network': 'ok', 'Google Cloud Storage': 'ok' });
     expect(sortByProblem(AOC_STATUS_SERVICES, result, everything).slice(0, 2).map(s => s.id)).toEqual(['imgix', 'github']);
+  });
+});
+
+describe('statusSummary', () => {
+  const everything = () => true;
+  const allOk = (): ServiceStatusResult => ({
+    checkedAt: '2026-11-04T12:00:00.000Z',
+    services: Object.fromEntries(AOC_STATUS_SERVICES.map(s => [s.id, levels(Object.fromEntries(s.parts.map(p => [p.label, 'ok' as StatusLevel])))])),
+  });
+
+  it('counts nothing when all live services are ok', () => {
+    expect(statusSummary(AOC_STATUS_SERVICES, allOk(), everything)).toEqual({ problems: 0, unknown: 0 });
+  });
+
+  it('counts a problem and leaves link-only services out', () => {
+    const result = allOk();
+    result.services['github'] = levels({ 'Git Operations': 'ok', Actions: 'down' });
+    expect(statusSummary(AOC_STATUS_SERVICES, result, everything)).toEqual({ problems: 1, unknown: 0 });
+  });
+
+  // otherwise an answer with every feed failed would read as «all clear»
+  it('counts every live service as unknown without a status', () => {
+    const live = AOC_STATUS_SERVICES.filter(s => s.source !== 'none').length;
+    expect(statusSummary(AOC_STATUS_SERVICES, { checkedAt: '', services: {} }, everything)).toEqual({ problems: 0, unknown: live });
+  });
+
+  it('ignores a part the tenant does not see', () => {
+    const result = allOk();
+    result.services['kring'] = levels({ 'Frontend App': 'ok', 'Firebase Cloud Functions': 'ok', 'Matrix Server': 'down' });
+    expect(statusSummary([service('kring')], result, on('auth'))).toEqual({ problems: 0, unknown: 0 });
+  });
+});
+
+describe('dayLevel', () => {
+  it.each<[string, StatusLevel]>([
+    ['operational', 'ok'],
+    ['recovered', 'degraded'],
+    ['degraded', 'degraded'],
+    ['downtime', 'down'],
+    ['maintenance', 'maintenance'],
+    ['not_monitored', 'unknown'],
+  ])('reads %s as %s', (status, level) => {
+    expect(dayLevel(status)).toBe(level);
   });
 });

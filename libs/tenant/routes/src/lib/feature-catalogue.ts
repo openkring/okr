@@ -183,6 +183,7 @@ const aoc: BlockRoutes = {
       { path: 'tag',        canActivate: [isContentAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocTag) },
       { path: 'email',      canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocEmail) },
       { path: 'sessions',   canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocSession) },
+      { path: 'status',     canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocStatus) },
       // SOFTENED by owner ruling R-5, 2026-08-05, to match the live `aoc-website` menu doc's
       // `roleNeeded: contentAdmin`. This is the one place the live `app.routes.ts` guard is NOT
       // reproduced verbatim: it writes `isPrivilegedGuard`, which was inert under the old admin

@@ -246,6 +246,25 @@
     "allEventTypes": "Tutti i tipi di evento",
     "empty": "Nessun evento trovato."
   },
+  "status": {
+    "title": "Stato dei servizi",
+    "allClear": "Tutti i servizi funzionano normalmente",
+    "problemOne": "1 servizio segnala un guasto",
+    "problems": "{count} servizi segnalano un guasto",
+    "someUnknown": "Al momento lo stato di alcuni servizi non è noto",
+    "checkedAt": "Controllato alle {time}",
+    "loadFailed": "Non è stato possibile caricare lo stato attuale. I link portano alle pagine dei fornitori.",
+    "noLiveStatus": "Per questo servizio non c'è una visualizzazione in tempo reale.",
+    "openPage": "Apri la pagina di stato",
+    "refresh": "Aggiorna",
+    "level": {
+      "ok": "In funzione",
+      "degraded": "Limitato",
+      "down": "Guasto",
+      "maintenance": "Manutenzione",
+      "unknown": "Sconosciuto"
+    }
+  },
   "hub": {
     "area": {
       "access": "Accesso e privacy",
@@ -261,6 +280,10 @@
       "sessions": {
         "label": "Sessioni",
         "effect": "Mostra chi era connesso, quando e con quale dispositivo."
+      },
+      "status": {
+        "label": "Stato dei servizi",
+        "effect": "Mostra se i servizi di cui hanno bisogno le tue funzioni sono attivi."
       },
       "register": {
         "label": "Registro dei trattamenti",

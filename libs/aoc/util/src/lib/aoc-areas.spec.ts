@@ -15,6 +15,7 @@ const ids = (area: AocArea, c: ReturnType<typeof ctx>) => visibleAocCards(AOC_AR
 const EXPECTED_ROUTES: Record<string, string> = {
   users: '/user/all/c-users',
   sessions: '/aoc/sessions',
+  status: '/aoc/status',
   register: '/security/register',
   privacyAudit: '/security/privacy-audit',
   allocation: '/operator/allocation',
@@ -66,7 +67,7 @@ describe('visibleAocCards', () => {
     expect(ids('ops', ctx('scs'))).not.toContain('emailEvents');
     expect(ids('ops', ctx('scs'))).not.toContain('chatMaintenance');
     expect(ids('access', ctx('scs'))).not.toContain('allocation');
-    expect(ids('ops', ctx('bka'))).toEqual(['activity', 'emailEvents', 'chatMaintenance']);
+    expect(ids('ops', ctx('bka'))).toEqual(['status', 'activity', 'emailEvents', 'chatMaintenance']);
     expect(ids('access', ctx('bka'))).toEqual(['users', 'sessions', 'register', 'privacyAudit', 'iban', 'allocation']);
     expect(ids('data', ctx('scs'))).toEqual(['validate', 'reindex']);
     expect(ids('data', ctx('bka'))).toEqual(['validate', 'reindex']);
@@ -81,7 +82,7 @@ describe('visibleAocCards', () => {
 
   it('shows all four areas on kring, like on every catalogue-composed app', () => {
     expect(ids('access', ctx('kring'))).toEqual(['users', 'sessions', 'register', 'privacyAudit', 'iban']);
-    expect(ids('ops', ctx('kring'))).toEqual(['activity', 'escalations']);
+    expect(ids('ops', ctx('kring'))).toEqual(['status', 'activity', 'escalations']);
     expect(ids('config', ctx('kring'))).toEqual(['features', 'workflow']);
     expect(ids('data', ctx('kring'))).toEqual(['validate', 'reindex']);
   });
@@ -93,6 +94,17 @@ describe('visibleAocCards', () => {
 
   it('filters by feature block', () => {
     expect(ids('access', ctx('scs', { enabled: ['user'] }))).toEqual(['users']);
+  });
+});
+
+describe('the Dienst-Status card', () => {
+  it('shows on Betrieb for an admin of any tenant', () => {
+    expect(ids('ops', ctx('scs'))[0]).toBe('status');
+    expect(ids('ops', ctx('elab'))).toContain('status');
+  });
+
+  it('stays hidden from a non-admin', () => {
+    expect(ids('ops', ctx('scs', { roles: ['registered'] }))).not.toContain('status');
   });
 });
 

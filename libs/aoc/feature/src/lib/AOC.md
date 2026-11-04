@@ -41,6 +41,7 @@ writes each run to `activities` (`scope: 'aoc'`), and the card shows the last ru
 
 | Card | Target | What it does |
 |---|---|---|
+| Dienst-Status | `/aoc/status` | External services by feature block, only the parts we use (`AocStatus`, spec 1.137) |
 | System-Aktivitäten | `/activity` | The activity log (`@okr/activity-feature`) |
 | E-Mail-Ereignisse | `/aoc/email` | Delivery, open and bounce events of outgoing mail (`AocEmail`), operator only |
 | Chat-Wartung (Betreiber) | `/operator/chat` | Operator only (bka) |
@@ -112,6 +113,10 @@ alone (`loadTenantUser`, `isSoleTenantUserData`, `mayDeleteAuthUser`).
 
 ## Library path
 
-`@okr/aoc-feature` (`libs/aoc/feature/src/lib/`): `AocHub`, `AocSession`, `AocEmail`, `AocTag`,
+`@okr/aoc-feature` (`libs/aoc/feature/src/lib/`): `AocHub`, `AocSession`, `AocStatus`, `AocEmail`, `AocTag`,
 `AocWebsite`, `AocTenantAllocation` and the tenant switcher. `@okr/aoc-util` (`libs/aoc/util/src/lib/`):
 `AOC_AREAS`, `AOC_AREA_ROUTES`, the hub i18n keys and the pure helpers.
+
+The list of external services is `AOC_STATUS_SERVICES` in `libs/aoc/util/src/lib/aoc-status-services.ts`,
+read by the page and by `getServiceStatus`. Every new external service gets a row there (`privacy-model`
+rule 4), with an empty `statusUrl` when the provider has no status page.
