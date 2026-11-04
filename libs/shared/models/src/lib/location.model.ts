@@ -1,5 +1,5 @@
 import { DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LOCATION_TYPE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
-import { OkrModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
+import { BaseProperty, OkrModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 
 export class LocationModel implements OkrModel, NamedModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY;
@@ -19,6 +19,7 @@ export class LocationModel implements OkrModel, NamedModel, SearchableModel, Tag
   public direction = 0; // degrees
   public distance = 0; // distance in km from a given point
   public notes = DEFAULT_NOTES;
+  public properties: BaseProperty[] = []; // general key/value data about the place, e.g. bfsNr (spec 1.136)
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

@@ -6,9 +6,9 @@ import { from, of, take } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { DiarySource, PersonCollection, PersonModel, PersonModelName, UserCollection, UserModel } from '@okr/shared-models';
-import { AhvFormat, AppNavigationService, DIARY_EXTRA_SOURCES, formatAhv, isBlankAhv } from '@okr/shared-util-angular';
-import { debugItemLoaded } from '@okr/shared-util-core';
+import { DiarySourceModel, PersonCollection, PersonModel, PersonModelName, UserCollection, UserModel, withoutDiaryConsents } from '@okr/shared-models';
+import { AhvFormat, AlertService, AppNavigationService, formatAhv, isBlankAhv } from '@okr/shared-util-angular';
+import { debugItemLoaded, fill } from '@okr/shared-util-core';
 import { FirestoreService } from '@okr/shared-data-access';
 
 import { AvatarService } from '@okr/avatar-data-access';
@@ -16,8 +16,7 @@ import { AvatarService } from '@okr/avatar-data-access';
 import { PersonService, SensitivePersonData } from '@okr/subject-person-data-access';
 import { PersonFormModel } from '@okr/subject-person-util';
 import { PROFILE_I18N_KEYS, ProfileI18n } from '@okr/profile-util';
-import { mergeDiarySources } from '@okr/content-diary-util';
-import { DiaryLineService, DiaryTenantInfo } from '@okr/content-diary-data-access';
+import { DiaryLineService, DiaryPullColumn, DiaryRequest, DiarySourcesService } from '@okr/content-diary-data-access';
 
 /**
  * the personEditPage is setting the personKey.
@@ -26,13 +25,20 @@ import { DiaryLineService, DiaryTenantInfo } from '@okr/content-diary-data-acces
  */
 export type ProfileState = {
   personKey: string | undefined;
-  /** spec 1.77 §5.2 — the caller's diary apps (columns) and the transfer kinds (rows) */
-  diaryTenants: { diaries: DiaryTenantInfo[]; sources: DiarySource[] };
+  /** spec 1.77 §12.4 — in a diary app: the columns of «Tagebuch-Quellen» and the owner's doc */
+  diaryPullColumns: DiaryPullColumn[];
+  diarySources: DiarySourceModel | undefined;
+  /** spec 1.77 §12.4 — in a source app: the diaries asking, and whether an answer is under way */
+  diaryRequests: DiaryRequest[];
+  diaryRequestBusy: boolean;
 };
 
 export const initialState: ProfileState = {
   personKey: undefined,
-  diaryTenants: { diaries: [], sources: [] },
+  diaryPullColumns: [],
+  diarySources: undefined,
+  diaryRequests: [],
+  diaryRequestBusy: false,
 };
 
 export const ProfileStore = signalStore(
@@ -45,8 +51,8 @@ export const ProfileStore = signalStore(
     firestoreService: inject(FirestoreService),
     i18nService: inject(I18nService),
     diaryLineService: inject(DiaryLineService),
-    /** diary sources this app offers beyond its feature blocks (bkg-app: the tracker) */
-    diaryExtraSources: inject(DIARY_EXTRA_SOURCES),
+    diarySourcesService: inject(DiarySourcesService),
+    alertService: inject(AlertService),
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(PROFILE_I18N_KEYS) as ProfileI18n,
@@ -116,16 +122,55 @@ export const ProfileStore = signalStore(
 
       /************************************ ACTIONS ************************************* */
       /**
-       * Spec 1.77 §5.2 — loads the diary apps of the caller, once when the profile page opens.
-       * A failed call leaves both lists empty, which hides the «Tagebuch-Transfer» accordion.
+       * Spec 1.77 §12.4 — «Tagebuch-Quellen», once when the profile page opens. No columns (an app without a diary, or
+       * a failed call) hides the accordion.
        */
-      async loadDiaryTenants(): Promise<void> {
+      async loadDiarySources(): Promise<void> {
+        const uid = store.appStore.fbUser()?.uid;
+        if (!uid) return;
         try {
-          const result = await store.diaryLineService.listMyDiaryTenants();
-          patchState(store, { diaryTenants: { diaries: result?.diaries ?? [], sources: mergeDiarySources(result?.sources ?? [], store.diaryExtraSources) } });
+          const columns = await store.diaryLineService.listMyDiaryPullOptions();
+          if (columns.length === 0) return;
+          const doc = await store.diarySourcesService.read(uid);
+          const tenants = [store.appStore.tenantId()];
+          patchState(store, { diaryPullColumns: columns, diarySources: doc ?? { okey: uid, tenants, authorKey: uid, from: '', to: '', pulls: [] } });
         } catch (e) {
-          console.warn('ProfileStore.loadDiaryTenants', e);
+          console.warn('ProfileStore.loadDiarySources', e);
         }
+      },
+
+      /** Spec 1.77 §12.4 — the diaries asking this app, once when the profile opens. A failed call shows no list. */
+      async loadDiaryRequests(): Promise<void> {
+        try {
+          patchState(store, { diaryRequests: await store.diaryLineService.listMyDiaryRequests() });
+        } catch (e) {
+          console.warn('ProfileStore.loadDiaryRequests', e);
+        }
+      },
+
+      /** Answers one diary: *Erlauben* with what it asks for, *Widerrufen* with nothing (`setDiaryConsent`). */
+      async answerDiaryRequest(tenantId: string, allow: boolean): Promise<void> {
+        const request = store.diaryRequests().find((r) => r.tenantId === tenantId);
+        if (!request) return;
+        patchState(store, { diaryRequestBusy: true });
+        try {
+          const { sources, swept } = await store.diaryLineService.setDiaryConsent(tenantId, allow ? request.requested : []);
+          patchState(store, { diaryRequests: store.diaryRequests().map((r) => r.tenantId === tenantId ? { ...r, consented: sources } : r) });
+          if (swept > 0) await store.alertService.showToast(fill(store.i18n.diaryTransfer_swept(), { count: String(swept) }));
+        } catch (e) {
+          console.warn('ProfileStore.answerDiaryRequest', e);
+          await store.alertService.showToast(store.i18n.diaryTransfer_error());
+        } finally {
+          patchState(store, { diaryRequestBusy: false });
+        }
+      },
+
+      /** Returns false when the write failed: the service has shown the error, the edit is not saved. */
+      async saveDiarySources(model: DiarySourceModel): Promise<boolean> {
+        const key = await store.diarySourcesService.save(model, store.i18n.update_error());
+        if (!key) return false;
+        patchState(store, { diarySources: model });
+        return true;
       },
 
     /**
@@ -155,7 +200,7 @@ export const ProfileStore = signalStore(
           store.appStore.reloadPersons();
         }
         if (user) {
-          await store.firestoreService.updateModel<UserModel>(UserCollection, user, false, store.i18n.update_conf(), store.i18n.update_error(), user);
+          await store.firestoreService.updateModel<UserModel>(UserCollection, withoutDiaryConsents(user), false, store.i18n.update_conf(), store.i18n.update_error(), user);
         }
       },
 

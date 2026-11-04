@@ -102,6 +102,16 @@
     "placeholder": "Texte"
   },
 
+  "properties": {
+    "title": "Informations complémentaires",
+    "empty": "Aucune information complémentaire enregistrée.",
+    "key": "Type",
+    "value": "Valeur",
+    "add": "Ajouter",
+    "bfsNr": "Numéro OFS",
+    "bfsStatus": "Statut des données communales"
+  },
+
   "location_type": {
     "label": "Type de lieu",
     "helper": "Type d'une indication de lieu, normalement utilisé comme filtre dans les listes de lieux.",
@@ -119,6 +129,10 @@
     "geomarker": {
       "label": "Géomarqueur",
       "description": "Le lieu est un repère sur une carte."
+    },
+    "city": {
+      "label": "Commune",
+      "description": "Le lieu est une commune politique."
     },
     "airport": {
       "label": "Aéroport",

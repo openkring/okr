@@ -1,0 +1,252 @@
+{
+  "stafa": {
+    "head": {
+      "vars": [
+        "period",
+        "operatorName",
+        "total",
+        "energy",
+        "gridusage",
+        "charge",
+        "aidfee"
+      ]
+    },
+    "results": {
+      "bindings": [
+        {
+          "period": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#gYear",
+            "type": "literal",
+            "value": "2011"
+          },
+          "operatorName": {
+            "type": "literal",
+            "value": "Energie und Wasser, Gemeindewerke Stäfa"
+          },
+          "total": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "18.220"
+          },
+          "energy": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "8.010"
+          },
+          "gridusage": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "9.360"
+          },
+          "charge": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "0.400"
+          },
+          "aidfee": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "0.450"
+          }
+        },
+        {
+          "period": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#gYear",
+            "type": "literal",
+            "value": "2012"
+          },
+          "operatorName": {
+            "type": "literal",
+            "value": "Energie und Wasser, Gemeindewerke Stäfa"
+          },
+          "total": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "17.850"
+          },
+          "energy": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "8.010"
+          },
+          "gridusage": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "9.040"
+          },
+          "charge": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "0.350"
+          },
+          "aidfee": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "0.450"
+          }
+        },
+        {
+          "period": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#gYear",
+            "type": "literal",
+            "value": "2026"
+          },
+          "operatorName": {
+            "type": "literal",
+            "value": "Energie und Wasser, Gemeindewerke Stäfa"
+          },
+          "total": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "27.380"
+          },
+          "energy": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "12.600"
+          },
+          "gridusage": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "10.747"
+          },
+          "charge": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "0.000"
+          },
+          "aidfee": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "2.300"
+          }
+        }
+      ]
+    }
+  },
+  "maennedorf": {
+    "head": {
+      "vars": [
+        "period",
+        "operatorName",
+        "total",
+        "energy",
+        "gridusage",
+        "charge",
+        "aidfee"
+      ]
+    },
+    "results": {
+      "bindings": [
+        {
+          "period": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#gYear",
+            "type": "literal",
+            "value": "2025"
+          },
+          "operatorName": {
+            "type": "literal",
+            "value": "Gemeinde Männedorf, Energieversorung"
+          },
+          "total": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "29.201"
+          },
+          "energy": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "15.400"
+          },
+          "gridusage": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "11.501"
+          },
+          "charge": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "0.000"
+          },
+          "aidfee": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "2.300"
+          }
+        },
+        {
+          "period": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#gYear",
+            "type": "literal",
+            "value": "2026"
+          },
+          "operatorName": {
+            "type": "literal",
+            "value": "Gemeinde Männedorf, Energieversorung"
+          },
+          "total": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "25.029"
+          },
+          "energy": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "11.600"
+          },
+          "gridusage": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "10.196"
+          },
+          "charge": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "0.000"
+          },
+          "aidfee": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "2.300"
+          }
+        },
+        {
+          "period": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#gYear",
+            "type": "literal",
+            "value": "2026"
+          },
+          "operatorName": {
+            "type": "literal",
+            "value": "Elektrizitätswerke des Kantons Zürich (EKZ)"
+          },
+          "total": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "24.136"
+          },
+          "energy": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "12.112"
+          },
+          "gridusage": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "8.230"
+          },
+          "charge": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "0.160"
+          },
+          "aidfee": {
+            "datatype": "http://www.w3.org/2001/XMLSchema#decimal",
+            "type": "literal",
+            "value": "2.300"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -178,6 +178,27 @@ export const AOC_EMAIL_I18N_KEYS = {
   email_empty:              PFX + 'email.empty',
 };
 
+// ─── AocStatus (spec 1.137) ──────────────────────────────────────────────────
+export const AOC_STATUS_I18N_KEYS = {
+  title:             PFX + 'status.title',
+  all_clear:         PFX + 'status.allClear',
+  problem_one:       PFX + 'status.problemOne',
+  problems:          PFX + 'status.problems',
+  some_unknown:      PFX + 'status.someUnknown',
+  checked_at:        PFX + 'status.checkedAt',
+  load_failed:       PFX + 'status.loadFailed',
+  no_live_status:    PFX + 'status.noLiveStatus',
+  open_page:         PFX + 'status.openPage',
+  refresh:           PFX + 'status.refresh',
+  level_ok:          PFX + 'status.level.ok',
+  level_degraded:    PFX + 'status.level.degraded',
+  level_down:        PFX + 'status.level.down',
+  level_maintenance: PFX + 'status.level.maintenance',
+  level_unknown:     PFX + 'status.level.unknown',
+};
+
+export type AocStatusI18n = { [K in keyof typeof AOC_STATUS_I18N_KEYS]: Signal<string> };
+
 // ─── AOC hub cards (spec 1.101 phase 5) ──────────────────────────────────────
 export const AOC_HUB_I18N_KEYS = {
   title: PFX + 'hub.title',
@@ -235,6 +256,8 @@ export const AOC_HUB_I18N_KEYS = {
   card_users_effect: PFX + 'hub.card.users.effect',
   card_sessions_label: PFX + 'hub.card.sessions.label',
   card_sessions_effect: PFX + 'hub.card.sessions.effect',
+  card_status_label: PFX + 'hub.card.status.label',
+  card_status_effect: PFX + 'hub.card.status.effect',
   card_register_label: PFX + 'hub.card.register.label',
   card_register_effect: PFX + 'hub.card.register.effect',
   card_privacyAudit_label: PFX + 'hub.card.privacyAudit.label',

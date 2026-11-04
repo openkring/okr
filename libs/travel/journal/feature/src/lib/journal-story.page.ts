@@ -13,7 +13,8 @@ import { createActionSheetButton, createActionSheetOptions, okrPrompt } from '@o
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { AlbumSection, ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig } from '@okr/shared-models';
 import { openImageGallery } from '@okr/shared-ui';
-import { blockActions, footprintMenu, FootprintFormModel, htmlToPlainText, lostValueText, photoFileName, StoryBlock, toStorySections } from '@okr/travel-journal-util';
+import { blockActions, footprintMenu, FootprintFormModel, htmlToPlainText, lostValueText, photoFileName, StoryBlock, toStorySections, weatherLine } from '@okr/travel-journal-util';
+import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
 
 import type { VideoSkipReason } from '@okr/travel-journal-data-access';
 import { JournalFileUrlService } from './journal-file-url.service';
@@ -71,7 +72,7 @@ import { JournalStore } from './journal.store';
       }
       @if (story(); as story) {
         @if (story.hero; as hero) {
-          <okr-hero-section [section]="hero" />
+          <okr-hero-section [section]="hero" [chipIcon]="weatherChipIcon()" />
         } @else {
           <div class="plain-title">
             <h1>{{ footprint()?.title || store.i18n.untitled() }}</h1>
@@ -161,6 +162,10 @@ export class JournalStoryPage {
 
   protected readonly footprints = computed(() => this.store.footprints(this.journalKey()));
   protected readonly footprint = computed(() => this.footprints().find((f) => f.key === this.footprintKey()));
+  protected readonly weatherChipIcon = computed(() => {
+    const weather = this.footprint()?.weather;
+    return weather ? { chip: weatherLine(weather), name: weatherCodeToIcon(weather.code), set: WEATHER_ICON_SET } : undefined;
+  });
   /**
    * The story as the CMS sections render it. In the browser, a photo that is signed but not in the bucket (still a draft
    * photo on the iPad) is left out of the album and counted per block for a note; the block's `imageKeys` stay as they are.

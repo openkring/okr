@@ -102,6 +102,16 @@
     "placeholder": "Testo"
   },
 
+  "properties": {
+    "title": "Ulteriori informazioni",
+    "empty": "Nessuna ulteriore informazione registrata.",
+    "key": "Tipo",
+    "value": "Valore",
+    "add": "Aggiungi",
+    "bfsNr": "Numero UST",
+    "bfsStatus": "Stato dei dati comunali"
+  },
+
   "location_type": {
     "label": "Tipo di luogo",
     "helper": "Tipo di un'indicazione di luogo, normalmente utilizzato come filtro negli elenchi di luoghi.",
@@ -119,6 +129,10 @@
     "geomarker": {
       "label": "Geomarcatore",
       "description": "Il luogo è un pin su una mappa."
+    },
+    "city": {
+      "label": "Comune",
+      "description": "Il luogo è un comune politico."
     },
     "airport": {
       "label": "Aeroporto",

@@ -1474,5 +1474,19 @@
       "label": "Trayecto a pie en minutos",
       "helper": "Déjalo vacío para calcularlo a partir de la distancia"
     }
+  },
+  "energy": {
+    "title": "Energía",
+    "label": "Energía",
+    "edit": "Cambiar la configuración de energía",
+    "description": "Las cifras de energía de un municipio: consumo, producción, solar, calefacción, coches eléctricos y tarifas, con comparación",
+    "location": {
+      "label": "Municipio",
+      "helper": "Elige el municipio que quieres mostrar"
+    },
+    "compare": {
+      "label": "Comparar con",
+      "helper": "Hasta 4 municipios más para la tabla de comparación"
+    }
   }
 }

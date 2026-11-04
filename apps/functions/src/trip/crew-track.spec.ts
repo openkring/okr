@@ -1,11 +1,15 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Firestore } from 'firebase-admin/firestore';
 import { TripModel } from '@okr/shared-models';
 import type { LocalSection } from '@okr/mobility-tracker-util';
 import { clipSections, decodeStrokeTimes, decodeTrack, strokeTimesBase } from '@okr/mobility-tracker-util';
 import {
   buildCrewCopy, CREW_TRACK_MAX_SPAN_MS, crewPushTexts, crewTrackActions, crewWindowMs, decideCrewAccess, isCrewMember,
-  isLinkedRecording, selectCrewDiaryTarget, toCrewSections, isTrackReferenced, crewCleanupDecision, logbuchCleanupDeadline, thumbPrefixes,
+  isLinkedRecording, crewDiaryTenants, toCrewSections, isTrackReferenced, crewCleanupDecision, logbuchCleanupDeadline, thumbPrefixes,
 } from './crew-track';
+
+const mocks = vi.hoisted(() => ({ resolveDiaryPulls: vi.fn() }));
+vi.mock('../diary/diary-pull', () => ({ resolveDiaryPulls: mocks.resolveDiaryPulls }));
 
 function logbuch(over: Partial<TripModel> = {}): TripModel {
   const t = new TripModel('scs');
@@ -206,23 +210,30 @@ describe('crewPushTexts', () => {
   });
 });
 
-describe('selectCrewDiaryTarget', () => {
-  const target = (tenantId: string, sources: string[] = ['tracker']) => ({ tenantId, sources, from: '', to: '' });
-  it('routes by the source-tenant user and drops the source tenant', () => {
-    const users = [
-      { id: 'uScs', tenants: ['scs'], diaryTargets: [target('scs'), target('bkd')] },
-      { id: 'uBkd', tenants: ['bkd'] },
-    ];
-    expect(selectCrewDiaryTarget(users as never, 'scs', '20261027')).toEqual({ tenants: ['bkd'], uid: 'uBkd' });
+describe('crewCleanupDecision in a tenant that does not expire', () => {
+  it('keeps a Logbuch-linked recording of an app with its own diary', () => {
+    const logbuchTrip = logbuch({ endDate: '20261001', state: 'closed' });
+    const recording = { type: 'tracker', tenants: ['scs'], track: { logbuchKey: 'lb1', endedAt: '2026-10-01T10:00:00Z' } } as unknown as TripModel;
+    expect(crewCleanupDecision(logbuchTrip, recording, 'lb1', 'scs', '20261101', true).delete).toBe(true);
+    expect(crewCleanupDecision(logbuchTrip, recording, 'lb1', 'scs', '20261101', false)).toMatchObject({ delete: false, unlink: true, unlinkRecording: true });
   });
-  it('undefined without a user in the source tenant, without tracker targets, or without a diary user', () => {
-    expect(selectCrewDiaryTarget([{ id: 'u', tenants: ['gss'], diaryTargets: [target('bkd')] }] as never, 'scs', '20261027')).toBeUndefined();
-    expect(selectCrewDiaryTarget([{ id: 'u', tenants: ['scs'], diaryTargets: [target('bkd', ['tripDone'])] }, { id: 'v', tenants: ['bkd'] }] as never, 'scs', '20261027')).toBeUndefined();
-    expect(selectCrewDiaryTarget([{ id: 'u', tenants: ['scs'], diaryTargets: [target('bkd')] }] as never, 'scs', '20261027')).toBeUndefined();
+});
+
+describe('crewDiaryTenants', () => {
+  const db = {} as Firestore;
+  beforeEach(() => mocks.resolveDiaryPulls.mockReset());
+  const ok = (tenantId: string, status = 'ok') => ({ tenantId, uid: `u-${tenantId}`, status });
+
+  it('goes to the diary tenants only, with the uid of the first', async () => {
+    mocks.resolveDiaryPulls.mockResolvedValue([ok('scs'), ok('bkd'), ok('jp')]);
+    expect(await crewDiaryTenants(db, 'p1', 'scs', '20261027')).toEqual({ tenants: ['bkd', 'jp'], uid: 'u-bkd' });
+    expect(mocks.resolveDiaryPulls).toHaveBeenCalledWith(db, { personKey: 'p1', sourceTenant: 'scs', source: 'tracker', date: '20261027' });
   });
-  it('ignores an archived source user', () => {
-    const users = [{ id: 'u', tenants: ['scs'], isArchived: true, diaryTargets: [target('bkd')] }, { id: 'v', tenants: ['bkd'] }];
-    expect(selectCrewDiaryTarget(users as never, 'scs', '20261027')).toBeUndefined();
+  it('makes no copy without a diary or a consent', async () => {
+    mocks.resolveDiaryPulls.mockResolvedValue([]);
+    expect(await crewDiaryTenants(db, 'p1', 'scs', '20261027')).toBeUndefined();
+    mocks.resolveDiaryPulls.mockResolvedValue([ok('bkd', 'skipped-no-consent')]);
+    expect(await crewDiaryTenants(db, 'p1', 'scs', '20261027')).toBeUndefined();
   });
 });
 
@@ -314,46 +325,46 @@ describe('crewCleanupDecision', () => {
   const after = '20261028';
 
   it('auto-closed (closed.rev) Logbuch -> no copy, cleanup unchanged', () => {
-    expect(crewCleanupDecision(lb({ state: 'closed.rev' }), rec(), 'lb1', T, before)).toEqual({ copy: false, unlink: false, unlinkRecording: false, delete: false });
-    expect(crewCleanupDecision(lb({ state: 'closed.rev' }), rec(), 'lb1', T, after)).toEqual({ copy: false, unlink: true, unlinkRecording: true, delete: true });
+    expect(crewCleanupDecision(lb({ state: 'closed.rev' }), rec(), 'lb1', T, before, true)).toEqual({ copy: false, unlink: false, unlinkRecording: false, delete: false });
+    expect(crewCleanupDecision(lb({ state: 'closed.rev' }), rec(), 'lb1', T, after, true)).toEqual({ copy: false, unlink: true, unlinkRecording: true, delete: true });
   });
   it('ended, before deadline -> copy only', () =>
-    expect(crewCleanupDecision(lb(), rec(), 'lb1', T, before)).toEqual({ copy: true, unlink: false, unlinkRecording: false, delete: false }));
+    expect(crewCleanupDecision(lb(), rec(), 'lb1', T, before, true)).toEqual({ copy: true, unlink: false, unlinkRecording: false, delete: false }));
   it('past deadline, unreferenced -> copy, unlink and delete', () =>
-    expect(crewCleanupDecision(lb(), rec(), 'lb1', T, after)).toEqual({ copy: true, unlink: true, unlinkRecording: true, delete: true }));
+    expect(crewCleanupDecision(lb(), rec(), 'lb1', T, after, true)).toEqual({ copy: true, unlink: true, unlinkRecording: true, delete: true }));
   it('past deadline, journalKey -> unlink, no delete', () =>
-    expect(crewCleanupDecision(lb(), rec({}, { journalKey: 'j' }), 'lb1', T, after)).toMatchObject({ unlink: true, unlinkRecording: true, delete: false }));
+    expect(crewCleanupDecision(lb(), rec({}, { journalKey: 'j' }), 'lb1', T, after, true)).toMatchObject({ unlink: true, unlinkRecording: true, delete: false }));
   it('past deadline, diary tenant -> unlink, no delete', () =>
-    expect(crewCleanupDecision(lb(), rec({ tenants: [T, 'kring'] }), 'lb1', T, after)).toMatchObject({ unlink: true, delete: false }));
+    expect(crewCleanupDecision(lb(), rec({ tenants: [T, 'kring'] }), 'lb1', T, after, true)).toMatchObject({ unlink: true, delete: false }));
   it('recording missing -> unlink only', () =>
-    expect(crewCleanupDecision(lb(), undefined, 'lb1', T, after)).toEqual({ copy: false, unlink: true, unlinkRecording: false, delete: false }));
+    expect(crewCleanupDecision(lb(), undefined, 'lb1', T, after, true)).toEqual({ copy: false, unlink: true, unlinkRecording: false, delete: false }));
   it('recording points to another Logbuch -> unlink Logbuch only', () =>
-    expect(crewCleanupDecision(lb(), rec({}, { logbuchKey: 'other' }), 'lb1', T, after)).toEqual({ copy: false, unlink: true, unlinkRecording: false, delete: false }));
+    expect(crewCleanupDecision(lb(), rec({}, { logbuchKey: 'other' }), 'lb1', T, after, true)).toEqual({ copy: false, unlink: true, unlinkRecording: false, delete: false }));
   it('soft-deleted Logbuch before deadline -> nothing (no copy, no unlink, no delete)', () =>
-    expect(crewCleanupDecision(lb({ deletedAt: '2026-10-21T10:00:00Z' }), rec(), 'lb1', T, before)).toEqual({ copy: false, unlink: false, unlinkRecording: false, delete: false }));
+    expect(crewCleanupDecision(lb({ deletedAt: '2026-10-21T10:00:00Z' }), rec(), 'lb1', T, before, true)).toEqual({ copy: false, unlink: false, unlinkRecording: false, delete: false }));
   it('state deleted / archived before deadline -> nothing', () => {
-    expect(crewCleanupDecision(lb({ state: 'deleted' }), rec(), 'lb1', T, before)).toMatchObject({ copy: false, unlink: false, delete: false });
-    expect(crewCleanupDecision(lb({ isArchived: true }), rec(), 'lb1', T, before)).toMatchObject({ copy: false, unlink: false, delete: false });
+    expect(crewCleanupDecision(lb({ state: 'deleted' }), rec(), 'lb1', T, before, true)).toMatchObject({ copy: false, unlink: false, delete: false });
+    expect(crewCleanupDecision(lb({ isArchived: true }), rec(), 'lb1', T, before, true)).toMatchObject({ copy: false, unlink: false, delete: false });
   });
   it('soft-deleted Logbuch after deadline -> unlink + delete-if-unreferenced, no copy', () => {
-    expect(crewCleanupDecision(lb({ deletedAt: '2026-10-21T10:00:00Z' }), rec(), 'lb1', T, after)).toEqual({ copy: false, unlink: true, unlinkRecording: true, delete: true });
-    expect(crewCleanupDecision(lb({ deletedAt: '2026-10-21T10:00:00Z' }), rec({}, { journalKey: 'j' }), 'lb1', T, after)).toMatchObject({ unlink: true, delete: false });
+    expect(crewCleanupDecision(lb({ deletedAt: '2026-10-21T10:00:00Z' }), rec(), 'lb1', T, after, true)).toEqual({ copy: false, unlink: true, unlinkRecording: true, delete: true });
+    expect(crewCleanupDecision(lb({ deletedAt: '2026-10-21T10:00:00Z' }), rec({}, { journalKey: 'j' }), 'lb1', T, after, true)).toMatchObject({ unlink: true, delete: false });
   });
   it('a crew copy is never deleted', () =>
-    expect(crewCleanupDecision(lb(), rec({}, { copyOf: 'x' }), 'lb1', T, after).delete).toBe(false));
+    expect(crewCleanupDecision(lb(), rec({}, { copyOf: 'x' }), 'lb1', T, after, true).delete).toBe(false));
   it('back-dated Logbuch trip -> link and recording kept until the recording\'s own deadline, then unlink + delete', () => {
     const backdated = lb({ endDate: '20261001' }); // Logbuch deadline 20261008, recording ended 20261020 -> 20261027
-    expect(crewCleanupDecision(backdated, rec(), 'lb1', T, before)).toMatchObject({ unlink: false, unlinkRecording: false, delete: false });
-    expect(crewCleanupDecision(backdated, rec(), 'lb1', T, after)).toMatchObject({ unlink: true, unlinkRecording: true, delete: true });
+    expect(crewCleanupDecision(backdated, rec(), 'lb1', T, before, true)).toMatchObject({ unlink: false, unlinkRecording: false, delete: false });
+    expect(crewCleanupDecision(backdated, rec(), 'lb1', T, after, true)).toMatchObject({ unlink: true, unlinkRecording: true, delete: true });
   });
   it('back-dated Logbuch trip, recording points elsewhere -> Logbuch unlinked on its own deadline', () =>
-    expect(crewCleanupDecision(lb({ endDate: '20261001' }), rec({}, { logbuchKey: 'other' }), 'lb1', T, before)).toMatchObject({ unlink: true, unlinkRecording: false, delete: false }));
+    expect(crewCleanupDecision(lb({ endDate: '20261001' }), rec({}, { logbuchKey: 'other' }), 'lb1', T, before, true)).toMatchObject({ unlink: true, unlinkRecording: false, delete: false }));
   it('recording without a readable end -> falls back to the Logbuch deadline', () => {
-    expect(crewCleanupDecision(lb(), rec({}, { endedAt: '' }), 'lb1', T, before)).toMatchObject({ unlink: false, delete: false });
-    expect(crewCleanupDecision(lb(), rec({}, { endedAt: '' }), 'lb1', T, after)).toMatchObject({ unlink: true, delete: true });
+    expect(crewCleanupDecision(lb(), rec({}, { endedAt: '' }), 'lb1', T, before, true)).toMatchObject({ unlink: false, delete: false });
+    expect(crewCleanupDecision(lb(), rec({}, { endedAt: '' }), 'lb1', T, after, true)).toMatchObject({ unlink: true, delete: true });
   });
   it('open trip never expires', () =>
-    expect(crewCleanupDecision(lb({ state: 'open', endDate: '' }), rec(), 'lb1', T, after)).toMatchObject({ copy: false, unlink: false, delete: false }));
+    expect(crewCleanupDecision(lb({ state: 'open', endDate: '' }), rec(), 'lb1', T, after, true)).toMatchObject({ copy: false, unlink: false, delete: false }));
 });
 
 describe('logbuchCleanupDeadline', () => {

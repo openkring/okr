@@ -18,7 +18,7 @@ import {
 import { convertDateFormatToString, DateFormat, fill } from '@okr/shared-util-core';
 import {
   isExpiringApp, isKeptRecording, recordingDeleteDate, alignSections, buildGpx, ElevationPoint, elevationProfile, hasRelief, needsTerrain, sectionsWithHeights, terrainAltitudes, terrainSamples, logbuchTripLabel, correctedTrack, fromLocalSections, gpxFileName, isShareCancel, LocalSection, LocalTrack, localFromTrip, mergeWithNext,
-  localStoreDate, middlePointIndex, sectionRows, setSectionMode, splitSection, toLocalSections, trackTenants, wantsPhotoReattach, withoutPhoto,
+  middlePointIndex, sectionRows, setSectionMode, splitSection, toLocalSections, wantsPhotoReattach, withoutPhoto,
   withPhotoHidden, withQueriedSteps, routeDistanceM, transitRouteKey, transitRouteReq, distanceAlong, formatKm, photosOnTrack, removePoints, spikeRunAround, withoutSpikes,
 } from '@okr/mobility-tracker-util';
 
@@ -893,11 +893,8 @@ export class TrackDetailPage {
     const personKey = this.appStore.currentUser()?.personKey;
     const uid = this.appStore.fbUser()?.uid;
     if (!personKey || !uid) return undefined;
-    // an already uploaded trip keeps its tenants; a local-only one resolves them from the diary targets
-    const existing = this.trip()?.tenants;
-    const startedAt = this.track()?.startedAt;
-    const tenants = existing && existing.length > 0 ? existing : trackTenants(this.appStore.tenantId(), this.appStore.currentUser()?.diaryTargets, localStoreDate(startedAt ?? Date.now()));
-    return { personKey, uid, tenants };
+    // only this app: the server adds the diaries, and a copy of tenants read earlier could bring back a diary detach
+    return { personKey, uid, tenants: [this.appStore.tenantId()] };
   }
 
   /** The transport mode from the split point on (any but the current one). */

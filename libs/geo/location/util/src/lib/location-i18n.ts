@@ -83,6 +83,14 @@ export const LOCATION_I18N_KEYS = {
   notes_label:            PFX + 'notes.label',
   notes_placeholder:      PFX + 'notes.placeholder',
 
+  properties_title:       PFX + 'properties.title',
+  properties_empty:       PFX + 'properties.empty',
+  properties_key:         PFX + 'properties.key',
+  properties_value:       PFX + 'properties.value',
+  properties_add:         PFX + 'properties.add',
+  properties_bfsNr:       PFX + 'properties.bfsNr',
+  properties_bfsStatus:   PFX + 'properties.bfsStatus',
+
   name:                 '@name.label',
   type:                 '@type',
   as_title:             '@actionsheet.title',

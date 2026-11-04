@@ -1474,5 +1474,19 @@
       "label": "Trajet à pied en minutes",
       "helper": "Laisse vide pour le calculer à partir de la distance"
     }
+  },
+  "energy": {
+    "title": "Énergie",
+    "label": "Énergie",
+    "edit": "Modifier la configuration de l’énergie",
+    "description": "Les chiffres de l’énergie d’une commune : consommation, production, solaire, chauffage, voitures électriques et tarifs, avec comparaison",
+    "location": {
+      "label": "Commune",
+      "helper": "Choisis la commune à afficher"
+    },
+    "compare": {
+      "label": "Comparer avec",
+      "helper": "Jusqu’à 4 autres communes pour le tableau de comparaison"
+    }
   }
 }

@@ -52,6 +52,7 @@ Collection name: `sections`
 | `chart` | `EChartsOption` | Apache ECharts chart |
 | `chat` | `ChatConfig` | Matrix chat channel |
 | `emergency` | — | Emergency notice section |
+| `energy` | `EnergyConfig` | Energy figures of one municipality: key figures, trends, tariffs, comparison (read-only, from `energy-figures`) |
 | `events` | `EventsConfig` | Upcoming / past calendar event list |
 | `files` | `FilesConfig` | Curated document file list |
 | `hero` | `HeroConfig` | Full-width hero image with logo overlay |

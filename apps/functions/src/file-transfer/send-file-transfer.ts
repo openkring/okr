@@ -6,7 +6,7 @@ import {
   AppConfig, AppConfigCollection, DeliveryChannel, FileTransferCollection, FileTransferEventCollection, FileTransferEventModel, FileTransferModel,
   FileTransferRecipient, UserModel,
 } from '@okr/shared-models';
-import { isKioskOnly } from '@okr/shared-util-core';
+import { mayCreateFileTransfer } from './file-transfer-sender';
 import { checkAppCheckToken, checkAuthentication, getCallerTenantId } from '@okr/shared-util-functions';
 import {
   checkFileTransferRequest, openBytes, resolveFileTransferLimits, SendFileTransferRequest, SendFileTransferResponse,
@@ -130,7 +130,7 @@ export const sendFileTransfer = onCall<unknown, Promise<SendFileTransferResponse
     const user = userSnap.data() as Partial<UserModel>;
     const personKey = user.personKey;
     if (!personKey) throw new HttpsError('failed-precondition', 'User profile has no linked person.');
-    if (user.roles?.registered !== true || isKioskOnly(user as UserModel)) {
+    if (!mayCreateFileTransfer(user)) {
       throw new HttpsError('permission-denied', 'Registered users only.');
     }
 

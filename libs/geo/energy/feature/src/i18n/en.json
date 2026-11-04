@@ -1,0 +1,97 @@
+{
+  "state": {
+    "noLocation": "No place has been chosen for this section yet.",
+    "preparing": "The figures are being prepared. They will appear after the next nightly update.",
+    "noData": "There are no municipal figures for this place. Check on the place whether the BFS number is correct and whether it is recorded as a municipality.",
+    "noBlock": "There are no figures for this part yet.",
+    "stale": "These figures are from {date}. Energie Reporter is updated monthly, so they are older than usual."
+  },
+  "header": {
+    "bfsNr": "BFS no. {n}",
+    "asOf": "As of {date}",
+    "operators": "Network operators"
+  },
+  "tiles": {
+    "title": "Key figures",
+    "consumption": "Electricity consumption",
+    "households": "of which {share} % households",
+    "production": "Renewable electricity production",
+    "solarCapacity": "Solar capacity",
+    "solarPotential": "Solar potential used",
+    "renewableHeating": "Renewable heating",
+    "electricCars": "Electric cars",
+    "chargingPoints": "Charging points",
+    "tariff": "Current electricity tariff",
+    "tariffYear": "Tariff {year}",
+    "tariffFallback": "Tariff {year}, the tariff for this year is not published yet",
+    "periodRange": "{from} to {until}",
+    "asOf": "As of {date}",
+    "unitMwh": "MWh",
+    "unitKwp": "kWp",
+    "unitRpKwh": "Rp./kWh",
+    "estimate": "estimate",
+    "modelNote": "Electricity consumption and production are estimates. Energie Reporter uses a model to divide values measured for all of Switzerland among the municipalities. For consumption the average deviation is about 21 percent, for production between 10 and 40 percent."
+  },
+  "trends": {
+    "title": "Trends",
+    "solarCapacity": "Solar capacity (kWp)",
+    "electricCars": "Electric cars",
+    "renewableHeating": "Share of renewable heating (%)",
+    "electricity": "Electricity consumption and production (MWh)",
+    "consumption": "Consumption",
+    "production": "Production",
+    "gapsNote": "A gap in the line means there is no figure for that point in time."
+  },
+  "tariffs": {
+    "title": "Electricity tariffs by year",
+    "operator": "Network operator: {name}",
+    "energy": "Energy",
+    "gridUsage": "Grid usage",
+    "charge": "Charges to the public sector",
+    "aidFee": "Support levy",
+    "future": "announced",
+    "futureNote": "ElCom publishes next year's tariffs months ahead. These years are shown lighter, because what you pay today is still this year's tariff.",
+    "unit": "Rp./kWh"
+  },
+  "compare": {
+    "title": "Comparison",
+    "municipality": "Municipality",
+    "solarPotential": "Solar potential used",
+    "renewableHeating": "Renewable heating",
+    "electricCars": "Share of electric cars",
+    "electricityPerPerson": "Electricity per person",
+    "tariff": "Current tariff",
+    "noData": "no data",
+    "unknownLocation": "Unknown place",
+    "note": "Only shares and per-person values are compared. Absolute figures would only show how big a municipality is."
+  },
+  "gaps": {
+    "title": "What is not known",
+    "intro": "These details are not public. Each one says who might know.",
+    "placeholder": "open",
+    "gasHeat": {
+      "label": "Gas and heat consumption",
+      "note": "The gas supplier or the municipality might know."
+    },
+    "storage": {
+      "label": "Storage, for example batteries",
+      "note": "The network operator might know."
+    },
+    "heatingAge": {
+      "label": "Age of heating systems",
+      "note": "The municipality might know."
+    },
+    "outages": {
+      "label": "Power outages",
+      "note": "The network operator might know."
+    }
+  },
+  "sources": {
+    "title": "Sources",
+    "energyReporter": "Figures on electricity, solar, heating and electric cars: «Energie Reporter» by geoimpact and EnergieSchweiz, licence CC BY 4.0.",
+    "energyReporterLink": "Go to Energie Reporter",
+    "tariffs": "Electricity tariffs: ElCom, the Swiss Federal Electricity Commission.",
+    "solar": "Solar potential: document of the Swiss Federal Office of Energy (BFE).",
+    "solarLink": "Open the BFE solar document"
+  }
+}

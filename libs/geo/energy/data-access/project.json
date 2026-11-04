@@ -1,0 +1,33 @@
+{
+  "name": "energy-data-access",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/geo/energy/data-access/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": [
+    "type:data-access",
+    "scope:energy",
+    "platform:mobile",
+    "platform:web"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/libs/energy/data-access",
+        "main": "libs/geo/energy/data-access/src/index.ts",
+        "tsConfig": "libs/geo/energy/data-access/tsconfig.lib.json",
+        "assets": [
+          "libs/geo/energy/data-access/*.md"
+        ],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

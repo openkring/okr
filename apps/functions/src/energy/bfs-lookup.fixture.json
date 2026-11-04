@@ -1,0 +1,92 @@
+{
+  "results": [
+    {
+      "layerBodId": "ch.swisstopo.swissboundaries3d-gemeinde-flaeche.fill",
+      "layerName": "Gemeindegrenzen",
+      "featureId": "10363-1887",
+      "id": "10363-1887",
+      "properties": {
+        "gemname": "Stäfa",
+        "gemflaeche": 858.986632500872,
+        "gde_hist_id": 10363,
+        "gde_nr": 158,
+        "jahr": 1887,
+        "perimeter": 17373.46938836869,
+        "kanton": "ZH",
+        "objektart": 11,
+        "is_current_jahr": false,
+        "objektart_lookup": "politische_gemeinde",
+        "link_de": "https://www.agvchapp.bfs.admin.ch/de/communes/results?BfsNr=158&EntriesFrom=12.09.1848&EntriesTo=01.01.2023&IncludeUnassignedEntities=True",
+        "link_fr": "https://www.agvchapp.bfs.admin.ch/fr/communes/results?BfsNr=158&EntriesFrom=12.09.1848&EntriesTo=01.01.2023&IncludeUnassignedEntities=True",
+        "link_it": "https://www.agvchapp.bfs.admin.ch/it/communes/results?BfsNr=158&EntriesFrom=12.09.1848&EntriesTo=01.01.2023&IncludeUnassignedEntities=True",
+        "label": "Stäfa"
+      }
+    },
+    {
+      "layerBodId": "ch.swisstopo.swissboundaries3d-gemeinde-flaeche.fill",
+      "layerName": "Gemeindegrenzen",
+      "featureId": "10363-1889",
+      "id": "10363-1889",
+      "properties": {
+        "gemname": "Stäfa",
+        "gemflaeche": 858.986632500872,
+        "gde_hist_id": 10363,
+        "gde_nr": 158,
+        "jahr": 1889,
+        "perimeter": 17373.46938836869,
+        "kanton": "ZH",
+        "objektart": 11,
+        "is_current_jahr": false,
+        "objektart_lookup": "politische_gemeinde",
+        "link_de": "https://www.agvchapp.bfs.admin.ch/de/communes/results?BfsNr=158&EntriesFrom=12.09.1848&EntriesTo=01.01.2023&IncludeUnassignedEntities=True",
+        "link_fr": "https://www.agvchapp.bfs.admin.ch/fr/communes/results?BfsNr=158&EntriesFrom=12.09.1848&EntriesTo=01.01.2023&IncludeUnassignedEntities=True",
+        "link_it": "https://www.agvchapp.bfs.admin.ch/it/communes/results?BfsNr=158&EntriesFrom=12.09.1848&EntriesTo=01.01.2023&IncludeUnassignedEntities=True",
+        "label": "Stäfa"
+      }
+    },
+    {
+      "layerBodId": "ch.swisstopo.swissboundaries3d-gemeinde-flaeche.fill",
+      "layerName": "Gemeindegrenzen",
+      "featureId": "10363-1892",
+      "id": "10363-1892",
+      "properties": {
+        "gemname": "Stäfa",
+        "gemflaeche": 858.986632500872,
+        "gde_hist_id": 10363,
+        "gde_nr": 158,
+        "jahr": 1892,
+        "perimeter": 17373.46938836869,
+        "kanton": "ZH",
+        "objektart": 11,
+        "is_current_jahr": false,
+        "objektart_lookup": "politische_gemeinde",
+        "link_de": "https://www.agvchapp.bfs.admin.ch/de/communes/results?BfsNr=158&EntriesFrom=12.09.1848&EntriesTo=01.01.2023&IncludeUnassignedEntities=True",
+        "link_fr": "https://www.agvchapp.bfs.admin.ch/fr/communes/results?BfsNr=158&EntriesFrom=12.09.1848&EntriesTo=01.01.2023&IncludeUnassignedEntities=True",
+        "link_it": "https://www.agvchapp.bfs.admin.ch/it/communes/results?BfsNr=158&EntriesFrom=12.09.1848&EntriesTo=01.01.2023&IncludeUnassignedEntities=True",
+        "label": "Stäfa"
+      }
+    },
+    {
+      "layerBodId": "ch.swisstopo.swissboundaries3d-gemeinde-flaeche.fill",
+      "layerName": "Gemeindegrenzen",
+      "featureId": "158",
+      "id": "158",
+      "properties": {
+        "gemname": "Stäfa",
+        "gemflaeche": 859.0,
+        "gde_hist_id": 10363,
+        "gde_nr": 158,
+        "jahr": 2026,
+        "perimeter": 19714.968562914608,
+        "kanton": "ZH",
+        "objektart": 0,
+        "is_current_jahr": true,
+        "objektart_lookup": "gemeindegebiet",
+        "link_de": "https://www.agvchapp.bfs.admin.ch/de/communes/results?BfsNr=158&EntriesFrom=12.09.1848&EntriesTo=01.01.2026&IncludeUnassignedEntities=True\n\n",
+        "link_fr": "https://www.agvchapp.bfs.admin.ch/fr/communes/results?BfsNr=158&EntriesFrom=12.09.1848&EntriesTo=01.01.2026&IncludeUnassignedEntities=True\n\n",
+        "link_it": "https://www.agvchapp.bfs.admin.ch/it/communes/results?BfsNr=158&EntriesFrom=12.09.1848&EntriesTo=01.01.2026&IncludeUnassignedEntities=True\n\n",
+        "label": "Stäfa"
+      }
+    }
+  ]
+}

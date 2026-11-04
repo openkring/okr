@@ -20,6 +20,7 @@ import { runBillApproverDaily } from '../bill/bill-approver-daily';
 import { runOrphanSessionCleanup } from '../session';
 import { runFileTransferReap } from '../file-transfer/reap-file-transfers';
 import { runWeatherFetch } from '../weather/fetch-weather';
+import { runEnergyFiguresFetch } from '../energy/fetch-energy-figures';
 import { runRegasoftApiWatch } from '../srv/api-watch';
 import { SRV_SECRETS } from '../_gateway/adapters/srv';
 import { runCourseEndTasks } from '../course/course-end-tasks';
@@ -37,6 +38,7 @@ export const NIGHTLY_JOBS: NamedJob[] = [
   { name: 'billScanReap', run: runBillScanReap },
   { name: 'privacyExportReap', run: runPrivacyExportReap },
   { name: 'courseEndTasks', run: runCourseEndTasks },
+  { name: 'energyFiguresFetch', run: runEnergyFiguresFetch },
 ];
 
 export const MORNING_JOBS: NamedJob[] = [

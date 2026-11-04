@@ -1102,6 +1102,19 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     retention: { months: 'indefinite', legalBasis: 'Persönliche Aufzeichnung — bleibt, bis der Autor sie löscht' },
   },
   {
+    collection: 'diarySources',
+    dataClass: 'content',
+    tier: 'T2',              // voluntary, like the `diaries` it feeds — nothing may block a T2 erasure
+    onTenantExit: 'delete',  // what one owner's diary collects from their other apps: leaves with its owner
+    // Spec 1.77 §12.3, one doc per diary owner. The subject is the OWNER, via the Firebase Auth uid on `authorKey`,
+    // same shape and rule comparison as `diaries`. It names source apps and an optional period, nothing about others.
+    find: (c: SubjectCtx) => db().collection('diarySources').where('authorKey', '==', c.uid),
+    tenantScope: 'tenantsArray',
+    onExport: 'full',        // the owner's own settings — part of Art. 25 DSG access
+    onErasure: 'delete',
+    retention: { months: 'indefinite', legalBasis: 'Persönliche Einstellung — bleibt, bis der Autor sie löscht' },
+  },
+  {
     collection: 'diaryImports',
     dataClass: 'log',
     tier: 'T2',               // voluntary, like the `diaries` row it mirrors — nothing may block its erasure
@@ -1725,6 +1738,7 @@ export async function resolveArrayItemDocs(entry: SubjectDataEntry, ctx: Subject
 // not personal data: weather-radar — the MeteoSwiss precipitation radar's frame list (spec 1.110):
 //   one shared document of image paths and timestamps for the whole country. Written by the
 //   scheduler, tied to no person, location of a member or tenant.
+// not personal data: energy-figures — public municipal aggregates and tariffs, one document per BFS number.
 // not personal data: hearingQuizNodes — the Hörtraining CONTENT tree (folders, questions, clips)
 //   authored by content admins. `parentKey` is the parent FOLDER's okey, never a person; nothing
 //   in a node records who wrote it or who answered it — answers live in `hearingQuizResults`.

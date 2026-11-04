@@ -324,6 +324,13 @@ export const SECTION_I18N_KEYS = {
   weather_orientation_label:                PFX + 'weather.orientation.label',
   weather_days_label:                       PFX + 'weather.days.label',
 
+  // energy
+  energy_title:                             PFX + 'energy.title',
+  energy_location_label:                    PFX + 'energy.location.label',
+  energy_location_helper:                   PFX + 'energy.location.helper',
+  energy_compare_label:                     PFX + 'energy.compare.label',
+  energy_compare_helper:                    PFX + 'energy.compare.helper',
+
   // connections (spec 1.131)
   connections_title:                        PFX + 'connections.title',
   connections_destination_label:            PFX + 'connections.destination.label',

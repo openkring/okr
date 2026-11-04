@@ -62,15 +62,29 @@ export const PROFILE_I18N_KEYS = {
   show_helpers_label:              PFX + 'show.helpers.label',
   show_helpers_helper:             PFX + 'show.helpers.helper',
 
-  // diary transfer (spec 1.77 §5)
+  // diary transfer, the source app's side (spec 1.77 §12.4)
   diaryTransfer_title:             PFX + 'diaryTransfer.title',
   diaryTransfer_description:       PFX + 'diaryTransfer.description',
-  diaryTransfer_from:              PFX + 'diaryTransfer.from',
-  diaryTransfer_to:                PFX + 'diaryTransfer.to',
   diaryTransfer_source_taskDone:   PFX + 'diaryTransfer.source.taskDone',
   diaryTransfer_source_jasstafel:  PFX + 'diaryTransfer.source.jasstafel',
   diaryTransfer_source_tracker:    PFX + 'diaryTransfer.source.tracker',
-  diaryTransfer_period_error:      PFX + 'diaryTransfer.period.error',
+  diaryTransfer_wants:             PFX + 'diaryTransfer.wants',
+  diaryTransfer_allowed:           PFX + 'diaryTransfer.allowed',
+  diaryTransfer_allow:             PFX + 'diaryTransfer.allow',
+  diaryTransfer_revoke:            PFX + 'diaryTransfer.revoke',
+  diaryTransfer_swept:             PFX + 'diaryTransfer.swept',
+  diaryTransfer_error:             PFX + 'diaryTransfer.error',
+
+  // diary sources, the diary app's side (spec 1.77 §12.4)
+  diarySources_title:              PFX + 'diarySources.title',
+  diarySources_description:        PFX + 'diarySources.description',
+  diarySources_from:               PFX + 'diarySources.from',
+  diarySources_to:                 PFX + 'diarySources.to',
+  diarySources_state_none:         PFX + 'diarySources.state.none',
+  diarySources_state_waiting:      PFX + 'diarySources.state.waiting',
+  diarySources_state_confirmed:    PFX + 'diarySources.state.confirmed',
+  diarySources_state_partial:      PFX + 'diarySources.state.partial',
+  diarySources_period_error:       PFX + 'diarySources.period.error',
 
   // email signature (spec 2026-06-16)
   sig_title:                       PFX + 'signature.title',

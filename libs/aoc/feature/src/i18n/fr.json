@@ -246,6 +246,25 @@
     "allEventTypes": "Tous les types d'événements",
     "empty": "Aucun événement trouvé."
   },
+  "status": {
+    "title": "État des services",
+    "allClear": "Tous les services fonctionnent normalement",
+    "problemOne": "1 service signale une panne ou une maintenance",
+    "problems": "{count} services signalent une panne ou une maintenance",
+    "someUnknown": "L'état de certains services n'est pas connu pour le moment",
+    "checkedAt": "Vérifié à {time}",
+    "loadFailed": "L'état actuel n'a pas pu être chargé. Les liens mènent aux pages des fournisseurs.",
+    "noLiveStatus": "Il n'y a pas d'affichage en direct pour ce service.",
+    "openPage": "Ouvrir la page d'état",
+    "refresh": "Actualiser",
+    "level": {
+      "ok": "En service",
+      "degraded": "Limité",
+      "down": "Panne",
+      "maintenance": "Maintenance",
+      "unknown": "Inconnu"
+    }
+  },
   "hub": {
     "area": {
       "access": "Accès et confidentialité",
@@ -261,6 +280,10 @@
       "sessions": {
         "label": "Sessions",
         "effect": "Montre qui était connecté, quand et avec quel appareil."
+      },
+      "status": {
+        "label": "État des services",
+        "effect": "Montre si les services dont tes fonctions ont besoin fonctionnent."
       },
       "register": {
         "label": "Registre des traitements",

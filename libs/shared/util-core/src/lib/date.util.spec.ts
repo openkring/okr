@@ -1,6 +1,7 @@
 import { END_FUTURE_DATE_STR, MAX_YEAR, MIN_YEAR } from '@okr/shared-constants';
 import { describe, expect, it } from 'vitest';
 import {
+    sunTimesLine,
     checkYearRange,
     isInRollingWindow,
     classifyStoreDate,
@@ -736,5 +737,14 @@ describe('isPastDate with an explicit today', () => {
     expect(isPastDate('20261031', DateFormat.StoreDate, '20261101')).toBe(true);
     expect(isPastDate('20261101', DateFormat.StoreDate, '20261101')).toBe(false);
     expect(isPastDate('20261031', DateFormat.StoreDate, '20261031')).toBe(false);
+  });
+});
+
+describe('sunTimesLine', () => {
+  it('joins both times and hides what cannot be shown', () => {
+    expect(sunTimesLine({ sunrise: '07:12', sunset: '17:22' })).toBe('☀ 07:12–17:22');
+    expect(sunTimesLine({ sunrise: '', sunset: '17:22' })).toBe('');
+    expect(sunTimesLine({ sunrise: '00:00', sunset: '00:00' })).toBe('');
+    expect(sunTimesLine(undefined)).toBe('');
   });
 });

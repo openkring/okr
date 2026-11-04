@@ -1,14 +1,14 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, resource } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import {
-  DEFAULT_JASS_CONFIG, JASS_I18N_KEYS, jassDiaryDate, jassDiaryLine, JassConfig, JassGame, JassHandFormModel, JassI18n, JassPlayer, JassVariant,
+  DEFAULT_JASS_CONFIG, JASS_I18N_KEYS, jassDiaryDate, jassDiaryLine, JassConfig, jassRouted, JassGame, JassHandFormModel, JassI18n, JassPlayer, JassVariant,
   JassChalkUnit, PLAYER_COUNTS, addChalk, addHand, createGame, deleteHand as deleteHandAt, handFromForm, newHandForm, nextTrumpMaker, normalizeConfig, parsePending,
   parseStoredGame, replaceHand, stats, totals, undoLast, jassConfigValidations, validateHand, winner,
 } from '@okr/games-jasstafel-util';
 import { ActivityService } from '@okr/activity-data-access';
-import { DiaryLineService } from '@okr/content-diary-data-access';
+import { DiaryLineService, DiarySourcesService } from '@okr/content-diary-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AvatarInfo } from '@okr/shared-models';
@@ -96,6 +96,7 @@ export const JasstafelStore = signalStore(
     alertService: inject(AlertService),
     appStore: inject(AppStore),
     diaryLineService: inject(DiaryLineService),
+    diarySourcesService: inject(DiarySourcesService),
     _storage: { ok: true } as StorageFlag,
     /** the user whose slate is loaded; '' = none yet, nothing is written */
     _uid: { value: '' },
@@ -104,18 +105,30 @@ export const JasstafelStore = signalStore(
     _finishLogged: { id: undefined as string | undefined },
   })),
 
+  withProps(store => ({
+    /** In a diary app: what it pulls from itself (D-R3, a read of the owner's own doc). A failed read offers no button. */
+    _ownDiaryPull: resource({
+      params: () => {
+        const uid = store.appStore.fbUser()?.uid;
+        return uid && store.appStore.appConfig()?.enabledFeatures?.includes('diary') ? uid : undefined;
+      },
+      loader: async ({ params }) => {
+        const doc = await store.diarySourcesService.read(params).catch((e) => { console.warn('JasstafelStore.ownDiaryPull', e); return undefined; });
+        return doc?.pulls?.find((p) => p.tenantId === store.appStore.tenantId());
+      },
+    }),
+  })),
   withComputed(store => ({
     totals: computed(() => { const g = store.game(); return g ? totals(g) : {}; }),
     outcome: computed(() => { const g = store.game(); return g ? winner(g) : undefined; }),
     stats: computed(() => { const g = store.game(); return g ? stats(g) : {}; }),
     /**
-     * The result card's diary button (spec 1.77 §6.3): hidden unless the current user routes
-     * `jasstafel` to at least one diary. The target date range is checked on the server only.
+     * The result card's diary button (spec 1.77 §12.5): hidden unless a diary may collect the
+     * `jasstafel` of this app. The diary's period is checked on the server only.
      */
     diaryState: computed((): 'hidden' | 'ready' | 'done' => {
       const g = store.game();
-      const routed = (store.appStore.currentUser()?.diaryTargets ?? []).some(t => (t.sources ?? []).includes('jasstafel'));
-      if (!g?.finishedAt || !routed) return 'hidden';
+      if (!g?.finishedAt || !jassRouted(store.appStore.currentUser(), store._ownDiaryPull.value())) return 'hidden';
       return g.diaryAt ? 'done' : 'ready';
     }),
     canStart: computed(() => {
@@ -332,8 +345,8 @@ export const JasstafelStore = signalStore(
 
       /**
        * One line with the result and statistics into the caller's diary entry of the day the game
-       * finished, into the diaries the user's own `diaryTargets` route `jasstafel` to (spec 1.77;
-       * `recordDiaryLine` callable). A game outside every diary's target date range is not sent.
+       * finished, into the diaries that collect `jasstafel` from this app (spec 1.77 §12.5;
+       * `recordDiaryLine` callable). A game outside every diary's period is not sent.
        * The game is marked so the button cannot send it twice.
        */
       async toDiary(): Promise<void> {

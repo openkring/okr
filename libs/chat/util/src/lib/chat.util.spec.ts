@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildReceiptAriaLabel, buildReceiptRows, filterRoomsOfTenant, isBridgedRoom, isForeignRoom, serverNameOf, isRoomClassifiable, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower, groupRoomAliasLocalpart, groupKeyFromRoomAlias, isRoomGoneError, isAbortError, askRoomAliasLocalpart, shouldDeferAskRoom, findGroupOfRoom, fileTransferKeyOf, isFileTransferCardBody, fileTransferCardOf, isFileTransferBot, fileTransferRoomPreset, isFileReadable, fileTransferCardStatusOf } from './chat.util';
+import { buildReceiptAriaLabel, buildReceiptRows, filterRoomsOfTenant, isDirectRoomOfTenant, isBridgedRoom, isForeignRoom, serverNameOf, isRoomClassifiable, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower, groupRoomAliasLocalpart, groupKeyFromRoomAlias, isRoomGoneError, isAbortError, askRoomAliasLocalpart, shouldDeferAskRoom, findGroupOfRoom, fileTransferKeyOf, isFileTransferCardBody, fileTransferCardOf, isFileTransferBot, fileTransferRoomPreset, isFileReadable, fileTransferCardStatusOf } from './chat.util';
 
 describe('buildReceiptAriaLabel', () => {
   it('returns empty string for no receipts', () => {
@@ -731,5 +731,21 @@ describe('fileTransferCardStatusOf', () => {
   });
   it('leaves any other failure retryable', () => {
     expect(fileTransferCardStatusOf('other')).toBe('failed');
+  });
+});
+
+describe('isDirectRoomOfTenant', () => {
+  it('reuses a DM marked for this tenant', () => {
+    expect(isDirectRoomOfTenant(['scs', 'kwa'], 'kwa')).toBe(true);
+  });
+
+  it('skips a DM marked for another tenant or for none', () => {
+    expect(isDirectRoomOfTenant(['scs'], 'kwa')).toBe(false);
+    expect(isDirectRoomOfTenant([], 'kwa')).toBe(false);
+  });
+
+  it('reuses an unmarked DM, and every DM without a tenant', () => {
+    expect(isDirectRoomOfTenant(undefined, 'kwa')).toBe(true);
+    expect(isDirectRoomOfTenant(['scs'], undefined)).toBe(true);
   });
 });

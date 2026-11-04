@@ -148,6 +148,9 @@ seed("users/uidD", {"tenants": ["t1"], "roles": {"admin": True}, "firstName": "D
 seed("users/uidE", {"tenants": ["t1"], "roles": {}, "firstName": "E", "personKey": "pE"})
 seed("users/uidM", {"tenants": ["t1"], "roles": {"memberAdmin": True}, "firstName": "M", "personKey": "pM"})
 seed("users/uidP", {"tenants": ["t1"], "roles": {"privileged": True}, "firstName": "P"})
+
+# energy-figures (spec 1.136): municipal aggregates, tenantRead, CF-write-only
+seed("energy-figures/158", {"tenants": ["t1"], "isArchived": False, "bfsNr": 158, "municipality": "Stäfa"})
 seed("persons/pA", {"tenants": ["t1"], "isArchived": False, "lastName": "AA"})
 seed("persons/pB", {"tenants": ["t2"], "isArchived": False, "lastName": "BB"})
 seed("memberships/mA", {"tenants": ["t1"], "isArchived": False, "x": "1"})
@@ -1165,6 +1168,10 @@ single_cases = [
     ("treasurer T CREATE cost-allocations -> ALLOW", True, POST, "cost-allocations?documentId=allocY", T, body({"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "fiscalYear": 2026, "title": "Y"}), None),
     ("treasurer T PATCH cost-allocations/allocA.title -> ALLOW", True, PATCH, "cost-allocations/allocA", T, body({"title": "Y"}), ["title"]),
     ("treasurer T DELETE cost-allocations/allocA -> DENY", False, DELETE, "cost-allocations/allocA", T, None, None),
+    # energy-figures (spec 1.136): readable by the tenants on the document, never client-written
+    ("member A GET energy-figures/158 -> ALLOW (tenant t1)", True, GET, "energy-figures/158", A, None, None),
+    ("admin B (t2) GET energy-figures/158 -> DENY (other tenant)", False, GET, "energy-figures/158", B, None, None),
+    ("privileged P PATCH energy-figures/158 -> DENY (job-only)", False, PATCH, "energy-figures/158", P, body({"municipality": "X"}), ["municipality"]),
     ("treasurer T PATCH rowOpen.tenants -> ['t2'] -> DENY", False, PATCH, "bank-import-rows/rowOpen", T, body({"tenants": ["t2"]}), ["tenants"]),
     ("treasurer T PATCH rowPosted.title -> DENY", False, PATCH, "bank-import-rows/rowPosted", T, body({"title": "X"}), ["title"]),
     ("treasurer T DELETE rowPosted -> DENY", False, DELETE, "bank-import-rows/rowPosted", T, None, None),
@@ -1916,6 +1923,51 @@ form_stats_cases = [
      lambda: req("POST", "formStats?documentId=fsAnon", data=body({"tenants": ["t1"], "responseCount": 0}))),
 ]
 for label, expect, run in form_stats_cases:
+    code = run()
+    ok = (code in (200, 201)) == expect
+    passed += ok; failed += not ok
+    print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
+
+# ------------------------------------------------------------- diarySources ----
+# 1.77 §12: the pull settings are owner-only, document id = the owner's uid; `diaryConsents` is written by the
+# callable setDiaryConsent only (Admin SDK), `personKey` no longer by a tenant admin (D-R6, D-R10).
+seed("diarySources/uidE", {"tenants": ["t1"], "authorKey": "uidE", "from": "", "to": "", "pulls": []})
+DS_A, DS_D, DS_E = jwt("uidA"), jwt("uidD"), jwt("uidE")
+DS_DOC = {"tenants": ["t1"], "authorKey": "uidA", "from": "", "to": "", "pulls": []}
+diary_source_cases = [
+    ("diarySources: owner READ of a missing doc -> ALLOW (not found, not denied)", True,
+     lambda: 200 if req("GET", "diarySources/uidA", token=DS_A) == 404 else 403),
+    ("diarySources: owner READ -> ALLOW", True, lambda: req("GET", "diarySources/uidE", token=DS_E)),
+    ("diarySources: admin of the tenant READ -> DENY", False, lambda: req("GET", "diarySources/uidE", token=DS_D)),
+    ("diarySources: anonymous READ -> DENY", False, lambda: req("GET", "diarySources/uidE")),
+    ("diarySources: owner CREATE under their uid -> ALLOW", True,
+     lambda: req("POST", "diarySources?documentId=uidA", token=DS_A, data=body(DS_DOC))),
+    ("diarySources: CREATE under another id -> DENY", False,
+     lambda: req("POST", "diarySources?documentId=uidX", token=DS_A, data=body(DS_DOC))),
+    ("diarySources: CREATE naming another author -> DENY", False,
+     lambda: req("POST", "diarySources?documentId=uidD", token=DS_D, data=body(DS_DOC))),
+    ("diarySources: owner UPDATE -> ALLOW", True,
+     lambda: req("PATCH", "diarySources/uidE", token=DS_E, data=body({"from": "20261001"}), mask=["from"])),
+    ("diarySources: admin of the tenant UPDATE -> DENY", False,
+     lambda: req("PATCH", "diarySources/uidE", token=DS_D, data=body({"from": "20261001"}), mask=["from"])),
+    ("diarySources: owner cannot hand the doc over -> DENY", False,
+     lambda: req("PATCH", "diarySources/uidE", token=DS_E, data=body({"authorKey": "uidA"}), mask=["authorKey"])),
+    ("diarySources: admin DELETE -> DENY", False, lambda: req("DELETE", "diarySources/uidE", token=DS_D)),
+    ("diarySources: owner DELETE -> ALLOW", True, lambda: req("DELETE", "diarySources/uidE", token=DS_E)),
+    ("users: self WRITE diaryConsents -> DENY (callable only)", False,
+     lambda: req("PATCH", "users/uidA", token=DS_A, data=body({"diaryConsents": []}), mask=["diaryConsents"])),
+    ("users: admin WRITE diaryConsents -> DENY (D-R2)", False,
+     lambda: req("PATCH", "users/uidA", token=DS_D, data=body({"diaryConsents": []}), mask=["diaryConsents"])),
+    ("users: admin WRITE personKey -> DENY (D-R6)", False,
+     lambda: req("PATCH", "users/uidA", token=DS_D, data=body({"personKey": "pB"}), mask=["personKey"])),
+    ("users: self WRITE personKey -> DENY", False,
+     lambda: req("PATCH", "users/uidA", token=DS_A, data=body({"personKey": "pB"}), mask=["personKey"])),
+    ("users: self WRITE a normal field -> ALLOW", True,
+     lambda: req("PATCH", "users/uidA", token=DS_A, data=body({"firstName": "Aa"}), mask=["firstName"])),
+    ("users: admin WRITE a normal field -> ALLOW", True,
+     lambda: req("PATCH", "users/uidA", token=DS_D, data=body({"firstName": "Ab"}), mask=["firstName"])),
+]
+for label, expect, run in diary_source_cases:
     code = run()
     ok = (code in (200, 201)) == expect
     passed += ok; failed += not ok

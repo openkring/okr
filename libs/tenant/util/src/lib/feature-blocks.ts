@@ -3191,6 +3191,30 @@ const weather: FeatureBlock = {
 };
 
 /**
+ * Energiesituation (`libs/energy/*`, spec 2026-11-04 §6.2) — the municipal energy figures, shown
+ * by an `energy` CMS section and kept in the `energy-figures` collection.
+ *
+ * Its own block rather than part of `geo`: `geo` is `core: true` and therefore on for every
+ * tenant unconditionally, so a feature riding on it could never be switched on or off per tenant.
+ * Most tenants are clubs with no use for municipal energy figures; the ones that do tick it in
+ * the picker. It owns no menu row (the figures live in a section inside an ordinary page), so
+ * the backfill cannot infer it from menu evidence either — see `feature-backfill.util.spec.ts`.
+ *
+ * `dependsOn: ['geo']` because an energy municipality IS a `LocationModel`; there is no separate
+ * municipality model, and `geo` is what makes locations available.
+ */
+const energy: FeatureBlock = {
+  id: 'energy',
+  bundle: 'special',
+  label: '@tenant/util.feature.energy.label',
+  icon: 'bulb',
+  defaultAvailability: 'ga',
+  dependsOn: ['geo'],
+  collections: ['energy-figures'],
+  menu: [],
+};
+
+/**
  * `libs/business/contract/*` — Vertragsverwaltung (spec 1.5 §9): the staff list of every contract
  * (`/contract/all/c-contracts`), the member's own list (`/contract/my/c-contracts-my`) and the
  * dossier page (`/contract/detail/:contractKey`).
@@ -3323,5 +3347,5 @@ export const FEATURE_BLOCKS: FeatureBlock[] = [
   finance, memberFee, esign, pdfTemplate,
   documentBlock, contracts, meeting, diary, journal,
   chat, socialFeed, forms,
-  business, alias, weather,
+  business, alias, weather, energy,
 ];

@@ -1,6 +1,6 @@
 // apps/functions/src/task/task-diary.spec.ts
 import { describe, expect, it } from 'vitest';
-import { pickSourceUser } from './task-diary';
+import { pickSourceUser } from '../diary/diary-pull';
 
 describe('pickSourceUser', () => {
   it('picks the active user in the task tenant', () => {

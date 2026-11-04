@@ -280,13 +280,29 @@
   },
   "diaryTransfer": {
     "title": "Diary transfer",
-    "description": "Choose what this app sends into which of your diaries. Nothing is sent without a tick. If from or to is left empty, there is no limit on that side.",
-    "from": "from",
-    "to": "to",
+    "description": "These diaries would like to collect something from this app. Nothing is sent until you allow it.",
     "source": {
       "taskDone": "Completed tasks",
       "jasstafel": "Jass scoreboard",
       "tracker": "Tracks"
+    },
+    "wants": "wants:",
+    "allowed": "allowed:",
+    "allow": "Allow",
+    "revoke": "Revoke",
+    "swept": "{count} tracks added to the diary",
+    "error": "That did not work. Please try again."
+  },
+  "diarySources": {
+    "title": "Diary sources",
+    "description": "Choose what this diary collects from your other apps. Then confirm it once in the profile of that app. If from or to is left empty, there is no limit on that side.",
+    "from": "from",
+    "to": "to",
+    "state": {
+      "none": "not requested",
+      "waiting": "waiting for confirmation",
+      "confirmed": "confirmed",
+      "partial": "partly confirmed"
     },
     "period": {
       "error": "The start date is after the end date."

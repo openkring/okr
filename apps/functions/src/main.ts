@@ -405,7 +405,7 @@ export { submitSupportTicket, listSupportTickets, commentSupportTicket } from '.
 export { fetchDiaryWeather } from './diary/fetch-diary-weather';
 // spec 1.106: the photos and documents of one diary day, read live from its Drive folder
 export { getDiaryMediaImage, listDiaryMedia } from './diary/list-diary-media';
-// Jasstafel (spec 1.67): a finished game's result into the caller's diary in every tenant of their `diaryTargets`
+// Jasstafel (spec 1.67): a finished game's result into every diary that collects it (spec 1.77 §12.5)
 export { recordDiaryLine } from './diary/record-diary-line';
 export { getLogbuchTrack } from './trip/get-logbuch-track';
 // tracker Höhenprofil (spec 1.128): terrain heights for Strecken without GPS altitude
@@ -417,6 +417,10 @@ export { translator } from './translator';
 // Swiss timetable (OJP 2.0): tracker lines (1.129 §4.2), connections (1.131), stops + departure board (1.130)
 export { getTransitRoute, planTrip, searchStops, getDepartures } from './transit';
 export { listMyDiaryTenants } from './diary/list-my-diary-tenants';
+// spec 1.77 §12.4: the diary app chooses, the source app confirms
+export { listMyDiaryPullOptions } from './diary/list-my-diary-pull-options';
+export { listMyDiaryRequests } from './diary/list-my-diary-requests';
+export { setDiaryConsent } from './diary/set-diary-consent';
 
 // re-derive the dob/dod replicas from the live vault (the dateOfDeath migration ran and was retired 2026-10-24, spec 1.118 D3)
 export { resyncVaultReplicas } from './person/resync-vault-replicas';
@@ -560,6 +564,9 @@ export const exportJournalBook = Journal.exportJournalBook;
 export const deleteLearningItem = Learning.deleteLearningItem;
 // onRatingWritten: learning rooms, a rating write refreshes docs/{docKey}.ratingCount/ratingSum (spec 1.115)
 export const onRatingWritten = Learning.onRatingWritten;
+
+// getServiceStatus: AOC Dienst-Status, the live status of the external services, cached for five minutes (spec 1.137)
+export { getServiceStatus } from './aoc-status/get-service-status';
 
 // time-slot schedulers (spec 1.118 A9): replace fifteen separate onSchedule functions
 export { nightlyMaintenance, morningJobs, eveningJobs, halfHourlyJobs } from './_schedules';

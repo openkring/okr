@@ -60,3 +60,4 @@ export * from './lib/chat-status.util';
 export * from './lib/report.util';
 export * from './lib/server-badge-ledger.util';
 export * from './lib/external-id.util';
+export * from './lib/location-property.util';

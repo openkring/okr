@@ -25,6 +25,7 @@ export * from './lib/testimonial-configuration';
 export * from './lib/timeline-configuration';
 export * from './lib/advent-configuration';
 export * from './lib/weather-configuration';
+export * from './lib/energy-configuration';
 export * from './lib/connections-configuration';
 export * from './lib/departures-configuration';
 export * from './lib/request-status-note';

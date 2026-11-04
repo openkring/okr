@@ -158,6 +158,9 @@
       "path": "../../../geo/weather/feature/tsconfig.lib.json"
     },
     {
+      "path": "../../../geo/energy/feature/tsconfig.lib.json"
+    },
+    {
       "path": "../../../geo/location/data-access/tsconfig.lib.json"
     },
     {

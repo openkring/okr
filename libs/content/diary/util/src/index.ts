@@ -8,6 +8,7 @@ export * from './lib/diary-group.util';
 export * from './lib/diary-html.util';
 export * from './lib/diary-i18n';
 export * from './lib/diary-index.util';
+export * from './lib/diary-pull.util';
 export * from './lib/diary-key.util';
 export * from './lib/diary-lines.util';
 export * from './lib/diary-media.util';

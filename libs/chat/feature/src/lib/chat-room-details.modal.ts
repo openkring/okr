@@ -178,12 +178,18 @@ import type { RoomDetailsMember } from './room-details.feature';
           }
 
           <!-- Bottom rows -->
-          @if (sections.hide || sections.archive || sections.archiveViaGroup || sections.leave) {
+          @if (sections.hide || sections.assignToApp || sections.archive || sections.archiveViaGroup || sections.leave) {
             <ion-list lines="full" class="bottom">
               @if (sections.hide) {
                 <ion-item button detail="false" [disabled]="busy()" (click)="hide()">
                   <ion-icon slot="start" src="{{ 'eye-off' | svgIcon }}" />
                   <ion-label>{{ i18n.details_hide() }}</ion-label>
+                </ion-item>
+              }
+              @if (sections.assignToApp) {
+                <ion-item button detail="false" [disabled]="busy()" (click)="assignToApp()">
+                  <ion-icon slot="start" src="{{ 'pin' | svgIcon }}" />
+                  <ion-label>{{ i18n.details_assign_app() }}</ion-label>
                 </ion-item>
               }
               @if (sections.archive) {
@@ -375,6 +381,10 @@ export class ChatRoomDetailsModal {
 
   protected async hide(): Promise<void> {
     await this.run(() => this.store.hideCurrentRoom());
+  }
+
+  protected async assignToApp(): Promise<void> {
+    await this.run(() => this.store.assignCurrentRoomToApp());
   }
 
   protected async archive(): Promise<void> {

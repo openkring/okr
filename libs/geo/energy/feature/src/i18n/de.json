@@ -1,0 +1,97 @@
+{
+  "state": {
+    "noLocation": "Für diesen Abschnitt ist noch kein Ort gewählt.",
+    "preparing": "Die Daten werden vorbereitet. Sie erscheinen nach der nächsten nächtlichen Aktualisierung.",
+    "noData": "Für diesen Ort gibt es keine Gemeindedaten. Prüfe beim Ort, ob die BFS-Nummer stimmt und ob der Ort als Gemeinde erfasst ist.",
+    "noBlock": "Für diesen Bereich liegen noch keine Zahlen vor.",
+    "stale": "Die Daten stammen vom {date}. Der Energie Reporter wird monatlich aktualisiert, diese Zahlen sind also älter als üblich."
+  },
+  "header": {
+    "bfsNr": "BFS-Nr. {n}",
+    "asOf": "Stand {date}",
+    "operators": "Netzbetreiber"
+  },
+  "tiles": {
+    "title": "Kennzahlen",
+    "consumption": "Stromverbrauch",
+    "households": "davon {share} % Haushalte",
+    "production": "Erneuerbare Stromproduktion",
+    "solarCapacity": "Solarleistung",
+    "solarPotential": "Solarpotenzial genutzt",
+    "renewableHeating": "Erneuerbare Heizungen",
+    "electricCars": "Elektroautos",
+    "chargingPoints": "Ladepunkte",
+    "tariff": "Aktueller Stromtarif",
+    "tariffYear": "Tarif {year}",
+    "tariffFallback": "Tarif {year}, der Tarif für dieses Jahr ist noch nicht veröffentlicht",
+    "periodRange": "{from} bis {until}",
+    "asOf": "Stand {date}",
+    "unitMwh": "MWh",
+    "unitKwp": "kWp",
+    "unitRpKwh": "Rp./kWh",
+    "estimate": "Schätzwert",
+    "modelNote": "Stromverbrauch und Stromproduktion sind Schätzwerte. Der Energie Reporter verteilt gemessene Werte für die ganze Schweiz mit einem Modell auf die Gemeinden. Beim Verbrauch liegt die Abweichung im Mittel bei rund 21 Prozent, bei der Produktion zwischen 10 und 40 Prozent."
+  },
+  "trends": {
+    "title": "Entwicklung",
+    "solarCapacity": "Solarleistung (kWp)",
+    "electricCars": "Elektroautos",
+    "renewableHeating": "Anteil erneuerbare Heizungen (%)",
+    "electricity": "Stromverbrauch und Produktion (MWh)",
+    "consumption": "Verbrauch",
+    "production": "Produktion",
+    "gapsNote": "Lücken in der Linie bedeuten, dass für diesen Zeitpunkt keine Zahl vorliegt."
+  },
+  "tariffs": {
+    "title": "Stromtarife pro Jahr",
+    "operator": "Netzbetreiber: {name}",
+    "energy": "Energie",
+    "gridUsage": "Netznutzung",
+    "charge": "Abgaben an das Gemeinwesen",
+    "aidFee": "Förderabgabe",
+    "future": "angekündigt",
+    "futureNote": "Die ElCom veröffentlicht die Tarife des nächsten Jahres schon Monate im Voraus. Diese Jahre sind heller dargestellt, bezahlt wird noch der Tarif des laufenden Jahres.",
+    "unit": "Rp./kWh"
+  },
+  "compare": {
+    "title": "Vergleich",
+    "municipality": "Gemeinde",
+    "solarPotential": "Solarpotenzial genutzt",
+    "renewableHeating": "Erneuerbare Heizungen",
+    "electricCars": "Anteil Elektroautos",
+    "electricityPerPerson": "Strom pro Person",
+    "tariff": "Aktueller Tarif",
+    "noData": "keine Daten",
+    "unknownLocation": "Unbekannter Ort",
+    "note": "Verglichen werden nur Anteile und Werte pro Person. Absolute Zahlen würden nur zeigen, wie gross eine Gemeinde ist."
+  },
+  "gaps": {
+    "title": "Was nicht bekannt ist",
+    "intro": "Diese Angaben sind nicht öffentlich. Bei jeder steht, wer sie kennen könnte.",
+    "placeholder": "offen",
+    "gasHeat": {
+      "label": "Gas- und Wärmeverbrauch",
+      "note": "Das kann der Gasversorger oder die Gemeinde wissen."
+    },
+    "storage": {
+      "label": "Speicher, zum Beispiel Batterien",
+      "note": "Das kann der Netzbetreiber wissen."
+    },
+    "heatingAge": {
+      "label": "Alter der Heizungen",
+      "note": "Das kann die Gemeinde wissen."
+    },
+    "outages": {
+      "label": "Stromausfälle",
+      "note": "Das kann der Netzbetreiber wissen."
+    }
+  },
+  "sources": {
+    "title": "Quellen",
+    "energyReporter": "Zahlen zu Strom, Solar, Heizungen und Elektroautos: «Energie Reporter» von geoimpact und EnergieSchweiz, Lizenz CC BY 4.0.",
+    "energyReporterLink": "Zum Energie Reporter",
+    "tariffs": "Stromtarife: ElCom, die Eidgenössische Elektrizitätskommission.",
+    "solar": "Solarpotenzial: Dokument des Bundesamts für Energie (BFE).",
+    "solarLink": "Solardokument des BFE öffnen"
+  }
+}

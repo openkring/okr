@@ -2,6 +2,8 @@ export * from './lib/aoc-tag';
 export * from './lib/aoc-email';
 export * from './lib/aoc-session';
 export * from './lib/aoc-session.store';
+export * from './lib/aoc-status';
+export * from './lib/aoc-status.store';
 export * from './lib/aoc-website';
 export * from './lib/aoc-website.store';
 export * from './lib/session-detail.modal';

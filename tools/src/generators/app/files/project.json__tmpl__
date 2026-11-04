@@ -552,6 +552,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/geo/energy/feature/src/i18n",
+            "output": "./assets/i18n/geo/energy/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/geo/location/data-access/src/i18n",
             "output": "./assets/i18n/geo/location/data-access"
           },

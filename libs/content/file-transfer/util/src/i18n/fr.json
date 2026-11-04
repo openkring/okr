@@ -4,11 +4,12 @@
   "send": "Envoyer",
   "remove": "Retirer",
   "new": {
-    "title": "Envoyer un transfert",
+    "title": "Créer un transfert de fichiers",
     "titleChat": "Envoyer comme transfert",
     "chatHint": "Le groupe voit le transfert sous forme de carte dans le chat."
   },
   "files": {
+    "title": "Téléverser les fichiers à partager",
     "label": "Fichiers",
     "helper": "Tu peux choisir plusieurs fichiers à la fois. {max} au maximum en tout.",
     "total": "{size} en tout"
@@ -21,28 +22,45 @@
     "title": "Personnes",
     "add": "Ajouter une personne"
   },
+  "internal": {
+    "title": "Ajouter des destinataires internes",
+    "text": "Tu peux choisir comme destinataires les membres de groupes et/ou des personnes inscrites. Ces personnes reçoivent une notification et un lien pour télécharger le fichier."
+  },
   "emails": {
-    "title": "Adresses e-mail",
+    "title": "Destinataires externes",
     "add": "Ajouter une adresse e-mail",
-    "description": "Pour les personnes en dehors de l'app. Elles reçoivent un lien personnel par e-mail. {max} adresses au maximum."
+    "description": "Ici, tu peux ajouter comme destinataires des personnes qui n’ont pas accès à l’app. Elles reçoivent par e-mail un lien personnel pour télécharger les fichiers. Au maximum {max} adresses.",
+    "placeholder": "sssss@domain.com"
   },
   "consent": {
     "hint": "Le fichier montre-t-il d'autres personnes ? Partage-le seulement si elles sont d'accord."
   },
+  "settings": {
+    "title": "Paramètres du transfert",
+    "text": "Voici le message envoyé aux personnes invitées avec le lien de téléchargement.",
+    "variables": "À l’envoi, nous remplaçons {durée} par la durée, {expiration} par le jour où les fichiers sont supprimés et {motdepasse} par une note indiquant que les fichiers sont protégés par un mot de passe. Nous n’envoyons jamais le mot de passe lui-même."
+  },
   "message": {
     "label": "Message",
     "placeholder": "Quelques mots sur les fichiers",
-    "helper": "Facultatif. Tous les destinataires voient ce message."
+    "helper": "Chaque destinataire reçoit ce message avec son lien. Tu peux le modifier librement.",
+    "default": "Bonjour\n\nJe t’ai envoyé des fichiers. Tu peux les télécharger pendant {durée}, jusqu’au {expiration}. Ensuite, ils seront supprimés automatiquement.\n\n{motdepasse}\n\nMeilleures salutations",
+    "varLifetime": "durée",
+    "varExpiry": "expiration",
+    "varPassword": "motdepasse",
+    "days": "{days} jours",
+    "dayOne": "1 jour",
+    "passwordNote": "Les fichiers sont protégés par un mot de passe. Je t’envoie le mot de passe séparément."
   },
   "lifetime": {
     "label": "Durée en jours",
     "placeholder": "Nombre de jours",
-    "helper": "Ensuite, les fichiers sont supprimés. {max} jours au maximum."
+    "helper": "Les fichiers peuvent être téléchargés pendant 1 à {max} jours, puis ils sont supprimés."
   },
   "password": {
     "label": "Mot de passe",
-    "placeholder": "Laisser vide pour aucun mot de passe",
-    "helper": "Facultatif. Transmets toi-même le mot de passe aux personnes en dehors de l'app. Les membres n'en ont pas besoin."
+    "placeholder": "Facultatif",
+    "helper": "Facultatif. Les personnes extérieures à l’app ont besoin du mot de passe pour ouvrir les fichiers. Il n’est pas envoyé avec le lien : transmets-le toi-même, par exemple par téléphone. Les membres dans l’app n’en ont pas besoin."
   },
   "info": {
     "title": "Comment fonctionne un transfert",

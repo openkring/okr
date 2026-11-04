@@ -246,6 +246,25 @@
     "allEventTypes": "All event types",
     "empty": "No events found."
   },
+  "status": {
+    "title": "Service status",
+    "allClear": "All services are running normally",
+    "problemOne": "1 service reports a problem or maintenance",
+    "problems": "{count} services report a problem or maintenance",
+    "someUnknown": "The status of some services is not known right now",
+    "checkedAt": "Checked at {time}",
+    "loadFailed": "The current status could not be loaded. The links lead to the providers' pages.",
+    "noLiveStatus": "There is no live view for this service.",
+    "openPage": "Open status page",
+    "refresh": "Refresh",
+    "level": {
+      "ok": "Running",
+      "degraded": "Limited",
+      "down": "Outage",
+      "maintenance": "Maintenance",
+      "unknown": "Unknown"
+    }
+  },
   "hub": {
     "area": {
       "access": "Access & privacy",
@@ -261,6 +280,10 @@
       "sessions": {
         "label": "Sessions",
         "effect": "Shows who was signed in when, and on which device."
+      },
+      "status": {
+        "label": "Service status",
+        "effect": "Shows whether the services your features rely on are running."
       },
       "register": {
         "label": "Processing register",

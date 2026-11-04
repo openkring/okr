@@ -16,19 +16,17 @@ import {
   type LocalSection,
 } from '@okr/mobility-tracker-util';
 import {
-  resolveDiaryTargets,
   TRACKER_TRIP_TYPE,
   TripCollection,
-  UserCollection,
-  type DiaryTarget,
   type TrackSection,
   type TripModel,
   type TripTrack,
 } from '@okr/shared-models';
 import { crewTrackDeadline, formatTripTime } from '@okr/trip-util';
 
-import { pickDiaryAuthor } from '../diary/diary-transfer';
+import { resolveDiaryPulls } from '../diary/diary-pull';
 import { pushToPersons } from '../srv/push';
+import { expiringTenants } from './expiring-tenants';
 import { TIME_FMT, toStoreDate } from '../srv/zurich-time';
 import { privateBucket } from '../_storage/private-bucket';
 
@@ -216,37 +214,10 @@ export const crewPushTexts = {
   },
 };
 
-/** The slice of a `users/{uid}` doc the diary routing needs. */
-export interface CrewUser {
-  id: string;
-  tenants?: string[];
-  isArchived?: boolean;
-  diaryTargets?: DiaryTarget[];
-}
-
 /**
- * Pure half of crewDiaryTenants: the person's user in the source (club) tenant decides via `diaryTargets`
- * (source 'tracker'); the club tenant itself never gets a copy, nor a diary tenant without an active user of
- * the person (the copy would be invisible there). uid = the author in the first diary tenant.
- */
-export function selectCrewDiaryTarget(
-  users: CrewUser[],
-  sourceTenant: string,
-  date: string,
-): { tenants: string[]; uid: string } | undefined {
-  const source = users.find((u) => u.isArchived !== true && (u.tenants ?? []).includes(sourceTenant));
-  if (!source) return undefined;
-  const tenants = resolveDiaryTargets(source.diaryTargets, 'tracker', date)
-    .filter((t) => t !== sourceTenant && pickDiaryAuthor(users, t) !== undefined);
-  if (tenants.length === 0) return undefined;
-  const uid = pickDiaryAuthor(users, tenants[0]);
-  return uid ? { tenants, uid } : undefined;
-}
-
-/**
- * The diary tenants (and the owner uid) a crew copy goes to; undefined = no copy.
- * THE SINGLE SWAP POINT for spec 1.77 §12: today it reads the push model (`users.diaryTargets` of the person's user in
- * the club tenant); when the §12 pull model ships (diarySources + diaryConsents), only this function changes.
+ * The diary tenants (and the owner uid) a crew copy goes to; undefined = no copy. The source app is the club, the
+ * Transfer-Art `tracker` (spec 1.77 §12.5, 1.123 §6): the club tenant itself never gets a copy, uid = the author in the
+ * first diary tenant.
  */
 export async function crewDiaryTenants(
   db: Firestore,
@@ -254,15 +225,9 @@ export async function crewDiaryTenants(
   sourceTenant: string,
   date: string,
 ): Promise<{ tenants: string[]; uid: string } | undefined> {
-  if (!personKey) return undefined;
-  const snap = await db.collection(UserCollection).where('personKey', '==', personKey).get();
-  const users: CrewUser[] = snap.docs.map((d) => ({
-    id: d.id,
-    tenants: d.get('tenants') as string[] | undefined,
-    isArchived: d.get('isArchived') as boolean | undefined,
-    diaryTargets: d.get('diaryTargets') as DiaryTarget[] | undefined,
-  }));
-  return selectCrewDiaryTarget(users, sourceTenant, date);
+  const pulls = (await resolveDiaryPulls(db, { personKey, sourceTenant, source: 'tracker', date }))
+    .filter((p) => p.status === 'ok' && p.tenantId !== sourceTenant);
+  return pulls.length > 0 ? { tenants: pulls.map((p) => p.tenantId), uid: pulls[0].uid } : undefined;
 }
 
 /** One section's points of a copy, same shape as the tracker's TrackPointsDoc. */
@@ -446,8 +411,7 @@ export async function handleCrewTrack(before: TripModel | undefined, after: Trip
 
 /**
  * Does anything besides the Logbuch still hold the recording: a journal, or a diary tenant other than the Logbuch's? Pure.
- * Assumes a recorder's diary tenant is never the Logbuch (source) tenant itself (diary targets point to other apps), so
- * "tenants contains a tenant other than the Logbuch tenant" means "kept in a diary".
+ * A diary of the Logbuch tenant itself is no second tenant: crewCleanupDecision covers that case through `expiring`.
  */
 export function isTrackReferenced(recording: Pick<TripModel, 'tenants' | 'track'>, logbuchTenant: string): boolean {
   return !!recording.track?.journalKey || (recording.tenants ?? []).some((t) => t !== logbuchTenant);
@@ -495,7 +459,8 @@ function maxStoreDate(a: string, b: string): string {
  *   not auto-closed Logbuch trip, every night until day 7 (a copy that exists is skipped, so later nights only retry failures).
  * - unlink: past the deadline (also for a deleted / archived Logbuch trip, which keeps its link until then).
  * - unlinkRecording: only when the recording points back to this Logbuch trip.
- * - delete: past the deadline only, the recording was linked to this Logbuch trip, nothing else holds it, it is no crew copy,
+ * - delete: past the deadline only, in a tenant whose recordings expire (a Logbuch app with its own diary keeps them), the
+ *   recording was linked to this Logbuch trip, nothing else holds it, it is no crew copy,
  *   (the deadline of a linked recording is the later of the Logbuch's and its own, see below).
  */
 export function crewCleanupDecision(
@@ -504,6 +469,7 @@ export function crewCleanupDecision(
   logbuchKey: string,
   tenantId: string,
   today: string,
+  expiring: boolean,
 ): CrewCleanupDecision {
   const linkedBack = !!rec && rec.type === TRACKER_TRIP_TYPE && rec.track?.logbuchKey === logbuchKey;
   // A recording linked back keeps its link until the LATER of the Logbuch deadline (editable by any club member)
@@ -518,7 +484,7 @@ export function crewCleanupDecision(
     copy: !isLogbuchGone(logbuch) && isLogbuchEnded(logbuch) && !isAutoClosed(logbuch) && isLinkedRecording(rec, logbuch, logbuchKey, tenantId),
     unlink,
     unlinkRecording: unlink && linkedBack,
-    delete: pastDeadline && linkedBack && !!rec && !rec.track?.copyOf && !isTrackReferenced(rec, tenantId),
+    delete: pastDeadline && expiring && linkedBack && !!rec && !rec.track?.copyOf && !isTrackReferenced(rec, tenantId),
   };
 }
 
@@ -540,6 +506,11 @@ export async function deleteRecording(db: Firestore, rec: TripModel): Promise<vo
 export async function runCrewTrackCleanup(now: Date = new Date()): Promise<void> {
   const db = getFirestore();
   const today = toStoreDate(now);
+  // fail-safe: unknown means nothing expires here; a recording only unlinks, and trackerExpiry judges it later
+  const expiring = await expiringTenants(db).catch((error) => {
+    logger.error('crewTrackCleanup: expiring tenants unknown, deleting nothing', error);
+    return new Set<string>();
+  });
   const snap = await db.collection(TripCollection).where('trackKey', '>', '').get();
   let copies = 0;
   let unlinked = 0;
@@ -552,7 +523,7 @@ export async function runCrewTrackCleanup(now: Date = new Date()): Promise<void>
       const tenantId = logbuch.tenants?.[0] ?? '';
       const recSnap = await db.collection(TripCollection).doc(logbuch.trackKey).get();
       const rec = recSnap.exists ? ({ ...(recSnap.data() as TripModel), okey: recSnap.id } as TripModel) : undefined;
-      const d = crewCleanupDecision(logbuch, rec, doc.id, tenantId, today);
+      const d = crewCleanupDecision(logbuch, rec, doc.id, tenantId, today, expiring.has(tenantId));
       if (d.copy && rec) {
         try {
           copies += await copyForCrew(db, logbuch, rec);

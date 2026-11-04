@@ -280,13 +280,29 @@
   },
   "diaryTransfer": {
     "title": "Transferencia al diario",
-    "description": "Elige qué transfiere esta app a cuál de tus diarios. Sin marca no se transfiere nada. Si dejas vacío el inicio o el fin, no hay límite por ese lado.",
-    "from": "desde",
-    "to": "hasta",
+    "description": "Estos diarios quieren recoger algo de esta app. No se transfiere nada hasta que lo permitas.",
     "source": {
       "taskDone": "Tareas completadas",
       "jasstafel": "Pizarra de jass",
       "tracker": "Recorridos"
+    },
+    "wants": "quiere:",
+    "allowed": "permitido:",
+    "allow": "Permitir",
+    "revoke": "Revocar",
+    "swept": "{count} recorridos añadidos al diario",
+    "error": "No ha funcionado. Inténtalo de nuevo, por favor."
+  },
+  "diarySources": {
+    "title": "Fuentes del diario",
+    "description": "Elige qué recoge este diario de tus otras apps. Después lo confirmas una vez en el perfil de esa app. Si dejas vacío el inicio o el fin, no hay límite por ese lado.",
+    "from": "desde",
+    "to": "hasta",
+    "state": {
+      "none": "sin solicitar",
+      "waiting": "pendiente de confirmación",
+      "confirmed": "confirmado",
+      "partial": "confirmado en parte"
     },
     "period": {
       "error": "La fecha de inicio es posterior a la fecha de fin."

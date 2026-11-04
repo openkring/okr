@@ -257,7 +257,8 @@ describe('SUBJECT_DATA_MAP — tiers and tenant-exit disposition', () => {
     // author-only reads, voluntary, no club record; the aggregate is recomputed without it.
     // `trips/tracker` joined 2026-10-27 (1.121 / 1.123): a person's own GPS recordings and the crew
     // copies made for them — owned via `track.personKey`, voluntary, not the club's Logbuch record.
-    expect(SUBJECT_DATA_MAP.filter((e) => e.tier === 'T2').map((e) => e.collection)).toEqual(['avatars', 'prospects', 'trips/tracker', 'diaries', 'diaryAlbums', 'diaryImports', 'hearingQuizResults', 'chatReminders', 'ratings']);
+    // `diarySources` joined 2026-11-04 (1.77 §12): one owner's pull settings, the same owner-locked shape as `diaries`.
+    expect(SUBJECT_DATA_MAP.filter((e) => e.tier === 'T2').map((e) => e.collection)).toEqual(['avatars', 'prospects', 'trips/tracker', 'diaries', 'diaryAlbums', 'diarySources', 'diaryImports', 'hearingQuizResults', 'chatReminders', 'ratings']);
   });
 
   // Regression guard on the strictest-tier rule. `addresses` holds both the favorite

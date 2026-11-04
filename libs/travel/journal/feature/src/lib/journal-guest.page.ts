@@ -8,7 +8,7 @@ import { GoogleMapType, GoogleTiles } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { MapView, RouteMap, RoutePin } from '@okr/shared-ui';
 import { okrPrompt } from '@okr/shared-util-angular';
-import { fill } from '@okr/shared-util-core';
+import { fill, sunTimesLine } from '@okr/shared-util-core';
 import { GuestBlockView, GuestFootprintView, GuestJournalView, guestErrorOf, JournalGuestService } from '@okr/travel-journal-data-access';
 import { JournalReactions, JournalVideoBlock, ReactionComment, VideoClip } from '@okr/travel-journal-ui';
 import {
@@ -275,7 +275,7 @@ export class JournalGuestPage {
 
   protected facts(fp: GuestFootprintView): string {
     const date = /^\d{8}$/.test(fp.date) ? `${fp.date.slice(6, 8)}.${fp.date.slice(4, 6)}.${fp.date.slice(0, 4)}` : '';
-    return [date, fp.time, fp.placeName, weatherLine(weatherOf(fp.weather))].filter((x) => x).join(' · ');
+    return [date, fp.time, fp.placeName, weatherLine(weatherOf(fp.weather)), sunTimesLine(weatherOf(fp.weather))].filter((x) => x).join(' · ');
   }
 
   protected counts(fp: GuestFootprintView): string {

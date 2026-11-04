@@ -246,6 +246,25 @@
     "allEventTypes": "Alle Ereignisarten",
     "empty": "Keine Ereignisse gefunden."
   },
+  "status": {
+    "title": "Dienst-Status",
+    "allClear": "Alle Dienste laufen normal",
+    "problemOne": "1 Dienst meldet eine Störung oder Wartung",
+    "problems": "{count} Dienste melden eine Störung oder Wartung",
+    "someUnknown": "Für einige Dienste ist der Status gerade nicht bekannt",
+    "checkedAt": "Geprüft um {time}",
+    "loadFailed": "Der aktuelle Status konnte nicht geladen werden. Die Links führen zu den Seiten der Anbieter.",
+    "noLiveStatus": "Für diesen Dienst gibt es keine Live-Anzeige.",
+    "openPage": "Statusseite öffnen",
+    "refresh": "Aktualisieren",
+    "level": {
+      "ok": "In Betrieb",
+      "degraded": "Eingeschränkt",
+      "down": "Ausfall",
+      "maintenance": "Wartung",
+      "unknown": "Unbekannt"
+    }
+  },
   "hub": {
     "area": {
       "access": "Zugang & Datenschutz",
@@ -261,6 +280,10 @@
       "sessions": {
         "label": "Sessions",
         "effect": "Zeigt, wer wann angemeldet war und mit welchem Gerät."
+      },
+      "status": {
+        "label": "Dienst-Status",
+        "effect": "Zeigt, ob die Dienste laufen, die deine Funktionen brauchen."
       },
       "register": {
         "label": "Bearbeitungsverzeichnis",

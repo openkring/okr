@@ -5,6 +5,7 @@ export * from './lib/file-transfer-format';
 export * from './lib/file-transfer-i18n';
 export * from './lib/file-transfer-limits';
 export * from './lib/file-transfer-limits.validations';
+export * from './lib/file-transfer-message';
 export * from './lib/file-transfer-recipients';
 export * from './lib/file-transfer-state';
 export * from './lib/file-transfer.validations';

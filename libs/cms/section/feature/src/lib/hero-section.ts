@@ -1,15 +1,16 @@
 import { Component, computed, input } from '@angular/core';
-import { IonChip, IonCol, IonGrid, IonLabel, IonRow } from '@ionic/angular';
+import { IonChip, IonCol, IonGrid, IonIcon, IonLabel, IonRow } from '@ionic/angular';
 
 import { HeroSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
 import { Img, Spinner } from '@okr/shared-ui';
 
 @Component({
   selector: 'okr-hero-section',
   standalone: true,
   imports: [
-    Spinner, Img,
-    IonGrid, IonRow, IonCol, IonChip, IonLabel
+    Spinner, Img, SvgIconPipe,
+    IonGrid, IonRow, IonCol, IonChip, IonLabel, IonIcon
   ],
   styles: [`
     /* anchored to its own container (it used to position against the page) and bounded in height, so
@@ -42,7 +43,14 @@ import { Img, Spinner } from '@okr/shared-ui';
             @if (chips().length > 0) {
               <ion-row>
                 <ion-col class="chips">
-                  @for (chip of chips(); track $index) { <ion-chip><ion-label>{{ chip }}</ion-label></ion-chip> }
+                  @for (chip of chips(); track $index) {
+                    <ion-chip>
+                      @if (chipIcon(); as icon) {
+                        @if (icon.chip === chip) { <ion-icon src="{{ icon.name | svgIcon: icon.set }}" /> }
+                      }
+                      <ion-label>{{ chip }}</ion-label>
+                    </ion-chip>
+                  }
                 </ion-col>
               </ion-row>
             }
@@ -58,6 +66,8 @@ export class HeroSectionComponent {
 
   // inputs
   public section = input<HeroSection>();
+  /** an icon in front of the chip with exactly this text (travel journal: the weather chip) */
+  public chipIcon = input<{ chip: string; name: string; set: string } | undefined>();
 
   // derived values
   protected heroImage = computed(() => this.section()?.properties.hero ?? IMAGE_CONFIG_SHAPE);

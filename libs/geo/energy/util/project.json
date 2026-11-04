@@ -1,0 +1,31 @@
+{
+  "name": "energy-util",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/geo/energy/util/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:util", "scope:energy", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/energy/util",
+        "main": "libs/geo/energy/util/src/index.ts",
+        "tsConfig": "libs/geo/energy/util/tsconfig.lib.json",
+        "assets": ["libs/geo/energy/util/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "configFile": "libs/geo/energy/util/vite.config.ts"
+      }
+    }
+  }
+}

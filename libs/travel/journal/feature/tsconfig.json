@@ -31,6 +31,7 @@
     "dist/**/*"
   ],
   "references": [
+    { "path": "../../../geo/weather/util/tsconfig.lib.json" },
     {
       "path": "../../../auth/feature/tsconfig.lib.json"
     },

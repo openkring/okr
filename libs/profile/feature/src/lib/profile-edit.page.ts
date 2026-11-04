@@ -5,13 +5,13 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, IonItem, IonLab
 
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { safeStructuredClone } from '@okr/shared-util-core';
-import { PersonModelName, UserModel } from '@okr/shared-models';
+import { DiarySourceModel, PersonModelName, UserModel } from '@okr/shared-models';
 import { Languages } from '@okr/shared-categories';
 
 import { AddressesAccordion } from '@okr/subject-address-feature';
 import { AvatarToolbar } from '@okr/avatar-feature';
 import { PersonFormModel } from '@okr/subject-person-util';
-import { ProfileDataAccordion, ProfileDiaryTransferAccordion, ProfilePrivacyAccordion, ProfileSettingsAccordion } from '@okr/profile-ui';
+import { ProfileDataAccordion, ProfileDiaryRequestsAccordion, ProfileDiarySourcesAccordion, ProfilePrivacyAccordion, ProfileSettingsAccordion } from '@okr/profile-ui';
 import { ProfileStore } from './profile.store';
 import { EmailSignatureAccordion } from './email-signature.accordion';
 import { DataRightsAccordion } from './data-rights.accordion';
@@ -25,7 +25,7 @@ import { MaintenanceAccordion } from './maintenance.accordion';
     AsyncPipe,
     AvatarToolbar, Header, AddressesAccordion, ProfileDataAccordion,
     ChangeConfirmation, ProfileSettingsAccordion, ProfilePrivacyAccordion, EmailSignatureAccordion,
-    DataRightsAccordion, MaintenanceAccordion, PasskeysAccordion, ProfileDiaryTransferAccordion,
+    DataRightsAccordion, MaintenanceAccordion, PasskeysAccordion, ProfileDiarySourcesAccordion, ProfileDiaryRequestsAccordion,
     IonContent, IonItem, IonAccordionGroup, IonLabel, IonCard, IonCardContent
   ],
   providers: [ProfileStore],
@@ -83,21 +83,28 @@ import { MaintenanceAccordion } from './maintenance.accordion';
                 (dirty)="formDirty.set($event)"
               />
             }
-            <!-- spec 1.77 §5: only when this app offers a transfer kind and the person has a diary app -->
-            @if (showDiaryTransfer()) {
-              @if(userFormData(); as userFormData) {
-                <okr-profile-diary-transfer-accordion
-                  [formData]="userFormData"
-                  (formDataChange)="onUserChange($event)"
-                  [diaries]="store.diaryTenants().diaries"
-                  [sources]="store.diaryTenants().sources"
-                  [showForm]="showForm()"
-                  [readOnly]="false"
-                  [i18n]="store.i18n"
-                  (valid)="formValid.set($event)"
-                  (dirty)="formDirty.set($event)"
-                />
-              }
+            <!-- spec 1.77 §12.4: only in a diary app, with something to collect -->
+            @if (sourcesFormData(); as sourcesData) {
+              <okr-profile-diary-sources-accordion
+                [formData]="sourcesData"
+                (formDataChange)="sourcesFormData.set($event)"
+                [columns]="store.diaryPullColumns()"
+                [showForm]="showForm()"
+                [readOnly]="false"
+                [i18n]="store.i18n"
+                (valid)="sourcesValid.set($event)"
+                (dirty)="onSourcesDirty($event)"
+              />
+            }
+            <!-- spec 1.77 §12.4, D-R5: in the profile only, and only when a diary asked -->
+            @if (store.diaryRequests().length > 0) {
+              <okr-profile-diary-requests-accordion
+                [requests]="store.diaryRequests()"
+                [busy]="store.diaryRequestBusy()"
+                [i18n]="store.i18n"
+                (allow)="store.answerDiaryRequest($event, true)"
+                (revoke)="store.answerDiaryRequest($event, false)"
+              />
             }
             @if(userFormData(); as userFormData) {
               @if(personFormData(); as personFormData) {
@@ -146,6 +153,10 @@ export class ProfileEditPage {
   // reloads) and silently discard whatever the user has edited so far.
   protected personFormData = signal<PersonFormModel | undefined>(undefined);
   protected userFormData = signal<UserModel | undefined>(undefined);
+  // the diary's pull settings: its own doc, saved beside the user (spec 1.77 §12.3)
+  protected sourcesFormData = signal<DiarySourceModel | undefined>(undefined);
+  protected sourcesValid = signal(true);
+  private sourcesDirty = false;
   protected showForm = signal(true);
 
   // derived signals
@@ -167,13 +178,16 @@ export class ProfileEditPage {
   protected introHtml = computed(async () => this.store.i18n.intro() + ' <a href=mailto:"' + this.store.appStore.appConfig().opEmail + '">Website Admin</a>.');
   protected tags = computed(() => this.store.getTags());
   protected priv = computed(() => this.store.privacySettings());
-  protected showConfirmation = computed(() => this.formValid() && this.formDirty());
-  protected showDiaryTransfer = computed(() =>
-    this.store.diaryTenants().diaries.length > 0 && this.store.diaryTenants().sources.length > 0);
+  protected showConfirmation = computed(() => this.formValid() && this.sourcesValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   constructor() {
-    void this.store.loadDiaryTenants();   // spec 1.77 §5.2 — once per page open, never at boot
+    void this.store.loadDiarySources();   // spec 1.77 §12.4 — once per page open, never at boot
+    void this.store.loadDiaryRequests();
+    effect(() => {
+      const sources = this.store.diarySources();
+      if (sources && !untracked(this.sourcesFormData)) this.sourcesFormData.set(safeStructuredClone(sources));
+    });
     effect(() => {
       this.store.setPersonKey(this.personKey());
     });
@@ -194,12 +208,22 @@ export class ProfileEditPage {
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
     this.formDirty.set(false);
+    const sources = this.sourcesFormData();
+    if (sources && this.sourcesDirty) {
+      if (!await this.store.saveDiarySources(sources)) {
+        this.formDirty.set(true);   // the banner stays: the request has not reached the source app
+        return;
+      }
+      this.sourcesDirty = false;
+    }
     await this.store.save(this.personFormData(), this.userFormData());
   }
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
     this.seedFormData(this.currentPerson(), this.currentUser());  // reset to the persisted values
+    this.sourcesFormData.set(safeStructuredClone(this.store.diarySources()));
+    this.sourcesDirty = false;
     // re-mount the form so its field state (touched, error notes) starts fresh
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);
@@ -215,6 +239,11 @@ export class ProfileEditPage {
 
   protected onPersonChange(formData: PersonFormModel): void {
     this.personFormData.set(formData);
+  }
+
+  protected onSourcesDirty(dirty: boolean): void {
+    this.sourcesDirty = dirty;
+    this.formDirty.set(dirty);
   }
 
   protected onUserChange(formData: UserModel): void {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   LibraryPhoto, mergePhotos, nextThumbNumber, photoWindowEnd, serverPhotos, thumbNumber, wantsPhotoReattach, withoutPhoto, withPhotoHidden, placePhotos, positionAt, photosOnTrack,
-  trackThumbPath, trackTenants, localStoreDate,
+  trackThumbPath, localStoreDate,
 } from './track-photos.util';
 import { TrackPoint } from './track-polyline.util';
 
@@ -38,17 +38,6 @@ describe('placePhotos', () => {
   });
   it('drops photos that cannot be placed', () => {
     expect(placePhotos([photo('a', 1500)], [], 1000, 2000)).toEqual([]);
-  });
-});
-
-describe('trackTenants', () => {
-  it('adds matching targets after own, deduplicated', () => {
-    const t = (tenantId: string, sources: ('tracker' | 'tripDone')[], to = '') => ({ tenantId, sources, from: '', to });
-    expect(trackTenants('bkg', [t('bka', ['tracker'])], '20261026')).toEqual(['bkg', 'bka']);
-    expect(trackTenants('bkg', [t('bka', ['tracker'], '20261001')], '20261026')).toEqual(['bkg']);
-    expect(trackTenants('bkg', [t('bka', ['tripDone'])], '20261026')).toEqual(['bkg']);
-    expect(trackTenants('bkg', [t('bkg', ['tracker']), t('bka', ['tracker']), t('bka', ['tracker'])], '20261026')).toEqual(['bkg', 'bka']);
-    expect(trackTenants('bkg', undefined, '20261026')).toEqual(['bkg']);
   });
 });
 
