@@ -1474,5 +1474,19 @@
       "label": "Walk in minutes",
       "helper": "Leave empty to work it out from the distance"
     }
+  },
+  "energy": {
+    "title": "Energy",
+    "label": "Energy",
+    "edit": "Change energy settings",
+    "description": "Energy figures of a municipality: consumption, production, solar, heating, electric cars and tariffs, with a comparison",
+    "location": {
+      "label": "Municipality",
+      "helper": "Pick the municipality you want to show"
+    },
+    "compare": {
+      "label": "Compare with",
+      "helper": "Up to 4 more municipalities for the comparison table"
+    }
   }
 }

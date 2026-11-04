@@ -1474,5 +1474,19 @@
       "label": "Tragitto a piedi in minuti",
       "helper": "Lascia vuoto per calcolarlo dalla distanza"
     }
+  },
+  "energy": {
+    "title": "Energia",
+    "label": "Energia",
+    "edit": "Modifica la configurazione dell’energia",
+    "description": "I dati sull’energia di un comune: consumo, produzione, solare, riscaldamento, auto elettriche e tariffe, con confronto",
+    "location": {
+      "label": "Comune",
+      "helper": "Scegli il comune da mostrare"
+    },
+    "compare": {
+      "label": "Confronta con",
+      "helper": "Fino a 4 altri comuni per la tabella di confronto"
+    }
   }
 }

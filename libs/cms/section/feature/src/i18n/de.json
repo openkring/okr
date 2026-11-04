@@ -1474,5 +1474,19 @@
       "label": "Fussweg in Minuten",
       "helper": "Leer lassen, dann rechnen wir ihn aus der Entfernung"
     }
+  },
+  "energy": {
+    "title": "Energie",
+    "label": "Energie",
+    "edit": "Energie-Konfiguration ändern",
+    "description": "Energiekennzahlen einer Gemeinde: Verbrauch, Produktion, Solar, Heizung, Elektroautos und Tarife, mit Vergleich",
+    "location": {
+      "label": "Gemeinde",
+      "helper": "Wähle die gesuchte Gemeinde aus"
+    },
+    "compare": {
+      "label": "Vergleich mit",
+      "helper": "Bis zu 4 weitere Gemeinden für die Vergleichstabelle"
+    }
   }
 }

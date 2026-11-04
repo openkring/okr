@@ -50,6 +50,7 @@ import { AppStore } from '@okr/shared-feature';
             [states]="states()"
             [albumStyles]="albumStyles()"
             [weatherLocations]="weatherLocations()"
+            [energyLocations]="energyLocations()"
             [contracts]="contracts()"
             [forms]="forms()"
             [courses]="courses()"
@@ -91,6 +92,9 @@ export class SectionEditModal {
   private locations = toSignal(inject(LocationService).list(), { initialValue: [] as LocationModel[] });
   protected weatherLocations = computed(() =>
     this.locations().map((l) => ({ okey: l.okey, name: l.name })));
+  /** Municipalities offered by the energy configuration: `city` locations only (spec 2026-11-04 §6.2). */
+  protected energyLocations = computed(() =>
+    this.locations().filter((l) => l.type === 'city').map((l) => ({ okey: l.okey, name: l.name })));
 
   /**
    * Contracts a ContractDocument button may point at (spec 1.97). Only contract staff may list

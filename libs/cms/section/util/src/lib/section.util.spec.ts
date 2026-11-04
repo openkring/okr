@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ButtonAction, ButtonSection, ColorIonic, SECTION_TYPES, SectionType, WeatherSection, LearningSection } from '@okr/shared-models';
+import { ButtonAction, ButtonSection, ColorIonic, SECTION_TYPES, SectionType, WeatherSection, LearningSection, EnergySection } from '@okr/shared-models';
 
 import { createSection, narrowSection } from './section.util';
 
@@ -99,6 +99,22 @@ describe('createSection — completeness over every SectionType', () => {
     expect(a.properties).not.toBe(b.properties);
     a.properties.locationKeys?.push('loc1');
     expect(b.properties.locationKeys).toEqual([]);
+  });
+});
+
+describe('createSection — energy', () => {
+  it('gives every energy section its own compareKeys array', () => {
+    const a = createSection('energy', tenantId) as EnergySection;
+    const b = createSection('energy', tenantId) as EnergySection;
+    expect(a.properties).not.toBe(b.properties);
+    expect(a.properties.compareKeys).not.toBe(b.properties.compareKeys);
+    a.properties.compareKeys.push('loc1');
+    expect(b.properties.compareKeys).toEqual([]);
+  });
+
+  it('seeds both config keys, because section saves merge', () => {
+    const section = createSection('energy', tenantId) as EnergySection;
+    expect(section.properties).toEqual({ locationKey: '', compareKeys: [] });
   });
 });
 
