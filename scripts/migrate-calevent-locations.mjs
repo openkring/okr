@@ -8,6 +8,8 @@
  * reader parsed it its own way. `locations: AvatarInfo[]` replaces it; no code reads the old field
  * any more, so a document that is not migrated shows no location at all. Both collections, all
  * tenants, archived documents included. See `parseLocationKey` for how the shapes are told apart.
+ * Free text that names a location of the same tenant is linked to it (`linkFreeText`,
+ * `LOCATION_ALIASES`); everything else stays free text. The displayed text never changes.
  *
  * ═══════════════════════════════════════════════════════════════════════════════════════
  * ORDER
@@ -60,7 +62,7 @@ const db = getFirestore();
 async function main() {
   console.log(`\nMigrate locationKey → locations on ${COLLECTIONS.join(', ')}${WRITE ? '' : '  (DRY RUN — nothing is written)'}\n`);
 
-  const locationDocs = await db.collection('locations').select('name', 'type').get();
+  const locationDocs = await db.collection('locations').select('name', 'type', 'tenants', 'isArchived').get();
   const knownLocations = new Map(locationDocs.docs.map((doc) => [doc.id, doc.data()]));
   console.log(`  ${knownLocations.size} locations\n`);
 
@@ -68,7 +70,7 @@ async function main() {
   const writer = WRITE ? db.bulkWriter() : undefined;
 
   for (const collection of COLLECTIONS) {
-    const docs = await db.collection(collection).select('locationKey', 'locations', 'index').get();
+    const docs = await db.collection(collection).select('locationKey', 'locations', 'index', 'tenants').get();
     const counts = {};
     const samples = {};
 

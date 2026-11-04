@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { migrateIndex, parseLocationKey, planEvent } from './migrate-calevent-locations.logic.mjs';
+import { linkFreeText, migrateIndex, parseLocationKey, planEvent } from './migrate-calevent-locations.logic.mjs';
 
 const known = new Map([['loc1', { name: 'Bootshaus', type: 'building' }]]);
 const DELETED = 'a1b2c3d4e5f6g7h8i9j0';
@@ -75,4 +75,51 @@ test('planEvent with dropField deletes the emptied field', () => {
   assert.deepEqual(planEvent({ locationKey: '', locations: [avatar('', 'Neu')] }, known, true), { kind: 'clear', clearField: 'delete' });
   assert.deepEqual(planEvent({ locationKey: '' }, known, true), { kind: 'clear', clearField: 'delete' });
   assert.equal(planEvent({ locationKey: 'Halle@loc1' }, known, true).clearField, 'delete');
+});
+
+const places = new Map([
+  ['scs', { name: 'Seeclub Stäfa', type: 'logbuch', tenants: ['scs'] }],
+  ['villa', { name: 'Villa Sunneschy', type: 'address', tenants: ['scs'] }],
+  ['zh', { name: 'Zürich', type: 'address', tenants: ['bka'] }],
+  ['old', { name: 'Alte Halle', type: 'address', tenants: ['scs'], isArchived: true }],
+  ['twin1', { name: 'Halle', type: 'address', tenants: ['scs'] }],
+  ['twin2', { name: 'Halle', type: 'address', tenants: ['scs'] }],
+]);
+
+test('an alias links to its location, ignoring case and spacing', () => {
+  assert.equal(linkFreeText('  bootshaus ', ['scs'], places).okey, 'scs');
+  assert.equal(linkFreeText('SCS', ['scs'], places).kind, 'text-alias');
+  assert.equal(linkFreeText('Bootshaus,  Seestrasse 2b, Stäfa', ['scs'], places).okey, 'scs');
+});
+
+test('an alias only holds in its own tenant', () => {
+  assert.equal(linkFreeText('Bootshaus', ['p13'], places), undefined);
+});
+
+test('the exact name of a location links to it, Villa Sunneschy is not the Bootshaus', () => {
+  assert.deepEqual(linkFreeText('Villa Sunneschy', ['scs'], places), { kind: 'text-name', okey: 'villa', location: places.get('villa') });
+});
+
+test('a location of another tenant is not linked', () => {
+  assert.equal(linkFreeText('Zürich', ['scs'], places), undefined);
+});
+
+test('an archived location is not linked', () => {
+  assert.equal(linkFreeText('Alte Halle', ['scs'], places), undefined);
+});
+
+test('two locations of the same name stay free text', () => {
+  assert.equal(linkFreeText('Halle', ['scs'], places), undefined);
+});
+
+test('planEvent links free text and keeps the label the event showed', () => {
+  const plan = planEvent({ locationKey: 'Bootshaus', tenants: ['scs'], index: 'n:x l:Bootshaus c:p' }, places, false);
+  assert.equal(plan.kind, 'text-alias');
+  assert.deepEqual(plan.locations, [avatar('scs', 'Bootshaus', 'logbuch')]);
+});
+
+test('planEvent leaves unknown free text alone', () => {
+  const plan = planEvent({ locationKey: 'Sarnen', tenants: ['scs'] }, places, false);
+  assert.equal(plan.kind, 'text');
+  assert.deepEqual(plan.locations, [avatar('', 'Sarnen')]);
 });
