@@ -7,7 +7,7 @@ import { DIARY_SOURCES, DiaryConsent, DiaryPull, DiarySource, DiarySourceModel, 
 import { checkAppCheckToken } from '@okr/shared-util-functions';
 
 import { sweepRecordings } from '../trip/recording-diary';
-import { pickDiaryAuthor, readPullUsers } from './diary-pull';
+import { liveUsers, readPullUsers } from './diary-pull';
 
 export interface SetDiaryConsentRequest {
   /** the Tagebuch-App that asked */
@@ -76,8 +76,9 @@ export const setDiaryConsent = onCall<SetDiaryConsentRequest, Promise<SetDiaryCo
     if (!personKey || !ownTenant) throw new HttpsError('failed-precondition', 'no person');
     if (diaryTenantId === ownTenant) throw new HttpsError('invalid-argument', 'the diary app needs no confirmation');
 
-    const diaryUid = pickDiaryAuthor(await readPullUsers(db, personKey), diaryTenantId);
-    const doc = diaryUid ? (await db.collection(DiarySourcesCollection).doc(diaryUid).get()).data() as DiarySourceModel | undefined : undefined;
+    // exactly one live user there, as in selectDiaryPulls: with two nobody can tell whose request this answers
+    const diaryUsers = (await liveUsers(await readPullUsers(db, personKey))).filter((u) => (u.tenants ?? []).includes(diaryTenantId));
+    const doc = diaryUsers.length === 1 ? (await db.collection(DiarySourcesCollection).doc(diaryUsers[0].id).get()).data() as DiarySourceModel | undefined : undefined;
     const decision = decideConsent({
       current: user['diaryConsents'] as DiaryConsent[] | undefined,
       diaryTenantId, sources,

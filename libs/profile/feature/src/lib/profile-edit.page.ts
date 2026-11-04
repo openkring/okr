@@ -209,8 +209,13 @@ export class ProfileEditPage {
   public async save(): Promise<void> {
     this.formDirty.set(false);
     const sources = this.sourcesFormData();
-    if (sources && this.sourcesDirty) await this.store.saveDiarySources(sources);
-    this.sourcesDirty = false;
+    if (sources && this.sourcesDirty) {
+      if (!await this.store.saveDiarySources(sources)) {
+        this.formDirty.set(true);   // the banner stays: the request has not reached the source app
+        return;
+      }
+      this.sourcesDirty = false;
+    }
     await this.store.save(this.personFormData(), this.userFormData());
   }
 

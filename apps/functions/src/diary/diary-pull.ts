@@ -3,6 +3,7 @@
 // copies alike. A `diarySources/{uid}` doc decides for its diary tenant (pull ∩ the source user's `diaryConsents`);
 // only a diary tenant without such a doc still follows the source user's `diaryTargets` (§12.6, removed in step 4).
 
+import { logger } from 'firebase-functions/v2';
 import { getAuth } from 'firebase-admin/auth';
 import type { Firestore } from 'firebase-admin/firestore';
 
@@ -31,14 +32,6 @@ export interface PullUser {
   diaryTargets?: DiaryTarget[];
 }
 
-/** The person's active user doc in `diaryTenantId` — its id is the diary's `authorKey`. Pure. */
-export function pickDiaryAuthor(
-  users: { id: string; tenants?: string[]; isArchived?: boolean }[],
-  diaryTenantId: string,
-): string | undefined {
-  return users.find(u => u.isArchived !== true && (u.tenants ?? []).includes(diaryTenantId))?.id;
-}
-
 /** The user doc an item's routing is read from: the first active one in the source tenant. Pure. */
 export function pickSourceUser<T extends { tenants?: string[]; isArchived?: boolean }>(
   users: T[], sourceTenant: string,
@@ -51,9 +44,16 @@ function activeTenants(users: PullUser[]): string[] {
   return [...new Set(users.filter(u => u.isArchived !== true).flatMap(u => u.tenants ?? []))];
 }
 
+/** The person's live users in one tenant: active and able to log in. Pure. */
+function liveIn(users: PullUser[], tenantId: string, loginUids: Set<string>): PullUser[] {
+  return users.filter(u => u.isArchived !== true && (u.tenants ?? []).includes(tenantId) && loginUids.has(u.id));
+}
+
 /**
  * The diaries that receive `source` for an item dated `date` from `sourceTenant`. Every diary needs a live user of the
- * person (active, able to log in) in a tenant with the `diary` block, and so does the source tenant (§12.2). Pure.
+ * person (active, able to log in) in a tenant with the `diary` block, and so does the source tenant (§12.2). Exactly one
+ * in each: with two live users in a tenant nobody can tell whose diary or whose consent it is, and an admin can create
+ * a second account for a person, so such a tenant receives nothing instead of the first by document id. Pure.
  */
 export function selectDiaryPulls(input: {
   users: PullUser[];
@@ -65,13 +65,15 @@ export function selectDiaryPulls(input: {
   loginUids: Set<string>;
 }): PullResult[] {
   const { users, sourceTenant, source, date, docs, diaryTenants, loginUids } = input;
-  const sourceUser = pickSourceUser(users, sourceTenant);
-  if (!sourceUser || !loginUids.has(sourceUser.id)) return [];
+  const sourceUsers = liveIn(users, sourceTenant, loginUids);
+  if (sourceUsers.length !== 1) return [];
+  const sourceUser = sourceUsers[0];
 
   const out: PullResult[] = [];
   for (const tenantId of activeTenants(users)) {
-    const uid = pickDiaryAuthor(users, tenantId);
-    if (!uid || !diaryTenants.has(tenantId) || !loginUids.has(uid)) continue;
+    const diaryUsers = liveIn(users, tenantId, loginUids);
+    if (!diaryTenants.has(tenantId) || diaryUsers.length !== 1) continue;
+    const uid = diaryUsers[0].id;
     const reaches = (target: DiaryTarget | undefined) => resolveDiaryTargets(target ? [target] : [], source, date).length > 0;
     const doc = docs[uid];
     if (!doc) {
@@ -130,6 +132,13 @@ export async function readDiarySourceDocs(db: Firestore, users: PullUser[]): Pro
   return docs;
 }
 
+/** These users without the archived ones and those who cannot log in. */
+export async function liveUsers(users: PullUser[]): Promise<PullUser[]> {
+  const active = users.filter(u => u.isArchived !== true);
+  const logins = await Promise.all(active.map(u => canLogIn(u.id)));
+  return active.filter((_, i) => logins[i]);
+}
+
 /** All of the person's `users` docs, in the shape the routing needs. */
 export async function readPullUsers(db: Firestore, personKey: string): Promise<PullUser[]> {
   const snap = await db.collection(UserCollection).where('personKey', '==', personKey).get();
@@ -159,8 +168,11 @@ export async function resolveDiaryPulls(db: Firestore, args: {
   const tenantIds = [...new Set(candidates.flatMap(u => u.tenants ?? []))];
   const { configs, rollouts } = await readTenantFacts(db, tenantIds);
   const diaryTenants = new Set(tenantIds.filter(t => effectiveOf(configs, rollouts, t).has('diary')));
-  const uids = [...new Set([sourceUser.id, ...candidates.map(u => u.id)])];
-  const logins = await Promise.all(uids.map(canLogIn));
-  const loginUids = new Set(uids.filter((_, i) => logins[i]));
+  const concerned = new Set([args.sourceTenant, ...tenantIds]);
+  const live = await liveUsers(users.filter(u => (u.tenants ?? []).some(t => concerned.has(t))));
+  const loginUids = new Set(live.map(u => u.id));
+  for (const tenantId of concerned) {
+    if (liveIn(live, tenantId, loginUids).length > 1) logger.warn(`resolveDiaryPulls: person=${args.personKey} has several live users in ${tenantId}, nothing goes there`);
+  }
   return selectDiaryPulls({ ...args, users, docs, diaryTenants, loginUids });
 }

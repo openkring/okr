@@ -31,6 +31,10 @@ describe('buildDiaryRequests', () => {
     expect(buildDiaryRequests(input({ ownTenant: 'bka', docs: { uBka: doc('bka', ['taskDone']) } }))).toEqual([]);
   });
   it('skips a tenant without the diary block', () => expect(buildDiaryRequests(input({ diaryTenants: new Set() }))).toEqual([]));
+  it('offers no confirmation while two users share the diary tenant', () => {
+    const users = [{ id: 'uAdmin', tenants: ['bka'] }, { id: 'uBka', tenants: ['bka'] }];
+    expect(buildDiaryRequests(input({ users, docs: { uAdmin: doc('scs', ['tracker']), uBka: doc('scs', ['tracker']) } }))).toEqual([]);
+  });
   it('skips an archived diary user', () => {
     expect(buildDiaryRequests(input({ users: [{ id: 'uBka', tenants: ['bka'], isArchived: true }] }))).toEqual([]);
   });

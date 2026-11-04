@@ -165,9 +165,12 @@ export const ProfileStore = signalStore(
         }
       },
 
-      async saveDiarySources(model: DiarySourceModel): Promise<void> {
-        await store.diarySourcesService.save(model, store.i18n.update_error());
+      /** Returns false when the write failed: the service has shown the error, the edit is not saved. */
+      async saveDiarySources(model: DiarySourceModel): Promise<boolean> {
+        const key = await store.diarySourcesService.save(model, store.i18n.update_error());
+        if (!key) return false;
         patchState(store, { diarySources: model });
+        return true;
       },
 
     /**

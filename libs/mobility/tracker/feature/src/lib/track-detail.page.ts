@@ -893,9 +893,8 @@ export class TrackDetailPage {
     const personKey = this.appStore.currentUser()?.personKey;
     const uid = this.appStore.fbUser()?.uid;
     if (!personKey || !uid) return undefined;
-    // an already uploaded trip keeps its tenants; a local-only one starts in this app, the server adds the diaries
-    const existing = this.trip()?.tenants;
-    return { personKey, uid, tenants: existing && existing.length > 0 ? existing : [this.appStore.tenantId()] };
+    // only this app: the server adds the diaries, and a copy of tenants read earlier could bring back a diary detach
+    return { personKey, uid, tenants: [this.appStore.tenantId()] };
   }
 
   /** The transport mode from the split point on (any but the current one). */

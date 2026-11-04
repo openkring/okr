@@ -5,8 +5,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { DiaryConsent, DiarySource, DiarySourceModel, UserCollection } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
-import { loginTenantsOf } from '../auth/login-tenants';
-import { effectiveOf, PullUser, readDiarySourceDocs, readPullUsers, readTenantFacts } from './diary-pull';
+import { effectiveOf, liveUsers, PullUser, readDiarySourceDocs, readPullUsers, readTenantFacts } from './diary-pull';
 
 export interface DiaryRequest {
   tenantId: string;
@@ -22,7 +21,8 @@ const str = (v: unknown): string => (typeof v === 'string' ? v : '');
 
 /**
  * What the caller's diaries want from this app (spec 1.77 §12.4). A consent the diary no longer asks for stays listed,
- * so the person can revoke it. The diary app itself needs no confirmation (D-R3). Pure.
+ * so the person can revoke it. The diary app itself needs no confirmation (D-R3). A tenant with two users of the person
+ * offers no confirmation: nobody could tell whose request it answers. Pure.
  */
 export function buildDiaryRequests(input: {
   ownTenant: string;
@@ -37,6 +37,7 @@ export function buildDiaryRequests(input: {
     const tenantId = user.tenants?.[0] ?? '';
     const doc = input.docs[user.id];
     if (user.isArchived === true || !doc || tenantId === input.ownTenant || !input.diaryTenants.has(tenantId)) continue;
+    if (input.users.filter((u) => u.isArchived !== true && (u.tenants ?? []).includes(tenantId)).length > 1) continue;
     const requested = (doc.pulls ?? []).find((p) => p.tenantId === input.ownTenant)?.sources ?? [];
     const consented = input.consents.find((c) => c.tenantId === tenantId)?.sources ?? [];
     if (requested.length === 0 && consented.length === 0) continue;
@@ -58,10 +59,11 @@ export const listMyDiaryRequests = onCall(
 
     const own = (await db.collection(UserCollection).doc(uid).get()).data() ?? {};
     const ownTenant = (own['tenants'] as string[] | undefined)?.[0] ?? '';
-    const { personKey, tenants } = await loginTenantsOf(db, uid);
+    const personKey = (own['personKey'] as string | undefined) ?? '';
     if (!personKey || !ownTenant) return { requests: [] };
 
-    const users = (await readPullUsers(db, personKey)).filter((u) => (u.tenants ?? []).some((t) => tenants.includes(t)));
+    const users = await liveUsers(await readPullUsers(db, personKey));
+    const tenants = [...new Set(users.flatMap((u) => u.tenants ?? []))];
     const docs = await readDiarySourceDocs(db, users);
     const { configs, rollouts } = await readTenantFacts(db, tenants);
     const requests = buildDiaryRequests({
