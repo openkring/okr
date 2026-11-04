@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { TripModel } from '@okr/shared-models';
 
-import { expiryDecision, isExpiringTenant, recordingExpiry } from './tracker-expiry';
+import { isExpiringTenant } from './expiring-tenants';
+import { expiryDecision, recordingExpiry } from './tracker-expiry';
 
 const CLUB = new Set(['scs']);
 const rec = (extra: Partial<TripModel> = {}, track: Partial<NonNullable<TripModel['track']>> = {}): TripModel =>

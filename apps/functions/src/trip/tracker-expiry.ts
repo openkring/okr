@@ -1,20 +1,12 @@
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
-import { AppConfigCollection, FeatureRolloutCollection, TRACKER_TRIP_TYPE, TripCollection, type TripModel } from '@okr/shared-models';
+import { TRACKER_TRIP_TYPE, TripCollection, type TripModel } from '@okr/shared-models';
 import { crewTrackDeadline } from '@okr/trip-util';
-import { effectiveFeatures, FEATURE_BLOCKS, type FeatureRollout } from '@okr/tenant-util';
 
 import { toStoreDate } from '../srv/zurich-time';
 import { deleteRecording } from './crew-track';
-
-/**
- * A club app whose recordings expire: it has the Logbuch (`trip`) and neither a diary nor a travel journal. A diary
- * or journal app keeps its own recordings for good. Pure.
- */
-export function isExpiringTenant(features: Set<string>): boolean {
-  return features.has('trip') && !features.has('diary') && !features.has('journal');
-}
+import { expiringTenants } from './expiring-tenants';
 
 /**
  * The last day a recording stays: its end (Zurich date), else its start, + CREW_TRACK_DAYS. '' when neither is readable
@@ -54,13 +46,7 @@ export function expiryDecision(
 export async function runTrackerExpiry(now: Date = new Date()): Promise<void> {
   const db = getFirestore();
   const today = toStoreDate(now);
-  const [configSnap, rolloutSnap] = await Promise.all([db.collection(AppConfigCollection).get(), db.collection(FeatureRolloutCollection).get()]);
-  const rollouts = rolloutSnap.docs.map((d) => ({ okey: d.id, ...d.data() }) as FeatureRollout);
-  const expiring = new Set(configSnap.docs
-    .filter((d) => isExpiringTenant(effectiveFeatures({
-      catalogue: FEATURE_BLOCKS, rollouts, tenantId: d.id, enabled: d.get('enabledFeatures') as string[] | undefined,
-    })))
-    .map((d) => d.id));
+  const expiring = await expiringTenants(db);
   const snap = await db.collection(TripCollection).where('type', '==', TRACKER_TRIP_TYPE).get();
   let deleted = 0;
   let failed = 0;
