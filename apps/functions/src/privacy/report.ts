@@ -130,6 +130,7 @@ export const COLLECTION_LABELS: Record<string, string> = {
   'trips/tracker': 'Aufgezeichnete Strecken',
   diaries: 'Tagesnotizen', // libs/content/diary — the spec's own word, not "Tagebuch"
   diaryAlbums: 'Tagesnotizen-Alben', // libs/content/diary — the author's person/location/event albums (spec 1.114)
+  diarySources: 'Tagesnotizen-Quellen', // libs/content/diary — which of the person's apps their diary collects from (spec 1.77 §12)
   hearingQuizResults: 'Hörtraining-Ergebnisse',
   chatReminders: 'Chat-Erinnerungen', // libs/chat/feature/src/i18n/de.json: reminder.* («Erinnerung») on chat bookmarks
   // stats_members has no list view either — it's the per-member half of the trip
