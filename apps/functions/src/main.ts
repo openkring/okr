@@ -564,5 +564,8 @@ export const deleteLearningItem = Learning.deleteLearningItem;
 // onRatingWritten: learning rooms, a rating write refreshes docs/{docKey}.ratingCount/ratingSum (spec 1.115)
 export const onRatingWritten = Learning.onRatingWritten;
 
+// getServiceStatus: AOC Dienst-Status, the live status of the external services, cached for five minutes (spec 1.137)
+export { getServiceStatus } from './aoc-status/get-service-status';
+
 // time-slot schedulers (spec 1.118 A9): replace fifteen separate onSchedule functions
 export { nightlyMaintenance, morningJobs, eveningJobs, halfHourlyJobs } from './_schedules';
