@@ -249,8 +249,8 @@
   "status": {
     "title": "Estado de los servicios",
     "allClear": "Todos los servicios funcionan con normalidad",
-    "problemOne": "1 servicio informa de una avería",
-    "problems": "{count} servicios informan de una avería",
+    "problemOne": "1 servicio informa de una avería o mantenimiento",
+    "problems": "{count} servicios informan de una avería o mantenimiento",
     "someUnknown": "Por ahora no se conoce el estado de algunos servicios",
     "checkedAt": "Comprobado a las {time}",
     "loadFailed": "No se ha podido cargar el estado actual. Los enlaces llevan a las páginas de los proveedores.",

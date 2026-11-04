@@ -249,8 +249,8 @@
   "status": {
     "title": "Dienst-Status",
     "allClear": "Alle Dienste laufen normal",
-    "problemOne": "1 Dienst meldet eine Störung",
-    "problems": "{count} Dienste melden eine Störung",
+    "problemOne": "1 Dienst meldet eine Störung oder Wartung",
+    "problems": "{count} Dienste melden eine Störung oder Wartung",
     "someUnknown": "Für einige Dienste ist der Status gerade nicht bekannt",
     "checkedAt": "Geprüft um {time}",
     "loadFailed": "Der aktuelle Status konnte nicht geladen werden. Die Links führen zu den Seiten der Anbieter.",

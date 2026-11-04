@@ -249,8 +249,8 @@
   "status": {
     "title": "Stato dei servizi",
     "allClear": "Tutti i servizi funzionano normalmente",
-    "problemOne": "1 servizio segnala un guasto",
-    "problems": "{count} servizi segnalano un guasto",
+    "problemOne": "1 servizio segnala un guasto o una manutenzione",
+    "problems": "{count} servizi segnalano un guasto o una manutenzione",
     "someUnknown": "Al momento lo stato di alcuni servizi non è noto",
     "checkedAt": "Controllato alle {time}",
     "loadFailed": "Non è stato possibile caricare lo stato attuale. I link portano alle pagine dei fornitori.",

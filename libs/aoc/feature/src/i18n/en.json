@@ -249,8 +249,8 @@
   "status": {
     "title": "Service status",
     "allClear": "All services are running normally",
-    "problemOne": "1 service reports a problem",
-    "problems": "{count} services report a problem",
+    "problemOne": "1 service reports a problem or maintenance",
+    "problems": "{count} services report a problem or maintenance",
     "someUnknown": "The status of some services is not known right now",
     "checkedAt": "Checked at {time}",
     "loadFailed": "The current status could not be loaded. The links lead to the providers' pages.",
