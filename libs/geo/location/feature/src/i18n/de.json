@@ -102,6 +102,16 @@
     "placeholder": "Text"
   },
 
+  "properties": {
+    "title": "Weitere Angaben",
+    "empty": "Keine weiteren Angaben erfasst.",
+    "key": "Art",
+    "value": "Wert",
+    "add": "Hinzufügen",
+    "bfsNr": "BFS-Nummer",
+    "bfsStatus": "Status der Gemeindedaten"
+  },
+
   "location_type": {
     "label": "Ortstyp",
     "helper": "Typ einer Ortsangabe, normalerweise als Filter in Ortslisten verwendet.",
@@ -119,6 +129,10 @@
     "geomarker": {
       "label": "Geomarker",
       "description": "Ort ist ein pin auf einer Karte."
+    },
+    "city": {
+      "label": "Gemeinde",
+      "description": "Ort ist eine politische Gemeinde."
     },
     "airport": {
       "label": "Flughafen",

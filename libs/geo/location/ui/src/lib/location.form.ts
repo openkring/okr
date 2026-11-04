@@ -3,9 +3,9 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { CaseInsensitiveWordMask, LatitudeMask, LongitudeMask, What3WordMask } from '@okr/shared-config';
-import { CategoryListModel, LocationModel, RoleName, UserModel } from '@okr/shared-models';
-import { CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { coerceBoolean, hasRole } from '@okr/shared-util-core';
+import { BaseProperty, CategoryListModel, LocationModel, RoleName, UserModel } from '@okr/shared-models';
+import { CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, PropertyKeyOption, PropertyList, PropertyListI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, hasRole, LOCATION_PROPERTY_BFS_NR, LOCATION_PROPERTY_BFS_STATUS } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import { locationValidations } from '@okr/location-util';
@@ -44,13 +44,20 @@ export interface LocationFormI18n {
   distance_helper:        Signal<string>;
   notes_label:            Signal<string>;
   notes_placeholder:      Signal<string>;
+  properties_title:       Signal<string>;
+  properties_empty:       Signal<string>;
+  properties_key:         Signal<string>;
+  properties_value:       Signal<string>;
+  properties_add:         Signal<string>;
+  properties_bfsNr:       Signal<string>;
+  properties_bfsStatus:   Signal<string>;
 }
 
 @Component({
   selector: 'okr-location-form',
   standalone: true,
   imports: [
-    CategorySelect, TextInput, NumberInput, Chips, NotesInput, ErrorNote,
+    CategorySelect, TextInput, NumberInput, Chips, NotesInput, ErrorNote, PropertyList,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -113,6 +120,17 @@ export interface LocationFormI18n {
             </ion-grid>
           </ion-card-content>
         </ion-card>
+
+        <!---------------------------------------------------
+          PROPERTIES: general key/value data, e.g. the BFS number of a municipality (spec 1.136)
+          --------------------------------------------------->
+        <okr-property-list
+          [properties]="properties()"
+          (propertiesChange)="onFieldChange('properties', $event)"
+          [i18n]="propertiesI18n()"
+          [keyOptions]="propertyKeys()"
+          [readOnly]="isReadOnly()"
+          [reorderable]="false" />
 
         <!---------------------------------------------------
           TAG, NOTES
@@ -184,6 +202,8 @@ export class LocationForm {
   protected readonly distance = computed(() => this.formData()?.distance ?? 0);
   protected readonly tags = computed(() => this.formData()?.tags ?? '');
   protected readonly notes = computed(() => this.formData()?.notes ?? '');
+  // legacy documents have no `properties` (Firestore reads skip model defaults)
+  protected readonly properties = computed(() => this.formData()?.properties ?? []);
   protected okey = computed(() => this.formData().okey ?? '');
 
   // passing constants to template
@@ -269,8 +289,22 @@ export class LocationForm {
     placeholder: this.i18n().notes_placeholder()
   } as NotesInputI18n));
 
+  protected propertiesI18n = computed(() => ({
+    title: this.i18n().properties_title(),
+    empty: this.i18n().properties_empty(),
+    keyLabel: this.i18n().properties_key(),
+    valueLabel: this.i18n().properties_value(),
+    add: this.i18n().properties_add()
+  } as PropertyListI18n));
+
+  // the key is picked, never typed: the free key field would mask it to lowercase and could not produce bfsNr
+  protected propertyKeys = computed((): PropertyKeyOption[] => [
+    { key: LOCATION_PROPERTY_BFS_NR, label: this.i18n().properties_bfsNr() },
+    { key: LOCATION_PROPERTY_BFS_STATUS, label: this.i18n().properties_bfsStatus() }
+  ]);
+
   /******************************* actions *************************************** */
-  protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
+  protected onFieldChange(fieldName: string, fieldValue: string | number | boolean | BaseProperty[]): void {
     this.dirty.emit(true);
     if (fieldName === 'what3words') {
       const value = fieldValue as string;

@@ -102,6 +102,16 @@
     "placeholder": "Text"
   },
 
+  "properties": {
+    "title": "Additional details",
+    "empty": "No additional details recorded.",
+    "key": "Type",
+    "value": "Value",
+    "add": "Add",
+    "bfsNr": "BFS number",
+    "bfsStatus": "Municipal data status"
+  },
+
   "location_type": {
     "label": "Location type",
     "helper": "Type of a location indication, normally used as a filter in location lists.",
@@ -119,6 +129,10 @@
     "geomarker": {
       "label": "Geomarker",
       "description": "Location is a pin on a map."
+    },
+    "city": {
+      "label": "Municipality",
+      "description": "Location is a political municipality."
     },
     "airport": {
       "label": "Airport",
