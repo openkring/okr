@@ -62,15 +62,12 @@ export const PROFILE_I18N_KEYS = {
   show_helpers_label:              PFX + 'show.helpers.label',
   show_helpers_helper:             PFX + 'show.helpers.helper',
 
-  // diary transfer (spec 1.77 §5)
+  // diary transfer, the source app's side (spec 1.77 §12.4)
   diaryTransfer_title:             PFX + 'diaryTransfer.title',
   diaryTransfer_description:       PFX + 'diaryTransfer.description',
-  diaryTransfer_from:              PFX + 'diaryTransfer.from',
-  diaryTransfer_to:                PFX + 'diaryTransfer.to',
   diaryTransfer_source_taskDone:   PFX + 'diaryTransfer.source.taskDone',
   diaryTransfer_source_jasstafel:  PFX + 'diaryTransfer.source.jasstafel',
   diaryTransfer_source_tracker:    PFX + 'diaryTransfer.source.tracker',
-  diaryTransfer_period_error:      PFX + 'diaryTransfer.period.error',
   diaryTransfer_wants:             PFX + 'diaryTransfer.wants',
   diaryTransfer_allowed:           PFX + 'diaryTransfer.allowed',
   diaryTransfer_allow:             PFX + 'diaryTransfer.allow',

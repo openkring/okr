@@ -6,8 +6,8 @@ import { from, of, take } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { DiarySource, DiarySourceModel, PersonCollection, PersonModel, PersonModelName, UserCollection, UserModel, withoutDiaryConsents } from '@okr/shared-models';
-import { AhvFormat, AlertService, AppNavigationService, DIARY_EXTRA_SOURCES, formatAhv, isBlankAhv } from '@okr/shared-util-angular';
+import { DiarySourceModel, PersonCollection, PersonModel, PersonModelName, UserCollection, UserModel, withoutDiaryConsents } from '@okr/shared-models';
+import { AhvFormat, AlertService, AppNavigationService, formatAhv, isBlankAhv } from '@okr/shared-util-angular';
 import { debugItemLoaded, fill } from '@okr/shared-util-core';
 import { FirestoreService } from '@okr/shared-data-access';
 
@@ -16,8 +16,7 @@ import { AvatarService } from '@okr/avatar-data-access';
 import { PersonService, SensitivePersonData } from '@okr/subject-person-data-access';
 import { PersonFormModel } from '@okr/subject-person-util';
 import { PROFILE_I18N_KEYS, ProfileI18n } from '@okr/profile-util';
-import { mergeDiarySources } from '@okr/content-diary-util';
-import { DiaryLineService, DiaryPullColumn, DiaryRequest, DiarySourcesService, DiaryTenantInfo } from '@okr/content-diary-data-access';
+import { DiaryLineService, DiaryPullColumn, DiaryRequest, DiarySourcesService } from '@okr/content-diary-data-access';
 
 /**
  * the personEditPage is setting the personKey.
@@ -26,8 +25,6 @@ import { DiaryLineService, DiaryPullColumn, DiaryRequest, DiarySourcesService, D
  */
 export type ProfileState = {
   personKey: string | undefined;
-  /** spec 1.77 §5.2 — the caller's diary apps (columns) and the transfer kinds (rows) */
-  diaryTenants: { diaries: DiaryTenantInfo[]; sources: DiarySource[] };
   /** spec 1.77 §12.4 — in a diary app: the columns of «Tagebuch-Quellen» and the owner's doc */
   diaryPullColumns: DiaryPullColumn[];
   diarySources: DiarySourceModel | undefined;
@@ -38,7 +35,6 @@ export type ProfileState = {
 
 export const initialState: ProfileState = {
   personKey: undefined,
-  diaryTenants: { diaries: [], sources: [] },
   diaryPullColumns: [],
   diarySources: undefined,
   diaryRequests: [],
@@ -57,8 +53,6 @@ export const ProfileStore = signalStore(
     diaryLineService: inject(DiaryLineService),
     diarySourcesService: inject(DiarySourcesService),
     alertService: inject(AlertService),
-    /** diary sources this app offers beyond its feature blocks (bkg-app: the tracker) */
-    diaryExtraSources: inject(DIARY_EXTRA_SOURCES),
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(PROFILE_I18N_KEYS) as ProfileI18n,
@@ -127,19 +121,6 @@ export const ProfileStore = signalStore(
       },
 
       /************************************ ACTIONS ************************************* */
-      /**
-       * Spec 1.77 §5.2 — loads the diary apps of the caller, once when the profile page opens.
-       * A failed call leaves both lists empty, which hides the «Tagebuch-Transfer» accordion.
-       */
-      async loadDiaryTenants(): Promise<void> {
-        try {
-          const result = await store.diaryLineService.listMyDiaryTenants();
-          patchState(store, { diaryTenants: { diaries: result?.diaries ?? [], sources: mergeDiarySources(result?.sources ?? [], store.diaryExtraSources) } });
-        } catch (e) {
-          console.warn('ProfileStore.loadDiaryTenants', e);
-        }
-      },
-
       /**
        * Spec 1.77 §12.4 — «Tagebuch-Quellen», once when the profile page opens. No columns (an app without a diary, or
        * a failed call) hides the accordion.

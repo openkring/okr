@@ -8,3 +8,4 @@ export * from './lib/jass-i18n';
 export * from './lib/jass.storage';
 export * from './lib/jass.timing';
 export * from './lib/jass.diary';
+export * from './lib/jass-routed.util';

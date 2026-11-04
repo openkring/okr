@@ -281,15 +281,10 @@
   "diaryTransfer": {
     "title": "Trasferimento al diario",
     "description": "Questi diari vorrebbero raccogliere qualcosa da questa app. Non viene trasferito nulla finché non lo permetti.",
-    "from": "dal",
-    "to": "al",
     "source": {
       "taskDone": "Attività completate",
       "jasstafel": "Lavagna del jass",
       "tracker": "Percorsi"
-    },
-    "period": {
-      "error": "La data d'inizio è dopo la data di fine."
     },
     "wants": "vuole:",
     "allowed": "permesso:",

@@ -9,7 +9,7 @@ import type { DiarySource } from '@okr/shared-models';
 export interface DiaryLineRequest {
   /** the app's tenant (the one the event happened in) */
   tenantId: string;
-  /** which app event this line comes from; the server matches it against the caller's `diaryTargets` */
+  /** which app event this line comes from; the server matches it against what the diaries collect */
   source: DiarySource;
   /** DateFormat.StoreDate; must be a real day */
   date: string;
@@ -18,7 +18,7 @@ export interface DiaryLineRequest {
 
 export type DiaryLineStatus = 'written' | 'skipped-final' | 'skipped-missing' | 'skipped-no-target';
 
-/** One diary app of the caller, as listed by `listMyDiaryTenants`. */
+/** A tenant app of the caller, as the diary callables list it. */
 export interface DiaryTenantInfo {
   tenantId: string;
   title: string;
@@ -45,7 +45,7 @@ export interface DiaryRequest extends DiaryTenantInfo {
 
 /**
  * Wraps the `recordDiaryLine` callable: appends a line to the `events` of the caller's diary entry
- * in every diary tenant the caller's own `diaryTargets` route this `source` to (spec 1.77).
+ * in every diary that collects this `source` from the caller's app (spec 1.77 §12.5).
  * Throws the callable's error, e.g. `permission-denied`.
  */
 @Injectable({ providedIn: 'root' })
@@ -64,12 +64,6 @@ export class DiaryLineService {
     const callable = httpsCallable<DiaryLineRequest, { status: DiaryLineStatus; written?: string[] }>(this.functions, 'recordDiaryLine');
     const { status, written } = (await callable(request)).data;
     return { status, written: written ?? [] };
-  }
-
-  /** The caller's diary apps and the sources this app offers (spec 1.77 §5.2). Throws on failure. */
-  public async listMyDiaryTenants(): Promise<{ diaries: DiaryTenantInfo[]; sources: DiarySource[] }> {
-    const callable = httpsCallable<void, { diaries: DiaryTenantInfo[]; sources: DiarySource[] }>(this.functions, 'listMyDiaryTenants');
-    return (await callable()).data;
   }
 
   /** What this diary can collect from the person's apps, with the consent state (spec 1.77 §12.4). Throws on failure. */

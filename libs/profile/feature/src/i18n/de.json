@@ -281,15 +281,10 @@
   "diaryTransfer": {
     "title": "Tagebuch-Transfer",
     "description": "Diese Tagebücher möchten etwas aus dieser App sammeln. Übertragen wird erst, wenn du es erlaubst.",
-    "from": "von",
-    "to": "bis",
     "source": {
       "taskDone": "Erledigte Aufgaben",
       "jasstafel": "Jasstafel",
       "tracker": "Strecken"
-    },
-    "period": {
-      "error": "Das Startdatum liegt nach dem Enddatum."
     },
     "wants": "möchte:",
     "allowed": "erlaubt:",

@@ -47,9 +47,4 @@ describe('offeredDiarySources', () => {
     expect(offeredDiarySources(new Set(['trip']))).toEqual(['tracker']);
     expect(offeredDiarySources(new Set(['diary']))).toEqual([]);
   });
-
-  it('adds extra sources, deduplicated and in DIARY_SOURCES order', () => {
-    expect(offeredDiarySources(new Set(), ['tracker'])).toContain('tracker');
-    expect(offeredDiarySources(new Set(['jasstafel']), ['tracker', 'jasstafel', 'taskDone'])).toEqual(['taskDone', 'jasstafel', 'tracker']);
-  });
 });

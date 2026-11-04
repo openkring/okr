@@ -281,15 +281,10 @@
   "diaryTransfer": {
     "title": "Diary transfer",
     "description": "These diaries would like to collect something from this app. Nothing is sent until you allow it.",
-    "from": "from",
-    "to": "to",
     "source": {
       "taskDone": "Completed tasks",
       "jasstafel": "Jass scoreboard",
       "tracker": "Tracks"
-    },
-    "period": {
-      "error": "The start date is after the end date."
     },
     "wants": "wants:",
     "allowed": "allowed:",
