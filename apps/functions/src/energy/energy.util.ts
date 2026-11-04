@@ -183,6 +183,24 @@ export function tenantsPerBfs(locations: CityLocation[]): Map<number, string[]> 
 }
 
 /**
+ * The tenant lists to write onto existing documents so they follow the locations on every run, not only on
+ * the weekly refetch (spec §11: a second tenant with its own location must be able to read the shared document).
+ * Only numbers whose list differs as a set are returned (order and duplicates do not count); a number without
+ * an existing document is ignored, since it is about to be fetched and gets its tenants then.
+ */
+export function tenantsToSync(wanted: Map<number, string[]>, existing: Map<number, string[]>): Map<number, string[]> {
+  const sync = new Map<number, string[]>();
+  for (const [bfsNr, tenants] of wanted) {
+    const current = existing.get(bfsNr);
+    if (current === undefined) continue;
+    const a = new Set(tenants);
+    const b = new Set(current);
+    if (a.size !== b.size || [...a].some((t) => !b.has(t))) sync.set(bfsNr, tenants);
+  }
+  return sync;
+}
+
+/**
  * True when `bfsStatus` names the location's current number, i.e. the job already found no data for it.
  * A status naming another number is stale (the number was corrected), and `none` belongs to a location
  * without a number: neither blocks.

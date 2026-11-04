@@ -1,11 +1,13 @@
 import { readFileSync } from 'node:fs';
+import { createInterface } from 'node:readline';
+import JSZip from 'jszip';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { BaseProperty } from '@okr/shared-models';
 
 import {
   CityLocation, ENERGY_REPORTER_COLUMNS, assertEnergyReporterHeader, bfsNumbersToFetch, buildEnergyPatch, collectReporterRows, currentBfsFromLookup,
-  hasCoordinates, isBlockedByStatus, nextBfsStatus, parseCsvLine, parseHeader, rowToMonth, tariffsFromSparql, tenantsPerBfs,
+  hasCoordinates, isBlockedByStatus, nextBfsStatus, parseCsvLine, parseHeader, rowToMonth, tariffsFromSparql, tenantsPerBfs, tenantsToSync,
 } from './energy.util';
 import elcomFixture from './elcom.fixture.json';
 import lookupFixture from './bfs-lookup.fixture.json';
@@ -282,5 +284,44 @@ describe('collectReporterRows', () => {
     const withBom = ['﻿' + csvLines[0], '', ...csvLines.slice(1), ''];
     const { found } = await collectReporterRows(lines(withBom), new Set([158]));
     expect(found.get(158)?.months).toHaveLength(2);
+  });
+});
+
+describe('tenantsToSync', () => {
+  it('returns only the numbers whose tenant list differs, ignoring order', () => {
+    const wanted = new Map([[158, ['kring', 'scs']], [155, ['scs']], [1, ['a']]]);
+    const existing = new Map([[158, ['scs', 'kring']], [155, ['scs', 'kring']]]);
+    expect([...tenantsToSync(wanted, existing)]).toEqual([[155, ['scs']]]);
+  });
+
+  it('adds a tenant that joined a shared municipality', () => {
+    const synced = tenantsToSync(new Map([[158, ['kring', 'scs']]]), new Map([[158, ['scs']]]));
+    expect(synced.get(158)).toEqual(['kring', 'scs']);
+  });
+
+  it('ignores a number without an existing document: it is about to be fetched', () => {
+    expect(tenantsToSync(new Map([[158, ['scs']]]), new Map()).size).toBe(0);
+  });
+
+  it('treats duplicates in the stored list as the same set', () => {
+    expect(tenantsToSync(new Map([[158, ['scs']]]), new Map([[158, ['scs', 'scs']]])).size).toBe(0);
+  });
+});
+
+describe('collectReporterRows through a real ZIP', () => {
+  it('reads a BOM-prefixed CSV out of an in-memory ZIP via file.nodeStream() and readline', async () => {
+    const zip = new JSZip();
+    zip.file('energyreporter_municipality_historized.csv', '\ufeff' + csvLines.join('\r\n') + '\r\n');
+    const loaded = await JSZip.loadAsync(await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' }));
+    const file = loaded.file('energyreporter_municipality_historized.csv');
+    expect(file).not.toBeNull();
+    const input = file!.nodeStream();
+    let ended = false;
+    input.once('end', () => { ended = true; });
+    const { found, failed } = await collectReporterRows(createInterface({ input, crlfDelay: Infinity }), new Set([155, 158]));
+    expect(ended).toBe(true);
+    expect(failed.size).toBe(0);
+    expect(found.get(158)?.months.map((m) => m.date)).toEqual(['20210331', '20261031']);
+    expect(found.get(155)?.municipality).toBe('Männedorf');
   });
 });

@@ -11,7 +11,7 @@ import {
 
 import {
   CityLocation, ReporterRows, bfsNumbersToFetch, buildEnergyPatch, collectReporterRows, currentBfsFromLookup,
-  hasCoordinates, isBlockedByStatus, nextBfsStatus, tariffsFromSparql, tenantsPerBfs,
+  hasCoordinates, isBlockedByStatus, nextBfsStatus, tariffsFromSparql, tenantsPerBfs, tenantsToSync,
 } from './energy.util';
 
 const IDENTIFY_URL = 'https://api3.geo.admin.ch/rest/services/api/MapServer/identify';
@@ -120,17 +120,24 @@ async function fillBfsNumbers(db: admin.firestore.Firestore, locations: CityDoc[
   }
 }
 
-/** Step 3: the ISO `fetchedAt` of the existing documents (only that field is read, the documents are large). */
-async function readFetchedAt(db: admin.firestore.Firestore, bfsNumbers: number[]): Promise<Map<number, string>> {
+/** Step 3: `fetchedAt` (ISO) and `tenants` of the existing documents. Only those two fields are read, the documents are large. */
+async function readExisting(
+  db: admin.firestore.Firestore,
+  bfsNumbers: number[],
+): Promise<{ fetchedAt: Map<number, string>; tenants: Map<number, string[]> }> {
   const fetchedAt = new Map<number, string>();
-  if (bfsNumbers.length === 0) return fetchedAt;
+  const tenants = new Map<number, string[]>();
+  if (bfsNumbers.length === 0) return { fetchedAt, tenants };
   const refs = bfsNumbers.map((nr) => db.collection(EnergyFiguresCollection).doc(String(nr)));
-  const snaps = await db.getAll(...refs, { fieldMask: ['fetchedAt'] });
+  const snaps = await db.getAll(...refs, { fieldMask: ['fetchedAt', 'tenants'] });
   snaps.forEach((snap, i) => {
-    const stamp = snap.exists ? snap.get('fetchedAt') : undefined;
+    if (!snap.exists) return;
+    const stamp = snap.get('fetchedAt');
     if (typeof stamp === 'string' && stamp !== '') fetchedAt.set(bfsNumbers[i], stamp);
+    const list = snap.get('tenants');
+    tenants.set(bfsNumbers[i], Array.isArray(list) ? list.map(String) : []);
   });
-  return fetchedAt;
+  return { fetchedAt, tenants };
 }
 
 /**
@@ -187,7 +194,20 @@ export async function runEnergyFiguresFetch(): Promise<void> {
   await fillBfsNumbers(db, locations);
 
   const tenants = tenantsPerBfs(locations);
-  const fetchedAt = await readFetchedAt(db, [...tenants.keys()]);
+  const existing = await readExisting(db, [...tenants.keys()]);
+  const fetchedAt = existing.fetchedAt;
+
+  // Tenants follow the locations on every run, also when nothing is fetched: a second tenant with its own
+  // location for a shared municipality must be able to read the document at once (spec §11).
+  let tenantsSynced = 0;
+  for (const [bfsNr, list] of tenantsToSync(tenants, existing.tenants)) {
+    try {
+      await db.collection(EnergyFiguresCollection).doc(String(bfsNr)).set({ tenants: list }, { merge: true });
+      tenantsSynced++;
+    } catch (error) {
+      logger.error(`energyFiguresFetch: could not sync tenants of ${bfsNr}`, error);
+    }
+  }
   const wantedList = bfsNumbersToFetch(locations, fetchedAt, now);
   const wanted = new Set(wantedList);
 
@@ -200,7 +220,7 @@ export async function runEnergyFiguresFetch(): Promise<void> {
   }
 
   if (wantedList.length === 0) {
-    logger.info(`energyFiguresFetch: ${tenants.size} municipalities, all fresh`);
+    logger.info(`energyFiguresFetch: ${tenants.size} municipalities, all fresh, ${tenantsSynced} tenant lists synced`);
     return;
   }
 
@@ -249,7 +269,7 @@ export async function runEnergyFiguresFetch(): Promise<void> {
     }
   }
 
-  logger.info(`energyFiguresFetch: ${wantedList.length} wanted, ${written} written, ${complete} complete, ${noRow} without Energie Reporter row`);
+  logger.info(`energyFiguresFetch: ${wantedList.length} wanted, ${written} written, ${complete} complete, ${noRow} without Energie Reporter row, ${tenantsSynced} tenant lists synced`);
 }
 
 /** Energie Reporter answered cleanly but has no row for this number: tell the admin through the locations' status. */
