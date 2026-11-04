@@ -46,7 +46,7 @@ vi.mock('firebase-admin/firestore', () => ({
   }),
 }));
 
-import { dispatch, OutboxDoc } from './outbox';
+import { blankedBody, dispatch, OutboxDoc } from './outbox';
 
 const PERSON = 'anna';
 
@@ -107,5 +107,14 @@ describe('dispatch openChat', () => {
 
     expect(calls).toEqual(['resolve', 'join', 'post']);
     expect(posted).toHaveLength(1);
+  });
+});
+
+describe('blankedBody', () => {
+  const doc = (payload: Record<string, string>) => ({ tenants: ['t'], kind: 'sendEmail', ruleKey: 'r', day: 'd', payload }) as OutboxDoc;
+
+  it('blanks only a transient body', () => {
+    expect(blankedBody(doc({ body: 'x', transient: '1' }))).toEqual({ 'payload.body': '' });
+    expect(blankedBody(doc({ body: 'x' }))).toEqual({});
   });
 });

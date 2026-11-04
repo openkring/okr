@@ -1801,6 +1801,11 @@ export class MatrixChatService {
    * Matrix-Raum folgt serverseitig ueber `onMembershipDocWritten`, also mit ein paar
    * Sekunden Verzoegerung.
    */
+  /** E-Mail-Zustellung eines Chats schalten (spec 1.139); der Bot schreibt den Zustand. */
+  public async setChatEmailDelivery(roomId: string, enabled: boolean): Promise<void> {
+    await matrixUserOp('setChatEmailDelivery')({ roomId, enabled });
+  }
+
   public async leaveAdhocChat(groupKey: string): Promise<void> {
     const fn = matrixUserOp('leaveAdhocChat');
     await fn({ groupKey });

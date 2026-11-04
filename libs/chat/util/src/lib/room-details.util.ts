@@ -30,6 +30,8 @@ export interface RoomDetailsSections {
   archiveViaGroup: boolean;
   leave: boolean;
   pinForAll: boolean;
+  /** May switch email delivery (spec 1.139 §3); the server decides again. */
+  emailDelivery: boolean;
 }
 
 const MEMBERS: Record<RoomKind, RoomMembersMode> = {
@@ -69,6 +71,7 @@ export function getRoomDetailsSections(ctx: RoomDetailsCtx): RoomDetailsSections
       archiveViaGroup: false,
       leave: false,
       pinForAll: false,
+      emailDelivery: false,
     };
   }
 
@@ -85,6 +88,7 @@ export function getRoomDetailsSections(ctx: RoomDetailsCtx): RoomDetailsSections
     // DMs: the room right only. The client additionally gates DMs on the actual power to write
     // `m.room.pinned_events` (`canPinForAll` in pins.feature.ts), like 'other' rooms.
     pinForAll: kind === 'dm' || adhoc || ((kind === 'group' || kind === 'pinboard') && groupLevel),
+    emailDelivery: kind === 'dm' || adhoc || ((kind === 'group' || kind === 'pinboard') && groupLevel),
   };
 }
 

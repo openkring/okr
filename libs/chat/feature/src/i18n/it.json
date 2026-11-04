@@ -691,7 +691,15 @@
     "group": "Vai al gruppo",
     "error": "Non ha funzionato. Riprova, per favore.",
     "pins": "Fissati ({n})",
-    "help": "Aiuto"
+    "help": "Aiuto",
+    "email": {
+      "label": "Invio per e-mail",
+      "on": "Attivo",
+      "off": "Disattivo",
+      "hint": "I messaggi di questa chat vengono inviati anche per e-mail ai membri che desiderano ricevere le novità per e-mail. Per questo questa chat non è crittografata end-to-end.",
+      "enableConfirm": "I messaggi di questa chat verranno inviati anche per e-mail a tutti i membri che desiderano ricevere le novità per e-mail. Le e-mail non sono crittografate end-to-end e restano nella casella di posta anche se un messaggio viene eliminato qui. Tutti i membri vedranno che l’hai attivato. Lo vuoi?",
+      "disableConfirm": "Vuoi disattivare l’invio per e-mail per questa chat?"
+    }
   },
   "mute": {
     "tile": "Silenzia",

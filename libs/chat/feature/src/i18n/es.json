@@ -691,7 +691,15 @@
     "group": "Ir al grupo",
     "error": "No ha funcionado. Inténtalo de nuevo, por favor.",
     "pins": "Fijados ({n})",
-    "help": "Ayuda"
+    "help": "Ayuda",
+    "email": {
+      "label": "Envío por correo",
+      "on": "Activado",
+      "off": "Desactivado",
+      "hint": "Los mensajes de este chat también se envían por correo a los miembros que quieren recibir las novedades por correo. Por eso este chat no está cifrado de extremo a extremo.",
+      "enableConfirm": "Los mensajes de este chat también se enviarán por correo a todos los miembros que quieren recibir las novedades por correo. Los correos no están cifrados de extremo a extremo y permanecen en el buzón aunque un mensaje se borre aquí. Todos los miembros verán que lo has activado. ¿Lo quieres?",
+      "disableConfirm": "¿Quieres desactivar el envío por correo para este chat?"
+    }
   },
   "mute": {
     "tile": "Silenciar",

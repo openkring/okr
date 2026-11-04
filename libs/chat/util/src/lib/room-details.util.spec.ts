@@ -112,6 +112,20 @@ describe('archive', () => {
   });
 });
 
+describe('emailDelivery', () => {
+  it('follows spec 1.139 §3', () => {
+    expect(sections('dm').emailDelivery).toBe(true);
+    expect(sections('adhoc').emailDelivery).toBe(true);
+    expect(sections('group').emailDelivery).toBe(false);
+    expect(sections('group', { isGroupAdmin: true }).emailDelivery).toBe(true);
+    expect(sections('group', { isPrivileged: true }).emailDelivery).toBe(true);
+    expect(sections('notes', { isAdmin: true }).emailDelivery).toBe(false);
+    expect(sections('support', { isAdmin: true }).emailDelivery).toBe(false);
+    expect(sections('other', { isAdmin: true }).emailDelivery).toBe(false);
+    expect(sections('dm', { isKiosk: true }).emailDelivery).toBe(false);
+  });
+});
+
 describe('pinForAll', () => {
   it('is open to everyone in a DM or ad-hoc chat', () => {
     expect(sections('dm').pinForAll).toBe(true);

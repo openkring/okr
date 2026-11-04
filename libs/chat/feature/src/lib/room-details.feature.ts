@@ -7,8 +7,8 @@ import { AlertService } from '@okr/shared-util-angular';
 import type { MatrixChatService, MatrixRoomPrefsService } from '@okr/chat-data-access';
 import type { GroupService } from '@okr/subject-group-data-access';
 import {
-  ActivePin, aliasLocalpartOf, getRoomDetailsSections, isProtectedRoomAlias, isRoomMuted, MatrixChatI18n, muteUntil,
-  RoomDetailsCtx, RoomDetailsSections, RoomKind, tenantsAfterArchive,
+  ActivePin, aliasLocalpartOf, getRoomDetailsSections, isEmailDeliveryOn, isProtectedRoomAlias, isRoomMuted, MatrixChatI18n, muteUntil,
+  OKR_EMAIL_DELIVERY_EVENT, RoomDetailsCtx, RoomDetailsSections, RoomKind, tenantsAfterArchive,
 } from '@okr/chat-util';
 import { isAdminMember } from '@okr/subject-group-util';
 
@@ -80,6 +80,15 @@ export function roomDetailsComputeds(s: RoomDetailsComputedDeps) {
       isProtectedRoomAlias(aliasLocalpartOf(room.topic), tenantId));
   });
 
+  /** Whether the open room also goes out by email (spec 1.139); room state, so it follows every member's view. */
+  const isCurrentRoomEmailDelivered = computed((): boolean => {
+    const room = s.currentRoom();
+    if (!room) return false;
+    s.roomStateVersionResource.value();
+    const state = s.matrixService.getRoom(room.roomId)?.currentState.getStateEvents(OKR_EMAIL_DELIVERY_EVENT, '');
+    return isEmailDeliveryOn(state?.getContent());
+  });
+
   /** Joined members of the open room, from the Matrix room (self first, then by name). */
   const currentRoomMembers = computed((): RoomDetailsMember[] => {
     const room = s.currentRoom();
@@ -101,7 +110,7 @@ export function roomDetailsComputeds(s: RoomDetailsComputedDeps) {
       .sort((a, b) => Number(b.isSelf) - Number(a.isSelf) || a.name.localeCompare(b.name));
   });
 
-  return { currentRoomDetailsCtx, currentRoomDetails, isCurrentRoomMuted, currentRoomMembers };
+  return { currentRoomDetailsCtx, currentRoomDetails, isCurrentRoomMuted, isCurrentRoomEmailDelivered, currentRoomMembers };
 }
 
 /** What the details methods use from the store. */
@@ -184,6 +193,25 @@ export function roomDetailsMethods(store: RoomDetailsMethodDeps) {
       } catch (error) {
         console.error('MatrixChatStore.pickRoomMute: failed:', error);
         await store.alertService.showToast(store.i18n.details_error());
+      }
+    },
+
+    /**
+     * Email delivery on or off (spec 1.139 §3). Switching on states openly what happens to the
+     * messages and needs the confirmation (E2EE spec §4.3). True when it changed.
+     */
+    async setCurrentRoomEmailDelivery(enabled: boolean): Promise<boolean> {
+      const roomId = store.currentRoomId();
+      if (!roomId || !store.currentRoomDetails()?.emailDelivery) return false;
+      const question = enabled ? store.i18n.details_email_enable_confirm() : store.i18n.details_email_disable_confirm();
+      if (!await store.alertService.confirm(question, true)) return false;
+      try {
+        await store.matrixService.setChatEmailDelivery(roomId, enabled);
+        return true;
+      } catch (error) {
+        console.error('MatrixChatStore.setCurrentRoomEmailDelivery: failed:', error);
+        await store.alertService.showToast(store.i18n.details_error());
+        return false;
       }
     },
 

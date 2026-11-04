@@ -121,6 +121,7 @@ export const PROCESSOR_CATALOGUE: readonly CatalogueEntry[] = [
     purposes: [
       'Versand von Transaktions-E-Mails (Registrierung, Passwort-Zurücksetzung samt Benutzername, Benachrichtigungen)',
       'Versand von Dokumenten als E-Mail-Anhang',
+      'Zustellung von Chat-Nachrichten per E-Mail in Chats, die das eingeschaltet haben',
     ],
     // Der Benutzername (loginId, spec 1.71) steht in der Passwort-Zurücksetzen-Mail und zählt zur
     // Klasse 'identity'; eine eigene DataClass gibt es nicht.
@@ -136,9 +137,9 @@ export const PROCESSOR_CATALOGUE: readonly CatalogueEntry[] = [
     // E-Mail ist nicht abwählbar: ohne sie gibt es keine Registrierung und kein
     // Passwort-Zurücksetzen.
     alwaysOn: true,
-    cloudFunctions: ['auth/sendEmail', 'esign/esign-send-by-email', 'publicApi/contact'],
+    cloudFunctions: ['auth/sendEmail', 'esign/esign-send-by-email', 'publicApi/contact', 'matrix-simple/chat-email.ts'],
     memberNoticeDe:
-      'Bereits versandte E-Mails lassen sich nicht zurückholen. Die Zustellprotokolle beim Versanddienst löschen sich nach dessen eigener Frist.',
+      'Bereits versandte E-Mails lassen sich nicht zurückholen, auch nicht, wenn eine Chat-Nachricht später gelöscht wird. Die Zustellprotokolle beim Versanddienst löschen sich nach dessen eigener Frist.',
   },
   {
     key: 'sentry',

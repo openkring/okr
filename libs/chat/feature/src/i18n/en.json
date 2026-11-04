@@ -691,7 +691,15 @@
     "group": "Go to the group",
     "error": "That did not work. Please try again.",
     "pins": "Pinned ({n})",
-    "help": "Help"
+    "help": "Help",
+    "email": {
+      "label": "Email delivery",
+      "on": "On",
+      "off": "Off",
+      "hint": "Messages in this chat also go by email to members who want news by email. That is why this chat is not end-to-end encrypted.",
+      "enableConfirm": "Messages in this chat will then also go by email to all members who want news by email. Emails are not end-to-end encrypted and stay in the mailbox even if a message is deleted here. All members will see that you switched this on. Do you want that?",
+      "disableConfirm": "Do you want to switch off email delivery for this chat?"
+    }
   },
   "mute": {
     "tile": "Mute",

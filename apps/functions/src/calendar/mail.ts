@@ -133,6 +133,26 @@ export function commentEmail(p: EventSummary & { authorName: string; comment: st
   return { subject, html };
 }
 
+const CHAT_TIME = new Intl.DateTimeFormat('de-CH', { timeZone: 'Europe/Zurich', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+
+/** The digest of a chat (spec 1.139 §5). One-way: the button leads to the chat, replies go nowhere. */
+export function chatDigestEmail(p: Brand & {
+  chatName: string; chatUrl: string; more: number; messages: { senderName: string; ts: number; text: string }[];
+}): { subject: string; html: string } {
+  const subject = `Neue Nachrichten in ${p.chatName}`;
+  const lines = p.messages.map((m) =>
+    `<p style="margin:12px 0;padding:0 0 0 12px;border-left:3px solid #d0d7de;">`
+    + `<strong>${escapeHtml(m.senderName)}</strong> <span style="color:#57606a;">${escapeHtml(CHAT_TIME.format(m.ts))}</span><br>`
+    + `${paragraphText(m.text)}</p>`).join('');
+  const more = p.more > 0 ? `<p style="color:#57606a;">… und ${p.more} weitere</p>` : '';
+  const html = layout(p,
+    `<p>Neue Nachrichten in <strong>${escapeHtml(p.chatName)}</strong>:</p>`
+    + more + lines
+    + `<p>${button(p.chatUrl, 'Im Chat öffnen', primaryStyle(p))}</p>`
+    + `<p style="color:#57606a;font-size:13px;">Antworten auf diese E-Mail kommen nicht im Chat an. Ob du Neuigkeiten per E-Mail erhältst, stellst du in deinem Profil ein.</p>`);
+  return { subject, html };
+}
+
 const CURRENT_ANSWER: Record<string, string> = {
   accepted: 'Du hast bereits zugesagt. Du kannst deine Antwort hier ändern.',
   declined: 'Du hast bereits abgesagt. Du kannst deine Antwort hier ändern.',

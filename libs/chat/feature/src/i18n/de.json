@@ -691,7 +691,15 @@
     "group": "Zur Gruppe",
     "error": "Das hat nicht geklappt. Versuche es bitte noch einmal.",
     "pins": "Angeheftet ({n})",
-    "help": "Hilfe"
+    "help": "Hilfe",
+    "email": {
+      "label": "E-Mail-Zustellung",
+      "on": "Ein",
+      "off": "Aus",
+      "hint": "Nachrichten dieses Chats gehen auch per E-Mail an Mitglieder, die Neuigkeiten per E-Mail erhalten möchten. Dieser Chat ist deshalb nicht Ende-zu-Ende-verschlüsselt.",
+      "enableConfirm": "Nachrichten dieses Chats gehen dann auch per E-Mail an alle Mitglieder, die Neuigkeiten per E-Mail erhalten möchten. E-Mails sind nicht Ende-zu-Ende-verschlüsselt und bleiben im Postfach, auch wenn eine Nachricht hier gelöscht wird. Alle Mitglieder sehen, dass du das eingeschaltet hast. Möchtest du das?",
+      "disableConfirm": "Möchtest du die E-Mail-Zustellung für diesen Chat ausschalten?"
+    }
   },
   "mute": {
     "tile": "Stumm",

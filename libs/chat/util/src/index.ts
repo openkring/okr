@@ -30,6 +30,7 @@ export * from './lib/pin.util';
 export * from './lib/mute.util';
 export * from './lib/room-mute.util';
 export * from './lib/forward.util';
+export * from './lib/email-delivery.util';
 export * from './lib/room-details.util';
 export * from './lib/message-info.util';
 export * from './lib/message-edit.validations';

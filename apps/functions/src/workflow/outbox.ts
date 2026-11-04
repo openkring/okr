@@ -40,6 +40,7 @@ export interface OutboxDoc {
   day: string;                       // StoreDate — the per-rule daily cap counts on this
   state?: 'pending' | 'sent' | 'failed';
   error?: string;
+  /** `transient: '1'`: the `body` is blanked once the row is handled (chat content, TOC 1.139). */
   payload: Record<string, string>;
 }
 
@@ -165,6 +166,11 @@ export async function dispatch(doc: OutboxDoc): Promise<void> {
   }
 }
 
+/** The update that blanks a transient body; the row stays as the record of the send. */
+export function blankedBody(doc: OutboxDoc): Record<string, string> {
+  return doc.payload['transient'] ? { 'payload.body': '' } : {};
+}
+
 /**
  * Perform one queued action.
  *
@@ -188,11 +194,11 @@ export const onWorkflowOutbox = onDocumentCreated(
 
     try {
       await dispatch(doc);
-      await snap.ref.update({ state: 'sent' });
+      await snap.ref.update({ state: 'sent', ...blankedBody(doc) });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       logger.error(`${CF_NAME}: ${doc.kind} failed for rule ${doc.ruleKey}: ${message}`);
-      await snap.ref.update({ state: 'failed', error: message });
+      await snap.ref.update({ state: 'failed', error: message, ...blankedBody(doc) });
       // Nothing in the app reads `workflow-outbox`, so the failed row alone is invisible. The
       // engine's own rejections land in the activity log; the ones that depend on live Matrix
       // or mail state fail HERE, and they are exactly the ones an admin has to hear about —

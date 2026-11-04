@@ -116,13 +116,24 @@ export function groupKeyOfRoomAlias(canonicalAlias: string | undefined, hostname
   return key && groupRoomAliasLocalpart(key) === match[1] ? key : undefined;
 }
 
-function pinKindOfGroup(kind: unknown): PinRoomKind {
+export function pinKindOfGroup(kind: unknown): PinRoomKind {
   switch (kind ?? 'group') {
     case 'chat': return 'adhoc';
     case 'pinboard': return 'pinboard';
     case 'group': return 'group';
     default: return 'other';
   }
+}
+
+/** The group document that owns a room, with its `okey`: by `matrixRoomId`, else by the canonical alias. */
+export async function groupOfRoom(roomId: string, adminToken: string): Promise<Record<string, unknown> | undefined> {
+  const db = getFirestore();
+  const groups = await db.collection('groups').where('matrixRoomId', '==', roomId).limit(1).get();
+  if (!groups.empty) return { ...groups.docs[0].data(), okey: groups.docs[0].id };
+  // No matrixRoomId on the group doc (older rooms): fall back to the canonical alias, as the client does.
+  const aliasKey = groupKeyOfRoomAlias((await getRoomSummary(roomId, adminToken))?.canonicalAlias, serverHostname());
+  const doc = aliasKey ? await db.collection('groups').doc(aliasKey).get() : undefined;
+  return doc?.exists ? { ...doc.data(), okey: doc.id } : undefined;
 }
 
 function sameStrings(a: string[], b: string[]): boolean {
@@ -182,15 +193,7 @@ export async function handleSetChatPins(request: CallableRequest<any>): Promise<
 
   let mayPin = false;
   if (op !== 'cleanup') {
-    const db = getFirestore();
-    const groups = await db.collection('groups').where('matrixRoomId', '==', room).limit(1).get();
-    let group = groups.empty ? undefined : groups.docs[0].data();
-    if (!group) {
-      // No matrixRoomId on the group doc (older rooms): fall back to the canonical alias, as the client does.
-      const aliasKey = groupKeyOfRoomAlias((await getRoomSummary(room, adminToken))?.canonicalAlias, serverHostname());
-      const doc = aliasKey ? await db.collection('groups').doc(aliasKey).get() : undefined;
-      group = doc?.exists ? doc.data() : undefined;
-    }
+    const group = await groupOfRoom(room, adminToken);
     const kind = group ? pinKindOfGroup(group['kind']) : 'other';
     const isGroupAdmin = Array.isArray(group?.['admins']) &&
       (group['admins'] as { key?: string }[]).some((a) => a?.key === personKey);

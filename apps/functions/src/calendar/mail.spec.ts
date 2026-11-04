@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { answerPage, answerResultPage, brandColorOf, commentEmail, DEFAULT_BRAND_COLOR, escapeHtml, eventWhen, invitationEmail, textColorOn } from './mail';
+import { answerPage, answerResultPage, brandColorOf, chatDigestEmail, commentEmail, DEFAULT_BRAND_COLOR, escapeHtml, eventWhen, invitationEmail, textColorOn } from './mail';
 
 const EVIL = '<script>alert("x")</script> & co';
 const base = { appName: 'Seeclub', brandColor: '#009D53', logoUrl: 'https://img.x/logo.png?w=96&fm=png', eventName: EVIL, when: '01.10.2026, 11:00', location: EVIL };
@@ -61,6 +61,25 @@ describe('invitationEmail', () => {
   });
   it('keeps line breaks of the note', () => expect(mail.html).toContain('<br>zweite Zeile'));
   it('puts the event into the subject, unescaped (subject is plain text)', () => expect(mail.subject).toBe(`Einladung: ${EVIL}, 01.10.2026, 11:00`));
+});
+
+describe('chatDigestEmail', () => {
+  const mail = chatDigestEmail({
+    ...base, chatName: EVIL, chatUrl: 'https://app.x/private/chat?selectedRoom=r', more: 2,
+    messages: [{ senderName: EVIL, ts: Date.UTC(2026, 10, 4, 12, 30), text: `${EVIL}\nzweite Zeile` }],
+  });
+
+  it('escapes every piece of chat text', () => {
+    expect(mail.html).not.toContain(EVIL);
+    expect(mail.subject).toContain('Neue Nachrichten in');
+  });
+
+  it('shows time, line breaks, the remainder and the link', () => {
+    expect(mail.html).toContain('04.11., 13:30');
+    expect(mail.html).toContain('<br>zweite Zeile');
+    expect(mail.html).toContain('… und 2 weitere');
+    expect(mail.html).toContain('Im Chat öffnen');
+  });
 });
 
 describe('commentEmail', () => {

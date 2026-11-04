@@ -19,6 +19,7 @@
  *  - chat-reminders.ts  sendChatReminders: 5-minute sweep, bot reply for due chat reminders (1.104)
  *  - pinboard.ts        Pinnwand (a group document with kind: 'pinboard')
  *  - room-assignment.ts manual tenant assignment of a room the backfill cannot derive
+ *  - chat-email.ts      setChatEmailDelivery + sendChatEmailDigests: chats delivered by email (1.139)
  *  - chat-pins.ts       setChatPins: shared («Für alle») pins written by the bot (1.109)
  */
 
@@ -33,3 +34,4 @@ export * from './chat-reminders';
 export * from './pinboard';
 export * from './room-assignment';
 export * from './chat-pins';
+export * from './chat-email';

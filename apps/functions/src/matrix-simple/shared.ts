@@ -1216,6 +1216,19 @@ export async function sendBotReply(
   throw isTerminalMatrix(resp.status, text) ? new MatrixTerminalError(msg) : new Error(msg);
 }
 
+/** Posts an `m.notice` into a room as the admin-token account; `txnId` as in {@link sendBotReply}. */
+export async function sendBotNotice(roomId: string, body: string, txnId: string, adminToken: string): Promise<void> {
+  const resp = await fetch(
+    `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/send/m.room.message/${encodeURIComponent(txnId)}`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ msgtype: 'm.notice', body }),
+    },
+  );
+  if (!resp.ok) throw new Error(`sendBotNotice ${roomId} → ${resp.status}: ${await resp.text()}`);
+}
+
 /**
  * Fetches a live (not 404, not redacted) event; undefined when it is gone. Other failures throw —
  * a 5xx must not be read as «gone», or a transient outage would cancel the reminder.

@@ -131,6 +131,20 @@ import type { RoomDetailsMember } from './room-details.feature';
             }
           }
 
+          <!-- Email delivery (spec 1.139) -->
+          @if (sections.emailDelivery || emailDelivered()) {
+            <ion-list lines="full">
+              @if (sections.emailDelivery) {
+                <ion-item button detail="false" [disabled]="busy()" (click)="toggleEmailDelivery()">
+                  <ion-icon slot="start" src="{{ 'email' | svgIcon }}" />
+                  <ion-label>{{ i18n.details_email_label() }}</ion-label>
+                  <ion-note slot="end">{{ emailDelivered() ? i18n.details_email_on() : i18n.details_email_off() }}</ion-note>
+                </ion-item>
+              }
+            </ion-list>
+            @if (emailDelivered()) { <ion-note class="text">{{ i18n.details_email_hint() }}</ion-note> }
+          }
+
           <!-- Members -->
           @if (sections.members !== 'none') {
             <ion-list lines="full">
@@ -226,6 +240,8 @@ export class ChatRoomDetailsModal {
     return [...joined, ...extra].filter((m) => !this.removed().has(m.personKey));
   });
 
+  protected readonly emailDelivered = computed(() => this.store.isCurrentRoomEmailDelivered());
+
   /** DM: only the counterpart; otherwise all members. */
   protected readonly listedMembers = computed((): RoomDetailsMember[] =>
     this.sections()?.members === 'counterpart' ? this.members().filter((m) => !m.isSelf) : this.members());
@@ -275,6 +291,16 @@ export class ChatRoomDetailsModal {
   protected async mute(): Promise<void> {
     const roomId = this.room()?.roomId;
     if (roomId) await this.store.pickRoomMute(roomId);
+  }
+
+  protected async toggleEmailDelivery(): Promise<void> {
+    if (this.busy()) return;
+    this.busy.set(true);
+    try {
+      await this.store.setCurrentRoomEmailDelivery(!this.emailDelivered());
+    } finally {
+      this.busy.set(false);
+    }
   }
 
   protected async openPins(): Promise<void> {

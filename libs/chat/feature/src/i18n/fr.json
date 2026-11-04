@@ -691,7 +691,15 @@
     "group": "Vers le groupe",
     "error": "Cela n'a pas fonctionné. Essaie encore une fois.",
     "pins": "Épinglés ({n})",
-    "help": "Aide"
+    "help": "Aide",
+    "email": {
+      "label": "Envoi par e-mail",
+      "on": "Activé",
+      "off": "Désactivé",
+      "hint": "Les messages de ce chat sont aussi envoyés par e-mail aux membres qui souhaitent recevoir les nouvelles par e-mail. C’est pourquoi ce chat n’est pas chiffré de bout en bout.",
+      "enableConfirm": "Les messages de ce chat seront alors aussi envoyés par e-mail à tous les membres qui souhaitent recevoir les nouvelles par e-mail. Les e-mails ne sont pas chiffrés de bout en bout et restent dans la boîte mail, même si un message est supprimé ici. Tous les membres verront que tu l’as activé. Le veux-tu ?",
+      "disableConfirm": "Veux-tu désactiver l’envoi par e-mail pour ce chat ?"
+    }
   },
   "mute": {
     "tile": "Muet",

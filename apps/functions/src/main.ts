@@ -152,6 +152,7 @@ export const addAdhocChatMembers = MatrixSimple.addAdhocChatMembers;
 // Chat-Aktionen (TOC 1.109): Mitglied aus Ad-hoc-Chat entfernen, «Für alle» anheften
 export const removeAdhocChatMember = MatrixSimple.removeAdhocChatMember;
 export const setChatPins = MatrixSimple.setChatPins;
+export const sendChatEmailDigests = MatrixSimple.sendChatEmailDigests;
 // onGroupDocWritten: groups/{groupId}, one trigger fanning out to the seven former group triggers (replication, adminKeys, name, postPolicy, chatMode, chatCleanup, pinboard; 1.118 A3)
 export const onGroupDocWritten = Group.onGroupDocWritten;
 // onCourseDocWritten: courses/{courseId}, mirrors trainers[]/responsiblePersons[] into trainerKeys/responsibleKeys for firestore.rules (spec 1.132 §6.1)
