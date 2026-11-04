@@ -1,6 +1,6 @@
 import type { EventInput } from '@fullcalendar/core';
 
-import { Attendee, AvatarInfo, CalEventModel, InvitationState } from '@okr/shared-models';
+import { Attendee, AvatarInfo, CalendarModel, CalEventModel, InvitationState } from '@okr/shared-models';
 import { addTime, applyInvitationAnswer, convertDateFormatToString, DateFormat, getEventLocationName, getIsoDateTime, isCaleventAttendanceClosed, isPastDate, isType, toAttendeeState } from '@okr/shared-util-core';
 
 export { applyInvitationAnswer, toAttendeeState };
@@ -367,6 +367,20 @@ export function bestScheduleColumn(counts: number[]): number {
 }
 
 /** Deep link that reopens the poll: the calevent list route plus a `poll` query param. */
+/**
+ * The key of the group that owns an event's calendar, '' when none does. The first group calendar
+ * in `calendars` counts.
+ * @param eventCalendars `calevent.calendars`
+ * @param calendars every calendar of the tenant
+ */
+export function getCaleventGroupKey(eventCalendars: string[] | undefined, calendars: Pick<CalendarModel, 'okey' | 'owner'>[]): string {
+  for (const calendarKey of eventCalendars ?? []) {
+    const owner = calendars.find(calendar => calendar.okey === calendarKey)?.owner;
+    if (owner?.startsWith('group.')) return owner.substring('group.'.length);
+  }
+  return '';
+}
+
 export function buildSchedulePollLink(origin: string, calendarKey: string, seriesId: string): string {
   return `${origin.replace(/\/$/, '')}/calevent/${calendarKey}/c-calevents?poll=${seriesId}`;
 }

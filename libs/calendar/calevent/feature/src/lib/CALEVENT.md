@@ -116,6 +116,13 @@ Every event is open; who sees it follows from the reach of its calendar (see
 also writes an `Attendee { state: 'invited' }`, so the guest appears in the same list, unanswered.
 Invitations are per occurrence and never series-wide.
 
+## Group chat link
+
+An event of a group calendar links to the group's chat: «Gruppenchat öffnen» in the action sheet and
+the view modal (spec `1.138`). The rule is `canOpenGroupChat`, which rests on `canAccessGroup`, the
+gate in front of the chat anyway. Nothing is ever sent from a comment into a chat. An ad-hoc chat for
+the participants was dropped: if people want one, they open a group.
+
 ## Schedule poll (Terminumfrage) — no invitations
 
 **A poll never writes to `invitations`.** Its answers live in each proposed calevent's `attendees`,

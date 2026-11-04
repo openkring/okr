@@ -179,6 +179,17 @@ function storeToView(d: string): string {
         </ion-card>
       }
 
+      @if(showGroupChat()) {
+        <ion-card>
+          <ion-card-content>
+            <ion-item lines="none" button="true" [detail]="true" (click)="openGroupChat()">
+              <ion-icon slot="start" src="{{'chatbubbles' | svgIcon}}" />
+              <ion-label>{{ i18n.group_chat_open() }}</ion-label>
+            </ion-item>
+          </ion-card-content>
+        </ion-card>
+      }
+
     </ion-content>
   `
 })
@@ -191,6 +202,8 @@ export class CalEventViewModal {
   public calevent = input.required<CalEventModel>();
   public periodicities = input.required<CategoryListModel>();
   public locale = input.required<string>();
+  /** Set by the store, which also navigates: this modal must not import it. */
+  public showGroupChat = input(false);
 
   protected readonly parentKey = computed(() => `${CalEventModelName}.${this.calevent().okey}`);
 
@@ -279,6 +292,10 @@ export class CalEventViewModal {
 
   public async cancel(): Promise<void> {
     await dismissOverlay(this.modalController, null, 'cancel');
+  }
+
+  protected async openGroupChat(): Promise<void> {
+    await dismissOverlay(this.modalController, null, 'groupChat');
   }
 
   public async save(): Promise<void> {

@@ -82,6 +82,9 @@
     "all": "All",
     "showArchived": "Show archived"
   },
+  "groupChat": {
+    "open": "Open group chat"
+  },
   "quickEntry": {
     "label": "Quick entry",
     "placeholder": "Name[!!Location][//Date][@Person]",

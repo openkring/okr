@@ -18,7 +18,7 @@ import { GroupService } from '@okr/subject-group-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { createGroupMembership } from '@okr/relationship-membership-util';
-import { filterAccessibleGroups, findConflictingGroups, getUniqueGroupKey, groupHygieneFindings, getVisibleGroupKeys, GROUP_I18N_KEYS, withCreatorAsAdmin } from '@okr/subject-group-util';
+import { filterAccessibleGroups, findConflictingGroups, getUniqueGroupKey, groupChatRoomParam, groupHygieneFindings, getVisibleGroupKeys, GROUP_I18N_KEYS, withCreatorAsAdmin } from '@okr/subject-group-util';
 
 import { GroupEditModal } from './group-edit.modal';
 
@@ -218,7 +218,7 @@ export const GroupStore = signalStore(
      */
     async openSupportChat(groupKey = SUPPORT_GROUP_KEY): Promise<void> {
       const group = store.appStore.getGroup(groupKey);
-      const selectedRoom = group ? (group.chatMode === 'ask' ? groupKey : (group.matrixRoomId || groupKey)) : undefined;
+      const selectedRoom = group ? (group.chatMode === 'ask' ? groupKey : groupChatRoomParam(group)) : undefined;
       await navigateByUrl(store.router, '/private/chat/c-contentpage', selectedRoom ? { selectedRoom } : {});
     },
 

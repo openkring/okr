@@ -386,6 +386,7 @@ export const CALEVENT_I18N_KEYS = {
 
   responsible:                    PFX + 'responsible.label',
   responsible_add:                PFX + 'responsible.add',
+  group_chat_open:                PFX + 'groupChat.open',
   organiser_contact:              PFX + 'responsible.organiser.contact',
   // header of the contact modal; on narrow screens only the avatar + name are shown
   organiser_title:                PFX + 'responsible.organiser.title',

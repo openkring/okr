@@ -11,8 +11,9 @@ import { from, firstValueFrom, map, of } from 'rxjs';
 
 import { FirestoreService, ChatStatusService } from '@okr/shared-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
-import { Attendee, AvatarInfo, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CalEventModelName, CategoryListModel, CourseModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
+import { Attendee, AvatarInfo, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CalEventModelName, CategoryListModel, CourseModel, GroupModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
 import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getArchiveInclusiveQuery, getFullName, getSystemQuery, getTodayStr, fill, isCalendarPublic, isAfterDate, isAfterOrEqualDate, isInRollingWindow, nameMatches, pad, prettyFormatDate, publicAppOrigin, removeKeyFromOkrModel, warn, YEAR_ROLLING_WINDOW, chatBlockedAlertMessage, isChatBlockedError, hasRole } from '@okr/shared-util-core';
+import { canOpenGroupChat, groupChatRoomParam } from '@okr/subject-group-util';
 import { confirm, copyToClipboardDeferred, error, lazyService, navigateByUrl, notify, okrPrompt, showToast } from '@okr/shared-util-angular';
 import { InvitationService } from '@okr/relationship-invitation-data-access';
 import type { InvitePersonsFormData, InvitePersonsI18n } from '@okr/relationship-invitation-util';
@@ -26,7 +27,7 @@ import { LocationService } from '@okr/location-data-access';
 import { CalEventService } from '@okr/calendar-calevent-data-access';
 import { AliasMintService } from '@okr/system-alias-data-access';
 import { SeenService } from '@okr/user-data-access';
-import { addInvitedAttendee, applyInvitationAnswer, courseKeyChanged, courseKeysOf, lockedCoursesOf, seriesPlanCourseKeys, toAttendeeState, CALEVENT_I18N_KEYS, resetActivity, resetAttendance, confirmedOccurrences, seenKeyFor, toSeenCounts, unseenActivityFor, findConflictingCalEvents, duplicateEventFindings, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, isAttendanceClosed, getSeriesUpdateFields, isCalEvent, isCaleventFull, isCaleventInView, isPersonalCalendarName, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calendar-calevent-util';
+import { addInvitedAttendee, applyInvitationAnswer, courseKeyChanged, courseKeysOf, lockedCoursesOf, seriesPlanCourseKeys, toAttendeeState, CALEVENT_I18N_KEYS, resetActivity, resetAttendance, confirmedOccurrences, seenKeyFor, toSeenCounts, unseenActivityFor, findConflictingCalEvents, duplicateEventFindings, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventGroupKey, getCaleventIndex, isAttendanceClosed, getSeriesUpdateFields, isCalEvent, isCaleventFull, isCaleventInView, isPersonalCalendarName, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calendar-calevent-util';
 import { RegressionSelectionModal, showCalEventInfo } from '@okr/calendar-calevent-ui';
 import { createComment } from '@okr/comment-util';
 import { openReport } from '@okr/shared-ui';
@@ -977,10 +978,38 @@ export const CalEventStore = signalStore(
           componentProps: {
             calevent,
             periodicities: this.getPeriodicities(),
-            locale: this.getLocale()
+            locale: this.getLocale(),
+            showGroupChat: !!this.chatGroupOf(calevent),
           }
         });
         modal.present();
+        // not awaited: a caller of view() goes on while the modal is open
+        modal.onDidDismiss().then(({ role }) => role === 'groupChat' ? this.openGroupChat(calevent) : undefined);
+      },
+
+      /**
+       * The group whose chat an event links to, undefined for no link (spec 1.138 §3).
+       * `enabledFeatures` undefined means a legacy tenant, which has every block.
+       */
+      chatGroupOf(calevent: CalEventModel): GroupModel | undefined {
+        const enabled = store.appStore.appConfig().enabledFeatures;
+        if (enabled && !enabled.includes('chat')) return undefined;
+        const groupKey = getCaleventGroupKey(calevent.calendars, store.calendarsResource.value() ?? []);
+        if (!groupKey) return undefined;
+        const group = store.appStore.getGroup(groupKey);
+        const isMember = (store.membershipsForCurrentUserResource.value() ?? []).includes(`group.${groupKey}`);
+        return canOpenGroupChat(group, isMember, store.currentUser()) ? group : undefined;
+      },
+
+      async openGroupChat(calevent: CalEventModel): Promise<void> {
+        const group = this.chatGroupOf(calevent);
+        if (!group) return;
+        // 1.107: while the chat is blocked, show the admin's message instead of trying
+        if (this.isChatBlocked()) {
+          await this.showChatBlockedNotice();
+          return;
+        }
+        await navigateByUrl(store.router, '/private/chat/c-contentpage', { selectedRoom: groupChatRoomParam(group) });
       },
 
       async update(calevent: CalEventModel, readOnly = true): Promise<boolean> {

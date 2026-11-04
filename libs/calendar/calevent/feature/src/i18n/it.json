@@ -82,6 +82,9 @@
     "all": "Tutti",
     "showArchived": "Mostra archiviati"
   },
+  "groupChat": {
+    "open": "Apri la chat di gruppo"
+  },
   "quickEntry": {
     "label": "Inserimento rapido",
     "placeholder": "Nome[!!Luogo][//Data][@Persona]",

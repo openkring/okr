@@ -163,6 +163,28 @@ export function canAccessGroup(group: GroupModel, isMember: boolean, user: UserM
 }
 
 /**
+ * Whether an event of this group's calendar links to the group chat (spec 1.138 §3). The gate is
+ * `canAccessGroup`, the one in front of the chat anyway, so the link opens no new way in.
+ * An 'ask' group has one room per person, which is not the group's chat about the event.
+ * @param group the group that owns the event's calendar
+ * @param isMember whether the user holds an active membership in the group
+ * @param user the current user
+ */
+export function canOpenGroupChat(group: GroupModel | undefined, isMember: boolean, user: UserModel | undefined): boolean {
+  if (!group || group.isArchived) return false;
+  if (!(group.hasChat ?? true) || group.chatMode === 'ask') return false;
+  return canAccessGroup(group, isMember, user);
+}
+
+/**
+ * The `selectedRoom` param that opens a group's shared room. The persisted room id is a shortcut;
+ * with the group key the chat resolves the room through `requestGroupRoomAccess`.
+ */
+export function groupChatRoomParam(group: GroupModel): string {
+  return group.matrixRoomId || group.okey;
+}
+
+/**
  * The groups among `groups` that the user may see — `canAccessGroup` applied to a list.
  * @param groups the candidate groups (typically all groups of the tenant)
  * @param memberKeys okeys of the groups the user holds an active membership in

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { AVATAR_INFO_SHAPE, AvatarInfo, GroupModel, UserModel } from '@okr/shared-models';
-import { canAccessGroup, filterAccessibleGroups, findConflictingGroups, findDuplicateGroups, findGroupKeyIssues, getGroupKeyFromName, getMainContact, getUniqueGroupKey, getVisibilityRoles, getVisibleGroupKeys, shouldNotifyUser, stripAdminKeys, userMatchesGroupVisibility, withCreatorAsAdmin } from './group.util';
+import { canAccessGroup, canOpenGroupChat, filterAccessibleGroups, findConflictingGroups, findDuplicateGroups, findGroupKeyIssues, getGroupKeyFromName, getMainContact, getUniqueGroupKey, getVisibilityRoles, getVisibleGroupKeys, groupChatRoomParam, shouldNotifyUser, stripAdminKeys, userMatchesGroupVisibility, withCreatorAsAdmin } from './group.util';
 
 describe('Group Utils', () => {
   const tenantId = 'tenant-1';
@@ -343,5 +343,54 @@ describe('stripAdminKeys', () => {
     expect(stripped.name).toBe('Crew');
     expect(stripped.okey).toBe('g1');
     expect(group.adminKeys).toEqual(['P_Abc']);
+  });
+});
+
+describe('canOpenGroupChat', () => {
+  const user = (roles: object = {}): UserModel => ({ ...new UserModel('scs'), personKey: 'p1', roles } as UserModel);
+  const group = (patch: Partial<GroupModel> = {}): GroupModel => ({ ...new GroupModel('scs'), okey: 'g1', ...patch });
+
+  it('opens for a member', () => {
+    expect(canOpenGroupChat(group(), true, user())).toBe(true);
+  });
+
+  it('opens for an admin of the group without a membership', () => {
+    const admin = { key: 'p1' } as AvatarInfo;
+    expect(canOpenGroupChat(group({ admins: [admin] }), false, user())).toBe(true);
+  });
+
+  it('stays closed for somebody outside the group', () => {
+    expect(canOpenGroupChat(group(), false, user())).toBe(false);
+  });
+
+  it('stays closed without a group or a user', () => {
+    expect(canOpenGroupChat(undefined, true, user())).toBe(false);
+    expect(canOpenGroupChat(group(), true, undefined)).toBe(false);
+  });
+
+  it('stays closed for an archived group', () => {
+    expect(canOpenGroupChat(group({ isArchived: true }), true, user())).toBe(false);
+  });
+
+  it('stays closed for a group without a chat', () => {
+    expect(canOpenGroupChat(group({ hasChat: false }), true, user())).toBe(false);
+  });
+
+  it('reads an absent hasChat as on, like the group form', () => {
+    expect(canOpenGroupChat(group({ hasChat: undefined }), true, user())).toBe(true);
+  });
+
+  it('stays closed for an ask group, which has one room per person', () => {
+    expect(canOpenGroupChat(group({ chatMode: 'ask' }), true, user())).toBe(false);
+  });
+});
+
+describe('groupChatRoomParam', () => {
+  it('prefers the persisted room id', () => {
+    expect(groupChatRoomParam({ ...new GroupModel('scs'), okey: 'g1', matrixRoomId: '!room:hs' })).toBe('!room:hs');
+  });
+
+  it('falls back to the group key', () => {
+    expect(groupChatRoomParam({ ...new GroupModel('scs'), okey: 'g1', matrixRoomId: '' })).toBe('g1');
   });
 });

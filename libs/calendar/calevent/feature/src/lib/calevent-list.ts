@@ -1092,9 +1092,14 @@ export class CalEventList implements OnInit {
     }
 
     // organiser actions: one entry; the how (view/call/email/chat) is picked in a follow-up sheet
-    if (this.otherOrganisers(calevent).length > 0) {
-      actionSheetOptions.buttons.push(createActionSheetDivider());
+    const hasOrganisers = this.otherOrganisers(calevent).length > 0;
+    const hasGroupChat = !!this.store.chatGroupOf(calevent);
+    if (hasOrganisers || hasGroupChat) actionSheetOptions.buttons.push(createActionSheetDivider());
+    if (hasOrganisers) {
       actionSheetOptions.buttons.push(createActionSheetButton('organiser.contact', this.store.i18n.organiser_contact(), this.imgixBaseUrl, 'avatar-circle'));
+    }
+    if (hasGroupChat) {
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.groupChat', this.store.i18n.group_chat_open(), this.imgixBaseUrl, 'chatbubbles'));
     }
 
     actionSheetOptions.buttons.push(createActionSheetDivider());
@@ -1209,6 +1214,9 @@ export class CalEventList implements OnInit {
           break;
         case 'organiser.contact':
           await this.contactOrganiser(calEvent);
+          break;
+        case 'calevent.groupChat':
+          await this.store.openGroupChat(calEvent);
           break;
         case 'calevent.lock':
           await this.store.toggleCaleventLock(calEvent, true);

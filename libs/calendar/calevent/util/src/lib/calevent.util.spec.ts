@@ -1,7 +1,7 @@
 import { AttendanceEntry, Attendee, AvatarInfo, CalEventModel, InvitationState } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ATTENDANCE_FIELDS, confirmedOccurrences, resetAttendance, withoutAttendance, withoutCourseFields, addInvitedAttendee, removeInvitedAttendee, bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getCaleventIndex, getPublicCaleventIndex, getSeriesUpdateFields, isCaleventInView, isCalEvent, isFullDayEvent, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isCaleventFull, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, splitAttendees, toInvitationState } from './calevent.util';
+import { ATTENDANCE_FIELDS, confirmedOccurrences, resetAttendance, withoutAttendance, withoutCourseFields, addInvitedAttendee, removeInvitedAttendee, bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getCaleventGroupKey, getCaleventIndex, getPublicCaleventIndex, getSeriesUpdateFields, isCaleventInView, isCalEvent, isFullDayEvent, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isCaleventFull, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, splitAttendees, toInvitationState } from './calevent.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -500,6 +500,24 @@ describe('bestScheduleColumn', () => {
   });
   it('returns -1 for an empty poll', () => {
     expect(bestScheduleColumn([])).toBe(-1);
+  });
+});
+
+describe('getCaleventGroupKey', () => {
+  const calendars = [{ okey: 'club', owner: 'org.scs' }, { okey: 'crew', owner: 'group.g1' }, { okey: 'board', owner: 'group.g2' }];
+
+  it('finds the group that owns a calendar of the event', () => {
+    expect(getCaleventGroupKey(['club', 'crew'], calendars)).toBe('g1');
+  });
+
+  it('takes the first group calendar of the event', () => {
+    expect(getCaleventGroupKey(['board', 'crew'], calendars)).toBe('g2');
+  });
+
+  it('is empty without a group calendar', () => {
+    expect(getCaleventGroupKey(['club'], calendars)).toBe('');
+    expect(getCaleventGroupKey(['unknown'], calendars)).toBe('');
+    expect(getCaleventGroupKey(undefined, calendars)).toBe('');
   });
 });
 
