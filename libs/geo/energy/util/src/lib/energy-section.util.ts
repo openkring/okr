@@ -39,9 +39,11 @@ export function percentPoints(fraction: number | null | undefined): number | nul
   return typeof fraction === 'number' ? Math.round(fraction * 10000) / 100 : null;
 }
 
-/** «August 2025 bis Juli 2026». A row without a complete period falls back to its own date. */
+const STORE_DATE = /^\d{8}$/;
+
+/** «August 2025 bis Juli 2026». A row without a complete, well-formed period falls back to its own date: a malformed date must not throw inside the tiles. */
 function periodNote(from: string | null | undefined, until: string | null | undefined, date: string, i18n: EnergyI18n, lang: string): string {
-  return from && until
+  return from && until && STORE_DATE.test(from) && STORE_DATE.test(until)
     ? fill(i18n.tiles_periodRange(), { from: monthAndYear(from, lang), until: monthAndYear(until, lang) })
     : fill(i18n.tiles_asOf(), { date: viewDate(date) });
 }

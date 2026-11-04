@@ -112,6 +112,12 @@ describe('energyTiles', () => {
     expect(tile(f, 'tiles_consumption')?.note).toBe('Stand 31.10.2026');
   });
 
+  it('falls back to the row date instead of throwing when a stored period date is malformed', () => {
+    const f = figures([m('20261031', { elecConsumptionMwh: 100, elecPeriodFrom: 'garbage', elecPeriodUntil: '20260731' })]);
+    expect(() => energyTiles(f, i18n, 2026, 'de')).not.toThrow();
+    expect(tile(f, 'tiles_consumption')?.note).toBe('Stand 31.10.2026');
+  });
+
   it('does not show half a period', () => {
     const f = figures([m('20261031', { renewableProductionMwh: 100, productionPeriodUntil: '20251231' })]);
     expect(tile(f, 'tiles_production')?.note).toBe('Stand 31.10.2026');
