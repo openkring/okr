@@ -4,7 +4,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { randomUUID } from 'crypto';
 
 import { AppConfig, AppConfigCollection, UserModel } from '@okr/shared-models';
-import { isKioskOnly } from '@okr/shared-util-core';
+import { mayCreateFileTransfer } from './file-transfer-sender';
 import { checkAppCheckToken, checkAuthentication, getCallerTenantId } from '@okr/shared-util-functions';
 import { resolveFileTransferLimits } from '@okr/content-file-transfer-util';
 
@@ -47,7 +47,7 @@ export const requestFileTransferLimit = onCall<unknown, Promise<Record<string, n
     const user = (await db.collection('users').doc(request.auth?.uid ?? '').get()).data() as Partial<UserModel> | undefined;
     const personKey = user?.personKey;
     if (!personKey) throw new HttpsError('failed-precondition', 'User profile has no linked person.');
-    if (user.roles?.registered !== true || isKioskOnly(user as UserModel)) throw new HttpsError('permission-denied', 'Registered users only.');
+    if (!mayCreateFileTransfer(user)) throw new HttpsError('permission-denied', 'Registered users only.');
 
     const roomId = await resolveGroupRoom(`${tenantId}_support`, serverHostname(), matrixAdminToken.value());
     if (!roomId) throw new HttpsError('failed-precondition', 'noSupportRoom');
