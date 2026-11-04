@@ -140,12 +140,13 @@ function sparqlNumber(binding: Record<string, SparqlCell>, name: string): number
 /**
  * ElCom tariff rows (category H4, product standard) out of a SPARQL JSON result with the variables
  * `period`, `operatorName`, `total`, `energy`, `gridusage`, `charge`, `aidfee`. Oldest year first,
- * then by operator name, so the order does not depend on the endpoint. Throws on a non-numeric value:
- * a changed schema must not be written as zeros.
+ * then by operator name, so the order does not depend on the endpoint. Throws on a response without a
+ * `bindings` array (a maintenance page, an error document) and on a non-numeric value: a changed schema must
+ * not be written as zeros. Empty `bindings` returns []; the caller treats that as «no ElCom data».
  */
 export function tariffsFromSparql(response: unknown): EnergyTariff[] {
   const bindings = (response as { results?: { bindings?: unknown } } | null | undefined)?.results?.bindings;
-  if (!Array.isArray(bindings)) return [];
+  if (!Array.isArray(bindings)) throw new Error('ElCom: response has no results.bindings array');
   const tariffs = bindings.map((b: Record<string, SparqlCell>): EnergyTariff => ({
     year: sparqlNumber(b, 'period'),
     operatorName: String(b['operatorName']?.value ?? ''),
@@ -184,18 +185,19 @@ export function tenantsPerBfs(locations: CityLocation[]): Map<number, string[]> 
 
 /**
  * The tenant lists to write onto existing documents so they follow the locations on every run, not only on
- * the weekly refetch (spec §11: a second tenant with its own location must be able to read the shared document).
- * Only numbers whose list differs as a set are returned (order and duplicates do not count); a number without
- * an existing document is ignored, since it is about to be fetched and gets its tenants then.
+ * the weekly refetch (spec §11: a second tenant with its own location must be able to read the shared document,
+ * and a tenant that no longer has one must not). `wanted` is the tenant list per number that still has a
+ * location; an existing document whose number has no location left gets `[]`. Only documents whose list
+ * differs as a set are returned (order and duplicates do not count). A number without an existing document is
+ * ignored: it is about to be fetched and gets its tenants then. Documents are never deleted.
  */
 export function tenantsToSync(wanted: Map<number, string[]>, existing: Map<number, string[]>): Map<number, string[]> {
   const sync = new Map<number, string[]>();
-  for (const [bfsNr, tenants] of wanted) {
-    const current = existing.get(bfsNr);
-    if (current === undefined) continue;
-    const a = new Set(tenants);
+  for (const [bfsNr, current] of existing) {
+    const target = wanted.get(bfsNr) ?? [];
+    const a = new Set(target);
     const b = new Set(current);
-    if (a.size !== b.size || [...a].some((t) => !b.has(t))) sync.set(bfsNr, tenants);
+    if (a.size !== b.size || [...a].some((t) => !b.has(t))) sync.set(bfsNr, target);
   }
   return sync;
 }
@@ -213,16 +215,18 @@ export function isBlockedByStatus(location: CityLocation): boolean {
 }
 
 /**
- * The BFS numbers that need a download: ascending, each once, from locations that are not blocked by
- * their status. `fetchedAt` maps a number to the ISO timestamp of its document; a number with no entry,
- * an unreadable stamp or a stamp 7 days old or older is wanted. An unreadable stamp must mean «fetch»,
- * never «skip forever».
+ * The BFS numbers that need a download: ascending, each once. `fetchedAt` maps a number to the ISO timestamp
+ * of its document; a number with no entry, an unreadable stamp or a stamp 7 days old or older is wanted. An
+ * unreadable stamp must mean «fetch», never «skip forever». A location blocked by its status is left out on
+ * every day but Sunday (UTC), when it is tried again: Energie Reporter may publish a municipality late, and a
+ * status must not stick forever.
  */
 export function bfsNumbersToFetch(locations: CityLocation[], fetchedAt: Map<number, string>, now: Date): number[] {
   const wanted = new Set<number>();
+  const sundayRetry = now.getUTCDay() === 0;
   for (const location of locations) {
     const bfsNr = getBfsNr(location);
-    if (bfsNr === undefined || isBlockedByStatus(location)) continue;
+    if (bfsNr === undefined || (isBlockedByStatus(location) && !sundayRetry)) continue;
     const stamp = fetchedAt.get(bfsNr);
     const then = stamp === undefined ? Number.NaN : Date.parse(stamp);
     if (Number.isNaN(then) || now.getTime() - then >= REFETCH_AFTER_MS) wanted.add(bfsNr);
@@ -253,7 +257,7 @@ export interface EnergyPatchInput {
   now: Date;
   /** Energie Reporter: present only when the source succeeded and returned at least one month. */
   reporter?: { municipality: string; canton: string; months: EnergyMonth[] };
-  /** ElCom: present only when the source succeeded (an empty list is a valid answer). */
+  /** ElCom: present only when the source succeeded with at least one tariff. An empty list counts as no ElCom data. */
   tariffs?: EnergyTariff[];
 }
 
@@ -273,8 +277,9 @@ export function buildEnergyPatch(input: EnergyPatchInput): Record<string, unknow
     patch['months'] = months;
     patch['sourceDate'] = months[months.length - 1].date;
   }
-  if (input.tariffs) patch['tariffs'] = input.tariffs;
-  if (reporter && input.tariffs) patch['fetchedAt'] = input.now.toISOString();
+  const tariffs = input.tariffs && input.tariffs.length > 0 ? input.tariffs : undefined;
+  if (tariffs) patch['tariffs'] = tariffs;
+  if (reporter && tariffs) patch['fetchedAt'] = input.now.toISOString();
   return patch;
 }
 
@@ -316,7 +321,13 @@ export async function collectReporterRows(
     const cells = parseCsvLine(line);
     const bfsNr = Number(cells[bfsColumn]);
     if (!wanted.has(bfsNr) || failed.has(bfsNr)) continue;
-    const row = Object.fromEntries(header.map((name, i) => [name, cells[i] ?? '']));
+    if (cells.length !== header.length) {
+      // A short row would store a month of gaps, a long one (an unquoted comma) shifts every later figure.
+      failed.set(bfsNr, new Error(`Energie Reporter CSV: row of ${bfsNr} has ${cells.length} cells, the header ${header.length}`));
+      found.delete(bfsNr);
+      continue;
+    }
+    const row = Object.fromEntries(header.map((name, i) => [name, cells[i]]));
     try {
       const month = rowToMonth(row);
       const entry = found.get(bfsNr) ?? { municipality: '', canton: '', months: [] };

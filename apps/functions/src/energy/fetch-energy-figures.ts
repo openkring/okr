@@ -120,23 +120,25 @@ async function fillBfsNumbers(db: admin.firestore.Firestore, locations: CityDoc[
   }
 }
 
-/** Step 3: `fetchedAt` (ISO) and `tenants` of the existing documents. Only those two fields are read, the documents are large. */
+/**
+ * Step 3: `fetchedAt` (ISO) and `tenants` of all existing documents, not only those with a location, so the
+ * tenants of a municipality whose last location is gone can be emptied. Only those two fields are read, the
+ * documents are large.
+ */
 async function readExisting(
   db: admin.firestore.Firestore,
-  bfsNumbers: number[],
 ): Promise<{ fetchedAt: Map<number, string>; tenants: Map<number, string[]> }> {
   const fetchedAt = new Map<number, string>();
   const tenants = new Map<number, string[]>();
-  if (bfsNumbers.length === 0) return { fetchedAt, tenants };
-  const refs = bfsNumbers.map((nr) => db.collection(EnergyFiguresCollection).doc(String(nr)));
-  const snaps = await db.getAll(...refs, { fieldMask: ['fetchedAt', 'tenants'] });
-  snaps.forEach((snap, i) => {
-    if (!snap.exists) return;
-    const stamp = snap.get('fetchedAt');
-    if (typeof stamp === 'string' && stamp !== '') fetchedAt.set(bfsNumbers[i], stamp);
-    const list = snap.get('tenants');
-    tenants.set(bfsNumbers[i], Array.isArray(list) ? list.map(String) : []);
-  });
+  const snap = await db.collection(EnergyFiguresCollection).select('fetchedAt', 'tenants').get();
+  for (const doc of snap.docs) {
+    const bfsNr = Number(doc.id);
+    if (!Number.isInteger(bfsNr)) continue;
+    const stamp = doc.get('fetchedAt');
+    if (typeof stamp === 'string' && stamp !== '') fetchedAt.set(bfsNr, stamp);
+    const list = doc.get('tenants');
+    tenants.set(bfsNr, Array.isArray(list) ? list.map(String) : []);
+  }
   return { fetchedAt, tenants };
 }
 
@@ -168,12 +170,15 @@ async function readTariffs(bfsNr: number): Promise<EnergyTariff[]> {
     headers: { Accept: 'application/sparql-results+json', 'Content-Type': 'application/sparql-query' },
     timeout: 30_000,
   });
-  return tariffsFromSparql(data);
+  const tariffs = tariffsFromSparql(data);
+  // Empty bindings are also what a renamed dimension in the ElCom schema returns: never write them as «no tariffs».
+  if (tariffs.length === 0) throw new Error('ElCom returned no tariffs');
+  return tariffs;
 }
 
 /**
  * Nightly: municipal energy figures (spec 1.136). Fills missing BFS numbers of `city` locations from their
- * coordinates, then, for municipalities whose document is missing or 7 days old, downloads Energie Reporter
+ * coordinates, then, for municipalities whose document is missing or 7 days old (a status-blocked one is retried on Sundays), downloads Energie Reporter
  * and asks ElCom, and writes one `energy-figures` document per BFS number.
  *
  * Each municipality and each source fails alone. A failed source keeps its previous values and the other
@@ -186,19 +191,15 @@ export async function runEnergyFiguresFetch(): Promise<void> {
 
   const snap = await db.collection('locations').where('isArchived', '==', false).where('type', '==', 'city').get();
   const locations: CityDoc[] = snap.docs.map((d) => ({ ...(d.data() as CityDoc), okey: d.id }));
-  if (locations.length === 0) {
-    logger.info('energyFiguresFetch: no city locations');
-    return;
-  }
 
   await fillBfsNumbers(db, locations);
 
   const tenants = tenantsPerBfs(locations);
-  const existing = await readExisting(db, [...tenants.keys()]);
+  const existing = await readExisting(db);
   const fetchedAt = existing.fetchedAt;
 
-  // Tenants follow the locations on every run, also when nothing is fetched: a second tenant with its own
-  // location for a shared municipality must be able to read the document at once (spec §11).
+  // Tenants follow the locations on every run, also when nothing is fetched and also for a municipality whose
+  // last location is gone (its tenants become []): spec §11. Documents are never deleted.
   let tenantsSynced = 0;
   for (const [bfsNr, list] of tenantsToSync(tenants, existing.tenants)) {
     try {
@@ -208,6 +209,11 @@ export async function runEnergyFiguresFetch(): Promise<void> {
       logger.error(`energyFiguresFetch: could not sync tenants of ${bfsNr}`, error);
     }
   }
+  if (locations.length === 0) {
+    logger.info(`energyFiguresFetch: no city locations, ${tenantsSynced} tenant lists synced`);
+    return;
+  }
+
   const wantedList = bfsNumbersToFetch(locations, fetchedAt, now);
   const wanted = new Set(wantedList);
 

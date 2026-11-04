@@ -136,9 +136,15 @@ describe('ElCom tariffs', () => {
       'Elektrizitätswerke des Kantons Zürich (EKZ)', 'Gemeinde Männedorf, Energieversorung']);
   });
 
-  it('returns an empty list for an empty or malformed response', () => {
+  it('returns an empty list for empty bindings, the caller treats that as «no ElCom data»', () => {
     expect(tariffsFromSparql({ results: { bindings: [] } })).toEqual([]);
-    expect(tariffsFromSparql(undefined)).toEqual([]);
+  });
+
+  it('throws on a response without a bindings array, so a maintenance page cannot blank the tariffs', () => {
+    expect(() => tariffsFromSparql(undefined)).toThrow(/bindings/);
+    expect(() => tariffsFromSparql('<html>Wartungsarbeiten</html>')).toThrow(/bindings/);
+    expect(() => tariffsFromSparql({ results: {} })).toThrow(/bindings/);
+    expect(() => tariffsFromSparql({ error: 'x' })).toThrow(/bindings/);
   });
 
   it('refuses a row with a value that is not a number', () => {
@@ -174,6 +180,15 @@ describe('tenants and planning', () => {
 
   it('ignores locations without a number', () => {
     expect(bfsNumbersToFetch([city('a')], new Map(), now)).toEqual([]);
+  });
+
+  it('retries a status-blocked number on Sundays, so a late publication still arrives', () => {
+    const sunday = new Date('2026-11-08T03:15:00Z');
+    expect(sunday.getUTCDay()).toBe(0);
+    expect(bfsNumbersToFetch([city('a', '999', [], '999')], new Map(), sunday)).toEqual([999]);
+    expect(bfsNumbersToFetch([city('a', '999', [], '999')], new Map(), new Date('2026-11-07T03:15:00Z'))).toEqual([]);
+    // a fresh document still wins on Sunday
+    expect(bfsNumbersToFetch([city('a', '158', [], '158')], new Map([[158, '2026-11-07T03:15:00Z']]), sunday)).toEqual([]);
   });
 
   it('does not want a location blocked by its status, but retries a corrected number', () => {
@@ -239,6 +254,13 @@ describe('buildEnergyPatch', () => {
     expect(months.map((m) => m.date)).toEqual(['20261031', '20210331']); // the input is not reordered
   });
 
+  it('treats empty tariffs as no ElCom data: nothing written, fetchedAt does not move', () => {
+    const patch = buildEnergyPatch({ bfsNr: 158, tenants: ['scs'], now, reporter, tariffs: [] });
+    expect('tariffs' in patch).toBe(false);
+    expect('fetchedAt' in patch).toBe(false);
+    expect(Object.keys(buildEnergyPatch({ bfsNr: 99999, tenants: ['scs'], now, tariffs: [] })).sort()).toEqual(['bfsNr', 'isArchived', 'tenants']);
+  });
+
   it('treats a reporter without months as no Energie Reporter source', () => {
     const patch = buildEnergyPatch({ bfsNr: 158, tenants: ['scs'], now, reporter: { ...reporter, months: [] }, tariffs });
     expect(Object.keys(patch).sort()).toEqual(['bfsNr', 'isArchived', 'tariffs', 'tenants']);
@@ -272,6 +294,22 @@ describe('collectReporterRows', () => {
     expect(found.get(155)?.municipality).toBe('Männedorf');
   });
 
+  it('fails a municipality whose row is cut short, instead of storing a month of gaps', async () => {
+    const short = csvLines.map((l) => (l.startsWith('158,') && l.includes(',2026-10-31,') ? l.split(',').slice(0, 6).join(',') : l));
+    const { found, failed } = await collectReporterRows(lines(short), new Set([155, 158]));
+    expect([...failed.keys()]).toEqual([158]);
+    expect(found.has(158)).toBe(false);
+    expect(found.has(155)).toBe(true);
+  });
+
+  it('fails a municipality whose row has an extra cell, which would shift every later figure', async () => {
+    const long = csvLines.map((l) => (l.startsWith('158,') && l.includes(',2026-10-31,') ? l.replace(',2026-10-31,', ',2026-10-31,,') : l));
+    const { found, failed } = await collectReporterRows(lines(long), new Set([155, 158]));
+    expect([...failed.keys()]).toEqual([158]);
+    expect(found.has(158)).toBe(false);
+    expect(failed.get(158)?.message).toMatch(/cells/);
+  });
+
   it('throws when the header lacks an expected column', async () => {
     await expect(collectReporterRows(lines(['bfs_nr,municipality', '158,Stäfa']), new Set([158]))).rejects.toThrow(/missing column/);
   });
@@ -297,6 +335,11 @@ describe('tenantsToSync', () => {
   it('adds a tenant that joined a shared municipality', () => {
     const synced = tenantsToSync(new Map([[158, ['kring', 'scs']]]), new Map([[158, ['scs']]]));
     expect(synced.get(158)).toEqual(['kring', 'scs']);
+  });
+
+  it('empties the tenants of a document whose last location is gone, but does not touch an already empty one', () => {
+    const synced = tenantsToSync(new Map([[155, ['scs']]]), new Map([[158, ['scs']], [155, ['scs']], [7, []]]));
+    expect([...synced]).toEqual([[158, []]]);
   });
 
   it('ignores a number without an existing document: it is about to be fetched', () => {
