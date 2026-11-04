@@ -141,6 +141,8 @@ export function chooseWeatherApi(date: string, today: string): WeatherRange['api
 }
 
 interface OpenMeteoDailyResponse {
+  timezone?: string;
+  utc_offset_seconds?: number;
   daily?: {
     time: string[];
     weather_code?: number[];
@@ -153,14 +155,27 @@ interface OpenMeteoDailyResponse {
 }
 
 /**
- * Extracts the local 'HH:mm' clock time from an Open-Meteo ISO datetime, e.g. '2026-08-23T07:40'.
- * Open-Meteo omits seconds; DateFormat.IsoDateTime requires them, so a missing ':ss' is padded
- * before the conversion rather than inventing a second, seconds-less ISO format constant.
+ * The 'HH:mm' wall clock at the location on that very day. With `timezone=auto`, Open-Meteo shifts
+ * every date by the zone's offset of TODAY, so a July day fetched in winter reads an hour early.
+ * Undoing that offset gives the true instant, and the IANA zone then applies the day's own DST.
  */
-function toLocalTime(isoDateTime: string | undefined): string {
+export function toZoneTime(isoDateTime: string | undefined, utcOffsetSeconds?: number, timeZone?: string): string {
   if (!isoDateTime) return '';
-  const withSeconds = isoDateTime.length === 16 ? `${isoDateTime}:00` : isoDateTime;
-  return convertDateFormatToString(withSeconds, DateFormat.IsoDateTime, DateFormat.Time, false);
+  const raw = isoDateTime.slice(11, 16);
+  if (utcOffsetSeconds === undefined || !timeZone) return raw;
+  const instant = Date.parse(`${isoDateTime.slice(0, 16)}:00Z`) - utcOffsetSeconds * 1000;
+  try {
+    return new Intl.DateTimeFormat('en-GB', { timeZone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(instant);
+  } catch {
+    return raw; // unknown zone or unparsable datetime
+  }
+}
+
+/** Polar day and night: Open-Meteo sends a span of exactly 0 or 24 hours — there is no sunrise to show. */
+function isPolarDay(sunrise: string | undefined, sunset: string | undefined): boolean {
+  if (!sunrise || !sunset) return false;
+  const span = Date.parse(`${sunset.slice(0, 16)}:00Z`) - Date.parse(`${sunrise.slice(0, 16)}:00Z`);
+  return span <= 0 || span >= 24 * 3600 * 1000;
 }
 
 /**
@@ -185,21 +200,25 @@ export async function fetchWeatherRange(range: WeatherRange): Promise<Map<string
     return result;
   }
 
-  const body = (await response.json()) as OpenMeteoDailyResponse;
-  const daily = body.daily;
-  if (!daily?.time) {
+  // an overloaded host can answer 200 with a plain-text error
+  const body = await response.json().catch(() => undefined) as OpenMeteoDailyResponse | undefined;
+  const daily = body?.daily;
+  if (!body || !daily?.time) {
     return result;
   }
 
   daily.time.forEach((isoDate, i) => {
     const storeDate = convertDateFormatToString(isoDate, DateFormat.IsoDate, DateFormat.StoreDate);
+    const sunrise = daily.sunrise?.[i];
+    const sunset = daily.sunset?.[i];
+    const polar = isPolarDay(sunrise, sunset);
     result.set(storeDate, {
       code: daily.weather_code?.[i],
       min: daily.temperature_2m_min?.[i],
       max: daily.temperature_2m_max?.[i],
       precip: daily.precipitation_sum?.[i],
-      sunrise: toLocalTime(daily.sunrise?.[i]),
-      sunset: toLocalTime(daily.sunset?.[i]),
+      sunrise: polar ? '' : toZoneTime(sunrise, body.utc_offset_seconds, body.timezone),
+      sunset: polar ? '' : toZoneTime(sunset, body.utc_offset_seconds, body.timezone),
     });
   });
 

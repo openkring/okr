@@ -1,6 +1,6 @@
 // apps/functions/src/diary/weather.spec.ts
 import { describe, expect, it } from 'vitest';
-import { chooseWeatherApi, mergeWeather, planWeatherRanges } from './weather';
+import { chooseWeatherApi, mergeWeather, planWeatherRanges, toZoneTime } from './weather';
 
 const AT = (date: string, latitude: number, longitude: number) => ({ date, latitude, longitude });
 
@@ -108,5 +108,27 @@ describe('chooseWeatherApi', () => {
   });
   it('uses the archive host beyond a year', () => {
     expect(chooseWeatherApi('20240903', '20260903')).toBe('archive');
+  });
+});
+
+describe('toZoneTime', () => {
+  it('applies the DST of the day, not of the day the API was asked', () => {
+    // real answer for 1 July asked in November: Zurich is sent with its winter offset
+    expect(toZoneTime('2026-07-01T04:32', 3600, 'Europe/Zurich')).toBe('05:32');
+    expect(toZoneTime('2026-07-01T20:25', 3600, 'Europe/Zurich')).toBe('21:25');
+    expect(toZoneTime('2026-01-15T08:10', 3600, 'Europe/Zurich')).toBe('08:10');
+    // and a winter day asked in summer
+    expect(toZoneTime('2026-01-15T09:10', 7200, 'Europe/Zurich')).toBe('08:10');
+  });
+
+  it('keeps zones without DST and half-hour offsets', () => {
+    expect(toZoneTime('2026-07-01T04:28', 32400, 'Asia/Tokyo')).toBe('04:28');
+    expect(toZoneTime('2026-07-01T05:30', 19800, 'Asia/Kolkata')).toBe('05:30');
+  });
+
+  it('falls back to the clock as sent when the zone is unusable', () => {
+    expect(toZoneTime('2026-07-01T04:32')).toBe('04:32');
+    expect(toZoneTime('2026-07-01T04:32', 3600, 'Not/AZone')).toBe('04:32');
+    expect(toZoneTime(undefined, 3600, 'Europe/Zurich')).toBe('');
   });
 });

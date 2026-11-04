@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FootprintView, ImageView } from './journal-view.util';
-import { footprintChips, toStorySections } from './journal-story.util';
+import { footprintChips, footprintHeroChips, toStorySections } from './journal-story.util';
 
 const fileUrl = (p: string) => `capacitor://localhost/_capacitor_file_/docs/${p}`;
 function image(key: string): ImageView {
@@ -22,7 +22,7 @@ describe('journal story', () => {
     expect(story.hero?.title).toBe('Neko Harbour');
     expect(story.hero?.subTitle).toBe('Antarktische Halbinsel');
     expect(story.hero?.properties.hero.url).toBe(fileUrl('journals/j1/i1-2048.jpg'));
-    expect(story.hero?.properties.chips).toEqual(['14.01.2027', '09:00', '64°50′S 62°32′W']);
+    expect(story.hero?.properties.chips).toEqual(['14.01.2027', '64°50′S 62°32′W']);
     expect(story.hero?.tenants).toEqual(['bkg']);
   });
 
@@ -49,6 +49,11 @@ describe('journal story', () => {
     expect(footprintChips({ ...base, date: '', time: '' })).toEqual(['64°50′S 62°32′W']);
     expect(footprintChips({ ...base, latitude: 47.2312, longitude: 8.7123, date: '', time: '' })).toEqual(['47°14′N 8°43′E']);
     expect(footprintChips({ ...base, latitude: undefined, longitude: undefined })).toEqual(['14.01.2027', '09:00']);
+  });
+
+  it('the hero shows date, coordinates, weather and sun times, never the time', () => {
+    const weather = { code: 3, min: -2.6, max: 4.4, precip: 1.6, sunrise: '04:10', sunset: '23:40' };
+    expect(footprintHeroChips({ ...base, weather })).toEqual(['14.01.2027', '64°50′S 62°32′W', '-3–4 °C, 2 mm', '☀ 04:10–23:40']);
   });
 
   it('a photo without a URL yet is left out, never a blank tile', () => {

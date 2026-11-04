@@ -2,7 +2,7 @@ import {
   ALBUM_SECTION_SHAPE, AlbumSection, ARTICLE_SECTION_SHAPE, ArticleSection, HERO_SECTION_SHAPE, HeroSection,
   IMAGE_CONFIG_SHAPE, ImageConfig,
 } from '@okr/shared-models';
-import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, sunTimesLine } from '@okr/shared-util-core';
 import { BlockView, FootprintView, ImageView, weatherLine } from './journal-view.util';
 
 /**
@@ -24,16 +24,23 @@ function coordinate(value: number, positive: string, negative: string): string {
   return `${degrees}°${minutes}′${value < 0 ? negative : positive}`;
 }
 
-/** Short facts for the hero: date (dd.MM.yyyy), time, coordinates in degrees and minutes, weather. */
+function viewDate(footprint: FootprintView): string {
+  return footprint.date ? convertDateFormatToString(footprint.date, DateFormat.StoreDate, DateFormat.ViewDate, false) : '';
+}
+
+function coordinates(footprint: FootprintView): string {
+  if (footprint.latitude === undefined || footprint.longitude === undefined) return '';
+  return `${coordinate(footprint.latitude, 'N', 'S')} ${coordinate(footprint.longitude, 'E', 'W')}`;
+}
+
+/** Short facts for an overview card: date (dd.MM.yyyy), time, coordinates in degrees and minutes, weather. */
 export function footprintChips(footprint: FootprintView): string[] {
-  const chips: string[] = [];
-  if (footprint.date) chips.push(convertDateFormatToString(footprint.date, DateFormat.StoreDate, DateFormat.ViewDate, false));
-  if (footprint.time) chips.push(footprint.time);
-  if (footprint.latitude !== undefined && footprint.longitude !== undefined) {
-    chips.push(`${coordinate(footprint.latitude, 'N', 'S')} ${coordinate(footprint.longitude, 'E', 'W')}`);
-  }
-  chips.push(weatherLine(footprint.weather));
-  return chips.filter((c) => c !== '');
+  return [viewDate(footprint), footprint.time, coordinates(footprint), weatherLine(footprint.weather)].filter((c) => c !== '');
+}
+
+/** The hero's chips: date, coordinates, weather, sun times. */
+export function footprintHeroChips(footprint: FootprintView): string[] {
+  return [viewDate(footprint), coordinates(footprint), weatherLine(footprint.weather), sunTimesLine(footprint.weather)].filter((c) => c !== '');
 }
 
 function imageConfig(image: ImageView, url: string): ImageConfig {
@@ -81,7 +88,7 @@ export function toStorySections(
     ? {
         ...HERO_SECTION_SHAPE, ...common, okey: `hero-${footprint.key}`, name: `hero-${footprint.key}`,
         title: footprint.title, subTitle: footprint.placeName,
-        properties: { ...HERO_SECTION_SHAPE.properties, hero: cover, logo: { ...IMAGE_CONFIG_SHAPE }, chips: footprintChips(footprint) },
+        properties: { ...HERO_SECTION_SHAPE.properties, hero: cover, logo: { ...IMAGE_CONFIG_SHAPE }, chips: footprintHeroChips(footprint) },
       }
     : undefined;
   return { hero, blocks };

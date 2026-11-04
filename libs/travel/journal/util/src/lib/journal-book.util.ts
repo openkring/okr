@@ -1,5 +1,5 @@
 import { BookPageOverride, BookTemplate, JournalBookModel, TRANSPORT_MODES, TransportMode } from '@okr/shared-models';
-import { convertDateFormatToString, DateFormat, getDayDiff } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, getDayDiff, sunTimesLine } from '@okr/shared-util-core';
 import { albumPages, autoLayout, Box, coverGeometry, DPI_OK, DPI_POOR, effectiveDpi, GAP, MARGIN, PAGE_H, PAGE_W, templateBoxes } from './journal-book-layout.util';
 import { isVideoImage } from './journal-video.util';
 import { flyoverInputOf, flyoverTimeline } from './journal-flyover.util';
@@ -378,7 +378,7 @@ function openingFrames(ctx: Ctx, fp: FootprintView, facts: FootprintFacts, photo
   if (fp.latitude !== undefined && fp.longitude !== undefined) {
     factLines.push(`${degMin(fp.latitude, labels.north, labels.south)}, ${degMin(fp.longitude, labels.east, labels.west)}`);
   }
-  if (fp.weather) factLines.push(`${escapeHtml(labels.weather)}: ${weatherLine(fp.weather)}`);
+  if (fp.weather) factLines.push(`${escapeHtml(labels.weather)}: ${weatherLine(fp.weather)}`, sunTimesLine(fp.weather));
   const s = facts.stretch;
   const via = s ? ` · ${escapeHtml(labels.transportVia)} ${escapeHtml(s.transport ? labels.transport[s.transport] : labels.noTransport)}` : '';
   const statLines = [

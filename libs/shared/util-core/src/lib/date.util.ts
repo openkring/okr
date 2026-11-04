@@ -940,3 +940,12 @@ export function formatPartialStoreDate(storeDate: string): string {
       return '';
   }
 }
+
+/**
+ * The day's sun times as one line: '☀ 07:12–17:22', location-local as stored. Empty when a time is
+ * missing or both are equal (entries saved before polar days were recognised hold '00:00' twice).
+ */
+export function sunTimesLine(weather: { sunrise?: string; sunset?: string } | undefined): string {
+  if (!weather?.sunrise || !weather.sunset || weather.sunrise === weather.sunset) return '';
+  return `☀ ${weather.sunrise}–${weather.sunset}`;
+}
