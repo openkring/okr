@@ -1933,6 +1933,9 @@ for label, expect, run in form_stats_cases:
 # callable setDiaryConsent only (Admin SDK), `personKey` no longer by a tenant admin (D-R6, D-R10).
 seed("diarySources/uidE", {"tenants": ["t1"], "authorKey": "uidE", "from": "", "to": "", "pulls": []})
 DS_A, DS_D, DS_E = jwt("uidA"), jwt("uidD"), jwt("uidE")
+# 1.77 §12.9: «Aus dem Tagebuch entfernen» on a shared recording, the trip with the diary tenant
+seed("trips/tkDetach", {**tracker_trip("pA"), "tenants": ["t2", "t1"]})
+seed("trips/tkDetachOther", {**tracker_trip("pA"), "tenants": ["t2", "t1"]})
 DS_DOC = {"tenants": ["t1"], "authorKey": "uidA", "from": "", "to": "", "pulls": []}
 diary_source_cases = [
     ("diarySources: owner READ of a missing doc -> ALLOW (not found, not denied)", True,
@@ -1954,6 +1957,10 @@ diary_source_cases = [
      lambda: req("PATCH", "diarySources/uidE", token=DS_E, data=body({"authorKey": "uidA"}), mask=["authorKey"])),
     ("diarySources: admin DELETE -> DENY", False, lambda: req("DELETE", "diarySources/uidE", token=DS_D)),
     ("diarySources: owner DELETE -> ALLOW", True, lambda: req("DELETE", "diarySources/uidE", token=DS_E)),
+    ("tracker trip: owner detaches their own tenant -> ALLOW", True,
+     lambda: req("PATCH", "trips/tkDetach", token=DS_A, data=body({"tenants": ["t2"]}), mask=["tenants"])),
+    ("tracker trip: another member of the tenant detaches it -> DENY", False,
+     lambda: req("PATCH", "trips/tkDetachOther", token=DS_E, data=body({"tenants": ["t2"]}), mask=["tenants"])),
     ("users: self WRITE diaryConsents -> DENY (callable only)", False,
      lambda: req("PATCH", "users/uidA", token=DS_A, data=body({"diaryConsents": []}), mask=["diaryConsents"])),
     ("users: admin WRITE diaryConsents -> DENY (D-R2)", False,

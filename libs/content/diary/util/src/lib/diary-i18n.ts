@@ -143,6 +143,9 @@ export const DIARY_I18N_KEYS = {
   track_view_rename:      PFX + 'track.view.rename',
   track_view_rename_prompt: PFX + 'track.view.renamePrompt',
   track_view_rename_failed: PFX + 'track.view.renameFailed',
+  track_view_remove:      PFX + 'track.view.remove',
+  track_view_remove_confirm: PFX + 'track.view.removeConfirm',
+  track_view_remove_failed: PFX + 'track.view.removeFailed',
   track_view_map_label:   PFX + 'track.view.mapLabel',
   track_view_photo_show:  PFX + 'track.view.photoShow', // single braces: {time}
   track_view_map_note:    PFX + 'track.view.mapNote',

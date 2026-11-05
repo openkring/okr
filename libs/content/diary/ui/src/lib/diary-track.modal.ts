@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
-import { AlertController, IonContent, IonIcon, ModalController } from '@ionic/angular';
+import { AlertController, IonButton, IonContent, IonIcon, ModalController } from '@ionic/angular';
 
 import {
   DiaryI18n, DiaryTrackCard, diaryTrackModeLabel, formatTrackDate, toStretchTiles, trackTotals,
@@ -9,7 +9,7 @@ import { TrackMap, TrackMapPhoto, TrackMapSection } from '@okr/mobility-tracker-
 import { IMAGE_STYLE_SHAPE, ImageConfig, ImageType } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Header, showImageSlider } from '@okr/shared-ui';
-import { okrPrompt } from '@okr/shared-util-angular';
+import { confirm, okrPrompt } from '@okr/shared-util-angular';
 
 /** a visible photo of the grid; `index` points into the map's `photos` (hidden ones included there) */
 interface DiaryTrackPhotoCard { index: number; time: string; src?: string; ariaLabel: string }
@@ -20,14 +20,15 @@ interface DiaryTrackPhotoCard { index: number; time: string; src?: string; ariaL
  * sections, start / end dots, photo pins fanned out where they share a place), one tile per stretch (time,
  * distance, speed, steps when measured), the visible photos as a grid and the map credit. A tap on a photo — pin or
  * grid — opens the full-screen slider over all visible photos of the track. Hidden photos never appear. The title is
- * the only thing changed here (a prompt, no form); corrections stay on the tracker's own page.
+ * the only thing changed here (a prompt, no form); corrections stay on the tracker's own page. «Aus dem Tagebuch
+ * entfernen» takes the track out of this diary and closes the view (spec 1.77 §12.9).
  * The map is kept well below the viewport height and ignores the mouse wheel, so the page scrolls past it.
  * Thumbnails come in through `loadThumb` (the store's TrackService.readThumb) — this ui modal injects no service.
  */
 @Component({
   selector: 'okr-diary-track-modal',
   standalone: true,
-  imports: [Header, TrackMap, IonContent, IonIcon, SvgIconPipe],
+  imports: [Header, TrackMap, IonButton, IonContent, IonIcon, SvgIconPipe],
   styles: [`
     :host {
       --okr-dt-surface: var(--ion-card-background, var(--ion-item-background, var(--ion-background-color, #fff)));
@@ -125,6 +126,10 @@ interface DiaryTrackPhotoCard { index: number; time: string; src?: string; ariaL
         }
 
         <p class="note">{{ i18n().track_view_map_note() }}</p>
+        <ion-button fill="clear" color="danger" (click)="remove()">
+          <ion-icon slot="start" src="{{ 'trash' | svgIcon }}" aria-hidden="true" />
+          {{ i18n().track_view_remove() }}
+        </ion-button>
       </div>
     </ion-content>
   `,
@@ -139,6 +144,8 @@ export class DiaryTrackModal {
   public readonly loadThumb = input.required<(thumbPath: string) => Promise<string>>();
   /** saves a new title of the track; resolves false when the write failed */
   public readonly renameTrack = input.required<(card: DiaryTrackCard, name: string) => Promise<boolean>>();
+  /** takes the track out of the diary: the store's call, this ui modal injects no service */
+  public readonly removeTrack = input.required<(card: DiaryTrackCard) => void>();
   /** the active UI language — weekday and month name of the date */
   public readonly lang = input('de');
 
@@ -220,5 +227,13 @@ export class DiaryTrackModal {
     const name = entered?.trim();
     if (!name || name === current) return;
     if (await this.renameTrack()(this.card(), name)) this.name.set(name);
+  }
+
+  /** After a confirm: closes at once, the write runs detached and works offline. */
+  protected async remove(): Promise<void> {
+    const i18n = this.i18n();
+    if (!await confirm(this.alertController, i18n.track_view_remove_confirm(), i18n.track_view_remove(), i18n.cancel(), true)) return;
+    this.removeTrack()(this.card());
+    await this.modalController.dismiss();
   }
 }

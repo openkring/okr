@@ -7,6 +7,8 @@ export interface DiarySectionRoute { key: string; points: { lat: number; lng: nu
 /** One recorded track of a diary day, ready for the card and the read-only track view (spec 1.121 §7). */
 export interface DiaryTrackCard {
   key: string;
+  /** the trip's tenants: a delete in the diary takes out only the diary's own (spec 1.77 §12.9) */
+  tenants: string[];
   name: string;
   /** StoreDate (yyyyMMdd) of the trip; '' when unknown */
   startDate: string;
@@ -34,6 +36,12 @@ export interface DiaryTrackCard {
   photos: { lat: number; lng: number; thumbPath?: string; hidden: boolean; takenAt: string }[];
 }
 
+/** What the track view changed: the new title, or that the track left the diary. */
+export interface DiaryTrackChange {
+  name?: string;
+  removed?: boolean;
+}
+
 /**
  * The tracker trips of one day as diary cards, sorted by start time. `pointsByTrip` holds the decoded points per
  * trip key and section index (missing = no points yet). Trips without `track` are skipped; a missing photo list
@@ -55,6 +63,7 @@ export function toDiaryTrackCards(
     for (const s of sections) if (modes[modes.length - 1] !== s.mode) modes.push(s.mode);
     const card: DiaryTrackCard = {
       key: trip.okey,
+      tenants: trip.tenants ?? [],
       name: trip.name ?? '',
       startDate: trip.startDate ?? '',
       startTime: trip.startTime ?? '',

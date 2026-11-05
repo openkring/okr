@@ -18,6 +18,14 @@ function trip(okey: string, startTime: string, track?: Partial<TripTrack>): Trip
 const P = (lat: number) => ({ lat, lng: 8, t: lat });
 
 describe('toDiaryTrackCards', () => {
+  it('carries the tenants, so a delete in the diary can take out just the diary', () => {
+    const t = { okey: 'a', tenants: ['scs', 'bka'], track: { sections: [] } } as unknown as TripModel;
+    expect(toDiaryTrackCards([t], {})[0].tenants).toEqual(['scs', 'bka']);
+  });
+  it('reads a trip without tenants as none', () => {
+    const t = { okey: 'a', track: { sections: [] } } as unknown as TripModel;
+    expect(toDiaryTrackCards([t], {})[0].tenants).toEqual([]);
+  });
   it('returns [] for no trips', () => {
     expect(toDiaryTrackCards([], {})).toEqual([]);
   });

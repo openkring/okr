@@ -293,7 +293,10 @@
       "mapNote": "Carte : © swisstopo",
       "rename": "Modifier le titre",
       "renamePrompt": "Titre du parcours",
-      "renameFailed": "Le titre n'a pas pu être enregistré."
+      "renameFailed": "Le titre n'a pas pu être enregistré.",
+      "remove": "Retirer du journal",
+      "removeConfirm": "Retirer ce parcours du journal ? Il ne reviendra pas de lui-même et, dans une app de club, il sera supprimé après le délai habituel.",
+      "removeFailed": "Le parcours n'a pas pu être retiré. Réessaie, s'il te plaît."
     }
   }
 }

@@ -4,7 +4,7 @@ import type { DiaryTrackCard } from './diary-track.util';
 import { diaryTrackPhotoTiles } from './diary-track-photo.util';
 
 function card(key: string, photos: DiaryTrackCard['photos']): DiaryTrackCard {
-  return { key, name: key, startDate: '20261027', startTime: '08:00', modes: [], distanceM: 0, durationS: 0, sections: [], photos };
+  return { key, tenants: ['bka'], name: key, startDate: '20261027', startTime: '08:00', modes: [], distanceM: 0, durationS: 0, sections: [], photos };
 }
 
 const photo = (takenAt: string, hidden = false, thumbPath?: string): DiaryTrackCard['photos'][number] =>

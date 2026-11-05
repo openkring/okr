@@ -293,7 +293,10 @@
       "mapNote": "Mappa: © swisstopo",
       "rename": "Modifica titolo",
       "renamePrompt": "Titolo del percorso",
-      "renameFailed": "Non è stato possibile salvare il titolo."
+      "renameFailed": "Non è stato possibile salvare il titolo.",
+      "remove": "Rimuovi dal diario",
+      "removeConfirm": "Rimuovere questo percorso dal diario? Non tornerà da solo e, in un'app del club, verrà eliminato dopo il periodo consueto.",
+      "removeFailed": "Non è stato possibile rimuovere il percorso. Riprova, per favore."
     }
   }
 }

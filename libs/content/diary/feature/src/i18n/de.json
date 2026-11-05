@@ -293,7 +293,10 @@
       "mapNote": "Karte: © swisstopo",
       "rename": "Titel ändern",
       "renamePrompt": "Titel der Strecke",
-      "renameFailed": "Der Titel konnte nicht gespeichert werden."
+      "renameFailed": "Der Titel konnte nicht gespeichert werden.",
+      "remove": "Aus dem Tagebuch entfernen",
+      "removeConfirm": "Diese Strecke aus dem Tagebuch entfernen? Sie kommt nicht von selbst zurück, und in einer Vereins-App wird sie nach der üblichen Frist gelöscht.",
+      "removeFailed": "Die Strecke konnte nicht entfernt werden. Bitte versuche es nochmals."
     }
   }
 }

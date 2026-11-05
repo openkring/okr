@@ -12,7 +12,7 @@ const pt = (lat: number, h: number, m: number) => ({ lat, lng: 8.7, t: at(h, m) 
 
 function card(over: Partial<DiaryTrackCard> = {}): DiaryTrackCard {
   return {
-    key: 'k', name: 'DinnerSaskia', startDate: '20261025', startTime: '18:05', modes: ['foot', 'car'],
+    tenants: ['bka'], key: 'k', name: 'DinnerSaskia', startDate: '20261025', startTime: '18:05', modes: ['foot', 'car'],
     distanceM: 4321, durationS: 3600,
     sections: [
       { mode: 'foot', points: [pt(47.000, 18, 5), pt(47.010, 18, 35)], steps: 2345 },

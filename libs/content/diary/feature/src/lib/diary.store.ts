@@ -9,7 +9,7 @@ import { TrackService } from '@okr/mobility-tracker-data-access';
 import { TrackPoint } from '@okr/mobility-tracker-util';
 import { DiaryAlbumService, DiaryMediaService, DiaryService, DiaryWeatherService } from '@okr/content-diary-data-access';
 import {
-  DIARY_FIRST_YEAR, DIARY_I18N_KEYS, DiarySectionRoute, DiaryTrackCard, toDiaryTrackCards, customLocationAvatar, locationAvatar, mainLocation, DiaryFilter, DiaryMediaResult, DiaryRange, DiaryStateFilter, albumKey, albumRefOf,
+  DIARY_FIRST_YEAR, DIARY_I18N_KEYS, DiarySectionRoute, DiaryTrackCard, DiaryTrackChange, toDiaryTrackCards, customLocationAvatar, locationAvatar, mainLocation, DiaryFilter, DiaryMediaResult, DiaryRange, DiaryStateFilter, albumKey, albumRefOf,
   buildDiaryRangeTree, decodeDiaryFilter, diaryFilterLabel, diaryListUrl, diaryRangeOfYear, diaryStateMatches, encodeDiaryFilter,
   diaryTrackModeLabel, formatDiaryDate, getDiaryIndex, groupDiariesByMonth, hasDiaryWeather, inDiaryDateRange, newDiary, trackFilterDates, trackFilterTitle,
 } from '@okr/content-diary-util';
@@ -435,15 +435,15 @@ export const DiaryStore = signalStore(
 
     /**
      * Read-only track view; dynamic import like the view modal (store-modal-dynamic-import). Resolves, once the view
-     * is closed, to the title the track was renamed to there (undefined = unchanged).
+     * is closed, to what changed there: the new title, or that the track left the diary.
      */
-    const openTrack = async (card: DiaryTrackCard): Promise<string | undefined> => {
+    const openTrack = async (card: DiaryTrackCard): Promise<DiaryTrackChange> => {
       const { DiaryTrackModal } = await import('@okr/content-diary-ui');
-      let renamed: string | undefined;
+      const change: DiaryTrackChange = {};
       const renameTrack = async (track: DiaryTrackCard, name: string): Promise<boolean> => {
         try {
           await store.trackService.rename(track.key, name);
-          renamed = name;
+          change.name = name;
           return true;
         } catch (error) {
           console.error('DiaryStore.renameTrack', error);
@@ -451,14 +451,22 @@ export const DiaryStore = signalStore(
           return false;
         }
       };
+      // detached, like the tracker's own delete: archive() resolves only on the server's ack, offline never
+      const removeTrack = (track: DiaryTrackCard): void => {
+        change.removed = true;
+        store.trackService.archive(track.key, track.tenants).catch((error: unknown) => {
+          console.error('DiaryStore.removeTrack', error);
+          void store.alertService.showToast(store.i18n.track_view_remove_failed());
+        });
+      };
       const modal = await store.modalController.create({
         component: DiaryTrackModal,
         cssClass: 'wide-modal',
-        componentProps: { card, i18n: store.i18n, lang: store.lang(), loadThumb: loadTrackThumb, renameTrack },
+        componentProps: { card, i18n: store.i18n, lang: store.lang(), loadThumb: loadTrackThumb, renameTrack, removeTrack },
       });
       await modal.present();
       await modal.onWillDismiss();
-      return renamed;
+      return change;
     };
 
     /** prev/next/up of the shown entry (spec 1.106 §2.1) — queried, not taken from the loaded list. */

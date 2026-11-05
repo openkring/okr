@@ -5,10 +5,13 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import type { LocalTrack } from '@okr/mobility-tracker-util';
 
+const updateDocMock = vi.hoisted(() => vi.fn());
+
 vi.mock('firebase/firestore', async (orig) => ({
   ...(await (orig() as Promise<Record<string, unknown>>)),
   doc: (_db: unknown, path: string) => path,
   arrayUnion: (...values: string[]) => ({ union: values }),
+  updateDoc: (...args: unknown[]) => updateDocMock(...args),
 }));
 
 import { TrackService } from './track.service';
@@ -42,5 +45,24 @@ describe('TrackService.upload', () => {
     const [, points] = await upload(['scs']);
     expect(points.path).toBe('trips/t1/track-points/0');
     expect(points.data['tenants']).toEqual(['scs']);
+  });
+});
+
+describe('TrackService.archive in the diary app', () => {
+  function service() {
+    updateDocMock.mockReset().mockResolvedValue(undefined);
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [TrackService, { provide: ENV, useValue: { tenantId: 'bka' } }, { provide: FirestoreService, useValue: { firestore: {} } }],
+    });
+    return TestBed.inject(TrackService);
+  }
+  it('takes a pulled recording out of the diary and leaves it in its own app', async () => {
+    await service().archive('t1', ['scs', 'bka']);
+    expect(updateDocMock).toHaveBeenCalledWith('trips/t1', { tenants: ['scs'] });
+  });
+  it('archives a track that lives in the diary only', async () => {
+    await service().archive('t1', ['bka']);
+    expect(updateDocMock).toHaveBeenCalledWith('trips/t1', { isArchived: true });
   });
 });

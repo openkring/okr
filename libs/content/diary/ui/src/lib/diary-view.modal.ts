@@ -12,7 +12,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
 import { formatClockTime } from '@okr/mobility-tracker-util';
 
 import {
-  DiaryI18n, DiaryMediaResult, DiaryTrackCard, diaryTrackPhotoTiles, diaryAvatarName, diaryLocationAvatarKey, DIARY_TEXT_LOCATION_ICON, diaryLocationLabel, mainLocation, diarySliderImages, diaryWeatherLine, driveFolderUrl, formatDiaryDateLong, hasDiaryWeather,
+  DiaryI18n, DiaryMediaResult, DiaryTrackCard, DiaryTrackChange, diaryTrackPhotoTiles, diaryAvatarName, diaryLocationAvatarKey, DIARY_TEXT_LOCATION_ICON, diaryLocationLabel, mainLocation, diarySliderImages, diaryWeatherLine, driveFolderUrl, formatDiaryDateLong, hasDiaryWeather,
   isDiaryVideo, JassDiaryResult, parseJassDiaryLine, renderDiaryHtml,
 } from '@okr/content-diary-util';
 
@@ -205,8 +205,8 @@ export class DiaryViewModal {
   public readonly refreshWeather = input.required<(d: DiaryModel) => Promise<DiaryModel | undefined>>();
   /** the recorded tracks of a day (spec 1.121 §7); [] for other scopes, offline or without a person */
   public readonly loadTracks = input.required<(d: DiaryModel) => Promise<DiaryTrackCard[]>>();
-  /** opens the read-only track view; resolves to the new title when it was renamed there */
-  public readonly openTrack = input.required<(card: DiaryTrackCard) => Promise<string | undefined>>();
+  /** opens the track view; resolves to what changed there */
+  public readonly openTrack = input.required<(card: DiaryTrackCard) => Promise<DiaryTrackChange>>();
   /** a track photo's thumbnail (private bucket) as a displayable URL — the store's TrackService.readThumb */
   public readonly loadTrackThumb = input.required<(thumbPath: string) => Promise<string>>();
 
@@ -372,10 +372,11 @@ export class DiaryViewModal {
     if (images.length) await showImageSlider(this.modalController, images, { ...IMAGE_STYLE_SHAPE }, startIndex);
   }
 
-  /** Opens a track; a title changed there is shown on its card at once. */
+  /** Opens a track; a title changed there shows on its card at once, a track taken out of the diary leaves the day. */
   protected async showTrack(card: DiaryTrackCard): Promise<void> {
-    const name = await this.openTrack()(card);
-    if (name) this.tracks.update(list => list.map(c => (c.key === card.key ? { ...c, name } : c)));
+    const { name, removed } = await this.openTrack()(card);
+    if (removed) this.tracks.update(list => list.filter(c => c.key !== card.key));
+    else if (name) this.tracks.update(list => list.map(c => (c.key === card.key ? { ...c, name } : c)));
   }
 
   protected async openDocument(index: number): Promise<void> {

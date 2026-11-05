@@ -293,7 +293,10 @@
       "mapNote": "Map: © swisstopo",
       "rename": "Change title",
       "renamePrompt": "Title of the track",
-      "renameFailed": "The title could not be saved."
+      "renameFailed": "The title could not be saved.",
+      "remove": "Remove from the diary",
+      "removeConfirm": "Remove this track from the diary? It won't come back by itself, and in a club app it will be deleted after the usual period.",
+      "removeFailed": "The track could not be removed. Please try again."
     }
   }
 }
