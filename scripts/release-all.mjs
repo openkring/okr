@@ -11,6 +11,7 @@ import { closeSync, existsSync, mkdirSync, openSync, readFileSync, readdirSync, 
 import { join } from 'node:path';
 
 import { stampNgswVersion } from './stamp-ngsw-version.mjs';
+import { writeTestSummary } from './release-summary.mjs';
 import {
   repoRoot, SITES, APPS, PROD_APP, run, ask, closePrompts, abort, bump, readVersion, writeVersion,
   preflight, runGates, verifyLive, commitSubmoduleStamp, commitPointers,
@@ -509,6 +510,12 @@ export async function releaseAll(opts) {
   for (const f of failedNative) console.log(`\n✖ ${f.name}: ${f.reason}`);
   if (problems) process.exitCode = 1;
   else console.log(`\n✔ v${next} released to ${APPS.length} sites${o.native ? ' and the native targets' : ''}.`);
+
+  // 6. the test summary. Read-only, and a failure here must not turn a good release red.
+  try {
+    const { path, report } = writeTestSummary(next, { to: dryRun ? 'HEAD' : `v${next}`, write: !dryRun });
+    console.log(`\n${report}\n${dryRun ? '(dry run) not written' : `Test summary: ${path.slice(repoRoot.length + 1)} — ask Claude for the v${next} test checklist (release skill).`}`);
+  } catch (e) { console.log(`\n⚠ No test summary: ${e.message ?? e}. Run \`pnpm release:summary ${next}\`.`); }
 
   return { version: next, rows: ctx.rows, stamped: ctx.stamped, verifiedApps, failedApps, failedNative, ok: problems === 0 };
 }
